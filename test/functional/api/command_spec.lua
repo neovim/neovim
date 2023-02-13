@@ -543,7 +543,7 @@ describe('nvim_create_user_command', function()
   end)
 
   it('does not allow invalid command names', function()
-    matches("'name' must begin with an uppercase letter", pcall_err(exec_lua, [[
+    matches("Invalid command name %(must begin with an uppercase letter%): 'test'", pcall_err(exec_lua, [[
       vim.api.nvim_create_user_command('test', 'echo "hi"', {})
     ]]))
 

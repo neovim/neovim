@@ -1155,7 +1155,7 @@ describe('API', function()
 
   describe('nvim_put', function()
     it('validates args', function()
-      eq("Invalid 'line' type: expected String, got Integer",
+      eq("Invalid line: expected String, got Integer",
         pcall_err(request, 'nvim_put', {42}, 'l', false, false))
       eq("Invalid type: 'x'",
         pcall_err(request, 'nvim_put', {'foo'}, 'x', false, false))
@@ -1780,7 +1780,7 @@ describe('API', function()
     it('validates args', function()
       eq("Invalid key: 'blah'",
         pcall_err(nvim, 'get_context', {blah={}}))
-      eq("Invalid 'types' type: expected Array, got Integer",
+      eq("Invalid types: expected Array, got Integer",
         pcall_err(nvim, 'get_context', {types=42}))
       eq("Invalid type: 'zub'",
         pcall_err(nvim, 'get_context', {types={'jumps', 'zub', 'zam',}}))
@@ -2223,7 +2223,7 @@ describe('API', function()
       eq(5, meths.get_var('avar'))
     end)
 
-    it('throws error on malformed arguments', function()
+    it('validation', function()
       local req = {
         {'nvim_set_var', {'avar', 1}},
         {'nvim_set_var'},
@@ -2238,7 +2238,7 @@ describe('API', function()
         { 'nvim_set_var', { 'bvar', { 2, 3 } } },
         12,
       }
-      eq("Invalid 'calls item' type: expected Array, got Integer",
+      eq("Invalid calls item: expected Array, got Integer",
          pcall_err(meths.call_atomic, req))
       eq({2,3}, meths.get_var('bvar'))
 
@@ -2246,7 +2246,7 @@ describe('API', function()
         {'nvim_set_current_line', 'little line'},
         {'nvim_set_var', {'avar', 3}},
       }
-      eq("Invalid 'args' type: expected Array, got String",
+      eq("Invalid args: expected Array, got String",
          pcall_err(meths.call_atomic, req))
       -- call before was done, but not after
       eq(1, meths.get_var('avar'))
@@ -3046,9 +3046,9 @@ describe('API', function()
       eq({2, 2, buf.id, mark[4]}, mark)
     end)
     it('validation', function()
-      eq("Invalid mark name (must be file/uppercase): 'f'", pcall_err(meths.get_mark, 'f'))
-      eq("Invalid mark name (must be file/uppercase): '!'", pcall_err(meths.get_mark, '!'))
-      eq("Invalid mark name (must be a single char): 'fail'", pcall_err(meths.get_mark, 'fail'))
+      eq("Invalid mark name (must be file/uppercase): 'f'", pcall_err(meths.get_mark, 'f', {}))
+      eq("Invalid mark name (must be file/uppercase): '!'", pcall_err(meths.get_mark, '!', {}))
+      eq("Invalid mark name (must be a single char): 'fail'", pcall_err(meths.get_mark, 'fail', {}))
     end)
     it('returns the expected when mark is not set', function()
       eq(true, meths.del_mark('A'))
@@ -3118,7 +3118,7 @@ describe('API', function()
          pcall_err(meths.eval_statusline, '', { fillchar = '' }))
     end)
     it('rejects non-string fillchar', function()
-      eq("Invalid 'fillchar' type: expected String, got Integer",
+      eq("Invalid fillchar: expected String, got Integer",
          pcall_err(meths.eval_statusline, '', { fillchar = 1 }))
     end)
     it('rejects invalid string', function()
