@@ -284,14 +284,13 @@ fmark_T *get_jumplist(win_T *win, int count)
 /// @return  mark, NULL if out of bounds.
 fmark_T *get_changelist(buf_T *buf, win_T *win, int count)
 {
-  int n;
   fmark_T *fm;
 
   if (buf->b_changelistlen == 0) {       // nothing to jump to
     return NULL;
   }
 
-  n = win->w_changelistidx;
+  int n = win->w_changelistidx;
   if (n + count < 0) {
     if (n == 0) {
       return NULL;
@@ -357,8 +356,6 @@ fmark_T *mark_get(buf_T *buf, win_T *win, fmark_T *fmp, MarkGet flag, int name)
 /// @return  Mark
 xfmark_T *mark_get_global(bool resolve, int name)
 {
-  xfmark_T *mark;
-
   if (ascii_isdigit(name)) {
     name = name - '0' + NMARKS;
   } else if (ASCII_ISUPPER(name)) {
@@ -367,7 +364,7 @@ xfmark_T *mark_get_global(bool resolve, int name)
     // Not a valid mark name
     assert(false);
   }
-  mark = &namedfm[name];
+  xfmark_T *mark = &namedfm[name];
 
   if (resolve && mark->fmark.fnum == 0) {
     // Resolve filename to fnum (SHADA marks)
