@@ -320,23 +320,6 @@ end:
   return rv;
 }
 
-static bool check_string_array(Array arr, bool disallow_nl, Error *err)
-{
-  for (size_t i = 0; i < arr.size; i++) {
-    VALIDATE_T("replacement string", kObjectTypeString, arr.items[i].type, {
-      return false;
-    });
-    // Disallow newlines in the middle of the line.
-    if (disallow_nl) {
-      const String l = arr.items[i].data.string;
-      VALIDATE(!memchr(l.data, NL, l.size), "%s", "replacement string contains newlines", {
-        return false;
-      });
-    }
-  }
-  return true;
-}
-
 /// Sets (replaces) a line-range in the buffer.
 ///
 /// Indexing is zero-based, end-exclusive. Negative indices are interpreted
@@ -381,7 +364,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   });
 
   bool disallow_nl = (channel_id != VIML_INTERNAL_CALL);
-  if (!check_string_array(replacement, disallow_nl, err)) {
+  if (!check_string_array(replacement, "replacement string", disallow_nl, err)) {
     return;
   }
 
@@ -578,7 +561,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   });
 
   bool disallow_nl = (channel_id != VIML_INTERNAL_CALL);
-  if (!check_string_array(replacement, disallow_nl, err)) {
+  if (!check_string_array(replacement, "replacement string", disallow_nl, err)) {
     goto early_end;
   }
 

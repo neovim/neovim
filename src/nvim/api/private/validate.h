@@ -24,19 +24,11 @@
     } \
   } while (0)
 
-#define VALIDATE_R(cond, name, code) \
-  do { \
-    if (!(cond)) { \
-      api_set_error(err, kErrorTypeValidation, "'" name "' is required"); \
-      code; \
-    } \
-  } while (0)
-
 #define VALIDATE_EXP(cond, name, expected, actual, code) \
   do { \
     if (!(cond)) { \
-      api_set_error(err, kErrorTypeValidation, "Invalid " name ": expected %s, got %s", \
-                    expected, actual); \
+      api_set_error(err, kErrorTypeValidation, "Invalid %s: expected %s, got %s", \
+                    name, expected, actual); \
       code; \
     } \
   } while (0)
@@ -57,5 +49,12 @@
       code; \
     } \
   } while (0)
+
+#define VALIDATE_R(cond, name, code) \
+  VALIDATE(cond, "Required: '%s'", name, code);
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "api/private/validate.h.generated.h"
+#endif
 
 #endif  // NVIM_API_PRIVATE_VALIDATE_H

@@ -328,17 +328,17 @@ describe("API: set highlight", function()
     eq('Test_hl3       xxx ctermbg=9',
       exec_capture('highlight Test_hl3'))
 
-    eq("'redd' is not a valid color",
+    eq("Invalid highlight color: 'redd'",
       pcall_err(meths.set_hl, 0, 'Test_hl3', {fg='redd'}))
 
-    eq("'bleu' is not a valid color",
+    eq("Invalid highlight color: 'bleu'",
       pcall_err(meths.set_hl, 0, 'Test_hl3', {ctermfg='bleu'}))
 
     meths.set_hl(0, 'Test_hl3', {fg='#FF00FF'})
     eq('Test_hl3       xxx guifg=#ff00ff',
       exec_capture('highlight Test_hl3'))
 
-    eq("'#FF00FF' is not a valid color",
+    eq("Invalid highlight color: '#FF00FF'",
       pcall_err(meths.set_hl, 0, 'Test_hl3', {ctermfg='#FF00FF'}))
 
     for _, fg_val in ipairs{ nil, 'NONE', 'nOnE', '', -1 } do
