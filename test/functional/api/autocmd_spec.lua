@@ -21,7 +21,7 @@ describe('autocmd api', function()
         callback = "NotAllowed",
       })
 
-      eq("specify either 'callback' or 'command', not both", rv)
+      eq("Cannot use both 'callback' and 'command'", rv)
     end)
 
     it('doesnt leak when you use ++once', function()
@@ -66,7 +66,7 @@ describe('autocmd api', function()
         pattern = "*.py",
       })
 
-      eq("cannot pass both: 'pattern' and 'buffer' for the same autocmd", rv)
+      eq("Cannot use both 'pattern' and 'buffer' for the same autocmd", rv)
     end)
 
     it('does not allow passing invalid buffers', function()
@@ -407,8 +407,8 @@ describe('autocmd api', function()
           pattern = "<buffer=2>",
         }}, aus)
 
-        eq("Invalid value for 'buffer': must be an integer or array of integers", pcall_err(meths.get_autocmds, { event = "InsertEnter", buffer = "foo" }))
-        eq("Invalid value for 'buffer': must be an integer", pcall_err(meths.get_autocmds, { event = "InsertEnter", buffer = { "foo", 42 } }))
+        eq("Invalid buffer: expected Integer or Array, got String", pcall_err(meths.get_autocmds, { event = "InsertEnter", buffer = "foo" }))
+        eq("Invalid buffer: expected Integer, got String", pcall_err(meths.get_autocmds, { event = "InsertEnter", buffer = { "foo", 42 } }))
         eq("Invalid buffer id: 42", pcall_err(meths.get_autocmds, { event = "InsertEnter", buffer = { 42 } }))
 
         local bufs = {}
@@ -416,7 +416,7 @@ describe('autocmd api', function()
           table.insert(bufs, meths.create_buf(true, false))
         end
 
-        eq("Too many buffers. Please limit yourself to 256 or fewer", pcall_err(meths.get_autocmds, { event = "InsertEnter", buffer = bufs }))
+        eq("Too many buffers (maximum of 256)", pcall_err(meths.get_autocmds, { event = "InsertEnter", buffer = bufs }))
       end)
 
       it('should return autocmds when group is specified by id', function()
@@ -578,7 +578,7 @@ describe('autocmd api', function()
         ]], {}))
 
         eq(false, success)
-        matches('invalid augroup: NotDefined', code)
+        matches("Invalid group: 'NotDefined'", code)
       end)
 
       it('raises error for undefined augroup id', function()
@@ -596,7 +596,7 @@ describe('autocmd api', function()
         ]], {}))
 
         eq(false, success)
-        matches('invalid augroup: 1', code)
+        matches('Invalid group: 1', code)
       end)
 
       it('raises error for invalid group type', function()
@@ -611,7 +611,7 @@ describe('autocmd api', function()
         ]], {}))
 
         eq(false, success)
-        matches("'group' must be a string or an integer", code)
+        matches("Invalid group: expected String or Integer, got Boolean", code)
       end)
 
       it('raises error for invalid pattern array', function()
@@ -625,7 +625,7 @@ describe('autocmd api', function()
         ]], {}))
 
         eq(false, success)
-        matches("All entries in 'pattern' must be strings", code)
+        matches("Invalid 'pattern' item type: expected String, got Array", code)
       end)
     end)
 

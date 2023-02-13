@@ -24,10 +24,27 @@
     } \
   } while (0)
 
+#define VALIDATE_R(cond, name, code) \
+  do { \
+    if (!(cond)) { \
+      api_set_error(err, kErrorTypeValidation, "'" name "' is required"); \
+      code; \
+    } \
+  } while (0)
+
+#define VALIDATE_EXP(cond, name, expected, actual, code) \
+  do { \
+    if (!(cond)) { \
+      api_set_error(err, kErrorTypeValidation, "Invalid " name ": expected %s, got %s", \
+                    expected, actual); \
+      code; \
+    } \
+  } while (0)
+
 #define VALIDATE_T(name, expected_t, actual_t, code) \
   do { \
     if (expected_t != actual_t) { \
-      api_set_error(err, kErrorTypeValidation, "Invalid '" name "' type: expected %s, got %s", \
+      api_set_error(err, kErrorTypeValidation, "Invalid " name ": expected %s, got %s", \
                     api_typename(expected_t), api_typename(actual_t)); \
       code; \
     } \
