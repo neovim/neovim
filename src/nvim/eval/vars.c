@@ -370,12 +370,11 @@ int ex_let_vars(char *arg_start, typval_T *tv, int copy, int semicolon, int var_
 const char *skip_var_list(const char *arg, int *var_count, int *semicolon)
 {
   if (*arg == '[') {
-    const char *s;
     // "[var, var]": find the matching ']'.
     const char *p = arg;
     for (;;) {
       p = skipwhite(p + 1);             // skip whites after '[', ';' or ','
-      s = skip_var_one((char *)p);
+      const char *s = skip_var_one((char *)p);
       if (s == p) {
         semsg(_(e_invarg2), p);
         return NULL;
