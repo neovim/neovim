@@ -2643,8 +2643,7 @@ void list_in_columns(char **items, int size, int current)
   int width = 0;
 
   // Find the length of the longest item, use that + 1 as the column width.
-  int i;
-  for (i = 0; size < 0 ? items[i] != NULL : i < size; i++) {
+  for (int i = 0; size < 0 ? items[i] != NULL : i < size; i++) {
     int l = vim_strsize(items[i]) + (i == current ? 2 : 0);
 
     if (l > width) {
@@ -2656,7 +2655,7 @@ void list_in_columns(char **items, int size, int current)
 
   if (Columns < width) {
     // Not enough screen columns - show one per line
-    for (i = 0; i < item_count; i++) {
+    for (int i = 0; i < item_count; i++) {
       version_msg_wrap(items[i], i == current);
       if (msg_col > 0 && i < item_count - 1) {
         msg_putchar('\n');
@@ -2672,7 +2671,7 @@ void list_in_columns(char **items, int size, int current)
   int cur_row = 1;
 
   // "i" counts columns then rows.  "idx" counts rows then columns.
-  for (i = 0; !got_int && i < nrow * ncol; i++) {
+  for (int i = 0; !got_int && i < nrow * ncol; i++) {
     int idx = (i / ncol) + (i % ncol) * nrow;
     if (idx < item_count) {
       int last_col = (i + 1) % ncol == 0;
@@ -2879,9 +2878,7 @@ void intro_message(int colon)
 
 static void do_intro_line(long row, char *mesg, int attr)
 {
-  char *p;
   int l;
-  int clen;
 
   // Center the message horizontally.
   long col = vim_strsize(mesg);
@@ -2893,8 +2890,8 @@ static void do_intro_line(long row, char *mesg, int attr)
   }
 
   // Split up in parts to highlight <> items differently.
-  for (p = mesg; *p != NUL; p += l) {
-    clen = 0;
+  for (char *p = mesg; *p != NUL; p += l) {
+    int clen = 0;
 
     for (l = 0;
          p[l] != NUL && (l == 0 || (p[l] != '<' && p[l - 1] != '>'));
