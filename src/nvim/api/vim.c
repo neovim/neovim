@@ -195,7 +195,7 @@ void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
 void nvim_set_hl_ns(Integer ns_id, Error *err)
   FUNC_API_SINCE(10)
 {
-  VALIDATE_INT((ns_id < 0), "namespace", ns_id, {
+  VALIDATE_INT((ns_id >= 0), "namespace", ns_id, {
     return;
   });
 
@@ -501,7 +501,7 @@ Object nvim_notify(String msg, Integer log_level, Dictionary opts, Error *err)
 Integer nvim_strwidth(String text, Error *err)
   FUNC_API_SINCE(1)
 {
-  VALIDATE((text.size > INT_MAX), "text length (too long)", {
+  VALIDATE((text.size <= INT_MAX), "text length (too long)", {
     return 0;
   });
 
@@ -575,7 +575,7 @@ ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, E
 {
   bool is_lua = api_object_to_bool(opts->is_lua, "is_lua", false, err);
   bool source = api_object_to_bool(opts->do_source, "do_source", false, err);
-  VALIDATE((source && !nlua_is_deferred_safe()), "'do_source' used in fast callback", {});
+  VALIDATE((!source || nlua_is_deferred_safe()), "'do_source' used in fast callback", {});
 
   if (ERROR_SET(err)) {
     return (Array)ARRAY_DICT_INIT;
@@ -600,7 +600,7 @@ ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, E
 void nvim_set_current_dir(String dir, Error *err)
   FUNC_API_SINCE(1)
 {
-  VALIDATE((dir.size >= MAXPATHL), "directory name (too long)", {
+  VALIDATE((dir.size < MAXPATHL), "directory name (too long)", {
     return;
   });
 
@@ -661,12 +661,12 @@ Object nvim_get_var(String name, Error *err)
 {
   dictitem_T *di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
   if (di == NULL) {  // try to autoload script
-    VALIDATE_S((!script_autoload(name.data, name.size, false) || aborting()), "key", name.data, {
+    VALIDATE_S((script_autoload(name.data, name.size, false) && !aborting()), "key", name.data, {
       return (Object)OBJECT_INIT;
     });
     di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
   }
-  VALIDATE_S((di == NULL), "key (not found)", name.data, {
+  VALIDATE_S((di != NULL), "key (not found)", name.data, {
     return (Object)OBJECT_INIT;
   });
   return vim_to_object(&di->di_tv);
@@ -993,7 +993,7 @@ Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
       v->data.luaref = LUA_NOREF;
       break;
     } else {
-      VALIDATE_S(true, "key", k.data, {});
+      VALIDATE_S(false, "key", k.data, {});
     }
   }
 
@@ -1068,7 +1068,7 @@ void nvim_chan_send(Integer chan, String data, Error *err)
 
   channel_send((uint64_t)chan, data.data, data.size,
                false, &error);
-  VALIDATE(error, error, {});
+  VALIDATE(!error, error, {});
 }
 
 /// Gets the current list of tabpage handles.
@@ -1155,7 +1155,7 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
   static bool draining = false;
   bool cancel = false;
 
-  VALIDATE_INT((phase < -1 || phase > 3), "phase", phase, {
+  VALIDATE_INT((phase >= -1 && phase <= 3), "phase", phase, {
     return false;
   });
   Array args = ARRAY_DICT_INIT;
@@ -1224,7 +1224,7 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow,
   FUNC_API_CHECK_TEXTLOCK
 {
   yankreg_T *reg = xcalloc(1, sizeof(yankreg_T));
-  VALIDATE_S((!prepare_yankreg_from_object(reg, type, lines.size)), "type", type.data, {
+  VALIDATE_S((prepare_yankreg_from_object(reg, type, lines.size)), "type", type.data, {
     goto cleanup;
   });
   if (lines.size == 0) {
@@ -1361,7 +1361,7 @@ Dictionary nvim_get_context(Dict(context) *opts, Error *err)
         } else if (strequal(s, "funcs")) {
           int_types |= kCtxFuncs;
         } else {
-          VALIDATE_S(true, "type", s, {
+          VALIDATE_S(false, "type", s, {
             return (Dictionary)ARRAY_DICT_INIT;
           });
         }
@@ -1644,7 +1644,7 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Arena *arena, Error *er
       goto theend;
     });
     Array call = calls.items[i].data.array;
-    VALIDATE((call.size != 2), "Items in calls array must be arrays of size 2", {
+    VALIDATE((call.size == 2), "Items in calls array must be arrays of size 2", {
       goto theend;
     });
     VALIDATE_T("name", kObjectTypeString, call.items[0].type, {
@@ -1912,7 +1912,7 @@ void nvim_select_popupmenu_item(Integer item, Boolean insert, Boolean finish, Di
                                 Error *err)
   FUNC_API_SINCE(6)
 {
-  VALIDATE((opts.size > 0), "opts dict isn't empty", {
+  VALIDATE((opts.size == 0), "opts dict isn't empty", {
     return;
   });
 
@@ -1935,13 +1935,10 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Arena *arena, E
     g = &pum_grid;
   } else if (grid > 1) {
     win_T *wp = get_win_by_grid_handle((handle_T)grid);
-    if (wp != NULL && wp->w_grid_alloc.chars != NULL) {
-      g = &wp->w_grid_alloc;
-    } else {
-      VALIDATE_INT(true, "grid handle", grid, {
-        return ret;
-      });
-    }
+    VALIDATE_INT((wp != NULL && wp->w_grid_alloc.chars != NULL), "grid handle", grid, {
+      return ret;
+    });
+    g = &wp->w_grid_alloc;
   }
 
   if (row < 0 || row >= g->rows
@@ -1983,18 +1980,16 @@ Boolean nvim_del_mark(String name, Error *err)
   FUNC_API_SINCE(8)
 {
   bool res = false;
-  VALIDATE_S((name.size != 1), "mark name (must be a single char)", name.data, {
+  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
     return res;
   });
   // Only allow file/uppercase marks
   // TODO(muniter): Refactor this ASCII_ISUPPER macro to a proper function
-  if (ASCII_ISUPPER(*name.data) || ascii_isdigit(*name.data)) {
-    res = set_mark(NULL, name, 0, 0, err);
-  } else {
-    VALIDATE_S(true, "mark name (must be file/uppercase)", name.data, {
-      return res;
-    });
-  }
+  VALIDATE_S((ASCII_ISUPPER(*name.data) || ascii_isdigit(*name.data)),
+             "mark name (must be file/uppercase)", name.data, {
+    return res;
+  });
+  res = set_mark(NULL, name, 0, 0, err);
   return res;
 }
 
@@ -2015,10 +2010,10 @@ Array nvim_get_mark(String name, Dictionary opts, Error *err)
 {
   Array rv = ARRAY_DICT_INIT;
 
-  VALIDATE_S((name.size != 1), "mark name (must be a single char)", name.data, {
+  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
     return rv;
   });
-  VALIDATE_S((!(ASCII_ISUPPER(*name.data) || ascii_isdigit(*name.data))),
+  VALIDATE_S((ASCII_ISUPPER(*name.data) || ascii_isdigit(*name.data)),
              "mark name (must be file/uppercase)", name.data, {
     return rv;
   });
@@ -2106,7 +2101,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 
   if (str.size < 2 || memcmp(str.data, "%!", 2) != 0) {
     const char *const errmsg = check_stl_option(str.data);
-    VALIDATE((errmsg), errmsg, {
+    VALIDATE(!errmsg, errmsg, {
       return result;
     });
   }
@@ -2122,9 +2117,9 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
     VALIDATE_T("fillchar", kObjectTypeString, opts->fillchar.type, {
       return result;
     });
-    VALIDATE((opts->fillchar.data.string.size == 0
-              || ((size_t)utf_ptr2len(opts->fillchar.data.string.data)
-                  != opts->fillchar.data.string.size)),
+    VALIDATE((opts->fillchar.data.string.size != 0
+              && ((size_t)utf_ptr2len(opts->fillchar.data.string.data)
+                  == opts->fillchar.data.string.size)),
              "Invalid fillchar (not a single character)", {
       return result;
     });

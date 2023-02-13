@@ -6,7 +6,7 @@
 
 #define VALIDATE_INT(cond, name, n_, code) \
   do { \
-    if (cond) { \
+    if (!(cond)) { \
       api_set_error(err, kErrorTypeValidation, "Invalid " name ": %" PRId64, n_); \
       code; \
     } \
@@ -14,7 +14,7 @@
 
 #define VALIDATE_S(cond, name, str_, code) \
   do { \
-    if (cond) { \
+    if (!(cond)) { \
       if (strequal(str_, "")) { \
         api_set_error(err, kErrorTypeValidation, "Invalid " name); \
       } else { \
@@ -35,7 +35,7 @@
 
 #define VALIDATE(cond, msg_, code) \
   do { \
-    if (cond) { \
+    if (!(cond)) { \
       api_set_error(err, kErrorTypeValidation, "%s", msg_); \
       code; \
     } \
