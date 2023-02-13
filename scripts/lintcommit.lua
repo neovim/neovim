@@ -128,10 +128,10 @@ local function validate_commit(commit_message)
     return [[There should only be one whitespace after the colon.]]
   end
 
-  -- Check that first character after space isn't uppercase.
-  if string.match(after_colon:sub(2,2), '%u') then
-    return [[First character should not be uppercase.]]
-   end
+  -- Allow lowercase or ALL_UPPER but not Titlecase.
+  if after_colon:match(' *%u%l') then
+    return [[Description should not be Capitalized.]]
+  end
 
   -- Check that description isn't just whitespaces
   if vim.trim(after_colon) == "" then
@@ -231,7 +231,8 @@ function M._test()
     ['refactor(): empty scope'] = false,
     ['ci( ): whitespace as scope'] = false,
     ['ci: period at end of sentence.'] = false,
-    ['ci: Starting sentence capitalized'] = false,
+    ['ci: Capitalized first word'] = false,
+    ['ci: UPPER_CASE first word'] = true,
     ['unknown: using unknown type'] = false,
     ['ci: you\'re saying this commit message just goes on and on and on and on and on and on for way too long?'] = false,
   }
