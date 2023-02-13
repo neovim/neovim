@@ -410,7 +410,8 @@ void set_string_option_direct_in_win(win_T *wp, const char *name, int opt_idx, c
 ///                        #OPT_GLOBAL.
 ///
 /// @return NULL on success, an untranslated error message on error.
-char *set_string_option(const int opt_idx, const char *const value, const int opt_flags)
+char *set_string_option(const int opt_idx, const char *const value, const int opt_flags,
+                        char *const errbuf, const size_t errbuflen)
   FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   vimoption_T *opt = get_option(opt_idx);
@@ -442,7 +443,7 @@ char *set_string_option(const int opt_idx, const char *const value, const int op
 
   int value_checked = false;
   char *const errmsg = did_set_string_option(opt_idx, varp, oldval,
-                                             NULL, 0,
+                                             errbuf, errbuflen,
                                              opt_flags, &value_checked);
   if (errmsg == NULL) {
     did_set_option(opt_idx, opt_flags, true, value_checked);
