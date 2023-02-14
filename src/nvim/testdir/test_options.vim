@@ -434,6 +434,8 @@ func Test_set_errors()
   call assert_fails('set fileencoding=latin1', 'E21:')
   set modifiable&
   " call assert_fails('set t_#-&', 'E522:')
+  call assert_fails('let &formatoptions = "?"', 'E539:')
+  call assert_fails('call setbufvar("", "&formatoptions", "?")', 'E539:')
 endfunc
 
 func CheckWasSet(name)
@@ -1300,5 +1302,44 @@ func Test_endoffile_default()
   call delete('Xtestout')
 endfunc
 
+" Test for setting the 'lines' and 'columns' options to a minimum value
+func Test_set_min_lines_columns()
+  let save_lines = &lines
+  let save_columns = &columns
+
+  let after =<< trim END
+    set laststatus=1
+    set nomore
+    let msg = []
+    let v:errmsg = ''
+    silent! let &columns=0
+    call add(msg, v:errmsg)
+    silent! set columns=0
+    call add(msg, v:errmsg)
+    silent! call setbufvar('', '&columns', 0)
+    call add(msg, v:errmsg)
+    "call writefile(msg, 'XResultsetminlines')
+    silent! let &lines=0
+    call add(msg, v:errmsg)
+    silent! set lines=0
+    call add(msg, v:errmsg)
+    silent! call setbufvar('', '&lines', 0)
+    call add(msg, v:errmsg)
+    call writefile(msg, 'XResultsetminlines')
+    qall!
+  END
+  if RunVim([], after, '')
+    call assert_equal(['E594: Need at least 12 columns',
+          \ 'E594: Need at least 12 columns: columns=0',
+          \ 'E594: Need at least 12 columns',
+          \ 'E593: Need at least 2 lines',
+          \ 'E593: Need at least 2 lines: lines=0',
+          \ 'E593: Need at least 2 lines',], readfile('XResultsetminlines'))
+  endif
+
+  call delete('XResultsetminlines')
+  let &lines = save_lines
+  let &columns = save_columns
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

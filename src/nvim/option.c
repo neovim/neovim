@@ -3084,6 +3084,8 @@ char *set_option_value(const char *const name, const long number, const char *co
                        const int opt_flags)
   FUNC_ATTR_NONNULL_ARG(1)
 {
+  static char errbuf[80];
+
   if (is_tty_option(name)) {
     return NULL;  // Fail silently; many old vimrcs set t_xx options.
   }
@@ -3106,7 +3108,7 @@ char *set_option_value(const char *const name, const long number, const char *co
     if (s == NULL || opt_flags & OPT_CLEAR) {
       s = "";
     }
-    return set_string_option(opt_idx, s, opt_flags);
+    return set_string_option(opt_idx, s, opt_flags, errbuf, sizeof(errbuf));
   }
 
   char_u *varp = (char_u *)get_varp_scope(&(options[opt_idx]), opt_flags);
@@ -3144,7 +3146,7 @@ char *set_option_value(const char *const name, const long number, const char *co
     }
   }
   if (flags & P_NUM) {
-    return set_num_option(opt_idx, varp, numval, NULL, 0, opt_flags);
+    return set_num_option(opt_idx, varp, numval, errbuf, sizeof(errbuf), opt_flags);
   }
   return set_bool_option(opt_idx, (char *)varp, (int)numval, opt_flags);
 }
