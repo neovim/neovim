@@ -23,8 +23,9 @@ foreach(DLL_NAME ${DLLS})
     message(FATAL_ERROR "Unable to find dependency ${DLL_NAME}")
   endif()
 
-  message("Copying ${DLL_NAME} to ${DST}")
+  if($ENV{CI} MATCHES "true")
+    message("Copying ${DLL_NAME} to ${DST}")
+  endif()
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${DLL_PATH} ${DST})
   unset(DLL_PATH CACHE)
 endforeach()
-
