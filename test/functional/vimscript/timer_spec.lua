@@ -251,15 +251,7 @@ describe('timers', function()
       :good^                                   |
     ]])
     command('let g:val = 1')
-
-    screen:expect{grid=[[
-                                              |
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
-      :good^                                   |
-    ]], intermediate=true, timeout=load_adjust(200)}
+    screen:expect_unchanged(true, load_adjust(200))
 
     eq(2, eval('g:val'))
   end)

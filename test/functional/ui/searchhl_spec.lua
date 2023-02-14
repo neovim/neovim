@@ -317,6 +317,7 @@ describe('search highlighting', function()
     ]])
     feed('/foo')
     helpers.poke_eventloop()
+    screen:sleep(0)
     screen:expect_unchanged()
   end)
 

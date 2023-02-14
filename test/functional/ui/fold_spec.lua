@@ -10,7 +10,6 @@ local meths = helpers.meths
 local exec = helpers.exec
 local exec_lua = helpers.exec_lua
 local assert_alive = helpers.assert_alive
-local poke_eventloop = helpers.poke_eventloop
 
 
 local content1 = [[
@@ -30,8 +29,6 @@ describe("folded lines", function()
   local function with_ext_multigrid(multigrid)
     local screen
     before_each(function()
-      clear()
-      command('hi VertSplit gui=reverse')
       screen = Screen.new(45, 8)
       screen:attach({rgb=true, ext_multigrid=multigrid})
       screen:set_default_attr_ids({
@@ -166,12 +163,10 @@ describe("folded lines", function()
       end
       -- CursorLine is applied correctly with screenrow motions #22232
       feed("jgk")
-      poke_eventloop()
-      screen:expect_unchanged()
+      screen:expect_unchanged(true)
       -- CursorLine is applied correctly when closing a fold when cursor is not at fold start
       feed("zo4Gzc")
-      poke_eventloop()
-      screen:expect_unchanged()
+      screen:expect_unchanged(true)
       command("set cursorlineopt=line")
       if multigrid then
         screen:expect([[
