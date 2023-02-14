@@ -77,13 +77,8 @@ describe('vim.ui_attach', function()
     }
 
     feed '<c-y>'
-    screen:expect{grid=[[
-      foobar^                                  |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {2:-- INSERT --}                            |
-    ]], intermediate=true}
+    -- There is an intermediate state where the 'showmode' message disappears.
+    screen:expect_unchanged(true)
     expect_events {
        { "popupmenu_hide" };
     }

@@ -470,15 +470,19 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
   end, expected)
 end
 
-function Screen:expect_unchanged(waittime_ms, ignore_attrs, request_cb)
+function Screen:expect_unchanged(intermediate, waittime_ms, ignore_attrs)
   waittime_ms = waittime_ms and waittime_ms or 100
   -- Collect the current screen state.
-  self:sleep(0, request_cb)
   local kwargs = self:get_snapshot(nil, ignore_attrs)
 
-  -- Check that screen state does not change.
-  kwargs.unchanged = true
+  if intermediate then
+    kwargs.intermediate = true
+  else
+    kwargs.unchanged = true
+  end
+
   kwargs.timeout = waittime_ms
+  -- Check that screen state does not change.
   self:expect(kwargs)
 end
 
