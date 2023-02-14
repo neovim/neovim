@@ -240,7 +240,7 @@ describe("API: set highlight", function()
   it('validation', function()
     eq("Invalid 'blend': out of range",
       pcall_err(meths.set_hl, 0, 'Test_hl3', {fg='#FF00FF', blend=999}))
-    eq("Invalid blend: expected Integer, got Array",
+    eq("Invalid 'blend': expected Integer, got Array",
       pcall_err(meths.set_hl, 0, 'Test_hl3', {fg='#FF00FF', blend={}}))
   end)
 

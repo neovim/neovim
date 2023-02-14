@@ -1089,7 +1089,7 @@ int object_to_color(Object val, char *key, bool rgb, Error *err)
     });
     return color;
   } else {
-    VALIDATE(false, "Invalid %s: expected String or Integer", key, {
+    VALIDATE_EXP(false, key, "String or Integer", NULL, {
       return 0;
     });
   }

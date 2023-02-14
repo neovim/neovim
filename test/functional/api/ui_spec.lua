@@ -23,23 +23,23 @@ describe('nvim_ui_attach()', function()
     eq('No such UI option: foo',
       pcall_err(meths.ui_attach, 80, 24, { foo={'foo'} }))
 
-    eq('Invalid ext_linegrid: expected Boolean, got Array',
+    eq("Invalid 'ext_linegrid': expected Boolean, got Array",
       pcall_err(meths.ui_attach, 80, 24, { ext_linegrid={} }))
-    eq('Invalid override: expected Boolean, got Array',
+    eq("Invalid 'override': expected Boolean, got Array",
       pcall_err(meths.ui_attach, 80, 24, { override={} }))
-    eq('Invalid rgb: expected Boolean, got Array',
+    eq("Invalid 'rgb': expected Boolean, got Array",
       pcall_err(meths.ui_attach, 80, 24, { rgb={} }))
-    eq('Invalid term_name: expected String, got Boolean',
+    eq("Invalid 'term_name': expected String, got Boolean",
       pcall_err(meths.ui_attach, 80, 24, { term_name=true }))
-    eq('Invalid term_colors: expected Integer, got Boolean',
+    eq("Invalid 'term_colors': expected Integer, got Boolean",
       pcall_err(meths.ui_attach, 80, 24, { term_colors=true }))
-    eq('Invalid term_background: expected String, got Boolean',
+    eq("Invalid 'term_background': expected String, got Boolean",
       pcall_err(meths.ui_attach, 80, 24, { term_background=true }))
-    eq('Invalid stdin_fd: expected Integer, got String',
+    eq("Invalid 'stdin_fd': expected Integer, got String",
       pcall_err(meths.ui_attach, 80, 24, { stdin_fd='foo' }))
-    eq('Invalid stdin_tty: expected Boolean, got String',
+    eq("Invalid 'stdin_tty': expected Boolean, got String",
       pcall_err(meths.ui_attach, 80, 24, { stdin_tty='foo' }))
-    eq('Invalid stdout_tty: expected Boolean, got String',
+    eq("Invalid 'stdout_tty': expected Boolean, got String",
       pcall_err(meths.ui_attach, 80, 24, { stdout_tty='foo' }))
 
     eq('UI not attached to channel: 1',

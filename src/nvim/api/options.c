@@ -36,7 +36,7 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
     } else if (!strcmp(opts->scope.data.string.data, "global")) {
       *scope = OPT_GLOBAL;
     } else {
-      VALIDATE(false, "%s", "Invalid scope: expected 'local' or 'global'", {
+      VALIDATE_EXP(false, "scope", "'local' or 'global'", NULL, {
         return FAIL;
       });
     }
@@ -197,7 +197,7 @@ void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error 
     scope |= OPT_CLEAR;
     break;
   default:
-    VALIDATE_EXP(false, "option type", "Integer, Boolean, or String", api_typename(value.type), {
+    VALIDATE_EXP(false, name.data, "Integer/Boolean/String", api_typename(value.type), {
       return;
     });
   }

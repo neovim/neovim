@@ -30,11 +30,11 @@ describe('autocmd api', function()
       }))
       eq("Required: 'command' or 'callback'", pcall_err(meths.create_autocmd, 'FileType', {
       }))
-      eq('Invalid desc: expected String, got Integer', pcall_err(meths.create_autocmd, 'FileType', {
+      eq("Invalid 'desc': expected String, got Integer", pcall_err(meths.create_autocmd, 'FileType', {
         command = 'ls',
         desc = 42,
       }))
-      eq('Invalid callback: expected Lua function or Vim function name, got Integer', pcall_err(meths.create_autocmd, 'FileType', {
+      eq("Invalid 'callback': expected Lua function or Vim function name, got Integer", pcall_err(meths.create_autocmd, 'FileType', {
         callback = 0,
       }))
       eq("Invalid 'event' item: expected String, got Array", pcall_err(meths.create_autocmd,
@@ -301,6 +301,27 @@ describe('autocmd api', function()
   end)
 
   describe('nvim_get_autocmds', function()
+    it('validation', function()
+      eq("Invalid 'group': 9997999", pcall_err(meths.get_autocmds, {
+        group = 9997999,
+      }))
+      eq("Invalid 'group': 'bogus'", pcall_err(meths.get_autocmds, {
+        group = 'bogus',
+      }))
+      eq("Invalid 'group': expected String or Integer, got Array", pcall_err(meths.get_autocmds, {
+        group = {},
+      }))
+      eq("Invalid 'buffer': expected Integer or Array, got Boolean", pcall_err(meths.get_autocmds, {
+        buffer = true,
+      }))
+      eq("Invalid 'event': expected String or Array", pcall_err(meths.get_autocmds, {
+        event = true,
+      }))
+      eq("Invalid 'pattern': expected String or Array, got Boolean", pcall_err(meths.get_autocmds, {
+        pattern = true,
+      }))
+    end)
+
     describe('events', function()
       it('returns one autocmd when there is only one for an event', function()
         command [[au! InsertEnter]]
@@ -414,8 +435,8 @@ describe('autocmd api', function()
           pattern = "<buffer=2>",
         }}, aus)
 
-        eq("Invalid buffer: expected Integer or Array, got String", pcall_err(meths.get_autocmds, { event = "InsertEnter", buffer = "foo" }))
-        eq("Invalid buffer: expected Integer, got String", pcall_err(meths.get_autocmds, { event = "InsertEnter", buffer = { "foo", 42 } }))
+        eq("Invalid 'buffer': expected Integer or Array, got String", pcall_err(meths.get_autocmds, { event = "InsertEnter", buffer = "foo" }))
+        eq("Invalid 'buffer': expected Integer, got String", pcall_err(meths.get_autocmds, { event = "InsertEnter", buffer = { "foo", 42 } }))
         eq("Invalid buffer id: 42", pcall_err(meths.get_autocmds, { event = "InsertEnter", buffer = { 42 } }))
 
         local bufs = {}
@@ -585,7 +606,7 @@ describe('autocmd api', function()
         ]], {}))
 
         eq(false, success)
-        matches("Invalid group: 'NotDefined'", code)
+        matches("Invalid 'group': 'NotDefined'", code)
       end)
 
       it('raises error for undefined augroup id', function()
@@ -603,7 +624,7 @@ describe('autocmd api', function()
         ]], {}))
 
         eq(false, success)
-        matches('Invalid group: 1', code)
+        matches("Invalid 'group': 1", code)
       end)
 
       it('raises error for invalid group type', function()
@@ -618,7 +639,7 @@ describe('autocmd api', function()
         ]], {}))
 
         eq(false, success)
-        matches("Invalid group: expected String or Integer, got Boolean", code)
+        matches("Invalid 'group': expected String or Integer, got Boolean", code)
       end)
 
       it('raises error for invalid pattern array', function()
@@ -695,16 +716,16 @@ describe('autocmd api', function()
 
   describe('nvim_exec_autocmds', function()
     it('validation', function()
-      eq('Invalid group: 9997999', pcall_err(meths.exec_autocmds, 'FileType', {
+      eq("Invalid 'group': 9997999", pcall_err(meths.exec_autocmds, 'FileType', {
         group = 9997999,
       }))
-      eq("Invalid group: 'bogus'", pcall_err(meths.exec_autocmds, 'FileType', {
+      eq("Invalid 'group': 'bogus'", pcall_err(meths.exec_autocmds, 'FileType', {
         group = 'bogus',
       }))
-      eq('Invalid group: expected String or Integer, got Array', pcall_err(meths.exec_autocmds, 'FileType', {
+      eq("Invalid 'group': expected String or Integer, got Array", pcall_err(meths.exec_autocmds, 'FileType', {
         group = {},
       }))
-      eq('Invalid buffer: expected Integer, got Array', pcall_err(meths.exec_autocmds, 'FileType', {
+      eq("Invalid 'buffer': expected Integer, got Array", pcall_err(meths.exec_autocmds, 'FileType', {
         buffer = {},
       }))
       eq("Invalid 'event' item: expected String, got Array", pcall_err(meths.exec_autocmds,
