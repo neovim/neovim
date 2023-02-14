@@ -18,6 +18,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/api/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
@@ -193,10 +194,9 @@ void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
 void nvim_set_hl_ns(Integer ns_id, Error *err)
   FUNC_API_SINCE(10)
 {
-  if (ns_id < 0) {
-    api_set_error(err, kErrorTypeValidation, "no such namespace");
+  VALIDATE_INT((ns_id >= 0), "namespace", ns_id, {
     return;
-  }
+  });
 
   ns_hl_global = (NS)ns_id;
   hl_check_ns();
@@ -500,10 +500,9 @@ Object nvim_notify(String msg, Integer log_level, Dictionary opts, Error *err)
 Integer nvim_strwidth(String text, Error *err)
   FUNC_API_SINCE(1)
 {
-  if (text.size > INT_MAX) {
-    api_set_error(err, kErrorTypeValidation, "String is too long");
+  VALIDATE((text.size <= INT_MAX), "text length (too long)", {
     return 0;
-  }
+  });
 
   return (Integer)mb_string2cells(text.data);
 }
@@ -575,9 +574,7 @@ ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, E
 {
   bool is_lua = api_object_to_bool(opts->is_lua, "is_lua", false, err);
   bool source = api_object_to_bool(opts->do_source, "do_source", false, err);
-  if (source && !nlua_is_deferred_safe()) {
-    api_set_error(err, kErrorTypeValidation, "'do_source' cannot be used in fast callback");
-  }
+  VALIDATE((!source || nlua_is_deferred_safe()), "'do_source' used in fast callback", {});
 
   if (ERROR_SET(err)) {
     return (Array)ARRAY_DICT_INIT;
@@ -602,10 +599,9 @@ ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, E
 void nvim_set_current_dir(String dir, Error *err)
   FUNC_API_SINCE(1)
 {
-  if (dir.size >= MAXPATHL) {
-    api_set_error(err, kErrorTypeValidation, "Directory name is too long");
+  VALIDATE((dir.size < MAXPATHL), "directory name (too long)", {
     return;
-  }
+  });
 
   char string[MAXPATHL];
   memcpy(string, dir.data, dir.size);
@@ -664,16 +660,14 @@ Object nvim_get_var(String name, Error *err)
 {
   dictitem_T *di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
   if (di == NULL) {  // try to autoload script
-    if (!script_autoload(name.data, name.size, false) || aborting()) {
-      api_set_error(err, kErrorTypeValidation, "Key not found: %s", name.data);
+    VALIDATE_S((script_autoload(name.data, name.size, false) && !aborting()), "key", name.data, {
       return (Object)OBJECT_INIT;
-    }
+    });
     di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
   }
-  if (di == NULL) {
-    api_set_error(err, kErrorTypeValidation, "Key not found: %s", name.data);
+  VALIDATE_S((di != NULL), "key (not found)", name.data, {
     return (Object)OBJECT_INIT;
-  }
+  });
   return vim_to_object(&di->di_tv);
 }
 
@@ -991,16 +985,14 @@ Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
     if (strequal("on_input", k.data)) {
-      if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation,
-                      "%s is not a function", "on_input");
+      VALIDATE_T("on_input", kObjectTypeLuaRef, v->type, {
         return 0;
-      }
+      });
       cb = v->data.luaref;
       v->data.luaref = LUA_NOREF;
       break;
     } else {
-      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      VALIDATE_S(false, "key", k.data, {});
     }
   }
 
@@ -1075,9 +1067,7 @@ void nvim_chan_send(Integer chan, String data, Error *err)
 
   channel_send((uint64_t)chan, data.data, data.size,
                false, &error);
-  if (error) {
-    api_set_error(err, kErrorTypeValidation, "%s", error);
-  }
+  VALIDATE(!error, error, {});
 }
 
 /// Gets the current list of tabpage handles.
@@ -1164,10 +1154,9 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
   static bool draining = false;
   bool cancel = false;
 
-  if (phase < -1 || phase > 3) {
-    api_set_error(err, kErrorTypeValidation, "Invalid phase: %" PRId64, phase);
+  VALIDATE_INT((phase >= -1 && phase <= 3), "phase", phase, {
     return false;
-  }
+  });
   Array args = ARRAY_DICT_INIT;
   Object rv = OBJECT_INIT;
   if (phase == -1 || phase == 1) {  // Start of paste-stream.
@@ -1234,20 +1223,17 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow,
   FUNC_API_CHECK_TEXTLOCK
 {
   yankreg_T *reg = xcalloc(1, sizeof(yankreg_T));
-  if (!prepare_yankreg_from_object(reg, type, lines.size)) {
-    api_set_error(err, kErrorTypeValidation, "Invalid type: '%s'", type.data);
+  VALIDATE_S((prepare_yankreg_from_object(reg, type, lines.size)), "type", type.data, {
     goto cleanup;
-  }
+  });
   if (lines.size == 0) {
     goto cleanup;  // Nothing to do.
   }
 
   for (size_t i = 0; i < lines.size; i++) {
-    if (lines.items[i].type != kObjectTypeString) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Invalid lines (expected array of strings)");
+    VALIDATE_T("line", kObjectTypeString, lines.items[i].type, {
       goto cleanup;
-    }
+    });
     String line = lines.items[i].data.string;
     reg->y_array[i] = xmemdupz(line.data, line.size);
     memchrsub(reg->y_array[i], NUL, NL, line.size);
@@ -1351,8 +1337,9 @@ Dictionary nvim_get_context(Dict(context) *opts, Error *err)
   if (opts->types.type == kObjectTypeArray) {
     types = opts->types.data.array;
   } else if (opts->types.type != kObjectTypeNil) {
-    api_set_error(err, kErrorTypeValidation, "invalid value for key: types");
-    return (Dictionary)ARRAY_DICT_INIT;
+    VALIDATE_T("types", kObjectTypeArray, opts->types.type, {
+      return (Dictionary)ARRAY_DICT_INIT;
+    });
   }
 
   int int_types = types.size > 0 ? 0 : kCtxAll;
@@ -1373,8 +1360,9 @@ Dictionary nvim_get_context(Dict(context) *opts, Error *err)
         } else if (strequal(s, "funcs")) {
           int_types |= kCtxFuncs;
         } else {
-          api_set_error(err, kErrorTypeValidation, "unexpected type: %s", s);
-          return (Dictionary)ARRAY_DICT_INIT;
+          VALIDATE_S(false, "type", s, {
+            return (Dictionary)ARRAY_DICT_INIT;
+          });
         }
       }
     }
@@ -1651,34 +1639,20 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Arena *arena, Error *er
 
   size_t i;  // also used for freeing the variables
   for (i = 0; i < calls.size; i++) {
-    if (calls.items[i].type != kObjectTypeArray) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Items in calls array must be arrays");
+    VALIDATE_T("calls item", kObjectTypeArray, calls.items[i].type, {
       goto theend;
-    }
+    });
     Array call = calls.items[i].data.array;
-    if (call.size != 2) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Items in calls array must be arrays of size 2");
+    VALIDATE((call.size == 2), "Items in calls array must be arrays of size 2", {
       goto theend;
-    }
-
-    if (call.items[0].type != kObjectTypeString) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Name must be String");
+    });
+    VALIDATE_T("name", kObjectTypeString, call.items[0].type, {
       goto theend;
-    }
+    });
     String name = call.items[0].data.string;
-
-    if (call.items[1].type != kObjectTypeArray) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Args must be Array");
+    VALIDATE_T("args", kObjectTypeArray, call.items[1].type, {
       goto theend;
-    }
+    });
     Array args = call.items[1].data.array;
 
     MsgpackRpcRequestHandler handler =
@@ -1937,10 +1911,9 @@ void nvim_select_popupmenu_item(Integer item, Boolean insert, Boolean finish, Di
                                 Error *err)
   FUNC_API_SINCE(6)
 {
-  if (opts.size > 0) {
-    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
+  VALIDATE((opts.size == 0), "opts dict isn't empty", {
     return;
-  }
+  });
 
   if (finish) {
     insert = true;
@@ -1961,13 +1934,10 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Arena *arena, E
     g = &pum_grid;
   } else if (grid > 1) {
     win_T *wp = get_win_by_grid_handle((handle_T)grid);
-    if (wp != NULL && wp->w_grid_alloc.chars != NULL) {
-      g = &wp->w_grid_alloc;
-    } else {
-      api_set_error(err, kErrorTypeValidation,
-                    "No grid with the given handle");
+    VALIDATE_INT((wp != NULL && wp->w_grid_alloc.chars != NULL), "grid handle", grid, {
       return ret;
-    }
+    });
+    g = &wp->w_grid_alloc;
   }
 
   if (row < 0 || row >= g->rows
@@ -2009,20 +1979,16 @@ Boolean nvim_del_mark(String name, Error *err)
   FUNC_API_SINCE(8)
 {
   bool res = false;
-  if (name.size != 1) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Mark name must be a single character");
+  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
     return res;
-  }
+  });
   // Only allow file/uppercase marks
   // TODO(muniter): Refactor this ASCII_ISUPPER macro to a proper function
-  if (ASCII_ISUPPER(*name.data) || ascii_isdigit(*name.data)) {
-    res = set_mark(NULL, name, 0, 0, err);
-  } else {
-    api_set_error(err, kErrorTypeValidation,
-                  "Only file/uppercase marks allowed, invalid mark name: '%c'",
-                  *name.data);
-  }
+  VALIDATE_S((ASCII_ISUPPER(*name.data) || ascii_isdigit(*name.data)),
+             "mark name (must be file/uppercase)", name.data, {
+    return res;
+  });
+  res = set_mark(NULL, name, 0, 0, err);
   return res;
 }
 
@@ -2043,16 +2009,13 @@ Array nvim_get_mark(String name, Dictionary opts, Error *err)
 {
   Array rv = ARRAY_DICT_INIT;
 
-  if (name.size != 1) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Mark name must be a single character");
+  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
     return rv;
-  } else if (!(ASCII_ISUPPER(*name.data) || ascii_isdigit(*name.data))) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Only file/uppercase marks allowed, invalid mark name: '%c'",
-                  *name.data);
+  });
+  VALIDATE_S((ASCII_ISUPPER(*name.data) || ascii_isdigit(*name.data)),
+             "mark name (must be file/uppercase)", name.data, {
     return rv;
-  }
+  });
 
   xfmark_T *mark = mark_get_global(false, *name.data);  // false avoids loading the mark buffer
   pos_T pos = mark->fmark.mark;
@@ -2137,27 +2100,28 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 
   if (str.size < 2 || memcmp(str.data, "%!", 2) != 0) {
     const char *const errmsg = check_stl_option(str.data);
-    if (errmsg) {
-      api_set_error(err, kErrorTypeValidation, "%s", errmsg);
+    VALIDATE(!errmsg, errmsg, {
       return result;
-    }
+    });
   }
 
   if (HAS_KEY(opts->winid)) {
-    if (opts->winid.type != kObjectTypeInteger) {
-      api_set_error(err, kErrorTypeValidation, "winid must be an integer");
+    VALIDATE_T("winid", kObjectTypeInteger, opts->winid.type, {
       return result;
-    }
+    });
 
     window = (Window)opts->winid.data.integer;
   }
   if (HAS_KEY(opts->fillchar)) {
-    if (opts->fillchar.type != kObjectTypeString || opts->fillchar.data.string.size == 0
-        || ((size_t)utf_ptr2len(opts->fillchar.data.string.data)
-            != opts->fillchar.data.string.size)) {
-      api_set_error(err, kErrorTypeValidation, "fillchar must be a single character");
+    VALIDATE_T("fillchar", kObjectTypeString, opts->fillchar.type, {
       return result;
-    }
+    });
+    VALIDATE((opts->fillchar.data.string.size != 0
+              && ((size_t)utf_ptr2len(opts->fillchar.data.string.data)
+                  == opts->fillchar.data.string.size)),
+             "Invalid fillchar (not a single character)", {
+      return result;
+    });
     fillchar = utf_ptr2char(opts->fillchar.data.string.data);
   }
   if (HAS_KEY(opts->highlights)) {
@@ -2211,10 +2175,9 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   }
 
   if (HAS_KEY(opts->maxwidth)) {
-    if (opts->maxwidth.type != kObjectTypeInteger) {
-      api_set_error(err, kErrorTypeValidation, "maxwidth must be an integer");
+    VALIDATE_T("maxwidth", kObjectTypeInteger, opts->maxwidth.type, {
       return result;
-    }
+    });
 
     maxwidth = (int)opts->maxwidth.data.integer;
   } else {

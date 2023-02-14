@@ -827,6 +827,36 @@ int object_to_hl_id(Object obj, const char *what, Error *err)
   }
 }
 
+char *api_typename(ObjectType t)
+{
+  switch (t) {
+  case kObjectTypeNil:
+    return "nil";
+  case kObjectTypeBoolean:
+    return "Boolean";
+  case kObjectTypeInteger:
+    return "Integer";
+  case kObjectTypeFloat:
+    return "Float";
+  case kObjectTypeString:
+    return "String";
+  case kObjectTypeArray:
+    return "Array";
+  case kObjectTypeDictionary:
+    return "Dict";
+  case kObjectTypeLuaRef:
+    return "Function";
+  case kObjectTypeBuffer:
+    return "Buffer";
+  case kObjectTypeWindow:
+    return "Window";
+  case kObjectTypeTabpage:
+    return "Tabpage";
+  default:
+    abort();
+  }
+}
+
 HlMessage parse_hl_msg(Array chunks, Error *err)
 {
   HlMessage hl_msg = KV_INITIAL_VALUE;

@@ -11,6 +11,7 @@
 
 #include "klib/kvec.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/api/ui.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
@@ -608,7 +609,7 @@ Array ui_array(void)
   return all_uis;
 }
 
-void ui_grid_resize(handle_T grid_handle, int width, int height, Error *error)
+void ui_grid_resize(handle_T grid_handle, int width, int height, Error *err)
 {
   if (grid_handle == DEFAULT_GRID_HANDLE) {
     screen_resize(width, height);
@@ -616,11 +617,9 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *error)
   }
 
   win_T *wp = get_win_by_grid_handle(grid_handle);
-  if (wp == NULL) {
-    api_set_error(error, kErrorTypeValidation,
-                  "No window with the given handle");
+  VALIDATE_INT((wp != NULL), "window handle", (int64_t)grid_handle, {
     return;
-  }
+  });
 
   if (wp->w_floating) {
     if (width != wp->w_width || height != wp->w_height) {

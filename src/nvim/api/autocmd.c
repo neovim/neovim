@@ -12,6 +12,7 @@
 #include "nvim/api/autocmd.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
@@ -107,22 +108,21 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
     break;
   case kObjectTypeString:
     group = augroup_find(opts->group.data.string.data);
-    if (group < 0) {
-      api_set_error(err, kErrorTypeValidation, "invalid augroup passed.");
+    VALIDATE_S((group >= 0), "group", "", {
       goto cleanup;
-    }
+    });
     break;
   case kObjectTypeInteger:
     group = (int)opts->group.data.integer;
     char *name = augroup_name(group);
-    if (!augroup_exists(name)) {
-      api_set_error(err, kErrorTypeValidation, "invalid augroup passed.");
+    VALIDATE_S(augroup_exists(name), "group", "", {
       goto cleanup;
-    }
+    });
     break;
   default:
-    api_set_error(err, kErrorTypeValidation, "group must be a string or an integer.");
-    goto cleanup;
+    VALIDATE_S(false, "group (must be string or integer)", "", {
+      goto cleanup;
+    });
   }
 
   if (opts->event.type != kObjectTypeNil) {
@@ -134,29 +134,24 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
       event_set[event_nr] = true;
     } else if (v.type == kObjectTypeArray) {
       FOREACH_ITEM(v.data.array, event_v, {
-        if (event_v.type != kObjectTypeString) {
-          api_set_error(err,
-                        kErrorTypeValidation,
-                        "Every event must be a string in 'event'");
+        VALIDATE_T("event item", kObjectTypeString, event_v.type, {
           goto cleanup;
-        }
+        });
 
         GET_ONE_EVENT(event_nr, event_v, cleanup);
         event_set[event_nr] = true;
       })
     } else {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Not a valid 'event' value. Must be a string or an array");
-      goto cleanup;
+      VALIDATE_S(false, "event (must be String or Array)", "", {
+        goto cleanup;
+      });
     }
   }
 
-  if (opts->pattern.type != kObjectTypeNil && opts->buffer.type != kObjectTypeNil) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Cannot use both 'pattern' and 'buffer'");
+  VALIDATE((opts->pattern.type == kObjectTypeNil || opts->buffer.type == kObjectTypeNil),
+           "Cannot use both 'pattern' and 'buffer'", {
     goto cleanup;
-  }
+  });
 
   int pattern_filter_count = 0;
   if (opts->pattern.type != kObjectTypeNil) {
@@ -166,25 +161,23 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
       pattern_filter_count += 1;
     } else if (v.type == kObjectTypeArray) {
       if (v.data.array.size > AUCMD_MAX_PATTERNS) {
-        api_set_error(err, kErrorTypeValidation,
-                      "Too many patterns. Please limit yourself to %d or fewer",
+        api_set_error(err, kErrorTypeValidation, "Too many patterns (maximum of %d)",
                       AUCMD_MAX_PATTERNS);
         goto cleanup;
       }
 
       FOREACH_ITEM(v.data.array, item, {
-        if (item.type != kObjectTypeString) {
-          api_set_error(err, kErrorTypeValidation, "Invalid value for 'pattern': must be a string");
+        VALIDATE_T("pattern", kObjectTypeString, item.type, {
           goto cleanup;
-        }
+        });
 
         pattern_filters[pattern_filter_count] = item.data.string.data;
         pattern_filter_count += 1;
       });
     } else {
-      api_set_error(err, kErrorTypeValidation,
-                    "Not a valid 'pattern' value. Must be a string or an array");
-      goto cleanup;
+      VALIDATE_EXP(false, "pattern", "String or Array", api_typename(v.type), {
+        goto cleanup;
+      });
     }
   }
 
@@ -198,17 +191,16 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
     ADD(buffers, CSTR_TO_OBJ(pattern_buflocal));
   } else if (opts->buffer.type == kObjectTypeArray) {
     if (opts->buffer.data.array.size > AUCMD_MAX_PATTERNS) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Too many buffers. Please limit yourself to %d or fewer", AUCMD_MAX_PATTERNS);
+      api_set_error(err, kErrorTypeValidation, "Too many buffers (maximum of %d)",
+                    AUCMD_MAX_PATTERNS);
       goto cleanup;
     }
 
     FOREACH_ITEM(opts->buffer.data.array, bufnr, {
-      if (bufnr.type != kObjectTypeInteger && bufnr.type != kObjectTypeBuffer) {
-        api_set_error(err, kErrorTypeValidation, "Invalid value for 'buffer': must be an integer");
+      VALIDATE_EXP((bufnr.type == kObjectTypeInteger || bufnr.type == kObjectTypeBuffer),
+                   "buffer", "Integer", api_typename(bufnr.type), {
         goto cleanup;
-      }
+      });
 
       buf_T *buf = find_buffer_by_handle((Buffer)bufnr.data.integer, err);
       if (ERROR_SET(err)) {
@@ -219,9 +211,9 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
       ADD(buffers, CSTR_TO_OBJ(pattern_buflocal));
     });
   } else if (opts->buffer.type != kObjectTypeNil) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Invalid value for 'buffer': must be an integer or array of integers");
-    goto cleanup;
+    VALIDATE_EXP(false, "buffer", "Integer or Array", api_typename(opts->buffer.type), {
+      goto cleanup;
+    });
   }
 
   FOREACH_ITEM(buffers, bufnr, {
@@ -432,30 +424,23 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
     goto cleanup;
   }
 
-  if (opts->callback.type != kObjectTypeNil && opts->command.type != kObjectTypeNil) {
-    api_set_error(err, kErrorTypeValidation, "specify either 'callback' or 'command', not both");
+  VALIDATE((opts->callback.type == kObjectTypeNil || opts->command.type == kObjectTypeNil),
+           "Cannot use both 'callback' and 'command'", {
     goto cleanup;
-  } else if (opts->callback.type != kObjectTypeNil) {
-    // TODO(tjdevries): It's possible we could accept callable tables,
-    // but we don't do that many other places, so for the moment let's
-    // not do that.
+  });
+
+  if (opts->callback.type != kObjectTypeNil) {
+    // NOTE: We could accept callable tables, but that isn't common in the API.
 
     Object *callback = &opts->callback;
     switch (callback->type) {
     case kObjectTypeLuaRef:
-      if (callback->data.luaref == LUA_NOREF) {
-        api_set_error(err,
-                      kErrorTypeValidation,
-                      "must pass an actual value");
+      VALIDATE_S((callback->data.luaref != LUA_NOREF), "callback", "<no value>", {
         goto cleanup;
-      }
-
-      if (!nlua_ref_is_function(callback->data.luaref)) {
-        api_set_error(err,
-                      kErrorTypeValidation,
-                      "must pass a function for callback");
+      });
+      VALIDATE_S(nlua_ref_is_function(callback->data.luaref), "callback", "<not a function>", {
         goto cleanup;
-      }
+      });
 
       cb.type = kCallbackLua;
       cb.data.luaref = api_new_luaref(callback->data.luaref);
@@ -465,28 +450,25 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
       cb.data.funcref = string_to_cstr(callback->data.string);
       break;
     default:
-      api_set_error(err,
-                    kErrorTypeException,
-                    "'callback' must be a lua function or name of vim function");
-      goto cleanup;
+      VALIDATE_EXP(false, "callback", "Lua function or Vim function name",
+                   api_typename(callback->type), {
+        goto cleanup;
+      });
     }
 
     aucmd.type = CALLABLE_CB;
     aucmd.callable.cb = cb;
   } else if (opts->command.type != kObjectTypeNil) {
     Object *command = &opts->command;
-    if (command->type == kObjectTypeString) {
-      aucmd.type = CALLABLE_EX;
-      aucmd.callable.cmd = string_to_cstr(command->data.string);
-    } else {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "'command' must be a string");
+    VALIDATE_T("command", kObjectTypeString, command->type, {
       goto cleanup;
-    }
+    });
+    aucmd.type = CALLABLE_EX;
+    aucmd.callable.cmd = string_to_cstr(command->data.string);
   } else {
-    api_set_error(err, kErrorTypeValidation, "must pass one of: 'command', 'callback'");
-    goto cleanup;
+    VALIDATE_S(false, "'command' or 'callback' is required", "", {
+      goto cleanup;
+    });
   }
 
   bool is_once = api_object_to_bool(opts->once, "once", false, err);
@@ -502,24 +484,19 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
   }
 
   if (opts->desc.type != kObjectTypeNil) {
-    if (opts->desc.type == kObjectTypeString) {
-      desc = opts->desc.data.string.data;
-    } else {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "'desc' must be a string");
+    VALIDATE_T("desc", kObjectTypeString, opts->desc.type, {
       goto cleanup;
-    }
+    });
+    desc = opts->desc.data.string.data;
   }
 
   if (patterns.size == 0) {
     ADD(patterns, STRING_OBJ(STATIC_CSTR_TO_STRING("*")));
   }
 
-  if (event_array.size == 0) {
-    api_set_error(err, kErrorTypeValidation, "'event' is a required key");
+  VALIDATE_R((event_array.size != 0), "event", {
     goto cleanup;
-  }
+  });
 
   autocmd_id = next_autocmd_id++;
   FOREACH_ITEM(event_array, event_str, {
@@ -564,10 +541,9 @@ cleanup:
 void nvim_del_autocmd(Integer id, Error *err)
   FUNC_API_SINCE(9)
 {
-  if (id <= 0) {
-    api_set_error(err, kErrorTypeException, "Invalid autocmd id");
+  VALIDATE_INT((id > 0), "autocmd id", id, {
     return;
-  }
+  });
   if (!autocmd_delete_id(id)) {
     api_set_error(err, kErrorTypeException, "Failed to delete autocmd");
   }
@@ -610,11 +586,10 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Error *err)
     goto cleanup;
   }
 
-  if (opts->pattern.type != kObjectTypeNil && opts->buffer.type != kObjectTypeNil) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Cannot use both 'pattern' and 'buffer'");
+  VALIDATE((opts->pattern.type == kObjectTypeNil || opts->buffer.type == kObjectTypeNil),
+           "Cannot use both 'pattern' and 'buffer'", {
     goto cleanup;
-  }
+  });
 
   int au_group = get_augroup_from_object(opts->group, err);
   if (au_group == AUGROUP_ERROR) {
@@ -772,32 +747,29 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
     break;
   case kObjectTypeString:
     au_group = augroup_find(opts->group.data.string.data);
-    if (au_group == AUGROUP_ERROR) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "invalid augroup: %s", opts->group.data.string.data);
+    VALIDATE_S((au_group != AUGROUP_ERROR), "group", opts->group.data.string.data, {
       goto cleanup;
-    }
+    });
     break;
   case kObjectTypeInteger:
     au_group = (int)opts->group.data.integer;
     char *name = augroup_name(au_group);
-    if (!augroup_exists(name)) {
-      api_set_error(err, kErrorTypeValidation, "invalid augroup: %d", au_group);
+    VALIDATE_INT(augroup_exists(name), "group", (int64_t)au_group, {
       goto cleanup;
-    }
+    });
     break;
   default:
-    api_set_error(err, kErrorTypeValidation, "'group' must be a string or an integer.");
-    goto cleanup;
+    VALIDATE_EXP(false, "group", "String or Integer", api_typename(opts->group.type), {
+      goto cleanup;
+    });
   }
 
   if (opts->buffer.type != kObjectTypeNil) {
     Object buf_obj = opts->buffer;
-    if (buf_obj.type != kObjectTypeInteger && buf_obj.type != kObjectTypeBuffer) {
-      api_set_error(err, kErrorTypeException, "invalid buffer: %d", buf_obj.type);
+    VALIDATE_EXP((buf_obj.type == kObjectTypeInteger || buf_obj.type == kObjectTypeBuffer),
+                 "buffer", "Integer", api_typename(buf_obj.type), {
       goto cleanup;
-    }
+    });
 
     buf = find_buffer_by_handle((Buffer)buf_obj.data.integer, err);
 
@@ -844,18 +816,15 @@ static bool check_autocmd_string_array(Array arr, char *k, Error *err)
 {
   FOREACH_ITEM(arr, entry, {
     if (entry.type != kObjectTypeString) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "All entries in '%s' must be strings",
-                    k);
+      api_set_error(err, kErrorTypeValidation, "Invalid '%s' item type: expected String, got %s",
+                    k, api_typename(entry.type));
       return false;
     }
 
     // Disallow newlines in the middle of the line.
     const String l = entry.data.string;
     if (memchr(l.data, NL, l.size)) {
-      api_set_error(err, kErrorTypeValidation,
-                    "String cannot contain newlines");
+      api_set_error(err, kErrorTypeValidation, "'%s' item cannot contain newlines", k);
       return false;
     }
   })
@@ -873,10 +842,9 @@ static bool unpack_string_or_array(Array *array, Object *v, char *k, bool requir
     *array = copy_array(v->data.array, NULL);
   } else {
     if (required) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "'%s' must be an array or a string.",
-                    k);
+      api_set_error(err, kErrorTypeValidation,
+                    "Invalid '%s' type: expected Array or String, got %s",
+                    k, api_typename(v->type));
       return false;
     }
   }
@@ -894,27 +862,22 @@ static int get_augroup_from_object(Object group, Error *err)
     return AUGROUP_DEFAULT;
   case kObjectTypeString:
     au_group = augroup_find(group.data.string.data);
-    if (au_group == AUGROUP_ERROR) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "invalid augroup: %s", group.data.string.data);
-
+    VALIDATE_S((au_group != AUGROUP_ERROR), "group", group.data.string.data, {
       return AUGROUP_ERROR;
-    }
+    });
 
     return au_group;
   case kObjectTypeInteger:
     au_group = (int)group.data.integer;
     char *name = augroup_name(au_group);
-    if (!augroup_exists(name)) {
-      api_set_error(err, kErrorTypeValidation, "invalid augroup: %d", au_group);
+    VALIDATE_INT(augroup_exists(name), "group", (int64_t)au_group, {
       return AUGROUP_ERROR;
-    }
-
+    });
     return au_group;
   default:
-    api_set_error(err, kErrorTypeValidation, "'group' must be a string or an integer.");
-    return AUGROUP_ERROR;
+    VALIDATE_EXP(false, "group", "String or Integer", api_typename(group.type), {
+      return AUGROUP_ERROR;
+    });
   }
 }
 
@@ -923,11 +886,12 @@ static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Ob
 {
   const char pattern_buflocal[BUFLOCAL_PAT_LEN];
 
-  if (pattern.type != kObjectTypeNil && buffer.type != kObjectTypeNil) {
-    api_set_error(err, kErrorTypeValidation,
-                  "cannot pass both: 'pattern' and 'buffer' for the same autocmd");
+  VALIDATE((pattern.type == kObjectTypeNil || buffer.type == kObjectTypeNil),
+           "Cannot use both 'pattern' and 'buffer' for the same autocmd", {
     return false;
-  } else if (pattern.type != kObjectTypeNil) {
+  });
+
+  if (pattern.type != kObjectTypeNil) {
     Object *v = &pattern;
 
     if (v->type == kObjectTypeString) {
@@ -956,18 +920,15 @@ static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Ob
         }
       })
     } else {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "'pattern' must be a string or table");
-      return false;
+      VALIDATE_EXP(false, "pattern", "String or Table", api_typename(v->type), {
+        return false;
+      });
     }
   } else if (buffer.type != kObjectTypeNil) {
-    if (buffer.type != kObjectTypeInteger && buffer.type != kObjectTypeBuffer) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "'buffer' must be an integer");
+    VALIDATE_EXP((buffer.type == kObjectTypeInteger || buffer.type == kObjectTypeBuffer),
+                 "buffer", "Integer", api_typename(buffer.type), {
       return false;
-    }
+    });
 
     buf_T *buf = find_buffer_by_handle((Buffer)buffer.data.integer, err);
     if (ERROR_SET(err)) {

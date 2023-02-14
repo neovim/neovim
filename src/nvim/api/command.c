@@ -11,6 +11,7 @@
 #include "nvim/api/command.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
@@ -99,10 +100,9 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
 {
   Dictionary result = ARRAY_DICT_INIT;
 
-  if (opts.size > 0) {
-    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
+  VALIDATE((opts.size == 0), "opts dict isn't empty", {
     return result;
-  }
+  });
 
   // Parse command line
   exarg_T ea;
@@ -998,7 +998,7 @@ void nvim_buf_del_user_command(Buffer buffer, String name, Error *err)
     }
   }
 
-  api_set_error(err, kErrorTypeException, "No such user-defined command: %s", name.data);
+  api_set_error(err, kErrorTypeException, "Invalid command (not found): %s", name.data);
 }
 
 void create_user_command(String name, Object command, Dict(user_command) *opts, int flags,
@@ -1014,20 +1014,17 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
   LuaRef compl_luaref = LUA_NOREF;
   LuaRef preview_luaref = LUA_NOREF;
 
-  if (!uc_validate_name(name.data)) {
-    api_set_error(err, kErrorTypeValidation, "Invalid command name");
+  VALIDATE_S(uc_validate_name(name.data), "command name", name.data, {
     goto err;
-  }
-
-  if (mb_islower(name.data[0])) {
-    api_set_error(err, kErrorTypeValidation, "'name' must begin with an uppercase letter");
+  });
+  VALIDATE_S(!mb_islower(name.data[0]), "command name (must begin with an uppercase letter)",
+             name.data, {
     goto err;
-  }
-
-  if (HAS_KEY(opts->range) && HAS_KEY(opts->count)) {
-    api_set_error(err, kErrorTypeValidation, "'range' and 'count' are mutually exclusive");
+  });
+  VALIDATE((!HAS_KEY(opts->range) || !HAS_KEY(opts->count)),
+           "Cannot use both 'range' and 'count'", {
     goto err;
-  }
+  });
 
   if (opts->nargs.type == kObjectTypeInteger) {
     switch (opts->nargs.data.integer) {
@@ -1038,14 +1035,14 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
       argt |= EX_EXTRA | EX_NOSPC | EX_NEEDARG;
       break;
     default:
-      api_set_error(err, kErrorTypeValidation, "Invalid value for 'nargs'");
-      goto err;
+      VALIDATE_INT(false, "nargs", (int64_t)opts->nargs.data.integer, {
+        goto err;
+      });
     }
   } else if (opts->nargs.type == kObjectTypeString) {
-    if (opts->nargs.data.string.size > 1) {
-      api_set_error(err, kErrorTypeValidation, "Invalid value for 'nargs'");
+    VALIDATE_S((opts->nargs.data.string.size <= 1), "nargs", opts->nargs.data.string.data, {
       goto err;
-    }
+    });
 
     switch (opts->nargs.data.string.data[0]) {
     case '*':
@@ -1058,18 +1055,19 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
       argt |= EX_EXTRA | EX_NEEDARG;
       break;
     default:
-      api_set_error(err, kErrorTypeValidation, "Invalid value for 'nargs'");
-      goto err;
+      VALIDATE_S(false, "nargs", opts->nargs.data.string.data, {
+        goto err;
+      });
     }
   } else if (HAS_KEY(opts->nargs)) {
-    api_set_error(err, kErrorTypeValidation, "Invalid value for 'nargs'");
-    goto err;
+    VALIDATE_S(false, "nargs", "", {
+      goto err;
+    });
   }
 
-  if (HAS_KEY(opts->complete) && !argt) {
-    api_set_error(err, kErrorTypeValidation, "'complete' used without 'nargs'");
+  VALIDATE((!HAS_KEY(opts->complete) || argt), "'complete' used without 'nargs'", {
     goto err;
-  }
+  });
 
   if (opts->range.type == kObjectTypeBoolean) {
     if (opts->range.data.boolean) {
@@ -1077,13 +1075,12 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
       addr_type_arg = ADDR_LINES;
     }
   } else if (opts->range.type == kObjectTypeString) {
-    if (opts->range.data.string.data[0] == '%' && opts->range.data.string.size == 1) {
-      argt |= EX_RANGE | EX_DFLALL;
-      addr_type_arg = ADDR_LINES;
-    } else {
-      api_set_error(err, kErrorTypeValidation, "Invalid value for 'range'");
+    VALIDATE_S((opts->range.data.string.data[0] == '%' && opts->range.data.string.size == 1),
+               "range", "", {
       goto err;
-    }
+    });
+    argt |= EX_RANGE | EX_DFLALL;
+    addr_type_arg = ADDR_LINES;
   } else if (opts->range.type == kObjectTypeInteger) {
     argt |= EX_RANGE | EX_ZEROR;
     def = opts->range.data.integer;

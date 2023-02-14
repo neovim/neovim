@@ -9,6 +9,7 @@
 #include "nvim/api/options.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/window.h"
@@ -31,11 +32,14 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
     } else if (!strcmp(opts->scope.data.string.data, "global")) {
       *scope = OPT_GLOBAL;
     } else {
-      api_set_error(err, kErrorTypeValidation, "invalid scope: must be 'local' or 'global'");
-      return FAIL;
+      VALIDATE(false, "Invalid scope (expected 'local' or 'global')", {
+        return FAIL;
+      });
     }
   } else if (HAS_KEY(opts->scope)) {
-    api_set_error(err, kErrorTypeValidation, "invalid value for key: scope");
+    VALIDATE_T("scope", kObjectTypeString, opts->scope.type, {
+      return FAIL;
+    });
     return FAIL;
   }
 
@@ -48,8 +52,9 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
       return FAIL;
     }
   } else if (HAS_KEY(opts->win)) {
-    api_set_error(err, kErrorTypeValidation, "invalid value for key: win");
-    return FAIL;
+    VALIDATE_T("win", kObjectTypeInteger, opts->win.type, {
+      return FAIL;
+    });
   }
 
   if (opts->buf.type == kObjectTypeInteger) {
@@ -60,19 +65,17 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
       return FAIL;
     }
   } else if (HAS_KEY(opts->buf)) {
-    api_set_error(err, kErrorTypeValidation, "invalid value for key: buf");
-    return FAIL;
+    VALIDATE_T("buf", kObjectTypeInteger, opts->buf.type, {
+      return FAIL;
+    });
   }
 
-  if (HAS_KEY(opts->scope) && HAS_KEY(opts->buf)) {
-    api_set_error(err, kErrorTypeValidation, "scope and buf cannot be used together");
+  VALIDATE((!HAS_KEY(opts->scope) || !HAS_KEY(opts->buf)), "cannot use both 'scope' and 'buf'", {
     return FAIL;
-  }
-
-  if (HAS_KEY(opts->win) && HAS_KEY(opts->buf)) {
-    api_set_error(err, kErrorTypeValidation, "buf and win cannot be used together");
+  });
+  VALIDATE((!HAS_KEY(opts->win) || !HAS_KEY(opts->buf)), "cannot use both 'buf' and 'win'", {
     return FAIL;
-  }
+  });
 
   return OK;
 }
@@ -132,8 +135,9 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     }
     break;
   default:
-    api_set_error(err, kErrorTypeValidation, "unknown option '%s'", name.data);
-    return rv;
+    VALIDATE_S(false, "option", name.data, {
+      return rv;
+    });
   }
 
   return rv;
@@ -193,8 +197,9 @@ void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error 
     scope |= OPT_CLEAR;
     break;
   default:
-    api_set_error(err, kErrorTypeValidation, "invalid value for option");
-    return;
+    VALIDATE_EXP(false, "option type", "Integer, Boolean, or String", api_typename(value.type), {
+      return;
+    });
   }
 
   access_option_value_for(name.data, &numval, &stringval, scope, opt_type, to, false, err);
@@ -351,21 +356,18 @@ static Object get_option_from(void *from, int type, String name, Error *err)
 {
   Object rv = OBJECT_INIT;
 
-  if (name.size == 0) {
-    api_set_error(err, kErrorTypeValidation, "Empty option name");
+  VALIDATE_S(name.size > 0, "option name", "<empty>", {
     return rv;
-  }
+  });
 
   // Return values
   int64_t numval;
   char *stringval = NULL;
-  int flags = get_option_value_strict(name.data, &numval, &stringval, type, from);
 
-  if (!flags) {
-    api_set_error(err, kErrorTypeValidation, "Invalid option name: '%s'",
-                  name.data);
+  int flags = get_option_value_strict(name.data, &numval, &stringval, type, from);
+  VALIDATE_S(flags != 0, "option name", name.data, {
     return rv;
-  }
+  });
 
   if (flags & SOPT_BOOL) {
     rv.type = kObjectTypeBoolean;
@@ -374,20 +376,15 @@ static Object get_option_from(void *from, int type, String name, Error *err)
     rv.type = kObjectTypeInteger;
     rv.data.integer = numval;
   } else if (flags & SOPT_STRING) {
-    if (stringval) {
-      rv.type = kObjectTypeString;
-      rv.data.string.data = stringval;
-      rv.data.string.size = strlen(stringval);
-    } else {
-      api_set_error(err, kErrorTypeException,
-                    "Failed to get value for option '%s'",
-                    name.data);
+    if (!stringval) {
+      api_set_error(err, kErrorTypeException, "Failed to get option '%s'", name.data);
+      return rv;
     }
+    rv.type = kObjectTypeString;
+    rv.data.string.data = stringval;
+    rv.data.string.size = strlen(stringval);
   } else {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Unknown type for option '%s'",
-                  name.data);
+    api_set_error(err, kErrorTypeException, "Unknown type for option '%s'", name.data);
   }
 
   return rv;
@@ -402,29 +399,22 @@ static Object get_option_from(void *from, int type, String name, Error *err)
 /// @param[out] err Details of an error that may have occurred
 void set_option_to(uint64_t channel_id, void *to, int type, String name, Object value, Error *err)
 {
-  if (name.size == 0) {
-    api_set_error(err, kErrorTypeValidation, "Empty option name");
+  VALIDATE_S(name.size > 0, "option name", "<empty>", {
     return;
-  }
+  });
 
   int flags = get_option_value_strict(name.data, NULL, NULL, type, to);
-
-  if (flags == 0) {
-    api_set_error(err, kErrorTypeValidation, "Invalid option name '%s'",
-                  name.data);
+  VALIDATE_S(flags != 0, "option name", name.data, {
     return;
-  }
+  });
 
   if (value.type == kObjectTypeNil) {
     if (type == SREQ_GLOBAL) {
-      api_set_error(err, kErrorTypeException, "Cannot unset option '%s'",
-                    name.data);
+      api_set_error(err, kErrorTypeException, "Cannot unset option '%s'", name.data);
       return;
     } else if (!(flags & SOPT_GLOBAL)) {
-      api_set_error(err,
-                    kErrorTypeException,
-                    "Cannot unset option '%s' "
-                    "because it doesn't have a global value",
+      api_set_error(err, kErrorTypeException,
+                    "Cannot unset option '%s' because it doesn't have a global value",
                     name.data);
       return;
     } else {
@@ -437,39 +427,23 @@ void set_option_to(uint64_t channel_id, void *to, int type, String name, Object 
   char *stringval = NULL;
 
   if (flags & SOPT_BOOL) {
-    if (value.type != kObjectTypeBoolean) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Option '%s' requires a Boolean value",
-                    name.data);
+    VALIDATE_FMT(value.type == kObjectTypeBoolean, "Option '%s' value must be Boolean", name.data, {
       return;
-    }
-
+    });
     numval = value.data.boolean;
   } else if (flags & SOPT_NUM) {
-    if (value.type != kObjectTypeInteger) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Option '%s' requires an integer value",
-                    name.data);
+    VALIDATE_FMT(value.type == kObjectTypeInteger, "Option '%s' value must be Integer", name.data, {
       return;
-    }
-
-    if (value.data.integer > INT_MAX || value.data.integer < INT_MIN) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Value for option '%s' is out of range",
-                    name.data);
+    });
+    VALIDATE_FMT((value.data.integer <= INT_MAX && value.data.integer >= INT_MIN),
+                 "Option '%s' value is out of range", name.data, {
       return;
-    }
-
+    });
     numval = (int)value.data.integer;
   } else {
-    if (value.type != kObjectTypeString) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Option '%s' requires a string value",
-                    name.data);
+    VALIDATE_FMT(value.type == kObjectTypeString, "Option '%s' value must be String", name.data, {
       return;
-    }
-
+    });
     stringval = value.data.string.data;
   }
 

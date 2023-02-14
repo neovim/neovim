@@ -106,7 +106,7 @@ describe('API/extmarks', function()
       end_col = 0,
       end_row = 1
     })
-    eq("end_col value outside range",
+    eq("Invalid end_col: '(out of range)'",
        pcall_err(set_extmark, ns, marks[2], 0, 0, { end_col = 1, end_row = 1 }))
   end)
 
@@ -1344,10 +1344,10 @@ describe('API/extmarks', function()
 
   it('throws consistent error codes', function()
     local ns_invalid = ns2 + 1
-    eq("Invalid ns_id", pcall_err(set_extmark, ns_invalid, marks[1], positions[1][1], positions[1][2]))
-    eq("Invalid ns_id", pcall_err(curbufmeths.del_extmark, ns_invalid, marks[1]))
-    eq("Invalid ns_id", pcall_err(get_extmarks, ns_invalid, positions[1], positions[2]))
-    eq("Invalid ns_id", pcall_err(get_extmark_by_id, ns_invalid, marks[1]))
+    eq("Invalid ns_id: 3", pcall_err(set_extmark, ns_invalid, marks[1], positions[1][1], positions[1][2]))
+    eq("Invalid ns_id: 3", pcall_err(curbufmeths.del_extmark, ns_invalid, marks[1]))
+    eq("Invalid ns_id: 3", pcall_err(get_extmarks, ns_invalid, positions[1], positions[2]))
+    eq("Invalid ns_id: 3", pcall_err(get_extmark_by_id, ns_invalid, marks[1]))
   end)
 
   it('when col = line-length, set the mark on eol', function()
@@ -1362,13 +1362,13 @@ describe('API/extmarks', function()
 
   it('when col = line-length, set the mark on eol', function()
     local invalid_col = init_text:len() + 1
-    eq("col value outside range", pcall_err(set_extmark, ns, marks[1], 0, invalid_col))
+    eq("Invalid col: '(out of range)'", pcall_err(set_extmark, ns, marks[1], 0, invalid_col))
   end)
 
   it('fails when line > line_count', function()
     local invalid_col = init_text:len() + 1
     local invalid_lnum = 3
-    eq('line value outside range', pcall_err(set_extmark, ns, marks[1], invalid_lnum, invalid_col))
+    eq("Invalid line: '(out of range)'", pcall_err(set_extmark, ns, marks[1], invalid_lnum, invalid_col))
     eq({}, get_extmark_by_id(ns, marks[1]))
   end)
 

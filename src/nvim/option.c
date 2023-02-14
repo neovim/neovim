@@ -33,6 +33,7 @@
 #include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
@@ -5624,10 +5625,9 @@ long get_sidescrolloff_value(win_T *wp)
 Dictionary get_vimoption(String name, Error *err)
 {
   int opt_idx = findoption_len((const char *)name.data, name.size);
-  if (opt_idx < 0) {
-    api_set_error(err, kErrorTypeValidation, "no such option: '%s'", name.data);
+  VALIDATE_S(opt_idx >= 0, "option (not found)", name.data, {
     return (Dictionary)ARRAY_DICT_INIT;
-  }
+  });
   return vimoption2dict(&options[opt_idx]);
 }
 
