@@ -207,7 +207,7 @@ Boolean nvim_buf_attach(uint64_t channel_id, Buffer buffer, Boolean send_buffer,
       }
     }
 
-    VALIDATE_S(key_used, "key", k.data, {
+    VALIDATE_S(key_used, "'opts' key", k.data, {
       goto error;
     });
   }
@@ -1074,7 +1074,7 @@ void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
     } else if (strequal("unload", k.data)) {
       unload = api_object_to_bool(v, "unload", false, err);
     } else {
-      VALIDATE_S(false, "key", k.data, {
+      VALIDATE_S(false, "'opts' key", k.data, {
         return;
       });
     }

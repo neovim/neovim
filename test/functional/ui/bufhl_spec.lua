@@ -751,8 +751,8 @@ describe('Buffer highlighting', function()
 
     it('validates contents', function()
       -- this used to leak memory
-      eq('Invalid chunk: expected Array, got String', pcall_err(set_virtual_text, id1, 0, {"texty"}, {}))
-      eq('Invalid chunk: expected Array, got String', pcall_err(set_virtual_text, id1, 0, {{"very"}, "texty"}, {}))
+      eq("Invalid 'chunk': expected Array, got String", pcall_err(set_virtual_text, id1, 0, {"texty"}, {}))
+      eq("Invalid 'chunk': expected Array, got String", pcall_err(set_virtual_text, id1, 0, {{"very"}, "texty"}, {}))
     end)
 
     it('can be retrieved', function()

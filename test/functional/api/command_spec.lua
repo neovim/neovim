@@ -543,23 +543,19 @@ describe('nvim_create_user_command', function()
   end)
 
   it('does not allow invalid command names', function()
-    matches("Invalid command name %(must begin with an uppercase letter%): 'test'", pcall_err(exec_lua, [[
+    eq("Invalid command name (must start with uppercase): 'test'", pcall_err(exec_lua, [[
       vim.api.nvim_create_user_command('test', 'echo "hi"', {})
     ]]))
-
-    matches('Invalid command name', pcall_err(exec_lua, [[
+    eq("Invalid command name: 't@'", pcall_err(exec_lua, [[
       vim.api.nvim_create_user_command('t@', 'echo "hi"', {})
     ]]))
-
-    matches('Invalid command name', pcall_err(exec_lua, [[
+    eq("Invalid command name: 'T@st'", pcall_err(exec_lua, [[
       vim.api.nvim_create_user_command('T@st', 'echo "hi"', {})
     ]]))
-
-    matches('Invalid command name', pcall_err(exec_lua, [[
+    eq("Invalid command name: 'Test!'", pcall_err(exec_lua, [[
       vim.api.nvim_create_user_command('Test!', 'echo "hi"', {})
     ]]))
-
-    matches('Invalid command name', pcall_err(exec_lua, [[
+    eq("Invalid command name: '💩'", pcall_err(exec_lua, [[
       vim.api.nvim_create_user_command('💩', 'echo "hi"', {})
     ]]))
   end)

@@ -490,7 +490,7 @@ describe('API', function()
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
     end)
 
-    it('validates args', function()
+    it('validation', function()
       local too_many_args = { 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x' }
       source([[
         function! Foo(...) abort
@@ -532,7 +532,7 @@ describe('API', function()
       eq('@it works@', nvim('call_dict_function', { result = 'it works', G = 'G'}, 'G', {}))
     end)
 
-    it('validates args', function()
+    it('validation', function()
       command('let g:d={"baz":"zub","meep":[]}')
       eq('Not found: bogus',
         pcall_err(request, 'nvim_call_dict_function', 'g:d', 'bogus', {1,2}))
@@ -648,10 +648,10 @@ describe('API', function()
   end)
 
   describe('nvim_paste', function()
-    it('validates args', function()
-      eq('Invalid phase: -2',
+    it('validation', function()
+      eq("Invalid 'phase': -2",
         pcall_err(request, 'nvim_paste', 'foo', true, -2))
-      eq('Invalid phase: 4',
+      eq("Invalid 'phase': 4",
         pcall_err(request, 'nvim_paste', 'foo', true, 4))
     end)
     local function run_streamed_paste_tests()
@@ -1154,10 +1154,10 @@ describe('API', function()
   end)
 
   describe('nvim_put', function()
-    it('validates args', function()
-      eq("Invalid line: expected String, got Integer",
+    it('validation', function()
+      eq("Invalid 'line': expected String, got Integer",
         pcall_err(request, 'nvim_put', {42}, 'l', false, false))
-      eq("Invalid type: 'x'",
+      eq("Invalid 'type': 'x'",
         pcall_err(request, 'nvim_put', {'foo'}, 'x', false, false))
     end)
     it("fails if 'nomodifiable'", function()
@@ -1259,9 +1259,9 @@ describe('API', function()
         yyybc line 2
         line 3
         ]])
-      eq("Invalid type: 'bx'",
+      eq("Invalid 'type': 'bx'",
          pcall_err(meths.put, {'xxx', 'yyy'}, 'bx', false, true))
-      eq("Invalid type: 'b3x'",
+      eq("Invalid 'type': 'b3x'",
          pcall_err(meths.put, {'xxx', 'yyy'}, 'b3x', false, true))
     end)
   end)
@@ -1288,6 +1288,11 @@ describe('API', function()
   end)
 
   describe('set/get/del variables', function()
+    it('validation', function()
+      eq('Key not found: bogus', pcall_err(meths.get_var, 'bogus'))
+      eq('Key not found: bogus', pcall_err(meths.del_var, 'bogus'))
+    end)
+
     it('nvim_get_var, nvim_set_var, nvim_del_var', function()
       nvim('set_var', 'lua', {1, 2, {['3'] = 1}})
       eq({1, 2, {['3'] = 1}}, nvim('get_var', 'lua'))
@@ -1411,12 +1416,14 @@ describe('API', function()
     end)
 
     it('validation', function()
-      eq("Invalid scope: expected 'local' or 'global'",
+      eq("Invalid 'scope': expected 'local' or 'global'",
         pcall_err(nvim, 'get_option_value', 'scrolloff', {scope = 'bogus'}))
-      eq("Invalid scope: expected 'local' or 'global'",
+      eq("Invalid 'scope': expected 'local' or 'global'",
         pcall_err(nvim, 'set_option_value', 'scrolloff', 1, {scope = 'bogus'}))
-      eq("Invalid scope: expected String, got Integer",
+      eq("Invalid 'scope': expected String, got Integer",
         pcall_err(nvim, 'get_option_value', 'scrolloff', {scope = 42}))
+      eq("Invalid 'scrolloff': expected Integer/Boolean/String, got Array",
+        pcall_err(nvim, 'set_option_value', 'scrolloff', {}, {}))
     end)
 
     it('can get local values when global value is set', function()
@@ -1786,12 +1793,12 @@ describe('API', function()
   end)
 
   describe('nvim_get_context', function()
-    it('validates args', function()
+    it('validation', function()
       eq("Invalid key: 'blah'",
         pcall_err(nvim, 'get_context', {blah={}}))
-      eq("Invalid types: expected Array, got Integer",
+      eq("Invalid 'types': expected Array, got Integer",
         pcall_err(nvim, 'get_context', {types=42}))
-      eq("Invalid type: 'zub'",
+      eq("Invalid 'type': 'zub'",
         pcall_err(nvim, 'get_context', {types={'jumps', 'zub', 'zam',}}))
     end)
     it('returns map of current editor state', function()
@@ -2238,7 +2245,7 @@ describe('API', function()
         {'nvim_set_var'},
         {'nvim_set_var', {'avar', 2}},
       }
-      eq('calls item must be a 2-item Array',
+      eq("Invalid 'calls' item: expected 2-item Array",
          pcall_err(meths.call_atomic, req))
       -- call before was done, but not after
       eq(1, meths.get_var('avar'))
@@ -2247,7 +2254,7 @@ describe('API', function()
         { 'nvim_set_var', { 'bvar', { 2, 3 } } },
         12,
       }
-      eq("Invalid calls item: expected Array, got Integer",
+      eq("Invalid 'calls' item: expected Array, got Integer",
          pcall_err(meths.call_atomic, req))
       eq({2,3}, meths.get_var('bvar'))
 
@@ -2255,7 +2262,7 @@ describe('API', function()
         {'nvim_set_current_line', 'little line'},
         {'nvim_set_var', {'avar', 3}},
       }
-      eq("Invalid args: expected Array, got String",
+      eq("Invalid call args: expected Array, got String",
          pcall_err(meths.call_atomic, req))
       -- call before was done, but not after
       eq(1, meths.get_var('avar'))
@@ -3119,15 +3126,15 @@ describe('API', function()
          meths.eval_statusline('a%=b', { fillchar = '\031', maxwidth = 5 }))
     end)
     it('rejects multiple-character fillchar', function()
-      eq('Invalid fillchar: expected single character',
+      eq("Invalid 'fillchar': expected single character",
          pcall_err(meths.eval_statusline, '', { fillchar = 'aa' }))
     end)
     it('rejects empty string fillchar', function()
-      eq('Invalid fillchar: expected single character',
+      eq("Invalid 'fillchar': expected single character",
          pcall_err(meths.eval_statusline, '', { fillchar = '' }))
     end)
     it('rejects non-string fillchar', function()
-      eq("Invalid fillchar: expected String, got Integer",
+      eq("Invalid 'fillchar': expected String, got Integer",
          pcall_err(meths.eval_statusline, '', { fillchar = 1 }))
     end)
     it('rejects invalid string', function()

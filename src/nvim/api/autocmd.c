@@ -108,19 +108,19 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
     break;
   case kObjectTypeString:
     group = augroup_find(opts->group.data.string.data);
-    VALIDATE_S((group >= 0), "group", "", {
+    VALIDATE_S((group >= 0), "group", opts->group.data.string.data, {
       goto cleanup;
     });
     break;
   case kObjectTypeInteger:
     group = (int)opts->group.data.integer;
     char *name = augroup_name(group);
-    VALIDATE_S(augroup_exists(name), "group", "", {
+    VALIDATE_INT(augroup_exists(name), "group", opts->group.data.integer, {
       goto cleanup;
     });
     break;
   default:
-    VALIDATE_S(false, "group (must be string or integer)", "", {
+    VALIDATE_EXP(false, "group", "String or Integer", api_typename(opts->group.type), {
       goto cleanup;
     });
   }
@@ -142,7 +142,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
         event_set[event_nr] = true;
       })
     } else {
-      VALIDATE_S(false, "event (must be String or Array)", "", {
+      VALIDATE_EXP(false, "event", "String or Array", NULL, {
         goto cleanup;
       });
     }
@@ -160,11 +160,10 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
       pattern_filters[pattern_filter_count] = v.data.string.data;
       pattern_filter_count += 1;
     } else if (v.type == kObjectTypeArray) {
-      if (v.data.array.size > AUCMD_MAX_PATTERNS) {
-        api_set_error(err, kErrorTypeValidation, "Too many patterns (maximum of %d)",
-                      AUCMD_MAX_PATTERNS);
+      VALIDATE((v.data.array.size <= AUCMD_MAX_PATTERNS),
+               "Too many patterns (maximum of %d)", AUCMD_MAX_PATTERNS, {
         goto cleanup;
-      }
+      });
 
       FOREACH_ITEM(v.data.array, item, {
         VALIDATE_T("pattern", kObjectTypeString, item.type, {

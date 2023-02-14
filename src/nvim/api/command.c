@@ -1017,7 +1017,7 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
   VALIDATE_S(uc_validate_name(name.data), "command name", name.data, {
     goto err;
   });
-  VALIDATE_S(!mb_islower(name.data[0]), "command name (must begin with an uppercase letter)",
+  VALIDATE_S(!mb_islower(name.data[0]), "command name (must start with uppercase)",
              name.data, {
     goto err;
   });
@@ -1163,7 +1163,7 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
       goto err;
     });
   } else if (HAS_KEY(opts->complete)) {
-    VALIDATE(false, "%s", "Invalid complete: expected Function or String", {
+    VALIDATE_EXP(false, "complete", "Function or String", NULL, {
       goto err;
     });
   }
@@ -1190,7 +1190,7 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
     rep = command.data.string.data;
     break;
   default:
-    VALIDATE(false, "%s", "Invalid command: expected Function or String", {
+    VALIDATE_EXP(false, "command", "Function or String", NULL, {
       goto err;
     });
   }

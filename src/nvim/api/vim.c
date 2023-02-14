@@ -654,12 +654,13 @@ Object nvim_get_var(String name, Error *err)
 {
   dictitem_T *di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
   if (di == NULL) {  // try to autoload script
-    VALIDATE_S((script_autoload(name.data, name.size, false) && !aborting()), "key", name.data, {
+    bool found = script_autoload(name.data, name.size, false) && !aborting();
+    VALIDATE(found, "Key not found: %s", name.data, {
       return (Object)OBJECT_INIT;
     });
     di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
   }
-  VALIDATE_S((di != NULL), "key (not found)", name.data, {
+  VALIDATE((di != NULL), "Key not found: %s", name.data, {
     return (Object)OBJECT_INIT;
   });
   return vim_to_object(&di->di_tv);
@@ -986,7 +987,7 @@ Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
       v->data.luaref = LUA_NOREF;
       break;
     } else {
-      VALIDATE_S(false, "key", k.data, {});
+      VALIDATE_S(false, "'opts' key", k.data, {});
     }
   }
 
@@ -1632,18 +1633,18 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Arena *arena, Error *er
 
   size_t i;  // also used for freeing the variables
   for (i = 0; i < calls.size; i++) {
-    VALIDATE_T("calls item", kObjectTypeArray, calls.items[i].type, {
+    VALIDATE_T("'calls' item", kObjectTypeArray, calls.items[i].type, {
       goto theend;
     });
     Array call = calls.items[i].data.array;
-    VALIDATE((call.size == 2), "%s", "calls item must be a 2-item Array", {
+    VALIDATE_EXP((call.size == 2), "'calls' item", "2-item Array", NULL, {
       goto theend;
     });
     VALIDATE_T("name", kObjectTypeString, call.items[0].type, {
       goto theend;
     });
     String name = call.items[0].data.string;
-    VALIDATE_T("args", kObjectTypeArray, call.items[1].type, {
+    VALIDATE_T("call args", kObjectTypeArray, call.items[1].type, {
       goto theend;
     });
     Array args = call.items[1].data.array;
@@ -2108,10 +2109,10 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
     VALIDATE_T("fillchar", kObjectTypeString, opts->fillchar.type, {
       return result;
     });
-    VALIDATE((opts->fillchar.data.string.size != 0
-              && ((size_t)utf_ptr2len(opts->fillchar.data.string.data)
-                  == opts->fillchar.data.string.size)),
-             "%s", "Invalid fillchar: expected single character", {
+    VALIDATE_EXP((opts->fillchar.data.string.size != 0
+                  && ((size_t)utf_ptr2len(opts->fillchar.data.string.data)
+                      == opts->fillchar.data.string.size)),
+                 "fillchar", "single character", NULL, {
       return result;
     });
     fillchar = utf_ptr2char(opts->fillchar.data.string.data);

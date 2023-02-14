@@ -238,7 +238,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
         });
       }
     } else {
-      VALIDATE_S(false, "key", k.data, {
+      VALIDATE_S(false, "'opts' key", k.data, {
         return rv;
       });
     }
@@ -329,7 +329,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
         });
       }
     } else {
-      VALIDATE_S(false, "key", k.data, {
+      VALIDATE_S(false, "'opts' key", k.data, {
         return rv;
       });
     }
@@ -508,12 +508,13 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   });
 
   uint32_t id = 0;
-  if (opts->id.type == kObjectTypeInteger && opts->id.data.integer > 0) {
-    id = (uint32_t)opts->id.data.integer;
-  } else if (HAS_KEY(opts->id)) {
-    VALIDATE_S(false, "id (must be positive integer)", "", {
+  if (HAS_KEY(opts->id)) {
+    VALIDATE_EXP((opts->id.type == kObjectTypeInteger && opts->id.data.integer > 0),
+                 "id", "positive Integer", NULL, {
       goto error;
     });
+
+    id = (uint32_t)opts->id.data.integer;
   }
 
   int line2 = -1;
@@ -1088,10 +1089,10 @@ static bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, in
     // Check if it is a position
   } else if (obj.type == kObjectTypeArray) {
     Array pos = obj.data.array;
-    VALIDATE((pos.size == 2
-              && pos.items[0].type == kObjectTypeInteger
-              && pos.items[1].type == kObjectTypeInteger),
-             "%s", "Invalid position: expected 2 Integer items", {
+    VALIDATE_EXP((pos.size == 2
+                  && pos.items[0].type == kObjectTypeInteger
+                  && pos.items[1].type == kObjectTypeInteger),
+                 "mark position", "2 Integer items", NULL, {
       return false;
     });
 
@@ -1101,7 +1102,7 @@ static bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, in
     *col = (colnr_T)(pos_col >= 0 ? pos_col : MAXCOL);
     return true;
   } else {
-    VALIDATE(false, "%s", "Invalid position: expected mark id Integer or 2-item Array", {
+    VALIDATE_EXP(false, "mark position", "mark id Integer or 2-item Array", NULL, {
       return false;
     });
   }
