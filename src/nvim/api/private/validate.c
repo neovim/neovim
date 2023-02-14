@@ -19,31 +19,22 @@ void api_err_invalid(Error *err, const char *name, const char *val_s, int64_t va
 
   // No value.
   if (val_s && val_s[0] == '\0') {
-    if (has_space) {
-      api_set_error(err, errtype, "Invalid %s", name);
-    } else {
-      api_set_error(err, errtype, "Invalid '%s'", name);
-    }
+    api_set_error(err, errtype, has_space ? "Invalid %s" : "Invalid '%s'", name);
     return;
   }
 
   // Number value.
   if (val_s == NULL) {
-    if (has_space) {
-      api_set_error(err, errtype, "Invalid %s: %" PRId64, name, val_n);
-    } else {
-      api_set_error(err, errtype, "Invalid '%s': %" PRId64, name, val_n);
-    }
+    api_set_error(err, errtype, has_space ? "Invalid %s: %" PRId64 : "Invalid '%s': %" PRId64,
+                  name, val_n);
     return;
   }
 
   // String value.
   if (has_space) {
-    api_set_error(err, errtype, "Invalid %s: '%s'", name, val_s);
-  } else if (quote_val) {
-    api_set_error(err, errtype, "Invalid '%s': '%s'", name, val_s);
+    api_set_error(err, errtype, quote_val ? "Invalid %s: '%s'" : "Invalid %s: %s", name, val_s);
   } else {
-    api_set_error(err, errtype, "Invalid '%s': %s", name, val_s);
+    api_set_error(err, errtype, quote_val ? "Invalid '%s': '%s'" : "Invalid '%s': %s", name, val_s);
   }
 }
 
@@ -56,19 +47,15 @@ void api_err_exp(Error *err, const char *name, const char *expected, const char 
   char *has_space = strchr(name, ' ');
 
   if (!actual) {
-    if (has_space) {
-      api_set_error(err, errtype, "Invalid %s: expected %s", name, expected);
-    } else {
-      api_set_error(err, errtype, "Invalid '%s': expected %s", name, expected);
-    }
+    api_set_error(err, errtype,
+                  has_space ? "Invalid %s: expected %s" : "Invalid '%s': expected %s",
+                  name, expected);
     return;
   }
 
-  if (has_space) {
-    api_set_error(err, errtype, "Invalid %s: expected %s, got %s", name, expected, actual);
-  } else {
-    api_set_error(err, errtype, "Invalid '%s': expected %s, got %s", name, expected, actual);
-  }
+  api_set_error(err, errtype,
+                has_space ? "Invalid %s: expected %s, got %s" : "Invalid '%s': expected %s, got %s",
+                name, expected, actual);
 }
 
 bool check_string_array(Array arr, char *name, bool disallow_nl, Error *err)
