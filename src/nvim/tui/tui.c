@@ -359,12 +359,7 @@ static void terminfo_start(TUIData *tui)
     if (ret) {
       ELOG("uv_tty_init failed: %s", uv_strerror(ret));
     }
-#ifdef MSWIN
-    ret = uv_tty_set_mode(&tui->output_handle.tty, UV_TTY_MODE_RAW);
-    if (ret) {
-      ELOG("uv_tty_set_mode failed: %s", uv_strerror(ret));
-    }
-#else
+#ifndef MSWIN
     int retry_count = 10;
     // A signal may cause uv_tty_set_mode() to fail (e.g., SIGCONT). Retry a
     // few times. #12322
