@@ -102,7 +102,6 @@ describe('API/extmarks', function()
   end)
 
   it('validation', function()
-    local ns_invalid = ns2 + 1
     eq("Invalid 'end_col': expected Integer, got Array", pcall_err(set_extmark, ns, marks[2], 0, 0, { end_col = {}, end_row = 1 }))
     eq("Invalid 'end_row': expected Integer, got Array", pcall_err(set_extmark, ns, marks[2], 0, 0, { end_col = 1, end_row = {} }))
     eq("Invalid 'id': expected positive Integer", pcall_err(set_extmark, ns, {}, 0, 0, { end_col = 1, end_row = 1 }))
