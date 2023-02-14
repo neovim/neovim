@@ -12,6 +12,7 @@
 #include "lauxlib.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/api/ui.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/drawscreen.h"
@@ -971,35 +972,33 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     return hlattrs;
   }
 
-  if (dict->blend.type == kObjectTypeInteger) {
+  if (HAS_KEY(dict->blend)) {
+    VALIDATE_T("blend", kObjectTypeInteger, dict->blend.type, {
+      return hlattrs;
+    });
+
     Integer blend0 = dict->blend.data.integer;
-    if (blend0 < 0 || blend0 > 100) {
-      api_set_error(err, kErrorTypeValidation, "'blend' is not between 0 to 100");
-    } else {
-      blend = (int)blend0;
-    }
-  } else if (HAS_KEY(dict->blend)) {
-    api_set_error(err, kErrorTypeValidation, "'blend' must be an integer");
-  }
-  if (ERROR_SET(err)) {
-    return hlattrs;
+    VALIDATE_RANGE((blend0 >= 0 && blend0 <= 100), "blend", {
+      return hlattrs;
+    });
+    blend = (int)blend0;
   }
 
   if (HAS_KEY(dict->link) || HAS_KEY(dict->global_link)) {
-    if (link_id) {
-      if (HAS_KEY(dict->global_link)) {
-        *link_id = object_to_hl_id(dict->global_link, "link", err);
-        mask |= HL_GLOBAL;
-      } else {
-        *link_id = object_to_hl_id(dict->link, "link", err);
-      }
-
-      if (ERROR_SET(err)) {
-        return hlattrs;
-      }
-    } else {
+    if (!link_id) {
       api_set_error(err, kErrorTypeValidation, "Invalid Key: '%s'",
                     HAS_KEY(dict->global_link) ? "global_link" : "link");
+      return hlattrs;
+    }
+    if (HAS_KEY(dict->global_link)) {
+      *link_id = object_to_hl_id(dict->global_link, "link", err);
+      mask |= HL_GLOBAL;
+    } else {
+      *link_id = object_to_hl_id(dict->link, "link", err);
+    }
+
+    if (ERROR_SET(err)) {
+      return hlattrs;
     }
   }
 
@@ -1026,7 +1025,9 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     // TODO(clason): handle via gen_api_dispatch
     cterm_mask_provided = true;
   } else if (HAS_KEY(dict->cterm)) {
-    api_set_error(err, kErrorTypeValidation, "'cterm' must be a Dictionary.");
+    VALIDATE_T("cterm", kObjectTypeDictionary, dict->cterm.type, {
+      return hlattrs;
+    });
   }
 #undef CHECK_FLAG
 
@@ -1083,13 +1084,14 @@ int object_to_color(Object val, char *key, bool rgb, Error *err)
     } else {
       color = name_to_ctermcolor(str.data);
     }
-    if (color < 0) {
-      api_set_error(err, kErrorTypeValidation, "'%s' is not a valid color", str.data);
-    }
+    VALIDATE_S((color >= 0), "highlight color", str.data, {
+      return color;
+    });
     return color;
   } else {
-    api_set_error(err, kErrorTypeValidation, "'%s' must be string or integer", key);
-    return 0;
+    VALIDATE(false, "Invalid %s: expected String or Integer", key, {
+      return 0;
+    });
   }
 }
 

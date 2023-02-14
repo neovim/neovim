@@ -24,19 +24,11 @@
     } \
   } while (0)
 
-#define VALIDATE_R(cond, name, code) \
-  do { \
-    if (!(cond)) { \
-      api_set_error(err, kErrorTypeValidation, "'" name "' is required"); \
-      code; \
-    } \
-  } while (0)
-
 #define VALIDATE_EXP(cond, name, expected, actual, code) \
   do { \
     if (!(cond)) { \
-      api_set_error(err, kErrorTypeValidation, "Invalid " name ": expected %s, got %s", \
-                    expected, actual); \
+      api_set_error(err, kErrorTypeValidation, "Invalid %s: expected %s, got %s", \
+                    name, expected, actual); \
       code; \
     } \
   } while (0)
@@ -50,20 +42,27 @@
     } \
   } while (0)
 
-#define VALIDATE(cond, msg_, code) \
+#define VALIDATE(cond, fmt_, fmt_arg1, code) \
   do { \
     if (!(cond)) { \
-      api_set_error(err, kErrorTypeValidation, "%s", msg_); \
+      api_set_error(err, kErrorTypeValidation, fmt_, fmt_arg1); \
       code; \
     } \
   } while (0)
 
-#define VALIDATE_FMT(cond, fmt_, msg_, code) \
+#define VALIDATE_RANGE(cond, name, code) \
   do { \
     if (!(cond)) { \
-      api_set_error(err, kErrorTypeValidation, fmt_, msg_); \
+      api_set_error(err, kErrorTypeValidation, "Invalid '%s': out of range", name); \
       code; \
     } \
   } while (0)
+
+#define VALIDATE_R(cond, name, code) \
+  VALIDATE(cond, "Required: '%s'", name, code);
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "api/private/validate.h.generated.h"
+#endif
 
 #endif  // NVIM_API_PRIVATE_VALIDATE_H

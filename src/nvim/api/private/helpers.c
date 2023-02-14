@@ -821,8 +821,7 @@ int object_to_hl_id(Object obj, const char *what, Error *err)
   } else if (obj.type == kObjectTypeInteger) {
     return MAX((int)obj.data.integer, 0);
   } else {
-    api_set_error(err, kErrorTypeValidation,
-                  "%s is not a valid highlight", what);
+    api_set_error(err, kErrorTypeValidation, "Invalid highlight: %s", what);
     return 0;
   }
 }

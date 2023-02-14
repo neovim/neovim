@@ -106,7 +106,7 @@ describe('API/extmarks', function()
       end_col = 0,
       end_row = 1
     })
-    eq("Invalid end_col: '(out of range)'",
+    eq("Invalid 'end_col': out of range",
        pcall_err(set_extmark, ns, marks[2], 0, 0, { end_col = 1, end_row = 1 }))
   end)
 
@@ -1362,13 +1362,13 @@ describe('API/extmarks', function()
 
   it('when col = line-length, set the mark on eol', function()
     local invalid_col = init_text:len() + 1
-    eq("Invalid col: '(out of range)'", pcall_err(set_extmark, ns, marks[1], 0, invalid_col))
+    eq("Invalid 'col': out of range", pcall_err(set_extmark, ns, marks[1], 0, invalid_col))
   end)
 
   it('fails when line > line_count', function()
     local invalid_col = init_text:len() + 1
     local invalid_lnum = 3
-    eq("Invalid line: '(out of range)'", pcall_err(set_extmark, ns, marks[1], invalid_lnum, invalid_col))
+    eq("Invalid 'line': out of range", pcall_err(set_extmark, ns, marks[1], invalid_lnum, invalid_col))
     eq({}, get_extmark_by_id(ns, marks[1]))
   end)
 

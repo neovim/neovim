@@ -26,54 +26,54 @@
 static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_type, void **from,
                                       Error *err)
 {
-  if (opts->scope.type == kObjectTypeString) {
+  if (HAS_KEY(opts->scope)) {
+    VALIDATE_T("scope", kObjectTypeString, opts->scope.type, {
+      return FAIL;
+    });
+
     if (!strcmp(opts->scope.data.string.data, "local")) {
       *scope = OPT_LOCAL;
     } else if (!strcmp(opts->scope.data.string.data, "global")) {
       *scope = OPT_GLOBAL;
     } else {
-      VALIDATE(false, "Invalid scope (expected 'local' or 'global')", {
+      VALIDATE(false, "%s", "Invalid scope: expected 'local' or 'global'", {
         return FAIL;
       });
     }
-  } else if (HAS_KEY(opts->scope)) {
-    VALIDATE_T("scope", kObjectTypeString, opts->scope.type, {
-      return FAIL;
-    });
-    return FAIL;
   }
 
   *opt_type = SREQ_GLOBAL;
 
-  if (opts->win.type == kObjectTypeInteger) {
+  if (HAS_KEY(opts->win)) {
+    VALIDATE_T("win", kObjectTypeInteger, opts->win.type, {
+      return FAIL;
+    });
+
     *opt_type = SREQ_WIN;
     *from = find_window_by_handle((int)opts->win.data.integer, err);
     if (ERROR_SET(err)) {
       return FAIL;
     }
-  } else if (HAS_KEY(opts->win)) {
-    VALIDATE_T("win", kObjectTypeInteger, opts->win.type, {
-      return FAIL;
-    });
   }
 
-  if (opts->buf.type == kObjectTypeInteger) {
+  if (HAS_KEY(opts->buf)) {
+    VALIDATE_T("buf", kObjectTypeInteger, opts->buf.type, {
+      return FAIL;
+    });
+
     *scope = OPT_LOCAL;
     *opt_type = SREQ_BUF;
     *from = find_buffer_by_handle((int)opts->buf.data.integer, err);
     if (ERROR_SET(err)) {
       return FAIL;
     }
-  } else if (HAS_KEY(opts->buf)) {
-    VALIDATE_T("buf", kObjectTypeInteger, opts->buf.type, {
-      return FAIL;
-    });
   }
 
-  VALIDATE((!HAS_KEY(opts->scope) || !HAS_KEY(opts->buf)), "cannot use both 'scope' and 'buf'", {
+  VALIDATE((!HAS_KEY(opts->scope) || !HAS_KEY(opts->buf)), "%s",
+           "cannot use both 'scope' and 'buf'", {
     return FAIL;
   });
-  VALIDATE((!HAS_KEY(opts->win) || !HAS_KEY(opts->buf)), "cannot use both 'buf' and 'win'", {
+  VALIDATE((!HAS_KEY(opts->win) || !HAS_KEY(opts->buf)), "%s", "cannot use both 'buf' and 'win'", {
     return FAIL;
   });
 
@@ -427,21 +427,21 @@ void set_option_to(uint64_t channel_id, void *to, int type, String name, Object 
   char *stringval = NULL;
 
   if (flags & SOPT_BOOL) {
-    VALIDATE_FMT(value.type == kObjectTypeBoolean, "Option '%s' value must be Boolean", name.data, {
+    VALIDATE(value.type == kObjectTypeBoolean, "Option '%s' value must be Boolean", name.data, {
       return;
     });
     numval = value.data.boolean;
   } else if (flags & SOPT_NUM) {
-    VALIDATE_FMT(value.type == kObjectTypeInteger, "Option '%s' value must be Integer", name.data, {
+    VALIDATE(value.type == kObjectTypeInteger, "Option '%s' value must be Integer", name.data, {
       return;
     });
-    VALIDATE_FMT((value.data.integer <= INT_MAX && value.data.integer >= INT_MIN),
-                 "Option '%s' value is out of range", name.data, {
+    VALIDATE((value.data.integer <= INT_MAX && value.data.integer >= INT_MIN),
+             "Option '%s' value is out of range", name.data, {
       return;
     });
     numval = (int)value.data.integer;
   } else {
-    VALIDATE_FMT(value.type == kObjectTypeString, "Option '%s' value must be String", name.data, {
+    VALIDATE(value.type == kObjectTypeString, "Option '%s' value must be String", name.data, {
       return;
     });
     stringval = value.data.string.data;

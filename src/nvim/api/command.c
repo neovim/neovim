@@ -100,7 +100,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
 {
   Dictionary result = ARRAY_DICT_INIT;
 
-  VALIDATE((opts.size == 0), "opts dict isn't empty", {
+  VALIDATE((opts.size == 0), "%s", "opts dict isn't empty", {
     return result;
   });
 
@@ -1021,7 +1021,7 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
              name.data, {
     goto err;
   });
-  VALIDATE((!HAS_KEY(opts->range) || !HAS_KEY(opts->count)),
+  VALIDATE((!HAS_KEY(opts->range) || !HAS_KEY(opts->count)), "%s",
            "Cannot use both 'range' and 'count'", {
     goto err;
   });
@@ -1065,7 +1065,7 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
     });
   }
 
-  VALIDATE((!HAS_KEY(opts->complete) || argt), "'complete' used without 'nargs'", {
+  VALIDATE((!HAS_KEY(opts->complete) || argt), "%s", "'complete' used without 'nargs'", {
     goto err;
   });
 
@@ -1086,8 +1086,9 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
     def = opts->range.data.integer;
     addr_type_arg = ADDR_LINES;
   } else if (HAS_KEY(opts->range)) {
-    api_set_error(err, kErrorTypeValidation, "Invalid value for 'range'");
-    goto err;
+    VALIDATE_S(false, "range", "", {
+      goto err;
+    });
   }
 
   if (opts->count.type == kObjectTypeBoolean) {
@@ -1101,23 +1102,25 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
     addr_type_arg = ADDR_OTHER;
     def = opts->count.data.integer;
   } else if (HAS_KEY(opts->count)) {
-    api_set_error(err, kErrorTypeValidation, "Invalid value for 'count'");
-    goto err;
+    VALIDATE_S(false, "count", "", {
+      goto err;
+    });
   }
 
-  if (opts->addr.type == kObjectTypeString) {
-    if (parse_addr_type_arg(opts->addr.data.string.data, (int)opts->addr.data.string.size,
-                            &addr_type_arg) != OK) {
-      api_set_error(err, kErrorTypeValidation, "Invalid value for 'addr'");
+  if (HAS_KEY(opts->addr)) {
+    VALIDATE_T("addr", kObjectTypeString, opts->addr.type, {
       goto err;
-    }
+    });
+
+    VALIDATE_S(OK == parse_addr_type_arg(opts->addr.data.string.data,
+                                         (int)opts->addr.data.string.size, &addr_type_arg), "addr",
+               opts->addr.data.string.data, {
+      goto err;
+    });
 
     if (addr_type_arg != ADDR_LINES) {
       argt |= EX_ZEROR;
     }
-  } else if (HAS_KEY(opts->addr)) {
-    api_set_error(err, kErrorTypeValidation, "Invalid value for 'addr'");
-    goto err;
   }
 
   if (api_object_to_bool(opts->bang, "bang", false, err)) {
@@ -1153,23 +1156,25 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
     compl = EXPAND_USER_LUA;
     compl_luaref = api_new_luaref(opts->complete.data.luaref);
   } else if (opts->complete.type == kObjectTypeString) {
-    if (parse_compl_arg(opts->complete.data.string.data,
-                        (int)opts->complete.data.string.size, &compl, &argt,
-                        &compl_arg) != OK) {
-      api_set_error(err, kErrorTypeValidation, "Invalid value for 'complete'");
+    VALIDATE_S(OK == parse_compl_arg(opts->complete.data.string.data,
+                                     (int)opts->complete.data.string.size, &compl, &argt,
+                                     &compl_arg),
+               "complete", opts->complete.data.string.data, {
       goto err;
-    }
+    });
   } else if (HAS_KEY(opts->complete)) {
-    api_set_error(err, kErrorTypeValidation, "Invalid value for 'complete'");
-    goto err;
+    VALIDATE(false, "%s", "Invalid complete: expected Function or String", {
+      goto err;
+    });
   }
 
-  if (opts->preview.type == kObjectTypeLuaRef) {
+  if (HAS_KEY(opts->preview)) {
+    VALIDATE_T("preview", kObjectTypeLuaRef, opts->preview.type, {
+      goto err;
+    });
+
     argt |= EX_PREVIEW;
     preview_luaref = api_new_luaref(opts->preview.data.luaref);
-  } else if (HAS_KEY(opts->preview)) {
-    api_set_error(err, kErrorTypeValidation, "Invalid value for 'preview'");
-    goto err;
   }
 
   switch (command.type) {
@@ -1185,8 +1190,9 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
     rep = command.data.string.data;
     break;
   default:
-    api_set_error(err, kErrorTypeValidation, "'command' must be a string or Lua function");
-    goto err;
+    VALIDATE(false, "%s", "Invalid command: expected Function or String", {
+      goto err;
+    });
   }
 
   if (uc_add_command(name.data, name.size, rep, argt, def, flags, compl, compl_arg, compl_luaref,

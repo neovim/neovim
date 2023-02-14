@@ -11,17 +11,37 @@ describe('nvim_ui_attach()', function()
   before_each(function()
     clear()
   end)
+
   it('handles very large width/height #2180', function()
     local screen = Screen.new(999, 999)
     screen:attach()
     eq(999, eval('&lines'))
     eq(999, eval('&columns'))
   end)
-  it('invalid option returns error', function()
+
+  it('validation', function()
     eq('No such UI option: foo',
       pcall_err(meths.ui_attach, 80, 24, { foo={'foo'} }))
-  end)
-  it('validates channel arg', function()
+
+    eq('Invalid ext_linegrid: expected Boolean, got Array',
+      pcall_err(meths.ui_attach, 80, 24, { ext_linegrid={} }))
+    eq('Invalid override: expected Boolean, got Array',
+      pcall_err(meths.ui_attach, 80, 24, { override={} }))
+    eq('Invalid rgb: expected Boolean, got Array',
+      pcall_err(meths.ui_attach, 80, 24, { rgb={} }))
+    eq('Invalid term_name: expected String, got Boolean',
+      pcall_err(meths.ui_attach, 80, 24, { term_name=true }))
+    eq('Invalid term_colors: expected Integer, got Boolean',
+      pcall_err(meths.ui_attach, 80, 24, { term_colors=true }))
+    eq('Invalid term_background: expected String, got Boolean',
+      pcall_err(meths.ui_attach, 80, 24, { term_background=true }))
+    eq('Invalid stdin_fd: expected Integer, got String',
+      pcall_err(meths.ui_attach, 80, 24, { stdin_fd='foo' }))
+    eq('Invalid stdin_tty: expected Boolean, got String',
+      pcall_err(meths.ui_attach, 80, 24, { stdin_tty='foo' }))
+    eq('Invalid stdout_tty: expected Boolean, got String',
+      pcall_err(meths.ui_attach, 80, 24, { stdout_tty='foo' }))
+
     eq('UI not attached to channel: 1',
       pcall_err(request, 'nvim_ui_try_resize', 40, 10))
     eq('UI not attached to channel: 1',

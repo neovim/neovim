@@ -293,7 +293,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   start = normalize_index(buf, start, true, &oob);
   end = normalize_index(buf, end, true, &oob);
 
-  VALIDATE((!strict_indexing || !oob), "Index out of bounds", {
+  VALIDATE((!strict_indexing || !oob), "%s", "Index out of bounds", {
     return rv;
   });
 
@@ -318,23 +318,6 @@ end:
   }
 
   return rv;
-}
-
-static bool check_string_array(Array arr, bool disallow_nl, Error *err)
-{
-  for (size_t i = 0; i < arr.size; i++) {
-    VALIDATE_T("replacement item", kObjectTypeString, arr.items[i].type, {
-      return false;
-    });
-    // Disallow newlines in the middle of the line.
-    if (disallow_nl) {
-      const String l = arr.items[i].data.string;
-      VALIDATE(!memchr(l.data, NL, l.size), "String cannot contain newlines", {
-        return false;
-      });
-    }
-  }
-  return true;
 }
 
 /// Sets (replaces) a line-range in the buffer.
@@ -373,15 +356,15 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   start = normalize_index(buf, start, true, &oob);
   end = normalize_index(buf, end, true, &oob);
 
-  VALIDATE((!strict_indexing || !oob), "Index out of bounds", {
+  VALIDATE((!strict_indexing || !oob), "%s", "Index out of bounds", {
     return;
   });
-  VALIDATE((start <= end), "\"start\" is higher than \"end\"", {
+  VALIDATE((start <= end), "%s", "'start' is higher than 'end'", {
     return;
   });
 
   bool disallow_nl = (channel_id != VIML_INTERNAL_CALL);
-  if (!check_string_array(replacement, disallow_nl, err)) {
+  if (!check_string_array(replacement, "replacement string", disallow_nl, err)) {
     return;
   }
 
@@ -438,7 +421,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   for (size_t i = 0; i < to_replace; i++) {
     int64_t lnum = start + (int64_t)i;
 
-    VALIDATE(lnum < MAXLNUM, "Index value is too high", {
+    VALIDATE(lnum < MAXLNUM, "%s", "Index out of bounds", {
       goto end;
     });
 
@@ -457,7 +440,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   for (size_t i = to_replace; i < new_len; i++) {
     int64_t lnum = start + (int64_t)i - 1;
 
-    VALIDATE(lnum < MAXLNUM, "Index value is too high", {
+    VALIDATE(lnum < MAXLNUM, "%s", "Index out of bounds", {
       goto end;
     });
 
@@ -546,12 +529,12 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   // check range is ordered and everything!
   // start_row, end_row within buffer len (except add text past the end?)
   start_row = normalize_index(buf, start_row, false, &oob);
-  VALIDATE((!oob), "start_row out of bounds", {
+  VALIDATE_RANGE((!oob), "start_row", {
     return;
   });
 
   end_row = normalize_index(buf, end_row, false, &oob);
-  VALIDATE((!oob), "end_row out of bounds", {
+  VALIDATE_RANGE((!oob), "end_row", {
     return;
   });
 
@@ -561,24 +544,24 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   // Another call to ml_get_buf() may free the line, so make a copy.
   str_at_start = xstrdup(ml_get_buf(buf, (linenr_T)start_row, false));
   size_t len_at_start = strlen(str_at_start);
-  VALIDATE((start_col >= 0 && (size_t)start_col <= len_at_start), "start_col out of bounds", {
+  VALIDATE_RANGE((start_col >= 0 && (size_t)start_col <= len_at_start), "start_col", {
     goto early_end;
   });
 
   // Another call to ml_get_buf() may free the line, so make a copy.
   str_at_end = xstrdup(ml_get_buf(buf, (linenr_T)end_row, false));
   size_t len_at_end = strlen(str_at_end);
-  VALIDATE((end_col >= 0 && (size_t)end_col <= len_at_end), "end_col out of bounds", {
+  VALIDATE_RANGE((end_col >= 0 && (size_t)end_col <= len_at_end), "end_col", {
     goto early_end;
   });
 
   VALIDATE((start_row <= end_row && !(end_row == start_row && start_col > end_col)),
-           "start is higher than end", {
+           "%s", "'start' is higher than 'end'", {
     goto early_end;
   });
 
   bool disallow_nl = (channel_id != VIML_INTERNAL_CALL);
-  if (!check_string_array(replacement, disallow_nl, err)) {
+  if (!check_string_array(replacement, "replacement string", disallow_nl, err)) {
     goto early_end;
   }
 
@@ -681,7 +664,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   for (size_t i = 0; i < to_replace; i++) {
     int64_t lnum = start_row + (int64_t)i;
 
-    VALIDATE((lnum < MAXLNUM), "Index value is too high", {
+    VALIDATE((lnum < MAXLNUM), "%s", "Index out of bounds", {
       goto end;
     });
 
@@ -698,7 +681,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   for (size_t i = to_replace; i < new_len; i++) {
     int64_t lnum = start_row + (int64_t)i - 1;
 
-    VALIDATE((lnum < MAXLNUM), "Index value is too high", {
+    VALIDATE((lnum < MAXLNUM), "%s", "Index out of bounds", {
       goto end;
     });
 
@@ -777,7 +760,7 @@ ArrayOf(String) nvim_buf_get_text(uint64_t channel_id, Buffer buffer,
 {
   Array rv = ARRAY_DICT_INIT;
 
-  VALIDATE((opts.size == 0), "opts dict isn't empty", {
+  VALIDATE((opts.size == 0), "%s", "opts dict isn't empty", {
     return rv;
   });
 
@@ -796,14 +779,14 @@ ArrayOf(String) nvim_buf_get_text(uint64_t channel_id, Buffer buffer,
   start_row = normalize_index(buf, start_row, false, &oob);
   end_row = normalize_index(buf, end_row, false, &oob);
 
-  VALIDATE((!oob), "Index out of bounds", {
+  VALIDATE((!oob), "%s", "Index out of bounds", {
     return rv;
   });
 
   // nvim_buf_get_lines doesn't care if the start row is greater than the end
   // row (it will just return an empty array), but nvim_buf_get_text does in
   // order to maintain symmetry with nvim_buf_set_text.
-  VALIDATE((start_row <= end_row), "start is higher than end", {
+  VALIDATE((start_row <= end_row), "%s", "'start' is higher than 'end'", {
     return rv;
   });
 
@@ -881,7 +864,7 @@ Integer nvim_buf_get_offset(Buffer buffer, Integer index, Error *err)
     return -1;
   }
 
-  VALIDATE((index >= 0 && index <= buf->b_ml.ml_line_count), "Index out of bounds", {
+  VALIDATE((index >= 0 && index <= buf->b_ml.ml_line_count), "%s", "Index out of bounds", {
     return 0;
   });
 

@@ -87,10 +87,9 @@ Dictionary nvim_get_hl_by_name(String name, Boolean rgb, Arena *arena, Error *er
   Dictionary result = ARRAY_DICT_INIT;
   int id = syn_name2id(name.data);
 
-  if (id == 0) {
-    api_set_error(err, kErrorTypeException, "Invalid highlight name: %s", name.data);
+  VALIDATE_S((id != 0), "highlight name", name.data, {
     return result;
-  }
+  });
   return nvim_get_hl_by_id(id, rgb, arena, err);
 }
 
@@ -104,10 +103,9 @@ Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Arena *arena, Error *er
   FUNC_API_SINCE(3)
 {
   Dictionary dic = ARRAY_DICT_INIT;
-  if (syn_get_final_id((int)hl_id) == 0) {
-    api_set_error(err, kErrorTypeException, "Invalid highlight id: %" PRId64, hl_id);
+  VALIDATE_INT((syn_get_final_id((int)hl_id) != 0), "highlight id", hl_id, {
     return dic;
-  }
+  });
   int attrcode = syn_id2attr((int)hl_id);
   return hl_get_attr_by_id(attrcode, rgb, arena, err);
 }
@@ -174,10 +172,9 @@ void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
   FUNC_API_SINCE(7)
 {
   int hl_id = syn_check_group(name.data, name.size);
-  if (hl_id == 0) {
-    api_set_error(err, kErrorTypeException, "Invalid highlight name: %s", name.data);
+  VALIDATE_S((hl_id != 0), "highlight name", name.data, {
     return;
-  }
+  });
   int link_id = -1;
 
   HlAttrs attrs = dict2hlattrs(val, true, &link_id, err);
@@ -403,11 +400,9 @@ void nvim_input_mouse(String button, String action, String modifier, Integer gri
       continue;
     }
     int mod = name_to_mod_mask(byte);
-    if (mod == 0) {
-      api_set_error(err, kErrorTypeValidation,
-                    "invalid modifier %c", byte);
+    VALIDATE((mod != 0), "Invalid modifier: %c", byte, {
       return;
-    }
+    });
     modmask |= mod;
   }
 
@@ -500,7 +495,7 @@ Object nvim_notify(String msg, Integer log_level, Dictionary opts, Error *err)
 Integer nvim_strwidth(String text, Error *err)
   FUNC_API_SINCE(1)
 {
-  VALIDATE((text.size <= INT_MAX), "text length (too long)", {
+  VALIDATE_S((text.size <= INT_MAX), "text length", "(too long)", {
     return 0;
   });
 
@@ -574,8 +569,7 @@ ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, E
 {
   bool is_lua = api_object_to_bool(opts->is_lua, "is_lua", false, err);
   bool source = api_object_to_bool(opts->do_source, "do_source", false, err);
-  VALIDATE((!source || nlua_is_deferred_safe()), "'do_source' used in fast callback", {});
-
+  VALIDATE((!source || nlua_is_deferred_safe()), "%s", "'do_source' used in fast callback", {});
   if (ERROR_SET(err)) {
     return (Array)ARRAY_DICT_INIT;
   }
@@ -599,7 +593,7 @@ ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, E
 void nvim_set_current_dir(String dir, Error *err)
   FUNC_API_SINCE(1)
 {
-  VALIDATE((dir.size < MAXPATHL), "directory name (too long)", {
+  VALIDATE_S((dir.size < MAXPATHL), "directory name", "(too long)", {
     return;
   });
 
@@ -1067,7 +1061,7 @@ void nvim_chan_send(Integer chan, String data, Error *err)
 
   channel_send((uint64_t)chan, data.data, data.size,
                false, &error);
-  VALIDATE(!error, error, {});
+  VALIDATE(!error, "%s", error, {});
 }
 
 /// Gets the current list of tabpage handles.
@@ -1334,12 +1328,11 @@ Dictionary nvim_get_context(Dict(context) *opts, Error *err)
   FUNC_API_SINCE(6)
 {
   Array types = ARRAY_DICT_INIT;
-  if (opts->types.type == kObjectTypeArray) {
-    types = opts->types.data.array;
-  } else if (opts->types.type != kObjectTypeNil) {
+  if (HAS_KEY(opts->types)) {
     VALIDATE_T("types", kObjectTypeArray, opts->types.type, {
       return (Dictionary)ARRAY_DICT_INIT;
     });
+    types = opts->types.data.array;
   }
 
   int int_types = types.size > 0 ? 0 : kCtxAll;
@@ -1643,7 +1636,7 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Arena *arena, Error *er
       goto theend;
     });
     Array call = calls.items[i].data.array;
-    VALIDATE((call.size == 2), "Items in calls array must be arrays of size 2", {
+    VALIDATE((call.size == 2), "%s", "calls item must be a 2-item Array", {
       goto theend;
     });
     VALIDATE_T("name", kObjectTypeString, call.items[0].type, {
@@ -1824,10 +1817,9 @@ Array nvim_get_proc_children(Integer pid, Error *err)
   Array rvobj = ARRAY_DICT_INIT;
   int *proc_list = NULL;
 
-  if (pid <= 0 || pid > INT_MAX) {
-    api_set_error(err, kErrorTypeException, "Invalid pid: %" PRId64, pid);
+  VALIDATE_INT((pid > 0 && pid <= INT_MAX), "pid", pid, {
     goto end;
-  }
+  });
 
   size_t proc_count;
   int rv = os_proc_children((int)pid, &proc_list, &proc_count);
@@ -1866,10 +1858,10 @@ Object nvim_get_proc(Integer pid, Error *err)
   rvobj.data.dictionary = (Dictionary)ARRAY_DICT_INIT;
   rvobj.type = kObjectTypeDictionary;
 
-  if (pid <= 0 || pid > INT_MAX) {
-    api_set_error(err, kErrorTypeException, "Invalid pid: %" PRId64, pid);
+  VALIDATE_INT((pid > 0 && pid <= INT_MAX), "pid", pid, {
     return NIL;
-  }
+  });
+
 #ifdef MSWIN
   rvobj.data.dictionary = os_proc_info((int)pid);
   if (rvobj.data.dictionary.size == 0) {  // Process not found.
@@ -1911,7 +1903,7 @@ void nvim_select_popupmenu_item(Integer item, Boolean insert, Boolean finish, Di
                                 Error *err)
   FUNC_API_SINCE(6)
 {
-  VALIDATE((opts.size == 0), "opts dict isn't empty", {
+  VALIDATE((opts.size == 0), "%s", "opts dict isn't empty", {
     return;
   });
 
@@ -2100,7 +2092,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 
   if (str.size < 2 || memcmp(str.data, "%!", 2) != 0) {
     const char *const errmsg = check_stl_option(str.data);
-    VALIDATE(!errmsg, errmsg, {
+    VALIDATE(!errmsg, "%s", errmsg, {
       return result;
     });
   }
@@ -2119,7 +2111,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
     VALIDATE((opts->fillchar.data.string.size != 0
               && ((size_t)utf_ptr2len(opts->fillchar.data.string.data)
                   == opts->fillchar.data.string.size)),
-             "Invalid fillchar (not a single character)", {
+             "%s", "Invalid fillchar: expected single character", {
       return result;
     });
     fillchar = utf_ptr2char(opts->fillchar.data.string.data);
@@ -2145,10 +2137,9 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
       return result;
     }
   }
-  if (use_winbar && use_tabline) {
-    api_set_error(err, kErrorTypeValidation, "use_winbar and use_tabline are mutually exclusive");
+  VALIDATE(!(use_winbar && use_tabline), "%s", "Cannot use both 'use_winbar' and 'use_tabline'", {
     return result;
-  }
+  });
 
   win_T *wp, *ewp;
 
