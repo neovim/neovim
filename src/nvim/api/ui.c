@@ -12,6 +12,7 @@
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/api/ui.h"
 #include "nvim/autocmd.h"
 #include "nvim/channel.h"
@@ -291,22 +292,20 @@ void nvim_ui_set_option(uint64_t channel_id, String name, Object value, Error *e
   ui_set_option(ui, false, name, value, error);
 }
 
-static void ui_set_option(UI *ui, bool init, String name, Object value, Error *error)
+static void ui_set_option(UI *ui, bool init, String name, Object value, Error *err)
 {
   if (strequal(name.data, "override")) {
-    if (value.type != kObjectTypeBoolean) {
-      api_set_error(error, kErrorTypeValidation, "override must be a Boolean");
+    VALIDATE_T("override", kObjectTypeBoolean, value.type, {
       return;
-    }
+    });
     ui->override = value.data.boolean;
     return;
   }
 
   if (strequal(name.data, "rgb")) {
-    if (value.type != kObjectTypeBoolean) {
-      api_set_error(error, kErrorTypeValidation, "rgb must be a Boolean");
+    VALIDATE_T("rgb", kObjectTypeBoolean, value.type, {
       return;
-    }
+    });
     ui->rgb = value.data.boolean;
     // A little drastic, but only takes effect for legacy uis. For linegrid UI
     // only changes metadata for nvim_list_uis(), no refresh needed.
@@ -317,62 +316,56 @@ static void ui_set_option(UI *ui, bool init, String name, Object value, Error *e
   }
 
   if (strequal(name.data, "term_name")) {
-    if (value.type != kObjectTypeString) {
-      api_set_error(error, kErrorTypeValidation, "term_name must be a String");
+    VALIDATE_T("term_name", kObjectTypeString, value.type, {
       return;
-    }
+    });
     set_tty_option("term", string_to_cstr(value.data.string));
     return;
   }
 
   if (strequal(name.data, "term_colors")) {
-    if (value.type != kObjectTypeInteger) {
-      api_set_error(error, kErrorTypeValidation, "term_colors must be a Integer");
+    VALIDATE_T("term_colors", kObjectTypeInteger, value.type, {
       return;
-    }
+    });
     t_colors = (int)value.data.integer;
     return;
   }
 
   if (strequal(name.data, "term_background")) {
-    if (value.type != kObjectTypeString) {
-      api_set_error(error, kErrorTypeValidation, "term_background must be a String");
+    VALIDATE_T("term_background", kObjectTypeString, value.type, {
       return;
-    }
+    });
     set_tty_background(value.data.string.data);
     return;
   }
 
   if (strequal(name.data, "stdin_fd")) {
-    if (value.type != kObjectTypeInteger || value.data.integer < 0) {
-      api_set_error(error, kErrorTypeValidation, "stdin_fd must be a non-negative Integer");
+    VALIDATE_T("stdin_fd", kObjectTypeInteger, value.type, {
       return;
-    }
-
-    if (starting != NO_SCREEN) {
-      api_set_error(error, kErrorTypeValidation,
-                    "stdin_fd can only be used with first attached ui");
+    });
+    VALIDATE_INT((value.data.integer >= 0), "stdin_fd", value.data.integer, {
       return;
-    }
+    });
+    VALIDATE((starting == NO_SCREEN), "%s", "stdin_fd can only be used with first attached UI", {
+      return;
+    });
 
     stdin_fd = (int)value.data.integer;
     return;
   }
 
   if (strequal(name.data, "stdin_tty")) {
-    if (value.type != kObjectTypeBoolean) {
-      api_set_error(error, kErrorTypeValidation, "stdin_tty must be a Boolean");
+    VALIDATE_T("stdin_tty", kObjectTypeBoolean, value.type, {
       return;
-    }
+    });
     stdin_isatty = value.data.boolean;
     return;
   }
 
   if (strequal(name.data, "stdout_tty")) {
-    if (value.type != kObjectTypeBoolean) {
-      api_set_error(error, kErrorTypeValidation, "stdout_tty must be a Boolean");
+    VALIDATE_T("stdout_tty", kObjectTypeBoolean, value.type, {
       return;
-    }
+    });
     stdout_isatty = value.data.boolean;
     return;
   }
@@ -383,17 +376,15 @@ static void ui_set_option(UI *ui, bool init, String name, Object value, Error *e
   for (UIExtension i = 0; i < kUIExtCount; i++) {
     if (strequal(name.data, ui_ext_names[i])
         || (i == kUIPopupmenu && is_popupmenu)) {
-      if (value.type != kObjectTypeBoolean) {
-        api_set_error(error, kErrorTypeValidation, "%s must be a Boolean",
-                      name.data);
+      VALIDATE_EXP((value.type == kObjectTypeBoolean), name.data, "Boolean",
+                   api_typename(value.type), {
         return;
-      }
+      });
       bool boolval = value.data.boolean;
       if (!init && i == kUILinegrid && boolval != ui->ui_ext[i]) {
         // There shouldn't be a reason for an UI to do this ever
         // so explicitly don't support this.
-        api_set_error(error, kErrorTypeValidation,
-                      "ext_linegrid option cannot be changed");
+        api_set_error(err, kErrorTypeValidation, "ext_linegrid option cannot be changed");
       }
       ui->ui_ext[i] = boolval;
       if (!init) {
@@ -403,8 +394,7 @@ static void ui_set_option(UI *ui, bool init, String name, Object value, Error *e
     }
   }
 
-  api_set_error(error, kErrorTypeValidation, "No such UI option: %s",
-                name.data);
+  api_set_error(err, kErrorTypeValidation, "No such UI option: %s", name.data);
 }
 
 /// Tell Nvim to resize a grid. Triggers a grid_resize event with the requested
