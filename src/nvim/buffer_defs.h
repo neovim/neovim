@@ -337,36 +337,6 @@ struct mapblock {
   bool m_replace_keycodes;      // replace keycodes in result of expression
 };
 
-/// Used for highlighting in the status line.
-typedef struct stl_hlrec stl_hlrec_t;
-struct stl_hlrec {
-  char *start;
-  int userhl;                   // 0: no HL, 1-9: User HL, < 0 for syn ID
-};
-
-/// Used for building the status line.
-typedef struct stl_item stl_item_t;
-struct stl_item {
-  // Where the item starts in the status line output buffer
-  char *start;
-  // Function to run for ClickFunc items.
-  char *cmd;
-  // The minimum width of the item
-  int minwid;
-  // The maximum width of the item
-  int maxwid;
-  enum {
-    Normal,
-    Empty,
-    Group,
-    Separate,
-    Highlight,
-    TabPage,
-    ClickFunc,
-    Trunc,
-  } type;
-};
-
 // values for b_syn_spell: what to do with toplevel text
 #define SYNSPL_DEFAULT  0       // spell check if @Spell not defined
 #define SYNSPL_TOP      1       // spell check toplevel text
@@ -1418,26 +1388,6 @@ struct window_S {
   StlClickDefinition *w_statuscol_click_defs;
   // Size of the w_statuscol_click_defs array
   size_t w_statuscol_click_defs_size;
-};
-
-/// Struct to hold info for 'statuscolumn'
-typedef struct statuscol statuscol_T;
-
-struct statuscol {
-  int width;                           ///< width of the status column
-  int cur_attr;                        ///< current attributes in text
-  int num_attr;                        ///< attributes used for line number
-  int fold_attr;                       ///< attributes used for fold column
-  int sign_attr[SIGN_SHOW_MAX + 1];    ///< attributes used for signs
-  int truncate;                        ///< truncated width
-  bool draw;                           ///< draw statuscolumn or not
-  char fold_text[9 * 4 + 1];           ///< text in fold column (%C)
-  char *sign_text[SIGN_SHOW_MAX + 1];  ///< text in sign column (%s)
-  char text[MAXPATHL];                 ///< text in status column
-  char *textp;                         ///< current position in text
-  char *text_end;                      ///< end of text (the NUL byte)
-  stl_hlrec_t *hlrec;                  ///< highlight groups
-  stl_hlrec_t *hlrecp;                 ///< current highlight group
 };
 
 /// Macros defined in Vim, but not in Neovim

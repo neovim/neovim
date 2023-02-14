@@ -456,7 +456,7 @@ describe('statuscolumn', function()
                14 aaaaa                                    |
                                                            |
     ]])
-    command('set stc=')  -- also for the default sign column
+    command('set stc=')  -- also for the default fold column
     screen:expect_unchanged()
     -- 'statuscolumn' is not too wide with custom (bogus) fold column
     command([[set stc=%{foldlevel(v:lnum)>0?repeat('-',foldlevel(v:lnum)):''}%=%l\ ]])

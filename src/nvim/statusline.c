@@ -37,7 +37,7 @@
 #include "nvim/path.h"
 #include "nvim/pos.h"
 #include "nvim/screen.h"
-#include "nvim/sign_defs.h"
+#include "nvim/sign.h"
 #include "nvim/statusline.h"
 #include "nvim/strings.h"
 #include "nvim/types.h"
@@ -1637,20 +1637,40 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       if (stcp == NULL) {
         break;
       }
-
       bool fold = opt == STL_FOLDCOL;
+      int width = fold ? (compute_foldcolumn(wp, 0) > 0) : wp->w_scwidth;
+
+      if (width == 0) {
+        break;
+      }
+
+      char *p;
+      if (fold) {
+        size_t n = fill_foldcolumn(out_p, wp, stcp->foldinfo, (linenr_T)get_vim_var_nr(VV_LNUM));
+        stl_items[curitem].minwid = win_hl_attr(wp, stcp->use_cul ? HLF_CLF : HLF_FC);
+        p = out_p;
+        p[n] = NUL;
+      }
+
       *buf_tmp = NUL;
-      for (int i = 0; i <= SIGN_SHOW_MAX; i++) {
-        char *p = fold ? stcp->fold_text : stcp->sign_text[i];
-        if ((!p || !*p) && *buf_tmp == NUL) {
-          break;
+      varnumber_T virtnum = get_vim_var_nr(VV_VIRTNUM);
+      for (int i = 0; i <= width; i++) {
+        if (i == width) {
+          if (*buf_tmp == NUL) {
+            break;
+          }
+          stl_items[curitem].minwid = 0;
+        } else if (!fold) {
+          SignTextAttrs *sattr = virtnum ? NULL : sign_get_attr(i, stcp->sattrs, wp->w_scwidth);
+          p = sattr && sattr->text ? sattr->text : "  ";
+          stl_items[curitem].minwid = sattr ? stcp->sign_cul_attr ? stcp->sign_cul_attr
+                                                                  : sattr->hl_attr_id
+                                            : win_hl_attr(wp, stcp->use_cul ? HLF_CLS : HLF_SC);
         }
         stl_items[curitem].type = Highlight;
         stl_items[curitem].start = out_p + strlen(buf_tmp);
-        stl_items[curitem].minwid = !p || (fold && i) ? 0 : fold ? stcp->fold_attr
-                                                                 : stcp->sign_attr[i];
         curitem++;
-        if (!p || (fold && i)) {
+        if (i == width) {
           str = buf_tmp;
           break;
         }

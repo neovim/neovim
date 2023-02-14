@@ -404,37 +404,10 @@ static int get_sign_attrs(buf_T *buf, linenr_T lnum, SignTextAttrs *sattrs, int 
 /// the start of the buffer line "lnum" and once for the wrapped lines.
 ///
 /// @param[out] stcp  Status column attributes
-static void get_statuscol_str(win_T *wp, linenr_T lnum, int row, int startrow, int filler_lines,
-                              int cul_attr, int sign_num_attr, int sign_cul_attr, statuscol_T *stcp,
-                              foldinfo_T foldinfo, SignTextAttrs *sattrs)
+static void get_statuscol_str(win_T *wp, linenr_T lnum, int virtnum, statuscol_T *stcp)
 {
-  long relnum = -1;
-  bool use_cul = use_cursor_line_sign(wp, lnum);
-  int virtnum = row - startrow - filler_lines;
-
-  // When called the first time for line "lnum" set num_attr
-  if (stcp->num_attr == 0) {
-    stcp->num_attr = sign_num_attr ? sign_num_attr
-                     : get_line_number_attr(wp, lnum, row, startrow, filler_lines);
-  }
-  // When called for the first non-filler row of line "lnum" set num v:vars and fold column
-  if (virtnum == 0) {
-    relnum = labs(get_cursor_rel_lnum(wp, lnum));
-    if (compute_foldcolumn(wp, 0)) {
-      size_t n = fill_foldcolumn(stcp->fold_text, wp, foldinfo, lnum);
-      stcp->fold_text[n] = NUL;
-      stcp->fold_attr = win_hl_attr(wp, use_cul ? HLF_CLF : HLF_FC);
-    }
-  }
-  // Make sure to clear->set->clear sign column for filler->first->wrapped lines
-  int i = 0;
-  for (; i < wp->w_scwidth; i++) {
-    SignTextAttrs *sattr = virtnum ? NULL : sign_get_attr(i, sattrs, wp->w_scwidth);
-    stcp->sign_text[i] = sattr && sattr->text ? sattr->text : "  ";
-    stcp->sign_attr[i] = sattr ? (use_cul && sign_cul_attr ? sign_cul_attr : sattr->hl_attr_id)
-                               : win_hl_attr(wp, use_cul ? HLF_CLS : HLF_SC);
-  }
-  stcp->sign_text[i] = NULL;
+  // When called for the first non-filler row of line "lnum" set num v:vars
+  long relnum = virtnum == 0 ? labs(get_cursor_rel_lnum(wp, lnum)) : -1;
 
   // When a buffer's line count has changed, make a best estimate for the full
   // width of the status column by building with "w_nrwidth_line_count". Add
@@ -496,8 +469,7 @@ static void get_statuscol_display_info(statuscol_T *stcp, LineDrawState *draw_st
     if (stcp->textp + *n_extrap < stcp->text_end) {
       int hl = stcp->hlrecp->userhl;
       stcp->textp = stcp->hlrecp->start;
-      stcp->cur_attr = hl < 0 ? syn_id2attr(-stcp->hlrecp->userhl)
-                              : hl > 0 ? hl : stcp->num_attr;
+      stcp->cur_attr = hl < 0 ? syn_id2attr(-hl) : hl > 0 ? hl : stcp->num_attr;
       stcp->hlrecp++;
       *draw_state = WL_STC - 1;
     }
@@ -1208,7 +1180,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   if (*wp->w_p_stc != NUL) {
     // Draw the 'statuscolumn' if option is set.
     statuscol.draw = true;
+    statuscol.sattrs = sattrs;
+    statuscol.foldinfo = foldinfo;
     statuscol.width = win_col_off(wp);
+    statuscol.use_cul = use_cursor_line_sign(wp, lnum);
+    statuscol.sign_cul_attr = statuscol.use_cul ? sign_cul_attr : 0;
+    statuscol.num_attr = sign_num_attr ? sign_num_attr
+                         : get_line_number_attr(wp, lnum, row, startrow, filler_lines);
   }
 
   int sign_idx = 0;
@@ -1354,8 +1332,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         // Draw the 'statuscolumn' if option is set.
         if (statuscol.draw) {
           if (statuscol.textp == NULL) {
-            get_statuscol_str(wp, lnum, row, startrow, filler_lines, cul_attr,
-                              sign_num_attr, sign_cul_attr, &statuscol, foldinfo, sattrs);
+            get_statuscol_str(wp, lnum, row - startrow - filler_lines, &statuscol);
             if (wp->w_redr_statuscol) {
               break;
             }
