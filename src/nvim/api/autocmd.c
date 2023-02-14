@@ -160,7 +160,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
       pattern_filters[pattern_filter_count] = v.data.string.data;
       pattern_filter_count += 1;
     } else if (v.type == kObjectTypeArray) {
-      VALIDATE((v.data.array.size > AUCMD_MAX_PATTERNS),
+      VALIDATE((v.data.array.size <= AUCMD_MAX_PATTERNS),
                "Too many patterns (maximum of %d)", AUCMD_MAX_PATTERNS, {
         goto cleanup;
       });
