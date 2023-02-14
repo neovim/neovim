@@ -185,8 +185,9 @@ void tinput_stop(TermInput *input)
 }
 
 static void tinput_done_event(void **argv)
+  FUNC_ATTR_NORETURN
 {
-  input_done();
+  os_exit(1);
 }
 
 static void tinput_wait_enqueue(void **argv)

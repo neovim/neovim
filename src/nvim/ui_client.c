@@ -113,7 +113,7 @@ void ui_client_run(bool remote_ui)
   ui_client_is_remote = remote_ui;
   int width, height;
   char *term;
-  tui = tui_start(&width, &height, &term);
+  tui_start(&tui, &width, &height, &term);
 
   ui_client_attach(width, height, term);
 
