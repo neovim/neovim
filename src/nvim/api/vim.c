@@ -654,12 +654,13 @@ Object nvim_get_var(String name, Error *err)
 {
   dictitem_T *di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
   if (di == NULL) {  // try to autoload script
-    VALIDATE_S((script_autoload(name.data, name.size, false) && !aborting()), "key", name.data, {
+    bool found = script_autoload(name.data, name.size, false) && !aborting();
+    VALIDATE_S(found, "global var", name.data, {
       return (Object)OBJECT_INIT;
     });
     di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
   }
-  VALIDATE_S((di != NULL), "key (not found)", name.data, {
+  VALIDATE_S((di != NULL), "global var (not found)", name.data, {
     return (Object)OBJECT_INIT;
   });
   return vim_to_object(&di->di_tv);
@@ -986,7 +987,7 @@ Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
       v->data.luaref = LUA_NOREF;
       break;
     } else {
-      VALIDATE_S(false, "key", k.data, {});
+      VALIDATE_S(false, "'opts' key", k.data, {});
     }
   }
 

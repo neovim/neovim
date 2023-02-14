@@ -238,7 +238,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
         });
       }
     } else {
-      VALIDATE_S(false, "key", k.data, {
+      VALIDATE_S(false, "'opts' key", k.data, {
         return rv;
       });
     }
@@ -329,7 +329,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
         });
       }
     } else {
-      VALIDATE_S(false, "key", k.data, {
+      VALIDATE_S(false, "'opts' key", k.data, {
         return rv;
       });
     }
