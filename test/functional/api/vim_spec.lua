@@ -1288,6 +1288,11 @@ describe('API', function()
   end)
 
   describe('set/get/del variables', function()
+    it('validation', function()
+      eq('Key not found: bogus', pcall_err(meths.get_var, 'bogus'))
+      eq('Key not found: bogus', pcall_err(meths.del_var, 'bogus'))
+    end)
+
     it('nvim_get_var, nvim_set_var, nvim_del_var', function()
       nvim('set_var', 'lua', {1, 2, {['3'] = 1}})
       eq({1, 2, {['3'] = 1}}, nvim('get_var', 'lua'))

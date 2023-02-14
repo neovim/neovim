@@ -655,12 +655,12 @@ Object nvim_get_var(String name, Error *err)
   dictitem_T *di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
   if (di == NULL) {  // try to autoload script
     bool found = script_autoload(name.data, name.size, false) && !aborting();
-    VALIDATE_S(found, "global var", name.data, {
+    VALIDATE(found, "Key not found: %s", name.data, {
       return (Object)OBJECT_INIT;
     });
     di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
   }
-  VALIDATE_S((di != NULL), "global var (not found)", name.data, {
+  VALIDATE((di != NULL), "Key not found: %s", name.data, {
     return (Object)OBJECT_INIT;
   });
   return vim_to_object(&di->di_tv);
