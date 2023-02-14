@@ -415,14 +415,12 @@ static void get_statuscol_str(win_T *wp, linenr_T lnum, int virtnum, statuscol_T
   if (wp->w_statuscol_line_count != wp->w_nrwidth_line_count) {
     wp->w_statuscol_line_count = wp->w_nrwidth_line_count;
     set_vim_var_nr(VV_VIRTNUM, 0);
-    build_statuscol_str(wp, wp->w_nrwidth_line_count, 0, stcp->width,
-                        ' ', stcp->text, &stcp->hlrec, stcp);
+    build_statuscol_str(wp, wp->w_nrwidth_line_count, 0, stcp);
     stcp->width += stcp->truncate;
   }
   set_vim_var_nr(VV_VIRTNUM, virtnum);
 
-  int width = build_statuscol_str(wp, lnum, relnum, stcp->width,
-                                  ' ', stcp->text, &stcp->hlrec, stcp);
+  int width = build_statuscol_str(wp, lnum, relnum, stcp);
   // Force a redraw in case of error or when truncated
   if (*wp->w_p_stc == NUL || (stcp->truncate > 0 && wp->w_nrwidth < MAX_NUMBERWIDTH)) {
     if (stcp->truncate) {  // Avoid truncating 'statuscolumn'
