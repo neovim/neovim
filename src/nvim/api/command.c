@@ -1107,7 +1107,11 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
     });
   }
 
-  if (opts->addr.type == kObjectTypeString) {
+  if (HAS_KEY(opts->addr)) {
+    VALIDATE_T("addr", kObjectTypeString, opts->addr.type, {
+      goto err;
+    });
+
     VALIDATE_S(OK == parse_addr_type_arg(opts->addr.data.string.data,
                                          (int)opts->addr.data.string.size, &addr_type_arg), "addr",
                opts->addr.data.string.data, {
@@ -1117,10 +1121,6 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
     if (addr_type_arg != ADDR_LINES) {
       argt |= EX_ZEROR;
     }
-  } else if (HAS_KEY(opts->addr)) {
-    VALIDATE_T("addr", kObjectTypeString, opts->addr.type, {
-      goto err;
-    });
   }
 
   if (api_object_to_bool(opts->bang, "bang", false, err)) {
@@ -1168,13 +1168,13 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
     });
   }
 
-  if (opts->preview.type == kObjectTypeLuaRef) {
-    argt |= EX_PREVIEW;
-    preview_luaref = api_new_luaref(opts->preview.data.luaref);
-  } else if (HAS_KEY(opts->preview)) {
+  if (HAS_KEY(opts->preview)) {
     VALIDATE_T("preview", kObjectTypeLuaRef, opts->preview.type, {
       goto err;
     });
+
+    argt |= EX_PREVIEW;
+    preview_luaref = api_new_luaref(opts->preview.data.luaref);
   }
 
   switch (command.type) {

@@ -26,7 +26,11 @@
 static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_type, void **from,
                                       Error *err)
 {
-  if (opts->scope.type == kObjectTypeString) {
+  if (HAS_KEY(opts->scope)) {
+    VALIDATE_T("scope", kObjectTypeString, opts->scope.type, {
+      return FAIL;
+    });
+
     if (!strcmp(opts->scope.data.string.data, "local")) {
       *scope = OPT_LOCAL;
     } else if (!strcmp(opts->scope.data.string.data, "global")) {
@@ -36,38 +40,33 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
         return FAIL;
       });
     }
-  } else if (HAS_KEY(opts->scope)) {
-    VALIDATE_T("scope", kObjectTypeString, opts->scope.type, {
-      return FAIL;
-    });
-    return FAIL;
   }
 
   *opt_type = SREQ_GLOBAL;
 
-  if (opts->win.type == kObjectTypeInteger) {
+  if (HAS_KEY(opts->win)) {
+    VALIDATE_T("win", kObjectTypeInteger, opts->win.type, {
+      return FAIL;
+    });
+
     *opt_type = SREQ_WIN;
     *from = find_window_by_handle((int)opts->win.data.integer, err);
     if (ERROR_SET(err)) {
       return FAIL;
     }
-  } else if (HAS_KEY(opts->win)) {
-    VALIDATE_T("win", kObjectTypeInteger, opts->win.type, {
-      return FAIL;
-    });
   }
 
-  if (opts->buf.type == kObjectTypeInteger) {
+  if (HAS_KEY(opts->buf)) {
+    VALIDATE_T("buf", kObjectTypeInteger, opts->buf.type, {
+      return FAIL;
+    });
+
     *scope = OPT_LOCAL;
     *opt_type = SREQ_BUF;
     *from = find_buffer_by_handle((int)opts->buf.data.integer, err);
     if (ERROR_SET(err)) {
       return FAIL;
     }
-  } else if (HAS_KEY(opts->buf)) {
-    VALIDATE_T("buf", kObjectTypeInteger, opts->buf.type, {
-      return FAIL;
-    });
   }
 
   VALIDATE((!HAS_KEY(opts->scope) || !HAS_KEY(opts->buf)), "%s",

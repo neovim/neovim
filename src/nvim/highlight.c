@@ -972,16 +972,16 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     return hlattrs;
   }
 
-  if (dict->blend.type == kObjectTypeInteger) {
+  if (HAS_KEY(dict->blend)) {
+    VALIDATE_T("blend", kObjectTypeInteger, dict->blend.type, {
+      return hlattrs;
+    });
+
     Integer blend0 = dict->blend.data.integer;
     VALIDATE_RANGE((blend0 >= 0 && blend0 <= 100), "blend", {
       return hlattrs;
     });
     blend = (int)blend0;
-  } else if (HAS_KEY(dict->blend)) {
-    VALIDATE_T("blend", kObjectTypeInteger, dict->blend.type, {
-      return hlattrs;
-    });
   }
 
   if (HAS_KEY(dict->link) || HAS_KEY(dict->global_link)) {

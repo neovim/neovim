@@ -535,29 +535,29 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   bool strict = true;
   OPTION_TO_BOOL(strict, strict, true);
 
-  if (opts->end_row.type == kObjectTypeInteger) {
+  if (HAS_KEY(opts->end_row)) {
+    VALIDATE_T("end_row", kObjectTypeInteger, opts->end_row.type, {
+      goto error;
+    });
+
     Integer val = opts->end_row.data.integer;
     VALIDATE_RANGE((val >= 0 && !(val > buf->b_ml.ml_line_count && strict)), "end_row", {
       goto error;
     });
     line2 = (int)val;
-  } else if (HAS_KEY(opts->end_row)) {
-    VALIDATE_T("end_row", kObjectTypeInteger, opts->end_row.type, {
-      goto error;
-    });
   }
 
   colnr_T col2 = -1;
-  if (opts->end_col.type == kObjectTypeInteger) {
+  if (HAS_KEY(opts->end_col)) {
+    VALIDATE_T("end_col", kObjectTypeInteger, opts->end_col.type, {
+      goto error;
+    });
+
     Integer val = opts->end_col.data.integer;
     VALIDATE_RANGE((val >= 0 && val <= MAXCOL), "end_col", {
       goto error;
     });
     col2 = (int)val;
-  } else if (HAS_KEY(opts->end_col)) {
-    VALIDATE_T("end_col", kObjectTypeInteger, opts->end_col.type, {
-      goto error;
-    });
   }
 
   // uncrustify:off
@@ -587,33 +587,37 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     }
   }
 
-  if (opts->conceal.type == kObjectTypeString) {
+  if (HAS_KEY(opts->conceal)) {
+    VALIDATE_T("conceal", kObjectTypeString, opts->conceal.type, {
+      goto error;
+    });
+
     String c = opts->conceal.data.string;
     decor.conceal = true;
     if (c.size) {
       decor.conceal_char = utf_ptr2char(c.data);
     }
     has_decor = true;
-  } else if (HAS_KEY(opts->conceal)) {
-    VALIDATE_T("conceal", kObjectTypeString, opts->conceal.type, {
-      goto error;
-    });
   }
 
-  if (opts->virt_text.type == kObjectTypeArray) {
+  if (HAS_KEY(opts->virt_text)) {
+    VALIDATE_T("virt_text", kObjectTypeArray, opts->virt_text.type, {
+      goto error;
+    });
+
     decor.virt_text = parse_virt_text(opts->virt_text.data.array, err,
                                       &decor.virt_text_width);
     has_decor = true;
     if (ERROR_SET(err)) {
       goto error;
     }
-  } else if (HAS_KEY(opts->virt_text)) {
-    VALIDATE_T("virt_text", kObjectTypeArray, opts->virt_text.type, {
-      goto error;
-    });
   }
 
-  if (opts->virt_text_pos.type == kObjectTypeString) {
+  if (HAS_KEY(opts->virt_text_pos)) {
+    VALIDATE_T("virt_text_pos", kObjectTypeString, opts->virt_text_pos.type, {
+      goto error;
+    });
+
     String str = opts->virt_text_pos.data.string;
     if (strequal("eol", str.data)) {
       decor.virt_text_pos = kVTEndOfLine;
@@ -626,19 +630,15 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
         goto error;
       });
     }
-  } else if (HAS_KEY(opts->virt_text_pos)) {
-    VALIDATE_T("virt_text_pos", kObjectTypeString, opts->virt_text_pos.type, {
-      goto error;
-    });
   }
 
-  if (opts->virt_text_win_col.type == kObjectTypeInteger) {
-    decor.col = (int)opts->virt_text_win_col.data.integer;
-    decor.virt_text_pos = kVTWinCol;
-  } else if (HAS_KEY(opts->virt_text_win_col)) {
+  if (HAS_KEY(opts->virt_text_win_col)) {
     VALIDATE_T("virt_text_win_col", kObjectTypeInteger, opts->virt_text_win_col.type, {
       goto error;
     });
+
+    decor.col = (int)opts->virt_text_win_col.data.integer;
+    decor.virt_text_pos = kVTWinCol;
   }
 
   OPTION_TO_BOOL(decor.virt_text_hide, virt_text_hide, false);
@@ -666,7 +666,11 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   bool virt_lines_leftcol = false;
   OPTION_TO_BOOL(virt_lines_leftcol, virt_lines_leftcol, false);
 
-  if (opts->virt_lines.type == kObjectTypeArray) {
+  if (HAS_KEY(opts->virt_lines)) {
+    VALIDATE_T("virt_lines", kObjectTypeArray, opts->virt_lines.type, {
+      goto error;
+    });
+
     Array a = opts->virt_lines.data.array;
     for (size_t j = 0; j < a.size; j++) {
       VALIDATE_T("virt_text_line", kObjectTypeArray, a.items[j].type, {
@@ -680,37 +684,33 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       }
       has_decor = true;
     }
-  } else if (HAS_KEY(opts->virt_lines)) {
-    VALIDATE_T("virt_lines", kObjectTypeArray, opts->virt_lines.type, {
-      goto error;
-    });
   }
 
   OPTION_TO_BOOL(decor.virt_lines_above, virt_lines_above, false);
 
-  if (opts->priority.type == kObjectTypeInteger) {
+  if (HAS_KEY(opts->priority)) {
+    VALIDATE_T("priority", kObjectTypeInteger, opts->priority.type, {
+      goto error;
+    });
+
     Integer val = opts->priority.data.integer;
 
     VALIDATE_RANGE((val >= 0 && val <= UINT16_MAX), "priority", {
       goto error;
     });
     decor.priority = (DecorPriority)val;
-  } else if (HAS_KEY(opts->priority)) {
-    VALIDATE_T("priority", kObjectTypeInteger, opts->priority.type, {
-      goto error;
-    });
   }
 
-  if (opts->sign_text.type == kObjectTypeString) {
+  if (HAS_KEY(opts->sign_text)) {
+    VALIDATE_T("sign_text", kObjectTypeString, opts->sign_text.type, {
+      goto error;
+    });
+
     VALIDATE_S(init_sign_text(&decor.sign_text, opts->sign_text.data.string.data),
                "sign_text", "", {
       goto error;
     });
     has_decor = true;
-  } else if (HAS_KEY(opts->sign_text)) {
-    VALIDATE_T("sign_text", kObjectTypeString, opts->sign_text.type, {
-      goto error;
-    });
   }
 
   bool right_gravity = true;
