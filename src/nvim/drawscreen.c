@@ -1552,7 +1552,15 @@ static void win_update(win_T *wp, DecorProviders *providers)
     wp->w_old_visual_col = 0;
   }
 
-  bool cursorline_standout = win_cursorline_standout(wp);
+  foldinfo_T cursorline_fi;
+  wp->w_cursorline = win_cursorline_standout(wp) ? wp->w_cursor.lnum : 0;
+  if (wp->w_p_cul) {
+    // Make sure that the cursorline on a closed fold is redrawn
+    cursorline_fi = fold_info(wp, wp->w_cursor.lnum);
+    if (cursorline_fi.fi_level > 0 && cursorline_fi.fi_lines > 0) {
+      wp->w_cursorline = cursorline_fi.fi_lnum;
+    }
+  }
 
   win_check_ns_hl(wp);
 
@@ -1608,7 +1616,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
                         // if lines were inserted or deleted
                         || (wp->w_match_head != NULL
                             && buf->b_mod_xlines != 0)))))
-        || (cursorline_standout && lnum == wp->w_cursor.lnum)
+        || lnum == wp->w_cursorline
         || lnum == wp->w_last_cursorline) {
       if (lnum == mod_top) {
         top_to_mod = false;
@@ -1759,7 +1767,8 @@ static void win_update(win_T *wp, DecorProviders *providers)
       // When lines are folded, display one line for all of them.
       // Otherwise, display normally (can be several display lines when
       // 'wrap' is on).
-      foldinfo_T foldinfo = fold_info(wp, lnum);
+      foldinfo_T foldinfo = wp->w_p_cul && lnum == wp->w_cursor.lnum ?
+                            cursorline_fi : fold_info(wp, lnum);
 
       if (foldinfo.fi_lines == 0
           && idx < wp->w_lines_valid
@@ -1818,7 +1827,8 @@ static void win_update(win_T *wp, DecorProviders *providers)
       if (wp->w_p_rnu && wp->w_last_cursor_lnum_rnu != wp->w_cursor.lnum) {
         // 'relativenumber' set and cursor moved vertically: The
         // text doesn't need to be drawn, but the number column does.
-        foldinfo_T info = fold_info(wp, lnum);
+        foldinfo_T info = wp->w_p_cul && lnum == wp->w_cursor.lnum ?
+                          cursorline_fi : fold_info(wp, lnum);
         (void)win_line(wp, lnum, srow, wp->w_grid.rows, true, true,
                        info, &line_providers, &provider_err);
       }
@@ -1853,7 +1863,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
 
   // Now that the window has been redrawn with the old and new cursor line,
   // update w_last_cursorline.
-  wp->w_last_cursorline = cursorline_standout ? wp->w_cursor.lnum : 0;
+  wp->w_last_cursorline = wp->w_cursorline;
 
   wp->w_last_cursor_lnum_rnu = wp->w_p_rnu ? wp->w_cursor.lnum : 0;
 

@@ -10,6 +10,7 @@ local meths = helpers.meths
 local exec = helpers.exec
 local exec_lua = helpers.exec_lua
 local assert_alive = helpers.assert_alive
+local poke_eventloop = helpers.poke_eventloop
 
 
 local content1 = [[
@@ -90,10 +91,10 @@ describe("folded lines", function()
     end)
 
     it("highlights with CursorLineFold when 'cursorline' is set", function()
-      command("set cursorline foldcolumn=2 foldmethod=marker")
+      command("set number cursorline foldcolumn=2")
       command("hi link CursorLineFold Search")
       insert(content1)
-      feed("zf3j")
+      feed("ggzf3jj")
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -106,26 +107,26 @@ describe("folded lines", function()
           [2:---------------------------------------------]|
           [3:---------------------------------------------]|
         ## grid 2
-          {7:  }This is a                                  |
-          {7:  }valid English                              |
-          {7:  }sentence composed by                       |
-          {7:  }an exhausted developer                     |
-          {7:  }in his cave.                               |
-          {6:  }{12:^                                           }|
+          {7:+ }{8:  1 }{5:+--  4 lines: This is a················}|
+          {6:  }{9:  5 }{12:^in his cave.                           }|
+          {7:  }{8:  6 }                                       |
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
           {1:~                                            }|
         ## grid 3
                                                        |
         ]])
       else
         screen:expect([[
-        {7:  }This is a                                  |
-        {7:  }valid English                              |
-        {7:  }sentence composed by                       |
-        {7:  }an exhausted developer                     |
-        {7:  }in his cave.                               |
-        {6:  }{12:^                                           }|
-        {1:~                                            }|
-                                                     |
+          {7:+ }{8:  1 }{5:+--  4 lines: This is a················}|
+          {6:  }{9:  5 }{12:^in his cave.                           }|
+          {7:  }{8:  6 }                                       |
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+                                                       |
         ]])
       end
       feed("k")
@@ -141,28 +142,36 @@ describe("folded lines", function()
           [2:---------------------------------------------]|
           [3:---------------------------------------------]|
         ## grid 2
-          {7:  }This is a                                  |
-          {7:  }valid English                              |
-          {7:  }sentence composed by                       |
-          {7:  }an exhausted developer                     |
-          {6:  }{12:^in his cave.                               }|
-          {7:  }                                           |
+          {6:+ }{9:  1 }{12:^+--  4 lines: This is a················}|
+          {7:  }{8:  5 }in his cave.                           |
+          {7:  }{8:  6 }                                       |
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
           {1:~                                            }|
         ## grid 3
                                                        |
         ]])
       else
         screen:expect([[
-        {7:  }This is a                                  |
-        {7:  }valid English                              |
-        {7:  }sentence composed by                       |
-        {7:  }an exhausted developer                     |
-        {6:  }{12:^in his cave.                               }|
-        {7:  }                                           |
-        {1:~                                            }|
-                                                     |
+          {6:+ }{9:  1 }{12:^+--  4 lines: This is a················}|
+          {7:  }{8:  5 }in his cave.                           |
+          {7:  }{8:  6 }                                       |
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+                                                       |
         ]])
       end
+      -- CursorLine is applied correctly with screenrow motions #22232
+      feed("jgk")
+      poke_eventloop()
+      screen:expect_unchanged()
+      -- CursorLine is applied correctly when closing a fold when cursor is not at fold start
+      feed("zo4Gzc")
+      poke_eventloop()
+      screen:expect_unchanged()
       command("set cursorlineopt=line")
       if multigrid then
         screen:expect([[
@@ -176,26 +185,61 @@ describe("folded lines", function()
           [2:---------------------------------------------]|
           [3:---------------------------------------------]|
         ## grid 2
-          {7:  }This is a                                  |
-          {7:  }valid English                              |
-          {7:  }sentence composed by                       |
-          {7:  }an exhausted developer                     |
-          {7:  }{12:^in his cave.                               }|
-          {7:  }                                           |
+          {7:+ }{8:  1 }{12:^+--  4 lines: This is a················}|
+          {7:  }{8:  5 }in his cave.                           |
+          {7:  }{8:  6 }                                       |
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
           {1:~                                            }|
         ## grid 3
                                                        |
         ]])
       else
         screen:expect([[
-        {7:  }This is a                                  |
-        {7:  }valid English                              |
-        {7:  }sentence composed by                       |
-        {7:  }an exhausted developer                     |
-        {7:  }{12:^in his cave.                               }|
-        {7:  }                                           |
-        {1:~                                            }|
-                                                     |
+          {7:+ }{8:  1 }{12:^+--  4 lines: This is a················}|
+          {7:  }{8:  5 }in his cave.                           |
+          {7:  }{8:  6 }                                       |
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+                                                       |
+        ]])
+      end
+      command("set relativenumber cursorlineopt=number")
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [3:---------------------------------------------]|
+        ## grid 2
+          {6:+ }{9:1   }{5:^+--  4 lines: This is a················}|
+          {7:  }{8:  1 }in his cave.                           |
+          {7:  }{8:  2 }                                       |
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+          {6:+ }{9:1   }{5:^+--  4 lines: This is a················}|
+          {7:  }{8:  1 }in his cave.                           |
+          {7:  }{8:  2 }                                       |
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+                                                       |
         ]])
       end
     end)
