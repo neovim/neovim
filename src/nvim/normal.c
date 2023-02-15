@@ -2856,7 +2856,7 @@ static void nv_zet(cmdarg_T *cap)
     FALLTHROUGH;
 
   case 'z':
-    scroll_cursor_halfway(true);
+    scroll_cursor_halfway(true, false);
     redraw_later(curwin, UPD_VALID);
     set_fraction(curwin);
     break;

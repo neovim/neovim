@@ -1676,7 +1676,7 @@ void enter_buffer(buf_T *buf)
   maketitle();
   // when autocmds didn't change it
   if (curwin->w_topline == 1 && !curwin->w_topline_was_set) {
-    scroll_cursor_halfway(false);       // redisplay at correct position
+    scroll_cursor_halfway(false, false);  // redisplay at correct position
   }
 
   // Change directories when the 'acd' option is set.
