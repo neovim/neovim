@@ -1651,9 +1651,16 @@ func Test_splitkeep_options()
     call assert_equal(1, line("w0"))
     call assert_equal(curpos, getcurpos())
 
-    " Scroll when cursor becomes invalid in insert mode
+    " Scroll when cursor becomes invalid in insert mode.
     norm Lic
-    call assert_equal(curpos, getcurpos())
+    call assert_equal(curpos[0], getcurpos()[0], 'run ' .. run)
+
+    " The line number might be one less because of round-off.
+    call assert_inrange(curpos[1] - 1, curpos[1], getcurpos()[1], 'run ' .. run)
+
+    call assert_equal(curpos[2], getcurpos()[2], 'run ' .. run)
+    call assert_equal(curpos[3], getcurpos()[3], 'run ' .. run)
+    call assert_equal(curpos[4], getcurpos()[4], 'run ' .. run)
 
     " No scroll when topline not equal to 1
     only | execute "norm gg5\<C-e>" | split | wincmd k
