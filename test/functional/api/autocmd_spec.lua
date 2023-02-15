@@ -216,7 +216,7 @@ describe('autocmd api', function()
 
       local aus = meths.get_autocmds({ event = 'User', pattern = 'Test' })
       local first = aus[1]
-      eq(first.id, 1)
+      eq(true, first.id > 0)
 
       meths.set_var("some_condition", true)
       meths.exec_autocmds("User", {pattern = "Test"})

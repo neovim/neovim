@@ -2759,32 +2759,3 @@ void do_autocmd_focusgained(bool gained)
 
   recursive = false;
 }
-
-static void define_autocmd(event_T event, char *pat, char *group, bool once, bool nested, char *cmd)
-{
-  AucmdExecutable exec = AUCMD_EXECUTABLE_INIT;
-  exec.type = CALLABLE_EX;
-  exec.callable.cmd = cmd;  // autocmd_register() makes a copy
-  int group_id = augroup_add(group);
-  autocmd_register(0, event, pat, (int)strlen(pat), group_id, once, nested, NULL, exec);
-}
-
-/// initialization of default autocmds
-void init_default_autocmds(void)
-{
-  // open terminals when opening files that start with term://
-#define PROTO "term://"
-  define_autocmd(EVENT_BUFREADCMD, PROTO "*", "nvim_terminal", false, true,
-                 "if !exists('b:term_title')|call termopen("
-                 // Capture the command string
-                 "matchstr(expand(\"<amatch>\"), "
-                 "'\\c\\m" PROTO "\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), "
-                 // capture the working directory
-                 "{'cwd': expand(get(matchlist(expand(\"<amatch>\"), "
-                 "'\\c\\m" PROTO "\\(.\\{-}\\)//'), 1, ''))})"
-                 "|endif");
-#undef PROTO
-  // limit syntax synchronization in the command window
-  define_autocmd(EVENT_CMDWINENTER, "[:>]", "nvim_cmdwin", false, false,
-                 "syntax sync minlines=1 maxlines=1");
-}
