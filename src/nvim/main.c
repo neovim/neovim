@@ -589,7 +589,7 @@ int main(int argc, char **argv)
   }
 
 #ifdef MSWIN
-  if (use_builtin_ui) {
+  if (use_remote_ui || use_builtin_ui) {
     os_icon_init();
   }
   os_title_save();
