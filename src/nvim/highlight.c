@@ -1025,7 +1025,7 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     // TODO(clason): handle via gen_api_dispatch
     cterm_mask_provided = true;
   } else if (HAS_KEY(dict->cterm)) {
-    VALIDATE_T("cterm", kObjectTypeDictionary, dict->cterm.type, {
+    VALIDATE_EXP(false, "cterm", "Dict", api_typename(dict->cterm.type), {
       return hlattrs;
     });
   }

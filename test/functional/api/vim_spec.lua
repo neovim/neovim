@@ -3826,14 +3826,71 @@ describe('API', function()
       meths.cmd({ cmd = "set", args = { "cursorline" } }, {})
       eq(true, meths.get_option_value("cursorline", {}))
     end)
+
+    it('validation', function()
+      eq("Invalid 'cmd': expected non-empty String",
+        pcall_err(meths.cmd, { cmd = ""}, {}))
+      eq("Invalid 'cmd': expected non-empty String",
+        pcall_err(meths.cmd, { cmd = {}}, {}))
+      eq("Invalid 'args': expected Array, got Boolean",
+        pcall_err(meths.cmd, { cmd = "set", args = true }, {}))
+      eq("Invalid 'magic': expected Dict, got Array",
+        pcall_err(meths.cmd, { cmd = "set", args = {}, magic = {} }, {}))
+      eq("Invalid command arg: expected non-whitespace",
+        pcall_err(meths.cmd, { cmd = "set", args = {'  '}, }, {}))
+      eq("Invalid command arg: expected valid type, got Array",
+        pcall_err(meths.cmd, { cmd = "set", args = {{}}, }, {}))
+      eq("Wrong number of arguments",
+        pcall_err(meths.cmd, { cmd = "aboveleft", args = {}, }, {}))
+      eq("Command cannot accept bang: print",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, bang = true }, {}))
+
+      eq("Command cannot accept range: set",
+        pcall_err(meths.cmd, { cmd = "set", args = {}, range = {1} }, {}))
+      eq("Invalid 'range': expected Array, got Boolean",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, range = true }, {}))
+      eq("Invalid 'range': expected <=2 elements",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, range = {1,2,3,4} }, {}))
+      eq("Invalid range element: expected non-negative Integer",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, range = {-1} }, {}))
+
+      eq("Command cannot accept count: set",
+        pcall_err(meths.cmd, { cmd = "set", args = {}, count = 1 }, {}))
+      eq("Invalid 'count': expected non-negative Integer",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, count = true }, {}))
+      eq("Invalid 'count': expected non-negative Integer",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, count = -1 }, {}))
+
+      eq("Command cannot accept register: set",
+        pcall_err(meths.cmd, { cmd = "set", args = {}, reg = 'x' }, {}))
+      eq('Cannot use register "=',
+        pcall_err(meths.cmd, { cmd = "put", args = {}, reg = '=' }, {}))
+      eq("Invalid 'reg': expected single character, got xx",
+        pcall_err(meths.cmd, { cmd = "put", args = {}, reg = 'xx' }, {}))
+
+      -- Lua call allows empty {} for dict item.
+      eq('', exec_lua([[return vim.cmd{ cmd = "set", args = {}, magic = {} }]]))
+      eq('', exec_lua([[return vim.cmd{ cmd = "set", args = {}, mods = {} }]]))
+
+      -- Lua call does not allow non-empty list-like {} for dict item.
+      eq("Invalid 'magic': expected Dict, got Array",
+        pcall_err(exec_lua, [[return vim.cmd{ cmd = "set", args = {}, magic = { 'a' } }]]))
+      eq("Invalid key: 'bogus'",
+        pcall_err(exec_lua, [[return vim.cmd{ cmd = "set", args = {}, magic = { bogus = true } }]]))
+      eq("Invalid key: 'bogus'",
+        pcall_err(exec_lua, [[return vim.cmd{ cmd = "set", args = {}, mods = { bogus = true } }]]))
+    end)
+
     it('captures output', function()
       eq("foo", meths.cmd({ cmd = "echo", args = { '"foo"' } }, { output = true }))
     end)
+
     it('sets correct script context', function()
       meths.cmd({ cmd = "set", args = { "cursorline" } }, {})
       local str = meths.exec([[verbose set cursorline?]], true)
       neq(nil, str:find("cursorline\n\tLast set from API client %(channel id %d+%)"))
     end)
+
     it('works with range', function()
       insert [[
         line1
