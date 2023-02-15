@@ -92,6 +92,13 @@ else()
     -Wmissing-noreturn
     -Wmissing-format-attribute
     -Wmissing-prototypes)
+
+  if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(main_lib INTERFACE
+      $<$<CONFIG:Release>:-Wno-unused-result>
+      $<$<CONFIG:RelWithDebInfo>:-Wno-unused-result>
+      $<$<CONFIG:MinSizeRel>:-Wno-unused-result>)
+  endif()
 endif()
 
 # On FreeBSD 64 math.h uses unguarded C11 extension, which taints clang

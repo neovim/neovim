@@ -196,6 +196,10 @@ jobs:
             cc: gcc
             runner: ubuntu-22.04
             flags: -D UNSIGNED_CHAR=ON
+          - flavor: release
+            cc: gcc
+            runner: ubuntu-22.04
+            flags: -D CMAKE_BUILD_TYPE=Release
           - cc: clang
             runner: macos-12
 
@@ -262,7 +266,7 @@ jobs:
         id: abort_job
         run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
 
-      - if: matrix.flavor != 'tsan' && matrix.flavor != 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
+      - if: matrix.flavor != 'tsan' && matrix.flavor != 'release' && matrix.flavor != 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
         name: Unittest
         timeout-minutes: 5
         run: cmake --build build --target unittest

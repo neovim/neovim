@@ -1135,7 +1135,7 @@ void marktree_check(MarkTree *b)
 
   mtpos_t dummy;
   bool last_right = false;
-  size_t nkeys = check_node(b, b->root, &dummy, &last_right);
+  size_t nkeys = marktree_check_node(b, b->root, &dummy, &last_right);
   assert(b->n_keys == nkeys);
   assert(b->n_keys == map_size(b->id2node));
 #else
@@ -1145,7 +1145,7 @@ void marktree_check(MarkTree *b)
 }
 
 #ifndef NDEBUG
-static size_t check_node(MarkTree *b, mtnode_t *x, mtpos_t *last, bool *last_right)
+size_t marktree_check_node(MarkTree *b, mtnode_t *x, mtpos_t *last, bool *last_right)
 {
   assert(x->n <= 2 * T - 1);
   // TODO(bfredl): too strict if checking "in repair" post-delete tree.
@@ -1154,7 +1154,7 @@ static size_t check_node(MarkTree *b, mtnode_t *x, mtpos_t *last, bool *last_rig
 
   for (int i = 0; i < x->n; i++) {
     if (x->level) {
-      n_keys += check_node(b, x->ptr[i], last, last_right);
+      n_keys += marktree_check_node(b, x->ptr[i], last, last_right);
     } else {
       *last = (mtpos_t) { 0, 0 };
     }
@@ -1171,7 +1171,7 @@ static size_t check_node(MarkTree *b, mtnode_t *x, mtpos_t *last, bool *last_rig
   }
 
   if (x->level) {
-    n_keys += check_node(b, x->ptr[x->n], last, last_right);
+    n_keys += marktree_check_node(b, x->ptr[x->n], last, last_right);
     unrelative(x->key[x->n - 1].pos, last);
 
     for (int i = 0; i < x->n + 1; i++) {
