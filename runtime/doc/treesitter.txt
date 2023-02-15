@@ -721,7 +721,7 @@ add_directive({name}, {handler}, {force})
                    • predicate: list of strings containing the full directive
                      being called, e.g. `(node (#set! conceal "-"))` would get
                      the predicate `{ "#set!", "conceal", "-" }`
-      • {force}    (boolean)
+      • {force}    (boolean|nil)
 
                                         *vim.treesitter.query.add_predicate()*
 add_predicate({name}, {handler}, {force})
@@ -733,7 +733,7 @@ add_predicate({name}, {handler}, {force})
                    bufnr:number, predicate:string[])
                    • see |vim.treesitter.query.add_directive()| for argument
                      meanings
-      • {force}    (boolean)
+      • {force}    (boolean|nil)
 
                                         *vim.treesitter.query.get_node_text()*
 get_node_text({node}, {source}, {opts})
