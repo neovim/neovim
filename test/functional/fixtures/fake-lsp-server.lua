@@ -932,6 +932,23 @@ function tests.basic_formatting()
   }
 end
 
+function tests.set_defaults_all_capabilities()
+  skeleton {
+    on_init = function(_)
+      return {
+        capabilities = {
+          definitionProvider = true,
+          completionProvider = true,
+          documentRangeFormattingProvider = true,
+        }
+      }
+    end;
+    body = function()
+      notify('test')
+    end;
+  }
+end
+
 -- Tests will be indexed by test_name
 local test_name = arg[1]
 local timeout = arg[2]

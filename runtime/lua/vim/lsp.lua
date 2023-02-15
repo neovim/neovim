@@ -1113,18 +1113,42 @@ function lsp.start_client(config)
   end
 
   ---@private
+  -- Determines whether the given option can be set by `set_defaults`.
+  local function is_empty_or_default(bufnr, option)
+    if vim.bo[bufnr][option] == '' then
+      return true
+    end
+
+    local old_bufnr = vim.fn.bufnr('')
+    local last_set_from = vim.fn.gettext('\n\tLast set from ')
+    local line = vim.fn.gettext(' line ')
+
+    vim.cmd.buffer(bufnr)
+    local scriptname = vim.fn
+      .execute('verbose set ' .. option .. '?')
+      :match(last_set_from .. '(.*)' .. line .. '%d+')
+    vim.cmd.buffer(old_bufnr)
+
+    if not scriptname then
+      return false
+    end
+    local vimruntime = vim.fn.getenv('VIMRUNTIME')
+    return vim.startswith(vim.fn.expand(scriptname), vim.fn.expand(vimruntime))
+  end
+
+  ---@private
   local function set_defaults(client, bufnr)
     local capabilities = client.server_capabilities
-    if capabilities.definitionProvider and vim.bo[bufnr].tagfunc == '' then
+    if capabilities.definitionProvider and is_empty_or_default(bufnr, 'tagfunc') then
       vim.bo[bufnr].tagfunc = 'v:lua.vim.lsp.tagfunc'
     end
-    if capabilities.completionProvider and vim.bo[bufnr].omnifunc == '' then
+    if capabilities.completionProvider and is_empty_or_default(bufnr, 'omnifunc') then
       vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
     end
     if
       capabilities.documentRangeFormattingProvider
-      and vim.bo[bufnr].formatprg == ''
-      and vim.bo[bufnr].formatexpr == ''
+      and is_empty_or_default(bufnr, 'formatprg')
+      and is_empty_or_default(bufnr, 'formatexpr')
     then
       vim.bo[bufnr].formatexpr = 'v:lua.vim.lsp.formatexpr()'
     end
