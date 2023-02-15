@@ -1339,14 +1339,12 @@ write_error:
     semsg(_("E829: write error in undo file: %s"), file_name);
   }
 
-#ifdef HAVE_ACL
   if (buf->b_ffname != NULL) {
     // For systems that support ACL: get the ACL from the original file.
     vim_acl_T acl = os_get_acl(buf->b_ffname);
     os_set_acl(file_name, acl);
     os_free_acl(acl);
   }
-#endif
 
 theend:
   if (file_name != name) {

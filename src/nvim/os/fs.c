@@ -783,6 +783,7 @@ int os_setperm(const char *const name, int perm)
 # ifdef HAVE_SYS_ACCESS_H
 #  include <sys/access.h>
 # endif
+#endif
 
 // Return a pointer to the ACL of file "fname" in allocated memory.
 // Return NULL if the ACL is not available for whatever reason.
@@ -806,7 +807,6 @@ void os_free_acl(vim_acl_T aclent)
     return;
   }
 }
-#endif
 
 #ifdef UNIX
 /// Checks if the current user owns a file.
