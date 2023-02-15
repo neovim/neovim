@@ -1552,7 +1552,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
     wp->w_old_visual_col = 0;
   }
 
-  foldinfo_T cursorline_fi;
+  foldinfo_T cursorline_fi = { 0 };
   wp->w_cursorline = win_cursorline_standout(wp) ? wp->w_cursor.lnum : 0;
   if (wp->w_p_cul) {
     // Make sure that the cursorline on a closed fold is redrawn
