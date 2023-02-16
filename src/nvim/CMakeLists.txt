@@ -466,6 +466,13 @@ add_custom_target(update_version_stamp
     -P ${PROJECT_SOURCE_DIR}/cmake/GenerateVersion.cmake
   BYPRODUCTS ${NVIM_VERSION_GIT_H})
 
+set(NVIM_VERSION_DEF_H ${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h)
+add_custom_command(
+  OUTPUT "${NVIM_VERSION_DEF_H}"
+  COMMAND "${CMAKE_COMMAND}"
+  ARGS -E copy "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef-$<CONFIG>.h" "${NVIM_VERSION_DEF_H}"
+  DEPENDS "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef-$<CONFIG>.h")
+
 # NVIM_GENERATED_FOR_HEADERS: generated headers to be included in headers
 # NVIM_GENERATED_FOR_SOURCES: generated headers to be included in sources
 # NVIM_GENERATED_SOURCES: generated source files
@@ -503,7 +510,7 @@ foreach(sfile ${NVIM_SOURCES}
   set(depends "${HEADER_GENERATOR}" "${sfile}")
   if("${f}" STREQUAL "version.c")
     # Ensure auto/versiondef_git.h exists after "make clean".
-    list(APPEND depends update_version_stamp "${NVIM_VERSION_GIT_H}")
+    list(APPEND depends update_version_stamp "${NVIM_VERSION_GIT_H}" "${NVIM_VERSION_DEF_H}")
   endif()
   add_custom_command(
     OUTPUT "${gf_c_h}" "${gf_h_h}"
