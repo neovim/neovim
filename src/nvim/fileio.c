@@ -5181,7 +5181,10 @@ static void vim_mktempdir(void)
 
     // "/tmp/" exists, now try to create "/tmp/nvim.<user>/".
     add_pathsep(tmp);
-    xstrlcat(tmp, "nvim.", sizeof(tmp));
+
+    const char *appname = get_appname();
+    xstrlcat(tmp, appname, sizeof(tmp));
+    xstrlcat(tmp, ".", sizeof(tmp));
     xstrlcat(tmp, user, sizeof(tmp));
     (void)os_mkdir(tmp, 0700);  // Always create, to avoid a race.
     bool owned = os_file_owned(tmp);

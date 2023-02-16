@@ -55,6 +55,10 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
+• A new environment variable named NVIM_APPNAME enables configuring the
+  directories where Neovim should find its configuration and state files. See
+  `:help $NVIM_APPNAME` .
+
 • |nvim_open_win()| now accepts a relative `mouse` option to open a floating win
   relative to the mouse. Note that the mouse doesn't update frequently without
   setting `vim.o.mousemoveevent = true`
