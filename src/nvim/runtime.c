@@ -1846,10 +1846,13 @@ scriptitem_T *new_script_item(char *const name, scid_T *const sid_out)
   while (script_items.ga_len < sid) {
     script_items.ga_len++;
     SCRIPT_ITEM(script_items.ga_len).sn_name = NULL;
+
+    // Allocate the local script variables to use for this script.
+    new_script_vars(script_items.ga_len);
+
     SCRIPT_ITEM(script_items.ga_len).sn_prof_on = false;
   }
   SCRIPT_ITEM(sid).sn_name = name;
-  new_script_vars(sid);  // Allocate the local script variables to use for this script.
   return &SCRIPT_ITEM(sid);
 }
 
@@ -2305,7 +2308,14 @@ void free_scriptnames(void)
 {
   profile_reset();
 
-# define FREE_SCRIPTNAME(item) xfree((item)->sn_name)
+# define FREE_SCRIPTNAME(item) \
+  do { \
+    /* the variables themselves are cleared in evalvars_clear() */ \
+    xfree((item)->sn_vars); \
+    xfree((item)->sn_name); \
+    ga_clear(&(item)->sn_prl_ga); \
+  } while (0) \
+
   GA_DEEP_CLEAR(&script_items, scriptitem_T, FREE_SCRIPTNAME);
 }
 #endif
