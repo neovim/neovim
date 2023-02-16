@@ -470,7 +470,9 @@ set(NVIM_VERSION_DEF_H ${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h)
 add_custom_command(
   OUTPUT "${NVIM_VERSION_DEF_H}"
   COMMAND "${CMAKE_COMMAND}"
-  ARGS -E copy "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef-$<CONFIG>.h" "${NVIM_VERSION_DEF_H}"
+    -E copy
+    "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef-$<CONFIG>.h"
+    "${NVIM_VERSION_DEF_H}"
   DEPENDS "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef-$<CONFIG>.h")
 
 # NVIM_GENERATED_FOR_HEADERS: generated headers to be included in headers
