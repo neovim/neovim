@@ -547,7 +547,6 @@ char *transchar(int c)
 }
 
 char_u *transchar_buf(const buf_T *buf, int c)
-  FUNC_ATTR_NONNULL_ALL
 {
   int i = 0;
   if (IS_SPECIAL(c)) {
@@ -571,9 +570,9 @@ char_u *transchar_buf(const buf_T *buf, int c)
   return transchar_charbuf;
 }
 
-/// Like transchar(), but called with a byte instead of a character
+/// Like transchar(), but called with a byte instead of a character.
 ///
-/// Checks for an illegal UTF-8 byte.
+/// Checks for an illegal UTF-8 byte.  Uses 'fileformat' of the current buffer.
 ///
 /// @param[in]  c  Byte to translate.
 ///
@@ -581,11 +580,24 @@ char_u *transchar_buf(const buf_T *buf, int c)
 char_u *transchar_byte(const int c)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  return transchar_byte_buf(curbuf, c);
+}
+
+/// Like transchar_buf(), but called with a byte instead of a character.
+///
+/// Checks for an illegal UTF-8 byte.  Uses 'fileformat' of "buf", unless it is NULL.
+///
+/// @param[in]  c  Byte to translate.
+///
+/// @return pointer to translated character in transchar_charbuf.
+char_u *transchar_byte_buf(const buf_T *buf, const int c)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
   if (c >= 0x80) {
-    transchar_nonprint(curbuf, transchar_charbuf, c);
+    transchar_nonprint(buf, transchar_charbuf, c);
     return transchar_charbuf;
   }
-  return (char_u *)transchar(c);
+  return transchar_buf(buf, c);
 }
 
 /// Convert non-printable characters to 2..4 printable ones
@@ -598,12 +610,11 @@ char_u *transchar_byte(const int c)
 /// @param[in]  c  Character to convert. NUL is assumed to be NL according to
 ///                `:h NL-used-for-NUL`.
 void transchar_nonprint(const buf_T *buf, char_u *charbuf, int c)
-  FUNC_ATTR_NONNULL_ALL
 {
   if (c == NL) {
     // we use newline in place of a NUL
     c = NUL;
-  } else if ((c == CAR) && (get_fileformat(buf) == EOL_MAC)) {
+  } else if (buf != NULL && c == CAR && get_fileformat(buf) == EOL_MAC) {
     // we use CR in place of  NL in this case
     c = NL;
   }
