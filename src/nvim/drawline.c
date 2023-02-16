@@ -567,6 +567,43 @@ static bool check_mb_utf8(int *c, int *u8cc)
   return false;
 }
 
+static colnr_T get_trailcol(win_T *wp, const char *ptr, const char *line)
+{
+  colnr_T trailcol = MAXCOL;
+  // find start of trailing whitespace
+  if (wp->w_p_lcs_chars.trail) {
+    trailcol = (colnr_T)strlen(ptr);
+    while (trailcol > 0 && ascii_iswhite(ptr[trailcol - 1])) {
+      trailcol--;
+    }
+    trailcol += (colnr_T)(ptr - line);
+  }
+
+  return trailcol;
+}
+
+static colnr_T get_leadcol(win_T *wp, const char *ptr, const char *line)
+{
+  colnr_T leadcol = 0;
+
+  // find end of leading whitespace
+  if (wp->w_p_lcs_chars.lead || wp->w_p_lcs_chars.leadmultispace != NULL) {
+    leadcol = 0;
+    while (ascii_iswhite(ptr[leadcol])) {
+      leadcol++;
+    }
+    if (ptr[leadcol] == NUL) {
+      // in a line full of spaces all of them are treated as trailing
+      leadcol = 0;
+    } else {
+      // keep track of the first column not filled with spaces
+      leadcol += (colnr_T)(ptr - line + 1);
+    }
+  }
+
+  return leadcol;
+}
+
 /// Display line "lnum" of window 'wp' on the screen.
 /// wp->w_virtcol needs to be valid.
 ///
@@ -603,8 +640,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   int extra_attr = 0;                 // attributes when n_extra != 0
   static char *at_end_str = "";       // used for p_extra when displaying curwin->w_p_lcs_chars.eol
                                       // at end-of-line
-  int lcs_eol_one = wp->w_p_lcs_chars.eol;     // 'eol'  until it's been used
-  int lcs_prec_todo = wp->w_p_lcs_chars.prec;  // 'prec' until it's been used
   bool has_fold = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
 
   // saved "extra" items for when draw_state becomes WL_LINE (again)
@@ -667,8 +702,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   hlf_T diff_hlf = (hlf_T)0;            // type of diff highlighting
   int change_start = MAXCOL;            // first col of changed area
   int change_end = -1;                  // last col of changed area
-  colnr_T trailcol = MAXCOL;            // start of trailing spaces
-  colnr_T leadcol = 0;                  // start of leading spaces
   bool in_multispace = false;           // in multiple consecutive spaces
   int multispace_pos = 0;               // position in lcs-multispace string
   bool need_showbreak = false;          // overlong line, skip first x chars
@@ -997,6 +1030,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     }
   }
 
+  colnr_T trailcol = MAXCOL;  // start of trailing spaces
+  colnr_T leadcol = 0;        // start of leading spaces
+
+  int lcs_eol_one = wp->w_p_lcs_chars.eol;     // 'eol'  until it's been used
+  int lcs_prec_todo = wp->w_p_lcs_chars.prec;  // 'prec' until it's been used
+
   if (wp->w_p_list && !has_fold && !end_fill) {
     if (wp->w_p_lcs_chars.space
         || wp->w_p_lcs_chars.multispace != NULL
@@ -1006,28 +1045,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         || wp->w_p_lcs_chars.nbsp) {
       extra_check = true;
     }
-    // find start of trailing whitespace
-    if (wp->w_p_lcs_chars.trail) {
-      trailcol = (colnr_T)strlen(ptr);
-      while (trailcol > (colnr_T)0 && ascii_iswhite(ptr[trailcol - 1])) {
-        trailcol--;
-      }
-      trailcol += (colnr_T)(ptr - line);
-    }
-    // find end of leading whitespace
-    if (wp->w_p_lcs_chars.lead || wp->w_p_lcs_chars.leadmultispace != NULL) {
-      leadcol = 0;
-      while (ascii_iswhite(ptr[leadcol])) {
-        leadcol++;
-      }
-      if (ptr[leadcol] == NUL) {
-        // in a line full of spaces all of them are treated as trailing
-        leadcol = (colnr_T)0;
-      } else {
-        // keep track of the first column not filled with spaces
-        leadcol += (colnr_T)(ptr - line) + 1;
-      }
-    }
+  }
+
+  if (wp->w_p_list && !has_fold && !end_fill) {
+    trailcol = get_trailcol(wp, ptr, line);
+    leadcol = get_leadcol(wp, ptr, line);
   }
 
   // 'nowrap' or 'wrap' and a single line that doesn't fit: Advance to the
