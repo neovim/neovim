@@ -109,7 +109,7 @@ static hashtab_T compat_hashtab;
 /// Used for checking if local variables or arguments used in a lambda.
 bool *eval_lavars_used = NULL;
 
-#define SCRIPT_SV(id) (SCRIPT_ITEM(id).sn_vars)
+#define SCRIPT_SV(id) (SCRIPT_ITEM(id)->sn_vars)
 #define SCRIPT_VARS(id) (SCRIPT_SV(id)->sv_dict.dv_hashtab)
 
 static int echo_attr = 0;   // attributes used for ":echo"
@@ -7177,7 +7177,7 @@ void new_script_vars(scid_T id)
 {
   scriptvar_T *sv = xcalloc(1, sizeof(scriptvar_T));
   init_var_dict(&sv->sv_dict, &sv->sv_var, VAR_SCOPE);
-  SCRIPT_ITEM(id).sn_vars = sv;
+  SCRIPT_ITEM(id)->sn_vars = sv;
 }
 
 /// Initialize dictionary "dict" as a scope and set variable "dict_var" to
