@@ -26,9 +26,11 @@ if exists('s:did_load')
   set viewoptions&
   set viewoptions+=options
   set switchbuf=
-  " Make "Q" switch to Ex mode.
-  " This does not work for all tests.
-  nnoremap Q gQ
+  if g:testname !~ 'test_mapping.vim$'
+    " Make "Q" switch to Ex mode.
+    " This does not work for all tests.
+    nnoremap Q gQ
+  endif
 endif
 
 " Common preparations for running tests.

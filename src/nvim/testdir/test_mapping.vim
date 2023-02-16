@@ -934,6 +934,39 @@ func Test_abbr_remove()
   call assert_equal({}, maparg('foo', 'i', 1, 1))
 endfunc
 
+" Trigger an abbreviation using a special key
+func Test_abbr_trigger_special()
+  new
+  iabbr teh the
+  call feedkeys("iteh\<F2>\<Esc>", 'xt')
+  call assert_equal('the<F2>', getline(1))
+  iunab teh
+  close!
+endfunc
+
+" Test for '<' in 'cpoptions'
+func Test_map_cpo_special_keycode()
+  set cpo-=<
+  imap x<Bslash>k Test
+  let d = maparg('x<Bslash>k', 'i', 0, 1)
+  call assert_equal(['x\k', 'Test', 'i'], [d.lhs, d.rhs, d.mode])
+  call feedkeys(":imap x\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"imap x\k', @:)
+  iunmap x<Bslash>k
+  " Nvim: no "<" flag in 'cpoptions'.
+  " set cpo+=<
+  " imap x<Bslash>k Test
+  " let d = maparg('x<Bslash>k', 'i', 0, 1)
+  " call assert_equal(['x<Bslash>k', 'Test', 'i'], [d.lhs, d.rhs, d.mode])
+  " call feedkeys(":imap x\<C-A>\<C-B>\"\<CR>", 'tx')
+  " call assert_equal('"imap x<Bslash>k', @:)
+  " iunmap x<Bslash>k
+  set cpo-=<
+  " Modifying 'cpo' above adds some default mappings, remove them
+  mapclear
+  mapclear!
+endfunc
+
 func Test_map_cmdkey_redo()
   func SelectDash()
     call search('^---\n\zs', 'bcW')
