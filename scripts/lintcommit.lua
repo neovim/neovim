@@ -130,7 +130,7 @@ local function validate_commit(commit_message)
 
   -- Allow lowercase or ALL_UPPER but not Titlecase.
   if after_colon:match('^ *%u%l') then
-    return [[Description should not be Capitalized.]]
+    return [[Description first word should not be Capitalized.]]
   end
 
   -- Check that description isn't just whitespaces
