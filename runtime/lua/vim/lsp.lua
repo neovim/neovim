@@ -2126,7 +2126,6 @@ function lsp.omnifunc(findstart, base)
 
   local params = util.make_position_params()
 
-  local items = {}
   lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, result, ctx)
     if err or not result or vim.fn.mode() ~= 'i' then
       return
@@ -2153,9 +2152,7 @@ function lsp.omnifunc(findstart, base)
     local startbyte = adjust_start_col(pos[1], line, candidates, encoding) or textMatch
     local prefix = line:sub(startbyte + 1, pos[2])
     local matches = util.text_document_completion_list_to_complete_items(result, prefix)
-    -- TODO(ashkan): is this the best way to do this?
-    vim.list_extend(items, matches)
-    vim.fn.complete(startbyte + 1, items)
+    vim.fn.complete(startbyte + 1, matches)
   end)
 
   -- Return -2 to signal that we should continue completion so that we can
