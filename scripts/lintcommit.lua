@@ -129,8 +129,8 @@ local function validate_commit(commit_message)
   end
 
   -- Allow lowercase or ALL_UPPER but not Titlecase.
-  if after_colon:match(' *%u%l') then
-    return [[Description should not be Capitalized.]]
+  if after_colon:match('^ *%u%l') then
+    return [[Description first word should not be Capitalized.]]
   end
 
   -- Check that description isn't just whitespaces
@@ -232,7 +232,7 @@ function M._test()
     ['ci( ): whitespace as scope'] = false,
     ['ci: period at end of sentence.'] = false,
     ['ci: Capitalized first word'] = false,
-    ['ci: UPPER_CASE first word'] = true,
+    ['ci: UPPER_CASE First Word'] = true,
     ['unknown: using unknown type'] = false,
     ['ci: you\'re saying this commit message just goes on and on and on and on and on and on for way too long?'] = false,
   }
