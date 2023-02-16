@@ -7,6 +7,7 @@ local eq = helpers.eq
 local eval = helpers.eval
 local funcs, meths, exec_lua = helpers.funcs, helpers.meths, helpers.exec_lua
 local is_os = helpers.is_os
+local assert_alive = helpers.assert_alive
 
 describe('screen', function()
   local screen
@@ -989,6 +990,26 @@ local function screen_tests(linegrid)
         {0:~           }|
                     |
       ]])
+    end)
+
+    it('does not crash if it causes a scroll #22278', function()
+      screen:try_resize(35, 14)
+      command('set laststatus=2 linebreak')
+      insert([[
+        x xxx xxxxxxxx xx xxx xxx xxxxxx xxxx x xxxxx xxx xxxxxxx x xxx xxxx xxxxxx xxx xxxxxxxxxx xxxxx xxxxx xx xxxxxx xxx xx xxxxxx
+
+        xxxxx xxxxx xxxxx xx xxxxx xxxxxx xx xxxxx xxxxxxx xxx xxxxxx xx xxxxx xxxx xxxx xxxxxx xxxx xxxx xxxxxx xx xxxxxx xxxx xx xxx xxxx xxxxx xxxxx xxxx xxxxx xxxxxxxx xx xx xxxxx xxxx xxxxx xxxx xxxxxxxxx xx xxxx xxx xxxxx xxx xxxx xxx xxxxx xxxx xx xxxxxx xxx xxxx xxxx xxx xxxx xxxx xx xxxx xxxxx x xxxx xxx xxxxx xxxxxxxxxxxxx x xxxxxxxxxxxxxxx xxxxxxx x xxxxx xxxxx x xxx xxxxxx xx xxxxxxxx xxxx xxxxx]])
+      screen:try_resize(35, 21)
+      screen:try_resize(35, 14)
+      assert_alive()
+      screen:try_resize(35, 21)
+      command('tabnew')
+      screen:try_resize(35, 14)
+      exec_lua([[
+        vim.cmd.tabprev()
+        vim.wo.signcolumn = 'yes'
+      ]])
+      assert_alive()
     end)
   end)
 

@@ -401,6 +401,9 @@ void win_scroll_lines(win_T *wp, int row, int line_count)
     return;
   }
 
+  // Make sure the size of the window's grid is correct.
+  win_grid_alloc(wp);
+
   if (line_count < 0) {
     grid_del_lines(&wp->w_grid, row, -line_count,
                    wp->w_grid.rows, 0, wp->w_grid.cols);
