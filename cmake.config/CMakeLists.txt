@@ -161,18 +161,9 @@ configure_file (
   "${PROJECT_BINARY_DIR}/cmake.config/auto/config.h"
   )
 
-# TODO(dundargoc): the following is a hack to work around the behavior of
-# file(GENERATE) for multi-config generators, since it doesn't allow different
-# output with the same filename. This should be fixed to be generator
-# independent in the future.
-get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-if(isMultiConfig)
-  configure_file(versiondef-multi.h.in auto/versiondef.h.gen)
-else()
-  configure_file(versiondef.h.in auto/versiondef.h.gen)
-endif()
+configure_file(versiondef.h.in auto/versiondef.h.gen)
 file(GENERATE
-  OUTPUT "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h"
+  OUTPUT "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef-$<CONFIG>.h"
   INPUT "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h.gen")
 
 find_program(WHOAMI_PRG whoami)
