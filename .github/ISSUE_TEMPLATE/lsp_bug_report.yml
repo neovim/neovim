@@ -46,7 +46,7 @@ body:
           pattern = pattern,
           callback = function(args)
             local match = vim.fs.find(root_markers, { path = args.file, upward = true })[1]
-            local root_dir = match and vim.fn.fnamemodify(match, ':p:h') or vim.NIL
+            local root_dir = match and vim.fn.fnamemodify(match, ':p:h') or nil
             vim.lsp.start({
               name = 'bugged-ls',
               cmd = cmd,
