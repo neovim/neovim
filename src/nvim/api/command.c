@@ -350,20 +350,24 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     } \
   } while (0)
 
-#define VALIDATION_ERROR(...) \
+#define VALIDATE_MOD(cond, mod_, name_) \
   do { \
-    api_set_error(err, kErrorTypeValidation, __VA_ARGS__); \
-    goto end; \
+    if (!(cond)) { \
+      api_set_error(err, kErrorTypeValidation, "Command cannot accept %s: %s", (mod_), (name_)); \
+      goto end; \
+    } \
   } while (0)
 
   bool output;
   OBJ_TO_BOOL(output, opts->output, false, "'output'");
 
-  // First, parse the command name and check if it exists and is valid.
-  if (!HAS_KEY(cmd->cmd) || cmd->cmd.type != kObjectTypeString
-      || cmd->cmd.data.string.data[0] == NUL) {
-    VALIDATION_ERROR("'cmd' must be a non-empty String");
-  }
+  VALIDATE_R(HAS_KEY(cmd->cmd), "cmd", {
+    goto end;
+  });
+  VALIDATE_EXP((cmd->cmd.type == kObjectTypeString && cmd->cmd.data.string.data[0] != NUL),
+               "cmd", "non-empty String", NULL, {
+    goto end;
+  });
 
   cmdname = string_to_cstr(cmd->cmd.data.string);
   ea.cmd = cmdname;
@@ -382,12 +386,12 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     p = (ret && !aborting()) ? find_ex_command(&ea, NULL) : ea.cmd;
   }
 
-  if (p == NULL || ea.cmdidx == CMD_SIZE) {
-    VALIDATION_ERROR("Command not found: %s", cmdname);
-  }
-  if (is_cmd_ni(ea.cmdidx)) {
-    VALIDATION_ERROR("Command not implemented: %s", cmdname);
-  }
+  VALIDATE((p != NULL && ea.cmdidx != CMD_SIZE), "Command not found: %s", cmdname, {
+    goto end;
+  });
+  VALIDATE(!is_cmd_ni(ea.cmdidx), "Command not implemented: %s", cmdname, {
+    goto end;
+  });
 
   // Get the command flags so that we can know what type of arguments the command uses.
   // Not required for a user command since `find_ex_command` already deals with it in that case.
@@ -397,9 +401,9 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
 
   // Parse command arguments since it's needed to get the command address type.
   if (HAS_KEY(cmd->args)) {
-    if (cmd->args.type != kObjectTypeArray) {
-      VALIDATION_ERROR("'args' must be an Array");
-    }
+    VALIDATE_T("args", kObjectTypeArray, cmd->args.type, {
+      goto end;
+    });
 
     // Process all arguments. Convert non-String arguments to String and check if String arguments
     // have non-whitespace characters.
@@ -421,14 +425,15 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
         snprintf(data_str, NUMBUFLEN, "%" PRId64, elem.data.integer);
         break;
       case kObjectTypeString:
-        if (string_iswhite(elem.data.string)) {
-          VALIDATION_ERROR("String command argument must have at least one non-whitespace "
-                           "character");
-        }
+        VALIDATE_EXP(!string_iswhite(elem.data.string), "command arg", "non-whitespace", NULL, {
+          goto end;
+        });
         data_str = xstrndup(elem.data.string.data, elem.data.string.size);
         break;
       default:
-        VALIDATION_ERROR("Invalid type for command argument");
+        VALIDATE_EXP(false, "command arg", "valid type", api_typename(elem.type), {
+          goto end;
+        });
         break;
       }
 
@@ -456,9 +461,9 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
       break;
     }
 
-    if (!argc_valid) {
-      VALIDATION_ERROR("Incorrect number of arguments supplied");
-    }
+    VALIDATE(argc_valid, "%s", "Wrong number of arguments", {
+      goto end;
+    });
   }
 
   // Simply pass the first argument (if it exists) as the arg pointer to `set_cmd_addr_type()`
@@ -466,22 +471,23 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
   set_cmd_addr_type(&ea, args.size > 0 ? args.items[0].data.string.data : NULL);
 
   if (HAS_KEY(cmd->range)) {
-    if (!(ea.argt & EX_RANGE)) {
-      VALIDATION_ERROR("Command cannot accept a range");
-    } else if (cmd->range.type != kObjectTypeArray) {
-      VALIDATION_ERROR("'range' must be an Array");
-    } else if (cmd->range.data.array.size > 2) {
-      VALIDATION_ERROR("'range' cannot contain more than two elements");
-    }
+    VALIDATE_MOD((ea.argt & EX_RANGE), "range", cmd->cmd.data.string.data);
+    VALIDATE_T("range", kObjectTypeArray, cmd->range.type, {
+      goto end;
+    });
+    VALIDATE_EXP((cmd->range.data.array.size <= 2), "range", "<=2 elements", NULL, {
+      goto end;
+    });
 
     Array range = cmd->range.data.array;
     ea.addr_count = (int)range.size;
 
     for (size_t i = 0; i < range.size; i++) {
       Object elem = range.items[i];
-      if (elem.type != kObjectTypeInteger || elem.data.integer < 0) {
-        VALIDATION_ERROR("'range' element must be a non-negative Integer");
-      }
+      VALIDATE_EXP((elem.type == kObjectTypeInteger && elem.data.integer >= 0),
+                   "range element", "non-negative Integer", NULL, {
+        goto end;
+      });
     }
 
     if (range.size > 0) {
@@ -489,9 +495,9 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
       ea.line2 = (linenr_T)range.items[range.size - 1].data.integer;
     }
 
-    if (invalid_range(&ea) != NULL) {
-      VALIDATION_ERROR("Invalid range provided");
-    }
+    VALIDATE_S((invalid_range(&ea) == NULL), "range", "", {
+      goto end;
+    });
   }
   if (ea.addr_count == 0) {
     if (ea.argt & EX_DFLALL) {
@@ -507,38 +513,38 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
   }
 
   if (HAS_KEY(cmd->count)) {
-    if (!(ea.argt & EX_COUNT)) {
-      VALIDATION_ERROR("Command cannot accept a count");
-    } else if (cmd->count.type != kObjectTypeInteger || cmd->count.data.integer < 0) {
-      VALIDATION_ERROR("'count' must be a non-negative Integer");
-    }
+    VALIDATE_MOD((ea.argt & EX_COUNT), "count", cmd->cmd.data.string.data);
+    VALIDATE_EXP((cmd->count.type == kObjectTypeInteger && cmd->count.data.integer >= 0),
+                 "count", "non-negative Integer", NULL, {
+      goto end;
+    });
     set_cmd_count(&ea, (linenr_T)cmd->count.data.integer, true);
   }
 
   if (HAS_KEY(cmd->reg)) {
-    if (!(ea.argt & EX_REGSTR)) {
-      VALIDATION_ERROR("Command cannot accept a register");
-    } else if (cmd->reg.type != kObjectTypeString || cmd->reg.data.string.size != 1) {
-      VALIDATION_ERROR("'reg' must be a single character");
-    }
+    VALIDATE_MOD((ea.argt & EX_REGSTR), "register", cmd->cmd.data.string.data);
+    VALIDATE_EXP((cmd->reg.type == kObjectTypeString && cmd->reg.data.string.size == 1),
+                 "reg", "single character", cmd->reg.data.string.data, {
+      goto end;
+    });
     char regname = cmd->reg.data.string.data[0];
-    if (regname == '=') {
-      VALIDATION_ERROR("Cannot use register \"=");
-    } else if (!valid_yank_reg(regname, ea.cmdidx != CMD_put && !IS_USER_CMDIDX(ea.cmdidx))) {
-      VALIDATION_ERROR("Invalid register: \"%c", regname);
-    }
+    VALIDATE((regname != '='), "%s", "Cannot use register \"=", {
+      goto end;
+    });
+    VALIDATE(valid_yank_reg(regname, ea.cmdidx != CMD_put && !IS_USER_CMDIDX(ea.cmdidx)),
+             "Invalid register: \"%c", regname, {
+      goto end;
+    });
     ea.regname = (uint8_t)regname;
   }
 
   OBJ_TO_BOOL(ea.forceit, cmd->bang, false, "'bang'");
-  if (ea.forceit && !(ea.argt & EX_BANG)) {
-    VALIDATION_ERROR("Command cannot accept a bang");
-  }
+  VALIDATE_MOD((!ea.forceit || (ea.argt & EX_BANG)), "bang", cmd->cmd.data.string.data);
 
   if (HAS_KEY(cmd->magic)) {
-    if (cmd->magic.type != kObjectTypeDictionary) {
-      VALIDATION_ERROR("'magic' must be a Dictionary");
-    }
+    VALIDATE_T_DICT("magic", cmd->magic, {
+      goto end;
+    });
 
     Dict(cmd_magic) magic = { 0 };
     if (!api_dict_to_keydict(&magic, KeyDict_cmd_magic_get_field,
@@ -559,9 +565,9 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
   }
 
   if (HAS_KEY(cmd->mods)) {
-    if (cmd->mods.type != kObjectTypeDictionary) {
-      VALIDATION_ERROR("'mods' must be a Dictionary");
-    }
+    VALIDATE_T_DICT("mods", cmd->mods, {
+      goto end;
+    });
 
     Dict(cmd_mods) mods = { 0 };
     if (!api_dict_to_keydict(&mods, KeyDict_cmd_mods_get_field, cmd->mods.data.dictionary, err)) {
@@ -569,9 +575,9 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     }
 
     if (HAS_KEY(mods.filter)) {
-      if (mods.filter.type != kObjectTypeDictionary) {
-        VALIDATION_ERROR("'mods.filter' must be a Dictionary");
-      }
+      VALIDATE_T_DICT("mods.filter", mods.filter, {
+        goto end;
+      });
 
       Dict(cmd_mods_filter) filter = { 0 };
 
@@ -581,9 +587,9 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
       }
 
       if (HAS_KEY(filter.pattern)) {
-        if (filter.pattern.type != kObjectTypeString) {
-          VALIDATION_ERROR("'mods.filter.pattern' must be a String");
-        }
+        VALIDATE_T2(filter.pattern, kObjectTypeString, {
+          goto end;
+        });
 
         OBJ_TO_BOOL(cmdinfo.cmdmod.cmod_filter_force, filter.force, false, "'mods.filter.force'");
 
@@ -598,18 +604,20 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     }
 
     if (HAS_KEY(mods.tab)) {
-      if (mods.tab.type != kObjectTypeInteger) {
-        VALIDATION_ERROR("'mods.tab' must be an Integer");
-      } else if ((int)mods.tab.data.integer >= 0) {
+      VALIDATE_T2(mods.tab, kObjectTypeInteger, {
+        goto end;
+      });
+      if ((int)mods.tab.data.integer >= 0) {
         // Silently ignore negative integers to allow mods.tab to be set to -1.
         cmdinfo.cmdmod.cmod_tab = (int)mods.tab.data.integer + 1;
       }
     }
 
     if (HAS_KEY(mods.verbose)) {
-      if (mods.verbose.type != kObjectTypeInteger) {
-        VALIDATION_ERROR("'mods.verbose' must be an Integer");
-      } else if ((int)mods.verbose.data.integer >= 0) {
+      VALIDATE_T2(mods.verbose, kObjectTypeInteger, {
+        goto end;
+      });
+      if ((int)mods.verbose.data.integer >= 0) {
         // Silently ignore negative integers to allow mods.verbose to be set to -1.
         cmdinfo.cmdmod.cmod_verbose = (int)mods.verbose.data.integer + 1;
       }
@@ -624,9 +632,9 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     cmdinfo.cmdmod.cmod_split |= (horizontal ? WSP_HOR : 0);
 
     if (HAS_KEY(mods.split)) {
-      if (mods.split.type != kObjectTypeString) {
-        VALIDATION_ERROR("'mods.split' must be a String");
-      }
+      VALIDATE_T2(mods.split, kObjectTypeString, {
+        goto end;
+      });
 
       if (*mods.split.data.string.data == NUL) {
         // Empty string, do nothing.
@@ -641,7 +649,9 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
       } else if (strcmp(mods.split.data.string.data, "botright") == 0) {
         cmdinfo.cmdmod.cmod_split |= WSP_BOT;
       } else {
-        VALIDATION_ERROR("Invalid value for 'mods.split'");
+        VALIDATE_S(false, "mods.split", "", {
+          goto end;
+        });
       }
     }
 
@@ -666,9 +676,10 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
       cmdinfo.cmdmod.cmod_flags |= CMOD_SILENT;
     }
 
-    if ((cmdinfo.cmdmod.cmod_flags & CMOD_SANDBOX) && !(ea.argt & EX_SBOXOK)) {
-      VALIDATION_ERROR("Command cannot be run in sandbox");
-    }
+    VALIDATE(!((cmdinfo.cmdmod.cmod_flags & CMOD_SANDBOX) && !(ea.argt & EX_SBOXOK)),
+             "%s", "Command cannot be run in sandbox", {
+      goto end;
+    });
   }
 
   // Finally, build the command line string that will be stored inside ea.cmdlinep.
@@ -739,7 +750,7 @@ end:
 
 #undef OBJ_TO_BOOL
 #undef OBJ_TO_CMOD_FLAG
-#undef VALIDATION_ERROR
+#undef VALIDATE_MOD
 }
 
 /// Check if a string contains only whitespace characters.
