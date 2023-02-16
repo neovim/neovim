@@ -891,7 +891,7 @@ Note: these are typed literally, they are not special keys!
 		   to form a C expression.  E.g., when the cursor is on "arg"
 		   of "ptr->arg" then the result is "ptr->arg"; when the
 		   cursor is on "]" of "list[idx]" then the result is
-		   "list[idx]".  This is used for |v:beval_text|.
+		   "list[idx]".
 							*:<cfile>* *<cfile>*
 	<cfile>    is replaced with the path name under the cursor (like what
 		   |gf| uses)

@@ -1670,38 +1670,6 @@ v:argv		The command line arguments Vim was invoked with.  This is a
 		list of strings.  The first item is the Vim command.
 		See |v:progpath| for the command with full path.
 
-					*v:beval_col* *beval_col-variable*
-v:beval_col	The number of the column, over which the mouse pointer is.
-		This is the byte index in the |v:beval_lnum| line.
-		Only valid while evaluating the 'balloonexpr' option.
-
-					*v:beval_bufnr* *beval_bufnr-variable*
-v:beval_bufnr	The number of the buffer, over which the mouse pointer is. Only
-		valid while evaluating the 'balloonexpr' option.
-
-					*v:beval_lnum* *beval_lnum-variable*
-v:beval_lnum	The number of the line, over which the mouse pointer is. Only
-		valid while evaluating the 'balloonexpr' option.
-
-					*v:beval_text* *beval_text-variable*
-v:beval_text	The text under or after the mouse pointer.  Usually a word as
-		it is useful for debugging a C program.  'iskeyword' applies,
-		but a dot and "->" before the position is included.  When on a
-		']' the text before it is used, including the matching '[' and
-		word before it.  When on a Visual area within one line the
-		highlighted text is used.  Also see |<cexpr>|.
-		Only valid while evaluating the 'balloonexpr' option.
-
-					*v:beval_winnr* *beval_winnr-variable*
-v:beval_winnr	The number of the window, over which the mouse pointer is. Only
-		valid while evaluating the 'balloonexpr' option.  The first
-		window has number zero (unlike most other places where a
-		window gets a number).
-
-					*v:beval_winid* *beval_winid-variable*
-v:beval_winid	The |window-ID| of the window, over which the mouse pointer
-		is.  Otherwise like v:beval_winnr.
-
 					*v:char* *char-variable*
 v:char		Argument for evaluating 'formatexpr' and used for the typed
 		character when using <expr> in an abbreviation |:map-<expr>|.
@@ -4244,8 +4212,8 @@ Textlock							*textlock*
 In a few situations it is not allowed to change the text in the buffer, jump
 to another window and some other things that might confuse or break what Vim
 is currently doing.  This mostly applies to things that happen when Vim is
-actually doing something else.  For example, evaluating the 'balloonexpr' may
-happen any moment the mouse cursor is resting at some position.
+actually doing something else.  For example, a TextYankPost autocommand cannot
+edit the text it is yanking.
 
 This is not allowed when the textlock is active:
 	- changing the buffer text
