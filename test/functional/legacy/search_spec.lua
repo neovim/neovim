@@ -290,8 +290,8 @@ describe('search cmdline', function()
     -- First match
     feed('/thei')
     screen:expect([[
+        3 the             |
         4 {inc:thei}r           |
-        5 there           |
       /thei^               |
     ]])
     -- Match from initial cursor position when modifying search
