@@ -760,7 +760,9 @@ function M.rename(old_fname, new_fname, opts)
 
   -- The there may be pending changes in the buffer
   if vim.fn.isdirectory(old_fname) == 0 then
-    api.nvim_buf_call(oldbuf, function() vim.cmd('w!') end)
+    api.nvim_buf_call(oldbuf, function()
+      vim.cmd('w!')
+    end)
   end
 
   local ok, err = os.rename(old_fname, new_fname)
