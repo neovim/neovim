@@ -73,7 +73,7 @@ struct source_cookie {
 #endif
 
 garray_T exestack = { 0, 0, sizeof(estack_T), 50, NULL };
-garray_T script_items = { 0, 0, sizeof(scriptitem_T), 4, NULL };
+garray_T script_items = { 0, 0, sizeof(scriptitem_T *), 20, NULL };
 
 /// Initialize the execution stack.
 void estack_init(void)
@@ -144,7 +144,7 @@ char *estack_sfile(estack_arg_T which)
                                        ? &entry->es_info.ufunc->uf_script_ctx
                                        : &entry->es_info.aucmd->script_ctx);
         return def_ctx->sc_sid > 0
-                ? xstrdup((SCRIPT_ITEM(def_ctx->sc_sid).sn_name))
+                ? xstrdup((SCRIPT_ITEM(def_ctx->sc_sid)->sn_name))
                 : NULL;
       } else if (entry->es_type == ETYPE_SCRIPT) {
         return xstrdup(entry->es_name);
@@ -1844,13 +1844,18 @@ scriptitem_T *new_script_item(char *const name, scid_T *const sid_out)
   }
   ga_grow(&script_items, sid - script_items.ga_len);
   while (script_items.ga_len < sid) {
+    scriptitem_T *si = xcalloc(1, sizeof(scriptitem_T));
     script_items.ga_len++;
-    SCRIPT_ITEM(script_items.ga_len).sn_name = NULL;
-    SCRIPT_ITEM(script_items.ga_len).sn_prof_on = false;
+    SCRIPT_ITEM(script_items.ga_len) = si;
+    si->sn_name = NULL;
+
+    // Allocate the local script variables to use for this script.
+    new_script_vars(script_items.ga_len);
+
+    si->sn_prof_on = false;
   }
-  SCRIPT_ITEM(sid).sn_name = name;
-  new_script_vars(sid);  // Allocate the local script variables to use for this script.
-  return &SCRIPT_ITEM(sid);
+  SCRIPT_ITEM(sid)->sn_name = name;
+  return SCRIPT_ITEM(sid);
 }
 
 static int source_using_linegetter(void *cookie, LineGetter fgetline, const char *traceback_name)
@@ -2118,7 +2123,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
 
   if (l_do_profiling == PROF_YES) {
     // Get "si" again, "script_items" may have been reallocated.
-    si = &SCRIPT_ITEM(current_sctx.sc_sid);
+    si = SCRIPT_ITEM(current_sctx.sc_sid);
     if (si->sn_prof_on) {
       si->sn_pr_start = profile_end(si->sn_pr_start);
       si->sn_pr_start = profile_sub_wait(wait_start, si->sn_pr_start);
@@ -2198,7 +2203,7 @@ scriptitem_T *get_current_script_id(char **fnamep, sctx_T *ret_sctx)
     //   inode number, even though to the user it is the same script.
     // - If a script is deleted and another script is written, with a
     //   different name, the inode may be re-used.
-    si = &SCRIPT_ITEM(script_sctx.sc_sid);
+    si = SCRIPT_ITEM(script_sctx.sc_sid);
     if (si->sn_name != NULL && path_fnamecmp(si->sn_name, *fnamep) == 0) {
       // Found it!
       break;
@@ -2224,7 +2229,7 @@ void ex_scriptnames(exarg_T *eap)
       emsg(_(e_invarg));
     } else {
       if (eap->addr_count > 0) {
-        eap->arg = SCRIPT_ITEM(eap->line2).sn_name;
+        eap->arg = SCRIPT_ITEM(eap->line2)->sn_name;
       } else {
         expand_env(eap->arg, NameBuff, MAXPATHL);
         eap->arg = NameBuff;
@@ -2235,8 +2240,8 @@ void ex_scriptnames(exarg_T *eap)
   }
 
   for (int i = 1; i <= script_items.ga_len && !got_int; i++) {
-    if (SCRIPT_ITEM(i).sn_name != NULL) {
-      home_replace(NULL, SCRIPT_ITEM(i).sn_name, NameBuff, MAXPATHL, true);
+    if (SCRIPT_ITEM(i)->sn_name != NULL) {
+      home_replace(NULL, SCRIPT_ITEM(i)->sn_name, NameBuff, MAXPATHL, true);
       vim_snprintf(IObuff, IOSIZE, "%3d: %s", i, NameBuff);
       if (!message_filtered(IObuff)) {
         msg_putchar('\n');
@@ -2252,8 +2257,8 @@ void ex_scriptnames(exarg_T *eap)
 void scriptnames_slash_adjust(void)
 {
   for (int i = 1; i <= script_items.ga_len; i++) {
-    if (SCRIPT_ITEM(i).sn_name != NULL) {
-      slash_adjust(SCRIPT_ITEM(i).sn_name);
+    if (SCRIPT_ITEM(i)->sn_name != NULL) {
+      slash_adjust(SCRIPT_ITEM(i)->sn_name);
     }
   }
 }
@@ -2287,7 +2292,7 @@ char *get_scriptname(LastSet last_set, bool *should_free)
   case SID_STR:
     return _("anonymous :source");
   default: {
-    char *const sname = SCRIPT_ITEM(last_set.script_ctx.sc_sid).sn_name;
+    char *const sname = SCRIPT_ITEM(last_set.script_ctx.sc_sid)->sn_name;
     if (sname == NULL) {
       snprintf(IObuff, IOSIZE, _("anonymous :source (script id %d)"),
                last_set.script_ctx.sc_sid);
@@ -2305,8 +2310,17 @@ void free_scriptnames(void)
 {
   profile_reset();
 
-# define FREE_SCRIPTNAME(item) xfree((item)->sn_name)
-  GA_DEEP_CLEAR(&script_items, scriptitem_T, FREE_SCRIPTNAME);
+# define FREE_SCRIPTNAME(item) \
+  do { \
+    scriptitem_T *_si = *(item); \
+    /* the variables themselves are cleared in evalvars_clear() */ \
+    xfree(_si->sn_vars); \
+    xfree(_si->sn_name); \
+    ga_clear(&_si->sn_prl_ga); \
+    xfree(_si); \
+  } while (0) \
+
+  GA_DEEP_CLEAR(&script_items, scriptitem_T *, FREE_SCRIPTNAME);
 }
 #endif
 
