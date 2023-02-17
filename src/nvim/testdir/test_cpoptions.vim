@@ -217,33 +217,33 @@ endfunc
 
 " Test for the 'g' flag in 'cpo' (jump to line 1 when re-editing a file)
 func Test_cpo_g()
-  throw 'Skipped: Nvim does not support cpoptions flag "g"'
   let save_cpo = &cpo
   new test_cpoptions.vim
   set cpo-=g
   normal 20G
   edit
   call assert_equal(20, line('.'))
-  set cpo+=g
-  edit
-  call assert_equal(1, line('.'))
+  " Nvim: no "g" flag in 'cpoptions'.
+  " set cpo+=g
+  " edit
+  " call assert_equal(1, line('.'))
   close!
   let &cpo = save_cpo
 endfunc
 
 " Test for inserting text in a line with only spaces ('H' flag in 'cpoptions')
 func Test_cpo_H()
-  throw 'Skipped: Nvim does not support cpoptions flag "H"'
   let save_cpo = &cpo
   new
   set cpo-=H
   call setline(1, '    ')
   normal! Ia
   call assert_equal('    a', getline(1))
-  set cpo+=H
-  call setline(1, '    ')
-  normal! Ia
-  call assert_equal('   a ', getline(1))
+  " Nvim: no "H" flag in 'cpoptions'.
+  " set cpo+=H
+  " call setline(1, '    ')
+  " normal! Ia
+  " call assert_equal('   a ', getline(1))
   close!
   let &cpo = save_cpo
 endfunc
@@ -560,15 +560,15 @@ endfunc
 " Test for the 'w' flag in 'cpo' ('cw' on a blank character changes only one
 " character)
 func Test_cpo_w()
-  throw 'Skipped: Nvim does not support cpoptions flag "w"'
   let save_cpo = &cpo
   new
-  set cpo+=w
-  call setline(1, 'here      are   some words')
-  norm! 1gg0elcwZZZ
-  call assert_equal('hereZZZ     are   some words', getline('.'))
-  norm! 1gg2elcWYYY
-  call assert_equal('hereZZZ     areYYY  some words', getline('.'))
+  " Nvim: no "w" flag in 'cpoptions'.
+  " set cpo+=w
+  " call setline(1, 'here      are   some words')
+  " norm! 1gg0elcwZZZ
+  " call assert_equal('hereZZZ     are   some words', getline('.'))
+  " norm! 1gg2elcWYYY
+  " call assert_equal('hereZZZ     areYYY  some words', getline('.'))
   set cpo-=w
   call setline(1, 'here      are   some words')
   norm! 1gg0elcwZZZ
@@ -745,16 +745,16 @@ endfunc
 
 " Test for the '*' flag in 'cpo' (':*' is same as ':@')
 func Test_cpo_star()
-  throw 'Skipped: Nvim does not support cpoptions flag "*"'
   let save_cpo = &cpo
   let x = 0
   new
   set cpo-=*
   let @a = 'let x += 1'
   call assert_fails('*a', 'E20:')
-  set cpo+=*
-  *a
-  call assert_equal(1, x)
+  " Nvim: no "*" flag in 'cpoptions'.
+  " set cpo+=*
+  " *a
+  " call assert_equal(1, x)
   close!
   let &cpo = save_cpo
 endfunc
@@ -815,7 +815,6 @@ endfunc
 
 " Test for the '#' flag in 'cpo' (count before 'D', 'o' and 'O' operators)
 func Test_cpo_hash()
-  throw 'Skipped: Nvim does not support cpoptions flag "#"'
   let save_cpo = &cpo
   new
   set cpo-=#
@@ -827,14 +826,15 @@ func Test_cpo_hash()
   normal gg2Otwo
   call assert_equal(['two', 'two', 'three', 'four', 'four'], getline(1, '$'))
   %d
-  set cpo+=#
-  call setline(1, ['one', 'two', 'three'])
-  normal gg2D
-  call assert_equal(['', 'two', 'three'], getline(1, '$'))
-  normal gg2oone
-  call assert_equal(['', 'one', 'two', 'three'], getline(1, '$'))
-  normal gg2Ozero
-  call assert_equal(['zero', '', 'one', 'two', 'three'], getline(1, '$'))
+  " Nvim: no "#" flag in 'cpoptions'.
+  " set cpo+=#
+  " call setline(1, ['one', 'two', 'three'])
+  " normal gg2D
+  " call assert_equal(['', 'two', 'three'], getline(1, '$'))
+  " normal gg2oone
+  " call assert_equal(['', 'one', 'two', 'three'], getline(1, '$'))
+  " normal gg2Ozero
+  " call assert_equal(['zero', '', 'one', 'two', 'three'], getline(1, '$'))
   close!
   let &cpo = save_cpo
 endfunc
@@ -858,16 +858,16 @@ endfunc
 
 " Test for the '\' flag in 'cpo' (backslash in a [] range in a search pattern)
 func Test_cpo_backslash()
-  throw 'Skipped: Nvim does not support cpoptions flag "\"'
   let save_cpo = &cpo
   new
   call setline(1, ['', " \\-string"])
   set cpo-=\
   exe 'normal gg/[ \-]' .. "\<CR>n"
   call assert_equal(3, col('.'))
-  set cpo+=\
-  exe 'normal gg/[ \-]' .. "\<CR>n"
-  call assert_equal(2, col('.'))
+  " Nvim: no "\" flag in 'cpoptions'.
+  " set cpo+=\
+  " exe 'normal gg/[ \-]' .. "\<CR>n"
+  " call assert_equal(2, col('.'))
   close!
   let &cpo = save_cpo
 endfunc
@@ -877,7 +877,6 @@ endfunc
 " Test for the '{' flag in 'cpo' (the "{" and "}" commands stop at a {
 " character at the start of a line)
 func Test_cpo_brace()
-  throw 'Skipped: Nvim does not support cpoptions flag "{"'
   let save_cpo = &cpo
   new
   call setline(1, ['', '{', '    int i;', '}', ''])
@@ -886,11 +885,12 @@ func Test_cpo_brace()
   call assert_equal(5, line('.'))
   normal G{
   call assert_equal(1, line('.'))
-  set cpo+={
-  normal gg}
-  call assert_equal(2, line('.'))
-  normal G{
-  call assert_equal(2, line('.'))
+  " Nvim: no "{" flag in 'cpoptions'.
+  " set cpo+={
+  " normal gg}
+  " call assert_equal(2, line('.'))
+  " normal G{
+  " call assert_equal(2, line('.'))
   close!
   let &cpo = save_cpo
 endfunc

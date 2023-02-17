@@ -2254,61 +2254,63 @@ func Test_normal29_brace()
   " set cpo+={
   " 1
   " norm! 0d2}
-  " let expected =<< trim [DATA]
-  "   {
-  "   This is no paragraph
-  "   unless the '{' is set
-  "   in 'cpoptions'
-  "   }
-  "   .IP
-  "   The nroff macros IP separates a paragraph
-  "   That means, it must be a '.'
-  "   followed by IP
-  "   .LPIt does not matter, if afterwards some
-  "   more characters follow.
-  "   .SHAlso section boundaries from the nroff
-  "   macros terminate a paragraph. That means
-  "   a character like this:
-  "   .NH
-  "   End of text here
-  "
-  " [DATA]
+
+  let expected =<< trim [DATA]
+    {
+    This is no paragraph
+    unless the '{' is set
+    in 'cpoptions'
+    }
+    .IP
+    The nroff macros IP separates a paragraph
+    That means, it must be a '.'
+    followed by IP
+    .LPIt does not matter, if afterwards some
+    more characters follow.
+    .SHAlso section boundaries from the nroff
+    macros terminate a paragraph. That means
+    a character like this:
+    .NH
+    End of text here
+
+  [DATA]
   " call assert_equal(expected, getline(1, '$'))
-  "
+
   " $
   " norm! d}
-  " let expected =<< trim [DATA]
-  "   {
-  "   This is no paragraph
-  "   unless the '{' is set
-  "   in 'cpoptions'
-  "   }
-  "   .IP
-  "   The nroff macros IP separates a paragraph
-  "   That means, it must be a '.'
-  "   followed by IP
-  "   .LPIt does not matter, if afterwards some
-  "   more characters follow.
-  "   .SHAlso section boundaries from the nroff
-  "   macros terminate a paragraph. That means
-  "   a character like this:
-  "   .NH
-  "   End of text here
-  "
-  " [DATA]
+
+  let expected =<< trim [DATA]
+    {
+    This is no paragraph
+    unless the '{' is set
+    in 'cpoptions'
+    }
+    .IP
+    The nroff macros IP separates a paragraph
+    That means, it must be a '.'
+    followed by IP
+    .LPIt does not matter, if afterwards some
+    more characters follow.
+    .SHAlso section boundaries from the nroff
+    macros terminate a paragraph. That means
+    a character like this:
+    .NH
+    End of text here
+
+  [DATA]
   " call assert_equal(expected, getline(1, '$'))
-  "
+
   " norm! gg}
   " norm! d5}
-  "
-  " let expected =<< trim [DATA]
-  "   {
-  "   This is no paragraph
-  "   unless the '{' is set
-  "   in 'cpoptions'
-  "   }
 
-  " [DATA]
+  let expected =<< trim [DATA]
+    {
+    This is no paragraph
+    unless the '{' is set
+    in 'cpoptions'
+    }
+
+  [DATA]
   " call assert_equal(expected, getline(1, '$'))
 
   " Jumping to a fold should open the fold
