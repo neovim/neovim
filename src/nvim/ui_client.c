@@ -93,6 +93,7 @@ void ui_client_attach(int width, int height, char *term)
     PUT_C(opts, "stdout_tty", BOOLEAN_OBJ(stdout_isatty));
     if (ui_client_forward_stdin) {
       PUT_C(opts, "stdin_fd", INTEGER_OBJ(UI_CLIENT_STDIN_FD));
+      ui_client_forward_stdin = false;  // stdin shouldn't be forwarded again #22292
     }
   }
   ADD_C(args, DICTIONARY_OBJ(opts));
