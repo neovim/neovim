@@ -1194,7 +1194,7 @@ static char *translate_mapping(char_u *str, int cpo_flags)
     }
 
     if (c == ' ' || c == '\t' || c == Ctrl_J || c == Ctrl_V
-        || (c == '\\' && !cpo_bslash)) {
+        || c == '<' || (c == '\\' && !cpo_bslash)) {
       ga_append(&ga, cpo_bslash ? Ctrl_V : '\\');
     }
 

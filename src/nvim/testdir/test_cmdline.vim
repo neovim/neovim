@@ -340,7 +340,7 @@ func Test_map_completion()
   call feedkeys(":map <L\<Tab>\<Home>\"\<CR>", 'xt')
   call assert_equal('"map <Left>', getreg(':'))
   call feedkeys(":map <M\<Tab>\<Home>\"\<CR>", 'xt')
-  " call assert_equal("\"map <M\<Tab>", getreg(':'))
+  call assert_equal("\"map <M\<Tab>", getreg(':'))
   unmap <Left>
 
   " set cpo+=<
@@ -369,7 +369,7 @@ func Test_map_completion()
   call feedkeys(":map <L\<Tab>\<Home>\"\<CR>", 'xt')
   call assert_equal('"map <Left>', getreg(':'))
   unmap <Left>
-  " set cpo-=k
+  set cpo-=k
 
   call assert_fails('call feedkeys(":map \\\\%(\<Tab>\<Home>\"\<CR>", "xt")', 'E53:')
 
