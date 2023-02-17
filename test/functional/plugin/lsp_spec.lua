@@ -2067,6 +2067,8 @@ describe('LSP', function()
   end)
 
   describe('lsp.util.rename', function()
+    local pathsep = helpers.get_pathsep()
+
     it('Can rename an existing file', function()
       local old = helpers.tmpname()
       write_file(old, 'Test content')
@@ -2088,6 +2090,32 @@ describe('LSP', function()
       exists = exec_lua('return vim.loop.fs_stat(...) ~= nil', new)
       eq(true, exists)
       os.remove(new)
+    end)
+    it('Can rename a direcory', function()
+      -- only reserve the name, file must not exist for the test scenario
+      local old_dir = helpers.tmpname()
+      local new_dir = helpers.tmpname()
+      os.remove(old_dir)
+      os.remove(new_dir)
+
+      helpers.mkdir_p(old_dir)
+
+      local file = "file"
+      write_file(old_dir .. pathsep .. file, 'Test content')
+
+      exec_lua([[
+        local old_dir = select(1, ...)
+        local new_dir = select(2, ...)
+
+        vim.lsp.util.rename(old_dir, new_dir)
+      ]], old_dir, new_dir)
+
+      eq(false, exec_lua('return vim.loop.fs_stat(...) ~= nil', old_dir))
+      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', new_dir))
+      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', new_dir .. pathsep .. file))
+      eq('Test content', read_file(new_dir .. pathsep .. file))
+
+      os.remove(new_dir)
     end)
     it('Does not rename file if target exists and ignoreIfExists is set or overwrite is false', function()
       local old = helpers.tmpname()
