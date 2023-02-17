@@ -11,7 +11,7 @@ freebsd_task:
   timeout_in: 30m
   install_script:
     - pkg update -f
-    - pkg install -y cmake gmake ninja libtool automake pkgconf unzip wget gettext python libffi git
+    - pkg install -y cmake gmake ninja pkgconf unzip wget gettext python libffi git
   build_deps_script:
     - gmake deps
   build_script:
