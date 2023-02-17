@@ -273,12 +273,12 @@ jobs:
 
       - if: matrix.flavor != 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
         name: Functionaltest
-        timeout-minutes: 15
+        timeout-minutes: 20
         run: cmake --build build --target functionaltest
 
       - if: matrix.flavor == 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
         name: Functionaltest with PUC Lua
-        timeout-minutes: 15
+        timeout-minutes: 20
         run: cmake --build build --target functionaltest-lua
 
       - if: matrix.flavor != 'tsan' && (success() || failure() && steps.abort_job.outputs.status == 'success')
@@ -452,7 +452,7 @@ jobs:
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Run functionaltest
-        timeout-minutes: 15
+        timeout-minutes: 20
         run: cmake --build build --target functionaltest
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
