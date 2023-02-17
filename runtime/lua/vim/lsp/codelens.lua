@@ -277,7 +277,7 @@ function M.refresh()
     return
   end
   active_refreshes[bufnr] = true
-  vim.lsp.buf_request(0, 'textDocument/codeLens', params, M.on_codelens)
+  vim.lsp.buf_request(0, 'textDocument/codeLens', params)
 end
 
 return M
