@@ -68,15 +68,20 @@ endfunc
 func Test_cpo_B()
   let save_cpo = &cpo
   new
+  imap <buffer> x<Bslash>k Test
   set cpo-=B
   iabbr <buffer> abc ab\<BS>d
   exe "normal iabc "
   call assert_equal('ab<BS>d ', getline(1))
+  call feedkeys(":imap <buffer> x\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"imap <buffer> x\\k', @:)
   %d
   set cpo+=B
   iabbr <buffer> abc ab\<BS>d
   exe "normal iabc "
   call assert_equal('abd ', getline(1))
+  call feedkeys(":imap <buffer> x\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"imap <buffer> x\k', @:)
   close!
   let &cpo = save_cpo
 endfunc
@@ -195,7 +200,8 @@ func Test_cpo_f()
   set cpo+=f
   read test_cpoptions.vim
   call assert_equal('test_cpoptions.vim', @%)
-  close!
+
+  bwipe!
   let &cpo = save_cpo
 endfunc
 
@@ -428,7 +434,7 @@ func Test_cpo_O()
   let &cpo = save_cpo
 endfunc
 
-" Test for the 'p' flag in 'cpo' is in the test_lispwords.vim file.
+" Test for the 'p' flag in 'cpo' is in the test_lispindent.vim file.
 
 " Test for the 'P' flag in 'cpo' (appending to a file sets the current file
 " name)
@@ -444,7 +450,8 @@ func Test_cpo_P()
   set cpo+=P
   write >> XfileCpoP
   call assert_equal('XfileCpoP', @%)
-  close!
+
+  bwipe!
   call delete('XfileCpoP')
   let &cpo = save_cpo
 endfunc
