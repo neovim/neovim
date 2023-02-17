@@ -3,7 +3,7 @@
 #   best practices (3.0+): https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1
 #   pitfalls: https://izzys.casa/2019/02/everything-you-never-wanted-to-know-about-cmake/
 
-# Version should match the tested CMAKE_URL in .github/workflows/ci.yml.
+# Version should match the tested CMAKE_URL in .github/workflows/build.yml.
 cmake_minimum_required(VERSION 3.10)
 
 # Can be removed once minimum version is at least 3.15
