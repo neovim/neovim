@@ -115,6 +115,16 @@ function M.get_parser(bufnr, lang, opts)
   return parsers[bufnr]
 end
 
+---@private
+---@param bufnr (integer|nil) Buffer number
+---@return boolean
+function M._has_parser(bufnr)
+  if bufnr == nil or bufnr == 0 then
+    bufnr = a.nvim_get_current_buf()
+  end
+  return parsers[bufnr] ~= nil
+end
+
 --- Returns a string parser
 ---
 ---@param str string Text to parse
@@ -610,6 +620,16 @@ function M.show_tree(opts)
       end
     end,
   })
+end
+
+--- Returns the fold level for {lnum} in the current buffer. Can be set directly to 'foldexpr':
+--- <pre>lua
+--- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+--- </pre>
+---@param lnum integer|nil Line number to calculate fold level for
+---@return string
+function M.foldexpr(lnum)
+  return require('vim.treesitter._fold').foldexpr(lnum)
 end
 
 return M

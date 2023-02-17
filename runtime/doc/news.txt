@@ -168,6 +168,9 @@ The following new APIs or features were added.
   `vim.treesitter.language.require_language`.
 
 • `require'bit'` is now always available |lua-bit|
+
+• |vim.treesitter.foldexpr()| can be used for 'foldexpr' to use treesitter for folding.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
