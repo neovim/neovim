@@ -1167,7 +1167,7 @@ static char *translate_mapping(char_u *str, int cpo_flags)
   garray_T ga;
   ga_init(&ga, 1, 40);
 
-  bool cpo_bslash = !(cpo_flags&FLAG_CPO_BSLASH);
+  bool cpo_bslash = cpo_flags & FLAG_CPO_BSLASH;
 
   for (; *str; str++) {
     int c = *str;
