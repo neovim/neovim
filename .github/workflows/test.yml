@@ -89,10 +89,12 @@ jobs:
           args: --check runtime/
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+        name: configure
+        run: cmake -B build -G Ninja -D CI_BUILD=OFF
+
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: luacheck
-        run: |
-          cmake -B build -G Ninja
-          cmake --build build --target lintlua-luacheck
+        run: cmake --build build --target lintlua-luacheck
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: lintsh
@@ -202,7 +204,7 @@ jobs:
 
       - name: Build
         run: |
-          cmake -B build -G Ninja -D CI_BUILD=ON -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.flags }}
+          cmake -B build -G Ninja -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.flags }}
           cmake --build build
 
       - if: "!cancelled()"
@@ -322,7 +324,7 @@ jobs:
 
       - name: Build
         run: |
-          cmake -B build -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo' -D CI_BUILD=ON
+          cmake -B build -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo'
           cmake --build build
 
       - name: Install test deps
