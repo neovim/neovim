@@ -352,7 +352,7 @@ void screen_resize(int width, int height)
         update_screen();
         redrawcmdline();
         if (pum_drawn()) {
-          cmdline_pum_display(false);
+          cmdline_pum_display(false, NULL);
         }
       } else {
         update_topline(curwin);

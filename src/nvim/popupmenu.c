@@ -53,6 +53,7 @@ static int pum_kind_width;          // width of pum items kind column
 static int pum_extra_width;         // width of extra stuff
 static int pum_scrollbar;           // one when scrollbar present, else zero
 static bool pum_rl;                 // true when popupmenu is drawn 'rightleft'
+static char *pum_match;             // characters of match
 
 static int pum_anchor_grid;         // grid where position is defined
 static int pum_row;                 // top row of pum
@@ -110,7 +111,7 @@ static void pum_compute_size(void)
 ///                      if false, a new item is selected, but the array
 ///                      is the same
 /// @param cmd_startcol only for cmdline mode: column of completed match
-void pum_display(pumitem_T *array, int size, int selected, bool array_changed, int cmd_startcol)
+void pum_display(pumitem_T *array, int size, char *matched, int selected, bool array_changed, int cmd_startcol)
 {
   int context_lines;
   int redo_count = 0;
@@ -400,6 +401,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     // room the window size will keep changing.
   } while (pum_set_selected(selected, redo_count) && (++redo_count <= 2));
 
+  pum_match = matched;
   pum_redraw();
 }
 
@@ -409,6 +411,7 @@ void pum_redraw(void)
   int row = 0;
   int attr_norm = win_hl_attr(curwin, HLF_PNI);
   int attr_select = win_hl_attr(curwin, HLF_PSI);
+  int attr_match = win_hl_attr(curwin, HLF_PMI);
   int attr_scroll = win_hl_attr(curwin, HLF_PSB);
   int attr_thumb = win_hl_attr(curwin, HLF_PST);
   int i;
@@ -564,7 +567,16 @@ void pum_redraw(void)
               grid_col -= width;
             } else {
               // use grid_puts_len() to truncate the text
-              grid_puts(&pum_grid, st, row, grid_col, attr);
+              if (round != 1) {
+                grid_puts(&pum_grid, st, row, grid_col, attr);
+              } else {
+                int start_col = col_off;
+                for (size_t j = 0; j<= strlen(st);j ++){
+                  int cur_attr = (strchr(pum_match, st[j]) == 0 && attr != attr_select)  ? attr : attr_match;
+                  grid_putchar(&pum_grid, st[j], row, start_col, cur_attr);
+                  start_col += 1;
+                }
+              }
               xfree(st);
               grid_col += width;
             }

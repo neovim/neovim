@@ -100,6 +100,7 @@ typedef enum {
   HLF_SPL,        // SpellLocal
   HLF_PNI,        // popup menu normal item
   HLF_PSI,        // popup menu selected item
+  HLF_PMI,        // popup menu matched item
   HLF_PSB,        // popup menu scrollbar
   HLF_PST,        // popup menu scrollbar thumb
   HLF_TP,         // tabpage line
@@ -165,6 +166,7 @@ EXTERN const char *hlf_names[] INIT(= {
   [HLF_SPL] = "SpellLocal",
   [HLF_PNI] = "Pmenu",
   [HLF_PSI] = "PmenuSel",
+  [HLF_PMI] = "PmenuMatch",
   [HLF_PSB] = "PmenuSbar",
   [HLF_PST] = "PmenuThumb",
   [HLF_TP] = "TabLine",

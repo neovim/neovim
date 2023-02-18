@@ -358,14 +358,14 @@ static int cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches,
   // no default selection
   compl_selected = -1;
 
-  cmdline_pum_display(true);
+  cmdline_pum_display(true, *matches);
 
   return EXPAND_OK;
 }
 
-void cmdline_pum_display(bool changed_array)
+void cmdline_pum_display(bool changed_array, char *matches)
 {
-  pum_display(compl_match_array, compl_match_arraysize, compl_selected,
+  pum_display(compl_match_array, compl_match_arraysize, matches, compl_selected,
               changed_array, compl_startcol);
 }
 
@@ -692,7 +692,7 @@ static char *get_next_or_prev_match(int mode, expand_T *xp, int *p_findex, char 
   }
   if (compl_match_array) {
     compl_selected = findex;
-    cmdline_pum_display(false);
+    cmdline_pum_display(false, NULL);
   } else if (p_wmnu) {
     redraw_wildmenu(xp, xp->xp_numfiles, xp->xp_files, findex, cmd_showtail);
   }
