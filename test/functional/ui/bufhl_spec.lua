@@ -303,7 +303,7 @@ describe('Buffer highlighting', function()
         {1:~                                       }|
         {1:~                                       }|
         {1:~                                       }|
-        2 change3; before #3  {MATCH:.*}|
+        2 changes; before #3  {MATCH:.*}|
       ]]}
 
       command('undo')
