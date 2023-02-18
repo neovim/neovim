@@ -140,10 +140,10 @@ jobs:
             cc: gcc
             runner: ubuntu-22.04
             flags: -D UNSIGNED_CHAR=ON
-          - flavor: release
+          - flavor: release asan
             cc: gcc
             runner: ubuntu-22.04
-            flags: -D CMAKE_BUILD_TYPE=Release
+            flags: -D CMAKE_BUILD_TYPE=RelWithDebInfo -D CLANG_ASAN_UBSAN=ON
           - cc: clang
             runner: macos-12
 
