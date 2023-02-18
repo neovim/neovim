@@ -638,6 +638,17 @@ int x = INT_MAX;
           {1, 26, 1, 65}, -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
           {2, 29, 2, 68}  -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
         }, get_ranges())
+
+        helpers.feed('ggo<esc>')
+        eq(5, exec_lua("return #parser:children().c:trees()"))
+        eq({
+          {0, 0, 8, 0},   -- root tree
+          {4, 14, 4, 17}, -- VALUE 123
+          {5, 15, 5, 18}, -- VALUE1 123
+          {6, 15, 6, 18}, -- VALUE2 123
+          {2, 26, 2, 65}, -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+          {3, 29, 3, 68}  -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
+        }, get_ranges())
       end)
     end)
 
@@ -657,6 +668,18 @@ int x = INT_MAX;
                           -- VALUE1 123
                           -- VALUE2 123
           {1, 26, 2, 68}  -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+                          -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
+        }, get_ranges())
+
+        helpers.feed('ggo<esc>')
+        eq("table", exec_lua("return type(parser:children().c)"))
+        eq(2, exec_lua("return #parser:children().c:trees()"))
+        eq({
+          {0, 0, 8, 0},   -- root tree
+          {4, 14, 6, 18}, -- VALUE 123
+                          -- VALUE1 123
+                          -- VALUE2 123
+          {2, 26, 3, 68}  -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
                           -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
         }, get_ranges())
       end)
@@ -685,6 +708,18 @@ int x = INT_MAX;
                           -- VALUE1 123
                           -- VALUE2 123
           {1, 26, 2, 68}  -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+                          -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
+        }, get_ranges())
+
+        helpers.feed('ggo<esc>')
+        eq("table", exec_lua("return type(parser:children().c)"))
+        eq(2, exec_lua("return #parser:children().c:trees()"))
+        eq({
+          {0, 0, 8, 0},   -- root tree
+          {4, 14, 6, 18}, -- VALUE 123
+                          -- VALUE1 123
+                          -- VALUE2 123
+          {2, 26, 3, 68}  -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
                           -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
         }, get_ranges())
       end)

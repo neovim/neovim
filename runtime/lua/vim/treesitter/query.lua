@@ -406,7 +406,7 @@ predicate_handlers['vim-match?'] = predicate_handlers['match?']
 ---@class TSMetadata
 ---@field [integer] TSMetadata
 ---@field [string] integer|string
----@field range Range
+---@field range Range4
 
 ---@alias TSDirective fun(match: TSMatch, _, _, predicate: any[], metadata: TSMetadata)
 
