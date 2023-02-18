@@ -117,12 +117,13 @@ our CI strategy be. The following guidelines have worked well for us so far:
   prefer `-latest` tags so we don't need to manually bump the versions. An
   example of a special-purpose workflow is `labeler.yml`.
 
-* For our testing jobs, which is currently only `ci.yml`, prefer to use the
-  latest stable (i.e. non-beta) version explicitly. Avoid using the `-latest`
-  tags here as it makes it difficult to determine from an unrelated PR if a
-  failure is due to the PR itself or due to GitHub bumping the `-latest` tag
-  without our knowledge. There's also a high risk that automatic bumping the CI
-  versions will fail due to manual work being required from experience.
+* For our testing jobs, which are in `test.yml` and `build.yml`, prefer to use
+  the latest stable (i.e. non-beta) version explicitly. Avoid using the
+  `-latest` tags here as it makes it difficult to determine from an unrelated
+  PR if a failure is due to the PR itself or due to GitHub bumping the
+  `-latest` tag without our knowledge. There's also a high risk that automatic
+  bumping the CI versions will fail due to manual work being required from
+  experience.
 
 * For our release job, which is `release.yml`, prefer to use the oldest stable
   (i.e. non-deprecated) versions available. The reason is that we're trying to

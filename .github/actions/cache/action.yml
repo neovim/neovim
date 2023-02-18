@@ -18,5 +18,5 @@ runs:
       with:
         path: ${{ env.DEPS_BUILD_DIR }}
         key: ${{ env.CACHE_KEY }}-${{ hashFiles('cmake**', 'ci/**',
-          '.github/workflows/ci.yml', 'CMakeLists.txt',
+          '.github/workflows/test.yml', 'CMakeLists.txt',
           'runtime/CMakeLists.txt', 'src/nvim/**/CMakeLists.txt') }}

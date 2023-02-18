@@ -130,7 +130,7 @@ Each pull request must pass the automated builds on [Cirrus CI] and [GitHub Acti
   [style](#style). (See [#3174][3174] for background.)
 - CI for FreeBSD runs on [Cirrus CI].
 - To see CI results faster in your PR, you can temporarily set `TEST_FILE` in
-  [ci.yml](https://github.com/neovim/neovim/blob/e35b9020b16985eee26e942f9a3f6b045bc3809b/.github/workflows/ci.yml#L205).
+  [test.yml](https://github.com/neovim/neovim/blob/e35b9020b16985eee26e942f9a3f6b045bc3809b/.github/workflows/test.yml#L29).
 
 ### Clang scan-build
 
