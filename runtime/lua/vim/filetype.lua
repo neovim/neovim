@@ -982,6 +982,7 @@ local extension = {
   tyb = 'sql',
   pks = 'sql',
   sqlj = 'sqlj',
+  prql = 'prql',
   sqi = 'sqr',
   sqr = 'sqr',
   nut = 'squirrel',
