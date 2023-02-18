@@ -810,6 +810,7 @@ local extension = {
   pdb = 'prolog',
   pml = 'promela',
   proto = 'proto',
+  prql = 'prql',
   ['psd1'] = 'ps1',
   ['psm1'] = 'ps1',
   ['ps1'] = 'ps1',

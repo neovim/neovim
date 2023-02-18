@@ -550,6 +550,7 @@ let s:filename_checks = {
     \ 'spyce': ['file.spy', 'file.spi'],
     \ 'sql': ['file.tyb', 'file.typ', 'file.tyc', 'file.pkb', 'file.pks'],
     \ 'sqlj': ['file.sqlj'],
+    \ 'prql': ['file.prql'],
     \ 'sqr': ['file.sqr', 'file.sqi'],
     \ 'squid': ['squid.conf'],
     \ 'squirrel': ['file.nut'],
