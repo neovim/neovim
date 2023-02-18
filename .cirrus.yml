@@ -1,7 +1,6 @@
 env:
   CIRRUS_CLONE_DEPTH: '2'
   LANG: en_US.UTF-8
-  CMAKE_EXTRA_FLAGS: -DCI_BUILD=ON
 
 freebsd_task:
   name: FreeBSD
@@ -15,7 +14,7 @@ freebsd_task:
   build_deps_script:
     - gmake deps
   build_script:
-    - gmake CMAKE_EXTRA_FLAGS="${CMAKE_EXTRA_FLAGS}" nvim
+    - gmake nvim
   workaround_script:
     # Run tests as user "cirrus" instead of root. This is required for the
     # permission-related tests to work correctly.
