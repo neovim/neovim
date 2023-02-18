@@ -57,17 +57,6 @@ char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;
 # include "version.c.generated.h"
 #endif
 
-static char *features[] = {
-#ifdef HAVE_ACL
-  "+acl",
-#else
-  "-acl",
-#endif
-
-  "+tui",
-  NULL
-};
-
 // clang-format off
 static const int included_patches[] = {
   2424,
@@ -2619,21 +2608,6 @@ static void version_msg(char *s)
   version_msg_wrap(s, false);
 }
 
-/// List all features.
-/// This does not use list_in_columns (as in Vim), because there are only a
-/// few, and we do not start at a new line.
-static void list_features(void)
-{
-  version_msg(_("\n\nFeatures: "));
-  for (int i = 0; features[i] != NULL; i++) {
-    version_msg(features[i]);
-    if (features[i + 1] != NULL) {
-      version_msg(" ");
-    }
-  }
-  version_msg("\nSee \":help feature-compile\"\n\n");
-}
-
 /// List string items nicely aligned in columns.
 /// When "size" is < 0 then the last entry is marked with NULL.
 /// The entry with index "current" is inclosed in [].
@@ -2742,7 +2716,7 @@ void list_version(void)
   }
 #endif  // ifdef HAVE_PATHDEF
 
-  list_features();
+  version_msg("\n\n");
 
 #ifdef SYS_VIMRC_FILE
   version_msg(_("   system vimrc file: \""));
