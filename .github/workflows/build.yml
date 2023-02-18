@@ -15,7 +15,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
-
 env:
   BIN_DIR: ${{ github.workspace }}/bin
   INSTALL_PREFIX: ${{ github.workspace }}/nvim-install
@@ -116,3 +115,25 @@ jobs:
           cmake -B build -G Ninja
           cmake --build build
 
+  multi-config:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: ./.github/scripts/install_deps.sh
+
+      - name: Build third-party deps
+        run: |
+          cmake -S cmake.deps -B .deps -G "Ninja Multi-Config"
+          cmake --build .deps
+
+      - name: Configure
+        run: cmake -B build -G Ninja -D CMAKE_C_COMPILER=gcc
+
+      - name: Release
+        run: cmake --build build --config Release
+
+      - name: MinSizeRel
+        run: cmake --build build --config MinSizeRel
