@@ -109,14 +109,14 @@ describe('TUI', function()
   end)
 
   it('accepts resize while pager is active', function()
-    child_session:request("nvim_command", [[
+    child_session:request("nvim_exec", [[
     set more
     func! ManyErr()
       for i in range(10)
         echoerr "FAIL ".i
       endfor
     endfunc
-    ]])
+    ]], false)
     feed_data(':call ManyErr()\r')
     screen:expect{grid=[[
       {8:Error detected while processing function ManyErr:} |
@@ -302,11 +302,11 @@ describe('TUI', function()
   end)
 
   it('accepts mouse wheel events #19992', function()
-    child_session:request('nvim_command', [[
+    child_session:request('nvim_exec', [[
       set number nostartofline nowrap mousescroll=hor:1,ver:1
       call setline(1, repeat([join(range(10), '----')], 10))
       vsplit
-    ]])
+    ]], false)
     screen:expect([[
       {11:  1 }{1:0}----1----2----3----4│{11:  1 }0----1----2----3----|
       {11:  2 }0----1----2----3----4│{11:  2 }0----1----2----3----|
@@ -632,11 +632,11 @@ describe('TUI', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
-    child_session:request('nvim_command', [[
+    child_session:request('nvim_exec', [[
       tab split
       tabnew
       highlight Tabline ctermbg=NONE ctermfg=NONE cterm=underline
-    ]])
+    ]], false)
     screen:expect([[
       {12: + [No Name]  + [No Name] }{3: [No Name] }{1:            }{12:X}|
       {1: }                                                 |
@@ -669,7 +669,7 @@ describe('TUI', function()
   end)
 
   it('mouse events work with right-click menu', function()
-    child_session:request('nvim_command', [[
+    child_session:request('nvim_exec', [[
       call setline(1, 'popup menu test')
       set mouse=a mousemodel=popup
 
@@ -679,7 +679,7 @@ describe('TUI', function()
       menu PopUp.baz :let g:menustr = 'baz'<CR>
       highlight Pmenu ctermbg=NONE ctermfg=NONE cterm=underline,reverse
       highlight PmenuSel ctermbg=NONE ctermfg=NONE cterm=underline,reverse,bold
-    ]])
+    ]], false)
     meths.input_mouse('right', 'press', '', 0, 0, 4)
     screen:expect([[
       {1:p}opup menu test                                   |
@@ -1544,7 +1544,7 @@ describe('TUI', function()
       {2:~                        }│{4:~                       }|
       {2:~                        }│{5:[No Name]   0,0-1    All}|
       {2:~                        }│                        |
-      {5:new                       }{MATCH:<.*[/\]nvim }|
+      {5:new                       }{1:{MATCH:<.*[/\]nvim }}|
                                                         |
     ]])
   end)
@@ -1626,12 +1626,16 @@ end)
 
 describe('TUI FocusGained/FocusLost', function()
   local screen
+  local child_session
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
-    screen:expect{grid=[[
+    local child_server = new_pipename()
+    screen = thelpers.screen_setup(0,
+      string.format(
+        [=[["%s", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]]=],
+        nvim_prog, child_server))
+    screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -1639,22 +1643,16 @@ describe('TUI FocusGained/FocusLost', function()
       {5:[No Name]                                         }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
-    feed_data(":autocmd FocusGained * echo 'gained'\n")
-    feed_data(":autocmd FocusLost * echo 'lost'\n")
+    ]])
+    child_session = helpers.connect(child_server)
+    child_session:request('nvim_exec', [[
+      autocmd FocusGained * echo 'gained'
+      autocmd FocusLost * echo 'lost'
+    ]], false)
     feed_data("\034\016")  -- CTRL-\ CTRL-N
   end)
 
   it('in normal-mode', function()
-    screen:expect{grid=[[
-      {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {5:[No Name]                                         }|
-      :autocmd FocusLost * echo 'lost'                  |
-      {3:-- TERMINAL --}                                    |
-    ]]}
     retry(2, 3 * screen.timeout, function()
       feed_data('\027[I')
       screen:expect([[
@@ -1746,18 +1744,11 @@ describe('TUI FocusGained/FocusLost', function()
     -- Set up autocmds that modify the buffer, instead of just calling :echo.
     -- This is how we can test handling of focus gained/lost during cmdline-mode.
     -- See commit: 5cc87d4dabd02167117be7a978b5c8faaa975419.
-    feed_data(":autocmd!\n")
-    feed_data(":autocmd FocusLost * call append(line('$'), 'lost')\n")
-    feed_data(":autocmd FocusGained * call append(line('$'), 'gained')\n")
-    screen:expect{grid=[[
-      {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {5:[No Name]                                         }|
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]]}
+    child_session:request('nvim_exec', [[
+      autocmd!
+      autocmd FocusLost * call append(line('$'), 'lost')
+      autocmd FocusGained * call append(line('$'), 'gained')
+    ]], false)
     retry(2, 3 * screen.timeout, function()
       -- Enter cmdline-mode.
       feed_data(':')

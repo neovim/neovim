@@ -413,7 +413,7 @@ describe('named marks view', function()
       6 line      |
       ^7 line      |
       8 line      |
-      {MATCH:.*}  |
+      {MATCH:.*marks} |
                   |
       ]])
   end)
