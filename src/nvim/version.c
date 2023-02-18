@@ -2699,23 +2699,6 @@ void list_version(void)
   msg(version_cflags);
 #endif
 
-#ifdef HAVE_PATHDEF
-
-  if ((*compiled_user != NUL) || (*compiled_sys != NUL)) {
-    msg_puts(_("\nCompiled "));
-
-    if (*compiled_user != NUL) {
-      msg_puts(_("by "));
-      msg_puts((const char *)compiled_user);
-    }
-
-    if (*compiled_sys != NUL) {
-      msg_puts("@");
-      msg_puts((const char *)compiled_sys);
-    }
-  }
-#endif  // ifdef HAVE_PATHDEF
-
   version_msg("\n\n");
 
 #ifdef SYS_VIMRC_FILE
