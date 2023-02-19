@@ -1607,7 +1607,7 @@ char *runtimepath_default(bool clean_arg)
     data_len = strlen(data_home);
     size_t nvim_data_size = appname_len;
 #if defined(MSWIN)
-    nvim_data_size += sizeof("-data");
+    nvim_data_size += sizeof("-data") - 1;  // -1: NULL byte should be ignored
 #endif
     if (data_len != 0) {
       rtp_size += ((data_len + memcnt(data_home, ',', data_len)
