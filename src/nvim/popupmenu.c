@@ -570,11 +570,16 @@ void pum_redraw(void)
               if (round != 1) {
                 grid_puts(&pum_grid, st, row, grid_col, attr);
               } else {
-                int start_col = col_off;
-                for (size_t j = 0; j<= strlen(st);j ++){
-                  int cur_attr = (strchr(pum_match, st[j]) == 0 && attr != attr_select)  ? attr : attr_match;
-                  grid_putchar(&pum_grid, st[j], row, start_col, cur_attr);
-                  start_col += 1;
+                if (pum_match != NULL) {
+                  int start_col = col_off;
+                  for (size_t j = 0; j<= strlen(st);j ++){
+                    int cur_attr =
+                      strchr(pum_match, st[j]) ? (attr == attr_select ? hl_combine_attr(attr_match, attr_select): attr_match) : attr;
+                    grid_putchar(&pum_grid, st[j], row, start_col, cur_attr);
+                    start_col += 1;
+                  }
+                } else {
+                  grid_puts(&pum_grid, st, row, grid_col, attr);
                 }
               }
               xfree(st);
