@@ -164,6 +164,9 @@ The following new APIs or features were added.
 • |vim.treesitter.query.get_node_text()| now accepts a `metadata` option for
   writing custom directives using |vim.treesitter.query.add_directive()|.
 
+• |popupmenu| support highlight matched character. add new highlight group
+  `PmenuMatch`.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
