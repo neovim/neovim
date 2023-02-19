@@ -274,23 +274,3 @@ if(WIN32)
   GetBinaryDep(TARGET win32yank_X86_64
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_INSTALL_DIR}/bin)
 endif()
-
-# clean-shared-libraries removes ${DEPS_INSTALL_DIR}/lib/nvim/parser/c.dll,
-# resulting in MSVC build failure in CI.
-if (MSVC)
-  set(ALL_DEPS ${THIRD_PARTY_DEPS})
-else()
-  add_custom_target(clean-shared-libraries
-    COMMAND ${CMAKE_COMMAND}
-      -D REMOVE_FILE_GLOB=${DEPS_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}*${CMAKE_SHARED_LIBRARY_SUFFIX}*
-      -P ${PROJECT_SOURCE_DIR}/cmake/RemoveFiles.cmake
-    DEPENDS ${THIRD_PARTY_DEPS}
-  )
-  set(ALL_DEPS clean-shared-libraries)
-endif()
-
-# TODO(justinmk): does anyone use this target?
-add_custom_target(third-party ALL
-  COMMAND ${CMAKE_COMMAND} -E touch .third-party
-  DEPENDS ${ALL_DEPS}
-)
