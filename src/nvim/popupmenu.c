@@ -111,7 +111,8 @@ static void pum_compute_size(void)
 ///                      if false, a new item is selected, but the array
 ///                      is the same
 /// @param cmd_startcol only for cmdline mode: column of completed match
-void pum_display(pumitem_T *array, int size, char *matched, int selected, bool array_changed, int cmd_startcol)
+void pum_display(pumitem_T *array, int size, char *matched, int selected, bool array_changed,
+                 int cmd_startcol)
 {
   int context_lines;
   int redo_count = 0;
@@ -574,7 +575,9 @@ void pum_redraw(void)
                   int start_col = col_off;
                   for (size_t j = 0; j<= strlen(st);j ++){
                     int cur_attr =
-                      strchr(pum_match, st[j]) ? (attr == attr_select ? hl_combine_attr(attr_match, attr_select): attr_match) : attr;
+                      strchr(pum_match, st[j])
+                      ? (attr == attr_select ? hl_combine_attr(attr_match, attr_select): attr_match)
+                      : attr;
                     grid_putchar(&pum_grid, st[j], row, start_col, cur_attr);
                     start_col += 1;
                   }
