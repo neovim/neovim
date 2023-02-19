@@ -69,6 +69,9 @@ setmetatable(vim, {
         t[key] = val
         return t[key]
       end
+    elseif key == 'version' then
+      t[key] = require('vim.version')
+      return t[key]
     end
   end,
 })

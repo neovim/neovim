@@ -55,6 +55,10 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
+• Added |version.parse()|, |version.cmp()|, |version.lt()|, |version.eq()|
+  and |version.gt()| to |vim.version| for parsing and comparing version numbers
+  according to the semver specification, see |lua-version|.
+
 • A new environment variable named NVIM_APPNAME enables configuring the
   directories where Neovim should find its configuration and state files. See
   `:help $NVIM_APPNAME` .
