@@ -2479,19 +2479,10 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
           curwin->w_curswant -= width2;
         } else {
           // to previous line
-
-          // Move to the start of a closed fold.  Don't do that when
-          // 'foldopen' contains "all": it will open in a moment.
-          if (!(fdo_flags & FDO_ALL)) {
-            (void)hasFolding(curwin->w_cursor.lnum,
-                             &curwin->w_cursor.lnum, NULL);
-          }
-          if (curwin->w_cursor.lnum == 1) {
+          if (!cursor_up_inner(curwin, 1)) {
             retval = false;
             break;
           }
-          curwin->w_cursor.lnum--;
-
           linelen = linetabsize(get_cursor_line_ptr());
           if (linelen > width1) {
             int w = (((linelen - width1 - 1) / width2) + 1) * width2;
@@ -2511,15 +2502,10 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
           curwin->w_curswant += width2;
         } else {
           // to next line
-
-          // Move to the end of a closed fold.
-          (void)hasFolding(curwin->w_cursor.lnum, NULL,
-                           &curwin->w_cursor.lnum);
-          if (curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count) {
+          if (!cursor_down_inner(curwin, 1)) {
             retval = false;
             break;
           }
-          curwin->w_cursor.lnum++;
           curwin->w_curswant %= width2;
           // Check if the cursor has moved below the number display
           // when width1 < width2 (with cpoptions+=n). Subtract width2
