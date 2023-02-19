@@ -94,8 +94,6 @@ ExternalProject_Add(luarocks
   BUILD_COMMAND ""
   INSTALL_COMMAND "${LUAROCKS_INSTALL_COMMAND}")
 
-list(APPEND THIRD_PARTY_DEPS luarocks)
-
 if(USE_BUNDLED_LUAJIT)
   add_dependencies(luarocks luajit)
 elseif(USE_BUNDLED_LUA)
@@ -107,23 +105,20 @@ set(ROCKS_DIR ${DEPS_LIB_DIR}/luarocks/rocks-${LUA_VERSION})
 add_custom_command(OUTPUT ${ROCKS_DIR}/mpack
   COMMAND ${LUAROCKS_BINARY} build mpack 1.0.8-0 ${LUAROCKS_BUILDARGS}
   DEPENDS luarocks)
-add_custom_target(mpack DEPENDS ${ROCKS_DIR}/mpack)
-list(APPEND THIRD_PARTY_DEPS mpack)
+add_custom_target(mpack ALL DEPENDS ${ROCKS_DIR}/mpack)
 
 # lpeg
 add_custom_command(OUTPUT ${ROCKS_DIR}/lpeg
   COMMAND ${LUAROCKS_BINARY} build lpeg 1.0.2-1 ${LUAROCKS_BUILDARGS}
   DEPENDS mpack)
-add_custom_target(lpeg DEPENDS ${ROCKS_DIR}/lpeg)
-list(APPEND THIRD_PARTY_DEPS lpeg)
+add_custom_target(lpeg ALL DEPENDS ${ROCKS_DIR}/lpeg)
 
 if((NOT USE_BUNDLED_LUAJIT) AND USE_BUNDLED_LUA)
   # luabitop
   add_custom_command(OUTPUT ${ROCKS_DIR}/luabitop
     COMMAND ${LUAROCKS_BINARY} build luabitop 1.0.2-3 ${LUAROCKS_BUILDARGS}
     DEPENDS lpeg)
-  add_custom_target(luabitop DEPENDS ${ROCKS_DIR}/luabitop)
-  list(APPEND THIRD_PARTY_DEPS luabitop)
+  add_custom_target(luabitop ALL DEPENDS ${ROCKS_DIR}/luabitop)
 endif()
 
 if(USE_BUNDLED_BUSTED)
@@ -137,7 +132,7 @@ if(USE_BUNDLED_BUSTED)
   add_custom_command(OUTPUT ${ROCKS_DIR}/penlight
     COMMAND ${LUAROCKS_BINARY} build penlight 1.5.4-1 ${LUAROCKS_BUILDARGS}
     DEPENDS ${PENLIGHT_DEPENDS})
-  add_custom_target(penlight DEPENDS ${ROCKS_DIR}/penlight)
+  add_custom_target(penlight ALL DEPENDS ${ROCKS_DIR}/penlight)
 
   # busted
   if(WIN32)
@@ -150,22 +145,19 @@ if(USE_BUNDLED_BUSTED)
   add_custom_command(OUTPUT ${BUSTED_EXE}
     COMMAND ${LUAROCKS_BINARY} build busted 2.1.1 ${LUAROCKS_BUILDARGS}
     DEPENDS penlight)
-  add_custom_target(busted DEPENDS ${BUSTED_EXE})
+  add_custom_target(busted ALL DEPENDS ${BUSTED_EXE})
 
   # luacheck
   add_custom_command(OUTPUT ${LUACHECK_EXE}
     COMMAND ${LUAROCKS_BINARY} build luacheck 0.23.0-1 ${LUAROCKS_BUILDARGS}
     DEPENDS busted)
-  add_custom_target(luacheck DEPENDS ${LUACHECK_EXE})
+  add_custom_target(luacheck ALL DEPENDS ${LUACHECK_EXE})
 
   if (NOT USE_BUNDLED_LUAJIT)
     # coxpcall
     add_custom_command(OUTPUT ${ROCKS_DIR}/coxpcall
       COMMAND ${LUAROCKS_BINARY} build coxpcall 1.16.0-1 ${LUAROCKS_BUILDARGS}
       DEPENDS luarocks)
-    add_custom_target(coxpcall DEPENDS ${ROCKS_DIR}/coxpcall)
-  list(APPEND THIRD_PARTY_DEPS coxpcall)
+    add_custom_target(coxpcall ALL DEPENDS ${ROCKS_DIR}/coxpcall)
   endif()
-
-  list(APPEND THIRD_PARTY_DEPS busted luacheck)
 endif()

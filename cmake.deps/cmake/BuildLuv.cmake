@@ -60,7 +60,6 @@ ExternalProject_Add(luv-static
   CMAKE_ARGS ${DEPS_CMAKE_ARGS} ${LUV_CMAKE_ARGS}
   CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS})
 
-list(APPEND THIRD_PARTY_DEPS luv-static)
 if(USE_BUNDLED_LUAJIT)
   add_dependencies(luv-static luajit)
 elseif(USE_BUNDLED_LUA)

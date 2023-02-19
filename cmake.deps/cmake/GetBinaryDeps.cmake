@@ -35,5 +35,4 @@ function(GetBinaryDep)
     BUILD_COMMAND ""
     INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
     COMMAND "${_gettool_INSTALL_COMMAND}")
-  list(APPEND THIRD_PARTY_DEPS ${__gettool_TARGET})
 endfunction()

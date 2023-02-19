@@ -15,5 +15,3 @@ if(MSVC)
 else()
   message(FATAL_ERROR "Trying to build libiconv in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
 endif()
-
-list(APPEND THIRD_PARTY_DEPS libiconv)
