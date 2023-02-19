@@ -123,16 +123,10 @@ endif()
 
 if(USE_BUNDLED_BUSTED)
   if((NOT USE_BUNDLED_LUAJIT) AND USE_BUNDLED_LUA)
-    set(PENLIGHT_DEPENDS luabitop)
+    set(BUSTED_DEPENDS luabitop)
   else()
-    set(PENLIGHT_DEPENDS lpeg)
+    set(BUSTED_DEPENDS lpeg)
   endif()
-
-  # penlight
-  add_custom_command(OUTPUT ${ROCKS_DIR}/penlight
-    COMMAND ${LUAROCKS_BINARY} build penlight 1.5.4-1 ${LUAROCKS_BUILDARGS}
-    DEPENDS ${PENLIGHT_DEPENDS})
-  add_custom_target(penlight ALL DEPENDS ${ROCKS_DIR}/penlight)
 
   # busted
   if(WIN32)
@@ -144,7 +138,7 @@ if(USE_BUNDLED_BUSTED)
   endif()
   add_custom_command(OUTPUT ${BUSTED_EXE}
     COMMAND ${LUAROCKS_BINARY} build busted 2.1.1 ${LUAROCKS_BUILDARGS}
-    DEPENDS penlight)
+    DEPENDS ${BUSTED_DEPENDS})
   add_custom_target(busted ALL DEPENDS ${BUSTED_EXE})
 
   # luacheck
