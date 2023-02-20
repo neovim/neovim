@@ -383,6 +383,7 @@ int main(int argc, char **argv)
   if (ui_client_channel_id) {
     ui_client_run(remote_ui);  // NORETURN
   }
+  assert(!ui_client_channel_id && !use_builtin_ui);
 
   // Wait for UIs to set up Nvim or show early messages
   // and prompts (--cmd, swapfile dialog, …).
@@ -583,13 +584,13 @@ int main(int argc, char **argv)
   set_vim_var_nr(VV_VIM_DID_ENTER, 1L);
   apply_autocmds(EVENT_VIMENTER, NULL, NULL, false, curbuf);
   TIME_MSG("VimEnter autocommands");
-  if (use_remote_ui || use_builtin_ui) {
-    do_autocmd_uienter(use_remote_ui ? CHAN_STDIO : 0, true);
+  if (use_remote_ui) {
+    do_autocmd_uienter(CHAN_STDIO, true);
     TIME_MSG("UIEnter autocommands");
   }
 
 #ifdef MSWIN
-  if (use_remote_ui || use_builtin_ui) {
+  if (use_remote_ui) {
     os_icon_init();
   }
   os_title_save();
