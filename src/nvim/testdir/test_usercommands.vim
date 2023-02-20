@@ -736,6 +736,15 @@ func Test_buflocal_ambiguous_usercmd()
   bw!
 endfunc
 
+" Test for using buffer-local user command from cmdwin.
+func Test_buflocal_usercmd_cmdwin()
+  new
+  command -buffer TestCmd edit Test
+  " This used to crash Vim
+  call assert_fails("norm q::TestCmd\<CR>", 'E11:')
+  bw!
+endfunc
+
 " Test for using a multibyte character in a user command
 func Test_multibyte_in_usercmd()
   command SubJapanesePeriodToDot exe "%s/\u3002/./g"
