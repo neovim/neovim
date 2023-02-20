@@ -3600,6 +3600,10 @@ void ex_buffer_all(exarg_T *eap)
     all = true;
   }
 
+  // Stop Visual mode, the cursor and "VIsual" may very well be invalid after
+  // switching to another buffer.
+  reset_VIsual_and_resel();
+
   setpcmark();
 
   // Close superfluous windows (two windows for the same buffer).
