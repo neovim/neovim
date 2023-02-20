@@ -208,7 +208,7 @@ static void tinput_wait_enqueue(void **argv)
       input->paste = 2;
     }
     rbuffer_reset(input->key_buffer);
-  } else {  // enqueue input for the main thread or Nvim server
+  } else {  // enqueue input
     RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
       const String keys = { .data = buf, .size = len };
       MAXSIZE_TEMP_ARRAY(args, 1);
