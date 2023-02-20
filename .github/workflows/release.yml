@@ -223,7 +223,7 @@ jobs:
     steps:
       - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
         name: Publish stable
-        uses: vedantmgoyal2009/winget-releaser@v1
+        uses: vedantmgoyal2009/winget-releaser@v2
         with:
           identifier: Neovim.Neovim
           release-tag: ${{ github.event.inputs.tag_name || github.ref_name }}
@@ -238,7 +238,7 @@ jobs:
           "version=$VERSION" >> $env:GITHUB_OUTPUT
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
         name: Publish nightly
-        uses: vedantmgoyal2009/winget-releaser@v1
+        uses: vedantmgoyal2009/winget-releaser@v2
         with:
           identifier: Neovim.Neovim.Nightly
           version: ${{ steps.get-version.outputs.version }}
