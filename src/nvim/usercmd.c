@@ -1625,7 +1625,7 @@ int do_ucmd(exarg_T *eap, bool preview)
   if (eap->cmdidx == CMD_USER) {
     cmd = USER_CMD(eap->useridx);
   } else {
-    cmd = USER_CMD_GA(&curbuf->b_ucmds, eap->useridx);
+    cmd = USER_CMD_GA(&prevwin_curwin()->w_buffer->b_ucmds, eap->useridx);
   }
 
   if (preview) {
