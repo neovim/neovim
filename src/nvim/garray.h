@@ -52,7 +52,7 @@ static inline void *ga_append_via_ptr(garray_T *gap, size_t item_size)
 ///
 /// @param gap the garray to be freed
 /// @param item_type type of the item in the garray
-/// @param free_item_fn free function that takes (*item_type) as parameter
+/// @param free_item_fn free function that takes (item_type *) as parameter
 #define GA_DEEP_CLEAR(gap, item_type, free_item_fn) \
   do { \
     garray_T *_gap = (gap); \
