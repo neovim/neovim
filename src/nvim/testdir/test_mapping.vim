@@ -759,11 +759,12 @@ func Test_mapcomplete()
   call feedkeys(":abbr! \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal("\"abbr! \x01", @:)
 
-  " Multiple matches for a map
-  nmap ,f /H<CR>
-  omap ,f /H<CR>
+  " When multiple matches have the same {lhs}, it should only appear once.
+  " The simplified form should also not be included.
+  nmap ,<C-F> /H<CR>
+  omap ,<C-F> /H<CR>
   call feedkeys(":map ,\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"map ,f', @:)
+  call assert_equal('"map ,<C-F>', @:)
   mapclear
 endfunc
 
