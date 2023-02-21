@@ -5,7 +5,6 @@
   <a href="https://app.element.io/#/room/#neovim:matrix.org">Chat</a>
 </h1>
 
-[![GitHub CI](https://github.com/neovim/neovim/actions/workflows/test.yml/badge.svg?event=push&branch=master)](https://github.com/neovim/neovim/actions?query=workflow%3Atest+branch%3Amaster+event%3Apush)
 [![Coverity Scan analysis](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
 [![Clang analysis](https://neovim.io/doc/reports/clang/badge.svg)](https://neovim.io/doc/reports/clang)
 [![PVS-Studio analysis](https://neovim.io/doc/reports/pvs/badge.svg)](https://neovim.io/doc/reports/pvs/PVS-studio.html.d)
