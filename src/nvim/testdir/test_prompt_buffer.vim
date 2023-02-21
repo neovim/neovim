@@ -10,8 +10,7 @@ source screendump.vim
 func CanTestPromptBuffer()
   " We need to use a terminal window to be able to feed keys without leaving
   " Insert mode.
-  " Nvim's terminal implementation differs from Vim's
-  " CheckFeature terminal
+  CheckFeature terminal
 
   " TODO: make the tests work on MS-Windows
   CheckNotMSWindows
@@ -56,7 +55,6 @@ func WriteScript(name)
 endfunc
 
 func Test_prompt_basic()
-  throw 'skipped: TODO'
   call CanTestPromptBuffer()
   let scriptName = 'XpromptscriptBasic'
   call WriteScript(scriptName)
@@ -77,7 +75,6 @@ func Test_prompt_basic()
 endfunc
 
 func Test_prompt_editing()
-  throw 'skipped: TODO'
   call CanTestPromptBuffer()
   let scriptName = 'XpromptscriptEditing'
   call WriteScript(scriptName)
@@ -108,7 +105,6 @@ func Test_prompt_editing()
 endfunc
 
 func Test_prompt_switch_windows()
-  throw 'skipped: TODO'
   call CanTestPromptBuffer()
   let scriptName = 'XpromptSwitchWindows'
   call WriteScript(scriptName)
@@ -226,7 +222,6 @@ func Test_prompt_buffer_getbufinfo()
 endfunc
 
 func Test_prompt_while_writing_to_hidden_buffer()
-  throw 'skipped: TODO'
   call CanTestPromptBuffer()
   CheckUnix
 
