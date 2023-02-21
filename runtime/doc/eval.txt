@@ -1817,17 +1817,17 @@ v:event		Dictionary of event data for the current |autocommand|.  Valid
 			completed_item    Current selected complete item on
 					|CompleteChanged|, Is `{}` when no complete
 					item selected.
-			height 		Height of popup menu on |CompleteChanged|
-			width   	width of popup menu on |CompleteChanged|
-			row  	 	Row count of popup menu on |CompleteChanged|,
+			height		Height of popup menu on |CompleteChanged|
+			width		width of popup menu on |CompleteChanged|
+			row		Row count of popup menu on |CompleteChanged|,
 					relative to screen.
-			col  	 	Col count of popup menu on |CompleteChanged|,
+			col		Col count of popup menu on |CompleteChanged|,
 					relative to screen.
-			size 		Total number of completion items on
+			size		Total number of completion items on
 					|CompleteChanged|.
-			scrollbar 	Is |v:true| if popup menu have scrollbar, or
+			scrollbar	Is |v:true| if popup menu have scrollbar, or
 					|v:false| if not.
-			changed_window 	Is |v:true| if the event fired while
+			changed_window	Is |v:true| if the event fired while
 					changing window (or tab) on |DirChanged|.
 			status		Job status or exit code, -1 means "unknown". |TermClose|
 
@@ -2668,8 +2668,8 @@ text...
 			Example with [depth] 0: >
 				let mylist = [1, 2, 3]
 				lockvar 0 mylist
-				let mylist[0] = 77   	" OK
-				call add(mylist, 4]  	" OK
+				let mylist[0] = 77	" OK
+				call add(mylist, 4]	" OK
 				let mylist = [7, 8, 9]  " Error!
 <								*E743*
 			For unlimited depth use [!] and omit [depth].

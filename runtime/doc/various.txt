@@ -473,7 +473,7 @@ will be no "Last set" message.  When it was defined while executing a function,
 user command or autocommand, the script in which it was defined is reported.
 
 							*K*
-[count]K       		Runs the program given by 'keywordprg' to lookup the
+[count]K		Runs the program given by 'keywordprg' to lookup the
 			|word| (defined by 'iskeyword') under or right of the
 			cursor. Default is "man". Works like this: >
 				:tabnew | terminal {program} {keyword}

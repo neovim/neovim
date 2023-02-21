@@ -1055,7 +1055,7 @@ chansend({id}, {data})					*chansend()*
 		newlines in an item will be sent as NUL. To send a final
 		newline, include a final empty string. Example: >
 			:call chansend(id, ["abc", "123\n456", ""])
-< 		will send "abc<NL>123<NUL>456<NL>".
+<		will send "abc<NL>123<NUL>456<NL>".
 
 		chansend() writes raw data, not RPC messages.  If the channel
 		was created with `"rpc":v:true` then the channel expects RPC
@@ -4846,7 +4846,7 @@ maparg({name} [, {mode} [, {abbr} [, {dict}]]])			*maparg()*
 		  "lhs"	     The {lhs} of the mapping as it would be typed
 		  "lhsraw"   The {lhs} of the mapping as raw bytes
 		  "lhsrawalt" The {lhs} of the mapping as raw bytes, alternate
-		  	      form, only present when it differs from "lhsraw"
+			      form, only present when it differs from "lhsraw"
 		  "rhs"	     The {rhs} of the mapping as typed.
 		  "silent"   1 for a |:map-silent| mapping, else 0.
 		  "noremap"  1 if the {rhs} of the mapping is not remappable.

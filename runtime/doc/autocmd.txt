@@ -426,7 +426,7 @@ ColorSchemePre			Before loading a color scheme. |:colorscheme|
 				Useful to setup removing things added by a
 				color scheme, before another one is loaded.
 
-CompleteChanged 					*CompleteChanged*
+CompleteChanged						*CompleteChanged*
 				After each time the Insert mode completion
 				menu changed.  Not fired on popup menu hide,
 				use |CompleteDonePre| or |CompleteDone| for

@@ -186,7 +186,7 @@ static void tinput_done_event(void **argv)
   os_exit(1);
 }
 
-/// Send all pending input to Nvim server.
+/// Send all pending input in key buffer to Nvim server.
 static void tinput_flush(TermInput *input)
 {
   if (input->paste) {  // produce exactly one paste event

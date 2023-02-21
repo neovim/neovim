@@ -4,7 +4,7 @@
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
-Providers	 				*provider*
+Providers					*provider*
 
 Nvim delegates some features to dynamic "providers". This document describes
 the providers and how to install them.
@@ -82,7 +82,7 @@ The last command reports the interpreter path, add it to your init.vim: >vim
 See also: https://github.com/zchee/deoplete-jedi/wiki/Setting-up-Python-for-Neovim
 
 ==============================================================================
-Ruby integration		    	      *provider-ruby*
+Ruby integration			      *provider-ruby*
 
 Nvim supports Ruby |remote-plugin|s and the Vim legacy |ruby-vim| interface
 (which is itself implemented as a Nvim remote-plugin).
@@ -169,7 +169,7 @@ can be slow. To avoid this, set g:node_host_prog to the host path: >vim
     let g:node_host_prog = '/usr/local/bin/neovim-node-host'
 <
 ==============================================================================
-Clipboard integration 			      *provider-clipboard* *clipboard*
+Clipboard integration			      *provider-clipboard* *clipboard*
 
 Nvim has no direct connection to the system clipboard. Instead it depends on
 a |provider| which transparently uses shell commands to communicate with the
@@ -255,7 +255,7 @@ For Windows WSL, try this g:clipboard definition:
                 \ }
 
 ==============================================================================
-Paste 							*provider-paste* *paste*
+Paste							*provider-paste* *paste*
 
 "Paste" is a separate concept from |clipboard|: paste means "dump a bunch of
 text to the editor", whereas clipboard provides features like |quote+| to get

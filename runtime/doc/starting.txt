@@ -368,7 +368,7 @@ argument.
 -W {scriptout}	Like -w, but do not append, overwrite an existing file.
 
 							*--api-info*
---api-info 	Print msgpack-encoded |api-metadata| and exit.
+--api-info	Print msgpack-encoded |api-metadata| and exit.
 
 							*--embed*
 --embed		Use stdin/stdout as a msgpack-RPC channel, so applications can
@@ -392,7 +392,7 @@ argument.
 <		See also: |ui-startup| |channel-stdio|
 
 							*--headless*
---headless 	Start without UI, and do not wait for `nvim_ui_attach`. The
+--headless	Start without UI, and do not wait for `nvim_ui_attach`. The
 		builtin TUI is not used, so stdio works as an arbitrary
 		communication channel. |channel-stdio|
 

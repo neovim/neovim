@@ -53,11 +53,11 @@ with these (optional) keys:
 - `term_name`		Sets the name of the terminal 'term'.
 - `term_colors`		Sets the number of supported colors 't_Co'.
 - `term_background`	Sets the default value of 'background'.
-- `stdin_fd`		Read buffer from `fd` as if it was a stdin pipe
-			This option can only used by |--embed| ui,
-			see |ui-startup-stdin|.
-	`stdin_tty`		Tells if `stdin` is a `tty` or not.
-	`stdout_tty`		Tells if `stdout` is a `tty` or not.
+- `stdin_fd`		Read buffer from `fd` as if it was a stdin pipe.
+			This option can only used by |--embed| ui on startup.
+			See |ui-startup-stdin|.
+- `stdin_tty`		Tells if `stdin` is a `tty` or not.
+- `stdout_tty`		Tells if `stdout` is a `tty` or not.
 
 Specifying an unknown option is an error; UIs can check the |api-metadata|
 `ui_options` key for supported options.
@@ -154,11 +154,11 @@ procedure:
 An UI can support the native read from stdin feature as invoked with
 `command | nvim -` for the builtin TUI. |--|
 The embedding process can detect that its stdin is open to a file which
-not is a terminal, just like nvim does. It then needs to forward this fd
+not is a terminal, just like Nvim does. It then needs to forward this fd
 to Nvim. As fd=0 is already is used to send rpc data from the embedder to
 Nvim, it needs to use some other file descriptor, like fd=3 or higher.
 
-Then, `stdin_fd` option should be passed to `nvim_ui_attach` and nvim will
+Then, `stdin_fd` option should be passed to `nvim_ui_attach` and Nvim will
 implicitly read it as a buffer. This option can only be used when Nvim is
 launched with `--embed` option, as described above.
 
@@ -356,8 +356,8 @@ numerical highlight ids to the actual attributes.
 	The bulitin highlight group `name` was set to use the attributes `hl_id`
 	defined by a previous `hl_attr_define` call. This event is not needed
 	to render the grids which use attribute ids directly, but is useful
-	for an UI who want to render its own elements with consistent
-	highlighting. For instance an UI using |ui-popupmenu| events, might
+	for a UI who want to render its own elements with consistent
+	highlighting. For instance a UI using |ui-popupmenu| events, might
 	use the |hl-Pmenu| family of builtin highlights.
 
 							    *ui-event-grid_line*
@@ -532,7 +532,7 @@ is not active. New UIs should implement |ui-linegrid| instead.
 		+-------------------------+
 <
 ==============================================================================
-Detailed highlight state Extension 				  *ui-hlstate*
+Detailed highlight state Extension				  *ui-hlstate*
 
 Activated by the `ext_hlstate` |ui-option|.
 Activates |ui-linegrid| implicitly.
@@ -566,7 +566,7 @@ highlight group is cleared, so `ui_name` can always be used to reliably identify
 screen elements, even if no attributes have been applied.
 
 ==============================================================================
-Multigrid Events 	  					 *ui-multigrid*
+Multigrid Events						 *ui-multigrid*
 
 Activated by the `ext_multigrid` |ui-option|.
 Activates |ui-linegrid| implicitly.

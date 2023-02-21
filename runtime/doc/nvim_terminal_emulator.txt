@@ -239,7 +239,7 @@ gdb window and use a "print" command, e.g.: >
 	print *eap
 If mouse pointer movements are working, Vim will also show a balloon when the
 mouse rests on text that can be evaluated by gdb.
-You can also use the "K" mapping that will either use neovim floating windows
+You can also use the "K" mapping that will either use Nvim floating windows
 if available to show the results or print below the status bar.
 
 Now go back to the source window and put the cursor on the first line after
@@ -428,14 +428,14 @@ If the command needs an argument use a List: >vim
 If there is no g:termdebug_config you can use: >vim
 	let g:termdebugger = ['rr', 'replay', '--']
 
-To not use neovim floating windows for previewing variable evaluation, set the
+To not use Nvim floating windows for previewing variable evaluation, set the
 `g:termdebug_useFloatingHover` variable like this: >vim
 	let g:termdebug_useFloatingHover = 0
 
 If you are a mouse person, you can also define a mapping using your right
 click to one of the terminal command like evaluate the variable under the
 cursor: >vim
-      	nnoremap <RightMouse> :Evaluate<CR>
+	nnoremap <RightMouse> :Evaluate<CR>
 or set/unset a breakpoint: >vim
 	nnoremap <RightMouse> :Break<CR>
 
