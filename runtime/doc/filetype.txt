@@ -634,7 +634,10 @@ MARKDOWN                                                *ft-markdown-plugin*
 
 To enable folding use this: >
 	let g:markdown_folding = 1
-<
+
+'expandtab' will be set by default.  If you do not want that use this: >
+	let g:markdown_recommended_style = 0
+
 
 PDF							*ft-pdf-plugin*
 

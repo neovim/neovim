@@ -246,7 +246,7 @@ Credit Card:	You can use PayPal to send money with a Credit card.  This is
 		    Bram@iccf-holland.org
 
 Others:		Transfer to this account if possible:
-		    ING bank: 	IBAN: NL95 INGB 0004 5487 74
+		    ING bank:	IBAN: NL95 INGB 0004 5487 74
 				Swift code: INGBNL2A
 		    under the name "stichting ICCF Holland", Amersfoort
 		Checks are not accepted.

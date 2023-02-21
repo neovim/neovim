@@ -97,6 +97,8 @@ g#			Like "#", but don't put "\<" and "\>" around the word.
 							*gd*
 gd			Goto local Declaration.  When the cursor is on a local
 			variable, this command will jump to its declaration.
+			This was made to work for C code, in other languages
+			it may not work well.
 			First Vim searches for the start of the current
 			function, just like "[[".  If it is not found the
 			search stops in line 1.  If it is found, Vim goes back
@@ -1129,21 +1131,21 @@ x	A single character, with no special meaning, matches itself
 	  are supported:
 		  Name	      Func	Contents ~
 *[:alnum:]*	  [:alnum:]   isalnum	ASCII letters and digits
-*[:alpha:]*	  [:alpha:]   isalpha  	ASCII letters
-*[:blank:]*	  [:blank:]     	space and tab
-*[:cntrl:]*	  [:cntrl:]   iscntrl 	ASCII control characters
-*[:digit:]*	  [:digit:]     	decimal digits '0' to '9'
+*[:alpha:]*	  [:alpha:]   isalpha	ASCII letters
+*[:blank:]*	  [:blank:]		space and tab
+*[:cntrl:]*	  [:cntrl:]   iscntrl	ASCII control characters
+*[:digit:]*	  [:digit:]		decimal digits '0' to '9'
 *[:graph:]*	  [:graph:]   isgraph	ASCII printable characters excluding
 					space
 *[:lower:]*	  [:lower:]   (1)	lowercase letters (all letters when
 					'ignorecase' is used)
-*[:print:]*	  [:print:]   (2) 	printable characters including space
+*[:print:]*	  [:print:]   (2)	printable characters including space
 *[:punct:]*	  [:punct:]   ispunct	ASCII punctuation characters
-*[:space:]*	  [:space:]     	whitespace characters: space, tab, CR,
+*[:space:]*	  [:space:]		whitespace characters: space, tab, CR,
 					NL, vertical tab, form feed
 *[:upper:]*	  [:upper:]   (3)	uppercase letters (all letters when
 					'ignorecase' is used)
-*[:xdigit:]*	  [:xdigit:]    	hexadecimal digits: 0-9, a-f, A-F
+*[:xdigit:]*	  [:xdigit:]		hexadecimal digits: 0-9, a-f, A-F
 *[:return:]*	  [:return:]		the <CR> character
 *[:tab:]*	  [:tab:]		the <Tab> character
 *[:escape:]*	  [:escape:]		the <Esc> character

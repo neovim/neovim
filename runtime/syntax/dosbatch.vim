@@ -1,12 +1,12 @@
 " Vim syntax file
-" Language:	MS-DOS batch file (with NT command extensions)
-" Maintainer:	Mike Williams <mrw@eandem.co.uk>
+" Language:	MS-DOS/Windows batch file (with NT command extensions)
+" Maintainer:	Mike Williams <mrmrdubya@gmail.com>
 " Filenames:    *.bat
-" Last Change:	6th September 2009
-" Web Page:     http://www.eandem.co.uk/mrw/vim
+" Last Change:	12th February 2023
 "
 " Options Flags:
 " dosbatch_cmdextversion	- 1 = Windows NT, 2 = Windows 2000 [default]
+" dosbatch_colons_comment       - any value to treat :: as comment line
 "
 
 " quit when a syntax file was already loaded
@@ -92,7 +92,11 @@ syn match dosbatchComment	"^rem\($\|\s.*$\)"lc=3 contains=dosbatchTodo,dosbatchS
 syn match dosbatchComment	"^@rem\($\|\s.*$\)"lc=4 contains=dosbatchTodo,@dosbatchNumber,dosbatchVariable,dosbatchArgument,@Spell
 syn match dosbatchComment	"\srem\($\|\s.*$\)"lc=4 contains=dosbatchTodo,dosbatchSpecialChar,@dosbatchNumber,dosbatchVariable,dosbatchArgument,@Spell
 syn match dosbatchComment	"\s@rem\($\|\s.*$\)"lc=5 contains=dosbatchTodo,@dosbatchNumber,dosbatchVariable,dosbatchArgument,@Spell
-syn match dosbatchComment	"\s*:\s*:.*$" contains=dosbatchTodo,dosbatchSpecialChar,@dosbatchNumber,dosbatchVariable,dosbatchArgument,@Spell
+if exists("dosbatch_colons_comment")
+  syn match dosbatchComment	"\s*:\s*:.*$" contains=dosbatchTodo,dosbatchSpecialChar,@dosbatchNumber,dosbatchVariable,dosbatchArgument,@Spell
+else
+  syn match dosbatchError       "\s*:\s*:.*$"
+endif
 
 " Comments in ()'s - still to handle spaces before rem
 syn match dosbatchComment	"(rem\([^)]\|\^\@<=)\)*"lc=4 contains=dosbatchTodo,@dosbatchNumber,dosbatchVariable,dosbatchArgument,@Spell
@@ -110,34 +114,35 @@ syn keyword dosbatchImplicit    vol xcopy
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 
-hi def link dosbatchTodo		Todo
+hi def link dosbatchTodo	Todo
+hi def link dosbatchError	Error
 
 hi def link dosbatchStatement	Statement
 hi def link dosbatchCommands	dosbatchStatement
-hi def link dosbatchLabel		Label
+hi def link dosbatchLabel	Label
 hi def link dosbatchConditional	Conditional
-hi def link dosbatchRepeat		Repeat
+hi def link dosbatchRepeat	Repeat
 
-hi def link dosbatchOperator       Operator
-hi def link dosbatchEchoOperator   dosbatchOperator
-hi def link dosbatchIfOperator     dosbatchOperator
+hi def link dosbatchOperator	Operator
+hi def link dosbatchEchoOperator dosbatchOperator
+hi def link dosbatchIfOperator	dosbatchOperator
 
 hi def link dosbatchArgument	Identifier
-hi def link dosbatchIdentifier     Identifier
+hi def link dosbatchIdentifier	Identifier
 hi def link dosbatchVariable	dosbatchIdentifier
 
 hi def link dosbatchSpecialChar	SpecialChar
-hi def link dosbatchString		String
-hi def link dosbatchNumber		Number
+hi def link dosbatchString	String
+hi def link dosbatchNumber	Number
 hi def link dosbatchInteger	dosbatchNumber
 hi def link dosbatchHex		dosbatchNumber
-hi def link dosbatchBinary		dosbatchNumber
-hi def link dosbatchOctal		dosbatchNumber
+hi def link dosbatchBinary	dosbatchNumber
+hi def link dosbatchOctal	dosbatchNumber
 
 hi def link dosbatchComment	Comment
 hi def link dosbatchImplicit	Function
 
-hi def link dosbatchSwitch		Special
+hi def link dosbatchSwitch	Special
 
 hi def link dosbatchCmd		PreProc
 

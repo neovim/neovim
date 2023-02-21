@@ -1085,8 +1085,8 @@ QUICK REFERENCE: MAPS				*netrw-browse-maps* {{{2
 	 <c-tab> Shrink/expand a netrw/explore window                |netrw-c-tab|
 	   -	Makes Netrw go up one directory                      |netrw--|
 	   a	Cycles between normal display,                       |netrw-a|
-	    	hiding (suppress display of files matching g:netrw_list_hide)
-	    	and showing (display only files which match g:netrw_list_hide)
+		hiding (suppress display of files matching g:netrw_list_hide)
+		and showing (display only files which match g:netrw_list_hide)
 	   cd	Make browsing directory the current directory        |netrw-cd|
 	   C	Setting the editing window                           |netrw-C|
 	   d	Make a directory                                     |netrw-d|
@@ -1118,7 +1118,7 @@ QUICK REFERENCE: MAPS				*netrw-browse-maps* {{{2
 	   mX	Apply arbitrary shell command to marked files en bloc|netrw-mX|
 	   mz	Compress/decompress marked files                     |netrw-mz|
 	   o	Enter the file/directory under the cursor in a new   |netrw-o|
-	    	browser window.  A horizontal split is used.
+		browser window.  A horizontal split is used.
 	   O	Obtain a file specified by cursor                    |netrw-O|
 	   p	Preview the file                                     |netrw-p|
 	   P	Browse in the previously used window                 |netrw-P|
@@ -1134,7 +1134,7 @@ QUICK REFERENCE: MAPS				*netrw-browse-maps* {{{2
 	   u	Change to recently-visited directory                 |netrw-u|
 	   U	Change to subsequently-visited directory             |netrw-U|
 	   v	Enter the file/directory under the cursor in a new   |netrw-v|
-	    	browser window.  A vertical split is used.
+		browser window.  A vertical split is used.
 	   x	View file with an associated program                 |netrw-x|
 	   X	Execute filename under cursor via |system()|           |netrw-X|
 
@@ -2271,7 +2271,7 @@ Example:
 	...
 
 
-MARKED FILES, ARBITRARY SHELL COMMAND, EN BLOC 			*netrw-mX* {{{2
+MARKED FILES, ARBITRARY SHELL COMMAND, EN BLOC			*netrw-mX* {{{2
 	    (See |netrw-mf| and |netrw-mr| for how to mark files)
 		      (uses the global marked-file list)
 
@@ -2611,7 +2611,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 				Used to change access permission for a file.
 
   *g:netrw_clipboard*		=1
-  				By default, netrw will attempt to insure that
+				By default, netrw will attempt to insure that
 				the clipboard's values will remain unchanged.
 				However, some users report that they have
 				speed problems with this; consequently, this
@@ -2759,7 +2759,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 				escaped before applying glob()
 
   *g:netrw_gx*			="<cfile>"
- 				This option controls how gx (|netrw-gx|) picks
+				This option controls how gx (|netrw-gx|) picks
 				up the text under the cursor.  See |expand()|
 				for possibilities.
 
@@ -2824,11 +2824,11 @@ your browsing preferences.  (see also: |netrw-settings|)
 				directory (|netrw-mt|, |netrw-mc|)
 
   *g:netrw_localcopycmdopt*	=''             Linux/Unix/MacOS/Cygwin
-  				=' \c copy'                     Windows
+				=' \c copy'                     Windows
 				Options for the |g:netrw_localcopycmd|
 
   *g:netrw_localcopydircmd*	="cp"           Linux/Unix/MacOS/Cygwin
- 				=expand("$COMSPEC")             Windows
+				=expand("$COMSPEC")             Windows
 				Copies directories to target directory.
 				(|netrw-mc|, |netrw-mt|)
 
@@ -2854,7 +2854,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 				Options for |g:netrw_localmovecmd|
 
   *g:netrw_localrmdir*		="rmdir"        Linux/Unix/MacOS/Cygwin
- 				=expand("$COMSPEC")             Windows
+				=expand("$COMSPEC")             Windows
 				Remove directory command (rmdir)
 				This variable is only used if your vim is
 				earlier than 7.4 or if your vim doesn't
@@ -2890,10 +2890,10 @@ your browsing preferences.  (see also: |netrw-settings|)
 				(see |'ballooneval'|)
 
  *g:netrw_sizestyle*		not defined: actual bytes (default)
- 				="b" : actual bytes       (default)
- 				="h" : human-readable (ex. 5k, 4m, 3g)
+				="b" : actual bytes       (default)
+				="h" : human-readable (ex. 5k, 4m, 3g)
 				       uses 1000 base
- 				="H" : human-readable (ex. 5K, 4M, 3G)
+				="H" : human-readable (ex. 5K, 4M, 3G)
 				       uses 1024 base
 				The long listing (|netrw-i|) and query-file
 				maps (|netrw-qf|) will display file size
@@ -2941,7 +2941,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 				 default: "NETRWSERVER"
 
   *g:netrw_sort_by*		sort by "name", "time", "size", or
-  				"exten".
+				"exten".
 				 default: "name"
 
   *g:netrw_sort_direction*	sorting direction: "normal" or "reverse"
@@ -2998,7 +2998,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 					.vim/after/syntax/netrw.vim.
 <				 The netrwGray highlighting is set up by
 				netrw when >
-	       				* netrwGray has not been previously
+					* netrwGray has not been previously
 					  defined
 					* the gui is running
 <				 As an example, I myself use a dark-background
@@ -3256,7 +3256,7 @@ If there are marked files:  (see |netrw-mf|)
     name, applying that substitute, and renaming each file to the result.
     As an example : >
 
-    	mr  [query: reply with *.c]
+	mr  [query: reply with *.c]
 	R   [query: reply with s/^\(.*\)\.c$/\1.cpp/]
 <
     This example will mark all "*.c" files and then rename them to "*.cpp"
@@ -3265,7 +3265,7 @@ If there are marked files:  (see |netrw-mf|)
 
     The ctrl-X character has special meaning for renaming files: >
 
-    	<c-x>      : a single ctrl-x tells netrw to ignore the portion of the response
+	<c-x>      : a single ctrl-x tells netrw to ignore the portion of the response
 	             lying between the last '/' and the ctrl-x.
 
 	<c-x><c-x> : a pair of contiguous ctrl-x's tells netrw to ignore any
@@ -3833,7 +3833,7 @@ netrw:
 	  Decho.vim is provided as a "vimball".  You
 	  should edit the Decho.vba.gz file and source it in: >
 
-	  	vim Decho.vba.gz
+		vim Decho.vba.gz
 		:so %
 		:q
 <
@@ -3875,7 +3875,7 @@ netrw:
 	   To save the file: under linux, the output will be in a separate
 	   remote server window; in it, just save the file with >
 
-	   	:w! DBG
+		:w! DBG
 
 <	   Under a vim that doesn't support clientserver, your debugging
 	   output will appear in another tab: >

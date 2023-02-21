@@ -495,7 +495,7 @@ You can use the error ID at the start to find help about it: >
 	:help E37
 
 
-Summary: 					*help-summary*  >
+Summary:					*help-summary*  >
 
 1) Use Ctrl-D after typing a topic and let Vim show all available topics.
    Or press Tab to complete: >
