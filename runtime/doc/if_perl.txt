@@ -116,7 +116,7 @@ Overview >
 	VIM::SetOption("ai")			# sets a vim option
 	$nbuf = VIM::Buffers()			# returns the number of buffers
 	@buflist = VIM::Buffers()		# returns array of all buffers
-	$mybuf = (VIM::Buffers('a.c'))[0] 	# returns buffer object for 'a.c'
+	$mybuf = (VIM::Buffers('a.c'))[0]	# returns buffer object for 'a.c'
 	@winlist = VIM::Windows()		# returns array of all windows
 	$nwin = VIM::Windows()			# returns the number of windows
 	($success, $v) = VIM::Eval('&path')	# $v: option 'path', $success: 1

@@ -358,7 +358,7 @@ notation	meaning		    equivalent	decimal value(s)	~
 <kOrigin>	keypad origin (middle)		*keypad-origin*
 <kPageUp>	keypad page-up (upper right)	*keypad-page-up*
 <kPageDown>	keypad page-down (lower right)	*keypad-page-down*
-<kDel>		keypad delete 			*keypad-delete*
+<kDel>		keypad delete			*keypad-delete*
 <kPlus>		keypad +			*keypad-plus*
 <kMinus>	keypad -			*keypad-minus*
 <kMultiply>	keypad *			*keypad-multiply*

@@ -113,14 +113,14 @@ LSP FUNCTIONS
 - *vim.lsp.util.set_qflist()*		Use |setqflist()| instead.
 - *vim.lsp.util.set_loclist()*		Use |setloclist()| instead.
 - *vim.lsp.buf_get_clients()*		Use |vim.lsp.get_active_clients()| with
-                                        {buffer = bufnr} instead.
+					{buffer = bufnr} instead.
 - *vim.lsp.buf.formatting()*		Use |vim.lsp.buf.format()| with
 					{async = true} instead.
 - *vim.lsp.buf.range_formatting()*	Use |vim.lsp.formatexpr()|
 					or |vim.lsp.buf.format()| instead.
 
 LUA
-- *vim.register_keystroke_callback()* 	Use |vim.on_key()| instead.
+- *vim.register_keystroke_callback()*	Use |vim.on_key()| instead.
 
 NORMAL COMMANDS
 - *]f* *[f*		Same as "gf".

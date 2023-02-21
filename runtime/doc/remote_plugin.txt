@@ -4,7 +4,7 @@
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
-Nvim support for remote plugins 		  *remote-plugin*
+Nvim support for remote plugins			  *remote-plugin*
 
 				      Type |gO| to see the table of contents.
 
