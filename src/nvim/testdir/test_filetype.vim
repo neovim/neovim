@@ -665,6 +665,7 @@ let s:filename_checks = {
     \ 'yacc': ['file.yy', 'file.yxx', 'file.y++'],
     \ 'yaml': ['file.yaml', 'file.yml', '.clangd', '.clang-format', '.clang-tidy'],
     \ 'yang': ['file.yang'],
+    \ 'yuck': ['file.yuck'],
     \ 'z8a': ['file.z8a'],
     \ 'zig': ['file.zig'],
     \ 'zimbu': ['file.zu'],
