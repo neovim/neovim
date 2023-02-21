@@ -51,7 +51,7 @@ LanguageTree.__index = LanguageTree
 ---                                query per language.
 ---@return LanguageTree parser object
 function LanguageTree.new(source, lang, opts)
-  language.require_language(lang)
+  language.add(lang)
   ---@type LanguageTreeOpts
   opts = opts or {}
 
@@ -170,7 +170,7 @@ function LanguageTree:parse()
   local seen_langs = {} ---@type table<string,boolean>
 
   for lang, injection_ranges in pairs(injections_by_lang) do
-    local has_lang = language.require_language(lang, nil, true)
+    local has_lang = language.add(lang, { silent = true })
 
     -- Child language trees should just be ignored if not found, since
     -- they can depend on the text of a node. Intermediate strings

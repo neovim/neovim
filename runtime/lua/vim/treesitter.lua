@@ -29,6 +29,8 @@ setmetatable(M, {
   end,
 })
 
+---@diagnostic disable:invisible
+
 --- Creates a new parser
 ---
 --- It is not recommended to use this; use |get_parser()| instead.
@@ -39,16 +41,15 @@ setmetatable(M, {
 ---
 ---@return LanguageTree object to use for parsing
 function M._create_parser(bufnr, lang, opts)
-  language.require_language(lang)
   if bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()
   end
 
   vim.fn.bufload(bufnr)
 
-  local self = LanguageTree.new(bufnr, lang, opts)
+  language.add(lang, { filetype = vim.bo[bufnr].filetype })
 
-  ---@diagnostic disable:invisible
+  local self = LanguageTree.new(bufnr, lang, opts)
 
   ---@private
   local function bytes_cb(_, ...)
@@ -96,13 +97,16 @@ function M.get_parser(bufnr, lang, opts)
   if bufnr == nil or bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
+  if lang == nil then
+    local ft = vim.bo[bufnr].filetype
+    lang = language.get_lang(ft) or ft
+    -- TODO(lewis6991): we should error here and not default to ft
+    -- if not lang then
+    --   error(string.format('filetype %s of buffer %d is not associated with any lang', ft, bufnr))
+    -- end
+  end
 
-  if parsers[bufnr] == nil then
-    lang = lang or a.nvim_buf_get_option(bufnr, 'filetype')
-    parsers[bufnr] = M._create_parser(bufnr, lang, opts)
-  elseif lang and parsers[bufnr]:lang() ~= lang then
-    -- Only try to create a new parser if lang is provided
-    -- and it doesn't match the stored parser
+  if parsers[bufnr] == nil or parsers[bufnr]:lang() ~= lang then
     parsers[bufnr] = M._create_parser(bufnr, lang, opts)
   end
 
@@ -123,7 +127,7 @@ function M.get_string_parser(str, lang, opts)
     str = { str, 'string' },
     lang = { lang, 'string' },
   })
-  language.require_language(lang)
+  language.add(lang)
 
   return LanguageTree.new(str, lang, opts)
 end

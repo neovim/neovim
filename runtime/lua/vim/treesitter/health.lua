@@ -17,7 +17,7 @@ function M.check()
 
   for _, parser in pairs(parsers) do
     local parsername = vim.fn.fnamemodify(parser, ':t:r')
-    local is_loadable, ret = pcall(ts.language.require_language, parsername)
+    local is_loadable, ret = pcall(ts.language.add, parsername)
 
     if not is_loadable or not ret then
       health.report_error(
