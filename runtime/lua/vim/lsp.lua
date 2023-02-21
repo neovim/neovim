@@ -1736,8 +1736,8 @@ function lsp.buf_detach_client(bufnr, client_id)
     vim.notify(
       string.format(
         'Buffer (id: %d) is not attached to client (id: %d). Cannot detach.',
-        client_id,
-        bufnr
+        bufnr,
+        client_id
       )
     )
     return
