@@ -21,9 +21,8 @@ describe(':help docs', function()
     ok(rv.helpfiles > 100, '>100 :help files', rv.helpfiles)
     eq({}, rv.invalid_links, 'invalid tags in :help docs')
     eq({}, rv.invalid_urls, 'invalid URLs in :help docs')
-    -- Check that parse errors did not increase wildly.
-    -- TODO: Fix all parse errors in :help files.
-    ok(rv.err_count < 250, '<250 parse errors', rv.err_count)
+    -- Check that parse errors did not increase.
+    ok(rv.err_count == 0, 'no parse errors', rv.err_count)
   end)
 
   it('gen_help_html.lua generates HTML', function()

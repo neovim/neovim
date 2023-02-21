@@ -528,7 +528,7 @@ get_node_range({node_or_range})              *vim.treesitter.get_node_range()*
     Returns the node's range or an unpacked range table
 
     Parameters: ~
-      • {node_or_range}  (|TSNode||table) Node or table of positions
+      • {node_or_range}  (|TSNode| | table) Node or table of positions
 
     Return: ~
         (integer) start_row
@@ -1017,7 +1017,7 @@ LanguageTree:named_node_for_range({self}, {range}, {opts})
       • {self}
 
     Return: ~
-        |TSNode||nil Found node
+        |TSNode| | nil Found node
 
 LanguageTree:parse({self})                              *LanguageTree:parse()*
     Parses all defined regions using a treesitter parser for the language this
