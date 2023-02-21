@@ -119,6 +119,14 @@ LSP FUNCTIONS
 - *vim.lsp.buf.range_formatting()*	Use |vim.lsp.formatexpr()|
 					or |vim.lsp.buf.format()| instead.
 
+TREESITTER FUNCTIONS
+- *vim.treesitter.language.require_language()*	Use |vim.treesitter.language.add()|
+						instead.
+- *vim.treesitter.get_node_at_pos()*		Use |vim.treesitter.get_node()|
+						instead.
+- *vim.treesitter.get_node_at_cursor()*		Use |vim.treesitter.get_node()|
+						and |TSNode:type()| instead.
+
 LUA
 - *vim.register_keystroke_callback()*	Use |vim.on_key()| instead.
 
