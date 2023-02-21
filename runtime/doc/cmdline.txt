@@ -584,6 +584,7 @@ followed by another Vim command:
     :registers
     :read !
     :sign
+    :tabdo
     :terminal
     :vglobal
     :windo

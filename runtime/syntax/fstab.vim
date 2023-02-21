@@ -2,8 +2,8 @@
 " Language: fstab file
 " Maintainer: Radu Dineiu <radu.dineiu@gmail.com>
 " URL: https://raw.github.com/rid9/vim-fstab/master/syntax/fstab.vim
-" Last Change: 2022 Dec 11
-" Version: 1.6.2
+" Last Change: 2023 Feb 19
+" Version: 1.6.3
 "
 " Credits:
 "   David Necas (Yeti) <yeti@physics.muni.cz>
@@ -389,7 +389,7 @@ syn match fsFreqPassNumber /\d\+\s\+[012]\s*/ contained
 syn match fsDevice /^\s*\zs.\{-1,}\s/me=e-1 nextgroup=fsMountPoint contains=@fsDeviceCluster,@fsGeneralCluster
 syn match fsMountPoint /\s\+.\{-}\s/me=e-1 nextgroup=fsType contains=@fsMountPointCluster,@fsGeneralCluster contained
 syn match fsType /\s\+.\{-}\s/me=e-1 nextgroup=fsOptions contains=@fsTypeCluster,@fsGeneralCluster contained
-syn match fsOptions /\s\+.\{-}\s/me=e-1 nextgroup=fsFreqPass contains=@fsOptionsCluster,@fsGeneralCluster contained
+syn match fsOptions /\s\+.\{-}\%(\s\|$\)/ nextgroup=fsFreqPass contains=@fsOptionsCluster,@fsGeneralCluster contained
 syn match fsFreqPass /\s\+.\{-}$/ contains=@fsFreqPassCluster,@fsGeneralCluster contained
 
 " Whole line comments
@@ -491,4 +491,4 @@ let b:current_syntax = "fstab"
 let &cpo = s:cpo_save
 unlet s:cpo_save
 
-" vim: ts=8 ft=vim
+" vim: ts=8 noet ft=vim

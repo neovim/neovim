@@ -1271,18 +1271,32 @@ When not set 4 is used.
 
 DOSBATCH				*dosbatch.vim* *ft-dosbatch-syntax*
 
-There is one option with highlighting DOS batch files.	This covers new
-extensions to the Command Interpreter introduced with Windows 2000 and
-is controlled by the variable dosbatch_cmdextversion.  For Windows NT
-this should have the value 1, and for Windows 2000 it should be 2.
+Select the set of Windows Command interpreter extensions that should be
+supported with the variable dosbatch_cmdextversion.  For versions of Windows
+NT (before Windows 2000) this should have the value of 1.  For Windows 2000
+and later it should be 2.
 Select the version you want with the following line: >
 
    :let dosbatch_cmdextversion = 1
 
 If this variable is not defined it defaults to a value of 2 to support
-Windows 2000.
+Windows 2000 and later.
 
-A second option covers whether *.btm files should be detected as type
+The original MS-DOS supports an idiom of using a double colon (::) as an
+alternative way to enter a comment line.  This idiom can be used with the
+current Windows Command Interpreter, but it can lead to problems when used
+inside ( ... ) command blocks.  You can find a discussion about this on
+Stack Overflow -
+
+https://stackoverflow.com/questions/12407800/which-comment-style-should-i-use-in-batch-files
+
+To allow the use of the :: idiom for comments in the Windows Command
+Interpreter or working with MS-DOS bat files, set the
+dosbatch_colons_comment variable to anything: >
+
+   :let dosbatch_colons_comment = 1
+
+There is an option that covers whether *.btm files should be detected as type
 "dosbatch" (MS-DOS batch files) or type "btm" (4DOS batch files).  The latter
 is used by default.  You may select the former with the following line: >
 
@@ -3784,7 +3798,7 @@ SYNTAX ISKEYWORD SETTING				*:syn-iskeyword*
 
 	clear:		Syntax specific iskeyword setting is disabled and the
 			buffer-local 'iskeyword' setting is used.
-	{option}       	Set the syntax 'iskeyword' option to a new value.
+	{option}	Set the syntax 'iskeyword' option to a new value.
 
 	Example: >
   :syntax iskeyword @,48-57,192-255,$,_

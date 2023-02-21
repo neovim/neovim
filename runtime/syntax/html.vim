@@ -3,7 +3,7 @@
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainers: Jorge Maldonado Ventura <jorgesumle@freakspot.net>
 "			Claudio Fleiner <claudio@fleiner.com>
-" Last Change:		2022 Nov 18
+" Last Change:		2023 Feb 20
 
 " Please check :help html.vim for some comments and a description of the options
 
@@ -221,7 +221,7 @@ if main_syntax != 'java' || exists("java_javascript")
   " JAVA SCRIPT
   syn include @htmlJavaScript syntax/javascript.vim
   unlet b:current_syntax
-  syn region  javaScript start=+<script\_[^>]*>+ keepend end=+</script\_[^>]*>+me=s-1 contains=@htmlJavaScript,htmlCssStyleComment,htmlScriptTag,@htmlPreproc
+  syn region  javaScript start=+<script\>\_[^>]*>+ keepend end=+</script\_[^>]*>+me=s-1 contains=@htmlJavaScript,htmlCssStyleComment,htmlScriptTag,@htmlPreproc
   syn region  htmlScriptTag	contained start=+<script+ end=+>+ fold contains=htmlTagN,htmlString,htmlArg,htmlValue,htmlTagError,htmlEvent
   hi def link htmlScriptTag htmlTag
 

@@ -1445,7 +1445,7 @@ See below |functions|.
 ------------------------------------------------------------------------------
 lambda expression				*expr-lambda* *lambda*
 
-{args -> expr1}		lambda expression
+{args -> expr1}		lambda expression			*E451*
 
 A lambda expression creates a new unnamed function which returns the result of
 evaluating |expr1|.  Lambda expressions differ from |user-function|s in

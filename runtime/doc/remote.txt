@@ -46,7 +46,7 @@ The following command line arguments are available:
 				new tabpage.
 								*--remote-send*
    --remote-send {keys}		Send {keys} to server and exit.  The {keys}
-   				are not mapped.  Special key names are
+				are not mapped.  Special key names are
 				recognized, e.g., "<CR>" results in a CR
 				character.
 								*--remote-expr*

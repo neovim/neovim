@@ -2,7 +2,7 @@
 " Language:	PoE item filter
 " Maintainer:	ObserverOfTime <chronobserver@disroot.org>
 " Filenames:	*.filter
-" Last Change:	2022 Oct 07
+" Last Change:	2023 Feb 10
 
 if exists('b:current_syntax')
     finish
@@ -17,7 +17,7 @@ syn match poefilterCommentTag /\[[0-9A-Z\[\]]\+\]/ contained
 syn match poefilterComment /#.*$/ contains=poefilterTodo,poefilterCommentTag,@Spell
 
 " Blocks
-syn keyword poefilterBlock Show Hide
+syn keyword poefilterBlock Show Hide Minimal
 
 " Conditions
 syn keyword poefilterCondition

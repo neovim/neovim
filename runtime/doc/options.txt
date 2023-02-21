@@ -1186,7 +1186,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			case mapping, the current locale is not effective.
 			This probably only matters for Turkish.
 
-						*'cdhome'* *'cdh'*
+				*'cdhome'* *'cdh'* *'nocdhome'* *'nocdh'*
 'cdhome' 'cdh'		boolean	(default: off)
 			global
 	When on, |:cd|, |:tcd| and |:lcd| without an argument changes the
@@ -4291,7 +4291,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	The 'mousemodel' option is set by the |:behave| command.
 
-						*'mousemoveevent'* *'mousemev'*
+	      *'mousemoveevent'* *'mousemev'* *'nomousemoveevent'* *'nomousemev'*
 'mousemoveevent' 'mousemev'  boolean	(default off)
 			global
 	When on, mouse move events are delivered to the input queue and are
@@ -5550,7 +5550,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  A	don't give the "ATTENTION" message when an existing	*shm-A*
 		swap file is found
 	  I	don't give the intro message when starting Vim,		*shm-I*
-	  	see |:intro|
+		see |:intro|
 	  c	don't give |ins-completion-menu| messages; for		*shm-c*
 		example, "-- XXX completion (YYY)", "match 1 of 2", "The only
 		match", "Pattern not found", "Back at original", etc.
@@ -5559,8 +5559,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  q	use "recording" instead of "recording @a"		*shm-q*
 	  F	don't give the file info when editing a file, like	*shm-F*
 		`:silent` was used for the command
-	  S     do not show search count message when searching, e.g.	*shm-S*
-	        "[1/5]"
+	  S	do not show search count message when searching, e.g.	*shm-S*
+		"[1/5]"
 
 	This gives you the opportunity to avoid that a change between buffers
 	requires you to hit <Enter>, but still gives as useful a message as
@@ -5709,7 +5709,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'signcolumn' 'scl'	string	(default "auto")
 			local to window
 	When and how to draw the signcolumn. Valid values are:
-	   "auto"   	only when there is a sign to display
+	   "auto"	only when there is a sign to display
 	   "auto:[1-9]" resize to accommodate multiple signs up to the
 	                given number (maximum 9), e.g. "auto:4"
 	   "auto:[1-8]-[2-9]"
@@ -5718,8 +5718,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			at least the given minimum (maximum 8) fixed
 			space. The minimum number should always be less
 			than the maximum number, e.g. "auto:2-5"
-	   "no"	    	never
-	   "yes"    	always
+	   "no"		never
+	   "yes"	always
 	   "yes:[1-9]"  always, with fixed space for signs up to the given
 	                number (maximum 9), e.g. "yes:3"
 	   "number"	display signs in the 'number' column. If the number

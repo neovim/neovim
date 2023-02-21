@@ -380,6 +380,7 @@ CmdlineChanged			After a change was made to the text inside
 CmdlineEnter			After entering the command-line (including
 				non-interactive use of ":" in a mapping: use
 				|<Cmd>| instead to avoid this).
+				The pattern is matched against |cmdline-char|.
 				<afile> expands to the |cmdline-char|.
 				Sets these |v:event| keys:
 				    cmdlevel

@@ -5,7 +5,7 @@
 " go.vim: Vim syntax file for Go.
 " Language:             Go
 " Maintainer:           Billie Cleek <bhcleek@gmail.com>
-" Latest Revision:      2022-11-17
+" Latest Revision:      2023-02-19
 " License:              BSD-style. See LICENSE file in source repository.
 " Repository:           https://github.com/fatih/vim-go
 
@@ -136,8 +136,11 @@ syn keyword     goBoolean                  true false
 syn keyword     goPredefinedIdentifiers    nil iota
 
 hi def link     goBuiltins                 Identifier
+hi def link     goPredefinedIdentifiers    Constant
+" Boolean links to Constant by default by vim: goBoolean and goPredefinedIdentifiers
+" will be highlighted the same, but having the separate groups allows users to
+" have separate highlighting for them if they desire.
 hi def link     goBoolean                  Boolean
-hi def link     goPredefinedIdentifiers    goBoolean
 
 " Comments; their contents
 syn keyword     goTodo              contained TODO FIXME XXX BUG

@@ -1101,8 +1101,8 @@ cursor column will be replaced with the matches.  If the returned value is
 larger than the cursor column, the cursor column is used.
 
 Negative return values:
-   -2 	To cancel silently and stay in completion mode.
-   -3 	To cancel silently and leave completion mode.
+   -2	To cancel silently and stay in completion mode.
+   -3	To cancel silently and leave completion mode.
    Another negative value: completion starts at the cursor column
 
 On the second invocation the arguments are:
@@ -1154,7 +1154,7 @@ items:
 			item with the same word is already present.
 	empty		when non-zero this match will be added even when it is
 			an empty string
-	user_data 	custom data which is associated with the item and
+	user_data	custom data which is associated with the item and
 			available in |v:completed_item|; it can be any type;
 			defaults to an empty string
 
