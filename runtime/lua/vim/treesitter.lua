@@ -157,7 +157,7 @@ end
 
 --- Returns the node's range or an unpacked range table
 ---
----@param node_or_range (TSNode|table) Node or table of positions
+---@param node_or_range (TSNode | table) Node or table of positions
 ---
 ---@return integer start_row
 ---@return integer start_col
@@ -339,7 +339,7 @@ end
 ---             - lang string|nil Parser language
 ---             - ignore_injections boolean Ignore injected languages (default true)
 ---
----@return TSNode|nil under the cursor
+---@return TSNode | nil Node at the given position
 ---@deprecated
 function M.get_node_at_pos(bufnr, row, col, opts)
   vim.deprecate('vim.treesitter.get_node_at_pos()', 'vim.treesitter.get_node()', '0.10')
