@@ -17,11 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          # required to find all branches
-          fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Create backport PRs
-        uses: zeebe-io/backport-action@v0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          github_workspace: ${{ github.workspace }}
+        uses: korthout/backport-action@v1
