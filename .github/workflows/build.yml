@@ -130,7 +130,7 @@ jobs:
           cmake --build .deps
 
       - name: Configure
-        run: cmake -B build -G Ninja -D CMAKE_C_COMPILER=gcc
+        run: cmake -B build -G "Ninja Multi-Config" -D CMAKE_C_COMPILER=gcc
 
       - name: Release
         run: cmake --build build --config Release
