@@ -518,7 +518,6 @@ get_node({opts})                                   *vim.treesitter.get_node()*
                 • pos table|nil 0-indexed (row, col) tuple. Defaults to cursor
                   position in the current window. May not be omitted if
                   {bufnr} is not the current buffer
-                • lang string|nil Parser language
                 • ignore_injections boolean Ignore injected languages (default
                   true)
 
