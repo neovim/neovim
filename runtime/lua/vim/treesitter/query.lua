@@ -639,7 +639,7 @@ end
 ---   -- typically useful info about the node:
 ---   local type = node:type() -- type of the captured node
 ---   local row1, col1, row2, col2 = node:range() -- range of the capture
----   ... use the info here ...
+---   -- ... use the info here ...
 --- end
 --- </pre>
 ---
@@ -693,7 +693,7 @@ end
 ---
 ---     local node_data = metadata[id] -- Node level metadata
 ---
----     ... use the info here ...
+---     -- ... use the info here ...
 ---   end
 --- end
 --- </pre>

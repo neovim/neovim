@@ -40,15 +40,15 @@ requires a namespace.
 
                                                         *diagnostic-structure*
 A diagnostic is a Lua table with the following keys. Required keys are
-indicated with (*):
+indicated with (+):
 
     bufnr: Buffer number
-    lnum(*): The starting line of the diagnostic
+    lnum(+): The starting line of the diagnostic
     end_lnum: The final line of the diagnostic
-    col(*): The starting column of the diagnostic
+    col(+): The starting column of the diagnostic
     end_col: The final column of the diagnostic
     severity: The severity of the diagnostic |vim.diagnostic.severity|
-    message(*): The diagnostic text
+    message(+): The diagnostic text
     source: The source of the diagnostic
     code: The diagnostic code
     user_data: Arbitrary data plugins or users can add

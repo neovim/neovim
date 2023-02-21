@@ -218,7 +218,7 @@ end
 ---@param row integer Position row
 ---@param col integer Position column
 ---
----@return table[] List of captures `{ capture = "capture name", metadata = { ... } }`
+---@return table[] List of captures `{ capture = "name", metadata = { ... } }`
 function M.get_captures_at_pos(bufnr, row, col)
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
