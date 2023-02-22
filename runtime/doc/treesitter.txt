@@ -516,13 +516,13 @@ get_node({opts})                                   *vim.treesitter.get_node()*
                 • bufnr integer|nil Buffer number (nil or 0 for current
                   buffer)
                 • pos table|nil 0-indexed (row, col) tuple. Defaults to cursor
-                  position in the current window. May not be omitted if
-                  {bufnr} is not the current buffer
+                  position in the current window. Required if {bufnr} is not
+                  the current buffer
                 • ignore_injections boolean Ignore injected languages (default
                   true)
 
     Return: ~
-        |TSNode||nil Node at the given position
+        |TSNode| | nil Node at the given position
 
 get_node_range({node_or_range})              *vim.treesitter.get_node_range()*
     Returns the node's range or an unpacked range table

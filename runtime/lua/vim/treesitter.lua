@@ -291,11 +291,10 @@ end
 ---@param opts table|nil Optional keyword arguments:
 ---             - bufnr integer|nil Buffer number (nil or 0 for current buffer)
 ---             - pos table|nil 0-indexed (row, col) tuple. Defaults to cursor position in the
----                             current window. May not be omitted if {bufnr} is not the current
----                             buffer
+---                             current window. Required if {bufnr} is not the current buffer
 ---             - ignore_injections boolean Ignore injected languages (default true)
 ---
----@return TSNode|nil Node at the given position
+---@return TSNode | nil Node at the given position
 function M.get_node(opts)
   opts = opts or {}
 
