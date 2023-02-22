@@ -288,6 +288,50 @@ end
 
 --- Returns the smallest named node at the given position
 ---
+---@param opts table|nil Optional keyword arguments:
+---             - bufnr integer|nil Buffer number (nil or 0 for current buffer)
+---             - pos table|nil 0-indexed (row, col) tuple. Defaults to cursor position in the
+---                             current window. Required if {bufnr} is not the current buffer
+---             - ignore_injections boolean Ignore injected languages (default true)
+---
+---@return TSNode | nil Node at the given position
+function M.get_node(opts)
+  opts = opts or {}
+
+  local bufnr = opts.bufnr
+
+  if not bufnr or bufnr == 0 then
+    bufnr = a.nvim_get_current_buf()
+  end
+
+  local row, col
+  if opts.pos then
+    assert(#opts.pos == 2, 'Position must be a (row, col) tuple')
+    row, col = opts.pos[1], opts.pos[2]
+  else
+    assert(
+      bufnr == a.nvim_get_current_buf(),
+      'Position must be explicitly provided when not using the current buffer'
+    )
+    local pos = a.nvim_win_get_cursor(0)
+    -- Subtract one to account for 1-based row indexing in nvim_win_get_cursor
+    row, col = pos[1] - 1, pos[2]
+  end
+
+  assert(row >= 0 and col >= 0, 'Invalid position: row and col must be non-negative')
+
+  local ts_range = { row, col, row, col }
+
+  local root_lang_tree = M.get_parser(bufnr)
+  if not root_lang_tree then
+    return
+  end
+
+  return root_lang_tree:named_node_for_range(ts_range, opts)
+end
+
+--- Returns the smallest named node at the given position
+---
 ---@param bufnr integer Buffer number (0 for current buffer)
 ---@param row integer Position row
 ---@param col integer Position column
@@ -296,11 +340,15 @@ end
 ---             - ignore_injections boolean Ignore injected languages (default true)
 ---
 ---@return TSNode|nil under the cursor
+---@deprecated
 function M.get_node_at_pos(bufnr, row, col, opts)
+  vim.deprecate('vim.treesitter.get_node_at_pos()', 'vim.treesitter.get_node()', '0.10')
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
   local ts_range = { row, col, row, col }
+
+  opts = opts or {}
 
   local root_lang_tree = M.get_parser(bufnr, opts.lang)
   if not root_lang_tree then
@@ -315,12 +363,13 @@ end
 ---@param winnr (integer|nil) Window handle or 0 for current window (default)
 ---
 ---@return string Name of node under the cursor
+---@deprecated
 function M.get_node_at_cursor(winnr)
+  vim.deprecate('vim.treesitter.get_node_at_cursor()', 'vim.treesitter.get_node():type()', '0.10')
   winnr = winnr or 0
   local bufnr = a.nvim_win_get_buf(winnr)
-  local cursor = a.nvim_win_get_cursor(winnr)
 
-  return M.get_node_at_pos(bufnr, cursor[1] - 1, cursor[2], { ignore_injections = false }):type()
+  return M.get_node({ bufnr = bufnr, ignore_injections = false }):type()
 end
 
 --- Starts treesitter highlighting for a buffer
@@ -493,8 +542,8 @@ function M.show_tree(opts)
 
       a.nvim_buf_clear_namespace(b, pg.ns, 0, -1)
 
-      local cursor = a.nvim_win_get_cursor(win)
-      local cursor_node = M.get_node_at_pos(buf, cursor[1] - 1, cursor[2], {
+      local cursor_node = M.get_node({
+        bufnr = buf,
         lang = opts.lang,
         ignore_injections = false,
       })

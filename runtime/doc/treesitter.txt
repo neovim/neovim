@@ -508,30 +508,21 @@ get_captures_at_pos({bufnr}, {row}, {col})
         table[] List of captures `{ capture = "capture name", metadata = { ...
         } }`
 
-get_node_at_cursor({winnr})              *vim.treesitter.get_node_at_cursor()*
-    Returns the smallest named node under the cursor
-
-    Parameters: ~
-      • {winnr}  (integer|nil) Window handle or 0 for current window (default)
-
-    Return: ~
-        (string) Name of node under the cursor
-
-                                            *vim.treesitter.get_node_at_pos()*
-get_node_at_pos({bufnr}, {row}, {col}, {opts})
+get_node({opts})                                   *vim.treesitter.get_node()*
     Returns the smallest named node at the given position
 
     Parameters: ~
-      • {bufnr}  (integer) Buffer number (0 for current buffer)
-      • {row}    (integer) Position row
-      • {col}    (integer) Position column
-      • {opts}   (table) Optional keyword arguments:
-                 • lang string|nil Parser language
-                 • ignore_injections boolean Ignore injected languages
-                   (default true)
+      • {opts}  (table|nil) Optional keyword arguments:
+                • bufnr integer|nil Buffer number (nil or 0 for current
+                  buffer)
+                • pos table|nil 0-indexed (row, col) tuple. Defaults to cursor
+                  position in the current window. Required if {bufnr} is not
+                  the current buffer
+                • ignore_injections boolean Ignore injected languages (default
+                  true)
 
     Return: ~
-        |TSNode||nil under the cursor
+        |TSNode| | nil Node at the given position
 
 get_node_range({node_or_range})              *vim.treesitter.get_node_range()*
     Returns the node's range or an unpacked range table
