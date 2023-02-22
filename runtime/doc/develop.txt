@@ -132,6 +132,18 @@ DOCUMENTATION						*dev-doc*
   optimize for the reader's time and energy: be "precise yet concise".
     - See https://developers.google.com/style/tone
     - Prefer the active voice: "Foo does X", not "X is done by Foo".
+- Start function docstrings with present tense ("Gets"), not imperative
+  ("Get"). This tends to reduce ambiguity and improve clarity. >
+    GOOD:
+    /// Gets a highlight definition.
+    BAD:
+    /// Get a highlight definition.
+- Avoid starting docstrings with "The" or "A" unless needed to avoid
+  ambiguity. This is a visual aid and reduces noise. >
+    GOOD:
+    /// @param dirname Path fragment before `pend`
+    BAD:
+    /// @param dirname The path fragment before `pend`
 - Vim differences:
     - Do not prefix help tags with "nvim-". Use |vim_diff.txt| to catalog
       differences from Vim; no other distinction is necessary.
@@ -143,13 +155,6 @@ DOCUMENTATION						*dev-doc*
       not "the user host terminal".
     - Use "tui-" to prefix help tags related to the host terminal, and "TUI"
       in prose if possible.
-- Docstrings: do not start parameter descriptions with "The" or "A" unless it
-  is critical to avoid ambiguity. >
-    GOOD:
-    /// @param dirname Path fragment before `pend`
-    BAD:
-    /// @param dirname The path fragment before `pend`
-<
 
 Documentation format ~
 
@@ -159,14 +164,14 @@ https://neovim.io/doc/user ).
 
 Strict "vimdoc" subset:
 
-- Use lists (like this!) prefixed with "-", "*", or "•", for adjacent lines
-  that you don't want auto-wrapped. Lists are always rendered with "flow"
-  (soft-wrapped) layout instead of preformatted (hard-wrapped) layout common
-  in legacy :help docs.
+- Use lists (like this!) prefixed with "-" or "•", for adjacent lines that you
+  don't want to auto-wrap. Lists are always rendered with "flow" layout
+  (soft-wrapped) instead of preformatted (hard-wrapped) layout common in
+  legacy :help docs.
   - Limitation: currently the parser https://github.com/neovim/tree-sitter-vimdoc
     does not understand numbered listitems, so use a bullet symbol (- or •)
-    before numbered items, e.g. "- 1." instead of "1.".
-- Separate blocks (paragraphs) of content by a blank line(s).
+    before numbered items, e.g. "• 1." instead of "1.".
+- Separate blocks (paragraphs) of content by a blank line.
 - Do not use indentation in random places—that prevents the page from using
   "flow" layout. If you need a preformatted section, put it in
   a |help-codeblock| starting with ">".
@@ -246,7 +251,9 @@ vim.paste in runtime/lua/vim/_editor.lua like this: >
     ---@returns false if client should cancel the paste.
 
 
-LUA							*dev-lua*
+LUA STDLIB DESIGN GUIDELINES				*dev-lua*
+
+See also |dev-naming|.
 
 - Keep the core Lua modules |lua-stdlib| simple. Avoid elaborate OOP or
   pseudo-OOP designs. Plugin authors just want functions to call, not a big,
@@ -255,10 +262,26 @@ LUA							*dev-lua*
   tables or values are easier to serialize, easier to construct from literals,
   easier to inspect and print, and inherently compatible with all Lua plugins.
   (This guideline doesn't apply to opaque, non-data objects like `vim.cmd`.)
+- stdlib functions should follow these common patterns:
+  - accept iterable instead of table
+    - exception: in some cases iterable doesn't make sense, e.g. spair() sorts
+      the input by definition, so there is no reason for it to accept an
+      iterable, because the input needs to be "hydrated", it can't operate on
+      a "stream".
+  - return iterable instead of table
+  - mimic the pairs() or ipairs() interface if the function is intended to be
+    used in a "for" loop.
 
 
-API							*dev-api*
+API DESIGN GUIDELINES					*dev-api*
 
+See also |dev-naming|.
+
+- When adding an API, check the following:
+  - What precedents did you draw from? How does your solution compare to them?
+  - Does your new API allow future expansion? How? Or why not?
+  - Is the new API similar to existing APIs? Do we need to deprecate the old ones?
+  - Did you cross-reference related concepts in the docs?
 - Avoid "mutually exclusive" parameters--via constraints or limitations, if
   necessary. For example nvim_create_autocmd() has mutually exclusive
   "callback" and "command" args; but the "command" arg could be eliminated by
@@ -266,66 +289,95 @@ API							*dev-api*
   "callback" arg as an Ex command (which can call Vimscript functions). The
   "buffer" arg could also be eliminated by treating a number "pattern" as
   a buffer number.
+- Avoid functions that depend on cursor position, current buffer, etc. Instead
+  the function should take a position parameter, buffer parameter, etc.
 
-                                                              *dev-api-naming*
-Use this format to name new RPC |API| functions:
+NAMING GUIDELINES                                       *dev-naming*
 
-    nvim_{thing}_{action}_{arbitrary-qualifiers}
+Naming is exceedingly important: the name of a thing is the primary interface
+for uses it, discusses it, searches for it, shares it... Consistent
+naming in the stdlib, API, and UI helps both users and developers discover and
+intuitively understand related concepts ("families"), and reduces cognitive
+burden. Discoverability encourages code re-use and likewise avoids redundant,
+overlapping mechanisms, which reduces code surface-area, and thereby minimizes
+bugs...
 
-If the function acts on an object then {thing} is the name of that object
-(e.g. "buf" or "win"). If the function operates in a "global" context then
-{thing} is usually omitted (but consider "namespacing" your global operations
-with a {thing} that groups functions under a common concept).
+Naming conventions ~
 
-Use existing common {action} names if possible:
-    - add       Append to, or insert into, a collection
-    - call      Call a function
-    - create    Create a new (non-trivial) thing
-    - del       Delete a thing (or group of things)
-    - eval      Evaluate an expression
-    - exec      Execute code
-    - fmt       Format
-    - get       Get things (often by a query)
-    - open      Open
-    - parse     Parse something into a structured form
-    - set       Set a thing (or group of things)
+In general, look for precedent when choosing a name, that is, look at existing
+(non-deprecated) functions. In particular, see below...
+
+							*dev-name-common*
+Use existing common {verb} names (actions) if possible:
+    - add:          Appends or inserts into a collection
+    - attach:       Listens to something to get events from it (TODO: rename to "on"?)
+    - call:         Calls a function
+    - clear:        Clears state but does not destroy the container
+    - create:       Creates a new (non-trivial) thing (TODO: rename to "def"?)
+    - del:          Deletes a thing (or group of things)
+    - detach:       Dispose attached listener (TODO: rename to "un"?)
+    - eval:         Evaluates an expression
+    - exec:         Executes code
+    - fmt:          Formats
+    - get:          Gets things (often by a query)
+    - inspect:      Presents a high-level, often interactive, view
+    - open:         Opens something (a buffer, window, …)
+    - parse:        Parses something into a structured form
+    - set:          Sets a thing (or group of things)
+    - try_{verb}:   Best-effort operation, failure returns null or error obj
 
 Do NOT use these deprecated verbs:
-    - list      Redundant with "get"
+    - list:         Redundant with "get"
+    - show:         Redundant with "print", "echo"
+    - notify:       Redundant with "print", "echo"
 
-Use consistent names for {thing} (nouns) in API functions: buffer is called
+Use consistent names for {noun} (nouns) in API functions: buffer is called
 "buf" everywhere, not "buffer" in some places and "buf" in others.
-    - buf       Buffer
-    - chan      |channel|
-    - cmd       Command
-    - cmdline   Command-line UI or input
-    - fn        Function
-    - hl        Highlight
-    - pos       Position
-    - proc      System process
-    - tabpage   Tabpage
-    - win       Window
+    - buf:          Buffer
+    - chan:         |channel|
+    - cmd:          Command
+    - cmdline:      Command-line UI or input
+    - fn:           Function
+    - hl:           Highlight
+    - pos:          Position
+    - proc:         System process
+    - tabpage:      Tabpage
+    - win:          Window
 
 Do NOT use these deprecated nouns:
     - buffer
     - command
     - window
 
-Example:
-    `nvim_get_keymap('v')` operates in a global context (first parameter is not
-    a Buffer). The "get" {action} indicates that it gets anything matching the
-    given filter parameter. There is no need for a "list" action because
-    `nvim_get_keymap('')` (i.e., empty filter) returns all items.
+							*dev-name-events*
+Use the "on_" prefix to name event-handling callbacks and also the interface for
+"registering" such handlers (on_key). The dual nature is acceptable to avoid
+a confused collection of naming conventions for these related concepts.
 
-Example:
-    `nvim_buf_del_mark` acts on a `Buffer` object (the first parameter)
-    and uses the "del" {action}.
+Editor |events| (autocommands) are historically named like: >
+    {Noun}{Event}
 
-Use this format to name new API events:
-    nvim_{thing}_{event}_event
+Use this format to name API (RPC) events: >
+    nvim_{noun}_{event-name}_event
 
-Example:
-    `nvim_buf_changedtick_event`
+Example: >
+    nvim_buf_changedtick_event
+<
+							*dev-name-api*
+Use this format to name new RPC |API| functions: >
+    nvim_{noun}_{verb}_{arbitrary-qualifiers}
+
+If the function acts on an object then {noun} is the name of that object
+(e.g. "buf" or "win"). If the function operates in a "global" context then
+{noun} is usually omitted (but consider "namespacing" your global operations
+with a {noun} that groups functions under a common concept).
+
+- Example: `nvim_get_keymap('v')` operates in a global context (first
+  parameter is not a Buffer). The "get" verb indicates that it gets anything
+  matching the given filter parameter. A "list" verb is unnecessary because
+  `nvim_get_keymap('')` (empty filter) returns all items.
+- Example: `nvim_buf_del_mark` acts on a `Buffer` object (the first parameter)
+  and uses the "del" {verb}.
 
 
 API-CLIENT						*dev-api-client*
@@ -415,21 +467,6 @@ External UIs are expected to implement these common features:
 - Consider the "option_set" |ui-global| event as a hint for other GUI
   behaviors. Various UI-related options ('guifont', 'ambiwidth', …) are
   published in this event. See also "mouse_on", "mouse_off".
-
-
-NAMING							*dev-naming*
-
-Naming is important. Consistent naming in the API and UI helps both users and
-developers discover and intuitively understand related concepts ("families"),
-and reduces cognitive burden. Discoverability encourages code re-use and
-likewise avoids redundant, overlapping mechanisms, which reduces code
-surface-area, and thereby minimizes bugs...
-
-Naming conventions ~
-
-Use the "on_" prefix to name event handlers and also the interface for
-"registering" such handlers (on_key). The dual nature is acceptable to avoid
-a confused collection of naming conventions for these related concepts.
 
 
  vim:tw=78:ts=8:sw=4:et:ft=help:norl:

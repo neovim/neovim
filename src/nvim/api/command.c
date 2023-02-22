@@ -899,15 +899,13 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
   }
 }
 
-/// Create a new user command |user-commands|
+/// Creates a global |user-commands| command.
 ///
-/// {name} is the name of the new command. The name must begin with an uppercase letter.
-///
-/// {command} is the replacement text or Lua function to execute.
+/// For Lua usage see |lua-guide-commands-create|.
 ///
 /// Example:
 /// <pre>vim
-///    :call nvim_create_user_command('SayHello', 'echo "Hello world!"', {})
+///    :call nvim_create_user_command('SayHello', 'echo "Hello world!"', {'bang': v:true})
 ///    :SayHello
 ///    Hello world!
 /// </pre>
@@ -929,15 +927,16 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 ///                 - mods: (string) Command modifiers, if any |<mods>|
 ///                 - smods: (table) Command modifiers in a structured format. Has the same
 ///                 structure as the "mods" key of |nvim_parse_cmd()|.
-/// @param  opts    Optional command attributes. See |command-attributes| for more details. To use
-///                 boolean attributes (such as |:command-bang| or |:command-bar|) set the value to
-///                 "true". In addition to the string options listed in |:command-complete|, the
-///                 "complete" key also accepts a Lua function which works like the "customlist"
-///                 completion mode |:command-completion-customlist|. Additional parameters:
-///                 - desc: (string) Used for listing the command when a Lua function is used for
-///                                  {command}.
-///                 - force: (boolean, default true) Override any previous definition.
-///                 - preview: (function) Preview callback for 'inccommand' |:command-preview|
+/// @param  opts    Optional |command-attributes|.
+///                 - Set boolean attributes such as |:command-bang| or |:command-bar| to true (but
+///                   not |:command-buffer|, use |nvim_buf_create_user_command()| instead).
+///                 - "complete" |:command-complete| also accepts a Lua function which works like
+///                   |:command-completion-customlist|.
+///                 - Other parameters:
+///                   - desc: (string) Used for listing the command when a Lua function is used for
+///                                    {command}.
+///                   - force: (boolean, default true) Override any previous definition.
+///                   - preview: (function) Preview callback for 'inccommand' |:command-preview|
 /// @param[out] err Error details, if any.
 void nvim_create_user_command(String name, Object command, Dict(user_command) *opts, Error *err)
   FUNC_API_SINCE(9)
@@ -955,7 +954,7 @@ void nvim_del_user_command(String name, Error *err)
   nvim_buf_del_user_command(-1, name, err);
 }
 
-/// Create a new user command |user-commands| in the given buffer.
+/// Creates a buffer-local command |user-commands|.
 ///
 /// @param  buffer  Buffer handle, or 0 for current buffer.
 /// @param[out] err Error details, if any.

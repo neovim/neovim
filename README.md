@@ -75,7 +75,6 @@ See [`:help nvim-from-vim`](https://neovim.io/doc/user/nvim.html#nvim-from-vim) 
 Project layout
 --------------
 
-    ├─ ci/              build automation
     ├─ cmake/           CMake utils
     ├─ cmake.config/    CMake defines
     ├─ cmake.deps/      subproject to fetch and build dependencies (optional)

@@ -13,7 +13,7 @@ BREAKING CHANGES                                                *news-breaking*
 
 The following changes may require adaptations in user config or plugins.
 
-• Cscope support is now removed (see |cscope| and |nvim-features-removed|):
+• Cscope support is now removed (see |cscope| and |nvim-removed|):
   - Commands removed:
     - `:cscope`
     - `:lcscope`
@@ -34,7 +34,7 @@ The following changes may require adaptations in user config or plugins.
 
   See https://github.com/neovim/neovim/pull/20545 for more information.
 
-• `:hardcopy` is now removed (see |hardcopy| and |nvim-features-removed|):
+• `:hardcopy` is now removed (see |hardcopy| and |nvim-removed|):
   - Commands removed:
     - `:hardcopy`
   - Options removed:

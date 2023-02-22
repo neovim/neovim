@@ -81,6 +81,13 @@ Logs will be written to `${HOME}/logs/*san.PID` then.
 
 For more information: https://github.com/google/sanitizers/wiki/SanitizerCommonFlags
 
+Reproducible build
+------------------
+
+To make a reproducible build of Nvim, set cmake variable `LUA_GEN_PRG` to
+a LuaJIT binary built with `LUAJIT_SECURITY_PRN=0`. See commit
+cb757f2663e6950e655c6306d713338dfa66b18d.
+
 Debug: Performance
 ------------------
 

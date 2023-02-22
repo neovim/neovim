@@ -401,20 +401,15 @@ the system, mostly it is something like 256 or 1024 characters.
 ==============================================================================
 2. Automatically setting options			*auto-setting*
 
-Besides changing options with the ":set" command, there are three alternatives
-to set options automatically for one or more files:
+Besides changing options with the ":set" command, you can set options
+automatically in various ways:
 
-1. When starting Vim initializations are read from various places.  See
-   |initialization|.  Most of them are performed for all editing sessions,
-   and some of them depend on the directory where Vim is started.
-   You can create an initialization file with |:mkvimrc|, |:mkview| and
-   |:mksession|.
-2. If you start editing a new file, the automatic commands are executed.
-   This can be used to set options for files matching a particular pattern and
-   many other things.  See |autocommand|.
-3. If you start editing a new file, and the 'modeline' option is on, a
-   number of lines at the beginning and end of the file are checked for
-   modelines.  This is explained here.
+1. With a |config| file or a |startup| argument. You can create an
+   initialization file with |:mkvimrc|, |:mkview| and |:mksession|.
+2. |autocommand|s executed when you edit a file.
+3. ".nvim.lua" files in the current directory, if 'exrc' is enabled.
+4. |editorconfig| in the current buffer's directory or ancestors.
+5. 'modeline' settings found at the beginning or end of the file. See below.
 
 					*modeline* *vim:* *vi:* *ex:* *E520*
 There are two forms of modelines.  The first form:
@@ -2267,15 +2262,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'exrc'* *'ex'* *'noexrc'* *'noex'*
 'exrc' 'ex'		boolean (default off)
 			global
-	Enables the reading of .nvim.lua, .nvimrc, and .exrc files in the current
-	directory.
+	Automatically execute .nvim.lua, .nvimrc, and .exrc files in the
+	current directory, if the file is in the |trust| list. Use |:trust| to
+	manage trusted files. See also |vim.secure.read()|.
 
-	The file is only sourced if the user indicates the file is trusted. If
-	it is, the SHA256 hash of the file contents and the full path of the
-	file are persisted to a trust database. The user is only prompted
-	again if the file contents change. See |vim.secure.read()|.
-
-	Use |:trust| to manage the trusted file database.
+	Compare 'exrc' to |editorconfig|:
+	- 'exrc' can execute any code; editorconfig only specifies settings.
+	- 'exrc' is Nvim-specific; editorconfig works in other editors.
 
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
@@ -6199,6 +6192,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	         is a bug that denotes that new mouse button recognition was 
 	         added without modifying code that reacts on mouse clicks on 
 	         this label.
+	      Use |getmousepos()|.winid in the specified function to get the
+	      corresponding window id of the clicked item.
 	< -   Where to truncate line if too long.  Default is at the start.
 	      No width fields allowed.
 	= -   Separation point between alignment sections.  Each section will
