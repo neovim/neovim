@@ -2819,6 +2819,9 @@ nvim_win_get_cursor({window})                          *nvim_win_get_cursor()*
     Return: ~
         (row, col) tuple
 
+    See also: ~
+      • |getcurpos()|
+
 nvim_win_get_height({window})                          *nvim_win_get_height()*
     Gets the window height
 

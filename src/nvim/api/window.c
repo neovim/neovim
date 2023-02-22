@@ -57,6 +57,8 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
 /// (different windows showing the same buffer have independent cursor
 /// positions). |api-indexing|
 ///
+/// @see |getcurpos()|
+///
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
 /// @return (row, col) tuple
