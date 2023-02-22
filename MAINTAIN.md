@@ -93,6 +93,7 @@ These dependencies are "vendored" (inlined), we must update the sources manually
 * `runtime/lua/vim/inspect.lua`: [inspect.lua](https://github.com/kikito/inspect.lua)
 * `src/nvim/tui/terminfo_defs.h`: terminfo definitions
     * Run `scripts/update_terminfo.sh` to update these definitions.
+* `src/bit.c`: only for PUC lua: port of `require'bit'` from luajit https://bitop.luajit.org/
 * [treesitter parsers](https://github.com/neovim/neovim/blob/fcc24e43e0b5f9d801a01ff2b8f78ce8c16dd551/cmake.deps/CMakeLists.txt#L197-L210)
 
 ### Forks
