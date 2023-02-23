@@ -241,6 +241,15 @@ describe(':terminal buffer', function()
     feed_command('bdelete!')
   end)
 
+  it('can be #piped to', function()
+    feed_command('new')
+    feed_command('norm ihello')
+    feed_command('norm oworld')
+    feed_command('%term cat')
+    sleep(500)
+    screen:expect{any='hello\nworld\n\nProcess exited 0'}
+  end)
+
   describe('handles confirmations', function()
     it('with :confirm', function()
       feed_command('terminal')

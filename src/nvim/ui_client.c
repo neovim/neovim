@@ -54,7 +54,7 @@ uint64_t ui_client_start_server(int argc, char **argv)
   Channel *channel = channel_job_start(args, CALLBACK_READER_INIT,
                                        on_err, CALLBACK_NONE,
                                        false, true, true, false, kChannelStdinPipe,
-                                       NULL, 0, 0, NULL, &exit_status);
+                                       NULL, 0, 0, NULL, &exit_status, -1);
 
   // If stdin is not a pty, it is forwarded to the client.
   // Replace stdin in the TUI process with the tty fd.

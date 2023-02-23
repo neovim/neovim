@@ -3994,7 +3994,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit, pty,
                                     rpc, overlapped, detach, stdin_mode, cwd,
-                                    width, height, env, &rettv->vval.v_number);
+                                    width, height, env, &rettv->vval.v_number,
+                                    -1);
   if (chan) {
     channel_create_event(chan, NULL);
   }
@@ -6485,7 +6486,7 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
                                     CALLBACK_READER_INIT, CALLBACK_NONE,
                                     false, true, false, false,
                                     kChannelStdinPipe, NULL, 0, 0, NULL,
-                                    &rettv->vval.v_number);
+                                    &rettv->vval.v_number, -1);
   if (chan) {
     channel_create_event(chan, NULL);
   }
@@ -8540,6 +8541,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const bool pty = true;
   bool clear_env = false;
   dictitem_T *job_env = NULL;
+  int stdin_descriptor = -1;
 
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
@@ -8562,6 +8564,11 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       return;
     }
 
+    stdin_descriptor = (int)tv_dict_get_number(job_opts, "stdin_fd");
+    if (stdin_descriptor == 0) {
+      stdin_descriptor = -1;
+    }
+
     clear_env = tv_dict_get_number(job_opts, "clear_env") != 0;
 
     if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
@@ -8580,7 +8587,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit,
                                     pty, rpc, overlapped, detach, stdin_mode,
                                     cwd, term_width, (uint16_t)curwin->w_height_inner,
-                                    env, &rettv->vval.v_number);
+                                    env, &rettv->vval.v_number, stdin_descriptor);
   if (rettv->vval.v_number <= 0) {
     return;
   }

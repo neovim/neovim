@@ -35,6 +35,9 @@ struct process {
   char **argv;
   dict_T *env;
   Stream in, out, err;
+  int stdin_fd;  // File descriptor that should be used for stdin. -1 if stdin
+                 // should be left as-is. Differs from `in` because `in` is a
+                 // handle to the process's pty.
   /// Exit handler. If set, user must call process_free().
   process_exit_cb cb;
   internal_process_cb internal_exit_cb, internal_close_cb;
@@ -58,6 +61,7 @@ static inline Process process_init(Loop *loop, ProcessType type, void *data)
     .in = { .closed = false },
     .out = { .closed = false },
     .err = { .closed = false },
+    .stdin_fd = -1,
     .cb = NULL,
     .closed = false,
     .internal_close_cb = NULL,
