@@ -1045,6 +1045,83 @@ end]]
 
   end)
 
+  it('underline attribute with higher priority takes effect #22371', function()
+    screen:try_resize(50, 3)
+    insert('aaabbbaaa')
+    exec([[
+      hi TestUL gui=underline guifg=Blue
+      hi TestUC gui=undercurl guisp=Red
+      hi TestBold gui=bold
+    ]])
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue};
+      [1] = {underline = true, foreground = Screen.colors.Blue};
+      [2] = {undercurl = true, special = Screen.colors.Red};
+      [3] = {underline = true, foreground = Screen.colors.Blue, special = Screen.colors.Red};
+      [4] = {undercurl = true, foreground = Screen.colors.Blue, special = Screen.colors.Red};
+      [5] = {bold = true, underline = true, foreground = Screen.colors.Blue};
+      [6] = {bold = true, undercurl = true, special = Screen.colors.Red};
+    })
+
+    meths.buf_set_extmark(0, ns, 0, 0, { end_col = 9, hl_group = 'TestUL', priority = 20 })
+    meths.buf_set_extmark(0, ns, 0, 3, { end_col = 6, hl_group = 'TestUC', priority = 30 })
+    screen:expect([[
+      {1:aaa}{4:bbb}{1:aa^a}                                         |
+      {0:~                                                 }|
+                                                        |
+    ]])
+    meths.buf_clear_namespace(0, ns, 0, -1)
+    meths.buf_set_extmark(0, ns, 0, 0, { end_col = 9, hl_group = 'TestUC', priority = 20 })
+    meths.buf_set_extmark(0, ns, 0, 3, { end_col = 6, hl_group = 'TestUL', priority = 30 })
+    screen:expect([[
+      {2:aaa}{3:bbb}{2:aa^a}                                         |
+      {0:~                                                 }|
+                                                        |
+    ]])
+    meths.buf_clear_namespace(0, ns, 0, -1)
+    meths.buf_set_extmark(0, ns, 0, 0, { end_col = 9, hl_group = 'TestUL', priority = 30 })
+    meths.buf_set_extmark(0, ns, 0, 3, { end_col = 6, hl_group = 'TestUC', priority = 20 })
+    screen:expect([[
+      {1:aaa}{3:bbb}{1:aa^a}                                         |
+      {0:~                                                 }|
+                                                        |
+    ]])
+    meths.buf_clear_namespace(0, ns, 0, -1)
+    meths.buf_set_extmark(0, ns, 0, 0, { end_col = 9, hl_group = 'TestUC', priority = 30 })
+    meths.buf_set_extmark(0, ns, 0, 3, { end_col = 6, hl_group = 'TestUL', priority = 20 })
+    screen:expect([[
+      {2:aaa}{4:bbb}{2:aa^a}                                         |
+      {0:~                                                 }|
+                                                        |
+    ]])
+
+    -- When only one highlight group has an underline attribute, it should always take effect.
+    meths.buf_clear_namespace(0, ns, 0, -1)
+    meths.buf_set_extmark(0, ns, 0, 0, { end_col = 9, hl_group = 'TestUL', priority = 20 })
+    meths.buf_set_extmark(0, ns, 0, 3, { end_col = 6, hl_group = 'TestBold', priority = 30 })
+    screen:expect([[
+      {1:aaa}{5:bbb}{1:aa^a}                                         |
+      {0:~                                                 }|
+                                                        |
+    ]])
+    meths.buf_clear_namespace(0, ns, 0, -1)
+    meths.buf_set_extmark(0, ns, 0, 0, { end_col = 9, hl_group = 'TestUL', priority = 30 })
+    meths.buf_set_extmark(0, ns, 0, 3, { end_col = 6, hl_group = 'TestBold', priority = 20 })
+    screen:expect_unchanged(true)
+    meths.buf_clear_namespace(0, ns, 0, -1)
+    meths.buf_set_extmark(0, ns, 0, 0, { end_col = 9, hl_group = 'TestUC', priority = 20 })
+    meths.buf_set_extmark(0, ns, 0, 3, { end_col = 6, hl_group = 'TestBold', priority = 30 })
+    screen:expect([[
+      {2:aaa}{6:bbb}{2:aa^a}                                         |
+      {0:~                                                 }|
+                                                        |
+    ]])
+    meths.buf_clear_namespace(0, ns, 0, -1)
+    meths.buf_set_extmark(0, ns, 0, 0, { end_col = 9, hl_group = 'TestUC', priority = 30 })
+    meths.buf_set_extmark(0, ns, 0, 3, { end_col = 6, hl_group = 'TestBold', priority = 20 })
+    screen:expect_unchanged(true)
+  end)
+
 end)
 
 describe('decorations: virtual lines', function()

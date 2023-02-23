@@ -507,6 +507,16 @@ void hl_invalidate_blends(void)
   update_window_hl(curwin, true);
 }
 
+/// Combine HlAttrFlags.
+/// The underline attribute in "prim_ae" overrules the one in "char_ae" if both are present.
+static int16_t hl_combine_ae(int16_t char_ae, int16_t prim_ae)
+{
+  int16_t char_ul = char_ae & HL_UNDERLINE_MASK;
+  int16_t prim_ul = prim_ae & HL_UNDERLINE_MASK;
+  int16_t new_ul = prim_ul ? prim_ul : char_ul;
+  return (char_ae & ~HL_UNDERLINE_MASK) | (prim_ae & ~HL_UNDERLINE_MASK) | new_ul;
+}
+
 // Combine special attributes (e.g., for spelling) with other attributes
 // (e.g., for syntax highlighting).
 // "prim_attr" overrules "char_attr".
@@ -537,12 +547,12 @@ int hl_combine_attr(int char_attr, int prim_attr)
   if (prim_aep.cterm_ae_attr & HL_NOCOMBINE) {
     new_en.cterm_ae_attr = prim_aep.cterm_ae_attr;
   } else {
-    new_en.cterm_ae_attr |= prim_aep.cterm_ae_attr;
+    new_en.cterm_ae_attr = hl_combine_ae(new_en.cterm_ae_attr, prim_aep.cterm_ae_attr);
   }
   if (prim_aep.rgb_ae_attr & HL_NOCOMBINE) {
     new_en.rgb_ae_attr = prim_aep.rgb_ae_attr;
   } else {
-    new_en.rgb_ae_attr |= prim_aep.rgb_ae_attr;
+    new_en.rgb_ae_attr = hl_combine_ae(new_en.rgb_ae_attr, prim_aep.rgb_ae_attr);
   }
 
   if (prim_aep.cterm_fg_color > 0) {
@@ -664,7 +674,7 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
   } else {
     cattrs = fattrs;
     if (ratio >= 50) {
-      cattrs.rgb_ae_attr |= battrs.rgb_ae_attr;
+      cattrs.rgb_ae_attr = hl_combine_ae(battrs.rgb_ae_attr, cattrs.rgb_ae_attr);
     }
     cattrs.rgb_fg_color = rgb_blend(ratio/2, battrs.rgb_fg_color,
                                     fattrs.rgb_fg_color);
@@ -924,7 +934,10 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
 
 #define CHECK_FLAG(d, m, name, extra, flag) \
   if (api_object_to_bool(d->name##extra, #name, false, err)) { \
-    m = m | flag; \
+    if (flag & HL_UNDERLINE_MASK) { \
+      m &= ~HL_UNDERLINE_MASK; \
+    } \
+    m |= flag; \
   }
 
   CHECK_FLAG(dict, mask, reverse, , HL_INVERSE);

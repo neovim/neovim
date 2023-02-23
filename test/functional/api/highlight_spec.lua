@@ -278,6 +278,20 @@ describe("API: set highlight", function()
     eq(highlight3_result_cterm, meths.get_hl_by_name('Test_hl', false))
   end)
 
+  it("only allows one underline attribute #22371", function()
+    local ns = get_ns()
+    meths.set_hl(ns, 'Test_hl', {
+      underdouble = true,
+      underdotted = true,
+      cterm = {
+        underline = true,
+        undercurl = true,
+      },
+    })
+    eq({ undercurl = true }, meths.get_hl_by_name('Test_hl', false))
+    eq({ underdotted = true }, meths.get_hl_by_name('Test_hl', true))
+  end)
+
   it("can set a highlight in the global namespace", function()
     meths.set_hl(0, 'Test_hl', highlight2_config)
     eq('Test_hl        xxx cterm=underline,reverse ctermfg=8 ctermbg=15 gui=underline,reverse',
