@@ -372,7 +372,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader
   proc->overlapped = overlapped;
 
   char *cmd = xstrdup(proc->argv[0]);
-  bool has_in, has_out, has_err;
+  bool has_out, has_err;
   if (proc->type == kProcessTypePty) {
     has_out = true;
     has_err = false;
@@ -382,14 +382,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader
     proc->fwd_err = chan->on_stderr.fwd_err;
   }
 
-  switch (stdin_mode) {
-  case kChannelStdinPipe:
-    has_in = true;
-    break;
-  case kChannelStdinNull:
-    has_in = false;
-    break;
-  }
+  bool has_in = stdin_mode == kChannelStdinPipe;
 
   int status = process_spawn(proc, has_in, has_out, has_err);
   if (status) {
