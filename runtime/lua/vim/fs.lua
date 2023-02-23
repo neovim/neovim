@@ -144,7 +144,7 @@ end
 --- The search can be narrowed to find only files or only directories by
 --- specifying {type} to be "file" or "directory", respectively.
 ---
----@param names (string|table|fun(name: string): boolean) Names of the files
+---@param names (string|table|fun(name: string, path: string): boolean) Names of the files
 ---             and directories to find.
 ---             Must be base names, paths and globs are not supported.
 ---             The function is called per file and directory within the
@@ -201,7 +201,7 @@ function M.find(names, opts)
       test = function(p)
         local t = {}
         for name, type in M.dir(p) do
-          if names(name) and (not opts.type or opts.type == type) then
+          if (not opts.type or opts.type == type) and names(name, p) then
             table.insert(t, join_paths(p, name))
           end
         end

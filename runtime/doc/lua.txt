@@ -2360,11 +2360,11 @@ find({names}, {opts})                                          *vim.fs.find()*
     specifying {type} to be "file" or "directory", respectively.
 
     Parameters: ~
-      • {names}  (string|table|fun(name: string): boolean) Names of the files
-                 and directories to find. Must be base names, paths and globs
-                 are not supported. The function is called per file and
-                 directory within the traversed directories to test if they
-                 match {names}.
+      • {names}  (string|table|fun(name: string, path: string): boolean) Names
+                 of the files and directories to find. Must be base names,
+                 paths and globs are not supported. The function is called per
+                 file and directory within the traversed directories to test
+                 if they match {names}.
       • {opts}   (table) Optional keyword arguments:
                  • path (string): Path to begin searching from. If omitted,
                    the |current-directory| is used.
