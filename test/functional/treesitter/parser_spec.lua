@@ -871,4 +871,38 @@ int x = INT_MAX;
       end)
     end)
   end)
+
+  it("can fold via foldexpr", function()
+    insert(test_text)
+    exec_lua([[vim.treesitter.get_parser(0, "c")]])
+
+    local levels = exec_lua([[
+      local res = {}
+      for i = 1, vim.api.nvim_buf_line_count(0) do
+        res[i] = vim.treesitter.foldexpr(i)
+      end
+      return res
+    ]])
+
+    eq({
+     [1] = '>1',
+      [2] = '1',
+      [3] = '1',
+      [4] = '1',
+      [5] = '>2',
+      [6] = '2',
+      [7] = '2',
+      [8] = '1',
+      [9] = '1',
+      [10] = '>2',
+      [11] = '2',
+      [12] = '2',
+      [13] = '2',
+      [14] = '2',
+      [15] = '>3',
+      [16] = '3',
+      [17] = '3',
+      [18] = '2',
+      [19] = '1' }, levels)
+  end)
 end)
