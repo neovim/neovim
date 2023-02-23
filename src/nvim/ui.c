@@ -598,6 +598,15 @@ Array ui_array(void)
     PUT(info, "height", INTEGER_OBJ(ui->height));
     PUT(info, "rgb", BOOLEAN_OBJ(ui->rgb));
     PUT(info, "override", BOOLEAN_OBJ(ui->override));
+
+    // TUI fields.
+    PUT(info, "term_name", STRING_OBJ(cstr_to_string(ui->term_name)));
+    PUT(info, "term_background", STRING_OBJ(cstr_to_string(ui->term_background)));
+    PUT(info, "term_colors", INTEGER_OBJ(ui->term_colors));
+    PUT(info, "stdin_fd", INTEGER_OBJ(ui->stdin_fd));
+    PUT(info, "stdin_tty", BOOLEAN_OBJ(ui->stdin_tty));
+    PUT(info, "stdout_tty", BOOLEAN_OBJ(ui->stdout_tty));
+
     for (UIExtension j = 0; j < kUIExtCount; j++) {
       if (ui_ext_names[j][0] != '_' || ui->ui_ext[j]) {
         PUT(info, ui_ext_names[j], BOOLEAN_OBJ(ui->ui_ext[j]));

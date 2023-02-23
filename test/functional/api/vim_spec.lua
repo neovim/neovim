@@ -2549,20 +2549,26 @@ describe('API', function()
         {
           chan = 1,
           ext_cmdline = false,
+          ext_hlstate = false,
+          ext_linegrid = screen._options.ext_linegrid or false,
+          ext_messages = false,
+          ext_multigrid = false,
           ext_popupmenu = false,
           ext_tabline = false,
-          ext_wildmenu = false,
-          ext_linegrid = screen._options.ext_linegrid or false,
-          ext_multigrid = false,
-          ext_hlstate = false,
           ext_termcolors = false,
-          ext_messages = false,
+          ext_wildmenu = false,
           height = 4,
-          rgb = true,
           override = true,
+          rgb = true,
+          stdin_tty = false,
+          stdout_tty = false,
+          term_background = '',
+          term_colors = 0,
+          term_name = '',
           width = 20,
         }
       }
+
       eq(expected, nvim("list_uis"))
 
       screen:detach()

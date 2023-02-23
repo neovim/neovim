@@ -1398,17 +1398,32 @@ describe('TUI', function()
     ]]}
   end)
 
-  it('is included in nvim_list_uis()', function()
-    feed_data(':echo map(nvim_list_uis(), {k,v -> sort(items(filter(v, {k,v -> k[:3] !=# "ext_" })))})\r')
-    screen:expect([=[
-                                                        |
-      {4:~                                                 }|
-      {5:                                                  }|
-      [[['chan', 1], ['height', 6], ['override', v:false|
-      ], ['rgb', v:false], ['width', 50]]]              |
-      {10:Press ENTER or type command to continue}{1: }          |
-      {3:-- TERMINAL --}                                    |
-    ]=])
+  it('in nvim_list_uis()', function()
+    local expected = {
+      {
+         chan = 1,
+         ext_cmdline = false,
+         ext_hlstate = false,
+         ext_linegrid = true,
+         ext_messages = false,
+         ext_multigrid = false,
+         ext_popupmenu = false,
+         ext_tabline = false,
+         ext_termcolors = true,
+         ext_wildmenu = false,
+         height = 6,
+         override = false,
+         rgb = false,
+         stdin_tty = true,
+         stdout_tty = true,
+         term_background = '',
+         term_colors = 256,
+         term_name = 'xterm-256color',  -- $TERM in :terminal.
+         width = 50
+       },
+    }
+    local _, rv = child_session:request('nvim_list_uis')
+    eq(expected, rv)
   end)
 
   it('allows grid to assume wider ambiguous-width characters than host terminal #19686', function()

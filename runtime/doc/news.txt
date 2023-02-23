@@ -179,6 +179,8 @@ The following new APIs or features were added.
 
   Additionally |TSNode:range()| now takes an optional {include_bytes} argument.
 
+• |nvim_list_uis()| reports all |ui-option| fields.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
