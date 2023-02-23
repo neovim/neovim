@@ -71,7 +71,7 @@ local keyword are not accessible outside of the command. This won't work:
 <
 You can also use `:lua=`, which is the same as `:lua vim.pretty_print(...)`,
 to conveniently check the value of a variable or a table:
->lua
+>vim
     :lua=package
 <
 To run a Lua script in an external file, you can use the |:source| command

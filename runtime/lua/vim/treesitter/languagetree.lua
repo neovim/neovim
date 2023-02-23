@@ -653,7 +653,7 @@ end
 ---@param range Range `{ start_line, start_col, end_line, end_col }`
 ---@param opts table|nil Optional keyword arguments:
 ---             - ignore_injections boolean Ignore injected languages (default true)
----@return TSNode|nil Found node
+---@return TSNode | nil Found node
 function LanguageTree:named_node_for_range(range, opts)
   local tree = self:tree_for_range(range, opts)
   if tree then

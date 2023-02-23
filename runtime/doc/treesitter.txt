@@ -505,8 +505,7 @@ get_captures_at_pos({bufnr}, {row}, {col})
       • {col}    (integer) Position column
 
     Return: ~
-        table[] List of captures `{ capture = "capture name", metadata = { ...
-        } }`
+        table[] List of captures `{ capture = "name", metadata = { ... } }`
 
 get_node({opts})                                   *vim.treesitter.get_node()*
     Returns the smallest named node at the given position
@@ -528,7 +527,7 @@ get_node_range({node_or_range})              *vim.treesitter.get_node_range()*
     Returns the node's range or an unpacked range table
 
     Parameters: ~
-      • {node_or_range}  (|TSNode||table) Node or table of positions
+      • {node_or_range}  (|TSNode| | table) Node or table of positions
 
     Return: ~
         (integer) start_row
@@ -838,7 +837,7 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
        -- typically useful info about the node:
        local type = node:type() -- type of the captured node
        local row1, col1, row2, col2 = node:range() -- range of the capture
-       ... use the info here ...
+       -- ... use the info here ...
      end
 <
 
@@ -871,7 +870,7 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop})
 
          local node_data = metadata[id] -- Node level metadata
 
-         ... use the info here ...
+         -- ... use the info here ...
        end
      end
 <
@@ -1017,7 +1016,7 @@ LanguageTree:named_node_for_range({self}, {range}, {opts})
       • {self}
 
     Return: ~
-        |TSNode||nil Found node
+        |TSNode| | nil Found node
 
 LanguageTree:parse({self})                              *LanguageTree:parse()*
     Parses all defined regions using a treesitter parser for the language this
