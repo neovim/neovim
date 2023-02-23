@@ -150,6 +150,11 @@ end
 ---             The function is called per file and directory within the
 ---             traversed directories to test if they match {names}.
 ---
+---             If {names} is a function, it is called for each file and directory within the
+---             traversed directory and it would be passed the base name of each file or directory and
+---             the path of the directory being traversed.
+---             The function should return `true` if the given file or directory is considered a match.
+---
 ---@param opts (table) Optional keyword arguments:
 ---                       - path (string): Path to begin searching from. If
 ---                              omitted, the |current-directory| is used.
