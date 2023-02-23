@@ -686,11 +686,6 @@ add({lang}, {opts})                            *vim.treesitter.language.add()*
                 • path (string|nil) Optional path the parser is located at
                 • symbol_name (string|nil) Internal symbol name for the
                   language to load
-                • silent (boolean|nil) Don't throw an error if language not
-                  found
-
-    Return: ~
-        (boolean) If the specified language is installed
 
 get_lang({filetype})                      *vim.treesitter.language.get_lang()*
     Parameters: ~

@@ -184,7 +184,7 @@ function LanguageTree:parse()
   local seen_langs = {} ---@type table<string,boolean>
 
   for lang, injection_ranges in pairs(injections_by_lang) do
-    local has_lang = language.add(lang, { silent = true })
+    local has_lang = pcall(language.add, lang)
 
     -- Child language trees should just be ignored if not found, since
     -- they can depend on the text of a node. Intermediate strings
