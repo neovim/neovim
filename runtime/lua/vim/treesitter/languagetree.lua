@@ -27,7 +27,7 @@ local Range = require('vim.treesitter._range')
 ---@field private _lang string Language name
 ---@field private _source (integer|string) Buffer or string to parse
 ---@field private _trees TSTree[] Reference to parsed tree (one for each language)
----@field private _valid boolean|table<integer,true> If the parsed tree is valid
+---@field private _valid boolean|table<integer,boolean> If the parsed tree is valid
 --- TODO(lewis6991): combine _regions, _valid and _trees
 ---@field private _is_child boolean
 local LanguageTree = {}
@@ -115,10 +115,18 @@ end
 --- If the tree is invalid, call `parse()`.
 --- This will return the updated tree.
 function LanguageTree:is_valid()
-  if type(self._valid) == 'table' then
-    return #self._valid == #self._regions
+  local valid = self._valid
+
+  if type(valid) == 'table' then
+    for _, v in ipairs(valid) do
+      if not v then
+        return false
+      end
+    end
+    return true
   end
-  return self._valid
+
+  return valid
 end
 
 --- Returns a map of language to child tree.
@@ -323,11 +331,17 @@ function LanguageTree:set_included_regions(regions)
   elseif self._valid ~= false then
     if self._valid == true then
       self._valid = {}
+      for i = 1, #regions do
+        self._valid[i] = true
+      end
     end
+
     for i = 1, #regions do
-      self._valid[i] = true
       if not vim.deep_equal(self._regions[i], regions[i]) then
-        self._valid[i] = nil
+        self._valid[i] = false
+      end
+
+      if not self._valid[i] then
         self._trees[i] = nil
       end
     end
@@ -491,16 +505,16 @@ end
 ---@param regions Range6[][]
 ---@param old_range Range6
 ---@param new_range Range6
----@return table<integer, true> region indices to invalidate
+---@return table<integer,boolean> region indices to invalidate
 local function update_regions(regions, old_range, new_range)
-  ---@type table<integer,true>
+  ---@type table<integer,boolean>
   local valid = {}
 
   for i, ranges in ipairs(regions or {}) do
     valid[i] = true
     for j, r in ipairs(ranges) do
       if Range.intercepts(r, old_range) then
-        valid[i] = nil
+        valid[i] = false
         break
       end
 
@@ -572,12 +586,10 @@ function LanguageTree:_on_bytes(
     start_byte + new_byte,
   }
 
-  local valid_regions = update_regions(self._regions, old_range, new_range)
-
-  if #self._regions == 0 or #valid_regions == 0 then
+  if #self._regions == 0 then
     self._valid = false
   else
-    self._valid = valid_regions
+    self._valid = update_regions(self._regions, old_range, new_range)
   end
 
   for _, child in pairs(self._children) do
