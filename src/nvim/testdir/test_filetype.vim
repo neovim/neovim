@@ -609,6 +609,7 @@ let s:filename_checks = {
     \ 'typescript': ['file.mts', 'file.cts'],
     \ 'typescript.glimmer': ['file.gts'],
     \ 'typescriptreact': ['file.tsx'],
+    \ 'ungrammar': ['file.ungram'],
     \ 'uc': ['file.uc'],
     \ 'udevconf': ['/etc/udev/udev.conf', 'any/etc/udev/udev.conf'],
     \ 'udevperm': ['/etc/udev/permissions.d/file.permissions', 'any/etc/udev/permissions.d/file.permissions'],

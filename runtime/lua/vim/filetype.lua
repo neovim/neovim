@@ -1056,6 +1056,7 @@ local extension = {
   uc = 'uc',
   uit = 'uil',
   uil = 'uil',
+  ungram = 'ungrammar',
   sba = 'vb',
   vb = 'vb',
   dsm = 'vb',
