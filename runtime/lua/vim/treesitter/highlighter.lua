@@ -201,6 +201,8 @@ end
 ---@param self TSHighlighter
 ---@param buf integer
 ---@param line integer
+---@param leftcol integer
+---@param rightcol integer
 ---@param is_spell_nav boolean
 local function on_line_impl(self, buf, line, leftcol, rightcol, is_spell_nav)
   ---@diagnostic disable:invisible
@@ -276,13 +278,15 @@ local function on_line_impl(self, buf, line, leftcol, rightcol, is_spell_nav)
         break
       end
     end
-  end, true)
+  end)
 end
 
 ---@private
 ---@param _win integer
 ---@param buf integer
 ---@param line integer
+---@param leftcol integer
+---@param rightcol integer
 function TSHighlighter._on_line(_, _win, buf, line, leftcol, rightcol)
   local self = TSHighlighter.active[buf]
   if not self then
@@ -305,7 +309,7 @@ function TSHighlighter._on_spell_nav(_, _, buf, srow, _, erow, _)
   self:reset_highlight_state()
 
   for row = srow, erow do
-    on_line_impl(self, buf, row, true)
+    on_line_impl(self, buf, row, 0, 0, true)
   end
 end
 

@@ -29,15 +29,19 @@ local TSNode = {}
 ---@param captures true
 ---@param start integer
 ---@param end_ integer
+---@param start_col integer?
+---@param end_col integer?
 ---@return fun(): integer, TSNode, any
-function TSNode:_rawquery(query, captures, start, end_) end
+function TSNode:_rawquery(query, captures, start, end_, start_col, end_col) end
 
 ---@param query userdata
 ---@param captures false
 ---@param start integer
 ---@param end_ integer
+---@param start_col integer?
+---@param end_col integer?
 ---@return fun(): string, any
-function TSNode:_rawquery(query, captures, start, end_) end
+function TSNode:_rawquery(query, captures, start, end_, start_col, end_col) end
 
 ---@class TSParser
 ---@field parse fun(self: TSParser, tree, source: integer|string): TSTree, integer[]

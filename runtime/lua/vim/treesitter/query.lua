@@ -57,12 +57,12 @@ end
 
 ---@private
 ---@param buf (number)
----@param range (table)
+---@param range (Range4)
 ---@param concat (boolean)
 ---@returns (string[]|string|nil)
 local function buf_range_get_text(buf, range, concat)
-  local lines
-  local start_row, start_col, end_row, end_col = unpack(range)
+  local lines ---@type string[]
+  local start_row, start_col, end_row, end_col = range[1], range[2], range[4], range[4]
   local eof_row = a.nvim_buf_line_count(buf)
   if start_row >= eof_row then
     return nil
@@ -273,8 +273,8 @@ end
 ---@param opts (table|nil) Optional parameters.
 ---          - concat: (boolean) Concatenate result in a string (default true)
 ---          - metadata (table) Metadata of a specific capture. This would be
----            set to `metadata[capture_id]` when using
----            |vim.treesitter.query.add_directive()|.
+---            set to `metadata[capture_id]` when
+---            using |vim.treesitter.query.add_directive()|.
 ---@return (string[]|string|nil)
 function M.get_node_text(node, source, opts)
   opts = opts or {}
@@ -611,12 +611,12 @@ end
 ---@param node TSNode
 ---@param start integer
 ---@param stop integer
----@param start_col integer
----@param end_col integer
+---@param start_col integer?
+---@param end_col integer?
 ---@return integer, integer, integer, integer
 local function value_or_node_range(node, start, stop, start_col, end_col)
-  if start and stop and start_col and end_col then
-    return start, stop, start_col, end_col
+  if start and stop then
+    return start, stop, start_col or 0, end_col or 0
   end
 
   local node_start, node_start_col, node_stop, node_end_col = node:range()
@@ -649,8 +649,8 @@ end
 ---@param source (integer|string) Source buffer or string to extract text from
 ---@param start integer Starting line for the search
 ---@param stop integer Stopping line for the search (end-exclusive)
----@param start_col integer Starting column for the search
----@param end_col integer Stopping column for the search (end-exclusive)
+---@param start_col integer? Starting column for the search
+---@param end_col integer? Stopping column for the search (end-exclusive)
 ---
 ---@return (fun(): integer, TSNode, TSMetadata): capture id, capture node, metadata
 function Query:iter_captures(node, source, start, stop, start_col, end_col)
