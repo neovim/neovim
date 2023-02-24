@@ -734,7 +734,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   int syntax_flags    = 0;
   int syntax_seqnr    = 0;
   int prev_syntax_id  = 0;
-  int conceal_attr    = win_hl_attr(wp, HLF_CONCEAL);
   bool is_concealing  = false;
   int boguscols       = 0;              ///< nonexistent columns added to
                                         ///< force wrapping
@@ -1222,6 +1221,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     statuscol.num_attr = sign_num_attr ? sign_num_attr
                          : get_line_number_attr(wp, lnum, row, startrow, filler_lines);
   }
+
+  bool has_conceal = wp->w_p_cole > 0
+                     && (wp != curwin || lnum != wp->w_cursor.lnum || conceal_cursor_line(wp))
+                     && !(lnum_in_visual_area && vim_strchr(wp->w_p_cocu, 'v') == NULL);
 
   int sign_idx = 0;
   int virt_line_index;
@@ -2279,11 +2282,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         }
       }
 
-      if (wp->w_p_cole > 0
-          && (wp != curwin || lnum != wp->w_cursor.lnum || conceal_cursor_line(wp))
-          && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc > 0 || decor_conceal > 0)
-          && !(lnum_in_visual_area && vim_strchr(wp->w_p_cocu, 'v') == NULL)) {
-        char_attr = conceal_attr;
+      if (has_conceal
+          && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc > 0 || decor_conceal > 0)) {
+        char_attr = win_hl_attr(wp, HLF_CONCEAL);
         if (((prev_syntax_id != syntax_seqnr && (syntax_flags & HL_CONCEAL) != 0)
              || has_match_conc > 1 || decor_conceal > 1)
             && (syn_get_sub_char() != NUL
