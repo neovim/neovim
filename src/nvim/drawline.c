@@ -762,6 +762,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   buf_T *buf = wp->w_buffer;
   bool end_fill = (lnum == buf->b_ml.ml_line_count + 1);
 
+  line = end_fill ? "" : ml_get_buf(buf, lnum, false);
+
   if (!number_only) {
     // To speed up the loop below, set extra_check when there is linebreak,
     // trailing white space and/or syntax processing to be done.
@@ -784,10 +786,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       }
     }
 
-    line = ml_get_buf(buf, lnum, false);
+    // TODO(lewis6991): plines_win here is expensive. Try and remove.
+    int win_lines = end_fill ? 0 : plines_win(wp, lnum, true);
+
     has_decor = decor_redraw_line(buf, lnum - 1, &decor_state);
 
-    int win_lines = plines_win(wp, lnum, true);
     int leftoffset = wp->w_leftcol + wp->w_skipcol;
     int rightoffset = leftoffset + win_lines * (wp->w_width - win_col_off(wp));
     rightoffset = (int)win_linetabsize(wp, lnum, line, rightoffset);
@@ -1003,7 +1006,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     line_attr_lowprio_save = line_attr_lowprio;
   }
 
-  line = end_fill ? "" : ml_get_buf(wp->w_buffer, lnum, false);
   ptr = line;
 
   if (has_spell && !number_only) {
