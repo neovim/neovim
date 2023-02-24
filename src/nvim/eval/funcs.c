@@ -1914,7 +1914,7 @@ static void flatten_common(typval_T *argvars, typval_T *rettv, bool make_copy)
     tv_list_ref(list);
   }
 
-  tv_list_flatten(list, maxdepth);
+  tv_list_flatten(list, NULL, tv_list_len(list), maxdepth);
 }
 
 /// "flatten(list[, {maxdepth}])" function
