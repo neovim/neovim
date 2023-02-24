@@ -1902,7 +1902,7 @@ static void flatten_common(typval_T *argvars, typval_T *rettv, bool make_copy)
   }
 
   if (make_copy) {
-    list = tv_list_copy(NULL, list, true, get_copyID());
+    list = tv_list_copy(NULL, list, false, get_copyID());
     rettv->vval.v_list = list;
     if (list == NULL) {
       return;
