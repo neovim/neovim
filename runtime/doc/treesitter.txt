@@ -825,7 +825,8 @@ parse_query({lang}, {query})              *vim.treesitter.query.parse_query()*
         Query Parsed query
 
                                                        *Query:iter_captures()*
-Query:iter_captures({self}, {node}, {source}, {start}, {stop})
+Query:iter_captures({self}, {node}, {source}, {start}, {stop}, {start_col},
+                    {end_col})
     Iterate over all captures from all matches inside {node}
 
     {source} is needed if the query contains predicates; then the caller must
@@ -850,18 +851,21 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
 <
 
     Parameters: ~
-      • {node}    |TSNode| under which the search will occur
-      • {source}  (integer|string) Source buffer or string to extract text
-                  from
-      • {start}   (number) Starting line for the search
-      • {stop}    (number) Stopping line for the search (end-exclusive)
+      • {node}       |TSNode| under which the search will occur
+      • {source}     (integer|string) Source buffer or string to extract text
+                     from
+      • {start}      (integer) Starting line for the search
+      • {stop}       (integer) Stopping line for the search (end-exclusive)
+      • {start_col}  (integer) Starting column for the search
+      • {end_col}    (integer) Stopping column for the search (end-exclusive)
       • {self}
 
     Return: ~
         (fun(): integer, TSNode, TSMetadata ): capture id, capture node, metadata
 
                                                         *Query:iter_matches()*
-Query:iter_matches({self}, {node}, {source}, {start}, {stop})
+Query:iter_matches({self}, {node}, {source}, {start}, {stop}, {start_col},
+                   {end_col})
     Iterates the matches of self on a given range.
 
     Iterate over all matches within a {node}. The arguments are the same as
@@ -884,10 +888,12 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop})
 <
 
     Parameters: ~
-      • {node}    |TSNode| under which the search will occur
-      • {source}  (integer|string) Source buffer or string to search
-      • {start}   (integer) Starting line for the search
-      • {stop}    (integer) Stopping line for the search (end-exclusive)
+      • {node}       |TSNode| under which the search will occur
+      • {source}     (integer|string) Source buffer or string to search
+      • {start}      (integer) Starting line for the search
+      • {stop}       (integer) Stopping line for the search (end-exclusive)
+      • {start_col}  (integer) Starting column for the search
+      • {end_col}    (integer) Stopping column for the search (end-exclusive)
       • {self}
 
     Return: ~
