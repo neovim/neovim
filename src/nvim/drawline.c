@@ -625,7 +625,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   colnr_T vcol = 0;                   // virtual column (for tabs)
   long vcol_sbr = -1;                 // virtual column after showbreak
   long vcol_prev = -1;                // "vcol" of previous character
-  char *line;                         // current line
   char *ptr;                          // current position in "line"
   int row;                            // row in the window, excl w_winrow
   ScreenGrid *grid = &wp->w_grid;     // grid specific to the window
@@ -762,7 +761,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   buf_T *buf = wp->w_buffer;
   bool end_fill = (lnum == buf->b_ml.ml_line_count + 1);
 
-  line = end_fill ? "" : ml_get_buf(buf, lnum, false);
+  bool lnum_valid = lnum <= buf->b_ml.ml_line_count;
+
+  char *line = lnum_valid ? ml_get_buf(buf, lnum, false) : "";  // current line
 
   if (!number_only) {
     // To speed up the loop below, set extra_check when there is linebreak,
@@ -786,14 +787,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       }
     }
 
-    // TODO(lewis6991): plines_win here is expensive. Try and remove.
-    int win_lines = end_fill ? 0 : plines_win(wp, lnum, true);
-
     has_decor = decor_redraw_line(buf, lnum - 1, &decor_state);
 
     int leftoffset = wp->w_leftcol + wp->w_skipcol;
-    int rightoffset = leftoffset + win_lines * (wp->w_width - win_col_off(wp));
-    rightoffset = (int)win_linetabsize(wp, lnum, line, rightoffset);
+    int rightoffset = leftoffset + linetabsize_col(leftoffset, line);
 
     decor_providers_invoke_line(wp, providers, lnum - 1, &has_decor, provider_err, leftoffset,
                                 rightoffset);
@@ -829,8 +826,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       // Trick: skip a few chars for C/shell/Vim comments
       nextline[SPWORDLEN] = NUL;
       if (lnum < wp->w_buffer->b_ml.ml_line_count) {
-        line = ml_get_buf(wp->w_buffer, lnum + 1, false);
-        spell_cat_line(nextline + SPWORDLEN, line, SPWORDLEN);
+        char *next_line = ml_get_buf(wp->w_buffer, lnum + 1, false);
+        spell_cat_line(nextline + SPWORDLEN, next_line, SPWORDLEN);
       }
 
       // When a word wrapped from the previous line the start of the current
