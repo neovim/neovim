@@ -608,19 +608,19 @@ end
 -- When the node's range is used, the stop is incremented by 1
 -- to make the search inclusive.
 ---@private
+---@param node TSNode
 ---@param start integer
 ---@param stop integer
 ---@param start_col integer
 ---@param end_col integer
----@param node TSNode
----@return integer, integer
-local function value_or_node_range(start, stop, node, start_col, end_col)
-  if not (start or stop or start_col or end_col) then
-    local node_start, node_start_col, node_stop, node_end_col = node:range()
-    return node_start, node_stop + 1, node_start_col, node_end_col + 1 -- Make stop inclusive
+---@return integer, integer, integer, integer
+local function value_or_node_range(node, start, stop, start_col, end_col)
+  if start and stop and start_col and end_col then
+    return start, stop, start_col, end_col
   end
 
-  return start, stop, start_col or 0, end_col or 0
+  local node_start, node_start_col, node_stop, node_end_col = node:range()
+  return node_start, node_stop + 1, node_start_col, node_end_col + 1 -- Make stop inclusive
 end
 
 --- Iterate over all captures from all matches inside {node}
