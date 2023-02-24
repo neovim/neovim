@@ -654,14 +654,14 @@ tv_list_copy_error:
 /// @param[in] maxdepth   Maximum depth that will be flattened
 ///
 /// @return OK or FAIL
-int tv_list_flatten(list_T *list, long maxdepth)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
+void tv_list_flatten(list_T *list, long maxdepth)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   listitem_T *item;
   listitem_T *to_free;
   int n;
   if (maxdepth == 0) {
-    return OK;
+    return;
   }
 
   n = 0;
@@ -669,7 +669,7 @@ int tv_list_flatten(list_T *list, long maxdepth)
   while (item != NULL) {
     fast_breakcheck();
     if (got_int) {
-      return FAIL;
+      return;
     }
     if (item->li_tv.v_type == VAR_LIST) {
       listitem_T *next = item->li_next;
@@ -695,7 +695,6 @@ int tv_list_flatten(list_T *list, long maxdepth)
       item = item->li_next;
     }
   }
-  return OK;
 }
 
 /// Extend first list with the second

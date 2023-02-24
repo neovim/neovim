@@ -79,3 +79,14 @@ func Test_flatten()
   call assert_equal([1, 2, 1, 2], flatten(l:x, 2))
   call assert_equal([2, l:x], l:y)
 endfunc
+
+func Test_flattennew()
+  let l = [1, [2, [3, 4]], 5]
+  call assert_equal([1, 2, 3, 4, 5], flattennew(l))
+  call assert_equal([1, [2, [3, 4]], 5], l)
+
+  call assert_equal([1, 2, [3, 4], 5], flattennew(l, 1))
+  call assert_equal([1, [2, [3, 4]], 5], l)
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
