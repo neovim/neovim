@@ -13,11 +13,19 @@ end
 
 ---@deprecated
 function M.require_language(lang, path, silent, symbol_name)
-  return M.add(lang, {
+  local opts = {
     silent = silent,
     path = path,
     symbol_name = symbol_name,
-  })
+  }
+
+  if silent then
+    local installed = pcall(M.add, lang, opts)
+    return installed
+  end
+
+  M.add(lang, opts)
+  return true
 end
 
 ---@class treesitter.RequireLangOpts
@@ -38,20 +46,16 @@ end
 ---                          Defaults to lang.
 ---                        - path (string|nil) Optional path the parser is located at
 ---                        - symbol_name (string|nil) Internal symbol name for the language to load
----                        - silent (boolean|nil) Don't throw an error if language not found
----@return boolean If the specified language is installed
 function M.add(lang, opts)
   ---@cast opts treesitter.RequireLangOpts
   opts = opts or {}
   local path = opts.path
-  local silent = opts.silent
   local filetype = opts.filetype or lang
   local symbol_name = opts.symbol_name
 
   vim.validate({
     lang = { lang, 'string' },
     path = { path, 'string', true },
-    silent = { silent, 'boolean', true },
     symbol_name = { symbol_name, 'string', true },
     filetype = { filetype, { 'string', 'table' }, true },
   })
@@ -64,32 +68,18 @@ function M.add(lang, opts)
 
   if path == nil then
     if not (lang and lang:match('[%w_]+') == lang) then
-      if silent then
-        return false
-      end
       error("'" .. lang .. "' is not a valid language name")
     end
 
     local fname = 'parser/' .. lang .. '.*'
     local paths = a.nvim_get_runtime_file(fname, false)
     if #paths == 0 then
-      if silent then
-        return false
-      end
       error("no parser for '" .. lang .. "' language, see :help treesitter-parsers")
     end
     path = paths[1]
   end
 
-  if silent then
-    if not pcall(vim._ts_add_language, path, lang, symbol_name) then
-      return false
-    end
-  else
-    vim._ts_add_language(path, lang, symbol_name)
-  end
-
-  return true
+  vim._ts_add_language(path, lang, symbol_name)
 end
 
 --- Register a lang to be used for a filetype (or list of filetypes).

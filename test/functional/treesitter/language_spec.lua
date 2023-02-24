@@ -20,10 +20,9 @@ describe('treesitter language API', function()
     matches("Failed to load parser for language 'borklang': uv_dlopen: .+",
        pcall_err(exec_lua, "parser = vim.treesitter.add('borklang', { path = 'borkbork.so' })"))
 
-    -- Should not throw an error when silent
-    eq(false, exec_lua("return vim.treesitter.add('borklang', { silent = true })"))
+    eq(false, exec_lua("return pcall(vim.treesitter.add, 'borklang')"))
 
-    eq(false, exec_lua("return vim.treesitter.add('borklang', { path = 'borkbork.so', silent = true })"))
+    eq(false, exec_lua("return pcall(vim.treesitter.add, 'borklang', { path = 'borkbork.so' })"))
 
     eq(".../language.lua:0: no parser for 'borklang' language, see :help treesitter-parsers",
        pcall_err(exec_lua, "parser = vim.treesitter.inspect_language('borklang')"))
