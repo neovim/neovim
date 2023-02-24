@@ -1000,7 +1000,7 @@ void ui_ext_win_viewport(win_T *wp)
   }
 }
 
-/// If "split_disallowed" is set given an error and return FAIL.
+/// If "split_disallowed" is set give an error and return FAIL.
 /// Otherwise return OK.
 static int check_split_disallowed(void)
 {
