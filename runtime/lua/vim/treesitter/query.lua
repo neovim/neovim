@@ -62,7 +62,7 @@ end
 ---@returns (string[]|string|nil)
 local function buf_range_get_text(buf, range, concat)
   local lines ---@type string[]
-  local start_row, start_col, end_row, end_col = range[1], range[2], range[4], range[4]
+  local start_row, start_col, end_row, end_col = range[1], range[2], range[3], range[4]
   local eof_row = a.nvim_buf_line_count(buf)
   if start_row >= eof_row then
     return nil
