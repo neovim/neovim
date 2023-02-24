@@ -682,13 +682,13 @@ void tv_list_flatten(list_T *list, listitem_T *first, long maxitems, long maxdep
 
       tv_list_drop_items(list, item, item);
       tv_list_extend(list, itemlist, next);
-      tv_clear(&item->li_tv);
 
       if (maxdepth > 0) {
         tv_list_flatten(list,
                         item->li_prev == NULL ? list->lv_first : item->li_prev->li_next,
                         itemlist->lv_len, maxdepth - 1);
       }
+      tv_clear(&item->li_tv);
       xfree(item);
     }
 
