@@ -1294,26 +1294,6 @@ function lsp.start_client(config)
       client.server_capabilities =
         assert(result.capabilities, "initialize result doesn't contain capabilities")
       client.server_capabilities = protocol.resolve_capabilities(client.server_capabilities)
-
-      -- Deprecation wrapper: this will be removed in 0.8
-      local mt = {}
-      mt.__index = function(table, key)
-        if key == 'resolved_capabilities' then
-          vim.notify_once(
-            '[LSP] Accessing client.resolved_capabilities is deprecated, '
-              .. 'update your plugins or configuration to access client.server_capabilities instead.'
-              .. 'The new key/value pairs in server_capabilities directly match those '
-              .. 'defined in the language server protocol',
-            vim.log.levels.WARN
-          )
-          rawset(table, key, protocol._resolve_capabilities_compat(client.server_capabilities))
-          return rawget(table, key)
-        else
-          return rawget(table, key)
-        end
-      end
-      setmetatable(client, mt)
-
       client.supports_method = function(method)
         local required_capability = lsp._request_name_to_capability[method]
         -- if we don't know about the method, assume that the client supports it.
