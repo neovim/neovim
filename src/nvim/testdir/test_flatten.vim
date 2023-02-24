@@ -78,4 +78,31 @@ func Test_flatten()
   call add(y, x) " l:y = [2, [1, [...]]]
   call assert_equal([1, 2, 1, 2], flatten(l:x, 2))
   call assert_equal([2, l:x], l:y)
+
+  let l4 = [ 1, [ 11, [ 101, [ 1001 ] ] ] ]
+  call assert_equal(l4, flatten(deepcopy(l4), 0))
+  call assert_equal([1, 11, [101, [1001]]], flatten(deepcopy(l4), 1))
+  call assert_equal([1, 11, 101, [1001]], flatten(deepcopy(l4), 2))
+  call assert_equal([1, 11, 101, 1001], flatten(deepcopy(l4), 3))
+  call assert_equal([1, 11, 101, 1001], flatten(deepcopy(l4), 4))
+  call assert_equal([1, 11, 101, 1001], flatten(deepcopy(l4)))
 endfunc
+
+func Test_flattennew()
+  let l = [1, [2, [3, 4]], 5]
+  call assert_equal([1, 2, 3, 4, 5], flattennew(l))
+  call assert_equal([1, [2, [3, 4]], 5], l)
+
+  call assert_equal([1, 2, [3, 4], 5], flattennew(l, 1))
+  call assert_equal([1, [2, [3, 4]], 5], l)
+
+  let l4 = [ 1, [ 11, [ 101, [ 1001 ] ] ] ]
+  call assert_equal(l4, flatten(deepcopy(l4), 0))
+  call assert_equal([1, 11, [101, [1001]]], flattennew(l4, 1))
+  call assert_equal([1, 11, 101, [1001]], flattennew(l4, 2))
+  call assert_equal([1, 11, 101, 1001], flattennew(l4, 3))
+  call assert_equal([1, 11, 101, 1001], flattennew(l4, 4))
+  call assert_equal([1, 11, 101, 1001], flattennew(l4))
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

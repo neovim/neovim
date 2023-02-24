@@ -148,6 +148,8 @@ finddir({name} [, {path} [, {count}]])
 findfile({name} [, {path} [, {count}]])
 				String	find file {name} in {path}
 flatten({list} [, {maxdepth}])	List	flatten {list} up to {maxdepth} levels
+flattennew({list} [, {maxdepth}])
+				List	flatten a copy of {list}
 float2nr({expr})		Number	convert Float {expr} to a Number
 floor({expr})			Float	round {expr} down
 fmod({expr1}, {expr2})		Float	remainder of {expr1} / {expr2}
@@ -2277,7 +2279,7 @@ flatten({list} [, {maxdepth}])					*flatten()*
 		Flatten {list} up to {maxdepth} levels.  Without {maxdepth}
 		the result is a |List| without nesting, as if {maxdepth} is
 		a very large number.
-		The {list} is changed in place, make a copy first if you do
+		The {list} is changed in place, use |flattennew()| if you do
 		not want that.
 								*E900*
 		{maxdepth} means how deep in nested lists changes are made.
@@ -2295,6 +2297,10 @@ flatten({list} [, {maxdepth}])					*flatten()*
 		Can also be used as a |method|: >
 			mylist->flatten()
 <
+flattennew({list} [, {maxdepth}])			*flattennew()*
+		Like |flatten()| but first make a copy of {list}.
+
+
 float2nr({expr})					*float2nr()*
 		Convert {expr} to a Number by omitting the part after the
 		decimal point.
