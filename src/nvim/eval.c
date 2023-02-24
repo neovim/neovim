@@ -2572,7 +2572,7 @@ static int eval4(char **arg, typval_T *rettv, int evaluate)
 }
 
 /// Handle fourth level expression:
-///      +       number addition
+///      +       number addition, concatenation of list or blob
 ///      -       number subtraction
 ///      .       string concatenation
 ///      ..      string concatenation
