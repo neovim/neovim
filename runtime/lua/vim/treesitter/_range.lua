@@ -61,7 +61,7 @@ function M.intercepts(r1, r2)
   local off_1 = #r1 == 6 and 1 or 0
   local off_2 = #r1 == 6 and 1 or 0
 
-  local srow_1, scol_1, erow_1, ecol_1 = r1[1], r2[2], r1[3 + off_1], r1[4 + off_1]
+  local srow_1, scol_1, erow_1, ecol_1 = r1[1], r1[2], r1[3 + off_1], r1[4 + off_1]
   local srow_2, scol_2, erow_2, ecol_2 = r2[1], r2[2], r2[3 + off_2], r2[4 + off_2]
 
   -- r1 is above r2
@@ -80,12 +80,34 @@ end
 ---@private
 ---@param r1 Range4|Range6
 ---@param r2 Range4|Range6
+---@return boolean
+function M.equal(r1, r2)
+  local off_1 = #r1 == 6 and 1 or 0
+  local off_2 = #r1 == 6 and 1 or 0
+
+  local srow_1, scol_1, erow_1, ecol_1 = r1[1], r1[2], r1[3 + off_1], r1[4 + off_1]
+  local srow_2, scol_2, erow_2, ecol_2 = r2[1], r2[2], r2[3 + off_2], r2[4 + off_2]
+
+  if M.cmp_pos.ne(srow_1, scol_1, srow_2, scol_2) then
+    return false
+  end
+
+  if M.cmp_pos.ne(erow_1, ecol_1, erow_2, ecol_2) then
+    return false
+  end
+
+  return true
+end
+
+---@private
+---@param r1 Range4|Range6
+---@param r2 Range4|Range6
 ---@return boolean whether r1 contains r2
 function M.contains(r1, r2)
   local off_1 = #r1 == 6 and 1 or 0
   local off_2 = #r1 == 6 and 1 or 0
 
-  local srow_1, scol_1, erow_1, ecol_1 = r1[1], r2[2], r1[3 + off_1], r1[4 + off_1]
+  local srow_1, scol_1, erow_1, ecol_1 = r1[1], r1[2], r1[3 + off_1], r1[4 + off_1]
   local srow_2, scol_2, erow_2, ecol_2 = r2[1], r2[2], r2[3 + off_2], r2[4 + off_2]
 
   -- start doesn't fit
@@ -121,6 +143,20 @@ function M.add_bytes(source, range)
   end
 
   return { start_row, start_col, start_byte, end_row, end_col, end_byte }
+end
+
+---@private
+---@param range Range6
+---@return Range4
+function M.remove_bytes(range)
+  return { range[1], range[2], range[4], range[5] }
+end
+
+---@param range Range4|Range6
+---@return integer, integer, integer, integer
+function M.unpack(range)
+  local off = #range == 6 and 1 or 0
+  return range[1], range[2], range[3 + off], range[4 + off]
 end
 
 return M

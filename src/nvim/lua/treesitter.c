@@ -552,8 +552,7 @@ error:
 static int parser_set_ranges(lua_State *L)
 {
   if (lua_gettop(L) < 2) {
-    return luaL_error(L,
-                      "not enough args to parser:set_included_ranges()");
+    return luaL_error(L, "not enough args to parser:set_included_ranges()");
   }
 
   TSParser **p = parser_check(L, 1);
@@ -562,8 +561,7 @@ static int parser_set_ranges(lua_State *L)
   }
 
   if (!lua_istable(L, 2)) {
-    return luaL_error(L,
-                      "argument for parser:set_included_ranges() should be a table.");
+    return luaL_error(L, "argument for parser:set_included_ranges() should be a table.");
   }
 
   size_t tbl_len = lua_objlen(L, 2);

@@ -115,6 +115,11 @@ end
 --- If the tree is invalid, call `parse()`.
 --- This will return the updated tree.
 function LanguageTree:is_valid()
+  for _, child in pairs(self._children) do
+    if not child:is_valid() then
+      return false
+    end
+  end
   local valid = self._valid
 
   if type(valid) == 'table' then
@@ -174,16 +179,19 @@ function LanguageTree:parse()
         vim.list_extend(changes, tree_changes)
       end
     end
-  else
+  elseif not self._valid then
     local tree, tree_changes = self:_parse_tree(self._trees[1])
     self._trees = { tree }
     changes = tree_changes
   end
 
-  local injections_by_lang = self:_get_injections()
+  if #changes > 0 or not self._injections_by_lang then
+    self._injections_by_lang = self:_get_injections()
+  end
+
   local seen_langs = {} ---@type table<string,boolean>
 
-  for lang, injection_ranges in pairs(injections_by_lang) do
+  for lang, injection_ranges in pairs(self._injections_by_lang) do
     local has_lang = pcall(language.add, lang)
 
     -- Child language trees should just be ignored if not found, since
@@ -540,6 +548,39 @@ local function update_regions(regions, old_range, new_range)
   return valid
 end
 
+--- @private
+--- If an edit is small enough, run a small parse and compare
+--- the old and new nodes to determine if a full reparse is needed.
+--- @param old_range Range6
+--- @param new_range Range6
+--- @return boolean
+function LanguageTree:_needs_reparse(old_range, new_range)
+  if math.abs(old_range[4] - new_range[4]) > 2 then
+    -- Always reparse for large edits
+    return true
+  end
+
+  local old_node =
+    self:named_node_for_range(Range.remove_bytes(old_range), { ignore_injections = true })
+
+  if not old_node then
+    return true
+  end
+
+  local nrange = Range.add_bytes(self._source, { old_node:range() })
+
+  self._parser:set_included_ranges({ nrange })
+  local tree = self._parser:parse(nil, self._source)
+  self._parser:set_included_ranges({})
+
+  local new_node = tree:root():named_descendant_for_range(Range.unpack(new_range))
+
+  return old_node:type() ~= new_node:type()
+    or old_node:symbol() ~= new_node:symbol()
+    or old_node:child_count() ~= new_node:child_count()
+    or not Range.equal({ old_node:range() }, { new_node:range() })
+end
+
 ---@private
 ---@param bufnr integer
 ---@param changed_tick integer
@@ -586,8 +627,25 @@ function LanguageTree:_on_bytes(
     start_byte + new_byte,
   }
 
+  -- Edit trees together BEFORE emitting a bytes callback.
+  for _, tree in ipairs(self._trees) do
+    tree:edit(
+      start_byte,
+      start_byte + old_byte,
+      start_byte + new_byte,
+      start_row,
+      start_col,
+      start_row + old_row,
+      old_end_col,
+      start_row + new_row,
+      new_end_col
+    )
+  end
+
   if #self._regions == 0 then
-    self._valid = false
+    if self:_needs_reparse(old_range, new_range) then
+      self._valid = false
+    end
   else
     self._valid = update_regions(self._regions, old_range, new_range)
   end
@@ -605,21 +663,6 @@ function LanguageTree:_on_bytes(
       new_row,
       new_col,
       new_byte
-    )
-  end
-
-  -- Edit trees together BEFORE emitting a bytes callback.
-  for _, tree in ipairs(self._trees) do
-    tree:edit(
-      start_byte,
-      start_byte + old_byte,
-      start_byte + new_byte,
-      start_row,
-      start_col,
-      start_row + old_row,
-      old_end_col,
-      start_row + new_row,
-      new_end_col
     )
   end
 
