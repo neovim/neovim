@@ -856,8 +856,9 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop}, {start_col},
                      from
       • {start}      (integer) Starting line for the search
       • {stop}       (integer) Stopping line for the search (end-exclusive)
-      • {start_col}  (integer) Starting column for the search
-      • {end_col}    (integer) Stopping column for the search (end-exclusive)
+      • {start_col}  (integer|nil) Starting column for the search
+      • {end_col}    (integer|nil) Stopping column for the search
+                     (end-exclusive)
       • {self}
 
     Return: ~
@@ -892,8 +893,9 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop}, {start_col},
       • {source}     (integer|string) Source buffer or string to search
       • {start}      (integer) Starting line for the search
       • {stop}       (integer) Stopping line for the search (end-exclusive)
-      • {start_col}  (integer) Starting column for the search
-      • {end_col}    (integer) Stopping column for the search (end-exclusive)
+      • {start_col}  (integer|nil) Starting column for the search
+      • {end_col}    (integer|nil) Stopping column for the search
+                     (end-exclusive)
       • {self}
 
     Return: ~

@@ -649,9 +649,8 @@ end
 ---@param source (integer|string) Source buffer or string to extract text from
 ---@param start integer Starting line for the search
 ---@param stop integer Stopping line for the search (end-exclusive)
----@param start_col integer? Starting column for the search
----@param end_col integer? Stopping column for the search (end-exclusive)
----
+---@param start_col (integer|nil) Starting column for the search
+---@param end_col (integer|nil) Stopping column for the search (end-exclusive)
 ---@return (fun(): integer, TSNode, TSMetadata): capture id, capture node, metadata
 function Query:iter_captures(node, source, start, stop, start_col, end_col)
   if type(source) == 'number' and source == 0 then
@@ -706,8 +705,8 @@ end
 ---@param source (integer|string) Source buffer or string to search
 ---@param start integer Starting line for the search
 ---@param stop integer Stopping line for the search (end-exclusive)
----@param start_col integer Starting column for the search
----@param end_col integer Stopping column for the search (end-exclusive)
+---@param start_col (integer|nil) Starting column for the search
+---@param end_col (integer|nil) Stopping column for the search (end-exclusive)
 ---
 ---@return (fun(): integer, table<integer,TSNode>, table): pattern id, match, metadata
 function Query:iter_matches(node, source, start, stop, start_col, end_col)

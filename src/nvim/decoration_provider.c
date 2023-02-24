@@ -158,7 +158,7 @@ void decor_providers_invoke_line(win_T *wp, DecorProviders *providers, int row, 
       ADD_C(args, BUFFER_OBJ(wp->w_buffer->handle));
       ADD_C(args, INTEGER_OBJ(row));
       ADD_C(args, INTEGER_OBJ(leftoffset));
-      ADD_C(args,  INTEGER_OBJ(rightoffset));
+      ADD_C(args, INTEGER_OBJ(rightoffset));
       if (decor_provider_invoke(p->ns_id, "line", p->redraw_line, args, true, err)) {
         *has_decor = true;
       } else {
