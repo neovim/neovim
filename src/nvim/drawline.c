@@ -1045,9 +1045,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         || wp->w_p_lcs_chars.nbsp) {
       extra_check = true;
     }
-  }
-
-  if (wp->w_p_list && !has_fold && !end_fill) {
     trailcol = get_trailcol(wp, ptr, line);
     leadcol = get_leadcol(wp, ptr, line);
   }
