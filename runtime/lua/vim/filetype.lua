@@ -295,6 +295,7 @@ local extension = {
   desc = 'desc',
   directory = 'desktop',
   desktop = 'desktop',
+  dhall = 'dhall',
   diff = 'diff',
   rej = 'diff',
   Dockerfile = 'dockerfile',

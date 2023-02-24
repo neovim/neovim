@@ -156,6 +156,7 @@ let s:filename_checks = {
     \ 'denyhosts': ['denyhosts.conf'],
     \ 'desc': ['file.desc'],
     \ 'desktop': ['file.desktop', '.directory', 'file.directory'],
+    \ 'dhall': ['file.dhall'],
     \ 'dictconf': ['dict.conf', '.dictrc'],
     \ 'dictdconf': ['dictd.conf', 'dictdfile.conf', 'dictd-file.conf'],
     \ 'diff': ['file.diff', 'file.rej'],
