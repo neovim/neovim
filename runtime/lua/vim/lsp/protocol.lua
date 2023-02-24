@@ -832,6 +832,9 @@ function protocol.make_client_capabilities()
         },
         hierarchicalWorkspaceSymbolSupport = true,
       },
+      diagnostics = {
+        refreshSupport = true,
+      },
       configuration = true,
       workspaceFolders = true,
       applyEdit = true,
