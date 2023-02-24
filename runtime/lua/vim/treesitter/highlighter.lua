@@ -226,8 +226,9 @@ local function on_line_impl(self, buf, line, leftcol, rightcol, is_spell_nav)
     end
 
     if state.iter == nil or state.next_row < line then
-      state.iter =
-        highlighter_query:query():iter_captures(root_node, self.bufnr, line, root_end_row + 1, leftcol, rightcol)
+      state.iter = highlighter_query
+        :query()
+        :iter_captures(root_node, self.bufnr, line, root_end_row + 1, leftcol, rightcol)
     end
 
     while line >= state.next_row do
@@ -252,7 +253,8 @@ local function on_line_impl(self, buf, line, leftcol, rightcol, is_spell_nav)
       local spell_pri_offset = capture_name == 'nospell' and 1 or 0
 
       if
-        hl and end_row >= line
+        hl
+        and end_row >= line
         and (not is_spell_nav or spell ~= nil)
         and (start_col <= rightcol or end_col >= leftcol)
       then

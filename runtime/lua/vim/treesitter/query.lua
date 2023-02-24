@@ -615,7 +615,7 @@ end
 ---@param node TSNode
 ---@return integer, integer
 local function value_or_node_range(start, stop, node, start_col, end_col)
-  if not (start or stop or start_col or end_col)then
+  if not (start or stop or start_col or end_col) then
     local node_start, node_start_col, node_stop, node_end_col = node:range()
     return node_start, node_stop + 1, node_start_col, node_end_col + 1 -- Make stop inclusive
   end
