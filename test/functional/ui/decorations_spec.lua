@@ -129,6 +129,72 @@ describe('decorations providers', function()
     }
   end)
 
+  it('can handle long lines', function()
+    local line  = [[// Just a long line to make sure we handle wrapping properly. Need to make sure the line spans two screenlines. ]]
+    insert(line)
+    feed'0'
+
+    setup_provider()
+
+    screen:expect{grid=[[
+      ^// Just a long line to make sure we hand|
+      le wrapping properly. Need to make sure |
+      the line spans two screenlines.         |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]}
+
+    check_trace {
+      { "start", 4 };
+      { "win", 1000, 1, 0, 2 };
+      { "line", 1000, 1, 0, 0, line:len() };
+      { "end", 4 };
+    }
+
+    exec [[set nowrap]]
+
+    screen:expect{grid=[[
+      ^// Just a long line to make sure we hand|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]}
+
+    check_trace {
+      { "start", 5 };
+      { "win", 1000, 1, 0, 2 };
+      { "line", 1000, 1, 0, 0, 40 };
+      { "end", 5 };
+    }
+
+    feed'$'
+    screen:expect{grid=[[
+      ans two screenlines.^                    |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]}
+
+    -- helpers.assert_log('dwdqqwDDD')
+    check_trace {
+      { "start", 6 };
+      { "win", 1000, 1, 0, 2 };
+      { "line", 1000, 1, 0, 91, 112 };
+      { "end", 6 };
+    }
+  end)
+
   it('can have single provider', function()
     insert(mulholland)
     setup_provider [[

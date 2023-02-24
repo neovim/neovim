@@ -790,7 +790,15 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     has_decor = decor_redraw_line(buf, lnum - 1, &decor_state);
 
     int leftoffset = wp->w_leftcol + wp->w_skipcol;
-    int rightoffset = leftoffset + linetabsize_col(leftoffset, line);
+    int rightoffset;
+    int linevlen = linetabsize(line);
+
+    if (wp->w_p_wrap) {
+      // whole line
+      rightoffset = linevlen;
+    } else {
+      rightoffset = MIN(linevlen, leftoffset + wp->w_width);
+    }
 
     decor_providers_invoke_line(wp, providers, lnum - 1, &has_decor, provider_err, leftoffset,
                                 rightoffset);
