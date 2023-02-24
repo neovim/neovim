@@ -383,12 +383,14 @@ The following captures are linked by default to standard |group-name|s:
 
     @comment           Comment
     @punctuation       Delimiter
+    @debug             Debug
+    @tag               Tag
 
     @constant          Constant
     @constant.builtin  Special
     @constant.macro    Define
-    @define            Define
     @macro             Macro
+
     @string            String
     @string.escape     SpecialChar
     @string.special    SpecialChar
@@ -401,11 +403,9 @@ The following captures are linked by default to standard |group-name|s:
     @function          Function
     @function.builtin  Special
     @function.macro    Macro
-    @parameter         Identifier
     @method            Function
-    @field             Identifier
-    @property          Identifier
     @constructor       Special
+    @parameter         Identifier
 
     @conditional       Conditional
     @repeat            Repeat
@@ -413,17 +413,18 @@ The following captures are linked by default to standard |group-name|s:
     @operator          Operator
     @keyword           Keyword
     @exception         Exception
+    @define            Define
+    @include           Include
+    @preproc           PreProc
 
     @variable          Identifier
+    @namespace         Identifier
+    @field             Identifier
+    @property          Identifier
+
     @type              Type
     @type.definition   Typedef
     @storageclass      StorageClass
-    @structure         Structure
-    @namespace         Identifier
-    @include           Include
-    @preproc           PreProc
-    @debug             Debug
-    @tag               Tag
 <
                                                   *treesitter-highlight-spell*
 The special `@spell` capture can be used to indicate that a node should be

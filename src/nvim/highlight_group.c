@@ -225,13 +225,16 @@ static const char *highlight_init_both[] = {
   // Miscs
   "default link @comment Comment",
   "default link @punctuation Delimiter",
+  "default link @debug Debug",
+  "default link @tag Tag",
 
   // Constants
   "default link @constant Constant",
   "default link @constant.builtin Special",
   "default link @constant.macro Define",
-  "default link @define Define",
   "default link @macro Macro",
+
+  // Literals
   "default link @string String",
   "default link @string.escape SpecialChar",
   "default link @string.special SpecialChar",
@@ -245,11 +248,9 @@ static const char *highlight_init_both[] = {
   "default link @function Function",
   "default link @function.builtin Special",
   "default link @function.macro Macro",
-  "default link @parameter Identifier",
   "default link @method Function",
-  "default link @field Identifier",
-  "default link @property Identifier",
   "default link @constructor Special",
+  "default link @parameter Identifier",
 
   // Keywords
   "default link @conditional Conditional",
@@ -258,16 +259,20 @@ static const char *highlight_init_both[] = {
   "default link @operator Operator",
   "default link @keyword Keyword",
   "default link @exception Exception",
+  "default link @define Define",
+  "default link @include Include",
+  "default link @preproc PreProc",
 
+  // Identifiers
   "default link @variable Identifier",
+  "default link @namespace Identifier",
+  "default link @field Identifier",
+  "default link @property Identifier",
+
+  // Types
   "default link @type Type",
   "default link @type.definition Typedef",
   "default link @storageclass StorageClass",
-  "default link @namespace Identifier",
-  "default link @include Include",
-  "default link @preproc PreProc",
-  "default link @debug Debug",
-  "default link @tag Tag",
 
   // LSP semantic tokens
   "default link @class Structure",
