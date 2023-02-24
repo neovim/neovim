@@ -191,10 +191,10 @@ describe('decorations providers', function()
     check_trace {
       { "start", 5 };
       { "win", 1000, 1, 0, 5 };
-      { "line", 1000, 1, 0 };
-      { "line", 1000, 1, 1 };
-      { "line", 1000, 1, 2 };
-      { "line", 1000, 1, 3 };
+      { "line", 1000, 1, 0, 0, 23 };
+      { "line", 1000, 1, 1, 0, 21 };
+      { "line", 1000, 1, 2, 0, 24 };
+      { "line", 1000, 1, 3, 0, 0 };
       { "end", 5 };
     }
 
