@@ -1000,7 +1000,7 @@ void ui_ext_win_viewport(win_T *wp)
   }
 }
 
-/// If "split_disallowed" is set given an error and return FAIL.
+/// If "split_disallowed" is set give an error and return FAIL.
 /// Otherwise return OK.
 static int check_split_disallowed(void)
 {
@@ -4835,7 +4835,9 @@ static void win_enter_ext(win_T *const wp, const int flags)
   if (*p_spk == 'c') {
     changed_line_abv_curs();      // assume cursor position needs updating
   } else {
-    win_fix_cursor(true);
+    // Make sure the cursor position is valid, either by moving the cursor
+    // or by scrolling the text.
+    win_fix_cursor(get_real_state() & (MODE_NORMAL|MODE_CMDLINE|MODE_TERMINAL));
   }
 
   fix_current_dir();
@@ -6407,7 +6409,8 @@ void win_fix_scroll(int resize)
 
 /// Make sure the cursor position is valid for 'splitkeep'.
 /// If it is not, put the cursor position in the jumplist and move it.
-/// If we are not in normal mode, scroll to make valid instead.
+/// If we are not in normal mode ("normal" is zero), make it valid by scrolling
+/// instead.
 static void win_fix_cursor(int normal)
 {
   win_T *wp = curwin;

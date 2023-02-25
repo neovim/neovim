@@ -1,6 +1,7 @@
 local api = vim.api
 local handlers = require('vim.lsp.handlers')
 local util = require('vim.lsp.util')
+local bit = require('bit')
 
 --- @class STTokenRange
 --- @field line number line number 0-based
@@ -58,18 +59,10 @@ local function modifiers_from_number(x, modifiers_table)
   local modifiers = {}
   local idx = 1
   while x > 0 do
-    if _G.bit then
-      if _G.bit.band(x, 1) == 1 then
-        modifiers[#modifiers + 1] = modifiers_table[idx]
-      end
-      x = _G.bit.rshift(x, 1)
-    else
-      --TODO(jdrouhard): remove this branch once `bit` module is available for non-LuaJIT (#21222)
-      if x % 2 == 1 then
-        modifiers[#modifiers + 1] = modifiers_table[idx]
-      end
-      x = math.floor(x / 2)
+    if bit.band(x, 1) == 1 then
+      modifiers[#modifiers + 1] = modifiers_table[idx]
     end
+    x = bit.rshift(x, 1)
     idx = idx + 1
   end
 

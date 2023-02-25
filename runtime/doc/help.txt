@@ -120,15 +120,15 @@ PROGRAMMING LANGUAGE SUPPORT
 |lsp|			Language Server Protocol (LSP)
 |diagnostic-api|	Diagnostic framework
 |treesitter|		Incremental syntax parsing
-|indent.txt|      	automatic indenting for C and other languages
+|indent.txt|		automatic indenting for C and other languages
 |syntax|		syntax highlighting
 |filetype|		Settings for specific types of files
 |quickfix|		Commands for a quick edit-compile-fix cycle
-|ft_ada.txt|      	Ada filetype plugin
-|ft_ps1.txt|      	PowerShell filetype plugin
-|ft_raku.txt|     	Raku filetype plugin
-|ft_rust.txt|     	Rust filetype plugin
-|ft_sql.txt|      	SQL filetype plugin
+|ft_ada.txt|		Ada filetype plugin
+|ft_ps1.txt|		PowerShell filetype plugin
+|ft_raku.txt|		Raku filetype plugin
+|ft_rust.txt|		Rust filetype plugin
+|ft_sql.txt|		SQL filetype plugin
 
 ------------------------------------------------------------------------------
 UI
@@ -172,14 +172,14 @@ DEVELOPING NVIM
 						*standard-plugin-list*
 Standard plugins ~
 |matchit.txt|		Extended |%| matching
-|pi_gzip.txt|      	Reading and writing compressed files
-|pi_health.txt|    	Healthcheck framework
-|pi_msgpack.txt|   	msgpack utilities
-|pi_netrw.txt|     	Reading and writing files over a network
-|pi_paren.txt|     	Highlight matching parens
-|pi_spec.txt|      	Filetype plugin to work with rpm spec files
-|pi_tar.txt|       	Tar file explorer
-|pi_zip.txt|       	Zip archive explorer
+|pi_gzip.txt|		Reading and writing compressed files
+|pi_health.txt|		Healthcheck framework
+|pi_msgpack.txt|	msgpack utilities
+|pi_netrw.txt|		Reading and writing files over a network
+|pi_paren.txt|		Highlight matching parens
+|pi_spec.txt|		Filetype plugin to work with rpm spec files
+|pi_tar.txt|		Tar file explorer
+|pi_zip.txt|		Zip archive explorer
 
 LOCAL ADDITIONS:				*local-additions*
 

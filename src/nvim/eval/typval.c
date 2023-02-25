@@ -647,55 +647,54 @@ tv_list_copy_error:
   return NULL;
 }
 
-/// Flatten "list" in place to depth "maxdepth".
+/// Flatten up to "maxitems" in "list", starting at "first" to depth "maxdepth".
+/// When "first" is NULL use the first item.
 /// Does nothing if "maxdepth" is 0.
 ///
 /// @param[in,out] list   List to flatten
 /// @param[in] maxdepth   Maximum depth that will be flattened
 ///
 /// @return OK or FAIL
-int tv_list_flatten(list_T *list, long maxdepth)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
+void tv_list_flatten(list_T *list, listitem_T *first, long maxitems, long maxdepth)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   listitem_T *item;
-  listitem_T *to_free;
-  int n;
+  int done = 0;
   if (maxdepth == 0) {
-    return OK;
+    return;
   }
 
-  n = 0;
-  item = list->lv_first;
-  while (item != NULL) {
+  if (first == NULL) {
+    item = list->lv_first;
+  } else {
+    item = first;
+  }
+
+  while (item != NULL && done < maxitems) {
+    listitem_T *next = item->li_next;
+
     fast_breakcheck();
     if (got_int) {
-      return FAIL;
+      return;
     }
     if (item->li_tv.v_type == VAR_LIST) {
-      listitem_T *next = item->li_next;
+      list_T *itemlist = item->li_tv.vval.v_list;
 
       tv_list_drop_items(list, item, item);
-      tv_list_extend(list, item->li_tv.vval.v_list, next);
+      tv_list_extend(list, itemlist, next);
+
+      if (maxdepth > 0) {
+        tv_list_flatten(list,
+                        item->li_prev == NULL ? list->lv_first : item->li_prev->li_next,
+                        itemlist->lv_len, maxdepth - 1);
+      }
       tv_clear(&item->li_tv);
-      to_free = item;
-
-      if (item->li_prev == NULL) {
-        item = list->lv_first;
-      } else {
-        item = item->li_prev->li_next;
-      }
-      xfree(to_free);
-
-      if (++n >= maxdepth) {
-        n = 0;
-        item = next;
-      }
-    } else {
-      n = 0;
-      item = item->li_next;
+      xfree(item);
     }
+
+    done++;
+    item = next;
   }
-  return OK;
 }
 
 /// Extend first list with the second

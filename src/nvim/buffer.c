@@ -1676,7 +1676,7 @@ void enter_buffer(buf_T *buf)
   maketitle();
   // when autocmds didn't change it
   if (curwin->w_topline == 1 && !curwin->w_topline_was_set) {
-    scroll_cursor_halfway(false);       // redisplay at correct position
+    scroll_cursor_halfway(false, false);  // redisplay at correct position
   }
 
   // Change directories when the 'acd' option is set.
@@ -3311,7 +3311,7 @@ void maketitle(void)
         buf_p += MIN(size, SPACE_FOR_FNAME);
       } else {
         buf_p += transstr_buf((const char *)path_tail(curbuf->b_fname),
-                              buf_p, SPACE_FOR_FNAME + 1, true);
+                              -1, buf_p, SPACE_FOR_FNAME + 1, true);
       }
 
       switch (bufIsChanged(curbuf)
@@ -3599,6 +3599,10 @@ void ex_buffer_all(exarg_T *eap)
   } else {
     all = true;
   }
+
+  // Stop Visual mode, the cursor and "VIsual" may very well be invalid after
+  // switching to another buffer.
+  reset_VIsual_and_resel();
 
   setpcmark();
 

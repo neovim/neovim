@@ -2791,7 +2791,7 @@ static char_u *replace_stack = NULL;
 static ssize_t replace_stack_nr = 0;           // next entry in replace stack
 static ssize_t replace_stack_len = 0;          // max. number of entries
 
-/// Push character that is replaced onto the the replace stack.
+/// Push character that is replaced onto the replace stack.
 ///
 /// replace_offset is normally 0, in which case replace_push will add a new
 /// character at the end of the stack.  If replace_offset is not 0, that many

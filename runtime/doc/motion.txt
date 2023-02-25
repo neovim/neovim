@@ -589,7 +589,7 @@ i(							*vib* *v_ib* *v_i(* *ib*
 ib			"inner block", select [count] blocks, from "[count] [("
 			to the matching ')', excluding the '(' and ')' (see
 			|[(|).  If the cursor is not inside a () block, then
- 			find the next "(".
+			find the next "(".
 			When used in Visual mode it is made charwise.
 
 a>						*v_a>* *v_a<* *a>* *a<*

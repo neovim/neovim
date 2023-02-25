@@ -252,7 +252,7 @@ end)
 ---
 ---@return Query Parsed query
 function M.parse_query(lang, query)
-  language.require_language(lang)
+  language.add(lang)
   local cached = query_cache[lang][query]
   if cached then
     return cached
@@ -406,7 +406,7 @@ predicate_handlers['vim-match?'] = predicate_handlers['match?']
 ---@class TSMetadata
 ---@field [integer] TSMetadata
 ---@field [string] integer|string
----@field range Range
+---@field range Range4
 
 ---@alias TSDirective fun(match: TSMatch, _, _, predicate: any[], metadata: TSMetadata)
 
@@ -487,7 +487,7 @@ local directive_handlers = {
 ---@param name string Name of the predicate, without leading #
 ---@param handler function(match:table<string,TSNode>, pattern:string, bufnr:number, predicate:string[])
 ---   - see |vim.treesitter.query.add_directive()| for argument meanings
----@param force boolean
+---@param force boolean|nil
 function M.add_predicate(name, handler, force)
   if predicate_handlers[name] and not force then
     error(string.format('Overriding %s', name))
@@ -510,7 +510,7 @@ end
 ---   - pattern: see |treesitter-query|
 ---   - predicate: list of strings containing the full directive being called, e.g.
 ---     `(node (#set! conceal "-"))` would get the predicate `{ "#set!", "conceal", "-" }`
----@param force boolean
+---@param force boolean|nil
 function M.add_directive(name, handler, force)
   if directive_handlers[name] and not force then
     error(string.format('Overriding %s', name))
@@ -639,7 +639,7 @@ end
 ---   -- typically useful info about the node:
 ---   local type = node:type() -- type of the captured node
 ---   local row1, col1, row2, col2 = node:range() -- range of the capture
----   ... use the info here ...
+---   -- ... use the info here ...
 --- end
 --- </pre>
 ---
@@ -693,7 +693,7 @@ end
 ---
 ---     local node_data = metadata[id] -- Node level metadata
 ---
----     ... use the info here ...
+---     -- ... use the info here ...
 ---   end
 --- end
 --- </pre>

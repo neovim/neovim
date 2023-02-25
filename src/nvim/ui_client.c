@@ -93,6 +93,7 @@ void ui_client_attach(int width, int height, char *term)
     PUT_C(opts, "stdout_tty", BOOLEAN_OBJ(stdout_isatty));
     if (ui_client_forward_stdin) {
       PUT_C(opts, "stdin_fd", INTEGER_OBJ(UI_CLIENT_STDIN_FD));
+      ui_client_forward_stdin = false;  // stdin shouldn't be forwarded again #22292
     }
   }
   ADD_C(args, DICTIONARY_OBJ(opts));
@@ -113,7 +114,7 @@ void ui_client_run(bool remote_ui)
   ui_client_is_remote = remote_ui;
   int width, height;
   char *term;
-  tui = tui_start(&width, &height, &term);
+  tui_start(&tui, &width, &height, &term);
 
   ui_client_attach(width, height, term);
 
@@ -152,7 +153,7 @@ UIClientHandler ui_client_get_redraw_handler(const char *name, size_t name_len, 
 
 /// Placeholder for _sync_ requests with 'redraw' method name
 ///
-/// async 'redraw' events, which are expected when nvim acts as an ui client.
+/// async 'redraw' events, which are expected when nvim acts as a ui client.
 /// get handled in msgpack_rpc/unpacker.c and directly dispatched to handlers
 /// of specific ui events, like ui_client_event_grid_resize and so on.
 Object handle_ui_client_redraw(uint64_t channel_id, Array args, Arena *arena, Error *error)

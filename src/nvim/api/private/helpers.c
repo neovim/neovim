@@ -821,9 +821,38 @@ int object_to_hl_id(Object obj, const char *what, Error *err)
   } else if (obj.type == kObjectTypeInteger) {
     return MAX((int)obj.data.integer, 0);
   } else {
-    api_set_error(err, kErrorTypeValidation,
-                  "%s is not a valid highlight", what);
+    api_set_error(err, kErrorTypeValidation, "Invalid highlight: %s", what);
     return 0;
+  }
+}
+
+char *api_typename(ObjectType t)
+{
+  switch (t) {
+  case kObjectTypeNil:
+    return "nil";
+  case kObjectTypeBoolean:
+    return "Boolean";
+  case kObjectTypeInteger:
+    return "Integer";
+  case kObjectTypeFloat:
+    return "Float";
+  case kObjectTypeString:
+    return "String";
+  case kObjectTypeArray:
+    return "Array";
+  case kObjectTypeDictionary:
+    return "Dict";
+  case kObjectTypeLuaRef:
+    return "Function";
+  case kObjectTypeBuffer:
+    return "Buffer";
+  case kObjectTypeWindow:
+    return "Window";
+  case kObjectTypeTabpage:
+    return "Tabpage";
+  default:
+    abort();
   }
 }
 

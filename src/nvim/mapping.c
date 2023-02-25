@@ -1167,7 +1167,7 @@ static char *translate_mapping(char_u *str, int cpo_flags)
   garray_T ga;
   ga_init(&ga, 1, 40);
 
-  bool cpo_bslash = !(cpo_flags&FLAG_CPO_BSLASH);
+  bool cpo_bslash = cpo_flags & FLAG_CPO_BSLASH;
 
   for (; *str; str++) {
     int c = *str;
@@ -1194,7 +1194,7 @@ static char *translate_mapping(char_u *str, int cpo_flags)
     }
 
     if (c == ' ' || c == '\t' || c == Ctrl_J || c == Ctrl_V
-        || (c == '\\' && !cpo_bslash)) {
+        || c == '<' || (c == '\\' && !cpo_bslash)) {
       ga_append(&ga, cpo_bslash ? Ctrl_V : '\\');
     }
 
@@ -1342,7 +1342,7 @@ int ExpandMappings(char *pat, regmatch_T *regmatch, int *numMatches, char ***mat
       mp = maphash[hash];
     }
     for (; mp; mp = mp->m_next) {
-      if (!(mp->m_mode & expand_mapmodes)) {
+      if (mp->m_simplified || !(mp->m_mode & expand_mapmodes)) {
         continue;
       }
 

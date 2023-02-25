@@ -220,7 +220,7 @@ tag		char	      note action in Normal mode	~
 |CTRL-\_CTRL-N|	CTRL-\ CTRL-N	   go to Normal mode (no-op)
 |CTRL-\_CTRL-G|	CTRL-\ CTRL-G	   go to Normal mode (no-op)
 		CTRL-\ a - z	   reserved for extensions
-		CTRL-\ others      not used
+		CTRL-\ others	   not used
 |CTRL-]|	CTRL-]		   :ta to ident under cursor
 |CTRL-^|	CTRL-^		   edit Nth alternate file (equivalent to
 				   ":e #N")
@@ -233,7 +233,7 @@ tag		char	      note action in Normal mode	~
 				2  filter Nmove text through the {filter}
 				   command
 |!!|		!!{filter}	2  filter N lines through the {filter} command
-|quote|		"{register}  	   use {register} for next delete, yank or put
+|quote|		"{register}	   use {register} for next delete, yank or put
 				   ({.%#:} only work with put)
 |#|		#		1  search backward for the Nth occurrence of
 				   the ident under the cursor

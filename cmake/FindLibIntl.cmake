@@ -10,7 +10,7 @@ include(CheckVariableExists)
 include(LibFindMacros)
 
 # Append custom gettext path to CMAKE_PREFIX_PATH
-# if installed via Mac Hombrew
+# if installed via Mac Homebrew
 if (CMAKE_HOST_APPLE)
     find_program(HOMEBREW_PROG brew)
     if (EXISTS ${HOMEBREW_PROG})

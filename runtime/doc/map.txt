@@ -764,7 +764,7 @@ option).  After that it assumes that the 'q' is to be interpreted as such.  If
 you type slowly, or your system is slow, reset the 'timeout' option.  Then you
 might want to set the 'ttimeout' option.
 
-			      				*map-precedence*
+							*map-precedence*
 Buffer-local mappings (defined using |:map-<buffer>|) take precedence over
 global mappings.  When a buffer-local mapping is the same as a global mapping,
 Vim will use the buffer-local mapping.  In addition, Vim will use a complete
@@ -838,6 +838,11 @@ in the original Vi, you would get back the text before the first undo).
 
 1.10 MAPPING ALT-KEYS					*:map-alt-keys*
 
+For a readable mapping command the <A-k> form can be used.  Note that <A-k>
+and <A-K> are different, the latter will use an upper case letter.  Actually,
+<A-K> and <A-S-K> are the same.  Instead of "A" you can use "M".  If you have
+an actual Meta modifier key, please see |:map-meta-keys|.
+
 In the GUI Nvim handles the |ALT| key itself, thus mapping keys with ALT
 should always work.  But in a terminal Nvim gets a sequence of bytes and has
 to figure out whether ALT was pressed.  Terminals may use ESC to indicate that
@@ -847,7 +852,21 @@ milliseconds, the ESC is interpreted as:
 otherwise it is interpreted as two key presses:
         <ESC> {key}
 
-1.11 MAPPING AN OPERATOR				*:map-operator*
+1.11 MAPPING META-KEYS					*:map-meta-keys*
+
+Mapping keys with the Meta modifier works very similar to using the Alt key.
+What key on your keyboard produces the Meta modifier depends on your keyboard
+and configuration.
+
+Note that mapping <M-a> actually is for using the Alt key.  That can be
+confusing!  It cannot be changed, it would not be backwards compatible.
+
+For the Meta modifier the "T" character is used.  For example, to map Meta-b
+in Insert mode: >
+	:imap <T-b> terrible
+
+
+1.12 MAPPING AN OPERATOR				*:map-operator*
 
 An operator is used before a {motion} command.  To define your own operator
 you must create a mapping that first sets the 'operatorfunc' option and then
@@ -984,7 +1003,7 @@ non-id	  The "non-id" type ends in a non-keyword character, the other
 Examples of strings that cannot be abbreviations: "a.b", "#def", "a b", "_$r"
 
 An abbreviation is only recognized when you type a non-keyword character.
-This can also be the <Esc> that ends insert mode or the <CR> that ends a
+This can also be the <Esc> that ends Insert mode or the <CR> that ends a
 command.  The non-keyword character which ends the abbreviation is inserted
 after the expanded abbreviation.  An exception to this is the character <C-]>,
 which is used to expand an abbreviation without inserting any extra
@@ -1484,7 +1503,7 @@ which by default correspond to the current line, last line and the whole
 buffer, relate to arguments, (loaded) buffers, windows or tab pages.
 
 Possible values are (second column is the short name used in listing):
-    -addr=lines		  	Range of lines (this is the default for -range)
+    -addr=lines			Range of lines (this is the default for -range)
     -addr=arguments	  arg	Range for arguments
     -addr=buffers	  buf	Range for buffers (also not loaded buffers)
     -addr=loaded_buffers  load	Range for loaded buffers

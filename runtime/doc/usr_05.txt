@@ -273,7 +273,7 @@ an archive or as a repository.  For an archive you can follow these steps:
 	   package.
 	2. unpack the archive in that directory.  This assumes the top
 	   directory in the archive is "start": >
-	   	cd ~/.local/share/nvim/site/pack/fancy
+		cd ~/.local/share/nvim/site/pack/fancy
 		unzip /tmp/fancy.zip
 <	   If the archive layout is different make sure that you end up with a
 	   path like this:

@@ -128,6 +128,7 @@ return {
     finddir={args={1, 3}, base=1},
     findfile={args={1, 3}, base=1},
     flatten={args={1, 2}, base=1},
+    flattennew={args={1, 2}, base=1},
     float2nr={args=1, base=1},
     floor={args=1, base=1, float_func="floor"},
     fmod={args=2, base=1},

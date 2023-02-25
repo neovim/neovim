@@ -158,9 +158,9 @@ void grid_getbytes(ScreenGrid *grid, int row, int col, char *bytes, int *attrp)
 /// attributes 'attr', and update chars[] and attrs[].
 /// Note: only outputs within one row, message is truncated at grid boundary!
 /// Note: if grid, row and/or col is invalid, nothing is done.
-void grid_puts(ScreenGrid *grid, char *text, int row, int col, int attr)
+int grid_puts(ScreenGrid *grid, char *text, int row, int col, int attr)
 {
-  grid_puts_len(grid, text, -1, row, col, attr);
+  return grid_puts_len(grid, text, -1, row, col, attr);
 }
 
 static ScreenGrid *put_dirty_grid = NULL;
@@ -197,7 +197,7 @@ void grid_put_schar(ScreenGrid *grid, int row, int col, char *schar, int attr)
 
 /// like grid_puts(), but output "text[len]".  When "len" is -1 output up to
 /// a NUL.
-void grid_puts_len(ScreenGrid *grid, char *text, int textlen, int row, int col, int attr)
+int grid_puts_len(ScreenGrid *grid, char *text, int textlen, int row, int col, int attr)
 {
   size_t off;
   char *ptr = text;
@@ -218,7 +218,7 @@ void grid_puts_len(ScreenGrid *grid, char *text, int textlen, int row, int col, 
   if (grid->chars == NULL
       || row >= grid->rows || row < 0
       || col >= grid->cols || col < 0) {
-    return;
+    return 0;
   }
 
   if (put_dirty_row == -1) {
@@ -230,6 +230,7 @@ void grid_puts_len(ScreenGrid *grid, char *text, int textlen, int row, int col, 
     }
   }
   off = grid->line_offset[row] + (size_t)col;
+  int start_col = col;
 
   // When drawing over the right half of a double-wide char clear out the
   // left half.  Only needed in a terminal.
@@ -252,6 +253,12 @@ void grid_puts_len(ScreenGrid *grid, char *text, int textlen, int row, int col, 
       ? utfc_ptr2char_len(ptr, u8cc, (int)((text + len) - ptr))
       : utfc_ptr2char(ptr, u8cc);
     int mbyte_cells = utf_char2cells(u8c);
+    if (mbyte_cells > 2) {
+      mbyte_cells = 1;
+      u8c = 0xFFFD;
+      u8cc[0] = 0;
+    }
+
     if (p_arshape && !p_tbidi && ARABIC_CHAR(u8c)) {
       // Do Arabic shaping.
       if (len >= 0 && (int)(ptr - text) + mbyte_blen >= len) {
@@ -336,6 +343,7 @@ void grid_puts_len(ScreenGrid *grid, char *text, int textlen, int row, int col, 
   if (do_flush) {
     grid_puts_line_flush(true);
   }
+  return col - start_col;
 }
 
 /// End a group of grid_puts_len calls and send the screen buffer to the UI

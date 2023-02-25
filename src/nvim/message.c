@@ -773,7 +773,7 @@ bool emsg(const char *s)
 
 void emsg_invreg(int name)
 {
-  semsg(_("E354: Invalid register name: '%s'"), transchar(name));
+  semsg(_("E354: Invalid register name: '%s'"), transchar_buf(NULL, name));
 }
 
 /// Print an error message with unknown number of arguments
@@ -1531,7 +1531,7 @@ char *msg_outtrans_one(char *p, int attr)
     msg_outtrans_len_attr(p, l, attr);
     return p + l;
   }
-  msg_puts_attr((const char *)transchar_byte((uint8_t)(*p)), attr);
+  msg_puts_attr((const char *)transchar_byte_buf(NULL, (uint8_t)(*p)), attr);
   return p + 1;
 }
 
@@ -1576,14 +1576,14 @@ int msg_outtrans_len_attr(const char *msgstr, int len, int attr)
           msg_puts_attr_len(plain_start, str - plain_start, attr);
         }
         plain_start = str + mb_l;
-        msg_puts_attr((const char *)transchar(c),
+        msg_puts_attr((const char *)transchar_buf(NULL, c),
                       (attr == 0 ? HL_ATTR(HLF_8) : attr));
         retval += char2cells(c);
       }
       len -= mb_l - 1;
       str += mb_l;
     } else {
-      s = (char *)transchar_byte((uint8_t)(*str));
+      s = (char *)transchar_byte_buf(NULL, (uint8_t)(*str));
       if (s[1] != NUL) {
         // Unprintable char: print the printable chars so far and the
         // translation of the unprintable char.
@@ -1665,7 +1665,7 @@ int msg_outtrans_special(const char *strstart, bool from, int maxlen)
     }
     if (text[0] != NUL && text[1] == NUL) {
       // single-byte character or illegal byte
-      text = (char *)transchar_byte((uint8_t)text[0]);
+      text = (char *)transchar_byte_buf(NULL, (uint8_t)text[0]);
     }
     const int len = vim_strsize((char *)text);
     if (maxlen > 0 && retval + len >= maxlen) {
@@ -1911,7 +1911,7 @@ void msg_prt_line(char *s, int list)
         s--;
       } else if (c != NUL && (n = byte2cells(c)) > 1) {
         n_extra = n - 1;
-        p_extra = (char *)transchar_byte(c);
+        p_extra = (char *)transchar_byte_buf(NULL, c);
         c_extra = NUL;
         c_final = NUL;
         c = (unsigned char)(*p_extra++);

@@ -2524,7 +2524,7 @@ static char *get_scriptnames_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
     return NULL;
   }
 
-  scriptitem_T *si = &SCRIPT_ITEM(idx + 1);
+  scriptitem_T *si = SCRIPT_ITEM(idx + 1);
   home_replace(NULL, si->sn_name, NameBuff, MAXPATHL, true);
   return NameBuff;
 }

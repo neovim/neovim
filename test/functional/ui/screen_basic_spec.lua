@@ -61,6 +61,7 @@ local function screen_tests(linegrid)
       [5] = {background = Screen.colors.LightGrey, underline = true, bold = true, foreground = Screen.colors.Fuchsia},
       [6] = {bold = true, foreground = Screen.colors.Fuchsia},
       [7] = {bold = true, foreground = Screen.colors.SeaGreen},
+      [8] = {foreground = Screen.colors.White, background = Screen.colors.Red},
     } )
   end)
 
@@ -866,12 +867,9 @@ local function screen_tests(linegrid)
   end)
 
   describe('resize', function()
-    before_each(function()
+    it('rebuilds the whole screen', function()
       screen:try_resize(25, 5)
       feed('iresize')
-    end)
-
-    it('rebuilds the whole screen', function()
       screen:expect([[
         resize^                   |
         {0:~                        }|
@@ -882,6 +880,7 @@ local function screen_tests(linegrid)
     end)
 
     it('has minimum width/height values', function()
+      feed('iresize')
       screen:try_resize(1, 1)
       screen:expect([[
         resize^      |
@@ -896,7 +895,8 @@ local function screen_tests(linegrid)
     end)
 
     it('VimResized autocommand does not cause invalid UI events #20692 #20759', function()
-      feed('<Esc>')
+      screen:try_resize(25, 5)
+      feed('iresize<Esc>')
       command([[autocmd VimResized * redrawtabline]])
       command([[autocmd VimResized * lua vim.api.nvim_echo({ { 'Hello' } }, false, {})]])
       command([[autocmd VimResized * let g:echospace = v:echospace]])
@@ -918,6 +918,77 @@ local function screen_tests(linegrid)
                                       |
       ]])
       eq(29, meths.get_var('echospace'))
+    end)
+
+    it('messages from the same Ex command as resize are visible #22225', function()
+      feed(':set columns=20 | call<CR>')
+      screen:expect([[
+                            |
+                            |
+                            |
+                            |
+                            |
+                            |
+                            |
+                            |
+                            |
+        {1:                    }|
+        {8:E471: Argument requi}|
+        {8:red}                 |
+        {7:Press ENTER or type }|
+        {7:command to continue}^ |
+      ]])
+      feed('<CR>')
+      screen:expect([[
+        ^                    |
+        {0:~                   }|
+        {0:~                   }|
+        {0:~                   }|
+        {0:~                   }|
+        {0:~                   }|
+        {0:~                   }|
+        {0:~                   }|
+        {0:~                   }|
+        {0:~                   }|
+        {0:~                   }|
+        {0:~                   }|
+        {0:~                   }|
+                            |
+      ]])
+      feed(':set columns=0<CR>')
+      screen:expect([[
+                    |
+                    |
+                    |
+                    |
+                    |
+        {1:            }|
+        {8:E594: Need a}|
+        {8:t least 12 c}|
+        {8:olumns: colu}|
+        {8:mns=0}       |
+        {7:Press ENTER }|
+        {7:or type comm}|
+        {7:and to conti}|
+        {7:nue}^         |
+      ]])
+      feed('<CR>')
+      screen:expect([[
+        ^            |
+        {0:~           }|
+        {0:~           }|
+        {0:~           }|
+        {0:~           }|
+        {0:~           }|
+        {0:~           }|
+        {0:~           }|
+        {0:~           }|
+        {0:~           }|
+        {0:~           }|
+        {0:~           }|
+        {0:~           }|
+                    |
+      ]])
     end)
   end)
 

@@ -13,6 +13,12 @@
 # include "nvim/os/unix_defs.h"
 #endif
 
+#ifdef BACKSLASH_IN_FILENAME
+# define BACKSLASH_IN_FILENAME_BOOL true
+#else
+# define BACKSLASH_IN_FILENAME_BOOL false
+#endif
+
 #if !defined(NAME_MAX) && defined(_XOPEN_NAME_MAX)
 # define NAME_MAX _XOPEN_NAME_MAX
 #endif

@@ -12,6 +12,7 @@
 #include "lauxlib.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/api/ui.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/drawscreen.h"
@@ -506,6 +507,16 @@ void hl_invalidate_blends(void)
   update_window_hl(curwin, true);
 }
 
+/// Combine HlAttrFlags.
+/// The underline attribute in "prim_ae" overrules the one in "char_ae" if both are present.
+static int16_t hl_combine_ae(int16_t char_ae, int16_t prim_ae)
+{
+  int16_t char_ul = char_ae & HL_UNDERLINE_MASK;
+  int16_t prim_ul = prim_ae & HL_UNDERLINE_MASK;
+  int16_t new_ul = prim_ul ? prim_ul : char_ul;
+  return (char_ae & ~HL_UNDERLINE_MASK) | (prim_ae & ~HL_UNDERLINE_MASK) | new_ul;
+}
+
 // Combine special attributes (e.g., for spelling) with other attributes
 // (e.g., for syntax highlighting).
 // "prim_attr" overrules "char_attr".
@@ -536,12 +547,12 @@ int hl_combine_attr(int char_attr, int prim_attr)
   if (prim_aep.cterm_ae_attr & HL_NOCOMBINE) {
     new_en.cterm_ae_attr = prim_aep.cterm_ae_attr;
   } else {
-    new_en.cterm_ae_attr |= prim_aep.cterm_ae_attr;
+    new_en.cterm_ae_attr = hl_combine_ae(new_en.cterm_ae_attr, prim_aep.cterm_ae_attr);
   }
   if (prim_aep.rgb_ae_attr & HL_NOCOMBINE) {
     new_en.rgb_ae_attr = prim_aep.rgb_ae_attr;
   } else {
-    new_en.rgb_ae_attr |= prim_aep.rgb_ae_attr;
+    new_en.rgb_ae_attr = hl_combine_ae(new_en.rgb_ae_attr, prim_aep.rgb_ae_attr);
   }
 
   if (prim_aep.cterm_fg_color > 0) {
@@ -663,7 +674,7 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
   } else {
     cattrs = fattrs;
     if (ratio >= 50) {
-      cattrs.rgb_ae_attr |= battrs.rgb_ae_attr;
+      cattrs.rgb_ae_attr = hl_combine_ae(battrs.rgb_ae_attr, cattrs.rgb_ae_attr);
     }
     cattrs.rgb_fg_color = rgb_blend(ratio/2, battrs.rgb_fg_color,
                                     fattrs.rgb_fg_color);
@@ -923,7 +934,10 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
 
 #define CHECK_FLAG(d, m, name, extra, flag) \
   if (api_object_to_bool(d->name##extra, #name, false, err)) { \
-    m = m | flag; \
+    if (flag & HL_UNDERLINE_MASK) { \
+      m &= ~HL_UNDERLINE_MASK; \
+    } \
+    m |= flag; \
   }
 
   CHECK_FLAG(dict, mask, reverse, , HL_INVERSE);
@@ -971,35 +985,33 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     return hlattrs;
   }
 
-  if (dict->blend.type == kObjectTypeInteger) {
+  if (HAS_KEY(dict->blend)) {
+    VALIDATE_T("blend", kObjectTypeInteger, dict->blend.type, {
+      return hlattrs;
+    });
+
     Integer blend0 = dict->blend.data.integer;
-    if (blend0 < 0 || blend0 > 100) {
-      api_set_error(err, kErrorTypeValidation, "'blend' is not between 0 to 100");
-    } else {
-      blend = (int)blend0;
-    }
-  } else if (HAS_KEY(dict->blend)) {
-    api_set_error(err, kErrorTypeValidation, "'blend' must be an integer");
-  }
-  if (ERROR_SET(err)) {
-    return hlattrs;
+    VALIDATE_RANGE((blend0 >= 0 && blend0 <= 100), "blend", {
+      return hlattrs;
+    });
+    blend = (int)blend0;
   }
 
   if (HAS_KEY(dict->link) || HAS_KEY(dict->global_link)) {
-    if (link_id) {
-      if (HAS_KEY(dict->global_link)) {
-        *link_id = object_to_hl_id(dict->global_link, "link", err);
-        mask |= HL_GLOBAL;
-      } else {
-        *link_id = object_to_hl_id(dict->link, "link", err);
-      }
-
-      if (ERROR_SET(err)) {
-        return hlattrs;
-      }
-    } else {
+    if (!link_id) {
       api_set_error(err, kErrorTypeValidation, "Invalid Key: '%s'",
                     HAS_KEY(dict->global_link) ? "global_link" : "link");
+      return hlattrs;
+    }
+    if (HAS_KEY(dict->global_link)) {
+      *link_id = object_to_hl_id(dict->global_link, "link", err);
+      mask |= HL_GLOBAL;
+    } else {
+      *link_id = object_to_hl_id(dict->link, "link", err);
+    }
+
+    if (ERROR_SET(err)) {
+      return hlattrs;
     }
   }
 
@@ -1026,7 +1038,9 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     // TODO(clason): handle via gen_api_dispatch
     cterm_mask_provided = true;
   } else if (HAS_KEY(dict->cterm)) {
-    api_set_error(err, kErrorTypeValidation, "'cterm' must be a Dictionary.");
+    VALIDATE_EXP(false, "cterm", "Dict", api_typename(dict->cterm.type), {
+      return hlattrs;
+    });
   }
 #undef CHECK_FLAG
 
@@ -1083,13 +1097,14 @@ int object_to_color(Object val, char *key, bool rgb, Error *err)
     } else {
       color = name_to_ctermcolor(str.data);
     }
-    if (color < 0) {
-      api_set_error(err, kErrorTypeValidation, "'%s' is not a valid color", str.data);
-    }
+    VALIDATE_S((color >= 0), "highlight color", str.data, {
+      return color;
+    });
     return color;
   } else {
-    api_set_error(err, kErrorTypeValidation, "'%s' must be string or integer", key);
-    return 0;
+    VALIDATE_EXP(false, key, "String or Integer", NULL, {
+      return 0;
+    });
   }
 }
 

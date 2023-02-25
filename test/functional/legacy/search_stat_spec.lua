@@ -1,7 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, exec, command = helpers.clear, helpers.feed, helpers.exec, helpers.command
-local poke_eventloop = helpers.poke_eventloop
 
 describe('search stat', function()
   local screen
@@ -80,12 +79,11 @@ describe('search stat', function()
       {1:~                             }|
       /foo                   [1/2]  |
     ]])
+    -- Note: there is an intermediate state where the search stat disappears.
     feed('n')
-    poke_eventloop()
-    screen:expect_unchanged()
+    screen:expect_unchanged(true)
     feed('n')
-    poke_eventloop()
-    screen:expect_unchanged()
+    screen:expect_unchanged(true)
   end)
 
   -- oldtest: Test_search_stat_then_gd()

@@ -55,7 +55,16 @@ typedef enum {
   ESTACK_SCRIPT,
 } estack_arg_T;
 
-typedef struct scriptitem_S {
+/// Holds the hashtab with variables local to each sourced script.
+/// Each item holds a variable (nameless) that points to the dict_T.
+typedef struct {
+  ScopeDictDictItem sv_var;
+  dict_T sv_dict;
+} scriptvar_T;
+
+typedef struct {
+  scriptvar_T *sn_vars;         ///< stores s: variables for this script
+
   char *sn_name;
   bool sn_prof_on;              ///< true when script is/was profiled
   bool sn_pr_force;             ///< forceit: profile functions in this script
@@ -78,7 +87,7 @@ typedef struct scriptitem_S {
 
 /// Growarray to store info about already sourced scripts.
 extern garray_T script_items;
-#define SCRIPT_ITEM(id) (((scriptitem_T *)script_items.ga_data)[(id) - 1])
+#define SCRIPT_ITEM(id) (((scriptitem_T **)script_items.ga_data)[(id) - 1])
 #define SCRIPT_ID_VALID(id) ((id) > 0 && (id) <= script_items.ga_len)
 
 typedef void (*DoInRuntimepathCB)(char *, void *);

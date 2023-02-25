@@ -72,10 +72,6 @@ parts:
             sed -i 's|^Icon=.*|Icon=${SNAP}/usr/share/icons/hicolor/128x128/apps/nvim.png|' ${SNAPCRAFT_PART_INSTALL}/usr/share/applications/nvim.desktop
         build-packages:
             - ninja-build
-            - libtool
-            - libtool-bin
-            - autoconf
-            - automake
             - cmake
             - gawk
             - g++

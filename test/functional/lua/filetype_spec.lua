@@ -98,10 +98,22 @@ describe('vim.filetype', function()
   it('works with contents #22180', function()
     eq('sh', exec_lua [[
       -- Needs to be set so detect#sh doesn't fail
-      vim.g.ft_ignore_pat = "\\.\\(Z\\|gz\\|bz2\\|zip\\|tgz\\)$"
+      vim.g.ft_ignore_pat = '\\.\\(Z\\|gz\\|bz2\\|zip\\|tgz\\)$'
       return vim.filetype.match({ contents = { '#!/usr/bin/env bash' } })
     ]])
   end)
+
+  it('considers extension mappings when matching from hashbang', function()
+    eq('fooscript', exec_lua [[
+      vim.filetype.add({
+        extension = {
+          foo = 'fooscript',
+        }
+      })
+      return vim.filetype.match({ contents = { '#!/usr/bin/env foo' } })
+    ]])
+  end)
+
 end)
 
 describe('filetype.lua', function()

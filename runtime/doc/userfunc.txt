@@ -234,9 +234,10 @@ Example: >
   call Something('key', 20)	"key: 20"
 
 The argument default expressions are evaluated at the time of the function
-call, not definition.  Thus it is possible to use an expression which is
-invalid the moment the function is defined.  The expressions are also only
-evaluated when arguments are not specified during a call.
+call, not when the function is defined.  Thus it is possible to use an
+expression which is invalid the moment the function is defined.  The
+expressions are also only evaluated when arguments are not specified during a
+call.
 
 								*E989*
 Optional arguments with default expressions must occur after any mandatory

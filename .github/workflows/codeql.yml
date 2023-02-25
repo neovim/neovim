@@ -17,8 +17,8 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Install apt packages
-      run: ./.github/scripts/install_deps_ubuntu.sh
+    - name: Install dependencies
+      run: ./.github/scripts/install_deps.sh
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2

@@ -1322,7 +1322,7 @@ describe('ui/ext_messages', function()
       {1:~                }type  :q{5:<Enter>}               to exit         {1:                 }|
       {1:~                }type  :help{5:<Enter>}            for help        {1:                 }|
       {1:~                                                                               }|
-      {1:~                }type  :help news{5:<Enter>} to see changes in v{MATCH:%d+%.%d+}|
+      {1:~{MATCH: +}}type  :help news{5:<Enter>} to see changes in v{MATCH:%d+%.%d+}{1:{MATCH: +}}|
       {1:~                                                                               }|
       {MATCH:.*}|
       {MATCH:.*}|
@@ -1378,7 +1378,7 @@ describe('ui/ext_messages', function()
                        type  :q{5:<Enter>}               to exit                          |
                        type  :help{5:<Enter>}            for help                         |
                                                                                       |
-                       type  :help news{5:<Enter>} to see changes in v{MATCH:%d+%.%d+}|
+      {MATCH: +}type  :help news{5:<Enter>} to see changes in v{MATCH:%d+%.%d+ +}|
                                                                                       |
       {MATCH:.*}|
       {MATCH:.*}|

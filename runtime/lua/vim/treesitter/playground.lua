@@ -136,6 +136,8 @@ function TSPlayground:new(bufnr, lang)
   return t
 end
 
+local decor_ns = api.nvim_create_namespace('ts.playground')
+
 --- Write the contents of this Playground into {bufnr}.
 ---
 ---@param bufnr number Buffer number to write into.
@@ -144,22 +146,28 @@ function TSPlayground:draw(bufnr)
   vim.bo[bufnr].modifiable = true
   local lines = {} ---@type string[]
   for _, item in self:iter() do
-    lines[#lines + 1] = table.concat({
-      string.rep(' ', item.depth),
-      item.text,
-      item.lnum == item.end_lnum
-          and string.format(' [%d:%d-%d]', item.lnum + 1, item.col + 1, item.end_col)
-        or string.format(
-          ' [%d:%d-%d:%d]',
-          item.lnum + 1,
-          item.col + 1,
-          item.end_lnum + 1,
-          item.end_col
-        ),
-      self.opts.lang and string.format(' %s', item.lang) or '',
-    })
+    lines[#lines + 1] = string.rep(' ', item.depth) .. item.text
   end
   api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+
+  api.nvim_buf_clear_namespace(bufnr, decor_ns, 0, -1)
+
+  for i, item in self:iter() do
+    local range_str
+    if item.lnum == item.end_lnum then
+      range_str = string.format('[%d:%d-%d]', item.lnum + 1, item.col + 1, item.end_col)
+    else
+      range_str =
+        string.format('[%d:%d-%d:%d]', item.lnum + 1, item.col + 1, item.end_lnum + 1, item.end_col)
+    end
+
+    local lang_str = self.opts.lang and string.format(' %s', item.lang) or ''
+
+    api.nvim_buf_set_extmark(bufnr, decor_ns, i - 1, 0, {
+      virt_text = { { range_str, 'Comment' }, { lang_str, 'Title' } },
+    })
+  end
+
   vim.bo[bufnr].modifiable = false
 end
 

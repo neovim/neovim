@@ -296,15 +296,15 @@ endfunc
 
 " Test for *:s%* on :substitute.
 func Test_sub_cmd_6()
-  throw 'Skipped: Nvim does not support cpoptions flag "/"'
   set magic&
-  set cpo+=/
+  " Nvim: no "/" flag in 'cpoptions'.
+  " set cpo+=/
 
   " List entry format: [input, cmd, output]
   let tests = [ ['A', 's/A/a/', ['a']],
 	      \ ['B', 's/B/%/', ['a']],
 	      \ ]
-  call Run_SubCmd_Tests(tests)
+  " call Run_SubCmd_Tests(tests)
 
   set cpo-=/
   let tests = [ ['C', 's/C/c/', ['c']],
@@ -585,10 +585,11 @@ endfunc
 
 func Test_sub_replace_6()
   set magic&
+  " Nvim: no "/" flag in 'cpoptions'.
   " set cpo+=/
   call assert_equal('a', substitute('A', 'A', 'a', ''))
   call assert_equal('%', substitute('B', 'B', '%', ''))
-  " set cpo-=/
+  set cpo-=/
   call assert_equal('c', substitute('C', 'C', 'c', ''))
   call assert_equal('%', substitute('D', 'D', '%', ''))
 endfunc
@@ -853,13 +854,13 @@ func Test_sub_with_no_last_pat()
     call assert_equal([], readfile('Xresult'))
   endif
 
-  " Nvim does not support cpoptions flag "/"'
-  " let lines =<< trim [SCRIPT]
-  "   set cpo+=/
-  "   call assert_fails('s/abc/%/', 'E33:')
-  "   call writefile(v:errors, 'Xresult')
-  "   qall!
-  " [SCRIPT]
+  let lines =<< trim [SCRIPT]
+    set cpo+=/
+    call assert_fails('s/abc/%/', 'E33:')
+    call writefile(v:errors, 'Xresult')
+    qall!
+  [SCRIPT]
+  " Nvim: no "/" flag in 'cpoptions'.
   " call writefile(lines, 'Xscript')
   " if RunVim([], [], '--clean -S Xscript')
   "   call assert_equal([], readfile('Xresult'))

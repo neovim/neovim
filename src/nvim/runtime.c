@@ -73,7 +73,7 @@ struct source_cookie {
 #endif
 
 garray_T exestack = { 0, 0, sizeof(estack_T), 50, NULL };
-garray_T script_items = { 0, 0, sizeof(scriptitem_T), 4, NULL };
+garray_T script_items = { 0, 0, sizeof(scriptitem_T *), 20, NULL };
 
 /// Initialize the execution stack.
 void estack_init(void)
@@ -144,7 +144,7 @@ char *estack_sfile(estack_arg_T which)
                                        ? &entry->es_info.ufunc->uf_script_ctx
                                        : &entry->es_info.aucmd->script_ctx);
         return def_ctx->sc_sid > 0
-                ? xstrdup((SCRIPT_ITEM(def_ctx->sc_sid).sn_name))
+                ? xstrdup((SCRIPT_ITEM(def_ctx->sc_sid)->sn_name))
                 : NULL;
       } else if (entry->es_type == ETYPE_SCRIPT) {
         return xstrdup(entry->es_name);
@@ -1435,7 +1435,6 @@ static inline size_t compute_double_env_sep_len(const char *const val, const siz
   return ret;
 }
 
-#define NVIM_SIZE (sizeof("nvim") - 1)
 /// Add directories to a ENV_SEPCHAR-separated array from a colon-separated one
 ///
 /// Commas are escaped in process. To each item PATHSEP "nvim" is appended in
@@ -1464,6 +1463,8 @@ static inline char *add_env_sep_dirs(char *dest, const char *const val, const ch
     return dest;
   }
   const void *iter = NULL;
+  const char *appname = get_appname();
+  const size_t appname_len = strlen(appname);
   do {
     size_t dir_len;
     const char *dir;
@@ -1474,8 +1475,8 @@ static inline char *add_env_sep_dirs(char *dest, const char *const val, const ch
       if (!after_pathsep(dest - 1, dest)) {
         *dest++ = PATHSEP;
       }
-      memmove(dest, "nvim", NVIM_SIZE);
-      dest += NVIM_SIZE;
+      memmove(dest, appname, appname_len);
+      dest += appname_len;
       if (suf1 != NULL) {
         *dest++ = PATHSEP;
         memmove(dest, suf1, len1);
@@ -1529,14 +1530,18 @@ static inline char *add_dir(char *dest, const char *const dir, const size_t dir_
     if (!after_pathsep(dest - 1, dest)) {
       *dest++ = PATHSEP;
     }
+    const char *appname = get_appname();
+    size_t appname_len = strlen(appname);
+    assert(appname_len < (IOSIZE - sizeof("-data")));
+    xstrlcpy(IObuff, appname, appname_len + 1);
 #if defined(MSWIN)
-    size_t size = (type == kXDGDataHome ? sizeof("nvim-data") - 1 : NVIM_SIZE);
-    memmove(dest, (type == kXDGDataHome ? "nvim-data" : "nvim"), size);
-    dest += size;
-#else
-    memmove(dest, "nvim", NVIM_SIZE);
-    dest += NVIM_SIZE;
+    if (type == kXDGDataHome || type == kXDGStateHome) {
+      STRCAT(IObuff, "-data");
+      appname_len += 5;
+    }
 #endif
+    xstrlcpy(dest, IObuff, appname_len + 1);
+    dest += appname_len;
     if (suf1 != NULL) {
       *dest++ = PATHSEP;
       memmove(dest, suf1, len1);
@@ -1596,16 +1601,17 @@ char *runtimepath_default(bool clean_arg)
   size_t config_len = 0;
   size_t vimruntime_len = 0;
   size_t libdir_len = 0;
+  const char *appname = get_appname();
+  size_t appname_len = strlen(appname);
   if (data_home != NULL) {
     data_len = strlen(data_home);
-    if (data_len != 0) {
+    size_t nvim_data_size = appname_len;
 #if defined(MSWIN)
-      size_t nvim_size = (sizeof("nvim-data") - 1);
-#else
-      size_t nvim_size = NVIM_SIZE;
+    nvim_data_size += sizeof("-data") - 1;  // -1: NULL byte should be ignored
 #endif
+    if (data_len != 0) {
       rtp_size += ((data_len + memcnt(data_home, ',', data_len)
-                    + nvim_size + 1 + SITE_SIZE + 1
+                    + nvim_data_size + 1 + SITE_SIZE + 1
                     + !after_pathsep(data_home, data_home + data_len)) * 2
                    + AFTER_SIZE + 1);
     }
@@ -1614,7 +1620,7 @@ char *runtimepath_default(bool clean_arg)
     config_len = strlen(config_home);
     if (config_len != 0) {
       rtp_size += ((config_len + memcnt(config_home, ',', config_len)
-                    + NVIM_SIZE + 1
+                    + appname_len + 1
                     + !after_pathsep(config_home, config_home + config_len)) * 2
                    + AFTER_SIZE + 1);
     }
@@ -1632,9 +1638,9 @@ char *runtimepath_default(bool clean_arg)
     }
   }
   rtp_size += compute_double_env_sep_len(data_dirs,
-                                         NVIM_SIZE + 1 + SITE_SIZE + 1,
+                                         appname_len + 1 + SITE_SIZE + 1,
                                          AFTER_SIZE + 1);
-  rtp_size += compute_double_env_sep_len(config_dirs, NVIM_SIZE + 1,
+  rtp_size += compute_double_env_sep_len(config_dirs, appname_len + 1,
                                          AFTER_SIZE + 1);
   char *rtp = NULL;
   if (rtp_size == 0) {
@@ -1675,7 +1681,6 @@ freeall:
 
   return rtp;
 }
-#undef NVIM_SIZE
 
 static void cmd_source(char *fname, exarg_T *eap)
 {
@@ -1844,13 +1849,18 @@ scriptitem_T *new_script_item(char *const name, scid_T *const sid_out)
   }
   ga_grow(&script_items, sid - script_items.ga_len);
   while (script_items.ga_len < sid) {
+    scriptitem_T *si = xcalloc(1, sizeof(scriptitem_T));
     script_items.ga_len++;
-    SCRIPT_ITEM(script_items.ga_len).sn_name = NULL;
-    SCRIPT_ITEM(script_items.ga_len).sn_prof_on = false;
+    SCRIPT_ITEM(script_items.ga_len) = si;
+    si->sn_name = NULL;
+
+    // Allocate the local script variables to use for this script.
+    new_script_vars(script_items.ga_len);
+
+    si->sn_prof_on = false;
   }
-  SCRIPT_ITEM(sid).sn_name = name;
-  new_script_vars(sid);  // Allocate the local script variables to use for this script.
-  return &SCRIPT_ITEM(sid);
+  SCRIPT_ITEM(sid)->sn_name = name;
+  return SCRIPT_ITEM(sid);
 }
 
 static int source_using_linegetter(void *cookie, LineGetter fgetline, const char *traceback_name)
@@ -2118,7 +2128,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
 
   if (l_do_profiling == PROF_YES) {
     // Get "si" again, "script_items" may have been reallocated.
-    si = &SCRIPT_ITEM(current_sctx.sc_sid);
+    si = SCRIPT_ITEM(current_sctx.sc_sid);
     if (si->sn_prof_on) {
       si->sn_pr_start = profile_end(si->sn_pr_start);
       si->sn_pr_start = profile_sub_wait(wait_start, si->sn_pr_start);
@@ -2198,7 +2208,7 @@ scriptitem_T *get_current_script_id(char **fnamep, sctx_T *ret_sctx)
     //   inode number, even though to the user it is the same script.
     // - If a script is deleted and another script is written, with a
     //   different name, the inode may be re-used.
-    si = &SCRIPT_ITEM(script_sctx.sc_sid);
+    si = SCRIPT_ITEM(script_sctx.sc_sid);
     if (si->sn_name != NULL && path_fnamecmp(si->sn_name, *fnamep) == 0) {
       // Found it!
       break;
@@ -2224,7 +2234,7 @@ void ex_scriptnames(exarg_T *eap)
       emsg(_(e_invarg));
     } else {
       if (eap->addr_count > 0) {
-        eap->arg = SCRIPT_ITEM(eap->line2).sn_name;
+        eap->arg = SCRIPT_ITEM(eap->line2)->sn_name;
       } else {
         expand_env(eap->arg, NameBuff, MAXPATHL);
         eap->arg = NameBuff;
@@ -2235,8 +2245,8 @@ void ex_scriptnames(exarg_T *eap)
   }
 
   for (int i = 1; i <= script_items.ga_len && !got_int; i++) {
-    if (SCRIPT_ITEM(i).sn_name != NULL) {
-      home_replace(NULL, SCRIPT_ITEM(i).sn_name, NameBuff, MAXPATHL, true);
+    if (SCRIPT_ITEM(i)->sn_name != NULL) {
+      home_replace(NULL, SCRIPT_ITEM(i)->sn_name, NameBuff, MAXPATHL, true);
       vim_snprintf(IObuff, IOSIZE, "%3d: %s", i, NameBuff);
       if (!message_filtered(IObuff)) {
         msg_putchar('\n');
@@ -2252,8 +2262,8 @@ void ex_scriptnames(exarg_T *eap)
 void scriptnames_slash_adjust(void)
 {
   for (int i = 1; i <= script_items.ga_len; i++) {
-    if (SCRIPT_ITEM(i).sn_name != NULL) {
-      slash_adjust(SCRIPT_ITEM(i).sn_name);
+    if (SCRIPT_ITEM(i)->sn_name != NULL) {
+      slash_adjust(SCRIPT_ITEM(i)->sn_name);
     }
   }
 }
@@ -2287,7 +2297,7 @@ char *get_scriptname(LastSet last_set, bool *should_free)
   case SID_STR:
     return _("anonymous :source");
   default: {
-    char *const sname = SCRIPT_ITEM(last_set.script_ctx.sc_sid).sn_name;
+    char *const sname = SCRIPT_ITEM(last_set.script_ctx.sc_sid)->sn_name;
     if (sname == NULL) {
       snprintf(IObuff, IOSIZE, _("anonymous :source (script id %d)"),
                last_set.script_ctx.sc_sid);
@@ -2305,8 +2315,17 @@ void free_scriptnames(void)
 {
   profile_reset();
 
-# define FREE_SCRIPTNAME(item) xfree((item)->sn_name)
-  GA_DEEP_CLEAR(&script_items, scriptitem_T, FREE_SCRIPTNAME);
+# define FREE_SCRIPTNAME(item) \
+  do { \
+    scriptitem_T *_si = *(item); \
+    /* the variables themselves are cleared in evalvars_clear() */ \
+    xfree(_si->sn_vars); \
+    xfree(_si->sn_name); \
+    ga_clear(&_si->sn_prl_ga); \
+    xfree(_si); \
+  } while (0) \
+
+  GA_DEEP_CLEAR(&script_items, scriptitem_T *, FREE_SCRIPTNAME);
 }
 #endif
 

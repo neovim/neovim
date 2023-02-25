@@ -1870,8 +1870,8 @@ static void f_expandcmd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_string = cmdstr;
 }
 
-/// "flatten(list[, {maxdepth}])" function
-static void f_flatten(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+/// "flatten()" and "flattennew()" functions
+static void flatten_common(typval_T *argvars, typval_T *rettv, bool make_copy)
 {
   bool error = false;
 
@@ -1895,13 +1895,38 @@ static void f_flatten(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   list_T *list = argvars[0].vval.v_list;
-  if (list != NULL
-      && !value_check_lock(tv_list_locked(list),
-                           N_("flatten() argument"),
-                           TV_TRANSLATE)
-      && tv_list_flatten(list, maxdepth) == OK) {
-    tv_copy(&argvars[0], rettv);
+  rettv->v_type = VAR_LIST;
+  rettv->vval.v_list = list;
+  if (list == NULL) {
+    return;
   }
+
+  if (make_copy) {
+    list = tv_list_copy(NULL, list, false, get_copyID());
+    rettv->vval.v_list = list;
+    if (list == NULL) {
+      return;
+    }
+  } else {
+    if (value_check_lock(tv_list_locked(list), N_("flatten() argument"), TV_TRANSLATE)) {
+      return;
+    }
+    tv_list_ref(list);
+  }
+
+  tv_list_flatten(list, NULL, tv_list_len(list), maxdepth);
+}
+
+/// "flatten(list[, {maxdepth}])" function
+static void f_flatten(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  flatten_common(argvars, rettv, false);
+}
+
+/// "flattennew(list[, {maxdepth}])" function
+static void f_flattennew(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  flatten_common(argvars, rettv, true);
 }
 
 /// "extend(list, list [, idx])" function

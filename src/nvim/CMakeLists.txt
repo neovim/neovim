@@ -2,9 +2,15 @@ add_library(main_lib INTERFACE)
 add_executable(nvim main.c)
 
 add_library(libuv_lib INTERFACE)
-find_package(LibUV 1.28.0 REQUIRED)
-target_include_directories(libuv_lib SYSTEM BEFORE INTERFACE ${LIBUV_INCLUDE_DIRS})
-target_link_libraries(libuv_lib INTERFACE ${LIBUV_LIBRARIES})
+find_package(libuv CONFIG)
+if(TARGET libuv::uv_a)
+  target_link_libraries(libuv_lib INTERFACE libuv::uv_a)
+else()
+  # Fall back to find module for older libuv versions that don't provide config file
+  find_package(LibUV 1.28.0 REQUIRED MODULE)
+  target_include_directories(libuv_lib SYSTEM BEFORE INTERFACE ${LIBUV_INCLUDE_DIRS})
+  target_link_libraries(libuv_lib INTERFACE ${LIBUV_LIBRARIES})
+endif()
 
 find_package(Msgpack 1.0.0 REQUIRED)
 target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${MSGPACK_INCLUDE_DIRS})
@@ -92,6 +98,13 @@ else()
     -Wmissing-noreturn
     -Wmissing-format-attribute
     -Wmissing-prototypes)
+
+  if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(main_lib INTERFACE
+      $<$<CONFIG:Release>:-Wno-unused-result>
+      $<$<CONFIG:RelWithDebInfo>:-Wno-unused-result>
+      $<$<CONFIG:MinSizeRel>:-Wno-unused-result>)
+  endif()
 endif()
 
 # On FreeBSD 64 math.h uses unguarded C11 extension, which taints clang
@@ -157,7 +170,11 @@ if(HAS_DIAG_COLOR_FLAG)
   endif()
 endif()
 
-option(CI_BUILD "CI, extra flags will be set" OFF)
+if($ENV{CI})
+    option(CI_BUILD "CI, extra flags will be set" ON)
+else()
+    option(CI_BUILD "CI, extra flags will be set" OFF)
+endif()
 if(CI_BUILD)
   message(STATUS "CI build enabled")
   if(MSVC)
@@ -350,6 +367,12 @@ glob_wrapper(NVIM_HEADERS *.h)
 glob_wrapper(EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c)
 glob_wrapper(EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h)
 
+if(PREFER_LUA)
+  # luajit not used, use a vendored copy of the bit module
+  list(APPEND EXTERNAL_SOURCES ${PROJECT_SOURCE_DIR}/src/bit.c)
+  target_compile_definitions(main_lib INTERFACE NVIM_VENDOR_BIT)
+endif()
+
 foreach(subdir
         os
         api
@@ -408,10 +431,13 @@ if(MSVC)
     ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -wd4090 -wd4244 -wd4267")
 else()
   set_source_files_properties(
-    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion -Wno-strict-prototypes")
+    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion -Wno-strict-prototypes -Wno-misleading-indentation")
 endif()
 
 # Log level (MIN_LOG_LEVEL in log.h)
+if($ENV{CI} MATCHES "true")
+  set(MIN_LOG_LEVEL 3)
+endif()
 if("${MIN_LOG_LEVEL}" MATCHES "^$")
   # Minimize logging for release-type builds.
   target_compile_definitions(main_lib INTERFACE MIN_LOG_LEVEL=$<IF:$<CONFIG:Debug>,1,3>)
@@ -456,6 +482,15 @@ add_custom_target(update_version_stamp
     -P ${PROJECT_SOURCE_DIR}/cmake/GenerateVersion.cmake
   BYPRODUCTS ${NVIM_VERSION_GIT_H})
 
+set(NVIM_VERSION_DEF_H ${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h)
+add_custom_command(
+  OUTPUT "${NVIM_VERSION_DEF_H}"
+  COMMAND "${CMAKE_COMMAND}"
+    -E copy
+    "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef-$<CONFIG>.h"
+    "${NVIM_VERSION_DEF_H}"
+  DEPENDS "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef-$<CONFIG>.h")
+
 # NVIM_GENERATED_FOR_HEADERS: generated headers to be included in headers
 # NVIM_GENERATED_FOR_SOURCES: generated headers to be included in sources
 # NVIM_GENERATED_SOURCES: generated source files
@@ -493,7 +528,7 @@ foreach(sfile ${NVIM_SOURCES}
   set(depends "${HEADER_GENERATOR}" "${sfile}")
   if("${f}" STREQUAL "version.c")
     # Ensure auto/versiondef_git.h exists after "make clean".
-    list(APPEND depends update_version_stamp "${NVIM_VERSION_GIT_H}")
+    list(APPEND depends update_version_stamp "${NVIM_VERSION_GIT_H}" "${NVIM_VERSION_DEF_H}")
   endif()
   add_custom_command(
     OUTPUT "${gf_c_h}" "${gf_h_h}"
@@ -655,8 +690,8 @@ if(UNIX)
   endif()
 endif()
 
-if(NOT LUAJIT_FOUND)
-  message(STATUS "luajit not found, skipping unit tests")
+if(PREFER_LUA)
+  message(STATUS "luajit not used, skipping unit tests")
 else()
   glob_wrapper(UNIT_TEST_FIXTURES ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
   target_sources(nvim PRIVATE $<$<CONFIG:Debug>:${UNIT_TEST_FIXTURES}>)

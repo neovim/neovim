@@ -670,6 +670,7 @@ List manipulation:					*list-functions*
 	count()			count number of times a value appears in a List
 	repeat()		repeat a List multiple times
 	flatten()		flatten a List
+	flattennew()		flatten a copy of a List
 
 Dictionary manipulation:				*dict-functions*
 	get()			get an entry without an error for a wrong key

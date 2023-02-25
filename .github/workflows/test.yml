@@ -1,4 +1,4 @@
-name: CI
+name: test
 on:
   push:
     branches:
@@ -40,10 +40,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install apt packages
-        run: |
-          ./.github/scripts/install_deps_ubuntu.sh
-          sudo apt-get install -y lua-check
+      - name: Install dependencies
+        run: ./.github/scripts/install_deps.sh lua-check
 
       - name: Cache uncrustify
         id: cache-uncrustify
@@ -91,14 +89,23 @@ jobs:
           args: --check runtime/
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+        name: configure
+        run: cmake -B build -G Ninja -D CI_BUILD=OFF
+
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: luacheck
-        run: |
-          cmake -B build -G Ninja
-          cmake --build build --target lintlua-luacheck
+        run: cmake --build build --target lintlua-luacheck
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: lintsh
         run: cmake --build build --target lintsh
+
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+        name: clint.py
+        run: cmake --build build --target lintc-clint
+
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+        run: cmake --build build --target clang-tidy
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: uncrustify
@@ -116,69 +123,6 @@ jobs:
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: check uncrustify
         run: git diff --color --exit-code
-
-  lintc:
-    # This job tests two things: it lints the code but also builds neovim using
-    # system dependencies instead of bundled dependencies. This is to make sure
-    # we are able to build neovim without pigeonholing ourselves into specifics
-    # of the bundled dependencies.
-
-    if: (github.event_name == 'pull_request' && github.base_ref == 'master') || (github.event_name == 'push' && github.ref == 'refs/heads/master')
-    runs-on: ubuntu-22.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Install apt packages
-        run: |
-          sudo add-apt-repository ppa:neovim-ppa/stable
-          ./.github/scripts/install_deps_ubuntu.sh
-          sudo apt-get install -y \
-            libluajit-5.1-dev \
-            libmsgpack-dev \
-            libtermkey-dev \
-            libtree-sitter-dev \
-            libunibilium-dev \
-            libuv1-dev \
-            lua-busted \
-            lua-filesystem \
-            lua-inspect \
-            lua-lpeg \
-            lua-nvim \
-            luajit
-            # libvterm-dev \
-            # lua-luv-dev
-
-            # Remove comments from packages once we start using these external
-            # dependencies.
-
-      - uses: ./.github/actions/cache
-
-      - name: Build third-party deps
-        run: |
-          # Ideally all dependencies should external for this job, but some
-          # dependencies don't have the required version available. We use the
-          # bundled versions for these with the hopes of being able to remove them
-          # later on.
-          cmake -S cmake.deps -B $DEPS_BUILD_DIR -G Ninja -D USE_BUNDLED=OFF -D USE_BUNDLED_LUV=ON -D USE_BUNDLED_LIBVTERM=ON
-          cmake --build $DEPS_BUILD_DIR
-
-      - name: Build
-        run: |
-          cmake -B build -G Ninja
-          cmake --build build
-
-      - if: "!cancelled()"
-        name: Determine if run should be aborted
-        id: abort_job
-        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: clint.py
-        run: cmake --build build --target lintc-clint
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        run: cmake --build build --target clang-tidy
 
   posix:
     name: ${{ matrix.runner }} ${{ matrix.flavor }} (cc=${{ matrix.cc }})
@@ -224,15 +168,8 @@ jobs:
       - name: Create log dir
         run: mkdir -p "$LOG_DIR"
 
-      - name: Install apt packages
-        if: runner.os == 'Linux'
-        run: ./.github/scripts/install_deps_ubuntu.sh
-
-      - name: Install brew packages
-        if: runner.os == 'macOS'
-        run: |
-          brew update --quiet
-          brew install automake cpanminus ninja
+      - name: Install dependencies
+        run: ./.github/scripts/install_deps.sh cpanminus
 
       - name: Setup interpreter packages
         run: |
@@ -263,7 +200,7 @@ jobs:
 
       - name: Build
         run: |
-          cmake -B build -G Ninja -D CI_BUILD=ON -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX -D MIN_LOG_LEVEL=3 ${{ matrix.flags }}
+          cmake -B build -G Ninja -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.flags }}
           cmake --build build
 
       - if: "!cancelled()"
@@ -278,12 +215,12 @@ jobs:
 
       - if: matrix.flavor != 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
         name: Functionaltest
-        timeout-minutes: 15
+        timeout-minutes: 20
         run: cmake --build build --target functionaltest
 
       - if: matrix.flavor == 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
         name: Functionaltest with PUC Lua
-        timeout-minutes: 15
+        timeout-minutes: 20
         run: cmake --build build --target functionaltest-lua
 
       - if: matrix.flavor != 'tsan' && (success() || failure() && steps.abort_job.outputs.status == 'success')
@@ -357,46 +294,6 @@ jobs:
           echo 'Core dumps found'
           exit 1
 
-  old_cmake:
-    name: Test oldest supported cmake
-    runs-on: ubuntu-22.04
-    timeout-minutes: 15
-    env:
-      CMAKE_URL: 'https://cmake.org/files/v3.10/cmake-3.10.0-Linux-x86_64.sh'
-      CMAKE_VERSION: '3.10.0'
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up environment
-        run: echo "$BIN_DIR" >> $GITHUB_PATH
-
-      - name: Install apt packages
-        run: ./.github/scripts/install_deps_ubuntu.sh
-
-      - name: Install minimum required version of cmake
-        run: |
-          curl --retry 5 --silent --show-error --fail -o /tmp/cmake-installer.sh "$CMAKE_URL"
-          mkdir -p "$BIN_DIR" /opt/cmake-custom
-          chmod a+x /tmp/cmake-installer.sh
-          /tmp/cmake-installer.sh --prefix=/opt/cmake-custom --skip-license
-          ln -sfn /opt/cmake-custom/bin/cmake "$BIN_DIR/cmake"
-          cmake_version="$(cmake --version | head -1)"
-          echo "$cmake_version" | grep -qF "cmake version $CMAKE_VERSION" || {
-            echo "Unexpected CMake version: $cmake_version"
-            exit 1
-          }
-
-      - uses: ./.github/actions/cache
-
-      - name: Build dependencies
-        run: make deps
-
-      - name: Build
-        run: make CMAKE_FLAGS="-D CI_BUILD=ON -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX -D MIN_LOG_LEVEL=3"
-
-      - name: Install
-        run: make install
-
   windows:
     runs-on: windows-2019
     timeout-minutes: 45
@@ -423,7 +320,7 @@ jobs:
 
       - name: Build
         run: |
-          cmake -B build -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo' -D CI_BUILD=ON
+          cmake -B build -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo'
           cmake --build build
 
       - name: Install test deps
@@ -457,7 +354,7 @@ jobs:
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Run functionaltest
-        timeout-minutes: 15
+        timeout-minutes: 20
         run: cmake --build build --target functionaltest
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'

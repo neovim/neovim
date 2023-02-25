@@ -29,6 +29,8 @@ setmetatable(M, {
   end,
 })
 
+---@diagnostic disable:invisible
+
 --- Creates a new parser
 ---
 --- It is not recommended to use this; use |get_parser()| instead.
@@ -39,16 +41,15 @@ setmetatable(M, {
 ---
 ---@return LanguageTree object to use for parsing
 function M._create_parser(bufnr, lang, opts)
-  language.require_language(lang)
   if bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()
   end
 
   vim.fn.bufload(bufnr)
 
-  local self = LanguageTree.new(bufnr, lang, opts)
+  language.add(lang, { filetype = vim.bo[bufnr].filetype })
 
-  ---@diagnostic disable:invisible
+  local self = LanguageTree.new(bufnr, lang, opts)
 
   ---@private
   local function bytes_cb(_, ...)
@@ -97,7 +98,12 @@ function M.get_parser(bufnr, lang, opts)
     bufnr = a.nvim_get_current_buf()
   end
   if lang == nil then
-    lang = a.nvim_buf_get_option(bufnr, 'filetype')
+    local ft = vim.bo[bufnr].filetype
+    lang = language.get_lang(ft) or ft
+    -- TODO(lewis6991): we should error here and not default to ft
+    -- if not lang then
+    --   error(string.format('filetype %s of buffer %d is not associated with any lang', ft, bufnr))
+    -- end
   end
 
   if parsers[bufnr] == nil or parsers[bufnr]:lang() ~= lang then
@@ -107,6 +113,16 @@ function M.get_parser(bufnr, lang, opts)
   parsers[bufnr]:register_cbs(opts.buf_attach_cbs)
 
   return parsers[bufnr]
+end
+
+---@private
+---@param bufnr (integer|nil) Buffer number
+---@return boolean
+function M._has_parser(bufnr)
+  if bufnr == nil or bufnr == 0 then
+    bufnr = a.nvim_get_current_buf()
+  end
+  return parsers[bufnr] ~= nil
 end
 
 --- Returns a string parser
@@ -121,7 +137,7 @@ function M.get_string_parser(str, lang, opts)
     str = { str, 'string' },
     lang = { lang, 'string' },
   })
-  language.require_language(lang)
+  language.add(lang)
 
   return LanguageTree.new(str, lang, opts)
 end
@@ -151,7 +167,7 @@ end
 
 --- Returns the node's range or an unpacked range table
 ---
----@param node_or_range (TSNode|table) Node or table of positions
+---@param node_or_range (TSNode | table) Node or table of positions
 ---
 ---@return integer start_row
 ---@return integer start_col
@@ -212,7 +228,7 @@ end
 ---@param row integer Position row
 ---@param col integer Position column
 ---
----@return table[] List of captures `{ capture = "capture name", metadata = { ... } }`
+---@return table[] List of captures `{ capture = "name", metadata = { ... } }`
 function M.get_captures_at_pos(bufnr, row, col)
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
@@ -282,6 +298,50 @@ end
 
 --- Returns the smallest named node at the given position
 ---
+---@param opts table|nil Optional keyword arguments:
+---             - bufnr integer|nil Buffer number (nil or 0 for current buffer)
+---             - pos table|nil 0-indexed (row, col) tuple. Defaults to cursor position in the
+---                             current window. Required if {bufnr} is not the current buffer
+---             - ignore_injections boolean Ignore injected languages (default true)
+---
+---@return TSNode | nil Node at the given position
+function M.get_node(opts)
+  opts = opts or {}
+
+  local bufnr = opts.bufnr
+
+  if not bufnr or bufnr == 0 then
+    bufnr = a.nvim_get_current_buf()
+  end
+
+  local row, col
+  if opts.pos then
+    assert(#opts.pos == 2, 'Position must be a (row, col) tuple')
+    row, col = opts.pos[1], opts.pos[2]
+  else
+    assert(
+      bufnr == a.nvim_get_current_buf(),
+      'Position must be explicitly provided when not using the current buffer'
+    )
+    local pos = a.nvim_win_get_cursor(0)
+    -- Subtract one to account for 1-based row indexing in nvim_win_get_cursor
+    row, col = pos[1] - 1, pos[2]
+  end
+
+  assert(row >= 0 and col >= 0, 'Invalid position: row and col must be non-negative')
+
+  local ts_range = { row, col, row, col }
+
+  local root_lang_tree = M.get_parser(bufnr)
+  if not root_lang_tree then
+    return
+  end
+
+  return root_lang_tree:named_node_for_range(ts_range, opts)
+end
+
+--- Returns the smallest named node at the given position
+---
 ---@param bufnr integer Buffer number (0 for current buffer)
 ---@param row integer Position row
 ---@param col integer Position column
@@ -289,12 +349,16 @@ end
 ---             - lang string|nil Parser language
 ---             - ignore_injections boolean Ignore injected languages (default true)
 ---
----@return TSNode|nil under the cursor
+---@return TSNode | nil Node at the given position
+---@deprecated
 function M.get_node_at_pos(bufnr, row, col, opts)
+  vim.deprecate('vim.treesitter.get_node_at_pos()', 'vim.treesitter.get_node()', '0.10')
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
   local ts_range = { row, col, row, col }
+
+  opts = opts or {}
 
   local root_lang_tree = M.get_parser(bufnr, opts.lang)
   if not root_lang_tree then
@@ -309,12 +373,13 @@ end
 ---@param winnr (integer|nil) Window handle or 0 for current window (default)
 ---
 ---@return string Name of node under the cursor
+---@deprecated
 function M.get_node_at_cursor(winnr)
+  vim.deprecate('vim.treesitter.get_node_at_cursor()', 'vim.treesitter.get_node():type()', '0.10')
   winnr = winnr or 0
   local bufnr = a.nvim_win_get_buf(winnr)
-  local cursor = a.nvim_win_get_cursor(winnr)
 
-  return M.get_node_at_pos(bufnr, cursor[1] - 1, cursor[2], { ignore_injections = false }):type()
+  return M.get_node({ bufnr = bufnr, ignore_injections = false }):type()
 end
 
 --- Starts treesitter highlighting for a buffer
@@ -411,6 +476,7 @@ function M.show_tree(opts)
   vim.bo[b].buflisted = false
   vim.bo[b].buftype = 'nofile'
   vim.bo[b].bufhidden = 'wipe'
+  vim.bo[b].filetype = 'query'
 
   local title = opts.title
   if not title then
@@ -424,9 +490,6 @@ function M.show_tree(opts)
   a.nvim_buf_set_name(b, title)
 
   pg:draw(b)
-
-  vim.fn.matchadd('Comment', '\\[[0-9:-]\\+\\]')
-  vim.fn.matchadd('String', '".*"')
 
   a.nvim_buf_clear_namespace(buf, pg.ns, 0, -1)
   a.nvim_buf_set_keymap(b, 'n', '<CR>', '', {
@@ -467,6 +530,15 @@ function M.show_tree(opts)
         end_col = math.max(0, pos.end_col),
         hl_group = 'Visual',
       })
+
+      local topline, botline = vim.fn.line('w0', win), vim.fn.line('w$', win)
+
+      -- Move the cursor if highlighted range is completely out of view
+      if pos.lnum < topline and pos.end_lnum < topline then
+        a.nvim_win_set_cursor(win, { pos.end_lnum + 1, 0 })
+      elseif pos.lnum > botline and pos.end_lnum > botline then
+        a.nvim_win_set_cursor(win, { pos.lnum + 1, 0 })
+      end
     end,
   })
 
@@ -480,8 +552,8 @@ function M.show_tree(opts)
 
       a.nvim_buf_clear_namespace(b, pg.ns, 0, -1)
 
-      local cursor = a.nvim_win_get_cursor(win)
-      local cursor_node = M.get_node_at_pos(buf, cursor[1] - 1, cursor[2], {
+      local cursor_node = M.get_node({
+        bufnr = buf,
         lang = opts.lang,
         ignore_injections = false,
       })
@@ -548,6 +620,16 @@ function M.show_tree(opts)
       end
     end,
   })
+end
+
+--- Returns the fold level for {lnum} in the current buffer. Can be set directly to 'foldexpr':
+--- <pre>lua
+--- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+--- </pre>
+---@param lnum integer|nil Line number to calculate fold level for
+---@return string
+function M.foldexpr(lnum)
+  return require('vim.treesitter._fold').foldexpr(lnum)
 end
 
 return M

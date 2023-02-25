@@ -202,7 +202,7 @@ int fpconv_g_fmt(char *str, double num, int precision)
     return len;
 }
 
-void fpconv_init()
+void fpconv_init(void)
 {
     fpconv_update_locale();
 }

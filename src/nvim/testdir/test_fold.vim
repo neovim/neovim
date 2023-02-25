@@ -1548,4 +1548,11 @@ func Test_expand_fold_at_bottom_of_buffer()
   bwipe!
 endfunc
 
+func Test_fold_screenrow_motion()
+  call setline(1, repeat(['aaaa'], 5))
+  1,4fold
+  norm Ggkzo
+  call assert_equal(1, line('.'))
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

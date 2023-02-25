@@ -6,25 +6,21 @@
 
 EditorConfig integration                                        *editorconfig*
 
-Nvim natively supports EditorConfig. When a file is opened, Nvim searches
-upward through all of the parent directories of that file looking for
-".editorconfig" files. Each of these is parsed and any properties that match
-the opened file are applied.
-
-For more information on EditorConfig, see https://editorconfig.org/.
+Nvim supports EditorConfig. When a file is opened, Nvim searches all parent
+directories of that file for ".editorconfig" files, parses them, and applies
+any properties that match the opened file. Think of it like 'modeline' for an
+entire (recursive) directory. For more information see
+https://editorconfig.org/.
 
                                                *g:editorconfig* *b:editorconfig*
-EditorConfig integration can be disabled globally by adding >lua
+EditorConfig is enabled by default. To disable it, add to your config: >lua
 
     vim.g.editorconfig = false
 <
-to the user's |init.lua| file (or the Vimscript equivalent to |init.vim|). It
-can also be disabled per-buffer by setting the |b:editorconfig| buffer-local
-variable to `false`.
+(Vimscript: `let g:editorconfig = v:false`). It can also be disabled
+per-buffer by setting the |b:editorconfig| buffer-local variable to `false`.
 
-When Nvim finds a valid .editorconfig file it will store the applied
-properties in the buffer variable |b:editorconfig| if it was not already set to
-`false` by the user.
+Nvim stores the applied properties in |b:editorconfig| if it is not `false`.
 
                                                      *editorconfig-properties*
 The following properties are supported by default:
@@ -88,4 +84,4 @@ Example: >lua
       vim.b[bufnr].foo = val
     end
 <
- vim:tw=78:ts=8:noet:ft=help:norl:
+ vim:tw=78:ts=8:et:sw=4:ft=help:norl:

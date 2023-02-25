@@ -182,7 +182,7 @@ void early_init(mparm_T *paramp)
 #ifdef MSWIN
   OSVERSIONINFO ovi;
   ovi.dwOSVersionInfoSize = sizeof(ovi);
-  // Disable warning about GetVersionExA being deprecated. There doesn't seem to be a conventient
+  // Disable warning about GetVersionExA being deprecated. There doesn't seem to be a convenient
   // replacement that doesn't add a ton of extra code as of writing this.
 # pragma warning(suppress : 4996)
   GetVersionEx(&ovi);
@@ -383,6 +383,7 @@ int main(int argc, char **argv)
   if (ui_client_channel_id) {
     ui_client_run(remote_ui);  // NORETURN
   }
+  assert(!ui_client_channel_id && !use_builtin_ui);
 
   // Wait for UIs to set up Nvim or show early messages
   // and prompts (--cmd, swapfile dialog, …).
@@ -407,19 +408,16 @@ int main(int argc, char **argv)
 
   open_script_files(&params);
 
-  // Default mappings (incl. menus)
+  // Default mappings (incl. menus) & autocommands
   Error err = ERROR_INIT;
-  Object o = NLUA_EXEC_STATIC("return vim._init_default_mappings()",
+  Object o = NLUA_EXEC_STATIC("return vim._init_defaults()",
                               (Array)ARRAY_DICT_INIT, &err);
   assert(!ERROR_SET(&err));
   api_clear_error(&err);
   assert(o.type == kObjectTypeNil);
   api_free_object(o);
 
-  TIME_MSG("init default mappings");
-
-  init_default_autocmds();
-  TIME_MSG("init default autocommands");
+  TIME_MSG("init default mappings & autocommands");
 
   bool vimrc_none = strequal(params.use_vimrc, "NONE");
 
@@ -586,13 +584,13 @@ int main(int argc, char **argv)
   set_vim_var_nr(VV_VIM_DID_ENTER, 1L);
   apply_autocmds(EVENT_VIMENTER, NULL, NULL, false, curbuf);
   TIME_MSG("VimEnter autocommands");
-  if (use_remote_ui || use_builtin_ui) {
-    do_autocmd_uienter(use_remote_ui ? CHAN_STDIO : 0, true);
+  if (use_remote_ui) {
+    do_autocmd_uienter(CHAN_STDIO, true);
     TIME_MSG("UIEnter autocommands");
   }
 
 #ifdef MSWIN
-  if (use_builtin_ui) {
+  if (use_remote_ui) {
     os_icon_init();
   }
   os_title_save();

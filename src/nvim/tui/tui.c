@@ -167,7 +167,7 @@ static bool cursor_style_enabled = false;
 # include "tui/tui.c.generated.h"
 #endif
 
-TUIData *tui_start(int *width, int *height, char **term)
+void tui_start(TUIData **tui_p, int *width, int *height, char **term)
 {
   TUIData *tui = xcalloc(1, sizeof(TUIData));
   tui->is_starting = true;
@@ -190,11 +190,11 @@ TUIData *tui_start(int *width, int *height, char **term)
   uv_timer_start(&tui->startup_delay_timer, after_startup_cb,
                  100, 0);
 
+  *tui_p = tui;
   loop_poll_events(&main_loop, 1);
   *width = tui->width;
   *height = tui->height;
   *term = tui->term;
-  return tui;
 }
 
 void tui_enable_extkeys(TUIData *tui)
@@ -359,12 +359,7 @@ static void terminfo_start(TUIData *tui)
     if (ret) {
       ELOG("uv_tty_init failed: %s", uv_strerror(ret));
     }
-#ifdef MSWIN
-    ret = uv_tty_set_mode(&tui->output_handle.tty, UV_TTY_MODE_RAW);
-    if (ret) {
-      ELOG("uv_tty_set_mode failed: %s", uv_strerror(ret));
-    }
-#else
+#ifndef MSWIN
     int retry_count = 10;
     // A signal may cause uv_tty_set_mode() to fail (e.g., SIGCONT). Retry a
     // few times. #12322
@@ -1152,7 +1147,7 @@ void tui_mode_change(TUIData *tui, String mode, Integer mode_idx)
   // If stdin is not a TTY, the LHS of pipe may change the state of the TTY
   // after calling uv_tty_set_mode. So, set the mode of the TTY again here.
   // #13073
-  if (tui->is_starting && tui->input.in_fd == STDERR_FILENO) {
+  if (tui->is_starting && !stdin_isatty) {
     int ret = uv_tty_set_mode(&tui->output_handle.tty, UV_TTY_MODE_NORMAL);
     if (ret) {
       ELOG("uv_tty_set_mode failed: %s", uv_strerror(ret));

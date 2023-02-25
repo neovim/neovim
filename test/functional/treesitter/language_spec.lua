@@ -18,22 +18,22 @@ describe('treesitter language API', function()
 
     -- actual message depends on platform
     matches("Failed to load parser for language 'borklang': uv_dlopen: .+",
-       pcall_err(exec_lua, "parser = vim.treesitter.require_language('borklang', 'borkbork.so')"))
+       pcall_err(exec_lua, "parser = vim.treesitter.add('borklang', { path = 'borkbork.so' })"))
 
-    -- Should not throw an error when silent
-    eq(false, exec_lua("return vim.treesitter.require_language('borklang', nil, true)"))
-    eq(false, exec_lua("return vim.treesitter.require_language('borklang', 'borkbork.so', true)"))
+    eq(false, exec_lua("return pcall(vim.treesitter.add, 'borklang')"))
+
+    eq(false, exec_lua("return pcall(vim.treesitter.add, 'borklang', { path = 'borkbork.so' })"))
 
     eq(".../language.lua:0: no parser for 'borklang' language, see :help treesitter-parsers",
        pcall_err(exec_lua, "parser = vim.treesitter.inspect_language('borklang')"))
 
     matches("Failed to load parser: uv_dlsym: .+",
-       pcall_err(exec_lua, 'vim.treesitter.require_language("c", nil, false, "borklang")'))
+       pcall_err(exec_lua, 'vim.treesitter.add("c", { symbol_name = "borklang" })'))
   end)
 
   it('shows error for invalid language name', function()
     eq(".../language.lua:0: '/foo/' is not a valid language name",
-      pcall_err(exec_lua, 'vim.treesitter.require_language("/foo/", nil, false)'))
+      pcall_err(exec_lua, 'vim.treesitter.add("/foo/", nil, false)'))
   end)
 
   it('inspects language', function()
@@ -82,7 +82,7 @@ describe('treesitter language API', function()
     command("set filetype=borklang")
     -- Should throw an error when filetype changes to borklang
     eq(".../language.lua:0: no parser for 'borklang' language, see :help treesitter-parsers",
-       pcall_err(exec_lua, "new_parser = vim.treesitter.get_parser(0)"))
+       pcall_err(exec_lua, "new_parser = vim.treesitter.get_parser(0, 'borklang')"))
   end)
 
   it('retrieve the tree given a range', function ()

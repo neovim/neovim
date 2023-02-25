@@ -193,7 +193,7 @@ describe('api/buf', function()
 
     it('fails correctly when input is not valid', function()
       eq(1, api.curbufmeths.get_number())
-      eq([[String cannot contain newlines]],
+      eq([['replacement string' item contains newlines]],
         pcall_err(bufmeths.set_lines, 1, 1, 2, false, {'b\na'}))
     end)
 
@@ -553,20 +553,20 @@ describe('api/buf', function()
       insert([[
       hello foo!
       text]])
-      eq('start_row out of bounds', pcall_err(set_text, 2, 0, 3, 0, {}))
-      eq('start_row out of bounds', pcall_err(set_text, -3, 0, 0, 0, {}))
-      eq('end_row out of bounds', pcall_err(set_text, 0, 0, 2, 0, {}))
-      eq('end_row out of bounds', pcall_err(set_text, 0, 0, -3, 0, {}))
-      eq('start_col out of bounds', pcall_err(set_text, 1, 5, 1, 5, {}))
-      eq('end_col out of bounds', pcall_err(set_text, 1, 0, 1, 5, {}))
+      eq("Invalid 'start_row': out of range", pcall_err(set_text, 2, 0, 3, 0, {}))
+      eq("Invalid 'start_row': out of range", pcall_err(set_text, -3, 0, 0, 0, {}))
+      eq("Invalid 'end_row': out of range", pcall_err(set_text, 0, 0, 2, 0, {}))
+      eq("Invalid 'end_row': out of range", pcall_err(set_text, 0, 0, -3, 0, {}))
+      eq("Invalid 'start_col': out of range", pcall_err(set_text, 1, 5, 1, 5, {}))
+      eq("Invalid 'end_col': out of range", pcall_err(set_text, 1, 0, 1, 5, {}))
     end)
 
     it('errors when start is greater than end', function()
       insert([[
       hello foo!
       text]])
-      eq('start is higher than end', pcall_err(set_text, 1, 0, 0, 0, {}))
-      eq('start is higher than end', pcall_err(set_text, 0, 1, 0, 0, {}))
+      eq("'start' is higher than 'end'", pcall_err(set_text, 1, 0, 0, 0, {}))
+      eq("'start' is higher than 'end'", pcall_err(set_text, 0, 1, 0, 0, {}))
     end)
 
     it('no heap-use-after-free when called consecutively #19643', function()
@@ -611,7 +611,7 @@ describe('api/buf', function()
     end)
 
     it('errors when start is greater than end', function()
-      eq('start is higher than end', pcall_err(get_text, 1, 0, 0, 0, {}))
+      eq("'start' is higher than 'end'", pcall_err(get_text, 1, 0, 0, 0, {}))
       eq('start_col must be less than end_col', pcall_err(get_text, 0, 1, 0, 0, {}))
     end)
   end)

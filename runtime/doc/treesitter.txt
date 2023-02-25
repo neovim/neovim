@@ -481,6 +481,19 @@ library.
 ==============================================================================
 Lua module: vim.treesitter                               *lua-treesitter-core*
 
+foldexpr({lnum})                                   *vim.treesitter.foldexpr()*
+    Returns the fold level for {lnum} in the current buffer. Can be set
+    directly to 'foldexpr': >lua
+
+     vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+<
+
+    Parameters: ~
+      • {lnum}  (integer|nil) Line number to calculate fold level for
+
+    Return: ~
+        (string)
+
                                      *vim.treesitter.get_captures_at_cursor()*
 get_captures_at_cursor({winnr})
     Returns a list of highlight capture names under the cursor
@@ -505,39 +518,29 @@ get_captures_at_pos({bufnr}, {row}, {col})
       • {col}    (integer) Position column
 
     Return: ~
-        table[] List of captures `{ capture = "capture name", metadata = { ...
-        } }`
+        table[] List of captures `{ capture = "name", metadata = { ... } }`
 
-get_node_at_cursor({winnr})              *vim.treesitter.get_node_at_cursor()*
-    Returns the smallest named node under the cursor
-
-    Parameters: ~
-      • {winnr}  (integer|nil) Window handle or 0 for current window (default)
-
-    Return: ~
-        (string) Name of node under the cursor
-
-                                            *vim.treesitter.get_node_at_pos()*
-get_node_at_pos({bufnr}, {row}, {col}, {opts})
+get_node({opts})                                   *vim.treesitter.get_node()*
     Returns the smallest named node at the given position
 
     Parameters: ~
-      • {bufnr}  (integer) Buffer number (0 for current buffer)
-      • {row}    (integer) Position row
-      • {col}    (integer) Position column
-      • {opts}   (table) Optional keyword arguments:
-                 • lang string|nil Parser language
-                 • ignore_injections boolean Ignore injected languages
-                   (default true)
+      • {opts}  (table|nil) Optional keyword arguments:
+                • bufnr integer|nil Buffer number (nil or 0 for current
+                  buffer)
+                • pos table|nil 0-indexed (row, col) tuple. Defaults to cursor
+                  position in the current window. Required if {bufnr} is not
+                  the current buffer
+                • ignore_injections boolean Ignore injected languages (default
+                  true)
 
     Return: ~
-        |TSNode||nil under the cursor
+        |TSNode| | nil Node at the given position
 
 get_node_range({node_or_range})              *vim.treesitter.get_node_range()*
     Returns the node's range or an unpacked range table
 
     Parameters: ~
-      • {node_or_range}  (|TSNode||table) Node or table of positions
+      • {node_or_range}  (|TSNode| | table) Node or table of positions
 
     Return: ~
         (integer) start_row
@@ -666,6 +669,31 @@ stop({bufnr})                                          *vim.treesitter.stop()*
 ==============================================================================
 Lua module: vim.treesitter.language                  *lua-treesitter-language*
 
+add({lang}, {opts})                            *vim.treesitter.language.add()*
+    Asserts that a parser for the language {lang} is installed.
+
+    Parsers are searched in the `parser` runtime directory, or the provided
+    {path}
+
+    Parameters: ~
+      • {lang}  (string) Language the parser should parse (alphanumerical and
+                `_` only)
+      • {opts}  (table|nil) Options:
+                • filetype (string|string[]) Filetype(s) that lang can be
+                  parsed with. Note this is not strictly the same as lang
+                  since a single lang can parse multiple filetypes. Defaults
+                  to lang.
+                • path (string|nil) Optional path the parser is located at
+                • symbol_name (string|nil) Internal symbol name for the
+                  language to load
+
+get_lang({filetype})                      *vim.treesitter.language.get_lang()*
+    Parameters: ~
+      • {filetype}  (string)
+
+    Return: ~
+        (string|nil)
+
 inspect_language({lang})          *vim.treesitter.language.inspect_language()*
     Inspects the provided language.
 
@@ -678,24 +706,12 @@ inspect_language({lang})          *vim.treesitter.language.inspect_language()*
     Return: ~
         (table)
 
-                                  *vim.treesitter.language.require_language()*
-require_language({lang}, {path}, {silent}, {symbol_name})
-    Asserts that a parser for the language {lang} is installed.
-
-    Parsers are searched in the `parser` runtime directory, or the provided
-    {path}
+register({lang}, {filetype})              *vim.treesitter.language.register()*
+    Register a lang to be used for a filetype (or list of filetypes).
 
     Parameters: ~
-      • {lang}         (string) Language the parser should parse
-                       (alphanumerical and `_` only)
-      • {path}         (string|nil) Optional path the parser is located at
-      • {silent}       (boolean|nil) Don't throw an error if language not
-                       found
-      • {symbol_name}  (string|nil) Internal symbol name for the language to
-                       load
-
-    Return: ~
-        (boolean) If the specified language is installed
+      • {lang}      (string) Language to register
+      • {filetype}  string|string[] Filetype(s) to associate with lang
 
 
 ==============================================================================
@@ -721,7 +737,7 @@ add_directive({name}, {handler}, {force})
                    • predicate: list of strings containing the full directive
                      being called, e.g. `(node (#set! conceal "-"))` would get
                      the predicate `{ "#set!", "conceal", "-" }`
-      • {force}    (boolean)
+      • {force}    (boolean|nil)
 
                                         *vim.treesitter.query.add_predicate()*
 add_predicate({name}, {handler}, {force})
@@ -733,7 +749,7 @@ add_predicate({name}, {handler}, {force})
                    bufnr:number, predicate:string[])
                    • see |vim.treesitter.query.add_directive()| for argument
                      meanings
-      • {force}    (boolean)
+      • {force}    (boolean|nil)
 
                                         *vim.treesitter.query.get_node_text()*
 get_node_text({node}, {source}, {opts})
@@ -829,7 +845,7 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
        -- typically useful info about the node:
        local type = node:type() -- type of the captured node
        local row1, col1, row2, col2 = node:range() -- range of the capture
-       ... use the info here ...
+       -- ... use the info here ...
      end
 <
 
@@ -862,7 +878,7 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop})
 
          local node_data = metadata[id] -- Node level metadata
 
-         ... use the info here ...
+         -- ... use the info here ...
        end
      end
 <
@@ -1008,7 +1024,7 @@ LanguageTree:named_node_for_range({self}, {range}, {opts})
       • {self}
 
     Return: ~
-        |TSNode||nil Found node
+        |TSNode| | nil Found node
 
 LanguageTree:parse({self})                              *LanguageTree:parse()*
     Parses all defined regions using a treesitter parser for the language this

@@ -11,4 +11,10 @@ ExternalProject_Add(msgpack
     -D MSGPACK_BUILD_EXAMPLES=OFF
   CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS})
 
-list(APPEND THIRD_PARTY_DEPS msgpack)
+if (NOT MSVC)
+  add_custom_target(clean_shared_libraries_msgpack ALL
+    COMMAND ${CMAKE_COMMAND}
+      -D REMOVE_FILE_GLOB=${DEPS_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}*${CMAKE_SHARED_LIBRARY_SUFFIX}*
+      -P ${PROJECT_SOURCE_DIR}/cmake/RemoveFiles.cmake)
+  add_dependencies(clean_shared_libraries_msgpack msgpack)
+endif()

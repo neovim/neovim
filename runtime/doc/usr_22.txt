@@ -77,25 +77,25 @@ browser.  This is what you get: >
     9. Directory Browsing	 netrw-browse   netrw-dir   netrw-list   netrw-help
 
     MAPS								 netrw-maps
-     	 <F1>.............Help.......................................|netrw-help|
-     	 <cr>.............Browsing...................................|netrw-cr|
-     	 <del>............Deleting Files or Directories..............|netrw-delete|
-     	 -................Going Up...................................|netrw--|
-     	 a................Hiding Files or Directories................|netrw-a|
-     	 mb...............Bookmarking a Directory....................|netrw-mb|
-     	 gb...............Changing to a Bookmarked Directory.........|netrw-gb|
-     	 cd...............Make Browsing Directory The Current Dir....|netrw-c|
-     	 d................Make A New Directory.......................|netrw-d|
-     	 D................Deleting Files or Directories..............|netrw-D|
-     	 <c-h>............Edit File/Directory Hiding List............|netrw-ctrl-h|
-     	 i................Change Listing Style.......................|netrw-i|
-     	 <c-l>............Refreshing the Listing.....................|netrw-ctrl-l|
-     	 o................Browsing with a Horizontal Split...........|netrw-o|
-     	 p................Use Preview Window.........................|netrw-p|
-     	 P................Edit in Previous Window....................|netrw-p|
-     	 q................Listing Bookmarks and History..............|netrw-qb|
-     	 r................Reversing Sorting Order....................|netrw-r|
-<    	(etc)
+	 <F1>.............Help.......................................|netrw-help|
+	 <cr>.............Browsing...................................|netrw-cr|
+	 <del>............Deleting Files or Directories..............|netrw-delete|
+	 -................Going Up...................................|netrw--|
+	 a................Hiding Files or Directories................|netrw-a|
+	 mb...............Bookmarking a Directory....................|netrw-mb|
+	 gb...............Changing to a Bookmarked Directory.........|netrw-gb|
+	 cd...............Make Browsing Directory The Current Dir....|netrw-c|
+	 d................Make A New Directory.......................|netrw-d|
+	 D................Deleting Files or Directories..............|netrw-D|
+	 <c-h>............Edit File/Directory Hiding List............|netrw-ctrl-h|
+	 i................Change Listing Style.......................|netrw-i|
+	 <c-l>............Refreshing the Listing.....................|netrw-ctrl-l|
+	 o................Browsing with a Horizontal Split...........|netrw-o|
+	 p................Use Preview Window.........................|netrw-p|
+	 P................Edit in Previous Window....................|netrw-p|
+	 q................Listing Bookmarks and History..............|netrw-qb|
+	 r................Reversing Sorting Order....................|netrw-r|
+<	(etc)
 
 The <F1> key thus brings you to a netrw directory browsing contents help page.
 It's a regular help page; use the usual |CTRL-]| to jump to tagged help items
@@ -106,7 +106,7 @@ To select files for display and editing: (with the cursor is atop a filename)
 	<enter>		Open the file in the current window.	   |netrw-cr|
 	o		Horizontally split window and display file |netrw-o|
 	v		Vertically split window and display file   |netrw-v|
-	p		Use the |preview-window| 		   |netrw-p|
+	p		Use the |preview-window|		   |netrw-p|
 	P		Edit in the previous window		   |netrw-P|
 	t		Open file in a new tab			   |netrw-t|
 

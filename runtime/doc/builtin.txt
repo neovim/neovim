@@ -148,6 +148,8 @@ finddir({name} [, {path} [, {count}]])
 findfile({name} [, {path} [, {count}]])
 				String	find file {name} in {path}
 flatten({list} [, {maxdepth}])	List	flatten {list} up to {maxdepth} levels
+flattennew({list} [, {maxdepth}])
+				List	flatten a copy of {list}
 float2nr({expr})		Number	convert Float {expr} to a Number
 floor({expr})			Float	round {expr} down
 fmod({expr1}, {expr2})		Float	remainder of {expr1} / {expr2}
@@ -225,7 +227,7 @@ gettabwinvar({tabnr}, {winnr}, {name} [, {def}])
 gettagstack([{nr}])		Dict	get the tag stack of window {nr}
 gettext({text})			String	lookup translation of {text}
 getwininfo([{winid}])		List	list of info about each window
-getwinpos([{timeout}])		List	X and Y coord in pixels of the Vim window
+getwinpos([{timeout}])		List	X and Y coord in pixels of Vim window
 getwinposx()			Number	X coord in pixels of Vim window
 getwinposy()			Number	Y coord in pixels of Vim window
 getwinvar({nr}, {varname} [, {def}])
@@ -326,7 +328,7 @@ max({expr})			Number	maximum value of items in {expr}
 menu_get({path} [, {modes}])	List	description of |menus| matched by {path}
 menu_info({name} [, {mode}])	Dict	get menu item information
 min({expr})			Number	minimum value of items in {expr}
-mkdir({name} [, {path} [, {prot}]])
+mkdir({name} [, {flags} [, {prot}]])
 				Number	create directory {name}
 mode([expr])			String	current editing mode
 msgpackdump({list} [, {type}])	List/Blob  dump objects to msgpack
@@ -1055,7 +1057,7 @@ chansend({id}, {data})					*chansend()*
 		newlines in an item will be sent as NUL. To send a final
 		newline, include a final empty string. Example: >
 			:call chansend(id, ["abc", "123\n456", ""])
-< 		will send "abc<NL>123<NUL>456<NL>".
+<		will send "abc<NL>123<NUL>456<NL>".
 
 		chansend() writes raw data, not RPC messages.  If the channel
 		was created with `"rpc":v:true` then the channel expects RPC
@@ -2277,7 +2279,7 @@ flatten({list} [, {maxdepth}])					*flatten()*
 		Flatten {list} up to {maxdepth} levels.  Without {maxdepth}
 		the result is a |List| without nesting, as if {maxdepth} is
 		a very large number.
-		The {list} is changed in place, make a copy first if you do
+		The {list} is changed in place, use |flattennew()| if you do
 		not want that.
 								*E900*
 		{maxdepth} means how deep in nested lists changes are made.
@@ -2295,6 +2297,10 @@ flatten({list} [, {maxdepth}])					*flatten()*
 		Can also be used as a |method|: >
 			mylist->flatten()
 <
+flattennew({list} [, {maxdepth}])			*flattennew()*
+		Like |flatten()| but first make a copy of {list}.
+
+
 float2nr({expr})					*float2nr()*
 		Convert {expr} to a Number by omitting the part after the
 		decimal point.
@@ -4846,7 +4852,7 @@ maparg({name} [, {mode} [, {abbr} [, {dict}]]])			*maparg()*
 		  "lhs"	     The {lhs} of the mapping as it would be typed
 		  "lhsraw"   The {lhs} of the mapping as raw bytes
 		  "lhsrawalt" The {lhs} of the mapping as raw bytes, alternate
-		  	      form, only present when it differs from "lhsraw"
+			      form, only present when it differs from "lhsraw"
 		  "rhs"	     The {rhs} of the mapping as typed.
 		  "silent"   1 for a |:map-silent| mapping, else 0.
 		  "noremap"  1 if the {rhs} of the mapping is not remappable.
@@ -5432,11 +5438,14 @@ min({expr})	Return the minimum value of all items in {expr}. Example:  >
 			mylist->min()
 
 <							*mkdir()* *E739*
-mkdir({name} [, {path} [, {prot}]])
+mkdir({name} [, {flags} [, {prot}]])
 		Create directory {name}.
 
-		If {path} is "p" then intermediate directories are created as
-		necessary.  Otherwise it must be "".
+		When {flags} is present it must be a string.  An empty string
+		has no effect.
+
+		If {flags} is "p" then intermediate directories are created as
+		necessary.
 
 		If {prot} is given it is used to set the protection bits of
 		the new directory.  The default is 0o755 (rwxr-xr-x: r/w for
@@ -5449,7 +5458,7 @@ mkdir({name} [, {path} [, {prot}]])
 
 <		This function is not available in the |sandbox|.
 
-		If you try to create an existing directory with {path} set to
+		If you try to create an existing directory with {flags} set to
 		"p" mkdir() will silently exit.
 
 		The function result is a Number, which is TRUE if the call was
@@ -6957,7 +6966,7 @@ setcellwidths({list})					*setcellwidths()*
 		{width} must be either 1 or 2, indicating the character width
 		in screen cells.			*E1112*
 		An error is given if the argument is invalid, also when a
-		range overlaps with another. 		*E1113*
+		range overlaps with another.		*E1113*
 
 		If the new value causes 'fillchars' or 'listchars' to become
 		invalid it is rejected and an error is given.

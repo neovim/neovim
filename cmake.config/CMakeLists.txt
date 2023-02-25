@@ -161,38 +161,10 @@ configure_file (
   "${PROJECT_BINARY_DIR}/cmake.config/auto/config.h"
   )
 
-# TODO(dundargoc): the following is a hack to work around the behavior of
-# file(GENERATE) for multi-config generators, since it doesn't allow different
-# output with the same filename. This should be fixed to be generator
-# independent in the future.
-get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-if(isMultiConfig)
-  configure_file(versiondef-multi.h.in auto/versiondef.h.gen)
-else()
-  configure_file(versiondef.h.in auto/versiondef.h.gen)
-endif()
+configure_file(versiondef.h.in auto/versiondef.h.gen)
 file(GENERATE
-  OUTPUT "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h"
+  OUTPUT "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef-$<CONFIG>.h"
   INPUT "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h.gen")
-
-find_program(WHOAMI_PRG whoami)
-find_program(HOSTNAME_PRG hostname)
-mark_as_advanced(HOSTNAME_PRG WHOAMI_PRG)
-
-if (DEFINED ENV{USERNAME})
-  set(USERNAME $ENV{USERNAME})
-elseif (NOT DEFINED USERNAME AND EXISTS ${WHOAMI_PRG})
-  execute_process(COMMAND ${WHOAMI_PRG}
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    OUTPUT_VARIABLE USERNAME)
-endif()
-if (DEFINED ENV{HOSTNAME})
-  set(HOSTNAME $ENV{HOSTNAME})
-elseif (EXISTS ${HOSTNAME_PRG})
-  execute_process(COMMAND ${HOSTNAME_PRG}
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    OUTPUT_VARIABLE HOSTNAME)
-endif()
 
 configure_file (
   "${PROJECT_SOURCE_DIR}/cmake.config/pathdef.c.in"

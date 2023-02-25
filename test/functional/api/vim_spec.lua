@@ -490,7 +490,7 @@ describe('API', function()
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
     end)
 
-    it('validates args', function()
+    it('validation', function()
       local too_many_args = { 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x' }
       source([[
         function! Foo(...) abort
@@ -532,7 +532,7 @@ describe('API', function()
       eq('@it works@', nvim('call_dict_function', { result = 'it works', G = 'G'}, 'G', {}))
     end)
 
-    it('validates args', function()
+    it('validation', function()
       command('let g:d={"baz":"zub","meep":[]}')
       eq('Not found: bogus',
         pcall_err(request, 'nvim_call_dict_function', 'g:d', 'bogus', {1,2}))
@@ -648,10 +648,10 @@ describe('API', function()
   end)
 
   describe('nvim_paste', function()
-    it('validates args', function()
-      eq('Invalid phase: -2',
+    it('validation', function()
+      eq("Invalid 'phase': -2",
         pcall_err(request, 'nvim_paste', 'foo', true, -2))
-      eq('Invalid phase: 4',
+      eq("Invalid 'phase': 4",
         pcall_err(request, 'nvim_paste', 'foo', true, 4))
     end)
     local function run_streamed_paste_tests()
@@ -1154,10 +1154,10 @@ describe('API', function()
   end)
 
   describe('nvim_put', function()
-    it('validates args', function()
-      eq('Invalid lines (expected array of strings)',
+    it('validation', function()
+      eq("Invalid 'line': expected String, got Integer",
         pcall_err(request, 'nvim_put', {42}, 'l', false, false))
-      eq("Invalid type: 'x'",
+      eq("Invalid 'type': 'x'",
         pcall_err(request, 'nvim_put', {'foo'}, 'x', false, false))
     end)
     it("fails if 'nomodifiable'", function()
@@ -1259,9 +1259,9 @@ describe('API', function()
         yyybc line 2
         line 3
         ]])
-      eq("Invalid type: 'bx'",
+      eq("Invalid 'type': 'bx'",
          pcall_err(meths.put, {'xxx', 'yyy'}, 'bx', false, true))
-      eq("Invalid type: 'b3x'",
+      eq("Invalid 'type': 'b3x'",
          pcall_err(meths.put, {'xxx', 'yyy'}, 'b3x', false, true))
     end)
   end)
@@ -1288,6 +1288,11 @@ describe('API', function()
   end)
 
   describe('set/get/del variables', function()
+    it('validation', function()
+      eq('Key not found: bogus', pcall_err(meths.get_var, 'bogus'))
+      eq('Key not found: bogus', pcall_err(meths.del_var, 'bogus'))
+    end)
+
     it('nvim_get_var, nvim_set_var, nvim_del_var', function()
       nvim('set_var', 'lua', {1, 2, {['3'] = 1}})
       eq({1, 2, {['3'] = 1}}, nvim('get_var', 'lua'))
@@ -1408,6 +1413,17 @@ describe('API', function()
       ok(nvim('get_option_value', 'equalalways', {}))
       nvim('set_option_value', 'equalalways', false, {})
       ok(not nvim('get_option_value', 'equalalways', {}))
+    end)
+
+    it('validation', function()
+      eq("Invalid 'scope': expected 'local' or 'global'",
+        pcall_err(nvim, 'get_option_value', 'scrolloff', {scope = 'bogus'}))
+      eq("Invalid 'scope': expected 'local' or 'global'",
+        pcall_err(nvim, 'set_option_value', 'scrolloff', 1, {scope = 'bogus'}))
+      eq("Invalid 'scope': expected String, got Integer",
+        pcall_err(nvim, 'get_option_value', 'scrolloff', {scope = 42}))
+      eq("Invalid 'scrolloff': expected Integer/Boolean/String, got Array",
+        pcall_err(nvim, 'set_option_value', 'scrolloff', {}, {}))
     end)
 
     it('can get local values when global value is set', function()
@@ -1777,12 +1793,12 @@ describe('API', function()
   end)
 
   describe('nvim_get_context', function()
-    it('validates args', function()
+    it('validation', function()
       eq("Invalid key: 'blah'",
         pcall_err(nvim, 'get_context', {blah={}}))
-      eq('invalid value for key: types',
+      eq("Invalid 'types': expected Array, got Integer",
         pcall_err(nvim, 'get_context', {types=42}))
-      eq('unexpected type: zub',
+      eq("Invalid 'type': 'zub'",
         pcall_err(nvim, 'get_context', {types={'jumps', 'zub', 'zam',}}))
     end)
     it('returns map of current editor state', function()
@@ -2223,15 +2239,14 @@ describe('API', function()
       eq(5, meths.get_var('avar'))
     end)
 
-    it('throws error on malformed arguments', function()
+    it('validation', function()
       local req = {
         {'nvim_set_var', {'avar', 1}},
         {'nvim_set_var'},
         {'nvim_set_var', {'avar', 2}},
       }
-      local status, err = pcall(meths.call_atomic, req)
-      eq(false, status)
-      ok(err:match('Items in calls array must be arrays of size 2') ~= nil)
+      eq("Invalid 'calls' item: expected 2-item Array",
+         pcall_err(meths.call_atomic, req))
       -- call before was done, but not after
       eq(1, meths.get_var('avar'))
 
@@ -2239,18 +2254,16 @@ describe('API', function()
         { 'nvim_set_var', { 'bvar', { 2, 3 } } },
         12,
       }
-      status, err = pcall(meths.call_atomic, req)
-      eq(false, status)
-      ok(err:match('Items in calls array must be arrays') ~= nil)
+      eq("Invalid 'calls' item: expected Array, got Integer",
+         pcall_err(meths.call_atomic, req))
       eq({2,3}, meths.get_var('bvar'))
 
       req = {
         {'nvim_set_current_line', 'little line'},
         {'nvim_set_var', {'avar', 3}},
       }
-      status, err = pcall(meths.call_atomic, req)
-      eq(false, status)
-      ok(err:match('Args must be Array') ~= nil)
+      eq("Invalid call args: expected Array, got String",
+         pcall_err(meths.call_atomic, req))
       -- call before was done, but not after
       eq(1, meths.get_var('avar'))
       eq({''}, meths.buf_get_lines(0, 0, -1, true))
@@ -2750,7 +2763,7 @@ describe('API', function()
 
   describe('nvim_get_option_info', function()
     it('should error for unknown options', function()
-      eq("no such option: 'bogus'", pcall_err(meths.get_option_info, 'bogus'))
+      eq("Invalid option (not found): 'bogus'", pcall_err(meths.get_option_info, 'bogus'))
     end)
 
     it('should return the same options for short and long name', function()
@@ -3031,10 +3044,10 @@ describe('API', function()
       eq(true, meths.del_mark('F'))
       eq({0, 0}, meths.buf_get_mark(buf, 'F'))
     end)
-    it('fails when invalid marks are used', function()
-      eq(false, pcall(meths.del_mark, 'f'))
-      eq(false, pcall(meths.del_mark, '!'))
-      eq(false, pcall(meths.del_mark, 'fail'))
+    it('validation', function()
+      eq("Invalid mark name (must be file/uppercase): 'f'", pcall_err(meths.del_mark, 'f'))
+      eq("Invalid mark name (must be file/uppercase): '!'", pcall_err(meths.del_mark, '!'))
+      eq("Invalid mark name (must be a single char): 'fail'", pcall_err(meths.del_mark, 'fail'))
     end)
   end)
   describe('nvim_get_mark', function()
@@ -3048,10 +3061,10 @@ describe('API', function()
       assert(string.find(mark[4], "mybuf$"))
       eq({2, 2, buf.id, mark[4]}, mark)
     end)
-    it('fails when invalid marks are used', function()
-      eq(false, pcall(meths.del_mark, 'f'))
-      eq(false, pcall(meths.del_mark, '!'))
-      eq(false, pcall(meths.del_mark, 'fail'))
+    it('validation', function()
+      eq("Invalid mark name (must be file/uppercase): 'f'", pcall_err(meths.get_mark, 'f', {}))
+      eq("Invalid mark name (must be file/uppercase): '!'", pcall_err(meths.get_mark, '!', {}))
+      eq("Invalid mark name (must be a single char): 'fail'", pcall_err(meths.get_mark, 'fail', {}))
     end)
     it('returns the expected when mark is not set', function()
       eq(true, meths.del_mark('A'))
@@ -3113,15 +3126,15 @@ describe('API', function()
          meths.eval_statusline('a%=b', { fillchar = '\031', maxwidth = 5 }))
     end)
     it('rejects multiple-character fillchar', function()
-      eq('fillchar must be a single character',
+      eq("Invalid 'fillchar': expected single character",
          pcall_err(meths.eval_statusline, '', { fillchar = 'aa' }))
     end)
     it('rejects empty string fillchar', function()
-      eq('fillchar must be a single character',
+      eq("Invalid 'fillchar': expected single character",
          pcall_err(meths.eval_statusline, '', { fillchar = '' }))
     end)
     it('rejects non-string fillchar', function()
-      eq('fillchar must be a single character',
+      eq("Invalid 'fillchar': expected String, got Integer",
          pcall_err(meths.eval_statusline, '', { fillchar = 1 }))
     end)
     it('rejects invalid string', function()
@@ -3813,14 +3826,71 @@ describe('API', function()
       meths.cmd({ cmd = "set", args = { "cursorline" } }, {})
       eq(true, meths.get_option_value("cursorline", {}))
     end)
+
+    it('validation', function()
+      eq("Invalid 'cmd': expected non-empty String",
+        pcall_err(meths.cmd, { cmd = ""}, {}))
+      eq("Invalid 'cmd': expected non-empty String",
+        pcall_err(meths.cmd, { cmd = {}}, {}))
+      eq("Invalid 'args': expected Array, got Boolean",
+        pcall_err(meths.cmd, { cmd = "set", args = true }, {}))
+      eq("Invalid 'magic': expected Dict, got Array",
+        pcall_err(meths.cmd, { cmd = "set", args = {}, magic = {} }, {}))
+      eq("Invalid command arg: expected non-whitespace",
+        pcall_err(meths.cmd, { cmd = "set", args = {'  '}, }, {}))
+      eq("Invalid command arg: expected valid type, got Array",
+        pcall_err(meths.cmd, { cmd = "set", args = {{}}, }, {}))
+      eq("Wrong number of arguments",
+        pcall_err(meths.cmd, { cmd = "aboveleft", args = {}, }, {}))
+      eq("Command cannot accept bang: print",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, bang = true }, {}))
+
+      eq("Command cannot accept range: set",
+        pcall_err(meths.cmd, { cmd = "set", args = {}, range = {1} }, {}))
+      eq("Invalid 'range': expected Array, got Boolean",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, range = true }, {}))
+      eq("Invalid 'range': expected <=2 elements",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, range = {1,2,3,4} }, {}))
+      eq("Invalid range element: expected non-negative Integer",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, range = {-1} }, {}))
+
+      eq("Command cannot accept count: set",
+        pcall_err(meths.cmd, { cmd = "set", args = {}, count = 1 }, {}))
+      eq("Invalid 'count': expected non-negative Integer",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, count = true }, {}))
+      eq("Invalid 'count': expected non-negative Integer",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, count = -1 }, {}))
+
+      eq("Command cannot accept register: set",
+        pcall_err(meths.cmd, { cmd = "set", args = {}, reg = 'x' }, {}))
+      eq('Cannot use register "=',
+        pcall_err(meths.cmd, { cmd = "put", args = {}, reg = '=' }, {}))
+      eq("Invalid 'reg': expected single character, got xx",
+        pcall_err(meths.cmd, { cmd = "put", args = {}, reg = 'xx' }, {}))
+
+      -- Lua call allows empty {} for dict item.
+      eq('', exec_lua([[return vim.cmd{ cmd = "set", args = {}, magic = {} }]]))
+      eq('', exec_lua([[return vim.cmd{ cmd = "set", args = {}, mods = {} }]]))
+
+      -- Lua call does not allow non-empty list-like {} for dict item.
+      eq("Invalid 'magic': expected Dict, got Array",
+        pcall_err(exec_lua, [[return vim.cmd{ cmd = "set", args = {}, magic = { 'a' } }]]))
+      eq("Invalid key: 'bogus'",
+        pcall_err(exec_lua, [[return vim.cmd{ cmd = "set", args = {}, magic = { bogus = true } }]]))
+      eq("Invalid key: 'bogus'",
+        pcall_err(exec_lua, [[return vim.cmd{ cmd = "set", args = {}, mods = { bogus = true } }]]))
+    end)
+
     it('captures output', function()
       eq("foo", meths.cmd({ cmd = "echo", args = { '"foo"' } }, { output = true }))
     end)
+
     it('sets correct script context', function()
       meths.cmd({ cmd = "set", args = { "cursorline" } }, {})
       local str = meths.exec([[verbose set cursorline?]], true)
       neq(nil, str:find("cursorline\n\tLast set from API client %(channel id %d+%)"))
     end)
+
     it('works with range', function()
       insert [[
         line1

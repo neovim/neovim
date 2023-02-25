@@ -7,7 +7,7 @@
     https://github.com/flathub/io.neovim.nvim
 -->
 <component type="desktop-application">
-  <id>nvim</id>
+  <id>io.neovim.nvim</id>
   <translation type="gettext">nvim</translation>
   <project_license>Apache-2.0</project_license>
   <metadata_license>CC0-1.0</metadata_license>
@@ -61,5 +61,6 @@
   <url type="translate">https://github.com/neovim/neovim/tree/master/src/nvim/po</url>
   <provides>
     <binary>nvim</binary>
+    <id>nvim</id>
   </provides>
 </component>

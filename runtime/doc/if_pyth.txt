@@ -629,7 +629,7 @@ You can test if Python is available with: >vim
 	if has('pythonx')
 	  echo 'there is Python'
 	endif
-  	if has('python3')
+	if has('python3')
 	  echo 'there is Python 3.x'
 	endif
 

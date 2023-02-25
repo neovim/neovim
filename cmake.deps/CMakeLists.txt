@@ -62,7 +62,7 @@ option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ${USE_BUNDLED})
 option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
-#XXX(tarruda): Lua is only used for debugging the functional test client, no
+#XXX(tarruda): Lua is only used for debugging the functional test client, don't
 # build it unless explicitly requested
 option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
 option(USE_BUNDLED_TS_PARSERS "Use the bundled treesitter parsers." ${USE_BUNDLED})
@@ -148,8 +148,8 @@ set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/c-4.0.0/m
 set(MSGPACK_SHA256 420fe35e7572f2a168d17e660ef981a589c9cbe77faa25eb34a520e1fcc032c8)
 
 # https://github.com/LuaJIT/LuaJIT/tree/v2.1
-set(LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/d0e88930ddde28ff662503f9f20facf34f7265aa.tar.gz)
-set(LUAJIT_SHA256 aa354d1265814db5a1ee9dfff6049e19b148e1fd818f1ecfa4fcf2b19f6e4dd9)
+set(LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/505e2c03de35e2718eef0d2d3660712e06dadf1f.tar.gz)
+set(LUAJIT_SHA256 67c88399b901a22e9a236f4b77e6fe39af00f6b7144ce9dd6f51141d921f1076)
 
 set(LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz)
 set(LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333)
@@ -201,8 +201,8 @@ set(TREESITTER_VIM_SHA256 1b1cd39e33c8fb02fa7fe3977e844883c2a8508a7edd621f2d21e3
 set(TREESITTER_HELP_URL https://github.com/neovim/tree-sitter-vimdoc/archive/v1.3.0.tar.gz)
 set(TREESITTER_HELP_SHA256 f33f6d49c7d71feb2fd68ef2b2684da150f9f8e486ad9726213631d673942331)
 
-set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/eb970a83a107cbaba52e31588355c0b09b3a308a.tar.gz)
-set(TREESITTER_SHA256 58063721182f182fb9ec5481794f2ba594e52d6c2497e0214570535054dfc78d)
+set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/c51896d32dcc11a38e41f36e3deb1a6a9c4f4b14.tar.gz)
+set(TREESITTER_SHA256 243e07541a9dd71681984b65bffed2d4a259bef0a4ad28cff55cc1c6878b8d18)
 
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
@@ -274,23 +274,3 @@ if(WIN32)
   GetBinaryDep(TARGET win32yank_X86_64
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_INSTALL_DIR}/bin)
 endif()
-
-# clean-shared-libraries removes ${DEPS_INSTALL_DIR}/lib/nvim/parser/c.dll,
-# resulting in MSVC build failure in CI.
-if (MSVC)
-  set(ALL_DEPS ${THIRD_PARTY_DEPS})
-else()
-  add_custom_target(clean-shared-libraries
-    COMMAND ${CMAKE_COMMAND}
-      -D REMOVE_FILE_GLOB=${DEPS_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}*${CMAKE_SHARED_LIBRARY_SUFFIX}*
-      -P ${PROJECT_SOURCE_DIR}/cmake/RemoveFiles.cmake
-    DEPENDS ${THIRD_PARTY_DEPS}
-  )
-  set(ALL_DEPS clean-shared-libraries)
-endif()
-
-# TODO(justinmk): does anyone use this target?
-add_custom_target(third-party ALL
-  COMMAND ${CMAKE_COMMAND} -E touch .third-party
-  DEPENDS ${ALL_DEPS}
-)

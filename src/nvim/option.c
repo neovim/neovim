@@ -33,6 +33,7 @@
 #include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
@@ -2177,9 +2178,6 @@ static char *set_bool_option(const int opt_idx, char *const varp, const int valu
     if (curwin->w_p_spell) {
       errmsg = did_set_spelllang(curwin);
     }
-  } else if (((int *)varp == &curwin->w_p_nu || (int *)varp == &curwin->w_p_rnu)
-             && *curwin->w_p_stc != NUL) {  // '(relative)number' + 'statuscolumn'
-    curwin->w_nrwidth_line_count = 0;
   }
 
   if ((int *)varp == &curwin->w_p_arab) {
@@ -3084,6 +3082,8 @@ char *set_option_value(const char *const name, const long number, const char *co
                        const int opt_flags)
   FUNC_ATTR_NONNULL_ARG(1)
 {
+  static char errbuf[80];
+
   if (is_tty_option(name)) {
     return NULL;  // Fail silently; many old vimrcs set t_xx options.
   }
@@ -3106,7 +3106,7 @@ char *set_option_value(const char *const name, const long number, const char *co
     if (s == NULL || opt_flags & OPT_CLEAR) {
       s = "";
     }
-    return set_string_option(opt_idx, s, opt_flags);
+    return set_string_option(opt_idx, s, opt_flags, errbuf, sizeof(errbuf));
   }
 
   char_u *varp = (char_u *)get_varp_scope(&(options[opt_idx]), opt_flags);
@@ -3144,7 +3144,7 @@ char *set_option_value(const char *const name, const long number, const char *co
     }
   }
   if (flags & P_NUM) {
-    return set_num_option(opt_idx, varp, numval, NULL, 0, opt_flags);
+    return set_num_option(opt_idx, varp, numval, errbuf, sizeof(errbuf), opt_flags);
   }
   return set_bool_option(opt_idx, (char *)varp, (int)numval, opt_flags);
 }
@@ -5622,10 +5622,9 @@ long get_sidescrolloff_value(win_T *wp)
 Dictionary get_vimoption(String name, Error *err)
 {
   int opt_idx = findoption_len((const char *)name.data, name.size);
-  if (opt_idx < 0) {
-    api_set_error(err, kErrorTypeValidation, "no such option: '%s'", name.data);
+  VALIDATE_S(opt_idx >= 0, "option (not found)", name.data, {
     return (Dictionary)ARRAY_DICT_INIT;
-  }
+  });
   return vimoption2dict(&options[opt_idx]);
 }
 

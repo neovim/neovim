@@ -566,8 +566,12 @@ end)
 describe('stdpath()', function()
   -- Windows appends 'nvim-data' instead of just 'nvim' to prevent collisions
   -- due to XDG_CONFIG_HOME, XDG_DATA_HOME and XDG_STATE_HOME being the same.
-  local datadir = is_os('win') and 'nvim-data' or 'nvim'
-  local statedir = is_os('win') and 'nvim-data' or 'nvim'
+  local function maybe_data(name)
+    return is_os('win') and name .. '-data' or name
+  end
+
+  local datadir = maybe_data('nvim')
+  local statedir = maybe_data('nvim')
   local env_sep = is_os('win') and ';' or ':'
 
   it('acceptance', function()
@@ -580,6 +584,24 @@ describe('stdpath()', function()
     eq('table', type(funcs.stdpath('config_dirs')))
     eq('table', type(funcs.stdpath('data_dirs')))
     eq('string', type(funcs.stdpath('run')))
+    assert_alive()  -- Check for crash. #8393
+  end)
+
+  it('reacts to #NVIM_APPNAME', function()
+    local appname = "NVIM_APPNAME_TEST____________________________________" ..
+      "______________________________________________________________________"
+    clear({env={ NVIM_APPNAME=appname }})
+    eq(appname, funcs.fnamemodify(funcs.stdpath('config'), ':t'))
+    eq(appname, funcs.fnamemodify(funcs.stdpath('cache'), ':t'))
+    eq(maybe_data(appname), funcs.fnamemodify(funcs.stdpath('log'), ':t'))
+    eq(maybe_data(appname), funcs.fnamemodify(funcs.stdpath('data'), ':t'))
+    eq(maybe_data(appname), funcs.fnamemodify(funcs.stdpath('state'), ':t'))
+    -- config_dirs and data_dirs are empty on windows, so don't check them on
+    -- that platform
+    if not is_os('win') then
+      eq(appname, funcs.fnamemodify(funcs.stdpath('config_dirs')[1], ':t'))
+      eq(appname, funcs.fnamemodify(funcs.stdpath('data_dirs')[1], ':t'))
+    end
     assert_alive()  -- Check for crash. #8393
   end)
 

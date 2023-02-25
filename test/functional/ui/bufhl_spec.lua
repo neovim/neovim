@@ -303,7 +303,7 @@ describe('Buffer highlighting', function()
         {1:~                                       }|
         {1:~                                       }|
         {1:~                                       }|
-        2 change3; before #3  {MATCH:.*}|
+        2 changes; before #3  {MATCH:.*}|
       ]]}
 
       command('undo')
@@ -751,8 +751,8 @@ describe('Buffer highlighting', function()
 
     it('validates contents', function()
       -- this used to leak memory
-      eq('Chunk is not an array', pcall_err(set_virtual_text, id1, 0, {"texty"}, {}))
-      eq('Chunk is not an array', pcall_err(set_virtual_text, id1, 0, {{"very"}, "texty"}, {}))
+      eq("Invalid 'chunk': expected Array, got String", pcall_err(set_virtual_text, id1, 0, {"texty"}, {}))
+      eq("Invalid 'chunk': expected Array, got String", pcall_err(set_virtual_text, id1, 0, {{"very"}, "texty"}, {}))
     end)
 
     it('can be retrieved', function()

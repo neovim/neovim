@@ -610,7 +610,7 @@ sign_placelist({list})
 				be placed. For the accepted values, see
 				|line()|.
 		    name	name of the sign to place. See |sign_define()|
-		    		for more information.
+				for more information.
 		    priority	priority of the sign. When multiple signs are
 				placed on a line, the sign with the highest
 				priority is used. If not specified, the

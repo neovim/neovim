@@ -759,9 +759,11 @@ function M.rename(old_fname, new_fname, opts)
   vim.fn.bufload(oldbuf)
 
   -- The there may be pending changes in the buffer
-  api.nvim_buf_call(oldbuf, function()
-    vim.cmd('w!')
-  end)
+  if vim.fn.isdirectory(old_fname) == 0 then
+    api.nvim_buf_call(oldbuf, function()
+      vim.cmd('w!')
+    end)
+  end
 
   local ok, err = os.rename(old_fname, new_fname)
   assert(ok, err)

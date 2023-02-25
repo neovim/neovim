@@ -18,7 +18,6 @@ else()
   message(FATAL_ERROR "Trying to build gettext in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
 endif()
 
-list(APPEND THIRD_PARTY_DEPS gettext)
 if(USE_BUNDLED_LIBICONV)
   add_dependencies(gettext libiconv)
 endif()

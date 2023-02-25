@@ -235,7 +235,7 @@ void update_topline(win_T *wp)
       // cursor in the middle of the window.  Otherwise put the cursor
       // near the top of the window.
       if (n >= halfheight) {
-        scroll_cursor_halfway(false);
+        scroll_cursor_halfway(false, false);
       } else {
         scroll_cursor_top(scrolljump_value(), false);
         check_botline = true;
@@ -314,7 +314,7 @@ void update_topline(win_T *wp)
         if (line_count <= wp->w_height_inner + 1) {
           scroll_cursor_bot(scrolljump_value(), false);
         } else {
-          scroll_cursor_halfway(false);
+          scroll_cursor_halfway(false, false);
         }
       }
     }
@@ -1464,7 +1464,7 @@ void scroll_cursor_top(int min_scroll, int always)
   // This makes sure we get the same position when using "k" and "j"
   // in a small window.
   if (used > curwin->w_height_inner) {
-    scroll_cursor_halfway(false);
+    scroll_cursor_halfway(false, false);
   } else {
     // If "always" is false, only adjust topline to a lower value, higher
     // value may happen with wrapping lines
@@ -1669,7 +1669,7 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
   // Scroll up if the cursor is off the bottom of the screen a bit.
   // Otherwise put it at 1/2 of the screen.
   if (line_count >= curwin->w_height_inner && line_count > min_scroll) {
-    scroll_cursor_halfway(false);
+    scroll_cursor_halfway(false, true);
   } else {
     scrollup(line_count, true);
   }
@@ -1690,7 +1690,7 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
 ///
 /// @param atend if true, also put the cursor halfway to the end of the file.
 ///
-void scroll_cursor_halfway(int atend)
+void scroll_cursor_halfway(bool atend, bool prefer_above)
 {
   int above = 0;
   int topfill = 0;
@@ -1705,38 +1705,59 @@ void scroll_cursor_halfway(int atend)
   loff.fill = 0;
   boff.fill = 0;
   linenr_T topline = loff.lnum;
+
   while (topline > 1) {
-    if (below <= above) {           // add a line below the cursor first
-      if (boff.lnum < curbuf->b_ml.ml_line_count) {
-        botline_forw(curwin, &boff);
-        used += boff.height;
+    // This may not be right in the middle if the lines'
+    // physical height > 1 (e.g. 'wrap' is on).
+
+    // Depending on "prefer_above" we add a line above or below first.
+    // Loop twice to avoid duplicating code.
+    bool done = false;
+    for (int round = 1; round <= 2; round++) {
+      if (prefer_above
+          ? (round == 2 && below < above)
+          : (round == 1 && below <= above)) {
+        // add a line below the cursor
+        if (boff.lnum < curbuf->b_ml.ml_line_count) {
+          botline_forw(curwin, &boff);
+          used += boff.height;
+          if (used > curwin->w_height_inner) {
+            done = true;
+            break;
+          }
+          below += boff.height;
+        } else {
+          below++;                    // count a "~" line
+          if (atend) {
+            used++;
+          }
+        }
+      }
+
+      if (prefer_above
+          ? (round == 1 && below >= above)
+          : (round == 1 && below > above)) {
+        // add a line above the cursor
+        topline_back(curwin, &loff);
+        if (loff.height == MAXCOL) {
+          used = MAXCOL;
+        } else {
+          used += loff.height;
+        }
         if (used > curwin->w_height_inner) {
+          done = true;
           break;
         }
-        below += boff.height;
-      } else {
-        below++;                    // count a "~" line
-        if (atend) {
-          used++;
-        }
+        above += loff.height;
+        topline = loff.lnum;
+        topfill = loff.fill;
       }
     }
-
-    if (below > above) {            // add a line above the cursor
-      topline_back(curwin, &loff);
-      if (loff.height == MAXCOL) {
-        used = MAXCOL;
-      } else {
-        used += loff.height;
-      }
-      if (used > curwin->w_height_inner) {
-        break;
-      }
-      above += loff.height;
-      topline = loff.lnum;
-      topfill = loff.fill;
+    if (done) {
+      break;
     }
   }
+
   if (!hasFolding(topline, &curwin->w_topline, NULL)) {
     curwin->w_topline = topline;
   }

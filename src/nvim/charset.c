@@ -354,14 +354,15 @@ size_t transstr_len(const char *const s, bool untab)
 /// @param[in]  untab  remove tab characters
 ///
 /// @return length of the resulting string, without the NUL byte.
-size_t transstr_buf(const char *const s, char *const buf, const size_t len, bool untab)
+size_t transstr_buf(const char *const s, const ssize_t slen, char *const buf, const size_t buflen,
+                    bool untab)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *p = s;
   char *buf_p = buf;
-  char *const buf_e = buf_p + len - 1;
+  char *const buf_e = buf_p + buflen - 1;
 
-  while (*p != NUL && buf_p < buf_e) {
+  while ((slen < 0 || (p - s) < slen) && *p != NUL && buf_p < buf_e) {
     const size_t l = (size_t)utfc_ptr2len(p);
     if (l > 1) {
       if (buf_p + l > buf_e) {
@@ -416,7 +417,7 @@ char *transstr(const char *const s, bool untab)
   // multi-byte characters.
   const size_t len = transstr_len(s, untab) + 1;
   char *const buf = xmalloc(len);
-  transstr_buf(s, buf, len, untab);
+  transstr_buf(s, -1, buf, len, untab);
   return buf;
 }
 
@@ -431,7 +432,7 @@ size_t kv_transstr(StringBuilder *str, const char *const s, bool untab)
   // multi-byte characters.
   const size_t len = transstr_len(s, untab);
   kv_ensure_space(*str, len + 1);
-  transstr_buf(s, str->items + str->size, len + 1, untab);
+  transstr_buf(s, -1, str->items + str->size, len + 1, untab);
   str->size += len;  // do not include NUL byte
   return len;
 }
@@ -546,7 +547,6 @@ char *transchar(int c)
 }
 
 char_u *transchar_buf(const buf_T *buf, int c)
-  FUNC_ATTR_NONNULL_ALL
 {
   int i = 0;
   if (IS_SPECIAL(c)) {
@@ -570,9 +570,9 @@ char_u *transchar_buf(const buf_T *buf, int c)
   return transchar_charbuf;
 }
 
-/// Like transchar(), but called with a byte instead of a character
+/// Like transchar(), but called with a byte instead of a character.
 ///
-/// Checks for an illegal UTF-8 byte.
+/// Checks for an illegal UTF-8 byte.  Uses 'fileformat' of the current buffer.
 ///
 /// @param[in]  c  Byte to translate.
 ///
@@ -580,11 +580,24 @@ char_u *transchar_buf(const buf_T *buf, int c)
 char_u *transchar_byte(const int c)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  return transchar_byte_buf(curbuf, c);
+}
+
+/// Like transchar_buf(), but called with a byte instead of a character.
+///
+/// Checks for an illegal UTF-8 byte.  Uses 'fileformat' of "buf", unless it is NULL.
+///
+/// @param[in]  c  Byte to translate.
+///
+/// @return pointer to translated character in transchar_charbuf.
+char_u *transchar_byte_buf(const buf_T *buf, const int c)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
   if (c >= 0x80) {
-    transchar_nonprint(curbuf, transchar_charbuf, c);
+    transchar_nonprint(buf, transchar_charbuf, c);
     return transchar_charbuf;
   }
-  return (char_u *)transchar(c);
+  return transchar_buf(buf, c);
 }
 
 /// Convert non-printable characters to 2..4 printable ones
@@ -597,12 +610,11 @@ char_u *transchar_byte(const int c)
 /// @param[in]  c  Character to convert. NUL is assumed to be NL according to
 ///                `:h NL-used-for-NUL`.
 void transchar_nonprint(const buf_T *buf, char_u *charbuf, int c)
-  FUNC_ATTR_NONNULL_ALL
 {
   if (c == NL) {
     // we use newline in place of a NUL
     c = NUL;
-  } else if ((c == CAR) && (get_fileformat(buf) == EOL_MAC)) {
+  } else if (buf != NULL && c == CAR && get_fileformat(buf) == EOL_MAC) {
     // we use CR in place of  NL in this case
     c = NL;
   }

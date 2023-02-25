@@ -380,6 +380,7 @@ CmdlineChanged			After a change was made to the text inside
 CmdlineEnter			After entering the command-line (including
 				non-interactive use of ":" in a mapping: use
 				|<Cmd>| instead to avoid this).
+				The pattern is matched against |cmdline-char|.
 				<afile> expands to the |cmdline-char|.
 				Sets these |v:event| keys:
 				    cmdlevel
@@ -425,7 +426,7 @@ ColorSchemePre			Before loading a color scheme. |:colorscheme|
 				Useful to setup removing things added by a
 				color scheme, before another one is loaded.
 
-CompleteChanged 					*CompleteChanged*
+CompleteChanged						*CompleteChanged*
 				After each time the Insert mode completion
 				menu changed.  Not fired on popup menu hide,
 				use |CompleteDonePre| or |CompleteDone| for
