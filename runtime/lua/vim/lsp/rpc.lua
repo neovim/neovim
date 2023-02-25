@@ -538,7 +538,7 @@ local function public_client(client)
   ---
   ---@param method (string) The invoked LSP method
   ---@param params (table|nil) Parameters for the invoked LSP method
-  ---@param callback fun(err: lsp.ResponseError|nil, result: any) Callback to invoke
+  ---@param callback fun(err: lsp.ResponseError | nil, result: any) Callback to invoke
   ---@param notify_reply_callback (function|nil) Callback to invoke as soon as a request is no longer pending
   ---@return boolean success, integer|nil request_id true, message_id if request could be sent, `false` if not
   function result.request(method, params, callback, notify_reply_callback)
