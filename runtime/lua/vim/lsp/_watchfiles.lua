@@ -1,3 +1,4 @@
+local bit = require('bit')
 local watch = require('vim._watch')
 local protocol = require('vim.lsp.protocol')
 
@@ -218,13 +219,10 @@ function M.register(reg, ctx)
         cancels[client_id][reg.id],
         M._watchfunc(base_dir, { uvflags = { recursive = true } }, function(fullpath, change_type)
           change_type = to_lsp_change_type[change_type]
-          if
-            not M._match(pattern, fullpath)
-            -- e.g. match kind with Delete bit (0b0100) to Delete change_type (3)
-            -- Essentially, bit shift kind to the right using "integer division" with math.floor by (change_type - 1) places.
-            -- Then, "bitwise AND" with the lowest bit with `% 2 == 1`.
-            or not (math.floor(kind / (2 ^ (change_type - 1))) % 2 == 1)
-          then
+          -- e.g. match kind with Delete bit (0b0100) to Delete change_type (3)
+          local kind_mask = bit.lshift(1, change_type - 1)
+          local change_type_match = bit.band(kind, kind_mask) == kind_mask
+          if not M._match(pattern, fullpath) or not change_type_match then
             return
           end
 
