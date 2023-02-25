@@ -171,9 +171,6 @@ The following new APIs or features were added.
 
 • |vim.treesitter.foldexpr()| can be used for 'foldexpr' to use treesitter for folding.
 
-• Added support for the `workspace/didChangeWatchedFiles` capability to the
-  LSP client to notify servers of file changes on disk.
-
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
