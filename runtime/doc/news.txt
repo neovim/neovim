@@ -171,6 +171,14 @@ The following new APIs or features were added.
 
 • |vim.treesitter.foldexpr()| can be used for 'foldexpr' to use treesitter for folding.
 
+• Expanded the TSNode API with:
+  - |TSNode:tree()|
+  - |TSNode:has_changes()|
+  - |TSNode:extra()|
+  - |TSNode:equal()|
+
+  Additionally |TSNode:range()| now takes an optional {include_bytes} argument.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
