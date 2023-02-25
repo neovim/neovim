@@ -569,7 +569,7 @@ buf_notify({bufnr}, {method}, {params})                 *vim.lsp.buf_notify()*
       • {params}  (any) Arguments to send to the server
 
     Return: ~
-        true if any client returns true; false otherwise
+        (boolean) success true if any client returns true; false otherwise
 
                                                    *vim.lsp.buf_request_all()*
 buf_request_all({bufnr}, {method}, {params}, {callback})
@@ -582,11 +582,13 @@ buf_request_all({bufnr}, {method}, {params}, {callback})
       • {method}    (string) LSP method name
       • {params}    (table|nil) Parameters to send to the server
       • {callback}  (function) The callback to call when all requests are
-                    finished.
+                    finished. Unlike `buf_request`, this will collect all the
+                    responses from each server instead of handling them. A map
+                    of client_id:request_result will be provided to the
+                    callback
 
     Return: ~
-        (function) A function that will cancel all requests which is the same
-        as the one returned from `buf_request`.
+        fun() cancel A function that will cancel all requests
 
                                                   *vim.lsp.buf_request_sync()*
 buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
@@ -604,8 +606,9 @@ buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
                       result. Defaults to 1000
 
     Return: ~
-        Map of client_id:request_result. On timeout, cancel or error, returns
-        `(nil, err)` where `err` is a string describing the failure reason.
+        table<integer, any>|nil result, string|nil err Map of
+        client_id:request_result. On timeout, cancel or error, returns `(nil,
+        err)` where `err` is a string describing the failure reason.
 
 client()                                                      *vim.lsp.client*
     LSP client object. You can get an active client object via
@@ -671,7 +674,7 @@ client_is_stopped({client_id})                   *vim.lsp.client_is_stopped()*
       • {client_id}  (number)
 
     Return: ~
-        true if client is stopped, false otherwise.
+        (boolean) stopped true if client is stopped, false otherwise.
 
                                             *vim.lsp.for_each_buffer_client()*
 for_each_buffer_client({bufnr}, {fn})
@@ -722,10 +725,10 @@ get_buffers_by_client_id({client_id})
     Returns list of buffers attached to client_id.
 
     Parameters: ~
-      • {client_id}  (number) client id
+      • {client_id}  (integer) client id
 
     Return: ~
-        (list) of buffer ids
+        integer[] buffers list of buffer ids
 
 get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
     Gets a client by id, or nil if the id is invalid. The returned client may
@@ -741,7 +744,7 @@ get_log_path()                                        *vim.lsp.get_log_path()*
     Gets the path of the logfile used by the LSP client.
 
     Return: ~
-        (String) Path to logfile.
+        (string) path to log file
 
 omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
     Implements 'omnifunc' compatible LSP completion.
@@ -946,9 +949,9 @@ start_client({config})                                *vim.lsp.start_client()*
                     initialization.
 
     Return: ~
-        Client id. |vim.lsp.get_client_by_id()| Note: client may not be fully
-        initialized. Use `on_init` to do any actions once the client has been
-        initialized.
+        (integer|nil) client_id. |vim.lsp.get_client_by_id()| Note: client may
+        not be fully initialized. Use `on_init` to do any actions once the
+        client has been initialized.
 
 stop_client({client_id}, {force})                      *vim.lsp.stop_client()*
     Stops a client(s).
@@ -979,7 +982,7 @@ tagfunc({...})                                             *vim.lsp.tagfunc()*
       • {flags}    (string) See |tag-function|
 
     Return: ~
-        A list of matching tags
+        table[] tags A list of matching tags
 
 with({handler}, {override_config})                            *vim.lsp.with()*
     Function to manage overriding defaults for LSP handlers.
@@ -1943,13 +1946,13 @@ request({method}, {params}, {callback}, {notify_reply_callback})
       • {method}                 (string) The invoked LSP method
       • {params}                 (table|nil) Parameters for the invoked LSP
                                  method
-      • {callback}               (function) Callback to invoke
+      • {callback}               fun(err: lsp.ResponseError | nil, result: any) Callback to invoke
       • {notify_reply_callback}  (function|nil) Callback to invoke as soon as
                                  a request is no longer pending
 
     Return: ~
-        (bool, number) `(true, message_id)` if request could be sent, `false`
-        if not
+        (boolean) success, integer|nil request_id true, message_id if request
+        could be sent, `false` if not
 
                                             *vim.lsp.rpc.rpc_response_error()*
 rpc_response_error({code}, {message}, {data})

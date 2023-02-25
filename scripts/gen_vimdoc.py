@@ -42,6 +42,7 @@ import subprocess
 import collections
 import msgpack
 import logging
+from pathlib import Path
 
 from xml.dom import minidom
 
@@ -55,18 +56,28 @@ if sys.version_info < MIN_PYTHON_VERSION:
 doxygen_version = tuple((int(i) for i in subprocess.check_output(["doxygen", "-v"],
                         universal_newlines=True).split()[0].split('.')))
 
-# Until 0.9 is released, need this hacky way to check that "nvim -l foo.lua" works.
-nvim_version = list(line for line in subprocess.check_output(['nvim', '-h'], universal_newlines=True).split('\n')
-                     if '-l ' in line)
-
 if doxygen_version < MIN_DOXYGEN_VERSION:
     print("\nRequires doxygen {}.{}.{}+".format(*MIN_DOXYGEN_VERSION))
     print("Your doxygen version is {}.{}.{}\n".format(*doxygen_version))
     sys.exit(1)
 
-if len(nvim_version) == 0:
-    print("\nRequires 'nvim -l' feature, see https://github.com/neovim/neovim/pull/18706")
-    sys.exit(1)
+
+# Need a `nvim` that supports `-l`, try the local build
+nvim_path = Path(__file__).parent / "../build/bin/nvim"
+if nvim_path.exists():
+    nvim = str(nvim_path)
+else:
+    # Until 0.9 is released, use this hacky way to check that "nvim -l foo.lua" works.
+    nvim_out = subprocess.check_output(['nvim', '-h'], universal_newlines=True)
+    nvim_version = [line for line in nvim_out.split('\n')
+                    if '-l ' in line]
+    if len(nvim_version) == 0:
+        print((
+            "\nYou need to have a local Neovim build or a `nvim` version 0.9 for `-l` "
+            "support to build the documentation."))
+        sys.exit(1)
+    nvim = 'nvim'
+
 
 # DEBUG = ('DEBUG' in os.environ)
 INCLUDE_C_DECL = ('INCLUDE_C_DECL' in os.environ)
@@ -1163,7 +1174,7 @@ def main(doxygen_config, args):
 def filter_source(filename):
     name, extension = os.path.splitext(filename)
     if extension == '.lua':
-        p = subprocess.run(['nvim', '-l', lua2dox, filename], stdout=subprocess.PIPE)
+        p = subprocess.run([str(nvim), '-l', lua2dox, filename], stdout=subprocess.PIPE)
         op = ('?' if 0 != p.returncode else p.stdout.decode('utf-8'))
         print(op)
     else:

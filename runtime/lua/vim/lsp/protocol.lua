@@ -20,18 +20,6 @@ function transform_schema_to_table()
 end
 --]=]
 
----@class lsp.ShowMessageRequestParams
----@field type lsp.MessageType
----@field message string
----@field actions nil|lsp.MessageActionItem[]
-
----@class lsp.MessageActionItem
----@field title string
-
----@class lsp.FileEvent
----@field uri string
----@field type lsp.FileChangeType
-
 local constants = {
   DiagnosticSeverity = {
     -- Reports an error.

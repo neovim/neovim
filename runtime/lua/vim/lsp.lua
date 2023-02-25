@@ -67,7 +67,7 @@ lsp._request_name_to_capability = {
 ---@private
 --- Concatenates and writes a list of strings to the Vim error buffer.
 ---
----@param {...} table[] List to write to the buffer
+---@param ... string List to write to the buffer
 local function err_message(...)
   nvim_err_writeln(table.concat(vim.tbl_flatten({ ... })))
   nvim_command('redraw')
@@ -76,9 +76,8 @@ end
 ---@private
 --- Returns the buffer number for the given {bufnr}.
 ---
----@param bufnr (number|nil) Buffer number to resolve. Defaults to the current
----buffer if not given.
----@returns bufnr (number) Number of requested buffer
+---@param bufnr (integer|nil) Buffer number to resolve. Defaults to current buffer
+---@return integer bufnr
 local function resolve_bufnr(bufnr)
   validate({ bufnr = { bufnr, 'n', true } })
   if bufnr == nil or bufnr == 0 then
@@ -104,7 +103,7 @@ end
 --- Checks whether a given path is a directory.
 ---
 ---@param filename (string) path to check
----@returns true if {filename} exists and is a directory, false otherwise
+---@return boolean # true if {filename} exists and is a directory, false otherwise
 local function is_dir(filename)
   validate({ filename = { filename, 's' } })
   local stat = uv.fs_stat(filename)
@@ -133,7 +132,7 @@ local format_line_ending = {
 
 ---@private
 ---@param bufnr (number)
----@returns (string)
+---@return string
 local function buf_get_line_ending(bufnr)
   return format_line_ending[nvim_buf_get_option(bufnr, 'fileformat')] or '\n'
 end
@@ -142,7 +141,7 @@ local client_index = 0
 ---@private
 --- Returns a new, unused client id.
 ---
----@returns (number) client id
+---@return integer client_id
 local function next_client_id()
   client_index = client_index + 1
   return client_index
@@ -197,7 +196,7 @@ lsp.client_errors = tbl_extend(
 --- Normalizes {encoding} to valid LSP encoding names.
 ---
 ---@param encoding (string) Encoding to normalize
----@returns (string) normalized encoding name
+---@return string # normalized encoding name
 local function validate_encoding(encoding)
   validate({
     encoding = { encoding, 's' },
@@ -215,9 +214,8 @@ end
 --- Parses a command invocation into the command itself and its args. If there
 --- are no arguments, an empty table is returned as the second argument.
 ---
----@param input (List)
----@returns (string) the command
----@returns (list of strings) its arguments
+---@param input string[]
+---@return string command, string[] args #the command and arguments
 function lsp._cmd_parts(input)
   validate({
     cmd = {
@@ -244,9 +242,9 @@ end
 ---@private
 --- Augments a validator function with support for optional (nil) values.
 ---
----@param fn (fun(v)) The original validator function; should return a
+---@param fn (fun(v): boolean) The original validator function; should return a
 ---bool.
----@returns (fun(v)) The augmented function. Also returns true if {v} is
+---@return fun(v): boolean # The augmented function. Also returns true if {v} is
 ---`nil`.
 local function optional_validator(fn)
   return function(v)
@@ -258,10 +256,8 @@ end
 --- Validates a client configuration as given to |vim.lsp.start_client()|.
 ---
 ---@param config (table)
----@returns (table) "Cleaned" config, containing only the command, its
+---@return table config Cleaned config, containing the command, its
 ---arguments, and a valid encoding.
----
----@see |vim.lsp.start_client()|
 local function validate_client_config(config)
   validate({
     config = { config, 't' },
@@ -314,7 +310,7 @@ end
 --- Returns full text of buffer {bufnr} as a string.
 ---
 ---@param bufnr (number) Buffer handle, or 0 for current.
----@returns Buffer text as string.
+---@return string # Buffer text as string.
 local function buf_get_full_text(bufnr)
   local line_ending = buf_get_line_ending(bufnr)
   local text = table.concat(nvim_buf_get_lines(bufnr, 0, -1, true), line_ending)
@@ -331,7 +327,7 @@ end
 --- even if it has side effects.
 ---
 ---@param fn (function) Function to run
----@returns (function) Memoized function
+---@return function fn Memoized function
 local function once(fn)
   local value
   local ran = false
@@ -373,7 +369,7 @@ do
   --- @field lines string[] snapshot of buffer lines from last didChange
   --- @field lines_tmp string[]
   --- @field pending_changes table[] List of debounced changes in incremental sync mode
-  --- @field timer nil|userdata uv_timer
+  --- @field timer nil|uv.uv_timer_t uv_timer
   --- @field last_flush nil|number uv.hrtime of the last flush/didChange-notification
   --- @field needs_flush boolean true if buffer updates haven't been sent to clients/servers yet
   --- @field refs number how many clients are using this group
@@ -648,7 +644,7 @@ do
       if debounce == 0 then
         send_changes(bufnr, group.sync_kind, state, buf_state)
       else
-        local timer = uv.new_timer()
+        local timer = assert(uv.new_timer(), 'Must be able to create timer')
         buf_state.timer = timer
         timer:start(
           debounce,
@@ -1006,7 +1002,7 @@ end
 ---       server will base its workspaceFolders, rootUri, and rootPath
 ---       on initialization.
 ---
----@returns Client id. |vim.lsp.get_client_by_id()| Note: client may not be
+---@return integer|nil client_id. |vim.lsp.get_client_by_id()| Note: client may not be
 --- fully initialized. Use `on_init` to do any actions once
 --- the client has been initialized.
 function lsp.start_client(config)
@@ -1037,7 +1033,7 @@ function lsp.start_client(config)
   --- Returns the default handler if the user hasn't set a custom one.
   ---
   ---@param method (string) LSP method name
-  ---@returns (fn) The handler for the given method, if defined, or the default from |vim.lsp.handlers|
+  ---@return function|nil The handler for the given method, if defined, or the default from |vim.lsp.handlers|
   local function resolve_handler(method)
     return handlers[method] or default_handlers[method]
   end
@@ -1343,11 +1339,11 @@ function lsp.start_client(config)
   --- This is a thin wrapper around {client.rpc.request} with some additional
   --- checks for capabilities and handler availability.
   ---
-  ---@param method (string) LSP method name.
-  ---@param params (table) LSP request params.
-  ---@param handler (function|nil) Response |lsp-handler| for this method.
-  ---@param bufnr (number) Buffer handle (0 for current).
-  ---@returns ({status}, [request_id]): {status} is a bool indicating
+  ---@param method string LSP method name.
+  ---@param params table LSP request params.
+  ---@param handler lsp-handler|nil Response |lsp-handler| for this method.
+  ---@param bufnr integer Buffer handle (0 for current).
+  ---@return boolean status, integer|nil request_id {status} is a bool indicating
   ---whether the request was successful. If it is `false`, then it will
   ---always be `false` (the client has shutdown). If it was
   ---successful, then it will return {request_id} as the
@@ -1395,10 +1391,11 @@ function lsp.start_client(config)
   ---@param timeout_ms (number|nil) Maximum time in milliseconds to wait for
   ---                               a result. Defaults to 1000
   ---@param bufnr (number) Buffer handle (0 for current).
-  ---@returns { err=err, result=result }, a dictionary, where `err` and `result` come from the |lsp-handler|.
-  ---On timeout, cancel or error, returns `(nil, err)` where `err` is a
-  ---string describing the failure reason. If the request was unsuccessful
-  ---returns `nil`.
+  ---@return {err: lsp.ResponseError|nil, result:any}|nil, string|nil err # a dictionary, where
+  --- `err` and `result` come from the |lsp-handler|.
+  --- On timeout, cancel or error, returns `(nil, err)` where `err` is a
+  --- string describing the failure reason. If the request was unsuccessful
+  --- returns `nil`.
   ---@see |vim.lsp.buf_request_sync()|
   function client.request_sync(method, params, timeout_ms, bufnr)
     local request_result = nil
@@ -1429,7 +1426,7 @@ function lsp.start_client(config)
   ---
   ---@param method string LSP method name.
   ---@param params table|nil LSP request params.
-  ---@returns {status} (bool) true if the notification was successful.
+  ---@return boolean status true if the notification was successful.
   ---If it is false, then it will always be false
   ---(the client has shutdown).
   function client.notify(method, params)
@@ -1443,7 +1440,7 @@ function lsp.start_client(config)
   --- Cancels a request with a given request id.
   ---
   ---@param id (number) id of request to cancel
-  ---@returns true if any client returns true; false otherwise
+  ---@return boolean status true if notification was successful. false otherwise
   ---@see |vim.lsp.client.notify()|
   function client.cancel_request(id)
     validate({ id = { id, 'n' } })
@@ -1489,7 +1486,7 @@ function lsp.start_client(config)
   ---@private
   --- Checks whether a client is stopped.
   ---
-  ---@returns (bool) true if client is stopped or in the process of being
+  ---@return boolean # true if client is stopped or in the process of being
   ---stopped; false otherwise
   function client.is_stopped()
     return rpc.is_closing()
@@ -1497,7 +1494,7 @@ function lsp.start_client(config)
 
   ---@private
   --- Runs the on_attach function from the client's config if it was defined.
-  ---@param bufnr (number) Buffer number
+  ---@param bufnr integer Buffer number
   function client._on_attach(bufnr)
     text_document_did_open_handler(bufnr, client)
 
@@ -1771,8 +1768,8 @@ end
 
 --- Returns list of buffers attached to client_id.
 ---
----@param client_id number client id
----@returns list of buffer ids
+---@param client_id integer client id
+---@return integer[] buffers list of buffer ids
 function lsp.get_buffers_by_client_id(client_id)
   local client = lsp.get_client_by_id(client_id)
   return client and vim.tbl_keys(client.attached_buffers) or {}
@@ -1906,7 +1903,7 @@ api.nvim_create_autocmd('VimLeavePre', {
 ---@param handler function|nil See |lsp-handler|
 ---       If nil, follows resolution strategy defined in |lsp-handler-configuration|
 ---
----@returns 2-tuple:
+---@return table<integer, integer>, fun() 2-tuple:
 ---  - Map of client-id:request-id pairs for all successful requests.
 ---  - Function which can be used to cancel all the requests. You could instead
 ---    iterate all clients and call their `cancel_request()` methods.
@@ -1964,10 +1961,10 @@ end
 ---@param method (string) LSP method name
 ---@param params (table|nil) Parameters to send to the server
 ---@param callback (function) The callback to call when all requests are finished.
---  Unlike `buf_request`, this will collect all the responses from each server instead of handling them.
---  A map of client_id:request_result will be provided to the callback
---
----@returns (function) A function that will cancel all requests which is the same as the one returned from `buf_request`.
+--- Unlike `buf_request`, this will collect all the responses from each server instead of handling them.
+--- A map of client_id:request_result will be provided to the callback
+---
+---@return fun() cancel A function that will cancel all requests
 function lsp.buf_request_all(bufnr, method, params, callback)
   local request_results = {}
   local result_count = 0
@@ -2008,9 +2005,9 @@ end
 ---@param timeout_ms (number|nil) Maximum time in milliseconds to wait for a
 ---                               result. Defaults to 1000
 ---
----@returns Map of client_id:request_result. On timeout, cancel or error,
----        returns `(nil, err)` where `err` is a string describing the failure
----        reason.
+---@return table<integer, any>|nil result, string|nil err Map of client_id:request_result.
+--- On timeout, cancel or error, returns `(nil, err)` where `err` is a string describing
+--- the failure reason.
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   local request_results
 
@@ -2035,7 +2032,7 @@ end
 ---@param method (string) Name of the request method
 ---@param params (any) Arguments to send to the server
 ---
----@returns true if any client returns true; false otherwise
+---@return boolean success true if any client returns true; false otherwise
 function lsp.buf_notify(bufnr, method, params)
   validate({
     bufnr = { bufnr, 'n', true },
@@ -2172,7 +2169,7 @@ function lsp.formatexpr(opts)
   for _, client in pairs(lsp.get_active_clients({ bufnr = bufnr })) do
     if client.supports_method('textDocument/rangeFormatting') then
       local params = util.make_formatting_params()
-      local end_line = vim.fn.getline(end_lnum)
+      local end_line = vim.fn.getline(end_lnum) --[[@as string]]
       local end_col = util._str_utfindex_enc(end_line, nil, client.offset_encoding)
       params.range = {
         start = {
@@ -2207,7 +2204,7 @@ end
 ---@param pattern string Pattern used to find a workspace symbol
 ---@param flags string See |tag-function|
 ---
----@returns A list of matching tags
+---@return table[] tags A list of matching tags
 function lsp.tagfunc(...)
   return require('vim.lsp.tagfunc')(...)
 end
@@ -2215,7 +2212,7 @@ end
 ---Checks whether a client is stopped.
 ---
 ---@param client_id (number)
----@returns true if client is stopped, false otherwise.
+---@return boolean stopped true if client is stopped, false otherwise.
 function lsp.client_is_stopped(client_id)
   return active_clients[client_id] == nil
 end
@@ -2262,7 +2259,7 @@ function lsp.set_log_level(level)
 end
 
 --- Gets the path of the logfile used by the LSP client.
----@returns (String) Path to logfile.
+---@return string path to log file
 function lsp.get_log_path()
   return log.get_filename()
 end
