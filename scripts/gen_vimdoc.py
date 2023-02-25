@@ -62,11 +62,21 @@ if doxygen_version < MIN_DOXYGEN_VERSION:
     sys.exit(1)
 
 
-# Need a `nvim` that supports `-l`, so use the local build
-nvim = Path(__file__).parent / "../build/bin/nvim"
-if not nvim.exists():
-    print("\nYou need to build Neovim first to build the documentation.")
-    sys.exit(1)
+# Need a `nvim` that supports `-l`, try the local build
+nvim_path = Path(__file__).parent / "../build/bin/nvim"
+if nvim_path.exists():
+    nvim = str(nvim_path)
+else:
+    # Until 0.9 is released, use this hacky way to check that "nvim -l foo.lua" works.
+    nvim_out = subprocess.check_output(['nvim', '-h'], universal_newlines=True)
+    nvim_version = [line for line in nvim_out.split('\n')
+                    if '-l ' in line]
+    if len(nvim_version) == 0:
+        print((
+            "\nYou need to have a local Neovim build or a `nvim` version 0.9 for `-l` "
+            "support to build the documentation."))
+        sys.exit(1)
+    nvim = 'nvim'
 
 
 # DEBUG = ('DEBUG' in os.environ)
