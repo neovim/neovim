@@ -20,14 +20,6 @@ function transform_schema_to_table()
 end
 --]=]
 
----@class lsp.ShowMessageRequestParams
----@field type lsp.MessageType
----@field message string
----@field actions nil|lsp.MessageActionItem[]
-
----@class lsp.MessageActionItem
----@field title string
-
 local constants = {
   DiagnosticSeverity = {
     -- Reports an error.
@@ -60,6 +52,7 @@ local constants = {
   },
 
   -- The file event type.
+  ---@enum lsp.FileChangeType
   FileChangeType = {
     -- The file got created.
     Created = 1,
