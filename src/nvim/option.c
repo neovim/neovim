@@ -839,9 +839,8 @@ static void do_set_num(int opt_idx, int opt_flags, char **argp, int nextchar, co
 
 // Handle some special cases with string option values
 static void munge_string_opt_val(char **varp, char **oldval, char **const origval,
-                                 char_u **const origval_l, char_u **const origval_g,
-                                 char **const argp, char *const whichwrap, size_t whichwraplen,
-                                 char **const save_argp)
+                                 char **const origval_l, char **const origval_g, char **const argp,
+                                 char *const whichwrap, size_t whichwraplen, char **const save_argp)
 {
   // Set 'keywordprg' to ":help" if an empty
   // value was passed to :set by the user.
@@ -870,11 +869,11 @@ static void munge_string_opt_val(char **varp, char **oldval, char **const origva
     if (*origval == *oldval) {
       *origval = *varp;
     }
-    if (*origval_l == (char_u *)(*oldval)) {
-      *origval_l = *(char_u **)varp;
+    if (*origval_l == *oldval) {
+      *origval_l = *varp;
     }
-    if (*origval_g == (char_u *)(*oldval)) {
-      *origval_g = *(char_u **)varp;
+    if (*origval_g == *oldval) {
+      *origval_g = *varp;
     }
     *oldval = *varp;
   } else if (varp == &p_ww && ascii_isdigit(**argp)) {
@@ -919,8 +918,8 @@ static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar,
   char *varp = varp_arg;
   char *save_arg = NULL;
   char *s = NULL;
-  char_u *origval_l = NULL;
-  char_u *origval_g = NULL;
+  char *origval_l = NULL;
+  char *origval_g = NULL;
   char whichwrap[80];
 
   // When using ":set opt=val" for a global option
@@ -935,12 +934,12 @@ static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar,
   char *oldval = *(char **)varp;
 
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
-    origval_l = *(char_u **)get_varp_scope(&(options[opt_idx]), OPT_LOCAL);
-    origval_g = *(char_u **)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
+    origval_l = *(char **)get_varp_scope(&(options[opt_idx]), OPT_LOCAL);
+    origval_g = *(char **)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
 
     // A global-local string option might have an empty option as value to
     // indicate that the global value should be used.
-    if (((int)options[opt_idx].indir & PV_BOTH) && origval_l == (char_u *)empty_option) {
+    if (((int)options[opt_idx].indir & PV_BOTH) && origval_l == empty_option) {
       origval_l = origval_g;
     }
   }
@@ -1132,8 +1131,8 @@ static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar,
 
   // origval may be freed by did_set_string_option(), make a copy.
   char *saved_origval = (origval != NULL) ? xstrdup(origval) : NULL;
-  char *saved_origval_l = (origval_l != NULL) ? xstrdup((char *)origval_l) : NULL;
-  char *saved_origval_g = (origval_g != NULL) ? xstrdup((char *)origval_g) : NULL;
+  char *saved_origval_l = (origval_l != NULL) ? xstrdup(origval_l) : NULL;
+  char *saved_origval_g = (origval_g != NULL) ? xstrdup(origval_g) : NULL;
 
   // newval (and varp) may become invalid if the buffer is closed by
   // autocommands.
@@ -4672,7 +4671,7 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
         return;
       }
     }
-    int key = get_special_key_code((char_u *)arg + 1);
+    int key = get_special_key_code(arg + 1);
     if (key == 0) {                 // unknown name
       xp->xp_context = EXPAND_NOTHING;
       return;

@@ -107,19 +107,19 @@ enum {
 
 // Structure to pass arguments from buf_write() to buf_write_bytes().
 struct bw_info {
-  int bw_fd;                     // file descriptor
-  char *bw_buf;                  // buffer with data to be written
-  int bw_len;                    // length of data
-  int bw_flags;                  // FIO_ flags
-  char_u bw_rest[CONV_RESTLEN];  // not converted bytes
-  int bw_restlen;                // nr of bytes in bw_rest[]
-  int bw_first;                  // first write call
-  char *bw_conv_buf;             // buffer for writing converted chars
-  size_t bw_conv_buflen;         // size of bw_conv_buf
-  int bw_conv_error;             // set for conversion error
-  linenr_T bw_conv_error_lnum;   // first line with error or zero
-  linenr_T bw_start_lnum;        // line number at start of buffer
-  iconv_t bw_iconv_fd;           // descriptor for iconv() or -1
+  int bw_fd;                      // file descriptor
+  char *bw_buf;                   // buffer with data to be written
+  int bw_len;                     // length of data
+  int bw_flags;                   // FIO_ flags
+  uint8_t bw_rest[CONV_RESTLEN];  // not converted bytes
+  int bw_restlen;                 // nr of bytes in bw_rest[]
+  int bw_first;                   // first write call
+  char *bw_conv_buf;              // buffer for writing converted chars
+  size_t bw_conv_buflen;          // size of bw_conv_buf
+  int bw_conv_error;              // set for conversion error
+  linenr_T bw_conv_error_lnum;    // first line with error or zero
+  linenr_T bw_start_lnum;         // line number at start of buffer
+  iconv_t bw_iconv_fd;            // descriptor for iconv() or -1
 };
 
 typedef struct {
@@ -989,7 +989,7 @@ retry:
             int ni;
             long tlen = 0;
             for (;;) {
-              p = (char_u *)ml_get(read_buf_lnum) + read_buf_col;
+              p = (uint8_t *)ml_get(read_buf_lnum) + read_buf_col;
               int n = (int)strlen((char *)p);
               if ((int)tlen + n + 1 > size) {
                 // Filled up to "size", append partial line.
@@ -1798,7 +1798,7 @@ failed:
       msg_scrolled_ign = true;
 
       if (!read_stdin && !read_buffer) {
-        p = (char_u *)msg_trunc_attr(IObuff, false, 0);
+        p = (uint8_t *)msg_trunc_attr(IObuff, false, 0);
       }
 
       if (read_stdin || read_buffer || restart_edit != 0
@@ -1859,7 +1859,7 @@ failed:
 
   // When opening a new file locate undo info and read it.
   if (read_undo_file) {
-    char_u hash[UNDO_HASH_SIZE];
+    uint8_t hash[UNDO_HASH_SIZE];
 
     sha256_finish(&sha_ctx, hash);
     u_read_undo(NULL, hash, fname);
@@ -3208,7 +3208,7 @@ restore_backup:
     // Skip the BOM when appending and the file already existed, the BOM
     // only makes sense at the start of the file.
     if (buf->b_p_bomb && !write_bin && (!append || perm < 0)) {
-      write_info.bw_len = make_bom((char_u *)buffer, fenc);
+      write_info.bw_len = make_bom(buffer, fenc);
       if (write_info.bw_len > 0) {
         // don't convert
         write_info.bw_flags = FIO_NOCONVERT | wb_flags;
@@ -3991,9 +3991,10 @@ static int buf_write_bytes(struct bw_info *ip)
 /// @param flags FIO_ flags that specify which encoding to use
 ///
 /// @return true for an error, false when it's OK.
-static bool ucs2bytes(unsigned c, char **pp, int flags) FUNC_ATTR_NONNULL_ALL
+static bool ucs2bytes(unsigned c, char **pp, int flags)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char_u *p = (char_u *)(*pp);
+  uint8_t *p = (uint8_t *)(*pp);
   bool error = false;
 
   if (flags & FIO_UCS4) {
@@ -4170,8 +4171,9 @@ static char *check_for_bom(const char *p_in, int size, int *lenp, int flags)
 /// Generate a BOM in "buf[4]" for encoding "name".
 ///
 /// @return  the length of the BOM (zero when no BOM).
-static int make_bom(char_u *buf, char *name)
+static int make_bom(char *buf_in, char *name)
 {
+  uint8_t *buf = (uint8_t *)buf_in;
   int flags = get_fio_flags(name);
 
   // Can't put a BOM in a non-Unicode file.
@@ -4187,7 +4189,7 @@ static int make_bom(char_u *buf, char *name)
   }
   char *p = (char *)buf;
   (void)ucs2bytes(0xfeff, &p, flags);
-  return (int)((char_u *)p - buf);
+  return (int)((uint8_t *)p - buf);
 }
 
 /// Shorten filename of a buffer.
@@ -4953,7 +4955,7 @@ int buf_check_timestamp(buf_T *buf)
     // Reload the buffer.
     buf_reload(buf, orig_mode, reload == RELOAD_DETECT);
     if (buf->b_p_udf && buf->b_ffname != NULL) {
-      char_u hash[UNDO_HASH_SIZE];
+      uint8_t hash[UNDO_HASH_SIZE];
 
       // Any existing undo file is unusable, write it now.
       u_compute_hash(buf, hash);

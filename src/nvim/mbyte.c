@@ -1930,16 +1930,16 @@ theend:
 
 /// @return  true if string "s" is a valid utf-8 string.
 /// When "end" is NULL stop at the first NUL.  Otherwise stop at "end".
-bool utf_valid_string(const char_u *s, const char_u *end)
+bool utf_valid_string(const char *s, const char *end)
 {
-  const char_u *p = s;
+  const uint8_t *p = (uint8_t *)s;
 
-  while (end == NULL ? *p != NUL : p < end) {
+  while (end == NULL ? *p != NUL : p < (uint8_t *)end) {
     int l = utf8len_tab_zero[*p];
     if (l == 0) {
       return false;  // invalid lead byte
     }
-    if (end != NULL && p + l > end) {
+    if (end != NULL && p + l > (uint8_t *)end) {
       return false;  // incomplete byte sequence
     }
     p++;
@@ -2454,8 +2454,8 @@ char *string_convert(const vimconv_T *const vcp, char *ptr, size_t *lenp)
 // set to the number of remaining bytes.
 char *string_convert_ext(const vimconv_T *const vcp, char *ptr, size_t *lenp, size_t *unconvlenp)
 {
-  char_u *retval = NULL;
-  char_u *d;
+  uint8_t *retval = NULL;
+  uint8_t *d;
   int c;
 
   size_t len;
@@ -2475,10 +2475,10 @@ char *string_convert_ext(const vimconv_T *const vcp, char *ptr, size_t *lenp, si
     for (size_t i = 0; i < len; i++) {
       c = (uint8_t)ptr[i];
       if (c < 0x80) {
-        *d++ = (char_u)c;
+        *d++ = (uint8_t)c;
       } else {
-        *d++ = (char_u)(0xc0 + (char_u)((unsigned)c >> 6));
-        *d++ = (char_u)(0x80 + (c & 0x3f));
+        *d++ = (uint8_t)(0xc0 + (uint8_t)((unsigned)c >> 6));
+        *d++ = (uint8_t)(0x80 + (c & 0x3f));
       }
     }
     *d = NUL;
@@ -2573,7 +2573,7 @@ char *string_convert_ext(const vimconv_T *const vcp, char *ptr, size_t *lenp, si
         }
         if (!utf_iscomposing(c)) {              // skip composing chars
           if (c < 0x100) {
-            *d++ = (char_u)c;
+            *d++ = (uint8_t)c;
           } else if (vcp->vc_fail) {
             xfree(retval);
             return NULL;
@@ -2594,7 +2594,7 @@ char *string_convert_ext(const vimconv_T *const vcp, char *ptr, size_t *lenp, si
     break;
 
   case CONV_ICONV:  // conversion with vcp->vc_fd
-    retval = (char_u *)iconv_string(vcp, ptr, len, unconvlenp, lenp);
+    retval = (uint8_t *)iconv_string(vcp, ptr, len, unconvlenp, lenp);
     break;
   }
 

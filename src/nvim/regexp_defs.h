@@ -98,11 +98,11 @@ typedef struct {
   bool re_in_use;
 
   int regstart;
-  char_u reganch;
-  char_u *regmust;
+  uint8_t reganch;
+  uint8_t *regmust;
   int regmlen;
-  char_u reghasz;
-  char_u program[];
+  uint8_t reghasz;
+  uint8_t program[];
 } bt_regprog_T;
 
 // Structure representing a NFA state.
@@ -130,7 +130,7 @@ typedef struct {
 
   int reganch;                          // pattern starts with ^
   int regstart;                         // char at start of pattern
-  char_u *match_text;      // plain text to match with
+  uint8_t *match_text;      // plain text to match with
 
   int has_zend;                         // pattern contains \ze
   int has_backref;                      // pattern contains \1 .. \9
@@ -158,19 +158,19 @@ typedef struct {
 // from 1 to zero the matches need to be freed.
 struct reg_extmatch {
   int16_t refcnt;
-  char_u *matches[NSUBEXP];
+  uint8_t *matches[NSUBEXP];
 };
 
 struct regengine {
   /// bt_regcomp or nfa_regcomp
-  regprog_T *(*regcomp)(char_u *, int);
+  regprog_T *(*regcomp)(uint8_t *, int);
   /// bt_regfree or nfa_regfree
   void (*regfree)(regprog_T *);
   /// bt_regexec_nl or nfa_regexec_nl
-  int (*regexec_nl)(regmatch_T *, char_u *, colnr_T, bool);
+  int (*regexec_nl)(regmatch_T *, uint8_t *, colnr_T, bool);
   /// bt_regexec_mult or nfa_regexec_mult
   long (*regexec_multi)(regmmatch_T *, win_T *, buf_T *, linenr_T, colnr_T, proftime_T *, int *);
-  // char_u *expr;
+  // uint8_t *expr;
 };
 
 // Flags used by vim_regsub() and vim_regsub_both()

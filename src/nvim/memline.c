@@ -179,19 +179,19 @@ enum {
 // different machines. b0_magic_* is used to check the byte order and size of
 // variables, because the rest of the swap file is not portable.
 struct block0 {
-  char_u b0_id[2];                   ///< ID for block 0: BLOCK0_ID0 and BLOCK0_ID1.
+  char b0_id[2];                     ///< ID for block 0: BLOCK0_ID0 and BLOCK0_ID1.
   char b0_version[10];               // Vim version string
-  char_u b0_page_size[4];            // number of bytes per page
-  char_u b0_mtime[4];                // last modification time of file
-  char_u b0_ino[4];                  // inode of b0_fname
-  char_u b0_pid[4];                  // process id of creator (or 0)
+  char b0_page_size[4];              // number of bytes per page
+  char b0_mtime[4];                  // last modification time of file
+  char b0_ino[4];                    // inode of b0_fname
+  char b0_pid[4];                    // process id of creator (or 0)
   char b0_uname[B0_UNAME_SIZE];      // name of user (uid if no name)
   char b0_hname[B0_HNAME_SIZE];      // host name (if it has a name)
   char b0_fname[B0_FNAME_SIZE_ORG];  // name of file being edited
   long b0_magic_long;                // check for byte order of long
   int b0_magic_int;                  // check for byte order of int
   int16_t b0_magic_short;            // check for byte order of short
-  char_u b0_magic_char;              // check for last char
+  char b0_magic_char;                // check for last char
 };
 
 // Note: b0_dirty and b0_flags are put at the end of the file name.  For very
@@ -3556,19 +3556,21 @@ static bool fnamecmp_ino(char *fname_c, char *fname_s, long ino_block0)
 
 /// Move a long integer into a four byte character array.
 /// Used for machine independency in block zero.
-static void long_to_char(long n, char_u *s)
+static void long_to_char(long n, char *s_in)
 {
-  s[0] = (char_u)(n & 0xff);
+  uint8_t *s= (uint8_t *)s_in;
+  s[0] = (uint8_t)(n & 0xff);
   n = (unsigned)n >> 8;
-  s[1] = (char_u)(n & 0xff);
+  s[1] = (uint8_t)(n & 0xff);
   n = (unsigned)n >> 8;
-  s[2] = (char_u)(n & 0xff);
+  s[2] = (uint8_t)(n & 0xff);
   n = (unsigned)n >> 8;
-  s[3] = (char_u)(n & 0xff);
+  s[3] = (uint8_t)(n & 0xff);
 }
 
-static long char_to_long(const char_u *s)
+static long char_to_long(const char *s_in)
 {
+  const uint8_t *s = (uint8_t *)s_in;
   long retval;
 
   retval = s[3];

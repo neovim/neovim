@@ -1162,8 +1162,9 @@ static bool expand_buffer = false;
 /// @param cpo_flags  Value of various flags present in &cpo
 ///
 /// @return  NULL when there is a problem.
-static char *translate_mapping(char_u *str, int cpo_flags)
+static char *translate_mapping(char *str_in, int cpo_flags)
 {
+  uint8_t *str = (uint8_t *)str_in;
   garray_T ga;
   ga_init(&ga, 1, 40);
 
@@ -1346,7 +1347,7 @@ int ExpandMappings(char *pat, regmatch_T *regmatch, int *numMatches, char ***mat
         continue;
       }
 
-      char *p = translate_mapping((char_u *)mp->m_keys, CPO_TO_CPO_FLAGS);
+      char *p = translate_mapping(mp->m_keys, CPO_TO_CPO_FLAGS);
       if (p == NULL) {
         continue;
       }

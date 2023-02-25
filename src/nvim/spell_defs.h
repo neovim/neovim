@@ -206,8 +206,8 @@ typedef struct langp_S {
 typedef struct {
   bool st_isw[256];           // flags: is word char
   bool st_isu[256];           // flags: is uppercase char
-  char_u st_fold[256];        // chars: folded case
-  char_u st_upper[256];       // chars: upper case
+  uint8_t st_fold[256];        // chars: folded case
+  uint8_t st_upper[256];       // chars: upper case
 } spelltab_T;
 
 // Use our own character-case definitions, because the current locale may

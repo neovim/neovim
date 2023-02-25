@@ -1185,7 +1185,7 @@ int eval_foldexpr(char *arg, int *cp)
       // the number.
       char *s = tv.vval.v_string;
       if (!ascii_isdigit(*s) && *s != '-') {
-        *cp = (char_u)(*s++);
+        *cp = (uint8_t)(*s++);
       }
       retval = atol(s);
     }
@@ -1597,7 +1597,7 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
   dictitem_T *di;
 
   if (lp->ll_tv == NULL) {
-    cc = (char_u)(*endp);
+    cc = (uint8_t)(*endp);
     *endp = NUL;
     if (lp->ll_blob != NULL) {
       if (op != NULL && *op != '=') {
@@ -1993,7 +1993,7 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
     }
     arg = xp->xp_pattern;
     if (*arg != NUL) {
-      while ((c = (char_u)(*++arg)) != NUL && (c == ' ' || c == '\t')) {}
+      while ((c = (uint8_t)(*++arg)) != NUL && (c == ' ' || c == '\t')) {}
     }
   }
 
@@ -2602,7 +2602,7 @@ static int eval5(char **arg, typval_T *rettv, int evaluate)
 
   // Repeat computing, until no '+', '-' or '.' is following.
   for (;;) {
-    int op = (char_u)(**arg);
+    int op = (uint8_t)(**arg);
     if (op != '+' && op != '-' && op != '.') {
       break;
     }
@@ -2747,7 +2747,7 @@ static int eval6(char **arg, typval_T *rettv, int evaluate, int want_string)
 
   // Repeat computing, until no '*', '/' or '%' is following.
   for (;;) {
-    op = (char_u)(**arg);
+    op = (uint8_t)(**arg);
     if (op != '*' && op != '/' && op != '%') {
       break;
     }
@@ -7441,9 +7441,9 @@ void ex_execute(exarg_T *eap)
       const size_t len = strlen(argstr);
       ga_grow(&ga, (int)len + 2);
       if (!GA_EMPTY(&ga)) {
-        ((char_u *)(ga.ga_data))[ga.ga_len++] = ' ';
+        ((char *)(ga.ga_data))[ga.ga_len++] = ' ';
       }
-      memcpy((char_u *)(ga.ga_data) + ga.ga_len, argstr, len + 1);
+      memcpy((char *)(ga.ga_data) + ga.ga_len, argstr, len + 1);
       if (eap->cmdidx != CMD_execute) {
         xfree((void *)argstr);
       }
@@ -7838,7 +7838,7 @@ repeat:
   // ":~" - path relative to the home directory
   // ":8" - shortname path - postponed till after
   while (src[*usedlen] == ':'
-         && ((c = (char_u)src[*usedlen + 1]) == '.' || c == '~' || c == '8')) {
+         && ((c = (uint8_t)src[*usedlen + 1]) == '.' || c == '~' || c == '8')) {
     *usedlen += 2;
     if (c == '8') {
       continue;
@@ -8084,7 +8084,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char 
         if (zero_width == regmatch.startp[0]) {
           // avoid getting stuck on a match with an empty string
           int i = utfc_ptr2len(tail);
-          memmove((char_u *)ga.ga_data + ga.ga_len, tail, (size_t)i);
+          memmove((char *)ga.ga_data + ga.ga_len, tail, (size_t)i);
           ga.ga_len += i;
           tail += i;
           continue;
@@ -8103,7 +8103,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char 
 
       // copy the text up to where the match is
       int i = (int)(regmatch.startp[0] - tail);
-      memmove((char_u *)ga.ga_data + ga.ga_len, tail, (size_t)i);
+      memmove((char *)ga.ga_data + ga.ga_len, tail, (size_t)i);
       // add the substituted text
       (void)vim_regsub(&regmatch, sub, expr,
                        (char *)ga.ga_data + ga.ga_len + i, sublen,
