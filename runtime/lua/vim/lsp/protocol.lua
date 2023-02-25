@@ -28,6 +28,10 @@ end
 ---@class lsp.MessageActionItem
 ---@field title string
 
+---@class lsp.FileEvent
+---@field uri string
+---@field type lsp.FileChangeType
+
 local constants = {
   DiagnosticSeverity = {
     -- Reports an error.
@@ -60,6 +64,7 @@ local constants = {
   },
 
   -- The file event type.
+  ---@enum lsp.FileChangeType
   FileChangeType = {
     -- The file got created.
     Created = 1,
@@ -840,6 +845,10 @@ function protocol.make_client_capabilities()
       },
       semanticTokens = {
         refreshSupport = true,
+      },
+      didChangeWatchedFiles = {
+        dynamicRegistration = true,
+        relativePatternSupport = true,
       },
     },
     experimental = nil,
