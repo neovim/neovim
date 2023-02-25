@@ -222,57 +222,53 @@ function M.register(reg, ctx)
         kind = kind,
       })
     end
+  end
 
-    local callback = function(base_dir)
-      return function(fullpath, change_type)
-        for _, watch in ipairs(watch_regs) do
-          change_type = to_lsp_change_type[change_type]
-          -- e.g. match kind with Delete bit (0b0100) to Delete change_type (3)
-          local kind_mask = bit.lshift(1, change_type - 1)
-          local change_type_match = bit.band(watch.kind, kind_mask) == kind_mask
-          if
-            base_dir == watch.base_dir
-            and M._match(watch.pattern, fullpath)
-            and change_type_match
-          then
-            local change = {
-              uri = vim.uri_from_fname(fullpath),
-              type = change_type,
-            }
+  local callback = function(base_dir)
+    return function(fullpath, change_type)
+      for _, w in ipairs(watch_regs) do
+        change_type = to_lsp_change_type[change_type]
+        -- e.g. match kind with Delete bit (0b0100) to Delete change_type (3)
+        local kind_mask = bit.lshift(1, change_type - 1)
+        local change_type_match = bit.band(w.kind, kind_mask) == kind_mask
+        if base_dir == w.base_dir and M._match(w.pattern, fullpath) and change_type_match then
+          local change = {
+            uri = vim.uri_from_fname(fullpath),
+            type = change_type,
+          }
 
-            local last_type = change_cache[client_id][change.uri]
-            if last_type ~= change.type then
-              change_queues[client_id] = change_queues[client_id] or {}
-              table.insert(change_queues[client_id], change)
-              change_cache[client_id][change.uri] = change.type
-            end
-
-            if not queue_timers[client_id] then
-              queue_timers[client_id] = vim.defer_fn(function()
-                client.notify('workspace/didChangeWatchedFiles', {
-                  changes = change_queues[client_id],
-                })
-                queue_timers[client_id] = nil
-                change_queues[client_id] = nil
-                change_cache[client_id] = nil
-              end, queue_timeout_ms)
-            end
-
-            break -- if an event matches multiple watchers, only send one notification
+          local last_type = change_cache[client_id][change.uri]
+          if last_type ~= change.type then
+            change_queues[client_id] = change_queues[client_id] or {}
+            table.insert(change_queues[client_id], change)
+            change_cache[client_id][change.uri] = change.type
           end
+
+          if not queue_timers[client_id] then
+            queue_timers[client_id] = vim.defer_fn(function()
+              client.notify('workspace/didChangeWatchedFiles', {
+                changes = change_queues[client_id],
+              })
+              queue_timers[client_id] = nil
+              change_queues[client_id] = nil
+              change_cache[client_id] = nil
+            end, queue_timeout_ms)
+          end
+
+          break -- if an event matches multiple watchers, only send one notification
         end
       end
     end
+  end
 
-    local watching = {}
-    for _, w in ipairs(watch_regs) do
-      if not watching[w.base_dir] then
-        watching[w.base_dir] = true
-        table.insert(
-          cancels[client_id][reg.id],
-          M._watchfunc(w.base_dir, { uvflags = { recursive = true } }, callback(w.base_dir))
-        )
-      end
+  local watching = {}
+  for _, w in ipairs(watch_regs) do
+    if not watching[w.base_dir] then
+      watching[w.base_dir] = true
+      table.insert(
+        cancels[client_id][reg.id],
+        M._watchfunc(w.base_dir, { uvflags = { recursive = true } }, callback(w.base_dir))
+      )
     end
   end
 end
