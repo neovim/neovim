@@ -203,6 +203,9 @@ The following deprecated functions or APIs were removed.
   changes need to be contributed there first.)
   See https://github.com/neovim/neovim/pull/20674.
 
+• Vimball support is removed.
+  - :Vimuntar command removed.
+
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*
 

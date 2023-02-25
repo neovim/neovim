@@ -47,7 +47,6 @@ augroup tar
   au BufReadCmd   *.tar.zst		call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.tzs			call tar#Browse(expand("<amatch>"))
 augroup END
-com! -nargs=? -complete=file Vimuntar call tar#Vimuntar(<q-args>)
 
 " ---------------------------------------------------------------------
 " Restoration And Modelines: {{{1
