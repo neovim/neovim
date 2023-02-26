@@ -1086,6 +1086,7 @@ end
 ---@param opts table|nil options
 ---        - reuse_win (boolean) Jump to existing window if buffer is already open.
 ---        - focus (boolean) Whether to focus/jump to location if possible. Defaults to true.
+---        - center (boolean) Whether to center the screen vertically on the location. Defaults to false.
 ---@return boolean `true` if succeeded
 function M.show_document(location, offset_encoding, opts)
   -- location may be Location or LocationLink
@@ -1130,6 +1131,9 @@ function M.show_document(location, offset_encoding, opts)
     api.nvim_win_call(win, function()
       -- Open folds under the cursor
       vim.cmd('normal! zv')
+      if opts.center then
+        vim.cmd('normal! zz')
+      end
     end)
   end
 
@@ -1141,8 +1145,9 @@ end
 ---@param location table (`Location`|`LocationLink`)
 ---@param offset_encoding "utf-8" | "utf-16" | "utf-32"
 ---@param reuse_win boolean|nil Jump to existing window if buffer is already open.
+---@param center boolean|nil Whether to center the screen vertically on the location. Defaults to false.
 ---@return boolean `true` if the jump succeeded
-function M.jump_to_location(location, offset_encoding, reuse_win)
+function M.jump_to_location(location, offset_encoding, reuse_win, center)
   if offset_encoding == nil then
     vim.notify_once(
       'jump_to_location must be called with valid offset encoding',
@@ -1150,7 +1155,11 @@ function M.jump_to_location(location, offset_encoding, reuse_win)
     )
   end
 
-  return M.show_document(location, offset_encoding, { reuse_win = reuse_win, focus = true })
+  return M.show_document(
+    location,
+    offset_encoding,
+    { reuse_win = reuse_win, center = center, focus = true }
+  )
 end
 
 --- Previews a location in a floating window

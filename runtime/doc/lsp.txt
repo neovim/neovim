@@ -1068,6 +1068,8 @@ definition({options})                               *vim.lsp.buf.definition()*
                      already open.
                    • on_list: (function) handler for list results. See
                      |lsp-on-list-handler|
+                   • center: (boolean|nil) Whether to center the screen
+                     vertically on the location. Defaults to false.
 
 document_highlight()                        *vim.lsp.buf.document_highlight()*
     Send request to the server to resolve document highlights for the current
@@ -1556,7 +1558,7 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
         'shiftwidth'
 
                                              *vim.lsp.util.jump_to_location()*
-jump_to_location({location}, {offset_encoding}, {reuse_win})
+jump_to_location({location}, {offset_encoding}, {reuse_win}, {center})
     Jumps to a location.
 
     Parameters: ~
@@ -1564,6 +1566,8 @@ jump_to_location({location}, {offset_encoding}, {reuse_win})
       • {offset_encoding}  "utf-8" | "utf-16" | "utf-32"
       • {reuse_win}        (boolean|nil) Jump to existing window if buffer is
                            already open.
+      • {center}           (boolean|nil) Whether to center the screen
+                           vertically on the location. Defaults to false.
 
     Return: ~
         (boolean) `true` if the jump succeeded
@@ -1790,6 +1794,8 @@ show_document({location}, {offset_encoding}, {opts})
                              buffer is already open.
                            • focus (boolean) Whether to focus/jump to location
                              if possible. Defaults to true.
+                           • center (boolean) Whether to center the screen
+                             vertically on the location. Defaults to false.
 
     Return: ~
         (boolean) `true` if succeeded

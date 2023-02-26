@@ -380,14 +380,14 @@ local function location_handler(_, result, ctx, config)
       config.on_list({ title = title, items = items })
     else
       if #result == 1 then
-        util.jump_to_location(result[1], client.offset_encoding, config.reuse_win)
+        util.jump_to_location(result[1], client.offset_encoding, config.reuse_win, config.center)
         return
       end
       vim.fn.setqflist({}, ' ', { title = title, items = items })
       api.nvim_command('botright copen')
     end
   else
-    util.jump_to_location(result, client.offset_encoding, config.reuse_win)
+    util.jump_to_location(result, client.offset_encoding, config.reuse_win, config.center)
   end
 end
 

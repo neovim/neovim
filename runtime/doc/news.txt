@@ -171,6 +171,9 @@ The following new APIs or features were added.
 
 • |vim.treesitter.foldexpr()| can be used for 'foldexpr' to use treesitter for folding.
 
+• |vim.lsp.buf.definition()| can now take a new boolean option "center" to
+  center the display after opening the definition.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 

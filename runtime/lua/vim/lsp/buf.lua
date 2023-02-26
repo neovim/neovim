@@ -71,6 +71,8 @@ end
 ---@param options table|nil additional options
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
+---     - center: (boolean|nil) Whether to center the screen
+---               vertically on the location. Defaults to false.
 function M.definition(options)
   local params = util.make_position_params()
   request_with_options('textDocument/definition', params, options)
