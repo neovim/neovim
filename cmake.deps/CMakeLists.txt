@@ -6,6 +6,10 @@ if(POLICY CMP0135)
   cmake_policy(SET CMP0135 NEW)
 endif()
 
+if(CYGWIN OR MSYS)
+  message(FATAL_ERROR ".deps construction is not supported by this system. Install the individual dependent libraries.")
+endif()
+
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${PROJECT_SOURCE_DIR}/../cmake")
 
