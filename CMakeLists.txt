@@ -17,6 +17,10 @@ if(POLICY CMP0075)
   cmake_policy(SET CMP0075 NEW)
 endif()
 
+if(MINGW)
+  message(FATAL_ERROR "Builds on this system are not supported.")
+endif()
+
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
