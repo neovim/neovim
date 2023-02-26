@@ -37,31 +37,34 @@ if (vim.g.man_redraw_resized or 1) == 1 then
   local resize_timer, resized_winids
 
   local function redraw_manpages()
-    local winid = vim.api.nvim_get_current_win()
-    if
-      resized_winids == nil
-      or vim.b.pager
-      or not vim.api.nvim_win_is_valid(winid)
-      or not vim.tbl_contains(resized_winids, winid)
-    then
+    if resized_winids == nil then
       return
     end
-    local ref = vim.fn.matchstr(vim.fn.bufname(), 'man://\\zs.*')
-    if ref == '' then
-      return
+    local current_winid = vim.api.nvim_get_current_win()
+    for _, winid in ipairs(resized_winids) do
+      local buf = vim.api.nvim_win_get_buf(winid)
+      if
+        vim.api.nvim_win_is_valid(winid)
+        and vim.api.nvim_buf_get_option(buf, 'filetype') == 'man'
+        and vim.api.nvim_buf_get_var(buf, 'pager') == false
+      then
+        local bufname = vim.api.nvim_buf_get_name(buf)
+        local ref = vim.fn.matchstr(bufname, 'man://\\zs.*')
+        if ref ~= '' then
+          vim.api.nvim_set_current_win(winid)
+          local winview = vim.fn.winsaveview()
+          pcall(require('man').read_page, ref)
+          vim.fn.winrestview(winview)
+        end
+      end
     end
-    local winview = vim.fn.winsaveview()
-    pcall(require('man').read_page, ref)
-    vim.fn.winrestview(winview)
+    vim.api.nvim_set_current_win(current_winid)
     resize_timer, resized_winids = nil, nil
   end
 
   vim.api.nvim_create_autocmd('WinResized', {
     group = augroup,
     callback = function()
-      if vim.bo.filetype ~= 'man' then
-        return
-      end
       if resize_timer ~= nil then
         resize_timer:stop()
       end
