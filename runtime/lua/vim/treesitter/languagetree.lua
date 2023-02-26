@@ -86,6 +86,8 @@ local TSCallbackNames = {
 ---@field private _valid boolean|table<integer,boolean> If the parsed tree is valid
 ---@field private _logger? fun(logtype: string, msg: string)
 ---@field private _logfile? file*
+---@field private _injections_by_lang? table<string,Range6[][]>
+---@field private _injections_processed? boolean
 local LanguageTree = {}
 
 ---@class LanguageTreeOpts
@@ -172,6 +174,7 @@ end
 ---@generic R1, R2, R3
 ---@param f fun(): R1, R2, R2
 ---@return integer, R1, R2, R3
+---@overload fun(_: fun()): integer
 local function tcall(f, ...)
   local start = vim.uv.hrtime()
   ---@diagnostic disable-next-line
@@ -249,12 +252,19 @@ end
 function LanguageTree:is_valid(exclude_children)
   local valid = self._valid
 
+  if type(valid) == 'boolean' then
+    return valid
+  end
+
   if type(valid) == 'table' then
     for _, v in ipairs(valid) do
       if not v then
         return false
       end
     end
+    -- Doesn't contain any `false`, so compress
+    self._valid = true
+    valid = self._valid
   end
 
   if not exclude_children then
@@ -280,13 +290,75 @@ function LanguageTree:source()
   return self._source
 end
 
+--- @private
+--- Continuously run function fn. Each call is scheduled on different
+--- iteration of the event loop. Return false to break.
+--- @param fn fun(): boolean
+local function schedule_loop(fn)
+  coroutine.wrap(function()
+    local co = coroutine.running()
+    while fn() ~= false do
+      vim.schedule(function()
+        coroutine.resume(co)
+      end)
+      coroutine.yield()
+    end
+  end)()
+end
+
+--- @return integer
+function LanguageTree:_changedtick()
+  --- @type integer
+  return vim.b[self._source].changedtick
+end
+
+--- @class LanguageTreeParseOpts
+--- @field max_loop_time? integer
+--- @field callback? fun(trees: TSTree[])
+
 --- Parses all defined regions using a treesitter parser
 --- for the language this tree represents.
 --- This will run the injection query for this language to
 --- determine if any child languages should be created.
 ---
----@return TSTree[]
-function LanguageTree:parse()
+---@param opts LanguageTreeParseOpts|nil Options:
+---            - max_loop_time (integer|nil): Maximum time parsing can run on
+---              the event loop per iteration. If parsing reaches or exceeds
+---              this time, parsing is paused and continued in the next loop
+---              iteration. If source is a buffer, parsing is cancelled when
+---              the buffer's changedtick is updated. This causes this function
+---              to be non-blocking and thus will return nil.
+---            - callback (function|nil): Called when parsing completes,
+---              passed with TSTree[].
+---@return TSTree[]|nil
+function LanguageTree:parse(opts)
+  if opts and opts.max_loop_time then
+    local ct = self:_changedtick()
+    schedule_loop(function()
+      if self:_changedtick() ~= ct then
+        -- Buffer changed; cancel parse
+        return false
+      end
+      local trees = self:_parse(opts.max_loop_time)
+      if trees and opts and opts.callback then
+        opts.callback(trees)
+      end
+      return trees == nil
+    end)
+    return
+  end
+
+  local trees = assert(self:_parse())
+  if opts and opts.callback then
+    opts.callback(trees)
+  end
+  return trees
+end
+
+--- @package
+--- @param timeout integer|nil timeout in ms
+--- @return TSTree[]|nil
+function LanguageTree:_parse(timeout)
   if self:is_valid() then
     self:_log('valid')
     return self._trees
@@ -298,20 +370,54 @@ function LanguageTree:parse()
   local regions_parsed = 0
   local total_parse_time = 0
 
+  --- @private
+  local function check_timeout(t)
+    if not timeout then
+      return false
+    end
+    if t then
+      timeout = math.max(timeout - t, 0)
+    end
+    return timeout == 0
+  end
+
   --- At least 1 region is invalid
   if not self:is_valid(true) then
+    if type(self._valid) ~= 'table' then
+      self._valid = {}
+      for i = 1, #self:included_regions() do
+        self._valid[i] = false
+      end
+    end
+
     -- If there are no ranges, set to an empty list
     -- so the included ranges in the parser are cleared.
     for i, ranges in ipairs(self:included_regions()) do
-      if not self._valid or not self._valid[i] then
+      if not self._valid[i] then
         self._parser:set_included_ranges(ranges)
+        if timeout then
+          self._parser:set_timeout(timeout * 1000)  -- ms -> micros
+        else
+          self._parser:set_timeout(0)  -- ms -> micros
+        end
         local parse_time, tree, tree_changes =
           tcall(self._parser.parse, self._parser, self._trees[i], self._source, true)
+
+        if check_timeout(parse_time) or not tree then
+          return
+        end
+
+        self._valid[i] = true
 
         -- Pass ranges if this is an initial parse
         local cb_changes = self._trees[i] and tree_changes or tree:included_ranges(true)
 
+        -- Did a parse, refresh injections
+        -- TODO(lewis6991): only refresh on tree changes/deletions/additions
+        self._injections_by_lang = nil
+
         self:_do_callback('changedtree', cb_changes, tree)
+
         self._trees[i] = tree
         vim.list_extend(changes, tree_changes)
 
@@ -321,31 +427,41 @@ function LanguageTree:parse()
     end
   end
 
-  local seen_langs = {} ---@type table<string,boolean>
-
-  local query_time, injections_by_lang = tcall(self._get_injections, self)
-  for lang, injection_ranges in pairs(injections_by_lang) do
-    local has_lang = pcall(language.add, lang)
-
-    -- Child language trees should just be ignored if not found, since
-    -- they can depend on the text of a node. Intermediate strings
-    -- would cause errors for unknown parsers.
-    if has_lang then
-      local child = self._children[lang]
-
-      if not child then
-        child = self:add_child(lang)
-      end
-
-      child:set_included_regions(injection_ranges)
-      seen_langs[lang] = true
+  local query_time = 0 --- @type integer
+  if not self._injections_by_lang then
+    -- TODO(lewis6991): queries should also support a timeout.
+    query_time, self._injections_by_lang = tcall(self._get_injections, self)
+    self._injections_processed = false
+    if check_timeout(query_time) then
+      return
     end
   end
 
-  for lang, _ in pairs(self._children) do
-    if not seen_langs[lang] then
-      self:remove_child(lang)
-    end
+  local injection_process_time = 0 --- @type integer
+
+  if not self._injections_processed then
+    injection_process_time = tcall(function()
+      local seen_langs = {} ---@type table<string,boolean>
+
+      for lang, injection_ranges in pairs(self._injections_by_lang) do
+        if pcall(language.add, lang) then
+          self._children[lang] = self._children[lang] or self:add_child(lang)
+          self._children[lang]:set_included_regions(injection_ranges)
+          seen_langs[lang] = true
+        end
+      end
+
+      for lang, _ in pairs(self._children) do
+        if not seen_langs[lang] then
+          self:remove_child(lang)
+        end
+      end
+    end)
+    self._injections_processed = true
+  end
+
+  if check_timeout(injection_process_time) then
+    return
   end
 
   self:_log({
@@ -356,8 +472,17 @@ function LanguageTree:parse()
   })
 
   self:for_each_child(function(child)
-    child:parse()
+    local ctime = tcall(function()
+      child:_parse(timeout)
+    end)
+    if check_timeout(ctime) then
+      return false
+    end
   end)
+
+  if check_timeout() then
+    return
+  end
 
   self._valid = true
 
@@ -366,11 +491,13 @@ end
 
 --- Invokes the callback for each |LanguageTree| and its children recursively
 ---
----@param fn fun(tree: LanguageTree, lang: string)
+---@param fn fun(tree: LanguageTree, lang: string): boolean?
 ---@param include_self boolean|nil Whether to include the invoking tree in the results
 function LanguageTree:for_each_child(fn, include_self)
   if include_self then
-    fn(self, self._lang)
+    if fn(self, self._lang) == false then
+      return
+    end
   end
 
   for _, child in pairs(self._children) do
@@ -511,7 +638,7 @@ end
 --- This allows for embedded languages to be parsed together across different
 --- nodes, which is useful for templating languages like ERB and EJS.
 ---
----@private
+---@package
 ---@param new_regions Range6[][] List of regions this tree should manage and parse.
 function LanguageTree:set_included_regions(new_regions)
   self._has_regions = true
