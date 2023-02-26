@@ -3505,6 +3505,7 @@ static varnumber_T indexof_eval_expr(typval_T *expr)
 
   bool error = false;
   varnumber_T found = tv_get_bool_chk(&newtv, &error);
+  tv_clear(&newtv);
 
   return error ? false : found;
 }
@@ -3566,7 +3567,10 @@ static varnumber_T indexof_list(list_T *l, varnumber_T startidx, typval_T *expr)
     set_vim_var_nr(VV_KEY, idx);
     tv_copy(TV_LIST_ITEM_TV(item), get_vim_var_tv(VV_VAL));
 
-    if (indexof_eval_expr(expr)) {
+    bool found = indexof_eval_expr(expr);
+    tv_clear(get_vim_var_tv(VV_VAL));
+
+    if (found) {
       return idx;
     }
   }

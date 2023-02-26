@@ -372,6 +372,7 @@ func Test_indexof()
   call assert_equal(-1, indexof(b, {i, v -> v == 0x1}))
   call assert_equal(1, indexof(b, "v:val == 0xad"))
   call assert_equal(-1, indexof(b, "v:val == 0xff"))
+  call assert_equal(-1, indexof(b, {_, v -> "v == 0xad"}))
 
   call assert_equal(-1, indexof(0z, "v:val == 0x0"))
   call assert_equal(-1, indexof(v:_null_blob, "v:val == 0xde"))
