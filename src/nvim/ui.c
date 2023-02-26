@@ -64,31 +64,31 @@ static int pending_has_mouse = -1;
 static Array call_buf = ARRAY_DICT_INIT;
 
 #if MIN_LOG_LEVEL > LOGLVL_DBG
-# define UI_LOG(funname)
+# define ui_log(funname)
 #else
 static size_t uilog_seen = 0;
-static char uilog_last_event[1024] = { 0 };
+static const char *uilog_last_event = NULL;
 
+static void ui_log(const char *funname)
+{
 # ifndef EXITFREE
-#  define entered_free_all_mem false
+  if (entered_free_all_mem) {
+    return;  // do nothing, we cannot log now
+  }
 # endif
 
-# define UI_LOG(funname) \
-  do { \
-    if (entered_free_all_mem) { \
-      /* do nothing, we cannot log now */ \
-    } else if (strequal(uilog_last_event, STR(funname))) { \
-      uilog_seen++; \
-    } else { \
-      if (uilog_seen > 0) { \
-        logmsg(LOGLVL_DBG, "UI: ", NULL, -1, true, \
-               "%s (+%zu times...)", uilog_last_event, uilog_seen); \
-      } \
-      logmsg(LOGLVL_DBG, "UI: ", NULL, -1, true, STR(funname)); \
-      uilog_seen = 0; \
-      xstrlcpy(uilog_last_event, STR(funname), sizeof(uilog_last_event)); \
-    } \
-  } while (0)
+  if (uilog_last_event == funname) {
+    uilog_seen++;
+  } else {
+    if (uilog_seen > 0) {
+      logmsg(LOGLVL_DBG, "UI: ", NULL, -1, true,
+             "%s (+%zu times...)", uilog_last_event, uilog_seen);
+    }
+    logmsg(LOGLVL_DBG, "UI: ", NULL, -1, true, "%s", funname);
+    uilog_seen = 0;
+    uilog_last_event = funname;
+  }
+}
 #endif
 
 // UI_CALL invokes a function on all registered UI instances.
@@ -105,7 +105,7 @@ static char uilog_last_event[1024] = { 0 };
       } \
     } \
     if (any_call) { \
-      UI_LOG(funname); \
+      ui_log(STR(funname)); \
     } \
   } while (0)
 
@@ -654,6 +654,8 @@ void ui_call_event(char *name, Array args)
   if (!handled) {
     UI_CALL(true, event, ui, name, args);
   }
+
+  ui_log(name);
 }
 
 void ui_cb_update_ext(void)
