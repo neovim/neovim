@@ -135,6 +135,7 @@ endif()
 option(LOG_LIST_ACTIONS "Add list actions logging" OFF)
 
 option(CLANG_ASAN_UBSAN "Enable Clang address & undefined behavior sanitizer for nvim binary." OFF)
+option(LOG_DEBUG "Enable debug log messages even in a release build" OFF)
 option(CLANG_MSAN "Enable Clang memory sanitizer for nvim binary." OFF)
 option(CLANG_TSAN "Enable Clang thread sanitizer for nvim binary." OFF)
 

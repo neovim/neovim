@@ -209,7 +209,7 @@ Channel *channel_alloc(ChannelStreamType type)
 
 void channel_create_event(Channel *chan, const char *ext_source)
 {
-#if MIN_LOG_LEVEL <= LOGLVL_INF
+#ifdef NVIM_LOG_DEBUG
   const char *source;
 
   if (ext_source) {

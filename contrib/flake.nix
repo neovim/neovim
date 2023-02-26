@@ -33,7 +33,6 @@
           NIX_CFLAGS_COMPILE = " -ggdb -Og";
 
           cmakeBuildType = "Debug";
-          cmakeFlags = oa.cmakeFlags ++ [ "-DMIN_LOG_LEVEL=0" ];
 
           disallowedReferences = [ ];
         });
@@ -45,7 +44,6 @@
         }).overrideAttrs (oa: {
           cmakeFlags = oa.cmakeFlags ++ [
             "-DLUACHECK_PRG=${luacheck}/bin/luacheck"
-            "-DMIN_LOG_LEVEL=0"
             "-DENABLE_LTO=OFF"
           ] ++ final.lib.optionals final.stdenv.isLinux [
             # https://github.com/google/sanitizers/wiki/AddressSanitizerFlags

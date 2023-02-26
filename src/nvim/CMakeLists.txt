@@ -373,19 +373,16 @@ else()
     ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion -Wno-strict-prototypes -Wno-misleading-indentation")
 endif()
 
-# Log level (MIN_LOG_LEVEL in log.h)
+# Log level (NVIM_LOG_DEBUG in log.h)
 if($ENV{CI})
-  set(MIN_LOG_LEVEL 3)
-endif()
-if("${MIN_LOG_LEVEL}" MATCHES "^$")
-  # Minimize logging for release-type builds.
-  target_compile_definitions(main_lib INTERFACE MIN_LOG_LEVEL=$<IF:$<CONFIG:Debug>,1,3>)
+  # Don't debug log on CI, it gets too verbose in the main build log.
+  # TODO(bfredl): debug log level also exposes some errors with EXITFREE in ASAN build.
+  set(LOG_DEBUG FALSE)
+elseif(LOG_DEBUG)
+  target_compile_definitions(nvim PRIVATE NVIM_LOG_DEBUG)
 else()
-  if(NOT MIN_LOG_LEVEL MATCHES "^[0-3]$")
-    message(FATAL_ERROR "invalid MIN_LOG_LEVEL: " ${MIN_LOG_LEVEL})
-  endif()
-  message(STATUS "MIN_LOG_LEVEL=${MIN_LOG_LEVEL}")
-  target_compile_definitions(main_lib INTERFACE MIN_LOG_LEVEL=${MIN_LOG_LEVEL})
+  # Minimize logging for release-type builds.
+  target_compile_definitions(nvim PRIVATE $<$<CONFIG:Debug>:NVIM_LOG_DEBUG>)
 endif()
 
 if(CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)

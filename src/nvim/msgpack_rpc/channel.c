@@ -39,7 +39,73 @@
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"
 
-#if MIN_LOG_LEVEL > LOGLVL_DBG
+#ifdef NVIM_LOG_DEBUG
+# define REQ "[request]  "
+# define RES "[response] "
+# define NOT "[notify]   "
+# define ERR "[error]    "
+
+// Cannot define array with negative offsets, so this one is needed to be added
+// to MSGPACK_UNPACK_\* values.
+# define MUR_OFF 2
+
+static const char *const msgpack_error_messages[] = {
+  [MSGPACK_UNPACK_EXTRA_BYTES + MUR_OFF] = "extra bytes found",
+  [MSGPACK_UNPACK_CONTINUE + MUR_OFF] = "incomplete string",
+  [MSGPACK_UNPACK_PARSE_ERROR + MUR_OFF] = "parse error",
+  [MSGPACK_UNPACK_NOMEM_ERROR + MUR_OFF] = "not enough memory",
+};
+
+static void log_close(FILE *f)
+{
+  fputc('\n', f);
+  fflush(f);
+  fclose(f);
+  log_unlock();
+}
+
+static void log_server_msg(uint64_t channel_id, msgpack_sbuffer *packed)
+{
+  msgpack_unpacked unpacked;
+  msgpack_unpacked_init(&unpacked);
+  DLOGN("RPC ->ch %" PRIu64 ": ", channel_id);
+  const msgpack_unpack_return result =
+    msgpack_unpack_next(&unpacked, packed->data, packed->size, NULL);
+  switch (result) {
+  case MSGPACK_UNPACK_SUCCESS: {
+    uint64_t type = unpacked.data.via.array.ptr[0].via.u64;
+    log_lock();
+    FILE *f = open_log_file();
+    fprintf(f, type ? (type == 1 ? RES : NOT) : REQ);
+    msgpack_object_print(f, unpacked.data);
+    log_close(f);
+    msgpack_unpacked_destroy(&unpacked);
+    break;
+  }
+  case MSGPACK_UNPACK_EXTRA_BYTES:
+  case MSGPACK_UNPACK_CONTINUE:
+  case MSGPACK_UNPACK_PARSE_ERROR:
+  case MSGPACK_UNPACK_NOMEM_ERROR: {
+    log_lock();
+    FILE *f = open_log_file();
+    fprintf(f, ERR);
+    fprintf(f, "%s", msgpack_error_messages[result + MUR_OFF]);
+    log_close(f);
+    break;
+  }
+  }
+}
+
+static void log_client_msg(uint64_t channel_id, bool is_request, const char *name)
+{
+  DLOGN("RPC <-ch %" PRIu64 ": ", channel_id);
+  log_lock();
+  FILE *f = open_log_file();
+  fprintf(f, "%s: %s", is_request ? REQ : RES, name);
+  log_close(f);
+}
+
+#else
 # define log_client_msg(...)
 # define log_server_msg(...)
 #endif
@@ -71,7 +137,7 @@ void rpc_start(Channel *channel)
 
   if (channel->streamtype != kChannelStreamInternal) {
     Stream *out = channel_outstream(channel);
-#if MIN_LOG_LEVEL <= LOGLVL_DBG
+#ifdef NVIM_LOG_DEBUG
     Stream *in = channel_instream(channel);
     DLOG("rpc ch %" PRIu64 " in-stream=%p out-stream=%p", channel->id,
          (void *)in, (void *)out);
@@ -668,70 +734,3 @@ const char *rpc_client_name(Channel *chan)
 
   return NULL;
 }
-
-#if MIN_LOG_LEVEL <= LOGLVL_DBG
-# define REQ "[request]  "
-# define RES "[response] "
-# define NOT "[notify]   "
-# define ERR "[error]    "
-
-// Cannot define array with negative offsets, so this one is needed to be added
-// to MSGPACK_UNPACK_\* values.
-# define MUR_OFF 2
-
-static const char *const msgpack_error_messages[] = {
-  [MSGPACK_UNPACK_EXTRA_BYTES + MUR_OFF] = "extra bytes found",
-  [MSGPACK_UNPACK_CONTINUE + MUR_OFF] = "incomplete string",
-  [MSGPACK_UNPACK_PARSE_ERROR + MUR_OFF] = "parse error",
-  [MSGPACK_UNPACK_NOMEM_ERROR + MUR_OFF] = "not enough memory",
-};
-
-static void log_server_msg(uint64_t channel_id, msgpack_sbuffer *packed)
-{
-  msgpack_unpacked unpacked;
-  msgpack_unpacked_init(&unpacked);
-  DLOGN("RPC ->ch %" PRIu64 ": ", channel_id);
-  const msgpack_unpack_return result =
-    msgpack_unpack_next(&unpacked, packed->data, packed->size, NULL);
-  switch (result) {
-  case MSGPACK_UNPACK_SUCCESS: {
-    uint64_t type = unpacked.data.via.array.ptr[0].via.u64;
-    log_lock();
-    FILE *f = open_log_file();
-    fprintf(f, type ? (type == 1 ? RES : NOT) : REQ);
-    msgpack_object_print(f, unpacked.data);
-    log_close(f);
-    msgpack_unpacked_destroy(&unpacked);
-    break;
-  }
-  case MSGPACK_UNPACK_EXTRA_BYTES:
-  case MSGPACK_UNPACK_CONTINUE:
-  case MSGPACK_UNPACK_PARSE_ERROR:
-  case MSGPACK_UNPACK_NOMEM_ERROR: {
-    log_lock();
-    FILE *f = open_log_file();
-    fprintf(f, ERR);
-    fprintf(f, "%s", msgpack_error_messages[result + MUR_OFF]);
-    log_close(f);
-    break;
-  }
-  }
-}
-
-static void log_client_msg(uint64_t channel_id, bool is_request, const char *name)
-{
-  DLOGN("RPC <-ch %" PRIu64 ": ", channel_id);
-  log_lock();
-  FILE *f = open_log_file();
-  fprintf(f, "%s: %s", is_request ? REQ : RES, name);
-  log_close(f);
-}
-
-static void log_close(FILE *f)
-{
-  fputc('\n', f);
-  fflush(f);
-  fclose(f);
-  log_unlock();
-}
-#endif

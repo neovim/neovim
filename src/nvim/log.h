@@ -17,54 +17,29 @@
 # define NVIM_PROBE(name, n, ...)
 #endif
 
-#define LOGLVL_TRC 0
 #define LOGLVL_DBG 1
 #define LOGLVL_INF 2
 #define LOGLVL_WRN 3
 #define LOGLVL_ERR 4
 
-#define DLOG(...)
-#define DLOGN(...)
-#define ILOG(...)
-#define ILOGN(...)
-#define WLOG(...)
-#define WLOGN(...)
-#define ELOG(...)
-#define ELOGN(...)
-
-#ifndef MIN_LOG_LEVEL
-# define MIN_LOG_LEVEL LOGLVL_INF
-#endif
-
 #define LOG(level, ...) logmsg((level), NULL, __func__, __LINE__, true, __VA_ARGS__)
 
-#if MIN_LOG_LEVEL <= LOGLVL_DBG
-# undef DLOG
-# undef DLOGN
+#ifdef NVIM_LOG_DEBUG
 # define DLOG(...) logmsg(LOGLVL_DBG, NULL, __func__, __LINE__, true, __VA_ARGS__)
 # define DLOGN(...) logmsg(LOGLVL_DBG, NULL, __func__, __LINE__, false, __VA_ARGS__)
-#endif
-
-#if MIN_LOG_LEVEL <= LOGLVL_INF
-# undef ILOG
-# undef ILOGN
 # define ILOG(...) logmsg(LOGLVL_INF, NULL, __func__, __LINE__, true, __VA_ARGS__)
 # define ILOGN(...) logmsg(LOGLVL_INF, NULL, __func__, __LINE__, false, __VA_ARGS__)
+#else
+# define DLOG(...)
+# define DLOGN(...)
+# define ILOG(...)
+# define ILOGN(...)
 #endif
 
-#if MIN_LOG_LEVEL <= LOGLVL_WRN
-# undef WLOG
-# undef WLOGN
-# define WLOG(...) logmsg(LOGLVL_WRN, NULL, __func__, __LINE__, true, __VA_ARGS__)
-# define WLOGN(...) logmsg(LOGLVL_WRN, NULL, __func__, __LINE__, false, __VA_ARGS__)
-#endif
-
-#if MIN_LOG_LEVEL <= LOGLVL_ERR
-# undef ELOG
-# undef ELOGN
-# define ELOG(...) logmsg(LOGLVL_ERR, NULL, __func__, __LINE__, true, __VA_ARGS__)
-# define ELOGN(...) logmsg(LOGLVL_ERR, NULL, __func__, __LINE__, false, __VA_ARGS__)
-#endif
+#define WLOG(...) logmsg(LOGLVL_WRN, NULL, __func__, __LINE__, true, __VA_ARGS__)
+#define WLOGN(...) logmsg(LOGLVL_WRN, NULL, __func__, __LINE__, false, __VA_ARGS__)
+#define ELOG(...) logmsg(LOGLVL_ERR, NULL, __func__, __LINE__, true, __VA_ARGS__)
+#define ELOGN(...) logmsg(LOGLVL_ERR, NULL, __func__, __LINE__, false, __VA_ARGS__)
 
 #ifdef HAVE_EXECINFO_BACKTRACE
 # define LOG_CALLSTACK() log_callstack(__func__, __LINE__)
