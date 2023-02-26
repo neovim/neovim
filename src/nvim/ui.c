@@ -71,7 +71,7 @@ static const char *uilog_last_event = NULL;
 
 static void ui_log(const char *funname)
 {
-# ifndef EXITFREE
+# ifdef EXITFREE
   if (entered_free_all_mem) {
     return;  // do nothing, we cannot log now
   }
