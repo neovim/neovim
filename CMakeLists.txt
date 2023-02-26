@@ -38,23 +38,9 @@ endif()
 
 # Prefer our bundled versions of dependencies.
 if(DEFINED ENV{DEPS_BUILD_DIR})
-  if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
-    # pkg-config 29.2 has a bug on OpenBSD which causes it to drop any paths that
-    # *contain* system include paths. To avoid this, we prefix what would be
-    # "/usr/include" as "/_usr/include".
-    # This check is also performed in the cmake.deps/CMakeLists.txt and in the
-    # else clause following here.
-    # https://github.com/neovim/neovim/pull/14745#issuecomment-860201794
-    set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/_usr" CACHE PATH "Path prefix for finding dependencies")
-  else()
-    set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
-  endif()
+  set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
 else()
-  if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
-    set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/_usr" CACHE PATH "Path prefix for finding dependencies")
-  else()
-    set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
-  endif()
+  set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
   # When running from within CLion or Visual Studio,
   # build bundled dependencies automatically.
   if(NOT EXISTS ${DEPS_PREFIX}
@@ -84,7 +70,6 @@ else()
 endif()
 
 list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX})
-set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${DEPS_PREFIX}/lib/pkgconfig")
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   # If the macOS deployment target is not set manually (via $MACOSX_DEPLOYMENT_TARGET),
