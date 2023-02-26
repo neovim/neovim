@@ -3488,6 +3488,115 @@ static void f_index(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 }
 
+/// Evaluate "expr" with the v:key and v:val arguments and return the result.
+/// The expression is expected to return a boolean value.  The caller should set
+/// the VV_KEY and VV_VAL vim variables before calling this function.
+static varnumber_T indexof_eval_expr(typval_T *expr)
+{
+  typval_T argv[3];
+  argv[0] = *get_vim_var_tv(VV_KEY);
+  argv[1] = *get_vim_var_tv(VV_VAL);
+  typval_T newtv;
+  newtv.v_type = VAR_UNKNOWN;
+
+  if (eval_expr_typval(expr, argv, 2, &newtv) == FAIL) {
+    return false;
+  }
+
+  bool error = false;
+  varnumber_T found = tv_get_bool_chk(&newtv, &error);
+
+  return error ? false : found;
+}
+
+/// "indexof()" function
+static void f_indexof(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  rettv->vval.v_number = -1;
+
+  if (tv_check_for_list_or_blob_arg(argvars, 0) == FAIL
+      || tv_check_for_string_or_func_arg(argvars, 1) == FAIL
+      || tv_check_for_opt_dict_arg(argvars, 2) == FAIL) {
+    return;
+  }
+
+  if ((argvars[1].v_type == VAR_STRING && argvars[1].vval.v_string == NULL)
+      || (argvars[1].v_type == VAR_FUNC && argvars[1].vval.v_partial == NULL)) {
+    return;
+  }
+
+  varnumber_T startidx = 0;
+  varnumber_T idx = 0;
+  if (argvars[2].v_type == VAR_DICT) {
+    startidx = tv_dict_get_number_def(argvars[2].vval.v_dict, "startidx", 0);
+  }
+
+  typval_T save_val;
+  typval_T save_key;
+  prepare_vimvar(VV_VAL, &save_val);
+  prepare_vimvar(VV_KEY, &save_key);
+
+  // We reset "did_emsg" to be able to detect whether an error occurred
+  // during evaluation of the expression.
+  const int save_did_emsg = did_emsg;
+  did_emsg = false;
+
+  if (argvars[0].v_type == VAR_BLOB) {
+    blob_T *const b = argvars[0].vval.v_blob;
+    if (b == NULL) {
+      goto theend;
+    }
+    if (startidx < 0) {
+      startidx = tv_blob_len(b) + startidx;
+      if (startidx < 0) {
+        startidx = 0;
+      }
+    }
+
+    for (idx = startidx; idx < tv_blob_len(b); idx++) {
+      set_vim_var_nr(VV_KEY, idx);
+      set_vim_var_nr(VV_VAL, tv_blob_get(b, (int)idx));
+
+      if (indexof_eval_expr(&argvars[1])) {
+        rettv->vval.v_number = idx;
+        break;
+      }
+    }
+  } else {
+    list_T *const l = argvars[0].vval.v_list;
+    if (l == NULL) {
+      goto theend;
+    }
+
+    listitem_T *item;
+    if (startidx == 0) {
+      item = tv_list_first(l);
+    } else {
+      // Start at specified item.  Use the cached index that list_find()
+      // sets, so that a negative number also works.
+      item = tv_list_find(l, (int)startidx);
+      if (item != NULL) {
+        idx = l->lv_idx;
+      }
+    }
+
+    for (; item != NULL; item = TV_LIST_ITEM_NEXT(l, item), idx++) {
+      set_vim_var_nr(VV_KEY, idx);
+      tv_copy(TV_LIST_ITEM_TV(item), get_vim_var_tv(VV_VAL));
+
+      if (indexof_eval_expr(&argvars[1])) {
+        rettv->vval.v_number = idx;
+        break;
+      }
+    }
+  }
+
+theend:
+  restore_vimvar(VV_KEY, &save_key);
+  restore_vimvar(VV_VAL, &save_val);
+  did_emsg |= save_did_emsg;
+}
+
 static bool inputsecret_flag = false;
 
 /// "input()" function

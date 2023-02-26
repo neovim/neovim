@@ -657,14 +657,16 @@ List manipulation:					*list-functions*
 	map()			change each List item
 	reduce()		reduce a List to a value
 	sort()			sort a List
-	reverse()		reverse the order of a List
+	reverse()		reverse the order of a List or Blob
 	uniq()			remove copies of repeated adjacent items
 	split()			split a String into a List
 	join()			join List items into a String
 	range()			return a List with a sequence of numbers
 	string()		String representation of a List
 	call()			call a function with List as arguments
-	index()			index of a value in a List
+	index()			index of a value in a List or Blob
+	indexof()		index in a List or Blob where an expression
+				evaluates to true
 	max()			maximum value in a List
 	min()			minimum value in a List
 	count()			count number of times a value appears in a List
