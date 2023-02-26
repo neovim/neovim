@@ -4710,7 +4710,7 @@ static void nv_vreplace(cmdarg_T *cap)
     return;
   }
 
-  if (checkclearopq(cap->oap)) {
+  if (checkclearopq(cap->oap) || cap->extra_char == ESC) {
     return;
   }
 
@@ -4719,6 +4719,11 @@ static void nv_vreplace(cmdarg_T *cap)
   } else {
     if (cap->extra_char == Ctrl_V) {          // get another character
       cap->extra_char = get_literal(false);
+    }
+    if (cap->extra_char < ' ') {
+      // Prefix a control character with CTRL-V to avoid it being used as
+      // a command.
+      stuffcharReadbuff(Ctrl_V);
     }
     stuffcharReadbuff(cap->extra_char);
     stuffcharReadbuff(ESC);

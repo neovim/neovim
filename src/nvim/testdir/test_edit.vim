@@ -580,6 +580,7 @@ func Test_edit_CTRL_G()
   call assert_equal([0, 3, 7, 0], getpos('.'))
   call feedkeys("i\<c-g>j\<esc>", 'tnix')
   call assert_equal([0, 3, 6, 0], getpos('.'))
+  call assert_nobeep("normal! i\<c-g>\<esc>")
   bw!
 endfunc
 
