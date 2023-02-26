@@ -580,6 +580,7 @@ func Test_edit_CTRL_G()
   call assert_equal([0, 3, 7, 0], getpos('.'))
   call feedkeys("i\<c-g>j\<esc>", 'tnix')
   call assert_equal([0, 3, 6, 0], getpos('.'))
+  call assert_nobeep("normal! i\<c-g>\<esc>")
   bw!
 endfunc
 
@@ -2076,20 +2077,6 @@ func Test_edit_CTRL_hat()
   call assert_equal(2, &iminsert)
   call feedkeys("i\<C-^>", 'xt')
   call assert_equal(0, &iminsert)
-
-  bwipe!
-endfunc
-
-" Test "gr" followed by an Insert mode command does get out of Insert mode.
-func Test_edit_gr_special()
-  enew
-  call setline(1, ['abcdef', 'xxxxxx'])
-  exe "normal! gr\<C-O>lx"
-  call assert_equal("\<C-O>def", getline(1))
-
-  call setline(1, 'abcdef')
-  exe "normal! 0gr\<C-G>lx"
-  call assert_equal("\<C-G>def", getline(1))
 
   bwipe!
 endfunc
