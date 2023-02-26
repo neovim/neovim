@@ -63,8 +63,6 @@ function M._create_parser(bufnr, lang, opts)
     { on_bytes = bytes_cb, on_detach = detach_cb, on_reload = reload_cb, preview = true }
   )
 
-  self:parse()
-
   return self
 end
 
@@ -411,10 +409,16 @@ end
 ---
 ---@param bufnr (integer|nil) Buffer to be highlighted (default: current buffer)
 ---@param lang (string|nil) Language of the parser (default: from buffer filetype)
-function M.start(bufnr, lang)
+---@param opts table|nil Options:
+---                      - max_loop_time (integer|nil): When provided, parsing will run asynchronously
+---                        by segmenting the parse over Nvim's event loop where each segment
+---                        will run for at most this value in ms. Defaults to 10ms.
+function M.start(bufnr, lang, opts)
   bufnr = bufnr or api.nvim_get_current_buf()
   local parser = M.get_parser(bufnr, lang)
-  M.highlighter.new(parser)
+  opts = opts or {}
+  opts.max_loop_time = opts.max_loop_time or 10
+  M.highlighter.new(parser, opts)
 end
 
 --- Stops treesitter highlighting for a buffer

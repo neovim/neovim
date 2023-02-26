@@ -905,7 +905,7 @@ node_contains({node}, {range})                *vim.treesitter.node_contains()*
     Return: ~
         (`boolean`) True if the {node} contains the {range}
 
-start({bufnr}, {lang})                                *vim.treesitter.start()*
+start({bufnr}, {lang}, {opts})                        *vim.treesitter.start()*
     Starts treesitter highlighting for a buffer
 
     Can be used in an ftplugin or FileType autocommand.
@@ -928,6 +928,11 @@ start({bufnr}, {lang})                                *vim.treesitter.start()*
                  buffer)
       • {lang}   (`string?`) Language of the parser (default: from buffer
                  filetype)
+      • {opts}   (table|nil) Options:
+                 • max_loop_time (integer|nil): When provided, parsing will
+                   run asynchronously by segmenting the parse over Nvim's
+                   event loop where each segment will run for at most this
+                   value in ms. Defaults to 10ms.
 
 stop({bufnr})                                          *vim.treesitter.stop()*
     Stops treesitter highlighting for a buffer
@@ -1375,7 +1380,7 @@ LanguageTree:named_node_for_range({range}, {opts})
     Return: ~
         (`TSNode?`)
 
-LanguageTree:parse({range})                             *LanguageTree:parse()*
+LanguageTree:parse({range}, {opts})                     *LanguageTree:parse()*
     Recursively parse all regions in the language tree using
     |treesitter-parsers| for the corresponding languages and run injection
     queries on the parsed trees to determine whether child trees should be
@@ -1391,6 +1396,15 @@ LanguageTree:parse({range})                             *LanguageTree:parse()*
                  Can be slow!) Set to `false|nil` to only parse regions with
                  empty ranges (typically only the root tree without
                  injections).
+      • {opts}  (`table?`) Options:
+                • max_loop_time (`integer?`): Maximum time parsing can run on
+                  the event loop per iteration. If parsing reaches or exceeds
+                  this time, parsing is paused and continued in the next loop
+                  iteration. If source is a buffer, parsing is cancelled when
+                  the buffer's changedtick is updated. This causes this
+                  function to be non-blocking and thus will return nil.
+                • callback (`fun(trees: table<integer, TSTree>)`): Called when
+                  parsing completes.
 
     Return: ~
         (`table<integer, TSTree>`)
