@@ -1,24 +1,9 @@
-# - Try to find luv
-# Once done this will define
-#  LIBLUV_FOUND - System has libluv
-#  LIBLUV_INCLUDE_DIRS - The libluv include directories
-#  LIBLUV_LIBRARIES - The libraries needed to use libluv
-
-find_package(PkgConfig)
-if (PKG_CONFIG_FOUND)
-  pkg_check_modules(PC_LIBLUV QUIET luv)
-endif()
-
-set(LIBLUV_DEFINITIONS ${PC_LIBLUV_CFLAGS_OTHER})
-
-find_path(LIBLUV_INCLUDE_DIR luv/luv.h
-          PATHS ${PC_LIBLUV_INCLUDEDIR} ${PC_LIBLUV_INCLUDE_DIRS})
+find_path(LIBLUV_INCLUDE_DIR luv/luv.h)
 
 # Explicitly look for luv.so. #10407
 list(APPEND LIBLUV_NAMES luv_a luv libluv_a luv${CMAKE_SHARED_LIBRARY_SUFFIX})
 
-find_library(LIBLUV_LIBRARY NAMES ${LIBLUV_NAMES}
-  HINTS ${PC_LIBLUV_LIBDIR} ${PC_LIBLUV_LIBRARY_DIRS})
+find_library(LIBLUV_LIBRARY NAMES ${LIBLUV_NAMES})
 
 set(LIBLUV_LIBRARIES ${LIBLUV_LIBRARY})
 set(LIBLUV_INCLUDE_DIRS ${LIBLUV_INCLUDE_DIR})

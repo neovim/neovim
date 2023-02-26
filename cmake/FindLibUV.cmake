@@ -1,33 +1,13 @@
-# - Try to find libuv
-# Once done, this will define
-#
-#  LIBUV_FOUND - system has libuv
-#  LIBUV_INCLUDE_DIRS - the libuv include directories
-#  LIBUV_LIBRARIES - link these to use libuv
-
-find_package(PkgConfig)
-if (PKG_CONFIG_FOUND)
-  pkg_check_modules(PC_LIBUV QUIET libuv)
-endif()
-
-find_path(LIBUV_INCLUDE_DIR uv.h
-  HINTS ${PC_LIBUV_INCLUDEDIR} ${PC_LIBUV_INCLUDE_DIRS})
+find_path(LIBUV_INCLUDE_DIR uv.h)
 
 list(APPEND LIBUV_NAMES uv_a uv)
 
-find_library(LIBUV_LIBRARY NAMES ${LIBUV_NAMES}
-  HINTS ${PC_LIBUV_LIBDIR} ${PC_LIBUV_LIBRARY_DIRS})
+find_library(LIBUV_LIBRARY NAMES ${LIBUV_NAMES})
 
 mark_as_advanced(LIBUV_INCLUDE_DIR LIBUV_LIBRARY)
 
-if(PC_LIBUV_LIBRARIES)
-    list(REMOVE_ITEM PC_LIBUV_LIBRARIES uv)
-endif()
-
-set(LIBUV_LIBRARIES ${LIBUV_LIBRARY} ${PC_LIBUV_LIBRARIES})
+set(LIBUV_LIBRARIES ${LIBUV_LIBRARY})
 set(LIBUV_INCLUDE_DIRS ${LIBUV_INCLUDE_DIR})
-
-# Deal with the fact that libuv.pc is missing important dependency information.
 
 include(CheckLibraryExists)
 

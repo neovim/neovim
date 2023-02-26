@@ -34,23 +34,13 @@ if(HAS_OG_FLAG)
   set(DEFAULT_MAKE_CFLAGS CFLAGS+=-Og ${DEFAULT_MAKE_CFLAGS})
 endif()
 
-if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
-  # pkg-config 29.2 has a bug on OpenBSD which causes it to drop any paths that
-  # *contain* system include paths. To avoid this, we prefix what would be
-  # "/usr/include" as "/_usr/include".
-  # This check is also performed in the root CMakeLists.txt
-  # https://github.com/neovim/neovim/pull/14745#issuecomment-860201794
-  set(DEPS_INSTALL_DIR "${CMAKE_BINARY_DIR}/_usr" CACHE PATH "Dependencies install directory.")
-else()
-  set(DEPS_INSTALL_DIR "${CMAKE_BINARY_DIR}/usr" CACHE PATH "Dependencies install directory.")
-endif()
-
-list(APPEND DEPS_CMAKE_ARGS -D CMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR})
-
+set(DEPS_INSTALL_DIR "${CMAKE_BINARY_DIR}/usr" CACHE PATH "Dependencies install directory.")
 set(DEPS_BIN_DIR "${DEPS_INSTALL_DIR}/bin" CACHE PATH "Dependencies binary install directory.")
 set(DEPS_LIB_DIR "${DEPS_INSTALL_DIR}/lib" CACHE PATH "Dependencies library install directory.")
 set(DEPS_BUILD_DIR "${CMAKE_BINARY_DIR}/build" CACHE PATH "Dependencies build directory.")
 set(DEPS_DOWNLOAD_DIR "${DEPS_BUILD_DIR}/downloads" CACHE PATH "Dependencies download directory.")
+
+list(APPEND DEPS_CMAKE_ARGS -D CMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR})
 
 option(USE_BUNDLED "Use bundled dependencies." ON)
 
