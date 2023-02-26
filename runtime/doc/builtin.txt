@@ -4087,7 +4087,7 @@ indent({lnum})	The result is a Number, which is indent of line {lnum} in the
 
 index({object}, {expr} [, {start} [, {ic}]])			*index()*
 		Find {expr} in {object} and return its index.  See
-		|filterof()| for using a lambda to select the item.
+		|indexof()| for using a lambda to select the item.
 
 		If {object} is a |List| return the lowest index where the item
 		has a value equal to {expr}.  There is no automatic
@@ -4113,15 +4113,17 @@ index({object}, {expr} [, {start} [, {ic}]])			*index()*
 <		Can also be used as a |method|: >
 			GetObject()->index(what)
 
-indexof({object}, {expr} [, {opt}])			*indexof()*
-		{object} must be a |List| or a |Blob|.
+indexof({object}, {expr} [, {opts}])			*indexof()*
+		Returns the index of an item in {object} where {expr} is
+		v:true.  {object} must be a |List| or a |Blob|.
+
 		If {object} is a |List|, evaluate {expr} for each item in the
-		List until the expression returns v:true and return the index
-		of this item.
+		List until the expression is v:true and return the index of
+		this item.
 
 		If {object} is a |Blob| evaluate {expr} for each byte in the
-		Blob until the expression returns v:true and return the index
-		of this byte.
+		Blob until the expression is v:true and return the index of
+		this byte.
 
 		{expr} must be a |string| or |Funcref|.
 
@@ -4137,16 +4139,17 @@ indexof({object}, {expr} [, {opt}])			*indexof()*
 		The function must return |TRUE| if the item is found and the
 		search should stop.
 
-		The optional argument {opt} is a Dict and supports the
+		The optional argument {opts} is a Dict and supports the
 		following items:
-		    start	start evaluating {expr} at the item with index
-				{start} (may be negative for an item relative
-				to the end).
+		    startidx	start evaluating {expr} at the item with this
+				index; may be negative for an item relative to
+				the end
 		Returns -1 when {expr} evaluates to v:false for all the items.
 		Example: >
-			:let l = [#{n: 10}, #{n: 20}, #{n: 30]]
-			:let idx = indexof(l, "v:val.n == 20")
-			:let idx = indexof(l, {i, v -> v.n == 30})
+			:let l = [#{n: 10}, #{n: 20}, #{n: 30}]
+			:echo indexof(l, "v:val.n == 20")
+			:echo indexof(l, {i, v -> v.n == 30})
+			:echo indexof(l, "v:val.n == 20", #{startidx: 1})
 
 <		Can also be used as a |method|: >
 			mylist->indexof(expr)
