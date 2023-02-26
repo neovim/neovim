@@ -4720,6 +4720,11 @@ static void nv_vreplace(cmdarg_T *cap)
     if (cap->extra_char == Ctrl_V) {          // get another character
       cap->extra_char = get_literal(false);
     }
+    if (cap->extra_char < ' ') {
+      // Prefix a control character with CTRL-V to avoid it being used as
+      // a command.
+      stuffcharReadbuff(Ctrl_V);
+    }
     stuffcharReadbuff(cap->extra_char);
     stuffcharReadbuff(ESC);
     if (virtual_active()) {

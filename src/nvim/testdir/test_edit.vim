@@ -2080,6 +2080,20 @@ func Test_edit_CTRL_hat()
   bwipe!
 endfunc
 
+" Test "gr" followed by an Insert mode command does get out of Insert mode.
+func Test_edit_gr_special()
+  enew
+  call setline(1, ['abcdef', 'xxxxxx'])
+  exe "normal! gr\<C-O>lx"
+  call assert_equal("\<C-O>def", getline(1))
+
+  call setline(1, 'abcdef')
+  exe "normal! 0gr\<C-G>lx"
+  call assert_equal("\<C-G>def", getline(1))
+
+  bwipe!
+endfunc
+
 " Weird long file name was going over the end of NameBuff
 func Test_edit_overlong_file_name()
   CheckUnix
