@@ -1399,6 +1399,8 @@ describe('TUI', function()
   end)
 
   it('in nvim_list_uis()', function()
+    -- $TERM in :terminal.
+    local exp_term = is_os('bsd') and 'builtin_xterm' or 'xterm-256color'
     local expected = {
       {
          chan = 1,
@@ -1418,7 +1420,7 @@ describe('TUI', function()
          stdout_tty = true,
          term_background = '',
          term_colors = 256,
-         term_name = 'xterm-256color',  -- $TERM in :terminal.
+         term_name = exp_term,
          width = 50
        },
     }

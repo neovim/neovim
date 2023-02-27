@@ -107,7 +107,6 @@ struct ui_t {
   char *term_name;
   char *term_background;
   int term_colors;
-  int stdin_fd;
   bool stdin_tty;
   bool stdout_tty;
 

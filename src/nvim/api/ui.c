@@ -352,7 +352,6 @@ static void ui_set_option(UI *ui, bool init, String name, Object value, Error *e
     });
 
     stdin_fd = (int)value.data.integer;
-    ui->stdin_fd = (int)value.data.integer;
     return;
   }
 
