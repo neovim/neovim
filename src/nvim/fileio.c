@@ -68,7 +68,7 @@
 # include "nvim/charset.h"
 #endif
 
-#if defined(HAVE_FLOCK) && defined(HAVE_DIRFD)
+#ifdef HAVE_DIRFD_AND_FLOCK
 # include <dirent.h>
 # include <sys/file.h>
 #endif
@@ -5146,7 +5146,7 @@ void forward_slash(char *fname)
 
 /// Path to Nvim's own temp dir. Ends in a slash.
 static char *vim_tempdir = NULL;
-#if defined(HAVE_FLOCK) && defined(HAVE_DIRFD)
+#ifdef HAVE_DIRFD_AND_FLOCK
 DIR *vim_tempdir_dp = NULL;  ///< File descriptor of temp dir
 #endif
 
@@ -5316,7 +5316,7 @@ int delete_recursive(const char *name)
   return result;
 }
 
-#if defined(HAVE_FLOCK) && defined(HAVE_DIRFD)
+#ifdef HAVE_DIRFD_AND_FLOCK
 /// Open temporary directory and take file lock to prevent
 /// to be auto-cleaned.
 static void vim_opentempdir(void)
@@ -5353,7 +5353,7 @@ void vim_deltempdir(void)
     return;
   }
 
-#if defined(HAVE_FLOCK) && defined(HAVE_DIRFD)
+#ifdef HAVE_DIRFD_AND_FLOCK
   vim_closetempdir();
 #endif
   // remove the trailing path separator
@@ -5391,7 +5391,7 @@ static bool vim_settempdir(char *tempdir)
   vim_FullName(tempdir, buf, MAXPATHL, false);
   add_pathsep(buf);
   vim_tempdir = xstrdup(buf);
-#if defined(HAVE_FLOCK) && defined(HAVE_DIRFD)
+#ifdef HAVE_DIRFD_AND_FLOCK
   vim_opentempdir();
 #endif
   xfree(buf);

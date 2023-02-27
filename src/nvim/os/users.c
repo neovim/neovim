@@ -15,7 +15,7 @@
 #include "nvim/os/os.h"
 #include "nvim/types.h"
 #include "nvim/vim.h"
-#ifdef HAVE_PWD_H
+#ifdef HAVE_PWD_FUNCS
 # include <pwd.h>
 #endif
 #ifdef MSWIN
@@ -50,7 +50,7 @@ int os_get_usernames(garray_T *users)
   }
   ga_init(users, sizeof(char *), 20);
 
-#if defined(HAVE_GETPWENT) && defined(HAVE_PWD_H)
+#ifdef HAVE_PWD_FUNCS
   {
     struct passwd *pw;
 
@@ -81,7 +81,7 @@ int os_get_usernames(garray_T *users)
     }
   }
 #endif
-#if defined(HAVE_GETPWNAM)
+#ifdef HAVE_PWD_FUNCS
   {
     const char *user_env = os_getenv("USER");
 
@@ -141,7 +141,7 @@ int os_get_username(char *s, size_t len)
 /// @return OK if a username was found, else FAIL.
 int os_get_uname(uv_uid_t uid, char *s, size_t len)
 {
-#if defined(HAVE_PWD_H) && defined(HAVE_GETPWUID)
+#ifdef HAVE_PWD_FUNCS
   struct passwd *pw;
 
   if ((pw = getpwuid(uid)) != NULL  // NOLINT(runtime/threadsafe_fn)
@@ -159,7 +159,7 @@ int os_get_uname(uv_uid_t uid, char *s, size_t len)
 /// Caller must free() the returned string.
 char *os_get_userdir(const char *name)
 {
-#if defined(HAVE_GETPWNAM) && defined(HAVE_PWD_H)
+#ifdef HAVE_PWD_FUNCS
   if (name == NULL || *name == NUL) {
     return NULL;
   }

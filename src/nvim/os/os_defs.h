@@ -36,10 +36,9 @@
 // Command-processing buffer. Use large buffers for all platforms.
 #define CMDBUFFSIZE 1024
 
-// Note: Some systems need both string.h and strings.h (Savage).  However,
-// some systems can't handle both, only use string.h in that case.
+// Note: Some systems need both string.h and strings.h (Savage).
 #include <string.h>
-#if defined(HAVE_STRINGS_H) && !defined(NO_STRINGS_WITH_STRING_H)
+#ifdef HAVE_STRINGS_H
 # include <strings.h>
 #endif
 

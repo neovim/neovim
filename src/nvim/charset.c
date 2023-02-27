@@ -1446,7 +1446,7 @@ long getdigits_long(char **pp, bool strict, long def)
 int32_t getdigits_int32(char **pp, bool strict, long def)
 {
   intmax_t number = getdigits(pp, strict, def);
-#if SIZEOF_INTMAX_T > SIZEOF_INT32_T
+#if SIZEOF_INTMAX_T > 4
   if (strict) {
     assert(number >= INT32_MIN && number <= INT32_MAX);
   } else if (!(number >= INT32_MIN && number <= INT32_MAX)) {
