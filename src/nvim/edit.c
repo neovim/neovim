@@ -523,10 +523,6 @@ static int insert_execute(VimState *state, int key)
     did_cursorhold = true;
   }
 
-  if (p_hkmap && KeyTyped) {
-    s->c = hkmap(s->c);  // Hebrew mode mapping
-  }
-
   // Special handling of keys while the popup menu is visible or wanted
   // and the cursor is still in the completed word.  Only when there is
   // a match, skip this when no matches were found.
@@ -2140,9 +2136,6 @@ void insertchar(int c, int flags, int second_indent)
                || (virtcol += byte2cells((uint8_t)buf[i - 1])) < (colnr_T)textwidth)
            && !(!no_abbr && !vim_iswordc(c) && vim_iswordc((uint8_t)buf[i - 1]))) {
       c = vgetc();
-      if (p_hkmap && KeyTyped) {
-        c = hkmap(c);                       // Hebrew mode mapping
-      }
       buf[i++] = (char)c;
     }
 
@@ -3212,101 +3205,6 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
   return false;
 }
 
-// Map Hebrew keyboard when in hkmap mode.
-int hkmap(int c)
-  FUNC_ATTR_PURE
-{
-  if (p_hkmapp) {   // phonetic mapping, by Ilya Dogolazky
-    enum {
-      hALEF = 0, BET, GIMEL, DALET, HEI, VAV, ZAIN, HET, TET, IUD,
-      KAFsofit, hKAF, LAMED, MEMsofit, MEM, NUNsofit, NUN, SAMEH, AIN,
-      PEIsofit, PEI, ZADIsofit, ZADI, KOF, RESH, hSHIN, TAV,
-    };
-    static char_u map[26] = {
-      (char_u)hALEF,  // a
-      (char_u)BET,  // b
-      (char_u)hKAF,  // c
-      (char_u)DALET,  // d
-      (char_u) - 1,  // e
-      (char_u)PEIsofit,  // f
-      (char_u)GIMEL,  // g
-      (char_u)HEI,  // h
-      (char_u)IUD,  // i
-      (char_u)HET,  // j
-      (char_u)KOF,  // k
-      (char_u)LAMED,  // l
-      (char_u)MEM,  // m
-      (char_u)NUN,  // n
-      (char_u)SAMEH,  // o
-      (char_u)PEI,  // p
-      (char_u) - 1,  // q
-      (char_u)RESH,  // r
-      (char_u)ZAIN,  // s
-      (char_u)TAV,  // t
-      (char_u)TET,  // u
-      (char_u)VAV,  // v
-      (char_u)hSHIN,  // w
-      (char_u) - 1,  // x
-      (char_u)AIN,  // y
-      (char_u)ZADI,  // z
-    };
-
-    if (c == 'N' || c == 'M' || c == 'P' || c == 'C' || c == 'Z') {
-      return (int)(map[CHAR_ORD(c)] - 1 + p_aleph);
-    } else if (c == 'x') {  // '-1'='sofit'
-      return 'X';
-    } else if (c == 'q') {
-      return '\'';       // {geresh}={'}
-    } else if (c == 246) {
-      return ' ';        // \"o --> ' ' for a german keyboard
-    } else if (c == 228) {
-      return ' ';        // \"a --> ' '      -- / --
-    } else if (c == 252) {
-      return ' ';        // \"u --> ' '      -- / --
-    } else if (c >= 'a' && c <= 'z') {
-      // NOTE: islower() does not do the right thing for us on Linux so we
-      // do this the same was as 5.7 and previous, so it works correctly on
-      // all systems.  Specifically, the e.g. Delete and Arrow keys are
-      // munged and won't work if e.g. searching for Hebrew text.
-      return (int)(map[CHAR_ORD_LOW(c)] + p_aleph);
-    } else {
-      return c;
-    }
-  } else {
-    switch (c) {
-    case '`':
-      return ';';
-    case '/':
-      return '.';
-    case '\'':
-      return ',';
-    case 'q':
-      return '/';
-    case 'w':
-      return '\'';
-
-    // Hebrew letters - set offset from 'a'
-    case ',':
-      c = '{'; break;
-    case '.':
-      c = 'v'; break;
-    case ';':
-      c = 't'; break;
-    default: {
-      static char_u str[] = "zqbcxlsjphmkwonu ydafe rig";
-
-      if (c < 'a' || c > 'z') {
-        return c;
-      }
-      c = str[CHAR_ORD_LOW(c)];
-      break;
-    }
-    }
-
-    return (int)(CHAR_ORD_LOW(c) + p_aleph);
-  }
-}
-
 static void ins_reg(void)
 {
   bool need_redraw = false;
@@ -3581,7 +3479,7 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
   return true;
 }
 
-// Toggle language: hkmap and revins_on.
+// Toggle language: revins_on.
 // Move to end of reverse inserted text.
 static void ins_ctrl_(void)
 {
@@ -3600,7 +3498,6 @@ static void ins_ctrl_(void)
   } else {
     revins_scol = -1;
   }
-  p_hkmap = curwin->w_p_rl ^ p_ri;        // be consistent!
   showmode();
 }
 

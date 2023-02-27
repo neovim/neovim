@@ -55,8 +55,6 @@ return {
       full_name='aleph', abbreviation='al',
       short_desc=N_("ASCII code of the letter Aleph (Hebrew)"),
       type='number', scope={'global'},
-      redraw={'curswant'},
-      varname='p_aleph',
       defaults={if_true=224}
     },
     {
@@ -1071,16 +1069,16 @@ return {
     },
     {
       full_name='hkmap', abbreviation='hk',
-      short_desc=N_("Hebrew keyboard mapping"),
+      short_desc=N_("No description"),
       type='bool', scope={'global'},
-      varname='p_hkmap',
+      varname='p_force_off',
       defaults={if_true=false}
     },
     {
       full_name='hkmapp', abbreviation='hkp',
-      short_desc=N_("phonetic Hebrew keyboard mapping"),
+      short_desc=N_("No description"),
       type='bool', scope={'global'},
-      varname='p_hkmapp',
+      varname='p_force_off',
       defaults={if_true=false}
     },
     {

@@ -189,8 +189,6 @@ static int cedit_key = -1;  ///< key value of 'cedit' option
 static handle_T cmdpreview_bufnr = 0;
 static long cmdpreview_ns = 0;
 
-static int cmd_hkmap = 0;  // Hebrew mapping during command line
-
 static void save_viewstate(win_T *wp, viewstate_T *vs)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -680,11 +678,6 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool clea
     s->break_ctrl_c = true;
   }
 
-  // start without Hebrew mapping for a command line
-  if (s->firstc == ':' || s->firstc == '=' || s->firstc == '>') {
-    cmd_hkmap = 0;
-  }
-
   init_ccline(s->firstc, s->indent);
   ccline.prompt_id = last_prompt_id++;
   ccline.level = cmdline_level;
@@ -1166,9 +1159,6 @@ static int command_line_execute(VimState *state, int key)
 
   if (KeyTyped) {
     s->some_key_typed = true;
-    if (cmd_hkmap) {
-      s->c = hkmap(s->c);
-    }
 
     if (cmdmsg_rl && !KeyStuffed) {
       // Invert horizontal movements and operations.  Only when
@@ -2101,7 +2091,6 @@ static int command_line_handle_key(CommandLineState *s)
     if (!p_ari) {
       break;
     }
-    cmd_hkmap = !cmd_hkmap;
     return command_line_not_changed(s);
 
   default:

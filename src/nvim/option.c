@@ -5026,7 +5026,6 @@ static void paste_option_changed(void)
   static int save_sta = 0;
   static int save_ru = 0;
   static int save_ri = 0;
-  static int save_hkmap = 0;
 
   if (p_paste) {
     // Paste switched from off to on.
@@ -5052,7 +5051,6 @@ static void paste_option_changed(void)
       save_sta = p_sta;
       save_ru = p_ru;
       save_ri = p_ri;
-      save_hkmap = p_hkmap;
       // save global values for local buffer options
       p_ai_nopaste = p_ai;
       p_et_nopaste = p_et;
@@ -5089,7 +5087,6 @@ static void paste_option_changed(void)
     }
     p_ru = 0;                       // no ruler
     p_ri = 0;                       // no reverse insert
-    p_hkmap = 0;                    // no Hebrew keyboard
     // set global values for local buffer options
     p_tw = 0;
     p_wm = 0;
@@ -5129,7 +5126,6 @@ static void paste_option_changed(void)
     }
     p_ru = save_ru;
     p_ri = save_ri;
-    p_hkmap = save_hkmap;
     // set global values for local buffer options
     p_ai = p_ai_nopaste;
     p_et = p_et_nopaste;

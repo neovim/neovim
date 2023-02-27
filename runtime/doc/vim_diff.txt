@@ -594,6 +594,7 @@ Highlight groups:
 <
 
 Options:
+  *'aleph'* *'al'*
   antialias
   *'balloondelay'* *'bdlay'*
   *'ballooneval'* *'beval'* *'noballooneval'* *'nobeval'*
@@ -617,6 +618,9 @@ Options:
   *'guifontset'* *'gfs'* (Use 'guifont' instead.)
   *'guipty'* (Nvim uses pipes and PTYs consistently on all platforms.)
   'highlight' (Names of builtin |highlight-groups| cannot be changed.)
+  *'hkmap'* *'hk'* use `set keymap=hebrew` instead.
+  *'hkmapp'* *'hkp'* use `set keymap=hebrewp` instead.
+
   *'imactivatefunc'* *'imaf'*
   *'imactivatekey'* *'imak'*
   *'imstatusfunc'* *'imsf'*

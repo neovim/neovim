@@ -20,7 +20,8 @@ endfunc
 func Test_paste_opt_restore()
   set autoindent expandtab ruler showmatch
   if has('rightleft')
-    set revins hkmap
+    " set hkmap
+    set revins
   endif
   set smarttab softtabstop=3 textwidth=27 wrapmargin=12
   if has('vartabs')
@@ -33,7 +34,7 @@ func Test_paste_opt_restore()
   call assert_false(&expandtab)
   if has('rightleft')
     call assert_false(&revins)
-    call assert_false(&hkmap)
+    " call assert_false(&hkmap)
   endif
   call assert_false(&ruler)
   call assert_false(&showmatch)
@@ -51,7 +52,7 @@ func Test_paste_opt_restore()
   call assert_true(&expandtab)
   if has('rightleft')
     call assert_true(&revins)
-    call assert_true(&hkmap)
+    " call assert_true(&hkmap)
   endif
   call assert_true(&ruler)
   call assert_true(&showmatch)

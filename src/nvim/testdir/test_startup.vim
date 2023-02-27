@@ -389,7 +389,7 @@ endfunc
 " Test the -A, -F and -H arguments (Arabic, Farsi and Hebrew modes).
 func Test_A_F_H_arg()
   let after =<< trim [CODE]
-    call writefile([&rightleft, &arabic, 0, &hkmap], "Xtestout")
+    call writefile([&rightleft, &arabic, 0, &hkmap, &keymap], "Xtestout")
     qall
   [CODE]
 
@@ -397,17 +397,17 @@ func Test_A_F_H_arg()
   " 'encoding' is not utf-8.
   if has('arabic') && &encoding == 'utf-8' && RunVim([], after, '-e -s -A')
     let lines = readfile('Xtestout')
-    call assert_equal(['1', '1', '0', '0'], lines)
+    call assert_equal(['1', '1', '0', '0', 'arabic'], lines)
   endif
 
   if has('farsi') && RunVim([], after, '-F')
     let lines = readfile('Xtestout')
-    call assert_equal(['1', '0', '1', '0'], lines)
+    call assert_equal(['1', '0', '1', '0', '???'], lines)
   endif
 
   if has('rightleft') && RunVim([], after, '-H')
     let lines = readfile('Xtestout')
-    call assert_equal(['1', '0', '0', '1'], lines)
+    call assert_equal(['1', '0', '0', '0', 'hebrew'], lines)
   endif
 
   call delete('Xtestout')
