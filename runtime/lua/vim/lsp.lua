@@ -908,11 +908,11 @@ end
 ---       the `cmd` process. Not related to `root_dir`.
 ---
 --- - cmd_env: (table) Environment flags to pass to the LSP on
----       spawn.  Can be specified using keys like a map or as a list with `k=v`
----       pairs or both. Non-string values are coerced to string.
+---       spawn.  Must be specified using a map-like table.
+---       Non-string values are coerced to string.
 ---       Example:
 ---       <pre>
----                   { "PRODUCTION=true"; "TEST=123"; PORT = 8080; HOST = "0.0.0.0"; }
+---                   { PORT = 8080; HOST = "0.0.0.0"; }
 ---       </pre>
 ---
 --- - detached: (boolean, default true) Daemonize the server process so that it runs in a
