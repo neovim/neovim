@@ -2963,6 +2963,12 @@ func Test_cwindow_highlight()
   call term_sendkeys(buf, ":cnext\<CR>")
   call VerifyScreenDump(buf, 'Test_quickfix_cwindow_2', {})
 
+  call term_sendkeys(buf, "\<C-W>j:set cursorline\<CR>")
+  call VerifyScreenDump(buf, 'Test_quickfix_cwindow_3', {})
+
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_quickfix_cwindow_4', {})
+
   " clean up
   call StopVimInTerminal(buf)
   call delete('XtestCwindow')
