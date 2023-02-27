@@ -140,6 +140,7 @@ let s:filename_checks = {
     \ 'csv': ['file.csv'],
     \ 'cucumber': ['file.feature'],
     \ 'cuda': ['file.cu', 'file.cuh'],
+    \ 'cue': ['file.cue'],
     \ 'cupl': ['file.pld'],
     \ 'cuplsim': ['file.si'],
     \ 'cvs': ['cvs123'],
