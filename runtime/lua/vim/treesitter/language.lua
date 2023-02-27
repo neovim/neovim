@@ -63,7 +63,7 @@ function M.add(lang, opts)
   M.register(lang, filetype or lang)
 
   if vim._ts_has_language(lang) then
-    return true
+    return
   end
 
   if path == nil then
