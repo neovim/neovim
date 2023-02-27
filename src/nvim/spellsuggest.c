@@ -1209,7 +1209,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
 
   // The loop may take an indefinite amount of time. Break out after some
   // time.
-  proftime_T time_limit;
+  proftime_T time_limit = 0;
   if (spell_suggest_timeout > 0) {
     time_limit = profile_setlimit(spell_suggest_timeout);
   }
