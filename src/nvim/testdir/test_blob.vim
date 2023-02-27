@@ -364,4 +364,32 @@ func Test_blob2string()
   call assert_equal(v, string(b))
 endfunc
 
+" Test for the indexof() function
+func Test_indexof()
+  let b = 0zdeadbeef
+  call assert_equal(0, indexof(b, {i, v -> v == 0xde}))
+  call assert_equal(3, indexof(b, {i, v -> v == 0xef}))
+  call assert_equal(-1, indexof(b, {i, v -> v == 0x1}))
+  call assert_equal(1, indexof(b, "v:val == 0xad"))
+  call assert_equal(-1, indexof(b, "v:val == 0xff"))
+  call assert_equal(-1, indexof(b, {_, v -> "v == 0xad"}))
+
+  call assert_equal(-1, indexof(0z, "v:val == 0x0"))
+  call assert_equal(-1, indexof(v:_null_blob, "v:val == 0xde"))
+  call assert_equal(-1, indexof(b, v:_null_string))
+  " Nvim doesn't have null functions
+  " call assert_equal(-1, indexof(b, test_null_function())) 
+
+  let b = 0z01020102
+  call assert_equal(1, indexof(b, "v:val == 0x02", #{startidx: 0}))
+  call assert_equal(2, indexof(b, "v:val == 0x01", #{startidx: -2}))
+  call assert_equal(-1, indexof(b, "v:val == 0x01", #{startidx: 5}))
+  call assert_equal(0, indexof(b, "v:val == 0x01", #{startidx: -5}))
+  call assert_equal(0, indexof(b, "v:val == 0x01", v:_null_dict))
+
+  " failure cases
+  call assert_fails('let i = indexof(b, "val == 0xde")', 'E121:')
+  call assert_fails('let i = indexof(b, {})', 'E1256:')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -213,6 +213,7 @@ return {
     iconv={args=3, base=1, fast=true},
     indent={args=1, base=1},
     index={args={2, 4}, base=1},
+    indexof={args={2, 3}, base=1},
     input={args={1, 3}, base=1},
     inputdialog={args={1, 3}, base=1},
     inputlist={args=1, base=1},

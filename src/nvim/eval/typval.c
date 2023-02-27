@@ -44,10 +44,16 @@ static char e_string_required_for_argument_nr[]
   = N_("E1174: String required for argument %d");
 static char e_non_empty_string_required_for_argument_nr[]
   = N_("E1175: Non-empty string required for argument %d");
+static char e_dict_required_for_argument_nr[]
+  = N_("E1206: Dictionary required for argument %d");
 static char e_number_required_for_argument_nr[]
   = N_("E1210: Number required for argument %d");
 static char e_string_or_list_required_for_argument_nr[]
   = N_("E1222: String or List required for argument %d");
+static char e_list_or_blob_required_for_argument_nr[]
+  = N_("E1226: List or Blob required for argument %d");
+static char e_string_or_function_required_for_argument_nr[]
+  = N_("E1256: String or function required for argument %d");
 
 bool tv_in_free_unref_items = false;
 
@@ -3905,12 +3911,56 @@ int tv_check_for_opt_number_arg(const typval_T *const args, const int idx)
           || tv_check_for_number_arg(args, idx) != FAIL) ? OK : FAIL;
 }
 
+/// Give an error and return FAIL unless "args[idx]" is a dict.
+int tv_check_for_dict_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (args[idx].v_type != VAR_DICT) {
+    semsg(_(e_dict_required_for_argument_nr), idx + 1);
+    return FAIL;
+  }
+  return OK;
+}
+
+/// Check for an optional dict argument at "idx"
+int tv_check_for_opt_dict_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  return (args[idx].v_type == VAR_UNKNOWN
+          || tv_check_for_dict_arg(args, idx) != FAIL) ? OK : FAIL;
+}
+
 /// Give an error and return FAIL unless "args[idx]" is a string or a list.
 int tv_check_for_string_or_list_arg(const typval_T *const args, const int idx)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   if (args[idx].v_type != VAR_STRING && args[idx].v_type != VAR_LIST) {
     semsg(_(e_string_or_list_required_for_argument_nr), idx + 1);
+    return FAIL;
+  }
+  return OK;
+}
+
+/// Give an error and return FAIL unless "args[idx]" is a string
+/// or a function reference.
+int tv_check_for_string_or_func_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (args[idx].v_type != VAR_PARTIAL
+      && args[idx].v_type != VAR_FUNC
+      && args[idx].v_type != VAR_STRING) {
+    semsg(_(e_string_or_function_required_for_argument_nr), idx + 1);
+    return FAIL;
+  }
+  return OK;
+}
+
+/// Give an error and return FAIL unless "args[idx]" is a list or a blob.
+int tv_check_for_list_or_blob_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (args[idx].v_type != VAR_LIST && args[idx].v_type != VAR_BLOB) {
+    semsg(_(e_list_or_blob_required_for_argument_nr), idx + 1);
     return FAIL;
   }
   return OK;
