@@ -276,6 +276,7 @@ local extension = {
   feature = 'cucumber',
   cuh = 'cuda',
   cu = 'cuda',
+  cue = 'cue',
   pld = 'cupl',
   si = 'cuplsim',
   cyn = 'cynpp',
