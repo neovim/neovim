@@ -1205,12 +1205,14 @@ functions used in one script use the same name as in other scripts.  To avoid
 this, they can be made local to the script.
 
 						*<SID>* *<SNR>* *E81*
-The string "<SID>" can be used in a mapping or menu.
+The string "<SID>" can be used in a mapping or menu.  This is useful if you
+have a script-local function that you want to call from a mapping in the same
+script.
    When executing the map command, Vim will replace "<SID>" with the special
 key code <SNR>, followed by a number that's unique for the script, and an
 underscore.  Example: >
 	:map <SID>Add
-could define a mapping "<SNR>23_Add".
+would define a mapping "<SNR>23_Add".
 
 When defining a function in a script, "s:" can be prepended to the name to
 make it local to the script.  But when a mapping is executed from outside of
