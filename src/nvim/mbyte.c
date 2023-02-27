@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <iconv.h>
+#include <locale.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,10 +67,6 @@
 #include "nvim/strings.h"
 #include "nvim/types.h"
 #include "nvim/vim.h"
-
-#ifdef HAVE_LOCALE_H
-# include <locale.h>
-#endif
 
 typedef struct {
   int rangeStart;
@@ -2193,10 +2190,7 @@ char *enc_locale(void)
   if (!(s = nl_langinfo(CODESET)) || *s == NUL)
 #endif
   {
-#if defined(HAVE_LOCALE_H)
-    if (!(s = setlocale(LC_CTYPE, NULL)) || *s == NUL)
-#endif
-    {
+    if (!(s = setlocale(LC_CTYPE, NULL)) || *s == NUL) {
       if ((s = os_getenv("LC_ALL"))) {
         if ((s = os_getenv("LC_CTYPE"))) {
           s = os_getenv("LANG");

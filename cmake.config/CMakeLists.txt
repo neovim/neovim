@@ -35,7 +35,6 @@ check_symbol_exists(_NSGetEnviron crt_externs.h HAVE__NSGETENVIRON)
 
 # Headers
 check_include_files(langinfo.h HAVE_LANGINFO_H)
-check_include_files(locale.h HAVE_LOCALE_H)
 check_include_files(strings.h HAVE_STRINGS_H)
 check_include_files(sys/utsname.h HAVE_SYS_UTSNAME_H)
 check_include_files(termios.h HAVE_TERMIOS_H)
