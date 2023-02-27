@@ -31,6 +31,7 @@
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/extmark.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
@@ -3102,6 +3103,9 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
         if (buf_empty && (curbuf->b_ml.ml_line_count == 2)) {
           // Added the first line into an empty buffer, need to
           // delete the dummy empty line.
+          // This has a side effect of incrementing curbuf->deleted_bytes,
+          // which results in inaccurate reporting of the byte count of
+          // previous contents in buffer-update events.
           buf_empty = false;
           ml_delete((linenr_T)2, false);
         }
@@ -3143,6 +3147,7 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
           }
         }
       }
+      extmark_adjust(curbuf, lnum, lnum + count - 1, (long)MAXLNUM, added, kExtmarkUndo);
       changed_lines(lnum, 0, lnum + count, added, true);
 
       if (did_free) {
