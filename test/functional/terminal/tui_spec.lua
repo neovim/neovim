@@ -1512,6 +1512,42 @@ describe('TUI', function()
     exec_lua([[vim.loop.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     screen:expect({any = '%[Process exited 1%]'})
   end)
+
+  it('no stack-use-after-scope with cursor color #22432', function()
+    screen:set_option('rgb', true)
+    command('set termguicolors')
+    child_session:request('nvim_exec', [[
+      set tgc
+      hi Cursor guifg=Red guibg=Green
+      set guicursor=n:block-Cursor/lCursor
+    ]], false)
+    screen:set_default_attr_ids({
+      [1] = {reverse = true},
+      [2] = {bold = true, foreground = Screen.colors.Blue},
+      [3] = {foreground = Screen.colors.Blue},
+      [4] = {reverse = true, bold = true},
+      [5] = {bold = true},
+    })
+    screen:expect([[
+      {1: }                                                 |
+      {2:~}{3:                                                 }|
+      {2:~}{3:                                                 }|
+      {2:~}{3:                                                 }|
+      {4:[No Name]                                         }|
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    feed('i')
+    screen:expect([[
+      {1: }                                                 |
+      {2:~}{3:                                                 }|
+      {2:~}{3:                                                 }|
+      {2:~}{3:                                                 }|
+      {4:[No Name]                                         }|
+      {5:-- INSERT --}                                      |
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
 end)
 
 describe('TUI', function()
