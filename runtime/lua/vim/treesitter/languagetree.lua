@@ -467,7 +467,7 @@ function LanguageTree:_get_injections()
 
   -- Generate a map by lang of node lists.
   -- Each list is a set of ranges that should be parsed together.
-  for _, lang_map in ipairs(injections) do
+  for _, lang_map in pairs(injections) do
     for lang, patterns in pairs(lang_map) do
       if not result[lang] then
         result[lang] = {}
