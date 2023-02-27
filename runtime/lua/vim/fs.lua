@@ -144,15 +144,33 @@ end
 --- The search can be narrowed to find only files or only directories by
 --- specifying {type} to be "file" or "directory", respectively.
 ---
+--- Examples:
+--- <pre>lua
+--- -- location of Cargo.toml from the current buffer's path
+--- local cargo = vim.fs.find('Cargo.toml', {
+---   upward = true,
+---   stop = vim.loop.os_homedir(),
+---   path = vim.fs.dirname(vim.api.nvim_buf_get_name(0)),
+--- })
+---
+--- -- list all test directories under the runtime directory
+--- local test_dirs = vim.fs.find(
+---   {'test', 'tst', 'testdir'},
+---   {limit = math.huge, type = 'directory', path = './runtime/'}
+--- )
+---
+--- -- get all the C++ source and header files inside lib/
+--- local cpp_hpp = vim.fs.find(function(name, path)
+---   return name:match('.*%.[ch]pp$') and path:match('[/\\\\]lib$')
+--- end, {limit = math.huge, type = 'file'})
+--- </pre>
+---
 ---@param names (string|table|fun(name: string, path: string): boolean) Names of the files
 ---             and directories to find.
----             Must be base names, paths and globs are not supported.
----             The function is called per file and directory within the
----             traversed directories to test if they match {names}.
----
----             If {names} is a function, it is called for each file and directory within the
----             traversed directory and it would be passed the base name of each file or directory and
----             the path of the directory being traversed.
+---             Must be base names, paths and globs are not supported when {names} is a string or a table.
+---             If {names} is a function, it will be called for each file and directory
+---             within the traversed directory with the base name of the
+---             file and directory and the path of the directory being traversed.
 ---             The function should return `true` if the given file or directory is considered a match.
 ---
 ---@param opts (table) Optional keyword arguments:
@@ -255,7 +273,7 @@ function M.find(names, opts)
       for other, type_ in M.dir(dir) do
         local f = join_paths(dir, other)
         if type(names) == 'function' then
-          if names(other) and (not opts.type or opts.type == type_) then
+          if (not opts.type or opts.type == type_) and names(other, dir) then
             if add(f) then
               return matches
             end
