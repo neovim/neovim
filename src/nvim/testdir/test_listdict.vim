@@ -886,11 +886,15 @@ func Test_listdict_extendnew()
   let l = [1, 2, 3]
   call assert_equal([1, 2, 3, 4, 5], extendnew(l, [4, 5]))
   call assert_equal([1, 2, 3], l)
+  lockvar l
+  call assert_equal([1, 2, 3, 4, 5], extendnew(l, [4, 5]))
 
-  " Test extend() with dictionaries.
+  " Test extendnew() with dictionaries.
   let d = {'a': {'b': 'B'}}
   call assert_equal({'a': {'b': 'B'}, 'c': 'cc'}, extendnew(d, {'c': 'cc'}))
   call assert_equal({'a': {'b': 'B'}}, d)
+  lockvar d
+  call assert_equal({'a': {'b': 'B'}, 'c': 'cc'}, extendnew(d, {'c': 'cc'}))
 endfunc
 
 func s:check_scope_dict(x, fixed)
