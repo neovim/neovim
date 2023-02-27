@@ -881,6 +881,18 @@ func Test_listdict_extend()
   call assert_equal([1, 5, 7, 1, 5, 7], l)
 endfunc
 
+func Test_listdict_extendnew()
+  " Test extendnew() with lists
+  let l = [1, 2, 3]
+  call assert_equal([1, 2, 3, 4, 5], extendnew(l, [4, 5]))
+  call assert_equal([1, 2, 3], l)
+
+  " Test extend() with dictionaries.
+  let d = {'a': {'b': 'B'}}
+  call assert_equal({'a': {'b': 'B'}, 'c': 'cc'}, extendnew(d, {'c': 'cc'}))
+  call assert_equal({'a': {'b': 'B'}}, d)
+endfunc
+
 func s:check_scope_dict(x, fixed)
   func s:gen_cmd(cmd, x)
     return substitute(a:cmd, '\<x\ze:', a:x, 'g')
