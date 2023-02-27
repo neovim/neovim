@@ -138,6 +138,9 @@ expandcmd({string} [, {options}])
 				String	expand {string} like with `:edit`
 extend({expr1}, {expr2} [, {expr3}])
 				List/Dict insert items of {expr2} into {expr1}
+extendnew({expr1}, {expr2} [, {expr3}])
+				List/Dict like |extend()| but creates a new
+					List or Dictionary
 feedkeys({string} [, {mode}])	Number	add key sequence to typeahead buffer
 filereadable({file})		Number	|TRUE| if {file} is a readable file
 filewritable({file})		Number	|TRUE| if {file} is a writable file
@@ -2118,6 +2121,14 @@ extend({expr1}, {expr2} [, {expr3}])			*extend()*
 
 		Can also be used as a |method|: >
 			mylist->extend(otherlist)
+
+
+extendnew({expr1}, {expr2} [, {expr3}])			*extendnew()*
+		Like |extend()| but instead of adding items to {expr1} a new
+		List or Dictionary is created and returned.  {expr1} remains
+		unchanged.  Items can still be changed by {expr2}, if you
+		don't want that use |deepcopy()| first.
+
 
 feedkeys({string} [, {mode}])				*feedkeys()*
 		Characters in {string} are queued for processing as if they

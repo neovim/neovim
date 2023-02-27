@@ -1929,18 +1929,22 @@ static void f_flattennew(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   flatten_common(argvars, rettv, true);
 }
 
-/// "extend(list, list [, idx])" function
-/// "extend(dict, dict [, action])" function
-static void f_extend(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+/// "extend()" or "extendnew()" function.  "is_new" is true for extendnew().
+static void extend(typval_T *argvars, typval_T *rettv, char *arg_errmsg, bool is_new)
 {
-  const char *const arg_errmsg = N_("extend() argument");
-
   if (argvars[0].v_type == VAR_LIST && argvars[1].v_type == VAR_LIST) {
     bool error = false;
 
-    list_T *const l1 = argvars[0].vval.v_list;
+    list_T *l1 = argvars[0].vval.v_list;
     list_T *const l2 = argvars[1].vval.v_list;
-    if (!value_check_lock(tv_list_locked(l1), arg_errmsg, TV_TRANSLATE)) {
+    if (is_new || !value_check_lock(tv_list_locked(l1), arg_errmsg, TV_TRANSLATE)) {
+      if (is_new) {
+        l1 = tv_list_copy(NULL, l1, false, get_copyID());
+        if (l1 == NULL) {
+          return;
+        }
+      }
+
       listitem_T *item;
       if (argvars[2].v_type != VAR_UNKNOWN) {
         long before = (long)tv_get_number_chk(&argvars[2], &error);
@@ -1962,11 +1966,18 @@ static void f_extend(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       }
       tv_list_extend(l1, l2, item);
 
-      tv_copy(&argvars[0], rettv);
+      if (is_new) {
+        *rettv = (typval_T){
+          .v_type = VAR_LIST,
+          .v_lock = VAR_UNLOCKED,
+          .vval.v_list = l1,
+        };
+      } else {
+        tv_copy(&argvars[0], rettv);
+      }
     }
-  } else if (argvars[0].v_type == VAR_DICT && argvars[1].v_type ==
-             VAR_DICT) {
-    dict_T *const d1 = argvars[0].vval.v_dict;
+  } else if (argvars[0].v_type == VAR_DICT && argvars[1].v_type == VAR_DICT) {
+    dict_T *d1 = argvars[0].vval.v_dict;
     dict_T *const d2 = argvars[1].vval.v_dict;
     if (d1 == NULL) {
       const bool locked = value_check_lock(VAR_FIXED, arg_errmsg, TV_TRANSLATE);
@@ -1975,7 +1986,14 @@ static void f_extend(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     } else if (d2 == NULL) {
       // Do nothing
       tv_copy(&argvars[0], rettv);
-    } else if (!value_check_lock(d1->dv_lock, arg_errmsg, TV_TRANSLATE)) {
+    } else if (is_new || !value_check_lock(d1->dv_lock, arg_errmsg, TV_TRANSLATE)) {
+      if (is_new) {
+        d1 = tv_dict_copy(NULL, d1, false, get_copyID());
+        if (d1 == NULL) {
+          return;
+        }
+      }
+
       const char *action = "force";
       // Check the third argument.
       if (argvars[2].v_type != VAR_UNKNOWN) {
@@ -1999,11 +2017,35 @@ static void f_extend(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
       tv_dict_extend(d1, d2, action);
 
-      tv_copy(&argvars[0], rettv);
+      if (is_new) {
+        *rettv = (typval_T){
+          .v_type = VAR_DICT,
+          .v_lock = VAR_UNLOCKED,
+          .vval.v_dict = d1,
+        };
+      } else {
+        tv_copy(&argvars[0], rettv);
+      }
     }
   } else {
-    semsg(_(e_listdictarg), "extend()");
+    semsg(_(e_listdictarg), is_new ? "extendnew()" : "extend()");
   }
+}
+
+/// "extend(list, list [, idx])" function
+/// "extend(dict, dict [, action])" function
+static void f_extend(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  char *errmsg = N_("extend() argument");
+  extend(argvars, rettv, errmsg, false);
+}
+
+/// "extendnew(list, list [, idx])" function
+/// "extendnew(dict, dict [, action])" function
+static void f_extendnew(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  char *errmsg = N_("extendnew() argument");
+  extend(argvars, rettv, errmsg, true);
 }
 
 /// "feedkeys()" function
