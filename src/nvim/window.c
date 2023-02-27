@@ -1899,8 +1899,8 @@ static void win_rotate(bool upwards, int count)
     }
   }
 
-  win_T *wp1;
-  win_T *wp2;
+  win_T *wp1 = NULL;
+  win_T *wp2 = NULL;
 
   while (count--) {
     if (upwards) {              // first window becomes last window
