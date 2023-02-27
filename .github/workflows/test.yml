@@ -32,7 +32,7 @@ env:
 jobs:
   lint:
     if: (github.event_name == 'pull_request' && github.base_ref == 'master') || (github.event_name == 'push' && github.ref == 'refs/heads/master')
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       CACHE_UNCRUSTIFY: ${{ github.workspace }}/.cache/uncrustify
@@ -132,15 +132,15 @@ jobs:
         include:
           - flavor: asan
             cc: clang
-            runner: ubuntu-22.04
+            runner: ubuntu-latest
             flags: -D CLANG_ASAN_UBSAN=ON
           - flavor: tsan
             cc: clang
-            runner: ubuntu-22.04
+            runner: ubuntu-latest
             flags: -D CLANG_TSAN=ON
           - flavor: uchar
             cc: gcc
-            runner: ubuntu-22.04
+            runner: ubuntu-latest
             flags: -D UNSIGNED_CHAR=ON
           - cc: clang
             runner: macos-12
@@ -150,7 +150,7 @@ jobs:
             # 2. No treesitter parsers installed.
           - flavor: functionaltest-lua
             cc: gcc
-            runner: ubuntu-22.04
+            runner: ubuntu-latest
             deps_flags: -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON
             flags: -D PREFER_LUA=ON
     runs-on: ${{ matrix.runner }}
