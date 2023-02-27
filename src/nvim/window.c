@@ -4813,7 +4813,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
 
   // Might need to scroll the old window before switching, e.g., when the
   // cursor was moved.
-  if (*p_spk == 'c') {
+  if (*p_spk == 'c' && !curwin_invalid) {
     update_topline(curwin);
   }
 
