@@ -103,6 +103,13 @@ struct ui_t {
   double pum_height;
   double pum_width;
 
+  // TUI fields.
+  char *term_name;
+  char *term_background;
+  int term_colors;
+  bool stdin_tty;
+  bool stdout_tty;
+
   // TODO(bfredl): integrate into struct!
   UIData data[1];
 };

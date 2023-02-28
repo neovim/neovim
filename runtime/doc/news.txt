@@ -179,6 +179,11 @@ The following new APIs or features were added.
 
   Additionally |TSNode:range()| now takes an optional {include_bytes} argument.
 
+• |nvim_list_uis()| reports all |ui-option| fields.
+
+• Vim's `has('gui_running')` is now supported as a way for plugins to check if
+  a GUI (not the |TUI|) is attached to Nvim. |has()|
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 

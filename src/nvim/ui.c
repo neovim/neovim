@@ -134,6 +134,7 @@ void ui_free_all_mem(void)
 }
 #endif
 
+/// Returns true if any `rgb=true` UI is attached.
 bool ui_rgb_attached(void)
 {
   if (!headless_mode && p_tgc) {
@@ -141,6 +142,18 @@ bool ui_rgb_attached(void)
   }
   for (size_t i = 0; i < ui_count; i++) {
     if (uis[i]->rgb) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// Returns true if a GUI is attached.
+bool ui_gui_attached(void)
+{
+  for (size_t i = 0; i < ui_count; i++) {
+    bool tui = uis[i]->stdin_tty || uis[i]->stdout_tty;
+    if (!tui) {
       return true;
     }
   }
@@ -598,6 +611,14 @@ Array ui_array(void)
     PUT(info, "height", INTEGER_OBJ(ui->height));
     PUT(info, "rgb", BOOLEAN_OBJ(ui->rgb));
     PUT(info, "override", BOOLEAN_OBJ(ui->override));
+
+    // TUI fields. (`stdin_fd` is intentionally omitted.)
+    PUT(info, "term_name", STRING_OBJ(cstr_to_string(ui->term_name)));
+    PUT(info, "term_background", STRING_OBJ(cstr_to_string(ui->term_background)));
+    PUT(info, "term_colors", INTEGER_OBJ(ui->term_colors));
+    PUT(info, "stdin_tty", BOOLEAN_OBJ(ui->stdin_tty));
+    PUT(info, "stdout_tty", BOOLEAN_OBJ(ui->stdout_tty));
+
     for (UIExtension j = 0; j < kUIExtCount; j++) {
       if (ui_ext_names[j][0] != '_' || ui->ui_ext[j]) {
         PUT(info, ui_ext_names[j], BOOLEAN_OBJ(ui->ui_ext[j]));
