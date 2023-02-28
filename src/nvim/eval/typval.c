@@ -2711,7 +2711,7 @@ bool tv_blob_equal(const blob_T *const b1, const blob_T *const b2)
 }
 
 /// Check if "n1" is a valid index for a blob with length "bloblen".
-int tv_blob_check_index(int bloblen, varnumber_T n1, int is_range, bool quiet)
+int tv_blob_check_index(int bloblen, varnumber_T n1, bool quiet)
 {
   if (n1 < 0 || n1 > bloblen) {
     if (!quiet) {
