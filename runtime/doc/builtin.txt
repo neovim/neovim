@@ -6164,7 +6164,12 @@ readblob({fname} [, {offset} [, {size}]])			*readblob()*
 			readblob('file.bin', 0, 100)
 <		If {size} is -1 or omitted, the whole data starting from
 		{offset} will be read.
-		When the file can't be opened an error message is given and
+		This can be also used to read the data from a character device
+		on Unix when {size} is explicitly set.  Only if the device
+		supports seeking {offset} can be used.  Otherwise it should be
+		zero.  E.g. to read 10 bytes from a serial console: >
+			readblob('/dev/ttyS0', 0, 10)
+<		When the file can't be opened an error message is given and
 		the result is an empty |Blob|.
 		When trying to read bytes beyond the end of the file the
 		result is an empty blob.

@@ -5893,10 +5893,11 @@ int read_blob(FILE *const fd, typval_T *rettv, off_T offset, off_T size_arg)
   }
   // Trying to read bytes that aren't there results in an empty blob, not an
   // error.
-  if (size < 0 || size > (off_T)os_fileinfo_size(&file_info)) {
+  if (size < 0 || (!S_ISCHR(file_info.stat.st_mode)
+                   && size > (off_T)os_fileinfo_size(&file_info))) {
     return OK;
   }
-  if (vim_fseek(fd, offset, whence) != 0) {
+  if (offset != 0 && vim_fseek(fd, offset, whence) != 0) {
     return OK;
   }
 

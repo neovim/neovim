@@ -459,6 +459,11 @@ func Test_blob_read_write()
   END
   call CheckLegacyAndVim9Success(lines)
 
+  if filereadable('/dev/random')
+    let b = readblob('/dev/random', 0, 10)
+    call assert_equal(10, len(b))
+  endif
+
   call assert_fails("call readblob('notexist')", 'E484:')
   " TODO: How do we test for the E485 error?
 
