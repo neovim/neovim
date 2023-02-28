@@ -632,7 +632,7 @@ func Test_blob_sort()
   if has('float')
     call CheckLegacyAndVim9Failure(['call sort([1.0, 0z11], "f")'], 'E975:')
   endif
-  call CheckLegacyAndVim9Failure(['call sort(["abc", 0z11], "f")'], 'E892:')
+  call CheckLegacyAndVim9Failure(['call sort([11, 0z11], "N")'], 'E974:')
 endfunc
 
 " The following used to cause an out-of-bounds memory access
