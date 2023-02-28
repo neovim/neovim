@@ -1613,7 +1613,7 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
           lp->ll_n2 = tv_blob_len(lp->ll_blob) - 1;
         }
 
-        if (tv_blob_set_range(lp->ll_blob, lp->ll_n1, lp->ll_n2, rettv) == FAIL) {
+        if (tv_blob_set_range(lp->ll_blob, (int)lp->ll_n1, (int)lp->ll_n2, rettv) == FAIL) {
           return;
         }
       } else {
@@ -4938,6 +4938,8 @@ theend:
   return retval;
 }
 
+/// "function()" function
+/// "funcref()" function
 void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
 {
   char *s;

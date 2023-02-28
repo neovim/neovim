@@ -715,6 +715,18 @@ func Test_blob2string()
   call assert_equal(v, string(b))
 endfunc
 
+func Test_blob_repeat()
+  call assert_equal(0z, repeat(0z00, 0))
+  call assert_equal(0z00, repeat(0z00, 1))
+  call assert_equal(0z0000, repeat(0z00, 2))
+  call assert_equal(0z00000000, repeat(0z0000, 2))
+
+  call assert_equal(0z, repeat(0z12, 0))
+  call assert_equal(0z, repeat(0z1234, 0))
+  call assert_equal(0z1234, repeat(0z1234, 1))
+  call assert_equal(0z12341234, repeat(0z1234, 2))
+endfunc
+
 " Test for blob allocation failure
 func Test_blob_alloc_failure()
   CheckFunction test_alloc_fail
