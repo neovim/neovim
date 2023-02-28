@@ -48,10 +48,16 @@ static char e_dict_required_for_argument_nr[]
   = N_("E1206: Dictionary required for argument %d");
 static char e_number_required_for_argument_nr[]
   = N_("E1210: Number required for argument %d");
+static char e_list_required_for_argument_nr[]
+  = N_("E1211: List required for argument %d");
 static char e_string_or_list_required_for_argument_nr[]
   = N_("E1222: String or List required for argument %d");
 static char e_list_or_blob_required_for_argument_nr[]
   = N_("E1226: List or Blob required for argument %d");
+static char e_blob_required_for_argument_nr[]
+  = N_("E1238: Blob required for argument %d");
+static char e_invalid_value_for_blob_nr[]
+  = N_("E1239: Invalid value for blob: %d");
 static char e_string_or_function_required_for_argument_nr[]
   = N_("E1256: String or function required for argument %d");
 
@@ -2826,6 +2832,51 @@ void tv_blob_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
   }
 }
 
+/// blob2list() function
+void f_blob2list(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  tv_list_alloc_ret(rettv, kListLenMayKnow);
+
+  if (tv_check_for_blob_arg(argvars, 0) == FAIL) {
+    return;
+  }
+
+  blob_T *const blob = argvars->vval.v_blob;
+  list_T *const l = rettv->vval.v_list;
+  for (int i = 0; i < tv_blob_len(blob); i++) {
+    tv_list_append_number(l, tv_blob_get(blob, i));
+  }
+}
+
+/// list2blob() function
+void f_list2blob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  tv_blob_alloc_ret(rettv);
+  blob_T *const blob = rettv->vval.v_blob;
+
+  if (tv_check_for_list_arg(argvars, 0) == FAIL) {
+    return;
+  }
+
+  list_T *const l = argvars->vval.v_list;
+  if (l == NULL) {
+    return;
+  }
+
+  TV_LIST_ITER_CONST(l, li, {
+    bool error = false;
+    varnumber_T n = tv_get_number_chk(TV_LIST_ITEM_TV(li), &error);
+    if (error || n < 0 || n > 255) {
+      if (!error) {
+        semsg(_(e_invalid_value_for_blob_nr), n);
+      }
+      ga_clear(&blob->bv_ga);
+      return;
+    }
+    ga_append(&blob->bv_ga, (uint8_t)n);
+  });
+}
+
 //{{{1 Generic typval operations
 //{{{2 Init/alloc/clear
 //{{{3 Alloc
@@ -3966,6 +4017,28 @@ int tv_check_for_opt_number_arg(const typval_T *const args, const int idx)
 {
   return (args[idx].v_type == VAR_UNKNOWN
           || tv_check_for_number_arg(args, idx) != FAIL) ? OK : FAIL;
+}
+
+/// Give an error and return FAIL unless "args[idx]" is a blob.
+int tv_check_for_blob_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (args[idx].v_type != VAR_BLOB) {
+    semsg(_(e_blob_required_for_argument_nr), idx + 1);
+    return FAIL;
+  }
+  return OK;
+}
+
+/// Give an error and return FAIL unless "args[idx]" is a list.
+int tv_check_for_list_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (args[idx].v_type != VAR_LIST) {
+    semsg(_(e_list_required_for_argument_nr), idx + 1);
+    return FAIL;
+  }
+  return OK;
 }
 
 /// Give an error and return FAIL unless "args[idx]" is a dict.

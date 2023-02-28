@@ -666,6 +666,46 @@ func Test_blob_sort()
   call CheckLegacyAndVim9Failure(['call sort([11, 0z11], "N")'], 'E974:')
 endfunc
 
+" Tests for the blob2list() function
+func Test_blob2list()
+  call assert_fails('let v = blob2list(10)', 'E1238: Blob required for argument 1')
+  eval 0zFFFF->blob2list()->assert_equal([255, 255])
+  let tests = [[0z0102, [1, 2]],
+        \ [0z00, [0]],
+        \ [0z, []],
+        \ [0z00000000, [0, 0, 0, 0]],
+        \ [0zAABB.CCDD, [170, 187, 204, 221]]]
+  for t in tests
+    call assert_equal(t[0]->blob2list(), t[1])
+  endfor
+  exe 'let v = 0z' .. repeat('000102030405060708090A0B0C0D0E0F', 64)
+  call assert_equal(1024, blob2list(v)->len())
+  call assert_equal([4, 8, 15], [v[100], v[1000], v[1023]])
+  call assert_equal([], blob2list(v:_null_blob))
+endfunc
+
+" Tests for the list2blob() function
+func Test_list2blob()
+  call assert_fails('let b = list2blob(0z10)', 'E1211: List required for argument 1')
+  let tests = [[[1, 2], 0z0102],
+        \ [[0], 0z00],
+        \ [[], 0z],
+        \ [[0, 0, 0, 0], 0z00000000],
+        \ [[255, 255], 0zFFFF],
+        \ [[170, 187, 204, 221], 0zAABB.CCDD],
+        \ ]
+  for t in tests
+    call assert_equal(t[1], t[0]->list2blob())
+  endfor
+  call assert_fails('let b = list2blob([1, []])', 'E745:')
+  call assert_fails('let b = list2blob([-1])', 'E1239:')
+  call assert_fails('let b = list2blob([256])', 'E1239:')
+  let b = range(16)->repeat(64)->list2blob()
+  call assert_equal(1024, b->len())
+  call assert_equal([4, 8, 15], [b[100], b[1000], b[1023]])
+  call assert_equal(0z, list2blob(v:_null_list))
+endfunc
+
 " The following used to cause an out-of-bounds memory access
 func Test_blob2string()
   let v = '0z' .. repeat('01010101.', 444)
