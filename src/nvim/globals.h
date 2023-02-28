@@ -789,7 +789,7 @@ EXTERN int redir_reg INIT(= 0);             // message redirection register
 EXTERN int redir_vname INIT(= 0);           // message redirection variable
 EXTERN garray_T *capture_ga INIT(= NULL);   // captured output for execute()
 
-EXTERN char_u langmap_mapchar[256];     // mapping for language keys
+EXTERN uint8_t langmap_mapchar[256];     // mapping for language keys
 
 EXTERN int save_p_ls INIT(= -1);        // Save 'laststatus' setting
 EXTERN int save_p_wmh INIT(= -1);       // Save 'winminheight' setting
@@ -832,7 +832,7 @@ EXTERN long sub_nsubs;       // total number of substitutions
 EXTERN linenr_T sub_nlines;  // total number of lines changed
 
 // table to store parsed 'wildmode'
-EXTERN char_u wim_flags[4];
+EXTERN uint8_t wim_flags[4];
 
 // whether titlestring and iconstring contains statusline syntax
 #define STL_IN_ICON    1

@@ -2693,7 +2693,7 @@ char *getcmdline_prompt(const int firstc, const char *const prompt, const int at
 /// Read the 'wildmode' option, fill wim_flags[].
 int check_opt_wim(void)
 {
-  char_u new_wim_flags[4];
+  uint8_t new_wim_flags[4];
   int i;
   int idx = 0;
 
