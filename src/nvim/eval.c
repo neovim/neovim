@@ -5859,27 +5859,63 @@ write_blob_error:
   return false;
 }
 
-/// Read a blob from a file `fd`.
+/// Read blob from file "fd".
+/// Caller has allocated a blob in "rettv".
 ///
 /// @param[in]  fd  File to read from.
-/// @param[in,out]  blob  Blob to write to.
+/// @param[in,out]  rettv  Blob to write to.
+/// @param[in]  offset  Read the file from the specified offset.
+/// @param[in]  size  Read the specified size, or -1 if no limit.
 ///
-/// @return true on success, or false on failure.
-bool read_blob(FILE *const fd, blob_T *const blob)
+/// @return  OK on success, or FAIL on failure.
+int read_blob(FILE *const fd, typval_T *rettv, off_T offset, off_T size_arg)
   FUNC_ATTR_NONNULL_ALL
 {
+  blob_T *const blob = rettv->vval.v_blob;
   FileInfo file_info;
   if (!os_fileinfo_fd(fileno(fd), &file_info)) {
-    return false;
+    return FAIL;  // can't read the file, error
   }
-  const int size = (int)os_fileinfo_size(&file_info);
-  ga_grow(&blob->bv_ga, size);
-  blob->bv_ga.ga_len = size;
+
+  int whence;
+  off_T size = size_arg;
+  const off_T file_size = (off_T)os_fileinfo_size(&file_info);
+  if (offset >= 0) {
+    // The size defaults to the whole file.  If a size is given it is
+    // limited to not go past the end of the file.
+    if (size == -1 || (size > file_size - offset && !S_ISCHR(file_info.stat.st_mode))) {
+      // size may become negative, checked below
+      size = (off_T)os_fileinfo_size(&file_info) - offset;
+    }
+    whence = SEEK_SET;
+  } else {
+    // limit the offset to not go before the start of the file
+    if (-offset > file_size && !S_ISCHR(file_info.stat.st_mode)) {
+      offset = -file_size;
+    }
+    // Size defaults to reading until the end of the file.
+    if (size == -1 || size > -offset) {
+      size = -offset;
+    }
+    whence = SEEK_END;
+  }
+  if (size <= 0) {
+    return OK;
+  }
+  if (offset != 0 && vim_fseek(fd, offset, whence) != 0) {
+    return OK;
+  }
+
+  ga_grow(&blob->bv_ga, (int)size);
+  blob->bv_ga.ga_len = (int)size;
   if (fread(blob->bv_ga.ga_data, 1, (size_t)blob->bv_ga.ga_len, fd)
       < (size_t)blob->bv_ga.ga_len) {
-    return false;
+    // An empty blob is returned on error.
+    tv_blob_free(rettv->vval.v_blob);
+    rettv->vval.v_blob = NULL;
+    return FAIL;
   }
-  return true;
+  return OK;
 }
 
 /// Saves a typval_T as a string.

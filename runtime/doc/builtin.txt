@@ -359,7 +359,8 @@ pyxeval({expr})			any	evaluate |python_x| expression
 rand([{expr}])			Number	get pseudo-random number
 range({expr} [, {max} [, {stride}]])
 				List	items from {expr} to {max}
-readblob({fname})		Blob	read a |Blob| from {fname}
+readblob({fname} [, {offset} [, {size}]])
+				Blob	read a |Blob| from {fname}
 readdir({dir} [, {expr}])	List	file names in {dir} selected by {expr}
 readfile({fname} [, {type} [, {max}]])
 				List	get list of lines from file {fname}
@@ -6110,6 +6111,25 @@ pyxeval({expr})						*pyxeval()*
 		Can also be used as a |method|: >
 			GetExpr()->pyxeval()
 <
+rand([{expr}])						*rand()*
+		Return a pseudo-random Number generated with an xoshiro128**
+		algorithm using seed {expr}.  The returned number is 32 bits,
+		also on 64 bits systems, for consistency.
+		{expr} can be initialized by |srand()| and will be updated by
+		rand().  If {expr} is omitted, an internal seed value is used
+		and updated.
+		Returns -1 if {expr} is invalid.
+
+		Examples: >
+			:echo rand()
+			:let seed = srand()
+			:echo rand(seed)
+			:echo rand(seed) % 16  " random number 0 - 15
+<
+		Can also be used as a |method|: >
+			seed->rand()
+<
+
 							*E726* *E727*
 range({expr} [, {max} [, {stride}]])				*range()*
 		Returns a |List| with Numbers:
@@ -6132,29 +6152,29 @@ range({expr} [, {max} [, {stride}]])				*range()*
 		Can also be used as a |method|: >
 			GetExpr()->range()
 <
-rand([{expr}])						*rand()*
-		Return a pseudo-random Number generated with an xoshiro128**
-		algorithm using seed {expr}.  The returned number is 32 bits,
-		also on 64 bits systems, for consistency.
-		{expr} can be initialized by |srand()| and will be updated by
-		rand().  If {expr} is omitted, an internal seed value is used
-		and updated.
-		Returns -1 if {expr} is invalid.
 
-		Examples: >
-			:echo rand()
-			:let seed = srand()
-			:echo rand(seed)
-			:echo rand(seed) % 16  " random number 0 - 15
-<
-		Can also be used as a |method|: >
-			seed->rand()
-<
-
-readblob({fname})					*readblob()*
+readblob({fname} [, {offset} [, {size}]])			*readblob()*
 		Read file {fname} in binary mode and return a |Blob|.
-		When the file can't be opened an error message is given and
+		If {offset} is specified, read the file from the specified
+		offset.  If it is a negative value, it is used as an offset
+		from the end of the file.  E.g., to read the last 12 bytes: >
+			readblob('file.bin', -12)
+<		If {size} is specified, only the specified size will be read.
+		E.g. to read the first 100 bytes of a file: >
+			readblob('file.bin', 0, 100)
+<		If {size} is -1 or omitted, the whole data starting from
+		{offset} will be read.
+		This can be also used to read the data from a character device
+		on Unix when {size} is explicitly set.  Only if the device
+		supports seeking {offset} can be used.  Otherwise it should be
+		zero.  E.g. to read 10 bytes from a serial console: >
+			readblob('/dev/ttyS0', 0, 10)
+<		When the file can't be opened an error message is given and
 		the result is an empty |Blob|.
+		When the offset is beyond the end of the file the result is an
+		empty blob.
+		When trying to read more bytes than are available the result
+		is truncated.
 		Also see |readfile()| and |writefile()|.
 
 
