@@ -846,4 +846,19 @@ func Test_lastused_tabpage()
   tabonly!
 endfunc
 
+" this was giving ml_get errors
+func Test_tabpage_last_line()
+  enew
+  call setline(1, repeat(['a'], &lines + 5))
+  $
+  tabnew
+  call setline(1, repeat(['b'], &lines + 20))
+  $
+  tabNext
+  call assert_equal('a', getline('.'))
+
+  bwipe!
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
