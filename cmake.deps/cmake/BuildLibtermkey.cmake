@@ -9,7 +9,7 @@ ExternalProject_Add(libtermkey
   PATCH_COMMAND ${CMAKE_COMMAND} -E copy
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/libtermkeyCMakeLists.txt
     ${DEPS_BUILD_DIR}/src/libtermkey/CMakeLists.txt
-  CMAKE_ARGS ${DEPS_CMAKE_ARGS}
+  CMAKE_ARGS ${DEPS_CMAKE_ARGS_C}
     -D CMAKE_SHARED_LIBRARY_LINK_C_FLAGS="" # Hack to avoid -rdynamic in Mingw
     -D UNIBILIUM_INCLUDE_DIRS=${DEPS_INSTALL_DIR}/include
     -D UNIBILIUM_LIBRARIES=${DEPS_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}unibilium${CMAKE_STATIC_LIBRARY_SUFFIX}

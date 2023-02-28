@@ -1,6 +1,14 @@
 # This is not meant to be included by the top-level.
 cmake_minimum_required (VERSION 3.10)
-project(NVIM_DEPS C)
+
+option(USE_BUNDLED "Use bundled dependencies." ON)
+option(USE_BUNDLED_TS_PARSERS "Use the bundled treesitter parsers." ${USE_BUNDLED})
+
+if(USE_BUNDLED_TS_PARSERS)
+  project(NVIM_DEPS C CXX)
+else()
+  project(NVIM_DEPS C)
+endif()
 
 if(POLICY CMP0135)
   cmake_policy(SET CMP0135 NEW)
@@ -13,7 +21,6 @@ include(CheckCCompilerFlag)
 include(Util)
 
 set(DEPS_CMAKE_ARGS
-  -D CMAKE_C_COMPILER=${CMAKE_C_COMPILER}
   -D CMAKE_GENERATOR=${CMAKE_GENERATOR}
   -D CMAKE_GENERATOR_PLATFORM=${CMAKE_GENERATOR_PLATFORM}
   -D CMAKE_POSITION_INDEPENDENT_CODE=ON)
@@ -42,7 +49,14 @@ set(DEPS_DOWNLOAD_DIR "${DEPS_BUILD_DIR}/downloads" CACHE PATH "Dependencies dow
 
 list(APPEND DEPS_CMAKE_ARGS -D CMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR})
 
-option(USE_BUNDLED "Use bundled dependencies." ON)
+set(DEPS_CMAKE_ARGS_C ${DEPS_CMAKE_ARGS}
+  -D CMAKE_C_COMPILER=${CMAKE_C_COMPILER})
+
+set(DEPS_CMAKE_ARGS_C_CXX ${DEPS_CMAKE_ARGS}
+  -D CMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+  -D CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER})
+
+unset(DEPS_CMAKE_ARGS)
 
 option(USE_BUNDLED_UNIBILIUM "Use the bundled unibilium." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBTERMKEY "Use the bundled libtermkey." ${USE_BUNDLED})
@@ -55,7 +69,6 @@ option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
 #XXX(tarruda): Lua is only used for debugging the functional test client, don't
 # build it unless explicitly requested
 option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
-option(USE_BUNDLED_TS_PARSERS "Use the bundled treesitter parsers." ${USE_BUNDLED})
 option(USE_BUNDLED_TS "Use the bundled treesitter runtime." ${USE_BUNDLED})
 
 if(USE_BUNDLED AND MSVC)
@@ -190,6 +203,9 @@ set(TREESITTER_VIM_SHA256 1b1cd39e33c8fb02fa7fe3977e844883c2a8508a7edd621f2d21e3
 
 set(TREESITTER_HELP_URL https://github.com/neovim/tree-sitter-vimdoc/archive/v1.3.0.tar.gz)
 set(TREESITTER_HELP_SHA256 f33f6d49c7d71feb2fd68ef2b2684da150f9f8e486ad9726213631d673942331)
+
+set(TREESITTER_MARKDOWN_URL https://github.com/MDeiml/tree-sitter-markdown/archive/v0.1.3.tar.gz)
+set(TREESITTER_MARKDOWN_SHA256 4748af7ab03aa027909335e45f0372c42c4fa4b3eebe5bd5eba39c0e37957c62)
 
 set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/c51896d32dcc11a38e41f36e3deb1a6a9c4f4b14.tar.gz)
 set(TREESITTER_SHA256 243e07541a9dd71681984b65bffed2d4a259bef0a4ad28cff55cc1c6878b8d18)

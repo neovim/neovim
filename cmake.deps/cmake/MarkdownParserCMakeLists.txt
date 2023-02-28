@@ -1,0 +1,26 @@
+cmake_minimum_required(VERSION 3.10)
+project(${PARSERLANG})
+
+add_library(markdown MODULE
+tree-sitter-markdown/src/parser.c
+tree-sitter-markdown/src/scanner.cc)
+target_include_directories(markdown
+  PRIVATE
+  tree-sitter-markdown/src)
+
+add_library(markdown_inline MODULE
+tree-sitter-markdown-inline/src/parser.c
+tree-sitter-markdown-inline/src/scanner.cc)
+target_include_directories(markdown_inline
+  PRIVATE
+  tree-sitter-markdown-inline/src)
+
+set_target_properties(
+  markdown markdown_inline
+  PROPERTIES
+    PREFIX ""
+)
+
+install(TARGETS markdown markdown_inline LIBRARY DESTINATION lib/nvim/parser)
+
+# vim: set ft=cmake:
