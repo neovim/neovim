@@ -1199,7 +1199,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     statuscol.draw = true;
     statuscol.sattrs = sattrs;
     statuscol.foldinfo = foldinfo;
-    statuscol.width = win_col_off(wp);
+    statuscol.width = win_col_off(wp) - (cmdwin_type != 0 && wp == curwin);
     statuscol.use_cul = use_cursor_line_sign(wp, lnum);
     statuscol.sign_cul_attr = statuscol.use_cul ? sign_cul_attr : 0;
     statuscol.num_attr = sign_num_attr ? sign_num_attr
