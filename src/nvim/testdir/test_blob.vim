@@ -439,9 +439,28 @@ func Test_blob_read_write()
       call writefile(b, 'Xblob')
       VAR br = readfile('Xblob', 'B')
       call assert_equal(b, br)
+      VAR br2 = readblob('Xblob')
+      call assert_equal(b, br2)
+      VAR br3 = readblob('Xblob', 1)
+      call assert_equal(b[1 :], br3)
+      VAR br4 = readblob('Xblob', 1, 2)
+      call assert_equal(b[1 : 2], br4)
+      VAR br5 = readblob('Xblob', -3)
+      call assert_equal(b[-3 :], br5)
+      VAR br6 = readblob('Xblob', -3, 2)
+      call assert_equal(b[-3 : -2], br6)
+
+      VAR br1e = readblob('Xblob', 10000)
+      call assert_equal(0z, br1e)
+      VAR br2e = readblob('Xblob', -10000)
+      call assert_equal(0z, br2e)
+
       call delete('Xblob')
   END
   call CheckLegacyAndVim9Success(lines)
+
+  call assert_fails("call readblob('notexist')", 'E484:')
+  " TODO: How do we test for the E485 error?
 
   " This was crashing when calling readfile() with a directory.
   call assert_fails("call readfile('.', 'B')", 'E17: "." is a directory')

@@ -5592,15 +5592,24 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
   ptrdiff_t prevlen  = 0;               // length of data in prev
   ptrdiff_t prevsize = 0;               // size of prev buffer
   int64_t maxline  = MAXLNUM;
+  off_T offset = 0;
+  off_T size = -1;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    if (strcmp(tv_get_string(&argvars[1]), "b") == 0) {
-      binary = true;
-    } else if (strcmp(tv_get_string(&argvars[1]), "B") == 0) {
-      blob = true;
-    }
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      maxline = tv_get_number(&argvars[2]);
+    if (always_blob) {
+      offset = (off_T)tv_get_number(&argvars[1]);
+      if (argvars[2].v_type != VAR_UNKNOWN) {
+        size = (off_T)tv_get_number(&argvars[2]);
+      }
+    } else {
+      if (strcmp(tv_get_string(&argvars[1]), "b") == 0) {
+        binary = true;
+      } else if (strcmp(tv_get_string(&argvars[1]), "B") == 0) {
+        blob = true;
+      }
+      if (argvars[2].v_type != VAR_UNKNOWN) {
+        maxline = tv_get_number(&argvars[2]);
+      }
     }
   }
 
@@ -5619,11 +5628,8 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
 
   if (blob) {
     tv_blob_alloc_ret(rettv);
-    if (!read_blob(fd, rettv->vval.v_blob)) {
+    if (read_blob(fd, rettv, offset, size) == FAIL) {
       semsg(_(e_notread), fname);
-      // An empty blob is returned on error.
-      tv_blob_free(rettv->vval.v_blob);
-      rettv->vval.v_blob = NULL;
     }
     fclose(fd);
     return;
