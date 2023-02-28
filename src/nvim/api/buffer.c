@@ -248,6 +248,9 @@ void nvim__buf_redraw_range(Buffer buffer, Integer first, Integer last, Error *e
   if (!buf) {
     return;
   }
+  if (last < 0) {
+    last = buf->b_ml.ml_line_count;
+  }
 
   redraw_buf_range_later(buf, (linenr_T)first + 1, (linenr_T)last);
 }
