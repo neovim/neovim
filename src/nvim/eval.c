@@ -1620,18 +1620,7 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
         bool error = false;
         const char val = (char)tv_get_number_chk(rettv, &error);
         if (!error) {
-          garray_T *const gap = &lp->ll_blob->bv_ga;
-
-          // Allow for appending a byte.  Setting a byte beyond
-          // the end is an error otherwise.
-          if (lp->ll_n1 < gap->ga_len || lp->ll_n1 == gap->ga_len) {
-            ga_grow(&lp->ll_blob->bv_ga, 1);
-            tv_blob_set(lp->ll_blob, (int)lp->ll_n1, (uint8_t)val);
-            if (lp->ll_n1 == gap->ga_len) {
-              gap->ga_len++;
-            }
-          }
-          // error for invalid range was already given in get_lval()
+          tv_blob_set_append(lp->ll_blob, (int)lp->ll_n1, (uint8_t)val);
         }
       }
     } else if (op != NULL && *op != '=') {
@@ -4861,7 +4850,7 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
         if (filter_map_one(&tv, expr, map, &rem) == FAIL || did_emsg) {
           break;
         }
-        if (tv.v_type != VAR_NUMBER) {
+        if (tv.v_type != VAR_NUMBER && tv.v_type != VAR_BOOL) {
           emsg(_(e_invalblob));
           return;
         }
