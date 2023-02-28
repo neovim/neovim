@@ -478,4 +478,24 @@ describe('statuscolumn', function()
                                                            |
     ]])
   end)
+
+  it('works with cmdwin', function()
+    feed(':set stc=%l<CR>q:k$')
+    screen:expect([[
+      7 aaaaa                                              |
+      8 aaaaa                                              |
+      9 aaaaa                                              |
+      10aaaaa                                              |
+      [No Name] [+]                                        |
+      :1set stc=%^l                                         |
+      :2                                                   |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      [Command Line]                                       |
+      :                                                    |
+    ]])
+  end)
 end)
