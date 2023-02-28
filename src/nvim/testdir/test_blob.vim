@@ -450,10 +450,17 @@ func Test_blob_read_write()
       VAR br6 = readblob('Xblob', -3, 2)
       call assert_equal(b[-3 : -2], br6)
 
+      #" reading past end of file, empty result
       VAR br1e = readblob('Xblob', 10000)
       call assert_equal(0z, br1e)
-      VAR br2e = readblob('Xblob', -10000)
-      call assert_equal(0z, br2e)
+
+      #" reading too much, result is truncated
+      VAR blong = readblob('Xblob', -1000)
+      call assert_equal(b, blong)
+      LET blong = readblob('Xblob', -10, 8)
+      call assert_equal(b, blong)
+      LET blong = readblob('Xblob', 0, 10)
+      call assert_equal(b, blong)
 
       call delete('Xblob')
   END

@@ -6171,8 +6171,10 @@ readblob({fname} [, {offset} [, {size}]])			*readblob()*
 			readblob('/dev/ttyS0', 0, 10)
 <		When the file can't be opened an error message is given and
 		the result is an empty |Blob|.
-		When trying to read bytes beyond the end of the file the
-		result is an empty blob.
+		When the offset is beyond the end of the file the result is an
+		empty blob.
+		When trying to read more bytes than are available the result
+		is truncated.
 		Also see |readfile()| and |writefile()|.
 
 

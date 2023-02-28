@@ -5879,22 +5879,27 @@ int read_blob(FILE *const fd, typval_T *rettv, off_T offset, off_T size_arg)
 
   int whence;
   off_T size = size_arg;
+  const off_T file_size = (off_T)os_fileinfo_size(&file_info);
   if (offset >= 0) {
-    if (size == -1) {
+    // The size defaults to the whole file.  If a size is given it is
+    // limited to not go past the end of the file.
+    if (size == -1 || (size > file_size - offset && !S_ISCHR(file_info.stat.st_mode))) {
       // size may become negative, checked below
       size = (off_T)os_fileinfo_size(&file_info) - offset;
     }
     whence = SEEK_SET;
   } else {
-    if (size == -1) {
+    // limit the offset to not go before the start of the file
+    if (-offset > file_size && !S_ISCHR(file_info.stat.st_mode)) {
+      offset = -file_size;
+    }
+    // Size defaults to reading until the end of the file.
+    if (size == -1 || size > -offset) {
       size = -offset;
     }
     whence = SEEK_END;
   }
-  // Trying to read bytes that aren't there results in an empty blob, not an
-  // error.
-  if (size < 0 || (!S_ISCHR(file_info.stat.st_mode)
-                   && size > (off_T)os_fileinfo_size(&file_info))) {
+  if (size <= 0) {
     return OK;
   }
   if (offset != 0 && vim_fseek(fd, offset, whence) != 0) {
