@@ -2556,6 +2556,39 @@ static int eval4(char **arg, typval_T *rettv, int evaluate)
   return OK;
 }
 
+/// Make a copy of blob "tv1" and append blob "tv2".
+static void eval_addblob(typval_T *tv1, typval_T *tv2)
+{
+  const blob_T *const b1 = tv1->vval.v_blob;
+  const blob_T *const b2 = tv2->vval.v_blob;
+  blob_T *const b = tv_blob_alloc();
+
+  for (int i = 0; i < tv_blob_len(b1); i++) {
+    ga_append(&b->bv_ga, tv_blob_get(b1, i));
+  }
+  for (int i = 0; i < tv_blob_len(b2); i++) {
+    ga_append(&b->bv_ga, tv_blob_get(b2, i));
+  }
+
+  tv_clear(tv1);
+  tv_blob_set_ret(tv1, b);
+}
+
+/// Make a copy of list "tv1" and append list "tv2".
+static int eval_addlist(typval_T *tv1, typval_T *tv2)
+{
+  typval_T var3;
+  // Concatenate Lists.
+  if (tv_list_concat(tv1->vval.v_list, tv2->vval.v_list, &var3) == FAIL) {
+    tv_clear(tv1);
+    tv_clear(tv2);
+    return FAIL;
+  }
+  tv_clear(tv1);
+  *tv1 = var3;
+  return OK;
+}
+
 /// Handle fourth level expression:
 ///      +       number addition, concatenation of list or blob
 ///      -       number subtraction
@@ -2569,7 +2602,6 @@ static int eval4(char **arg, typval_T *rettv, int evaluate)
 static int eval5(char **arg, typval_T *rettv, int evaluate)
 {
   typval_T var2;
-  typval_T var3;
   varnumber_T n1, n2;
   float_T f1 = 0, f2 = 0;
   char *p;
@@ -2587,7 +2619,7 @@ static int eval5(char **arg, typval_T *rettv, int evaluate)
     }
 
     if ((op != '+' || (rettv->v_type != VAR_LIST && rettv->v_type != VAR_BLOB))
-        && (op == '.' || rettv->v_type != VAR_FLOAT)) {
+        && (op == '.' || rettv->v_type != VAR_FLOAT) && evaluate) {
       // For "list + ...", an illegal use of the first operand as
       // a number cannot be determined before evaluating the 2nd
       // operand: if this is also a list, all is ok.
@@ -2595,7 +2627,7 @@ static int eval5(char **arg, typval_T *rettv, int evaluate)
       // we know that the first operand needs to be a string or number
       // without evaluating the 2nd operand.  So check before to avoid
       // side effects after an error.
-      if (evaluate && !tv_check_str(rettv)) {
+      if ((op == '.' && !tv_check_str(rettv)) || (op != '.' && !tv_check_num(rettv))) {
         tv_clear(rettv);
         return FAIL;
       }
@@ -2628,32 +2660,12 @@ static int eval5(char **arg, typval_T *rettv, int evaluate)
         tv_clear(rettv);
         rettv->v_type = VAR_STRING;
         rettv->vval.v_string = p;
-      } else if (op == '+' && rettv->v_type == VAR_BLOB
-                 && var2.v_type == VAR_BLOB) {
-        const blob_T *const b1 = rettv->vval.v_blob;
-        const blob_T *const b2 = var2.vval.v_blob;
-        blob_T *const b = tv_blob_alloc();
-
-        for (int i = 0; i < tv_blob_len(b1); i++) {
-          ga_append(&b->bv_ga, tv_blob_get(b1, i));
-        }
-        for (int i = 0; i < tv_blob_len(b2); i++) {
-          ga_append(&b->bv_ga, tv_blob_get(b2, i));
-        }
-
-        tv_clear(rettv);
-        tv_blob_set_ret(rettv, b);
-      } else if (op == '+' && rettv->v_type == VAR_LIST
-                 && var2.v_type == VAR_LIST) {
-        // Concatenate Lists.
-        if (tv_list_concat(rettv->vval.v_list, var2.vval.v_list, &var3)
-            == FAIL) {
-          tv_clear(rettv);
-          tv_clear(&var2);
+      } else if (op == '+' && rettv->v_type == VAR_BLOB && var2.v_type == VAR_BLOB) {
+        eval_addblob(rettv, &var2);
+      } else if (op == '+' && rettv->v_type == VAR_LIST && var2.v_type == VAR_LIST) {
+        if (eval_addlist(rettv, &var2) == FAIL) {
           return FAIL;
         }
-        tv_clear(rettv);
-        *rettv = var3;
       } else {
         bool error = false;
 
