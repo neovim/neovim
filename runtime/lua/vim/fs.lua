@@ -159,7 +159,7 @@ end
 ---   {limit = math.huge, type = 'directory', path = './runtime/'}
 --- )
 ---
---- -- get all the C++ source and header files inside lib/
+--- -- get all files ending with .cpp or .hpp inside lib/
 --- local cpp_hpp = vim.fs.find(function(name, path)
 ---   return name:match('.*%.[ch]pp$') and path:match('[/\\\\]lib$')
 --- end, {limit = math.huge, type = 'file'})
