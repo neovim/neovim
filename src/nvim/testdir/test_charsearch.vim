@@ -86,6 +86,7 @@ endfunc
 
 " Test for character search with 'hkmap'
 func Test_charsearch_hkmap()
+  throw "Skipped: Nvim does not support 'hkmap'"
   new
   set hkmap
   call setline(1, "ùðáâ÷ëòéïçìêöî")

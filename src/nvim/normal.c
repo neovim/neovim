@@ -769,10 +769,6 @@ static void normal_get_additional_char(NormalState *s)
 
       // adjust chars > 127, except after "tTfFr" commands
       LANGMAP_ADJUST(*cp, !lang);
-      // adjust Hebrew mapped char
-      if (p_hkmap && lang && KeyTyped) {
-        *cp = hkmap(*cp);
-      }
     }
 
     // When the next character is CTRL-\ a following CTRL-N means the
