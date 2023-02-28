@@ -2750,6 +2750,23 @@ int tv_blob_set_range(blob_T *dest, long n1, long n2, typval_T *src)
   return OK;
 }
 
+/// Store one byte "byte" in blob "blob" at "idx".
+/// Append one byte if needed.
+void tv_blob_set_append(blob_T *blob, int idx, uint8_t byte)
+{
+  garray_T *gap = &blob->bv_ga;
+
+  // Allow for appending a byte.  Setting a byte beyond
+  // the end is an error otherwise.
+  if (idx <= gap->ga_len) {
+    if (idx == gap->ga_len) {
+      ga_grow(gap, 1);
+      gap->ga_len++;
+    }
+    tv_blob_set(blob, idx, byte);
+  }
+}
+
 /// "remove({blob})" function
 void tv_blob_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
 {
