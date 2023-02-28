@@ -1,5 +1,7 @@
 " Tests for the Blob types
 
+source vim9.vim
+
 func TearDown()
   " Run garbage collection after every test
   call test_garbagecollect_now()
@@ -9,73 +11,112 @@ endfunc
 
 " Blob creation from constant
 func Test_blob_create()
-  let b = 0zDEADBEEF
-  call assert_equal(v:t_blob, type(b))
-  call assert_equal(4, len(b))
-  call assert_equal(0xDE, b[0])
-  call assert_equal(0xAD, b[1])
-  call assert_equal(0xBE, b[2])
-  call assert_equal(0xEF, b[3])
-  call assert_fails('let x = b[4]')
+  let lines =<< trim END
+      VAR b = 0zDEADBEEF
+      call assert_equal(v:t_blob, type(b))
+      call assert_equal(4, len(b))
+      call assert_equal(0xDE, b[0])
+      call assert_equal(0xAD, b[1])
+      call assert_equal(0xBE, b[2])
+      call assert_equal(0xEF, b[3])
+      call assert_fails('VAR x = b[4]')
 
-  call assert_equal(0xDE, get(b, 0))
-  call assert_equal(0xEF, get(b, 3))
+      call assert_equal(0xDE, get(b, 0))
+      call assert_equal(0xEF, get(b, 3))
 
-  call assert_fails('let b = 0z1', 'E973:')
-  call assert_fails('let b = 0z1x', 'E973:')
-  call assert_fails('let b = 0z12345', 'E973:')
+      call assert_fails('VAR b = 0z1', 'E973:')
+      call assert_fails('VAR b = 0z1x', 'E973:')
+      call assert_fails('VAR b = 0z12345', 'E973:')
 
-  call assert_equal(0z, v:_null_blob)
+      call assert_equal(0z, v:_null_blob)
 
-  let b = 0z001122.33445566.778899.aabbcc.dd
-  call assert_equal(0z00112233445566778899aabbccdd, b)
-  call assert_fails('let b = 0z1.1')
-  call assert_fails('let b = 0z.')
-  call assert_fails('let b = 0z001122.')
-  call assert_fails('call get("", 1)', 'E896:')
-  call assert_equal(0, len(v:_null_blob))
+      LET b = 0z001122.33445566.778899.aabbcc.dd
+      call assert_equal(0z00112233445566778899aabbccdd, b)
+      call assert_fails('VAR b = 0z1.1')
+      call assert_fails('VAR b = 0z.')
+      call assert_fails('VAR b = 0z001122.')
+      call assert_fails('call get("", 1)', 'E896:')
+      call assert_equal(0, len(v:_null_blob))
+  END
+  call CheckLegacyAndVim9Success(lines)
 endfunc
 
 " assignment to a blob
 func Test_blob_assign()
-  let b = 0zDEADBEEF
-  let b2 = b[1:2]
-  call assert_equal(0zADBE, b2)
+  let lines =<< trim END
+      VAR b = 0zDEADBEEF
+      VAR b2 = b[1 : 2]
+      call assert_equal(0zADBE, b2)
 
-  let bcopy = b[:]
-  call assert_equal(b, bcopy)
-  call assert_false(b is bcopy)
+      VAR bcopy = b[:]
+      call assert_equal(b, bcopy)
+      call assert_false(b is bcopy)
 
-  let b = 0zDEADBEEF
-  let b2 = b
-  call assert_true(b is b2)
-  let b[:] = 0z11223344
-  call assert_equal(0z11223344, b)
-  call assert_equal(0z11223344, b2)
-  call assert_true(b is b2)
+      LET b = 0zDEADBEEF
+      LET b2 = b
+      call assert_true(b is b2)
+      LET b[:] = 0z11223344
+      call assert_equal(0z11223344, b)
+      call assert_equal(0z11223344, b2)
+      call assert_true(b is b2)
 
-  let b = 0zDEADBEEF
-  let b[3:] = 0z66
-  call assert_equal(0zDEADBE66, b)
-  let b[:1] = 0z8899
-  call assert_equal(0z8899BE66, b)
+      LET b = 0zDEADBEEF
+      LET b[3 :] = 0z66
+      call assert_equal(0zDEADBE66, b)
+      LET b[: 1] = 0z8899
+      call assert_equal(0z8899BE66, b)
 
-  call assert_fails('let b[2:3] = 0z112233', 'E972:')
-  call assert_fails('let b[2:3] = 0z11', 'E972:')
-  call assert_fails('let b[3:2] = 0z', 'E979:')
+      LET b = 0zDEADBEEF
+      LET b += 0z99
+      call assert_equal(0zDEADBEEF99, b)
 
-  let b = 0zDEADBEEF
-  let b += 0z99
-  call assert_equal(0zDEADBEEF99, b)
+      VAR l = [0z12]
+      VAR m = deepcopy(l)
+      LET m[0] = 0z34	#" E742 or E741 should not occur.
+  END
+  call CheckLegacyAndVim9Success(lines)
 
-  call assert_fails('let b .= 0z33', 'E734:')
-  call assert_fails('let b .= "xx"', 'E734:')
-  call assert_fails('let b += "xx"', 'E734:')
-  call assert_fails('let b[1:1] .= 0z55', 'E734:')
+  let lines =<< trim END
+      VAR b = 0zDEADBEEF
+      LET b[2 : 3] = 0z112233
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E972:')
 
-  let l = [0z12]
-  let m = deepcopy(l)
-  let m[0] = 0z34	" E742 or E741 should not occur.
+  let lines =<< trim END
+      VAR b = 0zDEADBEEF
+      LET b[2 : 3] = 0z11
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E972:')
+
+  let lines =<< trim END
+      VAR b = 0zDEADBEEF
+      LET b[3 : 2] = 0z
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E979:')
+
+  let lines =<< trim END
+      VAR b = 0zDEADBEEF
+      LET b ..= 0z33
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E734:', 'E1019:', 'E734:'])
+
+  let lines =<< trim END
+      VAR b = 0zDEADBEEF
+      LET b ..= "xx"
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E734:', 'E1019:', 'E734:'])
+
+  let lines =<< trim END
+      VAR b = 0zDEADBEEF
+      LET b += "xx"
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E734:', 'E1012:', 'E734:'])
+
+  let lines =<< trim END
+      VAR b = 0zDEADBEEF
+      LET b[1 : 1] ..= 0z55
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E734:', 'E1183:', 'E734:'])
 endfunc
 
 func Test_blob_get_range()
