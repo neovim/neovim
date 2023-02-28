@@ -120,86 +120,166 @@ func Test_blob_assign()
 endfunc
 
 func Test_blob_get_range()
+  let lines =<< trim END
+      VAR b = 0z0011223344
+      call assert_equal(0z2233, b[2 : 3])
+      call assert_equal(0z223344, b[2 : -1])
+      call assert_equal(0z00, b[0 : -5])
+      call assert_equal(0z, b[0 : -11])
+      call assert_equal(0z44, b[-1 :])
+      call assert_equal(0z0011223344, b[:])
+      call assert_equal(0z0011223344, b[: -1])
+      call assert_equal(0z, b[5 : 6])
+      call assert_equal(0z0011, b[-10 : 1])
+  END
+  call CheckLegacyAndVim9Success(lines)
+
+  " legacy script white space
   let b = 0z0011223344
   call assert_equal(0z2233, b[2:3])
-  call assert_equal(0z223344, b[2:-1])
-  call assert_equal(0z00, b[0:-5])
-  call assert_equal(0z, b[0:-11])
-  call assert_equal(0z44, b[-1:])
-  call assert_equal(0z0011223344, b[:])
-  call assert_equal(0z0011223344, b[:-1])
-  call assert_equal(0z, b[5:6])
-  call assert_equal(0z0011, b[-10:1])
 endfunc
 
 func Test_blob_get()
-  let b = 0z0011223344
-  call assert_equal(0x00, get(b, 0))
-  call assert_equal(0x22, get(b, 2, 999))
-  call assert_equal(0x44, get(b, 4))
-  call assert_equal(0x44, get(b, -1))
-  call assert_equal(-1, get(b, 5))
-  call assert_equal(999, get(b, 5, 999))
-  call assert_equal(-1, get(b, -8))
-  call assert_equal(999, get(b, -8, 999))
-  call assert_equal(10, get(v:_null_blob, 2, 10))
+  let lines =<< trim END
+      VAR b = 0z0011223344
+      call assert_equal(0x00, get(b, 0))
+      call assert_equal(0x22, get(b, 2, 999))
+      call assert_equal(0x44, get(b, 4))
+      call assert_equal(0x44, get(b, -1))
+      call assert_equal(-1, get(b, 5))
+      call assert_equal(999, get(b, 5, 999))
+      call assert_equal(-1, get(b, -8))
+      call assert_equal(999, get(b, -8, 999))
+      call assert_equal(10, get(v:_null_blob, 2, 10))
 
-  call assert_equal(0x00, b[0])
-  call assert_equal(0x22, b[2])
-  call assert_equal(0x44, b[4])
-  call assert_equal(0x44, b[-1])
-  call assert_fails('echo b[5]', 'E979:')
-  call assert_fails('echo b[-8]', 'E979:')
+      call assert_equal(0x00, b[0])
+      call assert_equal(0x22, b[2])
+      call assert_equal(0x44, b[4])
+      call assert_equal(0x44, b[-1])
+  END
+  call CheckLegacyAndVim9Success(lines)
+
+  let lines =<< trim END
+      VAR b = 0z0011223344
+      echo b[5]
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E979:')
+
+  let lines =<< trim END
+      VAR b = 0z0011223344
+      echo b[-8]
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E979:')
 endfunc
 
 func Test_blob_to_string()
-  let b = 0z00112233445566778899aabbccdd
-  call assert_equal('0z00112233.44556677.8899AABB.CCDD', string(b))
-  call assert_equal(b, eval(string(b)))
-  call remove(b, 4, -1)
-  call assert_equal('0z00112233', string(b))
-  call remove(b, 0, 3)
-  call assert_equal('0z', string(b))
+  let lines =<< trim END
+      VAR b = 0z00112233445566778899aabbccdd
+      call assert_equal('0z00112233.44556677.8899AABB.CCDD', string(b))
+      call assert_equal(b, eval(string(b)))
+      call remove(b, 4, -1)
+      call assert_equal('0z00112233', string(b))
+      call remove(b, 0, 3)
+      call assert_equal('0z', string(b))
+      call assert_equal('0z', string(v:_null_blob))
+  END
+  call CheckLegacyAndVim9Success(lines)
 endfunc
 
 func Test_blob_compare()
-  let b1 = 0z0011
-  let b2 = 0z1100
-  let b3 = 0z001122
-  call assert_true(b1 == b1)
-  call assert_false(b1 == b2)
-  call assert_false(b1 == b3)
-  call assert_true(b1 != b2)
-  call assert_true(b1 != b3)
-  call assert_true(b1 == 0z0011)
-  call assert_fails('echo b1 == 9', 'E977:')
-  call assert_fails('echo b1 != 9', 'E977:')
+  let lines =<< trim END
+      VAR b1 = 0z0011
+      VAR b2 = 0z1100
+      VAR b3 = 0z001122
+      call assert_true(b1 == b1)
+      call assert_false(b1 == b2)
+      call assert_false(b1 == b3)
+      call assert_true(b1 != b2)
+      call assert_true(b1 != b3)
+      call assert_true(b1 == 0z0011)
 
-  call assert_false(b1 is b2)
-  let b2 = b1
-  call assert_true(b1 == b2)
-  call assert_true(b1 is b2)
-  let b2 = copy(b1)
-  call assert_true(b1 == b2)
-  call assert_false(b1 is b2)
-  let b2 = b1[:]
-  call assert_true(b1 == b2)
-  call assert_false(b1 is b2)
+      call assert_false(b1 is b2)
+      LET b2 = b1
+      call assert_true(b1 == b2)
+      call assert_true(b1 is b2)
+      LET b2 = copy(b1)
+      call assert_true(b1 == b2)
+      call assert_false(b1 is b2)
+      LET b2 = b1[:]
+      call assert_true(b1 == b2)
+      call assert_false(b1 is b2)
+      call assert_true(b1 isnot b2)
+  END
+  call CheckLegacyAndVim9Success(lines)
 
-  call assert_fails('let x = b1 > b2')
-  call assert_fails('let x = b1 < b2')
-  call assert_fails('let x = b1 - b2')
-  call assert_fails('let x = b1 / b2')
-  call assert_fails('let x = b1 * b2')
+  let lines =<< trim END
+      VAR b1 = 0z0011
+      echo b1 == 9
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E977:', 'E1072', 'E1072'])
+
+  let lines =<< trim END
+      VAR b1 = 0z0011
+      echo b1 != 9
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E977:', 'E1072', 'E1072'])
+
+  let lines =<< trim END
+      VAR b1 = 0z0011
+      VAR b2 = 0z1100
+      VAR x = b1 > b2
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E978:', 'E1072:', 'E1072:'])
+
+  let lines =<< trim END
+      VAR b1 = 0z0011
+      VAR b2 = 0z1100
+      VAR x = b1 < b2
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E978:', 'E1072:', 'E1072:'])
+
+  let lines =<< trim END
+      VAR b1 = 0z0011
+      VAR b2 = 0z1100
+      VAR x = b1 - b2
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E974:', 'E1036:', 'E974:'])
+
+  let lines =<< trim END
+      VAR b1 = 0z0011
+      VAR b2 = 0z1100
+      VAR x = b1 / b2
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E974:', 'E1036:', 'E974:'])
+
+  let lines =<< trim END
+      VAR b1 = 0z0011
+      VAR b2 = 0z1100
+      VAR x = b1 * b2
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E974:', 'E1036:', 'E974:'])
 endfunc
 
-" test for range assign
-func Test_blob_range_assign()
-  let b = 0z00
-  let b[1] = 0x11
-  let b[2] = 0x22
-  call assert_equal(0z001122, b)
-  call assert_fails('let b[4] = 0x33', 'E979:')
+func Test_blob_index_assign()
+  let lines =<< trim END
+      VAR b = 0z00
+      LET b[1] = 0x11
+      LET b[2] = 0x22
+      call assert_equal(0z001122, b)
+  END
+  call CheckLegacyAndVim9Success(lines)
+
+  let lines =<< trim END
+      VAR b = 0z00
+      LET b[2] = 0x33
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E979:')
+
+  let lines =<< trim END
+      VAR b = 0z00
+      LET b[-2] = 0x33
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E979:')
 endfunc
 
 func Test_blob_for_loop()
