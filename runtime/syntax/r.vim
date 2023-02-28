@@ -5,7 +5,7 @@
 " 		      Tom Payne <tom@tompayne.org>
 " Contributor:        Johannes Ranke <jranke@uni-bremen.de>
 " Homepage:           https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	      Sun Mar 28, 2021  01:47PM
+" Last Change:	      Thu Nov 17, 2022  10:13PM
 " Filenames:	      *.R *.r *.Rhistory *.Rt
 "
 " NOTE: The highlighting of R functions might be defined in
@@ -65,41 +65,35 @@ if g:r_syntax_hl_roxygen
   " roxygen line containing only a roxygen comment marker, optionally followed
   " by whitespace is called an empty roxygen line.
 
+  syn match rOCommentKey "^\s*#\{1,2}'" contained
+  syn region rOExamples start="^\s*#\{1,2}' @examples.*"rs=e+1,hs=e+1 end="^\(#\{1,2}' @.*\)\@=" end="^\(#\{1,2}'\)\@!" contained contains=rOTag fold
+  
+  " R6 classes may contain roxygen lines independent of roxygen blocks
+  syn region rOR6Class start=/R6Class(/ end=/)/ transparent contains=ALLBUT,rError,rBraceError,rCurlyError fold
+  syn match rOR6Block "#\{1,2}'.*" contains=rOTag,rOExamples,@Spell containedin=rOR6Class contained
+  syn match rOR6Block "^\s*#\{1,2}'.*" contains=rOTag,rOExamples,@Spell containedin=rOR6Class contained
+
   " First we match all roxygen blocks as containing only a title. In case an
   " empty roxygen line ending the title or a tag is found, this will be
   " overridden later by the definitions of rOBlock.
-  syn match rOTitleBlock "\%^\(\s*#\{1,2}' .*\n\)\{1,}" contains=rOCommentKey,rOTitleTag
-  syn match rOTitleBlock "^\s*\n\(\s*#\{1,2}' .*\n\)\{1,}" contains=rOCommentKey,rOTitleTag
+  syn match rOTitleBlock "\(\%^\|^\s*\n\)\@<=\(\s*#\{1,2}' .*\n\)\{1,}" contains=rOCommentKey,rOTitleTag
 
   " A title as part of a block is always at the beginning of the block, i.e.
   " either at the start of a file or after a completely empty line.
-  syn match rOTitle "\%^\(\s*#\{1,2}' .*\n\)\{-1,}\s*#\{1,2}'\s*$" contained contains=rOCommentKey,rOTitleTag
-  syn match rOTitle "^\s*\n\(\s*#\{1,2}' .*\n\)\{-1,}\s*#\{1,2}'\s*$" contained contains=rOCommentKey,rOTitleTag
+  syn match rOTitle "\(\%^\|^\s*\n\)\@<=\(\s*#\{1,2}' .*\n\)\{-1,}\s*#\{1,2}'\s*$" contained contains=rOCommentKey,rOTitleTag
   syn match rOTitleTag contained "@title"
 
   " When a roxygen block has a title and additional content, the title
   " consists of one or more roxygen lines (as little as possible are matched),
   " followed either by an empty roxygen line
-  syn region rOBlock start="\%^\(\s*#\{1,2}' .*\n\)\{-1,}\s*#\{1,2}'\s*$" end="^\s*\(#\{1,2}'\)\@!" contains=rOTitle,rOTag,rOExamples,@Spell keepend fold
-  syn region rOBlock start="^\s*\n\(\s*#\{1,2}' .*\n\)\{-1,}\s*#\{1,2}'\s*$" end="^\s*\(#\{1,2}'\)\@!" contains=rOTitle,rOTag,rOExamples,@Spell keepend fold
+  syn region rOBlock start="\(\%^\|^\s*\n\)\@<=\(\s*#\{1,2}' .*\n\)\{-1,}\s*#\{1,2}'\s*$" end="^\s*\(#\{1,2}'\)\@!" contains=rOTitle,rOTag,rOExamples,@Spell keepend fold
 
   " or by a roxygen tag (we match everything starting with @ but not @@ which is used as escape sequence for a literal @).
-  syn region rOBlock start="\%^\(\s*#\{1,2}' .*\n\)\{-}\s*#\{1,2}' @\(@\)\@!" end="^\s*\(#\{1,2}'\)\@!" contains=rOTitle,rOTag,rOExamples,@Spell keepend fold
-  syn region rOBlock start="^\s*\n\(\s*#\{1,2}' .*\n\)\{-}\s*#\{1,2}' @\(@\)\@!" end="^\s*\(#\{1,2}'\)\@!" contains=rOTitle,rOTag,rOExamples,@Spell keepend fold
+  syn region rOBlock start="\(\%^\|^\s*\n\)\@<=\(\s*#\{1,2}' .*\n\)\{-}\s*#\{1,2}' @\(@\)\@!" end="^\s*\(#\{1,2}'\)\@!" contains=rOTitle,rOTag,rOExamples,@Spell keepend fold
 
   " If a block contains an @rdname, @describeIn tag, it may have paragraph breaks, but does not have a title
-  syn region rOBlockNoTitle start="\%^\(\s*#\{1,2}' .*\n\)\{-1,}\s*#\{1,2}'\s*\n\(\s*#\{1,2}'.*\n\)\{-}\s*#\{1,2}' @rdname" end="^\s*\(#\{1,2}'\)\@!" contains=rOTag,rOExamples,@Spell keepend fold
-  syn region rOBlockNoTitle start="^\s*\n\(\s*#\{1,2}' .*\n\)\{-1,}\s*#\{1,2}'\s*\n\(\s*#\{1,2}'.*\n\)\{-}\s*#\{1,2}' @rdname" end="^\s*\(#\{1,2}'\)\@!" contains=rOTag,rOExamples,@Spell keepend fold
-  syn region rOBlockNoTitle start="\%^\(\s*#\{1,2}' .*\n\)\{-1,}\s*#\{1,2}'\s*\n\(\s*#\{1,2}'.*\n\)\{-}\s*#\{1,2}' @describeIn" end="^\s*\(#\{1,2}'\)\@!" contains=rOTag,rOExamples,@Spell keepend fold
-  syn region rOBlockNoTitle start="^\s*\n\(\s*#\{1,2}' .*\n\)\{-1,}\s*#\{1,2}'\s*\n\(\s*#\{1,2}'.*\n\)\{-}\s*#\{1,2}' @describeIn" end="^\s*\(#\{1,2}'\)\@!" contains=rOTag,rOExamples,@Spell keepend fold
-
-  syn match rOCommentKey "^\s*#\{1,2}'" contained
-  syn region rOExamples start="^\s*#\{1,2}' @examples.*"rs=e+1,hs=e+1 end="^\(#\{1,2}' @.*\)\@=" end="^\(#\{1,2}'\)\@!" contained contains=rOTag fold
-
-  " R6 classes may contain roxygen lines independent of roxygen blocks
-  syn region rOR6Class start=/R6Class(/ end=/)/ transparent contains=ALLBUT,rError,rBraceError,rCurlyError fold
-  syn match rOR6Block "#\{1,2}'.*" contains=rOTag,rOExamples,@Spell containedin=rOR6Class contained
-  syn match rOR6Block "^\s*#\{1,2}'.*" contains=rOTag,rOExamples,@Spell containedin=rOR6Class contained
+  syn region rOBlockNoTitle start="\(\%^\|^\s*\n\)\@<=\(\s*#\{1,2}' .*\n\)\{-1,}\s*#\{1,2}'\s*\n\(\s*#\{1,2}'.*\n\)\{-}\s*#\{1,2}' @rdname" end="^\s*\(#\{1,2}'\)\@!" contains=rOTag,rOExamples,@Spell keepend fold
+  syn region rOBlockNoTitle start="\(\%^\|^\s*\n\)\@<=\(\s*#\{1,2}' .*\n\)\{-1,}\s*#\{1,2}'\s*\n\(\s*#\{1,2}'.*\n\)\{-}\s*#\{1,2}' @describeIn" end="^\s*\(#\{1,2}'\)\@!" contains=rOTag,rOExamples,@Spell keepend fold
 
   " rOTag list originally generated from the lists that were available in
   " https://github.com/klutometis/roxygen/R/rd.R and
@@ -245,14 +239,15 @@ syn match rOperator    "&"
 syn match rOperator    '-'
 syn match rOperator    '\*'
 syn match rOperator    '+'
-if &filetype != "rmd" && &filetype != "rrst"
-  syn match rOperator    "[|!<>^~/:]"
-else
+if &filetype == "quarto" || &filetype == "rmd" || &filetype == "rrst"
   syn match rOperator    "[|!<>^~`/:]"
+else
+  syn match rOperator    "[|!<>^~/:]"
 endif
 syn match rOperator    "%\{2}\|%\S\{-}%"
 syn match rOperator '\([!><]\)\@<=='
 syn match rOperator '=='
+syn match rOperator '|>'
 syn match rOpError  '\*\{3}'
 syn match rOpError  '//'
 syn match rOpError  '&&&'
@@ -318,10 +313,13 @@ if &filetype == "rhelp"
 endif
 
 " Type
+syn match rType "\\"
 syn keyword rType array category character complex double function integer list logical matrix numeric vector data.frame
 
 " Name of object with spaces
-if &filetype != "rmd" && &filetype != "rrst"
+if &filetype == "rmd" || &filetype == "rrst" || &filetype == "quarto"
+  syn region rNameWSpace start="`" end="`" contains=rSpaceFun containedin=rmdrChunk
+else
   syn region rNameWSpace start="`" end="`" contains=rSpaceFun
 endif
 

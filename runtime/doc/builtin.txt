@@ -2126,8 +2126,7 @@ extend({expr1}, {expr2} [, {expr3}])			*extend()*
 extendnew({expr1}, {expr2} [, {expr3}])			*extendnew()*
 		Like |extend()| but instead of adding items to {expr1} a new
 		List or Dictionary is created and returned.  {expr1} remains
-		unchanged.  Items can still be changed by {expr2}, if you
-		don't want that use |deepcopy()| first.
+		unchanged.
 
 
 feedkeys({string} [, {mode}])				*feedkeys()*
@@ -8725,6 +8724,8 @@ timer_start({time}, {callback} [, {options}])
 		{time} is the waiting time in milliseconds. This is the
 		minimum time before invoking the callback.  When the system is
 		busy or Vim is not waiting for input the time will be longer.
+		Zero can be used to execute the callback when Vim is back in
+		the main loop.
 
 		{callback} is the function to call.  It can be the name of a
 		function or a |Funcref|.  It is called with one argument, which
