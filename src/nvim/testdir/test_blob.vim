@@ -691,10 +691,11 @@ func Test_list2blob()
         \ [[0], 0z00],
         \ [[], 0z],
         \ [[0, 0, 0, 0], 0z00000000],
+        \ [[255, 255], 0zFFFF],
         \ [[170, 187, 204, 221], 0zAABB.CCDD],
         \ ]
   for t in tests
-    call assert_equal(t[0]->list2blob(), t[1])
+    call assert_equal(t[1], t[0]->list2blob())
   endfor
   call assert_fails('let b = list2blob([1, []])', 'E745:')
   call assert_fails('let b = list2blob([-1])', 'E1239:')
