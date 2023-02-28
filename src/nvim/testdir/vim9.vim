@@ -34,6 +34,10 @@ func CheckScriptSuccess(lines)
   endtry
 endfunc
 
+func CheckDefExecAndScriptFailure(lines, error, lnum = -3)
+  return
+endfunc
+
 " Check that "lines" inside a legacy function has no error.
 func CheckLegacySuccess(lines)
   let cwd = getcwd()

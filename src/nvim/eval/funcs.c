@@ -3743,7 +3743,6 @@ static void f_inputsecret(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "insert()" function
 static void f_insert(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  list_T *l;
   bool error = false;
 
   if (argvars[0].v_type == VAR_BLOB) {
@@ -3786,8 +3785,12 @@ static void f_insert(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     tv_copy(&argvars[0], rettv);
   } else if (argvars[0].v_type != VAR_LIST) {
     semsg(_(e_listblobarg), "insert()");
-  } else if (!value_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
-                               N_("insert() argument"), TV_TRANSLATE)) {
+  } else {
+    list_T *l = argvars[0].vval.v_list;
+    if (value_check_lock(tv_list_locked(l), N_("insert() argument"), TV_TRANSLATE)) {
+      return;
+    }
+
     int64_t before = 0;
     if (argvars[2].v_type != VAR_UNKNOWN) {
       before = tv_get_number_chk(&argvars[2], &error);

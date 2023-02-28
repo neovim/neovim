@@ -4861,7 +4861,7 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
         if (filter_map_one(&tv, expr, map, &rem) == FAIL || did_emsg) {
           break;
         }
-        if (tv.v_type != VAR_NUMBER) {
+        if (tv.v_type != VAR_NUMBER && tv.v_type != VAR_BOOL) {
           emsg(_(e_invalblob));
           return;
         }
