@@ -334,7 +334,8 @@ function STHighlighter:process_response(response, client, version)
   current_result.highlights = tokens_to_ranges(tokens, self.bufnr, client)
   current_result.namespace_cleared = false
 
-  api.nvim_command('redraw!')
+  -- redraw all windows displaying buffer
+  api.nvim__buf_redraw_range(self.bufnr, 0, -1)
 end
 
 --- on_win handler for the decoration provider (see |nvim_set_decoration_provider|)
