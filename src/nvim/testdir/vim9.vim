@@ -98,9 +98,9 @@ endfunc
 " Use ' #"' for a comment
 func CheckLegacyAndVim9Failure(lines, error)
   if type(a:error) == type('string')
-    let legacyError = error
+    let legacyError = a:error
   else
-    let legacyError = error[0]
+    let legacyError = a:error[0]
   endif
 
   let legacylines = a:lines->deepcopy()->map({_, v ->

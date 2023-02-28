@@ -1498,21 +1498,14 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
       tv_clear(&var1);
 
       const int bloblen = tv_blob_len(lp->ll_tv->vval.v_blob);
-      if (lp->ll_n1 < 0 || lp->ll_n1 > bloblen
-          || (lp->ll_range && lp->ll_n1 == bloblen)) {
-        if (!quiet) {
-          semsg(_(e_blobidx), (int64_t)lp->ll_n1);
-        }
+      if (tv_blob_check_index(bloblen, lp->ll_n1, lp->ll_range, quiet) == FAIL) {
         tv_clear(&var2);
         return NULL;
       }
       if (lp->ll_range && !lp->ll_empty2) {
         lp->ll_n2 = (long)tv_get_number(&var2);
         tv_clear(&var2);
-        if (lp->ll_n2 < 0 || lp->ll_n2 >= bloblen || lp->ll_n2 < lp->ll_n1) {
-          if (!quiet) {
-            semsg(_(e_blobidx), (int64_t)lp->ll_n2);
-          }
+        if (tv_blob_check_range(bloblen, lp->ll_n1, lp->ll_n2, quiet) == FAIL) {
           return NULL;
         }
       }

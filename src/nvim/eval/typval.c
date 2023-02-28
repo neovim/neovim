@@ -2710,6 +2710,30 @@ bool tv_blob_equal(const blob_T *const b1, const blob_T *const b2)
   return true;
 }
 
+/// Check if "n1" is a valid index for a blob with length "bloblen".
+int tv_blob_check_index(int bloblen, varnumber_T n1, int is_range, bool quiet)
+{
+  if (n1 < 0 || n1 > bloblen) {
+    if (!quiet) {
+      semsg(_(e_blobidx), n1);
+    }
+    return FAIL;
+  }
+  return OK;
+}
+
+/// Check if "n1"-"n2" is a valid range for a blob with length "bloblen".
+int tv_blob_check_range(int bloblen, varnumber_T n1, varnumber_T n2, bool quiet)
+{
+  if (n2 < 0 || n2 >= bloblen || n2 < n1) {
+    if (!quiet) {
+      semsg(_(e_blobidx), n2);
+    }
+    return FAIL;
+  }
+  return OK;
+}
+
 /// Set bytes "n1" to "n2" (inclusive) in "dest" to the value of "src".
 /// Caller must make sure "src" is a blob.
 /// Returns FAIL if the number of bytes does not match.

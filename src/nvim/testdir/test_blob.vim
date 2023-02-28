@@ -76,16 +76,47 @@ func Test_blob_assign()
   END
   call CheckLegacyAndVim9Success(lines)
 
-  " TODO: move to above once it works
-  let b = 0zDEADBEEF
-  call assert_fails('let b[2 : 3] = 0z112233', 'E972:')
-  call assert_fails('let b[2 : 3] = 0z11', 'E972:')
-  call assert_fails('let b[3 : 2] = 0z', 'E979:')
+  let lines =<< trim END
+      VAR b = 0zDEADBEEF
+      LET b[2 : 3] = 0z112233
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E972:')
 
-  call assert_fails('let b ..= 0z33', 'E734:')
-  call assert_fails('let b ..= "xx"', 'E734:')
-  call assert_fails('let b += "xx"', 'E734:')
-  call assert_fails('let b[1 : 1] ..= 0z55', 'E734:')
+  let lines =<< trim END
+      VAR b = 0zDEADBEEF
+      LET b[2 : 3] = 0z11
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E972:')
+
+  let lines =<< trim END
+      VAR b = 0zDEADBEEF
+      LET b[3 : 2] = 0z
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E979:')
+
+  let lines =<< trim END
+      VAR b = 0zDEADBEEF
+      LET b ..= 0z33
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E734:', 'E1019:', 'E734:'])
+
+  let lines =<< trim END
+      VAR b = 0zDEADBEEF
+      LET b ..= "xx"
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E734:', 'E1019:', 'E734:'])
+
+  let lines =<< trim END
+      VAR b = 0zDEADBEEF
+      LET b += "xx"
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E734:', 'E1012:', 'E734:'])
+
+  let lines =<< trim END
+      VAR b = 0zDEADBEEF
+      LET b[1 : 1] ..= 0z55
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E734:', 'E1183:', 'E734:'])
 endfunc
 
 func Test_blob_get_range()
