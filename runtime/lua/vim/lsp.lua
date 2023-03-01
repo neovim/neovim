@@ -367,7 +367,7 @@ do
   --- @field offset_encoding "utf-8"|"utf-16"|"utf-32"
   ---
   --- @class CTBufferState
-  --- @field name string name of the buffer
+  --- @field uri string uri of the buffer
   --- @field lines string[] snapshot of buffer lines from last didChange
   --- @field lines_tmp string[]
   --- @field pending_changes table[] List of debounced changes in incremental sync mode
@@ -486,8 +486,12 @@ do
     if buf_state then
       buf_state.refs = buf_state.refs + 1
     else
+      local uri = vim.uri_from_bufnr(bufnr)
+      if not uv.fs_stat(api.nvim_buf_get_name(bufnr)) then
+        uri = uri:gsub('^file://', 'buffer://')
+      end
       buf_state = {
-        name = api.nvim_buf_get_name(bufnr),
+        uri = uri,
         lines = {},
         lines_tmp = {},
         pending_changes = {},
@@ -502,12 +506,26 @@ do
   end
 
   ---@private
-  function changetracking._get_and_set_name(client, bufnr, name)
+  ---@param client table
+  ---@param bufnr integer
+  ---@return string uri
+  function changetracking._get_uri(client, bufnr)
     local state = state_by_group[get_group(client)] or {}
     local buf_state = (state.buffers or {})[bufnr]
-    local old_name = buf_state.name
-    buf_state.name = name
-    return old_name
+    return assert(buf_state.uri, 'Must have an URI set')
+  end
+
+  ---@private
+  ---@param client table
+  ---@param bufnr integer
+  ---@param uri string
+  ---@return string uri
+  function changetracking._get_and_set_uri(client, bufnr, uri)
+    local state = state_by_group[get_group(client)] or {}
+    local buf_state = (state.buffers or {})[bufnr]
+    local old_uri = buf_state.uri
+    buf_state.uri = uri
+    return old_uri
   end
 
   ---@private
@@ -594,7 +612,7 @@ do
         { text = buf_get_full_text(bufnr) },
       }
     end
-    local uri = vim.uri_from_bufnr(bufnr)
+    local uri = buf_state.uri
     for _, client in pairs(state.clients) do
       if not client.is_stopped() and lsp.buf_is_attached(bufnr, client.id) then
         client.notify('textDocument/didChange', {
@@ -707,11 +725,14 @@ local function text_document_did_open_handler(bufnr, client)
     return
   end
   local filetype = nvim_buf_get_option(bufnr, 'filetype')
-
+  local uri = vim.uri_from_bufnr(bufnr)
+  if not uv.fs_stat(api.nvim_buf_get_name(bufnr)) then
+    uri = uri:gsub('^file://', 'buffer://')
+  end
   local params = {
     textDocument = {
       version = 0,
-      uri = vim.uri_from_bufnr(bufnr),
+      uri = uri,
       languageId = client.config.get_language_id(bufnr, filetype),
       text = buf_get_full_text(bufnr),
     },
@@ -1560,8 +1581,13 @@ local function text_document_did_save_handler(bufnr)
   local text = once(buf_get_full_text)
   for_each_buffer_client(bufnr, function(client)
     local name = api.nvim_buf_get_name(bufnr)
-    local old_name = changetracking._get_and_set_name(client, bufnr, name)
-    if old_name and name ~= old_name then
+    local old_uri = changetracking._get_and_set_uri(client, bufnr, uri)
+    if old_uri and name ~= old_uri then
+      client.notify('textDocument/didClose', {
+        textDocument = {
+          uri = old_uri,
+        },
+      })
       client.notify('textDocument/didOpen', {
         textDocument = {
           version = 0,
@@ -1664,8 +1690,12 @@ function lsp.buf_attach_client(bufnr, client_id)
         end)
       end,
       on_detach = function()
-        local params = { textDocument = { uri = uri } }
         for_each_buffer_client(bufnr, function(client, _)
+          local params = {
+            textDocument = {
+              uri = changetracking._get_uri(client, bufnr),
+            },
+          }
           changetracking.reset_buf(client, bufnr)
           if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
             client.notify('textDocument/didClose', params)
