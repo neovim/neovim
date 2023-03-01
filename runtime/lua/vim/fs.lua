@@ -168,9 +168,9 @@ end
 ---@param names (string|table|fun(name: string, path: string): boolean) Names of the files
 ---             and directories to find.
 ---             Must be base names, paths and globs are not supported when {names} is a string or a table.
----             If {names} is a function, it will be called once for each file or directory
----             within the traversed directory with the base name of the
----             file and directory and the path of the directory being traversed.
+---             If {names} is a function, it is called for each traversed file and directory with args:
+---             - name: base name of the current item
+---             - path: full path of the current item
 ---             The function should return `true` if the given file or directory is considered a match.
 ---
 ---@param opts (table) Optional keyword arguments:
