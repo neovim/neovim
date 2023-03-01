@@ -553,10 +553,12 @@ function Screen:_wait(check, flags)
 
     if not err then
       success_seen = true
+      failure_after_success = false
       if did_minimal_timeout then
         self._session:stop()
       end
     elseif success_seen and #args > 0 then
+      success_seen = false
       failure_after_success = true
       -- print(inspect(args))
     end
