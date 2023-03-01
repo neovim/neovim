@@ -1138,7 +1138,7 @@ function lsp.start_client(config)
     for bufnr, client_ids in pairs(all_buffer_active_clients) do
       if client_ids[client_id] then
         vim.schedule(function()
-          if client.attached_buffers[bufnr] then
+          if client and client.attached_buffers[bufnr] then
             nvim_exec_autocmds('LspDetach', {
               buffer = bufnr,
               modeline = false,
