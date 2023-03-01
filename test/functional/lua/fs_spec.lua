@@ -8,6 +8,7 @@ local mkdir_p = helpers.mkdir_p
 local rmdir = helpers.rmdir
 local nvim_dir = helpers.nvim_dir
 local test_build_dir = helpers.test_build_dir
+local test_source_path = helpers.test_source_path
 local nvim_prog = helpers.nvim_prog
 local is_os = helpers.is_os
 
@@ -252,6 +253,16 @@ describe('vim.fs', function()
         local opts = { path = dir, upward = true, type = 'directory' }
         return vim.fs.find(function(x) return x == 'no-match' end, opts)
       ]], nvim_dir))
+      eq(
+        exec_lua([[
+          local dir = ...
+          return vim.tbl_map(vim.fs.basename, vim.fn.glob(dir..'/contrib/*', false, true))
+        ]], test_source_path),
+        exec_lua([[
+          local dir = ...
+          local opts = { path = dir, limit = math.huge }
+          return vim.tbl_map(vim.fs.basename, vim.fs.find(function(_, d) return d:match('[\\/]contrib$') end, opts))
+        ]], test_source_path))
     end)
   end)
 
