@@ -1534,8 +1534,8 @@ Array nvim_get_api_info(uint64_t channel_id, Arena *arena)
 ///                  .png or .svg format is preferred.
 ///
 /// @param[out] err Error details, if any
-void nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, String type,
-                          Dictionary methods, Dictionary attributes, Error *err)
+Integer nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, String type,
+			      Dictionary methods, Dictionary attributes, Error *err)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
 {
   Dictionary info = ARRAY_DICT_INIT;
@@ -1559,6 +1559,7 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, 
   PUT(info, "attributes", DICTIONARY_OBJ(copy_dictionary(attributes, NULL)));
 
   rpc_set_client_info(channel_id, info);
+  return (Integer)channel_id;
 }
 
 /// Gets information about a channel.
