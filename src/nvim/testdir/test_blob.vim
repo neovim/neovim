@@ -317,27 +317,59 @@ func Test_blob_for_loop()
 endfunc
 
 func Test_blob_concatenate()
-  let b = 0z0011
-  let b += 0z2233
-  call assert_equal(0z00112233, b)
+  let lines =<< trim END
+      VAR b = 0z0011
+      LET b += 0z2233
+      call assert_equal(0z00112233, b)
 
-  call assert_fails('let b += "a"')
-  call assert_fails('let b += 88')
+      LET b = 0zDEAD + 0zBEEF
+      call assert_equal(0zDEADBEEF, b)
+  END
+  call CheckLegacyAndVim9Success(lines)
 
-  let b = 0zDEAD + 0zBEEF
-  call assert_equal(0zDEADBEEF, b)
+  let lines =<< trim END
+      VAR b = 0z0011
+      LET b += "a"
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E734:', 'E1012:', 'E734:'])
+
+  let lines =<< trim END
+      VAR b = 0z0011
+      LET b += 88
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E734:', 'E1012:', 'E734:'])
 endfunc
 
 func Test_blob_add()
+  let lines =<< trim END
+      VAR b = 0z0011
+      call add(b, 0x22)
+      call assert_equal(0z001122, b)
+  END
+  call CheckLegacyAndVim9Success(lines)
+
+  " Only works in legacy script
   let b = 0z0011
-  call add(b, 0x22)
-  call assert_equal(0z001122, b)
   call add(b, '51')
-  call assert_equal(0z00112233, b)
+  call assert_equal(0z001133, b)
   call assert_equal(1, add(v:_null_blob, 0x22))
 
-  call assert_fails('call add(b, [9])', 'E745:')
-  call assert_fails('call add("", 0x01)', 'E897:')
+  let lines =<< trim END
+      VAR b = 0z0011
+      call add(b, [9])
+  END
+  call CheckLegacyAndVim9Failure(lines, ['E745:', 'E1012:', 'E745:'])
+
+  let lines =<< trim END
+      VAR b = 0z0011
+      call add("", 0x01)
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E897:')
+
+  let lines =<< trim END
+      add(v:_null_blob, 0x22)
+  END
+  call CheckDefExecAndScriptFailure(lines, 'E1131:')
 endfunc
 
 func Test_blob_empty()
