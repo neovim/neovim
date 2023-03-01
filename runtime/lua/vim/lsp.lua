@@ -1132,14 +1132,19 @@ function lsp.start_client(config)
       pcall(config.on_exit, code, signal, client_id)
     end
 
+    local client = active_clients[client_id] and active_clients[client_id]
+      or uninitialized_clients[client_id]
+
     for bufnr, client_ids in pairs(all_buffer_active_clients) do
       if client_ids[client_id] then
         vim.schedule(function()
-          nvim_exec_autocmds('LspDetach', {
-            buffer = bufnr,
-            modeline = false,
-            data = { client_id = client_id },
-          })
+          if client.attached_buffers[bufnr] then
+            nvim_exec_autocmds('LspDetach', {
+              buffer = bufnr,
+              modeline = false,
+              data = { client_id = client_id },
+            })
+          end
 
           local namespace = vim.lsp.diagnostic.get_namespace(client_id)
           vim.diagnostic.reset(namespace, bufnr)
@@ -1155,8 +1160,6 @@ function lsp.start_client(config)
     -- Schedule the deletion of the client object so that it exists in the execution of LspDetach
     -- autocommands
     vim.schedule(function()
-      local client = active_clients[client_id] and active_clients[client_id]
-        or uninitialized_clients[client_id]
       active_clients[client_id] = nil
       uninitialized_clients[client_id] = nil
 
