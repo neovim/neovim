@@ -60,6 +60,16 @@ function M.add(lang, opts)
     filetype = { filetype, { 'string', 'table' }, true },
   })
 
+  if filetype == '' then
+    error(string.format("'%s' is not a valid filetype", filetype))
+  elseif type(filetype) == 'table' then
+    for _, f in ipairs(filetype) do
+      if f == '' then
+        error(string.format("'%s' is not a valid filetype", filetype))
+      end
+    end
+  end
+
   M.register(lang, filetype or lang)
 
   if vim._ts_has_language(lang) then
