@@ -80,6 +80,7 @@ let s:filename_checks = {
     \ 'awk': ['file.awk', 'file.gawk'],
     \ 'b': ['file.mch', 'file.ref', 'file.imp'],
     \ 'basic': ['file.bas', 'file.bi', 'file.bm'],
+    \ 'bass': ['file.bass'],
     \ 'bc': ['file.bc'],
     \ 'bdf': ['file.bdf'],
     \ 'beancount': ['file.beancount'],
