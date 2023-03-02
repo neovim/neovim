@@ -146,9 +146,9 @@ local decor_ns = api.nvim_create_namespace('ts.playground')
 ---@return string
 local function get_range_str(lnum, col, end_col, end_lnum)
   if lnum == end_lnum then
-    return string.format('[%d:%d-%d]', lnum + 1, col + 1, end_col)
+    return string.format('[%d:%d - %d]', lnum + 1, col + 1, end_col)
   end
-  return string.format('[%d:%d-%d:%d]', lnum + 1, col + 1, end_lnum + 1, end_col)
+  return string.format('[%d:%d - %d:%d]', lnum + 1, col + 1, end_lnum + 1, end_col)
 end
 
 --- Write the contents of this Playground into {bufnr}.
@@ -163,7 +163,8 @@ function TSPlayground:draw(bufnr)
   for _, item in self:iter() do
     local range_str = get_range_str(item.lnum, item.col, item.end_lnum, item.end_col)
     local lang_str = self.opts.lang and string.format(' %s', item.lang) or ''
-    local line = string.rep(' ', item.depth) .. item.text .. '; ' .. range_str .. lang_str
+    local line =
+      string.format('%s%s ; %s%s', string.rep(' ', item.depth), item.text, range_str, lang_str)
 
     if self.opts.lang then
       lang_hl_marks[#lang_hl_marks + 1] = {
