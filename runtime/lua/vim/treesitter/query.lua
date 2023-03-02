@@ -57,12 +57,12 @@ end
 
 ---@private
 ---@param buf (number)
----@param range (table)
+---@param range (Range4)
 ---@param concat (boolean)
 ---@returns (string[]|string|nil)
 local function buf_range_get_text(buf, range, concat)
-  local lines
-  local start_row, start_col, end_row, end_col = unpack(range)
+  local lines ---@type string[]
+  local start_row, start_col, end_row, end_col = range[1], range[2], range[3], range[4]
   local eof_row = a.nvim_buf_line_count(buf)
   if start_row >= eof_row then
     return nil
@@ -273,8 +273,8 @@ end
 ---@param opts (table|nil) Optional parameters.
 ---          - concat: (boolean) Concatenate result in a string (default true)
 ---          - metadata (table) Metadata of a specific capture. This would be
----            set to `metadata[capture_id]` when using
----            |vim.treesitter.query.add_directive()|.
+---            set to `metadata[capture_id]` when
+---            using |vim.treesitter.query.add_directive()|.
 ---@return (string[]|string|nil)
 function M.get_node_text(node, source, opts)
   opts = opts or {}
@@ -608,17 +608,19 @@ end
 -- When the node's range is used, the stop is incremented by 1
 -- to make the search inclusive.
 ---@private
+---@param node TSNode
 ---@param start integer
 ---@param stop integer
----@param node TSNode
----@return integer, integer
-local function value_or_node_range(start, stop, node)
-  if start == nil and stop == nil then
-    local node_start, _, node_stop, _ = node:range()
-    return node_start, node_stop + 1 -- Make stop inclusive
+---@param start_col integer?
+---@param end_col integer?
+---@return integer, integer, integer, integer
+local function value_or_node_range(node, start, stop, start_col, end_col)
+  if start and stop then
+    return start, stop, start_col or 0, end_col or 0
   end
 
-  return start, stop
+  local node_start, node_start_col, node_stop, node_end_col = node:range()
+  return node_start, node_stop + 1, node_start_col, node_end_col + 1 -- Make stop inclusive
 end
 
 --- Iterate over all captures from all matches inside {node}
@@ -645,18 +647,19 @@ end
 ---
 ---@param node TSNode under which the search will occur
 ---@param source (integer|string) Source buffer or string to extract text from
----@param start number Starting line for the search
----@param stop number Stopping line for the search (end-exclusive)
----
+---@param start integer Starting line for the search
+---@param stop integer Stopping line for the search (end-exclusive)
+---@param start_col (integer|nil) Starting column for the search
+---@param end_col (integer|nil) Stopping column for the search (end-exclusive)
 ---@return (fun(): integer, TSNode, TSMetadata): capture id, capture node, metadata
-function Query:iter_captures(node, source, start, stop)
+function Query:iter_captures(node, source, start, stop, start_col, end_col)
   if type(source) == 'number' and source == 0 then
     source = vim.api.nvim_get_current_buf()
   end
 
-  start, stop = value_or_node_range(start, stop, node)
+  start, stop, start_col, end_col = value_or_node_range(node, start, stop, start_col, end_col)
 
-  local raw_iter = node:_rawquery(self.query, true, start, stop)
+  local raw_iter = node:_rawquery(self.query, true, start, stop, start_col, end_col)
   ---@private
   local function iter()
     local capture, captured_node, match = raw_iter()
@@ -702,16 +705,18 @@ end
 ---@param source (integer|string) Source buffer or string to search
 ---@param start integer Starting line for the search
 ---@param stop integer Stopping line for the search (end-exclusive)
+---@param start_col (integer|nil) Starting column for the search
+---@param end_col (integer|nil) Stopping column for the search (end-exclusive)
 ---
 ---@return (fun(): integer, table<integer,TSNode>, table): pattern id, match, metadata
-function Query:iter_matches(node, source, start, stop)
+function Query:iter_matches(node, source, start, stop, start_col, end_col)
   if type(source) == 'number' and source == 0 then
     source = vim.api.nvim_get_current_buf()
   end
 
-  start, stop = value_or_node_range(start, stop, node)
+  start, stop, start_col, end_col = value_or_node_range(node, start, stop, start_col, end_col)
 
-  local raw_iter = node:_rawquery(self.query, false, start, stop)
+  local raw_iter = node:_rawquery(self.query, false, start, stop, start_col, end_col)
   ---@cast raw_iter fun(): string, any
   local function iter()
     local pattern, match = raw_iter()

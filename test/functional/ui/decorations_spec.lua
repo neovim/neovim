@@ -99,13 +99,13 @@ describe('decorations providers', function()
     check_trace {
       { "start", 4 };
       { "win", 1000, 1, 0, 8 };
-      { "line", 1000, 1, 0 };
-      { "line", 1000, 1, 1 };
-      { "line", 1000, 1, 2 };
-      { "line", 1000, 1, 3 };
-      { "line", 1000, 1, 4 };
-      { "line", 1000, 1, 5 };
-      { "line", 1000, 1, 6 };
+      { "line", 1000, 1, 0, 0, 39 };
+      { "line", 1000, 1, 1, 0, 22 };
+      { "line", 1000, 1, 2, 0, 12 };
+      { "line", 1000, 1, 3, 0, 18 };
+      { "line", 1000, 1, 4, 0, 30 };
+      { "line", 1000, 1, 5, 0, 28 };
+      { "line", 1000, 1, 6, 0, 27 };
       { "end", 4 };
     }
 
@@ -124,8 +124,74 @@ describe('decorations providers', function()
       { "start", 5 };
       { "buf", 1 };
       { "win", 1000, 1, 0, 8 };
-      { "line", 1000, 1, 6 };
+      { "line", 1000, 1, 6, 0, 28 };
       { "end", 5 };
+    }
+  end)
+
+  it('can handle long lines', function()
+    local line  = [[// Just a long line to make sure we handle wrapping properly. Need to make sure the line spans two screenlines. ]]
+    insert(line)
+    feed'0'
+
+    setup_provider()
+
+    screen:expect{grid=[[
+      ^// Just a long line to make sure we hand|
+      le wrapping properly. Need to make sure |
+      the line spans two screenlines.         |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]}
+
+    check_trace {
+      { "start", 4 };
+      { "win", 1000, 1, 0, 2 };
+      { "line", 1000, 1, 0, 0, line:len() };
+      { "end", 4 };
+    }
+
+    exec [[set nowrap]]
+
+    screen:expect{grid=[[
+      ^// Just a long line to make sure we hand|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]}
+
+    check_trace {
+      { "start", 5 };
+      { "win", 1000, 1, 0, 2 };
+      { "line", 1000, 1, 0, 0, 40 };
+      { "end", 5 };
+    }
+
+    feed'$'
+    screen:expect{grid=[[
+      ans two screenlines.^                    |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]}
+
+    -- helpers.assert_log('dwdqqwDDD')
+    check_trace {
+      { "start", 6 };
+      { "win", 1000, 1, 0, 2 };
+      { "line", 1000, 1, 0, 91, 112 };
+      { "end", 6 };
     }
   end)
 
@@ -191,10 +257,10 @@ describe('decorations providers', function()
     check_trace {
       { "start", 5 };
       { "win", 1000, 1, 0, 5 };
-      { "line", 1000, 1, 0 };
-      { "line", 1000, 1, 1 };
-      { "line", 1000, 1, 2 };
-      { "line", 1000, 1, 3 };
+      { "line", 1000, 1, 0, 0, 23 };
+      { "line", 1000, 1, 1, 0, 21 };
+      { "line", 1000, 1, 2, 0, 24 };
+      { "line", 1000, 1, 3, 0, 0 };
       { "end", 5 };
     }
 

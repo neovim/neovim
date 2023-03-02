@@ -625,7 +625,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   colnr_T vcol = 0;                   // virtual column (for tabs)
   long vcol_sbr = -1;                 // virtual column after showbreak
   long vcol_prev = -1;                // "vcol" of previous character
-  char *line;                         // current line
   char *ptr;                          // current position in "line"
   int row;                            // row in the window, excl w_winrow
   ScreenGrid *grid = &wp->w_grid;     // grid specific to the window
@@ -735,7 +734,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   int syntax_flags    = 0;
   int syntax_seqnr    = 0;
   int prev_syntax_id  = 0;
-  int conceal_attr    = win_hl_attr(wp, HLF_CONCEAL);
   bool is_concealing  = false;
   int boguscols       = 0;              ///< nonexistent columns added to
                                         ///< force wrapping
@@ -762,6 +760,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   buf_T *buf = wp->w_buffer;
   bool end_fill = (lnum == buf->b_ml.ml_line_count + 1);
 
+  bool lnum_valid = lnum <= buf->b_ml.ml_line_count;
+
+  char *line = lnum_valid ? ml_get_buf(buf, lnum, false) : "";  // current line
+
   if (!number_only) {
     // To speed up the loop below, set extra_check when there is linebreak,
     // trailing white space and/or syntax processing to be done.
@@ -786,7 +788,19 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
     has_decor = decor_redraw_line(buf, lnum - 1, &decor_state);
 
-    decor_providers_invoke_line(wp, providers, lnum - 1, &has_decor, provider_err);
+    int leftoffset = wp->w_leftcol + wp->w_skipcol;
+    int rightoffset;
+    int linevlen = linetabsize(line);
+
+    if (wp->w_p_wrap) {
+      // whole line
+      rightoffset = linevlen;
+    } else {
+      rightoffset = MIN(linevlen, leftoffset + wp->w_width);
+    }
+
+    decor_providers_invoke_line(wp, providers, lnum - 1, &has_decor, provider_err, leftoffset,
+                                rightoffset);
 
     if (*provider_err) {
       provider_err_virt_text(lnum, *provider_err);
@@ -819,8 +833,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       // Trick: skip a few chars for C/shell/Vim comments
       nextline[SPWORDLEN] = NUL;
       if (lnum < wp->w_buffer->b_ml.ml_line_count) {
-        line = ml_get_buf(wp->w_buffer, lnum + 1, false);
-        spell_cat_line(nextline + SPWORDLEN, line, SPWORDLEN);
+        char *next_line = ml_get_buf(wp->w_buffer, lnum + 1, false);
+        spell_cat_line(nextline + SPWORDLEN, next_line, SPWORDLEN);
       }
 
       // When a word wrapped from the previous line the start of the current
@@ -996,7 +1010,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     line_attr_lowprio_save = line_attr_lowprio;
   }
 
-  line = end_fill ? "" : ml_get_buf(wp->w_buffer, lnum, false);
   ptr = line;
 
   if (has_spell && !number_only) {
@@ -1205,6 +1218,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     statuscol.num_attr = sign_num_attr ? sign_num_attr
                          : get_line_number_attr(wp, lnum, row, startrow, filler_lines);
   }
+
+  bool has_conceal = wp->w_p_cole > 0
+                     && (wp != curwin || lnum != wp->w_cursor.lnum || conceal_cursor_line(wp))
+                     && !(lnum_in_visual_area && vim_strchr(wp->w_p_cocu, 'v') == NULL);
 
   int sign_idx = 0;
   int virt_line_index;
@@ -2262,11 +2279,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         }
       }
 
-      if (wp->w_p_cole > 0
-          && (wp != curwin || lnum != wp->w_cursor.lnum || conceal_cursor_line(wp))
-          && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc > 0 || decor_conceal > 0)
-          && !(lnum_in_visual_area && vim_strchr(wp->w_p_cocu, 'v') == NULL)) {
-        char_attr = conceal_attr;
+      if (has_conceal
+          && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc > 0 || decor_conceal > 0)) {
+        char_attr = win_hl_attr(wp, HLF_CONCEAL);
         if (((prev_syntax_id != syntax_seqnr && (syntax_flags & HL_CONCEAL) != 0)
              || has_match_conc > 1 || decor_conceal > 1)
             && (syn_get_sub_char() != NUL

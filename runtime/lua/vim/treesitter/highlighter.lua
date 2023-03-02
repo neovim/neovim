@@ -201,8 +201,10 @@ end
 ---@param self TSHighlighter
 ---@param buf integer
 ---@param line integer
+---@param leftcol integer
+---@param rightcol integer
 ---@param is_spell_nav boolean
-local function on_line_impl(self, buf, line, is_spell_nav)
+local function on_line_impl(self, buf, line, leftcol, rightcol, is_spell_nav)
   ---@diagnostic disable:invisible
   self.tree:for_each_tree(function(tstree, tree)
     if not tstree then
@@ -226,8 +228,9 @@ local function on_line_impl(self, buf, line, is_spell_nav)
     end
 
     if state.iter == nil or state.next_row < line then
-      state.iter =
-        highlighter_query:query():iter_captures(root_node, self.bufnr, line, root_end_row + 1)
+      state.iter = highlighter_query
+        :query()
+        :iter_captures(root_node, self.bufnr, line, root_end_row + 1, leftcol, rightcol)
     end
 
     while line >= state.next_row do
@@ -251,7 +254,12 @@ local function on_line_impl(self, buf, line, is_spell_nav)
       -- Give nospell a higher priority so it always overrides spell captures.
       local spell_pri_offset = capture_name == 'nospell' and 1 or 0
 
-      if hl and end_row >= line and (not is_spell_nav or spell ~= nil) then
+      if
+        hl
+        and end_row >= line
+        and (not is_spell_nav or spell ~= nil)
+        and (start_col <= rightcol or end_col >= leftcol)
+      then
         a.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
           end_line = end_row,
           end_col = end_col,
@@ -264,22 +272,28 @@ local function on_line_impl(self, buf, line, is_spell_nav)
       end
       if start_row > line then
         state.next_row = start_row
+        break
+      end
+      if start_col > rightcol then
+        break
       end
     end
-  end, true)
+  end)
 end
 
 ---@private
 ---@param _win integer
 ---@param buf integer
 ---@param line integer
-function TSHighlighter._on_line(_, _win, buf, line, _)
+---@param leftcol integer
+---@param rightcol integer
+function TSHighlighter._on_line(_, _win, buf, line, leftcol, rightcol)
   local self = TSHighlighter.active[buf]
   if not self then
     return
   end
 
-  on_line_impl(self, buf, line, false)
+  on_line_impl(self, buf, line, leftcol, rightcol, false)
 end
 
 ---@private
@@ -295,7 +309,7 @@ function TSHighlighter._on_spell_nav(_, _, buf, srow, _, erow, _)
   self:reset_highlight_state()
 
   for row = srow, erow do
-    on_line_impl(self, buf, row, true)
+    on_line_impl(self, buf, row, 0, 0, true)
   end
 end
 
@@ -312,7 +326,7 @@ end
 ---@param _win integer
 ---@param buf integer
 ---@param _topline integer
-function TSHighlighter._on_win(_, _win, buf, _topline)
+function TSHighlighter._on_win(_, _win, buf, _topline, _botline)
   local self = TSHighlighter.active[buf]
   if not self then
     return false
