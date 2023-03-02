@@ -189,8 +189,6 @@ jobs:
             perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'
           fi
 
-      - run: echo "DEPS_BUILD_DIR=$HOME/nvim-deps" >> $GITHUB_ENV
-
       - uses: ./.github/actions/cache
 
       - name: Build third-party deps
