@@ -2106,9 +2106,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             // If n_extra > 0, it gives the number of chars
             // to use for a tab, else we need to calculate the width
             // for a tab.
-            int len = (tab_len * utf_char2len(wp->w_p_lcs_chars.tab2));
+            int tab2_len = utf_char2len(wp->w_p_lcs_chars.tab2);
+            int len = tab_len * tab2_len;
             if (wp->w_p_lcs_chars.tab3) {
-              len += utf_char2len(wp->w_p_lcs_chars.tab3);
+              len += utf_char2len(wp->w_p_lcs_chars.tab3) - tab2_len;
             }
             if (n_extra > 0) {
               len += n_extra - tab_len;
