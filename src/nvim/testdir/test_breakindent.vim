@@ -1075,4 +1075,22 @@ func Test_breakindent_column()
   bwipeout!
 endfunc
 
+func Test_linebreak_list()
+  " This was setting wlv.c_extra to NUL while wlv.p_extra is NULL
+  filetype plugin on
+  syntax enable
+  edit! $VIMRUNTIME/doc/index.txt
+  /v_P
+
+  setlocal list
+  setlocal listchars=tab:>-
+  setlocal linebreak
+  setlocal nowrap
+  setlocal filetype=help
+  redraw!
+
+  bwipe!
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab

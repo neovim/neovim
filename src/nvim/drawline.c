@@ -2170,7 +2170,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             c = (n_extra == 0 && wp->w_p_lcs_chars.tab3)
                  ? wp->w_p_lcs_chars.tab3
                  : wp->w_p_lcs_chars.tab1;
-            if (wp->w_p_lbr) {
+            if (wp->w_p_lbr && p_extra != NULL) {
               c_extra = NUL;  // using p_extra from above
             } else {
               c_extra = wp->w_p_lcs_chars.tab2;
