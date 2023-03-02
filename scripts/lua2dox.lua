@@ -27,7 +27,10 @@ http://search.cpan.org/~alec/Doxygen-Lua-0.02/lib/Doxygen/Lua.pm
 Running
 -------
 
-This script "lua2dox.lua" gets called by "gen_vimdoc.py".
+This script "lua2dox.lua" gets called by "gen_vimdoc.py". To debug, run gen_vimdoc.py with
+--keep-tmpfiles:
+
+    python3 scripts/gen_vimdoc.py -t treesitter --keep-tmpfiles
 
 Doxygen must be on your system. You can experiment like so:
 
@@ -71,14 +74,14 @@ local function class()
   return newClass
 end
 
---! \brief write to stdout
+-- write to stdout
 local function TCore_IO_write(Str)
   if Str then
     io.write(Str)
   end
 end
 
---! \brief write to stdout
+-- write to stdout
 local function TCore_IO_writeln(Str)
   if Str then
     io.write(Str)
@@ -86,12 +89,12 @@ local function TCore_IO_writeln(Str)
   io.write('\n')
 end
 
---! \brief trims a string
+-- trims a string
 local function string_trim(Str)
   return Str:match('^%s*(.-)%s*$')
 end
 
---! \brief split a string
+-- split a string
 --!
 --! \param Str
 --! \param Pattern
@@ -117,12 +120,12 @@ local function string_split(Str, Pattern)
 end
 
 -------------------------------
---! \brief file buffer
+-- file buffer
 --!
 --! an input file buffer
 local TStream_Read = class()
 
---! \brief get contents of file
+-- get contents of file
 --!
 --! \param Filename name of file to read (or nil == stdin)
 function TStream_Read.getContents(this, Filename)
@@ -143,12 +146,12 @@ function TStream_Read.getContents(this, Filename)
   return filecontents
 end
 
---! \brief get lineno
+-- get lineno
 function TStream_Read.getLineNo(this)
   return this.currentLineNo
 end
 
---! \brief get a line
+-- get a line
 function TStream_Read.getLine(this)
   local line
   if this.currentLine then
@@ -166,12 +169,12 @@ function TStream_Read.getLine(this)
   return line
 end
 
---! \brief save line fragment
+-- save line fragment
 function TStream_Read.ungetLine(this, LineFrag)
   this.currentLine = LineFrag
 end
 
---! \brief is it eof?
+-- is it eof?
 function TStream_Read.eof(this)
   if this.currentLine or this.currentLineNo <= this.contentsLen then
     return false
@@ -179,31 +182,31 @@ function TStream_Read.eof(this)
   return true
 end
 
---! \brief output stream
+-- output stream
 local TStream_Write = class()
 
---! \brief constructor
+-- constructor
 function TStream_Write.init(this)
   this.tailLine = {}
 end
 
---! \brief write immediately
+-- write immediately
 function TStream_Write.write(_, Str)
   TCore_IO_write(Str)
 end
 
---! \brief write immediately
+-- write immediately
 function TStream_Write.writeln(_, Str)
   TCore_IO_writeln(Str)
 end
 
---! \brief write immediately
+-- write immediately
 function TStream_Write.writelnComment(_, Str)
   TCore_IO_write('// ZZ: ')
   TCore_IO_writeln(Str)
 end
 
---! \brief write to tail
+-- write to tail
 function TStream_Write.writelnTail(this, Line)
   if not Line then
     Line = ''
@@ -211,7 +214,7 @@ function TStream_Write.writelnTail(this, Line)
   table.insert(this.tailLine, Line)
 end
 
---! \brief output tail lines
+-- output tail lines
 function TStream_Write.write_tailLines(this)
   for _, line in ipairs(this.tailLine) do
     TCore_IO_writeln(line)
@@ -219,17 +222,17 @@ function TStream_Write.write_tailLines(this)
   TCore_IO_write('// Lua2DoX new eof')
 end
 
---! \brief input filter
+-- input filter
 local TLua2DoX_filter = class()
 
---! \brief allow us to do errormessages
+-- allow us to do errormessages
 function TLua2DoX_filter.warning(this, Line, LineNo, Legend)
   this.outStream:writelnTail(
     '//! \todo warning! ' .. Legend .. ' (@' .. LineNo .. ')"' .. Line .. '"'
   )
 end
 
---! \brief trim comment off end of string
+-- trim comment off end of string
 --!
 --! If the string has a comment on the end, this trims it off.
 --!
@@ -243,7 +246,7 @@ local function TString_removeCommentFromLine(Line)
   return Line, tailComment
 end
 
---! \brief get directive from magic
+-- get directive from magic
 local function getMagicDirective(Line)
   local macro, tail
   local macroStr = '[\\@]'
@@ -264,7 +267,7 @@ local function getMagicDirective(Line)
   return macro, tail
 end
 
---! \brief check comment for fn
+-- check comment for fn
 local function checkComment4fn(Fn_magic, MagicLines)
   local fn_magic = Fn_magic
   --    TCore_IO_writeln('// checkComment4fn "' .. MagicLines .. '"')
@@ -293,7 +296,7 @@ local tagged_types = { 'TSNode', 'LanguageTree' }
 -- Document these as 'table'
 local alias_types = { 'Range4', 'Range6' }
 
---! \brief run the filter
+-- run the filter
 function TLua2DoX_filter.readfile(this, AppStamp, Filename)
   local inStream = TStream_Read()
   local outStream = TStream_Write()
@@ -524,10 +527,10 @@ function TLua2DoX_filter.readfile(this, AppStamp, Filename)
   end
 end
 
---! \brief this application
+-- this application
 local TApp = class()
 
---! \brief constructor
+-- constructor
 function TApp.init(this)
   this.timestamp = os.date('%c %Z', os.time())
   this.name = 'Lua2DoX'

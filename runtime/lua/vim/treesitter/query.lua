@@ -273,8 +273,7 @@ end
 ---@param opts (table|nil) Optional parameters.
 ---          - concat: (boolean) Concatenate result in a string (default true)
 ---          - metadata (table) Metadata of a specific capture. This would be
----            set to `metadata[capture_id]` when using
----            |vim.treesitter.query.add_directive()|.
+---            set to `metadata[capture_id]` when using |vim.treesitter.add_directive()|.
 ---@return (string[]|string|nil)
 function M.get_node_text(node, source, opts)
   opts = opts or {}
@@ -486,7 +485,7 @@ local directive_handlers = {
 ---
 ---@param name string Name of the predicate, without leading #
 ---@param handler function(match:table<string,TSNode>, pattern:string, bufnr:number, predicate:string[])
----   - see |vim.treesitter.query.add_directive()| for argument meanings
+---   - see |vim.treesitter.add_directive()| for argument meanings
 ---@param force boolean|nil
 function M.add_predicate(name, handler, force)
   if predicate_handlers[name] and not force then

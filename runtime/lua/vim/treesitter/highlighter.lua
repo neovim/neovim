@@ -58,7 +58,9 @@ function TSHighlighterQuery:query()
   return self._query
 end
 
---- Creates a new highlighter using @param tree
+---@private
+---
+--- Creates a highlighter for `tree`.
 ---
 ---@param tree LanguageTree parser object to use for highlighting
 ---@param opts (table|nil) Configuration of the highlighter:

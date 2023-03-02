@@ -162,11 +162,10 @@ The following new APIs or features were added.
 • Treesitter captures can now be transformed by directives. This will allow
   more complicated dynamic language injections.
 
-• |vim.treesitter.query.get_node_text()| now accepts a `metadata` option for
-  writing custom directives using |vim.treesitter.query.add_directive()|.
+• |vim.treesitter.get_node_text()| now accepts a `metadata` option for
+  writing custom directives using |vim.treesitter.add_directive()|.
 
-• |vim.treesitter.language.add()| as a new replacement for
-  `vim.treesitter.language.require_language`.
+• |vim.treesitter.add()| replaces `vim.treesitter.language.require_language`.
 
 • `require'bit'` is now always available |lua-bit|
 
@@ -225,8 +224,7 @@ DEPRECATIONS                                                *news-deprecations*
 The following functions are now deprecated and will be removed in the next
 release.
 
-• `vim.treesitter.language.require_language()` has been deprecated in favour
-  of |vim.treesitter.language.add()|.
+• |vim.treesitter.add()| replaces `vim.treesitter.language.require_language()`
 
 • |vim.treesitter.get_node_at_pos()| and |vim.treesitter.get_node_at_cursor()|
   are both deprecated in favor of |vim.treesitter.get_node()|.
