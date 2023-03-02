@@ -2096,10 +2096,10 @@ bool ins_compl_prep(int c)
     edit_submode_extra = NULL;
   }
 
-  // Ignore end of Select mode mapping and mouse scroll buttons.
+  // Ignore end of Select mode mapping and mouse scroll/movement.
   if (c == K_SELECT || c == K_MOUSEDOWN || c == K_MOUSEUP
-      || c == K_MOUSELEFT || c == K_MOUSERIGHT || c == K_EVENT
-      || c == K_COMMAND || c == K_LUA) {
+      || c == K_MOUSELEFT || c == K_MOUSERIGHT || c == K_MOUSEMOVE
+      || c == K_EVENT || c == K_COMMAND || c == K_LUA) {
     return retval;
   }
 
@@ -3043,8 +3043,8 @@ static void get_next_spell_completion(linenr_T lnum)
 /// @param cur_match_pos  current match position
 /// @param match_len
 /// @param cont_s_ipos    next ^X<> will set initial_pos
-static char *ins_comp_get_next_word_or_line(buf_T *ins_buf, pos_T *cur_match_pos, int *match_len,
-                                            bool *cont_s_ipos)
+static char *ins_compl_get_next_word_or_line(buf_T *ins_buf, pos_T *cur_match_pos, int *match_len,
+                                             bool *cont_s_ipos)
 {
   *match_len = 0;
   char *ptr = ml_get_buf(ins_buf, cur_match_pos->lnum, false) + cur_match_pos->col;
@@ -3206,8 +3206,8 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
       continue;
     }
     int len;
-    char *ptr = ins_comp_get_next_word_or_line(st->ins_buf, st->cur_match_pos,
-                                               &len, &cont_s_ipos);
+    char *ptr = ins_compl_get_next_word_or_line(st->ins_buf, st->cur_match_pos,
+                                                &len, &cont_s_ipos);
     if (ptr == NULL) {
       continue;
     }
