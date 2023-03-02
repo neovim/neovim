@@ -595,6 +595,31 @@ get_string_parser({str}, {lang}, {opts})
     Return: ~
         |LanguageTree| object to use for parsing
 
+inspect_tree({opts})                           *vim.treesitter.inspect_tree()*
+    Open a window that displays a textual representation of the nodes in the
+    language tree.
+
+    While in the window, press "a" to toggle display of anonymous nodes, "I"
+    to toggle the display of the source language of each node, and press
+    <Enter> to jump to the node under the cursor in the source buffer.
+
+    Parameters: ~
+      • {opts}  (table|nil) Optional options table with the following possible
+                keys:
+                • lang (string|nil): The language of the source buffer. If
+                  omitted, the filetype of the source buffer is used.
+                • bufnr (integer|nil): Buffer to draw the tree into. If
+                  omitted, a new buffer is created.
+                • winid (integer|nil): Window id to display the tree buffer
+                  in. If omitted, a new window is created with {command}.
+                • command (string|nil): Vimscript command to create the
+                  window. Default value is "topleft 60vnew". Only used when
+                  {winid} is nil.
+                • title (string|fun(bufnr:integer):string|nil): Title of the
+                  window. If a function, it accepts the buffer number of the
+                  source buffer as its only argument and should return a
+                  string.
+
 is_ancestor({dest}, {source})                   *vim.treesitter.is_ancestor()*
     Determines whether a node is the ancestor of another
 
@@ -626,31 +651,6 @@ node_contains({node}, {range})                *vim.treesitter.node_contains()*
 
     Return: ~
         (boolean) True if the {node} contains the {range}
-
-show_tree({opts})                                 *vim.treesitter.show_tree()*
-    Open a window that displays a textual representation of the nodes in the
-    language tree.
-
-    While in the window, press "a" to toggle display of anonymous nodes, "I"
-    to toggle the display of the source language of each node, and press
-    <Enter> to jump to the node under the cursor in the source buffer.
-
-    Parameters: ~
-      • {opts}  (table|nil) Optional options table with the following possible
-                keys:
-                • lang (string|nil): The language of the source buffer. If
-                  omitted, the filetype of the source buffer is used.
-                • bufnr (integer|nil): Buffer to draw the tree into. If
-                  omitted, a new buffer is created.
-                • winid (integer|nil): Window id to display the tree buffer
-                  in. If omitted, a new window is created with {command}.
-                • command (string|nil): Vimscript command to create the
-                  window. Default value is "topleft 60vnew". Only used when
-                  {winid} is nil.
-                • title (string|fun(bufnr:integer):string|nil): Title of the
-                  window. If a function, it accepts the buffer number of the
-                  source buffer as its only argument and should return a
-                  string.
 
 start({bufnr}, {lang})                                *vim.treesitter.start()*
     Starts treesitter highlighting for a buffer
