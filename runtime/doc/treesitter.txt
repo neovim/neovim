@@ -292,7 +292,39 @@ The following directives are built in:
         Example: >query
             ((identifier) @constant (#offset! @constant 0 1 0 -1))
 <
+    `gsub!`                                          *treesitter-directive-gsub!*
+        Transforms the content of the node using a Lua pattern. This will set
+        a new `metadata[capture_id].text`.
 
+        Parameters: ~
+            {capture_id}
+            {pattern}
+
+        Example: >query
+            (#gsub! @_node ".*%.(.*)" "%1")
+<
+    `trim!`                                          *treesitter-directive-trim!*
+        Trim blank lines from the end of the node. This will set a new
+        `metadata[capture_id].range`.
+
+        Parameters: ~
+            {capture_id}
+
+        Example: >query
+            (#inject-language! @_lang)
+<
+    `inject-language!`                    *treesitter-directive-inject-language!*
+        Set the injection language from the node text, interpreted first as a
+        language name, then (if a parser is not found) a filetype. Custom
+        aliases can be added via |vim.treesitter.language.register()|. This
+        will set a new `metadata[capture_id]['injection.language']`.
+
+        Parameters: ~
+            {capture_id}
+
+        Example: >query
+            (#inject-language! @_lang)
+<
 Further directives can be added via |vim.treesitter.query.add_directive()|.
 Use |vim.treesitter.query.list_directives()| to list all available directives.
 
