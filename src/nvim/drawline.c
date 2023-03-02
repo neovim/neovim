@@ -1691,11 +1691,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     } else if (foldinfo.fi_lines > 0) {
       // skip writing the buffer line itself
       c = NUL;
-      XFREE_CLEAR(p_extra_free);
     } else {
       int c0;
-
-      XFREE_CLEAR(p_extra_free);
 
       // Get a character from the line itself.
       c0 = c = (uint8_t)(*ptr);
@@ -2170,7 +2167,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             c = (n_extra == 0 && wp->w_p_lcs_chars.tab3)
                  ? wp->w_p_lcs_chars.tab3
                  : wp->w_p_lcs_chars.tab1;
-            if (wp->w_p_lbr && p_extra != NULL) {
+            if (wp->w_p_lbr && p_extra != NULL && *p_extra != NUL) {
               c_extra = NUL;  // using p_extra from above
             } else {
               c_extra = wp->w_p_lcs_chars.tab2;
