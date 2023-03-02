@@ -156,6 +156,7 @@ local extension = {
   bas = function(path, bufnr)
     return require('vim.filetype.detect').bas(bufnr)
   end,
+  bass = 'bass',
   bi = function(path, bufnr)
     return require('vim.filetype.detect').bas(bufnr)
   end,
