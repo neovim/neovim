@@ -433,9 +433,9 @@ local function test_cmdline(linegrid)
     feed('<f5>(a(b)a)')
     screen:expect{grid=[[
       ^                         |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
                                |
     ]], cmdline={{
       prompt = '>',

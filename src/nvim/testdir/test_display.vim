@@ -313,7 +313,7 @@ endfunc
 " Test for 'eob' (EndOfBuffer) item in 'fillchars'
 func Test_eob_fillchars()
   " default value (skipped)
-  " call assert_match('eob:\~', &fillchars)
+  " call assert_match('eob:\·', &fillchars)
   " invalid values
   call assert_fails(':set fillchars=eob:', 'E474:')
   call assert_fails(':set fillchars=eob:xy', 'E474:')
@@ -324,7 +324,7 @@ func Test_eob_fillchars()
   " default is ~
   new
   redraw
-  call assert_equal('~', Screenline(2))
+  call assert_equal('·', Screenline(2))
   set fillchars=eob:+
   redraw
   call assert_equal('+', Screenline(2))
@@ -362,7 +362,7 @@ func Test_fold_fillchars()
   call assert_equal(expected, lines)
 
   " change the setting
-  set fillchars=vert:\|,fold:-,eob:~,foldopen:[,foldclose:],foldsep:-
+  set fillchars=vert:\|,fold:-,eob:·,foldopen:[,foldclose:],foldsep:-
 
   " check the characters for an open fold
   let lines = ScreenLines([1, 5], 8)
