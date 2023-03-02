@@ -436,7 +436,7 @@ end
 ---                      - title (string|fun(bufnr:integer):string|nil): Title of the window. If a
 ---                        function, it accepts the buffer number of the source buffer as its only
 ---                        argument and should return a string.
-function M.show_tree(opts)
+function M.inspect_tree(opts)
   vim.validate({
     opts = { opts, 't', true },
   })
@@ -620,6 +620,12 @@ function M.show_tree(opts)
       end
     end,
   })
+end
+
+---@deprecated
+---@private
+function M.show_tree()
+  vim.deprecate('show_tree', 'inspect_tree', '0.9', nil, false)
 end
 
 --- Returns the fold level for {lnum} in the current buffer. Can be set directly to 'foldexpr':
