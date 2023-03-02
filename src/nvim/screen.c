@@ -850,6 +850,9 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
     int def;     ///< default value
   };
 
+  //char32_t middot = U'·';
+
+
   // XXX: Characters taking 2 columns is forbidden (TUI limitation?). Set old defaults in this case.
   struct chars_tab fcs_tab[] = {
     { &wp->w_p_fcs_chars.stl,        "stl",       ' ' },
@@ -868,7 +871,8 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
     { &wp->w_p_fcs_chars.foldsep,    "foldsep",   char2cells(0x2502) == 1 ? 0x2502 : '|' },  // │
     { &wp->w_p_fcs_chars.diff,       "diff",      '-' },
     { &wp->w_p_fcs_chars.msgsep,     "msgsep",    ' ' },
-    { &wp->w_p_fcs_chars.eob,        "eob",       '~' },
+    // make eob a middle dot by default 
+    { &wp->w_p_fcs_chars.eob,        "eob",       char2cells(0x00b7) == 1 ? 0x00b7 : '-' },  // ·
     { &wp->w_p_fcs_chars.lastline,   "lastline",  '@' },
   };
 
