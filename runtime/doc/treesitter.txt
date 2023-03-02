@@ -603,6 +603,8 @@ inspect_tree({opts})                           *vim.treesitter.inspect_tree()*
     to toggle the display of the source language of each node, and press
     <Enter> to jump to the node under the cursor in the source buffer.
 
+    Can also be shown with `:InspectTree`.                      *:InspectTree*
+
     Parameters: ~
       • {opts}  (table|nil) Optional options table with the following possible
                 keys:

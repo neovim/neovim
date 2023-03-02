@@ -424,6 +424,8 @@ end
 --- display of the source language of each node, and press <Enter> to jump to the node under the
 --- cursor in the source buffer.
 ---
+--- Can also be shown with `:InspectTree`. *:InspectTree*
+---
 ---@param opts table|nil Optional options table with the following possible keys:
 ---                      - lang (string|nil): The language of the source buffer. If omitted, the
 ---                        filetype of the source buffer is used.

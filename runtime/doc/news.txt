@@ -89,8 +89,9 @@ The following new APIs or features were added.
 
   See |lsp-semantic_tokens| for more information.
 
-• |vim.treesitter.inspect_tree()| opens a split window showing a text
-  representation of the nodes in a language tree for the current buffer.
+• |vim.treesitter.inspect_tree()| and |:InspectTree| opens a split window
+  showing a text representation of the nodes in a language tree for the current
+  buffer.
 
 • Added support for the `willSave` and `willSaveWaitUntil` capabilities to the
   LSP client. `willSaveWaitUntil` allows a server to modify a document before it
