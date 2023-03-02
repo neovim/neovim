@@ -1,13 +1,5 @@
-# - Try to find libintl
-# Once done, this will define
-#
-#  LibIntl_FOUND        - system has libintl
-#  LibIntl_INCLUDE_DIRS - the libintl include directories
-#  LibIntl_LIBRARIES    - link these to use libintl
-
 include(CheckCSourceCompiles)
 include(CheckVariableExists)
-include(LibFindMacros)
 
 # Append custom gettext path to CMAKE_PREFIX_PATH
 # if installed via Mac Homebrew
@@ -74,18 +66,15 @@ if (LibIntl_LIBRARY)
   list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES "${LibIntl_LIBRARY}")
 endif()
 
+set(REQUIRED_VARIABLES LibIntl_LIBRARY LIBTERMKEY_INCLUDE_DIR)
 if (HAVE_WORKING_LIBINTL)
   # On some systems (linux+glibc) libintl is passively available.
   # If HAVE_WORKING_LIBINTL then we consider the requirement satisfied.
-  # Unset REQUIRED so that libfind_process(LibIntl) can proceed.
-  if(LibIntl_FIND_REQUIRED)
-    unset(LibIntl_FIND_REQUIRED)
-  endif()
-  set(LibIntl_FIND_QUIETLY ON)
+  unset(REQUIRED_VARIABLES)
 
   check_variable_exists(_nl_msg_cat_cntr HAVE_NL_MSG_CAT_CNTR)
 endif()
 
-set(LibIntl_PROCESS_INCLUDES LibIntl_INCLUDE_DIR)
-set(LibIntl_PROCESS_LIBS LibIntl_LIBRARY)
-libfind_process(LibIntl)
+find_package_handle_standard_args(LibIntl DEFAULT_MSG
+  ${REQUIRED_VARIABLES})
+mark_as_advanced(LIBTERMKEY_INCLUDE_DIR LIBTERMKEY_LIBRARY)

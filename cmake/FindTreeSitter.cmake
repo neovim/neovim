@@ -1,11 +1,5 @@
-# - Try to find tree-sitter
-# Once done, this will define
-#
-#  TreeSitter_FOUND        - system has tree-sitter
-#  TreeSitter_INCLUDE_DIRS - the tree-sitter include directories
-#  TreeSitter_LIBRARIES    - link these to use tree-sitter
-
-include(LibFindMacros)
-
-libfind_pkg_detect(TreeSitter tree-sitter FIND_PATH tree_sitter/api.h FIND_LIBRARY tree-sitter)
-libfind_process(TreeSitter)
+find_path(TreeSitter_INCLUDE_DIR tree_sitter/api.h)
+find_library(TreeSitter_LIBRARY NAMES tree-sitter)
+find_package_handle_standard_args(TreeSitter DEFAULT_MSG
+  TreeSitter_LIBRARY TreeSitter_INCLUDE_DIR)
+mark_as_advanced(TreeSitter_LIBRARY TreeSitter_INCLUDE_DIR)

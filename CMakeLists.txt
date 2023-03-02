@@ -22,8 +22,9 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 include(CheckCCompilerFlag)
 include(CheckCSourceCompiles)
+include(FindPackageHandleStandardArgs)
 include(InstallHelpers)
-include(LuaHelpers) # Find Lua interpreter
+include(LuaHelpers)
 include(PreventInTreeBuilds)
 include(Util)
 
