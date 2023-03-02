@@ -1,6 +1,6 @@
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   set(LUA_TARGET linux)
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+elseif(APPLE)
   set(LUA_TARGET macosx)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
   set(LUA_TARGET freebsd)

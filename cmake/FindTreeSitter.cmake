@@ -1,5 +1,0 @@
-find_path(TreeSitter_INCLUDE_DIR tree_sitter/api.h)
-find_library(TreeSitter_LIBRARY NAMES tree-sitter)
-find_package_handle_standard_args(TreeSitter DEFAULT_MSG
-  TreeSitter_LIBRARY TreeSitter_INCLUDE_DIR)
-mark_as_advanced(TreeSitter_LIBRARY TreeSitter_INCLUDE_DIR)

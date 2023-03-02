@@ -53,7 +53,6 @@ ifeq (,$(BUILD_TOOL))
   endif
 endif
 
-
 # Only need to handle Ninja here.  Make will inherit the VERBOSE variable, and the -j, -l, and -n flags.
 ifeq ($(CMAKE_GENERATOR),Ninja)
   ifneq ($(VERBOSE),)

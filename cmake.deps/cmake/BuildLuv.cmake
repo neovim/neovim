@@ -14,7 +14,7 @@ if(USE_BUNDLED_LUAJIT)
 elseif(USE_BUNDLED_LUA)
   list(APPEND LUV_CMAKE_ARGS -D WITH_LUA_ENGINE=Lua)
 else()
-  find_package(LuaJit)
+  find_package(Luajit)
   if(LUAJIT_FOUND)
     list(APPEND LUV_CMAKE_ARGS -D WITH_LUA_ENGINE=LuaJit)
   else()
@@ -23,9 +23,7 @@ else()
 endif()
 
 if(USE_BUNDLED_LIBUV)
-  list(APPEND LUV_CMAKE_ARGS
-    -D CMAKE_PREFIX_PATH=${DEPS_INSTALL_DIR}
-    -D LIBUV_LIBRARIES=uv_a)
+  list(APPEND LUV_CMAKE_ARGS -D CMAKE_PREFIX_PATH=${DEPS_INSTALL_DIR})
 endif()
 
 list(APPEND LUV_CMAKE_ARGS

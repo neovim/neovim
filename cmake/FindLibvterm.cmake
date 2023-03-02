@@ -11,7 +11,7 @@ if(LIBVTERM_INCLUDE_DIR AND EXISTS "${LIBVTERM_INCLUDE_DIR}/vterm.h")
   set(VTERM_VERSION ${VTERM_VERSION_MAJOR}.${VTERM_VERSION_MINOR})
 endif()
 
-find_package_handle_standard_args(libvterm
+find_package_handle_standard_args(Libvterm
   REQUIRED_VARS LIBVTERM_INCLUDE_DIR LIBVTERM_LIBRARY
   VERSION_VAR VTERM_VERSION)
 

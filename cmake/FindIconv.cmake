@@ -6,3 +6,9 @@ find_library(ICONV_LIBRARY NAMES iconv libiconv)
 find_package_handle_standard_args(Iconv DEFAULT_MSG
   ICONV_INCLUDE_DIR)
 mark_as_advanced(ICONV_INCLUDE_DIR ICONV_LIBRARY)
+
+add_library(iconv INTERFACE)
+target_include_directories(iconv SYSTEM BEFORE INTERFACE ${ICONV_INCLUDE_DIR})
+if(ICONV_LIBRARY)
+  target_link_libraries(iconv INTERFACE ${ICONV_LIBRARY})
+endif()

@@ -14,7 +14,7 @@ find_library(LUAJIT_LIBRARY NAMES ${LUAJIT_NAMES})
 set(LUAJIT_LIBRARIES ${LUAJIT_LIBRARY})
 set(LUAJIT_INCLUDE_DIRS ${LUAJIT_INCLUDE_DIR})
 
-find_package_handle_standard_args(LuaJit DEFAULT_MSG
+find_package_handle_standard_args(Luajit DEFAULT_MSG
                                   LUAJIT_LIBRARY LUAJIT_INCLUDE_DIR)
 
 mark_as_advanced(LUAJIT_INCLUDE_DIR LUAJIT_LIBRARY)
