@@ -3877,14 +3877,14 @@ describe('LSP', function()
 
         local send_event
         require('vim.lsp._watchfiles')._watchfunc = function(_, _, callback)
-          local stoppped = false
+          local stopped = false
           send_event = function(...)
-            if not stoppped then
+            if not stopped then
               callback(...)
             end
           end
           return function()
-            stoppped = true
+            stopped = true
           end
         end
 

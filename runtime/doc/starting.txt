@@ -242,7 +242,7 @@ argument.
 							*-ll*
 -ll {script} [args]
 		Execute a lua script, similarly to |-l|, but the editor is not
-		initialized. This gives a lua enviroment similar to a worker
+		initialized. This gives a lua environment similar to a worker
 		thread. See |lua-loop-threading|.
 
 		Unlike `-l` no prior arguments are allowed.
@@ -1394,7 +1394,7 @@ result in Neovim looking for configuration files in `$XDG_CONFIG_HOME/neovim`
 instead of `$XDG_CONFIG_HOME/nvim`.
 
 Note: Similarly to the $XDG environment variables, when
-`$XDG_CONFIG_HOME/nvim` is mentionned, it should be understood as
+`$XDG_CONFIG_HOME/nvim` is mentioned, it should be understood as
 `$XDG_CONFIG_HOME/$NVIM_APPNAME`.
 
 LOG FILE					*log* *$NVIM_LOG_FILE* *E5430*

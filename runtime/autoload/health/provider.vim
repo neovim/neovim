@@ -435,7 +435,7 @@ endfunction
 
 " Check if pyenv is available and a valid pyenv root can be found, then return
 " their respective paths. If either of those is invalid, return two empty
-" strings, effectivly ignoring pyenv.
+" strings, effectively ignoring pyenv.
 function! s:check_for_pyenv() abort
   let pyenv_path = resolve(exepath('pyenv'))
 

@@ -517,7 +517,7 @@ groups are derived from the token's type and modifiers:
   • `@lsp.type.<type>.<ft>` for the type
   • `@lsp.mod.<mod>.<ft>` for each modifier
   • `@lsp.typemod.<type>.<mod>.<ft>` for each modifier
-Use |:Inspect| to view the higlights for a specific token. Use |:hi| or
+Use |:Inspect| to view the highlights for a specific token. Use |:hi| or
 |nvim_set_hl()| to change the appearance of semantic highlights: >vim
 
     hi @lsp.type.function guifg=Yellow        " function names are yellow

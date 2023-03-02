@@ -1367,7 +1367,7 @@ int main()
           exec_lua([[
             local text = ...
             vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.fn.split(text, "\n"))
-            vim.wait(15) -- wait fot debounce
+            vim.wait(15) -- wait for debounce
           ]], test.text2)
         end
 

@@ -4846,7 +4846,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  pack/		packages |:packadd|
 	  parser/	|treesitter| syntax parsers
 	  plugin/	plugin scripts |write-plugin|
-	  query/	|treesitter| queries
+	  queries/	|treesitter| queries
 	  rplugin/	|remote-plugin| scripts
 	  spell/	spell checking files |spell|
 	  syntax/	syntax files |mysyntaxfile|
@@ -7256,7 +7256,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'writedelay'* *'wd'*
 'writedelay' 'wd'	number	(default 0)
 			global
-	Only takes effect toghether with 'redrawdebug'.
+	Only takes effect together with 'redrawdebug'.
 	The number of milliseconds to wait after each line or each flush
 
  vim:tw=78:ts=8:noet:ft=help:norl:
