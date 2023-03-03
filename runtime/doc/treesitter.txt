@@ -272,9 +272,8 @@ The following predicates are built in:
 Each predicate has a `not-` prefixed predicate that is just the negation of
 the predicate.
 
-Further predicates can be added via |vim.treesitter.query.add_predicate()|.
-Use |vim.treesitter.query.list_predicates()| to list all available
-predicates.
+Further predicates can be added via |vim.treesitter.add_predicate()|.
+Use |vim.treesitter.list_predicates()| to list all available predicates.
 
 
 TREESITTER QUERY DIRECTIVES                            *treesitter-directives*
@@ -316,9 +315,8 @@ The following directives are built in:
             ((identifier) @constant (#offset! @constant 0 1 0 -1))
 <
 
-Further directives can be added via |vim.treesitter.query.add_directive()|.
-Use |vim.treesitter.query.list_directives()| to list all available
-directives.
+Further directives can be added via |vim.treesitter.add_directive()|.
+Use |vim.treesitter.list_directives()| to list all available directives.
 
 
 TREESITTER QUERY MODELINES                          *treesitter-query-modeline*
@@ -690,7 +688,7 @@ stop({bufnr})                                          *vim.treesitter.stop()*
 ==============================================================================
 Lua module: vim.treesitter.language                  *lua-treesitter-language*
 
-add({lang}, {opts})                            *vim.treesitter.language.add()*
+add({lang}, {opts})                                     *vim.treesitter.add()*
     Asserts that a parser for the language {lang} is installed.
 
     Parsers are searched in the `parser` runtime directory, or the provided
@@ -708,14 +706,14 @@ add({lang}, {opts})                            *vim.treesitter.language.add()*
                 • symbol_name (string|nil) Internal symbol name for the
                   language to load
 
-get_lang({filetype})                      *vim.treesitter.language.get_lang()*
+get_lang({filetype})                               *vim.treesitter.get_lang()*
     Parameters: ~
       • {filetype}  (string)
 
     Return: ~
         (string|nil)
 
-inspect_language({lang})          *vim.treesitter.language.inspect_language()*
+inspect_language({lang})                   *vim.treesitter.inspect_language()*
     Inspects the provided language.
 
     Inspecting provides some useful information on the language like node
@@ -727,7 +725,7 @@ inspect_language({lang})          *vim.treesitter.language.inspect_language()*
     Return: ~
         (table)
 
-register({lang}, {filetype})              *vim.treesitter.language.register()*
+register({lang}, {filetype})                       *vim.treesitter.register()*
     Register a lang to be used for a filetype (or list of filetypes).
 
     Parameters: ~
@@ -738,7 +736,7 @@ register({lang}, {filetype})              *vim.treesitter.language.register()*
 ==============================================================================
 Lua module: vim.treesitter.query                        *lua-treesitter-query*
 
-                                        *vim.treesitter.query.add_directive()*
+                                              *vim.treesitter.add_directive()*
 add_directive({name}, {handler}, {force})
     Adds a new directive to be used in queries
 
@@ -760,7 +758,7 @@ add_directive({name}, {handler}, {force})
                      the predicate `{ "#set!", "conceal", "-" }`
       • {force}    (boolean|nil)
 
-                                        *vim.treesitter.query.add_predicate()*
+                                              *vim.treesitter.add_predicate()*
 add_predicate({name}, {handler}, {force})
     Adds a new predicate to be used in queries
 
@@ -768,11 +766,11 @@ add_predicate({name}, {handler}, {force})
       • {name}     (string) Name of the predicate, without leading #
       • {handler}  function(match:table<string,|TSNode|>, pattern:string,
                    bufnr:number, predicate:string[])
-                   • see |vim.treesitter.query.add_directive()| for argument
+                   • see |vim.treesitter.add_directive()| for argument
                      meanings
       • {force}    (boolean|nil)
 
-                                        *vim.treesitter.query.get_node_text()*
+                                              *vim.treesitter.get_node_text()*
 get_node_text({node}, {source}, {opts})
     Gets the text corresponding to a given node
 
@@ -785,12 +783,12 @@ get_node_text({node}, {source}, {opts})
                     true)
                   • metadata (table) Metadata of a specific capture. This
                     would be set to `metadata[capture_id]` when using
-                    |vim.treesitter.query.add_directive()|.
+                    |vim.treesitter.add_directive()|.
 
     Return: ~
         (string[]|string|nil)
 
-get_query({lang}, {query_name})             *vim.treesitter.query.get_query()*
+get_query({lang}, {query_name})                   *vim.treesitter.get_query()*
     Returns the runtime query {query_name} for {lang}.
 
     Parameters: ~
@@ -800,7 +798,7 @@ get_query({lang}, {query_name})             *vim.treesitter.query.get_query()*
     Return: ~
         Query|nil Parsed query
 
-                                      *vim.treesitter.query.get_query_files()*
+                                            *vim.treesitter.get_query_files()*
 get_query_files({lang}, {query_name}, {is_included})
     Gets the list of files used to make up a query
 
@@ -814,19 +812,19 @@ get_query_files({lang}, {query_name}, {is_included})
         string[] query_files List of files to load for given query and
         language
 
-list_directives()                     *vim.treesitter.query.list_directives()*
+list_directives()                           *vim.treesitter.list_directives()*
     Lists the currently available directives to use in queries.
 
     Return: ~
         string[] List of supported directives.
 
-list_predicates()                     *vim.treesitter.query.list_predicates()*
+list_predicates()                           *vim.treesitter.list_predicates()*
     Lists the currently available predicates to use in queries.
 
     Return: ~
         string[] List of supported predicates.
 
-parse_query({lang}, {query})              *vim.treesitter.query.parse_query()*
+parse_query({lang}, {query})                    *vim.treesitter.parse_query()*
     Parse {query} as a string. (If the query is in a file, the caller should
     read the contents into a string before calling).
 
@@ -915,8 +913,7 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop})
         (fun(): integer, table<integer,TSNode>, table): pattern id, match,
         metadata
 
-                                            *vim.treesitter.query.set_query()*
-set_query({lang}, {query_name}, {text})
+set_query({lang}, {query_name}, {text})           *vim.treesitter.set_query()*
     Sets the runtime query named {query_name} for {lang}
 
     This allows users to override any runtime files and/or configuration set
@@ -930,17 +927,6 @@ set_query({lang}, {query_name}, {text})
 
 ==============================================================================
 Lua module: vim.treesitter.highlighter            *lua-treesitter-highlighter*
-
-new({tree}, {opts})                         *vim.treesitter.highlighter.new()*
-    Creates a new highlighter using
-
-    Parameters: ~
-      • {tree}  |LanguageTree| parser object to use for highlighting
-      • {opts}  (table|nil) Configuration of the highlighter:
-                • queries table overwrite queries used by the highlighter
-
-    Return: ~
-        TSHighlighter Created highlighter object
 
 TSHighlighter:destroy({self})                        *TSHighlighter:destroy()*
     Removes all internal references to the highlighter
@@ -1102,22 +1088,5 @@ LanguageTree:trees({self})                              *LanguageTree:trees()*
 
     Parameters: ~
       • {self}
-
-new({source}, {lang}, {opts})              *vim.treesitter.languagetree.new()*
-    A |LanguageTree| holds the treesitter parser for a given language {lang}
-    used to parse a buffer. As the buffer may contain injected languages, the LanguageTree needs to store parsers for these child languages as well (which in turn
-    may contain child languages themselves, hence the name).
-
-    Parameters: ~
-      • {source}  (integer|string) Buffer or a string of text to parse
-      • {lang}    (string) Root language this tree represents
-      • {opts}    (table|nil) Optional keyword arguments:
-                  • injections table Mapping language to injection query
-                    strings. This is useful for overriding the built-in
-                    runtime file searching for the injection language query
-                    per language.
-
-    Return: ~
-        |LanguageTree| parser object
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

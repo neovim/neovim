@@ -120,7 +120,7 @@ LSP FUNCTIONS
 					or |vim.lsp.buf.format()| instead.
 
 TREESITTER FUNCTIONS
-- *vim.treesitter.language.require_language()*	Use |vim.treesitter.language.add()|
+- *vim.treesitter.language.require_language()*	Use |vim.treesitter.add()|
 						instead.
 - *vim.treesitter.get_node_at_pos()*		Use |vim.treesitter.get_node()|
 						instead.

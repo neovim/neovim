@@ -24,10 +24,17 @@ Lua-to-Doxygen converter
 Partially from lua2dox
 http://search.cpan.org/~alec/Doxygen-Lua-0.02/lib/Doxygen/Lua.pm
 
-Running
+RUNNING
 -------
 
 This script "lua2dox.lua" gets called by "gen_vimdoc.py".
+
+DEBUGGING/DEVELOPING
+---------------------
+
+1. To debug, run gen_vimdoc.py with --keep-tmpfiles:
+   python3 scripts/gen_vimdoc.py -t treesitter --keep-tmpfiles
+2. The filtered result will be written to ./tmp-lua2dox-doc/….lua.c
 
 Doxygen must be on your system. You can experiment like so:
 
@@ -48,6 +55,9 @@ so it will probably not document accurately if we do do this.
 However I have put in a hack that will insert the "missing" close paren.
 The effect is that you will get the function documented, but not with the parameter list you might expect.
 ]]
+
+local _debug_outfile = nil
+local _debug_output = {}
 
 local function class()
   local newClass = {} -- a new class newClass
@@ -71,27 +81,28 @@ local function class()
   return newClass
 end
 
---! \brief write to stdout
+-- write to stdout
 local function TCore_IO_write(Str)
   if Str then
     io.write(Str)
+    if _debug_outfile then
+      table.insert(_debug_output, Str)
+    end
   end
 end
 
---! \brief write to stdout
+-- write to stdout
 local function TCore_IO_writeln(Str)
-  if Str then
-    io.write(Str)
-  end
-  io.write('\n')
+  TCore_IO_write(Str)
+  TCore_IO_write('\n')
 end
 
---! \brief trims a string
+-- trims a string
 local function string_trim(Str)
   return Str:match('^%s*(.-)%s*$')
 end
 
---! \brief split a string
+-- split a string
 --!
 --! \param Str
 --! \param Pattern
@@ -117,12 +128,12 @@ local function string_split(Str, Pattern)
 end
 
 -------------------------------
---! \brief file buffer
+-- file buffer
 --!
 --! an input file buffer
 local TStream_Read = class()
 
---! \brief get contents of file
+-- get contents of file
 --!
 --! \param Filename name of file to read (or nil == stdin)
 function TStream_Read.getContents(this, Filename)
@@ -143,12 +154,12 @@ function TStream_Read.getContents(this, Filename)
   return filecontents
 end
 
---! \brief get lineno
+-- get lineno
 function TStream_Read.getLineNo(this)
   return this.currentLineNo
 end
 
---! \brief get a line
+-- get a line
 function TStream_Read.getLine(this)
   local line
   if this.currentLine then
@@ -166,12 +177,12 @@ function TStream_Read.getLine(this)
   return line
 end
 
---! \brief save line fragment
+-- save line fragment
 function TStream_Read.ungetLine(this, LineFrag)
   this.currentLine = LineFrag
 end
 
---! \brief is it eof?
+-- is it eof?
 function TStream_Read.eof(this)
   if this.currentLine or this.currentLineNo <= this.contentsLen then
     return false
@@ -179,31 +190,31 @@ function TStream_Read.eof(this)
   return true
 end
 
---! \brief output stream
+-- output stream
 local TStream_Write = class()
 
---! \brief constructor
+-- constructor
 function TStream_Write.init(this)
   this.tailLine = {}
 end
 
---! \brief write immediately
+-- write immediately
 function TStream_Write.write(_, Str)
   TCore_IO_write(Str)
 end
 
---! \brief write immediately
+-- write immediately
 function TStream_Write.writeln(_, Str)
   TCore_IO_writeln(Str)
 end
 
---! \brief write immediately
+-- write immediately
 function TStream_Write.writelnComment(_, Str)
   TCore_IO_write('// ZZ: ')
   TCore_IO_writeln(Str)
 end
 
---! \brief write to tail
+-- write to tail
 function TStream_Write.writelnTail(this, Line)
   if not Line then
     Line = ''
@@ -211,7 +222,7 @@ function TStream_Write.writelnTail(this, Line)
   table.insert(this.tailLine, Line)
 end
 
---! \brief output tail lines
+-- output tail lines
 function TStream_Write.write_tailLines(this)
   for _, line in ipairs(this.tailLine) do
     TCore_IO_writeln(line)
@@ -219,17 +230,17 @@ function TStream_Write.write_tailLines(this)
   TCore_IO_write('// Lua2DoX new eof')
 end
 
---! \brief input filter
+-- input filter
 local TLua2DoX_filter = class()
 
---! \brief allow us to do errormessages
+-- allow us to do errormessages
 function TLua2DoX_filter.warning(this, Line, LineNo, Legend)
   this.outStream:writelnTail(
     '//! \todo warning! ' .. Legend .. ' (@' .. LineNo .. ')"' .. Line .. '"'
   )
 end
 
---! \brief trim comment off end of string
+-- trim comment off end of string
 --!
 --! If the string has a comment on the end, this trims it off.
 --!
@@ -243,7 +254,7 @@ local function TString_removeCommentFromLine(Line)
   return Line, tailComment
 end
 
---! \brief get directive from magic
+-- get directive from magic
 local function getMagicDirective(Line)
   local macro, tail
   local macroStr = '[\\@]'
@@ -264,7 +275,7 @@ local function getMagicDirective(Line)
   return macro, tail
 end
 
---! \brief check comment for fn
+-- check comment for fn
 local function checkComment4fn(Fn_magic, MagicLines)
   local fn_magic = Fn_magic
   --    TCore_IO_writeln('// checkComment4fn "' .. MagicLines .. '"')
@@ -293,8 +304,8 @@ local tagged_types = { 'TSNode', 'LanguageTree' }
 -- Document these as 'table'
 local alias_types = { 'Range4', 'Range6' }
 
---! \brief run the filter
-function TLua2DoX_filter.readfile(this, AppStamp, Filename)
+-- Processes the file and writes filtered output to stdout.
+function TLua2DoX_filter.filter(this, AppStamp, Filename)
   local inStream = TStream_Read()
   local outStream = TStream_Write()
   this.outStream = outStream -- save to this obj
@@ -524,10 +535,10 @@ function TLua2DoX_filter.readfile(this, AppStamp, Filename)
   end
 end
 
---! \brief this application
+-- this application
 local TApp = class()
 
---! \brief constructor
+-- constructor
 function TApp.init(this)
   this.timestamp = os.date('%c %Z', os.time())
   this.name = 'Lua2DoX'
@@ -551,8 +562,7 @@ local This_app = TApp()
 
 --main
 
-local argv1 = arg[1]
-if argv1 == '--help' then
+if arg[1] == '--help' then
   TCore_IO_writeln(This_app:getVersion())
   TCore_IO_writeln(This_app:getCopyright())
   TCore_IO_writeln([[
@@ -563,16 +573,30 @@ if argv1 == '--help' then
   <filename> : interprets filename
   --version  : show version/copyright info
   --help     : this help text]])
-elseif argv1 == '--version' then
+elseif arg[1] == '--version' then
   TCore_IO_writeln(This_app:getVersion())
   TCore_IO_writeln(This_app:getCopyright())
-else
-  -- it's a filter
-  local appStamp = This_app:getRunStamp()
-  local filename = argv1
+else  -- It's a filter.
+  local filename = arg[1]
 
+  if arg[2] == '--outdir' then
+    local outdir = arg[3]
+    if type(outdir) ~= 'string' or (0 ~= vim.fn.filereadable(outdir) and 0 == vim.fn.isdirectory(outdir)) then
+      error(('invalid --outdir: "%s"'):format(tostring(outdir)))
+    end
+    vim.fn.mkdir(outdir, 'p')
+    _debug_outfile = string.format('%s/%s.c', outdir, vim.fs.basename(filename))
+  end
+
+  local appStamp = This_app:getRunStamp()
   local filter = TLua2DoX_filter()
-  filter:readfile(appStamp, filename)
+  filter:filter(appStamp, filename)
+
+  if _debug_outfile then
+    local f = assert(io.open(_debug_outfile, 'w'))
+    f:write(table.concat(_debug_output))
+    f:close()
+  end
 end
 
 --eof
