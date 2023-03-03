@@ -507,8 +507,26 @@ function M.inspect_tree(opts)
   a.nvim_buf_set_keymap(b, 'n', 'a', '', {
     desc = 'Toggle anonymous nodes',
     callback = function()
+      local row, col = unpack(a.nvim_win_get_cursor(w))
+      local curnode = pg:get(row)
+      while curnode and not curnode.named do
+        row = row - 1
+        curnode = pg:get(row)
+      end
+
       pg.opts.anon = not pg.opts.anon
       pg:draw(b)
+
+      if not curnode then
+        return
+      end
+
+      local id = curnode.id
+      for i, node in pg:iter() do
+        if node.id == id then
+          a.nvim_win_set_cursor(w, { i, col })
+        end
+      end
     end,
   })
   a.nvim_buf_set_keymap(b, 'n', 'I', '', {
