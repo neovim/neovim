@@ -413,13 +413,13 @@ static void get_sign_display_info(bool nrcol, win_T *wp, winlinevars_T *wlv, int
         wlv->c_final = NUL;
 
         if (nrcol) {
-          int n, width = number_width(wp) - 2;
-          for (n = 0; n < width; n++) {
+          int width = number_width(wp) - 2;
+          size_t n;
+          for (n = 0; (int)n < width; n++) {
             wlv->extra[n] = ' ';
           }
           wlv->extra[n] = NUL;
-          STRCAT(wlv->extra, wlv->p_extra);
-          STRCAT(wlv->extra, " ");
+          snprintf(wlv->extra + n, sizeof(wlv->extra) - n, "%s ", wlv->p_extra);
           wlv->p_extra = wlv->extra;
           wlv->n_extra = (int)strlen(wlv->p_extra);
         } else {
