@@ -1319,7 +1319,7 @@ static int node_rawquery(lua_State *L)
   } else {
     cursor = ts_query_cursor_new();
   }
-  ts_query_cursor_set_match_limit(cursor, 64);
+  ts_query_cursor_set_match_limit(cursor, 256);
   ts_query_cursor_exec(cursor, query, node);
 
   bool captures = lua_toboolean(L, 3);
