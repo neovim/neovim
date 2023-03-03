@@ -429,6 +429,54 @@ static int get_sign_attrs(buf_T *buf, winlinevars_T *wlv, int *sign_num_attrp, i
   return num_signs;
 }
 
+/// Display the absolute or relative line number.  After the first row fill with
+/// blanks when the 'n' flag isn't in 'cpo'.
+static void handle_lnum_col(win_T *wp, winlinevars_T *wlv, int num_signs, int sign_idx,
+                            int sign_num_attr, int sign_cul_attr)
+{
+  if ((wp->w_p_nu || wp->w_p_rnu)
+      && (wlv->row == wlv->startrow + wlv->filler_lines
+          || vim_strchr(p_cpo, CPO_NUMCOL) == NULL)) {
+    // If 'signcolumn' is set to 'number' and a sign is present
+    // in "lnum", then display the sign instead of the line
+    // number.
+    if (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u' && num_signs > 0) {
+      get_sign_display_info(true, wp, wlv, sign_idx, sign_cul_attr);
+    } else {
+      // Draw the line number (empty space after wrapping).
+      if (wlv->row == wlv->startrow + wlv->filler_lines) {
+        get_line_number_str(wp, wlv->lnum, wlv->extra, sizeof(wlv->extra));
+        if (wp->w_skipcol > 0) {
+          for (wlv->p_extra = wlv->extra; *wlv->p_extra == ' '; wlv->p_extra++) {
+            *wlv->p_extra = '-';
+          }
+        }
+        if (wp->w_p_rl) {                       // reverse line numbers
+          // like rl_mirror(), but keep the space at the end
+          char *p2 = skipwhite(wlv->extra);
+          p2 = skiptowhite(p2) - 1;
+          for (char *p1 = skipwhite(wlv->extra); p1 < p2; p1++, p2--) {
+            const char t = *p1;
+            *p1 = *p2;
+            *p2 = t;
+          }
+        }
+        wlv->p_extra = wlv->extra;
+        wlv->c_extra = NUL;
+      } else {
+        wlv->c_extra = ' ';
+      }
+      wlv->c_final = NUL;
+      wlv->n_extra = number_width(wp) + 1;
+      if (sign_num_attr > 0) {
+        wlv->char_attr = sign_num_attr;
+      } else {
+        wlv->char_attr = get_line_number_attr(wp, wlv);
+      }
+    }
+  }
+}
+
 /// Prepare and build the 'statuscolumn' string for line "lnum" in window "wp".
 /// Fill "stcp" with the built status column string and attributes.
 /// This can be called three times per win_line(), once for virt_lines, once for
@@ -1294,8 +1342,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
       // sign column, this is hit until sign_idx reaches count
       if (wlv.draw_state == WL_SIGN - 1 && wlv.n_extra == 0) {
+        // Show the sign column when desired.
         wlv.draw_state = WL_SIGN;
-        // Show the sign column when there are any signs in this buffer
         if (wp->w_scwidth > 0) {
           get_sign_display_info(false, wp, &wlv, sign_idx, sign_cul_attr);
           sign_idx++;
@@ -1308,50 +1356,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       }
 
       if (wlv.draw_state == WL_NR - 1 && wlv.n_extra == 0) {
+        // Show the line number, if desired.
         wlv.draw_state = WL_NR;
-        // Display the absolute or relative line number. After the
-        // first fill with blanks when the 'n' flag isn't in 'cpo'
-        if ((wp->w_p_nu || wp->w_p_rnu)
-            && (wlv.row == startrow + wlv.filler_lines
-                || vim_strchr(p_cpo, CPO_NUMCOL) == NULL)) {
-          // If 'signcolumn' is set to 'number' and a sign is present
-          // in 'lnum', then display the sign instead of the line
-          // number.
-          if (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u' && num_signs > 0) {
-            get_sign_display_info(true, wp, &wlv, sign_idx, sign_cul_attr);
-          } else {
-            // Draw the line number (empty space after wrapping).
-            if (wlv.row == startrow + wlv.filler_lines) {
-              get_line_number_str(wp, lnum, wlv.extra, sizeof(wlv.extra));
-              if (wp->w_skipcol > 0) {
-                for (wlv.p_extra = wlv.extra; *wlv.p_extra == ' '; wlv.p_extra++) {
-                  *wlv.p_extra = '-';
-                }
-              }
-              if (wp->w_p_rl) {                       // reverse line numbers
-                // like rl_mirror(), but keep the space at the end
-                char *p2 = skipwhite(wlv.extra);
-                p2 = skiptowhite(p2) - 1;
-                for (char *p1 = skipwhite(wlv.extra); p1 < p2; p1++, p2--) {
-                  const char t = *p1;
-                  *p1 = *p2;
-                  *p2 = t;
-                }
-              }
-              wlv.p_extra = wlv.extra;
-              wlv.c_extra = NUL;
-            } else {
-              wlv.c_extra = ' ';
-            }
-            wlv.c_final = NUL;
-            wlv.n_extra = number_width(wp) + 1;
-            if (sign_num_attr > 0) {
-              wlv.char_attr = sign_num_attr;
-            } else {
-              wlv.char_attr = get_line_number_attr(wp, &wlv);
-            }
-          }
-        }
+        handle_lnum_col(wp, &wlv, num_signs, sign_idx, sign_num_attr, sign_cul_attr);
       }
 
       if (wlv.draw_state == WL_STC - 1 && wlv.n_extra == 0) {
