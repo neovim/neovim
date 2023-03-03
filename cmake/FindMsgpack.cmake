@@ -29,18 +29,3 @@ find_package_handle_standard_args(Msgpack
 add_library(msgpack INTERFACE)
 target_include_directories(msgpack SYSTEM BEFORE INTERFACE ${MSGPACK_INCLUDE_DIR})
 target_link_libraries(msgpack INTERFACE ${MSGPACK_LIBRARY})
-
-list(APPEND CMAKE_REQUIRED_INCLUDES "${MSGPACK_INCLUDE_DIR}")
-check_c_source_compiles("
-#include <msgpack.h>
-
-int
-main(void)
-{
-  return MSGPACK_OBJECT_FLOAT32;
-}
-" MSGPACK_HAS_FLOAT32)
-list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES "${MSGPACK_INCLUDE_DIR}")
-if(MSGPACK_HAS_FLOAT32)
-  target_compile_definitions(msgpack INTERFACE NVIM_MSGPACK_HAS_FLOAT32)
-endif()

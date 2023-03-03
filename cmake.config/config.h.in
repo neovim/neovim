@@ -3,9 +3,7 @@
 
 #cmakedefine SIZEOF_INT @SIZEOF_INT@
 #cmakedefine SIZEOF_INTMAX_T @SIZEOF_INTMAX_T@
-#cmakedefine SIZEOF_INT32_T @SIZEOF_INT32_T@
 #cmakedefine SIZEOF_LONG @SIZEOF_LONG@
-#cmakedefine SIZEOF_LONG_LONG @SIZEOF_LONG_LONG@
 #cmakedefine SIZEOF_SIZE_T @SIZEOF_SIZE_T@
 
 #if @SIZEOF_VOID_PTR@ == 8
@@ -19,18 +17,11 @@
 #cmakedefine HAVE__NSGETENVIRON
 #cmakedefine HAVE_FD_CLOEXEC
 #cmakedefine HAVE_FSEEKO
-#cmakedefine HAVE_GETPWENT
-#cmakedefine HAVE_GETPWNAM
-#cmakedefine HAVE_GETPWUID
 #cmakedefine HAVE_LANGINFO_H
-#cmakedefine HAVE_LOCALE_H
 #cmakedefine HAVE_NL_LANGINFO_CODESET
 #cmakedefine HAVE_NL_MSG_CAT_CNTR
-#cmakedefine HAVE_PWD_H
+#cmakedefine HAVE_PWD_FUNCS
 #cmakedefine HAVE_READLINK
-#cmakedefine HAVE_SETPGID
-#cmakedefine HAVE_SETSID
-#cmakedefine HAVE_SIGACTION
 #cmakedefine HAVE_STRNLEN
 #cmakedefine HAVE_STRCASECMP
 #cmakedefine HAVE_STRINGS_H
@@ -51,8 +42,7 @@
 #  undef HAVE_SYS_UIO_H
 # endif
 #endif
-#cmakedefine HAVE_DIRFD
-#cmakedefine HAVE_FLOCK
+#cmakedefine HAVE_DIRFD_AND_FLOCK
 #cmakedefine HAVE_FORKPTY
 
 #ifndef UNIT_TESTING

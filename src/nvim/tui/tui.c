@@ -60,27 +60,14 @@
 #define LINUXSET0C "\x1b[?0c"
 #define LINUXSET1C "\x1b[?1c"
 
-#ifdef NVIM_UNIBI_HAS_VAR_FROM
-# define UNIBI_SET_NUM_VAR(var, num) \
+#define UNIBI_SET_NUM_VAR(var, num) \
   do { \
     (var) = unibi_var_from_num((num)); \
   } while (0)
-# define UNIBI_SET_STR_VAR(var, str) \
+#define UNIBI_SET_STR_VAR(var, str) \
   do { \
     (var) = unibi_var_from_str((str)); \
   } while (0)
-#else
-# define UNIBI_SET_NUM_VAR(var, num) \
-  do { \
-    (var).p = NULL; \
-    (var).i = (num); \
-  } while (0)
-# define UNIBI_SET_STR_VAR(var, str) \
-  do { \
-    (var).i = INT_MIN; \
-    (var).p = str; \
-  } while (0)
-#endif
 
 typedef struct {
   int top, bot, left, right;
