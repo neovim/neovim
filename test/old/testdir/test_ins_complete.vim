@@ -6,6 +6,7 @@ source vim9.vim
 
 " Test for insert expansion
 func Test_ins_complete()
+  set include=^\\s*#\\s*include
   edit test_ins_complete.vim
   " The files in the current directory interferes with the files
   " used by this test. So use a separate directory for the test.

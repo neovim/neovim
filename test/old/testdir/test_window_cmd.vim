@@ -1136,6 +1136,7 @@ func Run_noroom_for_newwindow_test(dir_arg)
   call delete('Xtags')
 
   " :isplit and :dsplit
+  set define=^\\s*#\\s*define
   call setline(1, ['#define FOO 1', 'FOO'])
   normal 2G
   call assert_fails(dir .. 'isplit FOO', 'E36:')

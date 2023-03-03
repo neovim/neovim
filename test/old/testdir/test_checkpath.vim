@@ -2,6 +2,7 @@
 
 " Test for 'include' without \zs or \ze
 func Test_checkpath1()
+  set include=^\\s*#\\s*include
   call mkdir("Xdir1/dir2", "p")
   call writefile(['#include    "bar.a"'], 'Xdir1/dir2/foo.a')
   call writefile(['#include    "baz.a"'], 'Xdir1/dir2/bar.a')

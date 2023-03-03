@@ -570,7 +570,7 @@ return {
       alloced=true,
       redraw={'curswant'},
       varname='p_def',
-      defaults={if_true="^\\s*#\\s*define"}
+      defaults={if_true=""}
     },
     {
       full_name='delcombine', abbreviation='deco',
@@ -1227,7 +1227,7 @@ return {
       type='string', scope={'global', 'buffer'},
       alloced=true,
       varname='p_inc',
-      defaults={if_true="^\\s*#\\s*include"}
+      defaults={if_true=""}
     },
     {
       full_name='includeexpr', abbreviation='inex',
@@ -1815,7 +1815,7 @@ return {
       deny_duplicates=true,
       expand=true,
       varname='p_path',
-      defaults={if_true=".,/usr/include,,"}
+      defaults={if_true=".,,"}
     },
     {
       full_name='preserveindent', abbreviation='pi',

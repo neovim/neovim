@@ -37,6 +37,7 @@ Defaults					            *nvim-defaults*
 - 'commentstring' defaults to ""
 - 'compatible' is always disabled
 - 'complete' excludes "i"
+- 'define' defaults to "". The C ftplugin sets it to "^\\s*#\\s*define"
 - 'directory' defaults to ~/.local/state/nvim/swap// (|xdg|), auto-created
 - 'display' defaults to "lastline"
 - 'encoding' is UTF-8 (cf. 'fileencoding' for file-content encoding)
@@ -46,6 +47,7 @@ Defaults					            *nvim-defaults*
 - 'hidden' is enabled
 - 'history' defaults to 10000 (the maximum)
 - 'hlsearch' is enabled
+- 'include' defaults to "". The C ftplugin sets it to "^\\s*#\\s*include"
 - 'incsearch' is enabled
 - 'joinspaces' is disabled
 - 'langnoremap' is enabled
@@ -55,6 +57,7 @@ Defaults					            *nvim-defaults*
 - 'mouse' defaults to "nvi"
 - 'mousemodel' defaults to "popup_setpos"
 - 'nrformats' defaults to "bin,hex"
+- 'path' defaults to ".,,". The C ftplugin adds "/usr/include" if it exists.
 - 'ruler' is enabled
 - 'sessionoptions' includes "unix,slash", excludes "options"
 - 'shortmess' includes "CF", excludes "S"
