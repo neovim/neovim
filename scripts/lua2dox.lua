@@ -24,13 +24,17 @@ Lua-to-Doxygen converter
 Partially from lua2dox
 http://search.cpan.org/~alec/Doxygen-Lua-0.02/lib/Doxygen/Lua.pm
 
-Running
+RUNNING
 -------
 
-This script "lua2dox.lua" gets called by "gen_vimdoc.py". To debug, run gen_vimdoc.py with
---keep-tmpfiles:
+This script "lua2dox.lua" gets called by "gen_vimdoc.py".
 
-    python3 scripts/gen_vimdoc.py -t treesitter --keep-tmpfiles
+DEBUGGING/DEVELOPING
+---------------------
+
+1. To debug, run gen_vimdoc.py with --keep-tmpfiles:
+   python3 scripts/gen_vimdoc.py -t treesitter --keep-tmpfiles
+2. The filtered result will be written to ./tmp-lua2dox-doc/….lua.c
 
 Doxygen must be on your system. You can experiment like so:
 
@@ -51,6 +55,9 @@ so it will probably not document accurately if we do do this.
 However I have put in a hack that will insert the "missing" close paren.
 The effect is that you will get the function documented, but not with the parameter list you might expect.
 ]]
+
+local _debug_outfile = nil
+local _debug_output = {}
 
 local function class()
   local newClass = {} -- a new class newClass
@@ -78,15 +85,16 @@ end
 local function TCore_IO_write(Str)
   if Str then
     io.write(Str)
+    if _debug_outfile then
+      table.insert(_debug_output, Str)
+    end
   end
 end
 
 -- write to stdout
 local function TCore_IO_writeln(Str)
-  if Str then
-    io.write(Str)
-  end
-  io.write('\n')
+  TCore_IO_write(Str)
+  TCore_IO_write('\n')
 end
 
 -- trims a string
@@ -296,8 +304,8 @@ local tagged_types = { 'TSNode', 'LanguageTree' }
 -- Document these as 'table'
 local alias_types = { 'Range4', 'Range6' }
 
--- run the filter
-function TLua2DoX_filter.readfile(this, AppStamp, Filename)
+-- Processes the file and writes filtered output to stdout.
+function TLua2DoX_filter.filter(this, AppStamp, Filename)
   local inStream = TStream_Read()
   local outStream = TStream_Write()
   this.outStream = outStream -- save to this obj
@@ -554,8 +562,7 @@ local This_app = TApp()
 
 --main
 
-local argv1 = arg[1]
-if argv1 == '--help' then
+if arg[1] == '--help' then
   TCore_IO_writeln(This_app:getVersion())
   TCore_IO_writeln(This_app:getCopyright())
   TCore_IO_writeln([[
@@ -566,16 +573,30 @@ if argv1 == '--help' then
   <filename> : interprets filename
   --version  : show version/copyright info
   --help     : this help text]])
-elseif argv1 == '--version' then
+elseif arg[1] == '--version' then
   TCore_IO_writeln(This_app:getVersion())
   TCore_IO_writeln(This_app:getCopyright())
-else
-  -- it's a filter
-  local appStamp = This_app:getRunStamp()
-  local filename = argv1
+else  -- It's a filter.
+  local filename = arg[1]
 
+  if arg[2] == '--outdir' then
+    local outdir = arg[3]
+    if type(outdir) ~= 'string' or (0 ~= vim.fn.filereadable(outdir) and 0 == vim.fn.isdirectory(outdir)) then
+      error(('invalid --outdir: "%s"'):format(tostring(outdir)))
+    end
+    vim.fn.mkdir(outdir, 'p')
+    _debug_outfile = string.format('%s/%s.c', outdir, vim.fs.basename(filename))
+  end
+
+  local appStamp = This_app:getRunStamp()
   local filter = TLua2DoX_filter()
-  filter:readfile(appStamp, filename)
+  filter:filter(appStamp, filename)
+
+  if _debug_outfile then
+    local f = assert(io.open(_debug_outfile, 'w'))
+    f:write(table.concat(_debug_output))
+    f:close()
+  end
 end
 
 --eof
