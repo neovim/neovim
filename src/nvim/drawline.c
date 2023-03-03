@@ -429,6 +429,67 @@ static int get_sign_attrs(buf_T *buf, winlinevars_T *wlv, int *sign_num_attrp, i
   return num_signs;
 }
 
+static inline void get_line_number_str(win_T *wp, linenr_T lnum, char *buf, size_t buf_len)
+{
+  long num;
+  char *fmt = "%*ld ";
+
+  if (wp->w_p_nu && !wp->w_p_rnu) {
+    // 'number' + 'norelativenumber'
+    num = (long)lnum;
+  } else {
+    // 'relativenumber', don't use negative numbers
+    num = labs((long)get_cursor_rel_lnum(wp, lnum));
+    if (num == 0 && wp->w_p_nu && wp->w_p_rnu) {
+      // 'number' + 'relativenumber'
+      num = lnum;
+      fmt = "%-*ld ";
+    }
+  }
+
+  snprintf(buf, buf_len, fmt, number_width(wp), num);
+}
+
+/// Return true if CursorLineNr highlight is to be used for the number column.
+/// - 'cursorline' must be set
+/// - "wlv->lnum" must be the cursor line
+/// - 'cursorlineopt' has "number"
+/// - don't highlight filler lines (when in diff mode)
+/// - When line is wrapped and 'cursorlineopt' does not have "line", only highlight the line number
+///   itself on the first screenline of the wrapped line, otherwise highlight the number column of
+///   all screenlines of the wrapped line.
+static bool use_cursor_line_nr(win_T *wp, winlinevars_T *wlv)
+{
+  return wp->w_p_cul
+         && wlv->lnum == wp->w_cursorline
+         && (wp->w_p_culopt_flags & CULOPT_NBR)
+         && (wlv->row == wlv->startrow + wlv->filler_lines
+             || (wlv->row > wlv->startrow + wlv->filler_lines
+                 && (wp->w_p_culopt_flags & CULOPT_LINE)));
+}
+
+static int get_line_number_attr(win_T *wp, winlinevars_T *wlv)
+{
+  if (use_cursor_line_nr(wp, wlv)) {
+    // TODO(vim): Can we use CursorLine instead of CursorLineNr
+    // when CursorLineNr isn't set?
+    return win_hl_attr(wp, HLF_CLN);
+  }
+
+  if (wp->w_p_rnu) {
+    if (wlv->lnum < wp->w_cursor.lnum) {
+      // Use LineNrAbove
+      return win_hl_attr(wp, HLF_LNA);
+    }
+    if (wlv->lnum > wp->w_cursor.lnum) {
+      // Use LineNrBelow
+      return win_hl_attr(wp, HLF_LNB);
+    }
+  }
+
+  return win_hl_attr(wp, HLF_N);
+}
+
 /// Display the absolute or relative line number.  After the first row fill with
 /// blanks when the 'n' flag isn't in 'cpo'.
 static void handle_lnum_col(win_T *wp, winlinevars_T *wlv, int num_signs, int sign_idx,
@@ -552,68 +613,6 @@ static void get_statuscol_display_info(statuscol_T *stcp, winlinevars_T *wlv)
     }
     // Skip over empty highlight sections
   } while (wlv->n_extra == 0 && stcp->textp < stcp->text_end);
-}
-
-/// Return true if CursorLineNr highlight is to be used for the number column.
-///
-/// - 'cursorline' must be set
-/// - lnum must be the cursor line
-/// - 'cursorlineopt' has "number"
-/// - don't highlight filler lines (when in diff mode)
-/// - When line is wrapped and 'cursorlineopt' does not have "line", only highlight the line number
-///   itself on the first screenline of the wrapped line, otherwise highlight the number column of
-///   all screenlines of the wrapped line.
-static bool use_cursor_line_nr(win_T *wp, winlinevars_T *wlv)
-{
-  return wp->w_p_cul
-         && wlv->lnum == wp->w_cursorline
-         && (wp->w_p_culopt_flags & CULOPT_NBR)
-         && (wlv->row == wlv->startrow + wlv->filler_lines
-             || (wlv->row > wlv->startrow + wlv->filler_lines
-                 && (wp->w_p_culopt_flags & CULOPT_LINE)));
-}
-
-static inline void get_line_number_str(win_T *wp, linenr_T lnum, char *buf, size_t buf_len)
-{
-  long num;
-  char *fmt = "%*ld ";
-
-  if (wp->w_p_nu && !wp->w_p_rnu) {
-    // 'number' + 'norelativenumber'
-    num = (long)lnum;
-  } else {
-    // 'relativenumber', don't use negative numbers
-    num = labs((long)get_cursor_rel_lnum(wp, lnum));
-    if (num == 0 && wp->w_p_nu && wp->w_p_rnu) {
-      // 'number' + 'relativenumber'
-      num = lnum;
-      fmt = "%-*ld ";
-    }
-  }
-
-  snprintf(buf, buf_len, fmt, number_width(wp), num);
-}
-
-static int get_line_number_attr(win_T *wp, winlinevars_T *wlv)
-{
-  if (use_cursor_line_nr(wp, wlv)) {
-    // TODO(vim): Can we use CursorLine instead of CursorLineNr
-    // when CursorLineNr isn't set?
-    return win_hl_attr(wp, HLF_CLN);
-  }
-
-  if (wp->w_p_rnu) {
-    if (wlv->lnum < wp->w_cursor.lnum) {
-      // Use LineNrAbove
-      return win_hl_attr(wp, HLF_LNA);
-    }
-    if (wlv->lnum > wp->w_cursor.lnum) {
-      // Use LineNrBelow
-      return win_hl_attr(wp, HLF_LNB);
-    }
-  }
-
-  return win_hl_attr(wp, HLF_N);
 }
 
 static void apply_cursorline_highlight(win_T *wp, winlinevars_T *wlv)
