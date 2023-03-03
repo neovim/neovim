@@ -33,7 +33,12 @@ describe('treesitter language API', function()
 
   it('shows error for invalid language name', function()
     eq(".../language.lua:0: '/foo/' is not a valid language name",
-      pcall_err(exec_lua, 'vim.treesitter.add("/foo/", nil, false)'))
+      pcall_err(exec_lua, 'vim.treesitter.add("/foo/")'))
+  end)
+
+  it('shows error for invalid filetype', function()
+    eq('.../language.lua:0: \'\' is not a valid filetype',
+      pcall_err(exec_lua, [[vim.treesitter.add('foo', { filetype = '' })]]))
   end)
 
   it('inspects language', function()

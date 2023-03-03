@@ -4,6 +4,7 @@ local clear = helpers.clear
 local eq = helpers.eq
 local insert = helpers.insert
 local exec_lua = helpers.exec_lua
+local pcall_err = helpers.pcall_err
 local feed = helpers.feed
 local is_os = helpers.is_os
 local skip = helpers.skip
@@ -122,6 +123,16 @@ void ui_refresh(void)
       {"function_declarator", "declarator"},
       {"compound_statement", "body"}
     }, res)
+  end)
+
+  it('does not get parser for empty filetype', function()
+    insert(test_text);
+
+    eq(".../language.lua:0: '' is not a valid filetype",
+      pcall_err(exec_lua, 'vim.treesitter.get_parser(0)'))
+
+    -- Must provide language for buffers with an empty filetype
+    exec_lua("vim.treesitter.get_parser(0, 'c')")
   end)
 
   it('allows to get a child by field', function()
@@ -874,9 +885,10 @@ int x = INT_MAX;
 
   it("can fold via foldexpr", function()
     insert(test_text)
-    exec_lua([[vim.treesitter.get_parser(0, "c")]])
 
     local levels = exec_lua([[
+      vim.opt.filetype = 'c'
+      vim.treesitter.get_parser(0, "c")
       local res = {}
       for i = 1, vim.api.nvim_buf_line_count(0) do
         res[i] = vim.treesitter.foldexpr(i)

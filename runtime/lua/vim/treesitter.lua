@@ -47,7 +47,8 @@ function M._create_parser(bufnr, lang, opts)
 
   vim.fn.bufload(bufnr)
 
-  language.add(lang, { filetype = vim.bo[bufnr].filetype })
+  local ft = vim.bo[bufnr].filetype
+  language.add(lang, { filetype = ft ~= '' and ft or nil })
 
   local self = LanguageTree.new(bufnr, lang, opts)
 
