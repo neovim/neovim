@@ -196,6 +196,15 @@ set(TREESITTER_QUERY_SHA256 2f2c79a59e3ff550aef849925e589d69b8a146b3af935504366c
 set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/c51896d32dcc11a38e41f36e3deb1a6a9c4f4b14.tar.gz)
 set(TREESITTER_SHA256 243e07541a9dd71681984b65bffed2d4a259bef0a4ad28cff55cc1c6878b8d18)
 
+if(USE_EXISTING_SRC_DIR)
+  get_cmake_property(VARS VARIABLES)
+  foreach (VAR ${VARS})
+    if(VAR MATCHES "^.*URL$")
+      unset(${VAR})
+    endif()
+  endforeach()
+endif()
+
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
 endif()

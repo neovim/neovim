@@ -1,6 +1,3 @@
-if(USE_EXISTING_SRC_DIR)
-  unset(LIBUV_URL)
-endif()
 ExternalProject_Add(libuv
   URL ${LIBUV_URL}
   URL_HASH SHA256=${LIBUV_SHA256}

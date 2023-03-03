@@ -42,9 +42,6 @@ set(LUA_INSTALL_TOP_ARG "INSTALL_TOP=${DEPS_INSTALL_DIR}")
 
 message(STATUS "Lua target is ${LUA_TARGET}")
 
-if(USE_EXISTING_SRC_DIR)
-  unset(LUA_URL)
-endif()
 ExternalProject_Add(lua
   URL ${LUA_URL}
   URL_HASH SHA256=${LUA_SHA256}
