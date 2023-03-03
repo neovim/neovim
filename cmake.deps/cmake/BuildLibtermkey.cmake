@@ -1,6 +1,3 @@
-if(USE_EXISTING_SRC_DIR)
-  unset(LIBTERMKEY_URL)
-endif()
 ExternalProject_Add(libtermkey
   URL ${LIBTERMKEY_URL}
   URL_HASH SHA256=${LIBTERMKEY_SHA256}

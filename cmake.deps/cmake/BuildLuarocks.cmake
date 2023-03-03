@@ -81,9 +81,6 @@ else()
   message(FATAL_ERROR "Trying to build luarocks in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
 endif()
 
-if(USE_EXISTING_SRC_DIR)
-  unset(LUAROCKS_URL)
-endif()
 ExternalProject_Add(luarocks
   URL ${LUAROCKS_URL}
   URL_HASH SHA256=${LUAROCKS_SHA256}

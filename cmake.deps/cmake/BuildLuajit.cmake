@@ -15,9 +15,6 @@ function(BuildLuajit)
     set(_luajit_TARGET "luajit")
   endif()
 
-  if(USE_EXISTING_SRC_DIR)
-    unset(LUAJIT_URL)
-  endif()
   ExternalProject_Add(${_luajit_TARGET}
     URL ${LUAJIT_URL}
     URL_HASH SHA256=${LUAJIT_SHA256}

@@ -1,6 +1,3 @@
-if(USE_EXISTING_SRC_DIR)
-  unset(TREESITTER_URL)
-endif()
 ExternalProject_Add(tree-sitter
   URL ${TREESITTER_URL}
   URL_HASH SHA256=${TREESITTER_SHA256}
