@@ -10,6 +10,26 @@ local write_file = helpers.write_file
 local tmpname = helpers.tmpname
 local skip = helpers.skip
 local is_ci = helpers.is_ci
+local table_contains = vim.tbl_contains
+
+-- Returns a table composed of all man page name arguments
+-- that were passed to search_for_path after attempting to
+-- open 'name'.
+local function get_search_history(name)
+  local as_table = string.gsub(name, ' ', '\', \'')
+  as_table = '\'' .. as_table .. '\''
+  local code = ([[
+    local man = require('runtime.lua.man')
+    local res = {}
+    man.attempt_to_get_path = function(sect, name, silent)
+      table.insert(res, name)
+      return nil
+    end
+    pcall(man.open_page, 0, {tab = 0}, {%s})
+    return res
+  ]]):format(as_table)
+  return exec_lua(code)
+end
 
 clear()
 if funcs.executable('man') == 0 then
@@ -172,5 +192,11 @@ describe(':Man', function()
       'man.lua: "no manual entry for %s"'):format(actual_file),
       funcs.system(args, {''}))
     os.remove(actual_file)
+  end)
+
+  it('searches for manpage name with variants with spaces, underscores', function()
+    local tried = get_search_history('NAME WITH SPACES')
+    table_contains(tried, 'NAME WITH SPACES')
+    table_contains(tried, 'NAME_WITH_SPACES')
   end)
 end)
