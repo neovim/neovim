@@ -29,42 +29,6 @@ A parser can also be loaded manually using a full path: >lua
     vim.treesitter.require_language("python", "/path/to/python.so")
 <
 ==============================================================================
-LANGUAGE TREES                                       *treesitter-languagetree*
-                                                                *LanguageTree*
-
-As buffers can contain multiple languages (e.g., Vimscript commands in a Lua
-file), multiple parsers may be needed to parse the full buffer. These are
-combined in a |LanguageTree| object.
-
-To create a LanguageTree (parser object) for a buffer and a given language,
-use >lua
-
-    tsparser = vim.treesitter.get_parser(bufnr, lang)
-<
-`bufnr=0` can be used for current buffer. `lang` will default to 'filetype'.
-Currently, the parser will be retained for the lifetime of a buffer but this
-is subject to change. A plugin should keep a reference to the parser object as
-long as it wants incremental updates.
-
-Whenever you need to access the current syntax tree, parse the buffer: >lua
-
-    tstree = tsparser:parse()
-<
-This will return a table of immutable |treesitter-tree|s that represent the
-current state of the buffer. When the plugin wants to access the state after a
-(possible) edit it should call `parse()` again. If the buffer wasn't edited,
-the same tree will be returned again without extra work. If the buffer was
-parsed before, incremental parsing will be done of the changed parts.
-
-Note: To use the parser directly inside a |nvim_buf_attach()| Lua callback,
-you must call |vim.treesitter.get_parser()| before you register your callback.
-But preferably parsing shouldn't be done directly in the change callback
-anyway as they will be very frequent. Rather a plugin that does any kind of
-analysis on a tree should use a timer to throttle too frequent updates.
-
-See |lua-treesitter-languagetree| for the list of available methods.
-
-==============================================================================
 TREESITTER TREES                                             *treesitter-tree*
                                                                       *TSTree*
 
@@ -221,7 +185,7 @@ Nvim looks for queries as `*.scm` files in a `queries` directory under
 purpose, e.g., `queries/lua/highlights.scm` for highlighting Lua files.
 By default, the first query on `runtimepath` is used (which usually implies
 that user config takes precedence over plugins, which take precedence over
-queries bundled with Neovim). If a query should extend other queries instead
+queries bundled with Nvim). If a query should extend other queries instead
 of replacing them, use |treesitter-query-modeline-extends|.
 
 See |lua-treesitter-query| for the list of available methods for working with
@@ -321,7 +285,7 @@ Use |vim.treesitter.list_directives()| to list all available directives.
 
 TREESITTER QUERY MODELINES                          *treesitter-query-modeline*
 
-Neovim supports to customize the behavior of the queries using a set of
+Nvim supports to customize the behavior of the queries using a set of
 "modelines", that is comments in the queries starting with `;`. Here are the
 currently supported modeline alternatives:
 
@@ -937,6 +901,44 @@ TSHighlighter:destroy({self})                        *TSHighlighter:destroy()*
 
 ==============================================================================
 Lua module: vim.treesitter.languagetree          *lua-treesitter-languagetree*
+
+
+A *LanguageTree* contains a tree of parsers: the root treesitter parser
+for {lang} and any "injected" language parsers, which themselves may
+inject other languages, recursively. For example a Lua buffer containing
+some Vimscript commands needs multiple parsers to fully understand its
+contents.
+
+To create a LanguageTree (parser object) for a given buffer and language, use:
+
+>lua
+    local parser = vim.treesitter.get_parser(bufnr, lang)
+<
+
+(where `bufnr=0` means current buffer). `lang` defaults to 'filetype'.
+Note: currently the parser is retained for the lifetime of a buffer but
+this may change; a plugin should keep a reference to the parser object if
+it wants incremental updates.
+
+Whenever you need to access the current syntax tree, parse the buffer:
+
+>lua
+    local tree = parser:parse()
+<
+
+This returns a table of immutable |treesitter-tree| objects representing
+the current state of the buffer. When the plugin wants to access the state
+after a (possible) edit it must call `parse()` again. If the buffer wasn't
+edited, the same tree will be returned again without extra work. If the
+buffer was parsed before, incremental parsing will be done of the changed
+parts.
+
+Note: To use the parser directly inside a |nvim_buf_attach()| Lua
+callback, you must call |vim.treesitter.get_parser()| before you register
+your callback. But preferably parsing shouldn't be done directly in the
+change callback anyway as they will be very frequent. Rather a plugin that
+does any kind of analysis on a tree should use a timer to throttle too
+frequent updates.
 
 LanguageTree:children({self})                        *LanguageTree:children()*
     Returns a map of language to child tree.

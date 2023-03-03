@@ -1054,17 +1054,18 @@ def main(doxygen_config, args):
 
         fn_map_full = {}  # Collects all functions as each module is processed.
         sections = {}
-        intros = {}
+        section_docs = {}
         sep = '=' * text_width
 
         base = os.path.join(output_dir, 'xml')
         dom = minidom.parse(os.path.join(base, 'index.xml'))
 
-        # generate docs for section intros
+        # Generate module-level (section) docs (@defgroup).
         for compound in dom.getElementsByTagName('compound'):
             if compound.getAttribute('kind') != 'group':
                 continue
 
+            # Doxygen "@defgroup" directive.
             groupname = get_text(find_first(compound, 'name'))
             groupxml = os.path.join(base, '%s.xml' %
                                     compound.getAttribute('refid'))
@@ -1083,33 +1084,39 @@ def main(doxygen_config, args):
                 if doc:
                     doc_list.append(doc)
 
-            intros[groupname] = "\n".join(doc_list)
+            section_docs[groupname] = "\n".join(doc_list)
 
+        # Generate docs for all functions in the current module.
         for compound in dom.getElementsByTagName('compound'):
             if compound.getAttribute('kind') != 'file':
                 continue
 
             filename = get_text(find_first(compound, 'name'))
             if filename.endswith('.c') or filename.endswith('.lua'):
-                xmlfile = os.path.join(base,
-                                       '{}.xml'.format(compound.getAttribute('refid')))
+                xmlfile = os.path.join(base, '{}.xml'.format(compound.getAttribute('refid')))
                 # Extract unformatted (*.mpack).
                 fn_map, _ = extract_from_xml(xmlfile, target, 9999, False)
                 # Extract formatted (:help).
                 functions_text, deprecated_text = fmt_doxygen_xml_as_vimhelp(
-                    os.path.join(base, '{}.xml'.format(
-                                 compound.getAttribute('refid'))), target)
+                    os.path.join(base, '{}.xml'.format(compound.getAttribute('refid'))), target)
 
                 if not functions_text and not deprecated_text:
                     continue
                 else:
-                    name = os.path.splitext(
-                            os.path.basename(filename))[0].lower()
+                    filename = os.path.basename(filename)
+                    name = os.path.splitext(filename)[0].lower()
                     sectname = name.upper() if name == 'ui' else name.title()
+                    sectname = CONFIG[target]['section_name'].get(filename, sectname)
+                    title = CONFIG[target]['section_fmt'](sectname)
+                    section_tag = CONFIG[target]['helptag_fmt'](sectname)
+                    # Module/Section id matched against @defgroup.
+                    #   "*api-buffer*" => "api-buffer"
+                    section_id = section_tag.strip('*')
+
                     doc = ''
-                    intro = intros.get(f'api-{name}')
-                    if intro:
-                        doc += '\n\n' + intro
+                    section_doc = section_docs.get(section_id)
+                    if section_doc:
+                        doc += '\n\n' + section_doc
 
                     if functions_text:
                         doc += '\n\n' + functions_text
@@ -1119,12 +1126,7 @@ def main(doxygen_config, args):
                         doc += deprecated_text
 
                     if doc:
-                        filename = os.path.basename(filename)
-                        sectname = CONFIG[target]['section_name'].get(
-                                filename, sectname)
-                        title = CONFIG[target]['section_fmt'](sectname)
-                        helptag = CONFIG[target]['helptag_fmt'](sectname)
-                        sections[filename] = (title, helptag, doc)
+                        sections[filename] = (title, section_tag, doc)
                         fn_map_full.update(fn_map)
 
         if len(sections) == 0:
@@ -1139,15 +1141,14 @@ def main(doxygen_config, args):
 
         for filename in CONFIG[target]['section_order']:
             try:
-                title, helptag, section_doc = sections.pop(filename)
+                title, section_tag, section_doc = sections.pop(filename)
             except KeyError:
                 msg(f'warning: empty docs, skipping (target={target}): {filename}')
                 msg(f'    existing docs: {sections.keys()}')
                 continue
             if filename not in CONFIG[target]['append_only']:
                 docs += sep
-                docs += '\n%s%s' % (title,
-                                    helptag.rjust(text_width - len(title)))
+                docs += '\n{}{}'.format(title, section_tag.rjust(text_width - len(title)))
             docs += section_doc
             docs += '\n\n\n'
 
