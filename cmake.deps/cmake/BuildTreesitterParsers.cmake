@@ -20,3 +20,4 @@ BuildTSParser(c ${TREESITTER_C_URL} ${TREESITTER_C_SHA256} TreesitterParserCMake
 BuildTSParser(lua ${TREESITTER_LUA_URL} ${TREESITTER_LUA_SHA256} TreesitterParserCMakeLists.txt)
 BuildTSParser(vim ${TREESITTER_VIM_URL} ${TREESITTER_VIM_SHA256} TreesitterParserCMakeLists.txt)
 BuildTSParser(help ${TREESITTER_HELP_URL} ${TREESITTER_HELP_SHA256} TreesitterParserCMakeLists.txt)
+BuildTSParser(query ${TREESITTER_QUERY_URL} ${TREESITTER_QUERY_SHA256} TreesitterParserCMakeLists.txt)
