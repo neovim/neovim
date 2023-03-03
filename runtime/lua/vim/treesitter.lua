@@ -525,6 +525,7 @@ function M.inspect_tree(opts)
       for i, node in pg:iter() do
         if node.id == id then
           a.nvim_win_set_cursor(w, { i, col })
+          break
         end
       end
     end,
