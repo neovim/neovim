@@ -22,14 +22,13 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 include(CheckCCompilerFlag)
 include(CheckCSourceCompiles)
+include(FindPackageHandleStandardArgs)
 include(InstallHelpers)
-include(LuaHelpers) # Find Lua interpreter
+include(LuaHelpers)
 include(PreventInTreeBuilds)
 include(Util)
 
 set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
-
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 find_program(CCACHE_PRG ccache)
 if(CCACHE_PRG)
@@ -38,23 +37,9 @@ endif()
 
 # Prefer our bundled versions of dependencies.
 if(DEFINED ENV{DEPS_BUILD_DIR})
-  if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
-    # pkg-config 29.2 has a bug on OpenBSD which causes it to drop any paths that
-    # *contain* system include paths. To avoid this, we prefix what would be
-    # "/usr/include" as "/_usr/include".
-    # This check is also performed in the cmake.deps/CMakeLists.txt and in the
-    # else clause following here.
-    # https://github.com/neovim/neovim/pull/14745#issuecomment-860201794
-    set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/_usr" CACHE PATH "Path prefix for finding dependencies")
-  else()
-    set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
-  endif()
+  set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
 else()
-  if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
-    set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/_usr" CACHE PATH "Path prefix for finding dependencies")
-  else()
-    set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
-  endif()
+  set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
   # When running from within CLion or Visual Studio,
   # build bundled dependencies automatically.
   if(NOT EXISTS ${DEPS_PREFIX}
@@ -84,9 +69,8 @@ else()
 endif()
 
 list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX})
-set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${DEPS_PREFIX}/lib/pkgconfig")
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+if(APPLE)
   # If the macOS deployment target is not set manually (via $MACOSX_DEPLOYMENT_TARGET),
   # fall back to local system version. Needs to be done both here and in cmake.deps.
   if(NOT CMAKE_OSX_DEPLOYMENT_TARGET)
@@ -98,7 +82,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   message(STATUS "Using deployment target ${CMAKE_OSX_DEPLOYMENT_TARGET}")
 endif()
 
-if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+if(WIN32 OR APPLE)
   # Ignore case when comparing filenames on Windows and Mac.
   set(CASE_INSENSITIVE_FILENAME TRUE)
   # Enable fixing case-insensitive filenames for Windows and Mac.
@@ -273,7 +257,7 @@ add_glob_target(
   TARGET lintsh
   COMMAND ${SHELLCHECK_PRG}
   FLAGS -x -a
-  GLOB_DIRS scripts ci
+  GLOB_DIRS scripts
   GLOB_PAT *.sh
   EXCLUDE
     scripts/pvscheck.sh

@@ -1398,17 +1398,34 @@ describe('TUI', function()
     ]]}
   end)
 
-  it('is included in nvim_list_uis()', function()
-    feed_data(':echo map(nvim_list_uis(), {k,v -> sort(items(filter(v, {k,v -> k[:3] !=# "ext_" })))})\r')
-    screen:expect([=[
-                                                        |
-      {4:~                                                 }|
-      {5:                                                  }|
-      [[['chan', 1], ['height', 6], ['override', v:false|
-      ], ['rgb', v:false], ['width', 50]]]              |
-      {10:Press ENTER or type command to continue}{1: }          |
-      {3:-- TERMINAL --}                                    |
-    ]=])
+  it('in nvim_list_uis()', function()
+    -- $TERM in :terminal.
+    local exp_term = is_os('bsd') and 'builtin_xterm' or 'xterm-256color'
+    local expected = {
+      {
+         chan = 1,
+         ext_cmdline = false,
+         ext_hlstate = false,
+         ext_linegrid = true,
+         ext_messages = false,
+         ext_multigrid = false,
+         ext_popupmenu = false,
+         ext_tabline = false,
+         ext_termcolors = true,
+         ext_wildmenu = false,
+         height = 6,
+         override = false,
+         rgb = false,
+         stdin_tty = true,
+         stdout_tty = true,
+         term_background = '',
+         term_colors = 256,
+         term_name = exp_term,
+         width = 50
+       },
+    }
+    local _, rv = child_session:request('nvim_list_uis')
+    eq(expected, rv)
   end)
 
   it('allows grid to assume wider ambiguous-width characters than host terminal #19686', function()
@@ -1511,6 +1528,42 @@ describe('TUI', function()
   it('no assert failure on deadly signal #21896', function()
     exec_lua([[vim.loop.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     screen:expect({any = '%[Process exited 1%]'})
+  end)
+
+  it('no stack-use-after-scope with cursor color #22432', function()
+    screen:set_option('rgb', true)
+    command('set termguicolors')
+    child_session:request('nvim_exec', [[
+      set tgc
+      hi Cursor guifg=Red guibg=Green
+      set guicursor=n:block-Cursor/lCursor
+    ]], false)
+    screen:set_default_attr_ids({
+      [1] = {reverse = true},
+      [2] = {bold = true, foreground = Screen.colors.Blue},
+      [3] = {foreground = Screen.colors.Blue},
+      [4] = {reverse = true, bold = true},
+      [5] = {bold = true},
+    })
+    screen:expect([[
+      {1: }                                                 |
+      {2:~}{3:                                                 }|
+      {2:~}{3:                                                 }|
+      {2:~}{3:                                                 }|
+      {4:[No Name]                                         }|
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    feed('i')
+    screen:expect([[
+      {1: }                                                 |
+      {2:~}{3:                                                 }|
+      {2:~}{3:                                                 }|
+      {2:~}{3:                                                 }|
+      {4:[No Name]                                         }|
+      {5:-- INSERT --}                                      |
+      {5:-- TERMINAL --}                                    |
+    ]])
   end)
 end)
 

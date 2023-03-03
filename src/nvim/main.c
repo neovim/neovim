@@ -1147,8 +1147,8 @@ static void command_line_scan(mparm_T *parmp)
       case 'h':    // "-h" give help message
         usage();
         os_exit(0);
-      case 'H':    // "-H" start in Hebrew mode: rl + hkmap set.
-        p_hkmap = true;
+      case 'H':    // "-H" start in Hebrew mode: rl + keymap=hebrew set.
+        set_option_value_give_err("keymap", 0L, "hebrew", 0);
         set_option_value_give_err("rl", 1L, NULL, 0);
         break;
       case 'M':    // "-M"  no changes or writing of files

@@ -1498,21 +1498,14 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
       tv_clear(&var1);
 
       const int bloblen = tv_blob_len(lp->ll_tv->vval.v_blob);
-      if (lp->ll_n1 < 0 || lp->ll_n1 > bloblen
-          || (lp->ll_range && lp->ll_n1 == bloblen)) {
-        if (!quiet) {
-          semsg(_(e_blobidx), (int64_t)lp->ll_n1);
-        }
+      if (tv_blob_check_index(bloblen, lp->ll_n1, quiet) == FAIL) {
         tv_clear(&var2);
         return NULL;
       }
       if (lp->ll_range && !lp->ll_empty2) {
         lp->ll_n2 = (long)tv_get_number(&var2);
         tv_clear(&var2);
-        if (lp->ll_n2 < 0 || lp->ll_n2 >= bloblen || lp->ll_n2 < lp->ll_n1) {
-          if (!quiet) {
-            semsg(_(e_blobidx), (int64_t)lp->ll_n2);
-          }
+        if (tv_blob_check_range(bloblen, lp->ll_n1, lp->ll_n2, quiet) == FAIL) {
           return NULL;
         }
       }
@@ -1620,33 +1613,14 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
           lp->ll_n2 = tv_blob_len(lp->ll_blob) - 1;
         }
 
-        if (lp->ll_n2 - lp->ll_n1 + 1 != tv_blob_len(rettv->vval.v_blob)) {
-          emsg(_("E972: Blob value does not have the right number of bytes"));
+        if (tv_blob_set_range(lp->ll_blob, (int)lp->ll_n1, (int)lp->ll_n2, rettv) == FAIL) {
           return;
-        }
-        if (lp->ll_empty2) {
-          lp->ll_n2 = tv_blob_len(lp->ll_blob);
-        }
-
-        for (int il = (int)lp->ll_n1, ir = 0; il <= (int)lp->ll_n2; il++) {
-          tv_blob_set(lp->ll_blob, il, tv_blob_get(rettv->vval.v_blob, ir++));
         }
       } else {
         bool error = false;
         const char val = (char)tv_get_number_chk(rettv, &error);
         if (!error) {
-          garray_T *const gap = &lp->ll_blob->bv_ga;
-
-          // Allow for appending a byte.  Setting a byte beyond
-          // the end is an error otherwise.
-          if (lp->ll_n1 < gap->ga_len || lp->ll_n1 == gap->ga_len) {
-            ga_grow(&lp->ll_blob->bv_ga, 1);
-            tv_blob_set(lp->ll_blob, (int)lp->ll_n1, (uint8_t)val);
-            if (lp->ll_n1 == gap->ga_len) {
-              gap->ga_len++;
-            }
-          }
-          // error for invalid range was already given in get_lval()
+          tv_blob_set_append(lp->ll_blob, (int)lp->ll_n1, (uint8_t)val);
         }
       }
     } else if (op != NULL && *op != '=') {
@@ -2571,6 +2545,39 @@ static int eval4(char **arg, typval_T *rettv, int evaluate)
   return OK;
 }
 
+/// Make a copy of blob "tv1" and append blob "tv2".
+static void eval_addblob(typval_T *tv1, typval_T *tv2)
+{
+  const blob_T *const b1 = tv1->vval.v_blob;
+  const blob_T *const b2 = tv2->vval.v_blob;
+  blob_T *const b = tv_blob_alloc();
+
+  for (int i = 0; i < tv_blob_len(b1); i++) {
+    ga_append(&b->bv_ga, tv_blob_get(b1, i));
+  }
+  for (int i = 0; i < tv_blob_len(b2); i++) {
+    ga_append(&b->bv_ga, tv_blob_get(b2, i));
+  }
+
+  tv_clear(tv1);
+  tv_blob_set_ret(tv1, b);
+}
+
+/// Make a copy of list "tv1" and append list "tv2".
+static int eval_addlist(typval_T *tv1, typval_T *tv2)
+{
+  typval_T var3;
+  // Concatenate Lists.
+  if (tv_list_concat(tv1->vval.v_list, tv2->vval.v_list, &var3) == FAIL) {
+    tv_clear(tv1);
+    tv_clear(tv2);
+    return FAIL;
+  }
+  tv_clear(tv1);
+  *tv1 = var3;
+  return OK;
+}
+
 /// Handle fourth level expression:
 ///      +       number addition, concatenation of list or blob
 ///      -       number subtraction
@@ -2584,7 +2591,6 @@ static int eval4(char **arg, typval_T *rettv, int evaluate)
 static int eval5(char **arg, typval_T *rettv, int evaluate)
 {
   typval_T var2;
-  typval_T var3;
   varnumber_T n1, n2;
   float_T f1 = 0, f2 = 0;
   char *p;
@@ -2602,7 +2608,7 @@ static int eval5(char **arg, typval_T *rettv, int evaluate)
     }
 
     if ((op != '+' || (rettv->v_type != VAR_LIST && rettv->v_type != VAR_BLOB))
-        && (op == '.' || rettv->v_type != VAR_FLOAT)) {
+        && (op == '.' || rettv->v_type != VAR_FLOAT) && evaluate) {
       // For "list + ...", an illegal use of the first operand as
       // a number cannot be determined before evaluating the 2nd
       // operand: if this is also a list, all is ok.
@@ -2610,7 +2616,7 @@ static int eval5(char **arg, typval_T *rettv, int evaluate)
       // we know that the first operand needs to be a string or number
       // without evaluating the 2nd operand.  So check before to avoid
       // side effects after an error.
-      if (evaluate && !tv_check_str(rettv)) {
+      if ((op == '.' && !tv_check_str(rettv)) || (op != '.' && !tv_check_num(rettv))) {
         tv_clear(rettv);
         return FAIL;
       }
@@ -2643,32 +2649,12 @@ static int eval5(char **arg, typval_T *rettv, int evaluate)
         tv_clear(rettv);
         rettv->v_type = VAR_STRING;
         rettv->vval.v_string = p;
-      } else if (op == '+' && rettv->v_type == VAR_BLOB
-                 && var2.v_type == VAR_BLOB) {
-        const blob_T *const b1 = rettv->vval.v_blob;
-        const blob_T *const b2 = var2.vval.v_blob;
-        blob_T *const b = tv_blob_alloc();
-
-        for (int i = 0; i < tv_blob_len(b1); i++) {
-          ga_append(&b->bv_ga, tv_blob_get(b1, i));
-        }
-        for (int i = 0; i < tv_blob_len(b2); i++) {
-          ga_append(&b->bv_ga, tv_blob_get(b2, i));
-        }
-
-        tv_clear(rettv);
-        tv_blob_set_ret(rettv, b);
-      } else if (op == '+' && rettv->v_type == VAR_LIST
-                 && var2.v_type == VAR_LIST) {
-        // Concatenate Lists.
-        if (tv_list_concat(rettv->vval.v_list, var2.vval.v_list, &var3)
-            == FAIL) {
-          tv_clear(rettv);
-          tv_clear(&var2);
+      } else if (op == '+' && rettv->v_type == VAR_BLOB && var2.v_type == VAR_BLOB) {
+        eval_addblob(rettv, &var2);
+      } else if (op == '+' && rettv->v_type == VAR_LIST && var2.v_type == VAR_LIST) {
+        if (eval_addlist(rettv, &var2) == FAIL) {
           return FAIL;
         }
-        tv_clear(rettv);
-        *rettv = var3;
       } else {
         bool error = false;
 
@@ -4864,7 +4850,7 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
         if (filter_map_one(&tv, expr, map, &rem) == FAIL || did_emsg) {
           break;
         }
-        if (tv.v_type != VAR_NUMBER) {
+        if (tv.v_type != VAR_NUMBER && tv.v_type != VAR_BOOL) {
           emsg(_(e_invalblob));
           return;
         }
@@ -4952,6 +4938,8 @@ theend:
   return retval;
 }
 
+/// "function()" function
+/// "funcref()" function
 void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
 {
   char *s;
@@ -5873,27 +5861,63 @@ write_blob_error:
   return false;
 }
 
-/// Read a blob from a file `fd`.
+/// Read blob from file "fd".
+/// Caller has allocated a blob in "rettv".
 ///
 /// @param[in]  fd  File to read from.
-/// @param[in,out]  blob  Blob to write to.
+/// @param[in,out]  rettv  Blob to write to.
+/// @param[in]  offset  Read the file from the specified offset.
+/// @param[in]  size  Read the specified size, or -1 if no limit.
 ///
-/// @return true on success, or false on failure.
-bool read_blob(FILE *const fd, blob_T *const blob)
+/// @return  OK on success, or FAIL on failure.
+int read_blob(FILE *const fd, typval_T *rettv, off_T offset, off_T size_arg)
   FUNC_ATTR_NONNULL_ALL
 {
+  blob_T *const blob = rettv->vval.v_blob;
   FileInfo file_info;
   if (!os_fileinfo_fd(fileno(fd), &file_info)) {
-    return false;
+    return FAIL;  // can't read the file, error
   }
-  const int size = (int)os_fileinfo_size(&file_info);
-  ga_grow(&blob->bv_ga, size);
-  blob->bv_ga.ga_len = size;
+
+  int whence;
+  off_T size = size_arg;
+  const off_T file_size = (off_T)os_fileinfo_size(&file_info);
+  if (offset >= 0) {
+    // The size defaults to the whole file.  If a size is given it is
+    // limited to not go past the end of the file.
+    if (size == -1 || (size > file_size - offset && !S_ISCHR(file_info.stat.st_mode))) {
+      // size may become negative, checked below
+      size = (off_T)os_fileinfo_size(&file_info) - offset;
+    }
+    whence = SEEK_SET;
+  } else {
+    // limit the offset to not go before the start of the file
+    if (-offset > file_size && !S_ISCHR(file_info.stat.st_mode)) {
+      offset = -file_size;
+    }
+    // Size defaults to reading until the end of the file.
+    if (size == -1 || size > -offset) {
+      size = -offset;
+    }
+    whence = SEEK_END;
+  }
+  if (size <= 0) {
+    return OK;
+  }
+  if (offset != 0 && vim_fseek(fd, offset, whence) != 0) {
+    return OK;
+  }
+
+  ga_grow(&blob->bv_ga, (int)size);
+  blob->bv_ga.ga_len = (int)size;
   if (fread(blob->bv_ga.ga_data, 1, (size_t)blob->bv_ga.ga_len, fd)
       < (size_t)blob->bv_ga.ga_len) {
-    return false;
+    // An empty blob is returned on error.
+    tv_blob_free(rettv->vval.v_blob);
+    rettv->vval.v_blob = NULL;
+    return FAIL;
   }
-  return true;
+  return OK;
 }
 
 /// Saves a typval_T as a string.

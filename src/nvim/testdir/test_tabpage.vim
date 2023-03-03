@@ -846,4 +846,43 @@ func Test_lastused_tabpage()
   tabonly!
 endfunc
 
+" Test for tabpage allocation failure
+func Test_tabpage_alloc_failure()
+  CheckFunction test_alloc_fail
+  call test_alloc_fail(GetAllocId('newtabpage_tvars'), 0, 0)
+  call assert_fails('tabnew', 'E342:')
+
+  call test_alloc_fail(GetAllocId('newtabpage_tvars'), 0, 0)
+  edit Xfile1
+  call assert_fails('tabedit Xfile2', 'E342:')
+  call assert_equal(1, winnr('$'))
+  call assert_equal(1, tabpagenr('$'))
+  call assert_equal('Xfile1', @%)
+
+  new
+  call test_alloc_fail(GetAllocId('newtabpage_tvars'), 0, 0)
+  call assert_fails('wincmd T', 'E342:')
+  bw!
+
+  call test_alloc_fail(GetAllocId('newtabpage_tvars'), 0, 0)
+  call assert_fails('tab split', 'E342:')
+  call assert_equal(2, winnr('$'))
+  call assert_equal(1, tabpagenr('$'))
+endfunc
+
+" this was giving ml_get errors
+func Test_tabpage_last_line()
+  enew
+  call setline(1, repeat(['a'], &lines + 5))
+  $
+  tabnew
+  call setline(1, repeat(['b'], &lines + 20))
+  $
+  tabNext
+  call assert_equal('a', getline('.'))
+
+  bwipe!
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

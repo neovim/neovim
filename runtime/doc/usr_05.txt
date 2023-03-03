@@ -10,7 +10,7 @@ make Vim start with options set to different values.  Add plugins to extend
 Vim's capabilities.  Or define your own macros.
 
 |05.1|	The vimrc file
-|05.2|	The example vimrc file explained
+|05.2|	Example vimrc contents
 |05.3|	Simple mappings
 |05.4|	Adding a package
 |05.5|	Adding a plugin
@@ -27,10 +27,10 @@ Table of contents: |usr_toc.txt|
 
 You probably got tired of typing commands that you use very often.  To start
 Vim with all your favorite option settings and mappings, you write them in
-what is called the init.vim file.  Vim executes the commands in this file when 
+what is called the init.vim file.  Vim executes the commands in this file when
 it starts up.
 
-If you already have a init.vim file (e.g., when your sysadmin has one setup 
+If you already have a init.vim file (e.g., when your sysadmin has one setup
 for you), you can edit it this way: >
 
 	:edit $MYVIMRC
@@ -56,80 +56,32 @@ This chapter only explains the most basic items.  For more information on how
 to write a Vim script file: |usr_41.txt|.
 
 ==============================================================================
-*05.2*	The example vimrc file explained		*vimrc_example.vim*
+*05.2*	Example vimrc contents                          *vimrc_example.vim*
 
 In the first chapter was explained how to create a vimrc file. >
 
 	:exe 'edit' stdpath('config').'/init.vim'
 
-In this section we will explain the various commands used in this file.  This
-will give you hints about how to set up your own preferences.  Not everything
-will be explained though.  Use the ":help" command to find out more.
-
+In this section we will explain the various commands that can be specified in
+this file.  This will give you hints about how to set up your own preferences.
+Not everything will be explained though.  Use the ":help" command to find out
+more.
 >
-	set backspace=indent,eol,start
-
-This specifies where in Insert mode the <BS> is allowed to delete the
-character in front of the cursor.  The three items, separated by commas, tell
-Vim to delete the white space at the start of the line, a line break and the
-character before where Insert mode started.
->
-
-	set autoindent
-
-This makes Vim use the indent of the previous line for a newly created line.
-Thus there is the same amount of white space before the new line.  For example
-when pressing <Enter> in Insert mode, and when using the "o" command to open a
-new line.
->
-
 	set backup
 
 This tells Vim to keep a backup copy of a file when overwriting it. The backup
 file will have the same name as the original file with "~" added.  See |07.4|
 >
-
 	set history=50
-
+<
 Keep 50 commands and 50 search patterns in the history.  Use another number if
 you want to remember fewer or more lines.
->
-
-	set ruler
-
-Always display the current cursor position in the lower right corner of the
-Vim window.
-
->
-	set showcmd
-
-Display an incomplete command in the lower right corner of the Vim window,
-left of the ruler.  For example, when you type "2f", Vim is waiting for you to
-type the character to find and "2f" is displayed.  When you press "w" next,
-the "2fw" command is executed and the displayed "2f" is removed.
->
-	+-------------------------------------------------+
-	|text in the Vim window				  |
-	|~						  |
-	|~						  |
-	|-- VISUAL --			2f     43,8   17% |
-	+-------------------------------------------------+
-	 ^^^^^^^^^^^		      ^^^^^^^^ ^^^^^^^^^^
-	  'showmode'		     'showcmd'	'ruler'
-
->
-	set incsearch
-<
-Display matches for a search pattern while you type.
-
 >
 	map Q gq
 
 This defines a key mapping.  More about that in the next section.  This
-defines the "Q" command to do formatting with the "gq" operator.  This is how
-it worked before Vim 5.0.  Otherwise the "Q" command repeats the last recorded
-register.
-
+defines the "Q" command to do formatting with the "gq" operator. Otherwise the
+"Q" command repeats the last recorded register.
 >
 	vnoremap _g y:exe "grep /" .. escape(@", '\\/') .. "/ *.c *.h"<CR>
 
@@ -138,14 +90,8 @@ This is a complicated mapping.  You can see that mappings can be used to do
 quite complicated things.  Still, it is just a sequence of commands that are
 executed like you typed them.
 
+							*vimrc-filetype*
 >
-	set hlsearch
-
-This option tells Vim to highlight matches with the last used search pattern.
-The "if" command is very useful to set options only when some condition is
-met.  More about that in |usr_41.txt|.
-
-							*vimrc-filetype*  >
 	filetype plugin indent on
 
 This switches on three very clever mechanisms:
@@ -342,7 +288,7 @@ That's all!  Now you can use the commands defined in this plugin.
 
 Instead of putting plugins directly into the plugin/ directory, you may
 better organize them by putting them into subdirectories under plugin/.
-As an example, consider using "~/.local/share/nvim/site/plugin/perl/*.vim" for 
+As an example, consider using "~/.local/share/nvim/site/plugin/perl/*.vim" for
 all your Perl plugins.
 
 

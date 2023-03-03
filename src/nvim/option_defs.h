@@ -386,7 +386,6 @@ enum {
 
 // The following are actual variables for the options
 
-EXTERN long p_aleph;            // 'aleph'
 EXTERN char *p_ambw;            ///< 'ambiwidth'
 EXTERN int p_acd;               ///< 'autochdir'
 EXTERN int p_ai;                ///< 'autoindent'
@@ -544,8 +543,6 @@ EXTERN int p_hid;               // 'hidden'
 EXTERN char *p_hl;              // 'highlight'
 EXTERN int p_hls;               // 'hlsearch'
 EXTERN long p_hi;               // 'history'
-EXTERN int p_hkmap;             // 'hkmap'
-EXTERN int p_hkmapp;            // 'hkmapp'
 EXTERN int p_arshape;           // 'arabicshape'
 EXTERN int p_icon;              // 'icon'
 EXTERN char *p_iconstring;      // 'iconstring'

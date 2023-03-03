@@ -2,8 +2,8 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Dec 20, 2022
-" Version:		205
+" Last Change:		Feb 11, 2023
+" Version:		207
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from Eric Brunet (eric.brunet@ens.fr) and heredoc fixes from Felipe Contreras
@@ -166,7 +166,7 @@ if exists("b:is_kornshell") || exists("b:is_bash")
  syn cluster shLoopoList	add=shForPP
 endif
 syn cluster shPPSLeftList	contains=shAlias,shArithmetic,shCmdParenRegion,shCommandSub,shCtrlSeq,shDeref,shDerefSimple,shDoubleQuote,shEcho,shEscape,shExDoubleQuote,shExpr,shExSingleQuote,shHereDoc,shNumber,shOperator,shOption,shPosnParm,shHereString,shRedir,shSingleQuote,shSpecial,shStatement,shSubSh,shTest,shVariable
-syn cluster shPPSRightList	contains=shComment,shDeref,shDerefSimple,shEscape,shPosnParm
+syn cluster shPPSRightList	contains=shDeref,shDerefSimple,shEscape,shPosnParm
 syn cluster shSubShList	contains=@shCommandSubList,shCommandSubBQ,shCaseEsac,shColon,shCommandSub,shComment,shDo,shEcho,shExpr,shFor,shIf,shHereString,shRedir,shSetList,shSource,shStatement,shVariable,shCtrlSeq,shOperator
 syn cluster shTestList	contains=shArithmetic,shCharClass,shCommandSub,shCommandSubBQ,shCtrlSeq,shDeref,shDerefSimple,shDoubleQuote,shSpecialDQ,shExDoubleQuote,shExpr,shExSingleQuote,shNumber,shOperator,shSingleQuote,shTest,shTestOpr
 syn cluster shNoZSList	contains=shSpecialNoZS
@@ -335,7 +335,7 @@ syn match   shEscape	contained	'\%(^\)\@!\%(\\\\\)*\\.'	nextgroup=shComment
 " systems too, however, so the following syntax will flag $(..) as
 " an Error under /bin/sh.  By consensus of vimdev'ers!
 if exists("b:is_kornshell") || exists("b:is_bash") || exists("b:is_posix")
- syn region shCommandSub matchgroup=shCmdSubRegion start="\$(\ze[^(]\|$"  skip='\\\\\|\\.' end=")"  contains=@shCommandSubList
+ syn region shCommandSub matchgroup=shCmdSubRegion start="\$(\ze[^(]"  skip='\\\\\|\\.' end=")"  contains=@shCommandSubList
  syn region shArithmetic matchgroup=shArithRegion  start="\$((" skip='\\\\\|\\.' end="))" contains=@shArithList
  syn region shArithmetic matchgroup=shArithRegion  start="\$\[" skip='\\\\\|\\.' end="\]" contains=@shArithList
  syn match  shSkipInitWS contained	"^\s\+"
@@ -503,7 +503,6 @@ endif
 " ksh: ${.sh.*} variables: {{{1
 " ========================================
 if exists("b:is_kornshell")
-" syn match  shDerefVar	contained	"[.]*"	nextgroup=@shDerefVarList
  syn match  shDerefVar	contained	"\.\+"	nextgroup=@shDerefVarList
 endif
 
@@ -548,6 +547,7 @@ syn region  shDerefVarArray   contained	matchgroup=shDeref start="\[" end="]"	co
 "        bash : ${parameter,pattern}  Case modification
 "        bash : ${parameter,,pattern} Case modification
 "        bash : ${@:start:qty}        display command line arguments from start to start+qty-1 (inferred)
+"        bash : ${parameter@operator} transforms parameter (operator∈[uULqEPARa])
 syn cluster shDerefPatternList	contains=shDerefPattern,shDerefString
 if !exists("g:sh_no_error")
  syn match shDerefOpError	contained	":[[:punct:]]"
@@ -563,6 +563,7 @@ if exists("b:is_bash") || exists("b:is_kornshell") || exists("b:is_posix")
 endif
 if exists("b:is_bash")
  syn match  shDerefOp	contained	"[,^]\{1,2}"	nextgroup=@shDerefPatternList
+ syn match  shDerefOp	contained	"@[uULQEPAKa]"
 endif
 syn region shDerefString	contained	matchgroup=shDerefDelim start=+\%(\\\)\@<!'+ end=+'+	contains=shStringSpecial
 syn region shDerefString	contained	matchgroup=shDerefDelim start=+\%(\\\)\@<!"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial

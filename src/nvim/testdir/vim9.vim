@@ -34,6 +34,10 @@ func CheckScriptSuccess(lines)
   endtry
 endfunc
 
+func CheckDefExecAndScriptFailure(lines, error, lnum = -3)
+  return
+endfunc
+
 " Check that "lines" inside a legacy function has no error.
 func CheckLegacySuccess(lines)
   let cwd = getcwd()
@@ -98,9 +102,9 @@ endfunc
 " Use ' #"' for a comment
 func CheckLegacyAndVim9Failure(lines, error)
   if type(a:error) == type('string')
-    let legacyError = error
+    let legacyError = a:error
   else
-    let legacyError = error[0]
+    let legacyError = a:error[0]
   endif
 
   let legacylines = a:lines->deepcopy()->map({_, v ->

@@ -24,6 +24,25 @@ end)
 
 describe('semantic token highlighting', function()
 
+  local screen
+  before_each(function()
+    screen = Screen.new(40, 16)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [1] = { bold = true, foreground = Screen.colors.Blue1 };
+      [2] = { foreground = Screen.colors.DarkCyan };
+      [3] = { foreground = Screen.colors.SlateBlue };
+      [4] = { bold = true, foreground = Screen.colors.SeaGreen };
+      [5] = { foreground = tonumber('0x6a0dad') };
+      [6] = { foreground = Screen.colors.Blue1 };
+      [7] = { bold = true, foreground = Screen.colors.DarkCyan };
+      [8] = { bold = true, foreground = Screen.colors.SlateBlue };
+    }
+    command([[ hi link @namespace Type ]])
+    command([[ hi link @function Special ]])
+    command([[ hi @declaration gui=bold ]])
+  end)
+
   describe('general', function()
     local text = dedent([[
     #include <iostream>
@@ -58,24 +77,7 @@ describe('semantic token highlighting', function()
       "resultId":"2"
     }]]
 
-    local screen
     before_each(function()
-      screen = Screen.new(40, 16)
-      screen:attach()
-      screen:set_default_attr_ids {
-        [1] = { bold = true, foreground = Screen.colors.Blue1 };
-        [2] = { foreground = Screen.colors.DarkCyan };
-        [3] = { foreground = Screen.colors.SlateBlue };
-        [4] = { bold = true, foreground = Screen.colors.SeaGreen };
-        [5] = { foreground = tonumber('0x6a0dad') };
-        [6] = { foreground = Screen.colors.Blue1 };
-        [7] = { bold = true, foreground = Screen.colors.DarkCyan };
-        [8] = { bold = true, foreground = Screen.colors.SlateBlue };
-      }
-      command([[ hi link @namespace Type ]])
-      command([[ hi link @function Special ]])
-      command([[ hi @declaration gui=bold ]])
-
       exec_lua(create_server_definition)
       exec_lua([[
         local legend, response, edit_response = ...
@@ -928,6 +930,46 @@ b = "as"]],
             extmark_added = true,
           }
         },
+        expected_screen1 = function()
+        screen:expect{grid=[[
+          char* {7:foo} = "\n"^;                       |
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+                                                  |
+        ]]}
+        end,
+        expected_screen2 = function()
+          screen:expect{grid=[[
+            ^                                        |
+            char* {7:foo} = "\n";                       |
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+                                                    |
+          ]]}
+        end,
       },
       {
         it = 'response with multiple delta edits',
@@ -1127,6 +1169,46 @@ int main()
             extmark_added = true,
           }
         },
+        expected_screen1 = function()
+          screen:expect{grid=[[
+            #include <iostream>                     |
+                                                    |
+            int {8:main}()                              |
+            {                                       |
+                int {7:x};                              |
+            #ifdef {5:__cplusplus}                      |
+                {4:std}::{2:cout} << {2:x} << "\n";             |
+            {6:#else}                                   |
+            {6:    printf("%d\n", x);}                  |
+            {6:#endif}                                  |
+            ^}                                       |
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+                                                    |
+          ]]}
+        end,
+        expected_screen2 = function()
+          screen:expect{grid=[[
+            #include <iostream>                     |
+                                                    |
+            int {8:main}()                              |
+            {                                       |
+                int {8:x}();                            |
+                double {7:y};                           |
+            #ifdef {5:__cplusplus}                      |
+                {4:std}::{2:cout} << {3:x} << "\n";             |
+            {6:#else}                                   |
+            {6:    printf("%d\n", x);}                  |
+            {6:^#endif}                                  |
+            }                                       |
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+                                                    |
+          ]]}
+        end,
       },
       {
         it = 'optional token_edit.data on deletion',
@@ -1156,6 +1238,46 @@ int main()
         },
         expected2 = {
         },
+        expected_screen1 = function()
+          screen:expect{grid=[[
+            {7:string} = "test^"                         |
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+                                                    |
+          ]]}
+        end,
+        expected_screen2 = function()
+          screen:expect{grid=[[
+            ^                                        |
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+                                                    |
+          ]]}
+        end,
       },
     }) do
       it(test.it, function()
@@ -1192,6 +1314,8 @@ int main()
 
         insert(test.text1)
 
+        test.expected_screen1()
+
         local highlights = exec_lua([[
           return semantic_tokens.__STHighlighter.active[bufnr].client_state[client_id].current_result.highlights
         ]])
@@ -1207,6 +1331,8 @@ int main()
             vim.wait(15) -- wait fot debounce
           ]], test.text2)
         end
+
+        test.expected_screen2()
 
         highlights = exec_lua([[
           return semantic_tokens.__STHighlighter.active[bufnr].client_state[client_id].current_result.highlights

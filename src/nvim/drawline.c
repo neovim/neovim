@@ -1199,7 +1199,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     statuscol.draw = true;
     statuscol.sattrs = sattrs;
     statuscol.foldinfo = foldinfo;
-    statuscol.width = win_col_off(wp);
+    statuscol.width = win_col_off(wp) - (cmdwin_type != 0 && wp == curwin);
     statuscol.use_cul = use_cursor_line_sign(wp, lnum);
     statuscol.sign_cul_attr = statuscol.use_cul ? sign_cul_attr : 0;
     statuscol.num_attr = sign_num_attr ? sign_num_attr
@@ -1691,11 +1691,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     } else if (foldinfo.fi_lines > 0) {
       // skip writing the buffer line itself
       c = NUL;
-      XFREE_CLEAR(p_extra_free);
     } else {
       int c0;
-
-      XFREE_CLEAR(p_extra_free);
 
       // Get a character from the line itself.
       c0 = c = (uint8_t)(*ptr);
@@ -2103,42 +2100,45 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
               tab_len += n_extra - tab_len;
             }
 
-            // If n_extra > 0, it gives the number of chars
-            // to use for a tab, else we need to calculate the width
-            // for a tab.
-            int len = (tab_len * utf_char2len(wp->w_p_lcs_chars.tab2));
-            if (wp->w_p_lcs_chars.tab3) {
-              len += utf_char2len(wp->w_p_lcs_chars.tab3);
-            }
-            if (n_extra > 0) {
-              len += n_extra - tab_len;
-            }
-            c = wp->w_p_lcs_chars.tab1;
-            p = xmalloc((size_t)len + 1);
-            memset(p, ' ', (size_t)len);
-            p[len] = NUL;
-            xfree(p_extra_free);
-            p_extra_free = p;
-            for (int i = 0; i < tab_len; i++) {
-              if (*p == NUL) {
-                tab_len = i;
-                break;
+            if (tab_len > 0) {
+              // If n_extra > 0, it gives the number of chars
+              // to use for a tab, else we need to calculate the
+              // width for a tab.
+              int tab2_len = utf_char2len(wp->w_p_lcs_chars.tab2);
+              int len = tab_len * tab2_len;
+              if (wp->w_p_lcs_chars.tab3) {
+                len += utf_char2len(wp->w_p_lcs_chars.tab3) - tab2_len;
               }
-              int lcs = wp->w_p_lcs_chars.tab2;
-
-              // if tab3 is given, use it for the last char
-              if (wp->w_p_lcs_chars.tab3 && i == tab_len - 1) {
-                lcs = wp->w_p_lcs_chars.tab3;
+              if (n_extra > 0) {
+                len += n_extra - tab_len;
               }
-              p += utf_char2bytes(lcs, p);
-              n_extra += utf_char2len(lcs) - (saved_nextra > 0 ? 1 : 0);
-            }
-            p_extra = p_extra_free;
+              c = wp->w_p_lcs_chars.tab1;
+              p = xmalloc((size_t)len + 1);
+              memset(p, ' ', (size_t)len);
+              p[len] = NUL;
+              xfree(p_extra_free);
+              p_extra_free = p;
+              for (int i = 0; i < tab_len; i++) {
+                if (*p == NUL) {
+                  tab_len = i;
+                  break;
+                }
+                int lcs = wp->w_p_lcs_chars.tab2;
 
-            // n_extra will be increased by FIX_FOX_BOGUSCOLS
-            // macro below, so need to adjust for that here
-            if (vcol_off > 0) {
-              n_extra -= vcol_off;
+                // if tab3 is given, use it for the last char
+                if (wp->w_p_lcs_chars.tab3 && i == tab_len - 1) {
+                  lcs = wp->w_p_lcs_chars.tab3;
+                }
+                p += utf_char2bytes(lcs, p);
+                n_extra += utf_char2len(lcs) - (saved_nextra > 0 ? 1 : 0);
+              }
+              p_extra = p_extra_free;
+
+              // n_extra will be increased by FIX_FOX_BOGUSCOLS
+              // macro below, so need to adjust for that here
+              if (vcol_off > 0) {
+                n_extra -= vcol_off;
+              }
             }
           }
 
@@ -2167,7 +2167,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             c = (n_extra == 0 && wp->w_p_lcs_chars.tab3)
                  ? wp->w_p_lcs_chars.tab3
                  : wp->w_p_lcs_chars.tab1;
-            if (wp->w_p_lbr) {
+            if (wp->w_p_lbr && p_extra != NULL && *p_extra != NUL) {
               c_extra = NUL;  // using p_extra from above
             } else {
               c_extra = wp->w_p_lcs_chars.tab2;

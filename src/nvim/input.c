@@ -86,7 +86,7 @@ int ask_yesno(const char *const str, const bool direct)
 /// Translates the interrupt character for unix to ESC.
 int get_keystroke(MultiQueue *events)
 {
-  char *buf = NULL;
+  uint8_t *buf = NULL;
   int buflen = 150;
   int len = 0;
   int n;
@@ -112,7 +112,7 @@ int get_keystroke(MultiQueue *events)
 
     // First time: blocking wait.  Second time: wait up to 100ms for a
     // terminal code to complete.
-    n = os_inchar((uint8_t *)buf + len, maxlen, len == 0 ? -1L : 100L, 0, events);
+    n = os_inchar(buf + len, maxlen, len == 0 ? -1L : 100L, 0, events);
     if (n > 0) {
       // Replace zero and K_SPECIAL by a special key code.
       n = fix_input_buffer(buf + len, n);
@@ -127,14 +127,14 @@ int get_keystroke(MultiQueue *events)
     }
 
     // Handle modifier and/or special key code.
-    n = (uint8_t)buf[0];
+    n = buf[0];
     if (n == K_SPECIAL) {
-      n = TO_SPECIAL((uint8_t)buf[1], (uint8_t)buf[2]);
-      if ((uint8_t)buf[1] == KS_MODIFIER
+      n = TO_SPECIAL(buf[1], buf[2]);
+      if (buf[1] == KS_MODIFIER
           || n == K_IGNORE
           || (is_mouse_key(n) && n != K_LEFTMOUSE)) {
-        if ((uint8_t)buf[1] == KS_MODIFIER) {
-          mod_mask = (uint8_t)buf[2];
+        if (buf[1] == KS_MODIFIER) {
+          mod_mask = buf[2];
         }
         len -= 3;
         if (len > 0) {
@@ -149,7 +149,7 @@ int get_keystroke(MultiQueue *events)
       continue;
     }
     buf[len >= buflen ? buflen - 1 : len] = NUL;
-    n = utf_ptr2char(buf);
+    n = utf_ptr2char((char *)buf);
     break;
   }
   xfree(buf);

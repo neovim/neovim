@@ -73,6 +73,30 @@ func Test_linebreak_with_nolist()
   call s:close_windows()
 endfunc
 
+func Test_linebreak_with_list_and_number()
+  call s:test_windows('setl list listchars+=tab:>-')
+  call setline(1, ["abcdefg\thijklmnopqrstu", "v"])
+  let lines = s:screen_lines([1, 4], winwidth(0))
+  let expect_nonumber = [
+\ "abcdefg>------------",
+\ "hijklmnopqrstu$     ",
+\ "v$                  ",
+\ "~                   ",
+\ ]
+  call s:compare_lines(expect_nonumber, lines)
+
+  setl number
+  let lines = s:screen_lines([1, 4], winwidth(0))
+  let expect_number = [
+\ "  1 abcdefg>--------",
+\ "    hijklmnopqrstu$ ",
+\ "  2 v$              ",
+\ "~                   ",
+\ ]
+  call s:compare_lines(expect_number, lines)
+  call s:close_windows()
+endfunc
+
 func Test_should_break()
   call s:test_windows('setl sbr=+ nolist')
   call setline(1, "1\t" . repeat('a', winwidth(0)-2))

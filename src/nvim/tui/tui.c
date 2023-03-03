@@ -1109,8 +1109,8 @@ void tui_set_mode(TUIData *tui, ModeShape mode)
       // Hopefully the user's default cursor color is inverse.
       unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
     } else {
+      char hexbuf[8];
       if (tui->set_cursor_color_as_str) {
-        char hexbuf[8];
         snprintf(hexbuf, 7 + 1, "#%06x", aep.rgb_bg_color);
         UNIBI_SET_STR_VAR(tui->params[0], hexbuf);
       } else {

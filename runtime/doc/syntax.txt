@@ -2756,17 +2756,25 @@ For highlighted doctests and code inside: >
 	:let python_no_doctest_highlight = 1
 or >
 	:let python_no_doctest_code_highlight = 1
-(first option implies second one).
+The first option implies the second one.
 
 For highlighted trailing whitespace and mix of spaces and tabs: >
 	:let python_space_error_highlight = 1
 
-If you want all possible Python highlighting (the same as setting the
-preceding last option and unsetting all other ones): >
+If you want all possible Python highlighting: >
 	:let python_highlight_all = 1
+This has the same effect as setting python_space_error_highlight and
+unsetting all the other ones.
 
-Note: Only existence of these options matter, not their value. You can replace
-      1 above with anything.
+If you use Python 2 or straddling code (Python 2 and 3 compatible),
+you can enforce the use of an older syntax file with support for
+Python 2 and up to Python 3.5.  >
+	: let python_use_python2_syntax = 1
+This option will exclude all modern Python 3.6 or higher features.
+
+Note: Only existence of these options matters, not their value.
+      You can replace 1 above with anything.
+
 
 QUAKE						*quake.vim* *ft-quake-syntax*
 
@@ -5179,7 +5187,7 @@ Conceal		Placeholder characters substituted for concealed
 							*hl-CurSearch*
 CurSearch	Used for highlighting a search pattern under the cursor
 		(see 'hlsearch').
-							*hl-Cursor*
+						*hl-Cursor* *hl-lCursor*
 Cursor		Character under the cursor.
 lCursor		Character under the cursor when |language-mapping|
 		is used (see 'guicursor').

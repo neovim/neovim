@@ -113,6 +113,10 @@ void remote_ui_disconnect(uint64_t channel_id)
   kv_destroy(data->call_buf);
   pmap_del(uint64_t)(&connected_uis, channel_id);
   ui_detach_impl(ui, channel_id);
+
+  // Destroy `ui`.
+  XFREE_CLEAR(ui->term_name);
+  XFREE_CLEAR(ui->term_background);
   xfree(ui);
 }
 
@@ -163,15 +167,9 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dictiona
   UI *ui = xcalloc(1, sizeof(UI));
   ui->width = (int)width;
   ui->height = (int)height;
-  ui->pum_nlines = 0;
-  ui->pum_pos = false;
-  ui->pum_width = 0.0;
-  ui->pum_height = 0.0;
   ui->pum_row = -1.0;
   ui->pum_col = -1.0;
   ui->rgb = true;
-  ui->override = false;
-
   CLEAR_FIELD(ui->ui_ext);
 
   for (size_t i = 0; i < options.size; i++) {
@@ -320,6 +318,7 @@ static void ui_set_option(UI *ui, bool init, String name, Object value, Error *e
       return;
     });
     set_tty_option("term", string_to_cstr(value.data.string));
+    ui->term_name = string_to_cstr(value.data.string);
     return;
   }
 
@@ -328,6 +327,7 @@ static void ui_set_option(UI *ui, bool init, String name, Object value, Error *e
       return;
     });
     t_colors = (int)value.data.integer;
+    ui->term_colors = (int)value.data.integer;
     return;
   }
 
@@ -336,6 +336,7 @@ static void ui_set_option(UI *ui, bool init, String name, Object value, Error *e
       return;
     });
     set_tty_background(value.data.string.data);
+    ui->term_background = string_to_cstr(value.data.string);
     return;
   }
 
@@ -359,6 +360,7 @@ static void ui_set_option(UI *ui, bool init, String name, Object value, Error *e
       return;
     });
     stdin_isatty = value.data.boolean;
+    ui->stdin_tty = value.data.boolean;
     return;
   }
 
@@ -367,6 +369,7 @@ static void ui_set_option(UI *ui, bool init, String name, Object value, Error *e
       return;
     });
     stdout_isatty = value.data.boolean;
+    ui->stdout_tty = value.data.boolean;
     return;
   }
 

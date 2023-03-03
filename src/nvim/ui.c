@@ -64,31 +64,31 @@ static int pending_has_mouse = -1;
 static Array call_buf = ARRAY_DICT_INIT;
 
 #if MIN_LOG_LEVEL > LOGLVL_DBG
-# define UI_LOG(funname)
+# define ui_log(funname)
 #else
 static size_t uilog_seen = 0;
-static char uilog_last_event[1024] = { 0 };
+static const char *uilog_last_event = NULL;
 
-# ifndef EXITFREE
-#  define entered_free_all_mem false
+static void ui_log(const char *funname)
+{
+# ifdef EXITFREE
+  if (entered_free_all_mem) {
+    return;  // do nothing, we cannot log now
+  }
 # endif
 
-# define UI_LOG(funname) \
-  do { \
-    if (entered_free_all_mem) { \
-      /* do nothing, we cannot log now */ \
-    } else if (strequal(uilog_last_event, STR(funname))) { \
-      uilog_seen++; \
-    } else { \
-      if (uilog_seen > 0) { \
-        logmsg(LOGLVL_DBG, "UI: ", NULL, -1, true, \
-               "%s (+%zu times...)", uilog_last_event, uilog_seen); \
-      } \
-      logmsg(LOGLVL_DBG, "UI: ", NULL, -1, true, STR(funname)); \
-      uilog_seen = 0; \
-      xstrlcpy(uilog_last_event, STR(funname), sizeof(uilog_last_event)); \
-    } \
-  } while (0)
+  if (uilog_last_event == funname) {
+    uilog_seen++;
+  } else {
+    if (uilog_seen > 0) {
+      logmsg(LOGLVL_DBG, "UI: ", NULL, -1, true,
+             "%s (+%zu times...)", uilog_last_event, uilog_seen);
+    }
+    logmsg(LOGLVL_DBG, "UI: ", NULL, -1, true, "%s", funname);
+    uilog_seen = 0;
+    uilog_last_event = funname;
+  }
+}
 #endif
 
 // UI_CALL invokes a function on all registered UI instances.
@@ -105,7 +105,7 @@ static char uilog_last_event[1024] = { 0 };
       } \
     } \
     if (any_call) { \
-      UI_LOG(funname); \
+      ui_log(STR(funname)); \
     } \
   } while (0)
 
@@ -134,6 +134,7 @@ void ui_free_all_mem(void)
 }
 #endif
 
+/// Returns true if any `rgb=true` UI is attached.
 bool ui_rgb_attached(void)
 {
   if (!headless_mode && p_tgc) {
@@ -141,6 +142,18 @@ bool ui_rgb_attached(void)
   }
   for (size_t i = 0; i < ui_count; i++) {
     if (uis[i]->rgb) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// Returns true if a GUI is attached.
+bool ui_gui_attached(void)
+{
+  for (size_t i = 0; i < ui_count; i++) {
+    bool tui = uis[i]->stdin_tty || uis[i]->stdout_tty;
+    if (!tui) {
       return true;
     }
   }
@@ -598,6 +611,14 @@ Array ui_array(void)
     PUT(info, "height", INTEGER_OBJ(ui->height));
     PUT(info, "rgb", BOOLEAN_OBJ(ui->rgb));
     PUT(info, "override", BOOLEAN_OBJ(ui->override));
+
+    // TUI fields. (`stdin_fd` is intentionally omitted.)
+    PUT(info, "term_name", STRING_OBJ(cstr_to_string(ui->term_name)));
+    PUT(info, "term_background", STRING_OBJ(cstr_to_string(ui->term_background)));
+    PUT(info, "term_colors", INTEGER_OBJ(ui->term_colors));
+    PUT(info, "stdin_tty", BOOLEAN_OBJ(ui->stdin_tty));
+    PUT(info, "stdout_tty", BOOLEAN_OBJ(ui->stdout_tty));
+
     for (UIExtension j = 0; j < kUIExtCount; j++) {
       if (ui_ext_names[j][0] != '_' || ui->ui_ext[j]) {
         PUT(info, ui_ext_names[j], BOOLEAN_OBJ(ui->ui_ext[j]));
@@ -654,6 +675,8 @@ void ui_call_event(char *name, Array args)
   if (!handled) {
     UI_CALL(true, event, ui, name, args);
   }
+
+  ui_log(name);
 }
 
 void ui_cb_update_ext(void)

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(libtermkey)
+project(libtermkey C)
 
 add_definitions(-D _CRT_SECURE_NO_WARNINGS)
 add_definitions(-DHAVE_UNIBILIUM)

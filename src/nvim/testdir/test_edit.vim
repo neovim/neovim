@@ -516,7 +516,8 @@ func Test_edit_CTRL_()
   call setline(1, ['abc'])
   call cursor(1, 1)
   call feedkeys("i\<c-_>xyz\<esc>", 'tnix')
-  call assert_equal(["æèñabc"], getline(1, '$'))
+  " call assert_equal(["æèñabc"], getline(1, '$'))
+  call assert_equal(["zyxabc"], getline(1, '$'))
   call assert_true(&revins)
   call setline(1, ['abc'])
   call cursor(1, 1)
@@ -580,6 +581,7 @@ func Test_edit_CTRL_G()
   call assert_equal([0, 3, 7, 0], getpos('.'))
   call feedkeys("i\<c-g>j\<esc>", 'tnix')
   call assert_equal([0, 3, 6, 0], getpos('.'))
+  call assert_nobeep("normal! i\<c-g>\<esc>")
   bw!
 endfunc
 
@@ -1912,6 +1914,7 @@ endfunc
 
 " Test for 'hkmap' and 'hkmapp'
 func Test_edit_hkmap()
+  throw "Skipped: Nvim does not support 'hkmap'"
   CheckFeature rightleft
   if has('win32') && !has('gui')
     " Test fails on the MS-Windows terminal version

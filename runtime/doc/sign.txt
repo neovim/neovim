@@ -525,6 +525,7 @@ sign_jump({id}, {group}, {buf})
 		{buf} and position the cursor at sign {id} in group {group}.
 		This is similar to the |:sign-jump| command.
 
+		If {group} is an empty string, then the global group is used.
 		For the use of {buf}, see |bufname()|.
 
 		Returns the line number of the sign. Returns -1 if the
@@ -595,23 +596,23 @@ sign_placelist({list})
 		|sign_place()| function.  The {list} argument specifies the
 		List of signs to place. Each list item is a dict with the
 		following sign attributes:
-		    buffer	buffer name or number. For the accepted
+		    buffer	Buffer name or number. For the accepted
 				values, see |bufname()|.
-		    group	sign group. {group} functions as a namespace
+		    group	Sign group. {group} functions as a namespace
 				for {id}, thus two groups can use the same
 				IDs. If not specified or set to an empty
 				string, then the global group is used.   See
 				|sign-group| for more information.
-		    id		sign identifier. If not specified or zero,
+		    id		Sign identifier. If not specified or zero,
 				then a new unique identifier is allocated.
 				Otherwise the specified number is used. See
 				|sign-identifier| for more information.
-		    lnum	line number in the buffer where the sign is to
+		    lnum	Line number in the buffer where the sign is to
 				be placed. For the accepted values, see
 				|line()|.
-		    name	name of the sign to place. See |sign_define()|
+		    name	Name of the sign to place. See |sign_define()|
 				for more information.
-		    priority	priority of the sign. When multiple signs are
+		    priority	Priority of the sign. When multiple signs are
 				placed on a line, the sign with the highest
 				priority is used. If not specified, the
 				default value of 10 is used. See

@@ -2,6 +2,7 @@
 
 ---@class TSNode
 ---@field id fun(self: TSNode): integer
+---@field tree fun(self: TSNode): TSTree
 ---@field range fun(self: TSNode): integer, integer, integer, integer
 ---@field start fun(self: TSNode): integer, integer, integer
 ---@field end_ fun(self: TSNode): integer, integer, integer
@@ -9,6 +10,7 @@
 ---@field symbol fun(self: TSNode): integer
 ---@field named fun(self: TSNode): boolean
 ---@field missing fun(self: TSNode): boolean
+---@field extra fun(self: TSNode): boolean
 ---@field child_count fun(self: TSNode): integer
 ---@field named_child_count fun(self: TSNode): integer
 ---@field child fun(self: TSNode, integer): TSNode
@@ -21,7 +23,8 @@
 ---@field next_named_sibling fun(self: TSNode): TSNode
 ---@field prev_named_sibling fun(self: TSNode): TSNode
 ---@field named_children fun(self: TSNode): TSNode[]
----@field has_error fun(self: TSNode): boolean
+---@field has_changes fun(self: TSNode): boolean
+---@field equal fun(self: TSNode, other: TSNode): boolean
 ---@field iter_children fun(self: TSNode): fun(): TSNode, string
 local TSNode = {}
 
@@ -41,8 +44,11 @@ function TSNode:_rawquery(query, captures, start, end_) end
 
 ---@class TSParser
 ---@field parse fun(self: TSParser, tree, source: integer|string): TSTree, integer[]
+---@field reset fun(self: TSParser)
 ---@field included_ranges fun(self: TSParser): integer[]
 ---@field set_included_ranges fun(self: TSParser, ranges: integer[][])
+---@field set_timeout fun(self: TSParser, timeout: integer)
+---@field timeout fun(self: TSParser): integer
 
 ---@class TSTree
 ---@field root fun(self: TSTree): TSNode

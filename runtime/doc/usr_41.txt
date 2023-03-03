@@ -650,6 +650,7 @@ List manipulation:					*list-functions*
 	insert()		insert an item somewhere in a List
 	add()			append an item to a List
 	extend()		append a List to a List
+	extendnew()		make a new List and append items
 	remove()		remove one or more items from a List
 	copy()			make a shallow copy of a List
 	deepcopy()		make a full copy of a List
@@ -657,14 +658,16 @@ List manipulation:					*list-functions*
 	map()			change each List item
 	reduce()		reduce a List to a value
 	sort()			sort a List
-	reverse()		reverse the order of a List
+	reverse()		reverse the order of a List or Blob
 	uniq()			remove copies of repeated adjacent items
 	split()			split a String into a List
 	join()			join List items into a String
 	range()			return a List with a sequence of numbers
 	string()		String representation of a List
 	call()			call a function with List as arguments
-	index()			index of a value in a List
+	index()			index of a value in a List or Blob
+	indexof()		index in a List or Blob where an expression
+				evaluates to true
 	max()			maximum value in a List
 	min()			minimum value in a List
 	count()			count number of times a value appears in a List
@@ -679,6 +682,7 @@ Dictionary manipulation:				*dict-functions*
 	empty()			check if Dictionary is empty
 	remove()		remove an entry from a Dictionary
 	extend()		add entries from one Dictionary to another
+	extendnew()		make a new Dictionary and append items
 	filter()		remove selected entries from a Dictionary
 	map()			change each Dictionary entry
 	keys()			get List of Dictionary keys
@@ -716,6 +720,10 @@ Floating point computation:				*float-functions*
 	tanh()			hyperbolic tangent
 	isinf()			check for infinity
 	isnan()			check for not a number
+
+Blob manipulation:					*blob-functions*
+	blob2list()		get a list of numbers from a blob
+	list2blob()		get a blob from a list of numbers
 
 Other computation:					*bitwise-function*
 	and()			bitwise AND
@@ -1316,6 +1324,8 @@ is a List with arguments.
 
 Function references are most useful in combination with a Dictionary, as is
 explained in the next section.
+
+More information about defining your own functions here: |user-functions|.
 
 ==============================================================================
 *41.8*	Lists and Dictionaries

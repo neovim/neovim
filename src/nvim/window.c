@@ -1899,8 +1899,8 @@ static void win_rotate(bool upwards, int count)
     }
   }
 
-  win_T *wp1;
-  win_T *wp2;
+  win_T *wp1 = NULL;
+  win_T *wp2 = NULL;
 
   while (count--) {
     if (upwards) {              // first window becomes last window
@@ -4813,7 +4813,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
 
   // Might need to scroll the old window before switching, e.g., when the
   // cursor was moved.
-  if (*p_spk == 'c') {
+  if (*p_spk == 'c' && !curwin_invalid) {
     update_topline(curwin);
   }
 

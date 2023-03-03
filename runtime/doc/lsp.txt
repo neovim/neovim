@@ -851,11 +851,10 @@ start_client({config})                                *vim.lsp.start_client()*
                   • cmd_cwd: (string, default=|getcwd()|) Directory to launch
                     the `cmd` process. Not related to `root_dir`.
                   • cmd_env: (table) Environment flags to pass to the LSP on
-                    spawn. Can be specified using keys like a map or as a list
-                    with `k=v` pairs or both. Non-string values are coerced to string.
-                    Example: >
+                    spawn. Must be specified using a map-like table.
+                    Non-string values are coerced to string. Example: >
 
-                       { "PRODUCTION=true"; "TEST=123"; PORT = 8080; HOST = "0.0.0.0"; }
+                       { PORT = 8080; HOST = "0.0.0.0"; }
 <
                   • detached: (boolean, default true) Daemonize the server
                     process so that it runs in a separate process group from

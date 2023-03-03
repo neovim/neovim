@@ -534,9 +534,6 @@ int showmode(void)
         } else if (restart_edit == 'V') {
           msg_puts_attr(_(" (vreplace)"), attr);
         }
-        if (p_hkmap) {
-          msg_puts_attr(_(" Hebrew"), attr);
-        }
         if (State & MODE_LANGMAP) {
           if (curwin->w_p_arab) {
             msg_puts_attr(_(" Arabic"), attr);

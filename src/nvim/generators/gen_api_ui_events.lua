@@ -120,7 +120,6 @@ for i = 1, #events do
     if ev.remote_only then
       call_output:write('  Array args = call_buf;\n')
       write_arglist(call_output, ev)
-      call_output:write('  UI_LOG('..ev.name..');\n')
       call_output:write('  ui_call_event("'..ev.name..'", args);\n')
     elseif ev.compositor_impl then
       call_output:write('  ui_comp_'..ev.name)
