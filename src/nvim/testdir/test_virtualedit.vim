@@ -88,6 +88,16 @@ func Test_edit_change()
   set virtualedit=
 endfunc
 
+func Test_edit_special_char()
+  new
+  se ve=all
+  norm a0
+  sil! exe "norm o00000\<Nul>k<a0s"
+
+  bwipe!
+  set virtualedit=
+endfunc
+
 " Tests for pasting at the beginning, end and middle of a tab character
 " in virtual edit mode.
 func Test_paste_in_tab()
