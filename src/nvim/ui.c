@@ -63,9 +63,7 @@ static int pending_has_mouse = -1;
 
 static Array call_buf = ARRAY_DICT_INIT;
 
-#if MIN_LOG_LEVEL > LOGLVL_DBG
-# define ui_log(funname)
-#else
+#ifdef NVIM_LOG_DEBUG
 static size_t uilog_seen = 0;
 static const char *uilog_last_event = NULL;
 
@@ -89,6 +87,8 @@ static void ui_log(const char *funname)
     uilog_last_event = funname;
   }
 }
+#else
+# define ui_log(funname)
 #endif
 
 // UI_CALL invokes a function on all registered UI instances.

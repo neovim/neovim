@@ -141,9 +141,13 @@ bool logmsg(int log_level, const char *context, const char *func_name, int line_
     return false;
   }
 
-  if (log_level < MIN_LOG_LEVEL) {
+#ifndef NVIM_LOG_DEBUG
+  // This should rarely happen (callsites are compiled out), but to be sure.
+  // TODO(bfredl): allow log levels to be configured at runtime
+  if (log_level < LOGLVL_WRN) {
     return false;
   }
+#endif
 
 #ifdef EXITFREE
   // Logging after we've already started freeing all our memory will only cause
