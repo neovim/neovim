@@ -418,8 +418,8 @@ end
 ---@generic T: table
 ---@param dst T List which will be modified and appended to
 ---@param src table List from which values will be inserted
----@param start (number|nil) Start index on src. Defaults to 1
----@param finish (number|nil) Final index on src. Defaults to `#src`
+---@param start (integer|nil) Start index on src. Defaults to 1
+---@param finish (integer|nil) Final index on src. Defaults to `#src`
 ---@return T dst
 function vim.list_extend(dst, src, start, finish)
   vim.validate({
@@ -529,7 +529,7 @@ end
 ---
 ---@see https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
 ---@param t table Table
----@return number Number of non-nil values in table
+---@return integer Number of non-nil values in table
 function vim.tbl_count(t)
   vim.validate({ t = { t, 't' } })
 
@@ -544,8 +544,8 @@ end
 ---
 ---@generic T
 ---@param list T[] (list) Table
----@param start number|nil Start range of slice
----@param finish number|nil End range of slice
+---@param start integer|nil Start range of slice
+---@param finish integer|nil End range of slice
 ---@return T[] (list) Copy of table sliced from start to finish (inclusive)
 function vim.list_slice(list, start, finish)
   local new_list = {}

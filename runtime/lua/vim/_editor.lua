@@ -386,7 +386,7 @@ end
 
 --- Get a table of lines with start, end columns for a region marked by two points
 ---
----@param bufnr number of buffer
+---@param bufnr integer number of buffer
 ---@param pos1 integer[] (line, column) tuple marking beginning of region
 ---@param pos2 integer[] (line, column) tuple marking end of region
 ---@param regtype string type of selection, see |setreg()|
@@ -471,7 +471,7 @@ end
 --- writes to |:messages|.
 ---
 ---@param msg string Content of the notification to show to the user.
----@param level number|nil One of the values from |vim.log.levels|.
+---@param level integer|nil One of the values from |vim.log.levels|.
 ---@param opts table|nil Optional parameters. Unused by default.
 function vim.notify(msg, level, opts) -- luacheck: no unused args
   if level == vim.log.levels.ERROR then
@@ -492,7 +492,7 @@ do
   --- display a notification.
   ---
   ---@param msg string Content of the notification to show to the user.
-  ---@param level number|nil One of the values from |vim.log.levels|.
+  ---@param level integer|nil One of the values from |vim.log.levels|.
   ---@param opts table|nil Optional parameters. Unused by default.
   ---@return boolean true if message was displayed, else false
   function vim.notify_once(msg, level, opts)
@@ -521,10 +521,10 @@ local on_key_cbs = {}
 ---@param fn function: Callback function. It should take one string argument.
 ---                   On each key press, Nvim passes the key char to fn(). |i_CTRL-V|
 ---                   If {fn} is nil, it removes the callback for the associated {ns_id}
----@param ns_id number? Namespace ID. If nil or 0, generates and returns a new
+---@param ns_id integer? Namespace ID. If nil or 0, generates and returns a new
 ---                    |nvim_create_namespace()| id.
 ---
----@return number Namespace id associated with {fn}. Or count of all callbacks
+---@return integer Namespace id associated with {fn}. Or count of all callbacks
 ---if on_key() is called without arguments.
 ---
 ---@note {fn} will be removed if an error occurs while calling.
