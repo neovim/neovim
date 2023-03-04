@@ -264,14 +264,14 @@ if(WIN32)
   include(GetBinaryDeps)
 
   GetBinaryDep(TARGET wintools
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory . ${DEPS_INSTALL_DIR}/bin)
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory . ${DEPS_BIN_DIR})
 
   if(USE_BUNDLED_NVIMQT)
     GetBinaryDep(TARGET wingui
-      INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_INSTALL_DIR}/bin
+      INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_BIN_DIR}
       COMMAND ${CMAKE_COMMAND} -E copy_directory share ${DEPS_INSTALL_DIR}/share)
   endif()
 
   GetBinaryDep(TARGET win32yank_X86_64
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_INSTALL_DIR}/bin)
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_BIN_DIR})
 endif()
