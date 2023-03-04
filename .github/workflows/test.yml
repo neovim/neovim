@@ -75,6 +75,10 @@ jobs:
           cmake -S cmake.deps -B $DEPS_BUILD_DIR -G Ninja
           cmake --build $DEPS_BUILD_DIR
 
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+        name: configure
+        run: cmake -B build -G Ninja -D CI_BUILD=OFF
+
       - if: "!cancelled()"
         name: Determine if run should be aborted
         id: abort_job
@@ -87,10 +91,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: latest
           args: --check runtime/
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: configure
-        run: cmake -B build -G Ninja -D CI_BUILD=OFF
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: luacheck
