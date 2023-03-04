@@ -1413,7 +1413,7 @@ notify({msg}, {level}, {opts})                                  *vim.notify()*
 
     Parameters: ~
       • {msg}    (string) Content of the notification to show to the user.
-      • {level}  (number|nil) One of the values from |vim.log.levels|.
+      • {level}  (integer|nil) One of the values from |vim.log.levels|.
       • {opts}   (table|nil) Optional parameters. Unused by default.
 
 notify_once({msg}, {level}, {opts})                        *vim.notify_once()*
@@ -1424,7 +1424,7 @@ notify_once({msg}, {level}, {opts})                        *vim.notify_once()*
 
     Parameters: ~
       • {msg}    (string) Content of the notification to show to the user.
-      • {level}  (number|nil) One of the values from |vim.log.levels|.
+      • {level}  (integer|nil) One of the values from |vim.log.levels|.
       • {opts}   (table|nil) Optional parameters. Unused by default.
 
     Return: ~
@@ -1448,11 +1448,11 @@ on_key({fn}, {ns_id})                                           *vim.on_key()*
                  argument. On each key press, Nvim passes the key char to
                  fn(). |i_CTRL-V| If {fn} is nil, it removes the callback for
                  the associated {ns_id}
-      • {ns_id}  number? Namespace ID. If nil or 0, generates and returns a
+      • {ns_id}  integer? Namespace ID. If nil or 0, generates and returns a
                  new |nvim_create_namespace()| id.
 
     Return: ~
-        (number) Namespace id associated with {fn}. Or count of all callbacks
+        (integer) Namespace id associated with {fn}. Or count of all callbacks
         if on_key() is called without arguments.
 
     Note:
@@ -1507,7 +1507,7 @@ region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})         *vim.region()*
     points
 
     Parameters: ~
-      • {bufnr}      (number) of buffer
+      • {bufnr}      (integer) number of buffer
       • {pos1}       integer[] (line, column) tuple marking beginning of
                      region
       • {pos2}       integer[] (line, column) tuple marking end of region
@@ -1678,8 +1678,8 @@ list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
     Parameters: ~
       • {dst}     (table) List which will be modified and appended to
       • {src}     (table) List from which values will be inserted
-      • {start}   (number|nil) Start index on src. Defaults to 1
-      • {finish}  (number|nil) Final index on src. Defaults to `#src`
+      • {start}   (integer|nil) Start index on src. Defaults to 1
+      • {finish}  (integer|nil) Final index on src. Defaults to `#src`
 
     Return: ~
         (table) dst
@@ -1693,8 +1693,8 @@ list_slice({list}, {start}, {finish})                       *vim.list_slice()*
 
     Parameters: ~
       • {list}    (list) Table
-      • {start}   (number|nil) Start range of slice
-      • {finish}  (number|nil) End range of slice
+      • {start}   (integer|nil) Start range of slice
+      • {finish}  (integer|nil) End range of slice
 
     Return: ~
         (list) Copy of table sliced from start to finish (inclusive)
@@ -1794,7 +1794,7 @@ tbl_count({t})                                               *vim.tbl_count()*
       • {t}  (table) Table
 
     Return: ~
-        (number) Number of non-nil values in table
+        (integer) Number of non-nil values in table
 
     See also: ~
         https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
