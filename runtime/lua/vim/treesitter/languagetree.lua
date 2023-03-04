@@ -399,6 +399,169 @@ local function get_range_from_metadata(node, id, metadata)
   return { node:range() }
 end
 
+---@private
+--- TODO(lewis6991): cleanup of the node_range interface
+---@param node TSNode
+---@param id integer
+---@param metadata TSMetadata
+---@return Range4[]
+local function get_node_ranges(node, id, metadata, include_children)
+  local range = get_range_from_metadata(node, id, metadata)
+
+  if include_children then
+    return { range }
+  end
+
+  local ranges = {} ---@type Range4[]
+
+  local srow, scol, erow, ecol = range[1], range[2], range[3], range[4]
+
+  for i = 0, node:named_child_count() - 1 do
+    local child = node:named_child(i)
+    local child_srow, child_scol, child_erow, child_ecol = child:range()
+    if child_srow > srow or child_scol > scol then
+      table.insert(ranges, { srow, scol, child_srow, child_scol })
+    end
+    srow = child_erow
+    scol = child_ecol
+  end
+
+  if erow > srow or ecol > scol then
+    table.insert(ranges, { srow, scol, erow, ecol })
+  end
+
+  return ranges
+end
+
+---@alias TSInjection table<string,table<integer,table>>
+
+---@private
+---@param t table<integer,TSInjection>
+---@param tree_index integer
+---@param pattern integer
+---@param lang string
+---@param combined boolean
+---@param ranges Range4[]
+local function add_injection(t, tree_index, pattern, lang, combined, ranges)
+  assert(type(lang) == 'string')
+
+  -- Each tree index should be isolated from the other nodes.
+  if not t[tree_index] then
+    t[tree_index] = {}
+  end
+
+  if not t[tree_index][lang] then
+    t[tree_index][lang] = {}
+  end
+
+  -- Key this by pattern. If combined is set to true all captures of this pattern
+  -- will be parsed by treesitter as the same "source".
+  -- If combined is false, each "region" will be parsed as a single source.
+  if not t[tree_index][lang][pattern] then
+    t[tree_index][lang][pattern] = { combined = combined, regions = {} }
+  end
+
+  table.insert(t[tree_index][lang][pattern].regions, ranges)
+end
+
+---@private
+---Get node text
+---
+---Note: `query.get_node_text` returns string|string[]|nil so use this simple alias function
+---to annotate it returns string.
+---
+---TODO(lewis6991): use [at]overload annotations on `query.get_node_text`
+---@param node TSNode
+---@param source integer|string
+---@param metadata table
+---@return string
+local function get_node_text(node, source, metadata)
+  return query.get_node_text(node, source, { metadata = metadata }) --[[@as string]]
+end
+
+---@private
+--- Extract injections according to:
+--- https://tree-sitter.github.io/tree-sitter/syntax-highlighting#language-injection
+---@param match table<integer,TSNode>
+---@param metadata table
+---@return string, boolean, Range4[]
+function LanguageTree:_get_injection(match, metadata)
+  local ranges = {} ---@type Range4[]
+  local combined = metadata['injection.combined'] ~= nil
+  local lang = metadata['injection.language'] ---@type string
+  local include_children = metadata['injection.include-children'] ~= nil
+
+  for id, node in pairs(match) do
+    local name = self._injection_query.captures[id]
+
+    -- Lang should override any other language tag
+    if name == 'injection.language' then
+      lang = get_node_text(node, self._source, metadata[id])
+    elseif name == 'injection.content' then
+      ranges = get_node_ranges(node, id, metadata, include_children)
+    end
+  end
+
+  return lang, combined, ranges
+end
+
+---@private
+---@param match table<integer,TSNode>
+---@param metadata table
+---@return string, boolean, Range4[]
+function LanguageTree:_get_injection_deprecated(match, metadata)
+  local lang = nil ---@type string
+  local ranges = {} ---@type Range4[]
+  local combined = metadata.combined ~= nil
+
+  -- Directives can configure how injections are captured as well as actual node captures.
+  -- This allows more advanced processing for determining ranges and language resolution.
+  if metadata.content then
+    local content = metadata.content ---@type any
+
+    -- Allow for captured nodes to be used
+    if type(content) == 'number' then
+      content = { match[content]:range() }
+    end
+
+    if type(content) == 'table' and #content >= 4 then
+      vim.list_extend(ranges, content)
+    end
+  end
+
+  if metadata.language then
+    lang = metadata.language ---@type string
+  end
+
+  -- You can specify the content and language together
+  -- using a tag with the language, for example
+  -- @javascript
+  for id, node in pairs(match) do
+    local name = self._injection_query.captures[id]
+
+    -- Lang should override any other language tag
+    if name == 'language' and not lang then
+      lang = get_node_text(node, self._source, metadata[id])
+    elseif name == 'combined' then
+      combined = true
+    elseif name == 'content' and #ranges == 0 then
+      table.insert(ranges, get_range_from_metadata(node, id, metadata))
+      -- Ignore any tags that start with "_"
+      -- Allows for other tags to be used in matches
+    elseif string.sub(name, 1, 1) ~= '_' then
+      if not lang then
+        lang = name
+      end
+
+      if #ranges == 0 then
+        table.insert(ranges, get_range_from_metadata(node, id, metadata))
+      end
+    end
+  end
+
+  return lang, combined, ranges
+end
+
 --- Gets language injection points by language.
 ---
 --- This is where most of the injection processing occurs.
@@ -406,13 +569,13 @@ end
 --- TODO: Allow for an offset predicate to tailor the injection range
 ---       instead of using the entire nodes range.
 ---@private
----@return table<string, integer[][]>
+---@return table<string, Range4[][]>
 function LanguageTree:_get_injections()
   if not self._injection_query then
     return {}
   end
 
-  ---@type table<integer,table<string,table<integer,table>>>
+  ---@type table<integer,TSInjection>
   local injections = {}
 
   for tree_index, tree in ipairs(self._trees) do
@@ -422,75 +585,12 @@ function LanguageTree:_get_injections()
     for pattern, match, metadata in
       self._injection_query:iter_matches(root_node, self._source, start_line, end_line + 1)
     do
-      local lang = nil ---@type string
-      local ranges = {} ---@type Range4[]
-      local combined = metadata.combined ---@type boolean
-
-      -- Directives can configure how injections are captured as well as actual node captures.
-      -- This allows more advanced processing for determining ranges and language resolution.
-      if metadata.content then
-        local content = metadata.content ---@type any
-
-        -- Allow for captured nodes to be used
-        if type(content) == 'number' then
-          content = { match[content]:range() }
-        end
-
-        if type(content) == 'table' and #content >= 4 then
-          vim.list_extend(ranges, content)
-        end
+      local lang, combined, ranges = self:_get_injection(match, metadata)
+      if not lang then
+        -- TODO(lewis6991): remove after 0.9 (#20434)
+        lang, combined, ranges = self:_get_injection_deprecated(match, metadata)
       end
-
-      if metadata.language then
-        lang = metadata.language ---@type string
-      end
-
-      -- You can specify the content and language together
-      -- using a tag with the language, for example
-      -- @javascript
-      for id, node in pairs(match) do
-        local name = self._injection_query.captures[id]
-
-        -- Lang should override any other language tag
-        if name == 'language' and not lang then
-          ---@diagnostic disable-next-line
-          lang = query.get_node_text(node, self._source, { metadata = metadata[id] })
-        elseif name == 'combined' then
-          combined = true
-        elseif name == 'content' and #ranges == 0 then
-          table.insert(ranges, get_range_from_metadata(node, id, metadata))
-          -- Ignore any tags that start with "_"
-          -- Allows for other tags to be used in matches
-        elseif string.sub(name, 1, 1) ~= '_' then
-          if not lang then
-            lang = name
-          end
-
-          if #ranges == 0 then
-            table.insert(ranges, get_range_from_metadata(node, id, metadata))
-          end
-        end
-      end
-
-      assert(type(lang) == 'string')
-
-      -- Each tree index should be isolated from the other nodes.
-      if not injections[tree_index] then
-        injections[tree_index] = {}
-      end
-
-      if not injections[tree_index][lang] then
-        injections[tree_index][lang] = {}
-      end
-
-      -- Key this by pattern. If combined is set to true all captures of this pattern
-      -- will be parsed by treesitter as the same "source".
-      -- If combined is false, each "region" will be parsed as a single source.
-      if not injections[tree_index][lang][pattern] then
-        injections[tree_index][lang][pattern] = { combined = combined, regions = {} }
-      end
-
-      table.insert(injections[tree_index][lang][pattern].regions, ranges)
+      add_injection(injections, tree_index, pattern, lang, combined, ranges)
     end
   end
 

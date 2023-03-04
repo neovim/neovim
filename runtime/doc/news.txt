@@ -196,6 +196,10 @@ The following new APIs or features were added.
 
 • Added an omnifunc implementation for lua, |vim.lua_omnifunc()|
 
+• Treesitter injection queries now use the format described at
+  https://tree-sitter.github.io/tree-sitter/syntax-highlighting#language-injection .
+  Support for the previous format will be removed in a future release.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 

@@ -407,7 +407,7 @@ predicate_handlers['vim-match?'] = predicate_handlers['match?']
 ---@field [string] integer|string
 ---@field range Range4
 
----@alias TSDirective fun(match: TSMatch, _, _, predicate: any[], metadata: TSMetadata)
+---@alias TSDirective fun(match: TSMatch, _, _, predicate: (string|integer)[], metadata: TSMetadata)
 
 -- Predicate handler receive the following arguments
 -- (match, pattern, bufnr, predicate)
@@ -419,24 +419,17 @@ predicate_handlers['vim-match?'] = predicate_handlers['match?']
 ---@type table<string,TSDirective>
 local directive_handlers = {
   ['set!'] = function(_, _, _, pred, metadata)
-    if #pred == 4 then
-      -- (#set! @capture "key" "value")
-      ---@diagnostic disable-next-line:no-unknown
-      local _, capture_id, key, value = unpack(pred)
-      ---@cast value integer|string
-      ---@cast capture_id integer
-      ---@cast key string
+    if #pred >= 3 and type(pred[2]) == 'number' then
+      -- (#set! @capture key value)
+      local capture_id, key, value = pred[2], pred[3], pred[4]
       if not metadata[capture_id] then
         metadata[capture_id] = {}
       end
       metadata[capture_id][key] = value
     else
-      ---@diagnostic disable-next-line:no-unknown
-      local _, key, value = unpack(pred)
-      ---@cast value integer|string
-      ---@cast key string
-      -- (#set! "key" "value")
-      metadata[key] = value
+      -- (#set! key value)
+      local key, value = pred[2], pred[3]
+      metadata[key] = value or true
     end
   end,
   -- Shifts the range of a node.

@@ -14,7 +14,7 @@
 ---@field child_count fun(self: TSNode): integer
 ---@field named_child_count fun(self: TSNode): integer
 ---@field child fun(self: TSNode, integer): TSNode
----@field name_child fun(self: TSNode, integer): TSNode
+---@field named_child fun(self: TSNode, integer): TSNode
 ---@field descendant_for_range fun(self: TSNode, integer, integer, integer, integer): TSNode
 ---@field named_descendant_for_range fun(self: TSNode, integer, integer, integer, integer): TSNode
 ---@field parent fun(self: TSNode): TSNode
@@ -43,10 +43,10 @@ function TSNode:_rawquery(query, captures, start, end_) end
 function TSNode:_rawquery(query, captures, start, end_) end
 
 ---@class TSParser
----@field parse fun(self: TSParser, tree, source: integer|string): TSTree, integer[]
+---@field parse fun(self: TSParser, tree, source: integer|string): TSTree, Range4[]
 ---@field reset fun(self: TSParser)
----@field included_ranges fun(self: TSParser): integer[]
----@field set_included_ranges fun(self: TSParser, ranges: integer[][])
+---@field included_ranges fun(self: TSParser): Range4[]
+---@field set_included_ranges fun(self: TSParser, ranges: Range6[])
 ---@field set_timeout fun(self: TSParser, timeout: integer)
 ---@field timeout fun(self: TSParser): integer
 
