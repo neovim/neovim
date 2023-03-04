@@ -244,6 +244,10 @@ typedef enum {
 # include "memline.c.generated.h"
 #endif
 
+#if __has_feature(address_sanitizer)
+# define ML_GET_ALLOC_LINES
+#endif
+
 /// Open a new memline for "buf".
 ///
 /// @return  FAIL for failure, OK otherwise.
@@ -535,7 +539,8 @@ void ml_close(buf_T *buf, int del_file)
     return;
   }
   mf_close(buf->b_ml.ml_mfp, del_file);       // close the .swp file
-  if (buf->b_ml.ml_line_lnum != 0 && (buf->b_ml.ml_flags & ML_LINE_DIRTY)) {
+  if (buf->b_ml.ml_line_lnum != 0
+      && (buf->b_ml.ml_flags & (ML_LINE_DIRTY | ML_ALLOCATED))) {
     xfree(buf->b_ml.ml_line_ptr);
   }
   xfree(buf->b_ml.ml_stack);
@@ -1780,7 +1785,6 @@ char *ml_get_buf(buf_T *buf, linenr_T lnum, bool will_change)
       recursive--;
     }
     ml_flush_line(buf);
-    buf->b_ml.ml_flags &= ~ML_LINE_DIRTY;
 errorret:
     STRCPY(questions, "???");
     buf->b_ml.ml_line_lnum = lnum;
@@ -1824,18 +1828,36 @@ errorret:
     char *ptr = (char *)dp + (dp->db_index[lnum - buf->b_ml.ml_locked_low] & DB_INDEX_MASK);
     buf->b_ml.ml_line_ptr = ptr;
     buf->b_ml.ml_line_lnum = lnum;
-    buf->b_ml.ml_flags &= ~ML_LINE_DIRTY;
+    buf->b_ml.ml_flags &= ~(ML_LINE_DIRTY | ML_ALLOCATED);
   }
   if (will_change) {
     buf->b_ml.ml_flags |= (ML_LOCKED_DIRTY | ML_LOCKED_POS);
+#ifdef ML_GET_ALLOC_LINES
+    if (buf->b_ml.ml_flags & ML_ALLOCATED) {
+      // can't make the change in the data block
+      buf->b_ml.ml_flags |= ML_LINE_DIRTY;
+    }
+#endif
     ml_add_deleted_len_buf(buf, buf->b_ml.ml_line_ptr, -1);
   }
 
+#ifdef ML_GET_ALLOC_LINES
+  if ((buf->b_ml.ml_flags & (ML_LINE_DIRTY | ML_ALLOCATED)) == 0) {
+    // make sure the text is in allocated memory
+    buf->b_ml.ml_line_ptr = xstrdup(buf->b_ml.ml_line_ptr);
+    buf->b_ml.ml_flags |= ML_ALLOCATED;
+    if (will_change) {
+      // can't make the change in the data block
+      buf->b_ml.ml_flags |= ML_LINE_DIRTY;
+    }
+  }
+#endif
   return buf->b_ml.ml_line_ptr;
 }
 
 /// Check if a line that was just obtained by a call to ml_get
 /// is in allocated memory.
+/// This ignores ML_ALLOCATED to get the same behavior as without ML_GET_ALLOC_LINES.
 int ml_line_alloced(void)
 {
   return curbuf->b_ml.ml_flags & ML_LINE_DIRTY;
@@ -2352,22 +2374,21 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy)
     return FAIL;
   }
 
-  bool readlen = true;
-
   if (copy) {
     line = xstrdup(line);
   }
-  if (buf->b_ml.ml_line_lnum != lnum) {  // other line buffered
-    ml_flush_line(buf);  // flush it
-  } else if (buf->b_ml.ml_flags & ML_LINE_DIRTY) {  // same line allocated
-    ml_add_deleted_len_buf(buf, buf->b_ml.ml_line_ptr, -1);
-    readlen = false;  // already added the length
 
-    xfree(buf->b_ml.ml_line_ptr);  // free it
+  if (buf->b_ml.ml_line_lnum != lnum) {
+    // another line is buffered, flush it
+    ml_flush_line(buf);
   }
 
-  if (readlen && kv_size(buf->update_callbacks)) {
+  if (kv_size(buf->update_callbacks)) {
     ml_add_deleted_len_buf(buf, ml_get_buf(buf, lnum, false), -1);
+  }
+
+  if (buf->b_ml.ml_flags & (ML_LINE_DIRTY | ML_ALLOCATED)) {
+    xfree(buf->b_ml.ml_line_ptr);  // free allocated line
   }
 
   buf->b_ml.ml_line_ptr = line;
@@ -2692,8 +2713,11 @@ static void ml_flush_line(buf_T *buf)
     xfree(new_line);
 
     entered = false;
+  } else if (buf->b_ml.ml_flags & ML_ALLOCATED) {
+    xfree(buf->b_ml.ml_line_ptr);
   }
 
+  buf->b_ml.ml_flags &= ~(ML_LINE_DIRTY | ML_ALLOCATED);
   buf->b_ml.ml_line_lnum = 0;
   buf->b_ml.ml_line_offset = 0;
 }

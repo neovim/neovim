@@ -1507,6 +1507,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         if (statuscol.draw) {
           if (statuscol.textp == NULL) {
             get_statuscol_str(wp, lnum, wlv.row - startrow - wlv.filler_lines, &statuscol);
+            if (!end_fill) {
+              // Get the line again as evaluating 'statuscolumn' may free it.
+              line = ml_get_buf(wp->w_buffer, lnum, false);
+              ptr = line + v;
+            }
             if (wp->w_redr_statuscol) {
               break;
             }
@@ -1585,6 +1590,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       wlv.c_extra = NUL;
       wlv.c_final = NUL;
       wlv.p_extra[wlv.n_extra] = NUL;
+
+      // Get the line again as evaluating 'foldtext' may free it.
+      line = ml_get_buf(wp->w_buffer, lnum, false);
+      ptr = line + v;
     }
 
     if (wlv.draw_state == WL_LINE
