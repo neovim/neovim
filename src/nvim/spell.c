@@ -444,7 +444,7 @@ static void find_word(matchinf_T *mip, int mode)
     // Check for word with matching case in keep-case tree.
     ptr = mip->mi_word;
     flen = 9999;                    // no case folding, always enough bytes
-    byts = (uint8_t *)slang->sl_kbyts;
+    byts = slang->sl_kbyts;
     idxs = slang->sl_kidxs;
 
     if (mode == FIND_KEEPCOMPOUND) {
@@ -455,7 +455,7 @@ static void find_word(matchinf_T *mip, int mode)
     // Check for case-folded in case-folded tree.
     ptr = mip->mi_fword;
     flen = mip->mi_fwordlen;        // available case-folded bytes
-    byts = (uint8_t *)slang->sl_fbyts;
+    byts = slang->sl_fbyts;
     idxs = slang->sl_fidxs;
 
     if (mode == FIND_PREFIX) {
@@ -1062,7 +1062,7 @@ static void find_prefix(matchinf_T *mip, int mode)
   int wlen = 0;
   slang_T *slang = mip->mi_lp->lp_slang;
 
-  uint8_t *byts = (uint8_t *)slang->sl_pbyts;
+  uint8_t *byts = slang->sl_pbyts;
   if (byts == NULL) {
     return;                     // array is empty
   }
@@ -3194,7 +3194,7 @@ void spell_dump_compl(char *pat, int ic, Direction *dir, int dumpflags_arg)
   int curi[MAXWLEN];
   char word[MAXWLEN];
   int c;
-  char *byts;
+  uint8_t *byts;
   idx_T *idxs;
   linenr_T lnum = 0;
   int depth;
@@ -3296,7 +3296,7 @@ void spell_dump_compl(char *pat, int ic, Direction *dir, int dumpflags_arg)
           // Do one more byte at this node.
           n = arridx[depth] + curi[depth];
           curi[depth]++;
-          c = (uint8_t)byts[n];
+          c = byts[n];
           if (c == 0 || depth >= MAXWLEN - 1) {
             // End of word or reached maximum length, deal with the
             // word.
@@ -3462,7 +3462,7 @@ static linenr_T dump_prefixes(slang_T *slang, char *word, char *pat, Direction *
     has_word_up = true;
   }
 
-  char *byts = slang->sl_pbyts;
+  uint8_t *byts = slang->sl_pbyts;
   idx_T *idxs = slang->sl_pidxs;
   if (byts != NULL) {           // array not is empty
     // Loop over all prefixes, building them byte-by-byte in prefix[].
@@ -3472,7 +3472,7 @@ static linenr_T dump_prefixes(slang_T *slang, char *word, char *pat, Direction *
     curi[0] = 1;
     while (depth >= 0 && !got_int) {
       int n = arridx[depth];
-      int len = (uint8_t)byts[n];
+      int len = byts[n];
       if (curi[depth] > len) {
         // Done all bytes at this node, go up one level.
         depth--;
@@ -3481,7 +3481,7 @@ static linenr_T dump_prefixes(slang_T *slang, char *word, char *pat, Direction *
         // Do one more byte at this node.
         n += curi[depth];
         curi[depth]++;
-        c = (uint8_t)byts[n];
+        c = byts[n];
         if (c == 0) {
           // End of prefix, find out how many IDs there are.
           int i;
