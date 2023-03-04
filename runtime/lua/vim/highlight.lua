@@ -36,12 +36,12 @@ end
 
 --- Highlight range between two positions
 ---
----@param bufnr number of buffer to apply highlighting to
----@param ns namespace to add highlight to
----@param higroup highlight group to use for highlighting
----@param start first position (tuple {line,col})
----@param finish second position (tuple {line,col})
----@param opts table with options:
+---@param bufnr integer Buffer number to apply highlighting to
+---@param ns integer Namespace to add highlight to
+---@param higroup string Highlight group to use for highlighting
+---@param start { [1]: integer, [2]: integer } Start position {line, col}
+---@param finish { [1]: integer, [2]: integer } Finish position {line, col}
+---@param opts table|nil Optional parameters
 --             - regtype type of range (see |setreg()|, default charwise)
 --             - inclusive boolean indicating whether the range is end-inclusive (default false)
 --             - priority number indicating priority of highlight (default priorities.user)
@@ -84,7 +84,7 @@ local yank_timer
 --- customize conditions (here: do not highlight a visual selection) via
 ---   au TextYankPost * lua vim.highlight.on_yank {on_visual=false}
 ---
--- @param opts table with options controlling the highlight:
+-- @param opts table|nil Optional parameters
 --              - higroup   highlight group for yanked region (default "IncSearch")
 --              - timeout   time in ms before highlight is cleared (default 150)
 --              - on_macro  highlight when executing macro (default false)
