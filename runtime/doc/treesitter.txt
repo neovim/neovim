@@ -748,7 +748,7 @@ add_directive({name}, {handler}, {force})
     Parameters: ~
       • {name}     (string) Name of the directive, without leading #
       • {handler}  function(match:table<string,|TSNode|>, pattern:string,
-                   bufnr:number, predicate:string[], metadata:table)
+                   bufnr:integer, predicate:string[], metadata:table)
                    • match: see |treesitter-query|
                      • node-level data are accessible via `match[capture_id]`
 
@@ -765,7 +765,7 @@ add_predicate({name}, {handler}, {force})
     Parameters: ~
       • {name}     (string) Name of the predicate, without leading #
       • {handler}  function(match:table<string,|TSNode|>, pattern:string,
-                   bufnr:number, predicate:string[])
+                   bufnr:integer, predicate:string[])
                    • see |vim.treesitter.add_directive()| for argument
                      meanings
       • {force}    (boolean|nil)
@@ -776,7 +776,7 @@ get_node_text({node}, {source}, {opts})
 
     Parameters: ~
       • {node}    |TSNode|
-      • {source}  (number|string) Buffer or string from which the {node} is
+      • {source}  (integer|string) Buffer or string from which the {node} is
                   extracted
       • {opts}    (table|nil) Optional parameters.
                   • concat: (boolean) Concatenate result in a string (default
@@ -872,8 +872,8 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
       • {node}    |TSNode| under which the search will occur
       • {source}  (integer|string) Source buffer or string to extract text
                   from
-      • {start}   (number) Starting line for the search
-      • {stop}    (number) Stopping line for the search (end-exclusive)
+      • {start}   (integer) Starting line for the search
+      • {stop}    (integer) Stopping line for the search (end-exclusive)
       • {self}
 
     Return: ~
