@@ -10,14 +10,7 @@ else()
   set(MSGPACK_VERSION_STRING)
 endif()
 
-if(MSVC)
-  # The import library for the msgpack DLL has a different name
-  list(APPEND MSGPACK_NAMES msgpackc_import)
-else()
-  list(APPEND MSGPACK_NAMES msgpackc msgpack)
-endif()
-
-find_library(MSGPACK_LIBRARY NAMES ${MSGPACK_NAMES}
+find_library(MSGPACK_LIBRARY NAMES msgpackc msgpack msgpackc_import msgpack-c
   NAMES_PER_DIR)
 
 mark_as_advanced(MSGPACK_INCLUDE_DIR MSGPACK_LIBRARY)
