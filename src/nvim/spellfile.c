@@ -1079,7 +1079,7 @@ static int read_charflags_section(FILE *fd)
 
   // Set the word-char flags and fill SPELL_ISUPPER() table.
   if (flags != NULL && fol != NULL) {
-    set_spell_charflags((char_u *)flags, flagslen, (char *)fol);
+    set_spell_charflags(flags, flagslen, (char *)fol);
   }
 
   xfree(flags);
@@ -1314,7 +1314,7 @@ static int read_words_section(FILE *fd, slang_T *lp, int len)
   int done = 0;
   int i;
   int c;
-  char_u word[MAXWLEN];
+  uint8_t word[MAXWLEN];
 
   while (done < len) {
     // Read one word at a time.
@@ -1323,7 +1323,7 @@ static int read_words_section(FILE *fd, slang_T *lp, int len)
       if (c == EOF) {
         return SP_TRUNCERROR;
       }
-      word[i] = (char_u)c;
+      word[i] = (uint8_t)c;
       if (word[i] == NUL) {
         break;
       }
@@ -1480,7 +1480,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
     // Add all flags to "sl_compallflags".
     if (vim_strchr("?*+[]/", c) == NULL
         && !byte_in_str(slang->sl_compallflags, c)) {
-      *ap++ = (char_u)c;
+      *ap++ = (uint8_t)c;
       *ap = NUL;
     }
 
@@ -1493,7 +1493,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
         atstart = 0;
       } else {
         if (!byte_in_str(slang->sl_compstartflags, c)) {
-          *cp++ = (char_u)c;
+          *cp++ = (uint8_t)c;
           *cp = NUL;
         }
         if (atstart == 1) {
@@ -1508,7 +1508,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
         XFREE_CLEAR(slang->sl_comprules);
         crp = NULL;
       } else {
-        *crp++ = (char_u)c;
+        *crp++ = (uint8_t)c;
       }
     }
 
@@ -1709,7 +1709,7 @@ static int spell_read_tree(FILE *fd, char **bytsp, long *bytsp_len, idx_T **idxs
   *idxsp = ip;
 
   // Recursively read the tree and store it in the array.
-  idx = read_tree_node(fd, (char_u *)bp, ip, (int)len, 0, prefixtree, prefixcnt);
+  idx = read_tree_node(fd, bp, ip, (int)len, 0, prefixtree, prefixcnt);
   if (idx < 0) {
     return idx;
   }
@@ -1729,9 +1729,10 @@ static int spell_read_tree(FILE *fd, char **bytsp, long *bytsp_len, idx_T **idxs
 /// @param startidx  current index in "byts" and "idxs"
 /// @param prefixtree  true for reading PREFIXTREE
 /// @param maxprefcondnr  maximum for <prefcondnr>
-static idx_T read_tree_node(FILE *fd, char_u *byts, idx_T *idxs, int maxidx, idx_T startidx,
+static idx_T read_tree_node(FILE *fd, char *byts_in, idx_T *idxs, int maxidx, idx_T startidx,
                             bool prefixtree, int maxprefcondnr)
 {
+  uint8_t *byts = (uint8_t *)byts_in;
   int len;
   int n;
   idx_T idx = startidx;
@@ -1746,7 +1747,7 @@ static idx_T read_tree_node(FILE *fd, char_u *byts, idx_T *idxs, int maxidx, idx
   if (startidx + len >= maxidx) {
     return SP_FORMERROR;
   }
-  byts[idx++] = (char_u)len;
+  byts[idx++] = (uint8_t)len;
 
   // Read the byte values, flag/region bytes and shared indexes.
   for (int i = 1; i <= len; i++) {
@@ -1806,7 +1807,7 @@ static idx_T read_tree_node(FILE *fd, char_u *byts, idx_T *idxs, int maxidx, idx
         c = getc(fd);                                   // <xbyte>
       }
     }
-    byts[idx++] = (char_u)c;
+    byts[idx++] = (uint8_t)c;
   }
 
   // Recursively read the children for non-shared siblings.
@@ -1818,7 +1819,7 @@ static idx_T read_tree_node(FILE *fd, char_u *byts, idx_T *idxs, int maxidx, idx
         idxs[startidx + i] &= ~SHARED_MASK;
       } else {
         idxs[startidx + i] = idx;
-        idx = read_tree_node(fd, byts, idxs, maxidx, idx,
+        idx = read_tree_node(fd, (char *)byts, idxs, maxidx, idx,
                              prefixtree, maxprefcondnr);
         if (idx < 0) {
           break;
@@ -2783,11 +2784,11 @@ static void aff_process_flags(afffile_T *affile, affentry_T *entry)
   if (entry->ae_flags != NULL
       && (affile->af_compforbid != 0 || affile->af_comppermit != 0)) {
     for (p = entry->ae_flags; *p != NUL;) {
-      char_u *prevp = (char_u *)p;
+      char *prevp = p;
       unsigned flag = get_affitem(affile->af_flagtype, &p);
       if (flag == affile->af_comppermit || flag == affile->af_compforbid) {
         STRMOVE(prevp, p);
-        p = (char *)prevp;
+        p = prevp;
         if (flag == affile->af_comppermit) {
           entry->ae_comppermit = true;
         } else {
@@ -2894,12 +2895,12 @@ static void process_compflags(spellinfo_T *spin, afffile_T *aff, char *compflags
     STRCAT(p, "/");
   }
   spin->si_compflags = p;
-  char_u *tp = (char_u *)p + strlen(p);
+  uint8_t *tp = (uint8_t *)p + strlen(p);
 
   for (p = compflags; *p != NUL;) {
     if (vim_strchr("/?*+[]", (uint8_t)(*p)) != NULL) {
       // Copy non-flag characters directly.
-      *tp++ = (char_u)(*p++);
+      *tp++ = (uint8_t)(*p++);
     } else {
       // First get the flag number, also checks validity.
       prevp = p;
@@ -3640,7 +3641,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char *fname)
   char rline[MAXLINELEN];
   char *line;
   char *pc = NULL;
-  char_u *p;
+  char *p;
   int l;
   int retval = OK;
   bool did_word = false;
@@ -3748,7 +3749,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char *fname)
     regionmask = spin->si_region;
 
     // Check for flags and region after a slash.
-    p = (char_u *)vim_strchr(line, '/');
+    p = vim_strchr(line, '/');
     if (p != NULL) {
       *p++ = NUL;
       while (*p != NUL) {
@@ -3758,13 +3759,13 @@ static int spell_read_wordfile(spellinfo_T *spin, char *fname)
           flags |= WF_BANNED;
         } else if (*p == '?') {                  // Rare word.
           flags |= WF_RARE;
-        } else if (ascii_isdigit(*p)) {              // region number(s)
+        } else if (ascii_isdigit((uint8_t)(*p))) {              // region number(s)
           if ((flags & WF_REGION) == 0) {           // first one
             regionmask = 0;
           }
           flags |= WF_REGION;
 
-          l = *p - '0';
+          l = (uint8_t)(*p) - '0';
           if (l == 0 || l > spin->si_region_count) {
             smsg(_("Invalid region nr in %s line %ld: %s"),
                  fname, lnum, p);
@@ -3817,7 +3818,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char *fname)
 static void *getroom(spellinfo_T *spin, size_t len, bool align)
   FUNC_ATTR_NONNULL_RET
 {
-  char_u *p;
+  char *p;
   sblock_T *bl = spin->si_blocks;
 
   assert(len <= SBLOCKSIZE);
@@ -3837,7 +3838,7 @@ static void *getroom(spellinfo_T *spin, size_t len, bool align)
     spin->si_blocks_cnt++;
   }
 
-  p = bl->sb_data + bl->sb_used;
+  p = (char *)bl->sb_data + bl->sb_used;
   bl->sb_used += (int)len;
 
   return p;
@@ -3876,7 +3877,7 @@ static wordnode_T *wordtree_alloc(spellinfo_T *spin)
 /// Control characters and trailing '/' are invalid.  Space is OK.
 static bool valid_spell_word(const char *word, const char *end)
 {
-  if (!utf_valid_string((char_u *)word, (char_u *)end)) {
+  if (!utf_valid_string(word, end)) {
     return false;
   }
   for (const char *p = word; *p != NUL && p < end; p += utfc_ptr2len(p)) {
@@ -3913,7 +3914,7 @@ static int store_word(spellinfo_T *spin, char *word, int flags, int region, cons
   }
 
   (void)spell_casefold(curwin, word, len, foldword, MAXWLEN);
-  for (const char_u *p = (char_u *)pfxlist; res == OK; p++) {
+  for (const char *p = pfxlist; res == OK; p++) {
     if (!need_affix || (p != NULL && *p != NUL)) {
       res = tree_add_word(spin, (char_u *)foldword, spin->si_foldroot, ct | flags,
                           region, p == NULL ? 0 : *p);
@@ -3925,7 +3926,7 @@ static int store_word(spellinfo_T *spin, char *word, int flags, int region, cons
   spin->si_foldwcount++;
 
   if (res == OK && (ct == WF_KEEPCAP || (flags & WF_KEEPCAP))) {
-    for (const char_u *p = (char_u *)pfxlist; res == OK; p++) {
+    for (const char *p = pfxlist; res == OK; p++) {
       if (!need_affix || (p != NULL && *p != NUL)) {
         res = tree_add_word(spin, (char_u *)word, spin->si_keeproot, flags,
                             region, p == NULL ? 0 : *p);
@@ -5727,8 +5728,9 @@ static void init_spellfile(void)
 /// Set the spell character tables from strings in the .spl file.
 ///
 /// @param cnt  length of "flags"
-static void set_spell_charflags(const char_u *flags, int cnt, char *fol)
+static void set_spell_charflags(const char *flags_in, int cnt, char *fol)
 {
+  const uint8_t *flags = (uint8_t *)flags_in;
   // We build the new tables here first, so that we can compare with the
   // previous one.
   spelltab_T new_st;
@@ -5745,9 +5747,9 @@ static void set_spell_charflags(const char_u *flags, int cnt, char *fol)
 
     if (*p != NUL) {
       c = mb_ptr2char_adv((const char **)&p);
-      new_st.st_fold[i + 128] = (char_u)c;
+      new_st.st_fold[i + 128] = (uint8_t)c;
       if (i + 128 != c && new_st.st_isu[i + 128] && c < 256) {
-        new_st.st_upper[c] = (char_u)(i + 128);
+        new_st.st_upper[c] = (uint8_t)(i + 128);
       }
     }
   }

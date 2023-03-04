@@ -2780,7 +2780,7 @@ static bool echeck_abbr(int c)
 // that the NL replaced.  The extra one stores the characters after the cursor
 // that were deleted (always white space).
 
-static char_u *replace_stack = NULL;
+static uint8_t *replace_stack = NULL;
 static ssize_t replace_stack_nr = 0;           // next entry in replace stack
 static ssize_t replace_stack_len = 0;          // max. number of entries
 
@@ -2801,11 +2801,11 @@ void replace_push(int c)
     replace_stack_len += 50;
     replace_stack = xrealloc(replace_stack, (size_t)replace_stack_len);
   }
-  char_u *p = replace_stack + replace_stack_nr - replace_offset;
+  uint8_t *p = replace_stack + replace_stack_nr - replace_offset;
   if (replace_offset) {
     memmove(p + 1, p, (size_t)replace_offset);
   }
-  *p = (char_u)c;
+  *p = (uint8_t)c;
   replace_stack_nr++;
 }
 
@@ -2868,13 +2868,13 @@ static void replace_pop_ins(void)
 static void mb_replace_pop_ins(int cc)
 {
   int n;
-  char_u buf[MB_MAXBYTES + 1];
+  uint8_t buf[MB_MAXBYTES + 1];
   int i;
 
   if ((n = MB_BYTE2LEN(cc)) > 1) {
-    buf[0] = (char_u)cc;
+    buf[0] = (uint8_t)cc;
     for (i = 1; i < n; i++) {
-      buf[i] = (char_u)replace_pop();
+      buf[i] = (uint8_t)replace_pop();
     }
     ins_bytes_len((char *)buf, (size_t)n);
   } else {
@@ -2893,10 +2893,10 @@ static void mb_replace_pop_ins(int cc)
       break;
     }
 
-    buf[0] = (char_u)c;
+    buf[0] = (uint8_t)c;
     assert(n > 1);
     for (i = 1; i < n; i++) {
-      buf[i] = (char_u)replace_pop();
+      buf[i] = (uint8_t)replace_pop();
     }
     if (utf_iscomposing(utf_ptr2char((char *)buf))) {
       ins_bytes_len((char *)buf, (size_t)n);
@@ -3113,7 +3113,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
           return true;
         }
 
-        if (keytyped == get_special_key_code((char_u *)look + 1)) {
+        if (keytyped == get_special_key_code(look + 1)) {
           return true;
         }
       }

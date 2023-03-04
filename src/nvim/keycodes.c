@@ -723,7 +723,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
         if (modifiers != 0 && last_dash[l + 1] == '>') {
           key = utf_ptr2char(last_dash + off);
         } else {
-          key = get_special_key_code((char_u *)last_dash + off);
+          key = get_special_key_code(last_dash + off);
           if (!(flags & FSK_KEEP_X_KEY)) {
             key = handle_x_keys(key);
           }
@@ -822,18 +822,18 @@ int find_special_key_in_table(int c)
 ///                   a termcap name.
 ///
 /// @return Key code or 0 if not found.
-int get_special_key_code(const char_u *name)
+int get_special_key_code(const char *name)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   for (int i = 0; key_names_table[i].name != NULL; i++) {
     const char *const table_name = key_names_table[i].name;
     int j;
-    for (j = 0; ascii_isident(name[j]) && table_name[j] != NUL; j++) {
-      if (TOLOWER_ASC(table_name[j]) != TOLOWER_ASC(name[j])) {
+    for (j = 0; ascii_isident((uint8_t)name[j]) && table_name[j] != NUL; j++) {
+      if (TOLOWER_ASC(table_name[j]) != TOLOWER_ASC((uint8_t)name[j])) {
         break;
       }
     }
-    if (!ascii_isident(name[j]) && table_name[j] == NUL) {
+    if (!ascii_isident((uint8_t)name[j]) && table_name[j] == NUL) {
       return key_names_table[i].key;
     }
   }

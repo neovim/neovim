@@ -737,7 +737,7 @@ static void find_word(matchinf_T *mip, int mode)
         // If the word ends the sequence of compound flags of the
         // words must match with one of the COMPOUNDRULE items and
         // the number of syllables must not be too large.
-        mip->mi_compflags[mip->mi_complen] = (char_u)((unsigned)flags >> 24);
+        mip->mi_compflags[mip->mi_complen] = (uint8_t)((unsigned)flags >> 24);
         mip->mi_compflags[mip->mi_complen + 1] = NUL;
         if (word_ends) {
           char fword[MAXWLEN] = { 0 };
@@ -2354,8 +2354,8 @@ void clear_spell_chartab(spelltab_T *sp)
   CLEAR_FIELD(sp->st_isu);
 
   for (int i = 0; i < 256; i++) {
-    sp->st_fold[i] = (char_u)i;
-    sp->st_upper[i] = (char_u)i;
+    sp->st_fold[i] = (uint8_t)i;
+    sp->st_upper[i] = (uint8_t)i;
   }
 
   // We include digits. A word shouldn't start with a digit, but handling
@@ -2366,11 +2366,11 @@ void clear_spell_chartab(spelltab_T *sp)
   for (int i = 'A'; i <= 'Z'; i++) {
     sp->st_isw[i] = true;
     sp->st_isu[i] = true;
-    sp->st_fold[i] = (char_u)(i + 0x20);
+    sp->st_fold[i] = (uint8_t)(i + 0x20);
   }
   for (int i = 'a'; i <= 'z'; i++) {
     sp->st_isw[i] = true;
-    sp->st_upper[i] = (char_u)(i - 0x20);
+    sp->st_upper[i] = (uint8_t)(i - 0x20);
   }
 }
 
@@ -2391,8 +2391,8 @@ void init_spell_chartab(void)
     // The folded/upper-cased value is different between latin1 and
     // utf8 for 0xb5, causing E763 for no good reason.  Use the latin1
     // value for utf-8 to avoid this.
-    spelltab.st_fold[i] = (f < 256) ? (char_u)f : (char_u)i;
-    spelltab.st_upper[i] = (u < 256) ? (char_u)u : (char_u)i;
+    spelltab.st_fold[i] = (f < 256) ? (uint8_t)f : (uint8_t)i;
+    spelltab.st_upper[i] = (u < 256) ? (uint8_t)u : (uint8_t)i;
   }
 }
 

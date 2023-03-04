@@ -1186,7 +1186,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
 /// used only after other typeahead has been processed.
 static void put_reedit_in_typebuf(int silent)
 {
-  char_u buf[3];
+  uint8_t buf[3];
 
   if (restart_edit == NUL) {
     return;
@@ -1197,7 +1197,7 @@ static void put_reedit_in_typebuf(int silent)
     buf[1] = 'R';
     buf[2] = NUL;
   } else {
-    buf[0] = (char_u)(restart_edit == 'I' ? 'i' : restart_edit);
+    buf[0] = (uint8_t)(restart_edit == 'I' ? 'i' : restart_edit);
     buf[1] = NUL;
   }
   if (ins_typebuf((char *)buf, REMAP_NONE, 0, true, silent) == OK) {

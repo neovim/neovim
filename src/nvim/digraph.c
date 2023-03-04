@@ -41,8 +41,8 @@
 typedef int result_T;
 
 typedef struct digraph {
-  char_u char1;
-  char_u char2;
+  uint8_t char1;
+  uint8_t char2;
   result_T result;
 } digr_T;
 
@@ -1493,7 +1493,7 @@ char *get_digraph_for_char(int val_arg)
 {
   const int val = val_arg;
   const digr_T *dp;
-  static char_u r[3];
+  static char r[3];
 
   for (int use_defaults = 0; use_defaults <= 1; use_defaults++) {
     if (use_defaults == 0) {
@@ -1503,10 +1503,10 @@ char *get_digraph_for_char(int val_arg)
     }
     for (int i = 0; use_defaults ? dp->char1 != NUL : i < user_digraphs.ga_len; i++) {
       if (dp->result == val) {
-        r[0] = dp->char1;
-        r[1] = dp->char2;
+        r[0] = (char)dp->char1;
+        r[1] = (char)dp->char2;
         r[2] = NUL;
-        return (char *)r;
+        return r;
       }
       dp++;
     }
@@ -1645,8 +1645,8 @@ static void registerdigraph(int char1, int char2, int n)
 
   // Add a new digraph to the table.
   dp = GA_APPEND_VIA_PTR(digr_T, &user_digraphs);
-  dp->char1 = (char_u)char1;
-  dp->char2 = (char_u)char2;
+  dp->char1 = (uint8_t)char1;
+  dp->char2 = (uint8_t)char2;
   dp->result = n;
 }
 
