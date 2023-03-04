@@ -112,15 +112,20 @@ void decor_remove(buf_T *buf, int row, int row2, Decoration *decor)
   decor_free(decor);
 }
 
+void decor_clear(Decoration *decor)
+{
+  clear_virttext(&decor->virt_text);
+  for (size_t i = 0; i < kv_size(decor->virt_lines); i++) {
+    clear_virttext(&kv_A(decor->virt_lines, i).line);
+  }
+  kv_destroy(decor->virt_lines);
+  xfree(decor->sign_text);
+}
+
 void decor_free(Decoration *decor)
 {
   if (decor) {
-    clear_virttext(&decor->virt_text);
-    for (size_t i = 0; i < kv_size(decor->virt_lines); i++) {
-      clear_virttext(&kv_A(decor->virt_lines, i).line);
-    }
-    kv_destroy(decor->virt_lines);
-    xfree(decor->sign_text);
+    decor_clear(decor);
     xfree(decor);
   }
 }
