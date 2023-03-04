@@ -838,9 +838,8 @@ endOK:
 
 // Fill in the wordcount fields for a trie.
 // Returns the total number of words.
-static void tree_count_words(const char *byts_in, idx_T *idxs)
+static void tree_count_words(const uint8_t *byts, idx_T *idxs)
 {
-  const uint8_t *byts= (const uint8_t *)byts_in;
   int depth;
   idx_T arridx[MAXWLEN];
   int curi[MAXWLEN];
@@ -1675,12 +1674,12 @@ static int *mb_str2wide(char *s)
 /// @param prefixcnt  when "prefixtree" is true: prefix count
 ///
 /// @return  zero when OK, SP_ value for an error.
-static int spell_read_tree(FILE *fd, char **bytsp, long *bytsp_len, idx_T **idxsp, bool prefixtree,
-                           int prefixcnt)
+static int spell_read_tree(FILE *fd, uint8_t **bytsp, long *bytsp_len, idx_T **idxsp,
+                           bool prefixtree, int prefixcnt)
   FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
   int idx;
-  char *bp;
+  uint8_t *bp;
   idx_T *ip;
 
   // The tree size was computed when writing the file, so that we can
@@ -1729,10 +1728,9 @@ static int spell_read_tree(FILE *fd, char **bytsp, long *bytsp_len, idx_T **idxs
 /// @param startidx  current index in "byts" and "idxs"
 /// @param prefixtree  true for reading PREFIXTREE
 /// @param maxprefcondnr  maximum for <prefcondnr>
-static idx_T read_tree_node(FILE *fd, char *byts_in, idx_T *idxs, int maxidx, idx_T startidx,
+static idx_T read_tree_node(FILE *fd, uint8_t *byts, idx_T *idxs, int maxidx, idx_T startidx,
                             bool prefixtree, int maxprefcondnr)
 {
-  uint8_t *byts = (uint8_t *)byts_in;
   int len;
   int n;
   idx_T idx = startidx;
@@ -1819,8 +1817,7 @@ static idx_T read_tree_node(FILE *fd, char *byts_in, idx_T *idxs, int maxidx, id
         idxs[startidx + i] &= ~SHARED_MASK;
       } else {
         idxs[startidx + i] = idx;
-        idx = read_tree_node(fd, (char *)byts, idxs, maxidx, idx,
-                             prefixtree, maxprefcondnr);
+        idx = read_tree_node(fd, byts, idxs, maxidx, idx, prefixtree, maxprefcondnr);
         if (idx < 0) {
           break;
         }
@@ -4955,7 +4952,7 @@ theend:
 // Build the soundfold trie for language "slang".
 static int sug_filltree(spellinfo_T *spin, slang_T *slang)
 {
-  char_u *byts;
+  uint8_t *byts;
   idx_T *idxs;
   int depth;
   idx_T arridx[MAXWLEN];
@@ -4975,7 +4972,7 @@ static int sug_filltree(spellinfo_T *spin, slang_T *slang)
 
   // Go through the whole case-folded tree, soundfold each word and put it
   // in the trie.
-  byts = (char_u *)slang->sl_fbyts;
+  byts = slang->sl_fbyts;
   idxs = slang->sl_fidxs;
 
   arridx[0] = 0;

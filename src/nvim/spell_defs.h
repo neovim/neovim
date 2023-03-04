@@ -119,12 +119,12 @@ struct slang_S {
   char *sl_fname;           // name of .spl file
   bool sl_add;              // true if it's a .add file.
 
-  char *sl_fbyts;           // case-folded word bytes
+  uint8_t *sl_fbyts;        // case-folded word bytes
   long sl_fbyts_len;        // length of sl_fbyts
   idx_T *sl_fidxs;          // case-folded word indexes
-  char *sl_kbyts;           // keep-case word bytes
+  uint8_t *sl_kbyts;        // keep-case word bytes
   idx_T *sl_kidxs;          // keep-case word indexes
-  char *sl_pbyts;           // prefix tree word bytes
+  uint8_t *sl_pbyts;        // prefix tree word bytes
   idx_T *sl_pidxs;          // prefix tree word indexes
 
   char *sl_info;            // infotext string or NULL
@@ -172,7 +172,7 @@ struct slang_S {
 
   // Info from the .sug file.  Loaded on demand.
   time_t sl_sugtime;            // timestamp for .sug file
-  char *sl_sbyts;         // soundfolded word bytes
+  uint8_t *sl_sbyts;      // soundfolded word bytes
   idx_T *sl_sidxs;        // soundfolded word indexes
   buf_T *sl_sugbuf;       // buffer with word number table
   bool sl_sugloaded;            // true when .sug file was loaded or failed to

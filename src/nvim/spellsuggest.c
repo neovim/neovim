@@ -1181,7 +1181,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
 
   if (soundfold) {
     // Going through the soundfold tree.
-    byts = fbyts = (uint8_t *)slang->sl_sbyts;
+    byts = fbyts = slang->sl_sbyts;
     idxs = fidxs = slang->sl_sidxs;
     pbyts = NULL;
     pidxs = NULL;
@@ -1190,9 +1190,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
   } else {
     // When there are postponed prefixes we need to use these first.  At
     // the end of the prefix we continue in the case-fold tree.
-    fbyts = (uint8_t *)slang->sl_fbyts;
+    fbyts = slang->sl_fbyts;
     fidxs = slang->sl_fidxs;
-    pbyts = (uint8_t *)slang->sl_pbyts;
+    pbyts = slang->sl_pbyts;
     pidxs = slang->sl_pidxs;
     if (pbyts != NULL) {
       byts = pbyts;
@@ -2381,7 +2381,7 @@ static void find_keepcap_word(slang_T *slang, char *fword, char *kword)
   int c;
   idx_T lo, hi, m;
   char *p;
-  uint8_t *byts = (uint8_t *)slang->sl_kbyts;      // array with bytes of the words
+  uint8_t *byts = slang->sl_kbyts;      // array with bytes of the words
   idx_T *idxs = slang->sl_kidxs;      // array with indexes
 
   if (byts == NULL) {
@@ -2824,7 +2824,7 @@ static void add_sound_suggest(suginfo_T *su, char *goodword, int score, langp_T 
     // previous wordnr.
     orgnr += bytes2offset(&nrline);
 
-    byts = (uint8_t *)slang->sl_fbyts;
+    byts = slang->sl_fbyts;
     idxs = slang->sl_fidxs;
 
     // Lookup the word "orgnr" one of the two tries.
@@ -2957,7 +2957,7 @@ static int soundfold_find(slang_T *slang, char *word)
   uint8_t *ptr = (uint8_t *)word;
   int wordnr = 0;
 
-  uint8_t *byts = (uint8_t *)slang->sl_sbyts;
+  uint8_t *byts = slang->sl_sbyts;
   idx_T *idxs = slang->sl_sidxs;
 
   for (;;) {
