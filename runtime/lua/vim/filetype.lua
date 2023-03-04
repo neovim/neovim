@@ -28,9 +28,9 @@ end
 --- If only start_lnum is specified, return a single line as a string.
 --- If both start_lnum and end_lnum are omitted, return all lines from the buffer.
 ---
----@param bufnr number|nil The buffer to get the lines from
----@param start_lnum number|nil The line number of the first line (inclusive, 1-based)
----@param end_lnum number|nil The line number of the last line (inclusive, 1-based)
+---@param bufnr integer|nil The buffer to get the lines from
+---@param start_lnum integer|nil The line number of the first line (inclusive, 1-based)
+---@param end_lnum integer|nil The line number of the last line (inclusive, 1-based)
 ---@return table<string>|string Array of lines, or string when end_lnum is omitted
 function M.getlines(bufnr, start_lnum, end_lnum)
   if end_lnum then
@@ -67,8 +67,8 @@ end
 ---@private
 --- Get the next non-whitespace line in the buffer.
 ---
----@param bufnr number The buffer to get the line from
----@param start_lnum number The line number of the first line to start from (inclusive, 1-based)
+---@param bufnr integer The buffer to get the line from
+---@param start_lnum integer The line number of the first line to start from (inclusive, 1-based)
 ---@return string|nil The first non-blank line if found or `nil` otherwise
 function M.nextnonblank(bufnr, start_lnum)
   for _, line in ipairs(M.getlines(bufnr, start_lnum, -1)) do
