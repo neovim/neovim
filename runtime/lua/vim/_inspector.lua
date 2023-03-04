@@ -14,15 +14,15 @@ local defaults = {
 ---
 ---Can also be pretty-printed with `:Inspect!`. *:Inspect!*
 ---
----@param bufnr? number defaults to the current buffer
----@param row? number row to inspect, 0-based. Defaults to the row of the current cursor
----@param col? number col to inspect, 0-based. Defaults to the col of the current cursor
+---@param bufnr? integer defaults to the current buffer
+---@param row? integer row to inspect, 0-based. Defaults to the row of the current cursor
+---@param col? integer col to inspect, 0-based. Defaults to the col of the current cursor
 ---@param filter? InspectorFilter (table|nil) a table with key-value pairs to filter the items
 ---               - syntax (boolean): include syntax based highlight groups (defaults to true)
 ---               - treesitter (boolean): include treesitter based highlight groups (defaults to true)
 ---               - extmarks (boolean|"all"): include extmarks. When `all`, then extmarks without a `hl_group` will also be included (defaults to true)
 ---               - semantic_tokens (boolean): include semantic tokens (defaults to true)
----@return {treesitter:table,syntax:table,extmarks:table,semantic_tokens:table,buffer:number,col:number,row:number} (table) a table with the following key-value pairs. Items are in "traversal order":
+---@return {treesitter:table,syntax:table,extmarks:table,semantic_tokens:table,buffer:integer,col:integer,row:integer} (table) a table with the following key-value pairs. Items are in "traversal order":
 ---               - treesitter: a list of treesitter captures
 ---               - syntax: a list of syntax groups
 ---               - semantic_tokens: a list of semantic tokens
@@ -129,9 +129,9 @@ end
 ---
 ---Can also be shown with `:Inspect`. *:Inspect*
 ---
----@param bufnr? number defaults to the current buffer
----@param row? number row to inspect, 0-based. Defaults to the row of the current cursor
----@param col? number col to inspect, 0-based. Defaults to the col of the current cursor
+---@param bufnr? integer defaults to the current buffer
+---@param row? integer row to inspect, 0-based. Defaults to the row of the current cursor
+---@param col? integer col to inspect, 0-based. Defaults to the col of the current cursor
 ---@param filter? InspectorFilter (table|nil) see |vim.inspect_pos()|
 function vim.show_pos(bufnr, row, col, filter)
   local items = vim.inspect_pos(bufnr, row, col, filter)
