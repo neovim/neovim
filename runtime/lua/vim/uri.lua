@@ -80,7 +80,7 @@ local URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):.*'
 local WINDOWS_URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):[a-zA-Z]:.*'
 
 --- Get a URI from a bufnr
----@param bufnr number
+---@param bufnr integer
 ---@return string URI
 local function uri_from_bufnr(bufnr)
   local fname = vim.api.nvim_buf_get_name(bufnr)
@@ -123,7 +123,7 @@ end
 --- Creates a new unloaded buffer if no buffer for the uri already exists.
 --
 ---@param uri string
----@return number bufnr
+---@return integer bufnr
 local function uri_to_bufnr(uri)
   return vim.fn.bufadd(uri_to_fname(uri))
 end

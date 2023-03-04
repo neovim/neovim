@@ -2007,7 +2007,7 @@ uri_from_bufnr({bufnr})                                 *vim.uri_from_bufnr()*
     Get a URI from a bufnr
 
     Parameters: ~
-      • {bufnr}  (number)
+      • {bufnr}  (integer)
 
     Return: ~
         (string) URI
@@ -2029,7 +2029,7 @@ uri_to_bufnr({uri})                                       *vim.uri_to_bufnr()*
       • {uri}  (string)
 
     Return: ~
-        (number) bufnr
+        (integer) bufnr
 
 uri_to_fname({uri})                                       *vim.uri_to_fname()*
     Get a filename from a URI
