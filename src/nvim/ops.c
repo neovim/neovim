@@ -3346,7 +3346,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         ptr += yanklen;
 
         // insert block's trailing spaces only if there's text behind
-        if ((j < count - 1 || !shortline) && spaces) {
+        if ((j < count - 1 || !shortline) && spaces > 0) {
           memset(ptr, ' ', (size_t)spaces);
           ptr += spaces;
         } else {
@@ -3684,6 +3684,15 @@ error:
 
   msgmore(nr_lines);
   curwin->w_set_curswant = true;
+
+  // Make sure the cursor is not after the NUL.
+  int len = (int)strlen(get_cursor_line_ptr());
+  if (curwin->w_cursor.col > len) {
+    if (cur_ve_flags == VE_ALL) {
+      curwin->w_cursor.coladd = curwin->w_cursor.col - len;
+    }
+    curwin->w_cursor.col = len;
+  }
 
 end:
   if (cmdmod.cmod_flags & CMOD_LOCKMARKS) {
