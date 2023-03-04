@@ -1706,7 +1706,9 @@ void ex_luado(exarg_T *const eap)
       break;
     }
     lua_pushvalue(lstate, -1);
-    const char *old_line = (const char *)ml_get_buf(curbuf, l, false);
+    const char *const old_line = (const char *)ml_get_buf(curbuf, l, false);
+    // Get length of old_line here as calling Lua code may free it.
+    const size_t old_line_len = strlen(old_line);
     lua_pushstring(lstate, old_line);
     lua_pushnumber(lstate, (lua_Number)l);
     if (nlua_pcall(lstate, 2, 1)) {
@@ -1714,8 +1716,6 @@ void ex_luado(exarg_T *const eap)
       break;
     }
     if (lua_isstring(lstate, -1)) {
-      size_t old_line_len = strlen(old_line);
-
       size_t new_line_len;
       const char *const new_line = lua_tolstring(lstate, -1, &new_line_len);
       char *const new_line_transformed = xmemdupz(new_line, new_line_len);
