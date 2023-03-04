@@ -202,7 +202,7 @@ end
 
 --- Configure the given buffer with options from an .editorconfig file
 ---
----@param bufnr number Buffer number to configure
+---@param bufnr integer Buffer number to configure
 ---
 ---@private
 function M.config(bufnr)
