@@ -1542,11 +1542,11 @@ inspect_pos({bufnr}, {row}, {col}, {filter})               *vim.inspect_pos()*
     Can also be pretty-printed with `:Inspect!`.                   *:Inspect!*
 
     Parameters: ~
-      • {bufnr}   (number|nil) defaults to the current buffer
-      • {row}     (number|nil) row to inspect, 0-based. Defaults to the row of
-                  the current cursor
-      • {col}     (number|nil) col to inspect, 0-based. Defaults to the col of
-                  the current cursor
+      • {bufnr}   (integer|nil) defaults to the current buffer
+      • {row}     (integer|nil) row to inspect, 0-based. Defaults to the row
+                  of the current cursor
+      • {col}     (integer|nil) col to inspect, 0-based. Defaults to the col
+                  of the current cursor
       • {filter}  (table|nil) a table with key-value pairs to filter the items
                   • syntax (boolean): include syntax based highlight groups
                     (defaults to true)
@@ -1575,11 +1575,11 @@ show_pos({bufnr}, {row}, {col}, {filter})                     *vim.show_pos()*
     Can also be shown with `:Inspect`.                              *:Inspect*
 
     Parameters: ~
-      • {bufnr}   (number|nil) defaults to the current buffer
-      • {row}     (number|nil) row to inspect, 0-based. Defaults to the row of
-                  the current cursor
-      • {col}     (number|nil) col to inspect, 0-based. Defaults to the col of
-                  the current cursor
+      • {bufnr}   (integer|nil) defaults to the current buffer
+      • {row}     (integer|nil) row to inspect, 0-based. Defaults to the row
+                  of the current cursor
+      • {col}     (integer|nil) col to inspect, 0-based. Defaults to the col
+                  of the current cursor
       • {filter}  (table|nil) see |vim.inspect_pos()|
 
 
