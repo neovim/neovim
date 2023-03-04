@@ -4,7 +4,7 @@
 ---@field range Range
 ---@field message string
 ---@field severity DiagnosticSeverity|nil
----@field code number | string
+---@field code integer | string
 ---@field source string
 ---@field tags DiagnosticTag[]
 ---@field relatedInformation DiagnosticRelatedInformation[]
@@ -135,7 +135,7 @@ local _client_namespaces = {}
 
 --- Get the diagnostic namespace associated with an LSP client |vim.diagnostic|.
 ---
----@param client_id number The id of the LSP client
+---@param client_id integer The id of the LSP client
 function M.get_namespace(client_id)
   vim.validate({ client_id = { client_id, 'n' } })
   if not _client_namespaces[client_id] then
@@ -212,7 +212,7 @@ end
 --- this method signature is still used internally in some parts of the LSP
 --- implementation so it's simply marked @private rather than @deprecated.
 ---
----@param client_id number
+---@param client_id integer
 ---@param buffer_client_map table map of buffers to active clients
 ---@private
 function M.reset(client_id, buffer_client_map)
@@ -232,14 +232,14 @@ end
 --- Marked private as this is used internally by the LSP subsystem, but
 --- most users should instead prefer |vim.diagnostic.get()|.
 ---
----@param bufnr number|nil The buffer number
----@param line_nr number|nil The line number
+---@param bufnr integer|nil The buffer number
+---@param line_nr integer|nil The line number
 ---@param opts table|nil Configuration keys
 ---         - severity: (DiagnosticSeverity, default nil)
 ---             - Only return diagnostics with this severity. Overrides severity_limit
 ---         - severity_limit: (DiagnosticSeverity, default nil)
 ---             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
----@param client_id|nil number the client id
+---@param client_id integer|nil the client id
 ---@return table Table with map of line number to list of diagnostics.
 ---              Structured: { [1] = {...}, [5] = {.... } }
 ---@private

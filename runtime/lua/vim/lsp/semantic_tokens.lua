@@ -4,36 +4,36 @@ local util = require('vim.lsp.util')
 local bit = require('bit')
 
 --- @class STTokenRange
---- @field line number line number 0-based
---- @field start_col number start column 0-based
---- @field end_col number end column 0-based
+--- @field line integer line number 0-based
+--- @field start_col integer start column 0-based
+--- @field end_col integer end column 0-based
 --- @field type string token type as string
 --- @field modifiers table token modifiers as a set. E.g., { static = true, readonly = true }
 --- @field marked boolean whether this token has had extmarks applied
 ---
 --- @class STCurrentResult
---- @field version number document version associated with this result
+--- @field version integer document version associated with this result
 --- @field result_id string resultId from the server; used with delta requests
 --- @field highlights STTokenRange[] cache of highlight ranges for this document version
---- @field tokens number[] raw token array as received by the server. used for calculating delta responses
+--- @field tokens integer[] raw token array as received by the server. used for calculating delta responses
 --- @field namespace_cleared boolean whether the namespace was cleared for this result yet
 ---
 --- @class STActiveRequest
---- @field request_id number the LSP request ID of the most recent request sent to the server
---- @field version number the document version associated with the most recent request
+--- @field request_id integer the LSP request ID of the most recent request sent to the server
+--- @field version integer the document version associated with the most recent request
 ---
 --- @class STClientState
---- @field namespace number
+--- @field namespace integer
 --- @field active_request STActiveRequest
 --- @field current_result STCurrentResult
 
 ---@class STHighlighter
----@field active table<number, STHighlighter>
----@field bufnr number
----@field augroup number augroup for buffer events
----@field debounce number milliseconds to debounce requests for new tokens
+---@field active table<integer, STHighlighter>
+---@field bufnr integer
+---@field augroup integer augroup for buffer events
+---@field debounce integer milliseconds to debounce requests for new tokens
 ---@field timer table uv_timer for debouncing requests for new tokens
----@field client_state table<number, STClientState>
+---@field client_state table<integer, STClientState>
 local STHighlighter = { active = {} }
 
 --- Do a binary search of the tokens in the half-open range [lo, hi).
@@ -141,7 +141,7 @@ end
 --- Construct a new STHighlighter for the buffer
 ---
 ---@private
----@param bufnr number
+---@param bufnr integer
 function STHighlighter.new(bufnr)
   local self = setmetatable({}, { __index = STHighlighter })
 
@@ -470,7 +470,7 @@ end
 --- in case the server supports delta requests.
 ---
 ---@private
----@param client_id number
+---@param client_id integer
 function STHighlighter:mark_dirty(client_id)
   local state = self.client_state[client_id]
   assert(state)
@@ -529,10 +529,10 @@ local M = {}
 ---   client.server_capabilities.semanticTokensProvider = nil
 --- </pre>
 ---
----@param bufnr number
----@param client_id number
+---@param bufnr integer
+---@param client_id integer
 ---@param opts (nil|table) Optional keyword arguments
----  - debounce (number, default: 200): Debounce token requests
+---  - debounce (integer, default: 200): Debounce token requests
 ---        to the server by the given number in milliseconds
 function M.start(bufnr, client_id, opts)
   vim.validate({
@@ -585,8 +585,8 @@ end
 --- of `start()`, so you should only need this function to manually disengage the semantic
 --- token engine without fully detaching the LSP client from the buffer.
 ---
----@param bufnr number
----@param client_id number
+---@param bufnr integer
+---@param client_id integer
 function M.stop(bufnr, client_id)
   vim.validate({
     bufnr = { bufnr, 'n', false },
@@ -608,15 +608,15 @@ end
 --- Return the semantic token(s) at the given position.
 --- If called without arguments, returns the token under the cursor.
 ---
----@param bufnr number|nil Buffer number (0 for current buffer, default)
----@param row number|nil Position row (default cursor position)
----@param col number|nil Position column (default cursor position)
+---@param bufnr integer|nil Buffer number (0 for current buffer, default)
+---@param row integer|nil Position row (default cursor position)
+---@param col integer|nil Position column (default cursor position)
 ---
 ---@return table|nil (table|nil) List of tokens at position. Each token has
 ---        the following fields:
----        - line (number) line number, 0-based
----        - start_col (number) start column, 0-based
----        - end_col (number) end column, 0-based
+---        - line (integer) line number, 0-based
+---        - start_col (integer) start column, 0-based
+---        - end_col (integer) end column, 0-based
 ---        - type (string) token type as string, e.g. "variable"
 ---        - modifiers (table) token modifiers as a set. E.g., { static = true, readonly = true }
 function M.get_at_pos(bufnr, row, col)
@@ -661,7 +661,7 @@ end
 --- Only has an effect if the buffer is currently active for semantic token
 --- highlighting (|vim.lsp.semantic_tokens.start()| has been called for it)
 ---
----@param bufnr (number|nil) filter by buffer. All buffers if nil, current
+---@param bufnr (integer|nil) filter by buffer. All buffers if nil, current
 ---       buffer if 0
 function M.force_refresh(bufnr)
   vim.validate({
@@ -689,11 +689,11 @@ end
 --- use inside |LspTokenUpdate| callbacks.
 ---@param token (table) a semantic token, found as `args.data.token` in
 ---       |LspTokenUpdate|.
----@param bufnr (number) the buffer to highlight
----@param client_id (number) The ID of the |vim.lsp.client|
+---@param bufnr (integer) the buffer to highlight
+---@param client_id (integer) The ID of the |vim.lsp.client|
 ---@param hl_group (string) Highlight group name
 ---@param opts (table|nil) Optional parameters.
----       - priority: (number|nil) Priority for the applied extmark. Defaults
+---       - priority: (integer|nil) Priority for the applied extmark. Defaults
 ---         to `vim.highlight.priorities.semantic_tokens + 3`
 function M.highlight_token(token, bufnr, client_id, hl_group, opts)
   local highlighter = STHighlighter.active[bufnr]
