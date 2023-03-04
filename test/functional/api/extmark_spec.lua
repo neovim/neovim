@@ -107,6 +107,13 @@ describe('API/extmarks', function()
     eq("Invalid 'id': expected positive Integer", pcall_err(set_extmark, ns, {}, 0, 0, { end_col = 1, end_row = 1 }))
     eq("Invalid mark position: expected 2 Integer items", pcall_err(get_extmarks, ns, {}, {-1, -1}))
     eq("Invalid mark position: expected mark id Integer or 2-item Array", pcall_err(get_extmarks, ns, true, {-1, -1}))
+    -- No memory leak with virt_text, virt_lines, sign_text
+    eq("right_gravity is not a boolean", pcall_err(set_extmark, ns, marks[2], 0, 0, {
+      virt_text = {{'foo', 'Normal'}},
+      virt_lines = {{{'bar', 'Normal'}}},
+      sign_text = 'a',
+      right_gravity = 'baz',
+    }))
   end)
 
   it("can end extranges past final newline using end_col = 0", function()

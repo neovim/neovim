@@ -809,8 +809,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   return (Integer)id;
 
 error:
-  clear_virttext(&decor.virt_text);
-  xfree(decor.sign_text);
+  decor_clear(&decor);
   return 0;
 }
 
