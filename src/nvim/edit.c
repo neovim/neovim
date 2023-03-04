@@ -4653,9 +4653,9 @@ int ins_copychar(linenr_T lnum)
   }
 
   // try to advance to the cursor column
+  validate_virtcol();
   line = ml_get(lnum);
   prev_ptr = line;
-  validate_virtcol();
 
   chartabsize_T cts;
   init_chartabsize_arg(&cts, curwin, lnum, 0, line, line);
