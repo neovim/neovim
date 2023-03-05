@@ -6220,6 +6220,66 @@ func Test_loclist_replace_autocmd()
   call setloclist(0, [], 'f')
 endfunc
 
+" Test for a very long error line and a very long information line
+func Test_very_long_error_line()
+  let msg = repeat('abcdefghijklmn', 146)
+  let emsg = 'Xlonglines.c:1:' . msg
+  call writefile([msg, emsg], 'Xerror', 'D')
+  cfile Xerror
+  cwindow
+  call assert_equal($'|| {msg}', getline(1))
+  call assert_equal($'Xlonglines.c|1| {msg}', getline(2))
+  cclose
+
+  let l = execute('clist!')->split("\n")
+  call assert_equal([$' 1: {msg}', $' 2 Xlonglines.c:1: {msg}'], l)
+
+  let l = execute('cc')->split("\n")
+  call assert_equal([$'(2 of 2): {msg}'], l)
+
+  call setqflist([], 'f')
+endfunc
+
+" The test depends on deferred delete and string interpolation, which haven't
+" been ported, so override it with a rewrite that doesn't use these features.
+func! Test_very_long_error_line()
+  let msg = repeat('abcdefghijklmn', 146)
+  let emsg = 'Xlonglines.c:1:' . msg
+  call writefile([msg, emsg], 'Xerror')
+  cfile Xerror
+  call delete('Xerror')
+  cwindow
+  call assert_equal('|| ' .. msg, getline(1))
+  call assert_equal('Xlonglines.c|1| ' .. msg, getline(2))
+  cclose
+
+  let l = execute('clist!')->split("\n")
+  call assert_equal([' 1: ' .. msg, ' 2 Xlonglines.c:1: ' .. msg], l)
+
+  let l = execute('cc')->split("\n")
+  call assert_equal(['(2 of 2): ' .. msg], l)
+
+  call setqflist([], 'f')
+endfunc
+
+" In the quickfix window, spaces at the beginning of an informational line
+" should not be removed but should be removed from an error line.
+func Test_info_line_with_space()
+  cexpr ["a.c:20:12:         error: expected ';' before ':' token",
+        \ '   20 |     Afunc():', '', '      |            ^']
+  copen
+  call assert_equal(["a.c|20 col 12| error: expected ';' before ':' token",
+        \ '||    20 |     Afunc():', '|| ',
+        \ '||       |            ^'], getline(1, '$'))
+  cclose
+
+  let l = execute('clist!')->split("\n")
+  call assert_equal([" 1 a.c:20 col 12: error: expected ';' before ':' token",
+        \ ' 2:    20 |     Afunc():', ' 3:  ', ' 4:       |            ^'], l)
+
+  call setqflist([], 'f')
+endfunc
+
 func s:QfTf(_)
 endfunc
 
