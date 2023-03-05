@@ -292,10 +292,24 @@ static garray_T *qfga_get(void)
     ga_init(&qfga, 1, 256);
   }
 
-  // Retain ga_data from previous use.  Reset the length to zero.
+  // Reset the length to zero.  Retain ga_data from previous use to avoid
+  // many alloc/free calls.
   qfga.ga_len = 0;
 
   return &qfga;
+}
+
+/// The "qfga" grow array buffer is reused across multiple quickfix commands as
+/// a temporary buffer to reduce the number of alloc/free calls.  But if the
+/// buffer size is large, then to avoid holding on to that memory, clear the
+/// grow array.  Otherwise just reset the grow array length.
+static void qfga_clear(void)
+{
+  if (qfga.ga_maxlen > 1000) {
+    ga_clear(&qfga);
+  } else {
+    qfga.ga_len = 0;
+  }
 }
 
 // Counter to prevent autocmds from freeing up location lists when they are
@@ -2847,6 +2861,8 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
   msg_ext_set_kind("quickfix");
   msg_attr_keep(gap->ga_data, 0, true, false);
   msg_scroll = (int)i;
+
+  qfga_clear();
 }
 
 /// Find a usable window for opening a file from the quickfix/location list. If
@@ -3204,6 +3220,7 @@ void qf_list(exarg_T *eap)
     }
     os_breakcheck();
   }
+  qfga_clear();
 }
 
 /// Remove newlines and leading whitespace from an error message.
@@ -4147,6 +4164,8 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
       // Delete the empty line which is now at the end
       (void)ml_delete(lnum + 1, false);
     }
+
+    qfga_clear();
   }
 
   // Correct cursor position.
