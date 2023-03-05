@@ -30,6 +30,6 @@ function(GetBinaryDep)
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND ""
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_BIN_DIR}
     COMMAND "${_gettool_INSTALL_COMMAND}")
 endfunction()
