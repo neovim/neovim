@@ -1,6 +1,3 @@
-if(USE_EXISTING_SRC_DIR)
-  unset(LIBVTERM_URL)
-endif()
 ExternalProject_Add(libvterm
   URL ${LIBVTERM_URL}
   URL_HASH SHA256=${LIBVTERM_SHA256}

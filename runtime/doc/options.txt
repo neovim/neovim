@@ -575,16 +575,6 @@ supported use something like this: >
 							*E355*
 A jump table for the options with a short description can be found at |Q_op|.
 
-					*'aleph'* *'al'* *aleph* *Aleph*
-'aleph' 'al'		number	(default 224)
-			global
-	The ASCII code for the first letter of the Hebrew alphabet.  The
-	routine that maps the keyboard in Hebrew mode, both in Insert mode
-	(when hkmap is set) and on the command-line (when hitting CTRL-_)
-	outputs the Hebrew characters in the range [aleph..aleph+26].
-	aleph=128 applies to PC code, and aleph=224 applies to ISO 8859-8.
-	See |rileft.txt|.
-
 			*'allowrevins'* *'ari'* *'noallowrevins'* *'noari'*
 'allowrevins' 'ari'	boolean	(default off)
 			global
@@ -3194,20 +3184,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	is remembered.  This option decides how many entries may be stored in
 	each of these histories (see |cmdline-editing|).
 	The maximum value is 10000.
-
-					 *'hkmap'* *'hk'* *'nohkmap'* *'nohk'*
-'hkmap' 'hk'		boolean (default off)
-			global
-	When on, the keyboard is mapped for the Hebrew character set.
-	Normally you would set 'allowrevins' and use CTRL-_ in insert mode to
-	toggle this option.  See |rileft.txt|.
-
-				 *'hkmapp'* *'hkp'* *'nohkmapp'* *'nohkp'*
-'hkmapp' 'hkp'		boolean (default off)
-			global
-	When on, phonetic keyboard mapping is used.  'hkmap' must also be on.
-	This is useful if you have a non-Hebrew keyboard.
-	See |rileft.txt|.
 
 				 *'hlsearch'* *'hls'* *'nohlsearch'* *'nohls'*
 'hlsearch' 'hls'	boolean	(default on)

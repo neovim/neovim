@@ -196,6 +196,20 @@ func Test_sign()
 			  \ bufnr('%'), 'E155:')
 endfunc
 
+func Test_sign_many_bytes()
+  new
+  set signcolumn=number
+  set number
+  call setline(1, 'some text')
+  " composing characters can use many bytes, check for overflow
+  sign define manyBytes text=▶᷄᷅᷆◀᷄᷅᷆᷇
+  sign place 17 line=1 name=manyBytes
+  redraw
+
+  bwipe!
+  sign undefine manyBytes
+endfunc
+
 " Undefining placed sign is not recommended.
 " Quoting :help sign
 "

@@ -257,9 +257,8 @@ for i = 1, #functions do
 
     output:write('Object handle_'..fn.name..'(uint64_t channel_id, Array args, Arena* arena, Error *error)')
     output:write('\n{')
-    output:write('\n#if MIN_LOG_LEVEL <= LOGLVL_DBG')
-    output:write('\n  logmsg(LOGLVL_DBG, "RPC: ", NULL, -1, true, "ch %" PRIu64 ": invoke '
-                 ..fn.name..'", channel_id);')
+    output:write('\n#ifdef NVIM_LOG_DEBUG')
+    output:write('\n  DLOG("RPC: ch %" PRIu64 ": invoke '..fn.name..'", channel_id);')
     output:write('\n#endif')
     output:write('\n  Object ret = NIL;')
     -- Declare/initialize variables that will hold converted arguments

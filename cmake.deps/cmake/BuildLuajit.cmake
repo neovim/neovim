@@ -15,9 +15,6 @@ function(BuildLuajit)
     set(_luajit_TARGET "luajit")
   endif()
 
-  if(USE_EXISTING_SRC_DIR)
-    unset(LUAJIT_URL)
-  endif()
   ExternalProject_Add(${_luajit_TARGET}
     URL ${LUAJIT_URL}
     URL_HASH SHA256=${LUAJIT_SHA256}
@@ -38,7 +35,7 @@ function(BuildLuajit)
 endfunction()
 
 check_c_compiler_flag(-fno-stack-check HAS_NO_STACK_CHECK)
-if(CMAKE_SYSTEM_NAME MATCHES "Darwin" AND HAS_NO_STACK_CHECK)
+if(APPLE AND HAS_NO_STACK_CHECK)
   set(NO_STACK_CHECK "CFLAGS+=-fno-stack-check")
 else()
   set(NO_STACK_CHECK "")
@@ -58,7 +55,7 @@ set(BUILDCMD_UNIX ${MAKE_PRG} -j CFLAGS=-fPIC
 
 # Setting MACOSX_DEPLOYMENT_TARGET is mandatory for LuaJIT; use version set by
 # cmake.deps/CMakeLists.txt (either environment variable or current system version).
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+if(APPLE)
   set(DEPLOYMENT_TARGET "MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}")
 endif()
 
@@ -116,34 +113,34 @@ elseif(MINGW)
                       # Build a DLL too
                       COMMAND ${LUAJIT_MAKE_PRG} CC=${DEPS_C_COMPILER} BUILDMODE=dynamic
 
-          INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
-	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/luajit.exe ${DEPS_INSTALL_DIR}/bin
-	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.dll ${DEPS_INSTALL_DIR}/bin
-	    COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/lib
+          INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_BIN_DIR}
+	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/luajit.exe ${DEPS_BIN_DIR}
+	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.dll ${DEPS_BIN_DIR}
+	    COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_LIB_DIR}
 	    # Luarocks searches for lua51.dll in lib
-	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.dll ${DEPS_INSTALL_DIR}/lib
-	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/libluajit.a ${DEPS_INSTALL_DIR}/lib
+	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.dll ${DEPS_LIB_DIR}
+	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/libluajit.a ${DEPS_LIB_DIR}
 	    COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/include/luajit-2.1
 	    COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/luajit/src/*.h -DTO=${DEPS_INSTALL_DIR}/include/luajit-2.1 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake
-	    COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin/lua/jit
-	    COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPS_BUILD_DIR}/src/luajit/src/jit ${DEPS_INSTALL_DIR}/bin/lua/jit
+	    COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_BIN_DIR}/lua/jit
+	    COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPS_BUILD_DIR}/src/luajit/src/jit ${DEPS_BIN_DIR}/lua/jit
 	    )
 elseif(MSVC)
 
   BuildLuaJit(
     BUILD_COMMAND ${CMAKE_COMMAND} -E chdir ${DEPS_BUILD_DIR}/src/luajit/src ${DEPS_BUILD_DIR}/src/luajit/src/msvcbuild.bat
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
-      COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/luajit.exe ${DEPS_INSTALL_DIR}/bin
-      COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.dll ${DEPS_INSTALL_DIR}/bin
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/lib
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_BIN_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/luajit.exe ${DEPS_BIN_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.dll ${DEPS_BIN_DIR}
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_LIB_DIR}
       # Luarocks searches for lua51.lib
-      COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.lib ${DEPS_INSTALL_DIR}/lib/lua51.lib
+      COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.lib ${DEPS_LIB_DIR}/lua51.lib
       # Luv searches for luajit.lib
-      COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.lib ${DEPS_INSTALL_DIR}/lib/luajit.lib
+      COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.lib ${DEPS_LIB_DIR}/luajit.lib
       COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/include/luajit-2.1
       COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/luajit/src/*.h -DTO=${DEPS_INSTALL_DIR}/include/luajit-2.1 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin/lua/jit
-      COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPS_BUILD_DIR}/src/luajit/src/jit ${DEPS_INSTALL_DIR}/bin/lua/jit
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_BIN_DIR}/lua/jit
+      COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPS_BUILD_DIR}/src/luajit/src/jit ${DEPS_BIN_DIR}/lua/jit
       )
 else()
   message(FATAL_ERROR "Trying to build luajit in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
@@ -152,7 +149,7 @@ endif()
 if (NOT MSVC)
   add_custom_target(clean_shared_libraries_luajit ALL
     COMMAND ${CMAKE_COMMAND}
-      -D REMOVE_FILE_GLOB=${DEPS_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}*${CMAKE_SHARED_LIBRARY_SUFFIX}*
+      -D REMOVE_FILE_GLOB=${DEPS_LIB_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}*${CMAKE_SHARED_LIBRARY_SUFFIX}*
       -P ${PROJECT_SOURCE_DIR}/cmake/RemoveFiles.cmake)
   add_dependencies(clean_shared_libraries_luajit luajit)
 endif()

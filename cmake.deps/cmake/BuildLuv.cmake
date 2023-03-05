@@ -14,7 +14,7 @@ if(USE_BUNDLED_LUAJIT)
 elseif(USE_BUNDLED_LUA)
   list(APPEND LUV_CMAKE_ARGS -D WITH_LUA_ENGINE=Lua)
 else()
-  find_package(LuaJit)
+  find_package(Luajit)
   if(LUAJIT_FOUND)
     list(APPEND LUV_CMAKE_ARGS -D WITH_LUA_ENGINE=LuaJit)
   else()
@@ -23,9 +23,7 @@ else()
 endif()
 
 if(USE_BUNDLED_LIBUV)
-  list(APPEND LUV_CMAKE_ARGS
-    -D CMAKE_PREFIX_PATH=${DEPS_INSTALL_DIR}
-    -D LIBUV_LIBRARIES=uv_a)
+  list(APPEND LUV_CMAKE_ARGS -D CMAKE_PREFIX_PATH=${DEPS_INSTALL_DIR})
 endif()
 
 list(APPEND LUV_CMAKE_ARGS
@@ -35,9 +33,6 @@ if(CMAKE_GENERATOR MATCHES "Unix Makefiles" AND
     list(APPEND LUV_CMAKE_ARGS -D CMAKE_MAKE_PROGRAM=gmake)
 endif()
 
-if(USE_EXISTING_SRC_DIR)
-  unset(LUA_COMPAT53_URL)
-endif()
 ExternalProject_Add(lua-compat-5.3
   URL ${LUA_COMPAT53_URL}
   URL_HASH SHA256=${LUA_COMPAT53_SHA256}
@@ -47,9 +42,6 @@ ExternalProject_Add(lua-compat-5.3
   BUILD_COMMAND ""
   INSTALL_COMMAND "")
 
-if(USE_EXISTING_SRC_DIR)
-  unset(LUV_URL)
-endif()
 ExternalProject_Add(luv-static
   DEPENDS lua-compat-5.3
   URL ${LUV_URL}

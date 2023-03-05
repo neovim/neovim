@@ -41,7 +41,6 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/keycodes.h"
-#include "nvim/locale.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros.h"
@@ -60,6 +59,7 @@
 #include "nvim/optionstr.h"
 #include "nvim/os/fileio.h"
 #include "nvim/os/input.h"
+#include "nvim/os/lang.h"
 #include "nvim/os/os.h"
 #include "nvim/os/stdpaths_defs.h"
 #include "nvim/os/time.h"
@@ -184,20 +184,22 @@ void early_init(mparm_T *paramp)
   ovi.dwOSVersionInfoSize = sizeof(ovi);
   // Disable warning about GetVersionExA being deprecated. There doesn't seem to be a convenient
   // replacement that doesn't add a ton of extra code as of writing this.
-# pragma warning(suppress : 4996)
+# ifdef _MSC_VER
+#  pragma warning(suppress : 4996)
   GetVersionEx(&ovi);
+# else
+  GetVersionEx(&ovi);
+# endif
   snprintf(windowsVersion, sizeof(windowsVersion), "%d.%d",
            (int)ovi.dwMajorVersion, (int)ovi.dwMinorVersion);
 #endif
 
   TIME_MSG("early init");
 
-#if defined(HAVE_LOCALE_H)
   // Setup to use the current locale (for ctype() and many other things).
   // NOTE: Translated messages with encodings other than latin1 will not
   // work until set_init_1() has been called!
   init_locale();
-#endif
 
   // tabpage local options (p_ch) must be set before allocating first tabpage.
   set_init_tablocal();
@@ -1147,8 +1149,8 @@ static void command_line_scan(mparm_T *parmp)
       case 'h':    // "-h" give help message
         usage();
         os_exit(0);
-      case 'H':    // "-H" start in Hebrew mode: rl + hkmap set.
-        p_hkmap = true;
+      case 'H':    // "-H" start in Hebrew mode: rl + keymap=hebrew set.
+        set_option_value_give_err("keymap", 0L, "hebrew", 0);
         set_option_value_give_err("rl", 1L, NULL, 0);
         break;
       case 'M':    // "-M"  no changes or writing of files

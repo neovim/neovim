@@ -38,18 +38,16 @@ local LanguageTree = {}
 
 LanguageTree.__index = LanguageTree
 
---- A |LanguageTree| holds the treesitter parser for a given language {lang} used
---- to parse a buffer. As the buffer may contain injected languages, the LanguageTree
---- needs to store parsers for these child languages as well (which in turn may contain
---- child languages themselves, hence the name).
+--- @private
 ---
----@param source (integer|string) Buffer or a string of text to parse
----@param lang string Root language this tree represents
----@param opts (table|nil) Optional keyword arguments:
----             - injections table Mapping language to injection query strings.
----                                This is useful for overriding the built-in
----                                runtime file searching for the injection language
----                                query per language.
+--- |LanguageTree| contains a tree of parsers: the root treesitter parser for {lang} and any
+--- "injected" language parsers, which themselves may inject other languages, recursively.
+---
+---@param source (integer|string) Buffer or text string to parse
+---@param lang string Root language of this tree
+---@param opts (table|nil) Optional arguments:
+---             - injections table Map of language to injection query strings. Overrides the
+---                                built-in runtime file searching for language injections.
 ---@return LanguageTree parser object
 function LanguageTree.new(source, lang, opts)
   language.add(lang)

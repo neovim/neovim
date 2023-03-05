@@ -399,8 +399,8 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
     fclose(fd);
     return FAIL;
   }
-#if SIZEOF_LONG_LONG > SIZEOF_SIZE_T
-  assert(templen <= (long long)SIZE_MAX);  // NOLINT(runtime/int)
+#if 8 > SIZEOF_SIZE_T
+  assert(templen <= SIZE_MAX);  // NOLINT(runtime/int)
 #endif
   len = (size_t)templen;
   fseek(fd, 0L, SEEK_SET);

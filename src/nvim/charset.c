@@ -1446,7 +1446,7 @@ long getdigits_long(char **pp, bool strict, long def)
 int32_t getdigits_int32(char **pp, bool strict, long def)
 {
   intmax_t number = getdigits(pp, strict, def);
-#if SIZEOF_INTMAX_T > SIZEOF_INT32_T
+#if SIZEOF_INTMAX_T > 4
   if (strict) {
     assert(number >= INT32_MIN && number <= INT32_MAX);
   } else if (!(number >= INT32_MIN && number <= INT32_MAX)) {
@@ -1500,9 +1500,10 @@ bool vim_isblankline(char *lbuf)
 /// @param strict If true, fail if the number has unexpected trailing
 ///               alphanumeric chars: *len is set to 0 and nothing else is
 ///               returned.
+/// @param overflow When not NULL, set to true for overflow.
 void vim_str2nr(const char *const start, int *const prep, int *const len, const int what,
                 varnumber_T *const nptr, uvarnumber_T *const unptr, const int maxlen,
-                const bool strict)
+                const bool strict, bool *const overflow)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   const char *ptr = start;
@@ -1626,6 +1627,9 @@ void vim_str2nr(const char *const start, int *const prep, int *const len, const 
         un = (base) * un + digit; \
       } else { \
         un = UVARNUMBER_MAX; \
+        if (overflow != NULL) { \
+          *overflow = true; \
+        } \
       } \
       ptr++; \
     } \
@@ -1664,12 +1668,18 @@ vim_str2nr_proceed:
       // avoid ubsan error for overflow
       if (un > VARNUMBER_MAX) {
         *nptr = VARNUMBER_MIN;
+        if (overflow != NULL) {
+          *overflow = true;
+        }
       } else {
         *nptr = -(varnumber_T)un;
       }
     } else {
       if (un > VARNUMBER_MAX) {
         un = VARNUMBER_MAX;
+        if (overflow != NULL) {
+          *overflow = true;
+        }
       }
       *nptr = (varnumber_T)un;
     }

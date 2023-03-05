@@ -1022,7 +1022,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
           *p2 = NUL;
           vim_snprintf(NameBuff, MAXPATHL,
                        _("E154: Duplicate tag \"%s\" in file %s/%s"),
-                       ((char_u **)ga.ga_data)[i], dir, p2 + 1);
+                       ((char **)ga.ga_data)[i], dir, p2 + 1);
           emsg(NameBuff);
           *p2 = '\t';
           break;

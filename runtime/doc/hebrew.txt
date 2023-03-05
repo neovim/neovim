@@ -30,17 +30,10 @@ Details
    +  'rightleft' ('rl') sets window orientation to right-to-left.  This means
       that the logical text 'ABC' will be displayed as 'CBA', and will start
       drawing at the right edge of the window, not the left edge.
-   +  'hkmap' ('hk') sets keyboard mapping to Hebrew, in insert/replace modes.
-   +  'aleph' ('al'), numeric, holds the decimal code of Aleph, for keyboard
-      mapping.
-   +  'hkmapp' ('hkp') sets keyboard mapping to "phonetic hebrew"
-
-   NOTE: these three ('hkmap', 'hkmapp' and 'aleph') are obsolete.  You should
-	 use ":set keymap=hebrewp" instead.
-
-   +  'delcombine' ('deco'), boolean, if editing UTF-8 encoded Hebrew, allows
-      one to remove the niqud or te`amim by pressing 'x' on a character (with
-      associated niqud).
+   +  'keymap' ('kmp') sets keyboard mapping. use values "hebrew" or "heprewp"
+      (the latter option enables phonetic mapping)
+   +  'delcombine' ('deco'), boolean, allows one to remove the niqud or
+      te`amim by pressing 'x' on a character (with associated niqud).
 
    +  'rightleftcmd' ('rlc') makes the command-prompt for searches show up on
       the right side.  It only takes effect if the window is 'rightleft'.
@@ -62,10 +55,10 @@ Details
 
    +  CTRL-_ in insert/replace modes toggles 'revins' and 'hkmap' as follows:
 
-      When in rightleft window, 'revins' and 'nohkmap' are toggled, since
+      When in rightleft window, 'revins' is toggled, since
       English will likely be inserted in this case.
 
-      When in norightleft window, 'revins' 'hkmap' are toggled, since Hebrew
+      When in norightleft window, 'revins' is toggled, since Hebrew
       will likely be inserted in this case.
 
       CTRL-_ moves the cursor to the end of the typed text.

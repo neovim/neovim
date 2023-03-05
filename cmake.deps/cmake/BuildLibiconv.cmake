@@ -1,7 +1,4 @@
 if(MSVC)
-  if(USE_EXISTING_SRC_DIR)
-    unset(LIBICONV_URL)
-  endif()
   ExternalProject_Add(libiconv
     URL ${LIBICONV_URL}
     URL_HASH SHA256=${LIBICONV_SHA256}

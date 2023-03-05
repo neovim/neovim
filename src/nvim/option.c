@@ -62,7 +62,6 @@
 #include "nvim/indent_c.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
-#include "nvim/locale.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros.h"
@@ -815,7 +814,7 @@ static void do_set_num(int opt_idx, int opt_flags, char **argp, int nextchar, co
   } else if (*arg == '-' || ascii_isdigit(*arg)) {
     int i;
     // Allow negative, octal and hex numbers.
-    vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0, true);
+    vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0, true, NULL);
     if (i == 0 || (arg[i] != NUL && !ascii_iswhite(arg[i]))) {
       *errmsg = e_number_required_after_equal;
       return;
@@ -840,9 +839,8 @@ static void do_set_num(int opt_idx, int opt_flags, char **argp, int nextchar, co
 
 // Handle some special cases with string option values
 static void munge_string_opt_val(char **varp, char **oldval, char **const origval,
-                                 char_u **const origval_l, char_u **const origval_g,
-                                 char **const argp, char *const whichwrap, size_t whichwraplen,
-                                 char **const save_argp)
+                                 char **const origval_l, char **const origval_g, char **const argp,
+                                 char *const whichwrap, size_t whichwraplen, char **const save_argp)
 {
   // Set 'keywordprg' to ":help" if an empty
   // value was passed to :set by the user.
@@ -871,11 +869,11 @@ static void munge_string_opt_val(char **varp, char **oldval, char **const origva
     if (*origval == *oldval) {
       *origval = *varp;
     }
-    if (*origval_l == (char_u *)(*oldval)) {
-      *origval_l = *(char_u **)varp;
+    if (*origval_l == *oldval) {
+      *origval_l = *varp;
     }
-    if (*origval_g == (char_u *)(*oldval)) {
-      *origval_g = *(char_u **)varp;
+    if (*origval_g == *oldval) {
+      *origval_g = *varp;
     }
     *oldval = *varp;
   } else if (varp == &p_ww && ascii_isdigit(**argp)) {
@@ -920,8 +918,8 @@ static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar,
   char *varp = varp_arg;
   char *save_arg = NULL;
   char *s = NULL;
-  char_u *origval_l = NULL;
-  char_u *origval_g = NULL;
+  char *origval_l = NULL;
+  char *origval_g = NULL;
   char whichwrap[80];
 
   // When using ":set opt=val" for a global option
@@ -936,12 +934,12 @@ static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar,
   char *oldval = *(char **)varp;
 
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
-    origval_l = *(char_u **)get_varp_scope(&(options[opt_idx]), OPT_LOCAL);
-    origval_g = *(char_u **)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
+    origval_l = *(char **)get_varp_scope(&(options[opt_idx]), OPT_LOCAL);
+    origval_g = *(char **)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
 
     // A global-local string option might have an empty option as value to
     // indicate that the global value should be used.
-    if (((int)options[opt_idx].indir & PV_BOTH) && origval_l == (char_u *)empty_option) {
+    if (((int)options[opt_idx].indir & PV_BOTH) && origval_l == empty_option) {
       origval_l = origval_g;
     }
   }
@@ -1133,8 +1131,8 @@ static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar,
 
   // origval may be freed by did_set_string_option(), make a copy.
   char *saved_origval = (origval != NULL) ? xstrdup(origval) : NULL;
-  char *saved_origval_l = (origval_l != NULL) ? xstrdup((char *)origval_l) : NULL;
-  char *saved_origval_g = (origval_g != NULL) ? xstrdup((char *)origval_g) : NULL;
+  char *saved_origval_l = (origval_l != NULL) ? xstrdup(origval_l) : NULL;
+  char *saved_origval_g = (origval_g != NULL) ? xstrdup(origval_g) : NULL;
 
   // newval (and varp) may become invalid if the buffer is closed by
   // autocommands.
@@ -4673,7 +4671,7 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
         return;
       }
     }
-    int key = get_special_key_code((char_u *)arg + 1);
+    int key = get_special_key_code(arg + 1);
     if (key == 0) {                 // unknown name
       xp->xp_context = EXPAND_NOTHING;
       return;
@@ -5026,7 +5024,6 @@ static void paste_option_changed(void)
   static int save_sta = 0;
   static int save_ru = 0;
   static int save_ri = 0;
-  static int save_hkmap = 0;
 
   if (p_paste) {
     // Paste switched from off to on.
@@ -5052,7 +5049,6 @@ static void paste_option_changed(void)
       save_sta = p_sta;
       save_ru = p_ru;
       save_ri = p_ri;
-      save_hkmap = p_hkmap;
       // save global values for local buffer options
       p_ai_nopaste = p_ai;
       p_et_nopaste = p_et;
@@ -5089,7 +5085,6 @@ static void paste_option_changed(void)
     }
     p_ru = 0;                       // no ruler
     p_ri = 0;                       // no reverse insert
-    p_hkmap = 0;                    // no Hebrew keyboard
     // set global values for local buffer options
     p_tw = 0;
     p_wm = 0;
@@ -5129,7 +5124,6 @@ static void paste_option_changed(void)
     }
     p_ru = save_ru;
     p_ri = save_ri;
-    p_hkmap = save_hkmap;
     // set global values for local buffer options
     p_ai = p_ai_nopaste;
     p_et = p_et_nopaste;

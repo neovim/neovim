@@ -63,7 +63,7 @@ local function test_vim_str2nr(s, what, exp, maxlen, strict)
         cv[k] = args[k]
       end
     end
-    lib.vim_str2nr(s, cv.pre, cv.len, what, cv.num, cv.unum, maxlen, strict)
+    lib.vim_str2nr(s, cv.pre, cv.len, what, cv.num, cv.unum, maxlen, strict, nil)
     for cck, ccv in pairs(cv) do
       if exp[cck] ~= tonumber(ccv[0]) then
         error(('Failed check (%s = %d) in test (s=%s, w=%u, m=%d, strict=%s): %d'):format(

@@ -118,7 +118,7 @@ endif()
 
 # If the macOS deployment target is not set manually (via $MACOSX_DEPLOYMENT_TARGET),
 # fall back to local system version. Needs to be done here and in top-level CMakeLists.txt.
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+if(APPLE)
   if(NOT CMAKE_OSX_DEPLOYMENT_TARGET)
     execute_process(COMMAND sw_vers -productVersion
                     OUTPUT_VARIABLE MACOS_VERSION
@@ -134,8 +134,8 @@ set_directory_properties(PROPERTIES EP_PREFIX "${DEPS_BUILD_DIR}")
 set(LIBUV_URL https://github.com/libuv/libuv/archive/62c2374a8c005ce9e42088965f8f8af2532c177b.tar.gz)
 set(LIBUV_SHA256 c7e89137da65a1cb550ba96b892dfeeabea982bf33b9237bcf9bbcd90f2e70a1)
 
-set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/c-4.0.0/msgpack-c-4.0.0.tar.gz)
-set(MSGPACK_SHA256 420fe35e7572f2a168d17e660ef981a589c9cbe77faa25eb34a520e1fcc032c8)
+set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/c-6.0.0/msgpack-c-6.0.0.tar.gz)
+set(MSGPACK_SHA256 3654f5e2c652dc52e0a993e270bb57d5702b262703f03771c152bba51602aeba)
 
 # https://github.com/LuaJIT/LuaJIT/tree/v2.1
 set(LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/505e2c03de35e2718eef0d2d3660712e06dadf1f.tar.gz)
@@ -156,9 +156,8 @@ set(LIBTERMKEY_SHA256 6945bd3c4aaa83da83d80a045c5563da4edd7d0374c62c0d35aec09eb3
 set(LIBVTERM_URL https://www.leonerd.org.uk/code/libvterm/libvterm-0.3.1.tar.gz)
 set(LIBVTERM_SHA256 25a8ad9c15485368dfd0a8a9dca1aec8fea5c27da3fa74ec518d5d3787f0c397)
 
-set(LUV_VERSION 1.44.2-1)
-set(LUV_URL https://github.com/luvit/luv/archive/e8e7b7e13225348a8806118a3ea9e021383a9536.tar.gz)
-set(LUV_SHA256 531dfbcb6fffe3fdfa806860b39035e54b07ee1ff3bb2af813e175febf7e9ccc)
+set(LUV_URL https://github.com/luvit/luv/archive/e5da6417db06a09d75bb5315662a2cf3e48a4a89.tar.gz)
+set(LUV_SHA256 16720d17b9e6d42a7008b902207ea2d61e3eeaef3cf358398dbbf3777867ec09)
 
 set(LUA_COMPAT53_URL https://github.com/keplerproject/lua-compat-5.3/archive/v0.9.tar.gz)
 set(LUA_COMPAT53_SHA256 ad05540d2d96a48725bb79a1def35cf6652a4e2ec26376e2617c8ce2baa6f416)
@@ -191,8 +190,20 @@ set(TREESITTER_VIM_SHA256 1b1cd39e33c8fb02fa7fe3977e844883c2a8508a7edd621f2d21e3
 set(TREESITTER_HELP_URL https://github.com/neovim/tree-sitter-vimdoc/archive/v1.3.0.tar.gz)
 set(TREESITTER_HELP_SHA256 f33f6d49c7d71feb2fd68ef2b2684da150f9f8e486ad9726213631d673942331)
 
+set(TREESITTER_QUERY_URL https://github.com/nvim-treesitter/tree-sitter-query/archive/0717de07078a20a8608c98ad5f26c208949d0e15.tar.gz)
+set(TREESITTER_QUERY_SHA256 2f2c79a59e3ff550aef849925e589d69b8a146b3af935504366cc973399d26e1)
+
 set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/c51896d32dcc11a38e41f36e3deb1a6a9c4f4b14.tar.gz)
 set(TREESITTER_SHA256 243e07541a9dd71681984b65bffed2d4a259bef0a4ad28cff55cc1c6878b8d18)
+
+if(USE_EXISTING_SRC_DIR)
+  get_cmake_property(VARS VARIABLES)
+  foreach (VAR ${VARS})
+    if(VAR MATCHES "^.*URL$")
+      unset(${VAR})
+    endif()
+  endforeach()
+endif()
 
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
@@ -253,14 +264,14 @@ if(WIN32)
   include(GetBinaryDeps)
 
   GetBinaryDep(TARGET wintools
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory . ${DEPS_INSTALL_DIR}/bin)
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory . ${DEPS_BIN_DIR})
 
   if(USE_BUNDLED_NVIMQT)
     GetBinaryDep(TARGET wingui
-      INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_INSTALL_DIR}/bin
+      INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_BIN_DIR}
       COMMAND ${CMAKE_COMMAND} -E copy_directory share ${DEPS_INSTALL_DIR}/share)
   endif()
 
   GetBinaryDep(TARGET win32yank_X86_64
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_INSTALL_DIR}/bin)
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_BIN_DIR})
 endif()

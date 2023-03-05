@@ -56,7 +56,7 @@ local function add_included_lang(base_langs, lang, ilang)
 end
 
 ---@private
----@param buf (number)
+---@param buf (integer)
 ---@param range (table)
 ---@param concat (boolean)
 ---@returns (string[]|string|nil)
@@ -269,12 +269,11 @@ end
 --- Gets the text corresponding to a given node
 ---
 ---@param node TSNode
----@param source (number|string) Buffer or string from which the {node} is extracted
+---@param source (integer|string) Buffer or string from which the {node} is extracted
 ---@param opts (table|nil) Optional parameters.
 ---          - concat: (boolean) Concatenate result in a string (default true)
 ---          - metadata (table) Metadata of a specific capture. This would be
----            set to `metadata[capture_id]` when using
----            |vim.treesitter.query.add_directive()|.
+---            set to `metadata[capture_id]` when using |vim.treesitter.add_directive()|.
 ---@return (string[]|string|nil)
 function M.get_node_text(node, source, opts)
   opts = opts or {}
@@ -485,8 +484,8 @@ local directive_handlers = {
 --- Adds a new predicate to be used in queries
 ---
 ---@param name string Name of the predicate, without leading #
----@param handler function(match:table<string,TSNode>, pattern:string, bufnr:number, predicate:string[])
----   - see |vim.treesitter.query.add_directive()| for argument meanings
+---@param handler function(match:table<string,TSNode>, pattern:string, bufnr:integer, predicate:string[])
+---   - see |vim.treesitter.add_directive()| for argument meanings
 ---@param force boolean|nil
 function M.add_predicate(name, handler, force)
   if predicate_handlers[name] and not force then
@@ -504,7 +503,7 @@ end
 --- metadata table `metadata[capture_id].key = value`
 ---
 ---@param name string Name of the directive, without leading #
----@param handler function(match:table<string,TSNode>, pattern:string, bufnr:number, predicate:string[], metadata:table)
+---@param handler function(match:table<string,TSNode>, pattern:string, bufnr:integer, predicate:string[], metadata:table)
 ---   - match: see |treesitter-query|
 ---      - node-level data are accessible via `match[capture_id]`
 ---   - pattern: see |treesitter-query|
@@ -645,8 +644,8 @@ end
 ---
 ---@param node TSNode under which the search will occur
 ---@param source (integer|string) Source buffer or string to extract text from
----@param start number Starting line for the search
----@param stop number Stopping line for the search (end-exclusive)
+---@param start integer Starting line for the search
+---@param stop integer Stopping line for the search (end-exclusive)
 ---
 ---@return (fun(): integer, TSNode, TSMetadata): capture id, capture node, metadata
 function Query:iter_captures(node, source, start, stop)

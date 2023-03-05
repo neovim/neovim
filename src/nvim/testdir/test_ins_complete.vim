@@ -375,6 +375,54 @@ func Test_completefunc_info()
   set completefunc&
 endfunc
 
+" Test that mouse scrolling/movement should not interrupt completion.
+func Test_mouse_scroll_move_during_completion()
+  new
+  com! -buffer TestCommand1 echo 'TestCommand1'
+  com! -buffer TestCommand2 echo 'TestCommand2'
+  call setline(1, ['', '', '', '', ''])
+  call cursor(5, 1)
+
+  " Without completion menu scrolling can move text.
+  set completeopt-=menu wrap
+  call feedkeys("ccT\<C-X>\<C-V>\<ScrollWheelDown>\<C-V>", 'tx')
+  call assert_equal('TestCommand2', getline('.'))
+  call assert_notequal(1, winsaveview().topline)
+  call feedkeys("ccT\<C-X>\<C-V>\<ScrollWheelUp>\<C-V>", 'tx')
+  call assert_equal('TestCommand2', getline('.'))
+  call assert_equal(1, winsaveview().topline)
+  set nowrap
+  call feedkeys("ccT\<C-X>\<C-V>\<ScrollWheelRight>\<C-V>", 'tx')
+  call assert_equal('TestCommand2', getline('.'))
+  call assert_notequal(0, winsaveview().leftcol)
+  call feedkeys("ccT\<C-X>\<C-V>\<ScrollWheelLeft>\<C-V>", 'tx')
+  call assert_equal('TestCommand2', getline('.'))
+  call assert_equal(0, winsaveview().leftcol)
+  call feedkeys("ccT\<C-X>\<C-V>\<MouseMove>\<C-V>", 'tx')
+  call assert_equal('TestCommand2', getline('.'))
+
+  " With completion menu scrolling cannot move text.
+  set completeopt+=menu wrap
+  call feedkeys("ccT\<C-X>\<C-V>\<ScrollWheelDown>\<C-V>", 'tx')
+  call assert_equal('TestCommand2', getline('.'))
+  call assert_equal(1, winsaveview().topline)
+  call feedkeys("ccT\<C-X>\<C-V>\<ScrollWheelUp>\<C-V>", 'tx')
+  call assert_equal('TestCommand2', getline('.'))
+  call assert_equal(1, winsaveview().topline)
+  set nowrap
+  call feedkeys("ccT\<C-X>\<C-V>\<ScrollWheelRight>\<C-V>", 'tx')
+  call assert_equal('TestCommand2', getline('.'))
+  call assert_equal(0, winsaveview().leftcol)
+  call feedkeys("ccT\<C-X>\<C-V>\<ScrollWheelLeft>\<C-V>", 'tx')
+  call assert_equal('TestCommand2', getline('.'))
+  call assert_equal(0, winsaveview().leftcol)
+  call feedkeys("ccT\<C-X>\<C-V>\<MouseMove>\<C-V>", 'tx')
+  call assert_equal('TestCommand2', getline('.'))
+
+  bwipe!
+  set completeopt& wrap&
+endfunc
+
 " Check that when using feedkeys() typeahead does not interrupt searching for
 " completions.
 func Test_compl_feedkeys()

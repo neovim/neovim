@@ -18,7 +18,6 @@ if(BUSTED_PRG)
     add_custom_target(unittest
       COMMAND ${CMAKE_COMMAND}
         -D BUSTED_PRG=${BUSTED_PRG}
-        -D LUA_PRG=${LUA_PRG}
         -D NVIM_PRG=$<TARGET_FILE:nvim>
         -D WORKING_DIR=${PROJECT_SOURCE_DIR}
         -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
@@ -30,7 +29,6 @@ if(BUSTED_PRG)
         -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
       DEPENDS ${UNITTEST_PREREQS}
       USES_TERMINAL)
-    set_target_properties(unittest PROPERTIES FOLDER test)
   else()
     message(WARNING "disabling unit tests: no Luajit FFI in ${LUA_PRG}")
   endif()
@@ -42,7 +40,6 @@ if(BUSTED_PRG)
   add_custom_target(functionaltest
     COMMAND ${CMAKE_COMMAND}
       -D BUSTED_PRG=${BUSTED_PRG}
-      -D LUA_PRG=${LUA_PRG}
       -D NVIM_PRG=$<TARGET_FILE:nvim>
       -D WORKING_DIR=${PROJECT_SOURCE_DIR}
       -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
@@ -55,12 +52,10 @@ if(BUSTED_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     USES_TERMINAL)
-  set_target_properties(functionaltest PROPERTIES FOLDER test)
 
   add_custom_target(benchmark
     COMMAND ${CMAKE_COMMAND}
       -D BUSTED_PRG=${BUSTED_PRG}
-      -D LUA_PRG=${LUA_PRG}
       -D NVIM_PRG=$<TARGET_FILE:nvim>
       -D WORKING_DIR=${PROJECT_SOURCE_DIR}
       -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
@@ -72,7 +67,6 @@ if(BUSTED_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${BENCHMARK_PREREQS}
     USES_TERMINAL)
-  set_target_properties(benchmark PROPERTIES FOLDER test)
 endif()
 
 find_program(BUSTED_LUA_PRG busted-lua)
@@ -80,7 +74,6 @@ if(BUSTED_LUA_PRG)
   add_custom_target(functionaltest-lua
     COMMAND ${CMAKE_COMMAND}
       -D BUSTED_PRG=${BUSTED_LUA_PRG}
-      -D LUA_PRG=${LUA_PRG}
       -D NVIM_PRG=$<TARGET_FILE:nvim>
       -D WORKING_DIR=${PROJECT_SOURCE_DIR}
       -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
@@ -92,5 +85,4 @@ if(BUSTED_LUA_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     USES_TERMINAL)
-    set_target_properties(functionaltest-lua PROPERTIES FOLDER test)
 endif()

@@ -189,28 +189,28 @@ typedef enum {
 
 /// Struct to keep the state at each level in suggest_try_change().
 typedef struct trystate_S {
-  state_T ts_state;         ///< state at this level, STATE_
-  int ts_score;             ///< score
-  idx_T ts_arridx;          ///< index in tree array, start of node
-  int16_t ts_curi;          ///< index in list of child nodes
-  char_u ts_fidx;           ///< index in fword[], case-folded bad word
-  char_u ts_fidxtry;        ///< ts_fidx at which bytes may be changed
-  char_u ts_twordlen;       ///< valid length of tword[]
-  char_u ts_prefixdepth;    ///< stack depth for end of prefix or
-                            ///< PFD_PREFIXTREE or PFD_NOPREFIX
-  char_u ts_flags;          ///< TSF_ flags
-  char_u ts_tcharlen;       ///< number of bytes in tword character
-  char_u ts_tcharidx;       ///< current byte index in tword character
-  char_u ts_isdiff;         ///< DIFF_ values
-  char_u ts_fcharstart;     ///< index in fword where badword char started
-  char_u ts_prewordlen;     ///< length of word in "preword[]"
-  char_u ts_splitoff;       ///< index in "tword" after last split
-  char_u ts_splitfidx;      ///< "ts_fidx" at word split
-  char_u ts_complen;        ///< nr of compound words used
-  char_u ts_compsplit;      ///< index for "compflags" where word was spit
-  char_u ts_save_badflags;  ///< su_badflags saved here
-  char_u ts_delidx;         ///< index in fword for char that was deleted,
-                            ///< valid when "ts_flags" has TSF_DIDDEL
+  state_T ts_state;          ///< state at this level, STATE_
+  int ts_score;              ///< score
+  idx_T ts_arridx;           ///< index in tree array, start of node
+  int16_t ts_curi;           ///< index in list of child nodes
+  uint8_t ts_fidx;           ///< index in fword[], case-folded bad word
+  uint8_t ts_fidxtry;        ///< ts_fidx at which bytes may be changed
+  uint8_t ts_twordlen;       ///< valid length of tword[]
+  uint8_t ts_prefixdepth;    ///< stack depth for end of prefix or
+                             ///< PFD_PREFIXTREE or PFD_NOPREFIX
+  uint8_t ts_flags;          ///< TSF_ flags
+  uint8_t ts_tcharlen;       ///< number of bytes in tword character
+  uint8_t ts_tcharidx;       ///< current byte index in tword character
+  uint8_t ts_isdiff;         ///< DIFF_ values
+  uint8_t ts_fcharstart;     ///< index in fword where badword char started
+  uint8_t ts_prewordlen;     ///< length of word in "preword[]"
+  uint8_t ts_splitoff;       ///< index in "tword" after last split
+  uint8_t ts_splitfidx;      ///< "ts_fidx" at word split
+  uint8_t ts_complen;        ///< nr of compound words used
+  uint8_t ts_compsplit;      ///< index for "compflags" where word was spit
+  uint8_t ts_save_badflags;  ///< su_badflags saved here
+  uint8_t ts_delidx;         ///< index in fword for char that was deleted,
+                             ///< valid when "ts_flags" has TSF_DIDDEL
 } trystate_T;
 
 // values for ts_isdiff
@@ -243,7 +243,7 @@ static long spell_suggest_timeout = 5000;
 /// Returns true when the sequence of flags in "compflags" plus "flag" can
 /// possibly form a valid compounded word.  This also checks the COMPOUNDRULE
 /// lines if they don't contain wildcards.
-static bool can_be_compound(trystate_T *sp, slang_T *slang, char_u *compflags, int flag)
+static bool can_be_compound(trystate_T *sp, slang_T *slang, uint8_t *compflags, int flag)
 {
   // If the flag doesn't appear in sl_compstartflags or sl_compallflags
   // then it can't possibly compound.
@@ -256,7 +256,7 @@ static bool can_be_compound(trystate_T *sp, slang_T *slang, char_u *compflags, i
   // possibly can form a match with COMPOUNDRULE patterns.  This only
   // makes sense when we have two or more words.
   if (slang->sl_comprules != NULL && sp->ts_complen > sp->ts_compsplit) {
-    compflags[sp->ts_complen] = (char_u)flag;
+    compflags[sp->ts_complen] = (uint8_t)flag;
     compflags[sp->ts_complen + 1] = NUL;
     bool v = match_compoundrule(slang, compflags + sp->ts_compsplit);
     compflags[sp->ts_complen] = NUL;
@@ -349,7 +349,7 @@ static int badword_captype(char *word, char *end)
 /// @return  the offset.
 static int bytes2offset(char **pp)
 {
-  char_u *p = (char_u *)(*pp);
+  uint8_t *p = (uint8_t *)(*pp);
   int nr;
 
   int c = *p++;
@@ -1145,10 +1145,10 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
   // words and split word.  NUL terminated
   // when going deeper but not when coming
   // back.
-  char_u compflags[MAXWLEN];        // compound flags, one for each word
+  uint8_t compflags[MAXWLEN];        // compound flags, one for each word
   int newscore;
   int score;
-  char_u *byts, *fbyts, *pbyts;
+  uint8_t *byts, *fbyts, *pbyts;
   idx_T *idxs, *fidxs, *pidxs;
   int c, c2, c3;
   int n = 0;
@@ -1165,7 +1165,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
   bool goodword_ends;
 #ifdef DEBUG_TRIEWALK
   // Stores the name of the change made at each level.
-  char_u changename[MAXWLEN][80];
+  uint8_t changename[MAXWLEN][80];
 #endif
   int breakcheckcount = 1000;
   bool compound_ok;
@@ -1181,7 +1181,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
 
   if (soundfold) {
     // Going through the soundfold tree.
-    byts = fbyts = (char_u *)slang->sl_sbyts;
+    byts = fbyts = slang->sl_sbyts;
     idxs = fidxs = slang->sl_sidxs;
     pbyts = NULL;
     pidxs = NULL;
@@ -1190,9 +1190,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
   } else {
     // When there are postponed prefixes we need to use these first.  At
     // the end of the prefix we continue in the case-fold tree.
-    fbyts = (char_u *)slang->sl_fbyts;
+    fbyts = slang->sl_fbyts;
     fidxs = slang->sl_fidxs;
-    pbyts = (char_u *)slang->sl_pbyts;
+    pbyts = slang->sl_pbyts;
     pidxs = slang->sl_pidxs;
     if (pbyts != NULL) {
       byts = pbyts;
@@ -1239,7 +1239,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
         n = (int)sp->ts_state;
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_ENDNUL;
-        sp->ts_save_badflags = (char_u)su->su_badflags;
+        sp->ts_save_badflags = (uint8_t)su->su_badflags;
 
         // At end of a prefix or at start of prefixtree: check for
         // following word.
@@ -1256,7 +1256,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
           go_deeper(stack, depth, 0);
           depth++;
           sp = &stack[depth];
-          sp->ts_prefixdepth = (char_u)(depth - 1);
+          sp->ts_prefixdepth = (uint8_t)(depth - 1);
           byts = fbyts;
           idxs = fidxs;
           sp->ts_arridx = 0;
@@ -1266,7 +1266,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
           tword[sp->ts_twordlen] = NUL;
           make_case_word(tword + sp->ts_splitoff,
                          preword + sp->ts_prewordlen, flags);
-          sp->ts_prewordlen = (char_u)strlen(preword);
+          sp->ts_prewordlen = (uint8_t)strlen(preword);
           sp->ts_splitoff = sp->ts_twordlen;
         }
         break;
@@ -1276,7 +1276,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
         // Past bytes in node and/or past NUL bytes.
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_ENDNUL;
-        sp->ts_save_badflags = (char_u)su->su_badflags;
+        sp->ts_save_badflags = (uint8_t)su->su_badflags;
         break;
       }
 
@@ -1379,7 +1379,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
             break;
           }
 
-          compflags[sp->ts_complen] = (char_u)((unsigned)flags >> 24);
+          compflags[sp->ts_complen] = (uint8_t)((unsigned)flags >> 24);
           compflags[sp->ts_complen + 1] = NUL;
           xstrlcpy(preword + sp->ts_prewordlen,
                    tword + sp->ts_splitoff,
@@ -1577,7 +1577,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
                 < slang->sl_compmax)
             && (can_be_compound(sp, slang, compflags, (int)((unsigned)flags >> 24)))) {
           try_compound = true;
-          compflags[sp->ts_complen] = (char_u)((unsigned)flags >> 24);
+          compflags[sp->ts_complen] = (uint8_t)((unsigned)flags >> 24);
           compflags[sp->ts_complen + 1] = NUL;
         }
 
@@ -1596,7 +1596,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
           sp->ts_curi--;                    // do the same NUL again
           compflags[sp->ts_complen] = NUL;
         } else {
-          sp->ts_flags &= (char_u) ~TSF_DIDSPLIT;
+          sp->ts_flags &= (uint8_t) ~TSF_DIDSPLIT;
         }
 
         if (try_split || try_compound) {
@@ -1641,7 +1641,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
             }
 #endif
             // Save things to be restored at STATE_SPLITUNDO.
-            sp->ts_save_badflags = (char_u)su->su_badflags;
+            sp->ts_save_badflags = (uint8_t)su->su_badflags;
             PROF_STORE(sp->ts_state)
             sp->ts_state = STATE_SPLITUNDO;
 
@@ -1652,7 +1652,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
             if (!try_compound && !fword_ends) {
               STRCAT(preword, " ");
             }
-            sp->ts_prewordlen = (char_u)strlen(preword);
+            sp->ts_prewordlen = (uint8_t)strlen(preword);
             sp->ts_splitoff = sp->ts_twordlen;
             sp->ts_splitfidx = sp->ts_fidx;
 
@@ -1673,12 +1673,12 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
               if (fword_ends) {
                 // Copy the skipped character to preword.
                 memmove(preword + sp->ts_prewordlen, fword + sp->ts_fidx, (size_t)l);
-                sp->ts_prewordlen = (char_u)(sp->ts_prewordlen + l);
+                sp->ts_prewordlen = (uint8_t)(sp->ts_prewordlen + l);
                 preword[sp->ts_prewordlen] = NUL;
               } else {
                 sp->ts_score -= SCORE_SPLIT - SCORE_SUBST;
               }
-              sp->ts_fidx = (char_u)(sp->ts_fidx + l);
+              sp->ts_fidx = (uint8_t)(sp->ts_fidx + l);
             }
 
             // When compounding include compound flag in
@@ -1803,7 +1803,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
             // First byte.
             sp->ts_tcharidx = 0;
             sp->ts_tcharlen = MB_BYTE2LEN(c);
-            sp->ts_fcharstart = (char_u)(sp->ts_fidx - 1);
+            sp->ts_fcharstart = (uint8_t)(sp->ts_fidx - 1);
             sp->ts_isdiff = (newscore != 0)
                             ? DIFF_YES : DIFF_NONE;
           } else if (sp->ts_isdiff == DIFF_INSERT && sp->ts_fidx > 0) {
@@ -1816,8 +1816,8 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
             if (sp->ts_isdiff == DIFF_YES) {
               // Correct ts_fidx for the byte length of the
               // character (we didn't check that before).
-              sp->ts_fidx = (char_u)(sp->ts_fcharstart
-                                     + utfc_ptr2len(fword + sp->ts_fcharstart));
+              sp->ts_fidx = (uint8_t)(sp->ts_fcharstart
+                                      + utfc_ptr2len(fword + sp->ts_fcharstart));
 
               // For changing a composing character adjust
               // the score from SCORE_SUBST to
@@ -1905,7 +1905,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
         // results.
         c = utf_ptr2char(fword + sp->ts_fidx);
         stack[depth].ts_fidx =
-          (char_u)(stack[depth].ts_fidx + utfc_ptr2len(fword + sp->ts_fidx));
+          (uint8_t)(stack[depth].ts_fidx + utfc_ptr2len(fword + sp->ts_fidx));
         if (utf_iscomposing(c)) {
           stack[depth].ts_score -= SCORE_DEL - SCORE_DELCOMP;
         } else if (c == utf_ptr2char(fword + stack[depth].ts_fidx)) {
@@ -1985,7 +1985,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
           // There are following bytes for the same character.
           // We must find all bytes before trying
           // delete/insert/swap/etc.
-          sp->ts_tcharlen = (char_u)fl;
+          sp->ts_tcharlen = (uint8_t)fl;
           sp->ts_tcharidx = 1;
           sp->ts_isdiff = DIFF_INSERT;
         }
@@ -2061,7 +2061,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
         fl = utf_char2len(c2);
         memmove(p, p + n, (size_t)fl);
         utf_char2bytes(c, p + fl);
-        stack[depth].ts_fidxtry = (char_u)(sp->ts_fidx + n + fl);
+        stack[depth].ts_fidxtry = (uint8_t)(sp->ts_fidx + n + fl);
       } else {
         // If this swap doesn't work then SWAP3 won't either.
         PROF_STORE(sp->ts_state)
@@ -2118,7 +2118,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
         memmove(p, p + n + fl, (size_t)tl);
         utf_char2bytes(c2, p + tl);
         utf_char2bytes(c, p + fl + tl);
-        stack[depth].ts_fidxtry = (char_u)(sp->ts_fidx + n + fl + tl);
+        stack[depth].ts_fidxtry = (uint8_t)(sp->ts_fidx + n + fl + tl);
       } else {
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_REP_INI;
@@ -2166,7 +2166,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
         fl += utf_ptr2len(p + n + fl);
         memmove(p, p + n, (size_t)fl);
         utf_char2bytes(c, p + fl);
-        stack[depth].ts_fidxtry = (char_u)(sp->ts_fidx + n + fl);
+        stack[depth].ts_fidxtry = (uint8_t)(sp->ts_fidx + n + fl);
       } else {
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_REP_INI;
@@ -2203,7 +2203,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
         tl = utf_ptr2len(p + n);
         memmove(p + tl, p, (size_t)n);
         utf_char2bytes(c, p);
-        stack[depth].ts_fidxtry = (char_u)(sp->ts_fidx + n + tl);
+        stack[depth].ts_fidxtry = (uint8_t)(sp->ts_fidx + n + tl);
       } else {
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_REP_INI;
@@ -2293,7 +2293,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
             repextra += tl - fl;
           }
           memmove(p, ftp->ft_to, (size_t)tl);
-          stack[depth].ts_fidxtry = (char_u)(sp->ts_fidx + tl);
+          stack[depth].ts_fidxtry = (uint8_t)(sp->ts_fidx + tl);
           stack[depth].ts_tcharlen = 0;
           break;
         }
@@ -2381,7 +2381,7 @@ static void find_keepcap_word(slang_T *slang, char *fword, char *kword)
   int c;
   idx_T lo, hi, m;
   char *p;
-  char_u *byts = (char_u *)slang->sl_kbyts;      // array with bytes of the words
+  uint8_t *byts = slang->sl_kbyts;      // array with bytes of the words
   idx_T *idxs = slang->sl_kidxs;      // array with indexes
 
   if (byts == NULL) {
@@ -2683,11 +2683,11 @@ static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char *ba
 /// handled already.
 typedef struct {
   int16_t sft_score;   ///< lowest score used
-  char_u sft_word[];   ///< soundfolded word
+  uint8_t sft_word[];   ///< soundfolded word
 } sftword_T;
 
 static sftword_T dumsft;
-#define HIKEY2SFT(p)  ((sftword_T *)((p) - (dumsft.sft_word - (char_u *)&dumsft)))
+#define HIKEY2SFT(p)  ((sftword_T *)((p) - (dumsft.sft_word - (uint8_t *)&dumsft)))
 #define HI2SFT(hi)     HIKEY2SFT((hi)->hi_key)
 
 /// Prepare for calling suggest_try_soundalike().
@@ -2779,7 +2779,7 @@ static void add_sound_suggest(suginfo_T *su, char *goodword, int score, langp_T 
   char theword[MAXWLEN];
   int i;
   int wlen;
-  char_u *byts;
+  uint8_t *byts;
   idx_T *idxs;
   int n;
   int wordcount;
@@ -2824,7 +2824,7 @@ static void add_sound_suggest(suginfo_T *su, char *goodword, int score, langp_T 
     // previous wordnr.
     orgnr += bytes2offset(&nrline);
 
-    byts = (char_u *)slang->sl_fbyts;
+    byts = slang->sl_fbyts;
     idxs = slang->sl_fidxs;
 
     // Lookup the word "orgnr" one of the two tries.
@@ -2954,10 +2954,10 @@ static int soundfold_find(slang_T *slang, char *word)
 {
   idx_T arridx = 0;
   int wlen = 0;
-  char_u *ptr = (char_u *)word;
+  uint8_t *ptr = (uint8_t *)word;
   int wordnr = 0;
 
-  char_u *byts = (char_u *)slang->sl_sbyts;
+  uint8_t *byts = slang->sl_sbyts;
   idx_T *idxs = slang->sl_sidxs;
 
   for (;;) {
@@ -3236,15 +3236,15 @@ static void rescore_one(suginfo_T *su, suggest_T *stp)
   // Only rescore suggestions that have no sal score yet and do have a
   // language.
   if (slang != NULL && !GA_EMPTY(&slang->sl_sal) && !stp->st_had_bonus) {
-    char_u *p;
+    char *p;
     if (slang == su->su_sallang) {
-      p = (char_u *)su->su_sal_badword;
+      p = su->su_sal_badword;
     } else {
       spell_soundfold(slang, su->su_fbadword, true, sal_badword);
-      p = (char_u *)sal_badword;
+      p = sal_badword;
     }
 
-    stp->st_altscore = stp_sal_score(stp, su, slang, (char *)p);
+    stp->st_altscore = stp_sal_score(stp, su, slang, p);
     if (stp->st_altscore == SCORE_MAXMAX) {
       stp->st_altscore = SCORE_BIG;
     }

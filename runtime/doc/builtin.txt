@@ -380,7 +380,8 @@ remove({blob}, {idx} [, {end}])	Number/Blob
 					remove bytes {idx}-{end} from {blob}
 remove({dict}, {key})		any	remove entry {key} from {dict}
 rename({from}, {to})		Number	rename (move) file from {from} to {to}
-repeat({expr}, {count})		String	repeat {expr} {count} times
+repeat({expr}, {count})		List/Blob/String
+					repeat {expr} {count} times
 resolve({filename})		String	get filename a shortcut points to
 reverse({list})			List	reverse {list} in-place
 round({expr})			Float	round off {expr}
@@ -6420,8 +6421,8 @@ repeat({expr}, {count})					*repeat()*
 		result.  Example: >
 			:let separator = repeat('-', 80)
 <		When {count} is zero or negative the result is empty.
-		When {expr} is a |List| the result is {expr} concatenated
-		{count} times.  Example: >
+		When {expr} is a |List| or a |Blob| the result is {expr}
+		concatenated {count} times.  Example: >
 			:let longlist = repeat(['a', 'b'], 3)
 <		Results in ['a', 'b', 'a', 'b', 'a', 'b'].
 

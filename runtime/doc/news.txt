@@ -89,8 +89,9 @@ The following new APIs or features were added.
 
   See |lsp-semantic_tokens| for more information.
 
-• |vim.treesitter.show_tree()| opens a split window showing a text
-  representation of the nodes in a language tree for the current buffer.
+• |vim.treesitter.inspect_tree()| and |:InspectTree| opens a split window
+  showing a text representation of the nodes in a language tree for the current
+  buffer.
 
 • Added support for the `willSave` and `willSaveWaitUntil` capabilities to the
   LSP client. `willSaveWaitUntil` allows a server to modify a document before it
@@ -161,11 +162,10 @@ The following new APIs or features were added.
 • Treesitter captures can now be transformed by directives. This will allow
   more complicated dynamic language injections.
 
-• |vim.treesitter.query.get_node_text()| now accepts a `metadata` option for
-  writing custom directives using |vim.treesitter.query.add_directive()|.
+• |vim.treesitter.get_node_text()| now accepts a `metadata` option for
+  writing custom directives using |vim.treesitter.add_directive()|.
 
-• |vim.treesitter.language.add()| as a new replacement for
-  `vim.treesitter.language.require_language`.
+• |vim.treesitter.add()| replaces `vim.treesitter.language.require_language`.
 
 • `require'bit'` is now always available |lua-bit|
 
@@ -183,6 +183,11 @@ The following new APIs or features were added.
 
 • Vim's `has('gui_running')` is now supported as a way for plugins to check if
   a GUI (not the |TUI|) is attached to Nvim. |has()|
+
+• Added preliminary support for the `workspace/didChangeWatchedFiles` capability
+  to the LSP client to notify servers of file changes on disk. The feature is
+  disabled by default and can be enabled by setting the
+  `workspace.didChangeWatchedFiles.dynamicRegistration=true` capability.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
@@ -216,14 +221,15 @@ The following deprecated functions or APIs were removed.
   changes need to be contributed there first.)
   See https://github.com/neovim/neovim/pull/20674.
 
+- 'hkmap', 'hkmapp' and 'aleph' options were removed. Use 'keymap' option instead.
+
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*
 
 The following functions are now deprecated and will be removed in the next
 release.
 
-• `vim.treesitter.language.require_language()` has been deprecated in favour
-  of |vim.treesitter.language.add()|.
+• |vim.treesitter.add()| replaces `vim.treesitter.language.require_language()`
 
 • |vim.treesitter.get_node_at_pos()| and |vim.treesitter.get_node_at_cursor()|
   are both deprecated in favor of |vim.treesitter.get_node()|.

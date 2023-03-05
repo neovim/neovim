@@ -673,7 +673,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
     if (end - bp > 3 && bp[0] == 't' && bp[1] == '_') {
       bp += 3;  // skip t_xx, xx may be '-' or '>'
     } else if (end - bp > 4 && STRNICMP(bp, "char-", 5) == 0) {
-      vim_str2nr(bp + 5, NULL, &l, STR2NR_ALL, NULL, NULL, 0, true);
+      vim_str2nr(bp + 5, NULL, &l, STR2NR_ALL, NULL, NULL, 0, true, NULL);
       if (l == 0) {
         emsg(_(e_invarg));
         return 0;
@@ -704,7 +704,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
       if (STRNICMP(last_dash + 1, "char-", 5) == 0
           && ascii_isdigit(last_dash[6])) {
         // <Char-123> or <Char-033> or <Char-0x33>
-        vim_str2nr(last_dash + 6, NULL, &l, STR2NR_ALL, NULL, &n, 0, true);
+        vim_str2nr(last_dash + 6, NULL, &l, STR2NR_ALL, NULL, &n, 0, true, NULL);
         if (l == 0) {
           emsg(_(e_invarg));
           return 0;
@@ -723,7 +723,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
         if (modifiers != 0 && last_dash[l + 1] == '>') {
           key = utf_ptr2char(last_dash + off);
         } else {
-          key = get_special_key_code((char_u *)last_dash + off);
+          key = get_special_key_code(last_dash + off);
           if (!(flags & FSK_KEEP_X_KEY)) {
             key = handle_x_keys(key);
           }
@@ -822,18 +822,18 @@ int find_special_key_in_table(int c)
 ///                   a termcap name.
 ///
 /// @return Key code or 0 if not found.
-int get_special_key_code(const char_u *name)
+int get_special_key_code(const char *name)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   for (int i = 0; key_names_table[i].name != NULL; i++) {
     const char *const table_name = key_names_table[i].name;
     int j;
-    for (j = 0; ascii_isident(name[j]) && table_name[j] != NUL; j++) {
-      if (TOLOWER_ASC(table_name[j]) != TOLOWER_ASC(name[j])) {
+    for (j = 0; ascii_isident((uint8_t)name[j]) && table_name[j] != NUL; j++) {
+      if (TOLOWER_ASC(table_name[j]) != TOLOWER_ASC((uint8_t)name[j])) {
         break;
       }
     }
-    if (!ascii_isident(name[j]) && table_name[j] == NUL) {
+    if (!ascii_isident((uint8_t)name[j]) && table_name[j] == NUL) {
       return key_names_table[i].key;
     }
   }
@@ -1094,16 +1094,4 @@ void vim_unescape_ks(char *p)
     }
   }
   *d = NUL;
-}
-
-/// Logs a single key as a human-readable keycode.
-void log_key(int log_level, int key)
-{
-  if (log_level < MIN_LOG_LEVEL) {
-    return;
-  }
-  char *keyname = key == K_EVENT
-    ? "K_EVENT"
-    : (char *)get_special_key_name(key, mod_mask);
-  LOG(log_level, "input: %s", keyname);
 }

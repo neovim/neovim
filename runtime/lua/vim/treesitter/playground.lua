@@ -1,7 +1,7 @@
 local api = vim.api
 
 ---@class TSPlayground
----@field ns number API namespace
+---@field ns integer API namespace
 ---@field opts table Options table with the following keys:
 ---                  - anon (boolean): If true, display anonymous nodes
 ---                  - lang (boolean): If true, display the language alongside each node
@@ -10,14 +10,14 @@ local api = vim.api
 local TSPlayground = {}
 ---
 ---@class Node
----@field id number Node id
+---@field id integer Node id
 ---@field text string Node text
 ---@field named boolean True if this is a named (non-anonymous) node
----@field depth number Depth of the node within the tree
----@field lnum number Beginning line number of this node in the source buffer
----@field col number Beginning column number of this node in the source buffer
----@field end_lnum number Final line number of this node in the source buffer
----@field end_col number Final column number of this node in the source buffer
+---@field depth integer Depth of the node within the tree
+---@field lnum integer Beginning line number of this node in the source buffer
+---@field col integer Beginning column number of this node in the source buffer
+---@field end_lnum integer Final line number of this node in the source buffer
+---@field end_col integer Final column number of this node in the source buffer
 ---@field lang string Source language of this node
 ---@field root TSNode
 
@@ -34,7 +34,7 @@ local TSPlayground = {}
 --- table maps nodes in the primary tree to root nodes of injected trees.
 ---
 ---@param node TSNode Starting node to begin traversal |tsnode|
----@param depth number Current recursion depth
+---@param depth integer Current recursion depth
 ---@param lang string Language of the tree currently being traversed
 ---@param injections table<integer,Node> Mapping of node ids to root nodes of injected language trees (see
 ---                        explanation above)
@@ -146,14 +146,14 @@ local decor_ns = api.nvim_create_namespace('ts.playground')
 ---@return string
 local function get_range_str(lnum, col, end_col, end_lnum)
   if lnum == end_lnum then
-    return string.format('[%d:%d-%d]', lnum + 1, col + 1, end_col)
+    return string.format('[%d:%d - %d]', lnum + 1, col + 1, end_col)
   end
-  return string.format('[%d:%d-%d:%d]', lnum + 1, col + 1, end_lnum + 1, end_col)
+  return string.format('[%d:%d - %d:%d]', lnum + 1, col + 1, end_lnum + 1, end_col)
 end
 
 --- Write the contents of this Playground into {bufnr}.
 ---
----@param bufnr number Buffer number to write into.
+---@param bufnr integer Buffer number to write into.
 ---@private
 function TSPlayground:draw(bufnr)
   vim.bo[bufnr].modifiable = true
@@ -163,7 +163,8 @@ function TSPlayground:draw(bufnr)
   for _, item in self:iter() do
     local range_str = get_range_str(item.lnum, item.col, item.end_lnum, item.end_col)
     local lang_str = self.opts.lang and string.format(' %s', item.lang) or ''
-    local line = string.rep(' ', item.depth) .. item.text .. '; ' .. range_str .. lang_str
+    local line =
+      string.format('%s%s ; %s%s', string.rep(' ', item.depth), item.text, range_str, lang_str)
 
     if self.opts.lang then
       lang_hl_marks[#lang_hl_marks + 1] = {
@@ -193,7 +194,7 @@ end
 ---
 --- The node number is dependent on whether or not anonymous nodes are displayed.
 ---
----@param i number Node number to get
+---@param i integer Node number to get
 ---@return Node
 ---@private
 function TSPlayground:get(i)
@@ -205,7 +206,7 @@ end
 ---
 ---@return (fun(): integer, Node) Iterator over all nodes in this Playground
 ---@return table
----@return number
+---@return integer
 ---@private
 function TSPlayground:iter()
   return ipairs(self.opts.anon and self.nodes or self.named)

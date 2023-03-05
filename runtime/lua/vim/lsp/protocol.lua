@@ -834,6 +834,10 @@ function protocol.make_client_capabilities()
       semanticTokens = {
         refreshSupport = true,
       },
+      didChangeWatchedFiles = {
+        dynamicRegistration = false,
+        relativePatternSupport = true,
+      },
     },
     experimental = nil,
     window = {

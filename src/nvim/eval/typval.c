@@ -2743,14 +2743,14 @@ int tv_blob_check_range(int bloblen, varnumber_T n1, varnumber_T n2, bool quiet)
 /// Set bytes "n1" to "n2" (inclusive) in "dest" to the value of "src".
 /// Caller must make sure "src" is a blob.
 /// Returns FAIL if the number of bytes does not match.
-int tv_blob_set_range(blob_T *dest, long n1, long n2, typval_T *src)
+int tv_blob_set_range(blob_T *dest, int n1, int n2, typval_T *src)
 {
   if (n2 - n1 + 1 != tv_blob_len(src->vval.v_blob)) {
     emsg(_("E972: Blob value does not have the right number of bytes"));
     return FAIL;
   }
 
-  for (int il = (int)n1, ir = 0; il <= (int)n2; il++) {
+  for (int il = n1, ir = 0; il <= n2; il++) {
     tv_blob_set(dest, il, tv_blob_get(src->vval.v_blob, ir++));
   }
   return OK;
@@ -3890,7 +3890,7 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
   case VAR_STRING: {
     varnumber_T n = 0;
     if (tv->vval.v_string != NULL) {
-      vim_str2nr(tv->vval.v_string, NULL, NULL, STR2NR_ALL, &n, NULL, 0, false);
+      vim_str2nr(tv->vval.v_string, NULL, NULL, STR2NR_ALL, &n, NULL, 0, false, NULL);
     }
     return n;
   }

@@ -235,7 +235,6 @@ func Test_swap_recover()
     autocmd SwapExists * let v:swapchoice = 'r'
   augroup END
 
-
   call mkdir('Xswap')
   let $Xswap = 'foo'  " Check for issue #4369.
   set dir=Xswap//
@@ -435,6 +434,12 @@ func s:get_unused_pid(base)
     endwhile
     if job_status(j) ==# 'dead'
       return job_info(j).process
+    endif
+  elseif has('nvim')
+    let j = jobstart('echo')
+    let pid = jobpid(j)
+    if jobwait([j])[0] >= 0
+      return pid
     endif
   endif
   " Must add four for MS-Windows to see it as a different one.

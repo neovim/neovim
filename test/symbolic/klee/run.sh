@@ -58,7 +58,6 @@ main() {
   includes="$includes -I/host-includes"
 
   local defines=
-  defines="$defines -DMIN_LOG_LEVEL=9999"
   defines="$defines -DINCLUDE_GENERATED_DECLARATIONS"
 
   test -z "$compile" && defines="$defines -DUSE_KLEE"

@@ -4,6 +4,7 @@ local clear = helpers.clear
 local eq = helpers.eq
 local insert = helpers.insert
 local exec_lua = helpers.exec_lua
+local pcall_err = helpers.pcall_err
 local feed = helpers.feed
 local is_os = helpers.is_os
 local skip = helpers.skip
@@ -124,6 +125,16 @@ void ui_refresh(void)
     }, res)
   end)
 
+  it('does not get parser for empty filetype', function()
+    insert(test_text);
+
+    eq(".../language.lua:0: '' is not a valid filetype",
+      pcall_err(exec_lua, 'vim.treesitter.get_parser(0)'))
+
+    -- Must provide language for buffers with an empty filetype
+    exec_lua("vim.treesitter.get_parser(0, 'c')")
+  end)
+
   it('allows to get a child by field', function()
     insert(test_text);
 
@@ -182,9 +193,9 @@ void ui_refresh(void)
     local firstrun = q(1)
     local manyruns = q(100)
 
-    local factor = is_os('win') and 3 or 4
-    -- First run should be at least 4x slower.
-    assert(factor * 100 * manyruns < firstrun, ('firstrun: %d ms, manyruns: %d ms'):format(firstrun / 1000, manyruns / 1000))
+    -- First run should be at least 400x slower than an 100 subsequent runs.
+    local factor = is_os('win') and 300 or 400
+    assert(factor * manyruns < firstrun, ('firstrun: %f ms, manyruns: %f ms'):format(firstrun / 1e6, manyruns / 1e6))
   end)
 
   it('support query and iter by capture', function()
@@ -874,9 +885,10 @@ int x = INT_MAX;
 
   it("can fold via foldexpr", function()
     insert(test_text)
-    exec_lua([[vim.treesitter.get_parser(0, "c")]])
 
     local levels = exec_lua([[
+      vim.opt.filetype = 'c'
+      vim.treesitter.get_parser(0, "c")
       local res = {}
       for i = 1, vim.api.nvim_buf_line_count(0) do
         res[i] = vim.treesitter.foldexpr(i)

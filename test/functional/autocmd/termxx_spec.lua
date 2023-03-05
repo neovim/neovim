@@ -22,6 +22,8 @@ describe('autocmd TermClose', function()
 
 
   local function test_termclose_delete_own_buf()
+    -- The terminal process needs to keep running so that TermClose isn't triggered immediately.
+    nvim('set_option', 'shell', string.format('"%s" INTERACT', testprg('shell-test')))
     command('autocmd TermClose * bdelete!')
     command('terminal')
     matches('^TermClose Autocommands for "%*": Vim%(bdelete%):E937: Attempt to delete a buffer that is in use: term://',

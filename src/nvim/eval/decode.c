@@ -439,7 +439,7 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
         t += 4;
         uvarnumber_T ch;
         vim_str2nr(ubuf, NULL, NULL,
-                   STR2NR_HEX | STR2NR_FORCE, NULL, &ch, 4, true);
+                   STR2NR_HEX | STR2NR_FORCE, NULL, &ch, 4, true, NULL);
         if (ch == 0) {
           hasnul = true;
         }
@@ -608,7 +608,7 @@ parse_json_number_check:
     // Convert integer
     varnumber_T nr;
     int num_len;
-    vim_str2nr(s, NULL, &num_len, 0, &nr, NULL, (int)(p - s), true);
+    vim_str2nr(s, NULL, &num_len, 0, &nr, NULL, (int)(p - s), true, NULL);
     if ((int)exp_num_len != num_len) {
       semsg(_("E685: internal error: while converting number \"%.*s\" "
               "to integer vim_str2nr consumed %i bytes in place of %zu"),
@@ -987,12 +987,8 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
       tv_list_append_number(list, (varnumber_T)(n & 0x7FFFFFFF));
     }
     break;
-#ifdef NVIM_MSGPACK_HAS_FLOAT32
   case MSGPACK_OBJECT_FLOAT32:
   case MSGPACK_OBJECT_FLOAT64:
-#else
-  case MSGPACK_OBJECT_FLOAT:
-#endif
     *rettv = (typval_T) {
       .v_type = VAR_FLOAT,
       .v_lock = VAR_UNLOCKED,

@@ -841,6 +841,22 @@ func Test_increment_unsigned()
   set nrformats-=unsigned
 endfunc
 
+func Test_in_decrement_large_number()
+  " NOTE: 18446744073709551616 == 2^64
+  call setline(1, '18446744073709551616')
+  exec "norm! gg0\<C-X>"
+  call assert_equal('18446744073709551615', getline(1))
+
+  exec "norm! gg0\<C-X>"
+  call assert_equal('18446744073709551614', getline(1))
+
+  exec "norm! gg0\<C-A>"
+  call assert_equal('18446744073709551615', getline(1))
+
+  exec "norm! gg0\<C-A>"
+  call assert_equal('-18446744073709551615', getline(1))
+endfunc
+
 func Test_normal_increment_with_virtualedit()
   set virtualedit=all
 

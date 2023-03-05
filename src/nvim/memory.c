@@ -755,11 +755,7 @@ void free_all_mem(void)
   p_hi = 0;
   init_history();
 
-  qf_free_all(NULL);
-  // Free all location lists
-  FOR_ALL_TAB_WINDOWS(tab, win) {
-    qf_free_all(win);
-  }
+  free_quickfix();
 
   // Close all script inputs.
   close_all_scripts();

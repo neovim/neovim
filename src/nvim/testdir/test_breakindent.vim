@@ -10,7 +10,9 @@ CheckOption breakindent
 source view_util.vim
 source screendump.vim
 
-let s:input ="\tabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP"
+func SetUp()
+  let s:input ="\tabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP"
+endfunc
 
 func s:screen_lines(lnum, width) abort
   return ScreenLines([a:lnum, a:lnum + 2], a:width)
@@ -837,12 +839,12 @@ func Test_breakindent20_list()
   call s:compare_lines(expect, lines)
   " check formatlistpat indent with different list levels
   let &l:flp = '^\s*\*\+\s\+'
-  redraw!
   %delete _
   call setline(1, ['* Congress shall make no law',
         \ '*** Congress shall make no law',
         \ '**** Congress shall make no law'])
   norm! 1gg
+  redraw!
   let expect = [
 	\ "* Congress shall    ",
 	\ "  make no law       ",
@@ -956,9 +958,9 @@ func Test_no_spurious_match()
   let @/ = '\%>3v[y]'
   redraw!
   call searchcount().total->assert_equal(1)
+
   " cleanup
   set hls&vim
-  let s:input = "\tabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP"
   bwipeout!
 endfunc
 
@@ -1023,8 +1025,6 @@ func Test_no_extra_indent()
 endfunc
 
 func Test_breakindent_column()
-  " restore original
-  let s:input ="\tabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP"
   call s:test_windows('setl breakindent breakindentopt=column:10')
   redraw!
   " 1) default: does not indent, too wide :(
@@ -1074,5 +1074,23 @@ func Test_breakindent_column()
   call s:compare_lines(expect, lines)
   bwipeout!
 endfunc
+
+func Test_linebreak_list()
+  " This was setting wlv.c_extra to NUL while wlv.p_extra is NULL
+  filetype plugin on
+  syntax enable
+  edit! $VIMRUNTIME/doc/index.txt
+  /v_P
+
+  setlocal list
+  setlocal listchars=tab:>-
+  setlocal linebreak
+  setlocal nowrap
+  setlocal filetype=help
+  redraw!
+
+  bwipe!
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

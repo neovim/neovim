@@ -516,7 +516,8 @@ func Test_edit_CTRL_()
   call setline(1, ['abc'])
   call cursor(1, 1)
   call feedkeys("i\<c-_>xyz\<esc>", 'tnix')
-  call assert_equal(["æèñabc"], getline(1, '$'))
+  " call assert_equal(["æèñabc"], getline(1, '$'))
+  call assert_equal(["zyxabc"], getline(1, '$'))
   call assert_true(&revins)
   call setline(1, ['abc'])
   call cursor(1, 1)
@@ -1889,6 +1890,9 @@ func Test_edit_insertmode_ex_edit()
   call writefile(lines, 'Xtest_edit_insertmode_ex_edit')
 
   let buf = RunVimInTerminal('-S Xtest_edit_insertmode_ex_edit', #{rows: 6})
+  " Somehow this can be very slow with valgrind. A separate TermWait() works
+  " better than a longer time with WaitForAssert() (why?)
+  call TermWait(buf, 1000)
   call WaitForAssert({-> assert_match('^-- INSERT --\s*$', term_getline(buf, 6))})
   call term_sendkeys(buf, "\<C-B>\<C-L>")
   call WaitForAssert({-> assert_notmatch('^-- INSERT --\s*$', term_getline(buf, 6))})
@@ -1913,6 +1917,7 @@ endfunc
 
 " Test for 'hkmap' and 'hkmapp'
 func Test_edit_hkmap()
+  throw "Skipped: Nvim does not support 'hkmap'"
   CheckFeature rightleft
   if has('win32') && !has('gui')
     " Test fails on the MS-Windows terminal version

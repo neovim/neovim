@@ -258,7 +258,7 @@ argument.
 -A		Arabic mode.  Sets the 'arabic' option on.
 
 							*-H*
--H		Hebrew mode.  Sets the 'hkmap' and 'rightleft' options on.
+-H		Hebrew mode.  Sets the 'rightleft' option on and 'keymap' to "hebrew"
 
 							*-V* *verbose*
 -V[N]		Verbose.  Sets the 'verbose' option to [N] (default: 10).

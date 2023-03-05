@@ -2032,7 +2032,12 @@ end
 ---@returns `TextDocumentIdentifier`
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentIdentifier
 function M.make_text_document_params(bufnr)
-  return { uri = vim.uri_from_bufnr(bufnr or 0) }
+  bufnr = bufnr or 0
+  local uri = vim.uri_from_bufnr(bufnr)
+  if not uv.fs_stat(api.nvim_buf_get_name(bufnr)) then
+    uri = uri:gsub('^file://', 'buffer://')
+  end
+  return { uri = uri }
 end
 
 --- Create the workspace params
@@ -2065,7 +2070,7 @@ function M.make_formatting_params(options)
     insertSpaces = vim.bo.expandtab,
   })
   return {
-    textDocument = { uri = vim.uri_from_bufnr(0) },
+    textDocument = M.make_text_document_params(0),
     options = options,
   }
 end

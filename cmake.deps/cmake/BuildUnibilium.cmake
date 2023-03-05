@@ -1,6 +1,3 @@
-if(USE_EXISTING_SRC_DIR)
-  unset(UNIBILIUM_URL)
-endif()
 ExternalProject_Add(unibilium
   URL ${UNIBILIUM_URL}
   URL_HASH SHA256=${UNIBILIUM_SHA256}

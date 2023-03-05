@@ -22,14 +22,13 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 include(CheckCCompilerFlag)
 include(CheckCSourceCompiles)
+include(FindPackageHandleStandardArgs)
 include(InstallHelpers)
-include(LuaHelpers) # Find Lua interpreter
+include(LuaHelpers)
 include(PreventInTreeBuilds)
 include(Util)
 
 set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
-
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 find_program(CCACHE_PRG ccache)
 if(CCACHE_PRG)
@@ -71,7 +70,7 @@ endif()
 
 list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX})
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+if(APPLE)
   # If the macOS deployment target is not set manually (via $MACOSX_DEPLOYMENT_TARGET),
   # fall back to local system version. Needs to be done both here and in cmake.deps.
   if(NOT CMAKE_OSX_DEPLOYMENT_TARGET)
@@ -83,7 +82,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   message(STATUS "Using deployment target ${CMAKE_OSX_DEPLOYMENT_TARGET}")
 endif()
 
-if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+if(WIN32 OR APPLE)
   # Ignore case when comparing filenames on Windows and Mac.
   set(CASE_INSENSITIVE_FILENAME TRUE)
   # Enable fixing case-insensitive filenames for Windows and Mac.
@@ -121,27 +120,23 @@ if(CMAKE_C_FLAGS_RELEASE MATCHES "-O3")
   string(REPLACE "-O3" "-O2" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 endif()
 
-if(CMAKE_C_COMPILER_ID MATCHES "GNU")
-  check_c_compiler_flag(-Og HAS_OG_FLAG)
-else()
-  set(HAS_OG_FLAG 0)
-endif()
-
-#
 # Build-type: RelWithDebInfo
-#
-if(HAS_OG_FLAG)
-  set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -Og -g")
+
+# /Og means something different in MSVC
+if(CMAKE_C_COMPILER_ID MATCHES "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang")
+   set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -Og -g")
 endif()
 # We _want_ assertions in RelWithDebInfo build-type.
 if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
   string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
   string(REPLACE "/DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+  string(REPLACE "  " " " CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}") # Remove duplicate whitespace
 endif()
 
 option(LOG_LIST_ACTIONS "Add list actions logging" OFF)
 
 option(CLANG_ASAN_UBSAN "Enable Clang address & undefined behavior sanitizer for nvim binary." OFF)
+option(LOG_DEBUG "Enable debug log messages even in a release build" OFF)
 option(CLANG_MSAN "Enable Clang memory sanitizer for nvim binary." OFF)
 option(CLANG_TSAN "Enable Clang thread sanitizer for nvim binary." OFF)
 
@@ -258,7 +253,7 @@ add_glob_target(
   TARGET lintsh
   COMMAND ${SHELLCHECK_PRG}
   FLAGS -x -a
-  GLOB_DIRS scripts ci
+  GLOB_DIRS scripts
   GLOB_PAT *.sh
   EXCLUDE
     scripts/pvscheck.sh

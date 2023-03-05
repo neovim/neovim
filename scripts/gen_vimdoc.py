@@ -265,6 +265,7 @@ CONFIG = {
             'query.lua',
             'highlighter.lua',
             'languagetree.lua',
+            'playground.lua',
         ],
         'files': [
             'runtime/lua/vim/treesitter.lua',
@@ -286,7 +287,7 @@ CONFIG = {
             if fstem == 'treesitter'
             else f'*{name}()*'
             if name[0].isupper()
-            else f'*vim.treesitter.{fstem}.{name}()*'),
+            else f'*vim.treesitter.{name}()*'),
         'module_override': {},
         'append_only': [],
     }
@@ -1171,10 +1172,12 @@ def main(doxygen_config, args):
     msg_report()
 
 
-def filter_source(filename):
+def filter_source(filename, keep_tmpfiles):
+    output_dir = out_dir.format(target='lua2dox')
     name, extension = os.path.splitext(filename)
     if extension == '.lua':
-        p = subprocess.run([str(nvim), '-l', lua2dox, filename], stdout=subprocess.PIPE)
+        args = [str(nvim), '-l', lua2dox, filename] + (['--outdir', output_dir] if keep_tmpfiles else [])
+        p = subprocess.run(args, stdout=subprocess.PIPE)
         op = ('?' if 0 != p.returncode else p.stdout.decode('utf-8'))
         print(op)
     else:
@@ -1197,7 +1200,7 @@ def parse_args():
     ap.add_argument('source_filter', nargs='*',
                     help="Filter source file(s)")
     ap.add_argument('-k', '--keep-tmpfiles', action='store_true',
-                    help="Keep temporary files")
+                    help="Keep temporary files (tmp-xx-doc/ directories, including tmp-lua2dox-doc/ for lua2dox.lua quasi-C output)")
     ap.add_argument('-t', '--target',
                     help=f'One of ({targets}), defaults to "all"')
     return ap.parse_args()
@@ -1245,8 +1248,13 @@ if __name__ == "__main__":
     log.setLevel(args.log_level)
     log.addHandler(logging.StreamHandler())
 
+    # When invoked as a filter, args won't be passed, so use an env var.
+    if args.keep_tmpfiles:
+        os.environ['NVIM_KEEP_TMPFILES'] = '1'
+    keep_tmpfiles = ('NVIM_KEEP_TMPFILES' in os.environ)
+
     if len(args.source_filter) > 0:
-        filter_source(args.source_filter[0])
+        filter_source(args.source_filter[0], keep_tmpfiles)
     else:
         main(Doxyfile, args)
 

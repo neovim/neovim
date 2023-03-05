@@ -1525,6 +1525,52 @@ func Test_win_move_statusline()
   %bwipe!
 endfunc
 
+" Test for window allocation failure
+func Test_window_alloc_failure()
+  CheckFunction test_alloc_fail
+  %bw!
+
+  " test for creating a new window above current window
+  call test_alloc_fail(GetAllocId('newwin_wvars'), 0, 0)
+  call assert_fails('above new', 'E342:')
+  call assert_equal(1, winnr('$'))
+
+  " test for creating a new window below current window
+  call test_alloc_fail(GetAllocId('newwin_wvars'), 0, 0)
+  call assert_fails('below new', 'E342:')
+  call assert_equal(1, winnr('$'))
+
+  " test for popup window creation failure
+  call test_alloc_fail(GetAllocId('newwin_wvars'), 0, 0)
+  call assert_fails('call popup_create("Hello", {})', 'E342:')
+  call assert_equal([], popup_list())
+
+  call test_alloc_fail(GetAllocId('newwin_wvars'), 0, 0)
+  call assert_fails('split', 'E342:')
+  call assert_equal(1, winnr('$'))
+
+  edit Xfile1
+  edit Xfile2
+  call test_alloc_fail(GetAllocId('newwin_wvars'), 0, 0)
+  call assert_fails('sb Xfile1', 'E342:')
+  call assert_equal(1, winnr('$'))
+  call assert_equal('Xfile2', @%)
+  %bw!
+
+  " FIXME: The following test crashes Vim
+  " test for new tabpage creation failure
+  " call test_alloc_fail(GetAllocId('newwin_wvars'), 0, 0)
+  " call assert_fails('tabnew', 'E342:')
+  " call assert_equal(1, tabpagenr('$'))
+  " call assert_equal(1, winnr('$'))
+
+  " This test messes up the internal Vim window/frame information. So the
+  " Test_window_cmd_cmdwin_with_vsp() test fails after running this test.
+  " Open a new tab and close everything else to fix this issue.
+  tabnew
+  tabonly
+endfunc
+
 func Test_win_equal_last_status()
   let save_lines = &lines
   set lines=20

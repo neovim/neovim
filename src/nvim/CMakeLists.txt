@@ -1,22 +1,19 @@
 add_library(main_lib INTERFACE)
 add_executable(nvim main.c)
 
-add_library(libuv_lib INTERFACE)
+add_library(libuv INTERFACE)
 find_package(libuv CONFIG)
 if(TARGET libuv::uv_a)
-  target_link_libraries(libuv_lib INTERFACE libuv::uv_a)
+  target_link_libraries(libuv INTERFACE libuv::uv_a)
+  mark_as_advanced(libuv_DIR)
 else()
   # Fall back to find module for older libuv versions that don't provide config file
-  find_package(LibUV 1.28.0 REQUIRED MODULE)
-  target_include_directories(libuv_lib SYSTEM BEFORE INTERFACE ${LIBUV_INCLUDE_DIRS})
-  target_link_libraries(libuv_lib INTERFACE ${LIBUV_LIBRARIES})
+  find_package(Libuv 1.28.0 REQUIRED MODULE)
+  target_include_directories(libuv SYSTEM BEFORE INTERFACE ${LIBUV_INCLUDE_DIRS})
+  target_link_libraries(libuv INTERFACE ${LIBUV_LIBRARIES})
 endif()
 
-find_package(Msgpack 1.0.0 REQUIRED)
-target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${MSGPACK_INCLUDE_DIRS})
-target_link_libraries(main_lib INTERFACE ${MSGPACK_LIBRARIES})
-
-find_package(LibLUV 1.43.0 REQUIRED)
+find_package(Libluv 1.43.0 REQUIRED)
 target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBLUV_INCLUDE_DIRS})
 # Use "luv" as imported library, to work around CMake using "-lluv" for
 # "luv.so".  #10407
@@ -24,31 +21,28 @@ add_library(luv UNKNOWN IMPORTED)
 set_target_properties(luv PROPERTIES IMPORTED_LOCATION ${LIBLUV_LIBRARIES})
 target_link_libraries(main_lib INTERFACE luv)
 
-find_package(TreeSitter REQUIRED)
-target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${TreeSitter_INCLUDE_DIRS})
-target_link_libraries(main_lib INTERFACE ${TreeSitter_LIBRARIES})
-
-find_package(unibilium 2.0 REQUIRED)
-target_link_libraries(main_lib INTERFACE unibilium)
-
-find_package(LibTermkey 0.22 REQUIRED)
-target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBTERMKEY_INCLUDE_DIRS})
-target_link_libraries(main_lib INTERFACE ${LIBTERMKEY_LIBRARIES})
-
-find_package(libvterm 0.3 REQUIRED)
-target_link_libraries(main_lib INTERFACE libvterm)
-
 find_package(Iconv REQUIRED)
-target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${Iconv_INCLUDE_DIRS})
-target_link_libraries(main_lib INTERFACE ${Iconv_LIBRARIES})
+find_package(Libtermkey 0.22 REQUIRED)
+find_package(Libvterm 0.3 REQUIRED)
+find_package(Msgpack 1.0.0 REQUIRED)
+find_package(Treesitter REQUIRED)
+find_package(Unibilium 2.0 REQUIRED)
+
+target_link_libraries(main_lib INTERFACE
+  iconv
+  libtermkey
+  libvterm
+  msgpack
+  treesitter
+  unibilium)
 
 option(ENABLE_LIBINTL "enable libintl" ON)
 if(ENABLE_LIBINTL)
-  # LibIntl (not Intl) selects our FindLibIntl.cmake script. #8464
-  find_package(LibIntl REQUIRED)
-  target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LibIntl_INCLUDE_DIRS})
-  if (LibIntl_FOUND)
-    target_link_libraries(main_lib INTERFACE ${LibIntl_LIBRARY})
+  # Libintl (not Intl) selects our FindLibintl.cmake script. #8464
+  find_package(Libintl REQUIRED)
+  target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBINTL_INCLUDE_DIR})
+  if (LIBINTL_LIBRARY)
+    target_link_libraries(main_lib INTERFACE ${LIBINTL_LIBRARY})
   endif()
 endif()
 
@@ -59,9 +53,9 @@ if(PREFER_LUA)
   target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LUA_INCLUDE_DIR})
   target_link_libraries(main_lib INTERFACE ${LUA_LIBRARIES})
   # Passive (not REQUIRED): if LUAJIT_FOUND is not set, fixtures for unittests is skipped.
-  find_package(LuaJit)
+  find_package(Luajit)
 else()
-  find_package(LuaJit REQUIRED)
+  find_package(Luajit REQUIRED)
   target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LUAJIT_INCLUDE_DIRS})
   target_link_libraries(main_lib INTERFACE ${LUAJIT_LIBRARIES})
 endif()
@@ -93,14 +87,14 @@ if(MSVC)
   target_sources(main_lib INTERFACE ${CMAKE_CURRENT_LIST_DIR}/os/nvim.manifest)
 else()
   target_compile_options(main_lib INTERFACE -Wall -Wextra -pedantic -Wno-unused-parameter
-    -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion
+    -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion -Wvla
     -Wdouble-promotion
     -Wmissing-noreturn
     -Wmissing-format-attribute
     -Wmissing-prototypes)
 
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(main_lib INTERFACE
+    target_compile_options(main_lib INTERFACE -fno-common
       $<$<CONFIG:Release>:-Wno-unused-result>
       $<$<CONFIG:RelWithDebInfo>:-Wno-unused-result>
       $<$<CONFIG:MinSizeRel>:-Wno-unused-result>)
@@ -150,17 +144,6 @@ if(WIN32)
   target_compile_definitions(main_lib INTERFACE _WIN32_WINNT=0x0602 MSWIN)
 endif()
 
-# OpenBSD's GCC (4.2.1) doesn't have -Wvla
-check_c_compiler_flag(-Wvla HAS_WVLA_FLAG)
-if(HAS_WVLA_FLAG)
-  target_compile_options(main_lib INTERFACE -Wvla)
-endif()
-
-check_c_compiler_flag(-fno-common HAVE_FNO_COMMON)
-if (HAVE_FNO_COMMON)
-  target_compile_options(main_lib INTERFACE -fno-common)
-endif()
-
 check_c_compiler_flag(-fdiagnostics-color=auto HAS_DIAG_COLOR_FLAG)
 if(HAS_DIAG_COLOR_FLAG)
   if(CMAKE_GENERATOR MATCHES "Ninja")
@@ -189,52 +172,6 @@ if(UNSIGNED_CHAR)
   target_compile_options(main_lib INTERFACE -funsigned-char)
 endif()
 
-list(APPEND CMAKE_REQUIRED_INCLUDES "${MSGPACK_INCLUDE_DIRS}")
-check_c_source_compiles("
-#include <msgpack.h>
-
-int
-main(void)
-{
-  return MSGPACK_OBJECT_FLOAT32;
-}
-" MSGPACK_HAS_FLOAT32)
-list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES "${MSGPACK_INCLUDE_DIRS}")
-if(MSGPACK_HAS_FLOAT32)
-  target_compile_definitions(main_lib INTERFACE NVIM_MSGPACK_HAS_FLOAT32)
-endif()
-
-list(APPEND CMAKE_REQUIRED_INCLUDES "${TreeSitter_INCLUDE_DIRS}")
-list(APPEND CMAKE_REQUIRED_LIBRARIES "${TreeSitter_LIBRARIES}")
-check_c_source_compiles("
-#include <tree_sitter/api.h>
-int
-main(void)
-{
-  TSQueryCursor *cursor = ts_query_cursor_new();
-  ts_query_cursor_set_match_limit(cursor, 32);
-  return 0;
-}
-" TS_HAS_SET_MATCH_LIMIT)
-if(TS_HAS_SET_MATCH_LIMIT)
-  target_compile_definitions(main_lib INTERFACE NVIM_TS_HAS_SET_MATCH_LIMIT)
-endif()
-check_c_source_compiles("
-#include <stdlib.h>
-#include <tree_sitter/api.h>
-int
-main(void)
-{
-  ts_set_allocator(malloc, calloc, realloc, free);
-  return 0;
-}
-" TS_HAS_SET_ALLOCATOR)
-if(TS_HAS_SET_ALLOCATOR)
-  target_compile_definitions(main_lib INTERFACE NVIM_TS_HAS_SET_ALLOCATOR)
-endif()
-list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES "${TreeSitter_INCLUDE_DIRS}")
-list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES "${TreeSitter_LIBRARIES}")
-
 target_compile_definitions(main_lib INTERFACE INCLUDE_GENERATED_DECLARATIONS)
 
 # Remove --sort-common from linker flags, as this seems to cause bugs (see #2641, #3374).
@@ -258,7 +195,7 @@ endif()
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
   if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
     target_link_libraries(nvim PRIVATE -Wl,--no-undefined -lsocket)
-  elseif(NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  elseif(NOT APPLE)
     target_link_libraries(nvim PRIVATE -Wl,--no-undefined)
   endif()
 
@@ -285,20 +222,22 @@ if(WIN32)
     # Enable wmain
     target_link_libraries(nvim PRIVATE -municode)
   endif()
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+elseif(APPLE)
   target_link_libraries(nvim PRIVATE "-framework CoreServices")
 endif()
 
 if(UNIX)
   # -fstack-protector breaks non Unix builds even in Mingw-w64
   check_c_compiler_flag(-fstack-protector-strong HAS_FSTACK_PROTECTOR_STRONG_FLAG)
-  check_c_compiler_flag(-fstack-protector HAS_FSTACK_PROTECTOR_FLAG)
   if(HAS_FSTACK_PROTECTOR_STRONG_FLAG)
     target_compile_options(main_lib INTERFACE -fstack-protector-strong)
     target_link_libraries(main_lib INTERFACE -fstack-protector-strong)
-  elseif(HAS_FSTACK_PROTECTOR_FLAG)
-    target_compile_options(main_lib INTERFACE -fstack-protector --param ssp-buffer-size=4)
-    target_link_libraries(main_lib INTERFACE -fstack-protector --param ssp-buffer-size=4)
+  else()
+    check_c_compiler_flag(-fstack-protector HAS_FSTACK_PROTECTOR_FLAG)
+    if(HAS_FSTACK_PROTECTOR_FLAG)
+      target_compile_options(main_lib INTERFACE -fstack-protector --param ssp-buffer-size=4)
+      target_link_libraries(main_lib INTERFACE -fstack-protector --param ssp-buffer-size=4)
+    endif()
   endif()
 endif()
 
@@ -434,19 +373,16 @@ else()
     ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion -Wno-strict-prototypes -Wno-misleading-indentation")
 endif()
 
-# Log level (MIN_LOG_LEVEL in log.h)
-if($ENV{CI} MATCHES "true")
-  set(MIN_LOG_LEVEL 3)
-endif()
-if("${MIN_LOG_LEVEL}" MATCHES "^$")
-  # Minimize logging for release-type builds.
-  target_compile_definitions(main_lib INTERFACE MIN_LOG_LEVEL=$<IF:$<CONFIG:Debug>,1,3>)
+# Log level (NVIM_LOG_DEBUG in log.h)
+if($ENV{CI})
+  # Don't debug log on CI, it gets too verbose in the main build log.
+  # TODO(bfredl): debug log level also exposes some errors with EXITFREE in ASAN build.
+  set(LOG_DEBUG FALSE)
+elseif(LOG_DEBUG)
+  target_compile_definitions(nvim PRIVATE NVIM_LOG_DEBUG)
 else()
-  if(NOT MIN_LOG_LEVEL MATCHES "^[0-3]$")
-    message(FATAL_ERROR "invalid MIN_LOG_LEVEL: " ${MIN_LOG_LEVEL})
-  endif()
-  message(STATUS "MIN_LOG_LEVEL=${MIN_LOG_LEVEL}")
-  target_compile_definitions(main_lib INTERFACE MIN_LOG_LEVEL=${MIN_LOG_LEVEL})
+  # Minimize logging for release-type builds.
+  target_compile_definitions(nvim PRIVATE $<$<CONFIG:Debug>:NVIM_LOG_DEBUG>)
 endif()
 
 if(CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)
@@ -464,7 +400,7 @@ get_target_property(prop main_lib INTERFACE_INCLUDE_DIRECTORIES)
 foreach(gen_include ${prop})
   list(APPEND gen_cflags "-I${gen_include}")
 endforeach()
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND CMAKE_OSX_SYSROOT)
+if(APPLE AND CMAKE_OSX_SYSROOT)
   list(APPEND gen_cflags "-isysroot")
   list(APPEND gen_cflags "${CMAKE_OSX_SYSROOT}")
 endif()
@@ -716,7 +652,7 @@ if(${CMAKE_VERSION} VERSION_LESS 3.20)
   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 endif()
 
-target_link_libraries(nvim PRIVATE main_lib PUBLIC libuv_lib)
+target_link_libraries(nvim PRIVATE main_lib PUBLIC libuv)
 install_helper(TARGETS nvim)
 if(MSVC)
   install(FILES $<TARGET_PDB_FILE:nvim> DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
@@ -827,12 +763,10 @@ if(WIN32)
   file(WRITE ${PROJECT_BINARY_DIR}/external_blobs.cmake ${EXTERNAL_BLOBS_SCRIPT})
   add_custom_target(external_blobs
     COMMAND ${CMAKE_COMMAND} -P ${PROJECT_BINARY_DIR}/external_blobs.cmake)
-  set_target_properties(external_blobs PROPERTIES FOLDER deps)
   add_dependencies(nvim_runtime_deps external_blobs)
 else()
   add_custom_target(nvim_runtime_deps)  # Stub target to avoid CMP0046.
 endif()
-set_target_properties(nvim_runtime_deps PROPERTIES FOLDER deps)
 
 file(MAKE_DIRECTORY ${BINARY_LIB_DIR})
 
@@ -860,7 +794,7 @@ set_target_properties(
     OUTPUT_NAME ${LIBNVIM_NAME}
 )
 target_compile_definitions(libnvim PRIVATE MAKE_LIB)
-target_link_libraries(libnvim PRIVATE main_lib PUBLIC libuv_lib)
+target_link_libraries(libnvim PRIVATE main_lib PUBLIC libuv)
 
 if(CLANG_ASAN_UBSAN)
   message(STATUS "Enabling Clang address sanitizer and undefined behavior sanitizer for nvim.")

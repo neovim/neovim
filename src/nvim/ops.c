@@ -1186,7 +1186,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
 /// used only after other typeahead has been processed.
 static void put_reedit_in_typebuf(int silent)
 {
-  char_u buf[3];
+  uint8_t buf[3];
 
   if (restart_edit == NUL) {
     return;
@@ -1197,7 +1197,7 @@ static void put_reedit_in_typebuf(int silent)
     buf[1] = 'R';
     buf[2] = NUL;
   } else {
-    buf[0] = (char_u)(restart_edit == 'I' ? 'i' : restart_edit);
+    buf[0] = (uint8_t)(restart_edit == 'I' ? 'i' : restart_edit);
     buf[1] = NUL;
   }
   if (ins_typebuf((char *)buf, REMAP_NONE, 0, true, silent) == OK) {
@@ -2684,8 +2684,10 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
           getvcol(curwin, &oap->start, &cs, NULL, &ce);
           if (ce != cs && oap->start.coladd > 0) {
             // Part of a tab selected -- but don't double-count it.
-            bd.startspaces = (ce - cs + 1)
-                             - oap->start.coladd;
+            bd.startspaces = (ce - cs + 1) - oap->start.coladd;
+            if (bd.startspaces < 0) {
+              bd.startspaces = 0;
+            }
             startcol++;
           }
         }
@@ -3346,7 +3348,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         ptr += yanklen;
 
         // insert block's trailing spaces only if there's text behind
-        if ((j < count - 1 || !shortline) && spaces) {
+        if ((j < count - 1 || !shortline) && spaces > 0) {
           memset(ptr, ' ', (size_t)spaces);
           ptr += spaces;
         } else {
@@ -3684,6 +3686,15 @@ error:
 
   msgmore(nr_lines);
   curwin->w_set_curswant = true;
+
+  // Make sure the cursor is not after the NUL.
+  int len = (int)strlen(get_cursor_line_ptr());
+  if (curwin->w_cursor.col > len) {
+    if (cur_ve_flags == VE_ALL) {
+      curwin->w_cursor.coladd = curwin->w_cursor.col - len;
+    }
+    curwin->w_cursor.col = len;
+  }
 
 end:
   if (cmdmod.cmod_flags & CMOD_LOCKMARKS) {
@@ -4647,11 +4658,12 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
                 : length);
     }
 
+    bool overflow = false;
     vim_str2nr(ptr + col, &pre, &length,
                0 + (do_bin ? STR2NR_BIN : 0)
                + (do_oct ? STR2NR_OCT : 0)
                + (do_hex ? STR2NR_HEX : 0),
-               NULL, &n, maxlen, false);
+               NULL, &n, maxlen, false, &overflow);
 
     // ignore leading '-' for hex, octal and bin numbers
     if (pre && negative) {
@@ -4671,8 +4683,10 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
 
     oldn = n;
 
-    n = subtract ? n - (uvarnumber_T)Prenum1
-                 : n + (uvarnumber_T)Prenum1;
+    if (!overflow) {  // if number is too big don't add/subtract
+      n = subtract ? n - (uvarnumber_T)Prenum1
+                   : n + (uvarnumber_T)Prenum1;
+    }
 
     // handle wraparound for decimal numbers
     if (!pre) {

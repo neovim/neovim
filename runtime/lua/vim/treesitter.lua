@@ -47,7 +47,8 @@ function M._create_parser(bufnr, lang, opts)
 
   vim.fn.bufload(bufnr)
 
-  language.add(lang, { filetype = vim.bo[bufnr].filetype })
+  local ft = vim.bo[bufnr].filetype
+  language.add(lang, { filetype = ft ~= '' and ft or nil })
 
   local self = LanguageTree.new(bufnr, lang, opts)
 
@@ -424,6 +425,8 @@ end
 --- display of the source language of each node, and press <Enter> to jump to the node under the
 --- cursor in the source buffer.
 ---
+--- Can also be shown with `:InspectTree`. *:InspectTree*
+---
 ---@param opts table|nil Optional options table with the following possible keys:
 ---                      - lang (string|nil): The language of the source buffer. If omitted, the
 ---                        filetype of the source buffer is used.
@@ -436,7 +439,7 @@ end
 ---                      - title (string|fun(bufnr:integer):string|nil): Title of the window. If a
 ---                        function, it accepts the buffer number of the source buffer as its only
 ---                        argument and should return a string.
-function M.show_tree(opts)
+function M.inspect_tree(opts)
   vim.validate({
     opts = { opts, 't', true },
   })
@@ -504,8 +507,27 @@ function M.show_tree(opts)
   a.nvim_buf_set_keymap(b, 'n', 'a', '', {
     desc = 'Toggle anonymous nodes',
     callback = function()
+      local row, col = unpack(a.nvim_win_get_cursor(w))
+      local curnode = pg:get(row)
+      while curnode and not curnode.named do
+        row = row - 1
+        curnode = pg:get(row)
+      end
+
       pg.opts.anon = not pg.opts.anon
       pg:draw(b)
+
+      if not curnode then
+        return
+      end
+
+      local id = curnode.id
+      for i, node in pg:iter() do
+        if node.id == id then
+          a.nvim_win_set_cursor(w, { i, col })
+          break
+        end
+      end
     end,
   })
   a.nvim_buf_set_keymap(b, 'n', 'I', '', {
@@ -620,6 +642,12 @@ function M.show_tree(opts)
       end
     end,
   })
+end
+
+---@deprecated
+---@private
+function M.show_tree()
+  vim.deprecate('show_tree', 'inspect_tree', '0.9', nil, false)
 end
 
 --- Returns the fold level for {lnum} in the current buffer. Can be set directly to 'foldexpr':
