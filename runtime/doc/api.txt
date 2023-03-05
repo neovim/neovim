@@ -1286,6 +1286,8 @@ nvim_set_client_info({name}, {version}, {type}, {methods}, {attributes})
     appropriate. Example: library first identifies the channel, then a plugin
     using that library later identifies itself.
 
+    Return: ~
+        Integer id of channel
     Note:
         "Something is better than nothing". You don't need to include all the
         fields.

@@ -1559,6 +1559,8 @@ Integer nvim_set_client_info(uint64_t channel_id, String name, Dictionary versio
   PUT(info, "attributes", DICTIONARY_OBJ(copy_dictionary(attributes, NULL)));
 
   rpc_set_client_info(channel_id, info);
+
+  assert(channel_id <= INT64_MAX);
   return (Integer)channel_id;
 }
 
