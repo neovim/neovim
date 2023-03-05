@@ -168,11 +168,11 @@ end
 
 M._watchfunc = (vim.fn.has('win32') == 1 or vim.fn.has('mac') == 1) and watch.watch or watch.poll
 
----@type table<number, table<number, function()>> client id -> registration id -> cancel function
+---@type table<number, table<number, function[]>> client id -> registration id -> cancel function
 local cancels = vim.defaulttable()
 
 local queue_timeout_ms = 100
----@type table<number, uv_timer_t> client id -> libuv timer which will send queued changes at its timeout
+---@type table<number, uv.uv_timer_t> client id -> libuv timer which will send queued changes at its timeout
 local queue_timers = {}
 ---@type table<number, lsp.FileEvent[]> client id -> set of queued changes to send in a single LSP notification
 local change_queues = {}
@@ -193,6 +193,9 @@ local to_lsp_change_type = {
 function M.register(reg, ctx)
   local client_id = ctx.client_id
   local client = vim.lsp.get_client_by_id(client_id)
+  if not client.workspace_folders then
+    return
+  end
   local watch_regs = {}
   for _, w in ipairs(reg.registerOptions.watchers) do
     local glob_patterns = {}
