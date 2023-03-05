@@ -184,6 +184,11 @@ The following new APIs or features were added.
 • Vim's `has('gui_running')` is now supported as a way for plugins to check if
   a GUI (not the |TUI|) is attached to Nvim. |has()|
 
+• Added preliminary support for the `workspace/didChangeWatchedFiles` capability
+  to the LSP client to notify servers of file changes on disk. The feature is
+  disabled by default and can be enabled by setting the
+  `workspace.didChangeWatchedFiles.dynamicRegistration=true` capability.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
