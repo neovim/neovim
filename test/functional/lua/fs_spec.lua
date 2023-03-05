@@ -260,7 +260,7 @@ describe('vim.fs', function()
         ]], test_source_path),
         exec_lua([[
           local dir = ...
-          local opts = { path = dir, limit = math.huge }
+          local opts = { path = dir .. "/contrib", limit = math.huge }
           return vim.tbl_map(vim.fs.basename, vim.fs.find(function(_, d) return d:match('[\\/]contrib$') end, opts))
         ]], test_source_path))
     end)
