@@ -14,12 +14,8 @@ else()
 endif()
 
 find_package(Libluv 1.43.0 REQUIRED)
-target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBLUV_INCLUDE_DIRS})
-# Use "luv" as imported library, to work around CMake using "-lluv" for
-# "luv.so".  #10407
-add_library(luv UNKNOWN IMPORTED)
-set_target_properties(luv PROPERTIES IMPORTED_LOCATION ${LIBLUV_LIBRARIES})
-target_link_libraries(main_lib INTERFACE luv)
+target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBLUV_INCLUDE_DIR})
+target_link_libraries(main_lib INTERFACE ${LIBLUV_LIBRARY})
 
 find_package(Iconv REQUIRED)
 find_package(Libtermkey 0.22 REQUIRED)
