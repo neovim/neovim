@@ -2807,13 +2807,15 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
       update_screen();
     }
   }
-  snprintf(IObuff, IOSIZE, _("(%d of %d)%s%s: "), qf_index,
-           qf_get_curlist(qi)->qf_count,
-           qf_ptr->qf_cleared ? _(" (line deleted)") : "",
-           qf_types(qf_ptr->qf_type, qf_ptr->qf_nr));
+  vim_snprintf(IObuff, IOSIZE, _("(%d of %d)%s%s: "), qf_index,
+               qf_get_curlist(qi)->qf_count,
+               qf_ptr->qf_cleared ? _(" (line deleted)") : "",
+               qf_types(qf_ptr->qf_type, qf_ptr->qf_nr));
   // Add the message, skipping leading whitespace and newlines.
-  int len = (int)strlen(IObuff);
-  qf_fmt_text(skipwhite(qf_ptr->qf_text), IObuff + len, IOSIZE - len);
+  garray_T ga;
+  ga_init(&ga, 1, 256);
+  ga_concat(&ga, IObuff);
+  qf_fmt_text(&ga, skipwhite(qf_ptr->qf_text));
 
   // Output the message.  Overwrite to avoid scrolling when the 'O'
   // flag is present in 'shortmess'; But when not jumping, print the
@@ -2825,8 +2827,9 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
     msg_scroll = false;
   }
   msg_ext_set_kind("quickfix");
-  msg_attr_keep(IObuff, 0, true, false);
+  msg_attr_keep(ga.ga_data, 0, true, false);
   msg_scroll = (int)i;
+  ga_clear(&ga);
 }
 
 /// Find a usable window for opening a file from the quickfix/location list. If
@@ -3086,41 +3089,32 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   if (qfp->qf_lnum != 0) {
     msg_puts_attr(":", qfSepAttr);
   }
+  garray_T ga;
+  ga_init(&ga, 1, 256);
   if (qfp->qf_lnum == 0) {
-    IObuff[0] = NUL;
+    ga_append(&ga, NUL);
   } else {
-    qf_range_text(qfp, IObuff, IOSIZE);
+    qf_range_text(&ga, qfp);
   }
-  vim_snprintf(IObuff + strlen(IObuff), IOSIZE, "%s", qf_types(qfp->qf_type, qfp->qf_nr));
-  msg_puts_attr((const char *)IObuff, qfLineAttr);
+  ga_concat(&ga, qf_types(qfp->qf_type, qfp->qf_nr));
+  ga_append(&ga, NUL);
+  msg_puts_attr(ga.ga_data, qfLineAttr);
+  ga_clear(&ga);
   msg_puts_attr(":", qfSepAttr);
   if (qfp->qf_pattern != NULL) {
-    qf_fmt_text(qfp->qf_pattern, IObuff, IOSIZE);
-    msg_puts((const char *)IObuff);
+    qf_fmt_text(&ga, qfp->qf_pattern);
+    msg_puts(ga.ga_data);
+    ga_clear(&ga);
     msg_puts_attr(":", qfSepAttr);
   }
   msg_puts(" ");
 
-  char *tbuf = IObuff;
-  size_t tbuflen = IOSIZE;
-  size_t len = strlen(qfp->qf_text) + 3;
-
-  if (len > IOSIZE) {
-    tbuf = xmalloc(len);
-    tbuflen = len;
-  }
-
   // Remove newlines and leading whitespace from the text.  For an
   // unrecognized line keep the indent, the compiler may mark a word
   // with ^^^^.
-  qf_fmt_text((fname != NULL || qfp->qf_lnum != 0)
-              ? skipwhite(qfp->qf_text) : qfp->qf_text,
-              tbuf, (int)tbuflen);
-  msg_prt_line(tbuf, false);
-
-  if (tbuf != IObuff) {
-    xfree(tbuf);
-  }
+  qf_fmt_text(&ga, (fname != NULL || qfp->qf_lnum != 0) ? skipwhite(qfp->qf_text) : qfp->qf_text);
+  msg_prt_line(ga.ga_data, false);
+  ga_clear(&ga);
 }
 
 // ":clist": list all errors
@@ -3197,49 +3191,54 @@ void qf_list(exarg_T *eap)
   }
 }
 
-// Remove newlines and leading whitespace from an error message.
-// Put the result in "buf[bufsize]".
-static void qf_fmt_text(const char *restrict text, char *restrict buf, int bufsize)
+/// Remove newlines and leading whitespace from an error message.
+/// Add the result to the grow array "gap".
+static void qf_fmt_text(garray_T *gap, const char *restrict text)
   FUNC_ATTR_NONNULL_ALL
 {
-  int i;
   const char *p = (char *)text;
 
-  for (i = 0; *p != NUL && i < bufsize - 1; i++) {
+  while (*p != NUL) {
     if (*p == '\n') {
-      buf[i] = ' ';
+      ga_append(gap, ' ');
       while (*++p != NUL) {
         if (!ascii_iswhite(*p) && *p != '\n') {
           break;
         }
       }
     } else {
-      buf[i] = *p++;
+      ga_append(gap, (uint8_t)(*p++));
     }
   }
-  buf[i] = NUL;
+
+  ga_append(gap, NUL);
 }
 
-// Range information from lnum, col, end_lnum, and end_col.
-// Put the result in "buf[bufsize]".
-static void qf_range_text(const qfline_T *qfp, char *buf, int bufsize)
+/// Add the range information from the lnum, col, end_lnum, and end_col values
+/// of a quickfix entry to the grow array "gap".
+static void qf_range_text(garray_T *gap, const qfline_T *qfp)
 {
-  vim_snprintf(buf, (size_t)bufsize, "%" PRIdLINENR, qfp->qf_lnum);
-  int len = (int)strlen(buf);
+  char *const buf = IObuff;
+  const size_t bufsize = IOSIZE;
+
+  vim_snprintf(buf, bufsize, "%" PRIdLINENR, qfp->qf_lnum);
+  size_t len = strlen(buf);
 
   if (qfp->qf_end_lnum > 0 && qfp->qf_lnum != qfp->qf_end_lnum) {
-    vim_snprintf(buf + len, (size_t)(bufsize - len), "-%" PRIdLINENR, qfp->qf_end_lnum);
-    len += (int)strlen(buf + len);
+    vim_snprintf(buf + len, bufsize - len, "-%" PRIdLINENR, qfp->qf_end_lnum);
+    len += strlen(buf + len);
   }
   if (qfp->qf_col > 0) {
-    vim_snprintf(buf + len, (size_t)(bufsize - len), " col %d", qfp->qf_col);
-    len += (int)strlen(buf + len);
+    vim_snprintf(buf + len, bufsize - len, " col %d", qfp->qf_col);
+    len += strlen(buf + len);
     if (qfp->qf_end_col > 0 && qfp->qf_col != qfp->qf_end_col) {
-      vim_snprintf(buf + len, (size_t)(bufsize - len), "-%d", qfp->qf_end_col);
-      len += (int)strlen(buf + len);
+      vim_snprintf(buf + len, bufsize - len, "-%d", qfp->qf_end_col);
+      len += strlen(buf + len);
     }
   }
   buf[len] = NUL;
+
+  ga_concat_len(gap, buf, len);
 }
 
 /// Display information (list number, list size and the title) about a
@@ -3945,21 +3944,22 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
                            char *dirname, char *qftf_str, bool first_bufline)
   FUNC_ATTR_NONNULL_ARG(1, 2, 4, 5)
 {
+  garray_T ga;
+  ga_init(&ga, 1, 256);
+
   // If the 'quickfixtextfunc' function returned a non-empty custom string
   // for this entry, then use it.
   if (qftf_str != NULL && *qftf_str != NUL) {
-    xstrlcpy(IObuff, qftf_str, IOSIZE);
+    ga_concat(&ga, qftf_str);
   } else {
     buf_T *errbuf;
-    int len;
     if (qfp->qf_module != NULL) {
-      xstrlcpy(IObuff, qfp->qf_module, IOSIZE);
-      len = (int)strlen(IObuff);
+      ga_concat(&ga, qfp->qf_module);
     } else if (qfp->qf_fnum != 0
                && (errbuf = buflist_findnr(qfp->qf_fnum)) != NULL
                && errbuf->b_fname != NULL) {
       if (qfp->qf_type == 1) {  // :helpgrep
-        xstrlcpy(IObuff, path_tail(errbuf->b_fname), IOSIZE);
+        ga_concat(&ga, path_tail(errbuf->b_fname));
       } else {
         // Shorten the file name if not done already.
         // For optimization, do this only for the first entry in a
@@ -3972,42 +3972,35 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
           }
           shorten_buf_fname(errbuf, dirname, false);
         }
-        xstrlcpy(IObuff, errbuf->b_fname, IOSIZE);
+        ga_concat(&ga, errbuf->b_fname);
       }
-      len = (int)strlen(IObuff);
-    } else {
-      len = 0;
     }
-    if (len < IOSIZE - 1) {
-      IObuff[len++] = '|';
-    }
-    if (qfp->qf_lnum > 0) {
-      qf_range_text(qfp, IObuff + len, IOSIZE - len);
-      len += (int)strlen(IObuff + len);
 
-      snprintf(IObuff + len, (size_t)(IOSIZE - len), "%s", qf_types(qfp->qf_type,
-                                                                    qfp->qf_nr));
-      len += (int)strlen(IObuff + len);
+    ga_append(&ga, '|');
+
+    if (qfp->qf_lnum > 0) {
+      qf_range_text(&ga, qfp);
+      ga_concat(&ga, qf_types(qfp->qf_type, qfp->qf_nr));
     } else if (qfp->qf_pattern != NULL) {
-      qf_fmt_text(qfp->qf_pattern, IObuff + len, IOSIZE - len);
-      len += (int)strlen(IObuff + len);
+      qf_fmt_text(&ga, qfp->qf_pattern);
     }
-    if (len < IOSIZE - 2) {
-      IObuff[len++] = '|';
-      IObuff[len++] = ' ';
-    }
+    ga_append(&ga, '|');
+    ga_append(&ga, ' ');
 
     // Remove newlines and leading whitespace from the text.
     // For an unrecognized line keep the indent, the compiler may
     // mark a word with ^^^^.
-    qf_fmt_text(len > 3 ? skipwhite(qfp->qf_text) : qfp->qf_text,
-                IObuff + len, IOSIZE - len);
+    qf_fmt_text(&ga, ga.ga_len > 3 ? skipwhite(qfp->qf_text) : qfp->qf_text);
   }
 
-  if (ml_append_buf(buf, lnum, IObuff,
-                    (colnr_T)strlen(IObuff) + 1, false) == FAIL) {
+  ga_append(&ga, NUL);
+
+  if (ml_append_buf(buf, lnum, ga.ga_data, ga.ga_len + 1, false) == FAIL) {
     return FAIL;
   }
+
+  ga_clear(&ga);
+
   return OK;
 }
 
