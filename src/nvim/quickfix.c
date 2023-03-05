@@ -245,6 +245,10 @@ typedef struct vgr_args_S {
 #endif
 
 static char *e_no_more_items = N_("E553: No more items");
+static char *e_current_quickfix_list_was_changed =
+  N_("E925: Current quickfix list was changed");
+static char *e_current_location_list_was_changed =
+  N_("E926: Current location list was changed");
 
 // Quickfix window check helper macro
 #define IS_QF_WINDOW(wp) (bt_quickfix((wp)->w_buffer) && (wp)->w_llist_ref == NULL)
@@ -275,10 +279,24 @@ static char *e_no_more_items = N_("E553: No more items");
 static char *qf_last_bufname = NULL;
 static bufref_T qf_last_bufref = { NULL, 0, 0 };
 
-static char *e_current_quickfix_list_was_changed =
-  N_("E925: Current quickfix list was changed");
-static char *e_current_location_list_was_changed =
-  N_("E926: Current location list was changed");
+static garray_T qfga;
+
+/// Get a growarray to buffer text in.  Shared between various commands to avoid
+/// many alloc/free calls.
+static garray_T *qfga_get(void)
+{
+  static bool initialized = false;
+
+  if (!initialized) {
+    initialized = true;
+    ga_init(&qfga, 1, 256);
+  }
+
+  // Retain ga_data from previous use.  Reset the length to zero.
+  qfga.ga_len = 0;
+
+  return &qfga;
+}
 
 // Counter to prevent autocmds from freeing up location lists when they are
 // still being used.
@@ -2799,6 +2817,8 @@ static void qf_jump_goto_line(linenr_T qf_lnum, int qf_col, char qf_viscol, char
 static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf_T *old_curbuf,
                               linenr_T old_lnum)
 {
+  garray_T *const gap = qfga_get();
+
   // Update the screen before showing the message, unless the screen
   // scrolled up.
   if (!msg_scrolled) {
@@ -2812,10 +2832,8 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
                qf_ptr->qf_cleared ? _(" (line deleted)") : "",
                qf_types(qf_ptr->qf_type, qf_ptr->qf_nr));
   // Add the message, skipping leading whitespace and newlines.
-  garray_T ga;
-  ga_init(&ga, 1, 256);
-  ga_concat(&ga, IObuff);
-  qf_fmt_text(&ga, skipwhite(qf_ptr->qf_text));
+  ga_concat(gap, IObuff);
+  qf_fmt_text(gap, skipwhite(qf_ptr->qf_text));
 
   // Output the message.  Overwrite to avoid scrolling when the 'O'
   // flag is present in 'shortmess'; But when not jumping, print the
@@ -2827,9 +2845,8 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
     msg_scroll = false;
   }
   msg_ext_set_kind("quickfix");
-  msg_attr_keep(ga.ga_data, 0, true, false);
+  msg_attr_keep(gap->ga_data, 0, true, false);
   msg_scroll = (int)i;
-  ga_clear(&ga);
 }
 
 /// Find a usable window for opening a file from the quickfix/location list. If
@@ -3089,22 +3106,20 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   if (qfp->qf_lnum != 0) {
     msg_puts_attr(":", qfSepAttr);
   }
-  garray_T ga;
-  ga_init(&ga, 1, 256);
+  garray_T *gap = qfga_get();
   if (qfp->qf_lnum == 0) {
-    ga_append(&ga, NUL);
+    ga_append(gap, NUL);
   } else {
-    qf_range_text(&ga, qfp);
+    qf_range_text(gap, qfp);
   }
-  ga_concat(&ga, qf_types(qfp->qf_type, qfp->qf_nr));
-  ga_append(&ga, NUL);
-  msg_puts_attr(ga.ga_data, qfLineAttr);
-  ga_clear(&ga);
+  ga_concat(gap, qf_types(qfp->qf_type, qfp->qf_nr));
+  ga_append(gap, NUL);
+  msg_puts_attr(gap->ga_data, qfLineAttr);
   msg_puts_attr(":", qfSepAttr);
   if (qfp->qf_pattern != NULL) {
-    qf_fmt_text(&ga, qfp->qf_pattern);
-    msg_puts(ga.ga_data);
-    ga_clear(&ga);
+    gap = qfga_get();
+    qf_fmt_text(gap, qfp->qf_pattern);
+    msg_puts(gap->ga_data);
     msg_puts_attr(":", qfSepAttr);
   }
   msg_puts(" ");
@@ -3112,9 +3127,9 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   // Remove newlines and leading whitespace from the text.  For an
   // unrecognized line keep the indent, the compiler may mark a word
   // with ^^^^.
-  qf_fmt_text(&ga, (fname != NULL || qfp->qf_lnum != 0) ? skipwhite(qfp->qf_text) : qfp->qf_text);
-  msg_prt_line(ga.ga_data, false);
-  ga_clear(&ga);
+  gap = qfga_get();
+  qf_fmt_text(gap, (fname != NULL || qfp->qf_lnum != 0) ? skipwhite(qfp->qf_text) : qfp->qf_text);
+  msg_prt_line(gap->ga_data, false);
 }
 
 // ":clist": list all errors
@@ -3944,22 +3959,21 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
                            char *dirname, char *qftf_str, bool first_bufline)
   FUNC_ATTR_NONNULL_ARG(1, 2, 4, 5)
 {
-  garray_T ga;
-  ga_init(&ga, 1, 256);
+  garray_T *gap = qfga_get();
 
   // If the 'quickfixtextfunc' function returned a non-empty custom string
   // for this entry, then use it.
   if (qftf_str != NULL && *qftf_str != NUL) {
-    ga_concat(&ga, qftf_str);
+    ga_concat(gap, qftf_str);
   } else {
     buf_T *errbuf;
     if (qfp->qf_module != NULL) {
-      ga_concat(&ga, qfp->qf_module);
+      ga_concat(gap, qfp->qf_module);
     } else if (qfp->qf_fnum != 0
                && (errbuf = buflist_findnr(qfp->qf_fnum)) != NULL
                && errbuf->b_fname != NULL) {
       if (qfp->qf_type == 1) {  // :helpgrep
-        ga_concat(&ga, path_tail(errbuf->b_fname));
+        ga_concat(gap, path_tail(errbuf->b_fname));
       } else {
         // Shorten the file name if not done already.
         // For optimization, do this only for the first entry in a
@@ -3972,34 +3986,32 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
           }
           shorten_buf_fname(errbuf, dirname, false);
         }
-        ga_concat(&ga, errbuf->b_fname);
+        ga_concat(gap, errbuf->b_fname);
       }
     }
 
-    ga_append(&ga, '|');
+    ga_append(gap, '|');
 
     if (qfp->qf_lnum > 0) {
-      qf_range_text(&ga, qfp);
-      ga_concat(&ga, qf_types(qfp->qf_type, qfp->qf_nr));
+      qf_range_text(gap, qfp);
+      ga_concat(gap, qf_types(qfp->qf_type, qfp->qf_nr));
     } else if (qfp->qf_pattern != NULL) {
-      qf_fmt_text(&ga, qfp->qf_pattern);
+      qf_fmt_text(gap, qfp->qf_pattern);
     }
-    ga_append(&ga, '|');
-    ga_append(&ga, ' ');
+    ga_append(gap, '|');
+    ga_append(gap, ' ');
 
     // Remove newlines and leading whitespace from the text.
     // For an unrecognized line keep the indent, the compiler may
     // mark a word with ^^^^.
-    qf_fmt_text(&ga, ga.ga_len > 3 ? skipwhite(qfp->qf_text) : qfp->qf_text);
+    qf_fmt_text(gap, gap->ga_len > 3 ? skipwhite(qfp->qf_text) : qfp->qf_text);
   }
 
-  ga_append(&ga, NUL);
+  ga_append(gap, NUL);
 
-  if (ml_append_buf(buf, lnum, ga.ga_data, ga.ga_len + 1, false) == FAIL) {
+  if (ml_append_buf(buf, lnum, gap->ga_data, gap->ga_len + 1, false) == FAIL) {
     return FAIL;
   }
-
-  ga_clear(&ga);
 
   return OK;
 }
@@ -7206,6 +7218,19 @@ void ex_helpgrep(exarg_T *eap)
     }
   }
 }
+
+#if defined(EXITFREE)
+void free_quickfix(void)
+{
+  qf_free_all(NULL);
+  // Free all location lists
+  FOR_ALL_TAB_WINDOWS(tab, win) {
+    qf_free_all(win);
+  }
+
+  ga_clear(&qfga);
+}
+#endif
 
 static void get_qf_loc_list(int is_qf, win_T *wp, typval_T *what_arg, typval_T *rettv)
 {
