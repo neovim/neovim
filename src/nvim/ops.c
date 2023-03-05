@@ -2684,8 +2684,10 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
           getvcol(curwin, &oap->start, &cs, NULL, &ce);
           if (ce != cs && oap->start.coladd > 0) {
             // Part of a tab selected -- but don't double-count it.
-            bd.startspaces = (ce - cs + 1)
-                             - oap->start.coladd;
+            bd.startspaces = (ce - cs + 1) - oap->start.coladd;
+            if (bd.startspaces < 0) {
+              bd.startspaces = 0;
+            }
             startcol++;
           }
         }
