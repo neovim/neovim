@@ -3982,6 +3982,7 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
   // for this entry, then use it.
   if (qftf_str != NULL && *qftf_str != NUL) {
     ga_concat(gap, qftf_str);
+    ga_append(gap, NUL);
   } else {
     buf_T *errbuf;
     if (qfp->qf_module != NULL) {
@@ -4024,9 +4025,7 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
     qf_fmt_text(gap, gap->ga_len > 3 ? skipwhite(qfp->qf_text) : qfp->qf_text);
   }
 
-  ga_append(gap, NUL);
-
-  if (ml_append_buf(buf, lnum, gap->ga_data, gap->ga_len + 1, false) == FAIL) {
+  if (ml_append_buf(buf, lnum, gap->ga_data, gap->ga_len, false) == FAIL) {
     return FAIL;
   }
 
