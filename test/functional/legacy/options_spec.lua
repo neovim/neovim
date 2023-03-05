@@ -1,4 +1,4 @@
--- See also: src/nvim/testdir/test_options.vim
+-- See also: test/old/testdir/test_options.vim
 local helpers = require('test.functional.helpers')(after_each)
 local command, clear = helpers.command, helpers.clear
 local source, expect = helpers.source, helpers.expect

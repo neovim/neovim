@@ -226,6 +226,10 @@ preprocess_patch() {
   local na_vimrcexample='vimrc_example\.vim'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/\<\%('${na_vimrcexample}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
+  # Rename src/testdir/ paths to test/old/testdir/
+  LC_ALL=C sed -e 's/\( [ab]\)\/src\/testdir/\1\/test\/old\/testdir/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
   # Rename src/ paths to src/nvim/
   LC_ALL=C sed -e 's/\( [ab]\/src\)/\1\/nvim/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"

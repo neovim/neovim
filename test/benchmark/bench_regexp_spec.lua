@@ -7,7 +7,7 @@ local clear, command = helpers.clear, helpers.command
 -- Temporary file for gathering benchmarking results for each regexp engine.
 local result_file = 'benchmark.out'
 -- Fixture containing an HTML fragment that can make a search appear to freeze.
-local sample_file = 'src/nvim/testdir/samples/re.freeze.txt'
+local sample_file = 'test/old/testdir/samples/re.freeze.txt'
 
 -- Vim script code that does both the work and the benchmarking of that work.
 local measure_cmd =
