@@ -3678,7 +3678,7 @@ static int get_number_tv(char **arg, typval_T *rettv, bool evaluate, bool want_s
     // decimal, hex or octal number
     int len;
     varnumber_T n;
-    vim_str2nr(*arg, NULL, &len, STR2NR_ALL, &n, NULL, 0, true);
+    vim_str2nr(*arg, NULL, &len, STR2NR_ALL, &n, NULL, 0, true, NULL);
     if (len == 0) {
       if (evaluate) {
         semsg(_(e_invexpr2), *arg);

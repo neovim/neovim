@@ -814,7 +814,7 @@ static void do_set_num(int opt_idx, int opt_flags, char **argp, int nextchar, co
   } else if (*arg == '-' || ascii_isdigit(*arg)) {
     int i;
     // Allow negative, octal and hex numbers.
-    vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0, true);
+    vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0, true, NULL);
     if (i == 0 || (arg[i] != NUL && !ascii_iswhite(arg[i]))) {
       *errmsg = e_number_required_after_equal;
       return;
