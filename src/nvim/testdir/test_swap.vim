@@ -435,6 +435,12 @@ func s:get_unused_pid(base)
     if job_status(j) ==# 'dead'
       return job_info(j).process
     endif
+  elseif has('nvim')
+    let j = jobstart('echo')
+    let pid = jobpid(j)
+    if jobwait([j])[0] >= 0
+      return pid
+    endif
   endif
   " Must add four for MS-Windows to see it as a different one.
   return a:base + 4
