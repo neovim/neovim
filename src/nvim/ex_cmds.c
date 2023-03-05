@@ -580,7 +580,7 @@ void ex_sort(exarg_T *eap)
     }
 
     if (sort_nr || sort_flt) {
-      // Make sure vim_str2nr doesn't read any digits past the end
+      // Make sure vim_str2nr() doesn't read any digits past the end
       // of the match, by temporarily terminating the string there
       s2 = s + end_col;
       c = *s2;
@@ -605,7 +605,7 @@ void ex_sort(exarg_T *eap)
         } else {
           nrs[lnum - eap->line1].st_u.num.is_number = true;
           vim_str2nr(s, NULL, NULL, sort_what,
-                     &nrs[lnum - eap->line1].st_u.num.value, NULL, 0, false);
+                     &nrs[lnum - eap->line1].st_u.num.value, NULL, 0, false, NULL);
         }
       } else {
         s = skipwhite(p);

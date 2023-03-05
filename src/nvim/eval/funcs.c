@@ -8033,7 +8033,7 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     break;
   }
   varnumber_T n;
-  vim_str2nr(p, NULL, NULL, what, &n, NULL, 0, false);
+  vim_str2nr(p, NULL, NULL, what, &n, NULL, 0, false, NULL);
   // Text after the number is silently ignored.
   if (isneg) {
     rettv->vval.v_number = -n;

@@ -673,7 +673,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
     if (end - bp > 3 && bp[0] == 't' && bp[1] == '_') {
       bp += 3;  // skip t_xx, xx may be '-' or '>'
     } else if (end - bp > 4 && STRNICMP(bp, "char-", 5) == 0) {
-      vim_str2nr(bp + 5, NULL, &l, STR2NR_ALL, NULL, NULL, 0, true);
+      vim_str2nr(bp + 5, NULL, &l, STR2NR_ALL, NULL, NULL, 0, true, NULL);
       if (l == 0) {
         emsg(_(e_invarg));
         return 0;
@@ -704,7 +704,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
       if (STRNICMP(last_dash + 1, "char-", 5) == 0
           && ascii_isdigit(last_dash[6])) {
         // <Char-123> or <Char-033> or <Char-0x33>
-        vim_str2nr(last_dash + 6, NULL, &l, STR2NR_ALL, NULL, &n, 0, true);
+        vim_str2nr(last_dash + 6, NULL, &l, STR2NR_ALL, NULL, &n, 0, true, NULL);
         if (l == 0) {
           emsg(_(e_invarg));
           return 0;
