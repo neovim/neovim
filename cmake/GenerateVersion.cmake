@@ -5,6 +5,7 @@ execute_process(
   COMMAND git --git-dir=${NVIM_SOURCE_DIR}/.git --work-tree=${NVIM_SOURCE_DIR} describe --first-parent --dirty --always
   OUTPUT_VARIABLE GIT_TAG
   OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET
   RESULT_VARIABLE RES)
 
 if(RES)
