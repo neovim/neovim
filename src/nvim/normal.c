@@ -963,7 +963,8 @@ normal_end:
   may_trigger_modechanged();
   // Redraw the cursor with another shape, if we were in Operator-pending
   // mode or did a replace command.
-  if (s->c || s->ca.cmdchar == 'r') {
+  if (s->c || s->ca.cmdchar == 'r'
+      || (s->ca.cmdchar == 'g' && s->ca.nchar == 'r')) {
     ui_cursor_shape();                  // may show different cursor shape
   }
 
@@ -1162,7 +1163,7 @@ static int normal_execute(VimState *state, int key)
 
   State = MODE_NORMAL;
 
-  if (s->ca.nchar == ESC) {
+  if (s->ca.nchar == ESC || s->ca.extra_char == ESC) {
     clearop(&s->oa);
     s->command_finished = true;
     goto finish;
@@ -4706,7 +4707,7 @@ static void nv_vreplace(cmdarg_T *cap)
     return;
   }
 
-  if (checkclearopq(cap->oap) || cap->extra_char == ESC) {
+  if (checkclearopq(cap->oap)) {
     return;
   }
 

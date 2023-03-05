@@ -44,7 +44,10 @@ describe('ui mode_change event', function()
       {0:~                        }|
                                |
     ]], mode="normal"}
+  end)
 
+  -- oldtest: Test_mouse_shape_after_failed_change()
+  it('is restored to Normal mode after failed "c"', function()
     screen:try_resize(50, 4)
     command('set nomodifiable')
 
@@ -62,6 +65,25 @@ describe('ui mode_change event', function()
       {0:~                                                 }|
       {0:~                                                 }|
       {4:E21: Cannot make changes, 'modifiable' is off}     |
+    ]], mode="normal"}
+  end)
+
+  -- oldtest: Test_mouse_shape_after_cancelling_gr()
+  it('is restored to Normal mode after cancelling "gr"', function()
+    feed('gr')
+    screen:expect{grid=[[
+      ^                         |
+      {0:~                        }|
+      {0:~                        }|
+                               |
+    ]], mode="replace"}
+
+    feed('<Esc>')
+    screen:expect{grid=[[
+      ^                         |
+      {0:~                        }|
+      {0:~                        }|
+                               |
     ]], mode="normal"}
   end)
 
