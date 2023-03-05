@@ -189,8 +189,6 @@ jobs:
             perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'
           fi
 
-      - run: echo "DEPS_BUILD_DIR=$HOME/nvim-deps" >> $GITHUB_ENV
-
       - uses: ./.github/actions/cache
 
       - name: Build third-party deps
@@ -269,30 +267,6 @@ jobs:
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Show logs
         run: cat $(find "$LOG_DIR" -type f)
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: Show core dumps
-        run: |
-          # TODO(dundargoc): app should be luajit for unittests
-          app="build/bin/nvim"
-          if test "$RUNNER_OS" = macOS; then
-            cores="$(find /cores/ -type f -print)"
-          else
-            cores="$(find ./ -type f \( -name 'core.*' -o -name core -o -name nvim.core \) -print)"
-          fi
-
-          if test -z "$cores"; then
-            exit 0
-          fi
-          for core in $cores; do
-            if test "$RUNNER_OS" = macOS; then
-              lldb -Q -o "bt all" -f "$app" -c "$core"
-            else
-              gdb -n -batch -ex 'thread apply all bt full' "$app" -c "$core"
-            fi
-          done
-          echo 'Core dumps found'
-          exit 1
 
   build-types:
     runs-on: ubuntu-22.04
