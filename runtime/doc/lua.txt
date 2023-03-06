@@ -2497,4 +2497,71 @@ trust({opts})                                             *vim.secure.trust()*
         • true and full path of target file if operation was successful
         • false and error message on failure
 
+
+==============================================================================
+Lua module: version                                              *lua-version*
+
+cmp({v1}, {v2}, {opts})                                    *vim.version.cmp()*
+    Compares two strings ( `v1` and `v2` ) in semver format.
+
+    Parameters: ~
+      • {v1}    (string) Version.
+      • {v2}    (string) Version to compare with v1.
+      • {opts}  (table|nil) Optional keyword arguments:
+                • strict (boolean): see `semver.parse` for details. Defaults
+                  to false.
+
+    Return: ~
+        (integer) `-1` if `v1 < v2`, `0` if `v1 == v2`, `1` if `v1 > v2`.
+
+eq({v1}, {v2})                                              *vim.version.eq()*
+    Returns `true` if `v1` are `v2` are equal versions.
+
+    Parameters: ~
+      • {v1}  (string)
+      • {v2}  (string)
+
+    Return: ~
+        (boolean)
+
+gt({v1}, {v2})                                              *vim.version.gt()*
+    Returns `true` if `v1` is greater than `v2` .
+
+    Parameters: ~
+      • {v1}  (string)
+      • {v2}  (string)
+
+    Return: ~
+        (boolean)
+
+lt({v1}, {v2})                                              *vim.version.lt()*
+    Returns `true` if `v1` is less than `v2` .
+
+    Parameters: ~
+      • {v1}  (string)
+      • {v2}  (string)
+
+    Return: ~
+        (boolean)
+
+parse({version}, {opts})                                 *vim.version.parse()*
+    Parses a semantic version string.
+
+    Ignores leading "v" and surrounding whitespace, e.g. "
+    v1.0.1-rc1+build.2", "1.0.1-rc1+build.2", "v1.0.1-rc1+build.2" and
+    "v1.0.1-rc1+build.2 " are all parsed as: >
+
+       { major = 1, minor = 0, patch = 1, prerelease = "rc1", build = "build.2" }
+<
+
+    Parameters: ~
+      • {version}  (string) Version string to be parsed.
+      • {opts}     (table|nil) Optional keyword arguments:
+                   • strict (boolean): Default false. If `true` , no coercion is attempted on input not strictly
+                     conforming to semver v2.0.0 ( https://semver.org/spec/v2.0.0.html ). E.g. `parse("v1.2")` returns nil.
+
+    Return: ~
+        (table|nil) parsed_version Parsed version table or `nil` if `version`
+        is invalid.
+
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

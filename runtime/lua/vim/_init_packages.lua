@@ -51,7 +51,10 @@ end
 -- builtin functions which always should be available
 require('vim.shared')
 
-vim._submodules = { inspect = true }
+vim._submodules = {
+  inspect = true,
+  version = true,
+}
 
 -- These are for loading runtime modules in the vim namespace lazily.
 setmetatable(vim, {
