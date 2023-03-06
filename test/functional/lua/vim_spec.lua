@@ -2900,6 +2900,29 @@ describe('lua stdlib', function()
     end)
   end)
 
+  it('vim.lua_omnifunc', function()
+    local screen = Screen.new(60,5)
+    screen:set_default_attr_ids {
+      [1] = {foreground = Screen.colors.Blue1, bold = true};
+      [2] = {background = Screen.colors.WebGray};
+      [3] = {background = Screen.colors.LightMagenta};
+      [4] = {bold = true};
+      [5] = {foreground = Screen.colors.SeaGreen, bold = true};
+    }
+    screen:attach()
+    command [[ set omnifunc=v:lua.vim.lua_omnifunc ]]
+
+    -- Note: the implementation is shared with lua command line completion.
+    -- More tests for completion in lua/command_line_completion_spec.lua
+    feed [[ivim.insp<c-x><c-o>]]
+    screen:expect{grid=[[
+      vim.inspect^                                                 |
+      {1:~  }{2: inspect        }{1:                                         }|
+      {1:~  }{3: inspect_pos    }{1:                                         }|
+      {1:~                                                           }|
+      {4:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+    ]]}
+  end)
 end)
 
 describe('lua: builtin modules', function()

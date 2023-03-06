@@ -1404,6 +1404,12 @@ inspect({object}, {options})                                   *vim.inspect()*
         https://github.com/kikito/inspect.lua
         https://github.com/mpeterv/vinspect
 
+lua_omnifunc({find_start}, {_})                           *vim.lua_omnifunc()*
+    Omnifunc for completing lua values from from the runtime lua interpreter,
+    similar to the builtin completion for the `:lua` command.
+
+    Activate using `set omnifunc=v:lua.vim.lua_omnifunc` in a lua buffer.
+
 notify({msg}, {level}, {opts})                                  *vim.notify()*
     Display a notification to the user.
 
