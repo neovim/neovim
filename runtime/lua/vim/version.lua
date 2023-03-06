@@ -1,23 +1,41 @@
 local M = {}
 
 ---@private
+---@param version string
+---@return string
+local function create_err_msg(version)
+  return string.format('invalid version: "%s"', version)
+end
+
+---@private
+--- Throws an error if `version` cannot be parsed.
+---@param version string
+local function assert_version(version, opt)
+  local rv = M.parse(version, opt)
+  if rv == nil then
+    error(create_err_msg(version))
+  end
+  return rv
+end
+
+---@private
 --- Compares the prerelease component of the two versions.
----@param v1_parsed table Parsed version.
----@param v2_parsed table Parsed version.
----@return integer `-1` if `v1_parsed < v2_parsed`, `0` if `v1_parsed == v2_parsed`, `1` if `v1_parsed > v2_parsed`.
-local function cmp_prerelease(v1_parsed, v2_parsed)
-  if v1_parsed.prerelease and not v2_parsed.prerelease then
+---@param v1 table Parsed version.
+---@param v2 table Parsed version.
+---@return integer `-1` if `v1 < v2`, `0` if `v1 == v2`, `1` if `v1 > v2`.
+local function cmp_prerelease(v1, v2)
+  if v1.prerelease and not v2.prerelease then
     return -1
   end
-  if not v1_parsed.prerelease and v2_parsed.prerelease then
+  if not v1.prerelease and v2.prerelease then
     return 1
   end
-  if not v1_parsed.prerelease and not v2_parsed.prerelease then
+  if not v1.prerelease and not v2.prerelease then
     return 0
   end
 
-  local v1_identifiers = vim.split(v1_parsed.prerelease, '.', { plain = true })
-  local v2_identifiers = vim.split(v2_parsed.prerelease, '.', { plain = true })
+  local v1_identifiers = vim.split(v1.prerelease, '.', { plain = true })
+  local v2_identifiers = vim.split(v2.prerelease, '.', { plain = true })
   local i = 1
   local max = math.max(vim.tbl_count(v1_identifiers), vim.tbl_count(v2_identifiers))
   while i <= max do
@@ -71,23 +89,15 @@ end
 
 ---@private
 --- Compares the version core component of the two versions.
----@param v1_parsed table Parsed version.
----@param v2_parsed table Parsed version.
----@return integer `-1` if `v1_parsed < v2_parsed`, `0` if `v1_parsed == v2_parsed`, `1` if `v1_parsed > v2_parsed`.
-local function cmp_version_core(v1_parsed, v2_parsed)
-  if
-    v1_parsed.major == v2_parsed.major
-    and v1_parsed.minor == v2_parsed.minor
-    and v1_parsed.patch == v2_parsed.patch
-  then
+---@param v1 table Parsed version.
+---@param v2 table Parsed version.
+---@return integer `-1` if `v1 < v2`, `0` if `v1 == v2`, `1` if `v1 > v2`.
+local function cmp_version_core(v1, v2)
+  if v1.major == v2.major and v1.minor == v2.minor and v1.patch == v2.patch then
     return 0
   end
 
-  if
-    v1_parsed.major > v2_parsed.major
-    or v1_parsed.minor > v2_parsed.minor
-    or v1_parsed.patch > v2_parsed.patch
-  then
+  if v1.major > v2.major or v1.minor > v2.minor or v1.patch > v2.patch then
     return 1
   end
 
@@ -96,14 +106,14 @@ end
 
 --- Compares two strings (`v1` and `v2`) in semver format.
 ---@param v1 string Version.
----@param v2 string Version to be compared with v1.
+---@param v2 string Version to compare with v1.
 ---@param opts table|nil Optional keyword arguments:
 ---                      - strict (boolean):  see `semver.parse` for details. Defaults to false.
 ---@return integer `-1` if `v1 < v2`, `0` if `v1 == v2`, `1` if `v1 > v2`.
 function M.cmp(v1, v2, opts)
   opts = opts or { strict = false }
-  local v1_parsed = M.parse(v1, opts)
-  local v2_parsed = M.parse(v2, opts)
+  local v1_parsed = assert_version(v1, opts)
+  local v2_parsed = assert_version(v2, opts)
 
   local result = cmp_version_core(v1_parsed, v2_parsed)
   if result == 0 then
@@ -188,30 +198,20 @@ local function is_prerelease_and_build_valid(prerelease_and_build)
   return has_build or has_prerelease or has_prerelease_and_build
 end
 
----@private
----@param version string
----@return string
-local function create_err_msg(version)
-  return string.format('invalid version: "%s"', version)
-end
-
---- Parses a semantically formatted version string into a table.
+--- Parses a semantic version string.
 ---
---- Supports leading "v" and leading and trailing whitespace in the version
---- string. e.g. `" v1.0.1-rc1+build.2"` , `"1.0.1-rc1+build.2"`, `"v1.0.1-rc1+build.2"`
---- and `"v1.0.1-rc1+build.2 "` will be parsed as:
----
---- `{ major = 1, minor = 0, patch = 1, prerelease = 'rc1', build = 'build.2' }`
+--- Ignores leading "v" and surrounding whitespace, e.g. " v1.0.1-rc1+build.2",
+--- "1.0.1-rc1+build.2", "v1.0.1-rc1+build.2" and "v1.0.1-rc1+build.2 " are all parsed as:
+--- <pre>
+---   { major = 1, minor = 0, patch = 1, prerelease = "rc1", build = "build.2" }
+--- </pre>
 ---
 ---@param version string Version string to be parsed.
 ---@param opts table|nil Optional keyword arguments:
----                      - strict (boolean):  when set to `true` an error will be thrown for version
----                      strings that do not conform to the semver specification (v2.0.0) (see
----                      semver.org/spec/v2.0.0.html for details). This means that
----                      `semver.parse('v1.2)` will throw an error. When set to `false`,
----                      `semver.parse('v1.2)` will coerce 'v1.2' to 'v1.2.0' and return the table:
----                      `{ major = 1, minor = 2, patch = 0 }`. Defaults to false.
----@return table|nil parsed_version Parsed version table or `nil` if `version` is not valid.
+---                      - strict (boolean):  Default false. If `true`, no coercion is attempted on
+---                      input not strictly conforming to semver v2.0.0
+---                      (https://semver.org/spec/v2.0.0.html). E.g. `parse("v1.2")` returns nil.
+---@return table|nil parsed_version Parsed version table or `nil` if `version` is invalid.
 function M.parse(version, opts)
   if type(version) ~= 'string' then
     error(create_err_msg(version))
@@ -246,46 +246,28 @@ function M.parse(version, opts)
   }
 end
 
----@private
---- Throws an error if `version` cannot be parsed.
----@param version string
-local function assert_version(version)
-  if M.parse(version) == nil then
-    error(create_err_msg(version))
-  end
-end
-
 ---Returns `true` if `v1` are `v2` are equal versions.
----@param version_1 string
----@param version_2 string
+---@param v1 string
+---@param v2 string
 ---@return boolean
-function M.eq(version_1, version_2)
-  assert_version(version_1)
-  assert_version(version_2)
-
-  return M.cmp(version_1, version_2) == 0
+function M.eq(v1, v2)
+  return M.cmp(v1, v2) == 0
 end
 
 ---Returns `true` if `v1` is less than `v2`.
----@param version_1 string
----@param version_2 string
+---@param v1 string
+---@param v2 string
 ---@return boolean
-function M.lt(version_1, version_2)
-  assert_version(version_1)
-  assert_version(version_2)
-
-  return M.cmp(version_1, version_2) == -1
+function M.lt(v1, v2)
+  return M.cmp(v1, v2) == -1
 end
 
 ---Returns `true` if `v1` is greater than `v2`.
----@param version_1 string
----@param version_2 string
+---@param v1 string
+---@param v2 string
 ---@return boolean
-function M.gt(version_1, version_2)
-  assert_version(version_1)
-  assert_version(version_2)
-
-  return M.cmp(version_1, version_2) == 1
+function M.gt(v1, v2)
+  return M.cmp(v1, v2) == 1
 end
 
 setmetatable(M, {

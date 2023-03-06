@@ -194,6 +194,7 @@ CONFIG = {
             'keymap': 'vim.keymap',
             'fs': 'vim.fs',
             'secure': 'vim.secure',
+            'version': 'vim.version',
         },
         'append_only': [
             'shared.lua',
