@@ -656,6 +656,7 @@ local extension = {
   mkd = 'markdown',
   markdown = 'markdown',
   mdown = 'markdown',
+  mdx = 'markdown.mdx',
   mhtml = 'mason',
   comp = 'mason',
   mason = 'mason',
