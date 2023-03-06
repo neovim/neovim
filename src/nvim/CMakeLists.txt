@@ -24,6 +24,13 @@ find_package(Msgpack 1.0.0 REQUIRED)
 find_package(Treesitter REQUIRED)
 find_package(Unibilium 2.0 REQUIRED)
 
+target_include_directories(main_lib SYSTEM BEFORE INTERFACE
+  ${ICONV_INCLUDE_DIR}
+  ${LIBTERMKEY_INCLUDE_DIR}
+  ${LIBVTERM_INCLUDE_DIR}
+  ${MSGPACK_INCLUDE_DIR}
+  ${TREESITTER_INCLUDE_DIR}
+  ${UNIBILIUM_INCLUDE_DIR})
 target_link_libraries(main_lib INTERFACE
   iconv
   libtermkey
