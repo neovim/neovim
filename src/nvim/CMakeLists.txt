@@ -626,8 +626,8 @@ if(PREFER_LUA)
   message(STATUS "luajit not used, skipping unit tests")
 else()
   glob_wrapper(UNIT_TEST_FIXTURES ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
-  target_sources(nvim PRIVATE $<$<CONFIG:Debug>:${UNIT_TEST_FIXTURES}>)
-  target_compile_definitions(nvim PRIVATE $<$<CONFIG:Debug>:UNIT_TESTING>)
+  target_sources(nvim PRIVATE ${UNIT_TEST_FIXTURES})
+  target_compile_definitions(nvim PRIVATE UNIT_TESTING)
 endif()
 
 target_sources(main_lib INTERFACE
