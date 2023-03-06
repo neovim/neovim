@@ -3,8 +3,11 @@ local M = {}
 ---@private
 ---@param version string
 ---@return string
-local function create_err_msg(version)
-  return string.format('invalid version: "%s"', version)
+local function create_err_msg(v)
+  if type(v) == 'string' then
+    return string.format('invalid version: "%s"', tostring(v))
+  end
+  return string.format('invalid version: %s (%s)', tostring(v), type(v))
 end
 
 ---@private
@@ -20,9 +23,6 @@ end
 
 ---@private
 --- Compares the prerelease component of the two versions.
----@param v1 table Parsed version.
----@param v2 table Parsed version.
----@return integer `-1` if `v1 < v2`, `0` if `v1 == v2`, `1` if `v1 > v2`.
 local function cmp_prerelease(v1, v2)
   if v1.prerelease and not v2.prerelease then
     return -1
@@ -88,19 +88,17 @@ local function cmp_prerelease(v1, v2)
 end
 
 ---@private
---- Compares the version core component of the two versions.
----@param v1 table Parsed version.
----@param v2 table Parsed version.
----@return integer `-1` if `v1 < v2`, `0` if `v1 == v2`, `1` if `v1 > v2`.
 local function cmp_version_core(v1, v2)
   if v1.major == v2.major and v1.minor == v2.minor and v1.patch == v2.patch then
     return 0
   end
-
-  if v1.major > v2.major or v1.minor > v2.minor or v1.patch > v2.patch then
+  if
+    v1.major > v2.major
+    or (v1.major == v2.major and v1.minor > v2.minor)
+    or (v1.major == v2.major and v1.minor == v2.minor and v1.patch > v2.patch)
+  then
     return 1
   end
-
   return -1
 end
 

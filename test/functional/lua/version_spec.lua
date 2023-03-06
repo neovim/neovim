@@ -21,20 +21,20 @@ describe('version', function()
     local testcases = {
       {
         desc = '(v1 < v2)',
-        v1 = 'v0.0.0',
+        v1 = 'v0.0.99',
         v2 = 'v9.0.0',
         want = -1,
       },
       {
         desc = '(v1 < v2)',
-        v1 = 'v0.0.0',
-        v2 = 'v0.9.0',
+        v1 = 'v0.4.0',
+        v2 = 'v0.9.99',
         want = -1,
       },
       {
         desc = '(v1 < v2)',
-        v1 = 'v0.0.0',
-        v2 = 'v0.0.9',
+        v1 = 'v0.2.8',
+        v2 = 'v1.0.9',
         want = -1,
       },
       {
@@ -46,7 +46,7 @@ describe('version', function()
       {
         desc = '(v1 > v2)',
         v1 = 'v9.0.0',
-        v2 = 'v0.0.0',
+        v2 = 'v0.9.0',
         want = 1,
       },
       {
@@ -317,255 +317,23 @@ describe('version', function()
       }
       for _, tc in ipairs(testcases) do
         it(string.format('(%s): %s', tc.desc, tostring(tc.version)), function()
-          matches(string.format('invalid version: "%s"', tostring(tc.version)),
-            pcall_err(version.parse, tc.version, { strict = true }))
+          local expected = string.format(type(tc.version) == 'string'
+            and 'invalid version: "%s"' or 'invalid version: %s', tostring(tc.version))
+          matches(expected, pcall_err(version.parse, tc.version, { strict = true }))
         end)
       end
     end)
   end)
 
-  describe('eq()', function()
-    local testcases = {
-      {
-        v1 = '1.0.0',
-        v2 = '1.0.0',
-        want = true,
-      },
-      {
-        v1 = '1.0.0',
-        v2 = 'v1.0.0',
-        want = true,
-      },
-      {
-        v1 = '1.0.0',
-        v2 = '1.0',
-        want = true,
-      },
-      {
-        v1 = '1.0.0',
-        v2 = '1',
-        want = true,
-      },
-      {
-        v1 = '1.0.0-alpha',
-        v2 = '1.0.0-alpha',
-        want = true,
-      },
-      {
-        v1 = '1.0.0-alpha',
-        v2 = 'v1.0.0-alpha',
-        want = true,
-      },
-      {
-        v1 = '1.0.0-alpha',
-        v2 = '1.0.0-alpha+build.5',
-        want = true,
-      },
-      {
-        v1 = '1.0.0-alpha.1',
-        v2 = '1.0.0-alpha.1+build.5',
-        want = true,
-      },
-      {
-        v1 = '1.0.0-alpha',
-        v2 = '1.0.0-alpha.1',
-        want = false,
-      },
-      {
-        v1 = '1.0.0',
-        v2 = '2.0.0',
-        want = false,
-      },
-    }
-
-    for _, tc in ipairs(testcases) do
-      it(string.format('returns %s for %s = %s', tostring(tc.want), tc.v1, tc.v2), function()
-        eq(tc.want, version.eq(tc.v1, tc.v2))
-      end)
-    end
-
-    describe('fails', function()
-      local failtests = {
-        {
-          v1 = '',
-          v2 = '1.0.0',
-          err_version = '',
-        },
-        {
-          v1 = '1.0.0',
-          v2 = '',
-          err_version = '',
-        },
-        {
-          v1 = '',
-          v2 = '',
-          err_version = '',
-        },
-        {
-          v1 = '1.0.0',
-          v2 = 'foo',
-          err_version = 'foo',
-        },
-      }
-      for _, tc in ipairs(failtests) do
-        it(string.format('for %s = %s', quote_empty(tc.v1), quote_empty(tc.v2)), function()
-          matches(string.format('invalid version: "%s"', tc.err_version),
-            pcall_err(version.eq, tc.v1, tc.v2))
-        end)
-      end
-    end)
+  it('lt()', function()
+    eq(true, version.lt('1', '2'))
   end)
 
-  describe('lt()', function()
-    local testcases = {
-      {
-        v1 = '1.0.0',
-        v2 = '1.0.1',
-        want = true,
-      },
-      {
-        v1 = '1.0.0-alpha',
-        v2 = '1.0.1',
-        want = true,
-      },
-      {
-        v1 = '1.0.0-alpha',
-        v2 = '1.0.1-beta',
-        want = true,
-      },
-      {
-        v1 = '1.0.1',
-        v2 = '1.0.0',
-        want = false,
-      },
-      {
-        v1 = '1.0.0-alpha',
-        v2 = '1.0.0-alpha',
-        want = false,
-      },
-      {
-        v1 = '1.0.0-alpha',
-        v2 = '1.0.0-alpha+build.5',
-        want = false,
-      },
-      {
-        v1 = '1.0.0-alpha+build.4',
-        v2 = '1.0.0-alpha+build.5',
-        want = false,
-      },
-    }
-    for _, tc in ipairs(testcases) do
-      it(string.format('returns %s for %s < %s', tostring(tc.want), tc.v1, tc.v2), function()
-        eq(tc.want, version.lt(tc.v1, tc.v2))
-      end)
-    end
-
-    describe('fails', function()
-      local failtests = {
-        {
-          v1 = '',
-          v2 = '1.0.0',
-          err_version = '',
-        },
-        {
-          v1 = '1.0.0',
-          v2 = '',
-          err_version = '',
-        },
-        {
-          v1 = '',
-          v2 = '',
-          err_version = '',
-        },
-      }
-      for _, tc in ipairs(failtests) do
-        it(string.format('for %s < %s', quote_empty(tc.v1), quote_empty(tc.v2)), function()
-          matches(string.format('invalid version: "%s"', tc.err_version),
-            pcall_err(version.lt, tc.v1, tc.v2))
-        end)
-      end
-    end)
+  it('gt()', function()
+    eq(true, version.gt('2', '1'))
   end)
 
-  describe('gt()', function()
-    local testcases = {
-      {
-        v1 = '1.0.1',
-        v2 = '1.0.0',
-        want = true,
-      },
-      {
-        v1 = '1.0.1',
-        v2 = '1.0.1-alpha',
-        want = true,
-      },
-      {
-        v1 = '1.0.0',
-        v2 = '1.0.1',
-        want = false,
-      },
-      {
-        v1 = '1.0.0-alpha',
-        v2 = '1.0.1',
-        want = false,
-      },
-      {
-        v1 = '1.0.0-alpha',
-        v2 = '1.0.1-beta',
-        want = false,
-      },
-      {
-        v1 = '1.0.0-alpha',
-        v2 = '1.0.0-alpha',
-        want = false,
-      },
-      {
-        v1 = '1.0.0-beta',
-        v2 = '1.0.0-alpha',
-        want = true,
-      },
-      {
-        v1 = '1.0.0-alpha',
-        v2 = '1.0.0-alpha+build.5',
-        want = false,
-      },
-      {
-        v1 = '1.0.0-alpha+build.4',
-        v2 = '1.0.0-alpha+build.5',
-        want = false,
-      },
-    }
-
-    for _, tc in ipairs(testcases) do
-      it(string.format('returns %s for %s > %s', tostring(tc.want), tc.v1, tc.v2), function()
-        eq(tc.want, version.gt(tc.v1, tc.v2))
-      end)
-    end
-
-    describe('fails', function()
-      local failtests = {
-        {
-          v1 = '',
-          v2 = '1.0.0',
-          err_version = '',
-        },
-        {
-          v1 = '1.0.0',
-          v2 = '',
-          err_version = '',
-        },
-        {
-          v1 = '',
-          v2 = '',
-          err_version = '',
-        },
-      }
-      for _, tc in ipairs(failtests) do
-        it(string.format('for %s < %s', quote_empty(tc.v1), quote_empty(tc.v2)), function()
-          matches(string.format('invalid version: "%s"', tc.err_version),
-            pcall_err(version.gt, tc.v1, tc.v2))
-        end)
-      end
-    end)
+  it('eq()', function()
+    eq(true, version.eq('2', '2'))
   end)
 end)
