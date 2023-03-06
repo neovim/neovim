@@ -161,6 +161,9 @@ void fastforward_buf_to_lnum(const char **s, long lnum)
 {
   for (long i = 0; i < lnum - 1; i++) {
     *s = strchr(*s, '\n');
+    if (!*s) {
+      return;
+    }
     (*s)++;
   }
 }
