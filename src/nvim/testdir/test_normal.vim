@@ -2540,8 +2540,11 @@ func Test_normal33_g_cmd2()
   norm! g'a
   call assert_equal('>', a[-1:])
   call assert_equal(1, line('.'))
+  let v:errmsg = ''
   call assert_nobeep("normal! g`\<Esc>")
+  call assert_equal('', v:errmsg)
   call assert_nobeep("normal! g'\<Esc>")
+  call assert_equal('', v:errmsg)
 
   " Test for g; and g,
   norm! g;
