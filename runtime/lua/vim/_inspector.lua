@@ -2,7 +2,7 @@
 ---@field syntax boolean include syntax based highlight groups (defaults to true)
 ---@field treesitter boolean include treesitter based highlight groups (defaults to true)
 ---@field extmarks boolean|"all" include extmarks. When `all`, then extmarks without a `hl_group` will also be included (defaults to true)
----@field semantic_tokens boolean include semantic tokens (defaults to true)
+---@field semantic_tokens boolean include semantic token highlights (defaults to true)
 local defaults = {
   syntax = true,
   treesitter = true,
@@ -81,47 +81,54 @@ function vim.inspect_pos(bufnr, row, col, filter)
     end
   end
 
-  -- semantic tokens
-  if filter.semantic_tokens then
-    for _, token in ipairs(vim.lsp.semantic_tokens.get_at_pos(bufnr, row, col) or {}) do
-      token.hl_groups = {
-        type = resolve_hl({ hl_group = '@' .. token.type }),
-        modifiers = vim.tbl_map(function(modifier)
-          return resolve_hl({ hl_group = '@' .. modifier })
-        end, token.modifiers or {}),
-      }
-      table.insert(results.semantic_tokens, token)
-    end
+  --- Convert an extmark tuple into a map-like table
+  --- @private
+  local function to_map(extmark)
+    extmark = {
+      id = extmark[1],
+      row = extmark[2],
+      col = extmark[3],
+      opts = resolve_hl(extmark[4]),
+    }
+    extmark.end_row = extmark.opts.end_row or extmark.row -- inclusive
+    extmark.end_col = extmark.opts.end_col or (extmark.col + 1) -- exclusive
+    return extmark
   end
 
-  -- extmarks
-  if filter.extmarks then
-    for ns, nsid in pairs(vim.api.nvim_get_namespaces()) do
-      if ns:find('vim_lsp_semantic_tokens') ~= 1 then
-        local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, nsid, 0, -1, { details = true })
-        for _, extmark in ipairs(extmarks) do
-          extmark = {
-            ns_id = nsid,
-            ns = ns,
-            id = extmark[1],
-            row = extmark[2],
-            col = extmark[3],
-            opts = resolve_hl(extmark[4]),
-          }
-          local end_row = extmark.opts.end_row or extmark.row -- inclusive
-          local end_col = extmark.opts.end_col or (extmark.col + 1) -- exclusive
-          if
-            (filter.extmarks == 'all' or extmark.opts.hl_group) -- filter hl_group
-            and (row >= extmark.row and row <= end_row) -- within the rows of the extmark
-            and (row > extmark.row or col >= extmark.col) -- either not the first row, or in range of the col
-            and (row < end_row or col < end_col) -- either not in the last row or in range of the col
-          then
-            table.insert(results.extmarks, extmark)
-          end
-        end
-      end
-    end
+  --- Check if an extmark overlaps this position
+  --- @private
+  local function is_here(extmark)
+    return (row >= extmark.row and row <= extmark.end_row) -- within the rows of the extmark
+      and (row > extmark.row or col >= extmark.col) -- either not the first row, or in range of the col
+      and (row < extmark.end_row or col < extmark.end_col) -- either not in the last row or in range of the col
   end
+
+  -- all extmarks at this position
+  local extmarks = {}
+  for ns, nsid in pairs(vim.api.nvim_get_namespaces()) do
+    local ns_marks = vim.api.nvim_buf_get_extmarks(bufnr, nsid, 0, -1, { details = true })
+    ns_marks = vim.tbl_map(to_map, ns_marks)
+    ns_marks = vim.tbl_filter(is_here, ns_marks)
+    for _, mark in ipairs(ns_marks) do
+      mark.ns_id = nsid
+      mark.ns = ns
+    end
+    vim.list_extend(extmarks, ns_marks)
+  end
+
+  if filter.semantic_tokens then
+    results.semantic_tokens = vim.tbl_filter(function(extmark)
+      return extmark.ns:find('vim_lsp_semantic_tokens') == 1
+    end, extmarks)
+  end
+
+  if filter.extmarks then
+    results.extmarks = vim.tbl_filter(function(extmark)
+      return extmark.ns:find('vim_lsp_semantic_tokens') ~= 1
+        and (filter.extmarks == 'all' or extmark.opts.hl_group)
+    end, extmarks)
+  end
+
   return results
 end
 
@@ -174,16 +181,17 @@ function vim.show_pos(bufnr, row, col, filter)
     nl()
   end
 
+  -- semantic tokens
   if #items.semantic_tokens > 0 then
     append('Semantic Tokens', 'Title')
     nl()
-    for _, token in ipairs(items.semantic_tokens) do
-      local client = vim.lsp.get_client_by_id(token.client_id)
-      client = client and (' (' .. client.name .. ')') or ''
-      item(token.hl_groups.type, 'type' .. client)
-      for _, modifier in ipairs(token.hl_groups.modifiers) do
-        item(modifier, 'modifier' .. client)
-      end
+    local sorted_marks = vim.fn.sort(items.semantic_tokens, function(left, right)
+      local left_first = left.opts.priority < right.opts.priority
+        or left.opts.priority == right.opts.priority and left.opts.hl_group < right.opts.hl_group
+      return left_first and -1 or 1
+    end)
+    for _, extmark in ipairs(sorted_marks) do
+      item(extmark.opts, 'priority: ' .. extmark.opts.priority)
     end
     nl()
   end
@@ -197,6 +205,7 @@ function vim.show_pos(bufnr, row, col, filter)
     end
     nl()
   end
+
   -- extmarks
   if #items.extmarks > 0 then
     append('Extmarks', 'Title')

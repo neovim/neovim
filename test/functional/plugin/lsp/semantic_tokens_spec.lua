@@ -37,10 +37,12 @@ describe('semantic token highlighting', function()
       [6] = { foreground = Screen.colors.Blue1 };
       [7] = { bold = true, foreground = Screen.colors.DarkCyan };
       [8] = { bold = true, foreground = Screen.colors.SlateBlue };
+      [9] = { bold = true, foreground = tonumber('0x6a0dad') };
     }
-    command([[ hi link @namespace Type ]])
-    command([[ hi link @function Special ]])
-    command([[ hi @declaration gui=bold ]])
+    command([[ hi link @lsp.type.namespace Type ]])
+    command([[ hi link @lsp.type.function Special ]])
+    command([[ hi link @lsp.type.comment Comment ]])
+    command([[ hi @lsp.mod.declaration gui=bold ]])
   end)
 
   describe('general', function()
@@ -127,6 +129,46 @@ describe('semantic token highlighting', function()
         {1:~                                       }|
                                                 |
       ]] }
+    end)
+
+    it('use LspTokenUpdate and highlight_token', function()
+      exec_lua([[
+        vim.api.nvim_create_autocmd("LspTokenUpdate", {
+          callback = function(args)
+            local token = args.data.token
+            if token.type == "function" and token.modifiers.declaration then
+              vim.lsp.semantic_tokens.highlight_token(
+                token, args.buf, args.data.client_id, "Macro"
+              )
+            end
+          end,
+        })
+        bufnr = vim.api.nvim_get_current_buf()
+        vim.api.nvim_win_set_buf(0, bufnr)
+        client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+      ]])
+
+      insert(text)
+
+      screen:expect { grid = [[
+        #include <iostream>                     |
+                                                |
+        int {9:main}()                              |
+        {                                       |
+            int {7:x};                              |
+        #ifdef {5:__cplusplus}                      |
+            {4:std}::{2:cout} << {2:x} << "\n";             |
+        {6:#else}                                   |
+        {6:    printf("%d\n", x);}                  |
+        {6:#endif}                                  |
+        }                                       |
+        ^}                                       |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]] }
+
     end)
 
     it('buffer is unhighlighted when client is detached', function()
@@ -580,14 +622,11 @@ describe('semantic token highlighting', function()
         expected = {
           {
             line = 0,
-            modifiers = {
-              'declaration',
-              'globalScope',
-            },
+            modifiers = { declaration = true, globalScope = true },
             start_col = 6,
             end_col = 9,
             type = 'variable',
-            extmark_added = true,
+            marked = true,
           },
         },
       },
@@ -615,67 +654,67 @@ int main()
         expected = {
           { -- main
             line = 1,
-            modifiers = { 'declaration', 'globalScope' },
+            modifiers = { declaration = true, globalScope = true },
             start_col = 4,
             end_col = 8,
             type = 'function',
-            extmark_added = true,
+            marked = true,
           },
           { --  __cplusplus
             line = 3,
-            modifiers = { 'globalScope' },
+            modifiers = { globalScope = true },
             start_col = 9,
             end_col = 20,
             type = 'macro',
-            extmark_added = true,
+            marked = true,
           },
           { -- x
             line = 4,
-            modifiers = { 'declaration', 'readonly', 'functionScope' },
+            modifiers = { declaration = true, readonly = true, functionScope = true },
             start_col = 12,
             end_col = 13,
             type = 'variable',
-            extmark_added = true,
+            marked = true,
           },
           { -- std
             line = 5,
-            modifiers = { 'defaultLibrary', 'globalScope' },
+            modifiers = { defaultLibrary = true, globalScope = true },
             start_col = 2,
             end_col = 5,
             type = 'namespace',
-            extmark_added = true,
+            marked = true,
           },
           { -- cout
             line = 5,
-            modifiers = { 'defaultLibrary', 'globalScope' },
+            modifiers = { defaultLibrary = true, globalScope = true },
             start_col = 7,
             end_col = 11,
             type = 'variable',
-            extmark_added = true,
+            marked = true,
           },
           { -- x
             line = 5,
-            modifiers = { 'readonly', 'functionScope' },
+            modifiers = { readonly = true, functionScope = true },
             start_col = 15,
             end_col = 16,
             type = 'variable',
-            extmark_added = true,
+            marked = true,
           },
           { -- std
             line = 5,
-            modifiers = { 'defaultLibrary', 'globalScope' },
+            modifiers = { defaultLibrary = true, globalScope = true },
             start_col = 20,
             end_col = 23,
             type = 'namespace',
-            extmark_added = true,
+            marked = true,
           },
           { -- endl
             line = 5,
-            modifiers = { 'defaultLibrary', 'globalScope' },
+            modifiers = { defaultLibrary = true, globalScope = true },
             start_col = 25,
             end_col = 29,
             type = 'function',
-            extmark_added = true,
+            marked = true,
           },
           { -- #else comment #endif
             line = 6,
@@ -683,7 +722,7 @@ int main()
             start_col = 0,
             end_col = 7,
             type = 'comment',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 7,
@@ -691,7 +730,7 @@ int main()
             start_col = 0,
             end_col = 11,
             type = 'comment',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 8,
@@ -699,7 +738,7 @@ int main()
             start_col = 0,
             end_col = 8,
             type = 'comment',
-            extmark_added = true,
+            marked = true,
           },
         },
       },
@@ -724,23 +763,23 @@ b = "as"]],
             start_col = 0,
             end_col = 10,
             type = 'comment', -- comment
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 1,
-            modifiers = { 'declaration' }, -- a
+            modifiers = { declaration = true }, -- a
             start_col = 6,
             end_col = 7,
             type = 'variable',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 2,
-            modifiers = { 'static' }, -- b (global)
+            modifiers = { static = true }, -- b (global)
             start_col = 0,
             end_col = 1,
             type = 'variable',
-            extmark_added = true,
+            marked = true,
           },
         },
       },
@@ -770,7 +809,7 @@ b = "as"]],
             start_col = 0,
             end_col = 3, -- pub
             type = 'keyword',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 0,
@@ -778,15 +817,15 @@ b = "as"]],
             start_col = 4,
             end_col = 6, -- fn
             type = 'keyword',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 0,
-            modifiers = { 'declaration', 'public' },
+            modifiers = { declaration = true, public = true },
             start_col = 7,
             end_col = 11, -- main
             type = 'function',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 0,
@@ -794,7 +833,7 @@ b = "as"]],
             start_col = 11,
             end_col = 12,
             type = 'parenthesis',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 0,
@@ -802,7 +841,7 @@ b = "as"]],
             start_col = 12,
             end_col = 13,
             type = 'parenthesis',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 0,
@@ -810,15 +849,15 @@ b = "as"]],
             start_col = 14,
             end_col = 15,
             type = 'brace',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 1,
-            modifiers = { 'controlFlow' },
+            modifiers = { controlFlow = true },
             start_col = 4,
             end_col = 9, -- break
             type = 'keyword',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 1,
@@ -826,7 +865,7 @@ b = "as"]],
             start_col = 10,
             end_col = 13, -- rust
             type = 'unresolvedReference',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 1,
@@ -834,15 +873,15 @@ b = "as"]],
             start_col = 13,
             end_col = 13,
             type = 'semicolon',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 2,
-            modifiers = { 'documentation' },
+            modifiers = { documentation = true },
             start_col = 4,
             end_col = 11,
             type = 'comment', -- /// what?
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 3,
@@ -850,7 +889,7 @@ b = "as"]],
             start_col = 0,
             end_col = 1,
             type = 'brace',
-            extmark_added = true,
+            marked = true,
           },
         },
       },
@@ -908,26 +947,26 @@ b = "as"]],
           {
             line = 0,
             modifiers = {
-              'declaration',
-              'globalScope',
+              declaration = true,
+              globalScope = true,
             },
             start_col = 6,
             end_col = 9,
             type = 'variable',
-            extmark_added = true,
+            marked = true,
           }
         },
         expected2 = {
           {
             line = 1,
             modifiers = {
-              'declaration',
-              'globalScope',
+              declaration = true,
+              globalScope = true,
             },
             start_col = 6,
             end_col = 9,
             type = 'variable',
-            extmark_added = true,
+            marked = true,
           }
         },
         expected_screen1 = function()
@@ -1018,55 +1057,55 @@ int main()
             line = 2,
             start_col = 4,
             end_col = 8,
-            modifiers = { 'declaration', 'globalScope' },
+            modifiers = { declaration = true, globalScope = true },
             type = 'function',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 4,
             start_col = 8,
             end_col = 9,
-            modifiers = { 'declaration', 'functionScope' },
+            modifiers = { declaration = true, functionScope = true },
             type = 'variable',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 5,
             start_col = 7,
             end_col = 18,
-            modifiers = { 'globalScope' },
+            modifiers = { globalScope = true },
             type = 'macro',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 6,
             start_col = 4,
             end_col = 7,
-            modifiers = { 'defaultLibrary', 'globalScope' },
+            modifiers = { defaultLibrary = true, globalScope = true },
             type = 'namespace',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 6,
             start_col = 9,
             end_col = 13,
-            modifiers = { 'defaultLibrary', 'globalScope' },
+            modifiers = { defaultLibrary = true, globalScope = true },
             type = 'variable',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 6,
             start_col = 17,
             end_col = 18,
-            extmark_added = true,
-            modifiers = { 'functionScope' },
+            marked = true,
+            modifiers = { functionScope = true },
             type = 'variable',
           },
           {
             line = 7,
             start_col = 0,
             end_col = 5,
-            extmark_added = true,
+            marked = true,
             modifiers = {},
             type = 'comment',
           },
@@ -1076,7 +1115,7 @@ int main()
             modifiers = {},
             start_col = 0,
             type = 'comment',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 9,
@@ -1084,7 +1123,7 @@ int main()
             end_col = 6,
             modifiers = {},
             type = 'comment',
-            extmark_added = true,
+            marked = true,
           }
         },
         expected2 = {
@@ -1092,63 +1131,63 @@ int main()
             line = 2,
             start_col = 4,
             end_col = 8,
-            modifiers = { 'declaration', 'globalScope' },
+            modifiers = { declaration = true, globalScope = true },
             type = 'function',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 4,
             start_col = 8,
             end_col = 9,
-            modifiers = { 'declaration', 'globalScope' },
+            modifiers = { declaration = true, globalScope = true },
             type = 'function',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 5,
             end_col = 12,
             start_col = 11,
-            modifiers = { 'declaration', 'functionScope' },
+            modifiers = { declaration = true, functionScope = true },
             type = 'variable',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 6,
             start_col = 7,
             end_col = 18,
-            modifiers = { 'globalScope' },
+            modifiers = { globalScope = true },
             type = 'macro',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 7,
             start_col = 4,
             end_col = 7,
-            modifiers = { 'defaultLibrary', 'globalScope' },
+            modifiers = { defaultLibrary = true, globalScope = true },
             type = 'namespace',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 7,
             start_col = 9,
             end_col = 13,
-            modifiers = { 'defaultLibrary', 'globalScope' },
+            modifiers = { defaultLibrary = true, globalScope = true },
             type = 'variable',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 7,
             start_col = 17,
             end_col = 18,
-            extmark_added = true,
-            modifiers = { 'globalScope' },
+            marked = true,
+            modifiers = { globalScope = true },
             type = 'function',
           },
           {
             line = 8,
             start_col = 0,
             end_col = 5,
-            extmark_added = true,
+            marked = true,
             modifiers = {},
             type = 'comment',
           },
@@ -1158,7 +1197,7 @@ int main()
             modifiers = {},
             start_col = 0,
             type = 'comment',
-            extmark_added = true,
+            marked = true,
           },
           {
             line = 10,
@@ -1166,7 +1205,7 @@ int main()
             end_col = 6,
             modifiers = {},
             type = 'comment',
-            extmark_added = true,
+            marked = true,
           }
         },
         expected_screen1 = function()
@@ -1228,12 +1267,12 @@ int main()
           {
             line = 0,
             modifiers = {
-              'declaration',
+              declaration = true,
             },
             start_col = 0,
             end_col = 6,
             type = 'variable',
-            extmark_added = true,
+            marked = true,
           }
         },
         expected2 = {
