@@ -338,9 +338,6 @@ jobs:
           # Sanity check
           python -c "import pynvim; print(str(pynvim))"
 
-          gem.cmd install --pre neovim
-          Get-Command -CommandType Application neovim-ruby-host.bat
-
           node --version
           npm.cmd --version
 
