@@ -116,23 +116,17 @@ install_helper(
   FILES ${CMAKE_CURRENT_SOURCE_DIR}/nvim.png
   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/128x128/apps)
 
-install_helper(
-  FILES ${CMAKE_CURRENT_SOURCE_DIR}/neovim.ico
-  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime)
+glob_wrapper(RUNTIME_ROOT_FILES *.vim *.lua *.ico)
+install_helper(FILES ${RUNTIME_ROOT_FILES}
+               DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/)
 
-globrecurse_wrapper(RUNTIME_PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR} *.awk *.sh *.bat)
-
-foreach(PROG ${RUNTIME_PROGRAMS})
-  get_filename_component(BASEDIR ${PROG} DIRECTORY)
-  install_helper(PROGRAMS ${PROG}
-                 DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/${BASEDIR})
+glob_wrapper(RUNTIME_DIRS */)
+foreach(D ${RUNTIME_DIRS})
+  if(IS_DIRECTORY ${D})
+    install_helper(DIRECTORY ${D}
+                   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/)
+  endif()
 endforeach()
 
-globrecurse_wrapper(RUNTIME_FILES ${CMAKE_CURRENT_SOURCE_DIR}
-  *.vim *.lua *.scm *.dict *.py *.rb *.ps *.spl *.tutor *.tutor.json)
-
-foreach(F ${RUNTIME_FILES})
-  get_filename_component(BASEDIR ${F} DIRECTORY)
-  install_helper(FILES ${F}
-                 DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/${BASEDIR})
-endforeach()
+# only foo.sh script in runtime/
+install_helper(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/macros/less.sh DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/macros/)
