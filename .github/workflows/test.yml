@@ -366,5 +366,5 @@ jobs:
           # But would break functionaltest, where its `more` would be used then.
           $OldPath = $env:PATH
           $env:PATH = "C:\msys64\usr\bin;$env:PATH"
-          & "C:\msys64\mingw64\bin\mingw32-make.exe" -C $(Convert-Path src\nvim\testdir) VERBOSE=1
+          & "C:\msys64\mingw64\bin\mingw32-make.exe" -C $(Convert-Path test\old\testdir) VERBOSE=1
           $env:PATH = $OldPath

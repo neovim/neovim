@@ -8,6 +8,4 @@ src/xdiff/**    linguist-vendored
 src/cjson/**    linguist-vendored
 src/unicode/**  linguist-vendored
 
-src/nvim/testdir/test42.in diff
-
 .github/    export-ignore

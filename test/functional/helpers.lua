@@ -898,7 +898,7 @@ local load_factor = 1
 if global_helpers.is_ci() then
   -- Compute load factor only once (but outside of any tests).
   module.clear()
-  module.request('nvim_command', 'source src/nvim/testdir/load.vim')
+  module.request('nvim_command', 'source test/old/testdir/load.vim')
   load_factor = module.request('nvim_eval', 'g:test_load_factor')
 end
 function module.load_adjust(num)
