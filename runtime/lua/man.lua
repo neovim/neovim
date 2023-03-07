@@ -328,7 +328,8 @@ local function get_path(sect, name, silent)
   -- find any that match the specified name
   ---@param v string
   local namematches = vim.tbl_filter(function(v)
-    return fn.fnamemodify(v, ':t'):match(name)
+    local tail = fn.fnamemodify(v, ':t')
+    return string.find(tail, name, 1, true)
   end, results) or {}
   local sectmatches = {}
 
@@ -372,18 +373,18 @@ local function extract_sect_and_name_ref(ref)
     if not name then
       man_error('manpage reference cannot contain only parentheses: ' .. ref)
     end
-    return '', spaces_to_underscores(name)
+    return '', name
   end
   local parts = vim.split(ref1, '(', { plain = true })
   -- see ':Man 3X curses' on why tolower.
   -- TODO(nhooyr) Not sure if this is portable across OSs
   -- but I have not seen a single uppercase section.
   local sect = vim.split(parts[2] or '', ')', { plain = true })[1]:lower()
-  local name = spaces_to_underscores(parts[1])
+  local name = parts[1]
   return sect, name
 end
 
--- verify_exists attempts to find the path to a manpage
+-- find_path attempts to find the path to a manpage
 -- based on the passed section and name.
 --
 -- 1. If manpage could not be found with the given sect and name,
@@ -391,10 +392,10 @@ end
 -- 2. If it still could not be found, then we try again without a section.
 -- 3. If still not found but $MANSECT is set, then we try again with $MANSECT
 --    unset.
+-- 4. If a path still wasn't found, return nil.
 ---@param sect string?
 ---@param name string
----@param silent boolean?
-local function verify_exists(sect, name, silent)
+function M.find_path(sect, name)
   if sect and sect ~= '' then
     local ret = get_path(sect, name, true)
     if ret then
@@ -430,10 +431,8 @@ local function verify_exists(sect, name, silent)
     end
   end
 
-  if not silent then
-    -- finally, if that didn't work, there is no hope
-    man_error('no manual entry for ' .. name)
-  end
+  -- finally, if that didn't work, there is no hope
+  return nil
 end
 
 local EXT_RE = vim.regex([[\.\%([glx]z\|bz2\|lzma\|Z\)$]])
@@ -585,8 +584,8 @@ local function get_paths(sect, name)
   ---@type string[]
   local paths = fn.globpath(mandirs, 'man?/' .. name .. '*.' .. sect .. '*', false, true)
 
-  -- Prioritize the result from verify_exists as it obeys b:man_default_sects.
-  local first = verify_exists(sect, name, true)
+  -- Prioritize the result from find_path as it obeys b:man_default_sects.
+  local first = M.find_path(sect, name)
   if first then
     paths = move_elem_to_head(paths, first)
   end
@@ -728,10 +727,6 @@ end
 ---@param count integer
 ---@param args string[]
 function M.open_page(count, smods, args)
-  if #args > 2 then
-    man_error('too many arguments')
-  end
-
   local ref ---@type string
   if #args == 0 then
     ref = vim.bo.filetype == 'man' and fn.expand('<cWORD>') or fn.expand('<cword>')
@@ -743,9 +738,14 @@ function M.open_page(count, smods, args)
   else
     -- Combine the name and sect into a manpage reference so that all
     -- verification/extraction can be kept in a single function.
-    -- If args[2] is a reference as well, that is fine because it is the only
-    -- reference that will match.
-    ref = ('%s(%s)'):format(args[2], args[1])
+    if tonumber(args[1]) then
+      local sect = args[1]
+      table.remove(args, 1)
+      local name = table.concat(args, ' ')
+      ref = ('%s(%s)'):format(name, sect)
+    else
+      ref = table.concat(args, ' ')
+    end
   end
 
   local sect, name = extract_sect_and_name_ref(ref)
@@ -753,9 +753,16 @@ function M.open_page(count, smods, args)
     sect = tostring(count)
   end
 
-  local path = verify_exists(sect, name)
-  sect, name = extract_sect_and_name_path(path)
+  -- Try both spaces and underscores, use the first that exists.
+  local path = M.find_path(sect, name)
+  if path == nil then
+    path = M.find_path(sect, spaces_to_underscores(name))
+    if path == nil then
+      man_error('no manual entry for ' .. name)
+    end
+  end
 
+  sect, name = extract_sect_and_name_path(path)
   local buf = fn.bufnr()
   local save_tfu = vim.bo[buf].tagfunc
   vim.bo[buf].tagfunc = "v:lua.require'man'.goto_tag"
@@ -786,7 +793,10 @@ end
 -- Called when a man:// buffer is opened.
 function M.read_page(ref)
   local sect, name = extract_sect_and_name_ref(ref)
-  local path = verify_exists(sect, name)
+  local path = M.find_path(sect, name)
+  if path == nil then
+    man_error('no manual entry for ' .. name)
+  end
   sect = extract_sect_and_name_path(path)
   local page = get_page(path)
   vim.b.man_sect = sect

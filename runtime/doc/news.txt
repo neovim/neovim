@@ -162,6 +162,8 @@ The following new APIs or features were added.
 
 • |:highlight| now supports an additional attribute "altfont".
 
+• |:Man| manpage viewer supports manpage names containing spaces.
+
 • Treesitter captures can now be transformed by directives. This will allow
   more complicated dynamic language injections.
 
