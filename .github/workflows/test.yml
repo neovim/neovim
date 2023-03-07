@@ -241,17 +241,9 @@ jobs:
           fi
 
           # Check that all runtime files were installed
-          for file in $(git -C runtime ls-files '*.vim' '*.ps' '*.dict' '*.py' '*.tutor'); do
+          for file in $(git -C runtime ls-files '*.vim' '*.ps' '*.dict' '*.py' '*.tutor' '*.awk' '*.sh' '*.bat'); do
             if ! test -e "$INSTALL_PREFIX/share/nvim/runtime/$file"; then
-              printf "%s%s" 'It appears that %s is not installed.' "$file"
-              exit 1
-            fi
-          done
-
-          # Check that some runtime files are installed and are executables
-          for file in $(git -C runtime ls-files '*.awk' '*.sh' '*.bat'); do
-            if ! test -x "$INSTALL_PREFIX/share/nvim/runtime/$file"; then
-              printf "%s%s" 'It appears that %s is not installed or is not executable.' "$file"
+              printf "It appears that %s is not installed." "$file"
               exit 1
             fi
           done
