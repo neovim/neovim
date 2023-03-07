@@ -2890,6 +2890,9 @@ getcharpos({expr})
 		Get the position for String {expr}. Same as |getpos()| but the
 		column number in the returned List is a character index
 		instead of a byte index.
+		If |getpos()| returns a very large column number, equal to
+		|v:maxcol|, then getcharpos() will return the character index
+		of the last character.
 
 		Example:
 		With the cursor on '세' in line 5 with text "여보세요": >
@@ -3064,10 +3067,11 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 							*getcurpos()*
 getcurpos([{winid}])
 		Get the position of the cursor.  This is like getpos('.'), but
-		includes an extra "curswant" in the list:
+		includes an extra "curswant" item in the list:
 		    [0, lnum, col, off, curswant] ~
 		The "curswant" number is the preferred column when moving the
-		cursor vertically.  Also see |getcursorcharpos()| and
+		cursor vertically.  After |$| command it will be a very large
+		number equal to |v:maxcol|.  Also see |getcursorcharpos()| and
 		|getpos()|.
 		The first "bufnum" item is always zero. The byte position of
 		the cursor is returned in "col". To get the character
@@ -3389,12 +3393,12 @@ getpos({expr})	Get the position for String {expr}.  For possible values of
 		character.
 		Note that for '< and '> Visual mode matters: when it is "V"
 		(visual line mode) the column of '< is zero and the column of
-		'> is a large number.
+		'> is a large number equal to |v:maxcol|.
 		The column number in the returned List is the byte position
 		within the line. To get the character position in the line,
 		use |getcharpos()|.
-		The column number can be very large, e.g. 2147483647, in which
-		case it means "after the end of the line".
+		A very large column number equal to |v:maxcol| can be returned,
+		in which case it means "after the end of the line".
 		If {expr} is invalid, returns a list with all zeros.
 		This can be used to save and restore the position of a mark: >
 			let save_a_mark = getpos("'a")
@@ -6570,6 +6574,8 @@ screenpos({winid}, {lnum}, {col})				*screenpos()*
 		as if 'conceallevel' is zero.  You can set the cursor to the
 		right position and use |screencol()| to get the value with
 		|conceal| taken into account.
+		If the position is in a closed fold the screen position of the
+		first character is returned, {col} is not used.
 		Returns an empty Dict if {winid} is invalid.
 
 		Can also be used as a |method|: >
@@ -9407,10 +9413,14 @@ winsaveview()	Returns a |Dictionary| that contains information to restore
 		The return value includes:
 			lnum		cursor line number
 			col		cursor column (Note: the first column
-					zero, as opposed to what getpos()
+					zero, as opposed to what |getcurpos()|
 					returns)
 			coladd		cursor column offset for 'virtualedit'
-			curswant	column for vertical movement
+			curswant	column for vertical movement (Note:
+					the first column is zero, as opposed
+					to what |getcurpos()| returns).  After
+					|$| command it will be a very large
+					number equal to |v:maxcol|.
 			topline		first line in the window
 			topfill		filler lines, only in diff mode
 			leftcol		first column displayed; only used when

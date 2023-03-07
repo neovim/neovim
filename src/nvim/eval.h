@@ -157,6 +157,7 @@ typedef enum {
   VV_ARGV,
   VV_COLLATE,
   VV_EXITING,
+  VV_MAXCOL,
   // Nvim
   VV_STDERR,
   VV_MSGPACK_TYPES,

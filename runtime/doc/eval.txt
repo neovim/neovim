@@ -1979,6 +1979,11 @@ v:lnum		Line number for the 'foldexpr' |fold-expr|, 'formatexpr',
 v:lua		Prefix for calling Lua functions from expressions.
 		See |v:lua-call| for more information.
 
+						*v:maxcol* *maxcol-variable*
+v:maxcol	Maximum line length.  Depending on where it is used it can be
+		screen columns, characters or bytes.  The value currently is
+		2147483647 on all systems.
+
 					*v:mouse_win* *mouse_win-variable*
 v:mouse_win	Window number for a mouse click obtained with |getchar()|.
 		First window has number 1, like with |winnr()|.  The value is
