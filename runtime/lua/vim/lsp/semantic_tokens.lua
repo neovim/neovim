@@ -435,7 +435,7 @@ function STHighlighter:on_win(topline, botline)
           token.marked = true
 
           api.nvim_exec_autocmds('LspTokenUpdate', {
-            pattern = vim.api.nvim_buf_get_name(self.bufnr),
+            buffer = self.bufnr,
             modeline = false,
             data = {
               token = token,
