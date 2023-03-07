@@ -251,6 +251,7 @@ static struct vimvar {
   VV(VV_ARGV,             "argv",             VAR_LIST, VV_RO),
   VV(VV_COLLATE,          "collate",          VAR_STRING, VV_RO),
   VV(VV_EXITING,          "exiting",          VAR_NUMBER, VV_RO),
+  VV(VV_MAXCOL,           "maxcol",           VAR_NUMBER, VV_RO),
   // Neovim
   VV(VV_STDERR,           "stderr",           VAR_NUMBER, VV_RO),
   VV(VV_MSGPACK_TYPES,    "msgpack_types",    VAR_DICT, VV_RO),
@@ -451,6 +452,7 @@ void eval_init(void)
   set_vim_var_nr(VV_NUMBERMIN, VARNUMBER_MIN);
   set_vim_var_nr(VV_NUMBERSIZE, sizeof(varnumber_T) * 8);
   set_vim_var_special(VV_EXITING, kSpecialVarNull);
+  set_vim_var_nr(VV_MAXCOL, MAXCOL);
 
   set_vim_var_nr(VV_ECHOSPACE,    sc_col - 1);
 
