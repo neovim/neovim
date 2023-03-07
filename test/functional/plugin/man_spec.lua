@@ -8,27 +8,27 @@ local nvim_prog = helpers.nvim_prog
 local matches = helpers.matches
 local write_file = helpers.write_file
 local tmpname = helpers.tmpname
+local eq = helpers.eq
 local skip = helpers.skip
 local is_ci = helpers.is_ci
-local table_contains = vim.tbl_contains
 
--- Returns a table composed of all man page name arguments
--- that were passed to search_for_path after attempting to
--- open 'name'.
+-- Collects all names passed to find_path() after attempting ":Man foo".
 local function get_search_history(name)
-  local as_table = string.gsub(name, ' ', '\', \'')
-  as_table = '\'' .. as_table .. '\''
-  local code = ([[
+  local args = vim.split(name, ' ')
+  local code = [[
+    local args = ...
     local man = require('runtime.lua.man')
     local res = {}
-    man.attempt_to_get_path = function(sect, name, silent)
+    man.find_path = function(sect, name)
       table.insert(res, name)
       return nil
     end
-    pcall(man.open_page, 0, {tab = 0}, {%s})
+    local ok, rv = pcall(man.open_page, 0, {tab = 0}, args)
+    assert(not ok)
+    assert(rv and rv:match('no manual entry'))
     return res
-  ]]):format(as_table)
-  return exec_lua(code)
+  ]]
+  return exec_lua(code, args)
 end
 
 clear()
@@ -194,9 +194,18 @@ describe(':Man', function()
     os.remove(actual_file)
   end)
 
-  it('searches for manpage name with variants with spaces, underscores', function()
-    local tried = get_search_history('NAME WITH SPACES')
-    table_contains(tried, 'NAME WITH SPACES')
-    table_contains(tried, 'NAME_WITH_SPACES')
+  it('tries variants with spaces, underscores #22503', function()
+    eq({
+       'NAME WITH SPACES',
+       'NAME_WITH_SPACES',
+      }, get_search_history('NAME WITH SPACES'))
+    eq({
+       'some other man',
+       'some_other_man',
+      }, get_search_history('3 some other man'))
+    eq({
+       'other_man',
+       'other_man',
+      }, get_search_history('other_man(1)'))
   end)
 end)

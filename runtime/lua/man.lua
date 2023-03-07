@@ -384,7 +384,7 @@ local function extract_sect_and_name_ref(ref)
   return sect, name
 end
 
--- search_for_path attempts to find the path to a manpage
+-- find_path attempts to find the path to a manpage
 -- based on the passed section and name.
 --
 -- 1. If manpage could not be found with the given sect and name,
@@ -395,7 +395,7 @@ end
 -- 4. If a path still wasn't found, return nil.
 ---@param sect string?
 ---@param name string
-function M.search_for_path(sect, name)
+function M.find_path(sect, name)
   if sect and sect ~= '' then
     local ret = get_path(sect, name, true)
     if ret then
@@ -584,8 +584,8 @@ local function get_paths(sect, name)
   ---@type string[]
   local paths = fn.globpath(mandirs, 'man?/' .. name .. '*.' .. sect .. '*', false, true)
 
-  -- Prioritize the result from search_for_path as it obeys b:man_default_sects.
-  local first = M.search_for_path(sect, name)
+  -- Prioritize the result from find_path as it obeys b:man_default_sects.
+  local first = M.find_path(sect, name)
   if first then
     paths = move_elem_to_head(paths, first)
   end
@@ -754,9 +754,9 @@ function M.open_page(count, smods, args)
   end
 
   -- Try both spaces and underscores, use the first that exists.
-  local path = M.search_for_path(sect, name)
+  local path = M.find_path(sect, name)
   if path == nil then
-    path = M.search_for_path(sect, spaces_to_underscores(name))
+    path = M.find_path(sect, spaces_to_underscores(name))
     if path == nil then
       man_error('no manual entry for ' .. name)
     end
@@ -793,7 +793,7 @@ end
 -- Called when a man:// buffer is opened.
 function M.read_page(ref)
   local sect, name = extract_sect_and_name_ref(ref)
-  local path = M.search_for_path(sect, name)
+  local path = M.find_path(sect, name)
   if path == nil then
     man_error('no manual entry for ' .. name)
   end
