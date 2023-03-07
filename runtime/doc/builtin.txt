@@ -6574,6 +6574,8 @@ screenpos({winid}, {lnum}, {col})				*screenpos()*
 		as if 'conceallevel' is zero.  You can set the cursor to the
 		right position and use |screencol()| to get the value with
 		|conceal| taken into account.
+		If the position is in a closed fold the screen position of the
+		first character is returned, {col} is not used.
 		Returns an empty Dict if {winid} is invalid.
 
 		Can also be used as a |method|: >
