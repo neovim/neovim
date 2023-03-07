@@ -19,22 +19,6 @@ function! s:cmd_ok(cmd) abort
   return v:shell_error == 0
 endfunction
 
-" Simple version comparison.
-function! s:version_cmp(a, b) abort
-  let a = split(a:a, '\.', 0)
-  let b = split(a:b, '\.', 0)
-
-  for i in range(len(a))
-    if str2nr(a[i]) > str2nr(b[i])
-      return 1
-    elseif str2nr(a[i]) < str2nr(b[i])
-      return -1
-    endif
-  endfor
-
-  return 0
-endfunction
-
 " Handler for s:system() function.
 function! s:system_handler(jobid, data, event) dict abort
   if a:event ==# 'stderr'
@@ -244,7 +228,7 @@ function! s:version_info(python) abort
   let nvim_path_base = fnamemodify(nvim_path, ':~:h')
   let version_status = 'unknown; '.nvim_path_base
   if !s:is_bad_response(nvim_version) && !s:is_bad_response(pypi_version)
-    if s:version_cmp(nvim_version, pypi_version) == -1
+    if v:lua.vim.version.lt(nvim_version, pypi_version)
       let version_status = 'outdated; from '.nvim_path_base
     else
       let version_status = 'up to date'
@@ -598,7 +582,7 @@ function! s:check_ruby() abort
     return
   endif
 
-  if s:version_cmp(current_gem, latest_gem) == -1
+  if v:lua.vim.version.lt(current_gem, latest_gem)
     call health#report_warn(
           \ printf('Gem "neovim" is out-of-date. Installed: %s, latest: %s',
           \ current_gem, latest_gem),
@@ -623,8 +607,8 @@ function! s:check_node() abort
   endif
   let node_v = get(split(s:system(['node', '-v']), "\n"), 0, '')
   call health#report_info('Node.js: '. node_v)
-  if s:shell_error || s:version_cmp(node_v[1:], '6.0.0') < 0
-    call health#report_warn('Nvim node.js host does not support '.node_v)
+  if s:shell_error || v:lua.vim.version.lt(node_v[1:], '6.0.0')
+    call health#report_warn('Nvim node.js host does not support Node '.node_v)
     " Skip further checks, they are nonsense if nodejs is too old.
     return
   endif
@@ -675,7 +659,7 @@ function! s:check_node() abort
     return
   endif
 
-  if s:version_cmp(current_npm, latest_npm) == -1
+  if latest_npm !=# 'unable to parse' && v:lua.vim.version.lt(current_npm, latest_npm)
     call health#report_warn(
           \ printf('Package "neovim" is out-of-date. Installed: %s, latest: %s',
           \ current_npm, latest_npm),
@@ -751,7 +735,7 @@ function! s:check_perl() abort
     return
   endif
 
-  if s:version_cmp(current_cpan, latest_cpan) == -1
+  if v:lua.vim.version.lt(current_cpan, latest_cpan)
     call health#report_warn(
           \ printf('Module "Neovim::Ext" is out-of-date. Installed: %s, latest: %s',
           \ current_cpan, latest_cpan),
