@@ -62,7 +62,7 @@ global /links to/ move $
 " move linked group names to the matching preferred groups
 " TODO: this fails if the group linked to isn't defined
 % substitute /^\(\w\+\)\s*\(links to\)\s*\(\w\+\)$/\3\t\2 \1/e
-silent! global /links to/ normal mz3ElD0#$p'zdd
+silent! global /links to/ normal! mz3ElD0#$p'zdd
 
 " delete empty lines
 global /^ *$/ delete
@@ -79,7 +79,7 @@ syntax clear
 % substitute /^syn keyword //
 
 " pretty formatting
-global /^/ exe "normal Wi\<CR>\t\eAA\ex"
+global /^/ exe "normal! Wi\<CR>\t\eAA\ex"
 global /^\S/ join
 
 " find out first syntax highlighting
