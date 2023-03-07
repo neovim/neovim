@@ -61,7 +61,7 @@ end
 
 --- Return all lenses for the given buffer
 ---
----@param bufnr number  Buffer number. 0 can be used for the current buffer.
+---@param bufnr integer  Buffer number. 0 can be used for the current buffer.
 ---@return table (`CodeLens[]`)
 function M.get(bufnr)
   local lenses_by_client = lens_cache_by_buf[bufnr or 0]
@@ -115,8 +115,8 @@ end
 
 --- Clear the lenses
 ---
----@param client_id number|nil filter by client_id. All clients if nil
----@param bufnr number|nil filter by buffer. All buffers if nil
+---@param client_id integer|nil filter by client_id. All clients if nil
+---@param bufnr integer|nil filter by buffer. All buffers if nil
 function M.clear(client_id, bufnr)
   local buffers = bufnr and { resolve_bufnr(bufnr) } or vim.tbl_keys(lens_cache_by_buf)
   for _, iter_bufnr in pairs(buffers) do
@@ -132,8 +132,8 @@ end
 --- Display the lenses using virtual text
 ---
 ---@param lenses table of lenses to display (`CodeLens[] | null`)
----@param bufnr number
----@param client_id number
+---@param bufnr integer
+---@param client_id integer
 function M.display(lenses, bufnr, client_id)
   local ns = namespaces[client_id]
   if not lenses or not next(lenses) then
@@ -177,8 +177,8 @@ end
 --- Store lenses for a specific buffer and client
 ---
 ---@param lenses table of lenses to store (`CodeLens[] | null`)
----@param bufnr number
----@param client_id number
+---@param bufnr integer
+---@param client_id integer
 function M.save(lenses, bufnr, client_id)
   local lenses_by_client = lens_cache_by_buf[bufnr]
   if not lenses_by_client then

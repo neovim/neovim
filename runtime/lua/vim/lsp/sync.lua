@@ -388,9 +388,9 @@ end
 --- Returns the range table for the difference between prev and curr lines
 ---@param prev_lines table list of lines
 ---@param curr_lines table list of lines
----@param firstline number line to begin search for first difference
----@param lastline number line to begin search in old_lines for last difference
----@param new_lastline number line to begin search in new_lines for last difference
+---@param firstline integer line to begin search for first difference
+---@param lastline integer line to begin search in old_lines for last difference
+---@param new_lastline integer line to begin search in new_lines for last difference
 ---@param offset_encoding string encoding requested by language server
 ---@returns table TextDocumentContentChangeEvent see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
 function M.compute_diff(
