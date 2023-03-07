@@ -1199,6 +1199,7 @@ static void did_set_statusline(win_T *win, char **varp, char **gvarp, char **err
     ru_wid = 0;
   } else if (varp == &win->w_p_stc) {
     win->w_nrwidth_line_count = 0;
+    win->w_statuscol_line_count = 0;
   }
   char *s = *varp;
   if (varp == &p_ruf && *s == '%') {

@@ -520,4 +520,42 @@ describe('statuscolumn', function()
       :                                                    |
     ]])
   end)
+
+  it("has correct width when toggling '(relative)number'", function()
+    screen:try_resize(screen._width, 6)
+    command('call setline(1, repeat(["aaaaa"], 100))')
+    command('set relativenumber')
+    command([[set stc=%{!&nu&&!&rnu?'':&rnu?v:relnum?v:relnum:&nu?v:lnum:'0':v:lnum}]])
+    screen:expect([[
+      1  aaaaa                                             |
+      8  ^aaaaa                                             |
+      1  aaaaa                                             |
+      2  aaaaa                                             |
+      3  aaaaa                                             |
+                                                           |
+    ]])
+    -- width correctly estimated with "w_nrwidth_line_count" when setting 'stc'
+    command([[set stc=%{!&nu&&!&rnu?'':&rnu?v:relnum?v:relnum:&nu?v:lnum:'0':v:lnum}]])
+    screen:expect_unchanged()
+    -- zero width when disabling 'number'
+    command('set norelativenumber nonumber')
+    screen:expect([[
+      aaaaa                                                |
+      ^aaaaa                                                |
+      aaaaa                                                |
+      aaaaa                                                |
+      aaaaa                                                |
+                                                           |
+    ]])
+    -- width correctly estimated with "w_nrwidth_line_count" when setting 'nu'
+    command('set number')
+    screen:expect([[
+      7  aaaaa                                             |
+      8  ^aaaaa                                             |
+      9  aaaaa                                             |
+      10 aaaaa                                             |
+      11 aaaaa                                             |
+                                                           |
+    ]])
+  end)
 end)
