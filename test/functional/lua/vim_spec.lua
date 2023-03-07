@@ -6,6 +6,7 @@ local nvim_prog = helpers.nvim_prog
 local funcs = helpers.funcs
 local meths = helpers.meths
 local command = helpers.command
+local dedent = helpers.dedent
 local insert = helpers.insert
 local clear = helpers.clear
 local eq = helpers.eq
@@ -2269,7 +2270,7 @@ describe('lua stdlib', function()
 
   describe('vim.region', function()
     it('charwise', function()
-      insert(helpers.dedent( [[
+      insert(dedent( [[
       text tααt tααt text
       text tαxt txtα tex
       text tαxt tαxt
@@ -2922,6 +2923,24 @@ describe('lua stdlib', function()
       {1:~                                                           }|
       {4:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
     ]]}
+  end)
+
+  it('vim.print', function()
+    -- vim.print() returns its args.
+    eq({42, 'abc', { a = { b = 77 }}},
+      exec_lua[[return {vim.print(42, 'abc', { a = { b = 77 }})}]])
+
+    -- vim.print() pretty-prints the args.
+    eq(dedent[[
+
+      42
+      abc
+      {
+        a = {
+          b = 77
+        }
+      }]],
+      eval[[execute('lua vim.print(42, "abc", { a = { b = 77 }})')]])
   end)
 end)
 

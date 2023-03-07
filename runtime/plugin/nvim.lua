@@ -1,6 +1,6 @@
 vim.api.nvim_create_user_command('Inspect', function(cmd)
   if cmd.bang then
-    vim.pretty_print(vim.inspect_pos())
+    vim.print(vim.inspect_pos())
   else
     vim.show_pos()
   end

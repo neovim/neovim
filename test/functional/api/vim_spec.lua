@@ -4042,7 +4042,7 @@ describe('API', function()
     it('splits arguments correctly for Lua callback', function()
       meths.exec_lua([[
         local function FooFunc(opts)
-          vim.pretty_print(opts.fargs)
+          vim.print(opts.fargs)
         end
 
         vim.api.nvim_create_user_command("Foo", FooFunc, { nargs = '+' })

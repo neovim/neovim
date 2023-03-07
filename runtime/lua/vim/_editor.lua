@@ -778,22 +778,37 @@ do
   end
 end
 
----Prints given arguments in human-readable format.
----Example:
----<pre>lua
----  -- Print highlight group Normal and store it's contents in a variable.
----  local hl_normal = vim.pretty_print(vim.api.nvim_get_hl_by_name("Normal", true))
----</pre>
----@see |vim.inspect()|
----@return any # given arguments.
+---@private
 function vim.pretty_print(...)
-  local objects = {}
-  for i = 1, select('#', ...) do
-    local v = select(i, ...)
-    table.insert(objects, vim.inspect(v))
+  vim.deprecate('vim.pretty_print', 'vim.print', '0.10')
+  return vim.print(...)
+end
+
+--- "Pretty prints" the given arguments and returns them unmodified.
+---
+--- Example:
+--- <pre>lua
+---   local hl_normal = vim.print(vim.api.nvim_get_hl_by_name('Normal', true))
+--- </pre>
+---
+--- @see |vim.inspect()|
+--- @return any # given arguments.
+function vim.print(...)
+  if vim.in_fast_event() then
+    print(...)
+    return ...
   end
 
-  print(table.concat(objects, '    '))
+  for i = 1, select('#', ...) do
+    local o = select(i, ...)
+    if type(o) == 'string' then
+      vim.api.nvim_out_write(o)
+    else
+      vim.api.nvim_out_write(vim.inspect(o, { newline = '\n', indent = '  ' }))
+    end
+    vim.api.nvim_out_write('\n')
+  end
+
   return ...
 end
 

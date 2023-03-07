@@ -1239,7 +1239,7 @@ which is accessed through |vim.opt:get()|:
             print(vim.o.wildignore)
 <
         In Lua using `vim.opt`: >lua
-            vim.pretty_print(vim.opt.wildignore:get())
+            vim.print(vim.opt.wildignore:get())
 <
 
 In any of the above examples, to replicate the behavior |:setlocal|, use
@@ -1258,7 +1258,7 @@ Option:get()
     the values as entries in the array: >lua
         vim.cmd [[set wildignore=*.pyc,*.o]]
 
-        vim.pretty_print(vim.opt.wildignore:get())
+        vim.print(vim.opt.wildignore:get())
         -- { "*.pyc", "*.o", }
 
         for _, ignore_pattern in ipairs(vim.opt.wildignore:get()) do
@@ -1271,7 +1271,7 @@ Option:get()
     the names as keys and the values as entries: >lua
         vim.cmd [[set listchars=space:_,tab:>~]]
 
-        vim.pretty_print(vim.opt.listchars:get())
+        vim.print(vim.opt.listchars:get())
         --  { space = "_", tab = ">~", }
 
         for char, representation in pairs(vim.opt.listchars:get()) do
@@ -1282,7 +1282,7 @@ Option:get()
     as keys and `true` as entries. >lua
         vim.cmd [[set formatoptions=njtcroql]]
 
-        vim.pretty_print(vim.opt.formatoptions:get())
+        vim.print(vim.opt.formatoptions:get())
         -- { n = true, j = true, c = true, ... }
 
         local format_opts = vim.opt.formatoptions:get()
@@ -1496,10 +1496,11 @@ paste({lines}, {phase})                                          *vim.paste()*
     See also: ~
         |paste| @alias paste_phase -1 | 1 | 2 | 3
 
-pretty_print({...})                                       *vim.pretty_print()*
-    Prints given arguments in human-readable format. Example: >lua
-      -- Print highlight group Normal and store it's contents in a variable.
-      local hl_normal = vim.pretty_print(vim.api.nvim_get_hl_by_name("Normal", true))
+print({...})                                                     *vim.print()*
+    "Pretty prints" the given arguments and returns them unmodified.
+
+    Example: >lua
+      local hl_normal = vim.print(vim.api.nvim_get_hl_by_name('Normal', true))
 <
 
     Return: ~
