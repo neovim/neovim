@@ -64,6 +64,7 @@ static struct luaL_Reg tree_meta[] = {
   { "__tostring", tree_tostring },
   { "root", tree_root },
   { "edit", tree_edit },
+  { "included_ranges", tree_get_ranges },
   { "copy", tree_copy },
   { NULL, NULL }
 };
@@ -510,6 +511,24 @@ static int tree_edit(lua_State *L)
   ts_tree_edit(*tree, &edit);
 
   return 0;
+}
+
+static int tree_get_ranges(lua_State *L)
+{
+  TSTree **tree = tree_check(L, 1);
+  if (!(*tree)) {
+    return 0;
+  }
+
+  bool include_bytes = (lua_gettop(L) >= 2) && lua_toboolean(L, 2);
+
+  uint32_t len;
+  TSRange *ranges = ts_tree_included_ranges(*tree, &len);
+
+  push_ranges(L, ranges, len, include_bytes);
+
+  xfree(ranges);
+  return 1;
 }
 
 // Use the top of the stack (without popping it) to create a TSRange, it can be

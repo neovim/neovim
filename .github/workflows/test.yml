@@ -376,13 +376,13 @@ jobs:
             libluajit-5.1-dev \
             libmsgpack-dev \
             libtermkey-dev \
-            libtree-sitter-dev \
             libunibilium-dev \
             libuv1-dev \
             lua-filesystem \
             lua-lpeg \
             lua-mpack \
             luajit
+            # libtree-sitter-dev \
             # libvterm-dev \
             # lua-luv-dev
 
@@ -397,7 +397,10 @@ jobs:
           # dependencies don't have the required version available. We use the
           # bundled versions for these with the hopes of being able to remove them
           # later on.
-          cmake -S cmake.deps -B .deps -G Ninja -D USE_BUNDLED=OFF -D USE_BUNDLED_LUV=ON -D USE_BUNDLED_LIBVTERM=ON
+          cmake -S cmake.deps -B .deps -G Ninja -D USE_BUNDLED=OFF \
+            -D USE_BUNDLED_LUV=ON \
+            -D USE_BUNDLED_LIBVTERM=ON \
+            -D USE_BUNDLED_TS=ON
           cmake --build .deps
 
       - name: Build
