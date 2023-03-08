@@ -123,6 +123,20 @@ func Test_open_command()
   close!
 endfunc
 
+func Test_open_command_flush_line()
+  throw 'Skipped: Nvim does not have :open'
+  " this was accessing freed memory: the regexp match uses a pointer to the
+  " current line which becomes invalid when searching for the ') mark.
+  new
+  call setline(1, ['one', 'two. three'])
+  s/one/ONE
+  try
+    open /\%')/
+  catch /E479/
+  endtry
+  bwipe!
+endfunc
+
 " Test for :g/pat/visual to run vi commands in Ex mode
 " This used to hang Vim before 8.2.0274.
 func Test_Ex_global()
