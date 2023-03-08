@@ -1,3 +1,4 @@
-(codeblock
-  (language) @language
-  (code) @content)
+((codeblock
+  (language) @injection.language
+  (code) @injection.content)
+ (#set! injection.include-children))
