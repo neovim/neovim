@@ -98,6 +98,7 @@ let s:filename_checks = {
     \ 'cabal': ['file.cabal'],
     \ 'cabalconfig': ['cabal.config'],
     \ 'cabalproject': ['cabal.project', 'cabal.project.local'],
+    \ 'cairo': ['file.cairo'],
     \ 'calendar': ['calendar', '/.calendar/file', '/share/calendar/any/calendar.file', '/share/calendar/calendar.file', 'any/share/calendar/any/calendar.file', 'any/share/calendar/calendar.file'],
     \ 'capnp': ['file.capnp'],
     \ 'catalog': ['catalog', 'sgml.catalogfile', 'sgml.catalog', 'sgml.catalog-file'],
