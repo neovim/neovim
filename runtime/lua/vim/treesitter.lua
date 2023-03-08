@@ -191,7 +191,7 @@ end
 ---
 ---@return boolean True if the position is in node range
 function M.is_in_node_range(node, line, col)
-  return M.node_contains(node, { line, col, line, col })
+  return M.node_contains(node, { line, col, line, col + 1 })
 end
 
 --- Determines if a node contains a range
@@ -202,7 +202,8 @@ end
 ---@return boolean True if the {node} contains the {range}
 function M.node_contains(node, range)
   vim.validate({
-    node = { node, 'userdata' },
+    -- allow a table so nodes can be mocked
+    node = { node, { 'userdata', 'table' } },
     range = { range, Range.validate, 'integer list with 4 or 6 elements' },
   })
   return Range.contains({ node:range() }, range)
