@@ -1015,6 +1015,7 @@ local extension = {
   svh = 'systemverilog',
   sv = 'systemverilog',
   tak = 'tak',
+  tal = 'tal',
   task = 'taskedit',
   tm = 'tcl',
   tcl = 'tcl',
