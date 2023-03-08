@@ -191,7 +191,20 @@ end
 ---
 ---@return boolean True if the position is in node range
 function M.is_in_node_range(node, line, col)
-  return M.node_contains(node, { line, col, line, col })
+  local start_line, start_col, end_line, end_col = node:range()
+  if line >= start_line and line <= end_line then
+    if line == start_line and line == end_line then
+      return col >= start_col and col < end_col
+    elseif line == start_line then
+      return col >= start_col
+    elseif line == end_line then
+      return col < end_col
+    else
+      return true
+    end
+  else
+    return false
+  end
 end
 
 --- Determines if a node contains a range
