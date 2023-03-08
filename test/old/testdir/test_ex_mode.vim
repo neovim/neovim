@@ -137,6 +137,28 @@ func Test_open_command_flush_line()
   bwipe!
 endfunc
 
+" FIXME: this doesn't fail without the fix but hangs
+func Skip_Test_open_command_state()
+  " Tricky script that failed because State was not set properly
+  let lines =<< trim END
+      !ls 
+      0scìi
+      so! Xsourced
+      set t_û0=0
+      v/-/o
+  END
+  call writefile(lines, 'XopenScript', '')
+
+  let sourced = ["!f\u0083\x02\<Esc>z=0"]
+  call writefile(sourced, 'Xsourced', 'b')
+
+  CheckRunVimInTerminal
+  let buf = RunVimInTerminal('-u NONE -i NONE -n -m -X -Z -e -s -S XopenScript -c qa!', #{rows: 6, wait_for_ruler: 0, no_clean: 1})
+  sleep 3
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " Test for :g/pat/visual to run vi commands in Ex mode
 " This used to hang Vim before 8.2.0274.
 func Test_Ex_global()
