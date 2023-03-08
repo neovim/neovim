@@ -116,7 +116,7 @@ func Test_syntime()
   let a = execute('syntime clear')
   call assert_equal("\nNo Syntax items defined for this buffer", a)
 
-  view samples/memfile_test.c
+  view ../memfile_test.c
   setfiletype cpp
   redraw
   let a = execute('syntime report')

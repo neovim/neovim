@@ -598,6 +598,7 @@ _set_missing_vimpatches() {
   # Massage arguments for git-log.
   declare -A git_log_replacements=(
     [^\(.*/\)?src/nvim/\(.*\)]="\${BASH_REMATCH[1]}src/\${BASH_REMATCH[2]}"
+    [^\(.*/\)?test/old/\(.*\)]="\${BASH_REMATCH[1]}src/\${BASH_REMATCH[2]}"
     [^\(.*/\)?\.vim-src/\(.*\)]="\${BASH_REMATCH[2]}"
   )
   local i j
