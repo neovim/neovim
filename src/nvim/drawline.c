@@ -265,18 +265,25 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
   bool do_eol = state->eol_col > -1;
   for (size_t i = 0; i < kv_size(state->active); i++) {
     DecorRange *item = &kv_A(state->active, i);
-    if (!(item->start_row == state->row && decor_virt_pos(&item->decor))) {
+    if (!(item->start_row == state->row && decor_virt_pos(item))) {
       continue;
     }
-    if (item->draw_col == -1) {
+
+    DecorVirtText *vt = NULL;
+    if (item->kind == kDecorKindVirtText) {
+      assert(item->data.vt);
+      vt = item->data.vt;
+    }
+    if (decor_virt_pos(item) && item->draw_col == -1) {
       bool updated = true;
-      if (item->decor.virt_text_pos == kVTRightAlign) {
-        right_pos -= item->decor.virt_text_width;
+      VirtTextPos pos = decor_virt_pos_kind(item);
+      if (pos == kVPosRightAlign) {
+        right_pos -= vt->width;
         item->draw_col = right_pos;
-      } else if (item->decor.virt_text_pos == kVTEndOfLine && do_eol) {
+      } else if (pos == kVPosEndOfLine && do_eol) {
         item->draw_col = state->eol_col;
-      } else if (item->decor.virt_text_pos == kVTWinCol) {
-        item->draw_col = MAX(col_off + item->decor.col, 0);
+      } else if (pos == kVPosWinCol) {
+        item->draw_col = MAX(col_off + vt->col, 0);
       } else {
         updated = false;
       }
@@ -289,19 +296,19 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
       continue;
     }
     int col = 0;
-    if (item->decor.ui_watched) {
+    if (item->kind == kDecorKindUIWatched) {
       // send mark position to UI
       col = item->draw_col;
-      WinExtmark m = { (NS)item->ns_id, item->mark_id, win_row, col };
+      WinExtmark m = { (NS)item->data.ui.ns_id, item->data.ui.mark_id, win_row, col };
       kv_push(win_extmark_arr, m);
     }
-    if (kv_size(item->decor.virt_text)) {
+    if (vt) {
       int vcol = item->draw_col - col_off;
-      col = draw_virt_text_item(buf, item->draw_col, item->decor.virt_text,
-                                item->decor.hl_mode, max_col, vcol);
+      col = draw_virt_text_item(buf, item->draw_col, vt->data.virt_text,
+                                vt->hl_mode, max_col, vcol);
     }
     item->draw_col = INT_MIN;  // deactivate
-    if (item->decor.virt_text_pos == kVTEndOfLine && do_eol) {
+    if (vt && vt->pos == kVPosEndOfLine && do_eol) {
       state->eol_col = col + 1;
     }
 
@@ -807,9 +814,9 @@ static bool has_more_inline_virt(winlinevars_T *wlv, ptrdiff_t v)
   for (size_t i = 0; i < kv_size(state->active); i++) {
     DecorRange *item = &kv_A(state->active, i);
     if (item->start_row != state->row
-        || !kv_size(item->decor.virt_text)
-        || item->decor.virt_text_pos != kVTInline
-        || item->decor.virt_text_width == 0) {
+        || item->kind != kDecorKindVirtText
+        || item->data.vt->pos != kVPosInline
+        || item->data.vt->width == 0) {
       continue;
     }
     if (item->draw_col >= -1 && item->start_col >= v) {
@@ -830,14 +837,14 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
       for (size_t i = 0; i < kv_size(state->active); i++) {
         DecorRange *item = &kv_A(state->active, i);
         if (item->start_row != state->row
-            || !kv_size(item->decor.virt_text)
-            || item->decor.virt_text_pos != kVTInline
-            || item->decor.virt_text_width == 0) {
+            || item->kind != kDecorKindVirtText
+            || item->data.vt->pos != kVPosInline
+            || item->data.vt->width == 0) {
           continue;
         }
         if (item->draw_col >= -1 && item->start_col == v) {
-          wlv->virt_inline = item->decor.virt_text;
-          wlv->virt_inline_hl_mode = item->decor.hl_mode;
+          wlv->virt_inline = item->data.vt->data.virt_text;
+          wlv->virt_inline_hl_mode = item->data.vt->hl_mode;
           item->draw_col = INT_MIN;
           break;
         }

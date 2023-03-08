@@ -43,6 +43,4 @@ typedef enum {
 
 #define TRISTATE_FROM_INT(val) ((val) == 0 ? kFalse : ((val) >= 1 ? kTrue : kNone))
 
-typedef struct Decoration Decoration;
-
 typedef int64_t OptInt;

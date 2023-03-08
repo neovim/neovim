@@ -287,7 +287,7 @@ static inline void marktree_putp_aux(MarkTree *b, MTNode *x, MTKey k)
 
 void marktree_put(MarkTree *b, MTKey key, int end_row, int end_col, bool end_right)
 {
-  assert(!(key.flags & ~MT_FLAG_EXTERNAL_MASK));
+  assert(!(key.flags & ~(MT_FLAG_EXTERNAL_MASK | MT_FLAG_RIGHT_GRAVITY)));
   if (end_row >= 0) {
     key.flags |= MT_FLAG_PAIRED;
   }
@@ -1137,25 +1137,6 @@ static void marktree_free_node(MarkTree *b, MTNode *x)
   b->n_nodes--;
 }
 
-/// NB: caller must check not pair!
-void marktree_revise(MarkTree *b, MarkTreeIter *itr, uint8_t decor_level, MTKey key)
-{
-  // TODO(bfredl): clean up this mess and re-instantiate &= and |= forms
-  // once we upgrade to a non-broken version of gcc in functionaltest-lua CI
-  rawkey(itr).flags = (uint16_t)(rawkey(itr).flags & (uint16_t) ~MT_FLAG_DECOR_MASK);
-  rawkey(itr).flags = (uint16_t)(rawkey(itr).flags & (uint16_t) ~MT_FLAG_INVALID);
-  rawkey(itr).flags = (uint16_t)(rawkey(itr).flags
-                                 | (uint16_t)(decor_level << MT_FLAG_DECOR_OFFSET)
-                                 | (uint16_t)(key.flags & MT_FLAG_DECOR_MASK)
-                                 | (uint16_t)(key.flags & MT_FLAG_HL_EOL)
-                                 | (uint16_t)(key.flags & MT_FLAG_NO_UNDO)
-                                 | (uint16_t)(key.flags & MT_FLAG_INVALID)
-                                 | (uint16_t)(key.flags & MT_FLAG_INVALIDATE));
-  rawkey(itr).decor_full = key.decor_full;
-  rawkey(itr).hl_id = key.hl_id;
-  rawkey(itr).priority = key.priority;
-}
-
 /// @param itr iterator is invalid after call
 void marktree_move(MarkTree *b, MarkTreeIter *itr, int row, int col)
 {
@@ -2003,8 +1984,8 @@ static void marktree_itr_fix_pos(MarkTree *b, MarkTreeIter *itr)
 void marktree_put_test(MarkTree *b, uint32_t ns, uint32_t id, int row, int col, bool right_gravity,
                        int end_row, int end_col, bool end_right)
 {
-  uint16_t flags = mt_flags(right_gravity, false, false, false, 0);
-  MTKey key = { { row, col }, ns, id, 0, flags, 0, NULL };
+  uint16_t flags = mt_flags(right_gravity, false, false, false);
+  MTKey key = { { row, col }, ns, id, flags, { .hl = DECOR_HIGHLIGHT_INLINE_INIT } };
   marktree_put(b, key, end_row, end_col, end_right);
 }
 

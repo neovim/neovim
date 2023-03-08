@@ -122,6 +122,9 @@ void decor_providers_invoke_win(win_T *wp, DecorProviders *providers,
                                 DecorProviders *line_providers)
 {
   kvi_init(*line_providers);
+  // this might change in the future
+  // then we would need decor_state.running_decor_provider just like "on_line" below
+  assert(kv_size(decor_state.active) == 0);
 
   linenr_T knownmax = MIN(wp->w_buffer->b_ml.ml_line_count,
                           ((wp->w_valid & VALID_BOTLINE)
@@ -153,7 +156,7 @@ void decor_providers_invoke_win(win_T *wp, DecorProviders *providers,
 /// @param[out] err       Provider error
 void decor_providers_invoke_line(win_T *wp, DecorProviders *providers, int row, bool *has_decor)
 {
-  decor_state.running_on_lines = true;
+  decor_state.running_decor_provider = true;
   for (size_t k = 0; k < kv_size(*providers); k++) {
     DecorProvider *p = kv_A(*providers, k);
     if (p && p->redraw_line != LUA_NOREF) {
@@ -171,7 +174,7 @@ void decor_providers_invoke_line(win_T *wp, DecorProviders *providers, int row, 
       hl_check_ns();
     }
   }
-  decor_state.running_on_lines = false;
+  decor_state.running_decor_provider = false;
 }
 
 /// For each provider invoke the 'buf' callback for a given buffer.
@@ -207,6 +210,7 @@ void decor_providers_invoke_end(DecorProviders *providers)
       decor_provider_invoke(p, "end", p->redraw_end, args, true);
     }
   }
+  decor_check_to_be_deleted();
 }
 
 /// Mark all cached state of per-namespace highlights as invalid. Revalidate
