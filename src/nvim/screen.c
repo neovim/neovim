@@ -611,7 +611,7 @@ int showmode(void)
   // the ruler is after the mode message and must be redrawn
   win_T *last = lastwin_nofloating();
   if (redrawing() && last->w_status_height == 0 && global_stl_height() == 0) {
-    win_redr_ruler(last, true);
+    win_redr_ruler(last);
   }
 
   redraw_cmdline = false;

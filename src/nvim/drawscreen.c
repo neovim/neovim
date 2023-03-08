@@ -92,6 +92,7 @@
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
+#include "nvim/state.h"
 #include "nvim/statusline.h"
 #include "nvim/syntax.h"
 #include "nvim/terminal.h"
@@ -733,28 +734,53 @@ void show_cursor_info(bool always)
     return;
   }
 
-  win_check_ns_hl(curwin);
-  if ((*p_stl != NUL || *curwin->w_p_stl != NUL)
-      && (curwin->w_status_height || global_stl_height())) {
-    redraw_custom_statusline(curwin);
-  } else {
-    win_redr_ruler(curwin, always);
-  }
-  if (*p_wbr != NUL || *curwin->w_p_wbr != NUL) {
-    win_redr_winbar(curwin);
+  int state = get_real_state();
+  int empty_line = (State & MODE_INSERT) == 0
+                   && *ml_get_buf(curwin->w_buffer, curwin->w_cursor.lnum, false) == NUL;
+
+  // Only draw when something changed.
+  validate_virtcol_win(curwin);
+  if (always
+      || curwin->w_cursor.lnum != curwin->w_stl_cursor.lnum
+      || curwin->w_cursor.col != curwin->w_stl_cursor.col
+      || curwin->w_virtcol != curwin->w_stl_virtcol
+      || curwin->w_cursor.coladd != curwin->w_stl_cursor.coladd
+      || curwin->w_topline != curwin->w_stl_topline
+      || curwin->w_buffer->b_ml.ml_line_count != curwin->w_stl_line_count
+      || curwin->w_topfill != curwin->w_stl_topfill
+      || empty_line != curwin->w_stl_empty
+      || state != curwin->w_stl_state) {
+    win_check_ns_hl(curwin);
+    if ((*p_stl != NUL || *curwin->w_p_stl != NUL)
+        && (curwin->w_status_height || global_stl_height())) {
+      redraw_custom_statusline(curwin);
+    } else {
+      win_redr_ruler(curwin);
+    }
+    if (*p_wbr != NUL || *curwin->w_p_wbr != NUL) {
+      win_redr_winbar(curwin);
+    }
+
+    if (need_maketitle
+        || (p_icon && (stl_syntax & STL_IN_ICON))
+        || (p_title && (stl_syntax & STL_IN_TITLE))) {
+      maketitle();
+    }
+
+    win_check_ns_hl(NULL);
+    // Redraw the tab pages line if needed.
+    if (redraw_tabline) {
+      draw_tabline();
+    }
   }
 
-  if (need_maketitle
-      || (p_icon && (stl_syntax & STL_IN_ICON))
-      || (p_title && (stl_syntax & STL_IN_TITLE))) {
-    maketitle();
-  }
-
-  win_check_ns_hl(NULL);
-  // Redraw the tab pages line if needed.
-  if (redraw_tabline) {
-    draw_tabline();
-  }
+  curwin->w_stl_cursor = curwin->w_cursor;
+  curwin->w_stl_virtcol = curwin->w_virtcol;
+  curwin->w_stl_empty = (char)empty_line;
+  curwin->w_stl_topline = curwin->w_topline;
+  curwin->w_stl_line_count = curwin->w_buffer->b_ml.ml_line_count;
+  curwin->w_stl_topfill = curwin->w_topfill;
+  curwin->w_stl_state = state;
 }
 
 static void redraw_win_signcol(win_T *wp)

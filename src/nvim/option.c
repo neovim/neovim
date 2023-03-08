@@ -92,6 +92,7 @@
 #include "nvim/spell.h"
 #include "nvim/spellfile.h"
 #include "nvim/spellsuggest.h"
+#include "nvim/statusline.h"
 #include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/terminal.h"
@@ -2251,8 +2252,13 @@ static char *set_bool_option(const int opt_idx, char *const varp, const int valu
     ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
                        BOOLEAN_OBJ(*varp));
   }
-
-  comp_col();                       // in case 'ruler' or 'showcmd' changed
+  if ((int *)varp == &p_ru || (int *)varp == &p_sc) {
+    // in case 'ruler' or 'showcmd' changed
+    comp_col();
+    if ((int *)varp == &p_ru) {
+      win_redr_ruler(curwin);
+    }
+  }
   if (curwin->w_curswant != MAXCOL
       && (options[opt_idx].flags & (P_CURSWANT | P_RALL)) != 0) {
     curwin->w_set_curswant = true;

@@ -49,6 +49,7 @@
 #include "nvim/spell.h"
 #include "nvim/spellfile.h"
 #include "nvim/spellsuggest.h"
+#include "nvim/statusline.h"
 #include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/ui.h"
@@ -1220,6 +1221,7 @@ static void did_set_statusline(win_T *win, char **varp, char **gvarp, char **err
   }
   if (varp == &p_ruf && *errmsg == NULL) {
     comp_col();
+    win_redr_ruler(curwin);
   }
   // add / remove window bars for 'winbar'
   if (gvarp == &p_wbr) {
