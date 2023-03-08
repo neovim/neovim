@@ -64,7 +64,6 @@ static struct luaL_Reg tree_meta[] = {
   { "__tostring", tree_tostring },
   { "root", tree_root },
   { "edit", tree_edit },
-  { "included_ranges", tree_get_ranges },
   { "copy", tree_copy },
   { NULL, NULL }
 };
@@ -365,29 +364,19 @@ static const char *input_cb(void *payload, uint32_t byte_index, TSPoint position
 #undef BUFSIZE
 }
 
-static void push_ranges(lua_State *L, const TSRange *ranges, const size_t length,
-                        bool include_bytes)
+static void push_ranges(lua_State *L, const TSRange *ranges, const size_t length)
 {
   lua_createtable(L, (int)length, 0);
   for (size_t i = 0; i < length; i++) {
-    lua_createtable(L, include_bytes ? 6 : 4, 0);
-    int j = 1;
+    lua_createtable(L, 4, 0);
     lua_pushinteger(L, ranges[i].start_point.row);
-    lua_rawseti(L, -2, j++);
+    lua_rawseti(L, -2, 1);
     lua_pushinteger(L, ranges[i].start_point.column);
-    lua_rawseti(L, -2, j++);
-    if (include_bytes) {
-      lua_pushinteger(L, ranges[i].start_byte);
-      lua_rawseti(L, -2, j++);
-    }
+    lua_rawseti(L, -2, 2);
     lua_pushinteger(L, ranges[i].end_point.row);
-    lua_rawseti(L, -2, j++);
+    lua_rawseti(L, -2, 3);
     lua_pushinteger(L, ranges[i].end_point.column);
-    lua_rawseti(L, -2, j++);
-    if (include_bytes) {
-      lua_pushinteger(L, ranges[i].end_byte);
-      lua_rawseti(L, -2, j++);
-    }
+    lua_rawseti(L, -2, 4);
 
     lua_rawseti(L, -2, (int)(i + 1));
   }
@@ -405,8 +394,6 @@ static int parser_parse(lua_State *L)
     TSTree **tmp = tree_check(L, 2);
     old_tree = tmp ? *tmp : NULL;
   }
-
-  bool include_bytes = (lua_gettop(L) >= 3) && lua_toboolean(L, 3);
 
   TSTree *new_tree = NULL;
   size_t len;
@@ -458,7 +445,7 @@ static int parser_parse(lua_State *L)
 
   push_tree(L, new_tree, false);  // [tree]
 
-  push_ranges(L, changed, n_ranges, include_bytes);  // [tree, ranges]
+  push_ranges(L, changed, n_ranges);  // [tree, ranges]
 
   xfree(changed);
   return 2;
@@ -511,24 +498,6 @@ static int tree_edit(lua_State *L)
   ts_tree_edit(*tree, &edit);
 
   return 0;
-}
-
-static int tree_get_ranges(lua_State *L)
-{
-  TSTree **tree = tree_check(L, 1);
-  if (!(*tree)) {
-    return 0;
-  }
-
-  bool include_bytes = (lua_gettop(L) >= 2) && lua_toboolean(L, 2);
-
-  uint32_t len;
-  TSRange *ranges = ts_tree_included_ranges(*tree, &len);
-
-  push_ranges(L, ranges, len, include_bytes);
-
-  xfree(ranges);
-  return 1;
 }
 
 // Use the top of the stack (without popping it) to create a TSRange, it can be
@@ -636,12 +605,10 @@ static int parser_get_ranges(lua_State *L)
     return 0;
   }
 
-  bool include_bytes = (lua_gettop(L) >= 2) && lua_toboolean(L, 2);
-
   uint32_t len;
   const TSRange *ranges = ts_parser_included_ranges(*p, &len);
 
-  push_ranges(L, ranges, len, include_bytes);
+  push_ranges(L, ranges, len);
   return 1;
 }
 
@@ -816,7 +783,10 @@ static int node_range(lua_State *L)
     return 0;
   }
 
-  bool include_bytes = (lua_gettop(L) >= 2) && lua_toboolean(L, 2);
+  bool include_bytes = false;
+  if (lua_gettop(L) >= 2) {
+    include_bytes = lua_toboolean(L, 2);
+  }
 
   TSPoint start = ts_node_start_point(node);
   TSPoint end = ts_node_end_point(node);
