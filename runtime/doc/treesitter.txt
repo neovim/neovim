@@ -1037,6 +1037,9 @@ LanguageTree:included_regions({self})        *LanguageTree:included_regions()*
     Parameters: ~
       • {self}
 
+    Return: ~
+        integer[][]
+
 LanguageTree:invalidate({self}, {reload})          *LanguageTree:invalidate()*
     Invalidates this parser and all its children
 
@@ -1044,11 +1047,16 @@ LanguageTree:invalidate({self}, {reload})          *LanguageTree:invalidate()*
       • {reload}  (boolean|nil)
       • {self}
 
-LanguageTree:is_valid({self})                        *LanguageTree:is_valid()*
+                                                     *LanguageTree:is_valid()*
+LanguageTree:is_valid({self}, {exclude_children})
     Determines whether this tree is valid. If the tree is invalid, call `parse()` . This will return the updated tree.
 
     Parameters: ~
+      • {exclude_children}  (boolean|nil)
       • {self}
+
+    Return: ~
+        (boolean)
 
 LanguageTree:lang({self})                                *LanguageTree:lang()*
     Gets the language of this tree node.
