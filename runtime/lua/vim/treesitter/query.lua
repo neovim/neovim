@@ -277,6 +277,7 @@ end
 ---@return (string[]|string|nil)
 function M.get_node_text(node, source, opts)
   opts = opts or {}
+  -- TODO(lewis6991): concat only works when source is number.
   local concat = vim.F.if_nil(opts.concat, true)
   local metadata = opts.metadata or {}
 
