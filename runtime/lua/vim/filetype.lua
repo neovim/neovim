@@ -751,6 +751,7 @@ local extension = {
   mli = 'ocaml',
   ml = 'ocaml',
   occ = 'occam',
+  odin = 'odin',
   xom = 'omnimark',
   xin = 'omnimark',
   opam = 'opam',
