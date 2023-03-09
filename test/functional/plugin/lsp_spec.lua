@@ -31,6 +31,11 @@ local fake_lsp_code = lsp_helpers.fake_lsp_code
 local fake_lsp_logfile = lsp_helpers.fake_lsp_logfile
 local test_rpc_server = lsp_helpers.test_rpc_server
 
+local function get_buf_option(name, bufnr)
+    bufnr = bufnr or "BUFFER"
+    return exec_lua(string.format("return vim.api.nvim_buf_get_option(%s, '%s')", bufnr, name))
+end
+
 -- TODO(justinmk): hangs on Windows https://github.com/neovim/neovim/pull/11837
 if skip(is_os('win')) then return end
 
@@ -309,6 +314,104 @@ describe('LSP', function()
             eq('basic_init', meths.get_var('lsp_detached'))
             client.stop()
           end
+        end;
+      }
+    end)
+
+    it('should set default options on attach', function()
+      local client
+      test_rpc_server {
+        test_name = "set_defaults_all_capabilities";
+        on_setup = function()
+          exec_lua [[
+            BUFFER = vim.api.nvim_create_buf(false, true)
+          ]]
+        end;
+        on_init = function(_client)
+          client = _client
+          exec_lua("lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)")
+        end;
+        on_handler = function(_, _, ctx)
+          if ctx.method == 'test' then
+            eq('v:lua.vim.lsp.tagfunc', get_buf_option("tagfunc"))
+            eq('v:lua.vim.lsp.omnifunc', get_buf_option("omnifunc"))
+            eq('v:lua.vim.lsp.formatexpr()', get_buf_option("formatexpr"))
+            client.stop()
+          end
+        end;
+        on_exit = function(_, _)
+          eq('', get_buf_option("tagfunc"))
+          eq('', get_buf_option("omnifunc"))
+          eq('', get_buf_option("formatexpr"))
+        end;
+      }
+    end)
+
+    it('should overwrite options set by ftplugins', function()
+      local client
+      test_rpc_server {
+        test_name = "set_defaults_all_capabilities";
+        on_setup = function()
+          exec_lua [[
+            vim.api.nvim_command('filetype plugin on')
+            BUFFER_1 = vim.api.nvim_create_buf(false, true)
+            BUFFER_2 = vim.api.nvim_create_buf(false, true)
+            vim.api.nvim_buf_set_option(BUFFER_1, 'filetype', 'man')
+            vim.api.nvim_buf_set_option(BUFFER_2, 'filetype', 'xml')
+          ]]
+          eq('v:lua.require\'man\'.goto_tag', get_buf_option("tagfunc", "BUFFER_1"))
+          eq('xmlcomplete#CompleteTags', get_buf_option("omnifunc", "BUFFER_2"))
+          eq('xmlformat#Format()', get_buf_option("formatexpr", "BUFFER_2"))
+        end;
+        on_init = function(_client)
+          client = _client
+          exec_lua("lsp.buf_attach_client(BUFFER_1, TEST_RPC_CLIENT_ID)")
+          exec_lua("lsp.buf_attach_client(BUFFER_2, TEST_RPC_CLIENT_ID)")
+        end;
+        on_handler = function(_, _, ctx)
+          if ctx.method == 'test' then
+            eq('v:lua.vim.lsp.tagfunc', get_buf_option("tagfunc", "BUFFER_1"))
+            eq('v:lua.vim.lsp.omnifunc', get_buf_option("omnifunc", "BUFFER_2"))
+            eq('v:lua.vim.lsp.formatexpr()', get_buf_option("formatexpr", "BUFFER_2"))
+            client.stop()
+          end
+        end;
+        on_exit = function(_, _)
+          eq('', get_buf_option("tagfunc", "BUFFER_1"))
+          eq('', get_buf_option("omnifunc", "BUFFER_2"))
+          eq('', get_buf_option("formatexpr", "BUFFER_2"))
+        end;
+      }
+    end)
+
+    it('should not overwrite user-defined options', function()
+      local client
+      test_rpc_server {
+        test_name = "set_defaults_all_capabilities";
+        on_setup = function()
+          exec_lua [[
+            BUFFER = vim.api.nvim_create_buf(false, true)
+            vim.api.nvim_buf_set_option(BUFFER, 'tagfunc', 'tfu')
+            vim.api.nvim_buf_set_option(BUFFER, 'omnifunc', 'ofu')
+            vim.api.nvim_buf_set_option(BUFFER, 'formatexpr', 'fex')
+          ]]
+        end;
+        on_init = function(_client)
+          client = _client
+          exec_lua("lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)")
+        end;
+        on_handler = function(_, _, ctx)
+          if ctx.method == 'test' then
+            eq('tfu', get_buf_option("tagfunc"))
+            eq('ofu', get_buf_option("omnifunc"))
+            eq('fex', get_buf_option("formatexpr"))
+            client.stop()
+          end
+        end;
+        on_exit = function(_, _)
+          eq('tfu', get_buf_option("tagfunc"))
+          eq('ofu', get_buf_option("omnifunc"))
+          eq('fex', get_buf_option("formatexpr"))
         end;
       }
     end)

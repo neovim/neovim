@@ -51,8 +51,11 @@ Starting a LSP client will automatically report diagnostics via
 |vim.diagnostic|. Read |vim.diagnostic.config()| to learn how to customize the
 display.
 
-It also sets some buffer options if the options are otherwise empty and if the
-language server supports the functionality.
+It also sets some buffer options if the language server supports the
+functionality and if the options are otherwise empty or have the default
+values set by Nvim runtime files (e.g. a ftplugin). In the latter case,
+the default values are not restored when the LSP client is detached from
+the buffer.
 
 - 'omnifunc' is set to |vim.lsp.omnifunc()|. This allows to trigger completion
   using |i_CTRL-X_CTRL-O|
