@@ -377,11 +377,9 @@ jobs:
             libtree-sitter-dev \
             libunibilium-dev \
             libuv1-dev \
-            lua-busted \
             lua-filesystem \
-            lua-inspect \
             lua-lpeg \
-            lua-nvim \
+            lua-mpack \
             luajit
             # libvterm-dev \
             # lua-luv-dev
