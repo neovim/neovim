@@ -907,6 +907,9 @@ theend:
     ui_call_cmdline_hide(ccline.level);
     msg_ext_clear_later();
   }
+  if (!cmd_silent) {
+    status_redraw_all();  // redraw to show mode change
+  }
 
   cmdline_level--;
 

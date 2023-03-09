@@ -10,6 +10,7 @@ local meths = helpers.meths
 local exec = helpers.exec
 local exec_lua = helpers.exec_lua
 local eval = helpers.eval
+local sleep = helpers.sleep
 
 describe('statusline clicks', function()
   local screen
@@ -588,4 +589,36 @@ it('showcmdloc=statusline does not show if statusline is too narrow', function()
   ]])
   feed('1234')
   screen:expect_unchanged()
+end)
+
+it('K_EVENT does not trigger a statusline redraw unnecessarily', function()
+  clear()
+  local screen = Screen.new(40, 8)
+  screen:attach()
+  -- does not redraw on vim.schedule (#17937)
+  command([[
+    set laststatus=2
+    let g:counter = 0
+    func Status()
+      let g:counter += 1
+      lua vim.schedule(function() end)
+      return g:counter
+    endfunc
+    set statusline=%!Status()
+  ]])
+  sleep(50)
+  eq(1, eval('g:counter < 50'), 'g:counter=' .. eval('g:counter'))
+  -- also in insert mode
+  feed('i')
+  sleep(50)
+  eq(1, eval('g:counter < 50'), 'g:counter=' .. eval('g:counter'))
+  -- does not redraw on timer call (#14303)
+  command([[
+    let g:counter = 0
+    func Timer(timer)
+    endfunc
+    call timer_start(1, 'Timer', {'repeat': 100})
+  ]])
+  sleep(50)
+  eq(1, eval('g:counter < 50'), 'g:counter=' .. eval('g:counter'))
 end)

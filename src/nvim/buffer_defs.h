@@ -1279,13 +1279,14 @@ struct window_S {
   bool w_redr_border;               // if true border must be redrawn
   bool w_redr_statuscol;            // if true 'statuscolumn' must be redrawn
 
-  // remember what is shown in the ruler for this window (if 'ruler' set)
-  pos_T w_ru_cursor;                // cursor position shown in ruler
-  colnr_T w_ru_virtcol;             // virtcol shown in ruler
-  linenr_T w_ru_topline;            // topline shown in ruler
-  linenr_T w_ru_line_count;         // line count used for ruler
-  int w_ru_topfill;                 // topfill shown in ruler
-  char w_ru_empty;                  // true if ruler shows 0-1 (empty line)
+  // remember what is shown in the 'statusline'-format elements
+  pos_T w_stl_cursor;                // cursor position when last redrawn
+  colnr_T w_stl_virtcol;             // virtcol when last redrawn
+  linenr_T w_stl_topline;            // topline when last redrawn
+  linenr_T w_stl_line_count;         // line count when last redrawn
+  int w_stl_topfill;                 // topfill when last redrawn
+  char w_stl_empty;                  // true if elements show 0-1 (empty line)
+  int w_stl_state;                   // State when last redrawn
 
   int w_alt_fnum;                   // alternate file (for # and CTRL-^)
 
