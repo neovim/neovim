@@ -5369,10 +5369,21 @@ void vim_deltempdir(void)
 /// Creates the directory on the first call.
 char *vim_gettempdir(void)
 {
-  if (vim_tempdir == NULL) {
+  static int notfound = 0;
+  bool exists = false;
+  if (vim_tempdir == NULL || !(exists = os_isdir(vim_tempdir))) {
+    if (vim_tempdir != NULL && !exists) {
+      notfound++;
+      if (notfound == 1) {
+        ELOG("tempdir disappeared (antivirus or broken cleanup job?): %s", vim_tempdir);
+      }
+      if (notfound > 1) {
+        msg_schedule_semsg("E5431: tempdir disappeared (%d times)", notfound);
+      }
+      XFREE_CLEAR(vim_tempdir);
+    }
     vim_mktempdir();
   }
-
   return vim_tempdir;
 }
 
