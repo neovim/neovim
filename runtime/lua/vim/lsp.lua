@@ -154,6 +154,8 @@ local all_buffer_active_clients = {}
 local uninitialized_clients = {}
 
 ---@private
+---@param bufnr? integer
+---@param fn fun(client: lsp.Client, client_id: integer, bufnr: integer)
 local function for_each_buffer_client(bufnr, fn, restrict_client_ids)
   validate({
     fn = { fn, 'f' },
@@ -1240,6 +1242,7 @@ function lsp.start_client(config)
     return
   end
 
+  ---@class lsp.Client
   local client = {
     id = client_id,
     name = name,
@@ -1390,7 +1393,7 @@ function lsp.start_client(config)
   --- checks for capabilities and handler availability.
   ---
   ---@param method string LSP method name.
-  ---@param params table LSP request params.
+  ---@param params table|nil LSP request params.
   ---@param handler lsp-handler|nil Response |lsp-handler| for this method.
   ---@param bufnr integer Buffer handle (0 for current).
   ---@return boolean status, integer|nil request_id {status} is a bool indicating
@@ -2087,7 +2090,7 @@ function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
 end
 
 --- Send a notification to a server
----@param bufnr (number|nil) The number of the buffer
+---@param bufnr (integer|nil) The number of the buffer
 ---@param method (string) Name of the request method
 ---@param params (any) Arguments to send to the server
 ---
