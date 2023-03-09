@@ -110,8 +110,12 @@ end
 
 function M.properties.insert_final_newline(bufnr, val)
   assert(val == 'true' or val == 'false', 'insert_final_newline must be either "true" or "false"')
-  vim.bo[bufnr].fixendofline = val == 'true'
-  vim.bo[bufnr].endofline = val == 'true'
+  -- Treat false as "leave untouched", not "remove trailing newline".
+  -- https://github.com/editorconfig/editorconfig/issues/475
+  if val == 'true' then
+    vim.bo[bufnr].fixendofline = true
+    vim.bo[bufnr].endofline = true
+  end
 end
 
 --- Modified version of |glob2regpat()| that does not match path separators on *.

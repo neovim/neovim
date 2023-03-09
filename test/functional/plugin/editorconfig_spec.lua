@@ -160,8 +160,10 @@ describe('editorconfig', function()
   end)
 
   it('sets newline options', function()
+    local orig_endofline = curbufmeths.get_option('endofline')
+    local orig_fixendofline = curbufmeths.get_option('fixendofline')
     test_case('with_newline.txt', { fixendofline = true, endofline = true })
-    test_case('without_newline.txt', { fixendofline = false, endofline = false })
+    test_case('without_newline.txt', { fixendofline = orig_fixendofline, endofline = orig_endofline })
   end)
 
   it('respects trim_trailing_whitespace', function()
