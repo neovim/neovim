@@ -1350,12 +1350,15 @@ void ins_redraw(bool ready)
   }
 
   pum_check_clear();
+  show_cursor_info_later(false);
   if (must_redraw) {
     update_screen();
-  } else if (clear_cmdline || redraw_cmdline) {
-    showmode();  // clear cmdline and show mode
+  } else {
+    redraw_statuslines();
+    if (clear_cmdline || redraw_cmdline || redraw_mode) {
+      showmode();  // clear cmdline and show mode
+    }
   }
-  show_cursor_info(false);
   setcursor();
   emsg_on_display = false;      // may remove error message now
 }

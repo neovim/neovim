@@ -1306,16 +1306,20 @@ static void normal_redraw(NormalState *s)
   update_topline(curwin);
   validate_cursor();
 
+  show_cursor_info_later(false);
+
   if (VIsual_active) {
     redraw_curbuf_later(UPD_INVERTED);  // update inverted part
-    update_screen();
-  } else if (must_redraw) {
-    update_screen();
-  } else if (redraw_cmdline || clear_cmdline || redraw_mode) {
-    showmode();
   }
 
-  redraw_statuslines();
+  if (must_redraw) {
+    update_screen();
+  } else {
+    redraw_statuslines();
+    if (redraw_cmdline || clear_cmdline || redraw_mode) {
+      showmode();
+    }
+  }
 
   if (need_maketitle) {
     maketitle();
@@ -1348,7 +1352,6 @@ static void normal_redraw(NormalState *s)
   did_emsg = false;
   msg_didany = false;  // reset lines_left in msg_start()
   may_clear_sb_text();  // clear scroll-back text on next msg
-  show_cursor_info(false);
 
   setcursor();
 }

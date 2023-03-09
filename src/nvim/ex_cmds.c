@@ -3747,6 +3747,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
               update_topline(curwin);
               validate_cursor();
               redraw_later(curwin, UPD_SOME_VALID);
+              show_cursor_info_later(true);
               update_screen();
               highlight_match = false;
               redraw_later(curwin, UPD_SOME_VALID);
@@ -3765,7 +3766,6 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
                         _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
               msg_no_more = false;
               msg_scroll = (int)i;
-              show_cursor_info(true);
               if (!ui_has(kUIMessages)) {
                 ui_cursor_goto(msg_row, msg_col);
               }
