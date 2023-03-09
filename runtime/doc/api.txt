@@ -452,6 +452,10 @@ Buffer text can be highlighted by typical mechanisms (syntax highlighting,
 options from the current window; specify `style=minimal` in |nvim_open_win()|
 to disable various visual features such as the 'number' column.
 
+Other highlight groups specific to floating windows:
+- |hl-FloatBorder| for window's border
+- |hl-FloatTitle| for window's title
+
 Currently, floating windows don't support some widgets like scrollbar.
 
 The output of |:mksession| does not include commands for restoring floating

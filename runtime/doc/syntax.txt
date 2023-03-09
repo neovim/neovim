@@ -5268,6 +5268,10 @@ NonText		'@' at the end of the window, characters from 'showbreak'
 Normal		Normal text.
 							*hl-NormalFloat*
 NormalFloat	Normal text in floating windows.
+							*hl-FloatBorder*
+FloatBorder	Border of floating windows.
+							*hl-FloatTitle*
+FloatTitle	Title of floating windows.
 							*hl-NormalNC*
 NormalNC	Normal text in non-current windows.
 							*hl-Pmenu*
