@@ -3075,8 +3075,7 @@ void ex_call(exarg_T *eap)
     }
 
     // Handle a function returning a Funcref, Dictionary or List.
-    if (handle_subscript((const char **)&arg, &rettv, true, true,
-                         (const char *)name, (const char **)&name)
+    if (handle_subscript((const char **)&arg, &rettv, true, true)
         == FAIL) {
       failed = true;
       break;

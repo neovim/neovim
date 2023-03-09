@@ -111,6 +111,13 @@ func Test_special_char()
   call assert_fails('echo "\<C-">')
 endfunc
 
+func Test_method_with_prefix()
+  call assert_equal(1, !range(5)->empty())
+  call assert_equal([0, 1, 2], --3->range())
+  call assert_equal(0, !-3)
+  call assert_equal(1, !+-+0)
+endfunc
+
 func Test_option_value()
   " boolean
   set bri

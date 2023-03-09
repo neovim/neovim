@@ -508,7 +508,7 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
         } else {
           // handle d.key, l[idx], f(expr)
           const char *const arg_subsc = arg;
-          if (handle_subscript(&arg, &tv, true, true, name, &name) == FAIL) {
+          if (handle_subscript(&arg, &tv, true, true) == FAIL) {
             error = true;
           } else {
             if (arg == arg_subsc && len == 2 && name[1] == ':') {
@@ -1715,7 +1715,7 @@ bool var_exists(const char *var)
     n = get_var_tv(name, len, &tv, NULL, false, true) == OK;
     if (n) {
       // Handle d.key, l[idx], f(expr).
-      n = handle_subscript(&var, &tv, true, false, name, &name) == OK;
+      n = handle_subscript(&var, &tv, true, false) == OK;
       if (n) {
         tv_clear(&tv);
       }
