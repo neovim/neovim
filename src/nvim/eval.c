@@ -2906,6 +2906,12 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
   case '8':
   case '9':
     ret = get_number_tv(arg, rettv, evaluate, want_string);
+
+    // Apply prefixed "-" and "+" now.  Matters especially when
+    // "->" follows.
+    if (ret == OK && evaluate && end_leader > start_leader) {
+      ret = eval7_leader(rettv, true, start_leader, &end_leader);
+    }
     break;
 
   // String constant: "string".
@@ -3011,13 +3017,12 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
   // Handle following '[', '(' and '.' for expr[expr], expr.name,
   // expr(expr), expr->name(expr)
   if (ret == OK) {
-    ret = handle_subscript((const char **)arg, rettv, evaluate, true,
-                           (char *)start_leader, &end_leader);
+    ret = handle_subscript((const char **)arg, rettv, evaluate, true);
   }
 
   // Apply logical NOT and unary '-', from right to left, ignore '+'.
   if (ret == OK && evaluate && end_leader > start_leader) {
-    ret = eval7_leader(rettv, (char *)start_leader, &end_leader);
+    ret = eval7_leader(rettv, false, start_leader, &end_leader);
   }
 
   recurse--;
@@ -3027,9 +3032,11 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
 /// Apply the leading "!" and "-" before an eval7 expression to "rettv".
 /// Adjusts "end_leaderp" until it is at "start_leader".
 ///
+/// @param numeric_only  if true only handle "+" and "-".
+///
 /// @return  OK on success, FAIL on failure.
-static int eval7_leader(typval_T *const rettv, const char *const start_leader,
-                        const char **const end_leaderp)
+static int eval7_leader(typval_T *const rettv, const bool numeric_only,
+                        const char *const start_leader, const char **const end_leaderp)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *end_leader = (char *)(*end_leaderp);
@@ -3050,6 +3057,10 @@ static int eval7_leader(typval_T *const rettv, const char *const start_leader,
     while (end_leader > start_leader) {
       end_leader--;
       if (*end_leader == '!') {
+        if (numeric_only) {
+          end_leader++;
+          break;
+        }
         if (rettv->v_type == VAR_FLOAT) {
           f = !(bool)f;
         } else {
@@ -6899,8 +6910,7 @@ int check_luafunc_name(const char *const str, const bool paren)
 /// @param verbose  give error messages
 /// @param start_leader  start of '!' and '-' prefixes
 /// @param end_leaderp  end of '!' and '-' prefixes
-int handle_subscript(const char **const arg, typval_T *rettv, int evaluate, int verbose,
-                     const char *const start_leader, const char **const end_leaderp)
+int handle_subscript(const char **const arg, typval_T *rettv, int evaluate, int verbose)
 {
   int ret = OK;
   dict_T *selfdict = NULL;
@@ -6944,11 +6954,6 @@ int handle_subscript(const char **const arg, typval_T *rettv, int evaluate, int 
       tv_dict_unref(selfdict);
       selfdict = NULL;
     } else if (**arg == '-') {
-      // Expression "-1.0->method()" applies the leader "-" before
-      // applying ->.
-      if (evaluate && *end_leaderp > start_leader) {
-        ret = eval7_leader(rettv, (char *)start_leader, end_leaderp);
-      }
       if (ret == OK) {
         if ((*arg)[2] == '{') {
           // expr->{lambda}()
