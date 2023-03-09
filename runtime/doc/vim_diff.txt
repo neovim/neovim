@@ -243,6 +243,8 @@ Highlight groups:
   |highlight-blend| controls blend level for a highlight group
   |expr-highlight| highlight groups (prefixed with "Nvim")
   |hl-NormalFloat| highlights floating window
+  |hl-FloatBorder| highlights border of a floating window
+  |hl-FloatTitle| highlights title of a floating window
   |hl-NormalNC| highlights non-current windows
   |hl-MsgArea| highlights messages/cmdline area
   |hl-MsgSeparator| highlights separator for scrolled messages
