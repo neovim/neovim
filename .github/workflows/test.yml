@@ -19,7 +19,6 @@ env:
   ASAN_OPTIONS: detect_leaks=1:check_initialization_order=1:handle_abort=1:handle_sigill=1:log_path=${{ github.workspace }}/build/log/asan:intercept_tls_get_addr=0
   BIN_DIR: ${{ github.workspace }}/bin
   BUILD_DIR: ${{ github.workspace }}/build
-  DEPS_BUILD_DIR: ${{ github.workspace }}/nvim-deps
   INSTALL_PREFIX: ${{ github.workspace }}/nvim-install
   LOG_DIR: ${{ github.workspace }}/build/log
   NVIM_LOG_FILE: ${{ github.workspace }}/build/.nvimlog
@@ -72,8 +71,8 @@ jobs:
 
       - name: Build third-party deps
         run: |
-          cmake -S cmake.deps -B $DEPS_BUILD_DIR -G Ninja
-          cmake --build $DEPS_BUILD_DIR
+          cmake -S cmake.deps -B .deps -G Ninja
+          cmake --build .deps
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: configure
@@ -193,8 +192,8 @@ jobs:
 
       - name: Build third-party deps
         run: |
-          cmake -S cmake.deps -B $DEPS_BUILD_DIR -G Ninja ${{ matrix.deps_flags }}
-          cmake --build $DEPS_BUILD_DIR
+          cmake -S cmake.deps -B .deps -G Ninja ${{ matrix.deps_flags }}
+          cmake --build .deps
 
       - name: Build
         run: |
@@ -273,8 +272,8 @@ jobs:
 
       - name: Build third-party deps
         run: |
-          cmake -S cmake.deps -B $DEPS_BUILD_DIR -G "Ninja Multi-Config"
-          cmake --build $DEPS_BUILD_DIR
+          cmake -S cmake.deps -B .deps -G "Ninja Multi-Config"
+          cmake --build .deps
 
       - name: Configure
         run: cmake -B build -G "Ninja Multi-Config" -D CMAKE_C_COMPILER=gcc
@@ -309,8 +308,8 @@ jobs:
 
       - name: Build deps
         run: |
-          cmake -S cmake.deps -B $env:DEPS_BUILD_DIR -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo'
-          cmake --build $env:DEPS_BUILD_DIR
+          cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo'
+          cmake --build .deps
 
       - name: Build
         run: |
