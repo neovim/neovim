@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(tree-sitter C)
-
+if(NOT MSVC)
+  add_compile_options(-std=c99)
+endif()
 add_library(tree-sitter lib/src/lib.c)
 target_include_directories(tree-sitter
   PRIVATE lib/src lib/include)
