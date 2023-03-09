@@ -20,6 +20,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
 #include "nvim/memory.h"
+#include "nvim/option.h"
 #include "nvim/pos.h"
 #include "nvim/types.h"
 
@@ -507,4 +508,17 @@ Object vim_del_var(String name, Error *err)
 static int64_t convert_index(int64_t index)
 {
   return index < 0 ? index - 1 : index;
+}
+
+/// Gets the option information for one option
+///
+/// @deprecated Use @ref nvim_get_option_info2 instead.
+///
+/// @param          name Option name
+/// @param[out] err Error details, if any
+/// @return         Option Information
+Dictionary nvim_get_option_info(String name, Error *err)
+  FUNC_API_SINCE(7)
+{
+  return get_vimoption(name, OPT_GLOBAL, curbuf, curwin, err);
 }
