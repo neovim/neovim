@@ -128,7 +128,9 @@ void ui_refresh(void)
   it('does not get parser for empty filetype', function()
     insert(test_text);
 
-    eq(".../language.lua:0: '' is not a valid filetype",
+    eq('.../treesitter.lua:0: There is no parser available for buffer 1 and one'
+         .. ' could not be created because lang could not be determined. Either'
+         .. ' pass lang or set the buffer filetype',
       pcall_err(exec_lua, 'vim.treesitter.get_parser(0)'))
 
     -- Must provide language for buffers with an empty filetype
