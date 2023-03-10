@@ -898,7 +898,8 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
       • {self}
 
     Return: ~
-        (fun(): integer, TSNode, TSMetadata ): capture id, capture node, metadata
+        (fun(): integer, TSNode, TSMetadata): capture id, capture node,
+        metadata
 
                                                         *Query:iter_matches()*
 Query:iter_matches({self}, {node}, {source}, {start}, {stop})

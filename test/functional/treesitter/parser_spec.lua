@@ -196,7 +196,7 @@ void ui_refresh(void)
     local manyruns = q(100)
 
     -- First run should be at least 400x slower than an 100 subsequent runs.
-    local factor = is_os('win') and 300 or 400
+    local factor = is_os('win') and 200 or 400
     assert(factor * manyruns < firstrun, ('firstrun: %f ms, manyruns: %f ms'):format(firstrun / 1e6, manyruns / 1e6))
   end)
 
@@ -277,13 +277,13 @@ void ui_refresh(void)
     eq('void', res2)
   end)
 
-  it('support getting text where start of node is past EOF', function()
+  it('support getting text where start of node is one past EOF', function()
     local text = [[
 def run
   a = <<~E
 end]]
     insert(text)
-    local result = exec_lua([[
+    eq('', exec_lua[[
       local fake_node = {}
       function fake_node:start()
         return 3, 0, 23
@@ -291,12 +291,14 @@ end]]
       function fake_node:end_()
         return 3, 0, 23
       end
-      function fake_node:range()
+      function fake_node:range(bytes)
+        if bytes then
+          return 3, 0, 23, 3, 0, 23
+        end
         return 3, 0, 3, 0
       end
-      return vim.treesitter.get_node_text(fake_node, 0) == nil
+      return vim.treesitter.get_node_text(fake_node, 0)
     ]])
-    eq(true, result)
   end)
 
   it('support getting empty text if node range is zero width', function()

@@ -59,10 +59,18 @@ end
 
 ---@private
 ---@param buf integer
----@param range Range6
+---@param range Range
 ---@returns string
 local function buf_range_get_text(buf, range)
   local start_row, start_col, end_row, end_col = Range.unpack4(range)
+  if end_col == 0 then
+    if start_row == end_row then
+      start_col = -1
+      start_row = start_row - 1
+    end
+    end_col = -1
+    end_row = end_row - 1
+  end
   local lines = a.nvim_buf_get_text(buf, start_row, start_col, end_row, end_col, {})
   return table.concat(lines, '\n')
 end
@@ -396,7 +404,7 @@ local predicate_handlers = {
 predicate_handlers['vim-match?'] = predicate_handlers['match?']
 
 ---@class TSMetadata
----@field range Range4|Range6
+---@field range Range
 ---@field [integer] TSMetadata
 ---@field [string] integer|string
 

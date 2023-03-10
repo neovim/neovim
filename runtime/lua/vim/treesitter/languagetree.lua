@@ -484,7 +484,6 @@ function LanguageTree:included_regions()
 end
 
 ---@private
---- TODO(lewis6991): cleanup of the node_range interface
 ---@param node TSNode
 ---@param source string|integer
 ---@param metadata TSMetadata
@@ -530,7 +529,7 @@ end
 ---@param pattern integer
 ---@param lang string
 ---@param combined boolean
----@param ranges Range4[]
+---@param ranges Range6[]
 local function add_injection(t, tree_index, pattern, lang, combined, ranges)
   assert(type(lang) == 'string')
 
@@ -558,13 +557,11 @@ end
 --- https://tree-sitter.github.io/tree-sitter/syntax-highlighting#language-injection
 ---@param match table<integer,TSNode>
 ---@param metadata TSMetadata
----@return string, boolean, Range4[]
+---@return string?, boolean, Range6[]
 function LanguageTree:_get_injection(match, metadata)
-  local ranges = {} ---@type Range4[]
+  local ranges = {} ---@type Range6[]
   local combined = metadata['injection.combined'] ~= nil
-  local lang = metadata['injection.language']
-  assert(type(lang) == 'string')
-
+  local lang = metadata['injection.language'] --[[@as string?]]
   local include_children = metadata['injection.include-children'] ~= nil
 
   for id, node in pairs(match) do
@@ -584,7 +581,7 @@ end
 ---@private
 ---@param match table<integer,TSNode>
 ---@param metadata TSMetadata
----@return string, boolean, Range4[]
+---@return string, boolean, Range6[]
 function LanguageTree:_get_injection_deprecated(match, metadata)
   local lang = nil ---@type string
   local ranges = {} ---@type Range6[]
@@ -910,7 +907,7 @@ end
 
 ---@private
 ---@param tree TSTree
----@param range Range4
+---@param range Range
 ---@return boolean
 local function tree_contains(tree, range)
   return Range.contains({ tree:root():range() }, range)
