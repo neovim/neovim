@@ -122,9 +122,6 @@ modifications.
 .It Fl b
 Binary mode.
 .Ic ":help edit-binary"
-.It Fl l
-Lisp mode.
-Sets the 'lisp' and 'showmatch' options.
 .It Fl A
 Arabic mode.
 Sets the 'arabic' option.
@@ -144,7 +141,7 @@ is specified, append messages to
 instead of printing them.
 .Ic ":help 'verbose'"
 .It Fl D
-Debug mode for VimL (Vim script).
+Vimscript debug mode.
 Started when executing the first command from a script.
 :help debug-mode
 .It Fl n
@@ -200,7 +197,8 @@ Skip loading plugins.
 Implied by
 .Cm -u NONE .
 .It Fl -clean
-Mimic a fresh install of Nvim. Skip loading non-builtin plugins and shada (viminfo) file.
+Start Nvim with "factory defaults" (no user config and plugins, no shada).
+.Ic ":help --clean"
 .It Fl o Ns Op Ar N
 Open
 .Ar N
@@ -267,10 +265,26 @@ but execute
 before processing any vimrc.
 Up to 10 instances of these can be used independently from instances of
 .Fl c .
+.It Fl l Ar script Op Ar args
+Execute Lua
+.Ar script
+with optional
+.Op Ar args
+after processing any preceding Nvim startup arguments.
+All
+.Op Ar args
+are treated as script arguments and are passed literally to Lua, that is,
+.Fl l
+stops processing of Nvim arguments.
+.Ic ":help -l"
 .It Fl S Op Ar session
-Source
+Execute
 .Ar session
-after the first file argument has been read.
+after the first file argument has been read. If
+.Ar session
+filename ends with
+.Pa .lua
+it is executed as Lua instead of Vimscript.
 Equivalent to
 .Cm -c \(dqsource session\(dq .
 .Ar session

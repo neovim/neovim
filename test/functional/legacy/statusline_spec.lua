@@ -68,4 +68,87 @@ describe('statusline', function()
                                                         |
     ]])
   end)
+
+  -- oldtest: Test_statusline_showcmd()
+  it('showcmdloc=statusline works', function()
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {background = Screen.colors.LightGrey},  -- Visual
+      [2] = {bold = true},  -- MoreMsg
+      [3] = {bold = true, reverse = true},  -- StatusLine
+      [5] = {background = Screen.colors.LightGrey, foreground = Screen.colors.DarkBlue},  -- Folded
+    })
+    exec([[
+      func MyStatusLine()
+        return '%S'
+      endfunc
+
+      set showcmd
+      set laststatus=2
+      set statusline=%S
+      set showcmdloc=statusline
+      call setline(1, ['a', 'b', 'c'])
+      set foldopen+=jump
+      1,2fold
+      3
+    ]])
+
+    feed('g')
+    screen:expect([[
+      {5:+--  2 lines: a···································}|
+      ^c                                                 |
+      {0:~                                                 }|
+      {0:~                                                 }|
+      {0:~                                                 }|
+      {3:g                                                 }|
+                                                        |
+    ]])
+
+    -- typing "gg" should open the fold
+    feed('g')
+    screen:expect([[
+      ^a                                                 |
+      b                                                 |
+      c                                                 |
+      {0:~                                                 }|
+      {0:~                                                 }|
+      {3:                                                  }|
+                                                        |
+    ]])
+
+    feed('<C-V>Gl')
+    screen:expect([[
+      {1:a}                                                 |
+      {1:b}                                                 |
+      {1:c}^                                                 |
+      {0:~                                                 }|
+      {0:~                                                 }|
+      {3:3x2                                               }|
+      {2:-- VISUAL BLOCK --}                                |
+    ]])
+
+    feed('<Esc>1234')
+    screen:expect([[
+      a                                                 |
+      b                                                 |
+      ^c                                                 |
+      {0:~                                                 }|
+      {0:~                                                 }|
+      {3:1234                                              }|
+                                                        |
+    ]])
+
+    feed('<Esc>:set statusline=<CR>')
+    feed(':<CR>')
+    feed('1234')
+    screen:expect([[
+      a                                                 |
+      b                                                 |
+      ^c                                                 |
+      {0:~                                                 }|
+      {0:~                                                 }|
+      {3:[No Name] [+]                          1234       }|
+      :                                                 |
+    ]])
+  end)
 end)

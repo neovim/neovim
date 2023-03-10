@@ -28,11 +28,9 @@ The Neo bits of Nvim should make it a better Vim, without becoming a
 completely different editor.
 - In matters of taste, prefer Vim/Unix tradition. If there is no relevant
   Vim/Unix tradition, consider the "common case".
-- A feature that people do not know about is a useless feature.  Don't add
-  obscure features, or at least add hints in documentation that they exist.
-- There is no limit to the features that can be added.  Selecting new features
-  is based on (1) what users ask for, (2) how much effort it takes to
-  implement and (3) someone actually implementing it.
+- There is no limit to the features that can be added.  Select new features
+  based on (1) what users ask for, (2) how much effort it takes to implement
+  and (3) someone actually implementing it.
 - Backwards compatibility is a feature.  The RPC API in particular should
   never break.
 
@@ -48,7 +46,7 @@ NVIM IS... WELL DOCUMENTED				*design-documented*
 
 NVIM IS... FAST AND SMALL				*design-speed-size*
 
-Keep Nvim small and fast.
+Keep Nvim small and fast. This directly affects versatility and usability.
 - Computers are becoming faster and bigger each year.  Vim can grow too, but
   no faster than computers are growing.  Keep Vim usable on older systems.
 - Many users start Vim from a shell very often.  Startup time must be short.
@@ -57,7 +55,8 @@ Keep Nvim small and fast.
 - Don't forget that some people use Vim over a slow connection.  Minimize the
   communication overhead.
 - Vim is a component among other components.  Don't turn it into a massive
-  application, but have it work well together with other programs.
+  application, but have it work well together with other programs
+  ("composability").
 
 
 NVIM IS... MAINTAINABLE					*design-maintain*
@@ -82,7 +81,7 @@ include the kitchen sink... but it's good for plumbing."
 Developer guidelines				        *dev-guidelines*
 
 
-PROVIDERS 						*dev-provider*
+PROVIDERS						*dev-provider*
 
 A primary goal of Nvim is to allow extension of the editor without special
 knowledge in the core.  Some core functions are delegated to "providers"
@@ -119,7 +118,7 @@ reflects whether Python support is working.
 							*provider-reload*
 Sometimes a GUI or other application may want to force a provider to
 "reload".  To reload a provider, undefine its "loaded" flag, then use
-|:runtime| to reload it: >
+|:runtime| to reload it: >vim
 
     :unlet g:loaded_clipboard_provider
     :runtime autoload/provider/clipboard.vim
@@ -131,7 +130,20 @@ DOCUMENTATION						*dev-doc*
   (docstrings, user manual, website materials, newsletters, …). Don't mince
   words. Personality and flavor, used sparingly, are welcome--but in general,
   optimize for the reader's time and energy: be "precise yet concise".
+    - See https://developers.google.com/style/tone
     - Prefer the active voice: "Foo does X", not "X is done by Foo".
+- Start function docstrings with present tense ("Gets"), not imperative
+  ("Get"). This tends to reduce ambiguity and improve clarity. >
+    GOOD:
+    /// Gets a highlight definition.
+    BAD:
+    /// Get a highlight definition.
+- Avoid starting docstrings with "The" or "A" unless needed to avoid
+  ambiguity. This is a visual aid and reduces noise. >
+    GOOD:
+    /// @param dirname Path fragment before `pend`
+    BAD:
+    /// @param dirname The path fragment before `pend`
 - Vim differences:
     - Do not prefix help tags with "nvim-". Use |vim_diff.txt| to catalog
       differences from Vim; no other distinction is necessary.
@@ -143,13 +155,26 @@ DOCUMENTATION						*dev-doc*
       not "the user host terminal".
     - Use "tui-" to prefix help tags related to the host terminal, and "TUI"
       in prose if possible.
-- Docstrings: do not start parameter descriptions with "The" or "A" unless it
-  is critical to avoid ambiguity.
-      GOOD: >
-      /// @param dirname Path fragment before `pend`
-<      BAD: >
-      /// @param dirname The path fragment before `pend`
-<
+
+Documentation format ~
+
+For Nvim-owned docs, use the following strict subset of "vimdoc" to ensure
+the help doc renders nicely in other formats (such as HTML:
+https://neovim.io/doc/user ).
+
+Strict "vimdoc" subset:
+
+- Use lists (like this!) prefixed with "-" or "•", for adjacent lines that you
+  don't want to auto-wrap. Lists are always rendered with "flow" layout
+  (soft-wrapped) instead of preformatted (hard-wrapped) layout common in
+  legacy :help docs.
+  - Limitation: currently the parser https://github.com/neovim/tree-sitter-vimdoc
+    does not understand numbered listitems, so use a bullet symbol (- or •)
+    before numbered items, e.g. "• 1." instead of "1.".
+- Separate blocks (paragraphs) of content by a blank line.
+- Do not use indentation in random places—that prevents the page from using
+  "flow" layout. If you need a preformatted section, put it in
+  a |help-codeblock| starting with ">".
 
 C docstrings ~
 
@@ -163,7 +188,8 @@ Docstring format:
   `@note`, `@param`, `@returns`
 - Limited markdown is supported.
   - List-items start with `-` (useful to nest or "indent")
-- Use `<pre>`  for code samples.
+- Use `<pre>` for code samples.
+  Code samples can be annotated as `vim` or `lua`
 
 Example: the help for |nvim_open_win()| is generated from a docstring defined
 in src/nvim/api/win_config.c like this: >
@@ -172,7 +198,7 @@ in src/nvim/api/win_config.c like this: >
     /// ...
     ///
     /// Example (Lua): window-relative float
-    /// <pre>
+    /// <pre>lua
     ///     vim.api.nvim_open_win(0, false,
     ///       {relative='win', row=3, col=3, width=12, height=3})
     /// </pre>
@@ -201,7 +227,8 @@ Docstring format:
   `---@see`, `---@param`, `---@returns`
 - Limited markdown is supported.
   - List-items start with `-` (useful to nest or "indent")
-- Use `<pre>`  for code samples.
+- Use `<pre>` for code samples.
+  Code samples can be annotated as `vim` or `lua`
 
 Example: the help for |vim.paste()| is generated from a docstring decorating
 vim.paste in runtime/lua/vim/_editor.lua like this: >
@@ -210,7 +237,7 @@ vim.paste in runtime/lua/vim/_editor.lua like this: >
     --- (such as the |TUI|) pastes text into the editor.
     ---
     --- Example: To remove ANSI color codes when pasting:
-    --- <pre>
+    --- <pre>lua
     --- vim.paste = (function()
     ---   local overridden = vim.paste
     ---   ...
@@ -224,54 +251,133 @@ vim.paste in runtime/lua/vim/_editor.lua like this: >
     ---@returns false if client should cancel the paste.
 
 
-LUA							*dev-lua*
+LUA STDLIB DESIGN GUIDELINES				*dev-lua*
+
+See also |dev-naming|.
 
 - Keep the core Lua modules |lua-stdlib| simple. Avoid elaborate OOP or
-  pseudo-OOP designs. Plugin authors just want functions to call, they don't
-  want to learn a big, fancy inheritance hierarchy. Thus avoid specialized
-  objects; tables or values are usually better.
+  pseudo-OOP designs. Plugin authors just want functions to call, not a big,
+  fancy inheritance hierarchy.
+- Avoid requiring or returning special objects in the Nvim stdlib. Plain
+  tables or values are easier to serialize, easier to construct from literals,
+  easier to inspect and print, and inherently compatible with all Lua plugins.
+  (This guideline doesn't apply to opaque, non-data objects like `vim.cmd`.)
+- stdlib functions should follow these common patterns:
+  - accept iterable instead of table
+    - exception: in some cases iterable doesn't make sense, e.g. spair() sorts
+      the input by definition, so there is no reason for it to accept an
+      iterable, because the input needs to be "hydrated", it can't operate on
+      a "stream".
+  - return iterable instead of table
+  - mimic the pairs() or ipairs() interface if the function is intended to be
+    used in a "for" loop.
 
 
-API							*dev-api*
+API DESIGN GUIDELINES					*dev-api*
 
-Use this template to name new RPC |API| functions:
-    nvim_{thing}_{action}_{arbitrary-qualifiers}
+See also |dev-naming|.
 
-If the function acts on an object then {thing} is the name of that object
-(e.g. "buf" or "win"). If the function operates in a "global" context then
-{thing} is usually omitted (but consider "namespacing" your global operations
-with a {thing} that groups functions under a common concept).
+- When adding an API, check the following:
+  - What precedents did you draw from? How does your solution compare to them?
+  - Does your new API allow future expansion? How? Or why not?
+  - Is the new API similar to existing APIs? Do we need to deprecate the old ones?
+  - Did you cross-reference related concepts in the docs?
+- Avoid "mutually exclusive" parameters--via constraints or limitations, if
+  necessary. For example nvim_create_autocmd() has mutually exclusive
+  "callback" and "command" args; but the "command" arg could be eliminated by
+  simply not supporting Vimscript function names, and treating a string
+  "callback" arg as an Ex command (which can call Vimscript functions). The
+  "buffer" arg could also be eliminated by treating a number "pattern" as
+  a buffer number.
+- Avoid functions that depend on cursor position, current buffer, etc. Instead
+  the function should take a position parameter, buffer parameter, etc.
 
-Use existing common {action} names if possible:
-    add     Append to, or insert into, a collection
-    create  Create a new thing
-    del     Delete a thing (or group of things)
-    exec    Execute code
-    get     Get a thing (or group of things by query)
-    list    Get all things
-    set     Set a thing (or group of things)
+NAMING GUIDELINES                                       *dev-naming*
 
-Use consistent names for {thing} in all API functions. E.g. a buffer is called
+Naming is exceedingly important: the name of a thing is the primary interface
+for uses it, discusses it, searches for it, shares it... Consistent
+naming in the stdlib, API, and UI helps both users and developers discover and
+intuitively understand related concepts ("families"), and reduces cognitive
+burden. Discoverability encourages code re-use and likewise avoids redundant,
+overlapping mechanisms, which reduces code surface-area, and thereby minimizes
+bugs...
+
+Naming conventions ~
+
+In general, look for precedent when choosing a name, that is, look at existing
+(non-deprecated) functions. In particular, see below...
+
+							*dev-name-common*
+Use existing common {verb} names (actions) if possible:
+    - add:          Appends or inserts into a collection
+    - attach:       Listens to something to get events from it (TODO: rename to "on"?)
+    - call:         Calls a function
+    - clear:        Clears state but does not destroy the container
+    - create:       Creates a new (non-trivial) thing (TODO: rename to "def"?)
+    - del:          Deletes a thing (or group of things)
+    - detach:       Dispose attached listener (TODO: rename to "un"?)
+    - eval:         Evaluates an expression
+    - exec:         Executes code
+    - fmt:          Formats
+    - get:          Gets things (often by a query)
+    - inspect:      Presents a high-level, often interactive, view
+    - open:         Opens something (a buffer, window, …)
+    - parse:        Parses something into a structured form
+    - set:          Sets a thing (or group of things)
+    - try_{verb}:   Best-effort operation, failure returns null or error obj
+
+Do NOT use these deprecated verbs:
+    - list:         Redundant with "get"
+    - show:         Redundant with "print", "echo"
+    - notify:       Redundant with "print", "echo"
+
+Use consistent names for {noun} (nouns) in API functions: buffer is called
 "buf" everywhere, not "buffer" in some places and "buf" in others.
+    - buf:          Buffer
+    - chan:         |channel|
+    - cmd:          Command
+    - cmdline:      Command-line UI or input
+    - fn:           Function
+    - hl:           Highlight
+    - pos:          Position
+    - proc:         System process
+    - tabpage:      Tabpage
+    - win:          Window
 
-Example:
-    `nvim_get_current_line` acts on the global editor state; the common
-    {action} "get" is used but {thing} is omitted.
+Do NOT use these deprecated nouns:
+    - buffer
+    - command
+    - window
 
-Example:
-    `nvim_buf_add_highlight` acts on a `Buffer` object (the first parameter)
-    and uses the common {action} "add".
+							*dev-name-events*
+Use the "on_" prefix to name event-handling callbacks and also the interface for
+"registering" such handlers (on_key). The dual nature is acceptable to avoid
+a confused collection of naming conventions for these related concepts.
 
-Example:
-    `nvim_list_bufs` operates in a global context (first parameter is not
-    a Buffer). The common {action} "list" indicates that it lists all bufs
-    (plural) in the global context.
+Editor |events| (autocommands) are historically named like: >
+    {Noun}{Event}
 
-Use this template to name new API events:
-    nvim_{thing}_{event}_event
+Use this format to name API (RPC) events: >
+    nvim_{noun}_{event-name}_event
 
-Example:
-    `nvim_buf_changedtick_event`
+Example: >
+    nvim_buf_changedtick_event
+<
+							*dev-name-api*
+Use this format to name new RPC |API| functions: >
+    nvim_{noun}_{verb}_{arbitrary-qualifiers}
+
+If the function acts on an object then {noun} is the name of that object
+(e.g. "buf" or "win"). If the function operates in a "global" context then
+{noun} is usually omitted (but consider "namespacing" your global operations
+with a {noun} that groups functions under a common concept).
+
+- Example: `nvim_get_keymap('v')` operates in a global context (first
+  parameter is not a Buffer). The "get" verb indicates that it gets anything
+  matching the given filter parameter. A "list" verb is unnecessary because
+  `nvim_get_keymap('')` (empty filter) returns all items.
+- Example: `nvim_buf_del_mark` acts on a `Buffer` object (the first parameter)
+  and uses the "del" {verb}.
 
 
 API-CLIENT						*dev-api-client*
@@ -309,10 +415,10 @@ a good name: it's idiomatic and unambiguous. If the package is named "neovim",
 it confuses users, and complicates documentation and discussions.
 
 Examples of API-client package names:
-        GOOD: nvim-racket
-        GOOD: pynvim
-        BAD:  python-client
-        BAD:  neovim
+- GOOD: nvim-racket
+- GOOD: pynvim
+- BAD:  python-client
+- BAD:  neovim
 
 API client implementation guidelines ~
 
@@ -337,7 +443,7 @@ API client implementation guidelines ~
     https://github.com/msgpack-rpc/msgpack-rpc
 
 
-EXTERNAL UI 						*dev-ui*
+EXTERNAL UI						*dev-ui*
 
 External UIs should be aware of the |api-contract|. In particular, future
 versions of Nvim may add new items to existing events. The API is strongly
@@ -363,19 +469,4 @@ External UIs are expected to implement these common features:
   published in this event. See also "mouse_on", "mouse_off".
 
 
-NAMING							*dev-naming*
-
-Naming is important. Consistent naming in the API and UI helps both users and
-developers discover and intuitively understand related concepts ("families"),
-and reduces cognitive burden. Discoverability encourages code re-use and
-likewise avoids redundant, overlapping mechanisms, which reduces code
-surface-area, and thereby minimizes bugs...
-
-Naming conventions ~
-
-Use the "on_" prefix to name event handlers and also the interface for
-"registering" such handlers (on_key). The dual nature is acceptable to avoid
-a confused collection of naming conventions for these related concepts.
-
-
- vim:tw=78:ts=8:noet:ft=help:norl:
+ vim:tw=78:ts=8:sw=4:et:ft=help:norl:

@@ -131,26 +131,15 @@ describe('timers', function()
     nvim_async("command", "call timer_start("..load_adjust(100)..", 'AddItem', {'repeat': -1})")
 
     screen:expect([[
-      ITEM 1                                  |
+      ^ITEM 1                                  |
       ITEM 2                                  |
       {1:~                                       }|
       {1:~                                       }|
       {1:~                                       }|
-      ^                                        |
+                                              |
     ]])
     nvim_async("command", "let g:cont = 1")
 
-    screen:expect([[
-      ITEM 1                                  |
-      ITEM 2                                  |
-      ITEM 3                                  |
-      {1:~                                       }|
-      {1:~                                       }|
-      ^                                        |
-    ]])
-
-    feed("3")
-    eq(51, eval("g:c2"))
     screen:expect([[
       ^ITEM 1                                  |
       ITEM 2                                  |
@@ -159,6 +148,17 @@ describe('timers', function()
       {1:~                                       }|
                                               |
     ]])
+
+    feed("3")
+    eq(51, eval("g:c2"))
+    screen:expect{grid=[[
+      ^ITEM 1                                  |
+      ITEM 2                                  |
+      ITEM 3                                  |
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]], unchanged=true}
   end)
 
   it('can be stopped', function()
@@ -251,15 +251,7 @@ describe('timers', function()
       :good^                                   |
     ]])
     command('let g:val = 1')
-
-    screen:expect{grid=[[
-                                              |
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
-      :good^                                   |
-    ]], intermediate=true, timeout=load_adjust(200)}
+    screen:expect_unchanged(true, load_adjust(200))
 
     eq(2, eval('g:val'))
   end)

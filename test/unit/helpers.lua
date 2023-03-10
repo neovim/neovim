@@ -7,9 +7,6 @@ local global_helpers = require('test.helpers')
 local assert = require('luassert')
 local say = require('say')
 
-local posix = nil
-local syscall = nil
-
 local check_cores = global_helpers.check_cores
 local dedent = global_helpers.dedent
 local neq = global_helpers.neq
@@ -78,7 +75,8 @@ local function child_cleanup_once(func, ...)
   end
 end
 
-local libnvim = nil
+-- Unittests are run from debug nvim binary in lua interpreter mode.
+local libnvim = ffi.C
 
 local lib = setmetatable({}, {
   __index = only_separate(function(_, idx)
@@ -90,8 +88,6 @@ local lib = setmetatable({}, {
 })
 
 local init = only_separate(function()
-  -- load neovim shared library
-  libnvim = ffi.load(Paths.test_libnvim_path)
   for _, c in ipairs(child_calls_init) do
     c.func(unpack(c.args))
   end
@@ -373,122 +369,91 @@ local function to_cstr(string)
   return cstr(#string + 1, string)
 end
 
-local sc
-
-if posix ~= nil then
-  sc = {
-    fork = posix.fork,
-    pipe = posix.pipe,
-    read = posix.read,
-    write = posix.write,
-    close = posix.close,
-    wait = posix.wait,
-    exit = posix._exit,
-  }
-elseif syscall ~= nil then
-  sc = {
-    fork = syscall.fork,
-    pipe = function()
-      local ret = {syscall.pipe()}
-      return ret[3], ret[4]
-    end,
-    read = function(rd, len)
-      return rd:read(nil, len)
-    end,
-    write = function(wr, s)
-      return wr:write(s)
-    end,
-    close = function(p)
-      return p:close()
-    end,
-    wait = syscall.wait,
-    exit = syscall.exit,
-  }
-else
-  cimport_immediate('./test/unit/fixtures/posix.h')
-  sc = {
-    fork = function()
-      return tonumber(ffi.C.fork())
-    end,
-    pipe = function()
-      local ret = ffi.new('int[2]', {-1, -1})
-      ffi.errno(0)
-      local res = ffi.C.pipe(ret)
-      if (res ~= 0) then
+cimport_immediate('./test/unit/fixtures/posix.h')
+local sc = {
+  fork = function()
+    return tonumber(ffi.C.fork())
+  end,
+  pipe = function()
+    local ret = ffi.new('int[2]', {-1, -1})
+    ffi.errno(0)
+    local res = ffi.C.pipe(ret)
+    if (res ~= 0) then
+      local err = ffi.errno(0)
+      assert(res == 0, ("pipe() error: %u: %s"):format(
+      err, ffi.string(ffi.C.strerror(err))))
+    end
+    assert(ret[0] ~= -1 and ret[1] ~= -1)
+    return ret[0], ret[1]
+  end,
+  read = function(rd, len)
+    local ret = ffi.new('char[?]', len, {0})
+    local total_bytes_read = 0
+    ffi.errno(0)
+    while total_bytes_read < len do
+      local bytes_read = tonumber(ffi.C.read(
+      rd,
+      ffi.cast('void*', ret + total_bytes_read),
+      len - total_bytes_read))
+      if bytes_read == -1 then
         local err = ffi.errno(0)
-        assert(res == 0, ("pipe() error: %u: %s"):format(
-            err, ffi.string(ffi.C.strerror(err))))
+        if err ~= ffi.C.kPOSIXErrnoEINTR then
+          assert(false, ("read() error: %u: %s"):format(
+          err, ffi.string(ffi.C.strerror(err))))
+        end
+      elseif bytes_read == 0 then
+        break
+      else
+        total_bytes_read = total_bytes_read + bytes_read
       end
-      assert(ret[0] ~= -1 and ret[1] ~= -1)
-      return ret[0], ret[1]
-    end,
-    read = function(rd, len)
-      local ret = ffi.new('char[?]', len, {0})
-      local total_bytes_read = 0
-      ffi.errno(0)
-      while total_bytes_read < len do
-        local bytes_read = tonumber(ffi.C.read(
-            rd,
-            ffi.cast('void*', ret + total_bytes_read),
-            len - total_bytes_read))
-        if bytes_read == -1 then
-          local err = ffi.errno(0)
-          if err ~= ffi.C.kPOSIXErrnoEINTR then
-            assert(false, ("read() error: %u: %s"):format(
-                err, ffi.string(ffi.C.strerror(err))))
-          end
-        elseif bytes_read == 0 then
+    end
+    return ffi.string(ret, total_bytes_read)
+  end,
+  write = function(wr, s)
+    local wbuf = to_cstr(s)
+    local total_bytes_written = 0
+    ffi.errno(0)
+    while total_bytes_written < #s do
+      local bytes_written = tonumber(ffi.C.write(
+      wr,
+      ffi.cast('void*', wbuf + total_bytes_written),
+      #s - total_bytes_written))
+      if bytes_written == -1 then
+        local err = ffi.errno(0)
+        if err ~= ffi.C.kPOSIXErrnoEINTR then
+          assert(false, ("write() error: %u: %s ('%s')"):format(
+          err, ffi.string(ffi.C.strerror(err)), s))
+        end
+      elseif bytes_written == 0 then
+        break
+      else
+        total_bytes_written = total_bytes_written + bytes_written
+      end
+    end
+    return total_bytes_written
+  end,
+  close = ffi.C.close,
+  wait = function(pid)
+    ffi.errno(0)
+    local stat_loc = ffi.new('int[1]', {0})
+    while true do
+      local r = ffi.C.waitpid(pid, stat_loc, ffi.C.kPOSIXWaitWUNTRACED)
+      if r == -1 then
+        local err = ffi.errno(0)
+        if err == ffi.C.kPOSIXErrnoECHILD then
           break
-        else
-          total_bytes_read = total_bytes_read + bytes_read
+        elseif err ~= ffi.C.kPOSIXErrnoEINTR then
+          assert(false, ("waitpid() error: %u: %s"):format(
+          err, ffi.string(ffi.C.strerror(err))))
         end
+      else
+        assert(r == pid)
       end
-      return ffi.string(ret, total_bytes_read)
-    end,
-    write = function(wr, s)
-      local wbuf = to_cstr(s)
-      local total_bytes_written = 0
-      ffi.errno(0)
-      while total_bytes_written < #s do
-        local bytes_written = tonumber(ffi.C.write(
-            wr,
-            ffi.cast('void*', wbuf + total_bytes_written),
-            #s - total_bytes_written))
-        if bytes_written == -1 then
-          local err = ffi.errno(0)
-          if err ~= ffi.C.kPOSIXErrnoEINTR then
-            assert(false, ("write() error: %u: %s ('%s')"):format(
-                err, ffi.string(ffi.C.strerror(err)), s))
-          end
-        elseif bytes_written == 0 then
-          break
-        else
-          total_bytes_written = total_bytes_written + bytes_written
-        end
-      end
-      return total_bytes_written
-    end,
-    close = ffi.C.close,
-    wait = function(pid)
-      ffi.errno(0)
-      while true do
-        local r = ffi.C.waitpid(pid, nil, ffi.C.kPOSIXWaitWUNTRACED)
-        if r == -1 then
-          local err = ffi.errno(0)
-          if err == ffi.C.kPOSIXErrnoECHILD then
-            break
-          elseif err ~= ffi.C.kPOSIXErrnoEINTR then
-            assert(false, ("waitpid() error: %u: %s"):format(
-                err, ffi.string(ffi.C.strerror(err))))
-          end
-        else
-          assert(r == pid)
-        end
-      end
-    end,
-    exit = ffi.C._exit,
-  }
-end
+    end
+    return stat_loc[0]
+  end,
+  exit = ffi.C._exit,
+}
 
 local function format_list(lst)
   local ret = ''
@@ -730,18 +695,22 @@ local function check_child_err(rd)
   end
 end
 
-local function itp_parent(rd, pid, allow_failure)
-  local err, emsg = pcall(check_child_err, rd)
-  sc.wait(pid)
+local function itp_parent(rd, pid, allow_failure, location)
+  local ok, emsg = pcall(check_child_err, rd)
+  local status = sc.wait(pid)
   sc.close(rd)
-  if not err then
+  if not ok then
     if allow_failure then
-      io.stderr:write('Errorred out:\n' .. tostring(emsg) .. '\n')
+      io.stderr:write('Errorred out ('..status..'):\n' .. tostring(emsg) .. '\n')
       os.execute([[
         sh -c "source ci/common/test.sh
         check_core_dumps --delete \"]] .. Paths.test_luajit_prg .. [[\""]])
     else
-      error(emsg)
+      error(tostring(emsg)..'\nexit code: '..status)
+    end
+  elseif status ~= 0 then
+    if not allow_failure then
+      error("child process errored out with status "..status.."!\n\n"..location)
     end
   end
 end
@@ -758,6 +727,11 @@ local function gen_itp(it)
       -- FIXME Fix tests with this true
       return
     end
+
+    -- Pre-emptively calculating error location, wasteful, ugh!
+    -- But the way this code messes around with busted implies the real location is strictly
+    -- not available in the parent when an actual error occurs. so we have to do this here.
+    local location = debug.traceback()
     it(name, function()
       local rd, wr = sc.pipe()
       child_pid = sc.fork()
@@ -768,7 +742,7 @@ local function gen_itp(it)
         sc.close(wr)
         local saved_child_pid = child_pid
         child_pid = nil
-        itp_parent(rd, saved_child_pid, allow_failure)
+        itp_parent(rd, saved_child_pid, allow_failure, location)
       end
     end)
   end

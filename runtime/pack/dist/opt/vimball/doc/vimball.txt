@@ -88,7 +88,7 @@ MAKING A VIMBALL						*:MkVimball*
 	If you wish to force slashes into the filename, that can also be done
 	by using the exclamation mark (ie. :MkVimball! path/filename).
 
-	The tip at http://vim.wikia.com/wiki/Using_VimBall_with_%27Make%27
+	The tip at https://vim.wikia.com/wiki/Using_VimBall_with_%27Make%27
 	has a good idea on how to automate the production of vimballs using
 	make.
 
@@ -171,12 +171,12 @@ WINDOWS							*vimball-windows*
 >
 	    Item     Tool/Suite   Free   Website
 	    ----     ----------   ----   -------
-	    7zip        tool       y     http://www.7-zip.org/
-	    Winzip      tool       n     http://www.winzip.com/downwz.htm
-	    unxutils    suite      y     http://unxutils.sourceforge.net/
-	    cygwin      suite      y     http://www.cygwin.com/
-	    GnuWin32    suite      y     http://gnuwin32.sourceforge.net/
-	    MinGW       suite      y     http://www.mingw.org/
+	    7zip        tool       y     https://www.7-zip.org/
+	    Winzip      tool       n     https://www.winzip.com/downwz.htm
+	    unxutils    suite      y     https://unxutils.sourceforge.net/
+	    cygwin      suite      y     https://www.cygwin.com/
+	    GnuWin32    suite      y     https://gnuwin32.sourceforge.net/
+	    MinGW       suite      y     https://www.mingw.org/
 <
 
 ==============================================================================

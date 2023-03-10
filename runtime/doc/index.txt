@@ -13,7 +13,6 @@ to look for deleting something, use: "/delete".
 For an overview of options see |option-list|.
 For an overview of built-in functions see |functions|.
 For a list of Vim variables see |vim-variable|.
-For a complete listing of all help items see |help-tags|.
 
                                       Type |gO| to see the table of contents.
 
@@ -21,7 +20,7 @@ For a complete listing of all help items see |help-tags|.
 1. Insert mode						*insert-index*
 
 tag		char		action in Insert mode	~
------------------------------------------------------------------------
+------------------------------------------------------------------------------ ~
 |i_CTRL-@|	CTRL-@		insert previously inserted text and stop
 				insert
 |i_CTRL-A|	CTRL-A		insert previously inserted text
@@ -61,7 +60,7 @@ tag		char		action in Insert mode	~
 |i_CTRL-Q|	CTRL-Q		same as CTRL-V, unless used for terminal
 				control flow
 |i_CTRL-SHIFT-Q|  CTRL-SHIFT-Q {char}
-				like CTRL-Q unless |modifyOtherKeys| is active
+				like CTRL-Q unless |tui-modifyOtherKeys| is active
 |i_CTRL-R|	CTRL-R {register}
 				insert the contents of a register
 |i_CTRL-R_CTRL-R| CTRL-R CTRL-R {register}
@@ -79,7 +78,7 @@ tag		char		action in Insert mode	~
 				line
 |i_CTRL-V|	CTRL-V {char}	insert next non-digit literally
 |i_CTRL-SHIFT-V|  CTRL-SHIFT-V {char}
-				like CTRL-V unless |modifyOtherKeys| is active
+				like CTRL-V unless |tui-modifyOtherKeys| is active
 |i_CTRL-V_digit| CTRL-V {number} insert three digit decimal number as a single
 				byte.
 |i_CTRL-W|	CTRL-W		delete word before the cursor
@@ -184,7 +183,7 @@ SECTION	 a section that possibly starts with '}' instead of '{'
 note: 1 = cursor movement command; 2 = can be undone/redone
 
 tag		char	      note action in Normal mode	~
-------------------------------------------------------------------------------
+------------------------------------------------------------------------------ ~
 		CTRL-@		   not used
 |CTRL-A|	CTRL-A		2  add N to number at/after cursor
 |CTRL-B|	CTRL-B		1  scroll N screens Backwards
@@ -221,7 +220,7 @@ tag		char	      note action in Normal mode	~
 |CTRL-\_CTRL-N|	CTRL-\ CTRL-N	   go to Normal mode (no-op)
 |CTRL-\_CTRL-G|	CTRL-\ CTRL-G	   go to Normal mode (no-op)
 		CTRL-\ a - z	   reserved for extensions
-		CTRL-\ others      not used
+		CTRL-\ others	   not used
 |CTRL-]|	CTRL-]		   :ta to ident under cursor
 |CTRL-^|	CTRL-^		   edit Nth alternate file (equivalent to
 				   ":e #N")
@@ -234,7 +233,7 @@ tag		char	      note action in Normal mode	~
 				2  filter Nmove text through the {filter}
 				   command
 |!!|		!!{filter}	2  filter N lines through the {filter} command
-|quote|		"{register}  	   use {register} for next delete, yank or put
+|quote|		"{register}	   use {register} for next delete, yank or put
 				   ({.%#:} only work with put)
 |#|		#		1  search backward for the Nth occurrence of
 				   the ident under the cursor
@@ -454,14 +453,14 @@ tag		char	      note action in Normal mode	~
 |<S-Up>|	<S-Up>		1  same as CTRL-B
 |<Undo>|	<Undo>		2  same as "u"
 |<Up>|		<Up>		1  same as "k"
-|<ScrollWheelDown>|	<ScrollWheelDown>	move window three lines down
-|<S-ScrollWheelDown>|	<S-ScrollWheelDown>	move window one page down
-|<ScrollWheelUp>|	<ScrollWheelUp>		move window three lines up
-|<S-ScrollWheelUp>|	<S-ScrollWheelUp>	move window one page up
-|<ScrollWheelLeft>|	<ScrollWheelLeft>	move window six columns left
-|<S-ScrollWheelLeft>|	<S-ScrollWheelLeft>	move window one page left
-|<ScrollWheelRight>|	<ScrollWheelRight>	move window six columns right
-|<S-ScrollWheelRight>|	<S-ScrollWheelRight>	move window one page right
+*<ScrollWheelDown>*	<ScrollWheelDown>	move window three lines down
+*<S-ScrollWheelDown>*	<S-ScrollWheelDown>	move window one page down
+*<ScrollWheelUp>*	<ScrollWheelUp>		move window three lines up
+*<S-ScrollWheelUp>*	<S-ScrollWheelUp>	move window one page up
+*<ScrollWheelLeft>*	<ScrollWheelLeft>	move window six columns left
+*<S-ScrollWheelLeft>*	<S-ScrollWheelLeft>	move window one page left
+*<ScrollWheelRight>*	<ScrollWheelRight>	move window six columns right
+*<S-ScrollWheelRight>*	<S-ScrollWheelRight>	move window one page right
 
 ==============================================================================
 2.1 Text objects						*objects*
@@ -469,7 +468,7 @@ tag		char	      note action in Normal mode	~
 These can be used after an operator or in Visual mode to select an object.
 
 tag		command		   action in op-pending and Visual mode	~
-------------------------------------------------------------------------------
+------------------------------------------------------------------------------ ~
 |v_aquote|	a"		   double quoted string
 |v_a'|		a'		   single quoted string
 |v_a(|		a(		   same as ab
@@ -511,7 +510,7 @@ tag		command		   action in op-pending and Visual mode	~
 2.2 Window commands						*CTRL-W*
 
 tag		command		   action in Normal mode	~
-------------------------------------------------------------------------------
+------------------------------------------------------------------------------ ~
 |CTRL-W_CTRL-B|	CTRL-W CTRL-B	   same as "CTRL-W b"
 |CTRL-W_CTRL-C|	CTRL-W CTRL-C	   same as "CTRL-W c"
 |CTRL-W_CTRL-D|	CTRL-W CTRL-D	   same as "CTRL-W d"
@@ -609,7 +608,7 @@ tag		command		   action in Normal mode	~
 2.3 Square bracket commands					*[* *]*
 
 tag		char	      note action in Normal mode	~
-------------------------------------------------------------------------------
+------------------------------------------------------------------------------ ~
 |[_CTRL-D|	[ CTRL-D	   jump to first #define found in current and
 				   included files matching the word under the
 				   cursor, start searching at beginning of
@@ -699,8 +698,8 @@ tag		char	      note action in Normal mode	~
 2.4 Commands starting with 'g'						*g*
 
 tag		char	      note action in Normal mode	~
-------------------------------------------------------------------------------
-|g_CTRL-A|	g CTRL-A	   dump a memory profile
+------------------------------------------------------------------------------ ~
+g_CTRL-A	g CTRL-A	   dump a memory profile
 |g_CTRL-G|	g CTRL-G	   show information about current cursor
 				   position
 |g_CTRL-H|	g CTRL-H	   start Select block mode
@@ -802,7 +801,7 @@ tag		char	      note action in Normal mode	~
 2.5 Commands starting with 'z'						*z*
 
 tag		char	      note action in Normal mode	~
-------------------------------------------------------------------------------
+------------------------------------------------------------------------------ ~
 |z<CR>|		z<CR>		   redraw, cursor line to top of window,
 				   cursor on first non-blank
 |zN<CR>|	z{height}<CR>	   redraw, make window {height} lines high
@@ -876,7 +875,7 @@ tag		char	      note action in Normal mode	~
 These can be used after an operator, but before a {motion} has been entered.
 
 tag		char		action in Operator-pending mode	~
------------------------------------------------------------------------
+------------------------------------------------------------------------------ ~
 |o_v|		v		force operator to work charwise
 |o_V|		V		force operator to work linewise
 |o_CTRL-V|	CTRL-V		force operator to work blockwise
@@ -888,7 +887,7 @@ Most commands in Visual mode are the same as in Normal mode.  The ones listed
 here are those that are different.
 
 tag		command	      note action in Visual mode	~
-------------------------------------------------------------------------------
+------------------------------------------------------------------------------ ~
 |v_CTRL-\_CTRL-N| CTRL-\ CTRL-N	   stop Visual mode
 |v_CTRL-\_CTRL-G| CTRL-\ CTRL-G	   go to Normal mode
 |v_CTRL-A|	CTRL-A		2  add N to number in highlighted text
@@ -1008,7 +1007,7 @@ Normal characters are inserted at the current cursor position.
 file names, tags, commands etc. as appropriate.
 
 tag		command		action in Command-line editing mode	~
-------------------------------------------------------------------------------
+------------------------------------------------------------------------------ ~
 		CTRL-@		not used
 |c_CTRL-A|	CTRL-A		do completion on the pattern in front of the
 				cursor and insert all matches
@@ -1111,23 +1110,23 @@ to terminal mode.
 You found it, Arthur!				*holy-grail*
 
 ==============================================================================
-6. EX commands					*ex-cmd-index* *:index*
+6. EX commands				*ex-commands* *ex-cmd-index* *:index*
 
 This is a brief but complete listing of all the ":" commands, without
 mentioning any arguments.  The optional part of the command name is inside [].
 The commands are sorted on the non-optional part of their name.
 
 tag		command		action ~
-------------------------------------------------------------------------------
+------------------------------------------------------------------------------ ~
 |:|		:		nothing
 |:range|	:{range}	go to last line in {range}
 |:!|		:!		filter lines or execute an external command
 |:!!|		:!!		repeat last ":!" command
 |:#|		:#		same as ":number"
 |:&|		:&		repeat last ":substitute"
-|:star|		:*		execute contents of a register
+|:star|		:*		use the last Visual area, like :'<,'>
 |:<|		:<		shift lines one 'shiftwidth' left
-|:=|		:=		print the cursor line number
+|:=|		:=		print the last line number
 |:>|		:>		shift lines one 'shiftwidth' right
 |:@|		:@		execute contents of a register
 |:@@|		:@@		repeat the previous ":@"
@@ -1209,8 +1208,8 @@ tag		command		action ~
 |:cgetfile|	:cg[etfile]	read file with error messages
 |:changes|	:changes	print the change list
 |:chdir|	:chd[ir]	change directory
-|:checkhealth|	:checkh[ealth]	run healthchecks
-|:checkpath|	:che[ckpath]	list included files
+|:checkhealth|	:che[ckhealth]	run healthchecks
+|:checkpath|	:checkp[ath]	list included files
 |:checktime|	:checkt[ime]	check timestamp of loaded buffers
 |:chistory|	:chi[story]	list the error lists
 |:clast|	:cla[st]	go to the specified error, default last one
@@ -1240,8 +1239,6 @@ tag		command		action ~
 |:cpfile|	:cpf[ile]	go to last error in previous file
 |:cquit|	:cq[uit]	quit Vim with an error code
 |:crewind|	:cr[ewind]	go to the specified error, default first one
-|:cscope|	:cs[cope]	execute cscope command
-|:cstag|	:cst[ag]	use cscope to jump to a tag
 |:cunmap|	:cu[nmap]	like ":unmap" but for Command-line mode
 |:cunabbrev|	:cuna[bbrev]	like ":unabbrev" but for Command-line mode
 |:cunmenu|	:cunme[nu]	remove menu for Command-line mode
@@ -1313,7 +1310,6 @@ tag		command		action ~
 |:grepadd|	:grepa[dd]	like :grep, but append to current list
 |:gui|		:gu[i]		start the GUI
 |:gvim|		:gv[im]		start the GUI
-|:hardcopy|	:ha[rdcopy]	send text to the printer
 |:help|		:h[elp]		open a help window
 |:helpclose|	:helpc[lose]	close one help window
 |:helpgrep|	:helpg[rep]	like ":grep" but searches help files
@@ -1321,6 +1317,7 @@ tag		command		action ~
 |:highlight|	:hi[ghlight]	specify highlighting methods
 |:hide|		:hid[e]		hide current buffer for a command
 |:history|	:his[tory]	print a history list
+|:horizontal|	:hor[izontal]	following window command work horizontally
 |:insert|	:i[nsert]	insert text
 |:iabbrev|	:ia[bbrev]	like ":abbrev" but for Insert mode
 |:iabclear|	:iabc[lear]	like ":abclear" but for Insert mode
@@ -1365,7 +1362,6 @@ tag		command		action ~
 |:lcd|		:lc[d]		change directory locally
 |:lchdir|	:lch[dir]	change directory locally
 |:lclose|	:lcl[ose]	close location window
-|:lcscope|	:lcs[cope]	like ":cscope" but uses location list
 |:ldo|		:ld[o]		execute command in valid location list entries
 |:lfdo|		:lfd[o]		execute command in each file in location list
 |:left|		:le[ft]		left align lines
@@ -1546,7 +1542,6 @@ tag		command		action ~
 				buffer list
 |:scriptnames|	:scr[iptnames]	list names of all sourced Vim scripts
 |:scriptencoding| :scripte[ncoding]  encoding used in sourced Vim script
-|:scscope|	:scs[cope]	split window and execute cscope command
 |:set|		:se[t]		show or set options
 |:setfiletype|	:setf[iletype]	set 'filetype', unless it was set already
 |:setglobal|	:setg[lobal]	show global values of options
@@ -1637,6 +1632,7 @@ tag		command		action ~
 |:topleft|	:to[pleft]	make split window appear at top or far left
 |:tprevious|	:tp[revious]	jump to previous matching tag
 |:trewind|	:tr[ewind]	jump to first matching tag
+|:trust|	:trust		add or remove file from trust database
 |:try|		:try		execute commands, abort on error or exception
 |:tselect|	:ts[elect]	list matching tags and select one
 |:tunmap|	:tunma[p]	like ":unmap" but for |Terminal-mode|

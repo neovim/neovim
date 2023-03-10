@@ -1,21 +1,25 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <inttypes.h>
-#include <msgpack.h>
+#include <msgpack/object.h>
+#include <msgpack/sbuffer.h>
+#include <msgpack/unpack.h>
+#include <msgpack/zone.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
-#include "nvim/api/private/dispatch.h"
+#include "klib/kvec.h"
+#include "msgpack/pack.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/assert.h"
-#include "nvim/lib/kvec.h"
-#include "nvim/log.h"
+#include "nvim/event/wstream.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/helpers.h"
-#include "nvim/vim.h"
+#include "nvim/types.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "keysets.generated.h"
+# include "keysets.generated.h"  // IWYU pragma: export
 # include "msgpack_rpc/helpers.c.generated.h"
 #endif
 
@@ -34,6 +38,8 @@ typedef struct {
   bool container;
   size_t idx;
 } MPToAPIObjectStackItem;
+
+// uncrustify:off
 
 /// Convert type used by msgpack parser to Nvim API type.
 ///
@@ -78,12 +84,8 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
         *cur.aobj = INTEGER_OBJ((Integer)cur.mobj->via.u64);
       }
       break;
-#ifdef NVIM_MSGPACK_HAS_FLOAT32
     case MSGPACK_OBJECT_FLOAT32:
     case MSGPACK_OBJECT_FLOAT64:
-#else
-    case MSGPACK_OBJECT_FLOAT:
-#endif
     {
       STATIC_ASSERT(sizeof(Float) == sizeof(cur.mobj->via.f64),
                     "Msgpack floating-point size does not match API integer");
@@ -95,9 +97,8 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
       dest = conv(((String) { \
       .size = obj->via.attr.size, \
       .data = (obj->via.attr.ptr == NULL || obj->via.attr.size == 0 \
-                   ? xmemdupz("", 0) \
-                   : xmemdupz(obj->via.attr.ptr, obj->via.attr.size)), \
-    })); \
+               ? xmemdupz("", 0) \
+               : xmemdupz(obj->via.attr.ptr, obj->via.attr.size)), })); \
       break; \
   }
       STR_CASE(MSGPACK_OBJECT_STR, str, cur.mobj, *cur.aobj, STRING_OBJ)
@@ -115,7 +116,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
               .mobj = &cur.mobj->via.array.ptr[idx],
               .aobj = &cur.aobj->data.array.items[idx],
               .container = false,
-            }));
+          }));
         }
       } else {
         *cur.aobj = ARRAY_OBJ(((Array) {
@@ -124,7 +125,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
             .items = (size > 0
                       ? xcalloc(size, sizeof(*cur.aobj->data.array.items))
                       : NULL),
-          }));
+        }));
         cur.container = true;
         kv_last(stack) = cur;
       }
@@ -151,12 +152,8 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
           case MSGPACK_OBJECT_BOOLEAN:
           case MSGPACK_OBJECT_POSITIVE_INTEGER:
           case MSGPACK_OBJECT_NEGATIVE_INTEGER:
-#ifdef NVIM_MSGPACK_HAS_FLOAT32
           case MSGPACK_OBJECT_FLOAT32:
           case MSGPACK_OBJECT_FLOAT64:
-#else
-          case MSGPACK_OBJECT_FLOAT:
-#endif
           case MSGPACK_OBJECT_EXT:
           case MSGPACK_OBJECT_MAP:
           case MSGPACK_OBJECT_ARRAY:
@@ -168,7 +165,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
                 .mobj = &cur.mobj->via.map.ptr[idx].val,
                 .aobj = &cur.aobj->data.dictionary.items[idx].value,
                 .container = false,
-              }));
+            }));
           }
         }
       } else {
@@ -178,7 +175,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
             .items = (size > 0
                       ? xcalloc(size, sizeof(*cur.aobj->data.dictionary.items))
                       : NULL),
-          }));
+        }));
         cur.container = true;
         kv_last(stack) = cur;
       }
@@ -368,7 +365,7 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
           kvi_push(stack, ((APIToMPObjectStackItem) {
               .aobj = &cur.aobj->data.array.items[idx],
               .container = false,
-            }));
+          }));
         }
       } else {
         msgpack_pack_array(res, size);
@@ -386,12 +383,11 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
           const size_t idx = cur.idx;
           cur.idx++;
           kv_last(stack) = cur;
-          msgpack_rpc_from_string(cur.aobj->data.dictionary.items[idx].key,
-                                  res);
+          msgpack_rpc_from_string(cur.aobj->data.dictionary.items[idx].key, res);
           kvi_push(stack, ((APIToMPObjectStackItem) {
               .aobj = &cur.aobj->data.dictionary.items[idx].value,
               .container = false,
-            }));
+          }));
         }
       } else {
         msgpack_pack_map(res, size);
@@ -407,6 +403,8 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
   }
   kvi_destroy(stack);
 }
+
+// uncrustify:on
 
 void msgpack_rpc_from_array(Array result, msgpack_packer *res)
   FUNC_ATTR_NONNULL_ARG(2)

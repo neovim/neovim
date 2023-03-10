@@ -1,0 +1,21 @@
+name: "Commit Linter"
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - 'master'
+jobs:
+  lint-commits:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+      - run: nvim --clean -es +"lua require('scripts.lintcommit').main({trace=false})"

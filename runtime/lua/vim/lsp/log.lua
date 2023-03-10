@@ -20,6 +20,17 @@ local format_func = function(arg)
 end
 
 do
+  ---@private
+  local function notify(msg, level)
+    if vim.in_fast_event() then
+      vim.schedule(function()
+        vim.notify(msg, level)
+      end)
+    else
+      vim.notify(msg, level)
+    end
+  end
+
   local path_sep = vim.loop.os_uname().version:match('Windows') and '\\' or '/'
   ---@private
   local function path_join(...)
@@ -53,7 +64,7 @@ do
     logfile, openerr = io.open(logfilename, 'a+')
     if not logfile then
       local err_msg = string.format('Failed to open LSP client log file: %s', openerr)
-      vim.notify(err_msg, vim.log.levels.ERROR)
+      notify(err_msg, vim.log.levels.ERROR)
       return false
     end
 
@@ -64,7 +75,7 @@ do
         log_info.size / (1000 * 1000),
         logfilename
       )
-      vim.notify(warn_msg)
+      notify(warn_msg)
     end
 
     -- Start message for logging
@@ -130,7 +141,7 @@ end
 vim.tbl_add_reverse_lookup(log.levels)
 
 --- Sets the current log level.
----@param level (string or number) One of `vim.lsp.log.levels`
+---@param level (string|integer) One of `vim.lsp.log.levels`
 function log.set_level(level)
   if type(level) == 'string' then
     current_log_level =
@@ -156,7 +167,7 @@ function log.set_format_func(handle)
 end
 
 --- Checks whether the level is sufficient for logging.
----@param level number log level
+---@param level integer log level
 ---@returns (bool) true if would log, false if not
 function log.should_log(level)
   return level >= current_log_level

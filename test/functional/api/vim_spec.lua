@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local lfs = require('lfs')
+local luv = require('luv')
 
 local fmt = string.format
 local assert_alive = helpers.assert_alive
@@ -11,9 +12,9 @@ local exec = helpers.exec
 local eval = helpers.eval
 local expect = helpers.expect
 local funcs = helpers.funcs
-local iswin = helpers.iswin
 local meths = helpers.meths
 local matches = helpers.matches
+local pesc = helpers.pesc
 local mkdir_p = helpers.mkdir_p
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
 local is_os = helpers.is_os
@@ -28,6 +29,7 @@ local exec_lua = helpers.exec_lua
 local exc_exec = helpers.exc_exec
 local insert = helpers.insert
 local expect_exit = helpers.expect_exit
+local skip = helpers.skip
 
 local pcall_err = helpers.pcall_err
 local format_string = helpers.format_string
@@ -57,7 +59,7 @@ describe('API', function()
 
     -- XXX: This must be the last one, else next one will fail:
     --      "Packer instance already working. Use another Packer ..."
-    matches("can't serialize object$",
+    matches("can't serialize object of type .$",
       pcall_err(request, nil))
   end)
 
@@ -164,7 +166,7 @@ describe('API', function()
           echo nvim_exec('echo Avast_ye_hades(''ahoy!'')', 1)
         ]], true))
 
-      eq('Vim(call):E5555: API call: Vim(echo):E121: Undefined variable: s:pirate',
+      matches('Vim%(echo%):E121: Undefined variable: s:pirate$',
         pcall_err(request, 'nvim_exec', [[
           let s:pirate = 'script-scoped varrrrr'
           call nvim_exec('echo s:pirate', 1)
@@ -206,12 +208,12 @@ describe('API', function()
     end)
 
     it('execution error', function()
-      eq('Vim:E492: Not an editor command: bogus_command',
+      eq('nvim_exec(): Vim:E492: Not an editor command: bogus_command',
         pcall_err(request, 'nvim_exec', 'bogus_command', false))
       eq('', nvim('eval', 'v:errmsg'))  -- v:errmsg was not updated.
       eq('', eval('v:exception'))
 
-      eq('Vim(buffer):E86: Buffer 23487 does not exist',
+      eq('nvim_exec(): Vim(buffer):E86: Buffer 23487 does not exist',
         pcall_err(request, 'nvim_exec', 'buffer 23487', false))
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
       eq('', eval('v:exception'))
@@ -397,7 +399,7 @@ describe('API', function()
     end)
 
     it('returns shell |:!| output', function()
-      local win_lf = iswin() and '\r' or ''
+      local win_lf = is_os('win') and '\r' or ''
       eq(':!echo foo\r\n\nfoo'..win_lf..'\n', nvim('command_output', [[!echo foo]]))
     end)
 
@@ -483,12 +485,12 @@ describe('API', function()
           throw 'wtf'
         endfunction
       ]])
-      eq('wtf', pcall_err(request, 'nvim_call_function', 'Foo', {}))
+      eq('function Foo, line 1: wtf', pcall_err(request, 'nvim_call_function', 'Foo', {}))
       eq('', eval('v:exception'))
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
     end)
 
-    it('validates args', function()
+    it('validation', function()
       local too_many_args = { 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x' }
       source([[
         function! Foo(...) abort
@@ -530,7 +532,7 @@ describe('API', function()
       eq('@it works@', nvim('call_dict_function', { result = 'it works', G = 'G'}, 'G', {}))
     end)
 
-    it('validates args', function()
+    it('validation', function()
       command('let g:d={"baz":"zub","meep":[]}')
       eq('Not found: bogus',
         pcall_err(request, 'nvim_call_dict_function', 'g:d', 'bogus', {1,2}))
@@ -602,10 +604,10 @@ describe('API', function()
       eq([[Error loading lua: [string "<nvim>"]:0: unexpected symbol]],
         pcall_err(meths.exec_lua, 'aa=bb\0', {}))
 
-      eq([[Error executing lua: [string "<nvim>"]:0: attempt to call global 'bork' (a nil value)]],
+      eq([[attempt to call global 'bork' (a nil value)]],
         pcall_err(meths.exec_lua, 'bork()', {}))
 
-      eq('Error executing lua: [string "<nvim>"]:0: did\nthe\nfail',
+      eq('did\nthe\nfail',
         pcall_err(meths.exec_lua, 'error("did\\nthe\\nfail")', {}))
     end)
 
@@ -646,10 +648,10 @@ describe('API', function()
   end)
 
   describe('nvim_paste', function()
-    it('validates args', function()
-      eq('Invalid phase: -2',
+    it('validation', function()
+      eq("Invalid 'phase': -2",
         pcall_err(request, 'nvim_paste', 'foo', true, -2))
-      eq('Invalid phase: 4',
+      eq("Invalid 'phase': 4",
         pcall_err(request, 'nvim_paste', 'foo', true, 4))
     end)
     local function run_streamed_paste_tests()
@@ -1106,6 +1108,14 @@ describe('API', function()
       nvim('paste', 'a', true, -1)
       eq('a', funcs.getcmdline())
     end)
+    it('pasted text is saved in cmdline history when <CR> comes from mapping #20957', function()
+      command('cnoremap <CR> <CR>')
+      feed(':')
+      nvim('paste', 'echo', true, -1)
+      eq('', funcs.histget(':'))
+      feed('<CR>')
+      eq('echo', funcs.histget(':'))
+    end)
     it('pasting with empty last chunk in Cmdline mode', function()
       local screen = Screen.new(20, 4)
       screen:attach()
@@ -1138,16 +1148,16 @@ describe('API', function()
     end)
     it('vim.paste() failure', function()
       nvim('exec_lua', 'vim.paste = (function(lines, phase) error("fake fail") end)', {})
-      eq([[Error executing lua: [string "<nvim>"]:0: fake fail]],
+      eq('fake fail',
         pcall_err(request, 'nvim_paste', 'line 1\nline 2\nline 3', false, 1))
     end)
   end)
 
   describe('nvim_put', function()
-    it('validates args', function()
-      eq('Invalid lines (expected array of strings)',
+    it('validation', function()
+      eq("Invalid 'line': expected String, got Integer",
         pcall_err(request, 'nvim_put', {42}, 'l', false, false))
-      eq("Invalid type: 'x'",
+      eq("Invalid 'type': 'x'",
         pcall_err(request, 'nvim_put', {'foo'}, 'x', false, false))
     end)
     it("fails if 'nomodifiable'", function()
@@ -1249,9 +1259,9 @@ describe('API', function()
         yyybc line 2
         line 3
         ]])
-      eq("Invalid type: 'bx'",
+      eq("Invalid 'type': 'bx'",
          pcall_err(meths.put, {'xxx', 'yyy'}, 'bx', false, true))
-      eq("Invalid type: 'b3x'",
+      eq("Invalid 'type': 'b3x'",
          pcall_err(meths.put, {'xxx', 'yyy'}, 'b3x', false, true))
     end)
   end)
@@ -1278,6 +1288,11 @@ describe('API', function()
   end)
 
   describe('set/get/del variables', function()
+    it('validation', function()
+      eq('Key not found: bogus', pcall_err(meths.get_var, 'bogus'))
+      eq('Key not found: bogus', pcall_err(meths.del_var, 'bogus'))
+    end)
+
     it('nvim_get_var, nvim_set_var, nvim_del_var', function()
       nvim('set_var', 'lua', {1, 2, {['3'] = 1}})
       eq({1, 2, {['3'] = 1}}, nvim('get_var', 'lua'))
@@ -1398,6 +1413,17 @@ describe('API', function()
       ok(nvim('get_option_value', 'equalalways', {}))
       nvim('set_option_value', 'equalalways', false, {})
       ok(not nvim('get_option_value', 'equalalways', {}))
+    end)
+
+    it('validation', function()
+      eq("Invalid 'scope': expected 'local' or 'global'",
+        pcall_err(nvim, 'get_option_value', 'scrolloff', {scope = 'bogus'}))
+      eq("Invalid 'scope': expected 'local' or 'global'",
+        pcall_err(nvim, 'set_option_value', 'scrolloff', 1, {scope = 'bogus'}))
+      eq("Invalid 'scope': expected String, got Integer",
+        pcall_err(nvim, 'get_option_value', 'scrolloff', {scope = 42}))
+      eq("Invalid 'scrolloff': expected Integer/Boolean/String, got Array",
+        pcall_err(nvim, 'set_option_value', 'scrolloff', {}, {}))
     end)
 
     it('can get local values when global value is set', function()
@@ -1767,12 +1793,12 @@ describe('API', function()
   end)
 
   describe('nvim_get_context', function()
-    it('validates args', function()
+    it('validation', function()
       eq("Invalid key: 'blah'",
         pcall_err(nvim, 'get_context', {blah={}}))
-      eq('invalid value for key: types',
+      eq("Invalid 'types': expected Array, got Integer",
         pcall_err(nvim, 'get_context', {types=42}))
-      eq('unexpected type: zub',
+      eq("Invalid 'type': 'zub'",
         pcall_err(nvim, 'get_context', {types={'jumps', 'zub', 'zam',}}))
     end)
     it('returns map of current editor state', function()
@@ -1797,9 +1823,11 @@ describe('API', function()
         },
 
         ['jumps'] = eval(([[
-        filter(map(getjumplist()[0], 'filter(
-          { "f": expand("#".v:val.bufnr.":p"), "l": v:val.lnum },
-          { k, v -> k != "l" || v != 1 })'), '!empty(v:val.f)')
+        filter(map(add(
+        getjumplist()[0], { 'bufnr': bufnr('%'), 'lnum': getcurpos()[1] }),
+        'filter(
+        { "f": expand("#".v:val.bufnr.":p"), "l": v:val.lnum },
+        { k, v -> k != "l" || v != 1 })'), '!empty(v:val.f)')
         ]]):gsub('\n', '')),
 
         ['bufs'] = eval([[
@@ -1903,11 +1931,32 @@ describe('API', function()
     end)
   end)
 
+  describe('nvim_out_write', function()
+    it('prints long messages correctly #20534', function()
+      exec([[
+        set more
+        redir => g:out
+          silent! call nvim_out_write('a')
+          silent! call nvim_out_write('a')
+          silent! call nvim_out_write('a')
+          silent! call nvim_out_write("\n")
+          silent! call nvim_out_write('a')
+          silent! call nvim_out_write('a')
+          silent! call nvim_out_write(repeat('a', 5000) .. "\n")
+          silent! call nvim_out_write('a')
+          silent! call nvim_out_write('a')
+          silent! call nvim_out_write('a')
+          silent! call nvim_out_write("\n")
+        redir END
+      ]])
+      eq('\naaa\n' .. ('a'):rep(5002) .. '\naaa', meths.get_var('out'))
+    end)
+  end)
+
   describe('nvim_err_write', function()
     local screen
 
     before_each(function()
-      clear()
       screen = Screen.new(40, 8)
       screen:attach()
       screen:set_default_attr_ids({
@@ -2093,7 +2142,7 @@ describe('API', function()
         pty='?',
       }
       local event = meths.get_var("opened_event")
-      if not iswin() then
+      if not is_os('win') then
         info.pty = event.info.pty
         neq(nil, string.match(info.pty, "^/dev/"))
       end
@@ -2109,7 +2158,7 @@ describe('API', function()
         stream = 'job',
         id = 4,
         argv = (
-          iswin() and {
+          is_os('win') and {
             eval('&shell'),
             '/s',
             '/c',
@@ -2131,7 +2180,7 @@ describe('API', function()
       -- :terminal with args + stopped process.
       eq(1, eval('jobstop(&channel)'))
       eval('jobwait([&channel], 1000)')  -- Wait.
-      expected2.pty = (iswin() and '?' or '')  -- pty stream was closed.
+      expected2.pty = (is_os('win') and '?' or '')  -- pty stream was closed.
       eq(expected2, eval('nvim_get_chan_info(&channel)'))
     end)
   end)
@@ -2190,15 +2239,14 @@ describe('API', function()
       eq(5, meths.get_var('avar'))
     end)
 
-    it('throws error on malformed arguments', function()
+    it('validation', function()
       local req = {
         {'nvim_set_var', {'avar', 1}},
         {'nvim_set_var'},
         {'nvim_set_var', {'avar', 2}},
       }
-      local status, err = pcall(meths.call_atomic, req)
-      eq(false, status)
-      ok(err:match('Items in calls array must be arrays of size 2') ~= nil)
+      eq("Invalid 'calls' item: expected 2-item Array",
+         pcall_err(meths.call_atomic, req))
       -- call before was done, but not after
       eq(1, meths.get_var('avar'))
 
@@ -2206,18 +2254,16 @@ describe('API', function()
         { 'nvim_set_var', { 'bvar', { 2, 3 } } },
         12,
       }
-      status, err = pcall(meths.call_atomic, req)
-      eq(false, status)
-      ok(err:match('Items in calls array must be arrays') ~= nil)
+      eq("Invalid 'calls' item: expected Array, got Integer",
+         pcall_err(meths.call_atomic, req))
       eq({2,3}, meths.get_var('bvar'))
 
       req = {
         {'nvim_set_current_line', 'little line'},
         {'nvim_set_var', {'avar', 3}},
       }
-      status, err = pcall(meths.call_atomic, req)
-      eq(false, status)
-      ok(err:match('Args must be Array') ~= nil)
+      eq("Invalid call args: expected Array, got String",
+         pcall_err(meths.call_atomic, req))
       -- call before was done, but not after
       eq(1, meths.get_var('avar'))
       eq({''}, meths.buf_get_lines(0, 0, -1, true))
@@ -2254,7 +2300,7 @@ describe('API', function()
       eq({'a', '', 'b'}, meths.list_runtime_paths())
       meths.set_option('runtimepath', ',a,b')
       eq({'', 'a', 'b'}, meths.list_runtime_paths())
-      -- trailing , is ignored, use ,, if you really really want $CWD
+      -- Trailing "," is ignored. Use ",," if you really really want CWD.
       meths.set_option('runtimepath', 'a,b,')
       eq({'a', 'b'}, meths.list_runtime_paths())
       meths.set_option('runtimepath', 'a,b,,')
@@ -2291,12 +2337,6 @@ describe('API', function()
     before_each(function()
       meths.set_option('isident', '')
     end)
-
-    local it_maybe_pending = it
-    if helpers.isCI() and os.getenv('CONFIGURATION') == 'MSVC_32' then
-      -- For "works with &opt" (flaky on MSVC_32), but not easy to skip alone.  #10241
-      it_maybe_pending = pending
-    end
 
     local function simplify_east_api_node(line, east_api_node)
       if east_api_node == NIL then
@@ -2494,7 +2534,7 @@ describe('API', function()
       end
     end
     require('test.unit.viml.expressions.parser_tests')(
-        it_maybe_pending, _check_parsing, hl, fmtn)
+        it, _check_parsing, hl, fmtn)
   end)
 
   describe('nvim_list_uis', function()
@@ -2509,20 +2549,26 @@ describe('API', function()
         {
           chan = 1,
           ext_cmdline = false,
+          ext_hlstate = false,
+          ext_linegrid = screen._options.ext_linegrid or false,
+          ext_messages = false,
+          ext_multigrid = false,
           ext_popupmenu = false,
           ext_tabline = false,
-          ext_wildmenu = false,
-          ext_linegrid = screen._options.ext_linegrid or false,
-          ext_multigrid = false,
-          ext_hlstate = false,
           ext_termcolors = false,
-          ext_messages = false,
+          ext_wildmenu = false,
           height = 4,
-          rgb = true,
           override = true,
+          rgb = true,
+          stdin_tty = false,
+          stdout_tty = false,
+          term_background = '',
+          term_colors = 0,
+          term_name = '',
           width = 20,
         }
       }
+
       eq(expected, nvim("list_uis"))
 
       screen:detach()
@@ -2698,7 +2744,7 @@ describe('API', function()
       eq({}, meths.get_runtime_file("foobarlang/", true))
     end)
     it('can handle bad patterns', function()
-      if helpers.pending_win32(pending) then return end
+      skip(is_os('win'))
 
       eq("Vim:E220: Missing }.", pcall_err(meths.get_runtime_file, "{", false))
 
@@ -2723,7 +2769,7 @@ describe('API', function()
 
   describe('nvim_get_option_info', function()
     it('should error for unknown options', function()
-      eq("no such option: 'bogus'", pcall_err(meths.get_option_info, 'bogus'))
+      eq("Invalid option (not found): 'bogus'", pcall_err(meths.get_option_info, 'bogus'))
     end)
 
     it('should return the same options for short and long name', function()
@@ -2732,8 +2778,8 @@ describe('API', function()
 
     it('should have information about window options', function()
       eq({
-        allows_duplicates = true,
-        commalist = false;
+        allows_duplicates = false,
+        commalist = true;
         default = "";
         flaglist = false;
         global_local = false;
@@ -3004,10 +3050,10 @@ describe('API', function()
       eq(true, meths.del_mark('F'))
       eq({0, 0}, meths.buf_get_mark(buf, 'F'))
     end)
-    it('fails when invalid marks are used', function()
-      eq(false, pcall(meths.del_mark, 'f'))
-      eq(false, pcall(meths.del_mark, '!'))
-      eq(false, pcall(meths.del_mark, 'fail'))
+    it('validation', function()
+      eq("Invalid mark name (must be file/uppercase): 'f'", pcall_err(meths.del_mark, 'f'))
+      eq("Invalid mark name (must be file/uppercase): '!'", pcall_err(meths.del_mark, '!'))
+      eq("Invalid mark name (must be a single char): 'fail'", pcall_err(meths.del_mark, 'fail'))
     end)
   end)
   describe('nvim_get_mark', function()
@@ -3017,14 +3063,14 @@ describe('API', function()
       meths.buf_set_mark(buf, 'F', 2, 2, {})
       meths.buf_set_name(buf, "mybuf")
       local mark = meths.get_mark('F', {})
-      -- Compare the path tail ony
+      -- Compare the path tail only
       assert(string.find(mark[4], "mybuf$"))
       eq({2, 2, buf.id, mark[4]}, mark)
     end)
-    it('fails when invalid marks are used', function()
-      eq(false, pcall(meths.del_mark, 'f'))
-      eq(false, pcall(meths.del_mark, '!'))
-      eq(false, pcall(meths.del_mark, 'fail'))
+    it('validation', function()
+      eq("Invalid mark name (must be file/uppercase): 'f'", pcall_err(meths.get_mark, 'f', {}))
+      eq("Invalid mark name (must be file/uppercase): '!'", pcall_err(meths.get_mark, '!', {}))
+      eq("Invalid mark name (must be a single char): 'fail'", pcall_err(meths.get_mark, 'fail', {}))
     end)
     it('returns the expected when mark is not set', function()
       eq(true, meths.del_mark('A'))
@@ -3086,20 +3132,38 @@ describe('API', function()
          meths.eval_statusline('a%=b', { fillchar = '\031', maxwidth = 5 }))
     end)
     it('rejects multiple-character fillchar', function()
-      eq('fillchar must be a single character',
+      eq("Invalid 'fillchar': expected single character",
          pcall_err(meths.eval_statusline, '', { fillchar = 'aa' }))
     end)
     it('rejects empty string fillchar', function()
-      eq('fillchar must be a single character',
+      eq("Invalid 'fillchar': expected single character",
          pcall_err(meths.eval_statusline, '', { fillchar = '' }))
     end)
     it('rejects non-string fillchar', function()
-      eq('fillchar must be a single character',
+      eq("Invalid 'fillchar': expected String, got Integer",
          pcall_err(meths.eval_statusline, '', { fillchar = 1 }))
     end)
     it('rejects invalid string', function()
       eq('E539: Illegal character <}>',
          pcall_err(meths.eval_statusline, '%{%}', {}))
+    end)
+    it('supports various items', function()
+      eq({ str = '0', width = 1 },
+         meths.eval_statusline('%l', { maxwidth = 5 }))
+      command('set readonly')
+      eq({ str = '[RO]', width = 4 },
+         meths.eval_statusline('%r', { maxwidth = 5 }))
+      local screen = Screen.new(80, 24)
+      screen:attach()
+      command('set showcmd')
+      feed('1234')
+      screen:expect({any = '1234'})
+      eq({ str = '1234', width = 4 },
+         meths.eval_statusline('%S', { maxwidth = 5 }))
+      feed('56')
+      screen:expect({any = '123456'})
+      eq({ str = '<3456', width = 5 },
+         meths.eval_statusline('%S', { maxwidth = 5 }))
     end)
     describe('highlight parsing', function()
       it('works', function()
@@ -3168,6 +3232,17 @@ describe('API', function()
             'TextWithNoHighlight%#WarningMsg#TextWithWarningHighlight',
             { use_winbar = true, highlights = true }))
       end)
+      it('no memory leak with click functions', function()
+        meths.eval_statusline('%@ClickFunc@StatusLineStringWithClickFunc%T', {})
+        eq({
+            str = 'StatusLineStringWithClickFunc',
+            width = 29
+          },
+          meths.eval_statusline(
+            '%@ClickFunc@StatusLineStringWithClickFunc%T',
+            {})
+          )
+      end)
     end)
   end)
   describe('nvim_parse_cmd', function()
@@ -3176,9 +3251,6 @@ describe('API', function()
         cmd = 'echo',
         args = { 'foo' },
         bang = false,
-        range = {},
-        count = -1,
-        reg = '',
         addr = 'none',
         magic = {
             file = false,
@@ -3195,6 +3267,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3205,7 +3278,7 @@ describe('API', function()
           sandbox = false,
           silent = false,
           split = "",
-          tab = 0,
+          tab = -1,
           unsilent = false,
           verbose = -1,
           vertical = false,
@@ -3218,8 +3291,6 @@ describe('API', function()
         args = { '/math.random/math.max/' },
         bang = false,
         range = { 4, 6 },
-        count = -1,
-        reg = '',
         addr = 'line',
         magic = {
             file = false,
@@ -3236,6 +3307,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3246,7 +3318,7 @@ describe('API', function()
           sandbox = false,
           silent = false,
           split = "",
-          tab = 0,
+          tab = -1,
           unsilent = false,
           verbose = -1,
           vertical = false,
@@ -3260,7 +3332,6 @@ describe('API', function()
         bang = false,
         range = { 1 },
         count = 1,
-        reg = '',
         addr = 'buf',
         magic = {
             file = false,
@@ -3277,6 +3348,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3287,7 +3359,7 @@ describe('API', function()
           sandbox = false,
           silent = false,
           split = "",
-          tab = 0,
+          tab = -1,
           unsilent = false,
           verbose = -1,
           vertical = false,
@@ -3300,7 +3372,6 @@ describe('API', function()
         args = {},
         bang = false,
         range = {},
-        count = -1,
         reg = '+',
         addr = 'line',
         magic = {
@@ -3318,6 +3389,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3328,12 +3400,51 @@ describe('API', function()
           sandbox = false,
           silent = false,
           split = "",
-          tab = 0,
+          tab = -1,
           unsilent = false,
           verbose = -1,
           vertical = false,
         }
       }, meths.parse_cmd('put +', {}))
+      eq({
+        cmd = 'put',
+        args = {},
+        bang = false,
+        range = {},
+        reg = '',
+        addr = 'line',
+        magic = {
+            file = false,
+            bar = true
+        },
+        nargs = '0',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          filter = {
+              pattern = "",
+              force = false
+          },
+          hide = false,
+          horizontal = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          split = "",
+          tab = -1,
+          unsilent = false,
+          verbose = -1,
+          vertical = false,
+        }
+      }, meths.parse_cmd('put', {}))
     end)
     it('works with range, count and register', function()
       eq({
@@ -3359,6 +3470,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3369,7 +3481,7 @@ describe('API', function()
           sandbox = false,
           silent = false,
           split = "",
-          tab = 0,
+          tab = -1,
           unsilent = false,
           verbose = -1,
           vertical = false,
@@ -3382,8 +3494,6 @@ describe('API', function()
         args = {},
         bang = true,
         range = {},
-        count = -1,
-        reg = '',
         addr = 'line',
         magic = {
             file = true,
@@ -3400,6 +3510,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3410,7 +3521,7 @@ describe('API', function()
           sandbox = false,
           silent = false,
           split = "",
-          tab = 0,
+          tab = -1,
           unsilent = false,
           verbose = -1,
           vertical = false,
@@ -3423,8 +3534,6 @@ describe('API', function()
         args = { 'foo.txt' },
         bang = false,
         range = {},
-        count = -1,
-        reg = '',
         addr = '?',
         magic = {
             file = true,
@@ -3441,6 +3550,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = true,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3451,19 +3561,17 @@ describe('API', function()
           sandbox = false,
           silent = true,
           split = "topleft",
-          tab = 2,
+          tab = 1,
           unsilent = false,
           verbose = 15,
           vertical = false,
         },
-      }, meths.parse_cmd('15verbose silent! aboveleft topleft tab filter /foo/ split foo.txt', {}))
+      }, meths.parse_cmd('15verbose silent! horizontal topleft tab filter /foo/ split foo.txt', {}))
       eq({
         cmd = 'split',
         args = { 'foo.txt' },
         bang = false,
         range = {},
-        count = -1,
-        reg = '',
         addr = '?',
         magic = {
             file = true,
@@ -3480,6 +3588,7 @@ describe('API', function()
               force = true
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3495,7 +3604,7 @@ describe('API', function()
           verbose = 0,
           vertical = false,
         },
-      }, meths.parse_cmd('0verbose unsilent botright confirm filter! /foo/ split foo.txt', {}))
+      }, meths.parse_cmd('0verbose unsilent botright 0tab confirm filter! /foo/ split foo.txt', {}))
     end)
     it('works with user commands', function()
       command('command -bang -nargs=+ -range -addr=lines MyCommand echo foo')
@@ -3504,8 +3613,6 @@ describe('API', function()
         args = { 'test', 'it' },
         bang = true,
         range = { 4, 6 },
-        count = -1,
-        reg = '',
         addr = 'line',
         magic = {
             file = false,
@@ -3522,6 +3629,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3532,7 +3640,7 @@ describe('API', function()
           sandbox = false,
           silent = false,
           split = "",
-          tab = 0,
+          tab = -1,
           unsilent = false,
           verbose = -1,
           vertical = false,
@@ -3545,8 +3653,6 @@ describe('API', function()
         args = { 'a.txt' },
         bang = false,
         range = {},
-        count = -1,
-        reg = '',
         addr = 'arg',
         magic = {
             file = true,
@@ -3563,6 +3669,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3573,7 +3680,7 @@ describe('API', function()
           sandbox = false,
           silent = false,
           split = "",
-          tab = 0,
+          tab = -1,
           unsilent = false,
           verbose = -1,
           vertical = false,
@@ -3586,9 +3693,6 @@ describe('API', function()
         cmd = 'MyCommand',
         args = { 'test it' },
         bang = false,
-        range = {},
-        count = -1,
-        reg = '',
         addr = 'none',
         magic = {
             file = false,
@@ -3605,6 +3709,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3615,7 +3720,7 @@ describe('API', function()
           sandbox = false,
           silent = false,
           split = "",
-          tab = 0,
+          tab = -1,
           unsilent = false,
           verbose = -1,
           vertical = false,
@@ -3679,8 +3784,6 @@ describe('API', function()
         args = {'x'},
         bang = true,
         range = {3, 4},
-        count = -1,
-        reg = '',
         addr = 'line',
         magic = {
           file = false,
@@ -3697,6 +3800,7 @@ describe('API', function()
             force = false,
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3707,7 +3811,7 @@ describe('API', function()
           sandbox = false,
           silent = false,
           split = "",
-          tab = 0,
+          tab = -1,
           unsilent = false,
           verbose = -1,
           vertical = false,
@@ -3717,20 +3821,82 @@ describe('API', function()
       eq('', funcs.getreg('/'))
       eq('', funcs.histget('search'))
     end)
+    it('result can be used directly by nvim_cmd #20051', function()
+      eq("foo", meths.cmd(meths.parse_cmd('echo "foo"', {}), { output = true }))
+      meths.cmd(meths.parse_cmd("set cursorline", {}), {})
+      eq(true, meths.get_option_value("cursorline", {}))
+    end)
   end)
   describe('nvim_cmd', function()
     it('works', function ()
       meths.cmd({ cmd = "set", args = { "cursorline" } }, {})
       eq(true, meths.get_option_value("cursorline", {}))
     end)
+
+    it('validation', function()
+      eq("Invalid 'cmd': expected non-empty String",
+        pcall_err(meths.cmd, { cmd = ""}, {}))
+      eq("Invalid 'cmd': expected non-empty String",
+        pcall_err(meths.cmd, { cmd = {}}, {}))
+      eq("Invalid 'args': expected Array, got Boolean",
+        pcall_err(meths.cmd, { cmd = "set", args = true }, {}))
+      eq("Invalid 'magic': expected Dict, got Array",
+        pcall_err(meths.cmd, { cmd = "set", args = {}, magic = {} }, {}))
+      eq("Invalid command arg: expected non-whitespace",
+        pcall_err(meths.cmd, { cmd = "set", args = {'  '}, }, {}))
+      eq("Invalid command arg: expected valid type, got Array",
+        pcall_err(meths.cmd, { cmd = "set", args = {{}}, }, {}))
+      eq("Wrong number of arguments",
+        pcall_err(meths.cmd, { cmd = "aboveleft", args = {}, }, {}))
+      eq("Command cannot accept bang: print",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, bang = true }, {}))
+
+      eq("Command cannot accept range: set",
+        pcall_err(meths.cmd, { cmd = "set", args = {}, range = {1} }, {}))
+      eq("Invalid 'range': expected Array, got Boolean",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, range = true }, {}))
+      eq("Invalid 'range': expected <=2 elements",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, range = {1,2,3,4} }, {}))
+      eq("Invalid range element: expected non-negative Integer",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, range = {-1} }, {}))
+
+      eq("Command cannot accept count: set",
+        pcall_err(meths.cmd, { cmd = "set", args = {}, count = 1 }, {}))
+      eq("Invalid 'count': expected non-negative Integer",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, count = true }, {}))
+      eq("Invalid 'count': expected non-negative Integer",
+        pcall_err(meths.cmd, { cmd = "print", args = {}, count = -1 }, {}))
+
+      eq("Command cannot accept register: set",
+        pcall_err(meths.cmd, { cmd = "set", args = {}, reg = 'x' }, {}))
+      eq('Cannot use register "=',
+        pcall_err(meths.cmd, { cmd = "put", args = {}, reg = '=' }, {}))
+      eq("Invalid 'reg': expected single character, got xx",
+        pcall_err(meths.cmd, { cmd = "put", args = {}, reg = 'xx' }, {}))
+
+      -- Lua call allows empty {} for dict item.
+      eq('', exec_lua([[return vim.cmd{ cmd = "set", args = {}, magic = {} }]]))
+      eq('', exec_lua([[return vim.cmd{ cmd = "set", args = {}, mods = {} }]]))
+
+      -- Lua call does not allow non-empty list-like {} for dict item.
+      eq("Invalid 'magic': expected Dict, got Array",
+        pcall_err(exec_lua, [[return vim.cmd{ cmd = "set", args = {}, magic = { 'a' } }]]))
+      eq("Invalid key: 'bogus'",
+        pcall_err(exec_lua, [[return vim.cmd{ cmd = "set", args = {}, magic = { bogus = true } }]]))
+      eq("Invalid key: 'bogus'",
+        pcall_err(exec_lua, [[return vim.cmd{ cmd = "set", args = {}, mods = { bogus = true } }]]))
+    end)
+
     it('captures output', function()
       eq("foo", meths.cmd({ cmd = "echo", args = { '"foo"' } }, { output = true }))
     end)
+
     it('sets correct script context', function()
       meths.cmd({ cmd = "set", args = { "cursorline" } }, {})
       local str = meths.exec([[verbose set cursorline?]], true)
       neq(nil, str:find("cursorline\n\tLast set from API client %(channel id %d+%)"))
     end)
+
     it('works with range', function()
       insert [[
         line1
@@ -3794,15 +3960,28 @@ describe('API', function()
       eq("", meths.cmd({ cmd = "Foo", bang = false }, { output = true }))
     end)
     it('works with modifiers', function()
-      -- with :silent output is still captured
+      -- with silent = true output is still captured
       eq('1',
          meths.cmd({ cmd = 'echomsg', args = { '1' }, mods = { silent = true } },
                    { output = true }))
-      -- with :silent message isn't added to message history
+      -- but message isn't added to message history
       eq('', meths.cmd({ cmd = 'messages' }, { output = true }))
+
       meths.create_user_command("Foo", 'set verbose', {})
       eq("  verbose=1", meths.cmd({ cmd = "Foo", mods = { verbose = 1 } }, { output = true }))
+
+      meths.create_user_command("Mods", "echo '<mods>'", {})
+      eq('keepmarks keeppatterns silent 3verbose aboveleft horizontal',
+         meths.cmd({ cmd = "Mods", mods = {
+           horizontal = true,
+           keepmarks = true,
+           keeppatterns = true,
+           silent = true,
+           split = 'aboveleft',
+           verbose = 3,
+         } }, { output = true }))
       eq(0, meths.get_option_value("verbose", {}))
+
       command('edit foo.txt | edit bar.txt')
       eq('  1 #h   "foo.txt"                      line 1',
          meths.cmd({ cmd = "buffers", mods = { filter = { pattern = "foo", force = false } } },
@@ -3810,6 +3989,13 @@ describe('API', function()
       eq('  2 %a   "bar.txt"                      line 1',
          meths.cmd({ cmd = "buffers", mods = { filter = { pattern = "foo", force = true } } },
                    { output = true }))
+
+      -- with emsg_silent = true error is suppresed
+      feed([[:lua vim.api.nvim_cmd({ cmd = 'call', mods = { emsg_silent = true } }, {})<CR>]])
+      eq('', meths.cmd({ cmd = 'messages' }, { output = true }))
+      -- error from the next command typed is not suppressed #21420
+      feed(':call<CR><CR>')
+      eq('E471: Argument required', meths.cmd({ cmd = 'messages' }, { output = true }))
     end)
     it('works with magic.file', function()
       exec_lua([[
@@ -3890,11 +4076,23 @@ describe('API', function()
       eq({'aa'}, meths.buf_get_lines(0, 0, 1, false))
       assert_alive()
     end)
+    it('supports filename expansion', function()
+      meths.cmd({ cmd = 'argadd', args = { '%:p:h:t', '%:p:h:t' } }, {})
+      local arg = funcs.expand('%:p:h:t')
+      eq({ arg, arg }, funcs.argv())
+    end)
     it("'make' command works when argument count isn't 1 #19696", function()
       command('set makeprg=echo')
-      meths.cmd({ cmd = 'make' }, {})
+      command('set shellquote=')
+      matches('^:!echo ',
+              meths.cmd({ cmd = 'make' }, { output = true }))
       assert_alive()
-      meths.cmd({ cmd = 'make', args = { 'foo', 'bar' } }, {})
+      matches('^:!echo foo bar',
+              meths.cmd({ cmd = 'make', args = { 'foo', 'bar' } }, { output = true }))
+      assert_alive()
+      local arg_pesc = pesc(funcs.expand('%:p:h:t'))
+      matches(('^:!echo %s %s'):format(arg_pesc, arg_pesc),
+              meths.cmd({ cmd = 'make', args = { '%:p:h:t', '%:p:h:t' } }, { output = true }))
       assert_alive()
     end)
     it('doesn\'t display messages when output=true', function()
@@ -3926,6 +4124,24 @@ describe('API', function()
         {0:~                                       }|
         15                                      |
       ]]}
+    end)
+    it('works with non-String args', function()
+      eq('2', meths.cmd({cmd = 'echo', args = {2}}, {output = true}))
+      eq('1', meths.cmd({cmd = 'echo', args = {true}}, {output = true}))
+    end)
+    describe('first argument as count', function()
+      before_each(clear)
+
+      it('works', function()
+        command('vsplit | enew')
+        meths.cmd({cmd = 'bdelete', args = {meths.get_current_buf()}}, {})
+        eq(1, meths.get_current_buf().id)
+      end)
+      it('works with :sleep using milliseconds', function()
+        local start = luv.now()
+        meths.cmd({cmd = 'sleep', args = {'100m'}}, {})
+        ok(luv.now() - start <= 300)
+      end)
     end)
   end)
 end)

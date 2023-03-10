@@ -1,6 +1,6 @@
 " Vim autoload file for the tohtml plugin.
 " Maintainer: Ben Fritz <fritzophrenic@gmail.com>
-" Last Change: 2019 Aug 16
+" Last Change: 2023 Jan 01
 "
 " Additional contributors:
 "
@@ -351,63 +351,65 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
   let s:old_magic = &magic
   set magic
 
-  if s:settings.use_xhtml
-    if s:settings.encoding != ""
-      let xml_line = "<?xml version=\"1.0\" encoding=\"" . s:settings.encoding . "\"?>"
-    else
-      let xml_line = "<?xml version=\"1.0\"?>"
-    endif
-    let tag_close = ' />'
-  endif
-
-  let style = [s:settings.use_xhtml ? "" : '-->']
-  let body_line = ''
-
   let html = []
-  let s:html5 = 0
-  if s:settings.use_xhtml
-    call add(html, xml_line)
-  endif
-  if s:settings.use_xhtml
-    call add(html, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">")
-    call add(html, '<html xmlns="http://www.w3.org/1999/xhtml">')
-  elseif s:settings.use_css && !s:settings.no_pre
-    call add(html, "<!DOCTYPE html>")
-    call add(html, '<html>')
-    let s:html5 = 1
-  else
-    call add(html, '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"')
-    call add(html, '  "http://www.w3.org/TR/html4/loose.dtd">')
-    call add(html, '<html>')
-  endif
-  call add(html, '<head>')
-
-  " include encoding as close to the top as possible, but only if not already
-  " contained in XML information
-  if s:settings.encoding != "" && !s:settings.use_xhtml
-    if s:html5
-      call add(html, '<meta charset="' . s:settings.encoding . '"' . tag_close)
-    else
-      call add(html, "<meta http-equiv=\"content-type\" content=\"text/html; charset=" . s:settings.encoding . '"' . tag_close)
+  if !s:settings.no_doc
+    if s:settings.use_xhtml
+      if s:settings.encoding != ""
+	let xml_line = "<?xml version=\"1.0\" encoding=\"" . s:settings.encoding . "\"?>"
+      else
+	let xml_line = "<?xml version=\"1.0\"?>"
+      endif
+      let tag_close = ' />'
     endif
+
+    let style = [s:settings.use_xhtml ? "" : '-->']
+    let body_line = ''
+
+    let s:html5 = 0
+    if s:settings.use_xhtml
+      call add(html, xml_line)
+    endif
+    if s:settings.use_xhtml
+      call add(html, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">")
+      call add(html, '<html xmlns="http://www.w3.org/1999/xhtml">')
+    elseif s:settings.use_css && !s:settings.no_pre
+      call add(html, "<!DOCTYPE html>")
+      call add(html, '<html>')
+      let s:html5 = 1
+    else
+      call add(html, '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"')
+      call add(html, '  "http://www.w3.org/TR/html4/loose.dtd">')
+      call add(html, '<html>')
+    endif
+    call add(html, '<head>')
+
+    " include encoding as close to the top as possible, but only if not already
+    " contained in XML information
+    if s:settings.encoding != "" && !s:settings.use_xhtml
+      if s:html5
+	call add(html, '<meta charset="' . s:settings.encoding . '"' . tag_close)
+      else
+	call add(html, "<meta http-equiv=\"content-type\" content=\"text/html; charset=" . s:settings.encoding . '"' . tag_close)
+      endif
+    endif
+
+    call add(html, '<title>diff</title>')
+    call add(html, '<meta name="Generator" content="Vim/'.v:version/100.'.'.v:version%100.'"'.tag_close)
+    call add(html, '<meta name="plugin-version" content="'.g:loaded_2html_plugin.'"'.tag_close)
+    call add(html, '<meta name="settings" content="'.
+	  \ join(filter(keys(s:settings),'s:settings[v:val]'),',').
+	  \ ',prevent_copy='.s:settings.prevent_copy.
+	  \ ',use_input_for_pc='.s:settings.use_input_for_pc.
+	  \ '"'.tag_close)
+    call add(html, '<meta name="colorscheme" content="'.
+	  \ (exists('g:colors_name')
+	  \ ? g:colors_name
+	  \ : 'none'). '"'.tag_close)
+
+    call add(html, '</head>')
+    let body_line_num = len(html)
+    call add(html, '<body'.(s:settings.line_ids ? ' onload="JumpToLine();"' : '').'>')
   endif
-
-  call add(html, '<title>diff</title>')
-  call add(html, '<meta name="Generator" content="Vim/'.v:version/100.'.'.v:version%100.'"'.tag_close)
-  call add(html, '<meta name="plugin-version" content="'.g:loaded_2html_plugin.'"'.tag_close)
-  call add(html, '<meta name="settings" content="'.
-	\ join(filter(keys(s:settings),'s:settings[v:val]'),',').
-	\ ',prevent_copy='.s:settings.prevent_copy.
-	\ ',use_input_for_pc='.s:settings.use_input_for_pc.
-	\ '"'.tag_close)
-  call add(html, '<meta name="colorscheme" content="'.
-	\ (exists('g:colors_name')
-	\ ? g:colors_name
-	\ : 'none'). '"'.tag_close)
-
-  call add(html, '</head>')
-  let body_line_num = len(html)
-  call add(html, '<body'.(s:settings.line_ids ? ' onload="JumpToLine();"' : '').'>')
   call add(html, "<table ".(s:settings.use_css? "" : "border='1' width='100%' ")."id='vimCodeElement".s:settings.id_suffix."'>")
 
   call add(html, '<tr>')
@@ -430,47 +432,53 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
     " When not using CSS or when using xhtml, the <body> line can be important.
     " Assume it will be the same for all buffers and grab it from the first
     " buffer. Similarly, need to grab the body end line as well.
-    if body_line == ''
+    if !s:settings.no_doc
+      if body_line == ''
+	1
+	call search('<body')
+	let body_line = getline('.')
+	$
+	call search('</body>', 'b')
+	let s:body_end_line = getline('.')
+      endif
+
+      " Grab the style information. Some of this will be duplicated so only insert
+      " it if it's not already there. {{{
       1
-      call search('<body')
-      let body_line = getline('.')
-      $
-      call search('</body>', 'b')
-      let s:body_end_line = getline('.')
-    endif
-
-    " Grab the style information. Some of this will be duplicated so only insert
-    " it if it's not already there. {{{
-    1
-    let style_start = search('^<style\( type="text/css"\)\?>')
-    1
-    let style_end = search('^</style>')
-    if style_start > 0 && style_end > 0
-      let buf_styles = getline(style_start + 1, style_end - 1)
-      for a_style in buf_styles
-	if index(style, a_style) == -1
-	  if diff_style_start == 0
-	    if a_style =~ '\<Diff\(Change\|Text\|Add\|Delete\)'
-	      let diff_style_start = len(style)-1
+      let style_start = search('^<style\( type="text/css"\)\?>')
+      1
+      let style_end = search('^</style>')
+      if style_start > 0 && style_end > 0
+	let buf_styles = getline(style_start + 1, style_end - 1)
+	for a_style in buf_styles
+	  if index(style, a_style) == -1
+	    if diff_style_start == 0
+	      if a_style =~ '\<Diff\(Change\|Text\|Add\|Delete\)'
+		let diff_style_start = len(style)-1
+	      endif
 	    endif
+	    call insert(style, a_style, insert_index)
+	    let insert_index += 1
 	  endif
-	  call insert(style, a_style, insert_index)
-	  let insert_index += 1
-	endif
-      endfor
-    endif " }}}
+	endfor
+      endif " }}}
 
-    " everything new will get added before the diff styles so diff highlight
-    " properly overrides normal highlight
-    if diff_style_start != 0
-      let insert_index = diff_style_start
+      " everything new will get added before the diff styles so diff highlight
+      " properly overrides normal highlight
+      if diff_style_start != 0
+	let insert_index = diff_style_start
+      endif
+
+      " Delete those parts that are not needed so we can include the rest into the
+      " resulting table.
+      1,/^<body.*\%(\n<!--.*-->\_s\+.*id='oneCharWidth'.*\_s\+.*id='oneInputWidth'.*\_s\+.*id='oneEmWidth'\)\?\zs/d_
+      $
+      ?</body>?,$d_
+    elseif !s:settings.no_modeline
+      " remove modeline from source files if it is included and we haven't deleted
+      " due to removing html footer already
+      $d
     endif
-
-    " Delete those parts that are not needed so we can include the rest into the
-    " resulting table.
-    1,/^<body.*\%(\n<!--.*-->\_s\+.*id='oneCharWidth'.*\_s\+.*id='oneInputWidth'.*\_s\+.*id='oneEmWidth'\)\?\zs/d_
-    $
-    ?</body>?,$d_
     let temp = getline(1,'$')
     " clean out id on the main content container because we already set it on
     " the table
@@ -478,7 +486,11 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
     " undo deletion of start and end part
     " so we can later save the file as valid html
     " TODO: restore using grabbed lines if undolevel is 1?
-    normal! 2u
+    if !s:settings.no_doc
+      normal! 2u
+    elseif !s:settings.no_modeline
+      normal! u
+    endif
     if s:settings.use_css
       call add(html, '<td><div>')
     elseif s:settings.use_xhtml
@@ -495,17 +507,23 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
     quit!
   endfor
 
-  let html[body_line_num] = body_line
+  if !s:settings.no_doc
+    let html[body_line_num] = body_line
+  endif
 
   call add(html, '</tr>')
   call add(html, '</table>')
-  call add(html, s:body_end_line)
-  call add(html, '</html>')
+  if !s:settings.no_doc
+    call add(html, s:body_end_line)
+    call add(html, '</html>')
+  endif
 
   " The generated HTML is admittedly ugly and takes a LONG time to fold.
   " Make sure the user doesn't do syntax folding when loading a generated file,
   " using a modeline.
-  call add(html, '<!-- vim: set foldmethod=manual : -->')
+  if !s:settings.no_modeline
+    call add(html, '<!-- vim: set foldmethod=manual : -->')
+  endif
 
   let i = 1
   let name = "Diff" . (s:settings.use_xhtml ? ".xhtml" : ".html")
@@ -542,129 +560,131 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
 
   call append(0, html)
 
-  if len(style) > 0
-    1
-    let style_start = search('^</head>')-1
+  if !s:settings.no_doc
+    if len(style) > 0
+      1
+      let style_start = search('^</head>')-1
 
-    " add required javascript in reverse order so we can just call append again
-    " and again without adjusting {{{
+      " add required javascript in reverse order so we can just call append again
+      " and again without adjusting {{{
 
-    let s:uses_script = s:settings.dynamic_folds || s:settings.line_ids
+      let s:uses_script = s:settings.dynamic_folds || s:settings.line_ids
 
-    " insert script closing tag if needed
-    if s:uses_script
-      call append(style_start, [
-	    \ '',
-	    \ s:settings.use_xhtml ? '//]]>' : '-->',
-	    \ "</script>"
-	    \ ])
-    endif
-
-    " insert javascript to get IDs from line numbers, and to open a fold before
-    " jumping to any lines contained therein
-    if s:settings.line_ids
-      call append(style_start, [
-	    \ "  /* Always jump to new location even if the line was hidden inside a fold, or",
-	    \ "   * we corrected the raw number to a line ID.",
-	    \ "   */",
-	    \ "  if (lineElem) {",
-	    \ "    lineElem.scrollIntoView(true);",
-	    \ "  }",
-	    \ "  return true;",
-	    \ "}",
-	    \ "if ('onhashchange' in window) {",
-	    \ "  window.onhashchange = JumpToLine;",
-	    \ "}"
-	    \ ])
-
-      if s:settings.dynamic_folds
+      " insert script closing tag if needed
+      if s:uses_script
 	call append(style_start, [
-	      \ "",
-	      \ "  /* navigate upwards in the DOM tree to open all folds containing the line */",
-	      \ "  var node = lineElem;",
-	      \ "  while (node && node.id != 'vimCodeElement".s:settings.id_suffix."')",
-	      \ "  {",
-	      \ "    if (node.className == 'closed-fold')",
-	      \ "    {",
-	      \ "      /* toggle open the fold ID (remove window ID) */",
-	      \ "      toggleFold(node.id.substr(4));",
-	      \ "    }",
-	      \ "    node = node.parentNode;",
-	      \ "  }",
+	      \ '',
+	      \ s:settings.use_xhtml ? '//]]>' : '-->',
+	      \ "</script>"
 	      \ ])
       endif
-    endif
 
-    if s:settings.line_ids
-      call append(style_start, [
-	    \ "",
-	    \ "/* function to open any folds containing a jumped-to line before jumping to it */",
-	    \ "function JumpToLine()",
-	    \ "{",
-	    \ "  var lineNum;",
-	    \ "  lineNum = window.location.hash;",
-	    \ "  lineNum = lineNum.substr(1); /* strip off '#' */",
-	    \ "",
-	    \ "  if (lineNum.indexOf('L') == -1) {",
-	    \ "    lineNum = 'L'+lineNum;",
-	    \ "  }",
-	    \ "  if (lineNum.indexOf('W') == -1) {",
-	    \ "    lineNum = 'W1'+lineNum;",
-	    \ "  }",
-	    \ "  var lineElem = document.getElementById(lineNum);"
-	    \ ])
-    endif
+      " insert javascript to get IDs from line numbers, and to open a fold before
+      " jumping to any lines contained therein
+      if s:settings.line_ids
+	call append(style_start, [
+	      \ "  /* Always jump to new location even if the line was hidden inside a fold, or",
+	      \ "   * we corrected the raw number to a line ID.",
+	      \ "   */",
+	      \ "  if (lineElem) {",
+	      \ "    lineElem.scrollIntoView(true);",
+	      \ "  }",
+	      \ "  return true;",
+	      \ "}",
+	      \ "if ('onhashchange' in window) {",
+	      \ "  window.onhashchange = JumpToLine;",
+	      \ "}"
+	      \ ])
 
-    " Insert javascript to toggle matching folds open and closed in all windows,
-    " if dynamic folding is active.
-    if s:settings.dynamic_folds
-      call append(style_start, [
-	    \  "  function toggleFold(objID)",
-	    \  "  {",
-	    \  "    for (win_num = 1; win_num <= ".len(a:buf_list)."; win_num++)",
-	    \  "    {",
-	    \  "      var fold;",
-	    \  '      fold = document.getElementById("win"+win_num+objID);',
-	    \  "      if(fold.className == 'closed-fold')",
-	    \  "      {",
-	    \  "        fold.className = 'open-fold';",
-	    \  "      }",
-	    \  "      else if (fold.className == 'open-fold')",
-	    \  "      {",
-	    \  "        fold.className = 'closed-fold';",
-	    \  "      }",
-	    \  "    }",
-	    \  "  }",
-	    \ ])
-    endif
+	if s:settings.dynamic_folds
+	  call append(style_start, [
+		\ "",
+		\ "  /* navigate upwards in the DOM tree to open all folds containing the line */",
+		\ "  var node = lineElem;",
+		\ "  while (node && node.id != 'vimCodeElement".s:settings.id_suffix."')",
+		\ "  {",
+		\ "    if (node.className == 'closed-fold')",
+		\ "    {",
+		\ "      /* toggle open the fold ID (remove window ID) */",
+		\ "      toggleFold(node.id.substr(4));",
+		\ "    }",
+		\ "    node = node.parentNode;",
+		\ "  }",
+		\ ])
+	endif
+      endif
 
-    if s:uses_script
-      " insert script tag if needed
-      call append(style_start, [
-	    \ "<script" . (s:html5 ? "" : " type='text/javascript'") . ">",
-	    \ s:settings.use_xhtml ? '//<![CDATA[' : "<!--"])
-    endif
+      if s:settings.line_ids
+	call append(style_start, [
+	      \ "",
+	      \ "/* function to open any folds containing a jumped-to line before jumping to it */",
+	      \ "function JumpToLine()",
+	      \ "{",
+	      \ "  var lineNum;",
+	      \ "  lineNum = window.location.hash;",
+	      \ "  lineNum = lineNum.substr(1); /* strip off '#' */",
+	      \ "",
+	      \ "  if (lineNum.indexOf('L') == -1) {",
+	      \ "    lineNum = 'L'+lineNum;",
+	      \ "  }",
+	      \ "  if (lineNum.indexOf('W') == -1) {",
+	      \ "    lineNum = 'W1'+lineNum;",
+	      \ "  }",
+	      \ "  var lineElem = document.getElementById(lineNum);"
+	      \ ])
+      endif
 
-    " Insert styles from all the generated html documents and additional styles
-    " for the table-based layout of the side-by-side diff. The diff should take
-    " up the full browser window (but not more), and be static in size,
-    " horizontally scrollable when the lines are too long. Otherwise, the diff
-    " is pretty useless for really long lines. {{{
-    if s:settings.use_css
-      call append(style_start,
-	    \ ['<style' . (s:html5 ? '' : 'type="text/css"') . '>']+
-	    \ style+
-	    \ [ s:settings.use_xhtml ? '' : '<!--',
-	    \   'table { table-layout: fixed; }',
-	    \   'html, body, table, tbody { width: 100%; margin: 0; padding: 0; }',
-	    \   'table, td, th { border: 1px solid; }',
-	    \   'td { vertical-align: top; }',
-	    \   'th, td { width: '.printf("%.1f",100.0/len(a:win_list)).'%; }',
-	    \   'td div { overflow: auto; }',
-	    \   s:settings.use_xhtml ? '' : '-->',
-	    \   '</style>'
-	    \])
-    endif "}}}
+      " Insert javascript to toggle matching folds open and closed in all windows,
+      " if dynamic folding is active.
+      if s:settings.dynamic_folds
+	call append(style_start, [
+	      \  "  function toggleFold(objID)",
+	      \  "  {",
+	      \  "    for (win_num = 1; win_num <= ".len(a:buf_list)."; win_num++)",
+	      \  "    {",
+	      \  "      var fold;",
+	      \  '      fold = document.getElementById("win"+win_num+objID);',
+	      \  "      if(fold.className == 'closed-fold')",
+	      \  "      {",
+	      \  "        fold.className = 'open-fold';",
+	      \  "      }",
+	      \  "      else if (fold.className == 'open-fold')",
+	      \  "      {",
+	      \  "        fold.className = 'closed-fold';",
+	      \  "      }",
+	      \  "    }",
+	      \  "  }",
+	      \ ])
+      endif
+
+      if s:uses_script
+	" insert script tag if needed
+	call append(style_start, [
+	      \ "<script" . (s:html5 ? "" : " type='text/javascript'") . ">",
+	      \ s:settings.use_xhtml ? '//<![CDATA[' : "<!--"])
+      endif
+
+      " Insert styles from all the generated html documents and additional styles
+      " for the table-based layout of the side-by-side diff. The diff should take
+      " up the full browser window (but not more), and be static in size,
+      " horizontally scrollable when the lines are too long. Otherwise, the diff
+      " is pretty useless for really long lines. {{{
+      if s:settings.use_css
+	call append(style_start,
+	      \ ['<style' . (s:html5 ? '' : 'type="text/css"') . '>']+
+	      \ style+
+	      \ [ s:settings.use_xhtml ? '' : '<!--',
+	      \   'table { table-layout: fixed; }',
+	      \   'html, body, table, tbody { width: 100%; margin: 0; padding: 0; }',
+	      \   'table, td, th { border: 1px solid; }',
+	      \   'td { vertical-align: top; }',
+	      \   'th, td { width: '.printf("%.1f",100.0/len(a:win_list)).'%; }',
+	      \   'td div { overflow: auto; }',
+	      \   s:settings.use_xhtml ? '' : '-->',
+	      \   '</style>'
+	      \])
+      endif "}}}
+    endif
   endif
 
   let &paste = s:old_paste
@@ -712,6 +732,9 @@ func! tohtml#GetUserSettings() "{{{
     call tohtml#GetOption(user_settings,     'no_foldcolumn', user_settings.ignore_folding)
     call tohtml#GetOption(user_settings,      'hover_unfold', 0 )
     call tohtml#GetOption(user_settings,            'no_pre', 0 )
+    call tohtml#GetOption(user_settings,            'no_doc', 0 )
+    call tohtml#GetOption(user_settings,          'no_links', 0 )
+    call tohtml#GetOption(user_settings,       'no_modeline', 0 )
     call tohtml#GetOption(user_settings,        'no_invalid', 0 )
     call tohtml#GetOption(user_settings,      'whole_filler', 0 )
     call tohtml#GetOption(user_settings,         'use_xhtml', 0 )
@@ -752,7 +775,7 @@ func! tohtml#GetUserSettings() "{{{
 
     " pre_wrap doesn't do anything if not using pre or not using CSS
     if user_settings.no_pre || !user_settings.use_css
-      let user_settings.pre_wrap=0
+      let user_settings.pre_wrap = 0
     endif
     "}}}
 

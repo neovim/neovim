@@ -3,14 +3,14 @@ local lfs = require('lfs')
 local clear = helpers.clear
 local command, eq, neq, write_file =
   helpers.command, helpers.eq, helpers.neq, helpers.write_file
-local iswin = helpers.iswin
 local read_file = helpers.read_file
+local is_os = helpers.is_os
 
 describe(':wshada', function()
   local shada_file = 'wshada_test'
 
   before_each(function()
-    clear{args={'-i', iswin() and 'nul' or '/dev/null',
+    clear{args={'-i', is_os('win') and 'nul' or '/dev/null',
                 -- Need 'swapfile' for these tests.
                 '--cmd', 'set swapfile undodir=. directory=. viewdir=. backupdir=. belloff= noshowcmd noruler'},
           args_rm={'-n', '-i', '--cmd'}}

@@ -5,7 +5,7 @@ local eval, eq = helpers.eval, helpers.eq
 local command = helpers.command
 local nvim = helpers.nvim
 local exc_exec = helpers.exc_exec
-local iswin = helpers.iswin
+local is_os = helpers.is_os
 
 describe('msgpack*() functions', function()
   before_each(clear)
@@ -467,7 +467,7 @@ describe('msgpackparse() function', function()
     eval(cmd)
     eval(cmd)  -- do it again (try to force segfault)
     local api_info = eval(cmd)  -- do it again
-    if iswin() then
+    if is_os('win') then
       helpers.assert_alive()
       pending('msgpackparse() has a bug on windows')
       return

@@ -2,12 +2,17 @@
 #define NVIM_MAP_H
 
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
 
+#include "klib/khash.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/extmark_defs.h"
+#include "nvim/gettext.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/map_defs.h"
 #include "nvim/tui/input_defs.h"
+#include "nvim/types.h"
 #include "nvim/ui_client.h"
 
 #if defined(__NetBSD__)
@@ -39,6 +44,7 @@ MAP_DECLS(int, cstr_t)
 MAP_DECLS(cstr_t, ptr_t)
 MAP_DECLS(cstr_t, int)
 MAP_DECLS(ptr_t, ptr_t)
+MAP_DECLS(uint32_t, ptr_t)
 MAP_DECLS(uint64_t, ptr_t)
 MAP_DECLS(uint64_t, ssize_t)
 MAP_DECLS(uint64_t, uint64_t)

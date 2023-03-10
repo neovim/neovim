@@ -75,6 +75,7 @@ local busted = require('busted')
 local deepcopy = helpers.deepcopy
 local shallowcopy = helpers.shallowcopy
 local concat_tables = helpers.concat_tables
+local pesc = helpers.pesc
 local run_session = helpers.run_session
 local eq = helpers.eq
 local dedent = helpers.dedent
@@ -101,13 +102,10 @@ end
 
 local default_screen_timeout = default_timeout_factor * 3500
 
-do
-  local spawn, nvim_prog = helpers.spawn, helpers.nvim_prog
-  local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N', '--embed'})
+function Screen._init_colors(session)
   local status, rv = session:request('nvim_get_color_map')
   if not status then
-    print('failed to get color map')
-    os.exit(1)
+    error('failed to get color map')
   end
   local colors = rv
   local colornames = {}
@@ -116,12 +114,15 @@ do
     -- this is just a helper to get any canonical name of a color
     colornames[rgb] = name
   end
-  session:close()
   Screen.colors = colors
   Screen.colornames = colornames
 end
 
 function Screen.new(width, height)
+  if not Screen.colors then
+    Screen._init_colors(get_session())
+  end
+
   if not width then
     width = 53
   end
@@ -214,7 +215,7 @@ function Screen:attach(options, session)
     -- simplify test code by doing the same.
     self._options.rgb = true
   end
-  if self._options.ext_multigrid or self._options.ext_float then
+  if self._options.ext_multigrid then
     self._options.ext_linegrid = true
   end
 end
@@ -257,7 +258,7 @@ local ext_keys = {
 -- grid:        Expected screen state (string). Each line represents a screen
 --              row. Last character of each row (typically "|") is stripped.
 --              Common indentation is stripped.
---              "{MATCH:x}|" lines are matched against Lua pattern `x`.
+--              "{MATCH:x}" in a line is matched against Lua pattern `x`.
 -- attr_ids:    Expected text attributes. Screen rows are transformed according
 --              to this table, as follows: each substring S composed of
 --              characters having the same attributes will be substituted by
@@ -382,8 +383,20 @@ function Screen:expect(expected, attr_ids, ...)
       end
       for i, row in ipairs(expected_rows) do
         msg_expected_rows[i] = row
-        local m = (row ~= actual_rows[i] and row:match('{MATCH:(.*)}') or nil)
-        if row ~= actual_rows[i] and (not m or not (actual_rows[i] and actual_rows[i]:match(m))) then
+        local pat = nil
+        if actual_rows[i] and row ~= actual_rows[i] then
+          local after = row
+          while true do
+            local s, e, m = after:find('{MATCH:(.-)}')
+            if not s then
+              pat = pat and (pat .. pesc(after))
+              break
+            end
+            pat = (pat or '') .. pesc(after:sub(1, s - 1)) .. m
+            after = after:sub(e + 1)
+          end
+        end
+        if row ~= actual_rows[i] and (not pat or not actual_rows[i]:match(pat)) then
           msg_expected_rows[i] = '*' .. msg_expected_rows[i]
           if i <= #actual_rows then
             actual_rows[i] = '*' .. actual_rows[i]
@@ -470,15 +483,19 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
   end, expected)
 end
 
-function Screen:expect_unchanged(waittime_ms, ignore_attrs, request_cb)
+function Screen:expect_unchanged(intermediate, waittime_ms, ignore_attrs)
   waittime_ms = waittime_ms and waittime_ms or 100
   -- Collect the current screen state.
-  self:sleep(0, request_cb)
   local kwargs = self:get_snapshot(nil, ignore_attrs)
 
-  -- Check that screen state does not change.
-  kwargs.unchanged = true
+  if intermediate then
+    kwargs.intermediate = true
+  else
+    kwargs.unchanged = true
+  end
+
   kwargs.timeout = waittime_ms
+  -- Check that screen state does not change.
   self:expect(kwargs)
 end
 
@@ -519,7 +536,7 @@ function Screen:_wait(check, flags)
   end
 
   assert(timeout >= minimal_timeout)
-  local did_miminal_timeout = false
+  local did_minimal_timeout = false
 
   local function notification_cb(method, args)
     assert(method == 'redraw', string.format(
@@ -536,10 +553,11 @@ function Screen:_wait(check, flags)
 
     if not err then
       success_seen = true
-      if did_miminal_timeout then
+      if did_minimal_timeout then
         self._session:stop()
       end
     elseif success_seen and #args > 0 then
+      success_seen = false
       failure_after_success = true
       -- print(inspect(args))
     end
@@ -558,7 +576,7 @@ function Screen:_wait(check, flags)
   end
 
   if not success_seen and not eof then
-    did_miminal_timeout = true
+    did_minimal_timeout = true
     eof = run_session(self._session, flags.request_cb, notification_cb, nil, timeout-minimal_timeout)
   end
 
@@ -769,6 +787,7 @@ end
 
 function Screen:_handle_grid_cursor_goto(grid, row, col)
   self._cursor.grid = grid
+  assert(row >= 0 and col >= 0)
   self._cursor.row = row + 1
   self._cursor.col = col + 1
 end
@@ -1549,7 +1568,8 @@ function Screen:_get_attr_id(attr_state, attrs, hl_id)
       attr_state.modified = true
       return id
     end
-    return "UNEXPECTED "..self:_pprint_attrs(self._attr_table[hl_id][1])
+    local kind = self._options.rgb and 1 or 2
+    return "UNEXPECTED "..self:_pprint_attrs(self._attr_table[hl_id][kind])
   else
     if self:_equal_attrs(attrs, {}) then
       -- ignore this attrs

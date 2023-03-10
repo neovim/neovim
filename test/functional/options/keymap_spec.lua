@@ -184,7 +184,7 @@ describe("'keymap' / :lmap", function()
     feed('il<esc>')
     expect('alllaaa')
   end)
-  -- This is a problem introduced when introducting :lmap and macro
+  -- This is a problem introduced when introducing :lmap and macro
   -- compatibility. There are no plans to fix this as the complexity involved
   -- seems too great.
   pending('mappings not applied to macro replay of :lnoremap', function()

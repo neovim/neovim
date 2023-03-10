@@ -39,6 +39,7 @@ local constants = {
     Deprecated = 2,
   },
 
+  ---@enum lsp.MessageType
   MessageType = {
     -- An error message.
     Error = 1,
@@ -51,6 +52,7 @@ local constants = {
   },
 
   -- The file event type.
+  ---@enum lsp.FileChangeType
   FileChangeType = {
     -- The file got created.
     Created = 1,
@@ -142,6 +144,7 @@ local constants = {
   },
 
   -- Represents reasons why a text document is saved.
+  ---@enum lsp.TextDocumentSaveReason
   TextDocumentSaveReason = {
     -- Manually triggered, e.g. by the user pressing save, by starting debugging,
     -- or by an API call.
@@ -293,6 +296,17 @@ local constants = {
     Source = 'source',
     -- Base kind for an organize imports source action
     SourceOrganizeImports = 'source.organizeImports',
+  },
+  -- The reason why code actions were requested.
+  ---@enum lsp.CodeActionTriggerKind
+  CodeActionTriggerKind = {
+    -- Code actions were explicitly requested by the user or by an extension.
+    Invoked = 1,
+    -- Code actions were requested automatically.
+    --
+    -- This typically happens when current selection in a file changes, but can
+    -- also be triggered when file content changes.
+    Automatic = 2,
   },
 }
 
@@ -619,14 +633,63 @@ export interface WorkspaceClientCapabilities {
 function protocol.make_client_capabilities()
   return {
     textDocument = {
+      semanticTokens = {
+        dynamicRegistration = false,
+        tokenTypes = {
+          'namespace',
+          'type',
+          'class',
+          'enum',
+          'interface',
+          'struct',
+          'typeParameter',
+          'parameter',
+          'variable',
+          'property',
+          'enumMember',
+          'event',
+          'function',
+          'method',
+          'macro',
+          'keyword',
+          'modifier',
+          'comment',
+          'string',
+          'number',
+          'regexp',
+          'operator',
+          'decorator',
+        },
+        tokenModifiers = {
+          'declaration',
+          'definition',
+          'readonly',
+          'static',
+          'deprecated',
+          'abstract',
+          'async',
+          'modification',
+          'documentation',
+          'defaultLibrary',
+        },
+        formats = { 'relative' },
+        requests = {
+          -- TODO(jdrouhard): Add support for this
+          range = false,
+          full = { delta = true },
+        },
+
+        overlappingTokenSupport = true,
+        -- TODO(jdrouhard): Add support for this
+        multilineTokenSupport = false,
+        serverCancelSupport = false,
+        augmentsSyntaxTokens = true,
+      },
       synchronization = {
         dynamicRegistration = false,
 
-        -- TODO(ashkan) Send textDocument/willSave before saving (BufWritePre)
-        willSave = false,
-
-        -- TODO(ashkan) Implement textDocument/willSaveWaitUntil
-        willSaveWaitUntil = false,
+        willSave = true,
+        willSaveWaitUntil = true,
 
         -- Send textDocument/didSave after saving (BufWritePost)
         didSave = true,
@@ -637,7 +700,7 @@ function protocol.make_client_capabilities()
         codeActionLiteralSupport = {
           codeActionKind = {
             valueSet = (function()
-              local res = vim.tbl_values(protocol.CodeActionKind)
+              local res = vim.tbl_values(constants.CodeActionKind)
               table.sort(res)
               return res
             end)(),
@@ -742,6 +805,9 @@ function protocol.make_client_capabilities()
           end)(),
         },
       },
+      callHierarchy = {
+        dynamicRegistration = false,
+      },
     },
     workspace = {
       symbol = {
@@ -765,9 +831,13 @@ function protocol.make_client_capabilities()
       workspaceEdit = {
         resourceOperations = { 'rename', 'create', 'delete' },
       },
-    },
-    callHierarchy = {
-      dynamicRegistration = false,
+      semanticTokens = {
+        refreshSupport = true,
+      },
+      didChangeWatchedFiles = {
+        dynamicRegistration = false,
+        relativePatternSupport = true,
+      },
     },
     experimental = nil,
     window = {
@@ -778,7 +848,7 @@ function protocol.make_client_capabilities()
         },
       },
       showDocument = {
-        support = false,
+        support = true,
       },
     },
   }
@@ -861,8 +931,8 @@ function protocol._resolve_capabilities_compat(server_capabilities)
       text_document_sync_properties = {
         text_document_open_close = if_nil(textDocumentSync.openClose, false),
         text_document_did_change = if_nil(textDocumentSync.change, TextDocumentSyncKind.None),
-        text_document_will_save = if_nil(textDocumentSync.willSave, false),
-        text_document_will_save_wait_until = if_nil(textDocumentSync.willSaveWaitUntil, false),
+        text_document_will_save = if_nil(textDocumentSync.willSave, true),
+        text_document_will_save_wait_until = if_nil(textDocumentSync.willSaveWaitUntil, true),
         text_document_save = if_nil(textDocumentSync.save, false),
         text_document_save_include_text = if_nil(
           type(textDocumentSync.save) == 'table' and textDocumentSync.save.includeText,

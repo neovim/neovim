@@ -1,22 +1,29 @@
 #ifndef NVIM_API_PRIVATE_DISPATCH_H
 #define NVIM_API_PRIVATE_DISPATCH_H
 
-#include "nvim/api/private/defs.h"
+#include <stdbool.h>
+#include <stdint.h>
 
-typedef Object (*ApiDispatchWrapper)(uint64_t channel_id,
-                                     Array args,
-                                     Error *error);
+#include "nvim/api/private/defs.h"
+#include "nvim/memory.h"
+#include "nvim/types.h"
+
+typedef Object (*ApiDispatchWrapper)(uint64_t channel_id, Array args, Arena *arena, Error *error);
 
 /// The rpc_method_handlers table, used in msgpack_rpc_dispatch(), stores
 /// functions of this type.
-typedef struct {
+struct MsgpackRpcRequestHandler {
   const char *name;
   ApiDispatchWrapper fn;
   bool fast;  // Function is safe to be executed immediately while running the
               // uv loop (the loop is run very frequently due to breakcheck).
               // If "fast" is false, the function is deferred, i e the call will
               // be put in the event queue, for safe handling later.
-} MsgpackRpcRequestHandler;
+  bool arena_return;  // return value is allocated in the arena (or statically)
+                      // and should not be freed as such.
+};
+
+extern const MsgpackRpcRequestHandler method_handlers[];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/dispatch.h.generated.h"

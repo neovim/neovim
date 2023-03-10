@@ -32,7 +32,7 @@ The easiest way to open a new window is to use the following command: >
 
 This command splits the screen into two windows and leaves the cursor in the
 top one:
-
+>
 	+----------------------------------+
 	|/* file one.c */		   |
 	|~				   |
@@ -43,7 +43,7 @@ top one:
 	|one.c=============================|
 	|				   |
 	+----------------------------------+
-
+<
 What you see here is two windows on the same file.  The line with "====" is
 the status line.  It displays information about the window above it.  (In
 practice the status line will be in reverse video.)
@@ -87,7 +87,7 @@ The following command opens a second window and starts editing the given file:
 	:split two.c
 
 If you were editing one.c, then the result looks like this:
-
+>
 	+----------------------------------+
 	|/* file two.c */		   |
 	|~				   |
@@ -98,7 +98,7 @@ If you were editing one.c, then the result looks like this:
 	|one.c=============================|
 	|				   |
 	+----------------------------------+
-
+<
 To open a window on a new, empty file, use this: >
 
 	:new
@@ -170,7 +170,7 @@ or: >
 	:vsplit two.c
 
 The result looks something like this:
-
+>
 	+--------------------------------------+
 	|/* file two.c */   |/* file one.c */  |
 	|~		    |~		       |
@@ -179,7 +179,7 @@ The result looks something like this:
 	|two.c===============one.c=============|
 	|				       |
 	+--------------------------------------+
-
+<
 Actually, the | lines in the middle will be in reverse video.  This is called
 the vertical separator.  It separates the two windows left and right of it.
 
@@ -218,7 +218,7 @@ cursor keys can also be used, if you like.
 You have split a few windows, but now they are in the wrong place.  Then you
 need a command to move the window somewhere else.  For example, you have three
 windows like this:
-
+>
 	+----------------------------------+
 	|/* file two.c */		   |
 	|~				   |
@@ -233,7 +233,7 @@ windows like this:
 	|one.c=============================|
 	|				   |
 	+----------------------------------+
-
+<
 Clearly the last one should be at the top.  Go to that window (using CTRL-W w)
 and then type this command: >
 
@@ -244,7 +244,7 @@ the very top.  You will notice that K is again used for moving upwards.
    When you have vertical splits, CTRL-W K will move the current window to the
 top and make it occupy the full width of the Vim window.  If this is your
 layout:
-
+>
 	+-------------------------------------------+
 	|/* two.c */  |/* three.c */  |/* one.c */  |
 	|~	      |~	      |~	    |
@@ -255,9 +255,9 @@ layout:
 	|two.c=========three.c=========one.c========|
 	|					    |
 	+-------------------------------------------+
-
+<
 Then using CTRL-W K in the middle window (three.c) will result in:
-
+>
 	+-------------------------------------------+
 	|/* three.c */				    |
 	|~					    |
@@ -268,7 +268,7 @@ Then using CTRL-W K in the middle window (three.c) will result in:
 	|two.c==================one.c===============|
 	|					    |
 	+-------------------------------------------+
-
+<
 The other three similar commands (you can probably guess these now):
 
 	CTRL-W H	move window to the far left
@@ -316,7 +316,7 @@ To make Vim open a window for each file, start it with the "-o" argument: >
 	vim -o one.txt two.txt three.txt
 
 This results in:
-
+>
 	+-------------------------------+
 	|file one.txt			|
 	|~				|
@@ -329,7 +329,7 @@ This results in:
 	|three.txt======================|
 	|				|
 	+-------------------------------+
-
+<
 The "-O" argument is used to get vertically split windows.
    When Vim is already running, the ":all" command opens a window for each
 file in the argument list.  ":vertical all" does it with vertical splits.
@@ -347,7 +347,7 @@ Type this command in a shell to start Nvim in diff mode: >
 
 Vim will start, with two windows side by side.  You will only see the line
 in which you added characters, and a few lines above and below it.
-
+>
 	 VV		      VV
 	+-----------------------------------------+
 	|+ +--123 lines: /* a|+ +--123 lines: /* a|  <- fold
@@ -366,7 +366,7 @@ in which you added characters, and a few lines above and below it.
 	|main.c~==============main.c==============|
 	|					  |
 	+-----------------------------------------+
-
+<
 (This picture doesn't show the highlighting, use "nvim -d" for that.)
 
 The lines that were not modified have been collapsed into one line.  This is
@@ -519,7 +519,7 @@ Assume you are editing "thisfile".  To create a new tab page use this command: >
 
 This will edit the file "thatfile" in a window that occupies the whole Vim
 window.  And you will notice a bar at the top with the two file names:
-
+>
 	+----------------------------------+
 	| thisfile | /thatfile/ __________X|    (thatfile is bold)
 	|/* thatfile */			   |
@@ -530,13 +530,13 @@ window.  And you will notice a bar at the top with the two file names:
 	|~				   |
 	|				   |
 	+----------------------------------+
-
+<
 You now have two tab pages.  The first one has a window for "thisfile" and the
 second one a window for "thatfile".  It's like two pages that are on top of
 each other, with a tab sticking out of each page showing the file name.
 
 Now use the mouse to click on "thisfile" in the top line.  The result is
-
+>
 	+----------------------------------+
 	| /thisfile/ | thatfile __________X|    (thisfile is bold)
 	|/* thisfile */			   |
@@ -547,7 +547,7 @@ Now use the mouse to click on "thisfile" in the top line.  The result is
 	|~				   |
 	|				   |
 	+----------------------------------+
-
+<
 Thus you can switch between tab pages by clicking on the label in the top
 line.  If you don't have a mouse or don't want to use it, you can use the "gt"
 command.  Mnemonic: Goto Tab.
@@ -558,7 +558,7 @@ Now let's create another tab page with the command: >
 
 This makes a new tab page with one window that is editing the same buffer as
 the window we were in:
-
+>
 	+-------------------------------------+
 	| thisfile | /thisfile/ | thatfile __X|   (thisfile is bold)
 	|/* thisfile */			      |
@@ -569,7 +569,7 @@ the window we were in:
 	|~				      |
 	|				      |
 	+-------------------------------------+
-
+<
 You can put ":tab" before any Ex command that opens a window.  The window will
 be opened in a new tab page.  Another example: >
 

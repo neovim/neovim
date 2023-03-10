@@ -338,7 +338,7 @@ Open the command line window with this command: >
 
 Vim now opens a (small) window at the bottom.  It contains the command line
 history, and an empty line at the end:
-
+>
 	+-------------------------------------+
 	|other window			      |
 	|~				      |
@@ -353,7 +353,7 @@ history, and an empty line at the end:
 	|command-line=========================|
 	|				      |
 	+-------------------------------------+
-
+<
 You are now in Normal mode.  You can use the "hjkl" keys to move around.  For
 example, move up with "5k" to the ":e config.h.in" line.  Type "$h" to go to
 the "i" of "in" and type "cwout".  Now you have changed the line to:

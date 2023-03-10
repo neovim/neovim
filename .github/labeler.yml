@@ -13,6 +13,7 @@
   - src/nvim/lua/treesitter.*
   - runtime/lua/vim/treesitter.lua
   - runtime/lua/vim/treesitter/*
+  - runtime/queries/**/*
 
 "diagnostic":
   - runtime/lua/vim/diagnostic.lua
@@ -62,3 +63,8 @@
 
 "filetype":
   - runtime/lua/vim/filetype.lua
+  - runtime/lua/vim/filetype/detect.lua
+
+"platform:nix":
+  - contrib/flake.lock
+  - contrib/flake.nix

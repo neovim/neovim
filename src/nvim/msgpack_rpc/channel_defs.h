@@ -27,7 +27,7 @@ typedef struct {
   MsgpackRpcRequestHandler handler;
   Array args;
   uint32_t request_id;
-  ArenaMem used_mem;
+  Arena used_mem;
 } RequestEvent;
 
 typedef struct {

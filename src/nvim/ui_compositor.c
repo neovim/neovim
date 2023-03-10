@@ -7,24 +7,28 @@
 // Layer-based compositing: https://en.wikipedia.org/wiki/Digital_compositing
 
 #include <assert.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "nvim/api/private/helpers.h"
+#include "klib/kvec.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/ascii.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/log.h"
-#include "nvim/lua/executor.h"
-#include "nvim/main.h"
+#include "nvim/macros.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/os/os.h"
-#include "nvim/popupmenu.h"
-#include "nvim/ugrid.h"
+#include "nvim/option_defs.h"
+#include "nvim/os/time.h"
+#include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/vim.h"
@@ -33,7 +37,6 @@
 # include "ui_compositor.c.generated.h"
 #endif
 
-static UI *compositor = NULL;
 static int composed_uis = 0;
 kvec_t(ScreenGrid *) layers = KV_INITIAL_VALUE;
 
@@ -58,33 +61,8 @@ static int dbghl_normal, dbghl_clear, dbghl_composed, dbghl_recompose;
 
 void ui_comp_init(void)
 {
-  if (compositor != NULL) {
-    return;
-  }
-  compositor = xcalloc(1, sizeof(UI));
-
-  compositor->rgb = true;
-  compositor->grid_resize = ui_comp_grid_resize;
-  compositor->grid_scroll = ui_comp_grid_scroll;
-  compositor->grid_cursor_goto = ui_comp_grid_cursor_goto;
-  compositor->raw_line = ui_comp_raw_line;
-  compositor->msg_set_pos = ui_comp_msg_set_pos;
-
-  // Be unopinionated: will be attached together with a "real" ui anyway
-  compositor->width = INT_MAX;
-  compositor->height = INT_MAX;
-  for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
-    compositor->ui_ext[i] = true;
-  }
-
-  // TODO(bfredl): this will be more complicated if we implement
-  // hlstate per UI (i e reduce hl ids for non-hlstate UIs)
-  compositor->ui_ext[kUIHlState] = false;
-
   kv_push(layers, &default_grid);
   curgrid = &default_grid;
-
-  ui_attach_impl(compositor, 0);
 }
 
 void ui_comp_syn_init(void)
@@ -122,7 +100,7 @@ bool ui_comp_should_draw(void)
 ///
 /// TODO(bfredl): later on the compositor should just use win_float_pos events,
 /// though that will require slight event order adjustment: emit the win_pos
-/// events in the beginning of  update_screen(0), rather than in ui_flush()
+/// events in the beginning of update_screen(), rather than in ui_flush()
 bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width, bool valid,
                       bool on_top)
 {
@@ -237,7 +215,7 @@ bool ui_comp_set_grid(handle_T handle)
   return false;
 }
 
-static void ui_comp_raise_grid(ScreenGrid *grid, size_t new_index)
+void ui_comp_raise_grid(ScreenGrid *grid, size_t new_index)
 {
   size_t old_index = grid->comp_index;
   for (size_t i = old_index; i < new_index; i++) {
@@ -257,7 +235,7 @@ static void ui_comp_raise_grid(ScreenGrid *grid, size_t new_index)
   }
 }
 
-static void ui_comp_grid_cursor_goto(UI *ui, Integer grid_handle, Integer r, Integer c)
+void ui_comp_grid_cursor_goto(Integer grid_handle, Integer r, Integer c)
 {
   if (!ui_comp_should_draw() || !ui_comp_set_grid((int)grid_handle)) {
     return;
@@ -469,6 +447,10 @@ static void compose_debug(Integer startrow, Integer endrow, Integer startcol, In
   endcol = MIN(endcol, default_grid.cols);
   int attr = syn_id2attr(syn_id);
 
+  if (delay) {
+    debug_delay(endrow - startrow);
+  }
+
   for (int row = (int)startrow; row < endrow; row++) {
     ui_composed_call_raw_line(1, row, startcol, startcol, endcol, attr, false,
                               (const schar_T *)linebuf,
@@ -485,7 +467,7 @@ static void debug_delay(Integer lines)
   ui_call_flush();
   uint64_t wd = (uint64_t)labs(p_wd);
   uint64_t factor = (uint64_t)MAX(MIN(lines, 5), 1);
-  os_microdelay(factor * wd * 1000u, true);
+  os_microdelay(factor * wd * 1000U, true);
 }
 
 static void compose_area(Integer startrow, Integer endrow, Integer startcol, Integer endcol)
@@ -513,9 +495,9 @@ void ui_comp_compose_grid(ScreenGrid *grid)
   }
 }
 
-static void ui_comp_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Integer endcol,
-                             Integer clearcol, Integer clearattr, LineFlags flags,
-                             const schar_T *chunk, const sattr_T *attrs)
+void ui_comp_raw_line(Integer grid, Integer row, Integer startcol, Integer endcol, Integer clearcol,
+                      Integer clearattr, LineFlags flags, const schar_T *chunk,
+                      const sattr_T *attrs)
 {
   if (!ui_comp_should_draw() || !ui_comp_set_grid((int)grid)) {
     return;
@@ -570,22 +552,23 @@ static void ui_comp_raw_line(UI *ui, Integer grid, Integer row, Integer startcol
 /// The screen is invalid and will soon be cleared
 ///
 /// Don't redraw floats until screen is cleared
-void ui_comp_set_screen_valid(bool valid)
+bool ui_comp_set_screen_valid(bool valid)
 {
+  bool old_val = valid_screen;
   valid_screen = valid;
   if (!valid) {
     msg_sep_row = -1;
   }
+  return old_val;
 }
 
-static void ui_comp_msg_set_pos(UI *ui, Integer grid, Integer row, Boolean scrolled,
-                                String sep_char)
+void ui_comp_msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep_char)
 {
   msg_grid.comp_row = (int)row;
   if (scrolled && row > 0) {
     msg_sep_row = (int)row - 1;
     if (sep_char.data) {
-      STRLCPY(msg_sep_char, sep_char.data, sizeof(msg_sep_char));
+      xstrlcpy(msg_sep_char, sep_char.data, sizeof(msg_sep_char));
     }
   } else {
     msg_sep_row = -1;
@@ -594,7 +577,7 @@ static void ui_comp_msg_set_pos(UI *ui, Integer grid, Integer row, Boolean scrol
   if (row > msg_current_row && ui_comp_should_draw()) {
     compose_area(MAX(msg_current_row - 1, 0), row, 0, default_grid.cols);
   } else if (row < msg_current_row && ui_comp_should_draw()
-             && msg_current_row < Rows) {
+             && (msg_current_row < Rows || (scrolled && !msg_was_scrolled))) {
     int delta = msg_current_row - (int)row;
     if (msg_grid.blending) {
       int first_row = MAX((int)row - (scrolled?1:0), 0);
@@ -623,8 +606,8 @@ static bool curgrid_covered_above(int row)
   return kv_size(layers) - (above_msg?1:0) > curgrid->comp_index + 1;
 }
 
-static void ui_comp_grid_scroll(UI *ui, Integer grid, Integer top, Integer bot, Integer left,
-                                Integer right, Integer rows, Integer cols)
+void ui_comp_grid_scroll(Integer grid, Integer top, Integer bot, Integer left, Integer right,
+                         Integer rows, Integer cols)
 {
   if (!ui_comp_should_draw() || !ui_comp_set_grid((int)grid)) {
     return;
@@ -658,7 +641,7 @@ static void ui_comp_grid_scroll(UI *ui, Integer grid, Integer top, Integer bot, 
   }
 }
 
-static void ui_comp_grid_resize(UI *ui, Integer grid, Integer width, Integer height)
+void ui_comp_grid_resize(Integer grid, Integer width, Integer height)
 {
   if (grid == 1) {
     ui_composed_call_grid_resize(1, width, height);

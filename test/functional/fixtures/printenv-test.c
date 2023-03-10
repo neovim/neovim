@@ -3,13 +3,13 @@
 
 #include <stdio.h>
 
-#ifdef WIN32
+#ifdef MSWIN
 # include <windows.h>
 #else
 # include <stdlib.h>
 #endif
 
-#ifdef WIN32
+#ifdef MSWIN
 int wmain(int argc, wchar_t **argv)
 #else
 int main(int argc, char **argv)
@@ -19,7 +19,7 @@ int main(int argc, char **argv)
     return 1;
   }
 
-#ifdef WIN32
+#ifdef MSWIN
   wchar_t *value = _wgetenv(argv[1]);
   if (value == NULL) {
     return 1;

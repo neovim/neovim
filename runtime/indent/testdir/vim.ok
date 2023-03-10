@@ -36,6 +36,13 @@ let t = [
 	    \ },
 	    \  ]
 
+def Func()
+    var d = dd
+		->extend({
+    })
+    eval 0
+enddef
+
 " END_INDENT
 
 " START_INDENT

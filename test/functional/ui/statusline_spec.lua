@@ -10,6 +10,7 @@ local meths = helpers.meths
 local exec = helpers.exec
 local exec_lua = helpers.exec_lua
 local eval = helpers.eval
+local sleep = helpers.sleep
 
 describe('statusline clicks', function()
   local screen
@@ -164,6 +165,24 @@ describe('statusline clicks', function()
     meths.input_mouse('right', 'press', '', 0, 6, 5)
     eq('0 1 r', eval("g:testvar"))
   end)
+
+  it('no memory leak with zero-width click labels', function()
+    command([[
+      let &stl = '%@Test@%T%@MyClickFunc@%=%T%@Test@'
+    ]])
+    meths.input_mouse('left', 'press', '', 0, 6, 0)
+    eq('0 1 l', eval("g:testvar"))
+    meths.input_mouse('right', 'press', '', 0, 6, 39)
+    eq('0 1 r', eval("g:testvar"))
+  end)
+
+  it('no memory leak with truncated click labels', function()
+    command([[
+      let &stl = '%@MyClickFunc@foo%X' .. repeat('a', 40) .. '%<t%@Test@bar%X%@Test@baz'
+    ]])
+    meths.input_mouse('left', 'press', '', 0, 6, 2)
+    eq('0 1 l', eval("g:testvar"))
+  end)
 end)
 
 describe('global statusline', function()
@@ -178,6 +197,7 @@ describe('global statusline', function()
       [2] = {bold = true, reverse = true};
       [3] = {bold = true};
       [4] = {reverse = true};
+      [5] = {bold = true, foreground = Screen.colors.Fuchsia};
     })
     command('set laststatus=3')
     command('set ruler')
@@ -398,6 +418,106 @@ describe('global statusline', function()
     meths.input_mouse('left', 'drag', '', 0, 14, 10)
     eq(1, meths.get_option('cmdheight'))
   end)
+
+  it('cmdline row is correct after setting cmdheight #20514', function()
+    command('botright split test/functional/fixtures/bigfile.txt')
+    meths.set_option('cmdheight', 1)
+    feed('L')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      ────────────────────────────────────────────────────────────|
+      0000;<control>;Cc;0;BN;;;;;N;NULL;;;;                       |
+      0001;<control>;Cc;0;BN;;;;;N;START OF HEADING;;;;           |
+      0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;              |
+      0003;<control>;Cc;0;BN;;;;;N;END OF TEXT;;;;                |
+      0004;<control>;Cc;0;BN;;;;;N;END OF TRANSMISSION;;;;        |
+      0005;<control>;Cc;0;BN;;;;;N;ENQUIRY;;;;                    |
+      ^0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;                |
+      {2:test/functional/fixtures/bigfile.txt      7,1            Top}|
+                                                                  |
+    ]])
+    feed('j')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      ────────────────────────────────────────────────────────────|
+      0001;<control>;Cc;0;BN;;;;;N;START OF HEADING;;;;           |
+      0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;              |
+      0003;<control>;Cc;0;BN;;;;;N;END OF TEXT;;;;                |
+      0004;<control>;Cc;0;BN;;;;;N;END OF TRANSMISSION;;;;        |
+      0005;<control>;Cc;0;BN;;;;;N;ENQUIRY;;;;                    |
+      0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;                |
+      ^0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                       |
+      {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
+                                                                  |
+    ]])
+    meths.set_option('showtabline', 2)
+    screen:expect([[
+      {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      ────────────────────────────────────────────────────────────|
+      0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;              |
+      0003;<control>;Cc;0;BN;;;;;N;END OF TEXT;;;;                |
+      0004;<control>;Cc;0;BN;;;;;N;END OF TRANSMISSION;;;;        |
+      0005;<control>;Cc;0;BN;;;;;N;ENQUIRY;;;;                    |
+      0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;                |
+      ^0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                       |
+      {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
+                                                                  |
+    ]])
+    meths.set_option('cmdheight', 0)
+    screen:expect([[
+      {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      ────────────────────────────────────────────────────────────|
+      0001;<control>;Cc;0;BN;;;;;N;START OF HEADING;;;;           |
+      0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;              |
+      0003;<control>;Cc;0;BN;;;;;N;END OF TEXT;;;;                |
+      0004;<control>;Cc;0;BN;;;;;N;END OF TRANSMISSION;;;;        |
+      0005;<control>;Cc;0;BN;;;;;N;ENQUIRY;;;;                    |
+      0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;                |
+      ^0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                       |
+      {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
+    ]])
+    meths.set_option('cmdheight', 1)
+    screen:expect([[
+      {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      ────────────────────────────────────────────────────────────|
+      0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;              |
+      0003;<control>;Cc;0;BN;;;;;N;END OF TEXT;;;;                |
+      0004;<control>;Cc;0;BN;;;;;N;END OF TRANSMISSION;;;;        |
+      0005;<control>;Cc;0;BN;;;;;N;ENQUIRY;;;;                    |
+      0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;                |
+      ^0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                       |
+      {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
+                                                                  |
+    ]])
+  end)
 end)
 
 it('statusline does not crash if it has Arabic characters #19447', function()
@@ -443,4 +563,62 @@ it('statusline is redrawn with :resize from <Cmd> mapping #19629', function()
     {1:[No Name]                               }|
                                             |
   ]])
+end)
+
+it('showcmdloc=statusline does not show if statusline is too narrow', function()
+  clear()
+  local screen = Screen.new(40, 8)
+  screen:set_default_attr_ids({
+    [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+    [1] = {bold = true, reverse = true},  -- StatusLine
+    [2] = {reverse = true},  -- StatusLineNC
+  })
+  screen:attach()
+  command('set showcmd')
+  command('set showcmdloc=statusline')
+  command('1vsplit')
+  screen:expect([[
+    ^ │                                      |
+    {0:~}│{0:~                                     }|
+    {0:~}│{0:~                                     }|
+    {0:~}│{0:~                                     }|
+    {0:~}│{0:~                                     }|
+    {0:~}│{0:~                                     }|
+    {1:< }{2:[No Name]                             }|
+                                            |
+  ]])
+  feed('1234')
+  screen:expect_unchanged()
+end)
+
+it('K_EVENT does not trigger a statusline redraw unnecessarily', function()
+  clear()
+  local screen = Screen.new(40, 8)
+  screen:attach()
+  -- does not redraw on vim.schedule (#17937)
+  command([[
+    set laststatus=2
+    let g:counter = 0
+    func Status()
+      let g:counter += 1
+      lua vim.schedule(function() end)
+      return g:counter
+    endfunc
+    set statusline=%!Status()
+  ]])
+  sleep(50)
+  eq(1, eval('g:counter < 50'), 'g:counter=' .. eval('g:counter'))
+  -- also in insert mode
+  feed('i')
+  sleep(50)
+  eq(1, eval('g:counter < 50'), 'g:counter=' .. eval('g:counter'))
+  -- does not redraw on timer call (#14303)
+  command([[
+    let g:counter = 0
+    func Timer(timer)
+    endfunc
+    call timer_start(1, 'Timer', {'repeat': 100})
+  ]])
+  sleep(50)
+  eq(1, eval('g:counter < 50'), 'g:counter=' .. eval('g:counter'))
 end)

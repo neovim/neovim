@@ -524,7 +524,6 @@ that see the '"' as part of their argument:
     :cexpr (and the like)
     :cdo (and the like)
     :command
-    :cscope (and the like)
     :debug
     :display
     :echo (and the like)
@@ -566,7 +565,6 @@ followed by another Vim command:
     :cdo
     :cfdo
     :command
-    :cscope
     :debug
     :eval
     :folddoopen
@@ -575,7 +573,6 @@ followed by another Vim command:
     :global
     :help
     :helpgrep
-    :lcscope
     :ldo
     :lfdo
     :lhelpgrep
@@ -586,8 +583,8 @@ followed by another Vim command:
     :python
     :registers
     :read !
-    :scscope
     :sign
+    :tabdo
     :terminal
     :vglobal
     :windo
@@ -694,7 +691,9 @@ Line numbers may be specified with:		*:range* *{address}*
 	'T		position of mark T (uppercase); when the mark is in
 			another file it cannot be used in a range
 	/{pattern}[/]	the next line where {pattern} matches	  *:/*
+				also see |:range-pattern| below
 	?{pattern}[?]	the previous line where {pattern} matches *:?*
+				also see |:range-pattern| below
 	\/		the next line where the previously used search
 			pattern matches
 	\?		the previous line where the previously used search
@@ -702,11 +701,49 @@ Line numbers may be specified with:		*:range* *{address}*
 	\&		the next line where the previously used substitute
 			pattern matches
 
+						*:range-offset*
 Each may be followed (several times) by '+' or '-' and an optional number.
 This number is added or subtracted from the preceding line number.  If the
 number is omitted, 1 is used.  If there is nothing before the '+' or '-' then
 the current line is used.
+						*:range-closed-fold*
+When a line number after the comma is in a closed fold it is adjusted to the
+last line of the fold, thus the whole fold is included.
 
+When a number is added this is done after the adjustment to the last line of
+the fold.  This means these lines are additionally included in the range.  For
+example: >
+   :3,4+2print
+On this text:
+	1 one ~
+	2 two ~
+	3 three ~
+	4 four FOLDED ~
+	5 five FOLDED ~
+	6 six ~
+	7 seven ~
+	8 eight ~
+Where lines four and five are a closed fold, ends up printing lines 3 to 7.
+The 7 comes from the "4" in the range, which is adjusted to the end of the
+closed fold, which is 5, and then the offset 2 is added.
+
+An example for subtracting (which isn't very useful): >
+   :2,4-1print
+On this text:
+	1 one ~
+	2 two ~
+	3 three FOLDED~
+	4 four FOLDED ~
+	5 five FOLDED ~
+	6 six FOLDED ~
+	7 seven ~
+	8 eight ~
+Where lines three to six are a closed fold, ends up printing lines 2 to 6.
+The 6 comes from the "4" in the range, which is adjusted to the end of the
+closed fold, which is 6, and then 1 is subtracted, then this is still in the
+closed fold and the last line of that fold is used, which is 6.
+
+							*:range-pattern*
 The "/" and "?" after {pattern} are required to separate the pattern from
 anything that follows.
 
@@ -762,9 +799,9 @@ always be swapped then.
 
 Count and Range						*N:*
 
-When giving a count before entering ":", this is translated into:
+When giving a count before entering ":", this is translated into: >
 		:.,.+(count - 1)
-In words: The 'count' lines at and after the cursor.  Example: To delete
+In words: The "count" lines at and after the cursor.  Example: To delete
 three lines: >
 		3:d<CR>		is translated into: .,.+2d<CR>
 <
@@ -855,7 +892,7 @@ Note: these are typed literally, they are not special keys!
 		   to form a C expression.  E.g., when the cursor is on "arg"
 		   of "ptr->arg" then the result is "ptr->arg"; when the
 		   cursor is on "]" of "list[idx]" then the result is
-		   "list[idx]".  This is used for |v:beval_text|.
+		   "list[idx]".
 							*:<cfile>* *<cfile>*
 	<cfile>    is replaced with the path name under the cursor (like what
 		   |gf| uses)

@@ -215,6 +215,9 @@ The search string will not be echoed when using this mapping.  Messages from
 the executed command are still given though.  To shut them up too, add a
 ":silent" in the executed command: >
 	:map <silent> ,h :exe ":silent normal /Header\r"<CR>
+Note that the effect of a command might also be silenced, e.g., when the
+mapping selects another entry for command line completion it won't be
+displayed.
 Prompts will still be given, e.g., for inputdialog().
 Using "<silent>" for an abbreviation is possible, but will cause redrawing of
 the command line to fail.
@@ -648,6 +651,10 @@ The special key name "<Plug>" can be used for an internal mapping, which is
 not to be matched with any key sequence.  This is useful in plugins
 |using-<Plug>|.
 
+							*<MouseMove>*
+The special key name "<MouseMove>" can be used to handle mouse movement.  It
+needs to be enabled with 'mousemoveevent'.
+
 							*<Char>* *<Char->*
 To map a character by its decimal, octal or hexadecimal number the <Char>
 construct can be used:
@@ -659,9 +666,9 @@ This is useful to specify a (multibyte) character in a 'keymap' file.
 Upper and lowercase differences are ignored.
 
 							*map-comments*
-It is not possible to put a comment after these commands, because the '"'
+It is not possible to put a comment after these commands, because the `"`
 character is considered to be part of the {lhs} or {rhs}. However, one can
-use |", since this starts a new, empty command with a comment.
+use `|"`, since this starts a new, empty command with a comment.
 
 							*map_bar* *map-bar*
 Since the '|' character is used to separate a map command from the next
@@ -691,8 +698,8 @@ To avoid mapping of the characters you type in insert or Command-line mode,
 type a CTRL-V first.  The mapping in Insert mode is disabled if the 'paste'
 option is on.
 							*map-error*
-Note that when an error is encountered (that causes an error message or beep)
-the rest of the mapping is not executed.  This is Vi-compatible.
+Note that when an error is encountered (that causes an error message or might
+cause a beep) the rest of the mapping is not executed.  This is Vi-compatible.
 
 Note that the second character (argument) of the commands @zZtTfF[]rm'`"v
 and CTRL-X is not mapped.  This was done to be able to use all the named
@@ -757,7 +764,7 @@ option).  After that it assumes that the 'q' is to be interpreted as such.  If
 you type slowly, or your system is slow, reset the 'timeout' option.  Then you
 might want to set the 'ttimeout' option.
 
-			      				*map-precedence*
+							*map-precedence*
 Buffer-local mappings (defined using |:map-<buffer>|) take precedence over
 global mappings.  When a buffer-local mapping is the same as a global mapping,
 Vim will use the buffer-local mapping.  In addition, Vim will use a complete
@@ -831,6 +838,11 @@ in the original Vi, you would get back the text before the first undo).
 
 1.10 MAPPING ALT-KEYS					*:map-alt-keys*
 
+For a readable mapping command the <A-k> form can be used.  Note that <A-k>
+and <A-K> are different, the latter will use an upper case letter.  Actually,
+<A-K> and <A-S-K> are the same.  Instead of "A" you can use "M".  If you have
+an actual Meta modifier key, please see |:map-meta-keys|.
+
 In the GUI Nvim handles the |ALT| key itself, thus mapping keys with ALT
 should always work.  But in a terminal Nvim gets a sequence of bytes and has
 to figure out whether ALT was pressed.  Terminals may use ESC to indicate that
@@ -840,7 +852,21 @@ milliseconds, the ESC is interpreted as:
 otherwise it is interpreted as two key presses:
         <ESC> {key}
 
-1.11 MAPPING AN OPERATOR				*:map-operator*
+1.11 MAPPING META-KEYS					*:map-meta-keys*
+
+Mapping keys with the Meta modifier works very similar to using the Alt key.
+What key on your keyboard produces the Meta modifier depends on your keyboard
+and configuration.
+
+Note that mapping <M-a> actually is for using the Alt key.  That can be
+confusing!  It cannot be changed, it would not be backwards compatible.
+
+For the Meta modifier the "T" character is used.  For example, to map Meta-b
+in Insert mode: >
+	:imap <T-b> terrible
+
+
+1.12 MAPPING AN OPERATOR				*:map-operator*
 
 An operator is used before a {motion} command.  To define your own operator
 you must create a mapping that first sets the 'operatorfunc' option and then
@@ -865,28 +891,56 @@ Here is an example that counts the number of spaces with <F4>: >
 	" doubling <F4> works on a line
 	nnoremap <expr> <F4><F4> CountSpaces() .. '_'
 
-	function CountSpaces(type = '') abort
+	function CountSpaces(context = {}, type = '') abort
 	  if a:type == ''
-	    set opfunc=CountSpaces
+	    let context = #{
+	      \ dot_command: v:false,
+	      \ extend_block: '',
+	      \ virtualedit: [&l:virtualedit, &g:virtualedit],
+	      \ }
+	    let &operatorfunc = function('CountSpaces', [context])
+	    set virtualedit=block
 	    return 'g@'
 	  endif
 
-	  let sel_save = &selection
-	  let reg_save = getreginfo('"')
-	  let cb_save = &clipboard
-	  let visual_marks_save = [getpos("'<"), getpos("'>")]
+	  let save = #{
+	    \ clipboard: &clipboard,
+	    \ selection: &selection,
+	    \ virtualedit: [&l:virtualedit, &g:virtualedit],
+	    \ register: getreginfo('"'),
+	    \ visual_marks: [getpos("'<"), getpos("'>")],
+	    \ }
 
 	  try
-	    set clipboard= selection=inclusive
-	    let commands = #{line: "'[V']y", char: "`[v`]y", block: "`[\<c-v>`]y"}
-	    silent exe 'noautocmd keepjumps normal! ' .. get(commands, a:type, '')
-	    echom count(getreg('"'), ' ')
+	    set clipboard= selection=inclusive virtualedit=
+	    let commands = #{
+	      \ line: "'[V']",
+	      \ char: "`[v`]",
+	      \ block: "`[\<C-V>`]",
+	      \ }[a:type]
+	    let [_, _, col, off] = getpos("']")
+	    if off != 0
+	      let vcol = getline("'[")->strpart(0, col + off)->strdisplaywidth()
+	      if vcol >= [line("'["), '$']->virtcol() - 1
+	        let a:context.extend_block = '$'
+	      else
+	        let a:context.extend_block = vcol .. '|'
+	      endif
+	    endif
+	    if a:context.extend_block != ''
+	      let commands ..= 'oO' .. a:context.extend_block
+	    endif
+	    let commands ..= 'y'
+	    execute 'silent noautocmd keepjumps normal! ' .. commands
+	    echomsg getreg('"')->count(' ')
 	  finally
-	    call setreg('"', reg_save)
-	    call setpos("'<", visual_marks_save[0])
-	    call setpos("'>", visual_marks_save[1])
-	    let &clipboard = cb_save
-	    let &selection = sel_save
+	    call setreg('"', save.register)
+	    call setpos("'<", save.visual_marks[0])
+	    call setpos("'>", save.visual_marks[1])
+	    let &clipboard = save.clipboard
+	    let &selection = save.selection
+	    let [&l:virtualedit, &g:virtualedit] = get(a:context.dot_command ? save : a:context, 'virtualedit')
+	    let a:context.dot_command = v:true
 	  endtry
 	endfunction
 
@@ -949,7 +1003,7 @@ non-id	  The "non-id" type ends in a non-keyword character, the other
 Examples of strings that cannot be abbreviations: "a.b", "#def", "a b", "_$r"
 
 An abbreviation is only recognized when you type a non-keyword character.
-This can also be the <Esc> that ends insert mode or the <CR> that ends a
+This can also be the <Esc> that ends Insert mode or the <CR> that ends a
 command.  The non-keyword character which ends the abbreviation is inserted
 after the expanded abbreviation.  An exception to this is the character <C-]>,
 which is used to expand an abbreviation without inserting any extra
@@ -1151,12 +1205,14 @@ functions used in one script use the same name as in other scripts.  To avoid
 this, they can be made local to the script.
 
 						*<SID>* *<SNR>* *E81*
-The string "<SID>" can be used in a mapping or menu.
+The string "<SID>" can be used in a mapping or menu.  This is useful if you
+have a script-local function that you want to call from a mapping in the same
+script.
    When executing the map command, Vim will replace "<SID>" with the special
 key code <SNR>, followed by a number that's unique for the script, and an
 underscore.  Example: >
 	:map <SID>Add
-could define a mapping "<SNR>23_Add".
+would define a mapping "<SNR>23_Add".
 
 When defining a function in a script, "s:" can be prepended to the name to
 make it local to the script.  But when a mapping is executed from outside of
@@ -1336,7 +1392,6 @@ completion can be enabled:
 	-complete=color		color schemes
 	-complete=command	Ex command (and arguments)
 	-complete=compiler	compilers
-	-complete=cscope	|:cscope| suboptions
 	-complete=dir		directory names
 	-complete=environment	environment variable names
 	-complete=event		autocommand events
@@ -1398,9 +1453,11 @@ The function arguments are:
 The function may use these for determining context.  For the "custom"
 argument, it is not necessary to filter candidates against the (implicit
 pattern in) ArgLead.  Vim will filter the candidates with its regexp engine
-after function return, and this is probably more efficient in most cases. For
-the "customlist" argument, Vim will not filter the returned completion
-candidates and the user supplied function should filter the candidates.
+after function return, and this is probably more efficient in most cases. If
+'wildoptions' contains "fuzzy", then the candidates will be filtered using
+|fuzzy-matching|.  For the "customlist" argument, Vim will not
+filter the returned completion candidates and the user supplied function
+should filter the candidates.
 
 The following example lists user names to a Finger command >
     :com -complete=custom,ListUsers -nargs=1 Finger !finger <args>
@@ -1437,7 +1494,7 @@ Possible attributes are:
 		    number.
 	-count=N    A count (default N) which is specified either in the line
 		    number position, or as an initial argument (like |:Next|).
-		    Specifying -count (without a default) acts like -count=0
+	-count	    Acts like -count=0
 
 Note that -range=N and -count=N are mutually exclusive - only one should be
 specified.
@@ -1448,14 +1505,16 @@ which by default correspond to the current line, last line and the whole
 buffer, relate to arguments, (loaded) buffers, windows or tab pages.
 
 Possible values are (second column is the short name used in listing):
-    -addr=lines		  line	Range of lines (this is the default)
+    -addr=lines			Range of lines (this is the default for -range)
     -addr=arguments	  arg	Range for arguments
     -addr=buffers	  buf	Range for buffers (also not loaded buffers)
     -addr=loaded_buffers  load	Range for loaded buffers
     -addr=windows	  win	Range for windows
     -addr=tabs		  tab	Range for tab pages
     -addr=quickfix	  qf	Range for quickfix entries
-    -addr=other		  ?	other kind of range
+    -addr=other		  ?	Other kind of range; can use ".", "$" and "%"
+				as with "lines" (this is the default for
+				-count)
 
 
 Incremental preview ~
@@ -1623,11 +1682,11 @@ The valid escape sequences are
 					*<mods>* *<q-mods>* *:command-modifiers*
 	<mods>  The command modifiers, if specified. Otherwise, expands to
 		nothing. Supported modifiers are |:aboveleft|, |:belowright|,
-		|:botright|, |:browse|, |:confirm|, |:hide|, |:keepalt|,
-		|:keepjumps|, |:keepmarks|, |:keeppatterns|, |:leftabove|,
-		|:lockmarks|, |:noautocmd|, |:noswapfile| |:rightbelow|,
-		|:sandbox|, |:silent|, |:tab|, |:topleft|, |:unsilent|,
-		|:verbose|, and |:vertical|.
+		|:botright|, |:browse|, |:confirm|, |:hide|, |:horizontal|,
+		|:keepalt|, |:keepjumps|, |:keepmarks|, |:keeppatterns|,
+		|:leftabove|, |:lockmarks|, |:noautocmd|, |:noswapfile|
+		|:rightbelow|, |:sandbox|, |:silent|, |:tab|, |:topleft|,
+		|:unsilent|, |:verbose|, and |:vertical|.
 		Note that |:filter| is not supported.
 		Examples: >
 		    command! -nargs=+ -complete=file MyEdit
@@ -1660,7 +1719,8 @@ The valid escape sequences are
 If the first two characters of an escape sequence are "q-" (for example,
 <q-args>) then the value is quoted in such a way as to make it a valid value
 for use in an expression.  This uses the argument as one single value.
-When there is no argument <q-args> is an empty string.
+When there is no argument <q-args> is an empty string.  See the
+|q-args-example| below.
 							*<f-args>*
 To allow commands to pass their arguments on to a user-defined function, there
 is a special form <f-args> ("function args").  This splits the command
@@ -1670,10 +1730,10 @@ See the Mycmd example below.  If no arguments are given <f-args> is removed.
    To embed whitespace into an argument of <f-args>, prepend a backslash.
 <f-args> replaces every pair of backslashes (\\) with one backslash.  A
 backslash followed by a character other than white space or a backslash
-remains unmodified.  Overview:
+remains unmodified.  Also see |f-args-example| below.  Overview:
 
 	command		   <f-args> ~
-	XX ab		   'ab'
+	XX ab		   "ab"
 	XX a\b		   'a\b'
 	XX a\ b		   'a b'
 	XX a\  b	   'a ', 'b'
@@ -1684,7 +1744,8 @@ remains unmodified.  Overview:
 	XX a\\\\b	   'a\\b'
 	XX a\\\\ b	   'a\\', 'b'
 
-Examples >
+
+Examples for user commands: >
 
    " Delete everything after here to the end
    :com Ddel +,$d
@@ -1700,7 +1761,8 @@ Examples >
    " Count the number of lines in the range
    :com! -range -nargs=0 Lines  echo <line2> - <line1> + 1 "lines"
 
-   " Call a user function (example of <f-args>)
+<						*f-args-example*
+Call a user function (example of <f-args>) >
    :com -nargs=* Mycmd call Myfunc(<f-args>)
 
 When executed as: >
@@ -1708,7 +1770,8 @@ When executed as: >
 This will invoke: >
 	:call Myfunc("arg1","arg2")
 
-   :" A more substantial example
+<						*q-args-example*
+A more substantial example: >
    :function Allargs(command)
    :   let i = 0
    :   while i < argc()

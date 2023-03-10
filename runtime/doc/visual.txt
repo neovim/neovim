@@ -103,7 +103,7 @@ gn			Search forward for the last used search pattern, like
 			E.g., "dgn" deletes the text of the next match.
 			If Visual mode is active, extends the selection
 			until the end of the next match.
-			'wrapscan' applies
+			'wrapscan' applies.
 			Note: Unlike `n` the search direction does not depend
 			on the previous search command.
 
@@ -501,11 +501,11 @@ mode Vim automatically switches to Visual mode, so that the same behavior as
 in Visual mode is effective.  If you don't want this use |:xmap| or |:smap|.
 
 One particular edge case: >
-  	:vnoremap <C-K> <Esc>
+	:vnoremap <C-K> <Esc>
 This ends Visual mode when in Visual mode, but in Select mode it does not
 work, because Select mode is restored after executing the mapped keys.  You
 need to use: >
-  	:snoremap <C-K> <Esc>
+	:snoremap <C-K> <Esc>
 <
 Users will expect printable characters to replace the selected area.
 Therefore avoid mapping printable characters in Select mode.  Or use

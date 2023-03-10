@@ -8,7 +8,7 @@ local clear = helpers.clear
 before_each(clear)
 
 describe('extend()', function()
-  it('suceeds to extend list with itself', function()
+  it('succeeds to extend list with itself', function()
     meths.set_var('l', {1, {}})
     eq({1, {}, 1, {}}, eval('extend(l, l)'))
     eq({1, {}, 1, {}}, meths.get_var('l'))

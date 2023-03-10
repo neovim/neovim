@@ -337,10 +337,6 @@ Viminfo.
 	The 'viminfo' option can be set to select which items to store in the
 	.viminfo file.  This is off by default.
 
-Printing.						|printing|
-	The |:hardcopy| command sends text to the printer.  This can include
-	syntax highlighting.
-
 Mouse support.						|mouse-using|
 	The mouse is supported in the GUI version, in an xterm for Unix, for
 	BSDs with sysmouse, for Linux with gpm, and for Win32.  It can be used

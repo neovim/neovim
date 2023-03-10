@@ -5,14 +5,14 @@
 // Terminal/console utils
 //
 
-#include "nvim/os/os.h"
+#include "nvim/os/os.h"  // IWYU pragma: keep (Windows)
 #include "nvim/os/tty.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/tty.c.generated.h"
+# include "os/tty.c.generated.h"  // IWYU pragma: export
 #endif
 
-#ifdef WIN32
+#ifdef MSWIN
 # if !defined(ENABLE_VIRTUAL_TERMINAL_PROCESSING)
 #  define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
 # endif

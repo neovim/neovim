@@ -1,8 +1,20 @@
 #ifndef NVIM_AUTOCMD_H
 #define NVIM_AUTOCMD_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "nvim/api/private/defs.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/macros.h"
+#include "nvim/regexp_defs.h"
+#include "nvim/types.h"
+
+struct AutoCmd_S;
+struct AutoPatCmd_S;
+struct AutoPat_S;
 
 // event_T definition
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -13,7 +25,7 @@
 // not the current buffer.
 typedef struct {
   buf_T *save_curbuf;             ///< saved curbuf
-  bool use_aucmd_win;             ///< using aucmd_win
+  int use_aucmd_win_idx;          ///< index in aucmd_win[] if >= 0
   handle_T save_curwin_handle;    ///< ID of saved curwin
   handle_T new_curwin_handle;     ///< ID of new curwin
   handle_T save_prevwin_handle;   ///< ID of saved prevwin

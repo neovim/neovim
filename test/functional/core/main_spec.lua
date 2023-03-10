@@ -9,6 +9,8 @@ local clear = helpers.clear
 local funcs = helpers.funcs
 local nvim_prog_abs = helpers.nvim_prog_abs
 local write_file = helpers.write_file
+local is_os = helpers.is_os
+local skip = helpers.skip
 
 describe('Command-line option', function()
   describe('-s', function()
@@ -49,12 +51,12 @@ describe('Command-line option', function()
       eq(#('100500\n'), attrs.size)
     end)
     it('does not crash after reading from stdin in non-headless mode', function()
-      if helpers.pending_win32(pending) then return end
+      skip(is_os('win'))
       local screen = Screen.new(40, 8)
       screen:attach()
       local args = {
         nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE',
-        '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
+        '--cmd', '"set noswapfile shortmess+=IFW fileformats=unix"',
         '-s', '-'
       }
 

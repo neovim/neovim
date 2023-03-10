@@ -255,7 +255,8 @@ well stand for "source").
 The windows that were open are restored, with the same position and size as
 before.  Mappings and option values are like before.
    What exactly is restored depends on the 'sessionoptions' option.  The
-default value is "blank,buffers,curdir,folds,help,options,winsize".
+default value is:
+"blank,buffers,curdir,folds,help,options,tabpages,winsize,terminal".
 
 	blank		keep empty windows
 	buffers		all buffers, not only the ones in a window
@@ -263,7 +264,9 @@ default value is "blank,buffers,curdir,folds,help,options,winsize".
 	folds		folds, also manually created ones
 	help		the help window
 	options		all options and mappings
+	tabpages	all tab pages
 	winsize		window sizes
+	terminal	include terminal windows
 
 Change this to your liking.  To also restore the size of the Vim window, for
 example, use: >
@@ -299,7 +302,7 @@ session file as a starting point.
 use, and save this in a session.  Then you can go back to this layout whenever
 you want.
    For example, this is a nice layout to use:
-
+>
 	+----------------------------------------+
 	|		   VIM - main help file  |
 	|					 |
@@ -315,7 +318,7 @@ you want.
 	|~/=========|[No File]===================|
 	|					 |
 	+----------------------------------------+
-
+<
 This has a help window at the top, so that you can read this text.  The narrow
 vertical window on the left contains a file explorer.  This is a Vim plugin
 that lists the contents of a directory.  You can select files to edit there.
@@ -451,7 +454,7 @@ Use this format for the modeline:
 
 The "any-text" indicates that you can put any text before and after the part
 that Vim will use.  This allows making it look like a comment, like what was
-done above with /* and */.
+done above with "/*" and "*/".
    The " vim:" part is what makes Vim recognize this line.  There must be
 white space before "vim", or "vim" must be at the start of the line.  Thus
 using something like "gvim:" will not work.

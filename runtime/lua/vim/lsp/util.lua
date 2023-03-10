@@ -1,6 +1,5 @@
 local protocol = require('vim.lsp.protocol')
 local snippet = require('vim.lsp._snippet')
-local vim = vim
 local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
@@ -110,12 +109,21 @@ local function split_lines(value)
   return split(value, '\n', true)
 end
 
+---@private
+local function create_window_without_focus()
+  local prev = vim.api.nvim_get_current_win()
+  vim.cmd.new()
+  local new = vim.api.nvim_get_current_win()
+  vim.api.nvim_set_current_win(prev)
+  return new
+end
+
 --- Convert byte index to `encoding` index.
 --- Convenience wrapper around vim.str_utfindex
 ---@param line string line to be indexed
----@param index number|nil byte index (utf-8), or `nil` for length
+---@param index integer|nil byte index (utf-8), or `nil` for length
 ---@param encoding string utf-8|utf-16|utf-32|nil defaults to utf-16
----@return number `encoding` index of `index` in `line`
+---@return integer `encoding` index of `index` in `line`
 function M._str_utfindex_enc(line, index, encoding)
   if not encoding then
     encoding = 'utf-16'
@@ -141,9 +149,9 @@ end
 --- Convenience wrapper around vim.str_byteindex
 ---Alternative to vim.str_byteindex that takes an encoding.
 ---@param line string line to be indexed
----@param index number UTF index
+---@param index integer UTF index
 ---@param encoding string utf-8|utf-16|utf-32|nil defaults to utf-16
----@return number byte (utf-8) index of `encoding` index `index` in `line`
+---@return integer byte (utf-8) index of `encoding` index `index` in `line`
 function M._str_byteindex_enc(line, index, encoding)
   if not encoding then
     encoding = 'utf-16'
@@ -231,9 +239,9 @@ end
 --- Works on unloaded buffers by reading the file using libuv to bypass buf reading events.
 --- Falls back to loading the buffer and nvim_buf_get_lines for buffers with non-file URI.
 ---
----@param bufnr number bufnr to get the lines from
----@param rows number[] zero-indexed line numbers
----@return table<number string> a table mapping rows to lines
+---@param bufnr integer bufnr to get the lines from
+---@param rows integer[] zero-indexed line numbers
+---@return table<integer, string> a table mapping rows to lines
 local function get_lines(bufnr, rows)
   rows = type(rows) == 'table' and rows or { rows }
 
@@ -313,8 +321,8 @@ end
 --- Works on unloaded buffers by reading the file using libuv to bypass buf reading events.
 --- Falls back to loading the buffer and nvim_buf_get_lines for buffers with non-file URI.
 ---
----@param bufnr number
----@param row number zero-indexed line number
+---@param bufnr integer
+---@param row integer zero-indexed line number
 ---@return string the line at row in filename
 local function get_line(bufnr, row)
   return get_lines(bufnr, { row })[row]
@@ -378,7 +386,7 @@ end
 
 --- Applies a list of text edits to a buffer.
 ---@param text_edits table list of `TextEdit` objects
----@param bufnr number Buffer id
+---@param bufnr integer Buffer id
 ---@param offset_encoding string utf-8|utf-16|utf-32
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 function M.apply_text_edits(text_edits, bufnr, offset_encoding)
@@ -459,35 +467,52 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
       text = split(text_edit.newText, '\n', true),
     }
 
-    -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't accept it so we should fix it here.
     local max = api.nvim_buf_line_count(bufnr)
-    if max <= e.start_row or max <= e.end_row then
-      local len = #(get_line(bufnr, max - 1) or '')
-      if max <= e.start_row then
-        e.start_row = max - 1
-        e.start_col = len
-        table.insert(e.text, 1, '')
-      end
+    -- If the whole edit is after the lines in the buffer we can simply add the new text to the end
+    -- of the buffer.
+    if max <= e.start_row then
+      api.nvim_buf_set_lines(bufnr, max, max, false, e.text)
+    else
+      local last_line_len = #(get_line(bufnr, math.min(e.end_row, max - 1)) or '')
+      -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't
+      -- accept it so we should fix it here.
       if max <= e.end_row then
         e.end_row = max - 1
-        e.end_col = len
+        e.end_col = last_line_len
+        has_eol_text_edit = true
+      else
+        -- If the replacement is over the end of a line (i.e. e.end_col is out of bounds and the
+        -- replacement text ends with a newline We can likely assume that the replacement is assumed
+        -- to be meant to replace the newline with another newline and we need to make sure this
+        -- doesn't add an extra empty line. E.g. when the last line to be replaced contains a '\r'
+        -- in the file some servers (clangd on windows) will include that character in the line
+        -- while nvim_buf_set_text doesn't count it as part of the line.
+        if
+          e.end_col > last_line_len
+          and #text_edit.newText > 0
+          and string.sub(text_edit.newText, -1) == '\n'
+        then
+          table.remove(e.text, #e.text)
+        end
       end
-      has_eol_text_edit = true
-    end
-    api.nvim_buf_set_text(bufnr, e.start_row, e.start_col, e.end_row, e.end_col, e.text)
+      -- Make sure we don't go out of bounds for e.end_col
+      e.end_col = math.min(last_line_len, e.end_col)
 
-    -- Fix cursor position.
-    local row_count = (e.end_row - e.start_row) + 1
-    if e.end_row < cursor.row then
-      cursor.row = cursor.row + (#e.text - row_count)
-      is_cursor_fixed = true
-    elseif e.end_row == cursor.row and e.end_col <= cursor.col then
-      cursor.row = cursor.row + (#e.text - row_count)
-      cursor.col = #e.text[#e.text] + (cursor.col - e.end_col)
-      if #e.text == 1 then
-        cursor.col = cursor.col + e.start_col
+      api.nvim_buf_set_text(bufnr, e.start_row, e.start_col, e.end_row, e.end_col, e.text)
+
+      -- Fix cursor position.
+      local row_count = (e.end_row - e.start_row) + 1
+      if e.end_row < cursor.row then
+        cursor.row = cursor.row + (#e.text - row_count)
+        is_cursor_fixed = true
+      elseif e.end_row == cursor.row and e.end_col <= cursor.col then
+        cursor.row = cursor.row + (#e.text - row_count)
+        cursor.col = #e.text[#e.text] + (cursor.col - e.end_col)
+        if #e.text == 1 then
+          cursor.col = cursor.col + e.start_col
+        end
+        is_cursor_fixed = true
       end
-      is_cursor_fixed = true
     end
   end
 
@@ -546,7 +571,7 @@ end
 --- document.
 ---
 ---@param text_document_edit table: a `TextDocumentEdit` object
----@param index number: Optional index of the edit, if from a list of edits (or nil, if not from a list)
+---@param index integer: Optional index of the edit, if from a list of edits (or nil, if not from a list)
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
 function M.apply_text_document_edit(text_document_edit, index, offset_encoding)
   local text_document = text_document_edit.textDocument
@@ -734,9 +759,11 @@ function M.rename(old_fname, new_fname, opts)
   vim.fn.bufload(oldbuf)
 
   -- The there may be pending changes in the buffer
-  api.nvim_buf_call(oldbuf, function()
-    vim.cmd('w!')
-  end)
+  if vim.fn.isdirectory(old_fname) == 0 then
+    api.nvim_buf_call(oldbuf, function()
+      vim.cmd('w!')
+    end)
+  end
 
   local ok, err = os.rename(old_fname, new_fname)
   assert(ok, err)
@@ -755,8 +782,11 @@ local function create_file(change)
   -- from spec: Overwrite wins over `ignoreIfExists`
   local fname = vim.uri_to_fname(change.uri)
   if not opts.ignoreIfExists or opts.overwrite then
+    vim.fn.mkdir(vim.fs.dirname(fname), 'p')
     local file = io.open(fname, 'w')
-    file:close()
+    if file then
+      file:close()
+    end
   end
   vim.fn.bufadd(fname)
 end
@@ -828,7 +858,7 @@ end
 --- `textDocument/signatureHelp`, and potentially others.
 ---
 ---@param input (`MarkedString` | `MarkedString[]` | `MarkupContent`)
----@param contents (table, optional, default `{}`) List of strings to extend with converted lines
+---@param contents (table|nil) List of strings to extend with converted lines. Defaults to {}.
 ---@returns {contents}, extended with lines of converted markdown.
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
 function M.convert_input_to_markdown_lines(input, contents)
@@ -887,8 +917,8 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
     return
   end
   --The active signature. If omitted or the value lies outside the range of
-  --`signatures` the value defaults to zero or is ignored if `signatures.length
-  --=== 0`. Whenever possible implementors should make an active decision about
+  --`signatures` the value defaults to zero or is ignored if `signatures.length == 0`.
+  --Whenever possible implementors should make an active decision about
   --the active signature and shouldn't rely on a default value.
   local contents = {}
   local active_hl
@@ -979,14 +1009,15 @@ end
 --- Creates a table with sensible default options for a floating window. The
 --- table can be passed to |nvim_open_win()|.
 ---
----@param width (number) window width (in character cells)
----@param height (number) window height (in character cells)
+---@param width (integer) window width (in character cells)
+---@param height (integer) window height (in character cells)
 ---@param opts (table, optional)
----        - offset_x (number) offset to add to `col`
----        - offset_y (number) offset to add to `row`
+---        - offset_x (integer) offset to add to `col`
+---        - offset_y (integer) offset to add to `row`
 ---        - border (string or table) override `border`
 ---        - focusable (string or table) override `focusable`
 ---        - zindex (string or table) override `zindex`, defaults to 50
+---        - relative ("mouse"|"cursor") defaults to "cursor"
 ---@returns (table) Options
 function M.make_floating_popup_options(width, height, opts)
   validate({
@@ -1001,7 +1032,8 @@ function M.make_floating_popup_options(width, height, opts)
   local anchor = ''
   local row, col
 
-  local lines_above = vim.fn.winline() - 1
+  local lines_above = opts.relative == 'mouse' and vim.fn.getmousepos().line - 1
+    or vim.fn.winline() - 1
   local lines_below = vim.fn.winheight(0) - lines_above
 
   if lines_above < lines_below then
@@ -1014,7 +1046,9 @@ function M.make_floating_popup_options(width, height, opts)
     row = 0
   end
 
-  if vim.fn.wincol() + width + (opts.offset_x or 0) <= api.nvim_get_option('columns') then
+  local wincol = opts.relative == 'mouse' and vim.fn.getmousepos().column or vim.fn.wincol()
+
+  if wincol + width + (opts.offset_x or 0) <= api.nvim_get_option('columns') then
     anchor = anchor .. 'W'
     col = 0
   else
@@ -1022,62 +1056,101 @@ function M.make_floating_popup_options(width, height, opts)
     col = 1
   end
 
+  local title = (opts.border and opts.title) and opts.title or nil
+  local title_pos
+
+  if title then
+    title_pos = opts.title_pos or 'center'
+  end
+
   return {
     anchor = anchor,
     col = col + (opts.offset_x or 0),
     height = height,
     focusable = opts.focusable,
-    relative = 'cursor',
+    relative = opts.relative == 'mouse' and 'mouse' or 'cursor',
     row = row + (opts.offset_y or 0),
     style = 'minimal',
     width = width,
     border = opts.border or default_border,
     zindex = opts.zindex or 50,
+    title = title,
+    title_pos = title_pos,
   }
+end
+
+--- Shows document and optionally jumps to the location.
+---
+---@param location table (`Location`|`LocationLink`)
+---@param offset_encoding "utf-8" | "utf-16" | "utf-32"
+---@param opts table|nil options
+---        - reuse_win (boolean) Jump to existing window if buffer is already open.
+---        - focus (boolean) Whether to focus/jump to location if possible. Defaults to true.
+---@return boolean `true` if succeeded
+function M.show_document(location, offset_encoding, opts)
+  -- location may be Location or LocationLink
+  local uri = location.uri or location.targetUri
+  if uri == nil then
+    return false
+  end
+  if offset_encoding == nil then
+    vim.notify_once('show_document must be called with valid offset encoding', vim.log.levels.WARN)
+  end
+  local bufnr = vim.uri_to_bufnr(uri)
+
+  opts = opts or {}
+  local focus = vim.F.if_nil(opts.focus, true)
+  if focus then
+    -- Save position in jumplist
+    vim.cmd("normal! m'")
+
+    -- Push a new item into tagstack
+    local from = { vim.fn.bufnr('%'), vim.fn.line('.'), vim.fn.col('.'), 0 }
+    local items = { { tagname = vim.fn.expand('<cword>'), from = from } }
+    vim.fn.settagstack(vim.fn.win_getid(), { items = items }, 't')
+  end
+
+  local win = opts.reuse_win and bufwinid(bufnr)
+    or focus and api.nvim_get_current_win()
+    or create_window_without_focus()
+
+  api.nvim_buf_set_option(bufnr, 'buflisted', true)
+  api.nvim_win_set_buf(win, bufnr)
+  if focus then
+    api.nvim_set_current_win(win)
+  end
+
+  -- location may be Location or LocationLink
+  local range = location.range or location.targetSelectionRange
+  if range then
+    --- Jump to new location (adjusting for encoding of characters)
+    local row = range.start.line
+    local col = get_line_byte_from_position(bufnr, range.start, offset_encoding)
+    api.nvim_win_set_cursor(win, { row + 1, col })
+    api.nvim_win_call(win, function()
+      -- Open folds under the cursor
+      vim.cmd('normal! zv')
+    end)
+  end
+
+  return true
 end
 
 --- Jumps to a location.
 ---
 ---@param location table (`Location`|`LocationLink`)
----@param offset_encoding string utf-8|utf-16|utf-32 (required)
----@param reuse_win boolean Jump to existing window if buffer is already opened.
----@returns `true` if the jump succeeded
+---@param offset_encoding "utf-8" | "utf-16" | "utf-32"
+---@param reuse_win boolean|nil Jump to existing window if buffer is already open.
+---@return boolean `true` if the jump succeeded
 function M.jump_to_location(location, offset_encoding, reuse_win)
-  -- location may be Location or LocationLink
-  local uri = location.uri or location.targetUri
-  if uri == nil then
-    return
-  end
   if offset_encoding == nil then
     vim.notify_once(
       'jump_to_location must be called with valid offset encoding',
       vim.log.levels.WARN
     )
   end
-  local bufnr = vim.uri_to_bufnr(uri)
-  -- Save position in jumplist
-  vim.cmd("normal! m'")
 
-  -- Push a new item into tagstack
-  local from = { vim.fn.bufnr('%'), vim.fn.line('.'), vim.fn.col('.'), 0 }
-  local items = { { tagname = vim.fn.expand('<cword>'), from = from } }
-  vim.fn.settagstack(vim.fn.win_getid(), { items = items }, 't')
-
-  --- Jump to new location (adjusting for UTF-16 encoding of characters)
-  local win = reuse_win and bufwinid(bufnr)
-  if win then
-    api.nvim_set_current_win(win)
-  else
-    api.nvim_buf_set_option(bufnr, 'buflisted', true)
-    api.nvim_set_current_buf(bufnr)
-  end
-  local range = location.range or location.targetSelectionRange
-  local row = range.start.line
-  local col = get_line_byte_from_position(bufnr, range.start, offset_encoding)
-  api.nvim_win_set_cursor(0, { row + 1, col })
-  -- Open folds under the cursor
-  vim.cmd('normal! zv')
-  return true
+  return M.show_document(location, offset_encoding, { reuse_win = reuse_win, focus = true })
 end
 
 --- Previews a location in a floating window
@@ -1194,7 +1267,7 @@ function M.stylize_markdown(bufnr, contents, opts)
   -- when ft is nil, we get the ft from the regex match
   local matchers = {
     block = { nil, '```+([a-zA-Z0-9_]*)', '```+' },
-    pre = { '', '<pre>', '</pre>' },
+    pre = { nil, '<pre>([a-z0-9]*)', '</pre>' },
     code = { '', '<code>', '</code>' },
     text = { 'text', '<text>', '</text>' },
   }
@@ -1219,8 +1292,6 @@ function M.stylize_markdown(bufnr, contents, opts)
   -- Clean up
   contents = M._trim(contents, opts)
 
-  -- Insert blank line separator after code block?
-  local add_sep = opts.separator == nil and true or opts.separator
   local stripped = {}
   local highlights = {}
   -- keep track of lnums that contain markdown
@@ -1248,7 +1319,7 @@ function M.stylize_markdown(bufnr, contents, opts)
           finish = #stripped,
         })
         -- add a separator, but not on the last line
-        if add_sep and i < #contents then
+        if opts.separator and i < #contents then
           table.insert(stripped, '---')
           markdown_lines[#stripped] = true
         end
@@ -1358,7 +1429,7 @@ end
 ---@private
 --- Closes the preview window
 ---
----@param winnr number window id of preview window
+---@param winnr integer window id of preview window
 ---@param bufnrs table|nil optional list of ignored buffers
 local function close_preview_window(winnr, bufnrs)
   vim.schedule(function()
@@ -1377,7 +1448,7 @@ end
 --- Creates autocommands to close a preview window when events happen.
 ---
 ---@param events table list of events
----@param winnr number window id of preview window
+---@param winnr integer window id of preview window
 ---@param bufnrs table list of buffers where the preview window will remain visible
 ---@see |autocmd-events|
 local function close_preview_autocmd(events, winnr, bufnrs)
@@ -1484,15 +1555,15 @@ end
 ---
 ---@param contents table of lines to show in window
 ---@param syntax string of syntax to set for opened buffer
----@param opts table with optional fields (additional keys are passed on to |vim.api.nvim_open_win()|)
----             - height: (number) height of floating window
----             - width: (number) width of floating window
+---@param opts table with optional fields (additional keys are passed on to |nvim_open_win()|)
+---             - height: (integer) height of floating window
+---             - width: (integer) width of floating window
 ---             - wrap: (boolean, default true) wrap long lines
----             - wrap_at: (number) character to wrap at for computing height when wrap is enabled
----             - max_width: (number) maximal width of floating window
----             - max_height: (number) maximal height of floating window
----             - pad_top: (number) number of lines to pad contents at top
----             - pad_bottom: (number) number of lines to pad contents at bottom
+---             - wrap_at: (integer) character to wrap at for computing height when wrap is enabled
+---             - max_width: (integer) maximal width of floating window
+---             - max_height: (integer) maximal height of floating window
+---             - pad_top: (integer) number of lines to pad contents at top
+---             - pad_bottom: (integer) number of lines to pad contents at bottom
 ---             - focus_id: (string) if a popup with this id is opened, then focus it
 ---             - close_events: (table) list of events that closes the floating window
 ---             - focusable: (boolean, default true) Make float focusable
@@ -1601,7 +1672,7 @@ do --[[ References ]]
 
   --- Removes document highlights from a buffer.
   ---
-  ---@param bufnr number Buffer id
+  ---@param bufnr integer Buffer id
   function M.buf_clear_references(bufnr)
     validate({ bufnr = { bufnr, 'n', true } })
     api.nvim_buf_clear_namespace(bufnr or 0, reference_ns, 0, -1)
@@ -1609,10 +1680,10 @@ do --[[ References ]]
 
   --- Shows a list of document highlights for a certain buffer.
   ---
-  ---@param bufnr number Buffer id
+  ---@param bufnr integer Buffer id
   ---@param references table List of `DocumentHighlight` objects to highlight
   ---@param offset_encoding string One of "utf-8", "utf-16", "utf-32".
-  ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
+  ---@see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
   function M.buf_highlight_references(bufnr, references, offset_encoding)
     validate({
       bufnr = { bufnr, 'n', true },
@@ -1799,7 +1870,7 @@ end
 --- CAUTION: Modifies the input in-place!
 ---
 ---@param lines (table) list of lines
----@returns (string) filetype or 'markdown' if it was unchanged.
+---@returns (string) filetype or "markdown" if it was unchanged.
 function M.try_trim_markdown_code_blocks(lines)
   local language_id = lines[1]:match('^```(.*)')
   if language_id then
@@ -1822,7 +1893,7 @@ function M.try_trim_markdown_code_blocks(lines)
 end
 
 ---@private
----@param window number|nil: window handle or 0 for current, defaults to current
+---@param window integer|nil: window handle or 0 for current, defaults to current
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
 local function make_position_param(window, offset_encoding)
   window = window or 0
@@ -1842,8 +1913,8 @@ end
 
 --- Creates a `TextDocumentPositionParams` object for the current buffer and cursor position.
 ---
----@param window number|nil: window handle or 0 for current, defaults to current
----@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
+---@param window integer|nil: window handle or 0 for current, defaults to current
+---@param offset_encoding string|nil utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
 ---@returns `TextDocumentPositionParams` object
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
 function M.make_position_params(window, offset_encoding)
@@ -1857,7 +1928,7 @@ function M.make_position_params(window, offset_encoding)
 end
 
 --- Utility function for getting the encoding of the first LSP client on the given buffer.
----@param bufnr (number) buffer handle or 0 for current, defaults to current
+---@param bufnr (integer) buffer handle or 0 for current, defaults to current
 ---@returns (string) encoding first client if there is one, nil otherwise
 function M._get_offset_encoding(bufnr)
   validate({
@@ -1866,7 +1937,7 @@ function M._get_offset_encoding(bufnr)
 
   local offset_encoding
 
-  for _, client in pairs(vim.lsp.buf_get_clients(bufnr)) do
+  for _, client in pairs(vim.lsp.get_active_clients({ bufnr = bufnr })) do
     if client.offset_encoding == nil then
       vim.notify_once(
         string.format(
@@ -1895,7 +1966,7 @@ end
 --- `textDocument/codeAction`, `textDocument/colorPresentation`,
 --- `textDocument/rangeFormatting`.
 ---
----@param window number|nil: window handle or 0 for current, defaults to current
+---@param window integer|nil: window handle or 0 for current, defaults to current
 ---@param offset_encoding "utf-8"|"utf-16"|"utf-32"|nil defaults to `offset_encoding` of first client of buffer of `window`
 ---@returns { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`current_position`, end = `current_position` } }
@@ -1912,11 +1983,11 @@ end
 --- Using the given range in the current buffer, creates an object that
 --- is similar to |vim.lsp.util.make_range_params()|.
 ---
----@param start_pos number[]|nil {row, col} mark-indexed position.
+---@param start_pos integer[]|nil {row, col} mark-indexed position.
 --- Defaults to the start of the last visual selection.
----@param end_pos number[]|nil {row, col} mark-indexed position.
+---@param end_pos integer[]|nil {row, col} mark-indexed position.
 --- Defaults to the end of the last visual selection.
----@param bufnr number|nil buffer handle or 0 for current, defaults to current
+---@param bufnr integer|nil buffer handle or 0 for current, defaults to current
 ---@param offset_encoding "utf-8"|"utf-16"|"utf-32"|nil defaults to `offset_encoding` of first client of `bufnr`
 ---@returns { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`start_position`, end = `end_position` } }
@@ -1957,11 +2028,16 @@ end
 
 --- Creates a `TextDocumentIdentifier` object for the current buffer.
 ---
----@param bufnr number|nil: Buffer handle, defaults to current
+---@param bufnr integer|nil: Buffer handle, defaults to current
 ---@returns `TextDocumentIdentifier`
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentIdentifier
 function M.make_text_document_params(bufnr)
-  return { uri = vim.uri_from_bufnr(bufnr or 0) }
+  bufnr = bufnr or 0
+  local uri = vim.uri_from_bufnr(bufnr)
+  if not uv.fs_stat(api.nvim_buf_get_name(bufnr)) then
+    uri = uri:gsub('^file://', 'buffer://')
+  end
+  return { uri = uri }
 end
 
 --- Create the workspace params
@@ -1972,9 +2048,9 @@ function M.make_workspace_params(added, removed)
 end
 --- Returns indentation size.
 ---
----@see |shiftwidth|
----@param bufnr (number|nil): Buffer handle, defaults to current
----@returns (number) indentation size
+---@see 'shiftwidth'
+---@param bufnr (integer|nil): Buffer handle, defaults to current
+---@returns (integer) indentation size
 function M.get_effective_tabstop(bufnr)
   validate({ bufnr = { bufnr, 'n', true } })
   local bo = bufnr and vim.bo[bufnr] or vim.bo
@@ -1994,18 +2070,18 @@ function M.make_formatting_params(options)
     insertSpaces = vim.bo.expandtab,
   })
   return {
-    textDocument = { uri = vim.uri_from_bufnr(0) },
+    textDocument = M.make_text_document_params(0),
     options = options,
   }
 end
 
 --- Returns the UTF-32 and UTF-16 offsets for a position in a certain buffer.
 ---
----@param buf number buffer number (0 for current)
+---@param buf integer buffer number (0 for current)
 ---@param row 0-indexed line
 ---@param col 0-indexed byte offset in line
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of `buf`
----@returns (number, number) `offset_encoding` index of the character in line {row} column {col} in buffer {buf}
+---@returns (integer, integer) `offset_encoding` index of the character in line {row} column {col} in buffer {buf}
 function M.character_offset(buf, row, col, offset_encoding)
   local line = get_line(buf, row)
   if offset_encoding == nil then

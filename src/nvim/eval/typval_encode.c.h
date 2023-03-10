@@ -250,7 +250,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_encode.h"
 #include "nvim/func_attr.h"
-#include "nvim/lib/kvec.h"
+#include "klib/kvec.h"
 
 // -V::1063
 
@@ -266,7 +266,7 @@ static inline int _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(
                                                       const MPConvStack *const mpstack, const int copyID,
                                                       const MPConvStackValType conv_type,
                                                       const char *const objname)
-REAL_FATTR_NONNULL_ARG(2, 3, 4, 7) REAL_FATTR_WARN_UNUSED_RESULT
+  REAL_FATTR_NONNULL_ARG(2, 3, 4, 7) REAL_FATTR_WARN_UNUSED_RESULT
   REAL_FATTR_ALWAYS_INLINE;
 
 /// Function for checking whether container references itself
@@ -301,7 +301,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
                                             MPConvStack *const mpstack, MPConvStackVal *const cur_mpsv,
                                             typval_T *const tv, const int copyID,
                                             const char *const objname)
-REAL_FATTR_NONNULL_ARG(2, 4, 6) REAL_FATTR_WARN_UNUSED_RESULT;
+  REAL_FATTR_NONNULL_ARG(2, 4, 6) REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Convert single value
 ///
@@ -339,7 +339,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
                             tv_blob_len(tv->vval.v_blob));
     break;
   case VAR_FUNC:
-    TYPVAL_ENCODE_CONV_FUNC_START(tv, (char_u *)tv->vval.v_string);
+    TYPVAL_ENCODE_CONV_FUNC_START(tv, tv->vval.v_string);
     TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, 0);
     TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, -1);
     TYPVAL_ENCODE_CONV_FUNC_END(tv);
@@ -347,7 +347,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
   case VAR_PARTIAL: {
     partial_T *const pt = tv->vval.v_partial;
     (void)pt;
-    TYPVAL_ENCODE_CONV_FUNC_START(tv, (pt == NULL ? NULL : (char_u *)partial_name(pt)));  // -V547
+    TYPVAL_ENCODE_CONV_FUNC_START(tv, (pt == NULL ? NULL : partial_name(pt)));  // -V547
     _mp_push(*mpstack, ((MPConvStackVal) {  // -V779
         .type = kMPConvPartial,
         .tv = tv,
@@ -358,7 +358,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
             .pt = tv->vval.v_partial,
           },
         },
-      }));
+    }));
     break;
   }
   case VAR_LIST: {
@@ -381,7 +381,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
             .li = tv_list_first(tv->vval.v_list),
           },
         },
-      }));
+    }));
     TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, _mp_last(*mpstack));
     break;
   }
@@ -459,8 +459,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
         const listitem_T *const highest_bits_li = (
                                                    TV_LIST_ITEM_NEXT(val_list, sign_li));
         if (TV_LIST_ITEM_TV(highest_bits_li)->v_type != VAR_NUMBER
-            || ((highest_bits
-                   = TV_LIST_ITEM_TV(highest_bits_li)->vval.v_number)
+            || ((highest_bits = TV_LIST_ITEM_TV(highest_bits_li)->vval.v_number)
                 < 0)) {
           goto _convert_one_value_regular_dict;
         }
@@ -536,7 +535,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
                   .li = tv_list_first(val_di->di_tv.vval.v_list),
                 },
               },
-            }));
+        }));
         break;
       }
       case kMPMap: {
@@ -571,7 +570,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
                   .li = tv_list_first(val_list),
                 },
               },
-            }));
+        }));
         break;
       }
       case kMPExt: {
@@ -581,8 +580,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
             || tv_list_len((val_list = val_di->di_tv.vval.v_list)) != 2
             || (TV_LIST_ITEM_TV(tv_list_first(val_list))->v_type
                 != VAR_NUMBER)
-            || ((type
-                   = TV_LIST_ITEM_TV(tv_list_first(val_list))->vval.v_number)
+            || ((type = TV_LIST_ITEM_TV(tv_list_first(val_list))->vval.v_number)
                 > INT8_MAX)
             || type < INT8_MIN
             || (TV_LIST_ITEM_TV(tv_list_last(val_list))->v_type
@@ -622,7 +620,7 @@ _convert_one_value_regular_dict: {}
             .todo = tv->vval.v_dict->dv_hashtab.ht_used,
           },
         },
-      }));
+    }));
     TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START(tv, tv->vval.v_dict,
                                              _mp_last(*mpstack));
     break;
@@ -640,7 +638,7 @@ typval_encode_stop_converting_one_item:
 TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
                                               TYPVAL_ENCODE_FIRST_ARG_TYPE TYPVAL_ENCODE_FIRST_ARG_NAME,
                                               typval_T *const tv, const char *const objname)
-REAL_FATTR_NONNULL_ARG(2, 3) REAL_FATTR_WARN_UNUSED_RESULT;
+  REAL_FATTR_NONNULL_ARG(2, 3) REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Convert the whole typval
 ///
@@ -758,7 +756,7 @@ typval_encode_stop_converting_one_item:
                   .todo = (size_t)pt->pt_argc,
                 },
               },
-            }));
+          }));
         }
         break;
       case kMPConvPartialSelf: {
@@ -797,7 +795,7 @@ typval_encode_stop_converting_one_item:
                     .todo = dict->dv_hashtab.ht_used,
                   },
                 },
-              }));
+          }));
           TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START(NULL, pt->pt_dict,
                                                    _mp_last(mpstack));
         } else {

@@ -1,15 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
-project(tree-sitter LANGUAGES C)
-
-file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/lib/src/*.c)
-foreach(sfile ${SRC_FILES})
-  get_filename_component(f ${sfile} NAME)
-  if(${f} MATCHES "lib.c$")
-    list(REMOVE_ITEM SRC_FILES ${sfile})
-  endif()
-endforeach()
-include_directories(${PROJECT_SOURCE_DIR}/lib/include)
-add_library(tree-sitter ${SRC_FILES})
+project(tree-sitter C)
+set(CMAKE_C_STANDARD 99)
+add_library(tree-sitter lib/src/lib.c)
+target_include_directories(tree-sitter
+  PRIVATE lib/src lib/include)
 
 install(FILES
   lib/include/tree_sitter/api.h
@@ -17,5 +11,6 @@ install(FILES
   DESTINATION include/tree_sitter)
 
 include(GNUInstallDirs)
-install(TARGETS tree-sitter
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS tree-sitter DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+# vim: set ft=cmake:

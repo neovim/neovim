@@ -9,6 +9,9 @@ local feed = helpers.feed
 local eval = helpers.eval
 local exec = helpers.exec
 local funcs = helpers.funcs
+local meths = helpers.meths
+local curwin = helpers.curwin
+local assert_alive = helpers.assert_alive
 
 describe('tabpage', function()
   before_each(clear)
@@ -52,6 +55,45 @@ describe('tabpage', function()
       +tabclose
     ]])
     neq(999, eval('g:win_closed'))
+  end)
+
+  it('no segfault with strange WinClosed autocommand #20290', function()
+    pcall(exec, [[
+      set nohidden
+      edit Xa
+      split Xb
+      tab split
+      new
+      autocmd WinClosed * tabprev | bwipe!
+      close
+    ]])
+    assert_alive()
+  end)
+
+  it('nvim_win_close and nvim_win_hide update tabline #20285', function()
+    eq(1, #meths.list_tabpages())
+    eq({1, 1}, funcs.win_screenpos(0))
+    local win1 = curwin().id
+
+    command('tabnew')
+    eq(2, #meths.list_tabpages())
+    eq({2, 1}, funcs.win_screenpos(0))
+    local win2 = curwin().id
+
+    meths.win_close(win1, true)
+    eq(win2, curwin().id)
+    eq(1, #meths.list_tabpages())
+    eq({1, 1}, funcs.win_screenpos(0))
+
+    command('tabnew')
+    eq(2, #meths.list_tabpages())
+    eq({2, 1}, funcs.win_screenpos(0))
+    local win3 = curwin().id
+
+    meths.win_hide(win2)
+    eq(win3, curwin().id)
+    eq(1, #meths.list_tabpages())
+    eq({1, 1}, funcs.win_screenpos(0))
   end)
 
   it('switching tabpage after setting laststatus=3 #19591', function()
@@ -101,5 +143,11 @@ describe('tabpage', function()
     eq(3, funcs.nvim_tabpage_get_number(0))
     command('     silent      :keepalt   :: :::    silent!    -2    tabmove')
     eq(1, funcs.nvim_tabpage_get_number(0))
+  end)
+
+  it(':tabs does not overflow IObuff with long path with comma #20850', function()
+    meths.buf_set_name(0, ('x'):rep(1024) .. ',' .. ('x'):rep(1024))
+    command('tabs')
+    assert_alive()
   end)
 end)

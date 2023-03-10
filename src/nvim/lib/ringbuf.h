@@ -25,14 +25,9 @@
 
 #define _RINGBUF_LENGTH(rb) \
   ((rb)->first == NULL ? 0 \
-                       : ((rb)->next == (rb)->first) ? (size_t)((rb)->buf_end - (rb)->buf) + 1 \
-                                                     : ((rb)->next > \
-                                                        (rb)->first) ? (size_t)((rb)->next - \
-                                                                                (rb)->first) \
-                                                                     : (size_t)((rb)-> \
-                                                                                next - (rb)->buf + \
-                                                                                (rb)->buf_end - \
-                                                                                (rb)->first + 1))
+   : ((rb)->next == (rb)->first) ? (size_t)((rb)->buf_end - (rb)->buf) + 1 \
+   : ((rb)->next > (rb)->first) ? (size_t)((rb)->next - (rb)->first) \
+   : (size_t)((rb)->next - (rb)->buf + (rb)->buf_end - (rb)->first + 1))
 
 #define _RINGBUF_NEXT(rb, var) \
   ((var) == (rb)->buf_end ? (rb)->buf : (var) + 1)

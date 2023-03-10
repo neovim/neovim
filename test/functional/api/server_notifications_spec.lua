@@ -1,12 +1,16 @@
 local helpers = require('test.functional.helpers')(after_each)
+local assert_log = helpers.assert_log
 local eq, clear, eval, command, nvim, next_msg =
   helpers.eq, helpers.clear, helpers.eval, helpers.command, helpers.nvim,
   helpers.next_msg
 local meths = helpers.meths
 local exec_lua = helpers.exec_lua
 local retry = helpers.retry
-local isCI = helpers.isCI
+local is_ci = helpers.is_ci
 local assert_alive = helpers.assert_alive
+local skip = helpers.skip
+
+local testlog = 'Xtest-server-notify-log'
 
 describe('notify', function()
   local channel
@@ -14,6 +18,10 @@ describe('notify', function()
   before_each(function()
     clear()
     channel = nvim('get_api_info')[1]
+  end)
+
+  after_each(function()
+    os.remove(testlog)
   end)
 
   describe('passing a valid channel id', function()
@@ -71,20 +79,18 @@ describe('notify', function()
   end)
 
   it('unsubscribe non-existing event #8745', function()
+    clear{env={
+      NVIM_LOG_FILE=testlog,
+    }}
     nvim('subscribe', 'event1')
     nvim('unsubscribe', 'doesnotexist')
+    assert_log("tried to unsubscribe unknown event 'doesnotexist'", testlog, 10)
     nvim('unsubscribe', 'event1')
     assert_alive()
   end)
 
   it('cancels stale events on channel close', function()
-    if isCI() then
-      pending('hangs on CI #14083 #15251')
-      return
-    elseif helpers.skip_fragile(pending) then
-      return
-    end
-    if helpers.pending_win32(pending) then return end
+    skip(is_ci(), 'hangs on CI #14083 #15251')
     local catchan = eval("jobstart(['cat'], {'rpc': v:true})")
     local catpath = eval('exepath("cat")')
     eq({id=catchan, argv={catpath}, stream='job', mode='rpc', client = {}}, exec_lua ([[

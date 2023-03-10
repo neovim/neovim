@@ -221,11 +221,11 @@ CTRL-Y		Insert the character which is above the cursor.
 		able to copy characters from a long line.
 
 						*i_CTRL-_*
-CTRL-_		Switch between languages, as follows:
-		-  When in a rightleft window, revins and nohkmap are toggled,
+CTRL-_		Switch between insert direction, by toggling 'revins', as follows:
+		-  When in a rightleft window, 'revins' is toggled,
 		   since English will likely be inserted in this case.
-		-  When in a norightleft window, revins and hkmap are toggled,
-		   since Hebrew will likely be inserted in this case.
+		-  When in a norightleft window, 'revins' is toggled,
+		   since a rightleft language will likely be inserted in this case.
 
 		CTRL-_ moves the cursor to the end of the typed text.
 
@@ -257,8 +257,8 @@ CTRL-]		Trigger abbreviation, without inserting a character.
 
 						*i_<Insert>*
 <Insert>	Toggle between Insert and Replace mode.
------------------------------------------------------------------------
 
+-----------------------------------------------------------------------
 						*i_backspacing*
 The effect of the <BS>, CTRL-W, and CTRL-U depend on the 'backspace' option
 (unless 'revins' is set).  This is a comma-separated list of items:
@@ -378,6 +378,7 @@ CTRL-G u	close undo sequence, start new change	     *i_CTRL-G_u*
 CTRL-G U	don't start a new undo block with the next   *i_CTRL-G_U*
 		left/right cursor movement, if the cursor
 		stays within the same line
+
 -----------------------------------------------------------------------
 
 The CTRL-O command sometimes has a side effect: If the cursor was beyond the
@@ -650,9 +651,9 @@ When the popup menu is displayed there are a few more special keys, see
 |popupmenu-keys|.
 
 Note: The keys that are valid in CTRL-X mode are not mapped.  This allows for
-":map ^F ^X^F" to work (where ^F is CTRL-F and ^X is CTRL-X).  The key that
-ends CTRL-X mode (any key that is not a valid CTRL-X mode command) is mapped.
-Also, when doing completion with 'complete' mappings apply as usual.
+`:map <C-F> <C-X><C-F>` to work.  The key that ends CTRL-X mode (any key that
+is not a valid CTRL-X mode command) is mapped. Also, when doing completion
+with 'complete' mappings apply as usual.
 
 								*E565*
 Note: While completion is active Insert mode can't be used recursively and
@@ -661,10 +662,10 @@ will generate an E565 error.
 
 The following mappings are suggested to make typing the completion commands
 a bit easier (although they will hide other commands): >
-    :inoremap ^] ^X^]
-    :inoremap ^F ^X^F
-    :inoremap ^D ^X^D
-    :inoremap ^L ^X^L
+    :inoremap <C-]> <C-X><C-]>
+    :inoremap <C-F> <C-X><C-F>
+    :inoremap <C-D> <C-X><C-D>
+    :inoremap <C-L> <C-X><C-L>
 
 As a special case, typing CTRL-R to perform register insertion (see
 |i_CTRL-R|) will not exit CTRL-X mode.  This is primarily to allow the use of
@@ -857,29 +858,27 @@ invoked and what it should return.
 Here is an example that uses the "aiksaurus" command (provided by Magnus
 Groß): >
 
-	func Thesaur(findstart, base)
-	    if a:findstart
-		let line = getline('.')
-		let start = col('.') - 1
-		while start > 0 && line[start - 1] =~ '\a'
-		   let start -= 1
-		endwhile
-		return start
-	    else
-		let res = []
-		let h = ''
-		for l in split(system('aiksaurus ' .. shellescape(a:base)), '\n')
-		    if l[:3] == '=== '
-		    	let h = substitute(l[4:], ' =*$', '', '')
-		    elseif l[0] =~ '\a'
-			call extend(res, map(split(l, ', '), {_, val -> {'word': val, 'menu': '('.h.')'}}))
-		    endif
-		endfor
-		return res
-	    endif
-	endfunc
+    func Thesaur(findstart, base)
+      if a:findstart
+	return searchpos('\<', 'bnW', line('.'))[1] - 1
+      endif
+      let res = []
+      let h = ''
+      for l in systemlist('aiksaurus ' .. shellescape(a:base))
+	if l[:3] == '=== '
+	  let h = '(' .. substitute(l[4:], ' =*$', ')', '')
+	elseif l ==# 'Alphabetically similar known words are: '
+	  let h = "\U0001f52e"
+	elseif l[0] =~ '\a' || (h ==# "\U0001f52e" && l[0] ==# "\t")
+	  call extend(res, map(split(substitute(l, '^\t', '', ''), ', '), {_, val -> {'word': val, 'menu': h}}))
+	endif
+      endfor
+      return res
+    endfunc
 
-	set thesaurusfunc=Thesaur
+    if exists('+thesaurusfunc')
+      set thesaurusfunc=Thesaur
+    endif
 
 
 Completing keywords in the current and included files	*compl-keyword*
@@ -1102,8 +1101,8 @@ cursor column will be replaced with the matches.  If the returned value is
 larger than the cursor column, the cursor column is used.
 
 Negative return values:
-   -2 	To cancel silently and stay in completion mode.
-   -3 	To cancel silently and leave completion mode.
+   -2	To cancel silently and stay in completion mode.
+   -3	To cancel silently and leave completion mode.
    Another negative value: completion starts at the cursor column
 
 On the second invocation the arguments are:
@@ -1126,7 +1125,8 @@ that contains the List.  The Dict can have these items:
 			leading text is changed.
 Other items are ignored.
 
-For acting upon end of completion, see the |CompleteDone| autocommand event.
+For acting upon end of completion, see the |CompleteDonePre| and
+|CompleteDone| autocommand event.
 
 For example, the function can contain this: >
 	let matches = ... list of words ...
@@ -1154,7 +1154,7 @@ items:
 			item with the same word is already present.
 	empty		when non-zero this match will be added even when it is
 			an empty string
-	user_data 	custom data which is associated with the item and
+	user_data	custom data which is associated with the item and
 			available in |v:completed_item|; it can be any type;
 			defaults to an empty string
 
@@ -1349,16 +1349,8 @@ Completion of C code requires a tags file.  You should use Universal/
 Exuberant ctags, because it adds extra information that is needed for
 completion.  You can find it here:
 	Universal Ctags: https://ctags.io
-	Exuberant Ctags: http://ctags.sourceforge.net
 
-Universal Ctags is preferred, Exuberant Ctags is no longer being developed.
-
-For Exuberant ctags, version 5.6 or later is recommended.  For version 5.5.4
-you should add a patch that adds the "typename:" field:
-	ftp://ftp.vim.org/pub/vim/unstable/patches/ctags-5.5.4.patch
-A compiled .exe for MS-Windows can be found at:
-	http://ctags.sourceforge.net/
-	https://github.com/universal-ctags/ctags-win32
+Universal Ctags is preferred, Exuberant Ctags is no longer maintained.
 
 If you want to complete system functions you can do something like this.  Use
 ctags to generate a tags file for all the system header files: >
@@ -1458,14 +1450,14 @@ DOM compatibility
 At the moment (beginning of 2006) there are two main browsers - MS Internet
 Explorer and Mozilla Firefox. These two applications are covering over 90% of
 market. Theoretically standards are created by W3C organisation
-(http://www.w3c.org) but they are not always followed/implemented.
-
+(https://www.w3.org/) but they are not always followed/implemented.
+>
 		IE	FF	W3C  Omni completion ~
 		+/-	+/-	+    +		     ~
 		+	+	-    +		     ~
 		+	-	-    -		     ~
 		-	+	-    -		     ~
-
+<
 Regardless from state of implementation in browsers but if element is defined
 in standards, completion plugin will place element in suggestion list. When
 both major engines implemented element, even if this is not in standards it
@@ -1479,7 +1471,6 @@ external files and for class aware completion. You should use Universal/
 Exuberant ctags version 5.5.4 or newer. You can find it here:
 
 	Universal Ctags: https://ctags.io
-	Exuberant Ctags: http://ctags.sourceforge.net
 
 Script completes:
 
@@ -1519,7 +1510,7 @@ RUBY						 *ft-ruby-omni*
 NOTE: |compl-omni| for Ruby code requires |provider-ruby| to be installed.
 
 Ruby completion will parse your buffer on demand in order to provide a list of
-completions.  These completions will be drawn from modules loaded by 'require'
+completions.  These completions will be drawn from modules loaded by "require"
 and modules defined in the current buffer.
 
 The completions provided by CTRL-X CTRL-O are sensitive to the context:
@@ -1533,7 +1524,7 @@ The completions provided by CTRL-X CTRL-O are sensitive to the context:
  3. After '.', '::' or ':'	     Methods applicable to the object being
 				       dereferenced
 
- 4. After ':' or ':foo'		     Symbol name (beginning with 'foo')
+ 4. After ':' or ':foo'		     Symbol name (beginning with "foo")
 
 Notes:
  - Vim will load/evaluate code in order to provide completions.  This may
@@ -1759,7 +1750,7 @@ In the example four special elements are visible:
    dialect.
 2. If the list containing possible values of attributes has one element and
    this element is equal to the name of the attribute this attribute will be
-   treated as boolean and inserted as 'attrname' and not as 'attrname="'
+   treated as boolean and inserted as "attrname" and not as 'attrname="'
 3. "vimxmltaginfo" - a special key with a Dictionary containing tag
    names as keys and two element List as values, for additional menu info and
    the long description.
@@ -1778,12 +1769,12 @@ DTD -> Vim							*dtd2vim*
 On |www| is the script |dtd2vim| which parses DTD and creates an XML data file
 for Vim XML omni completion.
 
-    dtd2vim: http://www.vim.org/scripts/script.php?script_id=1462
+    dtd2vim: https://www.vim.org/scripts/script.php?script_id=1462
 
 Check the beginning of that file for usage details.
 The script requires perl and:
 
-    perlSGML: http://savannah.nongnu.org/projects/perlsgml
+    perlSGML: https://savannah.nongnu.org/projects/perlsgml
 
 
 Commands

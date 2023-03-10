@@ -88,8 +88,8 @@ typedef struct mf_blocknr_trans_item {
 
 /// A memory file.
 typedef struct memfile {
-  char_u *mf_fname;                  /// name of the file
-  char_u *mf_ffname;                 /// idem, full path
+  char *mf_fname;                    /// name of the file
+  char *mf_ffname;                   /// idem, full path
   int mf_fd;                         /// file descriptor
   bhdr_T *mf_free_first;             /// first block header in free list
   bhdr_T *mf_used_first;             /// mru block header in used list

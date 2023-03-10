@@ -16,9 +16,9 @@ __SINCE=$1
 __INVMATCH=$2
 
 is_merge_commit() {
-  git rev-parse $1 >/dev/null 2>&1 \
+  git rev-parse "$1" >/dev/null 2>&1 \
     || { echo "ERROR: invalid commit: $1"; exit 1; }
-  git log $1^2 >/dev/null 2>&1 && return 0 || return 1
+  git log "$1"^2 >/dev/null 2>&1 && return 0 || return 1
 }
 
 # Removes parens from issue/ticket/PR numbers.
@@ -40,13 +40,13 @@ _format_ticketnums() {
 }
 
 for commit in $(git log --format='%H' --first-parent "$__SINCE"..HEAD); do
-  if is_merge_commit ${commit} ; then
-      if [ -z "$__INVMATCH" ] || ! git log --oneline ${commit}^1..${commit}^2 \
+  if is_merge_commit "${commit}" ; then
+      if [ -z "$__INVMATCH" ] || ! git log --oneline "${commit}^1..${commit}^2" \
            | >/dev/null 2>&1 grep -E "$__INVMATCH" ; then
-        git log -1 --oneline ${commit}
-        git log --format='    %h %s' ${commit}^1..${commit}^2
+        git log -1 --oneline "${commit}"
+        git log --format='    %h %s' "${commit}^1..${commit}^2"
       fi
   else
-    git log -1 --oneline ${commit}
+    git log -1 --oneline "${commit}"
   fi
 done | _format_ticketnums

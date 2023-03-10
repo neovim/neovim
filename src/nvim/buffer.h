@@ -1,13 +1,20 @@
 #ifndef NVIM_BUFFER_H
 #define NVIM_BUFFER_H
 
+#include <assert.h>
+#include <stdbool.h>
+#include <stddef.h>
+
+#include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/func_attr.h"
 #include "nvim/grid_defs.h"  // for StlClickRecord
 #include "nvim/macros.h"
 #include "nvim/memline.h"
-#include "nvim/pos.h"  // for linenr_T
+#include "nvim/memline_defs.h"
+#include "nvim/pos.h"
 
 // Values for buflist_getfile()
 enum getf_values {
@@ -69,8 +76,7 @@ EXTERN char *msg_qflist INIT(= N_("[Quickfix List]"));
 # include "buffer.h.generated.h"
 #endif
 
-static inline void buf_set_changedtick(buf_T *const buf,
-                                       const varnumber_T changedtick)
+static inline void buf_set_changedtick(buf_T *buf, varnumber_T changedtick)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE;
 
 /// Set b:changedtick, also checking b: for consistency in debug build
@@ -102,7 +108,7 @@ static inline void buf_set_changedtick(buf_T *const buf, const varnumber_T chang
   }
 }
 
-static inline varnumber_T buf_get_changedtick(const buf_T *const buf)
+static inline varnumber_T buf_get_changedtick(const buf_T *buf)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE REAL_FATTR_PURE
   REAL_FATTR_WARN_UNUSED_RESULT;
 
@@ -116,7 +122,7 @@ static inline varnumber_T buf_get_changedtick(const buf_T *const buf)
   return buf->changedtick_di.di_tv.vval.v_number;
 }
 
-static inline void buf_inc_changedtick(buf_T *const buf)
+static inline void buf_inc_changedtick(buf_T *buf)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE;
 
 /// Increment b:changedtick value

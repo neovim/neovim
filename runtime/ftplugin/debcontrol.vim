@@ -2,8 +2,8 @@
 " Language:     Debian control files
 " Maintainer:   Debian Vim Maintainers
 " Former Maintainer:    Pierre Habouzit <madcoder@debian.org>
-" Last Change:  2018-01-28
-" URL:          https://salsa.debian.org/vim-team/vim-debian/blob/master/ftplugin/debcontrol.vim
+" Last Change:  2023 Jan 16
+" URL:          https://salsa.debian.org/vim-team/vim-debian/blob/main/ftplugin/debcontrol.vim
 
 " Do these settings once per buffer
 if exists('b:did_ftplugin')

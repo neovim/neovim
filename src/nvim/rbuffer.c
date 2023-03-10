@@ -2,15 +2,16 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
 
+#include "nvim/macros.h"
 #include "nvim/memory.h"
 #include "nvim/rbuffer.h"
-#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "rbuffer.c.generated.h"
+# include "rbuffer.c.generated.h"  // IWYU pragma: export
 #endif
 
 /// Creates a new `RBuffer` instance.
@@ -164,7 +165,8 @@ void rbuffer_consumed_compact(RBuffer *buf, size_t count)
   assert(buf->read_ptr <= buf->write_ptr);
   rbuffer_consumed(buf, count);
   if (buf->read_ptr > buf->start_ptr) {
-    assert((size_t)(buf->read_ptr - buf->write_ptr) == buf->size);
+    assert((size_t)(buf->write_ptr - buf->read_ptr) == buf->size
+           || buf->write_ptr == buf->start_ptr);
     memmove(buf->start_ptr, buf->read_ptr, buf->size);
     buf->read_ptr = buf->start_ptr;
     buf->write_ptr = buf->read_ptr + buf->size;

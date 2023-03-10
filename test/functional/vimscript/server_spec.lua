@@ -1,11 +1,14 @@
 local helpers = require('test.functional.helpers')(after_each)
+local assert_log = helpers.assert_log
 local eq, neq, eval = helpers.eq, helpers.neq, helpers.eval
 local clear, funcs, meths = helpers.clear, helpers.funcs, helpers.meths
-local iswin = helpers.iswin
 local ok = helpers.ok
 local matches = helpers.matches
 local pcall_err = helpers.pcall_err
 local mkdir = helpers.mkdir
+local is_os = helpers.is_os
+
+local testlog = 'Xtest-server-log'
 
 local function clear_serverlist()
   for _, server in pairs(funcs.serverlist()) do
@@ -14,12 +17,16 @@ local function clear_serverlist()
 end
 
 describe('server', function()
+  after_each(function()
+    os.remove(testlog)
+  end)
+
   it('serverstart() stores sockets in $XDG_RUNTIME_DIR', function()
     local dir = 'Xtest_xdg_run'
     mkdir(dir)
     clear({ env={ XDG_RUNTIME_DIR=dir } })
     matches(dir, funcs.stdpath('run'))
-    if not iswin() then
+    if not is_os('win') then
       matches(dir, funcs.serverstart())
     end
   end)
@@ -65,7 +72,7 @@ describe('server', function()
     eq('', meths.get_vvar('servername'))
 
     -- v:servername and $NVIM take the next available server.
-    local servername = (iswin() and [[\\.\pipe\Xtest-functional-server-pipe]]
+    local servername = (is_os('win') and [[\\.\pipe\Xtest-functional-server-pipe]]
                                 or './Xtest-functional-server-socket')
     funcs.serverstart(servername)
     eq(servername, meths.get_vvar('servername'))
@@ -74,13 +81,20 @@ describe('server', function()
   end)
 
   it('serverstop() returns false for invalid input', function()
-    clear()
+    clear{env={
+      NVIM_LOG_FILE=testlog,
+      NVIM_LISTEN_ADDRESS='.',
+    }}
     eq(0, eval("serverstop('')"))
     eq(0, eval("serverstop('bogus-socket-name')"))
+    assert_log('Not listening on bogus%-socket%-name', testlog, 10)
   end)
 
   it('parses endpoints', function()
-    clear()
+    clear{env={
+      NVIM_LOG_FILE=testlog,
+      NVIM_LISTEN_ADDRESS='.',
+    }}
     clear_serverlist()
     eq({}, funcs.serverlist())
 
@@ -104,6 +118,7 @@ describe('server', function()
     if status then
       table.insert(expected, v4)
       pcall(funcs.serverstart, v4)  -- exists already; ignore
+      assert_log('Failed to start server: address already in use: 127%.0%.0%.1', testlog, 10)
     end
 
     local v6 = '::1:12345'
@@ -111,6 +126,7 @@ describe('server', function()
     if status then
       table.insert(expected, v6)
       pcall(funcs.serverstart, v6)  -- exists already; ignore
+      assert_log('Failed to start server: address already in use: ::1', testlog, 10)
     end
     eq(expected, funcs.serverlist())
     clear_serverlist()
@@ -130,7 +146,7 @@ describe('server', function()
     local n = eval('len(serverlist())')
 
     -- Add some servers.
-    local servs = (iswin()
+    local servs = (is_os('win')
       and { [[\\.\pipe\Xtest-pipe0934]], [[\\.\pipe\Xtest-pipe4324]] }
       or  { [[./Xtest-pipe0934]], [[./Xtest-pipe4324]] })
     for _, s in ipairs(servs) do
@@ -164,7 +180,7 @@ describe('startup --listen', function()
   end)
 
   it('sets v:servername, overrides $NVIM_LISTEN_ADDRESS', function()
-    local addr = (iswin() and [[\\.\pipe\Xtest-listen-pipe]]
+    local addr = (is_os('win') and [[\\.\pipe\Xtest-listen-pipe]]
                           or './Xtest-listen-pipe')
     clear({ env={ NVIM_LISTEN_ADDRESS='./Xtest-env-pipe' },
             args={ '--listen', addr } })

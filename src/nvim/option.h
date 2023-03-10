@@ -1,7 +1,7 @@
 #ifndef NVIM_OPTION_H
 #define NVIM_OPTION_H
 
-#include "nvim/ex_cmds_defs.h"  // for exarg_T
+#include "nvim/ex_cmds_defs.h"
 
 /// Returned by get_option_value().
 typedef enum {
@@ -18,6 +18,8 @@ typedef enum {
 #define BCO_ENTER       1       // going to enter the buffer
 #define BCO_ALWAYS      2       // always copy the options
 #define BCO_NOHELP      4       // don't touch the help related options
+
+#define MAX_NUMBERWIDTH 20      // used for 'numberwidth' and 'statuscolumn'
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.h.generated.h"

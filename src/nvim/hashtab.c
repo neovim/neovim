@@ -30,6 +30,7 @@
 #include "nvim/hashtab.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 
 // Magic value for algorithm that walks through the array.
@@ -67,7 +68,7 @@ void hash_clear(hashtab_T *ht)
 void hash_clear_all(hashtab_T *ht, unsigned int off)
 {
   size_t todo = ht->ht_used;
-  for (hashitem_T *hi = ht->ht_array; todo > 0; ++hi) {
+  for (hashitem_T *hi = ht->ht_array; todo > 0; hi++) {
     if (!HASHITEM_EMPTY(hi)) {
       xfree(hi->hi_key - off);
       todo--;
@@ -87,7 +88,7 @@ void hash_clear_all(hashtab_T *ht, unsigned int off)
 ///                  is changed in any way.
 hashitem_T *hash_find(const hashtab_T *const ht, const char *const key)
 {
-  return hash_lookup(ht, key, STRLEN(key), hash_hash((char_u *)key));
+  return hash_lookup(ht, key, strlen(key), hash_hash(key));
 }
 
 /// Like hash_find, but key is not NUL-terminated
@@ -140,7 +141,7 @@ hashitem_T *hash_lookup(const hashtab_T *const ht, const char *const key, const 
   if (hi->hi_key == HI_KEY_REMOVED) {
     freeitem = hi;
   } else if ((hi->hi_hash == hash)
-             && (STRNCMP(hi->hi_key, key, key_len) == 0)
+             && (strncmp(hi->hi_key, key, key_len) == 0)
              && hi->hi_key[key_len] == NUL) {
     return hi;
   }
@@ -166,7 +167,7 @@ hashitem_T *hash_lookup(const hashtab_T *const ht, const char *const key, const 
 
     if ((hi->hi_hash == hash)
         && (hi->hi_key != HI_KEY_REMOVED)
-        && (STRNCMP(hi->hi_key, key, key_len) == 0)
+        && (strncmp(hi->hi_key, key, key_len) == 0)
         && hi->hi_key[key_len] == NUL) {
       return hi;
     }
@@ -194,17 +195,17 @@ void hash_debug_results(void)
 #endif  // ifdef HT_DEBUG
 }
 
-/// Add item for key "key" to hashtable "ht".
+/// Add (empty) item for key `key` to hashtable `ht`.
 ///
 /// @param key Pointer to the key for the new item. The key has to be contained
 ///            in the new item (@see hashitem_T). Must not be NULL.
 ///
 /// @return OK   if success.
 ///         FAIL if key already present
-int hash_add(hashtab_T *ht, char_u *key)
+int hash_add(hashtab_T *ht, char *key)
 {
   hash_T hash = hash_hash(key);
-  hashitem_T *hi = hash_lookup(ht, (const char *)key, STRLEN(key), hash);
+  hashitem_T *hi = hash_lookup(ht, key, strlen(key), hash);
   if (!HASHITEM_EMPTY(hi)) {
     internal_error("hash_add()");
     return FAIL;
@@ -220,9 +221,10 @@ int hash_add(hashtab_T *ht, char_u *key)
 /// @param key  Pointer to the key for the new item. The key has to be contained
 ///             in the new item (@see hashitem_T). Must not be NULL.
 /// @param hash The precomputed hash value for the key.
-void hash_add_item(hashtab_T *ht, hashitem_T *hi, char_u *key, hash_T hash)
+void hash_add_item(hashtab_T *ht, hashitem_T *hi, char *key, hash_T hash)
 {
   ht->ht_used++;
+  ht->ht_changed++;
   if (hi->hi_key == NULL) {
     ht->ht_filled++;
   }
@@ -242,6 +244,7 @@ void hash_add_item(hashtab_T *ht, hashitem_T *hi, char_u *key, hash_T hash)
 void hash_remove(hashtab_T *ht, hashitem_T *hi)
 {
   ht->ht_used--;
+  ht->ht_changed++;
   hi->hi_key = HI_KEY_REMOVED;
   hash_may_resize(ht, 0);
 }
@@ -265,7 +268,7 @@ void hash_unlock(hashtab_T *ht)
   hash_may_resize(ht, 0);
 }
 
-/// Resize hastable (new size can be given or automatically computed).
+/// Resize hashtable (new size can be given or automatically computed).
 ///
 /// @param minitems Minimum number of items the new table should hold.
 ///                 If zero, new size will depend on currently used items:
@@ -290,6 +293,7 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
 #endif  // ifdef HT_DEBUG
 
   size_t minsize;
+  const size_t oldsize = ht->ht_mask + 1;
   if (minitems == 0) {
     // Return quickly for small tables with at least two NULL items.
     // items are required for the lookup to decide a key isn't there.
@@ -302,7 +306,6 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
     // removed items, so that they get cleaned up).
     // Shrink the array when it's less than 1/5 full. When growing it is
     // at least 1/4 full (avoids repeated grow-shrink operations)
-    size_t oldsize = ht->ht_mask + 1;
     if ((ht->ht_filled * 3 < oldsize * 2) && (ht->ht_used > oldsize / 5)) {
       return;
     }
@@ -333,6 +336,13 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   }
 
   bool newarray_is_small = newsize == HT_INIT_SIZE;
+
+  if (!newarray_is_small && newsize == oldsize && ht->ht_filled * 3 < oldsize * 2) {
+    // The hashtab is already at the desired size, and there are not too
+    // many removed items, bail out.
+    return;
+  }
+
   bool keep_smallarray = newarray_is_small
                          && ht->ht_array == ht->ht_smallarray;
 
@@ -356,7 +366,7 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   hash_T newmask = newsize - 1;
   size_t todo = ht->ht_used;
 
-  for (hashitem_T *olditem = oldarray; todo > 0; ++olditem) {
+  for (hashitem_T *olditem = oldarray; todo > 0; olditem++) {
     if (HASHITEM_EMPTY(olditem)) {
       continue;
     }
@@ -384,6 +394,7 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   ht->ht_array = newarray;
   ht->ht_mask = newmask;
   ht->ht_filled = ht->ht_used;
+  ht->ht_changed++;
 }
 
 #define HASH_CYCLE_BODY(hash, p) \
@@ -395,9 +406,9 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
 /// run a script that uses hashtables a lot. Vim will then print statistics
 /// when exiting. Try that with the current hash algorithm and yours. The
 /// lower the percentage the better.
-hash_T hash_hash(const char_u *key)
+hash_T hash_hash(const char *key)
 {
-  hash_T hash = *key;
+  hash_T hash = (uint8_t)(*key);
 
   if (hash == 0) {
     return (hash_T)0;
@@ -405,7 +416,7 @@ hash_T hash_hash(const char_u *key)
 
   // A simplistic algorithm that appears to do very well.
   // Suggested by George Reilly.
-  const uint8_t *p = key + 1;
+  const uint8_t *p = (uint8_t *)key + 1;
   while (*p != NUL) {
     HASH_CYCLE_BODY(hash, p);
   }
@@ -446,7 +457,7 @@ hash_T hash_hash_len(const char *key, const size_t len)
 ///
 /// Used for testing because luajit ffi does not allow getting addresses of
 /// globals.
-const char_u *_hash_key_removed(void)
+const char *_hash_key_removed(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return HI_KEY_REMOVED;

@@ -3,7 +3,7 @@
 " Filenames: *.desktop, *.directory
 " Maintainer: Eisuke Kawashima ( e.kawaschima+vim AT gmail.com )
 " Previous Maintainer: Mikolaj Machowski ( mikmach AT wp DOT pl )
-" Last Change: 2020-06-11
+" Last Change: 2022 Sep 22
 " Version Info: desktop.vim 1.5
 " References:
 " - https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-1.5.html (2020-04-27)
@@ -60,10 +60,10 @@ syn match dtLocaleSuffix
 
 " Boolean Value {{{2
 syn match   dtBoolean
-      \ /^\%(DBusActivatable\|Hidden\|NoDisplay\|PrefersNonDefaultGPU\|StartupNotify\|Terminal\)\s*=\s*\%(true\|false\)/
+      \ /^\%(DBusActivatable\|Hidden\|NoDisplay\|PrefersNonDefaultGPU\|SingleMainWindow\|StartupNotify\|Terminal\)\s*=\s*\%(true\|false\)/
       \ contains=dtBooleanKey,dtDelim,dtBooleanValue transparent
 syn keyword dtBooleanKey
-      \ DBusActivatable Hidden NoDisplay PrefersNonDefaultGPU StartupNotify Terminal
+      \ DBusActivatable Hidden NoDisplay PrefersNonDefaultGPU SingleMainWindow StartupNotify Terminal
       \ contained nextgroup=dtDelim
 
 if s:desktop_enable_kde

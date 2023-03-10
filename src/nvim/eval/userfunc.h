@@ -1,18 +1,42 @@
 #ifndef NVIM_EVAL_USERFUNC_H
 #define NVIM_EVAL_USERFUNC_H
 
+#include <stdbool.h>
+#include <stddef.h>
+
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/garray.h"
+#include "nvim/hashtab.h"
+#include "nvim/pos.h"
+#include "nvim/types.h"
+
+struct funccal_entry;
 
 // From user function to hashitem and back.
 #define UF2HIKEY(fp) ((fp)->uf_name)
 #define HIKEY2UF(p)  ((ufunc_T *)(p - offsetof(ufunc_T, uf_name)))
 #define HI2UF(hi)    HIKEY2UF((hi)->hi_key)
 
-///< Structure used by trans_function_name()
+// flags used in uf_flags
+#define FC_ABORT    0x01          // abort function on error
+#define FC_RANGE    0x02          // function accepts range
+#define FC_DICT     0x04          // Dict function, uses "self"
+#define FC_CLOSURE  0x08          // closure, uses outer scope variables
+#define FC_DELETED  0x10          // :delfunction used while uf_refcount > 0
+#define FC_REMOVED  0x20          // function redefined while uf_refcount > 0
+#define FC_SANDBOX  0x40          // function defined in the sandbox
+#define FC_DEAD     0x80          // function kept only for reference to dfunc
+#define FC_EXPORT   0x100         // "export def Func()"
+#define FC_NOARGS   0x200         // no a: variables in lambda
+#define FC_VIM9     0x400         // defined in vim9 script file
+#define FC_LUAREF  0x800          // luaref callback
+
+/// Structure used by trans_function_name()
 typedef struct {
   dict_T *fd_dict;  ///< Dictionary used.
-  char_u *fd_newkey;  ///< New key in "dict" in allocated memory.
+  char *fd_newkey;  ///< New key in "dict" in allocated memory.
   dictitem_T *fd_di;  ///< Dictionary item used.
 } funcdict_T;
 
@@ -24,44 +48,43 @@ struct funccal_entry {
 
 /// errors for when calling a function
 typedef enum {
-  ERROR_UNKNOWN = 0,
-  ERROR_TOOMANY,
-  ERROR_TOOFEW,
-  ERROR_SCRIPT,
-  ERROR_DICT,
-  ERROR_NONE,
-  ERROR_OTHER,
-  ERROR_BOTH,
-  ERROR_DELETED,
-  ERROR_NOTMETHOD,
+  FCERR_UNKNOWN = 0,
+  FCERR_TOOMANY = 1,
+  FCERR_TOOFEW = 2,
+  FCERR_SCRIPT = 3,
+  FCERR_DICT = 4,
+  FCERR_NONE = 5,
+  FCERR_OTHER = 6,
+  FCERR_DELETED = 7,
+  FCERR_NOTMETHOD = 8,  ///< function cannot be used as a method
 } FnameTransError;
 
 /// Used in funcexe_T. Returns the new argcount.
-typedef int (*ArgvFunc)(int current_argcount, typval_T *argv, int argskip,
-                        int called_func_argcount);
+typedef int (*ArgvFunc)(int current_argcount, typval_T *argv, int partial_argcount,
+                        ufunc_T *called_func);
 
 /// Structure passed between functions dealing with function call execution.
 typedef struct {
-  ArgvFunc argv_func;  ///< when not NULL, can be used to fill in arguments only
-                       ///< when the invoked function uses them
-  linenr_T firstline;  ///< first line of range
-  linenr_T lastline;   ///< last line of range
-  bool *doesrange;     ///< [out] if not NULL: function handled range
-  bool evaluate;       ///< actually evaluate expressions
-  partial_T *partial;  ///< for extra arguments
-  dict_T *selfdict;    ///< Dictionary for "self"
-  typval_T *basetv;    ///< base for base->method()
+  ArgvFunc fe_argv_func;  ///< when not NULL, can be used to fill in arguments only
+                          ///< when the invoked function uses them
+  linenr_T fe_firstline;  ///< first line of range
+  linenr_T fe_lastline;   ///< last line of range
+  bool *fe_doesrange;     ///< [out] if not NULL: function handled range
+  bool fe_evaluate;       ///< actually evaluate expressions
+  partial_T *fe_partial;  ///< for extra arguments
+  dict_T *fe_selfdict;    ///< Dictionary for "self"
+  typval_T *fe_basetv;    ///< base for base->method()
 } funcexe_T;
 
 #define FUNCEXE_INIT (funcexe_T) { \
-  .argv_func = NULL, \
-  .firstline = 0, \
-  .lastline = 0, \
-  .doesrange = NULL, \
-  .evaluate = false, \
-  .partial = NULL, \
-  .selfdict = NULL, \
-  .basetv = NULL, \
+  .fe_argv_func = NULL, \
+  .fe_firstline = 0, \
+  .fe_lastline = 0, \
+  .fe_doesrange = NULL, \
+  .fe_evaluate = false, \
+  .fe_partial = NULL, \
+  .fe_selfdict = NULL, \
+  .fe_basetv = NULL, \
 }
 
 #define FUNCARG(fp, j)  ((char **)(fp->uf_args.ga_data))[j]

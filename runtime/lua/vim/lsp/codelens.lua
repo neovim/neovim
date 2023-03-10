@@ -61,7 +61,7 @@ end
 
 --- Return all lenses for the given buffer
 ---
----@param bufnr number  Buffer number. 0 can be used for the current buffer.
+---@param bufnr integer  Buffer number. 0 can be used for the current buffer.
 ---@return table (`CodeLens[]`)
 function M.get(bufnr)
   local lenses_by_client = lens_cache_by_buf[bufnr or 0]
@@ -108,13 +108,36 @@ function M.run()
   end
 end
 
+---@private
+local function resolve_bufnr(bufnr)
+  return bufnr == 0 and api.nvim_get_current_buf() or bufnr
+end
+
+--- Clear the lenses
+---
+---@param client_id integer|nil filter by client_id. All clients if nil
+---@param bufnr integer|nil filter by buffer. All buffers if nil
+function M.clear(client_id, bufnr)
+  local buffers = bufnr and { resolve_bufnr(bufnr) } or vim.tbl_keys(lens_cache_by_buf)
+  for _, iter_bufnr in pairs(buffers) do
+    local client_ids = client_id and { client_id } or vim.tbl_keys(namespaces)
+    for _, iter_client_id in pairs(client_ids) do
+      local ns = namespaces[iter_client_id]
+      lens_cache_by_buf[iter_bufnr][iter_client_id] = {}
+      api.nvim_buf_clear_namespace(iter_bufnr, ns, 0, -1)
+    end
+  end
+end
+
 --- Display the lenses using virtual text
 ---
 ---@param lenses table of lenses to display (`CodeLens[] | null`)
----@param bufnr number
----@param client_id number
+---@param bufnr integer
+---@param client_id integer
 function M.display(lenses, bufnr, client_id)
+  local ns = namespaces[client_id]
   if not lenses or not next(lenses) then
+    api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
     return
   end
   local lenses_by_lnum = {}
@@ -126,7 +149,6 @@ function M.display(lenses, bufnr, client_id)
     end
     table.insert(line_lenses, lens)
   end
-  local ns = namespaces[client_id]
   local num_lines = api.nvim_buf_line_count(bufnr)
   for i = 0, num_lines do
     local line_lenses = lenses_by_lnum[i] or {}
@@ -155,8 +177,8 @@ end
 --- Store lenses for a specific buffer and client
 ---
 ---@param lenses table of lenses to store (`CodeLens[] | null`)
----@param bufnr number
----@param client_id number
+---@param bufnr integer
+---@param client_id integer
 function M.save(lenses, bufnr, client_id)
   local lenses_by_client = lens_cache_by_buf[bufnr]
   if not lenses_by_client then
@@ -241,7 +263,8 @@ end
 ---
 --- It is recommended to trigger this using an autocmd or via keymap.
 ---
---- <pre>
+--- Example:
+--- <pre>vim
 ---   autocmd BufEnter,CursorHold,InsertLeave <buffer> lua vim.lsp.codelens.refresh()
 --- </pre>
 ---

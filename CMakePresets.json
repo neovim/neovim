@@ -1,0 +1,113 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "base",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "hidden": true
+    },
+    {
+      "name": "default",
+      "displayName": "RelWithDebInfo",
+      "description": "Enables optimizations (-Og or -O2) with debug information",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      },
+      "inherits": ["base"]
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "description": "Disables optimizations (-O0), enables debug information",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "inherits": ["base"]
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "description": "Same as RelWithDebInfo, but disables debug information",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      },
+      "inherits": ["base"]
+    },
+    {
+      "name": "windows-default",
+      "displayName": "Windows x64 RelWithDebInfo",
+      "description": "Sets Ninja generator, enables optimizations with debug information for x64",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      },
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "hostOS": ["Windows"]
+        }
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "inherits": ["base"]
+    },
+    {
+      "name": "iwyu",
+      "displayName": "IWYU",
+      "description": "Run include-what-you-use with the compiler",
+      "cacheVariables": {
+        "ENABLE_IWYU": "ON"
+      },
+      "inherits": ["base"]
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default"
+    },
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "windows-default",
+      "configurePreset": "windows-default",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "iwyu",
+      "configurePreset": "iwyu"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "iwyu",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "iwyu"
+        },
+        {
+          "type": "build",
+          "name": "iwyu"
+        }
+      ]
+    }
+  ]
+}

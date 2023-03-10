@@ -1,6 +1,3 @@
--- prevents luacheck from making lints for setting things on vim
-local vim = assert(vim)
-
 local pathtrails = {}
 vim._so_trails = {}
 for s in (package.cpath .. ';'):gmatch('[^;]*;') do
@@ -45,19 +42,28 @@ function vim._load_package(name)
   return nil
 end
 
--- Insert vim._load_package after the preloader at position 2
-table.insert(package.loaders, 2, vim._load_package)
+-- TODO(bfredl): dedicated state for this?
+if vim.api then
+  -- Insert vim._load_package after the preloader at position 2
+  table.insert(package.loaders, 2, vim._load_package)
+end
 
 -- builtin functions which always should be available
 require('vim.shared')
 
-vim._submodules = { inspect = true }
+vim._submodules = {
+  inspect = true,
+  version = true,
+}
 
 -- These are for loading runtime modules in the vim namespace lazily.
 setmetatable(vim, {
   __index = function(t, key)
     if vim._submodules[key] then
       t[key] = require('vim.' .. key)
+      return t[key]
+    elseif key == 'inspect_pos' or key == 'show_pos' then
+      require('vim._inspector')
       return t[key]
     elseif vim.startswith(key, 'uri_') then
       local val = require('vim.uri')[key]
@@ -78,6 +84,6 @@ function vim.empty_dict()
 end
 
 -- only on main thread: functions for interacting with editor state
-if not vim.is_thread() then
+if vim.api and not vim.is_thread() then
   require('vim._editor')
 end

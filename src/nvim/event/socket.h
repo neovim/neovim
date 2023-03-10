@@ -4,8 +4,11 @@
 #include <uv.h>
 
 #include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
+
+struct socket_watcher;
 
 #define ADDRESS_MAX_SIZE 256
 

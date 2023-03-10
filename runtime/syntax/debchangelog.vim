@@ -3,8 +3,8 @@
 " Maintainer:  Debian Vim Maintainers
 " Former Maintainers: Gerfried Fuchs <alfie@ist.org>
 "                     Wichert Akkerman <wakkerma@debian.org>
-" Last Change: 2022 Jul 25
-" URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/debchangelog.vim
+" Last Change: 2023 Jan 16
+" URL: https://salsa.debian.org/vim-team/vim-debian/blob/main/syntax/debchangelog.vim
 
 " Standard syntax initialization
 if exists('b:current_syntax')
@@ -21,9 +21,9 @@ let s:cpo = &cpo
 set cpo-=C
 let s:supported = [
       \ 'oldstable', 'stable', 'testing', 'unstable', 'experimental', 'sid', 'rc-buggy',
-      \ 'buster', 'bullseye', 'bookworm', 'trixie',
+      \ 'buster', 'bullseye', 'bookworm', 'trixie', 'forky',
       \
-      \ 'trusty', 'xenial', 'bionic', 'focal', 'jammy', 'kinetic',
+      \ 'trusty', 'xenial', 'bionic', 'focal', 'jammy', 'kinetic', 'lunar',
       \ 'devel'
       \ ]
 let s:unsupported = [

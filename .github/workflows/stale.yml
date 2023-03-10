@@ -1,0 +1,42 @@
+name: 'Close stale issues and PRs'
+on:
+  schedule:
+    - cron: '30 1 * * *' # Run every day at 01:30
+  workflow_dispatch:
+  issue_comment:
+
+jobs:
+  close:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@v7
+        with:
+          days-before-close: 30
+          days-before-stale: -1
+          stale-issue-label: needs:response
+          stale-pr-label: needs:response
+          remove-stale-when-updated: false
+          close-issue-message: "This issue has been closed since a request for
+            information has not been answered for 30 days. It can be reopened
+            when the requested information is provided."
+          close-pr-message: "This PR has been closed since a request for
+            changes has not been answered for 30 days. It can be reopened when
+            the requested changes are provided."
+
+  remove-label:
+    if: github.event_name == 'issue_comment'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            const script = require('./.github/scripts/unstale.js')
+            await script({github, context})

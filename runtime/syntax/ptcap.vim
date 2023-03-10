@@ -53,7 +53,7 @@ syn match ptcapNumberError  "#0x\x*[^[:xdigit:]:\\]"lc=1 contained
 " The `=' operator assigns a string to the preceding flag
 syn match ptcapOperator	    "[@#=]" contained
 
-" Some terminal capabilites have special names like `#5' and `@1', and we
+" Some terminal capabilities have special names like `#5' and `@1', and we
 " need special rules to match these properly
 syn match ptcapSpecialCap   "\W[#@]\d" contains=ptcapDelimiter contained
 

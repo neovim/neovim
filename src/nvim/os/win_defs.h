@@ -1,7 +1,7 @@
 #ifndef NVIM_OS_WIN_DEFS_H
 #define NVIM_OS_WIN_DEFS_H
 
-#ifndef WIN32
+#ifndef MSWIN
 # error Header must be included only when compiling for Windows.
 #endif
 

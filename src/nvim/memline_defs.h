@@ -49,14 +49,15 @@ typedef struct memline {
   int ml_stack_top;             // current top of ml_stack
   int ml_stack_size;            // total number of entries in ml_stack
 
-#define ML_EMPTY        1       // empty buffer
-#define ML_LINE_DIRTY   2       // cached line was changed and allocated
-#define ML_LOCKED_DIRTY 4       // ml_locked was changed
-#define ML_LOCKED_POS   8       // ml_locked needs positive block number
+#define ML_EMPTY        0x01    // empty buffer
+#define ML_LINE_DIRTY   0x02    // cached line was changed and allocated
+#define ML_LOCKED_DIRTY 0x04    // ml_locked was changed
+#define ML_LOCKED_POS   0x08    // ml_locked needs positive block number
+#define ML_ALLOCATED    0x10    // ml_line_ptr is an allocated copy
   int ml_flags;
 
   linenr_T ml_line_lnum;        // line number of cached line, 0 if not valid
-  char_u *ml_line_ptr;     // pointer to cached line
+  char *ml_line_ptr;            // pointer to cached line
   size_t ml_line_offset;        // cached byte offset of ml_line_lnum
   int ml_line_offset_ff;        // fileformat of cached line
 
@@ -69,4 +70,4 @@ typedef struct memline {
   int ml_usedchunks;
 } memline_T;
 
-#endif // NVIM_MEMLINE_DEFS_H
+#endif  // NVIM_MEMLINE_DEFS_H

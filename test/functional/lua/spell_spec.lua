@@ -15,7 +15,7 @@ describe('vim.spell', function()
     end
 
     it('can handle nil', function()
-      eq([[Error executing lua: [string "<nvim>"]:0: bad argument #1 to 'check' (expected string)]],
+      eq([[bad argument #1 to 'check' (expected string)]],
         pcall_err(exec_lua, [[vim.spell.check(nil)]]))
     end)
 

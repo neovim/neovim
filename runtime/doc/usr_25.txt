@@ -325,16 +325,16 @@ Let's attempt to show this with one line of text.  The cursor is on the "w" of
 currently visible.  The "window"s below the text indicate the text that is
 visible after the command left of it.
 
-			      |<-- current window -->|
+			      `|<-- current window -->|`
 		some long text, part of which is visible in the window ~
-	ze	  |<--	   window     -->|
-	zH	   |<--     window     -->|
-	4zh		  |<--	   window     -->|
-	zh		     |<--     window	 -->|
-	zl		       |<--	window	   -->|
-	4zl			  |<--	   window     -->|
-	zL				|<--	 window     -->|
-	zs			       |<--	window	   -->|
+	ze	  `|<--	   window     -->|`
+	zH	   `|<--     window     -->|`
+	4zh		  `|<--	   window     -->|`
+	zh		     `|<--     window	 -->|`
+	zl		       `|<--	window	   -->|`
+	4zl			  `|<--	   window     -->|`
+	zL				`|<--	 window     -->|`
+	zs			       `|<--	window	   -->|`
 
 
 MOVING WITH WRAP OFF
@@ -350,7 +350,7 @@ scroll:
 	gM		to middle of the text in this line
 	g$		to last visible character in this line
 
-		|<--	  window     -->|
+		`|<--	  window     -->|`
 	some long    text, part of which is visible in one line ~
 		 g0  g^    gm	   gM g$
 
@@ -365,7 +365,7 @@ broken halfway, which makes them hard to read.
 'linebreak' option.  Vim then breaks lines at an appropriate place when
 displaying the line.  The text in the file remains unchanged.
    Without 'linebreak' text might look like this:
-
+>
 	+---------------------------------+
 	|letter generation program for a b|
 	|ank.  They wanted to send out a s|
@@ -373,12 +373,13 @@ displaying the line.  The text in the file remains unchanged.
 	|eir richest 1000 customers.  Unfo|
 	|rtunately for the programmer, he |
 	+---------------------------------+
+<
 After: >
 
 	:set linebreak
 
 it looks like this:
-
+>
 	+---------------------------------+
 	|letter generation program for a  |
 	|bank.  They wanted to send out a |
@@ -386,7 +387,7 @@ it looks like this:
 	|their richest 1000 customers.    |
 	|Unfortunately for the programmer,|
 	+---------------------------------+
-
+<
 Related options:
 'breakat' specifies the characters where a break can be inserted.
 'showbreak' specifies a string to show at the start of broken line.
@@ -425,7 +426,7 @@ That looks complicated.  Let's break it up in pieces:
 			into one line.
 
 Starting with this text, containing eight lines broken at column 30:
-
+>
 	+----------------------------------+
 	|A letter generation program	   |
 	|for a bank.  They wanted to	   |
@@ -436,9 +437,9 @@ Starting with this text, containing eight lines broken at column 30:
 	|customers.  Unfortunately for	   |
 	|the programmer,		   |
 	+----------------------------------+
-
+<
 You end up with two lines:
-
+>
 	+----------------------------------+
 	|A letter generation program for a |
 	|bank.	They wanted to send out a s|
@@ -446,7 +447,7 @@ You end up with two lines:
 	|To their richest 1000 customers.  |
 	|Unfortunately for the programmer, |
 	+----------------------------------+
-
+<
 Note that this doesn't work when the separating line is blank but not empty;
 when it contains spaces and/or tabs.  This command does work with blank lines:
 >

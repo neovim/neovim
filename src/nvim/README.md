@@ -18,22 +18,28 @@ The source files use extensions to hint about their purpose.
 - `*.h.generated.h` - exported functions’ declarations.
 - `*.c.generated.h` - static functions’ declarations.
 
+Common structures
+-----------------
+
+- StringBuilder
+- kvec or garray.c for dynamic lists / vectors (use StringBuilder for strings)
+
 Logs
 ----
 
 Low-level log messages sink to `$NVIM_LOG_FILE`.
 
-UI events are logged at DEBUG level (`LOGLVL_DBG`).
+UI events are logged at DEBUG level.
 
     rm -rf build/
-    make CMAKE_EXTRA_FLAGS="-DMIN_LOG_LEVEL=0"
+    make CMAKE_EXTRA_FLAGS="-DLOG_DEBUG"
 
 Use `LOG_CALLSTACK()` (Linux only) to log the current stacktrace. To log to an
 alternate file (e.g. stderr) use `LOG_CALLSTACK_TO_FILE(FILE*)`. Requires
 `-no-pie` ([ref](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=860394#15)):
 
     rm -rf build/
-    make CMAKE_EXTRA_FLAGS="-DMIN_LOG_LEVEL=0 -DCMAKE_C_FLAGS=-no-pie"
+    make CMAKE_EXTRA_FLAGS="-DLOG_DEBUG -DCMAKE_C_FLAGS=-no-pie"
 
 Many log messages have a shared prefix, such as "UI" or "RPC". Use the shell to
 filter the log, e.g. at DEBUG level you might want to exclude UI messages:
@@ -64,8 +70,8 @@ Create a directory to store logs:
 
 Configure the sanitizer(s) via these environment variables:
 
-    # Change to detect_leaks=1 to detect memory leaks (slower).
-    export ASAN_OPTIONS="detect_leaks=0:log_path=$HOME/logs/asan"
+    # Change to detect_leaks=1 to detect memory leaks (slower, noisier).
+    export ASAN_OPTIONS="detect_leaks=0:log_path=$HOME/logs/asan,handle_abort=1,handle_sigill=1"
     # Show backtraces in the logs.
     export UBSAN_OPTIONS=print_stacktrace=1
     export MSAN_OPTIONS="log_path=${HOME}/logs/msan"
@@ -74,6 +80,13 @@ Configure the sanitizer(s) via these environment variables:
 Logs will be written to `${HOME}/logs/*san.PID` then.
 
 For more information: https://github.com/google/sanitizers/wiki/SanitizerCommonFlags
+
+Reproducible build
+------------------
+
+To make a reproducible build of Nvim, set cmake variable `LUA_GEN_PRG` to
+a LuaJIT binary built with `LUAJIT_SECURITY_PRN=0`. See commit
+cb757f2663e6950e655c6306d713338dfa66b18d.
 
 Debug: Performance
 ------------------
@@ -391,8 +404,8 @@ implemented by libuv, the platform layer used by Nvim.
 
 Since Nvim inherited its code from Vim, the states are not prepared to receive
 "arbitrary events", so we use a special key to represent those (When a state
-receives an "arbitrary event", it normally doesn't do anything other update the
-screen).
+receives an "arbitrary event", it normally doesn't do anything other than
+update the screen).
 
 Main loop
 ---------

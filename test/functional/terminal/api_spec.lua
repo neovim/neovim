@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local child_session = require('test.functional.terminal.helpers')
 local ok = helpers.ok
 
-if helpers.pending_win32(pending) then return end
+if helpers.skip(helpers.is_os('win')) then return end
 
 describe('api', function()
   local screen
@@ -19,6 +19,16 @@ describe('api', function()
   end)
 
   it("qa! RPC request during insert-mode", function()
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
     -- Start the socket from the child nvim.
     child_session.feed_data(":echo serverstart('"..socket_name.."')\n")
 
@@ -67,4 +77,3 @@ describe('api', function()
     socket_session1:request("nvim_command", "qa!")
   end)
 end)
-

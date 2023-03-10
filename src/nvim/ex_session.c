@@ -9,31 +9,34 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdbool.h>
-#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
-#include "nvim/cursor.h"
-#include "nvim/edit.h"
 #include "nvim/eval.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/ex_session.h"
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/garray.h"
+#include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/keycodes.h"
+#include "nvim/macros.h"
 #include "nvim/mapping.h"
-#include "nvim/move.h"
+#include "nvim/mark_defs.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/option.h"
-#include "nvim/os/input.h"
 #include "nvim/os/os.h"
-#include "nvim/os/time.h"
 #include "nvim/path.h"
+#include "nvim/pos.h"
 #include "nvim/runtime.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
@@ -62,10 +65,10 @@ static int put_view_curpos(FILE *fd, const win_T *wp, char *spaces)
 
 static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
 {
-  int n = 0;
   win_T *wp;
 
   if (restore_size && (ssop_flags & SSOP_WINSIZE)) {
+    int n = 0;
     for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (!ses_do_win(wp)) {
         continue;
@@ -109,40 +112,43 @@ static int ses_win_rec(FILE *fd, frame_T *fr)
   frame_T *frc;
   int count = 0;
 
-  if (fr->fr_layout != FR_LEAF) {
-    // Find first frame that's not skipped and then create a window for
-    // each following one (first frame is already there).
-    frc = ses_skipframe(fr->fr_child);
-    if (frc != NULL) {
-      while ((frc = ses_skipframe(frc->fr_next)) != NULL) {
-        // Make window as big as possible so that we have lots of room
-        // to split.
-        if (fprintf(fd, "%s%s",
-                    "wincmd _ | wincmd |\n",
-                    (fr->fr_layout == FR_COL ? "split\n" : "vsplit\n")) < 0) {
-          return FAIL;
-        }
-        count++;
-      }
-    }
+  if (fr->fr_layout == FR_LEAF) {
+    return OK;
+  }
 
-    // Go back to the first window.
-    if (count > 0 && (fprintf(fd, fr->fr_layout == FR_COL
-                              ? "%dwincmd k\n" : "%dwincmd h\n", count) < 0)) {
-      return FAIL;
-    }
-
-    // Recursively create frames/windows in each window of this column or row.
-    frc = ses_skipframe(fr->fr_child);
-    while (frc != NULL) {
-      ses_win_rec(fd, frc);
-      frc = ses_skipframe(frc->fr_next);
-      // Go to next window.
-      if (frc != NULL && put_line(fd, "wincmd w") == FAIL) {
+  // Find first frame that's not skipped and then create a window for
+  // each following one (first frame is already there).
+  frc = ses_skipframe(fr->fr_child);
+  if (frc != NULL) {
+    while ((frc = ses_skipframe(frc->fr_next)) != NULL) {
+      // Make window as big as possible so that we have lots of room
+      // to split.
+      if (fprintf(fd, "%s%s",
+                  "wincmd _ | wincmd |\n",
+                  (fr->fr_layout == FR_COL ? "split\n" : "vsplit\n")) < 0) {
         return FAIL;
       }
+      count++;
     }
   }
+
+  // Go back to the first window.
+  if (count > 0 && (fprintf(fd, fr->fr_layout == FR_COL
+                            ? "%dwincmd k\n" : "%dwincmd h\n", count) < 0)) {
+    return FAIL;
+  }
+
+  // Recursively create frames/windows in each window of this column or row.
+  frc = ses_skipframe(fr->fr_child);
+  while (frc != NULL) {
+    ses_win_rec(fd, frc);
+    frc = ses_skipframe(frc->fr_next);
+    // Go to next window.
+    if (frc != NULL && put_line(fd, "wincmd w") == FAIL) {
+      return FAIL;
+    }
+  }
+
   return OK;
 }
 
@@ -211,22 +217,21 @@ static int ses_do_win(win_T *wp)
 /// @returns FAIL if writing fails.
 static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, int fullname, unsigned *flagp)
 {
-  char_u *buf = NULL;
-  char_u *s;
+  char *buf = NULL;
 
   if (fprintf(fd, "%s\n%s\n", cmd, "%argdel") < 0) {
     return FAIL;
   }
   for (int i = 0; i < gap->ga_len; i++) {
     // NULL file names are skipped (only happens when out of memory).
-    s = (char_u *)alist_name(&((aentry_T *)gap->ga_data)[i]);
+    char *s = alist_name(&((aentry_T *)gap->ga_data)[i]);
     if (s != NULL) {
       if (fullname) {
         buf = xmalloc(MAXPATHL);
-        (void)vim_FullName((char *)s, (char *)buf, MAXPATHL, false);
+        (void)vim_FullName(s, buf, MAXPATHL, false);
         s = buf;
       }
-      char *fname_esc = ses_escape_fname((char *)s, flagp);
+      char *fname_esc = ses_escape_fname(s, flagp);
       if (fprintf(fd, "$argadd %s\n", fname_esc) < 0) {
         xfree(fname_esc);
         xfree(buf);
@@ -240,7 +245,7 @@ static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, int fullname, unsigne
 }
 
 /// @return  the buffer name for `buf`.
-static char *ses_get_fname(buf_T *buf, unsigned *flagp)
+static char *ses_get_fname(buf_T *buf, const unsigned *flagp)
 {
   // Use the short file name if the current directory is known at the time
   // the session file will be sourced.
@@ -264,7 +269,7 @@ static char *ses_get_fname(buf_T *buf, unsigned *flagp)
 static int ses_fname(FILE *fd, buf_T *buf, unsigned *flagp, bool add_eol)
 {
   char *name = ses_get_fname(buf, flagp);
-  if (ses_put_fname(fd, (char_u *)name, flagp) == FAIL
+  if (ses_put_fname(fd, name, flagp) == FAIL
       || (add_eol && fprintf(fd, "\n") < 0)) {
     return FAIL;
   }
@@ -299,9 +304,9 @@ static char *ses_escape_fname(char *name, unsigned *flagp)
 /// characters.
 ///
 /// @return  FAIL if writing fails.
-static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp)
+static int ses_put_fname(FILE *fd, char *name, unsigned *flagp)
 {
-  char *p = ses_escape_fname((char *)name, flagp);
+  char *p = ses_escape_fname(name, flagp);
   bool retval = fputs(p, fd) < 0 ? FAIL : OK;
   xfree(p);
   return retval;
@@ -359,7 +364,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
       // Then ":help" will re-use both the buffer and the window and set
       // the options, even when "options" is not in 'sessionoptions'.
       if (0 < wp->w_tagstackidx && wp->w_tagstackidx <= wp->w_tagstacklen) {
-        curtag = (char *)wp->w_tagstack[wp->w_tagstackidx - 1].tagname;
+        curtag = wp->w_tagstack[wp->w_tagstackidx - 1].tagname;
       }
 
       if (put_line(fd, "enew | setl bt=help") == FAIL
@@ -523,7 +528,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
   if (wp->w_localdir != NULL
       && (flagp != &vop_flags || (*flagp & SSOP_CURDIR))) {
     if (fputs("lcd ", fd) < 0
-        || ses_put_fname(fd, (char_u *)wp->w_localdir, flagp) == FAIL
+        || ses_put_fname(fd, wp->w_localdir, flagp) == FAIL
         || fprintf(fd, "\n") < 0) {
       return FAIL;
     }
@@ -542,10 +547,9 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
 /// @param fd  File descriptor to write to
 ///
 /// @return FAIL on error, OK otherwise.
-static int makeopens(FILE *fd, char_u *dirnow)
+static int makeopens(FILE *fd, char *dirnow)
 {
   int only_save_windows = true;
-  int nr;
   int restore_size = true;
   win_T *wp;
   char *sname;
@@ -581,7 +585,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
   if (ssop_flags & SSOP_SESDIR) {
     PUTLINE_FAIL("exe \"cd \" . escape(expand(\"<sfile>:p:h\"), ' ')");
   } else if (ssop_flags & SSOP_CURDIR) {
-    sname = home_replace_save(NULL, globaldir != NULL ? globaldir : (char *)dirnow);
+    sname = home_replace_save(NULL, globaldir != NULL ? globaldir : dirnow);
     char *fname_esc = ses_escape_fname(sname, &ssop_flags);
     if (fprintf(fd, "cd %s\n", fname_esc) < 0) {
       xfree(fname_esc);
@@ -747,11 +751,9 @@ static int makeopens(FILE *fd, char_u *dirnow)
       PUTLINE_FAIL("let &splitright = s:save_splitright");
     }
 
-    //
     // Check if window sizes can be restored (no windows omitted).
     // Remember the window number of the current window after restoring.
-    //
-    nr = 0;
+    int nr = 0;
     for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (ses_do_win(wp)) {
         nr++;
@@ -828,7 +830,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
     // Take care of tab-local working directories if applicable
     if (tp->tp_localdir) {
       if (fputs("if exists(':tcd') == 2 | tcd ", fd) < 0
-          || ses_put_fname(fd, (char_u *)tp->tp_localdir, &ssop_flags) == FAIL
+          || ses_put_fname(fd, tp->tp_localdir, &ssop_flags) == FAIL
           || fputs(" | endif\n", fd) < 0) {
         return FAIL;
       }
@@ -903,12 +905,14 @@ static int makeopens(FILE *fd, char_u *dirnow)
 void ex_loadview(exarg_T *eap)
 {
   char *fname = get_view_file(*eap->arg);
-  if (fname != NULL) {
-    if (do_source(fname, false, DOSO_NONE) == FAIL) {
-      semsg(_(e_notopen), fname);
-    }
-    xfree(fname);
+  if (fname == NULL) {
+    return;
   }
+
+  if (do_source(fname, false, DOSO_NONE) == FAIL) {
+    semsg(_(e_notopen), fname);
+  }
+  xfree(fname);
 }
 
 /// ":mkexrc", ":mkvimrc", ":mkview", ":mksession".
@@ -919,11 +923,9 @@ void ex_loadview(exarg_T *eap)
 void ex_mkrc(exarg_T *eap)
 {
   FILE *fd;
-  int failed = false;
   int view_session = false;  // :mkview, :mksession
   int using_vdir = false;  // using 'viewdir'?
   char *viewFile = NULL;
-  unsigned *flagp;
 
   if (eap->cmdidx == CMD_mksession || eap->cmdidx == CMD_mkview) {
     view_session = true;
@@ -960,8 +962,10 @@ void ex_mkrc(exarg_T *eap)
     vim_mkdir_emsg((const char *)p_vdir, 0755);
   }
 
-  fd = open_exfile((char_u *)fname, eap->forceit, WRITEBIN);
+  fd = open_exfile(fname, eap->forceit, WRITEBIN);
   if (fd != NULL) {
+    int failed = false;
+    unsigned *flagp;
     if (eap->cmdidx == CMD_mkview) {
       flagp = &vop_flags;
     } else {
@@ -997,14 +1001,14 @@ void ex_mkrc(exarg_T *eap)
         failed = true;
       }
       if (eap->cmdidx == CMD_mksession) {
-        char_u *dirnow;  // current directory
+        char *dirnow;  // current directory
 
         dirnow = xmalloc(MAXPATHL);
         //
         // Change to session file's dir.
         //
         if (os_dirname(dirnow, MAXPATHL) == FAIL
-            || os_chdir((char *)dirnow) != 0) {
+            || os_chdir(dirnow) != 0) {
           *dirnow = NUL;
         }
         if (*dirnow != NUL && (ssop_flags & SSOP_SESDIR)) {
@@ -1024,7 +1028,7 @@ void ex_mkrc(exarg_T *eap)
         if (*dirnow != NUL && ((ssop_flags & SSOP_SESDIR)
                                || ((ssop_flags & SSOP_CURDIR) && globaldir !=
                                    NULL))) {
-          if (os_chdir((char *)dirnow) != 0) {
+          if (os_chdir(dirnow) != 0) {
             emsg(_(e_prev_dir));
           }
           shorten_fnames(true);
@@ -1095,7 +1099,7 @@ static char *get_view_file(int c)
       len++;
     }
   }
-  char *retval = xmalloc(strlen(sname) + len + STRLEN(p_vdir) + 9);
+  char *retval = xmalloc(strlen(sname) + len + strlen(p_vdir) + 9);
   STRCPY(retval, p_vdir);
   add_pathsep(retval);
   char *s = retval + strlen(retval);

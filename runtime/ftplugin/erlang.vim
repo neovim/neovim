@@ -5,7 +5,7 @@
 " Contributors: Ricardo Catalinas Jiménez <jimenezrick@gmail.com>
 "               Eduardo Lopez (http://github.com/tapichu)
 "               Arvid Bjurklint (http://github.com/slarwise)
-" Last Update:  2021-Jan-08
+" Last Update:  2021-Nov-22
 " License:      Vim license
 " URL:          https://github.com/vim-erlang/vim-erlang-runtime
 
@@ -29,6 +29,28 @@ setlocal comments=:%%%,:%%,:%
 setlocal commentstring=%%s
 
 setlocal formatoptions+=ro
+
+if get(g:, 'erlang_extend_path', 1)
+  " typical erlang.mk paths
+  let &l:path = join([
+        \ 'deps/*/include',
+        \ 'deps/*/src',
+        \ 'deps/*/test',
+        \ 'deps/*/apps/*/include',
+        \ 'deps/*/apps/*/src',
+        \ &g:path], ',')
+  " typical rebar3 paths
+  let &l:path = join([
+        \ 'apps/*/include',
+        \ 'apps/*/src',
+        \ '_build/default/lib/*/src',
+        \ '_build/default/*/include',
+        \ &l:path], ',')
+  " typical erlang paths
+  let &l:path = join(['include', 'src', 'test', &l:path], ',')
+
+  set wildignore+=*/.erlang.mk/*,*.beam
+endif
 
 setlocal suffixesadd=.erl,.hrl
 

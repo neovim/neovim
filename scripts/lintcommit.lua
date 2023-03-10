@@ -78,19 +78,38 @@ local function validate_commit(commit_message)
 
   -- Check if type is correct
   local type = vim.split(before_colon, "%(")[1]
-  local allowed_types = {'build', 'ci', 'docs', 'feat', 'fix', 'perf', 'refactor', 'revert', 'test', 'dist', 'vim-patch'}
+  local allowed_types = {'build', 'ci', 'docs', 'feat', 'fix', 'perf', 'refactor', 'revert', 'test', 'vim-patch'}
   if not vim.tbl_contains(allowed_types, type) then
     return string.format(
-      'Invalid commit type "%s". Allowed types are:\n    %s',
+      [[Invalid commit type "%s". Allowed types are:
+      %s.
+    If none of these seem appropriate then use "fix"]],
       type,
       vim.inspect(allowed_types))
   end
 
-  -- Check if scope is empty
+  -- Check if scope is appropriate
   if before_colon:match("%(") then
     local scope = vim.trim(before_colon:match("%((.*)%)"))
+
     if scope == '' then
-      return [[Scope can't be empty.]]
+      return [[Scope can't be empty]]
+    end
+
+    if vim.startswith(scope, "nvim_") then
+        return [[Scope should be "api" instead of "nvim_..."]]
+    end
+
+    local alternative_scope = {
+      ['filetype.vim'] = 'filetype',
+      ['filetype.lua'] = 'filetype',
+      ['tree-sitter'] = 'treesitter',
+      ['ts'] = 'treesitter',
+      ['hl'] = 'highlight',
+    }
+
+    if alternative_scope[scope] then
+      return ('Scope should be "%s" instead of "%s"'):format(alternative_scope[scope], scope)
     end
   end
 
@@ -109,10 +128,10 @@ local function validate_commit(commit_message)
     return [[There should only be one whitespace after the colon.]]
   end
 
-  -- Check that first character after space isn't uppercase.
-  if string.match(after_colon:sub(2,2), '%u') then
-    return [[First character should not be uppercase.]]
-   end
+  -- Allow lowercase or ALL_UPPER but not Titlecase.
+  if after_colon:match('^ *%u%l') then
+    return [[Description first word should not be Capitalized.]]
+  end
 
   -- Check that description isn't just whitespaces
   if vim.trim(after_colon) == "" then
@@ -147,13 +166,16 @@ function M.main(opt)
       local invalid_msg = validate_commit(msg)
       if invalid_msg then
         failed = failed + 1
+
+        -- Some breathing room
+        if failed == 1 then
+          p('\n')
+        end
+
         p(string.format([[
 Invalid commit message: "%s"
     Commit: %s
     %s
-    See also:
-        https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md#commit-messages
-        https://www.conventionalcommits.org/en/v1.0.0/
 ]],
           msg,
           commit_id,
@@ -163,6 +185,10 @@ Invalid commit message: "%s"
   end
 
   if failed > 0 then
+        p([[
+See also:
+    https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md#commit-messages
+]])
     die()  -- Exit with error.
   else
     p('')
@@ -181,7 +207,6 @@ function M._test()
     ['refactor: normal message'] = true,
     ['revert: normal message'] = true,
     ['test: normal message'] = true,
-    ['dist: normal message'] = true,
     ['ci(window): message with scope'] = true,
     ['ci!: message with breaking change'] = true,
     ['ci(tui)!: message with scope and breaking change'] = true,
@@ -206,7 +231,8 @@ function M._test()
     ['refactor(): empty scope'] = false,
     ['ci( ): whitespace as scope'] = false,
     ['ci: period at end of sentence.'] = false,
-    ['ci: Starting sentence capitalized'] = false,
+    ['ci: Capitalized first word'] = false,
+    ['ci: UPPER_CASE First Word'] = true,
     ['unknown: using unknown type'] = false,
     ['ci: you\'re saying this commit message just goes on and on and on and on and on and on for way too long?'] = false,
   }

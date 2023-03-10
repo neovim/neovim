@@ -639,7 +639,7 @@ describe('eval', function()
   end)
 
   it('function name includes a colon', function()
-    eq('Vim(function):E128: Function name must start with a capital or "s:": b:test()\\nendfunction',
+    eq('Vim(function):E884: Function name cannot contain a colon: b:test()\\nendfunction',
        exc_exec(dedent([[
         function! b:test()
         endfunction]])))

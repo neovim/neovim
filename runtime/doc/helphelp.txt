@@ -212,12 +212,6 @@ This is done when viewing the file in Vim, the file itself is not changed.  It
 is done by going through all help files and obtaining the first line of each
 file.  The files in $VIMRUNTIME/doc are skipped.
 
-							*help-xterm-window*
-If you want to have the help in another xterm window, you could use this
-command: >
-	:!xterm -e vim +help &
-<
-
 					*:helpt* *:helptags*
 			*E150* *E151* *E152* *E153* *E154* *E670* *E856*
 :helpt[ags] [++t] {dir}
@@ -257,7 +251,7 @@ At this moment translations are available for:
 	Japanese - multiple authors
 	Polish   - translated by Mikolaj Machowski
 	Russian  - translated by Vassily Ragosin
-See the Vim website to find them: http://www.vim.org/translations.php
+See the Vim website to find them: https://www.vim.org/translations.php
 
 A set of translated help files consists of these files:
 
@@ -348,7 +342,7 @@ should begin with the name of the Vim plugin.  The tag name is usually right
 aligned on a line.
 
 When referring to an existing help tag and to create a hot-link, place the
-name between two bars (|) eg. |help-writing|.
+name between two bars ("|") eg. |help-writing|.
 
 When referring to a Vim command and to create a hot-link, place the
 name between two backticks, eg. inside `:filetype`.  You will see this is
@@ -372,6 +366,7 @@ To separate sections in a help file, place a series of '=' characters in a
 line starting from the first column.  The section separator line is highlighted
 differently.
 
+							      *help-codeblock*
 To quote a block of ex-commands verbatim, place a greater than (>) character
 at the end of the line before the block and a less than (<) character as the
 first non-blank on a line following the block.  Any line starting in column 1

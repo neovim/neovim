@@ -1,9 +1,14 @@
 find_package(Gettext REQUIRED)
 find_program(XGETTEXT_PRG xgettext)
 find_program(ICONV_PRG iconv)
+mark_as_advanced(
+  GETTEXT_MSGFMT_EXECUTABLE
+  GETTEXT_MSGMERGE_EXECUTABLE
+  ICONV_PRG
+  XGETTEXT_PRG)
 
-option(LANGUAGES "Localizations to build")
-if(NOT LANGUAGES)
+option(ENABLE_LANGUAGES "Localizations to build" ON)
+if(ENABLE_LANGUAGES)
   set(LANGUAGES
     af
     ca
@@ -37,7 +42,6 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
   set(ENV{OLD_PO_FILE_INPUT} yes)
   set(ENV{OLD_PO_FILE_OUTPUT} yes)
 
-
   set(NVIM_RELATIVE_SOURCES)
   foreach(SRC ${NVIM_SOURCES} ${NVIM_HEADERS})
     file(RELATIVE_PATH RELATIVE_SRC ${CMAKE_CURRENT_SOURCE_DIR} ${SRC})
@@ -46,18 +50,19 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
 
   set(NVIM_POT ${CMAKE_CURRENT_BINARY_DIR}/nvim.pot)
 
+  list(SORT NVIM_RELATIVE_SOURCES)
   add_custom_command(
-    OUTPUT nvim.pot
-    COMMAND ${CMAKE_COMMAND}
-        -DXGETTEXT_PRG=${XGETTEXT_PRG}
-        -DPOT_FILE=${NVIM_POT}
-        -DSEARCH_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-        "\"-DSOURCES=${NVIM_RELATIVE_SOURCES}\""
-        -P ${PROJECT_SOURCE_DIR}/cmake/RunXgettext.cmake
-    DEPENDS ${NVIM_SOURCES})
-
-  add_custom_target(potfile DEPENDS ${NVIM_POT})
-  set_target_properties(potfile PROPERTIES FOLDER po)
+    OUTPUT ${NVIM_POT}
+    COMMAND $<TARGET_FILE:nvim> -u NONE -i NONE -n --headless --cmd "set cpo+=+"
+      -S ${CMAKE_CURRENT_SOURCE_DIR}/tojavascript.vim ${NVIM_POT} ${PROJECT_SOURCE_DIR}/runtime/optwin.vim
+    COMMAND ${XGETTEXT_PRG} -o ${NVIM_POT} --default-domain=nvim
+      --add-comments --keyword=_ --keyword=N_ --keyword=NGETTEXT:1,2
+      -D ${CMAKE_CURRENT_SOURCE_DIR} -D ${CMAKE_CURRENT_BINARY_DIR}
+      ${NVIM_RELATIVE_SOURCES} optwin.js
+    COMMAND $<TARGET_FILE:nvim> -u NONE -i NONE -n --headless --cmd "set cpo+=+"
+      -S ${CMAKE_CURRENT_SOURCE_DIR}/fixfilenames.vim ${NVIM_POT} ../../../runtime/optwin.vim
+    VERBATIM
+    DEPENDS ${NVIM_SOURCES} nvim nvim_runtime_deps)
 
   set(LANGUAGE_MO_FILES)
   set(UPDATE_PO_TARGETS)
@@ -68,11 +73,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
 
     add_custom_command(
       OUTPUT ${moFile}
-      COMMAND ${CMAKE_COMMAND}
-          -DMSGFMT_PRG=${GETTEXT_MSGFMT_EXECUTABLE}
-          -DMO_FILE=${moFile}
-          -DPO_FILE=${poFile}
-          -P ${PROJECT_SOURCE_DIR}/cmake/RunMsgfmt.cmake
+      COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} -o ${moFile} ${poFile}
       DEPENDS ${poFile} ${NVIM_POT})
 
     install_helper(
@@ -94,24 +95,21 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
       COMMENT "Checking ${name}.po"
       VERBATIM
       DEPENDS ${poFile})
-    set_target_properties(check-po-${name} PROPERTIES FOLDER po/check)
   endmacro()
 
   macro(BuildPoIconvGenericWithCharset
       lang inputName outputName inputEnc outputEnc outputCharSet)
     set(inputFile ${CMAKE_CURRENT_SOURCE_DIR}/${inputName}.po)
     set(outputFile ${CMAKE_CURRENT_SOURCE_DIR}/${outputName}.po)
-    string(TOUPPER ${inputEnc} upperInputEnc)
-    string(TOLOWER ${inputEnc} lowerInputEnc)
 
     add_custom_target(update-po-${lang}
       COMMAND ${CMAKE_COMMAND}
-        -DICONV_PRG=${ICONV_PRG}
-        -DINPUT_FILE=${inputFile}
-        -DOUTPUT_FILE=${outputFile}
-        -DINPUT_ENC=${inputEnc}
-        -DOUTPUT_ENC=${outputEnc}
-        -DOUTPUT_CHARSET=${outputCharSet}
+        -D ICONV_PRG=${ICONV_PRG}
+        -D INPUT_FILE=${inputFile}
+        -D OUTPUT_FILE=${outputFile}
+        -D INPUT_ENC=${inputEnc}
+        -D OUTPUT_ENC=${outputEnc}
+        -D OUTPUT_CHARSET=${outputCharSet}
         -P ${PROJECT_SOURCE_DIR}/cmake/ConvertPo.cmake
       COMMENT "Updating ${outputName}.po"
       DEPENDS ${inputFile})
@@ -172,11 +170,8 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
     set(poFile "${CMAKE_CURRENT_SOURCE_DIR}/${LANGUAGE}.po")
 
     add_custom_target(update-po-${LANGUAGE}
-      COMMAND ${CMAKE_COMMAND}
-          -DMSGMERGE_PRG=${GETTEXT_MSGMERGE_EXECUTABLE}
-          -DPO_FILE=${poFile}
-          -DPOT_FILE=${NVIM_POT}
-          -P ${PROJECT_SOURCE_DIR}/cmake/RunMsgmerge.cmake
+      COMMAND ${GETTEXT_MSGMERGE_EXECUTABLE} -q --update --backup=none --sort-by-file
+      ${poFile} ${NVIM_POT}
       COMMENT "Updating ${LANGUAGE}.po"
       DEPENDS ${NVIM_POT})
 
@@ -186,9 +181,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
 
     BuildMo(${LANGUAGE})
   endforeach()
-  set_target_properties(${UPDATE_PO_TARGETS} PROPERTIES FOLDER po/update)
 
   add_custom_target(translations ALL DEPENDS ${LANGUAGE_MO_FILES})
   add_custom_target(update-po DEPENDS ${UPDATE_PO_TARGETS})
-  set_target_properties(translations update-po PROPERTIES FOLDER po)
 endif()

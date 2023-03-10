@@ -1,12 +1,12 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local eq = helpers.eq
-local iswin = helpers.iswin
 local fnamemodify = helpers.funcs.fnamemodify
 local getcwd = helpers.funcs.getcwd
 local command = helpers.command
 local write_file = helpers.write_file
 local alter_slashes = helpers.alter_slashes
+local is_os = helpers.is_os
 
 local function eq_slashconvert(expected, got)
   eq(alter_slashes(expected), alter_slashes(got))
@@ -27,7 +27,7 @@ describe('fnamemodify()', function()
     local root = helpers.pathroot()
     eq(root, fnamemodify([[/]], ':p:h'))
     eq(root, fnamemodify([[/]], ':p'))
-    if iswin() then
+    if is_os('win') then
       eq(root, fnamemodify([[\]], ':p:h'))
       eq(root, fnamemodify([[\]], ':p'))
       command('set shellslash')
@@ -114,7 +114,7 @@ describe('fnamemodify()', function()
   it('handles shell escape', function()
     local expected
 
-    if iswin() then
+    if is_os('win') then
       -- we expand with double-quotes on Windows
       expected = [["hello there! quote ' newline]] .. '\n' .. [["]]
     else

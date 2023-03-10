@@ -1,7 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, exec, command = helpers.clear, helpers.feed, helpers.exec, helpers.command
-local poke_eventloop = helpers.poke_eventloop
 
 describe('search stat', function()
   local screen
@@ -17,6 +16,7 @@ describe('search stat', function()
     screen:attach()
   end)
 
+  -- oldtest: Test_search_stat_screendump()
   it('right spacing with silent mapping vim-patch:8.1.1970', function()
     exec([[
       set shortmess-=S
@@ -57,6 +57,7 @@ describe('search stat', function()
     ]])
   end)
 
+  -- oldtest: Test_search_stat_foldopen()
   it('when only match is in fold vim-patch:8.2.0840', function()
     exec([[
       set shortmess-=S
@@ -78,14 +79,14 @@ describe('search stat', function()
       {1:~                             }|
       /foo                   [1/2]  |
     ]])
+    -- Note: there is an intermediate state where the search stat disappears.
     feed('n')
-    poke_eventloop()
-    screen:expect_unchanged()
+    screen:expect_unchanged(true)
     feed('n')
-    poke_eventloop()
-    screen:expect_unchanged()
+    screen:expect_unchanged(true)
   end)
 
+  -- oldtest: Test_search_stat_then_gd()
   it('is cleared by gd and gD vim-patch:8.2.3583', function()
     exec([[
       call setline(1, ['int cat;', 'int dog;', 'cat = dog;'])
@@ -120,6 +121,7 @@ describe('search stat', function()
     ]])
   end)
 
+  -- oldtest: Test_search_stat_and_incsearch()
   it('is not broken by calling searchcount() in tabline vim-patch:8.2.4378', function()
     exec([[
       call setline(1, ['abc--c', '--------abc', '--abc'])

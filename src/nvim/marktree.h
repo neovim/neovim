@@ -2,13 +2,18 @@
 #define NVIM_MARKTREE_H
 
 #include <assert.h>
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include "nvim/assert.h"
 #include "nvim/garray.h"
 #include "nvim/map.h"
+#include "nvim/map_defs.h"
 #include "nvim/pos.h"
 #include "nvim/types.h"
+
+struct mtnode_s;
 
 #define MT_MAX_DEPTH 20
 #define MT_BRANCH_FACTOR 10

@@ -23,21 +23,13 @@ function(GetBinaryDep)
   endif()
 
   ExternalProject_Add(${_gettool_TARGET}
-    PREFIX ${DEPS_BUILD_DIR}
     URL ${URL}
+    URL_HASH SHA256=${HASH}
+    DOWNLOAD_NO_PROGRESS TRUE
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}
-      -DURL=${URL}
-      -DEXPECTED_SHA256=${HASH}
-      -DTARGET=${_gettool_TARGET}
-      -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND ""
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_BIN_DIR}
     COMMAND "${_gettool_INSTALL_COMMAND}")
-  list(APPEND THIRD_PARTY_DEPS ${__gettool_TARGET})
 endfunction()

@@ -9,9 +9,10 @@ local cinput = cimport("./src/nvim/tui/input.h")
 local rbuffer = cimport("./test/unit/fixtures/rbuffer.h")
 local globals = cimport("./src/nvim/globals.h")
 local multiqueue = cimport("./test/unit/fixtures/multiqueue.h")
+local ui_client = cimport("./src/nvim/ui_client.h")
 
 itp('handle_background_color', function()
-  local handle_background_color = cinput.ut_handle_background_color
+  local handle_background_color = cinput.handle_background_color
   local term_input = ffi.new('TermInput', {})
   local events = globals.main_loop.thread_events
   local kIncomplete = cinput.kIncomplete
@@ -33,11 +34,9 @@ itp('handle_background_color', function()
     term_input.waiting_for_bg_response = 1
     eq(kComplete, handle_background_color(term_input))
     eq(0, term_input.waiting_for_bg_response)
-    eq(1, multiqueue.multiqueue_size(events))
-
-    local event = multiqueue.multiqueue_get(events)
-    local bg_event = ffi.cast("Event*", event.argv[1])
-    eq(bg, ffi.string(bg_event.argv[0]))
+    eq(0, multiqueue.multiqueue_size(events))
+    eq(bg, ({[0]="light", [1] = "dark", [-1] = "none"})
+           [tonumber(ui_client.ui_client_bg_response)])
 
     -- Buffer has been consumed.
     eq(0, rbuf.size)
@@ -114,9 +113,7 @@ itp('handle_background_color', function()
   eq(kComplete, handle_background_color(term_input))
   eq(0, term_input.waiting_for_bg_response)
 
-  local event = multiqueue.multiqueue_get(events)
-  local bg_event = ffi.cast("Event*", event.argv[1])
-  eq('light', ffi.string(bg_event.argv[0]))
+  eq(0, tonumber(ui_client.ui_client_bg_response))
   eq(0, multiqueue.multiqueue_size(events))
   eq(0, rbuf.size)
 
@@ -133,9 +130,7 @@ itp('handle_background_color', function()
   eq(kComplete, handle_background_color(term_input))
   eq(0, term_input.waiting_for_bg_response)
 
-  event = multiqueue.multiqueue_get(events)
-  bg_event = ffi.cast("Event*", event.argv[1])
-  eq('light', ffi.string(bg_event.argv[0]))
+  eq(0, tonumber(ui_client.ui_client_bg_response))
   eq(0, multiqueue.multiqueue_size(events))
   eq(0, rbuf.size)
 
@@ -161,7 +156,7 @@ itp('handle_background_color', function()
   eq(kComplete, handle_background_color(term_input))
   eq(0, term_input.waiting_for_bg_response)
 
-  eq(1, multiqueue.multiqueue_size(events))
+  eq(0, multiqueue.multiqueue_size(events))
   eq(3, rbuf.size)
   rbuffer.rbuffer_consumed(rbuf, rbuf.size)
 end)

@@ -9,6 +9,8 @@ local clear = helpers.clear
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 local pathsep = helpers.get_pathsep()
+local skip = helpers.skip
+local is_os = helpers.is_os
 
 -- These directories will be created for testing
 local directories = {
@@ -279,9 +281,7 @@ describe("getcwd()", function ()
   end)
 
   it("returns empty string if working directory does not exist", function()
-    if helpers.iswin() then
-      return
-    end
+    skip(is_os('win'))
     command("cd "..directories.global)
     command("call delete('../"..directories.global.."', 'd')")
     eq("", helpers.eval("getcwd()"))

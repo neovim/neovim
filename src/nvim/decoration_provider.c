@@ -1,20 +1,30 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "klib/kvec.h"
+#include "lauxlib.h"
 #include "nvim/api/extmark.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/buffer.h"
-#include "nvim/decoration.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/decoration_provider.h"
+#include "nvim/globals.h"
 #include "nvim/highlight.h"
+#include "nvim/log.h"
 #include "nvim/lua/executor.h"
+#include "nvim/memory.h"
+#include "nvim/pos.h"
 
 static kvec_t(DecorProvider) decor_providers = KV_INITIAL_VALUE;
 
 #define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
   { ns_id, false, LUA_NOREF, LUA_NOREF, \
     LUA_NOREF, LUA_NOREF, LUA_NOREF, \
-    LUA_NOREF, -1, false }
+    LUA_NOREF, -1, false, false }
 
 static bool decor_provider_invoke(NS ns_id, const char *name, LuaRef ref, Array args,
                                   bool default_true, char **perr)
@@ -47,11 +57,33 @@ static bool decor_provider_invoke(NS ns_id, const char *name, LuaRef ref, Array 
   return false;
 }
 
+void decor_providers_invoke_spell(win_T *wp, int start_row, int start_col, int end_row, int end_col,
+                                  char **err)
+{
+  for (size_t i = 0; i < kv_size(decor_providers); i++) {
+    DecorProvider *p = &kv_A(decor_providers, i);
+    if (!p->active) {
+      continue;
+    }
+
+    if (p->spell_nav != LUA_NOREF) {
+      MAXSIZE_TEMP_ARRAY(args, 6);
+      ADD_C(args, INTEGER_OBJ(wp->handle));
+      ADD_C(args, INTEGER_OBJ(wp->w_buffer->handle));
+      ADD_C(args, INTEGER_OBJ(start_row));
+      ADD_C(args, INTEGER_OBJ(start_col));
+      ADD_C(args, INTEGER_OBJ(end_row));
+      ADD_C(args, INTEGER_OBJ(end_col));
+      decor_provider_invoke(p->ns_id, "spell", p->spell_nav, args, true, err);
+    }
+  }
+}
+
 /// For each provider invoke the 'start' callback
 ///
 /// @param[out] providers Decoration providers
 /// @param[out] err       Provider err
-void decor_providers_start(DecorProviders *providers, int type, char **err)
+void decor_providers_start(DecorProviders *providers, char **err)
 {
   kvi_init(*providers);
 
@@ -65,7 +97,6 @@ void decor_providers_start(DecorProviders *providers, int type, char **err)
     if (p->redraw_start != LUA_NOREF) {
       MAXSIZE_TEMP_ARRAY(args, 2);
       ADD_C(args, INTEGER_OBJ((int)display_tick));
-      ADD_C(args, INTEGER_OBJ(type));
       active = decor_provider_invoke(p->ns_id, "start", p->redraw_start, args, true, err);
     } else {
       active = true;
@@ -116,8 +147,8 @@ void decor_providers_invoke_win(win_T *wp, DecorProviders *providers,
 /// @param      row       Row to invoke line callback for
 /// @param[out] has_decor Set when at least one provider invokes a line callback
 /// @param[out] err       Provider error
-void providers_invoke_line(win_T *wp, DecorProviders *providers, int row, bool *has_decor,
-                           char **err)
+void decor_providers_invoke_line(win_T *wp, DecorProviders *providers, int row, bool *has_decor,
+                                 char **err)
 {
   for (size_t k = 0; k < kv_size(*providers); k++) {
     DecorProvider *p = kv_A(*providers, k);
@@ -172,6 +203,25 @@ void decor_providers_invoke_end(DecorProviders *providers, char **err)
   }
 }
 
+/// Mark all cached state of per-namespace highlights as invalid. Revalidate
+/// current namespace.
+///
+/// Expensive! Should on be called by an already throttled validity check
+/// like highlight_changed() (throttled to the next redraw or mode change)
+void decor_provider_invalidate_hl(void)
+{
+  size_t len = kv_size(decor_providers);
+  for (size_t i = 0; i < len; i++) {
+    DecorProvider *item = &kv_A(decor_providers, i);
+    item->hl_cached = false;
+  }
+
+  if (ns_hl_active) {
+    ns_hl_active = -1;
+    hl_check_ns();
+  }
+}
+
 DecorProvider *get_decor_provider(NS ns_id, bool force)
 {
   assert(ns_id > 0);
@@ -215,6 +265,7 @@ void decor_provider_clear(DecorProvider *p)
   NLUA_CLEAR_REF(p->redraw_win);
   NLUA_CLEAR_REF(p->redraw_line);
   NLUA_CLEAR_REF(p->redraw_end);
+  NLUA_CLEAR_REF(p->spell_nav);
   p->active = false;
 }
 

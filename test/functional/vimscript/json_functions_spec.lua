@@ -343,7 +343,7 @@ describe('json_decode() function', function()
        exc_exec('call json_decode("\\t\\"abc\\\\u0000")'))
   end)
 
-  it('fails to parse unknown escape sequnces', function()
+  it('fails to parse unknown escape sequences', function()
     eq('Vim(call):E474: Unknown escape sequence: \\a"',
        exc_exec('call json_decode("\\t\\"\\\\a\\"")'))
   end)

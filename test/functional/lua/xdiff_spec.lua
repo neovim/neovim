@@ -74,11 +74,13 @@ describe('xdiff bindings', function()
     end)
 
     it('with error callback', function()
-      exec_lua([[on_hunk = function(sa, ca, sb, cb)
+      exec_lua[[
+        on_hunk = function(sa, ca, sb, cb)
           error('ERROR1')
-        end]])
+        end
+      ]]
 
-      eq([[Error executing lua: [string "<nvim>"]:0: error running function on_hunk: [string "<nvim>"]:0: ERROR1]],
+      eq([[error running function on_hunk: [string "<nvim>"]:0: ERROR1]],
         pcall_err(exec_lua, [[vim.diff(a1, b1, {on_hunk = on_hunk})]]))
     end)
 
@@ -135,19 +137,19 @@ describe('xdiff bindings', function()
   end)
 
   it('can handle bad args', function()
-    eq([[Error executing lua: [string "<nvim>"]:0: Expected at least 2 arguments]],
+    eq([[Expected at least 2 arguments]],
       pcall_err(exec_lua, [[vim.diff('a')]]))
 
-    eq([[Error executing lua: [string "<nvim>"]:0: bad argument #1 to 'diff' (expected string)]],
+    eq([[bad argument #1 to 'diff' (expected string)]],
       pcall_err(exec_lua, [[vim.diff(1, 2)]]))
 
-    eq([[Error executing lua: [string "<nvim>"]:0: bad argument #3 to 'diff' (expected table)]],
+    eq([[bad argument #3 to 'diff' (expected table)]],
       pcall_err(exec_lua, [[vim.diff('a', 'b', true)]]))
 
-    eq([[Error executing lua: [string "<nvim>"]:0: unexpected key: bad_key]],
+    eq([[unexpected key: bad_key]],
       pcall_err(exec_lua, [[vim.diff('a', 'b', { bad_key = true })]]))
 
-    eq([[Error executing lua: [string "<nvim>"]:0: on_hunk is not a function]],
+    eq([[on_hunk is not a function]],
       pcall_err(exec_lua, [[vim.diff('a', 'b', { on_hunk = true })]]))
 
   end)

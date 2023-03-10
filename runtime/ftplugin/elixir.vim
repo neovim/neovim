@@ -1,7 +1,7 @@
 " Elixir filetype plugin
 " Language: Elixir
 " Maintainer:	Mitchell Hanberg <vimNOSPAM@mitchellhanberg.com>
-" Last Change: 2022 August 10
+" Last Change: 2022 Sep 20
 
 if exists("b:did_ftplugin")
   finish
@@ -23,7 +23,11 @@ if exists('loaded_matchit') && !exists('b:match_words')
         \ ',{:},\[:\],(:)'
 endif
 
+setlocal shiftwidth=2 softtabstop=2 expandtab iskeyword+=!,?
+setlocal comments=:#
 setlocal commentstring=#\ %s
+
+let b:undo_ftplugin = 'setlocal sw< sts< et< isk< com< cms<'
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

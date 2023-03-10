@@ -1,7 +1,10 @@
 #ifndef NVIM_DRAWSCREEN_H
 #define NVIM_DRAWSCREEN_H
 
+#include <stdbool.h>
+
 #include "nvim/drawline.h"
+#include "nvim/macros.h"
 
 /// flags for update_screen()
 /// The higher the value, the higher the priority

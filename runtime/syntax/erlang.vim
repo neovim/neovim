@@ -2,7 +2,7 @@
 " Language:     Erlang (http://www.erlang.org)
 " Maintainer:   Csaba Hoch <csaba.hoch@gmail.com>
 " Contributor:  Adam Rutkowski <hq@mtod.org>
-" Last Update:  2020-May-26
+" Last Update:  2022-Sep-06
 " License:      Vim license
 " URL:          https://github.com/vim-erlang/vim-erlang-runtime
 
@@ -61,7 +61,8 @@ syn match erlangQuotedAtomModifier '\\\%(\o\{1,3}\|x\x\x\|x{\x\+}\|\^.\|.\)' con
 syn match erlangModifier           '\$\%([^\\]\|\\\%(\o\{1,3}\|x\x\x\|x{\x\+}\|\^.\|.\)\)'
 
 " Operators, separators
-syn match erlangOperator   '==\|=:=\|/=\|=/=\|<\|=<\|>\|>=\|=>\|:=\|++\|--\|=\|!\|<-\|+\|-\|\*\|\/'
+syn match erlangOperator   '==\|=:=\|/=\|=/=\|<\|=<\|>\|>=\|=>\|:=\|?=\|++\|--\|=\|!\|<-\|+\|-\|\*\|\/'
+syn match erlangEqualsBinary '=<<\%(<\)\@!'
 syn keyword erlangOperator div rem or xor bor bxor bsl bsr and band not bnot andalso orelse
 syn match erlangBracket    '{\|}\|\[\|]\||\|||'
 syn match erlangPipe       '|'
@@ -76,7 +77,8 @@ syn match erlangGlobalFuncCall '\<\%(\a[[:alnum:]_@]*\%(\s\|\n\|%.*\n\)*\.\%(\s\
 syn match erlangGlobalFuncRef  '\<\%(\a[[:alnum:]_@]*\%(\s\|\n\|%.*\n\)*\.\%(\s\|\n\|%.*\n\)*\)*\a[[:alnum:]_@]*\%(\s\|\n\|%.*\n\)*:\%(\s\|\n\|%.*\n\)*\a[[:alnum:]_@]*\>\%(\%(\s\|\n\|%.*\n\)*/\)\@=' contains=erlangComment,erlangVariable
 
 " Variables, macros, records, maps
-syn match erlangVariable '\<[A-Z_][[:alnum:]_@]*'
+syn match erlangVariable '\<[A-Z][[:alnum:]_@]*'
+syn match erlangAnonymousVariable '\<_[[:alnum:]_@]*'
 syn match erlangMacro    '??\=[[:alnum:]_@]\+'
 syn match erlangMacro    '\%(-define(\)\@<=[[:alnum:]_@]\+'
 syn region erlangQuotedMacro         start=/??\=\s*'/ end=/'/ contains=erlangQuotedAtomModifier
@@ -92,7 +94,7 @@ syn match erlangBitType '\%(\/\%(\s\|\n\|%.*\n\)*\)\@<=\%(integer\|float\|binary
 
 " Constants and Directives
 syn match erlangUnknownAttribute '^\s*-\%(\s\|\n\|%.*\n\)*\l[[:alnum:]_@]*' contains=erlangComment
-syn match erlangAttribute '^\s*-\%(\s\|\n\|%.*\n\)*\%(behaviou\=r\|compile\|export\(_type\)\=\|file\|import\|module\|author\|copyright\|doc\|vsn\|on_load\|optional_callbacks\)\>' contains=erlangComment
+syn match erlangAttribute '^\s*-\%(\s\|\n\|%.*\n\)*\%(behaviou\=r\|compile\|export\(_type\)\=\|file\|import\|module\|author\|copyright\|doc\|vsn\|on_load\|optional_callbacks\|feature\)\>' contains=erlangComment
 syn match erlangInclude   '^\s*-\%(\s\|\n\|%.*\n\)*\%(include\|include_lib\)\>' contains=erlangComment
 syn match erlangRecordDef '^\s*-\%(\s\|\n\|%.*\n\)*record\>' contains=erlangComment
 syn match erlangDefine    '^\s*-\%(\s\|\n\|%.*\n\)*\%(define\|undef\)\>' contains=erlangComment
@@ -100,8 +102,8 @@ syn match erlangPreCondit '^\s*-\%(\s\|\n\|%.*\n\)*\%(ifdef\|ifndef\|else\|endif
 syn match erlangType      '^\s*-\%(\s\|\n\|%.*\n\)*\%(spec\|type\|opaque\|callback\)\>' contains=erlangComment
 
 " Keywords
-syn keyword erlangKeyword after begin case catch cond end fun if let of
-syn keyword erlangKeyword receive when try
+syn keyword erlangKeyword after begin case catch cond end fun if let of else
+syn keyword erlangKeyword receive when try maybe
 
 " Build-in-functions (BIFs)
 syn keyword erlangBIF abs alive apply atom_to_binary atom_to_list contained
@@ -174,6 +176,7 @@ hi def link erlangModifier Special
 
 " Operators, separators
 hi def link erlangOperator Operator
+hi def link erlangEqualsBinary ErrorMsg
 hi def link erlangRightArrow Operator
 if s:old_style
 hi def link erlangBracket Normal
@@ -191,6 +194,7 @@ hi def link erlangLocalFuncRef Normal
 hi def link erlangGlobalFuncCall Function
 hi def link erlangGlobalFuncRef Function
 hi def link erlangVariable Normal
+hi def link erlangAnonymousVariable erlangVariable
 hi def link erlangMacro Normal
 hi def link erlangQuotedMacro Normal
 hi def link erlangRecord Normal
@@ -203,6 +207,7 @@ hi def link erlangLocalFuncRef Normal
 hi def link erlangGlobalFuncCall Normal
 hi def link erlangGlobalFuncRef Normal
 hi def link erlangVariable Identifier
+hi def link erlangAnonymousVariable erlangVariable
 hi def link erlangMacro Macro
 hi def link erlangQuotedMacro Macro
 hi def link erlangRecord Structure

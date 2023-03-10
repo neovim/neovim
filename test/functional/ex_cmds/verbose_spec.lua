@@ -77,7 +77,7 @@ nohlsearch
        script_location), result)
   end)
 
-  it('"Last set" for keymap set by Lua', function()
+  it('"Last set" for mapping set by Lua', function()
     local result = exec_capture(':verbose map <leader>key1')
     eq(string.format([[
 
@@ -86,7 +86,7 @@ n  \key1       * :echo "test"<CR>
        script_location), result)
   end)
 
-  it('"Last set" for keymap set by vim.keymap', function()
+  it('"Last set" for mapping set by vim.keymap', function()
     local result = exec_capture(':verbose map <leader>key2')
     eq(string.format([[
 

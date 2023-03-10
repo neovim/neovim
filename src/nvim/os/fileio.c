@@ -11,22 +11,25 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include <stddef.h>
-
-#include "auto/config.h"
-
-#ifdef HAVE_SYS_UIO_H
-# include <sys/uio.h>
-#endif
-
+#include <stdint.h>
 #include <uv.h>
 
+#include "auto/config.h"
+#include "nvim/gettext.h"
 #include "nvim/globals.h"
+#include "nvim/log.h"
 #include "nvim/macros.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/os/fileio.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/rbuffer.h"
+#include "nvim/types.h"
+
+#ifdef MSWIN
+# include "nvim/os/os_win_console.h"
+#endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/fileio.c.generated.h"
@@ -71,12 +74,20 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname, const int f
   FLAG(flags, kFileReadOnly, O_RDONLY, kFalse, wr != kTrue);
 #ifdef O_NOFOLLOW
   FLAG(flags, kFileNoSymlink, O_NOFOLLOW, kNone, true);
+  FLAG(flags, kFileMkDir, O_CREAT|O_WRONLY, kTrue, !(flags & kFileCreateOnly));
 #endif
 #undef FLAG
   // wr is used for kFileReadOnly flag, but on
   // QB:neovim-qb-slave-ubuntu-12-04-64bit it still errors out with
   // `error: variable ‘wr’ set but not used [-Werror=unused-but-set-variable]`
   (void)wr;
+
+  if (flags & kFileMkDir) {
+    int mkdir_ret = os_file_mkdir((char *)fname, 0755);
+    if (mkdir_ret < 0) {
+      return mkdir_ret;
+    }
+  }
 
   const int fd = os_open(fname, os_open_flags, mode);
 
@@ -160,6 +171,30 @@ FileDescriptor *file_open_fd_new(int *const error, const int fd, const int flags
     return NULL;
   }
   return fp;
+}
+
+/// Opens standard input as a FileDescriptor.
+FileDescriptor *file_open_stdin(void)
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  int error;
+  int stdin_dup_fd;
+  if (stdin_fd > 0) {
+    stdin_dup_fd = stdin_fd;
+  } else {
+    stdin_dup_fd = os_dup(STDIN_FILENO);
+#ifdef MSWIN
+    // Replace the original stdin with the console input handle.
+    os_replace_stdin_to_conin();
+#endif
+  }
+  FileDescriptor *const stdin_dup = file_open_fd_new(&error, stdin_dup_fd,
+                                                     kFileReadOnly|kFileNonBlocking);
+  assert(stdin_dup != NULL);
+  if (error != 0) {
+    ELOG("failed to open stdin: %s", os_strerror(error));
+  }
+  return stdin_dup;
 }
 
 /// Close file and free its buffer

@@ -3,6 +3,7 @@
 " Maintainer:	Marcus Aurelius Farias <marcus.cf 'at' bol.com.br>
 " First Author:	Max Ischenko <mfi 'at' ukr.net>
 " Last Change:	2017 Jun 13
+"		2022 Sep 07: b:undo_indent added by Doug Kearns
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -17,6 +18,8 @@ setlocal indentexpr=GetLuaIndent()
 setlocal indentkeys+=0=end,0=until
 
 setlocal autoindent
+
+let b:undo_indent = "setlocal autoindent< indentexpr< indentkeys<"
 
 " Only define the function once.
 if exists("*GetLuaIndent")

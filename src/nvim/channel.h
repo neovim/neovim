@@ -1,13 +1,26 @@
 #ifndef NVIM_CHANNEL_H
 #define NVIM_CHANNEL_H
 
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/event/libuv_process.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/event/process.h"
 #include "nvim/event/socket.h"
+#include "nvim/event/stream.h"
+#include "nvim/garray.h"
+#include "nvim/macros.h"
 #include "nvim/main.h"
+#include "nvim/map.h"
+#include "nvim/map_defs.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/os/pty_process.h"
+#include "nvim/terminal.h"
+#include "nvim/types.h"
 
 #define CHAN_STDIO 1
 #define CHAN_STDERR 2
@@ -53,6 +66,7 @@ typedef struct {
   garray_T buffer;
   bool eof;
   bool buffered;
+  bool fwd_err;
   const char *type;
 } CallbackReader;
 
@@ -60,6 +74,7 @@ typedef struct {
                                                 .self = NULL, \
                                                 .buffer = GA_EMPTY_INIT_VALUE, \
                                                 .buffered = false, \
+                                                .fwd_err = false, \
                                                 .type = NULL })
 static inline bool callback_reader_set(CallbackReader reader)
 {

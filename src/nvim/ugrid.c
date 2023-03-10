@@ -2,14 +2,10 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
-#include <limits.h>
-#include <stdbool.h>
-#include <stdio.h>
+#include <string.h>
 
-#include "nvim/assert.h"
+#include "nvim/memory.h"
 #include "nvim/ugrid.h"
-#include "nvim/ui.h"
-#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ugrid.c.generated.h"

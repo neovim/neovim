@@ -1,16 +1,18 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include "nvim/api/ui.h"
+#include <assert.h>
+
 #include "nvim/buffer.h"
 #include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
 #include "nvim/extmark.h"
+#include "nvim/fold.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
-#include "nvim/lua/executor.h"
-#include "nvim/move.h"
-#include "nvim/vim.h"
+#include "nvim/memory.h"
+#include "nvim/pos.h"
+#include "nvim/sign_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "decoration.c.generated.h"
@@ -69,18 +71,21 @@ void bufhl_add_hl_pos_offset(buf_T *buf, int src_id, int hl_id, lpos_T pos_start
 void decor_redraw(buf_T *buf, int row1, int row2, Decoration *decor)
 {
   if (row2 >= row1) {
-    if (!decor || decor->hl_id || decor_has_sign(decor) || decor->conceal) {
+    if (!decor
+        || decor->hl_id
+        || decor_has_sign(decor)
+        || decor->conceal
+        || decor->spell != kNone) {
       redraw_buf_range_later(buf, row1 + 1, row2 + 1);
     }
   }
 
   if (decor && decor_virt_pos(*decor)) {
-    redraw_buf_line_later(buf, row1 + 1);
+    redraw_buf_line_later(buf, row1 + 1, false);
   }
 
   if (decor && kv_size(decor->virt_lines)) {
-    redraw_buf_line_later(buf, MIN(buf->b_ml.ml_line_count,
-                                   row1 + 1 + (decor->virt_lines_above?0:1)));
+    redraw_buf_line_later(buf, row1 + 1 + (decor->virt_lines_above?0:1), true);
   }
 }
 
@@ -95,25 +100,39 @@ void decor_remove(buf_T *buf, int row, int row2, Decoration *decor)
     if (decor_has_sign(decor)) {
       assert(buf->b_signs > 0);
       buf->b_signs--;
-    }
-    if (row2 >= row && decor->sign_text) {
-      buf_signcols_del_check(buf, row + 1, row2 + 1);
+      if (decor->sign_text) {
+        assert(buf->b_signs_with_text > 0);
+        buf->b_signs_with_text--;
+        if (row2 >= row) {
+          buf_signcols_del_check(buf, row + 1, row2 + 1);
+        }
+      }
     }
   }
   decor_free(decor);
 }
 
+void decor_clear(Decoration *decor)
+{
+  clear_virttext(&decor->virt_text);
+  for (size_t i = 0; i < kv_size(decor->virt_lines); i++) {
+    clear_virttext(&kv_A(decor->virt_lines, i).line);
+  }
+  kv_destroy(decor->virt_lines);
+  xfree(decor->sign_text);
+}
+
 void decor_free(Decoration *decor)
 {
   if (decor) {
-    clear_virttext(&decor->virt_text);
-    for (size_t i = 0; i < kv_size(decor->virt_lines); i++) {
-      clear_virttext(&kv_A(decor->virt_lines, i).line);
-    }
-    kv_destroy(decor->virt_lines);
-    xfree(decor->sign_text);
+    decor_clear(decor);
     xfree(decor);
   }
+}
+
+void decor_state_free(DecorState *state)
+{
+  xfree(state->active.items);
 }
 
 void clear_virttext(VirtText *text)
@@ -165,13 +184,12 @@ Decoration get_decor(mtkey_t mark)
 {
   if (mark.decor_full) {
     return *mark.decor_full;
-  } else {
-    Decoration fake = DECORATION_INIT;
-    fake.hl_id = mark.hl_id;
-    fake.priority = mark.priority;
-    fake.hl_eol = (mark.flags & MT_FLAG_HL_EOL);
-    return fake;
   }
+  Decoration fake = DECORATION_INIT;
+  fake.hl_id = mark.hl_id;
+  fake.priority = mark.priority;
+  fake.hl_eol = (mark.flags & MT_FLAG_HL_EOL);
+  return fake;
 }
 
 /// @return true if decor has a virtual position (virtual text or ui_watched)
@@ -306,6 +324,7 @@ next_mark:
   bool conceal = 0;
   int conceal_char = 0;
   int conceal_attr = 0;
+  TriState spell = kNone;
 
   for (size_t i = 0; i < kv_size(state->active); i++) {
     DecorRange item = kv_A(state->active, i);
@@ -339,6 +358,9 @@ next_mark:
         conceal_attr = item.attr_id;
       }
     }
+    if (active && item.decor.spell != kNone) {
+      spell = item.decor.spell;
+    }
     if ((item.start_row == state->row && item.start_col <= col)
         && decor_virt_pos(item.decor)
         && item.decor.virt_text_pos == kVTOverlay && item.win_col == -1) {
@@ -355,6 +377,7 @@ next_mark:
   state->conceal = conceal;
   state->conceal_char = conceal_char;
   state->conceal_attr = conceal_attr;
+  state->spell = spell;
   return attr;
 }
 
@@ -431,11 +454,11 @@ int decor_signcols(buf_T *buf, DecorState *state, int row, int end_row, int max)
   int signcols = 0;      // highest value of count
   int currow = -1;       // current row
 
-  if (max <= 1 && buf->b_signs >= (size_t)max) {
+  if (max <= 1 && buf->b_signs_with_text >= (size_t)max) {
     return max;
   }
 
-  if (buf->b_signs == 0) {
+  if (buf->b_signs_with_text == 0) {
     return 0;
   }
 
@@ -537,7 +560,8 @@ void decor_add_ephemeral(int start_row, int start_col, int end_row, int end_col,
   decor_add(&decor_state, start_row, start_col, end_row, end_col, decor, true, ns_id, mark_id);
 }
 
-int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines)
+/// @param has_fold  whether line "lnum" has a fold, or kNone when not calculated yet
+int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fold)
 {
   buf_T *buf = wp->w_buffer;
   if (!buf->b_virt_line_blocks) {
@@ -547,10 +571,14 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines)
   }
 
   int virt_lines = 0;
-  int row = (int)MAX(lnum - 2, 0);
+  int row = MAX(lnum - 2, 0);
   int end_row = (int)lnum;
   MarkTreeIter itr[1] = { 0 };
   marktree_itr_get(buf->b_marktree, row, 0,  itr);
+  bool below_fold = lnum > 1 && hasFoldingWin(wp, lnum - 1, NULL, NULL, true, NULL);
+  if (has_fold == kNone) {
+    has_fold = hasFoldingWin(wp, lnum, NULL, NULL, true, NULL);
+  }
   while (true) {
     mtkey_t mark = marktree_itr_current(itr);
     if (mark.pos.row < 0 || mark.pos.row >= end_row) {
@@ -558,9 +586,10 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines)
     } else if (marktree_decor_level(mark) < kDecorLevelVirtLine) {
       goto next_mark;
     }
-    bool above = mark.pos.row > (int)(lnum - 2);
+    bool above = mark.pos.row > (lnum - 2);
+    bool has_fold_cur = above ? has_fold : below_fold;
     Decoration *decor = mark.decor_full;
-    if (decor && decor->virt_lines_above == above) {
+    if (!has_fold_cur && decor && decor->virt_lines_above == above) {
       virt_lines += (int)kv_size(decor->virt_lines);
       if (lines) {
         kv_splice(*lines, decor->virt_lines);

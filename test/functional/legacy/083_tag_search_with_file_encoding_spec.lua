@@ -26,7 +26,7 @@ describe('tag search with !_TAG_FILE_ENCODING', function()
       '!_TAG_FILE_ENCODING	cp932	//\n' ..
       '\130`\130a\130b	Xtags2.txt	/\130`\130a\130b\n'
       )
-    -- The last file is very long but repetetive and can be generated on the
+    -- The last file is very long but repetitive and can be generated on the
     -- fly.
     local text = helpers.dedent([[
       !_TAG_FILE_SORTED	1	//

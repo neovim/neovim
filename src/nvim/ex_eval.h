@@ -1,7 +1,7 @@
 #ifndef NVIM_EX_EVAL_H
 #define NVIM_EX_EVAL_H
 
-#include "nvim/ex_cmds_defs.h"  // for exarg_T
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_eval_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

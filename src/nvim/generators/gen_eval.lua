@@ -27,26 +27,59 @@ local hashy = require'generators.hashy'
 
 local hashpipe = io.open(funcsfname, 'wb')
 
+hashpipe:write([[
+#include "nvim/arglist.h"
+#include "nvim/cmdexpand.h"
+#include "nvim/cmdhist.h"
+#include "nvim/digraph.h"
+#include "nvim/eval/buffer.h"
+#include "nvim/eval/funcs.h"
+#include "nvim/eval/typval.h"
+#include "nvim/eval/vars.h"
+#include "nvim/eval/window.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/ex_getln.h"
+#include "nvim/fold.h"
+#include "nvim/getchar.h"
+#include "nvim/insexpand.h"
+#include "nvim/mapping.h"
+#include "nvim/match.h"
+#include "nvim/mbyte.h"
+#include "nvim/menu.h"
+#include "nvim/move.h"
+#include "nvim/quickfix.h"
+#include "nvim/search.h"
+#include "nvim/sign.h"
+#include "nvim/testing.h"
+
+]])
+
 local funcs = require('eval').funcs
+for _, func in pairs(funcs) do
+  if func.float_func then
+    func.func = "float_op_wrapper"
+    func.data = "{ .float_func = &"..func.float_func.." }"
+  end
+end
+
 local metadata = mpack.unpack(io.open(metadata_file, 'rb'):read("*all"))
 for _,fun in ipairs(metadata) do
   if fun.eval then
     funcs[fun.name] = {
       args=#fun.parameters,
       func='api_wrapper',
-      data='&handle_'..fun.name,
+      data='{ .api_handler = &method_handlers['..fun.handler_id..'] }'
     }
   end
 end
 
+local func_names = vim.tbl_keys(funcs)
+table.sort(func_names)
 local funcsdata = io.open(funcs_file, 'w')
-funcsdata:write(mpack.pack(funcs))
+funcsdata:write(mpack.pack(func_names))
 funcsdata:close()
 
-
-local names = vim.tbl_keys(funcs)
-
-local neworder, hashfun = hashy.hashy_hash("find_internal_func", names, function (idx)
+local neworder, hashfun = hashy.hashy_hash("find_internal_func", func_names, function (idx)
   return "functions["..idx.."].name"
 end)
 hashpipe:write("static const EvalFuncDef functions[] = {\n")
@@ -60,12 +93,12 @@ for _, name in ipairs(neworder) do
   end
   local base = def.base or "BASE_NONE"
   local func = def.func or ('f_' .. name)
-  local data = def.data or "NULL"
+  local data = def.data or "{ .nullptr = NULL }"
   local fast = def.fast and 'true' or 'false'
-  hashpipe:write(('  { "%s", %s, %s, %s, %s, &%s, (FunPtr)%s },\n')
+  hashpipe:write(('  { "%s", %s, %s, %s, %s, &%s, %s },\n')
                   :format(name, args[1], args[2], base, fast, func, data))
 end
-hashpipe:write('  { NULL, 0, 0, BASE_NONE, false, NULL, NULL },\n')
+hashpipe:write('  { NULL, 0, 0, BASE_NONE, false, NULL, { .nullptr = NULL } },\n')
 hashpipe:write("};\n\n")
 hashpipe:write(hashfun)
 hashpipe:close()

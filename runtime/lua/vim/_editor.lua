@@ -12,21 +12,8 @@
 -- Guideline: "If in doubt, put it in the runtime".
 --
 -- Most functions should live directly in `vim.`, not in submodules.
--- The only "forbidden" names are those claimed by legacy `if_lua`:
---    $ vim
---    :lua for k,v in pairs(vim) do print(k) end
---    buffer
---    open
---    window
---    lastline
---    firstline
---    type
---    line
---    eval
---    dict
---    beep
---    list
---    command
+--
+-- Compatibility with Vim's `if_lua` is explicitly a non-goal.
 --
 -- Reference (#6580):
 --    - https://github.com/luafun/luafun
@@ -35,8 +22,6 @@
 --    - https://github.com/torch/paths
 --    - https://github.com/bakpakin/Fennel (pretty print, repl)
 --    - https://github.com/howl-editor/howl/tree/master/lib/howl/util
-
-local vim = assert(vim)
 
 -- These are for loading runtime modules lazily since they aren't available in
 -- the nvim binary as specified in executor.c
@@ -51,9 +36,23 @@ for k, v in pairs({
   ui = true,
   health = true,
   fs = true,
+  secure = true,
+  _watch = true,
 }) do
   vim._submodules[k] = v
 end
+
+-- There are things which have special rules in vim._init_packages
+-- for legacy reasons (uri) or for performance (_inspector).
+-- most new things should go into a submodule namespace ( vim.foobar.do_thing() )
+vim._extra = {
+  uri_from_fname = true,
+  uri_from_bufnr = true,
+  uri_to_fname = true,
+  uri_to_bufnr = true,
+  show_pos = true,
+  inspect_pos = true,
+}
 
 vim.log = {
   levels = {
@@ -122,9 +121,7 @@ function vim._os_proc_children(ppid)
   return children
 end
 
--- TODO(ZyX-I): Create compatibility layer.
-
---- Return a human-readable representation of the given object.
+--- Gets a human-readable representation of the given object.
 ---
 ---@see https://github.com/kikito/inspect.lua
 ---@see https://github.com/mpeterv/vinspect
@@ -139,7 +136,7 @@ do
   --- (such as the |TUI|) pastes text into the editor.
   ---
   --- Example: To remove ANSI color codes when pasting:
-  --- <pre>
+  --- <pre>lua
   --- vim.paste = (function(overridden)
   ---   return function(lines, phase)
   ---     for i,line in ipairs(lines) do
@@ -152,14 +149,15 @@ do
   --- </pre>
   ---
   ---@see |paste|
+  ---@alias paste_phase -1 | 1 | 2 | 3
   ---
-  ---@param lines  |readfile()|-style list of lines to paste. |channel-lines|
-  ---@param phase  -1: "non-streaming" paste: the call contains all lines.
+  ---@param lines  string[] # |readfile()|-style list of lines to paste. |channel-lines|
+  ---@param phase paste_phase  -1: "non-streaming" paste: the call contains all lines.
   ---              If paste is "streamed", `phase` indicates the stream state:
   ---                - 1: starts the paste (exactly once)
   ---                - 2: continues the paste (zero or more times)
   ---                - 3: ends the paste (exactly once)
-  ---@returns false if client should cancel the paste.
+  ---@returns boolean # false if client should cancel the paste.
   function vim.paste(lines, phase)
     local now = vim.loop.now()
     local is_first_chunk = phase < 2
@@ -183,7 +181,8 @@ do
         local line1 = lines[1]:gsub('(%c)', '\022%1')
         -- nvim_input() is affected by mappings,
         -- so use nvim_feedkeys() with "n" flag to ignore mappings.
-        vim.api.nvim_feedkeys(line1, 'n', true)
+        -- "t" flag is also needed so the pasted text is saved in cmdline history.
+        vim.api.nvim_feedkeys(line1, 'nt', true)
       end
       return true
     end
@@ -255,6 +254,8 @@ end
 ---@see |lua-loop-callbacks|
 ---@see |vim.schedule()|
 ---@see |vim.in_fast_event()|
+---@param cb function
+---@return function
 function vim.schedule_wrap(cb)
   return function(...)
     local args = vim.F.pack_len(...)
@@ -292,7 +293,7 @@ end
 --- command.
 ---
 --- Example:
---- <pre>
+--- <pre>lua
 ---   vim.cmd('echo 42')
 ---   vim.cmd([[
 ---     augroup My_group
@@ -398,12 +399,12 @@ end
 
 --- Get a table of lines with start, end columns for a region marked by two points
 ---
----@param bufnr number of buffer
----@param pos1 (line, column) tuple marking beginning of region
----@param pos2 (line, column) tuple marking end of region
----@param regtype type of selection (:help setreg)
+---@param bufnr integer number of buffer
+---@param pos1 integer[] (line, column) tuple marking beginning of region
+---@param pos2 integer[] (line, column) tuple marking end of region
+---@param regtype string type of selection, see |setreg()|
 ---@param inclusive boolean indicating whether the selection is end-inclusive
----@return region lua table of the form {linenr = {startcol,endcol}}
+---@return table region Table of the form `{linenr = {startcol,endcol}}`
 function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
@@ -430,11 +431,16 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
       c2 = c1 + regtype:sub(2)
       -- and adjust for non-ASCII characters
       bufline = vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1]
-      if c1 < #bufline then
+      local utflen = vim.str_utfindex(bufline, #bufline)
+      if c1 <= utflen then
         c1 = vim.str_byteindex(bufline, c1)
+      else
+        c1 = #bufline + 1
       end
-      if c2 < #bufline then
+      if c2 <= utflen then
         c2 = vim.str_byteindex(bufline, c2)
+      else
+        c2 = #bufline + 1
       end
     else
       c1 = (l == pos1[1]) and pos1[2] or 0
@@ -448,11 +454,11 @@ end
 --- Defers calling `fn` until `timeout` ms passes.
 ---
 --- Use to do a one-shot timer that calls `fn`
---- Note: The {fn} is |schedule_wrap|ped automatically, so API functions are
+--- Note: The {fn} is |vim.schedule_wrap()|ped automatically, so API functions are
 --- safe to call.
----@param fn Callback to call once `timeout` expires
----@param timeout Number of milliseconds to wait before calling `fn`
----@return timer luv timer object
+---@param fn function Callback to call once `timeout` expires
+---@param timeout integer Number of milliseconds to wait before calling `fn`
+---@return table timer luv timer object
 function vim.defer_fn(fn, timeout)
   vim.validate({ fn = { fn, 'c', true } })
   local timer = vim.loop.new_timer()
@@ -478,7 +484,7 @@ end
 --- writes to |:messages|.
 ---
 ---@param msg string Content of the notification to show to the user.
----@param level number|nil One of the values from |vim.log.levels|.
+---@param level integer|nil One of the values from |vim.log.levels|.
 ---@param opts table|nil Optional parameters. Unused by default.
 function vim.notify(msg, level, opts) -- luacheck: no unused args
   if level == vim.log.levels.ERROR then
@@ -499,7 +505,7 @@ do
   --- display a notification.
   ---
   ---@param msg string Content of the notification to show to the user.
-  ---@param level number|nil One of the values from |vim.log.levels|.
+  ---@param level integer|nil One of the values from |vim.log.levels|.
   ---@param opts table|nil Optional parameters. Unused by default.
   ---@return boolean true if message was displayed, else false
   function vim.notify_once(msg, level, opts)
@@ -528,10 +534,10 @@ local on_key_cbs = {}
 ---@param fn function: Callback function. It should take one string argument.
 ---                   On each key press, Nvim passes the key char to fn(). |i_CTRL-V|
 ---                   If {fn} is nil, it removes the callback for the associated {ns_id}
----@param ns_id number? Namespace ID. If nil or 0, generates and returns a new
+---@param ns_id integer? Namespace ID. If nil or 0, generates and returns a new
 ---                    |nvim_create_namespace()| id.
 ---
----@return number Namespace id associated with {fn}. Or count of all callbacks
+---@return integer Namespace id associated with {fn}. Or count of all callbacks
 ---if on_key() is called without arguments.
 ---
 ---@note {fn} will be removed if an error occurs while calling.
@@ -581,14 +587,12 @@ function vim._on_key(char)
 end
 
 --- Generate a list of possible completions for the string.
---- String starts with ^ and then has the pattern.
+--- String has the pattern.
 ---
 ---     1. Can we get it to just return things in the global namespace with that name prefix
 ---     2. Can we get it to return things from global namespace even with `print(` in front.
 function vim._expand_pat(pat, env)
   env = env or _G
-
-  pat = string.sub(pat, 2, #pat)
 
   if pat == '' then
     local result = vim.tbl_keys(env)
@@ -650,7 +654,7 @@ function vim._expand_pat(pat, env)
       local mt = getmetatable(final_env)
       if mt and type(mt.__index) == 'table' then
         field = rawget(mt.__index, key)
-      elseif final_env == vim and vim._submodules[key] then
+      elseif final_env == vim and (vim._submodules[key] or vim._extra[key]) then
         field = vim[key]
       end
     end
@@ -680,6 +684,7 @@ function vim._expand_pat(pat, env)
   end
   if final_env == vim then
     insert_keys(vim._submodules)
+    insert_keys(vim._extra)
   end
 
   keys = vim.tbl_keys(keys)
@@ -751,14 +756,36 @@ vim._expand_pat_get_parts = function(lua_string)
   return parts, search_index
 end
 
+do
+  -- Ideally we should just call complete() inside omnifunc, though there are
+  -- some bugs, so fake the two-step dance for now.
+  local matches
+
+  --- Omnifunc for completing lua values from from the runtime lua interpreter,
+  --- similar to the builtin completion for the `:lua` command.
+  ---
+  --- Activate using `set omnifunc=v:lua.vim.lua_omnifunc` in a lua buffer.
+  function vim.lua_omnifunc(find_start, _)
+    if find_start == 1 then
+      local line = vim.api.nvim_get_current_line()
+      local prefix = string.sub(line, 1, vim.api.nvim_win_get_cursor(0)[2])
+      local pos
+      matches, pos = vim._expand_pat(prefix)
+      return (#matches > 0 and pos) or -1
+    else
+      return matches
+    end
+  end
+end
+
 ---Prints given arguments in human-readable format.
 ---Example:
----<pre>
+---<pre>lua
 ---  -- Print highlight group Normal and store it's contents in a variable.
 ---  local hl_normal = vim.pretty_print(vim.api.nvim_get_hl_by_name("Normal", true))
 ---</pre>
 ---@see |vim.inspect()|
----@return given arguments.
+---@return any # given arguments.
 function vim.pretty_print(...)
   local objects = {}
   for i = 1, select('#', ...) do
@@ -899,6 +926,26 @@ function vim._init_default_mappings()
     anoremenu PopUp.-1-                     <Nop>
     anoremenu PopUp.How-to\ disable\ mouse  <Cmd>help disable-mouse<CR>
   ]])
+end
+
+function vim._init_default_autocmds()
+  local nvim_terminal_augroup = vim.api.nvim_create_augroup('nvim_terminal', {})
+  vim.api.nvim_create_autocmd({ 'bufreadcmd' }, {
+    pattern = 'term://*',
+    group = nvim_terminal_augroup,
+    nested = true,
+    command = "if !exists('b:term_title')|call termopen(matchstr(expand(\"<amatch>\"), '\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), {'cwd': expand(get(matchlist(expand(\"<amatch>\"), '\\c\\mterm://\\(.\\{-}\\)//'), 1, ''))})",
+  })
+  vim.api.nvim_create_autocmd({ 'cmdwinenter' }, {
+    pattern = '[:>]',
+    group = vim.api.nvim_create_augroup('nvim_cmdwin', {}),
+    command = 'syntax sync minlines=1 maxlines=1',
+  })
+end
+
+function vim._init_defaults()
+  vim._init_default_mappings()
+  vim._init_default_autocmds()
 end
 
 require('vim._meta')

@@ -1,0 +1,19 @@
+name: "Request reviews"
+on:
+  pull_request_target:
+    types: [labeled, ready_for_review, reopened]
+jobs:
+  request-reviewer:
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v3
+      - name: 'Request reviewers'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.TEAM_REVIEW }}
+          script: |
+            const script = require('./.github/scripts/reviews.js')
+            await script({github, context})

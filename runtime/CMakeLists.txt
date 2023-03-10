@@ -63,7 +63,7 @@ foreach(DF ${DOCFILES})
 endforeach()
 
 add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
-  COMMAND ${CMAKE_COMMAND} -E remove doc/*
+  COMMAND ${CMAKE_COMMAND} -E remove_directory doc
   COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${PROJECT_SOURCE_DIR}/runtime/doc doc
   COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
@@ -75,8 +75,10 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
 )
 
 
+# TODO: This doesn't work. wait for "nvim -l" to land?
 add_custom_target(doc_html
-  COMMAND make html
+  COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
+    -V1 -es --clean -c "lua require('scripts.gen_help_html').gen('./build/runtime/doc', './build/doc_html', nil, 'todo_commit_id')" -c "0cq"
   DEPENDS
     ${GENERATED_HELP_TAGS}
   WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}/doc"
@@ -108,25 +110,23 @@ if(NOT APPLE)
   install_helper(
     FILES ${CMAKE_CURRENT_SOURCE_DIR}/nvim.desktop
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
-
-  install_helper(
-    FILES ${CMAKE_CURRENT_SOURCE_DIR}/nvim.png
-    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/128x128/apps)
 endif()
 
-globrecurse_wrapper(RUNTIME_PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR} *.awk *.sh *.bat)
+install_helper(
+  FILES ${CMAKE_CURRENT_SOURCE_DIR}/nvim.png
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/128x128/apps)
 
-foreach(PROG ${RUNTIME_PROGRAMS})
-  get_filename_component(BASEDIR ${PROG} DIRECTORY)
-  install_helper(PROGRAMS ${PROG}
-                 DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/${BASEDIR})
+glob_wrapper(RUNTIME_ROOT_FILES *.vim *.lua *.ico)
+install_helper(FILES ${RUNTIME_ROOT_FILES}
+               DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/)
+
+glob_wrapper(RUNTIME_DIRS */)
+foreach(D ${RUNTIME_DIRS})
+  if(IS_DIRECTORY ${D})
+    install_helper(DIRECTORY ${D}
+                   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/)
+  endif()
 endforeach()
 
-globrecurse_wrapper(RUNTIME_FILES ${CMAKE_CURRENT_SOURCE_DIR}
-  *.vim *.lua *.dict *.py *.rb *.ps *.spl *.tutor *.tutor.json)
-
-foreach(F ${RUNTIME_FILES})
-  get_filename_component(BASEDIR ${F} DIRECTORY)
-  install_helper(FILES ${F}
-                 DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/${BASEDIR})
-endforeach()
+# only foo.sh script in runtime/
+install_helper(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/macros/less.sh DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/macros/)

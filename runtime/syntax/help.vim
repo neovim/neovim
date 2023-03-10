@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Vim help file
 " Maintainer:	Bram Moolenaar (Bram@vim.org)
-" Last Change:	2021 Jun 13
+" Last Change:	2022 Nov 13
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -11,13 +11,14 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-syn match helpHeadline		"^[-A-Z .][-A-Z0-9 .()_]*\ze\(\s\+\*\|$\)"
+syn match helpHeadline		"^[A-Z.][-A-Z0-9 .,()_']*?\=\ze\(\s\+\*\|$\)"
 syn match helpSectionDelim	"^===.*===$"
 syn match helpSectionDelim	"^---.*--$"
+" Neovim: support language annotation in codeblocks
 if has("conceal")
-  syn region helpExample	matchgroup=helpIgnore start=" >$" start="^>$" end="^[^ \t]"me=e-1 end="^<" concealends
+  syn region helpExample	matchgroup=helpIgnore start=" >[a-z0-9]*$" start="^>[a-z0-9]*$" end="^[^ \t]"me=e-1 end="^<" concealends
 else
-  syn region helpExample	matchgroup=helpIgnore start=" >$" start="^>$" end="^[^ \t]"me=e-1 end="^<"
+  syn region helpExample	matchgroup=helpIgnore start=" >[a-z0-9]*$" start="^>[a-z0-9]*$" end="^[^ \t]"me=e-1 end="^<"
 endif
 syn match helpHyperTextJump	"\\\@<!|[#-)!+-~]\+|" contains=helpBar
 syn match helpHyperTextEntry	"\*[#-)!+-~]\+\*\s"he=e-1 contains=helpStar
@@ -39,6 +40,7 @@ syn match helpVim		"VIM REFERENCE.*"
 syn match helpVim		"NVIM REFERENCE.*"
 syn match helpOption		"'[a-z]\{2,\}'"
 syn match helpOption		"'t_..'"
+syn match helpNormal		"'ab'"
 syn match helpCommand		"`[^` \t]\+`"hs=s+1,he=e-1 contains=helpBacktick
 syn match helpCommand		"\(^\|[^a-z"[]\)\zs`[^`]\+`\ze\([^a-z\t."']\|$\)"hs=s+1,he=e-1 contains=helpBacktick
 syn match helpHeader		"\s*\zs.\{-}\ze\s\=\~$" nextgroup=helpIgnore

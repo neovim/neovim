@@ -6,7 +6,7 @@ local nvim_prog = helpers.nvim_prog
 local feed_command = helpers.feed_command
 local feed_data = thelpers.feed_data
 
-if helpers.pending_win32(pending) then return end
+if helpers.skip(helpers.is_os('win')) then return end
 
 describe('autoread TUI FocusGained/FocusLost', function()
   local f1 = 'xtest-foo'
@@ -33,9 +33,17 @@ describe('autoread TUI FocusGained/FocusLost', function()
 
     helpers.write_file(path, '')
     lfs.touch(path, os.time() - 10)
-    feed_command('edit '..path)
-    feed_data('\027[O')
 
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    feed_command('edit '..path)
     screen:expect{grid=[[
       {1: }                                                 |
       {4:~                                                 }|
@@ -45,6 +53,17 @@ describe('autoread TUI FocusGained/FocusLost', function()
       :edit xtest-foo                                   |
       {3:-- TERMINAL --}                                    |
     ]]}
+    feed_data('\027[O')
+    feed_data('\027[O')
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:xtest-foo                                         }|
+      :edit xtest-foo                                   |
+      {3:-- TERMINAL --}                                    |
+    ]], unchanged=true}
 
     helpers.write_file(path, expected_addition)
 

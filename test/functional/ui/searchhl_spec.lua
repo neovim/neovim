@@ -10,7 +10,6 @@ local testprg = helpers.testprg
 
 describe('search highlighting', function()
   local screen
-  local colors = Screen.colors
 
   before_each(function()
     clear()
@@ -18,9 +17,9 @@ describe('search highlighting', function()
     screen:attach()
     screen:set_default_attr_ids( {
       [1] = {bold=true, foreground=Screen.colors.Blue},
-      [2] = {background = colors.Yellow}, -- Search
+      [2] = {background = Screen.colors.Yellow}, -- Search
       [3] = {reverse = true},
-      [4] = {foreground = colors.Red}, -- Message
+      [4] = {foreground = Screen.colors.Red}, -- Message
       [6] = {foreground = Screen.colors.Blue4, background = Screen.colors.LightGrey}, -- Folded
     })
   end)
@@ -221,10 +220,10 @@ describe('search highlighting', function()
       feed('gg/foo\\nbar<CR>')
       screen:expect([[
         one                                     |
-        {2:^foo}                                     |
+        {2:^foo }                                    |
         {2:bar}                                     |
         baz                                     |
-        {1:foo}                                     |
+        {1:foo }                                    |
         {1:bar}                                     |
         /foo\nbar                               |
       ]])
@@ -232,20 +231,20 @@ describe('search highlighting', function()
       feed('gg/efg\\nhij<CR>')
       screen:expect([[
         ---                                     |
-        abcd{2:^efg}                                 |
+        abcd{2:^efg }                                |
         {2:hij}kl                                   |
         ---                                     |
-        abcd{1:efg}                                 |
+        abcd{1:efg }                                |
         {1:hij}kl                                   |
         /efg\nhij                               |
       ]])
       feed('n')
       screen:expect([[
         ---                                     |
-        abcd{1:efg}                                 |
+        abcd{1:efg }                                |
         {1:hij}kl                                   |
         ---                                     |
-        abcd{2:^efg}                                 |
+        abcd{2:^efg }                                |
         {2:hij}kl                                   |
         /efg\nhij                               |
       ]])
@@ -318,6 +317,7 @@ describe('search highlighting', function()
     ]])
     feed('/foo')
     helpers.poke_eventloop()
+    screen:sleep(0)
     screen:expect_unchanged()
   end)
 
@@ -498,6 +498,20 @@ describe('search highlighting', function()
       {1:~                   }│{1:~                  }|
       //^                                      |
     ]])
+    feed('<Esc>')
+
+    -- incsearch works after c_CTRL-R_CTRL-R
+    command('let @" = "file"')
+    feed('/<C-R><C-R>"')
+    screen:expect([[
+      the first line      │the first line     |
+      in a little {3:file}    │in a little {2:file}   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      /file^                                   |
+    ]])
   end)
 
   it('works with incsearch and offset', function()
@@ -548,9 +562,9 @@ describe('search highlighting', function()
     feed('/line\\na<cr>')
     screen:expect([[
                                               |
-      a  repeated {2:^line}                        |
-      {2:a}  repeated {2:line}                        |
-      {2:a}  repeated {2:line}                        |
+      a  repeated {2:^line }                       |
+      {2:a}  repeated {2:line }                       |
+      {2:a}  repeated {2:line }                       |
       {2:a}  repeated line                        |
       {1:~                                       }|
       {4:search hit BOTTOM, continuing at TOP}    |
@@ -560,9 +574,9 @@ describe('search highlighting', function()
     feed('4Grb')
     screen:expect([[
                                               |
-      a  repeated {2:line}                        |
+      a  repeated {2:line }                       |
       {2:a}  repeated line                        |
-      ^b  repeated {2:line}                        |
+      ^b  repeated {2:line }                       |
       {2:a}  repeated line                        |
       {1:~                                       }|
       {4:search hit BOTTOM, continuing at TOP}    |
@@ -572,12 +586,12 @@ describe('search highlighting', function()
   it('works with matchadd and syntax', function()
     screen:set_default_attr_ids {
       [1] = {bold=true, foreground=Screen.colors.Blue};
-      [2] = {background = colors.Yellow};
+      [2] = {background = Screen.colors.Yellow};
       [3] = {reverse = true};
-      [4] = {foreground = colors.Red};
-      [5] = {bold = true, background = colors.Green};
-      [6] = {italic = true, background = colors.Magenta};
-      [7] = {bold = true, background = colors.Yellow};
+      [4] = {foreground = Screen.colors.Red};
+      [5] = {bold = true, background = Screen.colors.Green};
+      [6] = {italic = true, background = Screen.colors.Magenta};
+      [7] = {bold = true, background = Screen.colors.Yellow};
       [8] = {foreground = Screen.colors.Blue4, background = Screen.colors.LightGray};
     }
     feed_command('set hlsearch')

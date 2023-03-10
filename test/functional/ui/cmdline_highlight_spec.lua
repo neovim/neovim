@@ -61,7 +61,7 @@ before_each(function()
       endwhile
       return ret
     endfunction
-    function SplittedMultibyteStart(cmdline)
+    function SplitMultibyteStart(cmdline)
       let ret = []
       let i = 0
       while i < len(a:cmdline)
@@ -77,7 +77,7 @@ before_each(function()
       endwhile
       return ret
     endfunction
-    function SplittedMultibyteEnd(cmdline)
+    function SplitMultibyteEnd(cmdline)
       let ret = []
       let i = 0
       while i < len(a:cmdline)
@@ -296,7 +296,7 @@ describe('Command-line coloring', function()
   end
   it('does the right thing when hl start appears to split multibyte char',
   function()
-    set_color_cb('SplittedMultibyteStart')
+    set_color_cb('SplitMultibyteStart')
     start_prompt('echo "«')
     screen:expect{grid=[[
                                               |
@@ -322,7 +322,7 @@ describe('Command-line coloring', function()
   end)
   it('does the right thing when hl end appears to split multibyte char',
   function()
-    set_color_cb('SplittedMultibyteEnd')
+    set_color_cb('SplitMultibyteEnd')
     start_prompt('echo "«')
     screen:expect([[
                                               |
@@ -335,17 +335,17 @@ describe('Command-line coloring', function()
       :echo "«^                                |
     ]])
   end)
-  it('does the right thing when errorring', function()
+  it('does the right thing when erroring', function()
     set_color_cb('Echoerring')
     start_prompt('e')
     screen:expect([[
                                               |
       {EOB:~                                       }|
-      {EOB:~                                       }|
       {MSEP:                                        }|
       :                                       |
       {ERR:E5407: Callback has thrown an exception:}|
-      {ERR: Vim(echoerr):HERE}                      |
+      {ERR: function DoPrompt[3]..Echoerring, line }|
+      {ERR:1: Vim(echoerr):HERE}                    |
       :e^                                      |
     ]])
   end)
@@ -400,16 +400,16 @@ describe('Command-line coloring', function()
     screen:expect([[
                                               |
       {EOB:~                                       }|
-      {EOB:~                                       }|
       {MSEP:                                        }|
       :                                       |
       {ERR:E5407: Callback has thrown an exception:}|
+      {ERR: function DoPrompt[3]..Throwing, line 1:}|
       {ERR: ABC}                                    |
       :e^                                      |
     ]])
   end)
   it('stops executing callback after a number of errors', function()
-    set_color_cb('SplittedMultibyteStart')
+    set_color_cb('SplitMultibyteStart')
     start_prompt('let x = "«»«»«»«»«»"')
     screen:expect([[
                                               |
@@ -772,7 +772,7 @@ describe('Ex commands coloring', function()
     ]])
   end)
   it('still executes command-line even if errored out', function()
-    meths.set_var('Nvim_color_cmdline', 'SplittedMultibyteStart')
+    meths.set_var('Nvim_color_cmdline', 'SplitMultibyteStart')
     feed(':let x = "«"\n')
     eq('«', meths.get_var('x'))
     local msg = 'E5405: Chunk 0 start 10 splits multibyte character'

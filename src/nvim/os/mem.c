@@ -3,6 +3,7 @@
 
 /// Functions for accessing system memory information.
 
+#include <stdint.h>
 #include <uv.h>
 
 #include "nvim/os/os.h"

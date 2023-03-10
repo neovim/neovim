@@ -92,27 +92,10 @@ use of "-" and "_".
 				:lang mes en
 <
 
-MS-WINDOWS MESSAGE TRANSLATIONS				*win32-gettext*
-
-If you used the self-installing .exe file, message translations should work
-already.  Otherwise get the libintl.dll file if you don't have it yet:
-
-	http://sourceforge.net/projects/gettext
-Or:
-	https://mlocati.github.io/gettext-iconv-windows/
-
-This also contains tools xgettext, msgformat and others.
-
-libintl.dll should be placed in same directory as (g)vim.exe, or one of the
-directories listed in the PATH environment value.  Vim also looks for the
-alternate names "libintl-8.dll" and "intl.dll".
-
 Message files (vim.mo) have to be placed in "$VIMRUNTIME/lang/xx/LC_MESSAGES",
-where "xx" is the abbreviation of the language (mostly two letters).
-
-If you write your own translations you need to generate the .po file and
-convert it to a .mo file.  You need to get the source distribution and read
-the file "src/po/README.txt".
+where "xx" is the abbreviation of the language (mostly two letters). If you
+write your own translations you need to generate the .po file and convert it
+to a .mo file.
 
 To overrule the automatic choice of the language, set the $LANG variable to
 the language of your choice.  use "en" to disable translations. >

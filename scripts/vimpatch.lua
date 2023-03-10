@@ -1,7 +1,7 @@
 --  Updates version.c list of applied Vim patches.
 --
 --  Usage:
---    VIM_SOURCE_DIR=~/neovim/.vim-src/ nvim -i NONE -u NONE --headless +'luafile ./scripts/vimpatch.lua' +q
+--    VIM_SOURCE_DIR=~/neovim/.vim-src/ nvim -V1 -es -i NONE +'luafile ./scripts/vimpatch.lua' +q
 
 local nvim = vim.api
 
@@ -22,12 +22,13 @@ end
 -- Generates the lines to be inserted into the src/version.c
 -- `included_patches[]` definition.
 local function gen_version_c_lines()
-  -- Set of merged Vim 8.0.zzzz patch numbers.
+  -- Set of merged Vim 8.1.zzzz patch numbers.
   local merged_patch_numbers = {}
   local highest = 0
   for _, n in ipairs(vimpatch_sh_list_numbers()) do
+    n = tonumber(n)
     if n then
-      merged_patch_numbers[tonumber(n)] = true
+      merged_patch_numbers[n] = true
       highest = math.max(highest, n)
     end
   end

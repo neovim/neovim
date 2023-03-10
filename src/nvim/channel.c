@@ -1,25 +1,45 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <assert.h>
+#include <inttypes.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "lauxlib.h"
 #include "nvim/api/private/converter.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/ui.h"
 #include "nvim/autocmd.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/channel.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
+#include "nvim/eval/typval.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/rstream.h"
 #include "nvim/event/socket.h"
+#include "nvim/event/wstream.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/log.h"
 #include "nvim/lua/executor.h"
+#include "nvim/main.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
-#include "nvim/os/fs.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/shell.h"
-#ifdef WIN32
+#include "nvim/path.h"
+#include "nvim/rbuffer.h"
+
+#ifdef MSWIN
+# include "nvim/os/fs.h"
 # include "nvim/os/os_win_console.h"
 # include "nvim/os/pty_conpty_win.h"
 #endif
-#include "nvim/ascii.h"
-#include "nvim/path.h"
 
 static bool did_stdio = false;
 
@@ -189,7 +209,7 @@ Channel *channel_alloc(ChannelStreamType type)
 
 void channel_create_event(Channel *chan, const char *ext_source)
 {
-#if MIN_LOG_LEVEL <= LOGLVL_INF
+#ifdef NVIM_LOG_DEBUG
   const char *source;
 
   if (ext_source) {
@@ -197,7 +217,7 @@ void channel_create_event(Channel *chan, const char *ext_source)
     // external events should be included.
     source = ext_source;
   } else {
-    eval_fmt_source_name_line((char *)IObuff, sizeof(IObuff));
+    eval_fmt_source_name_line(IObuff, sizeof(IObuff));
     source = (const char *)IObuff;
   }
 
@@ -352,23 +372,17 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader
   proc->overlapped = overlapped;
 
   char *cmd = xstrdup(proc->argv[0]);
-  bool has_in, has_out, has_err;
+  bool has_out, has_err;
   if (proc->type == kProcessTypePty) {
     has_out = true;
     has_err = false;
   } else {
     has_out = rpc || callback_reader_set(chan->on_data);
     has_err = callback_reader_set(chan->on_stderr);
+    proc->fwd_err = chan->on_stderr.fwd_err;
   }
 
-  switch (stdin_mode) {
-  case kChannelStdinPipe:
-    has_in = true;
-    break;
-  case kChannelStdinNull:
-    has_in = false;
-    break;
-  }
+  bool has_in = stdin_mode == kChannelStdinPipe;
 
   int status = process_spawn(proc, has_in, has_out, has_err);
   if (status) {
@@ -492,7 +506,7 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
 
   int stdin_dup_fd = STDIN_FILENO;
   int stdout_dup_fd = STDOUT_FILENO;
-#ifdef WIN32
+#ifdef MSWIN
   // Strangely, ConPTY doesn't work if stdin and stdout are pipes. So replace
   // stdin and stdout with CONIN$ and CONOUT$, respectively.
   if (embedded_mode && os_has_conpty_working()) {
@@ -500,6 +514,13 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
     os_replace_stdin_to_conin();
     stdout_dup_fd = os_dup(STDOUT_FILENO);
     os_replace_stdout_and_stderr_to_conout();
+  }
+#else
+  if (embedded_mode) {
+    stdin_dup_fd = dup(STDIN_FILENO);
+    stdout_dup_fd = dup(STDOUT_FILENO);
+    dup2(STDERR_FILENO, STDOUT_FILENO);
+    dup2(STDERR_FILENO, STDIN_FILENO);
   }
 #endif
   rstream_init_fd(&main_loop, &channel->stream.stdio.in, stdin_dup_fd, 0);

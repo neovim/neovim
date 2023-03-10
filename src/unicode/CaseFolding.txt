@@ -1,11 +1,11 @@
-# CaseFolding-14.0.0.txt
-# Date: 2021-03-08, 19:35:41 GMT
-# © 2021 Unicode®, Inc.
+# CaseFolding-15.0.0.txt
+# Date: 2022-02-02, 23:35:35 GMT
+# © 2022 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
+# For terms of use, see https://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
-#   For documentation, see http://www.unicode.org/reports/tr44/
+#   For documentation, see https://www.unicode.org/reports/tr44/
 #
 # Case Folding Properties
 #

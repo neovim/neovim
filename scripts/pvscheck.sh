@@ -328,7 +328,7 @@ realdir() {(
 
 patch_sources() {(
   local tgt="$1" ; shift
-  local only_bulid="${1}" ; shift
+  local only_build="${1}" ; shift
 
   get_pvs_comment "$tgt"
 

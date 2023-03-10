@@ -3,6 +3,9 @@
 
 // users.c -- operating system user information
 
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 #include <uv.h>
 
 #include "auto/config.h"
@@ -10,11 +13,12 @@
 #include "nvim/garray.h"
 #include "nvim/memory.h"
 #include "nvim/os/os.h"
-#include "nvim/strings.h"
-#ifdef HAVE_PWD_H
+#include "nvim/types.h"
+#include "nvim/vim.h"
+#ifdef HAVE_PWD_FUNCS
 # include <pwd.h>
 #endif
-#ifdef WIN32
+#ifdef MSWIN
 # include <lm.h>
 #endif
 
@@ -46,7 +50,7 @@ int os_get_usernames(garray_T *users)
   }
   ga_init(users, sizeof(char *), 20);
 
-#if defined(HAVE_GETPWENT) && defined(HAVE_PWD_H)
+#ifdef HAVE_PWD_FUNCS
   {
     struct passwd *pw;
 
@@ -56,7 +60,7 @@ int os_get_usernames(garray_T *users)
     }
     endpwent();
   }
-#elif defined(WIN32)
+#elif defined(MSWIN)
   {
     DWORD nusers = 0, ntotal = 0, i;
     PUSER_INFO_0 uinfo;
@@ -77,7 +81,7 @@ int os_get_usernames(garray_T *users)
     }
   }
 #endif
-#if defined(HAVE_GETPWNAM)
+#ifdef HAVE_PWD_FUNCS
   {
     const char *user_env = os_getenv("USER");
 
@@ -93,7 +97,7 @@ int os_get_usernames(garray_T *users)
       for (i = 0; i < users->ga_len; i++) {
         char *local_user = ((char **)users->ga_data)[i];
 
-        if (STRCMP(local_user, user_env) == 0) {
+        if (strcmp(local_user, user_env) == 0) {
           break;
         }
       }
@@ -137,12 +141,12 @@ int os_get_username(char *s, size_t len)
 /// @return OK if a username was found, else FAIL.
 int os_get_uname(uv_uid_t uid, char *s, size_t len)
 {
-#if defined(HAVE_PWD_H) && defined(HAVE_GETPWUID)
+#ifdef HAVE_PWD_FUNCS
   struct passwd *pw;
 
   if ((pw = getpwuid(uid)) != NULL  // NOLINT(runtime/threadsafe_fn)
       && pw->pw_name != NULL && *(pw->pw_name) != NUL) {
-    STRLCPY(s, pw->pw_name, len);
+    xstrlcpy(s, pw->pw_name, len);
     return OK;
   }
 #endif
@@ -155,7 +159,7 @@ int os_get_uname(uv_uid_t uid, char *s, size_t len)
 /// Caller must free() the returned string.
 char *os_get_userdir(const char *name)
 {
-#if defined(HAVE_GETPWNAM) && defined(HAVE_PWD_H)
+#ifdef HAVE_PWD_FUNCS
   if (name == NULL || *name == NUL) {
     return NULL;
   }
@@ -208,17 +212,17 @@ char *get_users(expand_T *xp, int idx)
 /// @return 0 if name does not match any user name.
 ///         1 if name partially matches the beginning of a user name.
 ///         2 is name fully matches a user name.
-int match_user(char_u *name)
+int match_user(char *name)
 {
-  int n = (int)STRLEN(name);
+  int n = (int)strlen(name);
   int result = 0;
 
   init_users();
   for (int i = 0; i < ga_users.ga_len; i++) {
-    if (STRCMP(((char_u **)ga_users.ga_data)[i], name) == 0) {
+    if (strcmp(((char **)ga_users.ga_data)[i], name) == 0) {
       return 2;       // full match
     }
-    if (STRNCMP(((char_u **)ga_users.ga_data)[i], name, n) == 0) {
+    if (strncmp(((char **)ga_users.ga_data)[i], name, (size_t)n) == 0) {
       result = 1;       // partial match
     }
   }

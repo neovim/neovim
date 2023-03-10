@@ -1,15 +1,25 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <assert.h>
 #include <lauxlib.h>
+#include <limits.h>
 #include <lua.h>
+#include <stdbool.h>
+#include <stddef.h>
 
+#include "nvim/ascii.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/lua/spell.h"
+#include "nvim/message.h"
 #include "nvim/spell.h"
-#include "nvim/vim.h"
+#include "nvim/types.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/spell.c.generated.h"
+# include "lua/spell.c.generated.h"  // IWYU pragma: export
 #endif
 
 int nlua_spell_check(lua_State *lstate)
@@ -41,7 +51,6 @@ int nlua_spell_check(lua_State *lstate)
   }
 
   hlf_T attr = HLF_COUNT;
-  size_t len = 0;
   size_t pos = 0;
   int capcol = -1;
   int no_res = 0;
@@ -51,7 +60,7 @@ int nlua_spell_check(lua_State *lstate)
 
   while (*str != NUL) {
     attr = HLF_COUNT;
-    len = spell_check(curwin, (char_u *)str, &attr, &capcol, false);
+    size_t len = spell_check(curwin, (char *)str, &attr, &capcol, false);
     assert(len <= INT_MAX);
 
     if (attr != HLF_COUNT) {

@@ -7,6 +7,7 @@ local command = helpers.command
 local pcall_err = helpers.pcall_err
 local feed = helpers.feed
 local poke_eventloop = helpers.poke_eventloop
+local is_os = helpers.is_os
 
 describe('terminal channel is closed and later released if', function()
   local screen
@@ -91,4 +92,18 @@ describe('terminal channel is closed and later released if', function()
     -- channel has been released after one main loop iteration
     eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
+end)
+
+it('chansend sends lines to terminal channel in proper order', function()
+  clear()
+  local screen = Screen.new(100, 20)
+  screen:attach()
+  local shells = is_os('win') and {'cmd.exe', 'pwsh.exe -nop', 'powershell.exe -nop'} or {'sh'}
+  for _, sh in ipairs(shells) do
+    command([[bdelete! | let id = termopen(']] .. sh .. [[')]])
+    command([[call chansend(id, ['echo "hello"', 'echo "world"', ''])]])
+    screen:expect{
+      any=[[echo "hello".*echo "world"]]
+    }
+  end
 end)

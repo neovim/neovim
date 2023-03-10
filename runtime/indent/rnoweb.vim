@@ -2,7 +2,7 @@
 " Language:	Rnoweb
 " Author:	Jakson Alves de Aquino <jalvesaq@gmail.com>
 " Homepage:     https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	Fri Apr 15, 2016  10:58PM
+" Last Change:	Feb 25, 2023
 
 
 " Only load this indent file when no other was loaded.
@@ -28,6 +28,8 @@ let b:did_indent = 1
 
 setlocal indentkeys=0{,0},!^F,o,O,e,},=\bibitem,=\item
 setlocal indentexpr=GetRnowebIndent()
+
+let b:undo_indent = "setl inde< indk<"
 
 if exists("*GetRnowebIndent")
   finish

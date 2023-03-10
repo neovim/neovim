@@ -73,7 +73,7 @@ describe('cmdline autocommands', function()
       {1:~                                                                       }|
       {4:                                                                        }|
       :                                                                       |
-      {2:E5500: autocmd has thrown an exception: Vim(echoerr):FAIL}               |
+      {2:CmdlineEnter Autocommands for "*": Vim(echoerr):FAIL}                    |
       :^                                                                       |
     ]])
 
@@ -82,9 +82,9 @@ describe('cmdline autocommands', function()
                                                                               |
       {4:                                                                        }|
       :                                                                       |
-      {2:E5500: autocmd has thrown an exception: Vim(echoerr):FAIL}               |
+      {2:CmdlineEnter Autocommands for "*": Vim(echoerr):FAIL}                    |
       :put ='lorem ipsum'                                                     |
-      {2:E5500: autocmd has thrown an exception: Vim(echoerr):very error}         |
+      {2:CmdlineLeave Autocommands for "*": Vim(echoerr):very error}              |
                                                                               |
       {3:Press ENTER or type command to continue}^                                 |
     ]])
@@ -111,9 +111,9 @@ describe('cmdline autocommands', function()
       lorem ipsum                                                             |
       {4:                                                                        }|
       :                                                                       |
-      {2:E5500: autocmd has thrown an exception: Vim(echoerr):FAIL}               |
+      {2:CmdlineEnter Autocommands for "*": Vim(echoerr):FAIL}                    |
       :put ='lorem ipsum'                                                     |
-      {2:E5500: autocmd has thrown an exception: Vim(echoerr):change erreor}      |
+      {2:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
       :put ='lorem ipsum'^                                                     |
     ]])
 
@@ -123,9 +123,9 @@ describe('cmdline autocommands', function()
       lorem ipsum                                                             |
       {4:                                                                        }|
       :                                                                       |
-      {2:E5500: autocmd has thrown an exception: Vim(echoerr):FAIL}               |
+      {2:CmdlineEnter Autocommands for "*": Vim(echoerr):FAIL}                    |
       :put ='lorem ipsum'                                                     |
-      {2:E5500: autocmd has thrown an exception: Vim(echoerr):change erreor}      |
+      {2:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
       :put ='lorem ipsum^'                                                     |
     ]])
 
@@ -134,22 +134,22 @@ describe('cmdline autocommands', function()
     screen:expect([[
       {4:                                                                        }|
       :                                                                       |
-      {2:E5500: autocmd has thrown an exception: Vim(echoerr):FAIL}               |
+      {2:CmdlineEnter Autocommands for "*": Vim(echoerr):FAIL}                    |
       :put ='lorem ipsum'                                                     |
-      {2:E5500: autocmd has thrown an exception: Vim(echoerr):change erreor}      |
+      {2:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
       :put ='lorem ipsum.'                                                    |
-      {2:E5500: autocmd has thrown an exception: Vim(echoerr):change erreor}      |
+      {2:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
       :put ='lorem ipsum.^'                                                    |
     ]])
 
     feed('<cr>')
     screen:expect([[
       :put ='lorem ipsum'                                                     |
-      {2:E5500: autocmd has thrown an exception: Vim(echoerr):change erreor}      |
+      {2:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
       :put ='lorem ipsum.'                                                    |
-      {2:E5500: autocmd has thrown an exception: Vim(echoerr):change erreor}      |
+      {2:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
       :put ='lorem ipsum.'                                                    |
-      {2:E5500: autocmd has thrown an exception: Vim(echoerr):very error}         |
+      {2:CmdlineLeave Autocommands for "*": Vim(echoerr):very error}              |
                                                                               |
       {3:Press ENTER or type command to continue}^                                 |
     ]])
@@ -185,6 +185,14 @@ describe('cmdline autocommands', function()
     eq({'notification', 'CmdlineLeave', {{cmdtype='=', cmdlevel=2, abort=false}}}, next_msg())
   end)
 
+  it('no crash with recursive use of v:event #19484', function()
+    command('autocmd CmdlineEnter * normal :')
+    feed(':')
+    eq({'notification', 'CmdlineEnter', {{cmdtype=':', cmdlevel=1}}}, next_msg())
+    feed('<CR>')
+    eq({'notification', 'CmdlineLeave', {{cmdtype=':', cmdlevel=1, abort=false}}}, next_msg())
+  end)
+
   it('supports CmdlineChanged' ,function()
     command("autocmd CmdlineChanged * call rpcnotify(g:channel, 'CmdlineChanged', v:event, getcmdline())")
     feed(':')
@@ -215,7 +223,6 @@ describe('cmdline autocommands', function()
     eq({'notification', 'CmdlineChanged', {{cmdtype='=', cmdlevel=2}, "1+1"}}, next_msg())
     feed('<cr>')
     eq({'notification', 'CmdlineLeave', {{cmdtype='=', cmdlevel=2, abort=false}}}, next_msg())
-    eq({'notification', 'CmdlineChanged', {{cmdtype=':', cmdlevel=1}, "let x = "}}, next_msg())
     eq({'notification', 'CmdlineChanged', {{cmdtype=':', cmdlevel=1}, "let x = 2"}}, next_msg())
     feed('<cr>')
     eq({'notification', 'CmdlineLeave', {{cmdtype=':', cmdlevel=1, abort=false}}}, next_msg())

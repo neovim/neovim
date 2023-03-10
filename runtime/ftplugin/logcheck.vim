@@ -1,9 +1,9 @@
 " Vim filetype plugin file
 " Language:    Logcheck
 " Maintainer:  Debian Vim Maintainers
-" Last Change: 2018 Dec 27
+" Last Change: 2023 Jan 16
 " License:     Vim License
-" URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/ftplugin/logcheck.vim
+" URL: https://salsa.debian.org/vim-team/vim-debian/blob/main/ftplugin/logcheck.vim
 
 if exists('b:did_ftplugin')
     finish

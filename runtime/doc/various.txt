@@ -102,9 +102,7 @@ g8			Print the hex values of the bytes used in the
 						*:p* *:pr* *:print* *E749*
 :[range]p[rint] [flags]
 			Print [range] lines (default current line).
-			Note: If you are looking for a way to print your text
-			on paper see |:hardcopy|.  In the GUI you can use the
-			File.Print menu entry.
+			In the GUI you can use the File.Print menu entry.
 			See |ex-flags| for [flags].
 			The |:filter| command can be used to only show lines
 			matching a pattern.
@@ -259,6 +257,10 @@ g8			Print the hex values of the bytes used in the
 			or stderr, the streams are closed immediately. |E5677|
 			Use |jobstart()| instead. >
 				:call jobstart('foo', {'detach':1})
+<
+			For powershell, chaining a stringed executable path
+			requires using the call operator (&). >
+				:!Write-Output "1`n2" | & "C:\Windows\System32\sort.exe" /r
 <
 							*E34*
 			Any "!" in {cmd} is replaced with the previous
@@ -471,7 +473,7 @@ will be no "Last set" message.  When it was defined while executing a function,
 user command or autocommand, the script in which it was defined is reported.
 
 							*K*
-[count]K       		Runs the program given by 'keywordprg' to lookup the
+[count]K		Runs the program given by 'keywordprg' to lookup the
 			|word| (defined by 'iskeyword') under or right of the
 			cursor. Default is "man". Works like this: >
 				:tabnew | terminal {program} {keyword}

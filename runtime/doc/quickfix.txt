@@ -353,8 +353,6 @@ processing a quickfix or location list command, it will be aborted.
 			If numbers [from] and/or [to] are given, the respective
 			range of errors is listed.  A negative number counts
 			from the last error backwards, -1 being the last error.
-			The 'switchbuf' settings are respected when jumping
-			to a buffer.
 			The |:filter| command can be used to display only the
 			quickfix entries matching a supplied pattern. The
 			pattern is matched against the filename, module name,
@@ -466,7 +464,7 @@ You can parse a list of lines using 'errorformat' without creating or
 modifying a quickfix list using the |getqflist()| function. Examples: >
 	echo getqflist({'lines' : ["F1:10:Line10", "F2:20:Line20"]})
 	echo getqflist({'lines' : systemlist('grep -Hn quickfix *')})
-This returns a dictionary where the 'items' key contains the list of quickfix
+This returns a dictionary where the "items" key contains the list of quickfix
 entries parsed from lines. The following shows how to use a custom
 'errorformat' to parse the lines without modifying the 'errorformat' option: >
 	echo getqflist({'efm' : '%f#%l#%m', 'lines' : ['F1#10#Line']})
@@ -585,7 +583,7 @@ can go back to the unfiltered list using the |:colder|/|:lolder| command.
 			quickfix command or function, the |b:changedtick|
 			variable is incremented.  You can get the number of
 			this buffer using the getqflist() and getloclist()
-			functions by passing the 'qfbufnr' item. For a
+			functions by passing the "qfbufnr" item. For a
 			location list, this buffer is wiped out when the
 			location list is removed.
 
@@ -916,7 +914,7 @@ To get the number of the current list in the stack: >
 			   screen).
 			5. The errorfile is read using 'errorformat'.
 			6. All relevant |QuickFixCmdPost| autocommands are
-			   executed. See example below.
+			   executed.  See example below.
 			7. If [!] is not given the first error is jumped to.
 			8. The errorfile is deleted.
 			9. You can now move through the errors with commands
@@ -1259,6 +1257,21 @@ not "b:current_compiler".  What the command actually does is the following:
 For writing a compiler plugin, see |write-compiler-plugin|.
 
 
+DOTNET							*compiler-dotnet*
+
+The .NET CLI compiler outputs both errors and warnings by default. The output
+may be limited to include only errors, by setting the g:dotnet_errors_only
+variable to |v:true|.
+
+The associated project name is included in each error and warning. To suppress
+the project name, set the g:dotnet_show_project_file variable to |v:false|.
+
+Example: limit output to only display errors, and suppress the project name: >
+	let dotnet_errors_only = v:true
+	let dotnet_show_project_file = v:false
+	compiler dotnet
+<
+
 GCC					*quickfix-gcc*	*compiler-gcc*
 
 There's one variable you can set for the GCC compiler:
@@ -1287,7 +1300,7 @@ PYUNIT COMPILER						*compiler-pyunit*
 This is not actually a compiler, but a unit testing framework for the
 Python language.  It is included into standard Python distribution
 starting from version 2.0.  For older versions, you can get it from
-http://pyunit.sourceforge.net.
+https://pyunit.sourceforge.net.
 
 When you run your tests with the help of the framework, possible errors
 are parsed by Vim and presented for you in quick-fix mode.
@@ -1297,8 +1310,6 @@ The alltests.py script seems to be used quite often, that's all.
 Useful values for the 'makeprg' options therefore are:
  setlocal makeprg=./alltests.py " Run a testsuite
  setlocal makeprg=python\ %:S   " Run a single testcase
-
-Also see http://vim.sourceforge.net/tip_view.php?tip_id=280.
 
 
 TEX COMPILER						*compiler-tex*
@@ -1572,8 +1583,9 @@ A call of |:clist| writes them accordingly with their correct filenames:
 
 Unlike the other prefixes that all match against whole lines, %P, %Q and %O
 can be used to match several patterns in the same line.  Thus it is possible
-to parse even nested files like in the following line:
+to parse even nested files like in the following line: >
   {"file1" {"file2" error1} error2 {"file3" error3 {"file4" error4 error5}}}
+<
 The %O then parses over strings that do not contain any push/pop file name
 information.  See |errorformat-LaTeX| for an extended example.
 
@@ -1823,7 +1835,7 @@ In English, that sed script:
   it as a "continuation of a multi-line message."
 
 						*errorformat-ant*
-For ant (http://jakarta.apache.org/) the above errorformat has to be modified
+For ant (https://jakarta.apache.org/) the above errorformat has to be modified
 to honour the leading [javac] in front of each javac output line: >
   :set efm=%A\ %#[javac]\ %f:%l:\ %m,%-Z\ %#[javac]\ %p^,%-C%.%#
 
@@ -1933,13 +1945,13 @@ by Vim.
 
 The default format for the lines displayed in the quickfix window and location
 list window is:
-
+>
     <filename>|<lnum> col <col>|<text>
-
+<
 The values displayed in each line correspond to the "bufnr", "lnum", "col" and
 "text" fields returned by the |getqflist()| function.
 
-For some quickfix/location lists, the displayed text need to be customized.
+For some quickfix/location lists, the displayed text needs to be customized.
 For example, if only the filename is present for a quickfix entry, then the
 two "|" field separator characters after the filename are not needed.  Another
 use case is to customize the path displayed for a filename. By default, the
@@ -1965,7 +1977,7 @@ The function should return a single line of text to display in the quickfix
 window for each entry from start_idx to end_idx. The function can obtain
 information about the entries using the |getqflist()| function and specifying
 the quickfix list identifier "id". For a location list, getloclist() function
-can be used with the 'winid' argument. If an empty list is returned, then the
+can be used with the "winid" argument. If an empty list is returned, then the
 default format is used to display all the entries. If an item in the returned
 list is an empty string, then the default format is used to display the
 corresponding entry.

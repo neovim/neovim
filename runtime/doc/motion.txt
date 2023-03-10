@@ -309,10 +309,10 @@ g<Down>			[count] display lines downward.  |exclusive| motion.
 			an operator, because it's not linewise.
 
 							*-*
--  <minus>		[count] lines upward, on the first non-blank
+`-`  <minus>		[count] lines upward, on the first non-blank
 			character |linewise|.
 
-+		or					*+*
+`+`		or					*+*
 CTRL-M		or					*CTRL-M* *<CR>*
 <CR>			[count] lines downward, on the first non-blank
 			character |linewise|.
@@ -438,9 +438,9 @@ between Vi and Vim.
 }			[count] |paragraph|s forward.  |exclusive| motion.
 
 							*]]*
-]]			[count] |section|s forward or to the next '{' in the
+]]			[count] |section|s forward or to the next "{" in the
 			first column.  When used after an operator, then also
-			stops below a '}' in the first column.  |exclusive|
+			stops below a "}" in the first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
 
 							*][*
@@ -449,12 +449,12 @@ between Vi and Vim.
 			Note that |exclusive-linewise| often applies.
 
 							*[[*
-[[			[count] |section|s backward or to the previous '{' in
+[[			[count] |section|s backward or to the previous "{" in
 			the first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
 
 							*[]*
-[]			[count] |section|s backward or to the previous '}' in
+[]			[count] |section|s backward or to the previous "}" in
 			the first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
 
@@ -589,7 +589,7 @@ i(							*vib* *v_ib* *v_i(* *ib*
 ib			"inner block", select [count] blocks, from "[count] [("
 			to the matching ')', excluding the '(' and ')' (see
 			|[(|).  If the cursor is not inside a () block, then
- 			find the next "(".
+			find the next "(".
 			When used in Visual mode it is made charwise.
 
 a>						*v_a>* *v_a<* *a>* *a<*
@@ -831,12 +831,12 @@ deletes the lines from the cursor position to mark 't'.  Hint: Use mark 't' for
 Top, 'b' for Bottom, etc..  Lowercase marks are restored when using undo and
 redo.
 
-Uppercase marks 'A to 'Z include the file name.
-You can use them to jump from file to file.  You can only use an uppercase
-mark with an operator if the mark is in the current file.  The line number of
-the mark remains correct, even if you insert/delete lines or edit another file
-for a moment.  When the 'shada' option is not empty, uppercase marks are
-kept in the .shada file.  See |shada-file-marks|.
+Uppercase marks 'A to 'Z include the file name.  You can use them to jump from
+file to file.  You can only use an uppercase mark with an operator if the mark
+is in the current file.  The line number of the mark remains correct, even if
+you insert/delete lines or edit another file for a moment.  When the 'shada'
+option is not empty, uppercase marks are kept in the .shada file.  See
+|shada-file-marks|.
 
 Numbered marks '0 to '9 are quite different.  They can not be set directly.
 They are only present when using a shada file |shada-file|.  Basically '0
@@ -1004,8 +1004,8 @@ These commands are not marks themselves, but jump to a mark:
 			Note that ":keepjumps" must be used for every command.
 			When invoking a function the commands in that function
 			can still change the jumplist.  Also, for
-			":keepjumps exe 'command '" the "command" won't keep
-			jumps.  Instead use: ":exe 'keepjumps command'"
+			`:keepjumps exe 'command '` the "command" won't keep
+			jumps.  Instead use: `:exe 'keepjumps command'`
 
 ==============================================================================
 8. Jumps					*jump-motions*
@@ -1172,7 +1172,7 @@ g;			Go to [count] older position in change list.
 			(not a motion command)
 
 							*g,* *E663*
-g,			Go to [count] newer cursor position in change list.
+g,			Go to [count] newer position in change list.
 			Just like |g;| but in the opposite direction.
 			(not a motion command)
 

@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, command = helpers.clear, helpers.feed, helpers.command
 local source = helpers.source
+local meths = helpers.meths
 
 describe('Signs', function()
   local screen
@@ -155,9 +156,12 @@ describe('Signs', function()
         {0:~                                                    }|
                                                              |
       ]])
+      -- Check that 'statuscolumn' correctly applies numhl
+      command('set statuscolumn=%s%=%l\\ ')
+      screen:expect_unchanged()
     end)
 
-    it('higlights the cursorline sign with culhl', function()
+    it('highlights the cursorline sign with culhl', function()
       feed('ia<cr>b<cr>c<esc>')
       command('sign define piet text=>> texthl=Search culhl=ErrorMsg')
       command('sign place 1 line=1 name=piet buffer=1')
@@ -232,11 +236,13 @@ describe('Signs', function()
                                                              |
       ]])
       command('set cursorlineopt=number')
+      command('hi! link SignColumn IncSearch')
+      feed('Go<esc>2G')
       screen:expect([[
         {1:>>}a                                                  |
         {8:>>}^b                                                  |
         {1:>>}c                                                  |
-        {0:~                                                    }|
+        {5:  }                                                   |
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|
@@ -248,6 +254,9 @@ describe('Signs', function()
         {0:~                                                    }|
                                                              |
       ]])
+      -- Check that 'statuscolumn' cursorline/signcolumn highlights are the same (#21726)
+      command('set statuscolumn=%s')
+      screen:expect_unchanged()
     end)
 
     it('multiple signs #9295', function()
@@ -591,5 +600,89 @@ describe('Signs', function()
                                                              |
       ]])
     end)
+  end)
+
+  it('signcolumn width is updated when removing all signs after deleting lines', function()
+    meths.buf_set_lines(0, 0, 1, true, {'a', 'b', 'c', 'd', 'e'})
+    command('sign define piet text=>>')
+    command('sign place 10001 line=1 name=piet')
+    command('sign place 10002 line=5 name=piet')
+    command('2delete')
+    command('sign unplace 10001')
+    screen:expect([[
+      {2:  }a                                                  |
+      {2:  }^c                                                  |
+      {2:  }d                                                  |
+      >>e                                                  |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]])
+    command('sign unplace 10002')
+    screen:expect([[
+      a                                                    |
+      ^c                                                    |
+      d                                                    |
+      e                                                    |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]])
+  end)
+
+  it('signcolumn width is updated when removing all signs after inserting lines', function()
+    meths.buf_set_lines(0, 0, 1, true, {'a', 'b', 'c', 'd', 'e'})
+    command('sign define piet text=>>')
+    command('sign place 10001 line=1 name=piet')
+    command('sign place 10002 line=5 name=piet')
+    command('copy .')
+    command('sign unplace 10001')
+    screen:expect([[
+      {2:  }a                                                  |
+      {2:  }^a                                                  |
+      {2:  }b                                                  |
+      {2:  }c                                                  |
+      {2:  }d                                                  |
+      >>e                                                  |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]])
+    command('sign unplace 10002')
+    screen:expect([[
+      a                                                    |
+      ^a                                                    |
+      b                                                    |
+      c                                                    |
+      d                                                    |
+      e                                                    |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]])
   end)
 end)

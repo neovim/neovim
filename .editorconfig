@@ -10,6 +10,9 @@ insert_final_newline = true
 [*.{c,h,in,lua}]
 max_line_length = 100
 
+[*.py]
+indent_size = 4
+
 [{Makefile,**/Makefile,runtime/doc/*.txt}]
 indent_style = tab
 indent_size = 8

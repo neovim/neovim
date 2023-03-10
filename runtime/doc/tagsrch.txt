@@ -59,9 +59,9 @@ CTRL-]			Jump to the definition of the keyword under the
 CTRL-] is the default telnet escape key.  When you type CTRL-] to jump to a
 tag, you will get the telnet prompt instead.  Most versions of telnet allow
 changing or disabling the default escape key.  See the telnet man page.  You
-can 'telnet -E {Hostname}' to disable the escape character, or 'telnet -e
-{EscapeCharacter} {Hostname}' to specify another escape character.  If
-possible, try to use "ssh" instead of "telnet" to avoid this problem.
+can `telnet -E {Hostname}` to disable the escape character, or
+`telnet -e {EscapeCharacter} {Hostname}` to specify another escape character.
+If possible, try to use "ssh" instead of "telnet" to avoid this problem.
 
 							*tag-priority*
 When there are multiple matches for a tag, this priority is used:
@@ -92,7 +92,7 @@ The ignore-case matches are found when:
 - when 'tagcase' is "followscs" and 'ignorecase' is on or the 'smartcase'
   option is on and the pattern does not contain an upper case character
 - when 'tagcase' is "ignore"
-- when 'tagcase' is "smart" and the patter does not contain an upper case
+- when 'tagcase' is "smart" and the pattern does not contain an upper case
   character
 
 Note that using ignore-case tag searching disables binary searching in the
@@ -404,7 +404,7 @@ is added to the command and on the 'autowrite' option:
 
   tag in       file	   autowrite			~
 current file  changed	!   option	  action	~
------------------------------------------------------------------------------
+ ---------------------------------------------------------------------------
     yes		 x	x     x	  goto tag
     no		 no	x     x	  read other file, goto tag
     no		yes    yes    x   abandon current file, read other file, goto
@@ -412,7 +412,7 @@ current file  changed	!   option	  action	~
     no		yes	no    on  write current file, read other file, goto
 				  tag
     no		yes	no   off  fail
------------------------------------------------------------------------------
+ ---------------------------------------------------------------------------
 
 - If the tag is in the current file, the command will always work.
 - If the tag is in another file and the current file was not changed, the
@@ -514,18 +514,13 @@ ctags			As found on most Unix systems.  Only supports C.  Only
 universal ctags		A maintained version of ctags based on exuberant
 			ctags. See https://ctags.io.
 							*Exuberant_ctags*
-exuberant ctags		This is a very good one.  It works for C, C++, Java,
-			Fortran, Eiffel and others.  It can generate tags for
-			many items.  See http://ctags.sourceforge.net.
-			No new version since 2009.
+exuberant ctags		Works for C, C++, Java, Fortran, Eiffel and others.
+			See https://ctags.sourceforge.net. No new version
+			since 2009.
 JTags			For Java, in Java.  It can be found at
-			http://www.fleiner.com/jtags/.
+			https://www.fleiner.com/jtags/.
 ptags.py		For Python, in Python.  Found in your Python source
 			directory at Tools/scripts/ptags.py.
-ptags			For Perl, in Perl.  It can be found at
-			http://www.eleves.ens.fr:8080/home/nthiery/Tags/.
-gnatxref		For Ada.  See http://www.gnuada.org/.  gnatxref is
-			part of the gnat package.
 
 
 The lines in the tags file must have one of these two formats:
@@ -566,8 +561,8 @@ ctags).
 		with Vi, it ignores the following fields. Example:
 			APP	file	/^static int APP;$/;"	v
 		When {tagaddress} is not a line number or search pattern, then
-		{term} must be |;".  Here the bar ends the command (excluding
-		the bar) and ;" is used to have Vi ignore the rest of the
+		{term} must be `|;"`.  Here the bar ends the command (excluding
+		the bar) and `;"` is used to have Vi ignore the rest of the
 		line.  Example:
 			APP	file.c	call cursor(3, 4)|;"	v
 
@@ -629,8 +624,7 @@ If the command is a normal search command (it starts and ends with "/" or
 "?"), some special handling is done:
 - Searching starts on line 1 of the file.
   The direction of the search is forward for "/", backward for "?".
-  Note that 'wrapscan' does not matter, the whole file is always searched.  (Vi
-  does use 'wrapscan', which caused tags sometimes not be found.)
+  Note that 'wrapscan' does not matter, the whole file is always searched.
 - If the search fails, another try is done ignoring case.  If that fails too,
   a search is done for:
 	"^tagname[ \t]*("
@@ -834,10 +828,10 @@ CTRL-W d		Open a new window, with the cursor on the first
 			(default: whole file).
 			See |:search-args| for [/] and [!].
 
-					*:che* *:chec* *:check* *:checkpath*
-:che[ckpath]		List all the included files that could not be found.
+							*:checkp* *:checkpath*
+:checkp[ath]		List all the included files that could not be found.
 
-:che[ckpath]!		List all the included files.
+:checkp[ath]!		List all the included files.
 
 								*:search-args*
 Common arguments for the commands above:
@@ -854,9 +848,9 @@ Common arguments for the commands above:
 	a comment (even though syntax highlighting does recognize it).
 	Note: Since a macro definition mostly doesn't look like a comment, the
 	[!] makes no difference for ":dlist", ":dsearch" and ":djump".
-[/]	A pattern can be surrounded by '/'.  Without '/' only whole words are
-	matched, using the pattern "\<pattern\>".  Only after the second '/' a
-	next command can be appended with '|'.  Example: >
+[/]	A pattern can be surrounded by "/".  Without "/" only whole words are
+	matched, using the pattern "\<pattern\>".  Only after the second "/" a
+	next command can be appended with "|".  Example: >
 	:isearch /string/ | echo "the last one"
 <	For a ":djump", ":dsplit", ":dlist" and ":dsearch" command the pattern
 	is used as a literal string, not as a search pattern.
@@ -870,12 +864,14 @@ like |CTRL-]|.
 
 The function used for generating the taglist is specified by setting the
 'tagfunc' option.  The function will be called with three arguments:
-   a:pattern	The tag identifier or pattern used during the tag search.
-   a:flags	String containing flags to control the function behavior.
-   a:info	Dict containing the following entries:
+   pattern	The tag identifier or pattern used during the tag search.
+   flags	String containing flags to control the function behavior.
+   info		Dict containing the following entries:
 		    buf_ffname	  Full filename which can be used for priority.
 		    user_data	  Custom data String, if stored in the tag
 				  stack previously by tagfunc.
+
+Note that "a:" needs to be prepended to the argument name when using it.
 
 Currently up to three flags may be passed to the tag function:
   'c'		The function was invoked by a normal command being processed
@@ -912,6 +908,8 @@ If the function returns |v:null| instead of a List, a standard tag lookup will
 be performed instead.
 
 It is not allowed to change the tagstack from inside 'tagfunc'.  *E986* 
+It is not allowed to close a window or change window from inside 'tagfunc'.
+*E1299*
 
 The following is a hypothetical example of a function used for 'tagfunc'.  It
 uses the output of |taglist()| to generate the result: a list of tags in the

@@ -1,9 +1,15 @@
 #ifndef NVIM_DRAWLINE_H
 #define NVIM_DRAWLINE_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "klib/kvec.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/fold.h"
+#include "nvim/macros.h"
 #include "nvim/screen.h"
+#include "nvim/types.h"
 
 // Maximum columns for terminal highlight attributes
 #define TERM_ATTRS_MAX 1024

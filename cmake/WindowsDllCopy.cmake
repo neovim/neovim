@@ -6,13 +6,13 @@
 # - CMAKE_PREFIX_PATH: A list of directories to search for dependencies
 
 if(NOT DEFINED BINARY)
-  message(FATAL_ERROR "Missing required argument -DBINARY=")
+  message(FATAL_ERROR "Missing required argument -D BINARY=")
 endif()
 if(NOT DEFINED DST)
-  message(FATAL_ERROR "Missing required arguments -DDST=")
+  message(FATAL_ERROR "Missing required arguments -D DST=")
 endif()
 if(NOT DEFINED CMAKE_PREFIX_PATH)
-  message(FATAL_ERROR "Missing required arguments -DCMAKE_PREFIX_PATH=")
+  message(FATAL_ERROR "Missing required arguments -D CMAKE_PREFIX_PATH=")
 endif()
 
 include(GetPrerequisites)
@@ -23,8 +23,9 @@ foreach(DLL_NAME ${DLLS})
     message(FATAL_ERROR "Unable to find dependency ${DLL_NAME}")
   endif()
 
-  message("Copying ${DLL_NAME} to ${DST}")
+  if($ENV{CI} MATCHES "true")
+    message("Copying ${DLL_NAME} to ${DST}")
+  endif()
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${DLL_PATH} ${DST})
   unset(DLL_PATH CACHE)
 endforeach()
-

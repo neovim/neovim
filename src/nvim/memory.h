@@ -1,10 +1,12 @@
 #ifndef NVIM_MEMORY_H
 #define NVIM_MEMORY_H
 
-#include <stdbool.h>  // for bool
-#include <stddef.h>  // for size_t
-#include <stdint.h>  // for uint8_t
-#include <time.h>  // for time_t
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <time.h>
+
+#include "nvim/macros.h"
 
 /// `malloc()` function signature
 typedef void *(*MemMalloc)(size_t);
@@ -37,18 +39,20 @@ extern MemRealloc mem_realloc;
 extern bool entered_free_all_mem;
 #endif
 
+EXTERN size_t arena_alloc_count INIT(= 0);
+
 typedef struct consumed_blk {
   struct consumed_blk *prev;
 } *ArenaMem;
 
-#define ARENA_ALIGN sizeof(void *)
+#define ARENA_ALIGN MAX(sizeof(void *), sizeof(double))
 
 typedef struct {
   char *cur_blk;
   size_t pos, size;
 } Arena;
 
-// inits an empty arena. use arena_start() to actually allocate space!
+// inits an empty arena.
 #define ARENA_EMPTY { .cur_blk = NULL, .pos = 0, .size = 0 }
 
 #define kv_fixsize_arena(a, v, s) \

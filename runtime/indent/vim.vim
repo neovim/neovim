@@ -33,7 +33,9 @@ function GetVimIndent()
   endtry
 endfunc
 
-let s:lineContPat = '^\s*\(\\\|"\\ \)'
+" Legacy script line continuation and Vim9 script operators that must mean an
+" expression that continues from the previous line.
+let s:lineContPat = '^\s*\(\\\|"\\ \|->\)'
 
 function GetVimIndentIntern()
   " If the current line has line continuation and the previous one too, use
@@ -133,15 +135,15 @@ function GetVimIndentIntern()
     endif
   endif
 
-  " For a line starting with "}" find the matching "{".  If it is at the start
-  " of the line align with it, probably end of a block.
+  " For a line starting with "}" find the matching "{".  Align with that line,
+  " it is either the matching block start or dictionary start.
   " Use the mapped "%" from matchit to find the match, otherwise we may match
   " a { inside a comment or string.
   if cur_text =~ '^\s*}'
     if maparg('%') != ''
       exe v:lnum
       silent! normal %
-      if line('.') < v:lnum && getline('.') =~ '^\s*{'
+      if line('.') < v:lnum
 	let ind = indent('.')
       endif
     else
@@ -149,19 +151,33 @@ function GetVimIndentIntern()
     endif
   endif
 
-  " Below a line starting with "}" find the matching "{".  If it is at the
-  " end of the line we must be below the end of a dictionary.
-  if prev_text =~ '^\s*}'
-    if maparg('%') != ''
-      exe lnum
-      silent! normal %
-      if line('.') == lnum || getline('.') !~ '^\s*{'
-	let ind = ind - shiftwidth()
+  " Look back for a line to align with
+  while lnum > 1
+    " Below a line starting with "}" find the matching "{".
+    if prev_text =~ '^\s*}'
+      if maparg('%') != ''
+	exe lnum
+	silent! normal %
+	if line('.') < lnum
+	  let lnum = line('.')
+	  let ind = indent(lnum)
+	  let prev_text = getline(lnum)
+	else
+	  break
+	endif
+      else
+	" todo: use searchpair() to find a match
+	break
       endif
+    elseif prev_text =~ s:lineContPat
+      " looks like a continuation like, go back one line
+      let lnum = lnum - 1
+      let ind = indent(lnum)
+      let prev_text = getline(lnum)
     else
-      " todo: use searchpair() to find a match
+      break
     endif
-  endif
+  endwhile
 
   " Below a line starting with "]" we must be below the end of a list.
   " Include a "}" and "},} in case a dictionary ends too.

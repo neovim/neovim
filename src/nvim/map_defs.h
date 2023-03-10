@@ -1,7 +1,7 @@
 #ifndef NVIM_MAP_DEFS_H
 #define NVIM_MAP_DEFS_H
 
-#include "nvim/lib/khash.h"
+#include "klib/khash.h"
 
 typedef const char *cstr_t;
 typedef void *ptr_t;

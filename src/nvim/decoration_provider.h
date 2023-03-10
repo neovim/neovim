@@ -1,7 +1,12 @@
 #ifndef NVIM_DECORATION_PROVIDER_H
 #define NVIM_DECORATION_PROVIDER_H
 
+#include <stdbool.h>
+
+#include "klib/kvec.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/macros.h"
+#include "nvim/types.h"
 
 typedef struct {
   NS ns_id;
@@ -12,6 +17,7 @@ typedef struct {
   LuaRef redraw_line;
   LuaRef redraw_end;
   LuaRef hl_def;
+  LuaRef spell_nav;
   int hl_valid;
   bool hl_cached;
 } DecorProvider;

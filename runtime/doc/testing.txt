@@ -20,17 +20,11 @@ and for testing plugins.
 Vim can be tested after building it, usually with "make test".
 The tests are located in the directory "src/testdir".
 
-There are several types of tests added over time:
-	test33.in		oldest, don't add any of these
-	test_something.in	old style tests
-	test_something.vim	new style tests
-
 						*new-style-testing*
-New tests should be added as new style tests.  These use functions such as
-|assert_equal()| to keep the test commands and the expected result in one
-place.
-						*old-style-testing*
-In some cases an old style test needs to be used.
+New tests should be added as new style tests.  The test scripts are named
+test_<feature>.vim (replace <feature> with the feature under test). These use
+functions such as |assert_equal()| to keep the test commands and the expected
+result in one place.
 
 Find more information in the file src/testdir/README.txt.
 
@@ -98,18 +92,46 @@ assert_exception({error} [, {msg}])			*assert_exception()*
 			catch
 			  call assert_exception('E492:')
 			endtry
-
-assert_fails({cmd} [, {error} [, {msg}]])			*assert_fails()*
+<
+							*assert_fails()*
+assert_fails({cmd} [, {error} [, {msg} [, {lnum} [, {context}]]]])
 		Run {cmd} and add an error message to |v:errors| if it does
-		NOT produce an error.  Also see |assert-return|.
-		When {error} is given it must match in |v:errmsg|.
+		NOT produce an error or when {error} is not found in the
+		error message.  Also see |assert-return|.
+
+		When {error} is a string it must be found literally in the
+		first reported error. Most often this will be the error code,
+		including the colon, e.g. "E123:". >
+			assert_fails('bad cmd', 'E987:')
+<
+		When {error} is a |List| with one or two strings, these are
+		used as patterns.  The first pattern is matched against the
+		first reported error: >
+			assert_fails('cmd', ['E987:.*expected bool'])
+<		The second pattern, if present, is matched against the last
+		reported error.  To only match the last error use an empty
+		string for the first error: >
+			assert_fails('cmd', ['', 'E987:'])
+<
+		If {msg} is empty then it is not used.  Do this to get the
+		default message when passing the {lnum} argument.
+
+		When {lnum} is present and not negative, and the {error}
+		argument is present and matches, then this is compared with
+		the line number at which the error was reported. That can be
+		the line number in a function or in a script.
+
+		When {context} is present it is used as a pattern and matched
+		against the context (script name or function name) where
+		{lnum} is located in.
+
 		Note that beeping is not considered an error, and some failing
 		commands only beep.  Use |assert_beeps()| for those.
 
 		Can also be used as a |method|: >
 			GetCmd()->assert_fails('E99:')
 
-assert_false({actual} [, {msg}])				*assert_false()*
+assert_false({actual} [, {msg}])			*assert_false()*
 		When {actual} is not false an error message is added to
 		|v:errors|, like with |assert_equal()|.
 		Also see |assert-return|.
@@ -134,7 +156,7 @@ assert_match({pattern}, {actual} [, {msg}])
 		When {pattern} does not match {actual} an error message is
 		added to |v:errors|.  Also see |assert-return|.
 
-		{pattern} is used as with |=~|: The matching is always done
+		{pattern} is used as with |expr-=~|: The matching is always done
 		like 'magic' was set and 'cpoptions' is empty, no matter what
 		the actual value of 'magic' or 'cpoptions' is.
 

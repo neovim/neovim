@@ -3,11 +3,12 @@ local thelpers = require('test.functional.terminal.helpers')
 local feed_data = thelpers.feed_data
 local feed, clear = helpers.feed, helpers.clear
 local poke_eventloop = helpers.poke_eventloop
-local iswin = helpers.iswin
 local command = helpers.command
 local retry = helpers.retry
 local eq = helpers.eq
 local eval = helpers.eval
+local skip = helpers.skip
+local is_os = helpers.is_os
 
 describe(':terminal window', function()
   local screen
@@ -18,7 +19,7 @@ describe(':terminal window', function()
   end)
 
   it('sets topline correctly #8556', function()
-    if helpers.pending_win32(pending) then return end
+    skip(is_os('win'))
     -- Test has hardcoded assumptions of dimensions.
     eq(7, eval('&lines'))
     feed_data('\n\n\n')  -- Add blank lines.
@@ -54,9 +55,7 @@ describe(':terminal window', function()
         {3:-- TERMINAL --}                                    |
       ]])
 
-      if iswin() then
-        return  -- win: :terminal resize is unreliable #7007
-      end
+      skip(is_os('win'), 'win: :terminal resize is unreliable #7007')
 
       -- numberwidth=9
       feed([[<C-\><C-N>]])
@@ -172,7 +171,7 @@ describe(':terminal with multigrid', function()
     ]])
 
     screen:try_resize_grid(2, 20, 10)
-    if iswin() then
+    if is_os('win') then
       screen:expect{any="rows: 10, cols: 20"}
     else
       screen:expect([[
@@ -201,7 +200,7 @@ describe(':terminal with multigrid', function()
     end
 
     screen:try_resize_grid(2, 70, 3)
-    if iswin() then
+    if is_os('win') then
       screen:expect{any="rows: 3, cols: 70"}
     else
       screen:expect([[
@@ -223,7 +222,7 @@ describe(':terminal with multigrid', function()
     end
 
     screen:try_resize_grid(2, 0, 0)
-    if iswin() then
+    if is_os('win') then
       screen:expect{any="rows: 6, cols: 50"}
     else
       screen:expect([[

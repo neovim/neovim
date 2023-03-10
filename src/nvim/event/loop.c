@@ -1,13 +1,16 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <stdarg.h>
+#include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <uv.h>
 
+#include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
-#include "nvim/event/process.h"
 #include "nvim/log.h"
+#include "nvim/memory.h"
+#include "nvim/os/time.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/loop.c.generated.h"
@@ -31,41 +34,57 @@ void loop_init(Loop *loop, void *data)
   loop->poll_timer.data = xmalloc(sizeof(bool));  // "timeout expired" flag
 }
 
-/// Processes one `Loop.uv` event (at most).
-/// Processes all `Loop.fast_events` events.
-/// Does NOT process `Loop.events`, that is an application-specific decision.
+/// Process `Loop.uv` events with a timeout.
 ///
 /// @param loop
-/// @param ms   0: non-blocking poll.
-///            >0: timeout after `ms`.
-///            <0: wait forever.
-/// @returns true if `ms` timeout was reached
-bool loop_poll_events(Loop *loop, int ms)
+/// @param ms  0: non-blocking poll.
+///            > 0: timeout after `ms`.
+///            < 0: wait forever.
+/// @param once  true: process at most one `Loop.uv` event.
+///              false: process until `ms` timeout (only has effect if `ms` > 0).
+/// @return  true if `ms` > 0 and was reached
+bool loop_uv_run(Loop *loop, int64_t ms, bool once)
 {
   if (loop->recursive++) {
     abort();  // Should not re-enter uv_run
   }
 
   uv_run_mode mode = UV_RUN_ONCE;
-  bool timeout_expired = false;
+  bool *timeout_expired = loop->poll_timer.data;
+  *timeout_expired = false;
 
   if (ms > 0) {
-    *((bool *)loop->poll_timer.data) = false;  // reset "timeout expired" flag
-    // Dummy timer to ensure UV_RUN_ONCE does not block indefinitely for I/O.
+    // This timer ensures UV_RUN_ONCE does not block indefinitely for I/O.
     uv_timer_start(&loop->poll_timer, timer_cb, (uint64_t)ms, (uint64_t)ms);
   } else if (ms == 0) {
     // For ms == 0, do a non-blocking event poll.
     mode = UV_RUN_NOWAIT;
   }
 
-  uv_run(&loop->uv, mode);
+  do {  // -V1044
+    uv_run(&loop->uv, mode);
+  } while (ms > 0 && !once && !*timeout_expired);  // -V560
 
   if (ms > 0) {
-    timeout_expired = *((bool *)loop->poll_timer.data);
     uv_timer_stop(&loop->poll_timer);
   }
 
   loop->recursive--;  // Can re-enter uv_run now
+  return *timeout_expired;
+}
+
+/// Processes one `Loop.uv` event (at most).
+/// Processes all `Loop.fast_events` events.
+/// Does NOT process `Loop.events`, that is an application-specific decision.
+///
+/// @param loop
+/// @param ms  0: non-blocking poll.
+///            > 0: timeout after `ms`.
+///            < 0: wait forever.
+/// @return  true if `ms` > 0 and was reached
+bool loop_poll_events(Loop *loop, int64_t ms)
+{
+  bool timeout_expired = loop_uv_run(loop, ms, true);
   multiqueue_process_events(loop->fast_events);
   return timeout_expired;
 }

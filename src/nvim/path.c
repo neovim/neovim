@@ -2,11 +2,17 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
-#include <inttypes.h>
+#include <ctype.h>
+#include <limits.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include "auto/config.h"
 #include "nvim/ascii.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/eval.h"
@@ -14,27 +20,29 @@
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
-#include "nvim/memfile.h"
-#include "nvim/memline.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/macros.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
+#include "nvim/os/fs_defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
-#include "nvim/os_unix.h"
 #include "nvim/path.h"
-#include "nvim/quickfix.h"
+#include "nvim/pos.h"
 #include "nvim/regexp.h"
-#include "nvim/screen.h"
 #include "nvim/strings.h"
-#include "nvim/tag.h"
 #include "nvim/types.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
-#define URL_SLASH       1               // path_is_url() has found "://"
-#define URL_BACKSLASH   2               // path_is_url() has found ":\\"
+enum {
+  URL_SLASH = 1,      // path_is_url() has found ":/"
+  URL_BACKSLASH = 2,  // path_is_url() has found ":\\"
+};
 
 #ifdef gen_expand_wildcards
 # undef gen_expand_wildcards
@@ -62,9 +70,9 @@ FileComparison path_full_compare(char *const s1, char *const s2, const bool chec
   FileID file_id_1, file_id_2;
 
   if (expandenv) {
-    expand_env((char_u *)s1, (char_u *)exp1, MAXPATHL);
+    expand_env(s1, exp1, MAXPATHL);
   } else {
-    STRLCPY(exp1, s1, MAXPATHL);
+    xstrlcpy(exp1, s1, MAXPATHL);
   }
   bool id_ok_1 = os_fileid(exp1, &file_id_1);
   bool id_ok_2 = os_fileid(s2, &file_id_2);
@@ -73,7 +81,7 @@ FileComparison path_full_compare(char *const s1, char *const s2, const bool chec
     if (checkname) {
       vim_FullName(exp1, full1, MAXPATHL, false);
       vim_FullName(s2, full2, MAXPATHL, false);
-      if (FNAMECMP(full1, full2) == 0) {
+      if (path_fnamecmp(full1, full2) == 0) {
         return kEqualFileNames;
       }
     }
@@ -104,7 +112,7 @@ char *path_tail(const char *fname)
     return "";
   }
 
-  const char *tail = (char *)get_past_head((char_u *)fname);
+  const char *tail = get_past_head(fname);
   const char *p = tail;
   // Find last part of path.
   while (*p != NUL) {
@@ -130,7 +138,7 @@ char *path_tail_with_sep(char *fname)
   assert(fname != NULL);
 
   // Don't remove the '/' from "c:/file".
-  char *past_head = (char *)get_past_head((char_u *)fname);
+  char *past_head = get_past_head(fname);
   char *tail = path_tail(fname);
   while (tail > past_head && after_pathsep(fname, tail)) {
     tail--;
@@ -147,11 +155,11 @@ char *path_tail_with_sep(char *fname)
 /// @post if `len` is not null, stores the length of the executable name.
 ///
 /// @return The position of the last path separator + 1.
-const char_u *invocation_path_tail(const char_u *invocation, size_t *len)
+const char *invocation_path_tail(const char *invocation, size_t *len)
     FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1)
 {
-  const char_u *tail = get_past_head((char_u *)invocation);
-  const char_u *p = tail;
+  const char *tail = get_past_head(invocation);
+  const char *p = tail;
   while (*p != NUL && *p != ' ') {
     bool was_sep = vim_ispathsep_nocolon(*p);
     MB_PTR_ADV(p);
@@ -190,7 +198,7 @@ const char *path_next_component(const char *fname)
 ///   - 1 otherwise
 int path_head_length(void)
 {
-#ifdef WIN32
+#ifdef MSWIN
   return 3;
 #else
   return 1;
@@ -203,10 +211,10 @@ int path_head_length(void)
 /// @return
 ///   - True if path begins with a path head
 ///   - False otherwise
-bool is_path_head(const char_u *path)
+bool is_path_head(const char *path)
 {
-#ifdef WIN32
-  return isalpha(path[0]) && path[1] == ':';
+#ifdef MSWIN
+  return isalpha((uint8_t)path[0]) && path[1] == ':';
 #else
   return vim_ispathsep(*path);
 #endif
@@ -215,11 +223,11 @@ bool is_path_head(const char_u *path)
 /// Get a pointer to one character past the head of a path name.
 /// Unix: after "/"; Win: after "c:\"
 /// If there is no head, path is returned.
-char_u *get_past_head(const char_u *path)
+char *get_past_head(const char *path)
 {
-  const char_u *retval = path;
+  const char *retval = path;
 
-#ifdef WIN32
+#ifdef MSWIN
   // May skip "c:"
   if (is_path_head(path)) {
     retval = path + 2;
@@ -230,13 +238,11 @@ char_u *get_past_head(const char_u *path)
     retval++;
   }
 
-  return (char_u *)retval;
+  return (char *)retval;
 }
 
-/*
- * Return TRUE if 'c' is a path separator.
- * Note that for MS-Windows this includes the colon.
- */
+/// Return true if 'c' is a path separator.
+/// Note that for MS-Windows this includes the colon.
 int vim_ispathsep(int c)
 {
 #ifdef UNIX
@@ -250,9 +256,7 @@ int vim_ispathsep(int c)
 #endif
 }
 
-/*
- * Like vim_ispathsep(c), but exclude the colon for MS-Windows.
- */
+// Like vim_ispathsep(c), but exclude the colon for MS-Windows.
 int vim_ispathsep_nocolon(int c)
 {
   return vim_ispathsep(c)
@@ -262,9 +266,7 @@ int vim_ispathsep_nocolon(int c)
   ;
 }
 
-/*
- * return TRUE if 'c' is a path list separator.
- */
+/// return true if 'c' is a path list separator.
 int vim_ispathlistsep(int c)
 {
 #ifdef UNIX
@@ -278,13 +280,13 @@ int vim_ispathlistsep(int c)
 /// "trim_len" specifies how many characters to keep for each directory.
 /// Must be 1 or more.
 /// It's done in-place.
-void shorten_dir_len(char_u *str, int trim_len)
+void shorten_dir_len(char *str, int trim_len)
 {
-  char_u *tail = (char_u *)path_tail((char *)str);
-  char_u *d = str;
+  char *tail = path_tail(str);
+  char *d = str;
   bool skip = false;
   int dirchunk_len = 0;
-  for (char_u *s = str;; s++) {
+  for (char *s = str;; s++) {
     if (s >= tail) {                // copy the whole tail
       *d++ = *s;
       if (*s == NUL) {
@@ -304,7 +306,7 @@ void shorten_dir_len(char_u *str, int trim_len)
           skip = true;
         }
       }
-      int l = utfc_ptr2len((char *)s);
+      int l = utfc_ptr2len(s);
       while (--l > 0) {
         *d++ = *++s;
       }
@@ -314,20 +316,18 @@ void shorten_dir_len(char_u *str, int trim_len)
 
 /// Shorten the path of a file from "~/foo/../.bar/fname" to "~/f/../.b/fname"
 /// It's done in-place.
-void shorten_dir(char_u *str)
+void shorten_dir(char *str)
 {
   shorten_dir_len(str, 1);
 }
 
-/*
- * Return TRUE if the directory of "fname" exists, FALSE otherwise.
- * Also returns TRUE if there is no directory name.
- * "fname" must be writable!.
- */
-bool dir_of_file_exists(char_u *fname)
+/// Return true if the directory of "fname" exists, false otherwise.
+/// Also returns true if there is no directory name.
+/// "fname" must be writable!.
+bool dir_of_file_exists(char *fname)
 {
-  char *p = path_tail_with_sep((char *)fname);
-  if ((char_u *)p == fname) {
+  char *p = path_tail_with_sep(fname);
+  if (p == fname) {
     return true;
   }
   char c = *p;
@@ -338,6 +338,12 @@ bool dir_of_file_exists(char_u *fname)
 }
 
 /// Compare two file names
+///
+/// On some systems case in a file name does not matter, on others it does.
+///
+/// @note Does not account for maximum name lengths and things like "../dir",
+///       thus it is not 100% accurate. OS may also use different algorithm for
+///       case-insensitive comparison.
 ///
 /// Handles '/' and '\\' correctly and deals with &fileignorecase option.
 ///
@@ -376,21 +382,21 @@ int path_fnamencmp(const char *const fname1, const char *const fname2, size_t le
   const char *p1 = fname1;
   const char *p2 = fname2;
   while (len > 0) {
-    c1 = utf_ptr2char((const char_u *)p1);
-    c2 = utf_ptr2char((const char_u *)p2);
+    c1 = utf_ptr2char(p1);
+    c2 = utf_ptr2char(p2);
     if ((c1 == NUL || c2 == NUL
          || (!((c1 == '/' || c1 == '\\') && (c2 == '\\' || c2 == '/'))))
         && (p_fic ? (c1 != c2 && CH_FOLD(c1) != CH_FOLD(c2)) : c1 != c2)) {
       break;
     }
-    len -= (size_t)utfc_ptr2len((const char_u *)p1);
-    p1 += utfc_ptr2len((const char_u *)p1);
-    p2 += utfc_ptr2len((const char_u *)p2);
+    len -= (size_t)utfc_ptr2len(p1);
+    p1 += utfc_ptr2len(p1);
+    p2 += utfc_ptr2len(p2);
   }
   return p_fic ? CH_FOLD(c1) - CH_FOLD(c2) : c1 - c2;
 #else
   if (p_fic) {
-    return mb_strnicmp((const char_u *)fname1, (const char_u *)fname2, len);
+    return mb_strnicmp(fname1, fname2, len);
   }
   return strncmp(fname1, fname2, len);
 #endif
@@ -505,7 +511,7 @@ char *FullName_save(const char *fname, bool force)
 char *save_abs_path(const char *name)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  if (!path_is_absolute((char_u *)name)) {
+  if (!path_is_absolute(name)) {
     return FullName_save(name, true);
   }
   return xstrdup(name);
@@ -515,7 +521,7 @@ char *save_abs_path(const char *name)
 /// @param p  The path to expand.
 /// @returns Unix: True if it contains one of "?[{`'$".
 /// @returns Windows: True if it contains one of "*?$[".
-bool path_has_wildcard(const char_u *p)
+bool path_has_wildcard(const char *p)
   FUNC_ATTR_NONNULL_ALL
 {
   for (; *p; MB_PTR_ADV(p)) {
@@ -530,7 +536,7 @@ bool path_has_wildcard(const char_u *p)
     // Windows:
     const char *wildcards = "?*$[`";
 #endif
-    if (vim_strchr(wildcards, *p) != NULL
+    if (vim_strchr(wildcards, (uint8_t)(*p)) != NULL
         || (p[0] == '~' && p[1] != NUL)) {
       return true;
     }
@@ -538,9 +544,7 @@ bool path_has_wildcard(const char_u *p)
   return false;
 }
 
-/*
- * Unix style wildcard expansion code.
- */
+// Unix style wildcard expansion code.
 static int pstrcmp(const void *a, const void *b)
 {
   return pathcmp(*(char **)a, *(char **)b, -1);
@@ -550,7 +554,7 @@ static int pstrcmp(const void *a, const void *b)
 /// @param p  The path to expand.
 /// @returns Unix: True if it contains one of *?[{.
 /// @returns Windows: True if it contains one of *?[.
-bool path_has_exp_wildcard(const char_u *p)
+bool path_has_exp_wildcard(const char *p)
   FUNC_ATTR_NONNULL_ALL
 {
   for (; *p != NUL; MB_PTR_ADV(p)) {
@@ -564,7 +568,7 @@ bool path_has_exp_wildcard(const char_u *p)
 #else
     const char *wildcards = "*?[";  // Windows.
 #endif
-    if (vim_strchr(wildcards, *p) != NULL) {
+    if (vim_strchr(wildcards, (uint8_t)(*p)) != NULL) {
       return true;
     }
   }
@@ -579,10 +583,10 @@ bool path_has_exp_wildcard(const char_u *p)
 /// @param path     The path to search.
 /// @param flags    Flags for regexp expansion.
 ///   - EW_ICASE: Ignore case.
-///   - EW_NOERROR: Silence error messeges.
+///   - EW_NOERROR: Silence error messages.
 ///   - EW_NOTWILD: Add matches literally.
 /// @returns the number of matches found.
-static size_t path_expand(garray_T *gap, const char_u *path, int flags)
+static size_t path_expand(garray_T *gap, const char *path, int flags)
   FUNC_ATTR_NONNULL_ALL
 {
   return do_path_expand(gap, path, 0, flags, false);
@@ -606,7 +610,7 @@ static const char *scandir_next_with_dots(Directory *dir)
 /// Implementation of path_expand().
 ///
 /// Chars before `path + wildoff` do not get expanded.
-static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, int flags,
+static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, int flags,
                              bool didstar)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -625,19 +629,19 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
 
   // Make room for file name.  When doing encoding conversion the actual
   // length may be quite a bit longer, thus use the maximum possible length.
-  char_u *buf = xmalloc(MAXPATHL);
+  char *buf = xmalloc(MAXPATHL);
 
   // Find the first part in the path name that contains a wildcard.
   // When EW_ICASE is set every letter is considered to be a wildcard.
   // Copy it into "buf", including the preceding characters.
-  char_u *p = buf;
-  char_u *s = buf;
-  char_u *e = NULL;
-  const char_u *path_end = path;
+  char *p = buf;
+  char *s = buf;
+  char *e = NULL;
+  const char *path_end = path;
   while (*path_end != NUL) {
-    /* May ignore a wildcard that has a backslash before it; it will
-     * be removed by rem_backslash() or file_pat_to_reg_pat() below. */
-    if (path_end >= path + wildoff && rem_backslash(path_end)) {
+    // May ignore a wildcard that has a backslash before it; it will
+    // be removed by rem_backslash() or file_pat_to_reg_pat() below.
+    if (path_end >= path + wildoff && rem_backslash((char *)path_end)) {
       *p++ = *path_end++;
     } else if (vim_ispathsep_nocolon(*path_end)) {
       if (e != NULL) {
@@ -645,11 +649,11 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
       }
       s = p + 1;
     } else if (path_end >= path + wildoff
-               && (vim_strchr("*?[{~$", *path_end) != NULL
-#ifndef WIN32
+               && (vim_strchr("*?[{~$", (uint8_t)(*path_end)) != NULL
+#ifndef MSWIN
                    || (!p_fic && (flags & EW_ICASE) && mb_isalpha(utf_ptr2char((char *)path_end)))
 #endif
-                   )) {
+                   )) {  // NOLINT(whitespace/parens)
       e = p;
     }
     len = (size_t)(utfc_ptr2len((char *)path_end));
@@ -661,9 +665,9 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
   *e = NUL;
 
   // Now we have one wildcard component between "s" and "e".
-  /* Remove backslashes between "wildoff" and the start of the wildcard
-   * component. */
-  for (p = buf + wildoff; p < s; ++p) {
+  // Remove backslashes between "wildoff" and the start of the wildcard
+  // component.
+  for (p = buf + wildoff; p < s; p++) {
     if (rem_backslash(p)) {
       STRMOVE(p, p + 1);
       e--;
@@ -672,7 +676,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
   }
 
   // Check for "**" between "s" and "e".
-  for (p = s; p < e; ++p) {
+  for (p = s; p < e; p++) {
     if (p[0] == '*' && p[1] == '*') {
       starstar = true;
     }
@@ -680,7 +684,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
 
   // convert the file pattern to a regexp pattern
   int starts_with_dot = *s == '.';
-  char *pat = file_pat_to_reg_pat((char *)s, (char *)e, NULL, false);
+  char *pat = file_pat_to_reg_pat(s, e, NULL, false);
   if (pat == NULL) {
     xfree(buf);
     return 0;
@@ -708,8 +712,8 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
     return 0;
   }
 
-  /* If "**" is by itself, this is the first time we encounter it and more
-   * is following then find matches without any directory. */
+  // If "**" is by itself, this is the first time we encounter it and more
+  // is following then find matches without any directory.
   if (!didstar && stardepth < 100 && starstar && e - s == 2
       && *path_end == '/') {
     STRCPY(s, path_end + 1);
@@ -720,27 +724,27 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
   *s = NUL;
 
   Directory dir;
-  char *dirpath = (*buf == NUL ? "." : (char *)buf);
+  char *dirpath = (*buf == NUL ? "." : buf);
   if (os_file_is_readable(dirpath) && os_scandir(&dir, dirpath)) {
     // Find all matching entries.
-    char_u *name;
+    char *name;
     scandir_next_with_dots(NULL);  // initialize
-    while (!got_int && (name = (char_u *)scandir_next_with_dots(&dir)) != NULL) {
+    while (!got_int && (name = (char *)scandir_next_with_dots(&dir)) != NULL) {
       if ((name[0] != '.'
            || starts_with_dot
            || ((flags & EW_DODOT)
                && name[1] != NUL
                && (name[1] != '.' || name[2] != NUL)))  // -V557
-          && ((regmatch.regprog != NULL && vim_regexec(&regmatch, (char *)name, 0))
+          && ((regmatch.regprog != NULL && vim_regexec(&regmatch, name, 0))
               || ((flags & EW_NOTWILD)
-                  && FNAMENCMP(path + (s - buf), name, e - s) == 0))) {
+                  && path_fnamencmp(path + (s - buf), name, (size_t)(e - s)) == 0))) {
         STRCPY(s, name);
-        len = STRLEN(buf);
+        len = strlen(buf);
 
         if (starstar && stardepth < 100) {
-          /* For "**" in the pattern first go deeper in the tree to
-           * find matches. */
-          STRCPY(buf + len, "/**");
+          // For "**" in the pattern first go deeper in the tree to
+          // find matches.
+          STRCPY(buf + len, "/**");  // NOLINT
           STRCPY(buf + len + 3, path_end);
           stardepth++;
           (void)do_path_expand(gap, buf, len + 1, flags, true);
@@ -761,8 +765,9 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
             backslash_halve(buf + len + 1);
           }
           // add existing file or symbolic link
-          if ((flags & EW_ALLLINKS) ? os_fileinfo_link((char *)buf, &file_info)
-                                    : os_path_exists(buf)) {
+          if ((flags & EW_ALLLINKS)
+              ? os_fileinfo_link(buf, &file_info)
+              : os_path_exists(buf)) {
             addfile(gap, buf, flags);
           }
         }
@@ -778,21 +783,19 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
   // slow, thus skip it.
   size_t matches = (size_t)(gap->ga_len - start_len);
   if (matches > 0 && !got_int) {
-    qsort(((char_u **)gap->ga_data) + start_len, matches,
-          sizeof(char_u *), pstrcmp);
+    qsort(((char **)gap->ga_data) + start_len, matches,
+          sizeof(char *), pstrcmp);
   }
   return matches;
 }
 
-/*
- * Moves "*psep" back to the previous path separator in "path".
- * Returns FAIL is "*psep" ends up at the beginning of "path".
- */
-static int find_previous_pathsep(char_u *path, char_u **psep)
+// Moves "*psep" back to the previous path separator in "path".
+// Returns FAIL is "*psep" ends up at the beginning of "path".
+static int find_previous_pathsep(char *path, char **psep)
 {
   // skip the current separator
   if (*psep > path && vim_ispathsep(**psep)) {
-    --*psep;
+    (*psep)--;
   }
 
   // find the previous separator
@@ -806,25 +809,23 @@ static int find_previous_pathsep(char_u *path, char_u **psep)
   return FAIL;
 }
 
-/*
- * Returns TRUE if "maybe_unique" is unique wrt other_paths in "gap".
- * "maybe_unique" is the end portion of "((char_u **)gap->ga_data)[i]".
- */
-static bool is_unique(char_u *maybe_unique, garray_T *gap, int i)
+/// Returns true if "maybe_unique" is unique wrt other_paths in "gap".
+/// "maybe_unique" is the end portion of "((char **)gap->ga_data)[i]".
+static bool is_unique(char *maybe_unique, garray_T *gap, int i)
 {
-  char_u **other_paths = (char_u **)gap->ga_data;
+  char **other_paths = gap->ga_data;
 
   for (int j = 0; j < gap->ga_len; j++) {
     if (j == i) {
       continue;  // don't compare it with itself
     }
-    size_t candidate_len = STRLEN(maybe_unique);
-    size_t other_path_len = STRLEN(other_paths[j]);
+    size_t candidate_len = strlen(maybe_unique);
+    size_t other_path_len = strlen(other_paths[j]);
     if (other_path_len < candidate_len) {
       continue;  // it's different when it's shorter
     }
-    char_u *rival = other_paths[j] + other_path_len - candidate_len;
-    if (FNAMECMP(maybe_unique, rival) == 0
+    char *rival = other_paths[j] + other_path_len - candidate_len;
+    if (path_fnamecmp(maybe_unique, rival) == 0
         && (rival == other_paths[j] || vim_ispathsep(*(rival - 1)))) {
       return false;  // match
     }
@@ -832,33 +833,31 @@ static bool is_unique(char_u *maybe_unique, garray_T *gap, int i)
   return true;  // no match found
 }
 
-/*
- * Split the 'path' option into an array of strings in garray_T.  Relative
- * paths are expanded to their equivalent fullpath.  This includes the "."
- * (relative to current buffer directory) and empty path (relative to current
- * directory) notations.
- *
- * TODO: handle upward search (;) and path limiter (**N) notations by
- * expanding each into their equivalent path(s).
- */
-static void expand_path_option(char_u *curdir, garray_T *gap)
+// Split the 'path' option into an array of strings in garray_T.  Relative
+// paths are expanded to their equivalent fullpath.  This includes the "."
+// (relative to current buffer directory) and empty path (relative to current
+// directory) notations.
+//
+// TODO(vim): handle upward search (;) and path limiter (**N) notations by
+// expanding each into their equivalent path(s).
+static void expand_path_option(char *curdir, garray_T *gap)
 {
-  char_u *path_option = *curbuf->b_p_path == NUL ? p_path : curbuf->b_p_path;
-  char_u *buf = xmalloc(MAXPATHL);
+  char *path_option = *curbuf->b_p_path == NUL ? p_path : curbuf->b_p_path;
+  char *buf = xmalloc(MAXPATHL);
 
   while (*path_option != NUL) {
-    copy_option_part((char **)&path_option, (char *)buf, MAXPATHL, " ,");
+    copy_option_part(&path_option, buf, MAXPATHL, " ,");
 
     if (buf[0] == '.' && (buf[1] == NUL || vim_ispathsep(buf[1]))) {
-      /* Relative to current buffer:
-       * "/path/file" + "." -> "/path/"
-       * "/path/file"  + "./subdir" -> "/path/subdir" */
+      // Relative to current buffer:
+      // "/path/file" + "." -> "/path/"
+      // "/path/file"  + "./subdir" -> "/path/subdir"
       if (curbuf->b_ffname == NULL) {
         continue;
       }
-      char_u *p = (char_u *)path_tail(curbuf->b_ffname);
-      size_t len = (size_t)(p - (char_u *)curbuf->b_ffname);
-      if (len + STRLEN(buf) >= MAXPATHL) {
+      char *p = path_tail(curbuf->b_ffname);
+      size_t len = (size_t)(p - curbuf->b_ffname);
+      if (len + strlen(buf) >= MAXPATHL) {
         continue;
       }
       if (buf[1] == NUL) {
@@ -870,45 +869,43 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
       simplify_filename(buf);
     } else if (buf[0] == NUL) {
       STRCPY(buf, curdir);  // relative to current directory
-    } else if (path_with_url((char *)buf)) {
+    } else if (path_with_url(buf)) {
       continue;  // URL can't be used here
     } else if (!path_is_absolute(buf)) {
       // Expand relative path to their full path equivalent
-      size_t len = STRLEN(curdir);
-      if (len + STRLEN(buf) + 3 > MAXPATHL) {
+      size_t len = strlen(curdir);
+      if (len + strlen(buf) + 3 > MAXPATHL) {
         continue;
       }
       STRMOVE(buf + len + 1, buf);
       STRCPY(buf, curdir);
-      buf[len] = (char_u)PATHSEP;
+      buf[len] = PATHSEP;
       simplify_filename(buf);
     }
 
-    GA_APPEND(char_u *, gap, vim_strsave(buf));
+    GA_APPEND(char *, gap, xstrdup(buf));
   }
 
   xfree(buf);
 }
 
-/*
- * Returns a pointer to the file or directory name in "fname" that matches the
- * longest path in "ga"p, or NULL if there is no match. For example:
- *
- *    path: /foo/bar/baz
- *   fname: /foo/bar/baz/quux.txt
- * returns:              ^this
- */
-static char_u *get_path_cutoff(char_u *fname, garray_T *gap)
+// Returns a pointer to the file or directory name in "fname" that matches the
+// longest path in "ga"p, or NULL if there is no match. For example:
+//
+//    path: /foo/bar/baz
+//   fname: /foo/bar/baz/quux.txt
+// returns:              ^this
+static char *get_path_cutoff(char *fname, garray_T *gap)
 {
   int maxlen = 0;
-  char_u **path_part = (char_u **)gap->ga_data;
-  char_u *cutoff = NULL;
+  char **path_part = gap->ga_data;
+  char *cutoff = NULL;
 
   for (int i = 0; i < gap->ga_len; i++) {
     int j = 0;
 
     while ((fname[j] == path_part[i][j]
-#ifdef WIN32
+#ifdef MSWIN
             || (vim_ispathsep(fname[j]) && vim_ispathsep(path_part[i][j]))
 #endif
             )  // NOLINT(whitespace/parens)
@@ -931,32 +928,30 @@ static char_u *get_path_cutoff(char_u *fname, garray_T *gap)
   return cutoff;
 }
 
-/*
- * Sorts, removes duplicates and modifies all the fullpath names in "gap" so
- * that they are unique with respect to each other while conserving the part
- * that matches the pattern. Beware, this is at least O(n^2) wrt "gap->ga_len".
- */
-static void uniquefy_paths(garray_T *gap, char_u *pattern)
+/// Sorts, removes duplicates and modifies all the fullpath names in "gap" so
+/// that they are unique with respect to each other while conserving the part
+/// that matches the pattern. Beware, this is at least O(n^2) wrt "gap->ga_len".
+static void uniquefy_paths(garray_T *gap, char *pattern)
 {
-  char_u **fnames = (char_u **)gap->ga_data;
+  char **fnames = gap->ga_data;
   bool sort_again = false;
   regmatch_T regmatch;
   garray_T path_ga;
-  char_u **in_curdir = NULL;
-  char_u *short_name;
+  char **in_curdir = NULL;
+  char *short_name;
 
   ga_remove_duplicate_strings(gap);
-  ga_init(&path_ga, (int)sizeof(char_u *), 1);
+  ga_init(&path_ga, (int)sizeof(char *), 1);
 
   // We need to prepend a '*' at the beginning of file_pattern so that the
   // regex matches anywhere in the path. FIXME: is this valid for all
   // possible patterns?
-  size_t len = STRLEN(pattern);
-  char_u *file_pattern = xmalloc(len + 2);
+  size_t len = strlen(pattern);
+  char *file_pattern = xmalloc(len + 2);
   file_pattern[0] = '*';
   file_pattern[1] = NUL;
   STRCAT(file_pattern, pattern);
-  char *pat = file_pat_to_reg_pat((char *)file_pattern, NULL, NULL, true);
+  char *pat = file_pat_to_reg_pat(file_pattern, NULL, NULL, true);
   xfree(file_pattern);
   if (pat == NULL) {
     return;
@@ -969,24 +964,24 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
     return;
   }
 
-  char_u *curdir = xmalloc(MAXPATHL);
+  char *curdir = xmalloc(MAXPATHL);
   os_dirname(curdir, MAXPATHL);
   expand_path_option(curdir, &path_ga);
 
-  in_curdir = xcalloc((size_t)gap->ga_len, sizeof(char_u *));
+  in_curdir = xcalloc((size_t)gap->ga_len, sizeof(char *));
 
   for (int i = 0; i < gap->ga_len && !got_int; i++) {
-    char_u *path = fnames[i];
+    char *path = fnames[i];
     int is_in_curdir;
-    char_u *dir_end = (char_u *)gettail_dir((const char *)path);
-    char_u *pathsep_p;
-    char_u *path_cutoff;
+    char *dir_end = (char *)gettail_dir((const char *)path);
+    char *pathsep_p;
+    char *path_cutoff;
 
-    len = STRLEN(path);
-    is_in_curdir = FNAMENCMP(curdir, path, dir_end - path) == 0
+    len = strlen(path);
+    is_in_curdir = path_fnamencmp(curdir, path, (size_t)(dir_end - path)) == 0
                    && curdir[dir_end - path] == NUL;
     if (is_in_curdir) {
-      in_curdir[i] = vim_strsave(path);
+      in_curdir[i] = xstrdup(path);
     }
 
     // Shorten the filename while maintaining its uniqueness
@@ -998,20 +993,20 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
     if (pattern[0] == '*' && pattern[1] == '*'
         && vim_ispathsep_nocolon(pattern[2])
         && path_cutoff != NULL
-        && vim_regexec(&regmatch, (char *)path_cutoff, (colnr_T)0)
+        && vim_regexec(&regmatch, path_cutoff, (colnr_T)0)
         && is_unique(path_cutoff, gap, i)) {
       sort_again = true;
-      memmove(path, path_cutoff, STRLEN(path_cutoff) + 1);
+      memmove(path, path_cutoff, strlen(path_cutoff) + 1);
     } else {
       // Here all files can be reached without path, so get shortest
       // unique path.  We start at the end of the path. */
       pathsep_p = path + len - 1;
       while (find_previous_pathsep(path, &pathsep_p)) {
-        if (vim_regexec(&regmatch, (char *)pathsep_p + 1, (colnr_T)0)
+        if (vim_regexec(&regmatch, pathsep_p + 1, (colnr_T)0)
             && is_unique(pathsep_p + 1, gap, i)
             && path_cutoff != NULL && pathsep_p + 1 >= path_cutoff) {
           sort_again = true;
-          memmove(path, pathsep_p + 1, STRLEN(pathsep_p));
+          memmove(path, pathsep_p + 1, strlen(pathsep_p));
           break;
         }
       }
@@ -1031,8 +1026,8 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
       short_name = path_shorten_fname(path, curdir);
       if (short_name != NULL && short_name > path + 1) {
         STRCPY(path, ".");
-        add_pathsep((char *)path);
-        STRMOVE(path + STRLEN(path), short_name);
+        add_pathsep(path);
+        STRMOVE(path + strlen(path), short_name);
       }
     }
     os_breakcheck();
@@ -1040,15 +1035,15 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
 
   // Shorten filenames in /in/current/directory/{filename}
   for (int i = 0; i < gap->ga_len && !got_int; i++) {
-    char_u *rel_path;
-    char_u *path = in_curdir[i];
+    char *rel_path;
+    char *path = in_curdir[i];
 
     if (path == NULL) {
       continue;
     }
 
-    /* If the {filename} is not unique, change it to ./{filename}.
-     * Else reduce it to {filename} */
+    // If the {filename} is not unique, change it to ./{filename}.
+    // Else reduce it to {filename}
     short_name = path_shorten_fname(path, curdir);
     if (short_name == NULL) {
       short_name = path;
@@ -1058,9 +1053,9 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
       continue;
     }
 
-    rel_path = xmalloc(STRLEN(short_name) + STRLEN(PATHSEPSTR) + 2);
+    rel_path = xmalloc(strlen(short_name) + strlen(PATHSEPSTR) + 2);
     STRCPY(rel_path, ".");
-    add_pathsep((char *)rel_path);
+    add_pathsep(rel_path);
     STRCAT(rel_path, short_name);
 
     xfree(fnames[i]);
@@ -1119,21 +1114,21 @@ const char *gettail_dir(const char *const fname)
 /// Returns the total number of matches.
 ///
 /// @param flags  EW_* flags
-static int expand_in_path(garray_T *const gap, char_u *const pattern, const int flags)
+static int expand_in_path(garray_T *const gap, char *const pattern, const int flags)
 {
   garray_T path_ga;
 
-  char_u *const curdir = xmalloc(MAXPATHL);
+  char *const curdir = xmalloc(MAXPATHL);
   os_dirname(curdir, MAXPATHL);
 
-  ga_init(&path_ga, (int)sizeof(char_u *), 1);
+  ga_init(&path_ga, (int)sizeof(char *), 1);
   expand_path_option(curdir, &path_ga);
   xfree(curdir);
   if (GA_EMPTY(&path_ga)) {
     return 0;
   }
 
-  char_u *const paths = ga_concat_strings(&path_ga);
+  char *const paths = ga_concat_strings(&path_ga);
   ga_clear_strings(&path_ga);
 
   int glob_flags = 0;
@@ -1143,22 +1138,20 @@ static int expand_in_path(garray_T *const gap, char_u *const pattern, const int 
   if (flags & EW_ADDSLASH) {
     glob_flags |= WILD_ADD_SLASH;
   }
-  globpath((char *)paths, pattern, gap, glob_flags);
+  globpath(paths, pattern, gap, glob_flags, false);
   xfree(paths);
 
   return gap->ga_len;
 }
 
-/*
- * Return TRUE if "p" contains what looks like an environment variable.
- * Allowing for escaping.
- */
-static bool has_env_var(char_u *p)
+/// Return true if "p" contains what looks like an environment variable.
+/// Allowing for escaping.
+static bool has_env_var(char *p)
 {
   for (; *p; MB_PTR_ADV(p)) {
     if (*p == '\\' && p[1] != NUL) {
       p++;
-    } else if (vim_strchr("$", *p) != NULL) {
+    } else if (vim_strchr("$", (uint8_t)(*p)) != NULL) {
       return true;
     }
   }
@@ -1167,9 +1160,9 @@ static bool has_env_var(char_u *p)
 
 #ifdef SPECIAL_WILDCHAR
 
-// Return TRUE if "p" contains a special wildcard character, one that Vim
+// Return true if "p" contains a special wildcard character, one that Vim
 // cannot expand, requires using a shell.
-static bool has_special_wildchar(char_u *p)
+static bool has_special_wildchar(char *p)
 {
   for (; *p; MB_PTR_ADV(p)) {
     // Disallow line break characters.
@@ -1179,13 +1172,13 @@ static bool has_special_wildchar(char_u *p)
     // Allow for escaping.
     if (*p == '\\' && p[1] != NUL && p[1] != '\r' && p[1] != '\n') {
       p++;
-    } else if (vim_strchr(SPECIAL_WILDCHAR, *p) != NULL) {
+    } else if (vim_strchr(SPECIAL_WILDCHAR, (uint8_t)(*p)) != NULL) {
       // A { must be followed by a matching }.
-      if (*p == '{' && vim_strchr((char *)p, '}') == NULL) {
+      if (*p == '{' && vim_strchr(p, '}') == NULL) {
         continue;
       }
       // A quote and backtick must be followed by another one.
-      if ((*p == '`' || *p == '\'') && vim_strchr((char *)p, *p) == NULL) {
+      if ((*p == '`' || *p == '\'') && vim_strchr(p, (uint8_t)(*p)) == NULL) {
         continue;
       }
       return true;
@@ -1216,34 +1209,31 @@ static bool has_special_wildchar(char_u *p)
 int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, int flags)
 {
   garray_T ga;
-  char_u *p;
+  char *p;
   static bool recursive = false;
   int add_pat;
   bool did_expand_in_path = false;
 
-  /*
-   * expand_env() is called to expand things like "~user".  If this fails,
-   * it calls ExpandOne(), which brings us back here.  In this case, always
-   * call the machine specific expansion function, if possible.  Otherwise,
-   * return FAIL.
-   */
-  if (recursive)
+  // expand_env() is called to expand things like "~user".  If this fails,
+  // it calls ExpandOne(), which brings us back here.  In this case, always
+  // call the machine specific expansion function, if possible.  Otherwise,
+  // return FAIL.
+  if (recursive) {
 #ifdef SPECIAL_WILDCHAR
-  { return os_expand_wildcards(num_pat, pat, num_file, file, flags); }
+    return os_expand_wildcards(num_pat, pat, num_file, file, flags);
 #else
-  { return FAIL; }
+    return FAIL;
 #endif
+  }
 
 #ifdef SPECIAL_WILDCHAR
-  /*
-   * If there are any special wildcard characters which we cannot handle
-   * here, call machine specific function for all the expansion.  This
-   * avoids starting the shell for each argument separately.
-   * For `=expr` do use the internal function.
-   */
+  // If there are any special wildcard characters which we cannot handle
+  // here, call machine specific function for all the expansion.  This
+  // avoids starting the shell for each argument separately.
+  // For `=expr` do use the internal function.
   for (int i = 0; i < num_pat; i++) {
-    if (has_special_wildchar((char_u *)pat[i])
-        && !(vim_backtick((char_u *)pat[i]) && pat[i][1] == '=')) {
+    if (has_special_wildchar(pat[i])
+        && !(vim_backtick(pat[i]) && pat[i][1] == '=')) {
       return os_expand_wildcards(num_pat, pat, num_file, file, flags);
     }
   }
@@ -1251,20 +1241,18 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
 
   recursive = true;
 
-  /*
-   * The matching file names are stored in a growarray.  Init it empty.
-   */
-  ga_init(&ga, (int)sizeof(char_u *), 30);
+  // The matching file names are stored in a growarray.  Init it empty.
+  ga_init(&ga, (int)sizeof(char *), 30);
 
   for (int i = 0; i < num_pat && !got_int; i++) {
     add_pat = -1;
-    p = (char_u *)pat[i];
+    p = pat[i];
 
     if (vim_backtick(p)) {
       add_pat = expand_backtick(&ga, p, flags);
       if (add_pat == -1) {
         recursive = false;
-        FreeWild(ga.ga_len, ga.ga_data);
+        ga_clear_strings(&ga);
         *num_file = 0;
         *file = NULL;
         return FAIL;
@@ -1274,41 +1262,38 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
       if ((has_env_var(p) && !(flags & EW_NOTENV)) || *p == '~') {
         p = expand_env_save_opt(p, true);
         if (p == NULL) {
-          p = (char_u *)pat[i];
-        }
+          p = pat[i];
+        } else {
 #ifdef UNIX
-        /*
-         * On Unix, if expand_env() can't expand an environment
-         * variable, use the shell to do that.  Discard previously
-         * found file names and start all over again.
-         */
-        else if (has_env_var(p) || *p == '~') {
-          xfree(p);
-          ga_clear_strings(&ga);
-          i = os_expand_wildcards(num_pat, pat, num_file, file,
-                                  flags | EW_KEEPDOLLAR);
-          recursive = false;
-          return i;
-        }
+          // On Unix, if expand_env() can't expand an environment
+          // variable, use the shell to do that.  Discard previously
+          // found file names and start all over again.
+          if (has_env_var(p) || *p == '~') {
+            xfree(p);
+            ga_clear_strings(&ga);
+            i = os_expand_wildcards(num_pat, pat, num_file, file,
+                                    flags | EW_KEEPDOLLAR);
+            recursive = false;
+            return i;
+          }
 #endif
+        }
       }
 
-      /*
-       * If there are wildcards: Expand file names and add each match to
-       * the list.  If there is no match, and EW_NOTFOUND is given, add
-       * the pattern.
-       * If there are no wildcards: Add the file name if it exists or
-       * when EW_NOTFOUND is given.
-       */
-      if (path_has_exp_wildcard(p)) {
+      // If there are wildcards or case-insensitive expansion is
+      // required: Expand file names and add each match to the list.  If
+      // there is no match, and EW_NOTFOUND is given, add the pattern.
+      // Otherwise: Add the file name if it exists or when EW_NOTFOUND is
+      // given.
+      if (path_has_exp_wildcard(p) || (flags & EW_ICASE)) {
         if ((flags & EW_PATH)
             && !path_is_absolute(p)
             && !(p[0] == '.'
                  && (vim_ispathsep(p[1])
                      || (p[1] == '.'
                          && vim_ispathsep(p[2]))))) {
-          /* :find completion where 'path' is used.
-           * Recursiveness is OK here. */
+          // :find completion where 'path' is used.
+          // Recursiveness is OK here.
           recursive = false;
           add_pat = expand_in_path(&ga, p, flags);
           recursive = true;
@@ -1322,10 +1307,10 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
     }
 
     if (add_pat == -1 || (add_pat == 0 && (flags & EW_NOTFOUND))) {
-      char_u *t = backslash_halve_save(p);
+      char *t = backslash_halve_save(p);
 
-      /* When EW_NOTFOUND is used, always add files and dirs.  Makes
-       * "vim c:/" work. */
+      // When EW_NOTFOUND is used, always add files and dirs.  Makes
+      // "vim c:/" work.
       if (flags & EW_NOTFOUND) {
         addfile(&ga, t, flags | EW_DIR | EW_FILE);
       } else {
@@ -1340,7 +1325,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
     if (did_expand_in_path && !GA_EMPTY(&ga) && (flags & EW_PATH)) {
       uniquefy_paths(&ga, p);
     }
-    if (p != (char_u *)pat[i]) {
+    if (p != pat[i]) {
       xfree(p);
     }
   }
@@ -1365,12 +1350,10 @@ void FreeWild(int count, char **files)
   xfree(files);
 }
 
-/*
- * Return TRUE if we can expand this backtick thing here.
- */
-static int vim_backtick(char_u *p)
+/// @return  true if we can expand this backtick thing here.
+static int vim_backtick(char *p)
 {
-  return *p == '`' && *(p + 1) != NUL && *(p + STRLEN(p) - 1) == '`';
+  return *p == '`' && *(p + 1) != NUL && *(p + strlen(p) - 1) == '`';
 }
 
 /// Expand an item in `backticks` by executing it as a command.
@@ -1378,20 +1361,19 @@ static int vim_backtick(char_u *p)
 /// Returns number of file names found, -1 if an error is encountered.
 ///
 /// @param flags  EW_* flags
-static int expand_backtick(garray_T *gap, char_u *pat, int flags)
+static int expand_backtick(garray_T *gap, char *pat, int flags)
 {
   char *p;
   char *buffer;
   int cnt = 0;
 
   // Create the command: lop off the backticks.
-  char *cmd = (char *)vim_strnsave(pat + 1, STRLEN(pat) - 2);
+  char *cmd = xstrnsave(pat + 1, strlen(pat) - 2);
 
   if (*cmd == '=') {          // `={expr}`: Expand expression
     buffer = eval_to_string(cmd + 1, &p, true);
   } else {
-    buffer = (char *)get_cmd_output((char_u *)cmd, NULL, (flags & EW_SILENT) ? kShellOptSilent : 0,
-                                    NULL);
+    buffer = get_cmd_output(cmd, NULL, (flags & EW_SILENT) ? kShellOptSilent : 0, NULL);
   }
   xfree(cmd);
   if (buffer == NULL) {
@@ -1409,7 +1391,7 @@ static int expand_backtick(garray_T *gap, char_u *pat, int flags)
     if (p > cmd) {
       char i = *p;
       *p = NUL;
-      addfile(gap, (char_u *)cmd, flags);
+      addfile(gap, cmd, flags);
       *p = i;
       cnt++;
     }
@@ -1432,23 +1414,23 @@ static int expand_backtick(garray_T *gap, char_u *pat, int flags)
 /// backslash twice.
 /// When 'shellslash' set do it the other way around.
 /// When the path looks like a URL leave it unmodified.
-void slash_adjust(char_u *p)
+void slash_adjust(char *p)
 {
-  if (path_with_url((const char *)p)) {
+  if (path_with_url(p)) {
     return;
   }
 
   if (*p == '`') {
     // don't replace backslash in backtick quoted strings
-    const size_t len = STRLEN(p);
+    const size_t len = strlen(p);
     if (len > 2 && *(p + len - 1) == '`') {
       return;
     }
   }
 
   while (*p) {
-    if (*p == (char_u)psepcN) {
-      *p = (char_u)psepc;
+    if (*p == psepcN) {
+      *p = psepc;
     }
     MB_PTR_ADV(p);
   }
@@ -1464,7 +1446,7 @@ void slash_adjust(char_u *p)
 /// EW_ALLLINKS add symlink also when the referred file does not exist
 ///
 /// @param f  filename
-void addfile(garray_T *gap, char_u *f, int flags)
+void addfile(garray_T *gap, char *f, int flags)
 {
   bool isdir;
   FileInfo file_info;
@@ -1472,14 +1454,14 @@ void addfile(garray_T *gap, char_u *f, int flags)
   // if the file/dir/link doesn't exist, may not add it
   if (!(flags & EW_NOTFOUND)
       && ((flags & EW_ALLLINKS)
-          ? !os_fileinfo_link((char *)f, &file_info)
+          ? !os_fileinfo_link(f, &file_info)
           : !os_path_exists(f))) {
     return;
   }
 
 #ifdef FNAME_ILLEGAL
   // if the file/dir contains illegal characters, don't add it
-  if (strpbrk((char *)f, FNAME_ILLEGAL) != NULL) {
+  if (strpbrk(f, FNAME_ILLEGAL) != NULL) {
     return;
   }
 #endif
@@ -1492,35 +1474,31 @@ void addfile(garray_T *gap, char_u *f, int flags)
   // If the file isn't executable, may not add it.  Do accept directories.
   // When invoked from expand_shellcmd() do not use $PATH.
   if (!isdir && (flags & EW_EXEC)
-      && !os_can_exe((char *)f, NULL, !(flags & EW_SHELLCMD))) {
+      && !os_can_exe(f, NULL, !(flags & EW_SHELLCMD))) {
     return;
   }
 
-  char_u *p = xmalloc(STRLEN(f) + 1 + isdir);
+  char *p = xmalloc(strlen(f) + 1 + isdir);
 
   STRCPY(p, f);
 #ifdef BACKSLASH_IN_FILENAME
   slash_adjust(p);
 #endif
-  /*
-   * Append a slash or backslash after directory names if none is present.
-   */
+  // Append a slash or backslash after directory names if none is present.
   if (isdir && (flags & EW_ADDSLASH)) {
-    add_pathsep((char *)p);
+    add_pathsep(p);
   }
-  GA_APPEND(char_u *, gap, p);
+  GA_APPEND(char *, gap, p);
 }
 
-/*
- * Converts a file name into a canonical form. It simplifies a file name into
- * its simplest form by stripping out unneeded components, if any.  The
- * resulting file name is simplified in place and will either be the same
- * length as that supplied, or shorter.
- */
-void simplify_filename(char_u *filename)
+// Converts a file name into a canonical form. It simplifies a file name into
+// its simplest form by stripping out unneeded components, if any.  The
+// resulting file name is simplified in place and will either be the same
+// length as that supplied, or shorter.
+void simplify_filename(char *filename)
 {
   int components = 0;
-  char_u *p, *tail, *start;
+  char *p, *tail, *start;
   bool stripping_disabled = false;
   bool relative = true;
 
@@ -1540,8 +1518,8 @@ void simplify_filename(char_u *filename)
   start = p;        // remember start after "c:/" or "/" or "///"
 
   do {
-    /* At this point "p" is pointing to the char following a single "/"
-     * or "p" is at the "start" of the (absolute or relative) path name. */
+    // At this point "p" is pointing to the char following a single "/"
+    // or "p" is at the "start" of the (absolute or relative) path name.
     if (vim_ispathsep(*p)) {
       STRMOVE(p, p + 1);                // remove duplicate "/"
     } else if (p[0] == '.'
@@ -1549,10 +1527,10 @@ void simplify_filename(char_u *filename)
       if (p == start && relative) {
         p += 1 + (p[1] != NUL);         // keep single "." or leading "./"
       } else {
-        /* Strip "./" or ".///".  If we are at the end of the file name
-         * and there is no trailing path separator, either strip "/." if
-         * we are after "start", or strip "." if we are at the beginning
-         * of an absolute path name . */
+        // Strip "./" or ".///".  If we are at the end of the file name
+        // and there is no trailing path separator, either strip "/." if
+        // we are after "start", or strip "." if we are at the beginning
+        // of an absolute path name.
         tail = p + 1;
         if (p[1] != NUL) {
           while (vim_ispathsep(*tail)) {
@@ -1573,86 +1551,86 @@ void simplify_filename(char_u *filename)
 
       if (components > 0) {             // strip one preceding component
         bool do_strip = false;
-        char_u saved_char;
+        char saved_char;
 
         // Don't strip for an erroneous file name.
         if (!stripping_disabled) {
-          /* If the preceding component does not exist in the file
-           * system, we strip it.  On Unix, we don't accept a symbolic
-           * link that refers to a non-existent file. */
+          // If the preceding component does not exist in the file
+          // system, we strip it.  On Unix, we don't accept a symbolic
+          // link that refers to a non-existent file.
           saved_char = p[-1];
           p[-1] = NUL;
           FileInfo file_info;
-          if (!os_fileinfo_link((char *)filename, &file_info)) {
+          if (!os_fileinfo_link(filename, &file_info)) {
             do_strip = true;
           }
           p[-1] = saved_char;
 
           p--;
           // Skip back to after previous '/'.
-          while (p > start && !after_pathsep((char *)start, (char *)p)) {
+          while (p > start && !after_pathsep(start, p)) {
             MB_PTR_BACK(start, p);
           }
 
           if (!do_strip) {
-            /* If the component exists in the file system, check
-             * that stripping it won't change the meaning of the
-             * file name.  First get information about the
-             * unstripped file name.  This may fail if the component
-             * to strip is not a searchable directory (but a regular
-             * file, for instance), since the trailing "/.." cannot
-             * be applied then.  We don't strip it then since we
-             * don't want to replace an erroneous file name by
-             * a valid one, and we disable stripping of later
-             * components. */
+            // If the component exists in the file system, check
+            // that stripping it won't change the meaning of the
+            // file name.  First get information about the
+            // unstripped file name.  This may fail if the component
+            // to strip is not a searchable directory (but a regular
+            // file, for instance), since the trailing "/.." cannot
+            // be applied then.  We don't strip it then since we
+            // don't want to replace an erroneous file name by
+            // a valid one, and we disable stripping of later
+            // components.
             saved_char = *tail;
             *tail = NUL;
-            if (os_fileinfo((char *)filename, &file_info)) {
+            if (os_fileinfo(filename, &file_info)) {
               do_strip = true;
             } else {
               stripping_disabled = true;
             }
             *tail = saved_char;
             if (do_strip) {
-              /* The check for the unstripped file name
-               * above works also for a symbolic link pointing to
-               * a searchable directory.  But then the parent of
-               * the directory pointed to by the link must be the
-               * same as the stripped file name.  (The latter
-               * exists in the file system since it is the
-               * component's parent directory.) */
+              // The check for the unstripped file name
+              // above works also for a symbolic link pointing to
+              // a searchable directory.  But then the parent of
+              // the directory pointed to by the link must be the
+              // same as the stripped file name.  (The latter
+              // exists in the file system since it is the
+              // component's parent directory.)
               FileInfo new_file_info;
               if (p == start && relative) {
                 os_fileinfo(".", &new_file_info);
               } else {
                 saved_char = *p;
                 *p = NUL;
-                os_fileinfo((char *)filename, &new_file_info);
+                os_fileinfo(filename, &new_file_info);
                 *p = saved_char;
               }
 
               if (!os_fileinfo_id_equal(&file_info, &new_file_info)) {
                 do_strip = false;
-                /* We don't disable stripping of later
-                 * components since the unstripped path name is
-                 * still valid. */
+                // We don't disable stripping of later
+                // components since the unstripped path name is
+                // still valid.
               }
             }
           }
         }
 
         if (!do_strip) {
-          /* Skip the ".." or "../" and reset the counter for the
-           * components that might be stripped later on. */
+          // Skip the ".." or "../" and reset the counter for the
+          // components that might be stripped later on.
           p = tail;
           components = 0;
         } else {
-          /* Strip previous component.  If the result would get empty
-           * and there is no trailing path separator, leave a single
-           * "." instead.  If we are at the end of the file name and
-           * there is no trailing path separator and a preceding
-           * component is left after stripping, strip its trailing
-           * path separator as well. */
+          // Strip previous component.  If the result would get empty
+          // and there is no trailing path separator, leave a single
+          // "." instead.  If we are at the end of the file name and
+          // there is no trailing path separator and a preceding
+          // component is left after stripping, strip its trailing
+          // path separator as well.
           if (p == start && relative && tail[-1] == '.') {
             *p++ = '.';
             *p = NUL;
@@ -1676,7 +1654,7 @@ void simplify_filename(char_u *filename)
       }
     } else {
       components++;  // Simple path component.
-      p = (char_u *)path_next_component((const char *)p);
+      p = (char *)path_next_component(p);
     }
   } while (*p != NUL);
 }
@@ -1684,7 +1662,7 @@ void simplify_filename(char_u *filename)
 static char *eval_includeexpr(const char *const ptr, const size_t len)
 {
   set_vim_var_string(VV_FNAME, ptr, (ptrdiff_t)len);
-  char *res = eval_to_string_safe((char *)curbuf->b_p_inex, NULL,
+  char *res = eval_to_string_safe(curbuf->b_p_inex, NULL,
                                   was_set_insecurely(curwin, "includeexpr", OPT_LOCAL));
   set_vim_var_string(VV_FNAME, NULL, 0);
   return res;
@@ -1694,20 +1672,20 @@ static char *eval_includeexpr(const char *const ptr, const size_t len)
 /// Otherwise like file_name_at_cursor().
 ///
 /// @param rel_fname  file we are searching relative to
-char_u *find_file_name_in_path(char_u *ptr, size_t len, int options, long count, char_u *rel_fname)
+char *find_file_name_in_path(char *ptr, size_t len, int options, long count, char *rel_fname)
 {
-  char_u *file_name;
-  char_u *tofree = NULL;
+  char *file_name;
+  char *tofree = NULL;
 
   if (len == 0) {
     return NULL;
   }
 
   if ((options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
-    tofree = (char_u *)eval_includeexpr((char *)ptr, len);
+    tofree = eval_includeexpr(ptr, len);
     if (tofree != NULL) {
       ptr = tofree;
-      len = STRLEN(ptr);
+      len = strlen(ptr);
     }
   }
 
@@ -1715,35 +1693,34 @@ char_u *find_file_name_in_path(char_u *ptr, size_t len, int options, long count,
     file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS, true,
                                   rel_fname);
 
-    /*
-     * If the file could not be found in a normal way, try applying
-     * 'includeexpr' (unless done already).
-     */
+    // If the file could not be found in a normal way, try applying
+    // 'includeexpr' (unless done already).
     if (file_name == NULL
         && !(options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
-      tofree = (char_u *)eval_includeexpr((char *)ptr, len);
+      tofree = eval_includeexpr(ptr, len);
       if (tofree != NULL) {
         ptr = tofree;
-        len = STRLEN(ptr);
+        len = strlen(ptr);
         file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS,
-                                      TRUE, rel_fname);
+                                      true, rel_fname);
       }
     }
     if (file_name == NULL && (options & FNAME_MESS)) {
-      char_u c = ptr[len];
+      char c = ptr[len];
       ptr[len] = NUL;
       semsg(_("E447: Can't find file \"%s\" in path"), ptr);
       ptr[len] = c;
     }
 
-    /* Repeat finding the file "count" times.  This matters when it
-     * appears several times in the path. */
+    // Repeat finding the file "count" times.  This matters when it
+    // appears several times in the path.
     while (file_name != NULL && --count > 0) {
       xfree(file_name);
-      file_name = find_file_in_path(ptr, len, options, FALSE, rel_fname);
+      file_name =
+        find_file_in_path(ptr, len, options, false, rel_fname);
     }
   } else {
-    file_name = vim_strnsave(ptr, len);
+    file_name = xstrnsave(ptr, len);
   }
 
   xfree(tofree);
@@ -1751,12 +1728,26 @@ char_u *find_file_name_in_path(char_u *ptr, size_t len, int options, long count,
   return file_name;
 }
 
-// Check if the "://" of a URL is at the pointer, return URL_SLASH.
+/// Checks for a Windows drive letter ("C:/") at the start of the path.
+///
+/// @see https://url.spec.whatwg.org/#start-with-a-windows-drive-letter
+bool path_has_drive_letter(const char *p)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return strlen(p) >= 2
+         && ASCII_ISALPHA(p[0])
+         && (p[1] == ':' || p[1] == '|')
+         && (strlen(p) == 2 || ((p[2] == '/') | (p[2] == '\\') | (p[2] == '?') | (p[2] == '#')));
+}
+
+// Check if the ":/" of a URL is at the pointer, return URL_SLASH.
 // Also check for ":\\", which MS Internet Explorer accepts, return
 // URL_BACKSLASH.
 int path_is_url(const char *p)
 {
-  if (strncmp(p, "://", 3) == 0) {
+  // In the spec ':' is enough to recognize a scheme
+  // https://url.spec.whatwg.org/#scheme-state
+  if (strncmp(p, ":/", 2) == 0) {
     return URL_SLASH;
   } else if (strncmp(p, ":\\\\", 3) == 0) {
     return URL_BACKSLASH;
@@ -1777,19 +1768,23 @@ int path_with_url(const char *fname)
   // non-URL text.
 
   // first character must be alpha
-  if (!isalpha(*fname)) {
+  if (!ASCII_ISALPHA(*fname)) {
+    return 0;
+  }
+
+  if (path_has_drive_letter(fname)) {
     return 0;
   }
 
   // check body: alpha or dash
-  for (p = fname + 1; (isalpha(*p) || (*p == '-')); p++) {}
+  for (p = fname + 1; (ASCII_ISALPHA(*p) || (*p == '-')); p++) {}
 
   // check last char is not a dash
   if (p[-1] == '-') {
     return 0;
   }
 
-  // "://" or ":\\" must follow
+  // ":/" or ":\\" must follow
   return path_is_url(p);
 }
 
@@ -1802,12 +1797,10 @@ bool path_with_extension(const char *path, const char *extension)
   return strcmp(last_dot + 1, extension) == 0;
 }
 
-/*
- * Return TRUE if "name" is a full (absolute) path name or URL.
- */
-bool vim_isAbsName(char_u *name)
+/// Return true if "name" is a full (absolute) path name or URL.
+bool vim_isAbsName(char *name)
 {
-  return path_with_url((char *)name) != 0 || path_is_absolute(name);
+  return path_with_url(name) != 0 || path_is_absolute(name);
 }
 
 /// Save absolute file name to "buf[len]".
@@ -1830,8 +1823,8 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
 
   if (strlen(fname) > (len - 1)) {
     xstrlcpy(buf, fname, len);  // truncate
-#ifdef WIN32
-    slash_adjust((char_u *)buf);
+#ifdef MSWIN
+    slash_adjust(buf);
 #endif
     return FAIL;
   }
@@ -1841,12 +1834,12 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
     return OK;
   }
 
-  int rv = path_to_absolute((char_u *)fname, (char_u *)buf, len, force);
+  int rv = path_to_absolute(fname, buf, len, force);
   if (rv == FAIL) {
     xstrlcpy(buf, fname, len);  // something failed; use the filename
   }
-#ifdef WIN32
-  slash_adjust((char_u *)buf);
+#ifdef MSWIN
+  slash_adjust(buf);
 #endif
   return rv;
 }
@@ -1866,7 +1859,7 @@ char *fix_fname(const char *fname)
 #ifdef UNIX
   return FullName_save(fname, true);
 #else
-  if (!vim_isAbsName((char_u *)fname)
+  if (!vim_isAbsName((char *)fname)
       || strstr(fname, "..") != NULL
       || strstr(fname, "//") != NULL
 # ifdef BACKSLASH_IN_FILENAME
@@ -1879,7 +1872,7 @@ char *fix_fname(const char *fname)
   fname = xstrdup(fname);
 
 # ifdef USE_FNAME_CASE
-  path_fix_case(fname);  // set correct case for file name
+  path_fix_case((char *)fname);  // set correct case for file name
 # endif
 
   return (char *)fname;
@@ -1900,7 +1893,7 @@ void path_fix_case(char *name)
   }
 
   // Open the directory where the file is located.
-  char *slash = (char *)STRRCHR(name, '/');
+  char *slash = strrchr(name, '/');
   char *tail;
   Directory dir;
   bool ok;
@@ -1922,15 +1915,15 @@ void path_fix_case(char *name)
   while ((entry = (char *)os_scandir_next(&dir))) {
     // Only accept names that differ in case and are the same byte
     // length. TODO: accept different length name.
-    if (STRICMP(tail, entry) == 0 && STRLEN(tail) == STRLEN(entry)) {
-      char_u newname[MAXPATHL + 1];
+    if (STRICMP(tail, entry) == 0 && strlen(tail) == strlen(entry)) {
+      char newname[MAXPATHL + 1];
 
       // Verify the inode is equal.
-      STRLCPY(newname, name, MAXPATHL + 1);
-      STRLCPY(newname + (tail - name), entry,
-              MAXPATHL - (tail - name) + 1);
+      xstrlcpy(newname, name, MAXPATHL + 1);
+      xstrlcpy(newname + (tail - name), entry,
+               (size_t)(MAXPATHL - (tail - name) + 1));
       FileInfo file_info_new;
-      if (os_fileinfo_link((char *)newname, &file_info_new)
+      if (os_fileinfo_link(newname, &file_info_new)
           && os_fileinfo_id_equal(&file_info, &file_info_new)) {
         STRCPY(tail, entry);
         break;
@@ -1941,22 +1934,18 @@ void path_fix_case(char *name)
   os_closedir(&dir);
 }
 
-/*
- * Return TRUE if "p" points to just after a path separator.
- * Takes care of multi-byte characters.
- * "b" must point to the start of the file name
- */
+/// Return true if "p" points to just after a path separator.
+/// Takes care of multi-byte characters.
+/// "b" must point to the start of the file name
 int after_pathsep(const char *b, const char *p)
 {
   return p > b && vim_ispathsep(p[-1])
-         && utf_head_off((char_u *)b, (char_u *)p - 1) == 0;
+         && utf_head_off(b, p - 1) == 0;
 }
 
-/*
- * Return TRUE if file names "f1" and "f2" are in the same directory.
- * "f1" may be a short name, "f2" must be a full path.
- */
-bool same_directory(char_u *f1, char_u *f2)
+/// Return true if file names "f1" and "f2" are in the same directory.
+/// "f1" may be a short name, "f2" must be a full path.
+bool same_directory(char *f1, char *f2)
 {
   char ffname[MAXPATHL];
   char *t1;
@@ -1967,18 +1956,16 @@ bool same_directory(char_u *f1, char_u *f2)
     return false;
   }
 
-  (void)vim_FullName((char *)f1, (char *)ffname, MAXPATHL, FALSE);
+  (void)vim_FullName(f1, ffname, MAXPATHL, false);
   t1 = path_tail_with_sep(ffname);
-  t2 = path_tail_with_sep((char *)f2);
-  return t1 - ffname == (char_u *)t2 - f2
-         && pathcmp((char *)ffname, (char *)f2, (int)(t1 - ffname)) == 0;
+  t2 = path_tail_with_sep(f2);
+  return t1 - ffname == t2 - f2
+         && pathcmp(ffname, f2, (int)(t1 - ffname)) == 0;
 }
 
-/*
- * Compare path "p[]" to "q[]".
- * If "maxlen" >= 0 compare "p[maxlen]" to "q[maxlen]"
- * Return value like strcmp(p, q), but consider path separators.
- */
+// Compare path "p[]" to "q[]".
+// If "maxlen" >= 0 compare "p[maxlen]" to "q[maxlen]"
+// Return value like strcmp(p, q), but consider path separators.
 int pathcmp(const char *p, const char *q, int maxlen)
 {
   int i, j;
@@ -2057,10 +2044,10 @@ int pathcmp(const char *p, const char *q, int maxlen)
 ///   - Pointer into `full_path` if shortened.
 ///   - `full_path` unchanged if no shorter name is possible.
 ///   - NULL if `full_path` is NULL.
-char_u *path_try_shorten_fname(char_u *full_path)
+char *path_try_shorten_fname(char *full_path)
 {
-  char_u *dirname = xmalloc(MAXPATHL);
-  char_u *p = full_path;
+  char *dirname = xmalloc(MAXPATHL);
+  char *p = full_path;
 
   if (os_dirname(dirname, MAXPATHL) == OK) {
     p = path_shorten_fname(full_path, dirname);
@@ -2079,14 +2066,14 @@ char_u *path_try_shorten_fname(char_u *full_path)
 /// @return
 ///   - Pointer into `full_path` if shortened.
 ///   - NULL if no shorter name is possible.
-char_u *path_shorten_fname(char_u *full_path, char_u *dir_name)
+char *path_shorten_fname(char *full_path, char *dir_name)
 {
   if (full_path == NULL) {
     return NULL;
   }
 
   assert(dir_name != NULL);
-  size_t len = STRLEN(dir_name);
+  size_t len = strlen(dir_name);
 
   // If dir_name is a path head, full_path can always be made relative.
   if (len == (size_t)path_head_length() && is_path_head(dir_name)) {
@@ -2095,11 +2082,11 @@ char_u *path_shorten_fname(char_u *full_path, char_u *dir_name)
 
   // If full_path and dir_name do not match, it's impossible to make one
   // relative to the other.
-  if (FNAMENCMP(dir_name, full_path, len) != 0) {
+  if (path_fnamencmp(dir_name, full_path, len) != 0) {
     return NULL;
   }
 
-  char_u *p = full_path + len;
+  char *p = full_path + len;
 
   // If *p is not pointing to a path separator, this means that full_path's
   // last directory name is longer than *dir_name's last directory, so they
@@ -2125,21 +2112,25 @@ char_u *path_shorten_fname(char_u *full_path, char_u *dir_name)
 ///                        If FAIL is returned, *num_file and *file are either
 ///                        unchanged or *num_file is set to 0 and *file is set
 ///                        to NULL or points to "".
-int expand_wildcards_eval(char_u **pat, int *num_file, char ***file, int flags)
+int expand_wildcards_eval(char **pat, int *num_file, char ***file, int flags)
 {
   int ret = FAIL;
-  char_u *eval_pat = NULL;
-  char *exp_pat = (char *)(*pat);
+  char *eval_pat = NULL;
+  char *exp_pat = *pat;
   char *ignored_msg;
   size_t usedlen;
+  const bool is_cur_alt_file = *exp_pat == '%' || *exp_pat == '#';
+  bool star_follows = false;
 
-  if (*exp_pat == '%' || *exp_pat == '#' || *exp_pat == '<') {
+  if (is_cur_alt_file || *exp_pat == '<') {
     emsg_off++;
-    eval_pat = eval_vars((char_u *)exp_pat, (char_u *)exp_pat, &usedlen, NULL, &ignored_msg, NULL,
+    eval_pat = eval_vars(exp_pat, exp_pat, &usedlen, NULL, &ignored_msg,
+                         NULL,
                          true);
     emsg_off--;
     if (eval_pat != NULL) {
-      exp_pat = (char *)concat_str(eval_pat, (char_u *)exp_pat + usedlen);
+      star_follows = strcmp(exp_pat + usedlen, "*") == 0;
+      exp_pat = concat_str(eval_pat, exp_pat + usedlen);
     }
   }
 
@@ -2148,6 +2139,16 @@ int expand_wildcards_eval(char_u **pat, int *num_file, char ***file, int flags)
   }
 
   if (eval_pat != NULL) {
+    if (*num_file == 0 && is_cur_alt_file && star_follows) {
+      // Expanding "%" or "#" and the file does not exist: Add the
+      // pattern anyway (without the star) so that this works for remote
+      // files and non-file buffer names.
+      *file = xmalloc(sizeof(char *));
+      **file = eval_pat;
+      eval_pat = NULL;
+      *num_file = 1;
+      ret = OK;
+    }
     xfree(exp_pat);
     xfree(eval_pat);
   }
@@ -2173,7 +2174,7 @@ int expand_wildcards(int num_pat, char **pat, int *num_files, char ***files, int
 {
   int retval;
   int i, j;
-  char_u *p;
+  char *p;
   int non_suf_match;            // number without matching suffix
 
   retval = gen_expand_wildcards(num_pat, pat, num_files, files, flags);
@@ -2183,19 +2184,17 @@ int expand_wildcards(int num_pat, char **pat, int *num_files, char ***files, int
     return retval;
   }
 
-  /*
-   * Remove names that match 'wildignore'.
-   */
+  // Remove names that match 'wildignore'.
   if (*p_wig) {
-    char_u *ffname;
+    char *ffname;
 
     // check all files in (*files)[]
     assert(*num_files == 0 || *files != NULL);
     for (i = 0; i < *num_files; i++) {
-      ffname = (char_u *)FullName_save((*files)[i], false);
+      ffname = FullName_save((*files)[i], false);
       assert((*files)[i] != NULL);
       assert(ffname != NULL);
-      if (match_file_list(p_wig, (char_u *)(*files)[i], ffname)) {
+      if (match_file_list(p_wig, (*files)[i], ffname)) {
         // remove this matching file from the list
         xfree((*files)[i]);
         for (j = i; j + 1 < *num_files; j++) {
@@ -2214,13 +2213,13 @@ int expand_wildcards(int num_pat, char **pat, int *num_files, char ***files, int
   if (*num_files > 1 && !got_int) {
     non_suf_match = 0;
     for (i = 0; i < *num_files; i++) {
-      if (!match_suffix((char_u *)(*files)[i])) {
+      if (!match_suffix((*files)[i])) {
         // Move the name without matching suffix to the front of the list.
-        p = (char_u *)(*files)[i];
+        p = (*files)[i];
         for (j = i; j > non_suf_match; j--) {
           (*files)[j] = (*files)[j - 1];
         }
-        (*files)[non_suf_match++] = (char *)p;
+        (*files)[non_suf_match++] = p;
       }
     }
   }
@@ -2234,29 +2233,27 @@ int expand_wildcards(int num_pat, char **pat, int *num_files, char ***files, int
   return retval;
 }
 
-/*
- * Return TRUE if "fname" matches with an entry in 'suffixes'.
- */
-int match_suffix(char_u *fname)
+/// @return  true if "fname" matches with an entry in 'suffixes'.
+int match_suffix(char *fname)
 {
 #define MAXSUFLEN 30  // maximum length of a file suffix
-  char_u suf_buf[MAXSUFLEN];
+  char suf_buf[MAXSUFLEN];
 
-  size_t fnamelen = STRLEN(fname);
+  size_t fnamelen = strlen(fname);
   size_t setsuflen = 0;
-  for (char_u *setsuf = p_su; *setsuf;) {
-    setsuflen = copy_option_part((char **)&setsuf, (char *)suf_buf, MAXSUFLEN, ".,");
+  for (char *setsuf = p_su; *setsuf;) {
+    setsuflen = copy_option_part(&setsuf, suf_buf, MAXSUFLEN, ".,");
     if (setsuflen == 0) {
-      char_u *tail = (char_u *)path_tail((char *)fname);
+      char *tail = path_tail(fname);
 
       // empty entry: match name without a '.'
-      if (vim_strchr((char *)tail, '.') == NULL) {
+      if (vim_strchr(tail, '.') == NULL) {
         setsuflen = 1;
         break;
       }
     } else {
       if (fnamelen >= setsuflen
-          && FNAMENCMP(suf_buf, fname + fnamelen - setsuflen, setsuflen) == 0) {
+          && path_fnamencmp(suf_buf, fname + fnamelen - setsuflen, setsuflen) == 0) {
         break;
       }
       setsuflen = 0;
@@ -2274,14 +2271,14 @@ int path_full_dir_name(char *directory, char *buffer, size_t len)
   int SUCCESS = 0;
   int retval = OK;
 
-  if (STRLEN(directory) == 0) {
-    return os_dirname((char_u *)buffer, len);
+  if (strlen(directory) == 0) {
+    return os_dirname(buffer, len);
   }
 
   char old_dir[MAXPATHL];
 
   // Get current directory name.
-  if (os_dirname((char_u *)old_dir, MAXPATHL) == FAIL) {
+  if (os_dirname(old_dir, MAXPATHL) == FAIL) {
     return FAIL;
   }
 
@@ -2294,14 +2291,14 @@ int path_full_dir_name(char *directory, char *buffer, size_t len)
     // Path does not exist (yet).  For a full path fail,
     // will use the path as-is.  For a relative path use
     // the current directory and append the file name.
-    if (path_is_absolute((const char_u *)directory)) {
+    if (path_is_absolute(directory)) {
       // Do not return immediately since we may be in the wrong directory.
       retval = FAIL;
     } else {
       xstrlcpy(buffer, old_dir, len);
       append_path(buffer, directory, len);
     }
-  } else if (os_dirname((char_u *)buffer, len) == FAIL) {
+  } else if (os_dirname(buffer, len) == FAIL) {
     // Do not return immediately since we are in the wrong directory.
     retval = FAIL;
   }
@@ -2355,9 +2352,9 @@ int append_path(char *path, const char *to_append, size_t max_len)
 /// @param  force  also expand when "fname" is already absolute.
 ///
 /// @return FAIL for failure, OK for success.
-static int path_to_absolute(const char_u *fname, char_u *buf, size_t len, int force)
+static int path_to_absolute(const char *fname, char *buf, size_t len, int force)
 {
-  char_u *p;
+  char *p;
   *buf = NUL;
 
   char *relative_directory = xmalloc(len);
@@ -2365,49 +2362,42 @@ static int path_to_absolute(const char_u *fname, char_u *buf, size_t len, int fo
 
   // expand it if forced or not an absolute path
   if (force || !path_is_absolute(fname)) {
-    p = STRRCHR(fname, '/');
-#ifdef WIN32
+    p = strrchr(fname, '/');
+#ifdef MSWIN
     if (p == NULL) {
-      p = STRRCHR(fname, '\\');
+      p = strrchr(fname, '\\');
     }
 #endif
     if (p != NULL) {
-      // relative to root
-      if (p == fname) {
-        // only one path component
-        relative_directory[0] = PATHSEP;
-        relative_directory[1] = NUL;
-      } else {
-        assert(p >= fname);
-        memcpy(relative_directory, fname, (size_t)(p - fname));
-        relative_directory[p - fname] = NUL;
-      }
-      end_of_path = (char *)(p + 1);
+      assert(p >= fname);
+      memcpy(relative_directory, fname, (size_t)(p - fname + 1));
+      relative_directory[p - fname + 1] = NUL;
+      end_of_path = p + 1;
     } else {
       relative_directory[0] = NUL;
       end_of_path = (char *)fname;
     }
 
-    if (FAIL == path_full_dir_name(relative_directory, (char *)buf, len)) {
+    if (FAIL == path_full_dir_name(relative_directory, buf, len)) {
       xfree(relative_directory);
       return FAIL;
     }
   }
   xfree(relative_directory);
-  return append_path((char *)buf, end_of_path, len);
+  return append_path(buf, end_of_path, len);
 }
 
 /// Check if file `fname` is a full (absolute) path.
 ///
-/// @return `TRUE` if "fname" is absolute.
-int path_is_absolute(const char_u *fname)
+/// @return `true` if "fname" is absolute.
+int path_is_absolute(const char *fname)
 {
-#ifdef WIN32
+#ifdef MSWIN
   if (*fname == NUL) {
     return false;
   }
   // A name like "d:/foo" and "//server/share" is absolute
-  return ((isalpha(fname[0]) && fname[1] == ':' && vim_ispathsep_nocolon(fname[2]))
+  return ((isalpha((uint8_t)fname[0]) && fname[1] == ':' && vim_ispathsep_nocolon(fname[2]))
           || (vim_ispathsep_nocolon(fname[0]) && fname[0] == fname[1]));
 #else
   // UNIX: This just checks if the file name starts with '/' or '~'.
@@ -2427,11 +2417,11 @@ void path_guess_exepath(const char *argv0, char *buf, size_t bufsize)
 {
   const char *path = os_getenv("PATH");
 
-  if (path == NULL || path_is_absolute((char_u *)argv0)) {
+  if (path == NULL || path_is_absolute(argv0)) {
     xstrlcpy(buf, argv0, bufsize);
   } else if (argv0[0] == '.' || strchr(argv0, PATHSEP)) {
     // Relative to CWD.
-    if (os_dirname((char_u *)buf, MAXPATHL) != OK) {
+    if (os_dirname(buf, MAXPATHL) != OK) {
       buf[0] = NUL;
     }
     xstrlcat(buf, PATHSEPSTR, bufsize);
@@ -2449,11 +2439,11 @@ void path_guess_exepath(const char *argv0, char *buf, size_t bufsize)
       if (dir_len + 1 > sizeof(NameBuff)) {
         continue;
       }
-      STRLCPY(NameBuff, dir, dir_len + 1);
-      STRLCAT(NameBuff, PATHSEPSTR, sizeof(NameBuff));
-      STRLCAT(NameBuff, argv0, sizeof(NameBuff));
-      if (os_can_exe((char *)NameBuff, NULL, false)) {
-        xstrlcpy(buf, (char *)NameBuff, bufsize);
+      xstrlcpy(NameBuff, dir, dir_len + 1);
+      xstrlcat(NameBuff, PATHSEPSTR, sizeof(NameBuff));
+      xstrlcat(NameBuff, argv0, sizeof(NameBuff));
+      if (os_can_exe(NameBuff, NULL, false)) {
+        xstrlcpy(buf, NameBuff, bufsize);
         return;
       }
     } while (iter != NULL);

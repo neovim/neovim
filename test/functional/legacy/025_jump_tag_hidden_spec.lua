@@ -23,7 +23,7 @@ describe('jump to a tag with hidden set', function()
     feed_command('set hidden')
 
     -- Create a link from test25.dir to the current directory.
-    if helpers.iswin() then
+    if helpers.is_os('win') then
       feed_command('!rd /q/s test25.dir')
       feed_command('!mklink /j test25.dir .')
     else
@@ -33,7 +33,7 @@ describe('jump to a tag with hidden set', function()
 
     -- Create tags.text, with the current directory name inserted.
     feed_command('/tags line')
-    feed_command('r !' .. (helpers.iswin() and 'cd' or 'pwd'))
+    feed_command('r !' .. (helpers.is_os('win') and 'cd' or 'pwd'))
     feed('d$/test<cr>')
     feed('hP:.w! tags.test<cr>')
 
@@ -44,7 +44,7 @@ describe('jump to a tag with hidden set', function()
     feed('G<C-]> x:yank a<cr>')
     feed_command("call delete('tags.test')")
     feed_command("call delete('Xxx')")
-    if helpers.iswin() then
+    if helpers.is_os('win') then
       feed_command('!rd /q test25.dir')
     else
       feed_command('!rm -f test25.dir')

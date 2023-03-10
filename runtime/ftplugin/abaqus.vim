@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:     Abaqus finite element input file (www.abaqus.com)
 " Maintainer:   Carl Osterwisch <costerwi@gmail.com>
-" Last Change:  2022 Aug 03
+" Last Change:  2022 Oct 08
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin") | finish | endif
@@ -66,25 +66,44 @@ if exists("loaded_matchit") && !exists("b:match_words")
 endif
 
 if !exists("no_plugin_maps") && !exists("no_abaqus_maps")
-  " Define keys used to move [count] keywords backward or forward.
-  noremap <silent><buffer> [[ ?^\*\a<CR>:nohlsearch<CR>
-  noremap <silent><buffer> ]] /^\*\a<CR>:nohlsearch<CR>
+  " Map [[ and ]] keys to move [count] keywords backward or forward
+  nnoremap <silent><buffer> ]] :call <SID>Abaqus_NextKeyword(1)<CR>
+  nnoremap <silent><buffer> [[ :call <SID>Abaqus_NextKeyword(-1)<CR>
+  function! <SID>Abaqus_NextKeyword(direction)
+    .mark '
+    if a:direction < 0
+      let flags = 'b'
+    else
+      let flags = ''
+    endif
+    let l:count = abs(a:direction) * v:count1
+    while l:count > 0 && search("^\\*\\a", flags)
+      let l:count -= 1
+    endwhile
+  endfunction
 
-  " Define key to toggle commenting of the current line or range
+  " Map \\ to toggle commenting of the current line or range
   noremap <silent><buffer> <LocalLeader><LocalLeader>
       \ :call <SID>Abaqus_ToggleComment()<CR>j
   function! <SID>Abaqus_ToggleComment() range
-      if strpart(getline(a:firstline), 0, 2) == "**"
-	  " Un-comment all lines in range
-	  silent execute a:firstline . ',' . a:lastline . 's/^\*\*//'
-      else
-	  " Comment all lines in range
-	  silent execute a:firstline . ',' . a:lastline . 's/^/**/'
-      endif
+    if strpart(getline(a:firstline), 0, 2) == "**"
+      " Un-comment all lines in range
+      silent execute a:firstline . ',' . a:lastline . 's/^\*\*//'
+    else
+      " Comment all lines in range
+      silent execute a:firstline . ',' . a:lastline . 's/^/**/'
+    endif
+  endfunction
+
+  " Map \s to swap first two comma separated fields
+  noremap <silent><buffer> <LocalLeader>s :call <SID>Abaqus_Swap()<CR>
+  function! <SID>Abaqus_Swap() range
+    silent execute a:firstline . ',' . a:lastline . 's/\([^*,]*\),\([^,]*\)/\2,\1/'
   endfunction
 
   let b:undo_ftplugin .= "|unmap <buffer> [[|unmap <buffer> ]]"
       \ . "|unmap <buffer> <LocalLeader><LocalLeader>"
+      \ . "|unmap <buffer> <LocalLeader>s"
 endif
 
 " Undo must be done in nocompatible mode for <LocalLeader>.

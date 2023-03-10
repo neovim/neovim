@@ -125,7 +125,7 @@ file for a moment and come back to the same file and be in diff mode again.
 		buffers.
 
 The `:diffoff` command resets the relevant options to the values they had when
-using `:diffsplit`, `:diffpatch` , `:diffthis`. or starting Vim in diff mode.
+using `:diffsplit`, `:diffpatch`, `:diffthis`. or starting Vim in diff mode.
 When using `:diffoff` twice the last saved values are restored.
 Otherwise they are set to their default value:
 
@@ -136,6 +136,10 @@ Otherwise they are set to their default value:
 	'wrap'		on, or leave as-is if 'diffopt' includes "followwrap"
 	'foldmethod'	"manual"
 	'foldcolumn'	0
+
+'foldenable' will most-likely be reset to off.  That is when 'foldmethod' is
+restored to "manual".  The folds themselves are not cleared but they should
+not show up, resetting 'foldenable' is the best way to do that.
 
 ==============================================================================
 2. Viewing diffs						*view-diffs*
@@ -388,6 +392,11 @@ mode, so that a CTRL-Z doesn't end the text on DOS.
 The `redraw!` command may not be needed, depending on whether executing a
 shell command shows something on the display or not.
 
+If the 'diffexpr' expression starts with s: or |<SID>|, then it is replaced
+with the script ID (|local-function|). Example: >
+		set diffexpr=s:MyDiffExpr()
+		set diffexpr=<SID>SomeDiffExpr()
+<
 						*E810* *E97*
 Vim will do a test if the diff output looks alright.  If it doesn't, you will
 get an error message.  Possible causes:
@@ -401,7 +410,7 @@ to see more messages.
 
 The self-installing Vim for MS-Windows includes a diff program.  If you don't
 have it you might want to download a diff.exe.  For example from
-http://gnuwin32.sourceforge.net/packages/diffutils.htm.
+https://gnuwin32.sourceforge.net/packages/diffutils.htm.
 
 
 USING PATCHES					*diff-patchexpr*
@@ -439,4 +448,9 @@ evaluating 'patchexpr'.  This hopefully avoids that files in the current
 directory are accidentally patched.  Vim will also delete files starting with
 v:fname_in and ending in ".rej" and ".orig".
 
+If the 'patchexpr' expression starts with s: or |<SID>|, then it is replaced
+with the script ID (|local-function|). Example: >
+		set patchexpr=s:MyPatchExpr()
+		set patchexpr=<SID>SomePatchExpr()
+<
  vim:tw=78:ts=8:noet:ft=help:norl:

@@ -1,5 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 
+local feed = helpers.feed
 local eq = helpers.eq
 local clear = helpers.clear
 local funcs = helpers.funcs
@@ -122,4 +124,23 @@ describe('quickfix', function()
     command('grep foo ' .. file)
     os.remove(file)
   end)
+end)
+
+it(':vimgrep can specify Unicode pattern without delimiters', function()
+  eq('Vim(vimgrep):E480: No match: →', exc_exec('vimgrep → test/functional/fixtures/tty-test.c'))
+  local screen = Screen.new(40, 6)
+  screen:set_default_attr_ids({
+    [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+    [1] = {reverse = true},  -- IncSearch
+  })
+  screen:attach()
+  feed('i→<Esc>:vimgrep →')
+  screen:expect([[
+    {1:→}                                       |
+    {0:~                                       }|
+    {0:~                                       }|
+    {0:~                                       }|
+    {0:~                                       }|
+    :vimgrep →^                              |
+  ]])
 end)

@@ -6,6 +6,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/option_defs.h"
 #include "nvim/ui.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -18,6 +19,8 @@ static inline int win_hl_attr(win_T *wp, int hlf)
   // prior to entering redraw
   return ((wp->w_ns_hl_attr && ns_hl_fast < 0) ? wp->w_ns_hl_attr : hl_attr_active)[hlf];
 }
+
+#define HLATTRS_DICT_SIZE 16
 
 #define HL_SET_DEFAULT_COLORS(rgb_fg, rgb_bg, rgb_sp) \
   do { \

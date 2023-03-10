@@ -10,8 +10,11 @@ low-risk/isolated tasks:
 - Try a [complexity:low] issue.
 - Fix bugs found by [Clang](#clang-scan-build), [PVS](#pvs-studio) or
   [Coverity](#coverity).
-- [Improve documentation][wiki-contribute-help]
-- [Merge a Vim patch] (familiarity with Vim is *strongly* recommended)
+- [Improve documentation](#documenting)
+- [Merge a Vim patch] (requires strong familiarity with Vim)
+  - NOTE: read the above link before sending improvements to "runtime files" (anything in `runtime/`).
+    - Vimscript and documentation files are (mostly) maintained by [Vim](https://github.com/vim/vim), not Nvim.
+    - Lua files are maintained by Nvim.
 
 Reporting problems
 ------------------
@@ -30,14 +33,19 @@ Reporting problems
 Developer guidelines
 --------------------
 
-- Read `:help dev` if you are working on Nvim core.
-- Read `:help dev-ui` if you are developing a UI.
-- Read `:help dev-api-client` if you are developing an API client.
+- Read [:help dev](https://neovim.io/doc/user/develop.html#dev) if you are working on Nvim core.
+- Read [:help dev-ui](https://neovim.io/doc/user/develop.html#dev-ui) if you are developing a UI.
+- Read [:help dev-api-client](https://neovim.io/doc/user/develop.html#dev-api-client) if you are developing an API client.
 - Install `ninja` for faster builds of Nvim.
   ```
   sudo apt-get install ninja-build
   make distclean
   make  # Nvim build system uses ninja automatically, if available.
+  ```
+- Install `ccache` for faster rebuilds of Nvim. Nvim will use it automatically
+  if it's found. To disable caching use:
+  ```
+  CCACHE_DISABLE=true make
   ```
 
 Pull requests (PRs)
@@ -47,21 +55,19 @@ Pull requests (PRs)
 - Your PR must include [test coverage][run-tests].
 - Avoid cosmetic changes to unrelated files in the same commit.
 - Use a [feature branch][git-feature-branch] instead of the master branch.
-- Use a **rebase workflow** for small PRs.
-  - After addressing review comments, it's fine to rebase and force-push.
-- Use a **merge workflow** for big, high-risk PRs.
+- Use a _rebase workflow_ for small PRs.
+  - After addressing review comments, it's fine to force-push.
+- Use a _merge workflow_ (as opposed to "rebase") for big, high-risk PRs.
   - Merge `master` into your PR when there are conflicts or when master
     introduces breaking changes.
-  - Use the `ri` git alias:
-    ```
-    [alias]
-    ri = "!sh -c 't=\"${1:-master}\"; s=\"${2:-HEAD}\"; mb=\"$(git merge-base \"$t\" \"$s\")\"; if test \"x$mb\" = x ; then o=\"$t\"; else lm=\"$(git log -n1 --merges \"$t..$s\" --pretty=%H)\"; if test \"x$lm\" = x ; then o=\"$mb\"; else o=\"$lm\"; fi; fi; test $# -gt 0 && shift; test $# -gt 0 && shift; git rebase --interactive \"$o\" \"$@\"'"
-    ```
-    This avoids unnecessary rebases yet still allows you to combine related
-    commits, separate monolithic commits, etc.
   - Do not edit commits that come before the merge commit.
-- During a squash/fixup, use `exec make -C build unittest` between each
-  pick/edit/reword.
+
+### Merging to master
+
+For maintainers: when a PR is ready to merge to master,
+
+- prefer _Squash Merge_ for "single-commit PRs" (when the PR has only one meaningful commit).
+- prefer _Merge_ for "multi-commit PRs" (when the PR has multiple meaningful commits).
 
 ### Stages: Draft and Ready for review
 
@@ -92,7 +98,7 @@ the VCS/git logs more valuable. The general structure of a commit message is:
 ```
 
 - Prefix the commit subject with one of these [_types_](https://github.com/commitizen/conventional-commit-types/blob/master/index.json):
-    - `build`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `test`, `vim-patch`, `dist`
+    - `build`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `test`, `vim-patch`
     - You can **ignore this for "fixup" commits** or any commits you expect to be squashed.
 - Append optional scope to _type_ such as `(lsp)`, `(treesitter)`, `(float)`, …
 - _Description_ shouldn't start with a capital letter or end in a period.
@@ -111,34 +117,20 @@ the VCS/git logs more valuable. The general structure of a commit message is:
 
 ### Automated builds (CI)
 
-Each pull request must pass the automated builds on [sourcehut] and [GitHub Actions].
+Each pull request must pass the automated builds on [Cirrus CI] and [GitHub Actions].
 
 - CI builds are compiled with [`-Werror`][gcc-warnings], so compiler warnings
   will fail the build.
-- If any tests fail, the build will fail.
-  See [test/README.md#running-tests][run-tests] to run tests locally.
-  Passing locally doesn't guarantee passing the CI build, because of the
-  different compilers and platforms tested against.
+- If any tests fail, the build will fail. See [test/README.md#running-tests][run-tests] to run tests locally.
 - CI runs [ASan] and other analyzers.
     - To run valgrind locally: `VALGRIND=1 make test`
     - To run Clang ASan/UBSan locally: `CC=clang make CMAKE_FLAGS="-DCLANG_ASAN_UBSAN=ON"`
 - The [lint](#lint) build checks modified lines _and their immediate
   neighbors_, to encourage incrementally updating the legacy style to meet our
   [style](#style). (See [#3174][3174] for background.)
-- CI for freebsd and openbsd runs on [sourcehut].
-    - To get a backtrace on freebsd (after connecting via ssh):
-      ```sh
-      sudo pkg install tmux  # If you want tmux.
-      lldb build/bin/nvim -c nvim.core
-
-      # To get a full backtrace:
-      #   1. Rebuild with debug info.
-      rm -rf nvim.core build
-      gmake CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_EXTRA_FLAGS="-DCI_BUILD=ON -DMIN_LOG_LEVEL=3" nvim
-      #   2. Run the failing test to generate a new core file.
-      TEST_FILE=test/functional/foo.lua gmake functionaltest
-      lldb build/bin/nvim -c nvim.core
-      ```
+- CI for FreeBSD runs on [Cirrus CI].
+- To see CI results faster in your PR, you can temporarily set `TEST_FILE` in
+  [test.yml](https://github.com/neovim/neovim/blob/e35b9020b16985eee26e942f9a3f6b045bc3809b/.github/workflows/test.yml#L29).
 
 ### Clang scan-build
 
@@ -195,7 +187,7 @@ master build. To view the defects, just request access; you will be approved.
   ```
 - When running Neovim, use
   ```
-  UBSAN_OPTIONS=print_stacktrace=1 ASAN_OPTIONS=log_path=/tmp/nvim_asan nvim args...
+  UBSAN_OPTIONS=print_stacktrace=1 ASAN_OPTIONS=log_path=/tmp/nvim_asan,handle_abort=1,handle_sigill=1 nvim args...
   ```
 - If Neovim exits unexpectedly, check `/tmp/nvim_asan.{PID}` (or your preferred `log_path`) for log files with error messages.
 
@@ -259,12 +251,52 @@ You can lint a single file (but this will _not_ exclude legacy errors):
 For managing includes in C files, use [include-what-you-use].
 
 - [Install include-what-you-use][include-what-you-use-install]
-- Run with:
+- To see which includes needs fixing use the cmake preset `iwyu`:
   ```
-  make CMAKE_EXTRA_FLAGS=-DCMAKE_C_INCLUDE_WHAT_YOU_USE=include-what-you-use | tee iwyu.txt
+  cmake --workflow --preset iwyu
+  ```
+- There's also a make target that automatically fixes the suggestions from
+  IWYU:
+  ```
+  make iwyu
   ```
 
 See [#549][549] for more details.
+
+Documenting
+-----------
+
+Many parts of the `:help` documentation are autogenerated from C or Lua docstrings using the `./scripts/gen_vimdoc.py` script.
+You can filter the regeneration based on the target (api, lua, or lsp), or the file you changed, that need a doc refresh using `./scripts/gen_vimdoc.py -t <target>`.
+
+## Lua docstrings
+
+Lua documentation uses a subset of [EmmyLua] annotations. A rough outline of a function documentation is
+
+```lua
+--- {Brief}
+---
+--- {Long explanation}
+---
+---@param arg1 type {description}
+---@param arg2 type {description}
+{...}
+---
+---@return type {description}
+```
+
+If possible, always add type information (`table`, `string`, `number`, ...). Multiple valid types are separated by a bar (`string|table`). Indicate optional parameters via `type|nil`.
+
+If a function in your Lua module should not be documented (e.g. internal function or local function), you should set the doc comment to:
+
+```
+---@private
+```
+
+Mark functions that are deprecated as 
+```
+---@deprecated
+```
 
 Reviewing
 ---------
@@ -286,12 +318,14 @@ as context, use the `-W` argument as well.
 [1820]: https://github.com/neovim/neovim/pull/1820
 [3174]: https://github.com/neovim/neovim/issues/3174
 [ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
+[Cirrus CI]: https://cirrus-ci.com/github/neovim/neovim
 [Clang report]: https://neovim.io/doc/reports/clang/
 [GitHub Actions]: https://github.com/neovim/neovim/actions
 [clangd]: https://clangd.llvm.org
 [Merge a Vim patch]: https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
 [conventional_commits]: https://www.conventionalcommits.org
+[EmmyLua]: https://github.com/sumneko/lua-language-server/wiki/Annotations
 [gcc-warnings]: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
 [gh]: https://cli.github.com/
 [git-bisect]: http://git-scm.com/book/en/v2/Git-Tools-Debugging-with-Git
@@ -309,7 +343,6 @@ as context, use the `-W` argument as well.
 [pr-ready]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request
 [review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
 [run-tests]: https://github.com/neovim/neovim/blob/master/test/README.md#running-tests
-[sourcehut]: https://builds.sr.ht/~jmk
 [style-guide]: https://neovim.io/doc/user/dev_style.html#dev-style
 [uncrustify]: http://uncrustify.sourceforge.net/
 [wiki-contribute-help]: https://github.com/neovim/neovim/wiki/contribute-%3Ahelp

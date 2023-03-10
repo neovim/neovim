@@ -272,6 +272,7 @@ function tests.text_document_save_did_open()
     end;
     body = function()
       notify('start')
+      expect_notification('textDocument/didClose')
       expect_notification('textDocument/didOpen')
       expect_notification('textDocument/didSave')
       notify('shutdown')
@@ -292,6 +293,8 @@ function tests.text_document_sync_save_bool()
     end;
     body = function()
       notify('start')
+      expect_notification('textDocument/didClose')
+      expect_notification('textDocument/didOpen')
       expect_notification('textDocument/didSave', {textDocument = { uri = "file://" }})
       notify('shutdown')
     end;
@@ -313,6 +316,8 @@ function tests.text_document_sync_save_includeText()
     end;
     body = function()
       notify('start')
+      expect_notification('textDocument/didClose')
+      expect_notification('textDocument/didOpen')
       expect_notification('textDocument/didSave', {
         textDocument = {
           uri = "file://"
@@ -459,7 +464,7 @@ function tests.basic_check_buffer_open()
         textDocument = {
           languageId = "";
           text = table.concat({"testing"; "123"}, "\n") .. '\n';
-          uri = "file://";
+          uri = "buffer://";
           version = 0;
         };
       })
@@ -486,13 +491,13 @@ function tests.basic_check_buffer_open_and_change()
         textDocument = {
           languageId = "";
           text = table.concat({"testing"; "123"}, "\n") .. '\n';
-          uri = "file://";
+          uri = "buffer://";
           version = 0;
         };
       })
       expect_notification('textDocument/didChange', {
         textDocument = {
-          uri = "file://";
+          uri = "buffer://";
           version = 3;
         };
         contentChanges = {
@@ -522,13 +527,13 @@ function tests.basic_check_buffer_open_and_change_noeol()
         textDocument = {
           languageId = "";
           text = table.concat({"testing"; "123"}, "\n");
-          uri = "file://";
+          uri = "buffer://";
           version = 0;
         };
       })
       expect_notification('textDocument/didChange', {
         textDocument = {
-          uri = "file://";
+          uri = "buffer://";
           version = 3;
         };
         contentChanges = {
@@ -557,13 +562,13 @@ function tests.basic_check_buffer_open_and_change_multi()
         textDocument = {
           languageId = "";
           text = table.concat({"testing"; "123"}, "\n") .. '\n';
-          uri = "file://";
+          uri = "buffer://";
           version = 0;
         };
       })
       expect_notification('textDocument/didChange', {
         textDocument = {
-          uri = "file://";
+          uri = "buffer://";
           version = 3;
         };
         contentChanges = {
@@ -572,7 +577,7 @@ function tests.basic_check_buffer_open_and_change_multi()
       })
       expect_notification('textDocument/didChange', {
         textDocument = {
-          uri = "file://";
+          uri = "buffer://";
           version = 4;
         };
         contentChanges = {
@@ -602,13 +607,13 @@ function tests.basic_check_buffer_open_and_change_multi_and_close()
         textDocument = {
           languageId = "";
           text = table.concat({"testing"; "123"}, "\n") .. '\n';
-          uri = "file://";
+          uri = "buffer://";
           version = 0;
         };
       })
       expect_notification('textDocument/didChange', {
         textDocument = {
-          uri = "file://";
+          uri = "buffer://";
           version = 3;
         };
         contentChanges = {
@@ -617,7 +622,7 @@ function tests.basic_check_buffer_open_and_change_multi_and_close()
       })
       expect_notification('textDocument/didChange', {
         textDocument = {
-          uri = "file://";
+          uri = "buffer://";
           version = 4;
         };
         contentChanges = {
@@ -626,7 +631,7 @@ function tests.basic_check_buffer_open_and_change_multi_and_close()
       })
       expect_notification('textDocument/didClose', {
         textDocument = {
-          uri = "file://";
+          uri = "buffer://";
         };
       })
       expect_notification("finish")
@@ -660,13 +665,13 @@ function tests.basic_check_buffer_open_and_change_incremental()
         textDocument = {
           languageId = "";
           text = table.concat({"testing"; "123"}, "\n") .. '\n';
-          uri = "file://";
+          uri = "buffer://";
           version = 0;
         };
       })
       expect_notification('textDocument/didChange', {
         textDocument = {
-          uri = "file://";
+          uri = "buffer://";
           version = 3;
         };
         contentChanges = {
@@ -703,13 +708,13 @@ function tests.basic_check_buffer_open_and_change_incremental_editing()
         textDocument = {
           languageId = "";
           text = table.concat({"testing"; "123"}, "\n");
-          uri = "file://";
+          uri = "buffer://";
           version = 0;
         };
       })
       expect_notification('textDocument/didChange', {
         textDocument = {
-          uri = "file://";
+          uri = "buffer://";
           version = 3;
         };
         contentChanges = {
@@ -927,10 +932,30 @@ function tests.basic_formatting()
   }
 end
 
--- Tests will be indexed by TEST_NAME
+function tests.set_defaults_all_capabilities()
+  skeleton {
+    on_init = function(_)
+      return {
+        capabilities = {
+          definitionProvider = true,
+          completionProvider = true,
+          documentRangeFormattingProvider = true,
+        }
+      }
+    end;
+    body = function()
+      notify('test')
+    end;
+  }
+end
+
+-- Tests will be indexed by test_name
+local test_name = arg[1]
+local timeout = arg[2]
+assert(type(test_name) == 'string', 'test_name must be specified as first arg.')
 
 local kill_timer = vim.loop.new_timer()
-kill_timer:start(_G.TIMEOUT or 1e3, 0, function()
+kill_timer:start(timeout or 1e3, 0, function()
   kill_timer:stop()
   kill_timer:close()
   log('ERROR', 'LSP', 'TIMEOUT')
@@ -938,14 +963,11 @@ kill_timer:start(_G.TIMEOUT or 1e3, 0, function()
   os.exit(100)
 end)
 
-local test_name = _G.TEST_NAME -- lualint workaround
-assert(type(test_name) == 'string', 'TEST_NAME must be specified.')
 local status, err = pcall(assert(tests[test_name], "Test not found"))
 kill_timer:stop()
 kill_timer:close()
 if not status then
   log('ERROR', 'LSP', tostring(err))
   io.stderr:write(err)
-  os.exit(101)
+  vim.cmd [[101cquit]]
 end
-os.exit(0)

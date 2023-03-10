@@ -1,9 +1,13 @@
 #ifndef NVIM_EVENT_TIME_H
 #define NVIM_EVENT_TIME_H
 
+#include <stdbool.h>
 #include <uv.h>
 
 #include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
+
+struct time_watcher;
 
 typedef struct time_watcher TimeWatcher;
 typedef void (*time_cb)(TimeWatcher *watcher, void *data);

@@ -237,7 +237,7 @@ describe('server -> client', function()
         \ }
       ]])
       meths.set_var("args", {
-        helpers.test_lua_prg,
+        nvim_prog, '-ll',
         'test/functional/api/rpc_fixture.lua',
         package.path,
         package.cpath,
@@ -250,7 +250,7 @@ describe('server -> client', function()
       pcall(funcs.jobstop, jobid)
     end)
 
-    if helpers.pending_win32(pending) then return end
+    if helpers.skip(helpers.is_os('win')) then return end
 
     it('rpc and text stderr can be combined', function()
       local status, rv = pcall(funcs.rpcrequest, jobid, 'poll')
@@ -336,6 +336,21 @@ describe('server -> client', function()
       local address = funcs.serverstart("localhost:")
       eq('localhost:', string.sub(address,1,10))
       connect_test(server, 'tcp', address)
+    end)
+
+    it('does not crash on receiving UI events', function()
+      local server = spawn(nvim_argv)
+      set_session(server)
+      local address = funcs.serverlist()[1]
+      local client = spawn(nvim_argv, false, nil, true)
+      set_session(client)
+
+      local id = funcs.sockconnect('pipe', address, {rpc=true})
+      funcs.rpcrequest(id, 'nvim_ui_attach', 80, 24, {})
+      assert_alive()
+
+      server:close()
+      client:close()
     end)
   end)
 

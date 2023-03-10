@@ -813,10 +813,10 @@ REDRAWING THE SCREEN
 If the external command produced an error message, the display may have been
 messed up.  Vim is very efficient and only redraws those parts of the screen
 that it knows need redrawing.  But it can't know about what another program
-has written.  To tell Vim to redraw the screen: >
-
+has written.  To tell Vim to redraw the screen:
+>
 	CTRL-L
-
+<
 ==============================================================================
 
 Next chapter: |usr_11.txt|  Recovering from a crash

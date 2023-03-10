@@ -2,7 +2,7 @@
 " Language:	R
 " Author:	Jakson Alves de Aquino <jalvesaq@gmail.com>
 " Homepage:     https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	Sun Aug 19, 2018  09:13PM
+" Last Change:	Wed Oct 26, 2022  12:04PM
 
 
 " Only load this indent file when no other was loaded.
@@ -13,6 +13,8 @@ let b:did_indent = 1
 
 setlocal indentkeys=0{,0},:,!^F,o,O,e
 setlocal indentexpr=GetRIndent()
+
+let b:undo_indent = "setl inde< indk<"
 
 " Only define the function once.
 if exists("*GetRIndent")
@@ -28,7 +30,7 @@ let g:r_indent_ess_comments   = get(g:, 'r_indent_ess_comments',    0)
 let g:r_indent_comment_column = get(g:, 'r_indent_comment_column', 40)
 let g:r_indent_ess_compatible = get(g:, 'r_indent_ess_compatible',  0)
 let g:r_indent_op_pattern     = get(g:, 'r_indent_op_pattern',
-      \ '\(&\||\|+\|-\|\*\|/\|=\|\~\|%\|->\)\s*$')
+      \ '\(&\||\|+\|-\|\*\|/\|=\|\~\|%\|->\||>\)\s*$')
 
 function s:RDelete_quotes(line)
   let i = 0
@@ -359,17 +361,19 @@ function GetRIndent()
   let olnum = s:Get_prev_line(lnum)
   let oline = getline(olnum)
   if olnum > 0
-    if line =~ g:r_indent_op_pattern && s:Get_paren_balance(line, "(", ")") == 0
-      if oline =~ g:r_indent_op_pattern && s:Get_paren_balance(line, "(", ")") == 0
+    if substitute(line, '#.*', '', '') =~ g:r_indent_op_pattern && s:Get_paren_balance(line, "(", ")") == 0
+      if substitute(oline, '#.*', '', '') =~ g:r_indent_op_pattern && s:Get_paren_balance(line, "(", ")") == 0
         return indent(lnum)
       else
         return indent(lnum) + shiftwidth()
       endif
     else
-      if oline =~ g:r_indent_op_pattern && s:Get_paren_balance(line, "(", ")") == 0
+      if substitute(oline, '#.*', '', '') =~ g:r_indent_op_pattern && s:Get_paren_balance(line, "(", ")") == 0
         return indent(lnum) - shiftwidth()
       endif
     endif
+  elseif substitute(line, '#.*', '', '') =~ g:r_indent_op_pattern && s:Get_paren_balance(line, "(", ")") == 0
+    return indent(lnum) + shiftwidth()
   endif
 
   let post_fun = 0

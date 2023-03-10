@@ -173,9 +173,9 @@ describe('context functions', function()
       call('SaveSFuncs')
       call('DeleteSFuncs')
 
-      eq('Vim(call):E117: Unknown function: s:greet',
+      eq('function Greet, line 1: Vim(call):E117: Unknown function: s:greet',
          pcall_err(command, [[call Greet('World')]]))
-      eq('Vim(call):E117: Unknown function: s:greet_all',
+      eq('function GreetAll, line 1: Vim(call):E117: Unknown function: s:greet_all',
          pcall_err(command, [[call GreetAll('World', 'One', 'Two', 'Three')]]))
 
       call('RestoreFuncs')
@@ -287,9 +287,11 @@ describe('context functions', function()
 
       local with_jumps = {
         ['jumps'] = eval(([[
-        filter(map(getjumplist()[0], 'filter(
-          { "f": expand("#".v:val.bufnr.":p"), "l": v:val.lnum },
-          { k, v -> k != "l" || v != 1 })'), '!empty(v:val.f)')
+        filter(map(add(
+        getjumplist()[0], { 'bufnr': bufnr('%'), 'lnum': getcurpos()[1] }),
+        'filter(
+        { "f": expand("#".v:val.bufnr.":p"), "l": v:val.lnum },
+        { k, v -> k != "l" || v != 1 })'), '!empty(v:val.f)')
         ]]):gsub('\n', ''))
       }
 

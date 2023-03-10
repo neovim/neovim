@@ -5,20 +5,42 @@
 // sign.c: functions for managing with signs
 //
 
+#include <inttypes.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
 #include "nvim/eval/funcs.h"
+#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/fold.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/hashtab.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
+#include "nvim/macros.h"
+#include "nvim/mbyte.h"
+#include "nvim/memline_defs.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
+#include "nvim/pos.h"
 #include "nvim/sign.h"
-#include "nvim/syntax.h"
+#include "nvim/sign_defs.h"
+#include "nvim/strings.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
@@ -26,11 +48,11 @@
 typedef struct sign sign_T;
 
 struct sign {
-  sign_T *sn_next;       // next sign in list
+  sign_T *sn_next;    // next sign in list
   int sn_typenr;      // type number of sign
-  char_u *sn_name;       // name of sign
-  char_u *sn_icon;       // name of pixmap
-  char_u *sn_text;       // text used instead of pixmap
+  char *sn_name;      // name of sign
+  char *sn_icon;      // name of pixmap
+  char *sn_text;      // text used instead of pixmap
   int sn_line_hl;     // highlight ID for line
   int sn_text_hl;     // highlight ID for text
   int sn_cul_hl;      // highlight ID for text on current line when 'cursorline' is set
@@ -71,18 +93,17 @@ void init_signs(void)
 
 /// A new sign in group 'groupname' is added. If the group is not present,
 /// create it. Otherwise reference the group.
-///
-static signgroup_T *sign_group_ref(const char_u *groupname)
+static signgroup_T *sign_group_ref(const char *groupname)
 {
   hash_T hash;
   hashitem_T *hi;
   signgroup_T *group;
 
   hash = hash_hash(groupname);
-  hi = hash_lookup(&sg_table, (char *)groupname, STRLEN(groupname), hash);
+  hi = hash_lookup(&sg_table, (char *)groupname, strlen(groupname), hash);
   if (HASHITEM_EMPTY(hi)) {
     // new group
-    group = xmalloc(sizeof(signgroup_T) + STRLEN(groupname));
+    group = xmalloc(offsetof(signgroup_T, sg_name) + strlen(groupname) + 1);
 
     STRCPY(group->sg_name, groupname);
     group->sg_refcount = 1;
@@ -99,44 +120,43 @@ static signgroup_T *sign_group_ref(const char_u *groupname)
 
 /// A sign in group 'groupname' is removed. If all the signs in this group are
 /// removed, then remove the group.
-static void sign_group_unref(char_u *groupname)
+static void sign_group_unref(char *groupname)
 {
-  signgroup_T *group;
+  hashitem_T *hi = hash_find(&sg_table, groupname);
+  if (HASHITEM_EMPTY(hi)) {
+    return;
+  }
 
-  hashitem_T *hi = hash_find(&sg_table, (char *)groupname);
-  if (!HASHITEM_EMPTY(hi)) {
-    group = HI2SG(hi);
-    group->sg_refcount--;
-    if (group->sg_refcount == 0) {
-      // All the signs in this group are removed
-      hash_remove(&sg_table, hi);
-      xfree(group);
-    }
+  signgroup_T *group = HI2SG(hi);
+  group->sg_refcount--;
+  if (group->sg_refcount == 0) {
+    // All the signs in this group are removed
+    hash_remove(&sg_table, hi);
+    xfree(group);
   }
 }
 
 /// @return true if 'sign' is in 'group'.
 /// A sign can either be in the global group (sign->group == NULL)
 /// or in a named group. If 'group' is '*', then the sign is part of the group.
-static bool sign_in_group(sign_entry_T *sign, const char_u *group)
+static bool sign_in_group(sign_entry_T *sign, const char *group)
 {
-  return ((group != NULL && STRCMP(group, "*") == 0)
+  return ((group != NULL && strcmp(group, "*") == 0)
           || (group == NULL && sign->se_group == NULL)
           || (group != NULL && sign->se_group != NULL
-              && STRCMP(group, sign->se_group->sg_name) == 0));
+              && strcmp(group, sign->se_group->sg_name) == 0));
 }
 
 /// Get the next free sign identifier in the specified group
-static int sign_group_get_next_signid(buf_T *buf, const char_u *groupname)
+static int sign_group_get_next_signid(buf_T *buf, const char *groupname)
 {
   int id = 1;
   signgroup_T *group = NULL;
   sign_entry_T *sign;
-  hashitem_T *hi;
   int found = false;
 
   if (groupname != NULL) {
-    hi = hash_find(&sg_table, (char *)groupname);
+    hashitem_T *hi = hash_find(&sg_table, (char *)groupname);
     if (HASHITEM_EMPTY(hi)) {
       return id;
     }
@@ -154,7 +174,7 @@ static int sign_group_get_next_signid(buf_T *buf, const char_u *groupname)
     // Check whether this sign is already placed in the buffer
     found = true;
     FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-      if (id == sign->se_id && sign_in_group(sign, groupname)) {
+      if (id == sign->se_id && sign_in_group(sign, (char *)groupname)) {
         found = false;    // sign identifier is in use
         break;
       }
@@ -177,7 +197,7 @@ static int sign_group_get_next_signid(buf_T *buf, const char_u *groupname)
 /// @param typenr  typenr of sign we are adding
 /// @param has_text_or_icon  sign has text or icon
 static void insert_sign(buf_T *buf, sign_entry_T *prev, sign_entry_T *next, int id,
-                        const char_u *group, int prio, linenr_T lnum, int typenr,
+                        const char *group, int prio, linenr_T lnum, int typenr,
                         bool has_text_or_icon)
 {
   sign_entry_T *newsign = xmalloc(sizeof(sign_entry_T));
@@ -224,7 +244,7 @@ static void insert_sign(buf_T *buf, sign_entry_T *prev, sign_entry_T *next, int 
 /// @param lnum  line number which gets the mark
 /// @param typenr  typenr of sign we are adding
 /// @param has_text_or_icon  sign has text or icon
-static void insert_sign_by_lnum_prio(buf_T *buf, sign_entry_T *prev, int id, const char_u *group,
+static void insert_sign_by_lnum_prio(buf_T *buf, sign_entry_T *prev, int id, const char *group,
                                      int prio, linenr_T lnum, int typenr, bool has_text_or_icon)
 {
   sign_entry_T *sign;
@@ -259,7 +279,7 @@ static sign_T *find_sign_by_typenr(int typenr)
 }
 
 /// Get the name of a sign by its typenr.
-static char_u *sign_typenr2name(int typenr)
+static char *sign_typenr2name(int typenr)
 {
   sign_T *sp;
 
@@ -268,7 +288,7 @@ static char_u *sign_typenr2name(int typenr)
       return sp->sn_name;
     }
   }
-  return (char_u *)_("[Deleted]");
+  return _("[Deleted]");
 }
 
 /// Return information about a sign in a Dict
@@ -277,10 +297,10 @@ static dict_T *sign_get_info(sign_entry_T *sign)
   dict_T *d = tv_dict_alloc();
   tv_dict_add_nr(d,  S_LEN("id"), sign->se_id);
   tv_dict_add_str(d, S_LEN("group"), ((sign->se_group == NULL)
-                                      ? (char *)""
-                                      : (char *)sign->se_group->sg_name));
+                                      ? ""
+                                      : sign->se_group->sg_name));
   tv_dict_add_nr(d,  S_LEN("lnum"), sign->se_lnum);
-  tv_dict_add_str(d, S_LEN("name"), (char *)sign_typenr2name(sign->se_typenr));
+  tv_dict_add_str(d, S_LEN("name"), sign_typenr2name(sign->se_typenr));
   tv_dict_add_nr(d,  S_LEN("priority"), sign->se_priority);
 
   return d;
@@ -369,7 +389,7 @@ static void sign_sort_by_prio_on_line(buf_T *buf, sign_entry_T *sign)
 /// @param lnum  line number which gets the mark
 /// @param typenr  typenr of sign we are adding
 /// @param has_text_or_icon  sign has text or icon
-static void buf_addsign(buf_T *buf, int id, const char_u *groupname, int prio, linenr_T lnum,
+static void buf_addsign(buf_T *buf, int id, const char *groupname, int prio, linenr_T lnum,
                         int typenr, bool has_text_or_icon)
 {
   sign_entry_T *sign;    // a sign in the signlist
@@ -416,13 +436,13 @@ static void buf_addsign(buf_T *buf, int id, const char_u *groupname, int prio, l
 /// @param group  sign group
 /// @param typenr  typenr of sign we are adding
 /// @param prio  sign priority
-static linenr_T buf_change_sign_type(buf_T *buf, int markId, const char_u *group, int typenr,
+static linenr_T buf_change_sign_type(buf_T *buf, int markId, const char *group, int typenr,
                                      int prio)
 {
   sign_entry_T *sign;  // a sign in the signlist
 
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-    if (sign->se_id == markId && sign_in_group(sign, group)) {
+    if (sign->se_id == markId && sign_in_group(sign, (char *)group)) {
       sign->se_typenr = typenr;
       sign->se_priority = prio;
       sign_sort_by_prio_on_line(buf, sign);
@@ -534,7 +554,7 @@ int buf_get_signattrs(buf_T *buf, linenr_T lnum, SignTextAttrs sattrs[], HlPriAt
 ///
 /// @return  the line number of the deleted sign. If multiple signs are deleted,
 /// then returns the line number of the last sign deleted.
-static linenr_T buf_delsign(buf_T *buf, linenr_T atlnum, int id, char_u *group)
+static linenr_T buf_delsign(buf_T *buf, linenr_T atlnum, int id, char *group)
 {
   sign_entry_T **lastp;  // pointer to pointer to current sign
   sign_entry_T *sign;    // a sign in a b_signlist
@@ -558,7 +578,7 @@ static linenr_T buf_delsign(buf_T *buf, linenr_T atlnum, int id, char_u *group)
         sign_group_unref(sign->se_group->sg_name);
       }
       xfree(sign);
-      redraw_buf_line_later(buf, lnum);
+      redraw_buf_line_later(buf, lnum, false);
       // Check whether only one sign needs to be deleted
       // If deleting a sign with a specific identifier in a particular
       // group or deleting any sign at a particular line number, delete
@@ -590,7 +610,7 @@ static linenr_T buf_delsign(buf_T *buf, linenr_T atlnum, int id, char_u *group)
 /// @param buf  buffer to store sign in
 /// @param id  sign ID
 /// @param group  sign group
-static int buf_findsign(buf_T *buf, int id, char_u *group)
+static int buf_findsign(buf_T *buf, int id, char *group)
 {
   sign_entry_T *sign;  // a sign in the signlist
 
@@ -609,7 +629,7 @@ static int buf_findsign(buf_T *buf, int id, char_u *group)
 /// @param buf  buffer whose sign we are searching for
 /// @param lnum  line number of sign
 /// @param groupname  sign group name
-static sign_entry_T *buf_getsign_at_line(buf_T *buf, linenr_T lnum, char_u *groupname)
+static sign_entry_T *buf_getsign_at_line(buf_T *buf, linenr_T lnum, char *groupname)
 {
   sign_entry_T *sign;    // a sign in the signlist
 
@@ -633,7 +653,7 @@ static sign_entry_T *buf_getsign_at_line(buf_T *buf, linenr_T lnum, char_u *grou
 /// @param buf  buffer whose sign we are searching for
 /// @param lnum  line number of sign
 /// @param groupname  sign group name
-static int buf_findsign_id(buf_T *buf, linenr_T lnum, char_u *groupname)
+static int buf_findsign_id(buf_T *buf, linenr_T lnum, char *groupname)
 {
   sign_entry_T *sign;   // a sign in the signlist
 
@@ -661,7 +681,7 @@ void buf_delete_signs(buf_T *buf, char *group)
   lastp = &buf->b_signlist;
   for (sign = buf->b_signlist; sign != NULL; sign = next) {
     next = sign->se_next;
-    if (sign_in_group(sign, (char_u *)group)) {
+    if (sign_in_group(sign, group)) {
       *lastp = next;
       if (next != NULL) {
         next->se_prev = sign->se_prev;
@@ -678,7 +698,7 @@ void buf_delete_signs(buf_T *buf, char *group)
 }
 
 /// List placed signs for "rbuf".  If "rbuf" is NULL do it for all buffers.
-static void sign_list_placed(buf_T *rbuf, char_u *sign_group)
+static void sign_list_placed(buf_T *rbuf, char *sign_group)
 {
   buf_T *buf;
   sign_entry_T *sign;
@@ -725,7 +745,27 @@ static void sign_list_placed(buf_T *rbuf, char_u *sign_group)
   }
 }
 
-/// Adjust a placed sign for inserted/deleted lines.
+/// Adjust or delete a placed sign for inserted/deleted lines.
+///
+/// @return  the new line number of the sign, or 0 if the sign is in deleted lines.
+static linenr_T sign_adjust_one(const linenr_T se_lnum, linenr_T line1, linenr_T line2,
+                                linenr_T amount, linenr_T amount_after)
+{
+  if (se_lnum < line1) {
+    // Ignore changes to lines after the sign
+    return se_lnum;
+  }
+  if (se_lnum > line2) {
+    // Lines inserted or deleted before the sign
+    return se_lnum + amount_after;
+  }
+  if (amount == MAXLNUM) {  // sign in deleted lines
+    return 0;
+  }
+  return se_lnum + amount;
+}
+
+/// Adjust placed signs for inserted/deleted lines.
 void sign_mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T amount_after)
 {
   sign_entry_T *sign;           // a sign in a b_signlist
@@ -736,9 +776,7 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T 
   int is_fixed = 0;
   int signcol = win_signcol_configured(curwin, &is_fixed);
 
-  bool delete = amount == MAXLNUM;
-
-  if (delete) {
+  if (amount == MAXLNUM) {  // deleting
     buf_signcols_del_check(curbuf, line1, line2);
   }
 
@@ -746,11 +784,10 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T 
 
   for (sign = curbuf->b_signlist; sign != NULL; sign = next) {
     next = sign->se_next;
-    new_lnum = sign->se_lnum;
-    if (sign->se_lnum >= line1 && sign->se_lnum <= line2) {
-      if (!delete) {
-        new_lnum += amount;
-      } else if (!is_fixed || signcol >= 2) {
+
+    new_lnum = sign_adjust_one(sign->se_lnum, line1, line2, amount, amount_after);
+    if (new_lnum == 0) {  // sign in deleted lines
+      if (!is_fixed || signcol >= 2) {
         *lastp = next;
         if (next) {
           next->se_prev = last;
@@ -758,18 +795,22 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T 
         xfree(sign);
         continue;
       }
-    } else if (sign->se_lnum > line2) {
-      new_lnum += amount_after;
-    }
-    // If the new sign line number is past the last line in the buffer,
-    // then don't adjust the line number. Otherwise, it will always be past
-    // the last line and will not be visible.
-    if (sign->se_lnum >= line1 && new_lnum <= curbuf->b_ml.ml_line_count) {
-      sign->se_lnum = new_lnum;
+    } else {
+      // If the new sign line number is past the last line in the buffer,
+      // then don't adjust the line number. Otherwise, it will always be past
+      // the last line and will not be visible.
+      if (new_lnum <= curbuf->b_ml.ml_line_count) {
+        sign->se_lnum = new_lnum;
+      }
     }
 
     last = sign;
     lastp = &sign->se_next;
+  }
+
+  new_lnum = sign_adjust_one(curbuf->b_signcols.sentinel, line1, line2, amount, amount_after);
+  if (new_lnum != 0) {
+    curbuf->b_signcols.sentinel = new_lnum;
   }
 }
 
@@ -778,14 +819,14 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T 
 ///
 /// @param begin_cmd  begin of sign subcmd
 /// @param end_cmd  just after sign subcmd
-static int sign_cmd_idx(char_u *begin_cmd, char_u *end_cmd)
+static int sign_cmd_idx(char *begin_cmd, char *end_cmd)
 {
   int idx;
-  char_u save = *end_cmd;
+  char save = *end_cmd;
 
-  *end_cmd = (char_u)NUL;
+  *end_cmd = NUL;
   for (idx = 0;; idx++) {
-    if (cmds[idx] == NULL || STRCMP(begin_cmd, cmds[idx]) == 0) {
+    if (cmds[idx] == NULL || strcmp(begin_cmd, cmds[idx]) == 0) {
       break;
     }
   }
@@ -794,7 +835,7 @@ static int sign_cmd_idx(char_u *begin_cmd, char_u *end_cmd)
 }
 
 /// Find a sign by name. Also returns pointer to the previous sign.
-static sign_T *sign_find(const char_u *name, sign_T **sp_prev)
+static sign_T *sign_find(const char *name, sign_T **sp_prev)
 {
   sign_T *sp;
 
@@ -802,7 +843,7 @@ static sign_T *sign_find(const char_u *name, sign_T **sp_prev)
     *sp_prev = NULL;
   }
   for (sp = first_sign; sp != NULL; sp = sp->sn_next) {
-    if (STRCMP(sp->sn_name, name) == 0) {
+    if (strcmp(sp->sn_name, name) == 0) {
       break;
     }
     if (sp_prev != NULL) {
@@ -814,7 +855,7 @@ static sign_T *sign_find(const char_u *name, sign_T **sp_prev)
 }
 
 /// Allocate a new sign
-static sign_T *alloc_new_sign(char_u *name)
+static sign_T *alloc_new_sign(char *name)
 {
   sign_T *sp;
   sign_T *lp;
@@ -848,28 +889,28 @@ static sign_T *alloc_new_sign(char_u *name)
     next_sign_typenr = 1;  // wrap around
   }
 
-  sp->sn_name = vim_strsave(name);
+  sp->sn_name = xstrdup(name);
 
   return sp;
 }
 
 /// Initialize the icon information for a new sign
-static void sign_define_init_icon(sign_T *sp, char_u *icon)
+static void sign_define_init_icon(sign_T *sp, char *icon)
 {
   xfree(sp->sn_icon);
-  sp->sn_icon = vim_strsave(icon);
+  sp->sn_icon = xstrdup(icon);
   backslash_halve(sp->sn_icon);
 }
 
 /// Initialize the text for a new sign
-static int sign_define_init_text(sign_T *sp, char_u *text)
+static int sign_define_init_text(sign_T *sp, char *text)
 {
-  char_u *s;
-  char_u *endp;
+  char *s;
+  char *endp;
   int cells;
   size_t len;
 
-  endp = text + (int)STRLEN(text);
+  endp = text + (int)strlen(text);
   for (s = text; s + 1 < endp; s++) {
     if (*s == '\\') {
       // Remove a backslash, so that it is possible
@@ -880,11 +921,11 @@ static int sign_define_init_text(sign_T *sp, char_u *text)
   }
   // Count cells and check for non-printable chars
   cells = 0;
-  for (s = text; s < endp; s += utfc_ptr2len((char *)s)) {
-    if (!vim_isprintc(utf_ptr2char((char *)s))) {
+  for (s = text; s < endp; s += utfc_ptr2len(s)) {
+    if (!vim_isprintc(utf_ptr2char(s))) {
       break;
     }
-    cells += utf_ptr2cells((char *)s);
+    cells += utf_ptr2cells(s);
   }
   // Currently must be empty, one or two display cells
   if (s != endp || cells > 2) {
@@ -900,7 +941,7 @@ static int sign_define_init_text(sign_T *sp, char_u *text)
   // Allocate one byte more if we need to pad up
   // with a space.
   len = (size_t)(endp - text + ((cells == 1) ? 1 : 0));
-  sp->sn_text = vim_strnsave(text, len);
+  sp->sn_text = xstrnsave(text, len);
 
   if (cells == 1) {
     STRCPY(sp->sn_text + len - 1, " ");
@@ -910,8 +951,8 @@ static int sign_define_init_text(sign_T *sp, char_u *text)
 }
 
 /// Define a new sign or update an existing sign
-static int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_u *text,
-                               char_u *texthl, char_u *culhl, char *numhl)
+static int sign_define_by_name(char *name, char *icon, char *linehl, char *text, char *texthl,
+                               char *culhl, char *numhl)
 {
   sign_T *sp_prev;
   sign_T *sp;
@@ -952,7 +993,7 @@ static int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_
     if (*linehl == NUL) {
       sp->sn_line_hl = 0;
     } else {
-      sp->sn_line_hl = syn_check_group((char *)linehl, STRLEN(linehl));
+      sp->sn_line_hl = syn_check_group(linehl, strlen(linehl));
     }
   }
 
@@ -960,7 +1001,7 @@ static int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_
     if (*texthl == NUL) {
       sp->sn_text_hl = 0;
     } else {
-      sp->sn_text_hl = syn_check_group((char *)texthl, STRLEN(texthl));
+      sp->sn_text_hl = syn_check_group(texthl, strlen(texthl));
     }
   }
 
@@ -968,7 +1009,7 @@ static int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_
     if (*culhl == NUL) {
       sp->sn_cul_hl = 0;
     } else {
-      sp->sn_cul_hl = syn_check_group((char *)culhl, STRLEN(culhl));
+      sp->sn_cul_hl = syn_check_group(culhl, strlen(culhl));
     }
   }
 
@@ -976,7 +1017,7 @@ static int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_
     if (*numhl == NUL) {
       sp->sn_num_hl = 0;
     } else {
-      sp->sn_num_hl = syn_check_group(numhl, STRLEN(numhl));
+      sp->sn_num_hl = syn_check_group(numhl, strlen(numhl));
     }
   }
 
@@ -984,7 +1025,7 @@ static int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_
 }
 
 /// Free the sign specified by 'name'.
-static int sign_undefine_by_name(const char_u *name)
+static int sign_undefine_by_name(const char *name)
 {
   sign_T *sp_prev;
   sign_T *sp;
@@ -1000,7 +1041,7 @@ static int sign_undefine_by_name(const char_u *name)
 }
 
 /// List the signs matching 'name'
-static void sign_list_by_name(char_u *name)
+static void sign_list_by_name(char *name)
 {
   sign_T *sp;
 
@@ -1024,7 +1065,7 @@ static void may_force_numberwidth_recompute(buf_T *buf, int unplace)
 }
 
 /// Place a sign at the specified file location or update a sign.
-static int sign_place(int *sign_id, const char_u *sign_group, const char_u *sign_name, buf_T *buf,
+static int sign_place(int *sign_id, const char *sign_group, const char *sign_name, buf_T *buf,
                       linenr_T lnum, int prio)
 {
   sign_T *sp;
@@ -1035,7 +1076,7 @@ static int sign_place(int *sign_id, const char_u *sign_group, const char_u *sign
   }
 
   for (sp = first_sign; sp != NULL; sp = sp->sn_next) {
-    if (STRCMP(sp->sn_name, sign_name) == 0) {
+    if (strcmp(sp->sn_name, sign_name) == 0) {
       break;
     }
   }
@@ -1044,7 +1085,7 @@ static int sign_place(int *sign_id, const char_u *sign_group, const char_u *sign
     return FAIL;
   }
   if (*sign_id == 0) {
-    *sign_id = sign_group_get_next_signid(buf, sign_group);
+    *sign_id = sign_group_get_next_signid(buf, (char *)sign_group);
   }
 
   if (lnum > 0) {
@@ -1053,17 +1094,17 @@ static int sign_place(int *sign_id, const char_u *sign_group, const char_u *sign
     bool has_text_or_icon = sp->sn_text != NULL || sp->sn_icon != NULL;
     buf_addsign(buf,
                 *sign_id,
-                sign_group,
+                (char *)sign_group,
                 prio,
                 lnum,
                 sp->sn_typenr,
                 has_text_or_icon);
   } else {
     // ":sign place {id} file={fname}": change sign type and/or priority
-    lnum = buf_change_sign_type(buf, *sign_id, sign_group, sp->sn_typenr, prio);
+    lnum = buf_change_sign_type(buf, *sign_id, (char *)sign_group, sp->sn_typenr, prio);
   }
   if (lnum > 0) {
-    redraw_buf_line_later(buf, lnum);
+    redraw_buf_line_later(buf, lnum, false);
 
     // When displaying signs in the 'number' column, if the width of the
     // number column is less than 2, then force recomputing the width.
@@ -1077,7 +1118,7 @@ static int sign_place(int *sign_id, const char_u *sign_group, const char_u *sign
 }
 
 /// Unplace the specified sign
-static int sign_unplace(int sign_id, char_u *sign_group, buf_T *buf, linenr_T atlnum)
+static int sign_unplace(int sign_id, char *sign_group, buf_T *buf, linenr_T atlnum)
 {
   if (buf->b_signlist == NULL) {  // No signs in the buffer
     return OK;
@@ -1085,7 +1126,7 @@ static int sign_unplace(int sign_id, char_u *sign_group, buf_T *buf, linenr_T at
   if (sign_id == 0) {
     // Delete all the signs in the specified buffer
     redraw_buf_later(buf, UPD_NOT_VALID);
-    buf_delete_signs(buf, (char *)sign_group);
+    buf_delete_signs(buf, sign_group);
   } else {
     linenr_T lnum;
 
@@ -1094,7 +1135,7 @@ static int sign_unplace(int sign_id, char_u *sign_group, buf_T *buf, linenr_T at
     if (lnum == 0) {
       return FAIL;
     }
-    redraw_buf_line_later(buf, lnum);
+    redraw_buf_line_later(buf, lnum, false);
   }
 
   // When all the signs in a buffer are removed, force recomputing the
@@ -1108,7 +1149,7 @@ static int sign_unplace(int sign_id, char_u *sign_group, buf_T *buf, linenr_T at
 }
 
 /// Unplace the sign at the current cursor line.
-static void sign_unplace_at_cursor(char_u *groupname)
+static void sign_unplace_at_cursor(char *groupname)
 {
   int id = -1;
 
@@ -1121,7 +1162,7 @@ static void sign_unplace_at_cursor(char_u *groupname)
 }
 
 /// Jump to a sign.
-static linenr_T sign_jump(int sign_id, char_u *sign_group, buf_T *buf)
+static linenr_T sign_jump(int sign_id, char *sign_group, buf_T *buf)
 {
   linenr_T lnum;
 
@@ -1140,7 +1181,7 @@ static linenr_T sign_jump(int sign_id, char_u *sign_group, buf_T *buf)
       emsg(_("E934: Cannot jump to a buffer that does not have a name"));
       return -1;
     }
-    size_t cmdlen = STRLEN(buf->b_fname) + 24;
+    size_t cmdlen = strlen(buf->b_fname) + 24;
     char *cmd = xmallocz(cmdlen);
     snprintf(cmd, cmdlen, "e +%" PRId64 " %s",
              (int64_t)lnum, buf->b_fname);
@@ -1154,49 +1195,48 @@ static linenr_T sign_jump(int sign_id, char_u *sign_group, buf_T *buf)
 }
 
 /// ":sign define {name} ..." command
-static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
+static void sign_define_cmd(char *sign_name, char *cmdline)
 {
-  char_u *arg;
-  char_u *p = cmdline;
-  char_u *icon = NULL;
-  char_u *text = NULL;
-  char_u *linehl = NULL;
-  char_u *texthl = NULL;
-  char_u *culhl = NULL;
-  char_u *numhl = NULL;
+  char *p = cmdline;
+  char *icon = NULL;
+  char *text = NULL;
+  char *linehl = NULL;
+  char *texthl = NULL;
+  char *culhl = NULL;
+  char *numhl = NULL;
   int failed = false;
 
   // set values for a defined sign.
   for (;;) {
-    arg = (char_u *)skipwhite((char *)p);
+    char *arg = skipwhite(p);
     if (*arg == NUL) {
       break;
     }
-    p = (char_u *)skiptowhite_esc((char *)arg);
-    if (STRNCMP(arg, "icon=", 5) == 0) {
+    p = skiptowhite_esc(arg);
+    if (strncmp(arg, "icon=", 5) == 0) {
       arg += 5;
       XFREE_CLEAR(icon);
-      icon = vim_strnsave(arg, (size_t)(p - arg));
-    } else if (STRNCMP(arg, "text=", 5) == 0) {
+      icon = xstrnsave(arg, (size_t)(p - arg));
+    } else if (strncmp(arg, "text=", 5) == 0) {
       arg += 5;
       XFREE_CLEAR(text);
-      text = vim_strnsave(arg, (size_t)(p - arg));
-    } else if (STRNCMP(arg, "linehl=", 7) == 0) {
+      text = xstrnsave(arg, (size_t)(p - arg));
+    } else if (strncmp(arg, "linehl=", 7) == 0) {
       arg += 7;
       XFREE_CLEAR(linehl);
-      linehl = vim_strnsave(arg, (size_t)(p - arg));
-    } else if (STRNCMP(arg, "texthl=", 7) == 0) {
+      linehl = xstrnsave(arg, (size_t)(p - arg));
+    } else if (strncmp(arg, "texthl=", 7) == 0) {
       arg += 7;
       XFREE_CLEAR(texthl);
-      texthl = vim_strnsave(arg, (size_t)(p - arg));
-    } else if (STRNCMP(arg, "culhl=", 6) == 0) {
+      texthl = xstrnsave(arg, (size_t)(p - arg));
+    } else if (strncmp(arg, "culhl=", 6) == 0) {
       arg += 6;
       XFREE_CLEAR(culhl);
-      culhl = vim_strnsave(arg, (size_t)(p - arg));
-    } else if (STRNCMP(arg, "numhl=", 6) == 0) {
+      culhl = xstrnsave(arg, (size_t)(p - arg));
+    } else if (strncmp(arg, "numhl=", 6) == 0) {
       arg += 6;
       XFREE_CLEAR(numhl);
-      numhl = vim_strnsave(arg, (size_t)(p - arg));
+      numhl = xstrnsave(arg, (size_t)(p - arg));
     } else {
       semsg(_(e_invarg2), arg);
       failed = true;
@@ -1205,7 +1245,8 @@ static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
   }
 
   if (!failed) {
-    sign_define_by_name(sign_name, icon, linehl, text, texthl, culhl, (char *)numhl);
+    sign_define_by_name(sign_name, icon, linehl, text,
+                        texthl, culhl, numhl);
   }
 
   xfree(icon);
@@ -1217,7 +1258,7 @@ static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
 }
 
 /// ":sign place" command
-static void sign_place_cmd(buf_T *buf, linenr_T lnum, char_u *sign_name, int id, char_u *group,
+static void sign_place_cmd(buf_T *buf, linenr_T lnum, char *sign_name, int id, char *group,
                            int prio)
 {
   if (id <= 0) {
@@ -1250,7 +1291,7 @@ static void sign_place_cmd(buf_T *buf, linenr_T lnum, char_u *sign_name, int id,
 }
 
 /// ":sign unplace" command
-static void sign_unplace_cmd(buf_T *buf, linenr_T lnum, char_u *sign_name, int id, char_u *group)
+static void sign_unplace_cmd(buf_T *buf, linenr_T lnum, const char *sign_name, int id, char *group)
 {
   if (lnum >= 0 || sign_name != NULL || (group != NULL && *group == '\0')) {
     emsg(_(e_invarg));
@@ -1272,7 +1313,7 @@ static void sign_unplace_cmd(buf_T *buf, linenr_T lnum, char_u *sign_name, int i
       // :sign unplace * group=*
       FOR_ALL_BUFFERS(cbuf) {
         if (cbuf->b_signlist != NULL) {
-          buf_delete_signs(cbuf, (char *)group);
+          buf_delete_signs(cbuf, group);
         }
       }
     }
@@ -1307,7 +1348,7 @@ static void sign_unplace_cmd(buf_T *buf, linenr_T lnum, char_u *sign_name, int i
 ///   :sign jump {id} buffer={nr}
 ///   :sign jump {id} group={group} file={fname}
 ///   :sign jump {id} group={group} buffer={nr}
-static void sign_jump_cmd(buf_T *buf, linenr_T lnum, char_u *sign_name, int id, char_u *group)
+static void sign_jump_cmd(buf_T *buf, linenr_T lnum, const char *sign_name, int id, char *group)
 {
   if (sign_name == NULL && group == NULL && id == -1) {
     emsg(_(e_argreq));
@@ -1329,40 +1370,40 @@ static void sign_jump_cmd(buf_T *buf, linenr_T lnum, char_u *sign_name, int id, 
 /// ":sign jump" commands.
 /// The supported arguments are: line={lnum} name={name} group={group}
 /// priority={prio} and file={fname} or buffer={nr}.
-static int parse_sign_cmd_args(int cmd, char_u *arg, char_u **sign_name, int *signid,
-                               char_u **group, int *prio, buf_T **buf, linenr_T *lnum)
+static int parse_sign_cmd_args(int cmd, char *arg, char **sign_name, int *signid, char **group,
+                               int *prio, buf_T **buf, linenr_T *lnum)
 {
-  char_u *arg1;
-  char_u *name;
-  char_u *filename = NULL;
+  char *arg1;
+  char *name;
+  char *filename = NULL;
   int lnum_arg = false;
 
   // first arg could be placed sign id
   arg1 = arg;
   if (ascii_isdigit(*arg)) {
-    *signid = getdigits_int((char **)&arg, true, 0);
+    *signid = getdigits_int(&arg, true, 0);
     if (!ascii_iswhite(*arg) && *arg != NUL) {
       *signid = -1;
       arg = arg1;
     } else {
-      arg = (char_u *)skipwhite((char *)arg);
+      arg = skipwhite(arg);
     }
   }
 
   while (*arg != NUL) {
-    if (STRNCMP(arg, "line=", 5) == 0) {
+    if (strncmp(arg, "line=", 5) == 0) {
       arg += 5;
-      *lnum = atoi((char *)arg);
+      *lnum = atoi(arg);
       arg = skiptowhite(arg);
       lnum_arg = true;
-    } else if (STRNCMP(arg, "*", 1) == 0 && cmd == SIGNCMD_UNPLACE) {
+    } else if (strncmp(arg, "*", 1) == 0 && cmd == SIGNCMD_UNPLACE) {
       if (*signid != -1) {
         emsg(_(e_invarg));
         return FAIL;
       }
       *signid = -2;
       arg = skiptowhite(arg + 1);
-    } else if (STRNCMP(arg, "name=", 5) == 0) {
+    } else if (strncmp(arg, "name=", 5) == 0) {
       arg += 5;
       name = arg;
       arg = skiptowhite(arg);
@@ -1373,27 +1414,27 @@ static int parse_sign_cmd_args(int cmd, char_u *arg, char_u **sign_name, int *si
         name++;
       }
       *sign_name = name;
-    } else if (STRNCMP(arg, "group=", 6) == 0) {
+    } else if (strncmp(arg, "group=", 6) == 0) {
       arg += 6;
       *group = arg;
       arg = skiptowhite(arg);
       if (*arg != NUL) {
         *arg++ = NUL;
       }
-    } else if (STRNCMP(arg, "priority=", 9) == 0) {
+    } else if (strncmp(arg, "priority=", 9) == 0) {
       arg += 9;
-      *prio = atoi((char *)arg);
+      *prio = atoi(arg);
       arg = skiptowhite(arg);
-    } else if (STRNCMP(arg, "file=", 5) == 0) {
+    } else if (strncmp(arg, "file=", 5) == 0) {
       arg += 5;
       filename = arg;
-      *buf = buflist_findname_exp((char *)arg);
+      *buf = buflist_findname_exp(arg);
       break;
-    } else if (STRNCMP(arg, "buffer=", 7) == 0) {
+    } else if (strncmp(arg, "buffer=", 7) == 0) {
       arg += 7;
       filename = arg;
-      *buf = buflist_findnr(getdigits_int((char **)&arg, true, 0));
-      if (*skipwhite((char *)arg) != NUL) {
+      *buf = buflist_findnr(getdigits_int(&arg, true, 0));
+      if (*skipwhite(arg) != NUL) {
         semsg(_(e_trailing_arg), arg);
       }
       break;
@@ -1401,7 +1442,7 @@ static int parse_sign_cmd_args(int cmd, char_u *arg, char_u **sign_name, int *si
       emsg(_(e_invarg));
       return FAIL;
     }
-    arg = (char_u *)skipwhite((char *)arg);
+    arg = skipwhite(arg);
   }
 
   if (filename != NULL && *buf == NULL) {
@@ -1421,8 +1462,8 @@ static int parse_sign_cmd_args(int cmd, char_u *arg, char_u **sign_name, int *si
 /// ":sign" command
 void ex_sign(exarg_T *eap)
 {
-  char_u *arg = (char_u *)eap->arg;
-  char_u *p;
+  char *arg = eap->arg;
+  char *p;
   int idx;
   sign_T *sp;
 
@@ -1433,7 +1474,7 @@ void ex_sign(exarg_T *eap)
     semsg(_("E160: Unknown sign command: %s"), arg);
     return;
   }
-  arg = (char_u *)skipwhite((char *)p);
+  arg = skipwhite(p);
 
   if (idx <= SIGNCMD_LIST) {
     // Define, undefine or list signs.
@@ -1445,7 +1486,7 @@ void ex_sign(exarg_T *eap)
     } else if (*arg == NUL) {
       emsg(_("E156: Missing sign name"));
     } else {
-      char_u *name;
+      char *name;
 
       // Isolate the sign name.  If it's a number skip leading zeroes,
       // so that "099" and "99" are the same sign.  But keep "0".
@@ -1456,7 +1497,7 @@ void ex_sign(exarg_T *eap)
       while (arg[0] == '0' && arg[1] != NUL) {
         arg++;
       }
-      name = vim_strsave(arg);
+      name = xstrdup(arg);
 
       if (idx == SIGNCMD_DEFINE) {
         sign_define_cmd(name, p);
@@ -1474,8 +1515,8 @@ void ex_sign(exarg_T *eap)
   } else {
     int id = -1;
     linenr_T lnum = -1;
-    char_u *sign_name = NULL;
-    char_u *group = NULL;
+    char *sign_name = NULL;
+    char *group = NULL;
     int prio = SIGN_DEF_PRIO;
     buf_T *buf = NULL;
 
@@ -1500,12 +1541,12 @@ static void sign_getinfo(sign_T *sp, dict_T *retdict)
 {
   const char *p;
 
-  tv_dict_add_str(retdict, S_LEN("name"), (char *)sp->sn_name);
+  tv_dict_add_str(retdict, S_LEN("name"), sp->sn_name);
   if (sp->sn_icon != NULL) {
-    tv_dict_add_str(retdict, S_LEN("icon"), (char *)sp->sn_icon);
+    tv_dict_add_str(retdict, S_LEN("icon"), sp->sn_icon);
   }
   if (sp->sn_text != NULL) {
-    tv_dict_add_str(retdict, S_LEN("text"), (char *)sp->sn_text);
+    tv_dict_add_str(retdict, S_LEN("text"), sp->sn_text);
   }
   if (sp->sn_line_hl > 0) {
     p = get_highlight_name_ext(NULL, sp->sn_line_hl - 1, false);
@@ -1539,20 +1580,19 @@ static void sign_getinfo(sign_T *sp, dict_T *retdict)
 
 /// If 'name' is NULL, return a list of all the defined signs.
 /// Otherwise, return information about the specified sign.
-static void sign_getlist(const char_u *name, list_T *retlist)
+static void sign_getlist(const char *name, list_T *retlist)
 {
   sign_T *sp = first_sign;
-  dict_T *dict;
 
   if (name != NULL) {
-    sp = sign_find(name, NULL);
+    sp = sign_find((char *)name, NULL);
     if (sp == NULL) {
       return;
     }
   }
 
   for (; sp != NULL && !got_int; sp = sp->sn_next) {
-    dict = tv_dict_alloc();
+    dict_T *dict = tv_dict_alloc();
     tv_list_append_dict(retlist, dict);
     sign_getinfo(sp, dict);
 
@@ -1567,18 +1607,17 @@ list_T *get_buffer_signs(buf_T *buf)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   sign_entry_T *sign;
-  dict_T *d;
   list_T *const l = tv_list_alloc(kListLenMayKnow);
 
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-    d = sign_get_info(sign);
+    dict_T *d = sign_get_info(sign);
     tv_list_append_dict(l, d);
   }
   return l;
 }
 
-/// Return information about all the signs placed in a buffer
-static void sign_get_placed_in_buf(buf_T *buf, linenr_T lnum, int sign_id, const char_u *sign_group,
+/// @return  information about all the signs placed in a buffer
+static void sign_get_placed_in_buf(buf_T *buf, linenr_T lnum, int sign_id, const char *sign_group,
                                    list_T *retlist)
 {
   dict_T *d;
@@ -1594,7 +1633,7 @@ static void sign_get_placed_in_buf(buf_T *buf, linenr_T lnum, int sign_id, const
   tv_dict_add_list(d, S_LEN("signs"), l);
 
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-    if (!sign_in_group(sign, sign_group)) {
+    if (!sign_in_group(sign, (char *)sign_group)) {
       continue;
     }
     if ((lnum == 0 && sign_id == 0)
@@ -1609,7 +1648,7 @@ static void sign_get_placed_in_buf(buf_T *buf, linenr_T lnum, int sign_id, const
 /// Get a list of signs placed in buffer 'buf'. If 'num' is non-zero, return the
 /// sign placed at the line number. If 'lnum' is zero, return all the signs
 /// placed in 'buf'. If 'buf' is NULL, return signs placed in all the buffers.
-static void sign_get_placed(buf_T *buf, linenr_T lnum, int sign_id, const char_u *sign_group,
+static void sign_get_placed(buf_T *buf, linenr_T lnum, int sign_id, const char *sign_group,
                             list_T *retlist)
 {
   if (buf != NULL) {
@@ -1629,12 +1668,12 @@ static void sign_list_defined(sign_T *sp)
   smsg("sign %s", sp->sn_name);
   if (sp->sn_icon != NULL) {
     msg_puts(" icon=");
-    msg_outtrans((char *)sp->sn_icon);
+    msg_outtrans(sp->sn_icon);
     msg_puts(_(" (not supported)"));
   }
   if (sp->sn_text != NULL) {
     msg_puts(" text=");
-    msg_outtrans((char *)sp->sn_text);
+    msg_outtrans(sp->sn_text);
   }
   if (sp->sn_line_hl > 0) {
     msg_puts(" linehl=");
@@ -1710,8 +1749,8 @@ static enum {
   EXP_SIGN_GROUPS,  // expand with name of placed sign groups
 } expand_what;
 
-// Return the n'th sign name (used for command line completion)
-static char_u *get_nth_sign_name(int idx)
+/// @return  the n'th sign name (used for command line completion)
+static char *get_nth_sign_name(int idx)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Complete with name of signs already defined
@@ -1724,8 +1763,8 @@ static char_u *get_nth_sign_name(int idx)
   return NULL;
 }
 
-// Return the n'th sign group name (used for command line completion)
-static char_u *get_nth_sign_group_name(int idx)
+/// @return  the n'th sign group name (used for command line completion)
+static char *get_nth_sign_group_name(int idx)
 {
   // Complete with name of sign groups already defined
   int current_idx = 0;
@@ -1768,26 +1807,26 @@ char *get_sign_name(expand_T *xp, int idx)
     return unplace_arg[idx];
   }
   case EXP_SIGN_NAMES:
-    return (char *)get_nth_sign_name(idx);
+    return get_nth_sign_name(idx);
   case EXP_SIGN_GROUPS:
-    return (char *)get_nth_sign_group_name(idx);
+    return get_nth_sign_group_name(idx);
   default:
     return NULL;
   }
 }
 
 /// Handle command line completion for :sign command.
-void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
+void set_context_in_sign_cmd(expand_T *xp, char *arg)
 {
-  char_u *end_subcmd;
-  char_u *last;
+  char *end_subcmd;
+  char *last;
   int cmd_idx;
-  char_u *begin_subcmd_args;
+  char *begin_subcmd_args;
 
   // Default: expand subcommands.
   xp->xp_context = EXPAND_SIGN;
   expand_what = EXP_SUBCMD;
-  xp->xp_pattern = (char *)arg;
+  xp->xp_pattern = arg;
 
   end_subcmd = skiptowhite(arg);
   if (*end_subcmd == NUL) {
@@ -1801,7 +1840,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   // :sign {subcmd} {subcmd_args}
   //                |
   //                begin_subcmd_args
-  begin_subcmd_args = (char_u *)skipwhite((char *)end_subcmd);
+  begin_subcmd_args = skipwhite(end_subcmd);
 
   // Expand last argument of subcmd.
   //
@@ -1810,21 +1849,21 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   //              p
 
   // Loop until reaching last argument.
-  char_u *p = begin_subcmd_args;
+  char *p = begin_subcmd_args;
   do {
-    p = (char_u *)skipwhite((char *)p);
+    p = skipwhite(p);
     last = p;
     p = skiptowhite(p);
   } while (*p != NUL);
 
-  p = (char_u *)vim_strchr((char *)last, '=');
+  p = vim_strchr(last, '=');
 
   // :sign define {name} {args}... {last}=
   //                               |     |
   //                            last     p
   if (p == NULL) {
     // Expand last argument name (before equal sign).
-    xp->xp_pattern = (char *)last;
+    xp->xp_pattern = last;
     switch (cmd_idx) {
     case SIGNCMD_DEFINE:
       expand_what = EXP_DEFINE;
@@ -1854,26 +1893,26 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
     }
   } else {
     // Expand last argument value (after equal sign).
-    xp->xp_pattern = (char *)p + 1;
+    xp->xp_pattern = p + 1;
     switch (cmd_idx) {
     case SIGNCMD_DEFINE:
-      if (STRNCMP(last, "texthl", 6) == 0
-          || STRNCMP(last, "linehl", 6) == 0
-          || STRNCMP(last, "culhl", 5) == 0
-          || STRNCMP(last, "numhl", 5) == 0) {
+      if (strncmp(last, "texthl", 6) == 0
+          || strncmp(last, "linehl", 6) == 0
+          || strncmp(last, "culhl", 5) == 0
+          || strncmp(last, "numhl", 5) == 0) {
         xp->xp_context = EXPAND_HIGHLIGHT;
-      } else if (STRNCMP(last, "icon", 4) == 0) {
+      } else if (strncmp(last, "icon", 4) == 0) {
         xp->xp_context = EXPAND_FILES;
       } else {
         xp->xp_context = EXPAND_NOTHING;
       }
       break;
     case SIGNCMD_PLACE:
-      if (STRNCMP(last, "name", 4) == 0) {
+      if (strncmp(last, "name", 4) == 0) {
         expand_what = EXP_SIGN_NAMES;
-      } else if (STRNCMP(last, "group", 5) == 0) {
+      } else if (strncmp(last, "group", 5) == 0) {
         expand_what = EXP_SIGN_GROUPS;
-      } else if (STRNCMP(last, "file", 4) == 0) {
+      } else if (strncmp(last, "file", 4) == 0) {
         xp->xp_context = EXPAND_BUFFERS;
       } else {
         xp->xp_context = EXPAND_NOTHING;
@@ -1881,9 +1920,9 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
       break;
     case SIGNCMD_UNPLACE:
     case SIGNCMD_JUMP:
-      if (STRNCMP(last, "group", 5) == 0) {
+      if (strncmp(last, "group", 5) == 0) {
         expand_what = EXP_SIGN_GROUPS;
-      } else if (STRNCMP(last, "file", 4) == 0) {
+      } else if (strncmp(last, "file", 4) == 0) {
         xp->xp_context = EXPAND_BUFFERS;
       } else {
         xp->xp_context = EXPAND_NOTHING;
@@ -1928,8 +1967,8 @@ static int sign_define_from_dict(const char *name_arg, dict_T *dict)
     numhl  = tv_dict_get_string(dict, "numhl", true);
   }
 
-  if (sign_define_by_name((char_u *)name, (char_u *)icon, (char_u *)linehl,
-                          (char_u *)text, (char_u *)texthl, (char_u *)culhl, numhl)
+  if (sign_define_by_name(name, icon, linehl,
+                          text, texthl, culhl, numhl)
       == OK) {
     retval = 0;
   }
@@ -1964,7 +2003,7 @@ static void sign_define_multiple(list_T *l, list_T *retlist)
 }
 
 /// "sign_define()" function
-void f_sign_define(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_define(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const char *name;
 
@@ -1995,7 +2034,7 @@ void f_sign_define(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "sign_getdefined()" function
-void f_sign_getdefined(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_getdefined(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const char *name = NULL;
 
@@ -2005,14 +2044,13 @@ void f_sign_getdefined(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     name = tv_get_string(&argvars[0]);
   }
 
-  sign_getlist((const char_u *)name, rettv->vval.v_list);
+  sign_getlist(name, rettv->vval.v_list);
 }
 
 /// "sign_getplaced()" function
-void f_sign_getplaced(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_getplaced(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   buf_T *buf = NULL;
-  dict_T *dict;
   dictitem_T *di;
   linenr_T lnum = 0;
   int sign_id = 0;
@@ -2029,6 +2067,7 @@ void f_sign_getplaced(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
 
     if (argvars[1].v_type != VAR_UNKNOWN) {
+      dict_T *dict;
       if (argvars[1].v_type != VAR_DICT
           || ((dict = argvars[1].vval.v_dict) == NULL)) {
         emsg(_(e_dictreq));
@@ -2062,12 +2101,11 @@ void f_sign_getplaced(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  sign_get_placed(buf, lnum, sign_id, (const char_u *)group,
-                  rettv->vval.v_list);
+  sign_get_placed(buf, lnum, sign_id, group, rettv->vval.v_list);
 }
 
 /// "sign_jump()" function
-void f_sign_jump(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_jump(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   int sign_id;
   char *sign_group = NULL;
@@ -2103,7 +2141,7 @@ void f_sign_jump(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     goto cleanup;
   }
 
-  rettv->vval.v_number = sign_jump(sign_id, (char_u *)sign_group, buf);
+  rettv->vval.v_number = sign_jump(sign_id, sign_group, buf);
 
 cleanup:
   xfree(sign_group);
@@ -2115,8 +2153,8 @@ static int sign_place_from_dict(typval_T *id_tv, typval_T *group_tv, typval_T *n
                                 typval_T *buf_tv, dict_T *dict)
 {
   int sign_id = 0;
-  char_u *group = NULL;
-  char_u *sign_name = NULL;
+  char *group = NULL;
+  char *sign_name = NULL;
   buf_T *buf = NULL;
   dictitem_T *di;
   linenr_T lnum = 0;
@@ -2154,14 +2192,14 @@ static int sign_place_from_dict(typval_T *id_tv, typval_T *group_tv, typval_T *n
   if (group_tv == NULL) {
     group = NULL;  // global group
   } else {
-    group = (char_u *)tv_get_string_chk(group_tv);
+    group = (char *)tv_get_string_chk(group_tv);
     if (group == NULL) {
       goto cleanup;
     }
     if (group[0] == '\0') {  // global sign group
       group = NULL;
     } else {
-      group = vim_strsave(group);
+      group = xstrdup(group);
     }
   }
 
@@ -2175,7 +2213,7 @@ static int sign_place_from_dict(typval_T *id_tv, typval_T *group_tv, typval_T *n
   if (name_tv == NULL) {
     goto cleanup;
   }
-  sign_name = (char_u *)tv_get_string_chk(name_tv);
+  sign_name = (char *)tv_get_string_chk(name_tv);
   if (sign_name == NULL) {
     goto cleanup;
   }
@@ -2225,7 +2263,7 @@ cleanup:
 }
 
 /// "sign_place()" function
-void f_sign_place(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_place(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   dict_T *dict = NULL;
 
@@ -2243,7 +2281,7 @@ void f_sign_place(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "sign_placelist()" function.  Place multiple signs.
-void f_sign_placelist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_placelist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   int sign_id;
 
@@ -2269,13 +2307,13 @@ void f_sign_placelist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// Undefine multiple signs
 static void sign_undefine_multiple(list_T *l, list_T *retlist)
 {
-  char_u *name;
+  char *name;
   int retval;
 
   TV_LIST_ITER_CONST(l, li, {
     retval = -1;
-    name = (char_u *)tv_get_string_chk(TV_LIST_ITEM_TV(li));
-    if (name != NULL && (sign_undefine_by_name(name) == OK)) {
+    name = (char *)tv_get_string_chk(TV_LIST_ITEM_TV(li));
+    if (name != NULL && (sign_undefine_by_name((char *)name) == OK)) {
       retval = 0;
     }
     tv_list_append_number(retlist, retval);
@@ -2283,10 +2321,8 @@ static void sign_undefine_multiple(list_T *l, list_T *retlist)
 }
 
 /// "sign_undefine()" function
-void f_sign_undefine(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_undefine(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  const char *name;
-
   if (argvars[0].v_type == VAR_LIST && argvars[1].v_type == VAR_UNKNOWN) {
     // Undefine multiple signs
     tv_list_alloc_ret(rettv, kListLenMayKnow);
@@ -2303,12 +2339,12 @@ void f_sign_undefine(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     rettv->vval.v_number = 0;
   } else {
     // Free only the specified sign
-    name = tv_get_string_chk(&argvars[0]);
+    const char *name = tv_get_string_chk(&argvars[0]);
     if (name == NULL) {
       return;
     }
 
-    if (sign_undefine_by_name((const char_u *)name) == OK) {
+    if (sign_undefine_by_name(name) == OK) {
       rettv->vval.v_number = 0;
     }
   }
@@ -2321,20 +2357,20 @@ static int sign_unplace_from_dict(typval_T *group_tv, dict_T *dict)
   dictitem_T *di;
   int sign_id = 0;
   buf_T *buf = NULL;
-  char_u *group = NULL;
+  char *group = NULL;
   int retval = -1;
 
   // sign group
   if (group_tv != NULL) {
-    group = (char_u *)tv_get_string(group_tv);
+    group = (char *)tv_get_string(group_tv);
   } else {
-    group = (char_u *)tv_dict_get_string(dict, "group", false);
+    group = tv_dict_get_string(dict, "group", false);
   }
   if (group != NULL) {
     if (group[0] == '\0') {  // global sign group
       group = NULL;
     } else {
-      group = vim_strsave(group);
+      group = xstrdup(group);
     }
   }
 
@@ -2373,7 +2409,7 @@ cleanup:
 }
 
 /// "sign_unplace()" function
-void f_sign_unplace(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_unplace(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   dict_T *dict = NULL;
 
@@ -2396,7 +2432,7 @@ void f_sign_unplace(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "sign_unplacelist()" function
-void f_sign_unplacelist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_unplacelist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   int retval;
 

@@ -2,26 +2,31 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
-#include <limits.h>
-#include <stdlib.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vimscript.h"
 #include "nvim/ascii.h"
-#include "nvim/autocmd.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_docmd.h"
-#include "nvim/ops.h"
+#include "nvim/garray.h"
+#include "nvim/globals.h"
+#include "nvim/memory.h"
+#include "nvim/pos.h"
 #include "nvim/runtime.h"
-#include "nvim/strings.h"
 #include "nvim/vim.h"
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
-#include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/vimscript.c.generated.h"
@@ -137,7 +142,7 @@ Object nvim_eval(String expr, Error *err)
     if (!recursive) {
       force_abort = false;
       suppress_errthrow = false;
-      current_exception = NULL;
+      did_throw = false;
       // `did_emsg` is set by emsg(), which cancels execution.
       did_emsg = false;
     }
@@ -196,7 +201,7 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
     if (!recursive) {
       force_abort = false;
       suppress_errthrow = false;
-      current_exception = NULL;
+      did_throw = false;
       // `did_emsg` is set by emsg(), which cancels execution.
       did_emsg = false;
     }
@@ -204,10 +209,10 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
     try_start();
     typval_T rettv;
     funcexe_T funcexe = FUNCEXE_INIT;
-    funcexe.firstline = curwin->w_cursor.lnum;
-    funcexe.lastline = curwin->w_cursor.lnum;
-    funcexe.evaluate = true;
-    funcexe.selfdict = self;
+    funcexe.fe_firstline = curwin->w_cursor.lnum;
+    funcexe.fe_lastline = curwin->w_cursor.lnum;
+    funcexe.fe_evaluate = true;
+    funcexe.fe_selfdict = self;
     // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
     // (see above) to capture abort-causing non-exception errors.
     (void)call_func(fn.data, (int)fn.size, &rettv, (int)args.size,
@@ -304,7 +309,7 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Error *err)
     }
     fn = (String) {
       .data = di->di_tv.vval.v_string,
-      .size = STRLEN(di->di_tv.vval.v_string),
+      .size = strlen(di->di_tv.vval.v_string),
     };
   }
 
@@ -532,7 +537,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, E
       kv_drop(ast_conv_stack, 1);
     } else {
       if (cur_item.ret_node_p->type == kObjectTypeNil) {
-        size_t items_size = (size_t)(3  // "type", "start" and "len"
+        size_t items_size = (size_t)(3  // "type", "start" and "len"  // NOLINT(bugprone-misplaced-widening-cast)
                                      + (node->children != NULL)  // "children"
                                      + (node->type == kExprNodeOption
                                         || node->type == kExprNodePlainIdentifier)  // "scope"

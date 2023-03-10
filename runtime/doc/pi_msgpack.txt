@@ -63,16 +63,16 @@ msgpack#is_uint({msgpack-value})			*msgpack#is_uint()*
 							*msgpack#strftime*
 msgpack#strftime({format}, {msgpack-integer})		*msgpack#strftime()*
 	Same as |strftime()|, but second argument may be 
-	|msgpack-special-dict|.  Requires |+python| or |+python3| to really 
-	work with |msgpack-special-dict|s.
+	|msgpack-special-dict|.  Requires |Python| to really work with
+	|msgpack-special-dict|s.
 
 							*msgpack#strptime*
 msgpack#strptime({format}, {time})			*msgpack#strptime()*
 	Reverse of |msgpack#strftime()|: for any time and format 
 	|msgpack#equal|( |msgpack#strptime|(format, |msgpack#strftime|(format, 
-	time)), time) be true.  Requires |+python| or |+python3|, without it 
-	only supports non-|msgpack-special-dict| nonnegative times and format 
-	equal to `%Y-%m-%dT%H:%M:%S`.
+	time)), time) be true.  Requires ||Python|, without it only supports
+	non-|msgpack-special-dict| nonnegative times and format equal to
+	`%Y-%m-%dT%H:%M:%S`.
 
 msgpack#int_dict_to_str({msgpack-special-int})	*msgpack#int_dict_to_str()*
 	Function which converts |msgpack-special-dict| integer value to 

@@ -1,25 +1,22 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <assert.h>
 #include <inttypes.h>
-#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
+#include <uv.h>
 
-#include "nvim/ascii.h"
+#include "nvim/channel.h"
 #include "nvim/eval.h"
 #include "nvim/event/socket.h"
-#include "nvim/fileio.h"
 #include "nvim/garray.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
 #include "nvim/memory.h"
-#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/os.h"
-#include "nvim/path.h"
-#include "nvim/strings.h"
-#include "nvim/vim.h"
+#include "nvim/os/stdpaths_defs.h"
 
 #define MAX_CONNECTIONS 32
 #define ENV_LISTEN "NVIM_LISTEN_ADDRESS"  // deprecated
@@ -94,17 +91,18 @@ char *server_address_new(const char *name)
 {
   static uint32_t count = 0;
   char fmt[ADDRESS_MAX_SIZE];
-#ifdef WIN32
+  const char *appname = get_appname();
+#ifdef MSWIN
   int r = snprintf(fmt, sizeof(fmt), "\\\\.\\pipe\\%s.%" PRIu64 ".%" PRIu32,
-                   name ? name : "nvim", os_get_pid(), count++);
+                   name ? name : appname, os_get_pid(), count++);
 #else
   char *dir = stdpaths_get_xdg_var(kXDGRuntimeDir);
   int r = snprintf(fmt, sizeof(fmt), "%s/%s.%" PRIu64 ".%" PRIu32,
-                   dir, name ? name : "nvim", os_get_pid(), count++);
+                   dir, name ? name : appname, os_get_pid(), count++);
   xfree(dir);
 #endif
   if ((size_t)r >= sizeof(fmt)) {
-    ELOG("truncated server address");
+    ELOG("truncated server address: %.40s...", fmt);
   }
   return xstrdup(fmt);
 }
@@ -173,7 +171,7 @@ int server_start(const char *addr)
   ((SocketWatcher **)watchers.ga_data)[watchers.ga_len++] = watcher;
 
   // Update v:servername, if not set.
-  if (STRLEN(get_vim_var_str(VV_SEND_SERVER)) == 0) {
+  if (strlen(get_vim_var_str(VV_SEND_SERVER)) == 0) {
     set_vservername(&watchers);
   }
 
@@ -216,7 +214,7 @@ bool server_stop(char *endpoint)
   watchers.ga_len--;
 
   // Bump v:servername to the next available server, if any.
-  if (strequal(addr, (char *)get_vim_var_str(VV_SEND_SERVER))) {
+  if (strequal(addr, get_vim_var_str(VV_SEND_SERVER))) {
     set_vservername(&watchers);
   }
 

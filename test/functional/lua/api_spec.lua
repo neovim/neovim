@@ -33,7 +33,7 @@ describe('luaeval(vim.api.…)', function()
   describe('with errors', function()
     it('transforms API error from nvim_buf_set_lines into lua error', function()
       funcs.setline(1, {"abc", "def", "a\nb", "ttt"})
-      eq({false, 'String cannot contain newlines'},
+      eq({false, "'replacement string' item contains newlines"},
          funcs.luaeval('{pcall(vim.api.nvim_buf_set_lines, 1, 1, 2, false, {"b\\na"})}'))
     end)
 
@@ -166,7 +166,7 @@ describe('luaeval(vim.api.…)', function()
     eq({v={}}, funcs.luaeval('vim.api.nvim__id_dictionary({v={[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2}})'))
 
     -- If API requests dictionary, then empty table will be the one. This is not
-    -- the case normally because empty table is an empty arrray.
+    -- the case normally because empty table is an empty array.
     eq({}, funcs.luaeval('vim.api.nvim__id_dictionary({})'))
     eq(4, eval([[type(luaeval('vim.api.nvim__id_dictionary({})'))]]))
   end)

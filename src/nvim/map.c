@@ -8,17 +8,16 @@
 //       khash.h does not make its own copy of the key or value.
 //
 
-#include <lauxlib.h>
-#include <lua.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "nvim/lib/khash.h"
+#include "auto/config.h"
+#include "klib/khash.h"
+#include "nvim/gettext.h"
 #include "nvim/map.h"
 #include "nvim/map_defs.h"
 #include "nvim/memory.h"
-#include "nvim/vim.h"
 
 #define cstr_t_hash kh_str_hash_func
 #define cstr_t_eq kh_str_hash_equal
@@ -168,6 +167,7 @@ MAP_IMPL(int, cstr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(cstr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(cstr_t, int, DEFAULT_INITIALIZER)
 MAP_IMPL(ptr_t, ptr_t, DEFAULT_INITIALIZER)
+MAP_IMPL(uint32_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(uint64_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(uint64_t, ssize_t, SSIZE_INITIALIZER)
 MAP_IMPL(uint64_t, uint64_t, DEFAULT_INITIALIZER)

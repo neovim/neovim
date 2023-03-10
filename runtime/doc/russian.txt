@@ -45,7 +45,7 @@ If you wish to use messages, help files, menus and other items translated to
 Russian, you will need to install the RuVim Language Pack, available in
 different codepages from
 
-    http://www.sourceforge.net/projects/ruvim/
+    https://www.sourceforge.net/projects/ruvim/
 
 After downloading an archive from RuVim project, unpack it into your
 $VIMRUNTIME directory.  We recommend using UTF-8 archive.

@@ -308,7 +308,7 @@ These names for keys are used in the documentation.  They can also be used
 with the ":map" command.
 
 notation	meaning		    equivalent	decimal value(s)	~
------------------------------------------------------------------------
+----------------------------------------------------------------------- ~
 <Nul>		zero			CTRL-@	  0 (stored as 10) *<Nul>*
 <BS>		backspace		CTRL-H	  8	*backspace*
 <Tab>		tab			CTRL-I	  9	*tab* *Tab*
@@ -358,7 +358,7 @@ notation	meaning		    equivalent	decimal value(s)	~
 <kOrigin>	keypad origin (middle)		*keypad-origin*
 <kPageUp>	keypad page-up (upper right)	*keypad-page-up*
 <kPageDown>	keypad page-down (lower right)	*keypad-page-down*
-<kDel>		keypad delete 			*keypad-delete*
+<kDel>		keypad delete			*keypad-delete*
 <kPlus>		keypad +			*keypad-plus*
 <kMinus>	keypad -			*keypad-minus*
 <kMultiply>	keypad *			*keypad-multiply*
@@ -373,7 +373,7 @@ notation	meaning		    equivalent	decimal value(s)	~
 <M-…>		alt-key or meta-key		*META* *ALT* *<M-*
 <A-…>		same as <M-…>			*<A-*
 <D-…>		command-key or "super" key	*<D-*
------------------------------------------------------------------------
+----------------------------------------------------------------------- ~
 
 Note:
 
@@ -382,7 +382,7 @@ Note:
 - If numlock is on the |TUI| receives plain ASCII values, so mapping <k0>,
   <k1>, ..., <k9> and <kPoint> will not work.
 - Nvim supports mapping multibyte chars with modifiers such as `<M-ä>`. Which
-  combinations actually work depends on the the UI or host terminal.
+  combinations actually work depends on the UI or host terminal.
 - When a key is pressed using a meta or alt modifier and no mapping exists for
   that keypress, Nvim may behave as though <Esc> was pressed before the key.
 - It is possible to notate combined modifiers (e.g. <C-A-T> for CTRL-ALT-T),
@@ -408,13 +408,17 @@ the ":map" command.  The rules are:
 The <> notation uses <lt> to escape the special meaning of key names.  Using a
 backslash also works, but only when 'cpoptions' does not include the 'B' flag.
 
-Examples for mapping CTRL-H to the six characters "<Home>": >
+Examples for mapping CTRL-H to the six characters "<Home>": >vim
 	:imap <C-H> \<Home>
 	:imap <C-H> <lt>Home>
 The first one only works when the 'B' flag is not in 'cpoptions'.  The second
 one always works.
-To get a literal "<lt>" in a mapping: >
+To get a literal "<lt>" in a mapping: >vim
 	:map <C-L> <lt>lt>
+
+The notation can be used in a double quoted strings, using "\<" at the start,
+e.g. "\<C-Space>".  This results in a special key code.  To convert this back
+to readable text use `keytrans()`.
 
 ==============================================================================
 Modes, introduction				*vim-modes-intro* *vim-modes*
@@ -516,39 +520,39 @@ CTRL-O in Insert mode you get a beep but you are still in Insert mode, type
 		TO mode						    ~
 		Normal	Visual	Select	Insert	  Replace   Cmd-line  Ex ~
 FROM mode								 ~
-Normal			v V ^V	  *4	 *1	   R gR     : / ? !   Q
-Visual		 *2		  ^G	 c C	    --	      :       --
-Select		 *5	^O ^G		 *6	    --	      --      --
+Normal			v V ^V	  `*4`	 *1	   R gR     : / ? !   Q
+Visual		 `*2`		  ^G	 c C	    --	      :       --
+Select		 `*5`	^O ^G		 `*6`	    --	      --      --
 Insert		 <Esc>	  --	  --		  <Insert>    --      --
 Replace		 <Esc>	  --	  --	<Insert>	      --      --
-Command-line	 *3	  --	  --	 :start	    --		      --
+Command-line	 `*3`	  --	  --	 :start	    --		      --
 Ex		 :vi	  --	  --	 --	    --	      --
 
 -- not possible
 
-*1 Go from Normal mode to Insert mode by giving the command "i", "I", "a",
-   "A", "o", "O", "c", "C", "s" or S".
-*2 Go from Visual mode to Normal mode by giving a non-movement command, which
-   causes the command to be executed, or by hitting <Esc> "v", "V" or "CTRL-V"
-   (see |v_v|), which just stops Visual mode without side effects.
-*3 Go from Command-line mode to Normal mode by:
-   - Hitting <CR> or <NL>, which causes the entered command to be executed.
-   - Deleting the complete line (e.g., with CTRL-U) and giving a final <BS>.
-   - Hitting CTRL-C or <Esc>, which quits the command-line without executing
-     the command.
-   In the last case <Esc> may be the character defined with the 'wildchar'
-   option, in which case it will start command-line completion.  You can
-   ignore that and type <Esc> again.
-*4 Go from Normal to Select mode by:
-   - use the mouse to select text while 'selectmode' contains "mouse"
-   - use a non-printable command to move the cursor while keeping the Shift
-     key pressed, and the 'selectmode' option contains "key"
-   - use "v", "V" or "CTRL-V" while 'selectmode' contains "cmd"
-   - use "gh", "gH" or "g CTRL-H"  |g_CTRL-H|
-*5 Go from Select mode to Normal mode by using a non-printable command to move
-   the cursor, without keeping the Shift key pressed.
-*6 Go from Select mode to Insert mode by typing a printable character.  The
-   selection is deleted and the character is inserted.
+* 1 Go from Normal mode to Insert mode by giving the command "i", "I", "a",
+    "A", "o", "O", "c", "C", "s" or S".
+* 2 Go from Visual mode to Normal mode by giving a non-movement command, which
+    causes the command to be executed, or by hitting <Esc> "v", "V" or "CTRL-V"
+    (see |v_v|), which just stops Visual mode without side effects.
+* 3 Go from Command-line mode to Normal mode by:
+    - Hitting <CR> or <NL>, which causes the entered command to be executed.
+    - Deleting the complete line (e.g., with CTRL-U) and giving a final <BS>.
+    - Hitting CTRL-C or <Esc>, which quits the command-line without executing
+      the command.
+    In the last case <Esc> may be the character defined with the 'wildchar'
+    option, in which case it will start command-line completion.  You can
+    ignore that and type <Esc> again.
+* 4 Go from Normal to Select mode by:
+    - use the mouse to select text while 'selectmode' contains "mouse"
+    - use a non-printable command to move the cursor while keeping the Shift
+      key pressed, and the 'selectmode' option contains "key"
+    - use "v", "V" or "CTRL-V" while 'selectmode' contains "cmd"
+    - use "gh", "gH" or "g CTRL-H"  |g_CTRL-H|
+* 5 Go from Select mode to Normal mode by using a non-printable command to move
+    the cursor, without keeping the Shift key pressed.
+* 6 Go from Select mode to Insert mode by typing a printable character.  The
+    selection is deleted and the character is inserted.
 
 			*CTRL-\_CTRL-N* *i_CTRL-\_CTRL-N* *c_CTRL-\_CTRL-N*
 				      *v_CTRL-\_CTRL-N* *t_CTRL-\_CTRL-N*
@@ -585,26 +589,26 @@ Lines longer than the window width will wrap, unless the 'wrap' option is off
 
 If the window has room after the last line of the buffer, Vim will show '~' in
 the first column of the last lines in the window, like this:
-
+>
 	+-----------------------+
 	|some line		|
 	|last line		|
 	|~			|
 	|~			|
 	+-----------------------+
-
+<
 Thus the '~' lines indicate that the end of the buffer was reached.
 
 If the last line in a window doesn't fit, Vim will indicate this with a '@' in
 the first column of the last lines in the window, like this:
-
+>
 	+-----------------------+
 	|first line		|
 	|second line		|
 	|@			|
 	|@			|
 	+-----------------------+
-
+<
 Thus the '@' lines indicate that there is a line that doesn't fit in the
 window.
 
@@ -612,14 +616,14 @@ When the "lastline" flag is present in the 'display' option, you will not see
 '@' characters at the left side of window.  If the last line doesn't fit
 completely, only the part that fits is shown, and the last three characters of
 the last line are replaced with "@@@", like this:
-
+>
 	+-----------------------+
 	|first line		|
 	|second line		|
 	|a very long line that d|
 	|oesn't fit in the wi@@@|
 	+-----------------------+
-
+<
 If there is a single line that is too long to fit in the window, this is a
 special situation.  Vim will show only part of the line, around where the
 cursor is.  There are no special characters shown, so that you can edit all
@@ -700,9 +704,9 @@ Definitions						*definitions* *jargon*
 
 A screen contains one or more windows, separated by status lines and with the
 command line at the bottom.
-
+>
 	+-------------------------------+
-screen	| window 1	| window 2	|
+ screen	| window 1	| window 2	|
 	|		|		|
 	|		|		|
 	|= status line =|= status line =|
@@ -712,7 +716,7 @@ screen	| window 1	| window 2	|
 	|==== status line ==============|
 	|command line			|
 	+-------------------------------+
-
+<
 The command line is also used for messages.  It scrolls up the screen when
 there is not enough room in the command line.
 

@@ -3,7 +3,7 @@
 
                     LUV REFERENCE MANUAL
 
-
+								      *luvref*
 This file documents the Lua bindings for the LibUV library which is used for
 Nvim's event-loop and is accessible from Lua via |vim.loop| (e.g., |uv.version()|
 is exposed as `vim.loop.version()`).
@@ -24,11 +24,11 @@ be used in other Lua environments.
 More information about the core libuv library can be found at the original
 libuv documentation page (https://docs.libuv.org/).
 
-TCP Echo Server Example~
+TCP Echo Server Example ~
 
 Here is a small example showing a TCP echo server:
 
-    >
+    >lua
     local uv = vim.loop
 
     local server = uv.new_tcp()
@@ -51,15 +51,15 @@ Here is a small example showing a TCP echo server:
     uv.run() -- an explicit run call is necessary outside of luvit
 <
 
-Module Layout~
+Module Layout ~
 
 The luv library contains a single Lua module referred to hereafter as `uv` for
 simplicity. This module consists mostly of functions with names corresponding
 to their original libuv versions. For example, the libuv function
-`uv_tcp_bind` has a luv version at |uv.tcp_bind()|. Currently, only one
-non-function field exists: `uv.constants`, which is a table.
+`uv_tcp_bind` has a luv version at |uv.tcp_bind()|. Currently, only two
+non-function fields exists: `uv.constants` and `uv.errno`, which are tables.
 
-Functions vs Methods~
+Functions vs Methods ~
 
 In addition to having simple functions, luv provides an optional method-style
 API. For example, `uv.tcp_bind(server, host, port)` can alternatively be
@@ -67,7 +67,7 @@ called as `server:bind(host, port)` . Note that the first argument `server`
 becomes the object and `tcp_` is removed from the function name. Method forms
 are documented below where they exist.
 
-Synchronous vs Asynchronous Functions~
+Synchronous vs Asynchronous Functions ~
 
 Functions that accept a callback are asynchronous. These functions may
 immediately return results to the caller to indicate their initial status, but
@@ -82,7 +82,7 @@ Some (generally FS and DNS) functions can behave either synchronously or
 asynchronously. If a callback is provided to these functions, they behave
 asynchronously; if no callback is provided, they behave synchronously.
 
-Pseudo-Types~
+Pseudo-Types ~
 
 Some unique types are defined. These are not actual types in Lua, but they are
 used here to facilitate documenting consistent behavior:
@@ -97,7 +97,7 @@ used here to facilitate documenting consistent behavior:
 CONTENTS                                                          *luv-contents*
 
 This documentation is mostly a retelling of the libuv API documentation
-(http://docs.libuv.org/en/v1.x/api.html) within the context of luv's Lua API.
+(https://docs.libuv.org/en/v1.x/api.html) within the context of luv's Lua API.
 Low-level implementation details and unexposed C functions and types are not
 documented here except for when they are relevant to behavior seen in the Lua
 module.
@@ -133,10 +133,10 @@ module.
 ==============================================================================
 ERROR HANDLING                                              *luv-error-handling*
 
-In libuv, errors are negative numbered constants; however, these errors and
-the functions used to handle them are not exposed to luv users. Instead, if an
-internal error is encountered, the luv function will return to the caller an
-assertable `nil, err, name` tuple.
+In libuv, errors are negative numbered constants; however, while those errors
+are exposed through `uv.errno`, the functions used to handle them are not
+exposed to luv users. Instead, if an internal error is encountered, the luv
+function will return to the caller an assertable `nil, err, name` tuple.
 
 - `nil` idiomatically indicates failure
 - `err` is a string with the format `{name}: {message}`
@@ -150,6 +150,94 @@ This tuple is referred to below as the `fail` pseudo-type.
 When a function is called successfully, it will return either a value that is
 relevant to the operation of the function, or the integer `0` to indicate
 success, or sometimes nothing at all. These cases are documented below.
+
+`uv.errno`                                                              *uv.errno*
+
+A table value which exposes error constants as a map, where the key is the
+error name (without the `UV_` prefix) and its value is a negative number.
+See Libuv's "Error constants" page for further details.
+(https://docs.libuv.org/en/v1.x/errors.html#error-constants)
+
+- `E2BIG`: argument list too long.
+- `EACCES`: permission denied.
+- `EADDRINUSE`: address already in use.
+- `EADDRNOTAVAIL`: address not available.
+- `EAFNOSUPPORT`: address family not supported.
+- `EAGAIN`: resource temporarily unavailable.
+- `EAI_ADDRFAMILY`: address family not supported.
+- `EAI_AGAIN`: temporary failure.
+- `EAI_BADFLAGS`: bad ai_flags value.
+- `EAI_BADHINTS`: invalid value for hints.
+- `EAI_CANCELED`: request canceled.
+- `EAI_FAIL`: permanent failure.
+- `EAI_FAMILY`: ai_family not supported.
+- `EAI_MEMORY`: out of memory.
+- `EAI_NODATA`: no address.
+- `EAI_NONAME`: unknown node or service.
+- `EAI_OVERFLOW`: argument buffer overflow.
+- `EAI_PROTOCOL`: resolved protocol is unknown.
+- `EAI_SERVICE`: service not available for socket type.
+- `EAI_SOCKTYPE`: socket type not supported.
+- `EALREADY`: connection already in progress.
+- `EBADF`: bad file descriptor.
+- `EBUSY`: resource busy or locked.
+- `ECANCELED`: operation canceled.
+- `ECHARSET`: invalid Unicode character.
+- `ECONNABORTED`: software caused connection abort.
+- `ECONNREFUSED`: connection refused.
+- `ECONNRESET`: connection reset by peer.
+- `EDESTADDRREQ`: destination address required.
+- `EEXIST`: file already exists.
+- `EFAULT`: bad address in system call argument.
+- `EFBIG`: file too large.
+- `EHOSTUNREACH`: host is unreachable.
+- `EINTR`: interrupted system call.
+- `EINVAL`: invalid argument.
+- `EIO`: i/o error.
+- `EISCONN`: socket is already connected.
+- `EISDIR`: illegal operation on a directory.
+- `ELOOP`: too many symbolic links encountered.
+- `EMFILE`: too many open files.
+- `EMSGSIZE`: message too long.
+- `ENAMETOOLONG`: name too long.
+- `ENETDOWN`: network is down.
+- `ENETUNREACH`: network is unreachable.
+- `ENFILE`: file table overflow.
+- `ENOBUFS`: no buffer space available.
+- `ENODEV`: no such device.
+- `ENOENT`: no such file or directory.
+- `ENOMEM`: not enough memory.
+- `ENONET`: machine is not on the network.
+- `ENOPROTOOPT`: protocol not available.
+- `ENOSPC`: no space left on device.
+- `ENOSYS`: function not implemented.
+- `ENOTCONN`: socket is not connected.
+- `ENOTDIR`: not a directory.
+- `ENOTEMPTY`: directory not empty.
+- `ENOTSOCK`: socket operation on non-socket.
+- `ENOTSUP`: operation not supported on socket.
+- `EOVERFLOW`: value too large for defined data type.
+- `EPERM`: operation not permitted.
+- `EPIPE`: broken pipe.
+- `EPROTO`: protocol error.
+- `EPROTONOSUPPORT`: protocol not supported.
+- `EPROTOTYPE`: protocol wrong type for socket.
+- `ERANGE`: result too large.
+- `EROFS`: read-only file system.
+- `ESHUTDOWN`: cannot send after transport endpoint shutdown.
+- `ESPIPE`: invalid seek.
+- `ESRCH`: no such process.
+- `ETIMEDOUT`: connection timed out.
+- `ETXTBSY`: text file is busy.
+- `EXDEV`: cross-device link not permitted.
+- `UNKNOWN`: unknown error.
+- `EOF`: end of file.
+- `ENXIO`: no such device or address.
+- `EMLINK`: too many links.
+- `ENOTTY`: inappropriate ioctl for device.
+- `EFTYPE`: inappropriate file type or format.
+- `EILSEQ`: illegal byte sequence.
+- `ESOCKTNOSUPPORT`: socket type not supported.
 
 ==============================================================================
 VERSION CHECKING                                          *luv-version-checking*
@@ -250,7 +338,7 @@ uv.loop_configure({option}, {...})                         *uv.loop_configure()*
 
                 An example of a valid call to this function is:
 
-                    >
+                    >lua
                     uv.loop_configure("block_signal", "sigprof")
 <
 
@@ -343,7 +431,7 @@ uv.walk({callback})                                                  *uv.walk()*
 
                 Returns: Nothing.
 
-                    >
+                    >lua
                     -- Example usage of uv.walk to close all handles that
                     -- aren't already closing.
                     uv.walk(function (handle)
@@ -613,7 +701,7 @@ uv.new_timer()                                                  *uv.new_timer()*
 
                 Returns: `uv_timer_t userdata` or `fail`
 
-                    >
+                    >lua
                     -- Creating a simple setTimeout wrapper
                     local function setTimeout(timeout, callback)
                       local timer = uv.new_timer()
@@ -737,7 +825,7 @@ uv.timer_get_due_in({timer})                             *uv.timer_get_due_in()*
 Prepare handles will run the given callback once per loop iteration, right
 before polling for I/O.
 
-    >
+    >lua
     local prepare = uv.new_prepare()
     prepare:start(function()
       print("Before I/O polling")
@@ -782,7 +870,7 @@ uv.prepare_stop({prepare})                                   *uv.prepare_stop()*
 Check handles will run the given callback once per loop iteration, right after
 polling for I/O.
 
-    >
+    >lua
     local check = uv.new_check()
     check:start(function()
       print("After I/O polling")
@@ -834,7 +922,7 @@ blocking for I/O.
 WARNING: Despite the name, idle handles will get their callbacks called on
 every loop iteration, not when the loop is actually "idle".
 
-    >
+    >lua
     local idle = uv.new_idle()
     idle:start(function()
       print("Before I/O polling, no blocking")
@@ -879,7 +967,7 @@ uv.idle_stop({check})                                           *uv.idle_stop()*
 Async handles allow the user to "wakeup" the event loop and get a callback
 called from another thread.
 
-    >
+    >lua
     local async
     async = uv.new_async(function()
       print("async operation ran")
@@ -933,7 +1021,7 @@ uv.async_send({async}, {...})                                  *uv.async_send()*
 
 Poll handles are used to watch file descriptors for readability and
 writability, similar to the purpose of poll(2)
-(http://linux.die.net/man/2/poll).
+(https://linux.die.net/man/2/poll).
 
 The purpose of poll handles is to enable integrating external libraries that
 rely on the event loop to signal it about the socket status changes, like
@@ -1062,7 +1150,7 @@ Unix Notes:
     will lead to unpredictable behavior and is strongly discouraged. Future
     versions of libuv may simply reject them.
 
-    >
+    >lua
     -- Create a new signal handler
     local signal = uv.new_signal()
     -- Define a handler function
@@ -1164,7 +1252,7 @@ uv.spawn({path}, {options}, {on_exit})                              *uv.spawn()*
                 permissions to use the setuid or setgid specified, or not
                 having enough memory to allocate for the new process.
 
-                    >
+                    >lua
                     local stdin = uv.new_pipe()
                     local stdout = uv.new_pipe()
                     local stderr = uv.new_pipe()
@@ -1358,7 +1446,7 @@ uv.accept({stream}, {client_stream})                               *uv.accept()*
 
                 Returns: `0` or `fail`
 
-                    >
+                    >lua
                     server:listen(128, function (err)
                       local client = uv.new_tcp()
                       server:accept(client)
@@ -1382,7 +1470,7 @@ uv.read_start({stream}, {callback})                            *uv.read_start()*
 
                 Returns: `0` or `fail`
 
-                    >
+                    >lua
                     stream:read_start(function (err, chunk)
                       if err then
                         -- handle read error
@@ -1690,7 +1778,7 @@ uv.tcp_connect({tcp}, {host}, {port}, {callback})             *uv.tcp_connect()*
 
                 Returns: `uv_connect_t userdata` or `fail`
 
-                    >
+                    >lua
                     local client = uv.new_tcp()
                     client:connect("127.0.0.1", 8080, function (err)
                       -- check error and carry on.
@@ -1755,7 +1843,7 @@ uv.socketpair([{socktype}, [{protocol}, [{flags1}, [{flags2}]]]])
                 Returns: `table` or `fail`
                 - `[1, 2]` : `integer` (file descriptor)
 
-                    >
+                    >lua
                     -- Simple read/write with tcp
                     local fds = uv.socketpair(nil, nil, {nonblock=true}, {nonblock=true})
 
@@ -1780,7 +1868,7 @@ uv.socketpair([{socktype}, [{protocol}, [{flags1}, [{flags2}]]]])
 Pipe handles provide an abstraction over local domain sockets on Unix and
 named pipes on Windows.
 
-    >
+    >lua
     local pipe = uv.new_pipe(false)
 
     pipe:bind('/tmp/sock.test')
@@ -1959,7 +2047,7 @@ uv.pipe({read_flags}, {write_flags})                                 *uv.pipe()*
                 - `read` : `integer` (file descriptor)
                 - `write` : `integer` (file descriptor)
 
-                    >
+                    >lua
                     -- Simple read/write with pipe_open
                     local fds = uv.pipe({nonblock=true}, {nonblock=true})
 
@@ -1983,7 +2071,7 @@ uv.pipe({read_flags}, {write_flags})                                 *uv.pipe()*
 
 TTY handles represent a stream for the console.
 
-    >
+    >lua
     -- Simple echo program
     local stdin = uv.new_tty(0, true)
     local stdout = uv.new_tty(1, false)
@@ -2537,7 +2625,7 @@ FS call.
 Synchronous and asynchronous versions of `readFile` (with naive error
 handling) are implemented below as an example:
 
-    >
+    >lua
     local function readFileSync(path)
       local fd = assert(uv.fs_open(path, "r", 438))
       local stat = assert(uv.fs_fstat(fd))
@@ -2550,7 +2638,7 @@ handling) are implemented below as an example:
     print("synchronous read", data)
 <
 
-    >
+    >lua
     local function readFile(path, callback)
       uv.fs_open(path, "r", 438, function(err, fd)
         assert(not err, err)
@@ -2626,7 +2714,7 @@ uv.fs_read({fd}, {size} [, {offset} [, {callback}]])              *uv.fs_read()*
                 indicates EOF.
 
                 If `offset` is nil or omitted, it will default to `-1`, which
-                indicates 'use and update the current file offset.'
+                indicates "use and update the current file offset."
 
                 Note: When `offset` is >= 0, the current file offset will not
                 be updated by the read.
@@ -2665,7 +2753,7 @@ uv.fs_write({fd}, {data} [, {offset} [, {callback}]])            *uv.fs_write()*
                 written.
 
                 If `offset` is nil or omitted, it will default to `-1`, which
-                indicates 'use and update the current file offset.'
+                indicates "use and update the current file offset."
 
                 Note: When `offset` is >= 0, the current file offset will not
                 be updated by the write.
@@ -3253,7 +3341,7 @@ Libuv provides a threadpool which can be used to run user code and get
 notified in the loop thread. This threadpool is internally used to run all
 file system operations, as well as `getaddrinfo` and `getnameinfo` requests.
 
-    >
+    >lua
     local function work_callback(a, b)
       return a + b
     end
@@ -3272,14 +3360,17 @@ file system operations, as well as `getaddrinfo` and `getnameinfo` requests.
 uv.new_work({work_callback}, {after_work_callback})              *uv.new_work()*
 
                 Parameters:
-                - `work_callback`: `function`
+                - `work_callback`: `function` or `string`
                   - `...`: `threadargs` passed to/from
                     `uv.queue_work(work_ctx, ...)`
                 - `after_work_callback`: `function`
                   - `...`: `threadargs` returned from `work_callback`
 
                 Creates and initializes a new `luv_work_ctx_t` (not
-                `uv_work_t`). Returns the Lua userdata wrapping it.
+                `uv_work_t`).
+                `work_callback` is a Lua function or a string containing Lua
+                code or bytecode dumped from a function. Returns the Lua
+                userdata wrapping it.
 
                 Returns: `luv_work_ctx_t userdata`
 
@@ -3355,7 +3446,7 @@ uv.getnameinfo({address} [, {callback}])                      *uv.getnameinfo()*
                   - `family`: `string` or `integer` or `nil`
                 - `callback`: `callable` (async version) or `nil` (sync
                   version)
-                  - `err`: `nil` or `sring`
+                  - `err`: `nil` or `string`
                   - `host`: `string` or `nil`
                   - `service`: `string` or `nil`
 
@@ -3380,16 +3471,16 @@ uv.new_thread([{options}, ] {entry}, {...})                    *uv.new_thread()*
                 Parameters:
                 - `options`: `table` or `nil`
                   - `stack_size`: `integer` or `nil`
-                - `entry`: `function`
+                - `entry`: `function` or `string`
                 - `...`: `threadargs` passed to `entry`
 
                 Creates and initializes a `luv_thread_t` (not `uv_thread_t`).
                 Returns the Lua userdata wrapping it and asynchronously
-                executes `entry`, which can be either a Lua function or a Lua
-                function dumped to a string. Additional arguments `...` are
-                passed to the `entry` function and an optional `options` table
-                may be provided. Currently accepted `option` fields are
-                `stack_size`.
+                executes `entry`, which can be either a Lua function or a
+                string containing Lua code or bytecode dumped from a function.
+                Additional arguments `...` are passed to the `entry` function
+                and an optional `options` table may be provided. Currently
+                accepted `option` fields are `stack_size`.
 
                 Returns: `luv_thread_t userdata` or `fail`
 
@@ -3888,11 +3979,11 @@ uv.metrics_idle_time()                                  *uv.metrics_idle_time()*
 ==============================================================================
 CREDITS                                                            *luv-credits*
 
-This document is a reformatted version of the LUV documentation, based on
-commit c51e705 (5 May 2022) of the luv repository
-https://github.com/luvit/luv/commit/c51e7052ec4f0a25058f70c1b4ee99dd36180e59.
+This document is a reformatted version of the LUV documentation, up-to-date
+with commit e8e7b7e (3 Feb 2023) of the luv repository
+https://github.com/luvit/luv/commit/e8e7b7e13225348a8806118a3ea9e021383a9536.
 
-Included from https://github.com/nanotee/luv-vimdocs with kind permission.
+Based on https://github.com/nanotee/luv-vimdocs with kind permission.
 
 
 vim:tw=78:ts=8:ft=help:norl:

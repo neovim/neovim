@@ -21,13 +21,17 @@ on:
 
 jobs:
   regen-api-docs:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: nightly
       - uses: actions/checkout@v3
         with:
           # Fetch depth 0 is required if called through workflow_call. In order
@@ -38,9 +42,9 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y doxygen python3 python3-msgpack luajit
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y doxygen python3 python3-msgpack
 
-      - name: Setup git config
+      - name: Set up git config
         run: |
           git config --global user.name 'marvim'
           git config --global user.email 'marvim@users.noreply.github.com'
@@ -52,7 +56,7 @@ jobs:
         run: |
           git checkout -b ${DOC_BRANCH}
           python3 scripts/gen_vimdoc.py
-          printf '::set-output name=UPDATED_DOCS::%s\n' $([ -z "$(git diff)" ]; echo $?)
+          printf 'UPDATED_DOCS=%s\n' $([ -z "$(git diff)" ]; echo $?) >> $GITHUB_OUTPUT
 
       - name: FAIL, PR has not committed doc changes
         if: ${{ steps.docs.outputs.UPDATED_DOCS != 0 && inputs.check_only }}

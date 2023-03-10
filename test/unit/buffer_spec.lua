@@ -28,9 +28,9 @@ describe('buffer functions', function()
 
   setup(function()
     -- create the files
-    io.open(path1, 'w').close()
-    io.open(path2, 'w').close()
-    io.open(path3, 'w').close()
+    io.open(path1, 'w'):close()
+    io.open(path2, 'w'):close()
+    io.open(path3, 'w'):close()
   end)
 
   teardown(function()
@@ -233,9 +233,11 @@ describe('buffer functions', function()
                                      output_buffer,
                                      buffer_byte_size,
                                      to_cstr(pat),
-                                     false,
+                                     NULL,
+                                     0,
                                      fillchar,
                                      maximum_cell_count,
+                                     NULL,
                                      NULL,
                                      NULL)
     end

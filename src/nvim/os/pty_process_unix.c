@@ -2,13 +2,15 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 // Some of the code came from pangoterm and libuv
-#include <stdbool.h>
+
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#include <sys/types.h>
 #include <sys/wait.h>
-#include <termios.h>
 
 // forkpty is not in POSIX, so headers are platform-specific
 #if defined(__FreeBSD__) || defined(__DragonFly__)
@@ -31,13 +33,16 @@
 
 #include <uv.h>
 
+#include "auto/config.h"
+#include "klib/klist.h"
+#include "nvim/eval/typval.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/process.h"
-#include "nvim/event/rstream.h"
-#include "nvim/event/wstream.h"
-#include "nvim/lib/klist.h"
+#include "nvim/event/stream.h"
 #include "nvim/log.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
+#include "nvim/os/pty_process.h"
 #include "nvim/os/pty_process_unix.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -155,31 +160,13 @@ static pid_t forkpty(int *amaster, char *name, struct termios *termp, struct win
 
 #endif
 
-/// termios saved at startup (for TUI) or initialized by pty_process_spawn().
-static struct termios termios_default;
-
-/// Saves the termios properties associated with `tty_fd`.
-///
-/// @param tty_fd   TTY file descriptor, or -1 if not in a terminal.
-void pty_process_save_termios(int tty_fd)
-{
-  if (tty_fd == -1) {
-    return;
-  }
-  int rv = tcgetattr(tty_fd, &termios_default);
-  if (rv != 0) {
-    ELOG("tcgetattr failed (tty_fd=%d): %s", tty_fd, strerror(errno));
-  } else {
-    DLOG("tty_fd=%d", tty_fd);
-  }
-}
-
 /// @returns zero on success, or negative error code
 int pty_process_spawn(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
+  // termios initialized at first use
+  static struct termios termios_default;
   if (!termios_default.c_cflag) {
-    // TODO(jkeyes): We could pass NULL to forkpty() instead ...
     init_termios(&termios_default);
   }
 

@@ -4,7 +4,9 @@
 " Maintainer:   Marcin Szamotulski <profunctor@pm.me>
 " Previous Maintainer:	Vincent Berthoux <twinside@gmail.com>
 " File Types:   .cabal
-" Last Change:  21 Nov 2020
+" Last Change:  22 Oct 2022
+" v1.6: Added support for foreign-libraries
+"       Added highlighting for various fields 
 " v1.5: Incorporated changes from
 "       https://github.com/sdiehl/haskell-vim-proto/blob/master/vim/syntax/cabal.vim
 "       Use `syn keyword` instead of `syn match`.
@@ -61,13 +63,14 @@ syn keyword cabalCategory contained
 	\ test-suite
 	\ source-repository
 	\ flag
+        \ foreign-library
 	\ custom-setup
 	\ common
 syn match cabalCategoryTitle contained /[^{]*\ze{\?/
 syn match cabalCategoryRegion
 	\ contains=cabalCategory,cabalCategoryTitle
 	\ nextgroup=cabalCategory skipwhite
-	\ /^\c\s*\(contained\|executable\|library\|benchmark\|test-suite\|source-repository\|flag\|custom-setup\|common\)\+\s*\%(.*$\|$\)/
+	\ /^\c\s*\(contained\|executable\|library\|benchmark\|test-suite\|source-repository\|flag\|foreign-library\|custom-setup\|common\)\+\s*\%(.*$\|$\)/
 syn keyword cabalTruth true false
 
 " cabalStatementRegion which limits the scope of cabalStatement keywords, this
@@ -77,6 +80,7 @@ syn keyword cabalStatement contained containedin=cabalStatementRegion
 	\ default-language
 	\ default-extensions
 	\ author
+        \ autogen-includes
         \ autogen-modules
         \ asm-sources
         \ asm-options
@@ -84,7 +88,7 @@ syn keyword cabalStatement contained containedin=cabalStatementRegion
 	\ bug-reports
 	\ build-depends
 	\ build-tools
-        \ build-tools-depends
+        \ build-tool-depends
 	\ build-type
 	\ buildable
 	\ c-sources
@@ -95,6 +99,7 @@ syn keyword cabalStatement contained containedin=cabalStatementRegion
         \ cmm-sources
         \ cmm-options
 	\ cpp-options
+        \ cxx-options
         \ cxx-sources
 	\ data-dir
 	\ data-files
@@ -111,7 +116,9 @@ syn keyword cabalStatement contained containedin=cabalStatementRegion
         \ extra-framework-dirs
         \ extra-ghci-libraries
 	\ extra-lib-dirs
+	\ extra-lib-dirs-static
 	\ extra-libraries
+	\ extra-libraries-static
 	\ extra-library-flavours
 	\ extra-source-files
 	\ extra-tmp-files
@@ -133,6 +140,8 @@ syn keyword cabalStatement contained containedin=cabalStatementRegion
 	\ install-includes
         \ js-sources
 	\ ld-options
+        \ lib-version-info
+        \ lib-version-linux
 	\ license
 	\ license-file
 	\ location
@@ -141,20 +150,26 @@ syn keyword cabalStatement contained containedin=cabalStatementRegion
 	\ manual
         \ mixins
 	\ module
+        \ mod-def-file
 	\ name
 	\ nhc98-options
+        \ options
 	\ other-extensions
         \ other-language
         \ other-languages
 	\ other-modules
 	\ package-url
 	\ pkgconfig-depends
+        \ scope
 	\ setup-depends
+        \ signatures
 	\ stability
 	\ subdir
 	\ synopsis
+        \ reexported-modules
 	\ tag
 	\ tested-with
+        \ test-module
 	\ type
 	\ version
 	\ virtual-modules

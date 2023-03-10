@@ -3,7 +3,8 @@
 
 #include <stdbool.h>
 
-#include "nvim/buffer_defs.h"  // for win_T
+#include "nvim/buffer_defs.h"
+#include "nvim/macros.h"
 #include "nvim/pos.h"
 
 // Values for find_ident_under_cursor()
@@ -22,9 +23,7 @@ typedef enum {
   kMTUnknown = -1,  ///< Unknown or invalid motion type
 } MotionType;
 
-/*
- * Arguments for operators.
- */
+// Arguments for operators.
 typedef struct oparg_S {
   int op_type;                  // current pending operator type
   int regname;                  // register to use for the operator
@@ -53,11 +52,9 @@ typedef struct oparg_S {
                                 // block
 } oparg_T;
 
-/*
- * Arguments for Normal mode commands.
- */
+// Arguments for Normal mode commands.
 typedef struct cmdarg_S {
-  oparg_T *oap;             // Operator arguments
+  oparg_T *oap;                 // Operator arguments
   int prechar;                  // prefix character (optional, always 'g')
   int cmdchar;                  // command character
   int nchar;                    // next command character (optional)
@@ -69,12 +66,18 @@ typedef struct cmdarg_S {
   long count1;                  // count before command, default 1
   int arg;                      // extra argument from nv_cmds[]
   int retval;                   // return: CA_* values
-  char_u *searchbuf;       // return: pointer to search pattern or NULL
+  char *searchbuf;              // return: pointer to search pattern or NULL
 } cmdarg_T;
 
 // values for retval:
 #define CA_COMMAND_BUSY     1   // skip restarting edit() once
 #define CA_NO_ADJ_OP_END    2   // don't adjust operator end
+
+// columns needed by shown command
+#define SHOWCMD_COLS 10
+// 'showcmd' buffer shared between normal.c and statusline.c
+#define SHOWCMD_BUFLEN (SHOWCMD_COLS + 1 + 30)
+EXTERN char showcmd_buf[SHOWCMD_BUFLEN];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "normal.h.generated.h"

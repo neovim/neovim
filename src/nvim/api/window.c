@@ -10,16 +10,18 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/window.h"
 #include "nvim/ascii.h"
-#include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
+#include "nvim/eval/window.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/lua/executor.h"
+#include "nvim/memline_defs.h"
 #include "nvim/move.h"
-#include "nvim/option.h"
-#include "nvim/syntax.h"
-#include "nvim/vim.h"
+#include "nvim/pos.h"
+#include "nvim/types.h"
 #include "nvim/window.h"
 
 /// Gets the current buffer in a window
@@ -51,7 +53,9 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
   win_set_buf(window, buffer, false, err);
 }
 
-/// Gets the (1,0)-indexed cursor position in the window. |api-indexing|
+/// Gets the (1,0)-indexed, buffer-relative cursor position for a given window
+/// (different windows showing the same buffer have independent cursor
+/// positions). |api-indexing|
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
@@ -115,8 +119,13 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   // Make sure we stick in this column.
   win->w_set_curswant = true;
 
-  // make sure cursor is in visible range even if win != curwin
-  update_topline_win(win);
+  // make sure cursor is in visible range and
+  // cursorcolumn and cursorline are updated even if win != curwin
+  switchwin_T switchwin;
+  switch_win(&switchwin, win, NULL, true);
+  update_topline(curwin);
+  validate_cursor();
+  restore_win(&switchwin, true);
 
   redraw_later(win, UPD_VALID);
   win->w_redr_status = true;
@@ -160,9 +169,11 @@ void nvim_win_set_height(Window window, Integer height, Error *err)
 
   win_T *savewin = curwin;
   curwin = win;
+  curbuf = curwin->w_buffer;
   try_start();
   win_setheight((int)height);
   curwin = savewin;
+  curbuf = curwin->w_buffer;
   try_end(err);
 }
 
@@ -205,9 +216,11 @@ void nvim_win_set_width(Window window, Integer width, Error *err)
 
   win_T *savewin = curwin;
   curwin = win;
+  curbuf = curwin->w_buffer;
   try_start();
   win_setwidth((int)width);
   curwin = savewin;
+  curbuf = curwin->w_buffer;
   try_end(err);
 }
 
@@ -340,7 +353,7 @@ Boolean nvim_win_is_valid(Window window)
 ///
 /// Like |:hide| the buffer becomes hidden unless another window is editing it,
 /// or 'bufhidden' is `unload`, `delete` or `wipe` as opposed to |:close| or
-/// |nvim_win_close|, which will close the buffer.
+/// |nvim_win_close()|, which will close the buffer.
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
@@ -356,11 +369,16 @@ void nvim_win_hide(Window window, Error *err)
   tabpage_T *tabpage = win_find_tabpage(win);
   TryState tstate;
   try_enter(&tstate);
-  if (tabpage == curtab) {
+
+  // Never close the autocommand window.
+  if (is_aucmd_win(win)) {
+    emsg(_(e_autocmd_close));
+  } else if (tabpage == curtab) {
     win_close(win, false, false);
   } else {
     win_close_othertab(win, false, tabpage);
   }
+
   vim_ignored = try_leave(&tstate, err);
 }
 
@@ -430,7 +448,7 @@ Object nvim_win_call(Window window, LuaRef fun, Error *err)
 /// Set highlight namespace for a window. This will use highlights defined in
 /// this namespace, but fall back to global highlights (ns=0) when missing.
 ///
-/// This takes predecence over the 'winhighlight' option.
+/// This takes precedence over the 'winhighlight' option.
 ///
 /// @param ns_id the namespace to use
 /// @param[out] err Error details, if any

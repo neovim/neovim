@@ -22,7 +22,7 @@ describe('trunc_string', function()
   local function test_copy(s, expected, room)
     room = room and room or 20
     local buf = cimp.xmalloc(ffi.sizeof('char_u') * buflen)
-    local str = cimp.vim_strsave(to_cstr(s))
+    local str = cimp.xstrdup(to_cstr(s))
     cimp.trunc_string(str, buf, room, buflen)
     eq(expected, ffi.string(buf))
     cimp.xfree(buf)

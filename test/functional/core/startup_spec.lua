@@ -12,6 +12,7 @@ local eval = helpers.eval
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 local funcs = helpers.funcs
+local pesc = helpers.pesc
 local mkdir = helpers.mkdir
 local mkdir_p = helpers.mkdir_p
 local nvim_prog = helpers.nvim_prog
@@ -20,11 +21,12 @@ local read_file = helpers.read_file
 local retry = helpers.retry
 local rmdir = helpers.rmdir
 local sleep = helpers.sleep
-local iswin = helpers.iswin
 local startswith = helpers.startswith
 local write_file = helpers.write_file
 local meths = helpers.meths
 local alter_slashes = helpers.alter_slashes
+local is_os = helpers.is_os
+local dedent = helpers.dedent
 
 local testfile = 'Xtest_startuptime'
 after_each(function()
@@ -41,10 +43,36 @@ describe('startup', function()
 
   it('--startuptime', function()
     clear({ args = {'--startuptime', testfile}})
-    retry(nil, 1000, function()
-      assert_log('sourcing', testfile, 100)
-      assert_log("require%('vim%._editor'%)", testfile, 100)
-    end)
+    assert_log('sourcing', testfile, 100)
+    assert_log("require%('vim%._editor'%)", testfile, 100)
+  end)
+
+  it('-D does not hang #12647', function()
+    clear()
+    local screen
+    screen = Screen.new(60, 7)
+    screen:attach()
+    command([[let g:id = termopen('"]]..nvim_prog..
+    [[" -u NONE -i NONE --cmd "set noruler" -D')]])
+    screen:expect([[
+      ^                                                            |
+                                                                  |
+      Entering Debug mode.  Type "cont" to continue.              |
+      nvim_exec()                                                 |
+      cmd: aunmenu *                                              |
+      >                                                           |
+                                                                  |
+    ]])
+    command([[call chansend(g:id, "cont\n")]])
+    screen:expect([[
+      ^                                                            |
+      ~                                                           |
+      ~                                                           |
+      ~                                                           |
+      [No Name]                                                   |
+                                                                  |
+                                                                  |
+    ]])
   end)
 end)
 
@@ -57,6 +85,131 @@ describe('startup', function()
     os.remove('Xtest_startup_ttyout')
   end)
 
+  describe('-l Lua', function()
+    local function assert_l_out(expected, nvim_args, lua_args, script, input)
+      local args = { nvim_prog }
+      vim.list_extend(args, nvim_args or {})
+      vim.list_extend(args, { '-l', (script or 'test/functional/fixtures/startup.lua') })
+      vim.list_extend(args, lua_args or {})
+      local out = funcs.system(args, input):gsub('\r\n', '\n')
+      return eq(dedent(expected), out)
+    end
+
+    it('failure modes', function()
+      -- nvim -l <empty>
+      matches('nvim%.?e?x?e?: Argument missing after: "%-l"', funcs.system({ nvim_prog, '-l' }))
+      eq(1, eval('v:shell_error'))
+    end)
+
+    it('os.exit() sets Nvim exitcode', function()
+      -- tricky: LeakSanitizer triggers on os.exit() and disrupts the return value, disable it
+      exec_lua [[
+        local asan_options = os.getenv 'ASAN_OPTIONS'
+        if asan_options ~= nil and asan_options ~= '' then
+          vim.loop.os_setenv('ASAN_OPTIONS', asan_options..':detect_leaks=0')
+        end
+      ]]
+      -- nvim -l foo.lua -arg1 -- a b c
+      assert_l_out([[
+          bufs:
+          nvim args: 7
+          lua args: { "-arg1", "--exitcode", "73", "--arg2",
+            [0] = "test/functional/fixtures/startup.lua"
+          }]],
+        {},
+        { '-arg1', "--exitcode", "73", '--arg2' }
+      )
+      eq(73, eval('v:shell_error'))
+    end)
+
+    it('Lua-error sets Nvim exitcode', function()
+      eq(0, eval('v:shell_error'))
+      matches('E5113: .* my pearls!!',
+        funcs.system({ nvim_prog, '-l', 'test/functional/fixtures/startup-fail.lua' }))
+      eq(1, eval('v:shell_error'))
+      matches('E5113: .* %[string "error%("whoa"%)"%]:1: whoa',
+        funcs.system({ nvim_prog, '-l', '-' }, 'error("whoa")'))
+      eq(1, eval('v:shell_error'))
+    end)
+
+    it('executes stdin "-"', function()
+      assert_l_out('arg0=- args=2 whoa',
+        nil,
+        { 'arg1', 'arg 2' },
+        '-',
+        "print(('arg0=%s args=%d %s'):format(_G.arg[0], #_G.arg, 'whoa'))")
+      assert_l_out('biiig input: 1000042',
+        nil,
+        nil,
+        '-',
+        ('print("biiig input: "..("%s"):len())'):format(string.rep('x', (1000 * 1000) + 42)))
+      eq(0, eval('v:shell_error'))
+    end)
+
+    it('sets _G.arg', function()
+      -- nvim -l foo.lua [args]
+      assert_l_out([[
+          bufs:
+          nvim args: 7
+          lua args: { "-arg1", "--arg2", "--", "arg3",
+            [0] = "test/functional/fixtures/startup.lua"
+          }]],
+        {},
+        { '-arg1', '--arg2', '--', 'arg3' }
+      )
+      eq(0, eval('v:shell_error'))
+
+      -- nvim file1 file2 -l foo.lua -arg1 -- file3 file4
+      assert_l_out([[
+          bufs: file1 file2
+          nvim args: 10
+          lua args: { "-arg1", "arg 2", "--", "file3", "file4",
+            [0] = "test/functional/fixtures/startup.lua"
+          }]],
+        { 'file1', 'file2', },
+        { '-arg1', 'arg 2', '--', 'file3', 'file4' }
+      )
+      eq(0, eval('v:shell_error'))
+
+      -- nvim -l foo.lua <vim args>
+      assert_l_out([[
+          bufs:
+          nvim args: 5
+          lua args: { "-c", "set wrap?",
+            [0] = "test/functional/fixtures/startup.lua"
+          }]],
+        {},
+        { '-c', 'set wrap?' }
+      )
+      eq(0, eval('v:shell_error'))
+
+      -- nvim <vim args> -l foo.lua <vim args>
+      assert_l_out(
+        -- luacheck: ignore 611 (Line contains only whitespaces)
+        [[
+            wrap
+          
+          bufs:
+          nvim args: 7
+          lua args: { "-c", "set wrap?",
+            [0] = "test/functional/fixtures/startup.lua"
+          }]],
+        { '-c', 'set wrap?' },
+        { '-c', 'set wrap?' }
+      )
+      eq(0, eval('v:shell_error'))
+    end)
+
+    it('disables swapfile/shada/config/plugins', function()
+      assert_l_out('updatecount=0 shadafile=NONE loadplugins=false scriptnames=1',
+        nil,
+        nil,
+        '-',
+        [[print(('updatecount=%d shadafile=%s loadplugins=%s scriptnames=%d'):format(
+          vim.o.updatecount, vim.o.shadafile, tostring(vim.o.loadplugins), math.max(1, #vim.fn.split(vim.fn.execute('scriptnames'),'\n'))))]])
+    end)
+  end)
+
   it('pipe at both ends: has("ttyin")==0 has("ttyout")==0', function()
     -- system() puts a pipe at both ends.
     local out = funcs.system({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless',
@@ -65,6 +218,7 @@ describe('startup', function()
                                '+q' })
     eq('0 0', out)
   end)
+
   it('with --embed: has("ttyin")==0 has("ttyout")==0', function()
     local screen = Screen.new(25, 3)
     -- Remote UI connected by --embed.
@@ -76,10 +230,11 @@ describe('startup', function()
       0 0                      |
     ]])
   end)
+
   it('in a TTY: has("ttyin")==1 has("ttyout")==1', function()
     local screen = Screen.new(25, 4)
     screen:attach()
-    if iswin() then
+    if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
@@ -94,8 +249,9 @@ describe('startup', function()
                                |
     ]])
   end)
+
   it('output to pipe: has("ttyin")==1 has("ttyout")==0', function()
-    if iswin() then
+    if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
@@ -110,8 +266,9 @@ describe('startup', function()
          read_file('Xtest_startup_ttyout'))
     end)
   end)
+
   it('input from pipe: has("ttyin")==0 has("ttyout")==1', function()
-    if iswin() then
+    if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
@@ -127,10 +284,11 @@ describe('startup', function()
          read_file('Xtest_startup_ttyout'))
     end)
   end)
+
   it('input from pipe (implicit) #7679', function()
     local screen = Screen.new(25, 4)
     screen:attach()
-    if iswin() then
+    if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
@@ -146,6 +304,7 @@ describe('startup', function()
                                |
     ]])
   end)
+
   it('input from pipe + file args #7679', function()
     eq('ohyeah\r\n0 0 bufs=3',
        funcs.system({nvim_prog, '-n', '-u', 'NONE', '-i', 'NONE', '--headless',
@@ -237,11 +396,11 @@ describe('startup', function()
   it('-es/-Es disables swapfile, user config #8540', function()
     for _,arg in ipairs({'-es', '-Es'}) do
       local out = funcs.system({nvim_prog, arg,
-                                '+set swapfile? updatecount? shada?',
+                                '+set swapfile? updatecount? shadafile?',
                                 "+put =execute('scriptnames')", '+%print'})
       local line1 = string.match(out, '^.-\n')
       -- updatecount=0 means swapfile was disabled.
-      eq("  swapfile  updatecount=0  shada=!,'100,<50,s10,h\n", line1)
+      eq("  swapfile  updatecount=0  shadafile=\n", line1)
       -- Standard plugins were loaded, but not user config.
       eq('health.vim', string.match(out, 'health.vim'))
       eq(nil, string.match(out, 'init.vim'))
@@ -265,11 +424,13 @@ describe('startup', function()
                     { 'put =mode(1)', 'print', '' }))
   end)
 
-  it('fails on --embed with -es/-Es', function()
-    matches('nvim[.exe]*: %-%-embed conflicts with %-es/%-Es',
+  it('fails on --embed with -es/-Es/-l', function()
+    matches('nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
       funcs.system({nvim_prog, '--embed', '-es' }))
-    matches('nvim[.exe]*: %-%-embed conflicts with %-es/%-Es',
+    matches('nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
       funcs.system({nvim_prog, '--embed', '-Es' }))
+    matches('nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
+      funcs.system({nvim_prog, '--embed', '-l', 'foo.lua' }))
   end)
 
   it('does not crash if --embed is given twice', function()
@@ -354,7 +515,9 @@ describe('startup', function()
 
   local function pack_clear(cmd)
     -- add packages after config dir in rtp but before config/after
-    clear{args={'--cmd', 'set packpath=test/functional/fixtures', '--cmd', 'let paths=split(&rtp, ",")', '--cmd', 'let &rtp = paths[0]..",test/functional/fixtures,test/functional/fixtures/middle,"..join(paths[1:],",")', '--cmd', cmd}, env={XDG_CONFIG_HOME='test/functional/fixtures/'}}
+    clear{args={'--cmd', 'set packpath=test/functional/fixtures', '--cmd', 'let paths=split(&rtp, ",")', '--cmd', 'let &rtp = paths[0]..",test/functional/fixtures,test/functional/fixtures/middle,"..join(paths[1:],",")', '--cmd', cmd}, env={XDG_CONFIG_HOME='test/functional/fixtures/'},
+          args_rm={'runtimepath'},
+    }
   end
 
 
@@ -462,6 +625,19 @@ describe('startup', function()
     clear{args={'--cmd', 'set packpath^=test/functional/fixtures',  '--cmd', [[ lua _G.test_loadorder = {} vim.cmd "runtime! filen.lua" ]]}, env={XDG_CONFIG_HOME='test/functional/fixtures/'}}
     eq({'ordinary', 'FANCY', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
   end)
+
+  it('window widths are correct when modelines set &columns with tabpages', function()
+    write_file('tab1.noft', 'vim: columns=81')
+    write_file('tab2.noft', 'vim: columns=81')
+    finally(function()
+      os.remove('tab1.noft')
+      os.remove('tab2.noft')
+    end)
+    clear({args = {'-p', 'tab1.noft', 'tab2.noft'}})
+    eq(81, meths.win_get_width(0))
+    command('tabnext')
+    eq(81, meths.win_get_width(0))
+  end)
 end)
 
 describe('sysinit', function()
@@ -516,32 +692,6 @@ describe('sysinit', function()
        eval('printf("loaded %d xdg %d vim %d", g:loaded, get(g:, "xdg", 0), get(g:, "vim", 0))'))
   end)
 
-  it('fixed hang issue with -D (#12647)', function()
-    local screen
-    screen = Screen.new(60, 7)
-    screen:attach()
-    command([[let g:id = termopen('"]]..nvim_prog..
-    [[" -u NONE -i NONE --cmd "set noruler" -D')]])
-    screen:expect([[
-      ^                                                            |
-      Entering Debug mode.  Type "cont" to continue.              |
-      nvim_exec()                                                 |
-      cmd: aunmenu *                                              |
-      >                                                           |
-      <" -u NONE -i NONE --cmd "set noruler" -D 1,1            All|
-                                                                  |
-    ]])
-    command([[call chansend(g:id, "cont\n")]])
-    screen:expect([[
-      ^                                                            |
-      ~                                                           |
-      ~                                                           |
-      [No Name]                                                   |
-                                                                  |
-      <" -u NONE -i NONE --cmd "set noruler" -D 1,0-1          All|
-                                                                  |
-    ]])
-  end)
 end)
 
 describe('user config init', function()
@@ -574,7 +724,81 @@ describe('user config init', function()
     eq(funcs.fnamemodify(init_lua_path, ':p'), eval('$MYVIMRC'))
   end)
 
-  describe 'with explicitly provided config'(function()
+  describe('with existing .exrc in cwd', function()
+    local exrc_path = '.exrc'
+    local xstate = 'Xstate'
+
+    local function setup_exrc_file(filename)
+      exrc_path = filename
+
+      if string.find(exrc_path, "%.lua$") then
+        write_file(exrc_path, string.format([[
+          vim.g.exrc_file = "%s"
+        ]], exrc_path))
+      else
+        write_file(exrc_path, string.format([[
+          let g:exrc_file = "%s"
+        ]], exrc_path))
+      end
+    end
+
+    before_each(function()
+      write_file(init_lua_path, [[
+        vim.o.exrc = true
+        vim.g.exrc_file = '---'
+      ]])
+      mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
+    end)
+
+    after_each(function()
+      os.remove(exrc_path)
+      rmdir(xstate)
+    end)
+
+    for _, filename in ipairs({ '.exrc', '.nvimrc', '.nvim.lua' }) do
+      it('loads ' .. filename, function ()
+        setup_exrc_file(filename)
+
+        clear{ args_rm = {'-u'}, env={ XDG_CONFIG_HOME=xconfig, XDG_STATE_HOME=xstate } }
+        -- The 'exrc' file is not trusted, and the prompt is skipped because there is no UI.
+        eq('---', eval('g:exrc_file'))
+
+        local screen = Screen.new(50, 8)
+        screen:attach()
+        funcs.termopen({nvim_prog})
+        screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:') })
+        -- `i` to enter Terminal mode, `a` to allow
+        feed('ia')
+        screen:expect([[
+                                                            |
+          ~                                                 |
+          ~                                                 |
+          ~                                                 |
+          ~                                                 |
+          [No Name]                       0,0-1          All|
+                                                            |
+          -- TERMINAL --                                    |
+        ]])
+        feed(':echo g:exrc_file<CR>')
+        screen:expect(string.format([[
+                                                            |
+          ~                                                 |
+          ~                                                 |
+          ~                                                 |
+          ~                                                 |
+          [No Name]                       0,0-1          All|
+          %s%s|
+          -- TERMINAL --                                    |
+        ]], filename, string.rep(' ', 50 - #filename)))
+
+        clear{ args_rm = {'-u'}, env={ XDG_CONFIG_HOME=xconfig, XDG_STATE_HOME=xstate } }
+        -- The 'exrc' file is now trusted.
+        eq(filename, eval('g:exrc_file'))
+      end)
+    end
+  end)
+
+  describe('with explicitly provided config', function()
     local custom_lua_path = table.concat({xhome, 'custom.lua'}, pathsep)
     before_each(function()
       write_file(custom_lua_path, [[
@@ -589,7 +813,7 @@ describe('user config init', function()
     end)
   end)
 
-  describe 'VIMRC also exists'(function()
+  describe('VIMRC also exists', function()
     before_each(function()
       write_file(table.concat({xconfig, 'nvim', 'init.vim'}, pathsep), [[
       let g:vim_rc = 1
@@ -635,7 +859,7 @@ describe('runtime:', function()
   end)
 
   it('loads plugin/*.lua from start packages', function()
-    local plugin_path = table.concat({xconfig, 'nvim', 'pack', 'catagory',
+    local plugin_path = table.concat({xconfig, 'nvim', 'pack', 'category',
     'start', 'test_plugin'}, pathsep)
     local plugin_folder_path = table.concat({plugin_path, 'plugin'}, pathsep)
     local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'},
@@ -663,7 +887,7 @@ describe('runtime:', function()
   end)
 
   it('loads plugin/*.lua from site packages', function()
-    local nvimdata = iswin() and "nvim-data" or "nvim"
+    local nvimdata = is_os('win') and "nvim-data" or "nvim"
     local plugin_path = table.concat({xdata, nvimdata, 'site', 'pack', 'xa', 'start', 'yb'}, pathsep)
     local plugin_folder_path = table.concat({plugin_path, 'plugin'}, pathsep)
     local plugin_after_path = table.concat({plugin_path, 'after', 'plugin'}, pathsep)

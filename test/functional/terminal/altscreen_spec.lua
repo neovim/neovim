@@ -6,7 +6,7 @@ local feed_data = thelpers.feed_data
 local enter_altscreen = thelpers.enter_altscreen
 local exit_altscreen = thelpers.exit_altscreen
 
-if helpers.pending_win32(pending) then return end
+if helpers.skip(helpers.is_os('win')) then return end
 
 describe(':terminal altscreen', function()
   local screen
@@ -126,13 +126,13 @@ describe(':terminal altscreen', function()
       wait_removal()
       feed('<c-\\><c-n>4k')
       screen:expect([[
-        ^line3                                             |
+        ^                                                  |
                                                           |
                                                           |
         rows: 4, cols: 50                                 |
                                                           |
       ]])
-      eq(8, curbuf('line_count'))
+      eq(9, curbuf('line_count'))
     end)
 
     describe('and after exit', function()
@@ -142,15 +142,11 @@ describe(':terminal altscreen', function()
       end)
 
       it('restore buffer state', function()
-        -- FIXME(tarruda): Note that the last line was lost after restoring the
-        -- screen. This is a libvterm bug: When the main screen is restored it
-        -- seems to "cut" lines that would have been left below the new visible
-        -- screen.
         screen:expect([[
-          line4                                             |
           line5                                             |
           line6                                             |
           line7                                             |
+          line8                                             |
           {3:-- TERMINAL --}                                    |
         ]])
       end)

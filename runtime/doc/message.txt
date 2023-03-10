@@ -573,9 +573,7 @@ when using ":w"), therefore Vim requires using a !  after the command, e.g.:
   VirtualBinding
 
 Messages like this appear when starting up.  This is not a Vim problem, your
-X11 configuration is wrong.  You can find a hint on how to solve this here:
-http://groups.yahoo.com/group/solarisonintel/message/12179.
-[this URL is no longer valid]
+X11 configuration is wrong.
 
 							*W10*  >
   Warning: Changing a readonly file
@@ -603,6 +601,7 @@ probably means that some other program changed the file.  You will have to
 find out what happened, and decide which version of the file you want to keep.
 Set the 'autoread' option if you want to do this automatically.
 This message is not given when 'buftype' is not empty.
+Also see the |FileChangedShell| autocommand.
 
 There is one situation where you get this message even though there is nothing
 wrong: If you save a file in Windows on the day the daylight saving time
@@ -821,7 +820,7 @@ Type					effect ~
 					the clipboard ("* and "+ registers)
     {menu-entry}			what the menu is defined to in
 					Cmdline-mode.
-    <LeftMouse> (*)			next page
+    <LeftMouse>				next page (*)
 
 Any other key causes the meaning of the keys to be displayed.
 

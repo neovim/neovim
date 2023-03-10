@@ -1,4 +1,3 @@
-
 local nvimsrcdir = arg[1]
 local shared_file = arg[2]
 local funcs_file = arg[3]
@@ -38,7 +37,9 @@ local function sanitize(key)
   return key
 end
 
-for name, keys in pairs(keysets) do
+for _, v in ipairs(keysets) do
+  local name = v[1]
+  local keys = v[2]
   local neworder, hashfun = hashy.hashy_hash(name, keys, function (idx)
     return name.."_table["..idx.."].str"
   end)

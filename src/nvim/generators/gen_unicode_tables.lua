@@ -153,7 +153,8 @@ local build_combining_table = function(ut_fp, dataprops)
   local start = -1
   local end_ = -1
   for _, p in ipairs(dataprops) do
-    if (({Mn=true, Mc=true, Me=true})[p[3]]) then
+    -- The 'Mc' property was removed, it does take up space.
+    if (({Mn=true, Me=true})[p[3]]) then
       local n = tonumber(p[1], 16)
       if start >= 0 and end_ + 1 == n then
         -- Continue with the same range.

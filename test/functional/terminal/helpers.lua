@@ -4,19 +4,31 @@
 local helpers = require('test.functional.helpers')(nil)
 local Screen = require('test.functional.ui.screen')
 local testprg = helpers.testprg
+local exec_lua = helpers.exec_lua
 local feed_command, nvim = helpers.feed_command, helpers.nvim
 
 local function feed_data(data)
-  -- A string containing NUL bytes is not converted to a Blob when
-  -- calling nvim_set_var() API, so convert it using Lua instead.
-  nvim('exec_lua', 'vim.g.term_data = ...', {data})
-  nvim('command', 'call jobsend(b:terminal_job_id, term_data)')
+  if type(data) == 'table' then
+      data = table.concat(data, '\n')
+  end
+  exec_lua('vim.api.nvim_chan_send(vim.b.terminal_job_id, ...)', data)
 end
 
 local function feed_termcode(data)
-  -- feed with the job API
-  nvim('command', 'call jobsend(b:terminal_job_id, "\\x1b'..data..'")')
+  feed_data('\027' .. data)
 end
+
+local function make_lua_executor(session)
+  return function(code, ...)
+    local status, rv = session:request('nvim_exec_lua', code, {...})
+    if not status then
+      session:stop()
+      error(rv[2])
+    end
+    return rv
+  end
+end
+
 -- some helpers for controlling the terminal. the codes were taken from
 -- infocmp xterm-256color which is less what libvterm understands
 -- civis/cnorm
@@ -31,6 +43,8 @@ local function set_bg(num) feed_termcode('[48;5;'..num..'m') end
 local function set_bold() feed_termcode('[1m') end
 local function set_italic() feed_termcode('[3m') end
 local function set_underline() feed_termcode('[4m') end
+local function set_underdouble() feed_termcode('[4:2m') end
+local function set_undercurl() feed_termcode('[4:3m') end
 local function set_strikethrough() feed_termcode('[9m') end
 local function clear_attrs() feed_termcode('[0;10m') end
 -- mouse
@@ -60,7 +74,10 @@ local function screen_setup(extra_rows, command, cols, opts)
     [9] = {foreground = 4},
     [10] = {foreground = 121},  -- "Press ENTER" in embedded :terminal session.
     [11] = {foreground = tonumber('0x00000b')},
-    [12] = {reverse = true, foreground = tonumber('0x000079')},
+    [12] = {underline = true},
+    [13] = {underline = true, reverse = true},
+    [14] = {underline = true, reverse = true, bold = true},
+    [15] = {underline = true, foreground = 12},
   })
 
   screen:attach(opts or {rgb=false})
@@ -107,6 +124,7 @@ end
 return {
   feed_data = feed_data,
   feed_termcode = feed_termcode,
+  make_lua_executor = make_lua_executor,
   hide_cursor = hide_cursor,
   show_cursor = show_cursor,
   enter_altscreen = enter_altscreen,
@@ -116,6 +134,8 @@ return {
   set_bold = set_bold,
   set_italic = set_italic,
   set_underline = set_underline,
+  set_underdouble = set_underdouble,
+  set_undercurl = set_undercurl,
   set_strikethrough = set_strikethrough,
   clear_attrs = clear_attrs,
   enable_mouse = enable_mouse,

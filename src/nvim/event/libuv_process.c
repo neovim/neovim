@@ -2,16 +2,18 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
+#include <stdint.h>
 #include <uv.h>
 
+#include "nvim/eval/typval.h"
 #include "nvim/event/libuv_process.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/process.h"
-#include "nvim/event/rstream.h"
-#include "nvim/event/wstream.h"
+#include "nvim/event/stream.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"
 #include "nvim/os/os.h"
+#include "nvim/ui_client.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/libuv_process.c.generated.h"
@@ -25,7 +27,7 @@ int libuv_process_spawn(LibuvProcess *uvproc)
   uvproc->uvopts.file = proc->argv[0];
   uvproc->uvopts.args = proc->argv;
   uvproc->uvopts.flags = UV_PROCESS_WINDOWS_HIDE;
-#ifdef WIN32
+#ifdef MSWIN
   // libuv collapses the argv to a CommandLineToArgvW()-style string. cmd.exe
   // expects a different syntax (must be prepared by the caller before now).
   if (os_shell_is_cmdexe(proc->argv[0])) {
@@ -40,11 +42,19 @@ int libuv_process_spawn(LibuvProcess *uvproc)
 #endif
   uvproc->uvopts.exit_cb = exit_cb;
   uvproc->uvopts.cwd = proc->cwd;
+
   uvproc->uvopts.stdio = uvproc->uvstdio;
   uvproc->uvopts.stdio_count = 3;
   uvproc->uvstdio[0].flags = UV_IGNORE;
   uvproc->uvstdio[1].flags = UV_IGNORE;
   uvproc->uvstdio[2].flags = UV_IGNORE;
+
+  if (ui_client_forward_stdin) {
+    assert(UI_CLIENT_STDIN_FD == 3);
+    uvproc->uvopts.stdio_count = 4;
+    uvproc->uvstdio[3].data.fd = 0;
+    uvproc->uvstdio[3].flags = UV_INHERIT_FD;
+  }
   uvproc->uv.data = proc;
 
   if (proc->env) {
@@ -55,7 +65,7 @@ int libuv_process_spawn(LibuvProcess *uvproc)
 
   if (!proc->in.closed) {
     uvproc->uvstdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
-#ifdef WIN32
+#ifdef MSWIN
     uvproc->uvstdio[0].flags |= proc->overlapped ? UV_OVERLAPPED_PIPE : 0;
 #endif
     uvproc->uvstdio[0].data.stream = STRUCT_CAST(uv_stream_t,
@@ -64,7 +74,7 @@ int libuv_process_spawn(LibuvProcess *uvproc)
 
   if (!proc->out.closed) {
     uvproc->uvstdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
-#ifdef WIN32
+#ifdef MSWIN
     // pipe must be readable for IOCP to work on Windows.
     uvproc->uvstdio[1].flags |= proc->overlapped ?
                                 (UV_READABLE_PIPE | UV_OVERLAPPED_PIPE) : 0;
@@ -77,6 +87,9 @@ int libuv_process_spawn(LibuvProcess *uvproc)
     uvproc->uvstdio[2].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
     uvproc->uvstdio[2].data.stream = STRUCT_CAST(uv_stream_t,
                                                  &proc->err.uv.pipe);
+  } else if (proc->fwd_err) {
+    uvproc->uvstdio[2].flags = UV_INHERIT_FD;
+    uvproc->uvstdio[2].data.fd = STDERR_FILENO;
   }
 
   int status;
@@ -113,7 +126,7 @@ static void close_cb(uv_handle_t *handle)
 static void exit_cb(uv_process_t *handle, int64_t status, int term_signal)
 {
   Process *proc = handle->data;
-#if defined(WIN32)
+#if defined(MSWIN)
   // Use stored/expected signal.
   term_signal = proc->exit_signal;
 #endif

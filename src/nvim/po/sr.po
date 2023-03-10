@@ -2573,100 +2573,6 @@ msgstr "Стил:"
 msgid "Size:"
 msgstr "Величина:"
 
-msgid "E550: Missing colon"
-msgstr "E550: Недостаје двотачка"
-
-msgid "E551: Illegal component"
-msgstr "E551: Неисправна компонента"
-
-msgid "E552: digit expected"
-msgstr "E552: очекује се цифра"
-
-#, c-format
-msgid "Page %d"
-msgstr "Страна %d"
-
-msgid "No text to be printed"
-msgstr "Нема текста за штампу"
-
-#, c-format
-msgid "Printing page %d (%d%%)"
-msgstr "Штампање стране %d (%d%%)"
-
-#, c-format
-msgid " Copy %d of %d"
-msgstr " Копија %d од %d"
-
-#, c-format
-msgid "Printed: %s"
-msgstr "Одштампано: %s"
-
-msgid "Printing aborted"
-msgstr "Штампање прекинуто"
-
-msgid "E455: Error writing to PostScript output file"
-msgstr "E455: Грешка приликом уписа у PostScript излазну датотеку"
-
-#, c-format
-msgid "E624: Can't open file \"%s\""
-msgstr "E624: Датотека \"%s\" не може да се отвори"
-
-#, c-format
-msgid "E457: Can't read PostScript resource file \"%s\""
-msgstr "E457: PostScript resource датотека \"%s\" не може да се чита"
-
-#, c-format
-msgid "E618: file \"%s\" is not a PostScript resource file"
-msgstr "E618: датотека \"%s\" није PostScript resource датотека"
-
-#, c-format
-msgid "E619: file \"%s\" is not a supported PostScript resource file"
-msgstr "E619: датотека \"%s\" није подржана PostScript resource датотека"
-
-#, c-format
-msgid "E621: \"%s\" resource file has wrong version"
-msgstr "E621: \"%s\" resource датотека је погрешне верзије"
-
-msgid "E673: Incompatible multi-byte encoding and character set."
-msgstr "E673: Вишебајтно кодирање и скуп карактера нису компатибилни."
-
-msgid "E674: printmbcharset cannot be empty with multi-byte encoding."
-msgstr "E674: printmbcharset не може бити празно са вишебајтним кодирањем."
-
-msgid "E675: No default font specified for multi-byte printing."
-msgstr "E675: Није наведен подразумевани фонт за вишебајтно штампање."
-
-msgid "E324: Can't open PostScript output file"
-msgstr "E324: PostScript излазна датотека не може да се отвори"
-
-#, c-format
-msgid "E456: Can't open file \"%s\""
-msgstr "E456: Датотека \"%s\" не може да се отвори"
-
-msgid "E456: Can't find PostScript resource file \"prolog.ps\""
-msgstr "E456: PostScript resource датотека \"prolog.ps\" не може да се пронађе"
-
-msgid "E456: Can't find PostScript resource file \"cidfont.ps\""
-msgstr ""
-"E456: PostScript resource датотека \"cidfont.ps\" не може да се пронађе"
-
-#, c-format
-msgid "E456: Can't find PostScript resource file \"%s.ps\""
-msgstr "E456: PostScript resource датотека \"%s.ps\" не може да се пронађе"
-
-#, c-format
-msgid "E620: Unable to convert to print encoding \"%s\""
-msgstr "E620: Није могућа конверзија у кодирање за штампу \"%s\""
-
-msgid "Sending to printer..."
-msgstr "Слање штампачу..."
-
-msgid "E365: Failed to print PostScript file"
-msgstr "E365: PostScript датотека није успела да се одштампа"
-
-msgid "Print job sent."
-msgstr "Задатак штампе је послат"
-
 msgid "Add a new database"
 msgstr "Додај нову базу"
 
@@ -6050,8 +5956,8 @@ msgstr "E424: У употреби је превише различитих ат�
 msgid "E669: Unprintable character in group name"
 msgstr "E669: У имену групе је карактер који не може да се штампа"
 
-msgid "W18: Invalid character in group name"
-msgstr "W18: Неважећи карактер у имену групе"
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: Неважећи карактер у имену групе"
 
 msgid "E849: Too many highlight and syntax groups"
 msgstr "E849: Превише синтаксних и група истицања"

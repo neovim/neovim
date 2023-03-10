@@ -345,9 +345,9 @@ escaped with a backslash.
 Wildcards in {file} are expanded, but as with file completion, 'wildignore'
 and 'suffixes' apply.  Which wildcards are supported depends on the system.
 These are the common ones:
-	?	matches one character
-	*	matches anything, including nothing
-	**	matches anything, including nothing, recurses into directories
+	`?`	matches one character
+	`*`	matches anything, including nothing
+	`**`	matches anything, including nothing, recurses into directories
 	[abc]	match 'a', 'b' or 'c'
 
 To avoid the special meaning of the wildcards prepend a backslash.  However,
@@ -406,7 +406,7 @@ external command, by putting an equal sign right after the first backtick,
 e.g.: >
 	:e `=tempname()`
 The expression can contain just about anything, thus this can also be used to
-avoid the special meaning of '"', '|', '%' and '#'.  However, 'wildignore'
+avoid the special meaning of '"', "|", '%' and '#'.  However, 'wildignore'
 does apply like to other wildcards.
 
 Environment variables in the expression are expanded when evaluating the
@@ -423,9 +423,8 @@ Note that such expressions are only supported in places where a filename is
 expected as an argument to an Ex-command.
 
 							*++opt* *[++opt]*
-The [++opt] argument can be used to force the value of 'fileformat',
-'fileencoding' or 'binary' to a value for one command, and to specify the
-behavior for bad characters.  The form is: >
+The [++opt] argument can be used to set some options for one command, and to
+specify the behavior for bad characters.  The form is: >
 	++{optname}
 Or: >
 	++{optname}={value}
@@ -436,11 +435,11 @@ Where {optname} is one of:	    *++ff* *++enc* *++bin* *++nobin* *++edit*
     bin    or  binary	    sets 'binary'
     nobin  or  nobinary	    resets 'binary'
     bad			    specifies behavior for bad characters
-    edit		    for |:read| only: keep option values as if editing
-			    a file
+    edit		    for |:read|: keeps options as if editing a file
+    p			    for |:write|: creates the file's parent directory
 
-{value} cannot contain white space.  It can be any valid value for these
-options.  Examples: >
+{value} cannot contain whitespace.  It can be any valid value for the options.
+Examples: >
 	:e ++ff=unix
 This edits the same file again with 'fileformat' set to "unix". >
 
@@ -450,8 +449,23 @@ This writes the current buffer to "newfile" in latin1 format.
 The message given when writing a file will show "[converted]" when
 'fileencoding' or the value specified with ++enc differs from 'encoding'.
 
-There may be several ++opt arguments, separated by white space.  They must all
+There may be several ++opt arguments, separated by whitespace.  They must all
 appear before any |+cmd| argument.
+
+								*++p*
+The "++p" flag creates the parent directory of the file if it does not exist.
+For example if you edit "foo/bar/file.txt", the ":write ++p" command creates
+"foo/bar/" if necessary before writing the file. >
+
+	:edit foo/bar/file.txt
+	:write ++p
+
+If you want :write (without "++p") to always create missing parent
+directories, add this autocmd to your config: >
+
+	" Auto-create parent directories (except for URIs "://").
+	au BufWritePre,FileWritePre * if @% !~# '\(://\)' | call mkdir(expand('<afile>:p:h'), 'p') | endif
+<
 
 								*++bad*
 The argument of "++bad=" specifies what happens with characters that can't be
@@ -544,6 +558,44 @@ Before editing binary, executable or Vim script files you should set the
 'binary' option.  A simple way to do this is by starting Vim with the "-b"
 option.  This will avoid the use of 'fileformat'.  Without this you risk that
 single <NL> characters are unexpectedly replaced with <CR><NL>.
+
+END OF LINE AND END OF FILE				*eol-and-eof*
+
+Vim has several options to control the file format:
+	'fileformat'	the <EOL> style: Unix, DOS, Mac
+	'endofline'	whether the last line ends with a <EOL>
+	'endoffile'	whether the file ends with a CTRL-Z
+	'fixendofline'	whether to fix eol and eof
+
+The first three values are normally detected automatically when reading the
+file and are used when writing the text to a file.  While editing the buffer
+it looks like every line has a line ending and the CTRL-Z isn't there (an
+exception is when 'binary' is set, it works differently then).
+
+The 'fixendofline' option can be used to choose what to write.  You can also
+change the option values to write the file differently than how it was read.
+
+Here are some examples how to use them.
+
+If you want files in Unix format (every line NL terminated): >
+	setl ff=unix fixeol
+You should probably do this on any Unix-like system.  Also modern MS-Windows
+systems tend to work well with this.  It is recommended to always use this
+format for Vim scripts.
+
+If you want to use an old MS-DOS file in a modern environment, fixing line
+endings and dropping CTRL-Z, but keeping the <CR><NL> style <EOL>: >
+	setl ff=dos fixeol
+This is useful for many MS-Windows programs, they regularly expect the
+<CR><NL> line endings.
+
+If you want to drop the final <EOL> and add a final CTRL-Z (e.g. for an old
+system like CP/M): >
+	setl ff=dos nofixeol noeol eof
+
+If you want to preserve the fileformat exactly as-is, including any final
+<EOL> and final CTRL-Z: >
+	setl nofixeol
 
 ==============================================================================
 3. The argument list				*argument-list* *arglist*
@@ -842,7 +894,7 @@ changed.  This is done for all *.c files.
 Example: >
 	:args *.[ch]
 	:argdo %s/\<my_foo\>/My_Foo/ge | update
-This changes the word "my_foo" to "My_Foo" in all *.c and *.h files.  The "e"
+This changes the word "my_foo" to "My_Foo" in all "*.c" and "*.h" files.  The "e"
 flag is used for the ":substitute" command to avoid an error for files where
 "my_foo" isn't used.  ":update" writes the file only if changes were made.
 
@@ -855,11 +907,13 @@ Note: When the 'write' option is off, you are not able to write any file.
 					*E502* *E503* *E504* *E505*
 					*E512* *E514* *E667* *E949*
 :w[rite] [++opt]	Write the whole buffer to the current file.  This is
-			the normal way to save changes to a file.  It fails
-			when the 'readonly' option is set or when there is
-			another reason why the file can't be written.
-			For ++opt see |++opt|, but only ++bin, ++nobin, ++ff
-			and ++enc are effective.
+			the normal way to save changes to a file.  Fails when
+			'readonly' is set or when there is another reason why
+			the file can't be written, such as when the parent
+			directory doesn't exist (use |++p| to avoid that).
+			For ++opt see |++opt|, but only ++p, ++bin, ++nobin,
+			++ff and ++enc are effective.
+
 
 :w[rite]! [++opt]	Like ":write", but forcefully write when 'readonly' is
 			set or there is another reason why writing was
@@ -941,7 +995,7 @@ WRITING WITH MULTIPLE BUFFERS				*buffer-write*
 
 
 Vim will warn you if you try to overwrite a file that has been changed
-elsewhere.  See |timestamp|.
+elsewhere (unless "!" was used).  See |timestamp|.
 
 			    *backup* *E207* *E506* *E507* *E508* *E509* *E510*
 If you write to an existing file (but do not append) while the 'backup',
@@ -1222,8 +1276,8 @@ unmodified.
 For MS-Windows you can modify the filters that are used in the browse
 dialog.  By setting the g:browsefilter or b:browsefilter variables, you can
 change the filters globally or locally to the buffer.  The variable is set to
-a string in the format "{filter label}\t{pattern};{pattern}\n" where {filter
-label} is the text that appears in the "Files of Type" comboBox, and {pattern}
+a string in the format "{filter label}\t{pattern};{pattern}\n" where "{filter
+label}" is the text that appears in the "Files of Type" comboBox, and {pattern}
 is the pattern which filters the filenames.  Several patterns can be given,
 separated by ';'.
 
@@ -1271,6 +1325,7 @@ exist, the next-higher scope in the hierarchy applies.
 :cd[!] {path}		Change the current directory to {path}.
 			If {path} is relative, it is searched for in the
 			directories listed in |'cdpath'|.
+			Clear any window-local directory.
 			Does not change the meaning of an already opened file,
 			because its full path name is remembered.  Files from
 			the |arglist| may change though!
@@ -1481,8 +1536,8 @@ doing something there and closing it should be OK (if there are no side
 effects from other autocommands).  Closing unrelated windows and buffers will
 get you into trouble.
 
-Before writing a file the timestamp is checked.  If it has changed, Vim will
-ask if you really want to overwrite the file:
+Before writing a file, the timestamp is checked (unless "!" was used).
+If it has changed, Vim will ask if you really want to overwrite the file:
 
 	WARNING: The file has been changed since reading it!!!
 	Do you really want to write to it (y/n)?
@@ -1521,8 +1576,8 @@ which is slightly different.
 There are three different types of searching:
 
 1) Downward search:					*starstar*
-   Downward search uses the wildcards '*', '**' and possibly others
-   supported by your operating system.  '*' and '**' are handled inside Vim,
+   Downward search uses the wildcards "*", "**" and possibly others
+   supported by your operating system.  "*" and "**" are handled inside Vim,
    so they work on all operating systems.  Note that "**" only acts as a
    special wildcard when it is at the start of a name.
 
@@ -1530,12 +1585,12 @@ There are three different types of searching:
    search pattern this would be ".*".  Note that the "." is not used for file
    searching.
 
-   '**' is more sophisticated:
+   "**" is more sophisticated:
       - It ONLY matches directories.
       - It matches up to 30 directories deep by default, so you can use it to
 	search an entire directory tree
       - The maximum number of levels matched can be given by appending a number
-	to '**'.
+	to "**".
 	Thus '/usr/**2' can match: >
 		/usr
 		/usr/include
@@ -1546,14 +1601,14 @@ There are three different types of searching:
 		....
 <	It does NOT match '/usr/include/g++/std' as this would be three
 	levels.
-	The allowed number range is 0 ('**0' is removed) to 100
+	The allowed number range is 0 ("**0" is removed) to 100
 	If the given number is smaller than 0 it defaults to 30, if it's
 	bigger than 100 then 100 is used.  The system also has a limit on the
 	path length, usually 256 or 1024 bytes.
-      - '**' can only be at the end of the path or be followed by a path
+      - "**" can only be at the end of the path or be followed by a path
 	separator or by a number and a path separator.
 
-   You can combine '*' and '**' in any order: >
+   You can combine "*" and "**" in any order: >
 	/usr/**/sys/*
 	/usr/*tory/sys/**
 	/usr/**2/sys/*
@@ -1609,5 +1664,30 @@ There are three different types of searching:
    Note that completion for ":find", ":sfind", and ":tabfind" commands do not
    currently work with 'path' items that contain a URL or use the double star
    with depth limiter (/usr/**2) or upward search (;) notations.
+
+==============================================================================
+12. Trusted Files						*trust*
+
+Nvim executes arbitrary code found on the filesystem if 'exrc' is enabled. To
+prevent executing malicious code, only "trusted files" are executed. You can
+mark a file as trusted or untrusted using the |:trust| command or the
+|vim.secure.read()| function.
+
+							*:trust* *E5570*
+:trust [++deny] [++remove] [file]
+
+			Manage trusted files. Without ++ options, :trust marks
+			[file] (or current buffer if no [file]) as trusted,
+			keyed on a hash of its contents. The trust list is
+			stored on disk, Nvim will re-use it after restarting.
+
+			[++deny] marks [file] (or current buffer if no [file]) as
+			untrusted: it will never be executed, 'exrc' will
+			ignore it.
+
+			[++remove] removes [file] (or current buffer if no
+			[file]) from the trust list. When the file is
+			discovered by 'exrc' or |vim.secure.read()|, the user
+			will be asked whether to trust or deny the file.
 
  vim:tw=78:ts=8:noet:ft=help:norl:

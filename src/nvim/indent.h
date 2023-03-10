@@ -3,6 +3,8 @@
 
 #include "nvim/vim.h"
 
+typedef int (*IndentGetter)(void);
+
 // flags for set_indent()
 #define SIN_CHANGED     1       // call changed_bytes() when line changed
 #define SIN_INSERT      2       // insert indent before existing text

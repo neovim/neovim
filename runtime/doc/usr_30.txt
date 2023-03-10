@@ -56,7 +56,7 @@ From this you can see that you have errors in the file "main.c".  When you
 press <Enter>, Vim displays the file "main.c", with the cursor positioned on
 line 6, the first line with an error.  You did not need to specify the file or
 the line number, Vim knew where to go by looking in the error messages.
-
+>
 		+---------------------------------------------------+
 		|int main()					    |
 		|{						    |
@@ -69,7 +69,7 @@ the line number, Vim knew where to go by looking in the error messages.
 		| ~						    |
 		|(3 of 12): too many arguments to function 'do_sub' |
 		+---------------------------------------------------+
-
+<
 The following command goes to where the next error occurs: >
 
 	:cnext

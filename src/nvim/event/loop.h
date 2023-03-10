@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <uv.h>
 
+#include "klib/klist.h"
 #include "nvim/event/multiqueue.h"
-#include "nvim/lib/klist.h"
 #include "nvim/os/time.h"
 
 typedef void *WatcherPtr;
@@ -58,7 +58,7 @@ typedef struct loop {
 // Poll for events until a condition or timeout
 #define LOOP_PROCESS_EVENTS_UNTIL(loop, multiqueue, timeout, condition) \
   do { \
-    int remaining = timeout; \
+    int64_t remaining = timeout; \
     uint64_t before = (remaining > 0) ? os_hrtime() : 0; \
     while (!(condition)) { \
       LOOP_PROCESS_EVENTS(loop, multiqueue, remaining); \
@@ -66,7 +66,7 @@ typedef struct loop {
         break; \
       } else if (remaining > 0) { \
         uint64_t now = os_hrtime(); \
-        remaining -= (int)((now - before) / 1000000); \
+        remaining -= (int64_t)((now - before) / 1000000); \
         before = now; \
         if (remaining <= 0) { \
           break; \

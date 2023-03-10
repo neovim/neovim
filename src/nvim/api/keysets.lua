@@ -1,8 +1,17 @@
 return {
-  context = {
+  { 'context', {
     "types";
-  };
-  set_extmark = {
+  }};
+  { 'set_decoration_provider', {
+    "on_start";
+    "on_buf";
+    "on_win";
+    "on_line";
+    "on_end";
+    "_on_hl_def";
+    "_on_spell_nav";
+  }};
+  { 'set_extmark', {
     "id";
     "end_line";
     "end_row";
@@ -28,9 +37,10 @@ return {
     "line_hl_group";
     "cursorline_hl_group";
     "conceal";
+    "spell";
     "ui_watched";
-  };
-  keymap = {
+  }};
+  { 'keymap', {
     "noremap";
     "nowait";
     "silent";
@@ -40,11 +50,11 @@ return {
     "callback";
     "desc";
     "replace_keycodes";
-  };
-  get_commands = {
+  }};
+  { 'get_commands', {
     "builtin";
-  };
-  user_command = {
+  }};
+  { 'user_command', {
     "addr";
     "bang";
     "bar";
@@ -57,8 +67,8 @@ return {
     "preview";
     "range";
     "register";
-  };
-  float_config = {
+  }};
+  { 'float_config', {
     "row";
     "col";
     "width";
@@ -71,27 +81,29 @@ return {
     "focusable";
     "zindex";
     "border";
+    "title";
+    "title_pos";
     "style";
     "noautocmd";
-  };
-  runtime = {
+  }};
+  { 'runtime', {
     "is_lua";
     "do_source";
-  };
-  eval_statusline = {
+  }};
+  { 'eval_statusline', {
     "winid";
     "maxwidth";
     "fillchar";
     "highlights";
     "use_winbar";
     "use_tabline";
-  };
-  option = {
+  }};
+  { 'option', {
     "scope";
     "win";
     "buf";
-  };
-  highlight = {
+  }};
+  { 'highlight', {
     "bold";
     "standout";
     "strikethrough";
@@ -102,6 +114,7 @@ return {
     "underdashed";
     "italic";
     "reverse";
+    "altfont";
     "nocombine";
     "default";
     "cterm";
@@ -114,8 +127,10 @@ return {
     "global_link";
     "fallback";
     "blend";
-  };
-  highlight_cterm = {
+    "fg_indexed";
+    "bg_indexed";
+  }};
+  { 'highlight_cterm', {
     "bold";
     "standout";
     "strikethrough";
@@ -126,16 +141,17 @@ return {
     "underdashed";
     "italic";
     "reverse";
+    "altfont";
     "nocombine";
-  };
+  }};
   -- Autocmds
-  clear_autocmds = {
+  { 'clear_autocmds', {
     "buffer";
     "event";
     "group";
     "pattern";
-  };
-  create_autocmd = {
+  }};
+  { 'create_autocmd', {
     "buffer";
     "callback";
     "command";
@@ -144,24 +160,24 @@ return {
     "nested";
     "once";
     "pattern";
-  };
-  exec_autocmds = {
+  }};
+  { 'exec_autocmds', {
     "buffer";
     "group";
     "modeline";
     "pattern";
     "data";
-  };
-  get_autocmds = {
+  }};
+  { 'get_autocmds', {
     "event";
     "group";
     "pattern";
     "buffer";
-  };
-  create_augroup = {
+  }};
+  { 'create_augroup', {
     "clear";
-  };
-  cmd = {
+  }};
+  { 'cmd', {
     "cmd";
     "range";
     "count";
@@ -173,12 +189,12 @@ return {
     "nargs";
     "addr";
     "nextcmd";
-  };
-  cmd_magic = {
+  }};
+  { 'cmd_magic', {
     "file";
     "bar";
-  };
-  cmd_mods = {
+  }};
+  { 'cmd_mods', {
     "silent";
     "emsg_silent";
     "unsilent";
@@ -188,6 +204,7 @@ return {
     "browse";
     "confirm";
     "hide";
+    "horizontal";
     "keepalt";
     "keepjumps";
     "keepmarks";
@@ -198,13 +215,15 @@ return {
     "verbose";
     "vertical";
     "split";
-  };
-  cmd_mods_filter = {
+  }};
+  { 'cmd_mods_filter', {
     "pattern";
     "force";
-  };
-  cmd_opts = {
+  }};
+  { 'cmd_opts', {
     "output";
-  };
+  }};
+  { 'echo_opts', {
+    "verbose";
+  }};
 }
-

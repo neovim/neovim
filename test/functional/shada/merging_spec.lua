@@ -14,7 +14,7 @@ local wshada, sdrcmd, shada_fname =
   get_shada_rw('Xtest-functional-shada-merging.shada')
 
 local mock_file_path = '/a/b/'
-if helpers.iswin() then
+if helpers.is_os('win') then
   mock_file_path = 'C:/a/'
 end
 

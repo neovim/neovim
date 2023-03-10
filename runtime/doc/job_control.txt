@@ -30,7 +30,7 @@ Usage							*job-control-usage*
 To control jobs, use the "job…" family of functions: |jobstart()|,
 |jobstop()|, etc.
 
-Example: >
+Example: >vim
 
     function! s:OnEvent(job_id, data, event) dict
       if a:event == 'stdout'
@@ -51,7 +51,7 @@ Example: >
     let job1 = jobstart(['bash'], extend({'shell': 'shell 1'}, s:callbacks))
     let job2 = jobstart(['bash', '-c', 'for i in {1..10}; do echo hello $i!; sleep 1; done'], extend({'shell': 'shell 2'}, s:callbacks))
 
-To test the above script, copy it to a file ~/foo.vim and run it: >
+To test the above script, copy it to a file ~/foo.vim and run it: >bash
     nvim -u ~/foo.vim
 <
 Description of what happens:
@@ -75,7 +75,7 @@ Arguments passed to on_exit callback:
 	will not trigger the on_stdout/on_stderr callback (but if the process
 	ends, the on_exit callback will be invoked).
         For example, "ruby -e" buffers output, so small strings will be
-        buffered unless "auto-flushing" ($stdout.sync=true) is enabled. >
+        buffered unless "auto-flushing" ($stdout.sync=true) is enabled. >vim
           function! Receive(job_id, data, event)
             echom printf('%s: %s',a:event,string(a:data))
           endfunction
@@ -92,7 +92,7 @@ Arguments passed to on_exit callback:
 	  - `abc\nefg` may arrive as `['abc', '']`, `['efg']` or `['abc']`,
 	    `['','efg']`, or even `['ab']`, `['c','efg']`.
 	Easy way to deal with this: initialize a list as `['']`, then append
-	to it as follows: >
+	to it as follows: >vim
 	  let s:chunks = ['']
 	  func! s:on_stdout(job_id, data, event) dict
 	    let s:chunks[-1] .= a:data[0]
@@ -101,7 +101,7 @@ Arguments passed to on_exit callback:
 <
 
 The |jobstart-options| dictionary is passed as |self| to the callback.
-The above example could be written in this "object-oriented" style: >
+The above example could be written in this "object-oriented" style: >vim
 
     let Shell = {}
 
@@ -129,16 +129,16 @@ The above example could be written in this "object-oriented" style: >
     let instance = Shell.new('bomb',
           \ 'for i in $(seq 9 -1 1); do echo $i 1>&$((i % 2 + 1)); sleep 1; done')
 <
-To send data to the job's stdin, use |chansend()|: >
+To send data to the job's stdin, use |chansend()|: >vim
     :call chansend(job1, "ls\n")
     :call chansend(job1, "invalid-command\n")
     :call chansend(job1, "exit\n")
 <
-A job may be killed with |jobstop()|: >
+A job may be killed with |jobstop()|: >vim
     :call jobstop(job1)
 <
 A job may be killed at any time with the |jobstop()| function:
->
+>vim
     :call jobstop(job1)
 <
 Individual streams can be closed without killing the job, see |chanclose()|.

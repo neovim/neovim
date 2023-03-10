@@ -5,7 +5,7 @@
 			      Table Of Contents			*user-manual*
 
 ==============================================================================
-Overview ~
+Overview
 
 Getting Started
 |usr_01.txt|  About the manuals
@@ -52,7 +52,7 @@ The user manual is online:
 	https://neovim.io/doc/user
 
 ==============================================================================
-Getting Started ~
+Getting Started
 
 Read this from start to end to learn the essential commands.
 
@@ -111,8 +111,7 @@ Read this from start to end to learn the essential commands.
 		|06.2|	No or wrong colors?
 		|06.3|	Different colors
 		|06.4|	With colors or without colors
-		|06.5|	Printing with colors
-		|06.6|	Further reading
+		|06.5|	Further reading
 
 |usr_07.txt|  Editing more than one file
 		|07.1|	Edit another file
@@ -167,7 +166,7 @@ Read this from start to end to learn the essential commands.
 		|12.8|	Find where a word is used
 
 ==============================================================================
-Editing Effectively ~
+Editing Effectively
 
 Subjects that can be read independently.
 
@@ -275,7 +274,7 @@ Subjects that can be read independently.
 		|32.4|	Time travelling
 
 ==============================================================================
-Tuning Vim ~
+Tuning Vim
 
 Make Vim work as you like it.
 

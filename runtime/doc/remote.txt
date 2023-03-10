@@ -46,12 +46,16 @@ The following command line arguments are available:
 				new tabpage.
 								*--remote-send*
    --remote-send {keys}		Send {keys} to server and exit.  The {keys}
-   				are not mapped.  Special key names are
+				are not mapped.  Special key names are
 				recognized, e.g., "<CR>" results in a CR
 				character.
 								*--remote-expr*
    --remote-expr {expr}		Evaluate {expr} in server and print the result
 				on stdout.
+								*--remote-ui*
+   --remote-ui			Display the UI of the server in the terminal.
+				Fully interactive: keyboard and mouse input
+				are forwarded to the server.
 								*--server*
    --server {addr}		Connect to the named pipe or socket at the
 				given address for executing remote commands.

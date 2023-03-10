@@ -3,15 +3,13 @@
 
 #include <assert.h>
 #include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
 #include <uv.h>
 
 #include "nvim/event/loop.h"
+#include "nvim/event/stream.h"
 #include "nvim/event/wstream.h"
-#include "nvim/log.h"
+#include "nvim/macros.h"
 #include "nvim/memory.h"
-#include "nvim/vim.h"
 
 #define DEFAULT_MAXMEM 1024 * 1024 * 2000
 
