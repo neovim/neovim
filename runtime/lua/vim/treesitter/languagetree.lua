@@ -455,7 +455,7 @@ end
 --- nodes, which is useful for templating languages like ERB and EJS.
 ---
 ---@private
----@param new_regions Range4[][] List of regions this tree should manage and parse.
+---@param new_regions Range6[][] List of regions this tree should manage and parse.
 function LanguageTree:set_included_regions(new_regions)
   -- Transform the tables from 4 element long to 6 element long (with byte offset)
   for _, region in ipairs(new_regions) do
@@ -484,25 +484,13 @@ function LanguageTree:included_regions()
 end
 
 ---@private
----@param node TSNode
----@param source integer|string
----@param metadata TSMetadata
----@return Range6
-local function get_range_from_metadata(node, source, metadata)
-  if metadata and metadata.range then
-    return Range.add_bytes(source, metadata.range --[[@as Range4|Range6]])
-  end
-  return { node:range(true) }
-end
-
----@private
 --- TODO(lewis6991): cleanup of the node_range interface
 ---@param node TSNode
 ---@param source string|integer
 ---@param metadata TSMetadata
 ---@return Range6[]
 local function get_node_ranges(node, source, metadata, include_children)
-  local range = get_range_from_metadata(node, source, metadata)
+  local range = query.get_range(node, source, metadata)
 
   if include_children then
     return { range }
@@ -566,30 +554,17 @@ local function add_injection(t, tree_index, pattern, lang, combined, ranges)
 end
 
 ---@private
----Get node text
----
----Note: `query.get_node_text` returns string|string[]|nil so use this simple alias function
----to annotate it returns string.
----
----TODO(lewis6991): use [at]overload annotations on `query.get_node_text`
----@param node TSNode
----@param source integer|string
----@param metadata table
----@return string
-local function get_node_text(node, source, metadata)
-  return query.get_node_text(node, source, { metadata = metadata }) --[[@as string]]
-end
-
----@private
 --- Extract injections according to:
 --- https://tree-sitter.github.io/tree-sitter/syntax-highlighting#language-injection
 ---@param match table<integer,TSNode>
----@param metadata table
+---@param metadata TSMetadata
 ---@return string, boolean, Range4[]
 function LanguageTree:_get_injection(match, metadata)
   local ranges = {} ---@type Range4[]
   local combined = metadata['injection.combined'] ~= nil
-  local lang = metadata['injection.language'] ---@type string
+  local lang = metadata['injection.language']
+  assert(type(lang) == 'string')
+
   local include_children = metadata['injection.include-children'] ~= nil
 
   for id, node in pairs(match) do
@@ -597,7 +572,7 @@ function LanguageTree:_get_injection(match, metadata)
 
     -- Lang should override any other language tag
     if name == 'injection.language' then
-      lang = get_node_text(node, self._source, metadata[id])
+      lang = query.get_node_text(node, self._source, { metadata = metadata[id] })
     elseif name == 'injection.content' then
       ranges = get_node_ranges(node, self._source, metadata[id], include_children)
     end
@@ -608,11 +583,11 @@ end
 
 ---@private
 ---@param match table<integer,TSNode>
----@param metadata table
+---@param metadata TSMetadata
 ---@return string, boolean, Range4[]
 function LanguageTree:_get_injection_deprecated(match, metadata)
   local lang = nil ---@type string
-  local ranges = {} ---@type Range4[]
+  local ranges = {} ---@type Range6[]
   local combined = metadata.combined ~= nil
 
   -- Directives can configure how injections are captured as well as actual node captures.
@@ -630,8 +605,10 @@ function LanguageTree:_get_injection_deprecated(match, metadata)
     end
   end
 
-  if metadata.language then
-    lang = metadata.language ---@type string
+  local mlang = metadata.language
+  if mlang ~= nil then
+    assert(type(mlang) == 'string')
+    lang = mlang
   end
 
   -- You can specify the content and language together
@@ -642,11 +619,11 @@ function LanguageTree:_get_injection_deprecated(match, metadata)
 
     -- Lang should override any other language tag
     if name == 'language' and not lang then
-      lang = get_node_text(node, self._source, metadata[id])
+      lang = query.get_node_text(node, self._source, { metadata = metadata[id] })
     elseif name == 'combined' then
       combined = true
     elseif name == 'content' and #ranges == 0 then
-      ranges[#ranges + 1] = get_range_from_metadata(node, self._source, metadata[id])
+      ranges[#ranges + 1] = query.get_range(node, self._source, metadata[id])
       -- Ignore any tags that start with "_"
       -- Allows for other tags to be used in matches
     elseif string.sub(name, 1, 1) ~= '_' then
@@ -655,7 +632,7 @@ function LanguageTree:_get_injection_deprecated(match, metadata)
       end
 
       if #ranges == 0 then
-        ranges[#ranges + 1] = get_range_from_metadata(node, self._source, metadata[id])
+        ranges[#ranges + 1] = query.get_range(node, self._source, metadata[id])
       end
     end
   end

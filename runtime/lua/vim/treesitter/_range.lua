@@ -2,8 +2,19 @@ local api = vim.api
 
 local M = {}
 
----@alias Range4 {[1]: integer, [2]: integer, [3]: integer, [4]: integer}
----@alias Range6 {[1]: integer, [2]: integer, [3]: integer, [4]: integer, [5]: integer, [6]: integer}
+---@class Range4
+---@field [1] integer start row
+---@field [2] integer start column
+---@field [3] integer end row
+---@field [4] integer end column
+
+---@class Range6
+---@field [1] integer start row
+---@field [2] integer start column
+---@field [3] integer start bytes
+---@field [4] integer end row
+---@field [5] integer end column
+---@field [6] integer end bytes
 
 ---@private
 ---@param a_row integer
