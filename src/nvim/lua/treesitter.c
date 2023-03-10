@@ -405,8 +405,6 @@ static int parser_parse(lua_State *L)
     old_tree = tmp ? *tmp : NULL;
   }
 
-  bool include_bytes = (lua_gettop(L) >= 3) && lua_toboolean(L, 3);
-
   TSTree *new_tree = NULL;
   size_t len;
   const char *str;
@@ -442,6 +440,8 @@ static int parser_parse(lua_State *L)
   default:
     return luaL_argerror(L, 3, "expected either string or buffer handle");
   }
+
+  bool include_bytes = (lua_gettop(L) >= 4) && lua_toboolean(L, 4);
 
   // Sometimes parsing fails (timeout, or wrong parser ABI)
   // In those case, just return an error.
