@@ -228,7 +228,6 @@ end
 --- determine if any child languages should be created.
 ---
 ---@return TSTree[]
----@return table|nil Change list
 function LanguageTree:parse()
   if self:is_valid() then
     self:_log('valid')
@@ -302,18 +301,12 @@ function LanguageTree:parse()
   })
 
   self:for_each_child(function(child)
-    local _, child_changes = child:parse()
-
-    -- Propagate any child changes so they are included in the
-    -- the change list for the callback.
-    if child_changes then
-      vim.list_extend(changes, child_changes)
-    end
+    child:parse()
   end)
 
   self._valid = true
 
-  return self._trees, changes
+  return self._trees
 end
 
 --- Invokes the callback for each |LanguageTree| and its children recursively
