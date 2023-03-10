@@ -232,7 +232,10 @@ The following deprecated functions or APIs were removed.
   changes need to be contributed there first.)
   See https://github.com/neovim/neovim/pull/20674.
 
-- 'hkmap', 'hkmapp' and 'aleph' options were removed. Use 'keymap' option instead.
+• 'hkmap', 'hkmapp' and 'aleph' options were removed. Use 'keymap' option instead.
+
+• |LanguageTree:parse()| no longer returns changed regions. Please use the
+  `on_changedtree` callbacks instead.
 
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*

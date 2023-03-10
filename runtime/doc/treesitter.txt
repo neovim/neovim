@@ -1099,7 +1099,6 @@ LanguageTree:parse({self})                              *LanguageTree:parse()*
 
     Return: ~
         TSTree[]
-        (table|nil) Change list
 
 LanguageTree:register_cbs({self}, {cbs})         *LanguageTree:register_cbs()*
     Registers callbacks for the |LanguageTree|.
