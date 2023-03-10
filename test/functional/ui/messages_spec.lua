@@ -93,9 +93,6 @@ describe('ui/ext_messages', function()
       }, {
         content = { { "1" } },
         kind = "echo"
-      }, {
-        content = { { "Press ENTER or type command to continue", 4 } },
-        kind = "return_prompt"
     } }}
     feed('<cr><cr>')
 
@@ -176,10 +173,7 @@ describe('ui/ext_messages', function()
       }, {
         content = { { "E605: Exception not caught: foo", 2 } },
         kind = ""
-      }, {
-        content = { { "Press ENTER or type command to continue", 4 } },
-        kind = "return_prompt"
-      } }
+      }}
     }
 
     -- kind=quickfix after :cnext
@@ -239,10 +233,8 @@ describe('ui/ext_messages', function()
       }, {
         content = {{ "fail", 2 }},
         kind = "echoerr"
-      }, {
-        content = {{ "Press ENTER or type command to continue", 4 }},
-        kind = "return_prompt"
-    }}}
+      }
+    }}
 
     feed(':echoerr "extrafail"<cr>')
     screen:expect{grid=[[
@@ -255,15 +247,10 @@ describe('ui/ext_messages', function()
         content = { { "bork", 2 } },
         kind = "echoerr"
       }, {
-        content = { { "fail", 2 } },
-        kind = "echoerr"
-      }, {
         content = { { "extrafail", 2 } },
         kind = "echoerr"
-      }, {
-        content = { { "Press ENTER or type command to continue", 4 } },
-        kind = "return_prompt"
-    }}}
+      },
+    }}
 
     feed('<cr>')
     screen:expect{grid=[[
@@ -314,10 +301,8 @@ describe('ui/ext_messages', function()
       {kind="echoerr", content={{"fail", 2}}},
       {kind="echoerr", content={{"extrafail", 2}}},
       {kind="echoerr", content={{"problem", 2}}}
-    }, messages={{
-      content = {{ "Press ENTER or type command to continue", 4 }},
-      kind = "return_prompt"
-    }}}
+    }, messages={
+    }}
 
     feed '<cr>'
     screen:expect{grid=[[
@@ -384,7 +369,6 @@ describe('ui/ext_messages', function()
     ]], messages={
       {content = {{ "x                     #1" }}, kind = ""},
       {content = {{ "y                     #2" }}, kind = ""},
-      {content = {{ "Press ENTER or type command to continue", 4 }}, kind = "return_prompt"}
     }}
   end)
 
@@ -475,10 +459,8 @@ describe('ui/ext_messages', function()
       content = {{ "stuff" }},
       kind = "echomsg",
     }}, showmode={{ "-- INSERT --", 3 }},
-      messages={{
-        content = {{ "Press ENTER or type command to continue", 4}},
-        kind = "return_prompt"
-    }}}
+      messages={}
+    }
   end)
 
   it('&showmode with macro-recording message', function()
@@ -709,10 +691,8 @@ describe('ui/ext_messages', function()
       {kind="", content={{"Type  :qa  and press <Enter> to exit Nvim"}}},
       {kind="echoerr", content={{"bork", 2}}},
       {kind="emsg", content={{"E117: Unknown function: nosuchfunction", 2}}}
-    }, messages={{
-      content = {{ "Press ENTER or type command to continue", 4}},
-      kind = "return_prompt"
-    }}}
+    }, messages={}
+    }
   end)
 
   it('implies ext_cmdline and ignores cmdheight', function()
@@ -894,7 +874,6 @@ stack traceback:
       {1:~                        }|
       {1:~                        }|
     ]], messages={
-      { content = { { "Press ENTER or type command to continue", 4 } }, kind = "return_prompt" }
     }, msg_history={
       { content = { { "wow, ", 7 }, { "such\n\nvery ", 2 }, { "color", 10 } }, kind = "echomsg" }
     }}
@@ -1387,9 +1366,7 @@ describe('ui/ext_messages', function()
                                                                                       |
                                                                                       |
                                                                                       |
-    ]], messages={
-      {content = { { "Press ENTER or type command to continue", 4 } }, kind = "return_prompt" }
-    }}
+    ]], messages={}}
   end)
 
   it('supports global statusline', function()
@@ -2053,12 +2030,12 @@ aliquip ex ea commodo consequat.]])
     screen:expect{grid=[[
                                          |
       {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
       {12:                                   }|
       :ls                                |
         1 %a   "[No Name]"               |
-           line 1                        |
-      {4:Press ENTER or type command to cont}|
-      {4:inue}^                               |
+           line 1^                        |
     ]]}
 
     feed('<cr>')
@@ -2077,12 +2054,12 @@ aliquip ex ea commodo consequat.]])
     screen:expect{grid=[[
                                          |
       {1:~                                  }|
+      {1:~                                  }|
       {12:                                   }|
       :ls                                |
         1 %a   "[No Name]"               |
-           line 1                        |
-      {4:Press ENTER or type command to cont}|
-      {4:inue}^                               |
+           line 1^                        |
+                                         |
     ]]}
 
     feed('<cr>')

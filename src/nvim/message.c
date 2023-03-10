@@ -1309,6 +1309,10 @@ void wait_return(int redraw)
 /// Write the hit-return prompt.
 static void hit_return_msg(void)
 {
+  if (p_ch <= 0) {
+    return;
+  }
+
   int save_p_more = p_more;
 
   p_more = false;       // don't want to see this message when scrolling back
@@ -1410,8 +1414,10 @@ void msg_start(void)
     msg_clr_eos();
   }
 
+  bool cmdheight_check = p_ch == 0 && !ui_has(kUIMessages);
+
   // if cmdheight=0, we need to scroll in the first line of msg_grid upon the screen
-  if (p_ch == 0 && !ui_has(kUIMessages) && !msg_scrolled) {
+  if (cmdheight_check && !msg_scrolled) {
     msg_grid_validate();
     msg_scroll_up(false, true);
     msg_scrolled++;
@@ -1421,10 +1427,14 @@ void msg_start(void)
   if (!msg_scroll && full_screen) {     // overwrite last message
     msg_row = cmdline_row;
     msg_col = cmdmsg_rl ? Columns - 1 : 0;
-  } else if (msg_didout || (p_ch == 0 && !ui_has(kUIMessages))) {  // start message on next line
+  } else if (msg_didout) {  // start message on next line
     msg_putchar('\n');
     did_return = true;
     cmdline_row = msg_row;
+  } else if (cmdheight_check) {
+    msg_row = Rows - 1;
+    cmdline_row = msg_row;
+    need_wait_return = true;
   }
   if (!msg_didany || lines_left < 0) {
     msg_starthere();
