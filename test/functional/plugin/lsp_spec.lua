@@ -57,6 +57,7 @@ describe('LSP', function()
         return lsp.start_client {
           cmd_env = {
             NVIM_LOG_FILE = fake_lsp_logfile;
+            NVIM_APPNAME = "nvim_lsp_test";
           };
           cmd = {
             vim.v.progpath, '-l', fake_lsp_code, test_name;

@@ -13,6 +13,7 @@ function M.clear_notrace()
   -- solution: don't look too closely for dragons
   clear {env={
     NVIM_LUA_NOTRACK="1";
+    NVIM_APPNAME="nvim_lsp_test";
     VIMRUNTIME=os.getenv"VIMRUNTIME";
   }}
 end
@@ -85,6 +86,7 @@ local function fake_lsp_server_setup(test_name, timeout_ms, options, settings)
       cmd_env = {
         NVIM_LOG_FILE = fake_lsp_logfile;
         NVIM_LUA_NOTRACK = "1";
+        NVIM_APPNAME = "nvim_lsp_test";
       };
       cmd = {
         vim.v.progpath, '-l', fake_lsp_code, test_name, tostring(timeout),
