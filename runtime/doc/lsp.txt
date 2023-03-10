@@ -137,7 +137,18 @@ FAQ                                                     *lsp-faq*
      " Auto-format *.rs (rust) files prior to saving them
      " (async = false is the default for format)
      autocmd BufWritePre *.rs lua vim.lsp.buf.format({ async = false })
+<
+- Q: How can I disable LSP formatting when using the |gq| command?
+  A: First you could try using |gw| as an alternative to |gq| .
+  If that is not good enough for you, then you can use the following 
+  lua snippet to completely disable LSP formatting using |gq| :
 
+>lua
+    vim.api.nvim_create_autocmd('LspAttach', {
+        callback = function(args)
+            vim.bo[args.buf].formatexpr = nil
+        end,
+    })
 <
                                                            *lsp-vs-treesitter*
 - Q: How do LSP and Treesitter compare?
