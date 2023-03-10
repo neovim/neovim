@@ -26,6 +26,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_eval.h"
+#include "nvim/fold.h"
 #include "nvim/globals.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/spell.h"
@@ -528,6 +529,31 @@ static int nlua_iconv(lua_State *lstate)
   return 1;
 }
 
+// Like 'zx' but don't call newFoldLevel()
+static int nlua_foldupdate(lua_State *lstate)
+{
+  curwin->w_foldinvalid = true;  // recompute folds
+  foldOpenCursor();
+
+  return 0;
+}
+
+// Access to internal functions. For use in runtime/
+static void nlua_state_add_internal(lua_State *const lstate)
+{
+  // _getvar
+  lua_pushcfunction(lstate, &nlua_getvar);
+  lua_setfield(lstate, -2, "_getvar");
+
+  // _setvar
+  lua_pushcfunction(lstate, &nlua_setvar);
+  lua_setfield(lstate, -2, "_setvar");
+
+  // _updatefolds
+  lua_pushcfunction(lstate, &nlua_foldupdate);
+  lua_setfield(lstate, -2, "_foldupdate");
+}
+
 void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
 {
   if (!is_thread) {
@@ -562,14 +588,6 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
     lua_setfield(lstate, -2, "__index");  // [meta]
     lua_pop(lstate, 1);  // don't use metatable now
 
-    // _getvar
-    lua_pushcfunction(lstate, &nlua_getvar);
-    lua_setfield(lstate, -2, "_getvar");
-
-    // _setvar
-    lua_pushcfunction(lstate, &nlua_setvar);
-    lua_setfield(lstate, -2, "_setvar");
-
     // vim.spell
     luaopen_spell(lstate);
     lua_setfield(lstate, -2, "spell");
@@ -578,6 +596,8 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
     // depends on p_ambw, p_emoji
     lua_pushcfunction(lstate, &nlua_iconv);
     lua_setfield(lstate, -2, "iconv");
+
+    nlua_state_add_internal(lstate);
   }
 
   // vim.mpack

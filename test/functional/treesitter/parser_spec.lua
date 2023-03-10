@@ -128,7 +128,9 @@ void ui_refresh(void)
   it('does not get parser for empty filetype', function()
     insert(test_text);
 
-    eq(".../language.lua:0: '' is not a valid filetype",
+    eq('.../treesitter.lua:0: There is no parser available for buffer 1 and one'
+         .. ' could not be created because lang could not be determined. Either'
+         .. ' pass lang or set the buffer filetype',
       pcall_err(exec_lua, 'vim.treesitter.get_parser(0)'))
 
     -- Must provide language for buffers with an empty filetype
@@ -886,18 +888,20 @@ int x = INT_MAX;
   it("can fold via foldexpr", function()
     insert(test_text)
 
-    local levels = exec_lua([[
-      vim.opt.filetype = 'c'
-      vim.treesitter.get_parser(0, "c")
-      local res = {}
-      for i = 1, vim.api.nvim_buf_line_count(0) do
-        res[i] = vim.treesitter.foldexpr(i)
-      end
-      return res
-    ]])
+    local function get_fold_levels()
+      return exec_lua([[
+        local res = {}
+        for i = 1, vim.api.nvim_buf_line_count(0) do
+          res[i] = vim.treesitter.foldexpr(i)
+        end
+        return res
+      ]])
+    end
+
+    exec_lua([[vim.treesitter.get_parser(0, "c")]])
 
     eq({
-     [1] = '>1',
+      [1] = '>1',
       [2] = '1',
       [3] = '1',
       [4] = '1',
@@ -915,6 +919,33 @@ int x = INT_MAX;
       [16] = '3',
       [17] = '3',
       [18] = '2',
-      [19] = '1' }, levels)
+      [19] = '1' }, get_fold_levels())
+
+    helpers.command('1,2d')
+    helpers.poke_eventloop()
+
+    exec_lua([[vim.treesitter.get_parser():parse()]])
+
+    helpers.poke_eventloop()
+    helpers.sleep(100)
+
+    eq({
+      [1] = '0',
+      [2] = '0',
+      [3] = '>1',
+      [4] = '1',
+      [5] = '1',
+      [6] = '0',
+      [7] = '0',
+      [8] = '>1',
+      [9] = '1',
+      [10] = '1',
+      [11] = '1',
+      [12] = '1',
+      [13] = '>2',
+      [14] = '2',
+      [15] = '2',
+      [16] = '1',
+      [17] = '0' }, get_fold_levels())
   end)
 end)

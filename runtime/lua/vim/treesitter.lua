@@ -99,13 +99,28 @@ function M.get_parser(bufnr, lang, opts)
   if bufnr == nil or bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
+
   if lang == nil then
     local ft = vim.bo[bufnr].filetype
-    lang = language.get_lang(ft) or ft
-    -- TODO(lewis6991): we should error here and not default to ft
-    -- if not lang then
-    --   error(string.format('filetype %s of buffer %d is not associated with any lang', ft, bufnr))
-    -- end
+    if ft ~= '' then
+      lang = language.get_lang(ft) or ft
+      -- TODO(lewis6991): we should error here and not default to ft
+      -- if not lang then
+      --   error(string.format('filetype %s of buffer %d is not associated with any lang', ft, bufnr))
+      -- end
+    else
+      if parsers[bufnr] then
+        return parsers[bufnr]
+      end
+      error(
+        string.format(
+          'There is no parser available for buffer %d and one could not be'
+            .. ' created because lang could not be determined. Either pass lang'
+            .. ' or set the buffer filetype',
+          bufnr
+        )
+      )
+    end
   end
 
   if parsers[bufnr] == nil or parsers[bufnr]:lang() ~= lang then
