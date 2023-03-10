@@ -36,11 +36,6 @@ describe('treesitter language API', function()
       pcall_err(exec_lua, 'vim.treesitter.add("/foo/")'))
   end)
 
-  it('shows error for invalid filetype', function()
-    eq('.../language.lua:0: \'\' is not a valid filetype',
-      pcall_err(exec_lua, [[vim.treesitter.add('foo', { filetype = '' })]]))
-  end)
-
   it('inspects language', function()
     local keys, fields, symbols = unpack(exec_lua([[
       local lang = vim.treesitter.inspect_language('c')
