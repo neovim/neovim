@@ -44,7 +44,7 @@ local STHighlighter = { active = {} }
 ---@private
 local function lower_bound(tokens, line, lo, hi)
   while lo < hi do
-    local mid = math.floor((lo + hi) / 2)
+    local mid = bit.rshift(lo + hi, 1) -- Equivalent to floor((lo + hi) / 2).
     if tokens[mid].line < line then
       lo = mid + 1
     else
@@ -62,7 +62,7 @@ end
 ---@private
 local function upper_bound(tokens, line, lo, hi)
   while lo < hi do
-    local mid = math.floor((lo + hi) / 2)
+    local mid = bit.rshift(lo + hi, 1) -- Equivalent to floor((lo + hi) / 2).
     if line < tokens[mid].line then
       hi = mid
     else
