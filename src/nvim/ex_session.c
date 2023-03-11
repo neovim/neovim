@@ -909,7 +909,7 @@ void ex_loadview(exarg_T *eap)
     return;
   }
 
-  if (do_source(fname, false, DOSO_NONE) == FAIL) {
+  if (do_source(fname, false, DOSO_NONE, NULL) == FAIL) {
     semsg(_(e_notopen), fname);
   }
   xfree(fname);
