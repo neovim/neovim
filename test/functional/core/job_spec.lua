@@ -88,7 +88,6 @@ describe('jobs', function()
   end)
 
   it('append environment with pty #env', function()
-    skip(is_os('win'))
     nvim('command', "let $VAR = 'abc'")
     nvim('command', "let $TOTO = 'goodbye world'")
     nvim('command', "let g:job_opts.pty = v:true")
@@ -806,7 +805,6 @@ describe('jobs', function()
     end)
 
     it('can be called recursively', function()
-      skip(is_os('win'), "TODO: Need `cat`")
       source([[
       let g:opts = {}
       let g:counter = 0
