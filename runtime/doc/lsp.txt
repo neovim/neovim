@@ -676,7 +676,7 @@ buf_request_all({bufnr}, {method}, {params}, {callback})
                     finished. Unlike `buf_request`, this will collect all the
                     responses from each server instead of handling them. A map
                     of client_id:request_result will be provided to the
-                    callback
+                    callback.
 
     Return: ~
         fun() cancel A function that will cancel all requests
@@ -697,9 +697,9 @@ buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
                       result. Defaults to 1000
 
     Return: ~
-        table<integer, any>|nil result, string|nil err Map of
-        client_id:request_result. On timeout, cancel or error, returns `(nil,
-        err)` where `err` is a string describing the failure reason.
+        (table) result Map of client_id:request_result.
+        (string|nil) err On timeout, cancel, or error, `err` is a string
+        describing the failure reason, and `result` is nil.
 
 client()                                                      *vim.lsp.client*
     LSP client object. You can get an active client object via
