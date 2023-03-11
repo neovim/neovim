@@ -1510,14 +1510,14 @@ bool prompt_curpos_editable(void)
 // Undo the previous edit_putchar().
 void edit_unputchar(void)
 {
-  if (pc_status != PC_STATUS_UNSET && pc_row >= msg_scrolled) {
+  if (pc_status != PC_STATUS_UNSET) {
     if (pc_status == PC_STATUS_RIGHT) {
       curwin->w_wcol++;
     }
     if (pc_status == PC_STATUS_RIGHT || pc_status == PC_STATUS_LEFT) {
       redrawWinline(curwin, curwin->w_cursor.lnum);
     } else {
-      grid_puts(&curwin->w_grid, pc_bytes, pc_row - msg_scrolled, pc_col, pc_attr);
+      grid_puts(&curwin->w_grid, pc_bytes, pc_row, pc_col, pc_attr);
     }
   }
 }

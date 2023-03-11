@@ -1,6 +1,7 @@
 -- Insert-mode tests.
 
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local expect = helpers.expect
 local command = helpers.command
@@ -47,6 +48,48 @@ describe('insert-mode', function()
       command("let @@ = 'påskägg'")
       feed('i<C-r>"')
       expect('påskägg')
+    end)
+
+    it('double quote is removed after hit-enter prompt #22609', function()
+      local screen = Screen.new(60, 6)
+      screen:set_default_attr_ids({
+        [0] = {bold = true, foreground = Screen.colors.Blue},
+        [1] = {foreground = Screen.colors.Blue},
+        [2] = {foreground = Screen.colors.SlateBlue},
+        [3] = {bold = true},
+        [4] = {reverse = true, bold = true},
+        [5] = {background = Screen.colors.Red, foreground = Screen.colors.Red},
+        [6] = {background = Screen.colors.Red, foreground = Screen.colors.White},
+        [7] = {foreground = Screen.colors.SeaGreen, bold = true},
+      })
+      screen:attach()
+      feed('i<C-R>')
+      screen:expect([[
+        {1:^"}                                                           |
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {3:-- INSERT --}                                                |
+      ]])
+      feed('={}<CR>')
+      screen:expect([[
+        {1:"}                                                           |
+        {0:~                                                           }|
+        {4:                                                            }|
+        ={5:{}{2:}}                                                         |
+        {6:E731: using Dictionary as a String}                          |
+        {7:Press ENTER or type command to continue}^                     |
+      ]])
+      feed('<CR>')
+      screen:expect([[
+        ^                                                            |
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {3:-- INSERT --}                                                |
+      ]])
     end)
   end)
 
