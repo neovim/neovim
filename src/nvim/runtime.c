@@ -75,6 +75,9 @@ struct source_cookie {
 garray_T exestack = { 0, 0, sizeof(estack_T), 50, NULL };
 garray_T script_items = { 0, 0, sizeof(scriptitem_T *), 20, NULL };
 
+/// The names of packages that once were loaded are remembered.
+static garray_T ga_loaded = { 0, 0, sizeof(char *), 4, NULL };
+
 /// Initialize the execution stack.
 void estack_init(void)
 {
@@ -2339,6 +2342,11 @@ void free_scriptnames(void)
 }
 #endif
 
+void free_autoload_scriptnames(void)
+{
+  ga_clear_strings(&ga_loaded);
+}
+
 linenr_T get_sourced_lnum(LineGetter fgetline, void *cookie)
   FUNC_ATTR_PURE
 {
@@ -2629,4 +2637,78 @@ bool source_finished(LineGetter fgetline, void *cookie)
 {
   return getline_equal(fgetline, cookie, getsourceline)
          && ((struct source_cookie *)getline_cookie(fgetline, cookie))->finished;
+}
+
+/// Return the autoload script name for a function or variable name
+/// Caller must make sure that "name" contains AUTOLOAD_CHAR.
+///
+/// @param[in]  name  Variable/function name.
+/// @param[in]  name_len  Name length.
+///
+/// @return [allocated] autoload script name.
+char *autoload_name(const char *const name, const size_t name_len)
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  // Get the script file name: replace '#' with '/', append ".vim".
+  char *const scriptname = xmalloc(name_len + sizeof("autoload/.vim"));
+  memcpy(scriptname, "autoload/", sizeof("autoload/") - 1);
+  memcpy(scriptname + sizeof("autoload/") - 1, name, name_len);
+  size_t auchar_idx = 0;
+  for (size_t i = sizeof("autoload/") - 1;
+       i - sizeof("autoload/") + 1 < name_len;
+       i++) {
+    if (scriptname[i] == AUTOLOAD_CHAR) {
+      scriptname[i] = '/';
+      auchar_idx = i;
+    }
+  }
+  memcpy(scriptname + auchar_idx, ".vim", sizeof(".vim"));
+
+  return scriptname;
+}
+
+/// If name has a package name try autoloading the script for it
+///
+/// @param[in]  name  Variable/function name.
+/// @param[in]  name_len  Name length.
+/// @param[in]  reload  If true, load script again when already loaded.
+///
+/// @return true if a package was loaded.
+bool script_autoload(const char *const name, const size_t name_len, const bool reload)
+{
+  // If there is no '#' after name[0] there is no package name.
+  const char *p = memchr(name, AUTOLOAD_CHAR, name_len);
+  if (p == NULL || p == name) {
+    return false;
+  }
+
+  bool ret = false;
+  char *tofree = autoload_name(name, name_len);
+  char *scriptname = tofree;
+
+  // Find the name in the list of previously loaded package names.  Skip
+  // "autoload/", it's always the same.
+  int i = 0;
+  for (; i < ga_loaded.ga_len; i++) {
+    if (strcmp(((char **)ga_loaded.ga_data)[i] + 9, scriptname + 9) == 0) {
+      break;
+    }
+  }
+  if (!reload && i < ga_loaded.ga_len) {
+    ret = false;  // Was loaded already.
+  } else {
+    // Remember the name if it wasn't loaded already.
+    if (i == ga_loaded.ga_len) {
+      GA_APPEND(char *, &ga_loaded, scriptname);
+      tofree = NULL;
+    }
+
+    // Try loading the package from $VIMRUNTIME/autoload/<name>.vim
+    if (source_runtime(scriptname, 0) == OK) {
+      ret = true;
+    }
+  }
+
+  xfree(tofree);
+  return ret;
 }
