@@ -1,3 +1,4 @@
+---@diagnostic disable: invisible
 local default_handlers = require('vim.lsp.handlers')
 local log = require('vim.lsp.log')
 local lsp_rpc = require('vim.lsp.rpc')
@@ -1592,6 +1593,11 @@ local function text_document_did_save_handler(bufnr)
     local name = api.nvim_buf_get_name(bufnr)
     local old_name = changetracking._get_and_set_name(client, bufnr, name)
     if old_name and name ~= old_name then
+      client.notify('textDocument/didClose', {
+        textDocument = {
+          uri = vim.uri_from_fname(old_name),
+        },
+      })
       client.notify('textDocument/didOpen', {
         textDocument = {
           version = 0,
