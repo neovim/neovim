@@ -2300,23 +2300,23 @@ describe('lua stdlib', function()
     end)
   end)
 
-  describe('vim.on_fun', function()
+  describe('vim.func.on_fun', function()
     it('reports info', function()
       exec_lua [[
         function test2()
-          vim.on_fun(vim.ui, 'select', function() end)
-          vim.on_fun(vim.ui, 'select', function() end)
-          vim.on_fun(vim.health, 'report_ok', function() end)
-          vim.on_fun(vim.health, 'report_info', function() end)
-          vim.on_fun(vim.health, 'report_warn', function() end)
-          vim.on_fun(vim.health, 'report_warn', function() end)
+          vim.func.on_fun(vim.ui, 'select', function() end)
+          vim.func.on_fun(vim.ui, 'select', function() end)
+          vim.func.on_fun(vim.health, 'report_ok', function() end)
+          vim.func.on_fun(vim.health, 'report_info', function() end)
+          vim.func.on_fun(vim.health, 'report_warn', function() end)
+          vim.func.on_fun(vim.health, 'report_warn', function() end)
         end
         function test3()
-          vim.on_fun(vim, 'paste', function() end)
-          vim.on_fun(vim, 'paste', function() end)
-          vim.on_fun(vim, 'paste', function() end)
-          vim.on_fun(vim, 'paste', function() end)
-          _G._handle = vim.on_fun(vim, 'paste', function() end)
+          vim.func.on_fun(vim, 'paste', function() end)
+          vim.func.on_fun(vim, 'paste', function() end)
+          vim.func.on_fun(vim, 'paste', function() end)
+          vim.func.on_fun(vim, 'paste', function() end)
+          _G._handle = vim.func.on_fun(vim, 'paste', function() end)
         end
         function test1()
           test2()
@@ -2325,31 +2325,31 @@ describe('lua stdlib', function()
         test3()
       ]]
 
-      eq(5, exec_lua([[return vim.on_fun().maxdepth]]))
+      eq(5, exec_lua([[return vim.func.on_fun().maxdepth]]))
       exec_lua('_G._handle.unhook()')
       exec_lua('collectgarbage("collect")')
-      eq(4, exec_lua([[return vim.on_fun().maxdepth]]))
+      eq(4, exec_lua([[return vim.func.on_fun().maxdepth]]))
     end)
 
     it('idempotency', function()
       -- Skipped.
       eq(true, exec_lua([[
-        local handle = vim.on_fun(vim, 'inspect', function() end)
-        return vim.on_fun(vim, 'inspect', vim.inspect).skip
+        local handle = vim.func.on_fun(vim, 'inspect', function() end)
+        return vim.func.on_fun(vim, 'inspect', vim.inspect).skip
       ]]))
       -- Skipped.
       eq(true, exec_lua([[
-        local handle = vim.on_fun(vim, 'inspect', function() end)
-        vim.on_fun(vim, 'foo', vim.inspect)
-        return vim.on_fun(vim, 'inspect', vim.inspect).skip
+        local handle = vim.func.on_fun(vim, 'inspect', function() end)
+        vim.func.on_fun(vim, 'foo', vim.inspect)
+        return vim.func.on_fun(vim, 'inspect', vim.inspect).skip
       ]]))
       -- Not skipped.
       eq(vim.NIL, exec_lua([[
-        return vim.on_fun(vim, 'inspect', function() end).skip
+        return vim.func.on_fun(vim, 'inspect', function() end).skip
       ]]))
       -- Not skipped.
       eq(vim.NIL, exec_lua([[
-        return vim.on_fun(vim, 'foo', vim.inspect).skip
+        return vim.func.on_fun(vim, 'foo', vim.inspect).skip
       ]]))
     end)
 
@@ -2357,11 +2357,11 @@ describe('lua stdlib', function()
       local function dosetup()
         exec_lua [[
           local i = 0
-          _G._handle1 = vim.on_fun(vim, 'inspect', function()
+          _G._handle1 = vim.func.on_fun(vim, 'inspect', function()
             i = i + 1
             return false, ('wrapper 1, i=%d'):format(i)
           end)
-          _G._handle2 = vim.on_fun(vim, 'inspect', function()
+          _G._handle2 = vim.func.on_fun(vim, 'inspect', function()
             i = i + 1
             return false, ('wrapper 2, i=%d'):format(i)
           end)
@@ -2388,15 +2388,15 @@ describe('lua stdlib', function()
     it('can hook into and cancel a function', function()
       exec_lua [[
         _G._called = 0
-        vim.on_fun(vim, 'inspect', function(s)
+        vim.func.on_fun(vim, 'inspect', function(s)
           _G._called = _G._called + 1
           return true
         end)
-        vim.on_fun(vim, 'inspect', function(s)
+        vim.func.on_fun(vim, 'inspect', function(s)
           _G._called = _G._called + 1
           return true
         end)
-        vim.on_fun(vim, 'inspect', function(s)
+        vim.func.on_fun(vim, 'inspect', function(s)
           _G._called = _G._called + 1
           return true
         end)
@@ -2408,7 +2408,7 @@ describe('lua stdlib', function()
 
     it('fn() returning nil,… is an error', function()
       matches('fn: expected function%(%) returning true,… false,… or nothing, got function:', pcall_err(exec_lua, [[
-        vim.on_fun(vim, 'inspect', function(o)
+        vim.func.on_fun(vim, 'inspect', function(o)
           return nil, { foo = 'bar', z = o.z }
         end)
         return vim.inspect({ z = 77 })
@@ -2417,7 +2417,7 @@ describe('lua stdlib', function()
 
     it('can modify parameters to original function', function()
       local rv = exec_lua [[
-        vim.on_fun(vim, 'inspect', function(o)
+        vim.func.on_fun(vim, 'inspect', function(o)
           return true, { foo = 'bar', z = o.z }
         end)
         return vim.inspect({ z = 77 })
@@ -2431,7 +2431,7 @@ describe('lua stdlib', function()
 
     it('invoke after', function()
       local rv = exec_lua [[
-        vim.on_fun(vim, 'inspect', function(o)
+        vim.func.on_fun(vim, 'inspect', function(o)
           local function after(o2)
             return false, 'AFTER!'
           end

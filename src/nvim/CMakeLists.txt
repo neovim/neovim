@@ -273,6 +273,7 @@ set(LUA_EDITOR_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_editor.lua)
 set(LUA_SHARED_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/shared.lua)
 set(LUA_INSPECT_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/inspect.lua)
 set(LUA_F_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/F.lua)
+set(LUA_FUNC_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/func.lua)
 set(LUA_META_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_meta.lua)
 set(LUA_FILETYPE_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/filetype.lua)
 set(LUA_INIT_PACKAGES_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_init_packages.lua)
@@ -507,6 +508,7 @@ add_custom_command(
       ${LUA_EDITOR_MODULE_SOURCE} "vim._editor"
       ${LUA_SHARED_MODULE_SOURCE} "vim.shared"
       ${LUA_F_MODULE_SOURCE} "vim.F"
+      ${LUA_FUNC_MODULE_SOURCE} "vim.func"
       ${LUA_META_MODULE_SOURCE} "vim._meta"
       ${LUA_FILETYPE_MODULE_SOURCE} "vim.filetype"
       ${LUA_KEYMAP_MODULE_SOURCE} "vim.keymap"
@@ -517,6 +519,7 @@ add_custom_command(
     ${LUA_SHARED_MODULE_SOURCE}
     ${LUA_INSPECT_MODULE_SOURCE}
     ${LUA_F_MODULE_SOURCE}
+    ${LUA_FUNC_MODULE_SOURCE}
     ${LUA_META_MODULE_SOURCE}
     ${LUA_FILETYPE_MODULE_SOURCE}
     ${LUA_LOAD_PACKAGE_MODULE_SOURCE}
