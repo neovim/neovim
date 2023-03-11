@@ -1171,6 +1171,25 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it('works with :diffput and :diffget', function()
+      local check_events = setup_eventcheck(verify, {"AAA"})
+      command('diffthis')
+      command('new')
+      command('diffthis')
+      meths.buf_set_lines(0, 0, -1, true, {"AAA", "BBB"})
+      feed('G')
+      command('diffput')
+      check_events {
+        { "test1", "bytes", 1, 3, 1, 0, 4, 0, 0, 0, 1, 0, 4 };
+      }
+      meths.buf_set_lines(0, 0, -1, true, {"AAA", "CCC"})
+      feed('<C-w>pG')
+      command('diffget')
+      check_events {
+        { "test1", "bytes", 1, 4, 1, 0, 4, 1, 0, 4, 1, 0, 4 };
+      }
+    end)
+
     local function test_lockmarks(mode)
       local description = (mode ~= "") and mode or "(baseline)"
       it("test_lockmarks " .. description .. " %delete _", function()
