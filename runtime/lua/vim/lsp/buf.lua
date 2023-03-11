@@ -118,8 +118,9 @@ function M.completion(context)
 end
 
 ---@private
+---@param mode "v"|"V"
 ---@return table {start={row, col}, end={row, col}} using (1, 0) indexing
-local function range_from_selection()
+local function range_from_selection(mode)
   -- TODO: Use `vim.region()` instead https://github.com/neovim/neovim/pull/13896
 
   -- [bufnum, lnum, col, off]; both row and column 1-indexed
@@ -129,6 +130,11 @@ local function range_from_selection()
   local start_col = start[3]
   local end_row = end_[2]
   local end_col = end_[3]
+  if mode == 'V' then
+    start_col = 1
+    local lines = api.nvim_buf_get_lines(0, end_row - 1, end_row, true)
+    end_col = #lines[1]
+  end
 
   -- A user can start visual selection at the end and move backwards
   -- Normalize the range to start < end
@@ -200,7 +206,7 @@ function M.format(options)
   local mode = api.nvim_get_mode().mode
   local range = options.range
   if not range and mode == 'v' or mode == 'V' then
-    range = range_from_selection()
+    range = range_from_selection(mode)
   end
   local method = range and 'textDocument/rangeFormatting' or 'textDocument/formatting'
 
@@ -772,7 +778,7 @@ function M.code_action(options)
     local end_ = assert(options.range['end'], 'range must have a `end` property')
     params = util.make_given_range_params(start, end_)
   elseif mode == 'v' or mode == 'V' then
-    local range = range_from_selection()
+    local range = range_from_selection(mode)
     params = util.make_given_range_params(range.start, range['end'])
   else
     params = util.make_range_params()
