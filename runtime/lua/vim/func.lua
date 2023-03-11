@@ -1,7 +1,8 @@
 local M = {}
 
 table.pack = table.pack or function(...) return { n = select("#", ...), ... } end
-local _on_fun_map = setmetatable({}, { __mode = 'kv' })  -- weaktable
+-- function:wrapper map, where "function" itself may be a wrapper.
+local _fns = setmetatable({}, { __mode = 'kv' })  -- weaktable
 
 --- Sets function `container[key]` to a new (wrapper) function that calls `fn()` before optionally
 --- calling the original ("base") function.
@@ -65,20 +66,25 @@ function M.on_fun(container, key, fn)
     local report = {
       maxdepth = 0,
       total = 0,
+      rawcount = 0,
     }
-    for _,v in pairs(_on_fun_map) do
-      if v == true then
-        -- TODO: yucky... skip wrapper placeholder items
-      else
-        local info = v(_on_fun_map)
+    for k,v in pairs(_fns) do
+      report.rawcount = report.rawcount + 1
+      local info = v(_fns)
+      if info and k ~= v then
         local depth = 1
-        local f = info.basefn
-        while f and depth < 9999 do
+        local w = info.basefn
+        -- O(n^2): calculate depth.
+        while w and depth < 9999 do
           depth = depth + 1
-          f = f(_on_fun_map).basefn
+          -- O(n): check if w is a wrapper function.
+          local iswrapper = #vim.tbl_filter(function(o) return w == o end,
+            vim.tbl_values(_fns)) > 0
+          w = iswrapper and w(_fns).basefn or nil
         end
-        report[tostring(info.container)] = report[tostring(info.container)] or {}
-        local item = report[tostring(info.container)]
+        local cid = tostring(info.container)
+        report[cid] = report[cid] or {}
+        local item = report[cid]
         if not item[info.name] or depth > item[info.name].depth then
           item[info.name] = {
             last_set_by = info.last_set_by,
@@ -92,28 +98,49 @@ function M.on_fun(container, key, fn)
     return report
   end
 
-  local basefn = container[key] or function() end  -- !Intentionally allow container.key to be nil.
-  local info = type(_on_fun_map[fn]) == 'function' and _on_fun_map[fn](_on_fun_map) or setmetatable({
+  local basefn = container[key] or function() end  -- !Intentionally allow container.key to be nil?
+  local old_wrapper = _fns[fn]
+  local info = old_wrapper and old_wrapper(_fns) or setmetatable({
     last_set_by = nil,
     container = nil,
     basefn = nil,
     name = nil,
   }, { __mode = 'v' })  -- weaktable
 
-  -- Skip redundant invocations.
-  -- This won't work if the same fn exists on, and is overridden in, multiple containers.
-  if basefn == fn or (key == info.name and info.container == tostring(container)) then
+  local function unhooker(wrapper_)
     return {
-      skip = true,
-      unhook = function()
+      clear = function()
         container[key] = basefn
+      end,
+
+      unhook = function()
+        -- O(n): find the "child" whose parent (basefn) is the one being disposed.
+        local child = vim.tbl_filter(function(w)
+            local info = w(_fns)
+            return info and info.basefn == wrapper_ and container == info.container
+          end, vim.tbl_values(_fns))
+        if child[1] then
+          -- To delete (unhook) the current hook,
+          -- set the child's parent to its grandparent.
+          child[1](_fns).basefn = basefn
+        else
+          container[key] = basefn
+        end
       end,
     }
   end
+
+  -- Skip redundant invocations.
+  -- XXX: Doesn't work if the same fn is overridden in multiple containers.
+  if basefn == fn or (key == info.name and info.container == container) then
+    local un = unhooker(old_wrapper)
+    un.skip = true
+    return un
+  end
+
   info.name = key
-  info.container = tostring(container)
-  -- Only store known basefn (so we can invoke its "Info mode").
-  info.basefn = _on_fun_map[basefn] and basefn or nil
+  info.container = container
+  info.basefn = basefn
 
   local caller = nil
   for i=2,4 do
@@ -123,9 +150,9 @@ function M.on_fun(container, key, fn)
   end
   info.last_set_by = caller
 
-  local wrapper = function(...)
-    -- "Info" mode (use _on_fun_map as a sigil).
-    if ({...})[1] == _on_fun_map then
+  local wrapper = function(...)  -- New wrapper.
+    -- "Info" mode (use _fns as a sigil).
+    if ({...})[1] == _fns then
       return info
     end
 
@@ -150,15 +177,12 @@ function M.on_fun(container, key, fn)
     end
   end
   container[key] = wrapper
-  _on_fun_map[fn] = wrapper  -- weaktable reference
-  -- TODO: yucky... wrapper placeholder
-  _on_fun_map[wrapper] = _on_fun_map[wrapper] or true
 
-  return {
-    unhook = function()
-      container[key] = basefn
-    end,
-  }
+  -- housekeeping (weaktable)
+  _fns[fn] = wrapper
+  _fns[wrapper] = wrapper
+
+  return unhooker(wrapper)
 end
 
 return M

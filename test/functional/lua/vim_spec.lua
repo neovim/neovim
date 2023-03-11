@@ -2304,19 +2304,19 @@ describe('lua stdlib', function()
     it('reports info', function()
       exec_lua [[
         function test2()
-          vim.func.on_fun(vim.ui, 'select', function() end)
-          vim.func.on_fun(vim.ui, 'select', function() end)
-          vim.func.on_fun(vim.health, 'report_ok', function() end)
-          vim.func.on_fun(vim.health, 'report_info', function() end)
-          vim.func.on_fun(vim.health, 'report_warn', function() end)
-          vim.func.on_fun(vim.health, 'report_warn', function() end)
+          _G._ui1 = vim.func.on_fun(vim.ui, 'select', function() end)
+          _G._ui2 = vim.func.on_fun(vim.ui, 'select', function() end)
+          _G._health1 = vim.func.on_fun(vim.health, 'report_ok', function() end)
+          _G._health2 = vim.func.on_fun(vim.health, 'report_info', function() end)
+          _G._health3 = vim.func.on_fun(vim.health, 'report_warn', function() end)
+          _G._health4 = vim.func.on_fun(vim.health, 'report_warn', function() end)
         end
         function test3()
-          vim.func.on_fun(vim, 'paste', function() end)
-          vim.func.on_fun(vim, 'paste', function() end)
-          vim.func.on_fun(vim, 'paste', function() end)
-          vim.func.on_fun(vim, 'paste', function() end)
-          _G._handle = vim.func.on_fun(vim, 'paste', function() end)
+          _G._handle1 = vim.func.on_fun(vim, 'paste', function() end)
+          _G._handle2 = vim.func.on_fun(vim, 'paste', function() end)
+          _G._handle3 = vim.func.on_fun(vim, 'paste', function() end)
+          _G._handle4 = vim.func.on_fun(vim, 'paste', function() end)
+          _G._handle5 = vim.func.on_fun(vim, 'paste', function() end)
         end
         function test1()
           test2()
@@ -2324,20 +2324,51 @@ describe('lua stdlib', function()
         test1()
         test3()
       ]]
-
-      eq({ maxdepth = 5, total = 11, },
-        exec_lua([[
+      local function getinfo()
+        return exec_lua [[
           local report = vim.func.on_fun()
-          return { maxdepth = report.maxdepth, total = report.total, }
-      ]]))
-      exec_lua('_G._handle.unhook()')
+          return { maxdepth = report.maxdepth, total = report.total, rawcount = report.rawcount }
+        ]]
+      end
+
+      eq({ maxdepth = 6, total = 11, rawcount = 22 }, getinfo())
+
+      exec_lua('_G._handle3.unhook()')
+      exec_lua('_G._handle3.unhook()')  -- no-op
       -- Force eviction from the weaktable (see func.lua).
       exec_lua('collectgarbage("collect")')
-      eq({ maxdepth = 4, total = 10, },
-        exec_lua([[
-          local report = vim.func.on_fun()
-          return { maxdepth = report.maxdepth, total = report.total, }
-      ]]))
+      -- Only _one_ hook was removed, not any children!
+      eq({ maxdepth = 5, total = 11, rawcount = 22 }, getinfo())
+
+      -- Remove all hooks after the first one (inclusive).
+      exec_lua('_G._handle1.unhook()')
+      exec_lua('_G._handle2.unhook()')
+      exec_lua('_G._handle3.unhook()')
+      exec_lua('_G._handle4.unhook()')
+      exec_lua('_G._handle5.unhook()')
+      exec_lua('_G._health1.unhook()')
+      exec_lua('_G._health2.unhook()')
+      exec_lua('_G._health3.unhook()')
+      exec_lua('_G._health4.unhook()')
+      exec_lua('_G._ui1.unhook()')
+      exec_lua('_G._ui2.unhook()')
+
+      exec_lua('_G._handle1 = nil')
+      exec_lua('_G._handle2 = nil')
+      exec_lua('_G._handle3 = nil')
+      exec_lua('_G._handle4 = nil')
+      exec_lua('_G._handle5 = nil')
+      exec_lua('_G._health1 = nil')
+      exec_lua('_G._health2 = nil')
+      exec_lua('_G._health3 = nil')
+      exec_lua('_G._health4 = nil')
+      exec_lua('_G._ui1 = nil')
+      exec_lua('_G._ui2 = nil')
+
+      -- exec_lua('_G._handle1.clear()')
+      -- Force eviction from the weaktable (see func.lua).
+      exec_lua('collectgarbage("collect")')
+      eq({ maxdepth = 3, total = 6, rawcount = 12 }, getinfo())
     end)
 
     it('idempotency', function()
@@ -2383,12 +2414,12 @@ describe('lua stdlib', function()
       exec_lua('_G._handle2.unhook()')
       eq('wrapper 1, i=3', exec_lua('return vim.inspect(42)'))
       eq('wrapper 1, i=4', exec_lua('return vim.inspect({})'))
-      exec_lua('_G._handle1.unhook()')
+      exec_lua('_G._handle1.clear()')
       eq('"back to normal"', exec_lua('return vim.inspect("back to normal")'))
       dosetup()
-      exec_lua('_G._handle1.unhook()')
-      exec_lua('_G._handle1.unhook()')
-      exec_lua('_G._handle1.unhook()')
+      exec_lua('_G._handle1.clear()')
+      exec_lua('_G._handle1.clear()')
+      exec_lua('_G._handle1.clear()')
       eq('"back to normal"', exec_lua('return vim.inspect("back to normal")'))
       -- dosetup()
       -- dosetup()
@@ -2416,7 +2447,7 @@ describe('lua stdlib', function()
     end)
 
     it('fn() returning nil,… is an error', function()
-      matches('fn: expected function%(%) returning true,… false,… or nothing, got function:', pcall_err(exec_lua, [[
+      matches('fn: expected function%(%) returning true%[,…%] false%[,…%] or nothing, got function:', pcall_err(exec_lua, [[
         vim.func.on_fun(vim, 'inspect', function(o)
           return nil, { foo = 'bar', z = o.z }
         end)
