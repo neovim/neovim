@@ -114,7 +114,11 @@ static buf_T *do_ft_buf(char *filetype, aco_save_T *aco, Error *err)
 
   ftbuf->b_p_ft = xstrdup(filetype);
 
-  apply_autocmds(EVENT_FILETYPE, ftbuf->b_p_ft, ftbuf->b_fname, true, ftbuf);
+  TRY_WRAP({
+    try_start();
+    apply_autocmds(EVENT_FILETYPE, ftbuf->b_p_ft, ftbuf->b_fname, true, ftbuf);
+    try_end(err);
+  });
 
   return ftbuf;
 }
@@ -133,8 +137,8 @@ static buf_T *do_ft_buf(char *filetype, aco_save_T *aco, Error *err)
 ///                         Implies {scope} is "local".
 ///                  - filetype: |filetype|. Used to get the default option for a
 ///                    specific filetype. Cannot be used with any other option.
-///                    Note: this is expensive, it is recommended to cache this
-///                    value.
+///                    Note: this will trigger |ftplugin| and all |FileType|
+///                    autocommands for the corresponding filetype.
 /// @param[out] err  Error details, if any
 /// @return          Option value
 Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)

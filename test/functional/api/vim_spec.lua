@@ -1518,6 +1518,31 @@ describe('API', function()
       nvim('get_option_value', 'filetype', {buf = buf})
       eq({1, 9}, nvim('win_get_cursor', win))
     end)
+
+    it('can get default option values for filetypes', function()
+      command('filetype plugin on')
+      for ft, opts in pairs {
+        lua = { commentstring = '-- %s' },
+        vim = { commentstring = '"%s' },
+        man = { tagfunc = 'v:lua.require\'man\'.goto_tag' },
+        xml = { formatexpr = 'xmlformat#Format()' }
+      } do
+        for option, value in pairs(opts) do
+          eq(value, nvim('get_option_value', option, { filetype = ft }))
+        end
+      end
+
+      command'au FileType lua setlocal commentstring=NEW\\ %s'
+
+      eq('NEW %s', nvim('get_option_value', 'commentstring', { filetype = 'lua' }))
+    end)
+
+    it('errors for bad FileType autocmds', function()
+      command'au FileType lua setlocal commentstring=BAD'
+      eq([[FileType Autocommands for "lua": Vim(setlocal):E537: 'commentstring' must be empty or contain %s: commentstring=BAD]],
+         pcall_err(nvim, 'get_option_value', 'commentstring', { filetype = 'lua' }))
+    end)
+
   end)
 
   describe('nvim_{get,set}_current_buf, nvim_list_bufs', function()

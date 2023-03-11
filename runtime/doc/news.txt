@@ -213,6 +213,9 @@ The following new APIs or features were added.
 • |nvim_get_option_value()| now has a `filetype` option so it can return the
   default option for a specific filetype.
 
+• |vim.filetype.get_option()| to get the default option value for a specific
+  filetype. This is a wrapper around |nvim_get_option_value()| with caching.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
