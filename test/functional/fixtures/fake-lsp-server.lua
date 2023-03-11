@@ -272,6 +272,7 @@ function tests.text_document_save_did_open()
     end;
     body = function()
       notify('start')
+      expect_notification('textDocument/didClose')
       expect_notification('textDocument/didOpen')
       expect_notification('textDocument/didSave')
       notify('shutdown')
