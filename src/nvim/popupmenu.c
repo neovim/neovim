@@ -407,8 +407,6 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 void pum_redraw(void)
 {
   int row = 0;
-  int attr_norm = win_hl_attr(curwin, HLF_PNI);
-  int attr_select = win_hl_attr(curwin, HLF_PSI);
   int attr_scroll = win_hl_attr(curwin, HLF_PSB);
   int attr_thumb = win_hl_attr(curwin, HLF_PST);
   int i;
@@ -418,8 +416,13 @@ void pum_redraw(void)
   int w;
   int thumb_pos = 0;
   int thumb_height = 1;
-  int round;
   int n;
+
+#define HA(hlf) (win_hl_attr(curwin, (hlf)))
+  //                         "word"       "kind"       "extra text"
+  const int attrsNorm[3] = { HA(HLF_PNI), HA(HLF_PNK), HA(HLF_PNX) };
+  const int attrsSel[3] = { HA(HLF_PSI), HA(HLF_PSK), HA(HLF_PSX) };
+#undef HA
 
   int grid_width = pum_width;
   int col_off = 0;
@@ -482,7 +485,8 @@ void pum_redraw(void)
 
   for (i = 0; i < pum_height; i++) {
     int idx = i + pum_first;
-    int attr = (idx == pum_selected) ? attr_select : attr_norm;
+    const int *const attrs = (idx == pum_selected) ? attrsSel : attrsNorm;
+    int attr = attrs[0];  // start with "word" highlight
 
     grid_puts_line_start(&pum_grid, row);
 
@@ -496,26 +500,25 @@ void pum_redraw(void)
     }
 
     // Display each entry, use two spaces for a Tab.
-    // Do this 3 times: For the main text, kind and extra info
+    // Do this 3 times:
+    // 0 - main text
+    // 1 - kind
+    // 2 - extra info
     int grid_col = col_off;
     int totwidth = 0;
 
-    for (round = 1; round <= 3; round++) {
+    for (int round = 0; round < 3; round++) {
+      attr = attrs[round];
       width = 0;
       s = NULL;
 
       switch (round) {
+      case 0:
+        p = pum_array[idx].pum_text; break;
       case 1:
-        p = pum_array[idx].pum_text;
-        break;
-
+        p = pum_array[idx].pum_kind; break;
       case 2:
-        p = pum_array[idx].pum_kind;
-        break;
-
-      case 3:
-        p = pum_array[idx].pum_extra;
-        break;
+        p = pum_array[idx].pum_extra; break;
       }
 
       if (p != NULL) {
@@ -592,17 +595,17 @@ void pum_redraw(void)
         }
       }
 
-      if (round > 1) {
+      if (round > 0) {
         n = pum_kind_width + 1;
       } else {
         n = 1;
       }
 
       // Stop when there is nothing more to display.
-      if ((round == 3)
-          || ((round == 2)
-              && (pum_array[idx].pum_extra == NULL))
+      if ((round == 2)
           || ((round == 1)
+              && (pum_array[idx].pum_extra == NULL))
+          || ((round == 0)
               && (pum_array[idx].pum_kind == NULL)
               && (pum_array[idx].pum_extra == NULL))
           || (pum_base_width + n >= pum_width)) {

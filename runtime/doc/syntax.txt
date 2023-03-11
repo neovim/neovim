@@ -5278,6 +5278,14 @@ NormalNC	Normal text in non-current windows.
 Pmenu		Popup menu: Normal item.
 							*hl-PmenuSel*
 PmenuSel	Popup menu: Selected item.
+							*hl-PmenuKind*
+PmenuKind	Popup menu: Normal item "kind".
+							*hl-PmenuKindSel*
+PmenuKindSel	Popup menu: Selected item "kind".
+							*hl-PmenuExtra*
+PmenuExtra	Popup menu: Normal item "extra text".
+							*hl-PmenuExtraSel*
+PmenuExtraSel	Popup menu: Selected item "extra text".
 							*hl-PmenuSbar*
 PmenuSbar	Popup menu: Scrollbar.
 							*hl-PmenuThumb*
