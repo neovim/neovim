@@ -50,6 +50,11 @@ The following changes may require adaptations in user config or plugins.
 • Unsaved changes are now preserved rather than discarded when |channel-stdio|
   is closed.
 
+• Changes to |vim.treesitter.get_node_text()|:
+  - It now returns `string`, as opposed to `string|string[]|nil`.
+  - The `concat` option has been removed as it was not consistently applied.
+  - Invalid ranges now cause an error instead of returning `nil`.
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 

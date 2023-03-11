@@ -789,14 +789,12 @@ get_node_text({node}, {source}, {opts})
       • {source}  (integer|string) Buffer or string from which the {node} is
                   extracted
       • {opts}    (table|nil) Optional parameters.
-                  • concat: (boolean) Concatenate result in a string (default
-                    true)
                   • metadata (table) Metadata of a specific capture. This
                     would be set to `metadata[capture_id]` when using
                     |vim.treesitter.add_directive()|.
 
     Return: ~
-        (string[]|string|nil)
+        (string)
 
 get_query({lang}, {query_name})                   *vim.treesitter.get_query()*
     Returns the runtime query {query_name} for {lang}.
@@ -821,6 +819,19 @@ get_query_files({lang}, {query_name}, {is_included})
     Return: ~
         string[] query_files List of files to load for given query and
         language
+
+get_range({node}, {source}, {metadata})           *vim.treesitter.get_range()*
+    Get the range of a |TSNode|. Can also supply {source} and {metadata} to
+    get the range with directives applied.
+
+    Parameters: ~
+      • {node}      |TSNode|
+      • {source}    integer|string|nil Buffer or string from which the {node}
+                    is extracted
+      • {metadata}  TSMetadata|nil
+
+    Return: ~
+        (table)
 
 list_directives()                           *vim.treesitter.list_directives()*
     Lists the currently available directives to use in queries.
@@ -887,7 +898,8 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
       • {self}
 
     Return: ~
-        (fun(): integer, TSNode, TSMetadata ): capture id, capture node, metadata
+        (fun(): integer, TSNode, TSMetadata): capture id, capture node,
+        metadata
 
                                                         *Query:iter_matches()*
 Query:iter_matches({self}, {node}, {source}, {start}, {stop})

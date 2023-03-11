@@ -2,8 +2,21 @@ local api = vim.api
 
 local M = {}
 
----@alias Range4 {[1]: integer, [2]: integer, [3]: integer, [4]: integer}
----@alias Range6 {[1]: integer, [2]: integer, [3]: integer, [4]: integer, [5]: integer, [6]: integer}
+---@class Range4
+---@field [1] integer start row
+---@field [2] integer start column
+---@field [3] integer end row
+---@field [4] integer end column
+
+---@class Range6
+---@field [1] integer start row
+---@field [2] integer start column
+---@field [3] integer start bytes
+---@field [4] integer end row
+---@field [5] integer end column
+---@field [6] integer end bytes
+
+---@alias Range Range4|Range6
 
 ---@private
 ---@param a_row integer
@@ -74,8 +87,8 @@ function M.validate(r)
 end
 
 ---@private
----@param r1 Range4|Range6
----@param r2 Range4|Range6
+---@param r1 Range
+---@param r2 Range
 ---@return boolean
 function M.intercepts(r1, r2)
   local srow_1, scol_1, erow_1, ecol_1 = M.unpack4(r1)
@@ -95,7 +108,7 @@ function M.intercepts(r1, r2)
 end
 
 ---@private
----@param r Range4|Range6
+---@param r Range
 ---@return integer, integer, integer, integer
 function M.unpack4(r)
   local off_1 = #r == 6 and 1 or 0
@@ -110,8 +123,8 @@ function M.unpack6(r)
 end
 
 ---@private
----@param r1 Range4|Range6
----@param r2 Range4|Range6
+---@param r1 Range
+---@param r2 Range
 ---@return boolean whether r1 contains r2
 function M.contains(r1, r2)
   local srow_1, scol_1, erow_1, ecol_1 = M.unpack4(r1)
@@ -132,7 +145,7 @@ end
 
 ---@private
 ---@param source integer|string
----@param range Range4|Range6
+---@param range Range
 ---@return Range6
 function M.add_bytes(source, range)
   if type(range) == 'table' and #range == 6 then

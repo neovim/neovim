@@ -1,4 +1,5 @@
 local Range = require('vim.treesitter._range')
+local Query = require('vim.treesitter.query')
 
 local api = vim.api
 
@@ -74,18 +75,6 @@ function FoldInfo:get_stop(lnum)
   return self.stop_counts[lnum] or 0
 end
 
----@private
---- TODO(lewis6991): copied from languagetree.lua. Consolidate
----@param node TSNode
----@param metadata TSMetadata
----@return Range4
-local function get_range_from_metadata(node, metadata)
-  if metadata and metadata.range then
-    return metadata.range --[[@as Range4]]
-  end
-  return { node:range() }
-end
-
 local function trim_level(level)
   local max_fold_level = vim.wo.foldnestmax
   if level > max_fold_level then
@@ -118,7 +107,7 @@ local function get_folds_levels(bufnr, info, srow, erow)
 
     for id, node, metadata in query:iter_captures(tree:root(), bufnr, srow or 0, q_erow) do
       if query.captures[id] == 'fold' then
-        local range = get_range_from_metadata(node, metadata[id])
+        local range = Query.get_range(node, bufnr, metadata[id])
         local start, _, stop, stop_col = Range.unpack4(range)
 
         if stop_col == 0 then
