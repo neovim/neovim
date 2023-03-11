@@ -78,6 +78,8 @@ garray_T script_items = { 0, 0, sizeof(scriptitem_T *), 20, NULL };
 /// The names of packages that once were loaded are remembered.
 static garray_T ga_loaded = { 0, 0, sizeof(char *), 4, NULL };
 
+static int last_current_SID_seq = 0;
+
 /// Initialize the execution stack.
 void estack_init(void)
 {
@@ -266,7 +268,7 @@ void set_context_in_runtime_cmd(expand_T *xp, const char *arg)
 
 static void source_callback(char *fname, void *cookie)
 {
-  (void)do_source(fname, false, DOSO_NONE);
+  (void)do_source(fname, false, DOSO_NONE, cookie);
 }
 
 /// Find the file "name" in all directories in "path" and invoke
@@ -855,7 +857,7 @@ static void source_all_matches(char *pat)
   }
 
   for (int i = 0; i < num_files; i++) {
-    (void)do_source(files[i], false, DOSO_NONE);
+    (void)do_source(files[i], false, DOSO_NONE, NULL);
   }
   FreeWild(num_files, files);
 }
@@ -1701,7 +1703,7 @@ static void cmd_source(char *fname, exarg_T *eap)
                || eap->cstack->cs_idx >= 0);
 
     // ":source" read ex commands
-  } else if (do_source(fname, false, DOSO_NONE) == FAIL) {
+  } else if (do_source(fname, false, DOSO_NONE, NULL) == FAIL) {
     semsg(_(e_notopen), fname);
   }
 }
@@ -1954,9 +1956,12 @@ int do_source_str(const char *cmd, const char *traceback_name)
 /// @param fname
 /// @param check_other  check for .vimrc and _vimrc
 /// @param is_vimrc     DOSO_ value
+/// @param ret_sid      if not NULL and we loaded the script before, don't load it again
 ///
 /// @return  FAIL if file could not be opened, OK otherwise
-int do_source(char *fname, int check_other, int is_vimrc)
+///
+/// If a scriptitem_T was found or created "*ret_sid" is set to the SID.
+int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
 {
   struct source_cookie cookie;
   char *p;
@@ -1979,6 +1984,15 @@ int do_source(char *fname, int check_other, int is_vimrc)
   }
   if (os_isdir(fname_exp)) {
     smsg(_("Cannot source a directory: \"%s\""), fname);
+    goto theend;
+  }
+
+  // See if we loaded this script before.
+  int sid = find_script_by_name(fname_exp);
+  if (sid > 0 && ret_sid != NULL) {
+    // Already loaded and no need to load again, return here.
+    *ret_sid = sid;
+    retval = OK;
     goto theend;
   }
 
@@ -2080,7 +2094,24 @@ int do_source(char *fname, int check_other, int is_vimrc)
   save_funccal(&funccalp_entry);
 
   const sctx_T save_current_sctx = current_sctx;
-  si = get_current_script_id(&fname_exp, &current_sctx);
+
+  current_sctx.sc_lnum = 0;
+
+  // Always use a new sequence number.
+  current_sctx.sc_seq = ++last_current_SID_seq;
+
+  if (sid > 0) {
+    // loading the same script again
+    si = SCRIPT_ITEM(sid);
+  } else {
+    // It's new, generate a new SID.
+    si = new_script_item(fname_exp, &sid);
+    fname_exp = xstrdup(si->sn_name);  // used for autocmd
+    if (ret_sid != NULL) {
+      *ret_sid = sid;
+    }
+  }
+  current_sctx.sc_sid = sid;
 
   // Keep the sourcing name/lnum, for recursive calls.
   estack_push(ETYPE_SCRIPT, si->sn_name, 0);
@@ -2192,7 +2223,7 @@ theend:
 
 /// Find an already loaded script "name".
 /// If found returns its script ID.  If not found returns -1.
-static int find_script_by_name(char *name)
+int find_script_by_name(char *name)
 {
   assert(script_items.ga_len >= 0);
   for (int sid = script_items.ga_len; sid > 0; sid--) {
@@ -2207,35 +2238,6 @@ static int find_script_by_name(char *name)
     }
   }
   return -1;
-}
-
-/// Check if fname was sourced before to finds its SID.
-/// If it's new, generate a new SID.
-///
-/// @param[in,out] fnamep  pointer to file path of script
-/// @param[out] ret_sctx   sctx of this script
-scriptitem_T *get_current_script_id(char **fnamep, sctx_T *ret_sctx)
-{
-  static int last_current_SID_seq = 0;
-
-  scriptitem_T *si;
-  int sid = find_script_by_name(*fnamep);
-  if (sid > 0) {
-    si = SCRIPT_ITEM(sid);
-  } else {
-    si = new_script_item(*fnamep, &sid);
-    *fnamep = xstrdup(si->sn_name);
-  }
-
-  sctx_T script_sctx = { .sc_seq = ++last_current_SID_seq,
-                         .sc_lnum = 0,
-                         .sc_sid = sid };
-
-  if (ret_sctx != NULL) {
-    *ret_sctx = script_sctx;
-  }
-
-  return si;
 }
 
 /// ":scriptnames"
@@ -2704,7 +2706,9 @@ bool script_autoload(const char *const name, const size_t name_len, const bool r
     }
 
     // Try loading the package from $VIMRUNTIME/autoload/<name>.vim
-    if (source_runtime(scriptname, 0) == OK) {
+    // Use "ret_sid" to avoid loading the same script again.
+    int ret_sid;
+    if (do_in_runtimepath(scriptname, 0, source_callback, &ret_sid) == OK) {
       ret = true;
     }
   }
