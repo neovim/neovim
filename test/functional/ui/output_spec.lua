@@ -54,6 +54,7 @@ describe("shell command :!", function()
 
   it("throttles shell-command output greater than ~10KB", function()
     skip(is_os('openbsd'), 'FIXME #10804')
+    skip(is_os('win'))
     child_session.feed_data((":!%s REP 30001 foo\n"):format(testprg('shell-test')))
 
     -- If we observe any line starting with a dot, then throttling occurred.

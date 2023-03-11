@@ -18,6 +18,8 @@ local is_os = helpers.is_os
 
 local file_prefix = 'Xtest-functional-ex_cmds-mksession_spec'
 
+if helpers.skip(helpers.is_os('win')) then return end
+
 describe(':mksession', function()
   local session_file = file_prefix .. '.vim'
   local tab_dir = file_prefix .. '.d'

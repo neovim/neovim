@@ -288,7 +288,7 @@ jobs:
         run: cmake --build build --config MinSizeRel
 
   windows:
-    runs-on: windows-2019
+    runs-on: windows-2022
     timeout-minutes: 45
     name: windows
     steps:
@@ -348,14 +348,19 @@ jobs:
         run: cmake --build build --target functionaltest
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          pacboy: >-
+            make:p gcc:p
+          release: false
+
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Run oldtest
+        shell: msys2 {0}
         run: |
-          # Add MSYS to path, required for e.g. `find` used in test scripts.
-          # But would break functionaltest, where its `more` would be used then.
-          $OldPath = $env:PATH
-          $env:PATH = "C:\msys64\usr\bin;$env:PATH"
-          & "C:\msys64\mingw64\bin\mingw32-make.exe" -C $(Convert-Path test\old\testdir) VERBOSE=1
-          $env:PATH = $OldPath
+          cd test/old/testdir
+          mingw32-make VERBOSE=1
 
   with-external-deps:
     runs-on: ubuntu-22.04
