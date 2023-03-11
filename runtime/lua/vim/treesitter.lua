@@ -648,12 +648,6 @@ function M.inspect_tree(opts)
   })
 end
 
----@deprecated
----@private
-function M.show_tree()
-  vim.deprecate('show_tree', 'inspect_tree', '0.9', nil, false)
-end
-
 --- Returns the fold level for {lnum} in the current buffer. Can be set directly to 'foldexpr':
 --- <pre>lua
 --- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
