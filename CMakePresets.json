@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 3,
   "configurePresets": [
     {
       "name": "base",
@@ -93,21 +93,6 @@
     {
       "name": "iwyu",
       "configurePreset": "iwyu"
-    }
-  ],
-  "workflowPresets": [
-    {
-      "name": "iwyu",
-      "steps": [
-        {
-          "type": "configure",
-          "name": "iwyu"
-        },
-        {
-          "type": "build",
-          "name": "iwyu"
-        }
-      ]
     }
   ]
 }
