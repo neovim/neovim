@@ -2196,7 +2196,22 @@ describe('LSP', function()
       eq(true, exists)
       os.remove(new)
     end)
-    it('Can rename a direcory', function()
+    it("Kills old buffer after renaming an existing file", function()
+      local old = helpers.tmpname()
+      write_file(old, 'Test content')
+      local new = helpers.tmpname()
+      os.remove(new)  -- only reserve the name, file must not exist for the test scenario
+      local lines = exec_lua([[
+        local old = select(1, ...)
+	local oldbufnr = vim.fn.bufadd(old)
+        local new = select(2, ...)
+        vim.lsp.util.rename(old, new)
+	return vim.fn.bufloaded(oldbufnr)
+      ]], old, new)
+      eq(0, lines)
+      os.remove(new)
+    end)
+    it('Can rename a directory', function()
       -- only reserve the name, file must not exist for the test scenario
       local old_dir = helpers.tmpname()
       local new_dir = helpers.tmpname()
@@ -2205,16 +2220,19 @@ describe('LSP', function()
 
       helpers.mkdir_p(old_dir)
 
-      local file = "file"
+      local file = 'file.txt'
       write_file(old_dir .. pathsep .. file, 'Test content')
 
-      exec_lua([[
+      local lines = exec_lua([[
         local old_dir = select(1, ...)
         local new_dir = select(2, ...)
+	local pathsep = select(3, ...)
+	local oldbufnr = vim.fn.bufadd(old_dir .. pathsep .. 'file')
 
         vim.lsp.util.rename(old_dir, new_dir)
-      ]], old_dir, new_dir)
-
+	return vim.fn.bufloaded(oldbufnr)
+      ]], old_dir, new_dir, pathsep)
+      eq(0, lines)
       eq(false, exec_lua('return vim.loop.fs_stat(...) ~= nil', old_dir))
       eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', new_dir))
       eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', new_dir .. pathsep .. file))
