@@ -22,7 +22,6 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
-#include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_eval.h"
@@ -38,6 +37,7 @@
 #include "nvim/memory.h"
 #include "nvim/pos.h"
 #include "nvim/regexp.h"
+#include "nvim/runtime.h"
 #include "nvim/types.h"
 #include "nvim/vim.h"
 
