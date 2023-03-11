@@ -157,7 +157,8 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
 ///                  - win: |window-ID|. Used for setting window local option.
 ///                  - buf: Buffer number. Used for setting buffer local option.
 /// @param[out] err  Error details, if any
-void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error *err)
+void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(option) *opts,
+                           Error *err)
   FUNC_API_SINCE(9)
 {
   int scope = 0;
@@ -202,7 +203,9 @@ void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error 
     });
   }
 
-  access_option_value_for(name.data, &numval, &stringval, scope, opt_type, to, false, err);
+  WITH_SCRIPT_CONTEXT(channel_id, {
+    access_option_value_for(name.data, &numval, &stringval, scope, opt_type, to, false, err);
+  });
 }
 
 /// Gets the option information for all options.

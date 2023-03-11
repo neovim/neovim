@@ -938,10 +938,11 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 ///                   - force: (boolean, default true) Override any previous definition.
 ///                   - preview: (function) Preview callback for 'inccommand' |:command-preview|
 /// @param[out] err Error details, if any.
-void nvim_create_user_command(String name, Object command, Dict(user_command) *opts, Error *err)
+void nvim_create_user_command(uint64_t channel_id, String name, Object command,
+                              Dict(user_command) *opts, Error *err)
   FUNC_API_SINCE(9)
 {
-  create_user_command(name, command, opts, 0, err);
+  create_user_command(channel_id, name, command, opts, 0, err);
 }
 
 /// Delete a user-defined command.
@@ -959,7 +960,7 @@ void nvim_del_user_command(String name, Error *err)
 /// @param  buffer  Buffer handle, or 0 for current buffer.
 /// @param[out] err Error details, if any.
 /// @see nvim_create_user_command
-void nvim_buf_create_user_command(Buffer buffer, String name, Object command,
+void nvim_buf_create_user_command(uint64_t channel_id, Buffer buffer, String name, Object command,
                                   Dict(user_command) *opts, Error *err)
   FUNC_API_SINCE(9)
 {
@@ -970,7 +971,7 @@ void nvim_buf_create_user_command(Buffer buffer, String name, Object command,
 
   buf_T *save_curbuf = curbuf;
   curbuf = target_buf;
-  create_user_command(name, command, opts, UC_BUFFER, err);
+  create_user_command(channel_id, name, command, opts, UC_BUFFER, err);
   curbuf = save_curbuf;
 }
 
@@ -1011,8 +1012,8 @@ void nvim_buf_del_user_command(Buffer buffer, String name, Error *err)
   api_set_error(err, kErrorTypeException, "Invalid command (not found): %s", name.data);
 }
 
-void create_user_command(String name, Object command, Dict(user_command) *opts, int flags,
-                         Error *err)
+void create_user_command(uint64_t channel_id, String name, Object command, Dict(user_command) *opts,
+                         int flags, Error *err)
 {
   uint32_t argt = 0;
   int64_t def = -1;
@@ -1205,11 +1206,13 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
     });
   }
 
-  if (uc_add_command(name.data, name.size, rep, argt, def, flags, compl, compl_arg, compl_luaref,
-                     preview_luaref, addr_type_arg, luaref, force) != OK) {
-    api_set_error(err, kErrorTypeException, "Failed to create user command");
-    // Do not goto err, since uc_add_command now owns luaref, compl_luaref, and compl_arg
-  }
+  WITH_SCRIPT_CONTEXT(channel_id, {
+    if (uc_add_command(name.data, name.size, rep, argt, def, flags, compl, compl_arg, compl_luaref,
+                       preview_luaref, addr_type_arg, luaref, force) != OK) {
+      api_set_error(err, kErrorTypeException, "Failed to create user command");
+      // Do not goto err, since uc_add_command now owns luaref, compl_luaref, and compl_arg
+    }
+  });
 
   return;
 
