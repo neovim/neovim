@@ -2337,6 +2337,29 @@ linenr_T get_sourced_lnum(LineGetter fgetline, void *cookie)
         : SOURCING_LNUM;
 }
 
+/// "getscriptinfo()" function
+void f_getscriptinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  tv_list_alloc_ret(rettv, script_items.ga_len);
+
+  list_T *l = rettv->vval.v_list;
+
+  for (int i = 1; i <= script_items.ga_len; i++) {
+    scriptitem_T *si = SCRIPT_ITEM(i);
+
+    if (si->sn_name == NULL) {
+      continue;
+    }
+
+    dict_T *d = tv_dict_alloc();
+    tv_list_append_dict(l, d);
+    tv_dict_add_str(d, S_LEN("name"), si->sn_name);
+    tv_dict_add_nr(d, S_LEN("sid"), i);
+    // Vim9 autoload script (:h vim9-autoload), not applicable to Nvim.
+    tv_dict_add_bool(d, S_LEN("autoload"), false);
+  }
+}
+
 /// Get one full line from a sourced file.
 /// Called by do_cmdline() when it's called from do_source().
 ///
