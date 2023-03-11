@@ -2325,10 +2325,19 @@ describe('lua stdlib', function()
         test3()
       ]]
 
-      eq(5, exec_lua([[return vim.func.on_fun().maxdepth]]))
+      eq({ maxdepth = 5, total = 11, },
+        exec_lua([[
+          local report = vim.func.on_fun()
+          return { maxdepth = report.maxdepth, total = report.total, }
+      ]]))
       exec_lua('_G._handle.unhook()')
+      -- Force eviction from the weaktable (see func.lua).
       exec_lua('collectgarbage("collect")')
-      eq(4, exec_lua([[return vim.func.on_fun().maxdepth]]))
+      eq({ maxdepth = 4, total = 10, },
+        exec_lua([[
+          local report = vim.func.on_fun()
+          return { maxdepth = report.maxdepth, total = report.total, }
+      ]]))
     end)
 
     it('idempotency', function()

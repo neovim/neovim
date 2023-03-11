@@ -64,6 +64,7 @@ function M.on_fun(container, key, fn)
   if container == nil and key == nil and fn == nil then
     local report = {
       maxdepth = 0,
+      total = 0,
     }
     for _,v in pairs(_on_fun_map) do
       if v == true then
@@ -84,6 +85,7 @@ function M.on_fun(container, key, fn)
             depth = depth,
           }
         end
+        report.total = report.total + 1
         report.maxdepth = report.maxdepth > depth and report.maxdepth or depth
       end
     end
@@ -144,7 +146,7 @@ function M.on_fun(container, key, fn)
       end
       return unpack(rbase)
     else
-      vim.validate{ fn = { fn, function() return false end, 'function() returning true,… false,… or nothing' } }
+      vim.validate{ fn = { fn, function() return false end, 'function() returning true[,…] false[,…] or nothing' } }
     end
   end
   container[key] = wrapper
