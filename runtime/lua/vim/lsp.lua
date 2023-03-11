@@ -1038,7 +1038,7 @@ function lsp.start_client(config)
   --- Returns the default handler if the user hasn't set a custom one.
   ---
   ---@param method (string) LSP method name
-  ---@return function|nil The handler for the given method, if defined, or the default from |vim.lsp.handlers|
+  ---@return lsp-handler|nil The handler for the given method, if defined, or the default from |vim.lsp.handlers|
   local function resolve_handler(method)
     return handlers[method] or default_handlers[method]
   end
@@ -1938,7 +1938,7 @@ api.nvim_create_autocmd('VimLeavePre', {
 ---@param bufnr (integer) Buffer handle, or 0 for current.
 ---@param method (string) LSP method name
 ---@param params table|nil Parameters to send to the server
----@param handler function|nil See |lsp-handler|
+---@param handler lsp-handler|nil See |lsp-handler|
 ---       If nil, follows resolution strategy defined in |lsp-handler-configuration|
 ---
 ---@return table<integer, integer>, fun() 2-tuple:
@@ -1998,9 +1998,10 @@ end
 ---@param bufnr (integer) Buffer handle, or 0 for current.
 ---@param method (string) LSP method name
 ---@param params (table|nil) Parameters to send to the server
----@param callback (function) The callback to call when all requests are finished.
+---@param callback fun(request_results: table<integer, {error: lsp.ResponseError, result: any}>) (function)
+--- The callback to call when all requests are finished.
 --- Unlike `buf_request`, this will collect all the responses from each server instead of handling them.
---- A map of client_id:request_result will be provided to the callback
+--- A map of client_id:request_result will be provided to the callback.
 ---
 ---@return fun() cancel A function that will cancel all requests
 function lsp.buf_request_all(bufnr, method, params, callback)
@@ -2043,9 +2044,8 @@ end
 ---@param timeout_ms (integer|nil) Maximum time in milliseconds to wait for a
 ---                               result. Defaults to 1000
 ---
----@return table<integer, any>|nil result, string|nil err Map of client_id:request_result.
---- On timeout, cancel or error, returns `(nil, err)` where `err` is a string describing
---- the failure reason.
+---@return table<integer, {err: lsp.ResponseError, result: any}>|nil (table) result Map of client_id:request_result.
+---@return string|nil err On timeout, cancel, or error, `err` is a string describing the failure reason, and `result` is nil.
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   local request_results
 
