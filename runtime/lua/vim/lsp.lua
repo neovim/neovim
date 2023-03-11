@@ -1391,15 +1391,19 @@ function lsp.start_client(config)
     end
     -- Ensure pending didChange notifications are sent so that the server doesn't operate on a stale state
     changetracking.flush(client, bufnr)
+    local version = util.buf_versions[bufnr]
     bufnr = resolve_bufnr(bufnr)
     local _ = log.debug()
       and log.debug(log_prefix, 'client.request', client_id, method, params, handler, bufnr)
     local success, request_id = rpc.request(method, params, function(err, result)
-      handler(
-        err,
-        result,
-        { method = method, client_id = client_id, bufnr = bufnr, params = params }
-      )
+      local context = {
+        method = method,
+        client_id = client_id,
+        bufnr = bufnr,
+        params = params,
+        version = version
+      }
+      handler(err, result, context)
     end, function(request_id)
       client.requests[request_id] = nil
       nvim_exec_autocmds('User', { pattern = 'LspRequest', modeline = false })

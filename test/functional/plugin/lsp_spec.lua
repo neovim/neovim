@@ -3080,7 +3080,7 @@ describe('LSP', function()
         name = "prepare_rename_placeholder",
         expected_handlers = {
           {NIL, {}, {method="shutdown", client_id=1}};
-          {NIL, NIL, {method="textDocument/rename", client_id=1, bufnr=1}};
+          {NIL, NIL, {method="textDocument/rename", client_id=1, bufnr=1, version = 3}};
           {NIL, {}, {method="start", client_id=1}};
         },
         expected_text = "placeholder", -- see fake lsp response
@@ -3090,7 +3090,7 @@ describe('LSP', function()
         name = "prepare_rename_range",
         expected_handlers = {
           {NIL, {}, {method="shutdown", client_id=1}};
-          {NIL, NIL, {method="textDocument/rename", client_id=1, bufnr=1}};
+          {NIL, NIL, {method="textDocument/rename", client_id=1, bufnr=1, version = 3}};
           {NIL, {}, {method="start", client_id=1}};
         },
         expected_text = "line", -- see test case and fake lsp response
