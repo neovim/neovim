@@ -7,7 +7,7 @@ local exec_capture = helpers.exec_capture
 local write_file = helpers.write_file
 local call_viml_function = helpers.meths.call_function
 
-describe('lua :verbose', function()
+local function last_set_tests(cmd)
   local script_location, script_file
   -- All test cases below use the same nvim instance.
   setup(function()
@@ -46,7 +46,7 @@ endfunction\
 let &tw = s:return80()\
 ", true)
 ]])
-    exec(':source '..script_file)
+    exec(cmd .. ' ' .. script_file)
   end)
 
   teardown(function()
@@ -106,6 +106,9 @@ test_group  FileType
   end)
 
   it('"Last set" for command defined by nvim_command', function()
+    if cmd == 'luafile' then
+      pending('nvim_command does not set the script context')
+    end
     local result = exec_capture(':verbose command Bdelete')
     eq(string.format([[
     Name              Args Address Complete    Definition
@@ -123,7 +126,7 @@ test_group  FileType
        script_location), result)
   end)
 
-  it('"Last set for function', function()
+  it('"Last set" for function', function()
     local result = exec_capture(':verbose function Close_Window')
     eq(string.format([[
    function Close_Window() abort
@@ -140,6 +143,14 @@ test_group  FileType
 	Last set from %s line 22]],
        script_location), result)
   end)
+end
+
+describe('lua :verbose when using :source', function()
+  last_set_tests('source')
+end)
+
+describe('lua :verbose when using :luafile', function()
+  last_set_tests('luafile')
 end)
 
 describe('lua verbose:', function()
