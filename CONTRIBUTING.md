@@ -253,7 +253,8 @@ For managing includes in C files, use [include-what-you-use].
 - [Install include-what-you-use][include-what-you-use-install]
 - To see which includes needs fixing use the cmake preset `iwyu`:
   ```
-  cmake --workflow --preset iwyu
+  cmake --preset iwyu
+  cmake --build --preset iwyu
   ```
 - There's also a make target that automatically fixes the suggestions from
   IWYU:
