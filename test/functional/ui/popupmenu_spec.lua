@@ -3490,6 +3490,68 @@ describe('builtin popupmenu', function()
       pasted                          |
     ]])
   end)
+
+  describe('"kind" and "menu"', function()
+    before_each(function()
+      screen:try_resize(30, 8)
+      exec([[
+        func CompleteFunc( findstart, base )
+          if a:findstart
+            return 0
+          endif
+          return {
+                \ 'words': [
+                \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'W', },
+                \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'W', },
+                \ { 'word': 'aword3', 'menu': 'extra text 3', 'kind': 'W', },
+                \]}
+        endfunc
+        set completeopt=menu
+        set completefunc=CompleteFunc
+      ]])
+    end)
+
+    -- oldtest: Test_pum_highlights_default()
+    it('default highlight groups', function()
+      feed('iaw<C-X><C-u>')
+      screen:expect([[
+        aword1^                        |
+        {s:aword1 W extra text 1 }{1:        }|
+        {n:aword2 W extra text 2 }{1:        }|
+        {n:aword3 W extra text 3 }{1:        }|
+        {1:~                             }|
+        {1:~                             }|
+        {1:~                             }|
+        {2:-- }{5:match 1 of 3}               |
+      ]])
+    end)
+
+    -- oldtest: Test_pum_highlights_custom()
+    it('custom highlight groups', function()
+      exec([[
+        hi PmenuKind      guifg=Red guibg=Magenta
+        hi PmenuKindSel   guifg=Red guibg=Grey
+        hi PmenuExtra     guifg=White guibg=Magenta
+        hi PmenuExtraSel  guifg=Black guibg=Grey
+      ]])
+      local attrs = screen:get_default_attr_ids()
+      attrs.kn = {foreground = Screen.colors.Red, background = Screen.colors.Magenta}
+      attrs.ks = {foreground = Screen.colors.Red, background = Screen.colors.Grey}
+      attrs.xn = {foreground = Screen.colors.White, background = Screen.colors.Magenta}
+      attrs.xs = {foreground = Screen.colors.Black, background = Screen.colors.Grey}
+      feed('iaw<C-X><C-u>')
+      screen:expect([[
+        aword1^                        |
+        {s:aword1 }{ks:W }{xs:extra text 1 }{1:        }|
+        {n:aword2 }{kn:W }{xn:extra text 2 }{1:        }|
+        {n:aword3 }{kn:W }{xn:extra text 3 }{1:        }|
+        {1:~                             }|
+        {1:~                             }|
+        {1:~                             }|
+        {2:-- }{5:match 1 of 3}               |
+      ]], attrs)
+    end)
+  end)
 end)
 
 describe('builtin popupmenu with ui/ext_multigrid', function()
