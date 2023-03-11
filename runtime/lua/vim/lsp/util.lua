@@ -436,7 +436,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
 
   -- Some LSP servers are depending on the VSCode behavior.
   -- The VSCode will re-locate the cursor position after applying TextEdit so we also do it.
-  local is_current_buf = api.nvim_get_current_buf() == bufnr
+  local is_current_buf = api.nvim_get_current_buf() == bufnr or bufnr == 0
   local cursor = (function()
     if not is_current_buf then
       return {
@@ -464,7 +464,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
       start_col = get_line_byte_from_position(bufnr, text_edit.range.start, offset_encoding),
       end_row = text_edit.range['end'].line,
       end_col = get_line_byte_from_position(bufnr, text_edit.range['end'], offset_encoding),
-      text = split(text_edit.newText, '\n', true),
+      text = split(text_edit.newText, '\n', { plain = true }),
     }
 
     local max = api.nvim_buf_line_count(bufnr)
@@ -522,7 +522,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   if is_cursor_fixed then
     local is_valid_cursor = true
     is_valid_cursor = is_valid_cursor and cursor.row < max
-    is_valid_cursor = is_valid_cursor and cursor.col <= #(get_line(bufnr, max - 1) or '')
+    is_valid_cursor = is_valid_cursor and cursor.col <= #(get_line(bufnr, cursor.row) or '')
     if is_valid_cursor then
       api.nvim_win_set_cursor(0, { cursor.row + 1, cursor.col })
     end
