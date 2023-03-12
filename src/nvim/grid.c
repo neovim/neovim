@@ -549,6 +549,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
   }
 
   if (bg_attr) {
+    assert(off_from == (size_t)col);
     for (int c = col; c < endcol; c++) {
       linebuf_attr[c] = hl_combine_attr(bg_attr, linebuf_attr[c]);
     }
