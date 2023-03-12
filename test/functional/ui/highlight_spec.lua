@@ -1812,6 +1812,22 @@ describe("'winhighlight' highlight", function()
     ]])
   end)
 
+  it('works for background color in rightleft window in vsplit #22640', function()
+    screen:try_resize(40, 6)
+    insert('aa')
+    command('setlocal rightleft')
+    command('botright vsplit')
+    command('setlocal winhl=Normal:Background1')
+    screen:expect([[
+                       aa│{1:                  ^aa}|
+      {0:                  ~}│{2:                   ~}|
+      {0:                  ~}│{2:                   ~}|
+      {0:                  ~}│{2:                   ~}|
+      {4:[No Name] [+]       }{3:[No Name] [+]       }|
+                                              |
+    ]])
+  end)
+
   it('handles undefined groups', function()
     command("set winhl=Normal:Background1")
     screen:expect([[

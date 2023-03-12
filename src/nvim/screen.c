@@ -111,14 +111,14 @@ static int win_fill_end(win_T *wp, int c1, int c2, int off, int width, int row, 
                         int attr)
 {
   int nn = off + width;
+  const int endcol = wp->w_grid.cols;
 
-  if (nn > wp->w_grid.cols) {
-    nn = wp->w_grid.cols;
+  if (nn > endcol) {
+    nn = endcol;
   }
 
   if (wp->w_p_rl) {
-    grid_fill(&wp->w_grid, row, endrow, W_ENDCOL(wp) - nn, W_ENDCOL(wp) - off,
-              c1, c2, attr);
+    grid_fill(&wp->w_grid, row, endrow, endcol - nn, endcol - off, c1, c2, attr);
   } else {
     grid_fill(&wp->w_grid, row, endrow, off, nn, c1, c2, attr);
   }
@@ -156,13 +156,12 @@ void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row, int endr
 
   int attr = hl_combine_attr(win_bg_attr(wp), win_hl_attr(wp, (int)hl));
 
+  const int endcol = wp->w_grid.cols;
   if (wp->w_p_rl) {
-    grid_fill(&wp->w_grid, row, endrow, wp->w_wincol, W_ENDCOL(wp) - 1 - n,
-              c2, c2, attr);
-    grid_fill(&wp->w_grid, row, endrow, W_ENDCOL(wp) - 1 - n, W_ENDCOL(wp) - n,
-              c1, c2, attr);
+    grid_fill(&wp->w_grid, row, endrow, 0, endcol - 1 - n, c2, c2, attr);
+    grid_fill(&wp->w_grid, row, endrow, endcol - 1 - n, endcol - n, c1, c2, attr);
   } else {
-    grid_fill(&wp->w_grid, row, endrow, n, wp->w_grid.cols, c1, c2, attr);
+    grid_fill(&wp->w_grid, row, endrow, n, endcol, c1, c2, attr);
   }
 }
 
