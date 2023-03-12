@@ -592,8 +592,7 @@ get_node_text({node}, {source}, {opts})
         (string)
 
 get_parser({bufnr}, {lang}, {opts})              *vim.treesitter.get_parser()*
-    Returns the parser for a specific buffer and filetype and attaches it to
-    the buffer
+    Returns the parser for a specific buffer and attaches it to the buffer
 
     If needed, this will create the parser.
 
@@ -728,29 +727,35 @@ stop({bufnr})                                          *vim.treesitter.stop()*
 Lua module: vim.treesitter.language                  *lua-treesitter-language*
 
 add({lang}, {opts})                            *vim.treesitter.language.add()*
-    Asserts that a parser for the language {lang} is installed.
+    Load parser with name {lang}
 
     Parsers are searched in the `parser` runtime directory, or the provided
     {path}
 
     Parameters: ~
-      • {lang}  (string) Language the parser should parse (alphanumerical and
-                `_` only)
+      • {lang}  (string) Name of the parser (alphanumerical and `_` only)
       • {opts}  (table|nil) Options:
-                • filetype (string|string[]) Filetype(s) that lang can be
-                  parsed with. Note this is not strictly the same as lang
-                  since a single lang can parse multiple filetypes. Defaults
-                  to lang.
+                • filetype (string|string[]) Default filetype the parser
+                  should be associated with. Defaults to {lang}.
                 • path (string|nil) Optional path the parser is located at
                 • symbol_name (string|nil) Internal symbol name for the
                   language to load
 
-get_lang({filetype})                      *vim.treesitter.language.get_lang()*
+get_filetypes({lang})                *vim.treesitter.language.get_filetypes()*
+    Get the filetypes associated with the parser named {lang}.
+
     Parameters: ~
-      • {filetype}  (string)
+      • {lang}  string Name of parser
 
     Return: ~
-        (string|nil)
+        string[] filetypes
+
+get_lang({filetype})                      *vim.treesitter.language.get_lang()*
+    Parameters: ~
+      • {filetype}  string
+
+    Return: ~
+        string|nil
 
 inspect({lang})                            *vim.treesitter.language.inspect()*
     Inspects the provided language.
@@ -765,10 +770,10 @@ inspect({lang})                            *vim.treesitter.language.inspect()*
         (table)
 
 register({lang}, {filetype})              *vim.treesitter.language.register()*
-    Register a lang to be used for a filetype (or list of filetypes).
+    Register a parser named {lang} to be used for {filetype}(s).
 
     Parameters: ~
-      • {lang}      (string) Language to register
+      • {lang}      string Name of parser
       • {filetype}  string|string[] Filetype(s) to associate with lang
 
 
