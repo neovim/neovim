@@ -665,6 +665,7 @@ struct file_buffer {
   int b_p_ml_nobin;             ///< b_p_ml saved for binary mode
   int b_p_ma;                   ///< 'modifiable'
   char *b_p_nf;                 ///< 'nrformats'
+  char *b_p_parser;             ///< 'parser'
   int b_p_pi;                   ///< 'preserveindent'
   char *b_p_qe;                 ///< 'quoteescape'
   int b_p_ro;                   ///< 'readonly'

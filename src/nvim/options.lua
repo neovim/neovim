@@ -1676,6 +1676,17 @@ return {
       defaults={if_true="IPLPPPQPP TPHPLIPpLpItpplpipbp"}
     },
     {
+      full_name='parser',
+      short_desc=N_("parser for buffer"),
+      type='string', scope={'buffer'},
+      noglob=true,
+      normal_fname_chars=true,
+      alloced=true,
+      expand=true,
+      varname='p_parser',
+      defaults={if_true=""}
+    },
+    {
       full_name='paste',
       short_desc=N_("pasting text"),
       type='bool', scope={'global'},

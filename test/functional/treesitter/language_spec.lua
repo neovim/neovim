@@ -76,6 +76,7 @@ describe('treesitter language API', function()
   end)
 
   it('checks if vim.treesitter.get_parser tries to create a new parser on filetype change', function ()
+    command('filetype plugin on')
     command("set filetype=c")
     -- Should not throw an error when filetype is c
     eq('c', exec_lua("return vim.treesitter.get_parser(0):lang()"))

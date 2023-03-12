@@ -6,6 +6,20 @@ local M = {}
 ---@type table<string,string>
 local ft_to_lang = {}
 
+a.nvim_create_autocmd('FileType', {
+  group = a.nvim_create_augroup('vim.treesitter.language', {}),
+  callback = function(args)
+    if vim.bo[args.buf].parser ~= '' then
+      return
+    end
+
+    local ft = vim.bo[args.buf].filetype
+    if ft ~= '' and ft_to_lang[ft] then
+      vim.bo[args.buf].parser = ft_to_lang[ft]
+    end
+  end
+})
+
 --- Get the filetypes associated with the parser named {lang}.
 --- @param lang string Name of parser
 --- @return string[] filetypes
@@ -19,13 +33,14 @@ function M.get_filetypes(lang)
   return r
 end
 
+--- @deprecated
 --- @param filetype string
 --- @return string|nil
 function M.get_lang(filetype)
   if filetype == '' then
     return
   end
-  return ft_to_lang[filetype]
+  return a.nvim_get_option_value('parser', { filetype = filetype })
 end
 
 ---@deprecated

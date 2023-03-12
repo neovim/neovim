@@ -4020,6 +4020,8 @@ static char_u *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return (char_u *)&(buf->b_p_ff);
   case PV_FT:
     return (char_u *)&(buf->b_p_ft);
+  case PV_PARSER:
+    return (char_u *)&(buf->b_p_parser);
   case PV_FO:
     return (char_u *)&(buf->b_p_fo);
   case PV_FLP:
@@ -4468,6 +4470,7 @@ void buf_copy_options(buf_T *buf, int flags)
 
       // Don't copy 'filetype', it must be detected
       buf->b_p_ft = empty_option;
+      buf->b_p_parser = empty_option;
       buf->b_p_pi = p_pi;
       COPY_OPT_SCTX(buf, BV_PI);
       buf->b_p_cinw = xstrdup(p_cinw);

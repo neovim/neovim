@@ -226,6 +226,8 @@ The following new APIs or features were added.
 
 • Added |nvim_get_hl()| for getting highlight group definitions in a format compatible with |nvim_set_hl()|.
 
+• 'parser' option to associate buffers (and filetype) with a Treesitter parser.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 

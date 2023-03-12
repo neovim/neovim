@@ -29,6 +29,7 @@
 #include "nvim/indent_c.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros.h"
 #include "nvim/mapping.h"
 #include "nvim/mbyte.h"
@@ -256,6 +257,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_mp);
   check_string_option(&buf->b_p_efm);
   check_string_option(&buf->b_p_ep);
+  check_string_option(&buf->b_p_parser);
   check_string_option(&buf->b_p_path);
   check_string_option(&buf->b_p_tags);
   check_string_option(&buf->b_p_tfu);
@@ -1432,6 +1434,26 @@ static void did_set_filetype_or_syntax(char **varp, char *oldval, int *value_che
   *value_checked = true;
 }
 
+static void did_set_parser(char *val, char *oldval, int *value_checked, bool *value_changed,
+                           char **errmsg)
+{
+  Error err = ERROR_INIT;
+  MAXSIZE_TEMP_ARRAY(a, 1);
+  ADD(a, STRING_OBJ(cstr_as_string(val)));
+  NLUA_EXEC_STATIC("require('vim.treesitter.language').add(...)", a, &err);
+
+  if (err.type != kErrorTypeNone) {
+    *errmsg = err.msg;
+    return;
+  }
+
+  *value_changed = strcmp(oldval, val) != 0;
+
+  // Since we check the value, there is no need to set P_INSECURE,
+  // even when the value comes from a modeline.
+  *value_checked = true;
+}
+
 static void did_set_winhl(win_T *win, char **errmsg)
 {
   if (!parse_winhl_opt(win)) {
@@ -1769,6 +1791,8 @@ static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char
   } else if (gvarp == &p_ft                             // 'filetype'
              || gvarp == &p_syn) {                      // 'syntax'
     did_set_filetype_or_syntax(varp, oldval, value_checked, &value_changed, &errmsg);
+  } else if (gvarp == &p_parser) {                      // 'parser'
+    did_set_parser(*varp, oldval, value_checked, &value_changed, &errmsg);
   } else if (varp == &win->w_p_winhl) {                 // 'winhighlight'
     did_set_winhl(win, &errmsg);
   } else if (varp == &p_tpf) {

@@ -599,8 +599,8 @@ get_parser({bufnr}, {lang}, {opts})              *vim.treesitter.get_parser()*
     Parameters: ~
       • {bufnr}  (integer|nil) Buffer the parser should be tied to (default:
                  current buffer)
-      • {lang}   (string|nil) Filetype of this parser (default: buffer
-                 filetype)
+      • {lang}   (string|nil) Language of this parser (default: buffer
+                 'parser')
       • {opts}   (table|nil) Options to pass to the created language tree
 
     Return: ~
@@ -749,13 +749,6 @@ get_filetypes({lang})                *vim.treesitter.language.get_filetypes()*
 
     Return: ~
         string[] filetypes
-
-get_lang({filetype})                      *vim.treesitter.language.get_lang()*
-    Parameters: ~
-      • {filetype}  string
-
-    Return: ~
-        string|nil
 
 inspect({lang})                            *vim.treesitter.language.inspect()*
     Inspects the provided language.

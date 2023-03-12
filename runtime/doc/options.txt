@@ -4466,6 +4466,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Specifies the nroff macros that separate paragraphs.  These are pairs
 	of two letters (see |object-motions|).
 
+								*'parser'*
+'parser'		string	(default "")
+			local to buffer
+	Parser to use for Treesitter parsing.
+
 						*'pex'* *'patchexpr'*
 'patchexpr' 'pex'	string	(default "")
 			global

@@ -612,6 +612,7 @@ EXTERN int p_more;              // 'more'
 EXTERN char *p_nf;              ///< 'nrformats'
 EXTERN char *p_opfunc;          // 'operatorfunc'
 EXTERN char *p_para;            // 'paragraphs'
+EXTERN char *p_parser;          // 'parser'
 EXTERN int p_paste;             // 'paste'
 EXTERN char *p_pex;             // 'patchexpr'
 EXTERN char *p_pm;              // 'patchmode'
@@ -885,6 +886,7 @@ enum {
   BV_MPS,
   BV_NF,
   BV_OFU,
+  BV_PARSER,
   BV_PATH,
   BV_PI,
   BV_QE,

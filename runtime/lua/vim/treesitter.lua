@@ -101,7 +101,7 @@ end
 --- If needed, this will create the parser.
 ---
 ---@param bufnr (integer|nil) Buffer the parser should be tied to (default: current buffer)
----@param lang (string|nil) Filetype of this parser (default: buffer filetype)
+---@param lang (string|nil) Language of this parser (default: buffer 'parser')
 ---@param opts (table|nil) Options to pass to the created language tree
 ---
 ---@return LanguageTree object to use for parsing
@@ -113,7 +113,10 @@ function M.get_parser(bufnr, lang, opts)
   end
 
   if not valid_lang(lang) then
-    lang = M.language.get_lang(vim.bo[bufnr].filetype) or vim.bo[bufnr].filetype
+    lang = vim.bo[bufnr].parser
+    if lang == '' then
+      lang = vim.bo[bufnr].filetype
+    end
   end
 
   if not valid_lang(lang) then
@@ -129,6 +132,7 @@ function M.get_parser(bufnr, lang, opts)
     end
   elseif parsers[bufnr] == nil or parsers[bufnr]:lang() ~= lang then
     parsers[bufnr] = M._create_parser(bufnr, lang, opts)
+    vim.bo[bufnr].parser = lang
   end
 
   parsers[bufnr]:register_cbs(opts.buf_attach_cbs)

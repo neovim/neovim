@@ -2012,6 +2012,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_efm);
   clear_string_option(&buf->b_p_ep);
   clear_string_option(&buf->b_p_path);
+  clear_string_option(&buf->b_p_parser);
   clear_string_option(&buf->b_p_tags);
   clear_string_option(&buf->b_p_tc);
   clear_string_option(&buf->b_p_tfu);
