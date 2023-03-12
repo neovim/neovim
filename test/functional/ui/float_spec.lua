@@ -9224,6 +9224,55 @@ describe('float window', function()
       feed('<C-C>')
       screen:expect_unchanged()
     end)
+
+    it('with rightleft and border #22640', function()
+      local float_opts = {relative='editor', width=5, height=3, row=1, col=1, border='single'}
+      meths.open_win(meths.create_buf(false, false), true, float_opts)
+      command('setlocal rightleft')
+      feed('iabc<CR>def<Esc>')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+                                                  |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 4
+          {5:┌─────┐}|
+          {5:│}{1:  cba}{5:│}|
+          {5:│}{1:  ^fed}{5:│}|
+          {5:│}{2:    ~}{5:│}|
+          {5:└─────┘}|
+        ]], float_pos={
+          [4] = {{id = 1001}, "NW", 1, 1, 1, true, 50};
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+          [4] = {win = {id = 1001}, topline = 0, botline = 3, curline = 1, curcol = 2, linecount = 2};
+        }}
+      else
+        screen:expect{grid=[[
+                                                  |
+          {0:~}{5:┌─────┐}{0:                                }|
+          {0:~}{5:│}{1:  cba}{5:│}{0:                                }|
+          {0:~}{5:│}{1:  ^fed}{5:│}{0:                                }|
+          {0:~}{5:│}{2:    ~}{5:│}{0:                                }|
+          {0:~}{5:└─────┘}{0:                                }|
+                                                  |
+        ]]}
+      end
+    end)
   end
 
   describe('with ext_multigrid', function()
