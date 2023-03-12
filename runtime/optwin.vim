@@ -218,6 +218,8 @@ call <SID>AddOption("compatible", gettext("behave very Vi compatible (not advisa
 call <SID>BinOptionG("cp", &cp)
 call <SID>AddOption("cpoptions", gettext("list of flags to specify Vi compatibility"))
 call <SID>OptionG("cpo", &cpo)
+call <SID>AddOption("paste", gettext("paste mode, insert typed text literally"))
+call <SID>BinOptionG("paste", &paste)
 call <SID>AddOption("runtimepath", gettext("list of directories used for runtime files and plugins"))
 call <SID>OptionG("rtp", &rtp)
 call <SID>AddOption("packpath", gettext("list of directories used for plugin packages"))
