@@ -1,7 +1,7 @@
 " Test for 'pastetoggle'
 func Test_pastetoggle()
   " 'pastetoggle' is removed in neovim
-  finish
+  return
   new
   set pastetoggle=<F4>
   set nopaste
