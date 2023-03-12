@@ -1306,22 +1306,6 @@ static void did_set_foldcolumn(char **varp, char **errmsg)
   }
 }
 
-static void did_set_pastetoggle(void)
-{
-  // 'pastetoggle': translate key codes like in a mapping
-  if (*p_pt) {
-    char *p = NULL;
-    (void)replace_termcodes(p_pt,
-                            strlen(p_pt),
-                            &p, REPTERM_FROM_PART | REPTERM_DO_LT, NULL,
-                            CPO_TO_CPO_FLAGS);
-    if (p != NULL) {
-      free_string_option(p_pt);
-      p_pt = p;
-    }
-  }
-}
-
 static void did_set_backspace(char **errmsg)
 {
   if (ascii_isdigit(*p_bs)) {
@@ -1778,8 +1762,6 @@ static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char
     did_set_opt_strings(*varp, p_sloc_values, false, &errmsg);
   } else if (gvarp == &win->w_allbuf_opt.wo_fdc) {      // 'foldcolumn'
     did_set_foldcolumn(varp, &errmsg);
-  } else if (varp == &p_pt) {                           // 'pastetoggle'
-    did_set_pastetoggle();
   } else if (varp == &p_bs) {                           // 'backspace'
     did_set_backspace(&errmsg);
   } else if (varp == &p_bo) {

@@ -145,6 +145,7 @@ OPTIONS
 - 'viewoptions'		Flags "unix", "slash" are ignored and always enabled.
 - *'viminfo'*		Deprecated alias to 'shada' option.
 - *'viminfofile'*	Deprecated alias to 'shadafile' option.
+- *'paste'* *'nopaste'*
 
 UI EXTENSIONS
 - *ui-wildmenu*		Use |ui-cmdline| with |ui-popupmenu| instead. Enabled

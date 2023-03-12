@@ -1685,9 +1685,8 @@ return {
     },
     {
       full_name='pastetoggle', abbreviation='pt',
-      short_desc=N_("key code that causes 'paste' to toggle"),
+      short_desc=N_("No description"),
       type='string', scope={'global'},
-      varname='p_pt',
       defaults={if_true=""}
     },
     {

@@ -55,6 +55,8 @@ The following changes may require adaptations in user config or plugins.
   - The `concat` option has been removed as it was not consistently applied.
   - Invalid ranges now cause an error instead of returning `nil`.
 
+• 'paste' option is now deprecated and 'pastetoggle' is removed
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 

@@ -49,6 +49,8 @@ endfunc
 
 " Test for getting the value of 'pastetoggle'
 func Test_pastetoggle()
+  " 'pastetoggle' is removed from neovim
+  return
   " character with K_SPECIAL byte
   let &pastetoggle = '…'
   call assert_equal('…', &pastetoggle)
