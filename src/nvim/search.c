@@ -2340,7 +2340,6 @@ void showmatch(int c)
     dollar_vcol = -1;
   }
   curwin->w_virtcol++;              // do display ')' just before "$"
-  update_screen();                  // show the new char first
 
   colnr_T save_dollar_vcol = dollar_vcol;
   int save_state = State;
@@ -2349,7 +2348,8 @@ void showmatch(int c)
   curwin->w_cursor = mpos;          // move to matching char
   *so = 0;                          // don't use 'scrolloff' here
   *siso = 0;                        // don't use 'sidescrolloff' here
-  show_cursor_info(false);
+  show_cursor_info_later(false);
+  update_screen();                  // show the new char
   setcursor();
   ui_flush();
   // Restore dollar_vcol(), because setcursor() may call curs_rows()

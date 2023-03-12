@@ -152,7 +152,7 @@ describe('Screen', function()
       ~                   |
       ~                   |
       ~                   |
-      >                   |
+      -- INSERT --        |
     ]])
   end)
 

@@ -2255,9 +2255,6 @@ static char *set_bool_option(const int opt_idx, char *const varp, const int valu
   if ((int *)varp == &p_ru || (int *)varp == &p_sc) {
     // in case 'ruler' or 'showcmd' changed
     comp_col();
-    if ((int *)varp == &p_ru) {
-      win_redr_ruler(curwin);
-    }
   }
   if (curwin->w_curswant != MAXCOL
       && (options[opt_idx].flags & (P_CURSWANT | P_RALL)) != 0) {

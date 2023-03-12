@@ -474,8 +474,7 @@ describe('ui/ext_messages', function()
     ]], msg_history={{
       content = {{ "stuff" }},
       kind = "echomsg",
-    }}, showmode={{ "-- INSERT --", 3 }},
-      messages={{
+    }}, messages={{
         content = {{ "Press ENTER or type command to continue", 4}},
         kind = "return_prompt"
     }}}

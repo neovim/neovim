@@ -728,19 +728,15 @@ static void win_redr_border(win_T *wp)
 /// Show current cursor info in ruler and various other places
 ///
 /// @param always  if false, only show ruler if position has changed.
-void show_cursor_info(bool always)
+void show_cursor_info_later(bool force)
 {
-  if (!always && !redrawing()) {
-    return;
-  }
-
   int state = get_real_state();
   int empty_line = (State & MODE_INSERT) == 0
                    && *ml_get_buf(curwin->w_buffer, curwin->w_cursor.lnum, false) == NUL;
 
   // Only draw when something changed.
   validate_virtcol_win(curwin);
-  if (always
+  if (force
       || curwin->w_cursor.lnum != curwin->w_stl_cursor.lnum
       || curwin->w_cursor.col != curwin->w_stl_cursor.col
       || curwin->w_virtcol != curwin->w_stl_virtcol
@@ -750,27 +746,19 @@ void show_cursor_info(bool always)
       || curwin->w_topfill != curwin->w_stl_topfill
       || empty_line != curwin->w_stl_empty
       || state != curwin->w_stl_state) {
-    win_check_ns_hl(curwin);
-    if ((*p_stl != NUL || *curwin->w_p_stl != NUL)
-        && (curwin->w_status_height || global_stl_height())) {
-      redraw_custom_statusline(curwin);
+    if ((curwin->w_status_height || global_stl_height())) {
+      curwin->w_redr_status = true;
     } else {
-      win_redr_ruler(curwin);
+      redraw_cmdline = true;
     }
+
     if (*p_wbr != NUL || *curwin->w_p_wbr != NUL) {
-      win_redr_winbar(curwin);
+      curwin->w_redr_status = true;
     }
 
-    if (need_maketitle
-        || (p_icon && (stl_syntax & STL_IN_ICON))
+    if ((p_icon && (stl_syntax & STL_IN_ICON))
         || (p_title && (stl_syntax & STL_IN_TITLE))) {
-      maketitle();
-    }
-
-    win_check_ns_hl(NULL);
-    // Redraw the tab pages line if needed.
-    if (redraw_tabline) {
-      draw_tabline();
+      need_maketitle = true;
     }
   }
 
@@ -2136,7 +2124,7 @@ void status_redraw_all(void)
   bool is_stl_global = global_stl_height() != 0;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if ((!is_stl_global && wp->w_status_height) || (is_stl_global && wp == curwin)
+    if ((!is_stl_global && wp->w_status_height) || wp == curwin
         || wp->w_winbar_height) {
       wp->w_redr_status = true;
       redraw_later(wp, UPD_VALID);
