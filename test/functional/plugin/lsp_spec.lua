@@ -3554,6 +3554,7 @@ describe('LSP', function()
         vim.cmd.normal('v')
         vim.api.nvim_win_set_cursor(0, { 2, 3 })
         vim.lsp.buf.format({ bufnr = bufnr, false })
+        vim.lsp.stop_client(client_id)
         return server.messages
       ]])
       eq("textDocument/rangeFormatting", result[3].method)
@@ -3562,6 +3563,52 @@ describe('LSP', function()
         ['end'] = { line = 1, character = 4 },
       }
       eq(expected_range, result[3].params.range)
+    end)
+    it('format formats range in visual line mode', function()
+      exec_lua(create_server_definition)
+      local result = exec_lua([[
+        local server = _create_server({ capabilities = {
+          documentFormattingProvider = true,
+          documentRangeFormattingProvider = true,
+        }})
+        local bufnr = vim.api.nvim_get_current_buf()
+        local client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+        vim.api.nvim_win_set_buf(0, bufnr)
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, {'foo', 'bar baz'})
+        vim.api.nvim_win_set_cursor(0, { 1, 2 })
+        vim.cmd.normal('V')
+        vim.api.nvim_win_set_cursor(0, { 2, 1 })
+        vim.lsp.buf.format({ bufnr = bufnr, false })
+
+        -- Format again with visual lines going from bottom to top
+        -- Must result in same formatting
+        vim.cmd.normal("<ESC>")
+        vim.api.nvim_win_set_cursor(0, { 2, 1 })
+        vim.cmd.normal('V')
+        vim.api.nvim_win_set_cursor(0, { 1, 2 })
+        vim.lsp.buf.format({ bufnr = bufnr, false })
+
+        vim.lsp.stop_client(client_id)
+        return server.messages
+      ]])
+      local expected_methods = {
+        "initialize",
+        "initialized",
+        "textDocument/rangeFormatting",
+        "$/cancelRequest",
+        "textDocument/rangeFormatting",
+        "$/cancelRequest",
+        "shutdown",
+        "exit",
+      }
+      eq(expected_methods, vim.tbl_map(function(x) return x.method end, result))
+      -- uses first column of start line and last column of end line
+      local expected_range = {
+        start = { line = 0, character = 0 },
+        ['end'] = { line = 1, character = 7 },
+      }
+      eq(expected_range, result[3].params.range)
+      eq(expected_range, result[5].params.range)
     end)
     it('Aborts with notify if no clients support requested method', function()
       exec_lua(create_server_definition)
