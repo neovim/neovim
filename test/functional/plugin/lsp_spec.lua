@@ -3579,16 +3579,36 @@ describe('LSP', function()
         vim.cmd.normal('V')
         vim.api.nvim_win_set_cursor(0, { 2, 1 })
         vim.lsp.buf.format({ bufnr = bufnr, false })
+
+        -- Format again with visual lines going from bottom to top
+        -- Must result in same formatting
+        vim.cmd.normal("<ESC>")
+        vim.api.nvim_win_set_cursor(0, { 2, 1 })
+        vim.cmd.normal('V')
+        vim.api.nvim_win_set_cursor(0, { 1, 2 })
+        vim.lsp.buf.format({ bufnr = bufnr, false })
+
         vim.lsp.stop_client(client_id)
         return server.messages
       ]])
-      eq("textDocument/rangeFormatting", result[3].method)
+      local expected_methods = {
+        "initialize",
+        "initialized",
+        "textDocument/rangeFormatting",
+        "$/cancelRequest",
+        "textDocument/rangeFormatting",
+        "$/cancelRequest",
+        "shutdown",
+        "exit",
+      }
+      eq(expected_methods, vim.tbl_map(function(x) return x.method end, result))
       -- uses first column of start line and last column of end line
       local expected_range = {
         start = { line = 0, character = 0 },
         ['end'] = { line = 1, character = 7 },
       }
       eq(expected_range, result[3].params.range)
+      eq(expected_range, result[5].params.range)
     end)
     it('Aborts with notify if no clients support requested method', function()
       exec_lua(create_server_definition)

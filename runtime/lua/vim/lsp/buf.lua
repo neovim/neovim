@@ -130,11 +130,6 @@ local function range_from_selection(mode)
   local start_col = start[3]
   local end_row = end_[2]
   local end_col = end_[3]
-  if mode == 'V' then
-    start_col = 1
-    local lines = api.nvim_buf_get_lines(0, end_row - 1, end_row, true)
-    end_col = #lines[1]
-  end
 
   -- A user can start visual selection at the end and move backwards
   -- Normalize the range to start < end
@@ -143,6 +138,11 @@ local function range_from_selection(mode)
   elseif end_row < start_row then
     start_row, end_row = end_row, start_row
     start_col, end_col = end_col, start_col
+  end
+  if mode == 'V' then
+    start_col = 1
+    local lines = api.nvim_buf_get_lines(0, end_row - 1, end_row, true)
+    end_col = #lines[1]
   end
   return {
     ['start'] = { start_row, start_col - 1 },
