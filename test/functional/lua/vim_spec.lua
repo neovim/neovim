@@ -2301,7 +2301,7 @@ describe('lua stdlib', function()
   end)
 
   describe('vim.func.on_fun', function()
-    it('reports info', function()
+    local function create_some_hooks()
       exec_lua [[
         function test2()
           _G._ui1 = vim.func.on_fun(vim.ui, 'select', function() end)
@@ -2324,23 +2324,27 @@ describe('lua stdlib', function()
         test1()
         test3()
       ]]
-      local function getinfo()
-        return exec_lua [[
-          local report = vim.func.on_fun()
-          return { maxdepth = report.maxdepth, total = report.total, rawcount = report.rawcount }
-        ]]
-      end
+    end
 
-      eq({ maxdepth = 6, total = 11, rawcount = 22 }, getinfo())
+    local function getinfo()
+      return exec_lua [[
+        local report = vim.func.on_fun()
+        return { maxdepth = report.maxdepth, total = report.total, }
+      ]]
+    end
+
+    it('reports info', function()
+      create_some_hooks()
+
+      eq({ maxdepth = 5, total = 11, }, getinfo())
 
       exec_lua('_G._handle3.unhook()')
       exec_lua('_G._handle3.unhook()')  -- no-op
-      -- Force eviction from the weaktable (see func.lua).
+      -- -- Force eviction from the weaktable (see func.lua).
       exec_lua('collectgarbage("collect")')
-      -- Only _one_ hook was removed, not any children!
-      eq({ maxdepth = 5, total = 11, rawcount = 22 }, getinfo())
+      -- -- Only _one_ hook was removed, not any children!
+      eq({ maxdepth = 2, total = 10, }, getinfo())
 
-      -- Remove all hooks after the first one (inclusive).
       exec_lua('_G._handle1.unhook()')
       exec_lua('_G._handle2.unhook()')
       exec_lua('_G._handle3.unhook()')
@@ -2353,25 +2357,27 @@ describe('lua stdlib', function()
       exec_lua('_G._ui1.unhook()')
       exec_lua('_G._ui2.unhook()')
 
-      exec_lua('_G._handle1 = nil')
-      exec_lua('_G._handle2 = nil')
-      exec_lua('_G._handle3 = nil')
-      exec_lua('_G._handle4 = nil')
-      exec_lua('_G._handle5 = nil')
-      exec_lua('_G._health1 = nil')
-      exec_lua('_G._health2 = nil')
-      exec_lua('_G._health3 = nil')
-      exec_lua('_G._health4 = nil')
-      exec_lua('_G._ui1 = nil')
-      exec_lua('_G._ui2 = nil')
-
-      -- exec_lua('_G._handle1.clear()')
       -- Force eviction from the weaktable (see func.lua).
       exec_lua('collectgarbage("collect")')
-      eq({ maxdepth = 3, total = 6, rawcount = 12 }, getinfo())
+      eq({ maxdepth = 0, total = 0,}, getinfo())
     end)
 
-    it('idempotency', function()
+    it('.clear()', function()
+      create_some_hooks()
+
+      eq({ maxdepth = 5, total = 11, }, getinfo())
+
+      -- Remove all hooks after the first one (inclusive).
+      exec_lua('_G._handle5.clear()')
+      exec_lua('_G._ui2.clear()')
+      exec_lua('_G._health4.clear()')
+
+      -- Force eviction from the weaktable (see func.lua).
+      exec_lua('collectgarbage("collect")')
+      eq({ maxdepth = 1, total = 2,}, getinfo())
+    end)
+
+    pending('idempotency (removed feature)', function()
       -- Skipped.
       eq(true, exec_lua([[
         local handle = vim.func.on_fun(vim, 'inspect', function() end)

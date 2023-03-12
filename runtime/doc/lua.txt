@@ -1435,71 +1435,6 @@ notify_once({msg}, {level}, {opts})                        *vim.notify_once()*
     Return: ~
         (boolean) true if message was displayed, else false
 
-on_fun({container}, {key}, {fn})                                *vim.on_fun()*
-    Sets function `container[key]` to a new (wrapper) function that calls
-    `fn()` before optionally calling the original ("base") function.
-
-    The result of `fn()` decides how the base function is invoked. Given `fn()` : >
-
-       function()
-         …
-         return [r1, […, rn]]
-       end
-<
-    • no result: invoke base function with the original args.
-    • r1=false: skip base function; wrapper returns `[…, rn]`.
-    • r1=true: invoke base function with args `[…, rn]`, or original args if
-      `[…, rn]` is empty.
-    • r1=function: like "r1=true", and invoke this "after" function after
-      invoking the base function. Result of "after function" decides the
-      return value(s) of the wrapped function.
-
-    Modification of container-like parameters by fn() affects the parameters
-    passed to the base function.
-
-    Example: increment a counter when vim.paste() is called. >
-
-     vim.on_fun(vim, 'paste', function()
-       counter = counter + 1
-     end)
-<
-
-    Example: to modify the config during an LSP request (like the old `vim.lsp.with()` function): >
-
-     vim.on_fun(vim.lsp.handlers, 'textDocument/definition', function(err, result, ctx, config)
-       return true, err, result, ctx, vim.tbl_deep_extend('force', config or {}, override_config)
-     end)
-<
-
-    Compared to this Lua idiom: >lua
-
-     vim.foo = (function(basefn)
-       return function(...)
-         -- do stuff...
-         basefn(...)
-       end
-     end)(vim.foo)
-<
-
-    the difference is that vim.on_fun:
-    • ✓ XXX ??? idempontent (safe to call redundantly with identical args,
-      will be ignored)
-    • ✓ supports :unhook()
-    • ✓ supports inspection (visiblity)
-    • ✗ does logging
-    • ✗ supports auto-removal tied to a container scope (via weaktables)
-    • ✗ supports buf/win/tab-local definitions
-    • ✗ supports namespaces
-
-    Parameters: ~
-      • {container}  (table)
-      • {key}        (string)
-      • {fn}         (function) If the first return value is `false`, the
-                     original function is skipped.
-
-    Return: ~
-        (table) obj with original function and :unwind()
-
 on_key({fn}, {ns_id})                                           *vim.on_key()*
     Adds Lua function {fn} with namespace id {ns_id} as a listener to every,
     yes every, input key.
@@ -2549,6 +2484,73 @@ parents({start})                                            *vim.fs.parents()*
 
     Return: ~
         (function) Iterator
+
+
+==============================================================================
+Lua module: func                                                    *lua-func*
+
+on_fun({container}, {key}, {fn})                           *vim.func.on_fun()*
+    Sets function `container[key]` to a new (wrapper) function that calls
+    `fn()` before optionally calling the original ("base") function.
+
+    The result of `fn()` decides how the base function is invoked. Given `fn()` : >lua
+      function()
+        …
+        return [r1, […, rn]]
+      end
+<
+
+    • no result: invoke base function with the original args.
+    • r1=false: skip base function; wrapper returns `[…, rn]`.
+    • r1=true: invoke base function with args `[…, rn]`, or original args if
+      `[…, rn]` is empty.
+    • r1=function: like "r1=true", and invoke this "after" function after
+      invoking the base function. Result of "after function" decides the
+      return value(s) of the wrapped function.
+
+    Modification of container-like parameters by fn() affects the parameters
+    passed to the base function.
+
+    Example: increment a counter when vim.paste() is called. >lua
+    vim.on_fun(vim, 'paste', function()
+      counter = counter + 1
+    end)
+<
+
+    Example: modify the config during an LSP request (compare the old `vim.lsp.with()` function): >lua
+    vim.on_fun(vim.lsp.handlers, 'textDocument/definition', function(err, result, ctx, config)
+      config.signs = true
+      config.virtual_text = false
+      return true, err, result, ctx, config
+    end)
+<
+
+    Compared to this Lua idiom: >lua
+    vim.foo = (function(basefn)
+      return function(...)
+        -- do stuff...
+        basefn(...)
+      end
+    end)(vim.foo)
+<
+
+    the difference is that vim.on_fun:
+    • ✓ supports .unhook()
+    • ✓ supports inspection (visiblity)
+    • ✗ does logging
+    • ✗ supports auto-removal tied to a container scope (via weaktables)
+    • ✗ supports buf/win/tab-local definitions
+    • ✗ supports namespaces
+    • ✗ idempontent (safe to call redundantly with identical args, will be
+      ignored)
+
+    Parameters: ~
+      • {container}  table
+      • {key}        string
+      • {fn}         function Hook handler
+
+    Return: ~
+        table with .unhook()
 
 
 ==============================================================================

@@ -380,12 +380,11 @@ function vim.tbl_add_reverse_lookup(o)
   return o
 end
 
---- Index into table `o` via string keys or number indices `...`.
+--- Gets a value from (nested) table `o` given by the sequence of keys `...`.
 ---
 --- Examples:
 --- <pre>lua
 ---  vim.tbl_get({ k1 = { k2 = true }}, 'k1', 'k2') == true
----  vim.tbl_get({ k1 = {}}, 'k1', 'k2') == nil
 ---  vim.tbl_get({ k1 = {}}, 'k1', 'k2') == nil
 --- </pre>
 ---

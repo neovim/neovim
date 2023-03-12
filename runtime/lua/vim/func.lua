@@ -1,19 +1,117 @@
 local M = {}
 
 table.pack = table.pack or function(...) return { n = select("#", ...), ... } end
--- function:wrapper map, where "function" itself may be a wrapper.
-local _fns = setmetatable({}, { __mode = 'kv' })  -- weaktable
+-- function_id:info map
+local _wrs = {}
+
+--- @private
+---
+--- For `on_fun()`. Returns info about all hooks, for use by :checkhealth.
+local function _on_fun_report()
+  local report = {
+    maxdepth = 0,
+    total = 0,
+  }
+  for _,info in pairs(_wrs) do
+    local depth = 0
+    local w = info.basefn
+    while w and depth < 9999 do
+      depth = depth + 1
+      w = _wrs[tostring(w)] and _wrs[tostring(w)].basefn or nil
+    end
+    local cid = tostring(info.container)
+    report[cid] = report[cid] or {}
+    local item = report[cid]
+    if not item[info.name] or depth > item[info.name].depth then
+      item[info.name] = {
+        last_set_by = info.last_set_by,
+        depth = depth,
+      }
+    end
+    report.total = report.total + 1
+    report.maxdepth = depth > report.maxdepth and depth or report.maxdepth
+  end
+  return report
+end
+
+--- @private
+---
+--- For `on_fun()`. Disposes (unhooks) an `on_fun()` wrapper.
+---
+--- This intentionally lives outside of on_fun to make it obvious what scope it closes over: must
+--- not hold references to `fn`, `container`, etc., so the weaktable works correctly.
+---
+--- @param wid string wrapper id
+local function _on_fun_return_handle(wid)
+  return {
+    --- @private
+    ---
+    --- @return boolean true if successfully disposed, false if already disposed
+    clear = function()
+      local info = _wrs[wid]
+      if not info then  -- Already disposed.
+        return false
+      end
+
+      while info do
+        _wrs[tostring(info.wrapper)] = nil
+        info.container[info.name] = info.basefn
+        info = _wrs[tostring(info.basefn)] or nil
+      end
+
+      -- if (depth < 9999) then
+      --   -- TODO: logging ...
+      -- end
+      -- TODO Clean up any dangling hooks.
+
+      return true
+    end,
+
+    --- @private
+    ---
+    --- Dispose/delete/remove a hook from the chain of hooks.
+    --- @return boolean true if successfully disposed, false if already disposed
+    unhook = function()
+      local info = _wrs[wid]
+      if not info then  -- Already disposed.
+        return false
+      end
+      -- O(n): find the child whose parent (basefn) is the one being disposed.
+      local child = vim.tbl_filter(function(w)
+          return w.basefn == _wrs[wid].wrapper and _wrs[wid].container == w.container
+        end, vim.tbl_values(_wrs))
+      if child[1] then
+        -- To delete (unhook) the hook we are disposing,
+        -- 1. Set its parent to the grandparent.
+        child[1].basefn = info.basefn
+        -- 2. Redefine it as a passthrough wrapper. Lets GC collect it.
+        info.container[info.name] = function(...)
+          info.basefn(...)
+          child[1].wrapper(...)
+        end
+      else  -- Disposing the "head" hook, so just point to its parent (basefn).
+        info.container[info.name] = info.basefn
+      end
+      _wrs[wid] = nil
+      return true
+    end,
+  }
+end
+
+local function foo()
+end
 
 --- Sets function `container[key]` to a new (wrapper) function that calls `fn()` before optionally
 --- calling the original ("base") function.
 ---
 --- The result of `fn()` decides how the base function is invoked. Given `fn()`:
---- <pre>
+--- <pre>lua
 ---   function()
 ---     …
 ---     return [r1, […, rn]]
 ---   end
 --- </pre>
+---
 ---   - no result: invoke base function with the original args.
 ---   - r1=false: skip base function; wrapper returns `[…, rn]`.
 ---   - r1=true: invoke base function with args `[…, rn]`, or original args if `[…, rn]` is empty.
@@ -24,16 +122,18 @@ local _fns = setmetatable({}, { __mode = 'kv' })  -- weaktable
 --- function.
 ---
 --- Example: increment a counter when vim.paste() is called.
---- <pre>
+--- <pre>lua
 --- vim.on_fun(vim, 'paste', function()
 ---   counter = counter + 1
 --- end)
 --- </pre>
 ---
---- Example: to modify the config during an LSP request (like the old `vim.lsp.with()` function):
---- <pre>
+--- Example: modify the config during an LSP request (compare the old `vim.lsp.with()` function):
+--- <pre>lua
 --- vim.on_fun(vim.lsp.handlers, 'textDocument/definition', function(err, result, ctx, config)
----   return true, err, result, ctx, vim.tbl_deep_extend('force', config or {}, override_config)
+---   config.signs = true
+---   config.virtual_text = false
+---   return true, err, result, ctx, config
 --- end)
 --- </pre>
 ---
@@ -48,99 +148,25 @@ local _fns = setmetatable({}, { __mode = 'kv' })  -- weaktable
 --- </pre>
 ---
 --- the difference is that vim.on_fun:
----   - ✓ XXX ??? idempontent (safe to call redundantly with identical args, will be ignored)
----   - ✓ supports :unhook()
+---   - ✓ supports .unhook()
 ---   - ✓ supports inspection (visiblity)
 ---   - ✗ does logging
 ---   - ✗ supports auto-removal tied to a container scope (via weaktables)
 ---   - ✗ supports buf/win/tab-local definitions
 ---   - ✗ supports namespaces
+---   - ✗ idempontent (safe to call redundantly with identical args, will be ignored)
 ---
----@param container table
----@param key string
----@param fn function Hook handler
----@return table with .unhook()
+--- @param container table
+--- @param key string
+--- @param fn function Hook handler
+--- @return table with .unhook()
 function M.on_fun(container, key, fn)
-  -- "Report mode": gather info from all wrapper functions.
   if container == nil and key == nil and fn == nil then
-    local report = {
-      maxdepth = 0,
-      total = 0,
-      rawcount = 0,
-    }
-    for k,v in pairs(_fns) do
-      report.rawcount = report.rawcount + 1
-      local info = v(_fns)
-      if info and k ~= v then
-        local depth = 1
-        local w = info.basefn
-        -- O(n^2): calculate depth.
-        while w and depth < 9999 do
-          depth = depth + 1
-          -- O(n): check if w is a wrapper function.
-          local iswrapper = #vim.tbl_filter(function(o) return w == o end,
-            vim.tbl_values(_fns)) > 0
-          w = iswrapper and w(_fns).basefn or nil
-        end
-        local cid = tostring(info.container)
-        report[cid] = report[cid] or {}
-        local item = report[cid]
-        if not item[info.name] or depth > item[info.name].depth then
-          item[info.name] = {
-            last_set_by = info.last_set_by,
-            depth = depth,
-          }
-        end
-        report.total = report.total + 1
-        report.maxdepth = report.maxdepth > depth and report.maxdepth or depth
-      end
-    end
-    return report
+    -- "Report mode": gather info from all wrapper functions.
+    return _on_fun_report()
   end
 
-  local basefn = container[key] or function() end  -- !Intentionally allow container.key to be nil?
-  local old_wrapper = _fns[fn]
-  local info = old_wrapper and old_wrapper(_fns) or setmetatable({
-    last_set_by = nil,
-    container = nil,
-    basefn = nil,
-    name = nil,
-  }, { __mode = 'v' })  -- weaktable
-
-  local function unhooker(wrapper_)
-    return {
-      clear = function()
-        container[key] = basefn
-      end,
-
-      unhook = function()
-        -- O(n): find the "child" whose parent (basefn) is the one being disposed.
-        local child = vim.tbl_filter(function(w)
-            local info = w(_fns)
-            return info and info.basefn == wrapper_ and container == info.container
-          end, vim.tbl_values(_fns))
-        if child[1] then
-          -- To delete (unhook) the current hook,
-          -- set the child's parent to its grandparent.
-          child[1](_fns).basefn = basefn
-        else
-          container[key] = basefn
-        end
-      end,
-    }
-  end
-
-  -- Skip redundant invocations.
-  -- XXX: Doesn't work if the same fn is overridden in multiple containers.
-  if basefn == fn or (key == info.name and info.container == container) then
-    local un = unhooker(old_wrapper)
-    un.skip = true
-    return un
-  end
-
-  info.name = key
-  info.container = container
-  info.basefn = basefn
+  local basefn = container[key] or function(...) end  -- !Intentionally allow container.key to be nil?
 
   local caller = nil
   for i=2,4 do
@@ -148,14 +174,16 @@ function M.on_fun(container, key, fn)
     if c == nil or c.name == nil then break end
     caller = caller and ('%s/%s'):format(caller, c.name) or c.name
   end
-  info.last_set_by = caller
+
+  local info = setmetatable({
+    basefn = basefn,
+    container = container,
+    last_set_by = caller,
+    name = key,
+    wrapper = nil,
+  }, { __mode = 'v' })  -- weaktable
 
   local wrapper = function(...)  -- New wrapper.
-    -- "Info" mode (use _fns as a sigil).
-    if ({...})[1] == _fns then
-      return info
-    end
-
     local r = table.pack(fn(...))
     -- Like pcall: r1 is "status", rest are args to basefn.
     local r1 = r[1]
@@ -178,11 +206,11 @@ function M.on_fun(container, key, fn)
   end
   container[key] = wrapper
 
-  -- housekeeping (weaktable)
-  _fns[fn] = wrapper
-  _fns[wrapper] = wrapper
+  -- bookkeeping (weaktable)
+  info.wrapper = wrapper
+  _wrs[tostring(wrapper)] = info
 
-  return unhooker(wrapper)
+  return _on_fun_return_handle(tostring(wrapper))
 end
 
 return M
