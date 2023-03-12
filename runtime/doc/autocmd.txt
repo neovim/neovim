@@ -704,7 +704,6 @@ InsertCharPre			When a character is typed in Insert mode,
 				inserted literally.
 
 				Cannot change the text. |textlock|
-				Not triggered when 'paste' is set.
 							*InsertEnter*
 InsertEnter			Just before starting Insert mode.  Also for
 				Replace mode and Virtual Replace mode.  The

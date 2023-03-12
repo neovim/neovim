@@ -1725,8 +1725,6 @@ Note that when 'textwidth' is 0, Vim does no automatic formatting anyway (but
 does insert comment leaders according to the 'comments' option).  An exception
 is when the 'a' flag is present. |auto-format|
 
-Note that when 'paste' is on, Vim does no formatting at all.
-
 Note that 'textwidth' can be non-zero even if Vim never performs auto-wrapping;
 'textwidth' is still useful for formatting with "gq".
 

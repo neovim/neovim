@@ -695,8 +695,7 @@ this (see |<>|).  Example: >
    :map  _ls  :!ls -l %:S<CR>:echo "the end"<CR>
 
 To avoid mapping of the characters you type in insert or Command-line mode,
-type a CTRL-V first.  The mapping in Insert mode is disabled if the 'paste'
-option is on.
+type a CTRL-V first.
 							*map-error*
 Note that when an error is encountered (that causes an error message or might
 cause a beep) the rest of the mapping is not executed.  This is Vi-compatible.
@@ -1069,8 +1068,6 @@ There are no default abbreviations.
 Abbreviations are never recursive.  You can use ":ab f f-o-o" without any
 problem.  But abbreviations can be mapped.  {some versions of Vi support
 recursive abbreviations, for no apparent reason}
-
-Abbreviations are disabled if the 'paste' option is on.
 
 				*:abbreviate-local* *:abbreviate-<buffer>*
 Just like mappings, abbreviations can be local to a buffer.  This is mostly
