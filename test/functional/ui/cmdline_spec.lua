@@ -1241,7 +1241,7 @@ describe('cmdheight=0', function()
       {1:~                        }|
     ## grid 3
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
     }}
 
     feed '/p'
@@ -1261,7 +1261,7 @@ describe('cmdheight=0', function()
     ## grid 3
       /p^                       |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
     }}
   end)
 

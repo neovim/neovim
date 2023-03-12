@@ -1222,6 +1222,7 @@ struct window_S {
   colnr_T w_valid_leftcol;          // last known w_leftcol
 
   bool w_viewport_invalid;
+  linenr_T w_viewport_last_topline;  // topline when the viewport was last updated
 
   // w_cline_height is the number of physical lines taken by the buffer line
   // that the cursor is on.  We use this to avoid extra calls to plines_win().

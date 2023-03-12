@@ -626,11 +626,15 @@ tabs.
 	When |ui-messages| is active, no message grid is used, and this event
 	will not be sent.
 
-["win_viewport", grid, win, topline, botline, curline, curcol] ~
+["win_viewport", grid, win, topline, botline, curline, curcol, line_count, scroll_delta] ~
 	Indicates the range of buffer text displayed in the window, as well
 	as the cursor position in the buffer. All positions are zero-based.
 	`botline` is set to one more than the line count of the buffer, if
-	there are filler lines past the end.
+	there are filler lines past the end. `scroll_delta` contains how much
+	the top line of a window moved since `win_viewport` was last emitted.
+	It is intended to be used to implement smooth scrolling. For this
+	purpose it only counts "virtual" or "displayed" lines, so folds
+	only count as one line.
 
 ["win_extmark", grid, win, ns_id, mark_id, row, col] ~
 	Updates the position of an extmark which is currently visible in a

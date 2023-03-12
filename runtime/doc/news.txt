@@ -223,6 +223,9 @@ The following changes to existing APIs or features add new behavior.
 
 • API calls now show more information about where an exception happened.
 
+• The `win_viewport` UI event now contains information about virtual lines,
+  meaning that smooth scrolling can now be implemented more consistenlty.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 

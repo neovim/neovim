@@ -52,7 +52,7 @@ describe('search highlighting', function()
       {1:~                                       }|
       /text^                                   |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 9, linecount = 2};
+      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 9, linecount = 2, sum_scroll_delta = 0};
     }}
   end)
 
@@ -616,7 +616,7 @@ describe('search highlighting', function()
       {1:~                                       }|
       {4:search hit BOTTOM, continuing at TOP}    |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 11, linecount = 2};
+      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 11, linecount = 2, sum_scroll_delta = 0};
     }}
 
     -- check highlights work also in folds

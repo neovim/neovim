@@ -993,10 +993,22 @@ void ui_ext_win_viewport(win_T *wp)
       // interact with incomplete final line? Diff filler lines?
       botline = wp->w_buffer->b_ml.ml_line_count;
     }
+    int scroll_delta = 0;
+    if (wp->w_viewport_last_topline > line_count) {
+      scroll_delta -= wp->w_viewport_last_topline - line_count;
+      wp->w_viewport_last_topline = line_count;
+    }
+    if (wp->w_topline < wp->w_viewport_last_topline) {
+      scroll_delta -= plines_m_win(wp, wp->w_topline, wp->w_viewport_last_topline - 1);
+    } else if (wp->w_topline > wp->w_viewport_last_topline
+               && wp->w_topline <= line_count) {
+      scroll_delta += plines_m_win(wp, wp->w_viewport_last_topline, wp->w_topline - 1);
+    }
     ui_call_win_viewport(wp->w_grid_alloc.handle, wp->handle, wp->w_topline - 1,
                          botline, wp->w_cursor.lnum - 1, wp->w_cursor.col,
-                         line_count);
+                         line_count, scroll_delta);
     wp->w_viewport_invalid = false;
+    wp->w_viewport_last_topline = wp->w_topline;
   }
 }
 
@@ -5038,6 +5050,7 @@ static win_T *win_alloc(win_T *after, bool hidden)
   new_wp->w_floating = 0;
   new_wp->w_float_config = FLOAT_CONFIG_INIT;
   new_wp->w_viewport_invalid = true;
+  new_wp->w_viewport_last_topline = 1;
 
   new_wp->w_ns_hl = -1;
 
