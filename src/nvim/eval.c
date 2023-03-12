@@ -6951,14 +6951,12 @@ int handle_subscript(const char **const arg, typval_T *rettv, int evaluate, int 
       tv_dict_unref(selfdict);
       selfdict = NULL;
     } else if (**arg == '-') {
-      if (ret == OK) {
-        if ((*arg)[2] == '{') {
-          // expr->{lambda}()
-          ret = eval_lambda((char **)arg, rettv, evaluate, verbose);
-        } else {
-          // expr->name()
-          ret = eval_method((char **)arg, rettv, evaluate, verbose);
-        }
+      if ((*arg)[2] == '{') {
+        // expr->{lambda}()
+        ret = eval_lambda((char **)arg, rettv, evaluate, verbose);
+      } else {
+        // expr->name()
+        ret = eval_method((char **)arg, rettv, evaluate, verbose);
       }
     } else {  // **arg == '[' || **arg == '.'
       tv_dict_unref(selfdict);
