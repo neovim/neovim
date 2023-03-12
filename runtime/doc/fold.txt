@@ -354,6 +354,7 @@ za		When on a closed fold: open it.  When folds are nested, you
 		the fold.  When a count is given that many folds will be
 		closed (that's not the same as repeating "za" that many
 		times).
+		In short: toggles fold under cursor.
 
 							*zA*
 zA		When on a closed fold: open it recursively.
