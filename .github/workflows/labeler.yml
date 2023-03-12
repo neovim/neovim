@@ -48,3 +48,15 @@ jobs:
           script: |
             const script = require('./.github/scripts/reviews.js')
             await script({github, context})
+
+  block-merge:
+    runs-on: ubuntu-latest
+    needs: ["triage", "type-scope"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: 'Request reviewers'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const script = require('./.github/scripts/block_merge.js')
+            await script({github, context})

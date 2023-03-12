@@ -1,0 +1,17 @@
+name: block-merge
+on:
+  pull_request:
+    types: [labeled, unlabeled, reopened]
+jobs:
+  block-merge:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v3
+      - name: 'Request reviewers'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const script = require('./.github/scripts/block_merge.js')
+            await script({github, context})
