@@ -512,8 +512,7 @@ void approximate_botline_win(win_T *wp)
 int cursor_valid(void)
 {
   check_cursor_moved(curwin);
-  return (curwin->w_valid & (VALID_WROW|VALID_WCOL)) ==
-         (VALID_WROW|VALID_WCOL);
+  return (curwin->w_valid & (VALID_WROW|VALID_WCOL)) == (VALID_WROW|VALID_WCOL);
 }
 
 // Validate cursor position.  Makes sure w_wrow and w_wcol are valid.
