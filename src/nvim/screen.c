@@ -608,7 +608,7 @@ int showmode(void)
 
   // If the last window has no status line and global statusline is disabled,
   // the ruler is after the mode message and must be redrawn
-  win_T *last = lastwin_nofloating();
+  win_T *last = curwin->w_floating ? curwin : lastwin_nofloating();
   if (redrawing() && last->w_status_height == 0 && global_stl_height() == 0) {
     win_redr_ruler(last);
   }

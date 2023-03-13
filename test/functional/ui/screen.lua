@@ -1351,7 +1351,7 @@ local function fmt_ext_state(name, state)
     for k,v in pairs(state) do
       str = (str.."  ["..k.."] = {win = {id = "..v.win.id.."}, topline = "
              ..v.topline..", botline = "..v.botline..", curline = "..v.curline
-             ..", curcol = "..v.curcol..", linecount = "..v.linecount..", scroll_delta = "..v.scroll_delta.."};\n")
+             ..", curcol = "..v.curcol..", linecount = "..v.linecount..", sum_scroll_delta = "..v.sum_scroll_delta.."};\n")
     end
     return str .. "}"
   elseif name == "float_pos" then
