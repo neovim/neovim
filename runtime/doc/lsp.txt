@@ -139,9 +139,10 @@ FAQ                                                     *lsp-faq*
      autocmd BufWritePre *.rs lua vim.lsp.buf.format({ async = false })
 <
 - Q: How can I disable LSP formatting when using the |gq| command?
-  A: First you could try using |gw| as an alternative to |gq| .
-  If that is not good enough for you, then you can use the following 
-  lua snippet to completely disable LSP formatting using |gq| :
+  A: To use the default internal formatting method and bypass the LSP client's
+  'formatexpr', use |gw| instead.
+  Alternatively you can completely disable LSP formatting with gq by
+  unsetting 'formatexpr':
 
 >lua
     vim.api.nvim_create_autocmd('LspAttach', {
