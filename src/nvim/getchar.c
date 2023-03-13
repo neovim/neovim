@@ -2083,13 +2083,6 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
               || (typebuf.tb_buf[typebuf.tb_off + 1] == KS_MODIFIER && typebuf.tb_len < 4))) {
         // Incomplete modifier sequence: cannot decide whether to simplify yet.
         keylen = KEYLEN_PART_KEY;
-      } else if (keylen == KEYLEN_PART_KEY && !*timedout) {
-        // If 'pastetoggle' matched partially, don't simplify.
-        // When the last characters were not typed, don't wait for a typed character to
-        // complete 'pastetoggle'.
-        if (typebuf.tb_len == typebuf.tb_maplen) {
-          keylen = 0;
-        }
       } else {
         // Try to include the modifier into the key.
         keylen = check_simplify_modifier(max_mlen + 1);
