@@ -9,7 +9,6 @@ local curbufmeths = helpers.curbufmeths
 local insert = helpers.insert
 local expect = helpers.expect
 local feed = helpers.feed
-local skip = helpers.skip
 
 do
   clear()
