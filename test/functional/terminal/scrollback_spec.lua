@@ -140,7 +140,6 @@ describe(':terminal scrollback', function()
 
 
     describe('and height decreased by 1', function()
-      if skip(is_os('win')) then return end
       local function will_hide_top_line()
         feed([[<C-\><C-N>]])
         screen:try_resize(screen._width - 2, screen._height - 1)
@@ -347,7 +346,6 @@ end)
 
 describe(':terminal prints more lines than the screen height and exits', function()
   it('will push extra lines to scrollback', function()
-    skip(is_os('win'))
     clear()
     local screen = Screen.new(30, 7)
     screen:attach({rgb=false})

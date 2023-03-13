@@ -7,7 +7,6 @@ local exec_lua = helpers.exec_lua
 local pcall_err = helpers.pcall_err
 local feed = helpers.feed
 local is_os = helpers.is_os
-local skip = helpers.skip
 
 before_each(clear)
 
@@ -741,7 +740,6 @@ int x = INT_MAX;
       end)
 
       it("should not inject bad languages", function()
-        skip(is_os('win'))
         exec_lua([=[
         vim.treesitter.add_directive("inject-bad!", function(match, _, _, pred, metadata)
           metadata.language = "{"

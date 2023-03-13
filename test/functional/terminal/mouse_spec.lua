@@ -68,7 +68,6 @@ describe(':terminal mouse', function()
     end)
 
     it('does not leave terminal mode on left-release', function()
-      skip(is_os('win'))
       feed('<LeftRelease>')
       eq('t', eval('mode(1)'))
     end)
@@ -232,7 +231,6 @@ describe(':terminal mouse', function()
     end)
 
     describe('with a split window and other buffer', function()
-      skip(is_os('win'))
       before_each(function()
         feed('<c-\\><c-n>:vsp<cr>')
         screen:expect([[
