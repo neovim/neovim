@@ -250,6 +250,10 @@ The following deprecated functions or APIs were removed.
 • |LanguageTree:parse()| no longer returns changed regions. Please use the
   `on_changedtree` callbacks instead.
 
+• `vim.highlight.create()`, `vim.highlight.link()` were removed, use |nvim_set_hl()| instead.
+
+• `require'health'` was removed. Use |vim.health| instead.
+
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*
 
