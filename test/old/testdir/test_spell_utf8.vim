@@ -624,7 +624,6 @@ endfunc
 
 " Test affix flags with two characters
 func Test_spell_affix()
-  CheckNotMSWindows  " FIXME: Why does this fail with MSVC?
   call LoadAffAndDic(g:test_data_aff5, g:test_data_dic5)
   call RunGoodBad("fooa1 fooa\u00E9 bar prebar barbork prebarbork  startprebar start end startend  startmiddleend nouend",
         \ "bad: foo fooa2 prabar probarbirk middle startmiddle middleend endstart startprobar startnouend",

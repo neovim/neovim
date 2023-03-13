@@ -12,7 +12,6 @@ func Compare2(a, b) abort
 endfunc
 
 func Test_sort_strings()
-  CheckNotMSWindows  " FIXME: Why does this fail with MSVC?
   " numbers compared as strings
   call assert_equal([1, 2, 3], sort([3, 2, 1]))
   call assert_equal([13, 28, 3], sort([3, 28, 13]))
