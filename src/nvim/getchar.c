@@ -2306,7 +2306,9 @@ void check_end_reg_executing(bool advance)
 static int vgetorpeek(bool advance)
 {
   int c;
-  bool timedout = false;  // waited for more than 'timeoutlen' for mapping to complete
+  bool timedout = false;  // waited for more than 'timeoutlen'
+                          // for mapping to complete or
+                          // 'ttimeoutlen' for complete key code
   int mapdepth = 0;  // check for recursive mapping
   bool mode_deleted = false;  // set when mode has been deleted
   int new_wcol, new_wrow;
@@ -2458,7 +2460,7 @@ static int vgetorpeek(bool advance)
             && ex_normal_busy == 0
             && typebuf.tb_maplen == 0
             && (State & MODE_INSERT)
-            && p_timeout
+            && (p_timeout || (keylen == KEYLEN_PART_KEY && p_ttimeout))
             && (c = inchar(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len, 3, 25L)) == 0) {
           if (mode_displayed) {
             unshowmode(true);
@@ -2647,9 +2649,11 @@ static int vgetorpeek(bool advance)
         long wait_time = 0;
 
         if (advance) {
-          if (typebuf.tb_len == 0 || !p_timeout) {
+          if (typebuf.tb_len == 0 || !(p_timeout || (p_ttimeout && keylen == KEYLEN_PART_KEY))) {
             // blocking wait
             wait_time = -1L;
+          } else if (keylen == KEYLEN_PART_KEY && p_ttm >= 0) {
+            wait_time = p_ttm;
           } else {
             wait_time = p_tm;
           }
