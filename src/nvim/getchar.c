@@ -2647,7 +2647,7 @@ static int vgetorpeek(bool advance)
         long wait_time = 0;
 
         if (advance) {
-          if (typebuf.tb_len == 0 || !p_timeout) {
+          if (typebuf.tb_len == 0 || !p_timeout || keylen == KEYLEN_PART_KEY) {
             // blocking wait
             wait_time = -1L;
           } else {
