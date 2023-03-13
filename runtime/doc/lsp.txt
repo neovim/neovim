@@ -1027,6 +1027,8 @@ code_action({options})                             *vim.lsp.buf.code_action()*
                      selection. Table must contain `start` and `end` keys with
                      {row, col} tuples using mark-like indexing. See
                      |api-indexing|
+                   • silent: (boolean|nil) when silent is true, if there is no
+                     available actions does not show notify.
 
     See also: ~
         https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
