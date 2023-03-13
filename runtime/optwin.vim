@@ -106,11 +106,7 @@ func <SID>Update(lnum, line, local, thiswin)
   else
     let name = substitute(a:line, '^ \tset \(no\)\=\([a-z]*\).*', '\2', "")
   endif
-  if name == "pt" && &pt =~ "\x80"
-    let val = <SID>PTvalue()
-  else
-    let val = escape(eval('&' . name), " \t\\\"|")
-  endif
+  let val = escape(eval('&' . name), " \t\\\"|")
   if a:local
     exe a:thiswin . "wincmd w"
   endif
@@ -211,14 +207,6 @@ func <SID>Header(text)
   let s:lnum = s:lnum + 1
 endfunc
 
-" Get the value of 'pastetoggle'.  It could be a special key.
-func <SID>PTvalue()
-  redir @a
-  silent set pt
-  redir END
-  return substitute(@a, '[^=]*=\(.*\)', '\1', "")
-endfunc
-
 " Restore the previous value of 'cpoptions' here, it's used below.
 let &cpo = s:cpo_save
 
@@ -232,12 +220,6 @@ call <SID>AddOption("cpoptions", gettext("list of flags to specify Vi compatibil
 call <SID>OptionG("cpo", &cpo)
 call <SID>AddOption("paste", gettext("paste mode, insert typed text literally"))
 call <SID>BinOptionG("paste", &paste)
-call <SID>AddOption("pastetoggle", gettext("key sequence to toggle paste mode"))
-if &pt =~ "\x80"
-  call append("$", " \tset pt=" . <SID>PTvalue())
-else
-  call <SID>OptionG("pt", &pt)
-endif
 call <SID>AddOption("runtimepath", gettext("list of directories used for runtime files and plugins"))
 call <SID>OptionG("rtp", &rtp)
 call <SID>AddOption("packpath", gettext("list of directories used for plugin packages"))

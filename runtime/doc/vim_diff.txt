@@ -623,6 +623,7 @@ Options:
   'highlight' (Names of builtin |highlight-groups| cannot be changed.)
   *'hkmap'* *'hk'* use `set keymap=hebrew` instead.
   *'hkmapp'* *'hkp'* use `set keymap=hebrewp` instead.
+  *'pastetoggle'* *'pt'*
 
   *'imactivatefunc'* *'imaf'*
   *'imactivatekey'* *'imak'*

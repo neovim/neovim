@@ -1,21 +1,4 @@
 
-" Test for 'pastetoggle'
-func Test_pastetoggle()
-  new
-  set pastetoggle=<F4>
-  set nopaste
-  call feedkeys("iHello\<F4>", 'xt')
-  call assert_true(&paste)
-  call feedkeys("i\<F4>", 'xt')
-  call assert_false(&paste)
-  call assert_equal('Hello', getline(1))
-  " command-line completion for 'pastetoggle' value
-  call feedkeys(":set pastetoggle=\<Tab>\<C-B>\"\<CR>", 'xt')
-  call assert_equal('"set pastetoggle=<F4>', @:)
-  set pastetoggle&
-  bwipe!
-endfunc
-
 " Test for restoring option values when 'paste' is disabled
 func Test_paste_opt_restore()
   set autoindent expandtab ruler showmatch

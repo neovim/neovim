@@ -49,6 +49,7 @@ endfunc
 
 " Test for getting the value of 'pastetoggle'
 func Test_pastetoggle()
+  throw "Skipped: 'pastetoggle' is removed from Nvim"
   " character with K_SPECIAL byte
   let &pastetoggle = '…'
   call assert_equal('…', &pastetoggle)

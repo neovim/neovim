@@ -2918,11 +2918,7 @@ getoption_T get_option_value(const char *name, long *numval, char **stringval, u
       return gov_hidden_string;
     }
     if (stringval != NULL) {
-      if ((char **)varp == &p_pt) {  // 'pastetoggle'
-        *stringval = str2special_save(*(char **)(varp), false, false);
-      } else {
-        *stringval = xstrdup(*(char **)(varp));
-      }
+      *stringval = xstrdup(*(char **)(varp));
     }
     return gov_string;
   }
@@ -3532,17 +3528,7 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char **valuep, uint64_
   char_u *part = NULL;
 
   if (*valuep != NULL) {
-    // Output 'pastetoggle' as key names.  For other
-    // options some characters have to be escaped with
-    // CTRL-V or backslash
-    if (valuep == &p_pt) {
-      char_u *s = (char_u *)(*valuep);
-      while (*s != NUL) {
-        if (put_escstr(fd, (char *)str2special((const char **)&s, false, false), 2) == FAIL) {
-          return FAIL;
-        }
-      }
-    } else if ((flags & P_EXPAND) != 0) {
+    if ((flags & P_EXPAND) != 0) {
       size_t size = (size_t)strlen(*valuep) + 1;
 
       // replace home directory in the whole option value into "buf"
@@ -4990,9 +4976,6 @@ static void option_value2string(vimoption_T *opp, int scope)
       NameBuff[0] = NUL;
     } else if (opp->flags & P_EXPAND) {
       home_replace(NULL, varp, NameBuff, MAXPATHL, false);
-      // Translate 'pastetoggle' into special key names.
-    } else if ((char **)opp->var == &p_pt) {
-      str2specialbuf((const char *)p_pt, NameBuff, MAXPATHL);
     } else {
       xstrlcpy(NameBuff, varp, MAXPATHL);
     }

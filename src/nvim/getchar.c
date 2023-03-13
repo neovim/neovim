@@ -2073,39 +2073,6 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
     }
   }
 
-  // Check for match with 'pastetoggle'
-  if (*p_pt != NUL && mp == NULL && (State & (MODE_INSERT | MODE_NORMAL))) {
-    bool match = typebuf_match_len((uint8_t *)p_pt, &mlen);
-    if (match) {
-      // write chars to script file(s)
-      if (mlen > typebuf.tb_maplen) {
-        gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
-                 (size_t)(mlen - typebuf.tb_maplen));
-      }
-
-      del_typebuf(mlen, 0);  // remove the chars
-      set_option_value_give_err("paste", !p_paste, NULL, 0);
-      if (!(State & MODE_INSERT)) {
-        msg_col = 0;
-        msg_row = Rows - 1;
-        msg_clr_eos();  // clear ruler
-      }
-      status_redraw_all();
-      redraw_statuslines();
-      showmode();
-      setcursor();
-      *keylenp = keylen;
-      return map_result_retry;
-    }
-    // Need more chars for partly match.
-    if (mlen == typebuf.tb_len) {
-      keylen = KEYLEN_PART_KEY;
-    } else if (max_mlen < mlen) {
-      // no match, may have to check for termcode at next character
-      max_mlen = mlen + 1;
-    }
-  }
-
   if ((mp == NULL || max_mlen > mp_match_len) && keylen != KEYLEN_PART_MAP) {
     // When no matching mapping found or found a non-matching mapping that
     // matches at least what the matching mapping matched:
@@ -2116,13 +2083,6 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
               || (typebuf.tb_buf[typebuf.tb_off + 1] == KS_MODIFIER && typebuf.tb_len < 4))) {
         // Incomplete modifier sequence: cannot decide whether to simplify yet.
         keylen = KEYLEN_PART_KEY;
-      } else if (keylen == KEYLEN_PART_KEY && !*timedout) {
-        // If 'pastetoggle' matched partially, don't simplify.
-        // When the last characters were not typed, don't wait for a typed character to
-        // complete 'pastetoggle'.
-        if (typebuf.tb_len == typebuf.tb_maplen) {
-          keylen = 0;
-        }
       } else {
         // Try to include the modifier into the key.
         keylen = check_simplify_modifier(max_mlen + 1);
@@ -2921,18 +2881,6 @@ int fix_input_buffer(uint8_t *buf, int len)
   }
   *p = NUL;  // add trailing NUL
   return len;
-}
-
-static bool typebuf_match_len(const uint8_t *str, int *mlen)
-{
-  int i;
-  for (i = 0; i < typebuf.tb_len && str[i]; i++) {
-    if (str[i] != typebuf.tb_buf[typebuf.tb_off + i]) {
-      break;
-    }
-  }
-  *mlen = i;
-  return str[i] == NUL;  // matched the whole string
 }
 
 /// Get command argument for <Cmd> key
