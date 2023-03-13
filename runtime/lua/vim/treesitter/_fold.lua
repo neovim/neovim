@@ -200,8 +200,9 @@ end
 local function on_bytes(bufnr, foldinfo, start_row, old_row, new_row)
   local end_row_old = start_row + old_row
   local end_row_new = start_row + new_row
+
   if new_row < old_row then
-    foldinfo:remove_range(end_row_old, end_row_new)
+    foldinfo:remove_range(end_row_new, end_row_old)
   elseif new_row > old_row then
     foldinfo:add_range(start_row, end_row_new)
     vim.schedule(function()
