@@ -10,7 +10,6 @@ local insert = helpers.insert
 local expect = helpers.expect
 local feed = helpers.feed
 local skip = helpers.skip
-local funcs = helpers.funcs
 
 do
   clear()
@@ -19,10 +18,6 @@ do
     pending(string.format("Missing perl host, or perl version is too old (%s)", reason), function() end)
     return
   end
-end
-
-if skip(funcs.executable('perl') == 0, 'missing "perl" command') then
-  return
 end
 
 before_each(function()
