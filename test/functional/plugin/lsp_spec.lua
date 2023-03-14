@@ -1714,6 +1714,9 @@ describe('LSP', function()
       end)
 
       it('fix the cursor col', function()
+        -- append empty last line. See #22636
+        exec_lua('vim.api.nvim_buf_set_lines(...)', 1, -1, -1, true, {''})
+
         funcs.nvim_win_set_cursor(0, { 2, 11 })
         local edits = {
           make_edit(1, 7, 1, 11, '')
@@ -1725,6 +1728,7 @@ describe('LSP', function()
           'Third line of text';
           'Fourth line of text';
           'å å ɧ 汉语 ↥ 🤦 🦄';
+          '';
         }, buf_lines(1))
         eq({ 2, 7 }, funcs.nvim_win_get_cursor(0))
       end)
