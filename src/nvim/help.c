@@ -10,6 +10,7 @@
 
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
+#include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/ex_cmds.h"
@@ -699,6 +700,8 @@ void fix_help_buffer(void)
         continue;
       }
 
+      int lnum_start = lnum;
+
       // Go through all directories in 'runtimepath', skipping
       // $VIMRUNTIME.
       char *p = p_rtp;
@@ -828,6 +831,11 @@ void fix_help_buffer(void)
           }
         }
         xfree(rt);
+      }
+      linenr_T appended = lnum - lnum_start;
+      if (appended) {
+        mark_adjust(lnum_start + 1, (linenr_T)MAXLNUM, appended, 0L, kExtmarkUndo);
+        changed_lines_buf(curbuf, lnum_start + 1, lnum_start + 1, appended);
       }
       break;
     }

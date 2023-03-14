@@ -169,8 +169,8 @@ DEVELOPING NVIM
 |dev-style|		Development style guidelines
 |debug.txt|		Debugging Vim itself
 
-						*standard-plugin-list*
 Standard plugins ~
+						*standard-plugin-list*
 |matchit.txt|		Extended |%| matching
 |pi_gzip.txt|		Reading and writing compressed files
 |pi_health.txt|		Healthcheck framework
@@ -181,7 +181,8 @@ Standard plugins ~
 |pi_tar.txt|		Tar file explorer
 |pi_zip.txt|		Zip archive explorer
 
-LOCAL ADDITIONS:				*local-additions*
+Local additions ~
+							*local-additions*
 
 ------------------------------------------------------------------------------
 *bars*		Bars example
