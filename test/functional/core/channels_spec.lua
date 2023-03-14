@@ -230,6 +230,7 @@ describe('channels', function()
   end)
 
   it('can use buffered output mode', function()
+    skip(funcs.executable('grep') == 0, 'missing "grep" command')
     source([[
       let g:job_opts = {
       \ 'on_stdout': function('OnEvent'),
@@ -262,6 +263,7 @@ describe('channels', function()
   end)
 
   it('can use buffered output mode with no stream callback', function()
+    skip(funcs.executable('grep') == 0, 'missing "grep" command')
     source([[
       function! OnEvent(id, data, event) dict
         call rpcnotify(1, a:event, a:id, a:data, self.stdout)

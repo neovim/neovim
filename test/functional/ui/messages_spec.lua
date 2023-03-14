@@ -16,6 +16,8 @@ local poke_eventloop = helpers.poke_eventloop
 local assert_alive = helpers.assert_alive
 local is_os = helpers.is_os
 local is_ci = helpers.is_ci
+local funcs = helpers.funcs
+local skip = helpers.skip
 
 describe('ui/ext_messages', function()
   local screen
@@ -1916,6 +1918,7 @@ aliquip ex ea commodo consequat.]])
   end)
 
   it('with :!cmd does not crash on resize', function()
+    skip(funcs.executable('sleep') == 0, 'missing "sleep" command')
     feed(':!sleep 1<cr>')
     screen:expect{grid=[[
                                          |

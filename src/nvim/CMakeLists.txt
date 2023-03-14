@@ -740,6 +740,7 @@ if(WIN32)
   set(EXTERNAL_BLOBS_SCRIPT
     "file(MAKE_DIRECTORY \"${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms\")")
   foreach(DEP_FILE IN ITEMS
+      cat.exe
       curl-ca-bundle.crt
       curl.exe
       diff.exe
