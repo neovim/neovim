@@ -54,7 +54,7 @@
 
 // Values for searchcount()
 #define SEARCH_STAT_DEF_TIMEOUT 40L
-#define SEARCH_STAT_DEF_MAX_COUNT 99
+#define SEARCH_STAT_DEF_MAX_COUNT 999
 #define SEARCH_STAT_BUF_LEN 12
 
 /// Maximum number of characters that can be fuzzy matched
