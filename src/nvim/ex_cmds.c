@@ -77,7 +77,6 @@
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
-#include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/spell.h"
 #include "nvim/strings.h"
@@ -2658,7 +2657,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
       msg_scroll = false;
     }
     if (!msg_scroll) {          // wait a bit when overwriting an error msg
-      check_for_delay(false);
+      msg_check_for_delay(false);
     }
     msg_start();
     msg_scroll = msg_scroll_save;

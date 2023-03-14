@@ -52,7 +52,6 @@
 #include "nvim/plines.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos.h"
-#include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
@@ -138,7 +137,7 @@ static void insert_enter(InsertState *s)
   did_restart_edit = restart_edit;
   // sleep before redrawing, needed for "CTRL-O :" that results in an
   // error message
-  check_for_delay(true);
+  msg_check_for_delay(true);
   // set Insstart_orig to Insstart
   update_Insstart_orig = true;
 

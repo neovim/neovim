@@ -55,7 +55,6 @@
 #include "nvim/path.h"
 #include "nvim/pos.h"
 #include "nvim/regexp.h"
-#include "nvim/screen.h"
 #include "nvim/sha256.h"
 #include "nvim/shada.h"
 #include "nvim/strings.h"
@@ -157,7 +156,7 @@ void filemess(buf_T *buf, char *name, char *s, int attr)
     msg_scroll = false;
   }
   if (!msg_scroll) {    // wait a bit when overwriting an error msg
-    check_for_delay(false);
+    msg_check_for_delay(false);
   }
   msg_start();
   msg_scroll = msg_scroll_save;

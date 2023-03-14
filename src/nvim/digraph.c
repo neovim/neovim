@@ -15,6 +15,7 @@
 #include "nvim/charset.h"
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
+#include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
@@ -2179,4 +2180,43 @@ static void keymap_unload(void)
   ga_clear(&curbuf->b_kmap_ga);
   curbuf->b_kmap_state &= ~KEYMAP_LOADED;
   status_redraw_curbuf();
+}
+
+/// Get the value to show for the language mappings, active 'keymap'.
+///
+/// @param fmt  format string containing one %s item
+/// @param buf  buffer for the result
+/// @param len  length of buffer
+bool get_keymap_str(win_T *wp, char *fmt, char *buf, int len)
+{
+  char *p;
+
+  if (wp->w_buffer->b_p_iminsert != B_IMODE_LMAP) {
+    return false;
+  }
+
+  buf_T *old_curbuf = curbuf;
+  win_T *old_curwin = curwin;
+  char *s;
+
+  curbuf = wp->w_buffer;
+  curwin = wp;
+  STRCPY(buf, "b:keymap_name");       // must be writable
+  emsg_skip++;
+  s = p = eval_to_string(buf, NULL, false);
+  emsg_skip--;
+  curbuf = old_curbuf;
+  curwin = old_curwin;
+  if (p == NULL || *p == NUL) {
+    if (wp->w_buffer->b_kmap_state & KEYMAP_LOADED) {
+      p = wp->w_buffer->b_p_keymap;
+    } else {
+      p = "lang";
+    }
+  }
+  if (vim_snprintf(buf, (size_t)len, fmt, p) > len - 1) {
+    buf[0] = NUL;
+  }
+  xfree(s);
+  return buf[0] != NUL;
 }

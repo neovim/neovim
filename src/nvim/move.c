@@ -41,7 +41,6 @@
 #include "nvim/plines.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos.h"
-#include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/types.h"
@@ -102,18 +101,6 @@ static void comp_botline(win_T *wp)
   set_empty_rows(wp, done);
 
   win_check_anchored_floats(wp);
-}
-
-/// Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set.
-/// Also when concealing is on and 'concealcursor' is not active.
-void redraw_for_cursorline(win_T *wp)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if ((wp->w_valid & VALID_CROW) == 0 && !pum_visible()
-      && (wp->w_p_rnu || win_cursorline_standout(wp))) {
-    // win_line() will redraw the number column and cursorline only.
-    redraw_later(wp, UPD_VALID);
-  }
 }
 
 /// Redraw when w_virtcol changes and 'cursorcolumn' is set or 'cursorlineopt'

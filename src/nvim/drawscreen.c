@@ -66,11 +66,14 @@
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
+#include "nvim/cursor.h"
 #include "nvim/decoration.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/diff.h"
+#include "nvim/digraph.h"
 #include "nvim/drawline.h"
 #include "nvim/drawscreen.h"
+#include "nvim/eval.h"
 #include "nvim/ex_getln.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/fold.h"
@@ -91,7 +94,7 @@
 #include "nvim/pos.h"
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
-#include "nvim/screen.h"
+#include "nvim/search.h"
 #include "nvim/state.h"
 #include "nvim/statusline.h"
 #include "nvim/syntax.h"
@@ -203,7 +206,7 @@ bool default_grid_alloc(void)
 
 void screenclear(void)
 {
-  check_for_delay(false);
+  msg_check_for_delay(false);
 
   if (starting == NO_SCREEN || default_grid.chars == NULL) {
     return;
@@ -375,6 +378,32 @@ void screen_resize(int width, int height)
   resizing_screen = false;
 }
 
+/// Check if the new Nvim application "screen" dimensions are valid.
+/// Correct it if it's too small or way too big.
+void check_screensize(void)
+{
+  // Limit Rows and Columns to avoid an overflow in Rows * Columns.
+  if (Rows < min_rows()) {
+    // need room for one window and command line
+    Rows = min_rows();
+  } else if (Rows > 1000) {
+    Rows = 1000;
+  }
+
+  if (Columns < MIN_COLUMNS) {
+    Columns = MIN_COLUMNS;
+  } else if (Columns > 10000) {
+    Columns = 10000;
+  }
+}
+
+/// Return true if redrawing should currently be done.
+bool redrawing(void)
+{
+  return !RedrawingDisabled
+         && !(p_lz && char_avail() && !KeyTyped && !do_redraw);
+}
+
 /// Redraw the parts of the screen that is marked for redraw.
 ///
 /// Most code shouldn't call this directly, rather use redraw_later() and
@@ -521,7 +550,7 @@ int update_screen(void)
   }
 
   if (clear_cmdline) {          // going to clear cmdline (done below)
-    check_for_delay(false);
+    msg_check_for_delay(false);
   }
 
   // Force redraw when width of 'number' or 'relativenumber' column
@@ -637,6 +666,30 @@ int update_screen(void)
   return OK;
 }
 
+/// Prepare for 'hlsearch' highlighting.
+void start_search_hl(void)
+{
+  if (!p_hls || no_hlsearch) {
+    return;
+  }
+
+  end_search_hl();  // just in case it wasn't called before
+  last_pat_prog(&screen_search_hl.rm);
+  // Set the time limit to 'redrawtime'.
+  screen_search_hl.tm = profile_setlimit(p_rdt);
+}
+
+/// Clean up for 'hlsearch' highlighting.
+void end_search_hl(void)
+{
+  if (screen_search_hl.rm.regprog == NULL) {
+    return;
+  }
+
+  vim_regfree(screen_search_hl.rm.regprog);
+  screen_search_hl.rm.regprog = NULL;
+}
+
 static void win_border_redr_title(win_T *wp, ScreenGrid *grid, int col)
 {
   VirtText title_chunks = wp->w_float_config.title_chunks;
@@ -725,6 +778,35 @@ static void win_redr_border(win_T *wp)
   }
 }
 
+/// Set cursor to its position in the current window.
+void setcursor(void)
+{
+  setcursor_mayforce(false);
+}
+
+/// Set cursor to its position in the current window.
+/// @param force  when true, also when not redrawing.
+void setcursor_mayforce(bool force)
+{
+  if (force || redrawing()) {
+    validate_cursor();
+
+    ScreenGrid *grid = &curwin->w_grid;
+    int row = curwin->w_wrow;
+    int col = curwin->w_wcol;
+    if (curwin->w_p_rl) {
+      // With 'rightleft' set and the cursor on a double-wide character,
+      // position it on the leftmost column.
+      col = curwin->w_width_inner - curwin->w_wcol
+            - ((utf_ptr2cells(get_cursor_pos_ptr()) == 2
+                && vim_isprintc(gchar_cursor())) ? 2 : 1);
+    }
+
+    grid_adjust(&grid, &row, &col);
+    ui_grid_cursor_goto(grid->handle, row, col);
+  }
+}
+
 /// Show current cursor info in ruler and various other places
 ///
 /// @param always  if false, only show ruler if position has changed.
@@ -771,6 +853,306 @@ void show_cursor_info_later(bool force)
   curwin->w_stl_state = state;
 }
 
+/// @return true when postponing displaying the mode message: when not redrawing
+/// or inside a mapping.
+bool skip_showmode(void)
+{
+  // Call char_avail() only when we are going to show something, because it
+  // takes a bit of time.  redrawing() may also call char_avail().
+  if (global_busy || msg_silent != 0 || !redrawing() || (char_avail() && !KeyTyped)) {
+    redraw_mode = true;  // show mode later
+    return true;
+  }
+  return false;
+}
+
+/// Show the current mode and ruler.
+///
+/// If clear_cmdline is true, clear the rest of the cmdline.
+/// If clear_cmdline is false there may be a message there that needs to be
+/// cleared only if a mode is shown.
+/// If redraw_mode is true show or clear the mode.
+/// @return the length of the message (0 if no message).
+int showmode(void)
+{
+  int length = 0;
+
+  if (ui_has(kUIMessages) && clear_cmdline) {
+    msg_ext_clear(true);
+  }
+
+  // don't make non-flushed message part of the showmode
+  msg_ext_ui_flush();
+
+  msg_grid_validate();
+
+  int do_mode = ((p_smd && msg_silent == 0)
+                 && ((State & MODE_TERMINAL)
+                     || (State & MODE_INSERT)
+                     || restart_edit != NUL
+                     || VIsual_active));
+  if (do_mode || reg_recording != 0) {
+    int sub_attr;
+    if (skip_showmode()) {
+      return 0;  // show mode later
+    }
+
+    bool nwr_save = need_wait_return;
+
+    // wait a bit before overwriting an important message
+    msg_check_for_delay(false);
+
+    // if the cmdline is more than one line high, erase top lines
+    bool need_clear = clear_cmdline;
+    if (clear_cmdline && cmdline_row < Rows - 1) {
+      msg_clr_cmdline();  // will reset clear_cmdline
+    }
+
+    // Position on the last line in the window, column 0
+    msg_pos_mode();
+    int attr = HL_ATTR(HLF_CM);                     // Highlight mode
+
+    // When the screen is too narrow to show the entire mode message,
+    // avoid scrolling and truncate instead.
+    msg_no_more = true;
+    int save_lines_left = lines_left;
+    lines_left = 0;
+
+    if (do_mode) {
+      msg_puts_attr("--", attr);
+      // CTRL-X in Insert mode
+      if (edit_submode != NULL && !shortmess(SHM_COMPLETIONMENU)) {
+        // These messages can get long, avoid a wrap in a narrow window.
+        // Prefer showing edit_submode_extra. With external messages there
+        // is no imposed limit.
+        if (ui_has(kUIMessages)) {
+          length = INT_MAX;
+        } else {
+          length = (Rows - msg_row) * Columns - 3;
+        }
+        if (edit_submode_extra != NULL) {
+          length -= vim_strsize(edit_submode_extra);
+        }
+        if (length > 0) {
+          if (edit_submode_pre != NULL) {
+            length -= vim_strsize(edit_submode_pre);
+          }
+          if (length - vim_strsize(edit_submode) > 0) {
+            if (edit_submode_pre != NULL) {
+              msg_puts_attr((const char *)edit_submode_pre, attr);
+            }
+            msg_puts_attr((const char *)edit_submode, attr);
+          }
+          if (edit_submode_extra != NULL) {
+            msg_puts_attr(" ", attr);  // Add a space in between.
+            if ((int)edit_submode_highl < HLF_COUNT) {
+              sub_attr = win_hl_attr(curwin, (int)edit_submode_highl);
+            } else {
+              sub_attr = attr;
+            }
+            msg_puts_attr((const char *)edit_submode_extra, sub_attr);
+          }
+        }
+      } else {
+        if (State & MODE_TERMINAL) {
+          msg_puts_attr(_(" TERMINAL"), attr);
+        } else if (State & VREPLACE_FLAG) {
+          msg_puts_attr(_(" VREPLACE"), attr);
+        } else if (State & REPLACE_FLAG) {
+          msg_puts_attr(_(" REPLACE"), attr);
+        } else if (State & MODE_INSERT) {
+          if (p_ri) {
+            msg_puts_attr(_(" REVERSE"), attr);
+          }
+          msg_puts_attr(_(" INSERT"), attr);
+        } else if (restart_edit == 'I' || restart_edit == 'i'
+                   || restart_edit == 'a' || restart_edit == 'A') {
+          if (curbuf->terminal) {
+            msg_puts_attr(_(" (terminal)"), attr);
+          } else {
+            msg_puts_attr(_(" (insert)"), attr);
+          }
+        } else if (restart_edit == 'R') {
+          msg_puts_attr(_(" (replace)"), attr);
+        } else if (restart_edit == 'V') {
+          msg_puts_attr(_(" (vreplace)"), attr);
+        }
+        if (State & MODE_LANGMAP) {
+          if (curwin->w_p_arab) {
+            msg_puts_attr(_(" Arabic"), attr);
+          } else if (get_keymap_str(curwin, " (%s)",
+                                    NameBuff, MAXPATHL)) {
+            msg_puts_attr(NameBuff, attr);
+          }
+        }
+        if ((State & MODE_INSERT) && p_paste) {
+          msg_puts_attr(_(" (paste)"), attr);
+        }
+
+        if (VIsual_active) {
+          char *p;
+
+          // Don't concatenate separate words to avoid translation
+          // problems.
+          switch ((VIsual_select ? 4 : 0)
+                  + (VIsual_mode == Ctrl_V) * 2
+                  + (VIsual_mode == 'V')) {
+          case 0:
+            p = N_(" VISUAL"); break;
+          case 1:
+            p = N_(" VISUAL LINE"); break;
+          case 2:
+            p = N_(" VISUAL BLOCK"); break;
+          case 4:
+            p = N_(" SELECT"); break;
+          case 5:
+            p = N_(" SELECT LINE"); break;
+          default:
+            p = N_(" SELECT BLOCK"); break;
+          }
+          msg_puts_attr(_(p), attr);
+        }
+        msg_puts_attr(" --", attr);
+      }
+
+      need_clear = true;
+    }
+    if (reg_recording != 0
+        && edit_submode == NULL             // otherwise it gets too long
+        ) {
+      recording_mode(attr);
+      need_clear = true;
+    }
+
+    mode_displayed = true;
+    if (need_clear || clear_cmdline || redraw_mode) {
+      msg_clr_eos();
+    }
+    msg_didout = false;                 // overwrite this message
+    length = msg_col;
+    msg_col = 0;
+    msg_no_more = false;
+    lines_left = save_lines_left;
+    need_wait_return = nwr_save;        // never ask for hit-return for this
+  } else if (clear_cmdline && msg_silent == 0) {
+    // Clear the whole command line.  Will reset "clear_cmdline".
+    msg_clr_cmdline();
+  } else if (redraw_mode) {
+    msg_pos_mode();
+    msg_clr_eos();
+  }
+
+  // NB: also handles clearing the showmode if it was empty or disabled
+  msg_ext_flush_showmode();
+
+  // In Visual mode the size of the selected area must be redrawn.
+  if (VIsual_active) {
+    clear_showcmd();
+  }
+
+  // If the last window has no status line and global statusline is disabled,
+  // the ruler is after the mode message and must be redrawn
+  win_T *last = curwin->w_floating ? curwin : lastwin_nofloating();
+  if (redrawing() && last->w_status_height == 0 && global_stl_height() == 0) {
+    win_redr_ruler(last);
+  }
+
+  redraw_cmdline = false;
+  redraw_mode = false;
+  clear_cmdline = false;
+
+  return length;
+}
+
+/// Position for a mode message.
+static void msg_pos_mode(void)
+{
+  msg_col = 0;
+  msg_row = Rows - 1;
+}
+
+/// Delete mode message.  Used when ESC is typed which is expected to end
+/// Insert mode (but Insert mode didn't end yet!).
+/// Caller should check "mode_displayed".
+void unshowmode(bool force)
+{
+  // Don't delete it right now, when not redrawing or inside a mapping.
+  if (!redrawing() || (!force && char_avail() && !KeyTyped)) {
+    redraw_cmdline = true;  // delete mode later
+  } else {
+    clearmode();
+  }
+}
+
+// Clear the mode message.
+void clearmode(void)
+{
+  const int save_msg_row = msg_row;
+  const int save_msg_col = msg_col;
+
+  msg_ext_ui_flush();
+  msg_pos_mode();
+  if (reg_recording != 0) {
+    recording_mode(HL_ATTR(HLF_CM));
+  }
+  msg_clr_eos();
+  msg_ext_flush_showmode();
+
+  msg_col = save_msg_col;
+  msg_row = save_msg_row;
+}
+
+static void recording_mode(int attr)
+{
+  msg_puts_attr(_("recording"), attr);
+  if (shortmess(SHM_RECORDING)) {
+    return;
+  }
+
+  char s[4];
+  snprintf(s, ARRAY_SIZE(s), " @%c", reg_recording);
+  msg_puts_attr(s, attr);
+}
+
+#define COL_RULER 17        // columns needed by standard ruler
+
+/// Compute columns for ruler and shown command. 'sc_col' is also used to
+/// decide what the maximum length of a message on the status line can be.
+/// If there is a status line for the last window, 'sc_col' is independent
+/// of 'ru_col'.
+void comp_col(void)
+{
+  int last_has_status = (p_ls > 1 || (p_ls == 1 && !ONE_WINDOW));
+
+  sc_col = 0;
+  ru_col = 0;
+  if (p_ru) {
+    ru_col = (ru_wid ? ru_wid : COL_RULER) + 1;
+    // no last status line, adjust sc_col
+    if (!last_has_status) {
+      sc_col = ru_col;
+    }
+  }
+  if (p_sc) {
+    sc_col += SHOWCMD_COLS;
+    if (!p_ru || last_has_status) {         // no need for separating space
+      sc_col++;
+    }
+  }
+  assert(sc_col >= 0
+         && INT_MIN + sc_col <= Columns);
+  sc_col = Columns - sc_col;
+  assert(ru_col >= 0
+         && INT_MIN + ru_col <= Columns);
+  ru_col = Columns - ru_col;
+  if (sc_col <= 0) {            // screen too narrow, will become a mess
+    sc_col = 1;
+  }
+  if (ru_col <= 0) {
+    ru_col = 1;
+  }
+  set_vim_var_nr(VV_ECHOSPACE, sc_col - 1);
+}
 static void redraw_win_signcol(win_T *wp)
 {
   // If we can compute a change in the automatic sizing of the sign column
@@ -862,8 +1244,8 @@ static void draw_vsep_win(win_T *wp)
   }
 
   // draw the vertical separator right of this window
-  int hl;
-  int c = fillchar_vsep(wp, &hl);
+  int hl = win_hl_attr(wp, HLF_C);
+  int c = wp->w_p_fcs_chars.vert;
   grid_fill(&default_grid, wp->w_winrow, W_ENDROW(wp),
             W_ENDCOL(wp), W_ENDCOL(wp) + 1, c, ' ', hl);
 }
@@ -876,8 +1258,8 @@ static void draw_hsep_win(win_T *wp)
   }
 
   // draw the horizontal separator below this window
-  int hl;
-  int c = fillchar_hsep(wp, &hl);
+  int hl = win_hl_attr(wp, HLF_C);
+  int c = wp->w_p_fcs_chars.horiz;
   grid_fill(&default_grid, W_ENDROW(wp), W_ENDROW(wp) + 1,
             wp->w_wincol, W_ENDCOL(wp), c, c, hl);
 }
@@ -2021,6 +2403,152 @@ static void win_update(win_T *wp, DecorProviders *providers)
   }
 }
 
+/// Scroll `line_count` lines at 'row' in window 'wp'.
+///
+/// Positive `line_count` means scrolling down, so that more space is available
+/// at 'row'. Negative `line_count` implies deleting lines at `row`.
+void win_scroll_lines(win_T *wp, int row, int line_count)
+{
+  if (!redrawing() || line_count == 0) {
+    return;
+  }
+
+  // No lines are being moved, just draw over the entire area
+  if (row + abs(line_count) >= wp->w_grid.rows) {
+    return;
+  }
+
+  if (line_count < 0) {
+    grid_del_lines(&wp->w_grid, row, -line_count,
+                   wp->w_grid.rows, 0, wp->w_grid.cols);
+  } else {
+    grid_ins_lines(&wp->w_grid, row, line_count,
+                   wp->w_grid.rows, 0, wp->w_grid.cols);
+  }
+}
+
+/// Call grid_fill() with columns adjusted for 'rightleft' if needed.
+/// Return the new offset.
+static int win_fill_end(win_T *wp, int c1, int c2, int off, int width, int row, int endrow,
+                        int attr)
+{
+  int nn = off + width;
+  const int endcol = wp->w_grid.cols;
+
+  if (nn > endcol) {
+    nn = endcol;
+  }
+
+  if (wp->w_p_rl) {
+    grid_fill(&wp->w_grid, row, endrow, endcol - nn, endcol - off, c1, c2, attr);
+  } else {
+    grid_fill(&wp->w_grid, row, endrow, off, nn, c1, c2, attr);
+  }
+
+  return nn;
+}
+
+/// Clear lines near the end of the window and mark the unused lines with "c1".
+/// Use "c2" as filler character.
+/// When "draw_margin" is true, then draw the sign/fold/number columns.
+void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row, int endrow, hlf_T hl)
+{
+  assert(hl >= 0 && hl < HLF_COUNT);
+  int n = 0;
+
+  if (draw_margin) {
+    // draw the fold column
+    int fdc = compute_foldcolumn(wp, 0);
+    if (fdc > 0) {
+      n = win_fill_end(wp, ' ', ' ', n, fdc, row, endrow,
+                       win_hl_attr(wp, HLF_FC));
+    }
+    // draw the sign column
+    int count = wp->w_scwidth;
+    if (count > 0) {
+      n = win_fill_end(wp, ' ', ' ', n, win_signcol_width(wp) * count, row,
+                       endrow, win_hl_attr(wp, HLF_SC));
+    }
+    // draw the number column
+    if ((wp->w_p_nu || wp->w_p_rnu) && vim_strchr(p_cpo, CPO_NUMCOL) == NULL) {
+      n = win_fill_end(wp, ' ', ' ', n, number_width(wp) + 1, row, endrow,
+                       win_hl_attr(wp, HLF_N));
+    }
+  }
+
+  int attr = hl_combine_attr(win_bg_attr(wp), win_hl_attr(wp, (int)hl));
+
+  const int endcol = wp->w_grid.cols;
+  if (wp->w_p_rl) {
+    grid_fill(&wp->w_grid, row, endrow, 0, endcol - 1 - n, c2, c2, attr);
+    grid_fill(&wp->w_grid, row, endrow, endcol - 1 - n, endcol - n, c1, c2, attr);
+  } else {
+    grid_fill(&wp->w_grid, row, endrow, n, endcol, c1, c2, attr);
+  }
+}
+
+/// Compute the width of the foldcolumn.  Based on 'foldcolumn' and how much
+/// space is available for window "wp", minus "col".
+int compute_foldcolumn(win_T *wp, int col)
+{
+  int fdc = win_fdccol_count(wp);
+  int wmw = wp == curwin && p_wmw == 0 ? 1 : (int)p_wmw;
+  int wwidth = wp->w_grid.cols;
+
+  if (fdc > wwidth - (col + wmw)) {
+    fdc = wwidth - (col + wmw);
+  }
+  return fdc;
+}
+
+/// Return the width of the 'number' and 'relativenumber' column.
+/// Caller may need to check if 'number' or 'relativenumber' is set.
+/// Otherwise it depends on 'numberwidth' and the line count.
+int number_width(win_T *wp)
+{
+  linenr_T lnum;
+
+  if (wp->w_p_rnu && !wp->w_p_nu) {
+    // cursor line shows "0"
+    lnum = wp->w_height_inner;
+  } else {
+    // cursor line shows absolute line number
+    lnum = wp->w_buffer->b_ml.ml_line_count;
+  }
+
+  if (lnum == wp->w_nrwidth_line_count) {
+    return wp->w_nrwidth_width;
+  }
+  wp->w_nrwidth_line_count = lnum;
+
+  // reset for 'statuscolumn'
+  if (*wp->w_p_stc != NUL) {
+    wp->w_nrwidth_width = (wp->w_p_nu || wp->w_p_rnu) * (int)wp->w_p_nuw;
+    return wp->w_nrwidth_width;
+  }
+
+  int n = 0;
+  do {
+    lnum /= 10;
+    n++;
+  } while (lnum > 0);
+
+  // 'numberwidth' gives the minimal width plus one
+  if (n < wp->w_p_nuw - 1) {
+    n = (int)wp->w_p_nuw - 1;
+  }
+
+  // If 'signcolumn' is set to 'number' and there is a sign to display, then
+  // the minimal width for the number column is 2.
+  if (n < 2 && (wp->w_buffer->b_signlist != NULL)
+      && (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u')) {
+    n = 2;
+  }
+
+  wp->w_nrwidth_width = n;
+  return n;
+}
+
 /// Redraw a window later, with wp->w_redr_type >= type.
 ///
 /// Set must_redraw only if not already set to a higher value.
@@ -2206,6 +2734,51 @@ void redrawWinline(win_T *wp, linenr_T lnum)
     if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < lnum) {
       wp->w_redraw_bot = lnum;
     }
+    redraw_later(wp, UPD_VALID);
+  }
+}
+
+/// Return true if the cursor line in window "wp" may be concealed, according
+/// to the 'concealcursor' option.
+bool conceal_cursor_line(const win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int c;
+
+  if (*wp->w_p_cocu == NUL) {
+    return false;
+  }
+  if (get_real_state() & MODE_VISUAL) {
+    c = 'v';
+  } else if (State & MODE_INSERT) {
+    c = 'i';
+  } else if (State & MODE_NORMAL) {
+    c = 'n';
+  } else if (State & MODE_CMDLINE) {
+    c = 'c';
+  } else {
+    return false;
+  }
+  return vim_strchr(wp->w_p_cocu, c) != NULL;
+}
+
+/// Whether cursorline is drawn in a special way
+///
+/// If true, both old and new cursorline will need to be redrawn when moving cursor within windows.
+bool win_cursorline_standout(const win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
+}
+
+/// Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set.
+/// Also when concealing is on and 'concealcursor' is not active.
+void redraw_for_cursorline(win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if ((wp->w_valid & VALID_CROW) == 0 && !pum_visible()
+      && (wp->w_p_rnu || win_cursorline_standout(wp))) {
+    // win_line() will redraw the number column and cursorline only.
     redraw_later(wp, UPD_VALID);
   }
 }

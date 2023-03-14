@@ -660,6 +660,17 @@ size_t transchar_hex(char *const buf, const int c)
   return i;
 }
 
+/// Mirror text "str" for right-left displaying.
+/// Only works for single-byte characters (e.g., numbers).
+void rl_mirror_ascii(char *str)
+{
+  for (char *p1 = str, *p2 = str + strlen(str) - 1; p1 < p2; p1++, p2--) {
+    char t = *p1;
+    *p1 = *p2;
+    *p2 = t;
+  }
+}
+
 /// Convert the lower 4 bits of byte "c" to its hex character
 ///
 /// Lower case letters are used to avoid the confusion of <F1> being 0xf1 or
