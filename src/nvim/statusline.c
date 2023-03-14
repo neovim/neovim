@@ -15,6 +15,7 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
+#include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
@@ -36,7 +37,6 @@
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/pos.h"
-#include "nvim/screen.h"
 #include "nvim/sign.h"
 #include "nvim/statusline.h"
 #include "nvim/strings.h"
@@ -180,11 +180,44 @@ void win_redr_status(win_T *wp)
     if (stl_connected(wp)) {
       fillchar = fillchar_status(&attr, wp);
     } else {
-      fillchar = fillchar_vsep(wp, &attr);
+      attr = win_hl_attr(wp, HLF_C);
+      fillchar = wp->w_p_fcs_chars.vert;
     }
     grid_putchar(&default_grid, fillchar, W_ENDROW(wp), W_ENDCOL(wp), attr);
   }
   busy = false;
+}
+
+void get_trans_bufname(buf_T *buf)
+{
+  if (buf_spname(buf) != NULL) {
+    xstrlcpy(NameBuff, buf_spname(buf), MAXPATHL);
+  } else {
+    home_replace(buf, buf->b_fname, NameBuff, MAXPATHL, true);
+  }
+  trans_characters(NameBuff, MAXPATHL);
+}
+
+/// Only call if (wp->w_vsep_width != 0).
+///
+/// @return  true if the status line of window "wp" is connected to the status
+/// line of the window right of it.  If not, then it's a vertical separator.
+bool stl_connected(win_T *wp)
+{
+  frame_T *fr = wp->w_frame;
+  while (fr->fr_parent != NULL) {
+    if (fr->fr_parent->fr_layout == FR_COL) {
+      if (fr->fr_next != NULL) {
+        break;
+      }
+    } else {
+      if (fr->fr_next != NULL) {
+        return true;
+      }
+    }
+    fr = fr->fr_parent;
+  }
+  return false;
 }
 
 /// Clear status line, window bar or tab page line click definition table

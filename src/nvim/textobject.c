@@ -25,7 +25,6 @@
 #include "nvim/normal.h"
 #include "nvim/option_defs.h"
 #include "nvim/pos.h"
-#include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/textobject.h"

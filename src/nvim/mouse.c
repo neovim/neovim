@@ -35,7 +35,6 @@
 #include "nvim/option.h"
 #include "nvim/plines.h"
 #include "nvim/pos.h"
-#include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/state.h"
 #include "nvim/statusline.h"

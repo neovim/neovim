@@ -49,7 +49,6 @@
 #include "nvim/pos.h"
 #include "nvim/regexp.h"
 #include "nvim/runtime.h"
-#include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
@@ -1338,6 +1337,14 @@ void set_keep_msg(char *s, int attr)
   }
   keep_msg_more = false;
   keep_msg_attr = attr;
+}
+
+/// Return true if printing messages should currently be done.
+bool messaging(void)
+{
+  // TODO(bfredl): with general support for "async" messages with p_ch,
+  // this should be re-enabled.
+  return !(p_lz && char_avail() && !KeyTyped) && (p_ch > 0 || ui_has(kUIMessages));
 }
 
 void msgmore(long n)
@@ -3806,4 +3813,22 @@ int vim_dialog_yesnoallcancel(int type, char *title, char *message, int dflt)
     return VIM_DISCARDALL;
   }
   return VIM_CANCEL;
+}
+
+/// Check if there should be a delay to allow the user to see a message.
+///
+/// Used before clearing or redrawing the screen or the command line.
+void msg_check_for_delay(bool check_msg_scroll)
+{
+  if ((emsg_on_display || (check_msg_scroll && msg_scroll))
+      && !did_wait_return
+      && emsg_silent == 0
+      && !in_assert_fails) {
+    ui_flush();
+    os_delay(1006L, true);
+    emsg_on_display = false;
+    if (check_msg_scroll) {
+      msg_scroll = false;
+    }
+  }
 }

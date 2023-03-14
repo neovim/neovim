@@ -39,7 +39,6 @@
 #include "nvim/os/os_defs.h"
 #include "nvim/pos.h"
 #include "nvim/profile.h"
-#include "nvim/screen.h"
 #include "nvim/spell.h"
 #include "nvim/spellfile.h"
 #include "nvim/spellsuggest.h"
@@ -569,7 +568,7 @@ void spell_suggest(int count)
       }
       vim_snprintf(IObuff, IOSIZE, "%2d", i + 1);
       if (cmdmsg_rl) {
-        rl_mirror(IObuff);
+        rl_mirror_ascii(IObuff);
       }
       msg_puts((const char *)IObuff);
 
@@ -595,7 +594,7 @@ void spell_suggest(int count)
         }
         if (cmdmsg_rl) {
           // Mirror the numbers, but keep the leading space.
-          rl_mirror(IObuff + 1);
+          rl_mirror_ascii(IObuff + 1);
         }
         msg_advance(30);
         msg_puts((const char *)IObuff);

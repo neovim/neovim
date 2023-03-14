@@ -34,7 +34,6 @@
 #include "nvim/option.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos.h"
-#include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"

@@ -24,7 +24,6 @@
 #include "nvim/main.h"
 #include "nvim/option.h"
 #include "nvim/os/input.h"
-#include "nvim/screen.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/types.h"
