@@ -304,12 +304,6 @@ disable signs for diagnostics: >lua
     config.signs = false,  -- Disable signs
   end)
 <
-To enable signs, use vim.on_fun() to override the default handler: >lua
-
-  vim.on_fun(vim.lsp.handlers, 'textDocument/publishDiagnostics', function(err, result, ctx, config)
-    config.signs = true,  -- Enable signs.
-  end)
-<
 To configure handlers per-server you can use the {handlers} key of
 |vim.lsp.start()|: >lua
 
@@ -1304,25 +1298,21 @@ on_publish_diagnostics({_}, {result}, {ctx}, {config})
     |lsp-handler| for the method "textDocument/publishDiagnostics"
 
     See |vim.diagnostic.config()| for configuration options. Handler-specific
-    configuration can be set using |vim.lsp.with()|: >lua
+    configuration can be set using |vim.func.on_fun()|: >lua
 
-     vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
-       vim.lsp.diagnostic.on_publish_diagnostics, {
-         -- Enable underline, use default values
-         underline = true,
-         -- Enable virtual text, override spacing to 4
-         virtual_text = {
-           spacing = 4,
-         },
-         -- Use a function to dynamically turn signs off
-         -- and on, using buffer local variables
-         signs = function(namespace, bufnr)
-           return vim.b[bufnr].show_signs == true
-         end,
-         -- Disable a feature
-         update_in_insert = false,
-       }
-     )
+         vim.func.on_fun(vim.lsp.handlers, 'textDocument/publishDiagnostics', function(fn, args)
+           -- Enable underline, use default values
+           args.config.underline = true
+           -- Enable virtual text, override spacing to 4
+           args.config.virtual_text = { spacing = 4 }
+           -- Dynamically turn signs on/off via buffer-local variables.
+           args.config.signs = function(namespace, bufnr)
+             return vim.b[bufnr].show_signs == true
+           end
+           -- Disable a feature.
+           args.config.update_in_insert = false
+           return vim.lsp.diagnostic.on_publish_diagnostics(unpack(args))
+         end)
 <
 
     Parameters: ~
@@ -1476,14 +1466,13 @@ Lua module: vim.lsp.handlers                                    *lsp-handlers*
 hover({_}, {result}, {ctx}, {config})               *vim.lsp.handlers.hover()*
     |lsp-handler| for the method "textDocument/hover" >lua
 
-       vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
-         vim.lsp.handlers.hover, {
-           -- Use a sharp border with `FloatBorder` highlights
-           border = "single",
-           -- add the title in hover float window
-           title = "hover"
-         }
-       )
+       vim.func.on_fun(vim.lsp.handlers, 'textDocument/hover', function(fn, args)
+         -- Use a sharp border with `FloatBorder` highlights.
+         args.config.border = "single"
+         -- Add the title in hover float window.
+         args.config.title = "hover"
+         return vim.lsp.handlers.hover(unpack(args))
+       end)
 <
 
     Parameters: ~
@@ -1497,12 +1486,11 @@ signature_help({_}, {result}, {ctx}, {config})
     |lsp-handler| for the method "textDocument/signatureHelp". The active
     parameter is highlighted with |hl-LspSignatureActiveParameter|. >lua
 
-       vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
-         vim.lsp.handlers.signature_help, {
-           -- Use a sharp border with `FloatBorder` highlights
-           border = "single"
-         }
-       )
+       vim.func.on_fun(vim.lsp.handlers, 'textDocument/signatureHelp', function(fn, args)
+         -- Use a sharp border with `FloatBorder` highlights.
+         args.config.border = "single"
+         return vim.lsp.handlers.signature_help(unpack(args))
+       end)
 <
 
     Parameters: ~

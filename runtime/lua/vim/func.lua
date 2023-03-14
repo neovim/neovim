@@ -1,8 +1,14 @@
+--- Nvim "functional" and "iterable" stdlib.
+---
+--- TODO(justinmk):
+---   - vim.fu.merge()
+---   - deprecate vim.tbl_xx
+
 local M = {}
 
 table.pack = table.pack or function(...) return { n = select("#", ...), ... } end
--- function_id:info map
-local _wrs = {}
+-- Map of wrappers id:info.
+local _wrs = {}  ---@type table<string,table<string,any>>
 
 --- @private
 ---
@@ -36,138 +42,159 @@ end
 
 --- @private
 ---
---- For `on_fun()`. Disposes (unhooks) an `on_fun()` wrapper.
+--- For `on_fun()`. Disposes (unhooks) a function created by `on_fun()`.
 ---
 --- This intentionally lives outside of on_fun to make it obvious what scope it closes over: must
---- not hold references to `fn`, `container`, etc., so the weaktable works correctly.
+--- not hold references to `fn`, `container`, etc., so GC works.
 ---
---- @param wid string wrapper id
+--- @param wid string wrapper function id
 local function _on_fun_return_handle(wid)
+  local unhook = function()
+    local info = _wrs[wid]
+    if not info then  -- Already disposed.
+      return nil
+    end
+
+    -- O(n): find the child whose parent (basefn) is the one being disposed.
+    local child = vim.tbl_filter(function(w)
+        return w.basefn == _wrs[wid].wrapper and _wrs[wid].container == w.container
+      end, vim.tbl_values(_wrs))
+
+    _wrs[wid] = nil
+
+    if not child[1] then
+      -- Direction: UP
+      -- Deleting the "head" hook, update head to its parent (basefn).
+      info.container[info.name] = info.basefn
+      -- Return a handle to the replacement hook.
+      return _on_fun_return_handle(tostring(info.basefn))
+    else
+      -- Direction: DOWN
+      -- To delete the hook without breaking the "chain", set its parent to the grandparent.
+      child[1].basefn = info.basefn
+      -- Return a handle to the child.
+      return _on_fun_return_handle(tostring(child[1].wrapper))
+    end
+  end
+
   return {
     --- @private
     ---
-    --- @return boolean true if successfully disposed, false if already disposed
+    --- Clears all descendant hooks.
     clear = function()
-      local info = _wrs[wid]
-      if not info then  -- Already disposed.
+      local r = unhook()
+      if not r then
+        -- Nothing to do. No more hooks in the chain.
         return false
       end
-
-      while info do
-        _wrs[tostring(info.wrapper)] = nil
-        info.container[info.name] = info.basefn
-        info = _wrs[tostring(info.basefn)] or nil
+      while r do
+        r = r.unhook()
       end
-
+      return true
       -- if (depth < 9999) then
       --   -- TODO: logging ...
       -- end
       -- TODO Clean up any dangling hooks.
-
-      return true
     end,
 
     --- @private
     ---
-    --- Dispose/delete/remove a hook from the chain of hooks.
-    --- @return boolean true if successfully disposed, false if already disposed
-    unhook = function()
-      local info = _wrs[wid]
-      if not info then  -- Already disposed.
-        return false
-      end
-      -- O(n): find the child whose parent (basefn) is the one being disposed.
-      local child = vim.tbl_filter(function(w)
-          return w.basefn == _wrs[wid].wrapper and _wrs[wid].container == w.container
-        end, vim.tbl_values(_wrs))
-      if child[1] then
-        -- To delete (unhook) the hook we are disposing,
-        -- 1. Set its parent to the grandparent.
-        child[1].basefn = info.basefn
-        -- 2. Redefine it as a passthrough wrapper. Lets GC collect it.
-        info.container[info.name] = function(...)
-          info.basefn(...)
-          child[1].wrapper(...)
-        end
-      else  -- Disposing the "head" hook, so just point to its parent (basefn).
-        info.container[info.name] = info.basefn
-      end
-      _wrs[wid] = nil
-      return true
-    end,
+    --- Disposes/deletes/removes a hook from the chain of hooks, and returns a handle to the child
+    --- hook (if any) or else the parent hook, or nil if the chain is empty.
+    ---
+    --- This bi-directional behavior means that calling handle.unhook().unhook().… until `nil` is
+    --- returned, removes all hooks in the chain.
+    ---
+    --- @return table|nil handle with { .unhook() } to the next hook if successfully disposed, or
+    --- nil if already disposed or 
+    unhook = unhook,
   }
 end
 
-local function foo()
-end
+local function _ignore() end
 
---- Sets function `container[key]` to a new (wrapper) function that calls `fn()` before optionally
---- calling the original ("base") function.
+--- Sets function `container[key]` to a new "wrapper" function `function(fn, args)`, where `fn` is
+--- the original ("base") function and `args` contains the packed args.
 ---
---- The result of `fn()` decides how the base function is invoked. Given `fn()`:
---- <pre>lua
----   function()
----     …
----     return [r1, […, rn]]
----   end
---- </pre>
+--- Returns an object with `.unhook()` which can be used to "unhook" the function (remove it from
+--- the chain of `container[key]` hooks):
+---     <pre>lua
+---     local h = vim.func.on_fun(vim, 'print', function(fn, args)
+---       fn(('%s hooked'):format(args[1]))
+---     end)
+---     vim.print('x')  -- => "x hooked"
+---     h.unhook()
+---     vim.print('x')  -- => "x"
+---     </pre>
 ---
----   - no result: invoke base function with the original args.
----   - r1=false: skip base function; wrapper returns `[…, rn]`.
----   - r1=true: invoke base function with args `[…, rn]`, or original args if `[…, rn]` is empty.
----   - r1=function: like "r1=true", and invoke this "after" function after invoking the base
----     function. Result of "after function" decides the return value(s) of the wrapped function.
+--- Examples:
+---     <pre>lua
+---     -- Do something BEFORE the original function:
+---     vim.on_fun(vim, 'paste', function(fn, args)
+---       vim.print('before')
+---       return fn(unpack(args))
+---     end)
 ---
---- Modification of container-like parameters by fn() affects the parameters passed to the base
---- function.
+---     -- Do something AFTER the original function:
+---     vim.on_fun(vim, 'paste', function(fn, args)
+---       local r = pack(fn(unpack(args)))
+---       vim.print('after')
+---       return unpack(r)
+---     end)
 ---
---- Example: increment a counter when vim.paste() is called.
---- <pre>lua
---- vim.on_fun(vim, 'paste', function()
----   counter = counter + 1
---- end)
---- </pre>
----
---- Example: modify the config during an LSP request (compare the old `vim.lsp.with()` function):
---- <pre>lua
---- vim.on_fun(vim.lsp.handlers, 'textDocument/definition', function(err, result, ctx, config)
----   config.signs = true
----   config.virtual_text = false
----   return true, err, result, ctx, config
---- end)
---- </pre>
+---     -- Modify the config of an LSP request (like the old "vim.lsp.with()"):
+---     vim.on_fun(vim.lsp.handlers, 'textDocument/definition', function(fn, args)
+---       args.config.signs = true
+---       args.config.virtual_text = false
+---       return fn(unpack(args))
+---     end)
+---     </pre>
 ---
 --- Compared to this Lua idiom:
---- <pre>lua
---- vim.foo = (function(basefn)
----   return function(...)
----     -- do stuff...
----     basefn(...)
----   end
---- end)(vim.foo)
---- </pre>
+---     <pre>lua
+---     vim.foo = (function(fn)
+---       return function(...)
+---         vim.print('before')
+---         fn(...)
+---       end
+---     end)(vim.foo)
+---     </pre>
 ---
---- the difference is that vim.on_fun:
----   - ✓ supports .unhook()
----   - ✓ supports inspection (visiblity)
----   - ✗ does logging
----   - ✗ supports auto-removal tied to a container scope (via weaktables)
----   - ✗ supports buf/win/tab-local definitions
----   - ✗ supports namespaces
----   - ✗ idempontent (safe to call redundantly with identical args, will be ignored)
+--- on_fun() has these differences:
+--- - ✓ supports .unhook()
+--- - ✓ supports inspection (visiblity)
+--- - ✗ does logging
+--- - ✗ supports auto-removal tied to a container scope (via weaktables)
+--- - ✗ supports buf/win/tab-local definitions
+--- - ✗ supports namespaces
+--- - ✗ idempontent (safe to call redundantly with identical args, will be ignored)
 ---
 --- @param container table
---- @param key string
---- @param fn function Hook handler
---- @return table with .unhook()
+--- @param key string Function field on `container`
+--- @param fn function Function that hooks into `container[key]`
+--- @return table handle provides `.unhook()`
 function M.on_fun(container, key, fn)
   if container == nil and key == nil and fn == nil then
     -- "Report mode": gather info from all wrapper functions.
     return _on_fun_report()
   end
 
-  local basefn = container[key] or function(...) end  -- !Intentionally allow container.key to be nil?
+  local basefn = container[key] or nil
+  -- TODO(justinmk): Allow container.key to be nil?
+  assert(basefn)
 
+  local wid = {}
+  local wrapper = function(...)
+    -- TODO(justinmk): logging/tracing
+    local args = table.pack(...)
+    return fn(_wrs[wid[1]].basefn, args)
+  end
+  container[key] = wrapper
+  -- Tricky: Let the function gets its own id, instead of referencing `basefn` directly.
+  -- So GC works after .unhook().
+  wid[1] = tostring(wrapper)
+
+  -- Get caller, for debugging/inspection.
   local caller = nil
   for i=2,4 do
     local c = debug.getinfo(i, 'n')
@@ -175,40 +202,14 @@ function M.on_fun(container, key, fn)
     caller = caller and ('%s/%s'):format(caller, c.name) or c.name
   end
 
-  local info = setmetatable({
+  -- bookkeeping
+  _wrs[tostring(wrapper)] = { -- setmetatable({
     basefn = basefn,
     container = container,
     last_set_by = caller,
     name = key,
-    wrapper = nil,
-  }, { __mode = 'v' })  -- weaktable
-
-  local wrapper = function(...)  -- New wrapper.
-    local r = table.pack(fn(...))
-    -- Like pcall: r1 is "status", rest are args to basefn.
-    local r1 = r[1]
-    if r.n == 0 then  -- Invoke base function with the original args.
-      return basefn(...)
-    elseif r1 == false then  -- Skip base function.
-      return unpack(r, 2, r.n)
-    elseif r1 == true then  -- Invoke base function with args returned by fn().
-      return basefn(unpack(r, 2, r.n))
-    elseif type(r1) == 'function' then  -- "after" function.
-      local rbase = table.pack(basefn(unpack(r, 2, r.n)))
-      local r2 = table.pack(r1(...))
-      if r2[1] == false then  -- "after" fn returned false, thus it controls the rv of the wrapper.
-        return unpack(r2, 2, r2.n)
-      end
-      return unpack(rbase)
-    else
-      vim.validate{ fn = { fn, function() return false end, 'function() returning true[,…] false[,…] or nothing' } }
-    end
-  end
-  container[key] = wrapper
-
-  -- bookkeeping (weaktable)
-  info.wrapper = wrapper
-  _wrs[tostring(wrapper)] = info
+    wrapper = wrapper,
+  } --, { __mode = 'v' })  -- weaktable
 
   return _on_fun_return_handle(tostring(wrapper))
 end

@@ -1863,12 +1863,11 @@ tbl_flatten({t})                                           *vim.tbl_flatten()*
       • From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 
 tbl_get({o}, {...})                                            *vim.tbl_get()*
-    Index into table `o` via string keys or number indices `...`.
+    Gets a value from (nested) table `o` given by the sequence of keys `...`.
 
     Examples: >lua
 
       vim.tbl_get({ k1 = { k2 = true }}, 'k1', 'k2') == true
-      vim.tbl_get({ k1 = {}}, 'k1', 'k2') == nil
       vim.tbl_get({ k1 = {}}, 'k1', 'k2') == nil
 <
 
@@ -2490,51 +2489,54 @@ parents({start})                                            *vim.fs.parents()*
 Lua module: func                                                    *lua-func*
 
 on_fun({container}, {key}, {fn})                           *vim.func.on_fun()*
-    Sets function `container[key]` to a new (wrapper) function that calls
-    `fn()` before optionally calling the original ("base") function.
+    Sets function `container[key]` to a new "wrapper" function `function(fn,
+    args)`, where `fn` is the original ("base") function and `args` contains
+    the packed args.
 
-    The result of `fn()` decides how the base function is invoked. Given `fn()` : >lua
-      function()
-        …
-        return [r1, […, rn]]
-      end
+    Returns an object with `.unhook()` which can be used to "unhook" the function (remove it from the chain of `container[key]` hooks): >lua
+
+        local h = vim.func.on_fun(vim, 'print', function(fn, args)
+          fn(('s hooked'):format(args[1]))
+        end)
+        vim.print('x')  -- => "x hooked"
+        h.unhook()
+        vim.print('x')  -- => "x"
 <
 
-    • no result: invoke base function with the original args.
-    • r1=false: skip base function; wrapper returns `[…, rn]`.
-    • r1=true: invoke base function with args `[…, rn]`, or original args if
-      `[…, rn]` is empty.
-    • r1=function: like "r1=true", and invoke this "after" function after
-      invoking the base function. Result of "after function" decides the
-      return value(s) of the wrapped function.
+    Examples: >lua
 
-    Modification of container-like parameters by fn() affects the parameters
-    passed to the base function.
+        -- Do something BEFORE the original function:
+        vim.on_fun(vim, 'paste', function(fn, args)
+          vim.print('before')
+          return fn(unpack(args))
+        end)
 
-    Example: increment a counter when vim.paste() is called. >lua
-    vim.on_fun(vim, 'paste', function()
-      counter = counter + 1
-    end)
-<
+        -- Do something AFTER the original function:
+        vim.on_fun(vim, 'paste', function(fn, args)
+          local r = pack(fn(unpack(args)))
+          vim.print('after')
+          return unpack(r)
+        end)
 
-    Example: modify the config during an LSP request (compare the old `vim.lsp.with()` function): >lua
-    vim.on_fun(vim.lsp.handlers, 'textDocument/definition', function(err, result, ctx, config)
-      config.signs = true
-      config.virtual_text = false
-      return true, err, result, ctx, config
-    end)
+        -- Modify the config of an LSP request (like the old "vim.lsp.with()"):
+        vim.on_fun(vim.lsp.handlers, 'textDocument/definition', function(fn, args)
+          args.config.signs = true
+          args.config.virtual_text = false
+          return fn(unpack(args))
+        end)
 <
 
     Compared to this Lua idiom: >lua
-    vim.foo = (function(basefn)
-      return function(...)
-        -- do stuff...
-        basefn(...)
-      end
-    end)(vim.foo)
+
+        vim.foo = (function(fn)
+          return function(...)
+            vim.print('before')
+            fn(...)
+          end
+        end)(vim.foo)
 <
 
-    the difference is that vim.on_fun:
+    on_fun() has these differences:
     • ✓ supports .unhook()
     • ✓ supports inspection (visiblity)
     • ✗ does logging
@@ -2546,11 +2548,11 @@ on_fun({container}, {key}, {fn})                           *vim.func.on_fun()*
 
     Parameters: ~
       • {container}  table
-      • {key}        string
-      • {fn}         function Hook handler
+      • {key}        string Function field on `container`
+      • {fn}         function Function that hooks into `container[key]`
 
     Return: ~
-        table with .unhook()
+        table handle provides `.unhook()`
 
 
 ==============================================================================
