@@ -743,6 +743,20 @@ local function bufwinid(bufnr)
   end
 end
 
+--- Get list of buffers for a directory
+---@private
+local function get_dir_bufs(path)
+  path = path:gsub('([^%w])', '%%%1')
+  local buffers = {}
+  for _, v in ipairs(vim.api.nvim_list_bufs()) do
+    local bufname = vim.api.nvim_buf_get_name(v):gsub('buffer://', '')
+    if bufname:find(path) then
+      table.insert(buffers, v)
+    end
+  end
+  return buffers
+end
+
 --- Rename old_fname to new_fname
 ---
 ---@param opts (table)
@@ -755,12 +769,22 @@ function M.rename(old_fname, new_fname, opts)
     vim.notify('Rename target already exists. Skipping rename.')
     return
   end
-  local oldbuf = vim.fn.bufadd(old_fname)
-  vim.fn.bufload(oldbuf)
 
-  -- The there may be pending changes in the buffer
-  if vim.fn.isdirectory(old_fname) == 0 then
-    api.nvim_buf_call(oldbuf, function()
+  local oldbufs = {}
+  local win = nil
+
+  if vim.fn.isdirectory(old_fname) == 1 then
+    oldbufs = get_dir_bufs(old_fname)
+  else
+    local oldbuf = vim.fn.bufadd(old_fname)
+    table.insert(oldbufs, oldbuf)
+    win = bufwinid(oldbuf)
+  end
+
+  for _, b in ipairs(oldbufs) do
+    vim.fn.bufload(b)
+    -- The there may be pending changes in the buffer
+    api.nvim_buf_call(b, function()
       vim.cmd('w!')
     end)
   end
@@ -768,12 +792,16 @@ function M.rename(old_fname, new_fname, opts)
   local ok, err = os.rename(old_fname, new_fname)
   assert(ok, err)
 
-  local newbuf = vim.fn.bufadd(new_fname)
-  local win = bufwinid(oldbuf)
-  if win then
-    api.nvim_win_set_buf(win, newbuf)
+  if vim.fn.isdirectory(new_fname) == 0 then
+    local newbuf = vim.fn.bufadd(new_fname)
+    if win then
+      api.nvim_win_set_buf(win, newbuf)
+    end
   end
-  api.nvim_buf_delete(oldbuf, { force = true })
+
+  for _, b in ipairs(oldbufs) do
+    api.nvim_buf_delete(b, {})
+  end
 end
 
 ---@private
