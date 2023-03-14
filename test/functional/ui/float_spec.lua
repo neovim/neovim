@@ -2184,6 +2184,98 @@ describe('float window', function()
       end
     end)
 
+    it('show ruler of current floating window', function()
+      command 'set ruler'
+      local buf = meths.create_buf(false, false)
+      meths.buf_set_lines(buf, 0, -1, true, {'aaa aab ',
+                                             'abb acc '})
+      meths.open_win(buf, true, {relative='editor', width=9, height=3, row=0, col=5})
+      feed 'gg'
+
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+                                                  |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                1,1           All |
+        ## grid 5
+          {1:^aaa aab  }|
+          {1:abb acc  }|
+          {2:~        }|
+        ]], float_pos={
+          [5] = {{id = 1002}, "NW", 1, 0, 5, true, 50};
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0};
+        }}
+      else
+        screen:expect{grid=[[
+               {1:^aaa aab  }                          |
+          {0:~    }{1:abb acc  }{0:                          }|
+          {0:~    }{2:~        }{0:                          }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+                                1,1           All |
+        ]]}
+      end
+
+      feed 'w'
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+                                                  |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                1,5           All |
+        ## grid 5
+          {1:aaa ^aab  }|
+          {1:abb acc  }|
+          {2:~        }|
+        ]], float_pos={
+          [5] = {{id = 1002}, "NW", 1, 0, 5, true, 50};
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 4, linecount = 2, sum_scroll_delta = 0};
+        }}
+      else
+        screen:expect{grid=[[
+               {1:aaa ^aab  }                          |
+          {0:~    }{1:abb acc  }{0:                          }|
+          {0:~    }{2:~        }{0:                          }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+                                1,5           All |
+        ]]}
+      end
+    end)
+
     it('can have minimum size', function()
       insert("the background text")
       local buf = meths.create_buf(false, true)

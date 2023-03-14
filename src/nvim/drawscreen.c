@@ -746,7 +746,7 @@ void show_cursor_info_later(bool force)
       || curwin->w_topfill != curwin->w_stl_topfill
       || empty_line != curwin->w_stl_empty
       || state != curwin->w_stl_state) {
-    if ((curwin->w_status_height || global_stl_height())) {
+    if (curwin->w_status_height || global_stl_height()) {
       curwin->w_redr_status = true;
     } else {
       redraw_cmdline = true;
