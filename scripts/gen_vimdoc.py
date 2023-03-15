@@ -146,6 +146,7 @@ CONFIG = {
             '_editor.lua',
             '_inspector.lua',
             'shared.lua',
+            'loader.lua',
             'uri.lua',
             'ui.lua',
             'filetype.lua',
@@ -157,6 +158,7 @@ CONFIG = {
         'files': [
             'runtime/lua/vim/_editor.lua',
             'runtime/lua/vim/shared.lua',
+            'runtime/lua/vim/loader.lua',
             'runtime/lua/vim/uri.lua',
             'runtime/lua/vim/ui.lua',
             'runtime/lua/vim/filetype.lua',
@@ -190,6 +192,7 @@ CONFIG = {
             '_inspector': 'vim',
             'uri': 'vim',
             'ui': 'vim.ui',
+            'loader': 'vim.loader',
             'filetype': 'vim.filetype',
             'keymap': 'vim.keymap',
             'fs': 'vim.fs',
