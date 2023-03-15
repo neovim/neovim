@@ -127,6 +127,22 @@ describe('lua stdlib', function()
     eq(1, funcs.luaeval('vim.stricmp("\\0C\\0", "\\0B\\0")'))
   end)
 
+  it('vim.deprecate', function()
+    -- vim.deprecate(name, alternative, version, plugin, backtrace)
+    eq(dedent[[
+      foo.bar() is deprecated, use zub.wooo{ok=yay} instead. :help deprecated
+      This feature will be removed in Nvim version 2.17]],
+      exec_lua('return vim.deprecate(...)', 'foo.bar()', 'zub.wooo{ok=yay}', '2.17'))
+    -- Same message, skipped.
+    eq(vim.NIL,
+      exec_lua('return vim.deprecate(...)', 'foo.bar()', 'zub.wooo{ok=yay}', '2.17'))
+    -- When `plugin` is specified, don't show ":help deprecated". #22235
+    eq(dedent[[
+      foo.bar() is deprecated, use zub.wooo{ok=yay} instead.
+      This feature will be removed in my-plugin.nvim version 0.3.0]],
+      exec_lua('return vim.deprecate(...)', 'foo.bar()', 'zub.wooo{ok=yay}', '0.3.0', 'my-plugin.nvim', false))
+  end)
+
   it('vim.startswith', function()
     eq(true, funcs.luaeval('vim.startswith("123", "1")'))
     eq(true, funcs.luaeval('vim.startswith("123", "")'))

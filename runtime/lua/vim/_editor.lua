@@ -518,11 +518,6 @@ do
   end
 end
 
----@private
-function vim.register_keystroke_callback()
-  error('vim.register_keystroke_callback is deprecated, instead use: vim.on_key')
-end
-
 local on_key_cbs = {}
 
 --- Adds Lua function {fn} with namespace id {ns_id} as a listener to every,
@@ -882,26 +877,32 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
   }
 end
 
---- Display a deprecation notification to the user.
+--- Shows a deprecation message to the user.
 ---
----@param name        string     Deprecated function.
----@param alternative string|nil Preferred alternative function.
----@param version     string     Version in which the deprecated function will
----                              be removed.
----@param plugin      string|nil Plugin name that the function will be removed
----                              from. Defaults to "Nvim".
+---@param name        string     Deprecated feature (function, API, etc.).
+---@param alternative string|nil Suggested alternative feature.
+---@param version     string     Version when the deprecated function will be removed.
+---@param plugin      string|nil Name of the plugin that owns the deprecated feature.
+---                              Defaults to "Nvim".
 ---@param backtrace   boolean|nil Prints backtrace. Defaults to true.
+---
+---@returns Deprecated message, or nil if no message was shown.
 function vim.deprecate(name, alternative, version, plugin, backtrace)
-  local message = name .. ' is deprecated'
+  local msg = ('%s is deprecated'):format(name)
   plugin = plugin or 'Nvim'
-  message = alternative and (message .. ', use ' .. alternative .. ' instead.') or message
-  message = message
-    .. ' See :h deprecated\nThis function will be removed in '
-    .. plugin
-    .. ' version '
-    .. version
-  if vim.notify_once(message, vim.log.levels.WARN) and backtrace ~= false then
+  msg = alternative and ('%s, use %s instead.'):format(msg, alternative) or msg
+  msg = ('%s%s\nThis feature will be removed in %s version %s'):format(
+    msg,
+    (plugin == 'Nvim' and ' :help deprecated' or ''),
+    plugin,
+    version
+  )
+  local displayed = vim.notify_once(msg, vim.log.levels.WARN)
+  if displayed and backtrace ~= false then
     vim.notify(debug.traceback('', 2):sub(2), vim.log.levels.WARN)
+  end
+  if displayed then
+    return msg
   end
 end
 

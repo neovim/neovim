@@ -1386,16 +1386,19 @@ defer_fn({fn}, {timeout})                                     *vim.defer_fn()*
 
                                                              *vim.deprecate()*
 deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
-    Display a deprecation notification to the user.
+    Shows a deprecation message to the user.
 
     Parameters: ~
-      • {name}         string Deprecated function.
-      • {alternative}  (string|nil) Preferred alternative function.
-      • {version}      string Version in which the deprecated function will be
+      • {name}         string Deprecated feature (function, API, etc.).
+      • {alternative}  (string|nil) Suggested alternative feature.
+      • {version}      string Version when the deprecated function will be
                        removed.
-      • {plugin}       string|nil Plugin name that the function will be
-                       removed from. Defaults to "Nvim".
+      • {plugin}       string|nil Name of the plugin that owns the deprecated
+                       feature. Defaults to "Nvim".
       • {backtrace}    boolean|nil Prints backtrace. Defaults to true.
+
+    Return: ~
+        Deprecated message, or nil if no message was shown.
 
 inspect({object}, {options})                                   *vim.inspect()*
     Gets a human-readable representation of the given object.
