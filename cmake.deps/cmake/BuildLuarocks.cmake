@@ -140,7 +140,7 @@ if(USE_BUNDLED_BUSTED)
 
   # luacheck
   add_custom_command(OUTPUT ${LUACHECK_EXE}
-    COMMAND ${LUAROCKS_BINARY} build luacheck 0.23.0-1 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY} build luacheck 1.1.0-1 ${LUAROCKS_BUILDARGS}
     DEPENDS busted)
   add_custom_target(luacheck ALL DEPENDS ${LUACHECK_EXE})
 
