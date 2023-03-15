@@ -147,7 +147,7 @@ if(USE_BUNDLED_BUSTED)
   if (USE_BUNDLED_LUA OR NOT USE_BUNDLED_LUAJIT)
     # coxpcall
     add_custom_command(OUTPUT ${ROCKS_DIR}/coxpcall
-      COMMAND ${LUAROCKS_BINARY} build coxpcall 1.16.0-1 ${LUAROCKS_BUILDARGS}
+      COMMAND ${LUAROCKS_BINARY} build coxpcall 1.17.0-1 ${LUAROCKS_BUILDARGS}
       DEPENDS luarocks)
     add_custom_target(coxpcall ALL DEPENDS ${ROCKS_DIR}/coxpcall)
   endif()
