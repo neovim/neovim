@@ -684,7 +684,7 @@ nvim_create_buf({listed}, {scratch})                       *nvim_create_buf()*
         Buffer handle, or 0 on error
 
     See also: ~
-        buf_open_scratch
+      • buf_open_scratch
 
 nvim_del_current_line()                              *nvim_del_current_line()*
     Deletes the current line.
@@ -698,7 +698,7 @@ nvim_del_keymap({mode}, {lhs})                             *nvim_del_keymap()*
     To unmap a buffer-local mapping, use |nvim_buf_del_keymap()|.
 
     See also: ~
-        |nvim_set_keymap()|
+      • |nvim_set_keymap()|
 
 nvim_del_mark({name})                                        *nvim_del_mark()*
     Deletes an uppercase/file named mark. See |mark-motions|.
@@ -713,8 +713,8 @@ nvim_del_mark({name})                                        *nvim_del_mark()*
         true if the mark was deleted, else false.
 
     See also: ~
-        |nvim_buf_del_mark()|
-        |nvim_get_mark()|
+      • |nvim_buf_del_mark()|
+      • |nvim_get_mark()|
 
 nvim_del_var({name})                                          *nvim_del_var()*
     Removes a global (g:) variable.
@@ -751,7 +751,7 @@ nvim_err_writeln({str})                                   *nvim_err_writeln()*
       • {str}  Message
 
     See also: ~
-        nvim_err_write()
+      • nvim_err_write()
 
 nvim_eval_statusline({str}, {*opts})                  *nvim_eval_statusline()*
     Evaluates statusline string.
@@ -825,8 +825,8 @@ nvim_feedkeys({keys}, {mode}, {escape_ks})                   *nvim_feedkeys()*
                      true otherwise.
 
     See also: ~
-        feedkeys()
-        vim_strsave_escape_ks
+      • feedkeys()
+      • vim_strsave_escape_ks
 
 nvim_get_api_info()                                      *nvim_get_api_info()*
     Returns a 2-tuple (Array), where item 0 is the current channel id and item
@@ -934,7 +934,7 @@ nvim_get_hl_by_id({hl_id}, {rgb})                        *nvim_get_hl_by_id()*
         Highlight definition map
 
     See also: ~
-        nvim_get_hl_by_name
+      • nvim_get_hl_by_name
 
 nvim_get_hl_by_name({name}, {rgb})                     *nvim_get_hl_by_name()*
     Gets a highlight definition by name.
@@ -947,7 +947,7 @@ nvim_get_hl_by_name({name}, {rgb})                     *nvim_get_hl_by_name()*
         Highlight definition map
 
     See also: ~
-        nvim_get_hl_by_id
+      • nvim_get_hl_by_id
 
 nvim_get_hl_id_by_name({name})                      *nvim_get_hl_id_by_name()*
     Gets a highlight group by name
@@ -982,8 +982,8 @@ nvim_get_mark({name}, {opts})                                *nvim_get_mark()*
         not set.
 
     See also: ~
-        |nvim_buf_set_mark()|
-        |nvim_del_mark()|
+      • |nvim_buf_set_mark()|
+      • |nvim_del_mark()|
 
 nvim_get_mode()                                              *nvim_get_mode()*
     Gets the current mode. |mode()| "blocking" is true if Nvim is waiting for
@@ -1257,8 +1257,8 @@ nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
       • {special}    Replace |keycodes|, e.g. <CR> becomes a "\r" char.
 
     See also: ~
-        replace_termcodes
-        cpoptions
+      • replace_termcodes
+      • cpoptions
 
                                                 *nvim_select_popupmenu_item()*
 nvim_select_popupmenu_item({item}, {insert}, {finish}, {opts})
@@ -1592,9 +1592,9 @@ nvim_exec({src}, {output})                                       *nvim_exec()*
         string.
 
     See also: ~
-        |execute()|
-        |nvim_command()|
-        |nvim_cmd()|
+      • |execute()|
+      • |nvim_command()|
+      • |nvim_cmd()|
 
                                                      *nvim_parse_expression()*
 nvim_parse_expression({expr}, {flags}, {highlight})
@@ -1688,7 +1688,7 @@ nvim_buf_create_user_command({buffer}, {name}, {command}, {*opts})
       • {buffer}  Buffer handle, or 0 for current buffer.
 
     See also: ~
-        nvim_create_user_command
+      • nvim_create_user_command
 
                                                  *nvim_buf_del_user_command()*
 nvim_buf_del_user_command({buffer}, {name})
@@ -1742,8 +1742,8 @@ nvim_cmd({*cmd}, {*opts})                                         *nvim_cmd()*
         empty string.
 
     See also: ~
-        |nvim_exec()|
-        |nvim_command()|
+      • |nvim_exec()|
+      • |nvim_command()|
 
                                                   *nvim_create_user_command()*
 nvim_create_user_command({name}, {command}, {*opts})
@@ -2101,8 +2101,8 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
         otherwise True. TODO: LUA_API_NO_EVAL
 
     See also: ~
-        |nvim_buf_detach()|
-        |api-buffer-updates-lua|
+      • |nvim_buf_detach()|
+      • |api-buffer-updates-lua|
 
 nvim_buf_call({buffer}, {fun})                               *nvim_buf_call()*
     call a function with buffer as temporary current buffer
@@ -2136,7 +2136,7 @@ nvim_buf_del_keymap({buffer}, {mode}, {lhs})           *nvim_buf_del_keymap()*
       • {buffer}  Buffer handle, or 0 for current buffer
 
     See also: ~
-        |nvim_del_keymap()|
+      • |nvim_del_keymap()|
 
 nvim_buf_del_mark({buffer}, {name})                      *nvim_buf_del_mark()*
     Deletes a named mark in the buffer. See |mark-motions|.
@@ -2153,8 +2153,8 @@ nvim_buf_del_mark({buffer}, {name})                      *nvim_buf_del_mark()*
         true if the mark was deleted, else false.
 
     See also: ~
-        |nvim_buf_set_mark()|
-        |nvim_del_mark()|
+      • |nvim_buf_set_mark()|
+      • |nvim_del_mark()|
 
 nvim_buf_del_var({buffer}, {name})                        *nvim_buf_del_var()*
     Removes a buffer-scoped (b:) variable
@@ -2189,8 +2189,8 @@ nvim_buf_detach({buffer})                                  *nvim_buf_detach()*
         True.
 
     See also: ~
-        |nvim_buf_attach()|
-        |api-lua-detach| for detaching Lua callbacks
+      • |nvim_buf_attach()|
+      • |api-lua-detach| for detaching Lua callbacks
 
 nvim_buf_get_changedtick({buffer})                *nvim_buf_get_changedtick()*
     Gets a changed tick of a buffer
@@ -2247,8 +2247,8 @@ nvim_buf_get_mark({buffer}, {name})                      *nvim_buf_get_mark()*
         uppercase/file mark set in another buffer.
 
     See also: ~
-        |nvim_buf_set_mark()|
-        |nvim_buf_del_mark()|
+      • |nvim_buf_set_mark()|
+      • |nvim_buf_del_mark()|
 
 nvim_buf_get_name({buffer})                              *nvim_buf_get_name()*
     Gets the full file name for the buffer
@@ -2351,7 +2351,7 @@ nvim_buf_set_keymap({buffer}, {mode}, {lhs}, {rhs}, {*opts})
       • {buffer}  Buffer handle, or 0 for current buffer
 
     See also: ~
-        |nvim_set_keymap()|
+      • |nvim_set_keymap()|
 
                                                         *nvim_buf_set_lines()*
 nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing}, {replacement})
@@ -2378,7 +2378,7 @@ nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing}, {replacement})
       • {replacement}      Array of lines to use as replacement
 
     See also: ~
-        |nvim_buf_set_text()|
+      • |nvim_buf_set_text()|
 
                                                          *nvim_buf_set_mark()*
 nvim_buf_set_mark({buffer}, {name}, {line}, {col}, {opts})
@@ -2401,8 +2401,8 @@ nvim_buf_set_mark({buffer}, {name}, {line}, {col}, {opts})
         true if the mark was set, else false.
 
     See also: ~
-        |nvim_buf_del_mark()|
-        |nvim_buf_get_mark()|
+      • |nvim_buf_del_mark()|
+      • |nvim_buf_get_mark()|
 
 nvim_buf_set_name({buffer}, {name})                      *nvim_buf_set_name()*
     Sets the full file name for a buffer
@@ -2439,7 +2439,7 @@ nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
       • {replacement}  Array of lines to use as replacement
 
     See also: ~
-        |nvim_buf_set_lines()|
+      • |nvim_buf_set_lines()|
 
 nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
     Sets a buffer-scoped (b:) variable
@@ -2775,8 +2775,8 @@ nvim_win_call({window}, {fun})                               *nvim_win_call()*
         upvalues to send lua references in and out.
 
     See also: ~
-        |win_execute()|
-        |nvim_buf_call()|
+      • |win_execute()|
+      • |nvim_buf_call()|
 
 nvim_win_close({window}, {force})                           *nvim_win_close()*
     Closes the window (like |:close| with a |window-ID|).
@@ -3114,7 +3114,7 @@ nvim_win_set_config({window}, {*config})               *nvim_win_set_config()*
       • {config}  Map defining the window configuration, see |nvim_open_win()|
 
     See also: ~
-        |nvim_open_win()|
+      • |nvim_open_win()|
 
 
 ==============================================================================
@@ -3232,7 +3232,7 @@ nvim_create_augroup({name}, {*opts})                   *nvim_create_augroup()*
         Integer id of the created group.
 
     See also: ~
-        |autocmd-groups|
+      • |autocmd-groups|
 
 nvim_create_autocmd({event}, {*opts})                  *nvim_create_autocmd()*
     Creates an |autocommand| event handler, defined by `callback` (Lua function or Vimscript function name string) or `command` (Ex command string).
@@ -3297,8 +3297,8 @@ nvim_create_autocmd({event}, {*opts})                  *nvim_create_autocmd()*
         Autocommand id (number)
 
     See also: ~
-        |autocommand|
-        |nvim_del_autocmd()|
+      • |autocommand|
+      • |nvim_del_autocmd()|
 
 nvim_del_augroup_by_id({id})                        *nvim_del_augroup_by_id()*
     Delete an autocommand group by id.
@@ -3313,8 +3313,8 @@ nvim_del_augroup_by_id({id})                        *nvim_del_augroup_by_id()*
       • {id}  Integer The id of the group.
 
     See also: ~
-        |nvim_del_augroup_by_name()|
-        |nvim_create_augroup()|
+      • |nvim_del_augroup_by_name()|
+      • |nvim_create_augroup()|
 
 nvim_del_augroup_by_name({name})                  *nvim_del_augroup_by_name()*
     Delete an autocommand group by name.
@@ -3327,7 +3327,7 @@ nvim_del_augroup_by_name({name})                  *nvim_del_augroup_by_name()*
       • {name}  String The name of the group.
 
     See also: ~
-        |autocmd-groups|
+      • |autocmd-groups|
 
 nvim_del_autocmd({id})                                    *nvim_del_autocmd()*
     Delete an autocommand by id.
@@ -3338,7 +3338,7 @@ nvim_del_autocmd({id})                                    *nvim_del_autocmd()*
       • {id}  Integer The id returned by nvim_create_autocmd
 
     See also: ~
-        |nvim_create_autocmd()|
+      • |nvim_create_autocmd()|
 
 nvim_exec_autocmds({event}, {*opts})                    *nvim_exec_autocmds()*
     Execute all autocommands for {event} that match the corresponding {opts}
@@ -3359,7 +3359,7 @@ nvim_exec_autocmds({event}, {*opts})                    *nvim_exec_autocmds()*
                    callback. See |nvim_create_autocmd()| for details.
 
     See also: ~
-        |:doautocmd|
+      • |:doautocmd|
 
 nvim_get_autocmds({*opts})                               *nvim_get_autocmds()*
     Get all autocommands that match the corresponding {opts}.

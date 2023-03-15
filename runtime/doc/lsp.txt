@@ -862,9 +862,9 @@ omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
         • findstart=1: list of matches (actually just calls |complete()|)
 
     See also: ~
-        |complete-functions|
-        |complete-items|
-        |CompleteDone|
+      • |complete-functions|
+      • |complete-items|
+      • |CompleteDone|
 
 set_log_level({level})                               *vim.lsp.set_log_level()*
     Sets the global log level for LSP logging.
@@ -879,7 +879,7 @@ set_log_level({level})                               *vim.lsp.set_log_level()*
       • {level}  (integer|string) the case insensitive level name or number
 
     See also: ~
-        |vim.lsp.log_levels|
+      • |vim.lsp.log_levels|
 
 start({config}, {opts})                                      *vim.lsp.start()*
     Create a new LSP client and start a language server or reuses an already
@@ -1132,8 +1132,8 @@ code_action({options})                             *vim.lsp.buf.code_action()*
                      |api-indexing|
 
     See also: ~
-        https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
-        vim.lsp.protocol.constants.CodeActionTriggerKind
+      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
+      • vim.lsp.protocol.constants.CodeActionTriggerKind
 
 completion({context})                               *vim.lsp.buf.completion()*
     Retrieves the completion items at the current cursor position. Can only be
@@ -1146,7 +1146,7 @@ completion({context})                               *vim.lsp.buf.completion()*
                    character, if applicable)
 
     See also: ~
-        vim.lsp.protocol.constants.CompletionTriggerKind
+      • vim.lsp.protocol.constants.CompletionTriggerKind
 
 declaration({options})                             *vim.lsp.buf.declaration()*
     Jumps to the declaration of the symbol under the cursor.
@@ -1200,7 +1200,7 @@ execute_command({command_params})              *vim.lsp.buf.execute_command()*
       • {command_params}  (table) A valid `ExecuteCommandParams` object
 
     See also: ~
-        https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
+      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
 
 format({options})                                       *vim.lsp.buf.format()*
     Formats a buffer using the attached (and optionally filtered) language
@@ -1278,7 +1278,7 @@ references({context}, {options})                    *vim.lsp.buf.references()*
                      |lsp-on-list-handler|
 
     See also: ~
-        https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
+      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
 
                                        *vim.lsp.buf.remove_workspace_folder()*
 remove_workspace_folder({workspace_folder})
@@ -1570,7 +1570,7 @@ apply_text_document_edit({text_document_edit}, {index}, {offset_encoding})
                               list of edits (or nil, if not from a list)
 
     See also: ~
-        https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
+      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
 
                                              *vim.lsp.util.apply_text_edits()*
 apply_text_edits({text_edits}, {bufnr}, {offset_encoding})
@@ -1582,7 +1582,7 @@ apply_text_edits({text_edits}, {bufnr}, {offset_encoding})
       • {offset_encoding}  (string) utf-8|utf-16|utf-32
 
     See also: ~
-        https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
+      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 
                                          *vim.lsp.util.apply_workspace_edit()*
 apply_workspace_edit({workspace_edit}, {offset_encoding})
@@ -1609,7 +1609,7 @@ buf_highlight_references({bufnr}, {references}, {offset_encoding})
       • {offset_encoding}  (string) One of "utf-8", "utf-16", "utf-32".
 
     See also: ~
-        https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
+      • https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
 
                                              *vim.lsp.util.character_offset()*
 character_offset({buf}, {row}, {col}, {offset_encoding})
@@ -1642,7 +1642,7 @@ convert_input_to_markdown_lines({input}, {contents})
         {contents}, extended with lines of converted markdown.
 
     See also: ~
-        https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
+      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
 
                      *vim.lsp.util.convert_signature_help_to_markdown_lines()*
 convert_signature_help_to_markdown_lines({signature_help}, {ft}, {triggers})
@@ -1659,7 +1659,7 @@ convert_signature_help_to_markdown_lines({signature_help}, {ft}, {triggers})
         (list) of lines of converted markdown.
 
     See also: ~
-        https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
+      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
 
                                      *vim.lsp.util.extract_completion_items()*
 extract_completion_items({result})
@@ -1672,7 +1672,7 @@ extract_completion_items({result})
         (table) List of completion items
 
     See also: ~
-        https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
+      • https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
 
 get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
     Returns indentation size.
@@ -1684,7 +1684,7 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
         (integer) indentation size
 
     See also: ~
-        'shiftwidth'
+      • 'shiftwidth'
 
                                              *vim.lsp.util.jump_to_location()*
 jump_to_location({location}, {offset_encoding}, {reuse_win})
@@ -1756,7 +1756,7 @@ make_formatting_params({options})
         `DocumentFormattingParams` object
 
     See also: ~
-        https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
+      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
 
                                       *vim.lsp.util.make_given_range_params()*
 make_given_range_params({start_pos}, {end_pos}, {bufnr}, {offset_encoding})
@@ -1793,7 +1793,7 @@ make_position_params({window}, {offset_encoding})
         `TextDocumentPositionParams` object
 
     See also: ~
-        https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
+      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
 
                                             *vim.lsp.util.make_range_params()*
 make_range_params({window}, {offset_encoding})
@@ -1824,7 +1824,7 @@ make_text_document_params({bufnr})
         `TextDocumentIdentifier`
 
     See also: ~
-        https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentIdentifier
+      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentIdentifier
 
                                         *vim.lsp.util.make_workspace_params()*
 make_workspace_params({added}, {removed})
@@ -1974,7 +1974,7 @@ text_document_completion_list_to_complete_items({result}, {prefix})
         { matches = complete-items table, incomplete = bool }
 
     See also: ~
-        |complete-items|
+      • |complete-items|
 
 trim_empty_lines({lines})                    *vim.lsp.util.trim_empty_lines()*
     Removes empty lines from the beginning and end.
