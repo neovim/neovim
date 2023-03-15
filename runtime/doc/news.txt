@@ -210,6 +210,9 @@ The following new APIs or features were added.
   https://tree-sitter.github.io/tree-sitter/syntax-highlighting#language-injection .
   Support for the previous format will be removed in a future release.
 
+• |nvim_get_option_value()| now has a `filetype` option so it can return the
+  default option for a specific filetype.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 

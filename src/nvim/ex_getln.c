@@ -2740,6 +2740,9 @@ bool text_locked(void)
   if (cmdwin_type != 0) {
     return true;
   }
+  if (expr_map_locked()) {
+    return true;
+  }
   return textlock != 0;
 }
 
