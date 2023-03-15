@@ -1245,9 +1245,12 @@ bool edit(int cmdchar, bool startln, long count)
   // Don't allow changes in the buffer while editing the cmdline.  The
   // caller of getcmdline() may get confused.
   // Don't allow recursive insert mode when busy with completion.
-  if (textlock != 0 || ins_compl_active() || compl_busy || pum_visible()) {
-    emsg(_(e_textlock));
-    return false;
+  // Allow in dummy buffers since they are only used internally
+  if (!(curbuf->b_flags & BF_DUMMY)) {
+    if (textlock != 0 || ins_compl_active() || compl_busy || pum_visible()) {
+      emsg(_(e_textlock));
+      return false;
+    }
   }
 
   InsertState state, *s = &state;

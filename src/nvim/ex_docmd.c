@@ -6335,10 +6335,11 @@ static void ex_normal(exarg_T *eap)
   }
   char *arg = NULL;
 
-  if (ex_normal_lock > 0) {
+  if (ex_normal_lock > 0 && !(curbuf->b_flags & BF_DUMMY)) {
     emsg(_(e_secure));
     return;
   }
+
   if (ex_normal_busy >= p_mmd) {
     emsg(_("E192: Recursive use of :normal too deep"));
     return;

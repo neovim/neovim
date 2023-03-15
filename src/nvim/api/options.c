@@ -143,6 +143,64 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   return rv;
 }
 
+Object nvim_get_ft_option(String filetype, String option, Error *err)
+  FUNC_API_SINCE(9)
+{
+  Object rv = OBJECT_INIT;
+
+  // Allocate a buffer without putting it in the buffer list.
+  buf_T *newbuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY);
+  if (newbuf == NULL) {
+    return rv;
+  }
+
+  // Set curwin/curbuf to buf and save a few things.
+  aco_save_T aco;
+  aucmd_prepbuf(&aco, newbuf);
+
+  newbuf->b_p_ft = xstrdup(filetype.data);
+
+  apply_autocmds(EVENT_FILETYPE, newbuf->b_p_ft, newbuf->b_fname,
+                 true, newbuf);
+
+  char *stringval;
+  long numval;
+  getoption_T r = access_option_value_for(option.data, &numval, &stringval, OPT_LOCAL, SREQ_GLOBAL, newbuf, true, err);
+
+  switch (r) {
+  case gov_string:
+    rv = STRING_OBJ(cstr_as_string(stringval));
+    break;
+  case gov_number:
+    rv = INTEGER_OBJ(numval);
+    break;
+  case gov_bool:
+    switch (numval) {
+    case 0:
+    case 1:
+      rv = BOOLEAN_OBJ(numval);
+      break;
+    default:
+      // Boolean options that return something other than 0 or 1 should return nil. Currently this
+      // only applies to 'autoread' which uses -1 as a local value to indicate "unset"
+      rv = NIL;
+      break;
+    }
+    break;
+  default:
+    return rv;
+  }
+
+  // restore curwin/curbuf and a few other things
+  aucmd_restbuf(&aco);
+
+  if (curbuf != newbuf) {  // safety check
+    wipe_buffer(newbuf, false);
+  }
+
+  return rv;
+}
+
 /// Sets the value of an option. The behavior of this function matches that of
 /// |:set|: for global-local options, both the global and local value are set
 /// unless otherwise specified with {scope}.
