@@ -128,7 +128,7 @@ TREESITTER FUNCTIONS
 						and |TSNode:type()| instead.
 
 LUA
-- *vim.register_keystroke_callback()*	Use |vim.on_key()| instead.
+- vim.register_keystroke_callback()	Use |vim.on_key()| instead.
 - *vim.pretty_print()*			Use |vim.print()| instead.
 
 NORMAL COMMANDS
