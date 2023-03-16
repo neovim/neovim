@@ -439,7 +439,7 @@ end
 ---                      - winid (integer|nil): Window id to display the tree buffer in. If omitted,
 ---                        a new window is created with {command}.
 ---                      - command (string|nil): Vimscript command to create the window. Default
----                        value is "topleft 60vnew". Only used when {winid} is nil.
+---                        value is "60vnew". Only used when {winid} is nil.
 ---                      - title (string|fun(bufnr:integer):string|nil): Title of the window. If a
 ---                        function, it accepts the buffer number of the source buffer as its only
 ---                        argument and should return a string.
@@ -465,7 +465,7 @@ function M.inspect_tree(opts)
 
   local w = opts.winid
   if not w then
-    vim.cmd(opts.command or 'topleft 60vnew')
+    vim.cmd(opts.command or '60vnew')
     w = a.nvim_get_current_win()
   end
 
