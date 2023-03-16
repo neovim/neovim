@@ -1115,7 +1115,7 @@ function lsp.start_client(config)
       return false
     end
 
-    return vim.startswith(vim.fn.expand(scriptname), vim.fn.expand(vim.fn.getenv('VIMRUNTIME')))
+    return vim.startswith(vim.fn.expand(scriptname), vim.fn.expand('$VIMRUNTIME'))
   end
 
   ---@private
