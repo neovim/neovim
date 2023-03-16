@@ -793,7 +793,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   // TODO(bfredl): synergize these two branches even more
-  if (ephemeral && decor_state.buf == buf) {
+  if (ephemeral && decor_state.win && decor_state.win->w_buffer == buf) {
     decor_add_ephemeral((int)line, (int)col, line2, col2, &decor, (uint64_t)ns_id, id);
   } else {
     if (ephemeral) {

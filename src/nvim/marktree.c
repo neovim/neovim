@@ -279,13 +279,13 @@ void marktree_put_key(MarkTree *b, mtkey_t k)
 /// 6. If 4 went all the way to the root node. The root node
 ///    might have ended up with size 0. Delete it then.
 ///
-/// NB: ideally keeps the iterator valid. Like point to the key after this
-/// if present.
+/// The iterator remains valid, and now points at the key _after_ the deleted
+/// one.
 ///
 /// @param rev should be true if we plan to iterate _backwards_ and delete
 ///            stuff before this key. Most of the time this is false (the
 ///            recommended strategy is to always iterate forward)
-void marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
+uint64_t marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
 {
   int adjustment = 0;
 
@@ -293,6 +293,12 @@ void marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
   int curi = itr->i;
   uint64_t id = mt_lookup_key(cur->key[curi]);
   // fprintf(stderr, "\nDELET %lu\n", id);
+
+  mtkey_t raw = rawkey(itr);
+  uint64_t other = 0;
+  if (mt_paired(raw)) {
+    other = mt_lookup_id(raw.ns, raw.id, !mt_end(raw));
+  }
 
   if (itr->node->level) {
     if (rev) {
@@ -442,6 +448,8 @@ void marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
       marktree_itr_next(b, itr);
     }
   }
+
+  return other;
 }
 
 static mtnode_t *merge_node(MarkTree *b, mtnode_t *p, int i)
