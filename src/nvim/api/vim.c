@@ -141,6 +141,8 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Arena *arena, Error *err)
 ///
 /// @param ns_id Namespace id for this highlight |nvim_create_namespace()|.
 ///              Use 0 to set a highlight group globally |:highlight|.
+///              Highlights from non-global namespaces are not active by default, use
+///              |nvim_set_hl_ns()| or |nvim_win_set_hl_ns()| to activate them.
 /// @param name  Highlight group name, e.g. "ErrorMsg"
 /// @param val   Highlight definition map, accepts the following keys:
 ///                - fg (or foreground): color name or "#RRGGBB", see note.
@@ -183,8 +185,8 @@ void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
   }
 }
 
-/// Set active namespace for highlights. This can be set for a single window,
-/// see |nvim_win_set_hl_ns()|.
+/// Set active namespace for highlights defined with |nvim_set_hl()|. This can be set for
+/// a single window, see |nvim_win_set_hl_ns()|.
 ///
 /// @param ns_id the namespace to use
 /// @param[out] err Error details, if any
@@ -200,7 +202,7 @@ void nvim_set_hl_ns(Integer ns_id, Error *err)
   redraw_all_later(UPD_NOT_VALID);
 }
 
-/// Set active namespace for highlights while redrawing.
+/// Set active namespace for highlights defined with |nvim_set_hl()| while redrawing.
 ///
 /// This function meant to be called while redrawing, primarily from
 /// |nvim_set_decoration_provider()| on_win and on_line callbacks, which
