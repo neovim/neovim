@@ -16,7 +16,7 @@ export ASAN_OPTIONS="detect_leaks=0:log_path=$log_path/asan"
 # Show backtraces in the logs.
 export UBSAN_OPTIONS="print_stacktrace=1"
 
-make -C "$root_path" CMAKE_EXTRA_FLAGS="-DCLANG_ASAN_UBSAN=ON"
+make -C "$root_path" CMAKE_EXTRA_FLAGS="-DENABLE_ASAN_UBSAN=ON"
 VIMRUNTIME="$root_path"/runtime "$root_path"/build/bin/nvim
 
 # Need to manually reset terminal to avoid mangled output, nvim does not

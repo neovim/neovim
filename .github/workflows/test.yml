@@ -132,11 +132,11 @@ jobs:
           - flavor: asan
             cc: clang
             runner: ubuntu-22.04
-            flags: -D CLANG_ASAN_UBSAN=ON
+            flags: -D ENABLE_ASAN_UBSAN=ON
           - flavor: tsan
             cc: clang
             runner: ubuntu-22.04
-            flags: -D CLANG_TSAN=ON
+            flags: -D ENABLE_TSAN=ON
           - flavor: uchar
             cc: gcc
             runner: ubuntu-22.04
