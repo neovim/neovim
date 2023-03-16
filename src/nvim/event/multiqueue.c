@@ -245,6 +245,7 @@ static void multiqueue_push(MultiQueue *this, Event event)
 }
 
 static MultiQueueItem *multiqueue_node_data(QUEUE *q)
+  FUNC_ATTR_NO_SANITIZE_ADDRESS
 {
   return QUEUE_DATA(q, MultiQueueItem, node);
 }

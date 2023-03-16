@@ -803,8 +803,7 @@ if(CLANG_ASAN_UBSAN)
     -fno-omit-frame-pointer
     -fno-optimize-sibling-calls
     -fsanitize=address
-    -fsanitize=undefined
-    -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/src/.asan-blacklist)
+    -fsanitize=undefined)
   target_link_libraries(nvim PRIVATE -fsanitize=address -fsanitize=undefined)
 elseif(CLANG_MSAN)
   message(STATUS "Enabling Clang memory sanitizer for nvim.")

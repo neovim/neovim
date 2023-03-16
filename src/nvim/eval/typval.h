@@ -518,13 +518,15 @@ static inline bool tv_get_float_chk(const typval_T *const tv, float_T *const ret
 
 static inline DictWatcher *tv_dict_watcher_node_data(QUEUE *q)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_NONNULL_RET REAL_FATTR_PURE
-  REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE;
+  REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE
+  FUNC_ATTR_NO_SANITIZE_ADDRESS;
 
 /// Compute the `DictWatcher` address from a QUEUE node.
 ///
 /// This only exists for .asan-blacklist (ASAN doesn't handle QUEUE_DATA pointer
 /// arithmetic).
 static inline DictWatcher *tv_dict_watcher_node_data(QUEUE *q)
+  FUNC_ATTR_NO_SANITIZE_ADDRESS
 {
   return QUEUE_DATA(q, DictWatcher, node);
 }
