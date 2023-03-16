@@ -1203,7 +1203,7 @@ bool no_spell_checking(win_T *wp)
 static void decor_spell_nav_start(win_T *wp)
 {
   decor_state = (DecorState){ 0 };
-  decor_redraw_reset(wp->w_buffer, &decor_state);
+  decor_redraw_reset(wp, &decor_state);
 }
 
 static bool decor_spell_nav_col(win_T *wp, linenr_T lnum, linenr_T *decor_lnum, int col,
@@ -1211,10 +1211,10 @@ static bool decor_spell_nav_col(win_T *wp, linenr_T lnum, linenr_T *decor_lnum, 
 {
   if (*decor_lnum != lnum) {
     decor_providers_invoke_spell(wp, lnum - 1, col, lnum - 1, -1, decor_error);
-    decor_redraw_line(wp->w_buffer, lnum - 1, &decor_state);
+    decor_redraw_line(wp, lnum - 1, &decor_state);
     *decor_lnum = lnum;
   }
-  decor_redraw_col(wp->w_buffer, col, col, false, &decor_state);
+  decor_redraw_col(wp, col, col, false, &decor_state);
   return decor_state.spell == kTrue;
 }
 

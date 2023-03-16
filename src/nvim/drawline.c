@@ -1096,7 +1096,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       }
     }
 
-    has_decor = decor_redraw_line(buf, lnum - 1, &decor_state);
+    has_decor = decor_redraw_line(wp, lnum - 1, &decor_state);
 
     decor_providers_invoke_line(wp, providers, lnum - 1, &has_decor, provider_err);
 
@@ -1619,7 +1619,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         wlv.draw_state = WL_LINE;
         if (has_decor && wlv.row == startrow + wlv.filler_lines) {
           // hide virt_text on text hidden by 'nowrap'
-          decor_redraw_col(wp->w_buffer, wlv.vcol, wlv.off, true, &decor_state);
+          decor_redraw_col(wp, wlv.vcol, wlv.off, true, &decor_state);
         }
         win_line_continue(&wlv);  // use wlv.saved_ values
       }
@@ -2011,7 +2011,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         if (has_decor && v > 0) {
           bool selected = (area_active || (area_highlighting && noinvcur
                                            && wlv.vcol == wp->w_virtcol));
-          int extmark_attr = decor_redraw_col(wp->w_buffer, (colnr_T)v - 1, wlv.off,
+          int extmark_attr = decor_redraw_col(wp, (colnr_T)v - 1, wlv.off,
                                               selected, &decor_state);
           if (extmark_attr != 0) {
             if (!attr_pri) {
@@ -2615,7 +2615,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
                       ? 1 : 0);
 
       if (has_decor) {
-        has_virttext = decor_redraw_eol(wp->w_buffer, &decor_state, &wlv.line_attr,
+        has_virttext = decor_redraw_eol(wp, &decor_state, &wlv.line_attr,
                                         wlv.col + eol_skip);
       }
 

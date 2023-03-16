@@ -166,10 +166,10 @@ next_mark:
   return NULL;
 }
 
-bool decor_redraw_reset(buf_T *buf, DecorState *state)
+bool decor_redraw_reset(win_T *wp, DecorState *state)
 {
   state->row = -1;
-  state->buf = buf;
+  state->win = wp;
   for (size_t i = 0; i < kv_size(state->active); i++) {
     DecorRange item = kv_A(state->active, i);
     if (item.virt_text_owned) {
@@ -177,7 +177,7 @@ bool decor_redraw_reset(buf_T *buf, DecorState *state)
     }
   }
   kv_size(state->active) = 0;
-  return buf->b_marktree->n_keys;
+  return wp->w_buffer->b_marktree->n_keys;
 }
 
 Decoration get_decor(mtkey_t mark)
@@ -198,8 +198,9 @@ static bool decor_virt_pos(Decoration decor)
   return kv_size(decor.virt_text) || decor.ui_watched;
 }
 
-bool decor_redraw_start(buf_T *buf, int top_row, DecorState *state)
+bool decor_redraw_start(win_T *wp, int top_row, DecorState *state)
 {
+  buf_T *buf = wp->w_buffer;
   state->top_row = top_row;
   marktree_itr_get(buf->b_marktree, top_row, 0, state->itr);
   if (!state->itr->node) {
@@ -250,10 +251,10 @@ next_mark:
   return true;  // TODO(bfredl): check if available in the region
 }
 
-bool decor_redraw_line(buf_T *buf, int row, DecorState *state)
+bool decor_redraw_line(win_T *wp, int row, DecorState *state)
 {
   if (state->row == -1) {
-    decor_redraw_start(buf, row, state);
+    decor_redraw_start(wp, row, state);
   }
   state->row = row;
   state->col_until = -1;
@@ -282,8 +283,9 @@ static void decor_add(DecorState *state, int start_row, int start_col, int end_r
   kv_A(state->active, index) = range;
 }
 
-int decor_redraw_col(buf_T *buf, int col, int win_col, bool hidden, DecorState *state)
+int decor_redraw_col(win_T *wp, int col, int win_col, bool hidden, DecorState *state)
 {
+  buf_T *buf = wp->w_buffer;
   if (col <= state->col_until) {
     return state->current;
   }
@@ -529,12 +531,12 @@ next_mark:
 
 void decor_redraw_end(DecorState *state)
 {
-  state->buf = NULL;
+  state->win = NULL;
 }
 
-bool decor_redraw_eol(buf_T *buf, DecorState *state, int *eol_attr, int eol_col)
+bool decor_redraw_eol(win_T *wp, DecorState *state, int *eol_attr, int eol_col)
 {
-  decor_redraw_col(buf, MAXCOL, MAXCOL, false, state);
+  decor_redraw_col(wp, MAXCOL, MAXCOL, false, state);
   state->eol_col = eol_col;
   bool has_virttext = false;
   for (size_t i = 0; i < kv_size(state->active); i++) {

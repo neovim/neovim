@@ -1427,7 +1427,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
 
   win_extmark_arr.size = 0;
 
-  decor_redraw_reset(buf, &decor_state);
+  decor_redraw_reset(wp, &decor_state);
 
   DecorProviders line_providers;
   decor_providers_invoke_win(wp, providers, &line_providers, &provider_err);

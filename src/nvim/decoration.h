@@ -88,7 +88,7 @@ typedef struct {
 typedef struct {
   MarkTreeIter itr[1];
   kvec_t(DecorRange) active;
-  buf_T *buf;
+  win_T *win;
   int top_row;
   int row;
   int col_until;
