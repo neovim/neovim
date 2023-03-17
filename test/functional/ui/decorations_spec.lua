@@ -1247,6 +1247,7 @@ if (h->n_buckets < new_n_buckets) { // expand
     ]]}
 
     meths.buf_clear_namespace(0, ns, 0, -1)
+    -- Cursor should be drawn on the correct line. #22704
     screen:expect{grid=[[
       if (h->n_buckets < new_n_buckets) { // expand     |
         khkey_t *new_keys = (khkey_t *)                 |
@@ -1254,15 +1255,14 @@ if (h->n_buckets < new_n_buckets) { // expand
       hkey_t));                                         |
         h->keys = new_keys;                             |
         if (kh_is_map && val_size) {                    |
-          char *new_vals = {3:krealloc}( h->vals_buf, new_n_|
-      buck^ets * val_size);                              |
+          ^char *new_vals = {3:krealloc}( h->vals_buf, new_n_|
+      buckets * val_size);                              |
           h->vals_buf = new_vals;                       |
         }                                               |
       }                                                 |
                                                         |
     ]]}
   end)
-
 
   it('works with text at the beginning of the buffer', function()
     insert(example_text)
