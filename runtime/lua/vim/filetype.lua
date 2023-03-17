@@ -1018,6 +1018,7 @@ local extension = {
   swift = 'swift',
   svh = 'systemverilog',
   sv = 'systemverilog',
+  td = 'tablegen',
   tak = 'tak',
   tal = 'tal',
   task = 'taskedit',

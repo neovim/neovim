@@ -588,6 +588,7 @@ let s:filename_checks = {
     \ 'taskdata': ['pending.data', 'completed.data', 'undo.data'],
     \ 'taskedit': ['file.task'],
     \ 'tcl': ['file.tcl', 'file.tm', 'file.tk', 'file.itcl', 'file.itk', 'file.jacl', '.tclshrc', 'tclsh.rc', '.wishrc'],
+    \ 'tablegen': ['file.td'],
     \ 'teal': ['file.tl'],
     \ 'template': ['file.tmpl'],
     \ 'teraterm': ['file.ttl'],
