@@ -29,6 +29,7 @@ The following changes may require adaptations in user config or plugins.
     set selectmode=mouse,key
     set mousemodel=popup
     set keymodel=startsel,stopsel
+<
 
 ==============================================================================
 ADDED FEATURES                                                     *news-added*
@@ -51,6 +52,9 @@ iterators |luaref-in|.
 
 • |'smoothscroll'| option to scroll by screen line rather than by text line
 when |'wrap'| is set.
+
+• |Query:iter_matches()| now has the ability to set the maximum start depth
+  for matches.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
