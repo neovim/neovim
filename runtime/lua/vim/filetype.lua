@@ -838,6 +838,9 @@ local extension = {
   R = function(path, bufnr)
     return require('vim.filetype.detect').r(bufnr)
   end,
+  rkt = 'racket',
+  rktd = 'racket',
+  rktl = 'racket',
   rad = 'radiance',
   mat = 'radiance',
   ['pod6'] = 'raku',
@@ -910,9 +913,6 @@ local extension = {
   ss = 'scheme',
   scm = 'scheme',
   sld = 'scheme',
-  rkt = 'scheme',
-  rktd = 'scheme',
-  rktl = 'scheme',
   sce = 'scilab',
   sci = 'scilab',
   scss = 'scss',
