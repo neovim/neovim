@@ -1593,6 +1593,7 @@ local filename = {
   ['.pythonstartup'] = 'python',
   ['.pythonrc'] = 'python',
   SConstruct = 'python',
+  qmldir = 'qmldir',
   ['.Rprofile'] = 'r',
   ['Rprofile'] = 'r',
   ['Rprofile.site'] = 'r',
