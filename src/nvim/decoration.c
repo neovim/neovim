@@ -11,6 +11,7 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/memory.h"
+#include "nvim/move.h"
 #include "nvim/pos.h"
 #include "nvim/sign_defs.h"
 
@@ -86,6 +87,7 @@ void decor_redraw(buf_T *buf, int row1, int row2, Decoration *decor)
 
   if (decor && kv_size(decor->virt_lines)) {
     redraw_buf_line_later(buf, row1 + 1 + (decor->virt_lines_above?0:1), true);
+    changed_line_display_buf(buf);
   }
 }
 
