@@ -1,9 +1,59 @@
+--- @defgroup lua-version
+---
+--- @brief The \`vim.version\` module provides functions for comparing versions and ranges
+--- conforming to the https://semver.org spec. Plugins, and plugin managers, can use this to check
+--- available tools and dependencies on the current system.
+---
+--- Example:
+---   <pre>lua
+---   local v = vim.version.parse(vim.fn.system({'tmux', '-V'}), {strict=false})
+---   if vim.version.gt(v, {3, 2, 0}) then
+---     -- ...
+---   end
+---   </pre>
+---
+--- \*vim.version()\* returns the version of the current Nvim process.
+---
+--- VERSION RANGE SPEC \*version-range\*
+---
+--- A version "range spec" defines a semantic version range which can be tested against a version,
+--- using |vim.version.range()|.
+---
+--- Supported range specs are shown in the following table.
+--- Note: suffixed versions (1.2.3-rc1) are not matched.
+---   <pre>
+---   1.2.3             is 1.2.3
+---   =1.2.3            is 1.2.3
+---   >1.2.3            greater than 1.2.3
+---   <1.2.3            before 1.2.3
+---   >=1.2.3           at least 1.2.3
+---   ~1.2.3            is >=1.2.3 <1.3.0       "reasonably close to 1.2.3"
+---   ^1.2.3            is >=1.2.3 <2.0.0       "compatible with 1.2.3"
+---   ^0.2.3            is >=0.2.3 <0.3.0       (0.x.x is special)
+---   ^0.0.1            is =0.0.1               (0.0.x is special)
+---   ^1.2              is >=1.2.0 <2.0.0       (like ^1.2.0)
+---   ~1.2              is >=1.2.0 <1.3.0       (like ~1.2.0)
+---   ^1                is >=1.0.0 <2.0.0       "compatible with 1"
+---   ~1                same                    "reasonably close to 1"
+---   1.x               same
+---   1.*               same
+---   1                 same
+---   *                 any version
+---   x                 same
+---
+---   1.2.3 - 2.3.4     is >=1.2.3 <=2.3.4
+---
+---   Partial right: missing pieces treated as x (2.3 => 2.3.x).
+---   1.2.3 - 2.3       is >=1.2.3 <2.4.0
+---   1.2.3 - 2         is >=1.2.3 <3.0.0
+---
+---   Partial left: missing pieces treated as 0 (1.2 => 1.2.0).
+---   1.2 - 2.3.0       is 1.2.0 - 2.3.0
+---   </pre>
+
 local M = {}
 
-local LazyM = {}
-M.LazyM = LazyM
-
----@class Semver
+---@class Version
 ---@field [1] number
 ---@field [2] number
 ---@field [3] number
@@ -12,14 +62,14 @@ M.LazyM = LazyM
 ---@field patch number
 ---@field prerelease? string
 ---@field build? string
-local Semver = {}
-Semver.__index = Semver
+local Version = {}
+Version.__index = Version
 
-function Semver:__index(key)
-  return type(key) == 'number' and ({ self.major, self.minor, self.patch })[key] or Semver[key]
+function Version:__index(key)
+  return type(key) == 'number' and ({ self.major, self.minor, self.patch })[key] or Version[key]
 end
 
-function Semver:__newindex(key, value)
+function Version:__newindex(key, value)
   if key == 1 then
     self.major = value
   elseif key == 2 then
@@ -31,8 +81,8 @@ function Semver:__newindex(key, value)
   end
 end
 
----@param other Semver
-function Semver:__eq(other)
+---@param other Version
+function Version:__eq(other)
   for i = 1, 3 do
     if self[i] ~= other[i] then
       return false
@@ -41,7 +91,7 @@ function Semver:__eq(other)
   return self.prerelease == other.prerelease
 end
 
-function Semver:__tostring()
+function Version:__tostring()
   local ret = table.concat({ self.major, self.minor, self.patch }, '.')
   if self.prerelease then
     ret = ret .. '-' .. self.prerelease
@@ -52,8 +102,8 @@ function Semver:__tostring()
   return ret
 end
 
----@param other Semver
-function Semver:__lt(other)
+---@param other Version
+function Version:__lt(other)
   for i = 1, 3 do
     if self[i] > other[i] then
       return false
@@ -70,21 +120,32 @@ function Semver:__lt(other)
   return (self.prerelease or '') < (other.prerelease or '')
 end
 
----@param other Semver
-function Semver:__le(other)
+---@param other Version
+function Version:__le(other)
   return self < other or self == other
 end
 
----@param version string|number[]
----@param strict? boolean Reject "1.0", "0-x" or other non-conforming version strings
----@return Semver?
-function LazyM.version(version, strict)
+--- @private
+---
+--- Creates a new Version object. Not public currently.
+---
+--- @param version string|number[]|Version
+--- @param strict? boolean Reject "1.0", "0-x", "3.2a" or other non-conforming version strings
+--- @return Version?
+function M._version(version, strict) -- Adapted from https://github.com/folke/lazy.nvim
   if type(version) == 'table' then
+    if version.major then
+      return setmetatable(vim.deepcopy(version), Version)
+    end
     return setmetatable({
       major = version[1] or 0,
       minor = version[2] or 0,
       patch = version[3] or 0,
-    }, Semver)
+    }, Version)
+  end
+
+  if not strict then -- TODO: add more "scrubbing".
+    version = version:match('%d[^ ]*')
   end
 
   local prerel = version:match('%-([^+]*)')
@@ -110,11 +171,13 @@ function LazyM.version(version, strict)
       patch = patch == '' and 0 or tonumber(patch),
       prerelease = prerel ~= '' and prerel or nil,
       build = build ~= '' and build or nil,
-    }, Semver)
+    }, Version)
   end
 end
 
----@generic T: Semver
+---TODO: generalize this, move to func.lua
+---
+---@generic T: Version
 ---@param versions T[]
 ---@return T?
 function M.last(versions)
@@ -127,13 +190,15 @@ function M.last(versions)
   return last
 end
 
----@class SemverRange
----@field from Semver
----@field to? Semver
+---@class Range
+---@field from Version
+---@field to? Version
 local Range = {}
 
----@param version string|Semver
-function Range:matches(version)
+--- @private
+---
+---@param version string|Version
+function Range:has(version)
   if type(version) == 'string' then
     ---@diagnostic disable-next-line: cast-local-type
     version = M.parse(version)
@@ -146,8 +211,32 @@ function Range:matches(version)
   end
 end
 
----@param spec string
-function LazyM.range(spec)
+--- Parses a semver |version-range| "spec" and returns a range object:
+---   <pre>
+---   {
+---     from: Version
+---     to: Version
+---     has(v: string|Version)
+---   }
+---   </pre>
+---
+--- `:has()` checks if a version is in the range (inclusive `from`, exclusive `to`). Example:
+---   <pre>lua
+---   local r = vim.version.range('1.0.0 - 2.0.0')
+---   print(r:has('1.9.9'))  -- true
+---   print(r:has('2.0.0'))  -- false
+---   </pre>
+---
+--- Or use cmp(), eq(), lt(), and gt() to compare `.to` and `.from` directly:
+---   <pre>lua
+---   local r = vim.version.range('1.0.0 - 2.0.0')
+---   print(vim.version.gt({1,0,3}, r.from) and vim.version.lt({1,0,3}, r.to))
+---   </pre>
+---
+--- @see # https://github.com/npm/node-semver#ranges
+---
+--- @param spec string Version range "spec"
+function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
   if spec == '*' or spec == '' then
     return setmetatable({ from = M.parse('0.0.0') }, { __index = Range })
   end
@@ -158,8 +247,8 @@ function LazyM.range(spec)
     local a = spec:sub(1, hyphen - 1)
     local b = spec:sub(hyphen + 3)
     local parts = vim.split(b, '.', { plain = true })
-    local ra = LazyM.range(a)
-    local rb = LazyM.range(b)
+    local ra = M.range(a)
+    local rb = M.range(b)
     return setmetatable({
       from = ra and ra.from,
       to = rb and (#parts == 3 and rb.from or rb.to),
@@ -209,40 +298,40 @@ function LazyM.range(spec)
 end
 
 ---@private
----@param v string
+---@param v string|Version
 ---@return string
 local function create_err_msg(v)
   if type(v) == 'string' then
     return string.format('invalid version: "%s"', tostring(v))
+  elseif type(v) == 'table' and v.major then
+    return string.format('invalid version: %s', vim.inspect(v))
   end
   return string.format('invalid version: %s (%s)', tostring(v), type(v))
 end
 
----@private
---- Throws an error if `version` cannot be parsed.
----@param v string
-local function assert_version(v, opt)
-  local rv = M.parse(v, opt)
-  if rv == nil then
-    error(create_err_msg(v))
-  end
-  return rv
-end
-
---- Parses and compares two version strings.
+--- Parses and compares two version version objects (the result of |vim.version.parse()|, or
+--- specified literally as a `{major, minor, patch}` tuple, e.g. `{1, 0, 3}`).
 ---
---- semver notes:
---- - Build metadata MUST be ignored when comparing versions.
+--- Example:
+--- <pre>lua
+---   if vim.version.cmp({1,0,3}, {0,2,1}) == 0 then
+---     -- ...
+---   end
+---   local v1 = vim.version.parse('1.0.3-pre')
+---   local v2 = vim.version.parse('0.2.1')
+---   if vim.version.cmp(v1, v2) == 0 then
+---     -- ...
+---   end
+--- </pre>
 ---
----@param v1 string Version.
----@param v2 string Version to compare with v1.
----@param opts table|nil Optional keyword arguments:
----                      - strict (boolean):  see `version.parse` for details. Defaults to false.
----@return integer `-1` if `v1 < v2`, `0` if `v1 == v2`, `1` if `v1 > v2`.
-function M.cmp(v1, v2, opts)
-  opts = opts or { strict = false }
-  local v1_parsed = assert_version(v1, opts)
-  local v2_parsed = assert_version(v2, opts)
+--- @note Per semver, build metadata is ignored when comparing two otherwise-equivalent versions.
+---
+---@param v1 Version|number[] Version object.
+---@param v2 Version|number[] Version to compare with `v1`.
+---@return integer -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
+function M.cmp(v1, v2)
+  local v1_parsed = assert(M._version(v1), create_err_msg(v1))
+  local v2_parsed = assert(M._version(v2), create_err_msg(v1))
   if v1_parsed == v2_parsed then
     return 0
   end
@@ -252,56 +341,48 @@ function M.cmp(v1, v2, opts)
   return -1
 end
 
---- Parses a semantic version string.
----
---- Ignores leading "v" and surrounding whitespace, e.g. " v1.0.1-rc1+build.2",
---- "1.0.1-rc1+build.2", "v1.0.1-rc1+build.2" and "v1.0.1-rc1+build.2 " are all parsed as:
---- <pre>
----   { major = 1, minor = 0, patch = 1, prerelease = "rc1", build = "build.2" }
---- </pre>
----
----@param version string Version string to be parsed.
----@param opts table|nil Optional keyword arguments:
----                      - strict (boolean):  Default false. If `true`, no coercion is attempted on
----                      input not strictly conforming to semver v2.0.0
----                      (https://semver.org/spec/v2.0.0.html). E.g. `parse("v1.2")` returns nil.
----@return table|nil parsed_version Parsed version table or `nil` if `version` is invalid.
-function M.parse(version, opts)
-  if type(version) ~= 'string' then
-    error(create_err_msg(version))
-  end
-  opts = opts or { strict = false }
-
-  if opts.strict then
-    return LazyM.version(version, true)
-  end
-
-  version = vim.trim(version) -- TODO: add more "scrubbing".
-  return LazyM.version(version, false)
-end
-
----Returns `true` if `v1` are `v2` are equal versions.
----@param v1 string
----@param v2 string
+---Returns `true` if the given versions are equal.
+---@param v1 Version|number[]
+---@param v2 Version|number[]
 ---@return boolean
 function M.eq(v1, v2)
   return M.cmp(v1, v2) == 0
 end
 
----Returns `true` if `v1` is less than `v2`.
----@param v1 string
----@param v2 string
+---Returns `true` if `v1 < v2`.
+---@param v1 Version|number[]
+---@param v2 Version|number[]
 ---@return boolean
 function M.lt(v1, v2)
   return M.cmp(v1, v2) == -1
 end
 
----Returns `true` if `v1` is greater than `v2`.
----@param v1 string
----@param v2 string
+---Returns `true` if `v1 > v2`.
+---@param v1 Version|number[]
+---@param v2 Version|number[]
 ---@return boolean
 function M.gt(v1, v2)
   return M.cmp(v1, v2) == 1
+end
+
+--- Parses a semantic version string and returns a version object which can be used with other
+--- `vim.version` functions. For example "1.0.1-rc1+build.2" returns:
+--- <pre>
+---   { major = 1, minor = 0, patch = 1, prerelease = "rc1", build = "build.2" }
+--- </pre>
+---
+--- @see # https://semver.org/spec/v2.0.0.html
+---
+---@param version string Version string to parse.
+---@param opts table|nil Optional keyword arguments:
+---                      - strict (boolean):  Default false. If `true`, no coercion is attempted on
+---                      input not conforming to semver v2.0.0. If `false`, `parse()` attempts to
+---                      coerce input such as "1.0", "0-x", "tmux 3.2a" into valid versions.
+---@return table|nil parsed_version Version object or `nil` if input is invalid.
+function M.parse(version, opts)
+  assert(type(version) == 'string', create_err_msg(version))
+  opts = opts or { strict = false }
+  return M._version(version, opts.strict)
 end
 
 setmetatable(M, {
