@@ -100,7 +100,7 @@ set(ROCKS_DIR ${DEPS_LIB_DIR}/luarocks/rocks-${LUA_VERSION})
 
 # mpack
 add_custom_command(OUTPUT ${ROCKS_DIR}/mpack
-  COMMAND ${LUAROCKS_BINARY} build mpack 1.0.8-0 ${LUAROCKS_BUILDARGS}
+  COMMAND ${LUAROCKS_BINARY} build mpack 1.0.10-0 ${LUAROCKS_BUILDARGS}
   DEPENDS luarocks)
 add_custom_target(mpack ALL DEPENDS ${ROCKS_DIR}/mpack)
 
@@ -140,14 +140,14 @@ if(USE_BUNDLED_BUSTED)
 
   # luacheck
   add_custom_command(OUTPUT ${LUACHECK_EXE}
-    COMMAND ${LUAROCKS_BINARY} build luacheck 0.23.0-1 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY} build luacheck 1.1.0-1 ${LUAROCKS_BUILDARGS}
     DEPENDS busted)
   add_custom_target(luacheck ALL DEPENDS ${LUACHECK_EXE})
 
   if (USE_BUNDLED_LUA OR NOT USE_BUNDLED_LUAJIT)
     # coxpcall
     add_custom_command(OUTPUT ${ROCKS_DIR}/coxpcall
-      COMMAND ${LUAROCKS_BINARY} build coxpcall 1.16.0-1 ${LUAROCKS_BUILDARGS}
+      COMMAND ${LUAROCKS_BINARY} build coxpcall 1.17.0-1 ${LUAROCKS_BUILDARGS}
       DEPENDS luarocks)
     add_custom_target(coxpcall ALL DEPENDS ${ROCKS_DIR}/coxpcall)
   endif()
