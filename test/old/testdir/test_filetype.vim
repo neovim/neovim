@@ -495,6 +495,7 @@ let s:filename_checks = {
     \ 'rnc': ['file.rnc'],
     \ 'rng': ['file.rng'],
     \ 'rnoweb': ['file.rnw', 'file.snw'],
+    \ 'rpgle': ['file.rpgle', 'file.rpgleinc'],
     \ 'robot': ['file.robot', 'file.resource'],
     \ 'robots': ['robots.txt'],
     \ 'ron': ['file.ron'],
