@@ -747,6 +747,78 @@ and second is command name:
     vim.api.nvim_buf_del_user_command(4, 'Upper')
 <
 ==============================================================================
+Writing plugins                                               *lua-guide-plugin*
+
+This section will guide you on how to create your first Lua plugin in Nvim.
+
+------------------------------------------------------------------------------
+Introduction
+
+The first question that might pop up is "how do I create a Lua plugin?". The
+same way you'd create a Vimscript plugin, with some exceptions. The most
+important part to keep in mind is that Lua plugins is first and foremost Nvim
+plugins, so most rules still apply for Lua plugins.
+
+TODO: |write-plugin| is somehow jankier than I remember. Consider removing the
+following sentence.
+
+Check out |write-plugin| for a refresher on how to write Vimscript plugins.
+
+------------------------------------------------------------------------------
+Where to put the files
+
+Remember, the most important aspect of Lua plugins is that they're Nvim
+plugins. Your plugin structure should follow the predefined directories listed
+in |'runtimepath'|, and let the user add it to their own configuration in
+their preferred way.
+
+Are you making a colorscheme? Then your plugin should probably have a `color/`
+directory with `<colorscheme>.lua` in it.
+
+Are you making a plugin for a specific filetype? Then your plugin should
+probably have a `ftplugin/` directory with a `<language>.lua` in it.
+
+Are you making a general purpose plugin that should always be run at startup?
+Then your plugin should probably have a `plugin/` directory with a
+`<plugin>.lua` in it.
+
+None of these are mutually exclusive of course. You are free to mix and match
+these however you'd like. The important part is to rely on the
+already-existing and well-supported conventions for how different types of
+files should be structured.
+
+------------------------------------------------------------------------------
+Lua autoload
+
+One of the major differences between Vimscript and Lua plugins is the
+|autoload| mechanism from Vimscript is absent from Lua. Autoloading is the
+main way to ensure a fast plugin startup in Vimscript, by deferring the
+majority of the code loading to when it's actually required (see
+|write-plugin-quickload|). Lua doesn't have autoloading.
+
+It has something even better: `require()`! The details around how it works is
+already covered in |lua-guide-modules|.
+
+TODO: need to try this out so I can give an intuitive explanation.
+
+------------------------------------------------------------------------------
+Checkhealth
+
+Healthchecks are an excellent way for plugin authors to help users
+troubleshoot potential configuration or environment problems they might have
+that prevents the plugin to work correctly. An overview of the health module,
+including a quick example, is provided in |health-dev|.
+
+------------------------------------------------------------------------------
+Predefine mappings
+
+Plugin authors are generally discouraged from trying to pre-define keymaps for
+the user as to not risk clashing with other plugins that may want to use the
+same keymaps. Instead, plugin authors should aim to provide a recommended
+setup in the README that the author believes to be a good set of keymaps. The
+user can then use that, and modify it as they wish.
+
+==============================================================================
 Credits                                                      *lua-guide-credits*
 This guide is in large part taken from nanotee's Lua guide:
 https://github.com/nanotee/nvim-lua-guide
