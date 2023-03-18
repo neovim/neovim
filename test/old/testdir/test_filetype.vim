@@ -449,6 +449,7 @@ let s:filename_checks = {
     \ 'pod': ['file.pod'],
     \ 'poefilter': ['file.filter'],
     \ 'poke': ['file.pk'],
+    \ 'pony': ['file.pony'],
     \ 'postscr': ['file.ps', 'file.pfa', 'file.afm', 'file.eps', 'file.epsf', 'file.epsi', 'file.ai'],
     \ 'pov': ['file.pov'],
     \ 'povini': ['.povrayrc'],

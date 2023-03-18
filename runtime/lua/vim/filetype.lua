@@ -800,6 +800,7 @@ local extension = {
   pod = 'pod',
   filter = 'poefilter',
   pk = 'poke',
+  pony = 'pony',
   ps = 'postscr',
   epsi = 'postscr',
   afm = 'postscr',
