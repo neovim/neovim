@@ -62,7 +62,7 @@ static int64_t next_autocmd_id = 1;
 ///   })
 /// </pre>
 ///
-/// NOTE: When multiple patterns or events are provided, it will find all the autocommands that
+/// @note When multiple patterns or events are provided, it will find all the autocommands that
 /// match any combination of them.
 ///
 /// @param opts Dictionary with at least one of the following:
@@ -70,7 +70,7 @@ static int64_t next_autocmd_id = 1;
 ///             - event (string|array): event or events to match against |autocmd-events|.
 ///             - pattern (string|array): pattern or patterns to match against |autocmd-pattern|.
 ///             Cannot be used with {buffer}
-///             - buffer: Buffer number or list of buffer numbers for buffer local autocommands
+///             - buffer: Buffer number or list of buffer numbers for buffer-local autocommands
 ///             |autocmd-buflocal|. Cannot be used with {pattern}
 /// @return Array of autocommands matching the criteria, with each item
 ///         containing the following fields:
@@ -84,8 +84,8 @@ static int64_t next_autocmd_id = 1;
 ///             which is executed when this autocommand is triggered.
 ///             - once (boolean): whether the autocommand is only run once.
 ///             - pattern (string): the autocommand pattern.
-///             If the autocommand is buffer local |autocmd-buffer-local|:
-///             - buflocal (boolean): true if the autocommand is buffer local.
+///             If the autocommand is buffer-local |autocmd-buffer-local|:
+///             - buflocal (boolean): true if the autocommand is buffer-local.
 ///             - buffer (number): the buffer number.
 Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
   FUNC_API_SINCE(9)
@@ -352,8 +352,8 @@ cleanup:
   return autocmd_list;
 }
 
-/// Creates an |autocommand| event handler, defined by `callback` (Lua function or Vimscript
-/// function _name_ string) or `command` (Ex command string).
+/// Creates an |autocommand| event handler, defined by `callback` (Lua function
+/// or Vimscript function _name_ string) or `command` (Ex command string).
 ///
 /// Example using Lua callback:
 /// <pre>lua
@@ -373,11 +373,13 @@ cleanup:
 ///     })
 /// </pre>
 ///
-/// Note: `pattern` is NOT automatically expanded (unlike with |:autocmd|), thus names like "$HOME"
-/// and "~" must be expanded explicitly:
+/// @note `pattern` is NOT automatically expanded (unlike with |:autocmd|), thus 
+/// names like "$HOME" and "~" must be expanded explicitly:
 /// <pre>lua
 ///   pattern = vim.fn.expand("~") .. "/some/path/*.py"
 /// </pre>
+///
+/// @note the options {command} and {callback} cannot be used together.
 ///
 /// @param event (string|array) Event(s) that will trigger the handler (`callback` or `command`).
 /// @param opts Options dict:
@@ -396,8 +398,7 @@ cleanup:
 ///                 - buf: (number) expanded value of |<abuf>|
 ///                 - file: (string) expanded value of |<afile>|
 ///                 - data: (any) arbitrary data passed from |nvim_exec_autocmds()|
-///             - command (string) optional: Vim command to execute on event. Cannot be used with
-///             {callback}
+///             - command (string) optional: Vim command to execute on a event.
 ///             - once (boolean) optional: defaults to false. Run the autocommand
 ///             only once |autocmd-once|.
 ///             - nested (boolean) optional: defaults to false. Run nested
@@ -532,7 +533,20 @@ cleanup:
 
 /// Delete an autocommand by id.
 ///
-/// NOTE: Only autocommands created via the API have an id.
+/// @note Only autocommands created via the API have an id.
+///
+/// Example (lua):
+/// <pre>lua
+///   local autocmd_id = vim.api.nvim_create_autocmd("WinEnter", {
+///       callback = function()
+///           vim.print("Hello World!")
+///       end,
+///       desc = "Annyoing autocmd"
+///   })
+///   
+///   vim.api.nvim_del_autocmd(autocmd_id)
+/// </pre>
+///
 /// @param id Integer The id returned by nvim_create_autocmd
 /// @see |nvim_create_autocmd()|
 void nvim_del_autocmd(Integer id, Error *err)
@@ -548,6 +562,31 @@ void nvim_del_autocmd(Integer id, Error *err)
 
 /// Clear all autocommands that match the corresponding {opts}. To delete
 /// a particular autocmd, see |nvim_del_autocmd()|.
+///
+/// @note the options {pattern} and {buffer} cannot be used together.
+///
+/// Example (lua):
+/// <pre>lua
+///  local api = vim.api
+///  local augroup = api.nvim_create_augroup('info', { clear = false })
+///  local bufnr = api.nvim_create_buf(false, true)
+///  local win_id = api.nvim_get_current_win()
+///  api.nvim_win_set_buf(0, bufnr)
+///  
+///  local function close()
+///    api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
+///    if api.nvim_win_is_valid(win_id) then
+///      api.nvim_win_close(win_id, true)
+///    end
+///  end
+/// </pre>
+///
+/// Second example (lua):
+/// <pre>lua
+///   local group = augroup("LspSignature", { clear = false })
+///   vim.api.nvim_clear_autocmds { group = group, pattern = "<buffer>" }
+/// </pre>
+///
 /// @param opts Parameters
 ///         - event: (string|table)
 ///              Examples:
@@ -560,10 +599,8 @@ void nvim_del_autocmd(Integer id, Error *err)
 ///                   you must pass `*.py` exactly to clear it. `test.py` will not
 ///                   match the pattern.
 ///             - defaults to clearing all patterns.
-///             - NOTE: Cannot be used with {buffer}
 ///         - buffer: (bufnr)
 ///             - clear only |autocmd-buflocal| autocommands.
-///             - NOTE: Cannot be used with {pattern}
 ///         - group: (string|int) The augroup name or id.
 ///             - NOTE: If not passed, will only delete autocmds *not* in any group.
 ///
@@ -675,8 +712,15 @@ Integer nvim_create_augroup(uint64_t channel_id, String name, Dict(create_augrou
 ///
 /// To get a group id one can use |nvim_get_autocmds()|.
 ///
-/// NOTE: behavior differs from |:augroup-delete|. When deleting a group, autocommands contained in
+/// @note behavior differs from |:augroup-delete|. When deleting a group, autocommands contained in
 /// this group will also be deleted and cleared. This group will no longer exist.
+///
+/// Example (lua):
+/// <pre>lua
+///   local autogroup_id = vim.api.nvim_create_augroup("MY_AUGROUP", {})
+///   vim.api.nvim_del_augroup_by_id(autogroup_id)
+/// </pre>
+///
 /// @param id Integer The id of the group.
 /// @see |nvim_del_augroup_by_name()|
 /// @see |nvim_create_augroup()|
@@ -693,8 +737,19 @@ void nvim_del_augroup_by_id(Integer id, Error *err)
 
 /// Delete an autocommand group by name.
 ///
-/// NOTE: behavior differs from |:augroup-delete|. When deleting a group, autocommands contained in
+/// @note behavior differs from |:augroup-delete|. When deleting a group, autocommands contained in
 /// this group will also be deleted and cleared. This group will no longer exist.
+///
+/// Example (lua):
+/// <pre>lua
+///  local autogroup_id = vim.api.nvim_create_augroup("MY_AUGROUP", {})
+///  local autocmd_id = vim.api.nvim_create_autocmd("BufEnter", {
+///      group = "MY_AUGROUP",
+///      command = "echom 'hello'",
+///  })
+///  vim.api.nvim_del_augroup_by_name("MY_AUGROUP")
+///  -- autocmd_id is now cleared and no longer exists
+/// </pre>
 /// @param name String The name of the group.
 /// @see |autocmd-groups|
 void nvim_del_augroup_by_name(String name, Error *err)
@@ -709,14 +764,29 @@ void nvim_del_augroup_by_name(String name, Error *err)
 
 /// Execute all autocommands for {event} that match the corresponding
 ///  {opts} |autocmd-execute|.
+///
+/// Example (lua):
+/// <pre>lua
+///   vim.api.nvim_exec_autocmds("WinEnter", {})
+///   vim.api.nvim_exec_autocmds("User", { pattern = "*.c", modeline = false })
+///
+///   local autogroup_id = vim.api.nvim_create_augroup("MY_AUGROUP", {})
+///   local autocmd_id = vim.api.nvim_create_autocmd("BufEnter", {
+///       group = "MY_AUGROUP",
+///       callback = function(name)
+///         vim.print("hello " .. name)
+///       end,
+///   })
+///   vim.api.nvim_exec_autocmds("BufEnter", { group = "MY_AUGROUP", data = "world" })
+/// </pre>
+///
+/// @note the options {pattern} and {buffer} cannot be used together.
 /// @param event (String|Array) The event or events to execute
 /// @param opts Dictionary of autocommand options:
 ///             - group (string|integer) optional: the autocommand group name or
 ///             id to match against. |autocmd-groups|.
-///             - pattern (string|array) optional: defaults to "*" |autocmd-pattern|. Cannot be used
-///             with {buffer}.
-///             - buffer (integer) optional: buffer number |autocmd-buflocal|. Cannot be used with
-///             {pattern}.
+///             - pattern (string|array) optional: defaults to "*" |autocmd-pattern|.
+///             - buffer (integer) optional: buffer number |autocmd-buflocal|.
 ///             - modeline (bool) optional: defaults to true. Process the
 ///             modeline after the autocommands |<nomodeline>|.
 ///             - data (any): arbitrary data to send to the autocommand callback. See

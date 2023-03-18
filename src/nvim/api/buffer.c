@@ -1272,7 +1272,7 @@ void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
 
 /// Checks if a buffer is valid.
 ///
-/// @note Even if a buffer is valid it may have been unloaded. See |api-buffer|
+/// @note Even if a buffer is valid, it may have been unloaded. See |api-buffer|
 /// for more info about unloaded buffers.
 /// 
 /// Example (lua):
@@ -1379,7 +1379,7 @@ Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col,
   return res;
 }
 
-/// Returns a tuple (row,col) representing the position of the named mark. See
+/// Returns a tuple (row, col) representing the position of the named mark. See
 /// |mark-motions|.
 ///
 /// Marks are (1,0)-indexed. |api-indexing|
