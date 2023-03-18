@@ -1570,13 +1570,12 @@ int searchc(cmdarg_T *cap, int t_cmd)
   if (t_cmd) {
     // Backup to before the character (possibly double-byte).
     col -= dir;
-    if (dir < 0) {
+    
+    col += dir < 0 ?
       // Landed on the search char which is lastc_bytelen long.
-      col += lastc_bytelen - 1;
-    } else {
+      lastc_bytelen - 1 :
       // To previous char, which may be multi-byte.
-      col -= utf_head_off(p, p + col);
-    }
+      -utf_head_off(p, p + col);
   }
   curwin->w_cursor.col = col;
 
@@ -1600,8 +1599,7 @@ pos_T *findmatch(oparg_T *oap, int initc)
 // Handles multibyte string correctly.
 static bool check_prevcol(char *linep, int col, int ch, int *prevcol)
 {
-  col--;
-  if (col > 0) {
+  if (--col > 0) {
     col -= utf_head_off(linep, linep + col);
   }
   if (prevcol) {
