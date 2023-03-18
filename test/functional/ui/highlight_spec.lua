@@ -376,7 +376,6 @@ describe('highlight', function()
 
     -- Vertical cursor: highlights char-at-cursor. #8983
     command('set guicursor=a:block-blinkon175')
-    feed('<esc>gg$vhhh')
     screen:expect([[
         line1 foo{1:^ bar}     |
                           |
