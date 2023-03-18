@@ -26,6 +26,16 @@
 
 /// Gets the current buffer in a window
 ///
+/// Example (lua):
+/// <pre>lua
+///   local win = vim.api.nvim_get_current_win()
+///   local api = vim.api
+///   local bufnr = api.nvim_win_get_buf(termwinid)
+///   if 'terminal' == api.nvim_buf_get_option(bufnr, 'filetype') then
+///     api.nvim_win_close(termwinid, true)
+///   end
+/// </pre>
+///
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
 /// @return Buffer handle
@@ -43,6 +53,39 @@ Buffer nvim_win_get_buf(Window window, Error *err)
 
 /// Sets the current buffer in a window, without side effects
 ///
+/// Example (lua):
+/// <pre>lua
+///   local buf_handle = vim.api.nvim_create_buf(false, true)
+///   local win_handle = vim.api.nvim_get_current_win()
+///   vim.api.nvim_win_set_buf(win_handle, buf_handle)
+/// </pre>
+///
+/// Example (lua): logic to add buffers to windows
+/// <pre>lua
+/// local api = vim.api
+/// local windows = api.nvim_list_wins()
+/// local bufnr = api.nvim_get_current_buf()
+/// 
+/// local buffers = vim.tbl_filter(function(buf)
+///     return api.nvim_buf_is_valid(buf) and vim.bo[buf].buflisted
+/// end, api.nvim_list_bufs())
+/// 
+/// -- If there is only one buffer (which has to be the current one), vim will
+/// -- create a new buffer on :bd.
+/// if #buffers > 1 and #windows > 0 then
+///     for i, v in ipairs(buffers) do
+///         if v == bufnr then
+///             local prev_buf_idx = i == 1 and #buffers or (i - 1)
+///             local prev_buffer = buffers[prev_buf_idx]
+///             for _, win in ipairs(windows) do
+///                 api.nvim_win_set_buf(win, prev_buffer)
+///             end
+///         end
+///     end
+/// end
+/// </pre>
+///
+///
 /// @param window   Window handle, or 0 for current window
 /// @param buffer   Buffer handle
 /// @param[out] err Error details, if any
@@ -56,6 +99,22 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
 /// Gets the (1,0)-indexed, buffer-relative cursor position for a given window
 /// (different windows showing the same buffer have independent cursor
 /// positions). |api-indexing|
+///
+/// Example (lua): get the cursor position in the current window
+/// <pre>lua
+///   local api = vim.api
+///   local win_handle = api.nvim_get_current_win()
+///   local rol, col = unpack(api.nvim_win_get_cursor(win_handle))
+///   local only_col = api.nvim_win_get_cursor(0)[2]
+/// </pre>
+///
+/// Example (lua): check for whitespace before the cursor
+/// <pre>lua
+/// local function check_back_space()
+///     local col = vim.api.nvim_win_get_cursor(0)[2]
+///     local has_backspace = vim.api.nvim_get_current_line():sub(col, col):match("%s") ~= nil
+///     return col == 0 or has_backspace
+/// end
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
@@ -76,6 +135,15 @@ ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Error *err)
 
 /// Sets the (1,0)-indexed cursor position in the window. |api-indexing|
 /// This scrolls the window even if it is not the current one.
+///
+/// Example (lua):
+/// <pre>lua
+///  local api = vim.api
+///  local win_handle = api.nvim_get_current_win()
+///  local rol, col = unpack(api.nvim_win_get_cursor(win_handle))
+///  local text_to_repeat = "some text"
+///  api.nvim_win_set_cursor(0, {row, col + #text_to_repeat})
+/// </pre>
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param pos      (row, col) tuple representing the new position
@@ -133,6 +201,14 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
 
 /// Gets the window height
 ///
+/// Example (lua):
+/// <pre>lua
+///  local win_handle = vim.api.nvim_get_current_win()
+///  if vim.api.nvim_win_get_height(win_handle) > 1 then
+///    vim.print("Window is taller than 1 line")
+///  end
+/// </pre>
+///
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
 /// @return Height as a count of rows
@@ -149,6 +225,13 @@ Integer nvim_win_get_height(Window window, Error *err)
 }
 
 /// Sets the window height.
+///
+/// Example (lua):
+/// <pre>lua
+///   local win_handle = vim.api.nvim_get_current_win()
+///   local height = vim.api.nvim_win_get_height(win_handle)
+///   vim.api.nvim_win_set_height(win_handle, height + 1)
+/// </pre>
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param height   Height as a count of rows
@@ -179,6 +262,14 @@ void nvim_win_set_height(Window window, Integer height, Error *err)
 
 /// Gets the window width
 ///
+/// Example (lua):
+/// <pre>lua
+///   local win_handle = vim.api.nvim_get_current_win()
+///   if vim.api.nvim_win_get_width(win_handle) > 1 then
+///    vim.print("Window is wider than 1 column")
+///   end
+/// </pre>
+///
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
 /// @return Width as a count of columns
@@ -196,6 +287,13 @@ Integer nvim_win_get_width(Window window, Error *err)
 
 /// Sets the window width. This will only succeed if the screen is split
 /// vertically.
+///
+/// Example (lua):
+/// <pre>lua
+///   local win_handle = vim.api.nvim_get_current_win()
+///   local width = vim.api.nvim_win_get_width(win_handle)
+///   vim.api.nvim_win_set_width(win_handle, width + 1)
+/// </pre>
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param width    Width as a count of columns
@@ -226,6 +324,13 @@ void nvim_win_set_width(Window window, Integer width, Error *err)
 
 /// Gets a window-scoped (w:) variable
 ///
+/// Example (lua):
+/// <pre>lua
+///   local win_handle = vim.api.nvim_get_current_win()
+///   vim.api.nvim_win_set_var(win_handle, "special_bufnrs", {0, 12, 5})
+///   vim.print(vim.api.nvim_win_get_var(win_handle, "special_bufnrs"))
+/// </pre>
+///
 /// @param window   Window handle, or 0 for current window
 /// @param name     Variable name
 /// @param[out] err Error details, if any
@@ -243,6 +348,12 @@ Object nvim_win_get_var(Window window, String name, Error *err)
 }
 
 /// Sets a window-scoped (w:) variable
+///
+/// Example (lua):
+/// <pre>lua
+///   local win_handle = vim.api.nvim_get_current_win()
+///   vim.api.nvim_win_set_var(win_handle, "used_marks", {"a", "b", "c"})
+/// </pre>
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param name     Variable name
@@ -262,6 +373,13 @@ void nvim_win_set_var(Window window, String name, Object value, Error *err)
 
 /// Removes a window-scoped (w:) variable
 ///
+/// Example (lua):
+/// <pre>lua
+/// local win_handle = vim.api.nvim_get_current_win()
+/// vim.api.nvim_win_set_var(win_handle, "used_marks", {"a", "b", "c"})
+/// vim.api.nvim_win_del_var(win_handle, "used_marks")
+/// </pre>
+///
 /// @param window   Window handle, or 0 for current window
 /// @param name     Variable name
 /// @param[out] err Error details, if any
@@ -278,6 +396,14 @@ void nvim_win_del_var(Window window, String name, Error *err)
 }
 
 /// Gets the window position in display cells. First position is zero.
+///
+/// Example (lua):
+/// <pre>lua
+///   local win_handle = vim.api.nvim_get_current_win()
+///   local row, col = unpack(vim.api.nvim_win_get_position(win_handle))
+///   vim.print("Window is at screen position: " .. row .. ", " .. col)
+///   local only_row = vim.api.nvim_win_get_position(win_handle)[1]
+/// </pre>
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
@@ -298,6 +424,13 @@ ArrayOf(Integer, 2) nvim_win_get_position(Window window, Error *err)
 
 /// Gets the window tabpage
 ///
+/// Example (lua):
+/// <pre>lua
+///   local tab_handle = vim.api.nvim_win_get_tabpage(winnr)
+///   local tabnr = vim.api.nvim_tabpage_get_number(tab_handle)
+///   vim.print("Window is in tabpage: " .. tabnr)
+/// </pre>
+///
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
 /// @return Tabpage that contains the window
@@ -315,6 +448,12 @@ Tabpage nvim_win_get_tabpage(Window window, Error *err)
 }
 
 /// Gets the window number
+///
+/// Example (lua):
+/// <pre>lua
+///  local win_handle = vim.api.nvim_get_current_win()
+///  local winnr = vim.api.nvim_win_get_number(win_handle)
+///  vim.api.nvim_command(winnr .. "wincmd j")
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
@@ -337,6 +476,14 @@ Integer nvim_win_get_number(Window window, Error *err)
 
 /// Checks if a window is valid
 ///
+/// Example (lua):
+/// <pre>lua
+///   local win_handle = vim.api.nvim_get_current_win()
+///   if vim.api.nvim_win_is_valid(win_handle) then
+///     vim.api.nvim_win_set_option(win_handle, "wrap", false)
+///   end
+/// </pre>
+///
 /// @param window Window handle, or 0 for current window
 /// @return true if the window is valid, false otherwise
 Boolean nvim_win_is_valid(Window window)
@@ -348,12 +495,18 @@ Boolean nvim_win_is_valid(Window window)
   return ret;
 }
 
-/// Closes the window and hide the buffer it contains (like |:hide| with a
+/// Closes the window and hides the buffer it contains (like |:hide| with a
 /// |window-ID|).
 ///
 /// Like |:hide| the buffer becomes hidden unless another window is editing it,
-/// or 'bufhidden' is `unload`, `delete` or `wipe` as opposed to |:close| or
+/// or 'bufhidden' is `unload`, `delete` or `wipe` compared to |:close| or
 /// |nvim_win_close()|, which will close the buffer.
+///
+/// Example (lua):
+/// <pre>lua
+///   local win_handle = vim.api.nvim_get_current_win()
+///   vim.api.nvim_win_hide(win_handle)
+/// </pre>
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
@@ -383,6 +536,12 @@ void nvim_win_hide(Window window, Error *err)
 }
 
 /// Closes the window (like |:close| with a |window-ID|).
+///
+/// Example (lua):
+/// <pre>lua
+///   local buf_handle = vim.api.nvim_create_buf(false, true)
+///   vim.api.nvim_win_close(win_handle, false)
+/// </pre>
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param force    Behave like `:close!` The last window of a buffer with
@@ -419,6 +578,13 @@ void nvim_win_close(Window window, Boolean force, Error *err)
 /// @see |win_execute()|
 /// @see |nvim_buf_call()|
 ///
+/// Example (lua):
+/// <pre>lua
+///   local win_handle = vim.api.nvim_get_current_win()
+///   vim.api.nvim_win_call(win_handle, function() vim.api.nvim_command("syntax off") end)
+///   vim.api.nvim_win_call(win_handle, function() vim.cmd("redraw") end)
+/// </pre>
+///
 /// @param window     Window handle, or 0 for current window
 /// @param fun        Function to call inside the window (currently lua callable
 ///                   only)
@@ -451,6 +617,15 @@ Object nvim_win_call(Window window, LuaRef fun, Error *err)
 ///
 /// This takes precedence over the 'winhighlight' option.
 ///
+/// Example (lua):
+/// <pre>lua
+///   local win_handle = vim.api.nvim_get_current_win()
+///   local ns = vim.api.nvim_create_namespace('gitcommit')
+///   vim.api.nvim_set_hl(ns, 'ColorColumn', { link = 'CurSearch' })
+///   vim.api.nvim_win_set_hl_ns(win_handle, ns)
+/// </pre>
+///
+/// @param window     Window handle, or 0 for current window
 /// @param ns_id the namespace to use
 /// @param[out] err Error details, if any
 void nvim_win_set_hl_ns(Window window, Integer ns_id, Error *err)
