@@ -89,14 +89,14 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
 ///
 /// Example (lua):
 /// <pre>lua
-///   local winid = vim.api.nvim_get_current_win()
-///   vim.api.nvim_win_set_option(winid, 'spell', true)
+///   local win_handle = vim.api.nvim_get_current_win()
+///   vim.api.nvim_win_set_option(win_handle, 'spell', true)
 ///   vim.api.nvim_set_option('spell', false)
 ///
-///   local local_spell = vim.api.nvim_get_option_value('spell', {win = winid})
+///   local local_spell = vim.api.nvim_get_option_value('spell', {win = win_handle})
 ///   vim.print('Value of local spell is: ' .. string.format('%s', local_spell))
 ///
-///   local spell = vim.api.nvim_get_option_value('spell', {scope = 'global', win = winid})
+///   local spell = vim.api.nvim_get_option_value('spell', {scope = 'global', win = win_handle})
 ///   vim.print('Value of global spell is: ' .. string.format('%s', spell))
 /// </pre>
 ///
@@ -173,8 +173,8 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
 ///   vim.print("The buffer's spelllang is: " .. buf_spelllang)
 ///   
 ///   
-///   local winid = vim.api.nvim_get_current_win()
-///   local global_spelllang = vim.api.nvim_get_option_value('spelllang', {scope = 'global', win = winid})
+///   local win_handle = vim.api.nvim_get_current_win()
+///   local global_spelllang = vim.api.nvim_get_option_value('spelllang', {scope = 'global', win = wi_handle})
 ///   vim.print("The window's global spelllang is: " .. global_spelllang)
 ///   
 ///   local local_spelllang = vim.api.nvim_get_option_value('spelllang', {scope = 'local', win = winid})
@@ -370,8 +370,8 @@ Object nvim_buf_get_option(Buffer buffer, String name, Arena *arena, Error *err)
 /// Example (lua):
 /// <pre>lua
 ///   local bufnr = vim.api.nvim_get_current_buf()
-///   vim.api.nvim_buf_set_option(bufnr, "matchpairs", "(:),<:>,=:;")
-///   vim.api.nvim_buf_set_option(bufnr, "keywordprg", nil)
+///   vim.api.nvim_buf_set_option(buf, "matchpairs", "(:),<:>,=:;")
+///   vim.api.nvim_buf_set_option(buf, "keywordprg", nil)
 /// </pre>
 ///
 /// @param channel_id
@@ -395,8 +395,8 @@ void nvim_buf_set_option(uint64_t channel_id, Buffer buffer, String name, Object
 ///
 /// Example (lua):
 /// <pre>lua
-///   local winnr = vim.api.nvim_get_current_win()
-///   vim.api.nvim_win_get_option(winnr, "fillchars")
+///   local win_handle = vim.api.nvim_get_current_win()
+///   vim.api.nvim_win_get_option(win_handle, "fillchars")
 /// </pre>
 ///
 /// @param window   Window handle, or 0 for current window
@@ -420,9 +420,9 @@ Object nvim_win_get_option(Window window, String name, Arena *arena, Error *err)
 ///
 /// Example (lua):
 /// <pre>lua
-///   local winnr = vim.api.nvim_get_current_win() 
-///   vim.api.nvim_win_set_option(winnr, "fillchars", "eob:~")
-///   vim.api.nvim_win_set_option(winnr, "listchars", nil)
+///   local win_handle = vim.api.nvim_get_current_win() 
+///   vim.api.nvim_win_set_option(win_handle, "fillchars", "eob:~")
+///   vim.api.nvim_win_set_option(win_handle, "listchars", nil)
 /// </pre>
 ///
 /// @param channel_id
