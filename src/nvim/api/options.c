@@ -85,7 +85,7 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
 /// the global value is returned. Local values always correspond to the current
 /// buffer or window, unless "buf" or "win" is set in {opts}.
 ///
-/// Note the options {scope} and {buf} cannot be used together.
+/// @note the options {scope} and {buf} cannot be used together.
 ///
 /// Example (lua):
 /// <pre>lua
@@ -161,7 +161,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
 /// |:set|: for global-local options, both the global and local value are set
 /// unless otherwise specified with {scope}.
 ///
-/// Note the options {win} and {buf} cannot be used together.
+/// @note the options {win} and {buf} cannot be used together.
 ///
 /// Example (lua):
 /// <pre>lua
