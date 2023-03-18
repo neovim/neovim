@@ -62,27 +62,27 @@ Buffer nvim_win_get_buf(Window window, Error *err)
 ///
 /// Example (lua): logic to add buffers to windows
 /// <pre>lua
-/// local api = vim.api
-/// local windows = api.nvim_list_wins()
-/// local bufnr = api.nvim_get_current_buf()
-/// 
-/// local buffers = vim.tbl_filter(function(buf)
-///     return api.nvim_buf_is_valid(buf) and vim.bo[buf].buflisted
-/// end, api.nvim_list_bufs())
-/// 
-/// -- If there is only one buffer (which has to be the current one), vim will
-/// -- create a new buffer on :bd.
-/// if #buffers > 1 and #windows > 0 then
-///     for i, v in ipairs(buffers) do
-///         if v == bufnr then
-///             local prev_buf_idx = i == 1 and #buffers or (i - 1)
-///             local prev_buffer = buffers[prev_buf_idx]
-///             for _, win in ipairs(windows) do
-///                 api.nvim_win_set_buf(win, prev_buffer)
-///             end
-///         end
-///     end
-/// end
+///   local api = vim.api
+///   local windows = api.nvim_list_wins()
+///   local bufnr = api.nvim_get_current_buf()
+///   
+///   local buffers = vim.tbl_filter(function(buf)
+///       return api.nvim_buf_is_valid(buf) and vim.bo[buf].buflisted
+///   end, api.nvim_list_bufs())
+///   
+///   -- If there is only one buffer (which has to be the current one), vim will
+///   -- create a new buffer on :bd.
+///   if #buffers > 1 and #windows > 0 then
+///       for i, v in ipairs(buffers) do
+///           if v == bufnr then
+///               local prev_buf_idx = i == 1 and #buffers or (i - 1)
+///               local prev_buffer = buffers[prev_buf_idx]
+///               for _, win in ipairs(windows) do
+///                   api.nvim_win_set_buf(win, prev_buffer)
+///               end
+///           end
+///       end
+///   end
 /// </pre>
 ///
 ///
@@ -110,11 +110,12 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
 ///
 /// Example (lua): check for whitespace before the cursor
 /// <pre>lua
-/// local function check_back_space()
-///     local col = vim.api.nvim_win_get_cursor(0)[2]
-///     local has_backspace = vim.api.nvim_get_current_line():sub(col, col):match("%s") ~= nil
-///     return col == 0 or has_backspace
-/// end
+///   local function check_back_space()
+///       local col = vim.api.nvim_win_get_cursor(0)[2]
+///       local has_backspace = vim.api.nvim_get_current_line():sub(col, col):match("%s") ~= nil
+///       return col == 0 or has_backspace
+///   end
+/// </pre>
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
@@ -138,11 +139,11 @@ ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Error *err)
 ///
 /// Example (lua):
 /// <pre>lua
-///  local api = vim.api
-///  local win_handle = api.nvim_get_current_win()
-///  local rol, col = unpack(api.nvim_win_get_cursor(win_handle))
-///  local text_to_repeat = "some text"
-///  api.nvim_win_set_cursor(0, {row, col + #text_to_repeat})
+///   local api = vim.api
+///   local win_handle = api.nvim_get_current_win()
+///   local rol, col = unpack(api.nvim_win_get_cursor(win_handle))
+///   local text_to_repeat = "some text"
+///   api.nvim_win_set_cursor(0, {row, col + #text_to_repeat})
 /// </pre>
 ///
 /// @param window   Window handle, or 0 for current window
@@ -203,10 +204,10 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
 ///
 /// Example (lua):
 /// <pre>lua
-///  local win_handle = vim.api.nvim_get_current_win()
-///  if vim.api.nvim_win_get_height(win_handle) > 1 then
-///    vim.print("Window is taller than 1 line")
-///  end
+///   local win_handle = vim.api.nvim_get_current_win()
+///   if vim.api.nvim_win_get_height(win_handle) > 1 then
+///     vim.print("Window is taller than 1 line")
+///   end
 /// </pre>
 ///
 /// @param window   Window handle, or 0 for current window
@@ -375,9 +376,9 @@ void nvim_win_set_var(Window window, String name, Object value, Error *err)
 ///
 /// Example (lua):
 /// <pre>lua
-/// local win_handle = vim.api.nvim_get_current_win()
-/// vim.api.nvim_win_set_var(win_handle, "used_marks", {"a", "b", "c"})
-/// vim.api.nvim_win_del_var(win_handle, "used_marks")
+///   local win_handle = vim.api.nvim_get_current_win()
+///   vim.api.nvim_win_set_var(win_handle, "used_marks", {"a", "b", "c"})
+///   vim.api.nvim_win_del_var(win_handle, "used_marks")
 /// </pre>
 ///
 /// @param window   Window handle, or 0 for current window
@@ -451,9 +452,10 @@ Tabpage nvim_win_get_tabpage(Window window, Error *err)
 ///
 /// Example (lua):
 /// <pre>lua
-///  local win_handle = vim.api.nvim_get_current_win()
-///  local winnr = vim.api.nvim_win_get_number(win_handle)
-///  vim.api.nvim_command(winnr .. "wincmd j")
+///   local win_handle = vim.api.nvim_get_current_win()
+///   local winnr = vim.api.nvim_win_get_number(win_handle)
+///   vim.api.nvim_command(winnr .. "wincmd j")
+/// </pre>
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
