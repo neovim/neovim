@@ -51,7 +51,7 @@
 /// Unloaded Buffers:~
 ///
 /// Buffers may be unloaded by the |:bunload| command or the buffer's
-/// |'bufhidden'| option. When a buffer is unloaded its file contents are freed
+/// |'bufhidden'| option. When a buffer is unloaded, its file contents are freed
 /// from memory and vim cannot operate on the buffer lines until it is reloaded
 /// (usually by opening the buffer again in a new window). API methods such as
 /// |nvim_buf_get_lines()| and |nvim_buf_line_count()| will be affected.
@@ -60,6 +60,17 @@
 /// whether a buffer is loaded.
 
 /// Returns the number of lines in the given buffer.
+///
+/// Example (Lua): Get the number of lines in a buffer
+/// <pre>lua
+///   local bufnr = vim.api.nvim_create_buf(false, true)
+///   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {"foo", "bar", "baz"})
+///   local line_num = vim.api.nvim_buf_line_count(bufnr)
+///   vim.print(line_num == 3)
+///
+///   local curr_buf_lc = vim.api.nvim_buf_line_count(0)
+///   vim.print(curr_buf_lc)
+/// </pre>
 ///
 /// @param buffer   Buffer handle, or 0 for current buffer
 /// @param[out] err Error details, if any
@@ -98,7 +109,7 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 /// @param buffer Buffer handle, or 0 for current buffer
 /// @param send_buffer True if the initial notification should contain the
 ///        whole buffer: first notification will be `nvim_buf_lines_event`.
-///        Else the first notification will be `nvim_buf_changedtick_event`.
+///        Else, the first notification will be `nvim_buf_changedtick_event`.
 ///        Not for Lua callbacks.
 /// @param  opts  Optional parameters.
 ///             - on_lines: Lua callback invoked on change.
@@ -264,6 +275,22 @@ void nvim__buf_redraw_range(Buffer buffer, Integer first, Integer last, Error *e
 /// Out-of-bounds indices are clamped to the nearest valid value, unless
 /// `strict_indexing` is set.
 ///
+/// Example (lua): A function to check if there are words before the cursor
+/// <pre>lua
+///   local function has_words_before()
+///      local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+///      return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match "%s" == nil
+///   end
+/// </pre>
+///
+/// Example (lua): Using pcall to check for errors
+/// <pre>lua
+///   local status_ok, lines = pcall(vim.api.nvim_buf_get_lines, bufnr, line, line + 1, true)
+///   if not status_ok then
+///       break
+///   end
+/// </pre>
+///
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer
 /// @param start            First line index
@@ -334,6 +361,29 @@ end:
 ///
 /// Out-of-bounds indices are clamped to the nearest valid value, unless
 /// `strict_indexing` is set.
+///
+/// Example (lua): Trim whitespace from a buffer
+/// <pre>lua
+///   local function trim_space(line1, line2)
+///     local buf = vim.api.nvim_get_current_buf()
+///     local lines = vim.api.nvim_buf_get_lines(buf, line1 - 1, line2, false)
+///
+///     local new_lines = {}
+///     for i, line in ipairs(lines) do
+///       new_lines[i] = string.gsub(line, '%s+$', '')
+///     end
+///     vim.api.nvim_buf_set_lines(buf, line1 - 1, line2, false, new_lines)
+///   end
+/// </pre>
+///
+/// Example (lua): Using pcall to check for errors
+/// <pre>lua
+///   local status_ok, err = pcall(vim.api.nvim_buf_set_lines, bufnr, line, line + 1, true, {"new", "text"})
+///   if not status_ok then
+///     print("Error setting line: " .. err)
+///     break
+///   end
+/// </pre>
 ///
 /// @see |nvim_buf_set_text()|
 ///
@@ -503,6 +553,21 @@ end:
 /// Prefer |nvim_buf_set_lines()| if you are only adding or deleting entire lines.
 ///
 /// @see |nvim_buf_set_lines()|
+///
+/// Example (lua): Set a prompt
+/// <pre>lua
+///   function change_prompt_prefix(prompt_buffer, new_prefix)
+///      if not new_prefix then return end
+///
+///      if new_prefix ~= "" then
+///          vim.fn.prompt_setprompt(prompt_buffer, new_prefix)
+///      else
+///          local prompt_len = #vim.fn.prompt_getprompt(prompt_buffer)
+///          vim.api.nvim_buf_set_text(prompt_buffer, 0, 0, 0, prompt_len, {})
+///          vim.api.nvim_buf_set_option(prompt_buffer, "buftype", "")
+///      end
+///   end
+/// </pre>
 ///
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer
@@ -745,6 +810,12 @@ early_end:
 ///
 /// Prefer |nvim_buf_get_lines()| when retrieving entire lines.
 ///
+/// Example(lua): Use with |nvim_strwidth()| to calculate number of cells
+/// <pre>lua
+///   local line = vim.api.nvim_buf_get_text(bufnr, linenr - 1, 0, linenr - 1, byte_start, {})[1]
+///   col_start = vim.api.nvim_strwidth(line)
+/// </pre>
+///
 /// @param channel_id
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param start_row  First line index
@@ -850,6 +921,23 @@ end:
 /// Unlike |line2byte()|, throws error for out-of-bounds indexing.
 /// Returns -1 for unloaded buffer.
 ///
+/// Example (lua): Using the offset to check how large a buffer is.
+/// <pre>lua
+///   local function get_bufnrs()
+///      local LIMIT = 1024 * 1024 -- 1 Megabyte max
+///      local bufs = {}
+///
+///      for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+///          local line_count = vim.api.nvim_buf_line_count(buf)
+///          local byte_size = vim.api.nvim_buf_get_offset(buf, line_count)
+///
+///          if byte_size < LIMIT then bufs[buf] = true end
+///      end
+///
+///      return vim.tbl_keys(bufs)
+///   end
+/// </pre>
+///
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param index      Line index
 /// @param[out] err   Error details, if any
@@ -876,6 +964,12 @@ Integer nvim_buf_get_offset(Buffer buffer, Integer index, Error *err)
 
 /// Gets a buffer-scoped (b:) variable.
 ///
+/// Example (lua):
+/// <pre>lua
+///   vim.api.nvim_buf_set_var(0, "diff_loaded", true)
+///   vim.api.nvim_buf_get_var(0, "diff_loaded")
+/// </pre>
+///
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Variable name
 /// @param[out] err   Error details, if any
@@ -893,6 +987,11 @@ Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
 }
 
 /// Gets a changed tick of a buffer
+///
+/// Example (lua):
+/// <pre>lua
+///   vim.api.nvim_buf_get_changedtick(0)
+/// </pre>
 ///
 /// @param[in]  buffer  Buffer handle, or 0 for current buffer
 /// @param[out] err     Error details, if any
@@ -912,8 +1011,19 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
 
 /// Gets a list of buffer-local |mapping| definitions.
 ///
-/// @param  mode       Mode short-name ("n", "i", "v", ...)
+/// Example (lua): Add all buffer-local mappings to a list
+/// <pre>lua
+///   modes = {'n', 'i', 'x'}
+///   for _, mode in pairs(modes) do
+///       local buf_local_maps = vim.api.nvim_buf_get_keymap(0, mode)
+///       for _, keymap in ipairs(buf_local_maps) do
+///           add_keymap_to_list(keymap) -- custom function to add to a list
+///       end
+///   end
+/// </pre>
+///
 /// @param  buffer     Buffer handle, or 0 for current buffer
+/// @param  mode       Mode short-name ("n", "i", "v", ...)
 /// @param[out]  err   Error details, if any
 /// @returns Array of |maparg()|-like dictionaries describing mappings.
 ///          The "buffer" key holds the associated buffer handle.
@@ -933,6 +1043,18 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
 ///
 /// @see |nvim_set_keymap()|
 ///
+/// Example (lua): Add global mappings for the current buffer
+/// <pre>lua
+///   modes = {'n', 'i', 'x'}
+///   for _, mode in pairs(modes) do
+///       local global_maps = vim.api.nvim_get_keymap(mode)
+///       for _, keymap in ipairs(global_maps) do
+///           opts = {noremap = keymap.noremap, silent = keymap.silent, nowait = keymap.nowait}
+///           vim.api.nvim_buf_set_keymap(0, mode, keymap.lhs, keymap.rhs, opts)
+///       end
+///   end
+/// </pre>
+///
 /// @param  buffer  Buffer handle, or 0 for current buffer
 void nvim_buf_set_keymap(uint64_t channel_id, Buffer buffer, String mode, String lhs, String rhs,
                          Dict(keymap) *opts, Error *err)
@@ -942,6 +1064,17 @@ void nvim_buf_set_keymap(uint64_t channel_id, Buffer buffer, String mode, String
 }
 
 /// Unmaps a buffer-local |mapping| for the given mode.
+///
+/// Example (lua): unmaps global mappings for the current buffer
+/// <pre>lua
+///   modes = {'n', 'i', 'x'}
+///   for _, mode in pairs(modes) do
+///       local global_maps = vim.api.nvim_get_keymap(mode)
+///       for _, keymap in ipairs(global_maps) do
+///           vim.api.nvim_buf_del_keymap(0, mode, keymap.lhs)
+///       end
+///   end
+/// </pre>
 ///
 /// @see |nvim_del_keymap()|
 ///
@@ -954,6 +1087,11 @@ void nvim_buf_del_keymap(uint64_t channel_id, Buffer buffer, String mode, String
 }
 
 /// Sets a buffer-scoped (b:) variable
+///
+/// Example (lua):
+/// <pre>lua
+///  vim.api.nvim_buf_set_var(0, "num_of_todos", 64)
+/// </pre>
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Variable name
@@ -973,6 +1111,12 @@ void nvim_buf_set_var(Buffer buffer, String name, Object value, Error *err)
 
 /// Removes a buffer-scoped (b:) variable
 ///
+/// Example (lua):
+/// <pre>lua
+///   vim.api.nvim_buf_set_var(0, "repeated_words_total", 458)
+///   vim.api.nvim_buf_del_var(0, "repeated_words_total")
+/// </pre>
+///
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Variable name
 /// @param[out] err   Error details, if any
@@ -989,6 +1133,14 @@ void nvim_buf_del_var(Buffer buffer, String name, Error *err)
 }
 
 /// Gets the full file name for the buffer
+///
+/// @see |expand('%:p')|
+///
+/// Example (lua):
+/// <pre>lua
+///   local name = vim.api.nvim_buf_get_name(0)
+///   print(name)
+/// </pre>
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param[out] err   Error details, if any
@@ -1007,6 +1159,11 @@ String nvim_buf_get_name(Buffer buffer, Arena *arena, Error *err)
 }
 
 /// Sets the full file name for a buffer
+///
+/// Example (lua):
+/// <pre>lua
+///   vim.api.nvim_buf_set_name(0, "/tmp/new_name")
+/// </pre>
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Buffer name
@@ -1040,6 +1197,15 @@ void nvim_buf_set_name(Buffer buffer, String name, Error *err)
 /// Checks if a buffer is valid and loaded. See |api-buffer| for more info
 /// about unloaded buffers.
 ///
+/// Example (lua):
+/// <pre>lua
+///   local loaded = vim.api.nvim_buf_is_loaded(0)
+///   print(loaded)
+///   vim.api.nvim_command("bunload")
+///   loaded = vim.api.nvim_buf_is_loaded(0)
+///   print(loaded)
+/// </pre>
+///
 /// @param buffer Buffer handle, or 0 for current buffer
 /// @return true if the buffer is valid and loaded, false otherwise.
 Boolean nvim_buf_is_loaded(Buffer buffer)
@@ -1052,6 +1218,11 @@ Boolean nvim_buf_is_loaded(Buffer buffer)
 }
 
 /// Deletes the buffer. See |:bwipeout|
+///
+/// Example (lua):
+/// <pre>lua
+///   vim.api.nvim_buf_delete(0, {force=true})
+/// </pre>
 ///
 /// @param buffer Buffer handle, or 0 for current buffer
 /// @param opts  Optional parameters. Keys:
@@ -1103,6 +1274,12 @@ void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
 ///
 /// @note Even if a buffer is valid it may have been unloaded. See |api-buffer|
 /// for more info about unloaded buffers.
+/// 
+/// Example (lua):
+/// <pre>lua
+///   local valid = vim.api.nvim_buf_is_valid(0)
+///   print(valid)
+/// </pre>
 ///
 /// @param buffer Buffer handle, or 0 for current buffer
 /// @return true if the buffer is valid, false otherwise.
@@ -1118,7 +1295,15 @@ Boolean nvim_buf_is_valid(Buffer buffer)
 /// Deletes a named mark in the buffer. See |mark-motions|.
 ///
 /// @note only deletes marks set in the buffer, if the mark is not set
-/// in the buffer it will return false.
+/// in the buffer, it will return false.
+///
+/// Example (lua):
+/// <pre>lua
+///   vim.api.nvim_buf_del_mark(0, 'a') -- assuming mark 'a' is set
+///   let result = vim.api.nvim_buf_del_mark(0, 'a')
+///   print(result) -- returns false
+/// </pre>
+///
 /// @param buffer     Buffer to set the mark on
 /// @param name       Mark name
 /// @return true if the mark was deleted, else false.
@@ -1160,6 +1345,11 @@ Boolean nvim_buf_del_mark(Buffer buffer, String name, Error *err)
 /// Marks are (1,0)-indexed. |api-indexing|
 ///
 /// @note Passing 0 as line deletes the mark
+///
+/// Example (lua): set mark 'a' to line 1, column 1
+/// <pre>lua
+///   vim.api.nvim_buf_set_mark(0, 'a', 1, 1)
+/// </pre>
 ///
 /// @param buffer     Buffer to set the mark on
 /// @param name       Mark name
@@ -1243,11 +1433,23 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 /// If the current window already shows "buffer", the window is not switched
 /// If a window inside the current tabpage (including a float) already shows the
 /// buffer One of these windows will be set as current window temporarily.
-/// Otherwise a temporary scratch window (called the "autocmd window" for
+/// Otherwise, a temporary scratch window (called the "autocmd window" for
 /// historical reasons) will be used.
 ///
 /// This is useful e.g. to call vimL functions that only work with the current
 /// buffer/window currently, like |termopen()|.
+///
+/// Examples (lua):
+/// <pre>lua
+///   vim.api.nvim_buf_call(0, function()
+///     vim.cmd('norm! zz')
+///   end)
+///
+///   vim.api.nvim_buf_call(bufnr, function()
+///      vim.api.nvim_command("doautocmd BufRead " .. vim.api.nvim_buf_get_name(bufnr))
+///   end)
+///
+/// </pre>
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param fun        Function to call inside the buffer (currently lua callable
