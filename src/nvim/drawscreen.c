@@ -1153,6 +1153,7 @@ void comp_col(void)
   }
   set_vim_var_nr(VV_ECHOSPACE, sc_col - 1);
 }
+
 static void redraw_win_signcol(win_T *wp)
 {
   // If we can compute a change in the automatic sizing of the sign column
@@ -1392,10 +1393,12 @@ static void win_update(win_T *wp, DecorProviders *providers)
   int type = wp->w_redr_type;
 
   if (type >= UPD_NOT_VALID) {
-    // TODO(bfredl): should only be implied for CLEAR, not NOT_VALID!
     wp->w_redr_status = true;
-
     wp->w_lines_valid = 0;
+    if (*wp->w_p_stc != NUL) {
+      wp->w_nrwidth_line_count = 0;    // make sure width is reset
+      wp->w_statuscol_line_count = 0;  // make sure width is re-estimated
+    }
   }
 
   // Window is zero-height: Only need to draw the separator

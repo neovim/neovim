@@ -909,25 +909,6 @@ int build_statuscol_str(win_T *wp, linenr_T lnum, long relnum, statuscol_T *stcp
   return width;
 }
 
-/// Force a reset and re-estimation of the status column width.
-///
-/// @param wp  The window for which to reset the status column (can be NULL if "buf" is not)
-/// @param buf  The buffer for which to reset the status column (can be NULL)
-void invalidate_statuscol(win_T *wp, buf_T *buf)
-{
-  if (buf != NULL) {
-    FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
-      if (*win->w_p_stc != NUL && win->w_buffer == buf) {
-        win->w_nrwidth_line_count = 0;
-        win->w_statuscol_line_count = 0;
-      }
-    }
-  } else if (*wp->w_p_stc != NUL) {
-    wp->w_nrwidth_line_count = 0;    // make sure width is reset
-    wp->w_statuscol_line_count = 0;  // make sure width is re-estimated
-  }
-}
-
 /// Build a string from the status line items in "fmt".
 /// Return length of string in screen cells.
 ///

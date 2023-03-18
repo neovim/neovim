@@ -4109,7 +4109,6 @@ void buf_signcols_del_check(buf_T *buf, linenr_T line1, linenr_T line2)
 
   if (!buf->b_signcols.sentinel) {
     buf->b_signcols.valid = false;
-    invalidate_statuscol(NULL, buf);
     return;
   }
 
@@ -4118,7 +4117,6 @@ void buf_signcols_del_check(buf_T *buf, linenr_T line1, linenr_T line2)
   if (sent >= line1 && sent <= line2) {
     // Only invalidate when removing signs at the sentinel line.
     buf->b_signcols.valid = false;
-    invalidate_statuscol(NULL, buf);
   }
 }
 
@@ -4134,7 +4132,6 @@ void buf_signcols_add_check(buf_T *buf, sign_entry_T *added)
 
   if (!added || !buf->b_signcols.sentinel) {
     buf->b_signcols.valid = false;
-    invalidate_statuscol(NULL, buf);
     return;
   }
 

@@ -1198,8 +1198,8 @@ static void did_set_statusline(win_T *win, char **varp, char **gvarp, char **err
   if (varp == &p_ruf) {       // reset ru_wid first
     ru_wid = 0;
   } else if (varp == &win->w_p_stc) {
-    win->w_nrwidth_line_count = 0;
-    win->w_statuscol_line_count = 0;
+    win->w_nrwidth_line_count = 0;    // make sure width is reset
+    win->w_statuscol_line_count = 0;  // make sure width is re-estimated
   }
   char *s = *varp;
   if (varp == &p_ruf && *s == '%') {
