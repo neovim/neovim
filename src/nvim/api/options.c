@@ -87,17 +87,17 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
 ///
 /// Note the options {scope} and {buf} cannot be used together.
 ///
-/// Example:
+/// Example (lua):
 /// <pre>lua
-/// local winid = vim.api.nvim_get_current_win()
-/// vim.api.nvim_win_set_option(winid, 'spell', true)
-/// vim.api.nvim_set_option('spell', false)
+///   local winid = vim.api.nvim_get_current_win()
+///   vim.api.nvim_win_set_option(winid, 'spell', true)
+///   vim.api.nvim_set_option('spell', false)
 ///
-/// local local_spell = vim.api.nvim_get_option_value('spell', {win = winid})
-/// vim.print('Value of local spell is: ' .. string.format('%s', local_spell))
+///   local local_spell = vim.api.nvim_get_option_value('spell', {win = winid})
+///   vim.print('Value of local spell is: ' .. string.format('%s', local_spell))
 ///
-/// local spell = vim.api.nvim_get_option_value('spell', {scope = 'global', win = winid})
-/// vim.print('Value of global spell is: ' .. string.format('%s', spell))
+///   local spell = vim.api.nvim_get_option_value('spell', {scope = 'global', win = winid})
+///   vim.print('Value of global spell is: ' .. string.format('%s', spell))
 /// </pre>
 ///
 /// @param name      Option name
@@ -163,22 +163,22 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
 ///
 /// Note the options {win} and {buf} cannot be used together.
 ///
-/// Example:
+/// Example (lua):
 /// <pre>lua
-/// local bufnr = vim.api.nvim_get_current_buf()
-/// vim.api.nvim_set_option_value('spelllang', "fr", {buf = bufnr})
-/// vim.api.nvim_set_option_value('spelllang', "de", {scope = "global"})
-/// 
-/// local buf_spelllang = vim.api.nvim_get_option_value('spelllang', {buf = bufnr})
-/// vim.print("The buffer's spelllang is: " .. buf_spelllang)
-/// 
-/// 
-/// local winid = vim.api.nvim_get_current_win()
-/// local global_spelllang = vim.api.nvim_get_option_value('spelllang', {scope = 'global', win = winid})
-/// vim.print("The window's global spelllang is: " .. global_spelllang)
-/// 
-/// local local_spelllang = vim.api.nvim_get_option_value('spelllang', {scope = 'local', win = winid})
-/// vim.print("The window's global spelllang is: " .. local_spelllang)
+///   local bufnr = vim.api.nvim_get_current_buf()
+///   vim.api.nvim_set_option_value('spelllang', "fr", {buf = bufnr})
+///   vim.api.nvim_set_option_value('spelllang', "de", {scope = "global"})
+///   
+///   local buf_spelllang = vim.api.nvim_get_option_value('spelllang', {buf = bufnr})
+///   vim.print("The buffer's spelllang is: " .. buf_spelllang)
+///   
+///   
+///   local winid = vim.api.nvim_get_current_win()
+///   local global_spelllang = vim.api.nvim_get_option_value('spelllang', {scope = 'global', win = winid})
+///   vim.print("The window's global spelllang is: " .. global_spelllang)
+///   
+///   local local_spelllang = vim.api.nvim_get_option_value('spelllang', {scope = 'local', win = winid})
+///   vim.print("The window's global spelllang is: " .. local_spelllang)
 /// </pre>
 ///
 /// @param name      Option name
@@ -245,21 +245,20 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
 /// The dictionary has the full option names as keys and option metadata
 /// dictionaries, as detailed at |nvim_get_option_info()|.
 ///
-/// Example:
+/// Example (lua):
 /// <pre>lua
-/// local options = vim.api.nvim_get_all_options_info()
-/// for k, v in pairs(options) do
-///   if v.scope == "global" then
-///     vim.print(k, v.type)
+///   local options = vim.api.nvim_get_all_options_info()
+///   for k, v in pairs(options) do
+///     if v.scope == "global" then
+///       vim.print(k, v.type)
+///     end
 ///   end
-/// end
 ///
-/// for _, option in pairs(options) do
-///   if option.scope == "buf" and option.global_local then
-///     print(option.name .. option.default)
+///   for _, option in pairs(options) do
+///     if option.scope == "buf" and option.global_local then
+///       print(option.name .. option.default)
+///     end
 ///   end
-/// end
-/// 
 /// </pre>
 ///
 /// @return dictionary of all options
@@ -271,12 +270,12 @@ Dictionary nvim_get_all_options_info(Error *err)
 
 /// Gets the option information of an option
 ///
-/// Example:
+/// Example (lua):
 /// <pre>lua
-/// local dictionary = vim.api.nvim_get_option_info('dictionary')
-/// if dictionary.was_set then
-///     vim.notify("dictionary was already set, but it does not allow duplicates", vim.log.levels.ERROR)
-/// end
+///   local dictionary = vim.api.nvim_get_option_info('dictionary')
+///   if dictionary.was_set then
+///       vim.notify("dictionary was already set, but it does not allow duplicates", vim.log.levels.ERROR)
+///   end
 /// </pre>
 ///
 /// Resulting dictionary has keys:
@@ -309,9 +308,9 @@ Dictionary nvim_get_option_info(String name, Error *err)
 
 /// Sets the global value of an option.
 ///
-/// Example:
+/// Example (lua):
 /// <pre>lua
-/// vim.api.nvim_set_option('backupdir', vim.env.HOME .. '/backup/nvim')
+///   vim.api.nvim_set_option('backupdir', vim.env.HOME .. '/backup/nvim')
 /// </pre>
 ///
 /// @param channel_id
@@ -326,10 +325,10 @@ void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
 
 /// Gets the global value of an option.
 ///
-/// Example:
+/// Example (lua):
 /// <pre>lua
-/// local runtime = vim.api.nvim_get_option('runtimepath')
-/// for _, path in ipairs(vim.split(runtime, ',')) do print(path) end
+///   local runtime = vim.api.nvim_get_option('runtimepath')
+///   for _, path in ipairs(vim.split(runtime, ',')) do print(path) end
 /// </pre>
 ///
 /// @param name     Option name
@@ -343,10 +342,10 @@ Object nvim_get_option(String name, Arena *arena, Error *err)
 
 /// Gets a buffer option value
 ///
-/// Example:
+/// Example (lua):
 /// <pre>lua
-/// local bufnr = vim.api.nvim_get_current_buf()
-/// vim.api.nvim_buf_get_option(bufnr, "makeprg")
+///   local bufnr = vim.api.nvim_get_current_buf()
+///   vim.api.nvim_buf_get_option(bufnr, "makeprg")
 /// </pre>
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
@@ -368,11 +367,11 @@ Object nvim_buf_get_option(Buffer buffer, String name, Arena *arena, Error *err)
 /// Sets a buffer option value. Passing `nil` as value deletes the option (only
 /// works if there's a global fallback)
 ///
-/// Example:
+/// Example (lua):
 /// <pre>lua
-/// local bufnr = vim.api.nvim_get_current_buf()
-/// vim.api.nvim_buf_set_option(bufnr, "matchpairs", "(:),<:>,=:;")
-/// vim.api.nvim_buf_set_option(bufnr, "keywordprg", nil)
+///   local bufnr = vim.api.nvim_get_current_buf()
+///   vim.api.nvim_buf_set_option(bufnr, "matchpairs", "(:),<:>,=:;")
+///   vim.api.nvim_buf_set_option(bufnr, "keywordprg", nil)
 /// </pre>
 ///
 /// @param channel_id
@@ -394,10 +393,10 @@ void nvim_buf_set_option(uint64_t channel_id, Buffer buffer, String name, Object
 
 /// Gets a window option value
 ///
-/// Example:
+/// Example (lua):
 /// <pre>lua
-/// local winnr = vim.api.nvim_get_current_win()
-/// vim.api.nvim_win_get_option(winnr, "fillchars")
+///   local winnr = vim.api.nvim_get_current_win()
+///   vim.api.nvim_win_get_option(winnr, "fillchars")
 /// </pre>
 ///
 /// @param window   Window handle, or 0 for current window
@@ -419,11 +418,11 @@ Object nvim_win_get_option(Window window, String name, Arena *arena, Error *err)
 /// Sets a window option value. Passing `nil` as value deletes the option (only
 /// works if there's a global fallback)
 ///
-/// Example:
+/// Example (lua):
 /// <pre>lua
-/// local winnr = vim.api.nvim_get_current_win() 
-/// vim.api.nvim_win_set_option(winnr, "fillchars", "eob:~")
-/// vim.api.nvim_win_set_option(winnr, "listchars", nil)
+///   local winnr = vim.api.nvim_get_current_win() 
+///   vim.api.nvim_win_set_option(winnr, "fillchars", "eob:~")
+///   vim.api.nvim_win_set_option(winnr, "listchars", nil)
 /// </pre>
 ///
 /// @param channel_id
