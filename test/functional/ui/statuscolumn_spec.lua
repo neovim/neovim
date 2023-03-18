@@ -461,7 +461,6 @@ describe('statuscolumn', function()
       vim.api.nvim_buf_set_extmark(0, ns, 7, 0, {
         virt_lines_leftcol = true, virt_lines = {{{"virt", ""}}} })
     ]])
-    feed('lh')  -- force update cursor row
     screen:expect([[
                 4 aaaaa                                    |
                 5 aaaaa                                    |
