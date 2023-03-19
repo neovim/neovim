@@ -1373,8 +1373,8 @@ connection_failure_errmsg({consequence})
 defer_fn({fn}, {timeout})                                     *vim.defer_fn()*
     Defers calling `fn` until `timeout` ms passes.
 
-    Use to do a one-shot timer that calls `fn` Note: The {fn} is |vim.schedule_wrap()|ped automatically, so API functions
-    are safe to call.
+    Use to do a one-shot timer that calls `fn` Note: The {fn} is
+    |vim.schedule_wrap()|ped automatically, so API functions are safe to call.
 
     Parameters: ~
       • {fn}       (function) Callback to call once `timeout` expires
@@ -1598,7 +1598,8 @@ show_pos({bufnr}, {row}, {col}, {filter})                     *vim.show_pos()*
 deep_equal({a}, {b})                                        *vim.deep_equal()*
     Deep compare values for equality
 
-    Tables are compared recursively unless they both provide the `eq` metamethod. All other types are compared using the equality `==` operator.
+    Tables are compared recursively unless they both provide the `eq`
+    metamethod. All other types are compared using the equality `==` operator.
 
     Parameters: ~
       • {a}  any First value
@@ -2567,8 +2568,10 @@ parse({version}, {opts})                                 *vim.version.parse()*
     Parameters: ~
       • {version}  (string) Version string to be parsed.
       • {opts}     (table|nil) Optional keyword arguments:
-                   • strict (boolean): Default false. If `true` , no coercion is attempted on input not strictly
-                     conforming to semver v2.0.0 ( https://semver.org/spec/v2.0.0.html ). E.g. `parse("v1.2")` returns nil.
+                   • strict (boolean): Default false. If `true` , no coercion
+                     is attempted on input not strictly conforming to
+                     semver v2.0.0 ( https://semver.org/spec/v2.0.0.html ).
+                     E.g. `parse("v1.2")` returns nil.
 
     Return: ~
         (table|nil) parsed_version Parsed version table or `nil` if `version`
