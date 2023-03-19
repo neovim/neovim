@@ -200,9 +200,9 @@ endif()
 
 option(ENABLE_GCOV "Enable gcov support" OFF)
 if(ENABLE_GCOV)
-  if(CLANG_TSAN)
+  if(ENABLE_TSAN)
     # GCOV and TSAN results in false data race reports
-    message(FATAL_ERROR "ENABLE_GCOV cannot be used with CLANG_TSAN")
+    message(FATAL_ERROR "ENABLE_GCOV cannot be used with ENABLE_TSAN")
   endif()
   message(STATUS "Enabling gcov support")
   target_compile_options(main_lib INTERFACE --coverage)
@@ -378,7 +378,7 @@ else()
   target_compile_definitions(nvim PRIVATE $<$<CONFIG:Debug>:NVIM_LOG_DEBUG>)
 endif()
 
-if(CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)
+if(ENABLE_ASAN_UBSAN OR ENABLE_MSAN OR ENABLE_TSAN)
   target_compile_definitions(main_lib INTERFACE EXITFREE)
 endif()
 
@@ -791,7 +791,7 @@ set_target_properties(
 target_compile_definitions(libnvim PRIVATE MAKE_LIB)
 target_link_libraries(libnvim PRIVATE main_lib PUBLIC libuv)
 
-if(CLANG_ASAN_UBSAN)
+if(ENABLE_ASAN_UBSAN)
   message(STATUS "Enabling Clang address sanitizer and undefined behavior sanitizer for nvim.")
   if(CI_BUILD)
     # Try to recover from all sanitize issues so we get reports about all failures
@@ -803,10 +803,9 @@ if(CLANG_ASAN_UBSAN)
     -fno-omit-frame-pointer
     -fno-optimize-sibling-calls
     -fsanitize=address
-    -fsanitize=undefined
-    -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/src/.asan-blacklist)
+    -fsanitize=undefined)
   target_link_libraries(nvim PRIVATE -fsanitize=address -fsanitize=undefined)
-elseif(CLANG_MSAN)
+elseif(ENABLE_MSAN)
   message(STATUS "Enabling Clang memory sanitizer for nvim.")
   target_compile_options(nvim PRIVATE
     -fsanitize=memory
@@ -814,7 +813,7 @@ elseif(CLANG_MSAN)
     -fno-omit-frame-pointer
     -fno-optimize-sibling-calls)
   target_link_libraries(nvim PRIVATE -fsanitize=memory -fsanitize-memory-track-origins)
-elseif(CLANG_TSAN)
+elseif(ENABLE_TSAN)
   message(STATUS "Enabling Clang thread sanitizer for nvim.")
   target_compile_options(nvim PRIVATE -fsanitize=thread -fPIE)
   target_link_libraries(nvim PRIVATE -fsanitize=thread)

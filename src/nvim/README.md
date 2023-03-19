@@ -60,9 +60,9 @@ Requires clang 3.4 or later, and `llvm-symbolizer` must be in `$PATH`:
 
 Build Nvim with sanitizer instrumentation (choose one):
 
-    CC=clang make CMAKE_EXTRA_FLAGS="-DCLANG_ASAN_UBSAN=ON"
-    CC=clang make CMAKE_EXTRA_FLAGS="-DCLANG_MSAN=ON"
-    CC=clang make CMAKE_EXTRA_FLAGS="-DCLANG_TSAN=ON"
+    CC=clang make CMAKE_EXTRA_FLAGS="-DENABLE_ASAN_UBSAN=ON"
+    CC=clang make CMAKE_EXTRA_FLAGS="-DENABLE_MSAN=ON"
+    CC=clang make CMAKE_EXTRA_FLAGS="-DENABLE_TSAN=ON"
 
 Create a directory to store logs:
 

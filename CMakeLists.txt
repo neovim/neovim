@@ -135,19 +135,21 @@ endif()
 
 option(LOG_LIST_ACTIONS "Add list actions logging" OFF)
 
-option(CLANG_ASAN_UBSAN "Enable Clang address & undefined behavior sanitizer for nvim binary." OFF)
+option(ENABLE_ASAN_UBSAN "Enable Clang address & undefined behavior sanitizer for nvim binary." OFF)
 option(LOG_DEBUG "Enable debug log messages even in a release build" OFF)
-option(CLANG_MSAN "Enable Clang memory sanitizer for nvim binary." OFF)
-option(CLANG_TSAN "Enable Clang thread sanitizer for nvim binary." OFF)
+option(ENABLE_MSAN "Enable Clang memory sanitizer for nvim binary." OFF)
+option(ENABLE_TSAN "Enable Clang thread sanitizer for nvim binary." OFF)
 
-if((CLANG_ASAN_UBSAN AND CLANG_MSAN)
-    OR (CLANG_ASAN_UBSAN AND CLANG_TSAN)
-    OR (CLANG_MSAN AND CLANG_TSAN))
+if((ENABLE_ASAN_UBSAN AND ENABLE_MSAN)
+    OR (ENABLE_ASAN_UBSAN AND ENABLE_TSAN)
+    OR (ENABLE_MSAN AND ENABLE_TSAN))
   message(FATAL_ERROR "Sanitizers cannot be enabled simultaneously")
 endif()
 
-if((CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN) AND NOT CMAKE_C_COMPILER_ID MATCHES "Clang")
-  message(FATAL_ERROR "Sanitizers are only supported for Clang")
+if(ENABLE_ASAN_UBSAN OR ENABLE_MSAN OR ENABLE_TSAN)
+  if(NOT CMAKE_C_COMPILER_ID MATCHES "Clang" AND NOT CMAKE_C_COMPILER_ID MATCHES "GNU")
+    message(FATAL_ERROR "Sanitizers are only supported for Clang and GCC")
+  endif()
 endif()
 
 # Place targets in bin/ or lib/ for all build configurations
