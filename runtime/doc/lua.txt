@@ -1151,7 +1151,7 @@ vim.go                                                                *vim.go*
         print(vim.go.columns)
         print(vim.go.bar)     -- error: invalid key
 <
-vim.bo[{bufnr}]                                                                *vim.bo*
+vim.bo[{bufnr}]                                                       *vim.bo*
     Get or set buffer-scoped |options| for the buffer with number {bufnr}.
     Like `:set` and `:setlocal`. If [{bufnr}] is omitted then the current
     buffer is used. Invalid {bufnr} or key is an error.
@@ -1164,7 +1164,7 @@ vim.bo[{bufnr}]                                                                *
         print(vim.bo.comments)
         print(vim.bo.baz)                 -- error: invalid key
 <
-vim.wo[{winid}]                                                                *vim.wo*
+vim.wo[{winid}]                                                       *vim.wo*
     Get or set window-scoped |options| for the window with handle {winid}.
     Like `:set`. If [{winid}] is omitted then the current window is used.
     Invalid {winid} or key is an error.
@@ -1182,9 +1182,9 @@ vim.wo[{winid}]                                                                *
 
 
 
-                                                                        *vim.opt_local*
-                                                                       *vim.opt_global*
-                                                                              *vim.opt*
+                                                               *vim.opt_local*
+                                                              *vim.opt_global*
+                                                                     *vim.opt*
 
 
 A special interface |vim.opt| exists for conveniently interacting with list-
