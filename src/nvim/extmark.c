@@ -153,6 +153,9 @@ revised:
   }
 
   if (decor) {
+    if (kv_size(decor->virt_text)) {
+      buf->b_virt_text++;
+    }
     if (kv_size(decor->virt_lines)) {
       buf->b_virt_line_blocks++;
     }
