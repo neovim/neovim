@@ -429,3 +429,71 @@ it('terminal truncates number of composing characters to 5', function()
   meths.chan_send(chan, 'a' .. composing:rep(8))
   retry(nil, nil, function() eq('a' .. composing:rep(5), meths.get_current_line()) end)
 end)
+
+if is_os('win') then
+  describe(':terminal in Windows', function()
+    local screen
+
+    before_each(function()
+      clear()
+      feed_command('set modifiable swapfile undolevels=20')
+      poke_eventloop()
+      local cmd = '["cmd.exe","/K","PROMPT=$g$s"]'
+      screen = thelpers.screen_setup(nil, cmd)
+    end)
+
+    it('"put" operator sends data normally', function()
+      feed('<c-\\><c-n>G')
+      feed_command('let @a = ":: tty ready"')
+      feed_command('let @a = @a . "\\n:: appended " . @a . "\\n\\n"')
+      feed('"ap"ap')
+      screen:expect([[
+                                                        |
+      > :: tty ready                                    |
+      > :: appended :: tty ready                        |
+      > :: tty ready                                    |
+      > :: appended :: tty ready                        |
+      ^> {2: }                                               |
+      :let @a = @a . "\n:: appended " . @a . "\n\n"     |
+      ]])
+      -- operator count is also taken into consideration
+      feed('3"ap')
+      screen:expect([[
+      > :: appended :: tty ready                        |
+      > :: tty ready                                    |
+      > :: appended :: tty ready                        |
+      > :: tty ready                                    |
+      > :: appended :: tty ready                        |
+      ^> {2: }                                               |
+      :let @a = @a . "\n:: appended " . @a . "\n\n"     |
+      ]])
+    end)
+
+    it('":put" command sends data normally', function()
+      feed('<c-\\><c-n>G')
+      feed_command('let @a = ":: tty ready"')
+      feed_command('let @a = @a . "\\n:: appended " . @a . "\\n\\n"')
+      feed_command('put a')
+      screen:expect([[
+                                                        |
+      > :: tty ready                                    |
+      > :: appended :: tty ready                        |
+      > {2: }                                               |
+                                                        |
+      ^                                                  |
+      :put a                                            |
+      ]])
+      -- line argument is only used to move the cursor
+      feed_command('6put a')
+      screen:expect([[
+                                                        |
+      > :: tty ready                                    |
+      > :: appended :: tty ready                        |
+      > :: tty ready                                    |
+      > :: appended :: tty ready                        |
+      ^> {2: }                                               |
+      :6put a                                           |
+      ]])
+    end)
+  end)
+end

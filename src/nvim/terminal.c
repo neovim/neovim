@@ -723,7 +723,11 @@ void terminal_paste(long count, char **y_array, size_t y_size)
     for (size_t j = 0; j < y_size; j++) {
       if (j) {
         // terminate the previous line
+#ifdef MSWIN
+        terminal_send(curbuf->terminal, "\r\n", 2);
+#else
         terminal_send(curbuf->terminal, "\n", 1);
+#endif
       }
       size_t len = strlen(y_array[j]);
       if (len > buff_len) {
