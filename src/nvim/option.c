@@ -2176,8 +2176,10 @@ static char *set_bool_option(const int opt_idx, char *const varp, const int valu
     if (curwin->w_p_spell) {
       errmsg = did_set_spelllang(curwin);
     }
-  } else if ((int *)varp == &curwin->w_p_nu) {  // 'number'
-    invalidate_statuscol(curwin, NULL);
+  } else if ((int *)varp == &curwin->w_p_nu && *curwin->w_p_stc != NUL) {
+    // When 'statuscolumn' is set and 'number' is changed:
+    curwin->w_nrwidth_line_count = 0;    // make sure width is reset
+    curwin->w_statuscol_line_count = 0;  // make sure width is re-estimated
   }
 
   if ((int *)varp == &curwin->w_p_arab) {
