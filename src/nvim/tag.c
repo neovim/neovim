@@ -2029,13 +2029,14 @@ parse_line:
             // The format is {tagname}@{lang}NUL{heuristic}NUL
             *tagp.tagname_end = NUL;
             len = (size_t)(tagp.tagname_end - (char_u *)tagp.tagname);
-            mfp = xmalloc(sizeof(char) + len + 10 + ML_EXTRA + 1);
+            size_t mfp_size = sizeof(char) + len + 10 + ML_EXTRA + 1;
+            mfp = xmalloc(mfp_size);
 
             p = (char_u *)mfp;
             STRCPY(p, tagp.tagname);
             p[len] = '@';
             STRCPY(p + len + 1, help_lang);
-            snprintf((char *)p + len + 1 + ML_EXTRA, STRLEN(p) + len + 1 + ML_EXTRA, "%06d",
+            snprintf((char *)p + len + 1 + ML_EXTRA, mfp_size - (len + 1 + ML_EXTRA), "%06d",
                      help_heuristic(tagp.tagname,
                                     match_re ? matchoff : 0, !match_no_ic)
                      + help_pri);
