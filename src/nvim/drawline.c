@@ -1823,7 +1823,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           wlv.c_extra = NUL;
           wlv.c_final = NUL;
           wlv.extra_attr = vtc.hl_id ? syn_id2attr(vtc.hl_id) : 0;
-          n_attr = wlv.n_extra;
+          n_attr = mb_charlen(vtc.text);
           extmark_attr = 0;
           virt_inline_i++;
         }

@@ -1254,7 +1254,7 @@ end]]
         { virt_text = { { ' virtual text ', 'Special' } }, virt_text_pos = 'inline' })
     feed '^'
     feed '4l'
-        screen:expect { grid = [[
+    screen:expect { grid = [[
       1234{28: virtual text  virtual text }^5678              |
       {1:~                                                 }|
       {1:~                                                 }|
@@ -1274,12 +1274,12 @@ end]]
   end)
 
   it('adjusts cursor location correctly when inserting around inline virtual text', function()
-        insert('12345678')
-        feed '$'
-        meths.buf_set_extmark(0, ns, 0, 4,
+    insert('12345678')
+    feed '$'
+    meths.buf_set_extmark(0, ns, 0, 4,
             { virt_text = { { ' virtual text ', 'Special' } }, virt_text_pos = 'inline' })
 
-        screen:expect { grid = [[
+    screen:expect { grid = [[
       1234{28: virtual text }567^8                            |
       {1:~                                                 }|
       {1:~                                                 }|
@@ -1295,8 +1295,78 @@ end]]
       {1:~                                                 }|
       {1:~                                                 }|
                                                         |
-      ]]
-        }
+      ]]}
+  end)
+
+  it('has correct highlighting with multi-byte characters in inline virtual text', function()
+    insert('12345678')
+    meths.buf_set_extmark(0, ns, 0, 4,
+            { virt_text = { { 'múlti-byté chñröcters 修补', 'Special' } }, virt_text_pos = 'inline' })
+
+    screen:expect { grid = [[
+      1234{28:múlti-byté chñröcters 修补}567^8                |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+  end)
+
+  it('has correct cursor position when inserting around virtual text', function()
+    insert('12345678')
+    meths.buf_set_extmark(0, ns, 0, 4,
+            { virt_text = { { 'virtual text', 'Special' } }, virt_text_pos = 'inline' })
+    feed '^'
+    feed '3l'
+    feed 'a'
+    screen:expect { grid = [[
+      1234{28:^virtual text}5678                              |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {24:-- INSERT --}                                      |
+      ]]}
+    feed '<ESC>'
+    feed '^'
+    feed '4l'
+    feed 'i'
+    screen:expect { grid = [[
+      1234{28:^virtual text}5678                              |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {24:-- INSERT --}                                      |
+      ]]}
   end)
 end)
 
