@@ -34,8 +34,8 @@ describe(':make', function()
       nvim('set_option', 'makeprg', testprg('shell-test'))
       local out = eval('execute("make")')
       -- Ensure there are no "shell returned X" messages between
-	  -- command and last line (indicating zero exit)
-      matches('LastExitCode%s+[(]', out)
+      -- command and last line (indicating zero exit)
+      matches('LastExitCode%s+ready [$]%s+[(]', out)
       matches('\n.*%: ready [$]', out)
     end)
 

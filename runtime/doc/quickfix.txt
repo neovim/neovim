@@ -956,7 +956,7 @@ or simpler >
 "$*" can be given multiple times, for example: >
    :set makeprg=gcc\ -o\ $*\ $*
 
-The 'shellpipe' option defaults to ">%s 2>&1" for Win32.
+The 'shellpipe' option defaults to "2>&1| tee" for Win32.
 This means that the output of the compiler is saved in a file and not shown on
 the screen directly.  For Unix "| tee" is used.  The compiler output is shown
 on the screen and saved in a file the same time.  Depending on the shell used

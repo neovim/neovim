@@ -22,7 +22,7 @@ func Test_shell_options()
           \ ['tcsh', '-c', '|& tee', '', '>&', '', '']]
   endif
   if has('win32')
-    let shells += [['cmd', '/s /c', '>%s 2>&1', '', '>%s 2>&1', '', '"']]
+    let shells += [['cmd', '/s /c', '2>&1| tee', '', '>%s 2>&1', '', '"']]
   endif
 
   " start a new Vim instance with 'shell' set to each of the supported shells
