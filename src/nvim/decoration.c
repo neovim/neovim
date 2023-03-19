@@ -95,6 +95,10 @@ void decor_remove(buf_T *buf, int row, int row2, Decoration *decor)
 {
   decor_redraw(buf, row, row2, decor);
   if (decor) {
+    if (kv_size(decor->virt_text) && decor->virt_text_pos == kVTInline) {
+      assert(buf->b_virt_text_inline > 0);
+      buf->b_virt_text_inline--;
+    }
     if (kv_size(decor->virt_lines)) {
       assert(buf->b_virt_line_blocks > 0);
       buf->b_virt_line_blocks--;

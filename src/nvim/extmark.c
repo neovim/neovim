@@ -148,6 +148,9 @@ revised:
   }
 
   if (decor) {
+    if (kv_size(decor->virt_text) && decor->virt_text_pos == kVTInline) {
+      buf->b_virt_text_inline++;
+    }
     if (kv_size(decor->virt_lines)) {
       buf->b_virt_line_blocks++;
     }
