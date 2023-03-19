@@ -1947,6 +1947,7 @@ static void findtags_add_match(findtags_state_T *st, tagptrs_T *tagpp, findtags_
   const bool name_only = (st->flags & TAG_NAMES);
   int mtt;
   size_t len = 0;
+  size_t mfp_size = 0;
   bool is_current;             // file name matches
   bool is_static;              // current tag line is static
   char *mfp;
@@ -1990,13 +1991,14 @@ static void findtags_add_match(findtags_state_T *st, tagptrs_T *tagpp, findtags_
     // The format is {tagname}@{lang}NUL{heuristic}NUL
     *tagpp->tagname_end = NUL;
     len = (size_t)(tagpp->tagname_end - tagpp->tagname);
-    mfp = xmalloc(sizeof(char) + len + 10 + ML_EXTRA + 1);
+    mfp_size = sizeof(char) + len + 10 + ML_EXTRA + 1;
+    mfp = xmalloc(mfp_size);
 
     p = mfp;
     STRCPY(p, tagpp->tagname);
     p[len] = '@';
     STRCPY(p + len + 1, st->help_lang);
-    snprintf(p + len + 1 + ML_EXTRA, strlen(p) + len + 1 + ML_EXTRA, "%06d",
+    snprintf(p + len + 1 + ML_EXTRA, mfp_size - (len + 1 + ML_EXTRA), "%06d",
              help_heuristic(tagpp->tagname,
                             margs->match_re ? margs->matchoff : 0,
                             !margs->match_no_ic) + st->help_pri);
