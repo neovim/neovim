@@ -1272,6 +1272,32 @@ end]]
                                                         |
       ]]}
   end)
+
+  it('adjusts cursor location correctly when inserting around inline virtual text', function()
+        insert('12345678')
+        feed '$'
+        meths.buf_set_extmark(0, ns, 0, 4,
+            { virt_text = { { ' virtual text ', 'Special' } }, virt_text_pos = 'inline' })
+
+        screen:expect { grid = [[
+      1234{28: virtual text }567^8                            |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]
+        }
+  end)
 end)
 
 describe('decorations: virtual lines', function()
