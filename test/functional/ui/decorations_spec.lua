@@ -1245,6 +1245,33 @@ end]]
                                                               |
     ]]}
   end)
+
+  it('cursor positions are correct with multiple inline virtual text', function()
+    insert('12345678')
+    meths.buf_set_extmark(0, ns, 0, 4,
+        { virt_text = { { ' virtual text ', 'Special' } }, virt_text_pos = 'inline' })
+    meths.buf_set_extmark(0, ns, 0, 4,
+        { virt_text = { { ' virtual text ', 'Special' } }, virt_text_pos = 'inline' })
+    feed '^'
+    feed '4l'
+        screen:expect { grid = [[
+      1234{28: virtual text  virtual text }^5678              |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+  end)
 end)
 
 describe('decorations: virtual lines', function()

@@ -1796,8 +1796,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       if (has_decor && v >= 0) {
         bool selected = (area_active || (area_highlighting && noinvcur
                                          && wlv.vcol == wp->w_virtcol));
-        extmark_attr = decor_redraw_col(wp, (colnr_T)v, wlv.off,
-                                            selected, &decor_state);
+        extmark_attr = decor_redraw_col(wp, (colnr_T)v, wlv.off, selected, &decor_state);
 
         // we could already be inside an existing virt_line with multiple chunks
         if (!(virt_inline_i < kv_size(virt_inline))) {

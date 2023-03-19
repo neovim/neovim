@@ -396,12 +396,13 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
       mtkey_t mark = marktree_itr_current(cts->cts_iter);
       if (mark.pos.row != cts->cts_row || mark.pos.col > col) {
         break;
-      } else if (mark.pos.col == col) { // TODO: or maybe unconditionally, what if byte-misaligned?
+      } else if (mark.pos.col
+                 == col) {  // TODO(bfredl): or maybe unconditionally, what if byte-misaligned?
         if (!mt_end(mark)) {
           Decoration decor = get_decor(mark);
           if (decor.virt_text_pos == kVTInline) {
-            cts->cts_cur_text_width = decor.virt_text_width;
-            size += cts->cts_cur_text_width;
+            cts->cts_cur_text_width += decor.virt_text_width;
+            size += decor.virt_text_width;
           }
         }
       }
