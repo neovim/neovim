@@ -83,6 +83,9 @@ void decor_redraw(buf_T *buf, int row1, int row2, Decoration *decor)
 
   if (decor && decor_virt_pos(*decor)) {
     redraw_buf_line_later(buf, row1 + 1, false);
+    if (decor->virt_text_pos == kVTInline) {
+      changed_line_display_buf(buf);
+    }
   }
 
   if (decor && kv_size(decor->virt_lines)) {
