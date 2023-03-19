@@ -11,9 +11,11 @@ typedef struct {
   win_T *cts_win;
   char *cts_line;    // start of the line
   char *cts_ptr;     // current position in line
+  int cts_row;
 
   bool cts_has_virt_text;  // true if if a property inserts text
   int cts_cur_text_width;     // width of current inserted text
+  MarkTreeIter cts_iter[1];
   // TODO(bfredl): iterator in to the marktree for scanning virt text
 
   int cts_vcol;    // virtual column at current position
