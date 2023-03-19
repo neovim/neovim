@@ -295,17 +295,25 @@ unsigned     linetabsize(win_T *wp, linenr_T lnum)
 /// Prepare the structure passed to chartabsize functions.
 ///
 /// "line" is the start of the line, "ptr" is the first relevant character.
-/// When "lnum" is zero do not use text properties that insert text.
-void init_chartabsize_arg(chartabsize_T *cts, win_T *wp, linenr_T lnum FUNC_ATTR_UNUSED,
-                          colnr_T col, char *line, char *ptr)
+/// When "lnum" is zero do not use inline virtual text.
+void init_chartabsize_arg(chartabsize_T *cts, win_T *wp, linenr_T lnum, colnr_T col, char *line,
+                          char *ptr)
 {
   cts->cts_win = wp;
   cts->cts_vcol = col;
   cts->cts_line = line;
   cts->cts_ptr = ptr;
   cts->cts_cur_text_width = 0;
-  // TODO(bfredl): actually lookup inline virtual text here
   cts->cts_has_virt_text = false;
+  cts->cts_row = lnum - 1;
+
+  if (cts->cts_row >= 0) {
+    marktree_itr_get(wp->w_buffer->b_marktree, cts->cts_row, 0, cts->cts_iter);
+    mtkey_t mark = marktree_itr_current(cts->cts_iter);
+    if (mark.pos.row == cts->cts_row) {
+      cts->cts_has_virt_text = true;
+    }
+  }
 }
 
 /// Free any allocated item in "cts".
@@ -383,7 +391,22 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   // First get normal size, without 'linebreak' or virtual text
   int size = win_chartabsize(wp, s, vcol);
   if (cts->cts_has_virt_text) {
-    // TODO(bfredl): inline virtual text
+    int col = (int)(s - line);
+    while (true) {
+      mtkey_t mark = marktree_itr_current(cts->cts_iter);
+      if (mark.pos.row != cts->cts_row || mark.pos.col > col) {
+        break;
+      } else if (mark.pos.col == col) { // TODO: or maybe unconditionally, what if byte-misaligned?
+        if (!mt_end(mark)) {
+          Decoration decor = get_decor(mark);
+          if (decor.virt_text_pos == kVTInline) {
+            cts->cts_cur_text_width = decor.virt_text_width;
+            size += cts->cts_cur_text_width;
+          }
+        }
+      }
+      marktree_itr_next(wp->w_buffer->b_marktree, cts->cts_iter);
+    }
   }
 
   int c = (uint8_t)(*s);
