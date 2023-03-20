@@ -66,14 +66,15 @@ end)()
 ---   end
 ---   </pre>
 ---
----@see |vim.split()|
----@see |luaref-patterns|
----@see https://www.lua.org/pil/20.2.html
----@see http://lua-users.org/wiki/StringLibraryTutorial
+--- @see |string.gmatch()|
+--- @see |vim.split()|
+--- @see |luaref-patterns|
+--- @see https://www.lua.org/pil/20.2.html
+--- @see http://lua-users.org/wiki/StringLibraryTutorial
 ---
----@param s string String to split
----@param sep string Separator or pattern
----@param opts (table|nil) Keyword arguments |kwargs|:
+--- @param s string String to split
+--- @param sep string Separator or pattern
+--- @param opts (table|nil) Keyword arguments |kwargs|:
 ---       - keepsep: (boolean) Include segments matching `sep` instead of discarding them.
 ---       - plain: (boolean) Use `sep` literally (as in string.find).
 ---       - trimempty: (boolean) Discard empty segments at start and end of the sequence.

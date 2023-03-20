@@ -101,6 +101,9 @@ describe('version', function()
       { v1 = 'v9.0.0',           v2 = 'v0.9.0',           want = 1, },
       { v1 = 'v0.9.0',           v2 = 'v0.0.0',           want = 1, },
       { v1 = 'v0.0.9',           v2 = 'v0.0.0',           want = 1, },
+      { v1 = 'v0.0.9+aaa',       v2 = 'v0.0.9+bbb',       want = 0, },
+
+      -- prerelease 💩 https://semver.org/#spec-item-11
       { v1 = 'v1.0.0-alpha',     v2 = 'v1.0.0',           want = -1, },
       { v1 = '1.0.0',            v2 = '1.0.0-alpha',      want = 1, },
       { v1 = '1.0.0-2',          v2 = '1.0.0-1',          want = 1, },
@@ -116,11 +119,11 @@ describe('version', function()
       { v1 = '1.0.0-alpha.beta', v2 = '1.0.0-alpha',      want = 1, },
       { v1 = '1.0.0-alpha',      v2 = '1.0.0-alpha.beta', want = -1, },
       { v1 = '1.0.0-alpha.beta', v2 = '1.0.0-beta',       want = -1, },
-      { v1 = '1.0.0-beta',       v2 = '1.0.0-alpha.beta', want = 1, },
-      { v1 = '1.0.0-beta',       v2 = '1.0.0-beta.2',     want = -1, },
-      -- TODO
-      -- { v1 = '1.0.0-beta.2',     v2 = '1.0.0-beta.11',    want = -1, },
-      { v1 = '1.0.0-beta.11',    v2 = '1.0.0-rc.1',       want = -1, },
+      { v1 = '1.0.0-beta.2',     v2 = '1.0.0-beta.11',    want = -1, },
+      { v1 = '1.0.0-beta.20',    v2 = '1.0.0-beta.11',    want = 1, },
+      { v1 = '1.0.0-alpha.20',   v2 = '1.0.0-beta.11',    want = -1, },
+      { v1 = '1.0.0-a.01.x.3',   v2 = '1.0.0-a.1.x.003',  want = 0, },
+      { v1 = 'v0.9.0-dev-92+9',  v2 = 'v0.9.0-dev-120+3', want = -1, },
     }
     for _, tc in ipairs(testcases) do
       local msg = function(s) return ('v1 %s v2'):format(s == 0 and '==' or (s == 1 and '>' or '<')) end
