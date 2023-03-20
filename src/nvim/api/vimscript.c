@@ -157,7 +157,7 @@ Object nvim_eval(String expr, Error *err)
 
   if (!ERROR_SET(err)) {
     if (ok == FAIL) {
-      // Should never happen, try_end() (in TRY_WRAP_WITH) should get the error. #8371
+      // Should never happen, try_end() (in TRY_WRAP) should get the error. #8371
       api_set_error(err, kErrorTypeException,
                     "Failed to evaluate expression: '%.*s'", 256, expr.data);
     } else {
