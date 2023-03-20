@@ -192,6 +192,7 @@ let s:filename_checks = {
     \ 'epuppet': ['file.epp'],
     \ 'erlang': ['file.erl', 'file.hrl', 'file.yaws'],
     \ 'eruby': ['file.erb', 'file.rhtml'],
+    \ 'esdl': ['file.esdl'],
     \ 'esmtprc': ['anyesmtprc', 'esmtprc', 'some-esmtprc'],
     \ 'esqlc': ['file.ec', 'file.EC'],
     \ 'esterel': ['file.strl'],

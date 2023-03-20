@@ -350,6 +350,7 @@ local extension = {
   yaws = 'erlang',
   erb = 'eruby',
   rhtml = 'eruby',
+  esdl = 'esdl',
   ec = 'esqlc',
   EC = 'esqlc',
   strl = 'esterel',
