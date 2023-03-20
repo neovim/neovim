@@ -45,20 +45,28 @@ The following changes may require adaptations in user config or plugins.
     - `printheader`
     - `printmbcharset`
 
-• 'paste' option is now deprecated and 'pastetoggle' is removed. |paste| works
-  automatically in GUI and terminal (TUI) Nvim.  Just Paste It.™
-
-• libiconv and intl are now required build dependencies.
-
 • Unsaved changes are now preserved rather than discarded when |channel-stdio|
   is closed.
 
+OPTIONS
+• 'paste' option is now deprecated and 'pastetoggle' is removed. |paste| works
+  automatically in GUI and terminal (TUI) Nvim.  Just Paste It.™
+
+FUNCTIONS
+• Renamed vim.pretty_print to vim.print. |deprecated|
+
+COMMANDS
+
+LSP
+
+TREESITTER
 • Changes to |vim.treesitter.get_node_text()|:
   - It now returns `string`, as opposed to `string|string[]|nil`.
   - The `concat` option has been removed as it was not consistently applied.
   - Invalid ranges now cause an error instead of returning `nil`.
 
-• Renamed vim.pretty_print to vim.print. |deprecated|
+BUILD
+• libiconv and intl are now required build dependencies.
 
 ==============================================================================
 NEW FEATURES                                                    *news-features*
@@ -72,10 +80,6 @@ The following new APIs or features were added.
   directories where Neovim should find its configuration and state files. See
   `:help $NVIM_APPNAME` .
 
-• |nvim_open_win()| now accepts a relative `mouse` option to open a floating win
-  relative to the mouse. Note that the mouse doesn't update frequently without
-  setting `vim.o.mousemoveevent = true`
-
 • EditorConfig support is now builtin. This is enabled by default and happens
   automatically. To disable it, users should add >lua
 
@@ -88,56 +92,18 @@ The following new APIs or features were added.
 <  Also works with stdin: >
       echo "print(42)" | nvim -l -
 
-• Added a |vim.lsp.codelens.clear()| function to clear codelenses.
-
-• |vim.inspect_pos()|, |vim.show_pos()| and |:Inspect| allow a user to get or show items
-  at a given buffer position. Currently this includes treesitter captures,
-  semantic tokens, syntax groups and extmarks.
-
-• Added support for semantic token highlighting to the LSP client. This
-  functionality is enabled by default when a client that supports this feature
-  is attached to a buffer. Opt-out can be performed by deleting the
-  `semanticTokensProvider` from the LSP client's {server_capabilities} in the
-  `LspAttach` callback.
-
-  See |lsp-semantic-highlight| for more information.
-
-• |vim.treesitter.inspect_tree()| and |:InspectTree| opens a split window
-  showing a text representation of the nodes in a language tree for the current
-  buffer.
-
-• Added support for the `willSave` and `willSaveWaitUntil` capabilities to the
-  LSP client. `willSaveWaitUntil` allows a server to modify a document before it
-  gets saved. Example use-cases by language servers include removing unused
-  imports, or formatting the file.
-
-• Treesitter syntax highlighting for `help` files now supports highlighted
-  code examples. To enable, create a `.config/nvim/ftplugin/help.lua` with
-  the contents >lua
-    vim.treesitter.start()
-<
-  Note: Highlighted code examples are only available in the Nvim manual, not
-  in help files taken from Vim. The treesitter `help` parser is also work in
-  progress and not guaranteed to correctly highlight every help file in the
-  wild.
-
-• |vim.secure.trust()|, |:trust| allows the user to manage files in trust
-  database.
-
-• |vim.diagnostic.open_float()| (and therefore |vim.diagnostic.config()|) now
-  accepts a `suffix` option which, by default, renders LSP error codes.
-  Similarly, the `virtual_text` configuration in |vim.diagnostic.config()| now
-  has a `suffix` option which does nothing by default.
-
-• |vim.fs.dir()| now has a `opts` argument with a depth field to allow
-  recursively searching a directory tree.
-
-• |vim.secure.read()| reads a file and prompts the user if it should be
-  trusted and, if so, returns the file's contents.
-
 • When using Nvim inside tmux 3.2 or later, the default clipboard provider
   will now copy to the system clipboard. |provider-clipboard|
 
+• |--remote-ui| option was added to connect to a remote instance and display
+  in it in a |TUI| in the local terminal. This can be used run a headless nvim
+  instance in the background and display its UI on demand, which previously
+  only was possible using an external UI implementation.
+
+• Vim's `has('gui_running')` is now supported as a way for plugins to check if
+  a GUI (not the |TUI|) is attached to Nvim. |has()|
+
+OPTIONS
 • |'showcmdloc'| option to display the 'showcmd' information in the
   status line or tab line. A new %S statusline item is available to place
   the 'showcmd' text in a custom 'statusline'. Useful for when |'cmdheight'|
@@ -150,29 +116,84 @@ The following new APIs or features were added.
   the 'statusline' syntax and can be used to transform the line numbers, create
   mouse click callbacks for |signs|, introduce a custom margin or separator etc.
 
-• |nvim_select_popupmenu_item()| now supports |cmdline-completion| popup menu.
-
 • |'diffopt'| now includes a `linematch` option to enable a second-stage diff
   on individual hunks to provide much more accurate diffs. This option is also
   available to |vim.diff()|
 
   See https://github.com/neovim/neovim/pull/14537.
 
+FUNCTIONS
+• |nvim_open_win()| now accepts a relative `mouse` option to open a floating win
+  relative to the mouse. Note that the mouse doesn't update frequently without
+  setting `vim.o.mousemoveevent = true`
+
+• |vim.inspect_pos()|, |vim.show_pos()| and |:Inspect| allow a user to get or show items
+  at a given buffer position. Currently this includes treesitter captures,
+  semantic tokens, syntax groups and extmarks.
+
+• |vim.secure.trust()|, |:trust| allows the user to manage files in trust
+  database.
+
+• |vim.fs.dir()| now has a `opts` argument with a depth field to allow
+  recursively searching a directory tree.
+
+• |vim.secure.read()| reads a file and prompts the user if it should be
+  trusted and, if so, returns the file's contents.
+
+• |nvim_select_popupmenu_item()| now supports |cmdline-completion| popup menu.
+
 • |vim.diagnostic.is_disabled()| checks if diagnostics are disabled in a given
   buffer or namespace.
 
-• |--remote-ui| option was added to connect to a remote instance and display
-  in it in a |TUI| in the local terminal. This can be used run a headless nvim
-  instance in the background and display its UI on demand, which previously
-  only was possible using an external UI implementation.
+• |nvim_list_uis()| reports all |ui-option| fields.
 
-• Several improvements were made to make the code generation scripts more
-  deterministic, and a `LUA_GEN_PRG` build parameter has been introduced to
-  allow for a workaround for some remaining reproducibility problems.
+• Added an omnifunc implementation for lua, |vim.lua_omnifunc()|
 
+COMMANDS
 • |:highlight| now supports an additional attribute "altfont".
 
 • |:Man| manpage viewer supports manpage names containing spaces.
+
+LSP
+• Added a |vim.lsp.codelens.clear()| function to clear codelenses.
+
+• Added support for semantic token highlighting to the LSP client. This
+  functionality is enabled by default when a client that supports this feature
+  is attached to a buffer. Opt-out can be performed by deleting the
+  `semanticTokensProvider` from the LSP client's {server_capabilities} in the
+  `LspAttach` callback.
+
+  See |lsp-semantic-highlight| for more information.
+
+• Added support for the `willSave` and `willSaveWaitUntil` capabilities to the
+  LSP client. `willSaveWaitUntil` allows a server to modify a document before it
+  gets saved. Example use-cases by language servers include removing unused
+  imports, or formatting the file.
+
+• |vim.diagnostic.open_float()| (and therefore |vim.diagnostic.config()|) now
+  accepts a `suffix` option which, by default, renders LSP error codes.
+  Similarly, the `virtual_text` configuration in |vim.diagnostic.config()| now
+  has a `suffix` option which does nothing by default.
+
+• Added preliminary support for the `workspace/didChangeWatchedFiles` capability
+  to the LSP client to notify servers of file changes on disk. The feature is
+  disabled by default and can be enabled by setting the
+  `workspace.didChangeWatchedFiles.dynamicRegistration=true` capability.
+
+TREESITTER
+• |vim.treesitter.inspect_tree()| and |:InspectTree| opens a split window
+  showing a text representation of the nodes in a language tree for the current
+  buffer.
+
+• Treesitter syntax highlighting for `help` files now supports highlighted
+  code examples. To enable, create a `.config/nvim/ftplugin/help.lua` with
+  the contents >lua
+    vim.treesitter.start()
+<
+  Note: Highlighted code examples are only available in the Nvim manual, not
+  in help files taken from Vim. The treesitter `help` parser is also work in
+  progress and not guaranteed to correctly highlight every help file in the
+  wild.
 
 • Treesitter captures can now be transformed by directives. This will allow
   more complicated dynamic language injections.
@@ -181,8 +202,6 @@ The following new APIs or features were added.
   writing custom directives using |vim.treesitter.add_directive()|.
 
 • |vim.treesitter.add()| replaces `vim.treesitter.language.require_language`.
-
-• `require'bit'` is now always available |lua-bit|
 
 • |vim.treesitter.foldexpr()| can be used for 'foldexpr' to use treesitter for folding.
 
@@ -194,29 +213,21 @@ The following new APIs or features were added.
 
   Additionally |TSNode:range()| now takes an optional {include_bytes} argument.
 
-• |nvim_list_uis()| reports all |ui-option| fields.
-
-• Vim's `has('gui_running')` is now supported as a way for plugins to check if
-  a GUI (not the |TUI|) is attached to Nvim. |has()|
-
-• Added preliminary support for the `workspace/didChangeWatchedFiles` capability
-  to the LSP client to notify servers of file changes on disk. The feature is
-  disabled by default and can be enabled by setting the
-  `workspace.didChangeWatchedFiles.dynamicRegistration=true` capability.
-
-• Added an omnifunc implementation for lua, |vim.lua_omnifunc()|
-
 • Treesitter injection queries now use the format described at
   https://tree-sitter.github.io/tree-sitter/syntax-highlighting#language-injection .
   Support for the previous format will be removed in a future release.
+
+BUILD
+• Several improvements were made to make the code generation scripts more
+  deterministic, and a `LUA_GEN_PRG` build parameter has been introduced to
+  allow for a workaround for some remaining reproducibility problems.
+
+• `require'bit'` is now always available |lua-bit|
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
 The following changes to existing APIs or features add new behavior.
-
-• 'exrc' now supports `.nvim.lua` file.
-• 'exrc' is no longer marked deprecated.
 
 • The |TUI| is changed to run in a separate process (previously, a separate
   thread was used). This is not supposed to be a visible change to the user,
@@ -230,6 +241,21 @@ The following changes to existing APIs or features add new behavior.
 
 • The `win_viewport` UI event now contains information about virtual lines,
   meaning that smooth scrolling can now be implemented more consistenlty.
+
+OPTIONS
+
+• 'exrc' now supports `.nvim.lua` file.
+• 'exrc' is no longer marked deprecated.
+
+FUNCTIONS
+
+COMMANDS
+
+LSP
+
+TREESITTER
+
+BUILD
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
@@ -245,14 +271,24 @@ The following deprecated functions or APIs were removed.
   changes need to be contributed there first.)
   See https://github.com/neovim/neovim/pull/20674.
 
-• 'hkmap', 'hkmapp' and 'aleph' options were removed. Use 'keymap' option instead.
-
 • |LanguageTree:parse()| no longer returns changed regions. Please use the
   `on_changedtree` callbacks instead.
 
+OPTIONS
+• 'hkmap', 'hkmapp' and 'aleph' options were removed. Use 'keymap' option instead.
+
+FUNCTIONS
 • `vim.highlight.create()`, `vim.highlight.link()` were removed, use |nvim_set_hl()| instead.
 
 • `require'health'` was removed. Use |vim.health| instead.
+
+COMMANDS
+
+LSP
+
+TREESITTER
+
+BUILD
 
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*
@@ -260,9 +296,20 @@ DEPRECATIONS                                                *news-deprecations*
 The following functions are now deprecated and will be removed in the next
 release.
 
+OPTIONS
+
+FUNCTIONS
+
+COMMANDS
+
+LSP
+
+TREESITTER
 • |vim.treesitter.add()| replaces `vim.treesitter.language.require_language()`
 
 • |vim.treesitter.get_node_at_pos()| and |vim.treesitter.get_node_at_cursor()|
   are both deprecated in favor of |vim.treesitter.get_node()|.
+
+BUILD
 
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:
