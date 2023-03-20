@@ -96,6 +96,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/extmark.h"
 #include "nvim/fileio.h"
@@ -300,7 +301,7 @@ bool undo_allowed(buf_T *buf)
 
   // Don't allow changes in the buffer while editing the cmdline.  The
   // caller of getcmdline() may get confused.
-  if (textlock != 0) {
+  if (textlock != 0 || expr_map_locked()) {
     emsg(_(e_textlock));
     return false;
   }

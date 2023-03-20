@@ -6326,6 +6326,11 @@ void restore_current_state(save_state_T *sst)
   ui_cursor_shape();  // may show different cursor shape
 }
 
+bool expr_map_locked(void)
+{
+  return expr_map_lock > 0 && !(curbuf->b_flags & BF_DUMMY);
+}
+
 /// ":normal[!] {commands}": Execute normal mode commands.
 static void ex_normal(exarg_T *eap)
 {
@@ -6335,10 +6340,11 @@ static void ex_normal(exarg_T *eap)
   }
   char *arg = NULL;
 
-  if (ex_normal_lock > 0) {
+  if (expr_map_locked()) {
     emsg(_(e_secure));
     return;
   }
+
   if (ex_normal_busy >= p_mmd) {
     emsg(_("E192: Recursive use of :normal too deep"));
     return;

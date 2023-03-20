@@ -114,6 +114,21 @@ describe('vim.filetype', function()
     ]])
   end)
 
+  it('can get default option values for filetypes via vim.filetype.get_option()', function()
+    command('filetype plugin on')
+
+    for ft, opts in pairs {
+      lua = { commentstring = '-- %s' },
+      vim = { commentstring = '"%s' },
+      man = { tagfunc = 'v:lua.require\'man\'.goto_tag' },
+      xml = { formatexpr = 'xmlformat#Format()' }
+    } do
+      for option, value in pairs(opts) do
+        eq(value, exec_lua([[ return vim.filetype.get_option(...) ]], ft, option))
+      end
+    end
+
+  end)
 end)
 
 describe('filetype.lua', function()

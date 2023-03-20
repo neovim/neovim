@@ -102,6 +102,7 @@ return {
     "scope";
     "win";
     "buf";
+    "filetype";
   }};
   { 'highlight', {
     "bold";

@@ -2206,6 +2206,28 @@ add({filetypes})                                          *vim.filetype.add()*
       • {filetypes}  (table) A table containing new filetype maps (see
                      example).
 
+get_option({filetype}, {option})                   *vim.filetype.get_option()*
+    Get the default option value for a {filetype}.
+
+    The returned value is what would be set in a new buffer after 'filetype'
+    is set, meaning it should respect all FileType autocmds and ftplugin
+    files.
+
+    Example: >lua
+      vim.filetype.get_option('vim', 'commentstring')
+<
+
+    Note: this uses |nvim_get_option_value()| but caches the result. This
+    means |ftplugin| and |FileType| autocommands are only triggered once and
+    may not reflect later changes.
+
+    Parameters: ~
+      • {filetype}  string Filetype
+      • {option}    string Option name
+
+    Return: ~
+        string|boolean|integer: Option value
+
 match({args})                                           *vim.filetype.match()*
     Perform filetype detection.
 

@@ -24,7 +24,7 @@
 #endif
 
 static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_type, void **from,
-                                      Error *err)
+                                      char **filetype, Error *err)
 {
   if (HAS_KEY(opts->scope)) {
     VALIDATE_T("scope", kObjectTypeString, opts->scope.type, {
@@ -43,6 +43,14 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
   }
 
   *opt_type = SREQ_GLOBAL;
+
+  if (filetype != NULL && HAS_KEY(opts->filetype)) {
+    VALIDATE_T("scope", kObjectTypeString, opts->filetype.type, {
+      return FAIL;
+    });
+
+    *filetype = opts->filetype.data.string.data;
+  }
 
   if (HAS_KEY(opts->win)) {
     VALIDATE_T("win", kObjectTypeInteger, opts->win.type, {
@@ -69,15 +77,50 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
     }
   }
 
+  VALIDATE((!HAS_KEY(opts->filetype)
+            || !(HAS_KEY(opts->buf) || HAS_KEY(opts->scope) || HAS_KEY(opts->win))),
+           "%s", "cannot use 'filetype' with 'scope', 'buf' or 'win'", {
+    return FAIL;
+  });
+
   VALIDATE((!HAS_KEY(opts->scope) || !HAS_KEY(opts->buf)), "%s",
            "cannot use both 'scope' and 'buf'", {
     return FAIL;
   });
+
   VALIDATE((!HAS_KEY(opts->win) || !HAS_KEY(opts->buf)), "%s", "cannot use both 'buf' and 'win'", {
     return FAIL;
   });
 
   return OK;
+}
+
+/// Create a dummy buffer and run the FileType autocmd on it.
+static buf_T *do_ft_buf(char *filetype, aco_save_T *aco, Error *err)
+{
+  if (filetype == NULL) {
+    return NULL;
+  }
+
+  // Allocate a buffer without putting it in the buffer list.
+  buf_T *ftbuf = buflist_new(NULL, NULL, 1, BLN_DUMMY);
+  if (ftbuf == NULL) {
+    api_set_error(err, kErrorTypeException, "Could not create internal buffer");
+    return NULL;
+  }
+
+  // Set curwin/curbuf to buf and save a few things.
+  aucmd_prepbuf(aco, ftbuf);
+
+  ftbuf->b_p_ft = xstrdup(filetype);
+
+  TRY_WRAP({
+    try_start();
+    apply_autocmds(EVENT_FILETYPE, ftbuf->b_p_ft, ftbuf->b_fname, true, ftbuf);
+    try_end(err);
+  });
+
+  return ftbuf;
 }
 
 /// Gets the value of an option. The behavior of this function matches that of
@@ -92,6 +135,10 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
 ///                  - win: |window-ID|. Used for getting window local options.
 ///                  - buf: Buffer number. Used for getting buffer local options.
 ///                         Implies {scope} is "local".
+///                  - filetype: |filetype|. Used to get the default option for a
+///                    specific filetype. Cannot be used with any other option.
+///                    Note: this will trigger |ftplugin| and all |FileType|
+///                    autocommands for the corresponding filetype.
 /// @param[out] err  Error details, if any
 /// @return          Option value
 Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
@@ -102,14 +149,37 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   int scope = 0;
   int opt_type = SREQ_GLOBAL;
   void *from = NULL;
-  if (!validate_option_value_args(opts, &scope, &opt_type, &from, err)) {
+  char *filetype = NULL;
+
+  if (!validate_option_value_args(opts, &scope, &opt_type, &from, &filetype, err)) {
     return rv;
+  }
+
+  aco_save_T aco;
+
+  buf_T *ftbuf = do_ft_buf(filetype, &aco, err);
+  if (ERROR_SET(err)) {
+    return rv;
+  }
+
+  if (ftbuf != NULL) {
+    assert(!from);
+    from = ftbuf;
   }
 
   long numval = 0;
   char *stringval = NULL;
   getoption_T result = access_option_value_for(name.data, &numval, &stringval, scope, opt_type,
                                                from, true, err);
+
+  if (ftbuf != NULL) {
+    // restore curwin/curbuf and a few other things
+    aucmd_restbuf(&aco);
+
+    assert(curbuf != ftbuf);  // safety check
+    wipe_buffer(ftbuf, false);
+  }
+
   if (ERROR_SET(err)) {
     return rv;
   }
@@ -164,7 +234,7 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
   int scope = 0;
   int opt_type = SREQ_GLOBAL;
   void *to = NULL;
-  if (!validate_option_value_args(opts, &scope, &opt_type, &to, err)) {
+  if (!validate_option_value_args(opts, &scope, &opt_type, &to, NULL, err)) {
     return;
   }
 
