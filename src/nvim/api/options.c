@@ -114,10 +114,8 @@ static buf_T *do_ft_buf(char *filetype, aco_save_T *aco, Error *err)
 
   ftbuf->b_p_ft = xstrdup(filetype);
 
-  TRY_WRAP({
-    try_start();
+  TRY_WRAP(err, {
     apply_autocmds(EVENT_FILETYPE, ftbuf->b_p_ft, ftbuf->b_fname, true, ftbuf);
-    try_end(err);
   });
 
   return ftbuf;

@@ -1157,27 +1157,28 @@ int nlua_call(lua_State *lstate)
     }
   }
 
-  TRY_WRAP({
-    // TODO(bfredl): this should be simplified in error handling refactor
-    force_abort = false;
-    suppress_errthrow = false;
-    did_throw = false;
-    did_emsg = false;
+  // TODO(bfredl): this should be simplified in error handling refactor
+  force_abort = false;
+  suppress_errthrow = false;
+  did_throw = false;
+  did_emsg = false;
 
-    try_start();
-    typval_T rettv;
-    funcexe_T funcexe = FUNCEXE_INIT;
-    funcexe.fe_firstline = curwin->w_cursor.lnum;
-    funcexe.fe_lastline = curwin->w_cursor.lnum;
-    funcexe.fe_evaluate = true;
+  typval_T rettv;
+  funcexe_T funcexe = FUNCEXE_INIT;
+  funcexe.fe_firstline = curwin->w_cursor.lnum;
+  funcexe.fe_lastline = curwin->w_cursor.lnum;
+  funcexe.fe_evaluate = true;
+
+  TRY_WRAP(&err, {
     // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
     // (TRY_WRAP) to capture abort-causing non-exception errors.
     (void)call_func((char *)name, (int)name_len, &rettv, nargs, vim_args, &funcexe);
-    if (!try_end(&err)) {
-      nlua_push_typval(lstate, &rettv, false);
-    }
-    tv_clear(&rettv);
   });
+
+  if (!ERROR_SET(&err)) {
+    nlua_push_typval(lstate, &rettv, false);
+  }
+  tv_clear(&rettv);
 
 free_vim_args:
   while (i > 0) {
