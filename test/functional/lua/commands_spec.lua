@@ -146,6 +146,7 @@ describe(':lua command', function()
   it('prints result of =expr', function()
     exec_lua("x = 5")
     eq("5", exec_capture(':lua =x'))
+    eq("5", exec_capture('=x'))
     exec_lua("function x() return 'hello' end")
     eq('hello', exec_capture(':lua = x()'))
     exec_lua("x = {a = 1, b = 2}")
@@ -165,7 +166,7 @@ describe(':lua command', function()
       false
       nil
       Error message]],
-    exec_capture(':lua  =x(false)'))
+    exec_capture('=x(false)'))
   end)
 end)
 

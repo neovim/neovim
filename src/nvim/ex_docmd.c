@@ -5658,8 +5658,13 @@ static void ex_pwd(exarg_T *eap)
 /// ":=".
 static void ex_equal(exarg_T *eap)
 {
-  smsg("%" PRId64, (int64_t)eap->line2);
-  ex_may_print(eap);
+  if (*eap->arg != NUL && *eap->arg != '|') {
+    // equivalent to :lua= expr
+    ex_lua(eap);
+  } else {
+    eap->nextcmd = find_nextcmd(eap->arg);
+    smsg("%" PRId64, (int64_t)eap->line2);
+  }
 }
 
 static void ex_sleep(exarg_T *eap)

@@ -3319,7 +3319,7 @@ module.cmds = {
   {
     command='=',
     enum='CMD_equal',
-    flags=bit.bor(RANGE, TRLBAR, DFLALL, FLAGS, CMDWIN, LOCK_OK),
+    flags=bit.bor(RANGE, EXTRA, DFLALL, ARGOPT, CMDWIN, LOCK_OK),
     addr_type='ADDR_LINES',
     func='ex_equal',
   },

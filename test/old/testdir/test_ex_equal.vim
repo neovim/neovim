@@ -7,6 +7,19 @@ func Test_ex_equal()
   let a = execute('=')
   call assert_equal("\n2", a)
 
+  let a = execute('.=')
+  call assert_equal("\n1", a)
+
+  call assert_fails('3=', 'E16:')
+  bwipe!
+endfunc
+
+func Test_ex_equal_arg()
+  throw 'skipped: Nvim evaluates lua with := [arg]'
+
+  new
+  call setline(1, ["foo\tbar", "bar\tfoo"])
+
   let a = execute('=#')
   call assert_equal("\n2\n  1 foo     bar", a)
 
@@ -22,10 +35,6 @@ func Test_ex_equal()
   let a = execute('=p#')
   call assert_equal("\n2\n  1 foo     bar", a)
 
-  let a = execute('.=')
-  call assert_equal("\n1", a)
-
-  call assert_fails('3=', 'E16:')
   call assert_fails('=x', 'E488:')
 
   bwipe!
