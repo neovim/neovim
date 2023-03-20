@@ -619,9 +619,10 @@ local function process_function(fn)
     }
       ]], return_type))
     else
+      local special = (fn.since ~= nil and fn.since < 11)
       write_shifted_output(output, string.format([[
-    nlua_push_%s(lstate, ret, true);
-      ]], return_type))
+    nlua_push_%s(lstate, ret, %s);
+      ]], return_type, tostring(special)))
     end
 
     write_shifted_output(output, string.format([[
