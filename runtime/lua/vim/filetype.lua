@@ -265,6 +265,7 @@ local extension = {
   end,
   cql = 'cqlang',
   crm = 'crm',
+  cr = 'crystal',
   csx = 'cs',
   cs = 'cs',
   csc = 'csc',
