@@ -32,7 +32,7 @@
 
 /// Open a new window.
 ///
-/// Currently this is used to open floating and external windows.
+/// Currently, this is used to open floating and external windows.
 /// Floats are windows that are drawn above the split layout, at some anchor
 /// position in some other window. Floats can be drawn internally or by external
 /// GUI with the |ui-multigrid| extension. External windows are only supported
@@ -49,9 +49,9 @@
 /// (used by non-multigrid UIs) will always round down to nearest integer.
 ///
 /// Out-of-bounds values, and configurations that make the float not fit inside
-/// the main editor, are allowed. The builtin implementation truncates values
+/// the main editor, are allowed. The builtin implementation truncates values,
 /// so floats are fully within the main screen grid. External GUIs
-/// could let floats hover outside of the main window like a tooltip, but
+/// could let floats hover outside the main window like a tooltip, but
 /// this should not be used to specify arbitrary WM screen positions.
 ///
 /// Example (Lua): window-relative float
@@ -85,41 +85,41 @@
 ///   - height: Window height (in character cells). Minimum of 1.
 ///   - bufpos: Places float relative to buffer text (only when
 ///               relative="win"). Takes a tuple of zero-indexed [line, column].
-///               `row` and `col` if given are applied relative to this
-///               position, else they default to:
+///               `row` and `col` if given are applied 
+///               relative to this position, else they default to:
 ///               - `row=1` and `col=0` if `anchor` is "NW" or "NE"
 ///               - `row=0` and `col=0` if `anchor` is "SW" or "SE"
 ///               (thus like a tooltip near the buffer text).
-///   - row: Row position in units of "screen cell height", may be fractional.
-///   - col: Column position in units of "screen cell width", may be
+///   - row: Row position, in units of "screen cell height", may be fractional.
+///   - col: Column position, in units of "screen cell width", may be
 ///            fractional.
 ///   - focusable: Enable focus by user actions (wincmds, mouse events).
 ///       Defaults to true. Non-focusable windows can be entered by
 ///       |nvim_set_current_win()|.
 ///   - external: GUI should display the window as an external
-///       top-level window. Currently accepts no other positioning
+///       top-level window. Currently, accepts no other positioning
 ///       configuration together with this.
-///   - zindex: Stacking order. floats with higher `zindex` go on top on
-///               floats with lower indices. Must be larger than zero. The
-///               following screen elements have hard-coded z-indices:
-///       - 100: insert completion popupmenu
-///       - 200: message scrollback
-///       - 250: cmdline completion popupmenu (when wildoptions+=pum)
-///     The default value for floats are 50.  In general, values below 100 are
+///   - zindex: Stacking order. floats with higher `zindex` go on 
+///       top on floats with lower indices. Must be larger than zero. 
+///       The following screen elements have hard-coded z-indices:
+///               - 100: insert completion popupmenu
+///               - 200: message scrollback
+///               - 250: cmdline completion popupmenu (when wildoptions+=pum)
+///     The default value for floats is 50.  In general, values below 100 are
 ///     recommended, unless there is a good reason to overshadow builtin
 ///     elements.
-///   - style: Configure the appearance of the window. Currently only takes
+///   - style: Configure the appearance of the window. Currently, only takes
 ///       one non-empty value:
-///       - "minimal"  Nvim will display the window with many UI options
-///                    disabled. This is useful when displaying a temporary
-///                    float where the text should not be edited. Disables
-///                    'number', 'relativenumber', 'cursorline', 'cursorcolumn',
-///                    'foldcolumn', 'spell' and 'list' options. 'signcolumn'
-///                    is changed to `auto` and 'colorcolumn' is cleared.
-///                    'statuscolumn' is changed to empty. The end-of-buffer
-///                     region is hidden by setting `eob` flag of
-///                    'fillchars' to a space char, and clearing the
-///                    |hl-EndOfBuffer| region in 'winhighlight'.
+///      - "minimal"  Nvim will display the window with many UI options
+///                   disabled. This is useful when displaying a temporary
+///                   float where the text should not be edited. Disables
+///                   'number', 'relativenumber', 'cursorline', 'cursorcolumn',
+///                   'foldcolumn', 'spell' and 'list' options. 'signcolumn'
+///                   is changed to `auto` and 'colorcolumn' is cleared.
+///                   'statuscolumn' is changed to empty. The end-of-buffer
+///                    region is hidden by setting `eob` flag of
+///                   'fillchars' to a space char, and clearing the
+///                   |hl-EndOfBuffer| region in 'winhighlight'.
 ///   - border: Style of (optional) window border. This can either be a string
 ///      or an array. The string values are
 ///     - "none": No border (default).
@@ -129,11 +129,11 @@
 ///     - "solid": Adds padding by a single whitespace cell.
 ///     - "shadow": A drop shadow effect by blending with the background.
 ///     - If it is an array, it should have a length of eight or any divisor of
-///     eight. The array will specifify the eight chars building up the border
+///     eight. The array will specify the eight chars, building up the border
 ///     in a clockwise fashion starting with the top-left corner. As an
 ///     example, the double box style could be specified as
 ///       [ "╔", "═" ,"╗", "║", "╝", "═", "╚", "║" ].
-///     If the number of chars are less than eight, they will be repeated. Thus
+///     If the number of chars is less than eight, they will be repeated. Thus
 ///     an ASCII border could be specified as
 ///       [ "/", "-", \"\\\\\", "|" ],
 ///     or all chars the same as
@@ -145,10 +145,10 @@
 ///     when not defined.  It could also be specified by character:
 ///       [ ["+", "MyCorner"], ["x", "MyBorder"] ].
 ///   - title: Title (optional) in window border, String or list.
-///     List is [text, highlight] tuples. if is string the default
-///     highlight group is `FloatTitle`.
-///   - title_pos: Title position must set with title option.
-///     value can be of `left` `center` `right` default is left.
+///     List is [text, highlight] tuples. If it is a string, the 
+///     default highlight group is `FloatTitle`.
+///   - title_pos: Title position must set with the title option.
+///     Value can be of `left` `center` `right` default is left.
 ///   - noautocmd: If true then no buffer-related autocommand events such as
 ///                  |BufEnter|, |BufLeave| or |BufWinEnter| may fire from
 ///                  calling this function.
@@ -187,13 +187,27 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, E
   return wp->handle;
 }
 
-/// Configures window layout. Currently only for floating and external windows
+/// Configures window layout. Currently, only for floating and external windows
 /// (including changing a split window to those layouts).
 ///
 /// When reconfiguring a floating window, absent option keys will not be
 /// changed.  `row`/`col` and `relative` must be reconfigured together.
 ///
 /// @see |nvim_open_win()|
+///
+/// Example (lua):
+/// <pre>lua
+///   vim.api.nvim_set_hl('CustomTitleHighlight', {fg = 'red'})
+///   vim.api.nvim_set_hl('MyBorder', {fg = 'blue'})
+///   local winid = vim.api.nvim_open_win(buf, false, {relative='cursor', width=20, height=10})
+///   vim.api.nvim_win_set_config(winid, {
+///   	title = {'Signature', 'CustomTitleHighlight'},
+///   	title_pos = 'center',
+///   	style = 'minimal',
+///   	border = {['╭'] = 'MyBorder', ['─'] = 'MyBorder', ['╮'] = 'MyBorder', ['│'] = 'MyBorder', 
+///   	['╯'] = 'MyBorder', ['─'] = 'MyBorder', ['╰'] = 'MyBorder', ['│'] = 'MyBorder'},
+///   })
+/// </pre>
 ///
 /// @param      window  Window handle, or 0 for current window
 /// @param      config  Map defining the window configuration,
@@ -233,6 +247,13 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
 /// The returned value may be given to |nvim_open_win()|.
 ///
 /// `relative` is empty for normal windows.
+///
+/// Example (lua):
+/// <pre>lua
+///   if (vim.api.nvim_win_get_config(0).relative ~= "") then
+///    vim.notify("Current window is a floating window")
+///   end
+/// </pre>
 ///
 /// @param      window Window handle, or 0 for current window
 /// @param[out] err Error details, if any
