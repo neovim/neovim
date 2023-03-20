@@ -782,9 +782,6 @@ vim.api.{func}({...})                                                *vim.api*
     Example: call the "nvim_get_current_line()" API function: >lua
         print(tostring(vim.api.nvim_get_current_line()))
 
-vim.version()                                                    *vim.version*
-    Gets the version of the current Nvim build.
-
 vim.in_fast_event()                                      *vim.in_fast_event()*
     Returns true if the code is executing as part of a "fast" event handler,
     where most of the API is disabled. These are low-level events (e.g.
@@ -1391,8 +1388,7 @@ deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
     Parameters: ~
       • {name}         string Deprecated feature (function, API, etc.).
       • {alternative}  (string|nil) Suggested alternative feature.
-      • {version}      string Version when the deprecated function will be
-                       removed.
+      • {version}      string Version when the deprecated function will be removed.
       • {plugin}       string|nil Name of the plugin that owns the deprecated
                        feature. Defaults to "Nvim".
       • {backtrace}    boolean|nil Prints backtrace. Defaults to true.
@@ -2533,67 +2529,179 @@ trust({opts})                                             *vim.secure.trust()*
 ==============================================================================
 Lua module: version                                              *lua-version*
 
-cmp({v1}, {v2}, {opts})                                    *vim.version.cmp()*
-    Compares two strings ( `v1` and `v2` ) in semver format.
+
+The `vim.version` module provides functions for comparing versions and
+ranges conforming to the
+
+https://semver.org
+
+spec. Plugins, and plugin managers, can use this to check available tools
+and dependencies on the current system.
+
+Example: >lua
+
+  local v = vim.version.parse(vim.fn.system({'tmux', '-V'}), {strict=false})
+  if vim.version.gt(v, {3, 2, 0}) then
+    -- ...
+  end
+
+<
+
+*vim.version()* returns the version of the current Nvim process.
+
+VERSION RANGE SPEC *version-range*
+
+A version "range spec" defines a semantic version range which can be
+tested against a version, using |vim.version.range()|.
+
+Supported range specs are shown in the following table. Note: suffixed
+versions (1.2.3-rc1) are not matched. >
+
+  1.2.3             is 1.2.3
+  =1.2.3            is 1.2.3
+  >1.2.3            greater than 1.2.3
+  <1.2.3            before 1.2.3
+  >=1.2.3           at least 1.2.3
+  ~1.2.3            is >=1.2.3 <1.3.0       "reasonably close to 1.2.3"
+  ^1.2.3            is >=1.2.3 <2.0.0       "compatible with 1.2.3"
+  ^0.2.3            is >=0.2.3 <0.3.0       (0.x.x is special)
+  ^0.0.1            is =0.0.1               (0.0.x is special)
+  ^1.2              is >=1.2.0 <2.0.0       (like ^1.2.0)
+  ~1.2              is >=1.2.0 <1.3.0       (like ~1.2.0)
+  ^1                is >=1.0.0 <2.0.0       "compatible with 1"
+  ~1                same                    "reasonably close to 1"
+  1.x               same
+  1.*               same
+  1                 same
+  *                 any version
+  x                 same
+
+  1.2.3 - 2.3.4     is >=1.2.3 <=2.3.4
+
+  Partial right: missing pieces treated as x (2.3 => 2.3.x).
+  1.2.3 - 2.3       is >=1.2.3 <2.4.0
+  1.2.3 - 2         is >=1.2.3 <3.0.0
+
+  Partial left: missing pieces treated as 0 (1.2 => 1.2.0).
+  1.2 - 2.3.0       is 1.2.0 - 2.3.0
+
+<
+
+cmp({v1}, {v2})                                            *vim.version.cmp()*
+    Parses and compares two version version objects (the result of
+    |vim.version.parse()|, or specified literally as a `{major, minor, patch}`
+    tuple, e.g. `{1, 0, 3}`).
+
+    Example: >lua
+
+       if vim.version.cmp({1,0,3}, {0,2,1}) == 0 then
+         -- ...
+       end
+       local v1 = vim.version.parse('1.0.3-pre')
+       local v2 = vim.version.parse('0.2.1')
+       if vim.version.cmp(v1, v2) == 0 then
+         -- ...
+       end
+<
+
+    Note:
+        Per semver, build metadata is ignored when comparing two
+        otherwise-equivalent versions.
 
     Parameters: ~
-      • {v1}    (string) Version.
-      • {v2}    (string) Version to compare with v1.
-      • {opts}  (table|nil) Optional keyword arguments:
-                • strict (boolean): see `semver.parse` for details. Defaults
-                  to false.
+      • {v1}  Version|number[] Version object.
+      • {v2}  Version|number[] Version to compare with `v1` .
 
     Return: ~
-        (integer) `-1` if `v1 < v2`, `0` if `v1 == v2`, `1` if `v1 > v2`.
+        (integer) -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
 
 eq({v1}, {v2})                                              *vim.version.eq()*
-    Returns `true` if `v1` are `v2` are equal versions.
+    Returns `true` if the given versions are equal.
 
     Parameters: ~
-      • {v1}  (string)
-      • {v2}  (string)
+      • {v1}  Version|number[]
+      • {v2}  Version|number[]
 
     Return: ~
         (boolean)
 
 gt({v1}, {v2})                                              *vim.version.gt()*
-    Returns `true` if `v1` is greater than `v2` .
+    Returns `true` if `v1 > v2` .
 
     Parameters: ~
-      • {v1}  (string)
-      • {v2}  (string)
+      • {v1}  Version|number[]
+      • {v2}  Version|number[]
 
     Return: ~
         (boolean)
 
-lt({v1}, {v2})                                              *vim.version.lt()*
-    Returns `true` if `v1` is less than `v2` .
+last({versions})                                          *vim.version.last()*
+    TODO: generalize this, move to func.lua
 
     Parameters: ~
-      • {v1}  (string)
-      • {v2}  (string)
+      • {versions}  Version []
+
+    Return: ~
+        Version ?|ni
+
+lt({v1}, {v2})                                              *vim.version.lt()*
+    Returns `true` if `v1 < v2` .
+
+    Parameters: ~
+      • {v1}  Version|number[]
+      • {v2}  Version|number[]
 
     Return: ~
         (boolean)
 
 parse({version}, {opts})                                 *vim.version.parse()*
-    Parses a semantic version string.
-
-    Ignores leading "v" and surrounding whitespace, e.g. "
-    v1.0.1-rc1+build.2", "1.0.1-rc1+build.2", "v1.0.1-rc1+build.2" and
-    "v1.0.1-rc1+build.2 " are all parsed as: >
+    Parses a semantic version string and returns a version object which can be
+    used with other `vim.version` functions. For example "1.0.1-rc1+build.2" returns: >
 
        { major = 1, minor = 0, patch = 1, prerelease = "rc1", build = "build.2" }
 <
 
     Parameters: ~
-      • {version}  (string) Version string to be parsed.
+      • {version}  (string) Version string to parse.
       • {opts}     (table|nil) Optional keyword arguments:
-                   • strict (boolean): Default false. If `true` , no coercion is attempted on input not strictly
-                     conforming to semver v2.0.0 ( https://semver.org/spec/v2.0.0.html ). E.g. `parse("v1.2")` returns nil.
+                   • strict (boolean): Default false. If `true`, no coercion
+                     is attempted on input not conforming to semver v2.0.0. If
+                     `false`, `parse()` attempts to coerce input such as
+                     "1.0", "0-x", "tmux 3.2a" into valid versions.
 
     Return: ~
-        (table|nil) parsed_version Parsed version table or `nil` if `version`
-        is invalid.
+        (table|nil) parsed_version Version object or `nil` if input is invalid.
+
+    See also: ~
+      • # https://semver.org/spec/v2.0.0.html
+
+range({spec})                                            *vim.version.range()*
+    Parses a semver |version-range| "spec" and returns a range object: >
+
+      {
+        from: Version
+        to: Version
+        has(v: string|Version)
+      }
+<
+
+    `:has()` checks if a version is in the range (inclusive `from` , exclusive `to` ). Example: >lua
+
+      local r = vim.version.range('1.0.0 - 2.0.0')
+      print(r:has('1.9.9'))  -- true
+      print(r:has('2.0.0'))  -- false
+<
+
+    Or use cmp(), eq(), lt(), and gt() to compare `.to` and `.from` directly: >lua
+
+      local r = vim.version.range('1.0.0 - 2.0.0')
+      print(vim.version.gt({1,0,3}, r.from) and vim.version.lt({1,0,3}, r.to))
+<
+
+    Parameters: ~
+      • {spec}  string Version range "spec"
+
+    See also: ~
+      • # https://github.com/npm/node-semver#ranges
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

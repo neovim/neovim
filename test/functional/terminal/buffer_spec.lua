@@ -202,7 +202,7 @@ describe(':terminal buffer', function()
 
     -- Save the buffer number of the terminal for later testing.
     local tbuf = eval('bufnr("%")')
-    local exitcmd = helpers.is_os('win')
+    local exitcmd = is_os('win')
       and "['cmd', '/c', 'exit']"
       or "['sh', '-c', 'exit']"
     source([[
