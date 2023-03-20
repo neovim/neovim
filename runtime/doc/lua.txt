@@ -1649,14 +1649,25 @@ endswith({s}, {suffix})                                       *vim.endswith()*
     Return: ~
         (boolean) `true` if `suffix` is a suffix of `s`
 
-gsplit({s}, {sep}, {plain})                                     *vim.gsplit()*
+gsplit({s}, {sep}, {opts})                                      *vim.gsplit()*
     Splits a string at each instance of a separator.
 
+    Example: >lua
+
+       for s in vim.gsplit(':aa::b:', ':', {plain=true}) do
+         print(s)
+       end
+<
+
     Parameters: ~
-      • {s}      (string) String to split
-      • {sep}    (string) Separator or pattern
-      • {plain}  (boolean|nil) If `true` use `sep` literally (passed to
-                 string.find)
+      • {s}     (string) String to split
+      • {sep}   (string) Separator or pattern
+      • {opts}  (table|nil) Keyword arguments |kwargs|:
+                • keepsep: (boolean) Return segments matching `sep` instead of
+                  discarding them.
+                • plain: (boolean) Use `sep` literally (as in string.find).
+                • trimempty: (boolean) Discard empty segments at start and end
+                  of the sequence.
 
     Return: ~
         (function) Iterator over the split components
@@ -1729,7 +1740,7 @@ spairs({t})                                                     *vim.spairs()*
     See also: ~
       • Based on https://github.com/premake/premake-core/blob/master/src/base/table.lua
 
-split({s}, {sep}, {kwargs})                                      *vim.split()*
+split({s}, {sep}, {opts})                                        *vim.split()*
     Splits a string at each instance of a separator.
 
     Examples: >lua
@@ -1738,16 +1749,14 @@ split({s}, {sep}, {kwargs})                                      *vim.split()*
       split("axaby", "ab?")                   --> {'','x','y'}
       split("x*yz*o", "*", {plain=true})      --> {'x','yz','o'}
       split("|x|y|z|", "|", {trimempty=true}) --> {'x', 'y', 'z'}
+      split("|x|y|z|", "|", {keepsep=true})   --> {'|', 'x', '|', 'y', '|', 'z', '|'}
 <
 
     Parameters: ~
-      • {s}       (string) String to split
-      • {sep}     (string) Separator or pattern
-      • {kwargs}  (table|nil) Keyword arguments:
-                  • plain: (boolean) If `true` use `sep` literally (passed to
-                    string.find)
-                  • trimempty: (boolean) If `true` remove empty items from the
-                    front and back of the list
+      • {s}     (string) String to split
+      • {sep}   (string) Separator or pattern
+      • {opts}  (table|nil) Keyword arguments |kwargs| accepted by
+                |vim.gsplit()|
 
     Return: ~
         string[] List of split components

@@ -59,6 +59,13 @@ end)()
 
 --- Splits a string at each instance of a separator.
 ---
+--- Example:
+---   <pre>lua
+---   for s in vim.gsplit(':aa::b:', ':', {plain=true}) do
+---     print(s)
+---   end
+---   </pre>
+---
 ---@see |vim.split()|
 ---@see |luaref-patterns|
 ---@see https://www.lua.org/pil/20.2.html
@@ -66,17 +73,40 @@ end)()
 ---
 ---@param s string String to split
 ---@param sep string Separator or pattern
----@param plain (boolean|nil) If `true` use `sep` literally (passed to string.find)
----@return fun():string (function) Iterator over the split components
-function vim.gsplit(s, sep, plain)
-  vim.validate({ s = { s, 's' }, sep = { sep, 's' }, plain = { plain, 'b', true } })
+---@param opts (table|nil) Keyword arguments |kwargs|:
+---       - keepsep: (boolean) Include segments matching `sep` instead of discarding them.
+---       - plain: (boolean) Use `sep` literally (as in string.find).
+---       - trimempty: (boolean) Discard empty segments at start and end of the sequence.
+---@return fun():string|nil (function) Iterator over the split components
+function vim.gsplit(s, sep, opts)
+  local plain
+  local trimempty = false
+  local keepsep = false
+  if type(opts) == 'boolean' then
+    plain = opts -- For backwards compatibility.
+  else
+    vim.validate({ s = { s, 's' }, sep = { sep, 's' }, opts = { opts, 't', true } })
+    opts = opts or {}
+    plain, trimempty, keepsep = opts.plain, opts.trimempty, opts.keepsep
+    assert(not trimempty or not keepsep, 'keepsep+trimempty not supported')
+  end
 
   local start = 1
   local done = false
+  local sepseg = nil -- Last matched `sep` segment.
+  local sepesc = plain and vim.pesc(sep) or sep
+
+  -- For `trimempty`:
+  local empty_start = true -- Only empty segments seen so far.
+  local empty_segs = 0 -- Empty segments found between non-empty segments.
+  local nonemptyseg = nil
 
   local function _pass(i, j, ...)
     if i then
       assert(j + 1 > start, 'Infinite loop detected')
+      if keepsep then
+        sepseg = s:match(sepesc, start)
+      end
       local seg = s:sub(start, i - 1)
       start = j + 1
       return seg, ...
@@ -87,16 +117,48 @@ function vim.gsplit(s, sep, plain)
   end
 
   return function()
-    if done or (s == '' and sep == '') then
-      return
-    end
-    if sep == '' then
+    if trimempty and empty_segs > 0 then
+      -- trimempty: Pop the collected empty segments.
+      empty_segs = empty_segs - 1
+      return ''
+    elseif trimempty and nonemptyseg then
+      local seg = nonemptyseg
+      nonemptyseg = nil
+      return seg
+    elseif keepsep and sepseg then
+      local seg = sepseg
+      sepseg = nil
+      return seg
+    elseif done or (s == '' and sep == '') then
+      return nil
+    elseif sep == '' then
       if start == #s then
         done = true
       end
       return _pass(start + 1, start)
     end
-    return _pass(s:find(sep, start, plain))
+
+    local seg = _pass(s:find(sep, start, plain))
+
+    -- Trim empty segments from start/end.
+    if trimempty and seg == '' then
+      while not done and seg == '' do
+        empty_segs = empty_segs + 1
+        seg = _pass(s:find(sep, start, plain))
+      end
+      if done and seg == '' then
+        return nil
+      elseif empty_start then
+        empty_start = false
+        empty_segs = 0
+        return seg
+      end
+      nonemptyseg = seg ~= '' and seg or nil
+      seg = ''
+      empty_segs = empty_segs - 1
+    end
+
+    return seg
   end
 end
 
@@ -108,51 +170,21 @@ end
 ---  split("axaby", "ab?")                   --> {'','x','y'}
 ---  split("x*yz*o", "*", {plain=true})      --> {'x','yz','o'}
 ---  split("|x|y|z|", "|", {trimempty=true}) --> {'x', 'y', 'z'}
+---  split("|x|y|z|", "|", {keepsep=true})   --> {'|', 'x', '|', 'y', '|', 'z', '|'}
 --- </pre>
 ---
 ---@see |vim.gsplit()|
 ---
 ---@param s string String to split
 ---@param sep string Separator or pattern
----@param kwargs (table|nil) Keyword arguments:
----       - plain: (boolean) If `true` use `sep` literally (passed to string.find)
----       - trimempty: (boolean) If `true` remove empty items from the front
----         and back of the list
+---@param opts (table|nil) Keyword arguments |kwargs| accepted by |vim.gsplit()|
 ---@return string[] List of split components
-function vim.split(s, sep, kwargs)
-  local plain
-  local trimempty = false
-  if type(kwargs) == 'boolean' then
-    -- Support old signature for backward compatibility
-    plain = kwargs
-  else
-    vim.validate({ kwargs = { kwargs, 't', true } })
-    kwargs = kwargs or {}
-    plain = kwargs.plain
-    trimempty = kwargs.trimempty
-  end
-
+function vim.split(s, sep, opts)
+  -- TODO(justinmk): deprecate vim.split in favor of vim.totable(vim.gsplit())
   local t = {}
-  local skip = trimempty
-  for c in vim.gsplit(s, sep, plain) do
-    if c ~= '' then
-      skip = false
-    end
-
-    if not skip then
-      table.insert(t, c)
-    end
+  for c in vim.gsplit(s, sep, opts) do
+    table.insert(t, c)
   end
-
-  if trimempty then
-    for i = #t, 1, -1 do
-      if t[i] ~= '' then
-        break
-      end
-      table.remove(t, i)
-    end
-  end
-
   return t
 end
 

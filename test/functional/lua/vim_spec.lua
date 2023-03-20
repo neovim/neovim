@@ -292,51 +292,62 @@ describe('lua stdlib', function()
     ]]}
   end)
 
-  it("vim.split", function()
-    local split = function(str, sep, kwargs)
-      return exec_lua('return vim.split(...)', str, sep, kwargs)
-    end
-
+  it('vim.gsplit, vim.split', function()
     local tests = {
-      { "a,b", ",", false, false, { 'a', 'b' } },
-      { ":aa::bb:", ":", false, false, { '', 'aa', '', 'bb', '' } },
-      { ":aa::bb:", ":", false, true, { 'aa', '', 'bb' } },
-      { "::ee::ff:", ":", false, false, { '', '', 'ee', '', 'ff', '' } },
-      { "::ee::ff:", ":", false, true, { 'ee', '', 'ff' } },
-      { "ab", ".", false, false, { '', '', '' } },
-      { "a1b2c", "[0-9]", false, false, { 'a', 'b', 'c' } },
-      { "xy", "", false, false, { 'x', 'y' } },
-      { "here be dragons", " ", false, false, { "here", "be", "dragons"} },
-      { "axaby", "ab?", false, false, { '', 'x', 'y' } },
-      { "f v2v v3v w2w ", "([vw])2%1", false, false, { 'f ', ' v3v ', ' ' } },
-      { "", "", false, false, {} },
-      { "", "a", false, false, { '' } },
-      { "x*yz*oo*l", "*", true, false, { 'x', 'yz', 'oo', 'l' } },
+      { 'a,b',             ',',     false, false, { 'a', 'b' } },
+      { ':aa::::bb:',      ':',     false, false, { '', 'aa', '', '', '', 'bb', '' } },
+      { ':aa::::bb:',      ':',     false, true,  { 'aa', '', '', '', 'bb' } },
+      { ':aa::bb:',        ':',     false, true,  { 'aa', '', 'bb' } },
+      { '/a/b:/b/\n',      '[:\n]', false, true,  { '/a/b', '/b/' } },
+      { '::ee::ff:',       ':',     false, false, { '', '', 'ee', '', 'ff', '' } },
+      { '::ee::ff::',      ':',     false, true,  { 'ee', '', 'ff' } },
+      { 'ab',              '.',     false, false, { '', '', '' } },
+      { 'a1b2c',           '[0-9]', false, false, { 'a', 'b', 'c' } },
+      { 'xy',              '',      false, false, { 'x', 'y' } },
+      { 'here be dragons', ' ',     false, false, { 'here', 'be', 'dragons'} },
+      { 'axaby',           'ab?',   false, false, { '', 'x', 'y' } },
+      { 'f v2v v3v w2w ',  '([vw])2%1', false, false, { 'f ', ' v3v ', ' ' } },
+      { '',                '',      false, false, {} },
+      { '',                '',      false, true,  {} },
+      { '\n',              '[:\n]', false, true,  {} },
+      { '',                'a',     false, false, { '' } },
+      { 'x*yz*oo*l',       '*',     true,  false, { 'x', 'yz', 'oo', 'l' } },
     }
 
     for _, t in ipairs(tests) do
-      eq(t[5], split(t[1], t[2], {plain=t[3], trimempty=t[4]}))
+      eq(t[5], vim.split(t[1], t[2], {plain=t[3], trimempty=t[4]}))
     end
 
     -- Test old signature
-    eq({'x', 'yz', 'oo', 'l'}, split("x*yz*oo*l", "*", true))
+    eq({'x', 'yz', 'oo', 'l'}, vim.split("x*yz*oo*l", "*", true))
 
     local loops = {
       { "abc", ".-" },
     }
 
     for _, t in ipairs(loops) do
-      matches("Infinite loop detected", pcall_err(split, t[1], t[2]))
+      matches("Infinite loop detected", pcall_err(vim.split, t[1], t[2]))
     end
 
+    -- `keepsep`
+    eq({ '', '.', '', '.', 'aa', '.', 'bb', '.', 'cc', '.', 'dd', '.', 'ee', '.', '', },
+      vim.split('..aa.bb.cc.dd.ee.', '%.', {keepsep=true}))
+    eq({ '..aa', '1', '.bb', '2', '', '2', '.cc.', '9', '', },
+      vim.split('..aa1.bb22.cc.9', '%d', {keepsep=true}))
+    eq({ '..aa', '1', '.bb', '22', '.cc.', '9', '', },
+      vim.split('..aa1.bb22.cc.9', '%d+', {keepsep=true}))
+
     -- Validates args.
-    eq(true, pcall(split, 'string', 'string'))
+    eq(true, pcall(vim.split, 'string', 'string'))
     matches('s: expected string, got number',
-      pcall_err(split, 1, 'string'))
+      pcall_err(vim.split, 1, 'string'))
     matches('sep: expected string, got number',
-      pcall_err(split, 'string', 1))
-    matches('kwargs: expected table, got number',
-      pcall_err(split, 'string', 'string', 1))
+      pcall_err(vim.split, 'string', 1))
+    matches('opts: expected table, got number',
+      pcall_err(vim.split, 'string', 'string', 1))
+    -- Not supported (yet).
+    matches('keepsep%+trimempty not supported',
+      pcall_err(vim.split, 'foo bar', ' ', {keepsep=true, trimempty=true}))
   end)
 
   it('vim.trim', function()

@@ -132,6 +132,8 @@ The following new APIs or features were added.
 • |vim.fs.dir()| now has a `opts` argument with a depth field to allow
   recursively searching a directory tree.
 
+• |vim.gsplit()| supports all features of |vim.split()|.
+
 • |vim.secure.read()| reads a file and prompts the user if it should be
   trusted and, if so, returns the file's contents.
 
