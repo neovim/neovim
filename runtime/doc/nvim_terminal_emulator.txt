@@ -115,7 +115,7 @@ You can change the defaults with a TermOpen autocommand: >vim
 TERMINAL COLORS ~
 
 The `{g,b}:terminal_color_x` variables control the terminal color palette,
-where `x` is the color index between 0 and 255 inclusive.  The variables are
+where `x` is the color index between 0 and 15 inclusive.  The variables are
 read during |TermOpen|. The value must be a color name or hexadecimal string.
 Example: >vim
     let g:terminal_color_4 = '#ff0000'
