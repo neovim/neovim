@@ -483,6 +483,7 @@ local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
   local diagnostics =
     get_diagnostics(bufnr, vim.tbl_extend('keep', opts, { namespace = namespace }), true)
   local line_diagnostics = diagnostic_lines(diagnostics)
+
   for i = 0, line_count do
     local offset = i * (search_forward and 1 or -1)
     local lnum = position[1] + offset
@@ -752,6 +753,7 @@ end
 ---@field message string
 ---@field source nil|string
 ---@field code nil|string
+---@field _tags { deprecated: boolean, unnecessary: boolean}
 ---@field user_data nil|any arbitrary data plugins can add
 
 --- Get current diagnostics.
@@ -946,6 +948,16 @@ M.handlers.underline = {
       if higroup == nil then
         -- Default to error if we don't have a highlight associated
         higroup = underline_highlight_map.Error
+      end
+
+      if diagnostic._tags then
+        -- TODO(lewis6991): we should be able to stack these.
+        if diagnostic._tags.unnecessary then
+          higroup = 'DiagnosticUnnecessary'
+        end
+        if diagnostic._tags.deprecated then
+          higroup = 'DiagnosticDeprecated'
+        end
       end
 
       vim.highlight.range(

@@ -21,6 +21,7 @@ end
 --]=]
 
 local constants = {
+  --- @enum lsp.DiagnosticSeverity
   DiagnosticSeverity = {
     -- Reports an error.
     Error = 1,
@@ -32,6 +33,7 @@ local constants = {
     Hint = 4,
   },
 
+  --- @enum lsp.DiagnosticTag
   DiagnosticTag = {
     -- Unused or unnecessary code
     Unnecessary = 1,

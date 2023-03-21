@@ -97,7 +97,6 @@ describe('vim.lsp.diagnostic', function()
         }
 
         diagnostics[1].code = 42
-        diagnostics[1].tags = {"foo", "bar"}
         diagnostics[1].data = "Hello world"
 
         vim.lsp.diagnostic.on_publish_diagnostics(nil, {
@@ -110,10 +109,9 @@ describe('vim.lsp.diagnostic', function()
           vim.lsp.diagnostic.get_line_diagnostics(diagnostic_bufnr, 1)[1],
         }
       ]]
-      eq({code = 42, tags = {"foo", "bar"}, data = "Hello world"}, result[1].user_data.lsp)
+      eq({code = 42, data = "Hello world"}, result[1].user_data.lsp)
       eq(42, result[1].code)
       eq(42, result[2].code)
-      eq({"foo", "bar"}, result[2].tags)
       eq("Hello world", result[2].data)
     end)
   end)

@@ -86,6 +86,7 @@ describe('vim.diagnostic', function()
   it('creates highlight groups', function()
     command('runtime plugin/diagnostic.vim')
     eq({
+      'DiagnosticDeprecated',
       'DiagnosticError',
       'DiagnosticFloatingError',
       'DiagnosticFloatingHint',
@@ -105,6 +106,7 @@ describe('vim.diagnostic', function()
       'DiagnosticUnderlineInfo',
       'DiagnosticUnderlineOk',
       'DiagnosticUnderlineWarn',
+      'DiagnosticUnnecessary',
       'DiagnosticVirtualTextError',
       'DiagnosticVirtualTextHint',
       'DiagnosticVirtualTextInfo',
