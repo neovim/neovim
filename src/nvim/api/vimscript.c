@@ -1,4 +1,4 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
+ // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
@@ -39,6 +39,32 @@
 /// etc.
 ///
 /// On execution error: fails with VimL error, updates v:errmsg.
+///
+/// Example (lua):
+/// <pre>lua
+///   local result = vim.api.nvim_exec([[
+///     let s:pirate = 'script-scoped varrrrr'
+///     function! Avast_ye_hades(s) abort
+///             return a:s .. ' ' .. s:pirate
+///     endfunction
+///     echo nvim_exec('echo Avast_ye_hades(''ahoy!'')', 1)
+///   ]], true)
+///
+///   -- vim.print(result)
+///
+///   vim.api.nvim_exec([[
+///   let abc = #{
+///     \ a: 1,
+///     \ b: 2,
+///     \ c: 3
+///     \ }
+///   
+///   lua << 
+///   local abc = vim.api.nvim_get_var("abc")
+///   vim.print(abc.a + 1)
+///   EOF
+///   ]], false)
+/// </pre>
 ///
 /// @see |execute()|
 /// @see |nvim_command()|
@@ -111,7 +137,21 @@ theend:
 /// Prefer using |nvim_cmd()| or |nvim_exec()| over this. To evaluate multiple lines of Vim script
 /// or an Ex command directly, use |nvim_exec()|. To construct an Ex command using a structured
 /// format and then execute it, use |nvim_cmd()|. To modify an Ex command before evaluating it, use
-/// |nvim_parse_cmd()| in conjunction with |nvim_cmd()|.
+/// |nvim_parse_cmd()| with |nvim_cmd()|.
+///
+/// Example (lua):
+/// <pre>lua
+///   vim.keymap.set("n", "K", function()
+///       local cw = vim.fn.expand("<cword>")
+///       if vim.fn.index({"vim", "help"}, vim.bo.filetype) >= 0 then
+///           vim.api.nvim_command("h " .. cw)
+///       elseif vim.tbl_contains({"man"}, filetype) then
+///           vim.api.nvim_command("Man " .. cw)
+///       else
+///           vim.api.nvim_command(string.format("!%s %s", vim.o.keywordprg, cw))
+///       end
+///   end, {silent = true})
+/// </pre>
 ///
 /// @param command  Ex command string
 /// @param[out] err Error details (Vim error), if any
@@ -127,6 +167,19 @@ void nvim_command(String command, Error *err)
 /// Dictionaries and Lists are recursively expanded.
 ///
 /// On execution error: fails with VimL error, updates v:errmsg.
+///
+/// Examples (lua):
+/// <pre>lua
+///   -- Lua doesn't have a string split function!
+///   local result = vim.api.nvim_eval('get(split($PATH, ","), 0)')
+///   local base = vim.api.nvim_eval("fnamemodify(expand('%'), ':h:.:S')")
+///
+///   -- Use nvim_exec() call foldtext() function
+///   local lines = fn.getbufline(bufnr, v.foldstart, v.foldend-1)
+///   if string.find(lines[1], "^%s*if err != nil {") == nil then
+///       return vim.api.nvim_eval('foldtext()')
+///   end
+/// </pre>
 ///
 /// @param expr     VimL expression string
 /// @param[out] err Error details, if any
@@ -236,6 +289,13 @@ free_vim_args:
 ///
 /// On execution error: fails with VimL error, updates v:errmsg.
 ///
+/// Examples (lua):
+/// <pre>lua
+///   local pdf = vim.api.nvim_call_function("expand", {"%:p:r"}) .. ".pdf"
+///   local has_latex = vim.api.nvim_call_function("executable", {"pdflatex"})
+///   local word_to_search = vim.api.nvim_call_function("expand", {"<cword>"})
+/// </pre>
+///
 /// @param fn       Function to call
 /// @param args     Function arguments packed in an Array
 /// @param[out] err Error details, if any
@@ -249,6 +309,20 @@ Object nvim_call_function(String fn, Array args, Error *err)
 /// Calls a VimL |Dictionary-function| with the given arguments.
 ///
 /// On execution error: fails with VimL error, updates v:errmsg.
+///
+/// Example (lua):
+/// <pre>lua
+///   vim.api.nvim_exec([[
+///   	function! Count(num) dict
+///   		return count(self.data, a:num)
+///   	endfunction
+///   
+///   	let g:mydict = { 'data':' [0, 1, 2, 1]', 'count': function('Count') }
+///   ]], false)
+///   
+///   local result = vim.api.nvim_call_dict_function('g:mydict', 'count', {1})
+///   vim.print(result)
+/// </pre>
 ///
 /// @param dict Dictionary, or String evaluating to a VimL |self| dict
 /// @param fn Name of the function defined on the VimL dict
@@ -338,6 +412,24 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 
 /// Parse a VimL expression.
 ///
+/// Example (lua):
+/// <pre>lua
+///   local incorrect = vim.api.nvim_parse_expression("let b:x = 1 + 1", "l", true)
+///   if incorrect.error ~= nil then
+///     vim.print(incorrect.error)
+///   end
+///   
+///   local parsed = vim.api.nvim_parse_expression("let b:x = 1 + 1", "lm", true)
+///   if parsed.error ~= nil then
+///     vim.print(parsed.error)
+///   else
+///     vim.print(vim.inspect(parsed))
+///   end
+///   
+///   local echo = vim.api.nvim_parse_expression("hello", 'm', true)
+///   vim.print(vim.inspect(echo))
+/// </pre>
+///
 /// @param[in]  expr  Expression to parse. Always treated as a single line.
 /// @param[in]  flags Flags:
 ///                    - "m" if multiple expressions in a row are allowed (only
@@ -366,7 +458,7 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///          - "message": String, error message in printf format, translated.
 ///                       Must contain exactly one "%.*s".
 ///          - "arg": String, error message argument.
-///        - "len": Amount of bytes successfully parsed. With flags equal to ""
+///        - "len": Number of bytes successfully parsed. With flags equal to ""
 ///                 that should be equal to the length of expr string.
 ///                 (“Successfully parsed” here means “participated in AST
 ///                  creation”, not “till the first error”.)
@@ -380,9 +472,9 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///          - "len": “length” of the node. This and "start" are there for
 ///                   debugging purposes primary (debugging parser and providing
 ///                   debug information).
-///          - "children": a list of nodes described in top/"ast". There always
-///                        is zero, one or two children, key will not be present
-///                        if node has no children. Maximum number of children
+///          - "children": a list of nodes described in top/"ast". There is
+///                        always zero, one or two children, key will not be present
+///                        if node has no children. The maximum number of children
 ///                        may be found in node_maxchildren array.
 ///      - Local values (present only for certain nodes):
 ///        - "scope": a single Integer, specifies scope for "Option" and
@@ -403,7 +495,7 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///        - "augmentation": String, augmentation type for "Assignment" nodes.
 ///                          Is either an empty string, "Add", "Subtract" or
 ///                          "Concat" for "=", "+=", "-=" or ".=" respectively.
-///        - "invert": Boolean, true if result of comparison needs to be
+///        - "invert": Boolean, true if the result of comparison needs to be
 ///                    inverted. Only present for "Comparison" nodes.
 ///        - "ivalue": Integer, integer value for "Integer" nodes.
 ///        - "fvalue": Float, floating-point value for "Float" nodes.
