@@ -9,7 +9,7 @@ local function mk_tag_item(name, range, uri, offset_encoding)
   return {
     name = name,
     filename = vim.uri_to_fname(uri),
-    cmd = string.format('call cursor(%d, %d)|', range.start.line + 1, byte),
+    cmd = string.format([[/\%%%dl\%%%dc/]], range.start.line + 1, byte),
   }
 end
 
