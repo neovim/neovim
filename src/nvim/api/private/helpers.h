@@ -149,13 +149,15 @@ typedef struct {
 // which would otherwise be ignored.  This pattern is from do_cmdline().
 //
 // TODO(bfredl): prepare error-handling at "top level" (nv_event).
-#define TRY_WRAP(code) \
+#define TRY_WRAP(err, code) \
   do { \
     msglist_T **saved_msg_list = msg_list; \
     msglist_T *private_msg_list; \
     msg_list = &private_msg_list; \
     private_msg_list = NULL; \
+    try_start(); \
     code; \
+    try_end(err); \
     msg_list = saved_msg_list;  /* Restore the exception context. */ \
   } while (0)
 

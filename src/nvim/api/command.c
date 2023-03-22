@@ -697,8 +697,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     capture_ga = &capture_local;
   }
 
-  TRY_WRAP({
-    try_start();
+  TRY_WRAP(err, {
     if (output) {
       msg_silent++;
       msg_col = 0;  // prevent leading spaces
@@ -714,8 +713,6 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
       // Put msg_col back where it was, since nothing should have been written.
       msg_col = save_msg_col;
     }
-
-    try_end(err);
   });
 
   if (ERROR_SET(err)) {

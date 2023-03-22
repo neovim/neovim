@@ -538,10 +538,8 @@ ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Error *err)
 
   int flags = DIP_DIRFILE | (all ? DIP_ALL : 0);
 
-  TRY_WRAP({
-    try_start();
+  TRY_WRAP(err, {
     do_in_runtimepath((name.size ? name.data : ""), flags, find_runtime_cb, &rv);
-    try_end(err);
   });
   return rv;
 }
@@ -1238,14 +1236,12 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow,
 
   finish_yankreg_from_object(reg, false);
 
-  TRY_WRAP({
-    try_start();
+  TRY_WRAP(err, {
     bool VIsual_was_active = VIsual_active;
     msg_silent++;  // Avoid "N more lines" message.
     do_put(0, reg, after ? FORWARD : BACKWARD, 1, follow ? PUT_CURSEND : 0);
     msg_silent--;
     VIsual_active = VIsual_was_active;
-    try_end(err);
   });
 
 cleanup:

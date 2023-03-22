@@ -137,34 +137,36 @@ Object nvim_eval(String expr, Error *err)
   static int recursive = 0;  // recursion depth
   Object rv = OBJECT_INIT;
 
-  TRY_WRAP({
-    // Initialize `force_abort`  and `suppress_errthrow` at the top level.
-    if (!recursive) {
-      force_abort = false;
-      suppress_errthrow = false;
-      did_throw = false;
-      // `did_emsg` is set by emsg(), which cancels execution.
-      did_emsg = false;
-    }
-    recursive++;
-    try_start();
+  // Initialize `force_abort`  and `suppress_errthrow` at the top level.
+  if (!recursive) {
+    force_abort = false;
+    suppress_errthrow = false;
+    did_throw = false;
+    // `did_emsg` is set by emsg(), which cancels execution.
+    did_emsg = false;
+  }
 
-    typval_T rettv;
-    int ok = eval0(expr.data, &rettv, NULL, true);
+  recursive++;
 
-    if (!try_end(err)) {
-      if (ok == FAIL) {
-        // Should never happen, try_end() should get the error. #8371
-        api_set_error(err, kErrorTypeException,
-                      "Failed to evaluate expression: '%.*s'", 256, expr.data);
-      } else {
-        rv = vim_to_object(&rettv);
-      }
-    }
+  typval_T rettv;
+  int ok;
 
-    tv_clear(&rettv);
-    recursive--;
+  TRY_WRAP(err, {
+    ok = eval0(expr.data, &rettv, NULL, true);
   });
+
+  if (!ERROR_SET(err)) {
+    if (ok == FAIL) {
+      // Should never happen, try_end() (in TRY_WRAP) should get the error. #8371
+      api_set_error(err, kErrorTypeException,
+                    "Failed to evaluate expression: '%.*s'", 256, expr.data);
+    } else {
+      rv = vim_to_object(&rettv);
+    }
+  }
+
+  tv_clear(&rettv);
+  recursive--;
 
   return rv;
 }
@@ -196,33 +198,36 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
     }
   }
 
-  TRY_WRAP({
-    // Initialize `force_abort`  and `suppress_errthrow` at the top level.
-    if (!recursive) {
-      force_abort = false;
-      suppress_errthrow = false;
-      did_throw = false;
-      // `did_emsg` is set by emsg(), which cancels execution.
-      did_emsg = false;
-    }
-    recursive++;
-    try_start();
-    typval_T rettv;
-    funcexe_T funcexe = FUNCEXE_INIT;
-    funcexe.fe_firstline = curwin->w_cursor.lnum;
-    funcexe.fe_lastline = curwin->w_cursor.lnum;
-    funcexe.fe_evaluate = true;
-    funcexe.fe_selfdict = self;
+  // Initialize `force_abort`  and `suppress_errthrow` at the top level.
+  if (!recursive) {
+    force_abort = false;
+    suppress_errthrow = false;
+    did_throw = false;
+    // `did_emsg` is set by emsg(), which cancels execution.
+    did_emsg = false;
+  }
+  recursive++;
+
+  typval_T rettv;
+  funcexe_T funcexe = FUNCEXE_INIT;
+  funcexe.fe_firstline = curwin->w_cursor.lnum;
+  funcexe.fe_lastline = curwin->w_cursor.lnum;
+  funcexe.fe_evaluate = true;
+  funcexe.fe_selfdict = self;
+
+  TRY_WRAP(err, {
     // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
     // (see above) to capture abort-causing non-exception errors.
     (void)call_func(fn.data, (int)fn.size, &rettv, (int)args.size,
                     vim_args, &funcexe);
-    if (!try_end(err)) {
-      rv = vim_to_object(&rettv);
-    }
-    tv_clear(&rettv);
-    recursive--;
   });
+
+  if (!ERROR_SET(err)) {
+    rv = vim_to_object(&rettv);
+  }
+
+  tv_clear(&rettv);
+  recursive--;
 
 free_vim_args:
   while (i > 0) {
