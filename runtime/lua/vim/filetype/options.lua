@@ -3,7 +3,7 @@ local api = vim.api
 local M = {}
 
 local function get_ftplugin_runtime(filetype)
-  return api.nvim__get_runtime({
+  local files = api.nvim__get_runtime({
     string.format('ftplugin/%s.vim', filetype),
     string.format('ftplugin/%s_*.vim', filetype),
     string.format('ftplugin/%s/*.vim', filetype),
@@ -11,6 +11,15 @@ local function get_ftplugin_runtime(filetype)
     string.format('ftplugin/%s_*.lua', filetype),
     string.format('ftplugin/%s/*.lua', filetype),
   }, true, {}) --[[@as string[] ]]
+
+  local r = {} ---@type string[]
+  for _, f in ipairs(files) do
+    -- VIMRUNTIME should be static so shouldn't need to worry about it changing
+    if not vim.startswith(f, vim.env.VIMRUNTIME) then
+      r[#r + 1] = f
+    end
+  end
+  return r
 end
 
 -- Keep track of ftplugin files
@@ -52,14 +61,11 @@ local function update_ft_option_cache(filetype)
   end
 
   for _, f in ipairs(files) do
-    -- VIMRUNTIME should be static so shouldn't need to worry about it changing
-    if not vim.startswith(f, vim.env.VIMRUNTIME) then
-      local mtime = hash(f)
-      if ftplugin_cache[filetype][f] ~= mtime then
-        -- invalidate
-        ft_option_cache[filetype] = nil
-        ftplugin_cache[filetype][f] = mtime
-      end
+    local mtime = hash(f)
+    if ftplugin_cache[filetype][f] ~= mtime then
+      -- invalidate
+      ft_option_cache[filetype] = nil
+      ftplugin_cache[filetype][f] = mtime
     end
   end
 end
