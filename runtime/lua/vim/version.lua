@@ -65,6 +65,8 @@ local M = {}
 local Version = {}
 Version.__index = Version
 
+--- @private
+---
 --- Compares prerelease strings: per semver, number parts must be must be treated as numbers:
 --- "pre1.10" is greater than "pre1.2". https://semver.org/#spec-item-11
 local function cmp_prerel(prerel1, prerel2)

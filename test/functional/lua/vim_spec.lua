@@ -329,14 +329,6 @@ describe('lua stdlib', function()
       matches("Infinite loop detected", pcall_err(vim.split, t[1], t[2]))
     end
 
-    -- `keepsep`
-    eq({ '', '.', '', '.', 'aa', '.', 'bb', '.', 'cc', '.', 'dd', '.', 'ee', '.', '', },
-      vim.split('..aa.bb.cc.dd.ee.', '%.', {keepsep=true}))
-    eq({ '..aa', '1', '.bb', '2', '', '2', '.cc.', '9', '', },
-      vim.split('..aa1.bb22.cc.9', '%d', {keepsep=true}))
-    eq({ '..aa', '1', '.bb', '22', '.cc.', '9', '', },
-      vim.split('..aa1.bb22.cc.9', '%d+', {keepsep=true}))
-
     -- Validates args.
     eq(true, pcall(vim.split, 'string', 'string'))
     matches('s: expected string, got number',
@@ -345,9 +337,6 @@ describe('lua stdlib', function()
       pcall_err(vim.split, 'string', 1))
     matches('opts: expected table, got number',
       pcall_err(vim.split, 'string', 'string', 1))
-    -- Not supported (yet).
-    matches('keepsep%+trimempty not supported',
-      pcall_err(vim.split, 'foo bar', ' ', {keepsep=true, trimempty=true}))
   end)
 
   it('vim.trim', function()

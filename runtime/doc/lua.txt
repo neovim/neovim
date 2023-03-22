@@ -1659,12 +1659,18 @@ gsplit({s}, {sep}, {opts})                                      *vim.gsplit()*
        end
 <
 
+    If you want to also inspect the separator itself (instead of discarding
+    it), use |string.gmatch()|. Example: >lua
+
+       for word, num in ('foo111bar222'):gmatch('([^0-9]*)(d*)') do
+         print(('word: s num: s'):format(word, num))
+       end
+<
+
     Parameters: ~
-      • {s}     (string) String to split
-      • {sep}   (string) Separator or pattern
+      • {s}     string String to split
+      • {sep}   string Separator or pattern
       • {opts}  (table|nil) Keyword arguments |kwargs|:
-                • keepsep: (boolean) Return segments matching `sep` instead of
-                  discarding them.
                 • plain: (boolean) Use `sep` literally (as in string.find).
                 • trimempty: (boolean) Discard empty segments at start and end
                   of the sequence.
@@ -1673,6 +1679,7 @@ gsplit({s}, {sep}, {opts})                                      *vim.gsplit()*
         (function) Iterator over the split components
 
     See also: ~
+      • |string.gmatch()|
       • |vim.split()|
       • |luaref-patterns|
       • https://www.lua.org/pil/20.2.html
@@ -1749,7 +1756,6 @@ split({s}, {sep}, {opts})                                        *vim.split()*
       split("axaby", "ab?")                   --> {'','x','y'}
       split("x*yz*o", "*", {plain=true})      --> {'x','yz','o'}
       split("|x|y|z|", "|", {trimempty=true}) --> {'x', 'y', 'z'}
-      split("|x|y|z|", "|", {keepsep=true})   --> {'|', 'x', '|', 'y', '|', 'z', '|'}
 <
 
     Parameters: ~
@@ -1763,6 +1769,7 @@ split({s}, {sep}, {opts})                                        *vim.split()*
 
     See also: ~
       • |vim.gsplit()|
+      • |string.gmatch()|
 
 startswith({s}, {prefix})                                   *vim.startswith()*
     Tests if `s` starts with `prefix`.
@@ -2625,7 +2632,7 @@ cmp({v1}, {v2})                                            *vim.version.cmp()*
         (integer) -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
 
 eq({v1}, {v2})                                              *vim.version.eq()*
-    Returns `true` if the given versions are equal.
+    Returns `true` if the given versions are equal. See |vim.version.cmp()| for usage.
 
     Parameters: ~
       • {v1}  Version|number[]
@@ -2635,7 +2642,7 @@ eq({v1}, {v2})                                              *vim.version.eq()*
         (boolean)
 
 gt({v1}, {v2})                                              *vim.version.gt()*
-    Returns `true` if `v1 > v2` .
+    Returns `true` if `v1 > v2` . See |vim.version.cmp()| for usage.
 
     Parameters: ~
       • {v1}  Version|number[]
@@ -2654,7 +2661,7 @@ last({versions})                                          *vim.version.last()*
         Version ?|ni
 
 lt({v1}, {v2})                                              *vim.version.lt()*
-    Returns `true` if `v1 < v2` .
+    Returns `true` if `v1 < v2` . See |vim.version.cmp()| for usage.
 
     Parameters: ~
       • {v1}  Version|number[]

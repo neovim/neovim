@@ -66,6 +66,14 @@ end)()
 ---   end
 ---   </pre>
 ---
+--- If you want to also inspect the separator itself (instead of discarding it), use
+--- |string.gmatch()|. Example:
+---   <pre>lua
+---   for word, num in ('foo111bar222'):gmatch('([^0-9]*)(%d*)') do
+---     print(('word: %s num: %s'):format(word, num))
+---   end
+---   </pre>
+---
 --- @see |string.gmatch()|
 --- @see |vim.split()|
 --- @see |luaref-patterns|
@@ -75,27 +83,22 @@ end)()
 --- @param s string String to split
 --- @param sep string Separator or pattern
 --- @param opts (table|nil) Keyword arguments |kwargs|:
----       - keepsep: (boolean) Include segments matching `sep` instead of discarding them.
 ---       - plain: (boolean) Use `sep` literally (as in string.find).
 ---       - trimempty: (boolean) Discard empty segments at start and end of the sequence.
 ---@return fun():string|nil (function) Iterator over the split components
 function vim.gsplit(s, sep, opts)
   local plain
   local trimempty = false
-  local keepsep = false
   if type(opts) == 'boolean' then
     plain = opts -- For backwards compatibility.
   else
     vim.validate({ s = { s, 's' }, sep = { sep, 's' }, opts = { opts, 't', true } })
     opts = opts or {}
-    plain, trimempty, keepsep = opts.plain, opts.trimempty, opts.keepsep
-    assert(not trimempty or not keepsep, 'keepsep+trimempty not supported')
+    plain, trimempty = opts.plain, opts.trimempty
   end
 
   local start = 1
   local done = false
-  local sepseg = nil -- Last matched `sep` segment.
-  local sepesc = plain and vim.pesc(sep) or sep
 
   -- For `trimempty`:
   local empty_start = true -- Only empty segments seen so far.
@@ -105,9 +108,6 @@ function vim.gsplit(s, sep, opts)
   local function _pass(i, j, ...)
     if i then
       assert(j + 1 > start, 'Infinite loop detected')
-      if keepsep then
-        sepseg = s:match(sepesc, start)
-      end
       local seg = s:sub(start, i - 1)
       start = j + 1
       return seg, ...
@@ -125,10 +125,6 @@ function vim.gsplit(s, sep, opts)
     elseif trimempty and nonemptyseg then
       local seg = nonemptyseg
       nonemptyseg = nil
-      return seg
-    elseif keepsep and sepseg then
-      local seg = sepseg
-      sepseg = nil
       return seg
     elseif done or (s == '' and sep == '') then
       return nil
@@ -171,17 +167,16 @@ end
 ---  split("axaby", "ab?")                   --> {'','x','y'}
 ---  split("x*yz*o", "*", {plain=true})      --> {'x','yz','o'}
 ---  split("|x|y|z|", "|", {trimempty=true}) --> {'x', 'y', 'z'}
----  split("|x|y|z|", "|", {keepsep=true})   --> {'|', 'x', '|', 'y', '|', 'z', '|'}
 --- </pre>
 ---
 ---@see |vim.gsplit()|
+---@see |string.gmatch()|
 ---
 ---@param s string String to split
 ---@param sep string Separator or pattern
 ---@param opts (table|nil) Keyword arguments |kwargs| accepted by |vim.gsplit()|
 ---@return string[] List of split components
 function vim.split(s, sep, opts)
-  -- TODO(justinmk): deprecate vim.split in favor of vim.totable(vim.gsplit())
   local t = {}
   for c in vim.gsplit(s, sep, opts) do
     table.insert(t, c)
