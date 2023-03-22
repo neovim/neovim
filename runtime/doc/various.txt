@@ -173,13 +173,12 @@ g8			Print the hex values of the bytes used in the
 			Like ":z" or ":z!", but number the lines.
 
 							*:=*
-:= [flags]		Print the last line number.
-			See |ex-flags| for [flags].
+:=			Without arg: Print the last line number.
+			with args: equivalent to `:lua ={expr}`. see |:lua|
 
-:{range}= [flags]	Prints the last line number in {range}.  For example,
+:{range}=		Prints the last line number in {range}.  For example,
 			this prints the current line number: >
 				:.=
-<			See |ex-flags| for [flags].
 
 :norm[al][!] {commands}					*:norm* *:normal*
 			Execute Normal mode commands {commands}.  This makes

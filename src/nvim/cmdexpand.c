@@ -2141,6 +2141,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
     return set_context_in_scriptnames_cmd(xp, arg);
 
   case CMD_lua:
+  case CMD_equal:
     xp->xp_context = EXPAND_LUA;
     break;
 

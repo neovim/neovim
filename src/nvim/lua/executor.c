@@ -1621,14 +1621,15 @@ void ex_lua(exarg_T *const eap)
     xfree(code);
     return;
   }
-  // When =expr is used transform it to print(vim.inspect(expr))
-  if (code[0] == '=') {
-    len += sizeof("vim.print()") - sizeof("=");
+  // When =expr is used transform it to vim.print(expr)
+  if (eap->cmdidx == CMD_equal || code[0] == '=') {
+    size_t off = (eap->cmdidx == CMD_equal) ? 0 : 1;
+    len += sizeof("vim.print()") - 1 - off;
     // code_buf needs to be 1 char larger then len for null byte in the end.
     // lua nlua_typval_exec doesn't expect null terminated string so len
     // needs to end before null byte.
     char *code_buf = xmallocz(len);
-    vim_snprintf(code_buf, len + 1, "vim.print(%s)", code + 1);
+    vim_snprintf(code_buf, len + 1, "vim.print(%s)", code + off);
     xfree(code);
     code = code_buf;
   }

@@ -460,6 +460,7 @@ Commands:
   |:doautocmd| does not warn about "No matching autocommands".
   |:wincmd| accepts a count.
   `:write!` does not show a prompt if the file was updated externally.
+  |:=| does not accept |ex-flags|. With an arg it is equivalent to |:lua=|
 
 Command-line:
   The meanings of arrow keys do not change depending on 'wildoptions'.
