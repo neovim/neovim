@@ -111,6 +111,10 @@ static buf_T *do_ft_buf(char *filetype, aco_save_T *aco, Error *err)
 
   // Set curwin/curbuf to buf and save a few things.
   aucmd_prepbuf(aco, ftbuf);
+  set_option_value("bufhidden", 0L, "hide", OPT_LOCAL);
+  set_option_value("buftype", 0L, "nofile", OPT_LOCAL);
+  set_option_value("swapfile", 0L, NULL, OPT_LOCAL);
+  set_option_value("modeline", 0L, NULL, OPT_LOCAL);  // 'nomodeline'
 
   ftbuf->b_p_ft = xstrdup(filetype);
 
