@@ -369,3 +369,222 @@ describe("API: set highlight", function()
     assert_alive()
   end)
 end)
+
+describe('API: get highlight', function()
+  local highlight_color = {
+    fg = tonumber('0xff0000'),
+    bg = tonumber('0x0032aa'),
+    ctermfg = 8,
+    ctermbg = 15,
+  }
+  local highlight1 = {
+    bg = highlight_color.bg,
+    fg = highlight_color.fg,
+    bold = true,
+    italic = true,
+  }
+  local highlight2 = {
+    ctermbg = highlight_color.ctermbg,
+    ctermfg = highlight_color.ctermfg,
+    underline = true,
+    reverse = true,
+  }
+  local highlight3_config = {
+    bg = highlight_color.bg,
+    fg = highlight_color.fg,
+    ctermbg = highlight_color.ctermbg,
+    ctermfg = highlight_color.ctermfg,
+    bold = true,
+    italic = true,
+    reverse = true,
+    underdashed = true,
+    strikethrough = true,
+    altfont = true,
+    cterm = {
+      italic = true,
+      reverse = true,
+      strikethrough = true,
+      altfont = true,
+      nocombine = true,
+    },
+  }
+  local highlight3_result = {
+    bg = highlight_color.bg,
+    fg = highlight_color.fg,
+    ctermbg = highlight_color.ctermbg,
+    ctermfg = highlight_color.ctermfg,
+    bold = true,
+    italic = true,
+    nocombine = true,
+    reverse = true,
+    underdashed = true,
+    strikethrough = true,
+    altfont = true,
+  }
+
+  local function get_ns()
+    -- Test namespace filtering behavior
+    local ns2 = meths.create_namespace('Another_namespace')
+    meths.set_hl(ns2, 'Test_hl', { ctermfg = 23 })
+    meths.set_hl(ns2, 'Test_another_hl', { link = 'Test_hl' })
+    meths.set_hl(ns2, 'Test_hl_link', { link = 'Test_another_hl' })
+    meths.set_hl(ns2, 'Test_another_hl_link', { link = 'Test_hl_link' })
+
+    local ns = meths.create_namespace('Test_set_hl')
+    meths.set_hl_ns(ns)
+
+    return ns
+  end
+
+  before_each(clear)
+
+  it('validation', function()
+    eq(
+      'Invalid highlight name: expected String, got Integer',
+      pcall_err(meths.get_hl, 0, { name = 177 })
+    )
+    eq('Highlight id out of bounds', pcall_err(meths.get_hl, 0, { name = 'Test set hl' }))
+  end)
+
+  it('can get all highlights in current namespace', function()
+    local ns = get_ns()
+    meths.set_hl(ns, 'Test_hl', { bg = '#B4BEFE' })
+    meths.set_hl(ns, 'Test_hl_link', { link = 'Test_hl' })
+    eq({
+      Test_hl = {
+        bg = 11845374
+      },
+      Test_hl_link = {
+        link = 'Test_hl'
+      }
+    }, meths.get_hl(ns, {}))
+  end)
+
+  it('can get gui highlight', function()
+    local ns = get_ns()
+    meths.set_hl(ns, 'Test_hl', highlight1)
+    eq(highlight1, meths.get_hl(ns, { name = 'Test_hl' }))
+  end)
+
+  it('can get cterm highlight', function()
+    local ns = get_ns()
+    meths.set_hl(ns, 'Test_hl', highlight2)
+    eq(highlight2, meths.get_hl(ns, { name = 'Test_hl' }))
+  end)
+
+  it('can get empty cterm attr', function()
+    local ns = get_ns()
+    meths.set_hl(ns, 'Test_hl', { cterm = {} })
+    eq({}, meths.get_hl(ns, { name = 'Test_hl' }))
+  end)
+
+  it('cterm attr defaults to gui attr', function()
+    local ns = get_ns()
+    meths.set_hl(ns, 'Test_hl', highlight1)
+    eq(highlight1, meths.get_hl(ns, { name = 'Test_hl' }))
+  end)
+
+  it('can overwrite attr for cterm', function()
+    local ns = get_ns()
+    meths.set_hl(ns, 'Test_hl', highlight3_config)
+    eq(highlight3_result, meths.get_hl(ns, { name = 'Test_hl' }))
+  end)
+
+  it('only allows one underline attribute #22371', function()
+    local ns = get_ns()
+    meths.set_hl(ns, 'Test_hl', {
+      underdouble = true,
+      underdotted = true,
+      cterm = {
+        underline = true,
+        undercurl = true,
+      },
+    })
+    eq({ undercurl = true, underdotted = true }, meths.get_hl(ns, { name = 'Test_hl' }))
+  end)
+
+  it('can get a highlight in the global namespace', function()
+    meths.set_hl(0, 'Test_hl', highlight2)
+    eq(highlight2, meths.get_hl(0, { name = 'Test_hl' }))
+
+    meths.set_hl(0, 'Test_hl', { background = highlight_color.bg })
+    eq({
+      bg = 12970,
+    }, meths.get_hl(0, { name = 'Test_hl' }))
+
+    meths.set_hl(0, 'Test_hl2', highlight3_config)
+    eq(highlight3_result, meths.get_hl(0, { name = 'Test_hl2' }))
+
+    -- Colors are stored with the name they are defined, but
+    -- with canonical casing
+    meths.set_hl(0, 'Test_hl3', { bg = 'reD', fg = 'bLue' })
+    eq({
+      bg = 16711680,
+      fg = 255,
+    }, meths.get_hl(0, { name = 'Test_hl3' }))
+  end)
+
+  local expected_rgb = {
+    altfont = true,
+    bg = 16776960,
+    bold = true,
+    ctermbg = 10,
+    fg = 16711680,
+    italic = true,
+    nocombine = true,
+    reverse = true,
+    sp = 255,
+    strikethrough = true,
+    underline = true,
+  }
+  local expected = {
+    bg = 16776960,
+    bold = true,
+    ctermbg = 10,
+    fg = 16711680,
+    sp = 255,
+    underline = true,
+  }
+  local expected_undercurl = {
+    bg = 16776960,
+    ctermbg = 10,
+    fg = 16711680,
+    sp = 255,
+    undercurl = true,
+    underline = true,
+  }
+
+  it('nvim_get_hl by id', function()
+    local hl_id = meths.get_hl_id_by_name('NewHighlight')
+
+    command(
+      'hi NewHighlight cterm=underline ctermbg=green guifg=red guibg=yellow guisp=blue gui=bold'
+    )
+    eq(expected, meths.get_hl(0, { id = hl_id }))
+
+    -- Test 0 argument
+    eq('Highlight id out of bounds', pcall_err(meths.get_hl, 0, { id = 0 }))
+
+    eq(
+      'Invalid highlight id: expected Integer, got String',
+      pcall_err(meths.get_hl, 0, { id = 'Test_set_hl' })
+    )
+
+    -- Test all highlight properties.
+    command('hi NewHighlight gui=underline,bold,italic,reverse,strikethrough,altfont,nocombine')
+    eq(expected_rgb, meths.get_hl(0, { id = hl_id }))
+
+    -- Test undercurl
+    command('hi NewHighlight gui=undercurl')
+    eq(expected_undercurl, meths.get_hl(0, { id = hl_id }))
+  end)
+
+  it('can correctly detect links', function()
+    command('hi String guifg=#a6e3a1')
+    command('hi link @string string')
+    command('hi link @string.cpp @string')
+    eq({ fg = 10937249 }, meths.get_hl(0, { name = 'String' }))
+    eq({ link = 'String' }, meths.get_hl(0, { name = '@string' }))
+    eq({ fg = 10937249 }, meths.get_hl(0, { name = '@string.cpp', link = false }))
+  end)
+end)

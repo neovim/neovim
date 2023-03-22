@@ -74,42 +74,6 @@
 # include "api/vim.c.generated.h"
 #endif
 
-/// Gets a highlight definition by name.
-///
-/// @param name Highlight group name
-/// @param rgb Export RGB colors
-/// @param[out] err Error details, if any
-/// @return Highlight definition map
-/// @see nvim_get_hl_by_id
-Dictionary nvim_get_hl_by_name(String name, Boolean rgb, Arena *arena, Error *err)
-  FUNC_API_SINCE(3)
-{
-  Dictionary result = ARRAY_DICT_INIT;
-  int id = syn_name2id(name.data);
-
-  VALIDATE_S((id != 0), "highlight name", name.data, {
-    return result;
-  });
-  return nvim_get_hl_by_id(id, rgb, arena, err);
-}
-
-/// Gets a highlight definition by id. |hlID()|
-/// @param hl_id Highlight id as returned by |hlID()|
-/// @param rgb Export RGB colors
-/// @param[out] err Error details, if any
-/// @return Highlight definition map
-/// @see nvim_get_hl_by_name
-Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Arena *arena, Error *err)
-  FUNC_API_SINCE(3)
-{
-  Dictionary dic = ARRAY_DICT_INIT;
-  VALIDATE_INT((syn_get_final_id((int)hl_id) != 0), "highlight id", hl_id, {
-    return dic;
-  });
-  int attrcode = syn_id2attr((int)hl_id);
-  return hl_get_attr_by_id(attrcode, rgb, arena, err);
-}
-
 /// Gets a highlight group by name
 ///
 /// similar to |hlID()|, but allocates a new ID if not present.
@@ -119,12 +83,22 @@ Integer nvim_get_hl_id_by_name(String name)
   return syn_check_group(name.data, name.size);
 }
 
-Dictionary nvim__get_hl_defs(Integer ns_id, Arena *arena, Error *err)
+/// Gets all or specific highlight groups in a namespace.
+///
+/// @param ns_id Get highlight groups for namespace ns_id |nvim_get_namespaces()|.
+///              Use 0 to get global highlight groups |:highlight|.
+/// @param opts  Options dict:
+///                 - name: (string) Get a highlight definition by name.
+///                 - id: (integer) Get a highlight definition by id.
+///                 - link: (boolean, default true) Show linked group name instead of effective definition |:hi-link|.
+///
+/// @param[out] err Error details, if any.
+/// @return Highlight groups as a map from group name to a highlight definition map as in |nvim_set_hl()|,
+///                   or only a single highlight definition map if requested by name or id.
+Dictionary nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena *arena, Error *err)
+  FUNC_API_SINCE(11)
 {
-  if (ns_id == 0) {
-    return get_global_hl_defs(arena);
-  }
-  abort();
+  return ns_get_hl_defs((NS)ns_id, opts, arena, err);
 }
 
 /// Sets a highlight group.

@@ -145,6 +145,11 @@ return {
     "altfont";
     "nocombine";
   }};
+  { 'get_highlight', {
+    "id";
+    "name";
+    "link";
+  }};
   -- Autocmds
   { 'clear_autocmds', {
     "buffer";
