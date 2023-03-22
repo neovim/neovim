@@ -27,6 +27,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/extmark.h"
 #include "nvim/fold.h"
@@ -134,6 +135,7 @@ static char opchars[][3] = {
   { 'g', '@', OPF_CHANGE },              // OP_FUNCTION
   { Ctrl_A, NUL, OPF_CHANGE },           // OP_NR_ADD
   { Ctrl_X, NUL, OPF_CHANGE },           // OP_NR_SUB
+  { 'Q', NUL, OPF_LINES },               // OP_REGREPLAY
 };
 
 yankreg_T *get_y_previous(void)
@@ -207,6 +209,22 @@ int get_op_char(int optype)
 int get_extra_op_char(int optype)
 {
   return opchars[optype][1];
+}
+
+void op_regreplay(oparg_T *oap) {
+  int i;
+  int clnum = oap->start.lnum;
+
+  for (i = 0; i < oap->line_count; i++) {
+    curwin->w_cursor.lnum = clnum;
+    curwin->w_cursor.col = 0;
+
+    do_execreg(reg_recorded, false, false, false);
+    exec_normal(false);
+
+    line_breakcheck();
+    clnum++;
+  }
 }
 
 /// handle a shift operation
@@ -6385,6 +6403,14 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         VIsual_active = false;
       }
       check_cursor_col();
+      break;
+    case OP_REGREPLAY:
+      if (curwin->w_cursor.lnum + oap->line_count - 1 >
+          curbuf->b_ml.ml_line_count) {
+        beep_flush();
+      } else {
+        op_regreplay(oap);
+      }
       break;
     default:
       clearopbeep(oap);
