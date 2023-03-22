@@ -67,11 +67,6 @@ end
 local v1 = { tonumber(cached_version.major), tonumber(cached_version.minor), tonumber(cached_version.patch) }
 local v2 = { current_version.major, current_version.minor, current_version.patch }
 
-print('Cached version is:')
-vim.print(v1)
-print('Current version is:')
-vim.print(v2)
-
 -- if cache version is equal or greater than current, do nothing
 if vim.version.cmp(v1, v2) >= 0 then return end
 
