@@ -4,7 +4,7 @@
 ---@return (table) Contents of version file or empty table.
 local function read_version()
   local version = {}
-  local f = io.open(vim.fn.stdpath('cache') .. '/version', 'r')
+  local f = io.open(vim.fn.stdpath('state') .. '/version', 'r')
   if f then
     local contents = f:read('*a')
     if contents then
@@ -38,7 +38,7 @@ local function write_version(version)
     patch = { version.patch, 'number' },
     prerelease = { version.prerelease, 'boolean' },
   })
-  local f = assert(io.open(vim.fn.stdpath('cache') .. '/version', 'w'))
+  local f = assert(io.open(vim.fn.stdpath('state') .. '/version', 'w'))
 
   local v = {}
   for key, value in pairs(version) do
