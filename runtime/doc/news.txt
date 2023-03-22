@@ -40,6 +40,8 @@ The following new APIs or features were added.
   iterators |luaref-in|.
 
 • Added |vim.keycode()| for translating keycodes in a string.
+• We now offer to show detected to news.txt (prerelease
+builds only).
 
 • Added automatic linting of treesitter query files (see |ft-query-plugin|).
   Automatic linting can be turned off via >lua

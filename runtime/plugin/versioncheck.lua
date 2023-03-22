@@ -1,0 +1,23 @@
+if vim.g.loaded_versioncheck ~= nil then
+  return
+end
+vim.g.loaded_versioncheck = true
+
+-- detect non-interactive startups
+if vim.tbl_contains(vim.v.argv, '-l') then
+  return
+end
+
+if vim.version().prerelease ~= true then
+  return
+end
+
+local augroup = vim.api.nvim_create_augroup('versioncheck', {})
+
+vim.api.nvim_create_autocmd('CursorHold', {
+  group = augroup,
+  desc = 'Tell user about breaking changes on development branch.',
+  callback = function()
+    require('versioncheck').check_for_news()
+  end,
+})
