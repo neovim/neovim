@@ -69,7 +69,7 @@ local function validate_commit(commit_message)
   end
 
   local before_colon = commit_split[1]
-  local after_colon = commit_split[2]
+  local after_colon = commit_split[#commit_split]
 
   -- Check if commit introduces a breaking change.
   if vim.endswith(before_colon, "!") then
@@ -90,7 +90,7 @@ local function validate_commit(commit_message)
 
   -- Check if scope is appropriate
   if before_colon:match("%(") then
-    local scope = vim.trim(before_colon:match("%((.*)%)"))
+    local scope = vim.trim(commit_message:match("%((.-)%)"))
 
     if scope == '' then
       return [[Scope can't be empty]]
@@ -234,6 +234,7 @@ function M._test()
     ['ci: Capitalized first word'] = false,
     ['ci: UPPER_CASE First Word'] = true,
     ['unknown: using unknown type'] = false,
+    ['feat(:grep): read from pipe'] = true,
     ['ci: you\'re saying this commit message just goes on and on and on and on and on and on for way too long?'] = false,
   }
 
