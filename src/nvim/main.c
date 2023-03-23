@@ -1,7 +1,12 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#define EXTERN
+// Make sure extern symbols are exported on Windows
+#ifdef WIN32
+# define EXTERN __declspec(dllexport)
+#else
+# define EXTERN
+#endif
 #include <assert.h>
 #include <limits.h>
 #include <msgpack/pack.h>

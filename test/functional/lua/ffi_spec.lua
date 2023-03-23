@@ -63,5 +63,14 @@ describe('ffi.cdef', function()
         nil
       )
     ]=])
+
+    -- Check that extern symbols are exported and accessible
+    eq(true, exec_lua[[
+      local ffi = require('ffi')
+
+      ffi.cdef('uint64_t display_tick;')
+
+      return ffi.C.display_tick >= 0
+    ]])
   end)
 end)
