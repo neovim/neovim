@@ -2,10 +2,6 @@
   - runtime/lua/vim/lsp.lua
   - runtime/lua/vim/lsp/*
 
-"lua":
-  - runtime/lua/**/*
-  - src/nvim/lua/*
-
 "tui":
   - src/nvim/tui/tui.*
 
