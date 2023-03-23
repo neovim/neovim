@@ -364,7 +364,9 @@ function M.hover(_, result, ctx, config)
   local markdown_lines = util.convert_input_to_markdown_lines(result.contents)
   markdown_lines = util.trim_empty_lines(markdown_lines)
   if vim.tbl_isempty(markdown_lines) then
-    vim.notify('No information available')
+    if config.silent ~= true then
+      vim.notify('No information available')
+    end
     return
   end
   return util.open_floating_preview(markdown_lines, 'markdown', config)
