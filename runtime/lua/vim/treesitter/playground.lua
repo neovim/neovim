@@ -5,11 +5,11 @@ local api = vim.api
 ---@field opts table Options table with the following keys:
 ---                  - anon (boolean): If true, display anonymous nodes
 ---                  - lang (boolean): If true, display the language alongside each node
----@field nodes Node[]
----@field named Node[]
+---@field nodes TSP.Node[]
+---@field named TSP.Node[]
 local TSPlayground = {}
----
----@class Node
+
+---@class TSP.Node
 ---@field id integer Node id
 ---@field text string Node text
 ---@field named boolean True if this is a named (non-anonymous) node
@@ -36,9 +36,9 @@ local TSPlayground = {}
 ---@param node TSNode Starting node to begin traversal |tsnode|
 ---@param depth integer Current recursion depth
 ---@param lang string Language of the tree currently being traversed
----@param injections table<integer,Node> Mapping of node ids to root nodes of injected language trees (see
+---@param injections table<integer,TSP.Node> Mapping of node ids to root nodes of injected language trees (see
 ---                        explanation above)
----@param tree Node[] Output table containing a list of tables each representing a node in the tree
+---@param tree TSP.Node[] Output table containing a list of tables each representing a node in the tree
 ---@private
 local function traverse(node, depth, lang, injections, tree)
   local injection = injections[node:id()]
@@ -87,7 +87,7 @@ end
 ---@return TSPlayground|nil
 ---@return string|nil Error message, if any
 ---
----@private
+---@package
 function TSPlayground:new(bufnr, lang)
   local ok, parser = pcall(vim.treesitter.get_parser, bufnr or 0, lang)
   if not ok then
@@ -114,7 +114,7 @@ function TSPlayground:new(bufnr, lang)
 
   local nodes = traverse(root, 0, parser:lang(), injections, {})
 
-  local named = {} ---@type Node[]
+  local named = {} ---@type TSP.Node[]
   for _, v in ipairs(nodes) do
     if v.named then
       named[#named + 1] = v
@@ -154,7 +154,7 @@ end
 --- Write the contents of this Playground into {bufnr}.
 ---
 ---@param bufnr integer Buffer number to write into.
----@private
+---@package
 function TSPlayground:draw(bufnr)
   vim.bo[bufnr].modifiable = true
   local lines = {} ---@type string[]
@@ -195,8 +195,8 @@ end
 --- The node number is dependent on whether or not anonymous nodes are displayed.
 ---
 ---@param i integer Node number to get
----@return Node
----@private
+---@return TSP.Node
+---@package
 function TSPlayground:get(i)
   local t = self.opts.anon and self.nodes or self.named
   return t[i]
@@ -204,10 +204,10 @@ end
 
 --- Iterate over all of the nodes in this Playground object.
 ---
----@return (fun(): integer, Node) Iterator over all nodes in this Playground
+---@return (fun(): integer, TSP.Node) Iterator over all nodes in this Playground
 ---@return table
 ---@return integer
----@private
+---@package
 function TSPlayground:iter()
   return ipairs(self.opts.anon and self.nodes or self.named)
 end

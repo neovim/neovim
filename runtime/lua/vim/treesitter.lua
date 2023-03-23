@@ -30,8 +30,6 @@ setmetatable(M, {
   end,
 })
 
----@diagnostic disable:invisible
-
 --- Creates a new parser
 ---
 --- It is not recommended to use this; use |get_parser()| instead.
@@ -132,7 +130,7 @@ function M.get_parser(bufnr, lang, opts)
   return parsers[bufnr]
 end
 
----@private
+---@package
 ---@param bufnr (integer|nil) Buffer number
 ---@return boolean
 function M._has_parser(bufnr)
@@ -276,7 +274,7 @@ function M.get_captures_at_pos(bufnr, row, col)
         end
       end
     end
-  end, true)
+  end)
   return matches
 end
 

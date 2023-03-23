@@ -3,7 +3,8 @@
 ---@class TSNode
 ---@field id fun(self: TSNode): integer
 ---@field tree fun(self: TSNode): TSTree
----@field range fun(self: TSNode, include_bytes: boolean?): integer, integer, integer, integer, integer, integer
+---@field range fun(self: TSNode, include_bytes: false?): integer, integer, integer, integer
+---@field range fun(self: TSNode, include_bytes: true): integer, integer, integer, integer, integer, integer
 ---@field start fun(self: TSNode): integer, integer, integer
 ---@field end_ fun(self: TSNode): integer, integer, integer
 ---@field type fun(self: TSNode): string

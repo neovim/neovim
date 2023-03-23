@@ -336,6 +336,8 @@ function TLua2DoX_filter.filter(this, AppStamp, Filename)
           offset = 1
         end
 
+        line = line:gsub('@package', '@private')
+
         if vim.startswith(line, '---@cast')
           or vim.startswith(line, '---@diagnostic')
           or vim.startswith(line, '---@type') then

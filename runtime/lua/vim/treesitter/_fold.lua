@@ -3,7 +3,7 @@ local Query = require('vim.treesitter.query')
 
 local api = vim.api
 
----@class FoldInfo
+---@class TS.FoldInfo
 ---@field levels table<integer,string>
 ---@field levels0 table<integer,integer>
 ---@field private start_counts table<integer,integer>
@@ -11,6 +11,7 @@ local api = vim.api
 local FoldInfo = {}
 FoldInfo.__index = FoldInfo
 
+---@private
 function FoldInfo.new()
   return setmetatable({
     start_counts = {},
@@ -20,6 +21,7 @@ function FoldInfo.new()
   }, FoldInfo)
 end
 
+---@package
 ---@param srow integer
 ---@param erow integer
 function FoldInfo:invalidate_range(srow, erow)
@@ -31,6 +33,7 @@ function FoldInfo:invalidate_range(srow, erow)
   end
 end
 
+---@package
 ---@param srow integer
 ---@param erow integer
 function FoldInfo:remove_range(srow, erow)
@@ -42,6 +45,7 @@ function FoldInfo:remove_range(srow, erow)
   end
 end
 
+---@package
 ---@param srow integer
 ---@param erow integer
 function FoldInfo:add_range(srow, erow)
@@ -53,22 +57,26 @@ function FoldInfo:add_range(srow, erow)
   end
 end
 
+---@package
 ---@param lnum integer
 function FoldInfo:add_start(lnum)
   self.start_counts[lnum] = (self.start_counts[lnum] or 0) + 1
 end
 
+---@package
 ---@param lnum integer
 function FoldInfo:add_stop(lnum)
   self.stop_counts[lnum] = (self.stop_counts[lnum] or 0) + 1
 end
 
+---@packag
 ---@param lnum integer
 ---@return integer
 function FoldInfo:get_start(lnum)
   return self.start_counts[lnum] or 0
 end
 
+---@package
 ---@param lnum integer
 ---@return integer
 function FoldInfo:get_stop(lnum)
@@ -84,7 +92,7 @@ local function trim_level(level)
 end
 
 ---@param bufnr integer
----@param info FoldInfo
+---@param info TS.FoldInfo
 ---@param srow integer?
 ---@param erow integer?
 local function get_folds_levels(bufnr, info, srow, erow)
@@ -161,7 +169,7 @@ end
 
 local M = {}
 
----@type table<integer,FoldInfo>
+---@type table<integer,TS.FoldInfo>
 local foldinfos = {}
 
 local function recompute_folds()
@@ -178,7 +186,7 @@ local function recompute_folds()
 end
 
 ---@param bufnr integer
----@param foldinfo FoldInfo
+---@param foldinfo TS.FoldInfo
 ---@param tree_changes Range4[]
 local function on_changedtree(bufnr, foldinfo, tree_changes)
   -- For some reason, queries seem to use the old buffer state in on_bytes.
@@ -193,7 +201,7 @@ local function on_changedtree(bufnr, foldinfo, tree_changes)
 end
 
 ---@param bufnr integer
----@param foldinfo FoldInfo
+---@param foldinfo TS.FoldInfo
 ---@param start_row integer
 ---@param old_row integer
 ---@param new_row integer
@@ -212,13 +220,13 @@ local function on_bytes(bufnr, foldinfo, start_row, old_row, new_row)
   end
 end
 
+---@package
 ---@param lnum integer|nil
 ---@return string
 function M.foldexpr(lnum)
   lnum = lnum or vim.v.lnum
   local bufnr = api.nvim_get_current_buf()
 
-  ---@diagnostic disable-next-line:invisible
   if not vim.treesitter._has_parser(bufnr) or not lnum then
     return '0'
   end

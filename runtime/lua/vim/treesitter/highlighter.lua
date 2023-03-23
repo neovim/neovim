@@ -53,12 +53,12 @@ function TSHighlighterQuery.new(lang, query_string)
   return self
 end
 
----@private
+---@package
 function TSHighlighterQuery:query()
   return self._query
 end
 
----@private
+---@package
 ---
 --- Creates a highlighter for `tree`.
 ---
@@ -76,16 +76,14 @@ function TSHighlighter.new(tree, opts)
   opts = opts or {} ---@type { queries: table<string,string> }
   self.tree = tree
   tree:register_cbs({
-    ---@diagnostic disable:invisible
     on_changedtree = function(...)
       self:on_changedtree(...)
     end,
     on_bytes = function(...)
       self:on_bytes(...)
     end,
-    on_detach = function(...)
-      ---@diagnostic disable-next-line:redundant-parameter
-      self:on_detach(...)
+    on_detach = function()
+      self:on_detach()
     end,
   })
 
@@ -147,7 +145,7 @@ function TSHighlighter:destroy()
   end
 end
 
----@private
+---@package
 ---@param tstree TSTree
 ---@return TSHighlightState
 function TSHighlighter:get_highlight_state(tstree)
@@ -166,19 +164,19 @@ function TSHighlighter:reset_highlight_state()
   self._highlight_states = {}
 end
 
----@private
+---@package
 ---@param start_row integer
 ---@param new_end integer
 function TSHighlighter:on_bytes(_, _, start_row, _, _, _, _, _, new_end)
   a.nvim__buf_redraw_range(self.bufnr, start_row, start_row + new_end + 1)
 end
 
----@private
+---@package
 function TSHighlighter:on_detach()
   self:destroy()
 end
 
----@private
+---@package
 ---@param changes integer[][]?
 function TSHighlighter:on_changedtree(changes)
   for _, ch in ipairs(changes or {}) do
@@ -188,7 +186,7 @@ end
 
 --- Gets the query used for @param lang
 --
----@private
+---@package
 ---@param lang string Language used by the highlighter.
 ---@return TSHighlighterQuery
 function TSHighlighter:get_query(lang)
@@ -205,7 +203,6 @@ end
 ---@param line integer
 ---@param is_spell_nav boolean
 local function on_line_impl(self, buf, line, is_spell_nav)
-  ---@diagnostic disable:invisible
   self.tree:for_each_tree(function(tstree, tree)
     if not tstree then
       return
@@ -268,7 +265,7 @@ local function on_line_impl(self, buf, line, is_spell_nav)
         state.next_row = start_row
       end
     end
-  end, true)
+  end)
 end
 
 ---@private
