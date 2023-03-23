@@ -1649,19 +1649,37 @@ endswith({s}, {suffix})                                       *vim.endswith()*
     Return: ~
         (boolean) `true` if `suffix` is a suffix of `s`
 
-gsplit({s}, {sep}, {plain})                                     *vim.gsplit()*
+gsplit({s}, {sep}, {opts})                                      *vim.gsplit()*
     Splits a string at each instance of a separator.
 
+    Example: >lua
+
+       for s in vim.gsplit(':aa::b:', ':', {plain=true}) do
+         print(s)
+       end
+<
+
+    If you want to also inspect the separator itself (instead of discarding
+    it), use |string.gmatch()|. Example: >lua
+
+       for word, num in ('foo111bar222'):gmatch('([^0-9]*)(d*)') do
+         print(('word: s num: s'):format(word, num))
+       end
+<
+
     Parameters: ~
-      • {s}      (string) String to split
-      • {sep}    (string) Separator or pattern
-      • {plain}  (boolean|nil) If `true` use `sep` literally (passed to
-                 string.find)
+      • {s}     string String to split
+      • {sep}   string Separator or pattern
+      • {opts}  (table|nil) Keyword arguments |kwargs|:
+                • plain: (boolean) Use `sep` literally (as in string.find).
+                • trimempty: (boolean) Discard empty segments at start and end
+                  of the sequence.
 
     Return: ~
         (function) Iterator over the split components
 
     See also: ~
+      • |string.gmatch()|
       • |vim.split()|
       • |luaref-patterns|
       • https://www.lua.org/pil/20.2.html
@@ -1729,7 +1747,7 @@ spairs({t})                                                     *vim.spairs()*
     See also: ~
       • Based on https://github.com/premake/premake-core/blob/master/src/base/table.lua
 
-split({s}, {sep}, {kwargs})                                      *vim.split()*
+split({s}, {sep}, {opts})                                        *vim.split()*
     Splits a string at each instance of a separator.
 
     Examples: >lua
@@ -1741,19 +1759,17 @@ split({s}, {sep}, {kwargs})                                      *vim.split()*
 <
 
     Parameters: ~
-      • {s}       (string) String to split
-      • {sep}     (string) Separator or pattern
-      • {kwargs}  (table|nil) Keyword arguments:
-                  • plain: (boolean) If `true` use `sep` literally (passed to
-                    string.find)
-                  • trimempty: (boolean) If `true` remove empty items from the
-                    front and back of the list
+      • {s}     (string) String to split
+      • {sep}   (string) Separator or pattern
+      • {opts}  (table|nil) Keyword arguments |kwargs| accepted by
+                |vim.gsplit()|
 
     Return: ~
         string[] List of split components
 
     See also: ~
       • |vim.gsplit()|
+      • |string.gmatch()|
 
 startswith({s}, {prefix})                                   *vim.startswith()*
     Tests if `s` starts with `prefix`.
@@ -2616,7 +2632,7 @@ cmp({v1}, {v2})                                            *vim.version.cmp()*
         (integer) -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
 
 eq({v1}, {v2})                                              *vim.version.eq()*
-    Returns `true` if the given versions are equal.
+    Returns `true` if the given versions are equal. See |vim.version.cmp()| for usage.
 
     Parameters: ~
       • {v1}  Version|number[]
@@ -2626,7 +2642,7 @@ eq({v1}, {v2})                                              *vim.version.eq()*
         (boolean)
 
 gt({v1}, {v2})                                              *vim.version.gt()*
-    Returns `true` if `v1 > v2` .
+    Returns `true` if `v1 > v2` . See |vim.version.cmp()| for usage.
 
     Parameters: ~
       • {v1}  Version|number[]
@@ -2645,7 +2661,7 @@ last({versions})                                          *vim.version.last()*
         Version ?|ni
 
 lt({v1}, {v2})                                              *vim.version.lt()*
-    Returns `true` if `v1 < v2` .
+    Returns `true` if `v1 < v2` . See |vim.version.cmp()| for usage.
 
     Parameters: ~
       • {v1}  Version|number[]

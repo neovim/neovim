@@ -65,6 +65,35 @@ local M = {}
 local Version = {}
 Version.__index = Version
 
+--- @private
+---
+--- Compares prerelease strings: per semver, number parts must be must be treated as numbers:
+--- "pre1.10" is greater than "pre1.2". https://semver.org/#spec-item-11
+local function cmp_prerel(prerel1, prerel2)
+  if not prerel1 or not prerel2 then
+    return prerel1 and -1 or (prerel2 and 1 or 0)
+  end
+  -- TODO(justinmk): not fully spec-compliant; this treats non-dot-delimited digit sequences as
+  -- numbers. Maybe better: "(.-)(%.%d*)".
+  local iter1 = prerel1:gmatch('([^0-9]*)(%d*)')
+  local iter2 = prerel2:gmatch('([^0-9]*)(%d*)')
+  while true do
+    local word1, n1 = iter1()
+    local word2, n2 = iter2()
+    if word1 == nil and word2 == nil then -- Done iterating.
+      return 0
+    end
+    word1, n1, word2, n2 =
+      word1 or '', n1 and tonumber(n1) or 0, word2 or '', n2 and tonumber(n2) or 0
+    if word1 ~= word2 then
+      return word1 < word2 and -1 or 1
+    end
+    if n1 ~= n2 then
+      return n1 < n2 and -1 or 1
+    end
+  end
+end
+
 function Version:__index(key)
   return type(key) == 'number' and ({ self.major, self.minor, self.patch })[key] or Version[key]
 end
@@ -88,7 +117,7 @@ function Version:__eq(other)
       return false
     end
   end
-  return self.prerelease == other.prerelease
+  return 0 == cmp_prerel(self.prerelease, other.prerelease)
 end
 
 function Version:__tostring()
@@ -111,13 +140,7 @@ function Version:__lt(other)
       return true
     end
   end
-  if self.prerelease and not other.prerelease then
-    return true
-  end
-  if other.prerelease and not self.prerelease then
-    return false
-  end
-  return (self.prerelease or '') < (other.prerelease or '')
+  return -1 == cmp_prerel(self.prerelease, other.prerelease)
 end
 
 ---@param other Version
@@ -127,7 +150,7 @@ end
 
 --- @private
 ---
---- Creates a new Version object. Not public currently.
+--- Creates a new Version object, or returns `nil` if `version` is invalid.
 ---
 --- @param version string|number[]|Version
 --- @param strict? boolean Reject "1.0", "0-x", "3.2a" or other non-conforming version strings
@@ -173,6 +196,7 @@ function M._version(version, strict) -- Adapted from https://github.com/folke/la
       build = build ~= '' and build or nil,
     }, Version)
   end
+  return nil -- Invalid version string.
 end
 
 ---TODO: generalize this, move to func.lua
@@ -341,7 +365,7 @@ function M.cmp(v1, v2)
   return -1
 end
 
----Returns `true` if the given versions are equal.
+---Returns `true` if the given versions are equal. See |vim.version.cmp()| for usage.
 ---@param v1 Version|number[]
 ---@param v2 Version|number[]
 ---@return boolean
@@ -349,7 +373,7 @@ function M.eq(v1, v2)
   return M.cmp(v1, v2) == 0
 end
 
----Returns `true` if `v1 < v2`.
+---Returns `true` if `v1 < v2`. See |vim.version.cmp()| for usage.
 ---@param v1 Version|number[]
 ---@param v2 Version|number[]
 ---@return boolean
@@ -357,7 +381,7 @@ function M.lt(v1, v2)
   return M.cmp(v1, v2) == -1
 end
 
----Returns `true` if `v1 > v2`.
+---Returns `true` if `v1 > v2`. See |vim.version.cmp()| for usage.
 ---@param v1 Version|number[]
 ---@param v2 Version|number[]
 ---@return boolean
