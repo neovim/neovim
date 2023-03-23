@@ -10,11 +10,14 @@
 #include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/api/vimscript.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
 #include "nvim/extmark.h"
 #include "nvim/globals.h"
+#include "nvim/highlight.h"
+#include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
 #include "nvim/memory.h"
 #include "nvim/pos.h"
@@ -157,6 +160,49 @@ Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, A
   extmark_set(buf, ns_id, NULL, (int)line, 0, -1, -1, &decor, true,
               false, kExtmarkNoUndo);
   return src_id;
+}
+
+/// Gets a highlight definition by id. |hlID()|
+///
+/// @deprecated use |nvim_get_hl()| instead
+///
+/// @param hl_id Highlight id as returned by |hlID()|
+/// @param rgb Export RGB colors
+/// @param[out] err Error details, if any
+/// @return Highlight definition map
+/// @see nvim_get_hl_by_name
+Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Arena *arena, Error *err)
+  FUNC_API_SINCE(3)
+  FUNC_API_DEPRECATED_SINCE(9)
+{
+  Dictionary dic = ARRAY_DICT_INIT;
+  VALIDATE_INT((syn_get_final_id((int)hl_id) != 0), "highlight id", hl_id, {
+    return dic;
+  });
+  int attrcode = syn_id2attr((int)hl_id);
+  return hl_get_attr_by_id(attrcode, rgb, arena, err);
+}
+
+/// Gets a highlight definition by name.
+///
+/// @deprecated use |nvim_get_hl()| instead
+///
+/// @param name Highlight group name
+/// @param rgb Export RGB colors
+/// @param[out] err Error details, if any
+/// @return Highlight definition map
+/// @see nvim_get_hl_by_id
+Dictionary nvim_get_hl_by_name(String name, Boolean rgb, Arena *arena, Error *err)
+  FUNC_API_SINCE(3)
+  FUNC_API_DEPRECATED_SINCE(9)
+{
+  Dictionary result = ARRAY_DICT_INIT;
+  int id = syn_name2id(name.data);
+
+  VALIDATE_S((id != 0), "highlight name", name.data, {
+    return result;
+  });
+  return nvim_get_hl_by_id(id, rgb, arena, err);
 }
 
 /// Inserts a sequence of lines to a buffer at a certain index

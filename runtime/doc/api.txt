@@ -923,31 +923,23 @@ nvim_get_current_win()                                *nvim_get_current_win()*
     Return: ~
         Window handle
 
-nvim_get_hl_by_id({hl_id}, {rgb})                        *nvim_get_hl_by_id()*
-    Gets a highlight definition by id. |hlID()|
+nvim_get_hl({ns_id}, {*opts})                                  *nvim_get_hl()*
+    Gets all or specific highlight groups in a namespace.
 
     Parameters: ~
-      • {hl_id}  Highlight id as returned by |hlID()|
-      • {rgb}    Export RGB colors
+      • {ns_id}  Get highlight groups for namespace ns_id
+                 |nvim_get_namespaces()|. Use 0 to get global highlight groups
+                 |:highlight|.
+      • {opts}   Options dict:
+                 • name: (string) Get a highlight definition by name.
+                 • id: (integer) Get a highlight definition by id.
+                 • link: (boolean, default true) Show linked group name
+                   instead of effective definition |:hi-link|.
 
     Return: ~
-        Highlight definition map
-
-    See also: ~
-      • nvim_get_hl_by_name
-
-nvim_get_hl_by_name({name}, {rgb})                     *nvim_get_hl_by_name()*
-    Gets a highlight definition by name.
-
-    Parameters: ~
-      • {name}  Highlight group name
-      • {rgb}   Export RGB colors
-
-    Return: ~
-        Highlight definition map
-
-    See also: ~
-      • nvim_get_hl_by_id
+        Highlight groups as a map from group name to a highlight definition
+        map as in |nvim_set_hl()|, or only a single highlight definition map
+        if requested by name or id.
 
 nvim_get_hl_id_by_name({name})                      *nvim_get_hl_id_by_name()*
     Gets a highlight group by name

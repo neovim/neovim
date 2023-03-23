@@ -12,6 +12,7 @@
 
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
@@ -1521,24 +1522,71 @@ static void highlight_list_one(const int id)
   }
 }
 
-Dictionary get_global_hl_defs(Arena *arena)
+static bool hlgroup2dict(Dictionary *hl, NS ns_id, int hl_id, Arena *arena)
 {
+  HlGroup *sgp = &hl_table[hl_id - 1];
+  int link = ns_id == 0 ? sgp->sg_link : ns_get_hl(&ns_id, hl_id, true, sgp->sg_set);
+  if (link == -1) {
+    return false;
+  }
+  HlAttrs attr =
+    syn_attr2entry(ns_id == 0 ? sgp->sg_attr : ns_get_hl(&ns_id, hl_id, false, sgp->sg_set));
+  if (link > 0) {
+    *hl = arena_dict(arena, 1);
+    PUT_C(*hl, "link", STRING_OBJ(cstr_as_string(hl_table[link - 1].sg_name)));
+  } else {
+    *hl = arena_dict(arena, HLATTRS_DICT_SIZE);
+    hlattrs2dict(hl, attr, true, true);
+    hlattrs2dict(hl, attr, false, true);
+  }
+  return true;
+}
+
+Dictionary ns_get_hl_defs(NS ns_id, Dict(get_highlight) *opts, Arena *arena, Error *err)
+{
+  Boolean link = api_object_to_bool(opts->link, "link", true, err);
+  int id = -1;
+  if (opts->name.type != kObjectTypeNil) {
+    VALIDATE_T("highlight name", kObjectTypeString, opts->name.type, {
+      goto cleanup;
+    });
+    String name = opts->name.data.string;
+    id = syn_check_group(name.data, name.size);
+  } else if (opts->id.type != kObjectTypeNil) {
+    VALIDATE_T("highlight id", kObjectTypeInteger, opts->id.type, {
+      goto cleanup;
+    });
+    id = (int)opts->id.data.integer;
+  }
+
+  if (id != -1) {
+    VALIDATE(1 <= id && id <= highlight_ga.ga_len, "%s", "Highlight id out of bounds", {
+      goto cleanup;
+    });
+    Dictionary attrs = ARRAY_DICT_INIT;
+    hlgroup2dict(&attrs, ns_id, link ? id : syn_get_final_id(id), arena);
+    return attrs;
+  }
+  if (ERROR_SET(err)) {
+    goto cleanup;
+  }
+
   Dictionary rv = arena_dict(arena, (size_t)highlight_ga.ga_len);
   for (int i = 1; i <= highlight_ga.ga_len; i++) {
     Dictionary attrs = ARRAY_DICT_INIT;
-    HlGroup *h = &hl_table[i - 1];
-    if (h->sg_attr > 0) {
-      attrs = arena_dict(arena, HLATTRS_DICT_SIZE);
-      hlattrs2dict(&attrs, syn_attr2entry(h->sg_attr), true);
-    } else if (h->sg_link > 0) {
-      attrs = arena_dict(arena, 1);
-      char *link = hl_table[h->sg_link - 1].sg_name;
-      PUT_C(attrs, "link", STRING_OBJ(cstr_as_string(link)));
+    if (!hlgroup2dict(&attrs, ns_id, i, arena)) {
+      continue;
     }
-    PUT_C(rv, h->sg_name, DICTIONARY_OBJ(attrs));
+    PUT_C(rv, hl_table[(link ? i : syn_get_final_id(i)) - 1].sg_name, DICTIONARY_OBJ(attrs));
   }
 
   return rv;
+
+cleanup:
+  api_free_integer(id);
+  api_free_boolean(link);
+  Dictionary empty = ARRAY_DICT_INIT;
+  return empty;
 }
 
 /// Outputs a highlight when doing ":hi MyHighlight"

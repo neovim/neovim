@@ -821,7 +821,7 @@ Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Arena *arena, Error *
     return dic;
   }
   Dictionary retval = arena_dict(arena, HLATTRS_DICT_SIZE);
-  hlattrs2dict(&retval, syn_attr2entry((int)attr_id), rgb);
+  hlattrs2dict(&retval, syn_attr2entry((int)attr_id), rgb, false);
   return retval;
 }
 
@@ -830,7 +830,9 @@ Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Arena *arena, Error *
 /// @param[in/out] hl Dictionary with pre-allocated space for HLATTRS_DICT_SIZE elements
 /// @param[in] aep data to convert
 /// @param use_rgb use 'gui*' settings if true, else resorts to 'cterm*'
-void hlattrs2dict(Dictionary *dict, HlAttrs ae, bool use_rgb)
+/// @param short_keys change (foreground, background, special) to (fg, bg, sp) for 'gui*' settings
+///                          (foreground, background) to (ctermfg, ctermbg) for 'cterm*' settings
+void hlattrs2dict(Dictionary *dict, HlAttrs ae, bool use_rgb, bool short_keys)
 {
   assert(dict->capacity >= HLATTRS_DICT_SIZE);  // at most 16 items
   Dictionary hl = *dict;
@@ -887,32 +889,34 @@ void hlattrs2dict(Dictionary *dict, HlAttrs ae, bool use_rgb)
   }
 
   if (use_rgb) {
-    if (mask & HL_FG_INDEXED) {
-      PUT_C(hl, "fg_indexed", BOOLEAN_OBJ(true));
-    }
-
-    if (mask & HL_BG_INDEXED) {
-      PUT_C(hl, "bg_indexed", BOOLEAN_OBJ(true));
-    }
-
     if (ae.rgb_fg_color != -1) {
-      PUT_C(hl, "foreground", INTEGER_OBJ(ae.rgb_fg_color));
+      PUT_C(hl, short_keys ? "fg" : "foreground", INTEGER_OBJ(ae.rgb_fg_color));
     }
 
     if (ae.rgb_bg_color != -1) {
-      PUT_C(hl, "background", INTEGER_OBJ(ae.rgb_bg_color));
+      PUT_C(hl, short_keys ? "bg" : "background", INTEGER_OBJ(ae.rgb_bg_color));
     }
 
     if (ae.rgb_sp_color != -1) {
-      PUT_C(hl, "special", INTEGER_OBJ(ae.rgb_sp_color));
+      PUT_C(hl, short_keys ? "sp" : "special", INTEGER_OBJ(ae.rgb_sp_color));
+    }
+
+    if (!short_keys) {
+      if (mask & HL_FG_INDEXED) {
+        PUT_C(hl, "fg_indexed", BOOLEAN_OBJ(true));
+      }
+
+      if (mask & HL_BG_INDEXED) {
+        PUT_C(hl, "bg_indexed", BOOLEAN_OBJ(true));
+      }
     }
   } else {
     if (ae.cterm_fg_color != 0) {
-      PUT_C(hl, "foreground", INTEGER_OBJ(ae.cterm_fg_color - 1));
+      PUT_C(hl, short_keys ? "ctermfg" : "foreground", INTEGER_OBJ(ae.cterm_fg_color - 1));
     }
 
     if (ae.cterm_bg_color != 0) {
-      PUT_C(hl, "background", INTEGER_OBJ(ae.cterm_bg_color - 1));
+      PUT_C(hl, short_keys ? "ctermbg" : "background", INTEGER_OBJ(ae.cterm_bg_color - 1));
     }
   }
 

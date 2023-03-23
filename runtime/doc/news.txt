@@ -217,6 +217,8 @@ The following new APIs or features were added.
 
 • |vim.filetype.get_option()| to get the default option value for a specific
   filetype. This is a wrapper around |nvim_get_option_value()| with caching.
+  
+• Added |nvim_get_hl()| for getting highlight group definitions in a format compatible with |nvim_set_hl()|.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
@@ -277,5 +279,7 @@ release.
 
 • |vim.treesitter.get_node_at_pos()| and |vim.treesitter.get_node_at_cursor()|
   are both deprecated in favor of |vim.treesitter.get_node()|.
+
+• `vim.api.nvim_get_hl_by_name()`, `vim.api.nvim_get_hl_by_id()` were deprecated, use |nvim_get_hl()| instead.
 
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:
