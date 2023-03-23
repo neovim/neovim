@@ -70,7 +70,7 @@ local LanguageTree = {}
 
 LanguageTree.__index = LanguageTree
 
---- @private
+--- @package
 ---
 --- |LanguageTree| contains a tree of parsers: the root treesitter parser for {lang} and any
 --- "injected" language parsers, which themselves may inject other languages, recursively.
@@ -700,7 +700,7 @@ function LanguageTree:_do_callback(cb_name, ...)
   end
 end
 
----@private
+---@package
 function LanguageTree:_edit(
   start_byte,
   end_byte_old,
@@ -776,7 +776,7 @@ function LanguageTree:_edit(
   end)
 end
 
----@private
+---@package
 ---@param bufnr integer
 ---@param changed_tick integer
 ---@param start_row integer
@@ -822,7 +822,6 @@ function LanguageTree:_on_bytes(
   -- Edit trees together BEFORE emitting a bytes callback.
   ---@private
   self:for_each_child(function(child)
-    ---@diagnostic disable-next-line:invisible
     child:_edit(
       start_byte,
       start_byte + old_byte,
@@ -852,12 +851,12 @@ function LanguageTree:_on_bytes(
   )
 end
 
----@private
+---@package
 function LanguageTree:_on_reload()
   self:invalidate(true)
 end
 
----@private
+---@package
 function LanguageTree:_on_detach(...)
   self:invalidate(true)
   self:_do_callback('detach', ...)
