@@ -163,9 +163,15 @@ set(LUV_SHA256 16720d17b9e6d42a7008b902207ea2d61e3eeaef3cf358398dbbf3777867ec09)
 set(LUA_COMPAT53_URL https://github.com/keplerproject/lua-compat-5.3/archive/v0.9.tar.gz)
 set(LUA_COMPAT53_SHA256 ad05540d2d96a48725bb79a1def35cf6652a4e2ec26376e2617c8ce2baa6f416)
 
-# cat.exe curl.exe curl-ca-bundle.crt diff.exe tee.exe xxd.exe
-set(WINTOOLS_URL https://github.com/neovim/deps/raw/c1e7dd8de9e1b18d11dcfa0a192cd029262e5303/opt/win32tools.zip)
-set(WINTOOLS_SHA256 3c4c490a3d392ceeb1347cb77cc821a31900b688a2189276d3a1131a3f21daf1)
+# Windows only: cat.exe diff.exe tee.exe xxd.exe
+set(CAT_URL https://github.com/neovim/deps/raw/21c5e8bdda33521a6ed497b315e03265a2785cbc/opt/cat.exe)
+set(CAT_SHA256 93b8d307bb15af3968920bdea3beb869a49d166f9164853c58a4e6ffdcae61c6)
+set(DIFF_URL https://github.com/neovim/deps/raw/21c5e8bdda33521a6ed497b315e03265a2785cbc/opt/diff.exe)
+set(DIFF_SHA256 4ceceebc8150422c6d8d9a06c2e9686d5a5d90f1033f60ad92ab81fe810e2a28)
+set(TEE_URL https://github.com/neovim/deps/raw/21c5e8bdda33521a6ed497b315e03265a2785cbc/opt/tee.exe)
+set(TEE_SHA256 950eea4e17fa3a7e89fa2c55374037b5797b3f1a54fea1304634884ab42ec14d)
+set(XXD_URL https://github.com/neovim/deps/raw/21c5e8bdda33521a6ed497b315e03265a2785cbc/opt/xxd.exe)
+set(XXD_SHA256 7a581e3882d28161cc52850f9a11d634b3eaf2c029276f093c1ed4c90e45a10c)
 
 set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.17/neovim-qt.zip)
 set(WINGUI_SHA256 502e386eef677c2c2e0c11d8cbb27f3e12b4d96818369417e8da4129c4580c25)
@@ -264,8 +270,10 @@ endif()
 if(WIN32)
   include(GetBinaryDeps)
 
-  GetBinaryDep(TARGET wintools
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory . ${DEPS_BIN_DIR})
+  GetExecutable(TARGET cat)
+  GetExecutable(TARGET diff)
+  GetExecutable(TARGET tee)
+  GetExecutable(TARGET xxd)
 
   if(USE_BUNDLED_NVIMQT)
     GetBinaryDep(TARGET wingui
