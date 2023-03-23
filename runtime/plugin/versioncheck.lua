@@ -1,3 +1,6 @@
+-- skip if nvim started non-interactively
+if vim.tbl_contains(vim.v.argv, '-l') then return end
+
 ---@private
 ---Reads version stored in $XDG_CACHE_HOME/nvim/version
 ---
