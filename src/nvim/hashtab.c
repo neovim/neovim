@@ -207,7 +207,7 @@ int hash_add(hashtab_T *ht, char *key)
   hash_T hash = hash_hash(key);
   hashitem_T *hi = hash_lookup(ht, key, strlen(key), hash);
   if (!HASHITEM_EMPTY(hi)) {
-    internal_error("hash_add()");
+    siemsg(_("E685: Internal error: hash_add(): duplicate key \"%s\""), key);
     return FAIL;
   }
   hash_add_item(ht, hi, key, hash);

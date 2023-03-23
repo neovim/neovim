@@ -821,7 +821,7 @@ Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Arena *arena, Error *
     return dic;
   }
   Dictionary retval = arena_dict(arena, HLATTRS_DICT_SIZE);
-  hlattrs2dict(&retval, syn_attr2entry((int)attr_id), rgb, false);
+  hlattrs2dict(&retval, NULL, syn_attr2entry((int)attr_id), rgb, false);
   return retval;
 }
 
@@ -832,99 +832,98 @@ Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Arena *arena, Error *
 /// @param use_rgb use 'gui*' settings if true, else resorts to 'cterm*'
 /// @param short_keys change (foreground, background, special) to (fg, bg, sp) for 'gui*' settings
 ///                          (foreground, background) to (ctermfg, ctermbg) for 'cterm*' settings
-void hlattrs2dict(Dictionary *dict, HlAttrs ae, bool use_rgb, bool short_keys)
+void hlattrs2dict(Dictionary *hl, Dictionary *hl_attrs, HlAttrs ae, bool use_rgb, bool short_keys)
 {
-  assert(dict->capacity >= HLATTRS_DICT_SIZE);  // at most 16 items
-  Dictionary hl = *dict;
+  hl_attrs = hl_attrs ? hl_attrs : hl;
+  assert(hl->capacity >= HLATTRS_DICT_SIZE);  // at most 16 items
+  assert(hl_attrs->capacity >= HLATTRS_DICT_SIZE);  // at most 16 items
   int mask  = use_rgb ? ae.rgb_ae_attr : ae.cterm_ae_attr;
 
   if (mask & HL_INVERSE) {
-    PUT_C(hl, "reverse", BOOLEAN_OBJ(true));
+    PUT_C(*hl_attrs, "reverse", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_BOLD) {
-    PUT_C(hl, "bold", BOOLEAN_OBJ(true));
+    PUT_C(*hl_attrs, "bold", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_ITALIC) {
-    PUT_C(hl, "italic", BOOLEAN_OBJ(true));
+    PUT_C(*hl_attrs, "italic", BOOLEAN_OBJ(true));
   }
 
   switch (mask & HL_UNDERLINE_MASK) {
   case HL_UNDERLINE:
-    PUT_C(hl, "underline", BOOLEAN_OBJ(true));
+    PUT_C(*hl_attrs, "underline", BOOLEAN_OBJ(true));
     break;
 
   case HL_UNDERCURL:
-    PUT_C(hl, "undercurl", BOOLEAN_OBJ(true));
+    PUT_C(*hl_attrs, "undercurl", BOOLEAN_OBJ(true));
     break;
 
   case HL_UNDERDOUBLE:
-    PUT_C(hl, "underdouble", BOOLEAN_OBJ(true));
+    PUT_C(*hl_attrs, "underdouble", BOOLEAN_OBJ(true));
     break;
 
   case HL_UNDERDOTTED:
-    PUT_C(hl, "underdotted", BOOLEAN_OBJ(true));
+    PUT_C(*hl_attrs, "underdotted", BOOLEAN_OBJ(true));
     break;
 
   case HL_UNDERDASHED:
-    PUT_C(hl, "underdashed", BOOLEAN_OBJ(true));
+    PUT_C(*hl_attrs, "underdashed", BOOLEAN_OBJ(true));
     break;
   }
 
   if (mask & HL_STANDOUT) {
-    PUT_C(hl, "standout", BOOLEAN_OBJ(true));
+    PUT_C(*hl_attrs, "standout", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_STRIKETHROUGH) {
-    PUT_C(hl, "strikethrough", BOOLEAN_OBJ(true));
+    PUT_C(*hl_attrs, "strikethrough", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_ALTFONT) {
-    PUT_C(hl, "altfont", BOOLEAN_OBJ(true));
+    PUT_C(*hl_attrs, "altfont", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_NOCOMBINE) {
-    PUT_C(hl, "nocombine", BOOLEAN_OBJ(true));
+    PUT_C(*hl_attrs, "nocombine", BOOLEAN_OBJ(true));
   }
 
   if (use_rgb) {
     if (ae.rgb_fg_color != -1) {
-      PUT_C(hl, short_keys ? "fg" : "foreground", INTEGER_OBJ(ae.rgb_fg_color));
+      PUT_C(*hl, short_keys ? "fg" : "foreground", INTEGER_OBJ(ae.rgb_fg_color));
     }
 
     if (ae.rgb_bg_color != -1) {
-      PUT_C(hl, short_keys ? "bg" : "background", INTEGER_OBJ(ae.rgb_bg_color));
+      PUT_C(*hl, short_keys ? "bg" : "background", INTEGER_OBJ(ae.rgb_bg_color));
     }
 
     if (ae.rgb_sp_color != -1) {
-      PUT_C(hl, short_keys ? "sp" : "special", INTEGER_OBJ(ae.rgb_sp_color));
+      PUT_C(*hl, short_keys ? "sp" : "special", INTEGER_OBJ(ae.rgb_sp_color));
     }
 
     if (!short_keys) {
       if (mask & HL_FG_INDEXED) {
-        PUT_C(hl, "fg_indexed", BOOLEAN_OBJ(true));
+        PUT_C(*hl, "fg_indexed", BOOLEAN_OBJ(true));
       }
 
       if (mask & HL_BG_INDEXED) {
-        PUT_C(hl, "bg_indexed", BOOLEAN_OBJ(true));
+        PUT_C(*hl, "bg_indexed", BOOLEAN_OBJ(true));
       }
     }
   } else {
     if (ae.cterm_fg_color != 0) {
-      PUT_C(hl, short_keys ? "ctermfg" : "foreground", INTEGER_OBJ(ae.cterm_fg_color - 1));
+      PUT_C(*hl, short_keys ? "ctermfg" : "foreground", INTEGER_OBJ(ae.cterm_fg_color - 1));
     }
 
     if (ae.cterm_bg_color != 0) {
-      PUT_C(hl, short_keys ? "ctermbg" : "background", INTEGER_OBJ(ae.cterm_bg_color - 1));
+      PUT_C(*hl, short_keys ? "ctermbg" : "background", INTEGER_OBJ(ae.cterm_bg_color - 1));
     }
   }
 
-  if (ae.hl_blend > -1) {
-    PUT_C(hl, "blend", INTEGER_OBJ(ae.hl_blend));
+  if (ae.hl_blend > -1 && (use_rgb || !short_keys)) {
+    PUT_C(*hl, "blend", INTEGER_OBJ(ae.hl_blend));
   }
-
-  *dict = hl;
 }
 
 HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *err)
