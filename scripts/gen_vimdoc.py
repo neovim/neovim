@@ -290,7 +290,7 @@ CONFIG = {
             if fstem == 'treesitter'
             else f'*{name}()*'
             if name[0].isupper()
-            else f'*vim.treesitter.{name}()*'),
+            else f'*vim.treesitter.{fstem}.{name}()*'),
         'module_override': {},
         'append_only': [],
     }

@@ -1,5 +1,5 @@
 local a = vim.api
-local query = require('vim.treesitter.query')
+local query = vim.treesitter.query
 
 ---@alias TSHlIter fun(): integer, TSNode, TSMetadata
 
@@ -45,9 +45,9 @@ function TSHighlighterQuery.new(lang, query_string)
   })
 
   if query_string then
-    self._query = query.parse_query(lang, query_string)
+    self._query = query.parse(lang, query_string)
   else
-    self._query = query.get_query(lang, 'highlights')
+    self._query = query.get(lang, 'highlights')
   end
 
   return self

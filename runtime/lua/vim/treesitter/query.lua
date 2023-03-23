@@ -1,8 +1,6 @@
 local a = vim.api
 local language = require('vim.treesitter.language')
 
-local Range = require('vim.treesitter._range')
-
 ---@class Query
 ---@field captures string[] List of captures used in query
 ---@field info TSQueryInfo Contains used queries, predicates, directives
@@ -14,6 +12,7 @@ Query.__index = Query
 ---@field captures table
 ---@field patterns table<string,any[][]>
 
+---@class TSQueryModule
 local M = {}
 
 ---@private
@@ -57,22 +56,14 @@ local function add_included_lang(base_langs, lang, ilang)
   return false
 end
 
----@private
----@param buf integer
----@param range Range
----@returns string
-local function buf_range_get_text(buf, range)
-  local start_row, start_col, end_row, end_col = Range.unpack4(range)
-  if end_col == 0 then
-    if start_row == end_row then
-      start_col = -1
-      start_row = start_row - 1
-    end
-    end_col = -1
-    end_row = end_row - 1
-  end
-  local lines = a.nvim_buf_get_text(buf, start_row, start_col, end_row, end_col, {})
-  return table.concat(lines, '\n')
+---@deprecated
+function M.get_query_files(...)
+  vim.deprecate(
+    'vim.treesitter.query.get_query_files()',
+    'vim.treesitter.query.get_files()',
+    '0.10'
+  )
+  return M.get_files(...)
 end
 
 --- Gets the list of files used to make up a query
@@ -81,7 +72,7 @@ end
 ---@param query_name string Name of the query to load (e.g., "highlights")
 ---@param is_included (boolean|nil) Internal parameter, most of the time left as `nil`
 ---@return string[] query_files List of files to load for given query and language
-function M.get_query_files(lang, query_name, is_included)
+function M.get_files(lang, query_name, is_included)
   local query_path = string.format('queries/%s/%s.scm', lang, query_name)
   local lang_files = dedupe_files(a.nvim_get_runtime_file(query_path, true))
 
@@ -153,7 +144,7 @@ function M.get_query_files(lang, query_name, is_included)
 
   local query_files = {}
   for _, base_lang in ipairs(base_langs) do
-    local base_files = M.get_query_files(base_lang, query_name, true)
+    local base_files = M.get_files(base_lang, query_name, true)
     vim.list_extend(query_files, base_files)
   end
   vim.list_extend(query_files, { base_query })
@@ -175,7 +166,7 @@ local function read_query_files(filenames)
   return table.concat(contents, '')
 end
 
--- The explicitly set queries from |vim.treesitter.query.set_query()|
+-- The explicitly set queries from |vim.treesitter.query.set()|
 ---@type table<string,table<string,Query>>
 local explicit_queries = setmetatable({}, {
   __index = function(t, k)
@@ -186,6 +177,12 @@ local explicit_queries = setmetatable({}, {
   end,
 })
 
+---@deprecated
+function M.set_query(...)
+  vim.deprecate('vim.treesitter.query.set_query()', 'vim.treesitter.query.set()', '0.10')
+  M.set(...)
+end
+
 --- Sets the runtime query named {query_name} for {lang}
 ---
 --- This allows users to override any runtime files and/or configuration
@@ -194,8 +191,17 @@ local explicit_queries = setmetatable({}, {
 ---@param lang string Language to use for the query
 ---@param query_name string Name of the query (e.g., "highlights")
 ---@param text string Query text (unparsed).
-function M.set_query(lang, query_name, text)
-  explicit_queries[lang][query_name] = M.parse_query(lang, text)
+function M.set(lang, query_name, text)
+  explicit_queries[lang][query_name] = M.parse(lang, text)
+end
+
+---@deprecated
+---@param lang string Language to use for the query
+---@param query_name string Name of the query (e.g. "highlights")
+---
+---@return Query|nil Parsed query
+function M.get_query(lang, query_name)
+  return M.get(lang, query_name)
 end
 
 --- Returns the runtime query {query_name} for {lang}.
@@ -204,16 +210,16 @@ end
 ---@param query_name string Name of the query (e.g. "highlights")
 ---
 ---@return Query|nil Parsed query
-function M.get_query(lang, query_name)
+function M.get(lang, query_name)
   if explicit_queries[lang][query_name] then
     return explicit_queries[lang][query_name]
   end
 
-  local query_files = M.get_query_files(lang, query_name)
+  local query_files = M.get_files(lang, query_name)
   local query_string = read_query_files(query_files)
 
   if #query_string > 0 then
-    return M.parse_query(lang, query_string)
+    return M.parse(lang, query_string)
   end
 end
 
@@ -221,6 +227,12 @@ end
 local query_cache = vim.defaulttable(function()
   return setmetatable({}, { __mode = 'v' })
 end)
+
+---@deprecated
+function M.parse_query(...)
+  vim.deprecate('vim.treesitter.query.parse_query()', 'vim.treesitter.query.parse()', '0.10')
+  return M.parse(...)
+end
 
 --- Parse {query} as a string. (If the query is in a file, the caller
 --- should read the contents into a string before calling).
@@ -239,7 +251,7 @@ end)
 ---@param query string Query in s-expr syntax
 ---
 ---@return Query Parsed query
-function M.parse_query(lang, query)
+function M.parse(lang, query)
   language.add(lang)
   local cached = query_cache[lang][query]
   if cached then
@@ -254,41 +266,16 @@ function M.parse_query(lang, query)
   return self
 end
 
----Get the range of a |TSNode|. Can also supply {source} and {metadata}
----to get the range with directives applied.
----@param node TSNode
----@param source integer|string|nil Buffer or string from which the {node} is extracted
----@param metadata TSMetadata|nil
----@return Range6
-function M.get_range(node, source, metadata)
-  if metadata and metadata.range then
-    assert(source)
-    return Range.add_bytes(source, metadata.range)
-  end
-  return { node:range(true) }
+---@deprecated
+function M.get_range(...)
+  vim.deprecate('vim.treesitter.query.get_range()', 'vim.treesitter.get_range()', '0.10')
+  return vim.treesitter.get_range(...)
 end
 
---- Gets the text corresponding to a given node
----
----@param node TSNode
----@param source (integer|string) Buffer or string from which the {node} is extracted
----@param opts (table|nil) Optional parameters.
----          - metadata (table) Metadata of a specific capture. This would be
----            set to `metadata[capture_id]` when using |vim.treesitter.add_directive()|.
----@return string
-function M.get_node_text(node, source, opts)
-  opts = opts or {}
-  local metadata = opts.metadata or {}
-
-  if metadata.text then
-    return metadata.text
-  elseif type(source) == 'number' then
-    local range = M.get_range(node, source, metadata)
-    return buf_range_get_text(source, range)
-  end
-
-  ---@cast source string
-  return source:sub(select(3, node:start()) + 1, select(3, node:end_()))
+---@deprecated
+function M.get_node_text(...)
+  vim.deprecate('vim.treesitter.query.get_node_text()', 'vim.treesitter.get_node_text()', '0.10')
+  return vim.treesitter.get_node_text(...)
 end
 
 ---@alias TSMatch table<integer,TSNode>
@@ -304,7 +291,7 @@ local predicate_handlers = {
     if not node then
       return true
     end
-    local node_text = M.get_node_text(node, source)
+    local node_text = vim.treesitter.get_node_text(node, source)
 
     local str ---@type string
     if type(predicate[3]) == 'string' then
@@ -312,7 +299,7 @@ local predicate_handlers = {
       str = predicate[3]
     else
       -- (#eq? @aa @bb)
-      str = M.get_node_text(match[predicate[3]], source)
+      str = vim.treesitter.get_node_text(match[predicate[3]], source)
     end
 
     if node_text ~= str or str == nil then
@@ -328,7 +315,7 @@ local predicate_handlers = {
       return true
     end
     local regex = predicate[3]
-    return string.find(M.get_node_text(node, source), regex) ~= nil
+    return string.find(vim.treesitter.get_node_text(node, source), regex) ~= nil
   end,
 
   ['match?'] = (function()
@@ -357,7 +344,7 @@ local predicate_handlers = {
       end
       ---@diagnostic disable-next-line no-unknown
       local regex = compiled_vim_regexes[pred[3]]
-      return regex:match_str(M.get_node_text(node, source))
+      return regex:match_str(vim.treesitter.get_node_text(node, source))
     end
   end)(),
 
@@ -366,7 +353,7 @@ local predicate_handlers = {
     if not node then
       return true
     end
-    local node_text = M.get_node_text(node, source)
+    local node_text = vim.treesitter.get_node_text(node, source)
 
     for i = 3, #predicate do
       if string.find(node_text, predicate[i], 1, true) then
@@ -382,7 +369,7 @@ local predicate_handlers = {
     if not node then
       return true
     end
-    local node_text = M.get_node_text(node, source)
+    local node_text = vim.treesitter.get_node_text(node, source)
 
     -- Since 'predicate' will not be used by callers of this function, use it
     -- to store a string set built from the list of words to check against.
@@ -468,7 +455,7 @@ local directive_handlers = {
     assert(type(id) == 'number')
 
     local node = match[id]
-    local text = M.get_node_text(node, bufnr, { metadata = metadata[id] }) or ''
+    local text = vim.treesitter.get_node_text(node, bufnr, { metadata = metadata[id] }) or ''
 
     if not metadata[id] then
       metadata[id] = {}
@@ -486,7 +473,7 @@ local directive_handlers = {
 ---
 ---@param name string Name of the predicate, without leading #
 ---@param handler function(match:table<string,TSNode>, pattern:string, bufnr:integer, predicate:string[])
----   - see |vim.treesitter.add_directive()| for argument meanings
+---   - see |vim.treesitter.query.add_directive()| for argument meanings
 ---@param force boolean|nil
 function M.add_predicate(name, handler, force)
   if predicate_handlers[name] and not force then

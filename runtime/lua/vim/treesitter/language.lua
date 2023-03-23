@@ -1,5 +1,6 @@
 local a = vim.api
 
+---@class TSLanguageModule
 local M = {}
 
 ---@type table<string,string>
@@ -111,9 +112,19 @@ end
 ---
 ---@param lang string Language
 ---@return table
-function M.inspect_language(lang)
+function M.inspect(lang)
   M.add(lang)
   return vim._ts_inspect_language(lang)
+end
+
+---@deprecated
+function M.inspect_language(...)
+  vim.deprecate(
+    'vim.treesitter.language.inspect_language()',
+    'vim.treesitter.language.inspect()',
+    '0.10'
+  )
+  return M.inspect(...)
 end
 
 return M

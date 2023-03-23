@@ -376,7 +376,7 @@ describe('treesitter highlighting', function()
 
     exec_lua [[
       parser = vim.treesitter.get_parser(0, "c")
-      query = vim.treesitter.parse_query("c", "(declaration) @decl")
+      query = vim.treesitter.query.parse("c", "(declaration) @decl")
 
       local nodes = {}
       for _, node in query:iter_captures(parser:parse()[1]:root(), 0, 0, 19) do
@@ -481,8 +481,8 @@ describe('treesitter highlighting', function()
 
     exec_lua [[
       local injection_query = "(preproc_def (preproc_arg) @c) (preproc_function_def value: (preproc_arg) @c)"
-      require('vim.treesitter.query').set_query("c", "highlights", hl_query)
-      require('vim.treesitter.query').set_query("c", "injections", injection_query)
+      vim.treesitter.query.set("c", "highlights", hl_query)
+      vim.treesitter.query.set("c", "injections", injection_query)
 
       vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, "c"))
     ]]

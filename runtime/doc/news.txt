@@ -180,9 +180,9 @@ The following new APIs or features were added.
   more complicated dynamic language injections.
 
 • |vim.treesitter.get_node_text()| now accepts a `metadata` option for
-  writing custom directives using |vim.treesitter.add_directive()|.
+  writing custom directives using |vim.treesitter.query.add_directive()|.
 
-• |vim.treesitter.add()| replaces `vim.treesitter.language.require_language`.
+• |vim.treesitter.language.add()| replaces `vim.treesitter.language.require_language`.
 
 • `require'bit'` is now always available |lua-bit|
 
@@ -217,7 +217,7 @@ The following new APIs or features were added.
 
 • |vim.filetype.get_option()| to get the default option value for a specific
   filetype. This is a wrapper around |nvim_get_option_value()| with caching.
-  
+
 • Added |nvim_get_hl()| for getting highlight group definitions in a format compatible with |nvim_set_hl()|.
 
 ==============================================================================
@@ -275,11 +275,27 @@ DEPRECATIONS                                                *news-deprecations*
 The following functions are now deprecated and will be removed in the next
 release.
 
-• |vim.treesitter.add()| replaces `vim.treesitter.language.require_language()`
+• |vim.treesitter.language.add()| replaces `vim.treesitter.language.require_language()`
 
 • |vim.treesitter.get_node_at_pos()| and |vim.treesitter.get_node_at_cursor()|
   are both deprecated in favor of |vim.treesitter.get_node()|.
 
 • `vim.api.nvim_get_hl_by_name()`, `vim.api.nvim_get_hl_by_id()` were deprecated, use |nvim_get_hl()| instead.
+
+• The following top level Treesitter functions have been moved:
+  `vim.treesitter.inspect_language()`    -> `vim.treesitter.language.inspect()`
+  `vim.treesitter.get_query_files()`     -> `vim.treesitter.query.get_files()`
+  `vim.treesitter.set_query()`           -> `vim.treesitter.query.set()`
+  `vim.treesitter.query.set_query()`     -> `vim.treesitter.query.set()`
+  `vim.treesitter.get_query()`           -> `vim.treesitter.query.get()`
+  `vim.treesitter.query.get_query()`     -> `vim.treesitter.query.get()`
+  `vim.treesitter.parse_query()`         -> `vim.treesitter.query.parse()`
+  `vim.treesitter.query.parse_query()`   -> `vim.treesitter.query.parse()`
+  `vim.treesitter.add_predicate()`       -> `vim.treesitter.query.add_predicate()`
+  `vim.treesitter.add_directive()`       -> `vim.treesitter.query.add_directive()`
+  `vim.treesitter.list_predicates()`     -> `vim.treesitter.query.list_predicates()`
+  `vim.treesitter.list_directives()`     -> `vim.treesitter.query.list_directives()`
+  `vim.treesitter.query.get_range()`     -> `vim.treesitter.get_range()`
+  `vim.treesitter.query.get_node_text()` -> `vim.treesitter.get_node_text()`
 
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:
