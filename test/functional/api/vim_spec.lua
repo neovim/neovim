@@ -89,132 +89,145 @@ describe('API', function()
     eq({mode='i', blocking=false}, nvim("get_mode"))
   end)
 
-  describe('nvim_exec', function()
+  describe('nvim_exec2', function()
+    it('always returns table', function()
+      -- In built version this results into `vim.empty_dict()`
+      eq({}, nvim('exec2', 'echo "Hello"', {}))
+      eq({}, nvim('exec2', 'echo "Hello"', { output = false }))
+      eq({ output = 'Hello' }, nvim('exec2', 'echo "Hello"', { output = true }))
+    end)
+
+    it('default options', function()
+      -- Should be equivalent to { output = false }
+      nvim('exec2', "let x0 = 'a'", {})
+      eq('a', nvim('get_var', 'x0'))
+    end)
+
     it('one-line input', function()
-      nvim('exec', "let x1 = 'a'", false)
+      nvim('exec2', "let x1 = 'a'", { output = false })
       eq('a', nvim('get_var', 'x1'))
     end)
 
     it(':verbose set {option}?', function()
-      nvim('exec', 'set nowrap', false)
-      eq('nowrap\n\tLast set from anonymous :source',
-        nvim('exec', 'verbose set wrap?', true))
+      nvim('exec2', 'set nowrap', { output = false })
+      eq({ output = 'nowrap\n\tLast set from anonymous :source' },
+        nvim('exec2', 'verbose set wrap?', { output = true }))
 
       -- Using script var to force creation of a script item
-      nvim('exec', [[
+      nvim('exec2', [[
         let s:a = 1
         set nowrap
-      ]], false)
-      eq('nowrap\n\tLast set from anonymous :source (script id 1)',
-        nvim('exec', 'verbose set wrap?', true))
+      ]], { output = false })
+      eq({ output = 'nowrap\n\tLast set from anonymous :source (script id 1)' },
+        nvim('exec2', 'verbose set wrap?', { output = true }))
     end)
 
     it('multiline input', function()
       -- Heredoc + empty lines.
-      nvim('exec', "let x2 = 'a'\n", false)
+      nvim('exec2', "let x2 = 'a'\n", { output = false })
       eq('a', nvim('get_var', 'x2'))
-      nvim('exec','lua <<EOF\n\n\n\ny=3\n\n\nEOF', false)
+      nvim('exec2','lua <<EOF\n\n\n\ny=3\n\n\nEOF', { output = false })
       eq(3, nvim('eval', "luaeval('y')"))
 
-      eq('', nvim('exec', 'lua <<EOF\ny=3\nEOF', false))
+      eq({}, nvim('exec2', 'lua <<EOF\ny=3\nEOF', { output = false }))
       eq(3, nvim('eval', "luaeval('y')"))
 
       -- Multiple statements
-      nvim('exec', 'let x1=1\nlet x2=2\nlet x3=3\n', false)
+      nvim('exec2', 'let x1=1\nlet x2=2\nlet x3=3\n', { output = false })
       eq(1, nvim('eval', 'x1'))
       eq(2, nvim('eval', 'x2'))
       eq(3, nvim('eval', 'x3'))
 
       -- Functions
-      nvim('exec', 'function Foo()\ncall setline(1,["xxx"])\nendfunction', false)
+      nvim('exec2', 'function Foo()\ncall setline(1,["xxx"])\nendfunction', { output = false })
       eq('', nvim('get_current_line'))
-      nvim('exec', 'call Foo()', false)
+      nvim('exec2', 'call Foo()', { output = false })
       eq('xxx', nvim('get_current_line'))
 
       -- Autocmds
-      nvim('exec','autocmd BufAdd * :let x1 = "Hello"', false)
+      nvim('exec2','autocmd BufAdd * :let x1 = "Hello"', { output = false })
       nvim('command', 'new foo')
       eq('Hello', request('nvim_eval', 'g:x1'))
 
       -- Line continuations
-      nvim('exec', [[
+      nvim('exec2', [[
         let abc = #{
           \ a: 1,
          "\ b: 2,
           \ c: 3
-          \ }]], false)
+          \ }]], { output = false })
       eq({a = 1, c = 3}, request('nvim_eval', 'g:abc'))
 
       -- try no spaces before continuations to catch off-by-one error
-      nvim('exec', 'let ab = #{\n\\a: 98,\n"\\ b: 2\n\\}', false)
+      nvim('exec2', 'let ab = #{\n\\a: 98,\n"\\ b: 2\n\\}', { output = false })
       eq({a = 98}, request('nvim_eval', 'g:ab'))
 
       -- Script scope (s:)
-      eq('ahoy! script-scoped varrrrr', nvim('exec', [[
+      eq({ output = 'ahoy! script-scoped varrrrr' }, nvim('exec2', [[
           let s:pirate = 'script-scoped varrrrr'
           function! s:avast_ye_hades(s) abort
             return a:s .. ' ' .. s:pirate
           endfunction
           echo <sid>avast_ye_hades('ahoy!')
-        ]], true))
+        ]], { output = true }))
 
-      eq('ahoy! script-scoped varrrrr', nvim('exec', [[
+      eq({ output = "{'output': 'ahoy! script-scoped varrrrr'}" }, nvim('exec2', [[
           let s:pirate = 'script-scoped varrrrr'
           function! Avast_ye_hades(s) abort
             return a:s .. ' ' .. s:pirate
           endfunction
-          echo nvim_exec('echo Avast_ye_hades(''ahoy!'')', 1)
-        ]], true))
+          echo nvim_exec2('echo Avast_ye_hades(''ahoy!'')', {'output': v:true})
+        ]], { output = true }))
 
       matches('Vim%(echo%):E121: Undefined variable: s:pirate$',
-        pcall_err(request, 'nvim_exec', [[
+        pcall_err(request, 'nvim_exec2', [[
           let s:pirate = 'script-scoped varrrrr'
-          call nvim_exec('echo s:pirate', 1)
-        ]], false))
+          call nvim_exec2('echo s:pirate', {'output': v:true})
+        ]], { output = false }))
 
       -- Script items are created only on script var access
-      eq('1\n0', nvim('exec', [[
+      eq({ output = '1\n0' }, nvim('exec2', [[
           echo expand("<SID>")->empty()
           let s:a = 123
           echo expand("<SID>")->empty()
-        ]], true))
+        ]], { output = true }))
 
-      eq('1\n0', nvim('exec', [[
+      eq({ output = '1\n0' }, nvim('exec2', [[
           echo expand("<SID>")->empty()
           function s:a() abort
           endfunction
           echo expand("<SID>")->empty()
-        ]], true))
+        ]], { output = true }))
     end)
 
     it('non-ASCII input', function()
-      nvim('exec', [=[
+      nvim('exec2', [=[
         new
         exe "normal! i ax \n Ax "
         :%s/ax/--a1234--/g | :%s/Ax/--A1234--/g
-      ]=], false)
+      ]=], { output = false })
       nvim('command', '1')
       eq(' --a1234-- ', nvim('get_current_line'))
       nvim('command', '2')
       eq(' --A1234-- ', nvim('get_current_line'))
 
-      nvim('exec', [[
+      nvim('exec2', [[
         new
         call setline(1,['xxx'])
         call feedkeys('r')
         call feedkeys('ñ', 'xt')
-      ]], false)
+      ]], { output = false })
       eq('ñxx', nvim('get_current_line'))
     end)
 
     it('execution error', function()
-      eq('nvim_exec(): Vim:E492: Not an editor command: bogus_command',
-        pcall_err(request, 'nvim_exec', 'bogus_command', false))
+      eq('nvim_exec2(): Vim:E492: Not an editor command: bogus_command',
+        pcall_err(request, 'nvim_exec2', 'bogus_command', {}))
       eq('', nvim('eval', 'v:errmsg'))  -- v:errmsg was not updated.
       eq('', eval('v:exception'))
 
-      eq('nvim_exec(): Vim(buffer):E86: Buffer 23487 does not exist',
-        pcall_err(request, 'nvim_exec', 'buffer 23487', false))
+      eq('nvim_exec2(): Vim(buffer):E86: Buffer 23487 does not exist',
+        pcall_err(request, 'nvim_exec2', 'buffer 23487', {}))
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
       eq('', eval('v:exception'))
     end)
@@ -222,17 +235,17 @@ describe('API', function()
     it('recursion', function()
       local fname = tmpname()
       write_file(fname, 'let x1 = "set from :source file"\n')
-      -- nvim_exec
+      -- nvim_exec2
       --   :source
-      --     nvim_exec
-      request('nvim_exec', [[
+      --     nvim_exec2
+      request('nvim_exec2', [[
         let x2 = substitute('foo','o','X','g')
         let x4 = 'should be overwritten'
-        call nvim_exec("source ]]..fname..[[\nlet x3 = substitute('foo','foo','set by recursive nvim_exec','g')\nlet x5='overwritten'\nlet x4=x5\n", v:false)
-      ]], false)
+        call nvim_exec2("source ]]..fname..[[\nlet x3 = substitute('foo','foo','set by recursive nvim_exec2','g')\nlet x5='overwritten'\nlet x4=x5\n", {'output': v:false})
+      ]], { output = false })
       eq('set from :source file', request('nvim_get_var', 'x1'))
       eq('fXX', request('nvim_get_var', 'x2'))
-      eq('set by recursive nvim_exec', request('nvim_get_var', 'x3'))
+      eq('set by recursive nvim_exec2', request('nvim_get_var', 'x3'))
       eq('overwritten', request('nvim_get_var', 'x4'))
       eq('overwritten', request('nvim_get_var', 'x5'))
       os.remove(fname)
@@ -242,35 +255,35 @@ describe('API', function()
       local fname = tmpname()
       write_file(fname, 'echo "hello"\n')
       local sourcing_fname = tmpname()
-      write_file(sourcing_fname, 'call nvim_exec("source '..fname..'", v:false)\n')
-      meths.exec('set verbose=2', false)
+      write_file(sourcing_fname, 'call nvim_exec2("source '..fname..'", {"output": v:false})\n')
+      meths.exec2('set verbose=2', { output = false })
       local traceback_output = 'line 0: sourcing "'..sourcing_fname..'"\n'..
         'line 0: sourcing "'..fname..'"\n'..
         'hello\n'..
         'finished sourcing '..fname..'\n'..
-        'continuing in nvim_exec() called at '..sourcing_fname..':1\n'..
+        'continuing in nvim_exec2() called at '..sourcing_fname..':1\n'..
         'finished sourcing '..sourcing_fname..'\n'..
-        'continuing in nvim_exec() called at nvim_exec():0'
-      eq(traceback_output,
-        meths.exec('call nvim_exec("source '..sourcing_fname..'", v:false)', true))
+        'continuing in nvim_exec2() called at nvim_exec2():0'
+      eq({ output = traceback_output },
+        meths.exec2('call nvim_exec2("source '..sourcing_fname..'", {"output": v:false})', { output = true }))
       os.remove(fname)
       os.remove(sourcing_fname)
     end)
 
     it('returns output', function()
-      eq('this is spinal tap',
-         nvim('exec', 'lua <<EOF\n\n\nprint("this is spinal tap")\n\n\nEOF', true))
-      eq('', nvim('exec', 'echo', true))
-      eq('foo 42', nvim('exec', 'echo "foo" 42', true))
+      eq({ output = 'this is spinal tap' },
+         nvim('exec2', 'lua <<EOF\n\n\nprint("this is spinal tap")\n\n\nEOF', { output = true }))
+      eq({ output = '' }, nvim('exec2', 'echo', { output = true }))
+      eq({ output = 'foo 42' }, nvim('exec2', 'echo "foo" 42', { output = true }))
     end)
 
-    it('displays messages when output=false', function()
+    it('displays messages when opts.output=false', function()
       local screen = Screen.new(40, 8)
       screen:attach()
       screen:set_default_attr_ids({
         [0] = {bold=true, foreground=Screen.colors.Blue},
       })
-      meths.exec("echo 'hello'", false)
+      meths.exec2("echo 'hello'", { output = false })
       screen:expect{grid=[[
         ^                                        |
         {0:~                                       }|
@@ -289,7 +302,7 @@ describe('API', function()
       screen:set_default_attr_ids({
         [0] = {bold=true, foreground=Screen.colors.Blue},
       })
-      meths.exec("echo 'hello'", true)
+      meths.exec2("echo 'hello'", { output = true })
       screen:expect{grid=[[
         ^                                        |
         {0:~                                       }|
@@ -300,7 +313,7 @@ describe('API', function()
       ]]}
       exec([[
         func Print()
-          call nvim_exec('echo "hello"', v:true)
+          call nvim_exec2('echo "hello"', { 'output': v:true })
         endfunc
       ]])
       feed([[:echon 1 | call Print() | echon 5<CR>]])
@@ -575,7 +588,7 @@ describe('API', function()
 
     it('sets previous directory', function()
       meths.set_current_dir("Xtestdir")
-      meths.exec('cd -', false)
+      meths.exec2('cd -', { output = false })
       eq(funcs.getcwd(), start_dir)
     end)
   end)
@@ -2674,7 +2687,7 @@ describe('API', function()
       eq('  1 %a   "[No Name]"                    line 1\n'..
          '  3  h   "[Scratch]"                    line 0\n'..
          '  4  h   "[Scratch]"                    line 0',
-         meths.exec('ls', true))
+         meths.exec2('ls', { output = true }).output)
       -- current buffer didn't change
       eq({id=1}, meths.get_current_buf())
 
@@ -2788,7 +2801,7 @@ describe('API', function()
     end)
 
     it('should not crash when echoed', function()
-      meths.exec("echo nvim_get_all_options_info()", true)
+      meths.exec2("echo nvim_get_all_options_info()", { output = true })
     end)
   end)
 
@@ -2941,13 +2954,13 @@ describe('API', function()
     it('can save message history', function()
       nvim('command', 'set cmdheight=2') -- suppress Press ENTER
       nvim("echo", {{"msg\nmsg"}, {"msg"}}, true, {})
-      eq("msg\nmsgmsg", meths.exec('messages', true))
+      eq("msg\nmsgmsg", meths.exec2('messages', { output = true }).output)
     end)
 
     it('can disable saving message history', function()
       nvim('command', 'set cmdheight=2') -- suppress Press ENTER
       nvim_async("echo", {{"msg\nmsg"}, {"msg"}}, false, {})
-      eq("", meths.exec("messages", true))
+      eq("", meths.exec2("messages", { output = true }).output)
     end)
   end)
 
@@ -3936,7 +3949,7 @@ describe('API', function()
 
     it('sets correct script context', function()
       meths.cmd({ cmd = "set", args = { "cursorline" } }, {})
-      local str = meths.exec([[verbose set cursorline?]], true)
+      local str = meths.exec2([[verbose set cursorline?]], { output = true }).output
       neq(nil, str:find("cursorline\n\tLast set from API client %(channel id %d+%)"))
     end)
 
@@ -3986,7 +3999,7 @@ describe('API', function()
         line6
       ]]
       meths.cmd({ cmd = "del", range = { 2, 4 }, reg = 'a' }, {})
-      meths.exec("1put a", false)
+      meths.exec2("1put a", { output = false })
       expect [[
         line1
         line2
@@ -4051,11 +4064,11 @@ describe('API', function()
                    { output = true }))
     end)
     it('splits arguments correctly', function()
-      meths.exec([[
+      meths.exec2([[
         function! FooFunc(...)
           echo a:000
         endfunction
-      ]], false)
+      ]], { output = false })
       meths.create_user_command("Foo", "call FooFunc(<f-args>)", { nargs = '+' })
       eq([=[['a quick', 'brown fox', 'jumps over the', 'lazy dog']]=],
          meths.cmd({ cmd = "Foo", args = { "a quick", "brown fox", "jumps over the", "lazy dog"}},

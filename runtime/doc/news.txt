@@ -60,6 +60,8 @@ The following changes may require adaptations in user config or plugins.
 
 • Renamed vim.pretty_print to vim.print. |deprecated|
 
+• |nvim_exec()| is now deprecated in favor of |nvim_exec2()|.
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 

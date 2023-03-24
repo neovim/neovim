@@ -307,7 +307,7 @@ end:
 ///
 /// On execution error: fails with VimL error, updates v:errmsg.
 ///
-/// @see |nvim_exec()|
+/// @see |nvim_exec2()|
 /// @see |nvim_command()|
 ///
 /// @param cmd       Command to execute. Must be a Dictionary that can contain the same values as

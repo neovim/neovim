@@ -322,8 +322,8 @@ end
 ---
 ---@param command string|table Command(s) to execute.
 ---                            If a string, executes multiple lines of Vim script at once. In this
----                            case, it is an alias to |nvim_exec()|, where `output` is set to
----                            false. Thus it works identical to |:source|.
+---                            case, it is an alias to |nvim_exec2()|, where `opts.output` is set
+---                            to false. Thus it works identical to |:source|.
 ---                            If a table, executes a single command. In this case, it is an alias
 ---                            to |nvim_cmd()| where `opts` is empty.
 ---@see |ex-cmd-index|
@@ -338,7 +338,7 @@ vim.cmd = setmetatable({}, {
     if type(command) == 'table' then
       return vim.api.nvim_cmd(command, {})
     else
-      return vim.api.nvim_exec(command, false)
+      return vim.api.nvim_exec2(command, { output = false }).output
     end
   end,
   __index = function(t, command)

@@ -27,13 +27,26 @@
 # include "api/deprecated.c.generated.h"
 #endif
 
+/// @deprecated Use nvim_exec2() instead.
+/// @see nvim_exec2
+String nvim_exec(uint64_t channel_id, String src, Boolean output, Error *err)
+  FUNC_API_SINCE(7)
+  FUNC_API_DEPRECATED_SINCE(11)
+{
+  Dict(exec_opts) opts = { 0 };
+  opts.output = BOOLEAN_OBJ(output);
+  return exec_impl(channel_id, src, &opts, err);
+}
+
 /// @deprecated
-/// @see nvim_exec
+/// @see nvim_exec2
 String nvim_command_output(uint64_t channel_id, String command, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_DEPRECATED_SINCE(7)
 {
-  return nvim_exec(channel_id, command, true, err);
+  Dict(exec_opts) opts = { 0 };
+  opts.output = BOOLEAN_OBJ(true);
+  return exec_impl(channel_id, command, &opts, err);
 }
 
 /// @deprecated Use nvim_exec_lua() instead.

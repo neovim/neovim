@@ -6,7 +6,7 @@ local meths = helpers.meths
 local funcs = helpers.funcs
 
 local exec = function(str)
-  meths.exec(str, false)
+  meths.exec2(str, { output = false })
 end
 
 describe('oldtests', function()

@@ -362,7 +362,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       :e^                                      |
     ]])
-    eq('', meths.exec('messages', true))
+    eq('', meths.exec2('messages', { output = true }).output)
   end)
   it('silences :echon', function()
     set_color_cb('Echoning')
@@ -377,7 +377,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       :e^                                      |
     ]])
-    eq('', meths.exec('messages', true))
+    eq('', meths.exec2('messages', { output = true }).output)
   end)
   it('silences :echomsg', function()
     set_color_cb('Echomsging')
@@ -392,7 +392,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       :e^                                      |
     ]])
-    eq('', meths.exec('messages', true))
+    eq('', meths.exec2('messages', { output = true }).output)
   end)
   it('does the right thing when throwing', function()
     set_color_cb('Throwing')
@@ -858,7 +858,7 @@ describe('Ex commands coloring', function()
     ]])
     feed('<CR>')
     eq('Error detected while processing :\nE605: Exception not caught: 42\nE749: empty buffer',
-       meths.exec('messages', true))
+       meths.exec2('messages', { output = true }).output)
   end)
   it('errors out when failing to get callback', function()
     meths.set_var('Nvim_color_cmdline', 42)

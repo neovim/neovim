@@ -533,7 +533,7 @@ function module.feed_command(...)
   end
 end
 
--- @deprecated use nvim_exec()
+-- @deprecated use nvim_exec2()
 function module.source(code)
   module.exec(dedent(code))
 end
@@ -826,11 +826,11 @@ function module.skip_fragile(pending_fn, cond)
 end
 
 function module.exec(code)
-  return module.meths.exec(code, false)
+  module.meths.exec2(code, { output = false })
 end
 
 function module.exec_capture(code)
-  return module.meths.exec(code, true)
+  return module.meths.exec2(code, { output = true }).output
 end
 
 function module.exec_lua(code, ...)
