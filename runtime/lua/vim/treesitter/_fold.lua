@@ -1,5 +1,4 @@
 local Range = require('vim.treesitter._range')
-local Query = require('vim.treesitter.query')
 
 local api = vim.api
 
@@ -105,7 +104,7 @@ local function get_folds_levels(bufnr, info, srow, erow)
   local prev_stop = -1
 
   vim.treesitter.get_parser(bufnr):for_each_tree(function(tree, ltree)
-    local query = vim.treesitter.query.get_query(ltree:lang(), 'folds')
+    local query = vim.treesitter.query.get(ltree:lang(), 'folds')
     if not query then
       return
     end
@@ -115,7 +114,7 @@ local function get_folds_levels(bufnr, info, srow, erow)
 
     for id, node, metadata in query:iter_captures(tree:root(), bufnr, srow or 0, q_erow) do
       if query.captures[id] == 'fold' then
-        local range = Query.get_range(node, bufnr, metadata[id])
+        local range = vim.treesitter.get_range(node, bufnr, metadata[id])
         local start, _, stop, stop_col = Range.unpack4(range)
 
         if stop_col == 0 then
