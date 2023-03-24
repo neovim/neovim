@@ -26,7 +26,7 @@ describe('treesitter node API', function()
       parser = vim.treesitter.get_parser(0, "c")
       tree = parser:parse()[1]
       root = tree:root()
-      lang = vim.treesitter.inspect_language('c')
+      lang = vim.treesitter.language.inspect('c')
 
       function node_text(node)
         return query.get_node_text(node, 0)

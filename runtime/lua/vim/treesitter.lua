@@ -1,6 +1,4 @@
 local a = vim.api
-local query = require('vim.treesitter.query')
-local language = require('vim.treesitter.language')
 local LanguageTree = require('vim.treesitter.languagetree')
 local Range = require('vim.treesitter._range')
 
@@ -9,12 +7,9 @@ local parsers = setmetatable({}, { __mode = 'v' })
 
 ---@class TreesitterModule
 ---@field highlighter TSHighlighter
-local M = vim.tbl_extend('error', query, language)
-
-M.language_version = vim._ts_get_language_version()
-M.minimum_language_version = vim._ts_get_minimum_language_version()
-
-setmetatable(M, {
+---@field query TSQueryModule
+---@field language TSLanguageModule
+local M = setmetatable({}, {
   __index = function(t, k)
     ---@diagnostic disable:no-unknown
     if k == 'highlighter' then
@@ -27,8 +22,25 @@ setmetatable(M, {
       t[k] = require('vim.treesitter.query')
       return t[k]
     end
+
+    local query = require('vim.treesitter.query')
+    if query[k] then
+      vim.deprecate('vim.treesitter.' .. k .. '()', 'vim.treesitter.query.' .. k .. '()', '0.10')
+      t[k] = query[k]
+      return t[k]
+    end
+
+    local language = require('vim.treesitter.language')
+    if language[k] then
+      vim.deprecate('vim.treesitter.' .. k .. '()', 'vim.treesitter.language.' .. k .. '()', '0.10')
+      t[k] = language[k]
+      return t[k]
+    end
   end,
 })
+
+M.language_version = vim._ts_get_language_version()
+M.minimum_language_version = vim._ts_get_minimum_language_version()
 
 --- Creates a new parser
 ---
@@ -47,7 +59,7 @@ function M._create_parser(bufnr, lang, opts)
   vim.fn.bufload(bufnr)
 
   local ft = vim.bo[bufnr].filetype
-  language.add(lang, { filetype = ft ~= '' and ft or nil })
+  M.language.add(lang, { filetype = ft ~= '' and ft or nil })
 
   local self = LanguageTree.new(bufnr, lang, opts)
 
@@ -101,7 +113,7 @@ function M.get_parser(bufnr, lang, opts)
   if lang == nil then
     local ft = vim.bo[bufnr].filetype
     if ft ~= '' then
-      lang = language.get_lang(ft) or ft
+      lang = M.language.get_lang(ft) or ft
       -- TODO(lewis6991): we should error here and not default to ft
       -- if not lang then
       --   error(string.format('filetype %s of buffer %d is not associated with any lang', ft, bufnr))
@@ -152,7 +164,7 @@ function M.get_string_parser(str, lang, opts)
     str = { str, 'string' },
     lang = { lang, 'string' },
   })
-  language.add(lang)
+  M.language.add(lang)
 
   return LanguageTree.new(str, lang, opts)
 end
@@ -194,6 +206,61 @@ function M.get_node_range(node_or_range)
   else
     return node_or_range:range()
   end
+end
+
+---Get the range of a |TSNode|. Can also supply {source} and {metadata}
+---to get the range with directives applied.
+---@param node TSNode
+---@param source integer|string|nil Buffer or string from which the {node} is extracted
+---@param metadata TSMetadata|nil
+---@return Range6
+function M.get_range(node, source, metadata)
+  if metadata and metadata.range then
+    assert(source)
+    return Range.add_bytes(source, metadata.range)
+  end
+  return { node:range(true) }
+end
+
+---@private
+---@param buf integer
+---@param range Range
+---@returns string
+local function buf_range_get_text(buf, range)
+  local start_row, start_col, end_row, end_col = Range.unpack4(range)
+  if end_col == 0 then
+    if start_row == end_row then
+      start_col = -1
+      start_row = start_row - 1
+    end
+    end_col = -1
+    end_row = end_row - 1
+  end
+  local lines = a.nvim_buf_get_text(buf, start_row, start_col, end_row, end_col, {})
+  return table.concat(lines, '\n')
+end
+
+--- Gets the text corresponding to a given node
+---
+---@param node TSNode
+---@param source (integer|string) Buffer or string from which the {node} is extracted
+---@param opts (table|nil) Optional parameters.
+---          - metadata (table) Metadata of a specific capture. This would be
+---            set to `metadata[capture_id]` when using |vim.treesitter.query.add_directive()|.
+---@return string
+function M.get_node_text(node, source, opts)
+  opts = opts or {}
+  local metadata = opts.metadata or {}
+
+  if metadata.text then
+    return metadata.text
+  elseif type(source) == 'number' then
+    local range = vim.treesitter.get_range(node, source, metadata)
+    return buf_range_get_text(source, range)
+  end
+
+  ---@cast source string
+  return source:sub(select(3, node:start()) + 1, select(3, node:end_()))
 end
 
 --- Determines whether (line, col) position is in node range
