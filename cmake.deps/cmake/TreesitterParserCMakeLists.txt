@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(parser C)
 
-set(CMAKE_C_STANDARD 99)
 file(GLOB source_files src/*.c)
 
 add_library(parser

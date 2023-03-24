@@ -3,9 +3,6 @@ project(libtermkey C)
 
 add_definitions(-D _CRT_SECURE_NO_WARNINGS)
 add_definitions(-DHAVE_UNIBILIUM)
-if(NOT MSVC)
-  add_compile_options(-std=c99)
-endif()
 
 include_directories(${PROJECT_BINARY_DIR}/t)
 include_directories(SYSTEM ${UNIBILIUM_INCLUDE_DIRS})
