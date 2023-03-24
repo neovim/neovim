@@ -46,7 +46,6 @@ jobs:
           name: nvim-linux64
           path: |
             build/nvim-linux64.tar.gz
-            build/nvim-linux64.deb
           retention-days: 1
 
   appimage:
@@ -182,8 +181,6 @@ jobs:
           cd ./nvim-linux64
           sha256sum nvim-linux64.tar.gz > nvim-linux64.tar.gz.sha256sum
           echo "SHA_LINUX_64_TAR=$(cat nvim-linux64.tar.gz.sha256sum)" >> $GITHUB_ENV
-          sha256sum nvim-linux64.deb > nvim-linux64.deb.sha256sum
-          echo "SHA_LINUX_64_DEB=$(cat nvim-linux64.deb.sha256sum)" >> $GITHUB_ENV
       - name: Generate App Image SHA256 checksums
         run: |
           cd ./appimage
