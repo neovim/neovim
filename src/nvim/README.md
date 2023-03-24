@@ -198,6 +198,34 @@ possible to see exactly what terminfo values Nvim is using on any system.
 
     nvim -V3log
 
+### TUI Debugging with gdb/lldb
+
+Launching the nvim TUI involves two processes, one for main editor state and one
+for rendering the TUI. Both of these processes use the nvim binary, so somewhat
+confusingly setting a breakpoint in either will generally succeed but may not be
+hit depending on which process the breakpoints were set in.
+
+To debug the main process, you can debug the nvim binary with the `--headless`
+flag which does not launch the TUI and will allow you to set breakpoints in code
+not related to TUI rendering like so:
+
+```
+lldb -- ./build/bin/nvim --headless --listen ~/.cache/nvim/debug-server.pipe
+```
+
+You can then attach to the headless process to interact with the editor like so:
+
+```
+./build/bin/nvim --remote-ui --server ~/.cache/nvim/debug-server.pipe
+```
+
+Conversely for debugging TUI rendering, you can start a headless process and
+debug the remote-ui process multiple times without losing editor state.
+
+For details on using nvim-dap and automatically debugging the child (main)
+process, see
+[here](https://zignar.net/2023/02/17/debugging-neovim-with-neovim-and-nvim-dap/)
+
 ### TUI trace
 
 The ancient `script` command is still the "state of the art" for tracing
