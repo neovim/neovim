@@ -5,8 +5,6 @@ include(GNUInstallDirs)
 
 if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
-else()
-  add_compile_options(-std=c99)
 endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
