@@ -196,12 +196,9 @@ function M.set(lang, query_name, text)
 end
 
 ---@deprecated
----@param lang string Language to use for the query
----@param query_name string Name of the query (e.g. "highlights")
----
----@return Query|nil Parsed query
-function M.get_query(lang, query_name)
-  return M.get(lang, query_name)
+function M.get_query(...)
+  vim.deprecate('vim.treesitter.query.get_query()', 'vim.treesitter.query.get()', '0.10')
+  return M.get(...)
 end
 
 --- Returns the runtime query {query_name} for {lang}.
