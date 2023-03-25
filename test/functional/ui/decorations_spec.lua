@@ -1368,6 +1368,28 @@ end]]
       {24:-- INSERT --}                                      |
       ]]}
   end)
+
+  it('has correct cursor position with virtual text on an empty line', function()
+    meths.buf_set_extmark(0, ns, 0, 0,
+            { virt_text = { { 'virtual text', 'Special' } }, virt_text_pos = 'inline' })
+    screen:expect { grid = [[
+      {28:^virtual text}                                      |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+  end)
 end)
 
 describe('decorations: virtual lines', function()
