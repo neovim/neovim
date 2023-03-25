@@ -51,7 +51,7 @@ describe('vim.lsp.util', function()
       eq(expected, stylize_markdown(lines, opts))
     end)
 
-    it('should replace supported HTML entities', function()
+    it('replaces supported HTML entities', function()
       local lines = {
         "1 &lt; 2",
         "3 &gt; 2",
