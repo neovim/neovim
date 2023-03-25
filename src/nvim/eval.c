@@ -6771,20 +6771,18 @@ char *set_cmdarg(exarg_T *eap, char *oldarg)
 {
   char *oldval = vimvars[VV_CMDARG].vv_str;
   if (eap == NULL) {
-    xfree(oldval);
-    vimvars[VV_CMDARG].vv_str = oldarg;
-    return NULL;
+    goto error;
   }
 
   size_t len = 0;
   if (eap->force_bin == FORCE_BIN) {
-    len = 6;
+    len += 6;  // " ++bin"
   } else if (eap->force_bin == FORCE_NOBIN) {
-    len = 8;
+    len += 8;  // " ++nobin"
   }
 
   if (eap->read_edit) {
-    len += 7;
+    len += 7;  // " ++edit"
   }
 
   if (eap->force_ff != 0) {
@@ -6797,48 +6795,89 @@ char *set_cmdarg(exarg_T *eap, char *oldarg)
     len += 7 + 4;  // " ++bad=" + "keep" or "drop"
   }
   if (eap->mkdir_p != 0) {
-    len += 4;
+    len += 4;  // " ++p"
   }
 
   const size_t newval_len = len + 1;
   char *newval = xmalloc(newval_len);
+  size_t xlen = 0;
+  int rc = 0;
 
   if (eap->force_bin == FORCE_BIN) {
-    snprintf(newval, newval_len, " ++bin");
+    rc = snprintf(newval, newval_len, " ++bin");
   } else if (eap->force_bin == FORCE_NOBIN) {
-    snprintf(newval, newval_len, " ++nobin");
+    rc = snprintf(newval, newval_len, " ++nobin");
   } else {
     *newval = NUL;
   }
+  if (rc < 0) {
+    goto error;
+  }
+  xlen += (size_t)rc;
 
   if (eap->read_edit) {
-    STRCAT(newval, " ++edit");
+    rc = snprintf(newval + xlen, newval_len - xlen, " ++edit");
+    if (rc < 0) {
+      goto error;
+    }
+    xlen += (size_t)rc;
   }
 
   if (eap->force_ff != 0) {
-    snprintf(newval + strlen(newval), newval_len, " ++ff=%s",
-             eap->force_ff == 'u' ? "unix" :
-             eap->force_ff == 'd' ? "dos" : "mac");
+    rc = snprintf(newval + xlen,
+                  newval_len - xlen,
+                  " ++ff=%s",
+                  eap->force_ff == 'u'   ? "unix"
+                  : eap->force_ff == 'd' ? "dos" : "mac");
+    if (rc < 0) {
+      goto error;
+    }
+    xlen += (size_t)rc;
   }
   if (eap->force_enc != 0) {
-    snprintf(newval + strlen(newval), newval_len, " ++enc=%s",
-             eap->cmd + eap->force_enc);
-  }
-  if (eap->bad_char == BAD_KEEP) {
-    STRCPY(newval + strlen(newval), " ++bad=keep");
-  } else if (eap->bad_char == BAD_DROP) {
-    STRCPY(newval + strlen(newval), " ++bad=drop");
-  } else if (eap->bad_char != 0) {
-    snprintf(newval + strlen(newval), newval_len, " ++bad=%c",
-             eap->bad_char);
+    rc = snprintf(newval + (xlen), newval_len - xlen, " ++enc=%s", eap->cmd + eap->force_enc);
+    if (rc < 0) {
+      goto error;
+    }
+    xlen += (size_t)rc;
   }
 
-  if (eap->mkdir_p) {
-    snprintf(newval, newval_len, " ++p");
+  if (eap->bad_char == BAD_KEEP) {
+    rc = snprintf(newval + xlen, newval_len - xlen, " ++bad=keep");
+    if (rc < 0) {
+      goto error;
+    }
+    xlen += (size_t)rc;
+  } else if (eap->bad_char == BAD_DROP) {
+    rc = snprintf(newval + xlen, newval_len - xlen, " ++bad=drop");
+    if (rc < 0) {
+      goto error;
+    }
+    xlen += (size_t)rc;
+  } else if (eap->bad_char != 0) {
+    rc = snprintf(newval + xlen, newval_len - xlen, " ++bad=%c", eap->bad_char);
+    if (rc < 0) {
+      goto error;
+    }
+    xlen += (size_t)rc;
   }
+
+  if (eap->mkdir_p != 0) {
+    rc = snprintf(newval + xlen, newval_len - xlen, " ++p");
+    if (rc < 0) {
+      goto error;
+    }
+    xlen += (size_t)rc;
+  }
+  assert(xlen <= newval_len);
 
   vimvars[VV_CMDARG].vv_str = newval;
   return oldval;
+
+error:
+  xfree(oldval);
+  vimvars[VV_CMDARG].vv_str = oldarg;
+  return NULL;
 }
 
 /// Check if variable "name[len]" is a local variable or an argument.
