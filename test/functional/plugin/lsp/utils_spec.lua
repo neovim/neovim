@@ -21,7 +21,7 @@ describe('vim.lsp.util', function()
       ]], content, opts)
     end
 
-    it('should stylize markdown code fences', function()
+    it('code fences', function()
       local lines = {
         "```lua",
         "local hello = 'world'",
