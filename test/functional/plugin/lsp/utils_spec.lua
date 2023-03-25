@@ -34,7 +34,7 @@ describe('vim.lsp.util', function()
       eq(expected, stylize_markdown(lines, opts))
     end)
 
-    it('should add separator after code block', function()
+    it('adds separator after code block', function()
       local lines = {
         "```lua",
         "local hello = 'world'",
