@@ -390,7 +390,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
 
   // First get normal size, without 'linebreak' or virtual text
   int size = win_chartabsize(wp, s, vcol);
-  if (cts->cts_has_virt_text) {
+  if (cts->cts_has_virt_text && *line != NUL) {
     int col = (int)(s - line);
     while (true) {
       mtkey_t mark = marktree_itr_current(cts->cts_iter);
