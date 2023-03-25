@@ -149,13 +149,25 @@ To run a *specific* unit test:
 
     TEST_FILE=test/unit/foo.lua make unittest
 
+or
+
+    cmake -E env "TEST_FILE=test/unit/foo.lua" cmake --build build --target unittest
+
 To run a *specific* functional test:
 
     TEST_FILE=test/functional/foo.lua make functionaltest
 
+or
+
+    cmake -E env "TEST_FILE=test/functional/foo.lua" cmake --build build --target functionaltest
+
 To *repeat* a test:
 
     BUSTED_ARGS="--repeat=100 --no-keep-going" TEST_FILE=test/functional/foo_spec.lua make functionaltest
+
+or
+
+    cmake -E env "TEST_FILE=test/functional/foo_spec.lua" cmake -E env BUSTED_ARGS="--repeat=100 --no-keep-going" cmake --build build --target functionaltest
 
 ### Filter by tag
 
