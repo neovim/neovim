@@ -67,6 +67,11 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
+• |nvim_buf_get_extmarks()| now accepts a -1 `ns_id` to request extmarks from
+  all namespaces and adds the namespace id to the details array.
+  Other missing properties have been added to the details array and marks can
+  be filtered by type.
+
 • Added a new experimental |lua-loader| that byte-compiles and caches lua files.
   To enable the new loader, add the following at the top of your |init.lua|: >lua
     vim.loader.enable()

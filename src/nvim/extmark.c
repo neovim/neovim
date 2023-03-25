@@ -301,7 +301,8 @@ bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_r
 /// dir can be set to control the order of the array
 /// amount = amount of marks to find or -1 for all
 ExtmarkInfoArray extmark_get(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_row,
-                             colnr_T u_col, int64_t amount, bool reverse)
+                             colnr_T u_col, int64_t amount, bool reverse, bool all_ns,
+                             ExtmarkType type_filter)
 {
   ExtmarkInfoArray array = KV_INITIAL_VALUE;
   MarkTreeIter itr[1];
@@ -320,7 +321,25 @@ ExtmarkInfoArray extmark_get(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_co
       goto next_mark;
     }
 
-    if (mark.ns == ns_id) {
+    uint16_t type_flags = kExtmarkNone;
+    if (type_filter != kExtmarkNone) {
+      Decoration *decor = mark.decor_full;
+      if (decor && (decor->sign_text || decor->number_hl_id)) {
+        type_flags |= kExtmarkSign;
+      }
+      if (decor && decor->virt_text.size) {
+        type_flags |= kExtmarkVirtText;
+      }
+      if (decor && decor->virt_lines.size) {
+        type_flags |= kExtmarkVirtLines;
+      }
+      if ((decor && (decor->line_hl_id || decor->cursorline_hl_id))
+          || mark.hl_id) {
+        type_flags |= kExtmarkHighlight;
+      }
+    }
+
+    if ((all_ns || mark.ns == ns_id) && type_flags & type_filter) {
       mtkey_t end = marktree_get_alt(buf->b_marktree, mark, NULL);
       kv_push(array, ((ExtmarkInfo) { .ns_id = mark.ns,
                                       .mark_id = mark.id,
