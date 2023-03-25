@@ -380,14 +380,14 @@ describe('API: get highlight', function()
   local highlight1 = {
     bg = highlight_color.bg,
     fg = highlight_color.fg,
-    bold = true,
-    italic = true,
+    bold = true, italic = true,
+    cterm = {bold = true, italic = true},
   }
   local highlight2 = {
     ctermbg = highlight_color.ctermbg,
     ctermfg = highlight_color.ctermfg,
-    underline = true,
-    reverse = true,
+    underline = true, reverse = true,
+    cterm = {underline = true, reverse = true},
   }
   local highlight3_config = {
     bg = highlight_color.bg,
@@ -413,13 +413,8 @@ describe('API: get highlight', function()
     fg = highlight_color.fg,
     ctermbg = highlight_color.ctermbg,
     ctermfg = highlight_color.ctermfg,
-    bold = true,
-    italic = true,
-    nocombine = true,
-    reverse = true,
-    underdashed = true,
-    strikethrough = true,
-    altfont = true,
+    bold = true, italic = true, reverse = true, underdashed = true, strikethrough = true, altfont = true,
+    cterm = {italic = true, nocombine = true, reverse = true, strikethrough = true, altfont = true}
   }
 
   local function get_ns()
@@ -500,7 +495,8 @@ describe('API: get highlight', function()
         undercurl = true,
       },
     })
-    eq({ undercurl = true, underdotted = true }, meths.get_hl(ns, { name = 'Test_hl' }))
+    eq({ underdotted = true, cterm = { undercurl = true} },
+       meths.get_hl(ns, { name = 'Test_hl' }))
   end)
 
   it('can get a highlight in the global namespace', function()
@@ -524,43 +520,15 @@ describe('API: get highlight', function()
     }, meths.get_hl(0, { name = 'Test_hl3' }))
   end)
 
-  local expected_rgb = {
-    altfont = true,
-    bg = 16776960,
-    bold = true,
-    ctermbg = 10,
-    fg = 16711680,
-    italic = true,
-    nocombine = true,
-    reverse = true,
-    sp = 255,
-    strikethrough = true,
-    underline = true,
-  }
-  local expected = {
-    bg = 16776960,
-    bold = true,
-    ctermbg = 10,
-    fg = 16711680,
-    sp = 255,
-    underline = true,
-  }
-  local expected_undercurl = {
-    bg = 16776960,
-    ctermbg = 10,
-    fg = 16711680,
-    sp = 255,
-    undercurl = true,
-    underline = true,
-  }
-
   it('nvim_get_hl by id', function()
     local hl_id = meths.get_hl_id_by_name('NewHighlight')
 
     command(
       'hi NewHighlight cterm=underline ctermbg=green guifg=red guibg=yellow guisp=blue gui=bold'
     )
-    eq(expected, meths.get_hl(0, { id = hl_id }))
+    eq({ fg = 16711680, bg = 16776960, sp = 255, bold = true,
+         ctermbg = 10, cterm = { underline = true },
+    }, meths.get_hl(0, { id = hl_id }))
 
     -- Test 0 argument
     eq('Highlight id out of bounds', pcall_err(meths.get_hl, 0, { id = 0 }))
@@ -572,11 +540,17 @@ describe('API: get highlight', function()
 
     -- Test all highlight properties.
     command('hi NewHighlight gui=underline,bold,italic,reverse,strikethrough,altfont,nocombine')
-    eq(expected_rgb, meths.get_hl(0, { id = hl_id }))
+    eq({ fg = 16711680, bg = 16776960, sp = 255,
+         altfont = true, bold = true, italic = true, nocombine = true, reverse = true, strikethrough = true, underline = true,
+         ctermbg = 10, cterm = {underline = true},
+    }, meths.get_hl(0, { id = hl_id }))
 
     -- Test undercurl
     command('hi NewHighlight gui=undercurl')
-    eq(expected_undercurl, meths.get_hl(0, { id = hl_id }))
+    eq({ fg = 16711680, bg = 16776960, sp = 255, undercurl = true,
+         ctermbg = 10,
+         cterm = {underline = true},
+    }, meths.get_hl(0, { id = hl_id }))
   end)
 
   it('can correctly detect links', function()

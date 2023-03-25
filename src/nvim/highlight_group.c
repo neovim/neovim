@@ -1536,8 +1536,12 @@ static bool hlgroup2dict(Dictionary *hl, NS ns_id, int hl_id, Arena *arena)
     PUT_C(*hl, "link", STRING_OBJ(cstr_as_string(hl_table[link - 1].sg_name)));
   } else {
     *hl = arena_dict(arena, HLATTRS_DICT_SIZE);
-    hlattrs2dict(hl, attr, true, true);
-    hlattrs2dict(hl, attr, false, true);
+    Dictionary hl_cterm = arena_dict(arena, HLATTRS_DICT_SIZE);
+    hlattrs2dict(hl, NULL, attr, true, true);
+    hlattrs2dict(hl, &hl_cterm, attr, false, true);
+    if (kv_size(hl_cterm)) {
+      PUT_C(*hl, "cterm", DICTIONARY_OBJ(hl_cterm));
+    }
   }
   return true;
 }

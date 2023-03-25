@@ -727,8 +727,8 @@ void remote_ui_hl_attr_define(UI *ui, Integer id, HlAttrs rgb_attrs, HlAttrs cte
   ADD_C(args, INTEGER_OBJ(id));
   MAXSIZE_TEMP_DICT(rgb, HLATTRS_DICT_SIZE);
   MAXSIZE_TEMP_DICT(cterm, HLATTRS_DICT_SIZE);
-  hlattrs2dict(&rgb, rgb_attrs, true, false);
-  hlattrs2dict(&cterm, rgb_attrs, false, false);
+  hlattrs2dict(&rgb, NULL, rgb_attrs, true, false);
+  hlattrs2dict(&cterm, NULL, rgb_attrs, false, false);
   ADD_C(args, DICTIONARY_OBJ(rgb));
   ADD_C(args, DICTIONARY_OBJ(cterm));
 
@@ -751,7 +751,7 @@ void remote_ui_highlight_set(UI *ui, int id)
   }
   data->hl_id = id;
   MAXSIZE_TEMP_DICT(dict, HLATTRS_DICT_SIZE);
-  hlattrs2dict(&dict, syn_attr2entry(id), ui->rgb, false);
+  hlattrs2dict(&dict, NULL, syn_attr2entry(id), ui->rgb, false);
   ADD_C(args, DICTIONARY_OBJ(dict));
   push_call(ui, "highlight_set", args);
 }
@@ -950,7 +950,7 @@ static Array translate_contents(UI *ui, Array contents, Arena *arena)
     int attr = (int)item.items[0].data.integer;
     if (attr) {
       Dictionary rgb_attrs = arena_dict(arena, HLATTRS_DICT_SIZE);
-      hlattrs2dict(&rgb_attrs, syn_attr2entry(attr), ui->rgb, false);
+      hlattrs2dict(&rgb_attrs, NULL, syn_attr2entry(attr), ui->rgb, false);
       ADD(new_item, DICTIONARY_OBJ(rgb_attrs));
     } else {
       ADD(new_item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));

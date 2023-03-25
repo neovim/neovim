@@ -1653,7 +1653,7 @@ describe('typval.c', function()
           eq(OK, lib.tv_dict_add(d, di))
           alloc_log:check({})
           eq(FAIL, check_emsg(function() return lib.tv_dict_add(d, di) end,
-                              'E685: Internal error: hash_add()'))
+                              'E685: Internal error: hash_add(): duplicate key ""'))
           alloc_log:clear()
           lib.tv_dict_item_remove(d, di)
           alloc_log:check({
@@ -1947,7 +1947,7 @@ describe('typval.c', function()
           alloc_log:check({})
           eq({test=10, ['t-est']=int(42)}, dct2tbl(d))
           eq(FAIL, check_emsg(function() return lib.tv_dict_add(d, di) end,
-                              'E685: Internal error: hash_add()'))
+                              'E685: Internal error: hash_add(): duplicate key "t-est"'))
         end)
       end)
       describe('list()', function()
@@ -1964,7 +1964,7 @@ describe('typval.c', function()
           eq({test=10, tes={1, 2, 3}}, dct2tbl(d))
           eq(2, l.lv_refcount)
           eq(FAIL, check_emsg(function() return lib.tv_dict_add_list(d, 'testt', 3, l) end,
-                              'E685: Internal error: hash_add()'))
+                              'E685: Internal error: hash_add(): duplicate key "tes"'))
           eq(2, l.lv_refcount)
           alloc_log:clear()
           lib.emsg_skip = lib.emsg_skip + 1
@@ -1990,7 +1990,7 @@ describe('typval.c', function()
           eq({test=10, tes={foo=42}}, dct2tbl(d))
           eq(2, d2.dv_refcount)
           eq(FAIL, check_emsg(function() return lib.tv_dict_add_dict(d, 'testt', 3, d2) end,
-                              'E685: Internal error: hash_add()'))
+                              'E685: Internal error: hash_add(): duplicate key "tes"'))
           eq(2, d2.dv_refcount)
           alloc_log:clear()
           lib.emsg_skip = lib.emsg_skip + 1
@@ -2012,7 +2012,7 @@ describe('typval.c', function()
           alloc_log:check({a.di(dis.tes, 'tes')})
           eq({test=10, tes=int(2)}, dct2tbl(d))
           eq(FAIL, check_emsg(function() return lib.tv_dict_add_nr(d, 'testt', 3, 2) end,
-                              'E685: Internal error: hash_add()'))
+                              'E685: Internal error: hash_add(): duplicate key "tes"'))
           alloc_log:clear()
           lib.emsg_skip = lib.emsg_skip + 1
           eq(FAIL, check_emsg(function() return lib.tv_dict_add_nr(d, 'testt', 3, 2) end,
@@ -2032,7 +2032,7 @@ describe('typval.c', function()
           alloc_log:check({a.di(dis.tes, 'tes')})
           eq({test=10, tes=1.5}, dct2tbl(d))
           eq(FAIL, check_emsg(function() return lib.tv_dict_add_float(d, 'testt', 3, 1.5) end,
-                              'E685: Internal error: hash_add()'))
+                              'E685: Internal error: hash_add(): duplicate key "tes"'))
           alloc_log:clear()
           lib.emsg_skip = lib.emsg_skip + 1
           eq(FAIL, check_emsg(function() return lib.tv_dict_add_float(d, 'testt', 3, 1.5) end,
@@ -2055,7 +2055,7 @@ describe('typval.c', function()
           })
           eq({test=10, tes='TEST'}, dct2tbl(d))
           eq(FAIL, check_emsg(function() return lib.tv_dict_add_str(d, 'testt', 3, 'TEST') end,
-                              'E685: Internal error: hash_add()'))
+                              'E685: Internal error: hash_add(): duplicate key "tes"'))
           alloc_log:clear()
           lib.emsg_skip = lib.emsg_skip + 1
           eq(FAIL, check_emsg(function() return lib.tv_dict_add_str(d, 'testt', 3, 'TEST') end,
@@ -2085,7 +2085,7 @@ describe('typval.c', function()
           })
           eq({test=10, tes='TEST'}, dct2tbl(d))
           eq(FAIL, check_emsg(function() return lib.tv_dict_add_allocated_str(d, 'testt', 3, s2) end,
-                              'E685: Internal error: hash_add()'))
+                              'E685: Internal error: hash_add(): duplicate key "tes"'))
           alloc_log:clear()
           lib.emsg_skip = lib.emsg_skip + 1
           eq(FAIL, check_emsg(function() return lib.tv_dict_add_allocated_str(d, 'testt', 3, s3) end,
