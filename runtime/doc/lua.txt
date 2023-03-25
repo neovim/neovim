@@ -1510,7 +1510,8 @@ print({...})                                                     *vim.print()*
 
 region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})         *vim.region()*
     Get a table of lines with start, end columns for a region marked by two
-    points
+    points. Input and output positions are (0,0)-indexed and indicate byte
+    positions.
 
     Parameters: ~
       • {bufnr}      (integer) number of buffer
@@ -1518,11 +1519,12 @@ region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})         *vim.region()*
                      region
       • {pos2}       integer[] (line, column) tuple marking end of region
       • {regtype}    (string) type of selection, see |setreg()|
-      • {inclusive}  (boolean) indicating whether the selection is
-                     end-inclusive
+      • {inclusive}  (boolean) indicating whether column of pos2 is inclusive
 
     Return: ~
-        (table) region Table of the form `{linenr = {startcol,endcol}}`
+        (table) region Table of the form `{linenr = {startcol,endcol}}`.
+        `endcol` is exclusive, and whole lines are marked with
+        `{startcol,endcol} = {0,-1}`.
 
 schedule_wrap({cb})                                      *vim.schedule_wrap()*
     Defers callback `cb` until the Nvim API is safe to call.
