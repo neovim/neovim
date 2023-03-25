@@ -714,4 +714,33 @@ function Query:iter_matches(node, source, start, stop)
   return iter
 end
 
+---@class QueryLinterOpts
+---@field langs (string|string[]|nil)
+---@field clear (boolean)
+
+--- Lint treesitter queries using installed parser, or clear lint errors.
+---
+--- Use |treesitter-parsers| in runtimepath to check the query file in {buf} for errors:
+---
+---   - verify that used nodes are valid identifiers in the grammar.
+---   - verify that predicates and directives are valid.
+---   - verify that top-level s-expressions are valid.
+---
+--- The found diagnostics are reported using |diagnostic-api|.
+--- By default, the parser used for verification is determined by the containing folder
+--- of the query file, e.g., if the path is `**/lua/highlights.scm`, the parser for the
+--- `lua` language will be used.
+---@param buf (integer) Buffer handle
+---@param opts (QueryLinterOpts|nil) Optional keyword arguments:
+---   - langs (string|string[]|nil) Language(s) to use for checking the query.
+---            If multiple languages are specified, queries are validated for all of them
+---   - clear (boolean) if `true`, just clear current lint errors
+function M.lint(buf, opts)
+  if opts and opts.clear then
+    require('vim.treesitter._query_linter').clear(buf)
+  else
+    require('vim.treesitter._query_linter').lint(buf, opts)
+  end
+end
+
 return M

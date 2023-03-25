@@ -269,6 +269,7 @@ function M.inspect_tree(opts)
   vim.bo[b].buflisted = false
   vim.bo[b].buftype = 'nofile'
   vim.bo[b].bufhidden = 'wipe'
+  vim.b[b].disable_query_linter = true
   vim.bo[b].filetype = 'query'
 
   local title --- @type string?

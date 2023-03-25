@@ -663,6 +663,20 @@ To disable this behavior, set the following variable in your vimrc: >
 
 	let g:python_recommended_style = 0
 
+QUERY					                *ft-query-plugin*
+
+
+Linting of tree-sitter queries for installed parsers using
+|lua-treesitter-query_linter| is enabled by default on
+`BufEnter` and `BufWrite`. To change the events that
+trigger linting, use >lua
+
+	vim.g.query_lint_on = { 'InsertLeave', 'TextChanged' }
+<
+To disable linting completely, set >lua
+
+	vim.g.query_lint_on = {}
+<
 
 QF QUICKFIX					    *qf.vim* *ft-qf-plugin*
 
