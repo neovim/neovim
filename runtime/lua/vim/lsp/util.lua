@@ -1378,6 +1378,20 @@ function M.stylize_markdown(bufnr, contents, opts)
     end
   end
 
+  -- Handle some common html escape sequences
+  stripped = vim.tbl_map(function(line)
+    local escapes = {
+      ['&gt;'] = '>',
+      ['&lt;'] = '<',
+      ['&quot;'] = '"',
+      ['&apos;'] = "'",
+      ['&ensp;'] = ' ',
+      ['&emsp;'] = ' ',
+      ['&amp;'] = '&',
+    }
+    return (string.gsub(line, '&[^ ;]+;', escapes))
+  end, stripped)
+
   -- Compute size of float needed to show (wrapped) lines
   opts.wrap_at = opts.wrap_at or (vim.wo['wrap'] and api.nvim_win_get_width(0))
   local width = M._make_floating_popup_size(stripped, opts)
