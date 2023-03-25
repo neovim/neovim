@@ -3602,7 +3602,6 @@ shada_read_next_item_start:
     ret = spm_ret;
     goto shada_read_next_item_error;
   }
-  ret = kSDReadStatusMalformed;
   entry->data = sd_default_values[type_u64].data;
   switch ((ShadaEntryType)type_u64) {
   case kSDItemHeader:

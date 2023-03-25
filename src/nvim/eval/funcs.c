@@ -7581,7 +7581,7 @@ static void f_settagstack(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   // third argument: action - 'a' for append and 'r' for replace.
   // default is to replace the stack.
   if (argvars[2].v_type == VAR_UNKNOWN) {
-    action = 'r';
+    // action = 'r';
   } else if (argvars[2].v_type == VAR_STRING) {
     const char *actstr;
     actstr = tv_get_string_chk(&argvars[2]);

@@ -2890,7 +2890,7 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
     status = INS_COMPL_CPT_END;
   } else {
     if (ctrl_x_mode_line_or_eval()) {
-      compl_type = -1;
+      // compl_type = -1;
     } else if (*st->e_cpt == 'k' || *st->e_cpt == 's') {
       if (*st->e_cpt == 'k') {
         compl_type = CTRL_X_DICTIONARY;
@@ -2912,8 +2912,6 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
         vim_snprintf(IObuff, IOSIZE, "%s", _("Scanning tags."));
         (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
       }
-    } else {
-      compl_type = -1;
     }
 
     // in any case e_cpt is advanced to the next entry

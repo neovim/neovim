@@ -2375,7 +2375,6 @@ static int path_to_absolute(const char *fname, char *buf, size_t len, int force)
       end_of_path = p + 1;
     } else {
       relative_directory[0] = NUL;
-      end_of_path = (char *)fname;
     }
 
     if (FAIL == path_full_dir_name(relative_directory, buf, len)) {
