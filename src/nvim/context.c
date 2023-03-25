@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "nvim/api/private/converter.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vimscript.h"
 #include "nvim/context.h"
@@ -271,8 +272,10 @@ static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
       size_t cmd_len = sizeof("func! ") + strlen(name);
       char *cmd = xmalloc(cmd_len);
       snprintf(cmd, cmd_len, "func! %s", name);
-      String func_body = nvim_exec(VIML_INTERNAL_CALL, cstr_as_string(cmd),
-                                   true, &err);
+      Dict(exec_opts) opts = { 0 };
+      opts.output = BOOLEAN_OBJ(true);
+      String func_body = exec_impl(VIML_INTERNAL_CALL, cstr_as_string(cmd),
+                                   &opts, &err);
       xfree(cmd);
       if (!ERROR_SET(&err)) {
         ADD(ctx->funcs, STRING_OBJ(func_body));

@@ -162,7 +162,7 @@ local vim9 = (function()
           end
         end
 
-        vim.api.nvim_exec(table.concat(file, '\n'), false)
+        vim.api.nvim_exec2(table.concat(file, '\n'), { output = false })
       end,
     })
   end

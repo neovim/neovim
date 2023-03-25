@@ -101,7 +101,7 @@ describe('Remote', function()
     expect(contents)
     eq(1, #funcs.getbufinfo())
     -- Since we didn't pass silent, we should get a complaint
-    neq(nil, string.find(meths.exec('messages', true), 'E247'))
+    neq(nil, string.find(meths.exec2('messages', { output = true }).output, 'E247'))
   end)
 
   it('creates server if not found with tabs', function()
@@ -110,7 +110,7 @@ describe('Remote', function()
     eq(2, #funcs.gettabinfo())
     eq(2, #funcs.getbufinfo())
     -- We passed silent, so no message should be issued about the server not being found
-    eq(nil, string.find(meths.exec('messages', true), 'E247'))
+    eq(nil, string.find(meths.exec2('messages', { output = true }).output, 'E247'))
   end)
 
   pending('exits with error on', function()

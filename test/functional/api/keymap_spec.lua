@@ -681,13 +681,13 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   end)
 
   it('can set <expr> mappings whose RHS change dynamically', function()
-    meths.exec([[
+    meths.exec2([[
         function! FlipFlop() abort
           if !exists('g:flip') | let g:flip = 0 | endif
           let g:flip = !g:flip
           return g:flip
         endfunction
-        ]], true)
+        ]], { output = false })
     eq(1, meths.call_function('FlipFlop', {}))
     eq(0, meths.call_function('FlipFlop', {}))
     eq(1, meths.call_function('FlipFlop', {}))
@@ -827,8 +827,12 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     exec_lua [[
       vim.api.nvim_set_keymap ('n', 'asdf', '', {callback = function() print('jkl;') end })
     ]]
-    assert.truthy(string.match(exec_lua[[return vim.api.nvim_exec(':nmap asdf', true)]],
-                  "^\nn  asdf          <Lua %d+>"))
+    assert.truthy(
+      string.match(
+        exec_lua[[return vim.api.nvim_exec2(':nmap asdf', { output = true }).output]],
+        "^\nn  asdf          <Lua %d+>"
+      )
+    )
   end)
 
   it ('mapcheck() returns lua mapping correctly', function()

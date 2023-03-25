@@ -232,4 +232,7 @@ return {
   { 'echo_opts', {
     "verbose";
   }};
+  { 'exec_opts', {
+    "output";
+  }};
 }

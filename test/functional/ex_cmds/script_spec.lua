@@ -34,7 +34,7 @@ describe('script_get-based command', function()
             %s %s
           endif
         ]])):format(cmd, garbage)))
-        eq('', meths.exec('messages', true))
+        eq('', meths.exec2('messages', { output = true }).output)
         if check_neq then
           neq(0, exc_exec(dedent([[
             %s %s
@@ -49,7 +49,7 @@ describe('script_get-based command', function()
           EOF
           endif
         ]])):format(cmd, garbage)))
-        eq('', meths.exec('messages', true))
+        eq('', meths.exec2('messages', { output = true }).output)
         if check_neq then
           eq(true, pcall(source, (dedent([[
             let g:exc = 0

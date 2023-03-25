@@ -15,10 +15,11 @@ Deprecated features
 API
 - *nvim_buf_clear_highlight()*	Use |nvim_buf_clear_namespace()| instead.
 - *nvim_buf_set_virtual_text()*	Use |nvim_buf_set_extmark()| instead.
-- *nvim_command_output()*	Use |nvim_exec()| instead.
+- *nvim_command_output()*	Use |nvim_exec2()| instead.
 - *nvim_execute_lua()*		Use |nvim_exec_lua()| instead.
 - *nvim_get_hl_by_name()*	Use |nvim_get_hl()| instead.
 - *nvim_get_hl_by_id()*		Use |nvim_get_hl()| instead.
+- *nvim_exec()*			Use |nvim_exec2()| instead.
 
 COMMANDS
 - *:rv* *:rviminfo*		Deprecated alias to |:rshada| command.

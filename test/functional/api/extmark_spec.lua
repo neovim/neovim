@@ -1413,12 +1413,12 @@ describe('API/extmarks', function()
   end)
 
   it('does not crash with append/delete/undo sequence', function()
-    meths.exec([[
+    meths.exec2([[
       let ns = nvim_create_namespace('myplugin')
       call nvim_buf_set_extmark(0, ns, 0, 0, {})
       call append(0, '')
       %delete
-      undo]],false)
+      undo]], { output = false })
     assert_alive()
   end)
 
@@ -1450,7 +1450,7 @@ describe('API/extmarks', function()
 
     feed('u')
     -- handles pasting
-    meths.exec([[let @a='asdfasdf']], false)
+    meths.exec2([[let @a='asdfasdf']], { output = false })
     feed([["ap]])
     eq({ {1, 0, 0}, {2, 0, 8} },
         meths.buf_get_extmarks(0, ns, 0, -1, {}))

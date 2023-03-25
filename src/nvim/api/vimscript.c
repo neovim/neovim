@@ -45,13 +45,33 @@
 /// @see |nvim_cmd()|
 ///
 /// @param src      Vimscript code
-/// @param output   Capture and return all (non-error, non-shell |:!|) output
+/// @param opts  Optional parameters.
+///           - output: (boolean, default false) Whether to capture and return
+///                     all (non-error, non-shell |:!|) output.
 /// @param[out] err Error details (Vim error), if any
-/// @return Output (non-error, non-shell |:!|) if `output` is true,
-///         else empty string.
-String nvim_exec(uint64_t channel_id, String src, Boolean output, Error *err)
-  FUNC_API_SINCE(7)
+/// @return Dictionary containing information about execution, with these keys:
+///       - output: (string|nil) Output if `opts.output` is true.
+Dictionary nvim_exec2(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *err)
+  FUNC_API_SINCE(11)
 {
+  Dictionary result = ARRAY_DICT_INIT;
+
+  String output = exec_impl(channel_id, src, opts, err);
+  if (ERROR_SET(err)) {
+    return result;
+  }
+
+  if (HAS_KEY(opts->output) && api_object_to_bool(opts->output, "opts.output", false, err)) {
+    PUT(result, "output", STRING_OBJ(output));
+  }
+
+  return result;
+}
+
+String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *err)
+{
+  Boolean output = api_object_to_bool(opts->output, "opts.output", false, err);
+
   const int save_msg_silent = msg_silent;
   garray_T *const save_capture_ga = capture_ga;
   const int save_msg_col = msg_col;
@@ -69,7 +89,7 @@ String nvim_exec(uint64_t channel_id, String src, Boolean output, Error *err)
 
   const sctx_T save_current_sctx = api_set_sctx(channel_id);
 
-  do_source_str(src.data, "nvim_exec()");
+  do_source_str(src.data, "nvim_exec2()");
   if (output) {
     capture_ga = save_capture_ga;
     msg_silent = save_msg_silent;
@@ -108,8 +128,8 @@ theend:
 ///
 /// On execution error: fails with VimL error, updates v:errmsg.
 ///
-/// Prefer using |nvim_cmd()| or |nvim_exec()| over this. To evaluate multiple lines of Vim script
-/// or an Ex command directly, use |nvim_exec()|. To construct an Ex command using a structured
+/// Prefer using |nvim_cmd()| or |nvim_exec2()| over this. To evaluate multiple lines of Vim script
+/// or an Ex command directly, use |nvim_exec2()|. To construct an Ex command using a structured
 /// format and then execute it, use |nvim_cmd()|. To modify an Ex command before evaluating it, use
 /// |nvim_parse_cmd()| in conjunction with |nvim_cmd()|.
 ///

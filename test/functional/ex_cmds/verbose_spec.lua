@@ -24,11 +24,11 @@ vim.opt.number = true
 vim.api.nvim_set_keymap('n', '<leader>key1', ':echo "test"<cr>', {noremap = true})
 vim.keymap.set('n', '<leader>key2', ':echo "test"<cr>')
 
-vim.api.nvim_exec("augroup test_group\
+vim.api.nvim_exec2("augroup test_group\
                      autocmd!\
                      autocmd FileType c setl cindent\
                      augroup END\
-                  ", false)
+                  ", { output = false })
 
 vim.api.nvim_command("command Bdelete :bd")
 vim.api.nvim_create_user_command("TestCommand", ":echo 'Hello'", {})
