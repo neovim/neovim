@@ -525,7 +525,9 @@ static bool cin_is_cpp_namespace(const char *s)
 
   s = cin_skipcomment(s);
 
-  if (strncmp(s, "inline", 6) == 0 && (s[6] == NUL || !vim_iswordc((uint8_t)s[6]))) {
+  // skip over "inline" and "export" in any order
+  while ((strncmp(s, "inline", 6) == 0 || strncmp(s, "export", 6) == 0)
+         && (s[6] == NUL || !vim_iswordc((uint8_t)s[6]))) {
     s = cin_skipcomment(skipwhite(s + 6));
   }
 
