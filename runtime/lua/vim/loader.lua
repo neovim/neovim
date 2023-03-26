@@ -450,12 +450,7 @@ function Loader.lsmod(path)
   if not Loader._indexed[path] then
     local start = uv.hrtime()
     Loader._indexed[path] = {}
-    local handle = vim.loop.fs_scandir(path .. '/lua')
-    while handle do
-      local name, t = vim.loop.fs_scandir_next(handle)
-      if not name then
-        break
-      end
+    for name, t in vim.fs.dir(path .. '/lua') do
       local modpath = path .. '/lua/' .. name
       -- HACK: type is not always returned due to a bug in luv
       t = t or uv.fs_stat(modpath).type

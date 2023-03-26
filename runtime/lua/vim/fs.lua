@@ -77,6 +77,8 @@ local function join_paths(...)
   return (table.concat({ ... }, '/'):gsub('//+', '/'))
 end
 
+---@alias Iterator fun(): string?, string?
+
 --- Return an iterator over the files and directories located in {path}
 ---
 ---@param path (string) An absolute or relative path to the directory to iterate
@@ -100,10 +102,13 @@ function M.dir(path, opts)
   })
 
   if not opts.depth or opts.depth == 1 then
-    return function(fs)
+    local fs = vim.loop.fs_scandir(M.normalize(path))
+    return function()
+      if not fs then
+        return
+      end
       return vim.loop.fs_scandir_next(fs)
-    end,
-      vim.loop.fs_scandir(M.normalize(path))
+    end
   end
 
   --- @async
