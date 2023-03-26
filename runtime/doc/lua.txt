@@ -2025,6 +2025,53 @@ validate({opt})                                               *vim.validate()*
 
 
 ==============================================================================
+Lua module: loader                                                *lua-loader*
+
+disable()                                               *vim.loader.disable()*
+    Disables the experimental Lua module loader:
+    • removes the loaders
+    • adds the default Neovim loader
+
+enable()                                                 *vim.loader.enable()*
+    Enables the experimental Lua module loader:
+    • overrides loadfile
+    • adds the lua loader using the byte-compilation cache
+    • adds the libs loader
+    • removes the default Neovim loader
+
+find({modname}, {opts})                                    *vim.loader.find()*
+    Finds lua modules for the given module name.
+
+    Parameters: ~
+      • {modname}  (string) Module name, or `"*"` to find the top-level
+                   modules instead
+      • {opts}     (table|nil) Options for finding a module:
+                   • rtp: (boolean) Search for modname in the runtime path
+                     (defaults to `true`)
+                   • paths: (string[]) Extra paths to search for modname
+                     (defaults to `{}`)
+                   • patterns: (string[]) List of patterns to use when
+                     searching for modules. A pattern is a string added to the
+                     basename of the Lua module being searched. (defaults to
+                     `{"/init.lua", ".lua"}`)
+                   • all: (boolean) Return all matches instead of just the
+                     first one (defaults to `false`)
+
+    Return: ~
+        (list) A list of results with the following properties:
+        • modpath: (string) the path to the module
+        • modname: (string) the name of the module
+        • stat: (table|nil) the fs_stat of the module path. Won't be returned
+          for `modname="*"`
+
+reset({path})                                             *vim.loader.reset()*
+    Resets the topmods cache for the path, or all the paths if path is nil.
+
+    Parameters: ~
+      • {path}  string? path to reset
+
+
+==============================================================================
 Lua module: uri                                                      *lua-uri*
 
 uri_from_bufnr({bufnr})                                 *vim.uri_from_bufnr()*

@@ -271,6 +271,7 @@ set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
 set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
 set(LUA_EDITOR_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_editor.lua)
 set(LUA_SHARED_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/shared.lua)
+set(LUA_LOADER_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/loader.lua)
 set(LUA_INSPECT_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/inspect.lua)
 set(LUA_F_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/F.lua)
 set(LUA_META_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_meta.lua)
@@ -506,6 +507,7 @@ add_custom_command(
       ${LUA_INSPECT_MODULE_SOURCE} "vim.inspect"
       ${LUA_EDITOR_MODULE_SOURCE} "vim._editor"
       ${LUA_SHARED_MODULE_SOURCE} "vim.shared"
+      ${LUA_LOADER_MODULE_SOURCE} "vim.loader"
       ${LUA_F_MODULE_SOURCE} "vim.F"
       ${LUA_META_MODULE_SOURCE} "vim._meta"
       ${LUA_FILETYPE_MODULE_SOURCE} "vim.filetype"
@@ -515,6 +517,7 @@ add_custom_command(
     ${LUA_INIT_PACKAGES_MODULE_SOURCE}
     ${LUA_EDITOR_MODULE_SOURCE}
     ${LUA_SHARED_MODULE_SOURCE}
+    ${LUA_LOADER_MODULE_SOURCE}
     ${LUA_INSPECT_MODULE_SOURCE}
     ${LUA_F_MODULE_SOURCE}
     ${LUA_META_MODULE_SOURCE}
