@@ -3457,6 +3457,7 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
       }
     } else {
       curwin->w_cursor.col--;
+      curwin->w_valid &= ~(VALID_WCOL|VALID_VIRTCOL);
       // Correct cursor for multi-byte character.
       mb_adjust_cursor();
     }

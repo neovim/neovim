@@ -55,4 +55,68 @@ describe('edit', function()
       =^           |
     ]])
   end)
+
+  -- oldtest: Test_edit_ctrl_r_failed()
+  it('positioning cursor after CTRL-R expression failed', function()
+    local screen = Screen.new(60, 6)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {foreground = Screen.colors.Blue},  -- SpecialKey
+      [2] = {foreground = Screen.colors.SlateBlue},
+      [3] = {bold = true},  -- ModeMsg
+      [4] = {reverse = true, bold = true},  -- MsgSeparator
+      [5] = {background = Screen.colors.Red, foreground = Screen.colors.White},  -- ErrorMsg
+      [6] = {foreground = Screen.colors.SeaGreen, bold = true},  -- MoreMsg
+    })
+    screen:attach()
+
+    feed('i<C-R>')
+    screen:expect([[
+      {1:^"}                                                           |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {3:-- INSERT --}                                                |
+    ]])
+    feed('={}')
+    screen:expect([[
+      {1:"}                                                           |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      ={2:{}}^                                                         |
+    ]])
+    -- trying to insert a dictionary produces an error
+    feed('<CR>')
+    screen:expect([[
+      {1:"}                                                           |
+      {0:~                                                           }|
+      {4:                                                            }|
+      ={2:{}}                                                         |
+      {5:E731: using Dictionary as a String}                          |
+      {6:Press ENTER or type command to continue}^                     |
+    ]])
+
+    feed(':')
+    screen:expect([[
+      :^                                                           |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {3:-- INSERT --}                                                |
+    ]])
+    -- ending Insert mode should put the cursor back on the ':'
+    feed('<Esc>')
+    screen:expect([[
+      ^:                                                           |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+                                                                  |
+    ]])
+  end)
 end)
