@@ -411,6 +411,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   // First get normal size, without 'linebreak' or virtual text
   int size = win_chartabsize(wp, s, vcol);
   if (cts->cts_has_virt_text) {
+    int tab_size = size;
     int charlen = *s == NUL ? 1 : utf_ptr2len(s);
     int col = (int)(s - line);
     while (true) {
@@ -425,6 +426,12 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
           if (decor.virt_text_pos == kVTInline) {
             cts->cts_cur_text_width += decor.virt_text_width;
             size += decor.virt_text_width;
+            if (*s == TAB) {
+              // tab size changes because of the inserted text
+              size -= tab_size;
+              tab_size = win_chartabsize(wp, s, vcol + size);
+              size += tab_size;
+            }
           }
         }
       }
