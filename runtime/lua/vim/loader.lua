@@ -409,19 +409,6 @@ function M.enable()
       break
     end
   end
-
-  -- this will reset the top-mods in case someone adds a new
-  -- top-level lua module to a path already on the rtp
-  vim.api.nvim_create_autocmd('BufWritePost', {
-    group = vim.api.nvim_create_augroup('cache_topmods_reset', { clear = true }),
-    callback = function(event)
-      local bufname = event.match ---@type string
-      local idx = bufname:find('/lua/', 1, true)
-      if idx then
-        M.reset(bufname:sub(1, idx - 1))
-      end
-    end,
-  })
 end
 
 --- Disables the experimental Lua module loader:
@@ -440,7 +427,6 @@ function M.disable()
     end
   end
   table.insert(package.loaders, 2, vim._load_package)
-  vim.api.nvim_del_augroup_by_name('cache_topmods_reset')
 end
 
 --- Return the top-level `/lua/*` modules for this path
