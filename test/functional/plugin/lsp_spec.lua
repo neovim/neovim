@@ -3783,7 +3783,8 @@ describe('LSP', function()
 
         local expected_messages = 2 -- initialize, initialized
 
-        local msg_wait_timeout = require('vim.lsp._watchfiles')._watchfunc == vim._watch.poll and 2500 or 200
+        local watchfunc = require('vim.lsp._watchfiles')._watchfunc
+        local msg_wait_timeout = watchfunc == vim._watch.poll and 2500 or 200
         local function wait_for_messages()
           assert(vim.wait(msg_wait_timeout, function() return #server.messages == expected_messages end), 'Timed out waiting for expected number of messages. Current messages seen so far: ' .. vim.inspect(server.messages))
         end
@@ -3806,6 +3807,10 @@ describe('LSP', function()
             },
           },
         }, { client_id = client_id })
+
+        if watchfunc == vim._watch.poll then
+          vim.wait(100)
+        end
 
         local path = root_dir .. '/watch'
         local file = io.open(path, 'w')

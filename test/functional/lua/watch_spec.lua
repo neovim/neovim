@@ -126,6 +126,8 @@ describe('vim._watch', function()
         expected_events = expected_events + 1
         wait_for_events()
 
+        vim.wait(100)
+
         local watched_path = root_dir .. '/file'
         local watched, err = io.open(watched_path, 'w')
         assert(not err, err)
