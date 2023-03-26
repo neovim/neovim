@@ -5,6 +5,7 @@ if exists("+t_kD")
 endif
 
 source check.vim
+source screendump.vim
 
 " Needed for testing basic rightleft: Test_edit_rightleft
 source view_util.vim
@@ -1976,6 +1977,22 @@ func Test_edit_insert_reg()
   call assert_equal('"', g:Line)
   call test_override('ALL', 0)
   close!
+endfunc
+
+" Test for positioning cursor after CTRL-R expression failed
+func Test_edit_ctrl_r_failed()
+  CheckRunVimInTerminal
+
+  let buf = RunVimInTerminal('', #{rows: 6, cols: 60})
+
+  " trying to insert a dictionary produces an error
+  call term_sendkeys(buf, "i\<C-R>={}\<CR>")
+
+  " ending Insert mode should put the cursor back on the ':'
+  call term_sendkeys(buf, ":\<Esc>")
+  call VerifyScreenDump(buf, 'Test_edit_ctlr_r_failed_1', {})
+
+  call StopVimInTerminal(buf)
 endfunc
 
 " When a character is inserted at the last position of the last line in a

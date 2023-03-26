@@ -1377,6 +1377,7 @@ static int normal_check(VimState *state)
   // update cursor and redraw.
   if (skip_redraw || exmode_active) {
     skip_redraw = false;
+    setcursor();
   } else if (do_redraw || stuff_empty()) {
     // Ensure curwin->w_topline and curwin->w_leftcol are up to date
     // before triggering a WinScrolled autocommand.

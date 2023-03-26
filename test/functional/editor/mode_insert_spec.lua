@@ -53,14 +53,13 @@ describe('insert-mode', function()
     it('double quote is removed after hit-enter prompt #22609', function()
       local screen = Screen.new(60, 6)
       screen:set_default_attr_ids({
-        [0] = {bold = true, foreground = Screen.colors.Blue},
-        [1] = {foreground = Screen.colors.Blue},
+        [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+        [1] = {foreground = Screen.colors.Blue},  -- SpecialKey
         [2] = {foreground = Screen.colors.SlateBlue},
-        [3] = {bold = true},
-        [4] = {reverse = true, bold = true},
-        [5] = {background = Screen.colors.Red, foreground = Screen.colors.Red},
-        [6] = {background = Screen.colors.Red, foreground = Screen.colors.White},
-        [7] = {foreground = Screen.colors.SeaGreen, bold = true},
+        [3] = {bold = true},  -- ModeMsg
+        [4] = {reverse = true, bold = true},  -- MsgSeparator
+        [5] = {background = Screen.colors.Red, foreground = Screen.colors.White},  -- ErrorMsg
+        [6] = {foreground = Screen.colors.SeaGreen, bold = true},  -- MoreMsg
       })
       screen:attach()
       feed('i<C-R>')
@@ -72,14 +71,23 @@ describe('insert-mode', function()
         {0:~                                                           }|
         {3:-- INSERT --}                                                |
       ]])
-      feed('={}<CR>')
+      feed('={}')
+      screen:expect([[
+        {1:"}                                                           |
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        ={2:{}}^                                                         |
+      ]])
+      feed('<CR>')
       screen:expect([[
         {1:"}                                                           |
         {0:~                                                           }|
         {4:                                                            }|
-        ={5:{}{2:}}                                                         |
-        {6:E731: using Dictionary as a String}                          |
-        {7:Press ENTER or type command to continue}^                     |
+        ={2:{}}                                                         |
+        {5:E731: using Dictionary as a String}                          |
+        {6:Press ENTER or type command to continue}^                     |
       ]])
       feed('<CR>')
       screen:expect([[
