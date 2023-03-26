@@ -2165,7 +2165,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           chartabsize_T cts;
 
           init_chartabsize_arg(&cts, wp, lnum, wlv.vcol, line, p);
+          // do not want virtual text to be counted here
+          cts.cts_has_virt_text = false;
           wlv.n_extra = win_lbr_chartabsize(&cts, NULL) - 1;
+          clear_chartabsize_arg(&cts);
 
           // We have just drawn the showbreak value, no need to add
           // space for it again.
@@ -2197,7 +2200,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
               c = ' ';
             }
           }
-          clear_chartabsize_arg(&cts);
         }
 
         in_multispace = c == ' ' && ((ptr > line + 1 && ptr[-2] == ' ') || *ptr == ' ');
