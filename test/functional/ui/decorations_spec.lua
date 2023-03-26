@@ -1581,6 +1581,31 @@ bbbbbbb]])
                                                         |
       ]]}
   end)
+
+  it('has correct cursor position with virtual text on an empty line', function()
+    command('set linebreak')
+    insert('one twoword')
+    feed('0')
+    meths.buf_set_extmark(0, ns, 0, 3,
+            { virt_text = { { ': virtual text', 'Special' } }, virt_text_pos = 'inline' })
+    screen:expect { grid = [[
+      ^one{28:: virtual text} twoword                         |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+  end)
 end)
 
 describe('decorations: virtual lines', function()
