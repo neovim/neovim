@@ -28,7 +28,7 @@ vim.api.nvim_exec2("augroup test_group\
                      autocmd!\
                      autocmd FileType c setl cindent\
                      augroup END\
-                  ", { output = false })
+                  ", {})
 
 vim.api.nvim_command("command Bdelete :bd")
 vim.api.nvim_create_user_command("TestCommand", ":echo 'Hello'", {})

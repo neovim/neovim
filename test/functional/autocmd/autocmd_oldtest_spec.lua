@@ -4,10 +4,7 @@ local clear = helpers.clear
 local eq = helpers.eq
 local meths = helpers.meths
 local funcs = helpers.funcs
-
-local exec = function(str)
-  meths.exec2(str, { output = false })
-end
+local exec = helpers.exec
 
 describe('oldtests', function()
   before_each(clear)

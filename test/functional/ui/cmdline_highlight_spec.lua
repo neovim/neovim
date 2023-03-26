@@ -7,6 +7,7 @@ local clear = helpers.clear
 local meths = helpers.meths
 local funcs = helpers.funcs
 local source = helpers.source
+local exec_capture = helpers.exec_capture
 local dedent = helpers.dedent
 local command = helpers.command
 local curbufmeths = helpers.curbufmeths
@@ -362,7 +363,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       :e^                                      |
     ]])
-    eq('', meths.exec2('messages', { output = true }).output)
+    eq('', exec_capture('messages'))
   end)
   it('silences :echon', function()
     set_color_cb('Echoning')
@@ -377,7 +378,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       :e^                                      |
     ]])
-    eq('', meths.exec2('messages', { output = true }).output)
+    eq('', exec_capture('messages'))
   end)
   it('silences :echomsg', function()
     set_color_cb('Echomsging')
@@ -392,7 +393,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       :e^                                      |
     ]])
-    eq('', meths.exec2('messages', { output = true }).output)
+    eq('', exec_capture('messages'))
   end)
   it('does the right thing when throwing', function()
     set_color_cb('Throwing')
@@ -858,7 +859,7 @@ describe('Ex commands coloring', function()
     ]])
     feed('<CR>')
     eq('Error detected while processing :\nE605: Exception not caught: 42\nE749: empty buffer',
-       meths.exec2('messages', { output = true }).output)
+       exec_capture('messages'))
   end)
   it('errors out when failing to get callback', function()
     meths.set_var('Nvim_color_cmdline', 42)

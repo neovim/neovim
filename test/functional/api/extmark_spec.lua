@@ -11,6 +11,7 @@ local insert = helpers.insert
 local feed = helpers.feed
 local clear = helpers.clear
 local command = helpers.command
+local exec = helpers.exec
 local meths = helpers.meths
 local assert_alive = helpers.assert_alive
 
@@ -1413,12 +1414,12 @@ describe('API/extmarks', function()
   end)
 
   it('does not crash with append/delete/undo sequence', function()
-    meths.exec2([[
+    exec([[
       let ns = nvim_create_namespace('myplugin')
       call nvim_buf_set_extmark(0, ns, 0, 0, {})
       call append(0, '')
       %delete
-      undo]], { output = false })
+      undo]])
     assert_alive()
   end)
 
@@ -1450,7 +1451,7 @@ describe('API/extmarks', function()
 
     feed('u')
     -- handles pasting
-    meths.exec2([[let @a='asdfasdf']], { output = false })
+    exec([[let @a='asdfasdf']])
     feed([["ap]])
     eq({ {1, 0, 0}, {2, 0, 8} },
         meths.buf_get_extmarks(0, ns, 0, -1, {}))

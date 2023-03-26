@@ -826,7 +826,7 @@ function module.skip_fragile(pending_fn, cond)
 end
 
 function module.exec(code)
-  module.meths.exec2(code, { output = false })
+  module.meths.exec2(code, {})
 end
 
 function module.exec_capture(code)
