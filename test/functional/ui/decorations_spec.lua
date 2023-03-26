@@ -1390,6 +1390,92 @@ end]]
                                                         |
       ]]}
   end)
+
+  it('text is drawn correctly when inserting a wrapping virtual text on an empty line', function()
+    feed('o<esc>')
+    insert([[aaaaaaa
+
+bbbbbbb]])
+    meths.buf_set_extmark(0, ns, 0, 0,
+            { virt_text = { { string.rep('X', 51), 'Special' } }, virt_text_pos = 'inline' })
+    meths.buf_set_extmark(0, ns, 2, 0,
+            { virt_text = { { string.rep('X', 50), 'Special' } }, virt_text_pos = 'inline' })
+    feed('gg0')
+    screen:expect { grid = [[
+      {28:^XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {28:X}                                                 |
+      aaaaaaa                                           |
+      {28:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      bbbbbbb                                           |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+
+    feed('j')
+    screen:expect { grid = [[
+      {28:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {28:X}                                                 |
+      ^aaaaaaa                                           |
+      {28:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      bbbbbbb                                           |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+
+    feed('j')
+    screen:expect { grid = [[
+      {28:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {28:X}                                                 |
+      aaaaaaa                                           |
+      {28:^XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      bbbbbbb                                           |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+
+    feed('j')
+    screen:expect { grid = [[
+      {28:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {28:X}                                                 |
+      aaaaaaa                                           |
+      {28:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      ^bbbbbbb                                           |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+  end)
 end)
 
 describe('decorations: virtual lines', function()
