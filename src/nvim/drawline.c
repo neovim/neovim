@@ -978,7 +978,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   bool area_highlighting = false;       // Visual or incsearch highlighting in this line
   int vi_attr = 0;                      // attributes for Visual and incsearch highlighting
   int area_attr = 0;                    // attributes desired by highlighting
+  int saved_area_attr = 0;              // idem for area_attr
   int search_attr = 0;                  // attributes desired by 'hlsearch'
+  int saved_search_attr = 0;            // search_attr to be used when n_extra
+                                        // goes to zero
   int vcol_save_attr = 0;               // saved attr for 'cursorcolumn'
   int syntax_attr = 0;                  // attributes desired by syntax
   bool has_syntax = false;              // this buffer has syntax highl.
@@ -1729,6 +1732,50 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         area_active = false;
       }
 
+      if (has_decor && v >= 0) {
+        bool selected = (area_active || (area_highlighting && noinvcur
+                                         && wlv.vcol == wp->w_virtcol));
+        extmark_attr = decor_redraw_col(wp, (colnr_T)v, wlv.off,
+                                        selected, &decor_state);
+
+        // we could already be inside an existing virt_line with multiple chunks
+        if (!(virt_inline_i < kv_size(virt_inline))) {
+          DecorState *state = &decor_state;
+          for (size_t i = 0; i < kv_size(state->active); i++) {
+            DecorRange *item = &kv_A(state->active, i);
+            if (!(item->start_row == state->row
+                  && kv_size(item->decor.virt_text)
+                  && item->decor.virt_text_pos == kVTInline)) {
+              continue;
+            }
+            if (item->win_col >= -1 && item->start_col <= v) {
+              virt_inline = item->decor.virt_text;
+              virt_inline_i = 0;
+              item->win_col = -2;
+              break;
+            }
+          }
+        }
+
+        if (wlv.n_extra <= 0 && virt_inline_i < kv_size(virt_inline)) {
+          VirtTextChunk vtc = kv_A(virt_inline, virt_inline_i);
+          wlv.p_extra = vtc.text;
+          wlv.n_extra = (int)strlen(wlv.p_extra);
+          wlv.c_extra = NUL;
+          wlv.c_final = NUL;
+          wlv.extra_attr = vtc.hl_id ? syn_id2attr(vtc.hl_id) : 0;
+          n_attr = mb_charlen(vtc.text);
+          // restore search_attr and area_attr when n_extra
+          // is down to zero
+          saved_search_attr = search_attr;
+          saved_area_attr = area_attr;
+          search_attr = 0;
+          area_attr = 0;
+          extmark_attr = 0;
+          virt_inline_i++;
+        }
+      }
+
       if (!wlv.n_extra) {
         // Check for start/end of 'hlsearch' and other matches.
         // After end, check for start/end of next match.
@@ -1792,43 +1839,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           wlv.char_attr = 0;
         }
       }
-
-      if (has_decor && v >= 0) {
-        bool selected = (area_active || (area_highlighting && noinvcur
-                                         && wlv.vcol == wp->w_virtcol));
-        extmark_attr = decor_redraw_col(wp, (colnr_T)v, wlv.off, selected, &decor_state);
-
-        // we could already be inside an existing virt_line with multiple chunks
-        if (!(virt_inline_i < kv_size(virt_inline))) {
-          DecorState *state = &decor_state;
-          for (size_t i = 0; i < kv_size(state->active); i++) {
-            DecorRange *item = &kv_A(state->active, i);
-            if (!(item->start_row == state->row
-                  && kv_size(item->decor.virt_text)
-                  && item->decor.virt_text_pos == kVTInline)) {
-              continue;
-            }
-            if (item->win_col >= -1 && item->start_col <= v) {
-              virt_inline = item->decor.virt_text;
-              virt_inline_i = 0;
-              item->win_col = -2;
-              break;
-            }
-          }
-        }
-
-        if (wlv.n_extra <= 0 && virt_inline_i < kv_size(virt_inline)) {
-          VirtTextChunk vtc = kv_A(virt_inline, virt_inline_i);
-          wlv.p_extra = vtc.text;
-          wlv.n_extra = (int)strlen(wlv.p_extra);
-          wlv.c_extra = NUL;
-          wlv.c_final = NUL;
-          wlv.extra_attr = vtc.hl_id ? syn_id2attr(vtc.hl_id) : 0;
-          n_attr = mb_charlen(vtc.text);
-          extmark_attr = 0;
-          virt_inline_i++;
-        }
-      }
     }
 
     // Get the next character to put on the screen.
@@ -1890,6 +1900,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         wlv.p_extra++;
       }
       wlv.n_extra--;
+      if (wlv.n_extra <= 0) {
+        if (search_attr == 0) {
+          search_attr = saved_search_attr;
+        }
+        if (area_attr == 0 && *ptr != NUL) {
+          area_attr = saved_area_attr;
+        }
+      }
     } else if (foldinfo.fi_lines > 0) {
       // skip writing the buffer line itself
       c = NUL;
