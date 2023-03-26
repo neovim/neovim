@@ -49,19 +49,9 @@ function Loader.track(stat, start)
   Loader._stats[stat].time = Loader._stats[stat].time + uv.hrtime() - start
 end
 
---- slightly faster/different version than vim.fs.normalize
---- we also need to have it here, since the loader will load vim.fs
 ---@private
-function Loader.normalize(path)
-  if path:sub(1, 1) == '~' then
-    local home = vim.loop.os_homedir() or '~'
-    if home:sub(-1) == '\\' or home:sub(-1) == '/' then
-      home = home:sub(1, -2)
-    end
-    path = home .. path:sub(2)
-  end
-  path = path:gsub('\\', '/'):gsub('/+', '/')
-  return path:sub(-1) == '/' and path:sub(1, -2) or path
+local function normalize(path)
+  return vim.fs.normalize(path, { expand_env = false })
 end
 
 --- Gets the rtp excluding after directories.
@@ -80,7 +70,7 @@ function Loader.get_rtp()
   if key ~= Loader._rtp_key then
     Loader._rtp = {}
     for _, path in ipairs(vim.api.nvim_get_runtime_file('', true)) do
-      path = Loader.normalize(path)
+      path = normalize(path)
       -- skip after directories
       if
         path:sub(-6, -1) ~= '/after'
@@ -210,7 +200,7 @@ end
 -- luacheck: ignore 312
 function Loader.loadfile(filename, mode, env, hash)
   local start = uv.hrtime()
-  filename = Loader.normalize(filename)
+  filename = normalize(filename)
   mode = nil -- ignore mode, since we byte-compile the lua source files
   local chunk, err = Loader.load(filename, { mode = mode, env = env, hash = hash })
   Loader.track('loadfile', start)
@@ -383,7 +373,7 @@ end
 ---@param path string? path to reset
 function M.reset(path)
   if path then
-    Loader._indexed[Loader.normalize(path)] = nil
+    Loader._indexed[normalize(path)] = nil
   else
     Loader._indexed = {}
   end

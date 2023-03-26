@@ -321,16 +321,32 @@ end
 --- </pre>
 ---
 ---@param path (string) Path to normalize
+---@param opts table|nil Options:
+---             - expand_env: boolean Expand environment variables (default: true)
 ---@return (string) Normalized path
-function M.normalize(path)
-  vim.validate({ path = { path, 's' } })
-  return (
-    path
-      :gsub('^~$', vim.loop.os_homedir())
-      :gsub('^~/', vim.loop.os_homedir() .. '/')
-      :gsub('%$([%w_]+)', vim.loop.os_getenv)
-      :gsub('\\', '/')
-  )
+function M.normalize(path, opts)
+  opts = opts or {}
+
+  vim.validate({
+    path = { path, { 'string' } },
+    expand_env = { opts.expand_env, { 'boolean' }, true },
+  })
+
+  if path:sub(1, 1) == '~' then
+    local home = vim.loop.os_homedir() or '~'
+    if home:sub(-1) == '\\' or home:sub(-1) == '/' then
+      home = home:sub(1, -2)
+    end
+    path = home .. path:sub(2)
+  end
+
+  if opts.expand_env == nil or opts.expand_env then
+    path = path:gsub('%$([%w_]+)', vim.loop.os_getenv)
+  end
+
+  path = path:gsub('\\', '/'):gsub('/+', '/')
+
+  return path:sub(-1) == '/' and path:sub(1, -2) or path
 end
 
 return M
