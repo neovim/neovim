@@ -9,6 +9,7 @@ local NIL = helpers.NIL
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
 local command = helpers.command
 local exec = helpers.exec
+local exec_capture = helpers.exec_capture
 local eval = helpers.eval
 local expect = helpers.expect
 local funcs = helpers.funcs
@@ -588,7 +589,7 @@ describe('API', function()
 
     it('sets previous directory', function()
       meths.set_current_dir("Xtestdir")
-      meths.exec2('cd -', { output = false })
+      command('cd -')
       eq(funcs.getcwd(), start_dir)
     end)
   end)
@@ -2687,7 +2688,7 @@ describe('API', function()
       eq('  1 %a   "[No Name]"                    line 1\n'..
          '  3  h   "[Scratch]"                    line 0\n'..
          '  4  h   "[Scratch]"                    line 0',
-         meths.exec2('ls', { output = true }).output)
+         exec_capture('ls'))
       -- current buffer didn't change
       eq({id=1}, meths.get_current_buf())
 
@@ -2954,13 +2955,13 @@ describe('API', function()
     it('can save message history', function()
       nvim('command', 'set cmdheight=2') -- suppress Press ENTER
       nvim("echo", {{"msg\nmsg"}, {"msg"}}, true, {})
-      eq("msg\nmsgmsg", meths.exec2('messages', { output = true }).output)
+      eq("msg\nmsgmsg", exec_capture('messages'))
     end)
 
     it('can disable saving message history', function()
       nvim('command', 'set cmdheight=2') -- suppress Press ENTER
       nvim_async("echo", {{"msg\nmsg"}, {"msg"}}, false, {})
-      eq("", meths.exec2("messages", { output = true }).output)
+      eq("", exec_capture('messages'))
     end)
   end)
 
@@ -3949,7 +3950,7 @@ describe('API', function()
 
     it('sets correct script context', function()
       meths.cmd({ cmd = "set", args = { "cursorline" } }, {})
-      local str = meths.exec2([[verbose set cursorline?]], { output = true }).output
+      local str = exec_capture([[verbose set cursorline?]])
       neq(nil, str:find("cursorline\n\tLast set from API client %(channel id %d+%)"))
     end)
 
@@ -3999,7 +4000,7 @@ describe('API', function()
         line6
       ]]
       meths.cmd({ cmd = "del", range = { 2, 4 }, reg = 'a' }, {})
-      meths.exec2("1put a", { output = false })
+      command('1put a')
       expect [[
         line1
         line2
@@ -4064,11 +4065,11 @@ describe('API', function()
                    { output = true }))
     end)
     it('splits arguments correctly', function()
-      meths.exec2([[
+      exec([[
         function! FooFunc(...)
           echo a:000
         endfunction
-      ]], { output = false })
+      ]])
       meths.create_user_command("Foo", "call FooFunc(<f-args>)", { nargs = '+' })
       eq([=[['a quick', 'brown fox', 'jumps over the', 'lazy dog']]=],
          meths.cmd({ cmd = "Foo", args = { "a quick", "brown fox", "jumps over the", "lazy dog"}},

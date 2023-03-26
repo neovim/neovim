@@ -9,6 +9,7 @@ local ok = helpers.ok
 local eq = helpers.eq
 local matches = helpers.matches
 local eval = helpers.eval
+local exec_capture = helpers.exec_capture
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 local funcs = helpers.funcs
@@ -823,7 +824,7 @@ describe('user config init', function()
       clear{ args_rm={'-u'}, env=xenv }
       feed('<cr><c-c>')  -- Dismiss "Conflicting config …" message.
       eq(1, eval('g:lua_rc'))
-      matches('^E5422: Conflicting configs', meths.exec2('messages', { output = true }).output)
+      matches('^E5422: Conflicting configs', exec_capture('messages'))
     end)
   end)
 end)
@@ -872,7 +873,7 @@ describe('runtime:', function()
 
     eq(2, eval('g:lua_plugin'))
     -- Check if plugin_file_path is listed in :scriptname
-    local scripts = meths.exec2(':scriptnames', { output = true }).output
+    local scripts = exec_capture('scriptnames')
     assert(scripts:find(plugin_file_path))
 
     -- Check if plugin_file_path is listed in startup profile

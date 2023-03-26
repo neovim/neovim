@@ -10,6 +10,7 @@ local async_meths = helpers.async_meths
 local test_build_dir = helpers.test_build_dir
 local nvim_prog = helpers.nvim_prog
 local exec = helpers.exec
+local exec_capture = helpers.exec_capture
 local exc_exec = helpers.exc_exec
 local exec_lua = helpers.exec_lua
 local poke_eventloop = helpers.poke_eventloop
@@ -986,7 +987,7 @@ describe('ui/builtin messages', function()
 
     -- screen size doesn't affect internal output #10285
     eq('ErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red',
-       meths.exec2("hi ErrorMsg", { output = true }).output)
+       exec_capture("hi ErrorMsg"))
   end)
 
   it(':syntax list langGroup output', function()
@@ -1025,7 +1026,7 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
                    match /\<endif\s\+".*$/ms=s+5,lc=5  contains=@vimCommentGroup,vimCommentString 
                    match /\<else\s\+".*$/ms=s+4,lc=4  contains=@vimCommentGroup,vimCommentString 
                    links to Comment]],
-       meths.exec2('syntax list vimComment', { output = true }).output)
+       exec_capture('syntax list vimComment'))
     -- luacheck: pop
   end)
 

@@ -3,6 +3,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local eq = helpers.eq
 local neq = helpers.neq
 local command = helpers.command
+local exec_capture = helpers.exec_capture
 local write_file = helpers.write_file
 local meths = helpers.meths
 local clear = helpers.clear
@@ -34,7 +35,7 @@ describe('script_get-based command', function()
             %s %s
           endif
         ]])):format(cmd, garbage)))
-        eq('', meths.exec2('messages', { output = true }).output)
+        eq('', exec_capture('messages'))
         if check_neq then
           neq(0, exc_exec(dedent([[
             %s %s
@@ -49,7 +50,7 @@ describe('script_get-based command', function()
           EOF
           endif
         ]])):format(cmd, garbage)))
-        eq('', meths.exec2('messages', { output = true }).output)
+        eq('', exec_capture('messages'))
         if check_neq then
           eq(true, pcall(source, (dedent([[
             let g:exc = 0
