@@ -1,5 +1,8 @@
 local uv = vim.loop
 
+--- @type (fun(modename: string): fun()|string)[]
+local loaders = package.loaders
+
 local M = {}
 
 ---@alias CacheHash {mtime: {sec:number, nsec:number}, size:number}
@@ -399,13 +402,13 @@ function M.enable()
   vim.fn.mkdir(vim.fn.fnamemodify(M.path, ':p'), 'p')
   _G.loadfile = Loader.loadfile
   -- add lua loader
-  table.insert(package.loaders, 2, Loader.loader)
+  table.insert(loaders, 2, Loader.loader)
   -- add libs loader
-  table.insert(package.loaders, 3, Loader.loader_lib)
+  table.insert(loaders, 3, Loader.loader_lib)
   -- remove Neovim loader
-  for l, loader in ipairs(package.loaders) do
+  for l, loader in ipairs(loaders) do
     if loader == vim._load_package then
-      table.remove(package.loaders, l)
+      table.remove(loaders, l)
       break
     end
   end
@@ -420,13 +423,12 @@ function M.disable()
   end
   M.enabled = false
   _G.loadfile = Loader._loadfile
-  ---@diagnostic disable-next-line: no-unknown
-  for l, loader in ipairs(package.loaders) do
+  for l, loader in ipairs(loaders) do
     if loader == Loader.loader or loader == Loader.loader_lib then
-      table.remove(package.loaders, l)
+      table.remove(loaders, l)
     end
   end
-  table.insert(package.loaders, 2, vim._load_package)
+  table.insert(loaders, 2, vim._load_package)
 end
 
 --- Return the top-level `/lua/*` modules for this path
@@ -466,9 +468,9 @@ end
 --- Debug function that wrapps all loaders and tracks stats
 ---@private
 function M._profile_loaders()
-  for l, loader in pairs(package.loaders) do
+  for l, loader in pairs(loaders) do
     local loc = debug.getinfo(loader, 'Sn').source:sub(2)
-    package.loaders[l] = function(modname)
+    loaders[l] = function(modname)
       local start = vim.loop.hrtime()
       local ret = loader(modname)
       Loader.track('loader ' .. l .. ': ' .. loc, start)
