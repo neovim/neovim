@@ -184,8 +184,43 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
       PUT(dict, "virt_lines_leftcol", BOOLEAN_OBJ(virt_lines_leftcol));
     }
 
-    if (decor->hl_id || kv_size(decor->virt_text) || decor->ui_watched) {
+    if (decor->sign_text) {
+      PUT(dict, "sign_text", STRING_OBJ(cstr_to_string(decor->sign_text)));
+    }
+
+    // uncrustify:off
+
+    struct { const char *name; const int val; } hls[] = {
+      { "sign_hl_group"      , decor->sign_hl_id       },
+      { "number_hl_group"    , decor->number_hl_id     },
+      { "line_hl_group"      , decor->line_hl_id       },
+      { "cursorline_hl_group", decor->cursorline_hl_id },
+      { NULL, 0 },
+    };
+
+    // uncrustify:on
+
+    for (int j = 0; hls[j].name && hls[j].val; j++) {
+      if (hls[j].val) {
+        String name = cstr_to_string((const char *)syn_id2name(hls[j].val));
+        PUT(dict, hls[j].name, STRING_OBJ(name));
+      }
+    }
+
+    if (decor->sign_text
+        || decor->hl_id
+        || kv_size(decor->virt_text)
+        || decor->ui_watched) {
       PUT(dict, "priority", INTEGER_OBJ(decor->priority));
+    }
+
+    if (decor->conceal) {
+      String name = cstr_to_string((char *)&decor->conceal_char);
+      PUT(dict, "conceal", STRING_OBJ(name));
+    }
+
+    if (decor->spell != kNone) {
+      PUT(dict, "spell", BOOLEAN_OBJ(decor->spell == kTrue));
     }
 
     if (dict.size) {
