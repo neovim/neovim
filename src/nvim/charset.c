@@ -1092,7 +1092,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
       // cursor at end
       *cursor = vcol + incr - 1;
     } else {
-      if ((State & MODE_INSERT) == 0 && !on_NUL) {
+      if (((State & MODE_INSERT) == 0 || !cts.cts_has_right_gravity) && !on_NUL) {
         // cursor is after inserted text, unless on the NUL
         vcol += cts.cts_cur_text_width;
       }
