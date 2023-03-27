@@ -325,6 +325,7 @@ void init_chartabsize_arg(chartabsize_T *cts, win_T *wp, linenr_T lnum, colnr_T 
   cts->cts_ptr = ptr;
   cts->cts_cur_text_width = 0;
   cts->cts_has_virt_text = false;
+  cts->cts_has_right_gravity = true;
   cts->cts_row = lnum - 1;
 
   if (cts->cts_row >= 0) {
@@ -425,6 +426,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
           Decoration decor = get_decor(mark);
           if (decor.virt_text_pos == kVTInline) {
             cts->cts_cur_text_width += decor.virt_text_width;
+            cts->cts_has_right_gravity = mt_right(mark);
             size += decor.virt_text_width;
             if (*s == TAB) {
               // tab size changes because of the inserted text

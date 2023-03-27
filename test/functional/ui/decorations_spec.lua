@@ -1652,11 +1652,12 @@ bbbbbbb]])
       ]]}
   end)
 
+    feed('8l')
   it('visual select highlight is correct with virtual text attatched to', function()
     insert('foo foo foo foo')
     feed('0')
     meths.buf_set_extmark(0, ns, 0, 8,
-            { virt_text = { { 'virtual text', 'Special' } }, virt_text_pos = 'inline' })
+      { virt_text = { { 'virtual text', 'Special' } }, virt_text_pos = 'inline' })
     feed('8l')
     screen:expect { grid = [[
       foo foo {28:virtual text}^foo foo                       |
@@ -1694,6 +1695,50 @@ bbbbbbb]])
       {1:~                                                 }|
       {1:~                                                 }|
       {24:-- VISUAL --}                                      |
+      ]]}
+  end)
+
+  it('cursor position is correct when inserting around a virtual text with right gravity set to false', function()
+    insert('foo foo foo foo')
+    meths.buf_set_extmark(0, ns, 0, 8,
+      { virt_text = { { 'virtual text', 'Special' } }, virt_text_pos = 'inline', right_gravity = false })
+    feed('0')
+    feed('8l')
+    screen:expect { grid = [[
+      foo foo {28:virtual text}^foo foo                       |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+
+    feed('i')
+    screen:expect { grid = [[
+      foo foo {28:virtual text}^foo foo                       |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {24:-- INSERT --}                                      |
       ]]}
   end)
 end)
