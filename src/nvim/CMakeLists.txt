@@ -761,7 +761,6 @@ if(WIN32)
     "file(MAKE_DIRECTORY \"${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms\")")
   foreach(DEP_FILE IN ITEMS
       cat.exe
-      diff.exe
       tee.exe
       win32yank.exe
       xxd.exe
