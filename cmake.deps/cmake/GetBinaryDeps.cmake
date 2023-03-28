@@ -10,17 +10,10 @@ function(GetBinaryDep)
     "INSTALL_COMMAND"
     ${ARGN})
 
-  if(NOT _gettool_TARGET OR NOT _gettool_INSTALL_COMMAND)
-    message(FATAL_ERROR "Must pass INSTALL_COMMAND and TARGET")
-  endif()
-
   string(TOUPPER "${_gettool_TARGET}_URL" URL_VARNAME)
   string(TOUPPER "${_gettool_TARGET}_SHA256" HASH_VARNAME)
   set(URL ${${URL_VARNAME}})
   set(HASH ${${HASH_VARNAME}})
-  if(NOT URL OR NOT HASH )
-    message(FATAL_ERROR "${URL_VARNAME} and ${HASH_VARNAME} must be set")
-  endif()
 
   ExternalProject_Add(${_gettool_TARGET}
     URL ${URL}
@@ -32,4 +25,29 @@ function(GetBinaryDep)
     BUILD_COMMAND ""
     INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_BIN_DIR}
     COMMAND "${_gettool_INSTALL_COMMAND}")
+endfunction()
+
+# Download executable and move it to DEPS_BIN_DIR
+function(GetExecutable)
+  cmake_parse_arguments(ARG
+    ""
+    "TARGET"
+    ""
+    ${ARGN})
+
+  string(TOUPPER "${ARG_TARGET}_URL" URL_VARNAME)
+  string(TOUPPER "${ARG_TARGET}_SHA256" HASH_VARNAME)
+  set(URL ${${URL_VARNAME}})
+  set(HASH ${${HASH_VARNAME}})
+
+  ExternalProject_Add(${ARG_TARGET}
+    URL ${URL}
+    URL_HASH SHA256=${HASH}
+    DOWNLOAD_NO_PROGRESS TRUE
+    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}
+    DOWNLOAD_NO_EXTRACT TRUE
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_BIN_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy <DOWNLOADED_FILE> ${DEPS_BIN_DIR})
 endfunction()
