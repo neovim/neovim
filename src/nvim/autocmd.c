@@ -2758,3 +2758,32 @@ void do_autocmd_focusgained(bool gained)
 
   recursive = false;
 }
+
+void do_filetype_autocmd(buf_T *buf, bool force)
+{
+  static bool recursive = false;
+
+  if (recursive && !force) {
+    return;  // disallow recursion
+  }
+
+  char **varp = &buf->b_p_ft;
+  int secure_save = secure;
+
+  // Reset the secure flag, since the value of 'filetype' has
+  // been checked to be safe.
+  secure = 0;
+
+  recursive = true;
+  did_filetype = true;
+  // Only pass true for "force" when it is true or
+  // used recursively, to avoid endless recurrence.
+  apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname, force, buf);
+  recursive = false;
+
+  // Just in case the old "buf" is now invalid
+  if (varp != &(buf->b_p_ft)) {
+    varp = NULL;
+  }
+  secure = secure_save;
+}

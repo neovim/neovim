@@ -1529,34 +1529,6 @@ static void do_syntax_autocmd(buf_T *buf, bool value_changed)
   syn_recursive--;
 }
 
-static void do_filetype_autocmd(buf_T *buf, char **varp, int opt_flags, bool value_changed)
-{
-  // 'filetype' is set, trigger the FileType autocommand
-  // Skip this when called from a modeline and the filetype was
-  // already set to this value.
-  if (!(opt_flags & OPT_MODELINE) || value_changed) {
-    static int ft_recursive = 0;
-    int secure_save = secure;
-
-    // Reset the secure flag, since the value of 'filetype' has
-    // been checked to be safe.
-    secure = 0;
-
-    ft_recursive++;
-    did_filetype = true;
-    // Only pass true for "force" when the value changed or not
-    // used recursively, to avoid endless recurrence.
-    apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname,
-                   value_changed || ft_recursive == 1, buf);
-    ft_recursive--;
-    // Just in case the old "buf" is now invalid
-    if (varp != &(buf->b_p_ft)) {
-      varp = NULL;
-    }
-    secure = secure_save;
-  }
-}
-
 static void do_spelllang_source(win_T *win)
 {
   char fname[200];
@@ -1884,7 +1856,12 @@ static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char
     if (varp == &buf->b_p_syn) {
       do_syntax_autocmd(buf, value_changed);
     } else if (varp == &buf->b_p_ft) {
-      do_filetype_autocmd(buf, varp, opt_flags, value_changed);
+      // 'filetype' is set, trigger the FileType autocommand
+      // Skip this when called from a modeline
+      // Force autocmd when the filetype was changed
+      if (!(opt_flags & OPT_MODELINE) || value_changed) {
+        do_filetype_autocmd(buf, value_changed);
+      }
     } else if (varp == &win->w_s->b_p_spl) {
       do_spelllang_source(win);
     }
