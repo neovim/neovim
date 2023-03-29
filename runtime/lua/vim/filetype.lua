@@ -615,6 +615,7 @@ local extension = {
   asd = 'lisp',
   lt = 'lite',
   lite = 'lite',
+  livemd = 'livebook',
   lgt = 'logtalk',
   lotos = 'lotos',
   lot = 'lotos',
