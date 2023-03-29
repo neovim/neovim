@@ -5605,26 +5605,27 @@ long get_sidescrolloff_value(win_T *wp)
   return wp->w_p_siso < 0 ? p_siso : wp->w_p_siso;
 }
 
-Dictionary get_vimoption(String name, Error *err)
+Dictionary get_vimoption(String name, int scope, buf_T *buf, win_T *win, Error *err)
 {
   int opt_idx = findoption_len((const char *)name.data, name.size);
   VALIDATE_S(opt_idx >= 0, "option (not found)", name.data, {
     return (Dictionary)ARRAY_DICT_INIT;
   });
-  return vimoption2dict(&options[opt_idx]);
+
+  return vimoption2dict(&options[opt_idx], scope, buf, win);
 }
 
 Dictionary get_all_vimoptions(void)
 {
   Dictionary retval = ARRAY_DICT_INIT;
   for (size_t i = 0; options[i].fullname != NULL; i++) {
-    Dictionary opt_dict = vimoption2dict(&options[i]);
+    Dictionary opt_dict = vimoption2dict(&options[i], OPT_GLOBAL, curbuf, curwin);
     PUT(retval, options[i].fullname, DICTIONARY_OBJ(opt_dict));
   }
   return retval;
 }
 
-static Dictionary vimoption2dict(vimoption_T *opt)
+static Dictionary vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, win_T *win)
 {
   Dictionary dict = ARRAY_DICT_INIT;
 
@@ -5649,9 +5650,25 @@ static Dictionary vimoption2dict(vimoption_T *opt)
 
   PUT(dict, "was_set", BOOL(opt->flags & P_WAS_SET));
 
-  PUT(dict, "last_set_sid", INTEGER_OBJ(opt->last_set.script_ctx.sc_sid));
-  PUT(dict, "last_set_linenr", INTEGER_OBJ(opt->last_set.script_ctx.sc_lnum));
-  PUT(dict, "last_set_chan", INTEGER_OBJ((int64_t)opt->last_set.channel_id));
+  LastSet last_set = { .channel_id = 0 };
+  if (req_scope == OPT_GLOBAL) {
+    last_set = opt->last_set;
+  } else {
+    // Scope is either OPT_LOCAL or a fallback mode was requested.
+    if (opt->indir & PV_BUF) {
+      last_set = buf->b_p_script_ctx[opt->indir & PV_MASK];
+    }
+    if (opt->indir & PV_WIN) {
+      last_set = win->w_p_script_ctx[opt->indir & PV_MASK];
+    }
+    if (req_scope != OPT_LOCAL && last_set.script_ctx.sc_sid == 0) {
+      last_set = opt->last_set;
+    }
+  }
+
+  PUT(dict, "last_set_sid", INTEGER_OBJ(last_set.script_ctx.sc_sid));
+  PUT(dict, "last_set_linenr", INTEGER_OBJ(last_set.script_ctx.sc_lnum));
+  PUT(dict, "last_set_chan", INTEGER_OBJ((int64_t)last_set.channel_id));
 
   const char *type;
   Object def;

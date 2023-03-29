@@ -20,6 +20,7 @@ API
 - *nvim_get_hl_by_name()*	Use |nvim_get_hl()| instead.
 - *nvim_get_hl_by_id()*		Use |nvim_get_hl()| instead.
 - *nvim_exec()*			Use |nvim_exec2()| instead.
+- *nvim_get_option_info()*	Use |nvim_get_option_info2()| instead.
 
 COMMANDS
 - *:rv* *:rviminfo*		Deprecated alias to |:rshada| command.

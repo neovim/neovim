@@ -1912,7 +1912,7 @@ nvim_get_all_options_info()                      *nvim_get_all_options_info()*
     Gets the option information for all options.
 
     The dictionary has the full option names as keys and option metadata
-    dictionaries as detailed at |nvim_get_option_info()|.
+    dictionaries as detailed at |nvim_get_option_info2()|.
 
     Return: ~
         dictionary of all options
@@ -1926,8 +1926,8 @@ nvim_get_option({name})                                    *nvim_get_option()*
     Return: ~
         Option value (global)
 
-nvim_get_option_info({name})                          *nvim_get_option_info()*
-    Gets the option information for one option
+nvim_get_option_info2({name}, {*opts})               *nvim_get_option_info2()*
+    Gets the option information for one option from arbitrary buffer or window
 
     Resulting dictionary has keys:
     • name: Name of the option (like 'filetype')
@@ -1943,8 +1943,19 @@ nvim_get_option_info({name})                          *nvim_get_option_info()*
     • commalist: List of comma separated values
     • flaglist: List of single char flags
 
+    When {scope} is not provided, the last set information applies to the
+    local value in the current buffer or window if it is available, otherwise
+    the global value information is returned. This behavior can be disabled by
+    explicitly specifying {scope} in the {opts} table.
+
     Parameters: ~
       • {name}  Option name
+      • {opts}  Optional parameters
+                • scope: One of "global" or "local". Analogous to |:setglobal|
+                  and |:setlocal|, respectively.
+                • win: |window-ID|. Used for getting window local options.
+                • buf: Buffer number. Used for getting buffer local options.
+                  Implies {scope} is "local".
 
     Return: ~
         Option Information

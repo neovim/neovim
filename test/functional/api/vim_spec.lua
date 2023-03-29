@@ -2892,6 +2892,99 @@ describe('API', function()
     end)
   end)
 
+  describe('nvim_get_option_info2', function()
+    local fname
+    local bufs
+    local wins
+
+    before_each(function()
+      fname = tmpname()
+      write_file(fname, [[
+        setglobal dictionary=mydict " 1, global-local (buffer)
+        setlocal  formatprg=myprg   " 2, global-local (buffer)
+        setglobal equalprg=prg1     " 3, global-local (buffer)
+        setlocal  equalprg=prg2     " 4, global-local (buffer)
+        setglobal fillchars=stl:x   " 5, global-local (window)
+        setlocal  listchars=eol:c   " 6, global-local (window)
+        setglobal showbreak=aaa     " 7, global-local (window)
+        setlocal  showbreak=bbb     " 8, global-local (window)
+        setglobal completeopt=menu  " 9, global
+      ]])
+
+      exec_lua 'vim.cmd.vsplit()'
+      meths.create_buf(false, false)
+
+      bufs = meths.list_bufs()
+      wins = meths.list_wins()
+
+      meths.win_set_buf(wins[1].id, bufs[1].id)
+      meths.win_set_buf(wins[2].id, bufs[2].id)
+
+      meths.set_current_win(wins[2].id)
+      meths.exec('source ' .. fname, false)
+
+      meths.set_current_win(wins[1].id)
+    end)
+
+    after_each(function()
+      os.remove(fname)
+    end)
+
+    it('should return option information', function()
+      eq(meths.get_option_info('dictionary'),  meths.get_option_info2('dictionary',  {})) -- buffer
+      eq(meths.get_option_info('fillchars'),   meths.get_option_info2('fillchars',   {})) -- window
+      eq(meths.get_option_info('completeopt'), meths.get_option_info2('completeopt', {})) -- global
+    end)
+
+    describe('last set', function()
+      local tests = {
+        {desc="(buf option, global requested, global set) points to global",   linenr=1, sid=1, args={'dictionary', {scope='global'}}},
+        {desc="(buf option, global requested, local set) is not set",          linenr=0, sid=0, args={'formatprg',  {scope='global'}}},
+        {desc="(buf option, global requested, both set) points to global",     linenr=3, sid=1, args={'equalprg',   {scope='global'}}},
+        {desc="(buf option, local requested, global set) is not set",          linenr=0, sid=0, args={'dictionary', {scope='local'}}},
+        {desc="(buf option, local requested, local set) points to local",      linenr=2, sid=1, args={'formatprg',  {scope='local'}}},
+        {desc="(buf option, local requested, both set) points to local",       linenr=4, sid=1, args={'equalprg',   {scope='local'}}},
+        {desc="(buf option, fallback requested, global set) points to global", linenr=1, sid=1, args={'dictionary', {}}},
+        {desc="(buf option, fallback requested, local set) points to local",   linenr=2, sid=1, args={'formatprg',  {}}},
+        {desc="(buf option, fallback requested, both set) points to local",    linenr=4, sid=1, args={'equalprg',   {}}},
+        {desc="(win option, global requested, global set) points to global",   linenr=5, sid=1, args={'fillchars', {scope='global'}}},
+        {desc="(win option, global requested, local set) is not set",          linenr=0, sid=0, args={'listchars', {scope='global'}}},
+        {desc="(win option, global requested, both set) points to global",     linenr=7, sid=1, args={'showbreak', {scope='global'}}},
+        {desc="(win option, local requested, global set) is not set",          linenr=0, sid=0, args={'fillchars', {scope='local'}}},
+        {desc="(win option, local requested, local set) points to local",      linenr=6, sid=1, args={'listchars', {scope='local'}}},
+        {desc="(win option, local requested, both set) points to local",       linenr=8, sid=1, args={'showbreak', {scope='local'}}},
+        {desc="(win option, fallback requested, global set) points to global", linenr=5, sid=1, args={'fillchars', {}}},
+        {desc="(win option, fallback requested, local set) points to local",   linenr=6, sid=1, args={'listchars', {}}},
+        {desc="(win option, fallback requested, both set) points to local",    linenr=8, sid=1, args={'showbreak', {}}},
+        {desc="(global option, global requested) points to global",            linenr=9, sid=1, args={'completeopt', {scope='global'}}},
+        {desc="(global option, local requested) is not set",                   linenr=0, sid=0, args={'completeopt', {scope='local'}}},
+        {desc="(global option, fallback requested) points to global",          linenr=9, sid=1, args={'completeopt', {}}},
+      }
+
+      for _, t in pairs(tests) do
+        it(t.desc, function()
+          -- Switch to the target buffer/window so that curbuf/curwin are used.
+          meths.set_current_win(wins[2].id)
+          local info = meths.get_option_info2(unpack(t.args))
+          eq(t.linenr, info.last_set_linenr)
+          eq(t.sid, info.last_set_sid)
+        end)
+      end
+
+      it('is provided for cross-buffer requests', function()
+        local info = meths.get_option_info2('formatprg', {buf=bufs[2].id})
+        eq(2, info.last_set_linenr)
+        eq(1, info.last_set_sid)
+      end)
+
+      it('is provided for cross-window requests', function()
+        local info = meths.get_option_info2('listchars', {win=wins[2].id})
+        eq(6, info.last_set_linenr)
+        eq(1, info.last_set_sid)
+      end)
+    end)
+  end)
+
   describe('nvim_echo', function()
     local screen
 
