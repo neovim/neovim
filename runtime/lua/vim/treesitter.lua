@@ -116,7 +116,7 @@ function M.get_parser(bufnr, lang, opts)
     lang = M.language.get_lang(vim.bo[bufnr].filetype) or vim.bo[bufnr].filetype
   end
 
-  if !valid_lang(lang) then
+  if not valid_lang(lang) then
     if not parsers[bufnr] then
       error(
         string.format(
