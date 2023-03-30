@@ -438,21 +438,27 @@ function Loader.track(stat, f)
   end
 end
 
-Loader.get_rtp = Loader.track('get_rtp', Loader.get_rtp)
-Loader.read = Loader.track('read', Loader.read)
-Loader.loader = Loader.track('loader', Loader.loader)
-Loader.loader_lib = Loader.track('loader_lib', Loader.loader_lib)
-Loader.loadfile = Loader.track('loadfile', Loader.loadfile)
-Loader.load = Loader.track('load', Loader.load)
-M.find = Loader.track('find', M.find)
-Loader.lsmod = Loader.track('lsmod', Loader.lsmod)
+---@class ProfileOpts
+---@field loaders? boolean Add profiling to the loaders
 
 --- Debug function that wrapps all loaders and tracks stats
 ---@private
-function M._profile_loaders()
-  for l, loader in pairs(loaders) do
-    local loc = debug.getinfo(loader, 'Sn').source:sub(2)
-    loaders[l] = Loader.track('loader ' .. l .. ': ' .. loc, loader)
+---@param opts ProfileOpts?
+function M._profile(opts)
+  Loader.get_rtp = Loader.track('get_rtp', Loader.get_rtp)
+  Loader.read = Loader.track('read', Loader.read)
+  Loader.loader = Loader.track('loader', Loader.loader)
+  Loader.loader_lib = Loader.track('loader_lib', Loader.loader_lib)
+  Loader.loadfile = Loader.track('loadfile', Loader.loadfile)
+  Loader.load = Loader.track('load', Loader.load)
+  M.find = Loader.track('find', M.find)
+  Loader.lsmod = Loader.track('lsmod', Loader.lsmod)
+
+  if opts and opts.loaders then
+    for l, loader in pairs(loaders) do
+      local loc = debug.getinfo(loader, 'Sn').source:sub(2)
+      loaders[l] = Loader.track('loader ' .. l .. ': ' .. loc, loader)
+    end
   end
 end
 
