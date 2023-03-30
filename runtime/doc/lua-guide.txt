@@ -539,7 +539,7 @@ about the triggered autocommand. The most useful keys are
 
 For example, this allows you to set buffer-local mappings for some filetypes:
 >lua
-    vim.api.nvim.create_autocmd("FileType", {
+    vim.api.nvim_create_autocmd("FileType", {
       pattern = "lua",
       callback = function(args)
         vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = args.buf })
