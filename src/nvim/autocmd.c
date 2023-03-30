@@ -2778,7 +2778,7 @@ void do_filetype_autocmd(buf_T *buf, bool force)
   did_filetype = true;
   // Only pass true for "force" when it is true or
   // used recursively, to avoid endless recurrence.
-  apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname, force, buf);
+  apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname, force || ft_recursive == 1, buf);
   ft_recursive--;
 
   // Just in case the old "buf" is now invalid
