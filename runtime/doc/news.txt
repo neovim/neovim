@@ -226,6 +226,9 @@ The following new APIs or features were added.
 
 • Added |nvim_get_hl()| for getting highlight group definitions in a format compatible with |nvim_set_hl()|.
 
+• |vim.diagnostic| now supports LSP DiagnosticsTag.
+  See: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticTag
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 

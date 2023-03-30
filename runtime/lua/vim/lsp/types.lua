@@ -18,3 +18,20 @@
 ---@class lsp.FileEvent
 ---@field uri string
 ---@field type lsp.FileChangeType
+
+---@class lsp.Position
+---@field line integer
+---@field character integer
+
+---@class lsp.Range
+---@field start lsp.Position
+---@field end lsp.Position
+
+---@class lsp.Diagnostic
+---@field range lsp.Range
+---@field message string
+---@field severity? lsp.DiagnosticSeverity
+---@field code integer | string
+---@field source string
+---@field tags? lsp.DiagnosticTag[]
+---@field relatedInformation DiagnosticRelatedInformation[]
