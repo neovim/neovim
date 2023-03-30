@@ -4,7 +4,7 @@ ExternalProject_Add(libtermkey
   DOWNLOAD_NO_PROGRESS TRUE
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libtermkey
   PATCH_COMMAND ${CMAKE_COMMAND} -E copy
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/libtermkeyCMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/LibtermkeyCMakeLists.txt
     ${DEPS_BUILD_DIR}/src/libtermkey/CMakeLists.txt
   CMAKE_ARGS ${DEPS_CMAKE_ARGS}
     -D CMAKE_SHARED_LIBRARY_LINK_C_FLAGS="" # Hack to avoid -rdynamic in Mingw

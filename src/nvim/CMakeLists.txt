@@ -794,7 +794,7 @@ target_compile_definitions(libnvim PRIVATE MAKE_LIB)
 target_link_libraries(libnvim PRIVATE main_lib PUBLIC libuv)
 
 if(ENABLE_ASAN_UBSAN)
-  message(STATUS "Enabling Clang address sanitizer and undefined behavior sanitizer for nvim.")
+  message(STATUS "Enabling address sanitizer and undefined behavior sanitizer for nvim.")
   if(CI_BUILD)
     # Try to recover from all sanitize issues so we get reports about all failures
     target_compile_options(nvim PRIVATE -fsanitize-recover=all)
@@ -808,7 +808,7 @@ if(ENABLE_ASAN_UBSAN)
     -fsanitize=undefined)
   target_link_libraries(nvim PRIVATE -fsanitize=address -fsanitize=undefined)
 elseif(ENABLE_MSAN)
-  message(STATUS "Enabling Clang memory sanitizer for nvim.")
+  message(STATUS "Enabling memory sanitizer for nvim.")
   target_compile_options(nvim PRIVATE
     -fsanitize=memory
     -fsanitize-memory-track-origins
@@ -816,7 +816,7 @@ elseif(ENABLE_MSAN)
     -fno-optimize-sibling-calls)
   target_link_libraries(nvim PRIVATE -fsanitize=memory -fsanitize-memory-track-origins)
 elseif(ENABLE_TSAN)
-  message(STATUS "Enabling Clang thread sanitizer for nvim.")
+  message(STATUS "Enabling thread sanitizer for nvim.")
   target_compile_options(nvim PRIVATE -fsanitize=thread -fPIE)
   target_link_libraries(nvim PRIVATE -fsanitize=thread)
 endif()
