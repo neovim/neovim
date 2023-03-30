@@ -6,9 +6,25 @@ local M = {}
 ---@type table<string,string>
 local ft_to_lang = {}
 
----@param filetype string
----@return string|nil
+--- Get the filetypes associated with the parser named {lang}.
+--- @param lang string Name of parser
+--- @return string[] filetypes
+function M.get_filetypes(lang)
+  local r = {} ---@type string[]
+  for ft, p in pairs(ft_to_lang) do
+    if p == lang then
+      r[#r + 1] = ft
+    end
+  end
+  return r
+end
+
+--- @param filetype string
+--- @return string|nil
 function M.get_lang(filetype)
+  if filetype == '' then
+    return
+  end
   return ft_to_lang[filetype]
 end
 
@@ -35,16 +51,14 @@ end
 ---@field filetype? string|string[]
 ---@field symbol_name? string
 
---- Asserts that a parser for the language {lang} is installed.
+--- Load parser with name {lang}
 ---
 --- Parsers are searched in the `parser` runtime directory, or the provided {path}
 ---
----@param lang string Language the parser should parse (alphanumerical and `_` only)
+---@param lang string Name of the parser (alphanumerical and `_` only)
 ---@param opts (table|nil) Options:
----                        - filetype (string|string[]) Filetype(s) that lang can be parsed with.
----                          Note this is not strictly the same as lang since a single lang can
----                          parse multiple filetypes.
----                          Defaults to lang.
+---                        - filetype (string|string[]) Default filetype the parser should be associated with.
+---                          Defaults to {lang}.
 ---                        - path (string|nil) Optional path the parser is located at
 ---                        - symbol_name (string|nil) Internal symbol name for the language to load
 function M.add(lang, opts)
@@ -61,7 +75,7 @@ function M.add(lang, opts)
     filetype = { filetype, { 'string', 'table' }, true },
   })
 
-  M.register(lang, filetype or lang)
+  M.register(lang, filetype)
 
   if vim._ts_has_language(lang) then
     return
@@ -83,23 +97,26 @@ function M.add(lang, opts)
   vim._ts_add_language(path, lang, symbol_name)
 end
 
---- Register a lang to be used for a filetype (or list of filetypes).
----@param lang string Language to register
----@param filetype string|string[] Filetype(s) to associate with lang
+--- @private
+--- @param x string|string[]
+--- @return string[]
+local function ensure_list(x)
+  if type(x) == 'table' then
+    return x
+  end
+  return { x }
+end
+
+--- Register a parser named {lang} to be used for {filetype}(s).
+--- @param lang string Name of parser
+--- @param filetype string|string[] Filetype(s) to associate with lang
 function M.register(lang, filetype)
   vim.validate({
     lang = { lang, 'string' },
     filetype = { filetype, { 'string', 'table' } },
   })
 
-  local filetypes ---@type string[]
-  if type(filetype) == 'string' then
-    filetypes = { filetype }
-  else
-    filetypes = filetype
-  end
-
-  for _, f in ipairs(filetypes) do
+  for _, f in ipairs(ensure_list(filetype)) do
     if f ~= '' then
       ft_to_lang[f] = lang
     end

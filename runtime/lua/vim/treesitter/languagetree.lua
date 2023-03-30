@@ -76,7 +76,7 @@ LanguageTree.__index = LanguageTree
 --- "injected" language parsers, which themselves may inject other languages, recursively.
 ---
 ---@param source (integer|string) Buffer or text string to parse
----@param lang string Root language of this tree
+---@param lang string|nil Root language of this tree
 ---@param opts (table|nil) Optional arguments:
 ---             - injections table Map of language to injection query strings. Overrides the
 ---                                built-in runtime file searching for language injections.
@@ -85,11 +85,6 @@ function LanguageTree.new(source, lang, opts)
   language.add(lang)
   ---@type LanguageTreeOpts
   opts = opts or {}
-
-  if opts.queries then
-    a.nvim_err_writeln("'queries' is no longer supported. Use 'injections' now")
-    opts.injections = opts.queries
-  end
 
   local injections = opts.injections or {}
   local self = setmetatable({

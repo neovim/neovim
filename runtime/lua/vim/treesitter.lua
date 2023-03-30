@@ -58,9 +58,6 @@ function M._create_parser(bufnr, lang, opts)
 
   vim.fn.bufload(bufnr)
 
-  local ft = vim.bo[bufnr].filetype
-  M.language.add(lang, { filetype = ft ~= '' and ft or nil })
-
   local self = LanguageTree.new(bufnr, lang, opts)
 
   ---@private
@@ -94,7 +91,12 @@ function M._create_parser(bufnr, lang, opts)
   return self
 end
 
---- Returns the parser for a specific buffer and filetype and attaches it to the buffer
+--- @private
+local function valid_lang(lang)
+  return lang and lang ~= ''
+end
+
+--- Returns the parser for a specific buffer and attaches it to the buffer
 ---
 --- If needed, this will create the parser.
 ---
@@ -110,18 +112,12 @@ function M.get_parser(bufnr, lang, opts)
     bufnr = a.nvim_get_current_buf()
   end
 
-  if lang == nil then
-    local ft = vim.bo[bufnr].filetype
-    if ft ~= '' then
-      lang = M.language.get_lang(ft) or ft
-      -- TODO(lewis6991): we should error here and not default to ft
-      -- if not lang then
-      --   error(string.format('filetype %s of buffer %d is not associated with any lang', ft, bufnr))
-      -- end
-    else
-      if parsers[bufnr] then
-        return parsers[bufnr]
-      end
+  if not valid_lang(lang) then
+    lang = M.language.get_lang(vim.bo[bufnr].filetype) or vim.bo[bufnr].filetype
+  end
+
+  if not valid_lang(lang) then
+    if not parsers[bufnr] then
       error(
         string.format(
           'There is no parser available for buffer %d and one could not be'
@@ -131,9 +127,7 @@ function M.get_parser(bufnr, lang, opts)
         )
       )
     end
-  end
-
-  if parsers[bufnr] == nil or parsers[bufnr]:lang() ~= lang then
+  elseif parsers[bufnr] == nil or parsers[bufnr]:lang() ~= lang then
     parsers[bufnr] = M._create_parser(bufnr, lang, opts)
   end
 
@@ -164,7 +158,6 @@ function M.get_string_parser(str, lang, opts)
     str = { str, 'string' },
     lang = { lang, 'string' },
   })
-  M.language.add(lang)
 
   return LanguageTree.new(str, lang, opts)
 end
