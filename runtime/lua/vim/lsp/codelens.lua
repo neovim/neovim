@@ -3,11 +3,11 @@ local log = require('vim.lsp.log')
 local api = vim.api
 local M = {}
 
---- bufnr → true|nil
---- to throttle refreshes to at most one at a time
-local active_refreshes = {}
+---@class lsp.codelens.bufstate
+---@field version integer
+---@field client_lens table<integer, table<integer, lsp.CodeLens[]>> client_id -> (lnum -> lenses)
 
---- bufnr -> client_id -> lenses
+---@type table<integer, lsp.codelens.bufstate>
 local lens_cache_by_buf = setmetatable({}, {
   __index = function(t, b)
     local key = b > 0 and b or api.nvim_get_current_buf()
@@ -15,22 +15,8 @@ local lens_cache_by_buf = setmetatable({}, {
   end,
 })
 
-local namespaces = setmetatable({}, {
-  __index = function(t, key)
-    local value = api.nvim_create_namespace('vim_lsp_codelens:' .. key)
-    rawset(t, key, value)
-    return value
-  end,
-})
-
----@private
-M.__namespaces = namespaces
-
 ---@private
 local function execute_lens(lens, bufnr, client_id)
-  local line = lens.range.start.line
-  api.nvim_buf_clear_namespace(bufnr, namespaces[client_id], line, line + 1)
-
   local client = vim.lsp.get_client_by_id(client_id)
   assert(client, 'Client is required to execute lens, client_id=' .. client_id)
   local command = lens.command
@@ -61,8 +47,8 @@ end
 
 --- Return all lenses for the given buffer
 ---
----@param bufnr integer  Buffer number. 0 can be used for the current buffer.
----@return table (`CodeLens[]`)
+---@param bufnr integer Buffer number. 0 can be used for the current buffer.
+---@return lsp.CodeLens[] (table)
 function M.get(bufnr)
   local lenses_by_client = lens_cache_by_buf[bufnr or 0]
   if not lenses_by_client then
@@ -70,7 +56,9 @@ function M.get(bufnr)
   end
   local lenses = {}
   for _, client_lenses in pairs(lenses_by_client) do
-    vim.list_extend(lenses, client_lenses)
+    for _, line_lenses in pairs(client_lenses) do
+      vim.list_extend(lenses, line_lenses)
+    end
   end
   return lenses
 end
@@ -78,15 +66,14 @@ end
 --- Run the code lens in the current line
 ---
 function M.run()
-  local line = api.nvim_win_get_cursor(0)[1]
+  local lnum = api.nvim_win_get_cursor(0)[1] - 1
   local bufnr = api.nvim_get_current_buf()
   local options = {}
   local lenses_by_client = lens_cache_by_buf[bufnr] or {}
-  for client, lenses in pairs(lenses_by_client) do
+  for client, lenses_by_lnum in pairs(lenses_by_client) do
+    local lenses = lenses_by_lnum[lnum] or {}
     for _, lens in pairs(lenses) do
-      if lens.range.start.line == (line - 1) then
-        table.insert(options, { client = client, lens = lens })
-      end
+      table.insert(options, { client = client, lens = lens })
     end
   end
   if #options == 0 then
@@ -120,122 +107,117 @@ end
 function M.clear(client_id, bufnr)
   local buffers = bufnr and { resolve_bufnr(bufnr) } or vim.tbl_keys(lens_cache_by_buf)
   for _, iter_bufnr in pairs(buffers) do
-    local client_ids = client_id and { client_id } or vim.tbl_keys(namespaces)
+    local bufstate = lens_cache_by_buf[iter_bufnr]
+    local client_lens = (bufstate or {}).client_lens or {}
+    local client_ids = client_id and { client_id } or vim.tbl_keys(client_lens)
     for _, iter_client_id in pairs(client_ids) do
-      local ns = namespaces[iter_client_id]
-      lens_cache_by_buf[iter_bufnr][iter_client_id] = {}
-      api.nvim_buf_clear_namespace(iter_bufnr, ns, 0, -1)
+      if bufstate then
+        bufstate.client_lens[iter_client_id] = {}
+      end
     end
   end
+  vim.cmd('redraw!')
 end
 
 --- Display the lenses using virtual text
 ---
----@param lenses table of lenses to display (`CodeLens[] | null`)
----@param bufnr integer
----@param client_id integer
-function M.display(lenses, bufnr, client_id)
-  local ns = namespaces[client_id]
-  if not lenses or not next(lenses) then
-    api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
-    return
-  end
-  local lenses_by_lnum = {}
-  for _, lens in pairs(lenses) do
-    local line_lenses = lenses_by_lnum[lens.range.start.line]
-    if not line_lenses then
-      line_lenses = {}
-      lenses_by_lnum[lens.range.start.line] = line_lenses
-    end
-    table.insert(line_lenses, lens)
-  end
-  local num_lines = api.nvim_buf_line_count(bufnr)
-  for i = 0, num_lines do
-    local line_lenses = lenses_by_lnum[i] or {}
-    api.nvim_buf_clear_namespace(bufnr, ns, i, i + 1)
-    local chunks = {}
-    local num_line_lenses = #line_lenses
-    table.sort(line_lenses, function(a, b)
-      return a.range.start.character < b.range.start.character
-    end)
-    for j, lens in ipairs(line_lenses) do
-      local text = lens.command and lens.command.title or 'Unresolved lens ...'
-      table.insert(chunks, { text, 'LspCodeLens' })
-      if j < num_line_lenses then
-        table.insert(chunks, { ' | ', 'LspCodeLensSeparator' })
-      end
-    end
-    if #chunks > 0 then
-      api.nvim_buf_set_extmark(bufnr, ns, i, 0, {
-        virt_text = chunks,
-        hl_mode = 'combine',
-      })
-    end
-  end
+---@deprecated
+function M.display()
+  vim.deprecate('vim.lsp.codelens.display', nil, '0.10.0')
 end
 
 --- Store lenses for a specific buffer and client
+--- Resolves unresolved lenses
 ---
----@param lenses table of lenses to store (`CodeLens[] | null`)
+---@param lenses lsp.CodeLens[]|nil (table) of lenses to store
 ---@param bufnr integer
 ---@param client_id integer
-function M.save(lenses, bufnr, client_id)
-  local lenses_by_client = lens_cache_by_buf[bufnr]
-  if not lenses_by_client then
-    lenses_by_client = {}
-    lens_cache_by_buf[bufnr] = lenses_by_client
-    local ns = namespaces[client_id]
+---@param version integer
+function M.save(lenses, bufnr, client_id, version)
+  if not lenses then
+    return
+  end
+  local bufstate = lens_cache_by_buf[bufnr]
+  if not bufstate then
+    bufstate = {
+      client_lens = vim.defaulttable(),
+      version = version,
+    }
+    lens_cache_by_buf[bufnr] = bufstate
     api.nvim_buf_attach(bufnr, false, {
-      on_detach = function(b)
+      on_detach = function(_, b)
         lens_cache_by_buf[b] = nil
       end,
-      on_lines = function(_, b, _, first_lnum, last_lnum)
-        api.nvim_buf_clear_namespace(b, ns, first_lnum, last_lnum)
+      on_reload = function(_, b)
+        lens_cache_by_buf[b] = nil
       end,
     })
   end
-  lenses_by_client[client_id] = lenses
-end
+  local lenses_by_client = bufstate.client_lens
+  local lenses_by_lnum = lenses_by_client[client_id]
+  local client = vim.lsp.get_client_by_id(client_id)
 
----@private
-local function resolve_lenses(lenses, bufnr, client_id, callback)
-  lenses = lenses or {}
-  local num_lens = vim.tbl_count(lenses)
-  if num_lens == 0 then
-    callback()
+  -- To reduce flicker, preserve old resolved lenses until new ones are resolved.
+
+  local new_lenses_by_lnum = vim.defaulttable()
+  local num_unprocessed = #lenses
+  if num_unprocessed == 0 then
+    lenses_by_client[client_id] = {}
+    bufstate.version = version
     return
   end
 
-  ---@private
-  local function countdown()
-    num_lens = num_lens - 1
-    if num_lens == 0 then
-      callback()
+  for _, lens in ipairs(lenses) do
+    local lnum = lens.range.start.line
+    table.insert(new_lenses_by_lnum[lnum], lens)
+  end
+
+  for lnum, _ in pairs(lenses_by_lnum) do
+    if not next(new_lenses_by_lnum[lnum]) then
+      lenses_by_lnum[lnum] = nil
     end
   end
-  local ns = namespaces[client_id]
-  local client = vim.lsp.get_client_by_id(client_id)
-  for _, lens in pairs(lenses or {}) do
-    if lens.command then
-      countdown()
-    else
-      client.request('codeLens/resolve', lens, function(_, result)
-        if result and result.command then
-          lens.command = result.command
-          -- Eager display to have some sort of incremental feedback
-          -- Once all lenses got resolved there will be a full redraw for all lenses
-          -- So that multiple lens per line are properly displayed
-          api.nvim_buf_set_extmark(
-            bufnr,
-            ns,
-            lens.range.start.line,
-            0,
-            { virt_text = { { lens.command.title, 'LspCodeLens' } }, hl_mode = 'combine' }
-          )
-        end
-        countdown()
-      end, bufnr)
+
+  local countdown = function()
+    num_unprocessed = num_unprocessed - 1
+    if num_unprocessed == 0 then
+      bufstate.version = version
+      vim.cmd('redraw!')
     end
+  end
+
+  local redraw = false
+  for lnum, new_line_lenses in pairs(new_lenses_by_lnum) do
+    local num_unresolved = 0
+    for _, lens in pairs(new_line_lenses) do
+      if not lens.command then
+        num_unresolved = num_unresolved + 1
+      end
+    end
+    local current_line_lenses = lenses_by_lnum[lnum]
+    if not next(current_line_lenses or {}) then
+      lenses_by_lnum[lnum] = new_line_lenses
+      redraw = true
+    end
+    for _, lens in pairs(new_line_lenses) do
+      if lens.command then
+        countdown()
+      else
+        client.request('codeLens/resolve', lens, function(_, result)
+          if result and result.command then
+            lens.command = result.command
+          end
+          num_unresolved = num_unresolved - 1
+          if num_unresolved == 0 and current_line_lenses then
+            lenses_by_lnum[lnum] = new_line_lenses
+          end
+          countdown()
+        end)
+      end
+    end
+  end
+  if redraw then
+    vim.cmd('redraw!')
   end
 end
 
@@ -243,20 +225,10 @@ end
 ---
 function M.on_codelens(err, result, ctx, _)
   if err then
-    active_refreshes[ctx.bufnr] = nil
     local _ = log.error() and log.error('codelens', err)
     return
   end
-
-  M.save(result, ctx.bufnr, ctx.client_id)
-
-  -- Eager display for any resolved (and unresolved) lenses and refresh them
-  -- once resolved.
-  M.display(result, ctx.bufnr, ctx.client_id)
-  resolve_lenses(result, ctx.bufnr, ctx.client_id, function()
-    active_refreshes[ctx.bufnr] = nil
-    M.display(result, ctx.bufnr, ctx.client_id)
-  end)
+  M.save(result, ctx.bufnr, ctx.client_id, ctx.version)
 end
 
 --- Refresh the codelens for the current buffer
@@ -272,12 +244,47 @@ function M.refresh()
   local params = {
     textDocument = util.make_text_document_params(),
   }
-  local bufnr = api.nvim_get_current_buf()
-  if active_refreshes[bufnr] then
-    return
-  end
-  active_refreshes[bufnr] = true
-  vim.lsp.buf_request(0, 'textDocument/codeLens', params, M.on_codelens)
+  vim.lsp.buf_request(0, 'textDocument/codeLens', params)
 end
+
+local namespace = api.nvim_create_namespace('vim_lsp_codelens')
+
+api.nvim_set_decoration_provider(namespace, {
+  on_win = function(_, _, bufnr, topline, botline)
+    local bufstate = lens_cache_by_buf[bufnr]
+    if not bufstate then
+      return
+    end
+
+    if bufstate.version ~= vim.lsp.util.buf_versions[bufnr] then
+      return
+    end
+    local lenses_by_client = bufstate.client_lens
+    api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
+
+    for i = topline, botline do
+      local chunks = {}
+      for _, lenses_by_lnum in pairs(lenses_by_client) do
+        local line_lenses = lenses_by_lnum[i] or {}
+        table.sort(line_lenses, function(a, b)
+          return a.range.start.character < b.range.start.character
+        end)
+        for _, lens in ipairs(line_lenses) do
+          local text = lens.command and lens.command.title or 'Unresolved lens ...'
+          table.insert(chunks, { text, 'LspCodeLens' })
+          table.insert(chunks, { ' | ', 'LspCodeLensSeparator' })
+        end
+      end
+      if #chunks > 0 then
+        table.remove(chunks)
+        api.nvim_buf_set_extmark(bufnr, namespace, i, 0, {
+          ephemeral = false,
+          virt_text = chunks,
+          hl_mode = 'combine',
+        })
+      end
+    end
+  end,
+})
 
 return M

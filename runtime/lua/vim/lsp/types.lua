@@ -18,3 +18,21 @@
 ---@class lsp.FileEvent
 ---@field uri string
 ---@field type lsp.FileChangeType
+
+---@class lsp.Position
+---@field line number
+---@field character number
+
+---@class lsp.Range
+---@field start lsp.Position
+---@field end lsp.Position
+
+---@class lsp.Command
+---@field title string
+---@field command string
+---@field arguments any|nil
+
+---@class lsp.CodeLens
+---@field range lsp.Range
+---@field command lsp.Command|nil
+---@field data any|nil

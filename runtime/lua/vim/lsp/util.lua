@@ -2151,6 +2151,7 @@ end
 
 M._get_line_byte_from_position = get_line_byte_from_position
 
+---@type table<integer, integer> bufnr -> version
 M.buf_versions = {}
 
 return M
