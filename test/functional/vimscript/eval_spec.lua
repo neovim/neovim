@@ -12,7 +12,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local lfs = require('lfs')
+local mkdir = helpers.mkdir
 local clear = helpers.clear
 local eq = helpers.eq
 local exc_exec = helpers.exc_exec
@@ -56,11 +56,11 @@ end)
 describe("backtick expansion", function()
   setup(function()
     clear()
-    lfs.mkdir("test-backticks")
+    mkdir("test-backticks")
     write_file("test-backticks/file1", "test file 1")
     write_file("test-backticks/file2", "test file 2")
     write_file("test-backticks/file3", "test file 3")
-    lfs.mkdir("test-backticks/subdir")
+    mkdir("test-backticks/subdir")
     write_file("test-backticks/subdir/file4", "test file 4")
     -- Long path might cause "Press ENTER" prompt; use :silent to avoid it.
     command('silent cd test-backticks')

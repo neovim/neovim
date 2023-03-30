@@ -1,4 +1,4 @@
-local lfs = require('lfs')
+local luv = require('luv')
 local helpers = require('test.functional.helpers')(after_each)
 
 local assert_log = helpers.assert_log
@@ -142,7 +142,7 @@ describe('fileio', function()
     local backup_file_name = link_file_name .. '~'
 
     write_file('Xtest_startup_file1', initial_content, false)
-    lfs.link('Xtest_startup_file1', link_file_name, true)
+    luv.fs_symlink('Xtest_startup_file1', link_file_name)
     command('set backup')
     command('set backupcopy=yes')
     command('edit ' .. link_file_name)
@@ -166,7 +166,7 @@ describe('fileio', function()
     local backup_file_name = backup_dir .. sep .. link_file_name .. '~'
 
     write_file('Xtest_startup_file1', initial_content, false)
-    lfs.link('Xtest_startup_file1', link_file_name, true)
+    luv.fs_symlink('Xtest_startup_file1', link_file_name)
     mkdir(backup_dir)
     command('set backup')
     command('set backupcopy=yes')

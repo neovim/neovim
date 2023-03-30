@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local lfs = require('lfs')
 local luv = require('luv')
 
 local fmt = string.format
@@ -4153,7 +4152,7 @@ describe('API', function()
           vim.api.nvim_echo({{ opts.fargs[1] }}, false, {})
         end, { nargs = 1 })
       ]])
-      eq(lfs.currentdir(),
+      eq(luv.cwd(),
          meths.cmd({ cmd = "Foo", args = { '%:p:h' }, magic = { file = true } },
                    { output = true }))
     end)

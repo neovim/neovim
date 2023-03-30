@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 
-local lfs = require('lfs')
+local luv = require('luv')
 
 local eq = helpers.eq
 local clear = helpers.clear
@@ -16,6 +16,7 @@ local curtabmeths = helpers.curtabmeths
 local get_pathsep = helpers.get_pathsep
 local rmdir = helpers.rmdir
 local pcall_err = helpers.pcall_err
+local mkdir = helpers.mkdir
 
 local fname = 'Xtest-functional-eval-buf_functions'
 local fname2 = fname .. '.2'
@@ -62,7 +63,7 @@ describe('bufname() function', function()
     eq('', funcs.bufname('X'))
   end)
   before_each(function()
-    lfs.mkdir(dirname)
+    mkdir(dirname)
   end)
   after_each(function()
     rmdir(dirname)
@@ -70,7 +71,7 @@ describe('bufname() function', function()
   it('returns expected buffer name', function()
     eq('', funcs.bufname('%'))  -- Buffer has no name yet
     command('file ' .. fname)
-    local wd = lfs.currentdir()
+    local wd = luv.cwd()
     local sep = get_pathsep()
     local curdirname = funcs.fnamemodify(wd, ':t')
     for _, arg in ipairs({'%', 1, 'X', wd}) do
@@ -103,7 +104,7 @@ describe('bufnr() function', function()
   it('returns expected buffer number', function()
     eq(1, funcs.bufnr('%'))
     command('file ' .. fname)
-    local wd = lfs.currentdir()
+    local wd = luv.cwd()
     local curdirname = funcs.fnamemodify(wd, ':t')
     eq(1, funcs.bufnr(fname))
     eq(1, funcs.bufnr(wd))
@@ -144,7 +145,7 @@ describe('bufwinnr() function', function()
     eq(-1, funcs.bufwinnr('X'))
   end)
   before_each(function()
-    lfs.mkdir(dirname)
+    mkdir(dirname)
   end)
   after_each(function()
     rmdir(dirname)

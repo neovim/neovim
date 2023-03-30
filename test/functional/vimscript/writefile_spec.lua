@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
-local lfs = require('lfs')
+local luv = require('luv')
 
+local mkdir = helpers.mkdir
 local clear = helpers.clear
 local eq = helpers.eq
 local funcs = helpers.funcs
@@ -19,16 +20,16 @@ local ddname_tail = '2'
 local ddname = dname .. '/' .. ddname_tail
 
 before_each(function()
-  lfs.mkdir(dname)
-  lfs.mkdir(ddname)
+  mkdir(dname)
+  mkdir(ddname)
   clear()
 end)
 
 after_each(function()
   os.remove(fname)
   os.remove(dfname)
-  lfs.rmdir(ddname)
-  lfs.rmdir(dname)
+  luv.fs_rmdir(ddname)
+  luv.fs_rmdir(dname)
 end)
 
 describe('writefile()', function()

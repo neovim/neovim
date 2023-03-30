@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
 local lsp_helpers = require('test.functional.plugin.lsp.helpers')
-local lfs = require('lfs')
 
 local assert_log = helpers.assert_log
 local buf_lines = helpers.buf_lines
@@ -24,6 +23,7 @@ local is_ci = helpers.is_ci
 local meths = helpers.meths
 local is_os = helpers.is_os
 local skip = helpers.skip
+local mkdir = helpers.mkdir
 
 local clear_notrace = lsp_helpers.clear_notrace
 local create_server_definition = lsp_helpers.create_server_definition
@@ -3768,7 +3768,7 @@ describe('LSP', function()
     it('sends notifications when files change', function()
       local root_dir = helpers.tmpname()
       os.remove(root_dir)
-      lfs.mkdir(root_dir)
+      mkdir(root_dir)
 
       exec_lua(create_server_definition)
       local result = exec_lua([[

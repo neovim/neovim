@@ -3,7 +3,7 @@ local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 local clear = helpers.clear
 local is_os = helpers.is_os
-local lfs = require('lfs')
+local mkdir = helpers.mkdir
 
 describe('vim._watch', function()
   before_each(function()
@@ -14,7 +14,7 @@ describe('vim._watch', function()
     it('detects file changes', function()
       local root_dir = helpers.tmpname()
       os.remove(root_dir)
-      lfs.mkdir(root_dir)
+      mkdir(root_dir)
 
       local result = exec_lua(
         [[
@@ -102,7 +102,7 @@ describe('vim._watch', function()
     it('detects file changes', function()
       local root_dir = helpers.tmpname()
       os.remove(root_dir)
-      lfs.mkdir(root_dir)
+      mkdir(root_dir)
 
       local result = exec_lua(
         [[

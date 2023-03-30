@@ -1,6 +1,5 @@
 local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
-local lfs = require('lfs')
 local luv = require('luv')
 local eq, eval, expect, exec =
   helpers.eq, helpers.eval, helpers.expect, helpers.exec
@@ -21,6 +20,7 @@ local spawn = helpers.spawn
 local nvim_async = helpers.nvim_async
 local expect_msg_seq = helpers.expect_msg_seq
 local pcall_err = helpers.pcall_err
+local mkdir = helpers.mkdir
 
 describe(':recover', function()
   before_each(clear)
@@ -39,7 +39,7 @@ describe(':recover', function()
 end)
 
 describe("preserve and (R)ecover with custom 'directory'", function()
-  local swapdir = lfs.currentdir()..'/Xtest_recover_dir'
+  local swapdir = luv.cwd()..'/Xtest_recover_dir'
   local testfile = 'Xtest_recover_file1'
   -- Put swapdir at the start of the 'directory' list. #1836
   -- Note: `set swapfile` *must* go after `set directory`: otherwise it may
@@ -54,7 +54,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
     nvim1 = spawn(new_argv())
     set_session(nvim1)
     rmdir(swapdir)
-    lfs.mkdir(swapdir)
+    mkdir(swapdir)
   end)
   after_each(function()
     command('%bwipeout!')
@@ -126,7 +126,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
 end)
 
 describe('swapfile detection', function()
-  local swapdir = lfs.currentdir()..'/Xtest_swapdialog_dir'
+  local swapdir = luv.cwd()..'/Xtest_swapdialog_dir'
   local nvim0
   -- Put swapdir at the start of the 'directory' list. #1836
   -- Note: `set swapfile` *must* go after `set directory`: otherwise it may
@@ -139,7 +139,7 @@ describe('swapfile detection', function()
     nvim0 = spawn(new_argv())
     set_session(nvim0)
     rmdir(swapdir)
-    lfs.mkdir(swapdir)
+    mkdir(swapdir)
   end)
   after_each(function()
     set_session(nvim0)
@@ -361,7 +361,8 @@ describe('swapfile detection', function()
     ]])
 
     -- pretend that the swapfile was created before boot
-    lfs.touch(swname, os.time() - luv.uptime() - 10)
+    local atime = os.time() - luv.uptime() - 10
+    luv.fs_utime(swname, atime, atime)
 
     feed(':edit Xswaptest<CR>')
     screen:expect({any = table.concat({

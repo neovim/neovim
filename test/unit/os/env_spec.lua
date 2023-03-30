@@ -10,8 +10,6 @@ local to_cstr = helpers.to_cstr
 local NULL = helpers.NULL
 local OK = 0
 
-require('lfs')
-
 local cimp = cimport('./src/nvim/os/os.h')
 
 describe('env.c', function()

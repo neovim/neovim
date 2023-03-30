@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
-local lfs = require('lfs')
+local luv = require('luv')
 local clear = helpers.clear
 local nvim_prog = helpers.nvim_prog
 local feed_command = helpers.feed_command
@@ -32,7 +32,8 @@ describe('autoread TUI FocusGained/FocusLost', function()
     ]]
 
     helpers.write_file(path, '')
-    lfs.touch(path, os.time() - 10)
+    local atime = os.time() - 10
+    luv.fs_utime(path, atime, atime)
 
     screen:expect{grid=[[
       {1: }                                                 |

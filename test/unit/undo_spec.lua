@@ -1,6 +1,6 @@
 local helpers = require('test.unit.helpers')(after_each)
 local itp = helpers.gen_itp(it)
-local lfs = require('lfs')
+local luv = require('luv')
 local child_call_once = helpers.child_call_once
 local sleep = helpers.sleep
 
@@ -9,6 +9,7 @@ local cimport = helpers.cimport
 local to_cstr = helpers.to_cstr
 local neq = helpers.neq
 local eq = helpers.eq
+local mkdir = helpers.mkdir
 
 cimport('./src/nvim/ex_cmds_defs.h')
 cimport('./src/nvim/buffer_defs.h')
@@ -44,14 +45,14 @@ end)
 
 describe('u_write_undo', function()
   setup(function()
-    lfs.mkdir('unit-test-directory')
-    lfs.chdir('unit-test-directory')
-    options.p_udir = to_cstr(lfs.currentdir())  -- set p_udir to be the test dir
+    mkdir('unit-test-directory')
+    luv.chdir('unit-test-directory')
+    options.p_udir = to_cstr(luv.cwd())  -- set p_udir to be the test dir
   end)
 
   teardown(function()
-    lfs.chdir('..')
-    local success, err = lfs.rmdir('unit-test-directory')
+    luv.chdir('..')
+    local success, err = luv.fs_rmdir('unit-test-directory')
     if not success then
       print(err)  -- inform tester if directory fails to delete
     end
@@ -102,7 +103,7 @@ describe('u_write_undo', function()
     local test_permission_file = io.open(test_file_name, "w")
     test_permission_file:write("testing permissions")
     test_permission_file:close()
-    local test_permissions = lfs.attributes(test_file_name).permissions
+    local test_permissions = luv.fs_stat(test_file_name).mode
 
     -- Create vim buffer
     local c_file = to_cstr(test_file_name)
@@ -115,7 +116,7 @@ describe('u_write_undo', function()
     local undo_file_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, false))
 
     -- Find out the permissions of the new file
-    local permissions = lfs.attributes(undo_file_name).permissions
+    local permissions = luv.fs_stat(undo_file_name).mode
     eq(test_permissions, permissions)
 
     -- delete the file now that we're done with it.
@@ -130,7 +131,7 @@ describe('u_write_undo', function()
   end)
 
   itp('writes an undofile only readable by the user if the buffer is unnamed', function()
-    local correct_permissions = "rw-------"
+    local correct_permissions = 33152
     local undo_file_name = "test.undo"
 
     -- Create vim buffer
@@ -140,7 +141,7 @@ describe('u_write_undo', function()
     u_write_undo(undo_file_name, false, file_buffer, buffer_hash)
 
     -- Find out the permissions of the new file
-    local permissions = lfs.attributes(undo_file_name).permissions
+    local permissions = luv.fs_stat(undo_file_name).mode
     eq(correct_permissions, permissions)
 
     -- delete the file now that we're done with it.
@@ -172,13 +173,13 @@ describe('u_write_undo', function()
     u_write_undo(nil, false, file_buffer, buffer_hash)
     local correct_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, false))
 
-    local file_last_modified = lfs.attributes(correct_name).modification
+    local file_last_modified = luv.fs_stat(correct_name).mtime.sec
 
     sleep(1000)  -- Ensure difference in timestamps.
     file_buffer.b_u_numhead = 1  -- Mark it as if there are changes
     u_write_undo(nil, false, file_buffer, buffer_hash)
 
-    local file_last_modified_2 = lfs.attributes(correct_name).modification
+    local file_last_modified_2 = luv.fs_stat(correct_name).mtime.sec
 
     -- print(file_last_modified, file_last_modified_2)
     neq(file_last_modified, file_last_modified_2)

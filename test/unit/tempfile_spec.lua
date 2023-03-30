@@ -1,4 +1,3 @@
-local lfs = require('lfs')
 local helpers = require('test.unit.helpers')(after_each)
 local itp = helpers.gen_itp(it)
 
@@ -30,7 +29,7 @@ describe('tempfile related functions', function()
       -- os_file_is_writable returns 2 for a directory which we have rights
       -- to write into.
       eq(lib.os_file_is_writable(helpers.to_cstr(dir)), 2)
-      for entry in lfs.dir(dir) do
+      for entry in vim.fs.dir(dir) do
         assert.True(entry == '.' or entry == '..')
       end
     end)

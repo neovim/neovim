@@ -1,5 +1,4 @@
 local helpers = require('test.functional.helpers')(after_each)
-local lfs = require('lfs')
 
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
@@ -11,6 +10,7 @@ local test_build_dir = helpers.test_build_dir
 local test_source_path = helpers.test_source_path
 local nvim_prog = helpers.nvim_prog
 local is_os = helpers.is_os
+local mkdir = helpers.mkdir
 
 local nvim_prog_basename = is_os('win') and 'nvim.exe' or 'nvim'
 
@@ -133,10 +133,10 @@ describe('vim.fs', function()
 
   describe('dir()', function()
     before_each(function()
-      lfs.mkdir('testd')
-      lfs.mkdir('testd/a')
-      lfs.mkdir('testd/a/b')
-      lfs.mkdir('testd/a/b/c')
+      mkdir('testd')
+      mkdir('testd/a')
+      mkdir('testd/a/b')
+      mkdir('testd/a/b/c')
     end)
 
     after_each(function()
