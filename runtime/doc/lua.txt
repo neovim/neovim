@@ -2502,7 +2502,7 @@ find({names}, {opts})                                          *vim.fs.find()*
         (table) Normalized paths |vim.fs.normalize()| of all matching files or
         directories
 
-normalize({path})                                         *vim.fs.normalize()*
+normalize({path}, {opts})                                 *vim.fs.normalize()*
     Normalize a path to a standard format. A tilde (~) character at the
     beginning of the path is expanded to the user's home directory and any
     backslash (\) characters are converted to forward slashes (/). Environment
@@ -2522,6 +2522,9 @@ normalize({path})                                         *vim.fs.normalize()*
 
     Parameters: ~
       • {path}  (string) Path to normalize
+      • {opts}  (table|nil) Options:
+                • expand_env: boolean Expand environment variables (default:
+                  true)
 
     Return: ~
         (string) Normalized path

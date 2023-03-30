@@ -1,5 +1,8 @@
 local uv = vim.loop
 
+--- @type (fun(modename: string): fun()|string)[]
+local loaders = package.loaders
+
 local M = {}
 
 ---@alias CacheHash {mtime: {sec:number, nsec:number}, size:number}
@@ -38,27 +41,9 @@ local Loader = {
   },
 }
 
---- Tracks the time spent in a function
 ---@private
-function Loader.track(stat, start)
-  Loader._stats[stat] = Loader._stats[stat] or { total = 0, time = 0 }
-  Loader._stats[stat].total = Loader._stats[stat].total + 1
-  Loader._stats[stat].time = Loader._stats[stat].time + uv.hrtime() - start
-end
-
---- slightly faster/different version than vim.fs.normalize
---- we also need to have it here, since the loader will load vim.fs
----@private
-function Loader.normalize(path)
-  if path:sub(1, 1) == '~' then
-    local home = vim.loop.os_homedir() or '~'
-    if home:sub(-1) == '\\' or home:sub(-1) == '/' then
-      home = home:sub(1, -2)
-    end
-    path = home .. path:sub(2)
-  end
-  path = path:gsub('\\', '/'):gsub('/+', '/')
-  return path:sub(-1) == '/' and path:sub(1, -2) or path
+local function normalize(path)
+  return vim.fs.normalize(path, { expand_env = false })
 end
 
 --- Gets the rtp excluding after directories.
@@ -67,9 +52,7 @@ end
 --- @return string[] rtp, boolean updated
 ---@private
 function Loader.get_rtp()
-  local start = uv.hrtime()
   if vim.in_fast_event() then
-    Loader.track('get_rtp', start)
     return (Loader._rtp or {}), false
   end
   local updated = false
@@ -77,7 +60,7 @@ function Loader.get_rtp()
   if key ~= Loader._rtp_key then
     Loader._rtp = {}
     for _, path in ipairs(vim.api.nvim_get_runtime_file('', true)) do
-      path = Loader.normalize(path)
+      path = normalize(path)
       -- skip after directories
       if
         path:sub(-6, -1) ~= '/after'
@@ -89,7 +72,6 @@ function Loader.get_rtp()
     updated = true
     Loader._rtp_key = key
   end
-  Loader.track('get_rtp', start)
   return Loader._rtp, updated
 end
 
@@ -125,7 +107,6 @@ end
 ---@return CacheEntry?
 ---@private
 function Loader.read(name)
-  local start = uv.hrtime()
   local cname = Loader.cache_file(name)
   local f = uv.fs_open(cname, 'r', 438)
   if f then
@@ -143,7 +124,6 @@ function Loader.read(name)
     if tonumber(header[1]) ~= Loader.VERSION then
       return
     end
-    Loader.track('read', start)
     return {
       hash = {
         size = tonumber(header[2]),
@@ -152,7 +132,6 @@ function Loader.read(name)
       chunk = data:sub(zero + 1),
     }
   end
-  Loader.track('read', start)
 end
 
 --- The `package.loaders` loader for lua files using the cache.
@@ -160,14 +139,11 @@ end
 ---@return string|function
 ---@private
 function Loader.loader(modname)
-  local start = uv.hrtime()
   local ret = M.find(modname)[1]
   if ret then
     local chunk, err = Loader.load(ret.modpath, { hash = ret.stat })
-    Loader.track('loader', start)
     return chunk or error(err)
   end
-  Loader.track('loader', start)
   return '\ncache_loader: module ' .. modname .. ' not found'
 end
 
@@ -176,7 +152,6 @@ end
 ---@return string|function
 ---@private
 function Loader.loader_lib(modname)
-  local start = uv.hrtime()
   local sysname = uv.os_uname().sysname:lower() or ''
   local is_win = sysname:find('win', 1, true) and not sysname:find('darwin', 1, true)
   local ret = M.find(modname, { patterns = is_win and { '.dll' } or { '.so' } })[1]
@@ -190,10 +165,8 @@ function Loader.loader_lib(modname)
     local dash = modname:find('-', 1, true)
     local funcname = dash and modname:sub(dash + 1) or modname
     local chunk, err = package.loadlib(ret.modpath, 'luaopen_' .. funcname:gsub('%.', '_'))
-    Loader.track('loader_lib', start)
     return chunk or error(err)
   end
-  Loader.track('loader_lib', start)
   return '\ncache_loader_lib: module ' .. modname .. ' not found'
 end
 
@@ -206,12 +179,9 @@ end
 ---@private
 -- luacheck: ignore 312
 function Loader.loadfile(filename, mode, env, hash)
-  local start = uv.hrtime()
-  filename = Loader.normalize(filename)
-  mode = nil -- ignore mode, since we byte-compile the lua source files
-  local chunk, err = Loader.load(filename, { mode = mode, env = env, hash = hash })
-  Loader.track('loadfile', start)
-  return chunk, err
+  -- ignore mode, since we byte-compile the lua source files
+  mode = nil
+  return Loader.load(normalize(filename), { mode = mode, env = env, hash = hash })
 end
 
 --- Checks whether two cache hashes are the same based on:
@@ -239,8 +209,6 @@ end
 ---@return function?, string? error_message
 ---@private
 function Loader.load(modpath, opts)
-  local start = uv.hrtime()
-
   opts = opts or {}
   local hash = opts.hash or uv.fs_stat(modpath)
   ---@type function?, string?
@@ -248,9 +216,7 @@ function Loader.load(modpath, opts)
 
   if not hash then
     -- trigger correct error
-    chunk, err = Loader._loadfile(modpath, opts.mode, opts.env)
-    Loader.track('load', start)
-    return chunk, err
+    return Loader._loadfile(modpath, opts.mode, opts.env)
   end
 
   local entry = Loader.read(modpath)
@@ -258,7 +224,6 @@ function Loader.load(modpath, opts)
     -- found in cache and up to date
     chunk, err = load(entry.chunk --[[@as string]], '@' .. modpath, opts.mode, opts.env)
     if not (err and err:find('cannot load incompatible bytecode', 1, true)) then
-      Loader.track('load', start)
       return chunk, err
     end
   end
@@ -269,7 +234,6 @@ function Loader.load(modpath, opts)
     entry.chunk = string.dump(chunk)
     Loader.write(modpath, entry)
   end
-  Loader.track('load', start)
   return chunk, err
 end
 
@@ -287,7 +251,6 @@ end
 ---    - modname: (string) the name of the module
 ---    - stat: (table|nil) the fs_stat of the module path. Won't be returned for `modname="*"`
 function M.find(modname, opts)
-  local start = uv.hrtime()
   opts = opts or {}
 
   modname = modname:gsub('/', '.')
@@ -366,7 +329,6 @@ function M.find(modname, opts)
     _find(opts.paths)
   end
 
-  Loader.track('find', start)
   if #results == 0 then
     -- module not found
     Loader._stats.find.not_found = Loader._stats.find.not_found + 1
@@ -380,7 +342,7 @@ end
 ---@param path string? path to reset
 function M.reset(path)
   if path then
-    Loader._indexed[Loader.normalize(path)] = nil
+    Loader._indexed[normalize(path)] = nil
   else
     Loader._indexed = {}
   end
@@ -399,29 +361,16 @@ function M.enable()
   vim.fn.mkdir(vim.fn.fnamemodify(M.path, ':p'), 'p')
   _G.loadfile = Loader.loadfile
   -- add lua loader
-  table.insert(package.loaders, 2, Loader.loader)
+  table.insert(loaders, 2, Loader.loader)
   -- add libs loader
-  table.insert(package.loaders, 3, Loader.loader_lib)
+  table.insert(loaders, 3, Loader.loader_lib)
   -- remove Neovim loader
-  for l, loader in ipairs(package.loaders) do
+  for l, loader in ipairs(loaders) do
     if loader == vim._load_package then
-      table.remove(package.loaders, l)
+      table.remove(loaders, l)
       break
     end
   end
-
-  -- this will reset the top-mods in case someone adds a new
-  -- top-level lua module to a path already on the rtp
-  vim.api.nvim_create_autocmd('BufWritePost', {
-    group = vim.api.nvim_create_augroup('cache_topmods_reset', { clear = true }),
-    callback = function(event)
-      local bufname = event.match ---@type string
-      local idx = bufname:find('/lua/', 1, true)
-      if idx then
-        M.reset(bufname:sub(1, idx - 1))
-      end
-    end,
-  })
 end
 
 --- Disables the experimental Lua module loader:
@@ -433,14 +382,12 @@ function M.disable()
   end
   M.enabled = false
   _G.loadfile = Loader._loadfile
-  ---@diagnostic disable-next-line: no-unknown
-  for l, loader in ipairs(package.loaders) do
+  for l, loader in ipairs(loaders) do
     if loader == Loader.loader or loader == Loader.loader_lib then
-      table.remove(package.loaders, l)
+      table.remove(loaders, l)
     end
   end
-  table.insert(package.loaders, 2, vim._load_package)
-  vim.api.nvim_del_augroup_by_name('cache_topmods_reset')
+  table.insert(loaders, 2, vim._load_package)
 end
 
 --- Return the top-level `/lua/*` modules for this path
@@ -448,14 +395,8 @@ end
 ---@private
 function Loader.lsmod(path)
   if not Loader._indexed[path] then
-    local start = uv.hrtime()
     Loader._indexed[path] = {}
-    local handle = vim.loop.fs_scandir(path .. '/lua')
-    while handle do
-      local name, t = vim.loop.fs_scandir_next(handle)
-      if not name then
-        break
-      end
+    for name, t in vim.fs.dir(path .. '/lua') do
       local modpath = path .. '/lua/' .. name
       -- HACK: type is not always returned due to a bug in luv
       t = t or uv.fs_stat(modpath).type
@@ -477,23 +418,41 @@ function Loader.lsmod(path)
         end
       end
     end
-    Loader.track('lsmod', start)
   end
   return Loader._indexed[path]
 end
 
+--- Tracks the time spent in a function
+--- @generic F: function
+--- @param f F
+--- @return F
+--- @private
+function Loader.track(stat, f)
+  return function(...)
+    local start = vim.loop.hrtime()
+    local r = { f(...) }
+    Loader._stats[stat] = Loader._stats[stat] or { total = 0, time = 0 }
+    Loader._stats[stat].total = Loader._stats[stat].total + 1
+    Loader._stats[stat].time = Loader._stats[stat].time + uv.hrtime() - start
+    return unpack(r, 1, table.maxn(r))
+  end
+end
+
+Loader.get_rtp = Loader.track('get_rtp', Loader.get_rtp)
+Loader.read = Loader.track('read', Loader.read)
+Loader.loader = Loader.track('loader', Loader.loader)
+Loader.loader_lib = Loader.track('loader_lib', Loader.loader_lib)
+Loader.loadfile = Loader.track('loadfile', Loader.loadfile)
+Loader.load = Loader.track('load', Loader.load)
+M.find = Loader.track('find', M.find)
+Loader.lsmod = Loader.track('lsmod', Loader.lsmod)
+
 --- Debug function that wrapps all loaders and tracks stats
 ---@private
 function M._profile_loaders()
-  for l, loader in pairs(package.loaders) do
+  for l, loader in pairs(loaders) do
     local loc = debug.getinfo(loader, 'Sn').source:sub(2)
-    package.loaders[l] = function(modname)
-      local start = vim.loop.hrtime()
-      local ret = loader(modname)
-      Loader.track('loader ' .. l .. ': ' .. loc, start)
-      Loader.track('loader_all', start)
-      return ret
-    end
+    loaders[l] = Loader.track('loader ' .. l .. ': ' .. loc, loader)
   end
 end
 
