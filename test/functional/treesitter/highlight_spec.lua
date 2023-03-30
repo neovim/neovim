@@ -413,7 +413,7 @@ describe('treesitter highlighting', function()
   it("supports injected languages", function()
     insert([[
     int x = INT_MAX;
-    #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+    #define READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
     #define foo void main() { \
                   return 42;  \
                 }
@@ -421,7 +421,7 @@ describe('treesitter highlighting', function()
 
     screen:expect{grid=[[
       int x = INT_MAX;                                                 |
-      #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))|
+      #define READ_STRING(x, y) (char *)read_string((x), (size_t)(y))  |
       #define foo void main() { \                                      |
                     return 42;  \                                      |
                   }                                                    |
@@ -450,7 +450,7 @@ describe('treesitter highlighting', function()
 
     screen:expect{grid=[[
       {3:int} x = {5:INT_MAX};                                                 |
-      #define {5:READ_STRING}(x, y) ({3:char_u} *)read_string((x), ({3:size_t})(y))|
+      #define {5:READ_STRING}(x, y) ({3:char} *)read_string((x), ({3:size_t})(y))  |
       #define foo {3:void} main() { \                                      |
                     {4:return} {5:42};  \                                      |
                   }                                                    |
@@ -473,7 +473,7 @@ describe('treesitter highlighting', function()
   it("supports overriding queries, like ", function()
     insert([[
     int x = INT_MAX;
-    #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+    #define READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
     #define foo void main() { \
                   return 42;  \
                 }
@@ -489,7 +489,7 @@ describe('treesitter highlighting', function()
 
     screen:expect{grid=[[
       {3:int} x = {5:INT_MAX};                                                 |
-      #define {5:READ_STRING}(x, y) ({3:char_u} *)read_string((x), ({3:size_t})(y))|
+      #define {5:READ_STRING}(x, y) ({3:char} *)read_string((x), ({3:size_t})(y))  |
       #define foo {3:void} main() { \                                      |
                     {4:return} {5:42};  \                                      |
                   }                                                    |
@@ -567,7 +567,7 @@ describe('treesitter highlighting', function()
   it("supports highlighting with priority", function()
     insert([[
     int x = INT_MAX;
-    #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+    #define READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
     #define foo void main() { \
                   return 42;  \
                 }
@@ -580,7 +580,7 @@ describe('treesitter highlighting', function()
     -- expect everything to have Constant highlight
     screen:expect{grid=[[
       {12:int}{8: x = INT_MAX;}                                                 |
-      {8:#define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))}|
+      {8:#define READ_STRING(x, y) (char *)read_string((x), (size_t)(y))}  |
       {8:#define foo void main() { \}                                      |
       {8:              return 42;  \}                                      |
       {8:            }}                                                    |

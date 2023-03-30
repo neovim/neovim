@@ -37,7 +37,7 @@ child_call_once(function()
   -- requires refactor of UNDO_HASH_SIZE into constant/enum for ffi
   --
   -- compute a hash for this undofile
-  buffer_hash = ffi.new('char_u[32]')
+  buffer_hash = ffi.new('char[32]')
   undo.u_compute_hash(file_buffer, buffer_hash)
 end)
 

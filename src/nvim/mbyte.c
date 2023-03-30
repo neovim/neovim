@@ -653,32 +653,32 @@ int utf_ptr2char(const char *const p_in)
 //
 // If byte sequence is illegal or incomplete, returns -1 and does not advance
 // "s".
-static int utf_safe_read_char_adv(const char_u **s, size_t *n)
+static int utf_safe_read_char_adv(const char **s, size_t *n)
 {
   if (*n == 0) {  // end of buffer
     return 0;
   }
 
-  uint8_t k = utf8len_tab_zero[**s];
+  uint8_t k = utf8len_tab_zero[(uint8_t)(**s)];
 
   if (k == 1) {
     // ASCII character or NUL
     (*n)--;
-    return *(*s)++;
+    return (uint8_t)(*(*s)++);
   }
 
   if (k <= *n) {
     // We have a multibyte sequence and it isn't truncated by buffer
     // limits so utf_ptr2char() is safe to use. Or the first byte is
     // illegal (k=0), and it's also safe to use utf_ptr2char().
-    int c = utf_ptr2char((char *)(*s));
+    int c = utf_ptr2char(*s);
 
     // On failure, utf_ptr2char() returns the first byte, so here we
     // check equality with the first byte. The only non-ASCII character
     // which equals the first byte of its own UTF-8 representation is
     // U+00C3 (UTF-8: 0xC3 0x83), so need to check that special case too.
     // It's safe even if n=1, else we would have k=2 > n.
-    if (c != (int)(**s) || (c == 0xC3 && (*s)[1] == 0x83)) {
+    if (c != (int)((uint8_t)(**s)) || (c == 0xC3 && (uint8_t)(*s)[1] == 0x83)) {
       // byte sequence was successfully decoded
       *s += k;
       *n -= k;
@@ -1271,7 +1271,7 @@ bool mb_isalpha(int a)
   return mb_islower(a) || mb_isupper(a);
 }
 
-static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1, size_t n2)
+static int utf_strnicmp(const char *s1, const char *s2, size_t n1, size_t n2)
 {
   int c1, c2, cdiff;
   char buffer[6];
@@ -1313,14 +1313,14 @@ static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1, size_t n2
 
   if (c1 != -1 && c2 == -1) {
     n1 = (size_t)utf_char2bytes(utf_fold(c1), (char *)buffer);
-    s1 = (char_u *)buffer;
+    s1 = buffer;
   } else if (c2 != -1 && c1 == -1) {
     n2 = (size_t)utf_char2bytes(utf_fold(c2), (char *)buffer);
-    s2 = (char_u *)buffer;
+    s2 = buffer;
   }
 
   while (n1 > 0 && n2 > 0 && *s1 != NUL && *s2 != NUL) {
-    cdiff = (int)(*s1) - (int)(*s2);
+    cdiff = (int)((uint8_t)(*s1)) - (int)((uint8_t)(*s2));
     if (cdiff != 0) {
       return cdiff;
     }
@@ -1498,7 +1498,7 @@ ssize_t mb_utf_index_to_bytes(const char *s, size_t len, size_t index, bool use_
 ///          two characters otherwise.
 int mb_strnicmp(const char *s1, const char *s2, const size_t nn)
 {
-  return utf_strnicmp((char_u *)s1, (char_u *)s2, nn, nn);
+  return utf_strnicmp(s1, s2, nn, nn);
 }
 
 /// Compare strings case-insensitively

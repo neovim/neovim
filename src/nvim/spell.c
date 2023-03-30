@@ -150,7 +150,7 @@ typedef struct matchinf_S {
 
   // for when checking a compound word
   int mi_compoff;                       // start of following word offset
-  char_u mi_compflags[MAXWLEN];         // flags for compound words used
+  uint8_t mi_compflags[MAXWLEN];        // flags for compound words used
   int mi_complen;                       // nr of compound words used
   int mi_compextra;                     // nr of COMPOUNDROOT words
 
@@ -961,7 +961,7 @@ bool can_compound(slang_T *slang, const char *word, const uint8_t *flags)
 // compound rule.  This is used to stop trying a compound if the flags
 // collected so far can't possibly match any compound rule.
 // Caller must check that slang->sl_comprules is not NULL.
-bool match_compoundrule(slang_T *slang, const char_u *compflags)
+bool match_compoundrule(slang_T *slang, const uint8_t *compflags)
 {
   // loop over all the COMPOUNDRULE entries
   for (char *p = (char *)slang->sl_comprules; *p != NUL; p++) {
@@ -1748,7 +1748,7 @@ void count_common_word(slang_T *lp, char *word, int len, uint8_t count)
     wc = xmalloc(offsetof(wordcount_T, wc_word) + p_len + 1);
     memcpy(wc->wc_word, p, p_len + 1);
     wc->wc_count = count;
-    hash_add_item(&lp->sl_wordcount, hi, (char *)wc->wc_word, hash);
+    hash_add_item(&lp->sl_wordcount, hi, wc->wc_word, hash);
   } else {
     wc = HI2WC(hi);
     wc->wc_count = (uint16_t)(wc->wc_count + count);

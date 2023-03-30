@@ -404,14 +404,14 @@ typedef struct sblock_S sblock_T;
 struct sblock_S {
   int sb_used;                  // nr of bytes already in use
   sblock_T *sb_next;         // next block in list
-  char_u sb_data[];            // data
+  char sb_data[];            // data
 };
 
 // A node in the tree.
 typedef struct wordnode_S wordnode_T;
 struct wordnode_S {
   union {   // shared to save space
-    char_u hashkey[6];          // the hash key, only used while compressing
+    uint8_t hashkey[6];         // the hash key, only used while compressing
     int index;                  // index in written nodes (valid after first
                                 // round)
   } wn_u1;
@@ -422,17 +422,17 @@ struct wordnode_S {
   wordnode_T *wn_child;        // child (next byte in word)
   wordnode_T *wn_sibling;      // next sibling (alternate byte in word,
                                //   always sorted)
-  int wn_refs;                  // Nr. of references to this node.  Only
-                                //   relevant for first node in a list of
-                                //   siblings, in following siblings it is
-                                //   always one.
-  char_u wn_byte;               // Byte for this node. NUL for word end
+  int wn_refs;                 // Nr. of references to this node.  Only
+                               //   relevant for first node in a list of
+                               //   siblings, in following siblings it is
+                               //   always one.
+  uint8_t wn_byte;             // Byte for this node. NUL for word end
 
   // Info for when "wn_byte" is NUL.
   // In PREFIXTREE "wn_region" is used for the prefcondnr.
   // In the soundfolded word tree "wn_flags" has the MSW of the wordnr and
   // "wn_region" the LSW of the wordnr.
-  char_u wn_affixID;            // supported/required prefix ID or 0
+  uint8_t wn_affixID;           // supported/required prefix ID or 0
   uint16_t wn_flags;            // WF_ flags
   int16_t wn_region;            // region mask
 
@@ -482,7 +482,7 @@ typedef struct spellinfo_S {
   char *si_info;                // info text chars or NULL
   int si_region_count;          // number of regions supported (1 when there
                                 // are no regions)
-  char_u si_region_name[MAXREGIONS * 2 + 1];
+  char si_region_name[MAXREGIONS * 2 + 1];
   // region names; used only if
   // si_region_count > 1)
 
@@ -508,7 +508,7 @@ typedef struct spellinfo_S {
   garray_T si_comppat;          // CHECKCOMPOUNDPATTERN items, each stored as
                                 // a string
   char *si_compflags;           // flags used for compounding
-  char_u si_nobreak;            // NOBREAK
+  char si_nobreak;              // NOBREAK
   char *si_syllable;            // syllable string
   garray_T si_prefcond;         // table with conditions for postponed
                                 // prefixes, each stored as a string
@@ -985,7 +985,7 @@ someerror:
           if (c < 0) {
             goto someerror;
           }
-          GA_APPEND(char_u, &ga, (char_u)c);
+          GA_APPEND(uint8_t, &ga, (uint8_t)c);
           if (c == NUL) {
             break;
           }
@@ -1060,7 +1060,7 @@ static int read_region_section(FILE *fd, slang_T *lp, int len)
 static int read_charflags_section(FILE *fd)
 {
   char *flags;
-  char_u *fol;
+  char *fol;
   int flagslen, follen;
 
   // <charflagslen> <charflags>
@@ -1070,7 +1070,7 @@ static int read_charflags_section(FILE *fd)
   }
 
   // <folcharslen> <folchars>
-  fol = (char_u *)read_cnt_string(fd, 2, &follen);
+  fol = read_cnt_string(fd, 2, &follen);
   if (follen < 0) {
     xfree(flags);
     return follen;
@@ -1078,7 +1078,7 @@ static int read_charflags_section(FILE *fd)
 
   // Set the word-char flags and fill SPELL_ISUPPER() table.
   if (flags != NULL && fol != NULL) {
-    set_spell_charflags(flags, flagslen, (char *)fol);
+    set_spell_charflags(flags, flagslen, fol);
   }
 
   xfree(flags);
@@ -2538,9 +2538,9 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
               if (idx < 0) {
                 // Not found, add a new condition.
                 idx = spin->si_prefcond.ga_len;
-                char_u **pp = GA_APPEND_VIA_PTR(char_u *, &spin->si_prefcond);
+                char **pp = GA_APPEND_VIA_PTR(char *, &spin->si_prefcond);
                 *pp = (aff_entry->ae_cond == NULL) ?
-                      NULL : (char_u *)getroom_save(spin, aff_entry->ae_cond);
+                      NULL : getroom_save(spin, aff_entry->ae_cond);
               }
 
               // Add the prefix to the prefix tree.
@@ -2565,7 +2565,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
               if (aff_entry->ae_compforbid) {
                 n |= WFP_COMPFORBID;
               }
-              tree_add_word(spin, (char_u *)p, spin->si_prefroot, n,
+              tree_add_word(spin, p, spin->si_prefroot, n,
                             idx, cur_aff->ah_newID);
               did_postpone_prefix = true;
             }
@@ -3232,7 +3232,7 @@ static int spell_read_dic(spellinfo_T *spin, char *fname, afffile_T *affile)
       if (spin->si_compflags != NULL) {
         // Need to store the list of compound flags with the word.
         // Concatenate them to the list of prefix IDs.
-        get_compflags(affile, afflist, (char_u *)store_afflist + pfxlen);
+        get_compflags(affile, afflist, store_afflist + pfxlen);
       }
     }
 
@@ -3349,7 +3349,7 @@ static int get_pfxlist(afffile_T *affile, char *afflist, char *store_afflist)
 // Get the list of compound IDs from the affix list "afflist" that are used
 // for compound words.
 // Puts the flags in "store_afflist[]".
-static void get_compflags(afffile_T *affile, char *afflist, char_u *store_afflist)
+static void get_compflags(afffile_T *affile, char *afflist, char *store_afflist)
 {
   int cnt = 0;
   char key[AH_KEY_LEN];
@@ -3362,7 +3362,7 @@ static void get_compflags(afffile_T *affile, char *afflist, char_u *store_afflis
       xstrlcpy(key, prevp, (size_t)(p - prevp) + 1);
       hi = hash_find(&affile->af_comp, (char *)key);
       if (!HASHITEM_EMPTY(hi)) {
-        store_afflist[cnt++] = (char_u)HI2CI(hi)->ci_newID;
+        store_afflist[cnt++] = (char)(uint8_t)HI2CI(hi)->ci_newID;
       }
     }
     if (affile->af_flagtype == AFT_NUM && *p == ',') {
@@ -3530,7 +3530,7 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
                 if (spin->si_compflags != NULL) {
                   // Get compound IDS from the affix list.
                   get_compflags(affile, ae->ae_flags,
-                                (char_u *)use_pfxlist + use_pfxlen);
+                                use_pfxlist + use_pfxlen);
                 } else {
                   use_pfxlist[use_pfxlen] = NUL;
                 }
@@ -3835,7 +3835,7 @@ static void *getroom(spellinfo_T *spin, size_t len, bool align)
     spin->si_blocks_cnt++;
   }
 
-  p = (char *)bl->sb_data + bl->sb_used;
+  p = bl->sb_data + bl->sb_used;
   bl->sb_used += (int)len;
 
   return p;
@@ -3913,7 +3913,7 @@ static int store_word(spellinfo_T *spin, char *word, int flags, int region, cons
   (void)spell_casefold(curwin, word, len, foldword, MAXWLEN);
   for (const char *p = pfxlist; res == OK; p++) {
     if (!need_affix || (p != NULL && *p != NUL)) {
-      res = tree_add_word(spin, (char_u *)foldword, spin->si_foldroot, ct | flags,
+      res = tree_add_word(spin, foldword, spin->si_foldroot, ct | flags,
                           region, p == NULL ? 0 : *p);
     }
     if (p == NULL || *p == NUL) {
@@ -3925,7 +3925,7 @@ static int store_word(spellinfo_T *spin, char *word, int flags, int region, cons
   if (res == OK && (ct == WF_KEEPCAP || (flags & WF_KEEPCAP))) {
     for (const char *p = pfxlist; res == OK; p++) {
       if (!need_affix || (p != NULL && *p != NUL)) {
-        res = tree_add_word(spin, (char_u *)word, spin->si_keeproot, flags,
+        res = tree_add_word(spin, word, spin->si_keeproot, flags,
                             region, p == NULL ? 0 : *p);
       }
       if (p == NULL || *p == NUL) {
@@ -3941,7 +3941,7 @@ static int store_word(spellinfo_T *spin, char *word, int flags, int region, cons
 // When "flags" < 0 we are adding to the prefix tree where "flags" is used for
 // "rare" and "region" is the condition nr.
 // Returns FAIL when out of memory.
-static int tree_add_word(spellinfo_T *spin, const char_u *word, wordnode_T *root, int flags,
+static int tree_add_word(spellinfo_T *spin, const char *word, wordnode_T *root, int flags,
                          int region, int affixID)
 {
   wordnode_T *node = root;
@@ -3993,7 +3993,7 @@ static int tree_add_word(spellinfo_T *spin, const char_u *word, wordnode_T *root
     // higher byte value.  For zero bytes (end of word) the sorting is
     // done on flags and then on affixID.
     while (node != NULL
-           && (node->wn_byte < word[i]
+           && (node->wn_byte < (uint8_t)word[i]
                || (node->wn_byte == NUL
                    && (flags < 0
                        ? node->wn_affixID < (unsigned)affixID
@@ -4007,7 +4007,7 @@ static int tree_add_word(spellinfo_T *spin, const char_u *word, wordnode_T *root
       node = *prev;
     }
     if (node == NULL
-        || node->wn_byte != word[i]
+        || node->wn_byte != (uint8_t)word[i]
         || (word[i] == NUL
             && (flags < 0
                 || spin->si_sugtree
@@ -4018,7 +4018,7 @@ static int tree_add_word(spellinfo_T *spin, const char_u *word, wordnode_T *root
       if (np == NULL) {
         return FAIL;
       }
-      np->wn_byte = word[i];
+      np->wn_byte = (uint8_t)word[i];
 
       // If "node" is NULL this is a new child or the end of the sibling
       // list: ref count is one.  Otherwise use ref count of sibling and
@@ -4040,7 +4040,7 @@ static int tree_add_word(spellinfo_T *spin, const char_u *word, wordnode_T *root
     if (word[i] == NUL) {
       node->wn_flags = (uint16_t)flags;
       node->wn_region |= (int16_t)region;
-      node->wn_affixID = (char_u)affixID;
+      node->wn_affixID = (uint8_t)affixID;
       break;
     }
     prev = &node->wn_child;
@@ -4266,7 +4266,7 @@ static long node_compress(spellinfo_T *spin, wordnode_T *node, hashtab_T *ht, lo
   // Make a hash key for the node and its siblings, so that we can quickly
   // find a lookalike node.  This must be done after compressing the sibling
   // list, otherwise the hash key would become invalid by the compression.
-  node->wn_u1.hashkey[0] = (char_u)len;
+  node->wn_u1.hashkey[0] = (uint8_t)len;
   nr = 0;
   for (np = node; np != NULL; np = np->wn_sibling) {
     if (np->wn_byte == NUL) {
@@ -4281,13 +4281,13 @@ static long node_compress(spellinfo_T *spin, wordnode_T *node, hashtab_T *ht, lo
 
   // Avoid NUL bytes, it terminates the hash key.
   n = nr & 0xff;
-  node->wn_u1.hashkey[1] = n == 0 ? 1 : (char_u)n;
+  node->wn_u1.hashkey[1] = n == 0 ? 1 : (uint8_t)n;
   n = (nr >> 8) & 0xff;
-  node->wn_u1.hashkey[2] = n == 0 ? 1 : (char_u)n;
+  node->wn_u1.hashkey[2] = n == 0 ? 1 : (uint8_t)n;
   n = (nr >> 16) & 0xff;
-  node->wn_u1.hashkey[3] = n == 0 ? 1 : (char_u)n;
+  node->wn_u1.hashkey[3] = n == 0 ? 1 : (uint8_t)n;
   n = (nr >> 24) & 0xff;
-  node->wn_u1.hashkey[4] = n == 0 ? 1 : (char_u)n;
+  node->wn_u1.hashkey[4] = n == 0 ? 1 : (uint8_t)n;
   node->wn_u1.hashkey[5] = NUL;
 
   // Check for CTRL-C pressed now and then.
@@ -4957,8 +4957,8 @@ static int sug_filltree(spellinfo_T *spin, slang_T *slang)
   int depth;
   idx_T arridx[MAXWLEN];
   int curi[MAXWLEN];
-  char_u tword[MAXWLEN];
-  char_u tsalword[MAXWLEN];
+  char tword[MAXWLEN];
+  char tsalword[MAXWLEN];
   int c;
   idx_T n;
   unsigned words_done = 0;
@@ -4999,7 +4999,7 @@ static int sug_filltree(spellinfo_T *spin, slang_T *slang)
       if (c == 0) {
         // Sound-fold the word.
         tword[depth] = NUL;
-        spell_soundfold(slang, (char *)tword, true, (char *)tsalword);
+        spell_soundfold(slang, tword, true, tsalword);
 
         // We use the "flags" field for the MSB of the wordnr,
         // "region" for the LSB of the wordnr.
@@ -5024,7 +5024,7 @@ static int sug_filltree(spellinfo_T *spin, slang_T *slang)
         }
       } else {
         // Normal char, go one level deeper.
-        tword[depth++] = (char_u)c;
+        tword[depth++] = (char)(uint8_t)c;
         arridx[depth] = idxs[n];
         curi[depth] = 1;
         wordcount[depth] = 0;
@@ -5090,12 +5090,11 @@ static int sug_filltable(spellinfo_T *spin, wordnode_T *node, int startwordnr, g
         // following bytes.
         nr -= prev_nr;
         prev_nr += nr;
-        gap->ga_len += offset2bytes(nr,
-                                    (char_u *)gap->ga_data + gap->ga_len);
+        gap->ga_len += offset2bytes(nr, (char *)gap->ga_data + gap->ga_len);
       }
 
       // add the NUL byte
-      ((char_u *)gap->ga_data)[gap->ga_len++] = NUL;
+      ((char *)gap->ga_data)[gap->ga_len++] = NUL;
 
       if (ml_append_buf(spin->si_spellbuf, (linenr_T)wordnr,
                         gap->ga_data, gap->ga_len, true) == FAIL) {
@@ -5126,8 +5125,9 @@ static int sug_filltable(spellinfo_T *spin, wordnode_T *node, int startwordnr, g
 // Convert an offset into a minimal number of bytes.
 // Similar to utf_char2byters, but use 8 bits in followup bytes and avoid NUL
 // bytes.
-static int offset2bytes(int nr, char_u *buf)
+static int offset2bytes(int nr, char *buf_in)
 {
+  uint8_t *buf = (uint8_t *)buf_in;
   int rem;
   int b1, b2, b3, b4;
 
@@ -5140,25 +5140,25 @@ static int offset2bytes(int nr, char_u *buf)
   b4 = rem / 255 + 1;
 
   if (b4 > 1 || b3 > 0x1f) {    // 4 bytes
-    buf[0] = (char_u)(0xe0 + b4);
-    buf[1] = (char_u)b3;
-    buf[2] = (char_u)b2;
-    buf[3] = (char_u)b1;
+    buf[0] = (uint8_t)(0xe0 + b4);
+    buf[1] = (uint8_t)b3;
+    buf[2] = (uint8_t)b2;
+    buf[3] = (uint8_t)b1;
     return 4;
   }
   if (b3 > 1 || b2 > 0x3f) {   // 3 bytes
-    buf[0] = (char_u)(0xc0 + b3);
-    buf[1] = (char_u)b2;
-    buf[2] = (char_u)b1;
+    buf[0] = (uint8_t)(0xc0 + b3);
+    buf[1] = (uint8_t)b2;
+    buf[2] = (uint8_t)b1;
     return 3;
   }
   if (b2 > 1 || b1 > 0x7f) {   // 2 bytes
-    buf[0] = (char_u)(0x80 + b2);
-    buf[1] = (char_u)b1;
+    buf[0] = (uint8_t)(0x80 + b2);
+    buf[1] = (uint8_t)b1;
     return 2;
   }
   // 1 byte
-  buf[0] = (char_u)b1;
+  buf[0] = (uint8_t)b1;
   return 1;
 }
 
@@ -5342,8 +5342,8 @@ static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool
           semsg(_("E755: Invalid region in %s"), innames[i]);
           goto theend;
         }
-        spin.si_region_name[i * 2] = (char_u)TOLOWER_ASC(innames[i][len - 2]);
-        spin.si_region_name[i * 2 + 1] = (char_u)TOLOWER_ASC(innames[i][len - 1]);
+        spin.si_region_name[i * 2] = (char)(uint8_t)TOLOWER_ASC(innames[i][len - 2]);
+        spin.si_region_name[i * 2 + 1] = (char)(uint8_t)TOLOWER_ASC(innames[i][len - 1]);
       }
     }
     spin.si_region_count = incount;
@@ -5599,21 +5599,21 @@ void spell_add_word(char *word, int len, SpellAddType what, int idx, bool undo)
   if (!undo) {
     fd = os_fopen(fname, "a");
     if (fd == NULL && new_spf) {
-      char_u *p;
+      char *p;
 
       // We just initialized the 'spellfile' option and can't open the
       // file.  We may need to create the "spell" directory first.  We
       // already checked the runtime directory is writable in
       // init_spellfile().
       if (!dir_of_file_exists(fname)
-          && (p = (char_u *)path_tail_with_sep(fname)) != (char_u *)fname) {
-        int c = *p;
+          && (p = path_tail_with_sep(fname)) != fname) {
+        char c = *p;
 
         // The directory doesn't exist.  Try creating it and opening
         // the file again.
         *p = NUL;
         os_mkdir(fname, 0755);
-        *p = (char_u)c;
+        *p = c;
         fd = os_fopen(fname, "a");
       }
     }

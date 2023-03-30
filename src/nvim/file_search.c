@@ -794,7 +794,7 @@ char *vim_findfile(void *search_ctx_arg)
                   ) {
 #ifdef FF_VERBOSE
                 if (ff_check_visited(&search_ctx->ffsc_visited_list->ffvl_visited_list,
-                                     file_path, (char_u *)"") == FAIL) {
+                                     file_path, "") == FAIL) {
                   if (p_verbose >= 5) {
                     verbose_enter_scroll();
                     smsg("Already: %s", file_path);

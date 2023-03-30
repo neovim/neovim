@@ -2371,7 +2371,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           mb_c = c;
           mb_utf8 = check_mb_utf8(&c, u8cc);
         } else if (c != NUL) {
-          wlv.p_extra = (char *)transchar_buf(wp->w_buffer, c);
+          wlv.p_extra = transchar_buf(wp->w_buffer, c);
           if (wlv.n_extra == 0) {
             wlv.n_extra = byte2cells(c) - 1;
           }

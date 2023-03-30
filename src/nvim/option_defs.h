@@ -993,7 +993,7 @@ typedef struct vimoption {
   char *fullname;        // full option name
   char *shortname;       // permissible abbreviation
   uint32_t flags;               // see below
-  char_u *var;             // global option: pointer to variable;
+  char *var;               // global option: pointer to variable;
                            // window-local option: VAR_WIN;
                            // buffer-local option: global value
   idopt_T indir;                // global option: PV_NONE;
@@ -1018,6 +1018,6 @@ typedef struct vimoption {
 
 // Options local to a window have a value local to a buffer and global to all
 // buffers.  Indicate this by setting "var" to VAR_WIN.
-#define VAR_WIN ((char_u *)-1)
+#define VAR_WIN ((char *)-1)
 
 #endif  // NVIM_OPTION_DEFS_H

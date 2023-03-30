@@ -1589,7 +1589,7 @@ int msg_outtrans_len_attr(const char *msgstr, int len, int attr)
       len -= mb_l - 1;
       str += mb_l;
     } else {
-      s = (char *)transchar_byte_buf(NULL, (uint8_t)(*str));
+      s = transchar_byte_buf(NULL, (uint8_t)(*str));
       if (s[1] != NUL) {
         // Unprintable char: print the printable chars so far and the
         // translation of the unprintable char.
@@ -1671,7 +1671,7 @@ int msg_outtrans_special(const char *strstart, bool from, int maxlen)
     }
     if (text[0] != NUL && text[1] == NUL) {
       // single-byte character or illegal byte
-      text = (char *)transchar_byte_buf(NULL, (uint8_t)text[0]);
+      text = transchar_byte_buf(NULL, (uint8_t)text[0]);
     }
     const int len = vim_strsize(text);
     if (maxlen > 0 && retval + len >= maxlen) {
@@ -1917,7 +1917,7 @@ void msg_prt_line(char *s, int list)
         s--;
       } else if (c != NUL && (n = byte2cells(c)) > 1) {
         n_extra = n - 1;
-        p_extra = (char *)transchar_byte_buf(NULL, c);
+        p_extra = transchar_byte_buf(NULL, c);
         c_extra = NUL;
         c_final = NUL;
         c = (unsigned char)(*p_extra++);
