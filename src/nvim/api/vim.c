@@ -95,6 +95,9 @@ Integer nvim_get_hl_id_by_name(String name)
 /// @param[out] err Error details, if any.
 /// @return Highlight groups as a map from group name to a highlight definition map as in |nvim_set_hl()|,
 ///                   or only a single highlight definition map if requested by name or id.
+///
+/// @note When the `link` attribute is defined in the highlight definition
+///       map, other attributes will not be taking effect (see |:hi-link|).
 Dictionary nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(11)
 {
@@ -112,6 +115,10 @@ Dictionary nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena *arena, E
 ///       which act as aliases to the corresponding foreground and background
 ///       values of the Normal group. If the Normal group has not been defined,
 ///       using these values results in an error.
+///
+///
+/// @note If `link` is used in combination with other attributes; only the
+///       `link` will take effect (see |:hi-link|).
 ///
 /// @param ns_id Namespace id for this highlight |nvim_create_namespace()|.
 ///              Use 0 to set a highlight group globally |:highlight|.

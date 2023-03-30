@@ -561,4 +561,18 @@ describe('API: get highlight', function()
     eq({ link = 'String' }, meths.get_hl(0, { name = '@string' }))
     eq({ fg = 10937249 }, meths.get_hl(0, { name = '@string.cpp', link = false }))
   end)
+
+  it('can get all attributes for a linked group', function()
+    command('hi Bar guifg=red')
+    command('hi Foo guifg=#00ff00 gui=bold,underline')
+    command('hi! link Foo Bar')
+    eq({ link = 'Bar', fg = tonumber('00ff00', 16), bold = true, underline = true }, meths.get_hl(0, { name = 'Foo', link = true }))
+  end)
+
+  it('can set link as well as other attributes', function()
+    command('hi Bar guifg=red')
+    local hl = { link = 'Bar', fg = tonumber('00ff00', 16), bold = true, cterm = { bold = true } }
+    meths.set_hl(0, 'Foo', hl)
+    eq(hl, meths.get_hl(0, { name = 'Foo', link = true }))
+  end)
 end)
