@@ -2241,7 +2241,7 @@ void do_check_cursorbind(void)
   int old_VIsual_active = VIsual_active;
 
   // loop through the cursorbound windows
-  VIsual_select = VIsual_active = 0;
+  VIsual_select = VIsual_active = false;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     curwin = wp;
     curbuf = curwin->w_buffer;
