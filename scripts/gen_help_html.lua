@@ -624,7 +624,7 @@ local function get_helptags(help_dir)
   return m
 end
 
--- Use the help.so parser defined in the build, not whatever happens to be installed on the system.
+-- Use the vimdoc parser defined in the build, not whatever happens to be installed on the system.
 local function ensure_runtimepath()
   if not vim.o.runtimepath:find('build/lib/nvim/') then
     vim.cmd[[set runtimepath^=./build/lib/nvim/]]
@@ -643,8 +643,8 @@ local function parse_buf(fname)
     buf = fname
     vim.cmd('sbuffer '..tostring(fname))          -- Buffer number.
   end
-  -- vim.treesitter.require_language('help', './build/lib/nvim/parser/help.so')
-  local lang_tree = vim.treesitter.get_parser(buf, 'help')
+  -- vim.treesitter.require_language('help', './build/lib/nvim/parser/vimdoc.so')
+  local lang_tree = vim.treesitter.get_parser(buf)
   return lang_tree, buf
 end
 

@@ -194,8 +194,8 @@ set(TREESITTER_LUA_SHA256 930d0370dc15b66389869355c8e14305b9ba7aafd36edbfdb468c8
 set(TREESITTER_VIM_URL https://github.com/vigoux/tree-sitter-viml/archive/e39a7bbcfdcfc7900629962b785c7e14503ae590.tar.gz)
 set(TREESITTER_VIM_SHA256 7ca85fa1a5a9e4d057ff3b7ae53d13d31371973e734ada87a83f3f6cbe9c0e32)
 
-set(TREESITTER_HELP_URL https://github.com/neovim/tree-sitter-vimdoc/archive/v1.3.0.tar.gz)
-set(TREESITTER_HELP_SHA256 f33f6d49c7d71feb2fd68ef2b2684da150f9f8e486ad9726213631d673942331)
+set(TREESITTER_VIMDOC_URL https://github.com/neovim/tree-sitter-vimdoc/archive/b2ec4ec5f7be24cb6f7ccffafd7204477fe5784a.tar.gz)
+set(TREESITTER_VIMDOC_SHA256 0689a57d455243de6c6a6c8737a8ce137e225eb8f32676a7037f7dd13dfaec5d)
 
 set(TREESITTER_QUERY_URL https://github.com/nvim-treesitter/tree-sitter-query/archive/v0.1.0.tar.gz)
 set(TREESITTER_QUERY_SHA256 e2b806f80e8bf1c4f4e5a96248393fe6622fc1fc6189d6896d269658f67f914c)
