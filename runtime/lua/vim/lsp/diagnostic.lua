@@ -119,7 +119,7 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
       message = diagnostic.message,
       source = diagnostic.source,
       code = diagnostic.code,
-      tags = tags_lsp_to_vim(diagnostic, client_id),
+      _tags = tags_lsp_to_vim(diagnostic, client_id),
       user_data = {
         lsp = {
           -- usage of user_data.lsp.code is deprecated in favor of the top-level code field
