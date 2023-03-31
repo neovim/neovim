@@ -797,9 +797,9 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
   }
 
   HlGroup *g = &hl_table[idx];
+  g->sg_cleared = false;
 
   if (link_id > 0) {
-    g->sg_cleared = false;
     g->sg_link = link_id;
     g->sg_script_ctx = current_sctx;
     g->sg_script_ctx.sc_lnum += SOURCING_LNUM;
@@ -809,11 +809,10 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
       g->sg_deflink_sctx = current_sctx;
       g->sg_deflink_sctx.sc_lnum += SOURCING_LNUM;
     }
-    goto update;
+  } else {
+    g->sg_link = 0;
   }
 
-  g->sg_cleared = false;
-  g->sg_link = 0;
   g->sg_gui = attrs.rgb_ae_attr;
 
   g->sg_rgb_fg = attrs.rgb_fg_color;
@@ -865,7 +864,6 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
     }
   }
 
-update:
   if (!updating_screen) {
     redraw_all_later(UPD_NOT_VALID);
   }
@@ -1533,17 +1531,15 @@ static bool hlgroup2dict(Dictionary *hl, NS ns_id, int hl_id, Arena *arena)
   }
   HlAttrs attr =
     syn_attr2entry(ns_id == 0 ? sgp->sg_attr : ns_get_hl(&ns_id, hl_id, false, sgp->sg_set));
+  *hl = arena_dict(arena, HLATTRS_DICT_SIZE + 1);
   if (link > 0) {
-    *hl = arena_dict(arena, 1);
     PUT_C(*hl, "link", STRING_OBJ(cstr_as_string(hl_table[link - 1].sg_name)));
-  } else {
-    *hl = arena_dict(arena, HLATTRS_DICT_SIZE);
-    Dictionary hl_cterm = arena_dict(arena, HLATTRS_DICT_SIZE);
-    hlattrs2dict(hl, NULL, attr, true, true);
-    hlattrs2dict(hl, &hl_cterm, attr, false, true);
-    if (kv_size(hl_cterm)) {
-      PUT_C(*hl, "cterm", DICTIONARY_OBJ(hl_cterm));
-    }
+  }
+  Dictionary hl_cterm = arena_dict(arena, HLATTRS_DICT_SIZE);
+  hlattrs2dict(hl, NULL, attr, true, true);
+  hlattrs2dict(hl, &hl_cterm, attr, false, true);
+  if (kv_size(hl_cterm)) {
+    PUT_C(*hl, "cterm", DICTIONARY_OBJ(hl_cterm));
   }
   return true;
 }
