@@ -5,7 +5,7 @@ local loaders = package.loaders
 
 local M = {}
 
----@alias CacheHash {mtime: {sec:number, nsec:number}, size:number}
+---@alias CacheHash {mtime: {sec:number, nsec:number}, size:number, type: string}
 ---@alias CacheEntry {hash:CacheHash, chunk:string}
 
 ---@class ModuleFindOpts
@@ -32,6 +32,8 @@ local Loader = {
   VERSION = 3,
   ---@type table<string, table<string,ModuleInfo>>
   _indexed = {},
+  ---@type table<string, CacheHash>
+  _hashes = {},
   ---@type table<string, string[]>
   _topmods = {},
   _loadfile = loadfile,
@@ -40,6 +42,18 @@ local Loader = {
     find = { total = 0, time = 0, not_found = 0 },
   },
 }
+
+--- @param path string
+--- @return uv.fs_stat.result
+--- @private
+function Loader.get_hash(path)
+  if not Loader._hashes[path] then
+    -- Note we must never save a stat for a non-existent path.
+    -- For non-existent paths fs_stat() will return nil.
+    Loader._hashes[path] = uv.fs_stat(path)
+  end
+  return Loader._hashes[path]
+end
 
 ---@private
 local function normalize(path)
@@ -102,18 +116,28 @@ function Loader.write(name, entry)
   uv.fs_close(f)
 end
 
+--- @param path string
+--- @param mode integer
+--- @return string? data
+--- @private
+local function readfile(path, mode)
+  local f = uv.fs_open(path, 'r', mode)
+  if f then
+    local hash = assert(uv.fs_fstat(f))
+    local data = uv.fs_read(f, hash.size, 0) --[[@as string?]]
+    uv.fs_close(f)
+    return data
+  end
+end
+
 --- Loads the cache entry for a given module or file
 ---@param name string module name or filename
 ---@return CacheEntry?
 ---@private
 function Loader.read(name)
   local cname = Loader.cache_file(name)
-  local f = uv.fs_open(cname, 'r', 438)
-  if f then
-    local hash = uv.fs_fstat(f) --[[@as CacheHash]]
-    local data = uv.fs_read(f, hash.size, 0) --[[@as string]]
-    uv.fs_close(f)
-
+  local data = readfile(cname, 438)
+  if data then
     local zero = data:find('\0', 1, true)
     if not zero then
       return
@@ -141,7 +165,9 @@ end
 function Loader.loader(modname)
   local ret = M.find(modname)[1]
   if ret then
-    local chunk, err = Loader.load(ret.modpath, { hash = ret.stat })
+    -- Make sure to call the global loadfile so we respect any augmentations done elsewhere.
+    -- E.g. profiling
+    local chunk, err = loadfile(ret.modpath)
     return chunk or error(err)
   end
   return '\ncache_loader: module ' .. modname .. ' not found'
@@ -171,17 +197,17 @@ function Loader.loader_lib(modname)
 end
 
 --- `loadfile` using the cache
+--- Note this has the mode and env arguments which is supported by LuaJIT and is 5.1 compatible.
 ---@param filename? string
 ---@param mode? "b"|"t"|"bt"
 ---@param env? table
----@param hash? CacheHash
 ---@return function?, string?  error_message
 ---@private
 -- luacheck: ignore 312
-function Loader.loadfile(filename, mode, env, hash)
+function Loader.loadfile(filename, mode, env)
   -- ignore mode, since we byte-compile the lua source files
   mode = nil
-  return Loader.load(normalize(filename), { mode = mode, env = env, hash = hash })
+  return Loader.load(normalize(filename), { mode = mode, env = env })
 end
 
 --- Checks whether two cache hashes are the same based on:
@@ -201,8 +227,7 @@ end
 
 --- Loads the given module path using the cache
 ---@param modpath string
----@param opts? {hash?: CacheHash, mode?: "b"|"t"|"bt", env?:table} (table|nil) Options for loading the module:
----    - hash: (table) the hash of the file to load if it is already known. (defaults to `vim.loop.fs_stat({modpath})`)
+---@param opts? {mode?: "b"|"t"|"bt", env?:table} (table|nil) Options for loading the module:
 ---    - mode: (string) the mode to load the module with. "b"|"t"|"bt" (defaults to `nil`)
 ---    - env: (table) the environment to load the module in. (defaults to `nil`)
 ---@see |luaL_loadfile()|
@@ -210,7 +235,7 @@ end
 ---@private
 function Loader.load(modpath, opts)
   opts = opts or {}
-  local hash = opts.hash or uv.fs_stat(modpath)
+  local hash = Loader.get_hash(modpath)
   ---@type function?, string?
   local chunk, err
 
@@ -301,7 +326,7 @@ function M.find(modname, opts)
         for _, pattern in ipairs(patterns) do
           local modpath = path .. pattern
           Loader._stats.find.stat = (Loader._stats.find.stat or 0) + 1
-          local hash = uv.fs_stat(modpath)
+          local hash = Loader.get_hash(modpath)
           if hash then
             results[#results + 1] = { modpath = modpath, stat = hash, modname = modname }
             if not continue() then
@@ -337,7 +362,7 @@ function M.find(modname, opts)
   return results
 end
 
---- Resets the topmods cache for the path, or all the paths
+--- Resets the cache for the path, or all the paths
 --- if path is nil.
 ---@param path string? path to reset
 function M.reset(path)
@@ -346,6 +371,9 @@ function M.reset(path)
   else
     Loader._indexed = {}
   end
+
+  -- Path could be a directory so just clear all the hashes.
+  Loader._hashes = {}
 end
 
 --- Enables the experimental Lua module loader:
@@ -399,7 +427,7 @@ function Loader.lsmod(path)
     for name, t in vim.fs.dir(path .. '/lua') do
       local modpath = path .. '/lua/' .. name
       -- HACK: type is not always returned due to a bug in luv
-      t = t or uv.fs_stat(modpath).type
+      t = t or Loader.get_hash(modpath).type
       ---@type string
       local topname
       local ext = name:sub(-4)

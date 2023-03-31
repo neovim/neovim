@@ -2065,7 +2065,7 @@ find({modname}, {opts})                                    *vim.loader.find()*
           for `modname="*"`
 
 reset({path})                                             *vim.loader.reset()*
-    Resets the topmods cache for the path, or all the paths if path is nil.
+    Resets the cache for the path, or all the paths if path is nil.
 
     Parameters: ~
       • {path}  string? path to reset
