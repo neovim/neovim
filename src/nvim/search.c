@@ -4159,10 +4159,10 @@ static void show_pat_in_path(char *line, int type, bool did_show, int action, FI
     }
     if (action == ACTION_SHOW_ALL) {
       snprintf(IObuff, IOSIZE, "%3ld: ", count);  // Show match nr.
-      msg_puts((const char *)IObuff);
+      msg_puts(IObuff);
       snprintf(IObuff, IOSIZE, "%4" PRIdLINENR, *lnum);  // Show line nr.
       // Highlight line numbers.
-      msg_puts_attr((const char *)IObuff, HL_ATTR(HLF_N));
+      msg_puts_attr(IObuff, HL_ATTR(HLF_N));
       msg_puts(" ");
     }
     msg_prt_line(line, false);

@@ -726,7 +726,7 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
         if ((num_matches > prev_num_matches || new_tag)
             && num_matches > 1) {
           if (ic) {
-            msg_attr((const char *)IObuff, HL_ATTR(HLF_W));
+            msg_attr(IObuff, HL_ATTR(HLF_W));
           } else {
             msg(IObuff);
           }

@@ -218,7 +218,7 @@ void channel_create_event(Channel *chan, const char *ext_source)
     source = ext_source;
   } else {
     eval_fmt_source_name_line(IObuff, sizeof(IObuff));
-    source = (const char *)IObuff;
+    source = IObuff;
   }
 
   assert(chan->id <= VARNUMBER_MAX);

@@ -2153,7 +2153,7 @@ static void print_mainerr(const char *errstr, const char *str)
   os_errmsg(_(errstr));
   if (str != NULL) {
     os_errmsg(": \"");
-    os_errmsg((char *)str);
+    os_errmsg(str);
     os_errmsg("\"");
   }
   os_errmsg(_("\nMore info with \""));

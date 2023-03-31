@@ -4670,7 +4670,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
     }
   }
 
-  regmatch.regprog = vim_regcomp((char *)pat, RE_MAGIC + RE_STRING);
+  regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
   if (regmatch.regprog != NULL) {
     regmatch.rm_ic = p_ic;
 
@@ -7895,7 +7895,7 @@ static void f_split(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   regmatch_T regmatch = {
-    .regprog = vim_regcomp((char *)pat, RE_MAGIC + RE_STRING),
+    .regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING),
     .startp = { NULL },
     .endp = { NULL },
     .rm_ic = false,
@@ -7906,7 +7906,7 @@ static void f_split(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       if (*str == NUL) {
         match = false;  // Empty item at the end.
       } else {
-        match = vim_regexec_nl(&regmatch, (char *)str, col);
+        match = vim_regexec_nl(&regmatch, str, col);
       }
       const char *end;
       if (match) {

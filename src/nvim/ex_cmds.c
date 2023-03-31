@@ -4742,7 +4742,7 @@ void ex_oldfiles(exarg_T *eap)
     }
     nr++;
     const char *fname = tv_get_string(TV_LIST_ITEM_TV(li));
-    if (!message_filtered((char *)fname)) {
+    if (!message_filtered(fname)) {
       msg_outnum(nr);
       msg_puts(": ");
       msg_outtrans((char *)tv_get_string(TV_LIST_ITEM_TV(li)));

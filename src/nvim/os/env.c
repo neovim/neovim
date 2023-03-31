@@ -494,7 +494,7 @@ void init_homedir(void)
     // links.  Don't do it when we can't return.
     if (os_dirname(os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
       if (!os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
-        var = (char *)IObuff;
+        var = IObuff;
       }
       if (os_chdir(os_buf) != 0) {
         emsg(_(e_prev_dir));

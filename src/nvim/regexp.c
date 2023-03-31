@@ -2304,10 +2304,10 @@ static uint8_t regname[][30] = {
 // Returns the program in allocated memory.
 // Use vim_regfree() to free the memory.
 // Returns NULL for an error.
-regprog_T *vim_regcomp(char *expr_arg, int re_flags)
+regprog_T *vim_regcomp(const char *expr_arg, int re_flags)
 {
   regprog_T *prog = NULL;
-  char *expr = expr_arg;
+  const char *expr = expr_arg;
 
   regexp_engine = (int)p_re;
 
@@ -2403,7 +2403,7 @@ void free_regexp_stuff(void)
 
 #endif
 
-static void report_re_switch(char *pat)
+static void report_re_switch(const char *pat)
 {
   if (p_verbose > 0) {
     verbose_enter();
@@ -2425,7 +2425,7 @@ static void report_re_switch(char *pat)
 /// @param nl
 ///
 /// @return true if there is a match, false if not.
-static bool vim_regexec_string(regmatch_T *rmp, char *line, colnr_T col, bool nl)
+static bool vim_regexec_string(regmatch_T *rmp, const char *line, colnr_T col, bool nl)
 {
   regexec_T rex_save;
   bool rex_in_use_save = rex_in_use;
@@ -2482,7 +2482,7 @@ static bool vim_regexec_string(regmatch_T *rmp, char *line, colnr_T col, bool nl
 
 // Note: "*prog" may be freed and changed.
 // Return true if there is a match, false if not.
-bool vim_regexec_prog(regprog_T **prog, bool ignore_case, char *line, colnr_T col)
+bool vim_regexec_prog(regprog_T **prog, bool ignore_case, const char *line, colnr_T col)
 {
   regmatch_T regmatch = { .regprog = *prog, .rm_ic = ignore_case };
   bool r = vim_regexec_string(&regmatch, line, col, false);
@@ -2492,7 +2492,7 @@ bool vim_regexec_prog(regprog_T **prog, bool ignore_case, char *line, colnr_T co
 
 // Note: "rmp->regprog" may be freed and changed.
 // Return true if there is a match, false if not.
-bool vim_regexec(regmatch_T *rmp, char *line, colnr_T col)
+bool vim_regexec(regmatch_T *rmp, const char *line, colnr_T col)
 {
   return vim_regexec_string(rmp, line, col, false);
 }
@@ -2500,7 +2500,7 @@ bool vim_regexec(regmatch_T *rmp, char *line, colnr_T col)
 // Like vim_regexec(), but consider a "\n" in "line" to be a line break.
 // Note: "rmp->regprog" may be freed and changed.
 // Return true if there is a match, false if not.
-bool vim_regexec_nl(regmatch_T *rmp, char *line, colnr_T col)
+bool vim_regexec_nl(regmatch_T *rmp, const char *line, colnr_T col)
 {
   return vim_regexec_string(rmp, line, col, true);
 }

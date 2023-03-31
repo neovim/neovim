@@ -939,9 +939,9 @@ int showmode(void)
           }
           if (length - vim_strsize(edit_submode) > 0) {
             if (edit_submode_pre != NULL) {
-              msg_puts_attr((const char *)edit_submode_pre, attr);
+              msg_puts_attr(edit_submode_pre, attr);
             }
-            msg_puts_attr((const char *)edit_submode, attr);
+            msg_puts_attr(edit_submode, attr);
           }
           if (edit_submode_extra != NULL) {
             msg_puts_attr(" ", attr);  // Add a space in between.
@@ -950,7 +950,7 @@ int showmode(void)
             } else {
               sub_attr = attr;
             }
-            msg_puts_attr((const char *)edit_submode_extra, sub_attr);
+            msg_puts_attr(edit_submode_extra, sub_attr);
           }
         }
       } else {
