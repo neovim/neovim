@@ -1635,8 +1635,8 @@ defaulttable({create})                                    *vim.defaulttable()*
 <
 
     Parameters: ~
-      • {create}  (function|nil) The function called to create a missing
-                  value.
+      • {create}  function?(key:any):any The function called to create a
+                  missing value.
 
     Return: ~
         (table) Empty table with metamethod
