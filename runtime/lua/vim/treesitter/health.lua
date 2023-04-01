@@ -22,7 +22,7 @@ function M.check()
         )
       )
     else
-      local lang = ts.language.inspect_language(parsername)
+      local lang = ts.language.inspect(parsername)
       health.report_ok(
         string.format('Parser: %-10s ABI: %d, path: %s', parsername, lang._abi_version, parser)
       )
