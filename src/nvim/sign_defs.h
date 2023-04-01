@@ -35,7 +35,7 @@ struct sign_entry {
 /// Sign attributes. Used by the screen refresh routines.
 typedef struct {
   char *text;
-  int hl_attr_id;
+  int hl_id;
   int priority;
 } SignTextAttrs;
 

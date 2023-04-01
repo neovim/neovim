@@ -959,12 +959,14 @@ bool set_mark(buf_T *buf, String name, Integer line, Integer col, Error *err)
 }
 
 /// Get default statusline highlight for window
-const char *get_default_stl_hl(win_T *wp, bool use_winbar)
+const char *get_default_stl_hl(win_T *wp, bool use_winbar, int stc_hl_id)
 {
   if (wp == NULL) {
     return "TabLineFill";
   } else if (use_winbar) {
     return (wp == curwin) ? "WinBar" : "WinBarNC";
+  } else if (stc_hl_id > 0) {
+    return syn_id2name(stc_hl_id);
   } else {
     return (wp == curwin) ? "StatusLine" : "StatusLineNC";
   }

@@ -1512,7 +1512,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
 
     case STL_LINE:
       // Overload %l with v:lnum for 'statuscolumn'
-      if (opt_name != NULL && strcmp(opt_name, "statuscolumn") == 0) {
+      if (stcp != NULL) {
         if (wp->w_p_nu && !get_vim_var_nr(VV_VIRTNUM)) {
           num = (int)get_vim_var_nr(VV_LNUM);
         }
@@ -1617,7 +1617,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
     case STL_ROFLAG:
     case STL_ROFLAG_ALT:
       // Overload %r with v:relnum for 'statuscolumn'
-      if (opt_name != NULL && strcmp(opt_name, "statuscolumn") == 0) {
+      if (stcp != NULL) {
         if (wp->w_p_rnu && !get_vim_var_nr(VV_VIRTNUM)) {
           num = (int)get_vim_var_nr(VV_RELNUM);
         }
@@ -1652,7 +1652,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       char *p;
       if (fold) {
         size_t n = fill_foldcolumn(out_p, wp, stcp->foldinfo, (linenr_T)get_vim_var_nr(VV_LNUM));
-        stl_items[curitem].minwid = win_hl_attr(wp, stcp->use_cul ? HLF_CLF : HLF_FC);
+        stl_items[curitem].minwid = -((stcp->use_cul ? HLF_CLF : HLF_FC) + 1);
         p = out_p;
         p[n] = NUL;
       }
@@ -1668,9 +1668,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
         } else if (!fold) {
           SignTextAttrs *sattr = virtnum ? NULL : sign_get_attr(i, stcp->sattrs, wp->w_scwidth);
           p = sattr && sattr->text ? sattr->text : "  ";
-          stl_items[curitem].minwid = sattr ? stcp->sign_cul_attr ? stcp->sign_cul_attr
-                                                                  : sattr->hl_attr_id
-                                            : win_hl_attr(wp, stcp->use_cul ? HLF_CLS : HLF_SC);
+          stl_items[curitem].minwid = -(sattr ? stcp->sign_cul_id ? stcp->sign_cul_id
+                                        : sattr->hl_id : (stcp->use_cul ? HLF_CLS : HLF_SC) + 1);
         }
         stl_items[curitem].type = Highlight;
         stl_items[curitem].start = out_p + strlen(buf_tmp);

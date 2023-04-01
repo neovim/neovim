@@ -3421,6 +3421,40 @@ describe('API', function()
             'TextWithNoHighlight%#WarningMsg#TextWithWarningHighlight',
             { use_winbar = true, highlights = true }))
       end)
+      it('works with statuscolumn', function()
+        command([[
+          let &stc='%C%s%=%l '
+          set cul nu nuw=3 scl=yes:2 fdc=2
+          call setline(1, repeat(['aaaaa'], 5))
+          let g:ns = nvim_create_namespace('')
+          call sign_define('a', {'text':'aa', 'texthl':'IncSearch', 'numhl':'Normal'})
+          call sign_place(2, 1, 'a', bufnr(), {'lnum':4})
+          call nvim_buf_set_extmark(0, g:ns, 3, 1, { 'sign_text':'bb', 'sign_hl_group':'ErrorMsg' })
+          1,5fold | 1,5 fold | foldopen!
+        ]])
+        command('norm 4G')
+        command('let v:lnum=4')
+        eq({
+          str = '││aabb 4 ',
+          width = 9,
+          highlights = {
+            { group = 'CursorLineFold', start = 0 },
+            { group = 'Normal', start = 6 },
+            { group = 'IncSearch', start = 6 },
+            { group = 'ErrorMsg', start = 8 },
+            { group = 'Normal', start = 10 }
+          }
+        }, meths.eval_statusline('%C%s%=%l ', { use_statuscol = true, highlights = true }))
+        command('let v:lnum=3')
+        eq({
+          str = '3 ' ,
+          width = 2,
+          highlights = {
+            { group = 'LineNr', start = 0 },
+            { group = 'ErrorMsg', start = 1 }
+          }
+        }, meths.eval_statusline('%l%#ErrorMsg# ', { use_statuscol = true, highlights = true }))
+      end)
       it('no memory leak with click functions', function()
         meths.eval_statusline('%@ClickFunc@StatusLineStringWithClickFunc%T', {})
         eq({
