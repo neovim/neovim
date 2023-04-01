@@ -288,7 +288,7 @@ int nlua_regex(lua_State *lstate)
   regprog_T *prog = NULL;
 
   TRY_WRAP(&err, {
-    prog = vim_regcomp((char *)text, RE_AUTO | RE_MAGIC | RE_STRICT);
+    prog = vim_regcomp(text, RE_AUTO | RE_MAGIC | RE_STRICT);
   });
 
   if (ERROR_SET(&err)) {

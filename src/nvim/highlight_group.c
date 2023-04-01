@@ -1631,7 +1631,7 @@ static bool highlight_list_arg(const int id, bool didh, const int type, int iarg
     }
   }
 
-  (void)syn_list_header(didh, vim_strsize((char *)ts) + (int)strlen(name) + 1, id, false);
+  (void)syn_list_header(didh, vim_strsize(ts) + (int)strlen(name) + 1, id, false);
   didh = true;
   if (!got_int) {
     if (*name != NUL) {

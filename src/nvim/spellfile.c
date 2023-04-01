@@ -608,7 +608,7 @@ slang_T *spell_load_file(char *fname, char *lang, slang_T *old_lp, bool silent)
       semsg(_(e_notopen), fname);
     } else if (p_verbose > 2) {
       verbose_enter();
-      smsg((char *)e_notopen, fname);
+      smsg(e_notopen, fname);
       verbose_leave();
     }
     goto endFAIL;
@@ -4047,7 +4047,7 @@ static int tree_add_word(spellinfo_T *spin, const char_u *word, wordnode_T *root
     node = *prev;
   }
 #ifdef SPELL_PRINTTREE
-  smsg((char_u *)"Added \"%s\"", word);
+  smsg("Added \"%s\"", word);
   spell_print_tree(root->wn_sibling);
 #endif
 

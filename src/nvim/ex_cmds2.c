@@ -201,7 +201,7 @@ void dialog_changed(buf_T *buf, bool checkall)
     .forceit = false,
   };
 
-  dialog_msg((char *)buff, _("Save changes to \"%s\"?"), buf->b_fname);
+  dialog_msg(buff, _("Save changes to \"%s\"?"), buf->b_fname);
   if (checkall) {
     ret = vim_dialog_yesnoallcancel(VIM_QUESTION, NULL, buff, 1);
   } else {

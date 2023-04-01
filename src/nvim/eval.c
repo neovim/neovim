@@ -596,7 +596,7 @@ int var_redir_start(char *name, int append)
 ///   :redir => foo
 ///   :let foo
 ///   :redir END
-void var_redir_str(char *value, int value_len)
+void var_redir_str(const char *value, int value_len)
 {
   if (redir_lval == NULL) {
     return;
@@ -2147,10 +2147,10 @@ int pattern_match(const char *pat, const char *text, bool ic)
   // avoid 'l' flag in 'cpoptions'
   char *save_cpo = p_cpo;
   p_cpo = empty_option;
-  regmatch.regprog = vim_regcomp((char *)pat, RE_MAGIC + RE_STRING);
+  regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
   if (regmatch.regprog != NULL) {
     regmatch.rm_ic = ic;
-    matches = vim_regexec_nl(&regmatch, (char *)text, (colnr_T)0);
+    matches = vim_regexec_nl(&regmatch, text, (colnr_T)0);
     vim_regfree(regmatch.regprog);
   }
   p_cpo = save_cpo;

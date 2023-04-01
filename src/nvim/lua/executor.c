@@ -623,7 +623,7 @@ static bool nlua_init_packages(lua_State *lstate, bool is_standalone)
   lua_getglobal(lstate, "require");
   lua_pushstring(lstate, "vim._init_packages");
   if (nlua_pcall(lstate, 1, 0)) {
-    os_errmsg((char *)lua_tostring(lstate, -1));
+    os_errmsg(lua_tostring(lstate, -1));
     os_errmsg("\n");
     return false;
   }
