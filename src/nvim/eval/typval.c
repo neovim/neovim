@@ -2868,7 +2868,7 @@ void f_list2blob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     varnumber_T n = tv_get_number_chk(TV_LIST_ITEM_TV(li), &error);
     if (error || n < 0 || n > 255) {
       if (!error) {
-        semsg(_(e_invalid_value_for_blob_nr), n);
+        semsg(_(e_invalid_value_for_blob_nr), (int)n);
       }
       ga_clear(&blob->bv_ga);
       return;

@@ -1918,7 +1918,7 @@ static int nfa_regatom(void)
   case Magic('|'):
   case Magic('&'):
   case Magic(')'):
-    semsg(_(e_misplaced), (int64_t)no_Magic(c));  // -V1037
+    semsg(_(e_misplaced), (char)no_Magic(c));  // -V1037
     return FAIL;
 
   case Magic('='):
@@ -1928,7 +1928,7 @@ static int nfa_regatom(void)
   case Magic('*'):
   case Magic('{'):
     // these should follow an atom, not form an atom
-    semsg(_(e_misplaced), (int64_t)no_Magic(c));
+    semsg(_(e_misplaced), (char)no_Magic(c));
     return FAIL;
 
   case Magic('~'): {
