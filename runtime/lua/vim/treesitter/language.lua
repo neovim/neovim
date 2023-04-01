@@ -4,7 +4,9 @@ local a = vim.api
 local M = {}
 
 ---@type table<string,string>
-local ft_to_lang = {}
+local ft_to_lang = {
+  help = 'vimdoc',
+}
 
 --- Get the filetypes associated with the parser named {lang}.
 --- @param lang string Name of parser

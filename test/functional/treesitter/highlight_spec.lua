@@ -575,14 +575,14 @@ describe('treesitter highlighting', function()
 
     exec_lua [[
       local parser = vim.treesitter.get_parser(0, "c")
-      test_hl = vim.treesitter.highlighter.new(parser, {queries = {c = hl_query..'\n((translation_unit) @Error (set! "priority" 101))\n'}})
+      test_hl = vim.treesitter.highlighter.new(parser, {queries = {c = hl_query..'\n((translation_unit) @constant (#set! "priority" 101))\n'}})
     ]]
-    -- expect everything to have Error highlight
+    -- expect everything to have Constant highlight
     screen:expect{grid=[[
       {12:int}{8: x = INT_MAX;}                                                 |
-      {8:#define READ_STRING(x, y) (}{12:char_u}{8: *)read_string((x), (}{12:size_t}{8:)(y))}|
-      {8:#define foo }{12:void}{8: main() { \}                                      |
-      {8:              }{12:return}{8: 42;  \}                                      |
+      {8:#define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))}|
+      {8:#define foo void main() { \}                                      |
+      {8:              return 42;  \}                                      |
       {8:            }}                                                    |
       ^                                                                 |
       {1:~                                                                }|
@@ -599,13 +599,13 @@ describe('treesitter highlighting', function()
                                                                        |
     ]], attr_ids={
       [1] = {bold = true, foreground = Screen.colors.Blue1};
-      [8] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red};
+      [8] = {foreground = Screen.colors.Magenta1};
       -- bold will not be overwritten at the moment
-      [12] = {background = Screen.colors.Red, bold = true, foreground = Screen.colors.Grey100};
+      [12] = {bold = true, foreground = Screen.colors.Magenta1};
     }}
 
     eq({
-      {capture='Error', metadata = { priority='101' }, lang='c' };
+      {capture='constant', metadata = { priority='101' }, lang='c' };
       {capture='type', metadata = { }, lang='c' };
     }, exec_lua [[ return vim.treesitter.get_captures_at_pos(0, 0, 2) ]])
     end)

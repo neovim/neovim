@@ -38,9 +38,9 @@ BuildTSParser(
   CMAKE_FILE TreesitterParserCMakeLists.txt)
 
 BuildTSParser(
-  LANG help
-  URL ${TREESITTER_HELP_URL}
-  SHA256 ${TREESITTER_HELP_SHA256}
+  LANG vimdoc
+  URL ${TREESITTER_VIMDOC_URL}
+  SHA256 ${TREESITTER_VIMDOC_SHA256}
   CMAKE_FILE TreesitterParserCMakeLists.txt)
 
 BuildTSParser(

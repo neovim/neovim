@@ -195,7 +195,7 @@ treesitter queries from Lua.
 TREESITTER QUERY PREDICATES                            *treesitter-predicates*
 
 Predicates are special scheme nodes that are evaluated to conditionally capture
-nodes. For example, the `eq?` predicate can be used as follows: >
+nodes. For example, the `eq?` predicate can be used as follows: >query
 
     ((identifier) @foo (#eq? @foo "foo"))
 <
@@ -204,13 +204,13 @@ to only match identifier corresponding to the `"foo"` text.
 The following predicates are built in:
 
     `eq?`                                            *treesitter-predicate-eq?*
-        Match a string against the text corresponding to a node: >
+        Match a string against the text corresponding to a node: >query
             ((identifier) @foo (#eq? @foo "foo"))
             ((node1) @left (node2) @right (#eq? @left @right))
 <
     `match?`                                      *treesitter-predicate-match?*
     `vim-match?`                              *treesitter-predicate-vim-match?*
-         Match a |regexp| against the text corresponding to a node: >
+         Match a |regexp| against the text corresponding to a node: >query
             ((identifier) @constant (#match? @constant "^[A-Z_]+$"))
 <         Note: The `^` and `$` anchors will match the start and end of the
                node's text.
@@ -220,13 +220,14 @@ The following predicates are built in:
          similar to `match?`
 
     `contains?`                                *treesitter-predicate-contains?*
-        Match a string against parts of the text corresponding to a node: >
+        Match a string against parts of the text corresponding to a node:
+        >query
             ((identifier) @foo (#contains? @foo "foo"))
             ((identifier) @foo-bar (#contains? @foo-bar "foo" "bar"))
 <
     `any-of?`                                    *treesitter-predicate-any-of?*
         Match any of the given strings against the text corresponding to
-        a node: >
+        a node: >query
             ((identifier) @foo (#any-of? @foo "foo" "bar"))
 <
         This is the recommended way to check if the node matches one of many
@@ -243,7 +244,7 @@ Use |vim.treesitter.query.list_predicates()| to list all available predicates.
 TREESITTER QUERY DIRECTIVES                            *treesitter-directives*
 
 Treesitter directives store metadata for a node or match and perform side
-effects. For example, the `set!` directive sets metadata on the match or node: >
+effects. For example, the `set!` directive sets metadata on the match or node: >query
 
         ((identifier) @foo (#set! "type" "parameter"))
 <
@@ -259,7 +260,7 @@ The following directives are built in:
             {key}
             {value}
 
-        Examples: >
+        Examples: >query
             ((identifier) @foo (#set! @foo "kind" "parameter"))
             ((node1) @left (node2) @right (#set! "type" "pair"))
 <
@@ -275,7 +276,7 @@ The following directives are built in:
             {end_row}
             {end_col}
 
-        Example: >
+        Example: >query
             ((identifier) @constant (#offset! @constant 0 1 0 -1))
 <
 
@@ -304,7 +305,8 @@ currently supported modeline alternatives:
         a base depends on your 'runtimepath' value.
 
 Note: These modeline comments must be at the top of the query, but can be
-repeated, for example, the following two modeline blocks are both valid: >
+repeated, for example, the following two modeline blocks are both valid:
+>query
 
     ;; inherits: foo,bar
     ;; extends
@@ -318,13 +320,13 @@ TREESITTER SYNTAX HIGHLIGHTING                          *treesitter-highlight*
 
 Syntax highlighting is specified through queries named `highlights.scm`,
 which match a |TSNode| in the parsed |TSTree| to a `capture` that can be
-assigned a highlight group. For example, the query >
+assigned a highlight group. For example, the query >query
 
     (parameters (identifier) @parameter)
 <
 matches any `identifier` node inside a function `parameter` node (e.g., the
 `bar` in `foo(bar)`) to the capture named `@parameter`. It is also possible to
-match literal expressions (provided the parser returns them): >
+match literal expressions (provided the parser returns them): >query
 
     "return" @keyword.return
 <
@@ -409,7 +411,7 @@ The following captures are linked by default to standard |group-name|s:
                                                   *treesitter-highlight-spell*
 The special `@spell` capture can be used to indicate that a node should be
 spell checked by Nvim's builtin |spell| checker. For example, the following
-capture marks comments as to be checked: >
+capture marks comments as to be checked: >query
 
     (comment) @spell
 <
@@ -420,14 +422,14 @@ There is also `@nospell` which disables spellchecking regions with `@spell`.
 Treesitter highlighting supports |conceal| via the `conceal` metadata. By
 convention, nodes to be concealed are captured as `@conceal`, but any capture
 can be used. For example, the following query can be used to hide code block
-delimiters in Markdown: >
+delimiters in Markdown: >query
 
-    (fenced_code_block_delimiter) @conceal (#set! conceal "")
+    (fenced_code_block_delimiter @conceal (#set! conceal ""))
 <
 It is also possible to replace a node with a single character, which (unlike
 legacy syntax) can be given a custom highlight. For example, the following
 (ill-advised) query replaces the `!=` operator by a Unicode glyph, which is
-still highlighted the same as other operators: >
+still highlighted the same as other operators: >query
 
     "!=" @operator (#set! conceal "≠")
 <
@@ -438,9 +440,10 @@ Treesitter uses |nvim_buf_set_extmark()| to set highlights with a default
 priority of 100. This enables plugins to set a highlighting priority lower or
 higher than tree-sitter. It is also possible to change the priority of an
 individual query pattern manually by setting its `"priority"` metadata
-attribute: >
+attribute: >query
 
-    (super_important_node) @ImportantHighlight (#set! "priority" 105)
+    ((super_important_node) @superimportant (#set! "priority" 105))
+<
 
 ==============================================================================
 TREESITTER LANGUAGE INJECTIONS                *treesitter-language-injections*

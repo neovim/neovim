@@ -271,7 +271,7 @@
   ":"
 ] @punctuation.delimiter
 
-(ternary_expression ["?" ":"] @conditional)
+(ternary_expression ["?" ":"] @conditional.ternary)
 
 ; Options
 ((set_value) @number
