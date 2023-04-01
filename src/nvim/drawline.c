@@ -2484,15 +2484,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
               && wlv.line_attr == 0
               && wlv.line_attr_lowprio == 0) {
             // In virtualedit, visual selections may extend beyond end of line
-            if (area_highlighting && virtual_active()
-                && wlv.tocol != MAXCOL && wlv.vcol < wlv.tocol) {
-              wlv.n_extra = 0;
-            } else {
+            if (!(area_highlighting && virtual_active()
+                  && wlv.tocol != MAXCOL && wlv.vcol < wlv.tocol)) {
               wlv.p_extra = at_end_str;
-              wlv.n_extra = 1;
-              wlv.c_extra = NUL;
-              wlv.c_final = NUL;
             }
+            wlv.n_extra = 0;
           }
           if (wp->w_p_list && wp->w_p_lcs_chars.eol > 0) {
             c = wp->w_p_lcs_chars.eol;
@@ -2869,7 +2865,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         && !has_fold
         && (*ptr != NUL
             || lcs_eol_one > 0
-            || (wlv.n_extra && (wlv.c_extra != NUL || *wlv.p_extra != NUL)))) {
+            || (wlv.n_extra > 0 && (wlv.c_extra != NUL || *wlv.p_extra != NUL)))) {
       c = wp->w_p_lcs_chars.ext;
       wlv.char_attr = win_hl_attr(wp, HLF_AT);
       mb_c = c;
