@@ -622,3 +622,17 @@ it('K_EVENT does not trigger a statusline redraw unnecessarily', function()
   sleep(50)
   eq(1, eval('g:counter < 50'), 'g:counter=' .. eval('g:counter'))
 end)
+
+it('statusline is redrawn on recording state change #22683', function()
+  clear()
+  local screen = Screen.new(40, 4)
+  screen:attach()
+  command('set ls=2 stl=%{repeat(reg_recording(),5)}')
+  feed('qQ')
+  screen:expect([[
+    ^                                        |
+    ~                                       |
+    QQQQQ                                   |
+    recording @Q                            |
+  ]])
+end)

@@ -827,6 +827,7 @@ void show_cursor_info_later(bool force)
       || curwin->w_buffer->b_ml.ml_line_count != curwin->w_stl_line_count
       || curwin->w_topfill != curwin->w_stl_topfill
       || empty_line != curwin->w_stl_empty
+      || reg_recording != curwin->w_stl_recording
       || state != curwin->w_stl_state) {
     if (curwin->w_status_height || global_stl_height()) {
       curwin->w_redr_status = true;
@@ -851,6 +852,7 @@ void show_cursor_info_later(bool force)
   curwin->w_stl_line_count = curwin->w_buffer->b_ml.ml_line_count;
   curwin->w_stl_topfill = curwin->w_topfill;
   curwin->w_stl_state = state;
+  curwin->w_stl_recording = reg_recording;
 }
 
 /// @return true when postponing displaying the mode message: when not redrawing
