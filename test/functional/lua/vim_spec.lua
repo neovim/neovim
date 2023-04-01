@@ -2915,6 +2915,15 @@ describe('lua stdlib', function()
         return a
       ]])
     end)
+
+    it('accepts the key name', function()
+      eq({ b = 'b', c = 'c' }, exec_lua [[
+        local a = vim.defaulttable(function(k) return k end)
+        local _ = a.b
+        local _ = a.c
+        return a
+      ]])
+    end)
   end)
 
   it('vim.lua_omnifunc', function()
