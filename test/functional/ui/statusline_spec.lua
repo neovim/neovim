@@ -621,4 +621,30 @@ it('K_EVENT does not trigger a statusline redraw unnecessarily', function()
   ]])
   sleep(50)
   eq(1, eval('g:counter < 50'), 'g:counter=' .. eval('g:counter'))
+
+end)
+
+it('ruler is redrawn in cmdline with redrawstatus #22804', function()
+  clear()
+  local screen = Screen.new(40, 8)
+  screen:attach()
+  command([[
+    let g:n = 'initial value'
+    set laststatus=1
+    set ruler
+    set rulerformat=%{g:n}
+    redraw
+    let g:n = 'other value'
+    redrawstatus
+  ]])
+  screen:expect([[
+    ^                                        |
+    ~                                       |
+    ~                                       |
+    ~                                       |
+    ~                                       |
+    ~                                       |
+    ~                                       |
+                          other value       |
+  ]])
 end)
