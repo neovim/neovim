@@ -86,15 +86,15 @@
 
 #define DICT_MAXNEST 100        // maximum nesting of lists and dicts
 
-static char *e_missbrac = N_("E111: Missing ']'");
-static char *e_list_end = N_("E697: Missing end of List ']': %s");
-static char *e_dictrange = N_("E719: Cannot use [:] with a Dictionary");
-static char *e_nowhitespace
+static const char *e_missbrac = N_("E111: Missing ']'");
+static const char *e_list_end = N_("E697: Missing end of List ']': %s");
+static const char *e_dictrange = N_("E719: Cannot use [:] with a Dictionary");
+static const char *e_nowhitespace
   = N_("E274: No white space allowed before parenthesis");
-static char *e_write2 = N_("E80: Error while writing: %s");
-static char *e_string_list_or_blob_required = N_("E1098: String, List or Blob required");
-static char e_expression_too_recursive_str[] = N_("E1169: Expression too recursive: %s");
-static char e_dot_can_only_be_used_on_dictionary_str[]
+static const char *e_write2 = N_("E80: Error while writing: %s");
+static const char *e_string_list_or_blob_required = N_("E1098: String, List or Blob required");
+static const char e_expression_too_recursive_str[] = N_("E1169: Expression too recursive: %s");
+static const char e_dot_can_only_be_used_on_dictionary_str[]
   = N_("E1203: Dot can only be used on a dictionary: %s");
 
 static char * const namespace_char = "abglstvw";

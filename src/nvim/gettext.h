@@ -3,7 +3,7 @@
 
 #ifdef HAVE_WORKING_LIBINTL
 # include <libintl.h>
-# define _(x) gettext((char *)(x))
+# define _(x) gettext(x)
 // XXX do we actually need this?
 # ifdef gettext_noop
 #  define N_(x) gettext_noop(x)
@@ -17,7 +17,7 @@
 #  undef setlocale
 # endif
 #else
-# define _(x) ((char *)(x))
+# define _(x) (x)
 # define N_(x) x
 # define NGETTEXT(x, xs, n) ((n) == 1 ? (x) : (xs))
 # define bindtextdomain(x, y)  // empty

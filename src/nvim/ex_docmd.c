@@ -85,15 +85,15 @@
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
-static char e_ambiguous_use_of_user_defined_command[]
+static const char e_ambiguous_use_of_user_defined_command[]
   = N_("E464: Ambiguous use of user-defined command");
-static char e_not_an_editor_command[]
+static const char e_not_an_editor_command[]
   = N_("E492: Not an editor command");
-static char e_no_source_file_name_to_substitute_for_sfile[]
+static const char e_no_source_file_name_to_substitute_for_sfile[]
   = N_("E498: no :source file name to substitute for \"<sfile>\"");
-static char e_no_call_stack_to_substitute_for_stack[]
+static const char e_no_call_stack_to_substitute_for_stack[]
   = N_("E489: no call stack to substitute for \"<stack>\"");
-static char e_no_script_file_name_to_substitute_for_script[]
+static const char e_no_script_file_name_to_substitute_for_script[]
   = N_("E1274: No script file name to substitute for \"<script>\"");
 
 static int quitmore = 0;

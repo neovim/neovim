@@ -50,8 +50,8 @@
 
 #define DICT_MAXNEST 100        // maximum nesting of lists and dicts
 
-static char *e_letunexp = N_("E18: Unexpected characters in :let");
-static char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s");
+static const char *e_letunexp = N_("E18: Unexpected characters in :let");
+static const char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s");
 
 /// Get a list of lines from a HERE document. The here document is a list of
 /// lines surrounded by a marker.
@@ -693,7 +693,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
 
       if (!failed) {
         if (opt_type != gov_string || s != NULL) {
-          char *err = set_option_value(arg, (long)n, s, scope);
+          const char *err = set_option_value(arg, (long)n, s, scope);
           arg_end = p;
           if (err != NULL) {
             emsg(_(err));

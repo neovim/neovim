@@ -1055,7 +1055,7 @@ void ex_break(exarg_T *eap)
 void ex_endwhile(exarg_T *eap)
 {
   cstack_T *const cstack = eap->cstack;
-  char *err;
+  const char *err;
   int csf;
 
   if (eap->cmdidx == CMD_endwhile) {

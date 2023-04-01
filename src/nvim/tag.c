@@ -188,11 +188,11 @@ typedef struct {
 # include "tag.c.generated.h"
 #endif
 
-static char *bottommsg = N_("E555: at bottom of tag stack");
-static char *topmsg = N_("E556: at top of tag stack");
-static char *recurmsg = N_("E986: cannot modify the tag stack within tagfunc");
-static char *tfu_inv_ret_msg = N_("E987: invalid return value from tagfunc");
-static char e_window_unexpectedly_close_while_searching_for_tags[]
+static const char *bottommsg = N_("E555: at bottom of tag stack");
+static const char *topmsg = N_("E556: at top of tag stack");
+static const char *recurmsg = N_("E986: cannot modify the tag stack within tagfunc");
+static const char *tfu_inv_ret_msg = N_("E987: invalid return value from tagfunc");
+static const char e_window_unexpectedly_close_while_searching_for_tags[]
   = N_("E1299: Window unexpectedly closed while searching for tags");
 
 static char *tagmatchname = NULL;   // name of last used tag
@@ -210,7 +210,7 @@ static Callback tfu_cb;         // 'tagfunc' callback function
 /// Reads the 'tagfunc' option value and convert that to a callback value.
 /// Invoked when the 'tagfunc' option is set. The option value can be a name of
 /// a function (string), or function(<name>) or funcref(<name>) or a lambda.
-void set_tagfunc_option(char **errmsg)
+void set_tagfunc_option(const char **errmsg)
 {
   callback_free(&tfu_cb);
   callback_free(&curbuf->b_tfu_cb);

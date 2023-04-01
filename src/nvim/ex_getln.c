@@ -2753,7 +2753,7 @@ void text_locked_msg(void)
   emsg(_(get_text_locked_msg()));
 }
 
-char *get_text_locked_msg(void)
+const char *get_text_locked_msg(void)
 {
   if (cmdwin_type != 0) {
     return e_cmdwin;
@@ -4274,7 +4274,7 @@ void cmdline_init(void)
 
 /// Check value of 'cedit' and set cedit_key.
 /// Returns NULL if value is OK, error message otherwise.
-char *check_cedit(void)
+const char *check_cedit(void)
 {
   if (*p_cedit == NUL) {
     cedit_key = -1;

@@ -187,8 +187,8 @@ typedef enum {
   CP_FAST = 32,          ///< use fast_breakcheck instead of os_breakcheck
 } cp_flags_T;
 
-static char e_hitend[] = N_("Hit end of paragraph");
-static char e_compldel[] = N_("E840: Completion function deleted text");
+static const char e_hitend[] = N_("Hit end of paragraph");
+static const char e_compldel[] = N_("E840: Completion function deleted text");
 
 // All the current matches are stored in a list.
 // "compl_first_match" points to the start of the list.
@@ -2257,7 +2257,7 @@ static void copy_global_to_buflocal_cb(Callback *globcb, Callback *bufcb)
 /// Invoked when the 'completefunc' option is set. The option value can be a
 /// name of a function (string), or function(<name>) or funcref(<name>) or a
 /// lambda expression.
-void set_completefunc_option(char **errmsg)
+void set_completefunc_option(const char **errmsg)
 {
   if (option_set_callback_func(curbuf->b_p_cfu, &cfu_cb) == FAIL) {
     *errmsg = e_invarg;
@@ -2278,7 +2278,7 @@ void set_buflocal_cfu_callback(buf_T *buf)
 /// Invoked when the 'omnifunc' option is set. The option value can be a
 /// name of a function (string), or function(<name>) or funcref(<name>) or a
 /// lambda expression.
-void set_omnifunc_option(buf_T *buf, char **errmsg)
+void set_omnifunc_option(buf_T *buf, const char **errmsg)
 {
   if (option_set_callback_func(buf->b_p_ofu, &ofu_cb) == FAIL) {
     *errmsg = e_invarg;
@@ -2298,7 +2298,7 @@ void set_buflocal_ofu_callback(buf_T *buf)
 /// Invoked when the 'thesaurusfunc' option is set. The option value can be a
 /// name of a function (string), or function(<name>) or funcref(<name>) or a
 /// lambda expression.
-void set_thesaurusfunc_option(char **errmsg)
+void set_thesaurusfunc_option(const char **errmsg)
 {
   int retval;
 

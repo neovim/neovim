@@ -3619,9 +3619,9 @@ bool valid_spellfile(const char *val)
   return true;
 }
 
-char *did_set_spell_option(bool is_spellfile)
+const char *did_set_spell_option(bool is_spellfile)
 {
-  char *errmsg = NULL;
+  const char *errmsg = NULL;
 
   if (is_spellfile) {
     int l = (int)strlen(curwin->w_s->b_p_spf);
@@ -3646,7 +3646,7 @@ char *did_set_spell_option(bool is_spellfile)
 
 /// Set curbuf->b_cap_prog to the regexp program for 'spellcapcheck'.
 /// Return error message when failed, NULL when OK.
-char *compile_cap_prog(synblock_T *synblock)
+const char *compile_cap_prog(synblock_T *synblock)
   FUNC_ATTR_NONNULL_ALL
 {
   regprog_T *rp = synblock->b_cap_prog;

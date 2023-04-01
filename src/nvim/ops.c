@@ -5628,7 +5628,7 @@ static void op_colon(oparg_T *oap)
 static Callback opfunc_cb;
 
 /// Process the 'operatorfunc' option value.
-void set_operatorfunc_option(char **errmsg)
+void set_operatorfunc_option(const char **errmsg)
 {
   if (option_set_callback_func(p_opfunc, &opfunc_cb) == FAIL) {
     *errmsg = e_invarg;

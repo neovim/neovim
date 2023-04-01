@@ -65,11 +65,11 @@ static funccall_T *current_funccal = NULL;
 // item in it is still being used.
 static funccall_T *previous_funccal = NULL;
 
-static char *e_funcexts = N_("E122: Function %s already exists, add ! to replace it");
-static char *e_funcdict = N_("E717: Dictionary entry already exists");
-static char *e_funcref = N_("E718: Funcref required");
-static char *e_nofunc = N_("E130: Unknown function: %s");
-static char e_no_white_space_allowed_before_str_str[]
+static const char *e_funcexts = N_("E122: Function %s already exists, add ! to replace it");
+static const char *e_funcdict = N_("E717: Dictionary entry already exists");
+static const char *e_funcref = N_("E718: Funcref required");
+static const char *e_nofunc = N_("E130: Unknown function: %s");
+static const char e_no_white_space_allowed_before_str_str[]
   = N_("E1068: No white space allowed before '%s': %s");
 
 void func_init(void)
@@ -421,9 +421,9 @@ char *deref_func_name(const char *name, int *lenp, partial_T **const partialp, b
 
 /// Give an error message with a function name.  Handle <SNR> things.
 ///
-/// @param ermsg must be passed without translation (use N_() instead of _()).
+/// @param errmsg must be passed without translation (use N_() instead of _()).
 /// @param name function name
-void emsg_funcname(char *ermsg, const char *name)
+void emsg_funcname(const char *errmsg, const char *name)
 {
   char *p;
 
@@ -433,7 +433,7 @@ void emsg_funcname(char *ermsg, const char *name)
     p = (char *)name;
   }
 
-  semsg(_(ermsg), p);
+  semsg(_(errmsg), p);
 
   if (p != name) {
     xfree(p);

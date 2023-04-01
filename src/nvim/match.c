@@ -42,7 +42,7 @@
 # include "match.c.generated.h"
 #endif
 
-static char *e_invalwindow = N_("E957: Invalid window number");
+static const char *e_invalwindow = N_("E957: Invalid window number");
 
 #define SEARCH_HL_PRIORITY 0
 

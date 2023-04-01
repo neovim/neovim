@@ -105,17 +105,17 @@
 # include "nvim/arglist.h"
 #endif
 
-static char e_unknown_option[]
+static const char e_unknown_option[]
   = N_("E518: Unknown option");
-static char e_not_allowed_in_modeline[]
+static const char e_not_allowed_in_modeline[]
   = N_("E520: Not allowed in a modeline");
-static char e_not_allowed_in_modeline_when_modelineexpr_is_off[]
+static const char e_not_allowed_in_modeline_when_modelineexpr_is_off[]
   = N_("E992: Not allowed in a modeline when 'modelineexpr' is off");
-static char e_key_code_not_set[]
+static const char e_key_code_not_set[]
   = N_("E846: Key code not set");
-static char e_number_required_after_equal[]
+static const char e_number_required_after_equal[]
   = N_("E521: Number required after =");
-static char e_preview_window_already_exists[]
+static const char e_preview_window_already_exists[]
   = N_("E590: A preview window already exists");
 
 static char *p_term = NULL;
@@ -747,7 +747,7 @@ void ex_set(exarg_T *eap)
 }
 
 static void do_set_bool(int opt_idx, int opt_flags, int prefix, int nextchar, const char *varp,
-                        char **errmsg)
+                        const char **errmsg)
 {
   varnumber_T value;
 
@@ -777,7 +777,7 @@ static void do_set_bool(int opt_idx, int opt_flags, int prefix, int nextchar, co
 }
 
 static void do_set_num(int opt_idx, int opt_flags, char **argp, int nextchar, const set_op_T op,
-                       const char *varp, char *errbuf, size_t errbuflen, char **errmsg)
+                       const char *varp, char *errbuf, size_t errbuflen, const char **errmsg)
 {
   varnumber_T value;
   char *arg = *argp;
@@ -911,7 +911,7 @@ static void munge_string_opt_val(char **varp, char **oldval, char **const origva
 /// Part of do_set() for string options.
 static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, set_op_T op_arg,
                           uint32_t flags, char *varp_arg, char *errbuf, size_t errbuflen,
-                          int *value_checked, char **errmsg)
+                          int *value_checked, const char **errmsg)
 {
   char *arg = *argp;
   set_op_T op = op_arg;
@@ -1265,7 +1265,7 @@ static int parse_option_name(char *arg, int *keyp, int *lenp, int *opt_idxp)
 }
 
 static int validate_opt_idx(win_T *win, int opt_idx, int opt_flags, uint32_t flags, int prefix,
-                            char **errmsg)
+                            const char **errmsg)
 {
   // Only bools can have a prefix of 'inv' or 'no'
   if (!(flags & P_BOOL) && prefix != 1) {
@@ -1318,7 +1318,7 @@ static int validate_opt_idx(win_T *win, int opt_idx, int opt_flags, uint32_t fla
 
 static void do_set_option_value(int opt_idx, int opt_flags, char **argp, int prefix, int nextchar,
                                 set_op_T op, uint32_t flags, char *varp, char *errbuf,
-                                size_t errbuflen, char **errmsg)
+                                size_t errbuflen, const char **errmsg)
 {
   int value_checked = false;
   if (flags & P_BOOL) {        // boolean
@@ -1343,7 +1343,7 @@ static void do_set_option_value(int opt_idx, int opt_flags, char **argp, int pre
 }
 
 static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errbuf,
-                          size_t errbuflen, char **errmsg)
+                          size_t errbuflen, const char **errmsg)
 {
   // 1: nothing, 0: "no", 2: "inv" in front of name
   int prefix = get_option_prefix(argp);
@@ -1521,7 +1521,7 @@ int do_set(char *arg, int opt_flags)
         }
       } else {
         char *startarg = arg;             // remember for error message
-        char *errmsg = NULL;
+        const char *errmsg = NULL;
         char errbuf[80];
 
         do_set_option(opt_flags, &arg, &did_show, errbuf, sizeof(errbuf), &errmsg);
@@ -1992,12 +1992,12 @@ static void apply_optionset_autocmd(int opt_idx, long opt_flags, long oldval, lo
 /// @param[in]  opt_flags  OPT_LOCAL and/or OPT_GLOBAL.
 ///
 /// @return NULL on success, error message on error.
-static char *set_bool_option(const int opt_idx, char *const varp, const int value,
-                             const int opt_flags)
+static const char *set_bool_option(const int opt_idx, char *const varp, const int value,
+                                   const int opt_flags)
 {
   int old_value = *(int *)varp;
   int old_global_value = 0;
-  char *errmsg = NULL;
+  const char *errmsg = NULL;
 
   // Disallow changing some options from secure mode
   if ((secure || sandbox != 0)
@@ -2274,10 +2274,10 @@ static char *set_bool_option(const int opt_idx, char *const varp, const int valu
 /// @param[in]  opt_flags  OPT_LOCAL, OPT_GLOBAL or OPT_MODELINE.
 ///
 /// @return NULL on success, error message on error.
-static char *set_num_option(int opt_idx, char *varp, long value, char *errbuf, size_t errbuflen,
-                            int opt_flags)
+static const char *set_num_option(int opt_idx, char *varp, long value, char *errbuf,
+                                  size_t errbuflen, int opt_flags)
 {
-  char *errmsg = NULL;
+  const char *errmsg = NULL;
   long old_value = *(long *)varp;
   long old_global_value = 0;  // only used when setting a local and global option
   long old_Rows = Rows;       // remember old Rows
@@ -3078,8 +3078,8 @@ vimoption_T *get_option(int opt_idx)
 ///                        on the option).
 ///
 /// @return NULL on success, an untranslated error message on error.
-char *set_option_value(const char *const name, const long number, const char *const string,
-                       const int opt_flags)
+const char *set_option_value(const char *const name, const long number, const char *const string,
+                             const int opt_flags)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   static char errbuf[80];
@@ -3154,7 +3154,7 @@ char *set_option_value(const char *const name, const long number, const char *co
 /// @param opt_flags  OPT_LOCAL or 0 (both)
 void set_option_value_give_err(const char *name, long number, const char *string, int opt_flags)
 {
-  char *errmsg = set_option_value(name, number, string, opt_flags);
+  const char *errmsg = set_option_value(name, number, string, opt_flags);
 
   if (errmsg != NULL) {
     emsg(_(errmsg));
