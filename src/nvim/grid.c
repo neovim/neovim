@@ -657,22 +657,22 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
 void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy, bool valid)
 {
   int new_row;
-  ScreenGrid new = *grid;
+  ScreenGrid ngrid = *grid;
   assert(rows >= 0 && columns >= 0);
   size_t ncells = (size_t)rows * (size_t)columns;
-  new.chars = xmalloc(ncells * sizeof(schar_T));
-  new.attrs = xmalloc(ncells * sizeof(sattr_T));
-  new.line_offset = xmalloc((size_t)rows * sizeof(*new.line_offset));
-  new.line_wraps = xmalloc((size_t)rows * sizeof(*new.line_wraps));
+  ngrid.chars = xmalloc(ncells * sizeof(schar_T));
+  ngrid.attrs = xmalloc(ncells * sizeof(sattr_T));
+  ngrid.line_offset = xmalloc((size_t)rows * sizeof(*ngrid.line_offset));
+  ngrid.line_wraps = xmalloc((size_t)rows * sizeof(*ngrid.line_wraps));
 
-  new.rows = rows;
-  new.cols = columns;
+  ngrid.rows = rows;
+  ngrid.cols = columns;
 
-  for (new_row = 0; new_row < new.rows; new_row++) {
-    new.line_offset[new_row] = (size_t)new_row * (size_t)new.cols;
-    new.line_wraps[new_row] = false;
+  for (new_row = 0; new_row < ngrid.rows; new_row++) {
+    ngrid.line_offset[new_row] = (size_t)new_row * (size_t)ngrid.cols;
+    ngrid.line_wraps[new_row] = false;
 
-    grid_clear_line(&new, new.line_offset[new_row], columns, valid);
+    grid_clear_line(&ngrid, ngrid.line_offset[new_row], columns, valid);
 
     if (copy) {
       // If the screen is not going to be cleared, copy as much as
@@ -680,18 +680,18 @@ void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy, bool valid)
       // (used when resizing the window at the "--more--" prompt or when
       // executing an external command, for the GUI).
       if (new_row < grid->rows && grid->chars != NULL) {
-        int len = MIN(grid->cols, new.cols);
-        memmove(new.chars + new.line_offset[new_row],
+        int len = MIN(grid->cols, ngrid.cols);
+        memmove(ngrid.chars + ngrid.line_offset[new_row],
                 grid->chars + grid->line_offset[new_row],
                 (size_t)len * sizeof(schar_T));
-        memmove(new.attrs + new.line_offset[new_row],
+        memmove(ngrid.attrs + ngrid.line_offset[new_row],
                 grid->attrs + grid->line_offset[new_row],
                 (size_t)len * sizeof(sattr_T));
       }
     }
   }
   grid_free(grid);
-  *grid = new;
+  *grid = ngrid;
 
   // Share a single scratch buffer for all grids, by
   // ensuring it is as wide as the widest grid.

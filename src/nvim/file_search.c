@@ -1117,28 +1117,28 @@ static int ff_check_visited(ff_visited_T **visited_list, char *fname, char *wc_p
 static ff_stack_T *ff_create_stack_element(char *fix_part, char *wc_part, int level,
                                            int star_star_empty)
 {
-  ff_stack_T *new = xmalloc(sizeof(ff_stack_T));
+  ff_stack_T *stack = xmalloc(sizeof(ff_stack_T));
 
-  new->ffs_prev          = NULL;
-  new->ffs_filearray     = NULL;
-  new->ffs_filearray_size = 0;
-  new->ffs_filearray_cur  = 0;
-  new->ffs_stage         = 0;
-  new->ffs_level         = level;
-  new->ffs_star_star_empty = star_star_empty;
+  stack->ffs_prev          = NULL;
+  stack->ffs_filearray     = NULL;
+  stack->ffs_filearray_size = 0;
+  stack->ffs_filearray_cur  = 0;
+  stack->ffs_stage         = 0;
+  stack->ffs_level         = level;
+  stack->ffs_star_star_empty = star_star_empty;
 
   // the following saves NULL pointer checks in vim_findfile
   if (fix_part == NULL) {
     fix_part = "";
   }
-  new->ffs_fix_path = xstrdup(fix_part);
+  stack->ffs_fix_path = xstrdup(fix_part);
 
   if (wc_part == NULL) {
     wc_part = "";
   }
-  new->ffs_wc_path = xstrdup(wc_part);
+  stack->ffs_wc_path = xstrdup(wc_part);
 
-  return new;
+  return stack;
 }
 
 /// Push a dir on the directory stack.

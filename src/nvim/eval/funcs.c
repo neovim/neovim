@@ -3996,7 +3996,7 @@ static dict_T *create_environment(const dictitem_T *job_env, const bool clear_en
 
   if (!clear_env) {
     typval_T temp_env = TV_INITIAL_VALUE;
-    f_environ(NULL, &temp_env, (EvalFuncData){ .nullptr = NULL });
+    f_environ(NULL, &temp_env, (EvalFuncData){ .null = NULL });
     tv_dict_extend(env, temp_env.vval.v_dict, "force");
     tv_dict_free(temp_env.vval.v_dict);
 

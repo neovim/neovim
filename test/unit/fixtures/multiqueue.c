@@ -7,13 +7,13 @@
 #include "multiqueue.h"
 
 
-void ut_multiqueue_put(MultiQueue *this, const char *str)
+void ut_multiqueue_put(MultiQueue *self, const char *str)
 {
-  multiqueue_put(this, NULL, 1, str);
+  multiqueue_put(self, NULL, 1, str);
 }
 
-const char *ut_multiqueue_get(MultiQueue *this)
+const char *ut_multiqueue_get(MultiQueue *self)
 {
-  Event event = multiqueue_get(this);
+  Event event = multiqueue_get(self);
   return event.argv[0];
 }

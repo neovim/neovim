@@ -5428,10 +5428,9 @@ char *vim_tempname(void)
 
   // There is no need to check if the file exists, because we own the directory
   // and nobody else creates a file in it.
-  char template[TEMP_FILE_PATH_MAXLEN];
-  snprintf(template, TEMP_FILE_PATH_MAXLEN,
-           "%s%" PRIu64, tempdir, temp_count++);
-  return xstrdup(template);
+  char templ[TEMP_FILE_PATH_MAXLEN];
+  snprintf(templ, TEMP_FILE_PATH_MAXLEN, "%s%" PRIu64, tempdir, temp_count++);
+  return xstrdup(templ);
 }
 
 /// Tries matching a filename with a "pattern" ("prog" is NULL), or use the

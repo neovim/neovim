@@ -1053,7 +1053,7 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
   static struct clinterval {
     unsigned int first;
     unsigned int last;
-    unsigned int class;
+    unsigned int cls;
   } classes[] = {
     { 0x037e, 0x037e, 1 },              // Greek question mark
     { 0x0387, 0x0387, 1 },              // Greek ano teleia
@@ -1154,7 +1154,7 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
     } else if (classes[mid].first > (unsigned int)c) {
       top = mid - 1;
     } else {
-      return (int)classes[mid].class;
+      return (int)classes[mid].cls;
     }
   }
 

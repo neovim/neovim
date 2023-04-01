@@ -637,10 +637,10 @@ int parse_addr_type_arg(char *value, int vallen, cmd_addr_T *addr_type_arg)
 /// Parse a completion argument "value[vallen]".
 /// The detected completion goes in "*complp", argument type in "*argt".
 /// When there is an argument, for function and user defined completion, it's
-/// copied to allocated memory and stored in "*compl_arg".
+/// copied to allocated memory and stored in "*comp_arg".
 ///
 /// @return  FAIL if something is wrong.
-int parse_compl_arg(const char *value, int vallen, int *complp, uint32_t *argt, char **compl_arg)
+int parse_compl_arg(const char *value, int vallen, int *complp, uint32_t *argt, char **comp_arg)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *arg = NULL;
@@ -692,13 +692,13 @@ int parse_compl_arg(const char *value, int vallen, int *complp, uint32_t *argt, 
   }
 
   if (arg != NULL) {
-    *compl_arg = xstrnsave(arg, arglen);
+    *comp_arg = xstrnsave(arg, arglen);
   }
   return OK;
 }
 
 static int uc_scan_attr(char *attr, size_t len, uint32_t *argt, long *def, int *flags, int *complp,
-                        char **compl_arg, cmd_addr_T *addr_type_arg)
+                        char **comp_arg, cmd_addr_T *addr_type_arg)
   FUNC_ATTR_NONNULL_ALL
 {
   char *p;
@@ -809,7 +809,7 @@ invalid_count:
         return FAIL;
       }
 
-      if (parse_compl_arg(val, (int)vallen, complp, argt, compl_arg)
+      if (parse_compl_arg(val, (int)vallen, complp, argt, comp_arg)
           == FAIL) {
         return FAIL;
       }
@@ -857,12 +857,12 @@ char *uc_validate_name(char *name)
 
 /// Create a new user command {name}, if one doesn't already exist.
 ///
-/// This function takes ownership of compl_arg, compl_luaref, and luaref.
+/// This function takes ownership of comp_arg, comp_luaref, and luaref.
 ///
 /// @return  OK if the command is created, FAIL otherwise.
 int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, int64_t def,
-                   int flags, int compl, char *compl_arg, LuaRef compl_luaref,
-                   LuaRef preview_luaref, cmd_addr_T addr_type, LuaRef luaref, bool force)
+                   int flags, int comp, char *comp_arg, LuaRef comp_luaref, LuaRef preview_luaref,
+                   cmd_addr_T addr_type, LuaRef luaref, bool force)
   FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   ucmd_T *cmd = NULL;
@@ -944,12 +944,12 @@ int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, 
   cmd->uc_rep = rep_buf;
   cmd->uc_argt = argt;
   cmd->uc_def = def;
-  cmd->uc_compl = compl;
+  cmd->uc_compl = comp;
   cmd->uc_script_ctx = current_sctx;
   cmd->uc_script_ctx.sc_lnum += SOURCING_LNUM;
   nlua_set_sctx(&cmd->uc_script_ctx);
-  cmd->uc_compl_arg = compl_arg;
-  cmd->uc_compl_luaref = compl_luaref;
+  cmd->uc_compl_arg = comp_arg;
+  cmd->uc_compl_luaref = comp_luaref;
   cmd->uc_preview_luaref = preview_luaref;
   cmd->uc_addr_type = addr_type;
   cmd->uc_luaref = luaref;
@@ -958,9 +958,9 @@ int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, 
 
 fail:
   xfree(rep_buf);
-  xfree(compl_arg);
+  xfree(comp_arg);
   NLUA_CLEAR_REF(luaref);
-  NLUA_CLEAR_REF(compl_luaref);
+  NLUA_CLEAR_REF(comp_luaref);
   NLUA_CLEAR_REF(preview_luaref);
   return FAIL;
 }
@@ -974,8 +974,8 @@ void ex_command(exarg_T *eap)
   uint32_t argt = 0;
   long def = -1;
   int flags = 0;
-  int compl = EXPAND_NOTHING;
-  char *compl_arg = NULL;
+  int comp = EXPAND_NOTHING;
+  char *comp_arg = NULL;
   cmd_addr_T addr_type_arg = ADDR_NONE;
   int has_attr = (eap->arg[0] == '-');
   size_t name_len;
@@ -986,7 +986,7 @@ void ex_command(exarg_T *eap)
   while (*p == '-') {
     p++;
     end = skiptowhite(p);
-    if (uc_scan_attr(p, (size_t)(end - p), &argt, &def, &flags, &compl, &compl_arg,
+    if (uc_scan_attr(p, (size_t)(end - p), &argt, &def, &flags, &comp, &comp_arg,
                      &addr_type_arg) == FAIL) {
       goto theend;
     }
@@ -1011,17 +1011,17 @@ void ex_command(exarg_T *eap)
     emsg(_("E183: User defined commands must start with an uppercase letter"));
   } else if (name_len <= 4 && strncmp(name, "Next", name_len) == 0) {
     emsg(_("E841: Reserved name, cannot be used for user defined command"));
-  } else if (compl > 0 && (argt & EX_EXTRA) == 0) {
+  } else if (comp > 0 && (argt & EX_EXTRA) == 0) {
     emsg(_(e_complete_used_without_allowing_arguments));
   } else {
-    uc_add_command(name, name_len, p, argt, def, flags, compl, compl_arg, LUA_NOREF, LUA_NOREF,
+    uc_add_command(name, name_len, p, argt, def, flags, comp, comp_arg, LUA_NOREF, LUA_NOREF,
                    addr_type_arg, LUA_NOREF, eap->forceit);
 
     return;  // success
   }
 
 theend:
-  xfree(compl_arg);
+  xfree(comp_arg);
 }
 
 /// ":comclear"

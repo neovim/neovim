@@ -399,13 +399,13 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 /// insert/delete bytes at column
 ///
 /// Like changed_bytes() but also adjust extmark for "new" bytes.
-void inserted_bytes(linenr_T lnum, colnr_T col, int old, int new)
+void inserted_bytes(linenr_T lnum, colnr_T start_col, int old_col, int new_col)
 {
   if (curbuf_splice_pending == 0) {
-    extmark_splice_cols(curbuf, (int)lnum - 1, col, old, new, kExtmarkUndo);
+    extmark_splice_cols(curbuf, (int)lnum - 1, start_col, old_col, new_col, kExtmarkUndo);
   }
 
-  changed_bytes(lnum, col);
+  changed_bytes(lnum, start_col);
 }
 
 /// Appended "count" lines below line "lnum" in the current buffer.
