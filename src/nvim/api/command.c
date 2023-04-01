@@ -1015,11 +1015,11 @@ void create_user_command(uint64_t channel_id, String name, Object command, Dict(
   uint32_t argt = 0;
   int64_t def = -1;
   cmd_addr_T addr_type_arg = ADDR_NONE;
-  int comp = EXPAND_NOTHING;
-  char *comp_arg = NULL;
+  int context = EXPAND_NOTHING;
+  char *compl_arg = NULL;
   const char *rep = NULL;
   LuaRef luaref = LUA_NOREF;
-  LuaRef comp_luaref = LUA_NOREF;
+  LuaRef compl_luaref = LUA_NOREF;
   LuaRef preview_luaref = LUA_NOREF;
 
   VALIDATE_S(uc_validate_name(name.data), "command name", name.data, {
@@ -1161,12 +1161,12 @@ void create_user_command(uint64_t channel_id, String name, Object command, Dict(
   }
 
   if (opts->complete.type == kObjectTypeLuaRef) {
-    comp = EXPAND_USER_LUA;
-    comp_luaref = api_new_luaref(opts->complete.data.luaref);
+    context = EXPAND_USER_LUA;
+    compl_luaref = api_new_luaref(opts->complete.data.luaref);
   } else if (opts->complete.type == kObjectTypeString) {
     VALIDATE_S(OK == parse_compl_arg(opts->complete.data.string.data,
-                                     (int)opts->complete.data.string.size, &comp, &argt,
-                                     &comp_arg),
+                                     (int)opts->complete.data.string.size, &context, &argt,
+                                     &compl_arg),
                "complete", opts->complete.data.string.data, {
       goto err;
     });
@@ -1204,10 +1204,10 @@ void create_user_command(uint64_t channel_id, String name, Object command, Dict(
   }
 
   WITH_SCRIPT_CONTEXT(channel_id, {
-    if (uc_add_command(name.data, name.size, rep, argt, def, flags, comp, comp_arg, comp_luaref,
-                       preview_luaref, addr_type_arg, luaref, force) != OK) {
+    if (uc_add_command(name.data, name.size, rep, argt, def, flags, context, compl_arg,
+                       compl_luaref, preview_luaref, addr_type_arg, luaref, force) != OK) {
       api_set_error(err, kErrorTypeException, "Failed to create user command");
-      // Do not goto err, since uc_add_command now owns luaref, comp_luaref, and comp_arg
+      // Do not goto err, since uc_add_command now owns luaref, compl_luaref, and compl_arg
     }
   });
 
@@ -1215,8 +1215,8 @@ void create_user_command(uint64_t channel_id, String name, Object command, Dict(
 
 err:
   NLUA_CLEAR_REF(luaref);
-  NLUA_CLEAR_REF(comp_luaref);
-  xfree(comp_arg);
+  NLUA_CLEAR_REF(compl_luaref);
+  xfree(compl_arg);
 }
 /// Gets a map of global (non-buffer-local) Ex commands.
 ///
