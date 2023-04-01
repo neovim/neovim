@@ -91,7 +91,7 @@ used here to facilitate documenting consistent behavior:
   metamethod
 - `buffer`: a `string` or a sequential `table` of `string`s
 - `threadargs`: variable arguments (`...`) of type `nil`, `boolean`, `number`,
-  `string`, or `userdata`
+  `string`, or `userdata`; number of arguments limited to 9.
 
 ==============================================================================
 CONTENTS                                                          *luv-contents*
@@ -2576,7 +2576,7 @@ uv.fs_poll_start({fs_poll}, {path}, {interval}, {callback}) *uv.fs_poll_start()*
                 > method form `fs_poll:start(path, interval, callback)`
 
                 Parameters:
-                - `fs_event`: `uv_fs_event_t userdata`
+                - `fs_poll`: `uv_fs_poll_t userdata`
                 - `path`: `string`
                 - `interval`: `integer`
                 - `callback`: `callable`
@@ -3483,6 +3483,9 @@ uv.new_thread([{options}, ] {entry}, {...})                    *uv.new_thread()*
                 accepted `option` fields are `stack_size`.
 
                 Returns: `luv_thread_t userdata` or `fail`
+
+                Note: unsafe, please make sure that the thread's end of life
+                is before Lua state is closed.
 
 uv.thread_equal({thread}, {other_thread})                    *uv.thread_equal()*
 
