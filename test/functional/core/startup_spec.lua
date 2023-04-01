@@ -577,6 +577,12 @@ describe('startup', function()
     eq({'ordinary', 'FANCY', 'mittel', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
   end)
 
+  it("no crash with start packages' after/ already in &rtp #18240", function()
+    pack_clear [[ set loadplugins rtp=nosuchdir,test/functional/fixtures/pack/*/start/*/after | lua _G.test_loadorder = {} ]]
+    command [[ runtime! filen.lua ]]
+    eq({'FANCY', 'FANCY after'}, exec_lua [[ return _G.test_loadorder ]])
+  end)
+
   it("handles the correct order with globpath(&rtp, ...)", function()
     pack_clear [[ set loadplugins | lua _G.test_loadorder = {} ]]
     command [[
