@@ -440,7 +440,7 @@ higher than tree-sitter. It is also possible to change the priority of an
 individual query pattern manually by setting its `"priority"` metadata
 attribute: >
 
-    (super_important_node) @ImportantHighlight (#set! "priority" 105)
+    ((super_important_node) @superimportant (#set! "priority" 105))
 
 ==============================================================================
 TREESITTER LANGUAGE INJECTIONS                *treesitter-language-injections*
