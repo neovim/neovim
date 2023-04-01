@@ -2683,6 +2683,11 @@ void status_redraw_buf(buf_T *buf)
       redraw_later(wp, UPD_VALID);
     }
   }
+  // Redraw the ruler if it is in the command line and was not marked for redraw above
+  if (p_ru && !curwin->w_status_height && !curwin->w_redr_status) {
+    redraw_cmdline = true;
+    redraw_later(curwin, UPD_VALID);
+  }
 }
 
 /// Redraw all status lines that need to be redrawn.
