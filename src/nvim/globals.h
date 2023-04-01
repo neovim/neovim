@@ -169,7 +169,7 @@ EXTERN char *edit_submode_extra INIT(= NULL);   // appended to edit_submode
 EXTERN hlf_T edit_submode_highl;                // highl. method for extra info
 
 // state for putting characters in the message area
-EXTERN int cmdmsg_rl INIT(= false);  // cmdline is drawn right to left
+EXTERN bool cmdmsg_rl INIT(= false);  // cmdline is drawn right to left
 EXTERN int msg_col;
 EXTERN int msg_row;
 EXTERN int msg_scrolled;        // Number of screen lines that windows have
@@ -224,7 +224,7 @@ EXTERN bool did_wait_return INIT(= false);   // wait_return() was used and
                                              // nothing written since then
 EXTERN bool need_maketitle INIT(= true);     // call maketitle() soon
 
-EXTERN int quit_more INIT(= false);         // 'q' hit at "--more--" msg
+EXTERN bool quit_more INIT(= false);        // 'q' hit at "--more--" msg
 EXTERN int vgetc_busy INIT(= 0);            // when inside vgetc() then > 0
 
 EXTERN bool didset_vim INIT(= false);         // did set $VIM ourselves
@@ -233,7 +233,7 @@ EXTERN bool didset_vimruntime INIT(= false);  // idem for $VIMRUNTIME
 /// Lines left before a "more" message.  Ex mode needs to be able to reset this
 /// after you type something.
 EXTERN int lines_left INIT(= -1);           // lines left for listing
-EXTERN int msg_no_more INIT(= false);       // don't use more prompt, truncate
+EXTERN bool msg_no_more INIT(= false);      // don't use more prompt, truncate
                                             // messages
 
 EXTERN int ex_nesting_level INIT(= 0);          // nesting level
@@ -275,7 +275,7 @@ EXTERN int trylevel INIT(= 0);
 /// non-zero (and ":silent!" was not used) or an exception is being thrown at
 /// the time an error is detected.  It is set to false when "trylevel" gets
 /// zero again and there was no error or interrupt or throw.
-EXTERN int force_abort INIT(= false);
+EXTERN bool force_abort INIT(= false);
 
 /// "msg_list" points to a variable in the stack of do_cmdline() which keeps
 /// the list of arguments of several emsg() calls, one of which is to be
@@ -308,8 +308,8 @@ EXTERN except_T *caught_stack INIT(= NULL);
 /// "garbage_collect_at_exit" indicates garbagecollect(1) was called.
 ///
 EXTERN bool may_garbage_collect INIT(= false);
-EXTERN int want_garbage_collect INIT(= false);
-EXTERN int garbage_collect_at_exit INIT(= false);
+EXTERN bool want_garbage_collect INIT(= false);
+EXTERN bool garbage_collect_at_exit INIT(= false);
 
 // Special values for current_SID.
 #define SID_MODELINE    (-1)      // when using a modeline
@@ -360,19 +360,19 @@ EXTERN linenr_T search_last_line INIT(= MAXLNUM);  // for :{first},{LAST}s/pat
 
 EXTERN bool no_smartcase INIT(= false);          // don't use 'smartcase' once
 
-EXTERN int need_check_timestamps INIT(= false);  // need to check file
-                                                 // timestamps asap
-EXTERN int did_check_timestamps INIT(= false);   // did check timestamps
-                                                 // recently
-EXTERN int no_check_timestamps INIT(= 0);        // Don't check timestamps
+EXTERN bool need_check_timestamps INIT(= false);  // need to check file
+                                                  // timestamps asap
+EXTERN bool did_check_timestamps INIT(= false);   // did check timestamps
+                                                  // recently
+EXTERN int no_check_timestamps INIT(= 0);         // Don't check timestamps
 
-EXTERN int autocmd_busy INIT(= false);           // Is apply_autocmds() busy?
+EXTERN bool autocmd_busy INIT(= false);          // Is apply_autocmds() busy?
 EXTERN int autocmd_no_enter INIT(= false);       // *Enter autocmds disabled
 EXTERN int autocmd_no_leave INIT(= false);       // *Leave autocmds disabled
 EXTERN int modified_was_set;                     // did ":set modified"
-EXTERN int did_filetype INIT(= false);           // FileType event found
+EXTERN bool did_filetype INIT(= false);          // FileType event found
 // value for did_filetype when starting to execute autocommands
-EXTERN int keep_filetype INIT(= false);
+EXTERN bool keep_filetype INIT(= false);
 
 // When deleting the current buffer, another one must be loaded.
 // If we know which one is preferred, au_new_curbuf is set to it.
@@ -398,7 +398,7 @@ EXTERN int mouse_dragging INIT(= 0);          // extending Visual area with
 EXTERN vimmenu_T *root_menu INIT(= NULL);
 // While defining the system menu, sys_menu is true.  This avoids
 // overruling of menus that the user already defined.
-EXTERN int sys_menu INIT(= false);
+EXTERN bool sys_menu INIT(= false);
 
 // All windows are linked in a list. firstwin points to the first entry,
 // lastwin to the last entry (can be the same as firstwin) and curwin to the
@@ -501,7 +501,7 @@ EXTERN bool stderr_isatty INIT(= true);
 EXTERN int stdin_fd INIT(= -1);
 
 // true when doing full-screen output, otherwise only writing some messages.
-EXTERN int full_screen INIT(= false);
+EXTERN bool full_screen INIT(= false);
 
 /// Non-zero when only "safe" commands are allowed
 EXTERN int secure INIT(= 0);
@@ -519,14 +519,14 @@ EXTERN int allbuf_lock INIT(= 0);
 EXTERN int sandbox INIT(= 0);
 
 /// Batch-mode: "-es", "-Es", "-l" commandline argument was given.
-EXTERN int silent_mode INIT(= false);
+EXTERN bool silent_mode INIT(= false);
 
 /// Start position of active Visual selection.
 EXTERN pos_T VIsual;
 /// Whether Visual mode is active.
-EXTERN int VIsual_active INIT(= false);
+EXTERN bool VIsual_active INIT(= false);
 /// Whether Select mode is active.
-EXTERN int VIsual_select INIT(= false);
+EXTERN bool VIsual_select INIT(= false);
 /// Register name for Select mode
 EXTERN int VIsual_select_reg INIT(= 0);
 /// Restart Select mode when next cmd finished
@@ -536,7 +536,7 @@ EXTERN int VIsual_reselect;
 /// Type of Visual mode.
 EXTERN int VIsual_mode INIT(= 'v');
 /// true when redoing Visual.
-EXTERN int redo_VIsual_busy INIT(= false);
+EXTERN bool redo_VIsual_busy INIT(= false);
 
 // The Visual area is remembered for reselection.
 EXTERN int resel_VIsual_mode INIT(= NUL);       // 'v', 'V', or Ctrl-V
@@ -704,8 +704,8 @@ EXTERN char os_buf[                         ///< Buffer for the os/ layer
 // When non-zero, postpone redrawing.
 EXTERN int RedrawingDisabled INIT(= 0);
 
-EXTERN int readonlymode INIT(= false);      // Set to true for "view"
-EXTERN int recoverymode INIT(= false);      // Set to true for "-r" option
+EXTERN bool readonlymode INIT(= false);      // Set to true for "view"
+EXTERN bool recoverymode INIT(= false);      // Set to true for "-r" option
 
 // typeahead buffer
 EXTERN typebuf_T typebuf INIT(= { NULL, NULL, 0, 0, 0, 0, 0, 0, 0 });
@@ -714,13 +714,13 @@ EXTERN typebuf_T typebuf INIT(= { NULL, NULL, 0, 0, 0, 0, 0, 0, 0 });
 /// :normal argument was exhausted.
 EXTERN bool typebuf_was_empty INIT(= false);
 
-EXTERN int ex_normal_busy INIT(= 0);     // recursiveness of ex_normal()
-EXTERN int expr_map_lock INIT(= 0);      // running expr mapping, prevent use of ex_normal() and text changes
-EXTERN int ignore_script INIT(= false);  // ignore script input
-EXTERN int stop_insert_mode;             // for ":stopinsert"
-EXTERN bool KeyTyped;                    // true if user typed current char
-EXTERN int KeyStuffed;                   // true if current char from stuffbuf
-EXTERN int maptick INIT(= 0);            // tick for each non-mapped char
+EXTERN int ex_normal_busy INIT(= 0);      // recursiveness of ex_normal()
+EXTERN int expr_map_lock INIT(= 0);       // running expr mapping, prevent use of ex_normal() and text changes
+EXTERN bool ignore_script INIT(= false);  // ignore script input
+EXTERN int stop_insert_mode;              // for ":stopinsert"
+EXTERN bool KeyTyped;                     // true if user typed current char
+EXTERN int KeyStuffed;                    // true if current char from stuffbuf
+EXTERN int maptick INIT(= 0);             // tick for each non-mapped char
 
 EXTERN int must_redraw INIT(= 0);           // type of redraw necessary
 EXTERN bool skip_redraw INIT(= false);      // skip redraw once
@@ -776,7 +776,7 @@ EXTERN int replace_offset INIT(= 0);        // offset for replace_push()
 
 EXTERN char *escape_chars INIT(= " \t\\\"|");  // need backslash in cmd line
 
-EXTERN int keep_help_flag INIT(= false);  // doing :ta from help file
+EXTERN bool keep_help_flag INIT(= false);  // doing :ta from help file
 
 // When a string option is NULL (which only happens in out-of-memory
 // situations), it is set to empty_option, to avoid having to check for NULL
