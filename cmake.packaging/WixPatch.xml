@@ -1,14 +1,21 @@
 <CPackWiXPatch>
-    <!--  Fragment ID is from: <your build dir>/_CPack_Packages/win64/WIX/files.wxs -->
-    <CPackWiXFragment Id="CM_CP_bin.nvim.exe">
-      <Environment
-        Id='UpdatePath'
-        Name='PATH'
-        Action='set'
-        Permanent='no'
-        System='yes'
-        Part='last'
-        Value='[INSTALL_ROOT]bin'
-      />
-    </CPackWiXFragment>
+  <!--  Fragment ID is from: <your build dir>/_CPack_Packages/win64/WIX/files.wxs -->
+  <CPackWiXFragment Id="CM_CP_bin.nvim.exe">
+    <Environment
+      Id='UpdatePath'
+      Name='PATH'
+      Action='set'
+      Permanent='no'
+      System='no'
+      Part='last'
+      Value='[INSTALL_ROOT]bin'
+    />
+  </CPackWiXFragment>
+
+  <!-- Allow installation by non-administrative users -->
+  <!-- https://learn.microsoft.com/windows/win32/msi/allusers -->
+  <CPackWiXFragment Id="#PRODUCT">
+    <Property Id="ALLUSERS" Value="2" />
+    <Property Id="MSIINSTALLPERUSER" Value="1" />
+  </CPackWiXFragment>
 </CPackWiXPatch>
