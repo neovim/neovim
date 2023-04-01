@@ -105,7 +105,7 @@ API (EXTENSIBILITY/SCRIPTING/PLUGINS)
 |lua-guide|		Nvim Lua guide
 |lua|			Lua API
 |luaref|		Lua reference manual
-|luvref|		Luv (|vim.loop|) reference manual
+|luvref|		Luv (|vim.uv|) reference manual
 |autocmd|		Event handlers
 |job-control|		Spawn and control multiple processes
 |channel|		Nvim asynchronous IO

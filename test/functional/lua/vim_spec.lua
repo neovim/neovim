@@ -882,7 +882,7 @@ describe('lua stdlib', function()
 
   it('vim.fn is allowed in "fast" context by some functions #18306', function()
     exec_lua([[
-      local timer = vim.loop.new_timer()
+      local timer = vim.uv.new_timer()
       timer:start(0, 0, function()
         timer:close()
         assert(vim.in_fast_event())
@@ -948,7 +948,7 @@ describe('lua stdlib', function()
     })
     screen:attach()
     exec_lua([[
-      timer = vim.loop.new_timer()
+      timer = vim.uv.new_timer()
       timer:start(20, 0, function ()
         -- notify ok (executed later when safe)
         vim.rpcnotify(chan, 'nvim_set_var', 'yy', {3, vim.NIL})
@@ -2481,7 +2481,7 @@ describe('lua stdlib', function()
         start_time = get_time()
 
         vim.g.timer_result = false
-        timer = vim.loop.new_timer()
+        timer = vim.uv.new_timer()
         timer:start(100, 0, vim.schedule_wrap(function()
           vim.g.timer_result = true
         end))
@@ -2503,7 +2503,7 @@ describe('lua stdlib', function()
         start_time = get_time()
 
         vim.g.timer_result = false
-        timer = vim.loop.new_timer()
+        timer = vim.uv.new_timer()
         timer:start(100, 0, vim.schedule_wrap(function()
           vim.g.timer_result = true
         end))
@@ -2546,17 +2546,17 @@ describe('lua stdlib', function()
 
     it('should allow waiting with no callback, explicit', function()
       eq(true, exec_lua [[
-        local start_time = vim.loop.hrtime()
+        local start_time = vim.uv.hrtime()
         vim.wait(50, nil)
-        return vim.loop.hrtime() - start_time > 25000
+        return vim.uv.hrtime() - start_time > 25000
       ]])
     end)
 
     it('should allow waiting with no callback, implicit', function()
       eq(true, exec_lua [[
-        local start_time = vim.loop.hrtime()
+        local start_time = vim.uv.hrtime()
         vim.wait(50)
-        return vim.loop.hrtime() - start_time > 25000
+        return vim.uv.hrtime() - start_time > 25000
       ]])
     end)
 

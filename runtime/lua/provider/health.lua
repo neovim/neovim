@@ -5,7 +5,7 @@ local ok = vim.health.ok
 local info = vim.health.info
 local warn = vim.health.warn
 local error = vim.health.error
-local iswin = vim.loop.os_uname().sysname == 'Windows_NT'
+local iswin = vim.uv.os_uname().sysname == 'Windows_NT'
 
 local shell_error_code = 0
 local function shell_error()
@@ -30,7 +30,7 @@ local function isdir(path)
   if not path then
     return false
   end
-  local stat = vim.loop.fs_stat(path)
+  local stat = vim.uv.fs_stat(path)
   if not stat then
     return false
   end
@@ -41,7 +41,7 @@ local function isfile(path)
   if not path then
     return false
   end
-  local stat = vim.loop.fs_stat(path)
+  local stat = vim.uv.fs_stat(path)
   if not stat then
     return false
   end

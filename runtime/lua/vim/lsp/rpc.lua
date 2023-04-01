@@ -1,4 +1,4 @@
-local uv = vim.loop
+local uv = vim.uv
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 local validate, schedule, schedule_wrap = vim.validate, vim.schedule, vim.schedule_wrap
@@ -691,7 +691,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   })
 
   ---@private
-  --- Callback for |vim.loop.spawn()| Closes all streams and runs the `on_exit` dispatcher.
+  --- Callback for |vim.uv.spawn()| Closes all streams and runs the `on_exit` dispatcher.
   ---@param code (integer) Exit code
   ---@param signal (integer) Signal that was used to terminate (if any)
   local function onexit(code, signal)

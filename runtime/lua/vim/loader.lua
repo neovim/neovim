@@ -1,4 +1,4 @@
-local uv = vim.loop
+local uv = vim.uv
 
 --- @type (fun(modename: string): fun()|string)[]
 local loaders = package.loaders
@@ -465,7 +465,7 @@ end
 --- @private
 function Loader.track(stat, f)
   return function(...)
-    local start = vim.loop.hrtime()
+    local start = vim.uv.hrtime()
     local r = { f(...) }
     Loader._stats[stat] = Loader._stats[stat] or { total = 0, time = 0 }
     Loader._stats[stat].total = Loader._stats[stat].total + 1

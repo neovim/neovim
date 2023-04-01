@@ -31,7 +31,7 @@ do
     end
   end
 
-  local path_sep = vim.loop.os_uname().version:match('Windows') and '\\' or '/'
+  local path_sep = vim.uv.os_uname().version:match('Windows') and '\\' or '/'
   ---@private
   local function path_join(...)
     return table.concat(vim.tbl_flatten({ ... }), path_sep)
@@ -68,7 +68,7 @@ do
       return false
     end
 
-    local log_info = vim.loop.fs_stat(logfilename)
+    local log_info = vim.uv.fs_stat(logfilename)
     if log_info and log_info.size > 1e9 then
       local warn_msg = string.format(
         'LSP client log is large (%d MB): %s',

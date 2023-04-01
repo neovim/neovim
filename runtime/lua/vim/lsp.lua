@@ -10,7 +10,7 @@ local semantic_tokens = require('vim.lsp.semantic_tokens')
 local api = vim.api
 local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_exec_autocmds =
   api.nvim_err_writeln, api.nvim_buf_get_lines, api.nvim_command, api.nvim_exec_autocmds
-local uv = vim.loop
+local uv = vim.uv
 local tbl_isempty, tbl_extend = vim.tbl_isempty, vim.tbl_extend
 local validate = vim.validate
 local if_nil = vim.F.if_nil

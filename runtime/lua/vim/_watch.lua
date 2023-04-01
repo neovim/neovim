@@ -46,7 +46,7 @@ function M.watch(path, opts, callback)
 
   path = vim.fs.normalize(path)
   local uvflags = opts and opts.uvflags or {}
-  local handle, new_err = vim.loop.new_fs_event()
+  local handle, new_err = vim.uv.new_fs_event()
   assert(not new_err, new_err)
   local _, start_err = handle:start(path, uvflags, function(err, filename, events)
     assert(not err, err)
@@ -57,7 +57,7 @@ function M.watch(path, opts, callback)
     end
     local change_type = events.change and M.FileChangeType.Changed or 0
     if events.rename then
-      local _, staterr, staterrname = vim.loop.fs_stat(fullpath)
+      local _, staterr, staterrname = vim.uv.fs_stat(fullpath)
       if staterrname == 'ENOENT' then
         change_type = M.FileChangeType.Deleted
       else
@@ -99,7 +99,7 @@ local function poll_internal(path, opts, callback, watches)
   }
 
   if not watches.handle then
-    local poll, new_err = vim.loop.new_fs_poll()
+    local poll, new_err = vim.uv.new_fs_poll()
     assert(not new_err, new_err)
     watches.handle = poll
     local _, start_err = poll:start(

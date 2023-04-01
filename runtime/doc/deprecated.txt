@@ -144,6 +144,7 @@ TREESITTER FUNCTIONS
 LUA
 - vim.register_keystroke_callback()	Use |vim.on_key()| instead.
 - *vim.pretty_print()*			Use |vim.print()| instead.
+- *vim.loop*				Use |vim.uv| instead.
 
 NORMAL COMMANDS
 - *]f* *[f*		Same as "gf".

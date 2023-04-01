@@ -565,7 +565,7 @@ static void nlua_common_vim_init(lua_State *lstate, bool is_thread, bool is_stan
   lua_setfield(lstate, LUA_REGISTRYINDEX, "mpack.empty_dict");
   lua_setfield(lstate, -2, "_empty_dict_mt");
 
-  // vim.loop
+  // vim.uv
   if (is_standalone) {
     // do nothing, use libluv like in a standalone interpreter
   } else if (is_thread) {
@@ -578,9 +578,9 @@ static void nlua_common_vim_init(lua_State *lstate, bool is_thread, bool is_stan
   }
   luaopen_luv(lstate);
   lua_pushvalue(lstate, -1);
-  lua_setfield(lstate, -3, "loop");
+  lua_setfield(lstate, -3, "uv");
 
-  // package.loaded.luv = vim.loop
+  // package.loaded.luv = vim.uv
   // otherwise luv will be reinitialized when require'luv'
   lua_getglobal(lstate, "package");
   lua_getfield(lstate, -1, "loaded");

@@ -27,10 +27,10 @@ describe('thread', function()
 
   it('entry func is executed in protected mode', function()
     exec_lua [[
-      local thread = vim.loop.new_thread(function()
+      local thread = vim.uv.new_thread(function()
         error('Error in thread entry func')
       end)
-      vim.loop.thread_join(thread)
+      vim.uv.thread_join(thread)
     ]]
 
     screen:expect([[
@@ -51,17 +51,17 @@ describe('thread', function()
 
   it('callback is executed in protected mode', function()
     exec_lua [[
-      local thread = vim.loop.new_thread(function()
-        local timer = vim.loop.new_timer()
+      local thread = vim.uv.new_thread(function()
+        local timer = vim.uv.new_timer()
         local function ontimeout()
           timer:stop()
           timer:close()
           error('Error in thread callback')
         end
         timer:start(10, 0, ontimeout)
-        vim.loop.run()
+        vim.uv.run()
       end)
-      vim.loop.thread_join(thread)
+      vim.uv.thread_join(thread)
     ]]
 
     screen:expect([[
@@ -83,10 +83,10 @@ describe('thread', function()
   describe('print', function()
     it('works', function()
       exec_lua [[
-        local thread = vim.loop.new_thread(function()
+        local thread = vim.uv.new_thread(function()
           print('print in thread')
         end)
-        vim.loop.thread_join(thread)
+        vim.uv.thread_join(thread)
       ]]
 
       screen:expect([[
@@ -105,10 +105,10 @@ describe('thread', function()
 
     it('vim.inspect', function()
       exec_lua [[
-        local thread = vim.loop.new_thread(function()
+        local thread = vim.uv.new_thread(function()
           print(vim.inspect({1,2}))
         end)
-        vim.loop.thread_join(thread)
+        vim.uv.thread_join(thread)
       ]]
 
       screen:expect([[
@@ -140,13 +140,13 @@ describe('thread', function()
         function Thread_Test:do_test()
           local async
           local on_async = self.on_async
-          async = vim.loop.new_async(function(ret)
+          async = vim.uv.new_async(function(ret)
             on_async(ret)
             async:close()
           end)
           local thread =
-            vim.loop.new_thread(self.entry_func, async, self.entry_str, self.args)
-          vim.loop.thread_join(thread)
+            vim.uv.new_thread(self.entry_func, async, self.entry_str, self.args)
+          vim.uv.thread_join(thread)
         end
 
         Thread_Test.new = function(entry, on_async, ...)
@@ -175,10 +175,10 @@ describe('thread', function()
       eq({'notification', 'result', {true}}, next_msg())
     end)
 
-    it('loop', function()
+    it('uv', function()
       exec_lua [[
         local entry = function(async)
-          async:send(vim.loop.version())
+          async:send(vim.uv.version())
         end
         local on_async = function(ret)
           vim.rpcnotify(1, ret)
@@ -259,7 +259,7 @@ describe('threadpool', function()
       local after_work_fn = function(ret)
         vim.rpcnotify(1, 'result', ret)
       end
-      local work = vim.loop.new_work(work_fn, after_work_fn)
+      local work = vim.uv.new_work(work_fn, after_work_fn)
       work:queue()
     ]]
 
@@ -268,7 +268,7 @@ describe('threadpool', function()
 
   it('with invalid argument', function()
     local status = pcall_err(exec_lua, [[
-      local work = vim.loop.new_thread(function() end, function() end)
+      local work = vim.uv.new_thread(function() end, function() end)
       work:queue({})
     ]])
 
@@ -288,7 +288,7 @@ describe('threadpool', function()
     })
 
     exec_lua [[
-      local work = vim.loop.new_work(function() return {} end, function() end)
+      local work = vim.uv.new_work(function() return {} end, function() end)
       work:queue()
     ]]
 
@@ -319,7 +319,7 @@ describe('threadpool', function()
 
         function Threadpool_Test:do_test()
           local work =
-            vim.loop.new_work(self.work_fn, self.after_work)
+            vim.uv.new_work(self.work_fn, self.after_work)
           work:queue(self.work_fn_str, self.args)
         end
 
@@ -334,10 +334,10 @@ describe('threadpool', function()
       ]]
     end)
 
-    it('loop', function()
+    it('uv', function()
       exec_lua [[
         local work_fn = function()
-          return vim.loop.version()
+          return vim.uv.version()
         end
         local after_work_fn = function(ret)
           vim.rpcnotify(1, ret)

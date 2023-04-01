@@ -449,29 +449,24 @@ Note that underscore-prefixed functions (e.g. "_os_proc_children") are
 internal/private and must not be used by plugins.
 
 ------------------------------------------------------------------------------
-VIM.LOOP                                                   *lua-loop* *vim.loop*
+VIM.UV                                                   *lua-loop* *vim.uv*
 
-`vim.loop` exposes all features of the Nvim event-loop. This is a low-level
-API that provides functionality for networking, filesystem, and process
-management. Try this command to see available functions: >vim
-
-    :lua print(vim.inspect(vim.loop))
-<
-Internally, `vim.loop` wraps the "luv" Lua bindings for the LibUV library;
-see |luv-intro| for a full reference manual.
+`vim.uv` exposes the "luv" Lua bindings for the libUV library that Nvim uses
+for networking, filesystem, and process management, see |luvref.txt|.
+In particular, it allows interacting with the main Nvim |luv-event-loop|.
 
                                                     *E5560* *lua-loop-callbacks*
 It is an error to directly invoke `vim.api` functions (except |api-fast|) in
-`vim.loop` callbacks. For example, this is an error: >lua
+`vim.uv` callbacks. For example, this is an error: >lua
 
-    local timer = vim.loop.new_timer()
+    local timer = vim.uv.new_timer()
     timer:start(1000, 0, function()
       vim.api.nvim_command('echomsg "test"')
     end)
 <
 To avoid the error use |vim.schedule_wrap()| to defer the callback: >lua
 
-    local timer = vim.loop.new_timer()
+    local timer = vim.uv.new_timer()
     timer:start(1000, 0, vim.schedule_wrap(function()
       vim.api.nvim_command('echomsg "test"')
     end))
@@ -484,7 +479,7 @@ Example: repeating timer
     2. Execute it with ":luafile %". >lua
 
     -- Create a timer handle (implementation detail: uv_timer_t).
-    local timer = vim.loop.new_timer()
+    local timer = vim.uv.new_timer()
     local i = 0
     -- Waits 1000ms, then repeats every 750ms until timer:close().
     timer:start(1000, 750, function()
@@ -504,7 +499,7 @@ Example: File-change detection                                    *watch-file*
     5. Observe that the file reloads in Nvim (because on_change() calls
        |:checktime|). >lua
 
-    local w = vim.loop.new_fs_event()
+    local w = vim.uv.new_fs_event()
     local function on_change(err, fname, status)
       -- Do work...
       vim.api.nvim_command('checktime')
@@ -528,11 +523,11 @@ Example: TCP echo-server                                          *tcp-server*
     4. Connect from any TCP client (e.g. "nc 0.0.0.0 36795"): >lua
 
     local function create_server(host, port, on_connect)
-      local server = vim.loop.new_tcp()
+      local server = vim.uv.new_tcp()
       server:bind(host, port)
       server:listen(128, function(err)
         assert(not err, err)  -- Check for errors.
-        local sock = vim.loop.new_tcp()
+        local sock = vim.uv.new_tcp()
         server:accept(sock)  -- Accept client connection.
         on_connect(sock)  -- Start reading messages.
       end)
@@ -553,14 +548,14 @@ Example: TCP echo-server                                          *tcp-server*
 Multithreading                                            *lua-loop-threading*
 
 Plugins can perform work in separate (os-level) threads using the threading
-APIs in luv, for instance `vim.loop.new_thread`. Note that every thread
+APIs in luv, for instance `vim.uv.new_thread`. Note that every thread
 gets its own separate lua interpreter state, with no access to lua globals
 in the main thread. Neither can the state of the editor (buffers, windows,
 etc) be directly accessed from threads.
 
 A subset of the `vim.*` API is available in threads. This includes:
 
-- `vim.loop` with a separate event loop per thread.
+- `vim.uv` with a separate event loop per thread.
 - `vim.mpack` and `vim.json` (useful for serializing messages between threads)
 - `require` in threads can use lua packages from the global |package.path|
 - `print()` and `vim.inspect`
@@ -885,7 +880,7 @@ vim.defer_fn({fn}, {timeout})                                   *vim.defer_fn*
       • {timeout}   Time in ms to wait before calling {fn}
 
     Returns: ~
-        |vim.loop|.new_timer() object
+        |vim.uv|.new_timer() object
 
 vim.wait({time} [, {callback}, {interval}, {fast_only}])          *vim.wait()*
     Wait for {time} in milliseconds until {callback} returns `true`.
@@ -2531,7 +2526,7 @@ find({names}, {opts})                                          *vim.fs.find()*
      -- location of Cargo.toml from the current buffer's path
      local cargo = vim.fs.find('Cargo.toml', {
        upward = true,
-       stop = vim.loop.os_homedir(),
+       stop = vim.uv.os_homedir(),
        path = vim.fs.dirname(vim.api.nvim_buf_get_name(0)),
      })
 
