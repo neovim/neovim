@@ -914,19 +914,6 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
     const char *cur_entry = entry;
 
     copy_option_part((char **)&entry, buf, MAXPATHL, ",");
-    if (insp == NULL) {
-      add_pathsep(buf);
-      char *const rtp_ffname = fix_fname(buf);
-      if (rtp_ffname == NULL) {
-        goto theend;
-      }
-      bool match = path_fnamencmp(rtp_ffname, ffname, fname_len) == 0;
-      xfree(rtp_ffname);
-      if (match) {
-        // Insert "ffname" after this entry (and comma).
-        insp = entry;
-      }
-    }
 
     if ((p = strstr(buf, "after")) != NULL
         && p > buf
@@ -939,6 +926,20 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
       }
       after_insp = cur_entry;
       break;
+    }
+
+    if (insp == NULL) {
+      add_pathsep(buf);
+      char *const rtp_ffname = fix_fname(buf);
+      if (rtp_ffname == NULL) {
+        goto theend;
+      }
+      bool match = path_fnamencmp(rtp_ffname, ffname, fname_len) == 0;
+      xfree(rtp_ffname);
+      if (match) {
+        // Insert "ffname" after this entry (and comma).
+        insp = entry;
+      }
     }
   }
 

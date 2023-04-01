@@ -20,6 +20,13 @@ func Test_packadd()
   call mkdir(s:plugdir . '/plugin/also', 'p')
   call mkdir(s:plugdir . '/ftdetect', 'p')
   call mkdir(s:plugdir . '/after', 'p')
+
+  " This used to crash Vim
+  let &rtp = 'nosuchdir,' . s:plugdir . '/after'
+  packadd mytest
+  " plugdir should be inserted before plugdir/after
+  call assert_match('^nosuchdir,' . s:plugdir . ',', &rtp)
+
   set rtp&
   let rtp = &rtp
   filetype on
