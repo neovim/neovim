@@ -349,4 +349,28 @@ function M.normalize(path, opts)
   return path:sub(-1) == '/' and path:sub(1, -2) or path
 end
 
+--- Return true if path is file
+---
+---@param path (string) path
+---@return (boolean) true if {path} is file
+function M.isfile(path)
+  local stat = vim.loop.fs_stat(path)
+  if stat == nil then
+    return false
+  end
+  return stat.type == 'file'
+end
+
+--- Return true if path is directory
+---
+---@param path (string) path
+---@return (boolean) true if {path} is directory
+function M.isdir(path)
+  local stat = vim.loop.fs_stat(path)
+  if stat == nil then
+    return false
+  end
+  return stat.type == 'directory'
+end
+
 return M

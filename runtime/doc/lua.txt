@@ -2502,6 +2502,24 @@ find({names}, {opts})                                          *vim.fs.find()*
         (table) Normalized paths |vim.fs.normalize()| of all matching files or
         directories
 
+isdir({path})                                                 *vim.fs.isdir()*
+    Return true if path is directory
+
+    Parameters: ~
+      • {path}  (string) path
+
+    Return: ~
+        (boolean) true if {path} is directory
+
+isfile({path})                                               *vim.fs.isfile()*
+    Return true if path is file
+
+    Parameters: ~
+      • {path}  (string) path
+
+    Return: ~
+        (boolean) true if {path} is file
+
 normalize({path}, {opts})                                 *vim.fs.normalize()*
     Normalize a path to a standard format. A tilde (~) character at the
     beginning of the path is expanded to the user's home directory and any
