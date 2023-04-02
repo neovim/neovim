@@ -1,6 +1,7 @@
 if exists('s:did_load')
   " Align Nvim defaults to Vim.
   set backspace=
+  set commentstring=/*%s*/
   set complete=.,w,b,u,t,i
   set directory&
   set directory^=.
