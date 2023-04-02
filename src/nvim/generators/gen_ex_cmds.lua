@@ -41,7 +41,7 @@ static const uint16_t cmdidxs1[%u] = {
 -- Values in cmdidxs2[c1][c2] are relative to cmdidxs1[c1] so that they
 -- fit in a byte.
 local cmdidxs2_out = string.format([[
-static const char_u cmdidxs2[%u][%u] = {
+static const uint8_t cmdidxs2[%u][%u] = {
   /*           a   b   c   d   e   f   g   h   i   j   k   l   m   n   o   p   q   r   s   t   u   v   w   x   y   z */
 ]], a_to_z, a_to_z)
 

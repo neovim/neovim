@@ -6197,7 +6197,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 # else
   char *v = os_realpath(fname, NULL);
-  rettv->vval.v_string = (char_u *)(v == NULL ? xstrdup(fname) : v);
+  rettv->vval.v_string = v == NULL ? xstrdup(fname) : v;
 # endif
 #endif
 

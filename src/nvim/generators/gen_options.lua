@@ -139,7 +139,7 @@ local dump_option = function(i, o)
     w(get_cond(o.enable_if))
   end
   if o.varname then
-    w('    .var=(char_u *)&' .. o.varname)
+    w('    .var=(char *)&' .. o.varname)
   elseif #o.scope == 1 and o.scope[1] == 'window' then
     w('    .var=VAR_WIN')
   end

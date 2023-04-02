@@ -5162,7 +5162,7 @@ void write_reg_contents_ex(int name, const char *str, ssize_t len, bool must_app
 /// @param str string or list of strings to put in register
 /// @param len length of the string (Ignored when str_list=true.)
 /// @param blocklen width of visual block, or -1 for "I don't know."
-/// @param str_list True if str is `char_u **`.
+/// @param str_list True if str is `char **`.
 static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, size_t len,
                        colnr_T blocklen, bool str_list)
   FUNC_ATTR_NONNULL_ALL

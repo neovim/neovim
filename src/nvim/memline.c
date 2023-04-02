@@ -351,7 +351,7 @@ int ml_open(buf_T *buf)
   dp->db_index[0] = --dp->db_txt_start;         // at end of block
   dp->db_free -= 1 + (unsigned)INDEX_SIZE;
   dp->db_line_count = 1;
-  *((char_u *)dp + dp->db_txt_start) = NUL;     // empty line
+  *((char *)dp + dp->db_txt_start) = NUL;     // empty line
 
   return OK;
 
@@ -1065,7 +1065,7 @@ void ml_recover(bool checkext)
           }
 
           // make sure there is a NUL at the end of the block
-          *((char_u *)dp + dp->db_txt_end - 1) = NUL;
+          *((char *)dp + dp->db_txt_end - 1) = NUL;
 
           // check number of lines in block
           // if wrong, use count in data block

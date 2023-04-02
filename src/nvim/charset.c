@@ -55,7 +55,7 @@ static bool chartab_initialized = false;
   ((chartab)[(unsigned)(c) >> 6] & (1ull << ((c) & 0x3f)))
 
 // Table used below, see init_chartab() for an explanation
-static char_u g_chartab[256];
+static uint8_t g_chartab[256];
 
 // Flags for g_chartab[].
 #define CT_CELL_MASK  0x07  ///< mask: nr of display cells (1, 2 or 4)
@@ -286,7 +286,7 @@ void trans_characters(char *buf, int bufsize)
     if ((trs_len = utfc_ptr2len(buf)) > 1) {
       len -= trs_len;
     } else {
-      trs = (char *)transchar_byte((uint8_t)(*buf));
+      trs = transchar_byte((uint8_t)(*buf));
       trs_len = (int)strlen(trs);
 
       if (trs_len > 1) {
@@ -532,7 +532,7 @@ char *str_foldcase(char *str, int orglen, char *buf, int buflen)
 // Does NOT work for multi-byte characters, c must be <= 255.
 // Also doesn't work for the first byte of a multi-byte, "c" must be a
 // character!
-static char_u transchar_charbuf[11];
+static uint8_t transchar_charbuf[11];
 
 /// Translate a character into a printable one, leaving printable ASCII intact
 ///
@@ -543,10 +543,10 @@ static char_u transchar_charbuf[11];
 /// @return translated character into a static buffer.
 char *transchar(int c)
 {
-  return (char *)transchar_buf(curbuf, c);
+  return transchar_buf(curbuf, c);
 }
 
-char_u *transchar_buf(const buf_T *buf, int c)
+char *transchar_buf(const buf_T *buf, int c)
 {
   int i = 0;
   if (IS_SPECIAL(c)) {
@@ -560,14 +560,14 @@ char_u *transchar_buf(const buf_T *buf, int c)
   if ((!chartab_initialized && (c >= ' ' && c <= '~'))
       || ((c <= 0xFF) && vim_isprintc_strict(c))) {
     // printable character
-    transchar_charbuf[i] = (char_u)c;
+    transchar_charbuf[i] = (uint8_t)c;
     transchar_charbuf[i + 1] = NUL;
   } else if (c <= 0xFF) {
-    transchar_nonprint(buf, transchar_charbuf + i, c);
+    transchar_nonprint(buf, (char *)transchar_charbuf + i, c);
   } else {
     transchar_hex((char *)transchar_charbuf + i, c);
   }
-  return transchar_charbuf;
+  return (char *)transchar_charbuf;
 }
 
 /// Like transchar(), but called with a byte instead of a character.
@@ -577,7 +577,7 @@ char_u *transchar_buf(const buf_T *buf, int c)
 /// @param[in]  c  Byte to translate.
 ///
 /// @return pointer to translated character in transchar_charbuf.
-char_u *transchar_byte(const int c)
+char *transchar_byte(const int c)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return transchar_byte_buf(curbuf, c);
@@ -590,12 +590,12 @@ char_u *transchar_byte(const int c)
 /// @param[in]  c  Byte to translate.
 ///
 /// @return pointer to translated character in transchar_charbuf.
-char_u *transchar_byte_buf(const buf_T *buf, const int c)
+char *transchar_byte_buf(const buf_T *buf, const int c)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (c >= 0x80) {
-    transchar_nonprint(buf, transchar_charbuf, c);
-    return transchar_charbuf;
+    transchar_nonprint(buf, (char *)transchar_charbuf, c);
+    return (char *)transchar_charbuf;
   }
   return transchar_buf(buf, c);
 }
@@ -609,7 +609,7 @@ char_u *transchar_byte_buf(const buf_T *buf, const int c)
 ///                       at least 5 bytes (conversion result + NUL).
 /// @param[in]  c  Character to convert. NUL is assumed to be NL according to
 ///                `:h NL-used-for-NUL`.
-void transchar_nonprint(const buf_T *buf, char_u *charbuf, int c)
+void transchar_nonprint(const buf_T *buf, char *charbuf, int c)
 {
   if (c == NL) {
     // we use newline in place of a NUL
@@ -622,12 +622,12 @@ void transchar_nonprint(const buf_T *buf, char_u *charbuf, int c)
 
   if (dy_flags & DY_UHEX || c > 0x7f) {
     // 'display' has "uhex"
-    transchar_hex((char *)charbuf, c);
+    transchar_hex(charbuf, c);
   } else {
     // 0x00 - 0x1f and 0x7f
     charbuf[0] = '^';
     // DEL displayed as ^?
-    charbuf[1] = (char_u)(c ^ 0x40);
+    charbuf[1] = (char)(uint8_t)(c ^ 0x40);
 
     charbuf[2] = NUL;
   }

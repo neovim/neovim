@@ -1955,7 +1955,7 @@ static void insert_special(int c, int allow_modmask, int ctrlv)
     allow_modmask = true;
   }
   if (IS_SPECIAL(c) || (mod_mask && allow_modmask)) {
-    char *p = (char *)get_special_key_name(c, mod_mask);
+    char *p = get_special_key_name(c, mod_mask);
     int len = (int)strlen(p);
     c = (uint8_t)p[len - 1];
     if (len > 2) {

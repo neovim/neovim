@@ -421,7 +421,7 @@ static void set_option_default(const int opt_idx, int opt_flags)
 
   // pointer to variable for current option
   vimoption_T *opt = &options[opt_idx];
-  char_u *varp = (char_u *)get_varp_scope(opt, both ? OPT_LOCAL : opt_flags);
+  char *varp = get_varp_scope(opt, both ? OPT_LOCAL : opt_flags);
   uint32_t flags = opt->flags;
   if (varp != NULL) {       // skip hidden option, nothing to do for it
     if (flags & P_STRING) {
@@ -833,7 +833,7 @@ static void do_set_num(int opt_idx, int opt_flags, char **argp, int nextchar, co
   if (op == OP_REMOVING) {
     value = *(long *)varp - value;
   }
-  *errmsg = set_num_option(opt_idx, (char_u *)varp, (long)value,
+  *errmsg = set_num_option(opt_idx, (char *)varp, (long)value,
                            errbuf, errbuflen, opt_flags);
 }
 
@@ -847,7 +847,7 @@ static void munge_string_opt_val(char **varp, char **oldval, char **const origva
   if (varp == &p_kp && (**argp == NUL || **argp == ' ')) {
     *save_argp = *argp;
     *argp = ":help";
-  } else if (varp == &p_bs && ascii_isdigit(**(char_u **)varp)) {
+  } else if (varp == &p_bs && ascii_isdigit((uint8_t)(**varp))) {
     // Convert 'backspace' number to string, for
     // adding, prepending and removing string.
     const int i = getdigits_int(varp, true, 0);
@@ -927,7 +927,7 @@ static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar,
   // reset, use the global value here.
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
       && ((int)options[opt_idx].indir & PV_BOTH)) {
-    varp = (char *)options[opt_idx].var;
+    varp = options[opt_idx].var;
   }
 
   // The old value is kept until we are sure that the new value is valid.
@@ -1439,7 +1439,7 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
       showoneopt(&options[opt_idx], opt_flags);
       if (p_verbose > 0) {
         // Mention where the option was last set.
-        if (varp == (char *)options[opt_idx].var) {
+        if (varp == options[opt_idx].var) {
           option_last_set_msg(options[opt_idx].last_set);
         } else if ((int)options[opt_idx].indir & PV_WIN) {
           option_last_set_msg(curwin->w_p_script_ctx[(int)options[opt_idx].indir & PV_MASK]);
@@ -1735,7 +1735,7 @@ static char *option_expand(int opt_idx, char *val)
   // For 'spellsuggest' expand after "file:".
   expand_env_esc(val, NameBuff, MAXPATHL,
                  (char **)options[opt_idx].var == &p_tags, false,
-                 (char_u **)options[opt_idx].var == (char_u **)&p_sps ? "file:" :
+                 (char **)options[opt_idx].var == &p_sps ? "file:" :
                  NULL);
   if (strcmp(NameBuff, val) == 0) {   // they are the same
     return NULL;
@@ -2274,7 +2274,7 @@ static char *set_bool_option(const int opt_idx, char *const varp, const int valu
 /// @param[in]  opt_flags  OPT_LOCAL, OPT_GLOBAL or OPT_MODELINE.
 ///
 /// @return NULL on success, error message on error.
-static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf, size_t errbuflen,
+static char *set_num_option(int opt_idx, char *varp, long value, char *errbuf, size_t errbuflen,
                             int opt_flags)
 {
   char *errmsg = NULL;
@@ -2905,7 +2905,7 @@ getoption_T get_option_value(const char *name, long *numval, char **stringval, u
     return gov_unknown;
   }
 
-  char_u *varp = (char_u *)get_varp_scope(&(options[opt_idx]), scope);
+  char *varp = get_varp_scope(&(options[opt_idx]), scope);
 
   if (flagsp != NULL) {
     // Return the P_xxxx option flags.
@@ -3010,7 +3010,7 @@ int get_option_value_strict(char *name, int64_t *numval, char **stringval, int o
     return rv;
   }
 
-  char_u *varp = NULL;
+  char *varp = NULL;
 
   if (opt_type == SREQ_GLOBAL) {
     if (p->var == VAR_WIN) {
@@ -3030,7 +3030,7 @@ int get_option_value_strict(char *name, int64_t *numval, char **stringval, int o
         // only getting a pointer, no need to use aucmd_prepbuf()
         curbuf = (buf_T *)from;
         curwin->w_buffer = curbuf;
-        varp = (char_u *)get_varp_scope(p, OPT_LOCAL);
+        varp = get_varp_scope(p, OPT_LOCAL);
         curbuf = save_curbuf;
         curwin->w_buffer = curbuf;
       }
@@ -3038,7 +3038,7 @@ int get_option_value_strict(char *name, int64_t *numval, char **stringval, int o
       win_T *save_curwin = curwin;
       curwin = (win_T *)from;
       curbuf = curwin->w_buffer;
-      varp = (char_u *)get_varp_scope(p, OPT_LOCAL);
+      varp = get_varp_scope(p, OPT_LOCAL);
       curwin = save_curwin;
       curbuf = curwin->w_buffer;
     }
@@ -3109,7 +3109,7 @@ char *set_option_value(const char *const name, const long number, const char *co
     return set_string_option(opt_idx, s, opt_flags, errbuf, sizeof(errbuf));
   }
 
-  char_u *varp = (char_u *)get_varp_scope(&(options[opt_idx]), opt_flags);
+  char *varp = get_varp_scope(&(options[opt_idx]), opt_flags);
   if (varp == NULL) {
     // hidden option is not changed
     return NULL;
@@ -3146,7 +3146,7 @@ char *set_option_value(const char *const name, const long number, const char *co
   if (flags & P_NUM) {
     return set_num_option(opt_idx, varp, numval, errbuf, sizeof(errbuf), opt_flags);
   }
-  return set_bool_option(opt_idx, (char *)varp, (int)numval, opt_flags);
+  return set_bool_option(opt_idx, varp, (int)numval, opt_flags);
 }
 
 /// Call set_option_value() and when an error is returned report it.
@@ -3243,7 +3243,7 @@ static void showoptions(bool all, int opt_flags)
           varp = get_varp_scope(p, opt_flags);
         }
       } else {
-        varp = (char *)get_varp(p);
+        varp = get_varp(p);
       }
       if (varp != NULL
           && (all == 1 || (all == 0 && !optval_default(p, varp)))) {
@@ -3349,7 +3349,7 @@ static void showoneopt(vimoption_T *p, int opt_flags)
   silent_mode = false;
   info_message = true;          // use os_msg(), not os_errmsg()
 
-  char_u *varp = (char_u *)get_varp_scope(p, opt_flags);
+  char *varp = get_varp_scope(p, opt_flags);
 
   // for 'modified' we also need to check if 'ff' or 'fenc' changed.
   if ((p->flags & P_BOOL) && ((int *)varp == &curbuf->b_changed
@@ -3427,12 +3427,12 @@ int makeset(FILE *fd, int opt_flags, int local_only)
         }
 
         if ((opt_flags & OPT_SKIPRTP)
-            && (p->var == (char_u *)&p_rtp || p->var == (char_u *)&p_pp)) {
+            && (p->var == (char *)&p_rtp || p->var == (char *)&p_pp)) {
           continue;
         }
 
         int round = 2;
-        char_u *varp_local = NULL;  // fresh value
+        char *varp_local = NULL;  // fresh value
         if (p->indir != PV_NONE) {
           if (p->var == VAR_WIN) {
             // skip window-local option when only doing globals
@@ -3442,11 +3442,11 @@ int makeset(FILE *fd, int opt_flags, int local_only)
             // When fresh value of window-local option is not at the
             // default, need to write it too.
             if (!(opt_flags & OPT_GLOBAL) && !local_only) {
-              char_u *varp_fresh = (char_u *)get_varp_scope(p, OPT_GLOBAL);  // local value
-              if (!optval_default(p, (char *)varp_fresh)) {
+              char *varp_fresh = get_varp_scope(p, OPT_GLOBAL);  // local value
+              if (!optval_default(p, varp_fresh)) {
                 round = 1;
-                varp_local = (char_u *)varp;
-                varp = (char *)varp_fresh;
+                varp_local = varp;
+                varp = varp_fresh;
               }
             }
           }
@@ -3454,7 +3454,7 @@ int makeset(FILE *fd, int opt_flags, int local_only)
 
         // Round 1: fresh value for window-local options.
         // Round 2: other values
-        for (; round <= 2; varp = (char *)varp_local, round++) {
+        for (; round <= 2; varp = varp_local, round++) {
           char *cmd;
           if (round == 1 || (opt_flags & OPT_GLOBAL)) {
             cmd = "set";
@@ -3477,7 +3477,7 @@ int makeset(FILE *fd, int opt_flags, int local_only)
             // already right, avoids reloading the syntax file.
             if (p->indir == PV_SYN || p->indir == PV_FT) {
               if (fprintf(fd, "if &%s != '%s'", p->fullname,
-                          *(char_u **)(varp)) < 0
+                          *(char **)(varp)) < 0
                   || put_eol(fd) < 0) {
                 return FAIL;
               }
@@ -3524,7 +3524,7 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char **valuep, uint64_
   }
 
   char *buf = NULL;
-  char_u *part = NULL;
+  char *part = NULL;
 
   if (*valuep != NULL) {
     if ((flags & P_EXPAND) != 0) {
@@ -3552,8 +3552,8 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char **valuep, uint64_
           if (fprintf(fd, "%s %s+=", cmd, name) < 0) {
             goto fail;
           }
-          (void)copy_option_part(&p, (char *)part, size, ",");
-          if (put_escstr(fd, (char *)part, 2) == FAIL || put_eol(fd) == FAIL) {
+          (void)copy_option_part(&p, part, size, ",");
+          if (put_escstr(fd, part, 2) == FAIL || put_eol(fd) == FAIL) {
             goto fail;
           }
         }
@@ -3586,9 +3586,9 @@ static int put_setnum(FILE *fd, char *cmd, char *name, long *valuep)
     return FAIL;
   }
   long wc;
-  if (wc_use_keyname((char_u *)valuep, &wc)) {
+  if (wc_use_keyname((char *)valuep, &wc)) {
     // print 'wildchar' and 'wildcharm' as a key name
-    if (fputs((char *)get_special_key_name((int)wc, 0), fd) < 0) {
+    if (fputs(get_special_key_name((int)wc, 0), fd) < 0) {
       return FAIL;
     }
   } else if (fprintf(fd, "%" PRId64, (int64_t)(*valuep)) < 0) {
@@ -3727,7 +3727,7 @@ char *get_varp_scope_from(vimoption_T *p, int scope, buf_T *buf, win_T *win)
     if (p->var == VAR_WIN) {
       return GLOBAL_WO(get_varp_from(p, buf, win));
     }
-    return (char *)p->var;
+    return p->var;
   }
   if ((scope & OPT_LOCAL) && ((int)p->indir & PV_BOTH)) {
     switch ((int)p->indir) {
@@ -3790,7 +3790,7 @@ char *get_varp_scope_from(vimoption_T *p, int scope, buf_T *buf, win_T *win)
     }
     return NULL;     // "cannot happen"
   }
-  return (char *)get_varp_from(p, buf, win);
+  return get_varp_from(p, buf, win);
 }
 
 /// Get pointer to option variable, depending on local or global scope.
@@ -3801,7 +3801,7 @@ char *get_varp_scope(vimoption_T *p, int scope)
   return get_varp_scope_from(p, scope, curbuf, curwin);
 }
 
-static char_u *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
+static char *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
 {
   // hidden option, always return NULL
   if (p->var == NULL) {
@@ -3815,308 +3815,308 @@ static char_u *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
   // global option with local value: use local value if it's been set
   case PV_EP:
     return *buf->b_p_ep != NUL
-           ? (char_u *)&buf->b_p_ep : p->var;
+           ? (char *)&buf->b_p_ep : p->var;
   case PV_KP:
     return *buf->b_p_kp != NUL
-           ? (char_u *)&buf->b_p_kp : p->var;
+           ? (char *)&buf->b_p_kp : p->var;
   case PV_PATH:
     return *buf->b_p_path != NUL
-           ? (char_u *)&(buf->b_p_path) : p->var;
+           ? (char *)&(buf->b_p_path) : p->var;
   case PV_AR:
     return buf->b_p_ar >= 0
-           ? (char_u *)&(buf->b_p_ar) : p->var;
+           ? (char *)&(buf->b_p_ar) : p->var;
   case PV_TAGS:
     return *buf->b_p_tags != NUL
-           ? (char_u *)&(buf->b_p_tags) : p->var;
+           ? (char *)&(buf->b_p_tags) : p->var;
   case PV_TC:
     return *buf->b_p_tc != NUL
-           ? (char_u *)&(buf->b_p_tc) : p->var;
+           ? (char *)&(buf->b_p_tc) : p->var;
   case PV_SISO:
     return win->w_p_siso >= 0
-           ? (char_u *)&(win->w_p_siso) : p->var;
+           ? (char *)&(win->w_p_siso) : p->var;
   case PV_SO:
     return win->w_p_so >= 0
-           ? (char_u *)&(win->w_p_so) : p->var;
+           ? (char *)&(win->w_p_so) : p->var;
   case PV_BKC:
     return *buf->b_p_bkc != NUL
-           ? (char_u *)&(buf->b_p_bkc) : p->var;
+           ? (char *)&(buf->b_p_bkc) : p->var;
   case PV_DEF:
     return *buf->b_p_def != NUL
-           ? (char_u *)&(buf->b_p_def) : p->var;
+           ? (char *)&(buf->b_p_def) : p->var;
   case PV_INC:
     return *buf->b_p_inc != NUL
-           ? (char_u *)&(buf->b_p_inc) : p->var;
+           ? (char *)&(buf->b_p_inc) : p->var;
   case PV_DICT:
     return *buf->b_p_dict != NUL
-           ? (char_u *)&(buf->b_p_dict) : p->var;
+           ? (char *)&(buf->b_p_dict) : p->var;
   case PV_TSR:
     return *buf->b_p_tsr != NUL
-           ? (char_u *)&(buf->b_p_tsr) : p->var;
+           ? (char *)&(buf->b_p_tsr) : p->var;
   case PV_TSRFU:
     return *buf->b_p_tsrfu != NUL
-           ? (char_u *)&(buf->b_p_tsrfu) : p->var;
+           ? (char *)&(buf->b_p_tsrfu) : p->var;
   case PV_FP:
     return *buf->b_p_fp != NUL
-           ? (char_u *)&(buf->b_p_fp) : p->var;
+           ? (char *)&(buf->b_p_fp) : p->var;
   case PV_EFM:
     return *buf->b_p_efm != NUL
-           ? (char_u *)&(buf->b_p_efm) : p->var;
+           ? (char *)&(buf->b_p_efm) : p->var;
   case PV_GP:
     return *buf->b_p_gp != NUL
-           ? (char_u *)&(buf->b_p_gp) : p->var;
+           ? (char *)&(buf->b_p_gp) : p->var;
   case PV_MP:
     return *buf->b_p_mp != NUL
-           ? (char_u *)&(buf->b_p_mp) : p->var;
+           ? (char *)&(buf->b_p_mp) : p->var;
   case PV_SBR:
     return *win->w_p_sbr != NUL
-           ? (char_u *)&(win->w_p_sbr) : p->var;
+           ? (char *)&(win->w_p_sbr) : p->var;
   case PV_STL:
     return *win->w_p_stl != NUL
-           ? (char_u *)&(win->w_p_stl) : p->var;
+           ? (char *)&(win->w_p_stl) : p->var;
   case PV_WBR:
     return *win->w_p_wbr != NUL
-           ? (char_u *)&(win->w_p_wbr) : p->var;
+           ? (char *)&(win->w_p_wbr) : p->var;
   case PV_UL:
     return buf->b_p_ul != NO_LOCAL_UNDOLEVEL
-           ? (char_u *)&(buf->b_p_ul) : p->var;
+           ? (char *)&(buf->b_p_ul) : p->var;
   case PV_LW:
     return *buf->b_p_lw != NUL
-           ? (char_u *)&(buf->b_p_lw) : p->var;
+           ? (char *)&(buf->b_p_lw) : p->var;
   case PV_MENC:
     return *buf->b_p_menc != NUL
-           ? (char_u *)&(buf->b_p_menc) : p->var;
+           ? (char *)&(buf->b_p_menc) : p->var;
   case PV_FCS:
     return *win->w_p_fcs != NUL
-           ? (char_u *)&(win->w_p_fcs) : p->var;
+           ? (char *)&(win->w_p_fcs) : p->var;
   case PV_LCS:
     return *win->w_p_lcs != NUL
-           ? (char_u *)&(win->w_p_lcs) : p->var;
+           ? (char *)&(win->w_p_lcs) : p->var;
   case PV_VE:
     return *win->w_p_ve != NUL
-           ? (char_u *)&win->w_p_ve : p->var;
+           ? (char *)&win->w_p_ve : p->var;
 
   case PV_ARAB:
-    return (char_u *)&(win->w_p_arab);
+    return (char *)&(win->w_p_arab);
   case PV_LIST:
-    return (char_u *)&(win->w_p_list);
+    return (char *)&(win->w_p_list);
   case PV_SPELL:
-    return (char_u *)&(win->w_p_spell);
+    return (char *)&(win->w_p_spell);
   case PV_CUC:
-    return (char_u *)&(win->w_p_cuc);
+    return (char *)&(win->w_p_cuc);
   case PV_CUL:
-    return (char_u *)&(win->w_p_cul);
+    return (char *)&(win->w_p_cul);
   case PV_CULOPT:
-    return (char_u *)&(win->w_p_culopt);
+    return (char *)&(win->w_p_culopt);
   case PV_CC:
-    return (char_u *)&(win->w_p_cc);
+    return (char *)&(win->w_p_cc);
   case PV_DIFF:
-    return (char_u *)&(win->w_p_diff);
+    return (char *)&(win->w_p_diff);
   case PV_FDC:
-    return (char_u *)&(win->w_p_fdc);
+    return (char *)&(win->w_p_fdc);
   case PV_FEN:
-    return (char_u *)&(win->w_p_fen);
+    return (char *)&(win->w_p_fen);
   case PV_FDI:
-    return (char_u *)&(win->w_p_fdi);
+    return (char *)&(win->w_p_fdi);
   case PV_FDL:
-    return (char_u *)&(win->w_p_fdl);
+    return (char *)&(win->w_p_fdl);
   case PV_FDM:
-    return (char_u *)&(win->w_p_fdm);
+    return (char *)&(win->w_p_fdm);
   case PV_FML:
-    return (char_u *)&(win->w_p_fml);
+    return (char *)&(win->w_p_fml);
   case PV_FDN:
-    return (char_u *)&(win->w_p_fdn);
+    return (char *)&(win->w_p_fdn);
   case PV_FDE:
-    return (char_u *)&(win->w_p_fde);
+    return (char *)&(win->w_p_fde);
   case PV_FDT:
-    return (char_u *)&(win->w_p_fdt);
+    return (char *)&(win->w_p_fdt);
   case PV_FMR:
-    return (char_u *)&(win->w_p_fmr);
+    return (char *)&(win->w_p_fmr);
   case PV_NU:
-    return (char_u *)&(win->w_p_nu);
+    return (char *)&(win->w_p_nu);
   case PV_RNU:
-    return (char_u *)&(win->w_p_rnu);
+    return (char *)&(win->w_p_rnu);
   case PV_NUW:
-    return (char_u *)&(win->w_p_nuw);
+    return (char *)&(win->w_p_nuw);
   case PV_WFH:
-    return (char_u *)&(win->w_p_wfh);
+    return (char *)&(win->w_p_wfh);
   case PV_WFW:
-    return (char_u *)&(win->w_p_wfw);
+    return (char *)&(win->w_p_wfw);
   case PV_PVW:
-    return (char_u *)&(win->w_p_pvw);
+    return (char *)&(win->w_p_pvw);
   case PV_RL:
-    return (char_u *)&(win->w_p_rl);
+    return (char *)&(win->w_p_rl);
   case PV_RLC:
-    return (char_u *)&(win->w_p_rlc);
+    return (char *)&(win->w_p_rlc);
   case PV_SCROLL:
-    return (char_u *)&(win->w_p_scr);
+    return (char *)&(win->w_p_scr);
   case PV_WRAP:
-    return (char_u *)&(win->w_p_wrap);
+    return (char *)&(win->w_p_wrap);
   case PV_LBR:
-    return (char_u *)&(win->w_p_lbr);
+    return (char *)&(win->w_p_lbr);
   case PV_BRI:
-    return (char_u *)&(win->w_p_bri);
+    return (char *)&(win->w_p_bri);
   case PV_BRIOPT:
-    return (char_u *)&(win->w_p_briopt);
+    return (char *)&(win->w_p_briopt);
   case PV_SCBIND:
-    return (char_u *)&(win->w_p_scb);
+    return (char *)&(win->w_p_scb);
   case PV_CRBIND:
-    return (char_u *)&(win->w_p_crb);
+    return (char *)&(win->w_p_crb);
   case PV_COCU:
-    return (char_u *)&(win->w_p_cocu);
+    return (char *)&(win->w_p_cocu);
   case PV_COLE:
-    return (char_u *)&(win->w_p_cole);
+    return (char *)&(win->w_p_cole);
 
   case PV_AI:
-    return (char_u *)&(buf->b_p_ai);
+    return (char *)&(buf->b_p_ai);
   case PV_BIN:
-    return (char_u *)&(buf->b_p_bin);
+    return (char *)&(buf->b_p_bin);
   case PV_BOMB:
-    return (char_u *)&(buf->b_p_bomb);
+    return (char *)&(buf->b_p_bomb);
   case PV_BH:
-    return (char_u *)&(buf->b_p_bh);
+    return (char *)&(buf->b_p_bh);
   case PV_BT:
-    return (char_u *)&(buf->b_p_bt);
+    return (char *)&(buf->b_p_bt);
   case PV_BL:
-    return (char_u *)&(buf->b_p_bl);
+    return (char *)&(buf->b_p_bl);
   case PV_CHANNEL:
-    return (char_u *)&(buf->b_p_channel);
+    return (char *)&(buf->b_p_channel);
   case PV_CI:
-    return (char_u *)&(buf->b_p_ci);
+    return (char *)&(buf->b_p_ci);
   case PV_CIN:
-    return (char_u *)&(buf->b_p_cin);
+    return (char *)&(buf->b_p_cin);
   case PV_CINK:
-    return (char_u *)&(buf->b_p_cink);
+    return (char *)&(buf->b_p_cink);
   case PV_CINO:
-    return (char_u *)&(buf->b_p_cino);
+    return (char *)&(buf->b_p_cino);
   case PV_CINSD:
-    return (char_u *)&(buf->b_p_cinsd);
+    return (char *)&(buf->b_p_cinsd);
   case PV_CINW:
-    return (char_u *)&(buf->b_p_cinw);
+    return (char *)&(buf->b_p_cinw);
   case PV_COM:
-    return (char_u *)&(buf->b_p_com);
+    return (char *)&(buf->b_p_com);
   case PV_CMS:
-    return (char_u *)&(buf->b_p_cms);
+    return (char *)&(buf->b_p_cms);
   case PV_CPT:
-    return (char_u *)&(buf->b_p_cpt);
+    return (char *)&(buf->b_p_cpt);
 #ifdef BACKSLASH_IN_FILENAME
   case PV_CSL:
-    return (char_u *)&(buf->b_p_csl);
+    return (char *)&(buf->b_p_csl);
 #endif
   case PV_CFU:
-    return (char_u *)&(buf->b_p_cfu);
+    return (char *)&(buf->b_p_cfu);
   case PV_OFU:
-    return (char_u *)&(buf->b_p_ofu);
+    return (char *)&(buf->b_p_ofu);
   case PV_EOF:
-    return (char_u *)&(buf->b_p_eof);
+    return (char *)&(buf->b_p_eof);
   case PV_EOL:
-    return (char_u *)&(buf->b_p_eol);
+    return (char *)&(buf->b_p_eol);
   case PV_FIXEOL:
-    return (char_u *)&(buf->b_p_fixeol);
+    return (char *)&(buf->b_p_fixeol);
   case PV_ET:
-    return (char_u *)&(buf->b_p_et);
+    return (char *)&(buf->b_p_et);
   case PV_FENC:
-    return (char_u *)&(buf->b_p_fenc);
+    return (char *)&(buf->b_p_fenc);
   case PV_FF:
-    return (char_u *)&(buf->b_p_ff);
+    return (char *)&(buf->b_p_ff);
   case PV_FT:
-    return (char_u *)&(buf->b_p_ft);
+    return (char *)&(buf->b_p_ft);
   case PV_FO:
-    return (char_u *)&(buf->b_p_fo);
+    return (char *)&(buf->b_p_fo);
   case PV_FLP:
-    return (char_u *)&(buf->b_p_flp);
+    return (char *)&(buf->b_p_flp);
   case PV_IMI:
-    return (char_u *)&(buf->b_p_iminsert);
+    return (char *)&(buf->b_p_iminsert);
   case PV_IMS:
-    return (char_u *)&(buf->b_p_imsearch);
+    return (char *)&(buf->b_p_imsearch);
   case PV_INF:
-    return (char_u *)&(buf->b_p_inf);
+    return (char *)&(buf->b_p_inf);
   case PV_ISK:
-    return (char_u *)&(buf->b_p_isk);
+    return (char *)&(buf->b_p_isk);
   case PV_INEX:
-    return (char_u *)&(buf->b_p_inex);
+    return (char *)&(buf->b_p_inex);
   case PV_INDE:
-    return (char_u *)&(buf->b_p_inde);
+    return (char *)&(buf->b_p_inde);
   case PV_INDK:
-    return (char_u *)&(buf->b_p_indk);
+    return (char *)&(buf->b_p_indk);
   case PV_FEX:
-    return (char_u *)&(buf->b_p_fex);
+    return (char *)&(buf->b_p_fex);
   case PV_LISP:
-    return (char_u *)&(buf->b_p_lisp);
+    return (char *)&(buf->b_p_lisp);
   case PV_LOP:
-    return (char_u *)&(buf->b_p_lop);
+    return (char *)&(buf->b_p_lop);
   case PV_ML:
-    return (char_u *)&(buf->b_p_ml);
+    return (char *)&(buf->b_p_ml);
   case PV_MPS:
-    return (char_u *)&(buf->b_p_mps);
+    return (char *)&(buf->b_p_mps);
   case PV_MA:
-    return (char_u *)&(buf->b_p_ma);
+    return (char *)&(buf->b_p_ma);
   case PV_MOD:
-    return (char_u *)&(buf->b_changed);
+    return (char *)&(buf->b_changed);
   case PV_NF:
-    return (char_u *)&(buf->b_p_nf);
+    return (char *)&(buf->b_p_nf);
   case PV_PI:
-    return (char_u *)&(buf->b_p_pi);
+    return (char *)&(buf->b_p_pi);
   case PV_QE:
-    return (char_u *)&(buf->b_p_qe);
+    return (char *)&(buf->b_p_qe);
   case PV_RO:
-    return (char_u *)&(buf->b_p_ro);
+    return (char *)&(buf->b_p_ro);
   case PV_SCBK:
-    return (char_u *)&(buf->b_p_scbk);
+    return (char *)&(buf->b_p_scbk);
   case PV_SI:
-    return (char_u *)&(buf->b_p_si);
+    return (char *)&(buf->b_p_si);
   case PV_STS:
-    return (char_u *)&(buf->b_p_sts);
+    return (char *)&(buf->b_p_sts);
   case PV_SUA:
-    return (char_u *)&(buf->b_p_sua);
+    return (char *)&(buf->b_p_sua);
   case PV_SWF:
-    return (char_u *)&(buf->b_p_swf);
+    return (char *)&(buf->b_p_swf);
   case PV_SMC:
-    return (char_u *)&(buf->b_p_smc);
+    return (char *)&(buf->b_p_smc);
   case PV_SYN:
-    return (char_u *)&(buf->b_p_syn);
+    return (char *)&(buf->b_p_syn);
   case PV_SPC:
-    return (char_u *)&(win->w_s->b_p_spc);
+    return (char *)&(win->w_s->b_p_spc);
   case PV_SPF:
-    return (char_u *)&(win->w_s->b_p_spf);
+    return (char *)&(win->w_s->b_p_spf);
   case PV_SPL:
-    return (char_u *)&(win->w_s->b_p_spl);
+    return (char *)&(win->w_s->b_p_spl);
   case PV_SPO:
-    return (char_u *)&(win->w_s->b_p_spo);
+    return (char *)&(win->w_s->b_p_spo);
   case PV_SW:
-    return (char_u *)&(buf->b_p_sw);
+    return (char *)&(buf->b_p_sw);
   case PV_TFU:
-    return (char_u *)&(buf->b_p_tfu);
+    return (char *)&(buf->b_p_tfu);
   case PV_TS:
-    return (char_u *)&(buf->b_p_ts);
+    return (char *)&(buf->b_p_ts);
   case PV_TW:
-    return (char_u *)&(buf->b_p_tw);
+    return (char *)&(buf->b_p_tw);
   case PV_UDF:
-    return (char_u *)&(buf->b_p_udf);
+    return (char *)&(buf->b_p_udf);
   case PV_WM:
-    return (char_u *)&(buf->b_p_wm);
+    return (char *)&(buf->b_p_wm);
   case PV_VSTS:
-    return (char_u *)&(buf->b_p_vsts);
+    return (char *)&(buf->b_p_vsts);
   case PV_VTS:
-    return (char_u *)&(buf->b_p_vts);
+    return (char *)&(buf->b_p_vts);
   case PV_KMAP:
-    return (char_u *)&(buf->b_p_keymap);
+    return (char *)&(buf->b_p_keymap);
   case PV_SCL:
-    return (char_u *)&(win->w_p_scl);
+    return (char *)&(win->w_p_scl);
   case PV_WINHL:
-    return (char_u *)&(win->w_p_winhl);
+    return (char *)&(win->w_p_winhl);
   case PV_WINBL:
-    return (char_u *)&(win->w_p_winbl);
+    return (char *)&(win->w_p_winbl);
   case PV_STC:
-    return (char_u *)&(win->w_p_stc);
+    return (char *)&(win->w_p_stc);
   default:
     iemsg(_("E356: get_varp ERROR"));
   }
   // always return a valid pointer to avoid a crash!
-  return (char_u *)&(buf->b_p_wm);
+  return (char *)&(buf->b_p_wm);
 }
 
 /// Get pointer to option variable.
-static inline char_u *get_varp(vimoption_T *p)
+static inline char *get_varp(vimoption_T *p)
 {
   return get_varp_from(p, curbuf, curwin);
 }
@@ -4608,7 +4608,7 @@ void set_imsearch_global(buf_T *buf)
 }
 
 static int expand_option_idx = -1;
-static char_u expand_option_name[5] = { 't', '_', NUL, NUL, NUL };
+static char expand_option_name[5] = { 't', '_', NUL, NUL, NUL };
 static int expand_option_flags = 0;
 
 /// @param opt_flags  OPT_GLOBAL and/or OPT_LOCAL
@@ -4670,8 +4670,8 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
     }
     nextchar = *++p;
     is_term_option = true;
-    expand_option_name[2] = (char_u)KEY2TERMCAP0(key);
-    expand_option_name[3] = KEY2TERMCAP1(key);
+    expand_option_name[2] = (char)(uint8_t)KEY2TERMCAP0(key);
+    expand_option_name[3] = (char)(uint8_t)KEY2TERMCAP1(key);
   } else {
     if (p[0] == 't' && p[1] == '_') {
       p += 2;
@@ -4683,8 +4683,8 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
       }
       nextchar = *++p;
       is_term_option = true;
-      expand_option_name[2] = (char_u)p[-2];
-      expand_option_name[3] = (char_u)p[-1];
+      expand_option_name[2] = p[-2];
+      expand_option_name[3] = p[-1];
     } else {
       // Allow * wildcard.
       while (ASCII_ISALNUM(*p) || *p == '_' || *p == '*') {
@@ -4734,7 +4734,7 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
   xp->xp_pattern = p + 1;
 
   if (flags & P_EXPAND) {
-    p = (char *)options[opt_idx].var;
+    p = options[opt_idx].var;
     if (p == (char *)&p_bdir
         || p == (char *)&p_dir
         || p == (char *)&p_path
@@ -4778,7 +4778,7 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
     }
 
     // for 'spellsuggest' start at "file:"
-    if (options[opt_idx].var == (char_u *)&p_sps
+    if (options[opt_idx].var == (char *)&p_sps
         && strncmp(p, "file:", 5) == 0) {
       xp->xp_pattern = p + 5;
       break;
@@ -4915,7 +4915,7 @@ void ExpandOldSetting(int *numMatches, char ***matches)
 
   // For a terminal key code expand_option_idx is < 0.
   if (expand_option_idx < 0) {
-    expand_option_idx = findoption((const char *)expand_option_name);
+    expand_option_idx = findoption(expand_option_name);
   }
 
   if (expand_option_idx >= 0) {
@@ -4959,8 +4959,8 @@ static void option_value2string(vimoption_T *opp, int scope)
   if (opp->flags & P_NUM) {
     long wc = 0;
 
-    if (wc_use_keyname((char_u *)varp, &wc)) {
-      xstrlcpy(NameBuff, (char *)get_special_key_name((int)wc, 0), sizeof(NameBuff));
+    if (wc_use_keyname(varp, &wc)) {
+      xstrlcpy(NameBuff, get_special_key_name((int)wc, 0), sizeof(NameBuff));
     } else if (wc != 0) {
       xstrlcpy(NameBuff, transchar((int)wc), sizeof(NameBuff));
     } else {
@@ -4984,7 +4984,7 @@ static void option_value2string(vimoption_T *opp, int scope)
 /// Return true if "varp" points to 'wildchar' or 'wildcharm' and it can be
 /// printed as a keyname.
 /// "*wcp" is set to the value of the option if it's 'wildchar' or 'wildcharm'.
-static int wc_use_keyname(const char_u *varp, long *wcp)
+static int wc_use_keyname(const char *varp, long *wcp)
 {
   if (((long *)varp == &p_wc) || ((long *)varp == &p_wcm)) {
     *wcp = *(long *)varp;
@@ -5198,7 +5198,7 @@ void fill_breakat_flags(void)
 int fill_culopt_flags(char *val, win_T *wp)
 {
   char *p;
-  char_u culopt_flags_new = 0;
+  uint8_t culopt_flags_new = 0;
 
   if (val == NULL) {
     p = wp->w_p_culopt;
@@ -5568,7 +5568,7 @@ dict_T *get_winbuf_options(const int bufopt)
 
     if ((bufopt && (opt->indir & PV_BUF))
         || (!bufopt && (opt->indir & PV_WIN))) {
-      char_u *varp = get_varp(opt);
+      char *varp = get_varp(opt);
 
       if (varp != NULL) {
         if (opt->flags & P_STRING) {
@@ -5673,7 +5673,7 @@ static Dictionary vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, wi
   const char *type;
   Object def;
   // TODO(bfredl): do you even nocp?
-  char_u *def_val = (char_u *)opt->def_val;
+  char *def_val = opt->def_val;
   if (opt->flags & P_STRING) {
     type = "string";
     def = CSTR_TO_OBJ(def_val ? (char *)def_val : "");

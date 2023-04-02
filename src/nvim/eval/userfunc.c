@@ -90,7 +90,7 @@ static int get_function_args(char **argp, char endchar, garray_T *newargs, int *
   bool mustend = false;
   char *arg = *argp;
   char *p = arg;
-  char_u c;
+  uint8_t c;
   int i;
 
   if (newargs != NULL) {
@@ -128,7 +128,7 @@ static int get_function_args(char **argp, char endchar, garray_T *newargs, int *
       }
       if (newargs != NULL) {
         ga_grow(newargs, 1);
-        c = (char_u)(*p);
+        c = (uint8_t)(*p);
         *p = NUL;
         arg = xstrdup(arg);
 
@@ -159,7 +159,7 @@ static int get_function_args(char **argp, char endchar, garray_T *newargs, int *
           while (p > expr && ascii_iswhite(p[-1])) {
             p--;
           }
-          c = (char_u)(*p);
+          c = (uint8_t)(*p);
           *p = NUL;
           expr = xstrdup(expr);
           ((char **)(default_args->ga_data))[default_args->ga_len] = expr;

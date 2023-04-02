@@ -206,7 +206,7 @@ typedef struct {
   struct { \
     typval_T di_tv;  /* Structure that holds scope dictionary itself. */ \
     uint8_t di_flags;  /* Flags. */ \
-    char_u di_key[__VA_ARGS__];  /* Key value. */  /* NOLINT(runtime/arrays)*/ \
+    char di_key[__VA_ARGS__];  /* Key value. */  /* NOLINT(runtime/arrays)*/ \
   }
 
 /// Structure to hold a scope dictionary

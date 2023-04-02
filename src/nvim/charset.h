@@ -54,6 +54,6 @@ static inline bool vim_isbreak(int c)
 /// Used very often if 'linebreak' is set
 static inline bool vim_isbreak(int c)
 {
-  return breakat_flags[(char_u)c];
+  return breakat_flags[(uint8_t)c];
 }
 #endif  // NVIM_CHARSET_H
