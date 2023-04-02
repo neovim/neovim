@@ -766,6 +766,7 @@ describe('Buffer highlighting', function()
       -- an existing virtual text. We might add a prioritation system.
       set_virtual_text(id1, 0, s1, {})
       eq({{1, 0, 0, {
+        ns_id = 1,
         priority = 0,
         virt_text = s1,
         -- other details
@@ -778,6 +779,7 @@ describe('Buffer highlighting', function()
       local lastline = line_count()
       set_virtual_text(id1, line_count(), s2, {})
       eq({{3, lastline, 0, {
+        ns_id = 1,
         priority = 0,
         virt_text = s2,
         -- other details

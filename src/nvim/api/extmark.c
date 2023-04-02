@@ -105,7 +105,16 @@ bool ns_initialized(uint32_t ns)
   return ns < (uint32_t)next_namespace_id;
 }
 
-static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict)
+static Object hl_group_name(int hl_id, bool hl_name)
+{
+  if (hl_name) {
+    return STRING_OBJ(cstr_to_string(syn_id2name(hl_id)));
+  } else {
+    return INTEGER_OBJ(hl_id);
+  }
+}
+
+static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict, bool hl_name)
 {
   Array rv = ARRAY_DICT_INIT;
   if (id) {
@@ -117,6 +126,8 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
   if (add_dict) {
     Dictionary dict = ARRAY_DICT_INIT;
 
+    PUT(dict, "ns_id", INTEGER_OBJ((Integer)extmark->ns_id));
+
     PUT(dict, "right_gravity", BOOLEAN_OBJ(extmark->right_gravity));
 
     if (extmark->end_row >= 0) {
@@ -127,8 +138,7 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
 
     const Decoration *decor = &extmark->decor;
     if (decor->hl_id) {
-      String name = cstr_to_string((const char *)syn_id2name(decor->hl_id));
-      PUT(dict, "hl_group", STRING_OBJ(name));
+      PUT(dict, "hl_group", hl_group_name(decor->hl_id, hl_name));
       PUT(dict, "hl_eol", BOOLEAN_OBJ(decor->hl_eol));
     }
     if (decor->hl_mode) {
@@ -142,8 +152,7 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
         VirtTextChunk *vtc = &decor->virt_text.items[i];
         ADD(chunk, STRING_OBJ(cstr_to_string(vtc->text)));
         if (vtc->hl_id > 0) {
-          ADD(chunk,
-              STRING_OBJ(cstr_to_string((const char *)syn_id2name(vtc->hl_id))));
+          ADD(chunk, hl_group_name(vtc->hl_id, hl_name));
         }
         ADD(chunks, ARRAY_OBJ(chunk));
       }
@@ -172,8 +181,7 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
           VirtTextChunk *vtc = &vt->items[j];
           ADD(chunk, STRING_OBJ(cstr_to_string(vtc->text)));
           if (vtc->hl_id > 0) {
-            ADD(chunk,
-                STRING_OBJ(cstr_to_string((const char *)syn_id2name(vtc->hl_id))));
+            ADD(chunk, hl_group_name(vtc->hl_id, hl_name));
           }
           ADD(chunks, ARRAY_OBJ(chunk));
         }
@@ -184,8 +192,42 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
       PUT(dict, "virt_lines_leftcol", BOOLEAN_OBJ(virt_lines_leftcol));
     }
 
-    if (decor->hl_id || kv_size(decor->virt_text) || decor->ui_watched) {
+    if (decor->sign_text) {
+      PUT(dict, "sign_text", STRING_OBJ(cstr_to_string(decor->sign_text)));
+    }
+
+    // uncrustify:off
+
+    struct { char *name; const int val; } hls[] = {
+      { "sign_hl_group"      , decor->sign_hl_id       },
+      { "number_hl_group"    , decor->number_hl_id     },
+      { "line_hl_group"      , decor->line_hl_id       },
+      { "cursorline_hl_group", decor->cursorline_hl_id },
+      { NULL, 0 },
+    };
+
+    // uncrustify:on
+
+    for (int j = 0; hls[j].name && hls[j].val; j++) {
+      if (hls[j].val) {
+        PUT(dict, hls[j].name, hl_group_name(hls[j].val, hl_name));
+      }
+    }
+
+    if (decor->sign_text
+        || decor->hl_id
+        || kv_size(decor->virt_text)
+        || decor->ui_watched) {
       PUT(dict, "priority", INTEGER_OBJ(decor->priority));
+    }
+
+    if (decor->conceal) {
+      String name = cstr_to_string((char *)&decor->conceal_char);
+      PUT(dict, "conceal", STRING_OBJ(name));
+    }
+
+    if (decor->spell != kNone) {
+      PUT(dict, "spell", BOOLEAN_OBJ(decor->spell == kTrue));
     }
 
     if (dict.size) {
@@ -203,6 +245,7 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
 /// @param id  Extmark id
 /// @param opts  Optional parameters. Keys:
 ///          - details: Whether to include the details dict
+///          - hl_name: Whether to include highlight group name instead of id, true if omitted
 /// @param[out] err   Error details, if any
 /// @return 0-indexed (row, col) tuple or empty list () if extmark id was
 /// absent
@@ -224,18 +267,19 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
   });
 
   bool details = false;
+  bool hl_name = true;
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
     if (strequal("details", k.data)) {
-      if (v->type == kObjectTypeBoolean) {
-        details = v->data.boolean;
-      } else if (v->type == kObjectTypeInteger) {
-        details = v->data.integer;
-      } else {
-        VALIDATE_EXP(false, "details", "Boolean or Integer", api_typename(v->type), {
-          return rv;
-        });
+      details = api_object_to_bool(*v, "details", false, err);
+      if (ERROR_SET(err)) {
+        return rv;
+      }
+    } else if (strequal("hl_name", k.data)) {
+      hl_name = api_object_to_bool(*v, "hl_name", false, err);
+      if (ERROR_SET(err)) {
+        return rv;
       }
     } else {
       VALIDATE_S(false, "'opts' key", k.data, {
@@ -248,7 +292,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
   if (extmark.row < 0) {
     return rv;
   }
-  return extmark_to_array(&extmark, false, details);
+  return extmark_to_array(&extmark, false, details, hl_name);
 }
 
 /// Gets |extmarks| in "traversal order" from a |charwise| region defined by
@@ -282,14 +326,16 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 /// </pre>
 ///
 /// @param buffer  Buffer handle, or 0 for current buffer
-/// @param ns_id  Namespace id from |nvim_create_namespace()|
+/// @param ns_id  Namespace id from |nvim_create_namespace()| or -1 for all namespaces
 /// @param start  Start of range: a 0-indexed (row, col) or valid extmark id
 /// (whose position defines the bound). |api-indexing|
 /// @param end  End of range (inclusive): a 0-indexed (row, col) or valid
 /// extmark id (whose position defines the bound). |api-indexing|
 /// @param opts  Optional parameters. Keys:
 ///          - limit:  Maximum number of marks to return
-///          - details Whether to include the details dict
+///          - details: Whether to include the details dict
+///          - hl_name: Whether to include highlight group name instead of id, true if omitted
+///          - type: Filter marks by type: "highlight", "sign", "virt_text" and "virt_lines"
 /// @param[out] err   Error details, if any
 /// @return List of [extmark_id, row, col] tuples in "traversal order".
 Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object end, Dictionary opts,
@@ -303,12 +349,20 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
     return rv;
   }
 
-  VALIDATE_INT(ns_initialized((uint32_t)ns_id), "ns_id", ns_id, {
-    return rv;
-  });
+  bool all_ns;
+  if (ns_id == -1) {
+    all_ns = true;
+  } else {
+    VALIDATE_INT(ns_initialized((uint32_t)ns_id), "ns_id", ns_id, {
+      return rv;
+    });
+    all_ns = false;
+  }
 
   Integer limit = -1;
   bool details = false;
+  bool hl_name = true;
+  ExtmarkType type = kExtmarkNone;
 
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
@@ -319,12 +373,29 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
       });
       limit = v->data.integer;
     } else if (strequal("details", k.data)) {
-      if (v->type == kObjectTypeBoolean) {
-        details = v->data.boolean;
-      } else if (v->type == kObjectTypeInteger) {
-        details = v->data.integer;
+      details = api_object_to_bool(*v, "details", false, err);
+      if (ERROR_SET(err)) {
+        return rv;
+      }
+    } else if (strequal("hl_name", k.data)) {
+      hl_name = api_object_to_bool(*v, "hl_name", false, err);
+      if (ERROR_SET(err)) {
+        return rv;
+      }
+    } else if (strequal("type", k.data)) {
+      VALIDATE_EXP(v->type == kObjectTypeString, "type", "String", api_typename(v->type), {
+        return rv;
+      });
+      if (strequal(v->data.string.data, "sign")) {
+        type = kExtmarkSign;
+      } else if (strequal(v->data.string.data, "virt_text")) {
+        type = kExtmarkVirtText;
+      } else if (strequal(v->data.string.data, "virt_lines")) {
+        type = kExtmarkVirtLines;
+      } else if (strequal(v->data.string.data, "highlight")) {
+        type = kExtmarkHighlight;
       } else {
-        VALIDATE_EXP(false, "details", "Boolean or Integer", api_typename(v->type), {
+        VALIDATE_EXP(false, "type", "sign, virt_text, virt_lines or highlight", v->data.string.data, {
           return rv;
         });
       }
@@ -359,11 +430,11 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
     reverse = true;
   }
 
-  ExtmarkInfoArray marks = extmark_get(buf, (uint32_t)ns_id, l_row, l_col,
-                                       u_row, u_col, (int64_t)limit, reverse);
+  ExtmarkInfoArray marks = extmark_get(buf, (uint32_t)ns_id, l_row, l_col, u_row,
+                                       u_col, (int64_t)limit, reverse, all_ns, type);
 
   for (size_t i = 0; i < kv_size(marks); i++) {
-    ADD(rv, ARRAY_OBJ(extmark_to_array(&kv_A(marks, i), true, (bool)details)));
+    ADD(rv, ARRAY_OBJ(extmark_to_array(&kv_A(marks, i), true, (bool)details, hl_name)));
   }
 
   kv_destroy(marks);

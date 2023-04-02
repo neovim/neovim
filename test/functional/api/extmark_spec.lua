@@ -1463,6 +1463,7 @@ describe('API/extmarks', function()
       end_line = 1
     })
     eq({ {1, 0, 0, {
+      ns_id = 1,
       end_col = 0,
       end_row = 1,
       right_gravity = true,
@@ -1480,20 +1481,27 @@ describe('API/extmarks', function()
 
   it('can get details', function()
     set_extmark(ns, marks[1], 0, 0, {
+      conceal = "c",
+      cursorline_hl_group = "Statement",
       end_col = 0,
-      end_row = 1,
-      right_gravity = false,
       end_right_gravity = true,
-      priority = 0,
+      end_row = 1,
       hl_eol = true,
-      hl_mode = "blend",
       hl_group = "String",
-      virt_text = { { "text", "Statement" } },
-      virt_text_pos = "right_align",
-      virt_text_hide = true,
+      hl_mode = "blend",
+      line_hl_group = "Statement",
+      number_hl_group = "Statement",
+      priority = 0,
+      right_gravity = false,
+      sign_hl_group = "Statement",
+      sign_text = ">>",
+      spell = true,
       virt_lines = { { { "lines", "Statement" } }},
       virt_lines_above = true,
       virt_lines_leftcol = true,
+      virt_text = { { "text", "Statement" } },
+      virt_text_hide = true,
+      virt_text_pos = "right_align",
     })
     set_extmark(ns, marks[2], 0, 0, {
       priority = 0,
@@ -1501,22 +1509,31 @@ describe('API/extmarks', function()
       virt_text_win_col = 1,
     })
     eq({0, 0, {
+      conceal = "c",
+      cursorline_hl_group = "Statement",
       end_col = 0,
-      end_row = 1,
-      right_gravity = false,
       end_right_gravity = true,
-      priority = 0,
+      end_row = 1,
       hl_eol = true,
-      hl_mode = "blend",
       hl_group = "String",
-      virt_text = { { "text", "Statement" } },
-      virt_text_pos = "right_align",
-      virt_text_hide = true,
+      hl_mode = "blend",
+      line_hl_group = "Statement",
+      ns_id = 1,
+      number_hl_group = "Statement",
+      priority = 0,
+      right_gravity = false,
+      sign_hl_group = "Statement",
+      sign_text = ">>",
+      spell = true,
       virt_lines = { { { "lines", "Statement" } }},
       virt_lines_above = true,
       virt_lines_leftcol = true,
+      virt_text = { { "text", "Statement" } },
+      virt_text_hide = true,
+      virt_text_pos = "right_align",
     } }, get_extmark_by_id(ns, marks[1], { details = true }))
     eq({0, 0, {
+      ns_id = 1,
       right_gravity = true,
       priority = 0,
       virt_text = { { "text", "Statement" } },
@@ -1524,6 +1541,29 @@ describe('API/extmarks', function()
       virt_text_pos = "win_col",
       virt_text_win_col = 1,
     } }, get_extmark_by_id(ns, marks[2], { details = true }))
+  end)
+
+  it('can get marks from anonymous namespaces', function()
+    ns = request('nvim_create_namespace', "")
+    ns2 = request('nvim_create_namespace', "")
+    set_extmark(ns, 1, 0, 0, {})
+    set_extmark(ns2, 2, 1, 0, {})
+    eq({{ 1, 0, 0, { ns_id = ns, right_gravity = true }},
+        { 2, 1, 0, { ns_id = ns2, right_gravity = true }}},
+        get_extmarks(-1, 0, -1, { details = true }))
+  end)
+
+  it('can filter by extmark properties', function()
+    set_extmark(ns, 1, 0, 0, {})
+    set_extmark(ns, 2, 0, 0, { hl_group = 'Normal' })
+    set_extmark(ns, 3, 0, 0, { sign_text = '>>' })
+    set_extmark(ns, 4, 0, 0, { virt_text = {{'text', 'Normal'}}})
+    set_extmark(ns, 5, 0, 0, { virt_lines = {{{ 'line', 'Normal' }}}})
+    eq(5, #get_extmarks(-1, 0, -1, { details = true }))
+    eq({{ 2, 0, 0 }}, get_extmarks(-1, 0, -1, { type = 'highlight' }))
+    eq({{ 3, 0, 0 }}, get_extmarks(-1, 0, -1, { type = 'sign' }))
+    eq({{ 4, 0, 0 }}, get_extmarks(-1, 0, -1, { type = 'virt_text' }))
+    eq({{ 5, 0, 0 }}, get_extmarks(-1, 0, -1, { type = 'virt_lines' }))
   end)
 end)
 

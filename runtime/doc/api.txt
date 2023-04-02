@@ -2546,6 +2546,8 @@ nvim_buf_get_extmark_by_id({buffer}, {ns_id}, {id}, {opts})
       • {id}      Extmark id
       • {opts}    Optional parameters. Keys:
                   • details: Whether to include the details dict
+                  • hl_name: Whether to include highlight group name instead
+                    of id, true if omitted
 
     Return: ~
         0-indexed (row, col) tuple or empty list () if extmark id was absent
@@ -2582,7 +2584,8 @@ nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
 
     Parameters: ~
       • {buffer}  Buffer handle, or 0 for current buffer
-      • {ns_id}   Namespace id from |nvim_create_namespace()|
+      • {ns_id}   Namespace id from |nvim_create_namespace()| or -1 for all
+                  namespaces
       • {start}   Start of range: a 0-indexed (row, col) or valid extmark id
                   (whose position defines the bound). |api-indexing|
       • {end}     End of range (inclusive): a 0-indexed (row, col) or valid
@@ -2590,7 +2593,11 @@ nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
                   |api-indexing|
       • {opts}    Optional parameters. Keys:
                   • limit: Maximum number of marks to return
-                  • details Whether to include the details dict
+                  • details: Whether to include the details dict
+                  • hl_name: Whether to include highlight group name instead
+                    of id, true if omitted
+                  • type: Filter marks by type: "highlight", "sign",
+                    "virt_text" and "virt_lines"
 
     Return: ~
         List of [extmark_id, row, col] tuples in "traversal order".

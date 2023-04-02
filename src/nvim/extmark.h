@@ -76,6 +76,14 @@ typedef enum {
   kExtmarkClear,
 } UndoObjectType;
 
+typedef enum {
+  kExtmarkNone = 0x1,
+  kExtmarkSign = 0x2,
+  kExtmarkVirtText = 0x4,
+  kExtmarkVirtLines = 0x8,
+  kExtmarkHighlight = 0x10,
+} ExtmarkType;
+
 // TODO(bfredl): reduce the number of undo action types
 struct undo_object {
   UndoObjectType type;
