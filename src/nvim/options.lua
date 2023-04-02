@@ -413,7 +413,7 @@ return {
       alloced=true,
       redraw={'curswant'},
       varname='p_cms',
-      defaults={if_true="/*%s*/"}
+      defaults={if_true=""}
     },
     {
       full_name='compatible', abbreviation='cp',

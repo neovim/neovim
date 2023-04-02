@@ -116,6 +116,7 @@ describe('splitkeep', function()
   -- oldtest: Test_splitkeep_fold()
   it('does not scroll when window has closed folds', function()
     exec([[
+      set commentstring=/*%s*/
       set splitkeep=screen
       set foldmethod=marker
       set number

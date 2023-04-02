@@ -2032,8 +2032,11 @@ describe("folded lines", function()
   end)
 
   it('multibyte fold markers work #20438', function()
-    meths.win_set_option(0, 'foldmethod', 'marker')
-    meths.win_set_option(0, 'foldmarker', '«,»')
+    exec([[
+      setlocal foldmethod=marker
+      setlocal foldmarker=«,»
+      setlocal commentstring=/*%s*/
+    ]])
     insert([[
       bbbbb
       bbbbb

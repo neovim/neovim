@@ -66,6 +66,8 @@ The following changes may require adaptations in user config or plugins.
   change is that language-specific highlight groups need to be renamed from
   `@foo.help` to `@foo.vimdoc`.
 
+• The default value of 'commentstring' is now empty instead of "/*%s*/".
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 
