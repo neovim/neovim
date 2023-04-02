@@ -1742,7 +1742,7 @@ bbbbbbb]])
       ]]}
   end)
 
-  it('no wrap is rendered correctly with multiple virtual text, where one is hidden', function()
+  it('draws correctly with no wrap multiple virtual text, where one is hidden', function()
     insert('abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz')
     command("set nowrap")
     meths.buf_set_extmark(0, ns, 0, 50,
@@ -1752,6 +1752,31 @@ bbbbbbb]])
     feed('$')
     screen:expect { grid = [[
       opqrstuvwxyzabcdefghijklmnopqrstuvwx{28:virtual text}y^z|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+  end)
+
+  it('draws correctly with no wrap and a long virtual text', function()
+    insert('abcdefghi')
+    command("set nowrap")
+    meths.buf_set_extmark(0, ns, 0, 2,
+      { virt_text = { { string.rep('X', 55), 'Special' } }, virt_text_pos = 'inline', right_gravity = false })
+    feed('$')
+    screen:expect { grid = [[
+      {28:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}cdefgh^i|
       {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
