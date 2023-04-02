@@ -1741,6 +1741,33 @@ bbbbbbb]])
       {24:-- INSERT --}                                      |
       ]]}
   end)
+
+  it('no wrap is rendered correctly with multiple virtual text, where one is hidden', function()
+    insert('abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz')
+    command("set nowrap")
+    meths.buf_set_extmark(0, ns, 0, 50,
+      { virt_text = { { 'virtual text', 'Special' } }, virt_text_pos = 'inline', right_gravity = false })
+    meths.buf_set_extmark(0, ns, 0, 2,
+      { virt_text = { { 'virtual text', 'Special' } }, virt_text_pos = 'inline', right_gravity = false })
+    feed('$')
+    screen:expect { grid = [[
+      opqrstuvwxyzabcdefghijklmnopqrstuvwx{28:virtual text}y^z|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+  end)
 end)
 
 describe('decorations: virtual lines', function()
