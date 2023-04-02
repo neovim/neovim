@@ -18,6 +18,9 @@ function! health#check(plugin_names) abort
     call setline(1, 'ERROR: No healthchecks found.')
   else
     redraw|echo 'Running healthchecks...'
+
+    " List of checks with warnings or errors
+    let s:opened_folds = []
     for name in sort(keys(healthchecks))
       let [func, type] = healthchecks[name]
       let s:output = []
@@ -48,7 +51,22 @@ function! health#check(plugin_names) abort
       let s:output = s:output[0] == '' ? s:output[1:] : s:output
       let s:output = header + s:output + ['']
       call append('$', s:output)
+
+      if get(g:, 'checkhealth_folding_enable', v:true)
+        for line in s:output
+          if line =~ '^-\sWARNING\s\|^-\sERROR\s'
+            let s:opened_folds += [line('$')]
+            break
+          endif
+        endfor
+      endif
+
       redraw
+    endfor
+
+    " Open checks with warnings or errors
+    for line in s:opened_folds
+      execute line."foldopen"
     endfor
   endif
 
@@ -143,13 +161,13 @@ function! s:filepath_to_healthcheck(path) abort
     let func = 'health#'.name.'#check'
     let type = 'v'
   else
-   let base_path = substitute(a:path,
-         \ '.*lua[\/]\(.\{-}\)[\/]health\([\/]init\)\?\.lua$',
-         \ '\1', '')
-   let name = substitute(base_path, '[\/]', '.', 'g')
-   let func = 'require("'.name.'.health").check()'
-   let type = 'l'
- endif
+    let base_path = substitute(a:path,
+          \ '.*lua[\/]\(.\{-}\)[\/]health\([\/]init\)\?\.lua$',
+          \ '\1', '')
+    let name = substitute(base_path, '[\/]', '.', 'g')
+    let func = 'require("'.name.'.health").check()'
+    let type = 'l'
+  endif
   return [name, func, type]
 endfunction
 
@@ -201,7 +219,7 @@ function! s:get_healthcheck_list(plugin_names) abort
     else
       let healthchecks += map(uniq(sort(paths)),
             \'<SID>filepath_to_healthcheck(v:val)')
-    end
-  endfor
-  return healthchecks
-endfunction
+      end
+    endfor
+    return healthchecks
+  endfunction

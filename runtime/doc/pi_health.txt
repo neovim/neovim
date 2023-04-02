@@ -47,6 +47,14 @@ Commands                                *health-commands*
                         :checkhealth vim*
 <
 ==============================================================================
+Settings                                *health-settings*
+
+g:checkhealth_folding_enable                      *g:checkhealth_folding_enable*
+        Set this option to |v:false| to disable healthcheck folding. If |v:true|
+        (default value), sucessfull healthcheck(s) will be folded.
+<
+
+==============================================================================
 Functions                               *health-functions* *vim.health*
 
 The Lua "health" module can be used to create new healthchecks. To get started
