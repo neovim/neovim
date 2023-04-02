@@ -1550,7 +1550,7 @@ local patterns_text = {
   ['^SNNS pattern definition file'] = 'snnspat',
   ['^SNNS result file'] = 'snnsres',
   ['^%%.-[Vv]irata'] = { 'virata', { start_lnum = 1, end_lnum = 5 } },
-  ['[0-9:%.]* *execve%('] = 'strace',
+  ['execve%('] = 'strace',
   ['^__libc_start_main'] = 'strace',
   -- VSE JCL
   ['^\\* $$ JOB\\>'] = { 'vsejcl', { vim_regex = true } },
