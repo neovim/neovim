@@ -1742,12 +1742,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           DecorState *state = &decor_state;
           for (size_t i = 0; i < kv_size(state->active); i++) {
             DecorRange *item = &kv_A(state->active, i);
-            if (!(item->start_row == state->row
-                  && kv_size(item->decor.virt_text)
-                  && item->decor.virt_text_pos == kVTInline)) {
+            if (item->start_row != state->row
+                  || !kv_size(item->decor.virt_text)
+                  || item->decor.virt_text_pos != kVTInline) {
               continue;
             }
-            if (item->win_col >= -1 && item->start_col <= v) {
+            if (item->win_col >= -1 && item->start_col == v) {
               virt_inline = item->decor.virt_text;
               virt_inline_i = 0;
               item->win_col = -2;
