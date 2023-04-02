@@ -966,7 +966,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   int n_attr3 = 0;                      // chars with overruling special attr
   int saved_attr3 = 0;                  // char_attr saved for n_attr3
 
-  int n_skip = 0;                       // nr of chars to skip for 'nowrap'
+  int n_skip = 0;                       // nr of chars to skip for 'nowrap' or
+                                        // concealing
+  int skip_cells = 0;                   // nr of cells to skip for virtual text
+                                        // after the line, when w_skipcol is
+                                        // larger than the text length
 
   int fromcol_prev = -2;                // start of inverting after cursor
   bool noinvcur = false;                // don't invert the cursor
@@ -1434,6 +1438,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       }
     }
 
+    // If there the text doesn't reach to the desired column, need to skip
+    // "skip_cells" cells when virtual text follows.
+    if (!wp->w_p_wrap && v > wlv.vcol) {
+      skip_cells = (int)(v - wlv.vcol);
+    }
+
     // Adjust for when the inverted text is before the screen,
     // and when the start of the inverted text is before the screen.
     if (wlv.tocol <= wlv.vcol) {
@@ -1743,8 +1753,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           for (size_t i = 0; i < kv_size(state->active); i++) {
             DecorRange *item = &kv_A(state->active, i);
             if (item->start_row != state->row
-                  || !kv_size(item->decor.virt_text)
-                  || item->decor.virt_text_pos != kVTInline) {
+                || !kv_size(item->decor.virt_text)
+                || item->decor.virt_text_pos != kVTInline) {
               continue;
             }
             if (item->win_col >= -1 && item->start_col == v) {
@@ -1772,6 +1782,20 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           area_attr = 0;
           extmark_attr = 0;
           virt_inline_i++;
+          // If the text didn't reach until the first window
+          // column we need to skip cells.
+          if (skip_cells > 0) {
+            if (wlv.n_extra > skip_cells) {
+              wlv.n_extra -= skip_cells;
+              wlv.p_extra += skip_cells;
+              skip_cells = 0;
+            } else {
+              // the whole text is left of the window, drop
+              // it and advance to the next one
+              skip_cells -= wlv.n_extra;
+              wlv.n_extra = 0;
+            }
+          }
         }
       }
 
