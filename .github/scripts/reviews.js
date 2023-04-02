@@ -10,12 +10,10 @@ module.exports = async ({github, context}) => {
   const team_reviewers = new Array()
   if (labels.includes('api')) {
     reviewers.add("bfredl")
-    reviewers.add("muniter")
   }
 
   if (labels.includes('build')) {
-    reviewers.add("jamessan")
-    reviewers.add("justinmk")
+    team_reviewers.push('ci');
   }
 
   if (labels.includes('ci')) {
