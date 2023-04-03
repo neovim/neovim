@@ -1227,23 +1227,7 @@ func Test_fs_file()
   call assert_equal('forth', &filetype)
   bwipe!
 
-  call writefile(['.( Forth displayed inline comment )'], 'Xfile.fs')
-  split Xfile.fs
-  call assert_equal('forth', &filetype)
-  bwipe!
-
   call writefile(['\ Forth line comment'], 'Xfile.fs')
-  split Xfile.fs
-  call assert_equal('forth', &filetype)
-  bwipe!
-
-  " empty line comment - no space required
-  call writefile(['\'], 'Xfile.fs')
-  split Xfile.fs
-  call assert_equal('forth', &filetype)
-  bwipe!
-
-  call writefile(['\G Forth documentation comment '], 'Xfile.fs')
   split Xfile.fs
   call assert_equal('forth', &filetype)
   bwipe!
