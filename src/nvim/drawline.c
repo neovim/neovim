@@ -1941,7 +1941,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
       // Only restore search_attr and area_attr after "n_extra" in
       // the next screen line is also done.
-      if (wlv.n_extra <= 0) {
+      if (wlv.n_extra <= 0 && wlv.saved_n_extra <= 0) {
         if (search_attr == 0) {
           search_attr = saved_search_attr;
         }
