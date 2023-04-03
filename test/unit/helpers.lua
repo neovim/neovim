@@ -148,7 +148,11 @@ local cdef = ffi.cdef
 
 local cimportstr
 
-local previous_defines_init = ''
+local previous_defines_init = [[
+typedef struct { char bytes[16]; } __attribute__((aligned(16))) __uint128_t;
+typedef struct { char bytes[16]; } __attribute__((aligned(16))) __float128;
+]]
+
 local preprocess_cache_init = {}
 local previous_defines_mod = ''
 local preprocess_cache_mod = nil
