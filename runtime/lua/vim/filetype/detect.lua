@@ -473,12 +473,12 @@ function M.fs(bufnr)
   if vim.g.filetype_fs then
     return vim.g.filetype_fs
   end
-  local line = nextnonblank(bufnr, 1)
-  if findany(line, { '^%s*%.?%( ', '^%s*\\G? ', '^\\$', '^%s*: %S' }) then
-    return 'forth'
-  else
-    return 'fsharp'
+  for _, line in ipairs(getlines(bufnr, 1, 100)) do
+    if line:find('^[:(\\] ') then
+      return 'forth'
+    end
   end
+  return 'fsharp'
 end
 
 function M.git(bufnr)
