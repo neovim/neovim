@@ -236,7 +236,8 @@ local function on_line_impl(self, buf, line, is_spell_nav)
         break
       end
 
-      local start_row, start_col, end_row, end_col = node:range()
+      local range = metadata[capture] and metadata[capture].range or { node:range() }
+      local start_row, start_col, end_row, end_col = unpack(range)
       local hl = highlighter_query.hl_cache[capture]
 
       local capture_name = highlighter_query:query().captures[capture]
