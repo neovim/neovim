@@ -7,6 +7,9 @@ local global_helpers = require('test.helpers')
 local argss_to_cmd = global_helpers.argss_to_cmd
 local repeated_read_cmd = global_helpers.repeated_read_cmd
 
+--- @alias Compiler {path: string[], type: string}
+
+--- @type Compiler[]
 local ccs = {}
 
 local env_cc = os.getenv("CC")
@@ -27,6 +30,8 @@ table.insert(ccs, {path = {"/usr/bin/env", "clang"}, type = "clang"})
 table.insert(ccs, {path = {"/usr/bin/env", "icc"}, type = "gcc"})
 
 -- parse Makefile format dependencies into a Lua table
+--- @param deps string
+--- @return string[]
 local function parse_make_deps(deps)
   -- remove line breaks and line concatenators
   deps = deps:gsub("\n", ""):gsub("\\", "")
@@ -36,7 +41,7 @@ local function parse_make_deps(deps)
   deps = deps:gsub("  +", " ")
 
   -- split according to token (space in this case)
-  local headers = {}
+  local headers = {} --- @type string[]
   for token in deps:gmatch("[^%s]+") do
     -- headers[token] = true
     headers[#headers + 1] = token
@@ -53,57 +58,58 @@ local function parse_make_deps(deps)
   return headers
 end
 
--- will produce a string that represents a meta C header file that includes
--- all the passed in headers. I.e.:
---
--- headerize({"stdio.h", "math.h"}, true)
--- produces:
--- #include <stdio.h>
--- #include <math.h>
---
--- headerize({"vim.h", "memory.h"}, false)
--- produces:
--- #include "vim.h"
--- #include "memory.h"
+--- will produce a string that represents a meta C header file that includes
+--- all the passed in headers. I.e.:
+---
+--- headerize({"stdio.h", "math.h"}, true)
+--- produces:
+--- #include <stdio.h>
+--- #include <math.h>
+---
+--- headerize({"vim.h", "memory.h"}, false)
+--- produces:
+--- #include "vim.h"
+--- #include "memory.h"
+--- @param headers string[]
+--- @param global? boolean
+--- @return string
 local function headerize(headers, global)
-  local pre = '"'
-  local post = pre
-  if global then
-    pre = "<"
-    post = ">"
-  end
-
-  local formatted = {}
+  local fmt = global and '#include <%s>' or '#include "%s"'
+  local formatted = {} --- @type string[]
   for _, hdr in ipairs(headers) do
-    formatted[#formatted + 1] = "#include " ..
-                                tostring(pre) ..
-                                tostring(hdr) ..
-                                tostring(post)
+    formatted[#formatted + 1] = string.format(fmt, hdr)
   end
 
   return table.concat(formatted, "\n")
 end
 
+--- @class Gcc
+--- @field path string
+--- @field preprocessor_extra_flags string[]
+--- @field get_defines_extra_flags string[]
+--- @field get_declarations_extra_flags string[]
 local Gcc = {
   preprocessor_extra_flags = {},
   get_defines_extra_flags = {'-std=c99', '-dM', '-E'},
   get_declarations_extra_flags = {'-std=c99', '-P', '-E'},
 }
 
+--- @param name string
+--- @param args string[]?
+--- @param val string?
 function Gcc:define(name, args, val)
-  local define = '-D' .. name
-  if args ~= nil then
-    define = define .. '(' .. table.concat(args, ',') .. ')'
+  local define = string.format('-D%s', name)
+  if args then
+    define = string.format('%s(%s)', define, table.concat(args, ','))
   end
-  if val ~= nil then
-    define = define .. '=' .. val
+  if val then
+    define = string.format('%s=%s', define, val)
   end
   self.preprocessor_extra_flags[#self.preprocessor_extra_flags + 1] = define
 end
 
 function Gcc:undefine(name)
-  self.preprocessor_extra_flags[#self.preprocessor_extra_flags + 1] = (
-      '-U' .. name)
+  self.preprocessor_extra_flags[#self.preprocessor_extra_flags + 1] = '-U' .. name
 end
 
 function Gcc:init_defines()
@@ -128,6 +134,8 @@ function Gcc:init_defines()
   self:undefine('__BLOCKS__')
 end
 
+--- @param obj? Compiler
+--- @return Gcc
 function Gcc:new(obj)
   obj = obj or {}
   setmetatable(obj, self)
@@ -136,6 +144,7 @@ function Gcc:new(obj)
   return obj
 end
 
+--- @param ... string
 function Gcc:add_to_include_path(...)
   for i = 1, select('#', ...) do
     local path = select(i, ...)
@@ -145,110 +154,115 @@ function Gcc:add_to_include_path(...)
 end
 
 -- returns a list of the headers files upon which this file relies
+--- @param hdr string
+--- @return string[]?
 function Gcc:dependencies(hdr)
+  --- @type string
   local cmd = argss_to_cmd(self.path, {'-M', hdr}) .. ' 2>&1'
-  local out = io.popen(cmd)
+  local out = assert(io.popen(cmd))
   local deps = out:read("*a")
   out:close()
   if deps then
     return parse_make_deps(deps)
-  else
-    return nil
   end
 end
 
+--- @param defines string
+--- @return string
 function Gcc:filter_standard_defines(defines)
   if not self.standard_defines then
     local pseudoheader_fname = 'tmp_empty_pseudoheader.h'
-    local pseudoheader_file = io.open(pseudoheader_fname, 'w')
+    local pseudoheader_file = assert(io.open(pseudoheader_fname, 'w'))
     pseudoheader_file:close()
-    local standard_defines = repeated_read_cmd(self.path,
-                                               self.preprocessor_extra_flags,
-                                               self.get_defines_extra_flags,
-                                               {pseudoheader_fname})
+    local standard_defines = assert(repeated_read_cmd(self.path,
+                                                      self.preprocessor_extra_flags,
+                                                      self.get_defines_extra_flags,
+                                                      {pseudoheader_fname}))
     os.remove(pseudoheader_fname)
-    self.standard_defines = {}
+    self.standard_defines = {} --- @type table<string,true>
     for line in standard_defines:gmatch('[^\n]+') do
       self.standard_defines[line] = true
     end
   end
-  local ret = {}
+
+  local ret = {} --- @type string[]
   for line in defines:gmatch('[^\n]+') do
     if not self.standard_defines[line] then
       ret[#ret + 1] = line
     end
   end
+
   return table.concat(ret, "\n")
 end
 
--- returns a stream representing a preprocessed form of the passed-in headers.
--- Don't forget to close the stream by calling the close() method on it.
+--- returns a stream representing a preprocessed form of the passed-in headers.
+--- Don't forget to close the stream by calling the close() method on it.
+--- @param previous_defines string
+--- @param ... string
+--- @return string, string
 function Gcc:preprocess(previous_defines, ...)
   -- create pseudo-header
   local pseudoheader = headerize({...}, false)
   local pseudoheader_fname = 'tmp_pseudoheader.h'
-  local pseudoheader_file = io.open(pseudoheader_fname, 'w')
+  local pseudoheader_file = assert(io.open(pseudoheader_fname, 'w'))
   pseudoheader_file:write(previous_defines)
   pseudoheader_file:write("\n")
   pseudoheader_file:write(pseudoheader)
   pseudoheader_file:flush()
   pseudoheader_file:close()
 
-  local defines = repeated_read_cmd(self.path, self.preprocessor_extra_flags,
-                                    self.get_defines_extra_flags,
-                                    {pseudoheader_fname})
+  local defines = assert(repeated_read_cmd(self.path, self.preprocessor_extra_flags,
+                                           self.get_defines_extra_flags,
+                                           {pseudoheader_fname}))
   defines = self:filter_standard_defines(defines)
 
-  local declarations = repeated_read_cmd(self.path,
-                                         self.preprocessor_extra_flags,
-                                         self.get_declarations_extra_flags,
-                                         {pseudoheader_fname})
+  local declarations = assert(repeated_read_cmd(self.path,
+                                                self.preprocessor_extra_flags,
+                                                self.get_declarations_extra_flags,
+                                                {pseudoheader_fname}))
 
   os.remove(pseudoheader_fname)
 
-  assert(declarations and defines)
   return declarations, defines
 end
 
-local Clang = Gcc:new()
-local Msvc = Gcc:new()
-
-local type_to_class = {
-  ["gcc"] = Gcc,
-  ["clang"] = Clang,
-  ["msvc"] = Msvc
-}
-
 -- find the best cc. If os.exec causes problems on windows (like popping up
 -- a console window) we might consider using something like this:
 -- http://scite-ru.googlecode.com/svn/trunk/pack/tools/LuaLib/shell.html#exec
+--- @param compilers Compiler[]
+--- @return Gcc?
 local function find_best_cc(compilers)
   for _, meta in pairs(compilers) do
-    local version = io.popen(tostring(meta.path) .. " -v 2>&1")
+    local version = assert(io.popen(tostring(meta.path) .. " -v 2>&1"))
     version:close()
     if version then
-      return type_to_class[meta.type]:new({path = meta.path})
+      return Gcc:new({path = meta.path})
     end
   end
-  return nil
 end
 
 -- find the best cc. If os.exec causes problems on windows (like popping up
 -- a console window) we might consider using something like this:
 -- http://scite-ru.googlecode.com/svn/trunk/pack/tools/LuaLib/shell.html#exec
-local cc = nil
-if cc == nil then
-  cc = find_best_cc(ccs)
+local cc = assert(find_best_cc(ccs))
+
+local M = {}
+
+--- @param hdr string
+--- @return string[]?
+function M.includes(hdr)
+  return cc:dependencies(hdr)
 end
 
-return {
-  includes = function(hdr)
-    return cc:dependencies(hdr)
-  end,
-  preprocess = function(...)
-    return cc:preprocess(...)
-  end,
-  add_to_include_path = function(...)
-    return cc:add_to_include_path(...)
-  end
-}
+--- @param ... string
+--- @return string, string
+function M.preprocess(...)
+  return cc:preprocess(...)
+end
+
+--- @param ... string
+function M.add_to_include_path(...)
+  return cc:add_to_include_path(...)
+end
+
+return M

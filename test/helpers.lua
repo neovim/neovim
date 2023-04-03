@@ -20,12 +20,16 @@ local module = {
   REMOVE_THIS = {},
 }
 
+--- @param p string
+--- @return string
 local function relpath(p)
   p = vim.fs.normalize(p)
   local cwd = luv.cwd()
   return p:gsub("^" .. cwd)
 end
 
+--- @param path string
+--- @return boolean
 function module.isdir(path)
   if not path then
     return false
@@ -37,6 +41,8 @@ function module.isdir(path)
   return stat.type == 'directory'
 end
 
+--- @param path string
+--- @return boolean
 function module.isfile(path)
   if not path then
     return false
@@ -48,6 +54,7 @@ function module.isfile(path)
   return stat.type == 'file'
 end
 
+--- @return string
 function module.argss_to_cmd(...)
   local cmd = ''
   for i = 1, select('#', ...) do
@@ -462,6 +469,7 @@ function module.check_cores(app, force) -- luacheck: ignore
   end
 end
 
+--- @return string?
 function module.repeated_read_cmd(...)
   for _ = 1, 10 do
     local stream = module.popen_r(...)
@@ -561,6 +569,9 @@ function module.concat_tables(...)
   return ret
 end
 
+--- @param str string
+--- @param leave_indent? boolean
+--- @return string
 function module.dedent(str, leave_indent)
   -- find minimum common indent across lines
   local indent = nil
