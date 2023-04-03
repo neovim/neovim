@@ -1843,6 +1843,33 @@ bbbbbbb]])
                                                         |
       ]]}
   end)
+
+  it('highlighting is correct when virtual text wraps with number', function()
+    insert([[
+    test
+    test]])
+    command('set number')
+    meths.buf_set_extmark(0, ns, 0, 1,
+      { virt_text = { { string.rep('X', 55), 'Special' } }, virt_text_pos = 'inline', right_gravity = false })
+    feed('gg0')
+    screen:expect { grid = [[
+      {2:  1 }^t{28:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {2:    }{28:XXXXXXXXXX}est                                 |
+      {2:  2 }test                                          |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+  end)
 end)
 
 describe('decorations: virtual lines', function()
