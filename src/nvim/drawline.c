@@ -105,9 +105,12 @@ typedef struct {
   int c_extra;               ///< extra chars, all the same
   int c_final;               ///< final char, mandatory if set
 
+  bool extra_for_extmark;
+
   // saved "extra" items for when draw_state becomes WL_LINE (again)
   int saved_n_extra;
   char *saved_p_extra;
+  bool saved_extra_for_extmark;
   int saved_c_extra;
   int saved_c_final;
   int saved_char_attr;
@@ -909,6 +912,7 @@ static void win_line_start(win_T *wp, winlinevars_T *wlv, bool save_extra)
     wlv->draw_state = WL_START;
     wlv->saved_n_extra = wlv->n_extra;
     wlv->saved_p_extra = wlv->p_extra;
+    wlv->saved_extra_for_extmark = wlv->extra_for_extmark;
     wlv->saved_c_extra = wlv->c_extra;
     wlv->saved_c_final = wlv->c_final;
     wlv->saved_char_attr = wlv->char_attr;
@@ -924,6 +928,7 @@ static void win_line_continue(winlinevars_T *wlv)
     // Continue item from end of wrapped line.
     wlv->n_extra = wlv->saved_n_extra;
     wlv->saved_n_extra = 0;
+    wlv->extra_for_extmark = wlv->saved_extra_for_extmark;
     wlv->c_extra = wlv->saved_c_extra;
     wlv->c_final = wlv->saved_c_final;
     wlv->p_extra = wlv->saved_p_extra;
@@ -1769,7 +1774,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           }
         }
 
-        if (wlv.n_extra == 0) {
+        if (wlv.n_extra == 0 || !wlv.extra_for_extmark) {
           reset_extra_attr = false;
         }
 
@@ -1777,6 +1782,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           VirtTextChunk vtc = kv_A(virt_inline, virt_inline_i);
           wlv.p_extra = vtc.text;
           wlv.n_extra = (int)strlen(wlv.p_extra);
+          wlv.extra_for_extmark = true;
           wlv.c_extra = NUL;
           wlv.c_final = NUL;
           wlv.extra_attr = vtc.hl_id ? syn_id2attr(vtc.hl_id) : 0;
@@ -1834,12 +1840,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       }
 
       if (wlv.diff_hlf != (hlf_T)0) {
+        // When there is extra text (eg: virtual text) it gets the
+        // diff highlighting for the line, but not for changed text.
         if (wlv.diff_hlf == HLF_CHD && ptr - line >= change_start
             && wlv.n_extra == 0) {
           wlv.diff_hlf = HLF_TXD;                   // changed text
         }
-        if (wlv.diff_hlf == HLF_TXD && ptr - line > change_end
-            && wlv.n_extra == 0) {
+        if (wlv.diff_hlf == HLF_TXD && ((ptr - line > change_end && wlv.n_extra == 0)
+                                        || (wlv.n_extra > 0 && wlv.extra_for_extmark))) {
           wlv.diff_hlf = HLF_CHD;                   // changed line
         }
         wlv.line_attr = win_hl_attr(wp, (int)wlv.diff_hlf);
@@ -1943,16 +1951,22 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
       // Only restore search_attr and area_attr after "n_extra" in
       // the next screen line is also done.
-      if (wlv.n_extra <= 0 && wlv.saved_n_extra <= 0) {
-        if (search_attr == 0) {
-          search_attr = saved_search_attr;
+      if (wlv.n_extra <= 0) {
+        if (wlv.saved_n_extra <= 0) {
+          if (search_attr == 0) {
+            search_attr = saved_search_attr;
+          }
+          if (area_attr == 0 && *ptr != NUL) {
+            area_attr = saved_area_attr;
+          }
+
+          if (wlv.extra_for_extmark) {
+            // wlv.extra_attr should be used at this position but not
+            // any further.
+            reset_extra_attr = true;
+          }
         }
-        if (area_attr == 0 && *ptr != NUL) {
-          area_attr = saved_area_attr;
-        }
-        // wlv.extra_attr should be used at this position but not
-        // any further.
-        reset_extra_attr = true;
+        wlv.extra_for_extmark = false;
       }
     } else if (foldinfo.fi_lines > 0) {
       // skip writing the buffer line itself
