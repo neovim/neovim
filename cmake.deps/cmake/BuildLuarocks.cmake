@@ -13,6 +13,9 @@ if(NOT MSVC)
   # In MSVC don't pass the compiler/linker to luarocks, the bundled
   # version already knows, and passing them here breaks the build
   set(LUAROCKS_BUILDARGS CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER})
+else()
+  # Workaround for luarocks failing to find the md5sum.exe it is shipped with.
+  set(LUAROCKS_BUILDARGS MD5SUM=md5sum)
 endif()
 
 # Lua version, used with rocks directories.
