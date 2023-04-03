@@ -903,6 +903,7 @@ EXTERN char e_channotpty[] INIT(= N_("E904: channel is not a pty"));
 EXTERN char e_stdiochan2[] INIT(= N_("E905: Couldn't open stdio channel: %s"));
 EXTERN char e_invstream[] INIT(= N_("E906: invalid stream for channel"));
 EXTERN char e_invstreamrpc[] INIT(= N_("E906: invalid stream for rpc channel, use 'rpc'"));
+EXTERN char e_extermpipefail[] INIT(= N_("E907: cannot create pipe for terminal"));
 EXTERN char e_streamkey[] INIT(= N_("E5210: dict key '%s' already set for buffered stream in channel %" PRIu64));
 EXTERN char e_libcall[] INIT(= N_("E364: Library call failed for \"%s()\""));
 EXTERN char e_fsync[] INIT(= N_("E667: Fsync failed: %s"));

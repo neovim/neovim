@@ -2833,8 +2833,8 @@ module.cmds = {
   },
   {
     command='terminal',
-    flags=bit.bor(BANG, FILES, CMDWIN, LOCK_OK),
-    addr_type='ADDR_NONE',
+    flags=bit.bor(BANG, FILES, CMDWIN, LOCK_OK, RANGE),
+    addr_type='ADDR_LINES',
     func='ex_terminal',
   },
   {

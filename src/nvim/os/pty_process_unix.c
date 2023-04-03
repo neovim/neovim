@@ -290,6 +290,10 @@ static void init_child(PtyProcess *ptyproc)
 
   assert(proc->env);
   environ = tv_dict_to_env(proc->env);
+  if (proc->stdin_fd != -1) {
+    dup2(proc->stdin_fd, STDIN_FILENO);
+    close(proc->stdin_fd);
+  }
   execvp(prog, proc->argv);
   ELOG("execvp(%s) failed: %s", prog, strerror(errno));
 

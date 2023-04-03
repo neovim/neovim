@@ -7274,12 +7274,30 @@ void set_pressedreturn(bool val)
 static void ex_terminal(exarg_T *eap)
 {
   char ex_cmd[1024];
+  int stdin_descriptor = -1;
+
+  // If we have something to pipe to the terminal
+  if (eap->addr_count > 0) {
+    int fd[2];
+    if (pipe(fd)) {
+      emsg(_(e_extermpipefail));
+      return;
+    }
+    for (linenr_T lnum = eap->line1; lnum <= eap->line2; lnum++) {
+      char* line = ml_get_buf(curbuf, lnum, false);
+      size_t len = strlen(line);
+      write(fd[1], line, len);
+      write(fd[1], "\n", 1);
+    }
+    close(fd[1]);
+    stdin_descriptor = fd[0];
+  }
 
   if (*eap->arg != NUL) {  // Run {cmd} in 'shell'.
     char *name = vim_strsave_escaped(eap->arg, "\"\\");
     snprintf(ex_cmd, sizeof(ex_cmd),
-             ":enew%s | call termopen(\"%s\")",
-             eap->forceit ? "!" : "", name);
+             ":enew%s | call termopen(\"%s\",{'stdin_fd':%i})",
+             eap->forceit ? "!" : "", name, stdin_descriptor);
     xfree(name);
   } else {  // No {cmd}: run the job with tokenized 'shell'.
     if (*p_sh == NUL) {
@@ -7300,8 +7318,8 @@ static void ex_terminal(exarg_T *eap)
     shell_free_argv(argv);
 
     snprintf(ex_cmd, sizeof(ex_cmd),
-             ":enew%s | call termopen([%s])",
-             eap->forceit ? "!" : "", shell_argv + 1);
+             ":enew%s | call termopen([%s],{'stdin_fd':%i})",
+             eap->forceit ? "!" : "", shell_argv + 1, stdin_descriptor);
   }
 
   do_cmdline_cmd(ex_cmd);

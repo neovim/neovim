@@ -333,7 +333,8 @@ static void close_cb(Stream *stream, void *data)
 Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader on_stderr,
                            Callback on_exit, bool pty, bool rpc, bool overlapped, bool detach,
                            ChannelStdinMode stdin_mode, const char *cwd, uint16_t pty_width,
-                           uint16_t pty_height, dict_T *env, varnumber_T *status_out)
+                           uint16_t pty_height, dict_T *env, varnumber_T *status_out,
+                           int stdin_descriptor)
 {
   Channel *chan = channel_alloc(kChannelStreamProc);
   chan->on_data = on_stdout;
@@ -370,6 +371,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader
   proc->cwd = cwd;
   proc->env = env;
   proc->overlapped = overlapped;
+  proc->stdin_fd = stdin_descriptor;
 
   char *cmd = xstrdup(proc->argv[0]);
   bool has_out, has_err;
