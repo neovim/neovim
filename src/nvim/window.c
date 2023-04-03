@@ -2417,7 +2417,7 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
   }
 }
 
-static void leaving_window(win_T *const win)
+void leaving_window(win_T *const win)
   FUNC_ATTR_NONNULL_ALL
 {
   // Only matters for a prompt window.

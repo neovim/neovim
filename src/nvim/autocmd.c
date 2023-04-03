@@ -1495,7 +1495,9 @@ void aucmd_restbuf(aco_save_T *aco)
       }
     }
 win_found:
-
+    // May need to stop Insert mode if we were in a prompt buffer.
+    leaving_window(curwin);
+    // Remove the window.
     win_remove(curwin, NULL);
     pmap_del(handle_T)(&window_handles, curwin->handle);
     if (curwin->w_grid_alloc.chars != NULL) {
