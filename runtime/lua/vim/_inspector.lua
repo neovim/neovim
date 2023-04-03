@@ -81,6 +81,12 @@ function vim.inspect_pos(bufnr, row, col, filter)
     end
   end
 
+  -- namespace id -> name map
+  local nsmap = {}
+  for name, id in pairs(vim.api.nvim_get_namespaces()) do
+    nsmap[id] = name
+  end
+
   --- Convert an extmark tuple into a map-like table
   --- @private
   local function to_map(extmark)
@@ -90,6 +96,8 @@ function vim.inspect_pos(bufnr, row, col, filter)
       col = extmark[3],
       opts = resolve_hl(extmark[4]),
     }
+    extmark.ns_id = extmark.opts.ns_id
+    extmark.ns = nsmap[extmark.ns_id] or ''
     extmark.end_row = extmark.opts.end_row or extmark.row -- inclusive
     extmark.end_col = extmark.opts.end_col or (extmark.col + 1) -- exclusive
     return extmark
@@ -104,17 +112,9 @@ function vim.inspect_pos(bufnr, row, col, filter)
   end
 
   -- all extmarks at this position
-  local extmarks = {}
-  for ns, nsid in pairs(vim.api.nvim_get_namespaces()) do
-    local ns_marks = vim.api.nvim_buf_get_extmarks(bufnr, nsid, 0, -1, { details = true })
-    ns_marks = vim.tbl_map(to_map, ns_marks)
-    ns_marks = vim.tbl_filter(is_here, ns_marks)
-    for _, mark in ipairs(ns_marks) do
-      mark.ns_id = nsid
-      mark.ns = ns
-    end
-    vim.list_extend(extmarks, ns_marks)
-  end
+  local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, -1, 0, -1, { details = true })
+  extmarks = vim.tbl_map(to_map, extmarks)
+  extmarks = vim.tbl_filter(is_here, extmarks)
 
   if filter.semantic_tokens then
     results.semantic_tokens = vim.tbl_filter(function(extmark)
