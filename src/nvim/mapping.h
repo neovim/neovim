@@ -5,6 +5,7 @@
 #include <stddef.h>
 
 #include "lauxlib.h"
+#include "nvim/api/keysets.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/types.h"

@@ -10,6 +10,7 @@
 #include "lauxlib.h"
 #include "nvim/api/command.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
 #include "nvim/ascii.h"

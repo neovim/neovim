@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 
+#include "nvim/api/keysets.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/highlight_defs.h"

@@ -1,6 +1,7 @@
 #ifndef NVIM_HIGHLIGHT_GROUP_H
 #define NVIM_HIGHLIGHT_GROUP_H
 
+#include "nvim/api/keysets.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/types.h"
