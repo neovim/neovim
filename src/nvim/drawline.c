@@ -102,6 +102,7 @@ typedef struct {
                              ///< when c_extra and c_final are NUL
   char *p_extra_free;        ///< p_extra buffer that needs to be freed
   int extra_attr;            ///< attributes for p_extra
+                             ///< with win_attr if needed
   int c_extra;               ///< extra chars, all the same
   int c_final;               ///< final char, mandatory if set
 
@@ -923,6 +924,7 @@ static void win_line_continue(winlinevars_T *wlv)
   if (wlv->saved_n_extra > 0) {
     // Continue item from end of wrapped line.
     wlv->n_extra = wlv->saved_n_extra;
+    wlv->saved_n_extra = 0;
     wlv->c_extra = wlv->saved_c_extra;
     wlv->c_final = wlv->saved_c_final;
     wlv->p_extra = wlv->saved_p_extra;
@@ -985,6 +987,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   int search_attr = 0;                  // attributes desired by 'hlsearch'
   int saved_search_attr = 0;            // search_attr to be used when n_extra
                                         // goes to zero
+  bool reset_extra_attr = false;
+
   int vcol_save_attr = 0;               // saved attr for 'cursorcolumn'
   int syntax_attr = 0;                  // attributes desired by syntax
   bool has_syntax = false;              // this buffer has syntax highl.
@@ -1766,6 +1770,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           }
         }
 
+        if (wlv.n_extra == 0) {
+          reset_extra_attr = false;
+        }
+
         if (wlv.n_extra <= 0 && virt_inline_i < kv_size(virt_inline)) {
           VirtTextChunk vtc = kv_A(virt_inline, virt_inline_i);
           wlv.p_extra = vtc.text;
@@ -1931,6 +1939,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         wlv.p_extra++;
       }
       wlv.n_extra--;
+
+      // Only restore search_attr and area_attr after "n_extra" in
+      // the next screen line is also done.
       if (wlv.n_extra <= 0) {
         if (search_attr == 0) {
           search_attr = saved_search_attr;
@@ -1938,6 +1949,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         if (area_attr == 0 && *ptr != NUL) {
           area_attr = saved_area_attr;
         }
+        // wlv.extra_attr should be used at this position but not
+        // any further.
+        reset_extra_attr = true;
       }
     } else if (foldinfo.fi_lines > 0) {
       // skip writing the buffer line itself
@@ -2589,6 +2603,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     // Don't override visual selection highlighting.
     if (n_attr > 0 && wlv.draw_state == WL_LINE && !search_attr_from_match) {
       wlv.char_attr = hl_combine_attr(wlv.char_attr, wlv.extra_attr);
+      if (reset_extra_attr) {
+        reset_extra_attr = false;
+        wlv.extra_attr = 0;
+      }
     }
 
     // Handle the case where we are in column 0 but not on the first
