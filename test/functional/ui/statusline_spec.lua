@@ -636,3 +636,20 @@ it('statusline is redrawn on recording state change #22683', function()
     recording @Q                            |
   ]])
 end)
+
+it('ruler is redrawn in cmdline with redrawstatus #22804', function()
+  clear()
+  local screen = Screen.new(40, 2)
+  screen:attach()
+  command([[
+    let g:n = 'initial value'
+    set ls=1 ru ruf=%{g:n}
+    redraw
+    let g:n = 'other value'
+    redrawstatus
+  ]])
+  screen:expect([[
+    ^                                        |
+                          other value       |
+  ]])
+end)
