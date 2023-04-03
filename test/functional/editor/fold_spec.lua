@@ -359,4 +359,14 @@ a]], '13m7')
     eq(10, funcs.foldclosedend(7))
     eq(14, funcs.foldclosedend(11))
   end)
+  it('updates correctly with indent method and visual blockwise insertion', function()
+    insert([[
+    a
+    b
+    ]])
+    feed_command('set foldmethod=indent', 'set shiftwidth=2')
+    feed('gg0<C-v>jI  <Esc>') -- indent both lines using visual blockwise mode
+    eq(1, funcs.foldlevel(1))
+    eq(1, funcs.foldlevel(2))
+  end)
 end)
