@@ -648,6 +648,9 @@ describe('extmark decorations', function()
       [28] = {foreground = Screen.colors.SlateBlue};
       [29] = {background = Screen.colors.Yellow1};
       [30] = {reverse = true};
+      [31] = {foreground = Screen.colors.SlateBlue, background = Screen.colors.LightMagenta};
+      [32] = {bold = true, reverse = true};
+      [33] = {background = Screen.colors.Red1, bold = true}
     }
 
     ns = meths.create_namespace 'test'
@@ -1910,6 +1913,46 @@ bbbbbbb]])
       {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
+                                                        |
+      ]]}
+  end)
+
+  it('in diff mode virtual text is highlighted correct', function()
+    insert([[
+    9000
+    0009
+    0009
+    9000
+    0009
+    ]])
+    command("set diff")
+    meths.buf_set_extmark(0, ns, 0, 1,
+      { virt_text = { { 'test', 'Special' } }, virt_text_pos = 'inline', right_gravity = false })
+    command("vnew")
+    insert([[
+    000
+    000
+    000
+    000
+    000
+    ]])
+    command("set diff")
+    feed('gg0')
+    screen:expect { grid = [[
+      {27:^000                      }│{33:9}{31:test}{27:000                }|
+      {27:000                      }│{27:000}{33:9}{27:                    }|
+      {27:000                      }│{27:000}{33:9}{27:                    }|
+      {27:000                      }│{33:9}{27:000                    }|
+      {27:000                      }│{27:000}{33:9}{27:                    }|
+                               │                        |
+      {1:~                        }│{1:~                       }|
+      {1:~                        }│{1:~                       }|
+      {1:~                        }│{1:~                       }|
+      {1:~                        }│{1:~                       }|
+      {1:~                        }│{1:~                       }|
+      {1:~                        }│{1:~                       }|
+      {1:~                        }│{1:~                       }|
+      {32:[No Name] [+]             }{30:[No Name] [+]           }|
                                                         |
       ]]}
   end)
