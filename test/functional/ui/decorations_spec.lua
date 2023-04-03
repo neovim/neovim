@@ -1818,6 +1818,31 @@ bbbbbbb]])
                                                         |
       ]]}
   end)
+
+  it('highlighting does not extend when no wrap is enabled with a long virtual text', function()
+    insert('abcdef')
+    command("set nowrap")
+    meths.buf_set_extmark(0, ns, 0, 3,
+      { virt_text = { { string.rep('X', 50), 'Special' } }, virt_text_pos = 'inline', right_gravity = false })
+    feed('$')
+    screen:expect { grid = [[
+      {28:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}de^f|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+  end)
 end)
 
 describe('decorations: virtual lines', function()
