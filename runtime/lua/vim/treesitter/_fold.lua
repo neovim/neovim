@@ -68,7 +68,7 @@ function FoldInfo:add_stop(lnum)
   self.stop_counts[lnum] = (self.stop_counts[lnum] or 0) + 1
 end
 
----@packag
+---@package
 ---@param lnum integer
 ---@return integer
 function FoldInfo:get_start(lnum)

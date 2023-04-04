@@ -48,7 +48,7 @@ indent_style            One of "tab" or "space". Sets the 'expandtab' option.
 indent_size             A number indicating the size of a single indent.
                         Alternatively, use the value "tab" to use the value of
                         the tab_width property. Sets the 'shiftwidth' and
-                        'softtabstop'.
+                        'softtabstop' options.
 
                                            *editorconfig_insert_final_newline*
 insert_final_newline    "true" or "false" to ensure the file always has a

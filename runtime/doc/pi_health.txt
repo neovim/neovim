@@ -105,7 +105,7 @@ with your plugin name: >
         local M = {}
 
         M.check = function()
-          vim.health.report_start("my_plugin report")
+          vim.health.report_start("foo report")
           -- make sure setup function parameters are ok
           if check_setup() then
             vim.health.report_ok("Setup is correct")

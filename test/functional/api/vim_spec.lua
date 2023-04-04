@@ -4180,7 +4180,7 @@ describe('API', function()
          meths.cmd({ cmd = "buffers", mods = { filter = { pattern = "foo", force = true } } },
                    { output = true }))
 
-      -- with emsg_silent = true error is suppresed
+      -- with emsg_silent = true error is suppressed
       feed([[:lua vim.api.nvim_cmd({ cmd = 'call', mods = { emsg_silent = true } }, {})<CR>]])
       eq('', meths.cmd({ cmd = 'messages' }, { output = true }))
       -- error from the next command typed is not suppressed #21420

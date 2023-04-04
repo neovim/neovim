@@ -255,6 +255,8 @@ Highlight groups:
   |hl-TermCursorNC|
   |hl-WinSeparator| highlights window separators
   |hl-Whitespace| highlights 'listchars' whitespace
+  |hl-WinBar| highlights 'winbar'
+  |hl-WinBarNC| highlights non-current window 'winbar'
 
 Input/Mappings:
   ALT (|META|) chords always work (even in the |TUI|). Map |<M-| with any key:
