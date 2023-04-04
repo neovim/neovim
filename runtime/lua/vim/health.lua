@@ -1,5 +1,39 @@
 local M = {}
 
+function M.foldtext()
+  local foldtext = vim.fn.foldtext()
+
+  if vim.api.nvim_buf_get_name(0) ~= 'health://' then
+    return foldtext
+  end
+
+  if vim.b.failedchecks == nil then
+    vim.b.failedchecks = vim.empty_dict()
+  end
+
+  if vim.b.failedchecks[foldtext] == nil then
+    local warning = '- WARNING '
+    local warninglen = string.len(warning)
+    local error = '- ERROR '
+    local errorlen = string.len(error)
+    local failedchecks = vim.b.failedchecks
+    failedchecks[foldtext] = false
+
+    local foldcontent = vim.api.nvim_buf_get_lines(0, vim.v.foldstart - 1, vim.v.foldend, false)
+    for _, line in ipairs(foldcontent) do
+      if string.sub(line, 1, warninglen) == warning or string.sub(line, 1, errorlen) == error then
+        print(foldtext)
+        failedchecks[foldtext] = true
+        break
+      end
+    end
+
+    vim.b.failedchecks = failedchecks
+  end
+
+  return vim.b.failedchecks[foldtext] and '+WE' .. foldtext:sub(4) or foldtext
+end
+
 function M.report_start(msg)
   vim.fn['health#report_start'](msg)
 end
