@@ -769,7 +769,13 @@ function M.code_action(options)
   end
   if not context.diagnostics then
     local bufnr = api.nvim_get_current_buf()
-    context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics(bufnr)
+    local pos = api.nvim_win_get_cursor(0)
+    --when in normal mode use cursor diagnsotics in context
+    if api.nvim_get_mode().mode == 'n' then
+      context.diagnostics = vim.diagnostic.get(bufnr, { lnum = pos[1], col = pos[2], original = true })
+    else
+      context.diagnostics = vim.diagnostic.get(bufnr, { lnum = pos[1] })
+    end
   end
   local params
   local mode = api.nvim_get_mode().mode

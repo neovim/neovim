@@ -340,6 +340,25 @@ describe('vim.diagnostic', function()
     ]])
   end)
 
+  it('get diagnostic by lnum and col get original lsp diagnostic', function()
+    local result = exec_lua [[
+      local ns_1_diags = {
+        make_error("Error 1", 1, 1, 1, 5),
+        make_warning("Warning on Server 1", 2, 1, 2, 3),
+      }
+      vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, ns_1_diags)
+      local diag = vim.diagnostic.get(diagnostic_bufnr, { lnum = 1, col = 3 })[1]
+      local original = vim.diagnostic.get(diagnostic_bufnr, { original = true })[1]
+      return {
+        { bufnr = diag.bufnr ,lnum = diag.lnum, col = diag.col },
+        { message = original.message, severity = original.severity }
+      }
+    ]]
+
+    eq({2, 1, 1}, {result[1].bufnr, result[1].lnum, result[1].col})
+    eq({"Error 1", 1}, {result[2].message, result[2].severity})
+  end)
+
   describe('show() and hide()', function()
     it('works', function()
       local result = exec_lua [[

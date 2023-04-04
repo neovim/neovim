@@ -24,15 +24,6 @@ local function severity_lsp_to_vim(severity)
 end
 
 ---@private
----@return lsp.DiagnosticSeverity
-local function severity_vim_to_lsp(severity)
-  if type(severity) == 'string' then
-    severity = vim.diagnostic.severity[severity]
-  end
-  return severity
-end
-
----@private
 ---@return integer
 local function line_byte_from_position(lines, lnum, col, offset_encoding)
   if not lines or offset_encoding == 'utf-8' then
@@ -130,33 +121,6 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
         },
       },
     }
-  end, diagnostics)
-end
-
---- @private
---- @param diagnostics Diagnostic[]
---- @return lsp.Diagnostic[]
-local function diagnostic_vim_to_lsp(diagnostics)
-  ---@diagnostic disable-next-line:no-unknown
-  return vim.tbl_map(function(diagnostic)
-    ---@cast diagnostic Diagnostic
-    return vim.tbl_extend('keep', {
-      -- "keep" the below fields over any duplicate fields in diagnostic.user_data.lsp
-      range = {
-        start = {
-          line = diagnostic.lnum,
-          character = diagnostic.col,
-        },
-        ['end'] = {
-          line = diagnostic.end_lnum,
-          character = diagnostic.end_col,
-        },
-      },
-      severity = severity_vim_to_lsp(diagnostic.severity),
-      message = diagnostic.message,
-      source = diagnostic.source,
-      code = diagnostic.code,
-    }, diagnostic.user_data and (diagnostic.user_data.lsp or {}) or {})
   end, diagnostics)
 end
 
@@ -273,7 +237,9 @@ end
 ---@return table Table with map of line number to list of diagnostics.
 ---              Structured: { [1] = {...}, [5] = {.... } }
 ---@private
+---@deprecated
 function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
+  vim.deprecate('vim.lsp.diagnostic.get_line_diagnostics', 'vim.diagnostic.get', '0.10.0')
   opts = opts or {}
   if opts.severity then
     opts.severity = severity_lsp_to_vim(opts.severity)
@@ -290,8 +256,9 @@ function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
   end
 
   opts.lnum = line_nr
+  opts.original = true
 
-  return diagnostic_vim_to_lsp(vim.diagnostic.get(bufnr, opts))
+  return vim.diagnostic.get(bufnr, opts)
 end
 
 return M

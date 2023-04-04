@@ -289,6 +289,8 @@ The following deprecated functions or APIs were removed.
 
 • `require'health'` was removed. Use |vim.health| instead.
 
+• `vim.diagnostic.get` support get diagnostic by using col and get original
+  sever format diagnostic.
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*
 

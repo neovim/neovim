@@ -464,7 +464,10 @@ get({bufnr}, {opts})                                    *vim.diagnostic.get()*
                  • namespace: (number) Limit diagnostics to the given
                    namespace.
                  • lnum: (number) Limit diagnostics to the given line number.
+                 • col: (number) Limit diagnsotics to the given column number.
                  • severity: See |diagnostic-severity|.
+                 • original: (boolean) if true the diagnostic use lsp orignial
+                   format.
 
     Return: ~
         Diagnostic [] table A list of diagnostic items |diagnostic-structure|.

@@ -2149,6 +2149,35 @@ function M.lookup_section(settings, section)
   return settings
 end
 
+---@private
+---@param diagnostic Diagnostic
+---@return lsp.Diagnostic[]
+function M.diagnostic_vim_to_lsp(diagnostic)
+  local function severity_vim_to_lsp(severity)
+    if type(severity) == 'string' then
+      severity = vim.diagnostic.severity[severity]
+    end
+    return severity
+  end
+
+  return vim.tbl_extend('keep', {
+    range = {
+      start = {
+        line = diagnostic.lnum,
+        character = diagnostic.col,
+      },
+      ['end'] = {
+        line = diagnostic.end_lnum,
+        character = diagnostic.end_col,
+      },
+    },
+    severity = severity_vim_to_lsp(diagnostic.severity),
+    message = diagnostic.message,
+    source = diagnostic.source,
+    code = diagnostic.code,
+  }, diagnostic.user_data and (diagnostic.user_data.lsp or {}) or {})
+end
+
 M._get_line_byte_from_position = get_line_byte_from_position
 
 M.buf_versions = {}

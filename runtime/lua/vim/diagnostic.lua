@@ -412,13 +412,27 @@ local function get_diagnostics(bufnr, opts, clamp)
           d.end_col = math.max(d.end_col, 0)
         end
       end
-      table.insert(diagnostics, d)
+
+      if opts.col then
+        if not opts.lnum then
+          vim.notify('col must set with lnum in vim.diagnostic.get', vim.log.level.ERROR)
+          return
+        end
+        if opts.col < d.col or opts.col > d.end_col then
+          return
+        end
+      end
+
+      if opts.original and vim.tbl_get(d, 'user_data', 'lsp') then
+        d = require('vim.lsp.util').diagnostic_vim_to_lsp(d)
+      end
+      diagnostics[#diagnostics + 1] = d
     end
   end
 
   ---@private
   local function add_all_diags(buf, diags)
-    for _, diagnostic in pairs(diags) do
+    for _, diagnostic in ipairs(diags) do
       add(buf, diagnostic)
     end
   end
@@ -763,7 +777,9 @@ end
 ---@param opts table|nil A table with the following keys:
 ---                        - namespace: (number) Limit diagnostics to the given namespace.
 ---                        - lnum: (number) Limit diagnostics to the given line number.
+---                        - col: (number) Limit diagnsotics to the given column number.
 ---                        - severity: See |diagnostic-severity|.
+---                        - original: (boolean) if true the diagnostic use lsp orignial format.
 ---@return Diagnostic[] table A list of diagnostic items |diagnostic-structure|.
 function M.get(bufnr, opts)
   vim.validate({
