@@ -102,7 +102,6 @@ typedef struct {
                              ///< when c_extra and c_final are NUL
   char *p_extra_free;        ///< p_extra buffer that needs to be freed
   int extra_attr;            ///< attributes for p_extra
-                             ///< with win_attr if needed
   int c_extra;               ///< extra chars, all the same
   int c_final;               ///< final char, mandatory if set
 
@@ -1026,6 +1025,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   int prev_c1 = 0;                      // first composing char for prev_c
 
   bool search_attr_from_match = false;  // if search_attr is from :match
+  bool saved_search_attr_from_match = false;  // if search_attr is from :match
   bool has_decor = false;               // this buffer has decoration
   int win_col_offset = 0;               // offset for window columns
 
@@ -1785,6 +1785,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           // is down to zero
           saved_search_attr = search_attr;
           saved_area_attr = area_attr;
+          saved_search_attr_from_match = search_attr_from_match;
+          search_attr_from_match = false;
           search_attr = 0;
           area_attr = 0;
           extmark_attr = 0;
@@ -1814,7 +1816,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         }
       }
 
-      if (!wlv.n_extra) {
+      if (wlv.n_extra == 0) {
         // Check for start/end of 'hlsearch' and other matches.
         // After end, check for start/end of next match.
         // When another match, have to check for start again.
@@ -2608,6 +2610,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       if (reset_extra_attr) {
         reset_extra_attr = false;
         wlv.extra_attr = 0;
+        // search_attr_from_match can be restored now that the extra_attr has been applied
+        search_attr_from_match = saved_search_attr_from_match;
       }
     }
 
