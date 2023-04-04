@@ -2080,6 +2080,46 @@ describe('API', function()
     end)
   end)
 
+  describe('nvim_err_writeln', function()
+    local screen
+
+    before_each(function()
+      screen = Screen.new(40, 8)
+      screen:attach()
+      screen:set_default_attr_ids({
+        [0] = {bold=true, foreground=Screen.colors.Blue},
+        [1] = {foreground = Screen.colors.White, background = Screen.colors.Red},
+        [2] = {bold = true, foreground = Screen.colors.SeaGreen},
+        [3] = {bold = true, reverse = true},
+      })
+    end)
+
+    it('shows only one return prompt after all lines are shown', function()
+      nvim_async('err_writeln', 'FAILURE\nERROR\nEXCEPTION\nTRACEBACK')
+      screen:expect([[
+                                                |
+        {0:~                                       }|
+        {3:                                        }|
+        {1:FAILURE}                                 |
+        {1:ERROR}                                   |
+        {1:EXCEPTION}                               |
+        {1:TRACEBACK}                               |
+        {2:Press ENTER or type command to continue}^ |
+      ]])
+      feed('<CR>')
+      screen:expect([[
+        ^                                        |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+                                                |
+      ]])
+    end)
+  end)
+
   describe('nvim_list_chans, nvim_get_chan_info', function()
     before_each(function()
       command('autocmd ChanOpen * let g:opened_event = deepcopy(v:event)')
