@@ -32,7 +32,7 @@ typedef struct {
   Error *err;
   mmfile_t *ma;
   mmfile_t *mb;
-  bool linematch;
+  int64_t linematch;
   bool iwhite;
 } hunkpriv_t;
 
@@ -128,7 +128,7 @@ static int hunk_locations_cb(long start_a, long count_a, long start_b, long coun
 {
   hunkpriv_t *priv = (hunkpriv_t *)cb_data;
   lua_State *lstate = priv->lstate;
-  if (priv->linematch) {
+  if (priv->linematch > 0 && count_a + count_b <= priv->linematch) {
     get_linematch_results(lstate, priv->ma, priv->mb, start_a, count_a, start_b, count_b,
                           priv->iwhite);
   } else {
@@ -208,7 +208,7 @@ static bool check_xdiff_opt(ObjectType actType, ObjectType expType, const char *
 }
 
 static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate, xdemitconf_t *cfg, xpparam_t *params,
-                                           bool *linematch, Error *err)
+                                           int64_t *linematch, Error *err)
 {
   const DictionaryOf(LuaRef) opts = nlua_pop_Dictionary(lstate, true, err);
 
@@ -265,8 +265,12 @@ static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate, xdemitconf_t *cfg,
       }
       cfg->interhunkctxlen = (long)v->data.integer;
     } else if (strequal("linematch", k.data)) {
-      *linematch = api_object_to_bool(*v, "linematch", false, err);
-      if (ERROR_SET(err)) {
+      if (v->type == kObjectTypeBoolean) {
+        *linematch = v->data.boolean ? INT64_MAX : 0;
+      } else if (v->type == kObjectTypeInteger) {
+        *linematch = v->data.integer;
+      } else {
+        api_set_error(err, kErrorTypeValidation, "linematch must be a boolean or integer");
         goto exit_1;
       }
     } else {
@@ -330,7 +334,7 @@ int nlua_xdl_diff(lua_State *lstate)
   xdemitconf_t cfg;
   xpparam_t params;
   xdemitcb_t ecb;
-  bool linematch = false;
+  int64_t linematch = 0;
 
   CLEAR_FIELD(cfg);
   CLEAR_FIELD(params);
