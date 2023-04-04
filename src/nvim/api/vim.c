@@ -737,7 +737,7 @@ error:
 void nvim_out_write(String str)
   FUNC_API_SINCE(1)
 {
-  write_msg(str, false);
+  write_msg(str, false, false);
 }
 
 /// Writes a message to the Vim error buffer. Does not append "\n", the
@@ -747,7 +747,7 @@ void nvim_out_write(String str)
 void nvim_err_write(String str)
   FUNC_API_SINCE(1)
 {
-  write_msg(str, true);
+  write_msg(str, true, false);
 }
 
 /// Writes a message to the Vim error buffer. Appends "\n", so the buffer is
@@ -758,8 +758,7 @@ void nvim_err_write(String str)
 void nvim_err_writeln(String str)
   FUNC_API_SINCE(1)
 {
-  nvim_err_write(str);
-  nvim_err_write((String) { .data = "\n", .size = 1 });
+  write_msg(str, true, true);
 }
 
 /// Gets the current list of buffer handles
@@ -1672,23 +1671,24 @@ theend:
 ///
 /// @param message  Message to write
 /// @param to_err   true: message is an error (uses `emsg` instead of `msg`)
-static void write_msg(String message, bool to_err)
+/// @param writeln  Append a trailing newline
+static void write_msg(String message, bool to_err, bool writeln)
 {
   static StringBuilder out_line_buf = KV_INITIAL_VALUE;
   static StringBuilder err_line_buf = KV_INITIAL_VALUE;
 
-#define PUSH_CHAR(i, line_buf, msg) \
+#define PUSH_CHAR(c, line_buf, msg) \
   if (kv_max(line_buf) == 0) { \
     kv_resize(line_buf, LINE_BUFFER_MIN_SIZE); \
   } \
-  if (message.data[i] == NL) { \
+  if (c == NL) { \
     kv_push(line_buf, NUL); \
     msg(line_buf.items); \
     kv_drop(line_buf, kv_size(line_buf)); \
     kv_resize(line_buf, LINE_BUFFER_MIN_SIZE); \
-    continue; \
-  } \
-  kv_push(line_buf, message.data[i]);
+  } else { \
+    kv_push(line_buf, c); \
+  }
 
   no_wait_return++;
   for (uint32_t i = 0; i < message.size; i++) {
@@ -1696,9 +1696,16 @@ static void write_msg(String message, bool to_err)
       break;
     }
     if (to_err) {
-      PUSH_CHAR(i, err_line_buf, emsg);
+      PUSH_CHAR(message.data[i], err_line_buf, emsg);
     } else {
-      PUSH_CHAR(i, out_line_buf, msg);
+      PUSH_CHAR(message.data[i], out_line_buf, msg);
+    }
+  }
+  if (writeln) {
+    if (to_err) {
+      PUSH_CHAR(NL, err_line_buf, emsg);
+    } else {
+      PUSH_CHAR(NL, out_line_buf, msg);
     }
   }
   no_wait_return--;
