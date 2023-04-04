@@ -278,6 +278,7 @@ static const char *highlight_init_both[] = {
 
   // LSP semantic tokens
   "default link @lsp.type.class Structure",
+  "default link @lsp.type.comment Comment",
   "default link @lsp.type.decorator Function",
   "default link @lsp.type.enum Structure",
   "default link @lsp.type.enumMember Constant",
