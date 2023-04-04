@@ -538,6 +538,7 @@ function M.inspect_tree(opts)
 
   vim.wo[w].scrolloff = 5
   vim.wo[w].wrap = false
+  vim.wo[w].foldmethod = 'manual' -- disable folding
   vim.bo[b].buflisted = false
   vim.bo[b].buftype = 'nofile'
   vim.bo[b].bufhidden = 'wipe'
