@@ -1970,6 +1970,18 @@ describe('API', function()
   end)
 
   describe('nvim_out_write', function()
+    local screen
+
+    before_each(function()
+      screen = Screen.new(40, 8)
+      screen:attach()
+      screen:set_default_attr_ids({
+        [0] = {bold=true, foreground = Screen.colors.Blue},
+        [1] = {bold = true, foreground = Screen.colors.SeaGreen},
+        [2] = {bold = true, reverse = true},
+      })
+    end)
+
     it('prints long messages correctly #20534', function()
       exec([[
         set more
@@ -1988,6 +2000,48 @@ describe('API', function()
         redir END
       ]])
       eq('\naaa\n' .. ('a'):rep(5002) .. '\naaa', meths.get_var('out'))
+    end)
+
+    it('can show one line', function()
+      nvim_async('out_write', 'foo\n')
+      screen:expect([[
+        ^                                        |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        foo                                     |
+      ]])
+    end)
+
+    it('shows return prompt when more than &cmdheight lines', function()
+      nvim_async('out_write', 'foo\nbar\n')
+      screen:expect([[
+                                                |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {2:                                        }|
+        foo                                     |
+        bar                                     |
+        {1:Press ENTER or type command to continue}^ |
+      ]])
+    end)
+
+    it('shows return prompt when message is longer than screen width', function()
+      nvim_async('out_write', ('a'):rep(50) .. '\n')
+      screen:expect([[
+                                                |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {2:                                        }|
+        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+        aaaaaaaaaa                              |
+        {1:Press ENTER or type command to continue}^ |
+      ]])
     end)
   end)
 
