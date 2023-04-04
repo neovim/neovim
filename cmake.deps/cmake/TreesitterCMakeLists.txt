@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(tree-sitter C)
+project(treesitter C)
 
 add_library(tree-sitter lib/src/lib.c)
 target_include_directories(tree-sitter
