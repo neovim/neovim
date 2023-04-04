@@ -1,5 +1,4 @@
 local helpers = require('test.functional.helpers')(after_each)
-local lfs = require('lfs')
 
 local eq = helpers.eq
 local clear = helpers.clear
@@ -7,6 +6,7 @@ local meths = helpers.meths
 local exc_exec = helpers.exc_exec
 local rmdir = helpers.rmdir
 local write_file = helpers.write_file
+local mkdir = helpers.mkdir
 
 local testdir = 'Xtest-functional-spell-spellfile.d'
 
@@ -14,8 +14,8 @@ describe('spellfile', function()
   before_each(function()
     clear()
     rmdir(testdir)
-    lfs.mkdir(testdir)
-    lfs.mkdir(testdir .. '/spell')
+    mkdir(testdir)
+    mkdir(testdir .. '/spell')
   end)
   after_each(function()
     rmdir(testdir)

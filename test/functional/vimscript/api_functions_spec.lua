@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local lfs = require('lfs')
+local luv = require('luv')
 local neq, eq, command = helpers.neq, helpers.eq, helpers.command
 local clear, curbufmeths = helpers.clear, helpers.curbufmeths
 local exc_exec, expect, eval = helpers.exc_exec, helpers.expect, helpers.eval
@@ -118,7 +118,7 @@ describe('eval-API', function()
   end)
 
   it('are highlighted by vim.vim syntax file', function()
-    if lfs.attributes("build/runtime/syntax/vim/generated.vim",'uid') == nil then
+    if luv.fs_stat("build/runtime/syntax/vim/generated.vim").uid == nil then
       pending("runtime was not built, skipping test")
       return
     end

@@ -1,4 +1,3 @@
-local lfs = require('lfs')
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
@@ -15,6 +14,7 @@ local sleep = helpers.sleep
 local meths = helpers.meths
 local skip = helpers.skip
 local is_os = helpers.is_os
+local mkdir = helpers.mkdir
 
 local file_prefix = 'Xtest-functional-ex_cmds-mksession_spec'
 
@@ -26,7 +26,7 @@ describe(':mksession', function()
 
   before_each(function()
     clear()
-    lfs.mkdir(tab_dir)
+    mkdir(tab_dir)
   end)
 
   after_each(function()

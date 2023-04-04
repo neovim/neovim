@@ -1,6 +1,6 @@
 -- Test suite for testing interactions with API bindings
 local helpers = require('test.functional.helpers')(after_each)
-local lfs = require('lfs')
+local luv = require('luv')
 
 local command = helpers.command
 local meths = helpers.meths
@@ -754,7 +754,8 @@ describe('lua: nvim_buf_attach on_bytes', function()
       write_file("Xtest-reload", dedent [[
         old line 1
         old line 2]])
-      lfs.touch("Xtest-reload", os.time() - 10)
+      local atime = os.time() - 10
+      luv.fs_utime("Xtest-reload", atime, atime)
       command "e Xtest-reload"
       command "set autoread"
 

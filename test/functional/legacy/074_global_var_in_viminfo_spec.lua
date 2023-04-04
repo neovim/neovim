@@ -1,7 +1,7 @@
 -- Tests for storing global variables in the .shada file
 
 local helpers = require('test.functional.helpers')(after_each)
-local lfs = require('lfs')
+local luv = require('luv')
 local clear, command, eq, neq, eval, poke_eventloop =
   helpers.clear, helpers.command, helpers.eq, helpers.neq, helpers.eval,
   helpers.poke_eventloop
@@ -39,7 +39,7 @@ describe('storing global variables in ShaDa files', function()
     poke_eventloop()
 
     -- Assert that the shada file exists.
-    neq(nil, lfs.attributes(tempname))
+    neq(nil, luv.fs_stat(tempname))
     command('unlet MY_GLOBAL_DICT')
     command('unlet MY_GLOBAL_LIST')
     -- Assert that the variables where deleted.

@@ -199,12 +199,6 @@ function Gcc:preprocess(previous_defines, ...)
                                     {pseudoheader_fname})
   defines = self:filter_standard_defines(defines)
 
-  -- lfs = require("lfs")
-  -- print("CWD: #{lfs.currentdir!}")
-  -- print("CMD: #{cmd}")
-  -- io.stderr\write("CWD: #{lfs.currentdir!}\n")
-  -- io.stderr\write("CMD: #{cmd}\n")
-
   local declarations = repeated_read_cmd(self.path,
                                          self.preprocessor_extra_flags,
                                          self.get_declarations_extra_flags,

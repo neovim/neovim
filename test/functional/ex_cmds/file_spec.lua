@@ -1,17 +1,18 @@
 local helpers = require('test.functional.helpers')(after_each)
-local lfs = require('lfs')
+local luv = require('luv')
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
 local funcs = helpers.funcs
 local rmdir = helpers.rmdir
+local mkdir = helpers.mkdir
 
 describe(':file', function()
-  local swapdir = lfs.currentdir()..'/Xtest-file_spec'
+  local swapdir = luv.cwd()..'/Xtest-file_spec'
   before_each(function()
     clear()
     rmdir(swapdir)
-    lfs.mkdir(swapdir)
+    mkdir(swapdir)
   end)
   after_each(function()
     command('%bwipeout!')

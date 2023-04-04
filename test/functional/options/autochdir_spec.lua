@@ -1,9 +1,10 @@
-local lfs = require('lfs')
+local luv = require('luv')
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local eq = helpers.eq
 local funcs = helpers.funcs
 local command = helpers.command
+local mkdir = helpers.mkdir
 
 describe("'autochdir'", function()
   it('given on the shell gets processed properly', function()
@@ -20,11 +21,11 @@ describe("'autochdir'", function()
   end)
 
   it('is not overwritten by getwinvar() call #17609',function()
-    local curdir = string.gsub(lfs.currentdir(), '\\', '/')
+    local curdir = string.gsub(luv.cwd(), '\\', '/')
     local dir_a = curdir..'/Xtest-functional-options-autochdir.dir_a'
     local dir_b = curdir..'/Xtest-functional-options-autochdir.dir_b'
-    lfs.mkdir(dir_a)
-    lfs.mkdir(dir_b)
+    mkdir(dir_a)
+    mkdir(dir_b)
     clear()
     command('set shellslash')
     command('set autochdir')

@@ -1,4 +1,3 @@
-local lfs = require('lfs')
 local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
@@ -7,6 +6,7 @@ local get_pathsep = helpers.get_pathsep
 local eq = helpers.eq
 local funcs = helpers.funcs
 local rmdir = helpers.rmdir
+local mkdir = helpers.mkdir
 
 local file_prefix = 'Xtest-functional-ex_cmds-mkview_spec'
 
@@ -17,8 +17,8 @@ describe(':mkview', function()
 
   before_each(function()
     clear()
-    lfs.mkdir(view_dir)
-    lfs.mkdir(local_dir)
+    mkdir(view_dir)
+    mkdir(local_dir)
   end)
 
   after_each(function()

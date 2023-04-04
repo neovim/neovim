@@ -1,5 +1,4 @@
 local luv = require('luv')
-local lfs = require('lfs')
 local global_helpers = require('test.helpers')
 
 local Session = require('test.client.session')
@@ -20,10 +19,9 @@ local tbl_contains = global_helpers.tbl_contains
 local fail = global_helpers.fail
 
 local module = {
-  mkdir = lfs.mkdir,
 }
 
-local start_dir = lfs.currentdir()
+local start_dir = luv.cwd()
 local runtime_set = 'set runtimepath^=./build/lib/nvim/'
 module.nvim_prog = (
   os.getenv('NVIM_PRG')
@@ -730,21 +728,17 @@ function module.assert_visible(bufnr, visible)
 end
 
 local function do_rmdir(path)
-  local mode, errmsg, errcode = lfs.attributes(path, 'mode')
-  if mode == nil then
-    if errcode == 2 then
-      -- "No such file or directory", don't complain.
-      return
-    end
-    error(string.format('rmdir: %s (%d)', errmsg, errcode))
+  local stat = luv.fs_stat(path)
+  if stat == nil then
+    return
   end
-  if mode ~= 'directory' then
+  if stat.type ~= 'directory' then
     error(string.format('rmdir: not a directory: %s', path))
   end
-  for file in lfs.dir(path) do
+  for file in vim.fs.dir(path) do
     if file ~= '.' and file ~= '..' then
       local abspath = path..'/'..file
-      if lfs.attributes(abspath, 'mode') == 'directory' then
+      if global_helpers.isdir(abspath) then
         do_rmdir(abspath)  -- recurse
       else
         local ret, err = os.remove(abspath)
@@ -764,9 +758,9 @@ local function do_rmdir(path)
       end
     end
   end
-  local ret, err = lfs.rmdir(path)
+  local ret, err = luv.fs_rmdir(path)
   if not ret then
-    error('lfs.rmdir('..path..'): '..err)
+    error('luv.fs_rmdir('..path..'): '..err)
   end
 end
 

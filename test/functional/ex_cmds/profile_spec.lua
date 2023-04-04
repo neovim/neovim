@@ -1,5 +1,5 @@
 require('os')
-local lfs = require('lfs')
+local luv = require('luv')
 
 local helpers  = require('test.functional.helpers')(after_each)
 local eval     = helpers.eval
@@ -12,18 +12,16 @@ local read_file = helpers.read_file
 
 -- tmpname() also creates the file on POSIX systems. Remove it again.
 -- We just need the name, ignoring any race conditions.
-if lfs.attributes(tempfile, 'uid') then
+if luv.fs_stat(tempfile).uid then
   os.remove(tempfile)
 end
 
 local function assert_file_exists(filepath)
-  -- Use 2-argument lfs.attributes() so no extra table gets created.
-  -- We don't really care for the uid.
-  neq(nil, lfs.attributes(filepath, 'uid'))
+  neq(nil, luv.fs_stat(filepath).uid)
 end
 
 local function assert_file_exists_not(filepath)
-  eq(nil, lfs.attributes(filepath, 'uid'))
+  eq(nil, luv.fs_stat(filepath))
 end
 
 describe(':profile', function()
@@ -31,7 +29,7 @@ describe(':profile', function()
 
   after_each(function()
     helpers.expect_exit(command, 'qall!')
-    if lfs.attributes(tempfile, 'uid') ~= nil then
+    if luv.fs_stat(tempfile).uid ~= nil then
       os.remove(tempfile)
     end
   end)
