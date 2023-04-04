@@ -200,8 +200,8 @@ set(TREESITTER_VIMDOC_SHA256 1ff8f4afd3a9599dd4c3ce87c155660b078c1229704d1a25443
 set(TREESITTER_QUERY_URL https://github.com/nvim-treesitter/tree-sitter-query/archive/v0.1.0.tar.gz)
 set(TREESITTER_QUERY_SHA256 e2b806f80e8bf1c4f4e5a96248393fe6622fc1fc6189d6896d269658f67f914c)
 
-set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/a318b42c8b8594bd5ba1f571ab1d7a929198832c.tar.gz)
-set(TREESITTER_SHA256 5f8224431afc36963477e9b69c8c3a31e8e306911185997932fa2cde7d0a2d18)
+set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/v0.20.8.tar.gz)
+set(TREESITTER_SHA256 6181ede0b7470bfca37e293e7d5dc1d16469b9485d13f13a605baec4a8b1f791)
 
 if(USE_EXISTING_SRC_DIR)
   get_cmake_property(VARS VARIABLES)
