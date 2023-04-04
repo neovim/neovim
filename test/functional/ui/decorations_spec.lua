@@ -1746,9 +1746,9 @@ bbbbbbb]])
     insert('abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz')
     command("set nowrap")
     meths.buf_set_extmark(0, ns, 0, 50,
-      { virt_text = { { 'virtual text', 'Special' } }, virt_text_pos = 'inline', right_gravity = false })
+      { virt_text = { { 'virtual text', 'Special' } }, virt_text_pos = 'inline' })
     meths.buf_set_extmark(0, ns, 0, 2,
-      { virt_text = { { 'virtual text', 'Special' } }, virt_text_pos = 'inline', right_gravity = false })
+      { virt_text = { { 'virtual text', 'Special' } }, virt_text_pos = 'inline' })
     feed('$')
     screen:expect { grid = [[
       opqrstuvwxyzabcdefghijklmnopqrstuvwx{28:virtual text}y^z|
@@ -1773,7 +1773,7 @@ bbbbbbb]])
     insert('abcdefghi')
     command("set nowrap")
     meths.buf_set_extmark(0, ns, 0, 2,
-      { virt_text = { { string.rep('X', 55), 'Special' } }, virt_text_pos = 'inline', right_gravity = false })
+      { virt_text = { { string.rep('X', 55), 'Special' } }, virt_text_pos = 'inline' })
     feed('$')
     screen:expect { grid = [[
       {28:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}cdefgh^i|
@@ -1823,7 +1823,7 @@ bbbbbbb]])
     insert('abcdef')
     command("set nowrap")
     meths.buf_set_extmark(0, ns, 0, 3,
-      { virt_text = { { string.rep('X', 50), 'Special' } }, virt_text_pos = 'inline', right_gravity = false })
+      { virt_text = { { string.rep('X', 50), 'Special' } }, virt_text_pos = 'inline' })
     feed('$')
     screen:expect { grid = [[
       {28:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}de^f|
@@ -1850,12 +1850,55 @@ bbbbbbb]])
     test]])
     command('set number')
     meths.buf_set_extmark(0, ns, 0, 1,
-      { virt_text = { { string.rep('X', 55), 'Special' } }, virt_text_pos = 'inline', right_gravity = false })
+      { virt_text = { { string.rep('X', 55), 'Special' } }, virt_text_pos = 'inline' })
     feed('gg0')
     screen:expect { grid = [[
       {2:  1 }^t{28:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
       {2:    }{28:XXXXXXXXXX}est                                 |
       {2:  2 }test                                          |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+  end)
+
+  it('highlighting is correct when virtual text is proceeded with a match', function()
+    insert([[test]])
+    meths.buf_set_extmark(0, ns, 0, 2,
+      { virt_text = { { 'virtual text', 'Special' } }, virt_text_pos = 'inline' })
+    feed('gg0')
+    command('match ErrorMsg /e/')
+    screen:expect { grid = [[
+      ^t{4:e}{28:virtual text}st                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+    command('match ErrorMsg /s/')
+    screen:expect { grid = [[
+      ^te{28:virtual text}{4:s}t                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
