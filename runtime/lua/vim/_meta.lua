@@ -1,4 +1,4 @@
-local a = vim.api
+local api = vim.api
 
 -- TODO(tjdevries): Improve option metadata so that this doesn't have to be hardcoded.
 --                  Can be done in a separate PR.
@@ -30,7 +30,7 @@ end
 
 local options_info = setmetatable({}, {
   __index = function(t, k)
-    local info = a.nvim_get_option_info(k)
+    local info = api.nvim_get_option_info(k)
     info.metatype = get_option_metatype(k, info)
     rawset(t, k, info)
     return rawget(t, k)
@@ -74,12 +74,12 @@ local function new_opt_accessor(handle, scope)
         return new_opt_accessor(k, scope)
       end
       opt_validate(k, scope)
-      return a.nvim_get_option_value(k, { [scope] = handle or 0 })
+      return api.nvim_get_option_value(k, { [scope] = handle or 0 })
     end,
 
     __newindex = function(_, k, v)
       opt_validate(k, scope)
-      return a.nvim_set_option_value(k, v, { [scope] = handle or 0 })
+      return api.nvim_set_option_value(k, v, { [scope] = handle or 0 })
     end,
   })
 end
@@ -91,10 +91,10 @@ vim.wo = new_opt_accessor(nil, 'win')
 --  this ONLY sets the global option. like `setglobal`
 vim.go = setmetatable({}, {
   __index = function(_, k)
-    return a.nvim_get_option_value(k, { scope = 'global' })
+    return api.nvim_get_option_value(k, { scope = 'global' })
   end,
   __newindex = function(_, k, v)
-    return a.nvim_set_option_value(k, v, { scope = 'global' })
+    return api.nvim_set_option_value(k, v, { scope = 'global' })
   end,
 })
 
@@ -102,10 +102,10 @@ vim.go = setmetatable({}, {
 --  it has no additional metamethod magic.
 vim.o = setmetatable({}, {
   __index = function(_, k)
-    return a.nvim_get_option_value(k, {})
+    return api.nvim_get_option_value(k, {})
   end,
   __newindex = function(_, k, v)
-    return a.nvim_set_option_value(k, v, {})
+    return api.nvim_set_option_value(k, v, {})
   end,
 })
 
@@ -488,7 +488,7 @@ local function create_option_accessor(scope)
     --  opt[my_option] = value
     _set = function(self)
       local value = convert_value_to_vim(self._name, self._info, self._value)
-      a.nvim_set_option_value(self._name, value, { scope = scope })
+      api.nvim_set_option_value(self._name, value, { scope = scope })
     end,
 
     get = function(self)
@@ -526,7 +526,7 @@ local function create_option_accessor(scope)
 
   return setmetatable({}, {
     __index = function(_, k)
-      return make_option(k, a.nvim_get_option_value(k, {}))
+      return make_option(k, api.nvim_get_option_value(k, {}))
     end,
 
     __newindex = function(_, k, v)

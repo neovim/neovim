@@ -1,4 +1,4 @@
-local a = vim.api
+local api = vim.api
 local query = vim.treesitter.query
 
 ---@alias TSHlIter fun(): integer, TSNode, TSMetadata
@@ -25,7 +25,7 @@ TSHighlighter.active = TSHighlighter.active or {}
 local TSHighlighterQuery = {}
 TSHighlighterQuery.__index = TSHighlighterQuery
 
-local ns = a.nvim_create_namespace('treesitter/highlighter')
+local ns = api.nvim_create_namespace('treesitter/highlighter')
 
 ---@private
 function TSHighlighterQuery.new(lang, query_string)
@@ -36,7 +36,7 @@ function TSHighlighterQuery.new(lang, query_string)
       local name = self._query.captures[capture]
       local id = 0
       if not vim.startswith(name, '_') then
-        id = a.nvim_get_hl_id_by_name('@' .. name .. '.' .. lang)
+        id = api.nvim_get_hl_id_by_name('@' .. name .. '.' .. lang)
       end
 
       rawset(table, capture, id)
@@ -121,7 +121,7 @@ function TSHighlighter.new(tree, opts)
     vim.cmd.runtime({ 'syntax/synload.vim', bang = true })
   end
 
-  a.nvim_buf_call(self.bufnr, function()
+  api.nvim_buf_call(self.bufnr, function()
     vim.opt_local.spelloptions:append('noplainbuffer')
   end)
 
@@ -140,7 +140,7 @@ function TSHighlighter:destroy()
     vim.bo[self.bufnr].spelloptions = self.orig_spelloptions
     vim.b[self.bufnr].ts_highlight = nil
     if vim.g.syntax_on == 1 then
-      a.nvim_exec_autocmds('FileType', { group = 'syntaxset', buffer = self.bufnr })
+      api.nvim_exec_autocmds('FileType', { group = 'syntaxset', buffer = self.bufnr })
     end
   end
 end
@@ -168,7 +168,7 @@ end
 ---@param start_row integer
 ---@param new_end integer
 function TSHighlighter:on_bytes(_, _, start_row, _, _, _, _, _, new_end)
-  a.nvim__buf_redraw_range(self.bufnr, start_row, start_row + new_end + 1)
+  api.nvim__buf_redraw_range(self.bufnr, start_row, start_row + new_end + 1)
 end
 
 ---@package
@@ -180,7 +180,7 @@ end
 ---@param changes integer[][]?
 function TSHighlighter:on_changedtree(changes)
   for _, ch in ipairs(changes or {}) do
-    a.nvim__buf_redraw_range(self.bufnr, ch[1], ch[3] + 1)
+    api.nvim__buf_redraw_range(self.bufnr, ch[1], ch[3] + 1)
   end
 end
 
@@ -252,7 +252,7 @@ local function on_line_impl(self, buf, line, is_spell_nav)
       local spell_pri_offset = capture_name == 'nospell' and 1 or 0
 
       if hl and end_row >= line and (not is_spell_nav or spell ~= nil) then
-        a.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
+        api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
           end_line = end_row,
           end_col = end_col,
           hl_group = hl,
@@ -323,7 +323,7 @@ function TSHighlighter._on_win(_, _win, buf, _topline)
   return true
 end
 
-a.nvim_set_decoration_provider(ns, {
+api.nvim_set_decoration_provider(ns, {
   on_buf = TSHighlighter._on_buf,
   on_win = TSHighlighter._on_win,
   on_line = TSHighlighter._on_line,

@@ -32,7 +32,7 @@
 --- a plugin that does any kind of analysis on a tree should use a timer to throttle too frequent
 --- updates.
 
-local a = vim.api
+local api = vim.api
 local query = require('vim.treesitter.query')
 local language = require('vim.treesitter.language')
 local Range = require('vim.treesitter._range')
@@ -141,16 +141,16 @@ function LanguageTree:_log(...)
   local prefix =
     string.format('%s:%d: [%s:%d] ', info.name, info.currentline, self:lang(), nregions)
 
-  a.nvim_out_write(prefix)
+  api.nvim_out_write(prefix)
   for _, x in ipairs(args) do
     if type(x) == 'string' then
-      a.nvim_out_write(x)
+      api.nvim_out_write(x)
     else
-      a.nvim_out_write(vim.inspect(x, { newline = ' ', indent = '' }))
+      api.nvim_out_write(vim.inspect(x, { newline = ' ', indent = '' }))
     end
-    a.nvim_out_write(' ')
+    api.nvim_out_write(' ')
   end
-  a.nvim_out_write('\n')
+  api.nvim_out_write('\n')
 end
 
 --- Invalidates this parser and all its children
