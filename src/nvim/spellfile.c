@@ -322,11 +322,11 @@ enum {
   CF_UPPER = 0x02,
 };
 
-static char *e_spell_trunc = N_("E758: Truncated spell file");
-static char *e_illegal_character_in_word = N_("E1280: Illegal character in word");
-static char *e_afftrailing = N_("Trailing text in %s line %d: %s");
-static char *e_affname = N_("Affix name too long in %s line %d: %s");
-static char *msg_compressing = N_("Compressing word tree...");
+static const char *e_spell_trunc = N_("E758: Truncated spell file");
+static const char *e_illegal_character_in_word = N_("E1280: Illegal character in word");
+static const char *e_afftrailing = N_("Trailing text in %s line %d: %s");
+static const char *e_affname = N_("Affix name too long in %s line %d: %s");
+static const char *msg_compressing = N_("Compressing word tree...");
 
 #define MAXLINELEN  500         // Maximum length in bytes of a line in a .aff
                                 // and .dic file.

@@ -145,10 +145,10 @@ PRAGMA_DIAG_POP
 PRAGMA_DIAG_POP
 #endif
 
-static char *e_listblobarg = N_("E899: Argument of %s must be a List or Blob");
-static char *e_invalwindow = N_("E957: Invalid window number");
-static char *e_reduceempty = N_("E998: Reduce of an empty %s with no initial value");
-static char e_using_number_as_bool_nr[]
+static const char *e_listblobarg = N_("E899: Argument of %s must be a List or Blob");
+static const char *e_invalwindow = N_("E957: Invalid window number");
+static const char *e_reduceempty = N_("E998: Reduce of an empty %s with no initial value");
+static const char e_using_number_as_bool_nr[]
   = N_("E1023: Using a Number as a Bool: %d");
 
 /// Dummy va_list for passing to vim_snprintf
@@ -7557,7 +7557,7 @@ free_lstval:
 /// "settagstack()" function
 static void f_settagstack(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  static char *e_invact2 = N_("E962: Invalid action: '%s'");
+  static const char *e_invact2 = N_("E962: Invalid action: '%s'");
   char action = 'r';
 
   rettv->vval.v_number = -1;

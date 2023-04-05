@@ -34,13 +34,13 @@
 # include "testing.c.generated.h"
 #endif
 
-static char e_assert_fails_second_arg[]
+static const char e_assert_fails_second_arg[]
   = N_("E856: assert_fails() second argument must be a string or a list with one or two strings");
-static char e_assert_fails_fourth_argument[]
+static const char e_assert_fails_fourth_argument[]
   = N_("E1115: assert_fails() fourth argument must be a number");
-static char e_assert_fails_fifth_argument[]
+static const char e_assert_fails_fifth_argument[]
   = N_("E1116: assert_fails() fifth argument must be a string");
-static char e_calling_test_garbagecollect_now_while_v_testing_is_not_set[]
+static const char e_calling_test_garbagecollect_now_while_v_testing_is_not_set[]
   = N_("E1142: Calling test_garbagecollect_now() while v:testing is not set");
 
 /// Prepare "gap" for an assert error and add the sourcing position.
@@ -507,7 +507,7 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   garray_T ga;
   int save_trylevel = trylevel;
   const int called_emsg_before = called_emsg;
-  char *wrong_arg_msg = NULL;
+  const char *wrong_arg_msg = NULL;
 
   // trylevel must be zero for a ":throw" command to be considered failed
   trylevel = 0;

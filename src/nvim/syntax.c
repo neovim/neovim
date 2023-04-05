@@ -58,7 +58,7 @@ static bool did_syntax_onoff = false;
 #define SPO_LC_OFF      6       // leading context offset
 #define SPO_COUNT       7
 
-static char e_illegal_arg[] = N_("E390: Illegal argument: %s");
+static const char e_illegal_arg[] = N_("E390: Illegal argument: %s");
 
 // The patterns that are being searched for are stored in a syn_pattern.
 // A match item consists of one pattern.

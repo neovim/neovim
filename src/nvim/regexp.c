@@ -104,24 +104,24 @@ static int toggle_Magic(int x)
 
 #define MAX_LIMIT       (32767L << 16L)
 
-static char e_missingbracket[] = N_("E769: Missing ] after %s[");
-static char e_reverse_range[] = N_("E944: Reverse range in character class");
-static char e_large_class[] = N_("E945: Range too large in character class");
-static char e_unmatchedpp[] = N_("E53: Unmatched %s%%(");
-static char e_unmatchedp[] = N_("E54: Unmatched %s(");
-static char e_unmatchedpar[] = N_("E55: Unmatched %s)");
-static char e_z_not_allowed[] = N_("E66: \\z( not allowed here");
-static char e_z1_not_allowed[] = N_("E67: \\z1 - \\z9 not allowed here");
-static char e_missing_sb[] = N_("E69: Missing ] after %s%%[");
-static char e_empty_sb[] = N_("E70: Empty %s%%[]");
-static char e_recursive[] = N_("E956: Cannot use pattern recursively");
-static char e_regexp_number_after_dot_pos_search_chr[]
+static const char e_missingbracket[] = N_("E769: Missing ] after %s[");
+static const char e_reverse_range[] = N_("E944: Reverse range in character class");
+static const char e_large_class[] = N_("E945: Range too large in character class");
+static const char e_unmatchedpp[] = N_("E53: Unmatched %s%%(");
+static const char e_unmatchedp[] = N_("E54: Unmatched %s(");
+static const char e_unmatchedpar[] = N_("E55: Unmatched %s)");
+static const char e_z_not_allowed[] = N_("E66: \\z( not allowed here");
+static const char e_z1_not_allowed[] = N_("E67: \\z1 - \\z9 not allowed here");
+static const char e_missing_sb[] = N_("E69: Missing ] after %s%%[");
+static const char e_empty_sb[] = N_("E70: Empty %s%%[]");
+static const char e_recursive[] = N_("E956: Cannot use pattern recursively");
+static const char e_regexp_number_after_dot_pos_search_chr[]
   = N_("E1204: No Number allowed after .: '\\%%%c'");
-static char e_nfa_regexp_missing_value_in_chr[]
+static const char e_nfa_regexp_missing_value_in_chr[]
   = N_("E1273: (NFA regexp) missing value in '\\%%%c'");
-static char e_atom_engine_must_be_at_start_of_pattern[]
+static const char e_atom_engine_must_be_at_start_of_pattern[]
   = N_("E1281: Atom '\\%%#=%c' must be at the start of the pattern");
-static char e_substitute_nesting_too_deep[] = N_("E1290: substitute nesting too deep");
+static const char e_substitute_nesting_too_deep[] = N_("E1290: substitute nesting too deep");
 
 #define NOT_MULTI       0
 #define MULTI_ONE       1

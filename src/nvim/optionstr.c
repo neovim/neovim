@@ -59,13 +59,13 @@
 # include "optionstr.c.generated.h"
 #endif
 
-static char e_unclosed_expression_sequence[]
+static const char e_unclosed_expression_sequence[]
   = N_("E540: Unclosed expression sequence");
-static char e_unbalanced_groups[]
+static const char e_unbalanced_groups[]
   = N_("E542: unbalanced groups");
-static char e_backupext_and_patchmode_are_equal[]
+static const char e_backupext_and_patchmode_are_equal[]
   = N_("E589: 'backupext' and 'patchmode' are equal");
-static char e_showbreak_contains_unprintable_or_wide_character[]
+static const char e_showbreak_contains_unprintable_or_wide_character[]
   = N_("E595: 'showbreak' contains unprintable or wide character");
 
 static char *(p_ambw_values[]) = { "single", "double", NULL };
@@ -410,8 +410,8 @@ void set_string_option_direct_in_win(win_T *wp, const char *name, int opt_idx, c
 ///                        #OPT_GLOBAL.
 ///
 /// @return NULL on success, an untranslated error message on error.
-char *set_string_option(const int opt_idx, const char *const value, const int opt_flags,
-                        char *const errbuf, const size_t errbuflen)
+const char *set_string_option(const int opt_idx, const char *const value, const int opt_flags,
+                              char *const errbuf, const size_t errbuflen)
   FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   vimoption_T *opt = get_option(opt_idx);
@@ -442,9 +442,8 @@ char *set_string_option(const int opt_idx, const char *const value, const int op
   char *const saved_newval = xstrdup(s);
 
   int value_checked = false;
-  char *const errmsg = did_set_string_option(opt_idx, varp, oldval,
-                                             errbuf, errbuflen,
-                                             opt_flags, &value_checked);
+  const char *const errmsg = did_set_string_option(opt_idx, varp, oldval, errbuf, errbuflen,
+                                                   opt_flags, &value_checked);
   if (errmsg == NULL) {
     did_set_option(opt_idx, opt_flags, true, value_checked);
   }
@@ -478,7 +477,7 @@ static bool valid_filetype(const char *val)
 
 /// Handle setting 'mousescroll'.
 /// @return error message, NULL if it's OK.
-static char *check_mousescroll(char *string)
+static const char *check_mousescroll(char *string)
 {
   long vertical = -1;
   long horizontal = -1;
@@ -571,7 +570,7 @@ static int check_signcolumn(char *val)
 
 /// Check validity of options with the 'statusline' format.
 /// Return an untranslated error message or NULL.
-char *check_stl_option(char *s)
+const char *check_stl_option(char *s)
 {
   int groupdepth = 0;
   static char errbuf[80];
@@ -650,7 +649,7 @@ static bool check_illegal_path_names(char *val, uint32_t flags)
               && strpbrk(val, "*?[|;&<>\r\n") != NULL));
 }
 
-static void did_set_backupcopy(buf_T *buf, char *oldval, int opt_flags, char **errmsg)
+static void did_set_backupcopy(buf_T *buf, char *oldval, int opt_flags, const char **errmsg)
 {
   char *bkc = p_bkc;
   unsigned int *flags = &bkc_flags;
@@ -678,7 +677,7 @@ static void did_set_backupcopy(buf_T *buf, char *oldval, int opt_flags, char **e
   }
 }
 
-static void did_set_backupext_or_patchmode(char **errmsg)
+static void did_set_backupext_or_patchmode(const char **errmsg)
 {
   if (strcmp(*p_bex == '.' ? p_bex + 1 : p_bex,
              *p_pm == '.' ? p_pm + 1 : p_pm) == 0) {
@@ -686,7 +685,7 @@ static void did_set_backupext_or_patchmode(char **errmsg)
   }
 }
 
-static void did_set_breakindentopt(win_T *win, char **errmsg)
+static void did_set_breakindentopt(win_T *win, const char **errmsg)
 {
   if (briopt_check(win) == FAIL) {
     *errmsg = e_invarg;
@@ -697,7 +696,7 @@ static void did_set_breakindentopt(win_T *win, char **errmsg)
   }
 }
 
-static void did_set_isopt(buf_T *buf, bool *did_chartab, char **errmsg)
+static void did_set_isopt(buf_T *buf, bool *did_chartab, const char **errmsg)
 {
   // 'isident', 'iskeyword', 'isprint or 'isfname' option: refill g_chartab[]
   // If the new option is invalid, use old value.
@@ -719,14 +718,14 @@ static void did_set_helpfile(void)
   }
 }
 
-static void did_set_cursorlineopt(win_T *win, char **varp, char **errmsg)
+static void did_set_cursorlineopt(win_T *win, char **varp, const char **errmsg)
 {
   if (**varp == NUL || fill_culopt_flags(*varp, win) != OK) {
     *errmsg = e_invarg;
   }
 }
 
-static void did_set_helplang(char **errmsg)
+static void did_set_helplang(const char **errmsg)
 {
   // Check for "", "ab", "ab,cd", etc.
   for (char *s = p_hlg; *s != NUL; s += 3) {
@@ -740,26 +739,27 @@ static void did_set_helplang(char **errmsg)
   }
 }
 
-static void did_set_highlight(char **varp, char **errmsg)
+static void did_set_highlight(char **varp, const char **errmsg)
 {
   if (strcmp(*varp, HIGHLIGHT_INIT) != 0) {
     *errmsg = e_unsupportedoption;
   }
 }
 
-static void did_set_opt_flags(char *val, char **values, unsigned *flagp, bool list, char **errmsg)
+static void did_set_opt_flags(char *val, char **values, unsigned *flagp, bool list,
+                              const char **errmsg)
 {
   if (opt_strings_flags(val, values, flagp, list) != OK) {
     *errmsg = e_invarg;
   }
 }
 
-static void did_set_opt_strings(char *val, char **values, bool list, char **errmsg)
+static void did_set_opt_strings(char *val, char **values, bool list, const char **errmsg)
 {
   did_set_opt_flags(val, values, NULL, list, errmsg);
 }
 
-static void did_set_sessionoptions(char *oldval, char **errmsg)
+static void did_set_sessionoptions(char *oldval, const char **errmsg)
 {
   if (opt_strings_flags(p_ssop, p_ssop_values, &ssop_flags, true) != OK) {
     *errmsg = e_invarg;
@@ -771,7 +771,7 @@ static void did_set_sessionoptions(char *oldval, char **errmsg)
   }
 }
 
-static void did_set_ambiwidth(char **errmsg)
+static void did_set_ambiwidth(const char **errmsg)
 {
   if (check_opt_strings(p_ambw, p_ambw_values, false) != OK) {
     *errmsg = e_invarg;
@@ -780,7 +780,7 @@ static void did_set_ambiwidth(char **errmsg)
   }
 }
 
-static void did_set_background(char **errmsg)
+static void did_set_background(const char **errmsg)
 {
   if (check_opt_strings(p_bg, p_bg_values, false) != OK) {
     *errmsg = e_invarg;
@@ -803,21 +803,21 @@ static void did_set_background(char **errmsg)
   }
 }
 
-static void did_set_wildmode(char **errmsg)
+static void did_set_wildmode(const char **errmsg)
 {
   if (check_opt_wim() == FAIL) {
     *errmsg = e_invarg;
   }
 }
 
-static void did_set_winaltkeys(char **errmsg)
+static void did_set_winaltkeys(const char **errmsg)
 {
   if (*p_wak == NUL || check_opt_strings(p_wak, p_wak_values, false) != OK) {
     *errmsg = e_invarg;
   }
 }
 
-static void did_set_eventignore(char **errmsg)
+static void did_set_eventignore(const char **errmsg)
 {
   if (check_ei() == FAIL) {
     *errmsg = e_invarg;
@@ -825,7 +825,8 @@ static void did_set_eventignore(char **errmsg)
 }
 
 // 'encoding', 'fileencoding' and 'makeencoding'
-static void did_set_encoding(buf_T *buf, char **varp, char **gvarp, int opt_flags, char **errmsg)
+static void did_set_encoding(buf_T *buf, char **varp, char **gvarp, int opt_flags,
+                             const char **errmsg)
 {
   if (gvarp == &p_fenc) {
     if (!MODIFIABLE(buf) && opt_flags != OPT_GLOBAL) {
@@ -861,7 +862,7 @@ static void did_set_encoding(buf_T *buf, char **varp, char **gvarp, int opt_flag
 }
 
 static void did_set_keymap(buf_T *buf, char **varp, int opt_flags, int *value_checked,
-                           char **errmsg)
+                           const char **errmsg)
 {
   if (!valid_filetype(*varp)) {
     *errmsg = e_invarg;
@@ -908,7 +909,7 @@ static void did_set_keymap(buf_T *buf, char **varp, int opt_flags, int *value_ch
 }
 
 static void did_set_fileformat(buf_T *buf, char **varp, const char *oldval, int opt_flags,
-                               char **errmsg)
+                               const char **errmsg)
 {
   if (!MODIFIABLE(buf) && !(opt_flags & OPT_GLOBAL)) {
     *errmsg = e_modifiable;
@@ -926,7 +927,7 @@ static void did_set_fileformat(buf_T *buf, char **varp, const char *oldval, int 
   }
 }
 
-static void did_set_matchpairs(char **varp, char **errmsg)
+static void did_set_matchpairs(char **varp, const char **errmsg)
 {
   for (char *p = *varp; *p != NUL; p++) {
     int x2 = -1;
@@ -950,7 +951,7 @@ static void did_set_matchpairs(char **varp, char **errmsg)
   }
 }
 
-static void did_set_comments(char **varp, char *errbuf, size_t errbuflen, char **errmsg)
+static void did_set_comments(char **varp, char *errbuf, size_t errbuflen, const char **errmsg)
 {
   for (char *s = *varp; *s;) {
     while (*s && *s != ':') {
@@ -979,7 +980,8 @@ static void did_set_comments(char **varp, char *errbuf, size_t errbuflen, char *
   }
 }
 
-static void did_set_global_listfillchars(win_T *win, char **varp, int opt_flags, char **errmsg)
+static void did_set_global_listfillchars(win_T *win, char **varp, int opt_flags,
+                                         const char **errmsg)
 {
   char **local_ptr = varp == &p_lcs ? &win->w_p_lcs : &win->w_p_fcs;
   // only apply the global value to "win" when it does not have a local value
@@ -1004,7 +1006,7 @@ static void did_set_global_listfillchars(win_T *win, char **varp, int opt_flags,
   }
 }
 
-static void did_set_verbosefile(char **errmsg)
+static void did_set_verbosefile(const char **errmsg)
 {
   verbose_stop();
   if (*p_vfile != NUL && verbose_open() == FAIL) {
@@ -1015,7 +1017,7 @@ static void did_set_verbosefile(char **errmsg)
 static int shada_idx = -1;
 
 static void did_set_shada(vimoption_T **opt, int *opt_idx, bool *free_oldval, char *errbuf,
-                          size_t errbuflen, char **errmsg)
+                          size_t errbuflen, const char **errmsg)
 {
   // TODO(ZyX-I): Remove this code in the future, alongside with &viminfo
   //              option.
@@ -1073,7 +1075,7 @@ static void did_set_shada(vimoption_T **opt, int *opt_idx, bool *free_oldval, ch
   }
 }
 
-static void did_set_showbreak(char **varp, char **errmsg)
+static void did_set_showbreak(char **varp, const char **errmsg)
 {
   for (char *s = *varp; *s;) {
     if (ptr2cells(s) != 1) {
@@ -1097,14 +1099,14 @@ static void did_set_titleiconstring(char **varp)
   did_set_title();
 }
 
-static void did_set_selection(char **errmsg)
+static void did_set_selection(const char **errmsg)
 {
   if (*p_sel == NUL || check_opt_strings(p_sel, p_sel_values, false) != OK) {
     *errmsg = e_invarg;
   }
 }
 
-static void did_set_keymodel(char **errmsg)
+static void did_set_keymodel(const char **errmsg)
 {
   if (check_opt_strings(p_km, p_km_values, true) != OK) {
     *errmsg = e_invarg;
@@ -1114,7 +1116,7 @@ static void did_set_keymodel(char **errmsg)
   km_startsel = (vim_strchr(p_km, 'a') != NULL);
 }
 
-static void did_set_display(char **errmsg)
+static void did_set_display(const char **errmsg)
 {
   if (opt_strings_flags(p_dy, p_dy_values, &dy_flags, true) != OK) {
     *errmsg = e_invarg;
@@ -1124,7 +1126,7 @@ static void did_set_display(char **errmsg)
   msg_grid_validate();
 }
 
-static void did_set_spellfile(char **varp, char **errmsg)
+static void did_set_spellfile(char **varp, const char **errmsg)
 {
   // When there is a window for this buffer in which 'spell'
   // is set load the wordlists.
@@ -1136,7 +1138,7 @@ static void did_set_spellfile(char **varp, char **errmsg)
   }
 }
 
-static void did_set_spell(char **varp, char **errmsg)
+static void did_set_spell(char **varp, const char **errmsg)
 {
   // When there is a window for this buffer in which 'spell'
   // is set load the wordlists.
@@ -1147,13 +1149,13 @@ static void did_set_spell(char **varp, char **errmsg)
   }
 }
 
-static void did_set_spellcapcheck(win_T *win, char **errmsg)
+static void did_set_spellcapcheck(win_T *win, const char **errmsg)
 {
   // When 'spellcapcheck' is set compile the regexp program.
   *errmsg = compile_cap_prog(win->w_s);
 }
 
-static void did_set_spelloptions(win_T *win, char **errmsg)
+static void did_set_spelloptions(win_T *win, const char **errmsg)
 {
   if (opt_strings_flags(win->w_s->b_p_spo, p_spo_values, &(win->w_s->b_p_spo_flags),
                         true) != OK) {
@@ -1161,21 +1163,21 @@ static void did_set_spelloptions(win_T *win, char **errmsg)
   }
 }
 
-static void did_set_spellsuggest(char **errmsg)
+static void did_set_spellsuggest(const char **errmsg)
 {
   if (spell_check_sps() != OK) {
     *errmsg = e_invarg;
   }
 }
 
-static void did_set_mkspellmem(char **errmsg)
+static void did_set_mkspellmem(const char **errmsg)
 {
   if (spell_check_msm() != OK) {
     *errmsg = e_invarg;
   }
 }
 
-static void did_set_buftype(buf_T *buf, win_T *win, char **errmsg)
+static void did_set_buftype(buf_T *buf, win_T *win, const char **errmsg)
 {
   // When 'buftype' is set, check for valid value.
   if ((buf->terminal && buf->b_p_bt[0] != 't')
@@ -1193,7 +1195,7 @@ static void did_set_buftype(buf_T *buf, win_T *win, char **errmsg)
 }
 
 // 'statusline', 'winbar', 'tabline', 'rulerformat' or 'statuscolumn'
-static void did_set_statusline(win_T *win, char **varp, char **gvarp, char **errmsg)
+static void did_set_statusline(win_T *win, char **varp, char **gvarp, const char **errmsg)
 {
   if (varp == &p_ruf) {       // reset ru_wid first
     ru_wid = 0;
@@ -1227,7 +1229,7 @@ static void did_set_statusline(win_T *win, char **varp, char **gvarp, char **err
   }
 }
 
-static void did_set_complete(char **varp, char *errbuf, size_t errbuflen, char **errmsg)
+static void did_set_complete(char **varp, char *errbuf, size_t errbuflen, const char **errmsg)
 {
   // check if it is a valid value for 'complete' -- Acevedo
   for (char *s = *varp; *s;) {
@@ -1265,7 +1267,7 @@ static void did_set_complete(char **varp, char *errbuf, size_t errbuflen, char *
   }
 }
 
-static void did_set_completeopt(char **errmsg)
+static void did_set_completeopt(const char **errmsg)
 {
   if (check_opt_strings(p_cot, p_cot_values, true) != OK) {
     *errmsg = e_invarg;
@@ -1275,7 +1277,7 @@ static void did_set_completeopt(char **errmsg)
 }
 
 #ifdef BACKSLASH_IN_FILENAME
-static void did_set_completeslash(buf_T *buf, char **errmsg)
+static void did_set_completeslash(buf_T *buf, const char **errmsg)
 {
   if (check_opt_strings(p_csl, p_csl_values, false) != OK
       || check_opt_strings(buf->b_p_csl, p_csl_values, false) != OK) {
@@ -1284,7 +1286,7 @@ static void did_set_completeslash(buf_T *buf, char **errmsg)
 }
 #endif
 
-static void did_set_signcolumn(win_T *win, char **varp, const char *oldval, char **errmsg)
+static void did_set_signcolumn(win_T *win, char **varp, const char *oldval, const char **errmsg)
 {
   if (check_signcolumn(*varp) != OK) {
     *errmsg = e_invarg;
@@ -1298,14 +1300,14 @@ static void did_set_signcolumn(win_T *win, char **varp, const char *oldval, char
   }
 }
 
-static void did_set_foldcolumn(char **varp, char **errmsg)
+static void did_set_foldcolumn(char **varp, const char **errmsg)
 {
   if (**varp == NUL || check_opt_strings(*varp, p_fdc_values, false) != OK) {
     *errmsg = e_invarg;
   }
 }
 
-static void did_set_backspace(char **errmsg)
+static void did_set_backspace(const char **errmsg)
 {
   if (ascii_isdigit(*p_bs)) {
     if (*p_bs > '3' || p_bs[1] != NUL) {
@@ -1316,7 +1318,7 @@ static void did_set_backspace(char **errmsg)
   }
 }
 
-static void did_set_tagcase(buf_T *buf, int opt_flags, char **errmsg)
+static void did_set_tagcase(buf_T *buf, int opt_flags, const char **errmsg)
 {
   unsigned int *flags;
   char *p;
@@ -1338,14 +1340,14 @@ static void did_set_tagcase(buf_T *buf, int opt_flags, char **errmsg)
   }
 }
 
-static void did_set_diffopt(char **errmsg)
+static void did_set_diffopt(const char **errmsg)
 {
   if (diffopt_changed() == FAIL) {
     *errmsg = e_invarg;
   }
 }
 
-static void did_set_foldmethod(win_T *win, char **varp, char **errmsg)
+static void did_set_foldmethod(win_T *win, char **varp, const char **errmsg)
 {
   if (check_opt_strings(*varp, p_fdm_values, false) != OK
       || *win->w_p_fdm == NUL) {
@@ -1358,7 +1360,7 @@ static void did_set_foldmethod(win_T *win, char **varp, char **errmsg)
   }
 }
 
-static void did_set_foldmarker(win_T *win, char **varp, char **errmsg)
+static void did_set_foldmarker(win_T *win, char **varp, const char **errmsg)
 {
   char *p = vim_strchr(*varp, ',');
   if (p == NULL) {
@@ -1370,7 +1372,7 @@ static void did_set_foldmarker(win_T *win, char **varp, char **errmsg)
   }
 }
 
-static void did_set_commentstring(char **varp, char **errmsg)
+static void did_set_commentstring(char **varp, const char **errmsg)
 {
   if (**varp != NUL && strstr(*varp, "%s") == NULL) {
     *errmsg = N_("E537: 'commentstring' must be empty or contain %s");
@@ -1384,7 +1386,7 @@ static void did_set_foldignore(win_T *win)
   }
 }
 
-static void did_set_virtualedit(win_T *win, int opt_flags, char *oldval, char **errmsg)
+static void did_set_virtualedit(win_T *win, int opt_flags, char *oldval, const char **errmsg)
 {
   char *ve = p_ve;
   unsigned int *flags = &ve_flags;
@@ -1410,7 +1412,7 @@ static void did_set_virtualedit(win_T *win, int opt_flags, char *oldval, char **
   }
 }
 
-static void did_set_lispoptions(char **varp, char **errmsg)
+static void did_set_lispoptions(char **varp, const char **errmsg)
 {
   if (**varp != NUL && strcmp(*varp, "expr:0") != 0 && strcmp(*varp, "expr:1") != 0) {
     *errmsg = e_invarg;
@@ -1418,7 +1420,7 @@ static void did_set_lispoptions(char **varp, char **errmsg)
 }
 
 static void did_set_filetype_or_syntax(char **varp, char *oldval, int *value_checked,
-                                       bool *value_changed, char **errmsg)
+                                       bool *value_changed, const char **errmsg)
 {
   if (!valid_filetype(*varp)) {
     *errmsg = e_invarg;
@@ -1432,14 +1434,14 @@ static void did_set_filetype_or_syntax(char **varp, char *oldval, int *value_che
   *value_checked = true;
 }
 
-static void did_set_winhl(win_T *win, char **errmsg)
+static void did_set_winhl(win_T *win, const char **errmsg)
 {
   if (!parse_winhl_opt(win)) {
     *errmsg = e_invarg;
   }
 }
 
-static void did_set_varsoftabstop(buf_T *buf, char **varp, char **errmsg)
+static void did_set_varsoftabstop(buf_T *buf, char **varp, const char **errmsg)
 {
   if (!(*varp)[0] || ((*varp)[0] == '0' && !(*varp)[1])) {
     XFREE_CLEAR(buf->b_p_vsts_array);
@@ -1465,7 +1467,7 @@ static void did_set_varsoftabstop(buf_T *buf, char **varp, char **errmsg)
   }
 }
 
-static void did_set_vartabstop(buf_T *buf, win_T *win, char **varp, char **errmsg)
+static void did_set_vartabstop(buf_T *buf, win_T *win, char **varp, const char **errmsg)
 {
   if (!(*varp)[0] || ((*varp)[0] == '0' && !(*varp)[1])) {
     XFREE_CLEAR(buf->b_p_vts_array);
@@ -1505,7 +1507,7 @@ static void did_set_optexpr(char **varp)
 
 // handle option that is a list of flags.
 static void did_set_option_listflag(char **varp, char *flags, char *errbuf, size_t errbuflen,
-                                    char **errmsg)
+                                    const char **errmsg)
 {
   for (char *s = *varp; *s; s++) {
     if (vim_strchr(flags, (uint8_t)(*s)) == NULL) {
@@ -1569,11 +1571,11 @@ static void do_spelllang_source(win_T *win)
 /// @param value_checked  value was checked to be safe, no need to set P_INSECURE
 ///
 /// @return  NULL for success, or an untranslated error message for an error
-static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char **varp,
-                                       char *oldval, char *errbuf, size_t errbuflen, int opt_flags,
-                                       int *value_checked)
+static const char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char **varp,
+                                             char *oldval, char *errbuf, size_t errbuflen,
+                                             int opt_flags, int *value_checked)
 {
-  char *errmsg = NULL;
+  const char *errmsg = NULL;
   bool did_chartab = false;
   vimoption_T *opt = get_option(opt_idx);
   bool free_oldval = (opt->flags & P_ALLOCED);
@@ -1881,8 +1883,8 @@ static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char
   return errmsg;
 }
 
-char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf, size_t errbuflen,
-                            int opt_flags, int *value_checked)
+const char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf,
+                                  size_t errbuflen, int opt_flags, int *value_checked)
 {
   return did_set_string_option_for(curbuf, curwin, opt_idx, varp, oldval, errbuf, errbuflen,
                                    opt_flags, value_checked);
@@ -1939,8 +1941,10 @@ int check_ff_value(char *p)
   return check_opt_strings(p, p_ff_values, false);
 }
 
-static char e_conflicts_with_value_of_listchars[] = N_("E834: Conflicts with value of 'listchars'");
-static char e_conflicts_with_value_of_fillchars[] = N_("E835: Conflicts with value of 'fillchars'");
+static const char e_conflicts_with_value_of_listchars[]
+  = N_("E834: Conflicts with value of 'listchars'");
+static const char e_conflicts_with_value_of_fillchars[]
+  = N_("E835: Conflicts with value of 'fillchars'");
 
 /// Calls mb_cptr2char_adv(p) and returns the character.
 /// If "p" starts with "\x", "\u" or "\U" the hex or unicode value is used.
@@ -1978,7 +1982,7 @@ static int get_encoded_char_adv(const char **p)
 /// @param varp   either the global or the window-local value.
 /// @param apply  if false, do not store the flags, only check for errors.
 /// @return error message, NULL if it's OK.
-char *set_chars_option(win_T *wp, char **varp, bool apply)
+const char *set_chars_option(win_T *wp, char **varp, bool apply)
 {
   const char *last_multispace = NULL;   // Last occurrence of "multispace:"
   const char *last_lmultispace = NULL;  // Last occurrence of "leadmultispace:"
@@ -2202,7 +2206,7 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
 /// May set different defaults in case character widths change.
 ///
 /// @return  an untranslated error message if any of them is invalid, NULL otherwise.
-char *check_chars_options(void)
+const char *check_chars_options(void)
 {
   if (set_chars_option(curwin, &p_lcs, false) != NULL) {
     return e_conflicts_with_value_of_listchars;

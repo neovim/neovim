@@ -244,10 +244,10 @@ typedef struct vgr_args_S {
 # include "quickfix.c.generated.h"
 #endif
 
-static char *e_no_more_items = N_("E553: No more items");
-static char *e_current_quickfix_list_was_changed =
+static const char *e_no_more_items = N_("E553: No more items");
+static const char *e_current_quickfix_list_was_changed =
   N_("E925: Current quickfix list was changed");
-static char *e_current_location_list_was_changed =
+static const char *e_current_location_list_was_changed =
   N_("E926: Current location list was changed");
 
 // Quickfix window check helper macro
@@ -2385,7 +2385,7 @@ static qfline_T *get_nth_valid_entry(qf_list_T *qfl, int errornr, int dir, int *
 {
   qfline_T *qf_ptr = qfl->qf_ptr;
   int qf_idx = qfl->qf_index;
-  char *err = e_no_more_items;
+  const char *err = e_no_more_items;
 
   while (errornr--) {
     qfline_T *prev_qf_ptr = qf_ptr;
@@ -3885,7 +3885,7 @@ static buf_T *qf_find_buf(qf_info_T *qi)
 }
 
 /// Process the 'quickfixtextfunc' option value.
-void qf_process_qftf_option(char **errmsg)
+void qf_process_qftf_option(const char **errmsg)
 {
   if (option_set_callback_func(p_qftf, &qftf_cb) == FAIL) {
     *errmsg = e_invarg;
@@ -7304,7 +7304,7 @@ void f_getqflist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
   FUNC_ATTR_NONNULL_ARG(2, 3)
 {
-  static char *e_invact = N_("E927: Invalid action: '%s'");
+  static const char *e_invact = N_("E927: Invalid action: '%s'");
   const char *title = NULL;
   char action = ' ';
   static int recursive = 0;

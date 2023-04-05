@@ -559,7 +559,7 @@ static getoption_T access_option_value(char *key, long *numval, char **stringval
   if (get) {
     return get_option_value(key, numval, stringval, NULL, opt_flags);
   } else {
-    char *errmsg;
+    const char *errmsg;
     if ((errmsg = set_option_value(key, *numval, *stringval, opt_flags))) {
       if (try_end(err)) {
         return 0;

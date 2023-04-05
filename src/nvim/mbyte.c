@@ -87,17 +87,17 @@ struct interval {
 #endif
 // uncrustify:on
 
-static char e_list_item_nr_is_not_list[]
+static const char e_list_item_nr_is_not_list[]
   = N_("E1109: List item %d is not a List");
-static char e_list_item_nr_does_not_contain_3_numbers[]
+static const char e_list_item_nr_does_not_contain_3_numbers[]
   = N_("E1110: List item %d does not contain 3 numbers");
-static char e_list_item_nr_range_invalid[]
+static const char e_list_item_nr_range_invalid[]
   = N_("E1111: List item %d range invalid");
-static char e_list_item_nr_cell_width_invalid[]
+static const char e_list_item_nr_cell_width_invalid[]
   = N_("E1112: List item %d cell width invalid");
-static char e_overlapping_ranges_for_nr[]
+static const char e_overlapping_ranges_for_nr[]
   = N_("E1113: Overlapping ranges for 0x%lx");
-static char e_only_values_of_0x80_and_higher_supported[]
+static const char e_only_values_of_0x80_and_higher_supported[]
   = N_("E1114: Only values of 0x80 and higher supported");
 
 // To speed up BYTELEN(); keep a lookup table to quickly get the length in

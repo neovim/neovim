@@ -40,25 +40,25 @@
 # include "eval/typval.c.generated.h"
 #endif
 
-static char e_string_required_for_argument_nr[]
+static const char e_string_required_for_argument_nr[]
   = N_("E1174: String required for argument %d");
-static char e_non_empty_string_required_for_argument_nr[]
+static const char e_non_empty_string_required_for_argument_nr[]
   = N_("E1175: Non-empty string required for argument %d");
-static char e_dict_required_for_argument_nr[]
+static const char e_dict_required_for_argument_nr[]
   = N_("E1206: Dictionary required for argument %d");
-static char e_number_required_for_argument_nr[]
+static const char e_number_required_for_argument_nr[]
   = N_("E1210: Number required for argument %d");
-static char e_list_required_for_argument_nr[]
+static const char e_list_required_for_argument_nr[]
   = N_("E1211: List required for argument %d");
-static char e_string_or_list_required_for_argument_nr[]
+static const char e_string_or_list_required_for_argument_nr[]
   = N_("E1222: String or List required for argument %d");
-static char e_list_or_blob_required_for_argument_nr[]
+static const char e_list_or_blob_required_for_argument_nr[]
   = N_("E1226: List or Blob required for argument %d");
-static char e_blob_required_for_argument_nr[]
+static const char e_blob_required_for_argument_nr[]
   = N_("E1238: Blob required for argument %d");
-static char e_invalid_value_for_blob_nr[]
+static const char e_invalid_value_for_blob_nr[]
   = N_("E1239: Invalid value for blob: %d");
-static char e_string_or_function_required_for_argument_nr[]
+static const char e_string_or_function_required_for_argument_nr[]
   = N_("E1256: String or function required for argument %d");
 
 bool tv_in_free_unref_items = false;
@@ -2868,7 +2868,7 @@ void f_list2blob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     varnumber_T n = tv_get_number_chk(TV_LIST_ITEM_TV(li), &error);
     if (error || n < 0 || n > 255) {
       if (!error) {
-        semsg(_(e_invalid_value_for_blob_nr), n);
+        semsg(_(e_invalid_value_for_blob_nr), (int)n);
       }
       ga_clear(&blob->bv_ga);
       return;

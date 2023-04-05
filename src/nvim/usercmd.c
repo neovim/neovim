@@ -44,11 +44,11 @@
 
 garray_T ucmds = { 0, 0, sizeof(ucmd_T), 4, NULL };
 
-static char e_complete_used_without_allowing_arguments[]
+static const char e_complete_used_without_allowing_arguments[]
   = N_("E1208: -complete used without allowing arguments");
-static char e_no_such_user_defined_command_str[]
+static const char e_no_such_user_defined_command_str[]
   = N_("E184: No such user-defined command: %s");
-static char e_no_such_user_defined_command_in_current_buffer_str[]
+static const char e_no_such_user_defined_command_in_current_buffer_str[]
   = N_("E1237: No such user-defined command in current buffer: %s");
 
 /// List of names for completion for ":command" with the EXPAND_ flag.

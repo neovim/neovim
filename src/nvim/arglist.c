@@ -63,7 +63,7 @@ typedef struct {
 # include "arglist.c.generated.h"
 #endif
 
-static char e_cannot_change_arglist_recursively[]
+static const char e_cannot_change_arglist_recursively[]
   = N_("E1156: Cannot change the argument list recursively");
 
 enum {
