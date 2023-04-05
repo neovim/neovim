@@ -227,7 +227,7 @@ describe('health.vim', function()
         Bar = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGrey },
       })
       command("checkhealth foo success1")
-      command("set nowrap laststatus=0")
+      command("set nofoldenable nowrap laststatus=0")
       screen:expect{grid=[[
         ^                                                  |
         {Bar:──────────────────────────────────────────────────}|
