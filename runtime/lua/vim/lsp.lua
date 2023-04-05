@@ -1101,21 +1101,16 @@ function lsp.start_client(config)
       return true
     end
 
-    local last_set_from = vim.fn.gettext('\n\tLast set from ')
-    local line = vim.fn.gettext(' line ')
-    local scriptname
+    local info = vim.api.nvim_get_option_info2(option, { buf = bufnr })
+    local scriptinfo = vim.tbl_filter(function(e)
+      return e.sid == info.last_set_sid
+    end, vim.fn.getscriptinfo())
 
-    vim.api.nvim_buf_call(bufnr, function()
-      scriptname = vim.fn
-        .execute('verbose set ' .. option .. '?')
-        :match(last_set_from .. '(.*)' .. line .. '%d+')
-    end)
-
-    if not scriptname then
+    if #scriptinfo ~= 1 then
       return false
     end
 
-    return vim.startswith(vim.fn.expand(scriptname), vim.fn.expand('$VIMRUNTIME'))
+    return vim.startswith(scriptinfo[1].name, vim.fn.expand('$VIMRUNTIME'))
   end
 
   ---@private
