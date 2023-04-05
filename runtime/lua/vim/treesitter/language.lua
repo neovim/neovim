@@ -1,4 +1,4 @@
-local a = vim.api
+local api = vim.api
 
 ---@class TSLanguageModule
 local M = {}
@@ -89,7 +89,7 @@ function M.add(lang, opts)
     end
 
     local fname = 'parser/' .. lang .. '.*'
-    local paths = a.nvim_get_runtime_file(fname, false)
+    local paths = api.nvim_get_runtime_file(fname, false)
     if #paths == 0 then
       error("no parser for '" .. lang .. "' language, see :help treesitter-parsers")
     end

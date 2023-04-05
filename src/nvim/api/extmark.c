@@ -311,17 +311,17 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 ///
 /// Example:
 /// <pre>lua
-///   local a   = vim.api
-///   local pos = a.nvim_win_get_cursor(0)
-///   local ns  = a.nvim_create_namespace('my-plugin')
+///   local api = vim.api
+///   local pos = api.nvim_win_get_cursor(0)
+///   local ns  = api.nvim_create_namespace('my-plugin')
 ///   -- Create new extmark at line 1, column 1.
-///   local m1  = a.nvim_buf_set_extmark(0, ns, 0, 0, {})
+///   local m1  = api.nvim_buf_set_extmark(0, ns, 0, 0, {})
 ///   -- Create new extmark at line 3, column 1.
-///   local m2  = a.nvim_buf_set_extmark(0, ns, 2, 0, {})
+///   local m2  = api.nvim_buf_set_extmark(0, ns, 2, 0, {})
 ///   -- Get extmarks only from line 3.
-///   local ms  = a.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
+///   local ms  = api.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
 ///   -- Get all marks in this buffer + namespace.
-///   local all = a.nvim_buf_get_extmarks(0, ns, 0, -1, {})
+///   local all = api.nvim_buf_get_extmarks(0, ns, 0, -1, {})
 ///   print(vim.inspect(ms))
 /// </pre>
 ///

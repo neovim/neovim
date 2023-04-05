@@ -65,20 +65,20 @@ describe('float window', function()
   it('closed immediately by autocmd #11383', function()
     eq('Window was closed immediately',
       pcall_err(exec_lua, [[
-        local a = vim.api
+        local api = vim.api
         local function crashes(contents)
-          local buf = a.nvim_create_buf(false, true)
-          local floatwin = a.nvim_open_win(buf, true, {
+          local buf = api.nvim_create_buf(false, true)
+          local floatwin = api.nvim_open_win(buf, true, {
             relative = 'cursor';
             style = 'minimal';
             row = 0; col = 0;
             height = #contents;
             width = 10;
           })
-          a.nvim_buf_set_lines(buf, 0, -1, true, contents)
+          api.nvim_buf_set_lines(buf, 0, -1, true, contents)
           local winnr = vim.fn.win_id2win(floatwin)
-          a.nvim_command('wincmd p')
-          a.nvim_command('autocmd CursorMoved * ++once '..winnr..'wincmd c')
+          api.nvim_command('wincmd p')
+          api.nvim_command('autocmd CursorMoved * ++once '..winnr..'wincmd c')
           return buf, floatwin
         end
         crashes{'foo'}

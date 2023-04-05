@@ -1,4 +1,4 @@
-local a = vim.api
+local api = vim.api
 local LanguageTree = require('vim.treesitter.languagetree')
 local Range = require('vim.treesitter._range')
 
@@ -80,7 +80,7 @@ function M._create_parser(bufnr, lang, opts)
 
   local source = self:source() --[[@as integer]]
 
-  a.nvim_buf_attach(
+  api.nvim_buf_attach(
     source,
     false,
     { on_bytes = bytes_cb, on_detach = detach_cb, on_reload = reload_cb, preview = true }
@@ -109,7 +109,7 @@ function M.get_parser(bufnr, lang, opts)
   opts = opts or {}
 
   if bufnr == nil or bufnr == 0 then
-    bufnr = a.nvim_get_current_buf()
+    bufnr = api.nvim_get_current_buf()
   end
 
   if not valid_lang(lang) then
@@ -141,7 +141,7 @@ end
 ---@return boolean
 function M._has_parser(bufnr)
   if bufnr == nil or bufnr == 0 then
-    bufnr = a.nvim_get_current_buf()
+    bufnr = api.nvim_get_current_buf()
   end
   return parsers[bufnr] ~= nil
 end
@@ -229,7 +229,7 @@ local function buf_range_get_text(buf, range)
     end_col = -1
     end_row = end_row - 1
   end
-  local lines = a.nvim_buf_get_text(buf, start_row, start_col, end_row, end_col, {})
+  local lines = api.nvim_buf_get_text(buf, start_row, start_col, end_row, end_col, {})
   return table.concat(lines, '\n')
 end
 
@@ -294,7 +294,7 @@ end
 ---@return table[] List of captures `{ capture = "name", metadata = { ... } }`
 function M.get_captures_at_pos(bufnr, row, col)
   if bufnr == 0 then
-    bufnr = a.nvim_get_current_buf()
+    bufnr = api.nvim_get_current_buf()
   end
   local buf_highlighter = M.highlighter.active[bufnr]
 
@@ -345,8 +345,8 @@ end
 ---@return string[] List of capture names
 function M.get_captures_at_cursor(winnr)
   winnr = winnr or 0
-  local bufnr = a.nvim_win_get_buf(winnr)
-  local cursor = a.nvim_win_get_cursor(winnr)
+  local bufnr = api.nvim_win_get_buf(winnr)
+  local cursor = api.nvim_win_get_cursor(winnr)
 
   local data = M.get_captures_at_pos(bufnr, cursor[1] - 1, cursor[2])
 
@@ -374,7 +374,7 @@ function M.get_node(opts)
   local bufnr = opts.bufnr
 
   if not bufnr or bufnr == 0 then
-    bufnr = a.nvim_get_current_buf()
+    bufnr = api.nvim_get_current_buf()
   end
 
   local row, col
@@ -383,10 +383,10 @@ function M.get_node(opts)
     row, col = opts.pos[1], opts.pos[2]
   else
     assert(
-      bufnr == a.nvim_get_current_buf(),
+      bufnr == api.nvim_get_current_buf(),
       'Position must be explicitly provided when not using the current buffer'
     )
-    local pos = a.nvim_win_get_cursor(0)
+    local pos = api.nvim_win_get_cursor(0)
     -- Subtract one to account for 1-based row indexing in nvim_win_get_cursor
     row, col = pos[1] - 1, pos[2]
   end
@@ -417,7 +417,7 @@ end
 function M.get_node_at_pos(bufnr, row, col, opts)
   vim.deprecate('vim.treesitter.get_node_at_pos()', 'vim.treesitter.get_node()', '0.10')
   if bufnr == 0 then
-    bufnr = a.nvim_get_current_buf()
+    bufnr = api.nvim_get_current_buf()
   end
   local ts_range = { row, col, row, col }
 
@@ -440,7 +440,7 @@ end
 function M.get_node_at_cursor(winnr)
   vim.deprecate('vim.treesitter.get_node_at_cursor()', 'vim.treesitter.get_node():type()', '0.10')
   winnr = winnr or 0
-  local bufnr = a.nvim_win_get_buf(winnr)
+  local bufnr = api.nvim_win_get_buf(winnr)
 
   return M.get_node({ bufnr = bufnr, ignore_injections = false }):type()
 end
@@ -465,7 +465,7 @@ end
 ---@param bufnr (integer|nil) Buffer to be highlighted (default: current buffer)
 ---@param lang (string|nil) Language of the parser (default: buffer filetype)
 function M.start(bufnr, lang)
-  bufnr = bufnr or a.nvim_get_current_buf()
+  bufnr = bufnr or api.nvim_get_current_buf()
   local parser = M.get_parser(bufnr, lang)
   M.highlighter.new(parser)
 end
@@ -474,7 +474,7 @@ end
 ---
 ---@param bufnr (integer|nil) Buffer to stop highlighting (default: current buffer)
 function M.stop(bufnr)
-  bufnr = bufnr or a.nvim_get_current_buf()
+  bufnr = bufnr or api.nvim_get_current_buf()
 
   if M.highlighter.active[bufnr] then
     M.highlighter.active[bufnr]:destroy()

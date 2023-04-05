@@ -2721,11 +2721,11 @@ describe('lua stdlib', function()
     it('does not cause ml_get errors with invalid visual selection', function()
       -- Should be fixed by vim-patch:8.2.4028.
       exec_lua [[
-        local a = vim.api
-        local t = function(s) return a.nvim_replace_termcodes(s, true, true, true) end
-        a.nvim_buf_set_lines(0, 0, -1, true, {"a", "b", "c"})
-        a.nvim_feedkeys(t "G<C-V>", "txn", false)
-        a.nvim_buf_call(a.nvim_create_buf(false, true), function() vim.cmd "redraw" end)
+        local api = vim.api
+        local t = function(s) return api.nvim_replace_termcodes(s, true, true, true) end
+        api.nvim_buf_set_lines(0, 0, -1, true, {"a", "b", "c"})
+        api.nvim_feedkeys(t "G<C-V>", "txn", false)
+        api.nvim_buf_call(api.nvim_create_buf(false, true), function() vim.cmd "redraw" end)
       ]]
     end)
 
@@ -2800,29 +2800,29 @@ describe('lua stdlib', function()
     it('does not cause ml_get errors with invalid visual selection', function()
       -- Add lines to the current buffer and make another window looking into an empty buffer.
       exec_lua [[
-        _G.a = vim.api
-        _G.t = function(s) return a.nvim_replace_termcodes(s, true, true, true) end
-        _G.win_lines = a.nvim_get_current_win()
+        _G.api = vim.api
+        _G.t = function(s) return api.nvim_replace_termcodes(s, true, true, true) end
+        _G.win_lines = api.nvim_get_current_win()
         vim.cmd "new"
-        _G.win_empty = a.nvim_get_current_win()
-        a.nvim_set_current_win(win_lines)
-        a.nvim_buf_set_lines(0, 0, -1, true, {"a", "b", "c"})
+        _G.win_empty = api.nvim_get_current_win()
+        api.nvim_set_current_win(win_lines)
+        api.nvim_buf_set_lines(0, 0, -1, true, {"a", "b", "c"})
       ]]
 
       -- Start Visual in current window, redraw in other window with fewer lines.
       -- Should be fixed by vim-patch:8.2.4018.
       exec_lua [[
-        a.nvim_feedkeys(t "G<C-V>", "txn", false)
-        a.nvim_win_call(win_empty, function() vim.cmd "redraw" end)
+        api.nvim_feedkeys(t "G<C-V>", "txn", false)
+        api.nvim_win_call(win_empty, function() vim.cmd "redraw" end)
       ]]
 
       -- Start Visual in current window, extend it in other window with more lines.
       -- Fixed for win_execute by vim-patch:8.2.4026, but nvim_win_call should also not be affected.
       exec_lua [[
-        a.nvim_feedkeys(t "<Esc>gg", "txn", false)
-        a.nvim_set_current_win(win_empty)
-        a.nvim_feedkeys(t "gg<C-V>", "txn", false)
-        a.nvim_win_call(win_lines, function() a.nvim_feedkeys(t "G<C-V>", "txn", false) end)
+        api.nvim_feedkeys(t "<Esc>gg", "txn", false)
+        api.nvim_set_current_win(win_empty)
+        api.nvim_feedkeys(t "gg<C-V>", "txn", false)
+        api.nvim_win_call(win_lines, function() api.nvim_feedkeys(t "G<C-V>", "txn", false) end)
         vim.cmd "redraw"
       ]]
     end)
@@ -2836,14 +2836,14 @@ describe('lua stdlib', function()
       }
       screen:attach()
       exec_lua [[
-        _G.a = vim.api
+        _G.api = vim.api
         vim.opt.ruler = true
         local lines = {}
         for i = 0, 499 do lines[#lines + 1] = tostring(i) end
-        a.nvim_buf_set_lines(0, 0, -1, true, lines)
-        a.nvim_win_set_cursor(0, {20, 0})
+        api.nvim_buf_set_lines(0, 0, -1, true, lines)
+        api.nvim_win_set_cursor(0, {20, 0})
         vim.cmd "split"
-        _G.win = a.nvim_get_current_win()
+        _G.win = api.nvim_get_current_win()
         vim.cmd "wincmd w | redraw"
       ]]
       screen:expect [[
@@ -2854,7 +2854,7 @@ describe('lua stdlib', function()
                                       |
       ]]
       exec_lua [[
-        a.nvim_win_call(win, function() a.nvim_win_set_cursor(0, {100, 0}) end)
+        api.nvim_win_call(win, function() api.nvim_win_set_cursor(0, {100, 0}) end)
         vim.cmd "redraw"
       ]]
       screen:expect [[

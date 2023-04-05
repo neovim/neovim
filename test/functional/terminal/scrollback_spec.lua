@@ -575,12 +575,12 @@ describe("pending scrollback line handling", function()
 
   it("does not crash after setting 'number' #14891", function()
     exec_lua [[
-      local a = vim.api
-      local buf = a.nvim_create_buf(true, true)
-      local chan = a.nvim_open_term(buf, {})
-      a.nvim_win_set_option(0, "number", true)
-      a.nvim_chan_send(chan, ("a\n"):rep(11) .. "a")
-      a.nvim_win_set_buf(0, buf)
+      local api = vim.api
+      local buf = api.nvim_create_buf(true, true)
+      local chan = api.nvim_open_term(buf, {})
+      api.nvim_win_set_option(0, "number", true)
+      api.nvim_chan_send(chan, ("a\n"):rep(11) .. "a")
+      api.nvim_win_set_buf(0, buf)
     ]]
     screen:expect [[
       {1:  1 }^a                         |
@@ -607,12 +607,11 @@ describe("pending scrollback line handling", function()
   it("does not crash after nvim_buf_call #14891", function()
     skip(is_os('win'))
     exec_lua [[
-      local a = vim.api
-      local bufnr = a.nvim_create_buf(false, true)
-      a.nvim_buf_call(bufnr, function()
+      local bufnr = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_buf_call(bufnr, function()
         vim.fn.termopen({"echo", ("hi\n"):rep(11)})
       end)
-      a.nvim_win_set_buf(0, bufnr)
+      vim.api.nvim_win_set_buf(0, bufnr)
       vim.cmd("startinsert")
     ]]
     screen:expect [[

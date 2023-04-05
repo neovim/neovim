@@ -1,4 +1,4 @@
-local a = vim.api
+local api = vim.api
 local language = require('vim.treesitter.language')
 
 ---@class Query
@@ -74,7 +74,7 @@ end
 ---@return string[] query_files List of files to load for given query and language
 function M.get_files(lang, query_name, is_included)
   local query_path = string.format('queries/%s/%s.scm', lang, query_name)
-  local lang_files = dedupe_files(a.nvim_get_runtime_file(query_path, true))
+  local lang_files = dedupe_files(api.nvim_get_runtime_file(query_path, true))
 
   if #lang_files == 0 then
     return {}
@@ -635,7 +635,7 @@ end
 ---@return (fun(): integer, TSNode, TSMetadata): capture id, capture node, metadata
 function Query:iter_captures(node, source, start, stop)
   if type(source) == 'number' and source == 0 then
-    source = vim.api.nvim_get_current_buf()
+    source = api.nvim_get_current_buf()
   end
 
   start, stop = value_or_node_range(start, stop, node)
@@ -690,7 +690,7 @@ end
 ---@return (fun(): integer, table<integer,TSNode>, table): pattern id, match, metadata
 function Query:iter_matches(node, source, start, stop)
   if type(source) == 'number' and source == 0 then
-    source = vim.api.nvim_get_current_buf()
+    source = api.nvim_get_current_buf()
   end
 
   start, stop = value_or_node_range(start, stop, node)

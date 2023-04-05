@@ -47,15 +47,15 @@ describe('decorations providers', function()
 
   local function setup_provider(code)
     return exec_lua ([[
-      local a = vim.api
-      _G.ns1 = a.nvim_create_namespace "ns1"
+      local api = vim.api
+      _G.ns1 = api.nvim_create_namespace "ns1"
     ]] .. (code or [[
       beamtrace = {}
       local function on_do(kind, ...)
         table.insert(beamtrace, {kind, ...})
       end
     ]]) .. [[
-      a.nvim_set_decoration_provider(_G.ns1, {
+      api.nvim_set_decoration_provider(_G.ns1, {
         on_start = on_do; on_buf = on_do;
         on_win = on_do; on_line = on_do;
         on_end = on_do; _on_spell_nav = on_do;
@@ -75,8 +75,8 @@ describe('decorations providers', function()
     -- rather than append, which used to spin in an infinite loop allocating
     -- memory until nvim crashed/was killed.
     setup_provider([[
-      local ns2 = a.nvim_create_namespace "ns2"
-      a.nvim_set_decoration_provider(ns2, {})
+      local ns2 = api.nvim_create_namespace "ns2"
+      api.nvim_set_decoration_provider(ns2, {})
     ]])
     helpers.assert_alive()
   end)
@@ -132,12 +132,12 @@ describe('decorations providers', function()
   it('can have single provider', function()
     insert(mulholland)
     setup_provider [[
-      local hl = a.nvim_get_hl_id_by_name "ErrorMsg"
-      local test_ns = a.nvim_create_namespace "mulholland"
+      local hl = api.nvim_get_hl_id_by_name "ErrorMsg"
+      local test_ns = api.nvim_create_namespace "mulholland"
       function on_do(event, ...)
         if event == "line" then
           local win, buf, line = ...
-          a.nvim_buf_set_extmark(buf, test_ns, line, line,
+          api.nvim_buf_set_extmark(buf, test_ns, line, line,
                              { end_line = line, end_col = line+1,
                                hl_group = hl,
                                ephemeral = true
@@ -172,11 +172,11 @@ describe('decorations providers', function()
     ]]
 
     setup_provider [[
-      local ns = a.nvim_create_namespace "spell"
+      local ns = api.nvim_create_namespace "spell"
       beamtrace = {}
       local function on_do(kind, ...)
         if kind == 'win' or kind == 'spell' then
-          a.nvim_buf_set_extmark(0, ns, 0, 0, {
+          api.nvim_buf_set_extmark(0, ns, 0, 0, {
             end_row = 2,
             end_col = 23,
             spell = true,
@@ -330,12 +330,12 @@ describe('decorations providers', function()
     ]]}
 
     exec_lua [[
-      local a = vim.api
-      local thewin = a.nvim_get_current_win()
-      local ns2 = a.nvim_create_namespace 'ns2'
-      a.nvim_set_decoration_provider (ns2, {
+      local api = vim.api
+      local thewin = api.nvim_get_current_win()
+      local ns2 = api.nvim_create_namespace 'ns2'
+      api.nvim_set_decoration_provider (ns2, {
         on_win = function (_, win, buf)
-          a.nvim_set_hl_ns_fast(win == thewin and _G.ns1 or ns2)
+          api.nvim_set_hl_ns_fast(win == thewin and _G.ns1 or ns2)
         end;
       })
     ]]
@@ -436,12 +436,12 @@ describe('decorations providers', function()
   it('can have virtual text', function()
     insert(mulholland)
     setup_provider [[
-      local hl = a.nvim_get_hl_id_by_name "ErrorMsg"
-      local test_ns = a.nvim_create_namespace "mulholland"
+      local hl = api.nvim_get_hl_id_by_name "ErrorMsg"
+      local test_ns = api.nvim_create_namespace "mulholland"
       function on_do(event, ...)
         if event == "line" then
           local win, buf, line = ...
-          a.nvim_buf_set_extmark(buf, test_ns, line, 0, {
+          api.nvim_buf_set_extmark(buf, test_ns, line, 0, {
             virt_text = {{'+', 'ErrorMsg'}};
             virt_text_pos='overlay';
             ephemeral = true;
@@ -465,12 +465,12 @@ describe('decorations providers', function()
   it('can have virtual text of the style: right_align', function()
     insert(mulholland)
     setup_provider [[
-      local hl = a.nvim_get_hl_id_by_name "ErrorMsg"
-      local test_ns = a.nvim_create_namespace "mulholland"
+      local hl = api.nvim_get_hl_id_by_name "ErrorMsg"
+      local test_ns = api.nvim_create_namespace "mulholland"
       function on_do(event, ...)
         if event == "line" then
           local win, buf, line = ...
-          a.nvim_buf_set_extmark(buf, test_ns, line, 0, {
+          api.nvim_buf_set_extmark(buf, test_ns, line, 0, {
             virt_text = {{'+'}, {string.rep(' ', line+1), 'ErrorMsg'}};
             virt_text_pos='right_align';
             ephemeral = true;
@@ -494,12 +494,12 @@ describe('decorations providers', function()
   it('can highlight beyond EOL', function()
     insert(mulholland)
     setup_provider [[
-      local test_ns = a.nvim_create_namespace "veberod"
+      local test_ns = api.nvim_create_namespace "veberod"
       function on_do(event, ...)
         if event == "line" then
           local win, buf, line = ...
-          if string.find(a.nvim_buf_get_lines(buf, line, line+1, true)[1], "buf") then
-            a.nvim_buf_set_extmark(buf, test_ns, line, 0, {
+          if string.find(api.nvim_buf_get_lines(buf, line, line+1, true)[1], "buf") then
+            api.nvim_buf_set_extmark(buf, test_ns, line, 0, {
               end_line = line+1;
               hl_group = 'DiffAdd';
               hl_eol = true;
@@ -534,9 +534,9 @@ describe('decorations providers', function()
       local function on_do(kind, winid, bufnr, topline, botline_guess)
         if kind == 'win' then
           if topline < 100 and botline_guess > 100 then
-            vim.api.nvim_buf_set_extmark(bufnr, ns1, 99, -1, { sign_text = 'X' })
+            api.nvim_buf_set_extmark(bufnr, ns1, 99, -1, { sign_text = 'X' })
           else
-            vim.api.nvim_buf_clear_namespace(bufnr, ns1, 0, -1)
+            api.nvim_buf_clear_namespace(bufnr, ns1, 0, -1)
           end
         end
       end
