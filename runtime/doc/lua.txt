@@ -1847,6 +1847,60 @@ pesc({s})                                                         *vim.pesc()*
     See also: ~
       • https://github.com/rxi/lume
 
+ringbuf({size})                                                *vim.ringbuf()*
+    Create a ring buffer limited to a maximal number of items. Once the buffer
+    is full, adding a new entry overrides the oldest entry.
+>
+
+    local ringbuf = vim.ringbuf(4)
+    ringbuf:push("a")
+    ringbuf:push("b")
+    ringbuf:push("c")
+    ringbuf:push("d")
+    ringbuf:push("e")    -- overrides "a"
+    print(ringbuf:pop()) -- returns "b"
+    print(ringbuf:pop()) -- returns "c"
+
+    -- Can be used as iterator. Pops remaining items:
+    for val in ringbuf do
+      print(val)
+    end
+<
+
+    Returns a Ringbuf instance with the following methods:
+
+    • |Ringbuf:push()|
+    • |Ringbuf:pop()|
+    • |Ringbuf:peek()|
+    • |Ringbuf:clear()|
+
+    Parameters: ~
+      • {size}  (integer)
+
+    Return: ~
+        (table)
+
+Ringbuf:clear({self})                                        *Ringbuf:clear()*
+    Clear all items.
+
+Ringbuf:peek({self})                                          *Ringbuf:peek()*
+    Returns the first unread item without removing it
+
+    Return: ~
+        any?|ni
+
+Ringbuf:pop({self})                                            *Ringbuf:pop()*
+    Removes and returns the first unread item
+
+    Return: ~
+        any?|ni
+
+Ringbuf:push({self}, {item})                                  *Ringbuf:push()*
+    Adds an item, overriding the oldest item if the buffer is full.
+
+    Parameters: ~
+      • {item}  any
+
 spairs({t})                                                     *vim.spairs()*
     Enumerate a table sorted by its keys.
 
