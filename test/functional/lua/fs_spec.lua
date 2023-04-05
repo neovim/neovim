@@ -271,10 +271,11 @@ describe('vim.fs', function()
       eq('C:/Users/jdoe', exec_lua [[ return vim.fs.normalize('C:\\Users\\jdoe') ]])
     end)
     it('works with ~', function()
-      if is_os('win') then
-        pending([[$HOME does not exist on Windows ¯\_(ツ)_/¯]])
-      end
-      eq(os.getenv('HOME') .. '/src/foo', exec_lua [[ return vim.fs.normalize('~/src/foo') ]])
+      eq( exec_lua([[
+      local home = ...
+      return home .. '/src/foo'
+      ]], is_os('win') and vim.fs.normalize(os.getenv('USERPROFILE')) or os.getenv('HOME')
+      ) , exec_lua [[ return vim.fs.normalize('~/src/foo') ]])
     end)
     it('works with environment variables', function()
       local xdg_config_home = test_build_dir .. '/.config'
