@@ -386,7 +386,7 @@ next_mark:
 }
 
 void decor_redraw_signs(buf_T *buf, int row, int *num_signs, SignTextAttrs sattrs[],
-                        HlPriAttr *num_attrs, HlPriAttr *line_attrs, HlPriAttr *cul_attrs)
+                        HlPriId *num_id, HlPriId *line_id, HlPriId *cul_id)
 {
   if (!buf->b_signs) {
     return;
@@ -422,23 +422,23 @@ void decor_redraw_signs(buf_T *buf, int row, int *num_signs, SignTextAttrs sattr
       if (j < SIGN_SHOW_MAX) {
         sattrs[j] = (SignTextAttrs) {
           .text = decor->sign_text,
-          .hl_attr_id = decor->sign_hl_id == 0 ? 0 : syn_id2attr(decor->sign_hl_id),
+          .hl_id = decor->sign_hl_id,
           .priority = decor->priority
         };
         (*num_signs)++;
       }
     }
 
-    struct { HlPriAttr *dest; int hl; } cattrs[] = {
-      { line_attrs, decor->line_hl_id        },
-      { num_attrs,  decor->number_hl_id      },
-      { cul_attrs,  decor->cursorline_hl_id  },
+    struct { HlPriId *dest; int hl; } cattrs[] = {
+      { line_id, decor->line_hl_id        },
+      { num_id,  decor->number_hl_id      },
+      { cul_id,  decor->cursorline_hl_id  },
       { NULL, -1 },
     };
     for (int i = 0; cattrs[i].dest; i++) {
       if (cattrs[i].hl != 0 && decor->priority >= cattrs[i].dest->priority) {
-        *cattrs[i].dest = (HlPriAttr) {
-          .attr_id = syn_id2attr(cattrs[i].hl),
+        *cattrs[i].dest = (HlPriId) {
+          .hl_id = cattrs[i].hl,
           .priority = decor->priority
         };
       }

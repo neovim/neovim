@@ -508,29 +508,10 @@ static void get_sign_display_info(bool nrcol, win_T *wp, winlinevars_T *wlv, int
       if (use_cursor_line_highlight(wp, wlv->lnum) && sign_cul_attr > 0) {
         wlv->char_attr = sign_cul_attr;
       } else {
-        wlv->char_attr = sattr->hl_attr_id;
+        wlv->char_attr = sattr->hl_id ? syn_id2attr(sattr->hl_id) : 0;
       }
     }
   }
-}
-
-static int get_sign_attrs(buf_T *buf, winlinevars_T *wlv, int *sign_num_attrp, int *sign_cul_attrp)
-{
-  HlPriAttr line_attrs = { wlv->line_attr,  0 };
-  HlPriAttr num_attrs  = { *sign_num_attrp, 0 };
-  HlPriAttr cul_attrs  = { *sign_cul_attrp, 0 };
-
-  // TODO(bfredl, vigoux): line_attr should not take priority over decoration!
-  int num_signs = buf_get_signattrs(buf, wlv->lnum, wlv->sattrs, &num_attrs, &line_attrs,
-                                    &cul_attrs);
-  decor_redraw_signs(buf, wlv->lnum - 1, &num_signs, wlv->sattrs, &num_attrs, &line_attrs,
-                     &cul_attrs);
-
-  wlv->line_attr = line_attrs.attr_id;
-  *sign_num_attrp = num_attrs.attr_id;
-  *sign_cul_attrp = cul_attrs.attr_id;
-
-  return num_signs;
 }
 
 /// Returns width of the signcolumn that should be used for the whole window
@@ -726,7 +707,7 @@ static void get_statuscol_display_info(statuscol_T *stcp, winlinevars_T *wlv)
     if (stcp->textp + wlv->n_extra < stcp->text_end) {
       int hl = stcp->hlrecp->userhl;
       stcp->textp = stcp->hlrecp->start;
-      stcp->cur_attr = hl < 0 ? syn_id2attr(-hl) : hl > 0 ? hl : stcp->num_attr;
+      stcp->cur_attr = hl < 0 ? syn_id2attr(-hl) : stcp->num_attr;
       stcp->hlrecp++;
       wlv->draw_state = WL_STC - 1;
     }
@@ -1288,9 +1269,37 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     area_highlighting = true;
   }
 
-  int sign_num_attr = 0;                // sign attribute for the number column
-  int sign_cul_attr = 0;                // sign attribute for cursorline
-  int num_signs = get_sign_attrs(buf, &wlv, &sign_num_attr, &sign_cul_attr);
+  HlPriId line_id = { 0 };
+  HlPriId sign_cul = { 0 };
+  HlPriId sign_num = { 0 };
+  // TODO(bfredl, vigoux): line_attr should not take priority over decoration!
+  int num_signs = buf_get_signattrs(buf, wlv.lnum, wlv.sattrs, &sign_num, &line_id, &sign_cul);
+  decor_redraw_signs(buf, wlv.lnum - 1, &num_signs, wlv.sattrs, &sign_num, &line_id, &sign_cul);
+
+  int sign_cul_attr = 0;
+  int sign_num_attr = 0;
+  statuscol_T statuscol = { 0 };
+  if (*wp->w_p_stc != NUL) {
+    // Draw the 'statuscolumn' if option is set.
+    statuscol.draw = true;
+    statuscol.sattrs = wlv.sattrs;
+    statuscol.foldinfo = foldinfo;
+    statuscol.width = win_col_off(wp) - (cmdwin_type != 0 && wp == curwin);
+    statuscol.use_cul = use_cursor_line_highlight(wp, lnum);
+    statuscol.sign_cul_id = statuscol.use_cul ? sign_cul.hl_id : 0;
+    statuscol.num_attr = sign_num.hl_id ? syn_id2attr(sign_num.hl_id)
+                                        : get_line_number_attr(wp, &wlv);
+  } else {
+    if (sign_cul.hl_id > 0) {
+      sign_cul_attr = syn_id2attr(sign_cul.hl_id);
+    }
+    if (sign_num.hl_id > 0) {
+      sign_num_attr = syn_id2attr(sign_num.hl_id);
+    }
+  }
+  if (line_id.hl_id > 0) {
+    wlv.line_attr = syn_id2attr(line_id.hl_id);
+  }
 
   // Highlight the current line in the quickfix window.
   if (bt_quickfix(wp->w_buffer) && qf_current_entry(wp) == lnum) {
@@ -1493,18 +1502,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   if (wp->w_buffer->terminal) {
     terminal_get_line_attributes(wp->w_buffer->terminal, wp, lnum, term_attrs);
     extra_check = true;
-  }
-
-  statuscol_T statuscol = { 0 };
-  if (*wp->w_p_stc != NUL) {
-    // Draw the 'statuscolumn' if option is set.
-    statuscol.draw = true;
-    statuscol.sattrs = wlv.sattrs;
-    statuscol.foldinfo = foldinfo;
-    statuscol.width = win_col_off(wp) - (cmdwin_type != 0 && wp == curwin);
-    statuscol.use_cul = use_cursor_line_highlight(wp, lnum);
-    statuscol.sign_cul_attr = statuscol.use_cul ? sign_cul_attr : 0;
-    statuscol.num_attr = sign_num_attr ? sign_num_attr : get_line_number_attr(wp, &wlv);
   }
 
   int sign_idx = 0;

@@ -491,8 +491,8 @@ SignTextAttrs *sign_get_attr(int idx, SignTextAttrs sattrs[], int max_signs)
 /// @param lnum Line in which to search
 /// @param sattrs Output array for attrs
 /// @return Number of signs of which attrs were found
-int buf_get_signattrs(buf_T *buf, linenr_T lnum, SignTextAttrs sattrs[], HlPriAttr *num_attrs,
-                      HlPriAttr *line_attrs, HlPriAttr *cul_attrs)
+int buf_get_signattrs(buf_T *buf, linenr_T lnum, SignTextAttrs sattrs[], HlPriId *num_id,
+                      HlPriId *line_id, HlPriId *cul_id)
 {
   sign_entry_T *sign;
 
@@ -517,21 +517,21 @@ int buf_get_signattrs(buf_T *buf, linenr_T lnum, SignTextAttrs sattrs[], HlPriAt
     if (sp->sn_text != NULL && sattr_matches < SIGN_SHOW_MAX) {
       sattrs[sattr_matches++] = (SignTextAttrs) {
         .text = sp->sn_text,
-        .hl_attr_id = sp->sn_text_hl == 0 ? 0 : syn_id2attr(sp->sn_text_hl),
+        .hl_id = sp->sn_text_hl,
         .priority = sign->se_priority
       };
     }
 
-    struct { HlPriAttr *dest; int hl; } cattrs[] = {
-      { line_attrs, sp->sn_line_hl },
-      { num_attrs,  sp->sn_num_hl  },
-      { cul_attrs,  sp->sn_cul_hl  },
+    struct { HlPriId *dest; int hl; } cattrs[] = {
+      { line_id, sp->sn_line_hl },
+      { num_id,  sp->sn_num_hl  },
+      { cul_id,  sp->sn_cul_hl  },
       { NULL, -1 },
     };
     for (int i = 0; cattrs[i].dest; i++) {
       if (cattrs[i].hl != 0 && sign->se_priority >= cattrs[i].dest->priority) {
-        *cattrs[i].dest = (HlPriAttr) {
-          .attr_id = syn_id2attr(cattrs[i].hl),
+        *cattrs[i].dest = (HlPriId) {
+          .hl_id = cattrs[i].hl,
           .priority = sign->se_priority
         };
       }
