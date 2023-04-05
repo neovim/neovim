@@ -33,12 +33,6 @@ ${NVIM_VERSION}
 2. Extract: `tar xzvf nvim-linux64.tar.gz`
 3. Run `./nvim-linux64/bin/nvim`
 
-#### Debian Package
-
-1. Download **nvim-linux64.deb**
-2. Install the package using `sudo apt install ./nvim-linux64.deb`
-3. Run `nvim`
-
 #### AppImage
 1. Download **nvim.appimage**
 2. Run `chmod u+x nvim.appimage && ./nvim.appimage`
@@ -56,7 +50,6 @@ ${NVIM_VERSION}
 
 ```
 ${SHA_LINUX_64_TAR}
-${SHA_LINUX_64_DEB}
 ${SHA_APP_IMAGE}
 ${SHA_APP_IMAGE_ZSYNC}
 ${SHA_MACOS}
