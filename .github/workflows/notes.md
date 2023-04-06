@@ -27,12 +27,6 @@ ${NVIM_VERSION}
 
 ### Linux (x64)
 
-#### Tarball
-
-1. Download **nvim-linux64.tar.gz**
-2. Extract: `tar xzvf nvim-linux64.tar.gz`
-3. Run `./nvim-linux64/bin/nvim`
-
 #### AppImage
 1. Download **nvim.appimage**
 2. Run `chmod u+x nvim.appimage && ./nvim.appimage`
@@ -41,6 +35,14 @@ ${NVIM_VERSION}
      ./nvim.appimage --appimage-extract
      ./squashfs-root/usr/bin/nvim
      ```
+
+#### Tarball
+
+*(deprecated)*
+
+1. Download **nvim-linux64.tar.gz**
+2. Extract: `tar xzvf nvim-linux64.tar.gz`
+3. Run `./nvim-linux64/bin/nvim`
 
 ### Other
 
