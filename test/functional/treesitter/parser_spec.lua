@@ -948,4 +948,48 @@ int x = INT_MAX;
       [16] = '1',
       [17] = '0' }, get_fold_levels())
   end)
+
+  it('tracks the root range properly (#22911)', function()
+    insert([[
+      int main() {
+        int x = 3;
+      }]])
+
+    local query0 = [[
+      (declaration) @declaration
+      (function_definition) @function
+    ]]
+
+    exec_lua([[
+      vim.treesitter.start(0, 'c')
+    ]])
+
+    local function run_query()
+      return exec_lua([[
+      local query = vim.treesitter.query.parse("c", ...)
+      parser = vim.treesitter.get_parser()
+      tree = parser:parse()[1]
+      res = {}
+      for id, node in query:iter_captures(tree:root()) do
+        table.insert(res, {query.captures[id], node:range()})
+      end
+      return res
+      ]], query0)
+    end
+
+    eq({
+      { 'function', 0, 0, 2, 1 },
+      { 'declaration', 1, 2, 1, 12 }
+    }, run_query())
+
+    helpers.command'normal ggO'
+    insert('int a;')
+
+    eq({
+      { 'declaration', 0, 0, 0, 6 },
+      { 'function', 1, 0, 3, 1 },
+      { 'declaration', 2, 2, 2, 12 }
+    }, run_query())
+
+  end)
 end)

@@ -57,6 +57,7 @@ local Range = require('vim.treesitter._range')
 ---@field private _injection_query Query Queries defining injected languages
 ---@field private _opts table Options
 ---@field private _parser TSParser Parser for language
+---@field private _has_regions boolean
 ---@field private _regions Range6[][]?
 ---List of regions this tree should manage and parse. If nil then regions are
 ---taken from _trees. This is mostly a short-lived cache for included_regions()
@@ -440,6 +441,8 @@ end
 ---@private
 ---@param new_regions Range6[][] List of regions this tree should manage and parse.
 function LanguageTree:set_included_regions(new_regions)
+  self._has_regions = true
+
   -- Transform the tables from 4 element long to 6 element long (with byte offset)
   for _, region in ipairs(new_regions) do
     for i, range in ipairs(region) do
@@ -468,7 +471,8 @@ function LanguageTree:included_regions()
     return self._regions
   end
 
-  if #self._trees == 0 then
+  if not self._has_regions or #self._trees == 0 then
+    -- treesitter.c will default empty ranges to { -1, -1, -1, -1, -1, -1}
     return { {} }
   end
 
@@ -744,6 +748,10 @@ function LanguageTree:_edit(
 
   -- Validate regions after editing the tree
   self:_iter_regions(function(_, region)
+    if #region == 0 then
+      -- empty region, use the full source
+      return false
+    end
     for _, r in ipairs(region) do
       if Range.intercepts(r, changed_range) then
         return false
