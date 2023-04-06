@@ -121,7 +121,7 @@ EXTERN Callback on_print INIT(= CALLBACK_INIT);
 /// @returns Channel with the id or NULL if not found
 static inline Channel *find_channel(uint64_t id)
 {
-  return pmap_get(uint64_t)(&channels, id);
+  return (Channel *)pmap_get(uint64_t)(&channels, id);
 }
 
 static inline Stream *channel_instream(Channel *chan)

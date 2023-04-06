@@ -26,7 +26,7 @@ typedef struct MsgpackRpcRequestHandler MsgpackRpcRequestHandler;
 typedef union {
   float_T (*float_func)(float_T);
   const MsgpackRpcRequestHandler *api_handler;
-  void *nullptr;
+  void *null;
 } EvalFuncData;
 
 typedef handle_T NS;

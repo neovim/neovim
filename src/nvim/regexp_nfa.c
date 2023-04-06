@@ -5252,9 +5252,9 @@ static regsubs_T *addstate_here(nfa_list_T *l, nfa_state_T *state, regsubs_T *su
 }
 
 // Check character class "class" against current character c.
-static int check_char_class(int class, int c)
+static int check_char_class(int cls, int c)
 {
-  switch (class) {
+  switch (cls) {
   case NFA_CLASS_ALNUM:
     if (c >= 1 && c < 128 && isalnum(c)) {
       return OK;
@@ -5353,7 +5353,7 @@ static int check_char_class(int class, int c)
 
   default:
     // should not be here :P
-    siemsg(_(e_ill_char_class), (int64_t)class);
+    siemsg(_(e_ill_char_class), (int64_t)cls);
     return FAIL;
   }
   return FAIL;

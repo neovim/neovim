@@ -1014,17 +1014,17 @@ int os_file_mkdir(char *fname, int32_t mode)
 
 /// Create a unique temporary directory.
 ///
-/// @param[in] template Template of the path to the directory with XXXXXX
-///                     which would be replaced by random chars.
+/// @param[in] templ Template of the path to the directory with XXXXXX
+///                  which would be replaced by random chars.
 /// @param[out] path Path to created directory for success, undefined for
 ///                  failure.
 /// @return `0` for success, non-zero for failure.
-int os_mkdtemp(const char *template, char *path)
+int os_mkdtemp(const char *templ, char *path)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
   fs_loop_lock();
-  int result = uv_fs_mkdtemp(&fs_loop, &request, template, NULL);
+  int result = uv_fs_mkdtemp(&fs_loop, &request, templ, NULL);
   fs_loop_unlock();
   if (result == kLibuvSuccess) {
     xstrlcpy(path, request.path, TEMP_FILE_PATH_MAXLEN);

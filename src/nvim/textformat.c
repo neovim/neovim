@@ -634,7 +634,7 @@ static bool paragraph_start(linenr_T lnum)
 void auto_format(bool trailblank, bool prev_line)
 {
   colnr_T len;
-  char *new, *pnew;
+  char *linep, *plinep;
   int cc;
 
   if (!has_format_option(FO_AUTO)) {
@@ -705,13 +705,13 @@ void auto_format(bool trailblank, bool prev_line)
   // need to add a space when 'w' is in 'formatoptions' to keep a paragraph
   // formatted.
   if (!wasatend && has_format_option(FO_WHITE_PAR)) {
-    new = get_cursor_line_ptr();
-    len = (colnr_T)strlen(new);
+    linep = get_cursor_line_ptr();
+    len = (colnr_T)strlen(linep);
     if (curwin->w_cursor.col == len) {
-      pnew = xstrnsave(new, (size_t)len + 2);
-      pnew[len] = ' ';
-      pnew[len + 1] = NUL;
-      ml_replace(curwin->w_cursor.lnum, pnew, false);
+      plinep = xstrnsave(linep, (size_t)len + 2);
+      plinep[len] = ' ';
+      plinep[len + 1] = NUL;
+      ml_replace(curwin->w_cursor.lnum, plinep, false);
       // remove the space later
       did_add_space = true;
     } else {
