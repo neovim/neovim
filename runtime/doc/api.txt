@@ -773,8 +773,8 @@ nvim_eval_statusline({str}, {*opts})                  *nvim_eval_statusline()*
                 • use_tabline: (boolean) Evaluate tabline instead of
                   statusline. When true, {winid} is ignored. Mutually
                   exclusive with {use_winbar}.
-                • use_statuscol: (boolean) Evaluate statuscolumn instead of
-                  statusline.
+                • use_statuscol_lnum: (number) Evaluate statuscolumn for this
+                  line number instead of statusline.
 
     Return: ~
         Dictionary containing statusline information, with these keys:
