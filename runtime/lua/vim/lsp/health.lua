@@ -2,8 +2,8 @@ local M = {}
 
 --- Performs a healthcheck for LSP
 function M.check()
-  local report_info = vim.health.report_info
-  local report_warn = vim.health.report_warn
+  local report_info = vim.health.info
+  local report_warn = vim.health.warn
 
   local log = require('vim.lsp.log')
   local current_log_level = log.get_level()
@@ -29,7 +29,7 @@ function M.check()
   report_fn(string.format('Log size: %d KB', log_size / 1000))
 
   local clients = vim.lsp.get_active_clients()
-  vim.health.report_start('vim.lsp: Active Clients')
+  vim.health.start('vim.lsp: Active Clients')
   if next(clients) then
     for _, client in pairs(clients) do
       report_info(

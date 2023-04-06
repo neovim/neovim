@@ -1,22 +1,47 @@
 local M = {}
 
+---@deprecated
 function M.report_start(msg)
+  vim.deprecate('vim.health.report_start()', 'vim.health.start()', '0.11')
+  M.start(msg)
+end
+function M.start(msg)
   vim.fn['health#report_start'](msg)
 end
 
+---@deprecated
 function M.report_info(msg)
+  vim.deprecate('vim.health.report_info()', 'vim.health.info()', '0.11')
+  M.info(msg)
+end
+function M.info(msg)
   vim.fn['health#report_info'](msg)
 end
 
+---@deprecated
 function M.report_ok(msg)
+  vim.deprecate('vim.health.report_ok()', 'vim.health.ok()', '0.11')
+  M.ok(msg)
+end
+function M.ok(msg)
   vim.fn['health#report_ok'](msg)
 end
 
+---@deprecated
 function M.report_warn(msg, ...)
+  vim.deprecate('vim.health.report_warn()', 'vim.health.warn()', '0.11')
+  M.warn(msg, ...)
+end
+function M.warn(msg, ...)
   vim.fn['health#report_warn'](msg, ...)
 end
 
+---@deprecated
 function M.report_error(msg, ...)
+  vim.deprecate('vim.health.report_error()', 'vim.health.error()', '0.11')
+  M.error(msg, ...)
+end
+function M.error(msg, ...)
   vim.fn['health#report_error'](msg, ...)
 end
 

@@ -320,4 +320,8 @@ release.
 
 • Renamed |vim.pretty_print| to |vim.print|.
 
+• Deprecate all functions with the "report_" prefix in the *vim.health*. For
+example, instead of |vim.health.report_start()|, users should use
+|vim.health.start()|.
+
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:
