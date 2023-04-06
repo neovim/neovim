@@ -67,6 +67,15 @@
     } \
   } while (0)
 
+/// Checks that actual_t is either the correct handle type or a type erased handle (integer)
+#define VALIDATE_T_HANDLE(name, expected_t, actual_t, code) \
+  do { \
+    if (expected_t != actual_t && kObjectTypeInteger != actual_t) { \
+      api_err_exp(err, name, api_typename(expected_t), api_typename(actual_t)); \
+      code; \
+    } \
+  } while (0)
+
 #define VALIDATE_RANGE(cond, name, code) \
   do { \
     if (!(cond)) { \

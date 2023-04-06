@@ -53,7 +53,7 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
   }
 
   if (HAS_KEY(opts->win)) {
-    VALIDATE_T("win", kObjectTypeInteger, opts->win.type, {
+    VALIDATE_T_HANDLE("win", kObjectTypeWindow, opts->win.type, {
       return FAIL;
     });
 
@@ -65,7 +65,7 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
   }
 
   if (HAS_KEY(opts->buf)) {
-    VALIDATE_T("buf", kObjectTypeInteger, opts->buf.type, {
+    VALIDATE_T_HANDLE("buf", kObjectTypeBuffer, opts->buf.type, {
       return FAIL;
     });
 
