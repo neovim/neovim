@@ -204,7 +204,7 @@ return function(options)
 
   handler.fileStart = function(file)
     fileTestCount = 0
-    io.write(fileStartString:format(file.name))
+    io.write(fileStartString:format(vim.fs.normalize(file.name)))
     io.flush()
     return nil, true
   end
@@ -213,7 +213,7 @@ return function(options)
     local elapsedTime_ms = getElapsedTime(file)
     local tests = (fileTestCount == 1 and 'test' or 'tests')
     fileCount = fileCount + 1
-    io.write(fileEndString:format(fileTestCount, tests, file.name, elapsedTime_ms))
+    io.write(fileEndString:format(fileTestCount, tests, vim.fs.normalize(file.name), elapsedTime_ms))
     io.flush()
     return nil, true
   end
