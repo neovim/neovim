@@ -36,7 +36,6 @@ describe(':edit term://*', function()
   end)
 
   it("runs TermOpen early enough to set buffer-local 'scrollback'", function()
-    if helpers.skip(helpers.is_os('win')) then return end
     local columns, lines = 20, 4
     local scr = get_screen(columns, lines)
     local rep = 97
