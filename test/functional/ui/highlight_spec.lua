@@ -2432,6 +2432,23 @@ describe("'winhighlight' highlight", function()
                                               |
     ]]}
   end)
+
+  it('can link to empty highlight group', function()
+    command 'hi NormalNC guibg=Red' -- czerwone time
+    command 'set winhl=NormalNC:Normal'
+    command 'split'
+
+    screen:expect{grid=[[
+      ^                    |
+      {0:~                   }|
+      {0:~                   }|
+      {3:[No Name]           }|
+                          |
+      {0:~                   }|
+      {4:[No Name]           }|
+                          |
+    ]]}
+  end)
 end)
 
 describe('highlight namespaces', function()
