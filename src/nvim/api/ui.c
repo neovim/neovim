@@ -843,7 +843,7 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
         uint32_t csize = (repeat > 1) ? 3 : ((attrs[i] != last_hl) ? 2 : 1);
         nelem++;
         mpack_array(buf, csize);
-        mpack_str(buf, (const char *)chunk[i]);
+        mpack_str(buf, chunk[i]);
         if (csize >= 2) {
           mpack_uint(buf, (uint32_t)attrs[i]);
           if (csize >= 3) {
@@ -873,7 +873,7 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
     for (int i = 0; i < endcol - startcol; i++) {
       remote_ui_cursor_goto(ui, row, startcol + i);
       remote_ui_highlight_set(ui, attrs[i]);
-      remote_ui_put(ui, (const char *)chunk[i]);
+      remote_ui_put(ui, chunk[i]);
       if (utf_ambiguous_width(utf_ptr2char((char *)chunk[i]))) {
         data->client_col = -1;  // force cursor update
       }

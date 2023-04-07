@@ -49,7 +49,7 @@ typedef struct {
 #define TYPVAL_ENCODE_CONV_STRING(tv, str, len) \
   do { \
     const size_t len_ = (size_t)(len); \
-    const char *const str_ = (const char *)(str); \
+    const char *const str_ = (str); \
     assert(len_ == 0 || str_ != NULL); \
     kvi_push(edata->stack, STRING_OBJ(cbuf_to_string((len_?str_:""), len_))); \
   } while (0)

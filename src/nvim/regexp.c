@@ -97,7 +97,7 @@ static int toggle_Magic(int x)
 #define EMSG2_RET_NULL(m, c) \
   return (semsg((m), (c) ? "" : "\\"), rc_did_emsg = true, (void *)NULL)
 #define EMSG3_RET_NULL(m, c, a) \
-  return (semsg((const char *)(m), (c) ? "" : "\\", (a)), rc_did_emsg = true, (void *)NULL)
+  return (semsg((m), (c) ? "" : "\\", (a)), rc_did_emsg = true, (void *)NULL)
 #define EMSG2_RET_FAIL(m, c) \
   return (semsg((m), (c) ? "" : "\\"), rc_did_emsg = true, FAIL)
 #define EMSG_ONE_RET_NULL EMSG2_RET_NULL(_("E369: invalid item in %s%%[]"), reg_magic == MAGIC_ALL)
@@ -2237,12 +2237,12 @@ list_T *reg_submatch_list(int no)
       tv_list_append_string(list, s, ecol);
     }
   } else {
-    s = (const char *)rsm.sm_match->startp[no];
+    s = rsm.sm_match->startp[no];
     if (s == NULL || rsm.sm_match->endp[no] == NULL) {
       return NULL;
     }
     list = tv_list_alloc(1);
-    tv_list_append_string(list, s, (const char *)rsm.sm_match->endp[no] - s);
+    tv_list_append_string(list, s, rsm.sm_match->endp[no] - s);
   }
 
   tv_list_ref(list);

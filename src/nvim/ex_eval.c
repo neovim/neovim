@@ -1125,7 +1125,7 @@ void ex_endwhile(exarg_T *eap)
 /// Handle ":throw expr"
 void ex_throw(exarg_T *eap)
 {
-  const char *arg = (const char *)eap->arg;
+  const char *arg = eap->arg;
   char *value;
 
   if (*arg != NUL && *arg != '|' && *arg != '\n') {

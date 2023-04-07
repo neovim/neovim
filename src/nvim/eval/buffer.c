@@ -487,8 +487,7 @@ static dict_T *get_buffer_info(buf_T *buf)
   dict_T *const dict = tv_dict_alloc();
 
   tv_dict_add_nr(dict, S_LEN("bufnr"), buf->b_fnum);
-  tv_dict_add_str(dict, S_LEN("name"),
-                  buf->b_ffname != NULL ? (const char *)buf->b_ffname : "");
+  tv_dict_add_str(dict, S_LEN("name"), buf->b_ffname != NULL ? buf->b_ffname : "");
   tv_dict_add_nr(dict, S_LEN("lnum"),
                  buf == curbuf ? curwin->w_cursor.lnum : buflist_findlnum(buf));
   tv_dict_add_nr(dict, S_LEN("linecount"), buf->b_ml.ml_line_count);
@@ -496,8 +495,7 @@ static dict_T *get_buffer_info(buf_T *buf)
   tv_dict_add_nr(dict, S_LEN("listed"), buf->b_p_bl);
   tv_dict_add_nr(dict, S_LEN("changed"), bufIsChanged(buf));
   tv_dict_add_nr(dict, S_LEN("changedtick"), buf_get_changedtick(buf));
-  tv_dict_add_nr(dict, S_LEN("hidden"),
-                 buf->b_ml.ml_mfp != NULL && buf->b_nwindows == 0);
+  tv_dict_add_nr(dict, S_LEN("hidden"), buf->b_ml.ml_mfp != NULL && buf->b_nwindows == 0);
 
   // Get a reference to buffer variables
   tv_dict_add_dict(dict, S_LEN("variables"), buf->b_vars);
@@ -609,8 +607,7 @@ static void get_buffer_lines(buf_T *buf, linenr_T start, linenr_T end, int retli
     }
     tv_list_alloc_ret(rettv, end - start + 1);
     while (start <= end) {
-      tv_list_append_string(rettv->vval.v_list,
-                            (const char *)ml_get_buf(buf, start++, false), -1);
+      tv_list_append_string(rettv->vval.v_list, ml_get_buf(buf, start++, false), -1);
     }
   } else {
     rettv->v_type = VAR_STRING;

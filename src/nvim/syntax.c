@@ -3749,7 +3749,7 @@ static void add_keyword(char *const name, const int id, const int flags,
   hashtab_T *const ht = (curwin->w_s->b_syn_ic)
       ? &curwin->w_s->b_keywtab_ic
       : &curwin->w_s->b_keywtab;
-  hashitem_T *const hi = hash_lookup(ht, (const char *)kp->keyword,
+  hashitem_T *const hi = hash_lookup(ht, kp->keyword,
                                      strlen(kp->keyword), hash);
 
   // even though it looks like only the kp->keyword member is
@@ -5370,7 +5370,7 @@ void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
   }
 
   // (part of) subcommand already typed
-  const char *p = (const char *)skiptowhite(arg);
+  const char *p = skiptowhite(arg);
   if (*p == NUL) {
     return;
   }

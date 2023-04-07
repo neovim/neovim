@@ -976,7 +976,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
       }
       p1 = vim_strchr(IObuff, '*');       // find first '*'
       while (p1 != NULL) {
-        p2 = strchr((const char *)p1 + 1, '*');  // Find second '*'.
+        p2 = strchr(p1 + 1, '*');  // Find second '*'.
         if (p2 != NULL && p2 > p1 + 1) {         // Skip "*" and "**".
           for (s = p1 + 1; s < p2; s++) {
             if (*s == ' ' || *s == '\t' || *s == '|') {

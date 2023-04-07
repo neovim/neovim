@@ -1491,7 +1491,7 @@ static char *shada_filename(const char *file)
       //     If shell is not performing them then they should be done in main.c
       //     where arguments are parsed, *not here*.
       expand_env((char *)file, &(NameBuff[0]), MAXPATHL);
-      file = (const char *)&(NameBuff[0]);
+      file = &(NameBuff[0]);
     }
   }
   return xstrdup(file);
@@ -1548,9 +1548,9 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
         if (!HASHITEM_EMPTY(hi)) { \
           todo--; \
           dictitem_T *const di = TV_DICT_HI2DI(hi); \
-          const size_t key_len = strlen((const char *)hi->hi_key); \
+          const size_t key_len = strlen(hi->hi_key); \
           msgpack_pack_str(spacker, key_len); \
-          msgpack_pack_str_body(spacker, (const char *)hi->hi_key, key_len); \
+          msgpack_pack_str_body(spacker, hi->hi_key, key_len); \
           if (encode_vim_to_msgpack(spacker, &di->di_tv, \
                                     _("additional data of ShaDa " what)) \
               == FAIL) { \
@@ -2208,7 +2208,7 @@ static inline ShaDaWriteResult shada_read_when_writing(ShaDaReadDef *const sd_re
         shada_free_shada_entry(&entry);
         break;
       }
-      const char *const fname = (const char *)entry.data.filemark.fname;
+      const char *const fname = entry.data.filemark.fname;
       khiter_t k;
       int kh_ret;
       k = kh_put(file_marks, &wms->file_marks, fname, &kh_ret);
@@ -2714,17 +2714,17 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
       const char *fname;
       if (fm.fmark.fnum == 0) {
         assert(fm.fname != NULL);
-        if (shada_removable((const char *)fm.fname)) {
+        if (shada_removable(fm.fname)) {
           continue;
         }
-        fname = (const char *)fm.fname;
+        fname = fm.fname;
       } else {
         const buf_T *const buf = buflist_findnr(fm.fmark.fnum);
         if (buf == NULL || buf->b_ffname == NULL
             || in_bufset(&removable_bufs, buf)) {
           continue;
         }
-        fname = (const char *)buf->b_ffname;
+        fname = buf->b_ffname;
       }
       const PossiblyFreedShadaEntry pf_entry = {
         .can_free_entry = false,
@@ -2761,7 +2761,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
         continue;
       }
       const void *local_marks_iter = NULL;
-      const char *const fname = (const char *)buf->b_ffname;
+      const char *const fname = buf->b_ffname;
       khiter_t k;
       int kh_ret;
       k = kh_put(file_marks, &wms->file_marks, fname, &kh_ret);

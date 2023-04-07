@@ -1468,7 +1468,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char *pat)
     // when adding lines the matching line may be empty but it is not
     // ignored because we are interested in the next line -- Acevedo
     if (compl_status_adding() && !compl_status_sol()) {
-      if (mb_strcmp_ic((bool)p_ic, (const char *)p, (const char *)pat) == 0) {
+      if (mb_strcmp_ic((bool)p_ic, p, pat) == 0) {
         return OK;
       }
     } else if (*p != NUL) {  // Ignore empty lines.
@@ -2777,21 +2777,21 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       return;
     }
     dict = argvars[0].vval.v_dict;
-    di = tv_dict_find(dict, (const char *)"timeout", -1);
+    di = tv_dict_find(dict, "timeout", -1);
     if (di != NULL) {
       timeout = (long)tv_get_number_chk(&di->di_tv, &error);
       if (error) {
         return;
       }
     }
-    di = tv_dict_find(dict, (const char *)"maxcount", -1);
+    di = tv_dict_find(dict, "maxcount", -1);
     if (di != NULL) {
       maxcount = (int)tv_get_number_chk(&di->di_tv, &error);
       if (error) {
         return;
       }
     }
-    di = tv_dict_find(dict, (const char *)"recompute", -1);
+    di = tv_dict_find(dict, "recompute", -1);
     if (di != NULL) {
       recompute = tv_get_number_chk(&di->di_tv, &error);
       if (error) {
@@ -2805,7 +2805,7 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         return;
       }
     }
-    di = tv_dict_find(dict, (const char *)"pos", -1);
+    di = tv_dict_find(dict, "pos", -1);
     if (di != NULL) {
       if (di->di_tv.v_type != VAR_LIST) {
         semsg(_(e_invarg2), "pos");
@@ -3227,7 +3227,7 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
       // For a dict, either use the specified key to lookup the string or
       // use the specified callback function to get the string.
       if (key != NULL) {
-        itemstr = tv_dict_get_string(tv->vval.v_dict, (const char *)key, false);
+        itemstr = tv_dict_get_string(tv->vval.v_dict, key, false);
       } else {
         typval_T argv[2];
 
