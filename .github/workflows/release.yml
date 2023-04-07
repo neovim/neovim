@@ -33,7 +33,7 @@ jobs:
       - name: Build release
         id: build
         run: |
-          CC=gcc-10 make CMAKE_BUILD_TYPE=${NVIM_BUILD_TYPE} CMAKE_EXTRA_FLAGS="-DCI_BUILD=OFF -DCMAKE_INSTALL_PREFIX:PATH="
+          CC=gcc-10 make CMAKE_BUILD_TYPE=${NVIM_BUILD_TYPE} CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH="
           printf 'version<<END\n' >> $GITHUB_OUTPUT
           ./build/bin/nvim --version | head -n 3 >> $GITHUB_OUTPUT
           printf 'END\n' >> $GITHUB_OUTPUT
@@ -126,7 +126,7 @@ jobs:
           cmake --build .deps
       - name: build package
         run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo' -D CI_BUILD=OFF
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'
           cmake --build build --target package
       - uses: actions/upload-artifact@v3
         with:

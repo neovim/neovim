@@ -67,7 +67,7 @@ jobs:
         run: make deps
 
       - name: Build
-        run: make CMAKE_FLAGS="-D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX"
+        run: make CMAKE_FLAGS="-D CI_BUILD=ON -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX"
 
       - name: Install
         run: make install
