@@ -1206,7 +1206,7 @@ static void list_one_var_a(const char *prefix, const char *name, const ptrdiff_t
     msg_putchar(' ');
   }
 
-  msg_outtrans((char *)string);
+  msg_outtrans(string);
 
   if (type == VAR_FUNC || type == VAR_PARTIAL) {
     msg_puts("()");

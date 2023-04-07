@@ -4745,7 +4745,7 @@ void ex_oldfiles(exarg_T *eap)
     if (!message_filtered(fname)) {
       msg_outnum(nr);
       msg_puts(": ");
-      msg_outtrans((char *)tv_get_string(TV_LIST_ITEM_TV(li)));
+      msg_outtrans(tv_get_string(TV_LIST_ITEM_TV(li)));
       msg_clr_eos();
       msg_putchar('\n');
       os_breakcheck();
