@@ -1060,7 +1060,7 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
   }
 
   if (buf != NULL && buf->b_help) {
-    const size_t dlen = xstrlcpy(dst, path_tail((char *)src), dstlen);
+    const size_t dlen = xstrlcpy(dst, path_tail(src), dstlen);
     return MIN(dlen, dstlen - 1);
   }
 
@@ -1098,7 +1098,7 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
   }
 
   if (!one) {
-    src = skipwhite((char *)src);
+    src = skipwhite(src);
   }
   char *dst_p = dst;
   while (*src && dstlen > 0) {

@@ -3643,7 +3643,7 @@ static bool syn_list_keywords(const int id, const hashtab_T *const ht, bool did_
             prev_skipempty = (kp->flags & HL_SKIPEMPTY);
           }
         }
-        msg_outtrans((char *)kp->keyword);
+        msg_outtrans(kp->keyword);
       }
     }
   }

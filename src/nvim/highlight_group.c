@@ -1639,7 +1639,7 @@ static bool highlight_list_arg(const int id, bool didh, const int type, int iarg
       msg_puts_attr(name, HL_ATTR(HLF_D));
       msg_puts_attr("=", HL_ATTR(HLF_D));
     }
-    msg_outtrans((char *)ts);
+    msg_outtrans(ts);
   }
   return didh;
 }
