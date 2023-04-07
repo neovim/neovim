@@ -449,7 +449,7 @@ static int str_to_mapargs(const char *strargs, bool is_unmap, MapArguments *mapa
 /// @param args  "rhs", "rhs_lua", "orig_rhs", "expr", "silent", "nowait", "replace_keycodes" and
 ///              and "desc" fields are used.
 ///              "rhs", "rhs_lua", "orig_rhs" fields are cleared if "simplified" is false.
-/// @param sid  -1 to use current_sctx
+/// @param sid  0 to use current_sctx
 static void map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr_table, const char *keys,
                     MapArguments *args, int noremap, int mode, bool is_abbr, scid_T sid,
                     linenr_T lnum, bool simplified)
@@ -482,7 +482,7 @@ static void map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr_table,
   mp->m_simplified = simplified;
   mp->m_expr = args->expr;
   mp->m_replace_keycodes = args->replace_keycodes;
-  if (sid >= 0) {
+  if (sid != 0) {
     mp->m_script_ctx.sc_sid = sid;
     mp->m_script_ctx.sc_lnum = lnum;
   } else {
@@ -857,8 +857,8 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
 
     // Get here when adding a new entry to the maphash[] list or abbrlist.
     map_add(buf, map_table, abbr_table, lhs, args, noremap, mode, is_abbrev,
-            -1,  // sid
-            0,   // lnum
+            0,  // sid
+            0,  // lnum
             keyround1_simplified);
   }
 
