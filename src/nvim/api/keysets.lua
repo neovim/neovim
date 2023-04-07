@@ -97,7 +97,7 @@ return {
     "highlights";
     "use_winbar";
     "use_tabline";
-    "use_statuscol";
+    "use_statuscol_lnum";
   }};
   { 'option', {
     "scope";

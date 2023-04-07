@@ -74,7 +74,7 @@ NEW FEATURES                                                    *news-features*
 The following new APIs or features were added.
 
 • |nvim_eval_statusline()| supports evaluating the |'statuscolumn'| through a
-  new `opts` field: `use_statuscol`.
+  new `opts` field: `use_statuscol_lnum`.
 
 • |nvim_buf_get_extmarks()| now accepts a -1 `ns_id` to request extmarks from
   all namespaces and adds the namespace id to the details array.

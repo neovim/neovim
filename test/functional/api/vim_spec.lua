@@ -3422,7 +3422,7 @@ describe('API', function()
             { use_winbar = true, highlights = true }))
       end)
       it('works with statuscolumn', function()
-        command([[
+        exec([[
           let &stc='%C%s%=%l '
           set cul nu nuw=3 scl=yes:2 fdc=2
           call setline(1, repeat(['aaaaa'], 5))
@@ -3431,9 +3431,8 @@ describe('API', function()
           call sign_place(2, 1, 'a', bufnr(), {'lnum':4})
           call nvim_buf_set_extmark(0, g:ns, 3, 1, { 'sign_text':'bb', 'sign_hl_group':'ErrorMsg' })
           1,5fold | 1,5 fold | foldopen!
+          norm 4G
         ]])
-        command('norm 4G')
-        command('let v:lnum=4')
         eq({
           str = '││aabb 4 ',
           width = 9,
@@ -3444,8 +3443,7 @@ describe('API', function()
             { group = 'ErrorMsg', start = 8 },
             { group = 'Normal', start = 10 }
           }
-        }, meths.eval_statusline('%C%s%=%l ', { use_statuscol = true, highlights = true }))
-        command('let v:lnum=3')
+        }, meths.eval_statusline('%C%s%=%l ', { use_statuscol_lnum = 4, highlights = true }))
         eq({
           str = '3 ' ,
           width = 2,
@@ -3453,7 +3451,7 @@ describe('API', function()
             { group = 'LineNr', start = 0 },
             { group = 'ErrorMsg', start = 1 }
           }
-        }, meths.eval_statusline('%l%#ErrorMsg# ', { use_statuscol = true, highlights = true }))
+        }, meths.eval_statusline('%l%#ErrorMsg# ', { use_statuscol_lnum = 3, highlights = true }))
       end)
       it('no memory leak with click functions', function()
         meths.eval_statusline('%@ClickFunc@StatusLineStringWithClickFunc%T', {})
