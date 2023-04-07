@@ -396,11 +396,11 @@ void eval_init(void)
 
     // add to v: scope dict, unless the value is not always available
     if (p->vv_type != VAR_UNKNOWN) {
-      hash_add(&vimvarht, (char *)p->vv_di.di_key);
+      hash_add(&vimvarht, p->vv_di.di_key);
     }
     if (p->vv_flags & VV_COMPAT) {
       // add to compat scope dict
-      hash_add(&compat_hashtab, (char *)p->vv_di.di_key);
+      hash_add(&compat_hashtab, p->vv_di.di_key);
     }
   }
   vimvars[VV_VERSION].vv_nr = VIM_VERSION_100;
@@ -3035,7 +3035,7 @@ static int eval7_leader(typval_T *const rettv, const bool numeric_only,
                         const char *const start_leader, const char **const end_leaderp)
   FUNC_ATTR_NONNULL_ALL
 {
-  const char *end_leader = (char *)(*end_leaderp);
+  const char *end_leader = *end_leaderp;
   int ret = OK;
   bool error = false;
   varnumber_T val = 0;
@@ -3263,7 +3263,7 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
   bool empty2 = false;
   ptrdiff_t len = -1;
   int range = false;
-  char *key = NULL;
+  const char *key = NULL;
 
   switch (rettv->v_type) {
   case VAR_FUNC:
@@ -3512,7 +3512,7 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
       }
 
       if (len == -1) {
-        key = (char *)tv_get_string_chk(&var1);
+        key = tv_get_string_chk(&var1);
         if (key == NULL) {
           tv_clear(&var1);
           return FAIL;
@@ -7607,7 +7607,7 @@ const void *var_shada_iter(const void *const iter, const char **const name, typv
   } else {
     hi = (const hashitem_T *)iter;
   }
-  *name = (char *)TV_DICT_HI2DI(hi)->di_key;
+  *name = TV_DICT_HI2DI(hi)->di_key;
   tv_copy(&TV_DICT_HI2DI(hi)->di_tv, rettv);
   while ((size_t)(++hi - hifirst) < hinum) {
     if (!HASHITEM_EMPTY(hi) && (var_flavour(hi->hi_key) & flavour)) {
@@ -7944,7 +7944,7 @@ repeat:
       // "path/to/this.file.ext" :r:r:r
       //  ^       ^------------- tail
       //  +--------------------- *fnamep
-      if (s > MAX(tail, (char *)(*fnamep))) {
+      if (s > MAX(tail, *fnamep)) {
         *fnamelen = (size_t)(s - *fnamep);
       }
     }

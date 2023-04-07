@@ -1832,7 +1832,7 @@ static char *get_str_line(int c, void *cookie, int indent, bool do_concat)
       if (!concat_continued_line(&ga, 400, line, (size_t)(next_eol - line))) {
         break;
       }
-      eol = (char *)next_eol;
+      eol = next_eol;
     }
   }
   ga_append(&ga, NUL);

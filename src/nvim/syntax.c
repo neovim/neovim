@@ -3763,7 +3763,7 @@ static void add_keyword(char *const name, const int id, const int flags,
   } else {
     // keyword already exists, prepend to list
     kp->ke_next = HI2KE(hi);
-    hi->hi_key = (char *)KE2HIKEY(kp);
+    hi->hi_key = KE2HIKEY(kp);
   }
 }
 

@@ -596,13 +596,13 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
         int last = first;
         p = (char *)lhs + utfc_ptr2len((char *)lhs);
         n = 1;
-        while (p < (char *)lhs + len) {
+        while (p < lhs + len) {
           n++;                                  // nr of (multi-byte) chars
           last = vim_iswordp(p);                // type of last char
           if (same == -1 && last != first) {
             same = n - 1;                       // count of same char type
           }
-          p += utfc_ptr2len((char *)p);
+          p += utfc_ptr2len(p);
         }
         if (last && n > 2 && same >= 0 && same < n - 1) {
           retval = 1;

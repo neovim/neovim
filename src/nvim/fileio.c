@@ -4228,7 +4228,7 @@ void shorten_fnames(int force)
 
   os_dirname(dirname, MAXPATHL);
   FOR_ALL_BUFFERS(buf) {
-    shorten_buf_fname(buf, (char *)dirname, force);
+    shorten_buf_fname(buf, dirname, force);
 
     // Always make the swap file name a full path, a "nofile" buffer may
     // also have a swap file.
@@ -4362,7 +4362,7 @@ bool vim_fgets(char *buf, int size, FILE *fp)
     do {
       tbuf[sizeof(tbuf) - 2] = NUL;
       errno = 0;
-      retval = fgets((char *)tbuf, sizeof(tbuf), fp);
+      retval = fgets(tbuf, sizeof(tbuf), fp);
       if (retval == NULL && (feof(fp) || errno != EINTR)) {
         break;
       }
@@ -4544,8 +4544,7 @@ int vim_rename(const char *from, const char *to)
   // to the same file (ignoring case and slash/backslash differences) but
   // the file name differs we need to go through a temp file.
   if (path_fnamecmp(from, to) == 0) {
-    if (p_fic && (strcmp(path_tail((char *)from), path_tail((char *)to))
-                  != 0)) {
+    if (p_fic && (strcmp(path_tail(from), path_tail(to)) != 0)) {
       use_tmp_file = true;
     } else {
       return 0;
@@ -4554,7 +4553,7 @@ int vim_rename(const char *from, const char *to)
 
   // Fail if the "from" file doesn't exist. Avoids that "to" is deleted.
   FileInfo from_info;
-  if (!os_fileinfo((char *)from, &from_info)) {
+  if (!os_fileinfo(from, &from_info)) {
     return -1;
   }
 
@@ -4562,8 +4561,7 @@ int vim_rename(const char *from, const char *to)
   // This happens when "from" and "to" differ in case and are on a FAT32
   // filesystem. In that case go through a temp file name.
   FileInfo to_info;
-  if (os_fileinfo((char *)to, &to_info)
-      && os_fileinfo_id_equal(&from_info,  &to_info)) {
+  if (os_fileinfo(to, &to_info) && os_fileinfo_id_equal(&from_info,  &to_info)) {
     use_tmp_file = true;
   }
 
@@ -4575,7 +4573,7 @@ int vim_rename(const char *from, const char *to)
   // os_rename() work, on other systems it makes sure that we don't have
   // two files when the os_rename() fails.
 
-  os_remove((char *)to);
+  os_remove(to);
 
   // First try a normal rename, return if it works.
   if (os_rename(from, to) == OK) {
@@ -4586,14 +4584,14 @@ int vim_rename(const char *from, const char *to)
   long perm = os_getperm(from);
   // For systems that support ACL: get the ACL from the original file.
   vim_acl_T acl = os_get_acl(from);
-  int fd_in = os_open((char *)from, O_RDONLY, 0);
+  int fd_in = os_open(from, O_RDONLY, 0);
   if (fd_in < 0) {
     os_free_acl(acl);
     return -1;
   }
 
   // Create the new file with same permissions as the original.
-  int fd_out = os_open((char *)to, O_CREAT|O_EXCL|O_WRONLY|O_NOFOLLOW, (int)perm);
+  int fd_out = os_open(to, O_CREAT|O_EXCL|O_WRONLY|O_NOFOLLOW, (int)perm);
   if (fd_out < 0) {
     close(fd_in);
     os_free_acl(acl);
@@ -4636,7 +4634,7 @@ int vim_rename(const char *from, const char *to)
     semsg(errmsg, to);
     return -1;
   }
-  os_remove((char *)from);
+  os_remove(from);
   return 0;
 }
 

@@ -611,7 +611,7 @@ static void add_nr_var(dict_T *dp, dictitem_T *v, char *name, varnumber_T nr)
   STRCPY(v->di_key, name);
 #endif
   v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
-  hash_add(&dp->dv_hashtab, (char *)v->di_key);
+  hash_add(&dp->dv_hashtab, v->di_key);
   v->di_tv.v_type = VAR_NUMBER;
   v->di_tv.v_lock = VAR_FIXED;
   v->di_tv.vval.v_number = nr;
@@ -2612,7 +2612,7 @@ void ex_function(exarg_T *eap)
     set_ufunc_name(fp, name);
     if (overwrite) {
       hi = hash_find(&func_hashtab, name);
-      hi->hi_key = (char *)UF2HIKEY(fp);
+      hi->hi_key = UF2HIKEY(fp);
     } else if (hash_add(&func_hashtab, UF2HIKEY(fp)) == FAIL) {
       xfree(fp);
       goto erret;
@@ -2681,7 +2681,7 @@ int eval_fname_script(const char *const p)
 bool translated_function_exists(const char *name)
 {
   if (builtin_function(name, -1)) {
-    return find_internal_func((char *)name) != NULL;
+    return find_internal_func(name) != NULL;
   }
   return find_func(name) != NULL;
 }
