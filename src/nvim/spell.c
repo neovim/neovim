@@ -1316,7 +1316,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
     // Copy the line into "buf" and append the start of the next line if
     // possible.  Note: this ml_get_buf() may make "line" invalid, check
     // for empty line first.
-    bool empty_line = *skipwhite((const char *)line) == NUL;
+    bool empty_line = *skipwhite(line) == NUL;
     STRCPY(buf, line);
     if (lnum < wp->w_buffer->b_ml.ml_line_count) {
       spell_cat_line(buf + strlen(buf),
@@ -1743,7 +1743,7 @@ void count_common_word(slang_T *lp, char *word, int len, uint8_t count)
   wordcount_T *wc;
   hash_T hash = hash_hash(p);
   const size_t p_len = strlen(p);
-  hashitem_T *hi = hash_lookup(&lp->sl_wordcount, (const char *)p, p_len, hash);
+  hashitem_T *hi = hash_lookup(&lp->sl_wordcount, p, p_len, hash);
   if (HASHITEM_EMPTY(hi)) {
     wc = xmalloc(offsetof(wordcount_T, wc_word) + p_len + 1);
     memcpy(wc->wc_word, p, p_len + 1);
@@ -3129,9 +3129,9 @@ void ex_spellinfo(exarg_T *eap)
   for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len && !got_int; lpi++) {
     langp_T *const lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
     msg_puts("file: ");
-    msg_puts((const char *)lp->lp_slang->sl_fname);
+    msg_puts(lp->lp_slang->sl_fname);
     msg_putchar('\n');
-    const char *const p = (const char *)lp->lp_slang->sl_info;
+    const char *const p = lp->lp_slang->sl_info;
     if (p != NULL) {
       msg_puts(p);
       msg_putchar('\n');

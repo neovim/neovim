@@ -926,7 +926,7 @@ int do_record(int c)
     if (p != NULL) {
       // Remove escaping for K_SPECIAL in multi-byte chars.
       vim_unescape_ks(p);
-      (void)tv_dict_add_str(dict, S_LEN("regcontents"), (const char *)p);
+      (void)tv_dict_add_str(dict, S_LEN("regcontents"), p);
     }
 
     // Name of requested register, or empty string for unnamed operation.
@@ -1273,7 +1273,7 @@ int insert_reg(int regname, bool literally_arg)
     if (arg == NULL) {
       return FAIL;
     }
-    stuffescaped((const char *)arg, literally);
+    stuffescaped(arg, literally);
     if (allocated) {
       xfree(arg);
     }
@@ -1288,7 +1288,7 @@ int insert_reg(int regname, bool literally_arg)
           AppendCharToRedobuff(regname);
           do_put(regname, NULL, BACKWARD, 1L, PUT_CURSEND);
         } else {
-          stuffescaped((const char *)reg->y_array[i], literally);
+          stuffescaped(reg->y_array[i], literally);
         }
         // Insert a newline between lines and after last line if
         // y_type is kMTLineWise.
@@ -2867,7 +2867,7 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   // The yanked text contents.
   list_T *const list = tv_list_alloc((ptrdiff_t)reg->y_size);
   for (size_t i = 0; i < reg->y_size; i++) {
-    tv_list_append_string(list, (const char *)reg->y_array[i], -1);
+    tv_list_append_string(list, reg->y_array[i], -1);
   }
   tv_list_set_lock(list, VAR_FIXED);
   (void)tv_dict_add_list(dict, S_LEN("regcontents"), list);
@@ -4963,7 +4963,7 @@ void *get_reg_contents(int regname, int flags)
   if (flags & kGRegList) {
     list_T *const list = tv_list_alloc((ptrdiff_t)reg->y_size);
     for (size_t i = 0; i < reg->y_size; i++) {
-      tv_list_append_string(list, (const char *)reg->y_array[i], -1);
+      tv_list_append_string(list, reg->y_array[i], -1);
     }
 
     return list;
@@ -5608,13 +5608,13 @@ static void op_colon(oparg_T *oap)
     stuffReadbuff("!");
   }
   if (oap->op_type == OP_INDENT) {
-    stuffReadbuff((const char *)get_equalprg());
+    stuffReadbuff(get_equalprg());
     stuffReadbuff("\n");
   } else if (oap->op_type == OP_FORMAT) {
     if (*curbuf->b_p_fp != NUL) {
-      stuffReadbuff((const char *)curbuf->b_p_fp);
+      stuffReadbuff(curbuf->b_p_fp);
     } else if (*p_fp != NUL) {
-      stuffReadbuff((const char *)p_fp);
+      stuffReadbuff(p_fp);
     } else {
       stuffReadbuff("fmt");
     }
@@ -6639,7 +6639,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
     if (TV_LIST_ITEM_TV(li)->v_type != VAR_STRING) {
       goto err;
     }
-    reg->y_array[tv_idx++] = xstrdupnul((const char *)TV_LIST_ITEM_TV(li)->vval.v_string);
+    reg->y_array[tv_idx++] = xstrdupnul(TV_LIST_ITEM_TV(li)->vval.v_string);
   });
 
   if (reg->y_size > 0 && strlen(reg->y_array[reg->y_size - 1]) == 0) {
@@ -6700,7 +6700,7 @@ static void set_clipboard(int name, yankreg_T *reg)
   list_T *const lines = tv_list_alloc((ptrdiff_t)reg->y_size + (reg->y_type != kMTCharWise));
 
   for (size_t i = 0; i < reg->y_size; i++) {
-    tv_list_append_string(lines, (const char *)reg->y_array[i], -1);
+    tv_list_append_string(lines, reg->y_array[i], -1);
   }
 
   char regtype;
@@ -6910,7 +6910,7 @@ bcount_t get_region_bytecount(buf_T *buf, linenr_T start_lnum, linenr_T end_lnum
   if (start_lnum == end_lnum) {
     return end_col - start_col;
   }
-  const char *first = (const char *)ml_get_buf(buf, start_lnum, false);
+  const char *first = ml_get_buf(buf, start_lnum, false);
   bcount_t deleted_bytes = (bcount_t)strlen(first) - start_col + 1;
 
   for (linenr_T i = 1; i <= end_lnum - start_lnum - 1; i++) {

@@ -1786,7 +1786,7 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
         }
       }
       if (*p != NUL) {
-        p = transstr((const char *)text, true);
+        p = transstr(text, true);
         xfree(text);
         text = p;
       }

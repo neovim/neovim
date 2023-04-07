@@ -1091,7 +1091,7 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
   if (partial == NULL) {
     func_name = sortinfo->item_compare_func;
   } else {
-    func_name = (const char *)partial_name(partial);
+    func_name = partial_name(partial);
   }
 
   // Copy the values.  This is needed to be able to set v_lock to VAR_FIXED
@@ -1189,7 +1189,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
     if (argvars[1].v_type != VAR_UNKNOWN) {
       // optional second argument: {func}
       if (argvars[1].v_type == VAR_FUNC) {
-        info.item_compare_func = (const char *)argvars[1].vval.v_string;
+        info.item_compare_func = argvars[1].vval.v_string;
       } else if (argvars[1].v_type == VAR_PARTIAL) {
         info.item_compare_partial = argvars[1].vval.v_partial;
       } else {
@@ -1894,7 +1894,7 @@ void tv_dict_item_free(dictitem_T *const item)
 dictitem_T *tv_dict_item_copy(dictitem_T *const di)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  dictitem_T *const new_di = tv_dict_item_alloc((const char *)di->di_key);
+  dictitem_T *const new_di = tv_dict_item_alloc(di->di_key);
   tv_copy(&di->di_tv, &new_di->di_tv);
   return new_di;
 }
@@ -2240,7 +2240,7 @@ int tv_dict_wrong_func_name(dict_T *d, typval_T *tv, const char *name)
 int tv_dict_add(dict_T *const d, dictitem_T *const item)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (tv_dict_wrong_func_name(d, &item->di_tv, (const char *)item->di_key)) {
+  if (tv_dict_wrong_func_name(d, &item->di_tv, item->di_key)) {
     return FAIL;
   }
   return hash_add(&d->dv_hashtab, (char *)item->di_key);
@@ -2477,9 +2477,9 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action
 
   HASHTAB_ITER(&d2->dv_hashtab, hi2, {
     dictitem_T *const di2 = TV_DICT_HI2DI(hi2);
-    dictitem_T *const di1 = tv_dict_find(d1, (const char *)di2->di_key, -1);
+    dictitem_T *const di1 = tv_dict_find(d1, di2->di_key, -1);
     // Check the key to be valid when adding to any scope.
-    if (d1->dv_scope != VAR_NO_SCOPE && !valid_varname((const char *)di2->di_key)) {
+    if (d1->dv_scope != VAR_NO_SCOPE && !valid_varname(di2->di_key)) {
       break;
     }
     if (di1 == NULL) {
@@ -2489,14 +2489,14 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action
         dictitem_T *const new_di = di2;
         if (tv_dict_add(d1, new_di) == OK) {
           hash_remove(&d2->dv_hashtab, hi2);
-          tv_dict_watcher_notify(d1, (const char *)new_di->di_key, &new_di->di_tv, NULL);
+          tv_dict_watcher_notify(d1, new_di->di_key, &new_di->di_tv, NULL);
         }
       } else {
         dictitem_T *const new_di = tv_dict_item_copy(di2);
         if (tv_dict_add(d1, new_di) == FAIL) {
           tv_dict_item_free(new_di);
         } else if (watched) {
-          tv_dict_watcher_notify(d1, (const char *)new_di->di_key, &new_di->di_tv, NULL);
+          tv_dict_watcher_notify(d1, new_di->di_key, &new_di->di_tv, NULL);
         }
       }
     } else if (*action == 'e') {
@@ -2510,7 +2510,7 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action
         break;
       }
       // Disallow replacing a builtin function.
-      if (tv_dict_wrong_func_name(d1, &di2->di_tv, (const char *)di2->di_key)) {
+      if (tv_dict_wrong_func_name(d1, &di2->di_tv, di2->di_key)) {
         break;
       }
 
@@ -2522,8 +2522,7 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action
       tv_copy(&di2->di_tv, &di1->di_tv);
 
       if (watched) {
-        tv_dict_watcher_notify(d1, (const char *)di1->di_key, &di1->di_tv,
-                               &oldtv);
+        tv_dict_watcher_notify(d1, di1->di_key, &di1->di_tv, &oldtv);
         tv_clear(&oldtv);
       }
     }
@@ -2558,7 +2557,7 @@ bool tv_dict_equal(dict_T *const d1, dict_T *const d2, const bool ic, const bool
   }
 
   TV_DICT_ITER(d1, di1, {
-    dictitem_T *const di2 = tv_dict_find(d2, (const char *)di1->di_key, -1);
+    dictitem_T *const di2 = tv_dict_find(d2, di1->di_key, -1);
     if (di2 == NULL) {
       return false;
     }
@@ -2597,12 +2596,12 @@ dict_T *tv_dict_copy(const vimconv_T *const conv, dict_T *const orig, const bool
     }
     dictitem_T *new_di;
     if (conv == NULL || conv->vc_type == CONV_NONE) {
-      new_di = tv_dict_item_alloc((const char *)di->di_key);
+      new_di = tv_dict_item_alloc(di->di_key);
     } else {
-      size_t len = strlen((char *)di->di_key);
-      char *const key = (char *)string_convert(conv, (char *)di->di_key, &len);
+      size_t len = strlen(di->di_key);
+      char *const key = string_convert(conv, di->di_key, &len);
       if (key == NULL) {
-        new_di = tv_dict_item_alloc_len((const char *)di->di_key, len);
+        new_di = tv_dict_item_alloc_len(di->di_key, len);
       } else {
         new_di = tv_dict_item_alloc_len(key, len);
         xfree(key);
@@ -2960,7 +2959,7 @@ static void tv_dict_list(typval_T *const tv, typval_T *const rettv, const DictLi
         tv_list_append_owned_tv(sub_l, (typval_T) {
           .v_type = VAR_STRING,
           .v_lock = VAR_UNLOCKED,
-          .vval.v_string = xstrdup((const char *)di->di_key),
+          .vval.v_string = xstrdup(di->di_key),
         });
 
         tv_list_append_tv(sub_l, &di->di_tv);
@@ -3132,7 +3131,7 @@ static inline int _nothing_conv_func_start(typval_T *const tv, char *const fun)
     }
   } else {
     func_unref(fun);
-    if ((const char *)fun != tv_empty_string) {
+    if (fun != tv_empty_string) {
       xfree(fun);
     }
     tv->vval.v_string = NULL;
@@ -3805,7 +3804,7 @@ static const char *const str_errors[] = {
   [VAR_FUNC]= N_(FUNC_ERROR),
   [VAR_LIST]= N_("E730: using List as a String"),
   [VAR_DICT]= N_("E731: using Dictionary as a String"),
-  [VAR_FLOAT]= ((const char *)e_float_as_string),
+  [VAR_FLOAT]= e_float_as_string,
   [VAR_BLOB]= N_("E976: using Blob as a String"),
   [VAR_UNKNOWN]= N_("E908: using an invalid value as a String"),
 };
@@ -4116,7 +4115,7 @@ const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
     return buf;
   case VAR_STRING:
     if (tv->vval.v_string != NULL) {
-      return (const char *)tv->vval.v_string;
+      return tv->vval.v_string;
     }
     return "";
   case VAR_BOOL:

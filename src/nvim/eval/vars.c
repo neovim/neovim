@@ -215,7 +215,7 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
       emsg(_(e_invarg));
     } else if (!ends_excmd(*arg)) {
       // ":let var1 var2"
-      arg = (char *)list_arg_vars(eap, (const char *)arg, &first);
+      arg = (char *)list_arg_vars(eap, arg, &first);
     } else if (!eap->skip) {
       // ":let"
       list_glob_vars(&first);
@@ -551,7 +551,7 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
       xfree(tofree);
     }
 
-    arg = (const char *)skipwhite(arg);
+    arg = skipwhite(arg);
   }
 
   return arg;
@@ -601,7 +601,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
           char *s = vim_getenv(name);
           if (s != NULL) {
             tofree = concat_str(s, p);
-            p = (const char *)tofree;
+            p = tofree;
             xfree(s);
           }
         }
@@ -725,7 +725,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
         char *s = get_reg_contents(*arg == '@' ? '"' : *arg, kGRegExprSrc);
         if (s != NULL) {
           ptofree = concat_str(s, p);
-          p = (const char *)ptofree;
+          p = ptofree;
           xfree(s);
         }
       }
@@ -798,7 +798,7 @@ static void ex_unletlock(exarg_T *eap, char *argstart, int deep, ex_unletlock_ca
 
   do {
     if (*arg == '$') {
-      lv.ll_name = (const char *)arg;
+      lv.ll_name = arg;
       lv.ll_tv = NULL;
       arg++;
       if (get_env_len((const char **)&arg) == 0) {
@@ -1169,7 +1169,7 @@ void delete_var(hashtab_T *ht, hashitem_T *hi)
 static void list_one_var(dictitem_T *v, const char *prefix, int *first)
 {
   char *const s = encode_tv2echo(&v->di_tv, NULL);
-  list_one_var_a(prefix, (const char *)v->di_key, (ptrdiff_t)strlen((char *)v->di_key),
+  list_one_var_a(prefix, v->di_key, (ptrdiff_t)strlen((char *)v->di_key),
                  v->di_tv.v_type, (s == NULL ? "" : s), first);
   xfree(s);
 }

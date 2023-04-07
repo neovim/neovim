@@ -1501,7 +1501,7 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
       char *q = mp->m_keys;
       int match;
 
-      if (strchr((const char *)mp->m_keys, K_SPECIAL) != NULL) {
+      if (strchr(mp->m_keys, K_SPECIAL) != NULL) {
         // Might have K_SPECIAL escaped mp->m_keys.
         q = xstrdup(mp->m_keys);
         vim_unescape_ks(q);
@@ -1811,8 +1811,7 @@ int makemap(FILE *fd, buf_T *buf)
               did_cpo = true;
             } else {
               const char specials[] = { (char)(uint8_t)K_SPECIAL, NL, NUL };
-              if (strpbrk((const char *)mp->m_str, specials) != NULL
-                  || strpbrk((const char *)mp->m_keys, specials) != NULL) {
+              if (strpbrk(mp->m_str, specials) != NULL || strpbrk(mp->m_keys, specials) != NULL) {
                 did_cpo = true;
               }
             }
@@ -2091,7 +2090,7 @@ static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhs
     PUT(dict, "desc", STRING_OBJ(cstr_to_string(mp->m_desc)));
   }
   PUT(dict, "lhs", STRING_OBJ(cstr_as_string(lhs)));
-  PUT(dict, "lhsraw", STRING_OBJ(cstr_to_string((const char *)mp->m_keys)));
+  PUT(dict, "lhsraw", STRING_OBJ(cstr_to_string(mp->m_keys)));
   if (lhsrawalt != NULL) {
     // Also add the value for the simplified entry.
     PUT(dict, "lhsrawalt", STRING_OBJ(cstr_to_string(lhsrawalt)));

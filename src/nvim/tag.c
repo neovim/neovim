@@ -1081,7 +1081,7 @@ static int add_llist_tags(char *tag, int num_matches, char **matches)
     tv_list_append_dict(list, dict);
 
     tv_dict_add_str(dict, S_LEN("text"), tag_name);
-    tv_dict_add_str(dict, S_LEN("filename"), (const char *)fname);
+    tv_dict_add_str(dict, S_LEN("filename"), fname);
     tv_dict_add_nr(dict, S_LEN("lnum"), lnum);
     if (lnum == 0) {
       tv_dict_add_str(dict, S_LEN("pattern"), cmd);
@@ -1246,10 +1246,10 @@ static int find_tagfunc_tags(char *pat, garray_T *ga, int *match_count, int flag
   // create 'info' dict argument
   dict_T *const d = tv_dict_alloc_lock(VAR_FIXED);
   if (tag != NULL && tag->user_data != NULL) {
-    tv_dict_add_str(d, S_LEN("user_data"), (const char *)tag->user_data);
+    tv_dict_add_str(d, S_LEN("user_data"), tag->user_data);
   }
   if (buf_ffname != NULL) {
-    tv_dict_add_str(d, S_LEN("buf_ffname"), (const char *)buf_ffname);
+    tv_dict_add_str(d, S_LEN("buf_ffname"), buf_ffname);
   }
 
   d->dv_refcount++;
@@ -2067,7 +2067,7 @@ static void findtags_add_match(findtags_state_T *st, tagptrs_T *tagpp, findtags_
     // follow after it.  E.g. help tags store the priority
     // after the NUL.
     *hash = hash_hash(mfp);
-    hi = hash_lookup(&st->ht_match[mtt], (const char *)mfp, strlen(mfp), *hash);
+    hi = hash_lookup(&st->ht_match[mtt], mfp, strlen(mfp), *hash);
     if (HASHITEM_EMPTY(hi)) {
       hash_add_item(&st->ht_match[mtt], hi, mfp, *hash);
       GA_APPEND(char *, &st->ga_match[mtt], mfp);
@@ -3408,11 +3408,11 @@ static void get_tag_details(taggy_T *tag, dict_T *retdict)
   list_T *pos;
   fmark_T *fmark;
 
-  tv_dict_add_str(retdict, S_LEN("tagname"), (const char *)tag->tagname);
+  tv_dict_add_str(retdict, S_LEN("tagname"), tag->tagname);
   tv_dict_add_nr(retdict, S_LEN("matchnr"), tag->cur_match + 1);
   tv_dict_add_nr(retdict, S_LEN("bufnr"), tag->cur_fnum);
   if (tag->user_data) {
-    tv_dict_add_str(retdict, S_LEN("user_data"), (const char *)tag->user_data);
+    tv_dict_add_str(retdict, S_LEN("user_data"), tag->user_data);
   }
 
   pos = tv_list_alloc(4);

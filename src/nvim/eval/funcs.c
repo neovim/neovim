@@ -319,7 +319,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   Object result = handler.fn(VIML_INTERNAL_CALL, args, &res_arena, &err);
 
   if (ERROR_SET(&err)) {
-    semsg_multiline((const char *)e_api_error, err.msg);
+    semsg_multiline(e_api_error, err.msg);
     goto end;
   }
 
@@ -1546,7 +1546,7 @@ static void f_eval(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const char *s = tv_get_string_chk(&argvars[0]);
   if (s != NULL) {
-    s = (const char *)skipwhite(s);
+    s = skipwhite(s);
   }
 
   const char *const expr_start = s;
@@ -1779,7 +1779,7 @@ static void f_expand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (rettv->v_type == VAR_LIST) {
       tv_list_alloc_ret(rettv, (result != NULL));
       if (result != NULL) {
-        tv_list_append_string(rettv->vval.v_list, (const char *)result, -1);
+        tv_list_append_string(rettv->vval.v_list, result, -1);
       }
       XFREE_CLEAR(result);
     } else {
@@ -1805,8 +1805,7 @@ static void f_expand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         ExpandOne(&xpc, (char *)s, NULL, options, WILD_ALL_KEEP);
         tv_list_alloc_ret(rettv, xpc.xp_numfiles);
         for (int i = 0; i < xpc.xp_numfiles; i++) {
-          tv_list_append_string(rettv->vval.v_list,
-                                (const char *)xpc.xp_files[i], -1);
+          tv_list_append_string(rettv->vval.v_list, xpc.xp_files[i], -1);
         }
         ExpandCleanup(&xpc);
       }
@@ -2134,7 +2133,7 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
       first = false;
 
       if (fresult != NULL && rettv->v_type == VAR_LIST) {
-        tv_list_append_string(rettv->vval.v_list, (const char *)fresult, -1);
+        tv_list_append_string(rettv->vval.v_list, fresult, -1);
       }
     } while ((rettv->v_type == VAR_LIST || --count > 0) && fresult != NULL);
   }
@@ -3008,8 +3007,7 @@ static void f_glob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
                 WILD_ALL_KEEP);
       tv_list_alloc_ret(rettv, xpc.xp_numfiles);
       for (int i = 0; i < xpc.xp_numfiles; i++) {
-        tv_list_append_string(rettv->vval.v_list, (const char *)xpc.xp_files[i],
-                              -1);
+        tv_list_append_string(rettv->vval.v_list, xpc.xp_files[i], -1);
       }
       ExpandCleanup(&xpc);
     }
@@ -4050,7 +4048,7 @@ static dict_T *create_environment(const dictitem_T *job_env, const bool clear_en
 #ifdef MSWIN
     TV_DICT_ITER(job_env->di_tv.vval.v_dict, var, {
       // Always use upper-case keys for Windows so we detect duplicate keys
-      char *const key = strcase_save((const char *)var->di_key, true);
+      char *const key = strcase_save(var->di_key, true);
       size_t len = strlen(key);
       dictitem_T *dv = tv_dict_find(env, key, len);
       if (dv) {
@@ -4735,8 +4733,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
           if (regmatch.endp[i] == NULL) {
             tv_list_append_string(rettv->vval.v_list, NULL, 0);
           } else {
-            tv_list_append_string(rettv->vval.v_list,
-                                  (const char *)regmatch.startp[i],
+            tv_list_append_string(rettv->vval.v_list, regmatch.startp[i],
                                   (regmatch.endp[i] - regmatch.startp[i]));
           }
         }
@@ -4746,7 +4743,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
         if (l != NULL) {
           tv_copy(TV_LIST_ITEM_TV(li), rettv);
         } else {
-          rettv->vval.v_string = xmemdupz((const char *)regmatch.startp[0],
+          rettv->vval.v_string = xmemdupz(regmatch.startp[0],
                                           (size_t)(regmatch.endp[0] -
                                                    regmatch.startp[0]));
         }
@@ -7910,14 +7907,14 @@ static void f_split(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       }
       const char *end;
       if (match) {
-        end = (const char *)regmatch.startp[0];
+        end = regmatch.startp[0];
       } else {
         end = str + strlen(str);
       }
       if (keepempty || end > str || (tv_list_len(rettv->vval.v_list) > 0
                                      && *str != NUL
                                      && match
-                                     && end < (const char *)regmatch.endp[0])) {
+                                     && end < regmatch.endp[0])) {
         tv_list_append_string(rettv->vval.v_list, str, end - str);
       }
       if (!match) {
@@ -7930,7 +7927,7 @@ static void f_split(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         // Don't get stuck at the same match.
         col = utfc_ptr2len(regmatch.endp[0]);
       }
-      str = (const char *)regmatch.endp[0];
+      str = regmatch.endp[0];
     }
 
     vim_regfree(regmatch.regprog);

@@ -1235,7 +1235,7 @@ static int parse_option_name(char *arg, int *keyp, int *lenp, int *opt_idxp)
       return FAIL;
     }
     if (arg[1] == 't' && arg[2] == '_') {  // could be term code
-      opt_idx = findoption_len((const char *)arg + 1, (size_t)(len - 1));
+      opt_idx = findoption_len(arg + 1, (size_t)(len - 1));
     }
     len++;
     if (opt_idx == -1) {
@@ -1251,7 +1251,7 @@ static int parse_option_name(char *arg, int *keyp, int *lenp, int *opt_idxp)
         len++;
       }
     }
-    opt_idx = findoption_len((const char *)arg, (size_t)len);
+    opt_idx = findoption_len(arg, (size_t)len);
     if (opt_idx == -1) {
       key = find_key_option(arg, false);
     }
@@ -1869,7 +1869,7 @@ void check_blending(win_T *wp)
 /// Handle setting `winhighlight' in window "wp"
 bool parse_winhl_opt(win_T *wp)
 {
-  const char *p = (const char *)wp->w_p_winhl;
+  const char *p = wp->w_p_winhl;
 
   if (!*p) {
     if (wp->w_ns_hl_winhl && wp->w_ns_hl == wp->w_ns_hl_winhl) {
@@ -4694,7 +4694,7 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
         return;
       }
       nextchar = *p;
-      opt_idx = findoption_len((const char *)arg, (size_t)(p - arg));
+      opt_idx = findoption_len(arg, (size_t)(p - arg));
       if (opt_idx == -1 || options[opt_idx].var == NULL) {
         xp->xp_context = EXPAND_NOTHING;
         return;
@@ -5509,7 +5509,7 @@ int win_signcol_count(win_T *wp)
 /// Return the number of requested sign columns, based on user / configuration.
 int win_signcol_configured(win_T *wp, int *is_fixed)
 {
-  const char *scl = (const char *)wp->w_p_scl;
+  const char *scl = wp->w_p_scl;
 
   if (is_fixed) {
     *is_fixed = 1;
@@ -5607,7 +5607,7 @@ long get_sidescrolloff_value(win_T *wp)
 
 Dictionary get_vimoption(String name, int scope, buf_T *buf, win_T *win, Error *err)
 {
-  int opt_idx = findoption_len((const char *)name.data, name.size);
+  int opt_idx = findoption_len(name.data, name.size);
   VALIDATE_S(opt_idx >= 0, "option (not found)", name.data, {
     return (Dictionary)ARRAY_DICT_INIT;
   });
