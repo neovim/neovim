@@ -956,7 +956,7 @@ static void f_count(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         const size_t len = strlen(expr);
 
         while (*p != NUL) {
-          if (mb_strnicmp((char *)p, (char *)expr, len) == 0) {
+          if (mb_strnicmp(p, expr, len) == 0) {
             n++;
             p += len;
           } else {
@@ -965,7 +965,7 @@ static void f_count(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         }
       } else {
         char *next;
-        while ((next = strstr((char *)p, (char *)expr)) != NULL) {
+        while ((next = strstr(p, expr)) != NULL) {
           n++;
           p = next + strlen(expr);
         }
@@ -1064,17 +1064,17 @@ static void f_ctxpush(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     TV_LIST_ITER(argvars[0].vval.v_list, li, {
       typval_T *tv_li = TV_LIST_ITEM_TV(li);
       if (tv_li->v_type == VAR_STRING) {
-        if (strequal((char *)tv_li->vval.v_string, "regs")) {
+        if (strequal(tv_li->vval.v_string, "regs")) {
           types |= kCtxRegs;
-        } else if (strequal((char *)tv_li->vval.v_string, "jumps")) {
+        } else if (strequal(tv_li->vval.v_string, "jumps")) {
           types |= kCtxJumps;
-        } else if (strequal((char *)tv_li->vval.v_string, "bufs")) {
+        } else if (strequal(tv_li->vval.v_string, "bufs")) {
           types |= kCtxBufs;
-        } else if (strequal((char *)tv_li->vval.v_string, "gvars")) {
+        } else if (strequal(tv_li->vval.v_string, "gvars")) {
           types |= kCtxGVars;
-        } else if (strequal((char *)tv_li->vval.v_string, "sfuncs")) {
+        } else if (strequal(tv_li->vval.v_string, "sfuncs")) {
           types |= kCtxSFuncs;
-        } else if (strequal((char *)tv_li->vval.v_string, "funcs")) {
+        } else if (strequal(tv_li->vval.v_string, "funcs")) {
           types |= kCtxFuncs;
         }
       }
@@ -4953,7 +4953,7 @@ static void f_msgpackdump(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   char msgbuf[sizeof("msgpackdump() argument, index ") * 4 + NUMBUFLEN];
   int idx = 0;
   TV_LIST_ITER(list, li, {
-    vim_snprintf(msgbuf, sizeof(msgbuf), (char *)msg, idx);
+    vim_snprintf(msgbuf, sizeof(msgbuf), msg, idx);
     idx++;
     if (encode_vim_to_msgpack(packer, TV_LIST_ITEM_TV(li), msgbuf) == FAIL) {
       break;
@@ -6282,7 +6282,7 @@ static void f_reduce(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         argv[0] = *rettv;
         argv[1] = *TV_LIST_ITEM_TV(li);
         rettv->v_type = VAR_UNKNOWN;
-        const int r = call_func((char *)func_name, -1, rettv, 2, argv, &funcexe);
+        const int r = call_func(func_name, -1, rettv, 2, argv, &funcexe);
         tv_clear(&argv[0]);
         if (r == FAIL || called_emsg != called_emsg_start) {
           break;
@@ -6315,7 +6315,7 @@ static void f_reduce(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       argv[0] = *rettv;
       argv[1].v_type = VAR_NUMBER;
       argv[1].vval.v_number = tv_blob_get(b, i);
-      if (call_func((char *)func_name, -1, rettv, 2, argv, &funcexe) == FAIL) {
+      if (call_func(func_name, -1, rettv, 2, argv, &funcexe) == FAIL) {
         return;
       }
     }
@@ -8584,7 +8584,7 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (char *)(p == NULL ? p : xstrdup(p));
+  rettv->vval.v_string = p == NULL ? NULL : xstrdup(p);
 }
 
 /// "synIDtrans(id)" function

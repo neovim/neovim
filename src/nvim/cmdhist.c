@@ -622,7 +622,7 @@ void ex_history(exarg_T *eap)
     }
     histype1 = get_histtype(arg, (size_t)(end - arg), false);
     if (histype1 == HIST_INVALID) {
-      if (STRNICMP(arg, "all", end - (char *)arg) == 0) {
+      if (STRNICMP(arg, "all", end - arg) == 0) {
         histype1 = 0;
         histype2 = HIST_COUNT - 1;
       } else {

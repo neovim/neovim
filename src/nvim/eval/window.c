@@ -265,7 +265,7 @@ static int get_winnr(tabpage_T *tp, typval_T *argvar)
     } else {
       // Extract the window count (if specified). e.g. winnr('3j')
       char *endp;
-      long count = strtol((char *)arg, &endp, 10);
+      long count = strtol(arg, &endp, 10);
       if (count <= 0) {
         // if count is not specified, default to 1
         count = 1;
