@@ -32,6 +32,19 @@ find_package(Msgpack 1.0.0 REQUIRED)
 find_package(Treesitter 0.20.8 REQUIRED)
 find_package(Unibilium 2.0 REQUIRED)
 
+function(FindParsers lang)
+  string(TOUPPER "PARSER_${lang}" PARSER_NAME)
+  set(CMAKE_FIND_LIBRARY_PREFIXES "")
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_SHARED_MODULE_SUFFIX})
+  find_library(${PARSER_NAME} NAMES ${lang} PATH_SUFFIXES nvim/parser)
+  if(NOT ${PARSER_NAME})
+    message(FATAL_ERROR "${lang} parser not found")
+  endif()
+endfunction()
+foreach(lang c lua vim vimdoc query)
+  FindParsers(${lang})
+endforeach()
+
 target_link_libraries(main_lib INTERFACE
   iconv
   libtermkey
