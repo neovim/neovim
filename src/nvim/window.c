@@ -899,7 +899,7 @@ void win_check_anchored_floats(win_T *win)
 /// Return the number of fold columns to display
 int win_fdccol_count(win_T *wp)
 {
-  const char *fdc = (const char *)wp->w_p_fdc;
+  const char *fdc = wp->w_p_fdc;
 
   // auto:<NUM>
   if (strncmp(fdc, "auto", 4) == 0) {

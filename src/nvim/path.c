@@ -973,7 +973,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern)
   for (int i = 0; i < gap->ga_len && !got_int; i++) {
     char *path = fnames[i];
     int is_in_curdir;
-    char *dir_end = (char *)gettail_dir((const char *)path);
+    char *dir_end = (char *)gettail_dir(path);
     char *pathsep_p;
     char *path_cutoff;
 

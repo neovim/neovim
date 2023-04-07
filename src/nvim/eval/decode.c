@@ -148,7 +148,7 @@ static inline int json_decoder_pop(ValuesStackItem obj, ValuesStack *const stack
       assert(!(key.is_special_string
                || key.val.vval.v_string == NULL
                || *key.val.vval.v_string == NUL));
-      dictitem_T *const obj_di = tv_dict_item_alloc((const char *)key.val.vval.v_string);
+      dictitem_T *const obj_di = tv_dict_item_alloc(key.val.vval.v_string);
       tv_clear(&key.val);
       if (tv_dict_add(last_container.container.vval.v_dict, obj_di)
           == FAIL) {
@@ -179,8 +179,7 @@ static inline int json_decoder_pop(ValuesStackItem obj, ValuesStack *const stack
         && (obj.is_special_string
             || obj.val.vval.v_string == NULL
             || *obj.val.vval.v_string == NUL
-            || tv_dict_find(last_container.container.vval.v_dict,
-                            (const char *)obj.val.vval.v_string, -1))) {
+            || tv_dict_find(last_container.container.vval.v_dict, obj.val.vval.v_string, -1))) {
       tv_clear(&obj.val);
 
       // Restart

@@ -895,15 +895,15 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   bool dodefault = false;
 
   // Isolate the name.
-  const char *name_end = (const char *)skiptowhite(line);
-  const char *linep = (const char *)skipwhite(name_end);
+  const char *name_end = skiptowhite(line);
+  const char *linep = skipwhite(name_end);
 
   // Check for "default" argument.
   if (strncmp(line, "default", (size_t)(name_end - line)) == 0) {
     dodefault = true;
     line = linep;
-    name_end = (const char *)skiptowhite(line);
-    linep = (const char *)skipwhite(name_end);
+    name_end = skiptowhite(line);
+    linep = skipwhite(name_end);
   }
 
   bool doclear = false;
@@ -937,9 +937,9 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     int to_id;
     HlGroup *hlgroup = NULL;
 
-    from_end = (const char *)skiptowhite(from_start);
-    to_start = (const char *)skipwhite(from_end);
-    to_end   = (const char *)skiptowhite(to_start);
+    from_end = skiptowhite(from_start);
+    to_start = skipwhite(from_end);
+    to_end   = skiptowhite(to_start);
 
     if (ends_excmd((uint8_t)(*from_start))
         || ends_excmd((uint8_t)(*to_start))) {
@@ -1015,8 +1015,8 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       redraw_all_later(UPD_NOT_VALID);
       return;
     }
-    name_end = (const char *)skiptowhite(line);
-    linep = (const char *)skipwhite(name_end);
+    name_end = skiptowhite(line);
+    linep = skipwhite(name_end);
   }
 
   // Find the group name in the table.  If it does not exist yet, add it.
@@ -1073,7 +1073,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       memcpy(key, key_start, key_len);
       key[key_len] = NUL;
       vim_strup(key);
-      linep = (const char *)skipwhite(linep);
+      linep = skipwhite(linep);
 
       if (strcmp(key, "NONE") == 0) {
         if (!init || hl_table[idx].sg_set == 0) {
@@ -1094,7 +1094,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       linep++;
 
       // Isolate the argument.
-      linep = (const char *)skipwhite(linep);
+      linep = skipwhite(linep);
       if (*linep == '\'') {  // guifg='color name'
         arg_start = ++linep;
         linep = strchr(linep, '\'');
@@ -1105,7 +1105,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         }
       } else {
         arg_start = linep;
-        linep = (const char *)skiptowhite(linep);
+        linep = skiptowhite(linep);
       }
       if (linep == arg_start) {
         semsg(_("E417: missing argument: %s"), key_start);
@@ -1361,7 +1361,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       }
 
       // Continue with next argument.
-      linep = (const char *)skipwhite(linep);
+      linep = skipwhite(linep);
     }
   }
 
@@ -2211,7 +2211,7 @@ void set_context_in_highlight_cmd(expand_T *xp, const char *arg)
   }
 
   // (part of) subcommand already typed
-  const char *p = (const char *)skiptowhite(arg);
+  const char *p = skiptowhite(arg);
   if (*p == NUL) {
     return;
   }
@@ -2219,9 +2219,9 @@ void set_context_in_highlight_cmd(expand_T *xp, const char *arg)
   // past "default" or group name
   include_default = 0;
   if (strncmp("default", arg, (unsigned)(p - arg)) == 0) {
-    arg = (const char *)skipwhite(p);
+    arg = skipwhite(p);
     xp->xp_pattern = (char *)arg;
-    p = (const char *)skiptowhite(arg);
+    p = skiptowhite(arg);
   }
   if (*p == NUL) {
     return;
@@ -2235,10 +2235,10 @@ void set_context_in_highlight_cmd(expand_T *xp, const char *arg)
   if (strncmp("link", arg, (unsigned)(p - arg)) == 0
       || strncmp("clear", arg, (unsigned)(p - arg)) == 0) {
     xp->xp_pattern = skipwhite(p);
-    p = (const char *)skiptowhite(xp->xp_pattern);
+    p = skiptowhite(xp->xp_pattern);
     if (*p != NUL) {  // past first group name
       xp->xp_pattern = skipwhite(p);
-      p = (const char *)skiptowhite(xp->xp_pattern);
+      p = skiptowhite(xp->xp_pattern);
     }
   }
   if (*p != NUL) {  // past group name(s)
@@ -2301,7 +2301,7 @@ const char *get_highlight_name_ext(expand_T *xp, int idx, bool skip_cleared)
   } else if (idx >= highlight_ga.ga_len) {
     return NULL;
   }
-  return (const char *)hl_table[idx].sg_name;
+  return hl_table[idx].sg_name;
 }
 
 color_name_table_T color_name_table[] = {

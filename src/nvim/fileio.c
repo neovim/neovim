@@ -145,7 +145,7 @@ void filemess(buf_T *buf, char *name, char *s, int attr)
   if (msg_silent != 0) {
     return;
   }
-  add_quoted_fname(IObuff, IOSIZE - 100, buf, (const char *)name);
+  add_quoted_fname(IObuff, IOSIZE - 100, buf, name);
   // Avoid an over-long translation to cause trouble.
   xstrlcat(IObuff, s, IOSIZE);
   // For the first message may have to start a new line.
@@ -576,7 +576,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     // Set swap file protection bits after creating it.
     if (swap_mode > 0 && curbuf->b_ml.ml_mfp != NULL
         && curbuf->b_ml.ml_mfp->mf_fname != NULL) {
-      const char *swap_fname = (const char *)curbuf->b_ml.ml_mfp->mf_fname;
+      const char *swap_fname = curbuf->b_ml.ml_mfp->mf_fname;
 
       // If the group-read bit is set but not the world-read bit, then
       // the group must be equal to the group of the original file.  If
@@ -1732,7 +1732,7 @@ failed:
     }
 
     if (!filtering && !(flags & READ_DUMMY) && !silent) {
-      add_quoted_fname(IObuff, IOSIZE, curbuf, (const char *)sfname);
+      add_quoted_fname(IObuff, IOSIZE, curbuf, sfname);
       c = false;
 
 #ifdef UNIX
@@ -2372,7 +2372,7 @@ static int get_fileinfo_os(char *fname, FileInfo *file_info_old, bool overwritin
     *newfile = true;
     *perm = -1;
   } else {
-    *perm = os_getperm((const char *)fname);
+    *perm = os_getperm(fname);
     if (*perm < 0) {
       *newfile = true;
     } else if (os_isdir(fname)) {
@@ -2611,7 +2611,7 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
 
         // set file protection same as original file, but
         // strip s-bit.
-        (void)os_setperm((const char *)(*backupp), perm & 0777);
+        (void)os_setperm(*backupp, perm & 0777);
 
 #ifdef UNIX
         //
@@ -2621,8 +2621,7 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
         //
         if (file_info_new.stat.st_gid != file_info_old->stat.st_gid
             && os_chown(*backupp, (uv_uid_t)-1, (uv_gid_t)file_info_old->stat.st_gid) != 0) {
-          os_setperm((const char *)(*backupp),
-                     ((int)perm & 0707) | (((int)perm & 07) << 3));
+          os_setperm(*backupp, ((int)perm & 0707) | (((int)perm & 07) << 3));
         }
 #endif
 
@@ -2960,7 +2959,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
       && file_info_old.stat.st_uid == getuid()
       && vim_strchr(p_cpo, CPO_FWRITE) == NULL) {
     perm |= 0200;
-    (void)os_setperm((const char *)fname, (int)perm);
+    (void)os_setperm(fname, (int)perm);
     made_writable = true;
   }
 #endif
@@ -3378,7 +3377,7 @@ restore_backup:
     }
 #endif
     if (perm >= 0) {  // Set perm. of new file same as old file.
-      (void)os_setperm((const char *)wfname, (int)perm);
+      (void)os_setperm(wfname, (int)perm);
     }
     // Probably need to set the ACL before changing the user (can't set the
     // ACL on a file the user doesn't own).
@@ -3459,7 +3458,7 @@ restore_backup:
   fname = sfname;           // use shortname now, for the messages
 #endif
   if (!filtering) {
-    add_quoted_fname(IObuff, IOSIZE, buf, (const char *)fname);
+    add_quoted_fname(IObuff, IOSIZE, buf, fname);
     bool insert_space = false;
     if (write_info.bw_conv_error) {
       STRCAT(IObuff, _(" CONVERSION ERROR"));
@@ -3563,7 +3562,7 @@ restore_backup:
       }
     }
     if (org != NULL) {
-      os_setperm(org, os_getperm((const char *)fname) & 0777);
+      os_setperm(org, os_getperm(fname) & 0777);
       xfree(org);
     }
   }
@@ -3600,9 +3599,9 @@ nofail:
   if (err.msg != NULL) {
     // - 100 to save some space for further error message
 #ifndef UNIX
-    add_quoted_fname(IObuff, IOSIZE - 100, buf, (const char *)sfname);
+    add_quoted_fname(IObuff, IOSIZE - 100, buf, sfname);
 #else
-    add_quoted_fname(IObuff, IOSIZE - 100, buf, (const char *)fname);
+    add_quoted_fname(IObuff, IOSIZE - 100, buf, fname);
 #endif
     emit_err(&err);
 
@@ -5295,7 +5294,7 @@ int delete_recursive(const char *name)
     if (readdir_core(&ga, exp, NULL, NULL) == OK) {
       for (int i = 0; i < ga.ga_len; i++) {
         vim_snprintf(NameBuff, MAXPATHL, "%s/%s", exp, ((char **)ga.ga_data)[i]);
-        if (delete_recursive((const char *)NameBuff) != 0) {
+        if (delete_recursive(NameBuff) != 0) {
           // Remember the failure but continue deleting any further
           // entries.
           result = -1;

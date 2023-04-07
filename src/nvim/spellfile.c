@@ -5712,7 +5712,7 @@ static void init_spellfile(void)
                    ((fname != NULL
                      && strstr(path_tail(fname), ".ascii.") != NULL)
                     ? "ascii"
-                    : (const char *)spell_enc()));
+                    : spell_enc()));
       set_option_value_give_err("spellfile", 0L, buf, OPT_LOCAL);
       break;
     }
@@ -5851,7 +5851,7 @@ static void set_map_str(slang_T *lp, char *map)
         utf_char2bytes(headc, b + cl + 1);
         b[cl + 1 + headcl] = NUL;
         hash = hash_hash(b);
-        hi = hash_lookup(&lp->sl_map_hash, (const char *)b, strlen(b), hash);
+        hi = hash_lookup(&lp->sl_map_hash, b, strlen(b), hash);
         if (HASHITEM_EMPTY(hi)) {
           hash_add_item(&lp->sl_map_hash, hi, b, hash);
         } else {

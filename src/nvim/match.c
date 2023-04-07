@@ -938,10 +938,9 @@ void f_getmatches(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         tv_dict_add_list(dict, buf, (size_t)len, l);
       }
     } else {
-      tv_dict_add_str(dict, S_LEN("pattern"), (const char *)cur->mit_pattern);
+      tv_dict_add_str(dict, S_LEN("pattern"), cur->mit_pattern);
     }
-    tv_dict_add_str(dict, S_LEN("group"),
-                    (const char *)syn_id2name(cur->mit_hlg_id));
+    tv_dict_add_str(dict, S_LEN("group"), syn_id2name(cur->mit_hlg_id));
     tv_dict_add_nr(dict, S_LEN("priority"), (varnumber_T)cur->mit_priority);
     tv_dict_add_nr(dict, S_LEN("id"), (varnumber_T)cur->mit_id);
 
@@ -1166,9 +1165,8 @@ void f_matcharg(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     matchitem_T *const m = get_match(curwin, id);
 
     if (m != NULL) {
-      tv_list_append_string(rettv->vval.v_list,
-                            (const char *)syn_id2name(m->mit_hlg_id), -1);
-      tv_list_append_string(rettv->vval.v_list, (const char *)m->mit_pattern, -1);
+      tv_list_append_string(rettv->vval.v_list, syn_id2name(m->mit_hlg_id), -1);
+      tv_list_append_string(rettv->vval.v_list, m->mit_pattern, -1);
     } else {
       tv_list_append_string(rettv->vval.v_list, NULL, 0);
       tv_list_append_string(rettv->vval.v_list, NULL, 0);

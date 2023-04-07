@@ -1105,7 +1105,7 @@ static int nlua_debug(lua_State *lstate)
       tv_clear(&input);
       return 0;
     }
-    if (luaL_loadbuffer(lstate, (const char *)input.vval.v_string,
+    if (luaL_loadbuffer(lstate, input.vval.v_string,
                         strlen(input.vval.v_string), "=(debug command)")) {
       nlua_error(lstate, _("E5115: Error while loading debug string: %.*s"));
     } else if (nlua_pcall(lstate, 0, 0)) {
@@ -1652,7 +1652,7 @@ void ex_luado(exarg_T *const eap)
     emsg(_("cannot save undo information"));
     return;
   }
-  const char *const cmd = (const char *)eap->arg;
+  const char *const cmd = eap->arg;
   const size_t cmd_len = strlen(cmd);
 
   lua_State *const lstate = global_lstate;
@@ -1693,7 +1693,7 @@ void ex_luado(exarg_T *const eap)
       break;
     }
     lua_pushvalue(lstate, -1);
-    const char *const old_line = (const char *)ml_get_buf(curbuf, l, false);
+    const char *const old_line = ml_get_buf(curbuf, l, false);
     // Get length of old_line here as calling Lua code may free it.
     const size_t old_line_len = strlen(old_line);
     lua_pushstring(lstate, old_line);
@@ -1729,7 +1729,7 @@ void ex_luado(exarg_T *const eap)
 void ex_luafile(exarg_T *const eap)
   FUNC_ATTR_NONNULL_ALL
 {
-  nlua_exec_file((const char *)eap->arg);
+  nlua_exec_file(eap->arg);
 }
 
 /// Executes Lua code from a file or "-" (stdin).
@@ -1860,7 +1860,7 @@ int nlua_expand_pat(expand_T *xp, char *pat, int *num_results, char ***results)
   luaL_checktype(lstate, -1, LUA_TFUNCTION);
 
   // [ vim, vim._expand_pat, buf ]
-  lua_pushlstring(lstate, (const char *)pat, strlen(pat));
+  lua_pushlstring(lstate, pat, strlen(pat));
 
   if (nlua_pcall(lstate, 1, 2) != 0) {
     nlua_error(lstate,
@@ -2092,7 +2092,7 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
   lua_setfield(lstate, -2, "line2");
 
   lua_newtable(lstate);  // f-args table
-  lua_pushstring(lstate, (const char *)eap->arg);
+  lua_pushstring(lstate, eap->arg);
   lua_pushvalue(lstate, -1);  // Reference for potential use on f-args
   lua_setfield(lstate, -4, "args");
 

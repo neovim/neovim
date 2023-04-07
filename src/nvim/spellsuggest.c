@@ -2794,7 +2794,7 @@ static void add_sound_suggest(suginfo_T *su, char *goodword, int score, langp_T 
   // remember the words that have been done.
   hash_T hash = hash_hash(goodword);
   const size_t goodword_len = strlen(goodword);
-  hashitem_T *hi = hash_lookup(&slang->sl_sounddone, (const char *)goodword, goodword_len, hash);
+  hashitem_T *hi = hash_lookup(&slang->sl_sounddone, goodword, goodword_len, hash);
   if (HASHITEM_EMPTY(hi)) {
     sft = xmalloc(offsetof(sftword_T, sft_word) + goodword_len + 1);
     sft->sft_score = (int16_t)score;

@@ -1230,8 +1230,7 @@ static void get_arglist_as_rettv(aentry_T *arglist, int argcount, typval_T *rett
   tv_list_alloc_ret(rettv, argcount);
   if (arglist != NULL) {
     for (int idx = 0; idx < argcount; idx++) {
-      tv_list_append_string(rettv->vval.v_list,
-                            (const char *)alist_name(&arglist[idx]), -1);
+      tv_list_append_string(rettv->vval.v_list, alist_name(&arglist[idx]), -1);
     }
   }
 }
@@ -1267,7 +1266,7 @@ void f_argv(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_string = NULL;
   int idx = (int)tv_get_number_chk(&argvars[0], NULL);
   if (arglist != NULL && idx >= 0 && idx < argcount) {
-    rettv->vval.v_string = xstrdup((const char *)alist_name(&arglist[idx]));
+    rettv->vval.v_string = xstrdup(alist_name(&arglist[idx]));
   } else if (idx == -1) {
     get_arglist_as_rettv(arglist, argcount, rettv);
   }

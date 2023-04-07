@@ -389,7 +389,7 @@ size_t transstr_buf(const char *const s, const ssize_t slen, char *const buf, co
     } else if (*p == TAB && !untab) {
       *buf_p++ = *p++;
     } else {
-      const char *const tb = (const char *)transchar_byte((uint8_t)(*p++));
+      const char *const tb = transchar_byte((uint8_t)(*p++));
       const size_t tb_len = strlen(tb);
       if (buf_p + tb_len > buf_e) {
         break;  // Exceeded `buf` size.

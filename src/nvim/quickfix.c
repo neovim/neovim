@@ -5795,28 +5795,19 @@ static int get_qfline_items(qfline_T *qfp, list_T *list)
   buf[0] = qfp->qf_type;
   buf[1] = NUL;
   if (tv_dict_add_nr(dict, S_LEN("bufnr"), (varnumber_T)bufnum) == FAIL
-      || (tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)qfp->qf_lnum)
-          == FAIL)
-      || (tv_dict_add_nr(dict, S_LEN("end_lnum"), (varnumber_T)qfp->qf_end_lnum)
-          == FAIL)
+      || (tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)qfp->qf_lnum) == FAIL)
+      || (tv_dict_add_nr(dict, S_LEN("end_lnum"), (varnumber_T)qfp->qf_end_lnum) == FAIL)
       || (tv_dict_add_nr(dict, S_LEN("col"), (varnumber_T)qfp->qf_col) == FAIL)
-      || (tv_dict_add_nr(dict, S_LEN("end_col"), (varnumber_T)qfp->qf_end_col)
-          == FAIL)
-      || (tv_dict_add_nr(dict, S_LEN("vcol"), (varnumber_T)qfp->qf_viscol)
-          == FAIL)
+      || (tv_dict_add_nr(dict, S_LEN("end_col"), (varnumber_T)qfp->qf_end_col) == FAIL)
+      || (tv_dict_add_nr(dict, S_LEN("vcol"), (varnumber_T)qfp->qf_viscol) == FAIL)
       || (tv_dict_add_nr(dict, S_LEN("nr"), (varnumber_T)qfp->qf_nr) == FAIL)
-      || (tv_dict_add_str(dict, S_LEN("module"),
-                          (qfp->qf_module == NULL ? "" : (const char *)qfp->qf_module))
+      || (tv_dict_add_str(dict, S_LEN("module"), (qfp->qf_module == NULL ? "" : qfp->qf_module))
           == FAIL)
-      || (tv_dict_add_str(dict, S_LEN("pattern"),
-                          (qfp->qf_pattern == NULL ? "" : (const char *)qfp->qf_pattern))
+      || (tv_dict_add_str(dict, S_LEN("pattern"), (qfp->qf_pattern == NULL ? "" : qfp->qf_pattern))
           == FAIL)
-      || (tv_dict_add_str(dict, S_LEN("text"),
-                          (qfp->qf_text == NULL ? "" : (const char *)qfp->qf_text))
-          == FAIL)
-      || (tv_dict_add_str(dict, S_LEN("type"), (const char *)buf) == FAIL)
-      || (tv_dict_add_nr(dict, S_LEN("valid"), (varnumber_T)qfp->qf_valid)
-          == FAIL)) {
+      || (tv_dict_add_str(dict, S_LEN("text"), (qfp->qf_text == NULL ? "" : qfp->qf_text)) == FAIL)
+      || (tv_dict_add_str(dict, S_LEN("type"), buf) == FAIL)
+      || (tv_dict_add_nr(dict, S_LEN("valid"), (varnumber_T)qfp->qf_valid) == FAIL)) {
     // tv_dict_add* fail only if key already exist, but this is a newly
     // allocated dictionary which is thus guaranteed to have no existing keys.
     abort();
@@ -6039,8 +6030,7 @@ static int qf_getprop_qfidx(qf_info_T *qi, dict_T *what)
           qf_idx = INVALID_QFIDX;
         }
       }
-    } else if (di->di_tv.v_type == VAR_STRING
-               && strequal((const char *)di->di_tv.vval.v_string, "$")) {
+    } else if (di->di_tv.v_type == VAR_STRING && strequal(di->di_tv.vval.v_string, "$")) {
       // Get the last quickfix list number
       qf_idx = qi->qf_listcount - 1;
     } else {
@@ -6069,7 +6059,7 @@ static int qf_getprop_defaults(qf_info_T *qi, int flags, int locstack, dict_T *r
   int status = OK;
 
   if (flags & QF_GETLIST_TITLE) {
-    status = tv_dict_add_str(retdict, S_LEN("title"), (const char *)"");
+    status = tv_dict_add_str(retdict, S_LEN("title"), "");
   }
   if ((status == OK) && (flags & QF_GETLIST_ITEMS)) {
     list_T *l = tv_list_alloc(kListLenMayKnow);
@@ -6082,7 +6072,7 @@ static int qf_getprop_defaults(qf_info_T *qi, int flags, int locstack, dict_T *r
     status = tv_dict_add_nr(retdict, S_LEN("winid"), qf_winid(qi));
   }
   if ((status == OK) && (flags & QF_GETLIST_CONTEXT)) {
-    status = tv_dict_add_str(retdict, S_LEN("context"), (const char *)"");
+    status = tv_dict_add_str(retdict, S_LEN("context"), "");
   }
   if ((status == OK) && (flags & QF_GETLIST_ID)) {
     status = tv_dict_add_nr(retdict, S_LEN("id"), 0);
@@ -6112,8 +6102,7 @@ static int qf_getprop_defaults(qf_info_T *qi, int flags, int locstack, dict_T *r
 /// Return the quickfix list title as 'title' in retdict
 static int qf_getprop_title(qf_list_T *qfl, dict_T *retdict)
 {
-  return tv_dict_add_str(retdict, S_LEN("title"),
-                         (const char *)qfl->qf_title);
+  return tv_dict_add_str(retdict, S_LEN("title"), qfl->qf_title);
 }
 
 // Returns the identifier of the window used to display files from a location
@@ -6462,8 +6451,7 @@ static int qf_setprop_get_qfidx(const qf_info_T *qi, const dict_T *what, int act
       } else if (action != ' ') {
         *newlist = false;  // use the specified list
       }
-    } else if (di->di_tv.v_type == VAR_STRING
-               && strequal((const char *)di->di_tv.vval.v_string, "$")) {
+    } else if (di->di_tv.v_type == VAR_STRING && strequal(di->di_tv.vval.v_string, "$")) {
       if (!qf_stack_empty(qi)) {
         qf_idx = qi->qf_listcount - 1;
       } else if (*newlist) {
