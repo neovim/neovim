@@ -7,17 +7,17 @@ module.exports = async ({github, context}) => {
   const labels = pr_data.data.labels.map(e => e.name)
 
   const reviewers = new Set()
-  const team_reviewers = new Array()
+  const team_reviewers = new Set()
   if (labels.includes('api')) {
     reviewers.add("bfredl")
   }
 
   if (labels.includes('build')) {
-    team_reviewers.push('ci');
+    team_reviewers.add('ci');
   }
 
   if (labels.includes('ci')) {
-    team_reviewers.push('ci');
+    team_reviewers.add('ci');
   }
 
   if (labels.includes('column')) {
@@ -55,7 +55,7 @@ module.exports = async ({github, context}) => {
   }
 
   if (labels.includes('lsp')) {
-    team_reviewers.push('lsp');
+    team_reviewers.add('lsp');
   }
 
   if (labels.includes('platform:nix')) {
@@ -72,7 +72,7 @@ module.exports = async ({github, context}) => {
   }
 
   if (labels.includes('treesitter')) {
-    team_reviewers.push('treesitter');
+    team_reviewers.add('treesitter');
   }
 
   if (labels.includes('typo')) {
@@ -97,6 +97,6 @@ module.exports = async ({github, context}) => {
     repo: context.repo.repo,
     pull_number: context.issue.number,
     reviewers: Array.from(reviewers),
-    team_reviewers: team_reviewers
+    team_reviewers: Array.from(team_reviewers)
   });
 }
