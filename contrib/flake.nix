@@ -16,6 +16,9 @@
           preConfigure = ''
             sed -i cmake.config/versiondef.h.in -e 's/@NVIM_VERSION_PRERELEASE@/-dev-${version}/'
           '';
+          nativeBuildInputs = oa.nativeBuildInputs ++ [
+            final.libiconv
+          ];
         });
 
         # a development binary to help debug issues
