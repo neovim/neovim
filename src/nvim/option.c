@@ -2002,7 +2002,7 @@ static const char *set_bool_option(const int opt_idx, char *const varp, const in
   // Disallow changing some options from secure mode
   if ((secure || sandbox != 0)
       && (options[opt_idx].flags & P_SECURE)) {
-    return (char *)e_secure;
+    return e_secure;
   }
 
   // Save the global value before changing anything. This is needed as for

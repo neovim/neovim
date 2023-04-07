@@ -1085,23 +1085,17 @@ static int sign_place(int *sign_id, const char *sign_group, const char *sign_nam
     return FAIL;
   }
   if (*sign_id == 0) {
-    *sign_id = sign_group_get_next_signid(buf, (char *)sign_group);
+    *sign_id = sign_group_get_next_signid(buf, sign_group);
   }
 
   if (lnum > 0) {
     // ":sign place {id} line={lnum} name={name} file={fname}":
     // place a sign
     bool has_text_or_icon = sp->sn_text != NULL || sp->sn_icon != NULL;
-    buf_addsign(buf,
-                *sign_id,
-                (char *)sign_group,
-                prio,
-                lnum,
-                sp->sn_typenr,
-                has_text_or_icon);
+    buf_addsign(buf, *sign_id, sign_group, prio, lnum, sp->sn_typenr, has_text_or_icon);
   } else {
     // ":sign place {id} file={fname}": change sign type and/or priority
-    lnum = buf_change_sign_type(buf, *sign_id, (char *)sign_group, sp->sn_typenr, prio);
+    lnum = buf_change_sign_type(buf, *sign_id, sign_group, sp->sn_typenr, prio);
   }
   if (lnum > 0) {
     redraw_buf_line_later(buf, lnum, false);
@@ -1585,7 +1579,7 @@ static void sign_getlist(const char *name, list_T *retlist)
   sign_T *sp = first_sign;
 
   if (name != NULL) {
-    sp = sign_find((char *)name, NULL);
+    sp = sign_find(name, NULL);
     if (sp == NULL) {
       return;
     }
@@ -1633,7 +1627,7 @@ static void sign_get_placed_in_buf(buf_T *buf, linenr_T lnum, int sign_id, const
   tv_dict_add_list(d, S_LEN("signs"), l);
 
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-    if (!sign_in_group(sign, (char *)sign_group)) {
+    if (!sign_in_group(sign, sign_group)) {
       continue;
     }
     if ((lnum == 0 && sign_id == 0)

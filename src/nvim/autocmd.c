@@ -2499,7 +2499,7 @@ bool aupat_is_buflocal(char *pat, int patlen)
 
 int aupat_get_buflocal_nr(char *pat, int patlen)
 {
-  assert(aupat_is_buflocal((char *)pat, patlen));
+  assert(aupat_is_buflocal(pat, patlen));
 
   // "<buffer>"
   if (patlen == 8) {

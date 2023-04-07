@@ -1303,7 +1303,7 @@ static int find_tagfunc_tags(char *pat, garray_T *ga, int *match_count, int flag
     res_kind = NULL;
 
     TV_DICT_ITER(TV_LIST_ITEM_TV(li)->vval.v_dict, di, {
-      const char *dict_key = (char *)di->di_key;
+      const char *dict_key = di->di_key;
       typval_T *tv = &di->di_tv;
 
       if (tv->v_type != VAR_STRING || tv->vval.v_string == NULL) {
@@ -1372,7 +1372,7 @@ static int find_tagfunc_tags(char *pat, garray_T *ga, int *match_count, int flag
         }
 
         TV_DICT_ITER(TV_LIST_ITEM_TV(li)->vval.v_dict, di, {
-          const char *dict_key = (char *)di->di_key;
+          const char *dict_key = di->di_key;
           typval_T *tv = &di->di_tv;
           if (tv->v_type != VAR_STRING || tv->vval.v_string == NULL) {
             continue;
@@ -2530,7 +2530,7 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
       }
       tnp->tn_hf_idx++;
       STRCPY(buf, p_hf);
-      STRCPY(path_tail((char *)buf), "tags");
+      STRCPY(path_tail(buf), "tags");
 #ifdef BACKSLASH_IN_FILENAME
       slash_adjust(buf);
 #endif

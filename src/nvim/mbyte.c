@@ -367,7 +367,7 @@ static int enc_canon_search(const char *name)
 int enc_canon_props(const char *name)
   FUNC_ATTR_PURE
 {
-  int i = enc_canon_search((char *)name);
+  int i = enc_canon_search(name);
   if (i >= 0) {
     return enc_canon_table[i].prop;
   } else if (strncmp(name, "2byte-", 6) == 0) {
@@ -538,9 +538,9 @@ int utf_ptr2cells_len(const char *p, int size)
     if (utf_ptr2len_len(p, size) < utf8len_tab[(uint8_t)(*p)]) {
       return 1;        // truncated
     }
-    int c = utf_ptr2char((char *)p);
+    int c = utf_ptr2char(p);
     // An illegal byte is displayed as <xx>.
-    if (utf_ptr2len((char *)p) == 1 || c == NUL) {
+    if (utf_ptr2len(p) == 1 || c == NUL) {
       return 4;
     }
     // If the char is ASCII it must be an overlong sequence.
@@ -719,7 +719,7 @@ bool utf_composinglike(const char *p1, const char *p2)
 {
   int c2;
 
-  c2 = utf_ptr2char((char *)p2);
+  c2 = utf_ptr2char(p2);
   if (utf_iscomposing(c2)) {
     return true;
   }
