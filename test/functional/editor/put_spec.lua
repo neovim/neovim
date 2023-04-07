@@ -9,22 +9,21 @@ local eq = helpers.eq
 local map = helpers.tbl_map
 local filter = helpers.tbl_filter
 local feed_command = helpers.feed_command
+local command = helpers.command
 local curbuf_contents = helpers.curbuf_contents
 local funcs = helpers.funcs
 local dedent = helpers.dedent
-local getreg = funcs.getreg
 
 local function reset()
-  feed_command('enew!')
+  command('bwipe! | new')
   insert([[
   Line of words 1
   Line of words 2]])
-  feed_command('goto 1')
+  command('goto 1')
   feed('itest_string.<esc>u')
   funcs.setreg('a', 'test_stringa', 'V')
   funcs.setreg('b', 'test_stringb\ntest_stringb\ntest_stringb', 'b')
   funcs.setreg('"', 'test_string"', 'v')
-  feed_command('set virtualedit=')
 end
 
 -- We check the last inserted register ". in each of these tests because it is
@@ -508,10 +507,10 @@ describe('put command', function()
         test_expect(exception_table, after_redo)
         if selection_string then
           if not conversion_table.put_backwards then
-            eq(selection_string, getreg('"'))
+            eq(selection_string, funcs.getreg('"'))
           end
         else
-          eq('test_string"', getreg('"'))
+          eq('test_string"', funcs.getreg('"'))
         end
       end
     end
@@ -644,7 +643,7 @@ describe('put command', function()
         -- Set curswant to '8' to be at the end of the tab character
         -- This is where the cursor is put back after the 'u' command.
         funcs.setpos('.', {0, 2, 1, 0, 8})
-        feed_command('set autoindent')
+        command('set autoindent')
       end
     )
   end)
@@ -655,7 +654,7 @@ describe('put command', function()
        test_stringx"     Line of words 2]]
     run_normal_mode_tests(test_string, 'p', function()
       funcs.setline('$', '	Line of words 2')
-      feed_command('set virtualedit=all')
+      command('setlocal virtualedit=all')
       funcs.setpos('.', {0, 2, 1, 2, 3})
     end)
   end)
@@ -667,7 +666,7 @@ describe('put command', function()
     	Line of words 2]]
     run_normal_mode_tests(test_string, 'p', function()
       funcs.setline('$', '	Line of words 2')
-      feed_command('set virtualedit=all')
+      command('setlocal virtualedit=all')
       funcs.setpos('.', {0, 1, 16, 1, 17})
     end, true)
   end)
@@ -717,7 +716,7 @@ describe('put command', function()
           return function(exception_table, after_redo)
             test_expect(exception_table, after_redo)
             if not conversion_table.put_backwards then
-              eq('Line of words 1\n', getreg('"'))
+              eq('Line of words 1\n', funcs.getreg('"'))
             end
           end
         end
@@ -753,7 +752,7 @@ describe('put command', function()
         return function(e,c)
           test_expect(e,c)
           if not conversion_table.put_backwards then
-            eq('Lin\nLin', getreg('"'))
+            eq('Lin\nLin', funcs.getreg('"'))
           end
         end
       end
@@ -836,7 +835,7 @@ describe('put command', function()
           'vp',
           function()
             funcs.setline('$', '	Line of words 2')
-            feed_command('set virtualedit=all')
+            command('setlocal virtualedit=all')
             funcs.setpos('.', {0, 2, 1, 2, 3})
           end,
           nil,
@@ -851,7 +850,7 @@ describe('put command', function()
           base_expect_string,
           'vp',
           function()
-            feed_command('set virtualedit=all')
+            command('setlocal virtualedit=all')
             funcs.setpos('.', {0, 1, 16, 2, 18})
           end,
           true,
@@ -920,12 +919,12 @@ describe('put command', function()
     end)
 
     it('should ring the bell when deleting if not appropriate', function()
-        feed_command('goto 2')
-        feed('i<bs><esc>')
-        expect([[
-        ine of words 1
-        Line of words 2]])
-        bell_test(function() feed('".P') end, true)
+      command('goto 2')
+      feed('i<bs><esc>')
+      expect([[
+      ine of words 1
+      Line of words 2]])
+      bell_test(function() feed('".P') end, true)
     end)
 
     it('should restore cursor position after undo of ".p', function()
@@ -935,7 +934,7 @@ describe('put command', function()
     end)
 
     it("should be unaffected by 'autoindent' with V\".2p", function()
-      feed_command('set autoindent')
+      command('set autoindent')
       feed('i test_string.<esc>u')
       feed('V".2p')
       expect([[

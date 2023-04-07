@@ -4,17 +4,17 @@ local clear = helpers.clear
 local insert = helpers.insert
 local feed = helpers.feed
 local expect = helpers.expect
-local feed_command = helpers.feed_command
+local command = helpers.command
 local funcs = helpers.funcs
-local foldlevel = funcs.foldlevel
-local foldclosedend = funcs.foldclosedend
 local eq = helpers.eq
 
 describe('Folds', function()
   local tempfname = 'Xtest-fold.txt'
-  clear()
-  before_each(function() feed_command('enew!') end)
+
+  setup(clear)
+  before_each(function() command('bwipe! | new') end)
   after_each(function() os.remove(tempfname) end)
+
   it('manual folding adjusts with filter', function()
     insert([[
     1
@@ -37,8 +37,11 @@ describe('Folds', function()
     18
     19
     20]])
-    feed_command('4,$fold', '%foldopen', '10,$fold', '%foldopen')
-    feed_command('1,8! cat')
+    command('4,$fold')
+    command('%foldopen')
+    command('10,$fold')
+    command('%foldopen')
+    command('1,8! cat')
     feed('5ggzdzMGdd')
     expect([[
     1
@@ -51,22 +54,24 @@ describe('Folds', function()
     8
     9]])
   end)
+
   describe('adjusting folds after :move', function()
     local function manually_fold_indent()
       -- setting foldmethod twice is a trick to get vim to set the folds for me
-      feed_command('set foldmethod=indent', 'set foldmethod=manual')
+      command('set foldmethod=indent')
+      command('set foldmethod=manual')
       -- Ensure that all folds will get closed (makes it easier to test the
       -- length of folds).
-      feed_command('set foldminlines=0')
+      command('set foldminlines=0')
       -- Start with all folds open (so :move ranges aren't affected by closed
       -- folds).
-      feed_command('%foldopen!')
+      command('%foldopen!')
     end
 
     local function get_folds()
       local rettab = {}
       for i = 1, funcs.line('$') do
-        table.insert(rettab, foldlevel(i))
+        table.insert(rettab, funcs.foldlevel(i))
       end
       return rettab
     end
@@ -75,16 +80,16 @@ describe('Folds', function()
       -- This test is easy because we just need to ensure that the resulting
       -- fold is the same as calculated when creating folds from scratch.
       insert(insert_string)
-      feed_command(move_command)
+      command(move_command)
       local after_move_folds = get_folds()
       -- Doesn't change anything, but does call foldUpdateAll()
-      feed_command('set foldminlines=0')
+      command('set foldminlines=0')
       eq(after_move_folds, get_folds())
       -- Set up the buffer with insert_string for the manual fold testing.
-      feed_command('enew!')
+      command('enew!')
       insert(insert_string)
       manually_fold_indent()
-      feed_command(move_command)
+      command(move_command)
     end
 
     it('neither closes nor corrupts folds', function()
@@ -130,19 +135,20 @@ a
       for i = 1,funcs.line('$') do
         eq(-1, funcs.foldclosed(i))
         if i == 1 or i == 7 or i == 13 then
-          eq(0, foldlevel(i))
+          eq(0, funcs.foldlevel(i))
         elseif i == 4 then
-          eq(2, foldlevel(i))
+          eq(2, funcs.foldlevel(i))
         else
-          eq(1, foldlevel(i))
+          eq(1, funcs.foldlevel(i))
         end
       end
       -- folds are not corrupted
       feed('zM')
-      eq(6, foldclosedend(2))
-      eq(12, foldclosedend(8))
-      eq(18, foldclosedend(14))
+      eq(6, funcs.foldclosedend(2))
+      eq(12, funcs.foldclosedend(8))
+      eq(18, funcs.foldclosedend(14))
     end)
+
     it("doesn't split a fold when the move is within it", function()
       test_move_indent([[
 a
@@ -157,6 +163,7 @@ a
 a]], '5m6')
       eq({0, 1, 1, 2, 2, 2, 2, 1, 1, 0}, get_folds())
     end)
+
     it('truncates folds that end in the moved range', function()
       test_move_indent([[
 a
@@ -168,6 +175,7 @@ a
 a]], '4,5m6')
       eq({0, 1, 2, 0, 0, 0, 0}, get_folds())
     end)
+
     it('moves folds that start between moved range and destination', function()
       test_move_indent([[
 a
@@ -185,6 +193,7 @@ a
 	a]], '3,4m$')
       eq({0, 1, 1, 0, 0, 1, 2, 1, 0, 0, 1, 0, 0}, get_folds())
     end)
+
     it('does not affect folds outside changed lines', function()
       test_move_indent([[
 	a
@@ -198,6 +207,7 @@ a
 	a]], '4m5')
       eq({1, 1, 1, 0, 0, 0, 1, 1, 1}, get_folds())
     end)
+
     it('moves and truncates folds that start in moved range', function()
       test_move_indent([[
 a
@@ -212,6 +222,7 @@ a
 a]], '1,3m7')
       eq({0, 0, 0, 0, 0, 1, 2, 0, 0, 0}, get_folds())
     end)
+
     it('breaks a fold when moving text into it', function()
       test_move_indent([[
 a
@@ -223,6 +234,7 @@ a
 a]], '$m4')
       eq({0, 1, 2, 2, 0, 0, 0}, get_folds())
     end)
+
     it('adjusts correctly when moving a range backwards', function()
       test_move_indent([[
 a
@@ -232,6 +244,7 @@ a
 a]], '2,3m0')
       eq({1, 2, 0, 0, 0}, get_folds())
     end)
+
     it('handles shifting all remaining folds', function()
       test_move_indent([[
 	a
@@ -252,6 +265,7 @@ a]], '13m7')
       eq({1, 2, 2, 2, 1, 2, 2, 1, 1, 1, 2, 2, 2, 1, 0}, get_folds())
     end)
   end)
+
   it('updates correctly on :read', function()
     -- luacheck: ignore 621
     helpers.write_file(tempfname, [[
@@ -265,8 +279,10 @@ a]], '13m7')
     	a
     	a
     ]])
-    feed_command('set foldmethod=indent', '2', '%foldopen')
-    feed_command('read ' .. tempfname)
+    command('set foldmethod=indent')
+    command('2')
+    command('%foldopen')
+    command('read ' .. tempfname)
     -- Just to check we have the correct file text.
     expect([[
     	a
@@ -288,6 +304,7 @@ a]], '13m7')
       eq(1, funcs.foldlevel(i))
     end
   end)
+
   it('combines folds when removing separating space', function()
     -- luacheck: ignore 621
     insert([[
@@ -300,9 +317,11 @@ a]], '13m7')
     	a
     	a
     ]])
-    feed_command('set foldmethod=indent', '3,5d')
+    command('set foldmethod=indent')
+    command('3,5d')
     eq(5, funcs.foldclosedend(1))
   end)
+
   it("doesn't combine folds that have a specified end", function()
     insert([[
     {{{
@@ -314,9 +333,12 @@ a]], '13m7')
 
     }}}
     ]])
-    feed_command('set foldmethod=marker', '3,5d', '%foldclose')
+    command('set foldmethod=marker')
+    command('3,5d')
+    command('%foldclose')
     eq(2, funcs.foldclosedend(1))
   end)
+
   it('splits folds according to >N and <N with foldexpr', function()
     helpers.source([[
     function TestFoldExpr(lnum)
@@ -350,8 +372,11 @@ a]], '13m7')
     a
     a
     ]])
-    feed_command('set foldmethod=expr', 'set foldexpr=TestFoldExpr(v:lnum)', '2', 'foldopen')
-    feed_command('read ' .. tempfname, '%foldclose')
+    command('set foldmethod=expr foldexpr=TestFoldExpr(v:lnum)')
+    command('2')
+    command('foldopen')
+    command('read ' .. tempfname)
+    command('%foldclose')
     eq(2, funcs.foldclosedend(1))
     eq(0, funcs.foldlevel(3))
     eq(0, funcs.foldlevel(4))
@@ -359,12 +384,35 @@ a]], '13m7')
     eq(10, funcs.foldclosedend(7))
     eq(14, funcs.foldclosedend(11))
   end)
-  it('updates correctly with indent method and visual blockwise insertion', function()
+
+  it('no folds remain if :delete makes buffer empty #19671', function()
+    command('set foldmethod=manual')
+    funcs.setline(1, {'foo', 'bar', 'baz'})
+    command('2,3fold')
+    command('%delete')
+    eq(0, funcs.foldlevel(1))
+  end)
+
+  it('multibyte fold markers work #20438', function()
+    command('set foldmethod=marker foldmarker=«,» commentstring=/*%s*/')
+    insert([[
+      bbbbb
+      bbbbb
+      bbbbb]])
+    feed('zfgg')
+    expect([[
+      bbbbb/*«*/
+      bbbbb
+      bbbbb/*»*/]])
+    eq(1, funcs.foldlevel(1))
+  end)
+
+  it('updates correctly with indent method and visual blockwise insertion #22898', function()
     insert([[
     a
     b
     ]])
-    feed_command('set foldmethod=indent', 'set shiftwidth=2')
+    command('set foldmethod=indent shiftwidth=2')
     feed('gg0<C-v>jI  <Esc>') -- indent both lines using visual blockwise mode
     eq(1, funcs.foldlevel(1))
     eq(1, funcs.foldlevel(2))
