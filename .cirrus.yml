@@ -14,7 +14,7 @@ freebsd_task:
   build_deps_script:
     - gmake deps
   build_script:
-    - gmake nvim
+    - gmake CMAKE_EXTRA_FLAGS="-DCI_BUILD=ON" nvim
   workaround_script:
     # Run tests as user "cirrus" instead of root. This is required for the
     # permission-related tests to work correctly.

@@ -76,7 +76,7 @@ jobs:
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: configure
-        run: cmake -B build -G Ninja -D CI_BUILD=OFF
+        run: cmake -B build -G Ninja
 
       - if: "!cancelled()"
         name: Determine if run should be aborted
@@ -197,7 +197,7 @@ jobs:
 
       - name: Build
         run: |
-          cmake -B build -G Ninja -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.flags }}
+          cmake -B build -G Ninja -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.flags }} -D CI_BUILD=ON
           cmake --build build
 
       - if: "!cancelled()"
@@ -276,7 +276,7 @@ jobs:
           cmake --build .deps
 
       - name: Configure
-        run: cmake -B build -G "Ninja Multi-Config" -D CMAKE_C_COMPILER=gcc
+        run: cmake -B build -G "Ninja Multi-Config" -D CMAKE_C_COMPILER=gcc -D CI_BUILD=ON
 
       - name: Release
         run: cmake --build build --config Release
@@ -313,7 +313,7 @@ jobs:
 
       - name: Build
         run: |
-          cmake -B build -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo'
+          cmake -B build -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo' -D CI_BUILD=ON
           cmake --build build
 
       - name: Install test deps
@@ -405,5 +405,5 @@ jobs:
 
       - name: Build
         run: |
-          cmake -B build -G Ninja
+          cmake -B build -G Ninja -D CI_BUILD=ON
           cmake --build build
