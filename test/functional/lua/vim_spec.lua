@@ -2967,6 +2967,32 @@ describe('lua stdlib', function()
       }]],
       eval[[execute('lua vim.print(42, "abc", { a = { b = 77 }})')]])
   end)
+
+  it('vim.F.if_nil', function()
+    local function if_nil(...)
+      return exec_lua([[
+        local args = {...}
+        local nargs = select('#', ...)
+        for i = 1, nargs do
+          if args[i] == vim.NIL then
+            args[i] = nil
+          end
+        end
+        return vim.F.if_nil(unpack(args, 1, nargs))
+      ]], ...)
+    end
+
+    local a = NIL
+    local b = NIL
+    local c = 42
+    local d = false
+    eq(42, if_nil(a, c))
+    eq(false, if_nil(d, b))
+    eq(42, if_nil(a, b, c, d))
+    eq(false, if_nil(d))
+    eq(false, if_nil(d, c))
+    eq(NIL, if_nil(a))
+  end)
 end)
 
 describe('lua: builtin modules', function()
