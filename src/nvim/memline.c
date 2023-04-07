@@ -3988,7 +3988,7 @@ int inc(pos_T *lp)
   if (lp->col != MAXCOL) {
     const char *const p = ml_get_pos(lp);
     if (*p != NUL) {  // still within line, move to next char (may be NUL)
-      const int l = utfc_ptr2len((char *)p);
+      const int l = utfc_ptr2len(p);
 
       lp->col += l;
       return ((p[l] != NUL) ? 0 : 2);

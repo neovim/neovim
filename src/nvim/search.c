@@ -3036,8 +3036,8 @@ static int fuzzy_match_recursive(const char *fuzpat, const char *str, uint32_t s
   // Loop through fuzpat and str looking for a match
   bool first_match = true;
   while (*fuzpat != NUL && *str != NUL) {
-    const int c1 = utf_ptr2char((char *)fuzpat);
-    const int c2 = utf_ptr2char((char *)str);
+    const int c1 = utf_ptr2char(fuzpat);
+    const int c2 = utf_ptr2char(str);
 
     // Found match
     if (mb_tolower(c1) == mb_tolower(c2)) {
@@ -3257,7 +3257,7 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
       if (retmatchpos) {
         items[match_count].lmatchpos = tv_list_alloc(kListLenMayKnow);
         int j = 0;
-        const char *p = (char *)str;
+        const char *p = str;
         while (*p != NUL) {
           if (!ascii_iswhite(utf_ptr2char(p)) || matchseq) {
             tv_list_append_number(items[match_count].lmatchpos, matches[j]);

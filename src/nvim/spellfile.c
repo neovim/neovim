@@ -2137,7 +2137,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
     if (itemcnt > 0) {
       if (is_aff_rule(items, itemcnt, "SET", 2) && aff->af_enc == NULL) {
         // Setup for conversion from "ENC" to 'encoding'.
-        aff->af_enc = enc_canonize((char *)items[1]);
+        aff->af_enc = enc_canonize(items[1]);
         if (!spin->si_ascii
             && convert_setup(&spin->si_conv, aff->af_enc, p_enc) == FAIL) {
           smsg(_("Conversion in %s not supported: from %s to %s"),
@@ -2240,13 +2240,13 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
       } else if (is_aff_rule(items, itemcnt, "COMPOUNDRULES", 2)) {
         // We don't use the count, but do check that it's a number and
         // not COMPOUNDRULE mistyped.
-        if (atoi((char *)items[1]) == 0) {
+        if (atoi(items[1]) == 0) {
           smsg(_("Wrong COMPOUNDRULES value in %s line %d: %s"),
                fname, lnum, items[1]);
         }
       } else if (is_aff_rule(items, itemcnt, "COMPOUNDRULE", 2)) {
         // Don't use the first rule if it is a number.
-        if (compflags != NULL || *skipdigits((char *)items[1]) != NUL) {
+        if (compflags != NULL || *skipdigits(items[1]) != NUL) {
           // Concatenate this string to previously defined ones,
           // using a slash to separate them.
           l = (int)strlen(items[1]) + 1;
@@ -2263,21 +2263,21 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
         }
       } else if (is_aff_rule(items, itemcnt, "COMPOUNDWORDMAX", 2)
                  && compmax == 0) {
-        compmax = atoi((char *)items[1]);
+        compmax = atoi(items[1]);
         if (compmax == 0) {
           smsg(_("Wrong COMPOUNDWORDMAX value in %s line %d: %s"),
                fname, lnum, items[1]);
         }
       } else if (is_aff_rule(items, itemcnt, "COMPOUNDMIN", 2)
                  && compminlen == 0) {
-        compminlen = atoi((char *)items[1]);
+        compminlen = atoi(items[1]);
         if (compminlen == 0) {
           smsg(_("Wrong COMPOUNDMIN value in %s line %d: %s"),
                fname, lnum, items[1]);
         }
       } else if (is_aff_rule(items, itemcnt, "COMPOUNDSYLMAX", 2)
                  && compsylmax == 0) {
-        compsylmax = atoi((char *)items[1]);
+        compsylmax = atoi(items[1]);
         if (compsylmax == 0) {
           smsg(_("Wrong COMPOUNDSYLMAX value in %s line %d: %s"),
                fname, lnum, items[1]);
@@ -2291,7 +2291,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
       } else if (is_aff_rule(items, itemcnt, "CHECKCOMPOUNDTRIPLE", 1)) {
         compoptions |= COMP_CHECKTRIPLE;
       } else if (is_aff_rule(items, itemcnt, "CHECKCOMPOUNDPATTERN", 2)) {
-        if (atoi((char *)items[1]) == 0) {
+        if (atoi(items[1]) == 0) {
           smsg(_("Wrong CHECKCOMPOUNDPATTERN value in %s line %d: %s"),
                fname, lnum, items[1]);
         }
@@ -2344,7 +2344,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
         // "S" flag on all but the last block, thus we check for that
         // and store it in ah_follows.
         xstrlcpy(key, items[1], AH_KEY_LEN);
-        hi = hash_find(tp, (char *)key);
+        hi = hash_find(tp, key);
         if (!HASHITEM_EMPTY(hi)) {
           cur_aff = HI2AH(hi);
           if (cur_aff->ah_combine != (*items[2] == 'Y')) {
@@ -2421,7 +2421,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
           }
         }
 
-        aff_todo = atoi((char *)items[3]);
+        aff_todo = atoi(items[3]);
       } else if ((strcmp(items[0], "PFX") == 0
                   || strcmp(items[0], "SFX") == 0)
                  && aff_todo > 0
@@ -2640,7 +2640,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
 
           // We simply concatenate all the MAP strings, separated by
           // slashes.
-          ga_concat(&spin->si_map, (char *)items[1]);
+          ga_concat(&spin->si_map, items[1]);
           ga_append(&spin->si_map, '/');
         }
       }
@@ -2670,7 +2670,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
         sofoto = getroom_save(spin, items[1]);
       } else if (strcmp(items[0], "COMMON") == 0) {
         for (int i = 1; i < itemcnt; i++) {
-          if (HASHITEM_EMPTY(hash_find(&spin->si_commonwords, (char *)items[i]))) {
+          if (HASHITEM_EMPTY(hash_find(&spin->si_commonwords, items[i]))) {
             p = xstrdup(items[i]);
             hash_add(&spin->si_commonwords, p);
           }
@@ -2906,7 +2906,7 @@ static void process_compflags(spellinfo_T *spin, afffile_T *aff, char *compflags
         // Find the flag in the hashtable.  If it was used before, use
         // the existing ID.  Otherwise add a new entry.
         xstrlcpy(key, prevp, (size_t)(p - prevp) + 1);
-        hi = hash_find(&aff->af_comp, (char *)key);
+        hi = hash_find(&aff->af_comp, key);
         if (!HASHITEM_EMPTY(hi)) {
           id = HI2CI(hi)->ci_newID;
         } else {
@@ -3111,14 +3111,14 @@ static int spell_read_dic(spellinfo_T *spin, char *fname, afffile_T *affile)
   spin->si_msg_count = 999999;
 
   // Read and ignore the first line: word count.
-  if (vim_fgets((char *)line, MAXLINELEN, fd) || !ascii_isdigit(*skipwhite((char *)line))) {
+  if (vim_fgets(line, MAXLINELEN, fd) || !ascii_isdigit(*skipwhite(line))) {
     semsg(_("E760: No word count in %s"), fname);
   }
 
   // Read all the lines in the file one by one.
   // The words are converted to 'encoding' here, before being added to
   // the hashtable.
-  while (!vim_fgets((char *)line, MAXLINELEN, fd) && !got_int) {
+  while (!vim_fgets(line, MAXLINELEN, fd) && !got_int) {
     line_breakcheck();
     lnum++;
     if (line[0] == '#' || line[0] == '/') {
@@ -3137,7 +3137,7 @@ static int spell_read_dic(spellinfo_T *spin, char *fname, afffile_T *affile)
 
     // Convert from "SET" to 'encoding' when needed.
     if (spin->si_conv.vc_type != CONV_NONE) {
-      pc = string_convert(&spin->si_conv, (char *)line, NULL);
+      pc = string_convert(&spin->si_conv, line, NULL);
       if (pc == NULL) {
         smsg(_("Conversion failure for word in %s line %d: %s"),
              fname, lnum, line);
@@ -3329,7 +3329,7 @@ static int get_pfxlist(afffile_T *affile, char *afflist, char *store_afflist)
       // A flag is a postponed prefix flag if it appears in "af_pref"
       // and its ID is not zero.
       xstrlcpy(key, prevp, (size_t)(p - prevp) + 1);
-      hi = hash_find(&affile->af_pref, (char *)key);
+      hi = hash_find(&affile->af_pref, key);
       if (!HASHITEM_EMPTY(hi)) {
         id = HI2AH(hi)->ah_newID;
         if (id != 0) {
@@ -3360,7 +3360,7 @@ static void get_compflags(afffile_T *affile, char *afflist, char *store_afflist)
     if (get_affitem(affile->af_flagtype, &p) != 0) {
       // A flag is a compound flag if it appears in "af_comp".
       xstrlcpy(key, prevp, (size_t)(p - prevp) + 1);
-      hi = hash_find(&affile->af_comp, (char *)key);
+      hi = hash_find(&affile->af_comp, key);
       if (!HASHITEM_EMPTY(hi)) {
         store_afflist[cnt++] = (char)(uint8_t)HI2CI(hi)->ci_newID;
       }
@@ -4393,7 +4393,7 @@ static int write_vim_spell(spellinfo_T *spin, char *fname)
     // Form the <folchars> string first, we need to know its length.
     size_t l = 0;
     for (size_t i = 128; i < 256; i++) {
-      l += (size_t)utf_char2bytes(spelltab.st_fold[i], (char *)folchars + l);
+      l += (size_t)utf_char2bytes(spelltab.st_fold[i], folchars + l);
     }
     put_bytes(fd, 1 + 128 + 2 + l, 4);                  // <sectionlen>
 
@@ -5561,7 +5561,7 @@ void spell_add_word(char *word, int len, SpellAddType what, int idx, bool undo)
     // since its flags sort before the one with WF_BANNED.
     fd = os_fopen(fname, "r");
     if (fd != NULL) {
-      while (!vim_fgets((char *)line, MAXWLEN * 2, fd)) {
+      while (!vim_fgets(line, MAXWLEN * 2, fd)) {
         fpos = fpos_next;
         fpos_next = ftell(fd);
         if (fpos_next < 0) {

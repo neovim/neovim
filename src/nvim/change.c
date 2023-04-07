@@ -1311,7 +1311,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           }
 
           // find start of middle part
-          (void)copy_option_part(&p, (char *)lead_middle, COM_MAX_LEN, ",");
+          (void)copy_option_part(&p, lead_middle, COM_MAX_LEN, ",");
           require_blank = false;
         }
 
@@ -1322,7 +1322,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           }
           p++;
         }
-        (void)copy_option_part(&p, (char *)lead_middle, COM_MAX_LEN, ",");
+        (void)copy_option_part(&p, lead_middle, COM_MAX_LEN, ",");
 
         while (*p && p[-1] != ':') {  // find end of end flags
           // Check whether we allow automatic ending of comments
@@ -1331,7 +1331,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           }
           p++;
         }
-        size_t n = copy_option_part(&p, (char *)lead_end, COM_MAX_LEN, ",");
+        size_t n = copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
 
         if (end_comment_pending == -1) {  // we can set it now
           end_comment_pending = (unsigned char)lead_end[n - 1];
@@ -1352,7 +1352,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         // Doing "o" on a start of comment inserts the middle leader.
         if (lead_len > 0) {
           if (current_flag == COM_START) {
-            lead_repl = (char *)lead_middle;
+            lead_repl = lead_middle;
             lead_repl_len = (int)strlen(lead_middle);
           }
 

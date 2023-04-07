@@ -197,10 +197,10 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
   int var_count = 0;
   int semicolon = 0;
   char op[2];
-  char *argend;
+  const char *argend;
   int first = true;
 
-  argend = (char *)skip_var_list(arg, &var_count, &semicolon);
+  argend = skip_var_list(arg, &var_count, &semicolon);
   if (argend == NULL) {
     return;
   }
@@ -235,8 +235,7 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
       if (!eap->skip) {
         op[0] = '=';
         op[1] = NUL;
-        (void)ex_let_vars(eap->arg, &rettv, false, semicolon, var_count,
-                          is_const, (char *)op);
+        (void)ex_let_vars(eap->arg, &rettv, false, semicolon, var_count, is_const, op);
       }
       tv_clear(&rettv);
     }
@@ -267,8 +266,7 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
       }
       emsg_skip--;
     } else if (i != FAIL) {
-      (void)ex_let_vars(eap->arg, &rettv, false, semicolon, var_count,
-                        is_const, (char *)op);
+      (void)ex_let_vars(eap->arg, &rettv, false, semicolon, var_count, is_const, op);
       tv_clear(&rettv);
     }
   }
@@ -375,7 +373,7 @@ const char *skip_var_list(const char *arg, int *var_count, int *semicolon)
     const char *p = arg;
     for (;;) {
       p = skipwhite(p + 1);             // skip whites after '[', ';' or ','
-      s = skip_var_one((char *)p);
+      s = skip_var_one(p);
       if (s == p) {
         semsg(_(e_invarg2), p);
         return NULL;
@@ -398,7 +396,7 @@ const char *skip_var_list(const char *arg, int *var_count, int *semicolon)
     }
     return p + 1;
   }
-  return skip_var_one((char *)arg);
+  return skip_var_one(arg);
 }
 
 /// Skip one (assignable) variable name, including @r, $VAR, &option, d.key,
@@ -430,7 +428,7 @@ void list_hashtable_vars(hashtab_T *ht, const char *prefix, int empty, int *firs
 
       // apply :filter /pat/ to variable name
       xstrlcpy(buf, prefix, IOSIZE);
-      xstrlcat(buf, (char *)di->di_key, IOSIZE);
+      xstrlcat(buf, di->di_key, IOSIZE);
       if (message_filtered(buf)) {
         continue;
       }
@@ -915,7 +913,7 @@ static int do_unlet_var(lval_T *lp, char *name_end, exarg_T *eap, int deep FUNC_
       if (watched) {
         tv_copy(&di->di_tv, &oldtv);
         // need to save key because dictitem_remove will free it
-        key = xstrdup((char *)di->di_key);
+        key = xstrdup(di->di_key);
       }
 
       tv_dict_item_remove(d, di);
@@ -1169,7 +1167,7 @@ void delete_var(hashtab_T *ht, hashitem_T *hi)
 static void list_one_var(dictitem_T *v, const char *prefix, int *first)
 {
   char *const s = encode_tv2echo(&v->di_tv, NULL);
-  list_one_var_a(prefix, v->di_key, (ptrdiff_t)strlen((char *)v->di_key),
+  list_one_var_a(prefix, v->di_key, (ptrdiff_t)strlen(v->di_key),
                  v->di_tv.v_type, (s == NULL ? "" : s), first);
   xfree(s);
 }
@@ -1343,7 +1341,7 @@ void set_var_const(const char *name, const size_t name_len, typval_T *const tv, 
 
     v = xmalloc(offsetof(dictitem_T, di_key) + strlen(varname) + 1);
     STRCPY(v->di_key, varname);
-    if (hash_add(ht, (char *)v->di_key) == FAIL) {
+    if (hash_add(ht, v->di_key) == FAIL) {
       xfree(v);
       return;
     }
@@ -1362,7 +1360,7 @@ void set_var_const(const char *name, const size_t name_len, typval_T *const tv, 
   }
 
   if (watched) {
-    tv_dict_watcher_notify(dict, (char *)v->di_key, &v->di_tv, &oldtv);
+    tv_dict_watcher_notify(dict, v->di_key, &v->di_tv, &oldtv);
     tv_clear(&oldtv);
   }
 

@@ -1468,7 +1468,7 @@ char *reverse_text(char *s)
 /// @return [allocated] Copy of the string.
 char *strrep(const char *src, const char *what, const char *rep)
 {
-  char *pos = (char *)src;
+  const char *pos = src;
   size_t whatlen = strlen(what);
 
   // Count occurrences
