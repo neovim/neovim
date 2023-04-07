@@ -318,6 +318,6 @@ release.
 
 • |nvim_exec()| is now deprecated in favor of |nvim_exec2()|.
 
-• Renamed |vim.pretty_print| to |vim.print|.
+• Renamed |vim.pretty_print()| to |vim.print()|.
 
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:
