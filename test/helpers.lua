@@ -43,6 +43,38 @@ function module.isfile(path)
   return stat.type == 'file'
 end
 
+function module.rmdir(path)
+  if not module.isdir(path) then
+    return
+  end
+  local handle = luv.fs_scandir(path)
+  if type(handle) == 'string' then
+    error(handle)
+  end
+
+  while true do
+    local name, t = luv.fs_scandir_next(handle)
+    if not name then
+      break
+    end
+
+    local new_cwd = module.join_paths(path, name)
+    if t == 'directory' then
+      local success = module.rmdir(new_cwd)
+      if not success then
+        return false
+      end
+    else
+      local success = luv.fs_unlink(new_cwd)
+      if not success then
+        return false
+      end
+    end
+  end
+
+  return luv.fs_rmdir(path)
+end
+
 function module.argss_to_cmd(...)
   local cmd = ''
   for i = 1, select('#', ...) do

@@ -14,14 +14,12 @@ local filter = global_helpers.tbl_filter
 local is_os = global_helpers.is_os
 local map = global_helpers.tbl_map
 local ok = global_helpers.ok
-local sleep = global_helpers.sleep
 local tbl_contains = global_helpers.tbl_contains
 local fail = global_helpers.fail
 
 local module = {
 }
 
-local start_dir = luv.cwd()
 local runtime_set = 'set runtimepath^=./build/lib/nvim/'
 module.nvim_prog = (
   os.getenv('NVIM_PRG')
@@ -724,59 +722,6 @@ function module.assert_visible(bufnr, visible)
   else
     assert(-1 == module.funcs.bufwinnr(bufnr),
       'expected buffer NOT visible in current tabpage: '..tostring(bufnr))
-  end
-end
-
-local function do_rmdir(path)
-  local stat = luv.fs_stat(path)
-  if stat == nil then
-    return
-  end
-  if stat.type ~= 'directory' then
-    error(string.format('rmdir: not a directory: %s', path))
-  end
-  for file in vim.fs.dir(path) do
-    if file ~= '.' and file ~= '..' then
-      local abspath = path..'/'..file
-      if global_helpers.isdir(abspath) then
-        do_rmdir(abspath)  -- recurse
-      else
-        local ret, err = os.remove(abspath)
-        if not ret then
-          if not session then
-            error('os.remove: '..err)
-          else
-            -- Try Nvim delete(): it handles `readonly` attribute on Windows,
-            -- and avoids Lua cross-version/platform incompatibilities.
-            if -1 == module.call('delete', abspath) then
-              local hint = (is_os('win')
-                and ' (hint: try :%bwipeout! before rmdir())' or '')
-              error('delete() failed'..hint..': '..abspath)
-            end
-          end
-        end
-      end
-    end
-  end
-  local ret, err = luv.fs_rmdir(path)
-  if not ret then
-    error('luv.fs_rmdir('..path..'): '..err)
-  end
-end
-
-function module.rmdir(path)
-  local ret, _ = pcall(do_rmdir, path)
-  if not ret and is_os('win') then
-    -- Maybe "Permission denied"; try again after changing the nvim
-    -- process to the top-level directory.
-    module.command([[exe 'cd '.fnameescape(']]..start_dir.."')")
-    ret, _ = pcall(do_rmdir, path)
-  end
-  -- During teardown, the nvim process may not exit quickly enough, then rmdir()
-  -- will fail (on Windows).
-  if not ret then  -- Try again.
-    sleep(1000)
-    do_rmdir(path)
   end
 end
 
