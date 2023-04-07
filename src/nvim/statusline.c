@@ -1443,8 +1443,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       // Store the current buffer number as a string variable
       vim_snprintf(buf_tmp, sizeof(buf_tmp), "%d", curbuf->b_fnum);
       set_internal_string_var("g:actual_curbuf", buf_tmp);
-      vim_snprintf((char *)win_tmp, sizeof(win_tmp), "%d", curwin->handle);
-      set_internal_string_var("g:actual_curwin", (char *)win_tmp);
+      vim_snprintf(win_tmp, sizeof(win_tmp), "%d", curwin->handle);
+      set_internal_string_var("g:actual_curwin", win_tmp);
 
       buf_T *const save_curbuf = curbuf;
       win_T *const save_curwin = curwin;

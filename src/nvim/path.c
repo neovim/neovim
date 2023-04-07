@@ -641,7 +641,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
   while (*path_end != NUL) {
     // May ignore a wildcard that has a backslash before it; it will
     // be removed by rem_backslash() or file_pat_to_reg_pat() below.
-    if (path_end >= path + wildoff && rem_backslash((char *)path_end)) {
+    if (path_end >= path + wildoff && rem_backslash(path_end)) {
       *p++ = *path_end++;
     } else if (vim_ispathsep_nocolon(*path_end)) {
       if (e != NULL) {
@@ -651,7 +651,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
     } else if (path_end >= path + wildoff
                && (vim_strchr("*?[{~$", (uint8_t)(*path_end)) != NULL
 #ifndef MSWIN
-                   || (!p_fic && (flags & EW_ICASE) && mb_isalpha(utf_ptr2char((char *)path_end)))
+                   || (!p_fic && (flags & EW_ICASE) && mb_isalpha(utf_ptr2char(path_end)))
 #endif
                    )) {  // NOLINT(whitespace/parens)
       e = p;
@@ -727,9 +727,9 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
   char *dirpath = (*buf == NUL ? "." : buf);
   if (os_file_is_readable(dirpath) && os_scandir(&dir, dirpath)) {
     // Find all matching entries.
-    char *name;
+    const char *name;
     scandir_next_with_dots(NULL);  // initialize
-    while (!got_int && (name = (char *)scandir_next_with_dots(&dir)) != NULL) {
+    while (!got_int && (name = scandir_next_with_dots(&dir)) != NULL) {
       if ((name[0] != '.'
            || starts_with_dot
            || ((flags & EW_DODOT)

@@ -1216,7 +1216,7 @@ void mt_inspect_node(MarkTree *b, garray_T *ga, mtnode_t *n, mtpos_t off)
   for (int i = 0; i < n->n; i++) {
     mtpos_t p = n->key[i].pos;
     unrelative(off, &p);
-    snprintf((char *)buf, sizeof(buf), "%d/%d", p.row, p.col);
+    snprintf(buf, sizeof(buf), "%d/%d", p.row, p.col);
     ga_concat(ga, buf);
     if (n->level) {
       mt_inspect_node(b, ga, n->ptr[i + 1], p);

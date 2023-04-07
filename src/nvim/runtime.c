@@ -1039,7 +1039,7 @@ static int load_pack_plugin(bool opt, char *fname)
     do_cmdline_cmd("augroup filetypedetect");
     vim_snprintf(pat, len, ftpat, ffname);
     source_all_matches(pat);
-    vim_snprintf((char *)pat, len, "%s/ftdetect/*.lua", ffname);  // NOLINT
+    vim_snprintf(pat, len, "%s/ftdetect/*.lua", ffname);  // NOLINT
     source_all_matches(pat);
     do_cmdline_cmd("augroup END");
   }
@@ -1784,7 +1784,7 @@ static bool concat_continued_line(garray_T *const ga, const int init_growsize, c
                                   size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
-  const char *const line = skipwhite_len((char *)p, len);
+  const char *const line = skipwhite_len(p, len);
   len -= (size_t)(line - p);
   // Skip lines starting with '\" ', concat lines starting with '\'
   if (len >= 3 && strncmp(line, "\"\\ ", 3) == 0) {
@@ -1878,7 +1878,7 @@ static int source_using_linegetter(void *cookie, LineGetter fgetline, const char
   if (save_sourcing_name == NULL) {
     sname = (char *)traceback_name;
   } else {
-    snprintf((char *)sourcing_name_buf, sizeof(sourcing_name_buf),
+    snprintf(sourcing_name_buf, sizeof(sourcing_name_buf),
              "%s called at %s:%" PRIdLINENR, traceback_name, save_sourcing_name,
              save_sourcing_lnum);
     sname = sourcing_name_buf;

@@ -144,7 +144,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
 
   bool is_fish_shell =
 #if defined(UNIX)
-    strncmp((char *)invocation_path_tail(p_sh, NULL), "fish", 4) == 0;
+    strncmp(invocation_path_tail(p_sh, NULL), "fish", 4) == 0;
 #else
     false;
 #endif

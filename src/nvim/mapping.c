@@ -422,7 +422,7 @@ static int str_to_mapargs(const char *strargs, bool is_unmap, MapArguments *mapa
 
   // {lhs_end} is a pointer to the "terminating whitespace" after {lhs}.
   // Use that to initialize {rhs_start}.
-  const char *rhs_start = skipwhite((char *)lhs_end);
+  const char *rhs_start = skipwhite(lhs_end);
 
   // Given {lhs} might be larger than MAXMAPLEN before replace_termcodes
   // (e.g. "<Space>" is longer than ' '), so first copy into a buffer.
@@ -594,7 +594,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
 
         const int first = vim_iswordp(lhs);
         int last = first;
-        p = (char *)lhs + utfc_ptr2len((char *)lhs);
+        p = lhs + utfc_ptr2len(lhs);
         n = 1;
         while (p < lhs + len) {
           n++;                                  // nr of (multi-byte) chars
@@ -733,8 +733,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
                 // we ignore trailing space when matching with
                 // the "lhs", since an abbreviation can't have
                 // trailing space.
-                if (n != len && (!is_abbrev || round || n > len
-                                 || *skipwhite((char *)lhs + n) != NUL)) {
+                if (n != len && (!is_abbrev || round || n > len || *skipwhite(lhs + n) != NUL)) {
                   mpp = &(mp->m_next);
                   continue;
                 }
@@ -857,7 +856,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
     }
 
     // Get here when adding a new entry to the maphash[] list or abbrlist.
-    map_add(buf, map_table, abbr_table, (char *)lhs, args, noremap, mode, is_abbrev,
+    map_add(buf, map_table, abbr_table, lhs, args, noremap, mode, is_abbrev,
             -1,  // sid
             0,   // lnum
             keyround1_simplified);
@@ -2645,10 +2644,10 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
   case 0:
     break;
   case 1:
-    api_set_error(err, kErrorTypeException, (char *)e_invarg, 0);
+    api_set_error(err, kErrorTypeException, e_invarg, 0);
     goto fail_and_free;
   case 2:
-    api_set_error(err, kErrorTypeException, (char *)e_nomap, 0);
+    api_set_error(err, kErrorTypeException, e_nomap, 0);
     goto fail_and_free;
   case 5:
     api_set_error(err, kErrorTypeException,

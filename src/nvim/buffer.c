@@ -2231,7 +2231,7 @@ int buflist_findpat(const char *pattern, const char *pattern_end, bool unlisted,
     // Repeat this for finding an unlisted buffer if there was no matching
     // listed buffer.
 
-    pat = file_pat_to_reg_pat((char *)pattern, (char *)pattern_end, NULL, false);
+    pat = file_pat_to_reg_pat(pattern, pattern_end, NULL, false);
     if (pat == NULL) {
       return -1;
     }
