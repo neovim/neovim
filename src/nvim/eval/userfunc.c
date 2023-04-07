@@ -758,7 +758,7 @@ static void funccal_unref(funccall_T *fc, ufunc_T *fp, bool force)
 /// @return true if the entry was deleted, false if it wasn't found.
 static bool func_remove(ufunc_T *fp)
 {
-  hashitem_T *hi = hash_find(&func_hashtab, (char *)UF2HIKEY(fp));
+  hashitem_T *hi = hash_find(&func_hashtab, UF2HIKEY(fp));
   if (HASHITEM_EMPTY(hi)) {
     return false;
   }
@@ -905,7 +905,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     STRCPY(name, "self");
 #endif
     v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
-    hash_add(&fc->l_vars.dv_hashtab, (char *)v->di_key);
+    hash_add(&fc->l_vars.dv_hashtab, v->di_key);
     v->di_tv.v_type = VAR_DICT;
     v->di_tv.v_lock = VAR_UNLOCKED;
     v->di_tv.vval.v_dict = selfdict;
@@ -931,7 +931,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     STRCPY(name, "000");
 #endif
     v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
-    hash_add(&fc->l_avars.dv_hashtab, (char *)v->di_key);
+    hash_add(&fc->l_avars.dv_hashtab, v->di_key);
     v->di_tv.v_type = VAR_LIST;
     v->di_tv.v_lock = VAR_FIXED;
     v->di_tv.vval.v_list = &fc->l_varlist;
@@ -1009,9 +1009,9 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
       // Named arguments can be accessed without the "a:" prefix in lambda
       // expressions. Add to the l: dict.
       tv_copy(&v->di_tv, &v->di_tv);
-      hash_add(&fc->l_vars.dv_hashtab, (char *)v->di_key);
+      hash_add(&fc->l_vars.dv_hashtab, v->di_key);
     } else {
-      hash_add(&fc->l_avars.dv_hashtab, (char *)v->di_key);
+      hash_add(&fc->l_avars.dv_hashtab, v->di_key);
     }
 
     if (ai >= 0 && ai < MAX_FUNC_ARGS) {
@@ -1770,7 +1770,7 @@ char *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, part
         semsg(_(e_invarg2), start);
       }
     } else {
-      *pp = (char *)find_name_end((char *)start, NULL, NULL, FNE_INCL_BR);
+      *pp = (char *)find_name_end(start, NULL, NULL, FNE_INCL_BR);
     }
     goto theend;
   }

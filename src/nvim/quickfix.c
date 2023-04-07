@@ -531,7 +531,7 @@ static int efm_to_regpat(const char *efm, int len, efm_T *fmt_ptr, char *regpat)
         }
       }
       if (idx < FMT_PATTERNS) {
-        ptr = efmpat_to_regpat((char *)efmp, ptr, fmt_ptr, idx, round);
+        ptr = efmpat_to_regpat(efmp, ptr, fmt_ptr, idx, round);
         if (ptr == NULL) {
           return FAIL;
         }
@@ -1241,7 +1241,7 @@ static char *qf_cmdtitle(char *cmd)
 {
   static char qftitle_str[IOSIZE];
 
-  snprintf((char *)qftitle_str, IOSIZE, ":%s", cmd);
+  snprintf(qftitle_str, IOSIZE, ":%s", cmd);
 
   return qftitle_str;
 }
@@ -3281,7 +3281,7 @@ static void qf_msg(qf_info_T *qi, int which, char *lead)
   int count = qi->qf_lists[which].qf_count;
   char buf[IOSIZE];
 
-  vim_snprintf((char *)buf, IOSIZE, _("%serror list %d of %d; %d errors "),
+  vim_snprintf(buf, IOSIZE, _("%serror list %d of %d; %d errors "),
                lead,
                which + 1,
                qi->qf_listcount,
@@ -3506,7 +3506,7 @@ static char *qf_types(int c, int nr)
   }
 
   static char buf[20];
-  snprintf((char *)buf, sizeof(buf), "%s %3d", p, nr);
+  snprintf(buf, sizeof(buf), "%s %3d", p, nr);
   return buf;
 }
 

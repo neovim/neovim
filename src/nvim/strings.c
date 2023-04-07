@@ -946,10 +946,10 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap, t
                                  - str_arg);
           }
           if (fmt_spec == 'S') {
-            char *p1;
+            const char *p1;
             size_t i;
 
-            for (i = 0, p1 = (char *)str_arg; *p1; p1 += utfc_ptr2len(p1)) {
+            for (i = 0, p1 = str_arg; *p1; p1 += utfc_ptr2len(p1)) {
               size_t cell = (size_t)utf_ptr2cells(p1);
               if (precision_specified && i + cell > precision) {
                 break;

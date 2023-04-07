@@ -406,8 +406,8 @@ static const char *skip_var_one(const char *arg)
   if (*arg == '@' && arg[1] != NUL) {
     return arg + 2;
   }
-  return (char *)find_name_end(*arg == '$' || *arg == '&' ? arg + 1 : arg,
-                               NULL, NULL, FNE_INCL_BR | FNE_CHECK_START);
+  return find_name_end(*arg == '$' || *arg == '&' ? arg + 1 : arg,
+                       NULL, NULL, FNE_INCL_BR | FNE_CHECK_START);
 }
 
 /// List variables for hashtab "ht" with prefix "prefix".

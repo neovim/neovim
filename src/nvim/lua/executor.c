@@ -1172,7 +1172,7 @@ int nlua_call(lua_State *lstate)
   TRY_WRAP(&err, {
     // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
     // (TRY_WRAP) to capture abort-causing non-exception errors.
-    (void)call_func((char *)name, (int)name_len, &rettv, nargs, vim_args, &funcexe);
+    (void)call_func(name, (int)name_len, &rettv, nargs, vim_args, &funcexe);
   });
 
   if (!ERROR_SET(&err)) {

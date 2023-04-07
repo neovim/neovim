@@ -2233,10 +2233,10 @@ int check_linecomment(const char *line)
   const char *p = line;  // scan from start
   // skip Lispish one-line comments
   if (curbuf->b_p_lisp) {
-    if (vim_strchr((char *)p, ';') != NULL) {   // there may be comments
+    if (vim_strchr(p, ';') != NULL) {   // there may be comments
       bool in_str = false;       // inside of string
 
-      while ((p = strpbrk((char *)p, "\";")) != NULL) {
+      while ((p = strpbrk(p, "\";")) != NULL) {
         if (*p == '"') {
           if (in_str) {
             if (*(p - 1) != '\\') {             // skip escaped quote
@@ -2258,7 +2258,7 @@ int check_linecomment(const char *line)
       p = NULL;
     }
   } else {
-    while ((p = vim_strchr((char *)p, '/')) != NULL) {
+    while ((p = vim_strchr(p, '/')) != NULL) {
       // Accept a double /, unless it's preceded with * and followed by *,
       // because * / / * is an end and start of a C comment.  Only
       // accept the position if it is not inside a string.
@@ -3055,7 +3055,7 @@ static int fuzzy_match_recursive(const char *fuzpat, const char *str, uint32_t s
       // Recursive call that "skips" this match
       uint32_t recursiveMatches[MAX_FUZZY_MATCHES];
       int recursiveScore = 0;
-      const char *const next_char = (char *)str + utfc_ptr2len((char *)str);
+      const char *const next_char = str + utfc_ptr2len(str);
       if (fuzzy_match_recursive(fuzpat, next_char, strIdx + 1, &recursiveScore, strBegin, strLen,
                                 matches, recursiveMatches,
                                 sizeof(recursiveMatches) / sizeof(recursiveMatches[0]), nextMatch,
@@ -4015,7 +4015,7 @@ search_line:
             curwin->w_cursor.lnum = lnum;
             check_cursor();
           } else {
-            if (!GETFILE_SUCCESS(getfile(0, (char *)files[depth].name, NULL, true,
+            if (!GETFILE_SUCCESS(getfile(0, files[depth].name, NULL, true,
                                          files[depth].lnum, false))) {
               break;    // failed to jump to file
             }

@@ -726,7 +726,7 @@ bool utf_composinglike(const char *p1, const char *p2)
   if (!arabic_maycombine(c2)) {
     return false;
   }
-  return arabic_combine(utf_ptr2char((char *)p1), c2);
+  return arabic_combine(utf_ptr2char(p1), c2);
 }
 
 /// Convert a UTF-8 string to a wide character
@@ -1312,10 +1312,10 @@ static int utf_strnicmp(const char *s1, const char *s2, size_t n1, size_t n2)
   // to fold just one character to determine the result of comparison.
 
   if (c1 != -1 && c2 == -1) {
-    n1 = (size_t)utf_char2bytes(utf_fold(c1), (char *)buffer);
+    n1 = (size_t)utf_char2bytes(utf_fold(c1), buffer);
     s1 = buffer;
   } else if (c2 != -1 && c1 == -1) {
-    n2 = (size_t)utf_char2bytes(utf_fold(c2), (char *)buffer);
+    n2 = (size_t)utf_char2bytes(utf_fold(c2), buffer);
     s2 = buffer;
   }
 
