@@ -795,8 +795,8 @@ static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char 
 {
   taggy_T *tagstack = curwin->w_tagstack;
   int tagstackidx = curwin->w_tagstackidx;
-  char *p;
-  char *command_end;
+  const char *p;
+  const char *command_end;
   tagptrs_T tagp;
   int taglen;
   int attr;

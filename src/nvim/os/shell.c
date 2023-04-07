@@ -876,7 +876,7 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
     // Failed, probably 'shell' is not executable.
     if (!silent) {
       msg_puts(_("\nshell failed to start: "));
-      msg_outtrans((char *)os_strerror(status));
+      msg_outtrans(os_strerror(status));
       msg_puts(": ");
       msg_outtrans(prog);
       msg_putchar('\n');
