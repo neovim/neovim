@@ -131,8 +131,16 @@ functionaltest-lua: | nvim
 FORMAT=formatc formatlua format
 LINT=lintlua lintsh lintc clang-tidy lintcommit lint
 TEST=functionaltest unittest
-generated-sources benchmark uninstall $(FORMAT) $(LINT) $(TEST): | build/.ran-cmake
+generated-sources benchmark $(FORMAT) $(LINT) $(TEST): | build/.ran-cmake
 	$(CMAKE_PRG) --build build --target $@
+
+uninstall:
+ifneq (,$(wildcard build/install_manifest.txt))
+	$(CMAKE_PRG) --build build --target $@
+else
+	@echo Install manifest file not found. You need to build and install \
+	neovim to generate the manifest file.
+endif
 
 test: $(TEST)
 
