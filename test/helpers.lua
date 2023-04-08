@@ -21,6 +21,15 @@ local module = {
   REMOVE_THIS = {},
 }
 
+function module.get_pathsep()
+  return module.is_os('win') and '\\' or '/'
+end
+
+function module.join_paths(...)
+  local result = table.concat({ ... }, module.get_pathsep())
+  return result
+end
+
 function module.isdir(path)
   if not path then
     return false

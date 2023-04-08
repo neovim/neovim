@@ -776,10 +776,6 @@ function module.exec_lua(code, ...)
   return module.meths.exec_lua(code, {...})
 end
 
-function module.get_pathsep()
-  return is_os('win') and '\\' or '/'
-end
-
 --- Gets the filesystem root dir, namely "/" or "C:/".
 function module.pathroot()
   local pathsep = package.config:sub(1,1)
