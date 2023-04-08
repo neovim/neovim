@@ -600,7 +600,10 @@ end
 ---                                 means to always show the diagnostic source.
 ---                       * spacing: (number) Amount of empty spaces inserted at the beginning
 ---                                  of the virtual text.
----                       * prefix: (string) Prepend diagnostic message with prefix.
+---                       * prefix: (string or function) prepend diagnostic message with prefix.
+---                                 If a function, it must have the signature (diagnostic) -> string,
+---                                 where {diagnostic} is of type |diagnostic-structure|. This can be
+---                                 used to render diagnostic symbols or error codes.
 ---                       * suffix: (string or function) Append diagnostic message with suffix.
 ---                                 If a function, it must have the signature (diagnostic) ->
 ---                                 string, where {diagnostic} is of type |diagnostic-structure|.
@@ -1066,8 +1069,15 @@ function M._get_virt_text_chunks(line_diags, opts)
   -- Create a little more space between virtual text and contents
   local virt_texts = { { string.rep(' ', spacing) } }
 
-  for i = 1, #line_diags - 1 do
-    table.insert(virt_texts, { prefix, virtual_text_highlight_map[line_diags[i].severity] })
+  for i = 1, #line_diags do
+    local resolved_prefix = prefix
+    if type(prefix) == 'function' then
+      resolved_prefix = prefix(line_diags[i]) or ''
+    end
+    table.insert(
+      virt_texts,
+      { resolved_prefix, virtual_text_highlight_map[line_diags[i].severity] }
+    )
   end
   local last = line_diags[#line_diags]
 
@@ -1078,7 +1088,7 @@ function M._get_virt_text_chunks(line_diags, opts)
       suffix = suffix(last) or ''
     end
     table.insert(virt_texts, {
-      string.format('%s %s%s', prefix, last.message:gsub('\r', ''):gsub('\n', '  '), suffix),
+      string.format(' %s%s', last.message:gsub('\r', ''):gsub('\n', '  '), suffix),
       virtual_text_highlight_map[last.severity],
     })
 
