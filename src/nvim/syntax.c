@@ -3674,7 +3674,7 @@ static void syn_clear_keyword(int id, hashtab_T *ht)
           if (kp_next == NULL) {
             hash_remove(ht, hi);
           } else {
-            hi->hi_key = (char *)KE2HIKEY(kp_next);
+            hi->hi_key = KE2HIKEY(kp_next);
           }
         } else {
           kp_prev->ke_next = kp_next;

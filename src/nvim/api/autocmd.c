@@ -608,7 +608,7 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Error *err)
     FOR_ALL_AUEVENTS(event) {
       FOREACH_ITEM(patterns, pat_object, {
         char *pat = pat_object.data.string.data;
-        if (!clear_autocmd(event, (char *)pat, au_group, err)) {
+        if (!clear_autocmd(event, pat, au_group, err)) {
           goto cleanup;
         }
       });
@@ -619,7 +619,7 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Error *err)
 
       FOREACH_ITEM(patterns, pat_object, {
         char *pat = pat_object.data.string.data;
-        if (!clear_autocmd(event_nr, (char *)pat, au_group, err)) {
+        if (!clear_autocmd(event_nr, pat, au_group, err)) {
           goto cleanup;
         }
       });

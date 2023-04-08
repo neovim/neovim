@@ -4009,7 +4009,7 @@ static bool shada_removable(const char *name)
   char part[MAXPATHL + 1];
   bool retval = false;
 
-  char *new_name = home_replace_save(NULL, (char *)name);
+  char *new_name = home_replace_save(NULL, name);
   for (p = p_shada; *p;) {
     (void)copy_option_part(&p, part, ARRAY_SIZE(part), ", ");
     if (part[0] == 'r') {

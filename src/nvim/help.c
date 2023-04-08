@@ -1154,7 +1154,7 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
       ext[1] = fname[5];
       ext[2] = fname[6];
     }
-    helptags_one(dirname, (char *)ext, (char *)fname, add_help_tags, ignore_writeerr);
+    helptags_one(dirname, ext, fname, add_help_tags, ignore_writeerr);
   }
 
   ga_clear(&ga);

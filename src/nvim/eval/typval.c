@@ -897,7 +897,7 @@ void f_list2str(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   char buf[MB_MAXBYTES + 1];
 
   TV_LIST_ITER_CONST(l, li, {
-    buf[utf_char2bytes((int)tv_get_number(TV_LIST_ITEM_TV(li)), (char *)buf)] = NUL;
+    buf[utf_char2bytes((int)tv_get_number(TV_LIST_ITEM_TV(li)), buf)] = NUL;
     ga_concat(&ga, buf);
   });
   ga_append(&ga, NUL);
@@ -1906,7 +1906,7 @@ dictitem_T *tv_dict_item_copy(dictitem_T *const di)
 void tv_dict_item_remove(dict_T *const dict, dictitem_T *const item)
   FUNC_ATTR_NONNULL_ALL
 {
-  hashitem_T *const hi = hash_find(&dict->dv_hashtab, (char *)item->di_key);
+  hashitem_T *const hi = hash_find(&dict->dv_hashtab, item->di_key);
   if (HASHITEM_EMPTY(hi)) {
     semsg(_(e_intern2), "tv_dict_item_remove()");
   } else {
@@ -2111,9 +2111,9 @@ char **tv_dict_to_env(dict_T *denv)
   TV_DICT_ITER(denv, var, {
     const char *str = tv_get_string(&var->di_tv);
     assert(str);
-    size_t len = strlen((char *)var->di_key) + strlen(str) + strlen("=") + 1;
+    size_t len = strlen(var->di_key) + strlen(str) + strlen("=") + 1;
     env[i] = xmalloc(len);
-    snprintf(env[i], len, "%s=%s", (char *)var->di_key, str);
+    snprintf(env[i], len, "%s=%s", var->di_key, str);
     i++;
   });
 
@@ -2243,7 +2243,7 @@ int tv_dict_add(dict_T *const d, dictitem_T *const item)
   if (tv_dict_wrong_func_name(d, &item->di_tv, item->di_key)) {
     return FAIL;
   }
-  return hash_add(&d->dv_hashtab, (char *)item->di_key);
+  return hash_add(&d->dv_hashtab, item->di_key);
 }
 
 /// Add a list entry to dictionary
@@ -2944,7 +2944,7 @@ static void tv_dict_list(typval_T *const tv, typval_T *const rettv, const DictLi
     switch (what) {
       case kDictListKeys:
         tv_item.v_type = VAR_STRING;
-        tv_item.vval.v_string = xstrdup((char *)di->di_key);
+        tv_item.vval.v_string = xstrdup(di->di_key);
         break;
       case kDictListValues:
         tv_copy(&di->di_tv, &tv_item);

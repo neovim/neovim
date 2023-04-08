@@ -2007,8 +2007,8 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
         // Don't allow mapping the first byte(s) of a multi-byte char.
         // Happens when mapping <M-a> and then changing 'encoding'.
         // Beware that 0x80 is escaped.
-        char *p1 = mp->m_keys;
-        char *p2 = (char *)mb_unescape((const char **)&p1);
+        const char *p1 = mp->m_keys;
+        const char *p2 = mb_unescape(&p1);
 
         if (p2 != NULL && MB_BYTE2LEN(tb_c1) > utfc_ptr2len(p2)) {
           mlen = 0;
