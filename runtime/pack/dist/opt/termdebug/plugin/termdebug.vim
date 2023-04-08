@@ -245,7 +245,7 @@ func s:StartDebug_term(dict)
 
   " Create a hidden terminal window to communicate with gdb
   let s:comm_job_id = jobstart('tail -f /dev/null;#gdb communication', {
-        \ 'on_stdout': function('s:CommOutput'),
+        \ 'on_stdout': function('s:JobOutCallback', {'last_line': '', 'real_cb': function('s:CommOutput')}),
         \ 'pty': v:true,
         \ })
   " hide terminal buffer
@@ -430,7 +430,7 @@ func s:StartDebug_prompt(dict)
   " call ch_log('executing "' . join(gdb_cmd) . '"')
   let s:gdbjob = jobstart(gdb_cmd, {
     \ 'on_exit': function('s:EndPromptDebug'),
-    \ 'on_stdout': function('s:GdbOutCallback'),
+    \ 'on_stdout': function('s:JobOutCallback', {'last_line': '', 'real_cb': function('s:GdbOutCallback')}),
     \ })
   if s:gdbjob == 0
     echoerr 'invalid argument (or job table is full) while starting gdb job'
@@ -592,6 +592,23 @@ func s:PromptInterrupt()
   else
     call jobstop(s:gdbjob)
   endif
+endfunc
+
+" Wrapper around job callback that handles partial lines (:h channel-lines).
+" It should be called from a Dictionary with the following keys:
+" - last_line: the last (partial) line received
+" - real_cb: a callback that assumes full lines
+func s:JobOutCallback(jobid, data, event) dict
+  let eof = (a:data == [''])
+  let msgs = a:data
+  let msgs[0] = self.last_line .. msgs[0]
+  if eof
+    let self.last_line = ''
+  else
+    let self.last_line = msgs[-1]
+    unlet msgs[-1]
+  endif
+  call self.real_cb(a:jobid, msgs, a:event)
 endfunc
 
 " Function called when gdb outputs text.
