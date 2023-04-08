@@ -37,6 +37,7 @@ The following new APIs or features were added.
 
 • |vim.iter()| provides a generic iterator interface for tables and Lua
 iterators |luaref-in|.
+• Added |vim.keycode()| for translating keycodes in a string.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
