@@ -181,7 +181,6 @@ typedef struct {
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/helpers.h.generated.h"
-# include "keysets.h.generated.h"
 #endif
 
 #define WITH_SCRIPT_CONTEXT(channel_id, code) \

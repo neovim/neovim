@@ -11,6 +11,7 @@
 
 #include "klib/kvec.h"
 #include "msgpack/pack.h"
+#include "nvim/api/keysets.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/assert.h"
 #include "nvim/event/wstream.h"
@@ -19,7 +20,6 @@
 #include "nvim/types.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "keysets.generated.h"  // IWYU pragma: export
 # include "msgpack_rpc/helpers.c.generated.h"
 #endif
 
