@@ -2845,7 +2845,7 @@ static void spell_soundfold_wsal(slang_T *slang, const char *inword, char *res)
   // Remove accents, if wanted.  We actually remove all non-word characters.
   // But keep white space.
   int wordlen = 0;
-  for (const char *s = (char *)inword; *s != NUL;) {
+  for (const char *s = inword; *s != NUL;) {
     const char *t = s;
     int c = mb_cptr2char_adv(&s);
     if (slang->sl_rem_accents) {

@@ -2122,7 +2122,7 @@ static int execute_env(char *env)
   current_sctx.sc_sid = SID_ENV;
   current_sctx.sc_seq = 0;
   current_sctx.sc_lnum = 0;
-  do_cmdline_cmd((char *)initstr);
+  do_cmdline_cmd(initstr);
 
   estack_pop();
   current_sctx = save_current_sctx;

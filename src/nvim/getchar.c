@@ -1788,7 +1788,7 @@ void f_getcharstr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   int i = 0;
 
   if (n != 0) {
-    i += utf_char2bytes((int)n, (char *)temp);
+    i += utf_char2bytes((int)n, temp);
   }
   assert(i < 7);
   temp[i++] = NUL;

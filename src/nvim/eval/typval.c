@@ -898,7 +898,7 @@ void f_list2str(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   TV_LIST_ITER_CONST(l, li, {
     buf[utf_char2bytes((int)tv_get_number(TV_LIST_ITEM_TV(li)), (char *)buf)] = NUL;
-    ga_concat(&ga, (char *)buf);
+    ga_concat(&ga, buf);
   });
   ga_append(&ga, NUL);
 

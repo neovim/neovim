@@ -1343,7 +1343,7 @@ static char *menu_text(const char *str, int *mnemonic, char **actext)
 bool menu_is_menubar(const char *const name)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  return !menu_is_popup((char *)name)
+  return !menu_is_popup(name)
          && !menu_is_toolbar(name)
          && !menu_is_winbar(name)
          && *name != MNU_HIDDEN_CHAR;

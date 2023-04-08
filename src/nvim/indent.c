@@ -427,7 +427,7 @@ int get_indent_str_vtab(const char *ptr, long ts, long *vts, bool list)
       } else {
         // In list mode, when tab is not set, count screen char width
         // for Tab, displays: ^I
-        count += ptr2cells((char *)ptr);
+        count += ptr2cells(ptr);
       }
     } else if (*ptr == ' ') {
       count++;  // count a space for one
