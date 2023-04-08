@@ -1341,7 +1341,7 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
   char *buf = NULL;
   int rel_to_curdir;
 
-  if (rel_fname != NULL && path_with_url((const char *)rel_fname)) {
+  if (rel_fname != NULL && path_with_url(rel_fname)) {
     // Do not attempt to search "relative" to a URL. #6009
     rel_fname = NULL;
   }

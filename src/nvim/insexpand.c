@@ -1414,7 +1414,7 @@ static int thesaurus_add_words_in_line(char *fname, char **buf_arg, int dir, con
     // different classes, only separate words
     // with single-byte non-word characters.
     while (*ptr != NUL) {
-      const int l = utfc_ptr2len((const char *)ptr);
+      const int l = utfc_ptr2len(ptr);
 
       if (l < 2 && !vim_iswordc((uint8_t)(*ptr))) {
         break;
@@ -2515,7 +2515,7 @@ static void ins_compl_add_dict(dict_T *dict)
   compl_opt_refresh_always = false;
   di_refresh = tv_dict_find(dict, S_LEN("refresh"));
   if (di_refresh != NULL && di_refresh->di_tv.v_type == VAR_STRING) {
-    const char *v = (const char *)di_refresh->di_tv.vval.v_string;
+    const char *v = di_refresh->di_tv.vval.v_string;
 
     if (v != NULL && strcmp(v, "always") == 0) {
       compl_opt_refresh_always = true;
@@ -4301,7 +4301,7 @@ static void ins_compl_show_statusmsg(void)
     if (edit_submode_extra != NULL) {
       if (!p_smd) {
         msg_hist_off = true;
-        msg_attr((const char *)edit_submode_extra,
+        msg_attr(edit_submode_extra,
                  (edit_submode_highl < HLF_COUNT
                   ? HL_ATTR(edit_submode_highl) : 0));
         msg_hist_off = false;

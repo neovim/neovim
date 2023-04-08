@@ -1180,7 +1180,7 @@ static size_t tokenize(const char *const str, char **const argv)
     }
 
     argc++;
-    p = (const char *)skipwhite((p + len));
+    p = skipwhite((p + len));
   }
 
   return argc;

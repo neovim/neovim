@@ -814,7 +814,7 @@ static void script_host_do_range(char *name, exarg_T *eap)
     list_T *args = tv_list_alloc(3);
     tv_list_append_number(args, (int)eap->line1);
     tv_list_append_number(args, (int)eap->line2);
-    tv_list_append_string(args, (const char *)eap->arg, -1);
+    tv_list_append_string(args, eap->arg, -1);
     (void)eval_call_provider(name, "do_range", args, true);
   }
 }

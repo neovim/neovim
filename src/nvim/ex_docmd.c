@@ -4452,7 +4452,7 @@ static void ex_highlight(exarg_T *eap)
   if (*eap->arg == NUL && eap->cmd[2] == '!') {
     msg(_("Greetings, Vim user!"));
   }
-  do_highlight((const char *)eap->arg, eap->forceit, false);
+  do_highlight(eap->arg, eap->forceit, false);
 }
 
 /// Call this function if we thought we were going to exit, but we won't
@@ -5211,7 +5211,7 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
         int ms = msg_scroll;
 
         if (eap->nextcmd != NULL) {
-          stuffReadbuff((const char *)eap->nextcmd);
+          stuffReadbuff(eap->nextcmd);
           eap->nextcmd = NULL;
         }
 

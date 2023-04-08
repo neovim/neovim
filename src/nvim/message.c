@@ -1537,7 +1537,7 @@ char *msg_outtrans_one(char *p, int attr)
     msg_outtrans_len_attr(p, l, attr);
     return p + l;
   }
-  msg_puts_attr((const char *)transchar_byte_buf(NULL, (uint8_t)(*p)), attr);
+  msg_puts_attr(transchar_byte_buf(NULL, (uint8_t)(*p)), attr);
   return p + 1;
 }
 
@@ -1582,8 +1582,7 @@ int msg_outtrans_len_attr(const char *msgstr, int len, int attr)
           msg_puts_attr_len(plain_start, str - plain_start, attr);
         }
         plain_start = str + mb_l;
-        msg_puts_attr((const char *)transchar_buf(NULL, c),
-                      (attr == 0 ? HL_ATTR(HLF_8) : attr));
+        msg_puts_attr(transchar_buf(NULL, c), attr == 0 ? HL_ATTR(HLF_8) : attr);
         retval += char2cells(c);
       }
       len -= mb_l - 1;
@@ -1777,7 +1776,7 @@ const char *str2special(const char **const sp, const bool replace_spaces, const 
       || c < ' '
       || (replace_spaces && c == ' ')
       || (replace_lt && c == '<')) {
-    return (const char *)get_special_key_name(c, modifiers);
+    return get_special_key_name(c, modifiers);
   }
   buf[0] = (char)c;
   buf[1] = NUL;

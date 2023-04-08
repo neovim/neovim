@@ -2699,7 +2699,7 @@ int stuff_inserted(int c, long count, int no_esc)
   }
 
   do {
-    stuffReadbuff((const char *)ptr);
+    stuffReadbuff(ptr);
     // A trailing "0" is inserted as "<C-V>048", "^" as "<C-V>^".
     if (last) {
       stuffReadbuff(last == '0' ? "\026\060\064\070" : "\026^");

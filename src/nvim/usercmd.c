@@ -234,7 +234,7 @@ const char *set_context_in_user_cmd(expand_T *xp, const char *arg_in)
   // Check for attributes
   while (*arg == '-') {
     arg++;  // Skip "-".
-    p = (const char *)skiptowhite(arg);
+    p = skiptowhite(arg);
     if (*p == NUL) {
       // Cursor is still in the attribute.
       p = strchr(arg, '=');
@@ -262,11 +262,11 @@ const char *set_context_in_user_cmd(expand_T *xp, const char *arg_in)
       }
       return NULL;
     }
-    arg = (const char *)skipwhite(p);
+    arg = skipwhite(p);
   }
 
   // After the attributes comes the new command name.
-  p = (const char *)skiptowhite(arg);
+  p = skiptowhite(arg);
   if (*p == NUL) {
     xp->xp_context = EXPAND_USER_COMMANDS;
     xp->xp_pattern = (char *)arg;
@@ -274,7 +274,7 @@ const char *set_context_in_user_cmd(expand_T *xp, const char *arg_in)
   }
 
   // And finally comes a normal command.
-  return (const char *)skipwhite(p);
+  return skipwhite(p);
 }
 
 /// Set the completion context for the argument of a user defined command.
@@ -292,7 +292,7 @@ const char *set_context_in_user_cmdarg(const char *cmd FUNC_ATTR_UNUSED, const c
   }
 
   if (context == EXPAND_MENUS) {
-    return (const char *)set_context_in_menu_cmd(xp, cmd, (char *)arg, forceit);
+    return set_context_in_menu_cmd(xp, cmd, (char *)arg, forceit);
   }
   if (context == EXPAND_COMMANDS) {
     return arg;

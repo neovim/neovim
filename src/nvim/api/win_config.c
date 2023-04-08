@@ -275,13 +275,13 @@ Dictionary nvim_win_get_config(Window window, Error *err)
       for (size_t i = 0; i < 8; i++) {
         Array tuple = ARRAY_DICT_INIT;
 
-        String s = cstrn_to_string((const char *)config->border_chars[i], sizeof(schar_T));
+        String s = cstrn_to_string(config->border_chars[i], sizeof(schar_T));
 
         int hi_id = config->border_hl_ids[i];
         char *hi_name = syn_id2name(hi_id);
         if (hi_name[0]) {
           ADD(tuple, STRING_OBJ(s));
-          ADD(tuple, STRING_OBJ(cstr_to_string((const char *)hi_name)));
+          ADD(tuple, STRING_OBJ(cstr_to_string(hi_name)));
           ADD(border, ARRAY_OBJ(tuple));
         } else {
           ADD(border, STRING_OBJ(s));
@@ -293,10 +293,9 @@ Dictionary nvim_win_get_config(Window window, Error *err)
         VirtText title_datas = config->title_chunks;
         for (size_t i = 0; i < title_datas.size; i++) {
           Array tuple = ARRAY_DICT_INIT;
-          ADD(tuple, CSTR_TO_OBJ((const char *)title_datas.items[i].text));
+          ADD(tuple, CSTR_TO_OBJ(title_datas.items[i].text));
           if (title_datas.items[i].hl_id > 0) {
-            ADD(tuple,
-                STRING_OBJ(cstr_to_string((const char *)syn_id2name(title_datas.items[i].hl_id))));
+            ADD(tuple, STRING_OBJ(cstr_to_string(syn_id2name(title_datas.items[i].hl_id))));
           }
           ADD(titles, ARRAY_OBJ(tuple));
         }

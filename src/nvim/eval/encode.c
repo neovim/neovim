@@ -298,7 +298,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
 
 #define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
   do { \
-    const char *const buf_ = (const char *)(buf); \
+    const char *const buf_ = (buf); \
     if ((buf) == NULL) { \
       ga_concat(gap, "''"); \
     } else { \
@@ -376,7 +376,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
 
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
   do { \
-    const char *const fun_ = (const char *)(fun); \
+    const char *const fun_ = (fun); \
     if (fun_ == NULL) { \
       internal_error("string(): NULL function name"); \
       ga_concat(gap, "function(NULL"); \
@@ -712,7 +712,7 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
 #undef TYPVAL_ENCODE_CONV_STRING
 #define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
   do { \
-    if (convert_to_json_string(gap, (const char *)(buf), (len)) != OK) { \
+    if (convert_to_json_string(gap, (buf), (len)) != OK) { \
       return FAIL; \
     } \
   } while (0)
