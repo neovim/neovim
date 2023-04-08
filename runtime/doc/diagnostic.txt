@@ -295,6 +295,14 @@ DiagnosticSignHint
 DiagnosticSignOk
     Used for "Ok" signs in sign column.
 
+                                                *hl-DiagnosticDeprecated*
+DiagnosticDeprecated
+    Used for deprecated or obsolete code.
+
+                                                *hl-DiagnosticUnnecessary*
+DiagnosticUnnecessary
+    Used for unnecessary or unused code.
+
 ==============================================================================
 SIGNS                                                   *diagnostic-signs*
 
