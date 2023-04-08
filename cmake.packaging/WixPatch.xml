@@ -11,11 +11,4 @@
       Value='[INSTALL_ROOT]bin'
     />
   </CPackWiXFragment>
-
-  <!-- Allow installation by non-administrative users -->
-  <!-- https://learn.microsoft.com/windows/win32/msi/allusers -->
-  <CPackWiXFragment Id="#PRODUCT">
-    <Property Id="ALLUSERS" Value="2" />
-    <Property Id="MSIINSTALLPERUSER" Value="1" />
-  </CPackWiXFragment>
 </CPackWiXPatch>
