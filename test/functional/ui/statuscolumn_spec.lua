@@ -397,6 +397,29 @@ describe('statuscolumn', function()
       {0:~                                                    }|
                                                            |
     ]])
+    -- Also test virt_lines when 'cpoptions' includes "n"
+    exec_lua([[
+      vim.opt.cpoptions:append("n")
+      local ns = vim.api.nvim_create_namespace("ns")
+      vim.api.nvim_buf_set_extmark(0, ns, 14, 0, { virt_lines = {{{"virt_line1", ""}}} })
+      vim.api.nvim_buf_set_extmark(0, ns, 14, 0, { virt_lines = {{{"virt_line2", ""}}} })
+    ]])
+    screen:expect([[
+      {1:buffer  0 13}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaa                                            |
+      {1:buffer  0 14}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaa                                            |
+      {1:buffer  0 15}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaa                                            |
+      {1:virtual-2 15}virt_line1                               |
+      {1:virtual-2 15}virt_line2                               |
+      {1:buffer  0 16}{5:^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {5:aaaaaaaaa                                            }|
+      {1:virtual-1 16}END                                      |
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]])
   end)
 
   it("works with 'statuscolumn' clicks", function()
