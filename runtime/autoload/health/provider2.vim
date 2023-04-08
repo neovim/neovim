@@ -122,31 +122,6 @@ function! s:download(url) abort
           \ .'and `python`, cannot make web request'
 endfunction
 
-" Check for clipboard tools.
-function! s:check_clipboard() abort
-  call health#report_start('Clipboard (optional)')
-
-  if !empty($TMUX) && executable('tmux') && executable('pbpaste') && !s:cmd_ok('pbpaste')
-    let tmux_version = matchstr(system('tmux -V'), '\d\+\.\d\+')
-    call health#report_error('pbcopy does not work with tmux version: '.tmux_version,
-          \ ['Install tmux 2.6+.  https://superuser.com/q/231130',
-          \  'or use tmux with reattach-to-user-namespace.  https://superuser.com/a/413233'])
-  endif
-
-  let clipboard_tool = provider#clipboard#Executable()
-  if exists('g:clipboard') && empty(clipboard_tool)
-    call health#report_error(
-          \ provider#clipboard#Error(),
-          \ ["Use the example in :help g:clipboard as a template, or don't set g:clipboard at all."])
-  elseif empty(clipboard_tool)
-    call health#report_warn(
-          \ 'No clipboard tool found. Clipboard registers (`"+` and `"*`) will not work.',
-          \ [':help clipboard'])
-  else
-    call health#report_ok('Clipboard tool found: '. clipboard_tool)
-  endif
-endfunction
-
 " Get the latest Nvim Python client (pynvim) version from PyPI.
 function! s:latest_pypi_version() abort
   let pypi_version = 'unable to get pypi response'
@@ -745,8 +720,7 @@ function! s:check_perl() abort
   endif
 endfunction
 
-function! health#provider#check() abort
-  call s:check_clipboard()
+function! health#provider2#check() abort
   call s:check_python()
   call s:check_virtualenv()
   call s:check_ruby()
