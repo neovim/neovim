@@ -18,12 +18,13 @@ changes. This documentation may also not fully reflect the latest changes.
 PARSER FILES                                              *treesitter-parsers*
 
 Parsers are the heart of tree-sitter. They are libraries that tree-sitter will
-search for in the `parser` runtime directory. By default, Nvim bundles only
-parsers for C, Lua, and Vimscript, but parsers can be installed manually or
-via a plugin like https://github.com/nvim-treesitter/nvim-treesitter.
-Parsers are searched for as `parser/{lang}.*` in any 'runtimepath' directory.
-If multiple parsers for the same language are found, the first one is used.
-(This typically implies the priority "user config > plugins > bundled".
+search for in the `parser` runtime directory. By default, Nvim bundles parsers
+for C, Lua, Vimscript, Vimdoc and Treesitter query files, but parsers can be
+installed manually or via a plugin like
+https://github.com/nvim-treesitter/nvim-treesitter. Parsers are searched for
+as `parser/{lang}.*` in any 'runtimepath' directory. If multiple parsers for
+the same language are found, the first one is used. (This typically implies
+the priority "user config > plugins > bundled".
 A parser can also be loaded manually using a full path: >lua
 
     vim.treesitter.language.add('python', { path = "/path/to/python.so" })
@@ -307,10 +308,10 @@ currently supported modeline alternatives:
 Note: These modeline comments must be at the top of the query, but can be
 repeated, for example, the following two modeline blocks are both valid:
 >query
-
     ;; inherits: foo,bar
     ;; extends
-
+<
+>query
     ;; extends
     ;;
     ;; inherits: baz
@@ -907,11 +908,10 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
 
     {source} is needed if the query contains predicates; then the caller must
     ensure to use a freshly parsed tree consistent with the current text of
-    the buffer (if relevant). {start_row} and {end_row} can be used to limit
-    matches inside a row range (this is typically used with root node as the
-    {node}, i.e., to get syntax highlight matches in the current viewport).
-    When omitted, the {start} and {end} row values are used from the given
-    node.
+    the buffer (if relevant). {start} and {stop} can be used to limit matches
+    inside a row range (this is typically used with root node as the {node},
+    i.e., to get syntax highlight matches in the current viewport). When
+    omitted, the {start} and {stop} row values are used from the given node.
 
     The iterator returns three values: a numeric id identifying the capture,
     the captured node, and metadata from any directives processing the match.
@@ -1164,12 +1164,15 @@ LanguageTree:register_cbs({self}, {cbs}, {recursive})
                       • `on_bytes` : see |nvim_buf_attach()|, but this will be called after the parsers callback.
                       • `on_changedtree` : a callback that will be called
                         every time the tree has syntactical changes. It will
-                        only be passed one argument, which is a table of the
-                        ranges (as node ranges) that changed.
+                        be passed two arguments: a table of the ranges (as
+                        node ranges) that changed and the changed tree.
                       • `on_child_added` : emitted when a child is added to
                         the tree.
                       • `on_child_removed` : emitted when a child is removed
                         from the tree.
+                      • `on_detach` : emitted when the buffer is detached, see
+                        |nvim_buf_detach_event|. Takes one argument, the
+                        number of the buffer.
       • {recursive?}  boolean Apply callbacks recursively for all children.
                       Any new children will also inherit the callbacks.
       • {self}

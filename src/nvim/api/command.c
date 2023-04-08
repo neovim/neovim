@@ -916,6 +916,7 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 ///                 - args: (string) The args passed to the command, if any |<args>|
 ///                 - fargs: (table) The args split by unescaped whitespace (when more than one
 ///                 argument is allowed), if any |<f-args>|
+///                 - nargs: (string) Number of arguments |:command-nargs|
 ///                 - bang: (boolean) "true" if the command was executed with a ! modifier |<bang>|
 ///                 - line1: (number) The starting line of the command range |<line1>|
 ///                 - line2: (number) The final line of the command range |<line2>|

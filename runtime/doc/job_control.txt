@@ -134,9 +134,6 @@ To send data to the job's stdin, use |chansend()|: >vim
     :call chansend(job1, "invalid-command\n")
     :call chansend(job1, "exit\n")
 <
-A job may be killed with |jobstop()|: >vim
-    :call jobstop(job1)
-<
 A job may be killed at any time with the |jobstop()| function:
 >vim
     :call jobstop(job1)

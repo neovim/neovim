@@ -40,8 +40,7 @@ if(WIN32)
   set(CPACK_PACKAGE_EXECUTABLES "nvim" "Neovim" "nvim-qt" "Neovim Qt")
   set(CPACK_CREATE_DESKTOP_LINKS "nvim-qt")
 
-  # We use a wix patch to add further options to the installer. At present, it just adds neovim to the path
-  # on installation and defines per-user installation, however, it can be extended.
+  # We use a wix patch to add further options to the installer.
   # See: https://cmake.org/cmake/help/v3.7/module/CPackWIX.html#variable:CPACK_WIX_PATCH_FILE
   list(APPEND CPACK_WIX_EXTENSIONS WixUtilExtension)
   list(APPEND CPACK_WIX_PATCH_FILE ${CMAKE_CURRENT_LIST_DIR}/WixPatch.xml)

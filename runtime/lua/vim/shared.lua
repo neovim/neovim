@@ -361,7 +361,7 @@ local function tbl_extend(behavior, deep_extend, ...)
   return ret
 end
 
---- Merges two or more map-like tables.
+--- Merges two or more tables.
 ---
 ---@see |extend()|
 ---
@@ -369,13 +369,13 @@ end
 ---      - "error": raise an error
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
----@param ... table Two or more map-like tables
+---@param ... table Two or more tables
 ---@return table Merged table
 function vim.tbl_extend(behavior, ...)
   return tbl_extend(behavior, false, ...)
 end
 
---- Merges recursively two or more map-like tables.
+--- Merges recursively two or more tables.
 ---
 ---@see |vim.tbl_extend()|
 ---
@@ -385,7 +385,7 @@ end
 ---      - "error": raise an error
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
----@param ... T2 Two or more map-like tables
+---@param ... T2 Two or more tables
 ---@return T1|T2 (table) Merged table
 function vim.tbl_deep_extend(behavior, ...)
   return tbl_extend(behavior, true, ...)

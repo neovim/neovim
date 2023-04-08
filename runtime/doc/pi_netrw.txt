@@ -4125,7 +4125,7 @@ netrw:
 				  The "<nowait>" modifier has been included
 				  with most of netrw's mappings to avoid that
 				  delay.
-		Jun 26, 2015	* |netrw-gn| mapping implemted
+		Jun 26, 2015	* |netrw-gn| mapping implemented
 				* :Ntree NotADir resulted in having
 				  the tree listing expand in the error messages
 				  window.  Fixed.
@@ -4332,8 +4332,8 @@ netrw:
 		Dec 24, 2013	* (esquifit) asked that netrw allow the
 				  /cygdrive prefix be a user-alterable
 				  parameter.
-		Jan 02, 2014	* Fixed a problem with netrw-based ballon
-				  evaluation (ie. netrw#NetrwBaloonHelp()
+		Jan 02, 2014	* Fixed a problem with netrw-based balloon
+				  evaluation (ie. netrw#NetrwBalloonHelp()
 				  not having been loaded error messages)
 		Jan 03, 2014	* Fixed a problem with tree listings
 				* New command installed: |:Ntree|

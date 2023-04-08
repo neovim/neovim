@@ -624,9 +624,9 @@ in a different file:
 >lua
     local mygroup = vim.api.nvim_create_augroup('vimrc', { clear = false })
     vim.api.nvim_create_autocmd({ 'BufNewFile', 'BufRead' }, {
-      pattern = '*.html',
+      pattern = '*.c',
       group = mygroup,
-      command = 'set shiftwidth=4',
+      command = 'set noexpandtab',
     })
 <
 ------------------------------------------------------------------------------

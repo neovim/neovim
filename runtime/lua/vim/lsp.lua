@@ -913,7 +913,7 @@ end
 ---       the `cmd` process. Not related to `root_dir`.
 ---
 --- - cmd_env: (table) Environment flags to pass to the LSP on
----       spawn.  Must be specified using a map-like table.
+---       spawn.  Must be specified using a table.
 ---       Non-string values are coerced to string.
 ---       Example:
 ---       <pre>

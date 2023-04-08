@@ -778,7 +778,7 @@ do
   -- some bugs, so fake the two-step dance for now.
   local matches
 
-  --- Omnifunc for completing lua values from from the runtime lua interpreter,
+  --- Omnifunc for completing lua values from the runtime lua interpreter,
   --- similar to the builtin completion for the `:lua` command.
   ---
   --- Activate using `set omnifunc=v:lua.vim.lua_omnifunc` in a lua buffer.

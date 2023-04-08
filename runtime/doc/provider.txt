@@ -182,7 +182,7 @@ the "+" and/or "*" registers explicitly): >vim
 See 'clipboard' for details and options.
 
 							      *clipboard-tool*
-The presence of a working clipboard tool implicitly enables the '+' and '*'
+The presence of a working clipboard tool implicitly enables the '+' and "*"
 registers. Nvim looks for these clipboard tools, in order of priority:
 
   - |g:clipboard|
