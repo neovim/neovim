@@ -496,8 +496,10 @@ Macro/|recording| behavior
   the results of keys from 'keymap'.
 
 Mappings:
-  Creating a mapping for a simplifiable key (e.g. <C-I>) doesn't replace an
+- Creating a mapping for a simplifiable key (e.g. <C-I>) doesn't replace an
   existing mapping for its simplified form (e.g. <Tab>).
+- "#" followed by a digit doesn't stand for a function key at the start of the
+  lhs of a mapping.
 
 Motion:
   The |jumplist| avoids useless/phantom jumps.

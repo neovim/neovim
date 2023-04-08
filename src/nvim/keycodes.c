@@ -905,19 +905,6 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
 
   src = from;
 
-  // Check for #n at start only: function key n
-  if ((flags & REPTERM_FROM_PART) && from_len > 1 && src[0] == '#'
-      && ascii_isdigit(src[1])) {  // function key
-    result[dlen++] = (char)K_SPECIAL;
-    result[dlen++] = 'k';
-    if (src[1] == '0') {
-      result[dlen++] = ';';     // #0 is F10 is "k;"
-    } else {
-      result[dlen++] = src[1];  // #3 is F3 is "k3"
-    }
-    src += 2;
-  }
-
   // Copy each byte from *from to result[dlen]
   while (src <= end) {
     if (!allocated && dlen + 64 > buf_len) {
