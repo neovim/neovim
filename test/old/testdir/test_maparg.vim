@@ -1,8 +1,9 @@
 " Tests for maparg(), mapcheck() and mapset().
 " Also test utf8 map with a 0x80 byte.
-" Also test mapcheck()
 
-func s:SID()     
+source shared.vim
+
+func s:SID()
   return str2nr(matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$'))
 endfunc
 
@@ -319,7 +320,28 @@ func Test_map_restore()
   call Check_ctrlb_map(dsimp, 0)
 
   nunmap <C-B>
+endfunc
 
+" Test restoring the script context of a mapping
+func Test_map_restore_sid()
+  let after =<< trim [CODE]
+    call assert_equal("\tLast set from --cmd argument",
+          \ execute('verbose nmap ,n')->trim()->split("\n")[-1])
+    let d = maparg(',n', 'n', 0, 1)
+    nunmap ,n
+    call assert_equal('No mapping found',
+          \ execute('verbose nmap ,n')->trim()->split("\n")[-1])
+    call mapset('n', 0, d)
+    call assert_equal("\tLast set from --cmd argument",
+          \ execute('verbose nmap ,n')->trim()->split("\n")[-1])
+    call writefile(v:errors, 'Xresult')
+    qall!
+  [CODE]
+
+  if RunVim([], after, '--clean --cmd "nmap ,n <Nop>"')
+    call assert_equal([], readfile('Xresult'))
+  endif
+  call delete('Xresult')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
