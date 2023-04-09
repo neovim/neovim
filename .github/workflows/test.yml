@@ -143,6 +143,8 @@ jobs:
             flags: -D UNSIGNED_CHAR=ON
           - cc: clang
             runner: macos-12
+            flags: -D CMAKE_FIND_FRAMEWORK=NEVER
+            deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER
 
             # functionaltest-lua is our dumping ground for non-mainline configurations.
             # 1. Check that the tests pass with PUC Lua instead of LuaJIT.
