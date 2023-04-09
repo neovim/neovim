@@ -489,7 +489,7 @@ local function python()
       if not is_blank(pyenv_root) then
         venv_root = pyenv_root
       else
-        venv_root = vim.fs.basename(venv)
+        venv_root = vim.fs.dirname(venv)
       end
 
       if vim.startswith(vim.fn.resolve(python_exe), venv_root .. '/') then
@@ -571,9 +571,96 @@ local function python()
   end
 end
 
+-- Resolves Python executable path by invoking and checking `sys.executable`.
+local function python_exepath(invocation)
+  return vim.fs.normalize(
+    system(vim.fn.fnameescape(invocation) .. ' -c "import sys; sys.stdout.write(sys.executable)"')
+  )
+end
+
+-- Checks that $VIRTUAL_ENV Python executables are found at front of $PATH in
+-- Nvim and subshells.
+local function virtualenv()
+  start('Python virtualenv')
+  if not os.getenv('VIRTUAL_ENV') then
+    ok('no $VIRTUAL_ENV')
+    return
+  end
+  local errors = {}
+  -- Keep hints as dict keys in order to discard duplicates.
+  local hints = {}
+  -- The virtualenv should contain some Python executables, and those
+  -- executables should be first both on Nvim's $PATH and the $PATH of
+  -- subshells launched from Nvim.
+  local bin_dir = (iswin and '/Scripts' or '/bin')
+  local venv_bins = vim.fn.glob(os.getenv('VIRTUAL_ENV') .. bin_dir .. '/python*', true, true)
+  -- XXX: Remove irrelevant executables found in bin/.
+  venv_bins = vim.fn.filter(venv_bins, 'v:val !~# "python-config"')
+  if vim.tbl_coun(venv_bins) > 0 then
+    for _, venv_bin in pairs(venv_bins) do
+      venv_bin = vim.fs.normalize(venv_bin)
+      local py_bin_basename = vim.fs.basename(venv_bin)
+      local nvim_py_bin = python_exepath(vim.fn.exepath(py_bin_basename))
+      local subshell_py_bin = python_exepath(py_bin_basename)
+      if venv_bin ~= nvim_py_bin then
+        errors[#errors + 1] = '$PATH yields this '
+          .. py_bin_basename
+          .. ' executable: '
+          .. nvim_py_bin
+        local hint = '$PATH ambiguities arise if the virtualenv is not '
+          .. 'properly activated prior to launching Nvim. Close Nvim, activate the virtualenv, '
+          .. 'check that invoking Python from the command line launches the correct one, '
+          .. 'then relaunch Nvim.'
+        hints[hint] = true
+      end
+      if venv_bin ~= subshell_py_bin then
+        errors[#errors + 1] = '$PATH in subshells yields this '
+          .. py_bin_basename
+          .. ' executable: '
+          .. subshell_py_bin
+        local hint = '$PATH ambiguities in subshells typically are '
+          .. 'caused by your shell config overriding the $PATH previously set by the '
+          .. 'virtualenv. Either prevent them from doing so, or use this workaround: '
+          .. 'https://vi.stackexchange.com/a/34996'
+        hints[hint] = true
+      end
+    end
+  else
+    errors[#errors + 1] = 'no Python executables found in the virtualenv '
+      .. bin_dir
+      .. ' directory.'
+  end
+
+  local msg = '$VIRTUAL_ENV is set to: ' .. os.getenv('VIRTUAL_ENV')
+  if vim.tbl_count(errors) > 0 then
+    if vim.tbl_count(venv_bins) > 0 then
+      msg = msg
+        .. '\nAnd its '
+        .. bin_dir
+        .. ' directory contains: '
+        .. vim.fn.join(vim.fn.map(venv_bins, [[fnamemodify(v:val, ':t')]]), ', ')
+    end
+    local conj = '\nBut '
+    for _, err in ipairs(errors) do
+      msg = msg .. conj .. err
+      conj = '\nAnd '
+    end
+    msg = msg .. '\nSo invoking Python may lead to unexpected results.'
+    warn(msg, vim.fn.keys(hints))
+  else
+    info(msg)
+    info(
+      'Python version: '
+        .. system('python -c "import platform, sys; sys.stdout.write(platform.python_version())"')
+    )
+    ok('$VIRTUAL_ENV provides :!python.')
+  end
+end
+
 function M.check()
   clipboard()
   python()
+  virtualenv()
 end
 
 return M
