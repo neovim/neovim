@@ -22,6 +22,7 @@ local skip = helpers.skip
 
 describe('ui/ext_messages', function()
   local screen
+  local fname = 'Xtest_functional_ui_messages_spec'
 
   before_each(function()
     clear()
@@ -41,7 +42,7 @@ describe('ui/ext_messages', function()
     })
   end)
   after_each(function()
-    os.remove('Xtest')
+    os.remove(fname)
   end)
 
   it('msg_clear follows msg_show kind of confirm', function()
@@ -126,7 +127,7 @@ describe('ui/ext_messages', function()
     feed('nq')
 
     -- kind=wmsg (editing readonly file)
-    command('write Xtest')
+    command('write ' .. fname)
     command('set readonly nohls')
     feed('G$x')
     screen:expect{grid=[[
@@ -912,9 +913,9 @@ stack traceback:
   end)
 
   it('does not truncate messages', function()
-    command('write Xtest')
+    command('write '.. fname)
     screen:expect({messages={
-      {content = { { '"Xtest" [New] 0L, 0B written' } }, kind = "" }
+      {content = { { string.format('"%s" [New] 0L, 0B written', fname) } }, kind = "" }
     }})
   end)
 end)
