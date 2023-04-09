@@ -573,7 +573,7 @@ describe('API', function()
 
     before_each(function()
       clear()
-      funcs.mkdir("Xtestdir")
+      helpers.mkdir("Xtestdir")
       start_dir = funcs.getcwd()
     end)
 

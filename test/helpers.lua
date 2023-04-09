@@ -906,6 +906,9 @@ function module.read_nvim_log(logfile, ci_rename)
 end
 
 function module.mkdir(path)
+  if module.isdir(path) then
+    return
+  end
   -- 493 is 0755 in decimal
   return luv.fs_mkdir(path, 493)
 end
