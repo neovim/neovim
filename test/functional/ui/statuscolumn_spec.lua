@@ -616,4 +616,17 @@ describe('statuscolumn', function()
                                                            |
     ]])
   end)
+
+  it("is only evaluated twice, once to estimate and once to draw", function()
+    command([[
+      let g:stcnr = 0
+      func! Stc()
+        let g:stcnr += 1
+        return '12345'
+      endfunc
+      set stc=%!Stc()
+      norm ggdG
+    ]])
+    eq(2, eval('g:stcnr'))
+  end)
 end)
