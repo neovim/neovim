@@ -32,6 +32,7 @@ typedef struct {
   bufref_T new_curbuf;            ///< new curbuf
   char *globaldir;                ///< saved value of globaldir
   bool save_VIsual_active;        ///< saved VIsual_active
+  int save_State;                 ///< saved State
 } aco_save_T;
 
 typedef struct AutoCmd_S AutoCmd;

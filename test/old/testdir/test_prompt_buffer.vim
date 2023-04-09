@@ -271,6 +271,7 @@ func Test_prompt_appending_while_hidden()
 
       func DoAppend()
         call appendbufline('prompt', '$', 'Test')
+        return ''
       endfunc
   END
   call writefile(script, 'XpromptBuffer', 'D')
@@ -283,11 +284,21 @@ func Test_prompt_appending_while_hidden()
 
   call term_sendkeys(buf, "exit\<CR>")
   call TermWait(buf)
+  call assert_notmatch('-- INSERT --', term_getline(buf, 10))
 
   call term_sendkeys(buf, ":call DoAppend()\<CR>")
   call TermWait(buf)
   call assert_notmatch('-- INSERT --', term_getline(buf, 10))
 
+  call term_sendkeys(buf, "i")
+  call TermWait(buf)
+  call assert_match('-- INSERT --', term_getline(buf, 10))
+
+  call term_sendkeys(buf, "\<C-R>=DoAppend()\<CR>")
+  call TermWait(buf)
+  call assert_match('-- INSERT --', term_getline(buf, 10))
+
+  call term_sendkeys(buf, "\<Esc>")
   call StopVimInTerminal(buf)
 endfunc
 

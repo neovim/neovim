@@ -1421,6 +1421,8 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
   aco->save_curwin_handle = curwin->handle;
   aco->save_curbuf = curbuf;
   aco->save_prevwin_handle = prevwin == NULL ? 0 : prevwin->handle;
+  aco->save_State = State;
+
   if (win != NULL) {
     // There is a window for "buf" in the current tab page, make it the
     // curwin.  This is preferred, it has the least side effects (esp. if
@@ -1497,6 +1499,10 @@ void aucmd_restbuf(aco_save_T *aco)
 win_found:
     // May need to stop Insert mode if we were in a prompt buffer.
     leaving_window(curwin);
+    // Do not stop Insert mode when already in Insert mode before.
+    if (aco->save_State & MODE_INSERT) {
+      stop_insert_mode = false;
+    }
     // Remove the window.
     win_remove(curwin, NULL);
     pmap_del(handle_T)(&window_handles, curwin->handle);
