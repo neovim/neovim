@@ -24,7 +24,7 @@ local global_diagnostic_options = {
   virtual_text = true,
   float = true,
   update_in_insert = false,
-  severity_sort = false,
+  severity_sort = true,
 }
 
 M.handlers = setmetatable({}, {
