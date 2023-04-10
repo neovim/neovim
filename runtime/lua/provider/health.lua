@@ -137,7 +137,7 @@ local function system(cmd, ...)
 
   -- return opts.output
   local _ = ...
-  return vim.fn.system(cmd)
+  return vim.trim(vim.fn.system(cmd))
 end
 
 local function clipboard()
@@ -657,10 +657,74 @@ local function virtualenv()
   end
 end
 
+local function ruby()
+  start('Ruby provider (optional)')
+
+  if disabled_via_loaded_var('ruby') then
+    return
+  end
+
+  if not executable('ruby') or not executable('gem') then
+    warn(
+      '`ruby` and `gem` must be in $PATH.',
+      'Install Ruby and verify that `ruby` and `gem` commands work.'
+    )
+    return
+  end
+  info('Ruby: ' .. system({ 'ruby', '-v' }))
+
+  local ruby_detect_table = vim.fn['provider#ruby#Detect']()
+  local host = ruby_detect_table[1]
+  if is_blank(host) then
+    warn('`neovim-ruby-host` not found.', {
+      'Run `gem install neovim` to ensure the neovim RubyGem is installed.',
+      'Run `gem environment` to ensure the gem bin directory is in $PATH.',
+      'If you are using rvm/rbenv/chruby, try "rehashing".',
+      'See :help g:ruby_host_prog for non-standard gem installations.',
+      'You may disable this provider (and warning) by adding `let g:loaded_ruby_provider = 0` to your init.vim',
+    })
+    return
+  end
+  info('Host: ' .. host)
+
+  local latest_gem_cmd = (iswin and 'cmd /c gem list -ra "^^neovim$"' or 'gem list -ra ^neovim$')
+  local latest_gem = system(vim.fn.split(latest_gem_cmd))
+  if shell_error() or is_blank(latest_gem) then
+    error(
+      'Failed to run: ' .. latest_gem_cmd,
+      { "Make sure you're connected to the internet.", 'Are you behind a firewall or proxy?' }
+    )
+    return
+  end
+  local gem_split = vim.split(latest_gem, [[neovim (\|, \|)$]])
+  latest_gem = gem_split[1] or 'not found'
+
+  local current_gem_cmd = { host, '--version' }
+  local current_gem = system(current_gem_cmd)
+  if shell_error() then
+    error(
+      'Failed to run: ' .. table.concat(current_gem_cmd, ' '),
+      { 'Report this issue with the output of: ', table.concat(current_gem_cmd, ' ') }
+    )
+    return
+  end
+
+  if vim.version.lt(current_gem, latest_gem) then
+    local message = 'Gem "neovim" is out-of-date. Installed: '
+      .. current_gem
+      .. ', latest: '
+      .. latest_gem
+    warn(message, 'Run in shell: gem update neovim')
+  else
+    ok('Latest "neovim" gem is installed: ' .. current_gem)
+  end
+end
+
 function M.check()
   clipboard()
   python()
   virtualenv()
+  ruby()
 end
 
 return M
