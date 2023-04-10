@@ -323,14 +323,12 @@ describe('LSP', function()
       local client
       test_rpc_server {
         test_name = "set_defaults_all_capabilities";
-        on_setup = function()
-          exec_lua [[
-            BUFFER = vim.api.nvim_create_buf(false, true)
-          ]]
-        end;
         on_init = function(_client)
           client = _client
-          exec_lua("lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)")
+          exec_lua [[
+            BUFFER = vim.api.nvim_create_buf(false, true)
+            lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)
+          ]]
         end;
         on_handler = function(_, _, ctx)
           if ctx.method == 'test' then
@@ -352,7 +350,8 @@ describe('LSP', function()
       local client
       test_rpc_server {
         test_name = "set_defaults_all_capabilities";
-        on_setup = function()
+        on_init = function(_client)
+          client = _client
           exec_lua [[
             vim.api.nvim_command('filetype plugin on')
             BUFFER_1 = vim.api.nvim_create_buf(false, true)
@@ -360,14 +359,16 @@ describe('LSP', function()
             vim.api.nvim_buf_set_option(BUFFER_1, 'filetype', 'man')
             vim.api.nvim_buf_set_option(BUFFER_2, 'filetype', 'xml')
           ]]
+
+          -- Sanity check to ensure that some values are set after setting filetype.
           eq('v:lua.require\'man\'.goto_tag', get_buf_option("tagfunc", "BUFFER_1"))
           eq('xmlcomplete#CompleteTags', get_buf_option("omnifunc", "BUFFER_2"))
           eq('xmlformat#Format()', get_buf_option("formatexpr", "BUFFER_2"))
-        end;
-        on_init = function(_client)
-          client = _client
-          exec_lua("lsp.buf_attach_client(BUFFER_1, TEST_RPC_CLIENT_ID)")
-          exec_lua("lsp.buf_attach_client(BUFFER_2, TEST_RPC_CLIENT_ID)")
+
+          exec_lua [[
+            lsp.buf_attach_client(BUFFER_1, TEST_RPC_CLIENT_ID)
+            lsp.buf_attach_client(BUFFER_2, TEST_RPC_CLIENT_ID)
+          ]]
         end;
         on_handler = function(_, _, ctx)
           if ctx.method == 'test' then
@@ -389,17 +390,15 @@ describe('LSP', function()
       local client
       test_rpc_server {
         test_name = "set_defaults_all_capabilities";
-        on_setup = function()
+        on_init = function(_client)
+          client = _client
           exec_lua [[
             BUFFER = vim.api.nvim_create_buf(false, true)
             vim.api.nvim_buf_set_option(BUFFER, 'tagfunc', 'tfu')
             vim.api.nvim_buf_set_option(BUFFER, 'omnifunc', 'ofu')
             vim.api.nvim_buf_set_option(BUFFER, 'formatexpr', 'fex')
+            lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)
           ]]
-        end;
-        on_init = function(_client)
-          client = _client
-          exec_lua("lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)")
         end;
         on_handler = function(_, _, ctx)
           if ctx.method == 'test' then
