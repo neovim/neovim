@@ -225,13 +225,15 @@ jobs:
           identifier: Neovim.Neovim
           release-tag: ${{ github.event.inputs.tag_name || github.ref_name }}
           token: ${{ secrets.WINGET_TOKEN }}
+      - name: Fetch nightly build msi from previous job
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
+        uses: actions/download-artifact@v3
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
-        name: Get nightly version
+        name: Get version from nightly build msi
         id: get-version
         run: |
-          Invoke-WebRequest https://github.com/neovim/neovim/releases/download/nightly/nvim-win64.msi -OutFile setup.msi
           Install-Module -Name 'Carbon.Windows.Installer' -Force
-          $VERSION = (Get-CMsi (Resolve-Path .\setup.msi).Path).ProductVersion
+          $VERSION = (Get-CMsi (Resolve-Path .\nvim-win64\nvim-win64.msi).Path).ProductVersion
           "version=$VERSION" >> $env:GITHUB_OUTPUT
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
         name: Publish nightly
