@@ -12,6 +12,7 @@
 #include "nvim/arglist.h"
 #include "nvim/arglist_defs.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/eval.h"
@@ -986,6 +987,8 @@ void ex_mkrc(exarg_T *eap)
     } else {
       flagp = &ssop_flags;
     }
+
+    apply_autocmds(EVENT_SESSIONWRITEPRE, NULL, NULL, false, curbuf);
 
     // Write the version command for :mkvimrc
     if (eap->cmdidx == CMD_mkvimrc) {
