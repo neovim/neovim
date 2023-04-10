@@ -4225,6 +4225,11 @@ A pattern item may be
       right, counting `+1` for an `x` and `-1` for a `y`, the ending `y` is the first
       `y` where the count reaches 0. For instance, the item `%b()` matches
       expressions with balanced parentheses.
+   - `%f[set]`, a frontier pattern; such item matches an empty string at any
+     position such that the next character belongs to `set` and the previous
+     character does not belong to `set`. The set `set` is interpreted as
+     previously described. The beginning and the end of the subject are
+     handled as if they were the character '\0'.
 
                                                                 *luaref-pattern*
 Pattern:~
