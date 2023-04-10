@@ -653,3 +653,62 @@ it('ruler is redrawn in cmdline with redrawstatus #22804', function()
                           other value       |
   ]])
 end)
+
+it("shows correct ruler in cmdline with no statusline", function()
+  clear()
+  local screen = Screen.new(30, 8)
+  screen:set_default_attr_ids {
+    [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+    [2] = {bold = true, reverse = true},  -- StatusLine
+    [3] = {reverse = true},  -- StatusLineNC
+  }
+  screen:attach()
+  -- Use long ruler to check 'ruler' with 'rulerformat' set has correct width.
+  command [[
+    set ruler rulerformat=%{winnr()}longlonglong ls=0 winwidth=10
+    split
+    wincmd b
+    vsplit
+    wincmd t
+    wincmd |
+    mode
+  ]]
+  -- Window 1 is current. It has a statusline, so cmdline should show the
+  -- last window's ruler, which has no statusline.
+  command '1wincmd w'
+  screen:expect [[
+    ^                              |
+    {1:~                             }|
+    {1:~                             }|
+    {2:[No Name]      1longlonglong  }|
+                   │              |
+    {1:~              }│{1:~             }|
+    {1:~              }│{1:~             }|
+                   3longlonglong  |
+  ]]
+  -- Window 2 is current. It has no statusline, so cmdline should show its
+  -- ruler instead.
+  command '2wincmd w'
+  screen:expect [[
+                                  |
+    {1:~                             }|
+    {1:~                             }|
+    {3:[No Name]      1longlonglong  }|
+    ^               │              |
+    {1:~              }│{1:~             }|
+    {1:~              }│{1:~             }|
+                   2longlonglong  |
+  ]]
+  -- Window 3 is current. Cmdline should again show its ruler.
+  command '3wincmd w'
+  screen:expect [[
+                                  |
+    {1:~                             }|
+    {1:~                             }|
+    {3:[No Name]      1longlonglong  }|
+                   │^              |
+    {1:~              }│{1:~             }|
+    {1:~              }│{1:~             }|
+                   3longlonglong  |
+  ]]
+end)
