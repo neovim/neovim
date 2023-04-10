@@ -90,79 +90,6 @@ function! s:disabled_via_loaded_var(provider) abort
   return 0
 endfunction
 
-" Resolves Python executable path by invoking and checking `sys.executable`.
-function! s:python_exepath(invocation) abort
-  return s:normalize_path(system(fnameescape(a:invocation)
-    \ . ' -c "import sys; sys.stdout.write(sys.executable)"'))
-endfunction
-
-" Checks that $VIRTUAL_ENV Python executables are found at front of $PATH in
-" Nvim and subshells.
-function! s:check_virtualenv() abort
-  call health#report_start('Python virtualenv')
-  if !exists('$VIRTUAL_ENV')
-    call health#report_ok('no $VIRTUAL_ENV')
-    return
-  endif
-  let errors = []
-  " Keep hints as dict keys in order to discard duplicates.
-  let hints = {}
-  " The virtualenv should contain some Python executables, and those
-  " executables should be first both on Nvim's $PATH and the $PATH of
-  " subshells launched from Nvim.
-  let bin_dir = has('win32') ? '/Scripts' : '/bin'
-  let venv_bins = glob($VIRTUAL_ENV . bin_dir . '/python*', v:true, v:true)
-  " XXX: Remove irrelevant executables found in bin/.
-  let venv_bins = filter(venv_bins, 'v:val !~# "python-config"')
-  if len(venv_bins)
-    for venv_bin in venv_bins
-      let venv_bin = s:normalize_path(venv_bin)
-      let py_bin_basename = fnamemodify(venv_bin, ':t')
-      let nvim_py_bin = s:python_exepath(exepath(py_bin_basename))
-      let subshell_py_bin = s:python_exepath(py_bin_basename)
-      if venv_bin !=# nvim_py_bin
-        call add(errors, '$PATH yields this '.py_bin_basename.' executable: '.nvim_py_bin)
-        let hint = '$PATH ambiguities arise if the virtualenv is not '
-          \.'properly activated prior to launching Nvim. Close Nvim, activate the virtualenv, '
-          \.'check that invoking Python from the command line launches the correct one, '
-          \.'then relaunch Nvim.'
-        let hints[hint] = v:true
-      endif
-      if venv_bin !=# subshell_py_bin
-        call add(errors, '$PATH in subshells yields this '
-          \.py_bin_basename . ' executable: '.subshell_py_bin)
-        let hint = '$PATH ambiguities in subshells typically are '
-          \.'caused by your shell config overriding the $PATH previously set by the '
-          \.'virtualenv. Either prevent them from doing so, or use this workaround: '
-          \.'https://vi.stackexchange.com/a/34996'
-        let hints[hint] = v:true
-      endif
-    endfor
-  else
-    call add(errors, 'no Python executables found in the virtualenv '.bin_dir.' directory.')
-  endif
-
-  let msg = '$VIRTUAL_ENV is set to: '.$VIRTUAL_ENV
-  if len(errors)
-    if len(venv_bins)
-      let msg .= "\nAnd its ".bin_dir.' directory contains: '
-        \.join(map(venv_bins, "fnamemodify(v:val, ':t')"), ', ')
-    endif
-    let conj = "\nBut "
-    for error in errors
-      let msg .= conj.error
-      let conj = "\nAnd "
-    endfor
-    let msg .= "\nSo invoking Python may lead to unexpected results."
-    call health#report_warn(msg, keys(hints))
-  else
-    call health#report_info(msg)
-    call health#report_info('Python version: '
-      \.system('python -c "import platform, sys; sys.stdout.write(platform.python_version())"'))
-    call health#report_ok('$VIRTUAL_ENV provides :!python.')
-  endif
-endfunction
-
 function! s:check_ruby() abort
   call health#report_start('Ruby provider (optional)')
 
@@ -372,7 +299,6 @@ function! s:check_perl() abort
 endfunction
 
 function! health#provider2#check() abort
-  call s:check_virtualenv()
   call s:check_ruby()
   call s:check_node()
   call s:check_perl()
