@@ -720,11 +720,111 @@ local function ruby()
   end
 end
 
+local function node()
+  start('Node.js provider (optional)')
+
+  if disabled_via_loaded_var('node') then
+    return
+  end
+
+  if
+    not executable('node')
+    or (not executable('npm') and not executable('yarn') and not executable('pnpm'))
+  then
+    warn(
+      '`node` and `npm` (or `yarn`, `pnpm`) must be in $PATH.',
+      'Install Node.js and verify that `node` and `npm` (or `yarn`, `pnpm`) commands work.'
+    )
+    return
+  end
+
+  -- local node_v = vim.fn.split(system({'node', '-v'}), "\n")[1] or ''
+  local node_v = system({ 'node', '-v' })
+  info('Node.js: ' .. node_v)
+  if shell_error() or vim.version.lt(node_v, '6.0.0') then
+    warn('Nvim node.js host does not support Node ' .. node_v)
+    -- Skip further checks, they are nonsense if nodejs is too old.
+    return
+  end
+  if vim.fn['provider#node#can_inspect']() == 0 then
+    warn(
+      'node.js on this system does not support --inspect-brk so $NVIM_NODE_HOST_DEBUG is ignored.'
+    )
+  end
+
+  local node_detect_table = vim.fn['provider#node#Detect']()
+  local host = node_detect_table[1]
+  if is_blank(host) then
+    warn('Missing "neovim" npm (or yarn, pnpm) package.', {
+      'Run in shell: npm install -g neovim',
+      'Run in shell (if you use yarn): yarn global add neovim',
+      'Run in shell (if you use pnpm): pnpm install -g neovim',
+      'You may disable this provider (and warning) by adding `let g:loaded_node_provider = 0` to your init.vim',
+    })
+    return
+  end
+  info('Nvim node.js host: ' .. host)
+
+  local manager = 'npm'
+  if executable('yarn') then
+    manager = 'yarn'
+  elseif executable('pnpm') then
+    manager = 'pnpm'
+  end
+
+  local latest_npm_cmd = (
+    iswin and 'cmd /c ' .. manager .. ' info neovim --json' or manager .. ' info neovim --json'
+  )
+  local latest_npm = system(vim.fn.split(latest_npm_cmd))
+  if shell_error() or is_blank(latest_npm) then
+    error(
+      'Failed to run: ' .. latest_npm_cmd,
+      { "Make sure you're connected to the internet.", 'Are you behind a firewall or proxy?' }
+    )
+    return
+  end
+
+  local pcall_ok, output = pcall(vim.fn.json_decode, latest_npm)
+  local pkg_data
+  if pcall_ok then
+    pkg_data = output
+  else
+    return 'error: ' .. latest_npm
+  end
+  local latest_npm_subtable = pkg_data['dist-tags'] or {}
+  latest_npm = latest_npm_subtable['latest'] or 'unable to parse'
+
+  local current_npm_cmd = { 'node', host, '--version' }
+  local current_npm = system(current_npm_cmd)
+  if shell_error() then
+    error(
+      'Failed to run: ' .. table.concat(current_npm_cmd, ' '),
+      { 'Report this issue with the output of: ', table.concat(current_npm_cmd, ' ') }
+    )
+    return
+  end
+
+  if latest_npm ~= 'unable to parse' and vim.version.lt(current_npm, latest_npm) then
+    local message = 'Package "neovim" is out-of-date. Installed: '
+      .. current_npm
+      .. ' latest: '
+      .. latest_npm
+    warn(message({
+      'Run in shell: npm install -g neovim',
+      'Run in shell (if you use yarn): yarn global add neovim',
+      'Run in shell (if you use pnpm): pnpm install -g neovim',
+    }))
+  else
+    ok('Latest "neovim" npm/yarn/pnpm package is installed: ' .. current_npm)
+  end
+end
+
 function M.check()
   clipboard()
   python()
   virtualenv()
   ruby()
+  node()
 end
 
 return M
