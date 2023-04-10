@@ -402,8 +402,8 @@ end
 --- Input and output positions are (0,0)-indexed and indicate byte positions.
 ---
 ---@param bufnr integer number of buffer
----@param pos1 integer[] (line, column) tuple marking beginning of region
----@param pos2 integer[] (line, column) tuple marking end of region
+---@param pos1 integer[]|string start of region as a (line, column) tuple or string accepted by |getpos()|
+---@param pos2 integer[]|string end of region as a (line, column) tuple or string accepted by |getpos()|
 ---@param regtype string type of selection, see |setreg()|
 ---@param inclusive boolean indicating whether column of pos2 is inclusive
 ---@return table region Table of the form `{linenr = {startcol,endcol}}`.
@@ -412,6 +412,24 @@ end
 function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
+  end
+
+  if type(pos1) == 'string' then
+    local pos = vim.fn.getpos(pos1)
+    pos1 = { pos[2] - 1, pos[3] - 1 + pos[4] }
+  end
+  if type(pos2) == 'string' then
+    local pos = vim.fn.getpos(pos2)
+    pos2 = { pos[2] - 1, pos[3] - 1 + pos[4] }
+  end
+
+  if pos1[1] > pos2[1] or (pos1[1] == pos2[1] and pos1[2] > pos2[2]) then
+    pos1, pos2 = pos2, pos1
+  end
+
+  -- getpos() may return {0,0,0,0}
+  if pos1[1] < 0 or pos1[2] < 0 then
+    return {}
   end
 
   -- check that region falls within current buffer
