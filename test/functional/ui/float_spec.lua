@@ -432,6 +432,25 @@ describe('float window', function()
     assert_alive()
   end)
 
+  it("should re-apply 'style' when present", function()
+    local float_opts = {style = 'minimal', relative = 'editor', row = 1, col = 1, width = 1, height = 1}
+    local float_win = meths.open_win(0, true, float_opts)
+    meths.win_set_option(float_win, 'number', true)
+    float_opts.row = 2
+    meths.win_set_config(float_win, float_opts)
+    eq(false, meths.win_get_option(float_win, 'number'))
+  end)
+
+  it("should not re-apply 'style' when missing", function()
+    local float_opts = {style = 'minimal', relative = 'editor', row = 1, col = 1, width = 1, height = 1}
+    local float_win = meths.open_win(0, true, float_opts)
+    meths.win_set_option(float_win, 'number', true)
+    float_opts.row = 2
+    float_opts.style = nil
+    meths.win_set_config(float_win, float_opts)
+    eq(true, meths.win_get_option(float_win, 'number'))
+  end)
+
   it("'scroll' is computed correctly when opening float with splitkeep=screen #20684", function()
     meths.set_option('splitkeep', 'screen')
     local float_opts = {relative = 'editor', row = 1, col = 1, width = 10, height = 10}

@@ -108,8 +108,8 @@
 ///     The default value for floats are 50.  In general, values below 100 are
 ///     recommended, unless there is a good reason to overshadow builtin
 ///     elements.
-///   - style: Configure the appearance of the window. Currently only takes
-///       one non-empty value:
+///   - style: (optional) Configure the appearance of the window. Currently
+///       only supports one value:
 ///       - "minimal"  Nvim will display the window with many UI options
 ///                    disabled. This is useful when displaying a temporary
 ///                    float where the text should not be edited. Disables
@@ -222,9 +222,11 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
     win_config_float(win, fconfig);
     win->w_pos_changed = true;
   }
-  if (fconfig.style == kWinStyleMinimal) {
-    win_set_minimal_style(win);
-    didset_window_options(win, true);
+  if (HAS_KEY(config->style)) {
+    if (fconfig.style == kWinStyleMinimal) {
+      win_set_minimal_style(win);
+      didset_window_options(win, true);
+    }
   }
 }
 
