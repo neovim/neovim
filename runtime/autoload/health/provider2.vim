@@ -85,85 +85,6 @@ function! s:disabled_via_loaded_var(provider) abort
   return 0
 endfunction
 
-function! s:check_node() abort
-  call health#report_start('Node.js provider (optional)')
-
-  if s:disabled_via_loaded_var('node')
-    return
-  endif
-
-  if !executable('node') || (!executable('npm') && !executable('yarn') && !executable('pnpm'))
-    call health#report_warn(
-          \ '`node` and `npm` (or `yarn`, `pnpm`) must be in $PATH.',
-          \ ['Install Node.js and verify that `node` and `npm` (or `yarn`, `pnpm`) commands work.'])
-    return
-  endif
-  let node_v = get(split(s:system(['node', '-v']), "\n"), 0, '')
-  call health#report_info('Node.js: '. node_v)
-  if s:shell_error || v:lua.vim.version.lt(node_v[1:], '6.0.0')
-    call health#report_warn('Nvim node.js host does not support Node '.node_v)
-    " Skip further checks, they are nonsense if nodejs is too old.
-    return
-  endif
-  if !provider#node#can_inspect()
-    call health#report_warn('node.js on this system does not support --inspect-brk so $NVIM_NODE_HOST_DEBUG is ignored.')
-  endif
-
-  let [host, err] = provider#node#Detect()
-  if empty(host)
-    call health#report_warn('Missing "neovim" npm (or yarn, pnpm) package.',
-          \ ['Run in shell: npm install -g neovim',
-          \  'Run in shell (if you use yarn): yarn global add neovim',
-          \  'Run in shell (if you use pnpm): pnpm install -g neovim',
-          \  'You may disable this provider (and warning) by adding `let g:loaded_node_provider = 0` to your init.vim'])
-    return
-  endif
-  call health#report_info('Nvim node.js host: '. host)
-
-  let manager = 'npm'
-  if executable('yarn')
-    let manager = 'yarn'
-  elseif executable('pnpm')
-    let manager = 'pnpm'
-  endif
-
-  let latest_npm_cmd = has('win32') ?
-        \ 'cmd /c '. manager .' info neovim --json' :
-        \ manager .' info neovim --json'
-  let latest_npm = s:system(split(latest_npm_cmd))
-  if s:shell_error || empty(latest_npm)
-    call health#report_error('Failed to run: '. latest_npm_cmd,
-          \ ["Make sure you're connected to the internet.",
-          \  'Are you behind a firewall or proxy?'])
-    return
-  endif
-  try
-    let pkg_data = json_decode(latest_npm)
-  catch /E474/
-    return 'error: '.latest_npm
-  endtry
-  let latest_npm = get(get(pkg_data, 'dist-tags', {}), 'latest', 'unable to parse')
-
-  let current_npm_cmd = ['node', host, '--version']
-  let current_npm = s:system(current_npm_cmd)
-  if s:shell_error
-    call health#report_error('Failed to run: '. join(current_npm_cmd),
-          \ ['Report this issue with the output of: ', join(current_npm_cmd)])
-    return
-  endif
-
-  if latest_npm !=# 'unable to parse' && v:lua.vim.version.lt(current_npm, latest_npm)
-    call health#report_warn(
-          \ printf('Package "neovim" is out-of-date. Installed: %s, latest: %s',
-          \ current_npm, latest_npm),
-          \ ['Run in shell: npm install -g neovim',
-          \  'Run in shell (if you use yarn): yarn global add neovim',
-          \  'Run in shell (if you use pnpm): pnpm install -g neovim'])
-  else
-    call health#report_ok('Latest "neovim" npm/yarn/pnpm package is installed: '. current_npm)
-  endif
-endfunction
-
 function! s:check_perl() abort
   call health#report_start('Perl provider (optional)')
 
@@ -239,6 +160,5 @@ function! s:check_perl() abort
 endfunction
 
 function! health#provider2#check() abort
-  call s:check_node()
   call s:check_perl()
 endfunction
