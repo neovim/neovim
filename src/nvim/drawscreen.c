@@ -1052,11 +1052,11 @@ int showmode(void)
     clear_showcmd();
   }
 
-  // If the last window has no status line and global statusline is disabled,
+  // If the current or last window has no status line and global statusline is disabled,
   // the ruler is after the mode message and must be redrawn
-  win_T *last = curwin->w_floating ? curwin : lastwin_nofloating();
-  if (redrawing() && last->w_status_height == 0 && global_stl_height() == 0) {
-    win_redr_ruler(last);
+  win_T *ruler_win = curwin->w_status_height == 0 ? curwin : lastwin_nofloating();
+  if (redrawing() && ruler_win->w_status_height == 0 && global_stl_height() == 0) {
+    win_redr_ruler(ruler_win);
   }
 
   redraw_cmdline = false;

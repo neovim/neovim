@@ -497,7 +497,8 @@ void win_redr_ruler(win_T *wp)
 
   // Don't draw the ruler while doing insert-completion, it might overwrite
   // the (long) mode message.
-  if (wp == lastwin && lastwin->w_status_height == 0 && !is_stl_global) {
+  win_T *ruler_win = curwin->w_status_height == 0 ? curwin : lastwin_nofloating();
+  if (wp == ruler_win && ruler_win->w_status_height == 0 && !is_stl_global) {
     if (edit_submode != NULL) {
       return;
     }
@@ -510,7 +511,7 @@ void win_redr_ruler(win_T *wp)
 
   // Check if not in Insert mode and the line is empty (will show "0-1").
   int empty_line = (State & MODE_INSERT) == 0
-                   && *ml_get_buf(curwin->w_buffer, curwin->w_cursor.lnum, false) == NUL;
+                   && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, false) == NUL;
 
   int width;
   int row;
