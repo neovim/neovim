@@ -819,12 +819,102 @@ local function node()
   end
 end
 
+local function perl()
+  start('Perl provider (optional)')
+
+  if disabled_via_loaded_var('perl') then
+    return
+  end
+
+  local perl_detect_table = vim.fn['provider#perl#Detect']()
+  local perl_exec = perl_detect_table[1]
+  local perl_warnings = perl_detect_table[2]
+
+  if is_blank(perl_exec) then
+    if not is_blank(perl_warnings) then
+      warn(perl_warnings, {
+        'See :help provider-perl for more information.',
+        'You may disable this provider (and warning) by adding `let g:loaded_perl_provider = 0` to your init.vim',
+      })
+    else
+      warn('No usable perl executable found')
+    end
+    return
+  end
+
+  info('perl executable: ' .. perl_exec)
+
+  -- we cannot use cpanm that is on the path, as it may not be for the perl
+  -- set with g:perl_host_prog
+  system({ perl_exec, '-W', '-MApp::cpanminus', '-e', '' })
+  if shell_error() then
+    return { perl_exec, '"App::cpanminus" module is not installed' }
+  end
+
+  local latest_cpan_cmd = {
+    perl_exec,
+    '-MApp::cpanminus::fatscript',
+    '-e',
+    'my $app = App::cpanminus::script->new; $app->parse_options ("--info", "-q", "Neovim::Ext"); exit $app->doit',
+  }
+
+  local latest_cpan = system(latest_cpan_cmd)
+  if shell_error() or is_blank(latest_cpan) then
+    error(
+      'Failed to run: ' .. table.concat(latest_cpan_cmd, ' '),
+      { "Make sure you're connected to the internet.", 'Are you behind a firewall or proxy?' }
+    )
+    return
+  elseif latest_cpan[1] == '!' then
+    local cpanm_errs = vim.split(latest_cpan, '!')
+    if cpanm_errs[1]:find("Can't write to ") then
+      local advice = {}
+      for i = 2, #cpanm_errs do
+        advice[#advice + 1] = cpanm_errs[i]
+      end
+
+      warn(cpanm_errs[1], advice)
+      -- Last line is the package info
+      latest_cpan = cpanm_errs[#cpanm_errs]
+    else
+      error('Unknown warning from command: ' .. latest_cpan_cmd, cpanm_errs)
+      return
+    end
+  end
+  latest_cpan = vim.fn.matchstr(latest_cpan, [[\(\.\?\d\)\+]])
+  if is_blank(latest_cpan) then
+    error('Cannot parse version number from cpanm output: ' .. latest_cpan)
+    return
+  end
+
+  local current_cpan_cmd = { perl_exec, '-W', '-MNeovim::Ext', '-e', 'print $Neovim::Ext::VERSION' }
+  local current_cpan = system(current_cpan_cmd)
+  if shell_error then
+    error(
+      'Failed to run: ' .. table.concat(current_cpan_cmd, ' '),
+      { 'Report this issue with the output of: ', table.concat(current_cpan_cmd, ' ') }
+    )
+    return
+  end
+
+  if vim.version.lt(current_cpan, latest_cpan) then
+    local message = 'Module "Neovim::Ext" is out-of-date. Installed: '
+      .. current_cpan
+      .. ', latest: '
+      .. latest_cpan
+    warn(message, 'Run in shell: cpanm -n Neovim::Ext')
+  else
+    ok('Latest "Neovim::Ext" cpan module is installed: ' .. current_cpan)
+  end
+end
+
 function M.check()
   clipboard()
   python()
   virtualenv()
   ruby()
   node()
+  perl()
 end
 
 return M
