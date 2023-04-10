@@ -1307,6 +1307,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           .mark = cur_entry.data.filemark.mark,
           .fnum = (buf == NULL ? 0 : buf->b_fnum),
           .timestamp = cur_entry.timestamp,
+          .view = INIT_FMARKV,
           .additional_data = cur_entry.data.filemark.additional_data,
         },
       };
@@ -1388,6 +1389,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         .mark = cur_entry.data.filemark.mark,
         .fnum = 0,
         .timestamp = cur_entry.timestamp,
+        .view = INIT_FMARKV,
         .additional_data = cur_entry.data.filemark.additional_data,
       };
       if (cur_entry.type == kSDItemLocalMark) {
