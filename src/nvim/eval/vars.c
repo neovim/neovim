@@ -1149,7 +1149,7 @@ void vars_clear_ext(hashtab_T *ht, int free_val)
     }
   }
   hash_clear(ht);
-  ht->ht_used = 0;
+  hash_init(ht);
 }
 
 /// Delete a variable from hashtab "ht" at item "hi".
