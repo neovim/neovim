@@ -84,7 +84,7 @@ void clear_fmark(fmark_T *fm)
   FUNC_ATTR_NONNULL_ALL
 {
   free_fmark(*fm);
-  CLEAR_POINTER(fm);
+  *fm = (fmark_T)INIT_FMARK;
 }
 
 // Set named mark "c" to position "pos".
