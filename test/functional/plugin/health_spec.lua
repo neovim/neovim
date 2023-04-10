@@ -36,7 +36,7 @@ describe(':checkhealth', function()
   it('completions can be listed via getcompletion()', function()
     clear()
     eq('nvim', getcompletion('nvim', 'checkhealth')[1])
-    eq('provider', getcompletion('prov', 'checkhealth')[1])
+    eq('provider.clipboard', getcompletion('prov', 'checkhealth')[1])
     eq('vim.lsp', getcompletion('vim.ls', 'checkhealth')[1])
     neq('vim', getcompletion('^vim', 'checkhealth')[1])  -- should not complete vim.health
   end)
