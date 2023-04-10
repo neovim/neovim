@@ -596,7 +596,7 @@ local function virtualenv()
   local venv_bins = vim.fn.glob(os.getenv('VIRTUAL_ENV') .. bin_dir .. '/python*', true, true)
   -- XXX: Remove irrelevant executables found in bin/.
   venv_bins = vim.fn.filter(venv_bins, 'v:val !~# "python-config"')
-  if vim.tbl_coun(venv_bins) > 0 then
+  if vim.tbl_count(venv_bins) > 0 then
     for _, venv_bin in pairs(venv_bins) do
       venv_bin = vim.fs.normalize(venv_bin)
       local py_bin_basename = vim.fs.basename(venv_bin)
