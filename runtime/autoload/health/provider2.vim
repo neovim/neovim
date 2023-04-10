@@ -1,10 +1,5 @@
 let s:shell_error = 0
 
-" Convert '\' to '/'. Collapse '//' and '/./'.
-function! s:normalize_path(s) abort
-  return substitute(substitute(a:s, '\', '/', 'g'), '/\./\|/\+', '/', 'g')
-endfunction
-
 " Handler for s:system() function.
 function! s:system_handler(jobid, data, event) dict abort
   if a:event ==# 'stderr'
@@ -88,61 +83,6 @@ function! s:disabled_via_loaded_var(provider) abort
     endif
   endif
   return 0
-endfunction
-
-function! s:check_ruby() abort
-  call health#report_start('Ruby provider (optional)')
-
-  if s:disabled_via_loaded_var('ruby')
-    return
-  endif
-
-  if !executable('ruby') || !executable('gem')
-    call health#report_warn(
-          \ '`ruby` and `gem` must be in $PATH.',
-          \ ['Install Ruby and verify that `ruby` and `gem` commands work.'])
-    return
-  endif
-  call health#report_info('Ruby: '. s:system(['ruby', '-v']))
-
-  let [host, err] = provider#ruby#Detect()
-  if empty(host)
-    call health#report_warn('`neovim-ruby-host` not found.',
-          \ ['Run `gem install neovim` to ensure the neovim RubyGem is installed.',
-          \  'Run `gem environment` to ensure the gem bin directory is in $PATH.',
-          \  'If you are using rvm/rbenv/chruby, try "rehashing".',
-          \  'See :help g:ruby_host_prog for non-standard gem installations.',
-          \  'You may disable this provider (and warning) by adding `let g:loaded_ruby_provider = 0` to your init.vim'])
-    return
-  endif
-  call health#report_info('Host: '. host)
-
-  let latest_gem_cmd = has('win32') ? 'cmd /c gem list -ra "^^neovim$"' : 'gem list -ra ^neovim$'
-  let latest_gem = s:system(split(latest_gem_cmd))
-  if s:shell_error || empty(latest_gem)
-    call health#report_error('Failed to run: '. latest_gem_cmd,
-          \ ["Make sure you're connected to the internet.",
-          \  'Are you behind a firewall or proxy?'])
-    return
-  endif
-  let latest_gem = get(split(latest_gem, 'neovim (\|, \|)$' ), 0, 'not found')
-
-  let current_gem_cmd = [host, '--version']
-  let current_gem = s:system(current_gem_cmd)
-  if s:shell_error
-    call health#report_error('Failed to run: '. join(current_gem_cmd),
-          \ ['Report this issue with the output of: ', join(current_gem_cmd)])
-    return
-  endif
-
-  if v:lua.vim.version.lt(current_gem, latest_gem)
-    call health#report_warn(
-          \ printf('Gem "neovim" is out-of-date. Installed: %s, latest: %s',
-          \ current_gem, latest_gem),
-          \ ['Run in shell: gem update neovim'])
-  else
-    call health#report_ok('Latest "neovim" gem is installed: '. current_gem)
-  endif
 endfunction
 
 function! s:check_node() abort
@@ -299,7 +239,6 @@ function! s:check_perl() abort
 endfunction
 
 function! health#provider2#check() abort
-  call s:check_ruby()
   call s:check_node()
   call s:check_perl()
 endfunction
