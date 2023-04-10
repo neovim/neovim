@@ -220,3 +220,38 @@ describe('listing functions using :function', function()
     assert_alive()
   end)
 end)
+
+it('no double-free in garbage collection #16287', function()
+  clear()
+  -- Don't use exec() here as using a named script reproduces the issue better.
+  write_file('Xgarbagecollect.vim', [[
+    func Foo() abort
+      let s:args = [a:000]
+      let foo0 = ""
+      let foo1 = ""
+      let foo2 = ""
+      let foo3 = ""
+      let foo4 = ""
+      let foo5 = ""
+      let foo6 = ""
+      let foo7 = ""
+      let foo8 = ""
+      let foo9 = ""
+      let foo10 = ""
+      let foo11 = ""
+      let foo12 = ""
+      let foo13 = ""
+      let foo14 = ""
+    endfunc
+
+    set updatetime=1
+    call Foo()
+    call Foo()
+  ]])
+  finally(function()
+    os.remove('Xgarbagecollect.vim')
+  end)
+  command('source Xgarbagecollect.vim')
+  sleep(10)
+  assert_alive()
+end)
