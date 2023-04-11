@@ -1411,10 +1411,10 @@ describe('ColorColumn highlight', function()
       [3] = {foreground = Screen.colors.Brown},  -- LineNr
       [4] = {foreground = Screen.colors.Brown, bold = true},  -- CursorLineNr
       [5] = {foreground = Screen.colors.Blue, bold = true},  -- NonText
-      -- NonText and ColorColumn
       [6] = {foreground = Screen.colors.Blue, background = Screen.colors.LightRed, bold = true},
       [7] = {reverse = true, bold = true},  -- StatusLine
       [8] = {reverse = true},  -- StatusLineNC
+      [9] = {background = Screen.colors.Grey90, foreground = Screen.colors.Red},
     })
     screen:attach()
   end)
@@ -1497,6 +1497,25 @@ describe('ColorColumn highlight', function()
       {5:~                                       }|
       {5:~                                       }|
       {5:~                                       }|
+                                              |
+    ]])
+  end)
+
+  it('is combined with low-priority CursorLine highlight #23016', function()
+    screen:try_resize(40, 2)
+    command('set colorcolumn=30 cursorline')
+    screen:expect([[
+      {2:^                             }{1: }{2:          }|
+                                              |
+    ]])
+    command('hi clear ColorColumn')
+    screen:expect([[
+      {2:^                                        }|
+                                              |
+    ]])
+    command('hi ColorColumn guifg=Red')
+    screen:expect([[
+      {2:^                             }{9: }{2:          }|
                                               |
     ]])
   end)
