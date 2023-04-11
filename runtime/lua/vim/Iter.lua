@@ -17,7 +17,9 @@ function Iter.filter(self, f)
   self.fn = function()
     while true do
       local args = { fn() }
-      if args[1] == nil then break end
+      if args[1] == nil then
+        break
+      end
       if f(unpack(args)) then
         return unpack(args)
       end
@@ -69,7 +71,9 @@ end
 function Iter.foreach(self, f)
   while true do
     local args = { self.fn() }
-    if args[1] == nil then break end
+    if args[1] == nil then
+      break
+    end
     f(unpack(args))
   end
 end
