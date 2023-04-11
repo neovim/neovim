@@ -397,8 +397,8 @@ local function python()
   local pyenv = pyenv_table[1]
   local pyenv_root = pyenv_table[2]
 
-  if vim.g['host_prog_var'] then
-    local message = 'Using: g:' .. host_prog_var .. ' = "' .. vim.g['host_prog_var'] .. '"'
+  if vim.g[host_prog_var] then
+    local message = 'Using: g:' .. host_prog_var .. ' = "' .. vim.g[host_prog_var] .. '"'
     info(message)
   end
 
@@ -411,7 +411,7 @@ local function python()
       'No Python executable found that can `import neovim`. '
         .. 'Using the first available executable for diagnostics.'
     )
-  elseif vim.g['host_prog_var'] then
+  elseif vim.g[host_prog_var] then
     python_exe = pyname
   end
 
@@ -422,7 +422,7 @@ local function python()
       'You may disable this provider (and warning) by adding `let g:loaded_python3_provider = 0` to your init.vim',
     })
   elseif not is_blank(pyname) and is_blank(python_exe) then
-    if not vim.g['host_prog_var'] then
+    if not vim.g[host_prog_var] then
       local message = '`g:'
         .. host_prog_var
         .. '` is not set.  Searching for '
