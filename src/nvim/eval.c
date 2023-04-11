@@ -8048,7 +8048,8 @@ static int store_dict_list(FILE *fd, char *key, typval_T value, bool declaration
     if (fprintf(fd, "{") < 0)
       return FAIL;
     TV_DICT_ITER(value.vval.v_dict, inner_var, {
-      store_dict_list(fd, inner_var->di_key, inner_var->di_tv, false);
+      if (store_dict_list(fd, inner_var->di_key, inner_var->di_tv, false) == FAIL)
+        return FAIL;
     });
     if (declaration) {
       if (fprintf(fd, "}") < 0)
@@ -8060,8 +8061,10 @@ static int store_dict_list(FILE *fd, char *key, typval_T value, bool declaration
   } else if (value.v_type == VAR_LIST) {
     if (fprintf(fd, "[") < 0)
       return FAIL;
-    TV_LIST_ITER(
-      value.vval.v_list, inner_var, { store_dict_list(fd, 0, inner_var->li_tv, false); });
+    TV_LIST_ITER(value.vval.v_list, inner_var, {
+      if (store_dict_list(fd, 0, inner_var->li_tv, false) == FAIL)
+        return FAIL;
+    });
     if (fprintf(fd, "]") < 0)
       return FAIL;
   } else if (value.v_type == VAR_STRING || value.v_type == VAR_NUMBER) {
