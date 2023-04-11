@@ -458,7 +458,7 @@ local directive_handlers = {
       metadata[id] = {}
     end
 
-    local pattern, replacement = pred[3], pred[3]
+    local pattern, replacement = pred[3], pred[4]
     assert(type(pattern) == 'string')
     assert(type(replacement) == 'string')
 
