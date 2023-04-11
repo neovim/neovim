@@ -33,23 +33,6 @@ Copyright 2005-2017:					*tar-copyright*
    also write to the file.  Currently, one may not make a new file in
    tar archives via the plugin.
 
-						*:Vimuntar*
-   VIMUNTAR~
-
-   :Vimuntar [vimhome]
-
-	This command copies, if necessary, the tarball to the .vim or vimfiles
-	directory using the first writable directory in the |'runtimepath'|
-	when no [vimhome] is specified.  Otherwise, the [vimhome] argument
-	allows the user to specify that directory, instead.
-
-	The copy is done using the command in *g:tar_copycmd* , which is >
-		cp   for cygwin, unix, macunix
-		copy for windows (32, 95, 64, 16)
-<	The extraction is done with the command specified with
-	*g:tar_extractcmd* , which by default is >
-		"tar -xf"
-<
 						*:TarDiff*
    DIFFERENCING SUPPORT~
 
