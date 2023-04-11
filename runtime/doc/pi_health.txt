@@ -21,7 +21,7 @@ Plugin authors are encouraged to write new healthchecks. |health-dev|
 ==============================================================================
 Commands                                *health-commands*
 
-                                        *:che* *:checkhealth* *:CheckHealth*
+                                                             *:che* *:checkhealth*
 :che[ckhealth]  Run all healthchecks.
                                         *E5009*
                 Nvim depends on |$VIMRUNTIME|, 'runtimepath' and 'packpath' to

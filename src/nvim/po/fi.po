@@ -5540,7 +5540,7 @@ msgstr "tekijät Bram Moolenaar et al."
 #~ msgstr "kirjoita :help iccf<Enter>    lisätietoa varten            "
 
 #, fuzzy
-#~ msgid "type  :CheckHealth<Enter>     to optimize Nvim"
+#~ msgid "type  :checkhealth<Enter>     to optimize Nvim"
 #~ msgstr "kirjoita :help iccf<Enter>    lisätietoa varten            "
 
 msgid "type  :q<Enter>               to exit         "

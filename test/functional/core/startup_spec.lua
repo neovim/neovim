@@ -402,8 +402,6 @@ describe('startup', function()
       local line1 = string.match(out, '^.-\n')
       -- updatecount=0 means swapfile was disabled.
       eq("  swapfile  updatecount=0  shadafile=\n", line1)
-      -- Standard plugins were loaded, but not user config.
-      eq('health.vim', string.match(out, 'health.vim'))
       eq(nil, string.match(out, 'init.vim'))
     end
   end)
