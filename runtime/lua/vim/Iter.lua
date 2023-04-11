@@ -46,7 +46,7 @@ function Iter.map(self, f)
       if args[1] == nil then
         break
       end
-      local result =  { f(unpack(args)) }
+      local result = { f(unpack(args)) }
       if result[1] ~= nil then
         return unpack(result)
       end
