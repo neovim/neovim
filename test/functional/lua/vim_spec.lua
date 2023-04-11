@@ -3030,7 +3030,7 @@ describe('lua stdlib', function()
     eq(NIL, if_nil(a))
   end)
 
-  describe('vim.iter #test', function()
+  describe('vim.iter', function()
     it('works on tables', function()
       local function odd(_, v)
         return v % 2 ~= 0
