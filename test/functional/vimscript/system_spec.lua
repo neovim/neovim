@@ -393,7 +393,7 @@ describe('system()', function()
   end)
 
   describe('with output containing NULs', function()
-    local fname = 'Xtest'
+    local fname = 'Xtest_functional_vimscript_system_nuls'
 
     before_each(create_file_with_nuls(fname))
     after_each(delete_file(fname))
@@ -549,7 +549,7 @@ describe('systemlist()', function()
   end)
 
   describe('with output containing NULs', function()
-    local fname = 'Xtest'
+    local fname = 'Xtest_functional_vimscript_systemlist_nuls'
 
     before_each(function()
       command('set ff=unix')
