@@ -3031,7 +3031,7 @@ describe('lua stdlib', function()
   end)
 
   describe('vim.iter #test', function()
-    it('works on table', function()
+    it('works on tables', function()
       local function odd(_, v)
         return v % 2 ~= 0
       end
@@ -3063,25 +3063,17 @@ describe('lua stdlib', function()
         :collect()
       )
 
-      -- map() can work like filter() by returning nil
-      eq(
-        { 1 },
-        vim
-        .iter(t)
-        :map(function(_, v)
-          if v == 1 then
-            return v
-          end
-        end)
-        :collect()
-      )
-
       eq(
         15,
         vim.iter(t):fold(0, function(acc, _, v)
           return acc + v
         end)
       )
+
+      do
+        local it = vim.iter({1, 2, 3}):map(function(k, v) return k, v, v*v end)
+        matches('Cannot collect iterator with 3 return values', pcall_err(it.collect, it))
+      end
     end)
 
     it('works on iterators', function()

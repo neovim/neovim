@@ -49,7 +49,6 @@ end
 --- @param src table|function Table or iterator to drain values from
 --- @return Iter
 function Iter.new(src)
-  local iter = {}
   local fn
   if type(src) == 'table' then
     local f, s, var = pairs(src)
@@ -68,6 +67,15 @@ function Iter.new(src)
   return iter
 end
 
+--- Call a function once for each item in the pipeline.
+---
+--- This is used for functions which have side effects. To modify the values in the iterator, use
+--- |Iter.map()|.
+---
+--- Invalidates the iterator.
+---
+--- @param f function(...) Function to execute for each item in the pipeline. Takes all of the
+---                        values from the previous stage in the pipeline as arguments.
 function Iter.foreach(self, f)
   while true do
     local args = { self.fn() }
@@ -79,6 +87,8 @@ function Iter.foreach(self, f)
 end
 
 --- Fold an iterator into a single value.
+---
+--- Invalidates the iterator.
 ---
 --- Example:
 --- <pre>
@@ -98,7 +108,7 @@ function Iter.fold(self, acc, f)
   local result = acc
   self:foreach(function(...)
     local args = { n = select('#', ...), ... }
-    assert(args.n > 0, 'No value returned from accumulate function')
+    assert(args.n > 0, 'Cannot fold iterator with no return value')
     result = f(result, unpack(args, 1, args.n))
   end)
   return result
@@ -111,6 +121,8 @@ end
 --- is returned. Otherwise, the first return value is used as the table key and the second return
 --- value as the table value.
 ---
+--- Invalidates the iterator.
+---
 --- @return table
 function Iter.collect(self)
   local t = {}
@@ -121,7 +133,7 @@ function Iter.collect(self)
     elseif args.n == 2 then
       t[args[1]] = args[2]
     else
-      error(string.format('Cannot collect function with %d return values', args.n))
+      error(string.format('Cannot collect iterator with %d return values', args.n))
     end
   end)
   return t
