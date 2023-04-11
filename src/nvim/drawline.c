@@ -2668,7 +2668,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol) {
             col_attr = cuc_attr;
           } else if (draw_color_col && VCOL_HLC == *color_cols) {
-            col_attr = mc_attr;
+            col_attr = hl_combine_attr(wlv.line_attr_lowprio, mc_attr);
           }
 
           col_attr = hl_combine_attr(col_attr, wlv.line_attr);
