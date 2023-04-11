@@ -3117,7 +3117,7 @@ describe('lua stdlib', function()
 
     it('sort()', function()
       local it = vim
-        .iter(string.gmatch('1,4,17,2,9,3', '%d+'))
+        .iter(string.gmatch('1,4,lol,17,blah,2,9,3', '%d+'))
         :map(function(s)
           return tonumber(s)
         end)
