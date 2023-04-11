@@ -6,6 +6,10 @@ local Iter = {}
 
 Iter.__index = Iter
 
+Iter.__call = function(self)
+  return self.fn()
+end
+
 --- Add a filter step to the iterator.
 ---
 --- @param f function(...):boolean Filtering function. Takes all values returned from the previous
