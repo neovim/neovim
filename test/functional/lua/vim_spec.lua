@@ -3029,6 +3029,87 @@ describe('lua stdlib', function()
     eq(false, if_nil(d, c))
     eq(NIL, if_nil(a))
   end)
+
+  describe('vim.iter #test', function()
+    it('works on table', function()
+      local function odd(_, v)
+        return v % 2 ~= 0
+      end
+
+      local function even(_, v)
+        return v % 2 == 0
+      end
+
+      local t = { 1, 2, 3, 4, 5 }
+      eq({ 1, 3, 5 }, vim.iter(t):filter(odd):collect())
+      eq({ 2, 4 }, vim.iter(t):filter(even):collect())
+      eq(
+        {},
+        vim
+        .iter(t)
+        :filter(function(_, v)
+          return v > 5
+        end)
+        :collect()
+      )
+
+      eq(
+        { 2, 4, 6, 8, 10 },
+        vim
+        .iter(t)
+        :map(function(_, v)
+          return 2 * v
+        end)
+        :collect()
+      )
+
+      -- map() can work like filter() by returning nil
+      eq(
+        { 1 },
+        vim
+        .iter(t)
+        :map(function(_, v)
+          if v == 1 then
+            return v
+          end
+        end)
+        :collect()
+      )
+
+      eq(
+        15,
+        vim.iter(t):fold(0, function(acc, _, v)
+          return acc + v
+        end)
+      )
+    end)
+
+    it('works on iterators', function()
+      local it = vim.gsplit(
+        [[
+        Line 1
+        Line 2
+        Line 3
+        Line 4
+      ]],
+        '\n'
+      )
+
+      eq(
+        { 'Lion 2', 'Lion 4' },
+        vim
+        .iter(it)
+        :filter(function(s)
+          local lnum = s:match('(%d+)')
+          return lnum and tonumber(lnum) % 2 == 0
+        end)
+        :map(function(s)
+          return vim.trim(s:gsub('Line', 'Lion'))
+        end)
+        :collect()
+      )
+    end)
+  end)
 end)
 
 describe('lua: builtin modules', function()
