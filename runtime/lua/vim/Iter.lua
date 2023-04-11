@@ -8,9 +8,9 @@ Iter.__index = Iter
 
 --- Add a filter step to the iterator.
 ---
---- @param f function(k:any, v:any):boolean Filtering function. Takes the key and value of the
----                                         current item and returns a truthy value if the item
----                                         should be kept
+--- @param f function(...):boolean Filtering function. Takes all values returned from the previous
+---                                stage in the pipeline as arguments and returns a truthy value if
+---                                those items should be kept.
 --- @return Iter
 function Iter.filter(self, f)
   local fn = self.fn
@@ -30,8 +30,8 @@ end
 
 --- Add a map step to the iterator.
 ---
---- @param f function(k:any, v:any):any Mapping function. Replace the given value with the return
----                                     value of this function.
+--- @param f function(...):any Mapping function. Takes all values returned from the previous stage
+---                            in the pipeline as arguments and returns a new value.
 --- @return Iter
 function Iter.map(self, f)
   local fn = self.fn
@@ -83,14 +83,16 @@ end
 --- Example:
 --- <pre>
 --- local it = Iter.new({1, 2, 3, 4, 5})
---- local sum = Iter.fold(0, function(acc, i, v) return acc + v end)
+--- local sum = it:fold(0, function(acc, _, v) return acc + v end)
 --- assert(sum == 15)
 --- </pre>
 ---
 --- @generic A
 ---
 --- @param acc A Value to accumulate into.
---- @param f function(acc:A, k:any, v:any):A Accumulation function.
+--- @param f function(acc:A, ...):A Accumulation function. Takes the current accumulated value and
+---                                 all of the values from the previous stage in the pipeline as
+---                                 arguments, and returns the updated accumulation value.
 --- @return A
 function Iter.fold(self, acc, f)
   local result = acc
@@ -103,6 +105,11 @@ function Iter.fold(self, acc, f)
 end
 
 --- Create a new table from all of the steps in the iterator.
+---
+--- The final stage in the iterator pipeline must return 1 or 2 values. If only one value is
+--- returned, or if two values are returned and the first value is a number, an "array-like" table
+--- is returned. Otherwise, the first return value is used as the table key and the second return
+--- value as the table value.
 ---
 --- @return table
 function Iter.collect(self)
