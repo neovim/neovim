@@ -64,6 +64,7 @@ local function system(cmd_, silent, env)
       local cmd_str = table.concat(cmd, ' ')
       man_error(string.format('command error: %s', cmd_str))
     end
+    return ''
   end
 
   vim.wait(30000, function()
