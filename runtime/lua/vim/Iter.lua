@@ -31,14 +31,21 @@ end
 --- Add a map step to the iterator.
 ---
 --- @param f function(...):any Mapping function. Takes all values returned from the previous stage
----                            in the pipeline as arguments and returns a new value.
+---                            in the pipeline as arguments and returns a new value. Nil values
+---                            returned from `f` are filtered from the output.
 --- @return Iter
 function Iter.map(self, f)
   local fn = self.fn
   self.fn = function()
-    local args = { fn() }
-    if args[1] ~= nil then
-      return f(unpack(args))
+    while true do
+      local args = { fn() }
+      if args[1] == nil then
+        break
+      end
+      local result =  { f(unpack(args)) }
+      if result[1] ~= nil then
+        return unpack(result)
+      end
     end
   end
   return self
@@ -51,7 +58,7 @@ end
 function Iter.new(src)
   local fn
   if type(src) == 'table' then
-    local f, s, var = pairs(src)
+    local f, s, var = ipairs(src)
     fn = function()
       local k, v = f(s, var)
       var = k
@@ -128,15 +135,60 @@ function Iter.collect(self)
   local t = {}
   self:foreach(function(...)
     local args = { n = select('#', ...), ... }
-    if args.n == 1 or (args.n == 2 and type(args[1]) == 'number') then
+    if args.n == 1 then
       t[#t + 1] = args[1]
     elseif args.n == 2 then
-      t[args[1]] = args[2]
+      if type(args[1]) == 'number' then
+        t[#t + 1] = args[2]
+      else
+        t[args[1]] = args[2]
+      end
     else
       error(string.format('Cannot collect iterator with %d return values', args.n))
     end
   end)
   return t
+end
+
+--- Return the next value from the iterator.
+---
+--- @return any
+function Iter.next(self)
+  return self.fn()
+end
+
+--- Reverse an iterator.
+---
+--- @return Iter
+function Iter.rev(self)
+  local t = self:collect()
+  local i = #t
+  local n = 0
+  self.fn = function()
+    if i > 0 then
+      local v = t[i]
+      i = i - 1
+      n = n + 1
+      return n, v
+    end
+  end
+  return self
+end
+
+--- Sort an iterator
+---
+--- @param comp function Comparison function. See |table.sort()| for details.
+--- @return Iter
+function Iter.sort(self, comp)
+  local t = self:collect()
+  table.sort(t, comp)
+  local f, s, var = ipairs(t)
+  self.fn = function()
+    local k, v = f(s, var)
+    var = k
+    return k, v
+  end
+  return self
 end
 
 return Iter

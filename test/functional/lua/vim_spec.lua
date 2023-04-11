@@ -3101,6 +3101,31 @@ describe('lua stdlib', function()
         :collect()
       )
     end)
+
+    it('next()', function()
+      local it = vim.iter({1, 2, 3}):map(function(_, v) return 2 * v end)
+      eq(2, it:next())
+      eq(4, it:next())
+      eq(6, it:next())
+      eq(nil, it:next())
+    end)
+
+    it('reverse()', function()
+      eq({3, 2, 1}, vim.iter({1, 2, 3}):rev():collect())
+      eq({"c", "b", "a"}, vim.iter(string.gmatch("abc", "%w")):rev():collect())
+    end)
+
+    it('sort()', function()
+      local it = vim
+        .iter(string.gmatch('1,4,17,2,9,3', '%d+'))
+        :map(function(s)
+          return tonumber(s)
+        end)
+        :sort(function(a, b)
+          return a < b
+        end)
+      eq({ 1, 2, 3, 4, 9, 17 }, it:collect())
+    end)
   end)
 end)
 
