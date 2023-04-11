@@ -15,8 +15,8 @@ M.priorities = {
 ---@param bufnr integer Buffer number to apply highlighting to
 ---@param ns integer Namespace to add highlight to
 ---@param higroup string Highlight group to use for highlighting
----@param start { [1]: integer, [2]: integer } Start position {line, col}
----@param finish { [1]: integer, [2]: integer } Finish position {line, col}
+---@param start integer[]|string Start of region as a (line, column) tuple or string accepted by |getpos()|
+---@param finish integer[]|string End of region as a (line, column) tuple or string accepted by |getpos()|
 ---@param opts table|nil Optional parameters
 --             - regtype type of range (see |setreg()|, default charwise)
 --             - inclusive boolean indicating whether the range is end-inclusive (default false)
@@ -26,11 +26,6 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
   local regtype = opts.regtype or 'v'
   local inclusive = opts.inclusive or false
   local priority = opts.priority or M.priorities.user
-
-  -- sanity check
-  if start[2] < 0 or finish[1] < start[1] then
-    return
-  end
 
   local region = vim.region(bufnr, start, finish, regtype, inclusive)
   for linenr, cols in pairs(region) do
@@ -104,18 +99,12 @@ function M.on_yank(opts)
     yank_timer:close()
   end
 
-  local pos1 = vim.fn.getpos("'[")
-  local pos2 = vim.fn.getpos("']")
-
-  pos1 = { pos1[2] - 1, pos1[3] - 1 + pos1[4] }
-  pos2 = { pos2[2] - 1, pos2[3] - 1 + pos2[4] }
-
   M.range(
     bufnr,
     yank_ns,
     higroup,
-    pos1,
-    pos2,
+    "'[",
+    "']",
     { regtype = event.regtype, inclusive = event.inclusive, priority = M.priorities.user }
   )
 

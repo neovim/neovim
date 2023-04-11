@@ -1516,9 +1516,10 @@ region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})         *vim.region()*
 
     Parameters: ~
       • {bufnr}      (integer) number of buffer
-      • {pos1}       integer[] (line, column) tuple marking beginning of
-                     region
-      • {pos2}       integer[] (line, column) tuple marking end of region
+      • {pos1}       integer[]|string start of region as a (line, column)
+                     tuple or string accepted by |getpos()|
+      • {pos2}       integer[]|string end of region as a (line, column) tuple
+                     or string accepted by |getpos()|
       • {regtype}    (string) type of selection, see |setreg()|
       • {inclusive}  (boolean) indicating whether column of pos2 is inclusive
 
