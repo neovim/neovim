@@ -1,1 +1,0 @@
-autocmd CmdUndefined CheckHealth checkhealth
