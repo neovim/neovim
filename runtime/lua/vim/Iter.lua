@@ -13,6 +13,8 @@ Iter.__call = function(self)
   return self:next()
 end
 
+--- Special case implementations for iterators on tables.
+---@private
 local TableIter = {}
 
 TableIter.__index = setmetatable(TableIter, Iter)
@@ -41,9 +43,9 @@ end
 ---
 --- Example:
 --- <pre>
---- > local it = vim.iter({ 1, 2, 3, 4 }):filter_map(function(i, v)
+--- > local it = vim.iter({ 1, 2, 3, 4 }):filter_map(function(v)
 --- >   if v % 2 == 0 then
---- >     return i, v * 3
+--- >     return v * 3
 --- >   end
 --- > end)
 --- > it:collect()
@@ -221,6 +223,173 @@ function TableIter.rev(self)
   return self
 end
 
+--- Peek at the next value in the iterator without consuming it.
+---
+--- Only iterators on tables can be peeked.
+---
+--- Example:
+--- <pre>
+---
+--- > local it = vim.iter({ 3, 6, 9, 12 })
+--- > it:peek()
+--- 3
+--- > it:peek()
+--- 3
+--- > it:next()
+--- 3
+---
+--- </pre>
+---
+---@return any
+function Iter.peek(self)
+  error('Function iterators are not peekable')
+end
+
+---@private
+function TableIter.peek(self)
+  if self._head ~= self._tail then
+    return self._table[self._head]
+  end
+end
+
+--- Find the first value in the iterator that satisfies the given predicate.
+---
+--- Advances the iterator. Returns nil and drains the iterator if no value is found.
+---
+--- Examples:
+--- <pre>
+---
+--- > local it = vim.iter({ 3, 6, 9, 12 })
+--- > it:find(12)
+--- 12
+---
+--- > local it = vim.iter({ 3, 6, 9, 12 })
+--- > it:find(20)
+--- nil
+---
+--- > local it = vim.iter({ 3, 6, 9, 12 })
+--- > it:find(function(v) return v % 4 == 0 end)
+--- 12
+---
+--- </pre>
+---
+---@return any
+function Iter.find(self, f)
+  if type(f) ~= 'function' then
+    local val = f
+    f = function(v)
+      return v == val
+    end
+  end
+
+  while true do
+    local cur = pack(self:next())
+    if cur == nil then
+      break
+    end
+
+    if f(unpack(cur)) then
+      return unpack(cur)
+    end
+  end
+end
+
+--- Find the first value in the iterator that satisfies the given predicate, starting from the end.
+---
+--- Advances the iterator. Returns nil and drains the iterator if no value is found.
+---
+--- Only supported for iterators on tables.
+---
+--- Examples:
+--- <pre>
+---
+--- > local it = vim.iter({ 1, 2, 3, 2, 1 }):enumerate()
+--- > it:rfind(1)
+--- 5	1
+--- > it:rfind(1)
+--- 1	1
+---
+--- </pre>
+---
+---@see Iter.find
+---
+---@return any
+function Iter.rfind(self, f)
+  error('Function iterators cannot read from the end')
+end
+
+function TableIter.rfind(self, f)
+  if type(f) ~= 'function' then
+    local val = f
+    f = function(v)
+      return v == val
+    end
+  end
+
+  while true do
+    local cur = pack(self:next_back())
+    if cur == nil then
+      break
+    end
+
+    if f(unpack(cur)) then
+      return unpack(cur)
+    end
+  end
+end
+--- Return the next value from the end of the iterator.
+---
+--- Only supported with iterators on tables.
+---
+--- Example:
+--- <pre>
+--- > local it = vim.iter({1, 2, 3, 4})
+--- > it:next_back()
+--- 4
+--- > it:next_back()
+--- 3
+--- </pre>
+---
+---@return any
+function Iter.next_back(self)
+  error('Function iterators cannot read from the end')
+end
+
+function TableIter.next_back(self)
+  if self._head ~= self._tail then
+    local inc = self._head < self._tail and 1 or -1
+    self._tail = self._tail - inc
+    return self._table[self._tail]
+  end
+end
+
+--- Return the next value from the end of the iterator without consuming it.
+---
+--- Only supported with iterators on tables.
+---
+--- Example:
+--- <pre>
+--- > local it = vim.iter({1, 2, 3, 4})
+--- > it:peek_back()
+--- 4
+--- > it:peek_back()
+--- 4
+--- > it:next_back()
+--- 4
+--- </pre>
+---
+---@return any
+function Iter.peek_back(self)
+  error('Function iterators cannot read from the end')
+end
+
+function TableIter.peek_back(self)
+  if self._head ~= self._tail then
+    local inc = self._head < self._tail and 1 or -1
+    return self._table[self._tail - inc]
+  end
+end
+
 --- Skip values in the iterator.
 ---
 --- Example:
@@ -324,7 +493,7 @@ end
 ---
 --- > local it = vim.iter({ 3, 6, 9, 12, 15 })
 --- > it:last()
---- 5	15
+--- 15
 ---
 --- </pre>
 ---
@@ -374,13 +543,9 @@ end
 ---@private
 function TableIter.enumerate(self)
   local inc = self._head < self._tail and 1 or -1
-  local n = 0
   for i = self._head, self._tail - inc, inc do
     local v = self._table[i]
-    if v ~= nil then
-      n = n + 1
-      self._table[i] = { n, v }
-    end
+    self._table[i] = { i, v }
   end
   return self
 end

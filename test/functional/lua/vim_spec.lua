@@ -3226,6 +3226,101 @@ describe('lua stdlib', function()
       eq({3, 'c'}, {it:next()})
       eq({}, {it:next()})
     end)
+
+    it('peek()', function()
+      do
+        local it = vim.iter({ 3, 6, 9, 12 })
+        eq(3, it:peek())
+        eq(3, it:peek())
+        eq(3, it:next())
+      end
+
+      do
+        local it = vim.iter(vim.gsplit('hi', ''))
+        matches('Function iterators are not peekable', pcall_err(it.peek, it))
+      end
+    end)
+
+    it('find()', function()
+      local t = {3, 6, 9, 12}
+      eq(12, vim.iter(t):find(12))
+      eq(nil, vim.iter(t):find(15))
+      eq(12, vim.iter(t):find(function(v) return v % 4 == 0 end))
+
+      do
+        local it = vim.iter(t)
+        local pred = function(v) return v % 3 == 0 end
+        eq(3, it:find(pred))
+        eq(6, it:find(pred))
+        eq(9, it:find(pred))
+        eq(12, it:find(pred))
+        eq(nil, it:find(pred))
+      end
+
+      do
+        local it = vim.iter(vim.gsplit('AbCdE', ''))
+        local pred = function(s) return s:match('[A-Z]') end
+        eq('A', it:find(pred))
+        eq('C', it:find(pred))
+        eq('E', it:find(pred))
+        eq(nil, it:find(pred))
+      end
+    end)
+
+    it('rfind()', function()
+      local t = {1, 2, 3, 2, 1}
+      do
+        local it = vim.iter(t)
+        eq(1, it:rfind(1))
+        eq(1, it:rfind(1))
+        eq(nil, it:rfind(1))
+      end
+
+      do
+        local it = vim.iter(t):enumerate()
+        local pred = function(i) return i % 2 ~= 0 end
+        eq({5, 1}, {it:rfind(pred)})
+        eq({3, 3}, {it:rfind(pred)})
+        eq({1, 1}, {it:rfind(pred)})
+        eq(nil, it:rfind(pred))
+      end
+
+      do
+        local it = vim.iter(vim.gsplit('AbCdE', ''))
+        matches('Function iterators cannot read from the end', pcall_err(it.rfind, it, 'E'))
+      end
+    end)
+
+    it('next_back()', function()
+      do
+        local it = vim.iter({ 1, 2, 3, 4 })
+        eq(4, it:next_back())
+        eq(3, it:next_back())
+        eq(2, it:next_back())
+        eq(1, it:next_back())
+        eq(nil, it:next_back())
+        eq(nil, it:next_back())
+      end
+
+      do
+        local it = vim.iter(vim.gsplit('hi', ''))
+        matches('Function iterators cannot read from the end', pcall_err(it.next_back, it))
+      end
+    end)
+
+    it('peek_back()', function()
+      do
+        local it = vim.iter({ 1, 2, 3, 4 })
+        eq(4, it:peek_back())
+        eq(4, it:peek_back())
+        eq(4, it:peek_back())
+      end
+
+      do
+        local it = vim.iter(vim.gsplit('hi', ''))
+        matches('Function iterators cannot read from the end', pcall_err(it.peek_back, it))
+      end
+    end)
   end)
 end)
 

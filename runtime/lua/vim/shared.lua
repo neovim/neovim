@@ -886,8 +886,12 @@ end
 
 --- Create an Iter object from a table or iterator.
 ---
---- @param src table|function Table or iterator.
---- @return Iter
+--- Examples:
+--- <pre>
+--- </pre>
+---
+---@param src table|function Table or iterator.
+---@return Iter
 function vim.iter(src)
   local Iter = require('vim.Iter')
   return Iter.new(src)
