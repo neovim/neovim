@@ -969,8 +969,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   int n_skip = 0;                       // nr of chars to skip for 'nowrap' or
                                         // concealing
   int skip_cells = 0;                   // nr of cells to skip for virtual text
-                                        // after the line, when w_skipcol is
-                                        // larger than the text length
+  int skipped_cells = 0;                // nr of skipped virtual text cells
 
   int fromcol_prev = -2;                // start of inverting after cursor
   bool noinvcur = false;                // don't invert the cursor
@@ -1785,14 +1784,22 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           // If the text didn't reach until the first window
           // column we need to skip cells.
           if (skip_cells > 0) {
-            if (wlv.n_extra > skip_cells) {
-              wlv.n_extra -= skip_cells;
-              wlv.p_extra += skip_cells;
+            int virt_text_len = n_attr;
+            if (virt_text_len > skip_cells) {
+              int len = mb_charlen2bytelen(wlv.p_extra, skip_cells);
+              wlv.n_extra -= len;
+              wlv.p_extra += len;
+              n_attr -= skip_cells;
+              // Skipped cells needed to be accounted for in vcol.
+              skipped_cells += skip_cells;
               skip_cells = 0;
             } else {
               // the whole text is left of the window, drop
               // it and advance to the next one
-              skip_cells -= wlv.n_extra;
+              skip_cells -= virt_text_len;
+              // Skipped cells needed to be accounted for in vcol.
+              skipped_cells += virt_text_len;
+              n_attr = 0;
               wlv.n_extra = 0;
             }
           }
@@ -2969,6 +2976,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       }
     } else {
       n_skip--;
+    }
+
+    // The skipped cells need to be accounted for in vcol.
+    if (wlv.draw_state > WL_STC
+        && skipped_cells > 0) {
+      wlv.vcol += skipped_cells;
+      skipped_cells = 0;
     }
 
     // Only advance the "wlv.vcol" when after the 'number' or
