@@ -91,7 +91,7 @@ end
 --- Call a function once for each item in the pipeline.
 ---
 --- This is used for functions which have side effects. To modify the values in the iterator, use
---- |Iter.filter_map()|.
+--- |Iter:filter_map()|.
 ---
 --- This function drains the iterator.
 ---
