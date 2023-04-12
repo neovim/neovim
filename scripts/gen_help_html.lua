@@ -491,7 +491,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       return ''  -- Discard common "noise" lines.
     end
     -- XXX: Avoid newlines (too much whitespace) after block elements in old (preformatted) layout.
-    local div = opt.old and root:child(0) and vim.tbl_contains({'column_heading', 'h1', 'h2', 'h3'}, root:child(0):type())
+    local div = opt.old and root:child(0) and vim.list_contains({'column_heading', 'h1', 'h2', 'h3'}, root:child(0):type())
     return string.format('%s%s', div and trim(text) or text, div and '' or '\n')
   elseif node_name == 'line_li' then
     local sib = root:prev_sibling()
@@ -522,7 +522,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
     return s
-  elseif vim.tbl_contains({'codespan', 'keycode'}, node_name) then
+  elseif vim.list_contains({'codespan', 'keycode'}, node_name) then
     if root:has_error() then
       return text
     end
@@ -554,7 +554,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     if root:has_error() then
       return text
     end
-    local in_heading = vim.tbl_contains({'h1', 'h2', 'h3'}, parent)
+    local in_heading = vim.list_contains({'h1', 'h2', 'h3'}, parent)
     local cssclass = (not in_heading and get_indent(node_text()) > 8) and 'help-tag-right' or 'help-tag'
     local tagname = node_text(root:child(1), false)
     if vim.tbl_count(stats.first_tags) < 2 then
@@ -601,7 +601,7 @@ local function get_helpfiles(include)
   for f, type in vim.fs.dir(dir) do
     if (vim.endswith(f, '.txt')
         and type == 'file'
-        and (not include or vim.tbl_contains(include, f))) then
+        and (not include or vim.list_contains(include, f))) then
       local fullpath = vim.fn.fnamemodify(('%s/%s'):format(dir, f), ':p')
       table.insert(rv, fullpath)
     end

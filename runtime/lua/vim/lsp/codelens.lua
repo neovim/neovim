@@ -42,7 +42,7 @@ local function execute_lens(lens, bufnr, client_id)
   -- Need to use the client that returned the lens → must not use buf_request
   local command_provider = client.server_capabilities.executeCommandProvider
   local commands = type(command_provider) == 'table' and command_provider.commands or {}
-  if not vim.tbl_contains(commands, command.command) then
+  if not vim.list_contains(commands, command.command) then
     vim.notify(
       string.format(
         'Language server does not support command `%s`. This command may require a client extension.',
