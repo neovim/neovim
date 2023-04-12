@@ -104,34 +104,29 @@ if(MSVC)
   set(PATH PATH=${DEPS_INSTALL_DIR}/luarocks/tools;$ENV{PATH})
 endif()
 
-# mpack
-add_custom_command(OUTPUT ${ROCKS_DIR}/mpack
-  COMMAND ${CMAKE_COMMAND} -E env "${PATH}" ${LUAROCKS_BINARY} build mpack 1.0.10-0 ${LUAROCKS_BUILDARGS}
-  DEPENDS luarocks)
-add_custom_target(mpack ALL DEPENDS ${ROCKS_DIR}/mpack)
+set(CURRENT_DEP luarocks)
 
-# lpeg
-add_custom_command(OUTPUT ${ROCKS_DIR}/lpeg
-  COMMAND ${CMAKE_COMMAND} -E env "${PATH}" ${LUAROCKS_BINARY} build lpeg 1.0.2-1 ${LUAROCKS_BUILDARGS}
-  DEPENDS mpack)
-add_custom_target(lpeg ALL DEPENDS ${ROCKS_DIR}/lpeg)
+function(Download ROCK VER)
+  if(ARGV2)
+    set(OUTPUT ${ARGV2})
+  else()
+    set(OUTPUT ${ROCKS_DIR}/${ROCK})
+  endif()
+  add_custom_command(OUTPUT ${OUTPUT}
+    COMMAND ${CMAKE_COMMAND} -E env "${PATH}" ${LUAROCKS_BINARY} build ${ROCK} ${VER} ${LUAROCKS_BUILDARGS}
+    DEPENDS ${CURRENT_DEP})
+  add_custom_target(${ROCK} ALL DEPENDS ${OUTPUT})
+  set(CURRENT_DEP ${ROCK} PARENT_SCOPE)
+endfunction()
+
+Download(mpack 1.0.10-0)
+Download(lpeg 1.0.2-1)
 
 if((NOT USE_BUNDLED_LUAJIT) AND USE_BUNDLED_LUA)
-  # luabitop
-  add_custom_command(OUTPUT ${ROCKS_DIR}/luabitop
-    COMMAND ${CMAKE_COMMAND} -E env "${PATH}" ${LUAROCKS_BINARY} build luabitop 1.0.2-3 ${LUAROCKS_BUILDARGS}
-    DEPENDS lpeg)
-  add_custom_target(luabitop ALL DEPENDS ${ROCKS_DIR}/luabitop)
+  Download(luabitop 1.0.2-3)
 endif()
 
 if(USE_BUNDLED_BUSTED)
-  if((NOT USE_BUNDLED_LUAJIT) AND USE_BUNDLED_LUA)
-    set(BUSTED_DEPENDS luabitop)
-  else()
-    set(BUSTED_DEPENDS lpeg)
-  endif()
-
-  # busted
   if(WIN32)
     set(BUSTED_EXE "${DEPS_BIN_DIR}/busted.bat")
     set(LUACHECK_EXE "${DEPS_BIN_DIR}/luacheck.bat")
@@ -139,22 +134,11 @@ if(USE_BUNDLED_BUSTED)
     set(BUSTED_EXE "${DEPS_BIN_DIR}/busted")
     set(LUACHECK_EXE "${DEPS_BIN_DIR}/luacheck")
   endif()
-  add_custom_command(OUTPUT ${BUSTED_EXE}
-    COMMAND ${CMAKE_COMMAND} -E env "${PATH}" ${LUAROCKS_BINARY} build busted 2.1.1 ${LUAROCKS_BUILDARGS}
-    DEPENDS ${BUSTED_DEPENDS})
-  add_custom_target(busted ALL DEPENDS ${BUSTED_EXE})
 
-  # luacheck
-  add_custom_command(OUTPUT ${LUACHECK_EXE}
-    COMMAND ${CMAKE_COMMAND} -E env "${PATH}" ${LUAROCKS_BINARY} build luacheck 1.1.0-1 ${LUAROCKS_BUILDARGS}
-    DEPENDS busted)
-  add_custom_target(luacheck ALL DEPENDS ${LUACHECK_EXE})
+  Download(busted 2.1.1 ${BUSTED_EXE})
+  Download(luacheck 1.1.0-1 ${LUACHECK_EXE})
 
   if (USE_BUNDLED_LUA OR NOT USE_BUNDLED_LUAJIT)
-    # coxpcall
-    add_custom_command(OUTPUT ${ROCKS_DIR}/coxpcall
-      COMMAND ${CMAKE_COMMAND} -E env "${PATH}" ${LUAROCKS_BINARY} build coxpcall 1.17.0-1 ${LUAROCKS_BUILDARGS}
-      DEPENDS luarocks)
-    add_custom_target(coxpcall ALL DEPENDS ${ROCKS_DIR}/coxpcall)
+    Download(coxpcall 1.17.0-1)
   endif()
 endif()
