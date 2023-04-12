@@ -887,13 +887,32 @@ end
 --- Create an Iter object from a table or iterator.
 ---
 --- Examples:
---- <pre>
+--- <pre>lua
+--- local it = vim.iter({ 1, 2, 3, 4, 5 })
+--- it:filter_map(function(v)
+---   return v * 3
+--- end)
+--- it:rev()
+--- it:skip(2)
+--- it:collect()
+--- -- { 15, 12, 9 }
+---
+--- local it = vim.iter(vim.gsplit('1,2,3,4,5', ','))
+--- it:filter_map(function(s) return tonumber(s) end)
+--- for i, d in it:enumerate() do
+---   print(string.format("Column %d is %d", i, d))
+--- end
+--- -- Column 1 is 1
+--- -- Column 2 is 2
+--- -- Column 3 is 3
+--- -- Column 4 is 4
+--- -- Column 5 is 5
 --- </pre>
 ---
 ---@param src table|function Table or iterator.
 ---@return Iter
 function vim.iter(src)
-  local Iter = require('vim.Iter')
+  local Iter = require('vim.iter')
   return Iter.new(src)
 end
 

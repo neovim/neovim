@@ -42,14 +42,14 @@ end
 --- Add a filter/map step to the iterator.
 ---
 --- Example:
---- <pre>
---- > local it = vim.iter({ 1, 2, 3, 4 }):filter_map(function(v)
---- >   if v % 2 == 0 then
---- >     return v * 3
---- >   end
---- > end)
---- > it:collect()
---- { 6, 12 }
+--- <pre>lua
+--- local it = vim.iter({ 1, 2, 3, 4 }):filter_map(function(v)
+---   if v % 2 == 0 then
+---     return v * 3
+---   end
+--- end)
+--- it:collect()
+--- -- { 6, 12 }
 --- </pre>
 ---
 ---@param f function(...):any Mapping function. Takes all values returned from the previous stage
@@ -124,14 +124,15 @@ end
 --- value as the table value.
 ---
 --- Example:
---- <pre>
+--- <pre>lua
 ---
---- > local it1 = vim.iter(string.gmatch('100 20 50', '%d+')):filter_map(tonumber)
---- > it1:collect()
---- { 100, 20, 50 }
---- > local it2 = vim.iter(string.gmatch('100 20 50', '%d+')):filter_map(tonumber)
---- > it2:collect({ sort = true })
---- { 20, 50, 100 }
+--- local it1 = vim.iter(string.gmatch('100 20 50', '%d+')):filter_map(tonumber)
+--- it1:collect()
+--- -- { 100, 20, 50 }
+---
+--- local it2 = vim.iter(string.gmatch('100 20 50', '%d+')):filter_map(tonumber)
+--- it2:collect({ sort = true })
+--- -- { 20, 50, 100 }
 ---
 --- </pre>
 ---
@@ -169,15 +170,15 @@ end
 --- Return the next value from the iterator.
 ---
 --- Example:
---- <pre>
+--- <pre>lua
 ---
---- > local it = vim.iter(string.gmatch('1 2 3', '%d+')):filter_map(tonumber)
---- > it:next()
---- 1
---- > it:next()
---- 2
---- > it:next()
---- 3
+--- local it = vim.iter(string.gmatch('1 2 3', '%d+')):filter_map(tonumber)
+--- it:next()
+--- -- 1
+--- it:next()
+--- -- 2
+--- it:next()
+--- -- 3
 ---
 --- </pre>
 ---
@@ -202,11 +203,11 @@ end
 --- Only iterators on tables can be reversed.
 ---
 --- Example:
---- <pre>
+--- <pre>lua
 ---
---- > local it = vim.iter({ 3, 6, 9, 12 }):rev()
---- > it:collect()
---- { 12, 9, 6, 3 }
+--- local it = vim.iter({ 3, 6, 9, 12 }):rev()
+--- it:collect()
+--- -- { 12, 9, 6, 3 }
 ---
 --- </pre>
 ---
@@ -228,15 +229,15 @@ end
 --- Only iterators on tables can be peeked.
 ---
 --- Example:
---- <pre>
+--- <pre>lua
 ---
---- > local it = vim.iter({ 3, 6, 9, 12 })
---- > it:peek()
---- 3
---- > it:peek()
---- 3
---- > it:next()
---- 3
+--- local it = vim.iter({ 3, 6, 9, 12 })
+--- it:peek()
+--- -- 3
+--- it:peek()
+--- -- 3
+--- it:next()
+--- -- 3
 ---
 --- </pre>
 ---
@@ -257,19 +258,19 @@ end
 --- Advances the iterator. Returns nil and drains the iterator if no value is found.
 ---
 --- Examples:
---- <pre>
+--- <pre>lua
 ---
---- > local it = vim.iter({ 3, 6, 9, 12 })
---- > it:find(12)
---- 12
+--- local it = vim.iter({ 3, 6, 9, 12 })
+--- it:find(12)
+--- -- 12
 ---
---- > local it = vim.iter({ 3, 6, 9, 12 })
---- > it:find(20)
---- nil
+--- local it = vim.iter({ 3, 6, 9, 12 })
+--- it:find(20)
+--- -- nil
 ---
---- > local it = vim.iter({ 3, 6, 9, 12 })
---- > it:find(function(v) return v % 4 == 0 end)
---- 12
+--- local it = vim.iter({ 3, 6, 9, 12 })
+--- it:find(function(v) return v % 4 == 0 end)
+--- -- 12
 ---
 --- </pre>
 ---
@@ -301,13 +302,13 @@ end
 --- Only supported for iterators on tables.
 ---
 --- Examples:
---- <pre>
+--- <pre>lua
 ---
---- > local it = vim.iter({ 1, 2, 3, 2, 1 }):enumerate()
---- > it:rfind(1)
---- 5	1
---- > it:rfind(1)
---- 1	1
+--- local it = vim.iter({ 1, 2, 3, 2, 1 }):enumerate()
+--- it:rfind(1)
+--- -- 5	1
+--- it:rfind(1)
+--- -- 1	1
 ---
 --- </pre>
 ---
@@ -342,12 +343,12 @@ end
 --- Only supported for iterators on tables.
 ---
 --- Example:
---- <pre>
---- > local it = vim.iter({1, 2, 3, 4})
---- > it:next_back()
---- 4
---- > it:next_back()
---- 3
+--- <pre>lua
+--- local it = vim.iter({1, 2, 3, 4})
+--- it:next_back()
+--- -- 4
+--- it:next_back()
+--- -- 3
 --- </pre>
 ---
 ---@return any
@@ -368,14 +369,14 @@ end
 --- Only supported for iterators on tables.
 ---
 --- Example:
---- <pre>
---- > local it = vim.iter({1, 2, 3, 4})
---- > it:peek_back()
---- 4
---- > it:peek_back()
---- 4
---- > it:next_back()
---- 4
+--- <pre>lua
+--- local it = vim.iter({1, 2, 3, 4})
+--- it:peek_back()
+--- -- 4
+--- it:peek_back()
+--- -- 4
+--- it:next_back()
+--- -- 4
 --- </pre>
 ---
 ---@return any
@@ -393,11 +394,11 @@ end
 --- Skip values in the iterator.
 ---
 --- Example:
---- <pre>
+--- <pre>lua
 ---
---- > local it = vim.iter({ 3, 6, 9, 12 }):skip(2)
---- > it:next()
---- 9
+--- local it = vim.iter({ 3, 6, 9, 12 }):skip(2)
+--- it:next()
+--- -- 9
 ---
 --- </pre>
 ---
@@ -425,12 +426,12 @@ end
 --- Only supported for iterators on tables.
 ---
 --- Example:
---- <pre>
---- > local it = vim.iter({ 1, 2, 3, 4, 5 }):skip_back(2)
---- > it:next()
---- 1
---- > it:next_back()
---- 3
+--- <pre>lua
+--- local it = vim.iter({ 1, 2, 3, 4, 5 }):skip_back(2)
+--- it:next()
+--- -- 1
+--- it:next_back()
+--- -- 3
 --- </pre>
 ---
 ---@param n number Number of values to skip.
@@ -455,13 +456,13 @@ end
 --- This function advances the iterator.
 ---
 --- Example:
---- <pre>
+--- <pre>lua
 ---
---- > local it = vim.iter({ 3, 6, 9, 12 })
---- > it:nth(2)
---- 6
---- > it:nth(2)
---- 12
+--- local it = vim.iter({ 3, 6, 9, 12 })
+--- it:nth(2)
+--- -- 6
+--- it:nth(2)
+--- -- 12
 ---
 --- </pre>
 ---
@@ -480,13 +481,13 @@ end
 --- Only supported for iterators on tables.
 ---
 --- Example:
---- <pre>
+--- <pre>lua
 ---
---- > local it = vim.iter({ 3, 6, 9, 12 })
---- > it:nth_back(2)
---- 9
---- > it:nth_back(2)
---- 3
+--- local it = vim.iter({ 3, 6, 9, 12 })
+--- it:nth_back(2)
+--- -- 9
+--- it:nth_back(2)
+--- -- 3
 ---
 --- </pre>
 ---
@@ -543,15 +544,15 @@ end
 --- Drains the iterator.
 ---
 --- Example:
---- <pre>
+--- <pre>lua
 ---
---- > local it = vim.iter(vim.gsplit('abcdefg', ''))
---- > it:last()
---- 'g'
+--- local it = vim.iter(vim.gsplit('abcdefg', ''))
+--- it:last()
+--- -- 'g'
 ---
---- > local it = vim.iter({ 3, 6, 9, 12, 15 })
---- > it:last()
---- 15
+--- local it = vim.iter({ 3, 6, 9, 12, 15 })
+--- it:last()
+--- -- 15
 ---
 --- </pre>
 ---
@@ -577,15 +578,15 @@ end
 --- Add an iterator stage that returns the current iterator count as well as the iterator value.
 ---
 --- Example:
---- <pre>
+--- <pre>lua
 ---
---- > local it = vim.iter(vim.gsplit('abc', '')):enumerate()
---- > it:next()
---- 1	'a'
---- > it:next()
---- 2	'b'
---- > it:next()
---- 3	'c'
+--- local it = vim.iter(vim.gsplit('abc', '')):enumerate()
+--- it:next()
+--- -- 1	'a'
+--- it:next()
+--- -- 2	'b'
+--- it:next()
+--- -- 3	'c'
 ---
 --- </pre>
 ---
