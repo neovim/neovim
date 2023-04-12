@@ -656,7 +656,15 @@ static void get_statuscol_str(win_T *wp, linenr_T lnum, int virtnum, statuscol_T
     wp->w_statuscol_line_count = wp->w_nrwidth_line_count;
     set_vim_var_nr(VV_VIRTNUM, 0);
     build_statuscol_str(wp, wp->w_nrwidth_line_count, 0, stcp);
-    stcp->width += stcp->truncate;
+    if (stcp->truncate > 0) {
+      // Add truncated width to avoid unnecessary redraws
+      int addwidth = MIN(stcp->truncate, MAX_NUMBERWIDTH - wp->w_nrwidth);
+      stcp->truncate = 0;
+      stcp->width += addwidth;
+      wp->w_nrwidth += addwidth;
+      wp->w_nrwidth_width = wp->w_nrwidth;
+      wp->w_valid &= ~VALID_WCOL;
+    }
   }
   set_vim_var_nr(VV_VIRTNUM, virtnum);
 
