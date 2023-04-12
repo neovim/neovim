@@ -3033,22 +3033,22 @@ describe('lua stdlib', function()
   describe('vim.iter', function()
     it('works on tables', function()
       local function odd(_, v)
-        return v % 2 ~= 0
+        return v % 2 ~= 0 and v or nil
       end
 
       local function even(_, v)
-        return v % 2 == 0
+        return v % 2 == 0 and v or nil
       end
 
       local t = { 1, 2, 3, 4, 5 }
-      eq({ 1, 3, 5 }, vim.iter(t):filter(odd):collect())
-      eq({ 2, 4 }, vim.iter(t):filter(even):collect())
+      eq({ 1, 3, 5 }, vim.iter(t):filter_map(odd):collect())
+      eq({ 2, 4 }, vim.iter(t):filter_map(even):collect())
       eq(
         {},
         vim
         .iter(t)
-        :filter(function(_, v)
-          return v > 5
+        :filter_map(function(_, v)
+          if v > 5 then return v end
         end)
         :collect()
       )
@@ -3057,21 +3057,20 @@ describe('lua stdlib', function()
         { 2, 4, 6, 8, 10 },
         vim
         .iter(t)
-        :map(function(_, v)
+        :filter_map(function(_, v)
           return 2 * v
         end)
         :collect()
       )
 
-      eq(
-        15,
-        vim.iter(t):fold(0, function(acc, _, v)
-          return acc + v
-        end)
-      )
+      local acc = 0
+      for _, v in vim.iter(t) do
+        acc = acc + v
+      end
+      eq(15, acc)
 
       do
-        local it = vim.iter({1, 2, 3}):map(function(k, v) return k, v, v*v end)
+        local it = vim.iter({1, 2, 3}):filter_map(function(k, v) return k, v, v*v end)
         matches('Cannot collect iterator with 3 return values', pcall_err(it.collect, it))
       end
     end)
@@ -3091,38 +3090,47 @@ describe('lua stdlib', function()
         { 'Lion 2', 'Lion 4' },
         vim
         .iter(it)
-        :filter(function(s)
+        :filter_map(function(s)
           local lnum = s:match('(%d+)')
-          return lnum and tonumber(lnum) % 2 == 0
-        end)
-        :map(function(s)
-          return vim.trim(s:gsub('Line', 'Lion'))
+          if lnum and tonumber(lnum) % 2 == 0 then
+            return vim.trim(s:gsub('Line', 'Lion'))
+          end
         end)
         :collect()
       )
     end)
 
     it('next()', function()
-      local it = vim.iter({1, 2, 3}):map(function(_, v) return 2 * v end)
+      local it = vim.iter({1, 2, 3}):filter_map(function(_, v) return 2 * v end)
       eq(2, it:next())
       eq(4, it:next())
       eq(6, it:next())
       eq(nil, it:next())
     end)
 
-    it('reverse()', function()
+    it('rev()', function()
       eq({3, 2, 1}, vim.iter({1, 2, 3}):rev():collect())
-      eq({"c", "b", "a"}, vim.iter(string.gmatch("abc", "%w")):rev():collect())
+
+      local it = vim.iter(string.gmatch("abc", "%w"))
+      matches('Non%-table iterators cannot be reversed', pcall_err(it.rev, it))
     end)
 
-    it('sort()', function()
-      local it = vim
-        .iter(string.gmatch('1,4,lol,17,blah,2,9,3', '%d+'))
-        :map(tonumber)
-        :sort(function(a, b)
-          return a < b
-        end)
-      eq({ 1, 2, 3, 4, 9, 17 }, it:collect())
+    it('skip()', function()
+      local t = {4, 3, 2, 1}
+      eq(t, vim.iter(t):skip(0):collect())
+      eq({2, 1}, vim.iter(t):skip(2):collect())
+      eq({}, vim.iter(t):skip(#t):collect())
+      eq({}, vim.iter(t):skip(5):collect())
+    end)
+
+    it('nth()', function()
+      local t = {4, 3, 2, 1}
+      eq(nil, vim.iter(t):nth(0))
+      eq({1, 4}, {vim.iter(t):nth(1)})
+      eq({2, 3}, {vim.iter(t):nth(2)})
+      eq({3, 2}, {vim.iter(t):nth(3)})
+      eq({4, 1}, {vim.iter(t):nth(4)})
+      eq(nil, vim.iter(t):nth(5))
     end)
   end)
 end)

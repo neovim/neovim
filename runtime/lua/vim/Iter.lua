@@ -7,38 +7,24 @@ local Iter = {}
 Iter.__index = Iter
 
 Iter.__call = function(self)
-  return self.fn()
+  return self:next()
 end
 
---- Add a filter step to the iterator.
+--- Add a filter/map step to the iterator.
 ---
---- @param f function(...):boolean Filtering function. Takes all values returned from the previous
----                                stage in the pipeline as arguments and returns a truthy value if
----                                those items should be kept.
---- @return Iter
-function Iter.filter(self, f)
-  local fn = self.fn
-  self.fn = function()
-    while true do
-      local args = { fn() }
-      if args[1] == nil then
-        break
-      end
-      if f(unpack(args)) then
-        return unpack(args)
-      end
-    end
-  end
-  return self
-end
-
---- Add a map step to the iterator.
+--- Example:
+--- <pre>
+--- -- Remove odd numbers
+--- vim.iter({1, 2, 3, 4}):filter_map(function(v)
+---   return v % 2 == 0 and v else nil
+--- end)
+--- </pre>
 ---
 --- @param f function(...):any Mapping function. Takes all values returned from the previous stage
 ---                            in the pipeline as arguments and returns a new value. Nil values
 ---                            returned from `f` are filtered from the output.
 --- @return Iter
-function Iter.map(self, f)
+function Iter.filter_map(self, f)
   local fn = self.fn
   self.fn = function()
     while true do
@@ -55,38 +41,15 @@ function Iter.map(self, f)
   return self
 end
 
---- Create a new Iter object from a table of value.
----
---- @param src table|function Table or iterator to drain values from
---- @return Iter
-function Iter.new(src)
-  local fn
-  if type(src) == 'table' then
-    local f, s, var = ipairs(src)
-    fn = function()
-      local k, v = f(s, var)
-      var = k
-      return k, v
-    end
-  elseif type(src) == 'function' then
-    fn = src
-  end
-  assert(fn, 'src must be a table or function')
-
-  local iter = { fn = fn }
-  setmetatable(iter, Iter)
-  return iter
-end
-
 --- Call a function once for each item in the pipeline.
 ---
 --- This is used for functions which have side effects. To modify the values in the iterator, use
---- |Iter.map()|.
+--- |Iter.filter_map()|.
 ---
---- Invalidates the iterator.
+--- This function drains the iterator.
 ---
 --- @param f function(...) Function to execute for each item in the pipeline. Takes all of the
----                        values from the previous stage in the pipeline as arguments.
+---                        values returned by the previous stage in the pipeline as arguments.
 function Iter.foreach(self, f)
   while true do
     local args = { self.fn() }
@@ -97,42 +60,12 @@ function Iter.foreach(self, f)
   end
 end
 
---- Fold an iterator into a single value.
----
---- Invalidates the iterator.
----
---- Example:
---- <pre>
---- local it = Iter.new({1, 2, 3, 4, 5})
---- local sum = it:fold(0, function(acc, _, v) return acc + v end)
---- assert(sum == 15)
---- </pre>
----
---- @generic A
----
---- @param acc A Value to accumulate into.
---- @param f function(acc:A, ...):A Accumulation function. Takes the current accumulated value and
----                                 all of the values from the previous stage in the pipeline as
----                                 arguments, and returns the updated accumulation value.
---- @return A
-function Iter.fold(self, acc, f)
-  local result = acc
-  self:foreach(function(...)
-    local args = { n = select('#', ...), ... }
-    assert(args.n > 0, 'Cannot fold iterator with no return value')
-    result = f(result, unpack(args, 1, args.n))
-  end)
-  return result
-end
-
---- Create a new table from all of the steps in the iterator.
+--- Drain the iterator into a table.
 ---
 --- The final stage in the iterator pipeline must return 1 or 2 values. If only one value is
 --- returned, or if two values are returned and the first value is a number, an "array-like" table
 --- is returned. Otherwise, the first return value is used as the table key and the second return
 --- value as the table value.
----
---- Invalidates the iterator.
 ---
 --- @return table
 function Iter.collect(self)
@@ -163,36 +96,68 @@ end
 
 --- Reverse an iterator.
 ---
+--- Only iterators on tables can be reversed.
+---
 --- @return Iter
 function Iter.rev(self)
-  local t = self:collect()
-  local i = #t
-  local n = 0
-  self.fn = function()
-    if i > 0 then
-      local v = t[i]
-      i = i - 1
-      n = n + 1
-      return n, v
-    end
+  assert(self.head and self.tail, 'Non-table iterators cannot be reversed')
+  local inc =  self.head < self.tail and -1 or 1
+  self.head, self.tail = self.tail + inc, self.head + inc
+  return self
+end
+
+--- Skip values in the iterator.
+---
+--- @param n number Number of values to skip.
+--- @return Iter
+function Iter.skip(self, n)
+  for _ = 1, n do
+    local _ = self.fn()
   end
   return self
 end
 
---- Sort an iterator
+--- Return the nth value in the iterator.
 ---
---- @param comp function Comparison function. See |table.sort()| for details.
---- @return Iter
-function Iter.sort(self, comp)
-  local t = self:collect()
-  table.sort(t, comp)
-  local f, s, var = ipairs(t)
-  self.fn = function()
-    local k, v = f(s, var)
-    var = k
-    return k, v
+--- This function advances the iterator.
+---
+--- @param n number The index of the value to return.
+--- @return any
+function Iter.nth(self, n)
+  if n > 0 then
+    return self:skip(n - 1):next()
   end
-  return self
 end
+
+--- Create a new Iter object from a table of value.
+---
+--- @param src table|function Table or iterator to drain values from
+--- @return Iter
+function Iter.new(src)
+  local t = {}
+
+  if type(src) == 'table' then
+    t.head = 1
+    t.tail = #src + 1
+    t.fn = function()
+      if t.head ~= t.tail then
+        local i = t.head
+        local v = src[i]
+        if v ~= nil then
+          local inc = t.head < t.tail and 1 or -1
+          t.head = t.head + inc
+          return i, v
+        end
+      end
+    end
+  elseif type(src) == 'function' then
+    t.fn = src
+  end
+  assert(t.fn, 'src must be a table or function')
+
+  setmetatable(t, Iter)
+  return t
+end
+
 
 return Iter
