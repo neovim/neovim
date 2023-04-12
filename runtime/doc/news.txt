@@ -30,14 +30,16 @@ CHANGED FEATURES                                                 *news-changed*
 
 The following changes to existing APIs or features add new behavior.
 
+• |vim.tbl_contains()| now works for general tables and allows specifying a
+  predicate function that is checked for each value. (Use |vim.list_contains()|
+  for checking list-like tables (integer keys without gaps) for literal values.)
+
 • |vim.region()| can use a string accepted by |getpos()| as position.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
 The following deprecated functions or APIs were removed.
-
-• ...
 
 • Vimball support is removed.
   - :Vimuntar command removed.

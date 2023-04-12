@@ -252,12 +252,53 @@ function vim.tbl_filter(func, t)
   return rettab
 end
 
---- Checks if a list-like (vector) table contains `value`.
+--- Checks if a table contains a given value, specified either directly or via
+--- a predicate that is checked for each value.
+---
+--- Example:
+--- <pre>lua
+---  vim.tbl_contains({ 'a', { 'b', 'c' } }, function(v)
+---    return vim.deep_equal(v, { 'b', 'c' })
+---  end, { predicate = true })
+---  -- true
+--- </pre>
+---
+---@see |vim.list_contains()| for checking values in list-like tables
 ---
 ---@param t table Table to check
+---@param value any Value to compare or predicate function reference
+---@param opts (table|nil) Keyword arguments |kwargs|:
+---       - predicate: (boolean) `value` is a function reference to be checked (default false)
+---@return boolean `true` if `t` contains `value`
+function vim.tbl_contains(t, value, opts)
+  vim.validate({ t = { t, 't' }, opts = { opts, 't', true } })
+
+  local pred
+  if opts and opts.predicate then
+    vim.validate({ value = { value, 'c' } })
+    pred = value
+  else
+    pred = function(v)
+      return v == value
+    end
+  end
+
+  for _, v in pairs(t) do
+    if pred(v) then
+      return true
+    end
+  end
+  return false
+end
+
+--- Checks if a list-like table (integer keys without gaps) contains `value`.
+---
+---@see |vim.tbl_contains()| for checking values in general tables
+---
+---@param t table Table to check (must be list-like, not validated)
 ---@param value any Value to compare
 ---@return boolean `true` if `t` contains `value`
-function vim.tbl_contains(t, value)
+function vim.list_contains(t, value)
   vim.validate({ t = { t, 't' } })
 
   for _, v in ipairs(t) do
