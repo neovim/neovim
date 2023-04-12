@@ -1,15 +1,40 @@
 --- Iterator implementation.
 
 ---@class Iter
----@field next function():any Return the next value from the iterator
----@field __head ?number Index to the front of a table iterator
----@field __tail ?number Index to the end of a table iterator
+---@field next function Return the next value in the iterator
+---@field _table ?table Underlying table data (table iterators only)
+---@field _head ?number Index to the front of a table iterator (table iterators only)
+---@field _tail ?number Index to the end of a table iterator (table iterators only)
 local Iter = {}
 
 Iter.__index = Iter
 
 Iter.__call = function(self)
   return self:next()
+end
+
+local TableIter = {}
+
+TableIter.__index = setmetatable(TableIter, Iter)
+
+TableIter.__call = function(self)
+  return self:next()
+end
+
+---@private
+local function unpack(t)
+  if type(t) == 'table' then
+    return _G.unpack(t)
+  end
+  return t
+end
+
+---@private
+local function pack(...)
+  if select('#', ...) > 1 then
+    return { ... }
+  end
+  return ...
 end
 
 --- Add a filter/map step to the iterator.
@@ -33,16 +58,31 @@ function Iter.filter_map(self, f)
   local next = self.next
   self.next = function(this)
     while true do
-      local args = { next(this) }
-      if args[1] == nil then
+      local args = pack(next(this))
+      if args == nil then
         break
       end
-      local result = { f(unpack(args)) }
-      if result[1] ~= nil then
+      local result = pack(f(unpack(args)))
+      if result ~= nil then
         return unpack(result)
       end
     end
   end
+  return self
+end
+
+---@private
+function TableIter.filter_map(self, f)
+  local inc = self._head < self._tail and 1 or -1
+  local n = self._head
+  for i = self._head, self._tail - inc, inc do
+    local v = pack(f(unpack(self._table[i])))
+    if v ~= nil then
+      self._table[n] = v
+      n = n + inc
+    end
+  end
+  self._tail = n
   return self
 end
 
@@ -57,12 +97,21 @@ end
 ---                        values returned by the previous stage in the pipeline as arguments.
 function Iter.foreach(self, f)
   while true do
-    local args = { self:next() }
-    if args[1] == nil then
+    local args = pack(self:next())
+    if args == nil then
       break
     end
     f(unpack(args))
   end
+end
+
+---@private
+function TableIter.foreach(self, f)
+  local inc = self._head < self._tail and 1 or -1
+  for i = self._head, self._tail - inc, inc do
+    f(unpack(self._table[i]))
+  end
+  self._head = self._tail
 end
 
 --- Drain the iterator into a table.
@@ -91,24 +140,27 @@ end
 ---@return table
 function Iter.collect(self, opts)
   local t = {}
-  self:foreach(function(...)
-    local args = { n = select('#', ...), ... }
-    if args.n == 1 then
-      t[#t + 1] = args[1]
-    elseif args.n == 2 then
-      if type(args[1]) == 'number' then
-        t[#t + 1] = args[2]
-      else
-        t[args[1]] = args[2]
-      end
-    else
-      error(string.format('Cannot collect iterator with %d return values', args.n))
+
+  if self._table then
+    local inc = self._head < self._tail and 1 or -1
+    for i = self._head, self._tail - inc, inc do
+      t[#t + 1] = self._table[i]
     end
-  end)
+  else
+    while true do
+      local args = pack(self:next())
+      if args == nil then
+        break
+      end
+      t[#t + 1] = args
+    end
+  end
+
   if opts and opts.sort then
     local f = type(opts.sort) == 'function' and opts.sort or nil
     table.sort(t, f)
   end
+
   return t
 end
 
@@ -129,7 +181,18 @@ end
 ---
 ---@return any
 function Iter.next(self)
-  -- Function is defined by Iterator.new. This definition exists only for the docstring.
+  -- This function is provided by the source iterator in Iter.new. This definition exists only for
+  -- the docstring
+end
+
+---@private
+function TableIter.next(self)
+  if self._head ~= self._tail then
+    local v = self._table[self._head]
+    local inc = self._head < self._tail and 1 or -1
+    self._head = self._head + inc
+    return unpack(v)
+  end
 end
 
 --- Reverse an iterator.
@@ -147,9 +210,14 @@ end
 ---
 ---@return Iter
 function Iter.rev(self)
-  assert(self.__head and self.__tail, 'Non-table iterators cannot be reversed')
-  local inc = self.__head < self.__tail and 1 or -1
-  self.__head, self.__tail = self.__tail - inc, self.__head - inc
+  error('Function iterators cannot be reversed')
+  return self
+end
+
+---@private
+function TableIter.rev(self)
+  local inc = self._head < self._tail and 1 or -1
+  self._head, self._tail = self._tail - inc, self._head - inc
   return self
 end
 
@@ -167,14 +235,16 @@ end
 ---@param n number Number of values to skip.
 ---@return Iter
 function Iter.skip(self, n)
-  if self.__head and self.__tail then
-    local inc = self.__head < self.__tail and n or -n
-    self.__head = self.__head + inc
-  else
-    for _ = 1, n do
-      local _ = self:next()
-    end
+  for _ = 1, n do
+    local _ = self:next()
   end
+  return self
+end
+
+---@private
+function TableIter.skip(self, n)
+  local inc = self._head < self._tail and n or -n
+  self._head = self._head + inc
   return self
 end
 
@@ -209,8 +279,8 @@ end
 function Iter.any(self, pred)
   local any = false
   while true do
-    local args = { self:next() }
-    if args[1] == nil then
+    local args = pack(self:next())
+    if args == nil then
       break
     end
     if pred(unpack(args)) then
@@ -229,8 +299,8 @@ end
 function Iter.all(self, pred)
   local all = true
   while true do
-    local args = { self:next() }
-    if args[1] == nil then
+    local args = pack(self:next())
+    if args == nil then
       break
     end
     if not pred(unpack(args)) then
@@ -260,12 +330,6 @@ end
 ---
 ---@return any
 function Iter.last(self)
-  if self.__head and self.__tail then
-    local inc = self.__head < self.__tail and 1 or -1
-    self.__head = self.__tail - inc
-    return self:next()
-  end
-
   local last = self:next()
   local cur = self:next()
   while cur do
@@ -273,6 +337,14 @@ function Iter.last(self)
     cur = self:next()
   end
   return last
+end
+
+---@private
+function TableIter.last(self)
+  local inc = self._head < self._tail and 1 or -1
+  local v = self._table[self._tail - inc]
+  self._head = self._tail
+  return v
 end
 
 --- Add an iterator stage that returns the current iterator count as well as the iterator value.
@@ -299,36 +371,43 @@ function Iter.enumerate(self)
   end)
 end
 
+---@private
+function TableIter.enumerate(self)
+  local inc = self._head < self._tail and 1 or -1
+  local n = 0
+  for i = self._head, self._tail - inc, inc do
+    local v = self._table[i]
+    if v ~= nil then
+      n = n + 1
+      self._table[i] = { n, v }
+    end
+  end
+  return self
+end
+
 --- Create a new Iter object from a table of value.
 ---
 ---@param src table|function Table or iterator to drain values from
 ---@return Iter
 function Iter.new(src)
-  local t = {}
-
+  local it = {}
   if type(src) == 'table' then
-    t.__head = 1
-    t.__tail = #src + 1
-    t.next = function(self)
-      if self.__head ~= self.__tail then
-        local i = self.__head
-        local v = src[i]
-        if v ~= nil then
-          local inc = self.__head < self.__tail and 1 or -1
-          self.__head = self.__head + inc
-          return i, v
-        end
-      end
+    it._table = {}
+    for i = 1, #src do
+      it._table[i] = src[i]
     end
+    it._head = 1
+    it._tail = #src + 1
+    setmetatable(it, TableIter)
   elseif type(src) == 'function' then
-    t.next = function()
+    function it.next()
       return src()
     end
+    setmetatable(it, Iter)
+  else
+    error('src must be a table or function')
   end
-  assert(t.next, 'src must be a table or function')
-
-  setmetatable(t, Iter)
-  return t
+  return it
 end
 
 return Iter

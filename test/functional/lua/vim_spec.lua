@@ -3032,11 +3032,11 @@ describe('lua stdlib', function()
 
   describe('vim.iter', function()
     it('filter_map', function()
-      local function odd(_, v)
+      local function odd(v)
         return v % 2 ~= 0 and v or nil
       end
 
-      local function even(_, v)
+      local function even(v)
         return v % 2 == 0 and v or nil
       end
 
@@ -3047,7 +3047,7 @@ describe('lua stdlib', function()
         {},
         vim
         .iter(t)
-        :filter_map(function(_, v)
+        :filter_map(function(v)
           if v > 5 then return v end
         end)
         :collect()
@@ -3057,7 +3057,7 @@ describe('lua stdlib', function()
         { 2, 4, 6, 8, 10 },
         vim
         .iter(t)
-        :filter_map(function(_, v)
+        :filter_map(function(v)
           return 2 * v
         end)
         :collect()
@@ -3090,7 +3090,7 @@ describe('lua stdlib', function()
     it('for loops', function()
       local t = {1, 2, 3, 4, 5}
       local acc = 0
-      for v in vim.iter(t):filter_map(function(_, v) return v * 3 end) do
+      for v in vim.iter(t):filter_map(function(v) return v * 3 end) do
         acc = acc + v
       end
       eq(45, acc)
@@ -3098,8 +3098,8 @@ describe('lua stdlib', function()
 
     it('collect()', function()
       do
-        local it = vim.iter({1, 2, 3}):filter_map(function(k, v) return k, v, v*v end)
-        matches('Cannot collect iterator with 3 return values', pcall_err(it.collect, it))
+        local it = vim.iter({1, 2, 3}):filter_map(function(v) return v, v*v end)
+        eq({{1, 1}, {2, 4}, {3, 9}}, it:collect())
       end
 
       do
@@ -3109,7 +3109,7 @@ describe('lua stdlib', function()
     end)
 
     it('next()', function()
-      local it = vim.iter({1, 2, 3}):filter_map(function(_, v) return 2 * v end)
+      local it = vim.iter({1, 2, 3}):filter_map(function(v) return 2 * v end)
       eq(2, it:next())
       eq(4, it:next())
       eq(6, it:next())
@@ -3120,7 +3120,7 @@ describe('lua stdlib', function()
       eq({3, 2, 1}, vim.iter({1, 2, 3}):rev():collect())
 
       local it = vim.iter(string.gmatch("abc", "%w"))
-      matches('Non%-table iterators cannot be reversed', pcall_err(it.rev, it))
+      matches('Function iterators cannot be reversed', pcall_err(it.rev, it))
     end)
 
     it('skip()', function()
@@ -3151,10 +3151,10 @@ describe('lua stdlib', function()
       do
         local t = {4, 3, 2, 1}
         eq(nil, vim.iter(t):nth(0))
-        eq({1, 4}, {vim.iter(t):nth(1)})
-        eq({2, 3}, {vim.iter(t):nth(2)})
-        eq({3, 2}, {vim.iter(t):nth(3)})
-        eq({4, 1}, {vim.iter(t):nth(4)})
+        eq(4, vim.iter(t):nth(1))
+        eq(3, vim.iter(t):nth(2))
+        eq(2, vim.iter(t):nth(3))
+        eq(1, vim.iter(t):nth(4))
         eq(nil, vim.iter(t):nth(5))
       end
 
@@ -3172,7 +3172,7 @@ describe('lua stdlib', function()
     end)
 
     it('any()', function()
-      local function odd(_, v)
+      local function odd(v)
         return v % 2 ~= 0
       end
 
@@ -3193,7 +3193,7 @@ describe('lua stdlib', function()
     end)
 
     it('all()', function()
-      local function odd(_, v)
+      local function odd(v)
         return v % 2 ~= 0
       end
 
@@ -3215,7 +3215,7 @@ describe('lua stdlib', function()
 
     it('last()', function()
       local s = 'abcdefghijklmnopqrstuvwxyz'
-      eq({26, 'z'}, {vim.iter(vim.split(s, '')):last()})
+      eq('z', vim.iter(vim.split(s, '')):last())
       eq('z', vim.iter(vim.gsplit(s, '')):last())
     end)
 
