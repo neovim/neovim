@@ -175,21 +175,13 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
 /// ":let var ..= expr" assignment command.
 /// ":let [var1, var2] = expr" unpack list.
 /// ":let [name, ..., ; lastname] = expr" unpack list.
-void ex_let(exarg_T *eap)
-{
-  ex_let_const(eap, false);
-}
-
+///
 /// ":cons[t] var = expr1" define constant
 /// ":cons[t] [name1, name2, ...] = expr1" define constants unpacking list
 /// ":cons[t] [name, ..., ; lastname] = expr" define constants unpacking list
-void ex_const(exarg_T *eap)
+void ex_let(exarg_T *eap)
 {
-  ex_let_const(eap, true);
-}
-
-static void ex_let_const(exarg_T *eap, const bool is_const)
-{
+  const bool is_const = eap->cmdidx == CMD_const;
   char *arg = eap->arg;
   char *expr = NULL;
   typval_T rettv;
@@ -208,8 +200,10 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
     argend--;
   }
   expr = skipwhite(argend);
-  if (*expr != '=' && !((vim_strchr("+-*/%.", (uint8_t)(*expr)) != NULL
-                         && expr[1] == '=') || strncmp(expr, "..=", 3) == 0)) {
+  bool concat = strncmp(expr, "..=", 3) == 0;
+  bool has_assign = *expr == '=' || (vim_strchr("+-*/%.", (uint8_t)(*expr)) != NULL
+                                     && expr[1] == '=');
+  if (!has_assign && !concat) {
     // ":let" without "=": list variables
     if (*arg == '[') {
       emsg(_(e_invarg));
@@ -240,6 +234,8 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
       tv_clear(&rettv);
     }
   } else {
+    rettv.v_type = VAR_UNKNOWN;
+
     op[0] = '=';
     op[1] = NUL;
     if (*expr != '=') {
@@ -259,7 +255,8 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
     if (eap->skip) {
       emsg_skip++;
     }
-    i = eval0(expr, &rettv, &eap->nextcmd, !eap->skip);
+    int eval_flags = eap->skip ? 0 : EVAL_EVALUATE;
+    i = eval0(expr, &rettv, &eap->nextcmd, eval_flags);
     if (eap->skip) {
       if (i != FAIL) {
         tv_clear(&rettv);
@@ -506,7 +503,7 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
         } else {
           // handle d.key, l[idx], f(expr)
           const char *const arg_subsc = arg;
-          if (handle_subscript(&arg, &tv, true, true) == FAIL) {
+          if (handle_subscript(&arg, &tv, EVAL_EVALUATE, true) == FAIL) {
             error = true;
           } else {
             if (arg == arg_subsc && len == 2 && name[1] == ':') {
@@ -1713,7 +1710,7 @@ bool var_exists(const char *var)
     n = get_var_tv(name, len, &tv, NULL, false, true) == OK;
     if (n) {
       // Handle d.key, l[idx], f(expr).
-      n = handle_subscript(&var, &tv, true, false) == OK;
+      n = handle_subscript(&var, &tv, EVAL_EVALUATE, false) == OK;
       if (n) {
         tv_clear(&tv);
       }

@@ -1550,7 +1550,7 @@ static void f_eval(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   const char *const expr_start = s;
-  if (s == NULL || eval1((char **)&s, rettv, true) == FAIL) {
+  if (s == NULL || eval1((char **)&s, rettv, EVAL_EVALUATE) == FAIL) {
     if (expr_start != NULL && !aborting()) {
       semsg(_(e_invexpr2), expr_start);
     }
