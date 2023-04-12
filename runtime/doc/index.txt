@@ -1159,7 +1159,6 @@ tag		command		action ~
 |:badd|		:bad[d]		add buffer to the buffer list
 |:balt|		:balt		like ":badd" but also set the alternate file
 |:bdelete|	:bd[elete]	remove a buffer from the buffer list
-|:behave|	:be[have]	set mouse and selection behavior
 |:belowright|	:bel[owright]	make split window appear right or below
 |:bfirst|	:bf[irst]	go to first buffer in the buffer list
 |:blast|	:bl[ast]	go to last buffer in the buffer list

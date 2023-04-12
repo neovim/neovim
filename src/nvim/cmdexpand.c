@@ -2104,10 +2104,6 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
     xp->xp_context = EXPAND_CHECKHEALTH;
     xp->xp_pattern = (char *)arg;
     break;
-  case CMD_behave:
-    xp->xp_context = EXPAND_BEHAVE;
-    xp->xp_pattern = (char *)arg;
-    break;
 
   case CMD_messages:
     xp->xp_context = EXPAND_MESSAGES;
@@ -2479,19 +2475,6 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
 }
 
 /// Function given to ExpandGeneric() to obtain the possible arguments of the
-/// ":behave {mswin,xterm}" command.
-static char *get_behave_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
-{
-  if (idx == 0) {
-    return "mswin";
-  }
-  if (idx == 1) {
-    return "xterm";
-  }
-  return NULL;
-}
-
-/// Function given to ExpandGeneric() to obtain the possible arguments of the
 /// ":breakadd {expr, file, func, here}" command.
 /// ":breakdel {func, file, here}" command.
 static char *get_breakadd_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
@@ -2585,7 +2568,6 @@ static int ExpandOther(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches
     int escaped;
   } tab[] = {
     { EXPAND_COMMANDS, get_command_name, false, true },
-    { EXPAND_BEHAVE, get_behave_arg, true, true },
     { EXPAND_MAPCLEAR, get_mapclear_arg, true, true },
     { EXPAND_MESSAGES, get_messages_arg, true, true },
     { EXPAND_HISTORY, get_history_arg, true, true },

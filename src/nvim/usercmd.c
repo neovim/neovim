@@ -56,7 +56,6 @@ static const char e_no_such_user_defined_command_in_current_buffer_str[]
 static const char *command_complete[] = {
   [EXPAND_ARGLIST] = "arglist",
   [EXPAND_AUGROUP] = "augroup",
-  [EXPAND_BEHAVE] = "behave",
   [EXPAND_BUFFERS] = "buffer",
   [EXPAND_CHECKHEALTH] = "checkhealth",
   [EXPAND_COLORS] = "color",
