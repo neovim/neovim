@@ -1793,6 +1793,31 @@ bbbbbbb]])
                                                         |
       ]]}
   end)
+
+  it('tabs are the correct length with no wrap following virtual text', function()
+    command('set nowrap')
+    feed('itest<TAB>a<ESC>')
+    meths.buf_set_extmark(0, ns, 0, 0,
+      { virt_text = { { string.rep('a', 55), 'Special' } }, virt_text_pos = 'inline' })
+    feed('gg$')
+    screen:expect { grid = [[
+      {28:aaaaaaaaaaaaaaaaaaaaaaaaa}test     ^a               |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+  end)
 end)
 
 describe('decorations: virtual lines', function()
