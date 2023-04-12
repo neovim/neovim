@@ -3532,6 +3532,14 @@ endfunc
 
 func Test_setcmdline()
   func SetText(text, pos)
+    call assert_equal(0, setcmdline(v:_null_string))
+    call assert_equal('', getcmdline())
+    call assert_equal(1, getcmdpos())
+
+    call assert_equal(0, setcmdline(''[: -1]))
+    call assert_equal('', getcmdline())
+    call assert_equal(1, getcmdpos())
+
     autocmd CmdlineChanged * let g:cmdtype = expand('<afile>')
     call assert_equal(0, setcmdline(a:text))
     call assert_equal(a:text, getcmdline())
