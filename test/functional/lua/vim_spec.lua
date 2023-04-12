@@ -3170,6 +3170,54 @@ describe('lua stdlib', function()
         eq(nil, nth(5))
       end
     end)
+
+    it('any()', function()
+      local function odd(_, v)
+        return v % 2 ~= 0
+      end
+
+      do
+        local t = { 4, 8, 9, 10 }
+        eq(true, vim.iter(t):any(odd))
+      end
+
+      do
+        local t = { 4, 8, 10 }
+        eq(false, vim.iter(t):any(odd))
+      end
+
+      do
+        eq(true, vim.iter(vim.gsplit('a|b|c|d', '|')):any(function(s) return s == 'd' end))
+        eq(false, vim.iter(vim.gsplit('a|b|c|d', '|')):any(function(s) return s == 'e' end))
+      end
+    end)
+
+    it('all()', function()
+      local function odd(_, v)
+        return v % 2 ~= 0
+      end
+
+      do
+        local t = { 3, 5, 7, 9 }
+        eq(true, vim.iter(t):all(odd))
+      end
+
+      do
+        local t = { 3, 5, 7, 10 }
+        eq(false, vim.iter(t):all(odd))
+      end
+
+      do
+        eq(true, vim.iter(vim.gsplit('a|a|a|a', '|')):all(function(s) return s == 'a' end))
+        eq(false, vim.iter(vim.gsplit('a|a|a|b', '|')):all(function(s) return s == 'a' end))
+      end
+    end)
+
+    it('last()', function()
+      local s = 'abcdefghijklmnopqrstuvwxyz'
+      eq({26, 'z'}, {vim.iter(vim.split(s, '')):last()})
+      eq('z', vim.iter(vim.gsplit(s, '')):last())
+    end)
   end)
 end)
 

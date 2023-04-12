@@ -16,16 +16,19 @@ end
 ---
 --- Example:
 --- <pre>
---- -- Remove odd numbers
---- vim.iter({1, 2, 3, 4}):filter_map(function(v)
----   return v % 2 == 0 and v else nil
---- end)
+--- > local it = vim.iter({ 1, 2, 3, 4 }):filter_map(function(i, v)
+--- >   if v % 2 == 0 then
+--- >     return i, v * 3
+--- >   end
+--- > end)
+--- > it:collect()
+--- { 6, 12 }
 --- </pre>
 ---
---- @param f function(...):any Mapping function. Takes all values returned from the previous stage
+---@param f function(...):any Mapping function. Takes all values returned from the previous stage
 ---                            in the pipeline as arguments and returns a new value. Nil values
 ---                            returned from `f` are filtered from the output.
---- @return Iter
+---@return Iter
 function Iter.filter_map(self, f)
   local fn = self.fn
   self.fn = function()
@@ -50,11 +53,11 @@ end
 ---
 --- This function drains the iterator.
 ---
---- @param f function(...) Function to execute for each item in the pipeline. Takes all of the
+---@param f function(...) Function to execute for each item in the pipeline. Takes all of the
 ---                        values returned by the previous stage in the pipeline as arguments.
 function Iter.foreach(self, f)
   while true do
-    local args = { self.fn() }
+    local args = { self:next() }
     if args[1] == nil then
       break
     end
@@ -69,11 +72,23 @@ end
 --- is returned. Otherwise, the first return value is used as the table key and the second return
 --- value as the table value.
 ---
---- @param opts ?table Optional arguments:
+--- Example:
+--- <pre>
+---
+--- > local it1 = vim.iter(string.gmatch('100 20 50', '%d+')):filter_map(tonumber)
+--- > it1:collect()
+--- { 100, 20, 50 }
+--- > local it2 = vim.iter(string.gmatch('100 20 50', '%d+')):filter_map(tonumber)
+--- > it2:collect({ sort = true })
+--- { 20, 50, 100 }
+---
+--- </pre>
+---
+---@param opts ?table Optional arguments:
 ---                     - sort (boolean|function): If true, sort the resulting table before
 ---                       returning. If a function is provided, that function is used as the
 ---                       comparator function to |table.sort()|.
---- @return table
+---@return table
 function Iter.collect(self, opts)
   local t = {}
   self:foreach(function(...)
@@ -99,7 +114,20 @@ end
 
 --- Return the next value from the iterator.
 ---
---- @return any
+--- Example:
+--- <pre>
+---
+--- > local it = vim.iter(string.gmatch('1 2 3', '%d+')):filter_map(tonumber)
+--- > it:next()
+--- 1
+--- > it:next()
+--- 2
+--- > it:next()
+--- 3
+---
+--- </pre>
+---
+---@return any
 function Iter.next(self)
   return self.fn()
 end
@@ -108,28 +136,43 @@ end
 ---
 --- Only iterators on tables can be reversed.
 ---
---- @return Iter
+--- Example:
+--- <pre>
+---
+--- > local it = vim.iter({ 3, 6, 9, 12 }):rev()
+--- > it:collect()
+--- { 12, 9, 6, 3 }
+---
+--- </pre>
+---
+---@return Iter
 function Iter.rev(self)
   assert(self.head and self.tail, 'Non-table iterators cannot be reversed')
-  local inc =  self.head < self.tail and -1 or 1
-  self.head, self.tail = self.tail + inc, self.head + inc
+  local inc = self.head < self.tail and 1 or -1
+  self.head, self.tail = self.tail - inc, self.head - inc
   return self
 end
 
 --- Skip values in the iterator.
 ---
---- @param n number Number of values to skip.
---- @return Iter
+--- Example:
+--- <pre>
+---
+--- > local it = vim.iter({ 3, 6, 9, 12 }):skip(2)
+--- > it:next()
+--- 9
+---
+--- </pre>
+---
+---@param n number Number of values to skip.
+---@return Iter
 function Iter.skip(self, n)
   if self.head and self.tail then
-    if self.head < self.tail then
-      self.head = self.head + n
-    else
-      self.head = self.head - n
-    end
+    local inc = self.head < self.tail and n or -n
+    self.head = self.head + inc
   else
     for _ = 1, n do
-      local _ = self.fn()
+      local _ = self:next()
     end
   end
   return self
@@ -139,18 +182,127 @@ end
 ---
 --- This function advances the iterator.
 ---
---- @param n number The index of the value to return.
---- @return any
+--- Example:
+--- <pre>
+---
+--- > local it = vim.iter({ 3, 6, 9, 12 })
+--- > it:nth(2)
+--- 6
+--- > it:nth(2)
+--- 12
+---
+--- </pre>
+---
+---@param n number The index of the value to return.
+---@return any
 function Iter.nth(self, n)
   if n > 0 then
     return self:skip(n - 1):next()
   end
 end
 
+--- Return true if any of the items in the iterator match the given predicate.
+---
+---@param pred function(...):bool Predicate function. Takes all values returned from the previous
+---                                stage in the pipeline as arguments and returns true if the
+---                                predicate matches.
+function Iter.any(self, pred)
+  local any = false
+  while true do
+    local args = { self:next() }
+    if args[1] == nil then
+      break
+    end
+    if pred(unpack(args)) then
+      any = true
+      break
+    end
+  end
+  return any
+end
+
+--- Return true if all of the items in the iterator match the given predicate.
+---
+---@param pred function(...):bool Predicate function. Takes all values returned from the previous
+---                                stage in the pipeline as arguments and returns true if the
+---                                predicate matches.
+function Iter.all(self, pred)
+  local all = true
+  while true do
+    local args = { self:next() }
+    if args[1] == nil then
+      break
+    end
+    if not pred(unpack(args)) then
+      all = false
+      break
+    end
+  end
+  return all
+end
+
+--- Return the last item in the iterator.
+---
+--- Drains the iterator.
+---
+--- Example:
+--- <pre>
+---
+--- > local it = vim.iter(vim.gsplit('abcdefg', ''))
+--- > it:last()
+--- 'g'
+---
+--- > local it = vim.iter({ 3, 6, 9, 12, 15 })
+--- > it:last()
+--- 5	15
+---
+--- </pre>
+---
+---@return any
+function Iter.last(self)
+  if self.head and self.tail then
+    local inc = self.head < self.tail and 1 or -1
+    self.head = self.tail - inc
+    return self:next()
+  end
+
+  local last = self:next()
+  local cur = self:next()
+  while cur do
+    last = cur
+    cur = self:next()
+  end
+  return last
+end
+
+--- Add an iterator stage that returns the current iterator count as well as the iterator value.
+---
+--- Example:
+--- <pre>
+---
+--- > local it = vim.iter(vim.gsplit('abc', '')):enumerate()
+--- > it:next()
+--- 1	'a'
+--- > it:next()
+--- 2	'b'
+--- > it:next()
+--- 3	'c'
+---
+--- </pre>
+---
+---@return Iter
+function Iter.enumerate(self)
+  local i = 0
+  return self:filter_map(function(...)
+    i = i + 1
+    return i, ...
+  end)
+end
+
 --- Create a new Iter object from a table of value.
 ---
---- @param src table|function Table or iterator to drain values from
---- @return Iter
+---@param src table|function Table or iterator to drain values from
+---@return Iter
 function Iter.new(src)
   local t = {}
 
@@ -176,6 +328,5 @@ function Iter.new(src)
   setmetatable(t, Iter)
   return t
 end
-
 
 return Iter
