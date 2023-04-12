@@ -28,6 +28,9 @@ local meths = helpers.meths
 local alter_slashes = helpers.alter_slashes
 local is_os = helpers.is_os
 local dedent = helpers.dedent
+local tbl_map = helpers.tbl_map
+local tbl_filter = helpers.tbl_filter
+local endswith = helpers.endswith
 
 local testfile = 'Xtest_startuptime'
 after_each(function()
@@ -202,12 +205,12 @@ describe('startup', function()
     end)
 
     it('disables swapfile/shada/config/plugins', function()
-      assert_l_out('updatecount=0 shadafile=NONE loadplugins=false scriptnames=1',
+      assert_l_out('updatecount=0 shadafile=NONE loadplugins=false scripts=1',
         nil,
         nil,
         '-',
-        [[print(('updatecount=%d shadafile=%s loadplugins=%s scriptnames=%d'):format(
-          vim.o.updatecount, vim.o.shadafile, tostring(vim.o.loadplugins), math.max(1, #vim.fn.split(vim.fn.execute('scriptnames'),'\n'))))]])
+        [[print(('updatecount=%d shadafile=%s loadplugins=%s scripts=%d'):format(
+          vim.o.updatecount, vim.o.shadafile, tostring(vim.o.loadplugins), math.max(1, #vim.fn.getscriptinfo())))]])
     end)
   end)
 
@@ -398,11 +401,13 @@ describe('startup', function()
     for _,arg in ipairs({'-es', '-Es'}) do
       local out = funcs.system({nvim_prog, arg,
                                 '+set swapfile? updatecount? shadafile?',
-                                "+put =execute('scriptnames')", '+%print'})
+                                "+put =map(getscriptinfo(), {-> v:val.name})", '+%print'})
       local line1 = string.match(out, '^.-\n')
       -- updatecount=0 means swapfile was disabled.
       eq("  swapfile  updatecount=0  shadafile=\n", line1)
-      eq(nil, string.match(out, 'init.vim'))
+      -- Standard plugins were loaded, but not user config.
+      ok(string.find(out, 'man.lua') ~= nil)
+      ok(string.find(out, 'init.vim') == nil)
     end
   end)
 
@@ -863,6 +868,10 @@ describe('runtime:', function()
     local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'},
     pathsep)
     local profiler_file = 'test_startuptime.log'
+    finally(function()
+      os.remove(profiler_file)
+      rmdir(plugin_path)
+    end)
 
     mkdir_p(plugin_folder_path)
     write_file(plugin_file_path, [[vim.g.lua_plugin = 2]])
@@ -870,18 +879,15 @@ describe('runtime:', function()
     clear{ args_rm={'-u'}, args={'--startuptime', profiler_file}, env=xenv }
 
     eq(2, eval('g:lua_plugin'))
-    -- Check if plugin_file_path is listed in :scriptname
-    local scripts = exec_capture('scriptnames')
-    assert(scripts:find(plugin_file_path))
+    -- Check if plugin_file_path is listed in getscriptinfo()
+    local scripts = tbl_map(function(s) return s.name end, funcs.getscriptinfo())
+    ok(#tbl_filter(function(s) return endswith(s, plugin_file_path) end, scripts) > 0)
 
     -- Check if plugin_file_path is listed in startup profile
     local profile_reader = io.open(profiler_file, 'r')
     local profile_log = profile_reader:read('*a')
     profile_reader:close()
-    assert(profile_log:find(plugin_file_path))
-
-    os.remove(profiler_file)
-    rmdir(plugin_path)
+    ok(profile_log:find(plugin_file_path) ~= nil)
   end)
 
   it('loads plugin/*.lua from site packages', function()
