@@ -5,7 +5,7 @@
 # install root.
 function(GetBinaryDep)
   cmake_parse_arguments(_gettool
-    "BUILD_IN_SOURCE"
+    ""
     "TARGET"
     "INSTALL_COMMAND"
     ${ARGN})
