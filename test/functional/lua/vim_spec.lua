@@ -3124,21 +3124,51 @@ describe('lua stdlib', function()
     end)
 
     it('skip()', function()
-      local t = {4, 3, 2, 1}
-      eq(t, vim.iter(t):skip(0):collect())
-      eq({2, 1}, vim.iter(t):skip(2):collect())
-      eq({}, vim.iter(t):skip(#t):collect())
-      eq({}, vim.iter(t):skip(5):collect())
+      do
+        local t = {4, 3, 2, 1}
+        eq(t, vim.iter(t):skip(0):collect())
+        eq({3, 2, 1}, vim.iter(t):skip(1):collect())
+        eq({2, 1}, vim.iter(t):skip(2):collect())
+        eq({1}, vim.iter(t):skip(#t - 1):collect())
+        eq({}, vim.iter(t):skip(#t):collect())
+        eq({}, vim.iter(t):skip(5):collect())
+      end
+
+      do
+        local function skip(n)
+          return vim.iter(vim.gsplit('a|b|c|d', '|')):skip(n):collect()
+        end
+        eq({'a', 'b', 'c', 'd'}, skip(0))
+        eq({'b', 'c', 'd'}, skip(1))
+        eq({'c', 'd'}, skip(2))
+        eq({'d'}, skip(3))
+        eq({}, skip(4))
+        eq({}, skip(5))
+      end
     end)
 
     it('nth()', function()
-      local t = {4, 3, 2, 1}
-      eq(nil, vim.iter(t):nth(0))
-      eq({1, 4}, {vim.iter(t):nth(1)})
-      eq({2, 3}, {vim.iter(t):nth(2)})
-      eq({3, 2}, {vim.iter(t):nth(3)})
-      eq({4, 1}, {vim.iter(t):nth(4)})
-      eq(nil, vim.iter(t):nth(5))
+      do
+        local t = {4, 3, 2, 1}
+        eq(nil, vim.iter(t):nth(0))
+        eq({1, 4}, {vim.iter(t):nth(1)})
+        eq({2, 3}, {vim.iter(t):nth(2)})
+        eq({3, 2}, {vim.iter(t):nth(3)})
+        eq({4, 1}, {vim.iter(t):nth(4)})
+        eq(nil, vim.iter(t):nth(5))
+      end
+
+      do
+        local function nth(n)
+          return vim.iter(vim.gsplit('a|b|c|d', '|')):nth(n)
+        end
+        eq(nil, nth(0))
+        eq('a', nth(1))
+        eq('b', nth(2))
+        eq('c', nth(3))
+        eq('d', nth(4))
+        eq(nil, nth(5))
+      end
     end)
   end)
 end)

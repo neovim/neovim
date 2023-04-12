@@ -2,6 +2,8 @@
 
 ---@class Iter
 ---@field fn function
+---@field head ?number
+---@field tail ?number
 local Iter = {}
 
 Iter.__index = Iter
@@ -119,8 +121,16 @@ end
 --- @param n number Number of values to skip.
 --- @return Iter
 function Iter.skip(self, n)
-  for _ = 1, n do
-    local _ = self.fn()
+  if self.head and self.tail then
+    if self.head < self.tail then
+      self.head = self.head + n
+    else
+      self.head = self.head - n
+    end
+  else
+    for _ = 1, n do
+      local _ = self.fn()
+    end
   end
   return self
 end
