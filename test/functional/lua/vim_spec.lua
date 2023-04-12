@@ -3131,7 +3131,7 @@ describe('lua stdlib', function()
         eq({2, 1}, vim.iter(t):skip(2):collect())
         eq({1}, vim.iter(t):skip(#t - 1):collect())
         eq({}, vim.iter(t):skip(#t):collect())
-        eq({}, vim.iter(t):skip(5):collect())
+        eq({}, vim.iter(t):skip(#t + 1):collect())
       end
 
       do
@@ -3145,6 +3145,21 @@ describe('lua stdlib', function()
         eq({}, skip(4))
         eq({}, skip(5))
       end
+    end)
+
+    it('skip_back()', function()
+      do
+        local t = {4, 3, 2, 1}
+        eq(t, vim.iter(t):skip_back(0):collect())
+        eq({4, 3, 2}, vim.iter(t):skip_back(1):collect())
+        eq({4, 3}, vim.iter(t):skip_back(2):collect())
+        eq({4}, vim.iter(t):skip_back(#t - 1):collect())
+        eq({}, vim.iter(t):skip_back(#t):collect())
+        eq({}, vim.iter(t):skip_back(#t + 1):collect())
+      end
+
+      local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
+      matches('Function iterators cannot skip from the end', pcall_err(it.skip_back, it, 0))
     end)
 
     it('nth()', function()

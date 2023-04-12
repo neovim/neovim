@@ -339,7 +339,7 @@ function TableIter.rfind(self, f)
 end
 --- Return the next value from the end of the iterator.
 ---
---- Only supported with iterators on tables.
+--- Only supported for iterators on tables.
 ---
 --- Example:
 --- <pre>
@@ -365,7 +365,7 @@ end
 
 --- Return the next value from the end of the iterator without consuming it.
 ---
---- Only supported with iterators on tables.
+--- Only supported for iterators on tables.
 ---
 --- Example:
 --- <pre>
@@ -414,6 +414,39 @@ end
 function TableIter.skip(self, n)
   local inc = self._head < self._tail and n or -n
   self._head = self._head + inc
+  if (inc > 0 and self._head > self._tail) or (inc < 0 and self._head < self._tail) then
+    self._head = self._tail
+  end
+  return self
+end
+
+--- Skip values in the iterator starting from the end.
+---
+--- Only supported for iterators on tables.
+---
+--- Example:
+--- <pre>
+--- > local it = vim.iter({ 1, 2, 3, 4, 5 }):skip_back(2)
+--- > it:next()
+--- 1
+--- > it:next_back()
+--- 3
+--- </pre>
+---
+---@param n number Number of values to skip.
+---@return Iter
+function Iter.skip_back(self, n)
+  error('Function iterators cannot skip from the end')
+  return self
+end
+
+---@private
+function TableIter.skip_back(self, n)
+  local inc = self._head < self._tail and n or -n
+  self._tail = self._tail - inc
+  if (inc > 0 and self._head > self._tail) or (inc < 0 and self._head < self._tail) then
+    self._head = self._tail
+  end
   return self
 end
 
