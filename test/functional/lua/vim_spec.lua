@@ -3031,7 +3031,7 @@ describe('lua stdlib', function()
   end)
 
   describe('vim.iter', function()
-    it('works on tables', function()
+    it('filter_map', function()
       local function odd(_, v)
         return v % 2 ~= 0 and v or nil
       end
@@ -3063,19 +3063,6 @@ describe('lua stdlib', function()
         :collect()
       )
 
-      local acc = 0
-      for _, v in vim.iter(t) do
-        acc = acc + v
-      end
-      eq(15, acc)
-
-      do
-        local it = vim.iter({1, 2, 3}):filter_map(function(k, v) return k, v, v*v end)
-        matches('Cannot collect iterator with 3 return values', pcall_err(it.collect, it))
-      end
-    end)
-
-    it('works on iterators', function()
       local it = vim.gsplit(
         [[
         Line 1
@@ -3098,6 +3085,27 @@ describe('lua stdlib', function()
         end)
         :collect()
       )
+    end)
+
+    it('for loops', function()
+      local t = {1, 2, 3, 4, 5}
+      local acc = 0
+      for v in vim.iter(t):filter_map(function(_, v) return v * 3 end) do
+        acc = acc + v
+      end
+      eq(45, acc)
+    end)
+
+    it('collect()', function()
+      do
+        local it = vim.iter({1, 2, 3}):filter_map(function(k, v) return k, v, v*v end)
+        matches('Cannot collect iterator with 3 return values', pcall_err(it.collect, it))
+      end
+
+      do
+        local it = vim.iter(string.gmatch('1,4,lol,17,blah,2,9,3', '%d+')):filter_map(tonumber)
+        eq({1, 2, 3, 4, 9, 17}, it:collect({sort = true}))
+      end
     end)
 
     it('next()', function()

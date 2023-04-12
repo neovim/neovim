@@ -67,8 +67,12 @@ end
 --- is returned. Otherwise, the first return value is used as the table key and the second return
 --- value as the table value.
 ---
+--- @param opts ?table Optional arguments:
+---                     - sort (boolean|function): If true, sort the resulting table before
+---                       returning. If a function is provided, that function is used as the
+---                       comparator function to |table.sort()|.
 --- @return table
-function Iter.collect(self)
+function Iter.collect(self, opts)
   local t = {}
   self:foreach(function(...)
     local args = { n = select('#', ...), ... }
@@ -84,6 +88,10 @@ function Iter.collect(self)
       error(string.format('Cannot collect iterator with %d return values', args.n))
     end
   end)
+  if opts and opts.sort then
+    local f = type(opts.sort) == 'function' and opts.sort or nil
+    table.sort(t, f)
+  end
   return t
 end
 
