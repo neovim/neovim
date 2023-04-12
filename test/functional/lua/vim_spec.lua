@@ -3031,28 +3031,22 @@ describe('lua stdlib', function()
   end)
 
   describe('vim.iter', function()
-    it('filter_map', function()
+    it('filter()', function()
       local function odd(v)
-        return v % 2 ~= 0 and v or nil
-      end
-
-      local function even(v)
-        return v % 2 == 0 and v or nil
+        return v % 2 ~= 0
       end
 
       local t = { 1, 2, 3, 4, 5 }
-      eq({ 1, 3, 5 }, vim.iter(t):filter_map(odd):collect())
-      eq({ 2, 4 }, vim.iter(t):filter_map(even):collect())
-      eq(
-        {},
-        vim
-        .iter(t)
-        :filter_map(function(v)
-          if v > 5 then return v end
-        end)
-        :collect()
-      )
+      eq({ 1, 3, 5 }, vim.iter(t):filter(odd):collect())
+      eq({ 2, 4 }, vim.iter(t):filter(function(v) return not odd(v) end):collect())
+      eq({}, vim.iter(t):filter(function(v) if v > 5 then return v end end):collect())
 
+      local it = vim.iter(string.gmatch('the quick brown fox', '%w+'))
+      eq({'the', 'fox'}, it:filter(function(s) return #s <= 3 end):collect())
+    end)
+
+    it('filter_map()', function()
+      local t = { 1, 2, 3, 4, 5 }
       eq(
         { 2, 4, 6, 8, 10 },
         vim

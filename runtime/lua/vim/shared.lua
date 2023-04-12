@@ -884,7 +884,7 @@ function vim.defaulttable(create)
   })
 end
 
---- Create an Iter object from a table or iterator.
+--- Create an Iter |lua-iter| object from a table or iterator.
 ---
 --- Examples:
 --- <pre>lua
@@ -909,8 +909,10 @@ end
 --- -- Column 5 is 5
 --- </pre>
 ---
+---@see |lua-iter|
+---
 ---@param src table|function Table or iterator.
----@return Iter
+---@return Iter @|lua-iter|
 function vim.iter(src)
   local Iter = require('vim.iter')
   return Iter.new(src)

@@ -1699,7 +1699,7 @@ is_callable({f})                                           *vim.is_callable()*
         (boolean) `true` if `f` is callable, else `false`
 
 iter({src})                                                       *vim.iter()*
-    Create an Iter object from a table or iterator.
+    Create an Iter |lua-iter| object from a table or iterator.
 
     Examples: >lua
 
@@ -1728,7 +1728,10 @@ iter({src})                                                       *vim.iter()*
       • {src}  table|function Table or iterator.
 
     Return: ~
-        Iter
+        Iter |lua-iter|
+
+    See also: ~
+      • |lua-iter|
 
 list_contains({t}, {value})                              *vim.list_contains()*
     Checks if a list-like table (integer keys without gaps) contains `value`.
@@ -2916,8 +2919,24 @@ Iter:enumerate({self})                                      *Iter:enumerate()*
     Return: ~
         Iter
 
+Iter:filter({self}, {f})                                       *Iter:filter()*
+    Add a filter step to the iterator pipeline.
+
+    Example: >lua
+
+     local bufs = vim.iter(vim.api.nvim_list_bufs()):filter(vim.api.nvim_buf_is_loaded)
+<
+
+    Parameters: ~
+      • {f}  function(...):bool Takes all values returned from the previous
+             stage in the pipeline and returns false or nil if the current
+             iterator element should be removed.
+
+    Return: ~
+        Iter
+
 Iter:filter_map({self}, {f})                               *Iter:filter_map()*
-    Add a filter/map step to the iterator.
+    Add a filter/map step to the iterator pipeline.
 
     Example: >lua
 
@@ -2933,8 +2952,8 @@ Iter:filter_map({self}, {f})                               *Iter:filter_map()*
     Parameters: ~
       • {f}  function(...):any Mapping function. Takes all values returned
              from the previous stage in the pipeline as arguments and returns
-             a new value. Nil values returned from `f` are filtered from the
-             output.
+             one or more new values, which are used in the next pipeline
+             stage. Nil return values returned are filtered from the output.
 
     Return: ~
         Iter

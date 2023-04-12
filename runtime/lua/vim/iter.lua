@@ -39,7 +39,49 @@ local function pack(...)
   return ...
 end
 
---- Add a filter/map step to the iterator.
+--- Add a filter step to the iterator pipeline.
+---
+--- Example:
+--- <pre>lua
+--- local bufs = vim.iter(vim.api.nvim_list_bufs()):filter(vim.api.nvim_buf_is_loaded)
+--- </pre>
+---
+---@param f function(...):bool Takes all values returned from the previous stage in the pipeline and
+---                            returns false or nil if the current iterator element should be
+---                            removed.
+---@return Iter
+function Iter.filter(self, f)
+  local next = self.next
+  self.next = function(this)
+    while true do
+      local args = pack(next(this))
+      if args == nil then
+        break
+      end
+      if f(unpack(args)) then
+        return unpack(args)
+      end
+    end
+  end
+  return self
+end
+
+---@private
+function TableIter.filter(self, f)
+  local inc = self._head < self._tail and 1 or -1
+  local n = self._head
+  for i = self._head, self._tail - inc, inc do
+    local v = self._table[i]
+    if f(unpack(v)) then
+      self._table[n] = v
+      n = n + inc
+    end
+  end
+  self._tail = n
+  return self
+end
+
+--- Add a filter/map step to the iterator pipeline.
 ---
 --- Example:
 --- <pre>lua
@@ -53,8 +95,9 @@ end
 --- </pre>
 ---
 ---@param f function(...):any Mapping function. Takes all values returned from the previous stage
----                            in the pipeline as arguments and returns a new value. Nil values
----                            returned from `f` are filtered from the output.
+---                            in the pipeline as arguments and returns one or more new values,
+---                            which are used in the next pipeline stage. Nil return values returned
+---                            are filtered from the output.
 ---@return Iter
 function Iter.filter_map(self, f)
   local next = self.next
