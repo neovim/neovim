@@ -8040,58 +8040,45 @@ void var_set_global(const char *const name, typval_T vartv)
 
 static int store_dict_list(FILE *fd, char *key, typval_T value, bool declaration)
 {
-  if ((value.v_type == VAR_DICT || value.v_type == VAR_LIST) && !declaration) {
-    if (fprintf(fd, "'%s':", key) < 0)
-      return FAIL;
+  if ((value.v_type == VAR_DICT || value.v_type == VAR_LIST)) {
+    fprintf(fd, declaration ? "let %s = " : "'%s':", key);
   }
   if (value.v_type == VAR_DICT) {
-    if (fprintf(fd, "{") < 0)
-      return FAIL;
+    fprintf(fd, "{");
     TV_DICT_ITER(value.vval.v_dict, inner_var, {
-      if (store_dict_list(fd, inner_var->di_key, inner_var->di_tv, false) == FAIL)
+      if (store_dict_list(fd, inner_var->di_key, inner_var->di_tv, false) == FAIL) {
         return FAIL;
+      }
     });
-    if (declaration) {
-      if (fprintf(fd, "}") < 0)
-        return FAIL;
-    } else {
-      if (fprintf(fd, "},") < 0)
-        return FAIL;
-    }
+    fprintf(fd, declaration ? "}" : "},");
   } else if (value.v_type == VAR_LIST) {
-    if (fprintf(fd, "[") < 0)
-      return FAIL;
+    fprintf(fd, "[");
     TV_LIST_ITER(value.vval.v_list, inner_var, {
-      if (store_dict_list(fd, 0, inner_var->li_tv, false) == FAIL)
+      if (store_dict_list(fd, 0, inner_var->li_tv, false) == FAIL) {
         return FAIL;
+      }
     });
-    if (fprintf(fd, "]") < 0)
-      return FAIL;
-  } else if (value.v_type == VAR_STRING || value.v_type == VAR_NUMBER) {
+    fprintf(fd, "]");
+  } else if (value.v_type == VAR_STRING || value.v_type == VAR_NUMBER
+             || value.v_type == VAR_FLOAT) {
     if (key != 0) {
-      if (fprintf(fd, "'%s':", key) < 0)
-        return FAIL;
+      fprintf(fd, "'%s':", key);
     }
     if (value.v_type == VAR_STRING) {
-      if (fprintf(fd, "'%s',", tv_get_string(&value)) < 0)
-        return FAIL;
+      fprintf(fd, "'%s',", tv_get_string(&value));
+    } else if (value.v_type == VAR_NUMBER) {
+      fprintf(fd, "%s,", tv_get_string(&value));
     } else {
-      if (fprintf(fd, "%s,", tv_get_string(&value)) < 0)
-        return FAIL;
+      float_T f = value.vval.v_float;
+      if (f < 0) {
+        fprintf(fd, "-%f,", -f);
+      } else {
+        fprintf(fd, "%f,", f);
+      }
     }
-  } else if (value.v_type == VAR_FLOAT) {
-    if (key != 0) {
-      if (fprintf(fd, "'%s':", key) < 0)
-        return FAIL;
-    }
-    float_T f = value.vval.v_float;
-    if (f < 0) {
-      if (fprintf(fd, "-%f,", -f) < 0)
-        return FAIL;
-    } else {
-      if (fprintf(fd, "%f,", f) < 0)
-        return FAIL;
-    }
+  }
+  if (ferror(fd)) {
+    return FAIL;
   }
   return OK;
 }
@@ -8101,14 +8088,11 @@ int store_session_globals(FILE *fd)
   TV_DICT_ITER(&globvardict, this_var, {
     if ((this_var->di_tv.v_type == VAR_DICT || this_var->di_tv.v_type == VAR_LIST)
         && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
-      if (fprintf(fd, "let %s = ", this_var->di_key) < 0
-          || store_dict_list(fd, this_var->di_key, this_var->di_tv, true) == FAIL
+      if (store_dict_list(fd, this_var->di_key, this_var->di_tv, true) == FAIL
           || put_eol(fd) == FAIL)
         return FAIL;
-      ;
     }
-    if ((this_var->di_tv.v_type == VAR_NUMBER
-         || this_var->di_tv.v_type == VAR_STRING)
+    if ((this_var->di_tv.v_type == VAR_NUMBER || this_var->di_tv.v_type == VAR_STRING)
         && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
       // Escape special characters with a backslash.  Turn a LF and
       // CR into \n and \r.
