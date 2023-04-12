@@ -473,6 +473,31 @@ function Iter.nth(self, n)
   end
 end
 
+--- Return the nth value from the end of the iterator.
+---
+--- This function advances the iterator.
+---
+--- Only supported for iterators on tables.
+---
+--- Example:
+--- <pre>
+---
+--- > local it = vim.iter({ 3, 6, 9, 12 })
+--- > it:nth_back(2)
+--- 9
+--- > it:nth_back(2)
+--- 3
+---
+--- </pre>
+---
+---@param n number The index of the value to return.
+---@return any
+function Iter.nth_back(self, n)
+  if n > 0 then
+    return self:skip_back(n - 1):next_back()
+  end
+end
+
 --- Return true if any of the items in the iterator match the given predicate.
 ---
 ---@param pred function(...):bool Predicate function. Takes all values returned from the previous

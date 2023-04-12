@@ -3186,6 +3186,21 @@ describe('lua stdlib', function()
       end
     end)
 
+    it('nth_back()', function()
+      do
+        local t = {4, 3, 2, 1}
+        eq(nil, vim.iter(t):nth_back(0))
+        eq(1, vim.iter(t):nth_back(1))
+        eq(2, vim.iter(t):nth_back(2))
+        eq(3, vim.iter(t):nth_back(3))
+        eq(4, vim.iter(t):nth_back(4))
+        eq(nil, vim.iter(t):nth_back(5))
+      end
+
+      local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
+      matches('Function iterators cannot skip from the end', pcall_err(it.nth_back, it, 1))
+    end)
+
     it('any()', function()
       local function odd(v)
         return v % 2 ~= 0
