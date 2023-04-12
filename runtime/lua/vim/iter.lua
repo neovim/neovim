@@ -183,7 +183,7 @@ end
 --- </pre>
 ---
 ---@return any
-function Iter.next(self)
+function Iter.next(self) -- luacheck: no unused args
   -- This function is provided by the source iterator in Iter.new. This definition exists only for
   -- the docstring
 end
@@ -242,7 +242,7 @@ end
 --- </pre>
 ---
 ---@return any
-function Iter.peek(self)
+function Iter.peek(self) -- luacheck: no unused args
   error('Function iterators are not peekable')
 end
 
@@ -315,7 +315,7 @@ end
 ---@see Iter.find
 ---
 ---@return any
-function Iter.rfind(self, f)
+function Iter.rfind(self, f) -- luacheck: no unused args
   error('Function iterators cannot read from the end')
 end
 
@@ -352,7 +352,7 @@ end
 --- </pre>
 ---
 ---@return any
-function Iter.next_back(self)
+function Iter.next_back(self) -- luacheck: no unused args
   error('Function iterators cannot read from the end')
 end
 
@@ -380,7 +380,7 @@ end
 --- </pre>
 ---
 ---@return any
-function Iter.peek_back(self)
+function Iter.peek_back(self) -- luacheck: no unused args
   error('Function iterators cannot read from the end')
 end
 
@@ -436,7 +436,7 @@ end
 ---
 ---@param n number Number of values to skip.
 ---@return Iter
-function Iter.skip_back(self, n)
+function Iter.skip_back(self, n) -- luacheck: no unused args
   error('Function iterators cannot skip from the end')
   return self
 end
