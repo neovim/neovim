@@ -120,6 +120,8 @@ LSP FUNCTIONS
 					{buffer = bufnr} instead.
 - *vim.lsp.buf.formatting()*		Use |vim.lsp.buf.format()| with
 					{async = true} instead.
+- *vim.lsp.buf.formatting_sync()*	Use |vim.lsp.buf.format()| with
+					{async = false} instead.
 - *vim.lsp.buf.range_formatting()*	Use |vim.lsp.formatexpr()|
 					or |vim.lsp.buf.format()| instead.
 
