@@ -1,9 +1,9 @@
 --- Iterator implementation.
 
 ---@class Iter
----@field fn function
----@field head ?number
----@field tail ?number
+---@field next function():any Return the next value from the iterator
+---@field __head ?number Index to the front of a table iterator
+---@field __tail ?number Index to the end of a table iterator
 local Iter = {}
 
 Iter.__index = Iter
@@ -30,10 +30,10 @@ end
 ---                            returned from `f` are filtered from the output.
 ---@return Iter
 function Iter.filter_map(self, f)
-  local fn = self.fn
-  self.fn = function()
+  local next = self.next
+  self.next = function(this)
     while true do
-      local args = { fn() }
+      local args = { next(this) }
       if args[1] == nil then
         break
       end
@@ -129,7 +129,7 @@ end
 ---
 ---@return any
 function Iter.next(self)
-  return self.fn()
+  -- Function is defined by Iterator.new. This definition exists only for the docstring.
 end
 
 --- Reverse an iterator.
@@ -147,9 +147,9 @@ end
 ---
 ---@return Iter
 function Iter.rev(self)
-  assert(self.head and self.tail, 'Non-table iterators cannot be reversed')
-  local inc = self.head < self.tail and 1 or -1
-  self.head, self.tail = self.tail - inc, self.head - inc
+  assert(self.__head and self.__tail, 'Non-table iterators cannot be reversed')
+  local inc = self.__head < self.__tail and 1 or -1
+  self.__head, self.__tail = self.__tail - inc, self.__head - inc
   return self
 end
 
@@ -167,9 +167,9 @@ end
 ---@param n number Number of values to skip.
 ---@return Iter
 function Iter.skip(self, n)
-  if self.head and self.tail then
-    local inc = self.head < self.tail and n or -n
-    self.head = self.head + inc
+  if self.__head and self.__tail then
+    local inc = self.__head < self.__tail and n or -n
+    self.__head = self.__head + inc
   else
     for _ = 1, n do
       local _ = self:next()
@@ -260,9 +260,9 @@ end
 ---
 ---@return any
 function Iter.last(self)
-  if self.head and self.tail then
-    local inc = self.head < self.tail and 1 or -1
-    self.head = self.tail - inc
+  if self.__head and self.__tail then
+    local inc = self.__head < self.__tail and 1 or -1
+    self.__head = self.__tail - inc
     return self:next()
   end
 
@@ -307,23 +307,25 @@ function Iter.new(src)
   local t = {}
 
   if type(src) == 'table' then
-    t.head = 1
-    t.tail = #src + 1
-    t.fn = function()
-      if t.head ~= t.tail then
-        local i = t.head
+    t.__head = 1
+    t.__tail = #src + 1
+    t.next = function(self)
+      if self.__head ~= self.__tail then
+        local i = self.__head
         local v = src[i]
         if v ~= nil then
-          local inc = t.head < t.tail and 1 or -1
-          t.head = t.head + inc
+          local inc = self.__head < self.__tail and 1 or -1
+          self.__head = self.__head + inc
           return i, v
         end
       end
     end
   elseif type(src) == 'function' then
-    t.fn = src
+    t.next = function()
+      return src()
+    end
   end
-  assert(t.fn, 'src must be a table or function')
+  assert(t.next, 'src must be a table or function')
 
   setmetatable(t, Iter)
   return t
