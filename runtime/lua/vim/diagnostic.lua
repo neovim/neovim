@@ -744,7 +744,7 @@ function M.get_namespaces()
 end
 
 ---@class Diagnostic
----@field buffer integer
+---@field bufnr integer
 ---@field lnum integer 0-indexed
 ---@field end_lnum nil|integer 0-indexed
 ---@field col integer 0-indexed
