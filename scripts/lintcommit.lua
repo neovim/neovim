@@ -51,7 +51,7 @@ local function validate_commit(commit_message)
     return nil
   end
 
-  local commit_split = vim.split(commit_message, ":")
+  local commit_split = vim.split(commit_message, ":", {plain = true})
   -- Return nil if the type is vim-patch since most of the normal rules don't
   -- apply.
   if commit_split[1] == "vim-patch" then
@@ -63,13 +63,22 @@ local function validate_commit(commit_message)
     return [[Commit message is too long, a maximum of 80 characters is allowed.]]
   end
 
+  local before_colon = commit_split[1]
 
-  if vim.tbl_count(commit_split) < 2 then
+  local after_idx = 2
+  if before_colon:match('^[^%(]*%([^%)]*$') then
+    -- Need to find the end of commit scope when commit scope contains colons.
+    while after_idx <= vim.tbl_count(commit_split) do
+      after_idx = after_idx + 1
+      if commit_split[after_idx - 1]:find(')') then
+        break
+      end
+    end
+  end
+  if after_idx > vim.tbl_count(commit_split) then
     return [[Commit message does not include colons.]]
   end
-
-  local before_colon = commit_split[1]
-  local after_colon = commit_split[#commit_split]
+  local after_colon = commit_split[after_idx]
 
   -- Check if commit introduces a breaking change.
   if vim.endswith(before_colon, "!") then
@@ -77,7 +86,7 @@ local function validate_commit(commit_message)
   end
 
   -- Check if type is correct
-  local type = vim.split(before_colon, "%(")[1]
+  local type = vim.split(before_colon, "(", {plain = true})[1]
   local allowed_types = {'build', 'ci', 'docs', 'feat', 'fix', 'perf', 'refactor', 'revert', 'test', 'vim-patch'}
   if not vim.tbl_contains(allowed_types, type) then
     return string.format(
@@ -234,7 +243,16 @@ function M._test()
     ['ci: Capitalized first word'] = false,
     ['ci: UPPER_CASE First Word'] = true,
     ['unknown: using unknown type'] = false,
+    ['feat: foo:bar'] = true,
+    ['feat(something): foo:bar'] = true,
     ['feat(:grep): read from pipe'] = true,
+    ['feat(:grep/:make): read from pipe'] = true,
+    ['feat(:grep): foo:bar'] = true,
+    ['feat(:grep/:make): foo:bar'] = true,
+    ['feat(:grep)'] = false,
+    ['feat(:grep/:make)'] = false,
+    ['feat(:grep'] = false,
+    ['feat(:grep/:make'] = false,
     ['ci: you\'re saying this commit message just goes on and on and on and on and on and on for way too long?'] = false,
   }
 
