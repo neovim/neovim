@@ -634,7 +634,7 @@ module.cmds = {
     command='const',
     flags=bit.bor(EXTRA, NOTRLCOM, SBOXOK, CMDWIN, LOCK_OK),
     addr_type='ADDR_NONE',
-    func='ex_const',
+    func='ex_let',
   },
   {
     command='copen',

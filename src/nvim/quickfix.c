@@ -6958,7 +6958,7 @@ void ex_cexpr(exarg_T *eap)
   // Evaluate the expression.  When the result is a string or a list we can
   // use it to fill the errorlist.
   typval_T tv;
-  if (eval0(eap->arg, &tv, &eap->nextcmd, true) == FAIL) {
+  if (eval0(eap->arg, &tv, &eap->nextcmd, EVAL_EVALUATE) == FAIL) {
     return;
   }
 

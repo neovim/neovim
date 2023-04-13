@@ -266,6 +266,11 @@ typedef int (*ex_unletlock_callback)(lval_T *, char *, exarg_T *, int);
 // Used for checking if local variables or arguments used in a lambda.
 extern bool *eval_lavars_used;
 
+/// Flag for expression evaluation.
+enum {
+  EVAL_EVALUATE = 1,  ///< when missing don't actually evaluate
+};
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.h.generated.h"
 #endif

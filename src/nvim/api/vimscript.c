@@ -172,7 +172,7 @@ Object nvim_eval(String expr, Error *err)
   int ok;
 
   TRY_WRAP(err, {
-    ok = eval0(expr.data, &rettv, NULL, true);
+    ok = eval0(expr.data, &rettv, NULL, EVAL_EVALUATE);
   });
 
   if (!ERROR_SET(err)) {
@@ -290,7 +290,7 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Error *err)
   switch (dict.type) {
   case kObjectTypeString:
     try_start();
-    if (eval0(dict.data.string.data, &rettv, NULL, true) == FAIL) {
+    if (eval0(dict.data.string.data, &rettv, NULL, EVAL_EVALUATE) == FAIL) {
       api_set_error(err, kErrorTypeException,
                     "Failed to evaluate dict expression");
     }

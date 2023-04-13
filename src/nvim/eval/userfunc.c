@@ -152,7 +152,7 @@ static int get_function_args(char **argp, char endchar, garray_T *newargs, int *
         p = skipwhite(p) + 1;
         p = skipwhite(p);
         char *expr = p;
-        if (eval1(&p, &rettv, false) != FAIL) {
+        if (eval1(&p, &rettv, 0) != FAIL) {
           ga_grow(default_args, 1);
 
           // trim trailing whitespace
@@ -463,7 +463,8 @@ int get_func_tv(const char *name, int len, typval_T *rettv, char **arg, funcexe_
     if (*argp == ')' || *argp == ',' || *argp == NUL) {
       break;
     }
-    if (eval1(&argp, &argvars[argcount], funcexe->fe_evaluate) == FAIL) {
+    if (eval1(&argp, &argvars[argcount],
+              funcexe->fe_evaluate ? EVAL_EVALUATE : 0) == FAIL) {
       ret = FAIL;
       break;
     }
@@ -972,7 +973,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
 
         default_expr = ((char **)(fp->uf_def_args.ga_data))
                        [ai + fp->uf_def_args.ga_len];
-        if (eval1(&default_expr, &def_rettv, true) == FAIL) {
+        if (eval1(&default_expr, &def_rettv, EVAL_EVALUATE) == FAIL) {
           default_arg_err = true;
           break;
         }
@@ -1109,7 +1110,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     // A Lambda always has the command "return {expr}".  It is much faster
     // to evaluate {expr} directly.
     ex_nesting_level++;
-    (void)eval1(&p, rettv, true);
+    (void)eval1(&p, rettv, EVAL_EVALUATE);
     ex_nesting_level--;
   } else {
     // call do_cmdline() to execute the lines
@@ -2953,7 +2954,7 @@ void ex_return(exarg_T *eap)
 
   eap->nextcmd = NULL;
   if ((*arg != NUL && *arg != '|' && *arg != '\n')
-      && eval0(arg, &rettv, &eap->nextcmd, !eap->skip) != FAIL) {
+      && eval0(arg, &rettv, &eap->nextcmd, eap->skip ? 0 : EVAL_EVALUATE) != FAIL) {
     if (!eap->skip) {
       returning = do_return(eap, false, true, &rettv);
     } else {
@@ -3004,7 +3005,7 @@ void ex_call(exarg_T *eap)
     // instead to skip to any following command, e.g. for:
     //   :if 0 | call dict.foo().bar() | endif.
     emsg_skip++;
-    if (eval0(eap->arg, &rettv, &eap->nextcmd, false) != FAIL) {
+    if (eval0(eap->arg, &rettv, &eap->nextcmd, 0) != FAIL) {
       tv_clear(&rettv);
     }
     emsg_skip--;
@@ -3071,7 +3072,7 @@ void ex_call(exarg_T *eap)
     }
 
     // Handle a function returning a Funcref, Dictionary or List.
-    if (handle_subscript((const char **)&arg, &rettv, true, true)
+    if (handle_subscript((const char **)&arg, &rettv, EVAL_EVALUATE, true)
         == FAIL) {
       failed = true;
       break;
