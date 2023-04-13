@@ -1,4 +1,4 @@
--- Nvim-Lua stdlib: the `vim` module (:help lua-stdlib)
+-- Nvim Lua stdlib: the `vim` module (:help lua-stdlib)
 --
 -- Lua code lives in one of three places:
 --    1. runtime/lua/vim/ (the runtime): For "nice to have" features, e.g. the
@@ -11,17 +11,15 @@
 --
 -- Guideline: "If in doubt, put it in the runtime".
 --
--- Most functions should live directly in `vim.`, not in submodules.
+-- Most functions should live in `vim.x`, not in nested submodules (`vim.x.y.…`).
 --
 -- Compatibility with Vim's `if_lua` is explicitly a non-goal.
 --
 -- Reference (#6580):
 --    - https://github.com/luafun/luafun
---    - https://github.com/rxi/lume
 --    - http://leafo.net/lapis/reference/utilities.html
 --    - https://github.com/torch/paths
 --    - https://github.com/bakpakin/Fennel (pretty print, repl)
---    - https://github.com/howl-editor/howl/tree/master/lib/howl/util
 
 -- These are for loading runtime modules lazily since they aren't available in
 -- the nvim binary as specified in executor.c
@@ -30,6 +28,7 @@ for k, v in pairs({
   filetype = true,
   loader = true,
   F = true,
+  func = true,
   lsp = true,
   highlight = true,
   diagnostic = true,
@@ -149,14 +148,13 @@ do
   --- </pre>
   ---
   ---@see |paste|
-  ---@alias paste_phase -1 | 1 | 2 | 3
   ---
   ---@param lines  string[] # |readfile()|-style list of lines to paste. |channel-lines|
-  ---@param phase paste_phase  -1: "non-streaming" paste: the call contains all lines.
-  ---              If paste is "streamed", `phase` indicates the stream state:
+  ---@param phase integer indicates the stream state:
   ---                - 1: starts the paste (exactly once)
   ---                - 2: continues the paste (zero or more times)
   ---                - 3: ends the paste (exactly once)
+  ---                - -1: "non-streamed" paste, the call contains all lines.
   ---@returns boolean # false if client should cancel the paste.
   function vim.paste(lines, phase)
     local now = vim.loop.now()

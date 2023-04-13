@@ -117,16 +117,17 @@ describe('vim.lsp.diagnostic', function()
   end)
 
   describe("vim.lsp.diagnostic.on_publish_diagnostics", function()
-    it('allows configuring the virtual text via vim.lsp.with', function()
+    it('allows configuring virtual text via vim.func.on_fun()', function()
       local expected_spacing = 10
       local extmarks = exec_lua([[
-        PublishDiagnostics = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
-          virtual_text = {
-            spacing = ...,
-          },
-        })
+        local spacing = ...
+        vim.func.on_fun(vim.lsp.diagnostic, 'on_publish_diagnostics', function(fn, args)
+          args[4] = args[4] or {}
+          args[4].virtual_text = { spacing = spacing }
+          return fn(unpack(args))
+        end)
 
-        PublishDiagnostics(nil, {
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
             uri = fake_uri,
             diagnostics = {
               make_error('Delayed Diagnostic', 4, 4, 4, 4),
@@ -143,20 +144,20 @@ describe('vim.lsp.diagnostic', function()
       eq(expected_spacing, #spacing)
     end)
 
-    it('allows configuring the virtual text via vim.lsp.with using a function', function()
+    it('allows configuring virtual text using a function', function()
       local expected_spacing = 10
       local extmarks = exec_lua([[
         spacing = ...
 
-        PublishDiagnostics = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
-          virtual_text = function()
-            return {
-              spacing = spacing,
-            }
-          end,
-        })
+        vim.func.on_fun(vim.lsp.diagnostic, 'on_publish_diagnostics', function(fn, args)
+          args[4] = args[4] or {}
+          args[4].virtual_text = function()
+            return { spacing = spacing }
+          end
+          return fn(unpack(args))
+        end)
 
-        PublishDiagnostics(nil, {
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
             uri = fake_uri,
             diagnostics = {
               make_error('Delayed Diagnostic', 4, 4, 4, 4),
@@ -176,14 +177,16 @@ describe('vim.lsp.diagnostic', function()
     it('allows filtering via severity limit', function()
       local get_extmark_count_with_severity = function(severity_limit)
         return exec_lua([[
-          PublishDiagnostics = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
-            underline = false,
-            virtual_text = {
-              severity_limit = ...
-            },
-          })
+          local severity_limit = ...
+          vim.func.on_fun(vim.lsp.diagnostic, 'on_publish_diagnostics', function(fn, args)
+            args[4] = vim.tbl_deep_extend('keep', args[4] or {}, {
+              underline = false,
+              virtual_text = { severity_limit = severity_limit },
+            })
+            return fn(unpack(args))
+          end)
 
-          PublishDiagnostics(nil, {
+          vim.lsp.diagnostic.on_publish_diagnostics(nil, {
               uri = fake_uri,
               diagnostics = {
                 make_warning('Delayed Diagnostic', 4, 4, 4, 4),

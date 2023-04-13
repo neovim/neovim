@@ -1484,17 +1484,17 @@ paste({lines}, {phase})                                          *vim.paste()*
     Parameters: ~
       • {lines}  string[] # |readfile()|-style list of lines to paste.
                  |channel-lines|
-      • {phase}  paste_phase -1: "non-streaming" paste: the call contains all
-                 lines. If paste is "streamed", `phase` indicates the stream state:
+      • {phase}  (integer) indicates the stream state:
                  • 1: starts the paste (exactly once)
                  • 2: continues the paste (zero or more times)
                  • 3: ends the paste (exactly once)
+                 • -1: "non-streamed" paste, the call contains all lines.
 
     Return: ~
         (boolean) # false if client should cancel the paste.
 
     See also: ~
-      • |paste| @alias paste_phase -1 | 1 | 2 | 3
+        |paste|
 
 print({...})                                                     *vim.print()*
     "Pretty prints" the given arguments and returns them unmodified.
@@ -1883,22 +1883,21 @@ tbl_flatten({t})                                           *vim.tbl_flatten()*
       • From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 
 tbl_get({o}, {...})                                            *vim.tbl_get()*
-    Index into a table (first argument) via string keys passed as subsequent
-    arguments. Return `nil` if the key does not exist.
+    Gets a value from (nested) table `o` given by the sequence of keys `...`.
 
     Examples: >lua
 
-      vim.tbl_get({ key = { nested_key = true }}, 'key', 'nested_key') == true
-      vim.tbl_get({ key = {}}, 'key', 'nested_key') == nil
+      vim.tbl_get({ k1 = { k2 = true }}, 'k1', 'k2') == true
+      vim.tbl_get({ k1 = {}}, 'k1', 'k2') == nil
 <
 
     Parameters: ~
       • {o}    (table) Table to index
-      • {...}  (string) Optional strings (0 or more, variadic) via which to
-               index the table
+      • {...}  string|number sequence of string or number keys representing
+               the query
 
     Return: ~
-        any Nested value indexed by key (if it exists), else nil
+        any any Nested value indexed by key, or nil if not found
 
 tbl_isempty({t})                                           *vim.tbl_isempty()*
     Checks if a table is empty.
@@ -2554,6 +2553,76 @@ parents({start})                                            *vim.fs.parents()*
 
     Return: ~
         (function) Iterator
+
+
+==============================================================================
+Lua module: func                                                    *lua-func*
+
+on_fun({container}, {key}, {fn})                           *vim.func.on_fun()*
+    Sets function `container[key]` to a new "wrapper" function `function(fn,
+    args)`, where `fn` is the original ("base") function and `args` contains
+    the packed args.
+
+    Returns an object with `.unhook()` which can be used to "unhook" the function (remove it from the chain of `container[key]` hooks): >lua
+
+        local h = vim.func.on_fun(vim, 'print', function(fn, args)
+          fn(('s hooked'):format(args[1]))
+        end)
+        vim.print('x')  -- => "x hooked"
+        h.unhook()
+        vim.print('x')  -- => "x"
+<
+
+    Examples: >lua
+
+        -- Do something BEFORE the original function:
+        vim.on_fun(vim, 'paste', function(fn, args)
+          vim.print('before')
+          return fn(unpack(args))
+        end)
+
+        -- Do something AFTER the original function:
+        vim.on_fun(vim, 'paste', function(fn, args)
+          local r = pack(fn(unpack(args)))
+          vim.print('after')
+          return unpack(r)
+        end)
+
+        -- Modify the config of an LSP request (like the old "vim.lsp.with()"):
+        vim.on_fun(vim.lsp.handlers, 'textDocument/definition', function(fn, args)
+          args.config.signs = true
+          args.config.virtual_text = false
+          return fn(unpack(args))
+        end)
+<
+
+    Compared to this Lua idiom: >lua
+
+        vim.foo = (function(fn)
+          return function(...)
+            vim.print('before')
+            fn(...)
+          end
+        end)(vim.foo)
+<
+
+    on_fun() has these differences:
+    • ✓ supports .unhook()
+    • ✓ supports inspection (visiblity)
+    • ✗ does logging
+    • ✗ supports auto-removal tied to a container scope (via weaktables)
+    • ✗ supports buf/win/tab-local definitions
+    • ✗ supports namespaces
+    • ✗ idempontent (safe to call redundantly with identical args, will be
+      ignored)
+
+    Parameters: ~
+      • {container}  table
+      • {key}        string Function field on `container`
+      • {fn}         function Function that hooks into `container[key]`
+
+    Return: ~
+        table handle provides `.unhook()`
 
 
 ==============================================================================

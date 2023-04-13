@@ -124,6 +124,7 @@ LSP FUNCTIONS
 					{async = false} instead.
 - *vim.lsp.buf.range_formatting()*	Use |vim.lsp.formatexpr()|
 					or |vim.lsp.buf.format()| instead.
+- *vim.lsp.with()*			Use |vim.on_fun()| instead.
 
 TREESITTER FUNCTIONS
 - *vim.treesitter.language.require_language()*	Use |vim.treesitter.language.add()|

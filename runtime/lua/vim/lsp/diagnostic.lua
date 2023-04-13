@@ -179,26 +179,22 @@ end
 --- |lsp-handler| for the method "textDocument/publishDiagnostics"
 ---
 --- See |vim.diagnostic.config()| for configuration options. Handler-specific
---- configuration can be set using |vim.lsp.with()|:
---- <pre>lua
---- vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
----   vim.lsp.diagnostic.on_publish_diagnostics, {
----     -- Enable underline, use default values
----     underline = true,
----     -- Enable virtual text, override spacing to 4
----     virtual_text = {
----       spacing = 4,
----     },
----     -- Use a function to dynamically turn signs off
----     -- and on, using buffer local variables
----     signs = function(namespace, bufnr)
----       return vim.b[bufnr].show_signs == true
----     end,
----     -- Disable a feature
----     update_in_insert = false,
----   }
---- )
---- </pre>
+--- configuration can be set using |vim.func.on_fun()|:
+---     <pre>lua
+---     vim.func.on_fun(vim.lsp.handlers, 'textDocument/publishDiagnostics', function(fn, args)
+---       -- Enable underline, use default values
+---       args.config.underline = true
+---       -- Enable virtual text, override spacing to 4
+---       args.config.virtual_text = { spacing = 4 }
+---       -- Dynamically turn signs on/off via buffer-local variables.
+---       args.config.signs = function(namespace, bufnr)
+---         return vim.b[bufnr].show_signs == true
+---       end
+---       -- Disable a feature.
+---       args.config.update_in_insert = false
+---       return vim.lsp.diagnostic.on_publish_diagnostics(unpack(args))
+---     end)
+---     </pre>
 ---
 ---@param config table Configuration table (see |vim.diagnostic.config()|).
 function M.on_publish_diagnostics(_, result, ctx, config)
@@ -227,9 +223,8 @@ function M.on_publish_diagnostics(_, result, ctx, config)
       end
     end
 
-    -- Persist configuration to ensure buffer reloads use the same
-    -- configuration. To make lsp.with configuration work (See :help
-    -- lsp-handler-configuration)
+    -- Persist configuration to ensure buffer reloads use the same configuration.
+    -- To make vim.on_fun work (:help lsp-handler-config).
     vim.diagnostic.config(config, namespace)
   end
 

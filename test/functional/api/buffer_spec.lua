@@ -11,7 +11,6 @@ local exc_exec = helpers.exc_exec
 local exec_lua = helpers.exec_lua
 local feed_command = helpers.feed_command
 local insert = helpers.insert
-local NIL = helpers.NIL
 local command = helpers.command
 local bufmeths = helpers.bufmeths
 local feed = helpers.feed
@@ -684,14 +683,14 @@ describe('api/buf', function()
     it('buffer_set_var returns the old value', function()
       local val1 = {1, 2, {['3'] = 1}}
       local val2 = {4, 7}
-      eq(NIL, request('buffer_set_var', 0, 'lua', val1))
+      eq(vim.NIL, request('buffer_set_var', 0, 'lua', val1))
       eq(val1, request('buffer_set_var', 0, 'lua', val2))
     end)
 
     it('buffer_del_var returns the old value', function()
       local val1 = {1, 2, {['3'] = 1}}
       local val2 = {4, 7}
-      eq(NIL,  request('buffer_set_var', 0, 'lua', val1))
+      eq(vim.NIL,  request('buffer_set_var', 0, 'lua', val1))
       eq(val1, request('buffer_set_var', 0, 'lua', val2))
       eq(val2, request('buffer_del_var', 0, 'lua'))
     end)

@@ -1104,7 +1104,7 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
 
 /// Pastes at cursor, in any mode.
 ///
-/// Invokes the `vim.paste` handler, which handles each mode appropriately.
+/// Invokes |vim.paste()|, which handles each mode appropriately.
 /// Sets redo/undo. Faster than |nvim_input()|. Lines break at LF ("\n").
 ///
 /// Errors ('nomodifiable', `vim.paste()` failure, …) are reflected in `err`

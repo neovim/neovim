@@ -454,6 +454,8 @@ Standard Features ~
 
 External UIs are expected to implement these common features:
 
+- Call |nvim_paste()| when the user pastes text (CTRL-v/CMD-v/…). Don't
+  directly call "p", nvim_input(), etc.
 - Call |nvim_set_client_info()| after connecting, so users and plugins can
   detect the UI by handling the |ChanInfo| event. This avoids the need for
   special variables and UI-specific config files (gvimrc, macvimrc, …).

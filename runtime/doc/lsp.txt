@@ -24,26 +24,20 @@ QUICKSTART                                              *lsp-quickstart*
 Nvim provides an LSP client, but the servers are provided by third parties.
 Follow these steps to get LSP features:
 
-  1. Install language servers using your package manager or by
-     following the upstream installation instruction.
-
-     A list of language servers is available at:
-
+  1. Install language servers using your package manager or by following the
+     upstream installation instructions.
      https://microsoft.github.io/language-server-protocol/implementors/servers/
 
-  2. Configure the LSP client per language server.
-     A minimal example:
->lua
-    vim.lsp.start({
-      name = 'my-server-name',
-      cmd = {'name-of-language-server-executable'},
-      root_dir = vim.fs.dirname(vim.fs.find({'setup.py', 'pyproject.toml'}, { upward = true })[1]),
-    })
-<
-     See |vim.lsp.start()| for details.
+  2. Configure the LSP client per language server. See |vim.lsp.start()| for
+     details. Minimal example: >lua
 
-  3. Configure keymaps and autocmds to utilize LSP features.
-     See |lsp-config|.
+     vim.lsp.start({
+       name = 'my-server-name',
+       cmd = {'name-of-language-server-executable'},
+       root_dir = vim.fs.dirname(vim.fs.find({'setup.py', 'pyproject.toml'}, { upward = true })[1]),
+     })
+<
+  3. Configure keymaps and autocmds to utilize LSP features. See |lsp-config|.
 
                                                         *lsp-config*
 
@@ -253,7 +247,7 @@ For |lsp-request|, each |lsp-handler| has this signature: >
                         particular handler.
 
                         To configure a particular |lsp-handler|, see:
-                            |lsp-handler-configuration|
+                            |lsp-handler-config|
 
 
     Returns: ~
@@ -294,105 +288,75 @@ For |lsp-notification|, each |lsp-handler| has this signature: >
                             |vim.lsp.diagnostic.on_publish_diagnostics()|
 
                         To configure a particular |lsp-handler|, see:
-                            |lsp-handler-configuration|
+                            |lsp-handler-config|
 
     Returns: ~
         The |lsp-handler|'s return value will be ignored.
 
-                                                   *lsp-handler-configuration*
+                                                   *lsp-handler-config*
 
-To configure the behavior of a builtin |lsp-handler|, the convenient method
-|vim.lsp.with()| is provided for users.
+To override or augment a builtin |lsp-handler|, use |vim.on_fun()|.
 
-  To configure the behavior of |vim.lsp.diagnostic.on_publish_diagnostics()|,
-  consider the following example, where a new |lsp-handler| is created using
-  |vim.lsp.with()| that no longer generates signs for the diagnostics: >lua
+Example: this code overrides |vim.lsp.diagnostic.on_publish_diagnostics()|, to
+disable signs for diagnostics: >lua
 
-    vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
-      vim.lsp.diagnostic.on_publish_diagnostics, {
-        -- Disable signs
-        signs = false,
-      }
-    )
+  vim.on_fun(vim.lsp.handlers, 'textDocument/publishDiagnostics', function(err, result, ctx, config)
+    config.signs = false,  -- Disable signs
+  end)
 <
-  To enable signs, use |vim.lsp.with()| again to create and assign a new
-  |lsp-handler| to |vim.lsp.handlers| for the associated method: >lua
+To configure handlers per-server you can use the {handlers} key of
+|vim.lsp.start()|: >lua
 
-    vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
-      vim.lsp.diagnostic.on_publish_diagnostics, {
-        -- Enable signs
-        signs = true,
-      }
-    )
+  vim.lsp.start{
+    handlers = {
+      ["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
+          config.virtual_text = false,  -- Disable virtual text.
+          vim.lsp.diagnostic.on_publish_diagnostics(err, result, ctx, config)
+        end)
+    },
+    ...,  -- Other configuration omitted.
+  }
 <
-  To configure a handler on a per-server basis, you can use the {handlers} key
-  for |vim.lsp.start_client()| >lua
+or if using "nvim-lspconfig", use the {handlers} key of `setup()`: >lua
 
-    vim.lsp.start_client {
-      ..., -- Other configuration omitted.
-      handlers = {
-        ["textDocument/publishDiagnostics"] = vim.lsp.with(
-          vim.lsp.diagnostic.on_publish_diagnostics, {
-            -- Disable virtual_text
-            virtual_text = false,
-          }
-        ),
-      },
+  require('lspconfig').rust_analyzer.setup {
+    handlers = {
+      -- (same as above)
     }
+  }
 <
-  or if using "nvim-lspconfig", you can use the {handlers} key of `setup()`:
-  >lua
+Most handlers do not have a dedicated handler function (such as
+||vim.lsp.diagnostic.on_publish_diagnostics()|).
 
-    require('lspconfig').rust_analyzer.setup {
-      handlers = {
-        ["textDocument/publishDiagnostics"] = vim.lsp.with(
-          vim.lsp.diagnostic.on_publish_diagnostics, {
-            -- Disable virtual_text
-            virtual_text = false
-          }
-        ),
-      }
-    }
-<
-  Some handlers do not have an explicitly named handler function (such as
-  ||vim.lsp.diagnostic.on_publish_diagnostics()|). To override these, first
-  create a reference to the existing handler: >lua
+                                   *vim.lsp.handlers* *lsp-handler-resolution*
+The |lsp-handler| is resolved based on the current |lsp-method| in the
+following order:
 
-    local on_references = vim.lsp.handlers["textDocument/references"]
-    vim.lsp.handlers["textDocument/references"] = vim.lsp.with(
-      on_references, {
-        -- Use location list instead of quickfix list
-        loclist = true,
-      }
-    )
-<
-                                                      *lsp-handler-resolution*
+1. Handler (if any) passed to |vim.lsp.buf_request()|.
+2. Handler (if any) defined in |vim.lsp.start()|.
+3. Handler (if any) defined on |vim.lsp.handlers|.
+
 Handlers can be set by:
+- Global table `vim.lsp.handlers` defining the default mapping of |lsp-method|
+  names to |lsp-handlers|. Use |vim.on_fun()| to hook into the default
+  handler for the "textDocument/definition" method: >lua
 
-- Setting a field in vim.lsp.handlers.                      *vim.lsp.handlers*
-    vim.lsp.handlers is a global table that contains the default mapping of
-    |lsp-method| names to |lsp-handlers|.
+    vim.on_fun(vim.lsp.handlers, 'textDocument/definition', function(...)
+        -- custom logic
+    end)
 
-    To override the handler for the `"textDocument/definition"` method: >lua
+- {handlers} parameter of |vim.lsp.start()|. This will set the |lsp-handler|
+  as the default handler for this server. Example: >lua
 
-    vim.lsp.handlers["textDocument/definition"] = my_custom_default_definition
-<
-- The {handlers} parameter for |vim.lsp.start_client()|.
-    This will set the |lsp-handler| as the default handler for this server.
-
-    For example: >lua
-
-    vim.lsp.start_client {
+    vim.lsp.start {
       ..., -- Other configuration omitted.
       handlers = {
         ["textDocument/definition"] = my_custom_server_definition
       },
     }
 
-- The {handler} parameter for |vim.lsp.buf_request()|.
-    This will set the |lsp-handler| ONLY for the current request.
-
-    For example: >lua
+- {handler} parameter of |vim.lsp.buf_request()|. This will set the
+  |lsp-handler| ONLY for the current request. Example: >lua
 
     vim.lsp.buf_request(
       0,
@@ -401,12 +365,6 @@ Handlers can be set by:
       my_request_custom_definition
     )
 <
-In summary, the |lsp-handler| will be chosen based on the current |lsp-method|
-in the following order:
-
-1. Handler passed to |vim.lsp.buf_request()|, if any.
-2. Handler defined in |vim.lsp.start_client()|, if any.
-3. Handler defined in |vim.lsp.handlers|, if any.
 
                                                             *vim.lsp.log_levels*
 Log levels are defined in |vim.log.levels|
@@ -1086,14 +1044,6 @@ tagfunc({...})                                             *vim.lsp.tagfunc()*
     Return: ~
         table[] tags A list of matching tags
 
-with({handler}, {override_config})                            *vim.lsp.with()*
-    Function to manage overriding defaults for LSP handlers.
-
-    Parameters: ~
-      • {handler}          (function) See |lsp-handler|
-      • {override_config}  (table) Table containing the keys to override
-                           behavior of the {handler}
-
 
 ==============================================================================
 Lua module: vim.lsp.buf                                              *lsp-buf*
@@ -1349,25 +1299,21 @@ on_publish_diagnostics({_}, {result}, {ctx}, {config})
     |lsp-handler| for the method "textDocument/publishDiagnostics"
 
     See |vim.diagnostic.config()| for configuration options. Handler-specific
-    configuration can be set using |vim.lsp.with()|: >lua
+    configuration can be set using |vim.func.on_fun()|: >lua
 
-     vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
-       vim.lsp.diagnostic.on_publish_diagnostics, {
-         -- Enable underline, use default values
-         underline = true,
-         -- Enable virtual text, override spacing to 4
-         virtual_text = {
-           spacing = 4,
-         },
-         -- Use a function to dynamically turn signs off
-         -- and on, using buffer local variables
-         signs = function(namespace, bufnr)
-           return vim.b[bufnr].show_signs == true
-         end,
-         -- Disable a feature
-         update_in_insert = false,
-       }
-     )
+         vim.func.on_fun(vim.lsp.handlers, 'textDocument/publishDiagnostics', function(fn, args)
+           -- Enable underline, use default values
+           args.config.underline = true
+           -- Enable virtual text, override spacing to 4
+           args.config.virtual_text = { spacing = 4 }
+           -- Dynamically turn signs on/off via buffer-local variables.
+           args.config.signs = function(namespace, bufnr)
+             return vim.b[bufnr].show_signs == true
+           end
+           -- Disable a feature.
+           args.config.update_in_insert = false
+           return vim.lsp.diagnostic.on_publish_diagnostics(unpack(args))
+         end)
 <
 
     Parameters: ~
@@ -1521,14 +1467,13 @@ Lua module: vim.lsp.handlers                                    *lsp-handlers*
 hover({_}, {result}, {ctx}, {config})               *vim.lsp.handlers.hover()*
     |lsp-handler| for the method "textDocument/hover" >lua
 
-       vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
-         vim.lsp.handlers.hover, {
-           -- Use a sharp border with `FloatBorder` highlights
-           border = "single",
-           -- add the title in hover float window
-           title = "hover"
-         }
-       )
+       vim.func.on_fun(vim.lsp.handlers, 'textDocument/hover', function(fn, args)
+         -- Use a sharp border with `FloatBorder` highlights.
+         args.config.border = "single"
+         -- Add the title in hover float window.
+         args.config.title = "hover"
+         return vim.lsp.handlers.hover(unpack(args))
+       end)
 <
 
     Parameters: ~
@@ -1542,12 +1487,11 @@ signature_help({_}, {result}, {ctx}, {config})
     |lsp-handler| for the method "textDocument/signatureHelp". The active
     parameter is highlighted with |hl-LspSignatureActiveParameter|. >lua
 
-       vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
-         vim.lsp.handlers.signature_help, {
-           -- Use a sharp border with `FloatBorder` highlights
-           border = "single"
-         }
-       )
+       vim.func.on_fun(vim.lsp.handlers, 'textDocument/signatureHelp', function(fn, args)
+         -- Use a sharp border with `FloatBorder` highlights.
+         args.config.border = "single"
+         return vim.lsp.handlers.signature_help(unpack(args))
+       end)
 <
 
     Parameters: ~
