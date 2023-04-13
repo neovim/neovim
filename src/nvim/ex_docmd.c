@@ -7058,24 +7058,6 @@ void dialog_msg(char *buff, char *format, char *fname)
   vim_snprintf(buff, DIALOG_MSG_SIZE, format, fname);
 }
 
-/// ":behave {mswin,xterm}"
-static void ex_behave(exarg_T *eap)
-{
-  if (strcmp(eap->arg, "mswin") == 0) {
-    set_option_value_give_err("selection", 0L, "exclusive", 0);
-    set_option_value_give_err("selectmode", 0L, "mouse,key", 0);
-    set_option_value_give_err("mousemodel", 0L, "popup", 0);
-    set_option_value_give_err("keymodel", 0L, "startsel,stopsel", 0);
-  } else if (strcmp(eap->arg, "xterm") == 0) {
-    set_option_value_give_err("selection", 0L, "inclusive", 0);
-    set_option_value_give_err("selectmode", 0L, "", 0);
-    set_option_value_give_err("mousemodel", 0L, "extend", 0);
-    set_option_value_give_err("keymodel", 0L, "", 0);
-  } else {
-    semsg(_(e_invarg2), eap->arg);
-  }
-}
-
 static TriState filetype_detect = kNone;
 static TriState filetype_plugin = kNone;
 static TriState filetype_indent = kNone;

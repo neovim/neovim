@@ -15,7 +15,10 @@ endif
 set cpo&vim
 
 " set 'selection', 'selectmode', 'mousemodel' and 'keymodel' for MS-Windows
-behave mswin
+set selection=exclusive
+set selectmode=mouse,key
+set mousemodel=popup
+set keymodel=startsel,stopsel
 
 " backspace and cursor keys wrap to previous/next line
 set backspace=indent,eol,start whichwrap+=<,>,[,]

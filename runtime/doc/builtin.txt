@@ -3003,7 +3003,6 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		arglist		file names in argument list
 		augroup		autocmd groups
 		buffer		buffer names
-		behave		|:behave| suboptions
 		breakpoint	|:breakadd| and |:breakdel| suboptions
 		cmdline		|cmdline-completion| result
 		color		color schemes

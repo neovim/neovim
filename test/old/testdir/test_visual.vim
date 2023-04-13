@@ -485,14 +485,14 @@ endfunc
 
 func Test_visual_block_put_invalid()
   enew!
-  behave mswin
+  set selection=exclusive
   norm yy
   norm v)Ps/^/	
   " this was causing the column to become negative
   silent norm ggv)P
 
   bwipe!
-  behave xterm
+  set selection&
 endfunc
 
 " Visual modes (v V CTRL-V) followed by an operator; count; repeating

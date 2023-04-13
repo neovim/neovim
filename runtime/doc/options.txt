@@ -3589,7 +3589,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   stopsel	Using a not-shifted special key stops selection.
 	Special keys in this context are the cursor keys, <End>, <Home>,
 	<PageUp> and <PageDown>.
-	The 'keymodel' option is set by the |:behave| command.
 
 					*'keywordprg'* *'kp'*
 'keywordprg' 'kp'	string	(default ":Man", Windows: ":help")
@@ -4168,21 +4167,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'mousehide'	hide mouse pointer while typing text
 	'selectmode'	whether to start Select mode or Visual mode
 
-	The :behave command provides some "profiles" for mouse behavior.
-								*:behave* *:be*
-	:be[have] {model}	Set behavior for mouse and selection.  Valid
-				arguments are:
-				   mswin	MS-Windows behavior
-				   xterm	Xterm behavior
-
-				Using ":behave" changes these options:
-				option		mswin			xterm	~
-				'selectmode'	"mouse,key"		""
-				'mousemodel'	"popup"			"extend"
-				'keymodel'	"startsel,stopsel"	""
-				'selection'	"exclusive"		"inclusive"
-
-
 			*'mousefocus'* *'mousef'* *'nomousefocus'* *'nomousef'*
 'mousefocus' 'mousef'	boolean	(default off)
 			global
@@ -4249,8 +4233,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the "g" key before using the mouse:
 	    "g<LeftMouse>"  is "<C-LeftMouse>	(jump to tag under mouse click)
 	    "g<RightMouse>" is "<C-RightMouse>	("CTRL-T")
-
-	The 'mousemodel' option is set by the |:behave| command.
 
 	      *'mousemoveevent'* *'mousemev'* *'nomousemoveevent'* *'nomousemev'*
 'mousemoveevent' 'mousemev'  boolean	(default off)
@@ -5013,8 +4995,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	backwards, you cannot include the last character of a line, when
 	starting in Normal mode and 'virtualedit' empty.
 
-	The 'selection' option is set by the |:behave| command.
-
 						*'selectmode'* *'slm'*
 'selectmode' 'slm'	string	(default "")
 			global
@@ -5025,7 +5005,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   key		when using shifted special keys
 	   cmd		when using "v", "V" or CTRL-V
 	See |Select-mode|.
-	The 'selectmode' option is set by the |:behave| command.
 
 						*'sessionoptions'* *'ssop'*
 'sessionoptions' 'ssop'	string	(default: "blank,buffers,curdir,folds,

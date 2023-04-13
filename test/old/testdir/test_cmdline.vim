@@ -453,11 +453,6 @@ func Test_getcompletion()
   let l = getcompletion('blahblah', 'augroup')
   call assert_equal([], l)
 
-  let l = getcompletion('', 'behave')
-  call assert_true(index(l, 'mswin') >= 0)
-  let l = getcompletion('not', 'behave')
-  call assert_equal([], l)
-
   let l = getcompletion('', 'color')
   call assert_true(index(l, 'default') >= 0)
   let l = getcompletion('dirty', 'color')
@@ -2765,25 +2760,6 @@ func Test_fuzzy_completion_bufname_fullpath()
   call assert_match('Xcmd/Xstate/Xfile.js$', @:)
   cd -
   call delete('Xcmd', 'rf')
-  set wildoptions&
-endfunc
-
-" :behave suboptions fuzzy completion
-func Test_fuzzy_completion_behave()
-  set wildoptions&
-  call feedkeys(":behave xm\<Tab>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"behave xm', @:)
-  call feedkeys(":behave xt*m\<Tab>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"behave xterm', @:)
-  set wildoptions=fuzzy
-  call feedkeys(":behave xm\<Tab>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"behave xterm', @:)
-  call feedkeys(":behave xt*m\<Tab>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"behave xt*m', @:)
-  let g:Sline = ''
-  call feedkeys(":behave win\<C-D>\<F4>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('mswin', g:Sline)
-  call assert_equal('"behave win', @:)
   set wildoptions&
 endfunc
 

@@ -197,12 +197,6 @@ module.cmds = {
     func='ex_bunload',
   },
   {
-    command='behave',
-    flags=bit.bor(BANG, NEEDARG, WORD1, TRLBAR, CMDWIN, LOCK_OK),
-    addr_type='ADDR_NONE',
-    func='ex_behave',
-  },
-  {
     command='belowright',
     flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
     addr_type='ADDR_NONE',

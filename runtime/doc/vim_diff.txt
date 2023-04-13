@@ -556,6 +556,7 @@ Aliases:
   vimdiff   (alias for "nvim -d" |diff-mode|)
 
 Commands:
+  :behave
   :fixdel
   :hardcopy
   :helpfind
