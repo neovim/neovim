@@ -644,4 +644,3 @@ for k, fn in pairs(M) do
 end
 
 return M
--- vim:sw=2 ts=2 et

@@ -2154,4 +2154,3 @@ M._get_line_byte_from_position = get_line_byte_from_position
 M.buf_versions = {}
 
 return M
--- vim:sw=2 ts=2 et

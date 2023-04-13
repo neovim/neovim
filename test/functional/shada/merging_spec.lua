@@ -1115,5 +1115,3 @@ describe('ShaDa changes support code', function()
     eq(found, 100)
   end)
 end)
-
--- vim: ts=2 sw=2

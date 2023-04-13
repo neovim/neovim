@@ -894,4 +894,3 @@ function protocol.resolve_capabilities(server_capabilities)
 end
 
 return protocol
--- vim:sw=2 ts=2 et
