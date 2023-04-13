@@ -266,7 +266,7 @@ function LanguageTree:parse()
 
         self:_do_callback('changedtree', cb_changes, tree)
         self._trees[i] = tree
-        vim.list_extend(changes, tree_changes)
+        vim.list_extend(changes, cb_changes)
 
         self._stats.regions_parsed = self._stats.regions_parsed + 1
       end
@@ -276,6 +276,10 @@ function LanguageTree:parse()
   self._stats.changes = changes
 
   self._stats.query_time = tcall(function()
+    if #changes == 0 then
+      return
+    end
+
     local seen_langs = {} ---@type table<string,boolean>
     for lang, injection_ranges in pairs(self:_get_injections()) do
       if pcall(language.add, lang) then
@@ -481,6 +485,17 @@ function LanguageTree:set_included_regions(new_regions)
   self._regions = new_regions
 end
 
+--- @param rs Range6[]
+--- @return Range6[]
+local function prune_empty_ranges(rs)
+  return vim.iter(rs):filter(
+    --- @param r Range6
+    function(r)
+      return r[3] ~= r[6]
+    end
+  ):totable()
+end
+
 ---Gets the set of included regions
 ---@return integer[][]
 function LanguageTree:included_regions()
@@ -493,10 +508,36 @@ function LanguageTree:included_regions()
     return { {} }
   end
 
+  local trees_to_remove = {} --- @type table<TSTree,true>
+  local regions_to_remove = {} --- @type table<Range6[],true>
   local regions = {} ---@type Range6[][]
-  for i, _ in ipairs(self._trees) do
-    regions[i] = self._trees[i]:included_ranges(true)
+
+  for i, tree in ipairs(self._trees) do
+    local rs = tree:included_ranges(true)
+    prune_empty_ranges(rs)
+    table.insert(regions, rs)
+    if #rs == 0 then
+      -- Remove tree if it has no ranges
+      trees_to_remove[self._trees[i]] = true
+      regions_to_remove[regions[i]] = true
+    end
   end
+
+  self._trees = vim.iter(self._trees):filter(
+    --- @param t TSTree
+    function(t)
+      return not trees_to_remove[t]
+    end
+  ):totable()
+
+  regions = vim.iter(regions):filter(
+    --- @param r Range6[]
+    function(r)
+      return not regions_to_remove[r]
+    end
+  ):totable()  --[[@as Range6[][] ]]
+
+  assert(#self._trees == #regions)
 
   self._regions = regions
   return regions
