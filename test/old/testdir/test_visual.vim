@@ -485,6 +485,7 @@ endfunc
 
 func Test_visual_block_put_invalid()
   enew!
+  " behave mswin
   set selection=exclusive
   norm yy
   norm v)Ps/^/	
@@ -492,6 +493,7 @@ func Test_visual_block_put_invalid()
   silent norm ggv)P
 
   bwipe!
+  " behave xterm
   set selection&
 endfunc
 
