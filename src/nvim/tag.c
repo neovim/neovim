@@ -3322,11 +3322,10 @@ int get_tags(list_T *list, char *pat, char *buf_fname)
   }
 
   for (i = 0; i < num_matches; i++) {
-    int parse_result = parse_match(matches[i], &tp);
-
-    // Avoid an unused variable warning in release builds.
-    (void)parse_result;
-    assert(parse_result == OK);
+    if (parse_match(matches[i], &tp) == FAIL) {
+      xfree(matches[i]);
+      continue;
+    }
 
     bool is_static = test_for_static(&tp);
 
