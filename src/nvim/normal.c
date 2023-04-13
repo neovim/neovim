@@ -1173,7 +1173,7 @@ static int normal_execute(VimState *state, int key)
     msg_col = 0;
   }
 
-  s->old_pos = curwin->w_cursor;           // remember where cursor was
+  s->old_pos = curwin->w_cursor;           // remember where the cursor was
 
   // When 'keymodel' contains "startsel" some keys start Select/Visual
   // mode.
@@ -1997,13 +1997,21 @@ static void display_showcmd(void)
   showcmd_is_clear = (len == 0);
 
   if (*p_sloc == 's') {
-    win_redr_status(curwin);
-    setcursor();  // put cursor back where it belongs
+    if (showcmd_is_clear) {
+      curwin->w_redr_status = true;
+    } else {
+      win_redr_status(curwin);
+      setcursor();  // put cursor back where it belongs
+    }
     return;
   }
   if (*p_sloc == 't') {
-    draw_tabline();
-    setcursor();  // put cursor back where it belongs
+    if (showcmd_is_clear) {
+      redraw_tabline = true;
+    } else {
+      draw_tabline();
+      setcursor();  // put cursor back where it belongs
+    }
     return;
   }
   // 'showcmdloc' is "last" or empty
