@@ -11,11 +11,10 @@ describe('vim._watch', function()
   end)
 
   describe('watch', function()
+    local root_dir = vim.fs.dirname(helpers.tmpname())
+    helpers.rmdir(root_dir)
+    mkdir(root_dir)
     it('detects file changes', function()
-      local root_dir = helpers.tmpname()
-      os.remove(root_dir)
-      mkdir(root_dir)
-
       local result = exec_lua(
         [[
         local root_dir = ...
@@ -99,11 +98,10 @@ describe('vim._watch', function()
   end)
 
   describe('poll', function()
+    local root_dir = vim.fs.dirname(helpers.tmpname())
+    helpers.rmdir(root_dir)
+    mkdir(root_dir)
     it('detects file changes', function()
-      local root_dir = helpers.tmpname()
-      os.remove(root_dir)
-      mkdir(root_dir)
-
       local result = exec_lua(
         [[
         local root_dir = ...

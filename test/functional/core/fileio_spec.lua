@@ -266,9 +266,9 @@ describe('tmpdir', function()
 
   before_each(function()
     -- Fake /tmp dir so that we can mess it up.
-    os_tmpdir = tmpname()
-    os.remove(os_tmpdir)
-    mkdir(os_tmpdir)
+    os_tmpdir = vim.fs.dirname(tmpname())
+    helpers.rmdir(os_tmpdir)
+    helpers.mkdir_p(os_tmpdir)
   end)
 
   after_each(function()
