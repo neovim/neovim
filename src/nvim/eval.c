@@ -8038,34 +8038,36 @@ void var_set_global(const char *const name, typval_T vartv)
   restore_funccal();
 }
 
-static int store_variables(FILE *fd, char *key, typval_T *value, bool declaration)
+static int store_variable(FILE *fd, typval_T *value)
 {
-  if ((value->v_type == VAR_DICT || value->v_type == VAR_LIST) && !declaration) {
-    fprintf(fd, "'%s':", key);
-  }
   switch (value->v_type) {
   case VAR_DICT:
     fprintf(fd, "{");
+    size_t n_items = value->vval.v_dict->dv_hashtab.ht_used;
     TV_DICT_ITER(value->vval.v_dict, inner_var, {
-      if (store_variables(fd, inner_var->di_key, &inner_var->di_tv, false) == FAIL) {
+      fprintf(fd, "'%s':", inner_var->di_key);
+      if (store_variable(fd, &inner_var->di_tv) == FAIL) {
         return FAIL;
       }
+      if (--n_items > 0){
+        fprintf(fd, ",");
+      }
     });
-    fprintf(fd, declaration ? "}" : "},");
+    fprintf(fd, "}");
     break;
   case VAR_LIST:
     fprintf(fd, "[");
     TV_LIST_ITER(value->vval.v_list, inner_var, {
-      if (store_variables(fd, 0, &inner_var->li_tv, false) == FAIL) {
+      if (store_variable(fd, &inner_var->li_tv) == FAIL) {
         return FAIL;
       }
+      if (&inner_var->li_tv != &value->vval.v_list->lv_last->li_tv){
+        fprintf(fd, ",");
+      }
     });
-    fprintf(fd, declaration ? "]" : "],");
+    fprintf(fd, "]");
     break;
-  case VAR_STRING:
-    if (key != 0) {
-      fprintf(fd, "'%s':", key);
-    }
+  case VAR_STRING:;
     char *const p = vim_strsave_escaped(tv_get_string(value), "\\\"\n\r");
     for (char *t = p; *t != NUL; t++) {
       if (*t == '\n') {
@@ -8074,21 +8076,15 @@ static int store_variables(FILE *fd, char *key, typval_T *value, bool declaratio
         *t = 'r';
       }
     }
-    fprintf(fd, "'%s',", p);
+    fprintf(fd, "'%s'", p);
     xfree(p);
     break;
   case VAR_NUMBER:
-    if (key != 0) {
-      fprintf(fd, "'%s':", key);
-    }
-    fprintf(fd, "%s,", tv_get_string(value));
+    fprintf(fd, "%s", tv_get_string(value));
     break;
-  case VAR_FLOAT:
-    if (key != 0) {
-      fprintf(fd, "'%s':", key);
-    }
+  case VAR_FLOAT:;
     float_T f = value->vval.v_float;
-    fprintf(fd, f < 0 ? "-%f," : "%f,", fabs(f));
+    fprintf(fd, f < 0 ? "-%f" : "%f", fabs(f));
     break;
   default:
     break;
@@ -8101,7 +8097,7 @@ int store_session_globals(FILE *fd)
   TV_DICT_ITER(&globvardict, this_var, {
     if (var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
       if (fprintf(fd, "let %s = ", this_var->di_key) < 0
-          || store_variables(fd, 0, &(this_var->di_tv), true) == FAIL || put_eol(fd) == FAIL)
+          || store_variable(fd, &this_var->di_tv) == FAIL || put_eol(fd) == FAIL)
         return FAIL;
     }
   });
