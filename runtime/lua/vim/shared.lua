@@ -918,4 +918,57 @@ function vim.iter(src)
   return Iter.new(src)
 end
 
+--- Collect an iterator into a table.
+---
+--- This is a convenience function that performs:
+---
+--- <pre>lua
+--- vim.iter(f):collect()
+--- </pre>
+---
+---@param f function Iterator function
+---@param opts ?table Optional parameters. See |Iter:collect()|.
+---@return table
+function vim.collect(f, opts)
+  return vim.iter(f):collect(opts)
+end
+
+--- Filter a table or iterator.
+---
+--- This is a convenience function that performs:
+---
+--- <pre>lua
+--- vim.iter(src):filter(f):collect()
+--- </pre>
+---
+---@see |Iter:filter()|
+---
+---@param src table|function Table or iterator function to filter
+---@param f function(...):bool Filter function. Accepts the current iterator or table values as
+---                            arguments and returns true if those values should be kept in the
+---                            final table
+---@return table
+function vim.filter(src, f)
+  return vim.iter(src):filter(f):collect()
+end
+
+--- Map and filter a table or iterator.
+---
+--- This is a convenience function that performs:
+---
+--- <pre>lua
+--- vim.iter(src):filter_map(f):collect()
+--- </pre>
+---
+---@see |Iter:filter_map()|
+---
+---@param src table|function Table or iterator function to filter
+---@param f function(...):?any Map function. Accepts the current iterator or table values as
+---                            arguments and returns one or more new values. Nil values are removed
+---                            from the final table. the final table
+---@return table
+function vim.filter_map(src, f)
+  return vim.iter(src):filter_map(f):collect()
+end
+
 return vim

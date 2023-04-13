@@ -1595,6 +1595,23 @@ show_pos({bufnr}, {row}, {col}, {filter})                     *vim.show_pos()*
 
 
 
+collect({f}, {opts})                                           *vim.collect()*
+    Collect an iterator into a table.
+
+    This is a convenience function that performs:
+
+    >lua
+
+     vim.iter(f):collect()
+<
+
+    Parameters: ~
+      • {f}     (function) Iterator function
+      • {opts}  ?table Optional parameters. See |Iter:collect()|.
+
+    Return: ~
+        (table)
+
 deep_equal({a}, {b})                                        *vim.deep_equal()*
     Deep compare values for equality
 
@@ -1652,6 +1669,51 @@ endswith({s}, {suffix})                                       *vim.endswith()*
 
     Return: ~
         (boolean) `true` if `suffix` is a suffix of `s`
+
+filter({src}, {f})                                              *vim.filter()*
+    Filter a table or iterator.
+
+    This is a convenience function that performs:
+
+    >lua
+
+     vim.iter(src):filter(f):collect()
+<
+
+    Parameters: ~
+      • {src}  table|function Table or iterator function to filter
+      • {f}    function(...):bool Filter function. Accepts the current
+               iterator or table values as arguments and returns true if those
+               values should be kept in the final table
+
+    Return: ~
+        (table)
+
+    See also: ~
+      • |Iter:filter()|
+
+filter_map({src}, {f})                                      *vim.filter_map()*
+    Map and filter a table or iterator.
+
+    This is a convenience function that performs:
+
+    >lua
+
+     vim.iter(src):filter_map(f):collect()
+<
+
+    Parameters: ~
+      • {src}  table|function Table or iterator function to filter
+      • {f}    function(...):?any Map function. Accepts the current iterator
+               or table values as arguments and returns one or more new
+               values. Nil values are removed from the final table. the final
+               table
+
+    Return: ~
+        (table)
+
+    See also: ~
+      • |Iter:filter_map()|
 
 gsplit({s}, {sep}, {opts})                                      *vim.gsplit()*
     Splits a string at each instance of a separator.
