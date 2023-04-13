@@ -1530,6 +1530,10 @@ static bool hlgroup2dict(Dictionary *hl, NS ns_id, int hl_id, Arena *arena)
   if (link == -1) {
     return false;
   }
+  if (ns_id == 0 && sgp->sg_cleared && sgp->sg_set == 0) {
+    // table entry was created but not ever set
+    return false;
+  }
   HlAttrs attr =
     syn_attr2entry(ns_id == 0 ? sgp->sg_attr : ns_get_hl(&ns_id, hl_id, false, sgp->sg_set));
   *hl = arena_dict(arena, HLATTRS_DICT_SIZE + 1);
