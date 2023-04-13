@@ -512,7 +512,8 @@ end
 local function eval0(expr)
   local tv = ffi.gc(ffi.new('typval_T', {v_type=eval.VAR_UNKNOWN}),
                     eval.tv_clear)
-  if eval.eval0(to_cstr(expr), tv, nil, eval.EVAL_EVALUATE) == 0 then
+  local evalarg = ffi.new('evalarg_T', {eval_flags = eval.EVAL_EVALUATE})
+  if eval.eval0(to_cstr(expr), tv, nil, evalarg) == 0 then
     return nil
   else
     return tv

@@ -706,7 +706,7 @@ int eval_to_bool(char *arg, bool *error, char **nextcmd, int skip)
   if (skip) {
     emsg_skip++;
   }
-  if (eval0(arg, &tv, nextcmd, skip ? 0 : EVAL_EVALUATE) == FAIL) {
+  if (eval0(arg, &tv, nextcmd, skip ? NULL : &EVALARG_EVALUATE) == FAIL) {
     *error = true;
   } else {
     *error = false;
@@ -730,7 +730,7 @@ static int eval1_emsg(char **arg, typval_T *rettv, bool evaluate)
   const int did_emsg_before = did_emsg;
   const int called_emsg_before = called_emsg;
 
-  const int ret = eval1(arg, rettv, evaluate ? EVAL_EVALUATE : 0);
+  const int ret = eval1(arg, rettv, evaluate ? &EVALARG_EVALUATE : NULL);
   if (ret == FAIL) {
     // Report the invalid expression unless the expression evaluation has
     // been cancelled due to an aborting error, an interrupt, or an
@@ -832,7 +832,8 @@ char *eval_to_string_skip(const char *arg, const char **nextcmd, const bool skip
   if (skip) {
     emsg_skip++;
   }
-  if (eval0((char *)arg, &tv, (char **)nextcmd, skip ? 0 : EVAL_EVALUATE) == FAIL || skip) {
+  if (eval0((char *)arg, &tv, (char **)nextcmd, skip ? NULL : &EVALARG_EVALUATE)
+      == FAIL || skip) {
     retval = NULL;
   } else {
     retval = xstrdup(tv_get_string(&tv));
@@ -853,7 +854,7 @@ int skip_expr(char **pp)
   typval_T rettv;
 
   *pp = skipwhite(*pp);
-  return eval1(pp, &rettv, 0);
+  return eval1(pp, &rettv, NULL);
 }
 
 /// Top level evaluation function, returning a string.
@@ -868,7 +869,7 @@ char *eval_to_string(char *arg, char **nextcmd, bool convert)
   char *retval;
   garray_T ga;
 
-  if (eval0(arg, &tv, nextcmd, EVAL_EVALUATE) == FAIL) {
+  if (eval0(arg, &tv, nextcmd, &EVALARG_EVALUATE) == FAIL) {
     retval = NULL;
   } else {
     if (convert && tv.v_type == VAR_LIST) {
@@ -929,7 +930,7 @@ varnumber_T eval_to_number(char *expr)
 
   emsg_off++;
 
-  if (eval1(&p, &rettv, EVAL_EVALUATE) == FAIL) {
+  if (eval1(&p, &rettv, &EVALARG_EVALUATE) == FAIL) {
     retval = -1;
   } else {
     retval = tv_get_number_chk(&rettv, NULL);
@@ -947,7 +948,7 @@ varnumber_T eval_to_number(char *expr)
 typval_T *eval_expr(char *arg)
 {
   typval_T *tv = xmalloc(sizeof(*tv));
-  if (eval0(arg, tv, NULL, EVAL_EVALUATE) == FAIL) {
+  if (eval0(arg, tv, NULL, &EVALARG_EVALUATE) == FAIL) {
     XFREE_CLEAR(tv);
   }
   return tv;
@@ -1024,7 +1025,7 @@ list_T *eval_spell_expr(char *badword, char *expr)
     emsg_off++;
   }
 
-  if (eval1(&p, &rettv, EVAL_EVALUATE) == OK) {
+  if (eval1(&p, &rettv, &EVALARG_EVALUATE) == OK) {
     if (rettv.v_type != VAR_LIST) {
       tv_clear(&rettv);
     } else {
@@ -1171,7 +1172,7 @@ int eval_foldexpr(char *arg, int *cp)
   }
   textlock++;
   *cp = NUL;
-  if (eval0(arg, &tv, NULL, EVAL_EVALUATE) == FAIL) {
+  if (eval0(arg, &tv, NULL, &EVALARG_EVALUATE) == FAIL) {
     retval = 0;
   } else {
     // If the result is a number, just return the number.
@@ -1346,7 +1347,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
         empty1 = true;
       } else {
         empty1 = false;
-        if (eval1(&p, &var1, EVAL_EVALUATE) == FAIL) {  // Recursive!
+        if (eval1(&p, &var1, &EVALARG_EVALUATE) == FAIL) {  // Recursive!
           return NULL;
         }
         if (!tv_check_str(&var1)) {
@@ -1381,7 +1382,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
         } else {
           lp->ll_empty2 = false;
           // Recursive!
-          if (eval1(&p, &var2, EVAL_EVALUATE) == FAIL) {
+          if (eval1(&p, &var2, &EVALARG_EVALUATE) == FAIL) {
             tv_clear(&var1);
             return NULL;
           }
@@ -1784,6 +1785,7 @@ void *eval_for_line(const char *arg, bool *errp, char **nextcmdp, int skip)
   typval_T tv;
   list_T *l;
 
+  evalarg_T evalarg = { .eval_flags = skip ? 0 : EVAL_EVALUATE };
   *errp = true;  // Default: there is an error.
 
   expr = skip_var_list(arg, &fi->fi_varcount, &fi->fi_semicolon);
@@ -1800,7 +1802,7 @@ void *eval_for_line(const char *arg, bool *errp, char **nextcmdp, int skip)
   if (skip) {
     emsg_skip++;
   }
-  if (eval0(skipwhite(expr + 2), &tv, nextcmdp, skip ? 0 : EVAL_EVALUATE) == OK) {
+  if (eval0(skipwhite(expr + 2), &tv, nextcmdp, &evalarg) == OK) {
     *errp = false;
     if (!skip) {
       if (tv.v_type == VAR_LIST) {
@@ -2225,10 +2227,10 @@ static int eval_func(char **const arg, char *const name, const int name_len, typ
 /// Put the result in "rettv" when returning OK and "evaluate" is true.
 /// Note: "rettv.v_lock" is not set.
 ///
-/// @param flags  has EVAL_EVALUATE and similar flags.
+/// @param evalarg  can be NULL, &EVALARG_EVALUATE or a pointer.
 ///
 /// @return OK or FAIL.
-int eval0(char *arg, typval_T *rettv, char **nextcmd, const int flags)
+int eval0(char *arg, typval_T *rettv, char **nextcmd, evalarg_T *const evalarg)
 {
   int ret;
   char *p;
@@ -2237,7 +2239,7 @@ int eval0(char *arg, typval_T *rettv, char **nextcmd, const int flags)
   bool end_error = false;
 
   p = skipwhite(arg);
-  ret = eval1(&p, rettv, flags);
+  ret = eval1(&p, rettv, evalarg);
 
   if (ret != FAIL) {
     end_error = !ends_excmd(*p);
@@ -2277,20 +2279,20 @@ int eval0(char *arg, typval_T *rettv, char **nextcmd, const int flags)
 /// Note: "rettv.v_lock" is not set.
 ///
 /// @return  OK or FAIL.
-int eval1(char **arg, typval_T *rettv, const int flags)
+int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 {
-  typval_T var2;
-
   // Get the first variable.
-  if (eval2(arg, rettv, flags) == FAIL) {
+  if (eval2(arg, rettv, evalarg) == FAIL) {
     return FAIL;
   }
 
   if ((*arg)[0] == '?') {
-    const bool evaluate = flags & EVAL_EVALUATE;
+    evalarg_T nested_evalarg = evalarg == NULL ? (evalarg_T){ 0 } : *evalarg;
+    const int orig_flags = evalarg == NULL ? 0 : evalarg->eval_flags;
+    const bool evaluate = nested_evalarg.eval_flags & EVAL_EVALUATE;
 
     bool result = false;
-    if (flags & EVAL_EVALUATE) {
+    if (evaluate) {
       bool error = false;
 
       if (tv_get_number_chk(rettv, &error) != 0) {
@@ -2304,7 +2306,8 @@ int eval1(char **arg, typval_T *rettv, const int flags)
 
     // Get the second variable.  Recursive!
     *arg = skipwhite(*arg + 1);
-    if (eval1(arg, rettv, result ? flags : flags & ~EVAL_EVALUATE) == FAIL) {
+    nested_evalarg.eval_flags = result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
+    if (eval1(arg, rettv, &nested_evalarg) == FAIL) {
       return FAIL;
     }
 
@@ -2319,7 +2322,9 @@ int eval1(char **arg, typval_T *rettv, const int flags)
 
     // Get the third variable.  Recursive!
     *arg = skipwhite(*arg + 1);
-    if (eval1(arg, &var2, !result ? flags : flags & ~EVAL_EVALUATE) == FAIL) {
+    typval_T var2;
+    nested_evalarg.eval_flags = !result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
+    if (eval1(arg, &var2, &nested_evalarg) == FAIL) {
       if (evaluate && result) {
         tv_clear(rettv);
       }
@@ -2340,13 +2345,13 @@ int eval1(char **arg, typval_T *rettv, const int flags)
 /// "arg" is advanced to the next non-white after the recognized expression.
 ///
 /// @return  OK or FAIL.
-static int eval2(char **arg, typval_T *rettv, const int flags)
+static int eval2(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 {
   typval_T var2;
   bool error = false;
 
   // Get the first variable.
-  if (eval3(arg, rettv, flags) == FAIL) {
+  if (eval3(arg, rettv, evalarg) == FAIL) {
     return FAIL;
   }
 
@@ -2354,7 +2359,9 @@ static int eval2(char **arg, typval_T *rettv, const int flags)
   bool first = true;
   bool result = false;
   while ((*arg)[0] == '|' && (*arg)[1] == '|') {
-    const bool evaluate = flags & EVAL_EVALUATE;
+    evalarg_T nested_evalarg = evalarg == NULL ? (evalarg_T){ 0 } : *evalarg;
+    const int orig_flags = evalarg == NULL ? 0 : evalarg->eval_flags;
+    const bool evaluate = orig_flags & EVAL_EVALUATE;
 
     if (evaluate && first) {
       if (tv_get_number_chk(rettv, &error) != 0) {
@@ -2369,7 +2376,8 @@ static int eval2(char **arg, typval_T *rettv, const int flags)
 
     // Get the second variable.
     *arg = skipwhite(*arg + 2);
-    if (eval3(arg, &var2, !result ? flags : flags & ~EVAL_EVALUATE) == FAIL) {
+    nested_evalarg.eval_flags = !result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
+    if (eval3(arg, &var2, &nested_evalarg) == FAIL) {
       return FAIL;
     }
 
@@ -2399,13 +2407,13 @@ static int eval2(char **arg, typval_T *rettv, const int flags)
 ///             `arg` is advanced to the next non-white after the recognized expression.
 ///
 /// @return  OK or FAIL.
-static int eval3(char **arg, typval_T *rettv, const int flags)
+static int eval3(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 {
   typval_T var2;
   bool error = false;
 
   // Get the first variable.
-  if (eval4(arg, rettv, flags) == FAIL) {
+  if (eval4(arg, rettv, evalarg) == FAIL) {
     return FAIL;
   }
 
@@ -2413,7 +2421,9 @@ static int eval3(char **arg, typval_T *rettv, const int flags)
   bool first = true;
   bool result = true;
   while ((*arg)[0] == '&' && (*arg)[1] == '&') {
-    const bool evaluate = flags & EVAL_EVALUATE;
+    evalarg_T nested_evalarg = evalarg == NULL ? (evalarg_T){ 0 } : *evalarg;
+    const int orig_flags = evalarg == NULL ? 0 : evalarg->eval_flags;
+    const bool evaluate = orig_flags & EVAL_EVALUATE;
 
     if (evaluate && first) {
       if (tv_get_number_chk(rettv, &error) == 0) {
@@ -2428,7 +2438,8 @@ static int eval3(char **arg, typval_T *rettv, const int flags)
 
     // Get the second variable.
     *arg = skipwhite(*arg + 2);
-    if (eval4(arg, &var2, result ? flags : flags & ~EVAL_EVALUATE) == FAIL) {
+    nested_evalarg.eval_flags = result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
+    if (eval4(arg, &var2, &nested_evalarg) == FAIL) {
       return FAIL;
     }
 
@@ -2467,7 +2478,7 @@ static int eval3(char **arg, typval_T *rettv, const int flags)
 /// "arg" is advanced to the next non-white after the recognized expression.
 ///
 /// @return  OK or FAIL.
-static int eval4(char **arg, typval_T *rettv, const int flags)
+static int eval4(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 {
   typval_T var2;
   char *p;
@@ -2475,7 +2486,7 @@ static int eval4(char **arg, typval_T *rettv, const int flags)
   int len = 2;
 
   // Get the first variable.
-  if (eval5(arg, rettv, flags) == FAIL) {
+  if (eval5(arg, rettv, evalarg) == FAIL) {
     return FAIL;
   }
 
@@ -2539,11 +2550,11 @@ static int eval4(char **arg, typval_T *rettv, const int flags)
 
     // Get the second variable.
     *arg = skipwhite(p + len);
-    if (eval5(arg, &var2, flags) == FAIL) {
+    if (eval5(arg, &var2, evalarg) == FAIL) {
       tv_clear(rettv);
       return FAIL;
     }
-    if (flags & EVAL_EVALUATE) {
+    if (evalarg != NULL && (evalarg->eval_flags & EVAL_EVALUATE)) {
       const int ret = typval_compare(rettv, &var2, type, ic);
 
       tv_clear(&var2);
@@ -2597,27 +2608,25 @@ static int eval_addlist(typval_T *tv1, typval_T *tv2)
 ///             `arg` is advanced to the next non-white after the recognized expression.
 ///
 /// @return  OK or FAIL.
-static int eval5(char **arg, typval_T *rettv, const int flags)
+static int eval5(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 {
-  typval_T var2;
-  varnumber_T n1, n2;
-  float_T f1 = 0, f2 = 0;
-  char *p;
+  const bool evaluate = evalarg == NULL ? 0 : (evalarg->eval_flags & EVAL_EVALUATE);
 
   // Get the first variable.
-  if (eval6(arg, rettv, flags, false) == FAIL) {
+  if (eval6(arg, rettv, evalarg, false) == FAIL) {
     return FAIL;
   }
 
   // Repeat computing, until no '+', '-' or '.' is following.
   for (;;) {
     int op = (uint8_t)(**arg);
-    if (op != '+' && op != '-' && op != '.') {
+    bool concat = op == '.';
+    if (op != '+' && op != '-' && !concat) {
       break;
     }
 
     if ((op != '+' || (rettv->v_type != VAR_LIST && rettv->v_type != VAR_BLOB))
-        && (op == '.' || rettv->v_type != VAR_FLOAT) && (flags & EVAL_EVALUATE)) {
+        && (op == '.' || rettv->v_type != VAR_FLOAT) && evaluate) {
       // For "list + ...", an illegal use of the first operand as
       // a number cannot be determined before evaluating the 2nd
       // operand: if this is also a list, all is ok.
@@ -2636,12 +2645,13 @@ static int eval5(char **arg, typval_T *rettv, const int flags)
       (*arg)++;
     }
     *arg = skipwhite(*arg + 1);
-    if (eval6(arg, &var2, flags, op == '.') == FAIL) {
+    typval_T var2;
+    if (eval6(arg, &var2, evalarg, op == '.') == FAIL) {
       tv_clear(rettv);
       return FAIL;
     }
 
-    if (flags & EVAL_EVALUATE) {
+    if (evaluate) {
       // Compute the result.
       if (op == '.') {
         char buf1[NUMBUFLEN];
@@ -2654,7 +2664,7 @@ static int eval5(char **arg, typval_T *rettv, const int flags)
           tv_clear(&var2);
           return FAIL;
         }
-        p = concat_str(s1, s2);
+        char *p = concat_str(s1, s2);
         tv_clear(rettv);
         rettv->v_type = VAR_STRING;
         rettv->vval.v_string = p;
@@ -2666,6 +2676,8 @@ static int eval5(char **arg, typval_T *rettv, const int flags)
         }
       } else {
         bool error = false;
+        varnumber_T n1, n2;
+        float_T f1 = 0, f2 = 0;
 
         if (rettv->v_type == VAR_FLOAT) {
           f1 = rettv->vval.v_float;
@@ -2738,7 +2750,7 @@ static int eval5(char **arg, typval_T *rettv, const int flags)
 /// @param[in]  want_string  True if "." is string_concatenation, otherwise
 ///                          float
 /// @return  OK or FAIL.
-static int eval6(char **arg, typval_T *rettv, const int flags, bool want_string)
+static int eval6(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool want_string)
   FUNC_ATTR_NO_SANITIZE_UNDEFINED
 {
   typval_T var2;
@@ -2749,18 +2761,19 @@ static int eval6(char **arg, typval_T *rettv, const int flags, bool want_string)
   bool error = false;
 
   // Get the first variable.
-  if (eval7(arg, rettv, flags, want_string) == FAIL) {
+  if (eval7(arg, rettv, evalarg, want_string) == FAIL) {
     return FAIL;
   }
 
   // Repeat computing, until no '*', '/' or '%' is following.
   for (;;) {
+    const bool evaluate = evalarg == NULL ? 0 : (evalarg->eval_flags & EVAL_EVALUATE);
     op = (uint8_t)(**arg);
     if (op != '*' && op != '/' && op != '%') {
       break;
     }
 
-    if (flags & EVAL_EVALUATE) {
+    if (evaluate) {
       if (rettv->v_type == VAR_FLOAT) {
         f1 = rettv->vval.v_float;
         use_float = true;
@@ -2778,11 +2791,11 @@ static int eval6(char **arg, typval_T *rettv, const int flags, bool want_string)
 
     // Get the second variable.
     *arg = skipwhite(*arg + 1);
-    if (eval7(arg, &var2, flags, false) == FAIL) {
+    if (eval7(arg, &var2, evalarg, false) == FAIL) {
       return FAIL;
     }
 
-    if (flags & EVAL_EVALUATE) {
+    if (evaluate) {
       if (var2.v_type == VAR_FLOAT) {
         if (!use_float) {
           f1 = (float_T)n1;
@@ -2869,9 +2882,10 @@ static int eval6(char **arg, typval_T *rettv, const int flags, bool want_string)
 /// @param want_string  after "." operator
 ///
 /// @return  OK or FAIL.
-static int eval7(char **arg, typval_T *rettv, const int flags, bool want_string)
+static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool want_string)
 {
-  const bool evaluate = flags & EVAL_EVALUATE;
+  const int flags = evalarg == NULL ? 0 : evalarg->eval_flags;
+  const bool evaluate = evalarg != NULL && (evalarg->eval_flags & EVAL_EVALUATE);
   int ret = OK;
   static int recurse = 0;
 
@@ -2979,7 +2993,7 @@ static int eval7(char **arg, typval_T *rettv, const int flags, bool want_string)
   // nested expression: (expression).
   case '(':
     *arg = skipwhite(*arg + 1);
-    ret = eval1(arg, rettv, flags);  // recursive!
+    ret = eval1(arg, rettv, evalarg);  // recursive!
     if (**arg == ')') {
       (*arg)++;
     } else if (ret == OK) {
@@ -3319,13 +3333,15 @@ static int eval_index(char **arg, typval_T *rettv, const int flags, bool verbose
     }
     *arg = skipwhite(key + len);
   } else {
+    evalarg_T evalarg = { .eval_flags = flags };
+
     // something[idx]
     //
     // Get the (first) variable from inside the [].
     *arg = skipwhite(*arg + 1);
     if (**arg == ':') {
       empty1 = true;
-    } else if (eval1(arg, &var1, flags) == FAIL) {  // Recursive!
+    } else if (eval1(arg, &var1, &evalarg) == FAIL) {  // Recursive!
       return FAIL;
     } else if (evaluate && !tv_check_str(&var1)) {
       // Not a number or string.
@@ -3339,7 +3355,7 @@ static int eval_index(char **arg, typval_T *rettv, const int flags, bool verbose
       *arg = skipwhite(*arg + 1);
       if (**arg == ']') {
         empty2 = true;
-      } else if (eval1(arg, &var2, flags) == FAIL) {  // Recursive!
+      } else if (eval1(arg, &var2, &evalarg) == FAIL) {  // Recursive!
         if (!empty1) {
           tv_clear(&var1);
         }
@@ -3947,6 +3963,8 @@ static int get_list_tv(char **arg, typval_T *rettv, const int flags)
   const bool evaluate = flags & EVAL_EVALUATE;
   list_T *l = NULL;
 
+  evalarg_T evalarg = { .eval_flags = flags };
+
   if (evaluate) {
     l = tv_list_alloc(kListLenShouldKnow);
   }
@@ -3954,7 +3972,7 @@ static int get_list_tv(char **arg, typval_T *rettv, const int flags)
   *arg = skipwhite(*arg + 1);
   while (**arg != ']' && **arg != NUL) {
     typval_T tv;
-    if (eval1(arg, &tv, flags) == FAIL) {  // Recursive!
+    if (eval1(arg, &tv, &evalarg) == FAIL) {  // Recursive!
       goto failret;
     }
     if (evaluate) {
@@ -4586,7 +4604,9 @@ static int get_literal_key(char **arg, typval_T *tv)
 }
 
 /// Allocate a variable for a Dictionary and fill it from "*arg".
-/// "literal" is true for #{key: val}
+///
+/// @param literal  true for #{key: val}
+/// @param flags    can have EVAL_EVALUATE and other EVAL_ flags.
 ///
 /// @return  OK or FAIL.  Returns NOTDONE for {expr}.
 static int eval_dict(char **arg, typval_T *rettv, const int flags, bool literal)
@@ -4597,6 +4617,8 @@ static int eval_dict(char **arg, typval_T *rettv, const int flags, bool literal)
   char *curly_expr = skipwhite(*arg + 1);
   char buf[NUMBUFLEN];
 
+  evalarg_T evalarg = { .eval_flags = flags };
+
   // First check if it's not a curly-braces expression: {expr}.
   // Must do this without evaluating, otherwise a function may be called
   // twice.  Unfortunately this means we need to call eval1() twice for the
@@ -4605,7 +4627,7 @@ static int eval_dict(char **arg, typval_T *rettv, const int flags, bool literal)
   // "#{abc}" is never a curly-braces expression.
   if (*curly_expr != '}'
       && !literal
-      && eval1(&curly_expr, &tv, 0) == OK
+      && eval1(&curly_expr, &tv, NULL) == OK
       && *skipwhite(curly_expr) == '}') {
     return NOTDONE;
   }
@@ -4622,7 +4644,7 @@ static int eval_dict(char **arg, typval_T *rettv, const int flags, bool literal)
   while (**arg != '}' && **arg != NUL) {
     if ((literal
          ? get_literal_key(arg, &tvkey)
-         : eval1(arg, &tvkey, flags)) == FAIL) {  // recursive!
+         : eval1(arg, &tvkey, &evalarg)) == FAIL) {  // recursive!
       goto failret;
     }
     if (**arg != ':') {
@@ -4640,7 +4662,7 @@ static int eval_dict(char **arg, typval_T *rettv, const int flags, bool literal)
     }
 
     *arg = skipwhite(*arg + 1);
-    if (eval1(arg, &tv, flags) == FAIL) {  // Recursive!
+    if (eval1(arg, &tv, &evalarg) == FAIL) {  // Recursive!
       if (evaluate) {
         tv_clear(&tvkey);
       }
@@ -7389,6 +7411,8 @@ void ex_echo(exarg_T *eap)
   const int did_emsg_before = did_emsg;
   const int called_emsg_before = called_emsg;
 
+  evalarg_T evalarg = { .eval_flags = eap->skip ? 0 : EVAL_EVALUATE };
+
   if (eap->skip) {
     emsg_skip++;
   }
@@ -7399,7 +7423,7 @@ void ex_echo(exarg_T *eap)
 
     {
       char *p = arg;
-      if (eval1(&arg, &rettv, eap->skip ? 0 : EVAL_EVALUATE) == FAIL) {
+      if (eval1(&arg, &rettv, &evalarg) == FAIL) {
         // Report the invalid expression unless the expression evaluation
         // has been cancelled due to an aborting error, an interrupt, or an
         // exception.

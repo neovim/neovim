@@ -266,10 +266,22 @@ typedef int (*ex_unletlock_callback)(lval_T *, char *, exarg_T *, int);
 // Used for checking if local variables or arguments used in a lambda.
 extern bool *eval_lavars_used;
 
+/// Struct passed through eval() functions.
+/// See EVALARG_EVALUATE for a fixed value with eval_flags set to EVAL_EVALUATE.
+typedef struct {
+  int eval_flags;     ///< EVAL_ flag values below
+
+  /// copied from exarg_T when "getline" is "getsourceline". Can be NULL.
+  void *eval_cookie;   // argument for getline()
+} evalarg_T;
+
 /// Flag for expression evaluation.
 enum {
   EVAL_EVALUATE = 1,  ///< when missing don't actually evaluate
 };
+
+/// Passed to an eval() function to enable evaluation.
+EXTERN evalarg_T EVALARG_EVALUATE INIT(= { EVAL_EVALUATE, NULL });
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.h.generated.h"

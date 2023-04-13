@@ -255,13 +255,18 @@ void ex_let(exarg_T *eap)
     if (eap->skip) {
       emsg_skip++;
     }
-    int eval_flags = eap->skip ? 0 : EVAL_EVALUATE;
-    i = eval0(expr, &rettv, &eap->nextcmd, eval_flags);
+    evalarg_T evalarg = {
+      .eval_flags = eap->skip ? 0 : EVAL_EVALUATE,
+      .eval_cookie = eap->getline == getsourceline ? eap->cookie : NULL,
+    };
+    i = eval0(expr, &rettv, &eap->nextcmd, &evalarg);
+    if (eap->skip) {
+      emsg_skip--;
+    }
     if (eap->skip) {
       if (i != FAIL) {
         tv_clear(&rettv);
       }
-      emsg_skip--;
     } else if (i != FAIL) {
       (void)ex_let_vars(eap->arg, &rettv, false, semicolon, var_count, is_const, op);
       tv_clear(&rettv);
