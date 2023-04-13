@@ -740,7 +740,16 @@ function LanguageTree:_do_callback(cb_name, ...)
   end
 end
 
----@package
+--- @package
+--- @param start_byte integer
+--- @param end_byte_old integer
+--- @param end_byte_new integer
+--- @param start_row integer
+--- @param start_col integer
+--- @param end_row_old integer
+--- @param end_col_old integer
+--- @param end_row_new integer
+--- @param end_col_new integer
 function LanguageTree:_edit(
   start_byte,
   end_byte_old,

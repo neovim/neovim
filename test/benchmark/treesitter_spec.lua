@@ -3,6 +3,13 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 
+local function tcall(f, ...)
+  local start = vim.loop.hrtime()
+  f(...)
+  local d = vim.loop.hrtime() - start
+  return d / 1000000
+end
+
 describe('treesitter perf', function()
 
   setup(function()
@@ -47,6 +54,70 @@ describe('treesitter perf', function()
 
       return vim.loop.hrtime() - start
     ]]
+
+  end)
+
+  it ('can handle a stupidly large C file', function()
+    local filename = 'dcn_3_2_0_sh_mask.h'
+    local file_url = 'https://raw.githubusercontent.com/torvalds/linux/master/drivers/gpu/drm/amd/include/asic_reg/dcn/dcn_3_2_0_sh_mask.h'
+    if not vim.loop.fs_stat(filename) then
+      helpers.repeated_read_cmd('wget', file_url)
+    end
+
+    local query = [[
+      ((preproc_arg) @injection.content
+       (#set! injection.language "c"))
+    ]]
+
+    helpers.command('edit '..filename)
+
+    print('Times:')
+    print('Without injections:')
+
+    local function step(what, t)
+      print('    - ' .. what .. ':\t', t)
+    end
+
+    step('Initial parse', tcall(exec_lua, [[
+      parser = vim.treesitter._create_parser(0, 'c')
+    ]]))
+
+    step('Edit (modify comment)', tcall(exec_lua, [[
+      vim.cmd('normal gg3jx')
+      parser:parse()
+    ]]))
+
+    step('Edit (delete line)', tcall(exec_lua, [[
+      vim.cmd('28d')
+      parser:parse()
+    ]]))
+
+    step('Edit (undo)', tcall(exec_lua, [[
+      vim.cmd('u')
+      parser:parse()
+    ]]))
+
+    print('With injections:')
+
+    step('Initial parse', tcall(exec_lua, [[
+      vim.treesitter.query.set('c', 'injections', ...)
+      parser = vim.treesitter._create_parser(0, 'c')
+    ]], query))
+
+    step('Edit (modify commment)', tcall(exec_lua, [[
+      vim.cmd('normal gg3jx')
+      parser:parse()
+    ]]))
+
+    step('Edit (delete line)', tcall(exec_lua, [[
+      vim.cmd('28d')
+      parser:parse()
+    ]]))
+
+    step('Edit (undo)', tcall(exec_lua, [[
+      vim.cmd('u')
+      parser:parse()
+    ]]))
 
   end)
 
