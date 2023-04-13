@@ -1,10 +1,10 @@
 local M = {}
 
-local start = vim.health.report_start
-local ok = vim.health.report_ok
-local info = vim.health.report_info
-local warn = vim.health.report_warn
-local error = vim.health.report_error
+local start = vim.health.start
+local ok = vim.health.ok
+local info = vim.health.info
+local warn = vim.health.warn
+local error = vim.health.error
 local iswin = vim.loop.os_uname().sysname == 'Windows_NT'
 
 local shell_error_code = 0
