@@ -2384,4 +2384,3 @@ lsp.commands = setmetatable({}, {
 })
 
 return lsp
--- vim:sw=2 ts=2 et

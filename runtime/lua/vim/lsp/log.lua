@@ -174,4 +174,3 @@ function log.should_log(level)
 end
 
 return log
--- vim:sw=2 ts=2 et
