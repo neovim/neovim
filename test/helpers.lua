@@ -3,7 +3,6 @@ local shared = vim
 local assert = require('luassert')
 local busted = require('busted')
 local luv = require('luv')
-local relpath = require('pl.path').relpath
 local Paths = require('test.cmakeconfig.paths')
 
 assert:set_parameter('TableFormatLevel', 100)
@@ -20,6 +19,12 @@ end
 local module = {
   REMOVE_THIS = {},
 }
+
+local function relpath(p)
+  p = vim.fs.normalize(p)
+  local cwd = luv.cwd()
+  return p:gsub("^" .. cwd)
+end
 
 function module.isdir(path)
   if not path then
