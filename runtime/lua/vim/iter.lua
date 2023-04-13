@@ -81,7 +81,7 @@ function TableIter.filter(self, f)
   return self
 end
 
---- Add a filter/map step to the iterator pipeline.
+--- Add a map and filter step to the iterator pipeline.
 ---
 --- Example:
 --- <pre>lua
@@ -188,6 +188,11 @@ function Iter.collect(self, opts)
   local t = {}
 
   if self._table then
+    -- Skip a table copy if possible
+    if self._head == 1 and self._tail == #self._table + 1 then
+      return self._table
+    end
+
     local inc = self._head < self._tail and 1 or -1
     for i = self._head, self._tail - inc, inc do
       t[#t + 1] = self._table[i]
