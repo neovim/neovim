@@ -307,10 +307,10 @@ currently supported modeline alternatives:
 Note: These modeline comments must be at the top of the query, but can be
 repeated, for example, the following two modeline blocks are both valid:
 >query
-
     ;; inherits: foo,bar
     ;; extends
-
+<
+>query
     ;; extends
     ;;
     ;; inherits: baz
