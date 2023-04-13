@@ -121,6 +121,7 @@ typedef enum {
 static bool redraw_popupmenu = false;
 static bool msg_grid_invalid = false;
 static bool resizing_autocmd = false;
+static win_T *cursor_info_win = NULL;
 
 static char *provider_err = NULL;
 
@@ -828,6 +829,7 @@ void show_cursor_info_later(bool force)
       || curwin->w_topfill != curwin->w_stl_topfill
       || empty_line != curwin->w_stl_empty
       || reg_recording != curwin->w_stl_recording
+      || curwin != cursor_info_win
       || state != curwin->w_stl_state) {
     if (curwin->w_status_height || global_stl_height()) {
       curwin->w_redr_status = true;
@@ -853,6 +855,7 @@ void show_cursor_info_later(bool force)
   curwin->w_stl_topfill = curwin->w_topfill;
   curwin->w_stl_state = state;
   curwin->w_stl_recording = reg_recording;
+  cursor_info_win = curwin;
 }
 
 /// @return true when postponing displaying the mode message: when not redrawing
