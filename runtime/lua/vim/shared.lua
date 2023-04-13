@@ -889,7 +889,7 @@ end
 --- Examples:
 --- <pre>lua
 --- local it = vim.iter({ 1, 2, 3, 4, 5 })
---- it:filter_map(function(v)
+--- it:filtermap(function(v)
 ---   return v * 3
 --- end)
 --- it:rev()
@@ -898,7 +898,7 @@ end
 --- -- { 15, 12, 9 }
 ---
 --- local it = vim.iter(vim.gsplit('1,2,3,4,5', ','))
---- it:filter_map(function(s) return tonumber(s) end)
+--- it:filtermap(function(s) return tonumber(s) end)
 --- for i, d in it:enumerate() do
 ---   print(string.format("Column %d is %d", i, d))
 --- end
@@ -957,18 +957,18 @@ end
 --- This is a convenience function that performs:
 ---
 --- <pre>lua
---- vim.iter(src):filter_map(f):collect()
+--- vim.iter(src):filtermap(f):collect()
 --- </pre>
 ---
----@see |Iter:filter_map()|
+---@see |Iter:filtermap()|
 ---
 ---@param src table|function Table or iterator function to filter
 ---@param f function(...):?any Map function. Accepts the current iterator or table values as
 ---                            arguments and returns one or more new values. Nil values are removed
 ---                            from the final table. the final table
 ---@return table
-function vim.filter_map(src, f)
-  return vim.iter(src):filter_map(f):collect()
+function vim.filtermap(src, f)
+  return vim.iter(src):filtermap(f):collect()
 end
 
 return vim

@@ -3045,13 +3045,13 @@ describe('lua stdlib', function()
       eq({'the', 'fox'}, it:filter(function(s) return #s <= 3 end):collect())
     end)
 
-    it('filter_map()', function()
+    it('filtermap()', function()
       local t = { 1, 2, 3, 4, 5 }
       eq(
         { 2, 4, 6, 8, 10 },
         vim
         .iter(t)
-        :filter_map(function(v)
+        :filtermap(function(v)
           return 2 * v
         end)
         :collect()
@@ -3071,7 +3071,7 @@ describe('lua stdlib', function()
         { 'Lion 2', 'Lion 4' },
         vim
         .iter(it)
-        :filter_map(function(s)
+        :filtermap(function(s)
           local lnum = s:match('(%d+)')
           if lnum and tonumber(lnum) % 2 == 0 then
             return vim.trim(s:gsub('Line', 'Lion'))
@@ -3084,7 +3084,7 @@ describe('lua stdlib', function()
     it('for loops', function()
       local t = {1, 2, 3, 4, 5}
       local acc = 0
-      for v in vim.iter(t):filter_map(function(v) return v * 3 end) do
+      for v in vim.iter(t):filtermap(function(v) return v * 3 end) do
         acc = acc + v
       end
       eq(45, acc)
@@ -3092,18 +3092,18 @@ describe('lua stdlib', function()
 
     it('collect()', function()
       do
-        local it = vim.iter({1, 2, 3}):filter_map(function(v) return v, v*v end)
+        local it = vim.iter({1, 2, 3}):filtermap(function(v) return v, v*v end)
         eq({{1, 1}, {2, 4}, {3, 9}}, it:collect())
       end
 
       do
-        local it = vim.iter(string.gmatch('1,4,lol,17,blah,2,9,3', '%d+')):filter_map(tonumber)
+        local it = vim.iter(string.gmatch('1,4,lol,17,blah,2,9,3', '%d+')):filtermap(tonumber)
         eq({1, 2, 3, 4, 9, 17}, it:collect({sort = true}))
       end
     end)
 
     it('next()', function()
-      local it = vim.iter({1, 2, 3}):filter_map(function(v) return 2 * v end)
+      local it = vim.iter({1, 2, 3}):filtermap(function(v) return 2 * v end)
       eq(2, it:next())
       eq(4, it:next())
       eq(6, it:next())
@@ -3141,19 +3141,19 @@ describe('lua stdlib', function()
       end
     end)
 
-    it('skip_back()', function()
+    it('skipback()', function()
       do
         local t = {4, 3, 2, 1}
-        eq(t, vim.iter(t):skip_back(0):collect())
-        eq({4, 3, 2}, vim.iter(t):skip_back(1):collect())
-        eq({4, 3}, vim.iter(t):skip_back(2):collect())
-        eq({4}, vim.iter(t):skip_back(#t - 1):collect())
-        eq({}, vim.iter(t):skip_back(#t):collect())
-        eq({}, vim.iter(t):skip_back(#t + 1):collect())
+        eq(t, vim.iter(t):skipback(0):collect())
+        eq({4, 3, 2}, vim.iter(t):skipback(1):collect())
+        eq({4, 3}, vim.iter(t):skipback(2):collect())
+        eq({4}, vim.iter(t):skipback(#t - 1):collect())
+        eq({}, vim.iter(t):skipback(#t):collect())
+        eq({}, vim.iter(t):skipback(#t + 1):collect())
       end
 
       local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
-      matches('Function iterators cannot skip from the end', pcall_err(it.skip_back, it, 0))
+      matches('Function iterators cannot skip from the end', pcall_err(it.skipback, it, 0))
     end)
 
     it('nth()', function()
@@ -3180,19 +3180,19 @@ describe('lua stdlib', function()
       end
     end)
 
-    it('nth_back()', function()
+    it('nthback()', function()
       do
         local t = {4, 3, 2, 1}
-        eq(nil, vim.iter(t):nth_back(0))
-        eq(1, vim.iter(t):nth_back(1))
-        eq(2, vim.iter(t):nth_back(2))
-        eq(3, vim.iter(t):nth_back(3))
-        eq(4, vim.iter(t):nth_back(4))
-        eq(nil, vim.iter(t):nth_back(5))
+        eq(nil, vim.iter(t):nthback(0))
+        eq(1, vim.iter(t):nthback(1))
+        eq(2, vim.iter(t):nthback(2))
+        eq(3, vim.iter(t):nthback(3))
+        eq(4, vim.iter(t):nthback(4))
+        eq(nil, vim.iter(t):nthback(5))
       end
 
       local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
-      matches('Function iterators cannot skip from the end', pcall_err(it.nth_back, it, 1))
+      matches('Function iterators cannot skip from the end', pcall_err(it.nthback, it, 1))
     end)
 
     it('any()', function()
@@ -3315,34 +3315,34 @@ describe('lua stdlib', function()
       end
     end)
 
-    it('next_back()', function()
+    it('nextback()', function()
       do
         local it = vim.iter({ 1, 2, 3, 4 })
-        eq(4, it:next_back())
-        eq(3, it:next_back())
-        eq(2, it:next_back())
-        eq(1, it:next_back())
-        eq(nil, it:next_back())
-        eq(nil, it:next_back())
+        eq(4, it:nextback())
+        eq(3, it:nextback())
+        eq(2, it:nextback())
+        eq(1, it:nextback())
+        eq(nil, it:nextback())
+        eq(nil, it:nextback())
       end
 
       do
         local it = vim.iter(vim.gsplit('hi', ''))
-        matches('Function iterators cannot read from the end', pcall_err(it.next_back, it))
+        matches('Function iterators cannot read from the end', pcall_err(it.nextback, it))
       end
     end)
 
-    it('peek_back()', function()
+    it('peekback()', function()
       do
         local it = vim.iter({ 1, 2, 3, 4 })
-        eq(4, it:peek_back())
-        eq(4, it:peek_back())
-        eq(4, it:peek_back())
+        eq(4, it:peekback())
+        eq(4, it:peekback())
+        eq(4, it:peekback())
       end
 
       do
         local it = vim.iter(vim.gsplit('hi', ''))
-        matches('Function iterators cannot read from the end', pcall_err(it.peek_back, it))
+        matches('Function iterators cannot read from the end', pcall_err(it.peekback, it))
       end
     end)
   end)

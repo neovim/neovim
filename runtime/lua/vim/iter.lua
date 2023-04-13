@@ -85,7 +85,7 @@ end
 ---
 --- Example:
 --- <pre>lua
---- local it = vim.iter({ 1, 2, 3, 4 }):filter_map(function(v)
+--- local it = vim.iter({ 1, 2, 3, 4 }):filtermap(function(v)
 ---   if v % 2 == 0 then
 ---     return v * 3
 ---   end
@@ -99,7 +99,7 @@ end
 ---                            which are used in the next pipeline stage. Nil return values returned
 ---                            are filtered from the output.
 ---@return Iter
-function Iter.filter_map(self, f)
+function Iter.filtermap(self, f)
   local next = self.next
   self.next = function(this)
     while true do
@@ -117,7 +117,7 @@ function Iter.filter_map(self, f)
 end
 
 ---@private
-function TableIter.filter_map(self, f)
+function TableIter.filtermap(self, f)
   local inc = self._head < self._tail and 1 or -1
   local n = self._head
   for i = self._head, self._tail - inc, inc do
@@ -134,7 +134,7 @@ end
 --- Call a function once for each item in the pipeline.
 ---
 --- This is used for functions which have side effects. To modify the values in the iterator, use
---- |Iter:filter_map()|.
+--- |Iter:filtermap()|.
 ---
 --- This function drains the iterator.
 ---
@@ -169,11 +169,11 @@ end
 --- Example:
 --- <pre>lua
 ---
---- local it1 = vim.iter(string.gmatch('100 20 50', '%d+')):filter_map(tonumber)
+--- local it1 = vim.iter(string.gmatch('100 20 50', '%d+')):filtermap(tonumber)
 --- it1:collect()
 --- -- { 100, 20, 50 }
 ---
---- local it2 = vim.iter(string.gmatch('100 20 50', '%d+')):filter_map(tonumber)
+--- local it2 = vim.iter(string.gmatch('100 20 50', '%d+')):filtermap(tonumber)
 --- it2:collect({ sort = true })
 --- -- { 20, 50, 100 }
 ---
@@ -220,7 +220,7 @@ end
 --- Example:
 --- <pre>lua
 ---
---- local it = vim.iter(string.gmatch('1 2 3', '%d+')):filter_map(tonumber)
+--- local it = vim.iter(string.gmatch('1 2 3', '%d+')):filtermap(tonumber)
 --- it:next()
 --- -- 1
 --- it:next()
@@ -376,7 +376,7 @@ function TableIter.rfind(self, f)
   end
 
   while true do
-    local cur = pack(self:next_back())
+    local cur = pack(self:nextback())
     if cur == nil then
       break
     end
@@ -393,18 +393,18 @@ end
 --- Example:
 --- <pre>lua
 --- local it = vim.iter({1, 2, 3, 4})
---- it:next_back()
+--- it:nextback()
 --- -- 4
---- it:next_back()
+--- it:nextback()
 --- -- 3
 --- </pre>
 ---
 ---@return any
-function Iter.next_back(self) -- luacheck: no unused args
+function Iter.nextback(self) -- luacheck: no unused args
   error('Function iterators cannot read from the end')
 end
 
-function TableIter.next_back(self)
+function TableIter.nextback(self)
   if self._head ~= self._tail then
     local inc = self._head < self._tail and 1 or -1
     self._tail = self._tail - inc
@@ -419,20 +419,20 @@ end
 --- Example:
 --- <pre>lua
 --- local it = vim.iter({1, 2, 3, 4})
---- it:peek_back()
+--- it:peekback()
 --- -- 4
---- it:peek_back()
+--- it:peekback()
 --- -- 4
---- it:next_back()
+--- it:nextback()
 --- -- 4
 --- </pre>
 ---
 ---@return any
-function Iter.peek_back(self) -- luacheck: no unused args
+function Iter.peekback(self) -- luacheck: no unused args
   error('Function iterators cannot read from the end')
 end
 
-function TableIter.peek_back(self)
+function TableIter.peekback(self)
   if self._head ~= self._tail then
     local inc = self._head < self._tail and 1 or -1
     return self._table[self._tail - inc]
@@ -475,22 +475,22 @@ end
 ---
 --- Example:
 --- <pre>lua
---- local it = vim.iter({ 1, 2, 3, 4, 5 }):skip_back(2)
+--- local it = vim.iter({ 1, 2, 3, 4, 5 }):skipback(2)
 --- it:next()
 --- -- 1
---- it:next_back()
+--- it:nextback()
 --- -- 3
 --- </pre>
 ---
 ---@param n number Number of values to skip.
 ---@return Iter
-function Iter.skip_back(self, n) -- luacheck: no unused args
+function Iter.skipback(self, n) -- luacheck: no unused args
   error('Function iterators cannot skip from the end')
   return self
 end
 
 ---@private
-function TableIter.skip_back(self, n)
+function TableIter.skipback(self, n)
   local inc = self._head < self._tail and n or -n
   self._tail = self._tail - inc
   if (inc > 0 and self._head > self._tail) or (inc < 0 and self._head < self._tail) then
@@ -532,18 +532,18 @@ end
 --- <pre>lua
 ---
 --- local it = vim.iter({ 3, 6, 9, 12 })
---- it:nth_back(2)
+--- it:nthback(2)
 --- -- 9
---- it:nth_back(2)
+--- it:nthback(2)
 --- -- 3
 ---
 --- </pre>
 ---
 ---@param n number The index of the value to return.
 ---@return any
-function Iter.nth_back(self, n)
+function Iter.nthback(self, n)
   if n > 0 then
-    return self:skip_back(n - 1):next_back()
+    return self:skipback(n - 1):nextback()
   end
 end
 
@@ -641,7 +641,7 @@ end
 ---@return Iter
 function Iter.enumerate(self)
   local i = 0
-  return self:filter_map(function(...)
+  return self:filtermap(function(...)
     i = i + 1
     return i, ...
   end)

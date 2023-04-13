@@ -1692,14 +1692,14 @@ filter({src}, {f})                                              *vim.filter()*
     See also: ~
       • |Iter:filter()|
 
-filter_map({src}, {f})                                      *vim.filter_map()*
+filtermap({src}, {f})                                        *vim.filtermap()*
     Map and filter a table or iterator.
 
     This is a convenience function that performs:
 
     >lua
 
-     vim.iter(src):filter_map(f):collect()
+     vim.iter(src):filtermap(f):collect()
 <
 
     Parameters: ~
@@ -1713,7 +1713,7 @@ filter_map({src}, {f})                                      *vim.filter_map()*
         (table)
 
     See also: ~
-      • |Iter:filter_map()|
+      • |Iter:filtermap()|
 
 gsplit({s}, {sep}, {opts})                                      *vim.gsplit()*
     Splits a string at each instance of a separator.
@@ -1766,7 +1766,7 @@ iter({src})                                                       *vim.iter()*
     Examples: >lua
 
      local it = vim.iter({ 1, 2, 3, 4, 5 })
-     it:filter_map(function(v)
+     it:filtermap(function(v)
        return v * 3
      end)
      it:rev()
@@ -1775,7 +1775,7 @@ iter({src})                                                       *vim.iter()*
      -- { 15, 12, 9 }
 
      local it = vim.iter(vim.gsplit('1,2,3,4,5', ','))
-     it:filter_map(function(s) return tonumber(s) end)
+     it:filtermap(function(s) return tonumber(s) end)
      for i, d in it:enumerate() do
        print(string.format("Column %d is %d", i, d))
      end
@@ -2945,11 +2945,11 @@ Iter:collect({self}, {opts})                                  *Iter:collect()*
 
     Example: >lua
 
-     local it1 = vim.iter(string.gmatch('100 20 50', 'd+')):filter_map(tonumber)
+     local it1 = vim.iter(string.gmatch('100 20 50', 'd+')):filtermap(tonumber)
      it1:collect()
      -- { 100, 20, 50 }
 
-     local it2 = vim.iter(string.gmatch('100 20 50', 'd+')):filter_map(tonumber)
+     local it2 = vim.iter(string.gmatch('100 20 50', 'd+')):filtermap(tonumber)
      it2:collect({ sort = true })
      -- { 20, 50, 100 }
 <
@@ -2997,12 +2997,12 @@ Iter:filter({self}, {f})                                       *Iter:filter()*
     Return: ~
         Iter
 
-Iter:filter_map({self}, {f})                               *Iter:filter_map()*
-    Add a filter/map step to the iterator pipeline.
+Iter:filtermap({self}, {f})                                 *Iter:filtermap()*
+    Add a map and filter step to the iterator pipeline.
 
     Example: >lua
 
-     local it = vim.iter({ 1, 2, 3, 4 }):filter_map(function(v)
+     local it = vim.iter({ 1, 2, 3, 4 }):filtermap(function(v)
        if v % 2 == 0 then
          return v * 3
        end
@@ -3048,7 +3048,7 @@ Iter:foreach({self}, {f})                                     *Iter:foreach()*
     Call a function once for each item in the pipeline.
 
     This is used for functions which have side effects. To modify the values
-    in the iterator, use |Iter:filter_map()|.
+    in the iterator, use |Iter:filtermap()|.
 
     This function drains the iterator.
 
@@ -3081,7 +3081,7 @@ Iter:next({self})                                                *Iter:next()*
 
     Example: >lua
 
-     local it = vim.iter(string.gmatch('1 2 3', 'd+')):filter_map(tonumber)
+     local it = vim.iter(string.gmatch('1 2 3', 'd+')):filtermap(tonumber)
      it:next()
      -- 1
      it:next()
@@ -3093,7 +3093,7 @@ Iter:next({self})                                                *Iter:next()*
     Return: ~
         any
 
-Iter:next_back({self})                                      *Iter:next_back()*
+Iter:nextback({self})                                        *Iter:nextback()*
     Return the next value from the end of the iterator.
 
     Only supported for iterators on tables.
@@ -3101,9 +3101,9 @@ Iter:next_back({self})                                      *Iter:next_back()*
     Example: >lua
 
      local it = vim.iter({1, 2, 3, 4})
-     it:next_back()
+     it:nextback()
      -- 4
-     it:next_back()
+     it:nextback()
      -- 3
 <
 
@@ -3130,7 +3130,7 @@ Iter:nth({self}, {n})                                             *Iter:nth()*
     Return: ~
         any
 
-Iter:nth_back({self}, {n})                                   *Iter:nth_back()*
+Iter:nthback({self}, {n})                                     *Iter:nthback()*
     Return the nth value from the end of the iterator.
 
     This function advances the iterator.
@@ -3140,9 +3140,9 @@ Iter:nth_back({self}, {n})                                   *Iter:nth_back()*
     Example: >lua
 
      local it = vim.iter({ 3, 6, 9, 12 })
-     it:nth_back(2)
+     it:nthback(2)
      -- 9
-     it:nth_back(2)
+     it:nthback(2)
      -- 3
 <
 
@@ -3171,7 +3171,7 @@ Iter:peek({self})                                                *Iter:peek()*
     Return: ~
         any
 
-Iter:peek_back({self})                                      *Iter:peek_back()*
+Iter:peekback({self})                                        *Iter:peekback()*
     Return the next value from the end of the iterator without consuming it.
 
     Only supported for iterators on tables.
@@ -3179,11 +3179,11 @@ Iter:peek_back({self})                                      *Iter:peek_back()*
     Example: >lua
 
      local it = vim.iter({1, 2, 3, 4})
-     it:peek_back()
+     it:peekback()
      -- 4
-     it:peek_back()
+     it:peekback()
      -- 4
-     it:next_back()
+     it:nextback()
      -- 4
 <
 
@@ -3245,17 +3245,17 @@ Iter:skip({self}, {n})                                           *Iter:skip()*
     Return: ~
         Iter
 
-Iter:skip_back({self}, {n})                                 *Iter:skip_back()*
+Iter:skipback({self}, {n})                                   *Iter:skipback()*
     Skip values in the iterator starting from the end.
 
     Only supported for iterators on tables.
 
     Example: >lua
 
-     local it = vim.iter({ 1, 2, 3, 4, 5 }):skip_back(2)
+     local it = vim.iter({ 1, 2, 3, 4, 5 }):skipback(2)
      it:next()
      -- 1
-     it:next_back()
+     it:nextback()
      -- 3
 <
 
