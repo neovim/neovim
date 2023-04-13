@@ -575,4 +575,25 @@ describe('API: get highlight', function()
     meths.set_hl(0, 'Foo', hl)
     eq(hl, meths.get_hl(0, { name = 'Foo', link = true }))
   end)
+
+  it("doesn't contain unset groups", function()
+    local id = meths.get_hl_id_by_name "@foobar.hubbabubba"
+    ok(id > 0)
+
+    local data = meths.get_hl(0, {})
+    eq(nil, data["@foobar.hubbabubba"])
+    eq(nil, data["@foobar"])
+
+    command 'hi @foobar.hubbabubba gui=bold'
+    data = meths.get_hl(0, {})
+    eq({bold = true}, data["@foobar.hubbabubba"])
+    eq(nil, data["@foobar"])
+
+    -- @foobar.hubbabubba was explicitly cleared and thus shows up
+    -- but @foobar was never touched, and thus doesn't
+    command 'hi clear @foobar.hubbabubba'
+    data = meths.get_hl(0, {})
+    eq({}, data["@foobar.hubbabubba"])
+    eq(nil, data["@foobar"])
+  end)
 end)
