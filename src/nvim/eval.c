@@ -705,8 +705,11 @@ int eval_to_bool(char *arg, bool *error, exarg_T *eap, int skip)
 
   evalarg_T evalarg = {
     .eval_flags = skip ? 0 : EVAL_EVALUATE,
-    .eval_cookie = eap != NULL && eap->getline == getsourceline ? eap->cookie : NULL,
   };
+  if (eap != NULL && getline_equal(eap->getline, eap->cookie, getsourceline)) {
+    evalarg.eval_getline = eap->getline;
+    evalarg.eval_cookie = eap->cookie;
+  }
 
   if (skip) {
     emsg_skip++;
@@ -7461,8 +7464,11 @@ void ex_echo(exarg_T *eap)
 
   evalarg_T evalarg = {
     .eval_flags = eap->skip ? 0 : EVAL_EVALUATE,
-    .eval_cookie = eap->getline == getsourceline ? eap->cookie : NULL,
   };
+  if (getline_equal(eap->getline, eap->cookie, getsourceline)) {
+    evalarg.eval_getline = eap->getline;
+    evalarg.eval_cookie = eap->cookie;
+  }
 
   if (eap->skip) {
     emsg_skip++;

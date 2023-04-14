@@ -261,8 +261,11 @@ void ex_let(exarg_T *eap)
   }
   evalarg_T evalarg = {
     .eval_flags = eap->skip ? 0 : EVAL_EVALUATE,
-    .eval_cookie = eap->getline == getsourceline ? eap->cookie : NULL,
   };
+  if (getline_equal(eap->getline, eap->cookie, getsourceline)) {
+    evalarg.eval_getline = eap->getline;
+    evalarg.eval_cookie = eap->cookie;
+  }
   int eval_res = eval0(expr, &rettv, eap, &evalarg);
   if (eap->skip) {
     emsg_skip--;
