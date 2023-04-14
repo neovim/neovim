@@ -3345,6 +3345,16 @@ describe('lua stdlib', function()
         matches('Function iterators cannot read from the end', pcall_err(it.peekback, it))
       end
     end)
+
+    it('handles map-like tables', function()
+      local t = { a = 1, b = 2, c = 3 }
+      local it = vim.iter(t):filtermap(function(k, v)
+        if v % 2 ~= 0 then
+          return k:upper(), v * 2
+        end
+      end)
+      eq({ A = 2, C = 6 }, it:collect())
+    end)
   end)
 end)
 

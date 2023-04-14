@@ -6,20 +6,22 @@
 ---@field _head ?number Index to the front of a table iterator (table iterators only)
 ---@field _tail ?number Index to the end of a table iterator (table iterators only)
 local Iter = {}
-
 Iter.__index = Iter
-
 Iter.__call = function(self)
   return self:next()
 end
 
---- Special case implementations for iterators on tables.
----@private
-local TableIter = {}
+--- Special case implementations for iterators on list-like tables.
+local ListIter = {}
+ListIter.__index = setmetatable(ListIter, Iter)
+ListIter.__call = function(self)
+  return self:next()
+end
 
-TableIter.__index = setmetatable(TableIter, Iter)
-
-TableIter.__call = function(self)
+--- Special case implementations for iterators on map-like tables.
+local MapIter = {}
+MapIter.__index = setmetatable(MapIter, Iter)
+MapIter.__call = function(self)
   return self:next()
 end
 
@@ -67,7 +69,7 @@ function Iter.filter(self, f)
 end
 
 ---@private
-function TableIter.filter(self, f)
+function ListIter.filter(self, f)
   local inc = self._head < self._tail and 1 or -1
   local n = self._head
   for i = self._head, self._tail - inc, inc do
@@ -117,7 +119,7 @@ function Iter.filtermap(self, f)
 end
 
 ---@private
-function TableIter.filtermap(self, f)
+function ListIter.filtermap(self, f)
   local inc = self._head < self._tail and 1 or -1
   local n = self._head
   for i = self._head, self._tail - inc, inc do
@@ -151,12 +153,25 @@ function Iter.foreach(self, f)
 end
 
 ---@private
-function TableIter.foreach(self, f)
+function ListIter.foreach(self, f)
   local inc = self._head < self._tail and 1 or -1
   for i = self._head, self._tail - inc, inc do
     f(unpack(self._table[i]))
   end
   self._head = self._tail
+end
+
+--- Common functionality for all collect methods
+---
+---@param t table Collected table
+---@params opts ?table Optional arguments. See |Iter:collect()|.
+---@private
+local function collect(t, opts)
+  if opts and opts.sort then
+    local f = type(opts.sort) == 'function' and opts.sort or nil
+    table.sort(t, f)
+  end
+  return t
 end
 
 --- Drain the iterator into a table.
@@ -186,33 +201,38 @@ end
 ---@return table
 function Iter.collect(self, opts)
   local t = {}
+  while true do
+    local args = pack(self:next())
+    if args == nil then
+      break
+    end
+    t[#t + 1] = args
+  end
+  return collect(t, opts)
+end
 
-  if self._table then
-    -- Skip a table copy if possible
-    if self._head == 1 and self._tail == #self._table + 1 then
-      return self._table
-    end
-
-    local inc = self._head < self._tail and 1 or -1
-    for i = self._head, self._tail - inc, inc do
-      t[#t + 1] = self._table[i]
-    end
-  else
-    while true do
-      local args = pack(self:next())
-      if args == nil then
-        break
-      end
-      t[#t + 1] = args
-    end
+---@private
+function ListIter.collect(self, opts)
+  -- Skip a table copy if possible
+  if self._head == 1 and self._tail == #self._table + 1 then
+    return self._table
   end
 
-  if opts and opts.sort then
-    local f = type(opts.sort) == 'function' and opts.sort or nil
-    table.sort(t, f)
+  local t = {}
+  local inc = self._head < self._tail and 1 or -1
+  for i = self._head, self._tail - inc, inc do
+    t[#t + 1] = self._table[i]
   end
+  return collect(t, opts)
+end
 
-  return t
+---@private
+function MapIter.collect(self, opts)
+  local t = {}
+  for k, v in self do
+    t[k] = v
+  end
+  return collect(t, opts)
 end
 
 --- Return the next value from the iterator.
@@ -237,7 +257,7 @@ function Iter.next(self) -- luacheck: no unused args
 end
 
 ---@private
-function TableIter.next(self)
+function ListIter.next(self)
   if self._head ~= self._tail then
     local v = self._table[self._head]
     local inc = self._head < self._tail and 1 or -1
@@ -266,7 +286,7 @@ function Iter.rev(self)
 end
 
 ---@private
-function TableIter.rev(self)
+function ListIter.rev(self)
   local inc = self._head < self._tail and 1 or -1
   self._head, self._tail = self._tail - inc, self._head - inc
   return self
@@ -295,7 +315,7 @@ function Iter.peek(self) -- luacheck: no unused args
 end
 
 ---@private
-function TableIter.peek(self)
+function ListIter.peek(self)
   if self._head ~= self._tail then
     return self._table[self._head]
   end
@@ -367,7 +387,7 @@ function Iter.rfind(self, f) -- luacheck: no unused args
   error('Function iterators cannot read from the end')
 end
 
-function TableIter.rfind(self, f)
+function ListIter.rfind(self, f)
   if type(f) ~= 'function' then
     local val = f
     f = function(v)
@@ -404,7 +424,7 @@ function Iter.nextback(self) -- luacheck: no unused args
   error('Function iterators cannot read from the end')
 end
 
-function TableIter.nextback(self)
+function ListIter.nextback(self)
   if self._head ~= self._tail then
     local inc = self._head < self._tail and 1 or -1
     self._tail = self._tail - inc
@@ -432,7 +452,7 @@ function Iter.peekback(self) -- luacheck: no unused args
   error('Function iterators cannot read from the end')
 end
 
-function TableIter.peekback(self)
+function ListIter.peekback(self)
   if self._head ~= self._tail then
     local inc = self._head < self._tail and 1 or -1
     return self._table[self._tail - inc]
@@ -460,7 +480,7 @@ function Iter.skip(self, n)
 end
 
 ---@private
-function TableIter.skip(self, n)
+function ListIter.skip(self, n)
   local inc = self._head < self._tail and n or -n
   self._head = self._head + inc
   if (inc > 0 and self._head > self._tail) or (inc < 0 and self._head < self._tail) then
@@ -490,7 +510,7 @@ function Iter.skipback(self, n) -- luacheck: no unused args
 end
 
 ---@private
-function TableIter.skipback(self, n)
+function ListIter.skipback(self, n)
   local inc = self._head < self._tail and n or -n
   self._tail = self._tail - inc
   if (inc > 0 and self._head > self._tail) or (inc < 0 and self._head < self._tail) then
@@ -616,7 +636,7 @@ function Iter.last(self)
 end
 
 ---@private
-function TableIter.last(self)
+function ListIter.last(self)
   local inc = self._head < self._tail and 1 or -1
   local v = self._table[self._tail - inc]
   self._head = self._tail
@@ -648,7 +668,7 @@ function Iter.enumerate(self)
 end
 
 ---@private
-function TableIter.enumerate(self)
+function ListIter.enumerate(self)
   local inc = self._head < self._tail and 1 or -1
   for i = self._head, self._tail - inc, inc do
     local v = self._table[i]
@@ -661,24 +681,73 @@ end
 ---
 ---@param src table|function Table or iterator to drain values from
 ---@return Iter
-function Iter.new(src)
+function Iter.new(src, ...)
   local it = {}
   if type(src) == 'table' then
-    it._table = {}
-    for i = 1, #src do
-      it._table[i] = src[i]
+    local t = {}
+
+    -- Check if source table can be treated like a list (indices are consecutive integers
+    -- starting from 1)
+    local count = 0
+    for _ in pairs(src) do
+      count = count + 1
+      local v = src[count]
+      if v == nil then
+        return MapIter.new(src)
+      end
+      t[count] = v
     end
-    it._head = 1
-    it._tail = #src + 1
-    setmetatable(it, TableIter)
-  elseif type(src) == 'function' then
+    return ListIter.new(t)
+  end
+
+  if type(src) == 'function' then
+    local s, var = ...
     function it.next()
-      return src()
+      local vars = pack(src(s, var))
+      if vars ~= nil then
+        var = vars[1]
+        return unpack(vars)
+      end
     end
     setmetatable(it, Iter)
   else
     error('src must be a table or function')
   end
+  return it
+end
+
+--- Create a new ListIter
+---
+---@param t table List-like table. Caller guarantees that this table is a valid list.
+---@return Iter
+---@private
+function ListIter.new(t)
+  local it = {}
+  it._table = t
+  it._head = 1
+  it._tail = #t + 1
+  setmetatable(it, ListIter)
+  return it
+end
+
+--- Create a new MapIter
+---
+---@param t table Table to iterate over. For list-like tables, use ListIter.new instead.
+---@return Iter
+---@private
+function MapIter.new(t)
+  local it = {}
+
+  local index = nil
+  function it.next()
+    local k, v = next(t, index)
+    if k ~= nil then
+      index = k
+      return k, v
+    end
+  end
+
+  setmetatable(it, MapIter)
   return it
 end
 
