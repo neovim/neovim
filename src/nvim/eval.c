@@ -703,10 +703,15 @@ int eval_to_bool(char *arg, bool *error, exarg_T *eap, int skip)
   typval_T tv;
   bool retval = false;
 
+  evalarg_T evalarg = {
+    .eval_flags = skip ? 0 : EVAL_EVALUATE,
+    .eval_cookie = eap != NULL && eap->getline == getsourceline ? eap->cookie : NULL,
+  };
+
   if (skip) {
     emsg_skip++;
   }
-  if (eval0(arg, &tv, eap, skip ? NULL : &EVALARG_EVALUATE) == FAIL) {
+  if (eval0(arg, &tv, eap, &evalarg) == FAIL) {
     *error = true;
   } else {
     *error = false;
@@ -718,6 +723,7 @@ int eval_to_bool(char *arg, bool *error, exarg_T *eap, int skip)
   if (skip) {
     emsg_skip--;
   }
+  clear_evalarg(&evalarg, eap);
 
   return retval;
 }
@@ -2228,6 +2234,20 @@ static int eval_func(char **const arg, char *const name, const int name_len, typ
   return ret;
 }
 
+/// After using "evalarg" filled from "eap" free the memory.
+void clear_evalarg(evalarg_T *evalarg, exarg_T *eap)
+{
+  if (evalarg != NULL && eap != NULL && evalarg->eval_tofree != NULL) {
+    // We may need to keep the original command line, e.g. for
+    // ":let" it has the variable names.  But we may also need the
+    // new one, "nextcmd" points into it.  Keep both.
+    xfree(eap->cmdline_tofree);
+    eap->cmdline_tofree = *eap->cmdlinep;
+    *eap->cmdlinep = evalarg->eval_tofree;
+    evalarg->eval_tofree = NULL;
+  }
+}
+
 /// The "evaluate" argument: When false, the argument is only parsed but not
 /// executed.  The function may return OK, but the rettv will be of type
 /// VAR_UNKNOWN.  The function still returns FAIL for a syntax error.
@@ -2278,15 +2298,7 @@ int eval0(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
     eap->nextcmd = check_nextcmd(p);
   }
 
-  if (evalarg != NULL && eap != NULL && evalarg->eval_tofree != NULL) {
-    // We may need to keep the original command line, e.g. for
-    // ":let" it has the variable names.  But we may also need the
-    // new one, "nextcmd" points into it.  Keep both.
-    xfree(eap->cmdline_tofree);
-    eap->cmdline_tofree = *eap->cmdlinep;
-    *eap->cmdlinep = evalarg->eval_tofree;
-    evalarg->eval_tofree = NULL;
-  }
+  clear_evalarg(evalarg, eap);
 
   return ret;
 }
@@ -7502,6 +7514,7 @@ void ex_echo(exarg_T *eap)
     arg = skipwhite(arg);
   }
   eap->nextcmd = check_nextcmd(arg);
+  clear_evalarg(&evalarg, eap);
 
   if (eap->skip) {
     emsg_skip--;

@@ -267,7 +267,7 @@ void ex_let(exarg_T *eap)
   if (eap->skip) {
     emsg_skip--;
   }
-  xfree(evalarg.eval_tofree);
+  clear_evalarg(&evalarg, eap);
 
   if (!eap->skip && eval_res != FAIL) {
     (void)ex_let_vars(eap->arg, &rettv, false, semicolon, var_count, is_const, op);
