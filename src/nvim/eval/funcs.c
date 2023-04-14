@@ -1722,7 +1722,7 @@ static void f_exists(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       xfree(exp);
     }
   } else if (*p == '&' || *p == '+') {  // Option.
-    n = (get_option_tv(&p, NULL, true) == OK);
+    n = (eval_option(&p, NULL, true) == OK);
     if (*skipwhite(p) != NUL) {
       n = false;  // Trailing garbage.
     }
