@@ -2679,8 +2679,6 @@ static int eval_addlist(typval_T *tv1, typval_T *tv2)
 /// @return  OK or FAIL.
 static int eval5(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 {
-  const bool evaluate = evalarg == NULL ? 0 : (evalarg->eval_flags & EVAL_EVALUATE);
-
   // Get the first variable.
   if (eval6(arg, rettv, evalarg, false) == FAIL) {
     return FAIL;
@@ -2694,6 +2692,7 @@ static int eval5(char **arg, typval_T *rettv, evalarg_T *const evalarg)
       break;
     }
 
+    const bool evaluate = evalarg == NULL ? 0 : (evalarg->eval_flags & EVAL_EVALUATE);
     if ((op != '+' || (rettv->v_type != VAR_LIST && rettv->v_type != VAR_BLOB))
         && (op == '.' || rettv->v_type != VAR_FLOAT) && evaluate) {
       // For "list + ...", an illegal use of the first operand as
@@ -2822,12 +2821,7 @@ static int eval5(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 static int eval6(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool want_string)
   FUNC_ATTR_NO_SANITIZE_UNDEFINED
 {
-  typval_T var2;
-  int op;
-  varnumber_T n1, n2;
   bool use_float = false;
-  float_T f1 = 0, f2 = 0;
-  bool error = false;
 
   // Get the first variable.
   if (eval7(arg, rettv, evalarg, want_string) == FAIL) {
@@ -2836,12 +2830,15 @@ static int eval6(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
 
   // Repeat computing, until no '*', '/' or '%' is following.
   for (;;) {
-    const bool evaluate = evalarg == NULL ? 0 : (evalarg->eval_flags & EVAL_EVALUATE);
-    op = (uint8_t)(**arg);
+    int op = (uint8_t)(**arg);
     if (op != '*' && op != '/' && op != '%') {
       break;
     }
 
+    varnumber_T n1, n2;
+    float_T f1 = 0, f2 = 0;
+    bool error = false;
+    const bool evaluate = evalarg == NULL ? 0 : (evalarg->eval_flags & EVAL_EVALUATE);
     if (evaluate) {
       if (rettv->v_type == VAR_FLOAT) {
         f1 = rettv->vval.v_float;
@@ -2860,6 +2857,7 @@ static int eval6(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
 
     // Get the second variable.
     *arg = skipwhite(*arg + 1);
+    typval_T var2;
     if (eval7(arg, &var2, evalarg, false) == FAIL) {
       return FAIL;
     }
@@ -2953,7 +2951,6 @@ static int eval6(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
 /// @return  OK or FAIL.
 static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool want_string)
 {
-  const int flags = evalarg == NULL ? 0 : evalarg->eval_flags;
   const bool evaluate = evalarg != NULL && (evalarg->eval_flags & EVAL_EVALUATE);
   int ret = OK;
   static int recurse = 0;
@@ -3091,6 +3088,7 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
     if (len <= 0) {
       ret = FAIL;
     } else {
+      const int flags = evalarg == NULL ? 0 : evalarg->eval_flags;
       if (**arg == '(') {               // recursive!
         ret = eval_func(arg, evalarg, s, len, rettv, flags, NULL);
       } else if (evaluate) {
