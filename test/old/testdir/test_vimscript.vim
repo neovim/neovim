@@ -6746,7 +6746,7 @@ func Test_script_lines()
 		    \ ])
 	call assert_report("Shouldn't be able to define function")
     catch
-	call assert_exception('Vim(function):E126: Missing :endfunction')
+	call assert_exception('Vim(function):E1145: Missing heredoc end marker: .')
     endtry
 
     " :change
@@ -6766,7 +6766,7 @@ func Test_script_lines()
 		    \ ])
 	call assert_report("Shouldn't be able to define function")
     catch
-	call assert_exception('Vim(function):E126: Missing :endfunction')
+	call assert_exception('Vim(function):E1145: Missing heredoc end marker: .')
     endtry
 
     " :insert
@@ -6786,7 +6786,7 @@ func Test_script_lines()
 		    \ ])
 	call assert_report("Shouldn't be able to define function")
     catch
-	call assert_exception('Vim(function):E126: Missing :endfunction')
+	call assert_exception('Vim(function):E1145: Missing heredoc end marker: .')
     endtry
 endfunc
 
