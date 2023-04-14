@@ -458,14 +458,13 @@ void emsg_funcname(const char *errmsg, const char *name)
 /// @param funcexe  various values
 ///
 /// @return  OK or FAIL.
-int get_func_tv(const char *name, int len, typval_T *rettv, char **arg, funcexe_T *funcexe)
+int get_func_tv(const char *name, int len, typval_T *rettv, char **arg, evalarg_T *const evalarg,
+                funcexe_T *funcexe)
 {
   char *argp;
   int ret = OK;
   typval_T argvars[MAX_FUNC_ARGS + 1];          // vars for arguments
   int argcount = 0;                     // number of arguments found
-
-  evalarg_T evalarg = { .eval_flags = funcexe->fe_evaluate ? EVAL_EVALUATE : 0 };
 
   // Get the arguments.
   argp = *arg;
@@ -475,7 +474,7 @@ int get_func_tv(const char *name, int len, typval_T *rettv, char **arg, funcexe_
     if (*argp == ')' || *argp == ',' || *argp == NUL) {
       break;
     }
-    if (eval1(&argp, &argvars[argcount], &evalarg) == FAIL) {
+    if (eval1(&argp, &argvars[argcount], evalarg) == FAIL) {
       ret = FAIL;
       break;
     }
@@ -3013,16 +3012,19 @@ void ex_call(exarg_T *eap)
   bool failed = false;
   funcdict_T fudi;
   partial_T *partial = NULL;
+  evalarg_T evalarg;
 
+  fill_evalarg_from_eap(&evalarg, eap, eap->skip);
   if (eap->skip) {
     // trans_function_name() doesn't work well when skipping, use eval0()
     // instead to skip to any following command, e.g. for:
     //   :if 0 | call dict.foo().bar() | endif.
     emsg_skip++;
-    if (eval0(eap->arg, &rettv, eap, NULL) != FAIL) {
+    if (eval0(eap->arg, &rettv, eap, &evalarg) != FAIL) {
       tv_clear(&rettv);
     }
     emsg_skip--;
+    clear_evalarg(&evalarg, eap);
     return;
   }
 
@@ -3080,7 +3082,7 @@ void ex_call(exarg_T *eap)
     funcexe.fe_evaluate = true;
     funcexe.fe_partial = partial;
     funcexe.fe_selfdict = fudi.fd_dict;
-    if (get_func_tv(name, -1, &rettv, &arg, &funcexe) == FAIL) {
+    if (get_func_tv(name, -1, &rettv, &arg, &evalarg, &funcexe) == FAIL) {
       failed = true;
       break;
     }
@@ -3118,6 +3120,7 @@ void ex_call(exarg_T *eap)
       eap->nextcmd = check_nextcmd(arg);
     }
   }
+  clear_evalarg(&evalarg, eap);
 
 end:
   tv_dict_unref(fudi.fd_dict);

@@ -792,13 +792,9 @@ void report_discard_pending(int pending, void *value)
 void ex_eval(exarg_T *eap)
 {
   typval_T tv;
-  evalarg_T evalarg = {
-    .eval_flags = eap->skip ? 0 : EVAL_EVALUATE,
-  };
-  if (getline_equal(eap->getline, eap->cookie, getsourceline)) {
-    evalarg.eval_getline = eap->getline;
-    evalarg.eval_cookie = eap->cookie;
-  }
+  evalarg_T evalarg;
+
+  fill_evalarg_from_eap(&evalarg, eap, eap->skip);
 
   if (eval0(eap->arg, &tv, eap, &evalarg) == OK) {
     tv_clear(&tv);

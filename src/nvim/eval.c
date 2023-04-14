@@ -692,7 +692,7 @@ void eval_patch(const char *const origfile, const char *const difffile, const ch
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
 }
 
-static void fill_evalarg_from_eap(evalarg_T *evalarg, exarg_T *eap, bool skip)
+void fill_evalarg_from_eap(evalarg_T *evalarg, exarg_T *eap, bool skip)
 {
   *evalarg = (evalarg_T){ .eval_flags = skip ? 0 : EVAL_EVALUATE };
   if (eap != NULL && getline_equal(eap->getline, eap->cookie, getsourceline)) {
@@ -2206,9 +2206,10 @@ int pattern_match(const char *pat, const char *text, bool ic)
 /// @param basetv  "expr" for "expr->name(arg)"
 ///
 /// @return OK or FAIL.
-static int eval_func(char **const arg, char *const name, const int name_len, typval_T *const rettv,
-                     const int flags, typval_T *const basetv)
-  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
+static int eval_func(char **const arg, evalarg_T *const evalarg, char *const name,
+                     const int name_len, typval_T *const rettv, const int flags,
+                     typval_T *const basetv)
+  FUNC_ATTR_NONNULL_ARG(1, 3, 5)
 {
   const bool evaluate = flags & EVAL_EVALUATE;
   char *s = name;
@@ -2234,7 +2235,7 @@ static int eval_func(char **const arg, char *const name, const int name_len, typ
   funcexe.fe_evaluate = evaluate;
   funcexe.fe_partial = partial;
   funcexe.fe_basetv = basetv;
-  int ret = get_func_tv(s, len, rettv, arg, &funcexe);
+  int ret = get_func_tv(s, len, rettv, arg, evalarg, &funcexe);
 
   xfree(s);
 
@@ -3089,7 +3090,7 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
       ret = FAIL;
     } else {
       if (**arg == '(') {               // recursive!
-        ret = eval_func(arg, s, len, rettv, flags, NULL);
+        ret = eval_func(arg, evalarg, s, len, rettv, flags, NULL);
       } else if (evaluate) {
         ret = get_var_tv(s, len, rettv, NULL, true, false);
       } else {
@@ -3181,10 +3182,10 @@ static int eval7_leader(typval_T *const rettv, const bool numeric_only,
 ///                      to the name of the Lua function to call (after the
 ///                      "v:lua." prefix).
 /// @return  OK on success, FAIL on failure.
-static int call_func_rettv(char **const arg, typval_T *const rettv, const bool evaluate,
-                           dict_T *const selfdict, typval_T *const basetv,
+static int call_func_rettv(char **const arg, evalarg_T *const evalarg, typval_T *const rettv,
+                           const bool evaluate, dict_T *const selfdict, typval_T *const basetv,
                            const char *const lua_funcname)
-  FUNC_ATTR_NONNULL_ARG(1, 2)
+  FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   partial_T *pt = NULL;
   typval_T functv;
@@ -3216,7 +3217,7 @@ static int call_func_rettv(char **const arg, typval_T *const rettv, const bool e
   funcexe.fe_selfdict = selfdict;
   funcexe.fe_basetv = basetv;
   const int ret = get_func_tv(funcname, is_lua ? (int)(*arg - funcname) : -1, rettv,
-                              arg, &funcexe);
+                              arg, evalarg, &funcexe);
 
   // Clear the funcref afterwards, so that deleting it while
   // evaluating the arguments is possible (see test55).
@@ -3259,7 +3260,7 @@ static int eval_lambda(char **const arg, typval_T *const rettv, evalarg_T *const
     tv_clear(rettv);
     ret = FAIL;
   } else {
-    ret = call_func_rettv(arg, rettv, evaluate, NULL, &base, NULL);
+    ret = call_func_rettv(arg, evalarg, rettv, evaluate, NULL, &base, NULL);
   }
 
   // Clear the funcref afterwards, so that deleting it while
@@ -3276,10 +3277,12 @@ static int eval_lambda(char **const arg, typval_T *const rettv, evalarg_T *const
 /// @param *arg  points to the '-'.
 ///
 /// @return  FAIL or OK. "*arg" is advanced to after the ')'.
-static int eval_method(char **const arg, typval_T *const rettv, const bool evaluate,
+static int eval_method(char **const arg, typval_T *const rettv, evalarg_T *const evalarg,
                        const bool verbose)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
+  const bool evaluate = evalarg != NULL && (evalarg->eval_flags & EVAL_EVALUATE);
+
   // Skip over the ->.
   *arg += 2;
   typval_T base = *rettv;
@@ -3329,9 +3332,9 @@ static int eval_method(char **const arg, typval_T *const rettv, const bool evalu
         rettv->vval.v_partial = vvlua_partial;
         rettv->vval.v_partial->pt_refcount++;
       }
-      ret = call_func_rettv(arg, rettv, evaluate, NULL, &base, lua_funcname);
+      ret = call_func_rettv(arg, evalarg, rettv, evaluate, NULL, &base, lua_funcname);
     } else {
-      ret = eval_func(arg, name, len, rettv, evaluate ? EVAL_EVALUATE : 0, &base);
+      ret = eval_func(arg, evalarg, name, len, rettv, evaluate ? EVAL_EVALUATE : 0, &base);
     }
   }
 
@@ -7081,7 +7084,7 @@ int handle_subscript(const char **const arg, typval_T *rettv, evalarg_T *const e
               && !ascii_iswhite(*(*arg - 1)))
              || (**arg == '-' && (*arg)[1] == '>'))) {
     if (**arg == '(') {
-      ret = call_func_rettv((char **)arg, rettv, evaluate, selfdict, NULL, lua_funcname);
+      ret = call_func_rettv((char **)arg, evalarg, rettv, evaluate, selfdict, NULL, lua_funcname);
 
       // Stop the expression evaluation when immediately aborting on
       // error, or when an interrupt occurred or an exception was thrown
@@ -7100,7 +7103,7 @@ int handle_subscript(const char **const arg, typval_T *rettv, evalarg_T *const e
         ret = eval_lambda((char **)arg, rettv, evalarg, verbose);
       } else {
         // expr->name()
-        ret = eval_method((char **)arg, rettv, evaluate, verbose);
+        ret = eval_method((char **)arg, rettv, evalarg, verbose);
       }
     } else {  // **arg == '[' || **arg == '.'
       tv_dict_unref(selfdict);
