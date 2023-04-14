@@ -503,8 +503,7 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
         if (tofree != NULL) {
           name = tofree;
         }
-        if (get_var_tv(name, len, &tv, NULL, true, false)
-            == FAIL) {
+        if (eval_variable(name, len, &tv, NULL, true, false) == FAIL) {
           error = true;
         } else {
           // handle d.key, l[idx], f(expr)
@@ -1076,8 +1075,8 @@ static int do_lock_var(lval_T *lp, char *name_end FUNC_ATTR_UNUSED, exarg_T *eap
 /// @param dip  non-NULL when typval's dict item is needed
 /// @param verbose  may give error message
 /// @param no_autoload  do not use script autoloading
-int get_var_tv(const char *name, int len, typval_T *rettv, dictitem_T **dip, bool verbose,
-               bool no_autoload)
+int eval_variable(const char *name, int len, typval_T *rettv, dictitem_T **dip, bool verbose,
+                  bool no_autoload)
 {
   int ret = OK;
   typval_T *tv = NULL;
@@ -1564,7 +1563,7 @@ static void get_var_from(const char *varname, typval_T *rettv, typval_T *deftv, 
             tv_dict_set_ret(rettv, opts);
             done = true;
           }
-        } else if (get_option_tv(&varname, rettv, true) == OK) {
+        } else if (eval_option(&varname, rettv, true) == OK) {
           // Local option
           done = true;
         }
@@ -1713,7 +1712,7 @@ bool var_exists(const char *var)
     if (tofree != NULL) {
       name = tofree;
     }
-    n = get_var_tv(name, len, &tv, NULL, false, true) == OK;
+    n = eval_variable(name, len, &tv, NULL, false, true) == OK;
     if (n) {
       // Handle d.key, l[idx], f(expr).
       n = handle_subscript(&var, &tv, &EVALARG_EVALUATE, false) == OK;

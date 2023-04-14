@@ -1674,8 +1674,8 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
 
       // handle +=, -=, *=, /=, %= and .=
       di = NULL;
-      if (get_var_tv(lp->ll_name, (int)strlen(lp->ll_name),
-                     &tv, &di, true, false) == OK) {
+      if (eval_variable(lp->ll_name, (int)strlen(lp->ll_name),
+                        &tv, &di, true, false) == OK) {
         if ((di == NULL
              || (!var_check_ro(di->di_flags, lp->ll_name, TV_CSTRING)
                  && !tv_check_lock(&di->di_tv, lp->ll_name, TV_CSTRING)))
@@ -3049,7 +3049,7 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
   case '7':
   case '8':
   case '9':
-    ret = get_number_tv(arg, rettv, evaluate, want_string);
+    ret = eval_number(arg, rettv, evaluate, want_string);
 
     // Apply prefixed "-" and "+" now.  Matters especially when
     // "->" follows.
@@ -3060,17 +3060,17 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
 
   // String constant: "string".
   case '"':
-    ret = get_string_tv(arg, rettv, evaluate);
+    ret = eval_string(arg, rettv, evaluate);
     break;
 
   // Literal string constant: 'str''ing'.
   case '\'':
-    ret = get_lit_string_tv(arg, rettv, evaluate);
+    ret = eval_lit_string(arg, rettv, evaluate);
     break;
 
   // List: [expr, expr]
   case '[':
-    ret = get_list_tv(arg, rettv, evalarg);
+    ret = eval_list(arg, rettv, evalarg);
     break;
 
   // Dictionary: #{key: val, key: val}
@@ -3094,11 +3094,11 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
 
   // Option value: &name
   case '&':
-    ret = get_option_tv((const char **)arg, rettv, evaluate);
+    ret = eval_option((const char **)arg, rettv, evaluate);
     break;
   // Environment variable: $VAR.
   case '$':
-    ret = get_env_tv(arg, rettv, evaluate);
+    ret = eval_env_var(arg, rettv, evaluate);
     break;
 
   // Register contents: @r.
@@ -3146,11 +3146,14 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
       ret = FAIL;
     } else {
       const int flags = evalarg == NULL ? 0 : evalarg->eval_flags;
-      if (**arg == '(') {               // recursive!
+      if (**arg == '(') {
+        // "name(..."  recursive!
         ret = eval_func(arg, evalarg, s, len, rettv, flags, NULL);
       } else if (evaluate) {
-        ret = get_var_tv(s, len, rettv, NULL, true, false);
+        // get value of variable
+        ret = eval_variable(s, len, rettv, NULL, true, false);
       } else {
+        // skip the name
         check_vars(s, (size_t)len);
         ret = OK;
       }
@@ -3711,7 +3714,7 @@ static int eval_index(char **arg, typval_T *rettv, evalarg_T *const evalarg, boo
 /// @param[in] evaluate  If not true, rettv is not populated.
 ///
 /// @return  OK or FAIL.
-int get_option_tv(const char **const arg, typval_T *const rettv, const bool evaluate)
+int eval_option(const char **const arg, typval_T *const rettv, const bool evaluate)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   const bool working = (**arg == '+');  // has("+option")
@@ -3774,7 +3777,7 @@ int get_option_tv(const char **const arg, typval_T *const rettv, const bool eval
 /// Allocate a variable for a number constant.  Also deals with "0z" for blob.
 ///
 /// @return  OK or FAIL.
-static int get_number_tv(char **arg, typval_T *rettv, bool evaluate, bool want_string)
+static int eval_number(char **arg, typval_T *rettv, bool evaluate, bool want_string)
 {
   char *p = skipdigits(*arg + 1);
   bool get_float = false;
@@ -3859,7 +3862,7 @@ static int get_number_tv(char **arg, typval_T *rettv, bool evaluate, bool want_s
 /// Allocate a variable for a string constant.
 ///
 /// @return  OK or FAIL.
-static int get_string_tv(char **arg, typval_T *rettv, int evaluate)
+static int eval_string(char **arg, typval_T *rettv, int evaluate)
 {
   char *p;
   unsigned int extra = 0;
@@ -3972,7 +3975,7 @@ static int get_string_tv(char **arg, typval_T *rettv, int evaluate)
         if (extra != 0) {
           name += extra;
           if (name >= rettv->vval.v_string + len) {
-            iemsg("get_string_tv() used more space than allocated");
+            iemsg("eval_string() used more space than allocated");
           }
           break;
         }
@@ -3999,7 +4002,7 @@ static int get_string_tv(char **arg, typval_T *rettv, int evaluate)
 /// Allocate a variable for a 'str''ing' constant.
 ///
 /// @return  OK or FAIL.
-static int get_lit_string_tv(char **arg, typval_T *rettv, int evaluate)
+static int eval_lit_string(char **arg, typval_T *rettv, int evaluate)
 {
   char *p;
   int reduce = 0;
@@ -4085,7 +4088,7 @@ void partial_unref(partial_T *pt)
 ///
 /// @param arg  "*arg" points to the "[".
 /// @return  OK or FAIL.
-static int get_list_tv(char **arg, typval_T *rettv, evalarg_T *const evalarg)
+static int eval_list(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 {
   const bool evaluate = evalarg == NULL ? false : evalarg->eval_flags & EVAL_EVALUATE;
   list_T *l = NULL;
@@ -4883,7 +4886,7 @@ size_t string2float(const char *const text, float_T *const ret_value)
 /// @param arg  Points to the '$'.  It is advanced to after the name.
 ///
 /// @return  FAIL if the name is invalid.
-static int get_env_tv(char **arg, typval_T *rettv, int evaluate)
+static int eval_env_var(char **arg, typval_T *rettv, int evaluate)
 {
   (*arg)++;
   char *name = *arg;
@@ -8420,14 +8423,14 @@ bool eval_has_provider(const char *feat)
   typval_T tv;
   // Get the g:loaded_xx_provider variable.
   int len = snprintf(buf, sizeof(buf), "g:loaded_%s_provider", name);
-  if (get_var_tv(buf, len, &tv, NULL, false, true) == FAIL) {
+  if (eval_variable(buf, len, &tv, NULL, false, true) == FAIL) {
     // Trigger autoload once.
     len = snprintf(buf, sizeof(buf), "provider#%s#bogus", name);
     script_autoload(buf, (size_t)len, false);
 
     // Retry the (non-autoload-style) variable.
     len = snprintf(buf, sizeof(buf), "g:loaded_%s_provider", name);
-    if (get_var_tv(buf, len, &tv, NULL, false, true) == FAIL) {
+    if (eval_variable(buf, len, &tv, NULL, false, true) == FAIL) {
       // Show a hint if Call() is defined but g:loaded_xx_provider is missing.
       snprintf(buf, sizeof(buf), "provider#%s#Call", name);
       if (!!find_func(buf) && p_lpl) {
