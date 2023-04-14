@@ -7447,7 +7447,10 @@ void ex_echo(exarg_T *eap)
   const int did_emsg_before = did_emsg;
   const int called_emsg_before = called_emsg;
 
-  evalarg_T evalarg = { .eval_flags = eap->skip ? 0 : EVAL_EVALUATE };
+  evalarg_T evalarg = {
+    .eval_flags = eap->skip ? 0 : EVAL_EVALUATE,
+    .eval_cookie = eap->getline == getsourceline ? eap->cookie : NULL,
+  };
 
   if (eap->skip) {
     emsg_skip++;
