@@ -2352,9 +2352,14 @@ int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 
   char *p = *arg;
   if (*p == '?') {
-    evalarg_T nested_evalarg = evalarg == NULL ? (evalarg_T){ 0 } : *evalarg;
-    const int orig_flags = evalarg == NULL ? 0 : evalarg->eval_flags;
-    const bool evaluate = nested_evalarg.eval_flags & EVAL_EVALUATE;
+    evalarg_T *evalarg_used = evalarg;
+    evalarg_T local_evalarg;
+    if (evalarg == NULL) {
+      local_evalarg = (evalarg_T){ .eval_flags = 0 };
+      evalarg_used = &local_evalarg;
+    }
+    const int orig_flags = evalarg_used->eval_flags;
+    const bool evaluate = evalarg_used->eval_flags & EVAL_EVALUATE;
 
     bool result = false;
     if (evaluate) {
@@ -2371,8 +2376,8 @@ int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 
     // Get the second variable.  Recursive!
     *arg = skipwhite(*arg + 1);
-    nested_evalarg.eval_flags = result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
-    if (eval1(arg, rettv, &nested_evalarg) == FAIL) {
+    evalarg_used->eval_flags = result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
+    if (eval1(arg, rettv, evalarg_used) == FAIL) {
       return FAIL;
     }
 
@@ -2389,8 +2394,8 @@ int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
     // Get the third variable.  Recursive!
     *arg = skipwhite(*arg + 1);
     typval_T var2;
-    nested_evalarg.eval_flags = !result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
-    if (eval1(arg, &var2, &nested_evalarg) == FAIL) {
+    evalarg_used->eval_flags = !result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
+    if (eval1(arg, &var2, evalarg_used) == FAIL) {
       if (evaluate && result) {
         tv_clear(rettv);
       }
@@ -2398,6 +2403,12 @@ int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
     }
     if (evaluate && !result) {
       *rettv = var2;
+    }
+
+    if (evalarg == NULL) {
+      clear_evalarg(&local_evalarg, NULL);
+    } else {
+      evalarg->eval_flags = orig_flags;
     }
   }
 
@@ -2413,24 +2424,27 @@ int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 /// @return  OK or FAIL.
 static int eval2(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 {
-  typval_T var2;
-  bool error = false;
-
   // Get the first variable.
   if (eval3(arg, rettv, evalarg) == FAIL) {
     return FAIL;
   }
 
-  // Repeat until there is no following "||".
-  bool first = true;
-  bool result = false;
+  // Handle the  "||" operator.
   char *p = *arg;
-  while (p[0] == '|' && p[1] == '|') {
-    evalarg_T nested_evalarg = evalarg == NULL ? (evalarg_T){ 0 } : *evalarg;
-    const int orig_flags = evalarg == NULL ? 0 : evalarg->eval_flags;
-    const bool evaluate = orig_flags & EVAL_EVALUATE;
+  if (p[0] == '|' && p[1] == '|') {
+    evalarg_T *evalarg_used = evalarg;
+    evalarg_T local_evalarg;
+    if (evalarg == NULL) {
+      local_evalarg = (evalarg_T){ .eval_flags = 0 };
+      evalarg_used = &local_evalarg;
+    }
+    const int orig_flags = evalarg_used->eval_flags;
+    const bool evaluate = evalarg_used->eval_flags & EVAL_EVALUATE;
 
-    if (evaluate && first) {
+    bool result = false;
+
+    if (evaluate) {
+      bool error = false;
       if (tv_get_number_chk(rettv, &error) != 0) {
         result = true;
       }
@@ -2438,32 +2452,42 @@ static int eval2(char **arg, typval_T *rettv, evalarg_T *const evalarg)
       if (error) {
         return FAIL;
       }
-      first = false;
     }
 
-    // Get the second variable.
-    *arg = skipwhite(*arg + 2);
-    nested_evalarg.eval_flags = !result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
-    if (eval3(arg, &var2, &nested_evalarg) == FAIL) {
-      return FAIL;
-    }
-
-    // Compute the result.
-    if (evaluate && !result) {
-      if (tv_get_number_chk(&var2, &error) != 0) {
-        result = true;
-      }
-      tv_clear(&var2);
-      if (error) {
+    // Repeat until there is no following "||".
+    while (p[0] == '|' && p[1] == '|') {
+      // Get the second variable.
+      *arg = skipwhite(*arg + 2);
+      evalarg_used->eval_flags = !result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
+      typval_T var2;
+      if (eval3(arg, &var2, evalarg_used) == FAIL) {
         return FAIL;
       }
-    }
-    if (evaluate) {
-      rettv->v_type = VAR_NUMBER;
-      rettv->vval.v_number = result;
+
+      // Compute the result.
+      if (evaluate && !result) {
+        bool error = false;
+        if (tv_get_number_chk(&var2, &error) != 0) {
+          result = true;
+        }
+        tv_clear(&var2);
+        if (error) {
+          return FAIL;
+        }
+      }
+      if (evaluate) {
+        rettv->v_type = VAR_NUMBER;
+        rettv->vval.v_number = result;
+      }
+
+      p = *arg;
     }
 
-    p = *arg;
+    if (evalarg == NULL) {
+      clear_evalarg(&local_evalarg, NULL);
+    } else {
+      evalarg->eval_flags = orig_flags;
+    }
   }
 
   return OK;
@@ -2478,24 +2502,27 @@ static int eval2(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 /// @return  OK or FAIL.
 static int eval3(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 {
-  typval_T var2;
-  bool error = false;
-
   // Get the first variable.
   if (eval4(arg, rettv, evalarg) == FAIL) {
     return FAIL;
   }
 
-  // Repeat until there is no following "&&".
-  bool first = true;
-  bool result = true;
   char *p = *arg;
-  while (p[0] == '&' && p[1] == '&') {
-    evalarg_T nested_evalarg = evalarg == NULL ? (evalarg_T){ 0 } : *evalarg;
-    const int orig_flags = evalarg == NULL ? 0 : evalarg->eval_flags;
-    const bool evaluate = orig_flags & EVAL_EVALUATE;
+  // Handle the "&&" operator.
+  if (p[0] == '&' && p[1] == '&') {
+    evalarg_T *evalarg_used = evalarg;
+    evalarg_T local_evalarg;
+    if (evalarg == NULL) {
+      local_evalarg = (evalarg_T){ .eval_flags = 0 };
+      evalarg_used = &local_evalarg;
+    }
+    const int orig_flags = evalarg_used->eval_flags;
+    const bool evaluate = evalarg_used->eval_flags & EVAL_EVALUATE;
 
-    if (evaluate && first) {
+    bool result = true;
+
+    if (evaluate) {
+      bool error = false;
       if (tv_get_number_chk(rettv, &error) == 0) {
         result = false;
       }
@@ -2503,32 +2530,42 @@ static int eval3(char **arg, typval_T *rettv, evalarg_T *const evalarg)
       if (error) {
         return FAIL;
       }
-      first = false;
     }
 
-    // Get the second variable.
-    *arg = skipwhite(*arg + 2);
-    nested_evalarg.eval_flags = result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
-    if (eval4(arg, &var2, &nested_evalarg) == FAIL) {
-      return FAIL;
-    }
-
-    // Compute the result.
-    if (evaluate && result) {
-      if (tv_get_number_chk(&var2, &error) == 0) {
-        result = false;
-      }
-      tv_clear(&var2);
-      if (error) {
+    // Repeat until there is no following "&&".
+    while (p[0] == '&' && p[1] == '&') {
+      // Get the second variable.
+      *arg = skipwhite(*arg + 2);
+      evalarg_used->eval_flags = result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
+      typval_T var2;
+      if (eval4(arg, &var2, evalarg_used) == FAIL) {
         return FAIL;
       }
-    }
-    if (evaluate) {
-      rettv->v_type = VAR_NUMBER;
-      rettv->vval.v_number = result;
+
+      // Compute the result.
+      if (evaluate && result) {
+        bool error = false;
+        if (tv_get_number_chk(&var2, &error) == 0) {
+          result = false;
+        }
+        tv_clear(&var2);
+        if (error) {
+          return FAIL;
+        }
+      }
+      if (evaluate) {
+        rettv->v_type = VAR_NUMBER;
+        rettv->vval.v_number = result;
+      }
+
+      p = *arg;
     }
 
-    p = *arg;
+    if (evalarg == NULL) {
+      clear_evalarg(&local_evalarg, NULL);
+    } else {
+      evalarg->eval_flags = orig_flags;
+    }
   }
 
   return OK;
