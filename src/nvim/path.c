@@ -1371,7 +1371,7 @@ static int expand_backtick(garray_T *gap, char *pat, int flags)
   char *cmd = xstrnsave(pat + 1, strlen(pat) - 2);
 
   if (*cmd == '=') {          // `={expr}`: Expand expression
-    buffer = eval_to_string(cmd + 1, &p, true);
+    buffer = eval_to_string(cmd + 1, true);
   } else {
     buffer = get_cmd_output(cmd, NULL, (flags & EW_SILENT) ? kShellOptSilent : 0, NULL);
   }
@@ -1662,7 +1662,7 @@ void simplify_filename(char *filename)
 static char *eval_includeexpr(const char *const ptr, const size_t len)
 {
   set_vim_var_string(VV_FNAME, ptr, (ptrdiff_t)len);
-  char *res = eval_to_string_safe(curbuf->b_p_inex, NULL,
+  char *res = eval_to_string_safe(curbuf->b_p_inex,
                                   was_set_insecurely(curwin, "includeexpr", OPT_LOCAL));
   set_vim_var_string(VV_FNAME, NULL, 0);
   return res;

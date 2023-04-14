@@ -2957,7 +2957,7 @@ void ex_return(exarg_T *eap)
 
   eap->nextcmd = NULL;
   if ((*arg != NUL && *arg != '|' && *arg != '\n')
-      && eval0(arg, &rettv, &eap->nextcmd, &evalarg) != FAIL) {
+      && eval0(arg, &rettv, eap, &evalarg) != FAIL) {
     if (!eap->skip) {
       returning = do_return(eap, false, true, &rettv);
     } else {
@@ -3008,7 +3008,7 @@ void ex_call(exarg_T *eap)
     // instead to skip to any following command, e.g. for:
     //   :if 0 | call dict.foo().bar() | endif.
     emsg_skip++;
-    if (eval0(eap->arg, &rettv, &eap->nextcmd, NULL) != FAIL) {
+    if (eval0(eap->arg, &rettv, eap, NULL) != FAIL) {
       tv_clear(&rettv);
     }
     emsg_skip--;

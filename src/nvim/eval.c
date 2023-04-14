@@ -698,7 +698,7 @@ void eval_patch(const char *const origfile, const char *const difffile, const ch
 /// @param skip  only parse, don't execute
 ///
 /// @return  true or false.
-int eval_to_bool(char *arg, bool *error, char **nextcmd, int skip)
+int eval_to_bool(char *arg, bool *error, exarg_T *eap, int skip)
 {
   typval_T tv;
   bool retval = false;
@@ -706,7 +706,7 @@ int eval_to_bool(char *arg, bool *error, char **nextcmd, int skip)
   if (skip) {
     emsg_skip++;
   }
-  if (eval0(arg, &tv, nextcmd, skip ? NULL : &EVALARG_EVALUATE) == FAIL) {
+  if (eval0(arg, &tv, eap, skip ? NULL : &EVALARG_EVALUATE) == FAIL) {
     *error = true;
   } else {
     *error = false;
@@ -817,13 +817,12 @@ bool eval_expr_to_bool(const typval_T *expr, bool *error)
 /// Top level evaluation function, returning a string
 ///
 /// @param[in]  arg  String to evaluate.
-/// @param  nextcmd  Pointer to the start of the next Ex command.
 /// @param[in]  skip  If true, only do parsing to nextcmd without reporting
 ///                   errors or actually evaluating anything.
 ///
 /// @return [allocated] string result of evaluation or NULL in case of error or
 ///                     when skipping.
-char *eval_to_string_skip(const char *arg, const char **nextcmd, const bool skip)
+char *eval_to_string_skip(char *arg, exarg_T *eap, const bool skip)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   typval_T tv;
@@ -832,8 +831,7 @@ char *eval_to_string_skip(const char *arg, const char **nextcmd, const bool skip
   if (skip) {
     emsg_skip++;
   }
-  if (eval0((char *)arg, &tv, (char **)nextcmd, skip ? NULL : &EVALARG_EVALUATE)
-      == FAIL || skip) {
+  if (eval0(arg, &tv, eap, skip ? NULL : &EVALARG_EVALUATE) == FAIL || skip) {
     retval = NULL;
   } else {
     retval = xstrdup(tv_get_string(&tv));
@@ -863,13 +861,13 @@ int skip_expr(char **pp)
 ///                 a Float to a String.
 ///
 /// @return         pointer to allocated memory, or NULL for failure.
-char *eval_to_string(char *arg, char **nextcmd, bool convert)
+char *eval_to_string(char *arg, bool convert)
 {
   typval_T tv;
   char *retval;
   garray_T ga;
 
-  if (eval0(arg, &tv, nextcmd, &EVALARG_EVALUATE) == FAIL) {
+  if (eval0(arg, &tv, NULL, &EVALARG_EVALUATE) == FAIL) {
     retval = NULL;
   } else {
     if (convert && tv.v_type == VAR_LIST) {
@@ -899,7 +897,7 @@ char *eval_to_string(char *arg, char **nextcmd, bool convert)
 /// textlock.
 ///
 /// @param use_sandbox  when true, use the sandbox.
-char *eval_to_string_safe(char *arg, char **nextcmd, int use_sandbox)
+char *eval_to_string_safe(char *arg, int use_sandbox)
 {
   char *retval;
   funccal_entry_T funccal_entry;
@@ -909,7 +907,7 @@ char *eval_to_string_safe(char *arg, char **nextcmd, int use_sandbox)
     sandbox++;
   }
   textlock++;
-  retval = eval_to_string(arg, nextcmd, false);
+  retval = eval_to_string(arg, false);
   if (use_sandbox) {
     sandbox--;
   }
@@ -1778,7 +1776,7 @@ notify:
 /// @param[out] *errp  set to true for an error, false otherwise;
 ///
 /// @return  a pointer that holds the info.  Null when there is an error.
-void *eval_for_line(const char *arg, bool *errp, char **nextcmdp, int skip)
+void *eval_for_line(const char *arg, bool *errp, exarg_T *eap, int skip)
 {
   forinfo_T *fi = xcalloc(1, sizeof(forinfo_T));
   const char *expr;
@@ -1802,7 +1800,7 @@ void *eval_for_line(const char *arg, bool *errp, char **nextcmdp, int skip)
   if (skip) {
     emsg_skip++;
   }
-  if (eval0(skipwhite(expr + 2), &tv, nextcmdp, &evalarg) == OK) {
+  if (eval0(skipwhite(expr + 2), &tv, eap, &evalarg) == OK) {
     *errp = false;
     if (!skip) {
       if (tv.v_type == VAR_LIST) {
@@ -2230,7 +2228,7 @@ static int eval_func(char **const arg, char *const name, const int name_len, typ
 /// @param evalarg  can be NULL, &EVALARG_EVALUATE or a pointer.
 ///
 /// @return OK or FAIL.
-int eval0(char *arg, typval_T *rettv, char **nextcmd, evalarg_T *const evalarg)
+int eval0(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
 {
   int ret;
   char *p;
@@ -2238,6 +2236,9 @@ int eval0(char *arg, typval_T *rettv, char **nextcmd, evalarg_T *const evalarg)
   const int called_emsg_before = called_emsg;
   bool end_error = false;
 
+  if (evalarg != NULL) {
+    evalarg->eval_tofree = NULL;
+  }
   p = skipwhite(arg);
   ret = eval1(&p, rettv, evalarg);
 
@@ -2263,8 +2264,24 @@ int eval0(char *arg, typval_T *rettv, char **nextcmd, evalarg_T *const evalarg)
     }
     ret = FAIL;
   }
-  if (nextcmd != NULL) {
-    *nextcmd = check_nextcmd(p);
+
+  if (eap != NULL) {
+    eap->nextcmd = check_nextcmd(p);
+  }
+
+  if (evalarg != NULL) {
+    if (eap != NULL) {
+      if (evalarg->eval_tofree != NULL) {
+        // We may need to keep the original command line, e.g. for
+        // ":let" it has the variable names.  But we may also need the
+        // new one, "nextcmd" points into it.  Keep both.
+        xfree(eap->cmdline_tofree);
+        eap->cmdline_tofree = *eap->cmdlinep;
+        *eap->cmdlinep = evalarg->eval_tofree;
+      }
+    } else {
+      xfree(evalarg->eval_tofree);
+    }
   }
 
   return ret;
@@ -6537,15 +6554,14 @@ static char *make_expanded_name(const char *in_start, char *expr_start, char *ex
   }
 
   char *retval = NULL;
-  char *nextcmd = NULL;
 
   *expr_start = NUL;
   *expr_end = NUL;
   char c1 = *in_end;
   *in_end = NUL;
 
-  char *temp_result = eval_to_string(expr_start + 1, &nextcmd, false);
-  if (temp_result != NULL && nextcmd == NULL) {
+  char *temp_result = eval_to_string(expr_start + 1, false);
+  if (temp_result != NULL) {
     retval = xmalloc(strlen(temp_result) + (size_t)(expr_start - in_start)
                      + (size_t)(in_end - expr_end) + 1);
     STRCPY(retval, in_start);

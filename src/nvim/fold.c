@@ -1749,7 +1749,8 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
       curbuf = wp->w_buffer;
 
       emsg_silent++;       // handle exceptions, but don't display errors
-      text = eval_to_string_safe(wp->w_p_fdt, NULL, was_set_insecurely(wp, "foldtext", OPT_LOCAL));
+      text = eval_to_string_safe(wp->w_p_fdt,
+                                 was_set_insecurely(wp, "foldtext", OPT_LOCAL));
       emsg_silent--;
 
       if (text == NULL || did_emsg) {

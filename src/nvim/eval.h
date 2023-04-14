@@ -273,6 +273,9 @@ typedef struct {
 
   /// copied from exarg_T when "getline" is "getsourceline". Can be NULL.
   void *eval_cookie;   // argument for getline()
+
+  /// pointer to the line obtained with getsourceline()
+  char *eval_tofree;
 } evalarg_T;
 
 /// Flag for expression evaluation.
@@ -281,7 +284,7 @@ enum {
 };
 
 /// Passed to an eval() function to enable evaluation.
-EXTERN evalarg_T EVALARG_EVALUATE INIT(= { EVAL_EVALUATE, NULL });
+EXTERN evalarg_T EVALARG_EVALUATE INIT(= { EVAL_EVALUATE, NULL, NULL });
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.h.generated.h"
