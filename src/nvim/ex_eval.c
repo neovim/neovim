@@ -957,21 +957,12 @@ void ex_while(exarg_T *eap)
       eap->cmdidx == CMD_while ? CSF_WHILE : CSF_FOR;
 
     int skip = CHECK_SKIP;
-    if (eap->cmdidx == CMD_while) {
-      // ":while bool-expr"
+    if (eap->cmdidx == CMD_while) {  // ":while bool-expr"
       result = eval_to_bool(eap->arg, &error, eap, skip);
-    } else {
+    } else {  // ":for var in list-expr"
+      evalarg_T evalarg;
+      fill_evalarg_from_eap(&evalarg, eap, skip);
       void *fi;
-
-      evalarg_T evalarg = {
-        .eval_flags = eap->skip ? 0 : EVAL_EVALUATE,
-      };
-      if (getline_equal(eap->getline, eap->cookie, getsourceline)) {
-        evalarg.eval_getline = eap->getline;
-        evalarg.eval_cookie = eap->cookie;
-      }
-
-      // ":for var in list-expr"
       if ((cstack->cs_lflags & CSL_HAD_LOOP) != 0) {
         // Jumping here from a ":continue" or ":endfor": use the
         // previously evaluated list.

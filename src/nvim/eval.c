@@ -695,9 +695,11 @@ void eval_patch(const char *const origfile, const char *const difffile, const ch
 void fill_evalarg_from_eap(evalarg_T *evalarg, exarg_T *eap, bool skip)
 {
   *evalarg = (evalarg_T){ .eval_flags = skip ? 0 : EVAL_EVALUATE };
-  if (eap != NULL && getline_equal(eap->getline, eap->cookie, getsourceline)) {
-    evalarg->eval_getline = eap->getline;
-    evalarg->eval_cookie = eap->cookie;
+  if (eap != NULL) {
+    if (getline_equal(eap->getline, eap->cookie, getsourceline)) {
+      evalarg->eval_getline = eap->getline;
+      evalarg->eval_cookie = eap->cookie;
+    }
   }
 }
 
