@@ -3021,7 +3021,9 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
   // nested expression: (expression).
   case '(':
     *arg = skipwhite(*arg + 1);
+
     ret = eval1(arg, rettv, evalarg);  // recursive!
+
     if (**arg == ')') {
       (*arg)++;
     } else if (ret == OK) {
