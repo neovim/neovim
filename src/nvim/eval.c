@@ -837,10 +837,17 @@ char *eval_to_string_skip(char *arg, exarg_T *eap, const bool skip)
   typval_T tv;
   char *retval;
 
+  evalarg_T evalarg = {
+    .eval_flags = skip ? 0 : EVAL_EVALUATE,
+  };
+  if (eap != NULL && getline_equal(eap->getline, eap->cookie, getsourceline)) {
+    evalarg.eval_getline = eap->getline;
+    evalarg.eval_cookie = eap->cookie;
+  }
   if (skip) {
     emsg_skip++;
   }
-  if (eval0(arg, &tv, eap, skip ? NULL : &EVALARG_EVALUATE) == FAIL || skip) {
+  if (eval0(arg, &tv, eap, &evalarg) == FAIL || skip) {
     retval = NULL;
   } else {
     retval = xstrdup(tv_get_string(&tv));
@@ -849,7 +856,7 @@ char *eval_to_string_skip(char *arg, exarg_T *eap, const bool skip)
   if (skip) {
     emsg_skip--;
   }
-  clear_evalarg(&EVALARG_EVALUATE, eap);
+  clear_evalarg(&evalarg, eap);
 
   return retval;
 }
