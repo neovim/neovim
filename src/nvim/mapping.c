@@ -1632,7 +1632,7 @@ char *eval_map_expr(mapblock_T *mp, int c)
       api_clear_error(&err);
     }
   } else {
-    p = eval_to_string(expr, NULL, false);
+    p = eval_to_string(expr, false);
     xfree(expr);
   }
   expr_map_lock--;

@@ -152,7 +152,7 @@ static int get_function_args(char **argp, char endchar, garray_T *newargs, int *
         p = skipwhite(p) + 1;
         p = skipwhite(p);
         char *expr = p;
-        if (eval1(&p, &rettv, 0) != FAIL) {
+        if (eval1(&p, &rettv, NULL) != FAIL) {
           ga_grow(default_args, 1);
 
           // trim trailing whitespace
@@ -455,6 +455,8 @@ int get_func_tv(const char *name, int len, typval_T *rettv, char **arg, funcexe_
   typval_T argvars[MAX_FUNC_ARGS + 1];          // vars for arguments
   int argcount = 0;                     // number of arguments found
 
+  evalarg_T evalarg = { .eval_flags = funcexe->fe_evaluate ? EVAL_EVALUATE : 0 };
+
   // Get the arguments.
   argp = *arg;
   while (argcount < MAX_FUNC_ARGS
@@ -463,8 +465,7 @@ int get_func_tv(const char *name, int len, typval_T *rettv, char **arg, funcexe_
     if (*argp == ')' || *argp == ',' || *argp == NUL) {
       break;
     }
-    if (eval1(&argp, &argvars[argcount],
-              funcexe->fe_evaluate ? EVAL_EVALUATE : 0) == FAIL) {
+    if (eval1(&argp, &argvars[argcount], &evalarg) == FAIL) {
       ret = FAIL;
       break;
     }
@@ -973,7 +974,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
 
         default_expr = ((char **)(fp->uf_def_args.ga_data))
                        [ai + fp->uf_def_args.ga_len];
-        if (eval1(&default_expr, &def_rettv, EVAL_EVALUATE) == FAIL) {
+        if (eval1(&default_expr, &def_rettv, &EVALARG_EVALUATE) == FAIL) {
           default_arg_err = true;
           break;
         }
@@ -1110,7 +1111,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     // A Lambda always has the command "return {expr}".  It is much faster
     // to evaluate {expr} directly.
     ex_nesting_level++;
-    (void)eval1(&p, rettv, EVAL_EVALUATE);
+    (void)eval1(&p, rettv, &EVALARG_EVALUATE);
     ex_nesting_level--;
   } else {
     // call do_cmdline() to execute the lines
@@ -2948,13 +2949,15 @@ void ex_return(exarg_T *eap)
     return;
   }
 
+  evalarg_T evalarg = { .eval_flags = eap->skip ? 0 : EVAL_EVALUATE };
+
   if (eap->skip) {
     emsg_skip++;
   }
 
   eap->nextcmd = NULL;
   if ((*arg != NUL && *arg != '|' && *arg != '\n')
-      && eval0(arg, &rettv, &eap->nextcmd, eap->skip ? 0 : EVAL_EVALUATE) != FAIL) {
+      && eval0(arg, &rettv, eap, &evalarg) != FAIL) {
     if (!eap->skip) {
       returning = do_return(eap, false, true, &rettv);
     } else {
@@ -3005,7 +3008,7 @@ void ex_call(exarg_T *eap)
     // instead to skip to any following command, e.g. for:
     //   :if 0 | call dict.foo().bar() | endif.
     emsg_skip++;
-    if (eval0(eap->arg, &rettv, &eap->nextcmd, 0) != FAIL) {
+    if (eval0(eap->arg, &rettv, eap, NULL) != FAIL) {
       tv_clear(&rettv);
     }
     emsg_skip--;

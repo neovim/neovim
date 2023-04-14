@@ -792,8 +792,11 @@ void report_discard_pending(int pending, void *value)
 void ex_eval(exarg_T *eap)
 {
   typval_T tv;
-
-  if (eval0(eap->arg, &tv, &eap->nextcmd, eap->skip ? 0 : EVAL_EVALUATE) == OK) {
+  evalarg_T evalarg = {
+    .eval_flags = eap->skip ? 0 : EVAL_EVALUATE,
+    .eval_cookie = eap->getline == getsourceline ? eap->cookie : NULL,
+  };
+  if (eval0(eap->arg, &tv, eap, &evalarg) == OK) {
     tv_clear(&tv);
   }
 }
@@ -812,7 +815,7 @@ void ex_if(exarg_T *eap)
     int skip = CHECK_SKIP;
 
     bool error;
-    int result = eval_to_bool(eap->arg, &error, &eap->nextcmd, skip);
+    int result = eval_to_bool(eap->arg, &error, eap, skip);
 
     if (!skip && !error) {
       if (result) {
@@ -907,7 +910,7 @@ void ex_else(exarg_T *eap)
     if (skip && *eap->arg != '"' && ends_excmd(*eap->arg)) {
       semsg(_(e_invexpr2), eap->arg);
     } else {
-      result = eval_to_bool(eap->arg, &error, &eap->nextcmd, skip);
+      result = eval_to_bool(eap->arg, &error, eap, skip);
     }
 
     // When throwing error exceptions, we want to throw always the first
@@ -954,7 +957,7 @@ void ex_while(exarg_T *eap)
     int skip = CHECK_SKIP;
     if (eap->cmdidx == CMD_while) {
       // ":while bool-expr"
-      result = eval_to_bool(eap->arg, &error, &eap->nextcmd, skip);
+      result = eval_to_bool(eap->arg, &error, eap, skip);
     } else {
       void *fi;
 
@@ -966,7 +969,7 @@ void ex_while(exarg_T *eap)
         error = false;
       } else {
         // Evaluate the argument and get the info in a structure.
-        fi = eval_for_line(eap->arg, &error, &eap->nextcmd, skip);
+        fi = eval_for_line(eap->arg, &error, eap, skip);
         cstack->cs_forinfo[cstack->cs_idx] = fi;
       }
 
@@ -1125,12 +1128,11 @@ void ex_endwhile(exarg_T *eap)
 /// Handle ":throw expr"
 void ex_throw(exarg_T *eap)
 {
-  const char *arg = eap->arg;
+  char *arg = eap->arg;
   char *value;
 
   if (*arg != NUL && *arg != '|' && *arg != '\n') {
-    value = eval_to_string_skip(arg, (const char **)&eap->nextcmd,
-                                (bool)eap->skip);
+    value = eval_to_string_skip(arg, eap, eap->skip);
   } else {
     emsg(_(e_argreq));
     value = NULL;

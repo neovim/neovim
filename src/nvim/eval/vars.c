@@ -185,7 +185,6 @@ void ex_let(exarg_T *eap)
   char *arg = eap->arg;
   char *expr = NULL;
   typval_T rettv;
-  int i;
   int var_count = 0;
   int semicolon = 0;
   char op[2];
@@ -221,7 +220,10 @@ void ex_let(exarg_T *eap)
       list_vim_vars(&first);
     }
     eap->nextcmd = check_nextcmd(arg);
-  } else if (expr[0] == '=' && expr[1] == '<' && expr[2] == '<') {
+    return;
+  }
+
+  if (expr[0] == '=' && expr[1] == '<' && expr[2] == '<') {
     // HERE document
     list_T *l = heredoc_get(eap, expr + 3);
     if (l != NULL) {
@@ -233,39 +235,44 @@ void ex_let(exarg_T *eap)
       }
       tv_clear(&rettv);
     }
+    return;
+  }
+
+  rettv.v_type = VAR_UNKNOWN;
+
+  op[0] = '=';
+  op[1] = NUL;
+  if (*expr != '=') {
+    if (vim_strchr("+-*/%.", (uint8_t)(*expr)) != NULL) {
+      op[0] = *expr;  // +=, -=, *=, /=, %= or .=
+      if (expr[0] == '.' && expr[1] == '.') {  // ..=
+        expr++;
+      }
+    }
+    expr += 2;
   } else {
-    rettv.v_type = VAR_UNKNOWN;
+    expr += 1;
+  }
 
-    op[0] = '=';
-    op[1] = NUL;
-    if (*expr != '=') {
-      if (vim_strchr("+-*/%.", (uint8_t)(*expr)) != NULL) {
-        op[0] = *expr;  // +=, -=, *=, /=, %= or .=
-        if (expr[0] == '.' && expr[1] == '.') {  // ..=
-          expr++;
-        }
-      }
-      expr += 2;
-    } else {
-      expr += 1;
-    }
+  expr = skipwhite(expr);
 
-    expr = skipwhite(expr);
+  if (eap->skip) {
+    emsg_skip++;
+  }
+  evalarg_T evalarg = {
+    .eval_flags = eap->skip ? 0 : EVAL_EVALUATE,
+    .eval_cookie = eap->getline == getsourceline ? eap->cookie : NULL,
+  };
+  int eval_res = eval0(expr, &rettv, eap, &evalarg);
+  if (eap->skip) {
+    emsg_skip--;
+  }
 
-    if (eap->skip) {
-      emsg_skip++;
-    }
-    int eval_flags = eap->skip ? 0 : EVAL_EVALUATE;
-    i = eval0(expr, &rettv, &eap->nextcmd, eval_flags);
-    if (eap->skip) {
-      if (i != FAIL) {
-        tv_clear(&rettv);
-      }
-      emsg_skip--;
-    } else if (i != FAIL) {
-      (void)ex_let_vars(eap->arg, &rettv, false, semicolon, var_count, is_const, op);
-      tv_clear(&rettv);
-    }
+  if (!eap->skip && eval_res != FAIL) {
+    (void)ex_let_vars(eap->arg, &rettv, false, semicolon, var_count, is_const, op);
+  }
+  if (eval_res != FAIL) {
+    tv_clear(&rettv);
   }
 }
 

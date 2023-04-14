@@ -1812,7 +1812,7 @@ static int vim_regsub_both(char *source, typval_T *expr, char *dest, int destlen
         }
         tv_clear(&rettv);
       } else {
-        eval_result[nested] = eval_to_string(source + 2, NULL, true);
+        eval_result[nested] = eval_to_string(source + 2, true);
       }
       nesting--;
 
