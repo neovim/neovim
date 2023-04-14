@@ -692,6 +692,15 @@ void eval_patch(const char *const origfile, const char *const difffile, const ch
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
 }
 
+static void fill_evalarg_from_eap(evalarg_T *evalarg, exarg_T *eap, bool skip)
+{
+  *evalarg = (evalarg_T){ .eval_flags = skip ? 0 : EVAL_EVALUATE };
+  if (eap != NULL && getline_equal(eap->getline, eap->cookie, getsourceline)) {
+    evalarg->eval_getline = eap->getline;
+    evalarg->eval_cookie = eap->cookie;
+  }
+}
+
 /// Top level evaluation function, returning a boolean.
 /// Sets "error" to true if there was an error.
 ///
@@ -702,14 +711,9 @@ int eval_to_bool(char *arg, bool *error, exarg_T *eap, int skip)
 {
   typval_T tv;
   bool retval = false;
+  evalarg_T evalarg;
 
-  evalarg_T evalarg = {
-    .eval_flags = skip ? 0 : EVAL_EVALUATE,
-  };
-  if (eap != NULL && getline_equal(eap->getline, eap->cookie, getsourceline)) {
-    evalarg.eval_getline = eap->getline;
-    evalarg.eval_cookie = eap->cookie;
-  }
+  fill_evalarg_from_eap(&evalarg, eap, skip);
 
   if (skip) {
     emsg_skip++;
@@ -836,14 +840,9 @@ char *eval_to_string_skip(char *arg, exarg_T *eap, const bool skip)
 {
   typval_T tv;
   char *retval;
+  evalarg_T evalarg;
 
-  evalarg_T evalarg = {
-    .eval_flags = skip ? 0 : EVAL_EVALUATE,
-  };
-  if (eap != NULL && getline_equal(eap->getline, eap->cookie, getsourceline)) {
-    evalarg.eval_getline = eap->getline;
-    evalarg.eval_cookie = eap->cookie;
-  }
+  fill_evalarg_from_eap(&evalarg, eap, skip);
   if (skip) {
     emsg_skip++;
   }
@@ -976,10 +975,15 @@ varnumber_T eval_to_number(char *expr)
 typval_T *eval_expr(char *arg, exarg_T *eap)
 {
   typval_T *tv = xmalloc(sizeof(*tv));
-  if (eval0(arg, tv, eap, &EVALARG_EVALUATE) == FAIL) {
+  evalarg_T evalarg;
+
+  fill_evalarg_from_eap(&evalarg, eap, eap != NULL && eap->skip);
+
+  if (eval0(arg, tv, eap, &evalarg) == FAIL) {
     XFREE_CLEAR(tv);
   }
-  clear_evalarg(&EVALARG_EVALUATE, eap);
+
+  clear_evalarg(&evalarg, eap);
   return tv;
 }
 
@@ -7476,14 +7480,9 @@ void ex_echo(exarg_T *eap)
   bool need_clear = true;
   const int did_emsg_before = did_emsg;
   const int called_emsg_before = called_emsg;
+  evalarg_T evalarg;
 
-  evalarg_T evalarg = {
-    .eval_flags = eap->skip ? 0 : EVAL_EVALUATE,
-  };
-  if (getline_equal(eap->getline, eap->cookie, getsourceline)) {
-    evalarg.eval_getline = eap->getline;
-    evalarg.eval_cookie = eap->cookie;
-  }
+  fill_evalarg_from_eap(&evalarg, eap, eap != NULL && eap->skip);
 
   if (eap->skip) {
     emsg_skip++;
