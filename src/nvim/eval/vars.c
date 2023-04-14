@@ -178,12 +178,14 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
     return NULL;
   }
 
+  char *theline = NULL;
   list_T *l = tv_list_alloc(0);
   for (;;) {
     int mi = 0;
     int ti = 0;
 
-    char *theline = eap->getline(NUL, eap->cookie, 0, false);
+    xfree(theline);
+    theline = eap->getline(NUL, eap->cookie, 0, false);
     if (theline == NULL) {
       semsg(_("E990: Missing end marker '%s'"), marker);
       break;
@@ -196,14 +198,12 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
       mi = marker_indent_len;
     }
     if (strcmp(marker, theline + mi) == 0) {
-      xfree(theline);
       break;
     }
 
     // If expression evaluation failed in the heredoc, then skip till the
     // end marker.
     if (eval_failed) {
-      xfree(theline);
       continue;
     }
 
@@ -231,7 +231,6 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
       str = eval_all_expr_in_str(str);
       if (str == NULL) {
         // expression evaluation failed
-        xfree(theline);
         eval_failed = true;
         continue;
       }
@@ -240,8 +239,8 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
     }
 
     tv_list_append_string(l, str, -1);
-    xfree(theline);
   }
+  xfree(theline);
   xfree(text_indent);
 
   if (eval_failed) {
