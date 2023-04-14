@@ -2971,7 +2971,7 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
 
   // List: [expr, expr]
   case '[':
-    ret = get_list_tv(arg, rettv, flags);
+    ret = get_list_tv(arg, rettv, evalarg);
     break;
 
   // Dictionary: #{key: val, key: val}
@@ -3981,13 +3981,12 @@ void partial_unref(partial_T *pt)
 
 /// Allocate a variable for a List and fill it from "*arg".
 ///
+/// @param arg  "*arg" points to the "[".
 /// @return  OK or FAIL.
-static int get_list_tv(char **arg, typval_T *rettv, const int flags)
+static int get_list_tv(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 {
-  const bool evaluate = flags & EVAL_EVALUATE;
+  const bool evaluate = evalarg == NULL ? false : evalarg->eval_flags & EVAL_EVALUATE;
   list_T *l = NULL;
-
-  evalarg_T evalarg = { .eval_flags = flags };
 
   if (evaluate) {
     l = tv_list_alloc(kListLenShouldKnow);
@@ -3996,7 +3995,7 @@ static int get_list_tv(char **arg, typval_T *rettv, const int flags)
   *arg = skipwhite(*arg + 1);
   while (**arg != ']' && **arg != NUL) {
     typval_T tv;
-    if (eval1(arg, &tv, &evalarg) == FAIL) {  // Recursive!
+    if (eval1(arg, &tv, evalarg) == FAIL) {  // Recursive!
       goto failret;
     }
     if (evaluate) {
@@ -4004,14 +4003,20 @@ static int get_list_tv(char **arg, typval_T *rettv, const int flags)
       tv_list_append_owned_tv(l, tv);
     }
 
+    // the comma must comma after the value
+    bool had_comma = **arg == ',';
+    if (had_comma) {
+      *arg = skipwhite(*arg + 1);
+    }
+
     if (**arg == ']') {
       break;
     }
-    if (**arg != ',') {
+
+    if (!had_comma) {
       semsg(_("E696: Missing comma in List: %s"), *arg);
       goto failret;
     }
-    *arg = skipwhite(*arg + 1);
   }
 
   if (**arg != ']') {
