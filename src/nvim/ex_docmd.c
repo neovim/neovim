@@ -3751,7 +3751,7 @@ int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
     // Skip over `=expr`, wildcards in it are not expanded.
     if (p[0] == '`' && p[1] == '=') {
       p += 2;
-      (void)skip_expr(&p);
+      (void)skip_expr(&p, NULL);
       if (*p == '`') {
         p++;
       }
@@ -3970,7 +3970,7 @@ void separate_nextcmd(exarg_T *eap)
     } else if (p[0] == '`' && p[1] == '=' && (eap->argt & EX_XFILE)) {
       // Skip over `=expr` when wildcards are expanded.
       p += 2;
-      (void)skip_expr(&p);
+      (void)skip_expr(&p, NULL);
       if (*p == NUL) {  // stop at NUL after CTRL-V
         break;
       }

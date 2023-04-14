@@ -847,12 +847,24 @@ char *eval_to_string_skip(char *arg, exarg_T *eap, const bool skip)
 /// Skip over an expression at "*pp".
 ///
 /// @return  FAIL for an error, OK otherwise.
-int skip_expr(char **pp)
+int skip_expr(char **pp, evalarg_T *const evalarg)
 {
-  typval_T rettv;
+  const int save_flags = evalarg == NULL ? 0 : evalarg->eval_flags;
+
+  // Don't evaluate the expression.
+  if (evalarg != NULL) {
+    evalarg->eval_flags &= ~EVAL_EVALUATE;
+  }
 
   *pp = skipwhite(*pp);
-  return eval1(pp, &rettv, NULL);
+  typval_T rettv;
+  int res = eval1(pp, &rettv, NULL);
+
+  if (evalarg != NULL) {
+    evalarg->eval_flags = save_flags;
+  }
+
+  return res;
 }
 
 /// Top level evaluation function, returning a string.
@@ -2236,9 +2248,6 @@ int eval0(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
   const int called_emsg_before = called_emsg;
   bool end_error = false;
 
-  if (evalarg != NULL) {
-    evalarg->eval_tofree = NULL;
-  }
   p = skipwhite(arg);
   ret = eval1(&p, rettv, evalarg);
 
@@ -2269,19 +2278,14 @@ int eval0(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
     eap->nextcmd = check_nextcmd(p);
   }
 
-  if (evalarg != NULL) {
-    if (eap != NULL) {
-      if (evalarg->eval_tofree != NULL) {
-        // We may need to keep the original command line, e.g. for
-        // ":let" it has the variable names.  But we may also need the
-        // new one, "nextcmd" points into it.  Keep both.
-        xfree(eap->cmdline_tofree);
-        eap->cmdline_tofree = *eap->cmdlinep;
-        *eap->cmdlinep = evalarg->eval_tofree;
-      }
-    } else {
-      xfree(evalarg->eval_tofree);
-    }
+  if (evalarg != NULL && eap != NULL && evalarg->eval_tofree != NULL) {
+    // We may need to keep the original command line, e.g. for
+    // ":let" it has the variable names.  But we may also need the
+    // new one, "nextcmd" points into it.  Keep both.
+    xfree(eap->cmdline_tofree);
+    eap->cmdline_tofree = *eap->cmdlinep;
+    *eap->cmdlinep = evalarg->eval_tofree;
+    evalarg->eval_tofree = NULL;
   }
 
   return ret;
@@ -2987,7 +2991,7 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
   // Lambda: {arg, arg -> expr}
   // Dictionary: {'key': val, 'key': val}
   case '{':
-    ret = get_lambda_tv(arg, rettv, evaluate);
+    ret = get_lambda_tv(arg, rettv, evalarg);
     if (ret == NOTDONE) {
       ret = eval_dict(arg, rettv, evalarg, false);
     }
@@ -3062,7 +3066,7 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
   // Handle following '[', '(' and '.' for expr[expr], expr.name,
   // expr(expr), expr->name(expr)
   if (ret == OK) {
-    ret = handle_subscript((const char **)arg, rettv, flags, true);
+    ret = handle_subscript((const char **)arg, rettv, evalarg, true);
   }
 
   // Apply logical NOT and unary '-', from right to left, ignore '+'.
@@ -3192,16 +3196,17 @@ static int call_func_rettv(char **const arg, typval_T *const rettv, const bool e
 /// @return  FAIL or OK.
 ///
 /// @note "*arg" is advanced to after the ')'.
-static int eval_lambda(char **const arg, typval_T *const rettv, const bool evaluate,
+static int eval_lambda(char **const arg, typval_T *const rettv, evalarg_T *const evalarg,
                        const bool verbose)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
+  const bool evaluate = evalarg != NULL && (evalarg->eval_flags & EVAL_EVALUATE);
   // Skip over the ->.
   *arg += 2;
   typval_T base = *rettv;
   rettv->v_type = VAR_UNKNOWN;
 
-  int ret = get_lambda_tv(arg, rettv, evaluate);
+  int ret = get_lambda_tv(arg, rettv, evalarg);
   if (ret != OK) {
     return FAIL;
   } else if (**arg != '(') {
@@ -3306,9 +3311,9 @@ static int eval_method(char **const arg, typval_T *const rettv, const bool evalu
 /// @param verbose  give error messages
 ///
 /// @returns FAIL or OK. "*arg" is advanced to after the ']'.
-static int eval_index(char **arg, typval_T *rettv, const int flags, bool verbose)
+static int eval_index(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool verbose)
 {
-  const bool evaluate = flags & EVAL_EVALUATE;
+  const bool evaluate = evalarg != NULL && (evalarg->eval_flags & EVAL_EVALUATE);
   bool empty1 = false;
   bool empty2 = false;
   ptrdiff_t len = -1;
@@ -3357,15 +3362,13 @@ static int eval_index(char **arg, typval_T *rettv, const int flags, bool verbose
     }
     *arg = skipwhite(key + len);
   } else {
-    evalarg_T evalarg = { .eval_flags = flags };
-
     // something[idx]
     //
     // Get the (first) variable from inside the [].
     *arg = skipwhite(*arg + 1);
     if (**arg == ':') {
       empty1 = true;
-    } else if (eval1(arg, &var1, &evalarg) == FAIL) {  // Recursive!
+    } else if (eval1(arg, &var1, evalarg) == FAIL) {  // Recursive!
       return FAIL;
     } else if (evaluate && !tv_check_str(&var1)) {
       // Not a number or string.
@@ -3379,7 +3382,7 @@ static int eval_index(char **arg, typval_T *rettv, const int flags, bool verbose
       *arg = skipwhite(*arg + 1);
       if (**arg == ']') {
         empty2 = true;
-      } else if (eval1(arg, &var2, &evalarg) == FAIL) {  // Recursive!
+      } else if (eval1(arg, &var2, evalarg) == FAIL) {  // Recursive!
         if (!empty1) {
           tv_clear(&var1);
         }
@@ -7007,9 +7010,10 @@ int check_luafunc_name(const char *const str, const bool paren)
 /// @param verbose  give error messages
 /// @param start_leader  start of '!' and '-' prefixes
 /// @param end_leaderp  end of '!' and '-' prefixes
-int handle_subscript(const char **const arg, typval_T *rettv, const int flags, bool verbose)
+int handle_subscript(const char **const arg, typval_T *rettv, evalarg_T *const evalarg,
+                     bool verbose)
 {
-  const bool evaluate = flags & EVAL_EVALUATE;
+  const bool evaluate = evalarg != NULL && (evalarg->eval_flags & EVAL_EVALUATE);
   int ret = OK;
   dict_T *selfdict = NULL;
   const char *lua_funcname = NULL;
@@ -7054,7 +7058,7 @@ int handle_subscript(const char **const arg, typval_T *rettv, const int flags, b
     } else if (**arg == '-') {
       if ((*arg)[2] == '{') {
         // expr->{lambda}()
-        ret = eval_lambda((char **)arg, rettv, evaluate, verbose);
+        ret = eval_lambda((char **)arg, rettv, evalarg, verbose);
       } else {
         // expr->name()
         ret = eval_method((char **)arg, rettv, evaluate, verbose);
@@ -7069,7 +7073,7 @@ int handle_subscript(const char **const arg, typval_T *rettv, const int flags, b
       } else {
         selfdict = NULL;
       }
-      if (eval_index((char **)arg, rettv, flags, verbose) == FAIL) {
+      if (eval_index((char **)arg, rettv, evalarg, verbose) == FAIL) {
         tv_clear(rettv);
         ret = FAIL;
       }

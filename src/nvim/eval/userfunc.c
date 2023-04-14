@@ -252,8 +252,9 @@ static void set_ufunc_name(ufunc_T *fp, char *name)
 /// Parse a lambda expression and get a Funcref from "*arg".
 ///
 /// @return OK or FAIL.  Returns NOTDONE for dict or {expr}.
-int get_lambda_tv(char **arg, typval_T *rettv, bool evaluate)
+int get_lambda_tv(char **arg, typval_T *rettv, evalarg_T *evalarg)
 {
+  const bool evaluate = evalarg != NULL && (evalarg->eval_flags & EVAL_EVALUATE);
   garray_T newargs = GA_EMPTY_INIT_VALUE;
   garray_T *pnewargs;
   ufunc_T *fp = NULL;
@@ -264,6 +265,7 @@ int get_lambda_tv(char **arg, typval_T *rettv, bool evaluate)
   char *s, *e;
   bool *old_eval_lavars = eval_lavars_used;
   bool eval_lavars = false;
+  char *tofree = NULL;
 
   // First, check if this is a lambda expression. "->" must exists.
   ret = get_function_args(&start, '-', NULL, NULL, NULL, true);
@@ -291,10 +293,16 @@ int get_lambda_tv(char **arg, typval_T *rettv, bool evaluate)
   // Get the start and the end of the expression.
   *arg = skipwhite((*arg) + 1);
   s = *arg;
-  ret = skip_expr(arg);
+  ret = skip_expr(arg, evalarg);
   if (ret == FAIL) {
     goto errret;
   }
+  if (evalarg != NULL) {
+    // avoid that the expression gets freed when another line break follows
+    tofree = evalarg->eval_tofree;
+    evalarg->eval_tofree = NULL;
+  }
+
   e = *arg;
   *arg = skipwhite(*arg);
   if (**arg != '}') {
@@ -359,12 +367,14 @@ int get_lambda_tv(char **arg, typval_T *rettv, bool evaluate)
   }
 
   eval_lavars_used = old_eval_lavars;
+  xfree(tofree);
   return OK;
 
 errret:
   ga_clear_strings(&newargs);
   xfree(fp);
   xfree(pt);
+  xfree(tofree);
   eval_lavars_used = old_eval_lavars;
   return FAIL;
 }
@@ -3075,8 +3085,7 @@ void ex_call(exarg_T *eap)
     }
 
     // Handle a function returning a Funcref, Dictionary or List.
-    if (handle_subscript((const char **)&arg, &rettv, EVAL_EVALUATE, true)
-        == FAIL) {
+    if (handle_subscript((const char **)&arg, &rettv, &EVALARG_EVALUATE, true) == FAIL) {
       failed = true;
       break;
     }

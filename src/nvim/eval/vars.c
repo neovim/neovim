@@ -267,6 +267,7 @@ void ex_let(exarg_T *eap)
   if (eap->skip) {
     emsg_skip--;
   }
+  xfree(evalarg.eval_tofree);
 
   if (!eap->skip && eval_res != FAIL) {
     (void)ex_let_vars(eap->arg, &rettv, false, semicolon, var_count, is_const, op);
@@ -510,7 +511,7 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
         } else {
           // handle d.key, l[idx], f(expr)
           const char *const arg_subsc = arg;
-          if (handle_subscript(&arg, &tv, EVAL_EVALUATE, true) == FAIL) {
+          if (handle_subscript(&arg, &tv, &EVALARG_EVALUATE, true) == FAIL) {
             error = true;
           } else {
             if (arg == arg_subsc && len == 2 && name[1] == ':') {
@@ -1717,7 +1718,7 @@ bool var_exists(const char *var)
     n = get_var_tv(name, len, &tv, NULL, false, true) == OK;
     if (n) {
       // Handle d.key, l[idx], f(expr).
-      n = handle_subscript(&var, &tv, EVAL_EVALUATE, false) == OK;
+      n = handle_subscript(&var, &tv, &EVALARG_EVALUATE, false) == OK;
       if (n) {
         tv_clear(&tv);
       }
