@@ -849,6 +849,7 @@ char *eval_to_string_skip(char *arg, exarg_T *eap, const bool skip)
   if (skip) {
     emsg_skip--;
   }
+  clear_evalarg(&EVALARG_EVALUATE, eap);
 
   return retval;
 }
@@ -910,6 +911,7 @@ char *eval_to_string(char *arg, bool convert)
     }
     tv_clear(&tv);
   }
+  clear_evalarg(&EVALARG_EVALUATE, NULL);
 
   return retval;
 }
@@ -964,12 +966,13 @@ varnumber_T eval_to_number(char *expr)
 ///
 /// @return  an allocated typval_T with the result or
 ///          NULL when there is an error.
-typval_T *eval_expr(char *arg)
+typval_T *eval_expr(char *arg, exarg_T *eap)
 {
   typval_T *tv = xmalloc(sizeof(*tv));
-  if (eval0(arg, tv, NULL, &EVALARG_EVALUATE) == FAIL) {
+  if (eval0(arg, tv, eap, &EVALARG_EVALUATE) == FAIL) {
     XFREE_CLEAR(tv);
   }
+  clear_evalarg(&EVALARG_EVALUATE, eap);
   return tv;
 }
 
@@ -1215,6 +1218,7 @@ int eval_foldexpr(char *arg, int *cp)
     sandbox--;
   }
   textlock--;
+  clear_evalarg(&EVALARG_EVALUATE, NULL);
 
   return (int)retval;
 }
@@ -1797,14 +1801,14 @@ notify:
 /// @param[out] *errp  set to true for an error, false otherwise;
 ///
 /// @return  a pointer that holds the info.  Null when there is an error.
-void *eval_for_line(const char *arg, bool *errp, exarg_T *eap, int skip)
+void *eval_for_line(const char *arg, bool *errp, exarg_T *eap, evalarg_T *const evalarg)
 {
   forinfo_T *fi = xcalloc(1, sizeof(forinfo_T));
   const char *expr;
   typval_T tv;
   list_T *l;
+  const bool skip = !(evalarg->eval_flags & EVAL_EVALUATE);
 
-  evalarg_T evalarg = { .eval_flags = skip ? 0 : EVAL_EVALUATE };
   *errp = true;  // Default: there is an error.
 
   expr = skip_var_list(arg, &fi->fi_varcount, &fi->fi_semicolon);
@@ -1813,7 +1817,8 @@ void *eval_for_line(const char *arg, bool *errp, exarg_T *eap, int skip)
   }
 
   expr = skipwhite(expr);
-  if (expr[0] != 'i' || expr[1] != 'n' || !ascii_iswhite(expr[2])) {
+  if (expr[0] != 'i' || expr[1] != 'n'
+      || !(expr[2] == NUL || ascii_iswhite(expr[2]))) {
     emsg(_("E690: Missing \"in\" after :for"));
     return fi;
   }
@@ -1821,7 +1826,8 @@ void *eval_for_line(const char *arg, bool *errp, exarg_T *eap, int skip)
   if (skip) {
     emsg_skip++;
   }
-  if (eval0(skipwhite(expr + 2), &tv, eap, &evalarg) == OK) {
+  expr = skipwhite(expr + 2);
+  if (eval0((char *)expr, &tv, eap, evalarg) == OK) {
     *errp = false;
     if (!skip) {
       if (tv.v_type == VAR_LIST) {
@@ -2240,13 +2246,17 @@ static int eval_func(char **const arg, char *const name, const int name_len, typ
 /// After using "evalarg" filled from "eap" free the memory.
 void clear_evalarg(evalarg_T *evalarg, exarg_T *eap)
 {
-  if (evalarg != NULL && eap != NULL && evalarg->eval_tofree != NULL) {
-    // We may need to keep the original command line, e.g. for
-    // ":let" it has the variable names.  But we may also need the
-    // new one, "nextcmd" points into it.  Keep both.
-    xfree(eap->cmdline_tofree);
-    eap->cmdline_tofree = *eap->cmdlinep;
-    *eap->cmdlinep = evalarg->eval_tofree;
+  if (evalarg != NULL && evalarg->eval_tofree != NULL) {
+    if (eap != NULL) {
+      // We may need to keep the original command line, e.g. for
+      // ":let" it has the variable names.  But we may also need the
+      // new one, "nextcmd" points into it.  Keep both.
+      xfree(eap->cmdline_tofree);
+      eap->cmdline_tofree = *eap->cmdlinep;
+      *eap->cmdlinep = evalarg->eval_tofree;
+    } else {
+      xfree(evalarg->eval_tofree);
+    }
     evalarg->eval_tofree = NULL;
   }
 }
@@ -2300,8 +2310,6 @@ int eval0(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
   if (eap != NULL) {
     eap->nextcmd = check_nextcmd(p);
   }
-
-  clear_evalarg(evalarg, eap);
 
   return ret;
 }

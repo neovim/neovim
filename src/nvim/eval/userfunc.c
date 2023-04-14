@@ -2996,6 +2996,7 @@ void ex_return(exarg_T *eap)
   if (eap->skip) {
     emsg_skip--;
   }
+  clear_evalarg(&evalarg, eap);
 }
 
 /// ":1,25call func(arg1, arg2)" function call.

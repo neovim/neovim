@@ -6957,15 +6957,15 @@ void ex_cexpr(exarg_T *eap)
 
   // Evaluate the expression.  When the result is a string or a list we can
   // use it to fill the errorlist.
-  typval_T tv;
-  if (eval0(eap->arg, &tv, eap, &EVALARG_EVALUATE) == FAIL) {
+  typval_T *tv = eval_expr(eap->arg, eap);
+  if (tv == NULL) {
     return;
   }
 
-  if ((tv.v_type == VAR_STRING && tv.vval.v_string != NULL)
-      || tv.v_type == VAR_LIST) {
+  if ((tv->v_type == VAR_STRING && tv->vval.v_string != NULL)
+      || tv->v_type == VAR_LIST) {
     incr_quickfix_busy();
-    int res = qf_init_ext(qi, qi->qf_curlist, NULL, NULL, &tv, p_efm,
+    int res = qf_init_ext(qi, qi->qf_curlist, NULL, NULL, tv, p_efm,
                           (eap->cmdidx != CMD_caddexpr
                            && eap->cmdidx != CMD_laddexpr),
                           (linenr_T)0, (linenr_T)0,
@@ -6996,7 +6996,7 @@ void ex_cexpr(exarg_T *eap)
     emsg(_("E777: String or List expected"));
   }
 cleanup:
-  tv_clear(&tv);
+  tv_free(tv);
 }
 
 // Get the location list for ":lhelpgrep"
