@@ -71,6 +71,8 @@ static const char *e_funcref = N_("E718: Funcref required");
 static const char *e_nofunc = N_("E130: Unknown function: %s");
 static const char e_no_white_space_allowed_before_str_str[]
   = N_("E1068: No white space allowed before '%s': %s");
+static const char e_missing_heredoc_end_marker_str[]
+  = N_("E1145: Missing heredoc end marker: %s");
 
 void func_init(void)
 {
@@ -2319,7 +2321,11 @@ void ex_function(exarg_T *eap)
       lines_left = Rows - 1;
     }
     if (theline == NULL) {
-      emsg(_("E126: Missing :endfunction"));
+      if (skip_until != NULL) {
+        semsg(_(e_missing_heredoc_end_marker_str), skip_until);
+      } else {
+        emsg(_("E126: Missing :endfunction"));
+      }
       goto erret;
     }
     if (show_block) {

@@ -2539,7 +2539,7 @@ This does NOT work: >
 			|List| item.
 
 						*:let=<<* *:let-heredoc*
-						*E990* *E991* *E172* *E221*
+					*E990* *E991* *E172* *E221* *E1145*
 :let {var-name} =<< [trim] {endmarker}
 text...
 text...
