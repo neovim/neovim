@@ -4679,8 +4679,8 @@ static int get_literal_key(char **arg, typval_T *tv)
 
 /// Allocate a variable for a Dictionary and fill it from "*arg".
 ///
+/// @param arg  "*arg" points to the "{".
 /// @param literal  true for #{key: val}
-/// @param flags    can have EVAL_EVALUATE and other EVAL_ flags.
 ///
 /// @return  OK or FAIL.  Returns NOTDONE for {expr}.
 static int eval_dict(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool literal)
