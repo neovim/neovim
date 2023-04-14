@@ -2377,7 +2377,8 @@ static int eval2(char **arg, typval_T *rettv, evalarg_T *const evalarg)
   // Repeat until there is no following "||".
   bool first = true;
   bool result = false;
-  while ((*arg)[0] == '|' && (*arg)[1] == '|') {
+  char *p = *arg;
+  while (p[0] == '|' && p[1] == '|') {
     evalarg_T nested_evalarg = evalarg == NULL ? (evalarg_T){ 0 } : *evalarg;
     const int orig_flags = evalarg == NULL ? 0 : evalarg->eval_flags;
     const bool evaluate = orig_flags & EVAL_EVALUATE;
@@ -2414,6 +2415,8 @@ static int eval2(char **arg, typval_T *rettv, evalarg_T *const evalarg)
       rettv->v_type = VAR_NUMBER;
       rettv->vval.v_number = result;
     }
+
+    p = *arg;
   }
 
   return OK;
@@ -2439,7 +2442,8 @@ static int eval3(char **arg, typval_T *rettv, evalarg_T *const evalarg)
   // Repeat until there is no following "&&".
   bool first = true;
   bool result = true;
-  while ((*arg)[0] == '&' && (*arg)[1] == '&') {
+  char *p = *arg;
+  while (p[0] == '&' && p[1] == '&') {
     evalarg_T nested_evalarg = evalarg == NULL ? (evalarg_T){ 0 } : *evalarg;
     const int orig_flags = evalarg == NULL ? 0 : evalarg->eval_flags;
     const bool evaluate = orig_flags & EVAL_EVALUATE;
@@ -2476,6 +2480,8 @@ static int eval3(char **arg, typval_T *rettv, evalarg_T *const evalarg)
       rettv->v_type = VAR_NUMBER;
       rettv->vval.v_number = result;
     }
+
+    p = *arg;
   }
 
   return OK;
