@@ -474,6 +474,7 @@ int get_func_tv(const char *name, int len, typval_T *rettv, char **arg, evalarg_
   int ret = OK;
   typval_T argvars[MAX_FUNC_ARGS + 1];          // vars for arguments
   int argcount = 0;                     // number of arguments found
+  const bool evaluate = evalarg == NULL ? false : (evalarg->eval_flags & EVAL_EVALUATE);
 
   // Get the arguments.
   argp = *arg;
@@ -515,7 +516,7 @@ int get_func_tv(const char *name, int len, typval_T *rettv, char **arg, evalarg_
     ret = call_func(name, len, rettv, argcount, argvars, funcexe);
 
     funcargs.ga_len -= i;
-  } else if (!aborting()) {
+  } else if (!aborting() && evaluate) {
     if (argcount == MAX_FUNC_ARGS) {
       emsg_funcname(N_("E740: Too many arguments for function %s"), name);
     } else {
