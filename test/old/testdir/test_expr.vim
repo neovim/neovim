@@ -39,6 +39,38 @@ func Test_version()
   call assert_false(has('patch-9.9.1'))
 endfunc
 
+func Test_op_trinary()
+  call assert_equal('yes', 1 ? 'yes' : 'no')
+  call assert_equal('no', 0 ? 'yes' : 'no')
+  call assert_equal('no', 'x' ? 'yes' : 'no')
+  call assert_equal('yes', '1x' ? 'yes' : 'no')
+
+  call assert_fails('echo [1] ? "yes" : "no"', 'E745:')
+  call assert_fails('echo {} ? "yes" : "no"', 'E728:')
+endfunc
+
+func Test_op_falsy()
+  call assert_equal(v:true, v:true ?? 456)
+  call assert_equal(123, 123 ?? 456)
+  call assert_equal('yes', 'yes' ?? 456)
+  call assert_equal(0z00, 0z00 ?? 456)
+  call assert_equal([1], [1] ?? 456)
+  call assert_equal(#{one: 1}, #{one: 1} ?? 456)
+  if has('float')
+    call assert_equal(0.1, 0.1 ?? 456)
+  endif
+
+  call assert_equal(456, v:false ?? 456)
+  call assert_equal(456, 0 ?? 456)
+  call assert_equal(456, '' ?? 456)
+  call assert_equal(456, 0z ?? 456)
+  call assert_equal(456, [] ?? 456)
+  call assert_equal(456, {} ?? 456)
+  if has('float')
+    call assert_equal(456, 0.0 ?? 456)
+  endif
+endfunc
+
 func Test_dict()
   let d = {'': 'empty', 'a': 'a', 0: 'zero'}
   call assert_equal('empty', d[''])

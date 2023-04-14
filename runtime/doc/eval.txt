@@ -93,7 +93,27 @@ non-zero number it means TRUE: >
 	:" executed
 To test for a non-empty string, use empty(): >
 	:if !empty("foo")
-<
+
+<						*falsy* *truthy*
+An expression can be used as a condition, ignoring the type and only using
+whether the value is "sort of true" or "sort of false".  Falsy is:
+	the number zero
+	empty string, blob, list or dictionary
+Other values are truthy.  Examples:
+	0	falsy
+	1	truthy
+	-1	truthy
+	0.0	falsy
+	0.1	truthy
+	''	falsy
+	'x'	truthy
+	[]	falsy
+	[0]	truthy
+	{}	falsy
+	#{x: 1} truthy
+	0z	falsy
+	0z00	truthy
+
 							*non-zero-arg*
 Function arguments often behave slightly different from |TRUE|: If the
 argument is present and it evaluates to a non-zero Number, |v:true| or a
@@ -841,9 +861,12 @@ All expressions within one level are parsed from left to right.
 
 
 ------------------------------------------------------------------------------
-expr1							*expr1* *ternary* *E109*
+expr1				*expr1* *ternary* *falsy-operator* *??* *E109*
 
-expr2 ? expr1 : expr1
+The ternary operator: expr2 ? expr1 : expr1
+The falsy operator:   expr2 ?? expr1
+
+Ternary operator ~
 
 The expression before the '?' is evaluated to a number.  If it evaluates to
 |TRUE|, the result is the value of the expression between the '?' and ':',
@@ -865,6 +888,23 @@ To keep this readable, using |line-continuation| is suggested: >
 
 You should always put a space before the ':', otherwise it can be mistaken for
 use in a variable such as "a:1".
+
+Falsy operator ~
+
+This is also known as the "null coalescing operator", but that's too
+complicated, thus we just call it the falsy operator.
+
+The expression before the '??' is evaluated.  If it evaluates to
+|truthy|, this is used as the result.  Otherwise the expression after the '??'
+is evaluated and used as the result.  This is most useful to have a default
+value for an expression that may result in zero or empty: >
+	echo theList ?? 'list is empty'
+	echo GetName() ?? 'unknown'
+
+These are similar, but not equal: >
+	expr2 ?? expr1
+	expr2 ? expr2 : expr1
+In the second line "expr2" is evaluated twice.
 
 
 ------------------------------------------------------------------------------
