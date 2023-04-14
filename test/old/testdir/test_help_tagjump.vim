@@ -35,9 +35,7 @@ func Test_help_tagjump()
 
   help ??
   call assert_equal("help", &filetype)
-  " *??* tag needs patch 8.2.1794
-  " call assert_true(getline('.') =~ '\*??\*')
-  call assert_true(getline('.') =~ '\*g??\*')
+  call assert_true(getline('.') =~ '\*??\*')
   helpclose
 
   help :?

@@ -2336,6 +2336,7 @@ int eval0(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
 
 /// Handle top level expression:
 ///      expr2 ? expr1 : expr1
+///      expr2 ?? expr1
 ///
 /// "arg" must point to the first non-white of the expression.
 /// "arg" is advanced to the next non-white after the recognized expression.
@@ -2352,6 +2353,7 @@ int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 
   char *p = *arg;
   if (*p == '?') {
+    const bool op_falsy = p[1] == '?';
     evalarg_T *evalarg_used = evalarg;
     evalarg_T local_evalarg;
     if (evalarg == NULL) {
@@ -2365,47 +2367,60 @@ int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
     if (evaluate) {
       bool error = false;
 
-      if (tv_get_number_chk(rettv, &error) != 0) {
+      if (op_falsy) {
+        result = tv2bool(rettv);
+      } else if (tv_get_number_chk(rettv, &error) != 0) {
         result = true;
       }
-      tv_clear(rettv);
+      if (error || !op_falsy || !result) {
+        tv_clear(rettv);
+      }
       if (error) {
         return FAIL;
       }
     }
 
     // Get the second variable.  Recursive!
-    *arg = skipwhite(*arg + 1);
-    evalarg_used->eval_flags = result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
-    if (eval1(arg, rettv, evalarg_used) == FAIL) {
-      evalarg_used->eval_flags = orig_flags;
-      return FAIL;
+    if (op_falsy) {
+      (*arg)++;
     }
-
-    // Check for the ":".
-    p = *arg;
-    if (*p != ':') {
-      emsg(_("E109: Missing ':' after '?'"));
-      if (evaluate && result) {
-        tv_clear(rettv);
-      }
-      evalarg_used->eval_flags = orig_flags;
-      return FAIL;
-    }
-
-    // Get the third variable.  Recursive!
     *arg = skipwhite(*arg + 1);
-    evalarg_used->eval_flags = !result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
+    evalarg_used->eval_flags = (op_falsy ? !result : result)
+                                    ? orig_flags : orig_flags & ~EVAL_EVALUATE;
     typval_T var2;
     if (eval1(arg, &var2, evalarg_used) == FAIL) {
-      if (evaluate && result) {
-        tv_clear(rettv);
-      }
       evalarg_used->eval_flags = orig_flags;
       return FAIL;
     }
-    if (evaluate && !result) {
+    if (!op_falsy || !result) {
       *rettv = var2;
+    }
+
+    if (!op_falsy) {
+      // Check for the ":".
+      p = *arg;
+      if (*p != ':') {
+        emsg(_("E109: Missing ':' after '?'"));
+        if (evaluate && result) {
+          tv_clear(rettv);
+        }
+        evalarg_used->eval_flags = orig_flags;
+        return FAIL;
+      }
+
+      // Get the third variable.  Recursive!
+      *arg = skipwhite(*arg + 1);
+      evalarg_used->eval_flags = !result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
+      if (eval1(arg, &var2, evalarg_used) == FAIL) {
+        if (evaluate && result) {
+          tv_clear(rettv);
+        }
+        evalarg_used->eval_flags = orig_flags;
+        return FAIL;
+      }
+      if (evaluate && !result) {
+        *rettv = var2;
+      }
     }
 
     if (evalarg == NULL) {
