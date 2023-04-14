@@ -92,7 +92,7 @@ end
 ---     return v * 3
 ---   end
 --- end)
---- it:collect()
+--- it:totable()
 --- -- { 6, 12 }
 --- </pre>
 ---
@@ -171,16 +171,12 @@ end
 --- Example:
 --- <pre>lua
 --- local it1 = vim.iter(string.gmatch('100 20 50', '%d+')):filtermap(tonumber)
---- it1:collect()
+--- it1:totable()
 --- -- { 100, 20, 50 }
----
---- local it2 = vim.iter(string.gmatch('100 20 50', '%d+')):filtermap(tonumber)
---- it2:collect({ sort = true })
---- -- { 20, 50, 100 }
 --- </pre>
 ---
 ---@return table
-function Iter.collect(self)
+function Iter.totable(self)
   local t = {}
   while true do
     local args = pack(self:next())
@@ -193,7 +189,7 @@ function Iter.collect(self)
 end
 
 ---@private
-function ListIter.collect(self, opts)
+function ListIter.totable(self, opts)
   -- Skip a table copy if possible
   if self._head == 1 and self._tail == #self._table + 1 then
     return self._table
@@ -208,7 +204,7 @@ function ListIter.collect(self, opts)
 end
 
 ---@private
-function MapIter.collect(self)
+function MapIter.totable(self)
   local t = {}
   for k, v in self do
     t[k] = v
@@ -284,7 +280,7 @@ end
 --- <pre>lua
 ---
 --- local it = vim.iter({ 3, 6, 9, 12 }):rev()
---- it:collect()
+--- it:totable()
 --- -- { 12, 9, 6, 3 }
 ---
 --- </pre>

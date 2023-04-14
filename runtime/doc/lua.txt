@@ -1595,22 +1595,6 @@ show_pos({bufnr}, {row}, {col}, {filter})                     *vim.show_pos()*
 
 
 
-collect({f})                                                   *vim.collect()*
-    Collect an iterator into a table.
-
-    This is a convenience function that performs:
-
-    >lua
-
-     vim.iter(f):collect()
-<
-
-    Parameters: ~
-      • {f}  (function) Iterator function
-
-    Return: ~
-        (table)
-
 deep_equal({a}, {b})                                        *vim.deep_equal()*
     Deep compare values for equality
 
@@ -1676,7 +1660,7 @@ filter({f}, {src})                                              *vim.filter()*
 
     >lua
 
-     vim.iter(src):filter(f):collect()
+     vim.iter(src):filter(f):totable()
 <
 
     Parameters: ~
@@ -1698,7 +1682,7 @@ filtermap({f}, {src})                                        *vim.filtermap()*
 
     >lua
 
-     vim.iter(src):filtermap(f):collect()
+     vim.iter(src):filtermap(f):totable()
 <
 
     Parameters: ~
@@ -1770,7 +1754,7 @@ iter({src})                                                       *vim.iter()*
      end)
      it:rev()
      it:skip(2)
-     it:collect()
+     it:totable()
      -- { 15, 12, 9 }
 
      local it = vim.iter(vim.gsplit('1,2,3,4,5', ','))
@@ -2096,6 +2080,22 @@ tbl_values({t})                                             *vim.tbl_values()*
 
     Return: ~
         (list) List of values
+
+totable({f})                                                   *vim.totable()*
+    Collect an iterator into a table.
+
+    This is a convenience function that performs:
+
+    >lua
+
+     vim.iter(f):totable()
+<
+
+    Parameters: ~
+      • {f}  (function) Iterator function
+
+    Return: ~
+        (table)
 
 trim({s})                                                         *vim.trim()*
     Trim whitespace (Lua pattern "%s") from both sides of a string.
@@ -2933,29 +2933,6 @@ Iter:any({self}, {pred})                                          *Iter:any()*
                 returned from the previous stage in the pipeline as arguments
                 and returns true if the predicate matches.
 
-Iter:collect({self})                                          *Iter:collect()*
-    Drain the iterator into a table.
-
-    The final stage in the iterator pipeline must return 1 or 2 values. If
-    only one value is returned, or if two values are returned and the first
-    value is a number, an "array-like" table is returned. Otherwise, the first
-    return value is used as the table key and the second return value as the
-    table value.
-
-    Example: >lua
-
-     local it1 = vim.iter(string.gmatch('100 20 50', 'd+')):filtermap(tonumber)
-     it1:collect()
-     -- { 100, 20, 50 }
-
-     local it2 = vim.iter(string.gmatch('100 20 50', 'd+')):filtermap(tonumber)
-     it2:collect({ sort = true })
-     -- { 20, 50, 100 }
-<
-
-    Return: ~
-        (table)
-
 Iter:each({self}, {f})                                           *Iter:each()*
     Call a function once for each item in the pipeline.
 
@@ -3013,7 +2990,7 @@ Iter:filtermap({self}, {f})                                 *Iter:filtermap()*
          return v * 3
        end
      end)
-     it:collect()
+     it:totable()
      -- { 6, 12 }
 <
 
@@ -3201,7 +3178,7 @@ Iter:rev({self})                                                  *Iter:rev()*
     Example: >lua
 
      local it = vim.iter({ 3, 6, 9, 12 }):rev()
-     it:collect()
+     it:totable()
      -- { 12, 9, 6, 3 }
 <
 
@@ -3267,6 +3244,25 @@ Iter:skipback({self}, {n})                                   *Iter:skipback()*
 
     Return: ~
         Iter
+
+Iter:totable({self})                                          *Iter:totable()*
+    Drain the iterator into a table.
+
+    The final stage in the iterator pipeline must return 1 or 2 values. If
+    only one value is returned, or if two values are returned and the first
+    value is a number, an "array-like" table is returned. Otherwise, the first
+    return value is used as the table key and the second return value as the
+    table value.
+
+    Example: >lua
+
+     local it1 = vim.iter(string.gmatch('100 20 50', 'd+')):filtermap(tonumber)
+     it1:totable()
+     -- { 100, 20, 50 }
+<
+
+    Return: ~
+        (table)
 
 new({src}, {...})                                                      *new()*
     Create a new Iter object from a table of value.

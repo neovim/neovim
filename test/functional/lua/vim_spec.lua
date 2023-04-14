@@ -3037,12 +3037,12 @@ describe('lua stdlib', function()
       end
 
       local t = { 1, 2, 3, 4, 5 }
-      eq({ 1, 3, 5 }, vim.iter(t):filter(odd):collect())
-      eq({ 2, 4 }, vim.iter(t):filter(function(v) return not odd(v) end):collect())
-      eq({}, vim.iter(t):filter(function(v) if v > 5 then return v end end):collect())
+      eq({ 1, 3, 5 }, vim.iter(t):filter(odd):totable())
+      eq({ 2, 4 }, vim.iter(t):filter(function(v) return not odd(v) end):totable())
+      eq({}, vim.iter(t):filter(function(v) if v > 5 then return v end end):totable())
 
       local it = vim.iter(string.gmatch('the quick brown fox', '%w+'))
-      eq({'the', 'fox'}, it:filter(function(s) return #s <= 3 end):collect())
+      eq({'the', 'fox'}, it:filter(function(s) return #s <= 3 end):totable())
     end)
 
     it('filtermap()', function()
@@ -3054,7 +3054,7 @@ describe('lua stdlib', function()
         :filtermap(function(v)
           return 2 * v
         end)
-        :collect()
+        :totable()
       )
 
       local it = vim.gsplit(
@@ -3077,7 +3077,7 @@ describe('lua stdlib', function()
             return vim.trim(s:gsub('Line', 'Lion'))
           end
         end)
-        :collect()
+        :totable()
       )
     end)
 
@@ -3090,15 +3090,15 @@ describe('lua stdlib', function()
       eq(45, acc)
     end)
 
-    it('collect()', function()
+    it('totable()', function()
       do
         local it = vim.iter({1, 2, 3}):filtermap(function(v) return v, v*v end)
-        eq({{1, 1}, {2, 4}, {3, 9}}, it:collect())
+        eq({{1, 1}, {2, 4}, {3, 9}}, it:totable())
       end
 
       do
         local it = vim.iter(string.gmatch('1,4,lol,17,blah,2,9,3', '%d+')):filtermap(tonumber)
-        eq({1, 4, 17, 2, 9, 3}, it:collect())
+        eq({1, 4, 17, 2, 9, 3}, it:totable())
       end
     end)
 
@@ -3111,7 +3111,7 @@ describe('lua stdlib', function()
     end)
 
     it('rev()', function()
-      eq({3, 2, 1}, vim.iter({1, 2, 3}):rev():collect())
+      eq({3, 2, 1}, vim.iter({1, 2, 3}):rev():totable())
 
       local it = vim.iter(string.gmatch("abc", "%w"))
       matches('Function iterators cannot be reversed', pcall_err(it.rev, it))
@@ -3120,17 +3120,17 @@ describe('lua stdlib', function()
     it('skip()', function()
       do
         local t = {4, 3, 2, 1}
-        eq(t, vim.iter(t):skip(0):collect())
-        eq({3, 2, 1}, vim.iter(t):skip(1):collect())
-        eq({2, 1}, vim.iter(t):skip(2):collect())
-        eq({1}, vim.iter(t):skip(#t - 1):collect())
-        eq({}, vim.iter(t):skip(#t):collect())
-        eq({}, vim.iter(t):skip(#t + 1):collect())
+        eq(t, vim.iter(t):skip(0):totable())
+        eq({3, 2, 1}, vim.iter(t):skip(1):totable())
+        eq({2, 1}, vim.iter(t):skip(2):totable())
+        eq({1}, vim.iter(t):skip(#t - 1):totable())
+        eq({}, vim.iter(t):skip(#t):totable())
+        eq({}, vim.iter(t):skip(#t + 1):totable())
       end
 
       do
         local function skip(n)
-          return vim.iter(vim.gsplit('a|b|c|d', '|')):skip(n):collect()
+          return vim.iter(vim.gsplit('a|b|c|d', '|')):skip(n):totable()
         end
         eq({'a', 'b', 'c', 'd'}, skip(0))
         eq({'b', 'c', 'd'}, skip(1))
@@ -3144,12 +3144,12 @@ describe('lua stdlib', function()
     it('skipback()', function()
       do
         local t = {4, 3, 2, 1}
-        eq(t, vim.iter(t):skipback(0):collect())
-        eq({4, 3, 2}, vim.iter(t):skipback(1):collect())
-        eq({4, 3}, vim.iter(t):skipback(2):collect())
-        eq({4}, vim.iter(t):skipback(#t - 1):collect())
-        eq({}, vim.iter(t):skipback(#t):collect())
-        eq({}, vim.iter(t):skipback(#t + 1):collect())
+        eq(t, vim.iter(t):skipback(0):totable())
+        eq({4, 3, 2}, vim.iter(t):skipback(1):totable())
+        eq({4, 3}, vim.iter(t):skipback(2):totable())
+        eq({4}, vim.iter(t):skipback(#t - 1):totable())
+        eq({}, vim.iter(t):skipback(#t):totable())
+        eq({}, vim.iter(t):skipback(#t + 1):totable())
       end
 
       local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
@@ -3362,7 +3362,7 @@ describe('lua stdlib', function()
           return k:upper(), v * 2
         end
       end)
-      eq({ A = 2, C = 6 }, it:collect())
+      eq({ A = 2, C = 6 }, it:totable())
     end)
   end)
 end)

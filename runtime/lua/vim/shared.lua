@@ -894,7 +894,7 @@ end
 --- end)
 --- it:rev()
 --- it:skip(2)
---- it:collect()
+--- it:totable()
 --- -- { 15, 12, 9 }
 ---
 --- local it = vim.iter(vim.gsplit('1,2,3,4,5', ','))
@@ -923,13 +923,13 @@ end
 --- This is a convenience function that performs:
 ---
 --- <pre>lua
---- vim.iter(f):collect()
+--- vim.iter(f):totable()
 --- </pre>
 ---
 ---@param f function Iterator function
 ---@return table
-function vim.collect(f)
-  return vim.iter(f):collect()
+function vim.totable(f)
+  return vim.iter(f):totable()
 end
 
 --- Filter a table or iterator.
@@ -937,7 +937,7 @@ end
 --- This is a convenience function that performs:
 ---
 --- <pre>lua
---- vim.iter(src):filter(f):collect()
+--- vim.iter(src):filter(f):totable()
 --- </pre>
 ---
 ---@see |Iter:filter()|
@@ -948,7 +948,7 @@ end
 ---@param src table|function Table or iterator function to filter
 ---@return table
 function vim.filter(f, src)
-  return vim.iter(src):filter(f):collect()
+  return vim.iter(src):filter(f):totable()
 end
 
 --- Map and filter a table or iterator.
@@ -956,7 +956,7 @@ end
 --- This is a convenience function that performs:
 ---
 --- <pre>lua
---- vim.iter(src):filtermap(f):collect()
+--- vim.iter(src):filtermap(f):totable()
 --- </pre>
 ---
 ---@see |Iter:filtermap()|
@@ -967,7 +967,7 @@ end
 ---@param src table|function Table or iterator function to filter
 ---@return table
 function vim.filtermap(f, src)
-  return vim.iter(src):filtermap(f):collect()
+  return vim.iter(src):filtermap(f):totable()
 end
 
 return vim
