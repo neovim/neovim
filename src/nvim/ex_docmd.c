@@ -484,24 +484,6 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
       }
     }
 
-    if (cstack.cs_looplevel > 0) {
-      // Inside a while/for loop we need to store the lines and use them
-      // again.  Pass a different "fgetline" function to do_one_cmd()
-      // below, so that it stores lines in or reads them from
-      // "lines_ga".  Makes it possible to define a function inside a
-      // while/for loop.
-      cmd_getline = get_loop_line;
-      cmd_cookie = (void *)&cmd_loop_cookie;
-      cmd_loop_cookie.lines_gap = &lines_ga;
-      cmd_loop_cookie.current_line = current_line;
-      cmd_loop_cookie.getline = fgetline;
-      cmd_loop_cookie.cookie = cookie;
-      cmd_loop_cookie.repeating = (current_line < lines_ga.ga_len);
-    } else {
-      cmd_getline = fgetline;
-      cmd_cookie = cookie;
-    }
-
     // 2. If no line given, get an allocated line with fgetline().
     if (next_cmdline == NULL) {
       // Need to set msg_didout for the first line after an ":if",
@@ -540,15 +522,37 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
     }
     cmdline_copy = next_cmdline;
 
-    // Save the current line when inside a ":while" or ":for", and when
-    // the command looks like a ":while" or ":for", because we may need it
-    // later.  When there is a '|' and another command, it is stored
-    // separately, because we need to be able to jump back to it from an
+    int current_line_before = 0;
+    // Inside a while/for loop, and when the command looks like a ":while"
+    // or ":for", the line is stored, because we may need it later when
+    // looping.
+    //
+    // When there is a '|' and another command, it is stored separately,
+    // because we need to be able to jump back to it from an
     // :endwhile/:endfor.
-    if (current_line == lines_ga.ga_len
-        && (cstack.cs_looplevel || has_loop_cmd(next_cmdline))) {
-      store_loop_line(&lines_ga, next_cmdline);
+    //
+    // Pass a different "fgetline" function to do_one_cmd() below,
+    // that it stores lines in or reads them from "lines_ga".  Makes it
+    // possible to define a function inside a while/for loop.
+    if ((cstack.cs_looplevel > 0 || has_loop_cmd(next_cmdline))) {
+      cmd_getline = get_loop_line;
+      cmd_cookie = (void *)&cmd_loop_cookie;
+      cmd_loop_cookie.lines_gap = &lines_ga;
+      cmd_loop_cookie.current_line = current_line;
+      cmd_loop_cookie.getline = fgetline;
+      cmd_loop_cookie.cookie = cookie;
+      cmd_loop_cookie.repeating = (current_line < lines_ga.ga_len);
+
+      // Save the current line when encountering it the first time.
+      if (current_line == lines_ga.ga_len) {
+        store_loop_line(&lines_ga, next_cmdline);
+      }
+      current_line_before = current_line;
+    } else {
+      cmd_getline = fgetline;
+      cmd_cookie = cookie;
     }
+
     did_endif = false;
 
     if (count++ == 0) {
@@ -651,7 +655,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
       } else if (cstack.cs_lflags & CSL_HAD_LOOP) {
         // For a ":while" or ":for" we need to remember the line number.
         cstack.cs_lflags &= ~CSL_HAD_LOOP;
-        cstack.cs_line[cstack.cs_idx] = current_line - 1;
+        cstack.cs_line[cstack.cs_idx] = current_line_before;
       }
     }
 
@@ -3751,7 +3755,7 @@ int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
     // Skip over `=expr`, wildcards in it are not expanded.
     if (p[0] == '`' && p[1] == '=') {
       p += 2;
-      (void)skip_expr(&p);
+      (void)skip_expr(&p, NULL);
       if (*p == '`') {
         p++;
       }
@@ -3970,7 +3974,7 @@ void separate_nextcmd(exarg_T *eap)
     } else if (p[0] == '`' && p[1] == '=' && (eap->argt & EX_XFILE)) {
       // Skip over `=expr` when wildcards are expanded.
       p += 2;
-      (void)skip_expr(&p);
+      (void)skip_expr(&p, NULL);
       if (*p == NUL) {  // stop at NUL after CTRL-V
         break;
       }

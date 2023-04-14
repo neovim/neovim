@@ -5266,7 +5266,7 @@ int option_set_callback_func(char *optval, Callback *optcb)
       || (strncmp(optval, "function(", 9) == 0)
       || (strncmp(optval, "funcref(", 8) == 0)) {
     // Lambda expression or a funcref
-    tv = eval_expr(optval);
+    tv = eval_expr(optval, NULL);
     if (tv == NULL) {
       return FAIL;
     }

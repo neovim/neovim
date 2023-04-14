@@ -252,22 +252,23 @@ static void set_ufunc_name(ufunc_T *fp, char *name)
 /// Parse a lambda expression and get a Funcref from "*arg".
 ///
 /// @return OK or FAIL.  Returns NOTDONE for dict or {expr}.
-int get_lambda_tv(char **arg, typval_T *rettv, bool evaluate)
+int get_lambda_tv(char **arg, typval_T *rettv, evalarg_T *evalarg)
 {
+  const bool evaluate = evalarg != NULL && (evalarg->eval_flags & EVAL_EVALUATE);
   garray_T newargs = GA_EMPTY_INIT_VALUE;
   garray_T *pnewargs;
   ufunc_T *fp = NULL;
   partial_T *pt = NULL;
   int varargs;
   int ret;
-  char *start = skipwhite(*arg + 1);
-  char *s, *e;
   bool *old_eval_lavars = eval_lavars_used;
   bool eval_lavars = false;
+  char *tofree = NULL;
 
   // First, check if this is a lambda expression. "->" must exists.
-  ret = get_function_args(&start, '-', NULL, NULL, NULL, true);
-  if (ret == FAIL || *start != '>') {
+  char *s = skipwhite(*arg + 1);
+  ret = get_function_args(&s, '-', NULL, NULL, NULL, true);
+  if (ret == FAIL || *s != '>') {
     return NOTDONE;
   }
 
@@ -290,12 +291,18 @@ int get_lambda_tv(char **arg, typval_T *rettv, bool evaluate)
 
   // Get the start and the end of the expression.
   *arg = skipwhite((*arg) + 1);
-  s = *arg;
-  ret = skip_expr(arg);
+  char *start = *arg;
+  ret = skip_expr(arg, evalarg);
+  char *end = *arg;
   if (ret == FAIL) {
     goto errret;
   }
-  e = *arg;
+  if (evalarg != NULL) {
+    // avoid that the expression gets freed when another line break follows
+    tofree = evalarg->eval_tofree;
+    evalarg->eval_tofree = NULL;
+  }
+
   *arg = skipwhite(*arg);
   if (**arg != '}') {
     semsg(_("E451: Expected }: %s"), *arg);
@@ -317,11 +324,11 @@ int get_lambda_tv(char **arg, typval_T *rettv, bool evaluate)
     ga_grow(&newlines, 1);
 
     // Add "return " before the expression.
-    size_t len = (size_t)(7 + e - s + 1);
+    size_t len = (size_t)(7 + end - start + 1);
     p = xmalloc(len);
     ((char **)(newlines.ga_data))[newlines.ga_len++] = p;
     STRCPY(p, "return ");
-    xstrlcpy(p + 7, s, (size_t)(e - s) + 1);
+    xstrlcpy(p + 7, start, (size_t)(end - start) + 1);
     if (strstr(p + 7, "a:") == NULL) {
       // No a: variables are used for sure.
       flags |= FC_NOARGS;
@@ -359,12 +366,22 @@ int get_lambda_tv(char **arg, typval_T *rettv, bool evaluate)
   }
 
   eval_lavars_used = old_eval_lavars;
+  if (evalarg != NULL && evalarg->eval_tofree == NULL) {
+    evalarg->eval_tofree = tofree;
+  } else {
+    xfree(tofree);
+  }
   return OK;
 
 errret:
   ga_clear_strings(&newargs);
   xfree(fp);
   xfree(pt);
+  if (evalarg != NULL && evalarg->eval_tofree == NULL) {
+    evalarg->eval_tofree = tofree;
+  } else {
+    xfree(tofree);
+  }
   eval_lavars_used = old_eval_lavars;
   return FAIL;
 }
@@ -448,14 +465,13 @@ void emsg_funcname(const char *errmsg, const char *name)
 /// @param funcexe  various values
 ///
 /// @return  OK or FAIL.
-int get_func_tv(const char *name, int len, typval_T *rettv, char **arg, funcexe_T *funcexe)
+int get_func_tv(const char *name, int len, typval_T *rettv, char **arg, evalarg_T *const evalarg,
+                funcexe_T *funcexe)
 {
   char *argp;
   int ret = OK;
   typval_T argvars[MAX_FUNC_ARGS + 1];          // vars for arguments
   int argcount = 0;                     // number of arguments found
-
-  evalarg_T evalarg = { .eval_flags = funcexe->fe_evaluate ? EVAL_EVALUATE : 0 };
 
   // Get the arguments.
   argp = *arg;
@@ -465,7 +481,7 @@ int get_func_tv(const char *name, int len, typval_T *rettv, char **arg, funcexe_
     if (*argp == ')' || *argp == ',' || *argp == NUL) {
       break;
     }
-    if (eval1(&argp, &argvars[argcount], &evalarg) == FAIL) {
+    if (eval1(&argp, &argvars[argcount], evalarg) == FAIL) {
       ret = FAIL;
       break;
     }
@@ -2986,6 +3002,7 @@ void ex_return(exarg_T *eap)
   if (eap->skip) {
     emsg_skip--;
   }
+  clear_evalarg(&evalarg, eap);
 }
 
 /// ":1,25call func(arg1, arg2)" function call.
@@ -3002,16 +3019,19 @@ void ex_call(exarg_T *eap)
   bool failed = false;
   funcdict_T fudi;
   partial_T *partial = NULL;
+  evalarg_T evalarg;
 
+  fill_evalarg_from_eap(&evalarg, eap, eap->skip);
   if (eap->skip) {
     // trans_function_name() doesn't work well when skipping, use eval0()
     // instead to skip to any following command, e.g. for:
     //   :if 0 | call dict.foo().bar() | endif.
     emsg_skip++;
-    if (eval0(eap->arg, &rettv, eap, NULL) != FAIL) {
+    if (eval0(eap->arg, &rettv, eap, &evalarg) != FAIL) {
       tv_clear(&rettv);
     }
     emsg_skip--;
+    clear_evalarg(&evalarg, eap);
     return;
   }
 
@@ -3069,14 +3089,13 @@ void ex_call(exarg_T *eap)
     funcexe.fe_evaluate = true;
     funcexe.fe_partial = partial;
     funcexe.fe_selfdict = fudi.fd_dict;
-    if (get_func_tv(name, -1, &rettv, &arg, &funcexe) == FAIL) {
+    if (get_func_tv(name, -1, &rettv, &arg, &evalarg, &funcexe) == FAIL) {
       failed = true;
       break;
     }
 
     // Handle a function returning a Funcref, Dictionary or List.
-    if (handle_subscript((const char **)&arg, &rettv, EVAL_EVALUATE, true)
-        == FAIL) {
+    if (handle_subscript((const char **)&arg, &rettv, &EVALARG_EVALUATE, true) == FAIL) {
       failed = true;
       break;
     }
@@ -3108,6 +3127,7 @@ void ex_call(exarg_T *eap)
       eap->nextcmd = check_nextcmd(arg);
     }
   }
+  clear_evalarg(&evalarg, eap);
 
 end:
   tv_dict_unref(fudi.fd_dict);

@@ -792,13 +792,15 @@ void report_discard_pending(int pending, void *value)
 void ex_eval(exarg_T *eap)
 {
   typval_T tv;
-  evalarg_T evalarg = {
-    .eval_flags = eap->skip ? 0 : EVAL_EVALUATE,
-    .eval_cookie = eap->getline == getsourceline ? eap->cookie : NULL,
-  };
+  evalarg_T evalarg;
+
+  fill_evalarg_from_eap(&evalarg, eap, eap->skip);
+
   if (eval0(eap->arg, &tv, eap, &evalarg) == OK) {
     tv_clear(&tv);
   }
+
+  clear_evalarg(&evalarg, eap);
 }
 
 /// Handle ":if".
@@ -955,13 +957,12 @@ void ex_while(exarg_T *eap)
       eap->cmdidx == CMD_while ? CSF_WHILE : CSF_FOR;
 
     int skip = CHECK_SKIP;
-    if (eap->cmdidx == CMD_while) {
-      // ":while bool-expr"
+    if (eap->cmdidx == CMD_while) {  // ":while bool-expr"
       result = eval_to_bool(eap->arg, &error, eap, skip);
-    } else {
+    } else {  // ":for var in list-expr"
+      evalarg_T evalarg;
+      fill_evalarg_from_eap(&evalarg, eap, skip);
       void *fi;
-
-      // ":for var in list-expr"
       if ((cstack->cs_lflags & CSL_HAD_LOOP) != 0) {
         // Jumping here from a ":continue" or ":endfor": use the
         // previously evaluated list.
@@ -969,7 +970,7 @@ void ex_while(exarg_T *eap)
         error = false;
       } else {
         // Evaluate the argument and get the info in a structure.
-        fi = eval_for_line(eap->arg, &error, eap, skip);
+        fi = eval_for_line(eap->arg, &error, eap, &evalarg);
         cstack->cs_forinfo[cstack->cs_idx] = fi;
       }
 
@@ -984,6 +985,7 @@ void ex_while(exarg_T *eap)
         free_for_info(fi);
         cstack->cs_forinfo[cstack->cs_idx] = NULL;
       }
+      clear_evalarg(&evalarg, eap);
     }
 
     // If this cstack entry was just initialised and is active, set the

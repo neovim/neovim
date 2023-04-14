@@ -692,6 +692,17 @@ void eval_patch(const char *const origfile, const char *const difffile, const ch
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
 }
 
+void fill_evalarg_from_eap(evalarg_T *evalarg, exarg_T *eap, bool skip)
+{
+  *evalarg = (evalarg_T){ .eval_flags = skip ? 0 : EVAL_EVALUATE };
+  if (eap != NULL) {
+    if (getline_equal(eap->getline, eap->cookie, getsourceline)) {
+      evalarg->eval_getline = eap->getline;
+      evalarg->eval_cookie = eap->cookie;
+    }
+  }
+}
+
 /// Top level evaluation function, returning a boolean.
 /// Sets "error" to true if there was an error.
 ///
@@ -702,11 +713,14 @@ int eval_to_bool(char *arg, bool *error, exarg_T *eap, int skip)
 {
   typval_T tv;
   bool retval = false;
+  evalarg_T evalarg;
+
+  fill_evalarg_from_eap(&evalarg, eap, skip);
 
   if (skip) {
     emsg_skip++;
   }
-  if (eval0(arg, &tv, eap, skip ? NULL : &EVALARG_EVALUATE) == FAIL) {
+  if (eval0(arg, &tv, eap, &evalarg) == FAIL) {
     *error = true;
   } else {
     *error = false;
@@ -718,19 +732,23 @@ int eval_to_bool(char *arg, bool *error, exarg_T *eap, int skip)
   if (skip) {
     emsg_skip--;
   }
+  clear_evalarg(&evalarg, eap);
 
   return retval;
 }
 
 /// Call eval1() and give an error message if not done at a lower level.
-static int eval1_emsg(char **arg, typval_T *rettv, bool evaluate)
+static int eval1_emsg(char **arg, typval_T *rettv, exarg_T *eap)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   const char *const start = *arg;
   const int did_emsg_before = did_emsg;
   const int called_emsg_before = called_emsg;
+  evalarg_T evalarg;
 
-  const int ret = eval1(arg, rettv, evaluate ? &EVALARG_EVALUATE : NULL);
+  fill_evalarg_from_eap(&evalarg, eap, eap != NULL && eap->skip);
+
+  const int ret = eval1(arg, rettv, &evalarg);
   if (ret == FAIL) {
     // Report the invalid expression unless the expression evaluation has
     // been cancelled due to an aborting error, an interrupt, or an
@@ -742,6 +760,7 @@ static int eval1_emsg(char **arg, typval_T *rettv, bool evaluate)
       semsg(_(e_invexpr2), start);
     }
   }
+  clear_evalarg(&evalarg, eap);
   return ret;
 }
 
@@ -786,7 +805,7 @@ int eval_expr_typval(const typval_T *expr, typval_T *argv, int argc, typval_T *r
       return FAIL;
     }
     s = skipwhite(s);
-    if (eval1_emsg(&s, rettv, true) == FAIL) {
+    if (eval1_emsg(&s, rettv, NULL) == FAIL) {
       return FAIL;
     }
     if (*skipwhite(s) != NUL) {  // check for trailing chars after expr
@@ -827,11 +846,13 @@ char *eval_to_string_skip(char *arg, exarg_T *eap, const bool skip)
 {
   typval_T tv;
   char *retval;
+  evalarg_T evalarg;
 
+  fill_evalarg_from_eap(&evalarg, eap, skip);
   if (skip) {
     emsg_skip++;
   }
-  if (eval0(arg, &tv, eap, skip ? NULL : &EVALARG_EVALUATE) == FAIL || skip) {
+  if (eval0(arg, &tv, eap, &evalarg) == FAIL || skip) {
     retval = NULL;
   } else {
     retval = xstrdup(tv_get_string(&tv));
@@ -840,6 +861,7 @@ char *eval_to_string_skip(char *arg, exarg_T *eap, const bool skip)
   if (skip) {
     emsg_skip--;
   }
+  clear_evalarg(&evalarg, eap);
 
   return retval;
 }
@@ -847,12 +869,24 @@ char *eval_to_string_skip(char *arg, exarg_T *eap, const bool skip)
 /// Skip over an expression at "*pp".
 ///
 /// @return  FAIL for an error, OK otherwise.
-int skip_expr(char **pp)
+int skip_expr(char **pp, evalarg_T *const evalarg)
 {
-  typval_T rettv;
+  const int save_flags = evalarg == NULL ? 0 : evalarg->eval_flags;
+
+  // Don't evaluate the expression.
+  if (evalarg != NULL) {
+    evalarg->eval_flags &= ~EVAL_EVALUATE;
+  }
 
   *pp = skipwhite(*pp);
-  return eval1(pp, &rettv, NULL);
+  typval_T rettv;
+  int res = eval1(pp, &rettv, NULL);
+
+  if (evalarg != NULL) {
+    evalarg->eval_flags = save_flags;
+  }
+
+  return res;
 }
 
 /// Top level evaluation function, returning a string.
@@ -889,6 +923,7 @@ char *eval_to_string(char *arg, bool convert)
     }
     tv_clear(&tv);
   }
+  clear_evalarg(&EVALARG_EVALUATE, NULL);
 
   return retval;
 }
@@ -943,12 +978,18 @@ varnumber_T eval_to_number(char *expr)
 ///
 /// @return  an allocated typval_T with the result or
 ///          NULL when there is an error.
-typval_T *eval_expr(char *arg)
+typval_T *eval_expr(char *arg, exarg_T *eap)
 {
   typval_T *tv = xmalloc(sizeof(*tv));
-  if (eval0(arg, tv, NULL, &EVALARG_EVALUATE) == FAIL) {
+  evalarg_T evalarg;
+
+  fill_evalarg_from_eap(&evalarg, eap, eap != NULL && eap->skip);
+
+  if (eval0(arg, tv, eap, &evalarg) == FAIL) {
     XFREE_CLEAR(tv);
   }
+
+  clear_evalarg(&evalarg, eap);
   return tv;
 }
 
@@ -1194,6 +1235,7 @@ int eval_foldexpr(char *arg, int *cp)
     sandbox--;
   }
   textlock--;
+  clear_evalarg(&EVALARG_EVALUATE, NULL);
 
   return (int)retval;
 }
@@ -1776,14 +1818,14 @@ notify:
 /// @param[out] *errp  set to true for an error, false otherwise;
 ///
 /// @return  a pointer that holds the info.  Null when there is an error.
-void *eval_for_line(const char *arg, bool *errp, exarg_T *eap, int skip)
+void *eval_for_line(const char *arg, bool *errp, exarg_T *eap, evalarg_T *const evalarg)
 {
   forinfo_T *fi = xcalloc(1, sizeof(forinfo_T));
   const char *expr;
   typval_T tv;
   list_T *l;
+  const bool skip = !(evalarg->eval_flags & EVAL_EVALUATE);
 
-  evalarg_T evalarg = { .eval_flags = skip ? 0 : EVAL_EVALUATE };
   *errp = true;  // Default: there is an error.
 
   expr = skip_var_list(arg, &fi->fi_varcount, &fi->fi_semicolon);
@@ -1792,7 +1834,8 @@ void *eval_for_line(const char *arg, bool *errp, exarg_T *eap, int skip)
   }
 
   expr = skipwhite(expr);
-  if (expr[0] != 'i' || expr[1] != 'n' || !ascii_iswhite(expr[2])) {
+  if (expr[0] != 'i' || expr[1] != 'n'
+      || !(expr[2] == NUL || ascii_iswhite(expr[2]))) {
     emsg(_("E690: Missing \"in\" after :for"));
     return fi;
   }
@@ -1800,7 +1843,8 @@ void *eval_for_line(const char *arg, bool *errp, exarg_T *eap, int skip)
   if (skip) {
     emsg_skip++;
   }
-  if (eval0(skipwhite(expr + 2), &tv, eap, &evalarg) == OK) {
+  expr = skipwhite(expr + 2);
+  if (eval0((char *)expr, &tv, eap, evalarg) == OK) {
     *errp = false;
     if (!skip) {
       if (tv.v_type == VAR_LIST) {
@@ -2164,9 +2208,10 @@ int pattern_match(const char *pat, const char *text, bool ic)
 /// @param basetv  "expr" for "expr->name(arg)"
 ///
 /// @return OK or FAIL.
-static int eval_func(char **const arg, char *const name, const int name_len, typval_T *const rettv,
-                     const int flags, typval_T *const basetv)
-  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
+static int eval_func(char **const arg, evalarg_T *const evalarg, char *const name,
+                     const int name_len, typval_T *const rettv, const int flags,
+                     typval_T *const basetv)
+  FUNC_ATTR_NONNULL_ARG(1, 3, 5)
 {
   const bool evaluate = flags & EVAL_EVALUATE;
   char *s = name;
@@ -2192,7 +2237,7 @@ static int eval_func(char **const arg, char *const name, const int name_len, typ
   funcexe.fe_evaluate = evaluate;
   funcexe.fe_partial = partial;
   funcexe.fe_basetv = basetv;
-  int ret = get_func_tv(s, len, rettv, arg, &funcexe);
+  int ret = get_func_tv(s, len, rettv, arg, evalarg, &funcexe);
 
   xfree(s);
 
@@ -2216,6 +2261,26 @@ static int eval_func(char **const arg, char *const name, const int name_len, typ
   return ret;
 }
 
+/// After using "evalarg" filled from "eap": free the memory.
+void clear_evalarg(evalarg_T *evalarg, exarg_T *eap)
+{
+  if (evalarg != NULL) {
+    if (evalarg->eval_tofree != NULL) {
+      if (eap != NULL) {
+        // We may need to keep the original command line, e.g. for
+        // ":let" it has the variable names.  But we may also need the
+        // new one, "nextcmd" points into it.  Keep both.
+        xfree(eap->cmdline_tofree);
+        eap->cmdline_tofree = *eap->cmdlinep;
+        *eap->cmdlinep = evalarg->eval_tofree;
+      } else {
+        xfree(evalarg->eval_tofree);
+      }
+      evalarg->eval_tofree = NULL;
+    }
+  }
+}
+
 /// The "evaluate" argument: When false, the argument is only parsed but not
 /// executed.  The function may return OK, but the rettv will be of type
 /// VAR_UNKNOWN.  The function still returns FAIL for a syntax error.
@@ -2236,9 +2301,6 @@ int eval0(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
   const int called_emsg_before = called_emsg;
   bool end_error = false;
 
-  if (evalarg != NULL) {
-    evalarg->eval_tofree = NULL;
-  }
   p = skipwhite(arg);
   ret = eval1(&p, rettv, evalarg);
 
@@ -2269,21 +2331,6 @@ int eval0(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
     eap->nextcmd = check_nextcmd(p);
   }
 
-  if (evalarg != NULL) {
-    if (eap != NULL) {
-      if (evalarg->eval_tofree != NULL) {
-        // We may need to keep the original command line, e.g. for
-        // ":let" it has the variable names.  But we may also need the
-        // new one, "nextcmd" points into it.  Keep both.
-        xfree(eap->cmdline_tofree);
-        eap->cmdline_tofree = *eap->cmdlinep;
-        *eap->cmdlinep = evalarg->eval_tofree;
-      }
-    } else {
-      xfree(evalarg->eval_tofree);
-    }
-  }
-
   return ret;
 }
 
@@ -2303,7 +2350,8 @@ int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
     return FAIL;
   }
 
-  if ((*arg)[0] == '?') {
+  char *p = *arg;
+  if (*p == '?') {
     evalarg_T nested_evalarg = evalarg == NULL ? (evalarg_T){ 0 } : *evalarg;
     const int orig_flags = evalarg == NULL ? 0 : evalarg->eval_flags;
     const bool evaluate = nested_evalarg.eval_flags & EVAL_EVALUATE;
@@ -2329,7 +2377,8 @@ int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
     }
 
     // Check for the ":".
-    if ((*arg)[0] != ':') {
+    p = *arg;
+    if (*p != ':') {
       emsg(_("E109: Missing ':' after '?'"));
       if (evaluate && result) {
         tv_clear(rettv);
@@ -2375,7 +2424,8 @@ static int eval2(char **arg, typval_T *rettv, evalarg_T *const evalarg)
   // Repeat until there is no following "||".
   bool first = true;
   bool result = false;
-  while ((*arg)[0] == '|' && (*arg)[1] == '|') {
+  char *p = *arg;
+  while (p[0] == '|' && p[1] == '|') {
     evalarg_T nested_evalarg = evalarg == NULL ? (evalarg_T){ 0 } : *evalarg;
     const int orig_flags = evalarg == NULL ? 0 : evalarg->eval_flags;
     const bool evaluate = orig_flags & EVAL_EVALUATE;
@@ -2412,6 +2462,8 @@ static int eval2(char **arg, typval_T *rettv, evalarg_T *const evalarg)
       rettv->v_type = VAR_NUMBER;
       rettv->vval.v_number = result;
     }
+
+    p = *arg;
   }
 
   return OK;
@@ -2437,7 +2489,8 @@ static int eval3(char **arg, typval_T *rettv, evalarg_T *const evalarg)
   // Repeat until there is no following "&&".
   bool first = true;
   bool result = true;
-  while ((*arg)[0] == '&' && (*arg)[1] == '&') {
+  char *p = *arg;
+  while (p[0] == '&' && p[1] == '&') {
     evalarg_T nested_evalarg = evalarg == NULL ? (evalarg_T){ 0 } : *evalarg;
     const int orig_flags = evalarg == NULL ? 0 : evalarg->eval_flags;
     const bool evaluate = orig_flags & EVAL_EVALUATE;
@@ -2474,6 +2527,8 @@ static int eval3(char **arg, typval_T *rettv, evalarg_T *const evalarg)
       rettv->v_type = VAR_NUMBER;
       rettv->vval.v_number = result;
     }
+
+    p = *arg;
   }
 
   return OK;
@@ -2498,7 +2553,6 @@ static int eval3(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 static int eval4(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 {
   typval_T var2;
-  char *p;
   exprtype_T type = EXPR_UNKNOWN;
   int len = 2;
 
@@ -2507,7 +2561,7 @@ static int eval4(char **arg, typval_T *rettv, evalarg_T *const evalarg)
     return FAIL;
   }
 
-  p = *arg;
+  char *p = *arg;
   switch (p[0]) {
   case '=':
     if (p[1] == '=') {
@@ -2627,8 +2681,6 @@ static int eval_addlist(typval_T *tv1, typval_T *tv2)
 /// @return  OK or FAIL.
 static int eval5(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 {
-  const bool evaluate = evalarg == NULL ? 0 : (evalarg->eval_flags & EVAL_EVALUATE);
-
   // Get the first variable.
   if (eval6(arg, rettv, evalarg, false) == FAIL) {
     return FAIL;
@@ -2642,6 +2694,7 @@ static int eval5(char **arg, typval_T *rettv, evalarg_T *const evalarg)
       break;
     }
 
+    const bool evaluate = evalarg == NULL ? 0 : (evalarg->eval_flags & EVAL_EVALUATE);
     if ((op != '+' || (rettv->v_type != VAR_LIST && rettv->v_type != VAR_BLOB))
         && (op == '.' || rettv->v_type != VAR_FLOAT) && evaluate) {
       // For "list + ...", an illegal use of the first operand as
@@ -2770,12 +2823,7 @@ static int eval5(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 static int eval6(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool want_string)
   FUNC_ATTR_NO_SANITIZE_UNDEFINED
 {
-  typval_T var2;
-  int op;
-  varnumber_T n1, n2;
   bool use_float = false;
-  float_T f1 = 0, f2 = 0;
-  bool error = false;
 
   // Get the first variable.
   if (eval7(arg, rettv, evalarg, want_string) == FAIL) {
@@ -2784,12 +2832,15 @@ static int eval6(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
 
   // Repeat computing, until no '*', '/' or '%' is following.
   for (;;) {
-    const bool evaluate = evalarg == NULL ? 0 : (evalarg->eval_flags & EVAL_EVALUATE);
-    op = (uint8_t)(**arg);
+    int op = (uint8_t)(**arg);
     if (op != '*' && op != '/' && op != '%') {
       break;
     }
 
+    varnumber_T n1, n2;
+    float_T f1 = 0, f2 = 0;
+    bool error = false;
+    const bool evaluate = evalarg == NULL ? 0 : (evalarg->eval_flags & EVAL_EVALUATE);
     if (evaluate) {
       if (rettv->v_type == VAR_FLOAT) {
         f1 = rettv->vval.v_float;
@@ -2808,6 +2859,7 @@ static int eval6(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
 
     // Get the second variable.
     *arg = skipwhite(*arg + 1);
+    typval_T var2;
     if (eval7(arg, &var2, evalarg, false) == FAIL) {
       return FAIL;
     }
@@ -2901,7 +2953,6 @@ static int eval6(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
 /// @return  OK or FAIL.
 static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool want_string)
 {
-  const int flags = evalarg == NULL ? 0 : evalarg->eval_flags;
   const bool evaluate = evalarg != NULL && (evalarg->eval_flags & EVAL_EVALUATE);
   int ret = OK;
   static int recurse = 0;
@@ -2964,14 +3015,14 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
 
   // List: [expr, expr]
   case '[':
-    ret = get_list_tv(arg, rettv, flags);
+    ret = get_list_tv(arg, rettv, evalarg);
     break;
 
   // Dictionary: #{key: val, key: val}
   case '#':
     if ((*arg)[1] == '{') {
       (*arg)++;
-      ret = eval_dict(arg, rettv, flags, true);
+      ret = eval_dict(arg, rettv, evalarg, true);
     } else {
       ret = NOTDONE;
     }
@@ -2980,9 +3031,9 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
   // Lambda: {arg, arg -> expr}
   // Dictionary: {'key': val, 'key': val}
   case '{':
-    ret = get_lambda_tv(arg, rettv, evaluate);
+    ret = get_lambda_tv(arg, rettv, evalarg);
     if (ret == NOTDONE) {
-      ret = eval_dict(arg, rettv, flags, false);
+      ret = eval_dict(arg, rettv, evalarg, false);
     }
     break;
 
@@ -3010,6 +3061,7 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
   // nested expression: (expression).
   case '(':
     *arg = skipwhite(*arg + 1);
+
     ret = eval1(arg, rettv, evalarg);  // recursive!
     if (**arg == ')') {
       (*arg)++;
@@ -3038,8 +3090,9 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
     if (len <= 0) {
       ret = FAIL;
     } else {
+      const int flags = evalarg == NULL ? 0 : evalarg->eval_flags;
       if (**arg == '(') {               // recursive!
-        ret = eval_func(arg, s, len, rettv, flags, NULL);
+        ret = eval_func(arg, evalarg, s, len, rettv, flags, NULL);
       } else if (evaluate) {
         ret = get_var_tv(s, len, rettv, NULL, true, false);
       } else {
@@ -3055,7 +3108,7 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
   // Handle following '[', '(' and '.' for expr[expr], expr.name,
   // expr(expr), expr->name(expr)
   if (ret == OK) {
-    ret = handle_subscript((const char **)arg, rettv, flags, true);
+    ret = handle_subscript((const char **)arg, rettv, evalarg, true);
   }
 
   // Apply logical NOT and unary '-', from right to left, ignore '+'.
@@ -3131,10 +3184,10 @@ static int eval7_leader(typval_T *const rettv, const bool numeric_only,
 ///                      to the name of the Lua function to call (after the
 ///                      "v:lua." prefix).
 /// @return  OK on success, FAIL on failure.
-static int call_func_rettv(char **const arg, typval_T *const rettv, const bool evaluate,
-                           dict_T *const selfdict, typval_T *const basetv,
+static int call_func_rettv(char **const arg, evalarg_T *const evalarg, typval_T *const rettv,
+                           const bool evaluate, dict_T *const selfdict, typval_T *const basetv,
                            const char *const lua_funcname)
-  FUNC_ATTR_NONNULL_ARG(1, 2)
+  FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   partial_T *pt = NULL;
   typval_T functv;
@@ -3166,7 +3219,7 @@ static int call_func_rettv(char **const arg, typval_T *const rettv, const bool e
   funcexe.fe_selfdict = selfdict;
   funcexe.fe_basetv = basetv;
   const int ret = get_func_tv(funcname, is_lua ? (int)(*arg - funcname) : -1, rettv,
-                              arg, &funcexe);
+                              arg, evalarg, &funcexe);
 
   // Clear the funcref afterwards, so that deleting it while
   // evaluating the arguments is possible (see test55).
@@ -3185,16 +3238,17 @@ static int call_func_rettv(char **const arg, typval_T *const rettv, const bool e
 /// @return  FAIL or OK.
 ///
 /// @note "*arg" is advanced to after the ')'.
-static int eval_lambda(char **const arg, typval_T *const rettv, const bool evaluate,
+static int eval_lambda(char **const arg, typval_T *const rettv, evalarg_T *const evalarg,
                        const bool verbose)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
+  const bool evaluate = evalarg != NULL && (evalarg->eval_flags & EVAL_EVALUATE);
   // Skip over the ->.
   *arg += 2;
   typval_T base = *rettv;
   rettv->v_type = VAR_UNKNOWN;
 
-  int ret = get_lambda_tv(arg, rettv, evaluate);
+  int ret = get_lambda_tv(arg, rettv, evalarg);
   if (ret != OK) {
     return FAIL;
   } else if (**arg != '(') {
@@ -3208,7 +3262,7 @@ static int eval_lambda(char **const arg, typval_T *const rettv, const bool evalu
     tv_clear(rettv);
     ret = FAIL;
   } else {
-    ret = call_func_rettv(arg, rettv, evaluate, NULL, &base, NULL);
+    ret = call_func_rettv(arg, evalarg, rettv, evaluate, NULL, &base, NULL);
   }
 
   // Clear the funcref afterwards, so that deleting it while
@@ -3225,10 +3279,12 @@ static int eval_lambda(char **const arg, typval_T *const rettv, const bool evalu
 /// @param *arg  points to the '-'.
 ///
 /// @return  FAIL or OK. "*arg" is advanced to after the ')'.
-static int eval_method(char **const arg, typval_T *const rettv, const bool evaluate,
+static int eval_method(char **const arg, typval_T *const rettv, evalarg_T *const evalarg,
                        const bool verbose)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
+  const bool evaluate = evalarg != NULL && (evalarg->eval_flags & EVAL_EVALUATE);
+
   // Skip over the ->.
   *arg += 2;
   typval_T base = *rettv;
@@ -3278,9 +3334,9 @@ static int eval_method(char **const arg, typval_T *const rettv, const bool evalu
         rettv->vval.v_partial = vvlua_partial;
         rettv->vval.v_partial->pt_refcount++;
       }
-      ret = call_func_rettv(arg, rettv, evaluate, NULL, &base, lua_funcname);
+      ret = call_func_rettv(arg, evalarg, rettv, evaluate, NULL, &base, lua_funcname);
     } else {
-      ret = eval_func(arg, name, len, rettv, evaluate ? EVAL_EVALUATE : 0, &base);
+      ret = eval_func(arg, evalarg, name, len, rettv, evaluate ? EVAL_EVALUATE : 0, &base);
     }
   }
 
@@ -3299,9 +3355,9 @@ static int eval_method(char **const arg, typval_T *const rettv, const bool evalu
 /// @param verbose  give error messages
 ///
 /// @returns FAIL or OK. "*arg" is advanced to after the ']'.
-static int eval_index(char **arg, typval_T *rettv, const int flags, bool verbose)
+static int eval_index(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool verbose)
 {
-  const bool evaluate = flags & EVAL_EVALUATE;
+  const bool evaluate = evalarg != NULL && (evalarg->eval_flags & EVAL_EVALUATE);
   bool empty1 = false;
   bool empty2 = false;
   ptrdiff_t len = -1;
@@ -3350,15 +3406,13 @@ static int eval_index(char **arg, typval_T *rettv, const int flags, bool verbose
     }
     *arg = skipwhite(key + len);
   } else {
-    evalarg_T evalarg = { .eval_flags = flags };
-
     // something[idx]
     //
     // Get the (first) variable from inside the [].
     *arg = skipwhite(*arg + 1);
     if (**arg == ':') {
       empty1 = true;
-    } else if (eval1(arg, &var1, &evalarg) == FAIL) {  // Recursive!
+    } else if (eval1(arg, &var1, evalarg) == FAIL) {  // Recursive!
       return FAIL;
     } else if (evaluate && !tv_check_str(&var1)) {
       // Not a number or string.
@@ -3372,7 +3426,7 @@ static int eval_index(char **arg, typval_T *rettv, const int flags, bool verbose
       *arg = skipwhite(*arg + 1);
       if (**arg == ']') {
         empty2 = true;
-      } else if (eval1(arg, &var2, &evalarg) == FAIL) {  // Recursive!
+      } else if (eval1(arg, &var2, evalarg) == FAIL) {  // Recursive!
         if (!empty1) {
           tv_clear(&var1);
         }
@@ -3974,13 +4028,12 @@ void partial_unref(partial_T *pt)
 
 /// Allocate a variable for a List and fill it from "*arg".
 ///
+/// @param arg  "*arg" points to the "[".
 /// @return  OK or FAIL.
-static int get_list_tv(char **arg, typval_T *rettv, const int flags)
+static int get_list_tv(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 {
-  const bool evaluate = flags & EVAL_EVALUATE;
+  const bool evaluate = evalarg == NULL ? false : evalarg->eval_flags & EVAL_EVALUATE;
   list_T *l = NULL;
-
-  evalarg_T evalarg = { .eval_flags = flags };
 
   if (evaluate) {
     l = tv_list_alloc(kListLenShouldKnow);
@@ -3989,7 +4042,7 @@ static int get_list_tv(char **arg, typval_T *rettv, const int flags)
   *arg = skipwhite(*arg + 1);
   while (**arg != ']' && **arg != NUL) {
     typval_T tv;
-    if (eval1(arg, &tv, &evalarg) == FAIL) {  // Recursive!
+    if (eval1(arg, &tv, evalarg) == FAIL) {  // Recursive!
       goto failret;
     }
     if (evaluate) {
@@ -3997,14 +4050,20 @@ static int get_list_tv(char **arg, typval_T *rettv, const int flags)
       tv_list_append_owned_tv(l, tv);
     }
 
+    // the comma must come after the value
+    bool had_comma = **arg == ',';
+    if (had_comma) {
+      *arg = skipwhite(*arg + 1);
+    }
+
     if (**arg == ']') {
       break;
     }
-    if (**arg != ',') {
+
+    if (!had_comma) {
       semsg(_("E696: Missing comma in List: %s"), *arg);
       goto failret;
     }
-    *arg = skipwhite(*arg + 1);
   }
 
   if (**arg != ']') {
@@ -4622,19 +4681,17 @@ static int get_literal_key(char **arg, typval_T *tv)
 
 /// Allocate a variable for a Dictionary and fill it from "*arg".
 ///
+/// @param arg  "*arg" points to the "{".
 /// @param literal  true for #{key: val}
-/// @param flags    can have EVAL_EVALUATE and other EVAL_ flags.
 ///
 /// @return  OK or FAIL.  Returns NOTDONE for {expr}.
-static int eval_dict(char **arg, typval_T *rettv, const int flags, bool literal)
+static int eval_dict(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool literal)
 {
-  const bool evaluate = flags & EVAL_EVALUATE;
+  const bool evaluate = evalarg == NULL ? false : evalarg->eval_flags & EVAL_EVALUATE;
   typval_T tv;
   char *key = NULL;
   char *curly_expr = skipwhite(*arg + 1);
   char buf[NUMBUFLEN];
-
-  evalarg_T evalarg = { .eval_flags = flags };
 
   // First check if it's not a curly-braces expression: {expr}.
   // Must do this without evaluating, otherwise a function may be called
@@ -4661,7 +4718,7 @@ static int eval_dict(char **arg, typval_T *rettv, const int flags, bool literal)
   while (**arg != '}' && **arg != NUL) {
     if ((literal
          ? get_literal_key(arg, &tvkey)
-         : eval1(arg, &tvkey, &evalarg)) == FAIL) {  // recursive!
+         : eval1(arg, &tvkey, evalarg)) == FAIL) {  // recursive!
       goto failret;
     }
     if (**arg != ':') {
@@ -4679,7 +4736,7 @@ static int eval_dict(char **arg, typval_T *rettv, const int flags, bool literal)
     }
 
     *arg = skipwhite(*arg + 1);
-    if (eval1(arg, &tv, &evalarg) == FAIL) {  // Recursive!
+    if (eval1(arg, &tv, evalarg) == FAIL) {  // Recursive!
       if (evaluate) {
         tv_clear(&tvkey);
       }
@@ -4702,14 +4759,19 @@ static int eval_dict(char **arg, typval_T *rettv, const int flags, bool literal)
     }
     tv_clear(&tvkey);
 
+    // the comma must come after the value
+    bool had_comma = **arg == ',';
+    if (had_comma) {
+      *arg = skipwhite(*arg + 1);
+    }
+
     if (**arg == '}') {
       break;
     }
-    if (**arg != ',') {
+    if (!had_comma) {
       semsg(_("E722: Missing comma in Dictionary: %s"), *arg);
       goto failret;
     }
-    *arg = skipwhite(*arg + 1);
   }
 
   if (**arg != '}') {
@@ -6992,9 +7054,10 @@ int check_luafunc_name(const char *const str, const bool paren)
 /// @param verbose  give error messages
 /// @param start_leader  start of '!' and '-' prefixes
 /// @param end_leaderp  end of '!' and '-' prefixes
-int handle_subscript(const char **const arg, typval_T *rettv, const int flags, bool verbose)
+int handle_subscript(const char **const arg, typval_T *rettv, evalarg_T *const evalarg,
+                     bool verbose)
 {
-  const bool evaluate = flags & EVAL_EVALUATE;
+  const bool evaluate = evalarg != NULL && (evalarg->eval_flags & EVAL_EVALUATE);
   int ret = OK;
   dict_T *selfdict = NULL;
   const char *lua_funcname = NULL;
@@ -7023,7 +7086,7 @@ int handle_subscript(const char **const arg, typval_T *rettv, const int flags, b
               && !ascii_iswhite(*(*arg - 1)))
              || (**arg == '-' && (*arg)[1] == '>'))) {
     if (**arg == '(') {
-      ret = call_func_rettv((char **)arg, rettv, evaluate, selfdict, NULL, lua_funcname);
+      ret = call_func_rettv((char **)arg, evalarg, rettv, evaluate, selfdict, NULL, lua_funcname);
 
       // Stop the expression evaluation when immediately aborting on
       // error, or when an interrupt occurred or an exception was thrown
@@ -7039,10 +7102,10 @@ int handle_subscript(const char **const arg, typval_T *rettv, const int flags, b
     } else if (**arg == '-') {
       if ((*arg)[2] == '{') {
         // expr->{lambda}()
-        ret = eval_lambda((char **)arg, rettv, evaluate, verbose);
+        ret = eval_lambda((char **)arg, rettv, evalarg, verbose);
       } else {
         // expr->name()
-        ret = eval_method((char **)arg, rettv, evaluate, verbose);
+        ret = eval_method((char **)arg, rettv, evalarg, verbose);
       }
     } else {  // **arg == '[' || **arg == '.'
       tv_dict_unref(selfdict);
@@ -7054,7 +7117,7 @@ int handle_subscript(const char **const arg, typval_T *rettv, const int flags, b
       } else {
         selfdict = NULL;
       }
-      if (eval_index((char **)arg, rettv, flags, verbose) == FAIL) {
+      if (eval_index((char **)arg, rettv, evalarg, verbose) == FAIL) {
         tv_clear(rettv);
         ret = FAIL;
       }
@@ -7426,8 +7489,9 @@ void ex_echo(exarg_T *eap)
   bool need_clear = true;
   const int did_emsg_before = did_emsg;
   const int called_emsg_before = called_emsg;
+  evalarg_T evalarg;
 
-  evalarg_T evalarg = { .eval_flags = eap->skip ? 0 : EVAL_EVALUATE };
+  fill_evalarg_from_eap(&evalarg, eap, eap->skip);
 
   if (eap->skip) {
     emsg_skip++;
@@ -7479,6 +7543,7 @@ void ex_echo(exarg_T *eap)
     arg = skipwhite(arg);
   }
   eap->nextcmd = check_nextcmd(arg);
+  clear_evalarg(&evalarg, eap);
 
   if (eap->skip) {
     emsg_skip--;
@@ -7517,7 +7582,7 @@ void ex_execute(exarg_T *eap)
     emsg_skip++;
   }
   while (*arg != NUL && *arg != '|' && *arg != '\n') {
-    ret = eval1_emsg(&arg, &rettv, !eap->skip);
+    ret = eval1_emsg(&arg, &rettv, eap);
     if (ret == FAIL) {
       break;
     }

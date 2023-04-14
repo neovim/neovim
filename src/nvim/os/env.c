@@ -603,7 +603,7 @@ void expand_env_esc(char *restrict srcp, char *restrict dst, int dstlen, bool es
     if (src[0] == '`' && src[1] == '=') {
       var = src;
       src += 2;
-      (void)skip_expr(&src);
+      (void)skip_expr(&src, NULL);
       if (*src == '`') {
         src++;
       }
