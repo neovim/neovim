@@ -736,14 +736,17 @@ int eval_to_bool(char *arg, bool *error, exarg_T *eap, int skip)
 }
 
 /// Call eval1() and give an error message if not done at a lower level.
-static int eval1_emsg(char **arg, typval_T *rettv, bool evaluate)
+static int eval1_emsg(char **arg, typval_T *rettv, exarg_T *eap)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   const char *const start = *arg;
   const int did_emsg_before = did_emsg;
   const int called_emsg_before = called_emsg;
+  evalarg_T evalarg;
 
-  const int ret = eval1(arg, rettv, evaluate ? &EVALARG_EVALUATE : NULL);
+  fill_evalarg_from_eap(&evalarg, eap, eap != NULL && eap->skip);
+
+  const int ret = eval1(arg, rettv, &evalarg);
   if (ret == FAIL) {
     // Report the invalid expression unless the expression evaluation has
     // been cancelled due to an aborting error, an interrupt, or an
@@ -755,6 +758,7 @@ static int eval1_emsg(char **arg, typval_T *rettv, bool evaluate)
       semsg(_(e_invexpr2), start);
     }
   }
+  clear_evalarg(&evalarg, eap);
   return ret;
 }
 
@@ -799,7 +803,7 @@ int eval_expr_typval(const typval_T *expr, typval_T *argv, int argc, typval_T *r
       return FAIL;
     }
     s = skipwhite(s);
-    if (eval1_emsg(&s, rettv, true) == FAIL) {
+    if (eval1_emsg(&s, rettv, NULL) == FAIL) {
       return FAIL;
     }
     if (*skipwhite(s) != NUL) {  // check for trailing chars after expr
@@ -7573,7 +7577,7 @@ void ex_execute(exarg_T *eap)
     emsg_skip++;
   }
   while (*arg != NUL && *arg != '|' && *arg != '\n') {
-    ret = eval1_emsg(&arg, &rettv, !eap->skip);
+    ret = eval1_emsg(&arg, &rettv, eap);
     if (ret == FAIL) {
       break;
     }
