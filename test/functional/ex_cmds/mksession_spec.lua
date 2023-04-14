@@ -266,4 +266,23 @@ describe(':mksession', function()
 
     os.remove(tmpfile)
   end)
+  it('restores a dictionary', function()
+    command('set sessionoptions+=globals')
+    helpers.exec_lua(
+    [[  
+      vim.g.TestDict = {
+        list = { { dict = { value = -1.0 }}, 2, 3 },
+        number = 42,
+        float = 6.9,
+        dict = { nested = 1 },
+        string = 'string',
+        func = function() end,
+      }
+    ]])
+    command('mksession ' .. session_file)
+    clear()
+    command('source ' .. session_file)
+    local result = helpers.exec_capture([[echo TestDict]])
+    eq([[{'list': [{'dict': {'value': -1}}, 2, 3], 'number': 42, 'float': 6.9, 'dict': {'nested': 1}, 'string': 'string'}]], result)
+  end)
 end)

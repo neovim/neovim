@@ -8111,8 +8111,9 @@ int store_session_globals(FILE *fd)
     if (var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION
         && check_session_globals_allowed_types(this_var->di_tv.v_type)) {
       if (fprintf(fd, "let %s = ", this_var->di_key) < 0
-          || store_session_globals_variable(fd, &this_var->di_tv) == FAIL || put_eol(fd) == FAIL)
+          || store_session_globals_variable(fd, &this_var->di_tv) == FAIL || put_eol(fd) == FAIL) {
         return FAIL;
+      }
     }
   });
   return OK;
