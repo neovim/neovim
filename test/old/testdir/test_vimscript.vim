@@ -7258,6 +7258,30 @@ func Test_typed_script_var()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test for issue6776              {{{1
+func Test_trinary_expression()
+  try
+    call eval('0 ? 0')
+  catch
+  endtry
+  " previous failure should not cause next expression to fail
+  call assert_equal(v:false, eval(string(v:false)))
+
+  try
+    call eval('0 ? "burp')
+  catch
+  endtry
+  " previous failure should not cause next expression to fail
+  call assert_equal(v:false, eval(string(v:false)))
+
+  try
+    call eval('1 ? 0 : "burp')
+  catch
+  endtry
+  " previous failure should not cause next expression to fail
+  call assert_equal(v:false, eval(string(v:false)))
+endfunction
+
 func Test_for_over_string()
   let res = ''
   for c in 'aéc̀d'
