@@ -1595,7 +1595,7 @@ show_pos({bufnr}, {row}, {col}, {filter})                     *vim.show_pos()*
 
 
 
-collect({f}, {opts})                                           *vim.collect()*
+collect({f})                                                   *vim.collect()*
     Collect an iterator into a table.
 
     This is a convenience function that performs:
@@ -1606,8 +1606,7 @@ collect({f}, {opts})                                           *vim.collect()*
 <
 
     Parameters: ~
-      • {f}     (function) Iterator function
-      • {opts}  ?table Optional parameters. See |Iter:collect()|.
+      • {f}  (function) Iterator function
 
     Return: ~
         (table)
@@ -1670,7 +1669,7 @@ endswith({s}, {suffix})                                       *vim.endswith()*
     Return: ~
         (boolean) `true` if `suffix` is a suffix of `s`
 
-filter({src}, {f})                                              *vim.filter()*
+filter({f}, {src})                                              *vim.filter()*
     Filter a table or iterator.
 
     This is a convenience function that performs:
@@ -1681,10 +1680,10 @@ filter({src}, {f})                                              *vim.filter()*
 <
 
     Parameters: ~
-      • {src}  table|function Table or iterator function to filter
       • {f}    function(...):bool Filter function. Accepts the current
                iterator or table values as arguments and returns true if those
                values should be kept in the final table
+      • {src}  table|function Table or iterator function to filter
 
     Return: ~
         (table)
@@ -1692,7 +1691,7 @@ filter({src}, {f})                                              *vim.filter()*
     See also: ~
       • |Iter:filter()|
 
-filtermap({src}, {f})                                        *vim.filtermap()*
+filtermap({f}, {src})                                        *vim.filtermap()*
     Map and filter a table or iterator.
 
     This is a convenience function that performs:
@@ -1703,11 +1702,11 @@ filtermap({src}, {f})                                        *vim.filtermap()*
 <
 
     Parameters: ~
-      • {src}  table|function Table or iterator function to filter
       • {f}    function(...):?any Map function. Accepts the current iterator
                or table values as arguments and returns one or more new
                values. Nil values are removed from the final table. the final
                table
+      • {src}  table|function Table or iterator function to filter
 
     Return: ~
         (table)
@@ -2934,7 +2933,7 @@ Iter:any({self}, {pred})                                          *Iter:any()*
                 returned from the previous stage in the pipeline as arguments
                 and returns true if the predicate matches.
 
-Iter:collect({self}, {opts})                                  *Iter:collect()*
+Iter:collect({self})                                          *Iter:collect()*
     Drain the iterator into a table.
 
     The final stage in the iterator pipeline must return 1 or 2 values. If
@@ -2954,14 +2953,21 @@ Iter:collect({self}, {opts})                                  *Iter:collect()*
      -- { 20, 50, 100 }
 <
 
-    Parameters: ~
-      • {opts}  ?table Optional arguments:
-                • sort (boolean|function): If true, sort the resulting table
-                  before returning. If a function is provided, that function
-                  is used as the comparator function to |table.sort()|.
-
     Return: ~
         (table)
+
+Iter:each({self}, {f})                                           *Iter:each()*
+    Call a function once for each item in the pipeline.
+
+    This is used for functions which have side effects. To modify the values
+    in the iterator, use |Iter:filtermap()|.
+
+    This function drains the iterator.
+
+    Parameters: ~
+      • {f}  function(...) Function to execute for each item in the pipeline.
+             Takes all of the values returned by the previous stage in the
+             pipeline as arguments.
 
 Iter:enumerate({self})                                      *Iter:enumerate()*
     Add an iterator stage that returns the current iterator count as well as
@@ -3044,18 +3050,15 @@ Iter:find({self}, {f})                                           *Iter:find()*
     Return: ~
         any
 
-Iter:foreach({self}, {f})                                     *Iter:foreach()*
-    Call a function once for each item in the pipeline.
-
-    This is used for functions which have side effects. To modify the values
-    in the iterator, use |Iter:filtermap()|.
-
-    This function drains the iterator.
+Iter:fold({self}, {init}, {f})                                   *Iter:fold()*
+    Fold an iterator or table into a single value.
 
     Parameters: ~
-      • {f}  function(...) Function to execute for each item in the pipeline.
-             Takes all of the values returned by the previous stage in the
-             pipeline as arguments.
+      • {init}  any Initial value of the accumulator.
+      • {f}     function(acc:any, ...):A Accumulation function.
+
+    Return: ~
+        any
 
 Iter:last({self})                                                *Iter:last()*
     Return the last item in the iterator.
@@ -3265,7 +3268,7 @@ Iter:skipback({self}, {n})                                   *Iter:skipback()*
     Return: ~
         Iter
 
-new({src})                                                             *new()*
+new({src}, {...})                                                      *new()*
     Create a new Iter object from a table of value.
 
     Parameters: ~

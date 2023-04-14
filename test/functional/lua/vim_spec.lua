@@ -3098,7 +3098,7 @@ describe('lua stdlib', function()
 
       do
         local it = vim.iter(string.gmatch('1,4,lol,17,blah,2,9,3', '%d+')):filtermap(tonumber)
-        eq({1, 2, 3, 4, 9, 17}, it:collect({sort = true}))
+        eq({1, 4, 17, 2, 9, 3}, it:collect())
       end
     end)
 
@@ -3344,6 +3344,15 @@ describe('lua stdlib', function()
         local it = vim.iter(vim.gsplit('hi', ''))
         matches('Function iterators cannot read from the end', pcall_err(it.peekback, it))
       end
+    end)
+
+    it('fold()', function()
+      local t = {1, 2, 3, 4, 5}
+      eq(115, vim.iter(t):fold(100, function(acc, v) return acc + v end))
+      eq({5, 4, 3, 2, 1}, vim.iter(t):fold({}, function(acc, v)
+        table.insert(acc, 1, v)
+        return acc
+      end))
     end)
 
     it('handles map-like tables', function()

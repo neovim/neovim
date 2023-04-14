@@ -927,10 +927,9 @@ end
 --- </pre>
 ---
 ---@param f function Iterator function
----@param opts ?table Optional parameters. See |Iter:collect()|.
 ---@return table
-function vim.collect(f, opts)
-  return vim.iter(f):collect(opts)
+function vim.collect(f)
+  return vim.iter(f):collect()
 end
 
 --- Filter a table or iterator.
@@ -943,12 +942,12 @@ end
 ---
 ---@see |Iter:filter()|
 ---
----@param src table|function Table or iterator function to filter
 ---@param f function(...):bool Filter function. Accepts the current iterator or table values as
 ---                            arguments and returns true if those values should be kept in the
 ---                            final table
+---@param src table|function Table or iterator function to filter
 ---@return table
-function vim.filter(src, f)
+function vim.filter(f, src)
   return vim.iter(src):filter(f):collect()
 end
 
@@ -962,12 +961,12 @@ end
 ---
 ---@see |Iter:filtermap()|
 ---
----@param src table|function Table or iterator function to filter
 ---@param f function(...):?any Map function. Accepts the current iterator or table values as
 ---                            arguments and returns one or more new values. Nil values are removed
 ---                            from the final table. the final table
+---@param src table|function Table or iterator function to filter
 ---@return table
-function vim.filtermap(src, f)
+function vim.filtermap(f, src)
   return vim.iter(src):filtermap(f):collect()
 end
 

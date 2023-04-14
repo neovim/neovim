@@ -142,7 +142,7 @@ end
 ---
 ---@param f function(...) Function to execute for each item in the pipeline. Takes all of the
 ---                        values returned by the previous stage in the pipeline as arguments.
-function Iter.foreach(self, f)
+function Iter.each(self, f)
   while true do
     local args = pack(self:next())
     if args == nil then
@@ -153,25 +153,12 @@ function Iter.foreach(self, f)
 end
 
 ---@private
-function ListIter.foreach(self, f)
+function ListIter.each(self, f)
   local inc = self._head < self._tail and 1 or -1
   for i = self._head, self._tail - inc, inc do
     f(unpack(self._table[i]))
   end
   self._head = self._tail
-end
-
---- Common functionality for all collect methods
----
----@param t table Collected table
----@params opts ?table Optional arguments. See |Iter:collect()|.
----@private
-local function collect(t, opts)
-  if opts and opts.sort then
-    local f = type(opts.sort) == 'function' and opts.sort or nil
-    table.sort(t, f)
-  end
-  return t
 end
 
 --- Drain the iterator into a table.
@@ -183,7 +170,6 @@ end
 ---
 --- Example:
 --- <pre>lua
----
 --- local it1 = vim.iter(string.gmatch('100 20 50', '%d+')):filtermap(tonumber)
 --- it1:collect()
 --- -- { 100, 20, 50 }
@@ -191,15 +177,10 @@ end
 --- local it2 = vim.iter(string.gmatch('100 20 50', '%d+')):filtermap(tonumber)
 --- it2:collect({ sort = true })
 --- -- { 20, 50, 100 }
----
 --- </pre>
 ---
----@param opts ?table Optional arguments:
----                     - sort (boolean|function): If true, sort the resulting table before
----                       returning. If a function is provided, that function is used as the
----                       comparator function to |table.sort()|.
 ---@return table
-function Iter.collect(self, opts)
+function Iter.collect(self)
   local t = {}
   while true do
     local args = pack(self:next())
@@ -208,7 +189,7 @@ function Iter.collect(self, opts)
     end
     t[#t + 1] = args
   end
-  return collect(t, opts)
+  return t
 end
 
 ---@private
@@ -223,16 +204,45 @@ function ListIter.collect(self, opts)
   for i = self._head, self._tail - inc, inc do
     t[#t + 1] = self._table[i]
   end
-  return collect(t, opts)
+  return t
 end
 
 ---@private
-function MapIter.collect(self, opts)
+function MapIter.collect(self)
   local t = {}
   for k, v in self do
     t[k] = v
   end
-  return collect(t, opts)
+  return t
+end
+
+--- Fold an iterator or table into a single value.
+---
+---@generic A
+---
+---@param init A Initial value of the accumulator.
+---@param f function(acc:A, ...):A Accumulation function.
+---@return A
+function Iter.fold(self, init, f)
+  local acc = init
+  while true do
+    local args = pack(self.next())
+    if args == nil then
+      break
+    end
+    acc = f(acc, unpack(args))
+  end
+  return acc
+end
+
+---@private
+function ListIter.fold(self, init, f)
+  local acc = init
+  local inc = self._head < self._tail and 1 or -1
+  for i = self._head, self._tail - inc, inc do
+    acc = f(acc, unpack(self._table[i]))
+  end
+  return acc
 end
 
 --- Return the next value from the iterator.
