@@ -26,7 +26,7 @@ end
 
 function M.properties.charset(bufnr, val)
   assert(
-    vim.tbl_contains({ 'utf-8', 'utf-8-bom', 'latin1', 'utf-16be', 'utf-16le' }, val),
+    vim.list_contains({ 'utf-8', 'utf-8-bom', 'latin1', 'utf-16be', 'utf-16le' }, val),
     'charset must be one of "utf-8", "utf-8-bom", "latin1", "utf-16be", or "utf-16le"'
   )
   if val == 'utf-8' or val == 'utf-8-bom' then

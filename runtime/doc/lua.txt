@@ -1698,6 +1698,19 @@ is_callable({f})                                           *vim.is_callable()*
     Return: ~
         (boolean) `true` if `f` is callable, else `false`
 
+list_contains({t}, {value})                              *vim.list_contains()*
+    Checks if a list-like table (integer keys without gaps) contains `value`.
+
+    Parameters: ~
+      • {t}      (table) Table to check (must be list-like, not validated)
+      • {value}  any Value to compare
+
+    Return: ~
+        (boolean) `true` if `t` contains `value`
+
+    See also: ~
+      • |vim.tbl_contains()| for checking values in general tables
+
 list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
     Extends a list-like table with the values of another list-like table.
 
@@ -1797,15 +1810,30 @@ tbl_add_reverse_lookup({o})                     *vim.tbl_add_reverse_lookup()*
     Return: ~
         (table) o
 
-tbl_contains({t}, {value})                                *vim.tbl_contains()*
-    Checks if a list-like (vector) table contains `value`.
+tbl_contains({t}, {value}, {opts})                        *vim.tbl_contains()*
+    Checks if a table contains a given value, specified either directly or via
+    a predicate that is checked for each value.
+
+    Example: >lua
+
+      vim.tbl_contains({ 'a', { 'b', 'c' } }, function(v)
+        return vim.deep_equal(v, { 'b', 'c' })
+      end, { predicate = true })
+      -- true
+<
 
     Parameters: ~
       • {t}      (table) Table to check
-      • {value}  any Value to compare
+      • {value}  any Value to compare or predicate function reference
+      • {opts}   (table|nil) Keyword arguments |kwargs|:
+                 • predicate: (boolean) `value` is a function reference to be
+                   checked (default false)
 
     Return: ~
         (boolean) `true` if `t` contains `value`
+
+    See also: ~
+      • |vim.list_contains()| for checking values in list-like tables
 
 tbl_count({t})                                               *vim.tbl_count()*
     Counts the number of non-nil values in table `t`.

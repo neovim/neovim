@@ -17,14 +17,14 @@ P.take_until = function(targets, specials)
         table.insert(raw, '\\')
         new_pos = new_pos + 1
         c = string.sub(input, new_pos, new_pos)
-        if not vim.tbl_contains(targets, c) and not vim.tbl_contains(specials, c) then
+        if not vim.list_contains(targets, c) and not vim.list_contains(specials, c) then
           table.insert(esc, '\\')
         end
         table.insert(raw, c)
         table.insert(esc, c)
         new_pos = new_pos + 1
       else
-        if vim.tbl_contains(targets, c) then
+        if vim.list_contains(targets, c) then
           break
         end
         table.insert(raw, c)

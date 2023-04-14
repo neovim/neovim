@@ -325,7 +325,7 @@ local function check_tmux()
   -- check for RGB capabilities
   local info = vim.fn.system({ 'tmux', 'display-message', '-p', '#{client_termfeatures}' })
   info = vim.split(vim.trim(info), ',', { trimempty = true })
-  if not vim.tbl_contains(info, 'RGB') then
+  if not vim.list_contains(info, 'RGB') then
     local has_rgb = false
     if #info == 0 then
       -- client_termfeatures may not be supported; fallback to checking show-messages

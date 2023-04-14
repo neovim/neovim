@@ -449,7 +449,7 @@ function Loader.lsmod(path)
       if topname then
         Loader._indexed[path][topname] = { modpath = modpath, modname = topname }
         Loader._topmods[topname] = Loader._topmods[topname] or {}
-        if not vim.tbl_contains(Loader._topmods[topname], path) then
+        if not vim.list_contains(Loader._topmods[topname], path) then
           table.insert(Loader._topmods[topname], path)
         end
       end
@@ -523,7 +523,7 @@ function M._inspect(opts)
         { ms(Loader._stats[stat].time / Loader._stats[stat].total) .. '\n', 'Bold' },
       })
       for k, v in pairs(Loader._stats[stat]) do
-        if not vim.tbl_contains({ 'time', 'total' }, k) then
+        if not vim.list_contains({ 'time', 'total' }, k) then
           chunks[#chunks + 1] = { '* ' .. k .. ':' .. string.rep(' ', 9 - #k) }
           chunks[#chunks + 1] = { tostring(v) .. '\n', 'Number' }
         end

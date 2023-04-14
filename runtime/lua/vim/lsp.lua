@@ -171,7 +171,7 @@ local function for_each_buffer_client(bufnr, fn, restrict_client_ids)
   if restrict_client_ids and #restrict_client_ids > 0 then
     local filtered_client_ids = {}
     for client_id in pairs(client_ids) do
-      if vim.tbl_contains(restrict_client_ids, client_id) then
+      if vim.list_contains(restrict_client_ids, client_id) then
         filtered_client_ids[client_id] = true
       end
     end
@@ -2186,7 +2186,7 @@ function lsp.formatexpr(opts)
   opts = opts or {}
   local timeout_ms = opts.timeout_ms or 500
 
-  if vim.tbl_contains({ 'i', 'R', 'ic', 'ix' }, vim.fn.mode()) then
+  if vim.list_contains({ 'i', 'R', 'ic', 'ix' }, vim.fn.mode()) then
     -- `formatexpr` is also called when exceeding `textwidth` in insert mode
     -- fall back to internal formatting
     return 1

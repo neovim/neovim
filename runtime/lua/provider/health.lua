@@ -449,7 +449,7 @@ local function python()
           local path_bin = vim.fs.normalize(path .. '/' .. pyname)
           if
             path_bin ~= vim.fs.normalize(python_exe)
-            and vim.tbl_contains(python_multiple, path_bin)
+            and vim.list_contains(python_multiple, path_bin)
             and executable(path_bin)
           then
             python_multiple[#python_multiple + 1] = path_bin

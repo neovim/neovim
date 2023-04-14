@@ -461,6 +461,22 @@ describe('lua stdlib', function()
       pcall_err(exec_lua, [[return vim.pesc(2)]]))
   end)
 
+  it('vim.list_contains', function()
+    eq(true, exec_lua("return vim.list_contains({'a','b','c'}, 'c')"))
+    eq(false, exec_lua("return vim.list_contains({'a','b','c'}, 'd')"))
+  end)
+
+  it('vim.tbl_contains', function()
+    eq(true, exec_lua("return vim.tbl_contains({'a','b','c'}, 'c')"))
+    eq(false, exec_lua("return vim.tbl_contains({'a','b','c'}, 'd')"))
+    eq(true, exec_lua("return vim.tbl_contains({[2]='a',foo='b',[5] = 'c'}, 'c')"))
+    eq(true, exec_lua([[
+        return vim.tbl_contains({ 'a', { 'b', 'c' } }, function(v)
+          return vim.deep_equal(v, { 'b', 'c' })
+        end, { predicate = true })
+    ]]))
+  end)
+
   it('vim.tbl_keys', function()
     eq({}, exec_lua("return vim.tbl_keys({})"))
     for _, v in pairs(exec_lua("return vim.tbl_keys({'a', 'b', 'c'})")) do
