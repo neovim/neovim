@@ -387,6 +387,17 @@ END
   call assert_equal(['Text', 'with', 'indent'], text)
 endfunc
 
+func Test_let_interpolated()
+  call assert_equal('{text}', $'{{text}}')
+  call assert_equal('{{text}}', $'{{{{text}}}}')
+  let text = 'text'
+  call assert_equal('text{{', $'{text .. "{{"}')
+  call assert_equal('text{{', $"{text .. '{{'}")
+  " FIXME: should not need to escape quotes in the expression
+  call assert_equal('text{{', $'{text .. ''{{''}')
+  call assert_equal('text{{', $"{text .. \"{{\"}")
+endfunc
+
 " Test for the setting a variable using the heredoc syntax.
 " Keep near the end, this messes up highlighting.
 func Test_let_heredoc()
@@ -496,72 +507,72 @@ END
   call assert_equal(['     x', '     \y', '     z'], [a, b, c])
 endfunc
 
-" Test for evaluating Vim expressions in a heredoc using `=expr`
+" Test for evaluating Vim expressions in a heredoc using {expr}
 " Keep near the end, this messes up highlighting.
 func Test_let_heredoc_eval()
   let str = ''
   let code =<< trim eval END
-    let a = `=5 + 10`
-    let b = `=min([10, 6])` + `=max([4, 6])`
-    `=str`
-    let c = "abc`=str`d"
+    let a = {5 + 10}
+    let b = {min([10, 6])} + {max([4, 6])}
+    {str}
+    let c = "abc{str}d"
   END
   call assert_equal(['let a = 15', 'let b = 6 + 6', '', 'let c = "abcd"'], code)
 
   let $TESTVAR = "Hello"
   let code =<< eval trim END
-    let s = "`=$TESTVAR`"
+    let s = "{$TESTVAR}"
   END
   call assert_equal(['let s = "Hello"'], code)
 
   let code =<< eval END
-    let s = "`=$TESTVAR`"
+    let s = "{$TESTVAR}"
 END
   call assert_equal(['    let s = "Hello"'], code)
 
   let a = 10
   let data =<< eval END
-`=a`
+{a}
 END
   call assert_equal(['10'], data)
 
   let x = 'X'
   let code =<< eval trim END
-    let a = `abc`
-    let b = `=x`
-    let c = `
+    let a = {{abc}}
+    let b = {x}
+    let c = {{
   END
-  call assert_equal(['let a = `abc`', 'let b = X', 'let c = `'], code)
+  call assert_equal(['let a = {abc}', 'let b = X', 'let c = {'], code)
 
   let code = 'xxx'
   let code =<< eval trim END
-    let n = `=5 +
-    6`
+    let n = {5 +
+    6}
   END
   call assert_equal('xxx', code)
 
   let code =<< eval trim END
-     let n = `=min([1, 2]` + `=max([3, 4])`
+     let n = {min([1, 2]} + {max([3, 4])}
   END
   call assert_equal('xxx', code)
 
   let lines =<< trim LINES
       let text =<< eval trim END
-        let b = `=
+        let b = {
       END
   LINES
-  call CheckScriptFailure(lines, 'E1083:')
+  call CheckScriptFailure(lines, 'E1279:')
 
   let lines =<< trim LINES
       let text =<< eval trim END
-        let b = `=abc
+        let b = {abc
       END
   LINES
-  call CheckScriptFailure(lines, 'E1083:')
+  call CheckScriptFailure(lines, 'E1279:')
 
   let lines =<< trim LINES
       let text =<< eval trim END
-        let b = `=`
+        let b = {}
       END
   LINES
   call CheckScriptFailure(lines, 'E15:')
@@ -569,7 +580,7 @@ END
   " skipped heredoc
   if 0
     let msg =<< trim eval END
-        n is: `=n`
+        n is: {n}
     END
   endif
 
@@ -581,7 +592,7 @@ END
   let lines =<< trim END
     let Xvar =<< eval CODE
     let a = 1
-    let b = `=5+`
+    let b = {5+}
     let c = 2
     CODE
     let g:Count += 1
@@ -590,10 +601,10 @@ END
   let g:Count = 0
   call assert_fails('source', 'E15:')
   call assert_equal(1, g:Count)
-  call setline(3, 'let b = `=abc`')
+  call setline(3, 'let b = {abc}')
   call assert_fails('source', 'E121:')
   call assert_equal(2, g:Count)
-  call setline(3, 'let b = `=abc` + `=min([9, 4])` + 2')
+  call setline(3, 'let b = {abc} + {min([9, 4])} + 2')
   call assert_fails('source', 'E121:')
   call assert_equal(3, g:Count)
   call assert_equal('test', g:Xvar)

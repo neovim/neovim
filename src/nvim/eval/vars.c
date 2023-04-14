@@ -53,50 +53,73 @@
 static const char *e_letunexp = N_("E18: Unexpected characters in :let");
 static const char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s");
 
-/// Evaluate all the Vim expressions (`=expr`) in string "str" and return the
+/// Evaluate all the Vim expressions ({expr}) in string "str" and return the
 /// resulting string.  The caller must free the returned string.
-static char *eval_all_expr_in_str(char *str)
+char *eval_all_expr_in_str(char *str)
 {
   garray_T ga;
   ga_init(&ga, 1, 80);
   char *p = str;
 
-  // Look for `=expr`, evaluate the expression and replace `=expr` with the
-  // result.
   while (*p != NUL) {
-    char *s = p;
-    while (*p != NUL && (*p != '`' || p[1] != '=')) {
-      p++;
-    }
-    ga_concat_len(&ga, s, (size_t)(p - s));
-    if (*p == NUL) {
-      break;              // no backtick expression found
-    }
-    s = p;
-    p += 2;         // skip `=
+    bool escaped_brace = false;
 
-    int status = *p == NUL ? OK : skip_expr(&p, NULL);
-    if (status == FAIL || *p != '`') {
-      // invalid expression or missing ending backtick
-      if (status != FAIL) {
-        emsg(_("E1083: Missing backtick"));
-      }
-      xfree(ga.ga_data);
+    // Look for a block start.
+    char *lit_start = p;
+    while (*p != '{' && *p != '}' && *p != NUL) {
+      ++p;
+    }
+
+    if (*p != NUL && *p == p[1]) {
+      // Escaped brace, unescape and continue.
+      // Include the brace in the literal string.
+      ++p;
+      escaped_brace = true;
+    } else if (*p == '}') {
+      semsg(_(e_stray_closing_curly_str), str);
+      ga_clear(&ga);
       return NULL;
     }
-    s += 2;         // skip `=
-    char save_c = *p;
-    *p = NUL;
-    char *exprval = eval_to_string(s, true);
-    *p = save_c;
-    p++;
-    if (exprval == NULL) {
-      // expression evaluation failed
-      xfree(ga.ga_data);
+
+    // Append the literal part.
+    ga_concat_len(&ga, lit_start, (size_t)(p - lit_start));
+
+    if (*p == NUL) {
+      break;
+    }
+
+    if (escaped_brace) {
+      // Skip the second brace.
+      ++p;
+      continue;
+    }
+
+    // Skip the opening {.
+    char *block_start = ++p;
+    char *block_end = block_start;
+    if (*block_start != NUL && skip_expr(&block_end, NULL) == FAIL) {
+      ga_clear(&ga);
       return NULL;
     }
-    ga_concat(&ga, exprval);
-    xfree(exprval);
+    block_end = skipwhite(block_end);
+    // The block must be closed by a }.
+    if (*block_end != '}') {
+      semsg(_(e_missing_close_curly_str), str);
+      ga_clear(&ga);
+      return NULL;
+    }
+    char save_c = *block_end;
+    *block_end = NUL;
+    char *expr_val = eval_to_string(block_start, true);
+    *block_end = save_c;
+    if (expr_val == NULL) {
+      ga_clear(&ga);
+      return NULL;
+    }
+    ga_concat(&ga, expr_val);
+    xfree(expr_val);
+
+    p = block_end + 1;
   }
   ga_append(&ga, NUL);
 

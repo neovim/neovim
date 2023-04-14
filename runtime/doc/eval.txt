@@ -1407,6 +1407,26 @@ to be doubled.  These two commands are equivalent: >
 
 
 ------------------------------------------------------------------------------
+interpolated-string					*interp-string*
+
+$"string"		interpolated string constant		*expr-$quote*
+$'string'		interpolated literal string constant	*expr-$'*
+
+Interpolated strings are an extension of the |string| and |literal-string|,
+allowing the inclusion of Vim script expressions (see |expr1|).  Any
+expression returning a value can be enclosed between curly braces.  The value
+is converted to a string.  All the text and results of the expressions
+are concatenated to make a new string.
+
+To include an opening brace '{' or closing brace '}' in the string content
+double it.
+
+Examples: >
+	let your_name = input("What's your name? ")
+	echo $"Hello, {your_name}!"
+	echo $"The square root of 9 is {sqrt(9)}"
+
+------------------------------------------------------------------------------
 option						*expr-option* *E112* *E113*
 
 &option			option value, local value if possible

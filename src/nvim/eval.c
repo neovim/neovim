@@ -3100,8 +3100,13 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
     ret = eval_option((const char **)arg, rettv, evaluate);
     break;
   // Environment variable: $VAR.
+  // Interpolated string: $"string" or $'string'.
   case '$':
-    ret = eval_env_var(arg, rettv, evaluate);
+    if ((*arg)[1] == '"' || (*arg)[1] == '\'') {
+      ret = eval_interp_string(arg, rettv, evaluate);
+    } else {
+      ret = eval_env_var(arg, rettv, evaluate);
+    }
     break;
 
   // Register contents: @r.
@@ -4051,6 +4056,32 @@ static int eval_lit_string(char **arg, typval_T *rettv, int evaluate)
   *arg = p + 1;
 
   return OK;
+}
+
+int eval_interp_string(char **arg, typval_T *rettv, int evaluate)
+{
+  // *arg is on the '$' character.
+  (*arg)++;
+
+  rettv->v_type = VAR_STRING;
+
+  typval_T tv;
+  int ret;
+  if (**arg == '"') {
+    ret = eval_string(arg, &tv, evaluate);
+  } else {
+    ret = eval_lit_string(arg, &tv, evaluate);
+  }
+
+  if (ret == FAIL || !evaluate) {
+    return ret;
+  }
+
+  rettv->vval.v_string = eval_all_expr_in_str(tv.vval.v_string);
+
+  tv_clear(&tv);
+
+  return rettv->vval.v_string != NULL ? OK : FAIL;
 }
 
 /// @return  the function name of the partial.
