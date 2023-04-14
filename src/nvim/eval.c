@@ -4003,7 +4003,7 @@ static int get_list_tv(char **arg, typval_T *rettv, evalarg_T *const evalarg)
       tv_list_append_owned_tv(l, tv);
     }
 
-    // the comma must comma after the value
+    // the comma must come after the value
     bool had_comma = **arg == ',';
     if (had_comma) {
       *arg = skipwhite(*arg + 1);
