@@ -2483,10 +2483,19 @@ void ex_function(exarg_T *eap)
                 && (!ASCII_ISALNUM(p[2])
                     || (p[2] == 't' && !ASCII_ISALNUM(p[3]))))) {
           p = skipwhite(arg + 3);
-          if (strncmp(p, "trim", 4) == 0) {
-            // Ignore leading white space.
-            p = skipwhite(p + 4);
-            heredoc_trimmed = xstrnsave(theline, (size_t)(skipwhite(theline) - theline));
+          while (true) {
+            if (strncmp(p, "trim", 4) == 0) {
+              // Ignore leading white space.
+              p = skipwhite(p + 4);
+              heredoc_trimmed = xstrnsave(theline, (size_t)(skipwhite(theline) - theline));
+              continue;
+            }
+            if (strncmp(p, "eval", 4) == 0) {
+              // Ignore leading white space.
+              p = skipwhite(p + 4);
+              continue;
+            }
+            break;
           }
           skip_until = xstrnsave(p, (size_t)(skiptowhite(p) - p));
           do_concat = false;

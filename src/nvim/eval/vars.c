@@ -53,6 +53,56 @@
 static const char *e_letunexp = N_("E18: Unexpected characters in :let");
 static const char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s");
 
+/// Evaluate all the Vim expressions (`=expr`) in string "str" and return the
+/// resulting string.  The caller must free the returned string.
+static char *eval_all_expr_in_str(char *str)
+{
+  garray_T ga;
+  ga_init(&ga, 1, 80);
+  char *p = str;
+
+  // Look for `=expr`, evaluate the expression and replace `=expr` with the
+  // result.
+  while (*p != NUL) {
+    char *s = p;
+    while (*p != NUL && (*p != '`' || p[1] != '=')) {
+      p++;
+    }
+    ga_concat_len(&ga, s, (size_t)(p - s));
+    if (*p == NUL) {
+      break;              // no backtick expression found
+    }
+    s = p;
+    p += 2;         // skip `=
+
+    int status = *p == NUL ? OK : skip_expr(&p, NULL);
+    if (status == FAIL || *p != '`') {
+      // invalid expression or missing ending backtick
+      if (status != FAIL) {
+        emsg(_("E1083: Missing backtick"));
+      }
+      xfree(ga.ga_data);
+      return NULL;
+    }
+    s += 2;         // skip `=
+    char save_c = *p;
+    *p = NUL;
+    char *exprval = eval_to_string(s, true);
+    *p = save_c;
+    p++;
+    if (exprval == NULL) {
+      // expression evaluation failed
+      xfree(ga.ga_data);
+      return NULL;
+    }
+    ga_concat(&ga, exprval);
+    xfree(exprval);
+  }
+  ga_append(&ga, NUL);
+
+  return ga.ga_data;
+}
+
 /// Get a list of lines from a HERE document. The here document is a list of
 /// lines surrounded by a marker.
 ///     cmd << {marker}
@@ -65,7 +115,7 @@ static const char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s")
 /// marker, then the leading indentation before the lines (matching the
 /// indentation in the 'cmd' line) is stripped.
 ///
-/// @return  a List with {lines} or NULL.
+/// @return  a List with {lines} or NULL on failure.
 static list_T *heredoc_get(exarg_T *eap, char *cmd)
 {
   char *marker;
@@ -81,20 +131,33 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
 
   // Check for the optional 'trim' word before the marker
   cmd = skipwhite(cmd);
-  if (strncmp(cmd, "trim", 4) == 0
-      && (cmd[4] == NUL || ascii_iswhite(cmd[4]))) {
-    cmd = skipwhite(cmd + 4);
+  bool evalstr = false;
+  bool eval_failed = false;
+  while (true) {
+    if (strncmp(cmd, "trim", 4) == 0
+        && (cmd[4] == NUL || ascii_iswhite(cmd[4]))) {
+      cmd = skipwhite(cmd + 4);
 
-    // Trim the indentation from all the lines in the here document.
-    // The amount of indentation trimmed is the same as the indentation of
-    // the first line after the :let command line.  To find the end marker
-    // the indent of the :let command line is trimmed.
-    p = *eap->cmdlinep;
-    while (ascii_iswhite(*p)) {
-      p++;
-      marker_indent_len++;
+      // Trim the indentation from all the lines in the here document.
+      // The amount of indentation trimmed is the same as the indentation
+      // of the first line after the :let command line.  To find the end
+      // marker the indent of the :let command line is trimmed.
+      p = *eap->cmdlinep;
+      while (ascii_iswhite(*p)) {
+        p++;
+        marker_indent_len++;
+      }
+      text_indent_len = -1;
+
+      continue;
     }
-    text_indent_len = -1;
+    if (strncmp(cmd, "eval", 4) == 0
+        && (cmd[4] == NUL || ascii_iswhite(cmd[4]))) {
+      cmd = skipwhite(cmd + 4);
+      evalstr = true;
+      continue;
+    }
+    break;
   }
 
   // The marker is the next word.
@@ -136,6 +199,14 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
       xfree(theline);
       break;
     }
+
+    // If expression evaluation failed in the heredoc, then skip till the
+    // end marker.
+    if (eval_failed) {
+      xfree(theline);
+      continue;
+    }
+
     if (text_indent_len == -1 && *theline != NUL) {
       // set the text indent from the first line.
       p = theline;
@@ -155,11 +226,29 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
       }
     }
 
-    tv_list_append_string(l, theline + ti, -1);
+    char *str = theline + ti;
+    if (evalstr) {
+      str = eval_all_expr_in_str(str);
+      if (str == NULL) {
+        // expression evaluation failed
+        xfree(theline);
+        eval_failed = true;
+        continue;
+      }
+      xfree(theline);
+      theline = str;
+    }
+
+    tv_list_append_string(l, str, -1);
     xfree(theline);
   }
   xfree(text_indent);
 
+  if (eval_failed) {
+    // expression evaluation in the heredoc failed
+    tv_list_free(l);
+    return NULL;
+  }
   return l;
 }
 
