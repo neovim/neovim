@@ -366,7 +366,7 @@ int get_lambda_tv(char **arg, typval_T *rettv, evalarg_T *evalarg)
   }
 
   eval_lavars_used = old_eval_lavars;
-  if (evalarg->eval_tofree == NULL) {
+  if (evalarg != NULL && evalarg->eval_tofree == NULL) {
     evalarg->eval_tofree = tofree;
   } else {
     xfree(tofree);
@@ -377,7 +377,7 @@ errret:
   ga_clear_strings(&newargs);
   xfree(fp);
   xfree(pt);
-  if (evalarg->eval_tofree == NULL) {
+  if (evalarg != NULL && evalarg->eval_tofree == NULL) {
     evalarg->eval_tofree = tofree;
   } else {
     xfree(tofree);
