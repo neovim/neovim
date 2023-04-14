@@ -275,7 +275,7 @@ typedef struct {
   LineGetter eval_getline;
   void *eval_cookie;  ///< argument for eval_getline()
 
-  /// pointer to the line obtained with getsourceline()
+  /// pointer to the last line obtained with getsourceline()
   char *eval_tofree;
 } evalarg_T;
 

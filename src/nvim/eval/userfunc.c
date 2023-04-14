@@ -261,15 +261,14 @@ int get_lambda_tv(char **arg, typval_T *rettv, evalarg_T *evalarg)
   partial_T *pt = NULL;
   int varargs;
   int ret;
-  char *start = skipwhite(*arg + 1);
-  char *s, *e;
   bool *old_eval_lavars = eval_lavars_used;
   bool eval_lavars = false;
   char *tofree = NULL;
 
   // First, check if this is a lambda expression. "->" must exists.
-  ret = get_function_args(&start, '-', NULL, NULL, NULL, true);
-  if (ret == FAIL || *start != '>') {
+  char *s = skipwhite(*arg + 1);
+  ret = get_function_args(&s, '-', NULL, NULL, NULL, true);
+  if (ret == FAIL || *s != '>') {
     return NOTDONE;
   }
 
@@ -292,8 +291,9 @@ int get_lambda_tv(char **arg, typval_T *rettv, evalarg_T *evalarg)
 
   // Get the start and the end of the expression.
   *arg = skipwhite((*arg) + 1);
-  s = *arg;
+  char *start = *arg;
   ret = skip_expr(arg, evalarg);
+  char *end = *arg;
   if (ret == FAIL) {
     goto errret;
   }
@@ -303,7 +303,6 @@ int get_lambda_tv(char **arg, typval_T *rettv, evalarg_T *evalarg)
     evalarg->eval_tofree = NULL;
   }
 
-  e = *arg;
   *arg = skipwhite(*arg);
   if (**arg != '}') {
     semsg(_("E451: Expected }: %s"), *arg);
@@ -325,11 +324,11 @@ int get_lambda_tv(char **arg, typval_T *rettv, evalarg_T *evalarg)
     ga_grow(&newlines, 1);
 
     // Add "return " before the expression.
-    size_t len = (size_t)(7 + e - s + 1);
+    size_t len = (size_t)(7 + end - start + 1);
     p = xmalloc(len);
     ((char **)(newlines.ga_data))[newlines.ga_len++] = p;
     STRCPY(p, "return ");
-    xstrlcpy(p + 7, s, (size_t)(e - s) + 1);
+    xstrlcpy(p + 7, start, (size_t)(end - start) + 1);
     if (strstr(p + 7, "a:") == NULL) {
       // No a: variables are used for sure.
       flags |= FC_NOARGS;
@@ -367,14 +366,22 @@ int get_lambda_tv(char **arg, typval_T *rettv, evalarg_T *evalarg)
   }
 
   eval_lavars_used = old_eval_lavars;
-  xfree(tofree);
+  if (evalarg->eval_tofree == NULL) {
+    evalarg->eval_tofree = tofree;
+  } else {
+    xfree(tofree);
+  }
   return OK;
 
 errret:
   ga_clear_strings(&newargs);
   xfree(fp);
   xfree(pt);
-  xfree(tofree);
+  if (evalarg->eval_tofree == NULL) {
+    evalarg->eval_tofree = tofree;
+  } else {
+    xfree(tofree);
+  }
   eval_lavars_used = old_eval_lavars;
   return FAIL;
 }
