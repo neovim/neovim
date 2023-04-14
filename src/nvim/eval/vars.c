@@ -227,7 +227,7 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
     }
 
     char *str = theline + ti;
-    if (evalstr) {
+    if (evalstr && !eap->skip) {
       str = eval_all_expr_in_str(str);
       if (str == NULL) {
         // expression evaluation failed

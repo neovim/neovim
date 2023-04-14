@@ -507,20 +507,24 @@ func Test_let_heredoc_eval()
     let c = "abc`=str`d"
   END
   call assert_equal(['let a = 15', 'let b = 6 + 6', '', 'let c = "abcd"'], code)
+
   let $TESTVAR = "Hello"
   let code =<< eval trim END
     let s = "`=$TESTVAR`"
   END
   call assert_equal(['let s = "Hello"'], code)
+
   let code =<< eval END
     let s = "`=$TESTVAR`"
 END
   call assert_equal(['    let s = "Hello"'], code)
+
   let a = 10
   let data =<< eval END
 `=a`
 END
   call assert_equal(['10'], data)
+
   let x = 'X'
   let code =<< eval trim END
     let a = `abc`
@@ -528,12 +532,14 @@ END
     let c = `
   END
   call assert_equal(['let a = `abc`', 'let b = X', 'let c = `'], code)
+
   let code = 'xxx'
   let code =<< eval trim END
     let n = `=5 +
     6`
   END
   call assert_equal('xxx', code)
+
   let code =<< eval trim END
      let n = `=min([1, 2]` + `=max([3, 4])`
   END
@@ -559,6 +565,13 @@ END
       END
   LINES
   call CheckScriptFailure(lines, 'E15:')
+
+  " skipped heredoc
+  if 0
+    let msg =<< trim eval END
+        n is: `=n`
+    END
+  endif
 
   " Test for sourcing a script containing a heredoc with invalid expression.
   " Variable assignment should fail, if expression evaluation fails
