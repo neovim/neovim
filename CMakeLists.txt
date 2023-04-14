@@ -35,6 +35,10 @@ if(CCACHE_PRG)
   set(CMAKE_C_COMPILER_LAUNCHER ${CMAKE_COMMAND} -E env CCACHE_SLOPPINESS=pch_defines,time_macros ${CCACHE_PRG})
 endif()
 
+if(NOT CI_BUILD)
+  set(CMAKE_INSTALL_MESSAGE NEVER)
+endif()
+
 # Prefer our bundled versions of dependencies.
 if(DEFINED ENV{DEPS_BUILD_DIR})
   set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
