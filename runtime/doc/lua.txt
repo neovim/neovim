@@ -3076,7 +3076,7 @@ Iter:next({self})                                                *Iter:next()*
 Iter:nextback({self})                                        *Iter:nextback()*
     Return the next value from the end of the iterator.
 
-    Only supported for iterators on tables.
+    Only supported for iterators on list-like tables.
 
     Example: >lua
 
@@ -3115,7 +3115,7 @@ Iter:nthback({self}, {n})                                     *Iter:nthback()*
 
     This function advances the iterator.
 
-    Only supported for iterators on tables.
+    Only supported for iterators on list-like tables.
 
     Example: >lua
 
@@ -3154,7 +3154,7 @@ Iter:peek({self})                                                *Iter:peek()*
 Iter:peekback({self})                                        *Iter:peekback()*
     Return the next value from the end of the iterator without consuming it.
 
-    Only supported for iterators on tables.
+    Only supported for iterators on list-like tables.
 
     Example: >lua
 
@@ -3192,7 +3192,7 @@ Iter:rfind({self}, {f})                                         *Iter:rfind()*
     Advances the iterator. Returns nil and drains the iterator if no value is
     found.
 
-    Only supported for iterators on tables.
+    Only supported for iterators on list-like tables.
 
     Examples: >lua
 
@@ -3228,7 +3228,7 @@ Iter:skip({self}, {n})                                           *Iter:skip()*
 Iter:skipback({self}, {n})                                   *Iter:skipback()*
     Skip values in the iterator starting from the end.
 
-    Only supported for iterators on tables.
+    Only supported for iterators on list-like tables.
 
     Example: >lua
 
@@ -3241,6 +3241,20 @@ Iter:skipback({self}, {n})                                   *Iter:skipback()*
 
     Parameters: ~
       • {n}  (number) Number of values to skip.
+
+    Return: ~
+        Iter
+
+Iter:slice({self}, {first}, {last})                             *Iter:slice()*
+    Slice an iterator, changing its start and end positions.
+
+    This is equivalent to :skip(first - 1):skipback(len - last + 1)
+
+    Only supported for iterators on list-like tables.
+
+    Parameters: ~
+      • {first}  (number)
+      • {last}   (number)
 
     Return: ~
         Iter

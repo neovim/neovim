@@ -3114,7 +3114,7 @@ describe('lua stdlib', function()
       eq({3, 2, 1}, vim.iter({1, 2, 3}):rev():totable())
 
       local it = vim.iter(string.gmatch("abc", "%w"))
-      matches('Function iterators cannot be reversed', pcall_err(it.rev, it))
+      matches('rev%(%) requires a list%-like table', pcall_err(it.rev, it))
     end)
 
     it('skip()', function()
@@ -3153,7 +3153,18 @@ describe('lua stdlib', function()
       end
 
       local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
-      matches('Function iterators cannot skip from the end', pcall_err(it.skipback, it, 0))
+      matches('skipback%(%) requires a list%-like table', pcall_err(it.skipback, it, 0))
+    end)
+
+    it('slice()', function()
+      local t = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+      eq({3, 4, 5, 6, 7}, vim.iter(t):slice(3, 7):totable())
+      eq({}, vim.iter(t):slice(6, 5):totable())
+      eq({}, vim.iter(t):slice(0, 0):totable())
+      eq({1}, vim.iter(t):slice(1, 1):totable())
+      eq({1, 2}, vim.iter(t):slice(1, 2):totable())
+      eq({10}, vim.iter(t):slice(10, 10):totable())
+      eq({8, 9, 10}, vim.iter(t):slice(8, 11):totable())
     end)
 
     it('nth()', function()
@@ -3192,7 +3203,7 @@ describe('lua stdlib', function()
       end
 
       local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
-      matches('Function iterators cannot skip from the end', pcall_err(it.nthback, it, 1))
+      matches('skipback%(%) requires a list%-like table', pcall_err(it.nthback, it, 1))
     end)
 
     it('any()', function()
@@ -3261,7 +3272,7 @@ describe('lua stdlib', function()
 
       do
         local it = vim.iter(vim.gsplit('hi', ''))
-        matches('Function iterators are not peekable', pcall_err(it.peek, it))
+        matches('peek%(%) requires a list%-like table', pcall_err(it.peek, it))
       end
     end)
 
@@ -3311,7 +3322,7 @@ describe('lua stdlib', function()
 
       do
         local it = vim.iter(vim.gsplit('AbCdE', ''))
-        matches('Function iterators cannot read from the end', pcall_err(it.rfind, it, 'E'))
+        matches('nextback%(%) requires a list%-like table', pcall_err(it.rfind, it, 'E'))
       end
     end)
 
@@ -3328,7 +3339,7 @@ describe('lua stdlib', function()
 
       do
         local it = vim.iter(vim.gsplit('hi', ''))
-        matches('Function iterators cannot read from the end', pcall_err(it.nextback, it))
+        matches('nextback%(%) requires a list%-like table', pcall_err(it.nextback, it))
       end
     end)
 
@@ -3342,7 +3353,7 @@ describe('lua stdlib', function()
 
       do
         local it = vim.iter(vim.gsplit('hi', ''))
-        matches('Function iterators cannot read from the end', pcall_err(it.peekback, it))
+        matches('peekback%(%) requires a list%-like table', pcall_err(it.peekback, it))
       end
     end)
 

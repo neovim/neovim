@@ -287,7 +287,7 @@ end
 ---
 ---@return Iter
 function Iter.rev(self)
-  error('Function iterators cannot be reversed')
+  error('rev() requires a list-like table')
   return self
 end
 
@@ -317,7 +317,7 @@ end
 ---
 ---@return any
 function Iter.peek(self) -- luacheck: no unused args
-  error('Function iterators are not peekable')
+  error('peek() requires a list-like table')
 end
 
 ---@private
@@ -373,7 +373,7 @@ end
 ---
 --- Advances the iterator. Returns nil and drains the iterator if no value is found.
 ---
---- Only supported for iterators on tables.
+--- Only supported for iterators on list-like tables.
 ---
 --- Examples:
 --- <pre>lua
@@ -390,10 +390,6 @@ end
 ---
 ---@return any
 function Iter.rfind(self, f) -- luacheck: no unused args
-  error('Function iterators cannot read from the end')
-end
-
-function ListIter.rfind(self, f)
   if type(f) ~= 'function' then
     local val = f
     f = function(v)
@@ -412,9 +408,10 @@ function ListIter.rfind(self, f)
     end
   end
 end
+
 --- Return the next value from the end of the iterator.
 ---
---- Only supported for iterators on tables.
+--- Only supported for iterators on list-like tables.
 ---
 --- Example:
 --- <pre>lua
@@ -427,7 +424,7 @@ end
 ---
 ---@return any
 function Iter.nextback(self) -- luacheck: no unused args
-  error('Function iterators cannot read from the end')
+  error('nextback() requires a list-like table')
 end
 
 function ListIter.nextback(self)
@@ -440,7 +437,7 @@ end
 
 --- Return the next value from the end of the iterator without consuming it.
 ---
---- Only supported for iterators on tables.
+--- Only supported for iterators on list-like tables.
 ---
 --- Example:
 --- <pre>lua
@@ -455,7 +452,7 @@ end
 ---
 ---@return any
 function Iter.peekback(self) -- luacheck: no unused args
-  error('Function iterators cannot read from the end')
+  error('peekback() requires a list-like table')
 end
 
 function ListIter.peekback(self)
@@ -497,7 +494,7 @@ end
 
 --- Skip values in the iterator starting from the end.
 ---
---- Only supported for iterators on tables.
+--- Only supported for iterators on list-like tables.
 ---
 --- Example:
 --- <pre>lua
@@ -511,7 +508,7 @@ end
 ---@param n number Number of values to skip.
 ---@return Iter
 function Iter.skipback(self, n) -- luacheck: no unused args
-  error('Function iterators cannot skip from the end')
+  error('skipback() requires a list-like table')
   return self
 end
 
@@ -552,7 +549,7 @@ end
 ---
 --- This function advances the iterator.
 ---
---- Only supported for iterators on tables.
+--- Only supported for iterators on list-like tables.
 ---
 --- Example:
 --- <pre>lua
@@ -571,6 +568,19 @@ function Iter.nthback(self, n)
   if n > 0 then
     return self:skipback(n - 1):nextback()
   end
+end
+
+--- Slice an iterator, changing its start and end positions.
+---
+--- This is equivalent to :skip(first - 1):skipback(len - last + 1)
+---
+--- Only supported for iterators on list-like tables.
+---
+---@param first number
+---@param last number
+---@return Iter
+function Iter.slice(self, first, last) -- luacheck: no unused args
+  return self:skip(math.max(0, first - 1)):skipback(math.max(0, self._tail - last - 1))
 end
 
 --- Return true if any of the items in the iterator match the given predicate.
