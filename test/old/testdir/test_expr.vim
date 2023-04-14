@@ -39,6 +39,16 @@ func Test_version()
   call assert_false(has('patch-9.9.1'))
 endfunc
 
+func Test_op_trinary()
+  call assert_equal('yes', 1 ? 'yes' : 'no')
+  call assert_equal('no', 0 ? 'yes' : 'no')
+  call assert_equal('no', 'x' ? 'yes' : 'no')
+  call assert_equal('yes', '1x' ? 'yes' : 'no')
+
+  call assert_fails('echo [1] ? "yes" : "no"', 'E745:')
+  call assert_fails('echo {} ? "yes" : "no"', 'E728:')
+endfunc
+
 func Test_op_falsy()
   call assert_equal(v:true, v:true ?? 456)
   call assert_equal(123, 123 ?? 456)
