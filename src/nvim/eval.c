@@ -2978,7 +2978,7 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
   case '#':
     if ((*arg)[1] == '{') {
       (*arg)++;
-      ret = eval_dict(arg, rettv, flags, true);
+      ret = eval_dict(arg, rettv, evalarg, true);
     } else {
       ret = NOTDONE;
     }
@@ -2989,7 +2989,7 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
   case '{':
     ret = get_lambda_tv(arg, rettv, evaluate);
     if (ret == NOTDONE) {
-      ret = eval_dict(arg, rettv, flags, false);
+      ret = eval_dict(arg, rettv, evalarg, false);
     }
     break;
 
@@ -4638,15 +4638,13 @@ static int get_literal_key(char **arg, typval_T *tv)
 /// @param flags    can have EVAL_EVALUATE and other EVAL_ flags.
 ///
 /// @return  OK or FAIL.  Returns NOTDONE for {expr}.
-static int eval_dict(char **arg, typval_T *rettv, const int flags, bool literal)
+static int eval_dict(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool literal)
 {
-  const bool evaluate = flags & EVAL_EVALUATE;
+  const bool evaluate = evalarg == NULL ? false : evalarg->eval_flags & EVAL_EVALUATE;
   typval_T tv;
   char *key = NULL;
   char *curly_expr = skipwhite(*arg + 1);
   char buf[NUMBUFLEN];
-
-  evalarg_T evalarg = { .eval_flags = flags };
 
   // First check if it's not a curly-braces expression: {expr}.
   // Must do this without evaluating, otherwise a function may be called
@@ -4673,7 +4671,7 @@ static int eval_dict(char **arg, typval_T *rettv, const int flags, bool literal)
   while (**arg != '}' && **arg != NUL) {
     if ((literal
          ? get_literal_key(arg, &tvkey)
-         : eval1(arg, &tvkey, &evalarg)) == FAIL) {  // recursive!
+         : eval1(arg, &tvkey, evalarg)) == FAIL) {  // recursive!
       goto failret;
     }
     if (**arg != ':') {
@@ -4691,7 +4689,7 @@ static int eval_dict(char **arg, typval_T *rettv, const int flags, bool literal)
     }
 
     *arg = skipwhite(*arg + 1);
-    if (eval1(arg, &tv, &evalarg) == FAIL) {  // Recursive!
+    if (eval1(arg, &tv, evalarg) == FAIL) {  // Recursive!
       if (evaluate) {
         tv_clear(&tvkey);
       }
@@ -4714,14 +4712,19 @@ static int eval_dict(char **arg, typval_T *rettv, const int flags, bool literal)
     }
     tv_clear(&tvkey);
 
+    // the comma must come after the value
+    bool had_comma = **arg == ',';
+    if (had_comma) {
+      *arg = skipwhite(*arg + 1);
+    }
+
     if (**arg == '}') {
       break;
     }
-    if (**arg != ',') {
+    if (!had_comma) {
       semsg(_("E722: Missing comma in Dictionary: %s"), *arg);
       goto failret;
     }
-    *arg = skipwhite(*arg + 1);
   }
 
   if (**arg != '}') {
