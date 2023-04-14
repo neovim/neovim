@@ -2303,7 +2303,8 @@ int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
     return FAIL;
   }
 
-  if ((*arg)[0] == '?') {
+  char *p = *arg;
+  if (*p == '?') {
     evalarg_T nested_evalarg = evalarg == NULL ? (evalarg_T){ 0 } : *evalarg;
     const int orig_flags = evalarg == NULL ? 0 : evalarg->eval_flags;
     const bool evaluate = nested_evalarg.eval_flags & EVAL_EVALUATE;
@@ -2329,7 +2330,8 @@ int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
     }
 
     // Check for the ":".
-    if ((*arg)[0] != ':') {
+    p = *arg;
+    if (*p != ':') {
       emsg(_("E109: Missing ':' after '?'"));
       if (evaluate && result) {
         tv_clear(rettv);
