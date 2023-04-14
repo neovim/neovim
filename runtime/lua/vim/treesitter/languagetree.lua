@@ -75,6 +75,7 @@ local TSCallbackNames = {
 ---@field private _source (integer|string) Buffer or string to parse
 ---@field private _trees TSTree[] Reference to parsed tree (one for each language)
 ---@field private _valid boolean|table<integer,boolean> If the parsed tree is valid
+---@field private _stats table
 local LanguageTree = {}
 
 ---@class LanguageTreeOpts
@@ -112,6 +113,7 @@ function LanguageTree.new(source, lang, opts)
     _parser = vim._create_ts_parser(lang),
     _callbacks = {},
     _callbacks_rec = {},
+    _stats = {},
   }, LanguageTree)
 
   for _, name in pairs(TSCallbackNames) do
@@ -124,9 +126,8 @@ end
 
 ---@private
 ---Measure execution time of a function
----@generic R1, R2, R3
----@param f fun(): R1, R2, R2
----@return integer, R1, R2, R3
+---@param f function
+---@return integer
 local function tcall(f, ...)
   local start = vim.loop.hrtime()
   ---@diagnostic disable-next-line
@@ -247,19 +248,18 @@ function LanguageTree:parse()
 
   local changes = {}
 
-  -- Collect some stats
-  local regions_parsed = 0
-  local total_parse_time = 0
-
-  --- At least 1 region is invalid
-  if not self:is_valid(true) then
+  self._stats.regions_parsed = 0
+  self._stats.parse_time = tcall(function()
+    --- At least 1 region is invalid
+    if self:is_valid(true) then
+      return
+    end
     -- If there are no ranges, set to an empty list
     -- so the included ranges in the parser are cleared.
     for i, ranges in ipairs(self:included_regions()) do
       if not self._valid or not self._valid[i] then
         self._parser:set_included_ranges(ranges)
-        local parse_time, tree, tree_changes =
-          tcall(self._parser.parse, self._parser, self._trees[i], self._source, true)
+        local tree, tree_changes = self._parser:parse(self._trees[i], self._source, true)
 
         -- Pass ranges if this is an initial parse
         local cb_changes = self._trees[i] and tree_changes or tree:included_ranges(true)
@@ -268,49 +268,35 @@ function LanguageTree:parse()
         self._trees[i] = tree
         vim.list_extend(changes, tree_changes)
 
-        total_parse_time = total_parse_time + parse_time
-        regions_parsed = regions_parsed + 1
+        self._stats.regions_parsed = self._stats.regions_parsed + 1
       end
     end
-  end
+  end)
 
-  local seen_langs = {} ---@type table<string,boolean>
+  self._stats.changes = changes
 
-  local query_time, injections_by_lang = tcall(self._get_injections, self)
-  for lang, injection_ranges in pairs(injections_by_lang) do
-    local has_lang = pcall(language.add, lang)
-
-    -- Child language trees should just be ignored if not found, since
-    -- they can depend on the text of a node. Intermediate strings
-    -- would cause errors for unknown parsers.
-    if has_lang then
-      local child = self._children[lang]
-
-      if not child then
-        child = self:add_child(lang)
+  self._stats.query_time = tcall(function()
+    local seen_langs = {} ---@type table<string,boolean>
+    for lang, injection_ranges in pairs(self:_get_injections()) do
+      if pcall(language.add, lang) then
+        local child = self._children[lang] or self:add_child(lang)
+        child:set_included_regions(injection_ranges)
+        seen_langs[lang] = true
       end
-
-      child:set_included_regions(injection_ranges)
-      seen_langs[lang] = true
     end
-  end
 
-  for lang, _ in pairs(self._children) do
-    if not seen_langs[lang] then
-      self:remove_child(lang)
+    for lang, _ in pairs(self._children) do
+      if not seen_langs[lang] then
+        self:remove_child(lang)
+      end
     end
-  end
-
-  self:_log({
-    changes = changes,
-    regions_parsed = regions_parsed,
-    parse_time = total_parse_time,
-    query_time = query_time,
-  })
+  end)
 
   self:for_each_child(function(child)
     child:parse()
   end)
+
+  self:_log(self._stats)
 
   self._valid = true
 
@@ -403,6 +389,9 @@ end
 ---@private
 ---@param region Range6[]
 local function region_tostr(region)
+  if #region == 0 then
+    return 'ROOT'
+  end
   local srow, scol = region[1][1], region[1][2]
   local erow, ecol = region[#region][4], region[#region][5]
   return string.format('[%d:%d-%d:%d]', srow, scol, erow, ecol)
@@ -462,7 +451,7 @@ end
 --- This allows for embedded languages to be parsed together across different
 --- nodes, which is useful for templating languages like ERB and EJS.
 ---
----@private
+---@package
 ---@param new_regions Range6[][] List of regions this tree should manage and parse.
 function LanguageTree:set_included_regions(new_regions)
   self._has_regions = true
@@ -761,19 +750,21 @@ function LanguageTree:_edit(
   end_row_new,
   end_col_new
 )
-  for _, tree in ipairs(self._trees) do
-    tree:edit(
-      start_byte,
-      end_byte_old,
-      end_byte_new,
-      start_row,
-      start_col,
-      end_row_old,
-      end_col_old,
-      end_row_new,
-      end_col_new
-    )
-  end
+  self._stats.edit_time = tcall(function()
+    for _, tree in ipairs(self._trees) do
+      tree:edit(
+        start_byte,
+        end_byte_old,
+        end_byte_new,
+        start_row,
+        start_col,
+        end_row_old,
+        end_col_old,
+        end_row_new,
+        end_col_new
+      )
+    end
+  end)
 
   self._regions = nil
 
@@ -787,17 +778,19 @@ function LanguageTree:_edit(
   }
 
   -- Validate regions after editing the tree
-  self:_iter_regions(function(_, region)
-    if #region == 0 then
-      -- empty region, use the full source
-      return false
-    end
-    for _, r in ipairs(region) do
-      if Range.intercepts(r, changed_range) then
+  self._stats.validate_time = tcall(function()
+    self:_iter_regions(function(_, region)
+      if #region == 0 then
+        -- empty region, use the full source
         return false
       end
-    end
-    return true
+      for _, r in ipairs(region) do
+        if Range.intercepts(r, changed_range) then
+          return false
+        end
+      end
+      return true
+    end)
   end)
 end
 
@@ -829,10 +822,7 @@ function LanguageTree:_on_bytes(
   local old_end_col = old_col + ((old_row == 0) and start_col or 0)
   local new_end_col = new_col + ((new_row == 0) and start_col or 0)
 
-  self:_log(
-    'on_bytes',
-    bufnr,
-    changed_tick,
+  self._stats.on_bytes = {
     start_row,
     start_col,
     start_byte,
@@ -841,24 +831,25 @@ function LanguageTree:_on_bytes(
     old_byte,
     new_row,
     new_col,
-    new_byte
-  )
+    new_byte,
+  }
 
   -- Edit trees together BEFORE emitting a bytes callback.
-  ---@private
-  self:for_each_child(function(child)
-    child:_edit(
-      start_byte,
-      start_byte + old_byte,
-      start_byte + new_byte,
-      start_row,
-      start_col,
-      start_row + old_row,
-      old_end_col,
-      start_row + new_row,
-      new_end_col
-    )
-  end, true)
+  self._stats.child_edit_time = tcall(function()
+    self:for_each_child(function(child)
+      child:_edit(
+        start_byte,
+        start_byte + old_byte,
+        start_byte + new_byte,
+        start_row,
+        start_col,
+        start_row + old_row,
+        old_end_col,
+        start_row + new_row,
+        new_end_col
+      )
+    end, true)
+  end)
 
   self:_do_callback(
     'bytes',
@@ -993,6 +984,18 @@ function LanguageTree:language_for_range(range)
   end
 
   return self
+end
+
+function LanguageTree:_get_stats()
+  local s = {}
+  for k, v in pairs(self._stats) do
+    s[k] = {}
+    s[k].root = v
+    self:for_each_child(function(t, lang)
+      s[k][lang] = t._stats[k]
+    end)
+  end
+  return s
 end
 
 return LanguageTree
