@@ -2386,7 +2386,7 @@ int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
     }
     *arg = skipwhite(*arg + 1);
     evalarg_used->eval_flags = (op_falsy ? !result : result)
-                                    ? orig_flags : orig_flags & ~EVAL_EVALUATE;
+                                  ? orig_flags : (orig_flags & ~EVAL_EVALUATE);
     typval_T var2;
     if (eval1(arg, &var2, evalarg_used) == FAIL) {
       evalarg_used->eval_flags = orig_flags;
@@ -2410,7 +2410,7 @@ int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 
       // Get the third variable.  Recursive!
       *arg = skipwhite(*arg + 1);
-      evalarg_used->eval_flags = !result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
+      evalarg_used->eval_flags = !result ? orig_flags : (orig_flags & ~EVAL_EVALUATE);
       if (eval1(arg, &var2, evalarg_used) == FAIL) {
         if (evaluate && result) {
           tv_clear(rettv);
@@ -2476,7 +2476,7 @@ static int eval2(char **arg, typval_T *rettv, evalarg_T *const evalarg)
     while (p[0] == '|' && p[1] == '|') {
       // Get the second variable.
       *arg = skipwhite(*arg + 2);
-      evalarg_used->eval_flags = !result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
+      evalarg_used->eval_flags = !result ? orig_flags : (orig_flags & ~EVAL_EVALUATE);
       typval_T var2;
       if (eval3(arg, &var2, evalarg_used) == FAIL) {
         return FAIL;
@@ -2554,7 +2554,7 @@ static int eval3(char **arg, typval_T *rettv, evalarg_T *const evalarg)
     while (p[0] == '&' && p[1] == '&') {
       // Get the second variable.
       *arg = skipwhite(*arg + 2);
-      evalarg_used->eval_flags = result ? orig_flags : orig_flags & ~EVAL_EVALUATE;
+      evalarg_used->eval_flags = result ? orig_flags : (orig_flags & ~EVAL_EVALUATE);
       typval_T var2;
       if (eval4(arg, &var2, evalarg_used) == FAIL) {
         return FAIL;
