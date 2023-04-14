@@ -2506,7 +2506,6 @@ static int eval3(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 static int eval4(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 {
   typval_T var2;
-  char *p;
   exprtype_T type = EXPR_UNKNOWN;
   int len = 2;
 
@@ -2515,7 +2514,7 @@ static int eval4(char **arg, typval_T *rettv, evalarg_T *const evalarg)
     return FAIL;
   }
 
-  p = *arg;
+  char *p = *arg;
   switch (p[0]) {
   case '=':
     if (p[1] == '=') {
