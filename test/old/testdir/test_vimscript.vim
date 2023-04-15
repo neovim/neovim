@@ -7267,7 +7267,7 @@ func Test_typed_script_var()
 endfunc
 
 " Test for issue6776              {{{1
-func Test_trinary_expression()
+func Test_ternary_expression()
   try
     call eval('0 ? 0')
   catch

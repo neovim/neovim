@@ -3149,8 +3149,9 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
       ret = FAIL;
     } else {
       const int flags = evalarg == NULL ? 0 : evalarg->eval_flags;
-      if (**arg == '(') {
+      if (*skipwhite(*arg) == '(') {
         // "name(..."  recursive!
+        *arg = skipwhite(*arg);
         ret = eval_func(arg, evalarg, s, len, rettv, flags, NULL);
       } else if (evaluate) {
         // get value of variable

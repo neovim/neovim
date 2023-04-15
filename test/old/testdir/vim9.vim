@@ -34,6 +34,14 @@ func CheckScriptSuccess(lines)
   endtry
 endfunc
 
+func CheckDefAndScriptSuccess(lines)
+  return
+endfunc
+
+func CheckDefAndScriptFailure(lines, error, lnum = -3)
+  return
+endfunc
+
 func CheckDefExecAndScriptFailure(lines, error, lnum = -3)
   return
 endfunc
@@ -83,6 +91,14 @@ func CheckTransLegacySuccess(lines)
                               \  ->substitute('#"', ' "', 'g')
                               \ })
   call CheckLegacySuccess(legacylines)
+endfunc
+
+func CheckTransDefSuccess(lines)
+  return
+endfunc
+
+func CheckTransVim9Success(lines)
+  return
 endfunc
 
 " Execute "lines" in a legacy function
