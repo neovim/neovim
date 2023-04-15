@@ -205,6 +205,19 @@ func Test_vvar_scriptversion1()
   call assert_equal(511, 0o777)
 endfunc
 
+func Test_excute_null()
+  call assert_fails('execute v:_null_list', 'E730:')
+  call assert_fails('execute v:_null_dict', 'E731:')
+  call assert_fails('execute v:_null_blob', 'E976:')
+  execute v:_null_string
+  " Nvim doesn't have null partials
+  " call assert_fails('execute test_null_partial()', 'E729:')
+  if has('job')
+    call assert_fails('execute test_null_job()', 'E908:')
+    call assert_fails('execute test_null_channel()', 'E908:')
+  endif
+endfunc
+
 func Test_number_max_min_size()
   " This will fail on systems without 64 bit number support or when not
   " configured correctly.
