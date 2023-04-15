@@ -404,13 +404,16 @@ func Test_ask_yesno()
 endfunc
 
 func Test_null()
-  echom test_null_list()
-  echom test_null_dict()
-  echom test_null_blob()
-  echom test_null_job()
-  echom test_null_string()
-  echom test_null_channel()
-  echom test_null_partial()
+  echom v:_null_list
+  echom v:_null_dict
+  echom v:_null_blob
+  echom v:_null_string
+  " Nvim doesn't have NULL partials
+  " echom test_null_partial()
+  if has('job')
+    echom test_null_job()
+    echom test_null_channel()
+  endif
 endfunc
 
 func Test_mapping_at_hit_return_prompt()
