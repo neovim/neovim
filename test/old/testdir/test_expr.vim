@@ -717,6 +717,11 @@ func Test_expr_eval_error()
   call assert_fails("let v = -{}", 'E728:')
 endfunc
 
+func Test_white_in_function_call()
+  let text = substitute ( 'some text' , 't' , 'T' , 'g' )
+  call assert_equal('some TexT', text)
+endfunc
+
 " Test for float value comparison
 func Test_float_compare()
   CheckFeature float
