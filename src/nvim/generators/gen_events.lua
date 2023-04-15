@@ -1,13 +1,5 @@
-if arg[1] == '--help' then
-  print('Usage: gen_events.lua src/nvim enum_file event_names_file')
-  os.exit(0)
-end
-
-local nvimsrcdir = arg[1]
-local fileio_enum_file = arg[2]
-local names_file = arg[3]
-
-package.path = nvimsrcdir .. '/?.lua;' .. package.path
+local fileio_enum_file = arg[1]
+local names_file = arg[2]
 
 local auevents = require('auevents')
 local events = auevents.events

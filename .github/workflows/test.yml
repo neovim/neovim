@@ -382,7 +382,6 @@ jobs:
             libuv1-dev \
             lua-filesystem \
             lua-lpeg \
-            lua-mpack \
             luajit \
             lua-luv-dev
             # libtree-sitter-dev \

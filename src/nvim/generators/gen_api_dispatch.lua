@@ -1,39 +1,22 @@
 local mpack = require('mpack')
 
--- we need at least 4 arguments since the last two are output files
-if arg[1] == '--help' then
-  print('Usage: genmsgpack.lua args')
-  print('Args: 1: source directory')
-  print('      2: dispatch output file (dispatch_wrappers.generated.h)')
-  print('      3: functions metadata output file (funcs_metadata.generated.h)')
-  print('      4: API metadata output file (api_metadata.mpack)')
-  print('      5: lua C bindings output file (lua_api_c_bindings.generated.c)')
-  print('      6: keyset definitions output file (keysets_defs.generated.h)')
-  print('      rest: C files where API functions are defined')
-end
-assert(#arg >= 4)
-local functions = {}
-
-local nvimdir = arg[1]
-package.path = nvimdir .. '/?.lua;' .. package.path
-
-_G.vim = loadfile(nvimdir..'/../../runtime/lua/vim/shared.lua')()
-_G.vim.inspect = loadfile(nvimdir..'/../../runtime/lua/vim/inspect.lua')()
-
 local hashy = require'generators.hashy'
+
+assert(#arg >= 5)
+-- output h file with generated dispatch functions (dispatch_wrappers.generated.h)
+local dispatch_outputf = arg[1]
+-- output h file with packed metadata (funcs_metadata.generated.h)
+local funcs_metadata_outputf = arg[2]
+-- output metadata mpack file, for use by other build scripts (api_metadata.mpack)
+local mpack_outputf = arg[3]
+local lua_c_bindings_outputf = arg[4] -- lua_api_c_bindings.generated.c
+local keysets_outputf = arg[5] -- keysets_defs.generated.h
+
+local functions = {}
 
 -- names of all headers relative to the source root (for inclusion in the
 -- generated file)
 local headers = {}
-
--- output h file with generated dispatch functions
-local dispatch_outputf = arg[2]
--- output h file with packed metadata
-local funcs_metadata_outputf = arg[3]
--- output metadata mpack file, for use by other build scripts
-local mpack_outputf = arg[4]
-local lua_c_bindings_outputf = arg[5]
-local keysets_outputf = arg[6]
 
 -- set of function names, used to detect duplicates
 local function_names = {}
@@ -94,7 +77,7 @@ local function add_keyset(val)
 end
 
 -- read each input file, parse and append to the api metadata
-for i = 7, #arg do
+for i = 6, #arg do
   local full_path = arg[i]
   local parts = {}
   for part in string.gmatch(full_path, '[^/]+') do
@@ -210,7 +193,7 @@ end
 -- serialize the API metadata using msgpack and embed into the resulting
 -- binary for easy querying by clients
 local funcs_metadata_output = io.open(funcs_metadata_outputf, 'wb')
-local packed = mpack.pack(exported_functions)
+local packed = mpack.encode(exported_functions)
 local dump_bin_array = require("generators.dump_bin_array")
 dump_bin_array(funcs_metadata_output, 'funcs_metadata', packed)
 funcs_metadata_output:close()
@@ -514,7 +497,7 @@ output:write(hashfun)
 output:close()
 
 local mpack_output = io.open(mpack_outputf, 'wb')
-mpack_output:write(mpack.pack(functions))
+mpack_output:write(mpack.encode(functions))
 mpack_output:close()
 
 local function include_headers(output_handle, headers_to_include)

@@ -13,6 +13,14 @@ else()
   target_link_libraries(libuv INTERFACE ${LIBUV_LIBRARIES})
 endif()
 
+add_library(nlua0 MODULE)
+if(WIN32)
+  target_compile_definitions(nlua0 PUBLIC LUA_BUILD_AS_DLL NLUA_WIN32)
+  set_target_properties(nlua0 PROPERTIES ENABLE_EXPORTS TRUE)
+elseif(APPLE)
+  set_target_properties(nlua0 PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+endif()
+
 find_package(Libluv 1.43.0 REQUIRED)
 target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBLUV_INCLUDE_DIR})
 target_link_libraries(main_lib INTERFACE ${LIBLUV_LIBRARY})
@@ -44,6 +52,7 @@ option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)
 if(PREFER_LUA)
   find_package(Lua 5.1 EXACT REQUIRED)
   target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LUA_INCLUDE_DIR})
+  target_include_directories(nlua0 SYSTEM BEFORE PUBLIC ${LUA_INCLUDE_DIR})
   target_link_libraries(main_lib INTERFACE ${LUA_LIBRARIES})
   # Passive (not REQUIRED): if LUAJIT_FOUND is not set, fixtures for unittests is skipped.
   find_package(Luajit)
@@ -51,6 +60,10 @@ else()
   find_package(Luajit REQUIRED)
   target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LUAJIT_INCLUDE_DIRS})
   target_link_libraries(main_lib INTERFACE ${LUAJIT_LIBRARIES})
+  target_include_directories(nlua0 SYSTEM BEFORE PUBLIC ${LUAJIT_INCLUDE_DIRS})
+  if(WIN32)
+    target_link_libraries(nlua0 PUBLIC ${LUAJIT_LIBRARIES})
+  endif()
 endif()
 
 option(ENABLE_IWYU "Run include-what-you-use with the compiler." OFF)
@@ -184,7 +197,7 @@ endif()
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
   if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
     target_link_libraries(nvim PRIVATE -Wl,--no-undefined -lsocket)
-  elseif(NOT APPLE)
+  else()
     target_link_libraries(nvim PRIVATE -Wl,--no-undefined)
   endif()
 
@@ -235,6 +248,7 @@ set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(BINARY_LIB_DIR ${PROJECT_BINARY_DIR}/lib/nvim/)
 set(API_DISPATCH_GENERATOR ${GENERATOR_DIR}/gen_api_dispatch.lua)
 set(API_UI_EVENTS_GENERATOR ${GENERATOR_DIR}/gen_api_ui_events.lua)
+set(GENERATOR_PRELOAD ${GENERATOR_DIR}/preload.lua)
 set(GENERATOR_C_GRAMMAR ${GENERATOR_DIR}/c_grammar.lua)
 set(GENERATOR_HASHY ${GENERATOR_DIR}/hashy.lua)
 set(API_METADATA ${PROJECT_BINARY_DIR}/api_metadata.mpack)
@@ -286,6 +300,10 @@ target_include_directories(main_lib INTERFACE ${GENERATED_INCLUDES_DIR})
 target_include_directories(main_lib INTERFACE "${PROJECT_BINARY_DIR}/cmake.config")
 target_include_directories(main_lib INTERFACE "${PROJECT_SOURCE_DIR}/src")
 
+target_include_directories(nlua0 PUBLIC "${PROJECT_SOURCE_DIR}/src")
+target_include_directories(nlua0 PUBLIC "${PROJECT_BINARY_DIR}/cmake.config")
+target_include_directories(nlua0 PUBLIC ${GENERATED_INCLUDES_DIR})
+
 file(MAKE_DIRECTORY ${TOUCHES_DIR})
 file(MAKE_DIRECTORY ${GENERATED_DIR})
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
@@ -295,9 +313,12 @@ glob_wrapper(NVIM_HEADERS *.h)
 glob_wrapper(EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c)
 glob_wrapper(EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h)
 
+glob_wrapper(NLUA0_SOURCES ../mpack/*.c)
+
 if(PREFER_LUA)
   # luajit not used, use a vendored copy of the bit module
   list(APPEND EXTERNAL_SOURCES ${PROJECT_SOURCE_DIR}/src/bit.c)
+  list(APPEND NLUA0_SOURCES ${PROJECT_SOURCE_DIR}/src/bit.c)
   target_compile_definitions(main_lib INTERFACE NVIM_VENDOR_BIT)
 endif()
 
@@ -476,16 +497,20 @@ add_custom_command(OUTPUT ${GENERATED_UNICODE_TABLES}
     ${UNICODE_FILES}
 )
 
+set(LUA_GEN ${LUA_GEN_PRG} ${GENERATOR_PRELOAD} ${PROJECT_SOURCE_DIR} $<TARGET_FILE:nlua0>)
+set(LUA_GEN_DEPS ${GENERATOR_PRELOAD} $<TARGET_FILE:nlua0>)
+
 add_custom_command(
   OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_FUNCS_METADATA}
          ${API_METADATA} ${LUA_API_C_BINDINGS} ${GENERATED_KEYSETS_DEFS}
-  COMMAND ${LUA_GEN_PRG} ${API_DISPATCH_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
+         COMMAND ${LUA_GEN} ${API_DISPATCH_GENERATOR}
                          ${GENERATED_API_DISPATCH}
                          ${GENERATED_FUNCS_METADATA} ${API_METADATA}
                          ${LUA_API_C_BINDINGS}
                          ${GENERATED_KEYSETS_DEFS}
                          ${API_HEADERS}
   DEPENDS
+    ${LUA_GEN_DEPS}
     ${API_HEADERS}
     ${MSGPACK_RPC_HEADERS}
     ${API_DISPATCH_GENERATOR}
@@ -532,13 +557,14 @@ add_custom_command(
          ${GENERATED_UI_EVENTS_REMOTE}
          ${GENERATED_UI_EVENTS_METADATA}
          ${GENERATED_UI_EVENTS_CLIENT}
-  COMMAND ${LUA_GEN_PRG} ${API_UI_EVENTS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
-                         ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
-                         ${GENERATED_UI_EVENTS_CALL}
-                         ${GENERATED_UI_EVENTS_REMOTE}
-                         ${GENERATED_UI_EVENTS_METADATA}
-                         ${GENERATED_UI_EVENTS_CLIENT}
+  COMMAND ${LUA_GEN} ${API_UI_EVENTS_GENERATOR}
+                     ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
+                     ${GENERATED_UI_EVENTS_CALL}
+                     ${GENERATED_UI_EVENTS_REMOTE}
+                     ${GENERATED_UI_EVENTS_METADATA}
+                     ${GENERATED_UI_EVENTS_CLIENT}
   DEPENDS
+    ${LUA_GEN_DEPS}
     ${API_UI_EVENTS_GENERATOR}
     ${GENERATOR_C_GRAMMAR}
     ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
@@ -564,29 +590,25 @@ list(APPEND NVIM_GENERATED_SOURCES
 )
 
 add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
-  COMMAND ${LUA_PRG} ${EX_CMDS_GENERATOR}
-      ${CMAKE_CURRENT_LIST_DIR} ${GENERATED_INCLUDES_DIR} ${GENERATED_DIR}
-  DEPENDS ${EX_CMDS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/ex_cmds.lua
+  COMMAND ${LUA_GEN} ${EX_CMDS_GENERATOR} ${GENERATED_INCLUDES_DIR} ${GENERATED_DIR}
+  DEPENDS ${LUA_GEN_DEPS} ${EX_CMDS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/ex_cmds.lua
 )
 
 add_custom_command(OUTPUT ${GENERATED_FUNCS} ${FUNCS_DATA}
-  COMMAND ${LUA_PRG} ${FUNCS_GENERATOR}
-      ${CMAKE_CURRENT_LIST_DIR} ${LUA_SHARED_MODULE_SOURCE} ${GENERATED_DIR} ${API_METADATA} ${FUNCS_DATA}
-  DEPENDS ${FUNCS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/eval.lua ${API_METADATA}
+  COMMAND ${LUA_GEN} ${FUNCS_GENERATOR} ${GENERATED_DIR} ${API_METADATA} ${FUNCS_DATA}
+  DEPENDS ${LUA_GEN_DEPS} ${FUNCS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/eval.lua ${API_METADATA}
 )
 list(APPEND NVIM_GENERATED_FOR_SOURCES
   "${GENERATED_FUNCS}")
 
 add_custom_command(OUTPUT ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
-  COMMAND ${LUA_PRG} ${EVENTS_GENERATOR}
-      ${CMAKE_CURRENT_LIST_DIR} ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
-  DEPENDS ${EVENTS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/auevents.lua
+  COMMAND ${LUA_GEN} ${EVENTS_GENERATOR} ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
+  DEPENDS ${LUA_GEN_DEPS} ${EVENTS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/auevents.lua
 )
 
 add_custom_command(OUTPUT ${GENERATED_OPTIONS}
-  COMMAND ${LUA_PRG} ${OPTIONS_GENERATOR}
-                     ${CMAKE_CURRENT_LIST_DIR} ${GENERATED_OPTIONS}
-  DEPENDS ${OPTIONS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/options.lua
+  COMMAND ${LUA_GEN} ${OPTIONS_GENERATOR} ${GENERATED_OPTIONS}
+  DEPENDS ${LUA_GEN_DEPS} ${OPTIONS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/options.lua
 )
 
 # NVIM_GENERATED_FOR_SOURCES and NVIM_GENERATED_FOR_HEADERS must be mutually exclusive.
@@ -628,6 +650,8 @@ target_sources(main_lib INTERFACE
   ${NVIM_HEADERS}
   ${EXTERNAL_SOURCES}
   ${EXTERNAL_HEADERS})
+
+target_sources(nlua0 PUBLIC ${NLUA0_SOURCES})
 
 set_target_properties(nvim
   PROPERTIES
