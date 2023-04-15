@@ -393,9 +393,8 @@ func Test_let_interpolated()
   let text = 'text'
   call assert_equal('text{{', $'{text .. "{{"}')
   call assert_equal('text{{', $"{text .. '{{'}")
-  " FIXME: should not need to escape quotes in the expression
-  call assert_equal('text{{', $'{text .. ''{{''}')
-  call assert_equal('text{{', $"{text .. \"{{\"}")
+  call assert_equal('text{{', $'{text .. '{{'}')
+  call assert_equal('text{{', $"{text .. "{{"}")
 endfunc
 
 " Test for the setting a variable using the heredoc syntax.

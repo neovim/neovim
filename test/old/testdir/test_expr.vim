@@ -855,7 +855,7 @@ func Test_string_interp()
     #" Escaping rules.
     call assert_equal('"foo"{bar}', $"\"foo\"{{bar}}")
     call assert_equal('"foo"{bar}', $'"foo"{{bar}}')
-    call assert_equal('foobar', $"{\"foo\"}" .. $'{''bar''}')
+    call assert_equal('foobar', $"{"foo"}" .. $'{'bar'}')
     #" Whitespace before/after the expression.
     call assert_equal('3', $"{ 1 + 2 }")
     #" String conversion.
@@ -865,8 +865,8 @@ func Test_string_interp()
     call assert_equal(string(v:true), $"{v:true}")
     call assert_equal('(1+1=2)', $"(1+1={1 + 1})")
     #" Hex-escaped opening brace: char2nr('{') == 0x7b
-    call assert_equal('esc123ape', $"esc\x7b123}ape")
-    call assert_equal('me{}me', $"me{\x7b}\x7dme")
+    call assert_equal('esc123ape', $"esc{123}ape")
+    call assert_equal('me{}me', $"me{"\x7b"}\x7dme")
     VAR var1 = "sun"
     VAR var2 = "shine"
     call assert_equal('sunshine', $"{var1}{var2}")
@@ -874,7 +874,7 @@ func Test_string_interp()
     #" Multibyte strings.
     call assert_equal('say ハロー・ワールド', $"say {'ハロー・ワールド'}")
     #" Nested.
-    call assert_equal('foobarbaz', $"foo{$\"{'bar'}\"}baz")
+    call assert_equal('foobarbaz', $"foo{$"{'bar'}"}baz")
     #" Do not evaluate blocks when the expr is skipped.
     VAR tmp = 0
     if v:false

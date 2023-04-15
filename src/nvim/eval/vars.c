@@ -53,8 +53,42 @@
 static const char *e_letunexp = N_("E18: Unexpected characters in :let");
 static const char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s");
 
-/// Evaluate all the Vim expressions ({expr}) in string "str" and return the
-/// resulting string.  The caller must free the returned string.
+/// Evaluate one Vim expression {expr} in string "p" and append the
+/// resulting string to "gap".  "p" points to the opening "{".
+/// Return a pointer to the character after "}", NULL for an error.
+char *eval_one_expr_in_str(char *p, garray_T *gap)
+{
+  char *block_start = skipwhite(p + 1);  // skip the opening {
+  char *block_end = block_start;
+
+  if (*block_start == NUL) {
+    semsg(_(e_missing_close_curly_str), p);
+    return NULL;
+  }
+  if (skip_expr(&block_end, NULL) == FAIL) {
+    return NULL;
+  }
+  block_end = skipwhite(block_end);
+  if (*block_end != '}') {
+    semsg(_(e_missing_close_curly_str), p);
+    return NULL;
+  }
+  *block_end = NUL;
+  char *expr_val = eval_to_string(block_start, true);
+  *block_end = '}';
+  if (expr_val == NULL) {
+    return NULL;
+  }
+  ga_concat(gap, expr_val);
+  xfree(expr_val);
+
+  return block_end + 1;
+}
+
+/// Evaluate all the Vim expressions {expr} in "str" and return the resulting
+/// string in allocated memory.  "{{" is reduced to "{" and "}}" to "}".
+/// Used for a heredoc assignment.
+/// Returns NULL for an error.
 char *eval_all_expr_in_str(char *str)
 {
   garray_T ga;
@@ -67,13 +101,13 @@ char *eval_all_expr_in_str(char *str)
     // Look for a block start.
     char *lit_start = p;
     while (*p != '{' && *p != '}' && *p != NUL) {
-      ++p;
+      p++;
     }
 
     if (*p != NUL && *p == p[1]) {
       // Escaped brace, unescape and continue.
       // Include the brace in the literal string.
-      ++p;
+      p++;
       escaped_brace = true;
     } else if (*p == '}') {
       semsg(_(e_stray_closing_curly_str), str);
@@ -90,36 +124,16 @@ char *eval_all_expr_in_str(char *str)
 
     if (escaped_brace) {
       // Skip the second brace.
-      ++p;
+      p++;
       continue;
     }
 
-    // Skip the opening {.
-    char *block_start = ++p;
-    char *block_end = block_start;
-    if (*block_start != NUL && skip_expr(&block_end, NULL) == FAIL) {
+    // Evaluate the expression and append the result.
+    p = eval_one_expr_in_str(p, &ga);
+    if (p == NULL) {
       ga_clear(&ga);
       return NULL;
     }
-    block_end = skipwhite(block_end);
-    // The block must be closed by a }.
-    if (*block_end != '}') {
-      semsg(_(e_missing_close_curly_str), str);
-      ga_clear(&ga);
-      return NULL;
-    }
-    char save_c = *block_end;
-    *block_end = NUL;
-    char *expr_val = eval_to_string(block_start, true);
-    *block_end = save_c;
-    if (expr_val == NULL) {
-      ga_clear(&ga);
-      return NULL;
-    }
-    ga_concat(&ga, expr_val);
-    xfree(expr_val);
-
-    p = block_end + 1;
   }
   ga_append(&ga, NUL);
 
