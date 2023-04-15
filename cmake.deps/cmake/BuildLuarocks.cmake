@@ -1,7 +1,7 @@
 # Luarocks recipe. Luarocks is only required when building Neovim.
 # NOTE: LuaRocks rocks need to "DEPENDS" on the previous module, because
 #       running luarocks in parallel will break, e.g. when some rocks have
-#       the same dependency..
+#       the same dependency.
 
 option(USE_BUNDLED_BUSTED "Use the bundled version of busted to run tests." ON)
 
