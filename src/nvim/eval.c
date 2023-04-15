@@ -4918,6 +4918,7 @@ static int eval_env_var(char **arg, typval_T *rettv, int evaluate)
     name[len] = (char)cc;
     rettv->v_type = VAR_STRING;
     rettv->vval.v_string = string;
+    rettv->v_lock = VAR_UNLOCKED;
   }
 
   return OK;
