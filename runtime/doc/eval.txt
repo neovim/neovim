@@ -1407,6 +1407,34 @@ to be doubled.  These two commands are equivalent: >
 
 
 ------------------------------------------------------------------------------
+interpolated-string				*$quote* *interpolated-string*
+
+$"string"		interpolated string constant		*expr-$quote*
+$'string'		interpolated literal string constant	*expr-$'*
+
+Interpolated strings are an extension of the |string| and |literal-string|,
+allowing the inclusion of Vim script expressions (see |expr1|).  Any
+expression returning a value can be enclosed between curly braces.  The value
+is converted to a string.  All the text and results of the expressions
+are concatenated to make a new string.
+								*E1278*
+To include an opening brace '{' or closing brace '}' in the string content
+double it.  For double quoted strings using a backslash also works.  A single
+closing brace '}' will result in an error.
+
+Examples: >
+	let your_name = input("What's your name? ")
+<	What's your name?  Peter ~
+>
+	echo
+	echo $"Hello, {your_name}!"
+<	Hello, Peter! ~
+>
+	echo $"The square root of {{9}} is {sqrt(9)}"
+<	The square root of {9} is 3.0 ~
+
+
+------------------------------------------------------------------------------
 option						*expr-option* *E112* *E113*
 
 &option			option value, local value if possible
@@ -2540,14 +2568,30 @@ This does NOT work: >
 
 						*:let=<<* *:let-heredoc*
 					*E990* *E991* *E172* *E221* *E1145*
-:let {var-name} =<< [trim] {endmarker}
+:let {var-name} =<< [trim] [eval] {endmarker}
 text...
 text...
 {endmarker}
 			Set internal variable {var-name} to a |List|
 			containing the lines of text bounded by the string
-			{endmarker}. The lines of text is used as a
-			|literal-string|.
+			{endmarker}.
+
+			If "eval" is not specified, then each line of text is
+			used as a |literal-string|, except that single quotes
+			does not need to be doubled.
+			If "eval" is specified, then any Vim expression in the
+			form {expr} is evaluated and the result replaces the
+			expression, like with |interpolated-string|.
+			Example where $HOME is expanded: >
+				let lines =<< trim eval END
+				  some text
+				  See the file {$HOME}/.vimrc
+				  more text
+				END
+<			There can be multiple Vim expressions in a single line
+			but an expression cannot span multiple lines.  If any
+			expression evaluation fails, then the assignment fails.
+
 			{endmarker} must not contain white space.
 			{endmarker} cannot start with a lower case character.
 			The last line should end only with the {endmarker}
@@ -2597,6 +2641,13 @@ text...
 					1 2 3 4
 					5 6 7 8
 				DATA
+
+				let code =<< trim eval CODE
+				   let v = {10 + 20}
+				   let h = "{$HOME}"
+				   let s = "{Str1()} abc {Str2()}"
+				   let n = {MyFunc(3, 4)}
+				CODE
 <
 								*E121*
 :let {var-name}	..	List the value of variable {var-name}.  Multiple

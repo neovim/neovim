@@ -53,6 +53,96 @@
 static const char *e_letunexp = N_("E18: Unexpected characters in :let");
 static const char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s");
 
+/// Evaluate one Vim expression {expr} in string "p" and append the
+/// resulting string to "gap".  "p" points to the opening "{".
+/// When "evaluate" is false only skip over the expression.
+/// Return a pointer to the character after "}", NULL for an error.
+char *eval_one_expr_in_str(char *p, garray_T *gap, bool evaluate)
+{
+  char *block_start = skipwhite(p + 1);  // skip the opening {
+  char *block_end = block_start;
+
+  if (*block_start == NUL) {
+    semsg(_(e_missing_close_curly_str), p);
+    return NULL;
+  }
+  if (skip_expr(&block_end, NULL) == FAIL) {
+    return NULL;
+  }
+  block_end = skipwhite(block_end);
+  if (*block_end != '}') {
+    semsg(_(e_missing_close_curly_str), p);
+    return NULL;
+  }
+  if (evaluate) {
+    *block_end = NUL;
+    char *expr_val = eval_to_string(block_start, true);
+    *block_end = '}';
+    if (expr_val == NULL) {
+      return NULL;
+    }
+    ga_concat(gap, expr_val);
+    xfree(expr_val);
+  }
+
+  return block_end + 1;
+}
+
+/// Evaluate all the Vim expressions {expr} in "str" and return the resulting
+/// string in allocated memory.  "{{" is reduced to "{" and "}}" to "}".
+/// Used for a heredoc assignment.
+/// Returns NULL for an error.
+char *eval_all_expr_in_str(char *str)
+{
+  garray_T ga;
+  ga_init(&ga, 1, 80);
+  char *p = str;
+
+  while (*p != NUL) {
+    bool escaped_brace = false;
+
+    // Look for a block start.
+    char *lit_start = p;
+    while (*p != '{' && *p != '}' && *p != NUL) {
+      p++;
+    }
+
+    if (*p != NUL && *p == p[1]) {
+      // Escaped brace, unescape and continue.
+      // Include the brace in the literal string.
+      p++;
+      escaped_brace = true;
+    } else if (*p == '}') {
+      semsg(_(e_stray_closing_curly_str), str);
+      ga_clear(&ga);
+      return NULL;
+    }
+
+    // Append the literal part.
+    ga_concat_len(&ga, lit_start, (size_t)(p - lit_start));
+
+    if (*p == NUL) {
+      break;
+    }
+
+    if (escaped_brace) {
+      // Skip the second brace.
+      p++;
+      continue;
+    }
+
+    // Evaluate the expression and append the result.
+    p = eval_one_expr_in_str(p, &ga, true);
+    if (p == NULL) {
+      ga_clear(&ga);
+      return NULL;
+    }
+  }
+  ga_append(&ga, NUL);
+
+  return ga.ga_data;
+}
+
 /// Get a list of lines from a HERE document. The here document is a list of
 /// lines surrounded by a marker.
 ///     cmd << {marker}
@@ -65,7 +155,7 @@ static const char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s")
 /// marker, then the leading indentation before the lines (matching the
 /// indentation in the 'cmd' line) is stripped.
 ///
-/// @return  a List with {lines} or NULL.
+/// @return  a List with {lines} or NULL on failure.
 static list_T *heredoc_get(exarg_T *eap, char *cmd)
 {
   char *marker;
@@ -81,20 +171,33 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
 
   // Check for the optional 'trim' word before the marker
   cmd = skipwhite(cmd);
-  if (strncmp(cmd, "trim", 4) == 0
-      && (cmd[4] == NUL || ascii_iswhite(cmd[4]))) {
-    cmd = skipwhite(cmd + 4);
+  bool evalstr = false;
+  bool eval_failed = false;
+  while (true) {
+    if (strncmp(cmd, "trim", 4) == 0
+        && (cmd[4] == NUL || ascii_iswhite(cmd[4]))) {
+      cmd = skipwhite(cmd + 4);
 
-    // Trim the indentation from all the lines in the here document.
-    // The amount of indentation trimmed is the same as the indentation of
-    // the first line after the :let command line.  To find the end marker
-    // the indent of the :let command line is trimmed.
-    p = *eap->cmdlinep;
-    while (ascii_iswhite(*p)) {
-      p++;
-      marker_indent_len++;
+      // Trim the indentation from all the lines in the here document.
+      // The amount of indentation trimmed is the same as the indentation
+      // of the first line after the :let command line.  To find the end
+      // marker the indent of the :let command line is trimmed.
+      p = *eap->cmdlinep;
+      while (ascii_iswhite(*p)) {
+        p++;
+        marker_indent_len++;
+      }
+      text_indent_len = -1;
+
+      continue;
     }
-    text_indent_len = -1;
+    if (strncmp(cmd, "eval", 4) == 0
+        && (cmd[4] == NUL || ascii_iswhite(cmd[4]))) {
+      cmd = skipwhite(cmd + 4);
+      evalstr = true;
+      continue;
+    }
+    break;
   }
 
   // The marker is the next word.
@@ -115,12 +218,14 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
     return NULL;
   }
 
+  char *theline = NULL;
   list_T *l = tv_list_alloc(0);
   for (;;) {
     int mi = 0;
     int ti = 0;
 
-    char *theline = eap->getline(NUL, eap->cookie, 0, false);
+    xfree(theline);
+    theline = eap->getline(NUL, eap->cookie, 0, false);
     if (theline == NULL) {
       semsg(_("E990: Missing end marker '%s'"), marker);
       break;
@@ -133,9 +238,15 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
       mi = marker_indent_len;
     }
     if (strcmp(marker, theline + mi) == 0) {
-      xfree(theline);
       break;
     }
+
+    // If expression evaluation failed in the heredoc, then skip till the
+    // end marker.
+    if (eval_failed) {
+      continue;
+    }
+
     if (text_indent_len == -1 && *theline != NUL) {
       // set the text indent from the first line.
       p = theline;
@@ -155,11 +266,28 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
       }
     }
 
-    tv_list_append_string(l, theline + ti, -1);
-    xfree(theline);
+    char *str = theline + ti;
+    if (evalstr && !eap->skip) {
+      str = eval_all_expr_in_str(str);
+      if (str == NULL) {
+        // expression evaluation failed
+        eval_failed = true;
+        continue;
+      }
+      xfree(theline);
+      theline = str;
+    }
+
+    tv_list_append_string(l, str, -1);
   }
+  xfree(theline);
   xfree(text_indent);
 
+  if (eval_failed) {
+    // expression evaluation in the heredoc failed
+    tv_list_free(l);
+    return NULL;
+  }
   return l;
 }
 

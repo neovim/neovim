@@ -3063,12 +3063,12 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
 
   // String constant: "string".
   case '"':
-    ret = eval_string(arg, rettv, evaluate);
+    ret = eval_string(arg, rettv, evaluate, false);
     break;
 
   // Literal string constant: 'str''ing'.
   case '\'':
-    ret = eval_lit_string(arg, rettv, evaluate);
+    ret = eval_lit_string(arg, rettv, evaluate, false);
     break;
 
   // List: [expr, expr]
@@ -3100,8 +3100,13 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
     ret = eval_option((const char **)arg, rettv, evaluate);
     break;
   // Environment variable: $VAR.
+  // Interpolated string: $"string" or $'string'.
   case '$':
-    ret = eval_env_var(arg, rettv, evaluate);
+    if ((*arg)[1] == '"' || (*arg)[1] == '\'') {
+      ret = eval_interp_string(arg, rettv, evaluate);
+    } else {
+      ret = eval_env_var(arg, rettv, evaluate);
+    }
     break;
 
   // Register contents: @r.
@@ -3863,35 +3868,63 @@ static int eval_number(char **arg, typval_T *rettv, bool evaluate, bool want_str
   return OK;
 }
 
-/// Allocate a variable for a string constant.
+/// Evaluate a string constant and put the result in "rettv".
+/// "*arg" points to the double quote or to after it when "interpolate" is true.
+/// When "interpolate" is true reduce "{{" to "{", reduce "}}" to "}" and stop
+/// at a single "{".
 ///
 /// @return  OK or FAIL.
-static int eval_string(char **arg, typval_T *rettv, int evaluate)
+static int eval_string(char **arg, typval_T *rettv, bool evaluate, bool interpolate)
 {
   char *p;
-  unsigned int extra = 0;
+  const char *const arg_end = *arg + strlen(*arg);
+  unsigned int extra = interpolate ? 1 : 0;
+  const int off = interpolate ? 0 : 1;
 
   // Find the end of the string, skipping backslashed characters.
-  for (p = *arg + 1; *p != NUL && *p != '"'; MB_PTR_ADV(p)) {
+  for (p = *arg + off; *p != NUL && *p != '"'; MB_PTR_ADV(p)) {
     if (*p == '\\' && p[1] != NUL) {
       p++;
       // A "\<x>" form occupies at least 4 characters, and produces up
       // to 9 characters (6 for the char and 3 for a modifier):
       // reserve space for 5 extra.
       if (*p == '<') {
+        int modifiers = 0;
+        int flags = FSK_KEYCODE | FSK_IN_STRING;
+
         extra += 5;
+
+        // Skip to the '>' to avoid using '{' inside for string
+        // interpolation.
+        if (p[1] != '*') {
+          flags |= FSK_SIMPLIFY;
+        }
+        if (find_special_key((const char **)&p, (size_t)(arg_end - p),
+                             &modifiers, flags, NULL) != 0) {
+          p--;  // leave "p" on the ">"
+        }
       }
+    } else if (interpolate && (*p == '{' || *p == '}')) {
+      if (*p == '{' && p[1] != '{') {  // start of expression
+        break;
+      }
+      p++;
+      if (p[-1] == '}' && *p != '}') {  // single '}' is an error
+        semsg(_(e_stray_closing_curly_str), *arg);
+        return FAIL;
+      }
+      extra--;  // "{{" becomes "{", "}}" becomes "}"
     }
   }
 
-  if (*p != '"') {
+  if (*p != '"' && !(interpolate && *p == '{')) {
     semsg(_("E114: Missing quote: %s"), *arg);
     return FAIL;
   }
 
   // If only parsing, set *arg and return here
   if (!evaluate) {
-    *arg = p + 1;
+    *arg = p + off;
     return OK;
   }
 
@@ -3902,7 +3935,7 @@ static int eval_string(char **arg, typval_T *rettv, int evaluate)
   rettv->vval.v_string = xmalloc((size_t)len);
   char *end = rettv->vval.v_string;
 
-  for (p = *arg + 1; *p != NUL && *p != '"';) {
+  for (p = *arg + off; *p != NUL && *p != '"';) {
     if (*p == '\\') {
       switch (*++p) {
       case 'b':
@@ -3975,7 +4008,8 @@ static int eval_string(char **arg, typval_T *rettv, int evaluate)
         if (p[1] != '*') {
           flags |= FSK_SIMPLIFY;
         }
-        extra = trans_special((const char **)&p, strlen(p), end, flags, false, NULL);
+        extra = trans_special((const char **)&p, (size_t)(arg_end - p),
+                              end, flags, false, NULL);
         if (extra != 0) {
           end += extra;
           if (end >= rettv->vval.v_string + len) {
@@ -3991,11 +4025,17 @@ static int eval_string(char **arg, typval_T *rettv, int evaluate)
         break;
       }
     } else {
+      if (interpolate && (*p == '{' || *p == '}')) {
+        if (*p == '{' && p[1] != '{') {  // start of expression
+          break;
+        }
+        p++;  // reduce "{{" to "{" and "}}" to "}"
+      }
       mb_copy_char((const char **)&p, &end);
     }
   }
   *end = NUL;
-  if (*p != NUL) {  // just in case
+  if (*p == '"' && !interpolate) {
     p++;
   }
   *arg = p;
@@ -4004,43 +4044,67 @@ static int eval_string(char **arg, typval_T *rettv, int evaluate)
 }
 
 /// Allocate a variable for a 'str''ing' constant.
+/// When "interpolate" is true reduce "{{" to "{" and stop at a single "{".
 ///
-/// @return  OK or FAIL.
-static int eval_lit_string(char **arg, typval_T *rettv, int evaluate)
+/// @return  OK when a "rettv" was set to the string.
+///          FAIL on error, "rettv" is not set.
+static int eval_lit_string(char **arg, typval_T *rettv, bool evaluate, bool interpolate)
 {
   char *p;
-  int reduce = 0;
+  int reduce = interpolate ? -1 : 0;
+  const int off = interpolate ? 0 : 1;
 
   // Find the end of the string, skipping ''.
-  for (p = *arg + 1; *p != NUL; MB_PTR_ADV(p)) {
+  for (p = *arg + off; *p != NUL; MB_PTR_ADV(p)) {
     if (*p == '\'') {
       if (p[1] != '\'') {
         break;
       }
       reduce++;
       p++;
+    } else if (interpolate) {
+      if (*p == '{') {
+        if (p[1] != '{') {
+          break;
+        }
+        p++;
+        reduce++;
+      } else if (*p == '}') {
+        p++;
+        if (*p != '}') {
+          semsg(_(e_stray_closing_curly_str), *arg);
+          return FAIL;
+        }
+        reduce++;
+      }
     }
   }
 
-  if (*p != '\'') {
+  if (*p != '\'' && !(interpolate && *p == '{')) {
     semsg(_("E115: Missing quote: %s"), *arg);
     return FAIL;
   }
 
   // If only parsing return after setting "*arg"
   if (!evaluate) {
-    *arg = p + 1;
+    *arg = p + off;
     return OK;
   }
 
-  // Copy the string into allocated memory, handling '' to ' reduction.
+  // Copy the string into allocated memory, handling '' to ' reduction and
+  // any expressions.
   char *str = xmalloc((size_t)((p - *arg) - reduce));
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = str;
 
-  for (p = *arg + 1; *p != NUL;) {
+  for (p = *arg + off; *p != NUL;) {
     if (*p == '\'') {
       if (p[1] != '\'') {
+        break;
+      }
+      p++;
+    } else if (interpolate && (*p == '{' || *p == '}')) {
+      if (*p == '{' && p[1] != '{') {
         break;
       }
       p++;
@@ -4048,8 +4112,62 @@ static int eval_lit_string(char **arg, typval_T *rettv, int evaluate)
     mb_copy_char((const char **)&p, &str);
   }
   *str = NUL;
-  *arg = p + 1;
+  *arg = p + off;
 
+  return OK;
+}
+
+/// Evaluate a single or double quoted string possibly containing expressions.
+/// "arg" points to the '$'.  The result is put in "rettv".
+///
+/// @return  OK or FAIL.
+int eval_interp_string(char **arg, typval_T *rettv, bool evaluate)
+{
+  int ret = OK;
+
+  garray_T ga;
+  ga_init(&ga, 1, 80);
+
+  // *arg is on the '$' character, move it to the first string character.
+  (*arg)++;
+  const int quote = (uint8_t)(**arg);
+  (*arg)++;
+
+  for (;;) {
+    typval_T tv;
+    // Get the string up to the matching quote or to a single '{'.
+    // "arg" is advanced to either the quote or the '{'.
+    if (quote == '"') {
+      ret = eval_string(arg, &tv, evaluate, true);
+    } else {
+      ret = eval_lit_string(arg, &tv, evaluate, true);
+    }
+    if (ret == FAIL) {
+      break;
+    }
+    if (evaluate) {
+      ga_concat(&ga, tv.vval.v_string);
+      tv_clear(&tv);
+    }
+
+    if (**arg != '{') {
+      // found terminating quote
+      (*arg)++;
+      break;
+    }
+    char *p = eval_one_expr_in_str(*arg, &ga, evaluate);
+    if (p == NULL) {
+      ret = FAIL;
+      break;
+    }
+    *arg = p;
+  }
+
+  rettv->v_type = VAR_STRING;
+  if (ret != FAIL && evaluate) {
+    ga_append(&ga, NUL);
+  }
+  rettv->vval.v_string = ga.ga_data;
   return OK;
 }
 

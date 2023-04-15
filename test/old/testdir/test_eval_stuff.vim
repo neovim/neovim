@@ -407,4 +407,9 @@ func Test_modified_char_no_escape_special()
   nunmap <M-…>
 endfunc
 
+func Test_eval_string_in_special_key()
+  " this was using the '{' inside <> as the start of an interpolated string
+  silent! echo 0{1-$"\<S--{>n|nö%
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

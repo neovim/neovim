@@ -848,4 +848,60 @@ func Test_float_compare()
   call CheckLegacyAndVim9Success(lines)
 endfunc
 
+func Test_string_interp()
+  let lines =<< trim END
+    call assert_equal('', $"")
+    call assert_equal('foobar', $"foobar")
+    #" Escaping rules.
+    call assert_equal('"foo"{bar}', $"\"foo\"{{bar}}")
+    call assert_equal('"foo"{bar}', $'"foo"{{bar}}')
+    call assert_equal('foobar', $"{"foo"}" .. $'{'bar'}')
+    #" Whitespace before/after the expression.
+    call assert_equal('3', $"{ 1 + 2 }")
+    #" String conversion.
+    call assert_equal('hello from ' .. v:version, $"hello from {v:version}")
+    call assert_equal('hello from ' .. v:version, $'hello from {v:version}')
+    #" Paper over a small difference between VimScript behaviour.
+    call assert_equal(string(v:true), $"{v:true}")
+    call assert_equal('(1+1=2)', $"(1+1={1 + 1})")
+    #" Hex-escaped opening brace: char2nr('{') == 0x7b
+    call assert_equal('esc123ape', $"esc{123}ape")
+    call assert_equal('me{}me', $"me{"\x7b"}\x7dme")
+    VAR var1 = "sun"
+    VAR var2 = "shine"
+    call assert_equal('sunshine', $"{var1}{var2}")
+    call assert_equal('sunsunsun', $"{var1->repeat(3)}")
+    #" Multibyte strings.
+    call assert_equal('say ハロー・ワールド', $"say {'ハロー・ワールド'}")
+    #" Nested.
+    call assert_equal('foobarbaz', $"foo{$"{'bar'}"}baz")
+    #" Do not evaluate blocks when the expr is skipped.
+    VAR tmp = 0
+    if v:false
+      echo "${ LET tmp += 1 }"
+    endif
+    call assert_equal(0, tmp)
+
+    #" Stray closing brace.
+    call assert_fails('echo $"moo}"', 'E1278:')
+    #" Undefined variable in expansion.
+    call assert_fails('echo $"{moo}"', 'E121:')
+    #" Empty blocks are rejected.
+    call assert_fails('echo $"{}"', 'E15:')
+    call assert_fails('echo $"{   }"', 'E15:')
+  END
+  call CheckLegacyAndVim9Success(lines)
+
+  let lines =<< trim END
+    call assert_equal('5', $"{({x -> x + 1})(4)}")
+  END
+  call CheckLegacySuccess(lines)
+
+  let lines =<< trim END
+    call assert_equal('5', $"{((x) => x + 1)(4)}")
+    call assert_fails('echo $"{ # foo }"', 'E1279:')
+  END
+  call CheckDefAndScriptSuccess(lines)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -84,9 +84,7 @@ syn case ignore
 
   let s:digits = "0123456789ABCDEF"
   for s:radix in range(2, 16)
-    " Nvim does not support interpolated strings yet.
-    " exe $'syn match modula3Integer "\<{s:radix}_[{s:digits[:s:radix - 1]}]\+L\=\>"'
-    exe 'syn match modula3Integer "\<' .. s:radix .. '_[' .. s:digits[:s:radix - 1] .. ']\+L\=\>"'
+    exe $'syn match modula3Integer "\<{s:radix}_[{s:digits[:s:radix - 1]}]\+L\=\>"'
   endfor
   unlet s:digits s:radix
 

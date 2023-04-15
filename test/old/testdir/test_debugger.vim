@@ -348,6 +348,39 @@ func Test_Debugger_breakadd()
   call assert_fails('breakadd file Xtest.vim /\)/', 'E55:')
 endfunc
 
+" Test for expression breakpoint set using ":breakadd expr <expr>"
+func Test_Debugger_breakadd_expr()
+  CheckRunVimInTerminal
+  let lines =<< trim END
+    let g:Xtest_var += 1
+  END
+  call writefile(lines, 'Xtest.vim')
+
+  " Start Vim in a terminal
+  let buf = RunVimInTerminal('Xtest.vim', {})
+  call RunDbgCmd(buf, ':let g:Xtest_var = 10')
+  call RunDbgCmd(buf, ':breakadd expr g:Xtest_var')
+  call RunDbgCmd(buf, ':source %')
+  let expected =<< eval trim END
+    Oldval = "10"
+    Newval = "11"
+    {fnamemodify('Xtest.vim', ':p')}
+    line 1: let g:Xtest_var += 1
+  END
+  call RunDbgCmd(buf, ':source %', expected)
+  call RunDbgCmd(buf, 'cont')
+  let expected =<< eval trim END
+    Oldval = "11"
+    Newval = "12"
+    {fnamemodify('Xtest.vim', ':p')}
+    line 1: let g:Xtest_var += 1
+  END
+  call RunDbgCmd(buf, ':source %', expected)
+
+  call StopVimInTerminal(buf)
+  call delete('Xtest.vim')
+endfunc
+
 func Test_Backtrace_Through_Source()
   CheckRunVimInTerminal
   CheckCWD
