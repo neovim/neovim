@@ -43,6 +43,7 @@
 #include "nvim/os/stdpaths_defs.h"
 #include "nvim/path.h"
 #include "nvim/profile.h"
+#include "nvim/regexp.h"
 #include "nvim/runtime.h"
 #include "nvim/strings.h"
 #include "nvim/usercmd.h"
@@ -2361,7 +2362,24 @@ void f_getscriptinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   tv_list_alloc_ret(rettv, script_items.ga_len);
 
+  if (tv_check_for_opt_dict_arg(argvars, 0) == FAIL) {
+    return;
+  }
+
   list_T *l = rettv->vval.v_list;
+
+  regmatch_T regmatch = {
+    .regprog = NULL,
+    .rm_ic = p_ic,
+  };
+
+  char *pat = NULL;
+  if (argvars[0].v_type == VAR_DICT) {
+    pat = tv_dict_get_string(argvars[0].vval.v_dict, "name", true);
+    if (pat != NULL) {
+      regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
+    }
+  }
 
   for (int i = 1; i <= script_items.ga_len; i++) {
     scriptitem_T *si = SCRIPT_ITEM(i);
@@ -2370,13 +2388,22 @@ void f_getscriptinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       continue;
     }
 
+    if (pat != NULL && regmatch.regprog != NULL
+        && !vim_regexec(&regmatch, si->sn_name, (colnr_T)0)) {
+      continue;
+    }
+
     dict_T *d = tv_dict_alloc();
     tv_list_append_dict(l, d);
     tv_dict_add_str(d, S_LEN("name"), si->sn_name);
     tv_dict_add_nr(d, S_LEN("sid"), i);
+    tv_dict_add_nr(d, S_LEN("version"), 1);
     // Vim9 autoload script (:h vim9-autoload), not applicable to Nvim.
     tv_dict_add_bool(d, S_LEN("autoload"), false);
   }
+
+  vim_regfree(regmatch.regprog);
+  xfree(pat);
 }
 
 /// Get one full line from a sourced file.
