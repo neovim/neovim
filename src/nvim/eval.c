@@ -3877,6 +3877,7 @@ static int eval_number(char **arg, typval_T *rettv, bool evaluate, bool want_str
 static int eval_string(char **arg, typval_T *rettv, bool evaluate, bool interpolate)
 {
   char *p;
+  const char *const arg_end = *arg + strlen(*arg);
   unsigned int extra = interpolate ? 1 : 0;
   const int off = interpolate ? 0 : 1;
 
@@ -3888,7 +3889,20 @@ static int eval_string(char **arg, typval_T *rettv, bool evaluate, bool interpol
       // to 9 characters (6 for the char and 3 for a modifier):
       // reserve space for 5 extra.
       if (*p == '<') {
+        int modifiers = 0;
+        int flags = FSK_KEYCODE | FSK_IN_STRING;
+
         extra += 5;
+
+        // Skip to the '>' to avoid using '{' inside for string
+        // interpolation.
+        if (p[1] != '*') {
+          flags |= FSK_SIMPLIFY;
+        }
+        if (find_special_key((const char **)&p, (size_t)(arg_end - p),
+                             &modifiers, flags, NULL) != 0) {
+          p--;  // leave "p" on the ">"
+        }
       }
     } else if (interpolate && (*p == '{' || *p == '}')) {
       if (*p == '{' && p[1] != '{') {  // start of expression
@@ -3994,7 +4008,8 @@ static int eval_string(char **arg, typval_T *rettv, bool evaluate, bool interpol
         if (p[1] != '*') {
           flags |= FSK_SIMPLIFY;
         }
-        extra = trans_special((const char **)&p, strlen(p), end, flags, false, NULL);
+        extra = trans_special((const char **)&p, (size_t)(arg_end - p),
+                              end, flags, false, NULL);
         if (extra != 0) {
           end += extra;
           if (end >= rettv->vval.v_string + len) {
