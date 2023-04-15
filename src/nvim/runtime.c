@@ -22,6 +22,7 @@
 #include "nvim/cmdexpand.h"
 #include "nvim/debugger.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
@@ -43,6 +44,7 @@
 #include "nvim/os/stdpaths_defs.h"
 #include "nvim/path.h"
 #include "nvim/profile.h"
+#include "nvim/regexp.h"
 #include "nvim/runtime.h"
 #include "nvim/strings.h"
 #include "nvim/usercmd.h"
@@ -2356,17 +2358,77 @@ linenr_T get_sourced_lnum(LineGetter fgetline, void *cookie)
         : SOURCING_LNUM;
 }
 
+/// Return a List of script-local functions defined in the script with id "sid".
+static list_T *get_script_local_funcs(scid_T sid)
+{
+  hashtab_T *const functbl = func_tbl_get();
+  list_T *l = tv_list_alloc((ptrdiff_t)functbl->ht_used);
+
+  // Iterate through all the functions in the global function hash table
+  // looking for functions with script ID "sid".
+  HASHTAB_ITER(functbl, hi, {
+    const ufunc_T *const fp = HI2UF(hi);
+    // Add functions with script id == "sid"
+    if (fp->uf_script_ctx.sc_sid == sid) {
+      const char *const name = fp->uf_name_exp != NULL ? fp->uf_name_exp : fp->uf_name;
+      tv_list_append_string(l, name, -1);
+    }
+  });
+
+  return l;
+}
+
 /// "getscriptinfo()" function
 void f_getscriptinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   tv_list_alloc_ret(rettv, script_items.ga_len);
 
+  if (tv_check_for_opt_dict_arg(argvars, 0) == FAIL) {
+    return;
+  }
+
   list_T *l = rettv->vval.v_list;
 
-  for (int i = 1; i <= script_items.ga_len; i++) {
+  regmatch_T regmatch = {
+    .regprog = NULL,
+    .rm_ic = p_ic,
+  };
+  bool filterpat = false;
+  varnumber_T sid = -1;
+
+  char *pat = NULL;
+  if (argvars[0].v_type == VAR_DICT) {
+    dictitem_T *sid_di = tv_dict_find(argvars[0].vval.v_dict, S_LEN("sid"));
+    if (sid_di != NULL) {
+      bool error = false;
+      sid = tv_get_number_chk(&sid_di->di_tv, &error);
+      if (error) {
+        return;
+      }
+      if (sid <= 0) {
+        semsg(e_invargNval, "sid", tv_get_string(&sid_di->di_tv));
+        return;
+      }
+    } else {
+      pat = tv_dict_get_string(argvars[0].vval.v_dict, "name", true);
+      if (pat != NULL) {
+        regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
+      }
+      if (regmatch.regprog != NULL) {
+        filterpat = true;
+      }
+    }
+  }
+
+  for (varnumber_T i = sid > 0 ? sid : 1;
+       (i == sid || sid <= 0) && i <= script_items.ga_len; i++) {
     scriptitem_T *si = SCRIPT_ITEM(i);
 
     if (si->sn_name == NULL) {
+      continue;
+    }
+
+    if (filterpat && !vim_regexec(&regmatch, si->sn_name, (colnr_T)0)) {
       continue;
     }
 
@@ -2374,9 +2436,21 @@ void f_getscriptinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     tv_list_append_dict(l, d);
     tv_dict_add_str(d, S_LEN("name"), si->sn_name);
     tv_dict_add_nr(d, S_LEN("sid"), i);
+    tv_dict_add_nr(d, S_LEN("version"), 1);
     // Vim9 autoload script (:h vim9-autoload), not applicable to Nvim.
     tv_dict_add_bool(d, S_LEN("autoload"), false);
+
+    // When a script ID is specified, return information about only the
+    // specified script, and add the script-local variables and functions.
+    if (sid > 0) {
+      dict_T *var_dict = tv_dict_copy(NULL, &si->sn_vars->sv_dict, true, get_copyID());
+      tv_dict_add_dict(d, S_LEN("variables"), var_dict);
+      tv_dict_add_list(d, S_LEN("functions"), get_script_local_funcs((scid_T)sid));
+    }
   }
+
+  vim_regfree(regmatch.regprog);
+  xfree(pat);
 }
 
 /// Get one full line from a sourced file.

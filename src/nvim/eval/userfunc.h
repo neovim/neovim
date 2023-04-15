@@ -28,10 +28,10 @@ struct funccal_entry;
 #define FC_DELETED  0x10          // :delfunction used while uf_refcount > 0
 #define FC_REMOVED  0x20          // function redefined while uf_refcount > 0
 #define FC_SANDBOX  0x40          // function defined in the sandbox
-#define FC_DEAD     0x80          // function kept only for reference to dfunc
-#define FC_EXPORT   0x100         // "export def Func()"
+// #define FC_DEAD     0x80          // function kept only for reference to dfunc
+// #define FC_EXPORT   0x100         // "export def Func()"
 #define FC_NOARGS   0x200         // no a: variables in lambda
-#define FC_VIM9     0x400         // defined in vim9 script file
+// #define FC_VIM9     0x400         // defined in vim9 script file
 #define FC_LUAREF  0x800          // luaref callback
 
 /// Structure used by trans_function_name()
