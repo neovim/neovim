@@ -22,6 +22,7 @@
 #include "nvim/cmdexpand.h"
 #include "nvim/debugger.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
@@ -2357,6 +2358,26 @@ linenr_T get_sourced_lnum(LineGetter fgetline, void *cookie)
         : SOURCING_LNUM;
 }
 
+/// Return a List of script-local functions defined in the script with id "sid".
+static list_T *get_script_local_funcs(scid_T sid)
+{
+  hashtab_T *const functbl = func_tbl_get();
+  list_T *l = tv_list_alloc((ptrdiff_t)functbl->ht_used);
+
+  // Iterate through all the functions in the global function hash table
+  // looking for functions with script ID "sid".
+  HASHTAB_ITER(functbl, hi, {
+    const ufunc_T *const fp = HI2UF(hi);
+    // Add active functions with script id == "sid"
+    if (!(fp->uf_flags & FC_DEAD) && (fp->uf_script_ctx.sc_sid == sid)) {
+      const char *const name = fp->uf_name_exp != NULL ? fp->uf_name_exp : fp->uf_name;
+      tv_list_append_string(l, name, -1);
+    }
+  });
+
+  return l;
+}
+
 /// "getscriptinfo()" function
 void f_getscriptinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
@@ -2372,12 +2393,20 @@ void f_getscriptinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     .regprog = NULL,
     .rm_ic = p_ic,
   };
+  bool filterpat = false;
+  varnumber_T sid = -1;
 
   char *pat = NULL;
   if (argvars[0].v_type == VAR_DICT) {
-    pat = tv_dict_get_string(argvars[0].vval.v_dict, "name", true);
-    if (pat != NULL) {
-      regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
+    sid = tv_dict_get_number_def(argvars[0].vval.v_dict, "sid", -1);
+    if (sid == -1) {
+      pat = tv_dict_get_string(argvars[0].vval.v_dict, "name", true);
+      if (pat != NULL) {
+        regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
+      }
+      if (regmatch.regprog != NULL) {
+        filterpat = true;
+      }
     }
   }
 
@@ -2388,8 +2417,11 @@ void f_getscriptinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       continue;
     }
 
-    if (pat != NULL && regmatch.regprog != NULL
-        && !vim_regexec(&regmatch, si->sn_name, (colnr_T)0)) {
+    if (filterpat && !vim_regexec(&regmatch, si->sn_name, (colnr_T)0)) {
+      continue;
+    }
+
+    if (sid != -1 && sid != i) {
       continue;
     }
 
@@ -2400,6 +2432,15 @@ void f_getscriptinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     tv_dict_add_nr(d, S_LEN("version"), 1);
     // Vim9 autoload script (:h vim9-autoload), not applicable to Nvim.
     tv_dict_add_bool(d, S_LEN("autoload"), false);
+
+    // When a filter pattern is specified to return information about only
+    // specific script(s), also add the script-local variables and
+    // functions.
+    if (sid != -1) {
+      dict_T *var_dict = tv_dict_copy(NULL, &si->sn_vars->sv_dict, true, get_copyID());
+      tv_dict_add_dict(d, S_LEN("variables"), var_dict);
+      tv_dict_add_list(d, S_LEN("functions"), get_script_local_funcs((scid_T)sid));
+    }
   }
 
   vim_regfree(regmatch.regprog);
