@@ -732,10 +732,10 @@ func Test_opfunc_callback()
     bw!
 
     # Test for using a script-local function name
-    def s:LocalOpFunc(type: string): void
+    def LocalOpFunc(type: string): void
       g:LocalOpFuncArgs = [type]
     enddef
-    &opfunc = s:LocalOpFunc
+    &opfunc = LocalOpFunc
     g:LocalOpFuncArgs = []
     normal! g@l
     assert_equal(['char'], g:LocalOpFuncArgs)
