@@ -2398,8 +2398,18 @@ void f_getscriptinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   char *pat = NULL;
   if (argvars[0].v_type == VAR_DICT) {
-    sid = tv_dict_get_number_def(argvars[0].vval.v_dict, "sid", -1);
-    if (sid == -1) {
+    dictitem_T *sid_di = tv_dict_find(argvars[0].vval.v_dict, S_LEN("sid"));
+    if (sid_di != NULL) {
+      bool error = false;
+      sid = tv_get_number_chk(&sid_di->di_tv, &error);
+      if (error) {
+        return;
+      }
+      if (sid <= 0) {
+        semsg(e_invargNval, "sid", tv_get_string(&sid_di->di_tv));
+        return;
+      }
+    } else {
       pat = tv_dict_get_string(argvars[0].vval.v_dict, "name", true);
       if (pat != NULL) {
         regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
@@ -2410,7 +2420,8 @@ void f_getscriptinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
   }
 
-  for (int i = 1; i <= script_items.ga_len; i++) {
+  for (varnumber_T i = sid > 0 ? sid : 1;
+       (i == sid || sid <= 0) && i <= script_items.ga_len; i++) {
     scriptitem_T *si = SCRIPT_ITEM(i);
 
     if (si->sn_name == NULL) {
@@ -2418,10 +2429,6 @@ void f_getscriptinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
 
     if (filterpat && !vim_regexec(&regmatch, si->sn_name, (colnr_T)0)) {
-      continue;
-    }
-
-    if (sid != -1 && sid != i) {
       continue;
     }
 
@@ -2433,10 +2440,9 @@ void f_getscriptinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     // Vim9 autoload script (:h vim9-autoload), not applicable to Nvim.
     tv_dict_add_bool(d, S_LEN("autoload"), false);
 
-    // When a filter pattern is specified to return information about only
-    // specific script(s), also add the script-local variables and
-    // functions.
-    if (sid != -1) {
+    // When a script ID is specified, return information about only the
+    // specified script, and add the script-local variables and functions.
+    if (sid > 0) {
       dict_T *var_dict = tv_dict_copy(NULL, &si->sn_vars->sv_dict, true, get_copyID());
       tv_dict_add_dict(d, S_LEN("variables"), var_dict);
       tv_dict_add_list(d, S_LEN("functions"), get_script_local_funcs((scid_T)sid));
