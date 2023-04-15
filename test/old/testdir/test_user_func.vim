@@ -501,4 +501,35 @@ func Test_func_range()
   bwipe!
 endfunc
 
+" Test for memory allocation failure when defining a new function
+func Test_funcdef_alloc_failure()
+  CheckFunction test_alloc_fail
+  new
+  let lines =<< trim END
+    func Xtestfunc()
+      return 321
+    endfunc
+  END
+  call setline(1, lines)
+  call test_alloc_fail(GetAllocId('get_func'), 0, 0)
+  call assert_fails('source', 'E342:')
+  call assert_false(exists('*Xtestfunc'))
+  call assert_fails('delfunc Xtestfunc', 'E117:')
+  %d _
+  let lines =<< trim END
+    def g:Xvim9func(): number
+      return 456
+    enddef
+  END
+  call setline(1, lines)
+  call test_alloc_fail(GetAllocId('get_func'), 0, 0)
+  call assert_fails('source', 'E342:')
+  call assert_false(exists('*Xvim9func'))
+  "call test_alloc_fail(GetAllocId('get_func'), 0, 0)
+  "call assert_fails('source', 'E342:')
+  "call assert_false(exists('*Xtestfunc'))
+  "call assert_fails('delfunc Xtestfunc', 'E117:')
+  bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
