@@ -4059,7 +4059,10 @@ char *partial_name(partial_T *pt)
   if (pt->pt_name != NULL) {
     return pt->pt_name;
   }
-  return pt->pt_func->uf_name;
+  if (pt->pt_func != NULL) {
+    return pt->pt_func->uf_name;
+  }
+  return "";
 }
 
 static void partial_free(partial_T *pt)

@@ -194,6 +194,10 @@ func Test_partial_string()
   call assert_equal("function('MyFunc', {'one': 1})", string(F))
   let F = function('MyFunc', ['foo'], d)
   call assert_equal("function('MyFunc', ['foo'], {'one': 1})", string(F))
+  " Nvim doesn't have null functions
+  " call assert_equal("function('')", string(test_null_function()))
+  " Nvim doesn't have null partials
+  " call assert_equal("function('')", string(test_null_partial()))
 endfunc
 
 func Test_func_unref()

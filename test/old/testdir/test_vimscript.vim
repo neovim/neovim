@@ -6508,9 +6508,17 @@ func Test_type()
     call assert_equal(v:t_float, type(0.0))
     call assert_equal(v:t_bool, type(v:false))
     call assert_equal(v:t_bool, type(v:true))
+    " call assert_equal(v:t_none, type(v:none))
+    " call assert_equal(v:t_none, type(v:null))
     call assert_equal(v:t_string, type(v:_null_string))
     call assert_equal(v:t_list, type(v:_null_list))
     call assert_equal(v:t_dict, type(v:_null_dict))
+    if has('job')
+      call assert_equal(v:t_job, type(test_null_job()))
+    endif
+    if has('channel')
+      call assert_equal(v:t_channel, type(test_null_channel()))
+    endif
     call assert_equal(v:t_blob, type(v:_null_blob))
 
     call assert_equal(0, 0 + v:false)

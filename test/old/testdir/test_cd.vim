@@ -106,6 +106,7 @@ func Test_chdir_func()
   call assert_equal("", d)
   " Should not crash
   call chdir(d)
+  call assert_equal('', chdir([]))
 
   only | tabonly
   call chdir(topdir)

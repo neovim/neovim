@@ -39,6 +39,9 @@ func Test_mkdir_p()
   call assert_fails('call mkdir("Xfile", "p")', 'E739')
   call delete('Xfile')
   call delete('Xmkdir', 'rf')
+  call assert_equal(0, mkdir(v:_null_string))
+  call assert_fails('call mkdir([])', 'E730')
+  call assert_fails('call mkdir("abc", [], [])', 'E745')
 endfunc
 
 func Test_line_continuation()
@@ -212,6 +215,8 @@ func Test_execute_cmd_with_null()
   execute v:_null_string
   " Nvim doesn't have null partials
   " call assert_fails('execute test_null_partial()', 'E729:')
+  " Nvim doesn't have test_unknown()
+  " call assert_fails('execute test_unknown()', 'E908:')
   if has('job')
     call assert_fails('execute test_null_job()', 'E908:')
     call assert_fails('execute test_null_channel()', 'E908:')
