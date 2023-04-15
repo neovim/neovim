@@ -1,5 +1,4 @@
 local helpers = require('test.functional.helpers')(after_each)
-local global_helpers = require('test.helpers')
 local Screen = require('test.functional.ui.screen')
 
 local clear = helpers.clear
@@ -43,20 +42,17 @@ end)
 describe('health.vim', function()
   before_each(function()
     clear{args={'-u', 'NORC'}}
-    -- Provides functions:
-    --    health#broken#check()
-    --    health#success1#check()
-    --    health#success2#check()
+    -- Provides healthcheck functions
     command("set runtimepath+=test/functional/fixtures")
   end)
 
   describe(":checkhealth", function()
-    it("functions health#report_*() render correctly", function()
+    it("functions report_*() render correctly", function()
       command("checkhealth full_render")
       helpers.expect([[
 
       ==============================================================================
-      full_render: health#full_render#check
+      test_plug.full_render: require("test_plug.full_render.health").check()
 
       report 1 ~
       - OK life is fine
@@ -79,7 +75,7 @@ describe('health.vim', function()
       helpers.expect([[
 
         ==============================================================================
-        success1: health#success1#check
+        test_plug: require("test_plug.health").check()
 
         report 1 ~
         - OK everything is fine
@@ -88,36 +84,19 @@ describe('health.vim', function()
         - OK nothing to see here
 
         ==============================================================================
-        success2: health#success2#check
+        test_plug.success1: require("test_plug.success1.health").check()
+
+        report 1 ~
+        - OK everything is fine
+
+        report 2 ~
+        - OK nothing to see here
+
+        ==============================================================================
+        test_plug.success2: require("test_plug.success2.health").check()
 
         another 1 ~
         - OK ok
-
-        ==============================================================================
-        test_plug: require("test_plug.health").check()
-
-        report 1 ~
-        - OK everything is fine
-
-        report 2 ~
-        - OK nothing to see here
-        ]])
-    end)
-
-    it("lua plugins, skips vimscript healthchecks with the same name", function()
-      command("checkhealth test_plug")
-      -- Existing file in test/functional/fixtures/lua/test_plug/autoload/health/test_plug.vim
-      -- and the Lua healthcheck is used instead.
-      helpers.expect([[
-
-        ==============================================================================
-        test_plug: require("test_plug.health").check()
-
-        report 1 ~
-        - OK everything is fine
-
-        report 2 ~
-        - OK nothing to see here
         ]])
     end)
 
@@ -136,57 +115,6 @@ describe('health.vim', function()
         ]])
     end)
 
-    it("lua plugins submodules with expression '*'", function()
-      command("checkhealth test_plug*")
-      local buf_lines = helpers.curbuf('get_lines', 0, -1, true)
-      -- avoid dealing with path separators
-      local received = table.concat(buf_lines, '\n', 1, #buf_lines - 5)
-      local expected = helpers.dedent([[
-
-        ==============================================================================
-        test_plug: require("test_plug.health").check()
-
-        report 1 ~
-        - OK everything is fine
-
-        report 2 ~
-        - OK nothing to see here
-
-        ==============================================================================
-        test_plug.submodule: require("test_plug.submodule.health").check()
-
-        report 1 ~
-        - OK everything is fine
-
-        report 2 ~
-        - OK nothing to see here
-
-        ==============================================================================
-        test_plug.submodule_empty: require("test_plug.submodule_empty.health").check()
-
-        - ERROR The healthcheck report for "test_plug.submodule_empty" plugin is empty.
-
-        ==============================================================================
-        test_plug.submodule_failed: require("test_plug.submodule_failed.health").check()
-
-        - ERROR Failed to run healthcheck for "test_plug.submodule_failed" plugin. Exception:
-          function health#check, line 25]])
-      eq(expected, received)
-    end)
-
-    it("gracefully handles broken healthcheck", function()
-      command("checkhealth broken")
-      helpers.expect([[
-
-        ==============================================================================
-        broken: health#broken#check
-
-        - ERROR Failed to run healthcheck for "broken" plugin. Exception:
-          function health#check[25]..health#broken#check, line 1
-          caused an error
-        ]])
-    end)
-
     it("... including empty reports", function()
       command("checkhealth test_plug.submodule_empty")
       helpers.expect([[
@@ -196,25 +124,6 @@ describe('health.vim', function()
 
       - ERROR The healthcheck report for "test_plug.submodule_empty" plugin is empty.
       ]])
-    end)
-
-    it("gracefully handles broken lua healthcheck", function()
-      command("checkhealth test_plug.submodule_failed")
-      local buf_lines = helpers.curbuf('get_lines', 0, -1, true)
-      local received = table.concat(buf_lines, '\n', 1, #buf_lines - 5)
-      -- avoid dealing with path separators
-      local lua_err = "attempt to perform arithmetic on a nil value"
-      local last_line = buf_lines[#buf_lines - 4]
-      assert(string.find(last_line, lua_err) ~= nil, "Lua error not present")
-
-      local expected = global_helpers.dedent([[
-
-        ==============================================================================
-        test_plug.submodule_failed: require("test_plug.submodule_failed.health").check()
-
-        - ERROR Failed to run healthcheck for "test_plug.submodule_failed" plugin. Exception:
-          function health#check, line 25]])
-      eq(expected, received)
     end)
 
     it("highlights OK, ERROR", function()
@@ -236,7 +145,7 @@ describe('health.vim', function()
         - {Error:ERROR} No healthcheck found for "foo" plugin.    |
                                                           |
         {Bar:──────────────────────────────────────────────────}|
-        {Heading:success1: health#success1#check}                   |
+        {Heading:test_plug.success1: require("test_plug.success1.he}|
                                                           |
         {Heading:report 1}                                          |
         - {Ok:OK} everything is fine                           |

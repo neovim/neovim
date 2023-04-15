@@ -8597,33 +8597,27 @@ void eval_fmt_source_name_line(char *buf, size_t bufsize)
 /// ":checkhealth [plugins]"
 void ex_checkhealth(exarg_T *eap)
 {
-  bool found = !!find_func("health#check");
-  if (!found
-      && script_autoload("health#check", sizeof("health#check") - 1, false)) {
-    found = !!find_func("health#check");
-  }
-  if (!found) {
-    const char *vimruntime_env = os_getenv("VIMRUNTIME");
-    if (vimruntime_env == NULL) {
-      emsg(_("E5009: $VIMRUNTIME is empty or unset"));
-    } else {
-      bool rtp_ok = NULL != strstr(p_rtp, vimruntime_env);
-      if (rtp_ok) {
-        semsg(_("E5009: Invalid $VIMRUNTIME: %s"), vimruntime_env);
-      } else {
-        emsg(_("E5009: Invalid 'runtimepath'"));
-      }
-    }
+  Error err = ERROR_INIT;
+  MAXSIZE_TEMP_ARRAY(args, 1);
+  ADD_C(args, STRING_OBJ(cstr_as_string(eap->arg)));
+  NLUA_EXEC_STATIC("return vim.health._check(...)", args, &err);
+  if (!ERROR_SET(&err)) {
     return;
   }
 
-  size_t bufsize = strlen(eap->arg) + sizeof("call health#check('')");
-  char *buf = xmalloc(bufsize);
-  snprintf(buf, bufsize, "call health#check('%s')", eap->arg);
-
-  do_cmdline_cmd(buf);
-
-  xfree(buf);
+  const char *vimruntime_env = os_getenv("VIMRUNTIME");
+  if (vimruntime_env == NULL) {
+    emsg(_("E5009: $VIMRUNTIME is empty or unset"));
+  } else {
+    bool rtp_ok = NULL != strstr(p_rtp, vimruntime_env);
+    if (rtp_ok) {
+      semsg(_("E5009: Invalid $VIMRUNTIME: %s"), vimruntime_env);
+    } else {
+      emsg(_("E5009: Invalid 'runtimepath'"));
+    }
+  }
+  semsg_multiline(err.msg);
+  api_clear_error(&err);
 }
 
 void invoke_prompt_callback(void)
