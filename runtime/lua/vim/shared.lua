@@ -950,8 +950,8 @@ end
 ---
 ---@param f function Iterator function
 ---@return table
-function vim.totable(f)
-  return vim.iter(f):totable()
+function vim.totable(f, ...)
+  return vim.iter(f, ...):totable()
 end
 
 --- Filter a table or iterator.
@@ -969,8 +969,8 @@ end
 ---                            final table
 ---@param src table|function Table or iterator function to filter
 ---@return table
-function vim.filter(f, src)
-  return vim.iter(src):filter(f):totable()
+function vim.filter(f, src, ...)
+  return vim.iter(src, ...):filter(f):totable()
 end
 
 --- Map and filter a table or iterator.
@@ -988,8 +988,8 @@ end
 ---                            from the final table. the final table
 ---@param src table|function Table or iterator function to filter
 ---@return table
-function vim.map(f, src)
-  return vim.iter(src):map(f):totable()
+function vim.map(f, src, ...)
+  return vim.iter(src, ...):map(f):totable()
 end
 
 return vim
