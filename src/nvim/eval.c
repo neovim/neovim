@@ -3896,26 +3896,26 @@ static int eval_string(char **arg, typval_T *rettv, int evaluate)
 
   // Copy the string into allocated memory, handling backslashed
   // characters.
-  const int len = (int)(p - *arg + extra);
-  char *name = xmalloc((size_t)len);
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = name;
+  const int len = (int)(p - *arg + extra);
+  rettv->vval.v_string = xmalloc((size_t)len);
+  char *end = rettv->vval.v_string;
 
   for (p = *arg + 1; *p != NUL && *p != '"';) {
     if (*p == '\\') {
       switch (*++p) {
       case 'b':
-        *name++ = BS; ++p; break;
+        *end++ = BS; ++p; break;
       case 'e':
-        *name++ = ESC; ++p; break;
+        *end++ = ESC; ++p; break;
       case 'f':
-        *name++ = FF; ++p; break;
+        *end++ = FF; ++p; break;
       case 'n':
-        *name++ = NL; ++p; break;
+        *end++ = NL; ++p; break;
       case 'r':
-        *name++ = CAR; ++p; break;
+        *end++ = CAR; ++p; break;
       case 't':
-        *name++ = TAB; ++p; break;
+        *end++ = TAB; ++p; break;
 
       case 'X':           // hex: "\x1", "\x12"
       case 'x':
@@ -3941,9 +3941,9 @@ static int eval_string(char **arg, typval_T *rettv, int evaluate)
           // For "\u" store the number according to
           // 'encoding'.
           if (c != 'X') {
-            name += utf_char2bytes(nr, name);
+            end += utf_char2bytes(nr, end);
           } else {
-            *name++ = (char)nr;
+            *end++ = (char)nr;
           }
         }
         break;
@@ -3957,14 +3957,14 @@ static int eval_string(char **arg, typval_T *rettv, int evaluate)
       case '5':
       case '6':
       case '7':
-        *name = (char)(*p++ - '0');
+        *end = (char)(*p++ - '0');
         if (*p >= '0' && *p <= '7') {
-          *name = (char)((*name << 3) + *p++ - '0');
+          *end = (char)((*end << 3) + *p++ - '0');
           if (*p >= '0' && *p <= '7') {
-            *name = (char)((*name << 3) + *p++ - '0');
+            *end = (char)((*end << 3) + *p++ - '0');
           }
         }
-        name++;
+        end++;
         break;
 
       // Special key, e.g.: "\<C-W>"
@@ -3974,10 +3974,10 @@ static int eval_string(char **arg, typval_T *rettv, int evaluate)
         if (p[1] != '*') {
           flags |= FSK_SIMPLIFY;
         }
-        extra = trans_special((const char **)&p, strlen(p), name, flags, false, NULL);
+        extra = trans_special((const char **)&p, strlen(p), end, flags, false, NULL);
         if (extra != 0) {
-          name += extra;
-          if (name >= rettv->vval.v_string + len) {
+          end += extra;
+          if (end >= rettv->vval.v_string + len) {
             iemsg("eval_string() used more space than allocated");
           }
           break;
@@ -3986,14 +3986,14 @@ static int eval_string(char **arg, typval_T *rettv, int evaluate)
         FALLTHROUGH;
 
       default:
-        mb_copy_char((const char **)&p, &name);
+        mb_copy_char((const char **)&p, &end);
         break;
       }
     } else {
-      mb_copy_char((const char **)&p, &name);
+      mb_copy_char((const char **)&p, &end);
     }
   }
-  *name = NUL;
+  *end = NUL;
   if (*p != NUL) {  // just in case
     p++;
   }
