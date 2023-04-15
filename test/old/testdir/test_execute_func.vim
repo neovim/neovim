@@ -41,8 +41,6 @@ func Test_execute_string()
   call assert_equal("\nsomething", execute('echo "something"', 'silent!'))
   call assert_equal("", execute('burp', 'silent!'))
   call assert_fails('call execute("echo \"x\"", 3.4)', 'E806:')
-
-  call assert_equal("", execute(""))
 endfunc
 
 func Test_execute_list()
@@ -53,7 +51,6 @@ func Test_execute_list()
   call assert_equal("\n0\n1\n2\n3", execute(l))
 
   call assert_equal("", execute([]))
-  call assert_equal("", execute(v:_null_list))
 endfunc
 
 func Test_execute_does_not_change_col()
@@ -171,6 +168,19 @@ func Test_win_execute_visual_redraw()
 
   bwipe!
   bwipe!
+endfunc
+
+func Test_execute_cmd_with_null()
+  call assert_equal("", execute(v:_null_string))
+  call assert_equal("", execute(v:_null_list))
+  call assert_fails('call execute(v:_null_dict)', 'E731:')
+  call assert_fails('call execute(v:_null_blob)', 'E976:')
+  " Nvim doesn't have null partials
+  " call assert_fails('call execute(test_null_partial())','E729:')
+  if has('job')
+    call assert_fails('call execute(test_null_job())', 'E908:')
+    call assert_fails('call execute(test_null_channel())', 'E908:')
+  endif
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

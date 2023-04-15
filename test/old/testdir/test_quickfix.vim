@@ -2425,6 +2425,16 @@ func Xproperty_tests(cchar)
     call assert_equal(246, d.context)
     " set other Vim data types as context
     call g:Xsetlist([], 'a', {'context' : v:_null_blob})
+    if has('channel')
+      call g:Xsetlist([], 'a', {'context' : test_null_channel()})
+    endif
+    if has('job')
+      call g:Xsetlist([], 'a', {'context' : test_null_job()})
+    endif
+    " Nvim doesn't have null functions
+    " call g:Xsetlist([], 'a', {'context' : test_null_function()})
+    " Nvim doesn't have null partials
+    " call g:Xsetlist([], 'a', {'context' : test_null_partial()})
     call g:Xsetlist([], 'a', {'context' : ''})
     call test_garbagecollect_now()
     if a:cchar == 'l'

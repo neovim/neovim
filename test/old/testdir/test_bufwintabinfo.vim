@@ -42,6 +42,7 @@ function Test_getbufwintabinfo()
     sign undefine Mark
     enew!
   endif
+  call assert_notequal([], getbufinfo(v:_null_dict))
 
   only
   let w1_id = win_getid()

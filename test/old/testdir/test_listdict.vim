@@ -794,6 +794,7 @@ func Test_listdict_compare_complex()
   call assert_true(dict4 == dict4copy)
 endfunc
 
+" Test for extending lists and dictionaries
 func Test_listdict_extend()
   " Test extend() with lists
 
@@ -1028,6 +1029,9 @@ func Test_listdict_index()
   call assert_fails("let l[1.1] = 4", 'E806:')
   call assert_fails("let l[:i] = [4, 5]", 'E121:')
   call assert_fails("let l[:3.2] = [4, 5]", 'E806:')
+  " Nvim doesn't have test_unknown()
+  " let t = test_unknown()
+  " call assert_fails("echo t[0]", 'E685:')
 endfunc
 
 " Test for a null list
@@ -1079,8 +1083,20 @@ func Test_null_dict()
   call assert_equal(0, values(d))
   call assert_false(has_key(d, 'k'))
   call assert_equal('{}', string(d))
-  call assert_fails('let x = v:_null_dict[10]')
+  call assert_fails('let x = d[10]')
   call assert_equal({}, {})
+  call assert_equal(0, len(copy(d)))
+  call assert_equal(0, count(d, 'k'))
+  call assert_equal({}, deepcopy(d))
+  call assert_equal(20, get(d, 'k', 20))
+  call assert_equal(0, min(d))
+  call assert_equal(0, max(d))
+  call assert_equal(0, remove(d, 'k'))
+  call assert_equal('{}', string(d))
+  " call assert_equal(0, extend(d, d, 0))
+  lockvar d
+  call assert_equal(1, islocked('d'))
+  unlockvar d
 endfunc
 
 " Test for the indexof() function

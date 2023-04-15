@@ -3806,7 +3806,7 @@ static const char *const str_errors[] = {
   [VAR_DICT]= N_("E731: using Dictionary as a String"),
   [VAR_FLOAT]= e_float_as_string,
   [VAR_BLOB]= N_("E976: using Blob as a String"),
-  [VAR_UNKNOWN]= N_("E908: using an invalid value as a String"),
+  [VAR_UNKNOWN]= e_inval_string,
 };
 
 #undef FUNC_ERROR

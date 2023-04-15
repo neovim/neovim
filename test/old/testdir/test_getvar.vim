@@ -150,6 +150,12 @@ func Test_get_func()
   call assert_equal({'func has': 'no dict'}, get(l:F, 'dict', {'func has': 'no dict'}))
   call assert_equal(0, get(l:F, 'dict'))
   call assert_equal([], get(l:F, 'args'))
+  " Nvim doesn't have null functions
+  " let NF = test_null_function()
+  " call assert_equal('', get(NF, 'name'))
+  " call assert_equal(NF, get(NF, 'func'))
+  " call assert_equal(0, get(NF, 'dict'))
+  " call assert_equal([], get(NF, 'args'))
 endfunc
 
 " get({partial}, {what} [, {default}]) - in test_partial.vim

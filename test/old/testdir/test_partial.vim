@@ -63,16 +63,18 @@ endfunc
 func Test_partial_dict()
   let dict = {'name': 'hello'}
   let Cb = function('MyDictFunc', ["foo", "bar"], dict)
+  call test_garbagecollect_now()
   call assert_equal("hello/foo/bar", Cb())
   call assert_fails('Cb("xxx")', 'E492:')
+
+  let Cb = function('MyDictFunc', ["foo"], dict)
+  call assert_equal("hello/foo/xxx", Cb("xxx"))
+  call assert_fails('Cb()', 'E492:')
 
   let Cb = function('MyDictFunc', [], dict)
   call assert_equal("hello/ttt/xxx", Cb("ttt", "xxx"))
   call assert_fails('Cb("yyy")', 'E492:')
 
-  let Cb = function('MyDictFunc', ["foo"], dict)
-  call assert_equal("hello/foo/xxx", Cb("xxx"))
-  call assert_fails('Cb()', 'E492:')
   let Cb = function('MyDictFunc', dict)
   call assert_equal("hello/xxx/yyy", Cb("xxx", "yyy"))
   call assert_fails('Cb("fff")', 'E492:')
@@ -192,6 +194,10 @@ func Test_partial_string()
   call assert_equal("function('MyFunc', {'one': 1})", string(F))
   let F = function('MyFunc', ['foo'], d)
   call assert_equal("function('MyFunc', ['foo'], {'one': 1})", string(F))
+  " Nvim doesn't have null functions
+  " call assert_equal("function('')", string(test_null_function()))
+  " Nvim doesn't have null partials
+  " call assert_equal("function('')", string(test_null_partial()))
 endfunc
 
 func Test_func_unref()
@@ -238,17 +244,22 @@ endfunc
 func Ignored(job1, job2, status)
 endfunc
 
-" func Test_cycle_partial_job()
-"   let job = job_start('echo')
-"   call job_setoptions(job, {'exit_cb': function('Ignored', [job])})
-"   unlet job
-" endfunc
+func Test_cycle_partial_job()
+  if has('job')
+    let job = job_start('echo')
+    call job_setoptions(job, {'exit_cb': function('Ignored', [job])})
+    unlet job
+  endif
+endfunc
 
-" func Test_ref_job_partial_dict()
-"   let g:ref_job = job_start('echo')
-"   let d = {'a': 'b'}
-"   call job_setoptions(g:ref_job, {'exit_cb': function('string', [], d)})
-" endfunc
+func Test_ref_job_partial_dict()
+  if has('job')
+    let g:ref_job = job_start('echo')
+    let d = {'a': 'b'}
+    call job_setoptions(g:ref_job, {'exit_cb': function('string', [], d)})
+    call test_garbagecollect_now()
+  endif
+endfunc
 
 func Test_auto_partial_rebind()
   let dict1 = {'name': 'dict1'}
@@ -356,6 +367,18 @@ func Test_compare_partials()
   call assert_true(F1 isnot# F2)  " Different functions
   call assert_true(F1 isnot# F1d1)  " Partial /= non-partial
   call assert_true(d1.f1 isnot# d1.f1)  " handle_subscript creates new partial each time
+
+  " compare two null partials
+  " Nvim doesn't have null partials
+  " let N1 = test_null_partial()
+  let N1 = function('min')
+  let N2 = N1
+  call assert_true(N1 is N2)
+  call assert_true(N1 == N2)
+
+  " compare a partial and a null partial
+  call assert_false(N1 == F1)
+  call assert_false(F1 is N1)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
