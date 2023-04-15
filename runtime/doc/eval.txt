@@ -2569,20 +2569,20 @@ text...
 			{endmarker}.
 
 			If "eval" is not specified, then each line of text is
-			used as a |literal-string|.  If "eval" is specified,
-			then any Vim expression in the form ``={expr}`` is
-			evaluated and the result replaces the expression.
+			used as a |literal-string|, except that single quotes
+			doe not need to be doubled.
+			If "eval" is specified, then any Vim expression in the
+			form {expr} is evaluated and the result replaces the
+			expression, like with |interp-string|.
 			Example where $HOME is expanded: >
 				let lines =<< trim eval END
 				  some text
-				  See the file `=$HOME`/.vimrc
+				  See the file {$HOME}/.vimrc
 				  more text
 				END
 <			There can be multiple Vim expressions in a single line
 			but an expression cannot span multiple lines.  If any
 			expression evaluation fails, then the assignment fails.
-			once the "`=" has been found {expr} and a backtick
-			must follow.  {expr} cannot be empty.
 
 			{endmarker} must not contain white space.
 			{endmarker} cannot start with a lower case character.
@@ -2635,10 +2635,10 @@ text...
 				DATA
 
 				let code =<< trim eval CODE
-				   let v = `=10 + 20`
-				   let h = "`=$HOME`"
-				   let s = "`=Str1()` abc `=Str2()`"
-				   let n = `=MyFunc(3, 4)`
+				   let v = {10 + 20}
+				   let h = "{$HOME}"
+				   let s = "{Str1()} abc {Str2()}"
+				   let n = {MyFunc(3, 4)}
 				CODE
 <
 								*E121*
