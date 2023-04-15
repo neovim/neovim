@@ -56,6 +56,9 @@ if has('timers')
   endfunc
 
   func Test_cursorhold_insert()
+    " depends on timing
+    let g:test_is_flaky = 1
+
     " Need to move the cursor.
     call feedkeys("ggG", "xt")
 
@@ -3627,6 +3630,7 @@ func SetupVimTest_shm()
   let g:bwe = []
   let g:brp = []
   set shortmess+=F
+  messages clear
 
   let dirname='XVimTestSHM'
   call mkdir(dirname, 'R')
