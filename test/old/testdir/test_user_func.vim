@@ -532,4 +532,36 @@ func Test_funcdef_alloc_failure()
   bw!
 endfunc
 
+func AddDefer(arg)
+  call extend(g:deferred, [a:arg])
+endfunc
+
+func WithDeferTwo()
+  call extend(g:deferred, ['in Two'])
+  for nr in range(3)
+    defer AddDefer('Two' .. nr)
+  endfor
+  call extend(g:deferred, ['end Two'])
+endfunc
+
+func WithDeferOne()
+  call extend(g:deferred, ['in One'])
+  call writefile(['text'], 'Xfuncdefer')
+  defer delete('Xfuncdefer')
+  defer AddDefer('One')
+  call WithDeferTwo()
+  call extend(g:deferred, ['end One'])
+endfunc
+
+func Test_defer()
+  let g:deferred = []
+  call WithDeferOne()
+
+  call assert_equal(['in One', 'in Two', 'end Two', 'Two2', 'Two1', 'Two0', 'end One', 'One'], g:deferred)
+  unlet g:deferred
+
+  call assert_equal('', glob('Xfuncdefer'))
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -715,6 +715,18 @@ module.cmds = {
     func='ex_debuggreedy',
   },
   {
+    command='def',
+    flags=bit.bor(EXTRA, BANG, SBOXOK, CMDWIN, LOCK_OK),
+    addr_type='ADDR_NONE',
+    func='ex_ni',
+  },
+  {
+    command='defer',
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, CMDWIN, LOCK_OK),
+    addr_type='ADDR_NONE',
+    func='ex_call',
+  },
+  {
     command='delcommand',
     flags=bit.bor(BANG, NEEDARG, WORD1, TRLBAR, CMDWIN, LOCK_OK),
     addr_type='ADDR_NONE',

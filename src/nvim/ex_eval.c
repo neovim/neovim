@@ -1966,7 +1966,7 @@ void rewind_conditionals(cstack_T *cstack, int idx, int cond_type, int *cond_lev
 /// Handle ":endfunction" when not after a ":function"
 void ex_endfunction(exarg_T *eap)
 {
-  emsg(_("E193: :endfunction not inside a function"));
+  semsg(_(e_str_not_inside_function), ":endfunction");
 }
 
 /// @return  true if the string "p" looks like a ":while" or ":for" command.
