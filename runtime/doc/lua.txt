@@ -1746,6 +1746,21 @@ is_callable({f})                                           *vim.is_callable()*
 iter({src})                                                       *vim.iter()*
     Create an Iter |lua-iter| object from a table or iterator.
 
+    The input value can be a table (either a list-like table with consecutive
+    numeric indices beginning from 1, or a map-like table) or a function
+    iterator (see |luaref-in|).
+
+    This function wraps the input value into an interface which allows
+    chaining multiple pipeline stages in an efficient manner. Each pipeline
+    stage receives as input the output values from the prior stage. The values
+    used in the first stage of the pipeline depend on the type passed to this
+    function:
+
+    • List-like tables pass only the value of each element
+    • Map-like tables pass both the key and value of each element
+    • Function iterators pass all of the values returned by their respective
+      function
+
     Examples: >lua
 
      local it = vim.iter({ 1, 2, 3, 4, 5 })
@@ -1757,6 +1772,11 @@ iter({src})                                                       *vim.iter()*
      it:totable()
      -- { 15, 12, 9 }
 
+     vim.iter(ipairs({ 1, 2, 3, 4, 5 })):filter(function(i, v)
+       return i > 2
+     end):totable()
+     -- { 3, 4, 5 }
+
      local it = vim.iter(vim.gsplit('1,2,3,4,5', ','))
      it:filtermap(function(s) return tonumber(s) end)
      for i, d in it:enumerate() do
@@ -1767,6 +1787,11 @@ iter({src})                                                       *vim.iter()*
      -- Column 3 is 3
      -- Column 4 is 4
      -- Column 5 is 5
+
+     vim.iter({ a = 1, b = 2, c = 3, z = 26 }):any(function(k, v)
+       return k == 'z'
+     end)
+     -- true
 <
 
     Parameters: ~
@@ -3260,26 +3285,32 @@ Iter:slice({self}, {first}, {last})                             *Iter:slice()*
         Iter
 
 Iter:totable({self})                                          *Iter:totable()*
-    Drain the iterator into a table.
+    Collect the iterator into a table.
 
-    The final stage in the iterator pipeline must return 1 or 2 values. If
-    only one value is returned, or if two values are returned and the first
-    value is a number, an "array-like" table is returned. Otherwise, the first
-    return value is used as the table key and the second return value as the
-    table value.
+    The resulting table depends on the initial source in the iterator
+    pipeline. List-like tables and function iterators will be collected into a
+    list-like table. If multiple values are returned from the final stage in
+    the iterator pipeline, each value will be included in a table. If a
+    map-like table was used as the initial source, then a map-like table is
+    returned.
 
-    Example: >lua
+    Examples: >lua
 
-     local it1 = vim.iter(string.gmatch('100 20 50', 'd+')):filtermap(tonumber)
-     it1:totable()
+     vim.iter(string.gmatch('100 20 50', 'd+')):filtermap(tonumber):totable()
      -- { 100, 20, 50 }
+
+     vim.iter({ 1, 2, 3 }):filtermap(function(v) return v, 2 * v end):totable()
+     -- { { 1, 2 }, { 2, 4 }, { 3, 6 } }
+
+     vim.iter({ a = 1, b = 2, c = 3 }):filter(function(k, v) return v % 2 ~= 0 end):totable()
+     -- { a = 1, c = 3 }
 <
 
     Return: ~
         (table)
 
 new({src}, {...})                                                      *new()*
-    Create a new Iter object from a table of value.
+    Create a new Iter object from a table or iterator.
 
     Parameters: ~
       • {src}  table|function Table or iterator to drain values from

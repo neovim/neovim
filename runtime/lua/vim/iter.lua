@@ -162,18 +162,23 @@ function ListIter.each(self, f)
   self._head = self._tail
 end
 
---- Drain the iterator into a table.
+--- Collect the iterator into a table.
 ---
---- The final stage in the iterator pipeline must return 1 or 2 values. If only one value is
---- returned, or if two values are returned and the first value is a number, an "array-like" table
---- is returned. Otherwise, the first return value is used as the table key and the second return
---- value as the table value.
+--- The resulting table depends on the initial source in the iterator pipeline. List-like tables
+--- and function iterators will be collected into a list-like table. If multiple values are returned
+--- from the final stage in the iterator pipeline, each value will be included in a table. If a
+--- map-like table was used as the initial source, then a map-like table is returned.
 ---
---- Example:
+--- Examples:
 --- <pre>lua
---- local it1 = vim.iter(string.gmatch('100 20 50', '%d+')):filtermap(tonumber)
---- it1:totable()
+--- vim.iter(string.gmatch('100 20 50', '%d+')):filtermap(tonumber):totable()
 --- -- { 100, 20, 50 }
+---
+--- vim.iter({ 1, 2, 3 }):filtermap(function(v) return v, 2 * v end):totable()
+--- -- { { 1, 2 }, { 2, 4 }, { 3, 6 } }
+---
+--- vim.iter({ a = 1, b = 2, c = 3 }):filter(function(k, v) return v % 2 ~= 0 end):totable()
+--- -- { a = 1, c = 3 }
 --- </pre>
 ---
 ---@return table
@@ -694,7 +699,7 @@ function ListIter.enumerate(self)
   return self
 end
 
---- Create a new Iter object from a table of value.
+--- Create a new Iter object from a table or iterator.
 ---
 ---@param src table|function Table or iterator to drain values from
 ---@return Iter

@@ -886,6 +886,20 @@ end
 
 --- Create an Iter |lua-iter| object from a table or iterator.
 ---
+--- The input value can be a table (either a list-like table with consecutive
+--- numeric indices beginning from 1, or a map-like table) or a function
+--- iterator (see |luaref-in|).
+---
+--- This function wraps the input value into an interface which allows chaining
+--- multiple pipeline stages in an efficient manner. Each pipeline stage
+--- receives as input the output values from the prior stage. The values used in
+--- the first stage of the pipeline depend on the type passed to this function:
+---
+--- - List-like tables pass only the value of each element
+--- - Map-like tables pass both the key and value of each element
+--- - Function iterators pass all of the values returned by their respective
+---   function
+---
 --- Examples:
 --- <pre>lua
 --- local it = vim.iter({ 1, 2, 3, 4, 5 })
@@ -897,6 +911,11 @@ end
 --- it:totable()
 --- -- { 15, 12, 9 }
 ---
+--- vim.iter(ipairs({ 1, 2, 3, 4, 5 })):filter(function(i, v)
+---   return i > 2
+--- end):totable()
+--- -- { 3, 4, 5 }
+---
 --- local it = vim.iter(vim.gsplit('1,2,3,4,5', ','))
 --- it:filtermap(function(s) return tonumber(s) end)
 --- for i, d in it:enumerate() do
@@ -907,6 +926,11 @@ end
 --- -- Column 3 is 3
 --- -- Column 4 is 4
 --- -- Column 5 is 5
+---
+--- vim.iter({ a = 1, b = 2, c = 3, z = 26 }):any(function(k, v)
+---   return k == 'z'
+--- end)
+--- -- true
 --- </pre>
 ---
 ---@see |lua-iter|
