@@ -1,10 +1,6 @@
 --- Iterator implementation.
 
 ---@class Iter
----@field next function Return the next value in the iterator
----@field _table ?table Underlying table data (table iterators only)
----@field _head ?number Index to the front of a table iterator (table iterators only)
----@field _tail ?number Index to the end of a table iterator (table iterators only)
 local Iter = {}
 Iter.__index = Iter
 Iter.__call = function(self)
@@ -12,6 +8,10 @@ Iter.__call = function(self)
 end
 
 --- Special case implementations for iterators on list-like tables.
+---@class ListIter : Iter
+---@field _table table Underlying table data (table iterators only)
+---@field _head number Index to the front of a table iterator (table iterators only)
+---@field _tail number Index to the end of a table iterator (table iterators only)
 local ListIter = {}
 ListIter.__index = setmetatable(ListIter, Iter)
 ListIter.__call = function(self)
@@ -19,6 +19,7 @@ ListIter.__call = function(self)
 end
 
 --- Special case implementations for iterators on map-like tables.
+---@class MapIter : Iter
 local MapIter = {}
 MapIter.__index = setmetatable(MapIter, Iter)
 MapIter.__call = function(self)
@@ -189,7 +190,7 @@ function Iter.totable(self)
 end
 
 ---@private
-function ListIter.totable(self, opts)
+function ListIter.totable(self)
   -- Skip a table copy if possible
   if self._head == 1 and self._tail == #self._table + 1 then
     return self._table
