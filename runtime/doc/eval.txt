@@ -1407,7 +1407,7 @@ to be doubled.  These two commands are equivalent: >
 
 
 ------------------------------------------------------------------------------
-interpolated-string					*interp-string*
+interpolated-string				*$quote* *interpolated-string*
 
 $"string"		interpolated string constant		*expr-$quote*
 $'string'		interpolated literal string constant	*expr-$'*
@@ -2578,10 +2578,10 @@ text...
 
 			If "eval" is not specified, then each line of text is
 			used as a |literal-string|, except that single quotes
-			doe not need to be doubled.
+			does not need to be doubled.
 			If "eval" is specified, then any Vim expression in the
 			form {expr} is evaluated and the result replaces the
-			expression, like with |interp-string|.
+			expression, like with |interpolated-string|.
 			Example where $HOME is expanded: >
 				let lines =<< trim eval END
 				  some text
