@@ -93,11 +93,13 @@ function ListIter.filter(self, f)
   return self
 end
 
---- Add a map and filter step to the iterator pipeline.
+--- Add a map step to the iterator pipeline.
+---
+--- If the map function returns nil, the value is filtered from the iterator.
 ---
 --- Example:
 --- <pre>lua
---- local it = vim.iter({ 1, 2, 3, 4 }):filtermap(function(v)
+--- local it = vim.iter({ 1, 2, 3, 4 }):map(function(v)
 ---   if v % 2 == 0 then
 ---     return v * 3
 ---   end
@@ -111,7 +113,7 @@ end
 ---                            which are used in the next pipeline stage. Nil return values returned
 ---                            are filtered from the output.
 ---@return Iter
-function Iter.filtermap(self, f)
+function Iter.map(self, f)
   ---@private
   local function fn(...)
     local result = nil
@@ -136,7 +138,7 @@ function Iter.filtermap(self, f)
 end
 
 ---@private
-function ListIter.filtermap(self, f)
+function ListIter.map(self, f)
   local inc = self._head < self._tail and 1 or -1
   local n = self._head
   for i = self._head, self._tail - inc, inc do
@@ -153,7 +155,7 @@ end
 --- Call a function once for each item in the pipeline.
 ---
 --- This is used for functions which have side effects. To modify the values in the iterator, use
---- |Iter:filtermap()|.
+--- |Iter:map()|.
 ---
 --- This function drains the iterator.
 ---
@@ -189,10 +191,10 @@ end
 ---
 --- Examples:
 --- <pre>lua
---- vim.iter(string.gmatch('100 20 50', '%d+')):filtermap(tonumber):totable()
+--- vim.iter(string.gmatch('100 20 50', '%d+')):map(tonumber):totable()
 --- -- { 100, 20, 50 }
 ---
---- vim.iter({ 1, 2, 3 }):filtermap(function(v) return v, 2 * v end):totable()
+--- vim.iter({ 1, 2, 3 }):map(function(v) return v, 2 * v end):totable()
 --- -- { { 1, 2 }, { 2, 4 }, { 3, 6 } }
 ---
 --- vim.iter({ a = 1, b = 2, c = 3 }):filter(function(k, v) return v % 2 ~= 0 end):totable()
@@ -270,7 +272,7 @@ end
 --- Example:
 --- <pre>lua
 ---
---- local it = vim.iter(string.gmatch('1 2 3', '%d+')):filtermap(tonumber)
+--- local it = vim.iter(string.gmatch('1 2 3', '%d+')):map(tonumber)
 --- it:next()
 --- -- 1
 --- it:next()
@@ -734,7 +736,7 @@ end
 ---@return Iter
 function Iter.enumerate(self)
   local i = 0
-  return self:filtermap(function(...)
+  return self:map(function(...)
     i = i + 1
     return i, ...
   end)

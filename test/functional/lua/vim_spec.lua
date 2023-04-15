@@ -3044,7 +3044,7 @@ describe('lua stdlib', function()
       do
         local it = vim.iter(ipairs(t))
         it:filter(function(i, v) return i > 1 and v < 5 end)
-        it:filtermap(function(_, v) return v * 2 end)
+        it:map(function(_, v) return v * 2 end)
         eq({ 4, 6, 8 }, it:totable())
       end
 
@@ -3052,13 +3052,13 @@ describe('lua stdlib', function()
       eq({'the', 'fox'}, it:filter(function(s) return #s <= 3 end):totable())
     end)
 
-    it('filtermap()', function()
+    it('map()', function()
       local t = { 1, 2, 3, 4, 5 }
       eq(
         { 2, 4, 6, 8, 10 },
         vim
         .iter(t)
-        :filtermap(function(v)
+        :map(function(v)
           return 2 * v
         end)
         :totable()
@@ -3078,7 +3078,7 @@ describe('lua stdlib', function()
         { 'Lion 2', 'Lion 4' },
         vim
         .iter(it)
-        :filtermap(function(s)
+        :map(function(s)
           local lnum = s:match('(%d+)')
           if lnum and tonumber(lnum) % 2 == 0 then
             return vim.trim(s:gsub('Line', 'Lion'))
@@ -3091,7 +3091,7 @@ describe('lua stdlib', function()
     it('for loops', function()
       local t = {1, 2, 3, 4, 5}
       local acc = 0
-      for v in vim.iter(t):filtermap(function(v) return v * 3 end) do
+      for v in vim.iter(t):map(function(v) return v * 3 end) do
         acc = acc + v
       end
       eq(45, acc)
@@ -3099,18 +3099,18 @@ describe('lua stdlib', function()
 
     it('totable()', function()
       do
-        local it = vim.iter({1, 2, 3}):filtermap(function(v) return v, v*v end)
+        local it = vim.iter({1, 2, 3}):map(function(v) return v, v*v end)
         eq({{1, 1}, {2, 4}, {3, 9}}, it:totable())
       end
 
       do
-        local it = vim.iter(string.gmatch('1,4,lol,17,blah,2,9,3', '%d+')):filtermap(tonumber)
+        local it = vim.iter(string.gmatch('1,4,lol,17,blah,2,9,3', '%d+')):map(tonumber)
         eq({1, 4, 17, 2, 9, 3}, it:totable())
       end
     end)
 
     it('next()', function()
-      local it = vim.iter({1, 2, 3}):filtermap(function(v) return 2 * v end)
+      local it = vim.iter({1, 2, 3}):map(function(v) return 2 * v end)
       eq(2, it:next())
       eq(4, it:next())
       eq(6, it:next())
@@ -3375,7 +3375,7 @@ describe('lua stdlib', function()
 
     it('handles map-like tables', function()
       local t = { a = 1, b = 2, c = 3 }
-      local it = vim.iter(t):filtermap(function(k, v)
+      local it = vim.iter(t):map(function(k, v)
         if v % 2 ~= 0 then
           return k:upper(), v * 2
         end
