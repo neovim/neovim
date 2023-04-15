@@ -4140,7 +4140,7 @@ int eval_interp_string(char **arg, typval_T *rettv, bool evaluate)
       (*arg)++;
       break;
     }
-    char *p = eval_one_expr_in_str(*arg, &ga);
+    char *p = eval_one_expr_in_str(*arg, &ga, evaluate);
     if (p == NULL) {
       ret = FAIL;
       break;

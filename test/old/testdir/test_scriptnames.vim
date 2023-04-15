@@ -35,9 +35,7 @@ func Test_getscriptinfo()
   source Xscript
   let l = getscriptinfo()
   call assert_match('Xscript$', l[-1].name)
-  " Nvim does not support interpolated strings yet.
-  " call assert_equal(g:loaded_script_id, $"<SNR>{l[-1].sid}_")
-  call assert_equal(g:loaded_script_id, '<SNR>' . l[-1].sid . '_')
+  call assert_equal(g:loaded_script_id, $"<SNR>{l[-1].sid}_")
   call delete('Xscript')
 endfunc
 

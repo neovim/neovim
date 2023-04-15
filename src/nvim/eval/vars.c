@@ -55,8 +55,9 @@ static const char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s")
 
 /// Evaluate one Vim expression {expr} in string "p" and append the
 /// resulting string to "gap".  "p" points to the opening "{".
+/// When "evaluate" is false only skip over the expression.
 /// Return a pointer to the character after "}", NULL for an error.
-char *eval_one_expr_in_str(char *p, garray_T *gap)
+char *eval_one_expr_in_str(char *p, garray_T *gap, bool evaluate)
 {
   char *block_start = skipwhite(p + 1);  // skip the opening {
   char *block_end = block_start;
@@ -73,14 +74,16 @@ char *eval_one_expr_in_str(char *p, garray_T *gap)
     semsg(_(e_missing_close_curly_str), p);
     return NULL;
   }
-  *block_end = NUL;
-  char *expr_val = eval_to_string(block_start, true);
-  *block_end = '}';
-  if (expr_val == NULL) {
-    return NULL;
+  if (evaluate) {
+    *block_end = NUL;
+    char *expr_val = eval_to_string(block_start, true);
+    *block_end = '}';
+    if (expr_val == NULL) {
+      return NULL;
+    }
+    ga_concat(gap, expr_val);
+    xfree(expr_val);
   }
-  ga_concat(gap, expr_val);
-  xfree(expr_val);
 
   return block_end + 1;
 }
@@ -129,7 +132,7 @@ char *eval_all_expr_in_str(char *str)
     }
 
     // Evaluate the expression and append the result.
-    p = eval_one_expr_in_str(p, &ga);
+    p = eval_one_expr_in_str(p, &ga, true);
     if (p == NULL) {
       ga_clear(&ga);
       return NULL;
