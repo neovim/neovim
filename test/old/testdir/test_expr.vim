@@ -596,8 +596,8 @@ endfunc
 
 func Test_function_with_funcref()
   let lines =<< trim END
-      VAR s:F = function('type')
-      VAR s:Fref = function(s:F)
+      let s:F = function('type')
+      let s:Fref = function(s:F)
       call assert_equal(v:t_string, s:Fref('x'))
       call assert_fails("call function('s:F')", 'E700:')
 
@@ -605,17 +605,34 @@ func Test_function_with_funcref()
       call assert_fails("call function('foo()')", 'foo()')
       call assert_fails("function('')", 'E129:')
 
-      legacy let s:Len = {s -> strlen(s)}
+      let s:Len = {s -> strlen(s)}
       call assert_equal(6, s:Len('foobar'))
-      VAR name = string(s:Len)
-      #" can evaluate "function('<lambda>99')"
-      call execute('VAR Ref = ' .. name)
+      let name = string(s:Len)
+      " can evaluate "function('<lambda>99')"
+      call execute('let Ref = ' .. name)
       call assert_equal(4, Ref('text'))
   END
-  call CheckTransLegacySuccess(lines)
-  " skip CheckTransDefSuccess(), cannot assign to script variable
-  call map(lines, {k, v -> v =~ 'legacy' ? v : substitute(v, 's:', '', 'g')})
-  call CheckTransVim9Success(lines)
+  call CheckScriptSuccess(lines)
+
+  let lines =<< trim END
+      vim9script
+      var F = function('type')
+      var Fref = function(F)
+      call assert_equal(v:t_string, Fref('x'))
+      call assert_fails("call function('F')", 'E700:')
+
+      call assert_fails("call function('foo()')", 'E475:')
+      call assert_fails("call function('foo()')", 'foo()')
+      call assert_fails("function('')", 'E129:')
+
+      var Len = (s) => strlen(s)
+      call assert_equal(6, Len('foobar'))
+      var name = string(Len)
+      # can evaluate "function('<lambda>99')"
+      call execute('var Ref = ' .. name)
+      call assert_equal(4, Ref('text'))
+  END
+  call CheckScriptSuccess(lines)
 endfunc
 
 func Test_funcref()
