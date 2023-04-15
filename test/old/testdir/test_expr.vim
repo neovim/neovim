@@ -45,7 +45,7 @@ func Test_version()
   call assert_false(has('patch-9.9.1'))
 endfunc
 
-func Test_op_trinary()
+func Test_op_ternary()
   let lines =<< trim END
       call assert_equal('yes', 1 ? 'yes' : 'no')
       call assert_equal('no', 0 ? 'yes' : 'no')
