@@ -403,6 +403,16 @@ func Test_ask_yesno()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_null()
+  echom test_null_list()
+  echom test_null_dict()
+  echom test_null_blob()
+  echom test_null_job()
+  echom test_null_string()
+  echom test_null_channel()
+  echom test_null_partial()
+endfunc
+
 func Test_mapping_at_hit_return_prompt()
   nnoremap <C-B> :echo "hit ctrl-b"<CR>
   call feedkeys(":ls\<CR>", "xt")
