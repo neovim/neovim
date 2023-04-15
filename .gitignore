@@ -1,7 +1,9 @@
 # Tools
+/.direnv/
 /venv/
 compile_commands.json
 /.luarc.json
+/.envrc
 
 # IDEs
 /.vs/
