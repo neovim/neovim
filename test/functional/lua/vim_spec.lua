@@ -3041,6 +3041,13 @@ describe('lua stdlib', function()
       eq({ 2, 4 }, vim.iter(t):filter(function(v) return not odd(v) end):totable())
       eq({}, vim.iter(t):filter(function(v) if v > 5 then return v end end):totable())
 
+      do
+        local it = vim.iter(ipairs(t))
+        it:filter(function(i, v) return i > 1 and v < 5 end)
+        it:filtermap(function(_, v) return v * 2 end)
+        eq({ 4, 6, 8 }, it:totable())
+      end
+
       local it = vim.iter(string.gmatch('the quick brown fox', '%w+'))
       eq({'the', 'fox'}, it:filter(function(s) return #s <= 3 end):totable())
     end)

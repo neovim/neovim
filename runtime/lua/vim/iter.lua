@@ -54,17 +54,26 @@ end
 ---                            removed.
 ---@return Iter
 function Iter.filter(self, f)
-  local next = self.next
-  self.next = function(this)
-    while true do
-      local args = pack(next(this))
-      if args == nil then
-        break
-      end
-      if f(unpack(args)) then
-        return unpack(args)
+  ---@private
+  local function fn(...)
+    local result = nil
+    if select(1, ...) ~= nil then
+      if not f(...) then
+        return true, nil
+      else
+        result = pack(...)
       end
     end
+    return false, result
+  end
+
+  local next = self.next
+  self.next = function(this)
+    local cont, result
+    repeat
+      cont, result = fn(next(this))
+    until not cont
+    return unpack(result)
   end
   return self
 end
@@ -103,18 +112,25 @@ end
 ---                            are filtered from the output.
 ---@return Iter
 function Iter.filtermap(self, f)
-  local next = self.next
-  self.next = function(this)
-    while true do
-      local args = pack(next(this))
-      if args == nil then
-        break
-      end
-      local result = pack(f(unpack(args)))
-      if result ~= nil then
-        return unpack(result)
+  ---@private
+  local function fn(...)
+    local result = nil
+    if select(1, ...) ~= nil then
+      result = pack(f(...))
+      if result == nil then
+        return true, nil
       end
     end
+    return false, result
+  end
+
+  local next = self.next
+  self.next = function(this)
+    local cont, result
+    repeat
+      cont, result = fn(next(this))
+    until not cont
+    return unpack(result)
   end
   return self
 end
@@ -144,12 +160,14 @@ end
 ---@param f function(...) Function to execute for each item in the pipeline. Takes all of the
 ---                        values returned by the previous stage in the pipeline as arguments.
 function Iter.each(self, f)
-  while true do
-    local args = pack(self:next())
-    if args == nil then
-      break
+  ---@private
+  local function fn(...)
+    if select(1, ...) ~= nil then
+      f(...)
+      return true
     end
-    f(unpack(args))
+  end
+  while fn(self:next()) do
   end
 end
 
@@ -184,6 +202,7 @@ end
 ---@return table
 function Iter.totable(self)
   local t = {}
+
   while true do
     local args = pack(self:next())
     if args == nil then
@@ -200,12 +219,7 @@ function ListIter.totable(self)
     return self._table
   end
 
-  local t = {}
-  local inc = self._head < self._tail and 1 or -1
-  for i = self._head, self._tail - inc, inc do
-    t[#t + 1] = self._table[i]
-  end
-  return t
+  return Iter.totable(self)
 end
 
 ---@private
@@ -226,12 +240,17 @@ end
 ---@return A
 function Iter.fold(self, init, f)
   local acc = init
-  while true do
-    local args = pack(self.next())
-    if args == nil then
-      break
+
+  --- Use a closure to handle var args returned from iterator
+  ---@private
+  local function fn(...)
+    if select(1, ...) ~= nil then
+      acc = f(acc, ...)
+      return true
     end
-    acc = f(acc, unpack(args))
+  end
+
+  while fn(self:next()) do
   end
   return acc
 end
@@ -362,16 +381,23 @@ function Iter.find(self, f)
     end
   end
 
-  while true do
-    local cur = pack(self:next())
-    if cur == nil then
-      break
-    end
+  local result = nil
 
-    if f(unpack(cur)) then
-      return unpack(cur)
+  --- Use a closure to handle var args returned from iterator
+  ---@private
+  local function fn(...)
+    if select(1, ...) ~= nil then
+      if f(...) then
+        result = pack(...)
+      else
+        return true
+      end
     end
   end
+
+  while fn(self:next()) do
+  end
+  return unpack(result)
 end
 
 --- Find the first value in the iterator that satisfies the given predicate, starting from the end.
@@ -599,15 +625,20 @@ end
 ---                                predicate matches.
 function Iter.any(self, pred)
   local any = false
-  while true do
-    local args = pack(self:next())
-    if args == nil then
-      break
+
+  --- Use a closure to handle var args returned from iterator
+  ---@private
+  local function fn(...)
+    if select(1, ...) ~= nil then
+      if pred(...) then
+        any = true
+      else
+        return true
+      end
     end
-    if pred(unpack(args)) then
-      any = true
-      break
-    end
+  end
+
+  while fn(self:next()) do
   end
   return any
 end
@@ -619,15 +650,19 @@ end
 ---                                predicate matches.
 function Iter.all(self, pred)
   local all = true
-  while true do
-    local args = pack(self:next())
-    if args == nil then
-      break
+
+  ---@private
+  local function fn(...)
+    if select(1, ...) ~= nil then
+      if not pred(...) then
+        all = false
+      else
+        return true
+      end
     end
-    if not pred(unpack(args)) then
-      all = false
-      break
-    end
+  end
+
+  while fn(self:next()) do
   end
   return all
 end
@@ -740,13 +775,20 @@ function Iter.new(src, ...)
 
   if type(src) == 'function' then
     local s, var = ...
-    function it.next()
-      local vars = pack(src(s, var))
-      if vars ~= nil then
-        var = vars[1]
-        return unpack(vars)
+
+    --- Use a closure to handle var args returned from iterator
+    ---@private
+    local function fn(...)
+      if select(1, ...) ~= nil then
+        var = select(1, ...)
+        return ...
       end
     end
+
+    function it.next()
+      return fn(src(s, var))
+    end
+
     setmetatable(it, Iter)
   else
     error('src must be a table or function')
