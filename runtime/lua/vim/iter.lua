@@ -7,7 +7,7 @@ Iter.__call = function(self)
   return self:next()
 end
 
---- Special case implementations for iterators on list-like tables.
+--- Special case implementations for iterators on list tables.
 ---@class ListIter : Iter
 ---@field _table table Underlying table data (table iterators only)
 ---@field _head number Index to the front of a table iterator (table iterators only)
@@ -18,11 +18,11 @@ ListIter.__call = function(self)
   return self:next()
 end
 
---- Special case implementations for iterators on map-like tables.
----@class MapIter : Iter
-local MapIter = {}
-MapIter.__index = setmetatable(MapIter, Iter)
-MapIter.__call = function(self)
+--- Special case implementations for iterators on non-list tables.
+---@class TableIter : Iter
+local TableIter = {}
+TableIter.__index = setmetatable(TableIter, Iter)
+TableIter.__call = function(self)
   return self:next()
 end
 
@@ -196,8 +196,7 @@ end
 
 ---@private
 function ListIter.totable(self)
-  -- Skip a table copy if possible
-  if self._head == 1 and self._tail == #self._table + 1 then
+  if self._head == 1 and self._tail == #self._table + 1 and self.next == ListIter.next then
     return self._table
   end
 
@@ -210,7 +209,7 @@ function ListIter.totable(self)
 end
 
 ---@private
-function MapIter.totable(self)
+function TableIter.totable(self)
   local t = {}
   for k, v in self do
     t[k] = v
@@ -396,6 +395,11 @@ end
 ---
 ---@return any
 function Iter.rfind(self, f) -- luacheck: no unused args
+  error('rfind() requires a list-like table')
+end
+
+---@private
+function ListIter.rfind(self, f) -- luacheck: no unused args
   if type(f) ~= 'function' then
     local val = f
     f = function(v)
@@ -403,16 +407,15 @@ function Iter.rfind(self, f) -- luacheck: no unused args
     end
   end
 
-  while true do
-    local cur = pack(self:nextback())
-    if cur == nil then
-      break
-    end
-
-    if f(unpack(cur)) then
-      return unpack(cur)
+  local inc = self._head < self._tail and 1 or -1
+  for i = self._tail - inc, self._head, -inc do
+    local v = self._table[i]
+    if f(unpack(v)) then
+      self._tail = i
+      return unpack(v)
     end
   end
+  self._head = self._tail
 end
 
 --- Return the next value from the end of the iterator.
@@ -667,6 +670,19 @@ end
 
 --- Add an iterator stage that returns the current iterator count as well as the iterator value.
 ---
+--- For list tables, prefer
+--- <pre>lua
+--- vim.iter(ipairs(t))
+--- </pre>
+---
+--- over
+---
+--- <pre>lua
+--- vim.iter(t):enumerate()
+--- </pre>
+---
+--- as the former is faster.
+---
 --- Example:
 --- <pre>lua
 ---
@@ -715,7 +731,7 @@ function Iter.new(src, ...)
       count = count + 1
       local v = src[count]
       if v == nil then
-        return MapIter.new(src)
+        return TableIter.new(src)
       end
       t[count] = v
     end
@@ -752,12 +768,12 @@ function ListIter.new(t)
   return it
 end
 
---- Create a new MapIter
+--- Create a new TableIter
 ---
 ---@param t table Table to iterate over. For list-like tables, use ListIter.new instead.
 ---@return Iter
 ---@private
-function MapIter.new(t)
+function TableIter.new(t)
   local it = {}
 
   local index = nil
@@ -769,7 +785,7 @@ function MapIter.new(t)
     end
   end
 
-  setmetatable(it, MapIter)
+  setmetatable(it, TableIter)
   return it
 end
 

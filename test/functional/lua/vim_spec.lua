@@ -3322,7 +3322,7 @@ describe('lua stdlib', function()
 
       do
         local it = vim.iter(vim.gsplit('AbCdE', ''))
-        matches('nextback%(%) requires a list%-like table', pcall_err(it.rfind, it, 'E'))
+        matches('rfind%(%) requires a list%-like table', pcall_err(it.rfind, it, 'E'))
       end
     end)
 
