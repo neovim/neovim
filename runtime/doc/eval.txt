@@ -1417,14 +1417,22 @@ allowing the inclusion of Vim script expressions (see |expr1|).  Any
 expression returning a value can be enclosed between curly braces.  The value
 is converted to a string.  All the text and results of the expressions
 are concatenated to make a new string.
-
+								*E1278*
 To include an opening brace '{' or closing brace '}' in the string content
-double it.
+double it.  For double quoted strings using a backslash also works.  A single
+closing brace '}' will result in an error.
 
 Examples: >
 	let your_name = input("What's your name? ")
+<	What's your name?  Peter ~
+>
+	echo
 	echo $"Hello, {your_name}!"
-	echo $"The square root of 9 is {sqrt(9)}"
+<	Hello, Peter! ~
+>
+	echo $"The square root of {{9}} is {sqrt(9)}"
+<	The square root of {9} is 3.0 ~
+
 
 ------------------------------------------------------------------------------
 option						*expr-option* *E112* *E113*
