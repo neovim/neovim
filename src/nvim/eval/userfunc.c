@@ -2015,12 +2015,11 @@ static void list_functions(regmatch_T *regmatch)
     if (!HASHITEM_EMPTY(hi)) {
       ufunc_T *fp = HI2UF(hi);
       todo--;
-      if ((fp->uf_flags & FC_DEAD) == 0
-          && (regmatch == NULL
-              ? (!message_filtered(fp->uf_name)
-                 && !func_name_refcount(fp->uf_name))
-              : (!isdigit((uint8_t)(*fp->uf_name))
-                 && vim_regexec(regmatch, fp->uf_name, 0)))) {
+      if (regmatch == NULL
+          ? (!message_filtered(fp->uf_name)
+             && !func_name_refcount(fp->uf_name))
+          : (!isdigit((uint8_t)(*fp->uf_name))
+             && vim_regexec(regmatch, fp->uf_name, 0))) {
         list_func_head(fp, false, false);
         if (changed != func_hashtab.ht_changed) {
           emsg(_("E454: function list was modified"));

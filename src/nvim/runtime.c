@@ -2368,8 +2368,8 @@ static list_T *get_script_local_funcs(scid_T sid)
   // looking for functions with script ID "sid".
   HASHTAB_ITER(functbl, hi, {
     const ufunc_T *const fp = HI2UF(hi);
-    // Add active functions with script id == "sid"
-    if (!(fp->uf_flags & FC_DEAD) && (fp->uf_script_ctx.sc_sid == sid)) {
+    // Add functions with script id == "sid"
+    if (fp->uf_script_ctx.sc_sid == sid) {
       const char *const name = fp->uf_name_exp != NULL ? fp->uf_name_exp : fp->uf_name;
       tv_list_append_string(l, name, -1);
     }
