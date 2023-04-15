@@ -1081,6 +1081,7 @@ func Test_null_dict()
   call assert_equal('{}', string(d))
   call assert_fails('let x = v:_null_dict[10]')
   call assert_equal({}, {})
+  call assert_equal(0, len(copy(d)))
 endfunc
 
 " Test for the indexof() function

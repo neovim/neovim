@@ -22,6 +22,9 @@ func Test_equal()
   call assert_false([base.method] == [instance.other])
 
   call assert_fails('echo base.method > instance.method')
+  " Nvim doesn't have null functions
+  " call assert_equal(0, test_null_function() == function('min'))
+  " call assert_equal(1, test_null_function() == test_null_function())
 endfunc
 
 func Test_version()
@@ -710,6 +713,26 @@ func Test_expr_eval_error()
   call assert_fails("let v = 10 + []", 'E745:')
   call assert_fails("let v = 10 / []", 'E745:')
   call assert_fails("let v = -{}", 'E728:')
+endfunc
+
+" Test for float value comparison
+func Test_float_compare()
+  CheckFeature float
+  call assert_true(1.2 == 1.2)
+  call assert_true(1.0 != 1.2)
+  call assert_true(1.2 > 1.0)
+  call assert_true(1.2 >= 1.2)
+  call assert_true(1.0 < 1.2)
+  call assert_true(1.2 <= 1.2)
+  call assert_true(+0.0 == -0.0)
+  " two NaNs (not a number) are not equal
+  call assert_true(sqrt(-4.01) != (0.0 / 0.0))
+  " two inf (infinity) are equal
+  call assert_true((1.0 / 0) == (2.0 / 0))
+  " two -inf (infinity) are equal
+  call assert_true(-(1.0 / 0) == -(2.0 / 0))
+  " +infinity != -infinity
+  call assert_true((1.0 / 0) != -(2.0 / 0))
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

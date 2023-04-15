@@ -789,6 +789,9 @@ int eval_expr_typval(const typval_T *expr, typval_T *argv, int argc, typval_T *r
     }
   } else if (expr->v_type == VAR_PARTIAL) {
     partial_T *const partial = expr->vval.v_partial;
+    if (partial == NULL) {
+      return FAIL;
+    }
     const char *const s = partial_name(partial);
     if (s == NULL || *s == NUL) {
       return FAIL;
@@ -8640,8 +8643,9 @@ int typval_compare(typval_T *typ1, typval_T *typ2, exprtype_T type, bool ic)
     }
     if ((typ1->v_type == VAR_PARTIAL && typ1->vval.v_partial == NULL)
         || (typ2->v_type == VAR_PARTIAL && typ2->vval.v_partial == NULL)) {
-      // when a partial is NULL assume not equal
-      n1 = false;
+      // When both partials are NULL, then they are equal.
+      // Otherwise they are not equal.
+      n1 = (typ1->vval.v_partial == typ2->vval.v_partial);
     } else if (type_is) {
       if (typ1->v_type == VAR_FUNC && typ2->v_type == VAR_FUNC) {
         // strings are considered the same if their value is

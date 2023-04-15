@@ -170,7 +170,7 @@ func Test_win_execute_visual_redraw()
   bwipe!
 endfunc
 
-func Test_execute_null()
+func Test_execute_cmd_with_null()
   call assert_equal("", execute(v:_null_string))
   call assert_equal("", execute(v:_null_list))
   call assert_fails('call execute(v:_null_dict)', 'E731:')

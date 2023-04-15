@@ -205,7 +205,7 @@ func Test_vvar_scriptversion1()
   call assert_equal(511, 0o777)
 endfunc
 
-func Test_excute_null()
+func Test_execute_cmd_with_null()
   call assert_fails('execute v:_null_list', 'E730:')
   call assert_fails('execute v:_null_dict', 'E731:')
   call assert_fails('execute v:_null_blob', 'E976:')
