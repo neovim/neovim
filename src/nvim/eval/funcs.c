@@ -150,6 +150,8 @@ static const char *e_invalwindow = N_("E957: Invalid window number");
 static const char *e_reduceempty = N_("E998: Reduce of an empty %s with no initial value");
 static const char e_using_number_as_bool_nr[]
   = N_("E1023: Using a Number as a Bool: %d");
+static const char e_missing_function_argument[]
+  = N_("E1132: Missing function argument");
 
 /// Dummy va_list for passing to vim_snprintf
 ///
@@ -6244,8 +6246,9 @@ static void f_reduce(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   } else {
     func_name = tv_get_string(&argvars[1]);
   }
-  if (*func_name == NUL) {
-    return;  // type error or empty name
+  if (func_name == NULL || *func_name == NUL) {
+    emsg(_(e_missing_function_argument));
+    return;
   }
 
   funcexe_T funcexe = FUNCEXE_INIT;
