@@ -918,14 +918,13 @@ func Test_BufEnter()
   call assert_equal('++', g:val)
 
   " Also get BufEnter when editing a directory
-  call mkdir('Xdir')
-  split Xdir
+  call mkdir('Xbufenterdir', 'D')
+  split Xbufenterdir
   call assert_equal('+++', g:val)
 
   " On MS-Windows we can't edit the directory, make sure we wipe the right
   " buffer.
-  bwipe! Xdir
-  call delete('Xdir', 'd')
+  bwipe! Xbufenterdir
   au! BufEnter
 
   " Editing a "nofile" buffer doesn't read the file but does trigger BufEnter
@@ -2186,11 +2185,10 @@ func Test_BufWriteCmd()
   new
   file Xbufwritecmd
   set buftype=acwrite
-  call mkdir('Xbufwritecmd')
+  call mkdir('Xbufwritecmd', 'D')
   write
   " BufWriteCmd should be triggered even if a directory has the same name
   call assert_equal(1, g:written)
-  call delete('Xbufwritecmd', 'd')
   unlet g:written
   au! BufWriteCmd
   bwipe!
@@ -2947,16 +2945,15 @@ func Test_throw_in_BufWritePre()
 endfunc
 
 func Test_autocmd_in_try_block()
-  call mkdir('Xdir')
+  call mkdir('Xintrydir', 'R')
   au BufEnter * let g:fname = expand('%')
   try
-    edit Xdir/
+    edit Xintrydir/
   endtry
-  call assert_match('Xdir', g:fname)
+  call assert_match('Xintrydir', g:fname)
 
   unlet g:fname
   au! BufEnter
-  call delete('Xdir', 'rf')
 endfunc
 
 func Test_autocmd_CmdWinEnter()

@@ -748,7 +748,7 @@ describe('fs.c', function()
 
     local function os_mkdir_recurse(path, mode)
       local failed_str = ffi.new('char *[1]', {nil})
-      local ret = fs.os_mkdir_recurse(path, mode, failed_str)
+      local ret = fs.os_mkdir_recurse(path, mode, failed_str, nil)
       local str = failed_str[0]
       if str ~= nil then
         str = ffi.string(str)

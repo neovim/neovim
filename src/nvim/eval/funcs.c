@@ -4892,6 +4892,9 @@ static void f_mkdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     *path_tail_with_sep((char *)dir) = NUL;
   }
 
+  bool defer = false;
+  bool defer_recurse = false;
+  char *created = NULL;
   if (argvars[1].v_type != VAR_UNKNOWN) {
     if (argvars[2].v_type != VAR_UNKNOWN) {
       prot = (int)tv_get_number_chk(&argvars[2], NULL);
@@ -4899,9 +4902,17 @@ static void f_mkdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         return;
       }
     }
-    if (strcmp(tv_get_string(&argvars[1]), "p") == 0) {
+    const char *arg2 = tv_get_string(&argvars[1]);
+    defer = vim_strchr(arg2, 'D') != NULL;
+    defer_recurse = vim_strchr(arg2, 'R') != NULL;
+    if ((defer || defer_recurse) && !can_add_defer()) {
+      return;
+    }
+
+    if (vim_strchr(arg2, 'p') != NULL) {
       char *failed_dir;
-      int ret = os_mkdir_recurse(dir, prot, &failed_dir);
+      int ret = os_mkdir_recurse(dir, prot, &failed_dir,
+                                 defer || defer_recurse ? &created : NULL);
       if (ret != 0) {
         semsg(_(e_mkdir), failed_dir, os_strerror(ret));
         xfree(failed_dir);
@@ -4909,10 +4920,27 @@ static void f_mkdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         return;
       }
       rettv->vval.v_number = OK;
-      return;
     }
   }
-  rettv->vval.v_number = vim_mkdir_emsg(dir, prot);
+  if (rettv->vval.v_number == FAIL) {
+    rettv->vval.v_number = vim_mkdir_emsg(dir, prot);
+  }
+
+  // Handle "D" and "R": deferred deletion of the created directory.
+  if (rettv->vval.v_number == OK
+      && created == NULL && (defer || defer_recurse)) {
+    created = FullName_save(dir, false);
+  }
+  if (created != NULL) {
+    typval_T tv[2];
+    tv[0].v_type = VAR_STRING;
+    tv[0].v_lock = VAR_UNLOCKED;
+    tv[0].vval.v_string = created;
+    tv[1].v_type = VAR_STRING;
+    tv[1].v_lock = VAR_UNLOCKED;
+    tv[1].vval.v_string = xstrdup(defer_recurse ? "rf" : "d");
+    add_defer("delete", 2, tv);
+  }
 }
 
 /// "mode()" function
@@ -9332,8 +9360,7 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  if (defer && get_current_funccal() == NULL) {
-    semsg(_(e_str_not_inside_function), "defer");
+  if (defer && !can_add_defer()) {
     return;
   }
 
@@ -9351,7 +9378,7 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       typval_T tv = {
         .v_type = VAR_STRING,
         .v_lock = VAR_UNLOCKED,
-        .vval.v_string = xstrdup(fname),
+        .vval.v_string = FullName_save(fname, false),
       };
       add_defer("delete", 1, &tv);
     }

@@ -3042,7 +3042,7 @@ shada_write_file_nomerge: {}
       if (!os_isdir(fname)) {
         int ret;
         char *failed_dir;
-        if ((ret = os_mkdir_recurse(fname, 0700, &failed_dir)) != 0) {
+        if ((ret = os_mkdir_recurse(fname, 0700, &failed_dir, NULL)) != 0) {
           semsg(_(SERR "Failed to create directory %s "
                   "for writing ShaDa file: %s"),
                 failed_dir, os_strerror(ret));

@@ -3153,6 +3153,17 @@ static int ex_defer_inner(char *name, char **arg, const partial_T *const partial
   return OK;
 }
 
+/// Return true if currently inside a function call.
+/// Give an error message and return FALSE when not.
+bool can_add_defer(void)
+{
+  if (get_current_funccal() == NULL) {
+    semsg(_(e_str_not_inside_function), "defer");
+    return false;
+  }
+  return true;
+}
+
 /// Add a deferred call for "name" with arguments "argvars[argcount]".
 /// Consumes "argvars[]".
 /// Caller must check that current_funccal is not NULL.

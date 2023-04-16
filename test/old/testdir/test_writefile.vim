@@ -956,6 +956,19 @@ func Test_write_with_deferred_delete()
   " call assert_equal('', glob('XdefdeferDelete'))
 endfunc
 
+func DoWriteFile()
+  call writefile(['text'], 'Xthefile', 'D')
+  cd ..
+endfunc
+
+func Test_write_defer_delete_chdir()
+  let dir = getcwd()
+  call DoWriteFile()
+  call assert_notequal(dir, getcwd())
+  call chdir(dir)
+  call assert_equal('', glob('Xthefile'))
+endfunc
+
 " Check that buffer is written before triggering QuitPre
 func Test_wq_quitpre_autocommand()
   edit Xsomefile
