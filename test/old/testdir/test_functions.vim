@@ -2024,7 +2024,7 @@ func Test_call()
       let Time = 'localtime'
       call Time()
   END
-  CheckScriptFailure(lines, 'E1085:')
+  call CheckScriptFailure(lines, 'E1085:')
 endfunc
 
 func Test_char2nr()
