@@ -1653,7 +1653,7 @@ endswith({s}, {suffix})                                       *vim.endswith()*
     Return: ~
         (boolean) `true` if `suffix` is a suffix of `s`
 
-filter({f}, {src})                                              *vim.filter()*
+filter({f}, {src}, {...})                                       *vim.filter()*
     Filter a table or iterator.
 
     This is a convenience function that performs:
@@ -1674,29 +1674,6 @@ filter({f}, {src})                                              *vim.filter()*
 
     See also: ~
       • |Iter:filter()|
-
-filtermap({f}, {src})                                        *vim.filtermap()*
-    Map and filter a table or iterator.
-
-    This is a convenience function that performs:
-
-    >lua
-
-     vim.iter(src):filtermap(f):totable()
-<
-
-    Parameters: ~
-      • {f}    function(...):?any Map function. Accepts the current iterator
-               or table values as arguments and returns one or more new
-               values. Nil values are removed from the final table. the final
-               table
-      • {src}  table|function Table or iterator function to filter
-
-    Return: ~
-        (table)
-
-    See also: ~
-      • |Iter:filtermap()|
 
 gsplit({s}, {sep}, {opts})                                      *vim.gsplit()*
     Splits a string at each instance of a separator.
@@ -1762,7 +1739,7 @@ iter({src}, {...})                                                *vim.iter()*
     Examples: >lua
 
      local it = vim.iter({ 1, 2, 3, 4, 5 })
-     it:filtermap(function(v)
+     it:map(function(v)
        return v * 3
      end)
      it:rev()
@@ -1776,7 +1753,7 @@ iter({src}, {...})                                                *vim.iter()*
      -- { 3, 4, 5 }
 
      local it = vim.iter(vim.gsplit('1,2,3,4,5', ','))
-     it:filtermap(function(s) return tonumber(s) end)
+     it:map(function(s) return tonumber(s) end)
      for i, d in it:enumerate() do
        print(string.format("Column %d is %d", i, d))
      end
@@ -1842,6 +1819,29 @@ list_slice({list}, {start}, {finish})                       *vim.list_slice()*
 
     Return: ~
         (list) Copy of table sliced from start to finish (inclusive)
+
+map({f}, {src}, {...})                                             *vim.map()*
+    Map and filter a table or iterator.
+
+    This is a convenience function that performs:
+
+    >lua
+
+     vim.iter(src):map(f):totable()
+<
+
+    Parameters: ~
+      • {f}    function(...):?any Map function. Accepts the current iterator
+               or table values as arguments and returns one or more new
+               values. Nil values are removed from the final table. the final
+               table
+      • {src}  table|function Table or iterator function to filter
+
+    Return: ~
+        (table)
+
+    See also: ~
+      • |Iter:map()|
 
 pesc({s})                                                         *vim.pesc()*
     Escapes magic chars in |lua-patterns|.
@@ -2104,7 +2104,7 @@ tbl_values({t})                                             *vim.tbl_values()*
     Return: ~
         (list) List of values
 
-totable({f})                                                   *vim.totable()*
+totable({f}, {...})                                            *vim.totable()*
     Collect an iterator into a table.
 
     This is a convenience function that performs:
