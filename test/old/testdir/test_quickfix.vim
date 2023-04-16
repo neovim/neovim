@@ -6250,28 +6250,6 @@ func Test_very_long_error_line()
   call setqflist([], 'f')
 endfunc
 
-" The test depends on deferred delete and string interpolation, which haven't
-" been ported, so override it with a rewrite that doesn't use these features.
-func! Test_very_long_error_line()
-  let msg = repeat('abcdefghijklmn', 146)
-  let emsg = 'Xlonglines.c:1:' . msg
-  call writefile([msg, emsg], 'Xerror')
-  cfile Xerror
-  call delete('Xerror')
-  cwindow
-  call assert_equal('|| ' .. msg, getline(1))
-  call assert_equal('Xlonglines.c|1| ' .. msg, getline(2))
-  cclose
-
-  let l = execute('clist!')->split("\n")
-  call assert_equal([' 1: ' .. msg, ' 2 Xlonglines.c:1: ' .. msg], l)
-
-  let l = execute('cc')->split("\n")
-  call assert_equal(['(2 of 2): ' .. msg], l)
-
-  call setqflist([], 'f')
-endfunc
-
 " In the quickfix window, spaces at the beginning of an informational line
 " should not be removed but should be removed from an error line.
 func Test_info_line_with_space()

@@ -9296,6 +9296,7 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   bool binary = false;
   bool append = false;
+  bool defer = false;
   bool do_fsync = !!p_fs;
   bool mkdir_p = false;
   if (argvars[2].v_type != VAR_UNKNOWN) {
@@ -9309,6 +9310,8 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         binary = true; break;
       case 'a':
         append = true; break;
+      case 'D':
+        defer = true; break;
       case 's':
         do_fsync = true; break;
       case 'S':
@@ -9328,6 +9331,12 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (fname == NULL) {
     return;
   }
+
+  if (defer && get_current_funccal() == NULL) {
+    semsg(_(e_str_not_inside_function), "defer");
+    return;
+  }
+
   FileDescriptor fp;
   int error;
   if (*fname == NUL) {
@@ -9336,9 +9345,17 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
                                 ((append ? kFileAppend : kFileTruncate)
                                  | (mkdir_p ? kFileMkDir : kFileCreate)
                                  | kFileCreate), 0666)) != 0) {
-    semsg(_("E482: Can't open file %s for writing: %s"),
-          fname, os_strerror(error));
+    semsg(_("E482: Can't open file %s for writing: %s"), fname, os_strerror(error));
   } else {
+    if (defer) {
+      typval_T tv = {
+        .v_type = VAR_STRING,
+        .v_lock = VAR_UNLOCKED,
+        .vval.v_string = xstrdup(fname),
+      };
+      add_defer("delete", 1, &tv);
+    }
+
     bool write_ok;
     if (argvars[0].v_type == VAR_BLOB) {
       write_ok = write_blob(&fp, argvars[0].vval.v_blob);

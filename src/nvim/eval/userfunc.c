@@ -478,6 +478,7 @@ void emsg_funcname(const char *errmsg, const char *name)
 
 /// Get function arguments at "*arg" and advance it.
 /// Return them in "*argvars[MAX_FUNC_ARGS + 1]" and the count in "argcount".
+/// On failure FAIL is returned but the "argvars[argcount]" are still set.
 static int get_func_arguments(char **arg, evalarg_T *const evalarg, int partial_argc,
                               typval_T *argvars, int *argcount)
 {
@@ -3119,16 +3120,28 @@ static int ex_defer_inner(char *name, char **arg, evalarg_T *const evalarg)
 {
   typval_T argvars[MAX_FUNC_ARGS + 1];  // vars for arguments
   int argcount = 0;  // number of arguments found
-  int ret = FAIL;
 
   if (current_funccal == NULL) {
     semsg(_(e_str_not_inside_function), "defer");
     return FAIL;
   }
   if (get_func_arguments(arg, evalarg, false, argvars, &argcount) == FAIL) {
-    goto theend;
+    while (--argcount >= 0) {
+      tv_clear(&argvars[argcount]);
+    }
+    return FAIL;
   }
+  add_defer(name, argcount, argvars);
+  return OK;
+}
+
+/// Add a deferred call for "name" with arguments "argvars[argcount]".
+/// Consumes "argvars[]".
+/// Caller must check that current_funccal is not NULL.
+void add_defer(char *name, int argcount_arg, typval_T *argvars)
+{
   char *saved_name = xstrdup(name);
+  int argcount = argcount_arg;
 
   if (current_funccal->fc_defer.ga_itemsize == 0) {
     ga_init(&current_funccal->fc_defer, sizeof(defer_T), 10);
@@ -3140,13 +3153,6 @@ static int ex_defer_inner(char *name, char **arg, evalarg_T *const evalarg)
     argcount--;
     dr->dr_argvars[argcount] = argvars[argcount];
   }
-  ret = OK;
-
-theend:
-  while (--argcount >= 0) {
-    tv_clear(&argvars[argcount]);
-  }
-  return ret;
 }
 
 /// Invoked after a function has finished: invoke ":defer" functions.
