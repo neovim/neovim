@@ -60,6 +60,32 @@ has a major bug:
 Neovim automation includes a [backport bot](https://github.com/zeebe-io/backport-action).
 Trigger the action by labeling a PR with `backport release-X.Y`. See `.github/workflows/backport.yml`.
 
+Deprecating and removing features
+---------------------------------
+
+Neovim inherits many features and design decisions from Vim, not all of which
+align with the goals of this project. It is sometimes desired or necessary to
+remove existing features, or refactor parts of the code that would change
+user's workflow. In these cases, a deprecation policy is needed to properly
+inform users of the change.
+
+In general, when a feature is slated to be removed it should:
+
+1. Be marked deprecated in the _next_ release
+  - This includes a note in the release notes (include a "Deprecation Warning"
+    section just below "Breaking Changes")
+  - Lua features can use `vim.deprecate()`
+  - Features implemented in Vimscript or in C will need bespoke implementations
+    to communicate to users that the feature is deprecated
+2. Be removed in a release following the release in which it was marked
+   deprecated
+  - Usually this will be the next release, but it may be a later release if a
+    longer deprecation cycle is desired
+
+Feature removals which may benefit from community input or further discussion
+should also have a tracking issue (which should be linked to in the release
+notes).
+
 Third-party dependencies
 ------------------------
 
