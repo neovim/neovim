@@ -38,6 +38,7 @@
 #include "nvim/move.h"
 #include "nvim/normal.h"
 #include "nvim/option.h"
+#include "nvim/optionstr.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/path.h"
 #include "nvim/pos.h"
@@ -467,7 +468,6 @@ void ex_listdo(exarg_T *eap)
                         | (eap->forceit ? CCGD_FORCEIT : 0)
                         | CCGD_EXCMD)) {
     int next_fnum = 0;
-    char *p_shm_save;
     int i = 0;
     // start at the eap->line1 argument/window/buffer
     wp = firstwin;
@@ -514,7 +514,9 @@ void ex_listdo(exarg_T *eap)
       if (qf_size == 0 || (size_t)eap->line1 > qf_size) {
         buf = NULL;
       } else {
+        save_clear_shm_value();
         ex_cc(eap);
+        restore_shm_value();
 
         buf = curbuf;
         i = (int)eap->line1 - 1;
@@ -541,11 +543,9 @@ void ex_listdo(exarg_T *eap)
         if (curwin->w_arg_idx != i || !editing_arg_idx(curwin)) {
           // Clear 'shm' to avoid that the file message overwrites
           // any output from the command.
-          p_shm_save = xstrdup(p_shm);
-          set_option_value_give_err("shm", 0L, "", 0);
+          save_clear_shm_value();
           do_argfile(eap, i);
-          set_option_value_give_err("shm", 0L, p_shm_save, 0);
-          xfree(p_shm_save);
+          restore_shm_value();
         }
         if (curwin->w_arg_idx != i) {
           break;
@@ -610,11 +610,9 @@ void ex_listdo(exarg_T *eap)
 
         // Go to the next buffer.  Clear 'shm' to avoid that the file
         // message overwrites any output from the command.
-        p_shm_save = xstrdup(p_shm);
-        set_option_value_give_err("shm", 0L, "", 0);
+        save_clear_shm_value();
         goto_buffer(eap, DOBUF_FIRST, FORWARD, next_fnum);
-        set_option_value_give_err("shm", 0L, p_shm_save, 0);
-        xfree(p_shm_save);
+        restore_shm_value();
 
         // If autocommands took us elsewhere, quit here.
         if (curbuf->b_fnum != next_fnum) {
@@ -633,11 +631,9 @@ void ex_listdo(exarg_T *eap)
 
         // Clear 'shm' to avoid that the file message overwrites
         // any output from the command.
-        p_shm_save = xstrdup(p_shm);
-        set_option_value_give_err("shm", 0L, "", 0);
+        save_clear_shm_value();
         ex_cnext(eap);
-        set_option_value_give_err("shm", 0L, p_shm_save, 0);
-        xfree(p_shm_save);
+        restore_shm_value();
 
         // If jumping to the next quickfix entry fails, quit here.
         if (qf_get_cur_idx(eap) == qf_idx) {
