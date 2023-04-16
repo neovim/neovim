@@ -76,7 +76,7 @@ static void log_path_init(void)
     char *failed_dir = NULL;
     bool log_dir_failure = false;
     if (!os_isdir(loghome)) {
-      log_dir_failure = (os_mkdir_recurse(loghome, 0700, &failed_dir) != 0);
+      log_dir_failure = (os_mkdir_recurse(loghome, 0700, &failed_dir, NULL) != 0);
     }
     XFREE_CLEAR(loghome);
     // Invalid $NVIM_LOG_FILE or failed to expand; fall back to default.

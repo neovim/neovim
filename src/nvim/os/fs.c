@@ -937,10 +937,13 @@ int os_mkdir(const char *path, int32_t mode)
 ///                          the name of the directory which os_mkdir_recurse
 ///                          failed to create. I.e. it will contain dir or any
 ///                          of the higher level directories.
+/// @param[out]  created     Set to the full name of the first created directory.
+///                          It will be NULL until that happens.
 ///
 /// @return `0` for success, libuv error code for failure.
-int os_mkdir_recurse(const char *const dir, int32_t mode, char **const failed_dir)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+int os_mkdir_recurse(const char *const dir, int32_t mode, char **const failed_dir,
+                     char **const created)
+  FUNC_ATTR_NONNULL_ARG(1, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Get end of directory name in "dir".
   // We're done when it's "/" or "c:/".
@@ -975,6 +978,8 @@ int os_mkdir_recurse(const char *const dir, int32_t mode, char **const failed_di
     if ((ret = os_mkdir(curdir, mode)) != 0) {
       *failed_dir = curdir;
       return ret;
+    } else if (created != NULL && *created == NULL) {
+      *created = FullName_save(curdir, false);
     }
   }
   xfree(curdir);
@@ -1002,7 +1007,7 @@ int os_file_mkdir(char *fname, int32_t mode)
     *tail = NUL;
     int r;
     char *failed_dir;
-    if (((r = os_mkdir_recurse(fname, mode, &failed_dir)) < 0)) {
+    if (((r = os_mkdir_recurse(fname, mode, &failed_dir, NULL)) < 0)) {
       semsg(_(e_mkdir), failed_dir, os_strerror(r));
       xfree(failed_dir);
     }

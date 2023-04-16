@@ -36,12 +36,70 @@ func Test_mkdir_p()
   endtry
   " 'p' doesn't suppress real errors
   call writefile([], 'Xfile')
-  call assert_fails('call mkdir("Xfile", "p")', 'E739')
+  call assert_fails('call mkdir("Xfile", "p")', 'E739:')
   call delete('Xfile')
   call delete('Xmkdir', 'rf')
   call assert_equal(0, mkdir(v:_null_string))
-  call assert_fails('call mkdir([])', 'E730')
-  call assert_fails('call mkdir("abc", [], [])', 'E745')
+  call assert_fails('call mkdir([])', 'E730:')
+  call assert_fails('call mkdir("abc", [], [])', 'E745:')
+endfunc
+
+func DoMkdirDel(name)
+  call mkdir(a:name, 'pD')
+  call assert_true(isdirectory(a:name))
+endfunc
+
+func DoMkdirDelAddFile(name)
+  call mkdir(a:name, 'pD')
+  call assert_true(isdirectory(a:name))
+  call writefile(['text'], a:name .. '/file')
+endfunc
+
+func DoMkdirDelRec(name)
+  call mkdir(a:name, 'pR')
+  call assert_true(isdirectory(a:name))
+endfunc
+
+func DoMkdirDelRecAddFile(name)
+  call mkdir(a:name, 'pR')
+  call assert_true(isdirectory(a:name))
+  call writefile(['text'], a:name .. '/file')
+endfunc
+
+func Test_mkdir_defer_del()
+  " Xtopdir/tmp is created thus deleted, not Xtopdir itself
+  call mkdir('Xtopdir', 'R')
+  call DoMkdirDel('Xtopdir/tmp')
+  call assert_true(isdirectory('Xtopdir'))
+  call assert_false(isdirectory('Xtopdir/tmp'))
+
+  " Deletion fails because "tmp" contains "sub"
+  call DoMkdirDel('Xtopdir/tmp/sub')
+  call assert_true(isdirectory('Xtopdir'))
+  call assert_true(isdirectory('Xtopdir/tmp'))
+  call delete('Xtopdir/tmp', 'rf')
+
+  " Deletion fails because "tmp" contains "file"
+  call DoMkdirDelAddFile('Xtopdir/tmp')
+  call assert_true(isdirectory('Xtopdir'))
+  call assert_true(isdirectory('Xtopdir/tmp'))
+  call assert_true(filereadable('Xtopdir/tmp/file'))
+  call delete('Xtopdir/tmp', 'rf')
+
+  " Xtopdir/tmp is created thus deleted, not Xtopdir itself
+  call DoMkdirDelRec('Xtopdir/tmp')
+  call assert_true(isdirectory('Xtopdir'))
+  call assert_false(isdirectory('Xtopdir/tmp'))
+
+  " Deletion works even though "tmp" contains "sub"
+  call DoMkdirDelRec('Xtopdir/tmp/sub')
+  call assert_true(isdirectory('Xtopdir'))
+  call assert_false(isdirectory('Xtopdir/tmp'))
+
+  " Deletion works even though "tmp" contains "file"
+  call DoMkdirDelRecAddFile('Xtopdir/tmp')
+  call assert_true(isdirectory('Xtopdir'))
+  call assert_false(isdirectory('Xtopdir/tmp'))
 endfunc
 
 func Test_line_continuation()

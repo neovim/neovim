@@ -986,6 +986,8 @@ EXTERN const char e_maxmempat[] INIT(= N_("E363: pattern uses more memory than '
 EXTERN const char e_emptybuf[] INIT(= N_("E749: empty buffer"));
 EXTERN const char e_nobufnr[] INIT(= N_("E86: Buffer %" PRId64 " does not exist"));
 
+EXTERN const char e_str_not_inside_function[] INIT(= N_("E193: %s not inside a function"));
+
 EXTERN const char e_invalpat[] INIT(= N_("E682: Invalid search pattern or delimiter"));
 EXTERN const char e_bufloaded[] INIT(= N_("E139: File is loaded in another buffer"));
 EXTERN const char e_notset[] INIT(= N_("E764: Option '%s' is not set"));

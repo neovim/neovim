@@ -2536,7 +2536,7 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
       if (*dirp == NUL && !os_isdir(IObuff)) {
         int ret;
         char *failed_dir;
-        if ((ret = os_mkdir_recurse(IObuff, 0755, &failed_dir)) != 0) {
+        if ((ret = os_mkdir_recurse(IObuff, 0755, &failed_dir, NULL)) != 0) {
           semsg(_("E303: Unable to create directory \"%s\" for backup file: %s"),
                 failed_dir, os_strerror(ret));
           xfree(failed_dir);
@@ -2679,7 +2679,7 @@ nobackup:
       if (*dirp == NUL && !os_isdir(IObuff)) {
         int ret;
         char *failed_dir;
-        if ((ret = os_mkdir_recurse(IObuff, 0755, &failed_dir)) != 0) {
+        if ((ret = os_mkdir_recurse(IObuff, 0755, &failed_dir, NULL)) != 0) {
           semsg(_("E303: Unable to create directory \"%s\" for backup file: %s"),
                 failed_dir, os_strerror(ret));
           xfree(failed_dir);

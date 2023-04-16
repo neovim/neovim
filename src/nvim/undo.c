@@ -705,7 +705,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
         // Last directory in the list does not exist, create it.
         int ret;
         char *failed_dir;
-        if ((ret = os_mkdir_recurse(dir_name, 0755, &failed_dir)) != 0) {
+        if ((ret = os_mkdir_recurse(dir_name, 0755, &failed_dir, NULL)) != 0) {
           semsg(_("E5003: Unable to create directory \"%s\" for undo file: %s"),
                 failed_dir, os_strerror(ret));
           xfree(failed_dir);

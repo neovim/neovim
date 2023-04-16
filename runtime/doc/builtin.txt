@@ -5572,8 +5572,24 @@ mkdir({name} [, {flags} [, {prot}]])
 		When {flags} is present it must be a string.  An empty string
 		has no effect.
 
-		If {flags} is "p" then intermediate directories are created as
-		necessary.
+		If {flags} contains "p" then intermediate directories are
+		created as necessary.
+
+		If {flags} contains "D" then {name} is deleted at the end of
+		the current function, as with: >
+			defer delete({name}, 'd')
+<
+		If {flags} contains "R" then {name} is deleted recursively at
+		the end of the current function, as with: >
+			defer delete({name}, 'rf')
+<		Note that when {name} has more than one part and "p" is used
+		some directories may already exist.  Only the first one that
+		is created and what it contains is scheduled to be deleted.
+		E.g. when using: >
+			call mkdir('subdir/tmp/autoload', 'pR')
+<		and "subdir" already exists then "subdir/tmp" will be
+		scheduled for deletion, like with: >
+			defer delete('subdir/tmp', 'rf')
 
 		If {prot} is given it is used to set the protection bits of
 		the new directory.  The default is 0o755 (rwxr-xr-x: r/w for
@@ -9507,31 +9523,43 @@ writefile({object}, {fname} [, {flags}])
 		When {object} is a |List| write it to file {fname}.  Each list
 		item is separated with a NL.  Each list item must be a String
 		or Number.
-		When {flags} contains "b" then binary mode is used: There will
-		not be a NL after the last list item.  An empty item at the
-		end does cause the last line in the file to end in a NL.
-
-		When {object} is a |Blob| write the bytes to file {fname}
-		unmodified.
-
-		When {flags} contains "a" then append mode is used, lines are
-		appended to the file: >
-			:call writefile(["foo"], "event.log", "a")
-			:call writefile(["bar"], "event.log", "a")
-<
-		When {flags} contains "S" fsync() call is not used, with "s"
-		it is used, 'fsync' option applies by default. No fsync()
-		means that writefile() will finish faster, but writes may be
-		left in OS buffers and not yet written to disk. Such changes
-		will disappear if system crashes before OS does writing.
-
 		All NL characters are replaced with a NUL character.
 		Inserting CR characters needs to be done before passing {list}
 		to writefile().
+
+		When {object} is a |Blob| write the bytes to file {fname}
+		unmodified, also when binary mode is not specified.
+
+		{flags} must be a String.  These characters are recognized:
+
+		'b'  Binary mode is used: There will not be a NL after the
+		     last list item.  An empty item at the end does cause the
+		     last line in the file to end in a NL.
+
+		'a'  Append mode is used, lines are appended to the file: >
+			:call writefile(["foo"], "event.log", "a")
+			:call writefile(["bar"], "event.log", "a")
+<
+		'D'  Delete the file when the current function ends.  This
+		     works like: >
+			:defer delete({fname})
+<		     Fails when not in a function.  Also see |:defer|.
+
+		's'  fsync() is called after writing the file.  This flushes
+		     the file to disk, if possible.  This takes more time but
+		     avoids losing the file if the system crashes.
+
+		'S'  fsync() is not called, even when 'fsync' is set.
+
+		     When {flags} does not contain "S" or "s" then fsync() is
+		     called if the 'fsync' option is set.
+
 		An existing file is overwritten, if possible.
+
 		When the write fails -1 is returned, otherwise 0.  There is an
 		error message if the file can't be created or when writing
 		fails.
+
 		Also see |readfile()|.
 		To copy a file byte for byte: >
 			:let fl = readfile("foo", "b")

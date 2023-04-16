@@ -53,6 +53,13 @@
 # include "eval/userfunc.c.generated.h"
 #endif
 
+/// structure used as item in "fc_defer"
+typedef struct {
+  char *dr_name;  ///< function name, allocated
+  typval_T dr_argvars[MAX_FUNC_ARGS + 1];
+  int dr_argcount;
+} defer_T;
+
 static hashtab_T func_hashtab;
 
 // Used by get_func_tv()
@@ -74,6 +81,8 @@ static const char e_no_white_space_allowed_before_str_str[]
   = N_("E1068: No white space allowed before '%s': %s");
 static const char e_missing_heredoc_end_marker_str[]
   = N_("E1145: Missing heredoc end marker: %s");
+static const char e_cannot_use_partial_with_dictionary_for_defer[]
+  = N_("E1300: Cannot use a partial with dictionary for :defer");
 
 void func_init(void)
 {
@@ -469,7 +478,43 @@ void emsg_funcname(const char *errmsg, const char *name)
   }
 }
 
-/// Allocate a variable for the result of a function.
+/// Get function arguments at "*arg" and advance it.
+/// Return them in "*argvars[MAX_FUNC_ARGS + 1]" and the count in "argcount".
+/// On failure FAIL is returned but the "argvars[argcount]" are still set.
+static int get_func_arguments(char **arg, evalarg_T *const evalarg, int partial_argc,
+                              typval_T *argvars, int *argcount)
+{
+  char *argp = *arg;
+  int ret = OK;
+
+  // Get the arguments.
+  while (*argcount < MAX_FUNC_ARGS - partial_argc) {
+    argp = skipwhite(argp + 1);             // skip the '(' or ','
+
+    if (*argp == ')' || *argp == ',' || *argp == NUL) {
+      break;
+    }
+    if (eval1(&argp, &argvars[*argcount], evalarg) == FAIL) {
+      ret = FAIL;
+      break;
+    }
+    (*argcount)++;
+    if (*argp != ',') {
+      break;
+    }
+  }
+
+  argp = skipwhite(argp);
+  if (*argp == ')') {
+    argp++;
+  } else {
+    ret = FAIL;
+  }
+  *arg = argp;
+  return ret;
+}
+
+/// Call a function and put the result in "rettv".
 ///
 /// @param name  name of the function
 /// @param len  length of "name" or -1 to use strlen()
@@ -480,34 +525,16 @@ void emsg_funcname(const char *errmsg, const char *name)
 int get_func_tv(const char *name, int len, typval_T *rettv, char **arg, evalarg_T *const evalarg,
                 funcexe_T *funcexe)
 {
-  char *argp;
-  int ret = OK;
   typval_T argvars[MAX_FUNC_ARGS + 1];          // vars for arguments
   int argcount = 0;                     // number of arguments found
   const bool evaluate = evalarg == NULL ? false : (evalarg->eval_flags & EVAL_EVALUATE);
 
-  // Get the arguments.
-  argp = *arg;
-  while (argcount < MAX_FUNC_ARGS
-         - (funcexe->fe_partial == NULL ? 0 : funcexe->fe_partial->pt_argc)) {
-    argp = skipwhite(argp + 1);             // skip the '(' or ','
-    if (*argp == ')' || *argp == ',' || *argp == NUL) {
-      break;
-    }
-    if (eval1(&argp, &argvars[argcount], evalarg) == FAIL) {
-      ret = FAIL;
-      break;
-    }
-    argcount++;
-    if (*argp != ',') {
-      break;
-    }
-  }
-  if (*argp == ')') {
-    argp++;
-  } else {
-    ret = FAIL;
-  }
+  char *argp = *arg;
+  int ret = get_func_arguments(&argp, evalarg,
+                               (funcexe->fe_partial == NULL
+                                ? 0
+                                : funcexe->fe_partial->pt_argc),
+                               argvars, &argcount);
 
   if (ret == OK) {
     int i = 0;
@@ -1148,6 +1175,9 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
                DOCMD_NOWAIT|DOCMD_VERBOSE|DOCMD_REPEAT);
   }
 
+  // Invoke functions added with ":defer".
+  handle_defer_one(current_funccal);
+
   RedrawingDisabled--;
 
   // when the function was aborted because of an error, return -1
@@ -1544,7 +1574,7 @@ int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, t
   int argv_base = 0;
   partial_T *partial = funcexe->fe_partial;
 
-  // Initialize rettv so that it is safe for caller to invoke clear_tv(rettv)
+  // Initialize rettv so that it is safe for caller to invoke tv_clear(rettv)
   // even when call_func() returns FAIL.
   rettv->v_type = VAR_UNKNOWN;
 
@@ -3033,7 +3063,156 @@ void ex_return(exarg_T *eap)
   clear_evalarg(&evalarg, eap);
 }
 
+/// Lower level implementation of "call".  Only called when not skipping.
+static int ex_call_inner(exarg_T *eap, char *name, char **arg, char *startarg,
+                         const funcexe_T *const funcexe_init, evalarg_T *const evalarg)
+{
+  bool doesrange;
+  bool failed = false;
+
+  for (linenr_T lnum = eap->line1; lnum <= eap->line2; lnum++) {
+    if (eap->addr_count > 0) {
+      if (lnum > curbuf->b_ml.ml_line_count) {
+        // If the function deleted lines or switched to another buffer
+        // the line number may become invalid.
+        emsg(_(e_invrange));
+        break;
+      }
+      curwin->w_cursor.lnum = lnum;
+      curwin->w_cursor.col = 0;
+      curwin->w_cursor.coladd = 0;
+    }
+    *arg = startarg;
+
+    funcexe_T funcexe = *funcexe_init;
+    funcexe.fe_doesrange = &doesrange;
+    typval_T rettv;
+    rettv.v_type = VAR_UNKNOWN;  // tv_clear() uses this
+    if (get_func_tv(name, -1, &rettv, arg, evalarg, &funcexe) == FAIL) {
+      failed = true;
+      break;
+    }
+
+    // Handle a function returning a Funcref, Dictionary or List.
+    if (handle_subscript((const char **)arg, &rettv, &EVALARG_EVALUATE, true) == FAIL) {
+      failed = true;
+      break;
+    }
+
+    tv_clear(&rettv);
+    if (doesrange) {
+      break;
+    }
+
+    // Stop when immediately aborting on error, or when an interrupt
+    // occurred or an exception was thrown but not caught.
+    // get_func_tv() returned OK, so that the check for trailing
+    // characters below is executed.
+    if (aborting()) {
+      break;
+    }
+  }
+
+  return failed;
+}
+
+/// Core part of ":defer func(arg)".  "arg" points to the "(" and is advanced.
+///
+/// @return  FAIL or OK.
+static int ex_defer_inner(char *name, char **arg, const partial_T *const partial,
+                          evalarg_T *const evalarg)
+{
+  typval_T argvars[MAX_FUNC_ARGS + 1];  // vars for arguments
+  int partial_argc = 0;  // number of partial arguments
+  int argcount = 0;  // number of arguments found
+
+  if (current_funccal == NULL) {
+    semsg(_(e_str_not_inside_function), "defer");
+    return FAIL;
+  }
+  if (partial != NULL) {
+    if (partial->pt_dict != NULL) {
+      emsg(_(e_cannot_use_partial_with_dictionary_for_defer));
+      return FAIL;
+    }
+    if (partial->pt_argc > 0) {
+      partial_argc = partial->pt_argc;
+      for (int i = 0; i < partial_argc; i++) {
+        tv_copy(&partial->pt_argv[i], &argvars[i]);
+      }
+    }
+  }
+  int r = get_func_arguments(arg, evalarg, false, argvars + partial_argc, &argcount);
+  argcount += partial_argc;
+  if (r == FAIL) {
+    while (--argcount >= 0) {
+      tv_clear(&argvars[argcount]);
+    }
+    return FAIL;
+  }
+  add_defer(name, argcount, argvars);
+  return OK;
+}
+
+/// Return true if currently inside a function call.
+/// Give an error message and return FALSE when not.
+bool can_add_defer(void)
+{
+  if (get_current_funccal() == NULL) {
+    semsg(_(e_str_not_inside_function), "defer");
+    return false;
+  }
+  return true;
+}
+
+/// Add a deferred call for "name" with arguments "argvars[argcount]".
+/// Consumes "argvars[]".
+/// Caller must check that current_funccal is not NULL.
+void add_defer(char *name, int argcount_arg, typval_T *argvars)
+{
+  char *saved_name = xstrdup(name);
+  int argcount = argcount_arg;
+
+  if (current_funccal->fc_defer.ga_itemsize == 0) {
+    ga_init(&current_funccal->fc_defer, sizeof(defer_T), 10);
+  }
+  defer_T *dr = GA_APPEND_VIA_PTR(defer_T, &current_funccal->fc_defer);
+  dr->dr_name = saved_name;
+  dr->dr_argcount = argcount;
+  while (argcount > 0) {
+    argcount--;
+    dr->dr_argvars[argcount] = argvars[argcount];
+  }
+}
+
+/// Invoked after a function has finished: invoke ":defer" functions.
+static void handle_defer_one(funccall_T *funccal)
+{
+  for (int idx = funccal->fc_defer.ga_len - 1; idx >= 0; idx--) {
+    defer_T *dr = ((defer_T *)funccal->fc_defer.ga_data) + idx;
+    funcexe_T funcexe = { .fe_evaluate = true };
+    typval_T rettv;
+    rettv.v_type = VAR_UNKNOWN;     // tv_clear() uses this
+    call_func(dr->dr_name, -1, &rettv, dr->dr_argcount, dr->dr_argvars, &funcexe);
+    tv_clear(&rettv);
+    xfree(dr->dr_name);
+    for (int i = dr->dr_argcount - 1; i >= 0; i--) {
+      tv_clear(&dr->dr_argvars[i]);
+    }
+  }
+  ga_clear(&funccal->fc_defer);
+}
+
+/// Called when exiting: call all defer functions.
+void invoke_all_defer(void)
+{
+  for (funccall_T *funccal = current_funccal; funccal != NULL; funccal = funccal->caller) {
+    handle_defer_one(funccal);
+  }
+}
+
 /// ":1,25call func(arg1, arg2)" function call.
+/// ":defer func(arg1, arg2)"    deferred function call.
 void ex_call(exarg_T *eap)
 {
   char *arg = eap->arg;
@@ -3041,9 +3220,6 @@ void ex_call(exarg_T *eap)
   char *name;
   char *tofree;
   int len;
-  typval_T rettv;
-  linenr_T lnum;
-  bool doesrange;
   bool failed = false;
   funcdict_T fudi;
   partial_T *partial = NULL;
@@ -3051,6 +3227,7 @@ void ex_call(exarg_T *eap)
 
   fill_evalarg_from_eap(&evalarg, eap, eap->skip);
   if (eap->skip) {
+    typval_T rettv;
     // trans_function_name() doesn't work well when skipping, use eval0()
     // instead to skip to any following command, e.g. for:
     //   :if 0 | call dict.foo().bar() | endif.
@@ -3089,59 +3266,24 @@ void ex_call(exarg_T *eap)
   // Skip white space to allow ":call func ()".  Not good, but required for
   // backward compatibility.
   startarg = skipwhite(arg);
-  rettv.v_type = VAR_UNKNOWN;  // tv_clear() uses this.
 
   if (*startarg != '(') {
     semsg(_(e_missingparen), eap->arg);
     goto end;
   }
 
-  lnum = eap->line1;
-  for (; lnum <= eap->line2; lnum++) {
-    if (eap->addr_count > 0) {  // -V560
-      if (lnum > curbuf->b_ml.ml_line_count) {
-        // If the function deleted lines or switched to another buffer
-        // the line number may become invalid.
-        emsg(_(e_invrange));
-        break;
-      }
-      curwin->w_cursor.lnum = lnum;
-      curwin->w_cursor.col = 0;
-      curwin->w_cursor.coladd = 0;
-    }
+  if (eap->cmdidx == CMD_defer) {
     arg = startarg;
-
+    failed = ex_defer_inner(name, &arg, partial, &evalarg) == FAIL;
+  } else {
     funcexe_T funcexe = FUNCEXE_INIT;
-    funcexe.fe_firstline = eap->line1;
-    funcexe.fe_lastline = eap->line2;
-    funcexe.fe_doesrange = &doesrange;
-    funcexe.fe_evaluate = true;
     funcexe.fe_partial = partial;
     funcexe.fe_selfdict = fudi.fd_dict;
+    funcexe.fe_firstline = eap->line1;
+    funcexe.fe_lastline = eap->line2;
     funcexe.fe_found_var = found_var;
-    if (get_func_tv(name, -1, &rettv, &arg, &evalarg, &funcexe) == FAIL) {
-      failed = true;
-      break;
-    }
-
-    // Handle a function returning a Funcref, Dictionary or List.
-    if (handle_subscript((const char **)&arg, &rettv, &EVALARG_EVALUATE, true) == FAIL) {
-      failed = true;
-      break;
-    }
-
-    tv_clear(&rettv);
-    if (doesrange) {
-      break;
-    }
-
-    // Stop when immediately aborting on error, or when an interrupt
-    // occurred or an exception was thrown but not caught.
-    // get_func_tv() returned OK, so that the check for trailing
-    // characters below is executed.
-    if (aborting()) {
-      break;
-    }
+    funcexe.fe_evaluate = true;
+    failed = ex_call_inner(eap, name, &arg, startarg, &funcexe, &evalarg);
   }
 
   // When inside :try we need to check for following "| catch" or "| endtry".

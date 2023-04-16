@@ -3442,7 +3442,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
   } else if (!*found_existing_dir && **dirp == NUL) {
     int ret;
     char *failed_dir;
-    if ((ret = os_mkdir_recurse(dir_name, 0755, &failed_dir)) != 0) {
+    if ((ret = os_mkdir_recurse(dir_name, 0755, &failed_dir, NULL)) != 0) {
       semsg(_("E303: Unable to create directory \"%s\" for swap file, "
               "recovery impossible: %s"),
             failed_dir, os_strerror(ret));
