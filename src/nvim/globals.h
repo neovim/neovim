@@ -1000,6 +1000,7 @@ EXTERN const char e_fnametoolong[] INIT(= N_("E856: Filename too long"));
 EXTERN const char e_float_as_string[] INIT(= N_("E806: using Float as a String"));
 EXTERN const char e_inval_string[] INIT(= N_("E908: using an invalid value as a String"));
 EXTERN const char e_cannot_edit_other_buf[] INIT(= N_("E788: Not allowed to edit another buffer now"));
+EXTERN const char e_not_callable_type_str[] INIT(= N_("E1085: Not a callable type: %s"));
 
 EXTERN const char e_cmdmap_err[] INIT(= N_("E5520: <Cmd> mapping must end with <CR>"));
 EXTERN const char e_cmdmap_repeated[]

@@ -1236,7 +1236,7 @@ Note that the dot is also used for String concatenation.  To avoid confusion
 always put spaces around the dot for String concatenation.
 
 
-expr8(expr1, ...)	|Funcref| function call
+expr8(expr1, ...)	|Funcref| function call		*E1085*
 
 When expr8 is a |Funcref| type variable, invoke the function it refers to.
 

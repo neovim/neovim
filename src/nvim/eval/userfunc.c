@@ -65,6 +65,7 @@ static funccall_T *current_funccal = NULL;
 // item in it is still being used.
 static funccall_T *previous_funccal = NULL;
 
+static const char *e_unknownfunc = N_("E117: Unknown function: %s");
 static const char *e_funcexts = N_("E122: Function %s already exists, add ! to replace it");
 static const char *e_funcdict = N_("E717: Dictionary entry already exists");
 static const char *e_funcref = N_("E718: Funcref required");
@@ -401,9 +402,11 @@ errret:
 ///                        is not needed.
 /// @param[in]  no_autoload  If true, do not source autoload scripts if function
 ///                          was not found.
+/// @param[out]  found_var  If not NULL and a variable was found set it to true.
 ///
 /// @return name of the function.
-char *deref_func_name(const char *name, int *lenp, partial_T **const partialp, bool no_autoload)
+char *deref_func_name(const char *name, int *lenp, partial_T **const partialp, bool no_autoload,
+                      bool *found_var)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   if (partialp != NULL) {
@@ -411,18 +414,25 @@ char *deref_func_name(const char *name, int *lenp, partial_T **const partialp, b
   }
 
   dictitem_T *const v = find_var(name, (size_t)(*lenp), NULL, no_autoload);
-  if (v != NULL && v->di_tv.v_type == VAR_FUNC) {
-    if (v->di_tv.vval.v_string == NULL) {  // just in case
+  if (v == NULL) {
+    return (char *)name;
+  }
+  typval_T *const tv = &v->di_tv;
+  if (found_var != NULL) {
+    *found_var = true;
+  }
+
+  if (tv->v_type == VAR_FUNC) {
+    if (tv->vval.v_string == NULL) {  // just in case
       *lenp = 0;
       return "";
     }
-    *lenp = (int)strlen(v->di_tv.vval.v_string);
-    return v->di_tv.vval.v_string;
+    *lenp = (int)strlen(tv->vval.v_string);
+    return tv->vval.v_string;
   }
 
-  if (v != NULL && v->di_tv.v_type == VAR_PARTIAL) {
-    partial_T *const pt = v->di_tv.vval.v_partial;
-
+  if (tv->v_type == VAR_PARTIAL) {
+    partial_T *const pt = tv->vval.v_partial;
     if (pt == NULL) {  // just in case
       *lenp = 0;
       return "";
@@ -1454,12 +1464,16 @@ varnumber_T callback_call_retnr(Callback *callback, int argcount, typval_T *argv
 
 /// Give an error message for the result of a function.
 /// Nothing if "error" is FCERR_NONE.
-static void user_func_error(int error, const char *name)
+static void user_func_error(int error, const char *name, funcexe_T *funcexe)
   FUNC_ATTR_NONNULL_ALL
 {
   switch (error) {
   case FCERR_UNKNOWN:
-    emsg_funcname(N_("E117: Unknown function: %s"), name);
+    if (funcexe->fe_found_var) {
+      semsg(_(e_not_callable_type_str), name);
+    } else {
+      emsg_funcname(e_unknownfunc, name);
+    }
     break;
   case FCERR_NOTMETHOD:
     emsg_funcname(N_("E276: Cannot use function as a method: %s"), name);
@@ -1654,7 +1668,7 @@ theend:
   // Report an error unless the argument evaluation or function call has been
   // cancelled due to an aborting error, an interrupt, or an exception.
   if (!aborting()) {
-    user_func_error(error, (name != NULL) ? name : funcname);
+    user_func_error(error, (name != NULL) ? name : funcname, funcexe);
   }
 
   // clear the copies made from the partial
@@ -1846,14 +1860,13 @@ char *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, part
   // Check if the name is a Funcref.  If so, use the value.
   if (lv.ll_exp_name != NULL) {
     len = (int)strlen(lv.ll_exp_name);
-    name = deref_func_name(lv.ll_exp_name, &len, partial,
-                           flags & TFN_NO_AUTOLOAD);
+    name = deref_func_name(lv.ll_exp_name, &len, partial, flags & TFN_NO_AUTOLOAD, NULL);
     if (name == lv.ll_exp_name) {
       name = NULL;
     }
   } else if (!(flags & TFN_NO_DEREF)) {
     len = (int)(end - *pp);
-    name = deref_func_name(*pp, &len, partial, flags & TFN_NO_AUTOLOAD);
+    name = deref_func_name(*pp, &len, partial, flags & TFN_NO_AUTOLOAD, NULL);
     if (name == *pp) {
       name = NULL;
     }
@@ -3070,7 +3083,8 @@ void ex_call(exarg_T *eap)
   // contents. For VAR_PARTIAL get its partial, unless we already have one
   // from trans_function_name().
   len = (int)strlen(tofree);
-  name = deref_func_name(tofree, &len, partial != NULL ? NULL : &partial, false);
+  bool found_var = false;
+  name = deref_func_name(tofree, &len, partial != NULL ? NULL : &partial, false, &found_var);
 
   // Skip white space to allow ":call func ()".  Not good, but required for
   // backward compatibility.
@@ -3104,6 +3118,7 @@ void ex_call(exarg_T *eap)
     funcexe.fe_evaluate = true;
     funcexe.fe_partial = partial;
     funcexe.fe_selfdict = fudi.fd_dict;
+    funcexe.fe_found_var = found_var;
     if (get_func_tv(name, -1, &rettv, &arg, &evalarg, &funcexe) == FAIL) {
       failed = true;
       break;

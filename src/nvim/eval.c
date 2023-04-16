@@ -2220,6 +2220,7 @@ static int eval_func(char **const arg, evalarg_T *const evalarg, char *const nam
   const bool evaluate = flags & EVAL_EVALUATE;
   char *s = name;
   int len = name_len;
+  bool found_var = false;
 
   if (!evaluate) {
     check_vars(s, (size_t)len);
@@ -2228,7 +2229,7 @@ static int eval_func(char **const arg, evalarg_T *const evalarg, char *const nam
   // If "s" is the name of a variable of type VAR_FUNC
   // use its contents.
   partial_T *partial;
-  s = deref_func_name(s, &len, &partial, !evaluate);
+  s = deref_func_name(s, &len, &partial, !evaluate, &found_var);
 
   // Need to make a copy, in case evaluating the arguments makes
   // the name invalid.
@@ -2241,6 +2242,7 @@ static int eval_func(char **const arg, evalarg_T *const evalarg, char *const nam
   funcexe.fe_evaluate = evaluate;
   funcexe.fe_partial = partial;
   funcexe.fe_basetv = basetv;
+  funcexe.fe_found_var = found_var;
   int ret = get_func_tv(s, len, rettv, arg, evalarg, &funcexe);
 
   xfree(s);
