@@ -3063,6 +3063,7 @@ void ex_return(exarg_T *eap)
   clear_evalarg(&evalarg, eap);
 }
 
+/// Lower level implementation of "call".  Only called when not skipping.
 static int ex_call_inner(exarg_T *eap, char *name, char **arg, char *startarg,
                          const funcexe_T *const funcexe_init, evalarg_T *const evalarg)
 {
@@ -3070,7 +3071,7 @@ static int ex_call_inner(exarg_T *eap, char *name, char **arg, char *startarg,
   bool failed = false;
 
   for (linenr_T lnum = eap->line1; lnum <= eap->line2; lnum++) {
-    if (eap->addr_count > 0) {  // -V560
+    if (eap->addr_count > 0) {
       if (lnum > curbuf->b_ml.ml_line_count) {
         // If the function deleted lines or switched to another buffer
         // the line number may become invalid.
