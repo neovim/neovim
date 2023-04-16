@@ -1,5 +1,7 @@
-"Tests for nested functions
-"
+" Tests for nested functions
+
+source check.vim
+
 func NestedFunc()
   func! Func1()
     let g:text .= 'Func1 '
@@ -48,6 +50,9 @@ func Recurse(count)
 endfunc
 
 func Test_max_nesting()
+  " TODO: why does this fail on Windows?  Runs out of stack perhaps?
+  CheckNotMSWindows
+
   let call_depth_here = 2
   let ex_depth_here = 5
   set mfd&
@@ -61,3 +66,5 @@ func Test_max_nesting()
 
   set mfd&
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

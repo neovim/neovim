@@ -139,7 +139,7 @@ You will not get an error if you try to change the type of a variable.
 
 
 1.2 Function references ~
-							*Funcref* *E695* *E718*
+					*Funcref* *E695* *E718* *E1192*
 A Funcref variable is obtained with the |function()| function, the |funcref()|
 function or created with the lambda expression |expr-lambda|.  It can be used
 in an expression in the place of a function name, before the parenthesis
@@ -1236,7 +1236,7 @@ Note that the dot is also used for String concatenation.  To avoid confusion
 always put spaces around the dot for String concatenation.
 
 
-expr8(expr1, ...)	|Funcref| function call
+expr8(expr1, ...)	|Funcref| function call		*E1085*
 
 When expr8 is a |Funcref| type variable, invoke the function it refers to.
 

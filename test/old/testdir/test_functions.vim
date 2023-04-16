@@ -2009,6 +2009,22 @@ func Test_call()
   eval mydict.len->call([], mydict)->assert_equal(4)
   call assert_fails("call call('Mylen', [], 0)", 'E715:')
   call assert_fails('call foo', 'E107:')
+
+  " These once caused a crash.
+  " Nvim doesn't have null functions
+  " call call(test_null_function(), [])
+  " Nvim doesn't have null partials
+  " call call(test_null_partial(), [])
+  " Nvim doesn't have null functions
+  " call assert_fails('call test_null_function()()', 'E1192:')
+  " Nvim doesn't have null partials
+  " call assert_fails('call test_null_partial()()', 'E117:')
+
+  let lines =<< trim END
+      let Time = 'localtime'
+      call Time()
+  END
+  call CheckScriptFailure(lines, 'E1085:')
 endfunc
 
 func Test_char2nr()
