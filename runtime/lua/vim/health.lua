@@ -266,7 +266,7 @@ function M._check(plugin_names)
       M.error('No healthcheck found for "' .. name .. '" plugin.')
     end
     if type == 'v' then
-      vim.cmd.call(func, {})
+      vim.fn.call(func, {})
     else
       local f = assert(loadstring(func))
       local ok, output = pcall(f)
