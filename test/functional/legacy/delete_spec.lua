@@ -63,6 +63,6 @@ describe('Test for delete()', function()
 
   it('gives correct emsgs', function()
     eq('Vim(call):E474: Invalid argument', exc_exec("call delete('')"))
-    eq('Vim(call):E15: Invalid expression: 0', exc_exec("call delete('foo', 0)"))
+    eq('Vim(call):E15: Invalid expression: "0"', exc_exec("call delete('foo', 0)"))
   end)
 end)
