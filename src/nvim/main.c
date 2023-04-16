@@ -30,6 +30,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/userfunc.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/stream.h"
 #include "nvim/ex_cmds.h"
@@ -692,6 +693,9 @@ void getout(int exitval)
 
   // Position the cursor on the last screen line, below all the text
   ui_cursor_goto(Rows - 1, 0);
+
+  // Invoked all deferred functions in the function stack.
+  invoke_all_defer();
 
   // Optionally print hashtable efficiency.
   hash_debug_results();

@@ -584,5 +584,54 @@ func Test_defer()
   call assert_fails('defer Part("arg2")', 'E1300:')
 endfunc
 
+func DeferLevelTwo()
+  call writefile(['text'], 'XDeleteTwo', 'D')
+  throw 'someerror'
+endfunc
+
+" def DeferLevelOne()
+func DeferLevelOne()
+  call writefile(['text'], 'XDeleteOne', 'D')
+  call g:DeferLevelTwo()
+" enddef
+endfunc
+
+func Test_defer_throw()
+  let caught = 'no'
+  try
+    call DeferLevelOne()
+  catch /someerror/
+    let caught = 'yes'
+  endtry
+  call assert_equal('yes', caught)
+  call assert_false(filereadable('XDeleteOne'))
+  call assert_false(filereadable('XDeleteTwo'))
+endfunc
+
+func Test_defer_quitall()
+  let lines =<< trim END
+      " vim9script
+      func DeferLevelTwo()
+        call writefile(['text'], 'XQuitallTwo', 'D')
+        qa!
+      endfunc
+
+      " def DeferLevelOne()
+      func DeferLevelOne()
+        call writefile(['text'], 'XQuitallOne', 'D')
+        call DeferLevelTwo()
+      " enddef
+      endfunc
+
+      " DeferLevelOne()
+      call DeferLevelOne()
+  END
+  call writefile(lines, 'XdeferQuitall', 'D')
+  let res = system(GetVimCommandClean() .. ' -X -S XdeferQuitall')
+  call assert_equal(0, v:shell_error)
+  call assert_false(filereadable('XQuitallOne'))
+  call assert_false(filereadable('XQuitallTwo'))
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

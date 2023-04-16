@@ -1176,7 +1176,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   }
 
   // Invoke functions added with ":defer".
-  handle_defer();
+  handle_defer_one(current_funccal);
 
   RedrawingDisabled--;
 
@@ -3174,10 +3174,10 @@ void add_defer(char *name, int argcount_arg, typval_T *argvars)
 }
 
 /// Invoked after a function has finished: invoke ":defer" functions.
-static void handle_defer(void)
+static void handle_defer_one(funccall_T *funccal)
 {
-  for (int idx = current_funccal->fc_defer.ga_len - 1; idx >= 0; idx--) {
-    defer_T *dr = ((defer_T *)current_funccal->fc_defer.ga_data) + idx;
+  for (int idx = funccal->fc_defer.ga_len - 1; idx >= 0; idx--) {
+    defer_T *dr = ((defer_T *)funccal->fc_defer.ga_data) + idx;
     funcexe_T funcexe = { .fe_evaluate = true };
     typval_T rettv;
     rettv.v_type = VAR_UNKNOWN;     // tv_clear() uses this
@@ -3188,7 +3188,15 @@ static void handle_defer(void)
       tv_clear(&dr->dr_argvars[i]);
     }
   }
-  ga_clear(&current_funccal->fc_defer);
+  ga_clear(&funccal->fc_defer);
+}
+
+/// Called when exiting: call all defer functions.
+void invoke_all_defer(void)
+{
+  for (funccall_T *funccal = current_funccal; funccal != NULL; funccal = funccal->caller) {
+    handle_defer_one(funccal);
+  }
 }
 
 /// ":1,25call func(arg1, arg2)" function call.
