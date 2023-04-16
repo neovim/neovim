@@ -2009,6 +2009,12 @@ func Test_call()
   eval mydict.len->call([], mydict)->assert_equal(4)
   call assert_fails("call call('Mylen', [], 0)", 'E715:')
   call assert_fails('call foo', 'E107:')
+
+  " This once caused a crash.
+  " Nvim doesn't have null functions
+  " call call(test_null_function(), [])
+  " Nvim doesn't have null partials
+  " call call(test_null_partial(), [])
 endfunc
 
 func Test_char2nr()

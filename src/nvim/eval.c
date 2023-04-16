@@ -4175,11 +4175,13 @@ int eval_interp_string(char **arg, typval_T *rettv, bool evaluate)
 char *partial_name(partial_T *pt)
   FUNC_ATTR_PURE
 {
-  if (pt->pt_name != NULL) {
-    return pt->pt_name;
-  }
-  if (pt->pt_func != NULL) {
-    return pt->pt_func->uf_name;
+  if (pt != NULL) {
+    if (pt->pt_name != NULL) {
+      return pt->pt_name;
+    }
+    if (pt->pt_func != NULL) {
+      return pt->pt_func->uf_name;
+    }
   }
   return "";
 }

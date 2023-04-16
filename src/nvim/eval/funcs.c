@@ -565,8 +565,8 @@ static void f_call(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     func = (char *)tv_get_string(&argvars[0]);
   }
 
-  if (*func == NUL) {
-    return;             // type error or empty name
+  if (func == NULL || *func == NUL) {
+    return;         // type error, empty name or null function
   }
 
   dict_T *selfdict = NULL;
@@ -1136,7 +1136,7 @@ static void f_ctxsize(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 /// Set the cursor position.
-/// If 'charcol' is true, then use the column number as a character offset.
+/// If "charcol" is true, then use the column number as a character offset.
 /// Otherwise use the column number as a byte offset.
 static void set_cursorpos(typval_T *argvars, typval_T *rettv, bool charcol)
 {
