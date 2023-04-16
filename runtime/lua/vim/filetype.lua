@@ -257,6 +257,10 @@ local extension = {
   tcc = 'cpp',
   hxx = 'cpp',
   hpp = 'cpp',
+  ccm = 'cpp',
+  cppm = 'cpp',
+  cxxm = 'cpp',
+  ['c++m'] = 'cpp',
   cpp = function(path, bufnr)
     return vim.g.cynlib_syntax_for_cpp and 'cynlib' or 'cpp'
   end,
