@@ -8,8 +8,6 @@ jobs:
   lint-commits:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v3
         with:
