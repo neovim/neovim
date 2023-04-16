@@ -462,7 +462,7 @@ static bool check_text_locked(oparg_T *oap)
 /// If text is locked, "curbuf->b_ro_locked" or "allbuf_lock" is set:
 /// Give an error message, possibly beep and return true.
 /// "oap" may be NULL.
-static bool check_text_or_curbuf_locked(oparg_T *oap)
+bool check_text_or_curbuf_locked(oparg_T *oap)
 {
   if (check_text_locked(oap)) {
     return true;
