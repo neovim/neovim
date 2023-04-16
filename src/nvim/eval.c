@@ -7466,7 +7466,7 @@ hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, const char 
     if (funccal == NULL) {  // global variable
       *d = &globvardict;
     } else {  // l: variable
-      *d = &funccal->l_vars;
+      *d = &funccal->fc_l_vars;
     }
     goto end;
   }
@@ -7490,9 +7490,9 @@ hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, const char 
   } else if (*name == 'v') {  // v: variable
     *d = &vimvardict;
   } else if (*name == 'a' && funccal != NULL) {  // function argument
-    *d = &funccal->l_avars;
+    *d = &funccal->fc_l_avars;
   } else if (*name == 'l' && funccal != NULL) {  // local variable
-    *d = &funccal->l_vars;
+    *d = &funccal->fc_l_vars;
   } else if (*name == 's'  // script variable
              && (current_sctx.sc_sid > 0 || current_sctx.sc_sid == SID_STR
                  || current_sctx.sc_sid == SID_LUA)
