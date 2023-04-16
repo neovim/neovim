@@ -1,7 +1,9 @@
 function! s:deprecate(type) abort
   let deprecate = v:lua.vim.deprecate('health#report_' . a:type, 'vim.health.' . a:type, '0.11')
   redraw | echo 'Running healthchecks...'
-  call v:lua.vim.health.warn(deprecate)
+  if deprecate isnot v:null
+    call v:lua.vim.health.warn(deprecate)
+  endif
 endfunction
 
 function! health#report_start(name) abort
