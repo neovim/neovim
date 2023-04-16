@@ -406,7 +406,8 @@ GetArg()->TheFunc()` does not work, it may work in a later version.
 
 Errors are reported but do not cause aborting execution of deferred functions.
 
-No range is accepted.
+No range is accepted.  The function can be a partial with extra arguments, but
+not with a dictionary. *E1300*
 
 ==============================================================================
 

@@ -81,6 +81,8 @@ static const char e_no_white_space_allowed_before_str_str[]
   = N_("E1068: No white space allowed before '%s': %s");
 static const char e_missing_heredoc_end_marker_str[]
   = N_("E1145: Missing heredoc end marker: %s");
+static const char e_cannot_use_partial_with_dictionary_for_defer[]
+  = N_("E1300: Cannot use a partial with dictionary for :defer");
 
 void func_init(void)
 {
@@ -3062,7 +3064,7 @@ void ex_return(exarg_T *eap)
 }
 
 static int ex_call_inner(exarg_T *eap, char *name, char **arg, char *startarg,
-                         funcexe_T *funcexe_init, evalarg_T *const evalarg)
+                         const funcexe_T *const funcexe_init, evalarg_T *const evalarg)
 {
   bool doesrange;
   bool failed = false;
@@ -3116,16 +3118,32 @@ static int ex_call_inner(exarg_T *eap, char *name, char **arg, char *startarg,
 /// Core part of ":defer func(arg)".  "arg" points to the "(" and is advanced.
 ///
 /// @return  FAIL or OK.
-static int ex_defer_inner(char *name, char **arg, evalarg_T *const evalarg)
+static int ex_defer_inner(char *name, char **arg, const partial_T *const partial,
+                          evalarg_T *const evalarg)
 {
   typval_T argvars[MAX_FUNC_ARGS + 1];  // vars for arguments
+  int partial_argc = 0;  // number of partial arguments
   int argcount = 0;  // number of arguments found
 
   if (current_funccal == NULL) {
     semsg(_(e_str_not_inside_function), "defer");
     return FAIL;
   }
-  if (get_func_arguments(arg, evalarg, false, argvars, &argcount) == FAIL) {
+  if (partial != NULL) {
+    if (partial->pt_dict != NULL) {
+      emsg(_(e_cannot_use_partial_with_dictionary_for_defer));
+      return FAIL;
+    }
+    if (partial->pt_argc > 0) {
+      partial_argc = partial->pt_argc;
+      for (int i = 0; i < partial_argc; i++) {
+        tv_copy(&partial->pt_argv[i], &argvars[i]);
+      }
+    }
+  }
+  int r = get_func_arguments(arg, evalarg, false, argvars + partial_argc, &argcount);
+  argcount += partial_argc;
+  if (r == FAIL) {
     while (--argcount >= 0) {
       tv_clear(&argvars[argcount]);
     }
@@ -3236,7 +3254,7 @@ void ex_call(exarg_T *eap)
 
   if (eap->cmdidx == CMD_defer) {
     arg = startarg;
-    failed = ex_defer_inner(name, &arg, &evalarg) == FAIL;
+    failed = ex_defer_inner(name, &arg, partial, &evalarg) == FAIL;
   } else {
     funcexe_T funcexe = FUNCEXE_INIT;
     funcexe.fe_partial = partial;

@@ -532,8 +532,11 @@ func Test_funcdef_alloc_failure()
   bw!
 endfunc
 
-func AddDefer(arg)
-  call extend(g:deferred, [a:arg])
+func AddDefer(arg1, ...)
+  call extend(g:deferred, [a:arg1])
+  if a:0 == 1
+    call extend(g:deferred, [a:1])
+  endif
 endfunc
 
 func WithDeferTwo()
@@ -553,6 +556,13 @@ func WithDeferOne()
   call extend(g:deferred, ['end One'])
 endfunc
 
+func WithPartialDefer()
+  call extend(g:deferred, ['in Partial'])
+  let Part = funcref('AddDefer', ['arg1'])
+  defer Part("arg2")
+  call extend(g:deferred, ['end Partial'])
+endfunc
+
 func Test_defer()
   let g:deferred = []
   call WithDeferOne()
@@ -561,6 +571,17 @@ func Test_defer()
   unlet g:deferred
 
   call assert_equal('', glob('Xfuncdefer'))
+
+  call assert_fails('defer delete("Xfuncdefer")->Another()', 'E488:')
+  call assert_fails('defer delete("Xfuncdefer").member', 'E488:')
+
+  let g:deferred = []
+  call WithPartialDefer()
+  call assert_equal(['in Partial', 'end Partial', 'arg1', 'arg2'], g:deferred)
+  unlet g:deferred
+
+  let Part = funcref('AddDefer', ['arg1'], {})
+  call assert_fails('defer Part("arg2")', 'E1300:')
 endfunc
 
 
