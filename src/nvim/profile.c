@@ -513,8 +513,8 @@ void prof_child_enter(proftime_T *tm)
 {
   funccall_T *fc = get_current_funccal();
 
-  if (fc != NULL && fc->func->uf_profiling) {
-    fc->prof_child = profile_start();
+  if (fc != NULL && fc->fc_func->uf_profiling) {
+    fc->fc_prof_child = profile_start();
   }
 
   script_prof_save(tm);
@@ -528,14 +528,14 @@ void prof_child_exit(proftime_T *tm)
 {
   funccall_T *fc = get_current_funccal();
 
-  if (fc != NULL && fc->func->uf_profiling) {
-    fc->prof_child = profile_end(fc->prof_child);
+  if (fc != NULL && fc->fc_func->uf_profiling) {
+    fc->fc_prof_child = profile_end(fc->fc_prof_child);
     // don't count waiting time
-    fc->prof_child = profile_sub_wait(*tm, fc->prof_child);
-    fc->func->uf_tm_children =
-      profile_add(fc->func->uf_tm_children, fc->prof_child);
-    fc->func->uf_tml_children =
-      profile_add(fc->func->uf_tml_children, fc->prof_child);
+    fc->fc_prof_child = profile_sub_wait(*tm, fc->fc_prof_child);
+    fc->fc_func->uf_tm_children =
+      profile_add(fc->fc_func->uf_tm_children, fc->fc_prof_child);
+    fc->fc_func->uf_tml_children =
+      profile_add(fc->fc_func->uf_tml_children, fc->fc_prof_child);
   }
   script_prof_restore(tm);
 }
@@ -547,7 +547,7 @@ void prof_child_exit(proftime_T *tm)
 void func_line_start(void *cookie)
 {
   funccall_T *fcp = (funccall_T *)cookie;
-  ufunc_T *fp = fcp->func;
+  ufunc_T *fp = fcp->fc_func;
 
   if (fp->uf_profiling && SOURCING_LNUM >= 1 && SOURCING_LNUM <= fp->uf_lines.ga_len) {
     fp->uf_tml_idx = SOURCING_LNUM - 1;
@@ -566,7 +566,7 @@ void func_line_start(void *cookie)
 void func_line_exec(void *cookie)
 {
   funccall_T *fcp = (funccall_T *)cookie;
-  ufunc_T *fp = fcp->func;
+  ufunc_T *fp = fcp->fc_func;
 
   if (fp->uf_profiling && fp->uf_tml_idx >= 0) {
     fp->uf_tml_execed = true;
@@ -577,7 +577,7 @@ void func_line_exec(void *cookie)
 void func_line_end(void *cookie)
 {
   funccall_T *fcp = (funccall_T *)cookie;
-  ufunc_T *fp = fcp->func;
+  ufunc_T *fp = fcp->fc_func;
 
   if (fp->uf_profiling && fp->uf_tml_idx >= 0) {
     if (fp->uf_tml_execed) {
