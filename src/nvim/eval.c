@@ -3261,6 +3261,7 @@ static int call_func_rettv(char **const arg, evalarg_T *const evalarg, typval_T 
   typval_T functv;
   const char *funcname;
   bool is_lua = false;
+  int ret;
 
   // need to copy the funcref so that we can clear rettv
   if (evaluate) {
@@ -3276,6 +3277,7 @@ static int call_func_rettv(char **const arg, evalarg_T *const evalarg, typval_T 
       funcname = functv.vval.v_string;
       if (funcname == NULL || *funcname == NUL) {
         emsg(_(e_empty_function_name));
+        ret = FAIL;
         goto theend;
       }
     }
@@ -3290,8 +3292,8 @@ static int call_func_rettv(char **const arg, evalarg_T *const evalarg, typval_T 
   funcexe.fe_partial = pt;
   funcexe.fe_selfdict = selfdict;
   funcexe.fe_basetv = basetv;
-  const int ret = get_func_tv(funcname, is_lua ? (int)(*arg - funcname) : -1, rettv,
-                              arg, evalarg, &funcexe);
+  ret = get_func_tv(funcname, is_lua ? (int)(*arg - funcname) : -1, rettv,
+                    arg, evalarg, &funcexe);
 
 theend:
   // Clear the funcref afterwards, so that deleting it while
