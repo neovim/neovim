@@ -12,17 +12,21 @@ describe('vim.inspect_pos', function()
   it('it returns items', function()
     local ret = exec_lua([[
       local buf = vim.api.nvim_create_buf(true, false)
+      local buf1 = vim.api.nvim_create_buf(true, false)
       local ns1 = vim.api.nvim_create_namespace("ns1")
       local ns2 = vim.api.nvim_create_namespace("")
       vim.api.nvim_set_current_buf(buf)
       vim.api.nvim_buf_set_lines(0, 0, -1, false, {"local a = 123"})
+      vim.api.nvim_buf_set_lines(buf1, 0, -1, false, {"--commentline"})
       vim.api.nvim_buf_set_option(buf, "filetype", "lua")
+      vim.api.nvim_buf_set_option(buf1, "filetype", "lua")
       vim.api.nvim_buf_set_extmark(buf, ns1, 0, 10, { hl_group = "Normal" })
       vim.api.nvim_buf_set_extmark(buf, ns2, 0, 10, { hl_group = "Normal" })
       vim.cmd("syntax on")
-      return {buf, vim.inspect_pos(0, 0, 10)}
+      return {buf, vim.inspect_pos(0, 0, 10), vim.inspect_pos(buf1, 0, 10).syntax }
     ]])
-    local buf, items = unpack(ret)
+    local buf, items, other_buf_syntax = unpack(ret)
+
     eq('', eval('v:errmsg'))
     eq({
       buffer = buf,
@@ -73,6 +77,13 @@ describe('vim.inspect_pos', function()
         },
       },
     }, items)
+
+    eq({
+      {
+        hl_group = 'luaComment',
+        hl_group_link = 'Comment',
+      },
+    }, other_buf_syntax)
   end)
 end)
 
