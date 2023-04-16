@@ -12,7 +12,6 @@ jobs:
     steps:
     - uses: actions/labeler@v4
       with:
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
         sync-labels: ""
 
   type-scope:
@@ -21,7 +20,6 @@ jobs:
       contents: write
       pull-requests: write
     env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
       PR_TITLE: ${{ github.event.pull_request.title }}
