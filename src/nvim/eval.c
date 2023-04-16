@@ -96,6 +96,7 @@ static const char *e_string_list_or_blob_required = N_("E1098: String, List or B
 static const char e_expression_too_recursive_str[] = N_("E1169: Expression too recursive: %s");
 static const char e_dot_can_only_be_used_on_dictionary_str[]
   = N_("E1203: Dot can only be used on a dictionary: %s");
+static const char e_empty_function_name[] = N_("E1192: Empty function name");
 
 static char * const namespace_char = "abglstvw";
 
@@ -3273,6 +3274,10 @@ static int call_func_rettv(char **const arg, evalarg_T *const evalarg, typval_T 
       funcname = is_lua ? lua_funcname : partial_name(pt);
     } else {
       funcname = functv.vval.v_string;
+      if (funcname == NULL || *funcname == NUL) {
+        emsg(_(e_empty_function_name));
+        goto theend;
+      }
     }
   } else {
     funcname = "";
@@ -3288,6 +3293,7 @@ static int call_func_rettv(char **const arg, evalarg_T *const evalarg, typval_T 
   const int ret = get_func_tv(funcname, is_lua ? (int)(*arg - funcname) : -1, rettv,
                               arg, evalarg, &funcexe);
 
+theend:
   // Clear the funcref afterwards, so that deleting it while
   // evaluating the arguments is possible (see test55).
   if (evaluate) {

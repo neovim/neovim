@@ -2010,11 +2010,15 @@ func Test_call()
   call assert_fails("call call('Mylen', [], 0)", 'E715:')
   call assert_fails('call foo', 'E107:')
 
-  " This once caused a crash.
+  " These once caused a crash.
   " Nvim doesn't have null functions
   " call call(test_null_function(), [])
   " Nvim doesn't have null partials
   " call call(test_null_partial(), [])
+  " Nvim doesn't have null functions
+  " call assert_fails('call test_null_function()()', 'E1192:')
+  " Nvim doesn't have null partials
+  " call assert_fails('call test_null_partial()()', 'E117:')
 endfunc
 
 func Test_char2nr()
