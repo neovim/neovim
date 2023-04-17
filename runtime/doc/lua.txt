@@ -3173,7 +3173,7 @@ Iter:nthback({self}, {n})                                     *Iter:nthback()*
 Iter:peek({self})                                                *Iter:peek()*
     Peek at the next value in the iterator without consuming it.
 
-    Only iterators on tables can be peeked.
+    Only supported for iterators on list-like tables.
 
     Example: >lua
 
@@ -3211,7 +3211,7 @@ Iter:peekback({self})                                        *Iter:peekback()*
 Iter:rev({self})                                                  *Iter:rev()*
     Reverse an iterator.
 
-    Only iterators on tables can be reversed.
+    Only supported for iterators on list-like tables.
 
     Example: >lua
 

@@ -300,7 +300,7 @@ end
 
 --- Reverse an iterator.
 ---
---- Only iterators on tables can be reversed.
+--- Only supported for iterators on list-like tables.
 ---
 --- Example:
 --- <pre>lua
@@ -326,7 +326,7 @@ end
 
 --- Peek at the next value in the iterator without consuming it.
 ---
---- Only iterators on tables can be peeked.
+--- Only supported for iterators on list-like tables.
 ---
 --- Example:
 --- <pre>lua
