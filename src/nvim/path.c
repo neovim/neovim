@@ -1661,10 +1661,15 @@ void simplify_filename(char *filename)
 
 static char *eval_includeexpr(const char *const ptr, const size_t len)
 {
+  const sctx_T save_sctx = current_sctx;
   set_vim_var_string(VV_FNAME, ptr, (ptrdiff_t)len);
+  current_sctx = curbuf->b_p_script_ctx[BV_INEX].script_ctx;
+
   char *res = eval_to_string_safe(curbuf->b_p_inex,
                                   was_set_insecurely(curwin, "includeexpr", OPT_LOCAL));
+
   set_vim_var_string(VV_FNAME, NULL, 0);
+  current_sctx = save_sctx;
   return res;
 }
 
