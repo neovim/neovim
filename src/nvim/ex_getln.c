@@ -4096,6 +4096,10 @@ static char *get_cmdline_completion(void)
   }
 
   set_expand_context(p->xpc);
+  if (p->xpc->xp_context == EXPAND_UNSUCCESSFUL) {
+    return NULL;
+  }
+
   char *cmd_compl = get_user_cmd_complete(p->xpc, p->xpc->xp_context);
   if (cmd_compl != NULL) {
     return xstrdup(cmd_compl);
