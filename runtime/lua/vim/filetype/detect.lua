@@ -1322,6 +1322,15 @@ function M.txt(bufnr)
   end
 end
 
+function M.v(bufnr)
+  for _, line in ipairs(getlines(bufnr)) do
+    if not line:find(';$') then
+      return 'v'
+    end
+  end
+  return 'verilog'
+end
+
 -- WEB (*.web is also used for Winbatch: Guess, based on expecting "%" comment
 -- lines in a WEB file).
 function M.web(bufnr)
