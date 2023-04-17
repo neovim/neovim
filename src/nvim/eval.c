@@ -647,19 +647,27 @@ void var_redir_stop(void)
 int eval_charconvert(const char *const enc_from, const char *const enc_to,
                      const char *const fname_from, const char *const fname_to)
 {
-  bool err = false;
+  const sctx_T saved_sctx = current_sctx;
 
   set_vim_var_string(VV_CC_FROM, enc_from, -1);
   set_vim_var_string(VV_CC_TO, enc_to, -1);
   set_vim_var_string(VV_FNAME_IN, fname_from, -1);
   set_vim_var_string(VV_FNAME_OUT, fname_to, -1);
+  sctx_T *ctx = get_option_sctx("charconvert");
+  if (ctx != NULL) {
+    current_sctx = *ctx;
+  }
+
+  bool err = false;
   if (eval_to_bool(p_ccv, &err, NULL, false)) {
     err = true;
   }
+
   set_vim_var_string(VV_CC_FROM, NULL, -1);
   set_vim_var_string(VV_CC_TO, NULL, -1);
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
+  current_sctx = saved_sctx;
 
   if (err) {
     return FAIL;
