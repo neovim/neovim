@@ -5,6 +5,7 @@
 
 source check.vim
 source shared.vim
+source vim9.vim
 
 func Table(title, ...)
   let ret = a:title
@@ -627,10 +628,95 @@ func Test_defer_quitall()
       call DeferLevelOne()
   END
   call writefile(lines, 'XdeferQuitall', 'D')
-  let res = system(GetVimCommandClean() .. ' -X -S XdeferQuitall')
+  let res = system(GetVimCommand() .. ' -X -S XdeferQuitall')
   call assert_equal(0, v:shell_error)
   call assert_false(filereadable('XQuitallOne'))
   call assert_false(filereadable('XQuitallTwo'))
+endfunc
+
+func Test_defer_quitall_in_expr_func()
+  throw 'Skipped: Vim9 script is N/A'
+  let lines =<< trim END
+      def DefIndex(idx: number, val: string): bool
+        call writefile([idx .. ': ' .. val], 'Xentry' .. idx, 'D')
+        if val == 'b'
+          qa!
+        endif
+        return val == 'c'
+      enddef
+
+      def Test_defer_in_funcref()
+        assert_equal(2, indexof(['a', 'b', 'c'], funcref('g:DefIndex')))
+      enddef
+      call Test_defer_in_funcref()
+  END
+  call writefile(lines, 'XdeferQuitallExpr', 'D')
+  let res = system(GetVimCommand() .. ' -X -S XdeferQuitallExpr')
+  call assert_equal(0, v:shell_error)
+  call assert_false(filereadable('Xentry0'))
+  call assert_false(filereadable('Xentry1'))
+  call assert_false(filereadable('Xentry2'))
+endfunc
+
+func FuncIndex(idx, val)
+  call writefile([a:idx .. ': ' .. a:val], 'Xentry' .. a:idx, 'D')
+  return a:val == 'c'
+endfunc
+
+func Test_defer_wrong_arguments()
+  call assert_fails('defer delete()', 'E119:')
+  call assert_fails('defer FuncIndex(1)', 'E119:')
+  call assert_fails('defer delete(1, 2, 3)', 'E118:')
+  call assert_fails('defer FuncIndex(1, 2, 3)', 'E118:')
+
+  throw 'Skipped: Vim9 script is N/A'
+  let lines =<< trim END
+      def DeferFunc0()
+        defer delete()
+      enddef
+      defcompile
+  END
+  call v9.CheckScriptFailure(lines, 'E119:')
+  let lines =<< trim END
+      def DeferFunc3()
+        defer delete(1, 2, 3)
+      enddef
+      defcompile
+  END
+  call v9.CheckScriptFailure(lines, 'E118:')
+  let lines =<< trim END
+      def DeferFunc2()
+        defer delete(1, 2)
+      enddef
+      defcompile
+  END
+  call v9.CheckScriptFailure(lines, 'E1013: Argument 1: type mismatch, expected string but got number')
+
+  def g:FuncOneArg(arg: string)
+    echo arg
+  enddef
+
+  let lines =<< trim END
+      def DeferUserFunc0()
+        defer g:FuncOneArg()
+      enddef
+      defcompile
+  END
+  call v9.CheckScriptFailure(lines, 'E119:')
+  let lines =<< trim END
+      def DeferUserFunc2()
+        defer g:FuncOneArg(1, 2)
+      enddef
+      defcompile
+  END
+  call v9.CheckScriptFailure(lines, 'E118:')
+  let lines =<< trim END
+      def DeferUserFunc1()
+        defer g:FuncOneArg(1)
+      enddef
+      defcompile
+  END
+  call v9.CheckScriptFailure(lines, 'E1013: Argument 1: type mismatch, expected string but got number')
 endfunc
 
 

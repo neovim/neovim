@@ -953,6 +953,7 @@ EXTERN const char e_dictreq[] INIT(= N_("E715: Dictionary required"));
 EXTERN const char e_blobidx[] INIT(= N_("E979: Blob index out of range: %" PRId64));
 EXTERN const char e_invalblob[] INIT(= N_("E978: Invalid operation for Blob"));
 EXTERN const char e_toomanyarg[] INIT(= N_("E118: Too many arguments for function: %s"));
+EXTERN const char e_toofewarg[] INIT(= N_("E119: Not enough arguments for function: %s"));
 EXTERN const char e_dictkey[] INIT(= N_("E716: Key not present in Dictionary: \"%s\""));
 EXTERN const char e_listreq[] INIT(= N_("E714: List required"));
 EXTERN const char e_listblobreq[] INIT(= N_("E897: List or Blob required"));
