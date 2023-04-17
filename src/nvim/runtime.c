@@ -253,6 +253,7 @@ void ex_runtime(exarg_T *eap)
   int flags = eap->forceit ? DIP_ALL : 0;
   char *p = skiptowhite(arg);
   flags += get_runtime_cmd_flags(&arg, (size_t)(p - arg));
+  assert(arg != NULL);  // suppress clang false positive
   source_runtime(arg, flags);
 }
 
