@@ -985,7 +985,7 @@ end
 ---
 ---@param f function(...):?any Map function. Accepts the current iterator or table values as
 ---                            arguments and returns one or more new values. Nil values are removed
----                            from the final table. the final table
+---                            from the final table.
 ---@param src table|function Table or iterator function to filter
 ---@return table
 function vim.map(f, src, ...)
