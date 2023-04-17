@@ -536,6 +536,7 @@ int get_func_tv(const char *name, int len, typval_T *rettv, char **arg, evalarg_
                                 : funcexe->fe_partial->pt_argc),
                                argvars, &argcount);
 
+  assert(ret == OK || ret == FAIL);  // suppress clang false positive
   if (ret == OK) {
     int i = 0;
 
