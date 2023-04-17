@@ -1913,6 +1913,18 @@ bool parse_winhl_opt(win_T *wp)
   return true;
 }
 
+/// Get the script context of global option "name".
+sctx_T *get_option_sctx(const char *const name)
+{
+  int idx = findoption(name);
+
+  if (idx >= 0) {
+    return &options[idx].last_set.script_ctx;
+  }
+  siemsg("no such option: %s", name);
+  return NULL;
+}
+
 /// Set the script_ctx for an option, taking care of setting the buffer- or
 /// window-local value.
 void set_option_sctx_idx(int opt_idx, int opt_flags, sctx_T script_ctx)
