@@ -35,7 +35,8 @@ ADDED FEATURES                                                     *news-added*
 
 The following new APIs or features were added.
 
-• ...
+• |vim.iter()| provides a generic iterator interface for tables and Lua
+iterators |luaref-in|.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
