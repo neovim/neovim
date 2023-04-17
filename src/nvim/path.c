@@ -1690,8 +1690,11 @@ char *find_file_name_in_path(char *ptr, size_t len, int options, long count, cha
   }
 
   if (options & FNAME_EXP) {
-    file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS, true,
-                                  rel_fname);
+    char *file_to_find = NULL;
+    char *search_ctx = NULL;
+
+    file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS,
+                                  true, rel_fname, &file_to_find, &search_ctx);
 
     // If the file could not be found in a normal way, try applying
     // 'includeexpr' (unless done already).
@@ -1702,7 +1705,7 @@ char *find_file_name_in_path(char *ptr, size_t len, int options, long count, cha
         ptr = tofree;
         len = strlen(ptr);
         file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS,
-                                      true, rel_fname);
+                                      true, rel_fname, &file_to_find, &search_ctx);
       }
     }
     if (file_name == NULL && (options & FNAME_MESS)) {
@@ -1716,9 +1719,12 @@ char *find_file_name_in_path(char *ptr, size_t len, int options, long count, cha
     // appears several times in the path.
     while (file_name != NULL && --count > 0) {
       xfree(file_name);
-      file_name =
-        find_file_in_path(ptr, len, options, false, rel_fname);
+      file_name = find_file_in_path(ptr, len, options, false, rel_fname,
+                                    &file_to_find, &search_ctx);
     }
+
+    xfree(file_to_find);
+    vim_findfile_cleanup(search_ctx);
   } else {
     file_name = xstrnsave(ptr, len);
   }
