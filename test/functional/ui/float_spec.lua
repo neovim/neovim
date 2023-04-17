@@ -2276,6 +2276,51 @@ describe('float window', function()
       end
     end)
 
+    it("correct ruler position in current float with 'rulerformat' set", function()
+      command 'set ruler rulerformat=fish:<><'
+      meths.open_win(0, true, {relative='editor', width=9, height=3, row=0, col=5})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+                                                  |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                fish:<><          |
+        ## grid 4
+          {1:^         }|
+          {2:~        }|
+          {2:~        }|
+        ]], float_pos={
+          [4] = {{id = 1001}, "NW", 1, 0, 5, true, 50};
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }}
+      else
+        screen:expect{grid=[[
+               {1:^         }                          |
+          {0:~    }{2:~        }{0:                          }|
+          {0:~    }{2:~        }{0:                          }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+                                fish:<><          |
+        ]]}
+      end
+    end)
+
     it('can have minimum size', function()
       insert("the background text")
       local buf = meths.create_buf(false, true)

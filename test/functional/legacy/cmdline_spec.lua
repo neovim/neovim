@@ -239,6 +239,25 @@ describe('cmdline', function()
                                                                   |
     ]])
   end)
+
+  -- oldtest: Test_rulerformat_position()
+  it("ruler has correct position with 'rulerformat' set", function()
+    local screen = Screen.new(20, 3)
+    screen:set_default_attr_ids {
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+    }
+    screen:attach()
+    meths.set_option('ruler', true)
+    meths.set_option('rulerformat', 'longish')
+    meths.set_option('laststatus', 0)
+    meths.set_option('winwidth', 1)
+    feed [[<C-W>v<C-W>|<C-W>p]]
+    screen:expect [[
+                        │^ |
+      {0:~                 }│{0:~}|
+                longish   |
+    ]]
+  end)
 end)
 
 describe('cmdwin', function()
