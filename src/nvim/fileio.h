@@ -20,8 +20,29 @@
 
 typedef varnumber_T (*CheckItem)(void *expr, const char *name);
 
+enum {
+  FIO_LATIN1 = 0x01,       // convert Latin1
+  FIO_UTF8 = 0x02,         // convert UTF-8
+  FIO_UCS2 = 0x04,         // convert UCS-2
+  FIO_UCS4 = 0x08,         // convert UCS-4
+  FIO_UTF16 = 0x10,        // convert UTF-16
+  FIO_ENDIAN_L = 0x80,     // little endian
+  FIO_NOCONVERT = 0x2000,  // skip encoding conversion
+  FIO_UCSBOM = 0x4000,     // check for BOM at start of file
+  FIO_ALL = -1,            // allow all formats
+};
+
+// When converting, a read() or write() may leave some bytes to be converted
+// for the next call.  The value is guessed...
+#define CONV_RESTLEN 30
+
+#define WRITEBUFSIZE         8192    // size of normal write buffer
+
+// We have to guess how much a sequence of bytes may expand when converting
+// with iconv() to be able to allocate a buffer.
+#define ICONV_MULT 8
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-// Events for autocommands
 # include "fileio.h.generated.h"
 #endif
 #endif  // NVIM_FILEIO_H

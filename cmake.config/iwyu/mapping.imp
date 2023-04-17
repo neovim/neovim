@@ -20,6 +20,7 @@
   { include: [ '"autocmd.h.generated.h"', private, '"nvim/autocmd.h"', public ] },
   { include: [ '"buffer.h.generated.h"', private, '"nvim/buffer.h"', public ] },
   { include: [ '"buffer_updates.h.generated.h"', private, '"nvim/buffer_updates.h"', public ] },
+  { include: [ '"bufwrite.h.generated.h"', private, '"nvim/bufwrite.h"', public ] },
   { include: [ '"change.h.generated.h"', private, '"nvim/change.h"', public ] },
   { include: [ '"channel.h.generated.h"', private, '"nvim/channel.h"', public ] },
   { include: [ '"charset.h.generated.h"', private, '"nvim/charset.h"', public ] },
