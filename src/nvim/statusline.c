@@ -237,7 +237,7 @@ void stl_clear_click_defs(StlClickDefinition *const click_defs, const size_t cli
 }
 
 /// Allocate or resize the click definitions array if needed.
-StlClickDefinition *stl_alloc_click_defs(StlClickDefinition *cdp, long width, size_t *size)
+StlClickDefinition *stl_alloc_click_defs(StlClickDefinition *cdp, int width, size_t *size)
 {
   if (*size < (size_t)width) {
     xfree(cdp);

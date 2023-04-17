@@ -168,12 +168,12 @@ win_T *swbuf_goto_win_with_buf(buf_T *buf)
 /// all CTRL-W window commands are handled here, called from normal_cmd().
 ///
 /// @param xchar  extra char from ":wincmd gx" or NUL
-void do_window(int nchar, long Prenum, int xchar)
+void do_window(int nchar, int Prenum, int xchar)
 {
   int type = FIND_DEFINE;
   char cbuf[40];
 
-  long Prenum1 = Prenum == 0 ? 1 : Prenum;
+  int Prenum1 = Prenum == 0 ? 1 : Prenum;
 
 #define CHECK_CMDWIN \
   do { \
@@ -195,7 +195,7 @@ void do_window(int nchar, long Prenum, int xchar)
     if (bt_quickfix(curbuf)) {
       goto newwindow;
     }
-    (void)win_split((int)Prenum, 0);
+    (void)win_split(Prenum, 0);
     break;
 
   // split current window in two parts, vertically
@@ -208,7 +208,7 @@ void do_window(int nchar, long Prenum, int xchar)
     if (bt_quickfix(curbuf)) {
       goto newwindow;
     }
-    (void)win_split((int)Prenum, WSP_VERT);
+    (void)win_split(Prenum, WSP_VERT);
     break;
 
   // split current window and edit alternate file
@@ -217,7 +217,7 @@ void do_window(int nchar, long Prenum, int xchar)
     CHECK_CMDWIN;
     reset_VIsual_and_resel();  // stop Visual mode
 
-    if (buflist_findnr(Prenum == 0 ? curwin->w_alt_fnum : (int)Prenum) == NULL) {
+    if (buflist_findnr(Prenum == 0 ? curwin->w_alt_fnum : Prenum) == NULL) {
       if (Prenum == 0) {
         emsg(_(e_noalt));
       } else {
@@ -227,7 +227,7 @@ void do_window(int nchar, long Prenum, int xchar)
     }
 
     if (!curbuf_locked() && win_split(0, 0) == OK) {
-      (void)buflist_getfile(Prenum == 0 ? curwin->w_alt_fnum : (int)Prenum,
+      (void)buflist_getfile(Prenum == 0 ? curwin->w_alt_fnum : Prenum,
                             (linenr_T)0, GETF_ALT, false);
     }
     break;
@@ -387,7 +387,7 @@ newwindow:
       // First create a new tab with the window, then go back to
       // the old tab and close the window there.
       win_T *wp = curwin;
-      if (win_new_tabpage((int)Prenum, NULL) == OK
+      if (win_new_tabpage(Prenum, NULL) == OK
           && valid_tabpage(oldtab)) {
         tabpage_T *newtab = curtab;
         goto_tabpage_tp(oldtab, true, true);
@@ -436,14 +436,14 @@ newwindow:
   case 'r':
     CHECK_CMDWIN;
     reset_VIsual_and_resel();  // stop Visual mode
-    win_rotate(false, (int)Prenum1);  // downwards
+    win_rotate(false, Prenum1);  // downwards
     break;
 
   // rotate windows upwards
   case 'R':
     CHECK_CMDWIN;
     reset_VIsual_and_resel();  // stop Visual mode
-    win_rotate(true, (int)Prenum1);  // upwards
+    win_rotate(true, Prenum1);  // upwards
     break;
 
   // move window to the very top/bottom/left/right
@@ -452,7 +452,7 @@ newwindow:
   case 'H':
   case 'L':
     CHECK_CMDWIN;
-    win_totop((int)Prenum,
+    win_totop(Prenum,
               ((nchar == 'H' || nchar == 'L') ? WSP_VERT : 0)
               | ((nchar == 'H' || nchar == 'K') ? WSP_TOP : WSP_BOT));
     break;
@@ -466,40 +466,40 @@ newwindow:
 
   // increase current window height
   case '+':
-    win_setheight(curwin->w_height + (int)Prenum1);
+    win_setheight(curwin->w_height + Prenum1);
     break;
 
   // decrease current window height
   case '-':
-    win_setheight(curwin->w_height - (int)Prenum1);
+    win_setheight(curwin->w_height - Prenum1);
     break;
 
   // set current window height
   case Ctrl__:
   case '_':
-    win_setheight(Prenum ? (int)Prenum : Rows - 1);
+    win_setheight(Prenum ? Prenum : Rows - 1);
     break;
 
   // increase current window width
   case '>':
-    win_setwidth(curwin->w_width + (int)Prenum1);
+    win_setwidth(curwin->w_width + Prenum1);
     break;
 
   // decrease current window width
   case '<':
-    win_setwidth(curwin->w_width - (int)Prenum1);
+    win_setwidth(curwin->w_width - Prenum1);
     break;
 
   // set current window width
   case '|':
-    win_setwidth(Prenum != 0 ? (int)Prenum : Columns);
+    win_setwidth(Prenum != 0 ? Prenum : Columns);
     break;
 
   // jump to tag and split window if tag exists (in preview window)
   case '}':
     CHECK_CMDWIN;
     if (Prenum) {
-      g_do_tagpreview = (int)Prenum;
+      g_do_tagpreview = Prenum;
     } else {
       g_do_tagpreview = (int)p_pvh;
     }
@@ -509,7 +509,7 @@ newwindow:
     CHECK_CMDWIN;
     // Keep visual mode, can select words to use as a tag.
     if (Prenum) {
-      postponed_split = (int)Prenum;
+      postponed_split = Prenum;
     } else {
       postponed_split = -1;
     }
@@ -621,7 +621,7 @@ wingotofile:
     case '}':
       xchar = Ctrl_RSB;
       if (Prenum) {
-        g_do_tagpreview = (int)Prenum;
+        g_do_tagpreview = Prenum;
       } else {
         g_do_tagpreview = (int)p_pvh;
       }
@@ -630,7 +630,7 @@ wingotofile:
     case Ctrl_RSB:
       // Keep visual mode, can select words to use as a tag.
       if (Prenum) {
-        postponed_split = (int)Prenum;
+        postponed_split = Prenum;
       } else {
         postponed_split = -1;
       }
@@ -648,11 +648,11 @@ wingotofile:
       goto wingotofile;
 
     case 't':                       // CTRL-W gt: go to next tab page
-      goto_tabpage((int)Prenum);
+      goto_tabpage(Prenum);
       break;
 
     case 'T':                       // CTRL-W gT: go to previous tab page
-      goto_tabpage(-(int)Prenum1);
+      goto_tabpage(-Prenum1);
       break;
 
     case TAB:                       // CTRL-W g<Tab>: go to last used tab page
@@ -1849,7 +1849,7 @@ int make_windows(int count, bool vertical)
 }
 
 // Exchange current and next window
-static void win_exchange(long Prenum)
+static void win_exchange(int Prenum)
 {
   if (curwin->w_floating) {
     emsg(e_floatexchange);
@@ -4668,7 +4668,7 @@ tabpage_T *win_find_tabpage(win_T *win)
 /// @param count  nth neighbor window
 ///
 /// @return       found window
-win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, long count)
+win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, int count)
 {
   frame_T *foundfr = wp->w_frame;
 
@@ -4727,7 +4727,7 @@ end:
 ///
 /// @param up     true to go to win above
 /// @param count  go count times into direction
-static void win_goto_ver(bool up, long count)
+static void win_goto_ver(bool up, int count)
 {
   win_T *win = win_vert_neighbor(curtab, curwin, up, count);
   if (win != NULL) {
@@ -4744,7 +4744,7 @@ static void win_goto_ver(bool up, long count)
 /// @param count nth neighbor window
 ///
 /// @return      found window
-win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, long count)
+win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, int count)
 {
   frame_T *foundfr = wp->w_frame;
 
@@ -4803,7 +4803,7 @@ end:
 ///
 /// @param left   true to go to left window
 /// @param count  go count times into direction
-static void win_goto_hor(bool left, long count)
+static void win_goto_hor(bool left, int count)
 {
   win_T *win = win_horz_neighbor(curtab, curwin, left, count);
   if (win != NULL) {
@@ -5318,8 +5318,8 @@ static void frame_remove(frame_T *frp)
 
 void win_new_screensize(void)
 {
-  static long old_Rows = 0;
-  static long old_Columns = 0;
+  static int old_Rows = 0;
+  static int old_Columns = 0;
 
   if (old_Rows != Rows) {
     // If 'window' uses the whole screen, keep it using that.
@@ -6475,7 +6475,7 @@ static void win_fix_cursor(int normal)
   }
 
   // Determine valid cursor range.
-  long so = MIN(wp->w_height_inner / 2, get_scrolloff_value(wp));
+  linenr_T so = MIN(wp->w_height_inner / 2, get_scrolloff_value(wp));
   linenr_T lnum = wp->w_cursor.lnum;
 
   wp->w_cursor.lnum = wp->w_topline;
@@ -6812,7 +6812,7 @@ static void frame_add_height(frame_T *frp, int n)
 // Get the file name at the cursor.
 // If Visual mode is active, use the selected text if it's in one line.
 // Returns the name in allocated memory, NULL for failure.
-char *grab_file_name(long count, linenr_T *file_lnum)
+char *grab_file_name(int count, linenr_T *file_lnum)
 {
   int options = FNAME_MESS | FNAME_EXP | FNAME_REL | FNAME_UNESC;
   if (VIsual_active) {
@@ -6843,7 +6843,7 @@ char *grab_file_name(long count, linenr_T *file_lnum)
 // FNAME_EXP        expand to path
 // FNAME_HYP        check for hypertext link
 // FNAME_INCL       apply "includeexpr"
-char *file_name_at_cursor(int options, long count, linenr_T *file_lnum)
+char *file_name_at_cursor(int options, int count, linenr_T *file_lnum)
 {
   return file_name_in_line(get_cursor_line_ptr(),
                            curwin->w_cursor.col, options, count, curbuf->b_ffname,
@@ -6854,7 +6854,7 @@ char *file_name_at_cursor(int options, long count, linenr_T *file_lnum)
 /// @param file_lnum  line number after the file name
 ///
 /// @return  the name of the file under or after ptr[col]. Otherwise like file_name_at_cursor().
-char *file_name_in_line(char *line, int col, int options, long count, char *rel_fname,
+char *file_name_in_line(char *line, int col, int options, int count, char *rel_fname,
                         linenr_T *file_lnum)
 {
   // search forward for what could be the start of a file name

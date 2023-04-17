@@ -483,13 +483,13 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
       clen += 2;
     }
     // jumping right, put match at the left
-    if ((long)clen > Columns) {
+    if (clen > Columns) {
       first_match = match;
       // if showing the last match, we can add some on the left
       clen = 2;
       for (i = match; i < num_matches; i++) {
         clen += wildmenu_match_len(xp, SHOW_MATCH(i)) + 2;
-        if ((long)clen >= Columns) {
+        if (clen >= Columns) {
           break;
         }
       }
@@ -501,7 +501,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
   if (add_left) {
     while (first_match > 0) {
       clen += wildmenu_match_len(xp, SHOW_MATCH(first_match - 1)) + 2;
-      if ((long)clen >= Columns) {
+      if (clen >= Columns) {
         break;
       }
       first_match--;

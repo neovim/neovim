@@ -1688,7 +1688,7 @@ static int spell_read_tree(FILE *fd, uint8_t **bytsp, long *bytsp_len, idx_T **i
 
   // The tree size was computed when writing the file, so that we can
   // allocate it as one long block. <nodecount>
-  long len = get4c(fd);
+  int len = get4c(fd);
   if (len < 0) {
     return SP_TRUNCERROR;
   }
@@ -1712,7 +1712,7 @@ static int spell_read_tree(FILE *fd, uint8_t **bytsp, long *bytsp_len, idx_T **i
   *idxsp = ip;
 
   // Recursively read the tree and store it in the array.
-  idx = read_tree_node(fd, bp, ip, (int)len, 0, prefixtree, prefixcnt);
+  idx = read_tree_node(fd, bp, ip, len, 0, prefixtree, prefixcnt);
   if (idx < 0) {
     return idx;
   }

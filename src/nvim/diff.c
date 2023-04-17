@@ -2466,8 +2466,8 @@ int diffopt_changed(void)
   int linematch_lines_new = 0;
   int diff_flags_new = 0;
   int diff_foldcolumn_new = 2;
-  long diff_algorithm_new = 0;
-  long diff_indent_heuristic = 0;
+  int diff_algorithm_new = 0;
+  int diff_indent_heuristic = 0;
 
   char *p = p_dip;
   while (*p != NUL) {

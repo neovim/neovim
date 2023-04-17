@@ -30,7 +30,7 @@ typedef struct {
   bool save_msg_didout;
   int save_State;
   bool save_finish_op;
-  long save_opcount;
+  int save_opcount;
   int save_reg_executing;
   bool save_pending_end_reg_executing;
   tasave_T tabuf;

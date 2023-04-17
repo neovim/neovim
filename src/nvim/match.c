@@ -658,7 +658,7 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char **lin
           shl->endcol++;
         }
       }
-      if ((long)shl->startcol < mincol) {   // match at leftcol
+      if (shl->startcol < mincol) {   // match at leftcol
         shl->attr_cur = shl->attr;
         *search_attr = shl->attr;
         *search_attr_from_match = shl != search_hl;
@@ -808,28 +808,28 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char **line, match_T
   return search_attr;
 }
 
-bool get_prevcol_hl_flag(win_T *wp, match_T *search_hl, long curcol)
+bool get_prevcol_hl_flag(win_T *wp, match_T *search_hl, colnr_T curcol)
 {
-  long prevcol = curcol;
+  colnr_T prevcol = curcol;
   matchitem_T *cur;                      // points to the match list
 
   // we're not really at that column when skipping some text
-  if ((long)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol) {
+  if ((wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol) {
     prevcol++;
   }
 
   // Highlight a character after the end of the line if the match started
   // at the end of the line or when the match continues in the next line
   // (match includes the line break).
-  if (!search_hl->is_addpos && (prevcol == (long)search_hl->startcol
-                                || (prevcol > (long)search_hl->startcol
+  if (!search_hl->is_addpos && (prevcol == search_hl->startcol
+                                || (prevcol > search_hl->startcol
                                     && search_hl->endcol == MAXCOL))) {
     return true;
   }
   cur = wp->w_match_head;
   while (cur != NULL) {
-    if (!cur->mit_hl.is_addpos && (prevcol == (long)cur->mit_hl.startcol
-                                   || (prevcol > (long)cur->mit_hl.startcol
+    if (!cur->mit_hl.is_addpos && (prevcol == cur->mit_hl.startcol
+                                   || (prevcol > cur->mit_hl.startcol
                                        && cur->mit_hl.endcol == MAXCOL))) {
       return true;
     }
@@ -841,7 +841,7 @@ bool get_prevcol_hl_flag(win_T *wp, match_T *search_hl, long curcol)
 
 /// Get highlighting for the char after the text in "char_attr" from 'hlsearch'
 /// or match highlighting.
-void get_search_match_hl(win_T *wp, match_T *search_hl, long col, int *char_attr)
+void get_search_match_hl(win_T *wp, match_T *search_hl, colnr_T col, int *char_attr)
 {
   matchitem_T *cur = wp->w_match_head;  // points to the match list
   match_T *shl;                     // points to search_hl or a match
@@ -856,7 +856,7 @@ void get_search_match_hl(win_T *wp, match_T *search_hl, long col, int *char_attr
     } else {
       shl = &cur->mit_hl;
     }
-    if (col - 1 == (long)shl->startcol
+    if (col - 1 == shl->startcol
         && (shl == search_hl || !shl->is_addpos)) {
       *char_attr = shl->attr;
     }

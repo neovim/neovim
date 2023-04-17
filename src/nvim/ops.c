@@ -5763,7 +5763,7 @@ typedef struct {
   int rv_mode;             ///< 'v', 'V', or Ctrl-V
   linenr_T rv_line_count;  ///< number of lines
   colnr_T rv_vcol;         ///< number of cols or end column
-  long rv_count;           ///< count for Visual operator
+  int rv_count;            ///< count for Visual operator
   int rv_arg;              ///< extra argument
 } redo_VIsual_T;
 
@@ -6157,7 +6157,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     switch (oap->op_type) {
     case OP_LSHIFT:
     case OP_RSHIFT:
-      op_shift(oap, true, oap->is_VIsual ? (int)cap->count1 : 1);
+      op_shift(oap, true, oap->is_VIsual ? cap->count1 : 1);
       auto_format(false, true);
       break;
 

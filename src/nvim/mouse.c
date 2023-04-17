@@ -284,7 +284,7 @@ static int get_fpos_of_mouse(pos_T *mpos)
 /// @param fixindent  PUT_FIXINDENT if fixing indent necessary
 ///
 /// @return           true if start_arrow() should be called for edit mode.
-bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
+bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
 {
   static bool got_click = false;        // got a click some time back
 
@@ -732,7 +732,7 @@ popupexit:
   }
 
   if (start_visual.lnum) {              // right click in visual mode
-    long diff;
+    linenr_T diff;
     // When ALT is pressed make Visual mode blockwise.
     if (mod_mask & MOD_MASK_ALT) {
       VIsual_mode = Ctrl_V;
@@ -1616,17 +1616,17 @@ static linenr_T find_longest_lnum(void)
   if (curwin->w_topline <= curwin->w_cursor.lnum
       && curwin->w_botline > curwin->w_cursor.lnum
       && curwin->w_botline <= curbuf->b_ml.ml_line_count + 1) {
-    long max = 0;
+    colnr_T max = 0;
 
     // Use maximum of all visible lines.  Remember the lnum of the
     // longest line, closest to the cursor line.  Used when scrolling
     // below.
     for (linenr_T lnum = curwin->w_topline; lnum < curwin->w_botline; lnum++) {
       colnr_T len = scroll_line_len(lnum);
-      if (len > (colnr_T)max) {
+      if (len > max) {
         max = len;
         ret = lnum;
-      } else if (len == (colnr_T)max
+      } else if (len == max
                  && abs(lnum - curwin->w_cursor.lnum)
                  < abs(ret - curwin->w_cursor.lnum)) {
         ret = lnum;

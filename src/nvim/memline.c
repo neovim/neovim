@@ -962,14 +962,14 @@ void ml_recover(bool checkext)
   // Now that we are sure that the file is going to be recovered, clear the
   // contents of the current buffer.
   while (!(curbuf->b_ml.ml_flags & ML_EMPTY)) {
-    ml_delete((linenr_T)1, false);
+    ml_delete(1, false);
   }
 
   // Try reading the original file to obtain the values of 'fileformat',
   // 'fileencoding', etc.  Ignore errors.  The text itself is not used.
   if (curbuf->b_ffname != NULL) {
-    orig_file_status = readfile(curbuf->b_ffname, NULL, (linenr_T)0,
-                                (linenr_T)0, (linenr_T)MAXLNUM, NULL, READ_NEW, false);
+    orig_file_status = readfile(curbuf->b_ffname, NULL, 0,
+                                0, MAXLNUM, NULL, READ_NEW, false);
   }
 
   // Use the 'fileformat' and 'fileencoding' as stored in the swap file.
@@ -1701,7 +1701,7 @@ void ml_sync_all(int check_file, int check_char, bool do_fsync)
     }
     ml_flush_line(buf);                     // flush buffered line
                                             // flush locked block
-    (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);
+    (void)ml_find_line(buf, 0, ML_FLUSH);
     if (bufIsChanged(buf) && check_file && mf_need_trans(buf->b_ml.ml_mfp)
         && buf->b_ffname != NULL) {
       // If the original file does not exist anymore or has been changed
@@ -1751,7 +1751,7 @@ void ml_preserve(buf_T *buf, int message, bool do_fsync)
   got_int = false;
 
   ml_flush_line(buf);                               // flush buffered line
-  (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);   // flush locked block
+  (void)ml_find_line(buf, 0, ML_FLUSH);   // flush locked block
   int status = mf_sync(mfp, MFS_ALL | (do_fsync ? MFS_FLUSH : 0));
 
   // stack is invalid after mf_sync(.., MFS_ALL)
@@ -1778,7 +1778,7 @@ void ml_preserve(buf_T *buf, int message, bool do_fsync)
       CHECK(buf->b_ml.ml_locked_low != lnum, "low != lnum");
       lnum = buf->b_ml.ml_locked_high + 1;
     }
-    (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);  // flush locked block
+    (void)ml_find_line(buf, 0, ML_FLUSH);  // flush locked block
     // sync the updated pointer blocks
     if (mf_sync(mfp, MFS_ALL | (do_fsync ? MFS_FLUSH : 0)) == FAIL) {
       status = FAIL;
@@ -2002,7 +2002,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
   // This also fills the stack with the blocks from the root to the data block
   // This also releases any locked block.
   bhdr_T *hp;
-  if ((hp = ml_find_line(buf, lnum == 0 ? (linenr_T)1 : lnum,
+  if ((hp = ml_find_line(buf, lnum == 0 ? 1 : lnum,
                          ML_INSERT)) == NULL) {
     return FAIL;
   }
@@ -2235,7 +2235,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
     // pointer blocks is done below
     lineadd = buf->b_ml.ml_locked_lineadd;
     buf->b_ml.ml_locked_lineadd = 0;
-    (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);  // flush data block
+    (void)ml_find_line(buf, 0, ML_FLUSH);  // flush data block
 
     // update pointer blocks for the new data block
     for (stack_idx = buf->b_ml.ml_stack_top - 1; stack_idx >= 0; stack_idx--) {
@@ -2491,7 +2491,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
       set_keep_msg(_(no_lines_msg), 0);
     }
 
-    int i = ml_replace((linenr_T)1, "", true);
+    int i = ml_replace(1, "", true);
     buf->b_ml.ml_flags |= ML_EMPTY;
 
     return i;
@@ -2628,7 +2628,7 @@ void ml_setmarked(linenr_T lnum)
 linenr_T ml_firstmarked(void)
 {
   if (curbuf->b_ml.ml_mfp == NULL) {
-    return (linenr_T)0;
+    return 0;
   }
 
   // The search starts with lowest_marked line. This is the last line where
@@ -2639,7 +2639,7 @@ linenr_T ml_firstmarked(void)
     // block This also releases any locked block.
     bhdr_T *hp;
     if ((hp = ml_find_line(curbuf, lnum, ML_FIND)) == NULL) {
-      return (linenr_T)0;                   // give error message?
+      return 0;                   // give error message?
     }
     DATA_BL *dp = hp->bh_data;
 
@@ -2654,7 +2654,7 @@ linenr_T ml_firstmarked(void)
     }
   }
 
-  return (linenr_T)0;
+  return 0;
 }
 
 /// clear all DB_MARKED flags
@@ -4021,7 +4021,7 @@ void goto_byte(long cnt)
   if (boff) {
     boff--;
   }
-  linenr_T lnum = (linenr_T)ml_find_line_or_offset(curbuf, (linenr_T)0, &boff, false);
+  linenr_T lnum = (linenr_T)ml_find_line_or_offset(curbuf, 0, &boff, false);
   if (lnum < 1) {         // past the end
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     curwin->w_curswant = MAXCOL;

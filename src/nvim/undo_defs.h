@@ -56,7 +56,7 @@ struct u_header {
   u_entry_T *uh_entry;        // pointer to first entry
   u_entry_T *uh_getbot_entry;   // pointer to where ue_bot must be set
   pos_T uh_cursor;              // cursor position before saving
-  long uh_cursor_vcol;
+  colnr_T uh_cursor_vcol;
   int uh_flags;                 // see below
   fmark_T uh_namedm[NMARKS];    // marks before undo/after redo
   extmark_undo_vec_t uh_extmark;  // info to move extmarks

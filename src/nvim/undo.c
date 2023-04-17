@@ -2478,7 +2478,7 @@ static void u_undoredo(int undo, bool do_buf_event)
     if (curhead->uh_cursor.lnum == curwin->w_cursor.lnum) {
       curwin->w_cursor.col = curhead->uh_cursor.col;
       if (virtual_active() && curhead->uh_cursor_vcol >= 0) {
-        coladvance((colnr_T)curhead->uh_cursor_vcol);
+        coladvance(curhead->uh_cursor_vcol);
       } else {
         curwin->w_cursor.coladd = 0;
       }

@@ -2549,7 +2549,7 @@ int oneleft(void)
 
 /// Move the cursor up "n" lines in window "wp".
 /// Takes care of closed folds.
-void cursor_up_inner(win_T *wp, long n)
+void cursor_up_inner(win_T *wp, linenr_T n)
 {
   linenr_T lnum = wp->w_cursor.lnum;
 
@@ -2578,14 +2578,14 @@ void cursor_up_inner(win_T *wp, long n)
       lnum = 1;
     }
   } else {
-    lnum -= (linenr_T)n;
+    lnum -= n;
   }
 
   wp->w_cursor.lnum = lnum;
 }
 
 /// @param upd_topline  When true: update topline
-int cursor_up(long n, int upd_topline)
+int cursor_up(linenr_T n, int upd_topline)
 {
   // This fails if the cursor is already in the first line.
   if (n > 0 && curwin->w_cursor.lnum <= 1) {
@@ -4042,9 +4042,9 @@ static void ins_mousescroll(int dir)
   if (!pum_visible() || curwin != old_curwin) {
     if (dir == MSCR_DOWN || dir == MSCR_UP) {
       if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
-        scroll_redraw(dir, (long)(curwin->w_botline - curwin->w_topline));
+        scroll_redraw(dir, curwin->w_botline - curwin->w_topline);
       } else if (p_mousescroll_vert > 0) {
-        scroll_redraw(dir, p_mousescroll_vert);
+        scroll_redraw(dir, (linenr_T)p_mousescroll_vert);
       }
     } else {
       mouse_scroll_horiz(dir);
@@ -4250,7 +4250,7 @@ static void ins_pageup(void)
   }
 
   tpos = curwin->w_cursor;
-  if (onepage(BACKWARD, 1L) == OK) {
+  if (onepage(BACKWARD, 1) == OK) {
     start_arrow(&tpos);
     can_cindent = true;
   } else {
@@ -4298,7 +4298,7 @@ static void ins_pagedown(void)
   }
 
   tpos = curwin->w_cursor;
-  if (onepage(FORWARD, 1L) == OK) {
+  if (onepage(FORWARD, 1) == OK) {
     start_arrow(&tpos);
     can_cindent = true;
   } else {
