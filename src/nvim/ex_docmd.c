@@ -4976,8 +4976,13 @@ void ex_splitview(exarg_T *eap)
   }
 
   if (eap->cmdidx == CMD_sfind || eap->cmdidx == CMD_tabfind) {
+    char *file_to_find = NULL;
+    char *search_ctx = NULL;
     fname = find_file_in_path(eap->arg, strlen(eap->arg),
-                              FNAME_MESS, true, curbuf->b_ffname);
+                              FNAME_MESS, true, curbuf->b_ffname,
+                              &file_to_find, &search_ctx);
+    xfree(file_to_find);
+    vim_findfile_cleanup(search_ctx);
     if (fname == NULL) {
       goto theend;
     }
@@ -5169,17 +5174,23 @@ static void ex_resize(exarg_T *eap)
 /// ":find [+command] <file>" command.
 static void ex_find(exarg_T *eap)
 {
+  char *file_to_find = NULL;
+  char *search_ctx = NULL;
   char *fname = find_file_in_path(eap->arg, strlen(eap->arg),
-                                  FNAME_MESS, true, curbuf->b_ffname);
+                                  FNAME_MESS, true, curbuf->b_ffname,
+                                  &file_to_find, &search_ctx);
   if (eap->addr_count > 0) {
-    // Repeat finding the file "count" times.  This matters when it
-    // appears several times in the path.
+    // Repeat finding the file "count" times.  This matters when it appears
+    // several times in the path.
     linenr_T count = eap->line2;
     while (fname != NULL && --count > 0) {
       xfree(fname);
-      fname = find_file_in_path(NULL, 0, FNAME_MESS, false, curbuf->b_ffname);
+      fname = find_file_in_path(NULL, 0, FNAME_MESS, false, curbuf->b_ffname,
+                                &file_to_find, &search_ctx);
     }
   }
+  xfree(file_to_find);
+  vim_findfile_cleanup(search_ctx);
 
   if (fname == NULL) {
     return;
@@ -5211,18 +5222,17 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
     if (*eap->arg == NUL) {
       // Special case:  ":global/pat/visual\NLvi-commands"
       if (global_busy) {
-        int rd = RedrawingDisabled;
-        int nwr = no_wait_return;
-        int ms = msg_scroll;
-
         if (eap->nextcmd != NULL) {
           stuffReadbuff(eap->nextcmd);
           eap->nextcmd = NULL;
         }
 
+        const int save_rd = RedrawingDisabled;
         RedrawingDisabled = 0;
+        const int save_nwr = no_wait_return;
         no_wait_return = 0;
         need_wait_return = false;
+        const int save_ms = msg_scroll;
         msg_scroll = 0;
         redraw_all_later(UPD_NOT_VALID);
         pending_exmode_active = true;
@@ -5230,9 +5240,9 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
         normal_enter(false, true);
 
         pending_exmode_active = false;
-        RedrawingDisabled = rd;
-        no_wait_return = nwr;
-        msg_scroll = ms;
+        RedrawingDisabled = save_rd;
+        no_wait_return = save_nwr;
+        msg_scroll = save_ms;
       }
       return;
     }

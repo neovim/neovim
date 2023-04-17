@@ -2146,6 +2146,9 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
   }
 
   if (*fname != NUL && !error) {
+    char *file_to_find = NULL;
+    char *search_ctx = NULL;
+
     do {
       if (rettv->v_type == VAR_STRING || rettv->v_type == VAR_LIST) {
         xfree(fresult);
@@ -2156,13 +2159,17 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
                                          find_what, curbuf->b_ffname,
                                          (find_what == FINDFILE_DIR
                                           ? ""
-                                          : curbuf->b_p_sua));
+                                          : curbuf->b_p_sua),
+                                         &file_to_find, &search_ctx);
       first = false;
 
       if (fresult != NULL && rettv->v_type == VAR_LIST) {
         tv_list_append_string(rettv->vval.v_list, fresult, -1);
       }
     } while ((rettv->v_type == VAR_LIST || --count > 0) && fresult != NULL);
+
+    xfree(file_to_find);
+    vim_findfile_cleanup(search_ctx);
   }
 
   if (rettv->v_type == VAR_STRING) {
