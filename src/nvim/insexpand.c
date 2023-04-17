@@ -2257,14 +2257,14 @@ static void copy_global_to_buflocal_cb(Callback *globcb, Callback *bufcb)
 /// Invoked when the 'completefunc' option is set. The option value can be a
 /// name of a function (string), or function(<name>) or funcref(<name>) or a
 /// lambda expression.
-void set_completefunc_option(const char **errmsg)
+const char *did_set_completefunc(optset_T *args FUNC_ATTR_UNUSED)
 {
   if (option_set_callback_func(curbuf->b_p_cfu, &cfu_cb) == FAIL) {
-    *errmsg = e_invarg;
-    return;
+    return e_invarg;
   }
 
   set_buflocal_cfu_callback(curbuf);
+  return NULL;
 }
 
 /// Copy the global 'completefunc' callback function to the buffer-local
@@ -2278,13 +2278,14 @@ void set_buflocal_cfu_callback(buf_T *buf)
 /// Invoked when the 'omnifunc' option is set. The option value can be a
 /// name of a function (string), or function(<name>) or funcref(<name>) or a
 /// lambda expression.
-void set_omnifunc_option(buf_T *buf, const char **errmsg)
+const char *did_set_omnifunc(optset_T *args)
 {
+  buf_T *buf = (buf_T *)args->os_buf;
   if (option_set_callback_func(buf->b_p_ofu, &ofu_cb) == FAIL) {
-    *errmsg = e_invarg;
-    return;
+    return e_invarg;
   }
   set_buflocal_ofu_callback(buf);
+  return NULL;
 }
 
 /// Copy the global 'omnifunc' callback function to the buffer-local 'omnifunc'
@@ -2298,7 +2299,7 @@ void set_buflocal_ofu_callback(buf_T *buf)
 /// Invoked when the 'thesaurusfunc' option is set. The option value can be a
 /// name of a function (string), or function(<name>) or funcref(<name>) or a
 /// lambda expression.
-void set_thesaurusfunc_option(const char **errmsg)
+const char *did_set_thesaurusfunc(optset_T *args FUNC_ATTR_UNUSED)
 {
   int retval;
 
@@ -2310,9 +2311,7 @@ void set_thesaurusfunc_option(const char **errmsg)
     retval = option_set_callback_func(p_tsrfu, &tsrfu_cb);
   }
 
-  if (retval == FAIL) {
-    *errmsg = e_invarg;
-  }
+  return retval == FAIL ? e_invarg : NULL;
 }
 
 /// Mark the global 'completefunc' 'omnifunc' and 'thesaurusfunc' callbacks with

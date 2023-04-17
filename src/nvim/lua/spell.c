@@ -39,7 +39,7 @@ int nlua_spell_check(lua_State *lstate)
   const int wo_spell_save = curwin->w_p_spell;
 
   if (!curwin->w_p_spell) {
-    did_set_spelllang(curwin);
+    parse_spelllang(curwin);
     curwin->w_p_spell = true;
   }
 

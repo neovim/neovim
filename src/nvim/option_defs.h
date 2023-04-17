@@ -7,7 +7,7 @@
 
 // option_defs.h: definition of global variables for settable options
 
-// Flags
+// Option Flags
 #define P_BOOL         0x01U        ///< the option is boolean
 #define P_NUM          0x02U        ///< the option is numeric
 #define P_STRING       0x04U        ///< the option is a string
@@ -978,6 +978,36 @@ enum {
 
 #define TABSTOP_MAX 9999
 
+// Argument for the callback function (opt_did_set_cb_T) invoked after an
+// option value is modified.
+typedef struct {
+  int os_flags;
+  char *os_varp;  // pointer to the option variable
+
+  // old value of the option (can be a string, number or a boolean)
+  union {
+    const long number;
+    const bool boolean;
+    const char *string;
+  } os_oldval;
+
+  // new value of the option (can be a string, number or a boolean)
+  union {
+    const long number;
+    const bool boolean;
+    const char *string;
+  } os_newval;
+
+  // When set by the called function: Stop processing the option further.
+  // Currently only used for boolean options.
+  int os_doskip;
+
+  void *os_win;
+  void *os_buf;
+} optset_T;
+
+typedef const char *(*opt_did_set_cb_T)(optset_T *args);
+
 /// Stores an identifier of a script or channel that last set an option.
 typedef struct {
   sctx_T script_ctx;       /// script context where the option was last set
@@ -993,12 +1023,15 @@ typedef enum {
 typedef struct vimoption {
   char *fullname;        // full option name
   char *shortname;       // permissible abbreviation
-  uint32_t flags;               // see below
+  uint32_t flags;               // see above
   char *var;               // global option: pointer to variable;
                            // window-local option: VAR_WIN;
                            // buffer-local option: global value
   idopt_T indir;                // global option: PV_NONE;
                                 // local option: indirect option index
+  // callback function to invoke after an option is modified to validate and
+  // apply the new value.
+  opt_did_set_cb_T opt_did_set_cb;
   char *def_val;         // default values for variable (neovim!!)
   LastSet last_set;             // script in which the option was last set
 } vimoption_T;

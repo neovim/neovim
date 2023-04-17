@@ -1851,7 +1851,7 @@ static int count_syllables(slang_T *slang, const char *word)
 
 /// Parse 'spelllang' and set w_s->b_langp accordingly.
 /// @return  NULL if it's OK, an untranslated error message otherwise.
-char *did_set_spelllang(win_T *wp)
+char *parse_spelllang(win_T *wp)
 {
   garray_T ga;
   char *splp;
@@ -2309,7 +2309,7 @@ void spell_reload(void)
     // window for this buffer in which 'spell' is set.
     if (*wp->w_s->b_p_spl != NUL) {
       if (wp->w_p_spell) {
-        (void)did_set_spelllang(wp);
+        (void)parse_spelllang(wp);
         break;
       }
     }
@@ -3637,7 +3637,7 @@ const char *did_set_spell_option(bool is_spellfile)
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer == curbuf && wp->w_p_spell) {
-      errmsg = did_set_spelllang(wp);
+      errmsg = parse_spelllang(wp);
       break;
     }
   }

@@ -780,9 +780,10 @@ RuntimeSearchPath runtime_search_path_build(void)
   return search_path;
 }
 
-void runtime_search_path_invalidate(void)
+const char *did_set_runtimepackpath(optset_T *args)
 {
   runtime_search_path_valid = false;
+  return NULL;
 }
 
 void runtime_search_path_free(RuntimeSearchPath path)
