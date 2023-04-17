@@ -681,7 +681,7 @@ void eval_diff(const char *const origfile, const char *const newfile, const char
 
   // errors are ignored
   typval_T *tv = eval_expr(p_dex, NULL);
-  tv_clear(tv);
+  tv_free(tv);
 
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
   set_vim_var_string(VV_FNAME_NEW, NULL, -1);
