@@ -396,7 +396,9 @@ If the 'diffexpr' expression starts with s: or |<SID>|, then it is replaced
 with the script ID (|local-function|). Example: >
 		set diffexpr=s:MyDiffExpr()
 		set diffexpr=<SID>SomeDiffExpr()
-<
+Otherwise, the expression is evaluated in the context of the script where the
+option was set, thus script-local items are available.
+
 						*E810* *E97*
 Vim will do a test if the diff output looks alright.  If it doesn't, you will
 get an error message.  Possible causes:
@@ -452,5 +454,8 @@ If the 'patchexpr' expression starts with s: or |<SID>|, then it is replaced
 with the script ID (|local-function|). Example: >
 		set patchexpr=s:MyPatchExpr()
 		set patchexpr=<SID>SomePatchExpr()
-<
+Otherwise, the expression is evaluated in the context of the script where the
+option was set, thus script-local items are available.
+
+
  vim:tw=78:ts=8:noet:ft=help:norl:

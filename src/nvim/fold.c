@@ -1742,16 +1742,19 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
     set_vim_var_string(VV_FOLDDASHES, dashes, -1);
     set_vim_var_nr(VV_FOLDLEVEL, (varnumber_T)level);
 
-    // skip evaluating foldtext on errors
+    // skip evaluating 'foldtext' on errors
     if (!got_fdt_error) {
-      win_T *save_curwin = curwin;
+      win_T *const save_curwin = curwin;
+      const sctx_T saved_sctx = current_sctx;
+
       curwin = wp;
       curbuf = wp->w_buffer;
+      current_sctx = wp->w_p_script_ctx[WV_FDT].script_ctx;
 
-      emsg_silent++;       // handle exceptions, but don't display errors
+      emsg_off++;  // handle exceptions, but don't display errors
       text = eval_to_string_safe(wp->w_p_fdt,
                                  was_set_insecurely(wp, "foldtext", OPT_LOCAL));
-      emsg_silent--;
+      emsg_off--;
 
       if (text == NULL || did_emsg) {
         got_fdt_error = true;
@@ -1759,6 +1762,7 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
 
       curwin = save_curwin;
       curbuf = curwin->w_buffer;
+      current_sctx = saved_sctx;
     }
     last_lnum = lnum;
     last_wp   = wp;

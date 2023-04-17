@@ -881,6 +881,7 @@ void op_formatexpr(oparg_T *oap)
 int fex_format(linenr_T lnum, long count, int c)
 {
   int use_sandbox = was_set_insecurely(curwin, "formatexpr", OPT_LOCAL);
+  const sctx_T save_sctx = current_sctx;
 
   // Set v:lnum to the first line number and v:count to the number of lines.
   // Set v:char to the character to be inserted (can be NUL).
@@ -890,6 +891,8 @@ int fex_format(linenr_T lnum, long count, int c)
 
   // Make a copy, the option could be changed while calling it.
   char *fex = xstrdup(curbuf->b_p_fex);
+  current_sctx = curbuf->b_p_script_ctx[BV_FEX].script_ctx;
+
   // Evaluate the function.
   if (use_sandbox) {
     sandbox++;
@@ -901,6 +904,7 @@ int fex_format(linenr_T lnum, long count, int c)
 
   set_vim_var_string(VV_CHAR, NULL, -1);
   xfree(fex);
+  current_sctx = save_sctx;
 
   return r;
 }

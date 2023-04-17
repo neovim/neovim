@@ -647,19 +647,27 @@ void var_redir_stop(void)
 int eval_charconvert(const char *const enc_from, const char *const enc_to,
                      const char *const fname_from, const char *const fname_to)
 {
-  bool err = false;
+  const sctx_T saved_sctx = current_sctx;
 
   set_vim_var_string(VV_CC_FROM, enc_from, -1);
   set_vim_var_string(VV_CC_TO, enc_to, -1);
   set_vim_var_string(VV_FNAME_IN, fname_from, -1);
   set_vim_var_string(VV_FNAME_OUT, fname_to, -1);
+  sctx_T *ctx = get_option_sctx("charconvert");
+  if (ctx != NULL) {
+    current_sctx = *ctx;
+  }
+
+  bool err = false;
   if (eval_to_bool(p_ccv, &err, NULL, false)) {
     err = true;
   }
+
   set_vim_var_string(VV_CC_FROM, NULL, -1);
   set_vim_var_string(VV_CC_TO, NULL, -1);
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
+  current_sctx = saved_sctx;
 
   if (err) {
     return FAIL;
@@ -669,28 +677,46 @@ int eval_charconvert(const char *const enc_from, const char *const enc_to,
 
 void eval_diff(const char *const origfile, const char *const newfile, const char *const outfile)
 {
-  bool err = false;
-
+  const sctx_T saved_sctx = current_sctx;
   set_vim_var_string(VV_FNAME_IN, origfile, -1);
   set_vim_var_string(VV_FNAME_NEW, newfile, -1);
   set_vim_var_string(VV_FNAME_OUT, outfile, -1);
-  (void)eval_to_bool(p_dex, &err, NULL, false);
+
+  sctx_T *ctx = get_option_sctx("diffexpr");
+  if (ctx != NULL) {
+    current_sctx = *ctx;
+  }
+
+  // errors are ignored
+  typval_T *tv = eval_expr(p_dex, NULL);
+  tv_free(tv);
+
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
   set_vim_var_string(VV_FNAME_NEW, NULL, -1);
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
+  current_sctx = saved_sctx;
 }
 
 void eval_patch(const char *const origfile, const char *const difffile, const char *const outfile)
 {
-  bool err = false;
-
+  const sctx_T saved_sctx = current_sctx;
   set_vim_var_string(VV_FNAME_IN, origfile, -1);
   set_vim_var_string(VV_FNAME_DIFF, difffile, -1);
   set_vim_var_string(VV_FNAME_OUT, outfile, -1);
-  (void)eval_to_bool(p_pex, &err, NULL, false);
+
+  sctx_T *ctx = get_option_sctx("patchexpr");
+  if (ctx != NULL) {
+    current_sctx = *ctx;
+  }
+
+  // errors are ignored
+  typval_T *tv = eval_expr(p_pex, NULL);
+  tv_free(tv);
+
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
   set_vim_var_string(VV_FNAME_DIFF, NULL, -1);
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
+  current_sctx = saved_sctx;
 }
 
 void fill_evalarg_from_eap(evalarg_T *evalarg, exarg_T *eap, bool skip)
@@ -1059,6 +1085,7 @@ list_T *eval_spell_expr(char *badword, char *expr)
   typval_T rettv;
   list_T *list = NULL;
   char *p = skipwhite(expr);
+  const sctx_T saved_sctx = current_sctx;
 
   // Set "v:val" to the bad word.
   prepare_vimvar(VV_VAL, &save_val);
@@ -1066,6 +1093,10 @@ list_T *eval_spell_expr(char *badword, char *expr)
   vimvars[VV_VAL].vv_str = badword;
   if (p_verbose == 0) {
     emsg_off++;
+  }
+  sctx_T *ctx = get_option_sctx("spellsuggest");
+  if (ctx != NULL) {
+    current_sctx = *ctx;
   }
 
   if (eval1(&p, &rettv, &EVALARG_EVALUATE) == OK) {
@@ -1080,6 +1111,7 @@ list_T *eval_spell_expr(char *badword, char *expr)
     emsg_off--;
   }
   restore_vimvar(VV_VAL, &save_val);
+  current_sctx = saved_sctx;
 
   return list;
 }
