@@ -1290,6 +1290,21 @@ static bool func_name_refcount(const char *name)
   return isdigit((uint8_t)(*name)) || *name == '<';
 }
 
+/// Check the argument count for user function "fp".
+/// @return  FCERR_UNKNOWN if OK, FCERR_TOOFEW or FCERR_TOOMANY otherwise.
+static int check_user_func_argcount(ufunc_T *fp, int argcount)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const int regular_args = fp->uf_args.ga_len;
+
+  if (argcount < regular_args - fp->uf_def_args.ga_len) {
+    return FCERR_TOOFEW;
+  } else if (!fp->uf_varargs && argcount > regular_args) {
+    return FCERR_TOOMANY;
+  }
+  return FCERR_UNKNOWN;
+}
+
 /// Call a user function after checking the arguments.
 static int call_user_func_check(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rettv,
                                 funcexe_T *funcexe, dict_T *selfdict)
@@ -1302,12 +1317,11 @@ static int call_user_func_check(ufunc_T *fp, int argcount, typval_T *argvars, ty
   if ((fp->uf_flags & FC_RANGE) && funcexe->fe_doesrange != NULL) {
     *funcexe->fe_doesrange = true;
   }
-  int error;
-  if (argcount < fp->uf_args.ga_len - fp->uf_def_args.ga_len) {
-    error = FCERR_TOOFEW;
-  } else if (!fp->uf_varargs && argcount > fp->uf_args.ga_len) {
-    error = FCERR_TOOMANY;
-  } else if ((fp->uf_flags & FC_DICT) && selfdict == NULL) {
+  int error = check_user_func_argcount(fp, argcount);
+  if (error != FCERR_UNKNOWN) {
+    return error;
+  }
+  if ((fp->uf_flags & FC_DICT) && selfdict == NULL) {
     error = FCERR_DICT;
   } else {
     // Call the user function.
