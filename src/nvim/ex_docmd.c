@@ -2992,6 +2992,11 @@ char *find_ex_command(exarg_T *eap, int *full)
     }
     assert(eap->cmdidx >= 0);
 
+    if (len == 3 && strncmp("def", eap->cmd, 3) == 0) {
+      // Make :def an unknown command to avoid confusing behavior. #23149
+      eap->cmdidx = CMD_SIZE;
+    }
+
     for (; (int)eap->cmdidx < CMD_SIZE;
          eap->cmdidx = (cmdidx_T)((int)eap->cmdidx + 1)) {
       if (strncmp(cmdnames[(int)eap->cmdidx].cmd_name, eap->cmd,
@@ -3146,6 +3151,11 @@ void f_fullcommand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 cmdidx_T excmd_get_cmdidx(const char *cmd, size_t len)
 {
+  if (len == 3 && strncmp("def", cmd, 3) == 0) {
+    // Make :def an unknown command to avoid confusing behavior. #23149
+    return CMD_SIZE;
+  }
+
   cmdidx_T idx;
 
   if (!one_letter_cmd(cmd, &idx)) {
