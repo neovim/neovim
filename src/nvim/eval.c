@@ -1085,6 +1085,7 @@ list_T *eval_spell_expr(char *badword, char *expr)
   typval_T rettv;
   list_T *list = NULL;
   char *p = skipwhite(expr);
+  const sctx_T saved_sctx = current_sctx;
 
   // Set "v:val" to the bad word.
   prepare_vimvar(VV_VAL, &save_val);
@@ -1092,6 +1093,10 @@ list_T *eval_spell_expr(char *badword, char *expr)
   vimvars[VV_VAL].vv_str = badword;
   if (p_verbose == 0) {
     emsg_off++;
+  }
+  sctx_T *ctx = get_option_sctx("spellsuggest");
+  if (ctx != NULL) {
+    current_sctx = *ctx;
   }
 
   if (eval1(&p, &rettv, &EVALARG_EVALUATE) == OK) {
@@ -1106,6 +1111,7 @@ list_T *eval_spell_expr(char *badword, char *expr)
     emsg_off--;
   }
   restore_vimvar(VV_VAL, &save_val);
+  current_sctx = saved_sctx;
 
   return list;
 }
