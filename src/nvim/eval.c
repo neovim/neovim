@@ -669,15 +669,24 @@ int eval_charconvert(const char *const enc_from, const char *const enc_to,
 
 void eval_diff(const char *const origfile, const char *const newfile, const char *const outfile)
 {
-  bool err = false;
-
+  const sctx_T saved_sctx = current_sctx;
   set_vim_var_string(VV_FNAME_IN, origfile, -1);
   set_vim_var_string(VV_FNAME_NEW, newfile, -1);
   set_vim_var_string(VV_FNAME_OUT, outfile, -1);
-  (void)eval_to_bool(p_dex, &err, NULL, false);
+
+  sctx_T *ctx = get_option_sctx("diffexpr");
+  if (ctx != NULL) {
+    current_sctx = *ctx;
+  }
+
+  // errors are ignored
+  typval_T *tv = eval_expr(p_dex, NULL);
+  tv_clear(tv);
+
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
   set_vim_var_string(VV_FNAME_NEW, NULL, -1);
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
+  current_sctx = saved_sctx;
 }
 
 void eval_patch(const char *const origfile, const char *const difffile, const char *const outfile)
