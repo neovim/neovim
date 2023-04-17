@@ -907,10 +907,10 @@ end
 --- it:rev()
 --- it:skip(2)
 --- it:totable()
---- -- { 6, 5, 4 }
+--- -- { 9, 6, 3 }
 ---
---- vim.iter(ipairs({ 1, 2, 3, 4, 5 })):filter(function(i, v)
----   return i > 2
+--- vim.iter(ipairs({ 1, 2, 3, 4, 5 })):map(function(i, v)
+---   if i > 2 then return v end
 --- end):totable()
 --- -- { 3, 4, 5 }
 ---
@@ -943,7 +943,6 @@ end
 --- Collect an iterator into a table.
 ---
 --- This is a convenience function that performs:
----
 --- <pre>lua
 --- vim.iter(f):totable()
 --- </pre>
@@ -957,7 +956,6 @@ end
 --- Filter a table or iterator.
 ---
 --- This is a convenience function that performs:
----
 --- <pre>lua
 --- vim.iter(src):filter(f):totable()
 --- </pre>
@@ -976,7 +974,6 @@ end
 --- Map and filter a table or iterator.
 ---
 --- This is a convenience function that performs:
----
 --- <pre>lua
 --- vim.iter(src):map(f):totable()
 --- </pre>
