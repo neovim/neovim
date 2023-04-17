@@ -804,10 +804,11 @@ void runtime_search_path_validate(void)
     return;
   }
   if (!runtime_search_path_valid) {
+    RuntimeSearchPath new_path = runtime_search_path_build();
     if (!runtime_search_path_has_ref) {
       runtime_search_path_free(runtime_search_path);
     }
-    runtime_search_path = runtime_search_path_build();
+    runtime_search_path = new_path;
     runtime_search_path_valid = true;
     runtime_search_path_has_ref = false;  // initially unreferenced
     uv_mutex_lock(&runtime_search_path_mutex);
