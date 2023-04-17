@@ -88,6 +88,9 @@ local default_poll_interval_ms = 2000
 ---               be invoked recursively)
 ---     - children (table|nil)
 ---               A mapping of directory entry name to its recursive watches
+--      - started (boolean|nil)
+--                Whether or not the watcher has first been initialized. Used
+--                to prevent a flood of Created events on startup.
 local function poll_internal(path, opts, callback, watches)
   path = vim.fs.normalize(path)
   local interval = opts and opts.interval or default_poll_interval_ms
@@ -112,7 +115,9 @@ local function poll_internal(path, opts, callback, watches)
       end)
     )
     assert(not start_err, start_err)
-    callback(path, M.FileChangeType.Created)
+    if watches.started then
+      callback(path, M.FileChangeType.Created)
+    end
   end
 
   watches.cancel = function()
@@ -132,6 +137,7 @@ local function poll_internal(path, opts, callback, watches)
       if not watches.children[name] then
         watches.children[name] = {
           is_dir = ftype == 'directory',
+          started = watches.started,
         }
         poll_internal(filepath_join(path, name), opts, callback, watches.children[name])
       end
@@ -149,6 +155,8 @@ local function poll_internal(path, opts, callback, watches)
     end
     watches.children = newchildren
   end
+
+  watches.started = true
 
   return watches.cancel
 end
