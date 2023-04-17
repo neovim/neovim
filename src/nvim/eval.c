@@ -691,15 +691,24 @@ void eval_diff(const char *const origfile, const char *const newfile, const char
 
 void eval_patch(const char *const origfile, const char *const difffile, const char *const outfile)
 {
-  bool err = false;
-
+  const sctx_T saved_sctx = current_sctx;
   set_vim_var_string(VV_FNAME_IN, origfile, -1);
   set_vim_var_string(VV_FNAME_DIFF, difffile, -1);
   set_vim_var_string(VV_FNAME_OUT, outfile, -1);
-  (void)eval_to_bool(p_pex, &err, NULL, false);
+
+  sctx_T *ctx = get_option_sctx("patchexpr");
+  if (ctx != NULL) {
+    current_sctx = *ctx;
+  }
+
+  // errors are ignored
+  typval_T *tv = eval_expr(p_pex, NULL);
+  tv_free(tv);
+
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
   set_vim_var_string(VV_FNAME_DIFF, NULL, -1);
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
+  current_sctx = saved_sctx;
 }
 
 void fill_evalarg_from_eap(evalarg_T *evalarg, exarg_T *eap, bool skip)
