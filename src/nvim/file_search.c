@@ -1281,28 +1281,26 @@ static int ff_path_in_stoplist(char *path, int path_len, char **stopdirs_v)
 /// @param len  length of file name
 /// @param first  use count'th matching file name
 /// @param rel_fname  file name searching relative to
+/// @param[in,out] file_to_find  modified copy of file name
+/// @param[in,out] search_ctx  state of the search
 ///
 /// @return  an allocated string for the file name.  NULL for error.
-char *find_file_in_path(char *ptr, size_t len, int options, int first, char *rel_fname)
+char *find_file_in_path(char *ptr, size_t len, int options, int first, char *rel_fname,
+                        char **file_to_find, char **search_ctx)
 {
   return find_file_in_path_option(ptr, len, options, first,
                                   (*curbuf->b_p_path == NUL
                                    ? p_path
                                    : curbuf->b_p_path),
-                                  FINDFILE_BOTH, rel_fname, curbuf->b_p_sua);
+                                  FINDFILE_BOTH, rel_fname, curbuf->b_p_sua,
+                                  file_to_find, search_ctx);
 }
-
-static char *ff_file_to_find = NULL;
-static void *fdip_search_ctx = NULL;
 
 #if defined(EXITFREE)
 void free_findfile(void)
 {
-  xfree(ff_file_to_find);
-  vim_findfile_cleanup(fdip_search_ctx);
-  xfree(ff_expand_buffer);
+  XFREE_CLEAR(ff_expand_buffer);
 }
-
 #endif
 
 /// Find the directory name "ptr[len]" in the path.
@@ -1316,12 +1314,16 @@ void free_findfile(void)
 /// @param ptr  file name
 /// @param len  length of file name
 /// @param rel_fname  file name searching relative to
+/// @param[in,out] file_to_find  modified copy of file name
+/// @param[in,out] search_ctx  state of the search
 ///
 /// @return  an allocated string for the file name.  NULL for error.
-char *find_directory_in_path(char *ptr, size_t len, int options, char *rel_fname)
+char *find_directory_in_path(char *ptr, size_t len, int options, char *rel_fname,
+                             char **file_to_find, char **search_ctx)
 {
   return find_file_in_path_option(ptr, len, options, true, p_cdpath,
-                                  FINDFILE_DIR, rel_fname, "");
+                                  FINDFILE_DIR, rel_fname, "",
+                                  file_to_find, search_ctx);
 }
 
 /// @param ptr  file name
@@ -1331,9 +1333,13 @@ char *find_directory_in_path(char *ptr, size_t len, int options, char *rel_fname
 /// @param find_what  FINDFILE_FILE, _DIR or _BOTH
 /// @param rel_fname  file name we are looking relative to.
 /// @param suffixes  list of suffixes, 'suffixesadd' option
+/// @param[in,out] file_to_find  modified copy of file name
+/// @param[in,out] search_ctx_arg  state of the search
 char *find_file_in_path_option(char *ptr, size_t len, int options, int first, char *path_option,
-                               int find_what, char *rel_fname, char *suffixes)
+                               int find_what, char *rel_fname, char *suffixes, char **file_to_find,
+                               char **search_ctx_arg)
 {
+  ff_search_ctx_T **search_ctx = (ff_search_ctx_T **)search_ctx_arg;
   static char *dir;
   static int did_findfile_init = false;
   char save_char;
@@ -1357,11 +1363,11 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
     expand_env_esc(ptr, NameBuff, MAXPATHL, false, true, NULL);
     ptr[len] = save_char;
 
-    xfree(ff_file_to_find);
-    ff_file_to_find = xstrdup(NameBuff);
+    xfree(*file_to_find);
+    *file_to_find = xstrdup(NameBuff);
     if (options & FNAME_UNESC) {
       // Change all "\ " to " ".
-      for (ptr = ff_file_to_find; *ptr != NUL; ptr++) {
+      for (ptr = *file_to_find; *ptr != NUL; ptr++) {
         if (ptr[0] == '\\' && ptr[1] == ' ') {
           memmove(ptr, ptr + 1, strlen(ptr));
         }
@@ -1369,45 +1375,45 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
     }
   }
 
-  rel_to_curdir = (ff_file_to_find[0] == '.'
-                   && (ff_file_to_find[1] == NUL
-                       || vim_ispathsep(ff_file_to_find[1])
-                       || (ff_file_to_find[1] == '.'
-                           && (ff_file_to_find[2] == NUL
-                               || vim_ispathsep(ff_file_to_find[2])))));
-  if (vim_isAbsName(ff_file_to_find)
+  rel_to_curdir = ((*file_to_find)[0] == '.'
+                   && ((*file_to_find)[1] == NUL
+                       || vim_ispathsep((*file_to_find)[1])
+                       || ((*file_to_find)[1] == '.'
+                           && ((*file_to_find)[2] == NUL
+                               || vim_ispathsep((*file_to_find)[2])))));
+  if (vim_isAbsName(*file_to_find)
       // "..", "../path", "." and "./path": don't use the path_option
       || rel_to_curdir
 #if defined(MSWIN)
       // handle "\tmp" as absolute path
-      || vim_ispathsep(ff_file_to_find[0])
+      || vim_ispathsep((*file_to_find)[0])
       // handle "c:name" as absolute path
-      || (ff_file_to_find[0] != NUL && ff_file_to_find[1] == ':')
+      || ((*file_to_find)[0] != NUL && (*file_to_find)[1] == ':')
 #endif
       ) {
     // Absolute path, no need to use "path_option".
     // If this is not a first call, return NULL.  We already returned a
     // filename on the first call.
     if (first == true) {
-      if (path_with_url(ff_file_to_find)) {
-        file_name = xstrdup(ff_file_to_find);
+      if (path_with_url(*file_to_find)) {
+        file_name = xstrdup(*file_to_find);
         goto theend;
       }
 
       // When FNAME_REL flag given first use the directory of the file.
       // Otherwise or when this fails use the current directory.
       for (int run = 1; run <= 2; run++) {
-        size_t l = strlen(ff_file_to_find);
+        size_t l = strlen(*file_to_find);
         if (run == 1
             && rel_to_curdir
             && (options & FNAME_REL)
             && rel_fname != NULL
             && strlen(rel_fname) + l < MAXPATHL) {
           STRCPY(NameBuff, rel_fname);
-          STRCPY(path_tail(NameBuff), ff_file_to_find);
+          STRCPY(path_tail(NameBuff), *file_to_find);
           l = strlen(NameBuff);
         } else {
-          STRCPY(NameBuff, ff_file_to_find);
+          STRCPY(NameBuff, *file_to_find);
           run = 2;
         }
 
@@ -1435,14 +1441,14 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
     // Otherwise continue to find the next match.
     if (first == true) {
       // vim_findfile_free_visited can handle a possible NULL pointer
-      vim_findfile_free_visited(fdip_search_ctx);
+      vim_findfile_free_visited(*search_ctx);
       dir = path_option;
       did_findfile_init = false;
     }
 
     for (;;) {
       if (did_findfile_init) {
-        file_name = vim_findfile(fdip_search_ctx);
+        file_name = vim_findfile(*search_ctx);
         if (file_name != NULL) {
           break;
         }
@@ -1453,8 +1459,8 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
 
         if (dir == NULL || *dir == NUL) {
           // We searched all paths of the option, now we can free the search context.
-          vim_findfile_cleanup(fdip_search_ctx);
-          fdip_search_ctx = NULL;
+          vim_findfile_cleanup(*search_ctx);
+          *search_ctx = NULL;
           break;
         }
 
@@ -1466,10 +1472,10 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
 
         // get the stopdir string
         r_ptr = vim_findfile_stopdir(buf);
-        fdip_search_ctx = vim_findfile_init(buf, ff_file_to_find,
-                                            r_ptr, 100, false, find_what,
-                                            fdip_search_ctx, false, rel_fname);
-        if (fdip_search_ctx != NULL) {
+        *search_ctx = vim_findfile_init(buf, *file_to_find,
+                                        r_ptr, 100, false, find_what,
+                                        *search_ctx, false, rel_fname);
+        if (*search_ctx != NULL) {
           did_findfile_init = true;
         }
         xfree(buf);
@@ -1479,19 +1485,15 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
   if (file_name == NULL && (options & FNAME_MESS)) {
     if (first == true) {
       if (find_what == FINDFILE_DIR) {
-        semsg(_("E344: Can't find directory \"%s\" in cdpath"),
-              ff_file_to_find);
+        semsg(_("E344: Can't find directory \"%s\" in cdpath"), *file_to_find);
       } else {
-        semsg(_("E345: Can't find file \"%s\" in path"),
-              ff_file_to_find);
+        semsg(_("E345: Can't find file \"%s\" in path"), *file_to_find);
       }
     } else {
       if (find_what == FINDFILE_DIR) {
-        semsg(_("E346: No more directory \"%s\" found in cdpath"),
-              ff_file_to_find);
+        semsg(_("E346: No more directory \"%s\" found in cdpath"), *file_to_find);
       } else {
-        semsg(_("E347: No more file \"%s\" found in path"),
-              ff_file_to_find);
+        semsg(_("E347: No more file \"%s\" found in path"), *file_to_find);
       }
     }
   }
@@ -1606,8 +1608,12 @@ int vim_chdirfile(char *fname, CdCause cause)
 /// Change directory to "new_dir". Search 'cdpath' for relative directory names.
 int vim_chdir(char *new_dir)
 {
-  char *dir_name = find_directory_in_path(new_dir, strlen(new_dir),
-                                          FNAME_MESS, curbuf->b_ffname);
+  char *file_to_find = NULL;
+  char *search_ctx = NULL;
+  char *dir_name = find_directory_in_path(new_dir, strlen(new_dir), FNAME_MESS,
+                                          curbuf->b_ffname, &file_to_find, &search_ctx);
+  xfree(file_to_find);
+  vim_findfile_cleanup(search_ctx);
   if (dir_name == NULL) {
     return -1;
   }
