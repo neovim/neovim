@@ -457,6 +457,9 @@ describe('statuscolumn', function()
     -- Check that statusline click doesn't register as statuscolumn click
     meths.input_mouse('right', 'press', '', 0, 12, 0)
     eq('', eval("g:testvar"))
+    -- Check that cmdline click doesn't register as statuscolumn click
+    meths.input_mouse('right', 'press', '', 0, 13, 0)
+    eq('', eval("g:testvar"))
   end)
 
   it('click labels do not leak memory', function()
