@@ -14,23 +14,26 @@ describe('vim.loader', function()
     ]]
 
     local tmp = helpers.tmpname()
+
+    -- Make sure :write flushes the file to disk
+    command('set fsync')
+
     command('edit ' .. tmp)
 
-    eq(1, exec_lua([[
-      vim.api.nvim_buf_set_lines(0, 0, -1, true, {'_G.TEST=1'})
-      vim.cmd.write()
-      loadfile(...)()
-      return _G.TEST
-    ]], tmp))
+    for _ = 1, 10 do
+      eq(1, exec_lua([[
+        vim.api.nvim_buf_set_lines(0, 0, -1, true, {'_G.TEST=1'})
+        vim.cmd.write()
+        loadfile(...)()
+        return _G.TEST
+      ]], tmp))
 
-    -- fs latency
-    helpers.sleep(10)
-
-    eq(2, exec_lua([[
-      vim.api.nvim_buf_set_lines(0, 0, -1, true, {'_G.TEST=2'})
-      vim.cmd.write()
-      loadfile(...)()
-      return _G.TEST
-    ]], tmp))
+      eq(2, exec_lua([[
+        vim.api.nvim_buf_set_lines(0, 0, -1, true, {'_G.TEST=2'})
+        vim.cmd.write()
+        loadfile(...)()
+        return _G.TEST
+      ]], tmp))
+    end
   end)
 end)
