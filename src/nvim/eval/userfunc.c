@@ -881,6 +881,27 @@ static void func_clear_free(ufunc_T *fp, bool force)
   func_free(fp);
 }
 
+/// Allocate a funccall_T, link it in current_funccal and fill in "fp" and "rettv".
+/// Must be followed by one call to remove_funccal() or cleanup_function_call().
+funccall_T *create_funccal(ufunc_T *fp, typval_T *rettv)
+{
+  funccall_T *fc = xcalloc(1, sizeof(funccall_T));
+  fc->fc_caller = current_funccal;
+  current_funccal = fc;
+  fc->fc_func = fp;
+  func_ptr_ref(fp);
+  fc->fc_rettv = rettv;
+  return fc;
+}
+
+/// Restore current_funccal.
+void remove_funccal(void)
+{
+  funccall_T *fc = current_funccal;
+  current_funccal = fc->fc_caller;
+  free_funccal(fc);
+}
+
 /// Call a user function
 ///
 /// @param fp  Function to call.
@@ -895,7 +916,6 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   FUNC_ATTR_NONNULL_ARG(1, 3, 4)
 {
   bool using_sandbox = false;
-  funccall_T *fc;
   int save_did_emsg;
   static int depth = 0;
   dictitem_T *v;
@@ -930,19 +950,13 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   // check for CTRL-C hit
   line_breakcheck();
   // prepare the funccall_T structure
-  fc = xcalloc(1, sizeof(funccall_T));
-  fc->fc_caller = current_funccal;
-  current_funccal = fc;
-  fc->fc_func = fp;
-  fc->fc_rettv = rettv;
+  funccall_T *fc = create_funccal(fp, rettv);
   fc->fc_level = ex_nesting_level;
   // Check if this function has a breakpoint.
   fc->fc_breakpoint = dbg_find_breakpoint(false, fp->uf_name, (linenr_T)0);
   fc->fc_dbg_tick = debug_tick;
-
   // Set up fields for closure.
   ga_init(&fc->fc_ufuncs, sizeof(ufunc_T *), 1);
-  func_ptr_ref(fp);
 
   if (strncmp(fp->uf_name, "<lambda>", 8) == 0) {
     islambda = true;
