@@ -648,6 +648,14 @@ describe('statuscolumn', function()
       2 aaaaa                                              |
                                                            |
     ]])
+    -- In all windows
+    command('wincmd v | set ls=0')
+    command('sign place 1 line=2 name=sign')
+    screen:expect([[
+      1   ^aaaaa                 │1   aaaaa                 |
+      2 ssaaaaa                 │2 ssaaaaa                 |
+                                                           |
+    ]])
   end)
 
   it("is only evaluated twice, once to estimate and once to draw", function()
