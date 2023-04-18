@@ -206,4 +206,35 @@ func Test_set_shell()
   call delete('Xtestout')
 endfunc
 
+func Test_shell_repeat()
+  CheckUnix
+
+  let save_shell = &shell
+
+  call writefile(['#!/bin/sh', 'echo "Cmd: [$*]" > Xlog'], 'Xtestshell', 'D')
+  call setfperm('Xtestshell', "r-x------")
+  set shell=./Xtestshell
+  defer delete('Xlog')
+
+  call feedkeys(":!echo coconut\<CR>", 'xt')   " Run command
+  call assert_equal(['Cmd: [-c echo coconut]'], readfile('Xlog'))
+
+  call feedkeys(":!!\<CR>", 'xt')              " Re-run previous
+  call assert_equal(['Cmd: [-c echo coconut]'], readfile('Xlog'))
+
+  call writefile(['empty'], 'Xlog')
+  call feedkeys(":!\<CR>", 'xt')               " :! is a no-op
+  call assert_equal(['empty'], readfile('Xlog'))
+
+  call feedkeys(":!!\<CR>", 'xt')              " :! doesn't clear previous command
+  call assert_equal(['Cmd: [-c echo coconut]'], readfile('Xlog'))
+
+  call feedkeys(":!echo banana\<CR>", 'xt')    " Make sure setting previous command keeps working after a :! no-op
+  call assert_equal(['Cmd: [-c echo banana]'], readfile('Xlog'))
+  call feedkeys(":!!\<CR>", 'xt')
+  call assert_equal(['Cmd: [-c echo banana]'], readfile('Xlog'))
+
+  let &shell = save_shell
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

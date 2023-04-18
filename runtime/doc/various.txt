@@ -248,6 +248,7 @@ g8			Print the hex values of the bytes used in the
 <
 							*:!cmd* *:!*
 :!{cmd}			Execute {cmd} with 'shell'. See also |:terminal|.
+			`:!` without a {cmd} is a no-op, it does nothing.
 
 			The command runs in a non-interactive shell connected
 			to a pipe (not a terminal). Use |:terminal| to run an
