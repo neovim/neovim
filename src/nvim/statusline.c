@@ -348,7 +348,8 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   } else {
     row = is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp);
     fillchar = fillchar_status(&attr, wp);
-    maxwidth = is_stl_global ? Columns : wp->w_width;
+    const bool in_status_line = wp->w_status_height != 0 || is_stl_global;
+    maxwidth = in_status_line && !is_stl_global ? wp->w_width : Columns;
     stl_clear_click_defs(wp->w_status_click_defs, wp->w_status_click_defs_size);
     wp->w_status_click_defs = stl_alloc_click_defs(wp->w_status_click_defs, maxwidth,
                                                    &wp->w_status_click_defs_size);
@@ -374,8 +375,8 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
       if (col < (maxwidth + 1) / 2) {
         col = (maxwidth + 1) / 2;
       }
-      maxwidth = maxwidth - col;
-      if (!wp->w_status_height && !is_stl_global) {
+      maxwidth -= col;
+      if (!in_status_line) {
         grid = &msg_grid_adj;
         row = Rows - 1;
         maxwidth--;  // writing in last column may cause scrolling
@@ -388,7 +389,9 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
       opt_scope = ((*wp->w_p_stl != NUL) ? OPT_LOCAL : 0);
     }
 
-    col += is_stl_global ? 0 : wp->w_wincol;
+    if (in_status_line && !is_stl_global) {
+      col += wp->w_wincol;
+    }
   }
 
   if (maxwidth <= 0) {
@@ -494,7 +497,8 @@ void win_redr_ruler(win_T *wp)
 
   // Don't draw the ruler while doing insert-completion, it might overwrite
   // the (long) mode message.
-  if (wp == lastwin && lastwin->w_status_height == 0 && !is_stl_global) {
+  win_T *ruler_win = curwin->w_status_height == 0 ? curwin : lastwin_nofloating();
+  if (wp == ruler_win && ruler_win->w_status_height == 0 && !is_stl_global) {
     if (edit_submode != NULL) {
       return;
     }
@@ -507,7 +511,7 @@ void win_redr_ruler(win_T *wp)
 
   // Check if not in Insert mode and the line is empty (will show "0-1").
   int empty_line = (State & MODE_INSERT) == 0
-                   && *ml_get_buf(curwin->w_buffer, curwin->w_cursor.lnum, false) == NUL;
+                   && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, false) == NUL;
 
   int width;
   int row;
