@@ -1097,7 +1097,8 @@ retnomove:
     return IN_UNKNOWN;
   }
 
-  on_status_line = (grid == DEFAULT_GRID_HANDLE && row + wp->w_winbar_height >= wp->w_height)
+  bool below_window = grid == DEFAULT_GRID_HANDLE && row + wp->w_winbar_height >= wp->w_height;
+  on_status_line = (below_window)
     ? row + wp->w_winbar_height - wp->w_height + 1 == 1
     : false;
 
@@ -1105,7 +1106,7 @@ retnomove:
     ? wp->w_winbar_height != 0
     : false;
 
-  on_statuscol = !on_status_line && !on_winbar && col < win_col_off(wp)
+  on_statuscol = !below_window && !on_status_line && !on_winbar && col < win_col_off(wp)
     ? *wp->w_p_stc != NUL
     : false;
 
@@ -1144,7 +1145,7 @@ retnomove:
     dragwin = NULL;
 
     // winpos and height may change in win_enter()!
-    if (grid == DEFAULT_GRID_HANDLE && row + wp->w_winbar_height >= wp->w_height) {
+    if (below_window) {
       // In (or below) status line
       status_line_offset = row + wp->w_winbar_height - wp->w_height + 1;
       dragwin = wp;
