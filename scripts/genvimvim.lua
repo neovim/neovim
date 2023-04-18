@@ -37,6 +37,9 @@ local function cmd_kw(prev_cmd, cmd)
     while cmd:sub(shift, shift) == prev_cmd:sub(shift, shift) do
       shift = shift + 1
     end
+    if cmd:sub(1, shift) == 'def' then
+      shift = shift + 1
+    end
     if shift >= #cmd then
       return cmd
     else
@@ -66,6 +69,20 @@ for _, cmd_desc in ipairs(ex_cmds.cmds) do
   local cmd = cmd_desc.command
   if cmd:match('%w') and cmd ~= 'z' and not is_special_cased_cmd(cmd) then
     w(' ' .. cmd_kw(prev_cmd, cmd))
+  end
+  if cmd == 'delete' then
+    -- Add special abbreviations of :delete
+    w(' ' .. cmd_kw('d', 'dl'))
+    w(' ' .. cmd_kw('del', 'dell'))
+    w(' ' .. cmd_kw('dele', 'delel'))
+    w(' ' .. cmd_kw('delet', 'deletl'))
+    w(' ' .. cmd_kw('delete', 'deletel'))
+    w(' ' .. cmd_kw('d', 'dp'))
+    w(' ' .. cmd_kw('de', 'dep'))
+    w(' ' .. cmd_kw('del', 'delp'))
+    w(' ' .. cmd_kw('dele', 'delep'))
+    w(' ' .. cmd_kw('delet', 'deletp'))
+    w(' ' .. cmd_kw('delete', 'deletep'))
   end
   prev_cmd = cmd
 end
