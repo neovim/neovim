@@ -988,6 +988,8 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     }
     if (ins_prevcmd) {
       STRCAT(t, prevcmd);
+    } else {
+      xfree(t);
     }
     p = t + strlen(t);
     STRCAT(t, trailarg);
@@ -1012,15 +1014,11 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     }
   } while (trailarg != NULL);
 
-  // Don't do anything if there is no command as there isn't really anything
-  // useful in running "sh -c ''".  Avoids changing "prevcmd".
-  if (strlen(newcmd) == 0) {
-    xfree(newcmd);
-    return;
+  // Don't clear "prevcmd" if there is no command to run.
+  if (strlen(newcmd) > 0) {
+    xfree(prevcmd);
+    prevcmd = newcmd;
   }
-
-  xfree(prevcmd);
-  prevcmd = newcmd;
 
   if (bangredo) {  // put cmd in redo buffer for ! command
     // If % or # appears in the command, it must have been escaped.

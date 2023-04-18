@@ -223,8 +223,8 @@ func Test_shell_repeat()
   call assert_equal(['Cmd: [-c echo coconut]'], readfile('Xlog'))
 
   call writefile(['empty'], 'Xlog')
-  call feedkeys(":!\<CR>", 'xt')               " :! is a no-op
-  call assert_equal(['empty'], readfile('Xlog'))
+  call feedkeys(":!\<CR>", 'xt')               " :!
+  call assert_equal(['Cmd: [-c ]'], readfile('Xlog'))
 
   call feedkeys(":!!\<CR>", 'xt')              " :! doesn't clear previous command
   call assert_equal(['Cmd: [-c echo coconut]'], readfile('Xlog'))
