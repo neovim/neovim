@@ -838,6 +838,10 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
     wp->w_width = MIN(wp->w_width, Columns - win_border_width(wp));
   }
 
+  if(wp->w_height == 1 && wp->w_p_wbr != NULL && *wp->w_p_wbr != NUL) {
+    wp->w_p_wbr = xstrdup("");
+  }
+
   win_set_inner_size(wp, true);
   must_redraw = MAX(must_redraw, UPD_VALID);
 
