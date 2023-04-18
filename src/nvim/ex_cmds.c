@@ -1015,6 +1015,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   // Don't do anything if there is no command as there isn't really anything
   // useful in running "sh -c ''".  Avoids changing "prevcmd".
   if (strlen(newcmd) == 0) {
+    xfree(newcmd);
     return;
   }
 
