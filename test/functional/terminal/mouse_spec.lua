@@ -239,7 +239,7 @@ describe(':terminal mouse', function()
           line30                   │line30                  |
           rows: 5, cols: 25        │rows: 5, cols: 25       |
           {2:^ }                        │{2: }                       |
-          ==========                ==========              |
+          ==========               ▐==========              |
           :vsp                                              |
         ]])
         feed(':enew | set number<cr>')
@@ -249,7 +249,7 @@ describe(':terminal mouse', function()
           {4:~                        }│rows: 5, cols: 25       |
           {4:~                        }│rows: 5, cols: 24       |
           {4:~                        }│{2: }                       |
-          ==========                ==========              |
+          ==========               ▐==========              |
           :enew | set number                                |
         ]])
         feed('30iline\n<esc>')
@@ -259,7 +259,7 @@ describe(':terminal mouse', function()
           {7: 29 }line                 │rows: 5, cols: 25       |
           {7: 30 }line                 │rows: 5, cols: 24       |
           {7: 31 }^                     │{2: }                       |
-          ==========                ==========              |
+          ==========               ▐==========              |
                                                             |
         ]])
         feed('<c-w>li')
@@ -269,7 +269,7 @@ describe(':terminal mouse', function()
           {7: 29 }line                 │rows: 5, cols: 25       |
           {7: 30 }line                 │rows: 5, cols: 24       |
           {7: 31 }                     │{1: }                       |
-          ==========                ==========              |
+          ==========               ▌==========              |
           {3:-- TERMINAL --}                                    |
         ]])
 
@@ -282,7 +282,7 @@ describe(':terminal mouse', function()
           {7: 29 }line                 │rows: 5, cols: 24       |
           {7: 30 }line                 │mouse enabled           |
           {7: 31 }                     │{1: }                       |
-          ==========                ==========              |
+          ==========               ▌==========              |
           {3:-- TERMINAL --}                                    |
         ]])
       end)
@@ -295,7 +295,7 @@ describe(':terminal mouse', function()
           {7: 23 }line                 │rows: 5, cols: 24       |
           {7: 24 }line                 │mouse enabled           |
           {7: 25 }line                 │{1: }                       |
-          ==========                ==========              |
+          ==========               ▌==========              |
           {3:-- TERMINAL --}                                    |
         ]])
         feed('<S-ScrollWheelDown><4,0>')
@@ -305,7 +305,7 @@ describe(':terminal mouse', function()
           {7: 28 }line                 │rows: 5, cols: 24       |
           {7: 29 }line                 │mouse enabled           |
           {7: 30 }line                 │{1: }                       |
-          ==========                ==========              |
+          ==========               ▌==========              |
           {3:-- TERMINAL --}                                    |
         ]])
       end)
@@ -319,7 +319,7 @@ describe(':terminal mouse', function()
           {7: 28 }line                 │rows: 5, cols: 24       |
           {7: 29 }line                 │mouse enabled           |
           {7: 30 }line                 │{1: }                       |
-          ==========                ==========              |
+          ==========               ▌==========              |
           {3:-- TERMINAL --}                                    |
         ]])
         command('set mousescroll=ver:10')
@@ -330,7 +330,7 @@ describe(':terminal mouse', function()
           {7: 18 }line                 │rows: 5, cols: 24       |
           {7: 19 }line                 │mouse enabled           |
           {7: 20 }line                 │{1: }                       |
-          ==========                ==========              |
+          ==========               ▌==========              |
           {3:-- TERMINAL --}                                    |
         ]])
         command('set mousescroll=ver:0')
@@ -346,7 +346,7 @@ describe(':terminal mouse', function()
           {7: 29 }line                 │rows: 5, cols: 24       |
           {7: 30 }line                 │mouse enabled           |
           {7: 31 }                     │{2: }                       |
-          ==========                ==========              |
+          ==========               ▐==========              |
                                                             |
         ]])
       end)
@@ -360,7 +360,7 @@ describe(':terminal mouse', function()
           {7: 29 }line                 │rows: 5, cols: 24       |
           {7: 30 }line                 │mouse enabled           |
           {7: 31 }^                     │{2: }                       |
-          ==========                ==========              |
+          ==========               ▐==========              |
                                                             |
         ]])
         feed(':bn<cr>')
@@ -370,7 +370,7 @@ describe(':terminal mouse', function()
           mouse enabled            │mouse enabled           |
           rows: 5, cols: 25        │rows: 5, cols: 25       |
           {2:^ }                        │{2: }                       |
-          ==========                ==========              |
+          ==========               ▐==========              |
           :bn                                               |
         ]])
         feed(':bn<cr>')
@@ -380,7 +380,7 @@ describe(':terminal mouse', function()
           {7: 29 }line                 │rows: 5, cols: 25       |
           {7: 30 }line                 │rows: 5, cols: 24       |
           {7: 31 }^                     │{2: }                       |
-          ==========                ==========              |
+          ==========               ▐==========              |
           :bn                                               |
         ]])
       end)

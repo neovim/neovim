@@ -1597,7 +1597,7 @@ describe('TUI', function()
       {2:~                        }│{4:~                       }|
       {2:~                        }│{5:[No Name]   0,0-1    All}|
       {2:~                        }│                        |
-      {5:new                       }{1:{MATCH:<.*[/\]nvim }}|
+      {5:new                      ▐}{1:{MATCH:<.*[/\]nvim }}|
                                                         |
     ]])
   end)

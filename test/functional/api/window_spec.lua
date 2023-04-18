@@ -215,7 +215,7 @@ describe('API/win', function()
         {2:dd^d                           }│{2:ddd                          }|
         {1:~                             }│{1:~                            }|
         {1:~                             }│{1:~                            }|
-        {3:[No Name] [+]  4,3         All }{4:[No Name] [+]  4,3        All}|
+        {3:[No Name] [+]  4,3         All▐}{4:[No Name] [+]  4,3        All}|
                                                                     |
       ]])
       window('set_cursor', oldwin, {1, 0})
@@ -226,7 +226,7 @@ describe('API/win', function()
         {2:dd^d                           }│ddd                          |
         {1:~                             }│{1:~                            }|
         {1:~                             }│{1:~                            }|
-        {3:[No Name] [+]  4,3         All }{4:[No Name] [+]  1,1        All}|
+        {3:[No Name] [+]  4,3         All▐}{4:[No Name] [+]  1,1        All}|
                                                                     |
       ]])
     end)
@@ -255,7 +255,7 @@ describe('API/win', function()
         dd^d                           │ddd                          |
         {1:~                             }│{1:~                            }|
         {1:~                             }│{1:~                            }|
-        {3:[No Name] [+]                  }{4:[No Name] [+]                }|
+        {3:[No Name] [+]                 ▐}{4:[No Name] [+]                }|
                                                                     |
       ]])
       window('set_cursor', oldwin, {2, 0})
@@ -266,7 +266,7 @@ describe('API/win', function()
         dd^d                           │{2:d}dd                          |
         {1:~                             }│{1:~                            }|
         {1:~                             }│{1:~                            }|
-        {3:[No Name] [+]                  }{4:[No Name] [+]                }|
+        {3:[No Name] [+]                 ▐}{4:[No Name] [+]                }|
                                                                     |
       ]])
     end)

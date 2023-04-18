@@ -132,7 +132,7 @@ describe('display', function()
       b│{1:~                                                                        }|
       b│{1:~                                                                        }|
       {1:@}│{1:~                                                                        }|
-      {2:< }{3:[No Name] [+]                                                            }|
+      {2:<▐}{3:[No Name] [+]                                                            }|
                                                                                  |
     ]]):gsub('@', fillchar)))
 
@@ -149,7 +149,7 @@ describe('display', function()
       {1:~                                                                        }│b|
       {1:~                                                                        }│b|
       {1:~                                                                        }│{1:@}|
-      {2:[No Name] [+]                                                             }{3:<}|
+      {2:[No Name] [+]                                                            ▐}{3:<}|
                                                                                  |
     ]]):gsub('@', fillchar)))
 
@@ -182,7 +182,7 @@ describe('display', function()
       bb│{1:~                                                                       }|
       bb│{1:~                                                                       }|
       {1:@@}│{1:~                                                                       }|
-      {2:<  }{3:[No Name] [+]                                                           }|
+      {2:< ▐}{3:[No Name] [+]                                                           }|
                                                                                  |
     ]]):gsub('@', fillchar)))
   end

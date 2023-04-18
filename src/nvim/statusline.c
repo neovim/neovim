@@ -178,7 +178,19 @@ void win_redr_status(win_T *wp)
   // May need to draw the character below the vertical separator.
   if (wp->w_vsep_width != 0 && wp->w_status_height != 0 && redrawing()) {
     if (stl_connected(wp)) {
-      fillchar = fillchar_status(&attr, wp);
+      if (wp == curwin) {
+          // Draw the right half block character if the current window is focused
+        fillchar = utf_ptr2char("▐");
+        attr = win_hl_attr(wp, HLF_S);
+      } else {
+        if (wp->w_next == curwin) {
+          // Draw the left half block character if the window on the right is focused
+          fillchar = utf_ptr2char("▌");
+          attr = win_hl_attr(wp->w_next, HLF_S);
+        } else {
+          fillchar = fillchar_status(&attr, wp);
+        }
+      }
     } else {
       attr = win_hl_attr(wp, HLF_C);
       fillchar = wp->w_p_fcs_chars.vert;

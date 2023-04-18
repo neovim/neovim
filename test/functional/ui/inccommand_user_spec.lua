@@ -450,7 +450,7 @@ describe("'inccommand' with multiple buffers", function()
       {2:~                   }│{2:~                  }|
       {2:~                   }│{2:~                  }|
       {2:~                   }│{2:~                  }|
-      {4:[No Name] [+]        }{3:[No Name] [+]      }|
+      {4:[No Name] [+]       ▐}{3:[No Name] [+]      }|
       :Replace foo bar^                        |
     ]])
     feed('<CR>')
@@ -470,7 +470,7 @@ describe("'inccommand' with multiple buffers", function()
       {2:~                   }│{2:~                  }|
       {2:~                   }│{2:~                  }|
       {2:~                   }│{2:~                  }|
-      {4:[No Name] [+]        }{3:[No Name] [+]      }|
+      {4:[No Name] [+]       ▐}{3:[No Name] [+]      }|
       :Replace foo bar                        |
     ]])
   end)
@@ -483,7 +483,7 @@ describe("'inccommand' with multiple buffers", function()
         baz {1:bar} bar       │  bar baz {1:bar}      |
         {1:bar} bar baz       │  baz {1:bar} bar      |
                           │                   |
-      {4:[No Name] [+]        }{3:[No Name] [+]      }|
+      {4:[No Name] [+]       ▐}{3:[No Name] [+]      }|
       Buffer #1:                              |
       |1|   {1:bar} bar baz                       |
       |2|   bar baz {1:bar}                       |
@@ -514,7 +514,7 @@ describe("'inccommand' with multiple buffers", function()
       {2:~                   }│{2:~                  }|
       {2:~                   }│{2:~                  }|
       {2:~                   }│{2:~                  }|
-      {4:[No Name] [+]        }{3:[No Name] [+]      }|
+      {4:[No Name] [+]       ▐}{3:[No Name] [+]      }|
       :Replace foo bar                        |
     ]])
   end)

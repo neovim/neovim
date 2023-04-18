@@ -109,7 +109,7 @@ describe('Diff mode screen with 3 diffs open', function()
       {1:  }{10: 12 }                           │{1:  }{10: 12 }                          │{1:  }{10:  6 }                           |
       {6:~                                }│{6:~                               }│{6:~                                }|
       {6:~                                }│{6:~                               }│{6:~                                }|
-      {7:<-functional-diff-screen-1.3 [+]  }{3:<est-functional-diff-screen-1.2  Xtest-functional-diff-screen-1   }|
+      {7:<-functional-diff-screen-1.3 [+] ▐}{3:<est-functional-diff-screen-1.2  Xtest-functional-diff-screen-1   }|
       :2,6diffget screen-1.2                                                                              |
       ]])
     end)
@@ -132,7 +132,7 @@ describe('Diff mode screen with 3 diffs open', function()
       {6:~                                }│{6:~                               }│{6:~                                }|
       {6:~                                }│{6:~                               }│{6:~                                }|
       {6:~                                }│{6:~                               }│{6:~                                }|
-      {3:<test-functional-diff-screen-1.3  }{7:<functional-diff-screen-1.2 [+]  }{3:Xtest-functional-diff-screen-1   }|
+      {3:<test-functional-diff-screen-1.3 }{7:▌<functional-diff-screen-1.2 [+] ▐}{3:Xtest-functional-diff-screen-1   }|
       :5,7diffget screen-1.3                                                                              |
       ]])
     end)
@@ -155,7 +155,7 @@ describe('Diff mode screen with 3 diffs open', function()
       {1:  }{10:  6 }                           │{1:  }{10: 12 }                          │{1:  }{10: 11 }                           |
       {6:~                                }│{6:~                               }│{6:~                                }|
       {6:~                                }│{6:~                               }│{6:~                                }|
-      {3:<test-functional-diff-screen-1.3  <est-functional-diff-screen-1.2  }{7:<st-functional-diff-screen-1 [+] }|
+      {3:<test-functional-diff-screen-1.3  <est-functional-diff-screen-1.2 }{7:▌<st-functional-diff-screen-1 [+] }|
       :5,6diffget screen-1.2                                                                              |
       ]])
     end)
@@ -178,7 +178,7 @@ describe('Diff mode screen with 3 diffs open', function()
       {1:  }{10:  6 }                           │{1:  }{10: 12 }                          │{1:  }{10:  8 }                           |
       {6:~                                }│{6:~                               }│{6:~                                }|
       {6:~                                }│{6:~                               }│{6:~                                }|
-      {3:<test-functional-diff-screen-1.3  }{7:<est-functional-diff-screen-1.2  }{3:<st-functional-diff-screen-1 [+] }|
+      {3:<test-functional-diff-screen-1.3 }{7:▌<est-functional-diff-screen-1.2 ▐}{3:<st-functional-diff-screen-1 [+] }|
       :6,8diffput screen-1                                                                                |
       ]])
 
@@ -201,7 +201,7 @@ describe('Diff mode screen with 3 diffs open', function()
       {1:  }{10:  6 }                           │{1:  }{10: 12 }                          │{1:  }{10: 11 }                           |
       {6:~                                }│{6:~                               }│{6:~                                }|
       {6:~                                }│{6:~                               }│{6:~                                }|
-      {3:<test-functional-diff-screen-1.3  }{7:<est-functional-diff-screen-1.2  }{3:<st-functional-diff-screen-1 [+] }|
+      {3:<test-functional-diff-screen-1.3 }{7:▌<est-functional-diff-screen-1.2 ▐}{3:<st-functional-diff-screen-1 [+] }|
       :6,11diffput screen-1                                                                               |
       ]])
 
@@ -316,7 +316,7 @@ something
       {6:~                                                }│{6:~                                                 }|
       {6:~                                                }│{6:~                                                 }|
       {6:~                                                }│{6:~                                                 }|
-      {7:Xtest-functional-diff-screen-1.2 [+]              }{3:Xtest-functional-diff-screen-1                    }|
+      {7:Xtest-functional-diff-screen-1.2 [+]             ▐}{3:Xtest-functional-diff-screen-1                    }|
       :5,9diffget                                                                                         |
       ]])
     end)
@@ -342,7 +342,7 @@ something
       {6:~                                                }│{6:~                                                 }|
       {6:~                                                }│{6:~                                                 }|
       {6:~                                                }│{6:~                                                 }|
-      {3:Xtest-functional-diff-screen-1.2                  }{7:Xtest-functional-diff-screen-1 [+]                }|
+      {3:Xtest-functional-diff-screen-1.2                 }{7:▌Xtest-functional-diff-screen-1 [+]                }|
       :5,10diffget                                                                                        |
       ]])
     end)
@@ -368,7 +368,7 @@ something
       {6:~                                                }│{6:~                                                 }|
       {6:~                                                }│{6:~                                                 }|
       {6:~                                                }│{6:~                                                 }|
-      {3:Xtest-functional-diff-screen-1.2                  }{7:Xtest-functional-diff-screen-1 [+]                }|
+      {3:Xtest-functional-diff-screen-1.2                 }{7:▌Xtest-functional-diff-screen-1 [+]                }|
       :4,17diffget                                                                                        |
       ]])
 
@@ -395,7 +395,7 @@ something
       {1:  }{10: 16 }DEF                                        │{1:  }{10: 16 }DEF                                         |
       {1:  }{10: 17 }something                                  │{1:  }{10: 17 }something                                   |
       {1:  }{10: 18 }                                           │{1:  }{10: 18 }                                            |
-      {7:Xtest-functional-diff-screen-1.2 [+]              }{3:Xtest-functional-diff-screen-1                    }|
+      {7:Xtest-functional-diff-screen-1.2 [+]             ▐}{3:Xtest-functional-diff-screen-1                    }|
       :4,12diffget                                                                                        |
       ]])
     end)
@@ -422,7 +422,7 @@ something
       {1:  }{10:    }{2:-------------------------------------------}│{1:  }{10: 16 }{4:DEF                                         }|
       {1:  }{10: 12 }something                                  │{1:  }{10: 17 }something                                   |
       {1:  }{10: 13 }                                           │{1:  }{10: 18 }                                            |
-      {7:Xtest-functional-diff-screen-1.2 [+]              }{3:Xtest-functional-diff-screen-1                    }|
+      {7:Xtest-functional-diff-screen-1.2 [+]             ▐}{3:Xtest-functional-diff-screen-1                    }|
       :e                                                                                                  |
       ]])
     end)
@@ -449,7 +449,7 @@ something
       {1:  }{10:    }{2:-------------------------------------------}│{1:  }{10: 16 }{4:DEF                                         }|
       {1:  }{10: 12 }something                                  │{1:  }{10: 17 }something                                   |
       {1:  }{10: 13 }                                           │{1:  }{10: 18 }                                            |
-      {7:Xtest-functional-diff-screen-1.2 [+]              }{3:Xtest-functional-diff-screen-1                    }|
+      {7:Xtest-functional-diff-screen-1.2 [+]             ▐}{3:Xtest-functional-diff-screen-1                    }|
       :e                                                                                                  |
       ]])
     end)
@@ -476,7 +476,7 @@ something
       {1:  }{10:    }{2:-------------------------------------------}│{1:  }{10: 16 }{4:DEF                                         }|
       {1:  }{10: 12 }something                                  │{1:  }{10: 17 }something                                   |
       {1:  }{10: 13 }                                           │{1:  }{10: 18 }                                            |
-      {7:Xtest-functional-diff-screen-1.2 [+]              }{3:Xtest-functional-diff-screen-1                    }|
+      {7:Xtest-functional-diff-screen-1.2 [+]             ▐}{3:Xtest-functional-diff-screen-1                    }|
       :e                                                                                                  |
       ]])
     end)
@@ -503,7 +503,7 @@ something
       {1:  }{10:    }{2:-------------------------------------------}│{1:  }{10: 16 }{4:DEF                                         }|
       {1:  }{10: 13 }something                                  │{1:  }{10: 17 }something                                   |
       {1:  }{10: 14 }                                           │{1:  }{10: 18 }                                            |
-      {7:Xtest-functional-diff-screen-1.2 [+]              }{3:Xtest-functional-diff-screen-1                    }|
+      {7:Xtest-functional-diff-screen-1.2 [+]             ▐}{3:Xtest-functional-diff-screen-1                    }|
       :e                                                                                                  |
       ]])
     end)
@@ -530,7 +530,7 @@ something
       {1:  }{10: 12 }DEF                                        │{1:  }{10: 16 }DEF                                         |
       {1:  }{10: 13 }^something                                  │{1:  }{10: 17 }something                                   |
       {1:  }{10: 14 }                                           │{1:  }{10: 18 }                                            |
-      {7:Xtest-functional-diff-screen-1.2 [+]              }{3:Xtest-functional-diff-screen-1                    }|
+      {7:Xtest-functional-diff-screen-1.2 [+]             ▐}{3:Xtest-functional-diff-screen-1                    }|
       :e                                                                                                  |
       ]])
     end)
@@ -557,7 +557,7 @@ something
       {1:  }{10:    }{2:-------------------------------------------}│{1:  }{10: 16 }{4:DEF                                         }|
       {1:  }{10: 12 }something                                  │{1:  }{10: 17 }something                                   |
       {1:  }{10: 13 }                                           │{1:  }{10: 18 }                                            |
-      {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1 [+]                }|
+      {7:Xtest-functional-diff-screen-1.2                 ▐}{3:Xtest-functional-diff-screen-1 [+]                }|
       :e                                                                                                  |
       ]])
     end)
@@ -584,7 +584,7 @@ something
       {1:  }{10:    }{2:-------------------------------------------}│{1:  }{10: 16 }{4:DEF                                         }|
       {1:  }{10: 12 }something                                  │{1:  }{10: 17 }something                                   |
       {1:  }{10: 13 }                                           │{1:  }{10: 18 }                                            |
-      {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1 [+]                }|
+      {7:Xtest-functional-diff-screen-1.2                 ▐}{3:Xtest-functional-diff-screen-1 [+]                }|
       :e                                                                                                  |
       ]])
     end)
@@ -611,7 +611,7 @@ something
       {1:  }{10:    }{2:-------------------------------------------}│{1:  }{10: 16 }{4:DEF                                         }|
       {1:  }{10: 12 }something                                  │{1:  }{10: 17 }something                                   |
       {1:  }{10: 13 }                                           │{1:  }{10: 18 }                                            |
-      {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1 [+]                }|
+      {7:Xtest-functional-diff-screen-1.2                 ▐}{3:Xtest-functional-diff-screen-1 [+]                }|
       :e                                                                                                  |
       ]])
     end)
@@ -638,7 +638,7 @@ something
       {1:  }{10: 12 }something                                  │{1:  }{10: 16 }something                                   |
       {1:  }{10: 13 }                                           │{1:  }{10: 17 }                                            |
       {6:~                                                }│{6:~                                                 }|
-      {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1 [+]                }|
+      {7:Xtest-functional-diff-screen-1.2                 ▐}{3:Xtest-functional-diff-screen-1 [+]                }|
       :e                                                                                                  |
       ]])
     end)
@@ -665,7 +665,7 @@ something
       {1:  }{10: 12 }^something                                  │{1:  }{10: 16 }something                                   |
       {1:  }{10: 13 }                                           │{1:  }{10: 17 }                                            |
       {6:~                                                }│{6:~                                                 }|
-      {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1 [+]                }|
+      {7:Xtest-functional-diff-screen-1.2                 ▐}{3:Xtest-functional-diff-screen-1 [+]                }|
       :e                                                                                                  |
       ]])
     end)
@@ -692,7 +692,7 @@ something
       {1:  }{10:    }{2:-------------------------------------------}│{1:  }{10: 16 }{4:DEF                                         }|
       {1:  }{10: 15 }something                                  │{1:  }{10: 17 }something                                   |
       {1:  }{10: 16 }                                           │{1:  }{10: 18 }                                            |
-      {3:Xtest-functional-diff-screen-1.2 [+]              }{7:Xtest-functional-diff-screen-1                    }|
+      {3:Xtest-functional-diff-screen-1.2 [+]             }{7:▌Xtest-functional-diff-screen-1                    }|
       :e                                                                                                  |
       ]])
     end)
@@ -719,7 +719,7 @@ something
       {1:  }{10:    }{2:-------------------------------------------}│{1:  }{10: 16 }{4:DEF                                         }|
       {1:  }{10: 15 }something                                  │{1:  }{10: 17 }something                                   |
       {1:  }{10: 16 }                                           │{1:  }{10: 18 }                                            |
-      {3:Xtest-functional-diff-screen-1.2 [+]              }{7:Xtest-functional-diff-screen-1                    }|
+      {3:Xtest-functional-diff-screen-1.2 [+]             }{7:▌Xtest-functional-diff-screen-1                    }|
       :e                                                                                                  |
       ]])
     end)
@@ -746,7 +746,7 @@ something
       {1:  }{10:    }{2:-------------------------------------------}│{1:  }{10: 16 }{4:DEF                                         }|
       {1:  }{10: 12 }something                                  │{1:  }{10: 17 }something                                   |
       {1:  }{10: 13 }                                           │{1:  }{10: 18 }                                            |
-      {3:Xtest-functional-diff-screen-1.2 [+]              }{7:Xtest-functional-diff-screen-1                    }|
+      {3:Xtest-functional-diff-screen-1.2 [+]             }{7:▌Xtest-functional-diff-screen-1                    }|
       :e                                                                                                  |
       ]])
     end)
@@ -773,7 +773,7 @@ something
       {1:  }{10: 12 }DEF                                        │{1:  }{10: 16 }DEF                                         |
       {1:  }{10: 13 }something                                  │{1:  }{10: 17 }^something                                   |
       {1:  }{10: 14 }                                           │{1:  }{10: 18 }                                            |
-      {3:Xtest-functional-diff-screen-1.2 [+]              }{7:Xtest-functional-diff-screen-1                    }|
+      {3:Xtest-functional-diff-screen-1.2 [+]             }{7:▌Xtest-functional-diff-screen-1                    }|
       :e                                                                                                  |
       ]])
 
@@ -842,7 +842,7 @@ something
       {1:  }{10: 16 }{4:something else                             }│{1:  }{10:    }{2:--------------------------------------------}|
       {1:  }{10: 17 }common line                                │{1:  }{10: 10 }common line                                 |
       {1:  }{10: 18 }something                                  │{1:  }{10: 11 }something                                   |
-      {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+      {7:Xtest-functional-diff-screen-1.2                 ▐}{3:Xtest-functional-diff-screen-1                    }|
       :e                                                                                                  |
       ]])
       -- enable it by increasing the number
@@ -867,7 +867,7 @@ something
       {1:  }{10: 16 }{4:something else                             }│{1:  }{10:    }{2:--------------------------------------------}|
       {1:  }{10: 17 }common line                                │{1:  }{10: 10 }common line                                 |
       {1:  }{10: 18 }something                                  │{1:  }{10: 11 }something                                   |
-      {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+      {7:Xtest-functional-diff-screen-1.2                 ▐}{3:Xtest-functional-diff-screen-1                    }|
       :set diffopt+=linematch:30                                                                          |
       ]])
     end)
@@ -893,7 +893,7 @@ something
       {1:  }{10: 16 }something else                             │{1:  }{10: 16 }something else                              |
       {1:  }{10: 17 }common line                                │{1:  }{10: 17 }common line                                 |
       {1:  }{10: 18 }something                                  │{1:  }{10: 18 }something                                   |
-      {3:Xtest-functional-diff-screen-1.2                  }{7:Xtest-functional-diff-screen-1 [+]                }|
+      {3:Xtest-functional-diff-screen-1.2                 }{7:▌Xtest-functional-diff-screen-1 [+]                }|
       :1,12diffget                                                                                        |
       ]])
     end)
@@ -919,7 +919,7 @@ something
       {6:~                                                }│{6:~                                                 }|
       {6:~                                                }│{6:~                                                 }|
       {6:~                                                }│{6:~                                                 }|
-      {7:Xtest-functional-diff-screen-1.2 [+]              }{3:Xtest-functional-diff-screen-1                    }|
+      {7:Xtest-functional-diff-screen-1.2 [+]             ▐}{3:Xtest-functional-diff-screen-1                    }|
       :1,19diffget                                                                                        |
       ]])
     end)
@@ -945,7 +945,7 @@ something
       {1:  }{10: 16 }{4:something else                             }│{1:  }{10:    }{2:--------------------------------------------}|
       {1:  }{10: 17 }common line                                │{1:  }{10: 13 }common line                                 |
       {1:  }{10: 18 }something                                  │{1:  }{10: 14 }something                                   |
-      {3:Xtest-functional-diff-screen-1.2                  }{7:Xtest-functional-diff-screen-1 [+]                }|
+      {3:Xtest-functional-diff-screen-1.2                 }{7:▌Xtest-functional-diff-screen-1 [+]                }|
       :7,8diffget                                                                                         |
       ]])
     end)
@@ -971,7 +971,7 @@ something
       {1:  }{10: 16 }something else                             │{1:  }{10: 11 }something else                              |
       {1:  }{10: 17 }common line                                │{1:  }{10: 12 }common line                                 |
       {1:  }{10: 18 }something                                  │{1:  }{10: 13 }something                                   |
-      {3:Xtest-functional-diff-screen-1.2                  }{7:Xtest-functional-diff-screen-1 [+]                }|
+      {3:Xtest-functional-diff-screen-1.2                 }{7:▌Xtest-functional-diff-screen-1 [+]                }|
       :8,10diffget                                                                                        |
       ]])
     end)
