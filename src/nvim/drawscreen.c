@@ -1397,10 +1397,6 @@ static void win_update(win_T *wp, DecorProviders *providers)
   if (type >= UPD_NOT_VALID) {
     wp->w_redr_status = true;
     wp->w_lines_valid = 0;
-    if (*wp->w_p_stc != NUL) {
-      wp->w_nrwidth_line_count = 0;    // make sure width is reset
-      wp->w_statuscol_line_count = 0;  // make sure width is re-estimated
-    }
   }
 
   // Window is zero-height: Only need to draw the separator
@@ -2528,6 +2524,7 @@ int number_width(win_T *wp)
 
   // reset for 'statuscolumn'
   if (*wp->w_p_stc != NUL) {
+    wp->w_statuscol_line_count = 0;  // make sure width is re-estimated
     wp->w_nrwidth_width = (wp->w_p_nu || wp->w_p_rnu) * (int)wp->w_p_nuw;
     return wp->w_nrwidth_width;
   }
