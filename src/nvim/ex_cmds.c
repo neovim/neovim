@@ -1012,10 +1012,13 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     }
   } while (trailarg != NULL);
 
-  // Don't clear "prevcmd" if there is no command to run.
+  // Only set "prevcmd" if there is a command to run, otherwise keep te one
+  // we have.
   if (strlen(newcmd) > 0) {
     xfree(prevcmd);
     prevcmd = newcmd;
+  } else {
+    free_newcmd = true;
   }
 
   if (bangredo) {  // put cmd in redo buffer for ! command
@@ -1031,6 +1034,9 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   }
   // Add quotes around the command, for shells that need them.
   if (*p_shq != NUL) {
+    if (free_newcmd) {
+      xfree(newcmd);
+    }
     newcmd = xmalloc(strlen(prevcmd) + 2 * strlen(p_shq) + 1);
     STRCPY(newcmd, p_shq);
     STRCAT(newcmd, prevcmd);
