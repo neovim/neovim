@@ -3270,8 +3270,14 @@ static void handle_defer_one(funccall_T *funccal)
 /// Called when exiting: call all defer functions.
 void invoke_all_defer(void)
 {
-  for (funccall_T *funccal = current_funccal; funccal != NULL; funccal = funccal->fc_caller) {
-    handle_defer_one(funccal);
+  for (funccal_entry_T *fce = funccal_stack; fce != NULL; fce = fce->next) {
+    for (funccall_T *fc = fce->top_funccal; fc != NULL; fc = fc->fc_caller) {
+      handle_defer_one(fc);
+    }
+  }
+
+  for (funccall_T *fc = current_funccal; fc != NULL; fc = fc->fc_caller) {
+    handle_defer_one(fc);
   }
 }
 
