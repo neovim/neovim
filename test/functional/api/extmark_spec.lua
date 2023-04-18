@@ -1541,6 +1541,12 @@ describe('API/extmarks', function()
       virt_text_pos = "win_col",
       virt_text_win_col = 1,
     } }, get_extmark_by_id(ns, marks[2], { details = true }))
+    set_extmark(ns, marks[3], 0, 0, { cursorline_hl_group = "Statement" })
+    eq({0, 0, {
+      ns_id = 1,
+      cursorline_hl_group = "Statement",
+      right_gravity = true,
+    } }, get_extmark_by_id(ns, marks[3], { details = true }))
   end)
 
   it('can get marks from anonymous namespaces', function()

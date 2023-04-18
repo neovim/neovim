@@ -208,7 +208,7 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
 
     // uncrustify:on
 
-    for (int j = 0; hls[j].name && hls[j].val; j++) {
+    for (int j = 0; hls[j].name; j++) {
       if (hls[j].val) {
         PUT(dict, hls[j].name, hl_group_name(hls[j].val, hl_name));
       }
