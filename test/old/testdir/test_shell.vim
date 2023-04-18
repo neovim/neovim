@@ -237,4 +237,17 @@ func Test_shell_repeat()
   let &shell = save_shell
 endfunc
 
+func Test_shell_no_prevcmd()
+  " this doesn't do anything, just check it doesn't crash
+  let after =<< trim END
+    exe "normal !!\<CR>"
+    call writefile([v:errmsg, 'done'], 'Xtestdone')
+    qall!
+  END
+  if RunVim([], after, '--clean')
+    call assert_equal(['E34: No previous command', 'done'], readfile('Xtestdone'))
+  endif
+  call delete('Xtestdone')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

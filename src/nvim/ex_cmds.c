@@ -933,6 +933,17 @@ void free_prev_shellcmd(void)
 
 #endif
 
+/// Check that "prevcmd" is not NULL.  If it is NULL then give an error message
+/// and return false.
+static int prevcmd_is_set(void)
+{
+  if (prevcmd == NULL) {
+    emsg(_(e_noprev));
+    return false;
+  }
+  return true;
+}
+
 /// Handle the ":!cmd" command.  Also for ":r !cmd" and ":w !cmd"
 /// Bangs in the argument are replaced with the previously entered command.
 /// Remember the argument.
@@ -974,8 +985,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
       len += strlen(newcmd);
     }
     if (ins_prevcmd) {
-      if (prevcmd == NULL) {
-        emsg(_(e_noprev));
+      if (!prevcmd_is_set()) {
         xfree(newcmd);
         return;
       }
@@ -1022,6 +1032,10 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   }
 
   if (bangredo) {  // put cmd in redo buffer for ! command
+    if (!prevcmd_is_set()) {
+      goto theend;
+    }
+
     // If % or # appears in the command, it must have been escaped.
     // Reescape them, so that redoing them does not substitute them by the
     // buffername.
@@ -1059,6 +1073,8 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     do_filter(line1, line2, eap, newcmd, do_in, do_out);
     apply_autocmds(EVENT_SHELLFILTERPOST, NULL, NULL, false, curbuf);
   }
+
+theend:
   if (free_newcmd) {
     xfree(newcmd);
   }

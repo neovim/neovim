@@ -3207,7 +3207,7 @@ static int ex_defer_inner(char *name, char **arg, const partial_T *const partial
 }
 
 /// Return true if currently inside a function call.
-/// Give an error message and return FALSE when not.
+/// Give an error message and return false when not.
 bool can_add_defer(void)
 {
   if (get_current_funccal() == NULL) {
