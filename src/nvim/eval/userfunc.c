@@ -3242,12 +3242,24 @@ static void handle_defer_one(funccall_T *funccal)
 {
   for (int idx = funccal->fc_defer.ga_len - 1; idx >= 0; idx--) {
     defer_T *dr = ((defer_T *)funccal->fc_defer.ga_data) + idx;
+
+    if (dr->dr_name == NULL) {
+      // already being called, can happen if function does ":qa"
+      continue;
+    }
+
     funcexe_T funcexe = { .fe_evaluate = true };
+
     typval_T rettv;
     rettv.v_type = VAR_UNKNOWN;     // tv_clear() uses this
-    call_func(dr->dr_name, -1, &rettv, dr->dr_argcount, dr->dr_argvars, &funcexe);
+
+    char *name = dr->dr_name;
+    dr->dr_name = NULL;
+
+    call_func(name, -1, &rettv, dr->dr_argcount, dr->dr_argvars, &funcexe);
+
     tv_clear(&rettv);
-    xfree(dr->dr_name);
+    xfree(name);
     for (int i = dr->dr_argcount - 1; i >= 0; i--) {
       tv_clear(&dr->dr_argvars[i]);
     }
