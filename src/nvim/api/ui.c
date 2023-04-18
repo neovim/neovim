@@ -254,7 +254,8 @@ void nvim_ui_detach(uint64_t channel_id, Error *err)
 
 // TODO(bfredl): use me to detach a specific ui from the server
 void remote_ui_stop(UI *ui)
-{}
+{
+}
 
 void nvim_ui_try_resize(uint64_t channel_id, Integer width, Integer height, Error *err)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY

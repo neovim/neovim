@@ -1369,7 +1369,8 @@ void tui_set_title(TUIData *tui, String title)
 }
 
 void tui_set_icon(TUIData *tui, String icon)
-{}
+{
+}
 
 void tui_screenshot(TUIData *tui, String path)
 {
