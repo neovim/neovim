@@ -383,10 +383,10 @@ jobs:
             lua-filesystem \
             lua-lpeg \
             lua-mpack \
-            luajit
+            luajit \
+            lua-luv-dev
             # libtree-sitter-dev \
-            # libvterm-dev \
-            # lua-luv-dev
+            # libvterm-dev
 
             # Remove comments from packages once we start using these external
             # dependencies.
@@ -400,7 +400,6 @@ jobs:
           # bundled versions for these with the hopes of being able to remove them
           # later on.
           cmake -S cmake.deps -B .deps -G Ninja -D USE_BUNDLED=OFF \
-            -D USE_BUNDLED_LUV=ON \
             -D USE_BUNDLED_LIBVTERM=ON \
             -D USE_BUNDLED_TS=ON
           cmake --build .deps
