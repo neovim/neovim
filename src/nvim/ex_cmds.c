@@ -988,8 +988,6 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     }
     if (ins_prevcmd) {
       STRCAT(t, prevcmd);
-    } else {
-      xfree(t);
     }
     p = t + strlen(t);
     STRCAT(t, trailarg);
