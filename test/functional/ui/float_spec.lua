@@ -2295,6 +2295,166 @@ describe('float window', function()
       end
     end)
 
+    it("correct ruler position in current float with 'rulerformat' set", function()
+      command 'set ruler rulerformat=fish:<><'
+      meths.open_win(0, true, {relative='editor', width=9, height=3, row=0, col=5})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+                                                  |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                fish:<><          |
+        ## grid 4
+          {1:^         }|
+          {2:~        }|
+          {2:~        }|
+        ]], float_pos={
+          [4] = {{id = 1001}, "NW", 1, 0, 5, true, 50};
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }}
+      else
+        screen:expect{grid=[[
+               {1:^         }                          |
+          {0:~    }{2:~        }{0:                          }|
+          {0:~    }{2:~        }{0:                          }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+                                fish:<><          |
+        ]]}
+      end
+    end)
+
+    it('does not show ruler of not-last current float during ins-completion', function()
+      screen:try_resize(50,9)
+      command 'set ruler showmode'
+      meths.open_win(0, false, {relative='editor', width=3, height=3, row=0, col=0})
+      meths.open_win(0, false, {relative='editor', width=3, height=3, row=0, col=5})
+      feed '<c-w>w'
+      neq('', meths.win_get_config(0).relative)
+      neq(funcs.winnr '$', funcs.winnr())
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [3:--------------------------------------------------]|
+        ## grid 2
+                                                            |
+          {0:~                                                 }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+        ## grid 3
+                                          0,0-1         All |
+        ## grid 4
+          {1:   }|
+          {2:~  }|
+          {2:~  }|
+        ## grid 5
+          {1:^   }|
+          {2:~  }|
+          {2:~  }|
+        ]], float_pos={
+          [5] = {{id = 1002}, "NW", 1, 0, 5, true, 50};
+          [4] = {{id = 1001}, "NW", 1, 0, 0, true, 50};
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [5] = {win = {id = 1002}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }}
+      else
+        screen:expect{grid=[[
+          {1:   }  {1:^   }                                          |
+          {2:~  }{0:  }{2:~  }{0:                                          }|
+          {2:~  }{0:  }{2:~  }{0:                                          }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+                                          0,0-1         All |
+        ]]}
+      end
+      feed 'i<c-x>'
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [3:--------------------------------------------------]|
+        ## grid 2
+                                                            |
+          {0:~                                                 }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+        ## grid 3
+          {3:-- ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)}          |
+        ## grid 4
+          {1:   }|
+          {2:~  }|
+          {2:~  }|
+        ## grid 5
+          {1:^   }|
+          {2:~  }|
+          {2:~  }|
+        ]], float_pos={
+          [5] = {{id = 1002}, "NW", 1, 0, 5, true, 50};
+          [4] = {{id = 1001}, "NW", 1, 0, 0, true, 50};
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [5] = {win = {id = 1002}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }}
+      else
+        screen:expect{grid=[[
+          {1:   }  {1:^   }                                          |
+          {2:~  }{0:  }{2:~  }{0:                                          }|
+          {2:~  }{0:  }{2:~  }{0:                                          }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+          {0:~                                                 }|
+          {3:-- ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)}          |
+        ]]}
+      end
+    end)
+
     it('can have minimum size', function()
       insert("the background text")
       local buf = meths.create_buf(false, true)
