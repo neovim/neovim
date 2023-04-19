@@ -733,6 +733,11 @@ func Test_filetype_detection()
   filetype off
 endfunc
 
+" Content lines that should not result in filetype detection
+let s:false_positive_checks = {
+      \ '': [['test execve("/usr/bin/pstree", ["pstree"], 0x7ff0 /* 63 vars */) = 0']],
+      \ }
+
 " Filetypes detected from the file contents by scripts.vim
 let s:script_checks = {
       \ 'virata': [['% Virata'],
@@ -824,6 +829,7 @@ func Run_script_detection(test_dict)
 endfunc
 
 func Test_script_detection()
+  call Run_script_detection(s:false_positive_checks)
   call Run_script_detection(s:script_checks)
   call Run_script_detection(s:script_env_checks)
 endfunc
