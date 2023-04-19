@@ -400,6 +400,7 @@ return {
     strwidth={args=1, base=1, fast=true},
     submatch={args={1, 2}, base=1},
     substitute={args=4, base=1},
+    swapfilelist={},
     swapinfo={args=1, base=1},
     swapname={args=1, base=1},
     synID={args=3},

@@ -506,6 +506,7 @@ submatch({nr} [, {list}])	String or List
 					specific match in ":s" or substitute()
 substitute({expr}, {pat}, {sub}, {flags})
 				String	all {pat} in {expr} replaced with {sub}
+swapfilelist()			List	swap files found in 'directory'
 swapinfo({fname})		Dict	information about swap file {fname}
 swapname({buf})			String	swap file of buffer {buf}
 synID({lnum}, {col}, {trans})	Number	syntax ID at {lnum} and {col}
@@ -8416,6 +8417,17 @@ substitute({string}, {pat}, {sub}, {flags})		*substitute()*
 
 		Can also be used as a |method|: >
 			GetString()->substitute(pat, sub, flags)
+
+swapfilelist()						*swapfilelist()*
+		Returns a list of swap file names, like what "vim -r" shows.
+		See the |-r| command argument.  The 'directory' option is used
+		for the directories to inspect.  If you only want to get a
+		list of swap files in the current directory then temporarily
+		set 'directory' to a dot: >
+			let save_dir = &directory
+			let &directory = '.'
+			let swapfiles = swapfilelist()
+			let &directory = save_dir
 
 swapinfo({fname})					*swapinfo()*
 		The result is a dictionary, which holds information about the

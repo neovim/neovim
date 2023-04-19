@@ -115,6 +115,15 @@ func Test_swapinfo()
   w
   let fname = s:swapname()
   call assert_match('Xswapinfo', fname)
+
+  let nr = 0
+  for name in swapfilelist()
+    if name =~ '[\\/]' .. fname .. '$'
+      let nr += 1
+    endif
+  endfor
+  call assert_equal(1, nr)
+
   let info = fname->swapinfo()
 
   let ver = printf('VIM %d.%d', v:version / 100, v:version % 100)

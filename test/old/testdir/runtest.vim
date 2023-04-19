@@ -130,6 +130,14 @@ if has('mac')
   let $BASH_SILENCE_DEPRECATION_WARNING = 1
 endif
 
+
+" A previous (failed) test run may have left swap files behind.  Delete them
+" before running tests again, they might interfere.
+for name in s:GetSwapFileList()
+  call delete(name)
+endfor
+
+
 " Prepare for calling test_garbagecollect_now().
 let v:testing = 1
 
@@ -151,6 +159,22 @@ endfunc
 if has('reltime')
   let g:func_start = reltime()
 endif
+
+" Get the list of swap files in the current directory.
+func s:GetSwapFileList()
+  let save_dir = &directory
+  let &directory = '.'
+  let files = swapfilelist()
+  let &directory = save_dir
+
+  " remove a match with runtest.vim
+  let idx = indexof(files, 'v:val =~ "runtest.vim."')
+  if idx >= 0
+    call remove(files, idx)
+  endif
+
+  return files
+endfunc
 
 " Invoked when a test takes too much time.
 func TestTimeout(id)
@@ -294,6 +318,16 @@ func RunTheTest(test)
   endif
   call add(s:messages, message)
   let s:done += 1
+
+  " Check if the test has left any swap files behind.  Delete them before
+  " running tests again, they might interfere.
+  let swapfiles = s:GetSwapFileList()
+  if len(swapfiles) > 0
+    call add(s:messages, "Found swap files: " .. string(swapfiles))
+    for name in swapfiles
+      call delete(name)
+    endfor
+  endif
 endfunc
 
 func AfterTheTest(func_name)

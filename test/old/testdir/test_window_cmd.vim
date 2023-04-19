@@ -119,10 +119,9 @@ endfunc
 
 " Test the ":wincmd ^" and "<C-W>^" commands.
 func Test_window_split_edit_alternate()
-
   " Test for failure when the alternate buffer/file no longer exists.
   edit Xfoo | %bw
-  call assert_fails(':wincmd ^', 'E23')
+  call assert_fails(':wincmd ^', 'E23:')
 
   " Test for the expected behavior when we have two named buffers.
   edit Xfoo | edit Xbar
@@ -152,12 +151,11 @@ endfunc
 
 " Test the ":[count]wincmd ^" and "[count]<C-W>^" commands.
 func Test_window_split_edit_bufnr()
-
   %bwipeout
   let l:nr = bufnr('%') + 1
-  call assert_fails(':execute "normal! ' . l:nr . '\<C-W>\<C-^>"', 'E92')
-  call assert_fails(':' . l:nr . 'wincmd ^', 'E16')
-  call assert_fails(':0wincmd ^', 'E16')
+  call assert_fails(':execute "normal! ' . l:nr . '\<C-W>\<C-^>"', 'E92:')
+  call assert_fails(':' . l:nr . 'wincmd ^', 'E16:')
+  call assert_fails(':0wincmd ^', 'E16:')
 
   edit Xfoo | edit Xbar | edit Xbaz
   let l:foo_nr = bufnr('Xfoo')
