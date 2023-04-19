@@ -1956,6 +1956,33 @@ bbbbbbb]])
                                                         |
       ]]}
   end)
+
+  it('correctly draws when there are multiple overlapping virtual texts on the same line with nowrap', function()
+    command('set nowrap')
+    insert('a')
+    meths.buf_set_extmark(0, ns, 0, 0,
+      { virt_text = { { string.rep('a', 55), 'Special' } }, virt_text_pos = 'inline' })
+    meths.buf_set_extmark(0, ns, 0, 0,
+      { virt_text = { { string.rep('b', 55), 'Special' } }, virt_text_pos = 'inline' })
+    feed('$')
+    screen:expect { grid = [[
+      {28:bbbbbbbbbbbbbbbbbbbbbbbbb}^a                        |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+  end)
 end)
 
 describe('decorations: virtual lines', function()
