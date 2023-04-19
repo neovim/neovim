@@ -3381,6 +3381,33 @@ describe('lua stdlib', function()
         end
       end)
       eq({ A = 2, C = 6 }, it:totable())
+
+    it('handles table values mid-pipeline', function()
+      local map = {
+        item = {
+          file = 'test',
+        },
+        item_2 = {
+          file = 'test',
+        },
+        item_3 = {
+          file = 'test',
+        },
+      }
+
+      local output = vim.iter(map):map(function(key, value)
+        return { [key] = value.file }
+      end):totable()
+
+      table.sort(output, function(a, b)
+        return next(a) < next(b)
+      end)
+
+      eq({
+        { item = 'test' },
+        { item_2 = 'test' },
+        { item_3 = 'test' },
+      }, output)
     end)
   end)
 end)

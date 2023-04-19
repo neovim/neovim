@@ -28,16 +28,17 @@ end
 
 ---@private
 local function unpack(t)
-  if type(t) == 'table' then
-    return _G.unpack(t)
+  if type(t) == 'table' and t.__n ~= nil then
+    return _G.unpack(t, 1, t.__n)
   end
   return t
 end
 
 ---@private
 local function pack(...)
-  if select('#', ...) > 1 then
-    return { ... }
+  local n = select('#', ...)
+  if n > 1 then
+    return { __n = n, ... }
   end
   return ...
 end
@@ -210,6 +211,12 @@ function Iter.totable(self)
     if args == nil then
       break
     end
+
+    if type(args) == 'table' then
+      -- Removed packed table tag if it exists
+      args.__n = nil
+    end
+
     t[#t + 1] = args
   end
   return t
@@ -218,6 +225,14 @@ end
 ---@private
 function ListIter.totable(self)
   if self._head == 1 and self._tail == #self._table + 1 and self.next == ListIter.next then
+    -- Remove any packed table tags
+    for i = 1, #self._table do
+      local v = self._table[i]
+      if type(v) == 'table' then
+        v.__n = nil
+        self._table[i] = v
+      end
+    end
     return self._table
   end
 
@@ -747,7 +762,7 @@ function ListIter.enumerate(self)
   local inc = self._head < self._tail and 1 or -1
   for i = self._head, self._tail - inc, inc do
     local v = self._table[i]
-    self._table[i] = { i, v }
+    self._table[i] = pack(i, v)
   end
   return self
 end
