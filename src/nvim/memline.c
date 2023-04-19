@@ -1366,9 +1366,7 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
     } else if (ret_list != NULL) {
       for (int i = 0; i < num_files; i++) {
         char *name = concat_fnames(dir_name, files[i], true);
-        if (name != NULL) {
-          tv_list_append_allocated_string(ret_list, name);
-        }
+        tv_list_append_allocated_string(ret_list, name);
       }
     } else {
       file_count += num_files;

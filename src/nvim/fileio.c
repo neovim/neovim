@@ -3484,7 +3484,7 @@ char *vim_gettempdir(void)
   static int notfound = 0;
   bool exists = false;
   if (vim_tempdir == NULL || !(exists = os_isdir(vim_tempdir))) {
-    if (vim_tempdir != NULL && !exists) {
+    if (vim_tempdir != NULL) {
       notfound++;
       if (notfound == 1) {
         ELOG("tempdir disappeared (antivirus or broken cleanup job?): %s", vim_tempdir);
