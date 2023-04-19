@@ -449,7 +449,8 @@ for g:testfunc in sort(s:tests)
       call add(s:messages, 'Found errors in ' .. g:testfunc .. ':')
       call extend(s:messages, v:errors)
 
-      call add(total_errors, starttime .. ' Run ' .. g:run_nr .. ':')
+      let endtime = strftime("%H:%M:%S")
+      call add(total_errors, $'Run {g:run_nr}, {starttime} - {endtime}:')
       call extend(total_errors, v:errors)
 
       if g:run_nr >= 5 || prev_error == v:errors[0]
