@@ -139,11 +139,15 @@ func GetAllocId(name)
   return lnum - top - 1
 endfunc
 
+let g:func_start = reltime()
+
 func RunTheTest(test)
-  echo 'Executing ' . a:test
+  let prefix = ''
   if has('reltime')
-    let func_start = reltime()
+    let prefix = 'took ' .. reltimestr(reltime(g:func_start)) .. '; now '
+    let g:func_start = reltime()
   endif
+  echo prefix .. 'Executing ' .. a:test
 
   " Avoid stopping at the "hit enter" prompt
   set nomore
@@ -247,12 +251,12 @@ func RunTheTest(test)
   let message = 'Executed ' . a:test
   if has('reltime')
     let message ..= repeat(' ', 50 - len(message))
-    let time = reltime(func_start)
-    if has('float') && reltimefloat(time) > 0.1
+    let time = reltime(g:func_start)
+    if reltimefloat(time) > 0.1
       let message = s:t_bold .. message
     endif
     let message ..= ' in ' .. reltimestr(time) .. ' seconds'
-    if has('float') && reltimefloat(time) > 0.1
+    if reltimefloat(time) > 0.1
       let message ..= s:t_normal
     endif
   endif
