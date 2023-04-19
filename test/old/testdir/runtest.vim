@@ -152,6 +152,17 @@ if has('reltime')
   let g:func_start = reltime()
 endif
 
+" Invoked when a test takes too much time.
+func TestTimeout(id)
+  split test.log
+  call append(line('$'), '')
+  call append(line('$'), 'Test timed out: ' .. g:testfunc)
+  write
+  call add(v:errors, 'Test timed out: ' . g:testfunc)
+
+  cquit! 42
+endfunc
+
 func RunTheTest(test)
   let prefix = ''
   if has('reltime')
@@ -159,6 +170,12 @@ func RunTheTest(test)
     let g:func_start = reltime()
   endif
   echo prefix .. 'Executing ' .. a:test
+
+  if has('timers')
+    " No test should take longer than 30 seconds.  If it takes longer we
+    " assume we are stuck and need to break out.
+    let test_timeout_timer = timer_start(30000, 'TestTimeout')
+  endif
 
   " Avoid stopping at the "hit enter" prompt
   set nomore
@@ -223,6 +240,10 @@ func RunTheTest(test)
     catch
       call add(v:errors, 'Caught exception in TearDown() after ' . a:test . ': ' . v:exception . ' @ ' . v:throwpoint)
     endtry
+  endif
+
+  if has('timers')
+    call timer_stop(test_timeout_timer)
   endif
 
   " Clear any autocommands and put back the catch-all for SwapExists.
