@@ -323,7 +323,14 @@ func RunTheTest(test)
   " buffer, continue until we end up in an empty no-name buffer without a swap
   " file.
   while bufname() != '' || execute('swapname') !~ 'No swap file'
-    bwipe!
+    let bn = bufnr()
+
+    noswapfile bwipe!
+
+    if bn == bufnr()
+      " avoid getting stuck in the same buffer
+      break
+    endif
   endwhile
 
   " Check if the test has left any swap files behind.  Delete them before
