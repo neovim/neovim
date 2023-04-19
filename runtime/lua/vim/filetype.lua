@@ -1469,6 +1469,7 @@ local filename = {
   ['.gprc'] = 'gp',
   ['/.gnupg/gpg.conf'] = 'gpg',
   ['/.gnupg/options'] = 'gpg',
+  ['Jenkinsfile'] = 'groovy',
   ['/var/backups/gshadow.bak'] = 'group',
   ['/etc/gshadow'] = 'group',
   ['/etc/group-'] = 'group',
