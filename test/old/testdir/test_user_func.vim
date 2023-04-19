@@ -663,20 +663,37 @@ endfunc
 
 func Test_defer_quitall_autocmd()
   let lines =<< trim END
-      autocmd User DeferAutocmdThree qa!
-
-      func DeferLevelTwo()
-        call writefile(['text'], 'XQuitallAutocmdTwo', 'D')
-        doautocmd User DeferAutocmdThree
+      func DeferLevelFive()
+        defer writefile(['5'], 'XQuitallAutocmd', 'a')
+        qa!
       endfunc
 
-      autocmd User DeferAutocmdTwo ++nested call DeferLevelTwo()
+      autocmd User DeferAutocmdFive call DeferLevelFive()
 
-      " def DeferLevelOne()
-      func DeferLevelOne()
-        call writefile(['text'], 'XQuitallAutocmdOne', 'D')
-        doautocmd User DeferAutocmdTwo
+      " def DeferLevelFour()
+      func DeferLevelFour()
+        defer writefile(['4'], 'XQuitallAutocmd', 'a')
+        doautocmd User DeferAutocmdFive
       " enddef
+      endfunc
+
+      func DeferLevelThree()
+        defer writefile(['3'], 'XQuitallAutocmd', 'a')
+        call DeferLevelFour()
+      endfunc
+
+      autocmd User DeferAutocmdThree ++nested call DeferLevelThree()
+
+      " def DeferLevelTwo()
+      func DeferLevelTwo()
+        defer writefile(['2'], 'XQuitallAutocmd', 'a')
+        doautocmd User DeferAutocmdThree
+      " enddef
+      endfunc
+
+      func DeferLevelOne()
+        defer writefile(['1'], 'XQuitallAutocmd', 'a')
+        call DeferLevelTwo()
       endfunc
 
       autocmd User DeferAutocmdOne ++nested call DeferLevelOne()
@@ -684,10 +701,11 @@ func Test_defer_quitall_autocmd()
       doautocmd User DeferAutocmdOne
   END
   call writefile(lines, 'XdeferQuitallAutocmd', 'D')
-  let res = system(GetVimCommand() .. ' -X -S XdeferQuitallAutocmd')
+  call system(GetVimCommand() .. ' -X -S XdeferQuitallAutocmd')
   call assert_equal(0, v:shell_error)
-  call assert_false(filereadable('XQuitallAutocmdOne'))
-  call assert_false(filereadable('XQuitallAutocmdTwo'))
+  call assert_equal(['5', '4', '3', '2', '1'], readfile('XQuitallAutocmd'))
+
+  call delete('XQuitallAutocmd')
 endfunc
 
 func Test_defer_quitall_in_expr_func()
