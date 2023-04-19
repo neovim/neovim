@@ -1983,6 +1983,38 @@ bbbbbbb]])
                                                         |
       ]]}
   end)
+
+  it('correctly draws when overflowing virtual text is followed by tab with no wrap', function()
+    command('set nowrap')
+    feed('i<TAB>test<ESC>')
+    meths.buf_set_extmark(
+      0,
+      ns,
+      0,
+      0,
+      { virt_text = { { string.rep('a', 60), 'Special' } }, virt_text_pos = 'inline' }
+    )
+    feed('0')
+    screen:expect({
+      grid = [[
+      {28:aaaaaaaaaaaaaaaaaaaaaa}   ^ test                    |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]],
+    })
+  end)
 end)
 
 describe('decorations: virtual lines', function()

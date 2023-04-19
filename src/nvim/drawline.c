@@ -1798,6 +1798,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             area_attr = 0;
             extmark_attr = 0;
             virt_inline_i++;
+            n_skip = 0;
             // If the text didn't reach until the first window
             // column we need to skip cells.
             if (skip_cells > 0) {
