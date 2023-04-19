@@ -1756,70 +1756,76 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         extmark_attr = decor_redraw_col(wp, (colnr_T)v, wlv.off,
                                         selected, &decor_state);
 
-        // we could already be inside an existing virt_line with multiple chunks
-        if (!(virt_inline_i < kv_size(virt_inline))) {
-          DecorState *state = &decor_state;
-          for (size_t i = 0; i < kv_size(state->active); i++) {
-            DecorRange *item = &kv_A(state->active, i);
-            if (item->start_row != state->row
-                || !kv_size(item->decor.virt_text)
-                || item->decor.virt_text_pos != kVTInline) {
-              continue;
-            }
-            if (item->win_col >= -1 && item->start_col == v) {
-              virt_inline = item->decor.virt_text;
-              virt_inline_i = 0;
-              item->win_col = -2;
-              break;
-            }
-          }
-        }
-
-        if (wlv.n_extra == 0 || !wlv.extra_for_extmark) {
-          reset_extra_attr = false;
-        }
-
-        if (wlv.n_extra <= 0 && virt_inline_i < kv_size(virt_inline)) {
-          VirtTextChunk vtc = kv_A(virt_inline, virt_inline_i);
-          wlv.p_extra = vtc.text;
-          wlv.n_extra = (int)strlen(wlv.p_extra);
-          wlv.extra_for_extmark = true;
-          wlv.c_extra = NUL;
-          wlv.c_final = NUL;
-          wlv.extra_attr = vtc.hl_id ? syn_id2attr(vtc.hl_id) : 0;
-          n_attr = mb_charlen(vtc.text);
-          // restore search_attr and area_attr when n_extra
-          // is down to zero
-          saved_search_attr = search_attr;
-          saved_area_attr = area_attr;
-          saved_search_attr_from_match = search_attr_from_match;
-          search_attr_from_match = false;
-          search_attr = 0;
-          area_attr = 0;
-          extmark_attr = 0;
-          virt_inline_i++;
-          // If the text didn't reach until the first window
-          // column we need to skip cells.
-          if (skip_cells > 0) {
-            int virt_text_len = n_attr;
-            if (virt_text_len > skip_cells) {
-              int len = mb_charlen2bytelen(wlv.p_extra, skip_cells);
-              wlv.n_extra -= len;
-              wlv.p_extra += len;
-              n_attr -= skip_cells;
-              // Skipped cells needed to be accounted for in vcol.
-              skipped_cells += skip_cells;
-              skip_cells = 0;
-            } else {
-              // the whole text is left of the window, drop
-              // it and advance to the next one
-              skip_cells -= virt_text_len;
-              // Skipped cells needed to be accounted for in vcol.
-              skipped_cells += virt_text_len;
-              n_attr = 0;
-              wlv.n_extra = 0;
+        while (true) {
+          // we could already be inside an existing virt_line with multiple chunks
+          if (!(virt_inline_i < kv_size(virt_inline))) {
+            DecorState *state = &decor_state;
+            for (size_t i = 0; i < kv_size(state->active); i++) {
+              DecorRange *item = &kv_A(state->active, i);
+              if (item->start_row != state->row
+                  || !kv_size(item->decor.virt_text)
+                  || item->decor.virt_text_pos != kVTInline) {
+                continue;
+              }
+              if (item->win_col >= -1 && item->start_col == v) {
+                virt_inline = item->decor.virt_text;
+                virt_inline_i = 0;
+                item->win_col = -2;
+                break;
+              }
             }
           }
+
+          if (wlv.n_extra == 0 || !wlv.extra_for_extmark) {
+            reset_extra_attr = false;
+          }
+
+          if (wlv.n_extra <= 0 && virt_inline_i < kv_size(virt_inline)) {
+            VirtTextChunk vtc = kv_A(virt_inline, virt_inline_i);
+            wlv.p_extra = vtc.text;
+            wlv.n_extra = (int)strlen(wlv.p_extra);
+            wlv.extra_for_extmark = true;
+            wlv.c_extra = NUL;
+            wlv.c_final = NUL;
+            wlv.extra_attr = vtc.hl_id ? syn_id2attr(vtc.hl_id) : 0;
+            n_attr = mb_charlen(vtc.text);
+            // restore search_attr and area_attr when n_extra
+            // is down to zero
+            saved_search_attr = search_attr;
+            saved_area_attr = area_attr;
+            saved_search_attr_from_match = search_attr_from_match;
+            search_attr_from_match = false;
+            search_attr = 0;
+            area_attr = 0;
+            extmark_attr = 0;
+            virt_inline_i++;
+            // If the text didn't reach until the first window
+            // column we need to skip cells.
+            if (skip_cells > 0) {
+              int virt_text_len = n_attr;
+              if (virt_text_len > skip_cells) {
+                int len = mb_charlen2bytelen(wlv.p_extra, skip_cells);
+                wlv.n_extra -= len;
+                wlv.p_extra += len;
+                n_attr -= skip_cells;
+                // Skipped cells needed to be accounted for in vcol.
+                skipped_cells += skip_cells;
+                skip_cells = 0;
+              } else {
+                // the whole text is left of the window, drop
+                // it and advance to the next one
+                skip_cells -= virt_text_len;
+                // Skipped cells needed to be accounted for in vcol.
+                skipped_cells += virt_text_len;
+                n_attr = 0;
+                wlv.n_extra = 0;
+
+                // go to the start so the next virtual text chunk can be selected.
+                continue;
+              }
+            }
+          }
+          break;
         }
       }
 
@@ -3013,8 +3019,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     }
 
     // The skipped cells need to be accounted for in vcol.
-    if (wlv.draw_state > WL_STC
-        && skipped_cells > 0) {
+    if (wlv.draw_state > WL_STC && skipped_cells > 0) {
       wlv.vcol += skipped_cells;
       skipped_cells = 0;
     }
