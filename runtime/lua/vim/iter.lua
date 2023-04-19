@@ -18,26 +18,19 @@ ListIter.__call = function(self)
   return self:next()
 end
 
---- Special case implementations for iterators on non-list tables.
----@class TableIter : Iter
-local TableIter = {}
-TableIter.__index = setmetatable(TableIter, Iter)
-TableIter.__call = function(self)
-  return self:next()
-end
-
 ---@private
 local function unpack(t)
-  if type(t) == 'table' then
-    return _G.unpack(t)
+  if type(t) == 'table' and t.__n ~= nil then
+    return _G.unpack(t, 1, t.__n)
   end
   return t
 end
 
 ---@private
 local function pack(...)
-  if select('#', ...) > 1 then
-    return { ... }
+  local n = select('#', ...)
+  if n > 1 then
+    return { __n = n, ... }
   end
   return ...
 end
@@ -184,10 +177,10 @@ end
 
 --- Collect the iterator into a table.
 ---
---- The resulting table depends on the initial source in the iterator pipeline. List-like tables
---- and function iterators will be collected into a list-like table. If multiple values are returned
---- from the final stage in the iterator pipeline, each value will be included in a table. If a
---- map-like table was used as the initial source, then a map-like table is returned.
+--- The resulting table depends on the initial source in the iterator pipeline.
+--- List-like tables and function iterators will be collected into a list-like
+--- table. If multiple values are returned from the final stage in the iterator
+--- pipeline, each value will be included in a table.
 ---
 --- Examples:
 --- <pre>lua
@@ -198,8 +191,12 @@ end
 --- -- { { 1, 2 }, { 2, 4 }, { 3, 6 } }
 ---
 --- vim.iter({ a = 1, b = 2, c = 3 }):filter(function(k, v) return v % 2 ~= 0 end):totable()
---- -- { a = 1, c = 3 }
+--- -- { { 'a', 1 }, { 'c', 3 } }
 --- </pre>
+---
+--- The generated table is a list-like table with consecutive, numeric indices.
+--- To create a map-like table with arbitrary keys, use |Iter:fold()|.
+---
 ---
 ---@return table
 function Iter.totable(self)
@@ -210,6 +207,12 @@ function Iter.totable(self)
     if args == nil then
       break
     end
+
+    if type(args) == 'table' then
+      -- Removed packed table tag if it exists
+      args.__n = nil
+    end
+
     t[#t + 1] = args
   end
   return t
@@ -218,22 +221,34 @@ end
 ---@private
 function ListIter.totable(self)
   if self._head == 1 and self._tail == #self._table + 1 and self.next == ListIter.next then
+    -- Remove any packed table tags
+    for i = 1, #self._table do
+      local v = self._table[i]
+      if type(v) == 'table' then
+        v.__n = nil
+        self._table[i] = v
+      end
+    end
     return self._table
   end
 
   return Iter.totable(self)
 end
 
----@private
-function TableIter.totable(self)
-  local t = {}
-  for k, v in self do
-    t[k] = v
-  end
-  return t
-end
-
 --- Fold an iterator or table into a single value.
+---
+--- Examples:
+--- <pre>
+--- -- Create a new table with only even values
+--- local t = { a = 1, b = 2, c = 3, d = 4 }
+--- local it = vim.iter(t)
+--- it:filter(function(k, v) return v % 2 == 0 end)
+--- it:fold({}, function(t, k, v)
+---   t[k] = v
+---   return t
+--- end)
+--- -- { b = 2, d = 4 }
+--- </pre>
 ---
 ---@generic A
 ---
@@ -747,7 +762,7 @@ function ListIter.enumerate(self)
   local inc = self._head < self._tail and 1 or -1
   for i = self._head, self._tail - inc, inc do
     local v = self._table[i]
-    self._table[i] = { i, v }
+    self._table[i] = pack(i, v)
   end
   return self
 end
@@ -768,7 +783,7 @@ function Iter.new(src, ...)
       count = count + 1
       local v = src[count]
       if v == nil then
-        return TableIter.new(src)
+        return Iter.new(pairs(src))
       end
       t[count] = v
     end
@@ -809,27 +824,6 @@ function ListIter.new(t)
   it._head = 1
   it._tail = #t + 1
   setmetatable(it, ListIter)
-  return it
-end
-
---- Create a new TableIter
----
----@param t table Table to iterate over. For list-like tables, use ListIter.new instead.
----@return Iter
----@private
-function TableIter.new(t)
-  local it = {}
-
-  local index = nil
-  function it.next()
-    local k, v = next(t, index)
-    if k ~= nil then
-      index = k
-      return k, v
-    end
-  end
-
-  setmetatable(it, TableIter)
   return it
 end
 
