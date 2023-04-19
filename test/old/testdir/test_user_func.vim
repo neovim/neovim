@@ -609,29 +609,85 @@ func Test_defer_throw()
   call assert_false(filereadable('XDeleteTwo'))
 endfunc
 
-func Test_defer_quitall()
+func Test_defer_quitall_func()
   let lines =<< trim END
-      " vim9script
       func DeferLevelTwo()
-        call writefile(['text'], 'XQuitallTwo', 'D')
+        call writefile(['text'], 'XQuitallFuncTwo', 'D')
+        call writefile(['quit'], 'XQuitallFuncThree', 'a')
         qa!
       endfunc
 
+      func DeferLevelOne()
+        call writefile(['text'], 'XQuitalFunclOne', 'D')
+        defer DeferLevelTwo()
+      endfunc
+
+      call DeferLevelOne()
+  END
+  call writefile(lines, 'XdeferQuitallFunc', 'D')
+  call system(GetVimCommand() .. ' -X -S XdeferQuitallFunc')
+  call assert_equal(0, v:shell_error)
+  call assert_false(filereadable('XQuitallFuncOne'))
+  call assert_false(filereadable('XQuitallFuncTwo'))
+  call assert_equal(['quit'], readfile('XQuitallFuncThree'))
+
+  call delete('XQuitallFuncThree')
+endfunc
+
+func Test_defer_quitall_def()
+  throw 'Skipped: Vim9 script is N/A'
+  let lines =<< trim END
+      vim9script
+      def DeferLevelTwo()
+        call writefile(['text'], 'XQuitallDefTwo', 'D')
+        call writefile(['quit'], 'XQuitallDefThree', 'a')
+        qa!
+      enddef
+
+      def DeferLevelOne()
+        call writefile(['text'], 'XQuitallDefOne', 'D')
+        defer DeferLevelTwo()
+      enddef
+
+      DeferLevelOne()
+  END
+  call writefile(lines, 'XdeferQuitallDef', 'D')
+  call system(GetVimCommand() .. ' -X -S XdeferQuitallDef')
+  call assert_equal(0, v:shell_error)
+  call assert_false(filereadable('XQuitallDefOne'))
+  call assert_false(filereadable('XQuitallDefTwo'))
+  call assert_equal(['quit'], readfile('XQuitallDefThree'))
+
+  call delete('XQuitallDefThree')
+endfunc
+
+func Test_defer_quitall_autocmd()
+  let lines =<< trim END
+      autocmd User DeferAutocmdThree qa!
+
+      func DeferLevelTwo()
+        call writefile(['text'], 'XQuitallAutocmdTwo', 'D')
+        doautocmd User DeferAutocmdThree
+      endfunc
+
+      autocmd User DeferAutocmdTwo ++nested call DeferLevelTwo()
+
       " def DeferLevelOne()
       func DeferLevelOne()
-        call writefile(['text'], 'XQuitallOne', 'D')
-        call DeferLevelTwo()
+        call writefile(['text'], 'XQuitallAutocmdOne', 'D')
+        doautocmd User DeferAutocmdTwo
       " enddef
       endfunc
 
-      " DeferLevelOne()
-      call DeferLevelOne()
+      autocmd User DeferAutocmdOne ++nested call DeferLevelOne()
+
+      doautocmd User DeferAutocmdOne
   END
-  call writefile(lines, 'XdeferQuitall', 'D')
-  let res = system(GetVimCommand() .. ' -X -S XdeferQuitall')
+  call writefile(lines, 'XdeferQuitallAutocmd', 'D')
+  let res = system(GetVimCommand() .. ' -X -S XdeferQuitallAutocmd')
   call assert_equal(0, v:shell_error)
-  call assert_false(filereadable('XQuitallOne'))
-  call assert_false(filereadable('XQuitallTwo'))
+  call assert_false(filereadable('XQuitallAutocmdOne'))
+  call assert_false(filereadable('XQuitallAutocmdTwo'))
 endfunc
 
 func Test_defer_quitall_in_expr_func()
@@ -651,7 +707,7 @@ func Test_defer_quitall_in_expr_func()
       call Test_defer_in_funcref()
   END
   call writefile(lines, 'XdeferQuitallExpr', 'D')
-  let res = system(GetVimCommand() .. ' -X -S XdeferQuitallExpr')
+  call system(GetVimCommand() .. ' -X -S XdeferQuitallExpr')
   call assert_equal(0, v:shell_error)
   call assert_false(filereadable('Xentry0'))
   call assert_false(filereadable('Xentry1'))
