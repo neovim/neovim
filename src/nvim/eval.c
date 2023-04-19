@@ -5712,8 +5712,7 @@ void get_xdg_var_list(const XDGVarType xdg, typval_T *rettv)
     if (dir != NULL && dir_len > 0) {
       char *dir_with_nvim = xmemdupz(dir, dir_len);
       dir_with_nvim = concat_fnames_realloc(dir_with_nvim, appname, true);
-      tv_list_append_string(list, dir_with_nvim, (ssize_t)strlen(dir_with_nvim));
-      xfree(dir_with_nvim);
+      tv_list_append_allocated_string(list, dir_with_nvim);
     }
   } while (iter != NULL);
   xfree(dirs);

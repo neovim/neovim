@@ -43,6 +43,7 @@ compile_commands.json
 /test/old/testdir/test*.res
 /test/old/testdir/test*.log
 /test/old/testdir/messages
+/test/old/testdir/starttime
 /test/old/testdir/viminfo
 /test/old/testdir/test.ok
 /test/old/testdir/*.failed

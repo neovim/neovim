@@ -5983,6 +5983,9 @@ endfunc
 
 " interrupt right before a catch is invoked in a script
 func Test_ignore_catch_after_intr_1()
+  " for unknown reasons this test sometimes fails on MS-Windows.
+  let g:test_is_flaky = 1
+
   XpathINIT
   let lines =<< trim [CODE]
     try
@@ -6021,6 +6024,9 @@ endfunc
 
 " interrupt right before a catch is invoked inside a function.
 func Test_ignore_catch_after_intr_2()
+  " for unknown reasons this test sometimes fails on MS-Windows.
+  let g:test_is_flaky = 1
+
   XpathINIT
   func F()
     try
