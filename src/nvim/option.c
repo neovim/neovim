@@ -1996,6 +1996,413 @@ static void apply_optionset_autocmd(int opt_idx, long opt_flags, long oldval, lo
   reset_v_option_vars();
 }
 
+/// Ensure that options set to p_force_on cannot be disabled.
+static const char *did_set_force_on(int *doskip)
+{
+  if (p_force_on == false) {
+    p_force_on = true;
+    *doskip = true;
+    return e_unsupportedoption;
+  }
+  return NULL;
+}
+
+/// Ensure that options set to p_force_off cannot be enabled.
+static const char *did_set_force_off(int *doskip)
+{
+  if (p_force_off == true) {
+    p_force_off = false;
+    *doskip = true;
+    return e_unsupportedoption;
+  }
+  return NULL;
+}
+
+/// Process the updated 'langremap' option value.
+static void did_set_langremap(void)
+{
+  // 'langremap' -> !'langnoremap'
+  p_lnr = !p_lrm;
+}
+
+/// Process the updated 'langnoremap' option value.
+static void did_set_langnoremap(void)
+{
+  // 'langnoremap' -> !'langremap'
+  p_lrm = !p_lnr;
+}
+
+/// Process the updated 'undofile' option value.
+static void did_set_undofile(int opt_flags)
+{
+  // Only take action when the option was set. When reset we do not
+  // delete the undo file, the option may be set again without making
+  // any changes in between.
+  if (curbuf->b_p_udf || p_udf) {
+    uint8_t hash[UNDO_HASH_SIZE];
+
+    FOR_ALL_BUFFERS(bp) {
+      // When 'undofile' is set globally: for every buffer, otherwise
+      // only for the current buffer: Try to read in the undofile,
+      // if one exists, the buffer wasn't changed and the buffer was
+      // loaded
+      if ((curbuf == bp
+           || (opt_flags & OPT_GLOBAL) || opt_flags == 0)
+          && !bufIsChanged(bp) && bp->b_ml.ml_mfp != NULL) {
+        u_compute_hash(bp, hash);
+        u_read_undo(NULL, hash, bp->b_fname);
+      }
+    }
+  }
+}
+
+/// Process the updated 'readonly' option value.
+static void did_set_readonly(int opt_flags)
+{
+  // when 'readonly' is reset globally, also reset readonlymode
+  if (!curbuf->b_p_ro && (opt_flags & OPT_LOCAL) == 0) {
+    readonlymode = false;
+  }
+
+  // when 'readonly' is set may give W10 again
+  if (curbuf->b_p_ro) {
+    curbuf->b_did_warn = false;
+  }
+
+  redraw_titles();
+}
+
+/// Process the updated 'modifiable' option value.
+static char *did_set_modifiable(void)
+{
+  // when 'modifiable' is changed, redraw the window title
+  redraw_titles();
+
+  return NULL;
+}
+
+/// Process the updated 'endoffile' or 'endofline' or 'fixendofline' or 'bomb'
+/// option value.
+static void did_set_eof_eol_fixeol_bomb(void)
+{
+  // redraw the window title and tab page text
+  redraw_titles();
+}
+
+/// Process the updated 'binary' option value.
+static void did_set_binary(int opt_flags, long old_value)
+{
+  // when 'bin' is set also set some other options
+  set_options_bin((int)old_value, curbuf->b_p_bin, opt_flags);
+  redraw_titles();
+}
+
+/// Process the updated 'buflisted' option value.
+static void did_set_buflisted(long old_value)
+{
+  // when 'buflisted' changes, trigger autocommands
+  if (old_value != curbuf->b_p_bl) {
+    // when 'buflisted' changes, trigger autocommands
+    apply_autocmds(curbuf->b_p_bl ? EVENT_BUFADD : EVENT_BUFDELETE,
+                   NULL, NULL, true, curbuf);
+  }
+}
+
+/// Process the updated 'swapfile' option value.
+static void did_set_swapfile(void)
+{
+  // when 'swf' is set, create swapfile, when reset remove swapfile
+  if (curbuf->b_p_swf && p_uc) {
+    ml_open_file(curbuf);                     // create the swap file
+  } else {
+    // no need to reset curbuf->b_may_swap, ml_open_file() will check
+    // buf->b_p_swf
+    mf_close_file(curbuf, true);              // remove the swap file
+  }
+}
+
+/// Process the updated 'paste' option value.
+static void did_set_paste(void)
+{
+  // when 'paste' is set or reset also change other options
+  paste_option_changed();
+}
+
+/// Process the updated 'ignorecase' option value.
+static void did_set_ignorecase(void)
+{
+  // when 'ignorecase' is set or reset and 'hlsearch' is set, redraw
+  if (p_hls) {
+    redraw_all_later(UPD_SOME_VALID);
+  }
+}
+
+/// Process the updated 'hlsearch' option value.
+static void did_set_hlsearch(void)
+{
+  // when 'hlsearch' is set or reset: reset no_hlsearch
+  set_no_hlsearch(false);
+}
+
+/// Process the updated 'scrollbind' option value.
+static void did_set_scrollbind(void)
+{
+  // when 'scrollbind' is set: snapshot the current position to avoid a jump
+  // at the end of normal_cmd()
+  if (curwin->w_p_scb) {
+    do_check_scrollbind(false);
+    curwin->w_scbind_pos = curwin->w_topline;
+  }
+}
+
+/// Process the updated 'previewwindow' option value.
+static const char *did_set_previewwindow(int *doskip)
+{
+  if (!curwin->w_p_pvw) {
+    return NULL;
+  }
+
+  // There can be only one window with 'previewwindow' set.
+  FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+    if (win->w_p_pvw && win != curwin) {
+      curwin->w_p_pvw = false;
+      *doskip = true;
+      return e_preview_window_already_exists;
+    }
+  }
+
+  return NULL;
+}
+
+/// Process the updated 'lisp' option value.
+static void did_set_lisp(void)
+{
+  // When 'lisp' option changes include/exclude '-' in keyword characters.
+  (void)buf_init_chartab(curbuf, false);          // ignore errors
+}
+
+/// Process the updated 'title' or the 'icon' option value.
+static void did_set_title_icon(void)
+{
+  // when 'title' changed, may need to change the title; same for 'icon'
+  did_set_title();
+}
+
+/// Process the updated 'modified' option value.
+static void did_set_modified(long value)
+{
+  if (!value) {
+    save_file_ff(curbuf);  // Buffer is unchanged
+  }
+  redraw_titles();
+  modified_was_set = (int)value;
+}
+
+#ifdef BACKSLASH_IN_FILENAME
+/// Process the updated 'shellslash' option value.
+static void did_set_shellslash(void)
+{
+  if (p_ssl) {
+    psepc = '/';
+    psepcN = '\\';
+    pseps[0] = '/';
+  } else {
+    psepc = '\\';
+    psepcN = '/';
+    pseps[0] = '\\';
+  }
+
+  // need to adjust the file name arguments and buffer names.
+  buflist_slash_adjust();
+  alist_slash_adjust();
+  scriptnames_slash_adjust();
+}
+#endif
+
+/// Process the updated 'wrap' option value.
+static void did_set_wrap(void)
+{
+  // If 'wrap' is set, set w_leftcol to zero.
+  if (curwin->w_p_wrap) {
+    curwin->w_leftcol = 0;
+  }
+}
+
+/// Process the updated 'equalalways' option value.
+static void did_set_equalalways(long old_value)
+{
+  if (p_ea && !old_value) {
+    win_equal(curwin, false, 0);
+  }
+}
+
+/// Process the updated 'autochdir' option value.
+static void did_set_autochdir(void)
+{
+  // Change directories when the 'acd' option is set now.
+  do_autochdir();
+}
+
+/// Process the updated 'diff' option value.
+static void did_set_diff(void)
+{
+  // May add or remove the buffer from the list of diff buffers.
+  diff_buf_adjust(curwin);
+  if (foldmethodIsDiff(curwin)) {
+    foldUpdateAll(curwin);
+  }
+}
+
+/// Process the updated 'spell' option value.
+static char *did_set_spell(void)
+{
+  if (curwin->w_p_spell) {
+    return did_set_spelllang(curwin);
+  }
+
+  return NULL;
+}
+
+// Process the updated 'arabic' option value.
+static const char *did_set_arabic(void)
+{
+  const char *errmsg = NULL;
+  if (curwin->w_p_arab) {
+    // 'arabic' is set, handle various sub-settings.
+    if (!p_tbidi) {
+      // set rightleft mode
+      if (!curwin->w_p_rl) {
+        curwin->w_p_rl = true;
+        changed_window_setting();
+      }
+
+      // Enable Arabic shaping (major part of what Arabic requires)
+      if (!p_arshape) {
+        p_arshape = true;
+        redraw_all_later(UPD_NOT_VALID);
+      }
+    }
+
+    // Arabic requires a utf-8 encoding, inform the user if it's not
+    // set.
+    if (strcmp(p_enc, "utf-8") != 0) {
+      static char *w_arabic = N_("W17: Arabic requires UTF-8, do ':set encoding=utf-8'");
+
+      msg_source(HL_ATTR(HLF_W));
+      msg_attr(_(w_arabic), HL_ATTR(HLF_W));
+      set_vim_var_string(VV_WARNINGMSG, _(w_arabic), -1);
+    }
+
+    // set 'delcombine'
+    p_deco = true;
+
+    // Force-set the necessary keymap for arabic.
+    errmsg = set_option_value("keymap", 0L, "arabic", OPT_LOCAL);
+  } else {
+    // 'arabic' is reset, handle various sub-settings.
+    if (!p_tbidi) {
+      // reset rightleft mode
+      if (curwin->w_p_rl) {
+        curwin->w_p_rl = false;
+        changed_window_setting();
+      }
+
+      // 'arabicshape' isn't reset, it is a global option and
+      // another window may still need it "on".
+    }
+
+    // 'delcombine' isn't reset, it is a global option and another
+    // window may still want it "on".
+
+    // Revert to the default keymap
+    curbuf->b_p_iminsert = B_IMODE_NONE;
+    curbuf->b_p_imsearch = B_IMODE_USE_INSERT;
+  }
+
+  return errmsg;
+}
+
+static void did_set_number_relativenumber(void)
+{
+  if (*curwin->w_p_stc != NUL) {
+    // When 'relativenumber'/'number' is changed and 'statuscolumn' is set, reset width.
+    curwin->w_nrwidth_line_count = 0;
+  }
+}
+
+/// When some boolean options are changed, need to take some action.
+static const char *did_set_bool_option(const char *varp, int opt_flags, long value, long old_value,
+                                       int *doskip)
+{
+  const char *errmsg = NULL;
+
+  if ((int *)varp == &p_force_on) {
+    errmsg = did_set_force_on(doskip);
+  } else if ((int *)varp == &p_force_off) {
+    errmsg = did_set_force_off(doskip);
+  } else if ((int *)varp == &p_lrm) {              // 'langremap'
+    did_set_langremap();
+  } else if ((int *)varp == &p_lnr) {              // 'langnoremap'
+    did_set_langnoremap();
+  } else if ((int *)varp == &curbuf->b_p_udf      // buffer local 'undofile'
+             || (int *)varp == &p_udf) {         // 'undofile'
+    did_set_undofile(opt_flags);
+  } else if ((int *)varp == &curbuf->b_p_ro) {     // 'readonly'
+    did_set_readonly(opt_flags);
+  } else if ((int *)varp == &curbuf->b_p_ma) {
+    errmsg = did_set_modifiable();        // 'modifiable'
+  } else if ((int *)varp == &curbuf->b_p_eof      // 'endoffile'
+             || (int *)varp == &curbuf->b_p_eol  // 'endofline'
+             || (int *)varp == &curbuf->b_p_fixeol       // 'fixendofline'
+             || (int *)varp == &curbuf->b_p_bomb) {      // 'bomb'
+    did_set_eof_eol_fixeol_bomb();
+  } else if ((int *)varp == &curbuf->b_p_bin) {    // 'binary'
+    did_set_binary(opt_flags, old_value);
+  } else if ((int *)varp == &curbuf->b_p_bl) {     // 'buflisted'
+    did_set_buflisted(old_value);
+  } else if ((int *)varp == &curbuf->b_p_swf) {    // 'swapfile'
+    did_set_swapfile();
+  } else if ((int *)varp == &p_paste) {            // 'paste'
+    did_set_paste();
+  } else if ((int *)varp == &p_ic) {       // 'ignorecase'
+    did_set_ignorecase();
+  } else if ((int *)varp == &p_hls) {      // 'hlsearch'
+    did_set_hlsearch();
+  } else if ((int *)varp == &curwin->w_p_scb) {    // 'scrollbind'
+    did_set_scrollbind();
+  } else if ((int *)varp == &curwin->w_p_pvw) {    // 'previewwindow'
+    errmsg = did_set_previewwindow(doskip);
+  } else if (varp == (char *)&(curbuf->b_p_lisp)) {      // 'lisp'
+    did_set_lisp();
+  } else if ((int *)varp == &p_title            // 'title'
+             || (int *)varp == &p_icon) {        // 'icon'
+    did_set_title_icon();
+  } else if ((int *)varp == &curbuf->b_changed) {  // 'modified'
+    did_set_modified(value);
+#ifdef BACKSLASH_IN_FILENAME
+  } else if ((int *)varp == &p_ssl) {              // 'shellslash'
+    did_set_shellslash();
+#endif
+  } else if ((int *)varp == &curwin->w_p_wrap) {   // 'wrap'
+    did_set_wrap();
+  } else if ((int *)varp == &p_ea) {               // 'equalalways'
+    did_set_equalalways(old_value);
+  } else if ((int *)varp == &p_acd) {              // 'autochdir'
+    did_set_autochdir();
+  } else if ((int *)varp == &curwin->w_p_diff) {   // 'diff'
+    did_set_diff();
+  } else if ((int *)varp == &curwin->w_p_spell) {  // 'spell'
+    errmsg = did_set_spell();
+  } else if ((int *)varp == &curwin->w_p_arab) {   // 'arabic'
+    errmsg = did_set_arabic();
+  } else if ((int *)varp == &curwin->w_p_nu        // 'number'
+             || (int *)varp == &curwin->w_p_rnu) {  // 'relativenumber'
+    did_set_number_relativenumber();
+  }
+
+  return errmsg;
+}
+
 /// Set the value of a boolean option, taking care of side effects
 ///
 /// @param[in]  opt_idx  Option index in options[] table.
@@ -2009,7 +2416,6 @@ static const char *set_bool_option(const int opt_idx, char *const varp, const in
 {
   int old_value = *(int *)varp;
   int old_global_value = 0;
-  const char *errmsg = NULL;
 
   // Disallow changing some options from secure mode
   if ((secure || sandbox != 0)
@@ -2033,221 +2439,12 @@ static const char *set_bool_option(const int opt_idx, char *const varp, const in
     *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = value;
   }
 
-  // Ensure that options set to p_force_on cannot be disabled.
-  if ((int *)varp == &p_force_on && p_force_on == false) {
-    p_force_on = true;
-    return e_unsupportedoption;
-    // Ensure that options set to p_force_off cannot be enabled.
-  } else if ((int *)varp == &p_force_off && p_force_off == true) {
-    p_force_off = false;
-    return e_unsupportedoption;
-  } else if ((int *)varp == &p_lrm) {
-    // 'langremap' -> !'langnoremap'
-    p_lnr = !p_lrm;
-  } else if ((int *)varp == &p_lnr) {
-    // 'langnoremap' -> !'langremap'
-    p_lrm = !p_lnr;
-  } else if ((int *)varp == &curbuf->b_p_udf || (int *)varp == &p_udf) {
-    // 'undofile'
-    // Only take action when the option was set. When reset we do not
-    // delete the undo file, the option may be set again without making
-    // any changes in between.
-    if (curbuf->b_p_udf || p_udf) {
-      uint8_t hash[UNDO_HASH_SIZE];
-
-      FOR_ALL_BUFFERS(bp) {
-        // When 'undofile' is set globally: for every buffer, otherwise
-        // only for the current buffer: Try to read in the undofile,
-        // if one exists, the buffer wasn't changed and the buffer was
-        // loaded
-        if ((curbuf == bp
-             || (opt_flags & OPT_GLOBAL) || opt_flags == 0)
-            && !bufIsChanged(bp) && bp->b_ml.ml_mfp != NULL) {
-          u_compute_hash(bp, hash);
-          u_read_undo(NULL, hash, bp->b_fname);
-        }
-      }
-    }
-  } else if ((int *)varp == &curbuf->b_p_ro) {
-    // when 'readonly' is reset globally, also reset readonlymode
-    if (!curbuf->b_p_ro && (opt_flags & OPT_LOCAL) == 0) {
-      readonlymode = false;
-    }
-
-    // when 'readonly' is set may give W10 again
-    if (curbuf->b_p_ro) {
-      curbuf->b_did_warn = false;
-    }
-
-    redraw_titles();
-  } else if ((int *)varp == &curbuf->b_p_ma) {
-    // when 'modifiable' is changed, redraw the window title
-    redraw_titles();
-  } else if ((int *)varp == &curbuf->b_p_eof
-             || (int *)varp == &curbuf->b_p_eol
-             || (int *)varp == &curbuf->b_p_fixeol
-             || (int *)varp == &curbuf->b_p_bomb) {
-    // redraw the window title and tab page text when 'endoffile', 'endofline',
-    // 'fixeol' or 'bomb' is changed
-    redraw_titles();
-  } else if ((int *)varp == &curbuf->b_p_bin) {
-    // when 'bin' is set also set some other options
-    set_options_bin(old_value, curbuf->b_p_bin, opt_flags);
-    redraw_titles();
-  } else if ((int *)varp == &curbuf->b_p_bl && old_value != curbuf->b_p_bl) {
-    // when 'buflisted' changes, trigger autocommands
-    apply_autocmds(curbuf->b_p_bl ? EVENT_BUFADD : EVENT_BUFDELETE,
-                   NULL, NULL, true, curbuf);
-  } else if ((int *)varp == &curbuf->b_p_swf) {
-    // when 'swf' is set, create swapfile, when reset remove swapfile
-    if (curbuf->b_p_swf && p_uc) {
-      ml_open_file(curbuf);                     // create the swap file
-    } else {
-      // no need to reset curbuf->b_may_swap, ml_open_file() will check
-      // buf->b_p_swf
-      mf_close_file(curbuf, true);              // remove the swap file
-    }
-  } else if ((int *)varp == &p_paste) {
-    // when 'paste' is set or reset also change other options
-    paste_option_changed();
-  } else if ((int *)varp == &p_ic && p_hls) {
-    // when 'ignorecase' is set or reset and 'hlsearch' is set, redraw
-    redraw_all_later(UPD_SOME_VALID);
-  } else if ((int *)varp == &p_hls) {
-    // when 'hlsearch' is set or reset: reset no_hlsearch
-    set_no_hlsearch(false);
-  } else if ((int *)varp == &curwin->w_p_scb) {
-    // when 'scrollbind' is set: snapshot the current position to avoid a jump
-    // at the end of normal_cmd()
-    if (curwin->w_p_scb) {
-      do_check_scrollbind(false);
-      curwin->w_scbind_pos = curwin->w_topline;
-    }
-  } else if ((int *)varp == &curwin->w_p_pvw) {
-    // There can be only one window with 'previewwindow' set.
-    if (curwin->w_p_pvw) {
-      FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
-        if (win->w_p_pvw && win != curwin) {
-          curwin->w_p_pvw = false;
-          return e_preview_window_already_exists;
-        }
-      }
-    }
-  } else if (varp == (char *)&(curbuf->b_p_lisp)) {
-    // When 'lisp' option changes include/exclude '-' in
-    // keyword characters.
-    (void)buf_init_chartab(curbuf, false);          // ignore errors
-  } else if ((int *)varp == &p_title) {
-    // when 'title' changed, may need to change the title; same for 'icon'
-    did_set_title();
-  } else if ((int *)varp == &p_icon) {
-    did_set_title();
-  } else if ((int *)varp == &curbuf->b_changed) {
-    if (!value) {
-      save_file_ff(curbuf);             // Buffer is unchanged
-    }
-    redraw_titles();
-    modified_was_set = value;
-
-#ifdef BACKSLASH_IN_FILENAME
-  } else if ((int *)varp == &p_ssl) {
-    if (p_ssl) {
-      psepc = '/';
-      psepcN = '\\';
-      pseps[0] = '/';
-    } else {
-      psepc = '\\';
-      psepcN = '/';
-      pseps[0] = '\\';
-    }
-
-    // need to adjust the file name arguments and buffer names.
-    buflist_slash_adjust();
-    alist_slash_adjust();
-    scriptnames_slash_adjust();
-#endif
-  } else if ((int *)varp == &curwin->w_p_wrap) {
-    // If 'wrap' is set, set w_leftcol to zero.
-    if (curwin->w_p_wrap) {
-      curwin->w_leftcol = 0;
-    }
-  } else if ((int *)varp == &p_ea) {
-    if (p_ea && !old_value) {
-      win_equal(curwin, false, 0);
-    }
-  } else if ((int *)varp == &p_acd) {
-    // Change directories when the 'acd' option is set now.
-    do_autochdir();
-  } else if ((int *)varp == &curwin->w_p_diff) {  // 'diff'
-    // May add or remove the buffer from the list of diff buffers.
-    diff_buf_adjust(curwin);
-    if (foldmethodIsDiff(curwin)) {
-      foldUpdateAll(curwin);
-    }
-  } else if ((int *)varp == &curwin->w_p_spell) {  // 'spell'
-    if (curwin->w_p_spell) {
-      errmsg = did_set_spelllang(curwin);
-    }
-  } else if ((int *)varp == &curwin->w_p_nu && *curwin->w_p_stc != NUL) {
-    // When 'number' is changed and 'statuscolumn' is set, make sure width is reset.
-    curwin->w_nrwidth_line_count = 0;
+  // Handle side effects for changing a bool option.
+  int doskip = false;
+  const char *errmsg = did_set_bool_option(varp, opt_flags, value, old_value, &doskip);
+  if (doskip) {
+    return errmsg;
   }
-
-  if ((int *)varp == &curwin->w_p_arab) {
-    if (curwin->w_p_arab) {
-      // 'arabic' is set, handle various sub-settings.
-      if (!p_tbidi) {
-        // set rightleft mode
-        if (!curwin->w_p_rl) {
-          curwin->w_p_rl = true;
-          changed_window_setting();
-        }
-
-        // Enable Arabic shaping (major part of what Arabic requires)
-        if (!p_arshape) {
-          p_arshape = true;
-          redraw_all_later(UPD_NOT_VALID);
-        }
-      }
-
-      // Arabic requires a utf-8 encoding, inform the user if it's not
-      // set.
-      if (strcmp(p_enc, "utf-8") != 0) {
-        static char *w_arabic = N_("W17: Arabic requires UTF-8, do ':set encoding=utf-8'");
-
-        msg_source(HL_ATTR(HLF_W));
-        msg_attr(_(w_arabic), HL_ATTR(HLF_W));
-        set_vim_var_string(VV_WARNINGMSG, _(w_arabic), -1);
-      }
-
-      // set 'delcombine'
-      p_deco = true;
-
-      // Force-set the necessary keymap for arabic.
-      errmsg = set_option_value("keymap", 0L, "arabic", OPT_LOCAL);
-    } else {
-      // 'arabic' is reset, handle various sub-settings.
-      if (!p_tbidi) {
-        // reset rightleft mode
-        if (curwin->w_p_rl) {
-          curwin->w_p_rl = false;
-          changed_window_setting();
-        }
-
-        // 'arabicshape' isn't reset, it is a global option and
-        // another window may still need it "on".
-      }
-
-      // 'delcombine' isn't reset, it is a global option and another
-      // window may still want it "on".
-
-      // Revert to the default keymap
-      curbuf->b_p_iminsert = B_IMODE_NONE;
-      curbuf->b_p_imsearch = B_IMODE_USE_INSERT;
-    }
-  }
-
-  // End of handling side effects for bool options.
 
   // after handling side effects, call autocommand
 
@@ -3809,6 +4006,13 @@ char *get_varp_scope_from(vimoption_T *p, int scope, buf_T *buf, win_T *win)
 char *get_varp_scope(vimoption_T *p, int scope)
 {
   return get_varp_scope_from(p, scope, curbuf, curwin);
+}
+
+/// Get pointer to option variable at 'opt_idx', depending on local or global
+/// scope.
+char *get_option_varp_scope_from(int opt_idx, int scope, buf_T *buf, win_T *win)
+{
+  return get_varp_scope_from(&(options[opt_idx]), scope, buf, win);
 }
 
 static char *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
