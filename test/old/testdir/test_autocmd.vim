@@ -3156,7 +3156,7 @@ func Test_autocmd_FileReadCmd()
         \ 'v:cmdarg =  ++ff=mac',
         \ 'v:cmdarg =  ++enc=utf-8'], getline(1, '$'))
 
-  close!
+  bwipe!
   augroup FileReadCmdTest
     au!
   augroup END

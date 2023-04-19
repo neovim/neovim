@@ -319,6 +319,13 @@ func RunTheTest(test)
   call add(s:messages, message)
   let s:done += 1
 
+  " May be editing some buffer, wipe it out.  Then we may end up in another
+  " buffer, continue until we end up in an empty no-name buffer without a swap
+  " file.
+  while bufname() != '' || execute('swapname') !~ 'No swap file'
+    bwipe!
+  endwhile
+
   " Check if the test has left any swap files behind.  Delete them before
   " running tests again, they might interfere.
   let swapfiles = s:GetSwapFileList()
