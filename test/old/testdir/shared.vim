@@ -113,7 +113,7 @@ func RunServer(cmd, testfunc, args)
     " Wait for some time for the port number to be there.
     let port = GetPort()
     if port == 0
-      call assert_report(strftime("%T") .. " Can't start " .. a:cmd)
+      call assert_report(strftime("%H:%M:%S") .. " Can't start " .. a:cmd)
       return
     endif
 
