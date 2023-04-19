@@ -193,6 +193,11 @@ func RunTheTest(test)
   endif
   au! VimLeavePre
 
+  if a:test =~ '_terminal_'
+    " Terminal tests sometimes hang, give extra information
+    echoconsole 'After executing ' .. a:test
+  endif
+
   " In case 'insertmode' was set and something went wrong, make sure it is
   " reset to avoid trouble with anything else.
   set noinsertmode
@@ -233,6 +238,11 @@ func RunTheTest(test)
   endwhile
 
   exe 'cd ' . save_cwd
+
+  if a:test =~ '_terminal_'
+    " Terminal tests sometimes hang, give extra information
+    echoconsole 'Finished ' . a:test
+  endif
 
   let message = 'Executed ' . a:test
   if has('reltime')
