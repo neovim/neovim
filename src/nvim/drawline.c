@@ -2947,6 +2947,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       }
 
       wlv.boguscols = 0;
+      wlv.vcol_off = 0;
       wlv.row++;
 
       // When not wrapping and finished diff lines, or when displayed
