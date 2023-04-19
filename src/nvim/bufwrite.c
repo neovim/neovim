@@ -333,22 +333,48 @@ static int buf_write_bytes(struct bw_info *ip)
   return (wlen < len) ? FAIL : OK;
 }
 
-static void emit_err(Error_T *e)
+/// Check modification time of file, before writing to it.
+/// The size isn't checked, because using a tool like "gzip" takes care of
+/// using the same timestamp but can't set the size.
+static int check_mtime(buf_T *buf, FileInfo *file_info)
 {
-  if (e->num != NULL) {
-    if (e->arg != 0) {
-      semsg("%s: %s%s: %s", e->num, IObuff, e->msg, os_strerror(e->arg));
-    } else {
-      semsg("%s: %s%s", e->num, IObuff, e->msg);
+  if (buf->b_mtime_read != 0
+      && time_differs(file_info, buf->b_mtime_read, buf->b_mtime_read_ns)) {
+    msg_scroll = true;  // Don't overwrite messages here.
+    msg_silent = 0;     // Must give this prompt.
+    // Don't use emsg() here, don't want to flush the buffers.
+    msg_attr(_("WARNING: The file has been changed since reading it!!!"),
+             HL_ATTR(HLF_E));
+    if (ask_yesno(_("Do you really want to write to it"), true) == 'n') {
+      return FAIL;
     }
-  } else if (e->arg != 0) {
-    semsg(e->msg, os_strerror(e->arg));
-  } else {
-    emsg(e->msg);
+    msg_scroll = false;  // Always overwrite the file message now.
   }
-  if (e->alloc) {
-    xfree(e->msg);
+  return OK;
+}
+
+/// Generate a BOM in "buf[4]" for encoding "name".
+///
+/// @return  the length of the BOM (zero when no BOM).
+static int make_bom(char *buf_in, char *name)
+{
+  uint8_t *buf = (uint8_t *)buf_in;
+  int flags = get_fio_flags(name);
+
+  // Can't put a BOM in a non-Unicode file.
+  if (flags == FIO_LATIN1 || flags == 0) {
+    return 0;
   }
+
+  if (flags == FIO_UTF8) {      // UTF-8
+    buf[0] = 0xef;
+    buf[1] = 0xbb;
+    buf[2] = 0xbf;
+    return 3;
+  }
+  char *p = (char *)buf;
+  (void)ucs2bytes(0xfeff, &p, flags);
+  return (int)((uint8_t *)p - buf);
 }
 
 static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char **ffnamep,
@@ -520,50 +546,6 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
   return NOTDONE;
 }
 
-/// Check modification time of file, before writing to it.
-/// The size isn't checked, because using a tool like "gzip" takes care of
-/// using the same timestamp but can't set the size.
-static int check_mtime(buf_T *buf, FileInfo *file_info)
-{
-  if (buf->b_mtime_read != 0
-      && time_differs(file_info, buf->b_mtime_read, buf->b_mtime_read_ns)) {
-    msg_scroll = true;  // Don't overwrite messages here.
-    msg_silent = 0;     // Must give this prompt.
-    // Don't use emsg() here, don't want to flush the buffers.
-    msg_attr(_("WARNING: The file has been changed since reading it!!!"),
-             HL_ATTR(HLF_E));
-    if (ask_yesno(_("Do you really want to write to it"), true) == 'n') {
-      return FAIL;
-    }
-    msg_scroll = false;  // Always overwrite the file message now.
-  }
-  return OK;
-}
-
-/// Generate a BOM in "buf[4]" for encoding "name".
-///
-/// @return  the length of the BOM (zero when no BOM).
-static int make_bom(char *buf_in, char *name)
-{
-  uint8_t *buf = (uint8_t *)buf_in;
-  int flags = get_fio_flags(name);
-
-  // Can't put a BOM in a non-Unicode file.
-  if (flags == FIO_LATIN1 || flags == 0) {
-    return 0;
-  }
-
-  if (flags == FIO_UTF8) {      // UTF-8
-    buf[0] = 0xef;
-    buf[1] = 0xbb;
-    buf[2] = 0xbf;
-    return 3;
-  }
-  char *p = (char *)buf;
-  (void)ucs2bytes(0xfeff, &p, flags);
-  return (int)((uint8_t *)p - buf);
-}
-
 static void buf_write_do_post_autocmds(buf_T *buf, char *fname, exarg_T *eap, bool append,
                                        bool filtering, bool reset_changed, bool whole)
 {
@@ -591,6 +573,144 @@ static void buf_write_do_post_autocmds(buf_T *buf, char *fname, exarg_T *eap, bo
 
   // restore curwin/curbuf and a few other things
   aucmd_restbuf(&aco);
+}
+
+static inline Error_T set_err_num(const char *num, const char *msg)
+{
+  return (Error_T){ .num = num, .msg = (char *)msg, .arg = 0 };
+}
+
+static inline Error_T set_err(const char *msg)
+{
+  return (Error_T){ .num = NULL, .msg = (char *)msg, .arg = 0 };
+}
+
+static inline Error_T set_err_arg(const char *msg, int arg)
+{
+  return (Error_T){ .num = NULL, .msg = (char *)msg, .arg = arg };
+}
+
+static void emit_err(Error_T *e)
+{
+  if (e->num != NULL) {
+    if (e->arg != 0) {
+      semsg("%s: %s%s: %s", e->num, IObuff, e->msg, os_strerror(e->arg));
+    } else {
+      semsg("%s: %s%s", e->num, IObuff, e->msg);
+    }
+  } else if (e->arg != 0) {
+    semsg(e->msg, os_strerror(e->arg));
+  } else {
+    emsg(e->msg);
+  }
+  if (e->alloc) {
+    xfree(e->msg);
+  }
+}
+
+#if defined(UNIX)
+
+static int get_fileinfo_os(char *fname, FileInfo *file_info_old, bool overwriting, long *perm,
+                           bool *device, bool *newfile, Error_T *err)
+{
+  *perm = -1;
+  if (!os_fileinfo(fname, file_info_old)) {
+    *newfile = true;
+  } else {
+    *perm = (long)file_info_old->stat.st_mode;
+    if (!S_ISREG(file_info_old->stat.st_mode)) {             // not a file
+      if (S_ISDIR(file_info_old->stat.st_mode)) {
+        *err = set_err_num("E502", _("is a directory"));
+        return FAIL;
+      }
+      if (os_nodetype(fname) != NODE_WRITABLE) {
+        *err = set_err_num("E503", _("is not a file or writable device"));
+        return FAIL;
+      }
+      // It's a device of some kind (or a fifo) which we can write to
+      // but for which we can't make a backup.
+      *device = true;
+      *newfile = true;
+      *perm = -1;
+    }
+  }
+  return OK;
+}
+
+#else
+
+static int get_fileinfo_os(char *fname, FileInfo *file_info_old, bool overwriting, long *perm,
+                           bool *device, bool *newfile, Error_T *err)
+{
+  // Check for a writable device name.
+  char nodetype = fname == NULL ? NODE_OTHER : (char)os_nodetype(fname);
+  if (nodetype == NODE_OTHER) {
+    *err = set_err_num("E503", _("is not a file or writable device"));
+    return FAIL;
+  }
+  if (nodetype == NODE_WRITABLE) {
+    *device = true;
+    *newfile = true;
+    *perm = -1;
+  } else {
+    *perm = os_getperm(fname);
+    if (*perm < 0) {
+      *newfile = true;
+    } else if (os_isdir(fname)) {
+      *err = set_err_num("E502", _("is a directory"));
+      return FAIL;
+    }
+    if (overwriting) {
+      os_fileinfo(fname, file_info_old);
+    }
+  }
+  return OK;
+}
+
+#endif
+
+/// @param buf
+/// @param fname          File name
+/// @param overwriting
+/// @param forceit
+/// @param[out] file_info_old
+/// @param[out] perm
+/// @param[out] device
+/// @param[out] newfile
+/// @param[out] readonly
+static int get_fileinfo(buf_T *buf, char *fname, bool overwriting, bool forceit,
+                        FileInfo *file_info_old, long *perm, bool *device, bool *newfile,
+                        bool *readonly, Error_T *err)
+{
+  if (get_fileinfo_os(fname, file_info_old, overwriting, perm, device, newfile, err) == FAIL) {
+    return FAIL;
+  }
+
+  *readonly = false;  // overwritten file is read-only
+
+  if (!*device && !*newfile) {
+    // Check if the file is really writable (when renaming the file to
+    // make a backup we won't discover it later).
+    *readonly = !os_file_is_writable(fname);
+
+    if (!forceit && *readonly) {
+      if (vim_strchr(p_cpo, CPO_FWRITE) != NULL) {
+        *err = set_err_num("E504", _(err_readonly));
+      } else {
+        *err = set_err_num("E505", _("is read-only (add ! to override)"));
+      }
+      return FAIL;
+    }
+
+    // If 'forceit' is false, check if the timestamp hasn't changed since reading the file.
+    if (overwriting && !forceit) {
+      int retval = check_mtime(buf, file_info_old);
+      if (retval == FAIL) {
+        return FAIL;
+      }
+    }
+  }
+  return OK;
 }
 
 static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_old, vim_acl_T acl,
@@ -906,126 +1026,6 @@ nobackup:
     }
   }
   return OK;
-}
-
-#if defined(UNIX)
-
-static int get_fileinfo_os(char *fname, FileInfo *file_info_old, bool overwriting, long *perm,
-                           bool *device, bool *newfile, Error_T *err)
-{
-  *perm = -1;
-  if (!os_fileinfo(fname, file_info_old)) {
-    *newfile = true;
-  } else {
-    *perm = (long)file_info_old->stat.st_mode;
-    if (!S_ISREG(file_info_old->stat.st_mode)) {             // not a file
-      if (S_ISDIR(file_info_old->stat.st_mode)) {
-        *err = set_err_num("E502", _("is a directory"));
-        return FAIL;
-      }
-      if (os_nodetype(fname) != NODE_WRITABLE) {
-        *err = set_err_num("E503", _("is not a file or writable device"));
-        return FAIL;
-      }
-      // It's a device of some kind (or a fifo) which we can write to
-      // but for which we can't make a backup.
-      *device = true;
-      *newfile = true;
-      *perm = -1;
-    }
-  }
-  return OK;
-}
-
-#else
-
-static int get_fileinfo_os(char *fname, FileInfo *file_info_old, bool overwriting, long *perm,
-                           bool *device, bool *newfile, Error_T *err)
-{
-  // Check for a writable device name.
-  char nodetype = fname == NULL ? NODE_OTHER : (char)os_nodetype(fname);
-  if (nodetype == NODE_OTHER) {
-    *err = set_err_num("E503", _("is not a file or writable device"));
-    return FAIL;
-  }
-  if (nodetype == NODE_WRITABLE) {
-    *device = true;
-    *newfile = true;
-    *perm = -1;
-  } else {
-    *perm = os_getperm(fname);
-    if (*perm < 0) {
-      *newfile = true;
-    } else if (os_isdir(fname)) {
-      *err = set_err_num("E502", _("is a directory"));
-      return FAIL;
-    }
-    if (overwriting) {
-      os_fileinfo(fname, file_info_old);
-    }
-  }
-  return OK;
-}
-
-#endif
-
-/// @param buf
-/// @param fname          File name
-/// @param overwriting
-/// @param forceit
-/// @param[out] file_info_old
-/// @param[out] perm
-/// @param[out] device
-/// @param[out] newfile
-/// @param[out] readonly
-static int get_fileinfo(buf_T *buf, char *fname, bool overwriting, bool forceit,
-                        FileInfo *file_info_old, long *perm, bool *device, bool *newfile,
-                        bool *readonly, Error_T *err)
-{
-  if (get_fileinfo_os(fname, file_info_old, overwriting, perm, device, newfile, err) == FAIL) {
-    return FAIL;
-  }
-
-  *readonly = false;  // overwritten file is read-only
-
-  if (!*device && !*newfile) {
-    // Check if the file is really writable (when renaming the file to
-    // make a backup we won't discover it later).
-    *readonly = !os_file_is_writable(fname);
-
-    if (!forceit && *readonly) {
-      if (vim_strchr(p_cpo, CPO_FWRITE) != NULL) {
-        *err = set_err_num("E504", _(err_readonly));
-      } else {
-        *err = set_err_num("E505", _("is read-only (add ! to override)"));
-      }
-      return FAIL;
-    }
-
-    // If 'forceit' is false, check if the timestamp hasn't changed since reading the file.
-    if (overwriting && !forceit) {
-      int retval = check_mtime(buf, file_info_old);
-      if (retval == FAIL) {
-        return FAIL;
-      }
-    }
-  }
-  return OK;
-}
-
-static inline Error_T set_err_num(const char *num, const char *msg)
-{
-  return (Error_T){ .num = num, .msg = (char *)msg, .arg = 0 };
-}
-
-static inline Error_T set_err(const char *msg)
-{
-  return (Error_T){ .num = NULL, .msg = (char *)msg, .arg = 0 };
-}
-
-static inline Error_T set_err_arg(const char *msg, int arg)
-{
-  return (Error_T){ .num = NULL, .msg = (char *)msg, .arg = arg };
 }
 
 /// buf_write() - write to file "fname" lines "start" through "end"
