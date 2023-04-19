@@ -160,7 +160,7 @@ foreach(CFGNAME ${CMAKE_CONFIGURATION_TYPES})
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFGNAME} ${CMAKE_BINARY_DIR}/lib)
 endforeach()
 
-set(LUA_DEPENDENCIES lpeg mpack bit)
+set(LUA_DEPENDENCIES lpeg)
 if(NOT LUA_PRG)
   foreach(CURRENT_LUA_PRG luajit lua5.1 lua5.2 lua)
     unset(_CHECK_LUA_PRG CACHE)

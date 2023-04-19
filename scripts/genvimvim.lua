@@ -144,7 +144,7 @@ end
 w('\n\nsyn case match')
 local vimfun_start = 'syn keyword vimFuncName contained '
 w('\n\n' .. vimfun_start)
-local funcs = mpack.unpack(io.open(funcs_file, 'rb'):read("*all"))
+local funcs = mpack.decode(io.open(funcs_file, 'rb'):read("*all"))
 for _, name in ipairs(funcs) do
   if name then
     if lld.line_length > 850 then

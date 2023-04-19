@@ -1,27 +1,12 @@
 local mpack = require('mpack')
 
-local nvimsrcdir = arg[1]
-local shared_file = arg[2]
-local autodir = arg[3]
-local metadata_file = arg[4]
-local funcs_file = arg[5]
-
-_G.vim = loadfile(shared_file)()
-
-if nvimsrcdir == '--help' then
-  print([[
-Usage:
-  lua gen_eval.lua src/nvim build/src/nvim/auto
-
-Will generate build/src/nvim/auto/funcs.generated.h with definition of functions
-static const array.
-]])
-  os.exit(0)
-end
-
-package.path = nvimsrcdir .. '/?.lua;' .. package.path
+local autodir = arg[1]
+local metadata_file = arg[2]
+local funcs_file = arg[3]
 
 local funcsfname = autodir .. '/funcs.generated.h'
+
+--Will generate funcs.generated.h with definition of functions static const array.
 
 local hashy = require'generators.hashy'
 
@@ -63,7 +48,7 @@ for _, func in pairs(funcs) do
   end
 end
 
-local metadata = mpack.unpack(io.open(metadata_file, 'rb'):read("*all"))
+local metadata = mpack.decode(io.open(metadata_file, 'rb'):read("*all"))
 for _,fun in ipairs(metadata) do
   if fun.eval then
     funcs[fun.name] = {
@@ -77,7 +62,7 @@ end
 local func_names = vim.tbl_keys(funcs)
 table.sort(func_names)
 local funcsdata = io.open(funcs_file, 'w')
-funcsdata:write(mpack.pack(func_names))
+funcsdata:write(mpack.encode(func_names))
 funcsdata:close()
 
 local neworder, hashfun = hashy.hashy_hash("find_internal_func", func_names, function (idx)

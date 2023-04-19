@@ -119,12 +119,7 @@ function(Download ROCK VER)
   set(CURRENT_DEP ${ROCK} PARENT_SCOPE)
 endfunction()
 
-Download(mpack 1.0.10-0)
 Download(lpeg 1.0.2-1)
-
-if((NOT USE_BUNDLED_LUAJIT) AND USE_BUNDLED_LUA)
-  Download(luabitop 1.0.2-3)
-endif()
 
 if(USE_BUNDLED_BUSTED)
   if(WIN32)

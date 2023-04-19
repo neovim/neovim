@@ -1,12 +1,4 @@
-if arg[1] == '--help' then
-  print('Usage: genoptions.lua src/nvim options_file')
-  os.exit(0)
-end
-
-local nvimsrcdir = arg[1]
-local options_file = arg[2]
-
-package.path = nvimsrcdir .. '/?.lua;' .. package.path
+local options_file = arg[1]
 
 local opt_fd = io.open(options_file, 'w')
 
