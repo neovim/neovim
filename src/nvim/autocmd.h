@@ -40,11 +40,9 @@ struct AutoCmd_S {
   AucmdExecutable exec;
   bool once;                            // "One shot": removed after execution
   bool nested;                          // If autocommands nest here
-  bool last;                            // last command in list
   int64_t id;                           // ID used for uniquely tracking an autocmd.
   sctx_T script_ctx;                    // script context where it is defined
   char *desc;                           // Description for the autocmd.
-  AutoCmd *next;                        // Next AutoCmd in list
 };
 
 typedef struct AutoPat_S AutoPat;
@@ -54,19 +52,20 @@ struct AutoPat_S {
   char *pat;                            // pattern as typed (NULL when pattern
                                         // has been removed)
   regprog_T *reg_prog;                  // compiled regprog for pattern
-  AutoCmd *cmds;                        // list of commands to do
+  kvec_t(AutoCmd) cmds;                 // list of commands to do
   int group;                            // group ID
   int patlen;                           // strlen() of pat
   int buflocal_nr;                      // !=0 for buffer-local AutoPat
   char allow_dirs;                      // Pattern may match whole path
-  char last;                            // last pattern for apply_autocmds()
+  bool last;                            // last pattern for apply_autocmds()
 };
 
 /// Struct used to keep status while executing autocommands for an event.
 typedef struct AutoPatCmd_S AutoPatCmd;
 struct AutoPatCmd_S {
   AutoPat *curpat;          // next AutoPat to examine
-  AutoCmd *nextcmd;         // next AutoCmd to execute
+  size_t nextcmd;           // next AutoCmd index to execute
+  size_t last;              // last command index in list
   int group;                // group being used
   char *fname;              // fname to match with
   char *sfname;             // sfname to match with

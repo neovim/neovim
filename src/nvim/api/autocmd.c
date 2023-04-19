@@ -226,7 +226,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
     }
 
     for (AutoPat *ap = au_get_autopat_for_event(event); ap != NULL; ap = ap->next) {
-      if (ap->cmds == NULL) {
+      if (kv_size(ap->cmds) == 0) {
         continue;
       }
 
@@ -265,7 +265,8 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
         }
       }
 
-      for (AutoCmd *ac = ap->cmds; ac != NULL; ac = ac->next) {
+      for (size_t i = 0; i < kv_size(ap->cmds); i++) {
+        AutoCmd *const ac = &kv_A(ap->cmds, i);
         if (aucmd_exec_is_deleted(ac->exec)) {
           continue;
         }
