@@ -1129,6 +1129,13 @@ module.cmds = {
     func='ex_wrongmodifier',
   },
   {
+    command='hunspell',
+    flags=bit.bor(EXTRA),
+    addr_type='ADDR_NONE',
+    func='ex_hunspell_suggest',
+  },
+
+  {
     command='insert',
     flags=bit.bor(BANG, RANGE, TRLBAR, CMDWIN, LOCK_OK, MODIFY),
     addr_type='ADDR_LINES',

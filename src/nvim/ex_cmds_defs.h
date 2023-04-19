@@ -8,7 +8,6 @@
 #include "nvim/normal.h"
 #include "nvim/pos.h"
 #include "nvim/regexp_defs.h"
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds_enum.generated.h"
 #endif
@@ -86,7 +85,7 @@ typedef enum {
 } cmd_addr_T;
 
 typedef struct exarg exarg_T;
-
+#include "nvim/hunspell.h"
 // behavior for bad character, "++bad=" argument
 #define BAD_REPLACE     '?'     // replace it with '?' (default)
 #define BAD_KEEP        (-1)    // leave it

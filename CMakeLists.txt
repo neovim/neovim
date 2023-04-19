@@ -13,6 +13,9 @@ endif()
 
 project(nvim C)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${PROJECT_SOURCE_DIR}/src/nvim/hunspell -L/usr/local/lib/ -lhunspell")
+
+
 if(POLICY CMP0075)
   cmake_policy(SET CMP0075 NEW)
 endif()
@@ -291,6 +294,9 @@ else()
 endif()
 
 add_subdirectory(src/nvim)
+set(HUNSPELL_DICTIONARY_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/nvim/hunspell/lib")
+configure_file(src/nvim/hunspell/config.h.in src/nvim/hunspell/config.h @ONLY)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/nvim/hunspell)
 add_subdirectory(cmake.config)
 add_subdirectory(runtime)
 add_subdirectory(test)
