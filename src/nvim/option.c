@@ -3257,8 +3257,7 @@ static void showoptions(bool all, int opt_flags)
       } else {
         varp = get_varp(p);
       }
-      if (varp != NULL
-          && (all == 1 || (all == 0 && !optval_default(p, varp)))) {
+      if (varp != NULL && (all || !optval_default(p, varp))) {
         int len;
         if (opt_flags & OPT_ONECOLUMN) {
           len = Columns;
