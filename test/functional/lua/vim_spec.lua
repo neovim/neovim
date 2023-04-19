@@ -3374,13 +3374,18 @@ describe('lua stdlib', function()
     end)
 
     it('handles map-like tables', function()
-      local t = { a = 1, b = 2, c = 3 }
-      local it = vim.iter(t):map(function(k, v)
+      local it = vim.iter({ a = 1, b = 2, c = 3 }):map(function(k, v)
         if v % 2 ~= 0 then
           return k:upper(), v * 2
         end
       end)
-      eq({ A = 2, C = 6 }, it:totable())
+
+      local t = it:fold({}, function(t, k, v)
+        t[k] = v
+        return t
+      end)
+      eq({ A = 2, C = 6 }, t)
+    end)
 
     it('handles table values mid-pipeline', function()
       local map = {

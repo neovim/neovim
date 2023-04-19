@@ -3037,6 +3037,19 @@ Iter:find({self}, {f})                                           *Iter:find()*
 Iter:fold({self}, {init}, {f})                                   *Iter:fold()*
     Fold an iterator or table into a single value.
 
+    Examples: >
+
+     -- Create a new table with only even values
+     local t = { a = 1, b = 2, c = 3, d = 4 }
+     local it = vim.iter(t)
+     it:filter(function(k, v) return v % 2 == 0 end)
+     it:fold({}, function(t, k, v)
+       t[k] = v
+       return t
+     end)
+     -- { b = 2, d = 4 }
+<
+
     Parameters: ~
       • {init}  any Initial value of the accumulator.
       • {f}     function(acc:any, ...):A Accumulation function.
@@ -3297,9 +3310,7 @@ Iter:totable({self})                                          *Iter:totable()*
     The resulting table depends on the initial source in the iterator
     pipeline. List-like tables and function iterators will be collected into a
     list-like table. If multiple values are returned from the final stage in
-    the iterator pipeline, each value will be included in a table. If a
-    map-like table was used as the initial source, then a map-like table is
-    returned.
+    the iterator pipeline, each value will be included in a table.
 
     Examples: >lua
 
@@ -3310,8 +3321,12 @@ Iter:totable({self})                                          *Iter:totable()*
      -- { { 1, 2 }, { 2, 4 }, { 3, 6 } }
 
      vim.iter({ a = 1, b = 2, c = 3 }):filter(function(k, v) return v % 2 ~= 0 end):totable()
-     -- { a = 1, c = 3 }
+     -- { { 'a', 1 }, { 'c', 3 } }
 <
+
+    The generated table is a list-like table with consecutive, numeric
+    indices. To create a map-like table with arbitrary keys, use
+    |Iter:fold()|.
 
     Return: ~
         (table)
