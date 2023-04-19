@@ -320,6 +320,11 @@ func RunTheTest(test)
   call add(s:messages, message)
   let s:done += 1
 
+  " close any split windows
+  while winnr('$') > 1
+    bwipe!
+  endwhile
+
   " May be editing some buffer, wipe it out.  Then we may end up in another
   " buffer, continue until we end up in an empty no-name buffer without a swap
   " file.
