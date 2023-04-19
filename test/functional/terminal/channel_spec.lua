@@ -95,15 +95,19 @@ describe('terminal channel is closed and later released if', function()
 end)
 
 it('chansend sends lines to terminal channel in proper order', function()
-  clear()
+  clear({args = {'--cmd', 'set laststatus=2'}})
   local screen = Screen.new(100, 20)
   screen:attach()
   local shells = is_os('win') and {'cmd.exe', 'pwsh.exe -nop', 'powershell.exe -nop'} or {'sh'}
   for _, sh in ipairs(shells) do
-    command([[bdelete! | let id = termopen(']] .. sh .. [[')]])
+    command([[let id = termopen(']] .. sh .. [[')]])
     command([[call chansend(id, ['echo "hello"', 'echo "world"', ''])]])
     screen:expect{
       any=[[echo "hello".*echo "world"]]
+    }
+    command('bdelete!')
+    screen:expect{
+      any='%[No Name%]'
     }
   end
 end)
