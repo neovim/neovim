@@ -989,6 +989,8 @@ typedef struct {
   // flag in the regexp.  Defaults to false, always.
   bool reg_icombine;
 
+  bool reg_nobreak;
+
   // Copy of "rmm_maxcol": maximum column to search for a match.  Zero when
   // there is no maximum.
   colnr_T reg_maxcol;
@@ -1010,6 +1012,13 @@ typedef struct {
 
 static regexec_T rex;
 static bool rex_in_use = false;
+
+static void reg_breakcheck(void)
+{
+  if (!rex.reg_nobreak) {
+    fast_breakcheck();
+  }
+}
 
 // Return true if character 'c' is included in 'iskeyword' option for
 // "reg_buf" buffer.
@@ -1221,7 +1230,7 @@ static void reg_nextline(void)
 {
   rex.line = (uint8_t *)reg_getline(++rex.lnum);
   rex.input = rex.line;
-  fast_breakcheck();
+  reg_breakcheck();
 }
 
 // Check whether a backreference matches.
@@ -2265,6 +2274,7 @@ static void init_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_
   rex.reg_line_lbr = false;
   rex.reg_ic = rmp->rmm_ic;
   rex.reg_icombine = false;
+  rex.reg_nobreak = rmp->regprog->re_flags & RE_NOBREAK;
   rex.reg_maxcol = rmp->rmm_maxcol;
 }
 

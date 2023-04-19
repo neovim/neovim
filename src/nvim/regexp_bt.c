@@ -3539,7 +3539,7 @@ static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
   for (;;) {
     // Some patterns may take a long time to match, e.g., "\([a-z]\+\)\+Q".
     // Allow interrupting them with CTRL-C.
-    fast_breakcheck();
+    reg_breakcheck();
 
 #ifdef REGEXP_DEBUG
     if (scan != NULL && regnarrate) {
@@ -4792,7 +4792,7 @@ static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
                   break;
                 }
                 rex.input = rex.line + strlen((char *)rex.line);
-                fast_breakcheck();
+                reg_breakcheck();
               } else {
                 MB_PTR_BACK(rex.line, rex.input);
               }
@@ -5155,6 +5155,7 @@ static int bt_regexec_nl(regmatch_T *rmp, uint8_t *line, colnr_T col, bool line_
   rex.reg_win = NULL;
   rex.reg_ic = rmp->rm_ic;
   rex.reg_icombine = false;
+  rex.reg_nobreak = rmp->regprog->re_flags & RE_NOBREAK;
   rex.reg_maxcol = 0;
 
   long r = bt_regexec_both(line, col, NULL, NULL);

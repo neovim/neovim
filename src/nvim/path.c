@@ -620,7 +620,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
   static int stardepth = 0;  // depth for "**" expansion
 
   // Expanding "**" may take a long time, check for CTRL-C.
-  if (stardepth > 0) {
+  if (stardepth > 0 && !(flags & EW_NOBREAK)) {
     os_breakcheck();
     if (got_int) {
       return 0;
@@ -701,7 +701,8 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
   if (flags & (EW_NOERROR | EW_NOTWILD)) {
     emsg_silent++;
   }
-  regmatch.regprog = vim_regcomp(pat, RE_MAGIC);
+  bool nobreak = (flags & EW_NOBREAK);
+  regmatch.regprog = vim_regcomp(pat, RE_MAGIC | (nobreak ? RE_NOBREAK : 0));
   if (flags & (EW_NOERROR | EW_NOTWILD)) {
     emsg_silent--;
   }
