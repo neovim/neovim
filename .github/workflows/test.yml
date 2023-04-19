@@ -35,7 +35,7 @@ jobs:
     timeout-minutes: 10
     env:
       CACHE_UNCRUSTIFY: ${{ github.workspace }}/.cache/uncrustify
-      UNCRUSTIFY_VERSION: uncrustify-0.75.0
+      UNCRUSTIFY_VERSION: uncrustify-0.76.0
     steps:
       - uses: actions/checkout@v3
 

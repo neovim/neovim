@@ -91,7 +91,7 @@
 # define MCH_OPEN_RW(n, f)      os_open((n), (f), 0)
 #endif
 
-#define REPLACE_NORMAL(s) (((s) & REPLACE_FLAG) && !((s) & VREPLACE_FLAG))
+#define REPLACE_NORMAL(s) (((s)& REPLACE_FLAG) && !((s)& VREPLACE_FLAG))
 
 // MB_PTR_ADV(): advance a pointer to the next character, taking care of
 // multi-byte characters if needed. Skip over composing chars.

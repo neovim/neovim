@@ -2180,7 +2180,8 @@ static void nv_ignore(cmdarg_T *cap)
 /// Command character that doesn't do anything, but unlike nv_ignore() does
 /// start edit().  Used for "startinsert" executed while starting up.
 static void nv_nop(cmdarg_T *cap)
-{}
+{
+}
 
 /// Command character doesn't exist.
 static void nv_error(cmdarg_T *cap)
