@@ -1,4 +1,4 @@
-local mpack = require('mpack')
+local mpack = vim.mpack
 
 assert(#arg == 5)
 local input = io.open(arg[1], 'rb')

@@ -1,4 +1,4 @@
-local mpack = require('mpack')
+local mpack = vim.mpack
 
 if arg[1] == '--help' then
   print('Usage: lua genvimvim.lua src/nvim runtime/syntax/vim/generated.vim')

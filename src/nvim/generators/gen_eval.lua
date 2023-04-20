@@ -1,4 +1,4 @@
-local mpack = require('mpack')
+local mpack = vim.mpack
 
 local autodir = arg[1]
 local metadata_file = arg[2]
