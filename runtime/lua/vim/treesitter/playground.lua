@@ -147,7 +147,7 @@ local decor_ns = api.nvim_create_namespace('ts.playground')
 ---@param end_lnum integer
 ---@param end_col integer
 ---@return string
-local function get_range_str(lnum, col, end_col, end_lnum)
+local function get_range_str(lnum, col, end_lnum, end_col)
   if lnum == end_lnum then
     return string.format('[%d:%d - %d]', lnum + 1, col + 1, end_col)
   end
