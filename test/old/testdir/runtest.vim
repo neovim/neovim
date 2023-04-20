@@ -497,6 +497,9 @@ let s:flaky_tests = [
       \ 'Test_termwinscroll()',
       \ ]
 
+" Delete the .res file, it may change behavior for completion
+call delete(fnamemodify(g:testname, ':r') .. '.res')
+
 " Locate Test_ functions and execute them.
 redir @q
 silent function /^Test_
