@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        _Before reporting:_ search [existing issues](https://github.com/neovim/neovim/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and check the [FAQ](https://github.com/neovim/neovim/wiki/FAQ). Usage or "How to" questions belong on the [stackoverflow](https://vi.stackexchange.com/) and will be closed.
+        _Before reporting:_ run `make distclean` when encountering build issues, search [existing issues](https://github.com/neovim/neovim/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and check the [FAQ](https://github.com/neovim/neovim/wiki/FAQ). Usage or "How to" questions belong on the [stackoverflow](https://vi.stackexchange.com/) and will be closed.
 
   - type: textarea
     attributes:
