@@ -28,6 +28,11 @@ describe('Ex cmds', function()
     assert_alive()
   end)
 
+  it('listing long user command does not crash', function()
+    command('execute "command" repeat("T", 255) ":"')
+    command('command')
+  end)
+
   it(':def is an unknown command #23149', function()
     eq('Vim:E492: Not an editor command: def', pcall_err(command, 'def'))
     eq(1, funcs.exists(':d'))
