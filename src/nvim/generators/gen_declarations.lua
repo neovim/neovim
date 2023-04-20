@@ -1,12 +1,9 @@
-#!/usr/bin/lua
-
 local fname = arg[1]
 local static_fname = arg[2]
 local non_static_fname = arg[3]
 local preproc_fname = arg[4]
 
-
-local lpeg = require('lpeg')
+local lpeg = vim.lpeg
 
 local fold = function (func, ...)
   local result = nil

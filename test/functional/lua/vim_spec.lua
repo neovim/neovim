@@ -3031,6 +3031,15 @@ describe('lua stdlib', function()
     eq(false, if_nil(d, c))
     eq(NIL, if_nil(a))
   end)
+
+  it('lpeg', function()
+    eq(5, exec_lua [[
+      local m = vim.lpeg
+      return m.match(m.R'09'^1, '4504ab')
+    ]])
+
+    eq(4, exec_lua [[ return vim.re.match("abcde", '[a-c]+') ]])
+  end)
 end)
 
 describe('lua: builtin modules', function()

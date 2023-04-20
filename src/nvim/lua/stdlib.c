@@ -611,6 +611,19 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
   lua_setfield(lstate, -2, "mpack");
   lua_pop(lstate, 3);
 
+  // vim.lpeg
+  int luaopen_lpeg(lua_State *);
+  luaopen_lpeg(lstate);
+  lua_pushvalue(lstate, -1);
+  lua_setfield(lstate, -4, "lpeg");
+
+  // package.loaded.lpeg = vim.lpeg
+  lua_getglobal(lstate, "package");
+  lua_getfield(lstate, -1, "loaded");
+  lua_pushvalue(lstate, -3);
+  lua_setfield(lstate, -2, "lpeg");
+  lua_pop(lstate, 4);
+
   // vim.diff
   lua_pushcfunction(lstate, &nlua_xdl_diff);
   lua_setfield(lstate, -2, "diff");

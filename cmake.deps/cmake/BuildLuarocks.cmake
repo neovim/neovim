@@ -119,8 +119,6 @@ function(Download ROCK VER)
   set(CURRENT_DEP ${ROCK} PARENT_SCOPE)
 endfunction()
 
-Download(lpeg 1.0.2-1)
-
 if(USE_BUNDLED_BUSTED)
   if(WIN32)
     set(BUSTED_EXE "${DEPS_BIN_DIR}/busted.bat")

@@ -1,3 +1,4 @@
 /scripts
 /src
 /test
+/runtime/lua/vim/re.lua
