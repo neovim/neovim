@@ -206,7 +206,7 @@ char *estack_sfile(estack_arg_T which)
 }
 
 static bool runtime_search_path_valid = false;
-static int *runtime_search_path_ref = NULL;
+static bool runtime_search_path_has_ref = false;
 static RuntimeSearchPath runtime_search_path;
 static RuntimeSearchPath runtime_search_path_thread;
 static uv_mutex_t runtime_search_path_mutex;
@@ -372,17 +372,17 @@ int do_in_path(char *path, char *name, int flags, DoInRuntimepathCB callback, vo
   return did_one ? OK : FAIL;
 }
 
-RuntimeSearchPath runtime_search_path_get_cached(int *ref)
+RuntimeSearchPath runtime_search_path_get_cached(bool *has_ref)
   FUNC_ATTR_NONNULL_ALL
 {
   runtime_search_path_validate();
 
-  *ref = 0;
-  if (runtime_search_path_ref == NULL) {
-    // cached path was unreferenced. keep a ref to
+  *has_ref = false;
+  if (!runtime_search_path_has_ref) {
+    // cached path do not have an reference. keep a ref to
     // prevent runtime_search_path() to freeing it too early
-    (*ref)++;
-    runtime_search_path_ref = ref;
+    *has_ref = true;
+    runtime_search_path_has_ref = true;
   }
   return runtime_search_path;
 }
@@ -398,13 +398,14 @@ RuntimeSearchPath copy_runtime_search_path(const RuntimeSearchPath src)
   return dst;
 }
 
-void runtime_search_path_unref(RuntimeSearchPath path, const int *ref)
-  FUNC_ATTR_NONNULL_ALL
+void runtime_search_path_unref(RuntimeSearchPath path, bool has_ref)
 {
-  if (*ref) {
-    if (runtime_search_path_ref == ref) {
-      runtime_search_path_ref = NULL;
+  if (has_ref) {
+    if (runtime_search_path_has_ref) {
+      // release reference
+      runtime_search_path_has_ref = false;
     } else {
+      // Since a new runtime_search_path has been allocated, this path with reference is freeed.
       runtime_search_path_free(path);
     }
   }
@@ -433,8 +434,8 @@ int do_in_cached_path(char *name, int flags, DoInRuntimepathCB callback, void *c
     verbose_leave();
   }
 
-  int ref;
-  RuntimeSearchPath path = runtime_search_path_get_cached(&ref);
+  bool has_ref;
+  RuntimeSearchPath path = runtime_search_path_get_cached(&has_ref);
 
   // Loop over all entries in cached path
   for (size_t j = 0; j < kv_size(path); j++) {
@@ -499,7 +500,7 @@ int do_in_cached_path(char *name, int flags, DoInRuntimepathCB callback, void *c
     }
   }
 
-  runtime_search_path_unref(path, &ref);
+  runtime_search_path_unref(path, has_ref);
 
   return did_one ? OK : FAIL;
 }
@@ -524,13 +525,13 @@ Array runtime_inspect(void)
 
 ArrayOf(String) runtime_get_named(bool lua, Array pat, bool all)
 {
-  int ref;
-  RuntimeSearchPath path = runtime_search_path_get_cached(&ref);
+  bool has_ref;
+  RuntimeSearchPath path = runtime_search_path_get_cached(&has_ref);
   static char buf[MAXPATHL];
 
   ArrayOf(String) rv = runtime_get_named_common(lua, pat, all, path, buf, sizeof buf);
 
-  runtime_search_path_unref(path, &ref);
+  runtime_search_path_unref(path, has_ref);
   return rv;
 }
 
@@ -804,12 +805,13 @@ void runtime_search_path_validate(void)
     return;
   }
   if (!runtime_search_path_valid) {
-    if (!runtime_search_path_ref) {
+    RuntimeSearchPath new_path = runtime_search_path_build();
+    if (!runtime_search_path_has_ref) {
       runtime_search_path_free(runtime_search_path);
     }
-    runtime_search_path = runtime_search_path_build();
+    runtime_search_path = new_path;
     runtime_search_path_valid = true;
-    runtime_search_path_ref = NULL;  // initially unowned
+    runtime_search_path_has_ref = false;  // initially unreferenced
     uv_mutex_lock(&runtime_search_path_mutex);
     runtime_search_path_free(runtime_search_path_thread);
     runtime_search_path_thread = copy_runtime_search_path(runtime_search_path);
