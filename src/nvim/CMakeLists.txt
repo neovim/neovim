@@ -15,7 +15,7 @@ endif()
 
 add_library(nlua0 MODULE)
 if(WIN32)
-  target_compile_definitions(nlua0 PUBLIC LUA_BUILD_AS_DLL NLUA_WIN32)
+  target_compile_definitions(nlua0 PUBLIC LUA_BUILD_AS_DLL LUA_LIB)
   set_target_properties(nlua0 PROPERTIES ENABLE_EXPORTS TRUE)
 elseif(APPLE)
   set_target_properties(nlua0 PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
@@ -322,6 +322,7 @@ if(PREFER_LUA)
   target_compile_definitions(main_lib INTERFACE NVIM_VENDOR_BIT)
 endif()
 
+list(APPEND NLUA0_SOURCES ${PROJECT_SOURCE_DIR}/src/nlua0.c)
 foreach(subdir
         os
         api

@@ -1,4 +1,4 @@
-local mpack = require('mpack')
+local mpack = vim.mpack
 
 local hashy = require'generators.hashy'
 
