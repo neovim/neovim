@@ -1274,7 +1274,7 @@ describe('builtin popupmenu', function()
       {1:~                   }│{1:~          }|
       {1:~                   }│{1:~          }|
       {1:~                   }│{1:~          }|
-      {4:[No Name] [+]        }{3:<Name] [+] }|
+      {4:[No Name] [+]       ▐}{3:<Name] [+] }|
       :vsplit                         |
     ]])
 
@@ -1298,7 +1298,7 @@ describe('builtin popupmenu', function()
       {1:~                   }│{1:~          }|
       {1:~                   }│{1:~          }|
       {1:~                   }│{1:~          }|
-      {4:[No Name] [+]        }{3:<Name] [+] }|
+      {4:[No Name] [+]       ▐}{3:<Name] [+] }|
       {2:-- }{5:match 1 of 3}                 |
     ]])
 
@@ -1322,7 +1322,7 @@ describe('builtin popupmenu', function()
       {1:~          }│{1:~                   }|
       {1:~          }│{1:~                   }|
       {1:~          }│{1:~                   }|
-      {3:<Name] [+]  }{4:[No Name] [+]       }|
+      {3:<Name] [+] }{4:▌[No Name] [+]       }|
       {2:-- }{5:match 1 of 3}                 |
     ]])
   end)

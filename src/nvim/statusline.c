@@ -179,12 +179,10 @@ void win_redr_status(win_T *wp)
   if (wp->w_vsep_width != 0 && wp->w_status_height != 0 && redrawing()) {
     if (stl_connected(wp)) {
       if (wp == curwin) {
-          // Draw the right half block character if the current window is focused
         fillchar = utf_ptr2char("▐");
         attr = win_hl_attr(wp, HLF_S);
       } else {
         if (wp->w_next == curwin) {
-          // Draw the left half block character if the window on the right is focused
           fillchar = utf_ptr2char("▌");
           attr = win_hl_attr(wp->w_next, HLF_S);
         } else {

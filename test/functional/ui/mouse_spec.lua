@@ -820,7 +820,7 @@ describe('ui/mouse/input', function()
       ^mouse scrolling           │mouse scrolling           |
                                 │                          |
       {0:~                         }│{0:~                         }|
-      {5:[No Name] [+]              }{4:[No Name] [+]             }|
+      {5:[No Name] [+]             ▐}{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
       mouse scrolling                                      |
@@ -841,7 +841,7 @@ describe('ui/mouse/input', function()
       {0:~                         }│mouse scrolling           |
       {0:~                         }│                          |
       {0:~                         }│{0:~                         }|
-      {5:[No Name] [+]              }{4:[No Name] [+]             }|
+      {5:[No Name] [+]             ▐}{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
       mouse scrolling                                      |
@@ -862,7 +862,7 @@ describe('ui/mouse/input', function()
       {0:~                         }│lines                     |
       {0:~                         }│to                        |
       {0:~                         }│test                      |
-      {5:[No Name] [+]              }{4:[No Name] [+]             }|
+      {5:[No Name] [+]             ▐}{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
       mouse scrolling                                      |
@@ -884,7 +884,7 @@ describe('ui/mouse/input', function()
       {0:~                         }│lines                     |
       {0:~                         }│to                        |
       {0:~                         }│test                      |
-      {5:[No Name] [+]              }{4:[No Name] [+]             }|
+      {5:[No Name] [+]             ▐}{4:[No Name] [+]             }|
       Inserting                                            |
       text                                                 |
       with                                                 |

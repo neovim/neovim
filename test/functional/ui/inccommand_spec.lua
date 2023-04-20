@@ -1982,7 +1982,7 @@ describe("'inccommand' split windows", function()
       {15:~                   }│{15:~                  }|
       {15:~                   }│{15:~                  }|
       {15:~                   }│{15:~                  }|
-      {11:[No Name] [+]        }{10:[No Name] [+]      }|
+      {11:[No Name] [+]       ▐}{10:[No Name] [+]      }|
       Inc substitution on                     |
       {12:tw}o lines                               |
                                               |

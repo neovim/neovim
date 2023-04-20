@@ -120,7 +120,7 @@ describe('highlight defaults', function()
       {0:~                   }│{0:~               }│{0:~              }|
       {0:~                   }│{0:~               }│{0:~              }|
       {0:~                   }│{0:~               }│{0:~              }|
-      {1:[No Name]            }{2:[No Name]        [No Name]      }|
+      {1:[No Name]           ▐}{2:[No Name]        [No Name]      }|
                                                            |
       {0:~                                                    }|
       {0:~                                                    }|
@@ -158,7 +158,7 @@ describe('highlight defaults', function()
       {0:~                   }│{0:~                   }│{0:~          }|
       {0:~                   }│{0:~                   }│{0:~          }|
       {0:~                   }│{0:~                   }│{0:~          }|
-      {2:[No Name]            }{1:[No Name]            }{2:[No Name]  }|
+      {2:[No Name]           }{1:▌[No Name]           ▐}{2:[No Name]  }|
                                                            |
       {0:~                                                    }|
       {0:~                                                    }|
@@ -175,7 +175,7 @@ describe('highlight defaults', function()
       {0:~                   }│{0:~          }│{0:~                   }|
       {0:~                   }│{0:~          }│{0:~                   }|
       {0:~                   }│{0:~          }│{0:~                   }|
-      {2:[No Name]            [No Name]   }{1:[No Name]           }|
+      {2:[No Name]            [No Name]  }{1:▌[No Name]           }|
                                                            |
       {0:~                                                    }|
       {0:~                                                    }|
@@ -192,7 +192,7 @@ describe('highlight defaults', function()
       {0:~                   }│{0:~                   }│{0:~          }|
       {0:~                   }│{0:~                   }│{0:~          }|
       {0:~                   }│{0:~                   }│{0:~          }|
-      {1:[No Name]            }{2:[No Name]            [No Name]  }|
+      {1:[No Name]           ▐}{2:[No Name]            [No Name]  }|
                                                            |
       {0:~                                                    }|
       {0:~                                                    }|
@@ -1188,7 +1188,7 @@ describe('CursorLine and CursorLineNr highlights', function()
       {8:~                        }│{8:~                       }|
       {8:~                        }│{8:~                       }|
       {8:~                        }│{8:~                       }|
-      {4:[No Name] [+]             }{9:[No Name] [+]           }|
+      {4:[No Name] [+]            }{9:▌[No Name] [+]           }|
                                                         |
     ]])
     feed('jjjjj')
@@ -1203,7 +1203,7 @@ describe('CursorLine and CursorLineNr highlights', function()
       {8:~                        }│{8:~                       }|
       {8:~                        }│{8:~                       }|
       {8:~                        }│{8:~                       }|
-      {4:[No Name] [+]             }{9:[No Name] [+]           }|
+      {4:[No Name] [+]            }{9:▌[No Name] [+]           }|
                                                         |
     ]])
 
@@ -1222,7 +1222,7 @@ describe('CursorLine and CursorLineNr highlights', function()
       {8:~                        }│{8:~                       }|
       {8:~                        }│{8:~                       }|
       {8:~                        }│{8:~                       }|
-      {4:[No Name] [+]             }{9:[No Name] [+]           }|
+      {4:[No Name] [+]            }{9:▌[No Name] [+]           }|
                                                         |
     ]], {
       [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
@@ -1278,7 +1278,7 @@ describe('CursorLine and CursorLineNr highlights', function()
       {7:~                        }│{7:~                       }|
       {7:~                        }│{7:~                       }|
       {7:~                        }│{7:~                       }|
-      {8:[No Name] [+]             }{3:[No Name] [+]           }|
+      {8:[No Name] [+]            ▐}{3:[No Name] [+]           }|
                                                         |
     ]])
     command('set cursorlineopt=number')
@@ -1293,7 +1293,7 @@ describe('CursorLine and CursorLineNr highlights', function()
       {7:~                        }│{7:~                       }|
       {7:~                        }│{7:~                       }|
       {7:~                        }│{7:~                       }|
-      {8:[No Name] [+]             }{3:[No Name] [+]           }|
+      {8:[No Name] [+]            ▐}{3:[No Name] [+]           }|
                                                         |
     ]])
   end)
@@ -1831,7 +1831,7 @@ describe("'winhighlight' highlight", function()
       {2:                                      ~}{1:│}{2:                                       ~}|
       {2:                                      ~}{1:│}{2:                                       ~}|
       {2:                                      ~}{1:│}{2:                                       ~}|
-      {4:[No Name] [+]                           }{3:[No Name] [+]                           }|
+      {4:[No Name] [+]                          }{3:▌[No Name] [+]                           }|
                                                                                       |
     ]])
   end)
