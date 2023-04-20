@@ -425,7 +425,7 @@ local function pick_call_hierarchy_item(call_hierarchy_items)
   local items = {}
   for i, item in pairs(call_hierarchy_items) do
     local entry = item.detail or item.name
-    table.insert(items, string.format('%d. %s', i, entry))
+    items[#items + 1] = string.format('%d. %s', i, entry)
   end
   local choice = vim.fn.inputlist(items)
   if choice < 1 or choice > #items then
@@ -475,7 +475,7 @@ function M.list_workspace_folders()
   local workspace_folders = {}
   for _, client in pairs(vim.lsp.get_active_clients({ bufnr = 0 })) do
     for _, folder in pairs(client.workspace_folders or {}) do
-      table.insert(workspace_folders, folder.name)
+      workspace_folders[#workspace_folders + 1] = folder.name
     end
   end
   return workspace_folders
@@ -512,7 +512,7 @@ function M.add_workspace_folder(workspace_folder)
       if not client.workspace_folders then
         client.workspace_folders = {}
       end
-      table.insert(client.workspace_folders, params.event.added[1])
+      client.workspace_folders[#client.workspace_folders + 1] = params.event.added[1]
     end
   end
 end
@@ -630,7 +630,7 @@ local function on_code_action_results(results, ctx, options)
   for client_id, result in pairs(results) do
     for _, action in pairs(result.result or {}) do
       if action_filter(action) then
-        table.insert(action_tuples, { client_id, action })
+        action_tuples[#action_tuples + 1] = { client_id, action }
       end
     end
   end

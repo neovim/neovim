@@ -264,7 +264,7 @@ local function diagnostic_lines(diagnostics)
       line_diagnostics = {}
       diagnostics_by_line[diagnostic.lnum] = line_diagnostics
     end
-    table.insert(line_diagnostics, diagnostic)
+    line_diagnostics[#line_diagnostics + 1] = diagnostic
   end
   return diagnostics_by_line
 end
@@ -412,7 +412,7 @@ local function get_diagnostics(bufnr, opts, clamp)
           d.end_col = math.max(d.end_col, 0)
         end
       end
-      table.insert(diagnostics, d)
+      diagnostics[#diagnostics + 1] = d
     end
   end
 
@@ -1074,10 +1074,8 @@ function M._get_virt_text_chunks(line_diags, opts)
     if type(prefix) == 'function' then
       resolved_prefix = prefix(line_diags[i]) or ''
     end
-    table.insert(
-      virt_texts,
+    virt_texts[#virt_texts + 1] =
       { resolved_prefix, virtual_text_highlight_map[line_diags[i].severity] }
-    )
   end
   local last = line_diags[#line_diags]
 
@@ -1087,10 +1085,10 @@ function M._get_virt_text_chunks(line_diags, opts)
     if type(suffix) == 'function' then
       suffix = suffix(last) or ''
     end
-    table.insert(virt_texts, {
+    virt_texts[#virt_texts + 1] = {
       string.format(' %s%s', last.message:gsub('\r', ''):gsub('\n', '  '), suffix),
       virtual_text_highlight_map[last.severity],
-    })
+    }
 
     return virt_texts
   end
@@ -1370,12 +1368,12 @@ function M.open_float(opts, ...)
     if type(header) == 'table' then
       -- Don't insert any lines for an empty string
       if string.len(if_nil(header[1], '')) > 0 then
-        table.insert(lines, header[1])
-        table.insert(highlights, { hlname = header[2] or 'Bold' })
+        lines[#lines + 1] = header[1]
+        highlights[#highlights + 1] = { hlname = header[2] or 'Bold' }
       end
     elseif #header > 0 then
-      table.insert(lines, header)
-      table.insert(highlights, { hlname = 'Bold' })
+      lines[#lines + 1] = header
+      highlights[#highlights + 1] = { hlname = 'Bold' }
     end
   end
 
@@ -1442,8 +1440,8 @@ function M.open_float(opts, ...)
     for j = 1, #message_lines do
       local pre = j == 1 and prefix or string.rep(' ', #prefix)
       local suf = j == #message_lines and suffix or ''
-      table.insert(lines, pre .. message_lines[j] .. suf)
-      table.insert(highlights, {
+      lines[#lines + 1] = pre .. message_lines[j] .. suf
+      highlights[#highlights + 1] = {
         hlname = hiname,
         prefix = {
           length = j == 1 and #prefix or 0,
@@ -1453,7 +1451,7 @@ function M.open_float(opts, ...)
           length = j == #message_lines and #suffix or 0,
           hlname = suffix_hl_group,
         },
-      })
+      }
     end
   end
 
@@ -1698,7 +1696,7 @@ function M.toqflist(diagnostics)
       text = v.message,
       type = errlist_type_map[v.severity] or 'E',
     }
-    table.insert(list, item)
+    list[#list + 1] = item
   end
   table.sort(list, function(a, b)
     if a.bufnr == b.bufnr then
@@ -1736,7 +1734,7 @@ function M.fromqflist(list)
       local end_lnum = item.end_lnum > 0 and (item.end_lnum - 1) or lnum
       local end_col = item.end_col > 0 and (item.end_col - 1) or col
       local severity = item.type ~= '' and M.severity[item.type] or M.severity.ERROR
-      table.insert(diagnostics, {
+      diagnostics[#diagnostics + 1] = {
         bufnr = item.bufnr,
         lnum = lnum,
         col = col,
@@ -1744,7 +1742,7 @@ function M.fromqflist(list)
         end_col = end_col,
         severity = severity,
         message = item.text,
-      })
+      }
     end
   end
   return diagnostics

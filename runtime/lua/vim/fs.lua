@@ -234,7 +234,7 @@ function M.find(names, opts)
         local t = {}
         for name, type in M.dir(p) do
           if (not opts.type or opts.type == type) and names(name, p) then
-            table.insert(t, M.joinpath(p, name))
+            t[#t + 1] = M.joinpath(p, name)
           end
         end
         return t

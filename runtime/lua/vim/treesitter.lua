@@ -320,7 +320,7 @@ function M.get_captures_at_pos(bufnr, row, col)
       if M.is_in_node_range(node, row, col) then
         local c = q._query.captures[capture] -- name of the capture in the query
         if c ~= nil then
-          table.insert(matches, { capture = c, metadata = metadata, lang = tree:lang() })
+          matches[#matches + 1] = { capture = c, metadata = metadata, lang = tree:lang() }
         end
       end
     end
@@ -343,7 +343,7 @@ function M.get_captures_at_cursor(winnr)
   local captures = {}
 
   for _, capture in ipairs(data) do
-    table.insert(captures, capture.capture)
+    captures[#captures + 1] = capture.capture
   end
 
   return captures

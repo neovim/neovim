@@ -326,14 +326,14 @@ local function extract_text(lines, start_range, end_range, line_ending)
 
     -- Collect the full line for intermediate lines
     for idx = start_range.line_idx + 1, end_range.line_idx - 1 do
-      table.insert(result, lines[idx])
+      result[#result + 1] = lines[idx]
     end
 
     if lines[end_range.line_idx] then
       -- Collect the changed portion of the last changed line.
-      table.insert(result, string.sub(lines[end_range.line_idx], 1, end_range.byte_idx - 1))
+      result[#result + 1] = string.sub(lines[end_range.line_idx], 1, end_range.byte_idx - 1)
     else
-      table.insert(result, '')
+      result[#result + 1] = ''
     end
 
     -- Add line ending between all lines

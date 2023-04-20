@@ -234,7 +234,7 @@ function lsp._cmd_parts(input)
   for i, v in ipairs(input) do
     validate({ ['cmd argument'] = { v, 's' } })
     if i > 1 then
-      table.insert(cmd_args, v)
+      cmd_args[#cmd_args + 1] = v
     end
   end
   return cmd, cmd_args
@@ -640,7 +640,7 @@ do
           lastline,
           new_lastline
         )
-        table.insert(buf_state.pending_changes, changes)
+        buf_state.pending_changes[#buf_state.pending_changes + 1] = changes
       end
       if debounce == 0 then
         send_changes(bufnr, group.sync_kind, state, buf_state)
@@ -1948,7 +1948,7 @@ function lsp.buf_request(bufnr, method, params, handler)
   for_each_buffer_client(bufnr, function(client, client_id)
     if client.supports_method(method) then
       method_supported = true
-      table.insert(supported_clients, client_id)
+      supported_clients[#supported_clients + 1] = client_id
     end
   end)
 

@@ -176,7 +176,7 @@ end
 function vim.split(s, sep, opts)
   local t = {}
   for c in vim.gsplit(s, sep, opts) do
-    table.insert(t, c)
+    t[#t + 1] = c
   end
   return t
 end
@@ -194,7 +194,7 @@ function vim.tbl_keys(t)
 
   local keys = {}
   for k, _ in pairs(t) do
-    table.insert(keys, k)
+    keys[#keys + 1] = k
   end
   return keys
 end
@@ -210,7 +210,7 @@ function vim.tbl_values(t)
 
   local values = {}
   for _, v in pairs(t) do
-    table.insert(values, v)
+    values[#values + 1] = v
   end
   return values
 end
@@ -243,7 +243,7 @@ function vim.tbl_filter(func, t)
   local rettab = {}
   for _, entry in pairs(t) do
     if func(entry) then
-      table.insert(rettab, entry)
+      rettab[#rettab + 1] = entry
     end
   end
   return rettab
@@ -495,7 +495,7 @@ function vim.list_extend(dst, src, start, finish)
     finish = { finish, 'n', true },
   })
   for i = start or 1, finish or #src do
-    table.insert(dst, src[i])
+    dst[#dst + 1] = src[i]
   end
   return dst
 end
@@ -516,7 +516,7 @@ function vim.tbl_flatten(t)
       if type(v) == 'table' then
         _tbl_flatten(v)
       elseif v then
-        table.insert(result, v)
+        result[#result + 1] = v
       end
     end
   end
@@ -536,7 +536,7 @@ function vim.spairs(t)
   -- collect the keys
   local keys = {}
   for k in pairs(t) do
-    table.insert(keys, k)
+    keys[#keys + 1] = k
   end
   table.sort(keys)
 

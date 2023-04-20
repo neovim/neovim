@@ -35,7 +35,7 @@ local function env_merge(env)
   local final_env = {}
   for k, v in pairs(env) do
     assert(type(k) == 'string', 'env must be a dict')
-    table.insert(final_env, k .. '=' .. tostring(v))
+    final_env[#final_env + 1] = k .. '=' .. tostring(v)
   end
   return final_env
 end
@@ -114,7 +114,7 @@ local function request_parser_loop()
       while body_length < content_length do
         local chunk = coroutine.yield()
           or error('Expected more data for the body. The server may have died.') -- TODO hmm.
-        table.insert(body_chunks, chunk)
+        body_chunks[#body_chunks + 1] = chunk
         body_length = body_length + #chunk
       end
       local last_chunk = body_chunks[#body_chunks]
@@ -174,12 +174,12 @@ local function format_rpc_error(err)
 
   local message_parts = { 'RPC[Error]', code }
   if err.message then
-    table.insert(message_parts, 'message =')
-    table.insert(message_parts, string.format('%q', err.message))
+    message_parts[#message_parts + 1] = 'message ='
+    message_parts[#message_parts + 1] = string.format('%q', err.message)
   end
   if err.data then
-    table.insert(message_parts, 'data =')
-    table.insert(message_parts, vim.inspect(err.data))
+    message_parts[#message_parts + 1] = 'data ='
+    message_parts[#message_parts + 1] = vim.inspect(err.data)
   end
   return table.concat(message_parts, ' ')
 end

@@ -760,10 +760,10 @@ function LanguageTree:_get_injections()
           local regions = vim.tbl_map(function(e)
             return vim.tbl_flatten(e)
           end, entry.regions)
-          table.insert(result[lang], regions)
+          result[lang][#result[lang] + 1] = regions
         else
           for _, ranges in ipairs(entry.regions) do
-            table.insert(result[lang], ranges)
+            result[lang][#result[lang] + 1] = ranges
           end
         end
       end
@@ -949,14 +949,8 @@ function LanguageTree:register_cbs(cbs, recursive)
 
   for name, cbname in pairs(TSCallbackNames) do
     if cbs[name] then
-      table.insert(callbacks[cbname], cbs[name])
+      callbacks[cbname][#callbacks[cbname] + 1] = cbs[name]
     end
-  end
-
-  if recursive then
-    self:for_each_child(function(child)
-      child:register_cbs(cbs, true)
-    end)
   end
 end
 

@@ -369,10 +369,10 @@ function M.get_progress_messages()
         done = ctx.done,
         progress = true,
       }
-      table.insert(new_messages, new_report)
+      new_messages[#new_messages + 1] = new_report
 
       if ctx.done then
-        table.insert(progress_remove, { client = client, token = token })
+        progress_remove[#progress_remove + 1] = { client = client, token = token }
       end
     end
   end
@@ -707,7 +707,7 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
     end
 
     local word = get_completion_word(completion_item)
-    table.insert(matches, {
+    matches[#matches + 1] = {
       word = word,
       abbr = completion_item.label,
       kind = M._get_completion_item_kind_name(completion_item.kind),
@@ -723,7 +723,7 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
           },
         },
       },
-    })
+    }
   end
 
   return matches
@@ -747,7 +747,7 @@ local function get_dir_bufs(path)
   for _, v in ipairs(vim.api.nvim_list_bufs()) do
     local bufname = vim.api.nvim_buf_get_name(v):gsub('buffer://', '')
     if bufname:find(path) then
-      table.insert(buffers, v)
+      buffers[#buffers + 1] = v
     end
   end
   return buffers
@@ -773,7 +773,7 @@ function M.rename(old_fname, new_fname, opts)
     oldbufs = get_dir_bufs(old_fname)
   else
     local oldbuf = vim.fn.bufadd(old_fname)
-    table.insert(oldbufs, oldbuf)
+    oldbufs[#oldbufs + 1] = oldbuf
     win = bufwinid(oldbuf)
   end
 
@@ -912,9 +912,9 @@ function M.convert_input_to_markdown_lines(input, contents)
     elseif input.language then
       -- Some servers send input.value as empty, so let's ignore this :(
       -- assert(type(input.value) == 'string')
-      table.insert(contents, '```' .. input.language)
+      contents[#contents + 1] = '```' .. input.language
       list_extend(contents, split_lines(input.value or ''))
-      table.insert(contents, '```')
+      contents[#contents + 1] = '```'
       -- By deduction, this must be MarkedString[]
     else
       -- Use our existing logic to handle MarkedString
@@ -1239,7 +1239,7 @@ function M._trim(contents, opts)
   end
   if opts.pad_bottom then
     for _ = 1, opts.pad_bottom do
-      table.insert(contents, '')
+      contents[#contents + 1] = ''
     end
   end
   return contents
@@ -1334,17 +1334,17 @@ function M.stylize_markdown(bufnr, contents, opts)
             i = i + 1
             break
           end
-          table.insert(stripped, line)
+          stripped[#stripped + 1] = line
           i = i + 1
         end
-        table.insert(highlights, {
+        highlights[#highlights + 1] = {
           ft = match.ft,
           start = start + 1,
           finish = #stripped,
-        })
+        }
         -- add a separator, but not on the last line
         if opts.separator and i < #contents then
-          table.insert(stripped, '---')
+          stripped[#stripped + 1] = '---'
           markdown_lines[#stripped] = true
         end
       else
@@ -1366,7 +1366,7 @@ function M.stylize_markdown(bufnr, contents, opts)
             and stripped[#stripped]:match('^---+$')
           )
         then
-          table.insert(stripped, line)
+          stripped[#stripped + 1] = line
           markdown_lines[#stripped] = true
         end
         i = i + 1
@@ -1811,7 +1811,7 @@ function M.locations_to_items(locations, offset_encoding)
     for _, temp in ipairs(rows) do
       local pos = temp.start
       local row = pos.line
-      table.insert(uri_rows, row)
+      uri_rows[#uri_rows + 1] = row
     end
 
     -- get all the lines for this uri
@@ -1822,12 +1822,12 @@ function M.locations_to_items(locations, offset_encoding)
       local row = pos.line
       local line = lines[row] or ''
       local col = M._str_byteindex_enc(line, pos.character, offset_encoding)
-      table.insert(items, {
+      items[#items + 1] = {
         filename = filename,
         lnum = row + 1,
         col = col + 1,
         text = line,
-      })
+      }
     end
   end
   return items
@@ -1850,23 +1850,23 @@ function M.symbols_to_items(symbols, bufnr)
       if symbol.location then -- SymbolInformation type
         local range = symbol.location.range
         local kind = M._get_symbol_kind_name(symbol.kind)
-        table.insert(_items, {
+        _items[#_items + 1] = {
           filename = vim.uri_to_fname(symbol.location.uri),
           lnum = range.start.line + 1,
           col = range.start.character + 1,
           kind = kind,
           text = '[' .. kind .. '] ' .. symbol.name,
-        })
+        }
       elseif symbol.selectionRange then -- DocumentSymbole type
         local kind = M._get_symbol_kind_name(symbol.kind)
-        table.insert(_items, {
+        _items[#_items + 1] = {
           -- bufnr = _bufnr,
           filename = api.nvim_buf_get_name(_bufnr),
           lnum = symbol.selectionRange.start.line + 1,
           col = symbol.selectionRange.start.character + 1,
           kind = kind,
           text = '[' .. kind .. '] ' .. symbol.name,
-        })
+        }
         if symbol.children then
           for _, v in ipairs(_symbols_to_items(symbol.children, _items, _bufnr)) do
             for _, s in ipairs(v) do

@@ -29,7 +29,7 @@ local vim9 = (function()
 
   M.fn_ref = function(module, name, copied, ...)
     for _, val in ipairs({ ... }) do
-      table.insert(copied, val)
+      copied[#copied + 1] = val
     end
 
     local funcref = name
@@ -294,7 +294,7 @@ vim9['fn'] = (function()
   end
 
   M.add = function(list, item)
-    table.insert(list, item)
+    list[#list + 1] = item
     return list
   end
 
@@ -371,10 +371,10 @@ readdirex({directory} [, {expr} [, {dict}]])			*readdirex()*
     local files = vim.fn.readdir(dir)
     local direx = {}
     for _, f in ipairs(files) do
-      table.insert(direx, {
+      direx[#direx + 1] = {
         name = f,
         type = vim.fn.getftype(f),
-      })
+      }
     end
 
     return direx
@@ -456,7 +456,7 @@ readdirex({directory} [, {expr} [, {dict}]])			*readdirex()*
 
       local lines = {}
       for _, obj in ipairs(text) do
-        table.insert(lines, obj.text)
+        lines[#lines + 1] = obj.text
       end
 
       vim.api.nvim_buf_set_lines(vim.api.nvim_win_get_buf(id), 0, -1, false, lines)
@@ -489,7 +489,7 @@ vim9['heredoc'] = (function()
 
     local trimmed_lines = {}
     for _, line in ipairs(lines) do
-      table.insert(trimmed_lines, string.sub(line, min_whitespace + 1))
+      trimmed_lines[#trimmed_lines + 1] = string.sub(line, min_whitespace + 1)
     end
 
     return trimmed_lines

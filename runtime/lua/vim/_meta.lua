@@ -122,7 +122,7 @@ local function remove_duplicate_values(t)
   local result, seen = {}, {}
   for _, v in ipairs(t) do
     if not seen[v] then
-      table.insert(result, v)
+      result[#result + 1] = v
     end
 
     seen[v] = true
@@ -196,7 +196,7 @@ local to_vim_value = {
       local keys = {}
       for k, v in pairs(value) do
         if v then
-          table.insert(keys, k)
+          keys[#keys + 1] = k
         end
       end
 
@@ -231,7 +231,7 @@ local to_vim_value = {
 
     local result = {}
     for opt_key, opt_value in pairs(value) do
-      table.insert(result, string.format('%s:%s', opt_key, opt_value))
+      result[#result + 1] = string.format('%s:%s', opt_key, opt_value)
     end
 
     table.sort(result)
@@ -278,7 +278,7 @@ local to_lua_value = {
 
       local result = {}
       vim.list_extend(result, vim.split(left, ','))
-      table.insert(result, ',')
+      result[#result + 1] = ','
       vim.list_extend(result, vim.split(right, ','))
 
       table.sort(result)
@@ -291,7 +291,7 @@ local to_lua_value = {
 
       local result = {}
       vim.list_extend(result, vim.split(left, ','))
-      table.insert(result, '^,')
+      result[#result + 1] = '^,'
       vim.list_extend(result, vim.split(right, ','))
 
       table.sort(result)
@@ -399,7 +399,7 @@ local add_methods = {
 
   array = function(left, right)
     for _, v in ipairs(right) do
-      table.insert(left, v)
+      left[#left + 1] = v
     end
 
     return left

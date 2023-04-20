@@ -115,7 +115,7 @@ function vim._os_proc_children(ppid)
   for s in rv:gmatch('%S+') do
     local i = tonumber(s)
     if i ~= nil then
-      table.insert(children, i)
+      children[#children + 1] = i
     end
   end
   return children
@@ -587,8 +587,8 @@ function vim._on_key(char)
     local ok, err_msg = pcall(v, char)
     if not ok then
       vim.on_key(nil, k)
-      table.insert(failed_ns_ids, k)
-      table.insert(failed_messages, err_msg)
+      failed_ns_ids[#failed_ns_ids + 1] = k
+      failed_messages[#failed_messages + 1] = err_msg
     end
   end
 
@@ -720,14 +720,14 @@ vim._expand_pat_get_parts = function(lua_string)
     local s = lua_string:sub(idx, idx)
 
     if not in_brackets and (s == '.' or s == ':') then
-      table.insert(parts, accumulator)
+      parts[#parts + 1] = accumulator
       accumulator = ''
 
       search_index = idx + 1
     elseif s == '[' then
       in_brackets = true
 
-      table.insert(parts, accumulator)
+      parts[#parts + 1] = accumulator
       accumulator = ''
 
       search_index = idx + 1
@@ -737,7 +737,7 @@ vim._expand_pat_get_parts = function(lua_string)
         search_index = idx + 1
 
         if string_char == 'VAR' then
-          table.insert(parts, { accumulator })
+          parts[#parts + 1] = { accumulator }
           accumulator = ''
 
           string_char = nil
@@ -755,7 +755,7 @@ vim._expand_pat_get_parts = function(lua_string)
         if string_char ~= s then
           accumulator = accumulator .. s
         else
-          table.insert(parts, accumulator)
+          parts[#parts + 1] = accumulator
           accumulator = ''
 
           string_char = nil
@@ -898,11 +898,11 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
   else
     local command = {}
     if f_tab then
-      table.insert(command, 'tab')
+      command[#command + 1] = 'tab'
     end
-    table.insert(command, 'drop')
+    command[#command + 1] = 'drop'
     for i = 2, #args do
-      table.insert(command, vim.fn.fnameescape(args[i]))
+      command[#command + 1] = vim.fn.fnameescape(args[i])
     end
     vim.fn.rpcrequest(rcid, 'nvim_command', table.concat(command, ' '))
   end

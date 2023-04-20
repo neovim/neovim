@@ -70,9 +70,9 @@ local function uri_from_fname(path)
   end
   local uri_parts = { 'file://' }
   if is_windows then
-    table.insert(uri_parts, '/')
+    uri_parts[#uri_parts + 1] = '/'
   end
-  table.insert(uri_parts, path)
+  uri_parts[#uri_parts + 1] = path
   return table.concat(uri_parts)
 end
 

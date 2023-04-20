@@ -155,7 +155,7 @@ function vim.show_pos(bufnr, row, col, filter)
 
   ---@private
   local function nl()
-    table.insert(lines, {})
+    lines[#lines + 1] = {}
   end
 
   ---@private
@@ -232,7 +232,7 @@ function vim.show_pos(bufnr, row, col, filter)
   local chunks = {}
   for _, line in ipairs(lines) do
     vim.list_extend(chunks, line)
-    table.insert(chunks, { '\n' })
+    chunks[#chunks + 1] = { '\n' }
   end
   if #chunks == 0 then
     chunks = {

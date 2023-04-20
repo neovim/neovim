@@ -2318,7 +2318,7 @@ local function sort_by_priority(t)
     if not opts.priority then
       opts.priority = 0
     end
-    table.insert(sorted, { [k] = { ft, opts } })
+    sorted[#sorted + 1] = { [k] = { ft, opts } }
   end
   table.sort(sorted, function(a, b)
     return a[next(a)][2].priority > b[next(b)][2].priority

@@ -19,7 +19,7 @@ local function parse(pattern)
     local new_patterns = {}
     for _, p in ipairs(patterns) do
       for _, chunk in ipairs(chunks) do
-        table.insert(new_patterns, p .. chunk)
+        new_patterns[#new_patterns + 1] = p .. chunk
       end
     end
     patterns = new_patterns
@@ -33,7 +33,7 @@ local function parse(pattern)
     for i = 1, #s do
       local c = string.sub(s, i, i)
       if c == sep and not in_braces and not in_brackets then
-        table.insert(segments, segment)
+        segments[#segments + 1] = segment
         segment = ''
       else
         if c == '{' then
@@ -49,7 +49,7 @@ local function parse(pattern)
       end
     end
     if segment ~= '' then
-      table.insert(segments, segment)
+      segments[#segments + 1] = segment
     end
     return segments
   end
@@ -115,7 +115,7 @@ local function parse(pattern)
               local choices = split(brace_val, ',')
               local parsed_choices = {}
               for _, choice in ipairs(choices) do
-                table.insert(parsed_choices, parse(choice))
+                parsed_choices[#parsed_choices + 1] = parse(choice)
               end
               append(vim.tbl_flatten(parsed_choices))
               in_braces = false
@@ -207,11 +207,11 @@ function M.register(reg, ctx)
     local glob_patterns = {}
     if type(w.globPattern) == 'string' then
       for _, folder in ipairs(client.workspace_folders) do
-        table.insert(glob_patterns, { baseUri = folder.uri, pattern = w.globPattern })
+        glob_patterns[#glob_patterns + 1] = { baseUri = folder.uri, pattern = w.globPattern }
       end
     else
       relative_pattern = true
-      table.insert(glob_patterns, w.globPattern)
+      glob_patterns[#glob_patterns + 1] = w.globPattern
     end
     for _, glob_pattern in ipairs(glob_patterns) do
       local base_dir = nil
@@ -232,11 +232,11 @@ function M.register(reg, ctx)
       end
       pattern = parse(pattern)
 
-      table.insert(watch_regs, {
+      watch_regs[#watch_regs + 1] = {
         base_dir = base_dir,
         pattern = pattern,
         kind = kind,
-      })
+      }
     end
   end
 
@@ -256,7 +256,7 @@ function M.register(reg, ctx)
           local last_type = change_cache[client_id][change.uri]
           if last_type ~= change.type then
             change_queues[client_id] = change_queues[client_id] or {}
-            table.insert(change_queues[client_id], change)
+            change_queues[client_id][#change_queues[client_id] + 1] = change
             change_cache[client_id][change.uri] = change.type
           end
 
@@ -281,10 +281,9 @@ function M.register(reg, ctx)
   for _, w in ipairs(watch_regs) do
     if not watching[w.base_dir] then
       watching[w.base_dir] = true
-      table.insert(
-        cancels[client_id][reg.id],
+      local tmp = cancels[client_id][reg.id]
+      tmp[#tmp + 1] =
         M._watchfunc(w.base_dir, { uvflags = { recursive = true } }, callback(w.base_dir))
-      )
     end
   end
 end

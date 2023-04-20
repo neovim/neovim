@@ -124,9 +124,9 @@ do
         for i = 1, argc do
           local arg = select(i, ...)
           if arg == nil then
-            table.insert(parts, 'nil')
+            parts[#parts + 1] = 'nil'
           else
-            table.insert(parts, format_func(arg))
+            parts[#parts + 1] = format_func(arg)
           end
         end
         logfile:write(table.concat(parts, '\t'), '\n')

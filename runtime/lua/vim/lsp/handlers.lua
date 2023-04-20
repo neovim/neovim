@@ -105,7 +105,7 @@ M['window/showMessageRequest'] = function(_, result)
     for i, action in ipairs(actions) do
       local title = action.title:gsub('\r\n', '\\r\\n')
       title = title:gsub('\n', '\\n')
-      table.insert(option_strings, string.format('%d. %s', i, title))
+      option_strings[#option_strings + 1] = string.format('%d. %s', i, title)
     end
     local choice = vim.fn.inputlist(option_strings)
     if choice < 1 or choice > #actions then
@@ -193,7 +193,7 @@ M['workspace/configuration'] = function(_, result, ctx)
       if value == vim.NIL and item.section == '' then
         value = client.config.settings or vim.NIL
       end
-      table.insert(response, value)
+      response[#response + 1] = value
     end
   end
   return response
@@ -502,12 +502,12 @@ local make_call_hierarchy_handler = function(direction)
     for _, call_hierarchy_call in pairs(result) do
       local call_hierarchy_item = call_hierarchy_call[direction]
       for _, range in pairs(call_hierarchy_call.fromRanges) do
-        table.insert(items, {
+        items[#items + 1] = {
           filename = assert(vim.uri_to_fname(call_hierarchy_item.uri)),
           text = call_hierarchy_item.name,
           lnum = range.start.line + 1,
           col = range.start.character + 1,
-        })
+        }
       end
     end
     vim.fn.setqflist({}, ' ', { title = 'LSP call hierarchy', items = items })

@@ -25,7 +25,7 @@ local function dedupe_files(files)
 
   for _, path in ipairs(files) do
     if not seen[path] then
-      table.insert(result, path)
+      result[#result + 1] = path
       seen[path] = true
     end
   end
@@ -52,7 +52,7 @@ local function add_included_lang(base_langs, lang, ilang)
   if lang == ilang then
     return true
   end
-  table.insert(base_langs, ilang)
+  base_langs[#base_langs + 1] = ilang
   return false
 end
 
@@ -135,7 +135,7 @@ function M.get_files(lang, query_name, is_included)
     end
 
     if extension then
-      table.insert(extensions, filename)
+      extensions[#extensions + 1] = filename
     elseif base_query == nil then
       base_query = filename
     end
@@ -160,7 +160,7 @@ local function read_query_files(filenames)
   local contents = {}
 
   for _, filename in ipairs(filenames) do
-    table.insert(contents, safe_read(filename, '*a'))
+    contents[#contents + 1] = safe_read(filename, '*a')
   end
 
   return table.concat(contents, '')

@@ -64,7 +64,7 @@ local function traverse(node, depth, lang, injections, tree)
       text = string.format('"%s"', type:gsub('\n', '\\n'))
     end
 
-    table.insert(tree, {
+    tree[#tree + 1] = {
       id = child:id(),
       text = text,
       named = named,
@@ -74,7 +74,7 @@ local function traverse(node, depth, lang, injections, tree)
       end_lnum = end_lnum,
       end_col = end_col,
       lang = lang,
-    })
+    }
 
     traverse(child, depth + 1, lang, injections, tree)
   end

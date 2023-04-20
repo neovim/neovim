@@ -732,7 +732,7 @@ function protocol.make_client_capabilities()
             local res = {}
             for k in ipairs(protocol.CompletionItemKind) do
               if type(k) == 'number' then
-                table.insert(res, k)
+                res[#res + 1] = k
               end
             end
             return res
@@ -781,7 +781,7 @@ function protocol.make_client_capabilities()
             local res = {}
             for k in ipairs(protocol.SymbolKind) do
               if type(k) == 'number' then
-                table.insert(res, k)
+                res[#res + 1] = k
               end
             end
             return res
@@ -800,7 +800,7 @@ function protocol.make_client_capabilities()
             local res = {}
             for k in ipairs(protocol.DiagnosticTag) do
               if type(k) == 'number' then
-                table.insert(res, k)
+                res[#res + 1] = k
               end
             end
             return res
@@ -819,7 +819,7 @@ function protocol.make_client_capabilities()
             local res = {}
             for k in ipairs(protocol.SymbolKind) do
               if type(k) == 'number' then
-                table.insert(res, k)
+                res[#res + 1] = k
               end
             end
             return res

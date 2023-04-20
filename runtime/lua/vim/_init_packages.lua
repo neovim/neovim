@@ -8,7 +8,7 @@ for s in (package.cpath .. ';'):gmatch('[^;]*;') do
   local pathtrail = s:match('[/\\][^/\\]*%?.*$')
   if pathtrail and not pathtrails[pathtrail] then
     pathtrails[pathtrail] = true
-    table.insert(vim._so_trails, pathtrail)
+    vim._so_trails[#vim._so_trails + 1] = pathtrail
   end
 end
 
@@ -24,7 +24,7 @@ function vim._load_package(name)
   local so_paths = {}
   for _, trail in ipairs(vim._so_trails) do
     local path = 'lua' .. trail:gsub('?', basename) -- so_trails contains a leading slash
-    table.insert(so_paths, path)
+    so_paths[#so_paths + 1] = path
   end
 
   found = vim.api.nvim__get_runtime(so_paths, false, { is_lua = true })

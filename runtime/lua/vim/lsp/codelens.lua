@@ -85,7 +85,7 @@ function M.run()
   for client, lenses in pairs(lenses_by_client) do
     for _, lens in pairs(lenses) do
       if lens.range.start.line == (line - 1) then
-        table.insert(options, { client = client, lens = lens })
+        options[#options + 1] = { client = client, lens = lens }
       end
     end
   end
@@ -147,7 +147,7 @@ function M.display(lenses, bufnr, client_id)
       line_lenses = {}
       lenses_by_lnum[lens.range.start.line] = line_lenses
     end
-    table.insert(line_lenses, lens)
+    line_lenses[#line_lenses + 1] = lens
   end
   local num_lines = api.nvim_buf_line_count(bufnr)
   for i = 0, num_lines do
@@ -160,9 +160,9 @@ function M.display(lenses, bufnr, client_id)
     end)
     for j, lens in ipairs(line_lenses) do
       local text = lens.command and lens.command.title or 'Unresolved lens ...'
-      table.insert(chunks, { text, 'LspCodeLens' })
+      chunks[#chunks + 1] = { text, 'LspCodeLens' }
       if j < num_line_lenses then
-        table.insert(chunks, { ' | ', 'LspCodeLensSeparator' })
+        chunks[#chunks + 1] = { ' | ', 'LspCodeLensSeparator' }
       end
     end
     if #chunks > 0 then
