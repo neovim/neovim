@@ -7,6 +7,7 @@ local exc_exec, expect, eval = helpers.exc_exec, helpers.expect, helpers.eval
 local insert, pcall_err = helpers.insert, helpers.pcall_err
 local matches = helpers.matches
 local meths = helpers.meths
+local feed = helpers.feed
 
 describe('eval-API', function()
   before_each(clear)
@@ -48,10 +49,25 @@ describe('eval-API', function()
     eq('Vim(call):E5555: API call: Invalid buffer id: 17', err)
   end)
 
-  it('cannot change texts if textlocked', function()
+  it('cannot change text or window if textlocked', function()
     command("autocmd TextYankPost <buffer> ++once call nvim_buf_set_lines(0, 0, -1, v:false, [])")
     matches('Vim%(call%):E5555: API call: E565: Not allowed to change text or change window$',
        pcall_err(command, "normal! yy"))
+
+    -- Functions checking textlock should also not be usable from <expr> mappings.
+    command("inoremap <expr> <f2> nvim_win_close(0, 1)")
+    eq('Vim(normal):E5555: API call: E565: Not allowed to change text or change window',
+       pcall_err(command, [[execute "normal i\<f2>"]]))
+
+    -- Some functions checking textlock (usually those that may change the current window or buffer)
+    -- also ought to not be usable in the cmdwin.
+    feed("q:")
+    eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+       pcall_err(meths.win_hide, 0))
+
+    -- But others, like nvim_buf_set_lines(), which just changes text, is OK.
+    curbufmeths.set_lines(0, -1, 1, {"wow!"})
+    eq({'wow!'}, curbufmeths.get_lines(0, -1, 1))
   end)
 
   it("use buffer numbers and windows ids as handles", function()

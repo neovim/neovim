@@ -1365,7 +1365,7 @@ nvim_set_current_buf({buffer})                        *nvim_set_current_buf()*
     Sets the current buffer.
 
     Attributes: ~
-        not allowed when |textlock| is active
+        not allowed when |textlock| is active or in the |cmdwin|
 
     Parameters: ~
       • {buffer}  Buffer handle
@@ -1389,7 +1389,7 @@ nvim_set_current_tabpage({tabpage})               *nvim_set_current_tabpage()*
     Sets the current tabpage.
 
     Attributes: ~
-        not allowed when |textlock| is active
+        not allowed when |textlock| is active or in the |cmdwin|
 
     Parameters: ~
       • {tabpage}  Tabpage handle
@@ -1398,7 +1398,7 @@ nvim_set_current_win({window})                        *nvim_set_current_win()*
     Sets the current window.
 
     Attributes: ~
-        not allowed when |textlock| is active
+        not allowed when |textlock| is active or in the |cmdwin|
 
     Parameters: ~
       • {window}  Window handle
@@ -2163,7 +2163,7 @@ nvim_buf_delete({buffer}, {opts})                          *nvim_buf_delete()*
     Deletes the buffer. See |:bwipeout|
 
     Attributes: ~
-        not allowed when |textlock| is active
+        not allowed when |textlock| is active or in the |cmdwin|
 
     Parameters: ~
       • {buffer}  Buffer handle, or 0 for current buffer
@@ -2894,7 +2894,7 @@ nvim_win_hide({window})                                      *nvim_win_hide()*
     or |nvim_win_close()|, which will close the buffer.
 
     Attributes: ~
-        not allowed when |textlock| is active
+        not allowed when |textlock| is active or in the |cmdwin|
 
     Parameters: ~
       • {window}  Window handle, or 0 for current window
@@ -2912,7 +2912,7 @@ nvim_win_set_buf({window}, {buffer})                      *nvim_win_set_buf()*
     Sets the current buffer in a window, without side effects
 
     Attributes: ~
-        not allowed when |textlock| is active
+        not allowed when |textlock| is active or in the |cmdwin|
 
     Parameters: ~
       • {window}  Window handle, or 0 for current window
@@ -2999,7 +2999,7 @@ nvim_open_win({buffer}, {enter}, {*config})                  *nvim_open_win()*
 <
 
     Attributes: ~
-        not allowed when |textlock| is active
+        not allowed when |textlock| is active or in the |cmdwin|
 
     Parameters: ~
       • {buffer}  Buffer to display, or 0 for current buffer
