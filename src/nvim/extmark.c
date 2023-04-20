@@ -31,6 +31,7 @@
 #include <assert.h>
 #include <sys/types.h>
 
+#include "nvim/api/private/helpers.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
@@ -59,7 +60,7 @@ static uint32_t *buf_ns_ref(buf_T *buf, uint32_t ns_id, bool put)
 /// must not be used during iteration!
 void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col, int end_row,
                  colnr_T end_col, Decoration *decor, bool right_gravity, bool end_right_gravity,
-                 ExtmarkOp op)
+                 ExtmarkOp op, Error *err)
 {
   uint32_t *ns = buf_ns_ref(buf, ns_id, true);
   uint32_t id = idp ? *idp : 0;
@@ -88,6 +89,13 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
     MarkTreeIter itr[1] = { 0 };
     mtkey_t old_mark = marktree_lookup_ns(buf->b_marktree, ns_id, id, false, itr);
     if (old_mark.id) {
+      if (decor_state.running_on_lines) {
+        if (err) {
+          api_set_error(err, kErrorTypeException,
+                        "Cannot change extmarks during on_line callbacks");
+        }
+        goto error;
+      }
       if (mt_paired(old_mark) || end_row > -1) {
         extmark_del(buf, ns_id, id);
       } else {
@@ -161,6 +169,13 @@ revised:
 
   if (idp) {
     *idp = id;
+  }
+
+  return;
+
+error:
+  if (decor_full) {
+    decor_free(decor);
   }
 }
 

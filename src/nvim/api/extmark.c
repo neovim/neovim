@@ -874,7 +874,10 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
     extmark_set(buf, (uint32_t)ns_id, &id, (int)line, (colnr_T)col, line2, col2,
                 has_decor ? &decor : NULL, right_gravity, end_right_gravity,
-                kExtmarkNoUndo);
+                kExtmarkNoUndo, err);
+    if (ERROR_SET(err)) {
+      goto error;
+    }
   }
 
   return (Integer)id;
@@ -902,6 +905,11 @@ Boolean nvim_buf_del_extmark(Buffer buffer, Integer ns_id, Integer id, Error *er
   VALIDATE_INT(ns_initialized((uint32_t)ns_id), "ns_id", ns_id, {
     return false;
   });
+
+  if (decor_state.running_on_lines) {
+    api_set_error(err, kErrorTypeValidation, "Cannot remove extmarks during on_line callbacks");
+    return false;
+  }
 
   return extmark_del(buf, (uint32_t)ns_id, (uint32_t)id);
 }
@@ -993,7 +1001,7 @@ Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, In
   extmark_set(buf, ns, NULL,
               (int)line, (colnr_T)col_start,
               end_line, (colnr_T)col_end,
-              &decor, true, false, kExtmarkNoUndo);
+              &decor, true, false, kExtmarkNoUndo, NULL);
   return ns_id;
 }
 
@@ -1021,6 +1029,11 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
   VALIDATE_RANGE((line_start >= 0 && line_start < MAXLNUM), "line number", {
     return;
   });
+
+  if (decor_state.running_on_lines) {
+    api_set_error(err, kErrorTypeValidation, "Cannot remove extmarks during on_line callbacks");
+    return;
+  }
 
   if (line_end < 0 || line_end > MAXLNUM) {
     line_end = MAXLNUM;
@@ -1051,10 +1064,12 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 /// for the extmarks set/modified inside the callback anyway.
 ///
 /// Note: doing anything other than setting extmarks is considered experimental.
-/// Doing things like changing options are not expliticly forbidden, but is
+/// Doing things like changing options are not explicitly forbidden, but is
 /// likely to have unexpected consequences (such as 100% CPU consumption).
 /// doing `vim.rpcnotify` should be OK, but `vim.rpcrequest` is quite dubious
 /// for the moment.
+///
+/// Note: It is not allowed to remove or update extmarks in 'on_line' callbacks.
 ///
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param opts  Table of callbacks:

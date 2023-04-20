@@ -150,6 +150,7 @@ void decor_providers_invoke_win(win_T *wp, DecorProviders *providers,
 void decor_providers_invoke_line(win_T *wp, DecorProviders *providers, int row, bool *has_decor,
                                  char **err)
 {
+  decor_state.running_on_lines = true;
   for (size_t k = 0; k < kv_size(*providers); k++) {
     DecorProvider *p = kv_A(*providers, k);
     if (p && p->redraw_line != LUA_NOREF) {
@@ -167,6 +168,7 @@ void decor_providers_invoke_line(win_T *wp, DecorProviders *providers, int row, 
       hl_check_ns();
     }
   }
+  decor_state.running_on_lines = false;
 }
 
 /// For each provider invoke the 'buf' callback for a given buffer.
@@ -179,8 +181,9 @@ void decor_providers_invoke_buf(buf_T *buf, DecorProviders *providers, char **er
   for (size_t i = 0; i < kv_size(*providers); i++) {
     DecorProvider *p = kv_A(*providers, i);
     if (p && p->redraw_buf != LUA_NOREF) {
-      MAXSIZE_TEMP_ARRAY(args, 1);
+      MAXSIZE_TEMP_ARRAY(args, 2);
       ADD_C(args, BUFFER_OBJ(buf->handle));
+      ADD_C(args, INTEGER_OBJ((int64_t)display_tick));
       decor_provider_invoke(p->ns_id, "buf", p->redraw_buf, args, true, err);
     }
   }
