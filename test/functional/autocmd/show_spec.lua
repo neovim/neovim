@@ -180,4 +180,45 @@ describe(":autocmd", function()
       test_3  User
           B         echo "B3"]]), funcs.execute('autocmd test_3 * B'))
   end)
+
+  it('should skip consecutive patterns', function()
+    exec([[
+      autocmd! BufEnter
+      augroup test_1
+        autocmd BufEnter A echo 'A'
+        autocmd BufEnter A echo 'B'
+        autocmd BufEnter A echo 'C'
+        autocmd BufEnter B echo 'D'
+        autocmd BufEnter B echo 'E'
+        autocmd BufEnter B echo 'F'
+      augroup END
+      augroup test_2
+        autocmd BufEnter C echo 'A'
+        autocmd BufEnter C echo 'B'
+        autocmd BufEnter C echo 'C'
+        autocmd BufEnter D echo 'D'
+        autocmd BufEnter D echo 'E'
+        autocmd BufEnter D echo 'F'
+      augroup END
+
+      let g:output = execute('autocmd BufEnter')
+    ]])
+    eq(dedent([[
+
+      --- Autocommands ---
+      test_1  BufEnter
+          A         echo 'A'
+                    echo 'B'
+                    echo 'C'
+          B         echo 'D'
+                    echo 'E'
+                    echo 'F'
+      test_2  BufEnter
+          C         echo 'A'
+                    echo 'B'
+                    echo 'C'
+          D         echo 'D'
+                    echo 'E'
+                    echo 'F']]), eval('g:output'))
+  end)
 end)

@@ -35,27 +35,24 @@ names_tgt:write('\n  {0, NULL, (event_T)0},')
 enum_tgt:write('\n} event_T;\n')
 names_tgt:write('\n};\n')
 
-local gen_autopat_events = function(name)
-  names_tgt:write(string.format('\nstatic AutoPat *%s[NUM_EVENTS] = {\n ', name))
+do
+  names_tgt:write('\nstatic AutoCmdVec autocmds[NUM_EVENTS] = {\n ')
   local line_len = 1
   for _ = 1,((#events) - 1) do
-    line_len = line_len + #(' NULL,')
+    line_len = line_len + #(' KV_INITIAL_VALUE,')
     if line_len > 80 then
       names_tgt:write('\n ')
-      line_len = 1 + #(' NULL,')
+      line_len = 1 + #(' KV_INITIAL_VALUE,')
     end
-    names_tgt:write(' NULL,')
+    names_tgt:write(' KV_INITIAL_VALUE,')
   end
-  if line_len + #(' NULL') > 80 then
-    names_tgt:write('\n  NULL')
+  if line_len + #(' KV_INITIAL_VALUE') > 80 then
+    names_tgt:write('\n  KV_INITIAL_VALUE')
   else
-    names_tgt:write(' NULL')
+    names_tgt:write(' KV_INITIAL_VALUE')
   end
   names_tgt:write('\n};\n')
 end
-
-gen_autopat_events("first_autopat")
-gen_autopat_events("last_autopat")
 
 enum_tgt:close()
 names_tgt:close()
