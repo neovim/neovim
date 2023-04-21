@@ -282,7 +282,7 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
     if (item->win_col < 0) {
       continue;
     }
-    int col;
+    int col = 0;
     if (item->decor.ui_watched) {
       // send mark position to UI
       col = item->win_col;
@@ -1386,7 +1386,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   if (v > 0 && !number_only) {
     char *prev_ptr = ptr;
     chartabsize_T cts;
-    int charsize;
+    int charsize = 0;
 
     init_chartabsize_arg(&cts, wp, lnum, wlv.vcol, line, ptr);
     while (cts.cts_vcol < v && *cts.cts_ptr != NUL) {
