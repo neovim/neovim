@@ -294,9 +294,11 @@ describe('lua stdlib', function()
 
   it('vim.gsplit, vim.split', function()
     local tests = {
+      --                            plain  trimempty
       { 'a,b',             ',',     false, false, { 'a', 'b' } },
       { ':aa::::bb:',      ':',     false, false, { '', 'aa', '', '', '', 'bb', '' } },
       { ':aa::::bb:',      ':',     false, true,  { 'aa', '', '', '', 'bb' } },
+      { 'aa::::bb:',       ':',     false, true,  { 'aa', '', '', '', 'bb' } },
       { ':aa::bb:',        ':',     false, true,  { 'aa', '', 'bb' } },
       { '/a/b:/b/\n',      '[:\n]', false, true,  { '/a/b', '/b/' } },
       { '::ee::ff:',       ':',     false, false, { '', '', 'ee', '', 'ff', '' } },
@@ -315,7 +317,7 @@ describe('lua stdlib', function()
     }
 
     for _, t in ipairs(tests) do
-      eq(t[5], vim.split(t[1], t[2], {plain=t[3], trimempty=t[4]}))
+      eq(t[5], vim.split(t[1], t[2], {plain=t[3], trimempty=t[4]}), t[1])
     end
 
     -- Test old signature
