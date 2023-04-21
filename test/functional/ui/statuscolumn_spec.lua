@@ -15,6 +15,7 @@ describe('statuscolumn', function()
     clear('--cmd', 'set number nuw=1 | call setline(1, repeat(["aaaaa"], 16)) | norm GM')
     screen = Screen.new()
     screen:attach()
+    exec_lua('ns = vim.api.nvim_create_namespace("")')
   end)
 
   it("fails with invalid 'statuscolumn'", function()
@@ -352,7 +353,6 @@ describe('statuscolumn', function()
     ]])
     -- Status column is re-evaluated for virt_lines, buffer line, and wrapped line
     exec_lua([[
-      local ns = vim.api.nvim_create_namespace("ns")
       vim.api.nvim_buf_set_extmark(0, ns, 5, 0, {
         virt_lines_above = true, virt_lines = {{{"virt_line above", ""}}} })
       vim.api.nvim_buf_set_extmark(0, ns, 4, 0, { virt_lines = {{{"virt_line", ""}}} })
@@ -377,7 +377,6 @@ describe('statuscolumn', function()
     ]])
     -- Also test virt_lines at the end of buffer
     exec_lua([[
-      local ns = vim.api.nvim_create_namespace("ns")
       vim.api.nvim_buf_set_extmark(0, ns, 15, 0, { virt_lines = {{{"END", ""}}} })
     ]])
     feed('Gzz')
@@ -400,7 +399,6 @@ describe('statuscolumn', function()
     -- Also test virt_lines when 'cpoptions' includes "n"
     exec_lua([[
       vim.opt.cpoptions:append("n")
-      local ns = vim.api.nvim_create_namespace("ns")
       vim.api.nvim_buf_set_extmark(0, ns, 14, 0, { virt_lines = {{{"virt_line1", ""}}} })
       vim.api.nvim_buf_set_extmark(0, ns, 14, 0, { virt_lines = {{{"virt_line2", ""}}} })
     ]])
@@ -481,7 +479,6 @@ describe('statuscolumn', function()
     for _ = 0,8 do command('norm zfjzo') end
     -- 'statuscolumn' is not drawn for `virt_lines_leftcol` lines
     exec_lua([[
-      local ns = vim.api.nvim_create_namespace("ns")
       vim.api.nvim_buf_set_extmark(0, ns, 6, 0, {
         virt_lines_leftcol = true, virt_lines = {{{"virt", ""}}} })
       vim.api.nvim_buf_set_extmark(0, ns, 7, 0, {
@@ -585,37 +582,78 @@ describe('statuscolumn', function()
   end)
 
   it("has correct width with custom sign column when (un)placing signs", function()
-    screen:try_resize(screen._width, 6)
+    screen:try_resize(screen._width, 3)
     exec_lua([[
       vim.cmd.norm('gg')
       vim.o.signcolumn = 'no'
       vim.fn.sign_define('sign', { text = 'ss' })
       _G.StatusCol = function()
         local s = vim.fn.sign_getplaced(1)[1].signs
+        local es = vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {type = "sign"})
         local sign = ''
-        if #s > 0 then
-          sign = vim.v.lnum == 5 and 'ss' or '  '
+        local signs = #s + #es
+        if signs > 0 then
+          sign = (vim.v.lnum == 2 and 'ss' or '  '):rep(signs)
         end
         return vim.v.lnum .. '%=' .. sign
       end
       vim.o.statuscolumn = "%!v:lua.StatusCol()"
-      vim.fn.sign_place(0, '', 'sign', 1, { lnum = 5 })
     ]])
+    command('sign place 1 line=2 name=sign')
     screen:expect([[
       1   ^aaaaa                                            |
-      2   aaaaa                                            |
-      3   aaaaa                                            |
-      4   aaaaa                                            |
-      5 ssaaaaa                                            |
+      2 ssaaaaa                                            |
+                                                           |
+    ]])
+    command('sign place 2 line=2 name=sign')
+    screen:expect([[
+      1     ^aaaaa                                          |
+      2 ssssaaaaa                                          |
+                                                           |
+    ]])
+    command('sign unplace 2')
+    screen:expect([[
+      1   ^aaaaa                                            |
+      2 ssaaaaa                                            |
                                                            |
     ]])
     command('sign unplace 1')
     screen:expect([[
       1 ^aaaaa                                              |
       2 aaaaa                                              |
-      3 aaaaa                                              |
-      4 aaaaa                                              |
-      5 aaaaa                                              |
+                                                           |
+    ]])
+    -- Also for extmark signs
+    exec_lua('id1 = vim.api.nvim_buf_set_extmark(0, ns, 1, 0, {sign_text = "ss"})')
+    screen:expect([[
+      1   ^aaaaa                                            |
+      2 ssaaaaa                                            |
+                                                           |
+    ]])
+    exec_lua('id2 = vim.api.nvim_buf_set_extmark(0, ns, 1, 0, {sign_text = "ss"})')
+    screen:expect([[
+      1     ^aaaaa                                          |
+      2 ssssaaaaa                                          |
+                                                           |
+    ]])
+    exec_lua("vim.api.nvim_buf_del_extmark(0, ns, id1)")
+    screen:expect([[
+      1   ^aaaaa                                            |
+      2 ssaaaaa                                            |
+                                                           |
+    ]])
+    exec_lua("vim.api.nvim_buf_del_extmark(0, ns, id2)")
+    screen:expect([[
+      1 ^aaaaa                                              |
+      2 aaaaa                                              |
+                                                           |
+    ]])
+    -- In all windows
+    command('wincmd v | set ls=0')
+    command('sign place 1 line=2 name=sign')
+    screen:expect([[
+      1   ^aaaaa                 │1   aaaaa                 |
+      2 ssaaaaa                 │2 ssaaaaa                 |
                                                            |
     ]])
   end)
