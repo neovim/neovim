@@ -138,7 +138,9 @@ function vim.gsplit(s, sep, opts)
     local seg = _pass(s:find(sep, start, plain))
 
     -- Trim empty segments from start/end.
-    if trimempty and seg == '' then
+    if seg ~= '' then
+      empty_start = false
+    elseif trimempty then
       while not done and seg == '' do
         empty_segs = empty_segs + 1
         seg = _pass(s:find(sep, start, plain))
