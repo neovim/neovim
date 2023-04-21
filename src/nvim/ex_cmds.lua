@@ -2959,7 +2959,7 @@ module.cmds = {
   },
   {
     command='undo',
-    flags=bit.bor(BANG, RANGE, COUNT, ZEROR, TRLBAR, CMDWIN, LOCK_OK),
+    flags=bit.bor(EXTRA, BANG, RANGE, COUNT, ZEROR, TRLBAR, CMDWIN, LOCK_OK),
     addr_type='ADDR_OTHER',
     func='ex_undo',
   },
