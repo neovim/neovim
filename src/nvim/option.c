@@ -908,19 +908,267 @@ static void munge_string_opt_val(char **varp, char **oldval, char **const origva
   }
 }
 
+/// Get the default value for a string option.
+static char *stropt_get_default_val(int opt_idx, uint64_t flags)
+{
+  char *newval = options[opt_idx].def_val;
+  // expand environment variables and ~ since the default value was
+  // already expanded, only required when an environment variable was set
+  // later
+  if (newval == NULL) {
+    newval = empty_option;
+  } else if (!(options[opt_idx].flags & P_NO_DEF_EXP)) {
+    char *s = option_expand(opt_idx, newval);
+    if (s == NULL) {
+      s = newval;
+    }
+    newval = xstrdup(s);
+  } else {
+    newval = xstrdup(newval);
+  }
+  return newval;
+}
+
+/// Copy the new string value into allocated memory for the option.
+/// Can't use set_string_option_direct(), because we need to remove the
+/// backslashes.
+static char *stropt_copy_value(char *origval, char **argp, set_op_T op,
+                               uint32_t flags FUNC_ATTR_UNUSED)
+{
+  char *arg = *argp;
+
+  // get a bit too much
+  size_t newlen = strlen(arg) + 1;
+  if (op != OP_NONE) {
+    newlen += strlen(origval) + 1;
+  }
+  char *newval = xmalloc(newlen);
+  char *s = newval;
+
+  // Copy the string, skip over escaped chars.
+  // For MS-Windows backslashes before normal file name characters
+  // are not removed, and keep backslash at start, for "\\machine\path",
+  // but do remove it for "\\\\machine\\path".
+  // The reverse is found in ExpandOldSetting().
+  while (*arg != NUL && !ascii_iswhite(*arg)) {
+    if (*arg == '\\' && arg[1] != NUL
+#ifdef BACKSLASH_IN_FILENAME
+        && !((flags & P_EXPAND)
+             && vim_isfilec((uint8_t)arg[1])
+             && !ascii_iswhite(arg[1])
+             && (arg[1] != '\\'
+                 || (s == newval && arg[2] != '\\')))
+#endif
+        ) {
+      arg++;  // remove backslash
+    }
+    int i = utfc_ptr2len(arg);
+    if (i > 1) {
+      // copy multibyte char
+      memmove(s, arg, (size_t)i);
+      arg += i;
+      s += i;
+    } else {
+      *s++ = *arg++;
+    }
+  }
+  *s = NUL;
+
+  *argp = arg;
+  return newval;
+}
+
+/// Expand environment variables and ~ in string option value 'newval'.
+static char *stropt_expand_envvar(int opt_idx, char *origval, char *newval, set_op_T op)
+{
+  char *s = option_expand(opt_idx, newval);
+  if (s == NULL) {
+    return newval;
+  }
+
+  xfree(newval);
+  uint32_t newlen = (unsigned)strlen(s) + 1;
+  if (op != OP_NONE) {
+    newlen += (unsigned)strlen(origval) + 1;
+  }
+  newval = xmalloc(newlen);
+  STRCPY(newval, s);
+
+  return newval;
+}
+
+/// Concatenate the original and new values of a string option, adding a "," if
+/// needed.
+static void stropt_concat_with_comma(char *origval, char *newval, set_op_T op, uint32_t flags)
+{
+  int len = 0;
+  int comma = ((flags & P_COMMA) && *origval != NUL && *newval != NUL);
+  if (op == OP_ADDING) {
+    len = (int)strlen(origval);
+    // Strip a trailing comma, would get 2.
+    if (comma && len > 1
+        && (flags & P_ONECOMMA) == P_ONECOMMA
+        && origval[len - 1] == ','
+        && origval[len - 2] != '\\') {
+      len--;
+    }
+    memmove(newval + len + comma, newval, strlen(newval) + 1);
+    memmove(newval, origval, (size_t)len);
+  } else {
+    len = (int)strlen(newval);
+    STRMOVE(newval + len + comma, origval);
+  }
+  if (comma) {
+    newval[len] = ',';
+  }
+}
+
+/// Remove a value from a string option.  Copy string option value in "origval"
+/// to "newval" and then remove the string "strval" of length "len".
+static void stropt_remove_val(char *origval, char *newval, uint32_t flags, char *strval, int len)
+{
+  // Remove newval[] from origval[]. (Note: "len" has been set above
+  // and is used here).
+  STRCPY(newval, origval);
+  if (*strval) {
+    // may need to remove a comma
+    if (flags & P_COMMA) {
+      if (strval == origval) {
+        // include comma after string
+        if (strval[len] == ',') {
+          len++;
+        }
+      } else {
+        // include comma before string
+        strval--;
+        len++;
+      }
+    }
+    STRMOVE(newval + (strval - origval), strval + len);
+  }
+}
+
+/// Remove flags that appear twice in the string option value 'newval'.
+static void stropt_remove_dupflags(char *newval, uint32_t flags)
+{
+  char *s = newval;
+  // Remove flags that appear twice.
+  for (s = newval; *s;) {
+    // if options have P_FLAGLIST and P_ONECOMMA such as 'whichwrap'
+    if (flags & P_ONECOMMA) {
+      if (*s != ',' && *(s + 1) == ','
+          && vim_strchr(s + 2, (uint8_t)(*s)) != NULL) {
+        // Remove the duplicated value and the next comma.
+        STRMOVE(s, s + 2);
+        continue;
+      }
+    } else {
+      if ((!(flags & P_COMMA) || *s != ',')
+          && vim_strchr(s + 1, (uint8_t)(*s)) != NULL) {
+        STRMOVE(s, s + 1);
+        continue;
+      }
+    }
+    s++;
+  }
+}
+
+/// Get the string value specified for a ":set" command.  The following set
+/// options are supported:
+///     set {opt}&
+///     set {opt}<
+///     set {opt}={val}
+///     set {opt}:{val}
+static char *stropt_get_newval(int nextchar, int opt_idx, char **argp, char *varp,
+                               char **origval_arg, char **origval_l_arg, char **origval_g_arg,
+                               char **oldval_arg, set_op_T *op_arg, uint32_t flags)
+{
+  char *arg = *argp;
+  char *origval = *origval_arg;
+  char *origval_l = *origval_l_arg;
+  char *origval_g = *origval_g_arg;
+  char *oldval = *oldval_arg;
+  set_op_T op = *op_arg;
+  char *save_arg = NULL;
+  char *newval;
+  char *s = NULL;
+  char whichwrap[80];
+  if (nextchar == '&') {  // set to default val
+    newval = stropt_get_default_val(opt_idx, flags);
+  } else if (nextchar == '<') {  // set to global val
+    newval = xstrdup(*(char **)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL));
+  } else {
+    arg++;  // jump to after the '=' or ':'
+
+    munge_string_opt_val((char **)varp, &oldval, &origval, &origval_l, &origval_g, &arg,
+                         whichwrap, sizeof(whichwrap), &save_arg);
+
+    // Copy the new string into allocated memory.
+    newval = stropt_copy_value(origval, &arg, op, flags);
+
+    // Expand environment variables and ~.
+    // Don't do it when adding without inserting a comma.
+    if (op == OP_NONE || (flags & P_COMMA)) {
+      newval = stropt_expand_envvar(opt_idx, origval, newval, op);
+    }
+
+    // locate newval[] in origval[] when removing it
+    // and when adding to avoid duplicates
+    int len = 0;
+    if (op == OP_REMOVING || (flags & P_NODUP)) {
+      len = (int)strlen(newval);
+      s = find_dup_item(origval, newval, flags);
+
+      // do not add if already there
+      if ((op == OP_ADDING || op == OP_PREPENDING) && s != NULL) {
+        op = OP_NONE;
+        STRCPY(newval, origval);
+      }
+
+      // if no duplicate, move pointer to end of original value
+      if (s == NULL) {
+        s = origval + (int)strlen(origval);
+      }
+    }
+
+    // concatenate the two strings; add a ',' if needed
+    if (op == OP_ADDING || op == OP_PREPENDING) {
+      stropt_concat_with_comma(origval, newval, op, flags);
+    } else if (op == OP_REMOVING) {
+      // Remove newval[] from origval[]. (Note: "len" has been set above
+      // and is used here).
+      stropt_remove_val(origval, newval, flags, s, len);
+    }
+
+    if (flags & P_FLAGLIST) {
+      // Remove flags that appear twice.
+      stropt_remove_dupflags(newval, flags);
+    }
+  }
+
+  if (save_arg != NULL) {
+    arg = save_arg;  // arg was temporarily changed, restore it
+  }
+  *argp = arg;
+  *origval_arg = origval;
+  *origval_l_arg = origval_l;
+  *origval_g_arg = origval_g;
+  *oldval_arg = oldval;
+  *op_arg = op;
+
+  return newval;
+}
+
 /// Part of do_set() for string options.
-static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, set_op_T op_arg,
-                          uint32_t flags, char *varp_arg, char *errbuf, size_t errbuflen,
-                          int *value_checked, const char **errmsg)
+static void do_set_option_string(int opt_idx, int opt_flags, char **argp, int nextchar,
+                                 set_op_T op_arg, uint32_t flags, char *varp_arg, char *errbuf,
+                                 size_t errbuflen, int *value_checked, const char **errmsg)
 {
   char *arg = *argp;
   set_op_T op = op_arg;
   char *varp = varp_arg;
-  char *save_arg = NULL;
-  char *s = NULL;
   char *origval_l = NULL;
   char *origval_g = NULL;
-  char whichwrap[80];
 
   // When using ":set opt=val" for a global option
   // with a local value the local value will be
@@ -953,178 +1201,9 @@ static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar,
     origval = oldval;
   }
 
-  char *newval;
-  if (nextchar == '&') {  // set to default val
-    newval = options[opt_idx].def_val;
-    // expand environment variables and ~ since the default value was
-    // already expanded, only required when an environment variable was set
-    // later
-    if (newval == NULL) {
-      newval = empty_option;
-    } else if (!(options[opt_idx].flags & P_NO_DEF_EXP)) {
-      s = option_expand(opt_idx, newval);
-      if (s == NULL) {
-        s = newval;
-      }
-      newval = xstrdup(s);
-    } else {
-      newval = xstrdup(newval);
-    }
-  } else if (nextchar == '<') {  // set to global val
-    newval = xstrdup(*(char **)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL));
-  } else {
-    arg++;  // jump to after the '=' or ':'
-
-    munge_string_opt_val((char **)varp, &oldval, &origval, &origval_l, &origval_g, &arg,
-                         whichwrap, sizeof(whichwrap), &save_arg);
-
-    // Copy the new string into allocated memory.
-    // Can't use set_string_option_direct(), because we need to remove the
-    // backslashes.
-
-    // get a bit too much
-    size_t newlen = strlen(arg) + 1;
-    if (op != OP_NONE) {
-      newlen += strlen(origval) + 1;
-    }
-    newval = xmalloc(newlen);
-    s = newval;
-
-    // Copy the string, skip over escaped chars.
-    // For MS-Windows backslashes before normal file name characters
-    // are not removed, and keep backslash at start, for "\\machine\path",
-    // but do remove it for "\\\\machine\\path".
-    // The reverse is found in ExpandOldSetting().
-    while (*arg != NUL && !ascii_iswhite(*arg)) {
-      if (*arg == '\\' && arg[1] != NUL
-#ifdef BACKSLASH_IN_FILENAME
-          && !((flags & P_EXPAND)
-               && vim_isfilec((uint8_t)arg[1])
-               && !ascii_iswhite(arg[1])
-               && (arg[1] != '\\'
-                   || (s == newval && arg[2] != '\\')))
-#endif
-          ) {
-        arg++;  // remove backslash
-      }
-      int i = utfc_ptr2len(arg);
-      if (i > 1) {
-        // copy multibyte char
-        memmove(s, arg, (size_t)i);
-        arg += i;
-        s += i;
-      } else {
-        *s++ = *arg++;
-      }
-    }
-    *s = NUL;
-
-    // Expand environment variables and ~.
-    // Don't do it when adding without inserting a comma.
-    if (op == OP_NONE || (flags & P_COMMA)) {
-      s = option_expand(opt_idx, newval);
-      if (s != NULL) {
-        xfree(newval);
-        newlen = (unsigned)strlen(s) + 1;
-        if (op != OP_NONE) {
-          newlen += (unsigned)strlen(origval) + 1;
-        }
-        newval = xmalloc(newlen);
-        STRCPY(newval, s);
-      }
-    }
-
-    // locate newval[] in origval[] when removing it
-    // and when adding to avoid duplicates
-    int len = 0;
-    if (op == OP_REMOVING || (flags & P_NODUP)) {
-      len = (int)strlen(newval);
-      s = find_dup_item(origval, newval, flags);
-
-      // do not add if already there
-      if ((op == OP_ADDING || op == OP_PREPENDING) && s != NULL) {
-        op = OP_NONE;
-        STRCPY(newval, origval);
-      }
-
-      // if no duplicate, move pointer to end of original value
-      if (s == NULL) {
-        s = origval + (int)strlen(origval);
-      }
-    }
-
-    // concatenate the two strings; add a ',' if needed
-    if (op == OP_ADDING || op == OP_PREPENDING) {
-      int comma = ((flags & P_COMMA) && *origval != NUL && *newval != NUL);
-      if (op == OP_ADDING) {
-        len = (int)strlen(origval);
-        // Strip a trailing comma, would get 2.
-        if (comma && len > 1
-            && (flags & P_ONECOMMA) == P_ONECOMMA
-            && origval[len - 1] == ','
-            && origval[len - 2] != '\\') {
-          len--;
-        }
-        memmove(newval + len + comma, newval, strlen(newval) + 1);
-        memmove(newval, origval, (size_t)len);
-      } else {
-        len = (int)strlen(newval);
-        STRMOVE(newval + len + comma, origval);
-      }
-      if (comma) {
-        newval[len] = ',';
-      }
-    }
-
-    // Remove newval[] from origval[]. (Note: "len" has been set above and
-    // is used here).
-    if (op == OP_REMOVING) {
-      STRCPY(newval, origval);
-      if (*s) {
-        // may need to remove a comma
-        if (flags & P_COMMA) {
-          if (s == origval) {
-            // include comma after string
-            if (s[len] == ',') {
-              len++;
-            }
-          } else {
-            // include comma before string
-            s--;
-            len++;
-          }
-        }
-        STRMOVE(newval + (s - origval), s + len);
-      }
-    }
-
-    if (flags & P_FLAGLIST) {
-      // Remove flags that appear twice.
-      for (s = newval; *s;) {
-        // if options have P_FLAGLIST and P_ONECOMMA such as
-        // 'whichwrap'
-        if (flags & P_ONECOMMA) {
-          if (*s != ',' && *(s + 1) == ','
-              && vim_strchr(s + 2, (uint8_t)(*s)) != NULL) {
-            // Remove the duplicated value and the next comma.
-            STRMOVE(s, s + 2);
-            continue;
-          }
-        } else {
-          if ((!(flags & P_COMMA) || *s != ',')
-              && vim_strchr(s + 1, (uint8_t)(*s)) != NULL) {
-            STRMOVE(s, s + 1);
-            continue;
-          }
-        }
-        s++;
-      }
-    }
-
-    if (save_arg != NULL) {
-      arg = save_arg;  // arg was temporarily changed, restore it
-    }
-  }
+  // Get the new value for the option
+  char *newval = stropt_get_newval(nextchar, opt_idx, &arg, varp, &origval,
+                                   &origval_l, &origval_g, &oldval, &op, flags);
 
   // Set the new value.
   *(char **)(varp) = newval;
@@ -1326,8 +1405,8 @@ static void do_set_option_value(int opt_idx, int opt_flags, char **argp, int pre
   } else if (flags & P_NUM) {  // numeric
     do_set_num(opt_idx, opt_flags, argp, nextchar, op, varp, errbuf, errbuflen, errmsg);
   } else if (opt_idx >= 0) {   // string.
-    do_set_string(opt_idx, opt_flags, argp, nextchar, op, flags, varp, errbuf,
-                  errbuflen, &value_checked, errmsg);
+    do_set_option_string(opt_idx, opt_flags, argp, nextchar, op, flags, varp, errbuf,
+                         errbuflen, &value_checked, errmsg);
   } else {
     // key code option(FIXME(tarruda): Show a warning or something
     // similar)
@@ -2035,23 +2114,25 @@ static void did_set_langnoremap(void)
 /// Process the updated 'undofile' option value.
 static void did_set_undofile(int opt_flags)
 {
-  // Only take action when the option was set. When reset we do not
-  // delete the undo file, the option may be set again without making
-  // any changes in between.
-  if (curbuf->b_p_udf || p_udf) {
-    uint8_t hash[UNDO_HASH_SIZE];
+  // Only take action when the option was set.
+  if (!curbuf->b_p_udf && !p_udf) {
+    return;
+  }
 
-    FOR_ALL_BUFFERS(bp) {
-      // When 'undofile' is set globally: for every buffer, otherwise
-      // only for the current buffer: Try to read in the undofile,
-      // if one exists, the buffer wasn't changed and the buffer was
-      // loaded
-      if ((curbuf == bp
-           || (opt_flags & OPT_GLOBAL) || opt_flags == 0)
-          && !bufIsChanged(bp) && bp->b_ml.ml_mfp != NULL) {
-        u_compute_hash(bp, hash);
-        u_read_undo(NULL, hash, bp->b_fname);
-      }
+  // When reset we do not delete the undo file, the option may be set again
+  // without making any changes in between.
+  uint8_t hash[UNDO_HASH_SIZE];
+
+  FOR_ALL_BUFFERS(bp) {
+    // When 'undofile' is set globally: for every buffer, otherwise
+    // only for the current buffer: Try to read in the undofile,
+    // if one exists, the buffer wasn't changed and the buffer was
+    // loaded
+    if ((curbuf == bp
+         || (opt_flags & OPT_GLOBAL) || opt_flags == 0)
+        && !bufIsChanged(bp) && bp->b_ml.ml_mfp != NULL) {
+      u_compute_hash(bp, hash);
+      u_read_undo(NULL, hash, bp->b_fname);
     }
   }
 }
@@ -2148,10 +2229,11 @@ static void did_set_scrollbind(void)
 {
   // when 'scrollbind' is set: snapshot the current position to avoid a jump
   // at the end of normal_cmd()
-  if (curwin->w_p_scb) {
-    do_check_scrollbind(false);
-    curwin->w_scbind_pos = curwin->w_topline;
+  if (!curwin->w_p_scb) {
+    return;
   }
+  do_check_scrollbind(false);
+  curwin->w_scbind_pos = curwin->w_topline;
 }
 
 /// Process the updated 'previewwindow' option value.
