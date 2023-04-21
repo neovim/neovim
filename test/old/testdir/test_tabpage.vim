@@ -148,6 +148,22 @@ function Test_tabpage()
   tabonly!
 endfunc
 
+func Test_tabpage_drop()
+  edit f1
+  tab split f2
+  tab split f3
+  normal! gt
+  call assert_equal(1, tabpagenr())
+
+  tab drop f3
+  call assert_equal(3, tabpagenr())
+  call assert_equal(1, tabpagenr('#'))
+  bwipe!
+  bwipe!
+  bwipe!
+  call assert_equal(1, tabpagenr('$'))
+endfunc
+
 " Test autocommands
 function Test_tabpage_with_autocmd()
   command -nargs=1 -bar C :call add(s:li, '=== ' . <q-args> . ' ===')|<args>
