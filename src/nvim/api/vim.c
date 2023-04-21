@@ -2241,7 +2241,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   if (highlights) {
     Array hl_values = ARRAY_DICT_INIT;
     const char *grpname;
-    char user_group[6];
+    char user_group[15];  // strlen("User") + strlen("2147483647") + NUL
 
     // If first character doesn't have a defined highlight,
     // add the default highlight at the beginning of the highlight list
