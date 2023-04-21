@@ -733,16 +733,221 @@ VIM.JSON                                                            *lua-json*
 
 The *vim.json* module provides encoding and decoding of Lua objects to and
 from JSON-encoded strings. Supports |vim.NIL| and |vim.empty_dict()|.
+This module is provided by `openresty/lua-cjson`. See
+https://github.com/openresty/lua-cjson for more documentation.
 
-vim.json.encode({obj})                                       *vim.json.encode*
+encode({obj})                                              *vim.json.encode()*
     Encodes (or "packs") Lua object {obj} as JSON in a Lua string.
 
-vim.json.decode({str}[, {opts}])                             *vim.json.decode*
+decode({str}[, {opts}])                                    *vim.json.decode()*
     Decodes (or "unpacks") the JSON-encoded {str} to a Lua object.
 
     {opts} is a table with the key `luanil = { object: bool, array: bool }`
     that controls whether `null` in JSON objects or arrays should be converted
     to Lua `nil` instead of `vim.NIL`.
+
+new()                                                         *vim.json.new()*
+    Creates and returns a new `json` object, which is seperate from the
+    global `vim.json`. Can be used to safely configure the options on your
+    object and ensure safe parsing and encoding.
+
+The following methods change the configuration of the json object. ~
+The current settings are always returned. A particular setting is only ~
+changed when the argument is provided (non-nil). ~
+
+NOTE: These are global changes! Be careful with them or else create a new
+object with |vim.json.new()|
+
+                                     *vim.json.encode_empty_table_as_object()*
+encode_empty_table_as_object([{enable}])
+    Default: `false`
+    Parameters: ~
+      • {enable} (boolean / `"on"` / `"off"`) Whether to include array_mt
+        metatable.
+
+    Return: ~
+      Current value: {enable}
+
+    Change the default behavior when encoding an empty Lua table.
+
+    `true` - empty Lua tables are encoded as empty JSON Objects (`{}`).
+    `false` - empty Lua tables are encoded as empty JSON Arrays (`[]`).
+
+   {enable} is either a boolean or a string (`"on"`, `"off"`).
+
+                                       *vim.json.decode_array_with_array_mt()*
+decode_array_with_array_mt({bool})
+    Default: `false`
+    Parameters: ~
+      • {bool} (boolean) Whether to include array_mt metatable.
+
+    Return: ~
+      Current value: {bool}
+    `true` - JSON Arrays decoded by |vim.json.decode| will result in Lua tables
+    with the array_mt metatable. This can ensure a 1-to-1 relationship between
+    arrays upon multiple encoding/decoding of your JSON data with this module.
+
+    `false`- JSON Arrays will be decoded to plain Lua tables, without the array_mt metatable.
+
+                                              *vim.json.encode_sparse_array()*
+encode_sparse_array([{convert}[, {ratio}[, {safe}]]])
+    Default: `false`, `2`, `10`
+    Encodes sparse Lua arrays as JSON arrays using JSON null for the missing entries
+    Parameters: ~
+      • {convert} (boolean) whether to convert excessively sparse arrays to
+        json. Default: `false`.
+      • {ratio} (positive integer). Ratio of set items to maximum index.
+        Default: `2` (half of indices must be set).
+      • {safe}  (positive integer). Maximum index to always convert as
+        sparce. Default: `10`.
+
+    Return: ~
+      Current values of (in order): {convert}, {ratio}, {safe}
+
+    Lua CJSON classifies a Lua table into one of three kinds when encoding
+    a JSON array. This is determined by the number of values missing from
+    the Lua array as follows:
+
+    Normal - All values are available.
+    Sparse - At least `1 `value is missing.
+    Excessively sparse - The number of values missing exceeds the configured
+    ratio.
+
+    Lua CJSON encodes sparse Lua arrays as JSON arrays using JSON null for
+    the missing entries.
+
+    An array is excessively sparse when all the following conditions are met: >vimdoc
+    {ratio} > 0
+    maximum_index > {safe}
+    maximum_index > item_count * {ratio}
+<
+    Lua CJSON will never consider an array to be excessively sparse when
+    {ratio} = `0`. The {safe} limit ensures that small Lua arrays are always
+    encoded as sparse arrays.
+
+    By default, attempting to encode an excessively sparse array will generate
+    an error. If {convert} is set to `true`, excessively sparse arrays will be
+    converted to a JSON **object**.
+
+encode_max_depth([{depth}])                      *vim.json.encode_max_depth()*
+    Default: `1000`
+    Parameters: ~
+      • {depth} (positive integer) maximum table depth.
+
+    Return: ~
+      Current value: {depth}
+
+    Example: >lua
+    -- Recursive Lua table
+    a = {}; a[1] = a
+<
+    Once the maximum table depth has been exceeded Lua CJSON will generate an
+    error. This prevents a deeply nested or recursive data structure from
+    crashing the application.
+
+    By default, Lua CJSON will generate an error when trying to encode data
+    structures with more than `1000 `nested tables.
+
+decode_max_depth([{depth}])                      *vim.json.decode_max_depth()*
+    Default: `1000`
+    Parameters: ~
+      • {depth} (positive integer) maximum table depth.
+
+    Return: ~
+      Current value: {depth}
+
+    Lua CJSON will generate an error when parsing deeply nested JSON once
+    the maximum array/object depth has been exceeded. This check prevents
+    unnecessarily complicated JSON from slowing down the application, or
+    crashing the application due to lack of process stack space.
+
+    An error may be generated before the depth limit is hit if Lua is
+    unable to allocate more objects on the lua stack.
+
+    By default, Lua CJSON will reject JSON with arrays and/or objects
+    nested more than `1000` levels deep.
+
+encode_number_precision([{precision}])    *vim.json.encode_number_precision()*
+    Default: `14`
+    Parameters: ~
+      • {precision} (integer) Must be between 1-16.
+
+    Return: ~
+      Current value: {precision}
+
+    The amount of significant digits returned by Lua CJSON when encoding numbers
+    can be changed to balance accuracy versus performance. For data structures
+    containing many numbers, setting cjson.encode_number_precision to a smaller
+    integer, for example 3, can improve encoding performance by up to 50%.
+
+    By default, Lua CJSON will output 14 significant digits when converting a
+    number to text.
+
+encode_keep_buffer([{keep}])                   *vim.json.encode_keep_buffer()*
+    Default: `true`
+    Parameters: ~
+      • {keep} (boolean) Whether to keep the buffer.
+
+    Return: ~
+      Current value: {keep}
+
+    Lua CJSON can reuse the JSON encoding buffer to improve performance.
+
+    Available settings:
+
+    `true` - The buffer will grow to the largest size required and is not
+    freed until the Lua CJSON module is garbage collected.
+    `false` - Free the encode buffer after each call to cjson.encode.
+
+encode_invalid_numbers([{bool}])           *vim.json.encode_invalid_numbers()*
+    Default: `false`
+    Parameters: ~
+      • {bool} (boolean / `"null"`) Whether to encode invalid numbers.
+
+    Return: ~
+      Current value: {bool}
+
+    Lua CJSON may generate an error when encoding floating point
+    numbers not supported by the JSON specification (invalid numbers):
+    `infinity` and `NaN`
+
+    Available settings:
+
+    `true` -  Allow invalid numbers to be encoded using the Javascript
+    compatible values `NaN `and `Infinity`. This will generate non-standard
+    JSON, but these values are supported by some libraries.
+    `"null"` - Encode invalid numbers as a JSON null value. This allows
+    `infinity `and `NaN `to be encoded into valid JSON.
+    `false` - Throw an error when attempting to encode invalid numbers.
+    This is the default setting.
+
+decode_invalid_numbers([{bool}])           *vim.json.decode_invalid_numbers()*
+    Default: `true`
+    Parameters: ~
+      • {bool} (boolean) Whether to encode invalid numbers.
+
+    Return: ~
+      Current value: {bool}
+
+    Lua CJSON may generate an error when trying to decode
+    numbers not supported by the JSON specification. Invalid
+    numbers are defined as: `infinity, NaN, hexadecimal`
+
+    Available settings:
+
+    `true` - Accept and decode invalid numbers.
+    `false` - Throw an error when invalid numbers are encountered.
+encode_escape_forward_slash([{enabled}])    *vim.json.encode_escape_forward()*
+    Default: `true`
+    Parameters: ~
+      • {enabled} (boolean) Whether to escape forward slash('`/`') when
+      encoding.
+
+    Return: ~
+      Current value: {enabled}
+
+    `true` - forward slash '/' will be encoded as '\/'.
+    `false` - forward slash '/' will be encoded as '/' (no escape is applied).
 
 ------------------------------------------------------------------------------
 VIM.SPELL                                                          *lua-spell*
