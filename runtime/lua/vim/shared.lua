@@ -100,10 +100,9 @@ function vim.gsplit(s, sep, opts)
   local start = 1
   local done = false
 
-  -- For `trimempty`:
+  -- For `trimempty`: queue of collected segments, to be emitted at next pass.
+  local segs = {}
   local empty_start = true -- Only empty segments seen so far.
-  local empty_segs = 0 -- Empty segments found between non-empty segments.
-  local nonemptyseg = nil
 
   local function _pass(i, j, ...)
     if i then
@@ -118,14 +117,9 @@ function vim.gsplit(s, sep, opts)
   end
 
   return function()
-    if trimempty and empty_segs > 0 then
-      -- trimempty: Pop the collected empty segments.
-      empty_segs = empty_segs - 1
-      return ''
-    elseif trimempty and nonemptyseg then
-      local seg = nonemptyseg
-      nonemptyseg = nil
-      return seg
+    if trimempty and #segs > 0 then
+      -- trimempty: Pop the collected segments.
+      return table.remove(segs)
     elseif done or (s == '' and sep == '') then
       return nil
     elseif sep == '' then
@@ -138,21 +132,24 @@ function vim.gsplit(s, sep, opts)
     local seg = _pass(s:find(sep, start, plain))
 
     -- Trim empty segments from start/end.
-    if trimempty and seg == '' then
+    if trimempty and seg ~= '' then
+      empty_start = false
+    elseif trimempty and seg == '' then
       while not done and seg == '' do
-        empty_segs = empty_segs + 1
+        table.insert(segs, 1, '')
         seg = _pass(s:find(sep, start, plain))
       end
       if done and seg == '' then
         return nil
       elseif empty_start then
         empty_start = false
-        empty_segs = 0
+        segs = {}
         return seg
       end
-      nonemptyseg = seg ~= '' and seg or nil
-      seg = ''
-      empty_segs = empty_segs - 1
+      if seg ~= '' then
+        table.insert(segs, 1, seg)
+      end
+      return table.remove(segs)
     end
 
     return seg
