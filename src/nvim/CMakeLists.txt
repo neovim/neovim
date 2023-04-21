@@ -26,19 +26,28 @@ target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBLUV_INCLUDE_DIR
 target_link_libraries(main_lib INTERFACE ${LIBLUV_LIBRARY})
 
 find_package(Iconv REQUIRED)
-find_package(Libtermkey 0.22 REQUIRED)
-find_package(Libvterm 0.3 REQUIRED)
-find_package(Msgpack 1.0.0 REQUIRED)
-find_package(Treesitter 0.20.8 REQUIRED)
-find_package(Unibilium 2.0 REQUIRED)
+target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${ICONV_INCLUDE_DIR})
+target_link_libraries(main_lib INTERFACE ${ICONV_LIBRARY})
 
-target_link_libraries(main_lib INTERFACE
-  iconv
-  libtermkey
-  libvterm
-  msgpack
-  treesitter
-  unibilium)
+find_package(Libtermkey 0.22 REQUIRED)
+target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBTERMKEY_INCLUDE_DIR})
+target_link_libraries(main_lib INTERFACE ${LIBTERMKEY_LIBRARY})
+
+find_package(Libvterm 0.3 REQUIRED)
+target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBVTERM_INCLUDE_DIR})
+target_link_libraries(main_lib INTERFACE ${LIBVTERM_LIBRARY})
+
+find_package(Msgpack 1.0.0 REQUIRED)
+target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${MSGPACK_INCLUDE_DIR})
+target_link_libraries(main_lib INTERFACE ${MSGPACK_LIBRARY})
+
+find_package(Treesitter 0.20.8 REQUIRED)
+target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${TREESITTER_INCLUDE_DIR})
+target_link_libraries(main_lib INTERFACE ${TREESITTER_LIBRARY})
+
+find_package(Unibilium 2.0 REQUIRED)
+target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${UNIBILIUM_INCLUDE_DIR})
+target_link_libraries(main_lib INTERFACE ${UNIBILIUM_LIBRARY})
 
 # Libintl (not Intl) selects our FindLibintl.cmake script. #8464
 find_package(Libintl REQUIRED)
