@@ -1,17 +1,7 @@
 local mpack = vim.mpack
 
-if arg[1] == '--help' then
-  print('Usage: lua genvimvim.lua src/nvim runtime/syntax/vim/generated.vim')
-  os.exit(0)
-end
-
-local nvimsrcdir = arg[1]
-local syntax_file = arg[2]
-local funcs_file = arg[3]
-
-package.path = nvimsrcdir .. '/?.lua;' .. package.path
-
-_G.vim = loadfile(nvimsrcdir..'/../../runtime/lua/vim/shared.lua')()
+local syntax_file = arg[1]
+local funcs_file = arg[2]
 
 local lld = {}
 local syn_fd = io.open(syntax_file, 'w')
