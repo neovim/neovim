@@ -1997,7 +1997,7 @@ static void apply_optionset_autocmd(int opt_idx, long opt_flags, long oldval, lo
 }
 
 /// Ensure that options set to p_force_on cannot be disabled.
-static const char *did_set_force_on(int *doskip)
+static const char *did_set_force_on(bool *doskip)
 {
   if (p_force_on == false) {
     p_force_on = true;
@@ -2008,7 +2008,7 @@ static const char *did_set_force_on(int *doskip)
 }
 
 /// Ensure that options set to p_force_off cannot be enabled.
-static const char *did_set_force_off(int *doskip)
+static const char *did_set_force_off(bool *doskip)
 {
   if (p_force_off == true) {
     p_force_off = false;
@@ -2102,7 +2102,6 @@ static void did_set_buflisted(long old_value)
 {
   // when 'buflisted' changes, trigger autocommands
   if (old_value != curbuf->b_p_bl) {
-    // when 'buflisted' changes, trigger autocommands
     apply_autocmds(curbuf->b_p_bl ? EVENT_BUFADD : EVENT_BUFDELETE,
                    NULL, NULL, true, curbuf);
   }
@@ -2156,7 +2155,7 @@ static void did_set_scrollbind(void)
 }
 
 /// Process the updated 'previewwindow' option value.
-static const char *did_set_previewwindow(int *doskip)
+static const char *did_set_previewwindow(bool *doskip)
 {
   if (!curwin->w_p_pvw) {
     return NULL;
@@ -2263,7 +2262,7 @@ static char *did_set_spell(void)
   return NULL;
 }
 
-// Process the updated 'arabic' option value.
+/// Process the updated 'arabic' option value.
 static const char *did_set_arabic(void)
 {
   const char *errmsg = NULL;
@@ -2332,7 +2331,7 @@ static void did_set_number_relativenumber(void)
 
 /// When some boolean options are changed, need to take some action.
 static const char *did_set_bool_option(const char *varp, int opt_flags, long value, long old_value,
-                                       int *doskip)
+                                       bool *doskip)
 {
   const char *errmsg = NULL;
 
@@ -2440,7 +2439,7 @@ static const char *set_bool_option(const int opt_idx, char *const varp, const in
   }
 
   // Handle side effects for changing a bool option.
-  int doskip = false;
+  bool doskip = false;
   const char *errmsg = did_set_bool_option(varp, opt_flags, value, old_value, &doskip);
   if (doskip) {
     return errmsg;
