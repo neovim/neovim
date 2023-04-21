@@ -20,6 +20,22 @@ function M.report_error(msg, ...)
   vim.fn['health#report_error'](msg, ...)
 end
 
+function M.start(msg)
+  M.report_start(msg)
+end
+function M.info(msg)
+  M.report_info(msg)
+end
+function M.ok(msg)
+  M.report_ok(msg)
+end
+function M.warn(msg, ...)
+  M.report_warn(msg, ...)
+end
+function M.error(msg, ...)
+  M.report_error(msg, ...)
+end
+
 local path2name = function(path)
   if path:match('%.lua$') then
     -- Lua: transform "../lua/vim/lsp/health.lua" into "vim.lsp"
