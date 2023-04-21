@@ -1,6 +1,7 @@
 set(CPACK_PACKAGE_NAME "Neovim")
 set(CPACK_PACKAGE_VENDOR "neovim.io")
 set(CPACK_PACKAGE_FILE_NAME "nvim")
+set(CPACK_PACKAGE_DIRECTORY ${PROJECT_BINARY_DIR})
 
 # From the GitHub About section
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Vim-fork focused on extensibility and usability.")

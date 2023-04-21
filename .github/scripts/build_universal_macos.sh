@@ -35,10 +35,8 @@ cmake -B build -G Ninja \
   -D CMAKE_OSX_ARCHITECTURES=arm64\;x86_64 \
   -D CMAKE_FIND_FRAMEWORK=NEVER
 cmake --build build
-cmake --install build --prefix build/release/nvim-macos
-cd build
 # Make sure we build everything for M1 as well
-for macho in bin/* lib/nvim/parser/*.so; do
+for macho in build/bin/* build/lib/nvim/parser/*.so; do
   lipo -info "$macho" | grep -q arm64 || exit 1
 done
-cpack -C "$NVIM_BUILD_TYPE"
+cpack --config build/CPackConfig.cmake

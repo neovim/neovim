@@ -17,39 +17,10 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-20.04
+    env:
+      CC: gcc-10
     outputs:
       version: ${{ steps.build.outputs.version }}
-      release: ${{ steps.build.outputs.release }}
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Install dependencies
-        run: ./.github/scripts/install_deps.sh
-      - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
-        run: printf 'NVIM_BUILD_TYPE=Release\n' >> $GITHUB_ENV
-      - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
-        run: printf 'NVIM_BUILD_TYPE=RelWithDebInfo\n' >> $GITHUB_ENV
-      - name: Build release
-        id: build
-        run: |
-          CC=gcc-10 make CMAKE_BUILD_TYPE=${NVIM_BUILD_TYPE} CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH="
-          printf 'version<<END\n' >> $GITHUB_OUTPUT
-          ./build/bin/nvim --version | head -n 3 >> $GITHUB_OUTPUT
-          printf 'END\n' >> $GITHUB_OUTPUT
-          printf 'release=%s\n' "$(./build/bin/nvim --version | head -n 1)" >> $GITHUB_OUTPUT
-          make DESTDIR="$GITHUB_WORKSPACE/build/release/nvim-linux64" install
-          cd "$GITHUB_WORKSPACE/build/"
-          cpack -C $NVIM_BUILD_TYPE
-      - uses: actions/upload-artifact@v3
-        with:
-          name: nvim-linux64
-          path: |
-            build/nvim-linux64.tar.gz
-          retention-days: 1
-
-  appimage:
-    runs-on: ubuntu-20.04
     container:
       image: ubuntu:18.04
       options: --privileged # Privileged mode is needed to load fuse module.
@@ -71,11 +42,19 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y build-essential cmake gettext locales ninja-build pkg-config unzip
+          apt-get install -y build-essential cmake gettext ninja-build unzip
       - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
-        run: CC=gcc-10 make appimage-latest
+        run: |
+          echo 'NVIM_BUILD_TYPE=Release' >> $GITHUB_ENV
+          echo 'APPIMAGE_TAG=latest' >> $GITHUB_ENV
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
-        run: CC=gcc-10 make appimage-nightly
+        run: |
+          echo 'NVIM_BUILD_TYPE=RelWithDebInfo' >> $GITHUB_ENV
+          echo 'APPIMAGE_TAG=nightly' >> $GITHUB_ENV
+      - name: appimage
+        run: ./scripts/genappimage.sh ${APPIMAGE_TAG}
+      - name: tar.gz
+        run: cpack --config build/CPackConfig.cmake -G TGZ
       - uses: actions/upload-artifact@v3
         with:
           name: appimage
@@ -83,6 +62,18 @@ jobs:
             build/bin/nvim.appimage
             build/bin/nvim.appimage.zsync
           retention-days: 1
+      - uses: actions/upload-artifact@v3
+        with:
+          name: nvim-linux64
+          path: |
+            build/nvim-linux64.tar.gz
+          retention-days: 1
+      - name: Export version
+        id: build
+        run: |
+          printf 'version<<END\n' >> $GITHUB_OUTPUT
+          ./build/bin/nvim --version | head -n 3 >> $GITHUB_OUTPUT
+          printf 'END\n' >> $GITHUB_OUTPUT
 
   macOS:
     runs-on: macos-11
@@ -137,7 +128,7 @@ jobs:
           retention-days: 1
 
   publish:
-    needs: [linux, appimage, macOS, windows]
+    needs: [linux, macOS, windows]
     runs-on: ubuntu-latest
     env:
       GH_REPO: ${{ github.repository }}
