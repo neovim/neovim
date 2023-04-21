@@ -18,10 +18,13 @@ ListIter.__call = function(self)
   return self:next()
 end
 
+--- Packed tables use this as their metatable
+local packedmt = {}
+
 ---@private
 local function unpack(t)
-  if type(t) == 'table' and t.__n ~= nil then
-    return _G.unpack(t, 1, t.__n)
+  if getmetatable(t) == packedmt then
+    return _G.unpack(t, 1, t.n)
   end
   return t
 end
@@ -30,9 +33,18 @@ end
 local function pack(...)
   local n = select('#', ...)
   if n > 1 then
-    return { __n = n, ... }
+    return setmetatable({ n = n, ... }, packedmt)
   end
   return ...
+end
+
+---@private
+local function sanitize(t)
+  if getmetatable(t) == packedmt then
+    -- Remove length tag
+    t.n = nil
+  end
+  return t
 end
 
 --- Add a filter step to the iterator pipeline.
@@ -208,12 +220,7 @@ function Iter.totable(self)
       break
     end
 
-    if type(args) == 'table' then
-      -- Removed packed table tag if it exists
-      args.__n = nil
-    end
-
-    t[#t + 1] = args
+    t[#t + 1] = sanitize(args)
   end
   return t
 end
@@ -221,12 +228,10 @@ end
 ---@private
 function ListIter.totable(self)
   if self._head == 1 and self._tail == #self._table + 1 and self.next == ListIter.next then
-    -- Remove any packed table tags
-    for i = 1, #self._table do
-      local v = self._table[i]
-      if type(v) == 'table' then
-        v.__n = nil
-        self._table[i] = v
+    -- Sanitize packed table values
+    if getmetatable(self._table[1]) == packedmt then
+      for i = 1, #self._table do
+        self._table[i] = sanitize(self._table[i])
       end
     end
     return self._table
