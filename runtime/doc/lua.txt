@@ -783,7 +783,7 @@ decode_array_with_array_mt({bool})
 
     Return: ~
       Current value: {bool}
-    `true` - JSON Arrays decoded by |vim.json.decode| will result in Lua tables
+    `true` - JSON Arrays decoded by |vim.json.decode()| will result in Lua tables
     with the array_mt metatable. This can ensure a 1-to-1 relationship between
     arrays upon multiple encoding/decoding of your JSON data with this module.
 
