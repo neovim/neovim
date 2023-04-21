@@ -653,14 +653,20 @@ ufunc_T *find_func(const char *name)
 /// Copy the function name of "fp" to buffer "buf".
 /// "buf" must be able to hold the function name plus three bytes.
 /// Takes care of script-local function names.
-static void cat_func_name(char *buf, ufunc_T *fp)
+static void cat_func_name(char *buf, size_t buflen, ufunc_T *fp)
 {
-  if ((uint8_t)fp->uf_name[0] == K_SPECIAL) {
-    STRCPY(buf, "<SNR>");
-    STRCAT(buf, fp->uf_name + 3);
+  int len = -1;
+  size_t uflen = strlen(fp->uf_name);
+  assert(uflen > 0);
+
+  if ((uint8_t)fp->uf_name[0] == K_SPECIAL && uflen > 3) {
+    len = snprintf(buf, buflen, "<SNR>%s", fp->uf_name + 3);
   } else {
-    STRCPY(buf, fp->uf_name);
+    len = snprintf(buf, buflen, "%s", fp->uf_name);
   }
+
+  (void)len;  // Avoid unused warning on release builds
+  assert(len > 0);
 }
 
 /// Add a number variable "name" to dict "dp" with value "nr".
@@ -2851,7 +2857,7 @@ char *get_user_func_name(expand_T *xp, int idx)
       return fp->uf_name;  // Prevent overflow.
     }
 
-    cat_func_name(IObuff, fp);
+    cat_func_name(IObuff, IOSIZE, fp);
     if (xp->xp_context != EXPAND_USER_FUNC) {
       STRCAT(IObuff, "(");
       if (!fp->uf_varargs && GA_EMPTY(&fp->uf_args)) {

@@ -2446,7 +2446,7 @@ static bool cmdpreview_may_show(CommandLineState *s)
 
   CpInfo cpinfo;
   bool icm_split = *p_icm == 's';  // inccommand=split
-  buf_T *cmdpreview_buf;
+  buf_T *cmdpreview_buf = NULL;
   win_T *cmdpreview_win = NULL;
 
   emsg_silent++;                 // Block error reporting as the command may be incomplete,

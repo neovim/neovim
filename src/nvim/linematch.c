@@ -186,7 +186,7 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
 {
   if (path_idx == npaths) {
     if ((*choice) > 0) {
-      int from_vals[LN_MAX_BUFS];
+      int from_vals[LN_MAX_BUFS] = { 0 };
       const int *to_vals = df_iters;
       const char *current_lines[LN_MAX_BUFS];
       for (size_t k = 0; k < ndiffs; k++) {

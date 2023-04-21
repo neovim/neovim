@@ -65,7 +65,11 @@ uint64_t ui_client_start_server(int argc, char **argv)
 #ifdef MSWIN
     os_open_conin_fd();
 #else
-    dup(stderr_isatty ? STDERR_FILENO : STDOUT_FILENO);
+    int fd = dup(stderr_isatty ? STDERR_FILENO : STDOUT_FILENO);
+    if (fd < 0) {
+      return 0;
+    }
+    // FIXME: resource leak of fd
 #endif
   }
 

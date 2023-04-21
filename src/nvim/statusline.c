@@ -1656,7 +1656,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
         break;
       }
 
-      char *p;
+      char *p = NULL;
       if (fold) {
         size_t n = fill_foldcolumn(out_p, wp, stcp->foldinfo, (linenr_T)get_vim_var_nr(VV_LNUM));
         stl_items[curitem].minwid = -((stcp->use_cul ? HLF_CLF : HLF_FC) + 1);
@@ -1678,14 +1678,17 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
           stl_items[curitem].minwid = -(sattr ? stcp->sign_cul_id ? stcp->sign_cul_id
                                         : sattr->hl_id : (stcp->use_cul ? HLF_CLS : HLF_SC) + 1);
         }
+        size_t buflen = strlen(buf_tmp);
         stl_items[curitem].type = Highlight;
-        stl_items[curitem].start = out_p + strlen(buf_tmp);
+        stl_items[curitem].start = out_p + buflen;
         curitem++;
         if (i == width) {
           str = buf_tmp;
           break;
         }
-        STRCAT(buf_tmp, p);
+        int rc = snprintf(buf_tmp + buflen, sizeof(buf_tmp) - buflen, "%s", p);
+        (void)rc;  // Avoid unused warning on release build
+        assert(rc > 0);
       }
       break;
     }
