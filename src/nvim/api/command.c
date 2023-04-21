@@ -458,7 +458,12 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
       argc_valid = true;
       break;
     default:
-      argc_valid = args.size == 0;
+      // if the cmd can take a count argument, it optionally has 1 arg
+      if (ea.argt & EX_COUNT) {
+        argc_valid = args.size == 0 || args.size == 1;
+      } else {
+        argc_valid = args.size == 0;
+      }
       break;
     }
 
