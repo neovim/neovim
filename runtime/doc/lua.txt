@@ -735,6 +735,8 @@ The *vim.json* module provides encoding and decoding of Lua objects to and
 from JSON-encoded strings. Supports |vim.NIL| and |vim.empty_dict()|.
 This module is provided by `openresty/lua-cjson`. See
 https://github.com/openresty/lua-cjson for more documentation.
+Much of this documenation comes from `openresty/lua-cjson` and it's upstream
+`mpx/lua-cjson` (https://github.com/mpx/lua-cjson)
 
 encode({obj})                                              *vim.json.encode()*
     Encodes (or "packs") Lua object {obj} as JSON in a Lua string.
