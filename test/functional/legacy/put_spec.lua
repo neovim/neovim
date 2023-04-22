@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 local meths = helpers.meths
@@ -41,5 +42,32 @@ describe('put', function()
       call assert_fails('norm 999999999p', 'E1240:')
       bwipe!
     ]]
+  end)
+
+  -- oldtest: Test_put_other_window()
+  it('above topline in buffer in two splits', function()
+    local screen = Screen.new(80, 10)
+    screen:attach()
+    source([[
+      40vsplit
+      0put ='some text at the top'
+      put ='  one more text'
+      put ='  two more text'
+      put ='  three more text'
+      put ='  four more text'
+    ]])
+
+    screen:expect([[
+      some text at the top                    │some text at the top                   |
+        one more text                         │  one more text                        |
+        two more text                         │  two more text                        |
+        three more text                       │  three more text                      |
+        ^four more text                        │  four more text                       |
+                                              │                                       |
+      ~                                       │~                                      |
+      ~                                       │~                                      |
+      [No Name] [+]                            [No Name] [+]                          |
+                                                                                      |
+    ]])
   end)
 end)
