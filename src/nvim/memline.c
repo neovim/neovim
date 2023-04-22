@@ -121,6 +121,10 @@ struct pointer_block {
                                 // followed by empty space until end of page
 };
 
+// Value for pb_count_max.
+#define PB_COUNT_MAX(mfp) \
+  (uint16_t)((mfp->mf_page_size - offsetof(PTR_BL, pb_pointer)) / sizeof(PTR_EN))
+
 // A data block is a leaf in the tree.
 //
 // The text of the lines is at the end of the block. The text of the first line
@@ -243,6 +247,9 @@ typedef enum {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "memline.c.generated.h"
 #endif
+
+static char e_warning_pointer_block_corrupted[]
+  = N_("E1364: Warning: Pointer block corrupted");
 
 #if __has_feature(address_sanitizer)
 # define ML_GET_ALLOC_LINES
@@ -986,6 +993,19 @@ void ml_recover(bool checkext)
     } else {          // there is a block
       pp = hp->bh_data;
       if (pp->pb_id == PTR_ID) {                // it is a pointer block
+        bool ptr_block_error = false;
+        if (pp->pb_count_max != PB_COUNT_MAX(mfp)) {
+          ptr_block_error = true;
+          pp->pb_count_max = PB_COUNT_MAX(mfp);
+        }
+        if (pp->pb_count > pp->pb_count_max) {
+          ptr_block_error = true;
+          pp->pb_count = pp->pb_count_max;
+        }
+        if (ptr_block_error) {
+          emsg(_(e_warning_pointer_block_corrupted));
+        }
+
         // check line count when using pointer block first time
         if (idx == 0 && line_count != 0) {
           for (int i = 0; i < (int)pp->pb_count; i++) {
@@ -2752,8 +2772,7 @@ static bhdr_T *ml_new_ptr(memfile_T *mfp)
   PTR_BL *pp = hp->bh_data;
   pp->pb_id = PTR_ID;
   pp->pb_count = 0;
-  pp->pb_count_max
-    = (uint16_t)((mfp->mf_page_size - offsetof(PTR_BL, pb_pointer)) / sizeof(PTR_EN));
+  pp->pb_count_max = PB_COUNT_MAX(mfp);
 
   return hp;
 }
