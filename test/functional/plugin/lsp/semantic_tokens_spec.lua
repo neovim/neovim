@@ -629,6 +629,26 @@ describe('semantic token highlighting', function()
             marked = true,
           },
         },
+        expected_screen = function()
+          screen:expect{grid=[[
+            char* {7:foo} = "\n"^;                       |
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+                                                    |
+          ]]}
+        end,
       },
       {
         it = 'clangd-15 on C++',
@@ -741,6 +761,26 @@ int main()
             marked = true,
           },
         },
+        expected_screen = function()
+          screen:expect{grid=[[
+            #include <iostream>                     |
+            int {8:main}()                              |
+            {                                       |
+              #ifdef {5:__cplusplus}                    |
+              const int {7:x} = 1;                      |
+              {4:std}::{2:cout} << {2:x} << {4:std}::{3:endl};          |
+            {6:  #else}                                 |
+            {6:    comment}                             |
+            {6:  #endif}                                |
+            ^}                                       |
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+                                                    |
+          ]]}
+        end,
       },
       {
         it = 'sumneko_lua',
@@ -782,6 +822,26 @@ b = "as"]],
             marked = true,
           },
         },
+        expected_screen = function()
+          screen:expect{grid=[[
+            {6:-- comment}                              |
+            local {7:a} = 1                             |
+            {2:b} = "as^"                                |
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+                                                    |
+          ]]}
+        end,
       },
       {
         it = 'rust-analyzer',
@@ -892,6 +952,26 @@ b = "as"]],
             marked = true,
           },
         },
+        expected_screen = function()
+          screen:expect{grid=[[
+            pub fn {8:main}() {                         |
+              break rust;                           |
+              //{6:/ what?}                             |
+            }                                       |
+            ^                                        |
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+                                                    |
+          ]]}
+        end,
       },
     }) do
       it(test.it, function()
@@ -917,6 +997,8 @@ b = "as"]],
         ]], test.legend, test.response)
 
         insert(test.text)
+
+        test.expected_screen()
 
         local highlights = exec_lua([[
           local semantic_tokens = vim.lsp.semantic_tokens
