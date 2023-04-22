@@ -161,7 +161,7 @@ static char *get_buffcont(buffheader_T *buffer, int dozero)
     count += strlen(bp->b_str);
   }
 
-  if (count || dozero) {
+  if (count > 0 || dozero) {
     p = xmalloc(count + 1);
     char *p2 = p;
     for (const buffblock_T *bp = buffer->bh_first.b_next;

@@ -1450,7 +1450,8 @@ void show_popupmenu(void)
 
 /// Execute "menu".  Use by ":emenu" and the window toolbar.
 /// @param eap  NULL for the window toolbar.
-/// @param mode_idx  specify a MENU_INDEX_ value, use -1 to depend on the current state
+/// @param mode_idx  specify a MENU_INDEX_ value,
+///                  use MENU_INDEX_INVALID to depend on the current state
 void execute_menu(const exarg_T *eap, vimmenu_T *menu, int mode_idx)
   FUNC_ATTR_NONNULL_ARG(2)
 {
@@ -1458,7 +1459,7 @@ void execute_menu(const exarg_T *eap, vimmenu_T *menu, int mode_idx)
 
   if (idx < 0) {
     // Use the Insert mode entry when returning to Insert mode.
-    if (((State & MODE_INSERT) || restart_edit) && !current_sctx.sc_sid) {
+    if (((State & MODE_INSERT) || restart_edit) && current_sctx.sc_sid == 0) {
       idx = MENU_INDEX_INSERT;
     } else if (State & MODE_CMDLINE) {
       idx = MENU_INDEX_CMDLINE;
@@ -1612,7 +1613,7 @@ static vimmenu_T *menu_getbyname(char *name_arg)
 void ex_emenu(exarg_T *eap)
 {
   char *arg = eap->arg;
-  int mode_idx = -1;
+  int mode_idx = MENU_INDEX_INVALID;
 
   if (arg[0] && ascii_iswhite(arg[1])) {
     switch (arg[0]) {
