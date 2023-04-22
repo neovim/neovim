@@ -3,7 +3,6 @@ on:
   pull_request_target:
     types: [opened]
 jobs:
-
   triage:
     runs-on: ubuntu-latest
     permissions:
@@ -33,16 +32,7 @@ jobs:
       run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+(\(.*\))?!:.*|breaking-change|')" || true
 
   request-reviewer:
-    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
     needs: ["triage", "type-scope"]
     permissions:
       pull-requests: write
-    steps:
-      - uses: actions/checkout@v3
-      - name: 'Request reviewers'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const script = require('./.github/scripts/reviews.js')
-            await script({github, context})
+    uses: ./.github/workflows/add-reviewers.yml
