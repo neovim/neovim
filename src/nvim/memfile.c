@@ -300,7 +300,12 @@ bhdr_T *mf_get(memfile_T *mfp, blocknr_T nr, unsigned page_count)
 
     // could check here if the block is in the free list
 
-    hp = mf_alloc_bhdr(mfp, page_count);
+    if (page_count > 0) {
+      hp = mf_alloc_bhdr(mfp, page_count);
+    }
+    if (hp == NULL) {
+      return NULL;
+    }
 
     hp->bh_bnum = nr;
     hp->bh_flags = 0;
