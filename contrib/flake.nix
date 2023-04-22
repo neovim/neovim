@@ -10,7 +10,14 @@
     {
       overlay = final: prev: {
 
-        neovim = final.neovim-unwrapped.overrideAttrs (oa: rec {
+        neovim = let
+          stdenv = if final.stdenv.isDarwin then
+            final.clang14Stdenv
+          else
+            final.stdenv;
+        in (final.neovim-unwrapped.override {
+          inherit stdenv;
+        }).overrideAttrs (oa: rec {
           version = self.shortRev or "dirty";
           src = ../.;
           preConfigure = ''
