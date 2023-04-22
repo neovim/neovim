@@ -1522,6 +1522,7 @@ local filename = {
   ['.lsl'] = function(path, bufnr)
     return require('vim.filetype.detect').lsl(bufnr)
   end,
+  ['.busted'] = 'lua',
   ['.luacheckrc'] = 'lua',
   ['lynx.cfg'] = 'lynx',
   ['m3overrides'] = 'm3build',

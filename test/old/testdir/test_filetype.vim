@@ -345,7 +345,7 @@ let s:filename_checks = {
     \ 'lpc': ['file.lpc', 'file.ulpc'],
     \ 'lsl': ['file.lsl'],
     \ 'lss': ['file.lss'],
-    \ 'lua': ['file.lua', 'file.rockspec', 'file.nse', '.luacheckrc'],
+    \ 'lua': ['file.lua', 'file.rockspec', 'file.nse', '.luacheckrc', '.busted'],
     \ 'lynx': ['lynx.cfg'],
     \ 'lyrics': ['file.lrc'],
     \ 'm3build': ['m3makefile', 'm3overrides'],
