@@ -1207,6 +1207,9 @@ static void do_set_option_string(int opt_idx, int opt_flags, char **argp, int ne
 
   // Set the new value.
   *(char **)(varp) = newval;
+  if (newval == NULL) {
+    *(char **)(varp) = empty_option;
+  }
 
   // origval may be freed by did_set_string_option(), make a copy.
   char *saved_origval = (origval != NULL) ? xstrdup(origval) : NULL;
