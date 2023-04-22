@@ -552,7 +552,7 @@ function module.set_shell_powershell(fake)
   end
   local shell = found and (is_os('win') and 'powershell' or 'pwsh') or module.testprg('pwsh-test')
   local cmd = 'Remove-Item -Force '..table.concat(is_os('win')
-    and {'alias:cat', 'alias:echo', 'alias:sleep', 'alias:sort'}
+    and {'alias:cat', 'alias:echo', 'alias:sleep', 'alias:sort', 'alias:tee'}
     or  {'alias:echo'}, ',')..';'
   module.exec([[
     let &shell = ']]..shell..[['
@@ -562,7 +562,7 @@ function module.set_shell_powershell(fake)
     let &shellcmdflag .= '$PSDefaultParameterValues[''Out-File:Encoding'']=''utf8'';'
     let &shellcmdflag .= ']]..cmd..[['
     let &shellredir = '2>&1 | %%{ "$_" } | Out-File %s; exit $LastExitCode'
-    let &shellpipe  = '2>&1 | %%{ "$_" } | Tee-Object %s; exit $LastExitCode'
+    let &shellpipe  = '2>&1 | %%{ "$_" } | tee %s; exit $LastExitCode'
   ]])
   return found
 end
