@@ -197,7 +197,8 @@ endif()
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
   if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
     target_link_libraries(nvim PRIVATE -Wl,--no-undefined -lsocket)
-  else()
+  # workaround for clang-11 on macOS, supported on later versions:
+  elseif(NOT APPLE)
     target_link_libraries(nvim PRIVATE -Wl,--no-undefined)
   endif()
 
