@@ -57,7 +57,7 @@ has a major bug:
 
 ### Release automation
 
-Neovim automation includes a [backport bot](https://github.com/zeebe-io/backport-action).
+Neovim automation includes a backport bot.
 Trigger the action by labeling a PR with `backport release-X.Y`. See `.github/workflows/backport.yml`.
 
 Third-party dependencies
