@@ -908,19 +908,267 @@ static void munge_string_opt_val(char **varp, char **oldval, char **const origva
   }
 }
 
+/// Get the default value for a string option.
+static char *stropt_get_default_val(int opt_idx, uint64_t flags)
+{
+  char *newval = options[opt_idx].def_val;
+  // expand environment variables and ~ since the default value was
+  // already expanded, only required when an environment variable was set
+  // later
+  if (newval == NULL) {
+    newval = empty_option;
+  } else if (!(options[opt_idx].flags & P_NO_DEF_EXP)) {
+    char *s = option_expand(opt_idx, newval);
+    if (s == NULL) {
+      s = newval;
+    }
+    newval = xstrdup(s);
+  } else {
+    newval = xstrdup(newval);
+  }
+  return newval;
+}
+
+/// Copy the new string value into allocated memory for the option.
+/// Can't use set_string_option_direct(), because we need to remove the
+/// backslashes.
+static char *stropt_copy_value(char *origval, char **argp, set_op_T op,
+                               uint32_t flags FUNC_ATTR_UNUSED)
+{
+  char *arg = *argp;
+
+  // get a bit too much
+  size_t newlen = strlen(arg) + 1;
+  if (op != OP_NONE) {
+    newlen += strlen(origval) + 1;
+  }
+  char *newval = xmalloc(newlen);
+  char *s = newval;
+
+  // Copy the string, skip over escaped chars.
+  // For MS-Windows backslashes before normal file name characters
+  // are not removed, and keep backslash at start, for "\\machine\path",
+  // but do remove it for "\\\\machine\\path".
+  // The reverse is found in ExpandOldSetting().
+  while (*arg != NUL && !ascii_iswhite(*arg)) {
+    if (*arg == '\\' && arg[1] != NUL
+#ifdef BACKSLASH_IN_FILENAME
+        && !((flags & P_EXPAND)
+             && vim_isfilec((uint8_t)arg[1])
+             && !ascii_iswhite(arg[1])
+             && (arg[1] != '\\'
+                 || (s == newval && arg[2] != '\\')))
+#endif
+        ) {
+      arg++;  // remove backslash
+    }
+    int i = utfc_ptr2len(arg);
+    if (i > 1) {
+      // copy multibyte char
+      memmove(s, arg, (size_t)i);
+      arg += i;
+      s += i;
+    } else {
+      *s++ = *arg++;
+    }
+  }
+  *s = NUL;
+
+  *argp = arg;
+  return newval;
+}
+
+/// Expand environment variables and ~ in string option value 'newval'.
+static char *stropt_expand_envvar(int opt_idx, char *origval, char *newval, set_op_T op)
+{
+  char *s = option_expand(opt_idx, newval);
+  if (s == NULL) {
+    return newval;
+  }
+
+  xfree(newval);
+  uint32_t newlen = (unsigned)strlen(s) + 1;
+  if (op != OP_NONE) {
+    newlen += (unsigned)strlen(origval) + 1;
+  }
+  newval = xmalloc(newlen);
+  STRCPY(newval, s);
+
+  return newval;
+}
+
+/// Concatenate the original and new values of a string option, adding a "," if
+/// needed.
+static void stropt_concat_with_comma(char *origval, char *newval, set_op_T op, uint32_t flags)
+{
+  int len = 0;
+  int comma = ((flags & P_COMMA) && *origval != NUL && *newval != NUL);
+  if (op == OP_ADDING) {
+    len = (int)strlen(origval);
+    // Strip a trailing comma, would get 2.
+    if (comma && len > 1
+        && (flags & P_ONECOMMA) == P_ONECOMMA
+        && origval[len - 1] == ','
+        && origval[len - 2] != '\\') {
+      len--;
+    }
+    memmove(newval + len + comma, newval, strlen(newval) + 1);
+    memmove(newval, origval, (size_t)len);
+  } else {
+    len = (int)strlen(newval);
+    STRMOVE(newval + len + comma, origval);
+  }
+  if (comma) {
+    newval[len] = ',';
+  }
+}
+
+/// Remove a value from a string option.  Copy string option value in "origval"
+/// to "newval" and then remove the string "strval" of length "len".
+static void stropt_remove_val(char *origval, char *newval, uint32_t flags, char *strval, int len)
+{
+  // Remove newval[] from origval[]. (Note: "len" has been set above
+  // and is used here).
+  STRCPY(newval, origval);
+  if (*strval) {
+    // may need to remove a comma
+    if (flags & P_COMMA) {
+      if (strval == origval) {
+        // include comma after string
+        if (strval[len] == ',') {
+          len++;
+        }
+      } else {
+        // include comma before string
+        strval--;
+        len++;
+      }
+    }
+    STRMOVE(newval + (strval - origval), strval + len);
+  }
+}
+
+/// Remove flags that appear twice in the string option value 'newval'.
+static void stropt_remove_dupflags(char *newval, uint32_t flags)
+{
+  char *s = newval;
+  // Remove flags that appear twice.
+  for (s = newval; *s;) {
+    // if options have P_FLAGLIST and P_ONECOMMA such as 'whichwrap'
+    if (flags & P_ONECOMMA) {
+      if (*s != ',' && *(s + 1) == ','
+          && vim_strchr(s + 2, (uint8_t)(*s)) != NULL) {
+        // Remove the duplicated value and the next comma.
+        STRMOVE(s, s + 2);
+        continue;
+      }
+    } else {
+      if ((!(flags & P_COMMA) || *s != ',')
+          && vim_strchr(s + 1, (uint8_t)(*s)) != NULL) {
+        STRMOVE(s, s + 1);
+        continue;
+      }
+    }
+    s++;
+  }
+}
+
+/// Get the string value specified for a ":set" command.  The following set
+/// options are supported:
+///     set {opt}&
+///     set {opt}<
+///     set {opt}={val}
+///     set {opt}:{val}
+static char *stropt_get_newval(int nextchar, int opt_idx, char **argp, char *varp,
+                               char **origval_arg, char **origval_l_arg, char **origval_g_arg,
+                               char **oldval_arg, set_op_T *op_arg, uint32_t flags)
+{
+  char *arg = *argp;
+  char *origval = *origval_arg;
+  char *origval_l = *origval_l_arg;
+  char *origval_g = *origval_g_arg;
+  char *oldval = *oldval_arg;
+  set_op_T op = *op_arg;
+  char *save_arg = NULL;
+  char *newval;
+  char *s = NULL;
+  char whichwrap[80];
+  if (nextchar == '&') {  // set to default val
+    newval = stropt_get_default_val(opt_idx, flags);
+  } else if (nextchar == '<') {  // set to global val
+    newval = xstrdup(*(char **)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL));
+  } else {
+    arg++;  // jump to after the '=' or ':'
+
+    munge_string_opt_val((char **)varp, &oldval, &origval, &origval_l, &origval_g, &arg,
+                         whichwrap, sizeof(whichwrap), &save_arg);
+
+    // Copy the new string into allocated memory.
+    newval = stropt_copy_value(origval, &arg, op, flags);
+
+    // Expand environment variables and ~.
+    // Don't do it when adding without inserting a comma.
+    if (op == OP_NONE || (flags & P_COMMA)) {
+      newval = stropt_expand_envvar(opt_idx, origval, newval, op);
+    }
+
+    // locate newval[] in origval[] when removing it
+    // and when adding to avoid duplicates
+    int len = 0;
+    if (op == OP_REMOVING || (flags & P_NODUP)) {
+      len = (int)strlen(newval);
+      s = find_dup_item(origval, newval, flags);
+
+      // do not add if already there
+      if ((op == OP_ADDING || op == OP_PREPENDING) && s != NULL) {
+        op = OP_NONE;
+        STRCPY(newval, origval);
+      }
+
+      // if no duplicate, move pointer to end of original value
+      if (s == NULL) {
+        s = origval + (int)strlen(origval);
+      }
+    }
+
+    // concatenate the two strings; add a ',' if needed
+    if (op == OP_ADDING || op == OP_PREPENDING) {
+      stropt_concat_with_comma(origval, newval, op, flags);
+    } else if (op == OP_REMOVING) {
+      // Remove newval[] from origval[]. (Note: "len" has been set above
+      // and is used here).
+      stropt_remove_val(origval, newval, flags, s, len);
+    }
+
+    if (flags & P_FLAGLIST) {
+      // Remove flags that appear twice.
+      stropt_remove_dupflags(newval, flags);
+    }
+  }
+
+  if (save_arg != NULL) {
+    arg = save_arg;  // arg was temporarily changed, restore it
+  }
+  *argp = arg;
+  *origval_arg = origval;
+  *origval_l_arg = origval_l;
+  *origval_g_arg = origval_g;
+  *oldval_arg = oldval;
+  *op_arg = op;
+
+  return newval;
+}
+
 /// Part of do_set() for string options.
-static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, set_op_T op_arg,
-                          uint32_t flags, char *varp_arg, char *errbuf, size_t errbuflen,
-                          int *value_checked, const char **errmsg)
+static void do_set_option_string(int opt_idx, int opt_flags, char **argp, int nextchar,
+                                 set_op_T op_arg, uint32_t flags, char *varp_arg, char *errbuf,
+                                 size_t errbuflen, int *value_checked, const char **errmsg)
 {
   char *arg = *argp;
   set_op_T op = op_arg;
   char *varp = varp_arg;
-  char *save_arg = NULL;
-  char *s = NULL;
   char *origval_l = NULL;
   char *origval_g = NULL;
-  char whichwrap[80];
 
   // When using ":set opt=val" for a global option
   // with a local value the local value will be
@@ -953,181 +1201,15 @@ static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar,
     origval = oldval;
   }
 
-  char *newval;
-  if (nextchar == '&') {  // set to default val
-    newval = options[opt_idx].def_val;
-    // expand environment variables and ~ since the default value was
-    // already expanded, only required when an environment variable was set
-    // later
-    if (newval == NULL) {
-      newval = empty_option;
-    } else if (!(options[opt_idx].flags & P_NO_DEF_EXP)) {
-      s = option_expand(opt_idx, newval);
-      if (s == NULL) {
-        s = newval;
-      }
-      newval = xstrdup(s);
-    } else {
-      newval = xstrdup(newval);
-    }
-  } else if (nextchar == '<') {  // set to global val
-    newval = xstrdup(*(char **)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL));
-  } else {
-    arg++;  // jump to after the '=' or ':'
-
-    munge_string_opt_val((char **)varp, &oldval, &origval, &origval_l, &origval_g, &arg,
-                         whichwrap, sizeof(whichwrap), &save_arg);
-
-    // Copy the new string into allocated memory.
-    // Can't use set_string_option_direct(), because we need to remove the
-    // backslashes.
-
-    // get a bit too much
-    size_t newlen = strlen(arg) + 1;
-    if (op != OP_NONE) {
-      newlen += strlen(origval) + 1;
-    }
-    newval = xmalloc(newlen);
-    s = newval;
-
-    // Copy the string, skip over escaped chars.
-    // For MS-Windows backslashes before normal file name characters
-    // are not removed, and keep backslash at start, for "\\machine\path",
-    // but do remove it for "\\\\machine\\path".
-    // The reverse is found in ExpandOldSetting().
-    while (*arg != NUL && !ascii_iswhite(*arg)) {
-      if (*arg == '\\' && arg[1] != NUL
-#ifdef BACKSLASH_IN_FILENAME
-          && !((flags & P_EXPAND)
-               && vim_isfilec((uint8_t)arg[1])
-               && !ascii_iswhite(arg[1])
-               && (arg[1] != '\\'
-                   || (s == newval && arg[2] != '\\')))
-#endif
-          ) {
-        arg++;  // remove backslash
-      }
-      int i = utfc_ptr2len(arg);
-      if (i > 1) {
-        // copy multibyte char
-        memmove(s, arg, (size_t)i);
-        arg += i;
-        s += i;
-      } else {
-        *s++ = *arg++;
-      }
-    }
-    *s = NUL;
-
-    // Expand environment variables and ~.
-    // Don't do it when adding without inserting a comma.
-    if (op == OP_NONE || (flags & P_COMMA)) {
-      s = option_expand(opt_idx, newval);
-      if (s != NULL) {
-        xfree(newval);
-        newlen = (unsigned)strlen(s) + 1;
-        if (op != OP_NONE) {
-          newlen += (unsigned)strlen(origval) + 1;
-        }
-        newval = xmalloc(newlen);
-        STRCPY(newval, s);
-      }
-    }
-
-    // locate newval[] in origval[] when removing it
-    // and when adding to avoid duplicates
-    int len = 0;
-    if (op == OP_REMOVING || (flags & P_NODUP)) {
-      len = (int)strlen(newval);
-      s = find_dup_item(origval, newval, flags);
-
-      // do not add if already there
-      if ((op == OP_ADDING || op == OP_PREPENDING) && s != NULL) {
-        op = OP_NONE;
-        STRCPY(newval, origval);
-      }
-
-      // if no duplicate, move pointer to end of original value
-      if (s == NULL) {
-        s = origval + (int)strlen(origval);
-      }
-    }
-
-    // concatenate the two strings; add a ',' if needed
-    if (op == OP_ADDING || op == OP_PREPENDING) {
-      int comma = ((flags & P_COMMA) && *origval != NUL && *newval != NUL);
-      if (op == OP_ADDING) {
-        len = (int)strlen(origval);
-        // Strip a trailing comma, would get 2.
-        if (comma && len > 1
-            && (flags & P_ONECOMMA) == P_ONECOMMA
-            && origval[len - 1] == ','
-            && origval[len - 2] != '\\') {
-          len--;
-        }
-        memmove(newval + len + comma, newval, strlen(newval) + 1);
-        memmove(newval, origval, (size_t)len);
-      } else {
-        len = (int)strlen(newval);
-        STRMOVE(newval + len + comma, origval);
-      }
-      if (comma) {
-        newval[len] = ',';
-      }
-    }
-
-    // Remove newval[] from origval[]. (Note: "len" has been set above and
-    // is used here).
-    if (op == OP_REMOVING) {
-      STRCPY(newval, origval);
-      if (*s) {
-        // may need to remove a comma
-        if (flags & P_COMMA) {
-          if (s == origval) {
-            // include comma after string
-            if (s[len] == ',') {
-              len++;
-            }
-          } else {
-            // include comma before string
-            s--;
-            len++;
-          }
-        }
-        STRMOVE(newval + (s - origval), s + len);
-      }
-    }
-
-    if (flags & P_FLAGLIST) {
-      // Remove flags that appear twice.
-      for (s = newval; *s;) {
-        // if options have P_FLAGLIST and P_ONECOMMA such as
-        // 'whichwrap'
-        if (flags & P_ONECOMMA) {
-          if (*s != ',' && *(s + 1) == ','
-              && vim_strchr(s + 2, (uint8_t)(*s)) != NULL) {
-            // Remove the duplicated value and the next comma.
-            STRMOVE(s, s + 2);
-            continue;
-          }
-        } else {
-          if ((!(flags & P_COMMA) || *s != ',')
-              && vim_strchr(s + 1, (uint8_t)(*s)) != NULL) {
-            STRMOVE(s, s + 1);
-            continue;
-          }
-        }
-        s++;
-      }
-    }
-
-    if (save_arg != NULL) {
-      arg = save_arg;  // arg was temporarily changed, restore it
-    }
-  }
+  // Get the new value for the option
+  char *newval = stropt_get_newval(nextchar, opt_idx, &arg, varp, &origval,
+                                   &origval_l, &origval_g, &oldval, &op, flags);
 
   // Set the new value.
   *(char **)(varp) = newval;
+  if (newval == NULL) {
+    *(char **)(varp) = empty_option;
+  }
 
   // origval may be freed by did_set_string_option(), make a copy.
   char *saved_origval = (origval != NULL) ? xstrdup(origval) : NULL;
@@ -1326,8 +1408,8 @@ static void do_set_option_value(int opt_idx, int opt_flags, char **argp, int pre
   } else if (flags & P_NUM) {  // numeric
     do_set_num(opt_idx, opt_flags, argp, nextchar, op, varp, errbuf, errbuflen, errmsg);
   } else if (opt_idx >= 0) {   // string.
-    do_set_string(opt_idx, opt_flags, argp, nextchar, op, flags, varp, errbuf,
-                  errbuflen, &value_checked, errmsg);
+    do_set_option_string(opt_idx, opt_flags, argp, nextchar, op, flags, varp, errbuf,
+                         errbuflen, &value_checked, errmsg);
   } else {
     // key code option(FIXME(tarruda): Show a warning or something
     // similar)
@@ -2035,23 +2117,25 @@ static void did_set_langnoremap(void)
 /// Process the updated 'undofile' option value.
 static void did_set_undofile(int opt_flags)
 {
-  // Only take action when the option was set. When reset we do not
-  // delete the undo file, the option may be set again without making
-  // any changes in between.
-  if (curbuf->b_p_udf || p_udf) {
-    uint8_t hash[UNDO_HASH_SIZE];
+  // Only take action when the option was set.
+  if (!curbuf->b_p_udf && !p_udf) {
+    return;
+  }
 
-    FOR_ALL_BUFFERS(bp) {
-      // When 'undofile' is set globally: for every buffer, otherwise
-      // only for the current buffer: Try to read in the undofile,
-      // if one exists, the buffer wasn't changed and the buffer was
-      // loaded
-      if ((curbuf == bp
-           || (opt_flags & OPT_GLOBAL) || opt_flags == 0)
-          && !bufIsChanged(bp) && bp->b_ml.ml_mfp != NULL) {
-        u_compute_hash(bp, hash);
-        u_read_undo(NULL, hash, bp->b_fname);
-      }
+  // When reset we do not delete the undo file, the option may be set again
+  // without making any changes in between.
+  uint8_t hash[UNDO_HASH_SIZE];
+
+  FOR_ALL_BUFFERS(bp) {
+    // When 'undofile' is set globally: for every buffer, otherwise
+    // only for the current buffer: Try to read in the undofile,
+    // if one exists, the buffer wasn't changed and the buffer was
+    // loaded
+    if ((curbuf == bp
+         || (opt_flags & OPT_GLOBAL) || opt_flags == 0)
+        && !bufIsChanged(bp) && bp->b_ml.ml_mfp != NULL) {
+      u_compute_hash(bp, hash);
+      u_read_undo(NULL, hash, bp->b_fname);
     }
   }
 }
@@ -2148,10 +2232,11 @@ static void did_set_scrollbind(void)
 {
   // when 'scrollbind' is set: snapshot the current position to avoid a jump
   // at the end of normal_cmd()
-  if (curwin->w_p_scb) {
-    do_check_scrollbind(false);
-    curwin->w_scbind_pos = curwin->w_topline;
+  if (!curwin->w_p_scb) {
+    return;
   }
+  do_check_scrollbind(false);
+  curwin->w_scbind_pos = curwin->w_topline;
 }
 
 /// Process the updated 'previewwindow' option value.
@@ -2471,6 +2556,346 @@ static const char *set_bool_option(const int opt_idx, char *const varp, const in
   return errmsg;
 }
 
+/// Process the new 'winheight' value.
+static void did_set_winheight(win_T *win, long value)
+{
+  // Change window height NOW
+  if (!ONE_WINDOW) {
+    if (win->w_height < value) {
+      win_setheight((int)value);
+    }
+  }
+}
+
+/// Process the new 'helpheight' option value.
+static void did_set_helpheight(buf_T *buf, win_T *win, long value)
+{
+  // Change window height NOW
+  if (!ONE_WINDOW) {
+    if (buf->b_help && win->w_height < value) {
+      win_setheight((int)value);
+    }
+  }
+}
+
+/// Process the new 'winwidth' option value.
+static void did_set_winwidth(win_T *win, long value)
+{
+  if (!ONE_WINDOW && win->w_width < value) {
+    win_setwidth((int)value);
+  }
+}
+
+/// Process the new 'laststatus' option value.
+static void did_set_laststatus(long value, long old_value)
+{
+  // When switching to global statusline, decrease topframe height
+  // Also clear the cmdline to remove the ruler if there is one
+  if (value == 3 && old_value != 3) {
+    frame_new_height(topframe, topframe->fr_height - STATUS_HEIGHT, false, false);
+    (void)win_comp_pos();
+    clear_cmdline = true;
+  }
+  // When switching from global statusline, increase height of topframe by STATUS_HEIGHT
+  // in order to to re-add the space that was previously taken by the global statusline
+  if (old_value == 3 && value != 3) {
+    frame_new_height(topframe, topframe->fr_height + STATUS_HEIGHT, false, false);
+    (void)win_comp_pos();
+  }
+
+  last_status(false);  // (re)set last window status line.
+}
+
+/// Process the new 'showtabline' option value.
+static void did_set_showtabline(void)
+{
+  // (re)set tab page line
+  win_new_screen_rows();  // recompute window positions and heights
+}
+
+/// Process the new 'foldlevel' option value.
+static void did_set_foldlevel(void)
+{
+  newFoldLevel();
+}
+
+/// Process the new 'foldminlines' option value.
+static void did_set_foldminlines(win_T *win)
+{
+  foldUpdateAll(win);
+}
+
+/// Process the new 'foldnestmax' option value.
+static void did_set_foldnestmax(win_T *win)
+{
+  if (foldmethodIsSyntax(win) || foldmethodIsIndent(win)) {
+    foldUpdateAll(win);
+  }
+}
+
+/// Process the new 'shiftwidth' or the 'tabstop' option value.
+static void did_set_shiftwidth_tabstop(buf_T *buf, win_T *win, const long *pp)
+{
+  if (foldmethodIsIndent(win)) {
+    foldUpdateAll(win);
+  }
+  // When 'shiftwidth' changes, or it's zero and 'tabstop' changes:
+  // parse 'cinoptions'.
+  if (pp == &buf->b_p_sw || buf->b_p_sw == 0) {
+    parse_cino(buf);
+  }
+}
+
+/// Process the new 'iminset' option value.
+static void did_set_iminsert(void)
+{
+  showmode();
+  // Show/unshow value of 'keymap' in status lines.
+  status_redraw_curbuf();
+}
+
+/// Process the new 'window' option value.
+static void did_set_window(void)
+{
+  if (p_window < 1) {
+    p_window = Rows - 1;
+  } else if (p_window >= Rows) {
+    p_window = Rows - 1;
+  }
+}
+
+/// Process the new 'titlelen' option value.
+static void did_set_titlelen(long old_value)
+{
+  // if 'titlelen' has changed, redraw the title
+  if (starting != NO_SCREEN && old_value != p_titlelen) {
+    need_maketitle = true;
+  }
+}
+
+/// Process the new 'cmdheight' option value.
+static void did_set_cmdheight(long old_value)
+{
+  if (ui_has(kUIMessages)) {
+    p_ch = 0;
+  }
+  if (p_ch > Rows - min_rows() + 1) {
+    p_ch = Rows - min_rows() + 1;
+  }
+
+  // if p_ch changed value, change the command line height
+  // Only compute the new window layout when startup has been
+  // completed. Otherwise the frame sizes may be wrong.
+  if ((p_ch != old_value
+       || tabline_height() + global_stl_height() + topframe->fr_height != Rows - p_ch)
+      && full_screen) {
+    command_height();
+  }
+}
+
+/// Process the new 'updatecount' option value.
+static void did_set_updatecount(long old_value)
+{
+  // when 'updatecount' changes from zero to non-zero, open swap files
+  if (p_uc && !old_value) {
+    ml_open_files();
+  }
+}
+
+/// Process the new 'pumblend' option value.
+static void did_set_pumblend(void)
+{
+  p_pb = MAX(MIN(p_pb, 100), 0);
+  hl_invalidate_blends();
+  pum_grid.blending = (p_pb > 0);
+  if (pum_drawn()) {
+    pum_redraw();
+  }
+}
+
+/// Process the new global 'undolevels' option value.
+static void did_set_global_undolevels(long value, long old_value)
+{
+  // sync undo before 'undolevels' changes
+  // use the old value, otherwise u_sync() may not work properly
+  p_ul = old_value;
+  u_sync(true);
+  p_ul = value;
+}
+
+/// Process the new buffer local 'undolevels' option value.
+static void did_set_buflocal_undolevels(buf_T *buf, long value, long old_value)
+{
+  // use the old value, otherwise u_sync() may not work properly
+  buf->b_p_ul = old_value;
+  u_sync(true);
+  buf->b_p_ul = value;
+}
+
+/// Process the new 'scrollback' option value.
+static void did_set_scrollback(buf_T *buf, long value, long old_value)
+{
+  if (buf->terminal && value < old_value) {
+    // Force the scrollback to take immediate effect only when decreasing it.
+    on_scrollback_option_changed(buf->terminal);
+  }
+}
+
+/// Process the new 'numberwidth' option value.
+static void did_set_numberwidth(void)
+{
+  curwin->w_nrwidth_line_count = 0;  // trigger a redraw
+}
+
+/// Process the new 'textwidth' option value.
+static void did_set_textwidth(void)
+{
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    check_colorcolumn(wp);
+  }
+}
+
+/// Process the new 'winblend' option value.
+static void did_set_winblend(win_T *win, long value, long old_value)
+{
+  if (value != old_value) {
+    win->w_p_winbl = MAX(MIN(win->w_p_winbl, 100), 0);
+    win->w_hl_needs_update = true;
+    check_blending(curwin);
+  }
+}
+
+/// When some number options are changed, need to take some action.
+static const char *did_set_num_option(long *pp, long value, long old_value, const char *errmsg)
+{
+  if (pp == &p_wh) {      // 'winheight'
+    did_set_winheight(curwin, value);
+  } else if (pp == &p_hh) {  // 'helpheight'
+    did_set_helpheight(curbuf, curwin, value);
+  } else if (pp == &p_wmh) {  // 'winminheight'
+    did_set_winminheight();
+  } else if (pp == &p_wiw) {  // 'winwidth'
+    did_set_winwidth(curwin, value);
+  } else if (pp == &p_wmw) {  // 'winminwidth'
+    did_set_winminwidth();
+  } else if (pp == &p_window) {  // 'window'
+    did_set_window();
+  } else if (pp == &p_ls) {  // 'laststatus'
+    did_set_laststatus(value, old_value);
+  } else if (pp == &p_stal) {
+    did_set_showtabline();  // 'showtabline'
+  } else if (pp == &curwin->w_p_fdl) {
+    did_set_foldlevel();
+  } else if (pp == &curwin->w_p_fml) {
+    did_set_foldminlines(curwin);
+  } else if (pp == &curwin->w_p_fdn) {
+    did_set_foldnestmax(curwin);
+  } else if (pp == &curbuf->b_p_sw        // 'shiftwidth'
+             || pp == &curbuf->b_p_ts) {  // 'tabstop'
+    did_set_shiftwidth_tabstop(curbuf, curwin, pp);
+  } else if (pp == &curbuf->b_p_iminsert) {  // 'iminsert'
+    did_set_iminsert();
+  } else if (pp == &p_titlelen) {  // 'titlelen'
+    did_set_titlelen(old_value);
+  } else if (pp == &p_ch) {  // 'cmdheight'
+    did_set_cmdheight(old_value);
+  } else if (pp == &p_uc) {  // 'updatecount'
+    did_set_updatecount(old_value);
+  } else if (pp == &p_pb) {  // 'pumblend
+    did_set_pumblend();
+  } else if (pp == &p_ul) {  // global 'undolevels'
+    did_set_global_undolevels(value, old_value);
+  } else if (pp == &curbuf->b_p_ul) {  // buffer local 'undolevels'
+    did_set_buflocal_undolevels(curbuf, value, old_value);
+  } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
+    did_set_scrollback(curbuf, value, old_value);
+  } else if (pp == &curwin->w_p_nuw) {  // 'numberwidth'
+    did_set_numberwidth();
+  } else if (pp == &curbuf->b_p_tw) {  // 'textwidth'
+    did_set_textwidth();
+  } else if (pp == &curwin->w_p_winbl) {
+    did_set_winblend(curwin, value, old_value);
+  }
+
+  return errmsg;
+}
+
+/// Check the bounds of numeric options.
+static const char *check_num_option_bounds(long *pp, long old_value, long old_Rows, char *errbuf,
+                                           size_t errbuflen, const char *errmsg)
+{
+  // Check the (new) bounds for Rows and Columns here.
+  if (p_lines < min_rows() && full_screen) {
+    if (errbuf != NULL) {
+      vim_snprintf(errbuf, errbuflen, _("E593: Need at least %d lines"), min_rows());
+      errmsg = errbuf;
+    }
+    p_lines = min_rows();
+  }
+  if (p_columns < MIN_COLUMNS && full_screen) {
+    if (errbuf != NULL) {
+      vim_snprintf(errbuf, errbuflen, _("E594: Need at least %d columns"), MIN_COLUMNS);
+      errmsg = errbuf;
+    }
+    p_columns = MIN_COLUMNS;
+  }
+
+  // True max size is defined by check_screensize()
+  p_lines = MIN(p_lines, INT_MAX);
+  p_columns = MIN(p_columns, INT_MAX);
+
+  // If the screen (shell) height has been changed, assume it is the
+  // physical screenheight.
+  if (p_lines != Rows || p_columns != Columns) {
+    // Changing the screen size is not allowed while updating the screen.
+    if (updating_screen) {
+      *pp = old_value;
+    } else if (full_screen) {
+      screen_resize((int)p_columns, (int)p_lines);
+    } else {
+      // TODO(bfredl): is this branch ever needed?
+      // Postpone the resizing; check the size and cmdline position for
+      // messages.
+      Rows = (int)p_lines;
+      Columns = (int)p_columns;
+      check_screensize();
+      int new_row = (int)(Rows - MAX(p_ch, 1));
+      if (cmdline_row > new_row && Rows > p_ch) {
+        assert(p_ch >= 0 && new_row <= INT_MAX);
+        cmdline_row = new_row;
+      }
+    }
+    if (p_window >= Rows || !option_was_set("window")) {
+      p_window = Rows - 1;
+    }
+  }
+
+  if ((curwin->w_p_scr <= 0 || (curwin->w_p_scr > curwin->w_height && curwin->w_height > 0))
+      && full_screen) {
+    if (pp == &(curwin->w_p_scr)) {
+      if (curwin->w_p_scr != 0) {
+        errmsg = e_scroll;
+      }
+      win_comp_scroll(curwin);
+    } else if (curwin->w_p_scr <= 0) {
+      // If 'scroll' became invalid because of a side effect silently adjust it.
+      curwin->w_p_scr = 1;
+    } else {  // curwin->w_p_scr > curwin->w_height
+      curwin->w_p_scr = curwin->w_height;
+    }
+  }
+  if ((p_sj < -100 || p_sj >= Rows) && full_screen) {
+    if (Rows != old_Rows) {  // Rows changed, just adjust p_sj
+      p_sj = Rows / 2;
+    } else {
+      errmsg = e_scroll;
+      p_sj = 1;
+    }
+  }
+
+  return errmsg;
+}
+
 /// Set the value of a number option, taking care of side effects
 ///
 /// @param[in]  opt_idx  Option index in options[] table.
@@ -2491,8 +2916,7 @@ static const char *set_num_option(int opt_idx, char *varp, long value, char *err
   long *pp = (long *)varp;
 
   // Disallow changing some options from secure mode.
-  if ((secure || sandbox != 0)
-      && (options[opt_idx].flags & P_SECURE)) {
+  if ((secure || sandbox != 0) && (options[opt_idx].flags & P_SECURE)) {
     return e_secure;
   }
 
@@ -2656,207 +3080,11 @@ static const char *set_num_option(int opt_idx, char *varp, long value, char *err
   // Remember where the option was set.
   set_option_sctx_idx(opt_idx, opt_flags, current_sctx);
 
-  // For these options we want to fix some invalid values.
-  if (pp == &p_window) {
-    if (p_window < 1) {
-      p_window = Rows - 1;
-    } else if (p_window >= Rows) {
-      p_window = Rows - 1;
-    }
-  } else if (pp == &p_ch) {
-    if (ui_has(kUIMessages)) {
-      p_ch = 0;
-    }
-    if (p_ch > Rows - min_rows() + 1) {
-      p_ch = Rows - min_rows() + 1;
-    }
-  }
-
   // Number options that need some action when changed
-  if (pp == &p_wh) {
-    // 'winheight'
-    if (!ONE_WINDOW && curwin->w_height < p_wh) {
-      win_setheight((int)p_wh);
-    }
-  } else if (pp == &p_hh) {
-    // 'helpheight'
-    if (!ONE_WINDOW && curbuf->b_help && curwin->w_height < p_hh) {
-      win_setheight((int)p_hh);
-    }
-  } else if (pp == &p_wmh) {
-    // 'winminheight'
-    win_setminheight();
-  } else if (pp == &p_wiw) {
-    // 'winwidth'
-    if (!ONE_WINDOW && curwin->w_width < p_wiw) {
-      win_setwidth((int)p_wiw);
-    }
-  } else if (pp == &p_wmw) {
-    // 'winminwidth'
-    win_setminwidth();
-  } else if (pp == &p_ls) {
-    // When switching to global statusline, decrease topframe height
-    // Also clear the cmdline to remove the ruler if there is one
-    if (value == 3 && old_value != 3) {
-      frame_new_height(topframe, topframe->fr_height - STATUS_HEIGHT, false, false);
-      (void)win_comp_pos();
-      clear_cmdline = true;
-    }
-    // When switching from global statusline, increase height of topframe by STATUS_HEIGHT
-    // in order to to re-add the space that was previously taken by the global statusline
-    if (old_value == 3 && value != 3) {
-      frame_new_height(topframe, topframe->fr_height + STATUS_HEIGHT, false, false);
-      (void)win_comp_pos();
-    }
+  errmsg = did_set_num_option(pp, value, old_value, errmsg);
 
-    last_status(false);  // (re)set last window status line.
-  } else if (pp == &p_stal) {
-    // (re)set tab page line
-    win_new_screen_rows();   // recompute window positions and heights
-  } else if (pp == &curwin->w_p_fdl) {
-    newFoldLevel();
-  } else if (pp == &curwin->w_p_fml) {
-    foldUpdateAll(curwin);
-  } else if (pp == &curwin->w_p_fdn) {
-    if (foldmethodIsSyntax(curwin) || foldmethodIsIndent(curwin)) {
-      foldUpdateAll(curwin);
-    }
-  } else if (pp == &curbuf->b_p_sw || pp == &curbuf->b_p_ts) {
-    // 'shiftwidth' or 'tabstop'
-    if (foldmethodIsIndent(curwin)) {
-      foldUpdateAll(curwin);
-    }
-    // When 'shiftwidth' changes, or it's zero and 'tabstop' changes:
-    // parse 'cinoptions'.
-    if (pp == &curbuf->b_p_sw || curbuf->b_p_sw == 0) {
-      parse_cino(curbuf);
-    }
-  } else if (pp == &curbuf->b_p_iminsert) {
-    showmode();
-    // Show/unshow value of 'keymap' in status lines.
-    status_redraw_curbuf();
-  } else if (pp == &p_titlelen) {
-    // if 'titlelen' has changed, redraw the title
-    if (starting != NO_SCREEN && old_value != p_titlelen) {
-      need_maketitle = true;
-    }
-  } else if (pp == &p_ch) {
-    // if p_ch changed value, change the command line height
-    // Only compute the new window layout when startup has been
-    // completed. Otherwise the frame sizes may be wrong.
-    if ((p_ch != old_value
-         || tabline_height() + global_stl_height() + topframe->fr_height != Rows - p_ch)
-        && full_screen) {
-      command_height();
-    }
-  } else if (pp == &p_uc) {
-    // when 'updatecount' changes from zero to non-zero, open swap files
-    if (p_uc && !old_value) {
-      ml_open_files();
-    }
-  } else if (pp == &p_pb) {
-    p_pb = MAX(MIN(p_pb, 100), 0);
-    hl_invalidate_blends();
-    pum_grid.blending = (p_pb > 0);
-    if (pum_drawn()) {
-      pum_redraw();
-    }
-  } else if (pp == &p_ul || pp == &curbuf->b_p_ul) {
-    // sync undo before 'undolevels' changes
-    // use the old value, otherwise u_sync() may not work properly
-    *pp = old_value;
-    u_sync(true);
-    *pp = value;
-  } else if (pp == &curbuf->b_p_tw) {
-    FOR_ALL_TAB_WINDOWS(tp, wp) {
-      check_colorcolumn(wp);
-    }
-  } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
-    if (curbuf->terminal && value < old_value) {
-      // Force the scrollback to take immediate effect only when decreasing it.
-      on_scrollback_option_changed(curbuf->terminal);
-    }
-  } else if (pp == &curwin->w_p_nuw) {
-    curwin->w_nrwidth_line_count = 0;
-  } else if (pp == &curwin->w_p_winbl && value != old_value) {
-    // 'winblend'
-    curwin->w_p_winbl = MAX(MIN(curwin->w_p_winbl, 100), 0);
-    curwin->w_hl_needs_update = true;
-    check_blending(curwin);
-  }
-
-  // Check the (new) bounds for Rows and Columns here.
-  if (p_lines < min_rows() && full_screen) {
-    if (errbuf != NULL) {
-      vim_snprintf(errbuf, errbuflen,
-                   _("E593: Need at least %d lines"), min_rows());
-      errmsg = errbuf;
-    }
-    p_lines = min_rows();
-  }
-  if (p_columns < MIN_COLUMNS && full_screen) {
-    if (errbuf != NULL) {
-      vim_snprintf(errbuf, errbuflen,
-                   _("E594: Need at least %d columns"), MIN_COLUMNS);
-      errmsg = errbuf;
-    }
-    p_columns = MIN_COLUMNS;
-  }
-
-  // True max size is defined by check_screensize()
-  p_lines = MIN(p_lines, INT_MAX);
-  p_columns = MIN(p_columns, INT_MAX);
-
-  // If the screen (shell) height has been changed, assume it is the
-  // physical screenheight.
-  if (p_lines != Rows || p_columns != Columns) {
-    // Changing the screen size is not allowed while updating the screen.
-    if (updating_screen) {
-      *pp = old_value;
-    } else if (full_screen) {
-      screen_resize((int)p_columns, (int)p_lines);
-    } else {
-      // TODO(bfredl): is this branch ever needed?
-      // Postpone the resizing; check the size and cmdline position for
-      // messages.
-      Rows = (int)p_lines;
-      Columns = (int)p_columns;
-      check_screensize();
-      int new_row = (int)(Rows - MAX(p_ch, 1));
-      if (cmdline_row > new_row && Rows > p_ch) {
-        assert(p_ch >= 0 && new_row <= INT_MAX);
-        cmdline_row = new_row;
-      }
-    }
-    if (p_window >= Rows || !option_was_set("window")) {
-      p_window = Rows - 1;
-    }
-  }
-
-  if ((curwin->w_p_scr <= 0
-       || (curwin->w_p_scr > curwin->w_height
-           && curwin->w_height > 0))
-      && full_screen) {
-    if (pp == &(curwin->w_p_scr)) {
-      if (curwin->w_p_scr != 0) {
-        errmsg = e_scroll;
-      }
-      win_comp_scroll(curwin);
-    } else if (curwin->w_p_scr <= 0) {
-      // If 'scroll' became invalid because of a side effect silently adjust it.
-      curwin->w_p_scr = 1;
-    } else {  // curwin->w_p_scr > curwin->w_height
-      curwin->w_p_scr = curwin->w_height;
-    }
-  }
-  if ((p_sj < -100 || p_sj >= Rows) && full_screen) {
-    if (Rows != old_Rows) {     // Rows changed, just adjust p_sj
-      p_sj = Rows / 2;
-    } else {
-      errmsg = e_scroll;
-      p_sj = 1;
-    }
-  }
+  // Check the bounds for numeric options here
+  errmsg = check_num_option_bounds(pp, old_value, old_Rows, errbuf, errbuflen, errmsg);
 
   // May set global value for local option.
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {

@@ -6098,7 +6098,7 @@ static void frame_setwidth(frame_T *curfrp, int width)
 }
 
 // Check 'winminheight' for a valid value and reduce it if needed.
-void win_setminheight(void)
+void did_set_winminheight(void)
 {
   bool first = true;
 
@@ -6118,7 +6118,7 @@ void win_setminheight(void)
 }
 
 // Check 'winminwidth' for a valid value and reduce it if needed.
-void win_setminwidth(void)
+void did_set_winminwidth(void)
 {
   bool first = true;
 
