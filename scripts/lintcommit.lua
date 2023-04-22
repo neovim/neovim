@@ -1,9 +1,9 @@
 -- Usage:
 --    # verbose
---    nvim -l scripts/lintcommit.lua main
+--    nvim -l scripts/lintcommit.lua main --trace
 --
 --    # silent
---    nvim -l scripts/lintcommit.lua main --notrace
+--    nvim -l scripts/lintcommit.lua main
 --
 --    # self-test
 --    nvim -l scripts/lintcommit.lua _test
@@ -13,17 +13,24 @@ local M = {}
 
 local _trace = false
 
+-- Print message
+local function p(s)
+  vim.cmd('set verbose=1')
+  vim.api.nvim_echo({{s, ''}}, false, {})
+  vim.cmd('set verbose=0')
+end
+
 -- Executes and returns the output of `cmd`, or nil on failure.
 --
 -- Prints `cmd` if `trace` is enabled.
 local function run(cmd, or_die)
   if _trace then
-    print('run: '..vim.inspect(cmd))
+    p('run: '..vim.inspect(cmd))
   end
   local rv = vim.trim(vim.fn.system(cmd)) or ''
   if vim.v.shell_error ~= 0 then
     if or_die then
-      print(rv)
+      p(rv)
       os.exit(1)
     end
     return nil
@@ -161,7 +168,7 @@ function M.main(opt)
   for _, commit_id in ipairs(commits) do
     local msg = run({'git', 'show', '-s', '--format=%s' , commit_id})
     if vim.v.shell_error ~= 0 then
-      print('Invalid commit-id: '..commit_id..'"')
+      p('Invalid commit-id: '..commit_id..'"')
     else
       local invalid_msg = validate_commit(msg)
       if invalid_msg then
@@ -169,10 +176,10 @@ function M.main(opt)
 
         -- Some breathing room
         if failed == 1 then
-          print('\n')
+          p('\n')
         end
 
-        print(string.format([[
+        p(string.format([[
 Invalid commit message: "%s"
     Commit: %s
     %s
@@ -185,13 +192,14 @@ Invalid commit message: "%s"
   end
 
   if failed > 0 then
-        print([[
+        p([[
 See also:
     https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md#commit-messages
+
 ]])
     os.exit(1)
   else
-    print('')
+    p('')
   end
 end
 
@@ -252,7 +260,7 @@ function M._test()
     local is_valid = (nil == validate_commit(message))
     if is_valid ~= expected then
       failed = failed + 1
-      print(string.format('[ FAIL ]: expected=%s, got=%s\n    input: "%s"', expected, is_valid, message))
+      p(string.format('[ FAIL ]: expected=%s, got=%s\n    input: "%s"', expected, is_valid, message))
     end
   end
 
