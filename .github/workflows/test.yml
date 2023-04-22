@@ -354,7 +354,7 @@ jobs:
         with:
           update: true
           pacboy: >-
-            make:p gcc:p
+            make:p gcc:p diffutils:p
           release: false
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
