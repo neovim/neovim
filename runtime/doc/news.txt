@@ -52,6 +52,9 @@ The following changes to existing APIs or features add new behavior.
 • vim.diagnostic.config() now accepts a function for the virtual_text.prefix
   option, which allows for rendering e.g., diagnostic severities differently.
 
+• The `workspace/didChangeWatchedFiles` LSP client capability is now enabled
+  by default.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 

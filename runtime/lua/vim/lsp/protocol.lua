@@ -837,7 +837,7 @@ function protocol.make_client_capabilities()
         refreshSupport = true,
       },
       didChangeWatchedFiles = {
-        dynamicRegistration = false,
+        dynamicRegistration = true,
         relativePatternSupport = true,
       },
     },
