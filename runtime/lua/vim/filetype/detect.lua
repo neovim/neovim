@@ -1322,6 +1322,24 @@ function M.txt(bufnr)
   end
 end
 
+-- Determine if a .v file is Verilog, V, or Coq
+function M.v(bufnr)
+  if vim.fn.did_filetype() ~= 0 then
+    -- Filetype was already detected
+    return
+  end
+  for _, line in ipairs(getlines(bufnr, 1, 200)) do
+    if not line:find('^%s*/') then
+      if findany(line, { ';%s*$', ';%s*/' }) then
+        return 'verilog'
+      elseif findany(line, { '%.%s*$', '%.%s*%(%*' }) then
+        return 'coq'
+      end
+    end
+  end
+  return 'v'
+end
+
 -- WEB (*.web is also used for Winbatch: Guess, based on expecting "%" comment
 -- lines in a WEB file).
 function M.web(bufnr)
