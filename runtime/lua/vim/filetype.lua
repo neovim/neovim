@@ -1091,7 +1091,9 @@ local extension = {
   vr = 'vera',
   vri = 'vera',
   vrh = 'vera',
-  v = 'verilog',
+  v = function(path, bufnr)
+    return require('vim.filetype.detect').v(bufnr)
+  end,
   va = 'verilogams',
   vams = 'verilogams',
   vhdl = 'vhdl',

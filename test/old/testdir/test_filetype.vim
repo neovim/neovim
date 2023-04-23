@@ -646,7 +646,6 @@ let s:filename_checks = {
     \ 'vdmrt': ['file.vdmrt'],
     \ 'vdmsl': ['file.vdm', 'file.vdmsl'],
     \ 'vera': ['file.vr', 'file.vri', 'file.vrh'],
-    \ 'verilog': ['file.v'],
     \ 'verilogams': ['file.va', 'file.vams'],
     \ 'vgrindefs': ['vgrindefs'],
     \ 'vhdl': ['file.hdl', 'file.vhd', 'file.vhdl', 'file.vbe', 'file.vst', 'file.vhdl_123', 'file.vho', 'some.vhdl_1', 'some.vhdl_1-file'],
@@ -1766,6 +1765,27 @@ func Test_ttl_file()
   call writefile(['looks like Tera Term Language'], 'Xfile.ttl')
   split Xfile.ttl
   call assert_equal('teraterm', &filetype)
+  bwipe!
+
+  filetype off
+endfunc
+
+func Test_v_file()
+  filetype on
+
+  call writefile(['module tb; // Looks like a Verilog'], 'Xfile.v', 'D')
+  split Xfile.v
+  call assert_equal('verilog', &filetype)
+  bwipe!
+
+  call writefile(['module main'], 'Xfile.v')
+  split Xfile.v
+  call assert_equal('v', &filetype)
+  bwipe!
+
+  call writefile(['Definition x := 10.  (*'], 'Xfile.v')
+  split Xfile.v
+  call assert_equal('coq', &filetype)
   bwipe!
 
   filetype off
