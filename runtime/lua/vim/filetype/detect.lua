@@ -1330,9 +1330,9 @@ function M.v(bufnr)
   end
   for _, line in ipairs(getlines(bufnr, 1, 200)) do
     if not line:find('^%s*/') then
-      if findany(line, { ";%s*$", ";%s*/" }) then
+      if findany(line, { ';%s*$', ';%s*/' }) then
         return 'verilog'
-      elseif findany(line, { "%.%s*$", "%.%s*%(%*" }) then
+      elseif findany(line, { '%.%s*$', '%.%s*%(%*' }) then
         return 'coq'
       end
     end
