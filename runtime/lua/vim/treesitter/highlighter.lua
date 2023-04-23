@@ -76,9 +76,6 @@ function TSHighlighter.new(tree, opts)
   opts = opts or {} ---@type { queries: table<string,string> }
   self.tree = tree
   tree:register_cbs({
-    on_changedtree = function(...)
-      self:on_changedtree(...)
-    end,
     on_bytes = function(...)
       self:on_bytes(...)
     end,
@@ -86,6 +83,17 @@ function TSHighlighter.new(tree, opts)
       self:on_detach()
     end,
   })
+
+  tree:register_cbs({
+    on_changedtree = function(...)
+      self:on_changedtree(...)
+    end,
+    on_child_removed = function(child)
+      child:for_each_tree(function(t)
+        self:on_changedtree(t:included_ranges(true))
+      end)
+    end,
+  }, true)
 
   self.bufnr = tree:source() --[[@as integer]]
   self.edit_count = 0
@@ -177,10 +185,10 @@ function TSHighlighter:on_detach()
 end
 
 ---@package
----@param changes integer[][]?
+---@param changes Range6[][]
 function TSHighlighter:on_changedtree(changes)
-  for _, ch in ipairs(changes or {}) do
-    api.nvim__buf_redraw_range(self.bufnr, ch[1], ch[3] + 1)
+  for _, ch in ipairs(changes) do
+    api.nvim__buf_redraw_range(self.bufnr, ch[1], ch[4] + 1)
   end
 end
 
