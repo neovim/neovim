@@ -35,64 +35,20 @@
       "inherits": ["base"]
     },
     {
-      "name": "windows-default",
-      "displayName": "Windows x64 RelWithDebInfo",
-      "description": "Sets Ninja generator, enables optimizations with debug information for x64",
-      "generator": "Ninja",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
-      },
-      "architecture": {
-        "value": "x64",
-        "strategy": "external"
-      },
-      "vendor": {
-        "microsoft.com/VisualStudioSettings/CMake/1.0": {
-          "hostOS": ["Windows"]
-        }
-      },
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      },
-      "inherits": ["base"]
-    },
-    {
       "name": "iwyu",
       "displayName": "IWYU",
-      "description": "Run include-what-you-use with the compiler",
+      "description": "Run include-what-you-use",
       "cacheVariables": {
         "ENABLE_IWYU": "ON"
       },
       "inherits": ["base"]
-    }
-  ],
-  "buildPresets": [
-    {
-      "name": "default",
-      "configurePreset": "default"
     },
     {
-      "name": "debug",
-      "configurePreset": "debug"
-    },
-    {
-      "name": "release",
-      "configurePreset": "release"
-    },
-    {
-      "name": "windows-default",
-      "configurePreset": "windows-default",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      }
-    },
-    {
-      "name": "iwyu",
-      "configurePreset": "iwyu"
+      "name": "ci",
+      "cacheVariables": {
+        "CI_BUILD": "ON"
+      },
+      "inherits": ["base"]
     }
   ]
 }
