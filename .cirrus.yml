@@ -26,3 +26,17 @@ freebsd_task:
     - sudo -u cirrus gmake unittest
   oldtest_script:
     - sudo -u cirrus gmake oldtest
+
+with_external_deps_task:
+  container:
+    dockerfile: ci/Dockerfile.external_deps
+  deps_script:
+      # Ideally all dependencies should external for this job, but some
+      # dependencies don't have the required version available. We use the
+      # bundled versions for these with the hopes of being able to remove them
+      # later on.
+    - cmake -S cmake.deps -B .deps -G Ninja -D USE_BUNDLED=OFF -D USE_BUNDLED_LIBVTERM=ON -D USE_BUNDLED_TS=ON
+    - cmake --build .deps
+  build_script:
+    - cmake --preset ci
+    - cmake --build build
