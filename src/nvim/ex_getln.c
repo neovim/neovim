@@ -236,7 +236,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   bool delim_optional = false;
   int delim;
   char *end;
-  char *dummy;
+  const char *dummy;
   pos_T save_cursor;
   bool use_last_pat;
   bool retval = false;
@@ -261,7 +261,6 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
     return false;
   }
 
-  emsg_off++;
   exarg_T ea = {
     .line1 = 1,
     .line2 = 1,
@@ -369,7 +368,6 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   curwin->w_cursor = save_cursor;
   retval = true;
 theend:
-  emsg_off--;
   return retval;
 }
 
@@ -2428,13 +2426,10 @@ static bool cmdpreview_may_show(CommandLineState *s)
   // Copy the command line so we can modify it.
   int cmdpreview_type = 0;
   char *cmdline = xstrdup(ccline.cmdbuff);
-  char *errormsg = NULL;
-  emsg_off++;  // Block errors when parsing the command line, and don't update v:errmsg
+  const char *errormsg = NULL;
   if (!parse_cmdline(cmdline, &ea, &cmdinfo, &errormsg)) {
-    emsg_off--;
     goto end;
   }
-  emsg_off--;
 
   // Check if command is previewable, if not, don't attempt to show preview
   if (!(ea.argt & EX_PREVIEW)) {

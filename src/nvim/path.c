@@ -2129,7 +2129,7 @@ int expand_wildcards_eval(char **pat, int *num_file, char ***file, int flags)
   int ret = FAIL;
   char *eval_pat = NULL;
   char *exp_pat = *pat;
-  char *ignored_msg;
+  const char *ignored_msg;
   size_t usedlen;
   const bool is_cur_alt_file = *exp_pat == '%' || *exp_pat == '#';
   bool star_follows = false;
