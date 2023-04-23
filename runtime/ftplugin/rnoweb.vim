@@ -2,7 +2,7 @@
 " Language: Rnoweb
 " Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
 " Homepage: https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	Sun Apr 24, 2022  09:13AM
+" Last Change:	Mon Feb 27, 2023  07:16PM
 
 " Only do this when not yet done for this buffer
 if exists("b:did_ftplugin")
@@ -29,7 +29,7 @@ if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
         \ "All Files (*.*)\t*.*\n"
 endif
 
-function! SetRnwCommentStr()
+function SetRnwCommentStr()
     if (search("^\s*<<.*>>=", "bncW") > search("^@", "bncW"))
         set commentstring=#\ %s
     else
@@ -47,9 +47,9 @@ if !exists("g:rnw_dynamic_comments") || (exists("g:rnw_dynamic_comments") && g:r
 endif
 
 if exists('b:undo_ftplugin')
-  let b:undo_ftplugin .= " | setl isk< sua< com< | unlet! b:browsefilter"
+  let b:undo_ftplugin .= " | setl isk< sua< com< cms< | unlet! b:browsefilter"
 else
-  let b:undo_ftplugin = "setl isk< sua< com< | unlet! b:browsefilter"
+  let b:undo_ftplugin = "setl isk< sua< com< cms< | unlet! b:browsefilter"
 endif
 
 let &cpo = s:cpo_save

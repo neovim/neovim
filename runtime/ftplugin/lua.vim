@@ -4,7 +4,8 @@
 " Previous Maintainer:	Max Ischenko <mfi@ukr.net>
 " Contributor:		Dorai Sitaram <ds26@gte.com>
 "			C.D. MacEachern <craig.daniel.maceachern@gmail.com>
-" Last Change:		2022 Nov 19
+"			Tyler Miller <tmillr@proton.me>
+" Last Change:		2023 Mar 24
 
 if exists("b:did_ftplugin")
   finish
@@ -14,7 +15,7 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
-setlocal comments=:--
+setlocal comments=:---,:--
 setlocal commentstring=--\ %s
 setlocal formatoptions-=t formatoptions+=croql
 

@@ -910,7 +910,7 @@ func s:InstallCommands()
   command Program call s:GotoProgram()
   command Source call s:GotoSourcewinOrCreateIt()
   command Asm call s:GotoAsmwinOrCreateIt()
-  command Winbar call s:InstallWinbar()
+  command Winbar call s:InstallWinbar(1)
 
   let map = 1
   if exists('g:termdebug_config')
@@ -931,14 +931,7 @@ func s:InstallCommands()
   endif
 
   if has('menu') && &mouse != ''
-    " install the window toolbar by default, can be disabled in the config
-    let winbar = 1
-    if exists('g:termdebug_config')
-      let winbar = get(g:termdebug_config, 'winbar', 1)
-    endif
-    if winbar
-      call s:InstallWinbar()
-    endif
+    call s:InstallWinbar(0)
 
     let popup = 1
     if exists('g:termdebug_config')
@@ -963,7 +956,7 @@ endfunc
 " let s:winbar_winids = []
 
 " Install the window toolbar in the current window.
-func s:InstallWinbar()
+func s:InstallWinbar(force)
   " if has('menu') && &mouse != ''
   "   nnoremenu WinBar.Step   :Step<CR>
   "   nnoremenu WinBar.Next   :Over<CR>
@@ -1370,7 +1363,7 @@ func s:GotoSourcewinOrCreateIt()
   if !win_gotoid(s:sourcewin)
     new
     let s:sourcewin = win_getid(winnr())
-    call s:InstallWinbar()
+    call s:InstallWinbar(0)
   endif
 endfunc
 
@@ -1493,7 +1486,7 @@ func s:HandleCursor(msg)
           " TODO: find existing window
           exe 'split ' . fnameescape(fname)
           let s:sourcewin = win_getid(winnr())
-          call s:InstallWinbar()
+          call s:InstallWinbar(0)
         else
           exe 'edit ' . fnameescape(fname)
         endif

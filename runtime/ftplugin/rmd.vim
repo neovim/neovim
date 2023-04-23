@@ -2,7 +2,7 @@
 " Language: R Markdown file
 " Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
 " Homepage: https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	Sun Apr 24, 2022  09:12AM
+" Last Change:	Mon Feb 27, 2023  07:15PM
 " Original work by Alex Zvoleff (adjusted from R help for rmd by Michel Kuhlmann)
 
 " Only do this when not yet done for this buffer
@@ -23,7 +23,7 @@ setlocal iskeyword=@,48-57,_,.
 let s:cpo_save = &cpo
 set cpo&vim
 
-function! FormatRmd()
+function FormatRmd()
   if search("^[ \t]*```[ ]*{r", "bncW") > search("^[ \t]*```$", "bncW")
     setlocal comments=:#',:###,:##,:#
   else
@@ -32,7 +32,7 @@ function! FormatRmd()
   return 1
 endfunction
 
-function! SetRmdCommentStr()
+function SetRmdCommentStr()
     if (search("^[ \t]*```[ ]*{r", "bncW") > search("^[ \t]*```$", "bncW")) || ((search('^---$', 'Wn') || search('^\.\.\.$', 'Wn')) && search('^---$', 'bnW'))
         set commentstring=#\ %s
     else

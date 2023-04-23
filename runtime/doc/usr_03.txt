@@ -173,6 +173,8 @@ one.  Thus if the cursor is at the start of the line of the previous example,
 		---+---------------->
 			   %
 
+Other ways to move around code can be found in |usr_29.txt|.
+
 ==============================================================================
 *03.5*	Moving to a specific line
 
