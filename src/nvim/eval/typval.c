@@ -4224,7 +4224,7 @@ bool tv2bool(const typval_T *const tv)
   case VAR_BOOL:
     return tv->vval.v_bool == kBoolVarTrue;
   case VAR_SPECIAL:
-    return tv->vval.v_special == kSpecialVarNull;
+    return tv->vval.v_special != kSpecialVarNull;
   case VAR_BLOB:
     return tv->vval.v_blob != NULL && tv->vval.v_blob->bv_ga.ga_len > 0;
   case VAR_UNKNOWN:

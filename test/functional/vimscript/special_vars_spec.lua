@@ -130,6 +130,12 @@ describe('Special values', function()
     eq("v:false", eval('"" . v:false'))
   end)
 
+  it('work with ?? (falsy operator)', function()
+    eq(true, eval('v:true ?? 42'))
+    eq(42, eval('v:false ?? 42'))
+    eq(42, eval('v:null ?? 42'))
+  end)
+
   it('work with type()', function()
     eq(6, funcs.type(true))
     eq(6, funcs.type(false))
