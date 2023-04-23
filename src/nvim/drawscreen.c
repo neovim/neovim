@@ -574,9 +574,9 @@ int update_screen(void)
     draw_tabline();
   }
 
-  // Correct stored syntax highlighting info for changes in each displayed
-  // buffer.  Each buffer must only be done once.
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    // Correct stored syntax highlighting info for changes in each displayed
+    // buffer.  Each buffer must only be done once.
     update_window_hl(wp, type >= UPD_NOT_VALID || hl_changed);
 
     buf_T *buf = wp->w_buffer;
@@ -592,6 +592,11 @@ int update_screen(void)
         buf->b_mod_tick_decor = display_tick;
       }
     }
+
+    // Reset 'statuscolumn' if there is no dedicated signcolumn but it is invalid.
+    if (*wp->w_p_stc != NUL && !wp->w_buffer->b_signcols.valid && win_no_signcol(wp)) {
+      wp->w_nrwidth_line_count = 0;
+    }
   }
 
   // Go from top to bottom through the windows, redrawing the ones that need it.
@@ -599,6 +604,11 @@ int update_screen(void)
   screen_search_hl.rm.regprog = NULL;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    // Validate b_signcols if there is no dedicated signcolumn but 'statuscolumn' is set.
+    if (*wp->w_p_stc != NUL && win_no_signcol(wp)) {
+      buf_signcols(wp->w_buffer, 0);
+    }
+
     if (wp->w_redr_type == UPD_CLEAR && wp->w_floating && wp->w_grid_alloc.chars) {
       grid_invalidate(&wp->w_grid_alloc);
       wp->w_redr_type = UPD_NOT_VALID;
