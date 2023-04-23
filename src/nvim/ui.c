@@ -439,7 +439,7 @@ void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol, 
                              MIN(clearcol, (int)grid->cols - 1));
     ui_call_flush();
     uint64_t wd = (uint64_t)labs(p_wd);
-    os_microdelay(wd * 1000U, true);
+    os_sleep(wd);
     pending_cursor_update = true;  // restore the cursor later
   }
 }
@@ -521,7 +521,7 @@ void ui_flush(void)
   ui_call_flush();
 
   if (p_wd && (rdb_flags & RDB_FLUSH)) {
-    os_microdelay((uint64_t)labs(p_wd) * 1000U, true);
+    os_sleep((uint64_t)labs(p_wd));
   }
 }
 
