@@ -39,6 +39,10 @@ describe('autocmd api', function()
       }))
       eq("Invalid 'event' item: expected String, got Array", pcall_err(meths.create_autocmd,
         {'FileType', {}}, {}))
+      eq("Invalid 'group': 0", pcall_err(meths.create_autocmd, 'FileType', {
+        group = 0,
+        command = 'ls',
+      }))
     end)
 
     it('doesnt leak when you use ++once', function()
@@ -307,6 +311,9 @@ describe('autocmd api', function()
       }))
       eq("Invalid 'group': 'bogus'", pcall_err(meths.get_autocmds, {
         group = 'bogus',
+      }))
+      eq("Invalid 'group': 0", pcall_err(meths.get_autocmds, {
+        group = 0,
       }))
       eq("Invalid 'group': expected String or Integer, got Array", pcall_err(meths.get_autocmds, {
         group = {},
@@ -725,6 +732,9 @@ describe('autocmd api', function()
       eq("Invalid 'group': expected String or Integer, got Array", pcall_err(meths.exec_autocmds, 'FileType', {
         group = {},
       }))
+      eq("Invalid 'group': 0", pcall_err(meths.exec_autocmds, 'FileType', {
+        group = 0,
+      }))
       eq("Invalid 'buffer': expected Integer, got Array", pcall_err(meths.exec_autocmds, 'FileType', {
         buffer = {},
       }))
@@ -1049,6 +1059,12 @@ describe('autocmd api', function()
 
       eq(false, exec_lua[[return pcall(vim.api.nvim_del_augroup_by_id, -12342)]])
       eq('Vim:E367: No such group: "--Deleted--"', pcall_err(meths.del_augroup_by_id, -12312))
+
+      eq(false, exec_lua[[return pcall(vim.api.nvim_del_augroup_by_id, 0)]])
+      eq('Vim:E367: No such group: "[NULL]"', pcall_err(meths.del_augroup_by_id, 0))
+
+      eq(false, exec_lua[[return pcall(vim.api.nvim_del_augroup_by_id, 12342)]])
+      eq('Vim:E367: No such group: "[NULL]"', pcall_err(meths.del_augroup_by_id, 12312))
     end)
 
     it('groups work with once', function()
@@ -1224,6 +1240,7 @@ describe('autocmd api', function()
       eq("Invalid 'event' item: expected String, got Array", pcall_err(meths.clear_autocmds, {
         event = {'FileType', {}}
       }))
+      eq("Invalid 'group': 0", pcall_err(meths.clear_autocmds, {group = 0}))
     end)
 
     it('should clear based on event + pattern', function()
