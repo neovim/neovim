@@ -199,7 +199,7 @@ jobs:
 
       - name: Build
         run: |
-          cmake -B build -G Ninja -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.flags }} -D CI_BUILD=ON
+          cmake --preset ci -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.flags }}
           cmake --build build
 
       - if: "!cancelled()"
@@ -305,7 +305,7 @@ jobs:
 
       - name: Build
         run: |
-          cmake -B build -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo' -D CI_BUILD=ON
+          cmake --preset ci -D CMAKE_BUILD_TYPE='RelWithDebInfo'
           cmake --build build
 
       - name: Install test deps
@@ -395,5 +395,5 @@ jobs:
 
       - name: Build
         run: |
-          cmake -B build -G Ninja -D CI_BUILD=ON
+          cmake --preset ci
           cmake --build build
