@@ -1858,7 +1858,7 @@ int get_literal(bool no_simplify)
   no_mapping++;                 // don't map the next key hits
   cc = 0;
   i = 0;
-  for (;;) {
+  while (true) {
     nc = plain_vgetc();
     if (!no_simplify) {
       nc = merge_modifiers(nc, &mod_mask);
@@ -2356,7 +2356,7 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
 
       curwin->w_cursor = *end_insert_pos;
       check_cursor_col();        // make sure it is not past the line
-      for (;;) {
+      while (true) {
         if (gchar_cursor() == NUL && curwin->w_cursor.col > 0) {
           curwin->w_cursor.col--;
         }
@@ -2505,7 +2505,7 @@ int oneleft(void)
 
     // We might get stuck on 'showbreak', skip over it.
     width = 1;
-    for (;;) {
+    while (true) {
       coladvance(v - width);
       // getviscol() is slow, skip it when 'showbreak' is empty,
       // 'breakindent' is not set and there are no multi-byte
@@ -2886,7 +2886,7 @@ static void mb_replace_pop_ins(int cc)
   }
 
   // Handle composing chars.
-  for (;;) {
+  while (true) {
     int c = replace_pop();
     if (c == -1) {                // stack empty
       break;

@@ -852,7 +852,7 @@ static void arg_all_close_unused_windows(arg_all_state_T *aall)
   if (aall->had_tab > 0) {
     goto_tabpage_tp(first_tabpage, true, true);
   }
-  for (;;) {
+  while (true) {
     win_T *wpnext = NULL;
     tabpage_T *tpnext = curtab->tp_next;
     for (win_T *wp = firstwin; wp != NULL; wp = wpnext) {
@@ -1148,7 +1148,7 @@ char *arg_all(void)
   // Do this loop two times:
   // first time: compute the total length
   // second time: concatenate the names
-  for (;;) {
+  while (true) {
     int len = 0;
     for (int idx = 0; idx < ARGCOUNT; idx++) {
       char *p = alist_name(&ARGLIST[idx]);

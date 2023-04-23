@@ -780,7 +780,7 @@ void curs_columns(win_T *wp, int may_scroll)
     int off_right =
       endcol - wp->w_leftcol - wp->w_width_inner + (int)siso + 1;
     if (off_left < 0 || off_right > 0) {
-      int diff = (off_left < 0) ? -off_left: off_right;
+      int diff = (off_left < 0) ? -off_left : off_right;
 
       // When far off or not enough room on either side, put cursor in
       // middle of window.

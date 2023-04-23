@@ -389,7 +389,7 @@ size_t spell_check(win_T *wp, char *ptr, hlf_T *attrp, int *capcol, bool docount
       if (mi.mi_lp->lp_slang->sl_fidxs != NULL) {
         p = mi.mi_word;
         char *fp = mi.mi_fword;
-        for (;;) {
+        while (true) {
           MB_PTR_ADV(p);
           MB_PTR_ADV(fp);
           if (p >= mi.mi_end) {
@@ -482,7 +482,7 @@ static void find_word(matchinf_T *mip, int mode)
   // - there is a byte that doesn't match,
   // - we reach the end of the tree,
   // - or we reach the end of the line.
-  for (;;) {
+  while (true) {
     if (flen <= 0 && *mip->mi_fend != NUL) {
       flen = fold_more(mip);
     }
@@ -549,7 +549,7 @@ static void find_word(matchinf_T *mip, int mode)
     // One space in the good word may stand for several spaces in the
     // checked word.
     if (c == ' ') {
-      for (;;) {
+      while (true) {
         if (flen <= 0 && *mip->mi_fend != NUL) {
           flen = fold_more(mip);
         }
@@ -1081,7 +1081,7 @@ static void find_prefix(matchinf_T *mip, int mode)
   // - there is a byte that doesn't match,
   // - we reach the end of the tree,
   // - or we reach the end of the line.
-  for (;;) {
+  while (true) {
     if (flen == 0 && *mip->mi_fend != NUL) {
       flen = fold_more(mip);
     }
@@ -2558,7 +2558,7 @@ bool check_need_cap(linenr_T lnum, colnr_T col)
       .rm_ic = false
     };
     char *p = line + endcol;
-    for (;;) {
+    while (true) {
       MB_PTR_BACK(line, p);
       if (p == line || spell_iswordp_nmw(p, curwin)) {
         break;
@@ -2796,7 +2796,7 @@ static void spell_soundfold_sofo(slang_T *slang, char *inword, char *res)
       if (ip == NULL) {               // empty list, can't match
         c = NUL;
       } else {
-        for (;;) {                   // find "c" in the list
+        while (true) {                // find "c" in the list
           if (*ip == 0) {             // not found
             c = NUL;
             break;

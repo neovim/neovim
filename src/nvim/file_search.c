@@ -576,9 +576,9 @@ char *vim_findfile(void *search_ctx_arg)
   }
 
   // upward search loop
-  for (;;) {
+  while (true) {
     // downward search loop
-    for (;;) {
+    while (true) {
       // check if user wants to stop the search
       os_breakcheck();
       if (got_int) {
@@ -780,7 +780,7 @@ char *vim_findfile(void *search_ctx_arg)
             } else {
               suf = curbuf->b_p_sua;
             }
-            for (;;) {
+            while (true) {
               // if file exists and we didn't already find it
               if ((path_with_url(file_path)
                    || (os_path_exists(file_path)
@@ -1419,7 +1419,7 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
 
         // When the file doesn't exist, try adding parts of 'suffixesadd'.
         buf = suffixes;
-        for (;;) {
+        while (true) {
           if ((os_path_exists(NameBuff)
                && (find_what == FINDFILE_BOTH
                    || ((find_what == FINDFILE_DIR)
@@ -1446,7 +1446,7 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
       did_findfile_init = false;
     }
 
-    for (;;) {
+    while (true) {
       if (did_findfile_init) {
         file_name = vim_findfile(*search_ctx);
         if (file_name != NULL) {

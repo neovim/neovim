@@ -580,11 +580,11 @@ void ui_comp_msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep
              && (msg_current_row < Rows || (scrolled && !msg_was_scrolled))) {
     int delta = msg_current_row - (int)row;
     if (msg_grid.blending) {
-      int first_row = MAX((int)row - (scrolled?1:0), 0);
+      int first_row = MAX((int)row - (scrolled ? 1 : 0), 0);
       compose_area(first_row, Rows - delta, 0, Columns);
     } else {
       // scroll separator together with message text
-      int first_row = MAX((int)row - (msg_was_scrolled?1:0), 0);
+      int first_row = MAX((int)row - (msg_was_scrolled ? 1 : 0), 0);
       ui_composed_call_grid_scroll(1, first_row, Rows, 0, Columns, delta, 0);
       if (scrolled && !msg_was_scrolled && row > 0) {
         compose_area(row - 1, row, 0, Columns);
@@ -602,8 +602,8 @@ void ui_comp_msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep
 static bool curgrid_covered_above(int row)
 {
   bool above_msg = (kv_A(layers, kv_size(layers) - 1) == &msg_grid
-                    && row < msg_current_row - (msg_was_scrolled?1:0));
-  return kv_size(layers) - (above_msg?1:0) > curgrid->comp_index + 1;
+                    && row < msg_current_row - (msg_was_scrolled ? 1 : 0));
+  return kv_size(layers) - (above_msg ? 1 : 0) > curgrid->comp_index + 1;
 }
 
 void ui_comp_grid_scroll(Integer grid, Integer top, Integer bot, Integer left, Integer right,

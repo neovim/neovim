@@ -1201,7 +1201,7 @@ static void sign_define_cmd(char *sign_name, char *cmdline)
   int failed = false;
 
   // set values for a defined sign.
-  for (;;) {
+  while (true) {
     char *arg = skipwhite(p);
     if (*arg == NUL) {
       break;

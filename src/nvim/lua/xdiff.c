@@ -193,10 +193,10 @@ static bool check_xdiff_opt(ObjectType actType, ObjectType expType, const char *
 {
   if (actType != expType) {
     const char *type_str =
-      expType == kObjectTypeString  ? "string"   :
-      expType == kObjectTypeInteger ? "integer"  :
-      expType == kObjectTypeBoolean ? "boolean"  :
-      expType == kObjectTypeLuaRef  ? "function" :
+      expType == kObjectTypeString ? "string" :
+      expType == kObjectTypeInteger ? "integer" :
+      expType == kObjectTypeBoolean ? "boolean" :
+      expType == kObjectTypeLuaRef ? "function" :
       "NA";
 
     api_set_error(err, kErrorTypeValidation, "%s is not a %s", name,

@@ -572,8 +572,8 @@ char *get_special_key_name(int c, int modifiers)
 /// @param[out]  did_simplify  found <C-H>, etc.
 ///
 /// @return Number of characters added to dst, zero for no match.
-unsigned int trans_special(const char **const srcp, const size_t src_len, char *const dst,
-                           const int flags, const bool escape_ks, bool *const did_simplify)
+unsigned trans_special(const char **const srcp, const size_t src_len, char *const dst,
+                       const int flags, const bool escape_ks, bool *const did_simplify)
   FUNC_ATTR_NONNULL_ARG(1, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int modifiers = 0;
@@ -590,9 +590,9 @@ unsigned int trans_special(const char **const srcp, const size_t src_len, char *
 /// When "escape_ks" is true escape K_SPECIAL bytes in the character.
 /// The sequence is not NUL terminated.
 /// This is how characters in a string are encoded.
-unsigned int special_to_buf(int key, int modifiers, bool escape_ks, char *dst)
+unsigned special_to_buf(int key, int modifiers, bool escape_ks, char *dst)
 {
-  unsigned int dlen = 0;
+  unsigned dlen = 0;
 
   // Put the appropriate modifier in a string.
   if (modifiers != 0) {
@@ -608,9 +608,9 @@ unsigned int special_to_buf(int key, int modifiers, bool escape_ks, char *dst)
   } else if (escape_ks) {
     char *after = add_char2buf(key, dst + dlen);
     assert(after >= dst && (uintmax_t)(after - dst) <= UINT_MAX);
-    dlen = (unsigned int)(after - dst);
+    dlen = (unsigned)(after - dst);
   } else {
-    dlen += (unsigned int)utf_char2bytes(key, dst + dlen);
+    dlen += (unsigned)utf_char2bytes(key, dst + dlen);
   }
 
   return dlen;

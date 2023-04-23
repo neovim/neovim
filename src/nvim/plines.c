@@ -100,7 +100,7 @@ int plines_win_nofill(win_T *wp, linenr_T lnum, bool winheight)
 int plines_win_nofold(win_T *wp, linenr_T lnum)
 {
   char *s;
-  unsigned int col;
+  unsigned col;
   int width;
 
   s = ml_get_buf(wp->w_buffer, lnum, false);
@@ -120,10 +120,10 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   if (width <= 0 || col > 32000) {
     return 32000;  // bigger than the number of screen columns
   }
-  if (col <= (unsigned int)width) {
+  if (col <= (unsigned)width) {
     return 1;
   }
-  col -= (unsigned int)width;
+  col -= (unsigned)width;
   width += win_col_off2(wp);
   assert(col <= INT_MAX && (int)col < INT_MAX - (width - 1));
   return ((int)col + (width - 1)) / width + 1;
@@ -272,7 +272,7 @@ int linetabsize_col(int startcol, char *s)
 /// @param len
 ///
 /// @return Number of characters the string will take on the screen.
-unsigned int win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T len)
+unsigned win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T len)
 {
   chartabsize_T cts;
   init_chartabsize_arg(&cts, wp, lnum, 0, line, line);
@@ -281,7 +281,7 @@ unsigned int win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T len)
     cts.cts_vcol += win_lbr_chartabsize(&cts, NULL);
   }
   clear_chartabsize_arg(&cts);
-  return (unsigned int)cts.cts_vcol;
+  return (unsigned)cts.cts_vcol;
 }
 
 /// Prepare the structure passed to chartabsize functions.
@@ -405,7 +405,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
       }
     }
 
-    for (;;) {
+    while (true) {
       char *ps = s;
       MB_PTR_ADV(s);
       c = (uint8_t)(*s);

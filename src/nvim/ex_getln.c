@@ -1651,7 +1651,7 @@ static void command_line_left_right_mouse(CommandLineState *s)
 static void command_line_next_histidx(CommandLineState *s, bool next_match)
 {
   int j = (int)strlen(s->lookfor);
-  for (;;) {
+  while (true) {
     // one step backwards
     if (!next_match) {
       if (s->hiscnt == get_hislen()) {
@@ -4574,7 +4574,7 @@ char *script_get(exarg_T *const eap, size_t *const lenp)
   }
 
   const char *const end_pattern = (cmd[2] != NUL ? skipwhite(cmd + 2) : ".");
-  for (;;) {
+  while (true) {
     char *const theline = eap->getline(eap->cstack->cs_looplevel > 0 ? -1 : NUL, eap->cookie, 0,
                                        true);
 

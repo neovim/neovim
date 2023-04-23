@@ -351,7 +351,7 @@ void check_cursor_col_win(win_T *win)
 {
   colnr_T oldcol = win->w_cursor.col;
   colnr_T oldcoladd = win->w_cursor.col + win->w_cursor.coladd;
-  unsigned int cur_ve_flags = get_ve_flags();
+  unsigned cur_ve_flags = get_ve_flags();
 
   colnr_T len = (colnr_T)strlen(ml_get_buf(win->w_buffer, win->w_cursor.lnum, false));
   if (len == 0) {

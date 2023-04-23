@@ -1084,7 +1084,7 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
     // er's home directory)).
     char *p = homedir;
     size_t len = dirlen;
-    for (;;) {
+    while (true) {
       if (len
           && path_fnamencmp(src, p, len) == 0
           && (vim_ispathsep(src[len])

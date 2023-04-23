@@ -714,7 +714,7 @@ static int get_fileinfo(buf_T *buf, char *fname, bool overwriting, bool forceit,
 }
 
 static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_old, vim_acl_T acl,
-                                 long perm, unsigned int bkc, bool file_readonly, bool forceit,
+                                 long perm, unsigned bkc, bool file_readonly, bool forceit,
                                  int *backup_copyp, char **backupp, Error_T *err)
 {
   FileInfo file_info;
@@ -1056,7 +1056,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   int whole = (start == 1 && end == buf->b_ml.ml_line_count);
   int write_undo_file = false;
   context_sha256_T sha_ctx;
-  unsigned int bkc = get_bkc_value(buf);
+  unsigned bkc = get_bkc_value(buf);
 
   if (fname == NULL || *fname == NUL) {  // safety check
     return FAIL;

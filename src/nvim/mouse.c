@@ -310,7 +310,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
 
   pos_T save_cursor = curwin->w_cursor;
 
-  for (;;) {
+  while (true) {
     which_button = get_mouse_button(KEY2TERMCAP1(c), &is_click, &is_drag);
     if (is_drag) {
       // If the next character is the same mouse event then use that
@@ -1474,7 +1474,7 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
 
   frame_T *fp = topframe;
   *rowp -= firstwin->w_winrow;
-  for (;;) {
+  while (true) {
     if (fp->fr_layout == FR_LEAF) {
       break;
     }
@@ -1580,7 +1580,7 @@ static colnr_T scroll_line_len(linenr_T lnum)
   colnr_T col = 0;
   char *line = ml_get(lnum);
   if (*line != NUL) {
-    for (;;) {
+    while (true) {
       int numchar = win_chartabsize(curwin, line, col);
       MB_PTR_ADV(line);
       if (*line == NUL) {    // don't count the last character

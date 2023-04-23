@@ -619,7 +619,7 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
 
       for (current_lnum = lnum; current_lnum < end_lnum; current_lnum++) {
         syn_start_line();
-        for (;;) {
+        while (true) {
           had_sync_point = syn_finish_line(true);
           // When a sync point has been found, remember where, and
           // continue to look for another one, further on in the line.
@@ -2070,7 +2070,7 @@ static void check_state_ends(void)
   int had_extend;
 
   cur_si = &CUR_STATE(current_state.ga_len - 1);
-  for (;;) {
+  while (true) {
     if (cur_si->si_ends
         && (cur_si->si_m_endpos.lnum < current_lnum
             || (cur_si->si_m_endpos.lnum == current_lnum
@@ -2383,7 +2383,7 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
   }
 
   // Find the SKIP or first END pattern after the last START pattern.
-  for (;;) {
+  while (true) {
     spp = &(SYN_ITEMS(syn_block)[idx]);
     if (spp->sp_type != SPTYPE_START) {
       break;
@@ -2410,7 +2410,7 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
   // use syntax iskeyword option
   save_chartab(buf_chartab);
 
-  for (;;) {
+  while (true) {
     // Find end pattern that matches first after "matchcol".
     best_idx = -1;
     for (idx = start_idx; idx < syn_block->b_syn_patterns.ga_len; idx++) {
@@ -3838,7 +3838,7 @@ static char *get_syn_options(char *arg, syn_opt_arg_T *opt, int *conceal_char, i
     opt->flags |= HL_CONCEAL;
   }
 
-  for (;;) {
+  while (true) {
     // This is used very often when a large number of keywords is defined.
     // Need to skip quickly when no option name is found.
     // Also avoid tolower(), it's slow.
@@ -4675,7 +4675,7 @@ static void syn_cmd_cluster(exarg_T *eap, int syncing)
     }
     scl_id -= SYNID_CLUSTER;
 
-    for (;;) {
+    while (true) {
       if (STRNICMP(rest, "add", 3) == 0
           && (ascii_iswhite(rest[3]) || rest[3] == '=')) {
         opt_len = 3;

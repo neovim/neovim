@@ -782,7 +782,7 @@ void free_all_mem(void)
   first_tabpage = NULL;
 
   // message history
-  for (;;) {
+  while (true) {
     if (delete_first_msg() == FAIL) {
       break;
     }

@@ -2371,7 +2371,7 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, cmdmod_T *cmod, bool 
   CLEAR_POINTER(cmod);
 
   // Repeat until no more command modifiers are found.
-  for (;;) {
+  while (true) {
     while (*eap->cmd == ' '
            || *eap->cmd == '\t'
            || *eap->cmd == ':') {
@@ -2700,7 +2700,7 @@ int parse_cmd_address(exarg_T *eap, char **errormsg, bool silent)
   int ret = FAIL;
 
   // Repeat for all ',' or ';' separated addresses.
-  for (;;) {
+  while (true) {
     eap->line1 = eap->line2;
     eap->line2 = get_cmd_default_range(eap);
     eap->cmd = skipwhite(eap->cmd);
@@ -3464,7 +3464,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
       }
     }
 
-    for (;;) {
+    while (true) {
       cmd = skipwhite(cmd);
       if (*cmd != '-' && *cmd != '+' && !ascii_isdigit(*cmd)) {
         break;
@@ -6577,7 +6577,7 @@ static void ex_findpat(exarg_T *eap)
   }
   if (!eap->skip) {
     find_pattern_in_path(eap->arg, 0, strlen(eap->arg), whole, !eap->forceit,
-                         *eap->cmd == 'd' ?  FIND_DEFINE : FIND_ANY,
+                         *eap->cmd == 'd' ? FIND_DEFINE : FIND_ANY,
                          n, action, eap->line1, eap->line2);
   }
 }
@@ -7110,7 +7110,7 @@ static void ex_filetype(exarg_T *eap)
   bool indent = false;
 
   // Accept "plugin" and "indent" in any order.
-  for (;;) {
+  while (true) {
     if (strncmp(arg, "plugin", 6) == 0) {
       plugin = true;
       arg = skipwhite(arg + 6);

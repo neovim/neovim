@@ -3147,7 +3147,7 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
   }
   bool looped_around = false;
   int found_new_match = FAIL;
-  for (;;) {
+  while (true) {
     bool cont_s_ipos = false;
 
     msg_silent++;  // Don't want messages for wrapscan.
@@ -3311,7 +3311,7 @@ static int ins_compl_get_exp(pos_T *ini)
   st.cur_match_pos = compl_dir_forward() ? &st.last_match_pos : &st.first_match_pos;
 
   // For ^N/^P loop over all the flags/windows/buffers in 'complete'
-  for (;;) {
+  while (true) {
     found_new_match = FAIL;
     st.set_match_pos = false;
 

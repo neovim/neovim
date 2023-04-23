@@ -438,7 +438,7 @@ void trunc_string(const char *s, char *buf, int room_in, int buflen)
 
   // Last part: End of the string.
   half = i = (int)strlen(s);
-  for (;;) {
+  while (true) {
     do {
       half = half - utf_head_off(s, s + half - 1) - 1;
     } while (half > 0 && utf_iscomposing(utf_ptr2char(s + half)));
@@ -2656,7 +2656,7 @@ static msgchunk_T *disp_sb_line(int row, msgchunk_T *smp)
 {
   msgchunk_T *mp = smp;
 
-  for (;;) {
+  while (true) {
     msg_row = row;
     msg_col = mp->sb_msg_col;
     char *p = mp->sb_text;
@@ -2801,7 +2801,7 @@ static int do_more_prompt(int typed_char)
   if (typed_char == NUL) {
     msg_moremsg(false);
   }
-  for (;;) {
+  while (true) {
     // Get a typed character directly from the user.
     if (used_typed_char != NUL) {
       c = used_typed_char;              // was typed at hit-enter prompt
@@ -3528,7 +3528,7 @@ int do_dialog(int type, char *title, char *message, char *buttons, int dfltbutto
   no_wait_return++;
   hotkeys = msg_show_console_dialog(message, buttons, dfltbutton);
 
-  for (;;) {
+  while (true) {
     // Get a typed character directly from the user.
     int c = get_keystroke(NULL);
     switch (c) {

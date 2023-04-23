@@ -104,7 +104,7 @@ int findsent(Direction dir, long count)
     const int startlnum = pos.lnum;
     const bool cpo_J = vim_strchr(p_cpo, CPO_ENDOFSENT) != NULL;
 
-    for (;;) {                 // find end of sentence
+    while (true) {              // find end of sentence
       c = gchar_pos(&pos);
       if (c == NUL || (pos.col == 0 && startPS(pos.lnum, NUL, false))) {
         if (dir == BACKWARD && pos.lnum != startlnum) {
@@ -540,7 +540,7 @@ static void back_in_line(void)
   int sclass;                       // starting class
 
   sclass = cls();
-  for (;;) {
+  while (true) {
     if (curwin->w_cursor.col == 0) {        // stop at start of line
       break;
     }
@@ -1062,7 +1062,7 @@ static bool in_html_tag(bool end_tag)
   }
 
   // check that the matching '>' is not preceded by '/'
-  for (;;) {
+  while (true) {
     if (inc(&pos) < 0) {
       return false;
     }
@@ -1304,7 +1304,7 @@ extend:
           start_lnum -= dir;
           break;
         }
-        for (;;) {
+        while (true) {
           if (start_lnum == (dir == BACKWARD
                              ? 1 : curbuf->b_ml.ml_line_count)) {
             break;
@@ -1431,7 +1431,7 @@ extend:
 /// @return        column number of "quotechar" or -1 when not found.
 static int find_next_quote(char *line, int col, int quotechar, char *escape)
 {
-  for (;;) {
+  while (true) {
     int c = (uint8_t)line[col];
     if (c == NUL) {
       return -1;
@@ -1605,7 +1605,7 @@ bool current_quote(oparg_T *oap, long count, bool include, int quotechar)
     // Also do this when there is a Visual area, a' may leave the cursor
     // in between two strings.
     col_start = 0;
-    for (;;) {
+    while (true) {
       // Find open quote character.
       col_start = find_next_quote(line, col_start, quotechar, NULL);
       if (col_start < 0 || col_start > first_col) {

@@ -209,7 +209,7 @@ void tui_enable_extkeys(TUIData *tui)
   unibi_out_ext(tui, tui->unibi_ext.enable_extended_keys);
 }
 
-static size_t unibi_pre_fmt_str(TUIData *tui, unsigned int unibi_index, char *buf, size_t len)
+static size_t unibi_pre_fmt_str(TUIData *tui, unsigned unibi_index, char *buf, size_t len)
 {
   const char *str = unibi_get_str(tui->ut, unibi_index);
   if (!str) {
@@ -1617,7 +1617,7 @@ static void pad(void *ctx, size_t delay, int scale FUNC_ATTR_UNUSED, int force)
   }
 
   flush_buf(tui);
-  uv_sleep((unsigned int)(delay/10));
+  uv_sleep((unsigned)(delay/10));
 }
 
 static void unibi_set_if_empty(unibi_term *ut, enum unibi_string str, const char *val)

@@ -1042,7 +1042,7 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
     if (sortinfo->item_compare_lc) {
       res = strcoll(p1, p2);
     } else {
-      res = sortinfo->item_compare_ic ? STRICMP(p1, p2): strcmp(p1, p2);
+      res = sortinfo->item_compare_ic ? STRICMP(p1, p2) : strcmp(p1, p2);
     }
   } else {
     double n1, n2;

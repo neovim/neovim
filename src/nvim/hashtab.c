@@ -65,7 +65,7 @@ void hash_clear(hashtab_T *ht)
 /// Free the array of a hash table and all contained values.
 ///
 /// @param off the offset from start of value to start of key (@see hashitem_T).
-void hash_clear_all(hashtab_T *ht, unsigned int off)
+void hash_clear_all(hashtab_T *ht, unsigned off)
 {
   size_t todo = ht->ht_used;
   for (hashitem_T *hi = ht->ht_array; todo > 0; hi++) {

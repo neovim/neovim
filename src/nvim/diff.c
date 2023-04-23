@@ -328,7 +328,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
   diff_T *dp = tp->tp_first_diff;
 
   linenr_T lnum_deleted = line1;  // lnum of remaining deletion
-  for (;;) {
+  while (true) {
     // If the change is after the previous diff block and before the next
     // diff block, thus not touching an existing change, create a new diff
     // block.  Don't do this when ex_diffgetput() is busy.
@@ -588,7 +588,7 @@ static void diff_check_unchanged(tabpage_T *tp, diff_T *dp)
   linenr_T off_org = 0;
   linenr_T off_new = 0;
   int dir = FORWARD;
-  for (;;) {
+  while (true) {
     // Repeat until a line is found which is different or the number of
     // lines has become zero.
     while (dp->df_count[i_org] > 0) {
@@ -1012,7 +1012,7 @@ static int check_external_diff(diffio_T *diffio)
   // May try twice, first with "-a" and then without.
   int io_error = false;
   TriState ok = kFalse;
-  for (;;) {
+  while (true) {
     ok = kFalse;
     FILE *fd = os_fopen(diffio->dio_orig.din_fname, "w");
 
@@ -1042,7 +1042,7 @@ static int check_external_diff(diffio_T *diffio)
         } else {
           char linebuf[LBUFLEN];
 
-          for (;;) {
+          while (true) {
             // For normal diff there must be a line that contains
             // "1c1".  For unified diff "@@ -1 +1 @@".
             if (vim_fgets(linebuf, LBUFLEN, fd)) {
@@ -1560,7 +1560,7 @@ static bool extract_hunk_internal(diffout_T *dout, diffhunk_T *hunk, int *line_i
 // Extract hunk by parsing the diff output from file and calculate the diffstyle.
 static bool extract_hunk(FILE *fd, diffhunk_T *hunk, diffstyle_T *diffstyle)
 {
-  for (;;) {
+  while (true) {
     char line[LBUFLEN];  // only need to hold the diff line
     if (vim_fgets(line, LBUFLEN, fd)) {
       return true;  // end of file
@@ -1747,7 +1747,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
     }
   }
 
-  for (;;) {
+  while (true) {
     diffhunk_T hunk = { 0 };
     bool eof = dio->dio_internal
                ? extract_hunk_internal(dout, &hunk, &line_idx)
@@ -2952,7 +2952,7 @@ void ex_diffgetput(exarg_T *eap)
   }
 
   const int idx_from = eap->cmdidx == CMD_diffget ? idx_other : idx_cur;
-  const int idx_to   = eap->cmdidx == CMD_diffget ? idx_cur   : idx_other;
+  const int idx_to   = eap->cmdidx == CMD_diffget ? idx_cur : idx_other;
 
   // May give the warning for a changed buffer here, which can trigger the
   // FileChangedRO autocommand, which may do nasty things and mess

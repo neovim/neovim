@@ -904,7 +904,7 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi, const char *file_name)
   uhp->uh_time = undo_read_time(bi);
 
   // Unserialize optional fields.
-  for (;;) {
+  while (true) {
     int len = undo_read_byte(bi);
 
     if (len == EOF) {
@@ -1471,7 +1471,7 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
 
   // Optional header fields.
   long last_save_nr = 0;
-  for (;;) {
+  while (true) {
     int len = undo_read_byte(&bi);
 
     if (len == 0 || len == EOF) {
@@ -2024,7 +2024,7 @@ void undo_time(long step, bool sec, bool file, bool absolute)
 
     while (uhp != NULL) {
       uhp->uh_walk = mark;
-      long val = dosec  ? (long)(uhp->uh_time) :
+      long val = dosec ? (long)(uhp->uh_time) :
                  dofile ? uhp->uh_save_nr
                         : uhp->uh_seq;
 

@@ -2558,7 +2558,7 @@ static char *get_one_sourceline(struct source_cookie *sp)
 
   // Loop until there is a finished line (or end-of-file).
   sp->sourcing_lnum++;
-  for (;;) {
+  while (true) {
     // make room to read at least 120 (more) characters
     ga_grow(&ga, 120);
     buf = ga.ga_data;

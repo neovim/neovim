@@ -139,7 +139,7 @@ char *find_ucmd(exarg_T *eap, char *p, int *full, expand_T *xp, int *complp)
 
   // Look for buffer-local user commands first, then global ones.
   gap = &prevwin_curwin()->w_buffer->b_ucmds;
-  for (;;) {
+  while (true) {
     for (j = 0; j < gap->ga_len; j++) {
       uc = USER_CMD_GA(gap, j);
       cp = eap->cmd;
@@ -445,7 +445,7 @@ static void uc_list(char *name, size_t name_len)
 
   // In cmdwin, the alternative buffer should be used.
   const garray_T *gap = &prevwin_curwin()->w_buffer->b_ucmds;
-  for (;;) {
+  while (true) {
     for (i = 0; i < gap->ga_len; i++) {
       cmd = USER_CMD_GA(gap, i);
       a = cmd->uc_argt;
@@ -1066,7 +1066,7 @@ void ex_delcommand(exarg_T *eap)
   }
 
   gap = &curbuf->b_ucmds;
-  for (;;) {
+  while (true) {
     for (i = 0; i < gap->ga_len; i++) {
       cmd = USER_CMD_GA(gap, i);
       res = strcmp(arg, cmd->uc_name);
@@ -1645,12 +1645,12 @@ int do_ucmd(exarg_T *eap, bool preview)
   // First round: "buf" is NULL, compute length, allocate "buf".
   // Second round: copy result into "buf".
   buf = NULL;
-  for (;;) {
+  while (true) {
     p = cmd->uc_rep;        // source
     q = buf;                // destination
     totlen = 0;
 
-    for (;;) {
+    while (true) {
       start = vim_strchr(p, '<');
       if (start != NULL) {
         end = vim_strchr(start + 1, '>');

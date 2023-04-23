@@ -1094,7 +1094,7 @@ static int nlua_debug(lua_State *lstate)
       .v_type = VAR_UNKNOWN,
     },
   };
-  for (;;) {
+  while (true) {
     lua_settop(lstate, 0);
     typval_T input;
     get_user_input(input_args, &input, false, false);

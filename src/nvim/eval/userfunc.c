@@ -2343,7 +2343,7 @@ void ex_function(exarg_T *eap)
   }
 
   // find extra arguments "range", "dict", "abort" and "closure"
-  for (;;) {
+  while (true) {
     p = skipwhite(p);
     if (strncmp(p, "range", 5) == 0) {
       flags |= FC_RANGE;
@@ -2403,7 +2403,7 @@ void ex_function(exarg_T *eap)
 
   indent = 2;
   nesting = 0;
-  for (;;) {
+  while (true) {
     if (KeyTyped) {
       msg_scroll = true;
       saved_wait_return = false;

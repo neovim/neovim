@@ -88,7 +88,7 @@ void ex_menu(exarg_T *eap)
   modes = get_menu_cmd_modes(eap->cmd, eap->forceit, &noremap, &unmenu);
   arg = eap->arg;
 
-  for (;;) {
+  while (true) {
     if (strncmp(arg, "<script>", 8) == 0) {
       noremap = REMAP_SCRIPT;
       arg = skipwhite(arg + 8);

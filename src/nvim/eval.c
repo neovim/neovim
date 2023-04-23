@@ -2082,7 +2082,7 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
        || cmdidx == CMD_echon
        || cmdidx == CMD_echomsg)
       && xp->xp_context == EXPAND_EXPRESSION) {
-    for (;;) {
+    while (true) {
       char *const n = skiptowhite(arg);
 
       if (n == arg || ascii_iswhite_or_nul(*skipwhite(n))) {
@@ -2780,7 +2780,7 @@ static int eval5(char **arg, typval_T *rettv, evalarg_T *const evalarg)
   }
 
   // Repeat computing, until no '+', '-' or '.' is following.
-  for (;;) {
+  while (true) {
     int op = (uint8_t)(**arg);
     bool concat = op == '.';
     if (op != '+' && op != '-' && !concat) {
@@ -2924,7 +2924,7 @@ static int eval6(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
   }
 
   // Repeat computing, until no '*', '/' or '%' is following.
-  for (;;) {
+  while (true) {
     int op = (uint8_t)(**arg);
     if (op != '*' && op != '/' && op != '%') {
       break;
@@ -3920,7 +3920,7 @@ static int eval_string(char **arg, typval_T *rettv, bool evaluate, bool interpol
 {
   char *p;
   const char *const arg_end = *arg + strlen(*arg);
-  unsigned int extra = interpolate ? 1 : 0;
+  unsigned extra = interpolate ? 1 : 0;
   const int off = interpolate ? 0 : 1;
 
   // Find the end of the string, skipping backslashed characters.
@@ -4175,7 +4175,7 @@ int eval_interp_string(char **arg, typval_T *rettv, bool evaluate)
   const int quote = (uint8_t)(**arg);
   (*arg)++;
 
-  for (;;) {
+  while (true) {
     typval_T tv;
     // Get the string up to the matching quote or to a single '{'.
     // "arg" is advanced to either the quote or the '{'.
@@ -4686,7 +4686,7 @@ bool set_ref_in_ht(hashtab_T *ht, int copyID, list_stack_T **list_stack)
   ht_stack_T *ht_stack = NULL;
 
   hashtab_T *cur_ht = ht;
-  for (;;) {
+  while (true) {
     if (!abort) {
       // Mark each item in the hashtab.  If the item contains a hashtab
       // it is added to ht_stack, if it contains a list it is added to
@@ -4724,7 +4724,7 @@ bool set_ref_in_list(list_T *l, int copyID, ht_stack_T **ht_stack)
   list_stack_T *list_stack = NULL;
 
   list_T *cur_l = l;
-  for (;;) {
+  while (true) {
     // Mark each item in the list.  If the item contains a hashtab
     // it is added to ht_stack, if it contains a list it is added to
     // list_stack.
@@ -6514,7 +6514,7 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
     }
     pos = fm->mark;
     // Vimscript behavior, only provide fnum if mark is global.
-    *ret_fnum = ASCII_ISUPPER(mname) || ascii_isdigit(mname) ? fm->fnum: *ret_fnum;
+    *ret_fnum = ASCII_ISUPPER(mname) || ascii_isdigit(mname) ? fm->fnum : *ret_fnum;
   }
   if (pos.lnum != 0) {
     if (charcol) {
@@ -7162,7 +7162,7 @@ char *set_cmdarg(exarg_T *eap, char *oldarg)
     rc = snprintf(newval + xlen,
                   newval_len - xlen,
                   " ++ff=%s",
-                  eap->force_ff == 'u'   ? "unix"
+                  eap->force_ff == 'u' ? "unix"
                   : eap->force_ff == 'd' ? "dos" : "mac");
     if (rc < 0) {
       goto error;

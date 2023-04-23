@@ -5753,7 +5753,7 @@ bool can_bs(int what)
 /// Get the local or global value of 'backupcopy'.
 ///
 /// @param buf The buffer.
-unsigned int get_bkc_value(buf_T *buf)
+unsigned get_bkc_value(buf_T *buf)
 {
   return buf->b_bkc_flags ? buf->b_bkc_flags : bkc_flags;
 }
@@ -5770,7 +5770,7 @@ char *get_flp_value(buf_T *buf)
 }
 
 /// Get the local or global value of the 'virtualedit' flags.
-unsigned int get_ve_flags(void)
+unsigned get_ve_flags(void)
 {
   return (curwin->w_ve_flags ? curwin->w_ve_flags : ve_flags) & ~(VE_NONE | VE_NONEU);
 }

@@ -1926,7 +1926,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
 
       // skip over NUL bytes
       n = sp->ts_arridx;
-      for (;;) {
+      while (true) {
         if (sp->ts_curi > byts[n]) {
           // Only NUL bytes at this node, go to next state.
           PROF_STORE(sp->ts_state)
@@ -2959,7 +2959,7 @@ static int soundfold_find(slang_T *slang, char *word)
   uint8_t *byts = slang->sl_sbyts;
   idx_T *idxs = slang->sl_sidxs;
 
-  for (;;) {
+  while (true) {
     // First byte is the number of possible bytes.
     int len = byts[arridx++];
 
@@ -3077,7 +3077,7 @@ static void add_suggestion(suginfo_T *su, garray_T *gap, const char *goodword, i
   // "thee the" is added next to changing the first "the" the "thee".
   const char *pgood = goodword + strlen(goodword);
   char *pbad = su->su_badptr + badlenarg;
-  for (;;) {
+  while (true) {
     goodlen = (int)(pgood - goodword);
     badlen = (int)(pbad - su->su_badptr);
     if (goodlen <= 0 || badlen <= 0) {
@@ -3671,9 +3671,9 @@ static int spell_edit_score_limit_w(slang_T *slang, const char *badword, const c
   int score = 0;
   int minscore = limit + 1;
 
-  for (;;) {
+  while (true) {
     // Skip over an equal part, score remains the same.
-    for (;;) {
+    while (true) {
       bc = wbadword[bi];
       gc = wgoodword[gi];
 

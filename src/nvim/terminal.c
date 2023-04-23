@@ -680,7 +680,7 @@ void terminal_send(Terminal *term, char *data, size_t size)
 
 static bool is_filter_char(int c)
 {
-  unsigned int flag = 0;
+  unsigned flag = 0;
   switch (c) {
   case 0x08:
     flag = TPF_BS;
@@ -839,7 +839,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
                    | (cell.attrs.italic ? HL_ITALIC : 0)
                    | (cell.attrs.reverse ? HL_INVERSE : 0)
                    | get_underline_hl_flag(cell.attrs)
-                   | (cell.attrs.strike ? HL_STRIKETHROUGH: 0)
+                   | (cell.attrs.strike ? HL_STRIKETHROUGH : 0)
                    | ((fg_indexed && !fg_set) ? HL_FG_INDEXED : 0)
                    | ((bg_indexed && !bg_set) ? HL_BG_INDEXED : 0);
 
