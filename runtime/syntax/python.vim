@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Python
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
-" Last Change:	2023 Feb 26
+" Last Change:	2023 Feb 28
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "
@@ -178,17 +178,17 @@ syn match   pythonEscape	"\\$"
 " and so on, as specified in the 'Python Language Reference'.
 " https://docs.python.org/reference/lexical_analysis.html#numeric-literals
 if !exists("python_no_number_highlight")
-  " numbers (including longs and complex)
-  syn match   pythonNumber	"\<0[oO]\=\o\+[Ll]\=\>"
-  syn match   pythonNumber	"\<0[xX]\x\+[Ll]\=\>"
-  syn match   pythonNumber	"\<0[bB][01]\+[Ll]\=\>"
-  syn match   pythonNumber	"\<\%([1-9]\d*\|0\)[Ll]\=\>"
-  syn match   pythonNumber	"\<\d\+[jJ]\>"
-  syn match   pythonNumber	"\<\d\+[eE][+-]\=\d\+[jJ]\=\>"
+  " numbers (including complex)
+  syn match   pythonNumber	"\<0[oO]\%(_\=\o\)\+\>"
+  syn match   pythonNumber	"\<0[xX]\%(_\=\x\)\+\>"
+  syn match   pythonNumber	"\<0[bB]\%(_\=[01]\)\+\>"
+  syn match   pythonNumber	"\<\%([1-9]\%(_\=\d\)*\|0\+\%(_\=0\)*\)\>"
+  syn match   pythonNumber	"\<\d\%(_\=\d\)*[jJ]\>"
+  syn match   pythonNumber	"\<\d\%(_\=\d\)*[eE][+-]\=\d\%(_\=\d\)*[jJ]\=\>"
   syn match   pythonNumber
-	\ "\<\d\+\.\%([eE][+-]\=\d\+\)\=[jJ]\=\%(\W\|$\)\@="
+        \ "\<\d\%(_\=\d\)*\.\%([eE][+-]\=\d\%(_\=\d\)*\)\=[jJ]\=\%(\W\|$\)\@="
   syn match   pythonNumber
-	\ "\%(^\|\W\)\zs\d*\.\d\+\%([eE][+-]\=\d\+\)\=[jJ]\=\>"
+        \ "\%(^\|\W\)\zs\%(\d\%(_\=\d\)*\)\=\.\d\%(_\=\d\)*\%([eE][+-]\=\d\%(_\=\d\)*\)\=[jJ]\=\>"
 endif
 
 " Group the built-ins in the order in the 'Python Library Reference' for

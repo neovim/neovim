@@ -205,7 +205,8 @@ line may be postponed.  Use |CTRL-L| when needed.  Also see |set-spc-auto| for
 how it can be set automatically when 'spelllang' is set.
 
 The 'spelloptions' option has a few more flags that influence the way spell
-checking works.
+checking works.  For example, "camel" splits CamelCased words so that each
+part of the word is spell-checked separately.
 
 Vim counts the number of times a good word is encountered.  This is used to
 sort the suggestions: words that have been seen before get a small bonus,

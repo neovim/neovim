@@ -33,7 +33,7 @@ Example: this sets "g:gui" to the value of the UI's "rgb" field:    >
 		remembered until the window is opened.  The position is
 		adjusted to make the window fit on the screen (if possible).
 
-						    *:win* *:winsize* *E465*
+					    *:wi* *:win* *:winsize* *E465*
 :win[size] {width} {height}
 		Set the window height to {width} by {height} characters.
 		Obsolete, use ":set lines=11 columns=22".

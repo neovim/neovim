@@ -968,7 +968,7 @@ itself:
      fun! NetReadFixup(method, line1, line2)
        if method == 3   " ftp (no <.netrc>)
         let fourblanklines= line2 - 3
-        silent fourblanklines .. "," .. line2 .. "g/^\s*/d"
+        silent fourblanklines.",".line2."g/^\s*/d"
        endif
      endfunction
     endif
@@ -1625,10 +1625,8 @@ A further approach is to delete files which match a pattern.
       This will cause the matching files to be marked.  Then,
       press "D".
 
-If your vim has 7.4 with patch#1107, then |g:netrw_localrmdir| no longer
-is used to remove directories; instead, vim's |delete()| is used with
-the "d" option.  Please note that only empty directories may be deleted
-with the "D" mapping.  Regular files are deleted with |delete()|, too.
+Please note that only empty directories may be deleted with the "D" mapping.
+Regular files are deleted with |delete()|, too.
 
 The |g:netrw_rm_cmd|, |g:netrw_rmf_cmd|, and |g:netrw_rmdir_cmd| variables are
 used to control the attempts to remove remote files and directories.  The
@@ -1647,8 +1645,7 @@ to remove it again using the g:netrw_rmf_cmd variable.  Its default value is:
 	|g:netrw_rmf_cmd|: ssh HOSTNAME rm -f
 
 Related topics: |netrw-d|
-Associated setting variable: |g:netrw_localrmdir| |g:netrw_rm_cmd|
-                             |g:netrw_rmdir_cmd|   |g:netrw_ssh_cmd|
+Associated setting variable: |g:netrw_rm_cmd| |g:netrw_ssh_cmd|
 
 
 *netrw-explore*  *netrw-hexplore* *netrw-nexplore* *netrw-pexplore*
@@ -1691,7 +1688,11 @@ DIRECTORY EXPLORATION COMMANDS  {{{2
 	  to 2; edits will thus preferentially be made in window#2.
 
 	  The [N] specifies a |g:netrw_winsize| just for the new :Lexplore
-	  window.
+	  window. That means that
+	    if [N] < 0 : use |N| columns for the Lexplore window
+	    if [N] = 0 : a normal split is made
+	    if [N] > 0 : use N% of the current window will be used for the
+	                 new window
 
 	  Those who like this method often also like tree style displays;
 	  see |g:netrw_liststyle|.
@@ -1975,7 +1976,7 @@ To use this function, simply assign its output to |g:netrw_list_hide| option.  >
 	Example: let g:netrw_list_hide= netrw_gitignore#Hide('my_gitignore_file')
 		Function can take additional files with git-ignore patterns.
 
-	Example: let g:netrw_list_hide= netrw_gitignore#Hide() .. '.*\.swp$'
+	Example: g:netrw_list_hide= netrw_gitignore#Hide() . '.*\.swp$'
 		Combining 'netrw_gitignore#Hide' with custom patterns.
 <
 
@@ -2852,18 +2853,6 @@ your browsing preferences.  (see also: |netrw-settings|)
   *g:netrw_localmovecmdopt*	=""             Linux/Unix/MacOS/Cygwin
 				=" /c move"                     Windows
 				Options for |g:netrw_localmovecmd|
-
-  *g:netrw_localrmdir*		="rmdir"        Linux/Unix/MacOS/Cygwin
-				=expand("$COMSPEC")             Windows
-				Remove directory command (rmdir)
-				This variable is only used if your vim is
-				earlier than 7.4 or if your vim doesn't
-				have patch#1107.  Otherwise, |delete()|
-				is used with the "d" option.
-
-  *g:netrw_localrmdiropt*	=""             Linux/Unix/MacOS/Cygwin
-				=" /c rmdir"                    Windows
-				Options for |g:netrw_localrmdir|
 
   *g:netrw_maxfilenamelen*	=32 by default, selected so as to make long
 				    listings fit on 80 column displays.
@@ -3775,7 +3764,7 @@ Example: Clear netrw's marked file list via a mapping on gu >
 	     Netrw uses several system level commands to do things (see
 
 		 |g:netrw_localcopycmd|, |g:netrw_localmovecmd|,
-		 |g:netrw_localrmdir|, |g:netrw_mkdir_cmd|).
+		 |g:netrw_mkdir_cmd|).
 
 	    You may need to adjust the default commands for one or more of
 	    these commands by setting them properly in your .vimrc.  Another
@@ -3901,6 +3890,13 @@ netrw:
 ==============================================================================
 12. History						*netrw-history* {{{1
 
+	v172:	Sep 02, 2021	* (Bram Moolenaar) Changed "l:go" to "go"
+				* (Bram Moolenaar) no need for "b" in
+				  netrw-safe guioptions
+		Nov 15, 2021	* removed netrw_localrm and netrw_localrmdir
+				  references
+		Aug 18, 2022	* (Miguel Barro) improving compatability with
+				  powershell
 	v171:	Oct 09, 2020	* included code in s:NetrwOptionsSafe()
 				  to allow |'bh'| to be set to delete when
 				  rather than hide when g:netrw_fastbrowse
@@ -3986,7 +3982,7 @@ netrw:
 				  mostly for Windows.  Introduced new netrw
 				  settings: |g:netrw_localcopycmdopt|
 				  |g:netrw_localcopydircmdopt| |g:netrw_localmkdiropt|
-				  |g:netrw_localmovecmdopt| |g:netrw_localrmdiropt|
+				  |g:netrw_localmovecmdopt| g:netrw_localrmdiropt
 		Nov 21, 2016	* (mattn) provided a patch for preview; swapped
 				  winwidth() with winheight()
 		Nov 22, 2016	* (glacambre) reported that files containing
@@ -4046,7 +4042,7 @@ netrw:
 				  refreshes.  However, inside a |:map-<expr>|,
 				  tab and window changes are disallowed.  Fixed.
 				  (affects netrw's s:LocalBrowseRefresh())
-				* |g:netrw_localrmdir| not used any more, but
+				* g:netrw_localrmdir not used any more, but
 				  the relevant patch that causes |delete()| to
 				  take over was #1107 (not #1109).
 				* |expand()| is now used on |g:netrw_home|;

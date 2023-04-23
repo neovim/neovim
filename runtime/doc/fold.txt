@@ -346,7 +346,8 @@ zC		Close all folds under the cursor recursively.  Folds that
 		'foldenable' will be set.
 
 							*za*
-za		When on a closed fold: open it.  When folds are nested, you
+za		Summary: Toggle the fold under the cursor.
+		When on a closed fold: open it.  When folds are nested, you
 		may have to use "za" several times.  When a count is given,
 		that many closed folds are opened.
 		When on an open fold: close it and set 'foldenable'.  This

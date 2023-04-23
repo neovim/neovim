@@ -2,7 +2,7 @@
 " Language: reStructuredText documentation format with R code
 " Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
 " Homepage: https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	Sun Apr 24, 2022  09:13AM
+" Last Change:	Mon Feb 27, 2023  07:16PM
 " Original work by Alex Zvoleff
 
 " Only do this when not yet done for this buffer
@@ -22,7 +22,7 @@ setlocal formatoptions+=tcqln
 setlocal formatlistpat=^\\s*\\d\\+\\.\\s\\+\\\|^\\s*[-*+]\\s\\+
 setlocal iskeyword=@,48-57,_,.
 
-function! FormatRrst()
+function FormatRrst()
   if search('^\.\. {r', "bncW") > search('^\.\. \.\.$', "bncW")
     setlocal comments=:#',:###,:##,:#
   else
