@@ -1332,7 +1332,7 @@ function M.v(bufnr)
     if not line:find('^%s*/') then
       if findany(line, { ";%s*$", ";%s*/" }) then
         return 'verilog'
-      elseif matchregex(line, [[\.\(\s*\)\?\((\*.*\)\?$]]) then
+      elseif findany(line, { "%.%s*$", "%.%s*%(%*" }) then
         return 'coq'
       end
     end
