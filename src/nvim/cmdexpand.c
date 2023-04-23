@@ -1328,8 +1328,8 @@ char *addstar(char *fname, size_t len, int context)
 ///  EXPAND_FILES            After command with EX_XFILE set, or after setting
 ///                          with P_EXPAND set.  eg :e ^I, :w>>^I
 ///  EXPAND_DIRECTORIES      In some cases this is used instead of the latter
-///                          when we know only directories are of interest.  eg
-///                          :set dir=^I
+///                          when we know only directories are of interest.
+///                          E.g.  :set dir=^I  and  :cd ^I
 ///  EXPAND_SHELLCMD         After ":!cmd", ":r !cmd"  or ":w !cmd".
 ///  EXPAND_SETTINGS         Complete variable names.  eg :set d^I
 ///  EXPAND_BOOL_SETTINGS    Complete boolean variables only,  eg :set no^I
