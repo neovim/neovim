@@ -711,8 +711,7 @@ void ins_char_bytes(char *buf, size_t charlen)
   // Copy bytes after the changed character(s).
   char *p = newp + col;
   if (linelen > col + oldlen) {
-    memmove(p + newlen, oldp + col + oldlen,
-            (size_t)(linelen - col - oldlen));
+    memmove(p + newlen, oldp + col + oldlen, linelen - col - oldlen);
   }
 
   // Insert or overwrite the new character.

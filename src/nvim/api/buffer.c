@@ -404,7 +404,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   // If the size of the range is reducing (ie, new_len < old_len) we
   // need to delete some old_len. We do this at the start, by
   // repeatedly deleting line "start".
-  size_t to_delete = (new_len < old_len) ? (size_t)(old_len - new_len) : 0;
+  size_t to_delete = (new_len < old_len) ? old_len - new_len : 0;
   for (size_t i = 0; i < to_delete; i++) {
     if (ml_delete((linenr_T)start, false) == FAIL) {
       api_set_error(err, kErrorTypeException, "Failed to delete line");
@@ -648,7 +648,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   // If the size of the range is reducing (ie, new_len < old_len) we
   // need to delete some old_len. We do this at the start, by
   // repeatedly deleting line "start".
-  size_t to_delete = (new_len < old_len) ? (size_t)(old_len - new_len) : 0;
+  size_t to_delete = (new_len < old_len) ? old_len - new_len : 0;
   for (size_t i = 0; i < to_delete; i++) {
     if (ml_delete((linenr_T)start_row, false) == FAIL) {
       api_set_error(err, kErrorTypeException, "Failed to delete line");
