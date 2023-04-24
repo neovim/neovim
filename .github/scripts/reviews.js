@@ -5,10 +5,11 @@ module.exports = async ({ github, context }) => {
     pull_number: context.issue.number,
   });
   const labels = pr_data.data.labels.map((e) => e.name);
-
   const reviewers = new Set();
+
   if (labels.includes("api")) {
     reviewers.add("bfredl");
+    reviewers.add("famiu");
   }
 
   if (labels.includes("build")) {
@@ -72,6 +73,10 @@ module.exports = async ({ github, context }) => {
     reviewers.add("justinmk");
   }
 
+  if (labels.includes("statusline")) {
+    reviewers.add("famiu");
+  }
+
   if (labels.includes("test")) {
     reviewers.add("justinmk");
   }
@@ -88,6 +93,7 @@ module.exports = async ({ github, context }) => {
 
   if (labels.includes("ui")) {
     reviewers.add("bfredl");
+    reviewers.add("famiu");
   }
 
   if (labels.includes("vim-patch")) {
