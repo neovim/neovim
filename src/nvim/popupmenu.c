@@ -399,6 +399,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     // room the window size will keep changing.
   } while (pum_set_selected(selected, redo_count) && (++redo_count <= 2));
 
+  pum_grid.zindex = (State == MODE_CMDLINE) ? kZIndexCmdlinePopupMenu : kZIndexPopupMenu;
   pum_redraw();
 }
 
@@ -442,9 +443,6 @@ void pum_redraw(void)
   }
 
   grid_assign_handle(&pum_grid);
-
-  pum_grid.zindex = ((State == MODE_CMDLINE)
-                     ? kZIndexCmdlinePopupMenu : kZIndexPopupMenu);
 
   bool moved = ui_comp_put_grid(&pum_grid, pum_row, pum_col - col_off,
                                 pum_height, grid_width, false, true);
@@ -1088,6 +1086,7 @@ void pum_show_popupmenu(vimmenu_T *menu)
   for (;;) {
     pum_is_visible = true;
     pum_is_drawn = true;
+    pum_grid.zindex = kZIndexCmdlinePopupMenu;  // show above cmdline area #23275
     pum_redraw();
     setcursor_mayforce(true);
 
