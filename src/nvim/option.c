@@ -5947,6 +5947,14 @@ int win_signcol_count(win_T *wp)
   return win_signcol_configured(wp, NULL);
 }
 
+/// Return true when window "wp" has no sign column.
+bool win_no_signcol(win_T *wp)
+{
+  const char *scl = wp->w_p_scl;
+  return (*scl == 'n' && (*(scl + 1) == 'o' || (*(scl + 1) == 'u'
+                                                && (wp->w_p_nu || wp->w_p_rnu))));
+}
+
 /// Return the number of requested sign columns, based on user / configuration.
 int win_signcol_configured(win_T *wp, int *is_fixed)
 {
@@ -5956,20 +5964,7 @@ int win_signcol_configured(win_T *wp, int *is_fixed)
     *is_fixed = 1;
   }
 
-  // Note: It checks "no" or "number" in 'signcolumn' option
-  if (*scl == 'n'
-      && (*(scl + 1) == 'o' || (*(scl + 1) == 'u'
-                                && (wp->w_p_nu || wp->w_p_rnu)))) {
-    if (!wp->w_buffer->b_signcols.valid) {
-      FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
-        if (*win->w_p_stc != NUL) {
-          win->w_nrwidth_line_count = 0;
-        }
-      }
-    }
-    if (*wp->w_p_stc != NUL) {
-      buf_signcols(wp->w_buffer, 0);
-    }
+  if (win_no_signcol(wp)) {
     return 0;
   }
 
