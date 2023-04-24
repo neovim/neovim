@@ -3259,16 +3259,16 @@ describe('builtin popupmenu', function()
       :let g:menustr = 'bar'          |
     ]])
     eq('bar', meths.get_var('menustr'))
-    feed('<RightMouse><20,1>')
+    feed('<RightMouse><20,2>')
     screen:expect([[
       ^popup menu test                 |
       {1:~                               }|
+      {1:~                               }|
       {1:~                  }{n: foo }{1:        }|
       {1:~                  }{n: bar }{1:        }|
-      {1:~                  }{n: baz }{1:        }|
-      :let g:menustr = 'bar'          |
+      :let g:menustr = 'b{n: baz }        |
     ]])
-    feed('<LeftMouse><22,4>')
+    feed('<LeftMouse><22,5>')
     screen:expect([[
       ^popup menu test                 |
       {1:~                               }|
@@ -3675,7 +3675,7 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       {n: foo }|
       {n: bar }|
       {n: baz }|
-    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 2, 19, false, 100}}})
+    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 2, 19, false, 250}}})
     meths.input_mouse('left', 'press', '', 4, 2, 2)
     screen:expect({grid=[[
     ## grid 1
@@ -3716,7 +3716,7 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       {n: foo }|
       {n: bar }|
       {n: baz }|
-    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 100}}})
+    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
     meths.input_mouse('right', 'drag', '', 2, 3, 6)
     screen:expect({grid=[[
     ## grid 1
@@ -3738,7 +3738,7 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       {n: foo }|
       {n: bar }|
       {s: baz }|
-    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 100}}})
+    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
     meths.input_mouse('right', 'release', '', 2, 1, 6)
     screen:expect({grid=[[
     ## grid 1
@@ -3780,7 +3780,7 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       {n: foo }|
       {n: bar }|
       {n: baz }|
-    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 100}}})
+    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
     eq(true, screen.options.mousemoveevent)
     meths.input_mouse('move', '', '', 2, 3, 6)
     screen:expect({grid=[[
@@ -3803,7 +3803,7 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       {n: foo }|
       {n: bar }|
       {s: baz }|
-    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 100}}})
+    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
     eq(true, screen.options.mousemoveevent)
     meths.input_mouse('left', 'press', '', 2, 2, 6)
     screen:expect({grid=[[
