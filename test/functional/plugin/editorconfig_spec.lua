@@ -22,7 +22,7 @@ setup(function()
   helpers.write_file(
     testdir .. pathsep .. '.editorconfig',
     [[
-    root = true
+    root = true ; semicolon comment
 
     [3_space.txt]
     indent_style = space
@@ -39,7 +39,7 @@ setup(function()
     indent_size = tab
 
     [tab.txt]
-    indent_style = tab
+    indent_style = tab # hashtag comment
 
     [4_tab.txt]
     indent_style = tab

@@ -157,7 +157,7 @@ local function parse_line(line)
       return glob, nil, nil
     end
 
-    local key, val = line:match('^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$')
+    local key, val = line:match('^%s*([^:= ][^:=]-)%s*[:=]%s*([^#;%s]+).*$')
     if key ~= nil and val ~= nil then
       return nil, key:lower(), val:lower()
     end
