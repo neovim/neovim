@@ -266,10 +266,6 @@ int main(int argc, char **argv)
   // `argc` and `argv` are also copied, so that they can be changed.
   init_params(&params, argc, argv);
 
-  // Since os_open is called during the init_startuptime, we need to call
-  // fs_init before it.
-  fs_init();
-
   init_startuptime(&params);
 
   // Need to find "--clean" before actually parsing arguments.
@@ -1479,7 +1475,7 @@ static void init_startuptime(mparm_T *paramp)
 {
   for (int i = 1; i < paramp->argc - 1; i++) {
     if (STRICMP(paramp->argv[i], "--startuptime") == 0) {
-      time_fd = os_fopen(paramp->argv[i + 1], "a");
+      time_fd = fopen(paramp->argv[i + 1], "a");
       time_start("--- NVIM STARTING ---");
       break;
     }

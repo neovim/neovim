@@ -20,6 +20,7 @@
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"
+#include "nvim/main.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option_defs.h"
@@ -44,15 +45,13 @@
 
 struct iovec;
 
-#define RUN_UV_FS_FUNC(ret, func, ...) \
+#define RUN_UV_FS_FUNC_MAIN_LOOP(ret, func, ...) \
   do { \
     bool did_try_to_free = false; \
 uv_call_start: {} \
     uv_fs_t req; \
-    fs_loop_lock(); \
-    ret = func(&fs_loop, &req, __VA_ARGS__); \
+    ret = func(&main_loop.uv, &req, __VA_ARGS__); \
     uv_fs_req_cleanup(&req); \
-    fs_loop_unlock(); \
     if (ret == UV_ENOMEM && !did_try_to_free) { \
       try_to_free_memory(); \
       did_try_to_free = true; \
@@ -62,28 +61,6 @@ uv_call_start: {} \
 
 // Many fs functions from libuv return that value on success.
 static const int kLibuvSuccess = 0;
-static uv_loop_t fs_loop;
-static uv_mutex_t fs_loop_mutex;
-
-// Initialize the fs module
-void fs_init(void)
-{
-  uv_loop_init(&fs_loop);
-  uv_mutex_init_recursive(&fs_loop_mutex);
-}
-
-/// TODO(bfredl): some of these operations should
-/// be possible to do the private libuv loop of the
-/// thread, instead of contending the global fs loop
-void fs_loop_lock(void)
-{
-  uv_mutex_lock(&fs_loop_mutex);
-}
-
-void fs_loop_unlock(void)
-{
-  uv_mutex_unlock(&fs_loop_mutex);
-}
 
 /// Changes the current directory to `path`.
 ///
@@ -122,12 +99,9 @@ bool os_isrealdir(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
-  fs_loop_lock();
-  if (uv_fs_lstat(&fs_loop, &request, name, NULL) != kLibuvSuccess) {
-    fs_loop_unlock();
+  if (uv_fs_lstat(&main_loop.uv, &request, name, NULL) != kLibuvSuccess) {
     return false;
   }
-  fs_loop_unlock();
   if (S_ISLNK(request.statbuf.st_mode)) {
     return false;
   }
@@ -147,6 +121,21 @@ bool os_isdir(const char *name)
 
   return S_ISDIR(mode);
 }
+
+/// Check if the given path exists and is a directory.
+///
+/// @return `true` if `name` is a directory.
+bool os_isdir_thread(uv_loop_t *loop, const char *name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uv_fs_t request;
+  int result = uv_fs_stat(&main_loop.uv, &request, name, NULL);
+  bool res = (result == kLibuvSuccess) && S_ISDIR(request.statbuf.st_mode);
+
+  uv_fs_req_cleanup(&request);
+  return res;
+}
+
 
 /// Check what `name` is:
 /// @return NODE_NORMAL: file or directory (or doesn't exist)
@@ -280,7 +269,7 @@ static bool is_executable(const char *name, char **abspath)
 #else
   int r = -1;
   if (S_ISREG(mode)) {
-    RUN_UV_FS_FUNC(r, uv_fs_access, name, X_OK, NULL);
+    RUN_UV_FS_FUNC_MAIN_LOOP(r, uv_fs_access, name, X_OK, NULL);
   }
   const bool ok = (r == 0);
 #endif
@@ -418,7 +407,7 @@ int os_open(const char *path, int flags, int mode)
     return UV_EINVAL;
   }
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_open, path, flags, mode, NULL);
+  RUN_UV_FS_FUNC_MAIN_LOOP(r, uv_fs_open, path, flags, mode, NULL);
   return r;
 }
 
@@ -517,7 +506,7 @@ int os_set_cloexec(const int fd)
 int os_close(const int fd)
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_close, fd, NULL);
+  RUN_UV_FS_FUNC_MAIN_LOOP(r, uv_fs_close, fd, NULL);
   return r;
 }
 
@@ -715,7 +704,7 @@ ptrdiff_t os_write(const int fd, const char *const buf, const size_t size, const
 int os_copy(const char *path, const char *new_path, int flags)
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_copyfile, path, new_path, flags, NULL);
+  RUN_UV_FS_FUNC_MAIN_LOOP(r, uv_fs_copyfile, path, new_path, flags, NULL);
   return r;
 }
 
@@ -727,7 +716,7 @@ int os_copy(const char *path, const char *new_path, int flags)
 int os_fsync(int fd)
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_fsync, fd, NULL);
+  RUN_UV_FS_FUNC_MAIN_LOOP(r, uv_fs_fsync, fd, NULL);
   g_stats.fsync++;
   return r;
 }
@@ -742,9 +731,7 @@ static int os_stat(const char *name, uv_stat_t *statbuf)
     return UV_EINVAL;
   }
   uv_fs_t request;
-  fs_loop_lock();
-  int result = uv_fs_stat(&fs_loop, &request, name, NULL);
-  fs_loop_unlock();
+  int result = uv_fs_stat(&main_loop.uv, &request, name, NULL);
   if (result == kLibuvSuccess) {
     *statbuf = request.statbuf;
   }
@@ -772,7 +759,7 @@ int os_setperm(const char *const name, int perm)
   FUNC_ATTR_NONNULL_ALL
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_chmod, name, perm, NULL);
+  RUN_UV_FS_FUNC_MAIN_LOOP(r, uv_fs_chmod, name, perm, NULL);
   return (r == kLibuvSuccess ? OK : FAIL);
 }
 
@@ -837,7 +824,7 @@ bool os_file_owned(const char *fname)
 int os_chown(const char *path, uv_uid_t owner, uv_gid_t group)
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_chown, path, owner, group, NULL);
+  RUN_UV_FS_FUNC_MAIN_LOOP(r, uv_fs_chown, path, owner, group, NULL);
   return r;
 }
 
@@ -850,7 +837,7 @@ int os_chown(const char *path, uv_uid_t owner, uv_gid_t group)
 int os_fchown(int fd, uv_uid_t owner, uv_gid_t group)
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_fchown, fd, owner, group, NULL);
+  RUN_UV_FS_FUNC_MAIN_LOOP(r, uv_fs_fchown, fd, owner, group, NULL);
   return r;
 }
 
@@ -875,7 +862,7 @@ bool os_path_exists(const char *path)
 int os_file_settime(const char *path, double atime, double mtime)
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_utime, path, atime, mtime, NULL);
+  RUN_UV_FS_FUNC_MAIN_LOOP(r, uv_fs_utime, path, atime, mtime, NULL);
   return r;
 }
 
@@ -886,7 +873,21 @@ bool os_file_is_readable(const char *name)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_access, name, R_OK, NULL);
+  RUN_UV_FS_FUNC_MAIN_LOOP(r, uv_fs_access, name, R_OK, NULL);
+  return (r == 0);
+}
+
+/// Check if a file is readable.
+///
+/// This is a thread-safe variant. caller has to pass in the uv loop private to that thread.
+///
+/// @return true if `name` is readable, otherwise false.
+bool os_file_is_readable_thread(uv_loop_t *loop, const char *name)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  uv_fs_t req;
+  int r = uv_fs_access(loop, &req, name, R_OK, NULL);
+  uv_fs_req_cleanup(&req);
   return (r == 0);
 }
 
@@ -899,7 +900,7 @@ int os_file_is_writable(const char *name)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_access, name, W_OK, NULL);
+  RUN_UV_FS_FUNC_MAIN_LOOP(r, uv_fs_access, name, W_OK, NULL);
   if (r == 0) {
     return os_isdir(name) ? 2 : 1;
   }
@@ -913,7 +914,7 @@ int os_rename(const char *path, const char *new_path)
   FUNC_ATTR_NONNULL_ALL
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_rename, path, new_path, NULL);
+  RUN_UV_FS_FUNC_MAIN_LOOP(r, uv_fs_rename, path, new_path, NULL);
   return (r == kLibuvSuccess ? OK : FAIL);
 }
 
@@ -924,7 +925,7 @@ int os_mkdir(const char *path, int32_t mode)
   FUNC_ATTR_NONNULL_ALL
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_mkdir, path, mode, NULL);
+  RUN_UV_FS_FUNC_MAIN_LOOP(r, uv_fs_mkdir, path, mode, NULL);
   return r;
 }
 
@@ -1028,9 +1029,7 @@ int os_mkdtemp(const char *templ, char *path)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
-  fs_loop_lock();
-  int result = uv_fs_mkdtemp(&fs_loop, &request, templ, NULL);
-  fs_loop_unlock();
+  int result = uv_fs_mkdtemp(&main_loop.uv, &request, templ, NULL);
   if (result == kLibuvSuccess) {
     xstrlcpy(path, request.path, TEMP_FILE_PATH_MAXLEN);
   }
@@ -1045,7 +1044,7 @@ int os_rmdir(const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_rmdir, path, NULL);
+  RUN_UV_FS_FUNC_MAIN_LOOP(r, uv_fs_rmdir, path, NULL);
   return r;
 }
 
@@ -1057,9 +1056,7 @@ int os_rmdir(const char *path)
 bool os_scandir(Directory *dir, const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
-  fs_loop_lock();
-  int r = uv_fs_scandir(&fs_loop, &dir->request, path, 0, NULL);
-  fs_loop_unlock();
+  int r = uv_fs_scandir(&main_loop.uv, &dir->request, path, 0, NULL);
   if (r < 0) {
     os_closedir(dir);
   }
@@ -1091,7 +1088,7 @@ int os_remove(const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_unlink, path, NULL);
+  RUN_UV_FS_FUNC_MAIN_LOOP(r, uv_fs_unlink, path, NULL);
   return r;
 }
 
@@ -1120,9 +1117,7 @@ bool os_fileinfo_link(const char *path, FileInfo *file_info)
     return false;
   }
   uv_fs_t request;
-  fs_loop_lock();
-  bool ok = uv_fs_lstat(&fs_loop, &request, path, NULL) == kLibuvSuccess;
-  fs_loop_unlock();
+  bool ok = uv_fs_lstat(&main_loop.uv, &request, path, NULL) == kLibuvSuccess;
   if (ok) {
     file_info->stat = request.statbuf;
   }
@@ -1140,8 +1135,7 @@ bool os_fileinfo_fd(int file_descriptor, FileInfo *file_info)
 {
   uv_fs_t request;
   CLEAR_POINTER(file_info);
-  fs_loop_lock();
-  bool ok = uv_fs_fstat(&fs_loop,
+  bool ok = uv_fs_fstat(&main_loop.uv,
                         &request,
                         file_descriptor,
                         NULL) == kLibuvSuccess;
@@ -1149,7 +1143,6 @@ bool os_fileinfo_fd(int file_descriptor, FileInfo *file_info)
     file_info->stat = request.statbuf;
   }
   uv_fs_req_cleanup(&request);
-  fs_loop_unlock();
   return ok;
 }
 
@@ -1266,8 +1259,7 @@ char *os_realpath(const char *name, char *buf)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   uv_fs_t request;
-  fs_loop_lock();
-  int result = uv_fs_realpath(&fs_loop, &request, name, NULL);
+  int result = uv_fs_realpath(&main_loop.uv, &request, name, NULL);
   if (result == kLibuvSuccess) {
     if (buf == NULL) {
       buf = xmallocz(MAXPATHL);
@@ -1275,7 +1267,6 @@ char *os_realpath(const char *name, char *buf)
     xstrlcpy(buf, request.ptr, MAXPATHL + 1);
   }
   uv_fs_req_cleanup(&request);
-  fs_loop_unlock();
   return result == kLibuvSuccess ? buf : NULL;
 }
 

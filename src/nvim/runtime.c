@@ -528,24 +528,24 @@ ArrayOf(String) runtime_get_named(bool lua, Array pat, bool all)
   RuntimeSearchPath path = runtime_search_path_get_cached(&ref);
   static char buf[MAXPATHL];
 
-  ArrayOf(String) rv = runtime_get_named_common(lua, pat, all, path, buf, sizeof buf);
+  ArrayOf(String) rv = runtime_get_named_common(&main_loop.uv, lua, pat, all, path, buf, sizeof buf);
 
   runtime_search_path_unref(path, &ref);
   return rv;
 }
 
-ArrayOf(String) runtime_get_named_thread(bool lua, Array pat, bool all)
+ArrayOf(String) runtime_get_named_thread(uv_loop_t *loop, bool lua, Array pat, bool all)
 {
   // TODO(bfredl): avoid contention between multiple worker threads?
   uv_mutex_lock(&runtime_search_path_mutex);
   static char buf[MAXPATHL];
-  ArrayOf(String) rv = runtime_get_named_common(lua, pat, all, runtime_search_path_thread,
+  ArrayOf(String) rv = runtime_get_named_common(loop, lua, pat, all, runtime_search_path_thread,
                                                 buf, sizeof buf);
   uv_mutex_unlock(&runtime_search_path_mutex);
   return rv;
 }
 
-ArrayOf(String) runtime_get_named_common(bool lua, Array pat, bool all,
+ArrayOf(String) runtime_get_named_common(uv_loop_t *loop, bool lua, Array pat, bool all,
                                          RuntimeSearchPath path, char *buf, size_t buf_len)
 {
   ArrayOf(String) rv = ARRAY_DICT_INIT;
@@ -554,7 +554,7 @@ ArrayOf(String) runtime_get_named_common(bool lua, Array pat, bool all,
     if (lua) {
       if (item->has_lua == kNone) {
         size_t size = (size_t)snprintf(buf, buf_len, "%s/lua/", item->path);
-        item->has_lua = (size < buf_len && os_isdir(buf));
+        item->has_lua = (size < buf_len && os_isdir_thread(loop, buf));
       }
       if (item->has_lua == kFalse) {
         continue;
@@ -567,7 +567,7 @@ ArrayOf(String) runtime_get_named_common(bool lua, Array pat, bool all,
         size_t size = (size_t)snprintf(buf, buf_len, "%s/%s",
                                        item->path, pat_item.data.string.data);
         if (size < buf_len) {
-          if (os_file_is_readable(buf)) {
+          if (os_file_is_readable_thread(loop, buf)) {
             ADD(rv, STRING_OBJ(cstr_to_string(buf)));
             if (!all) {
               goto done;

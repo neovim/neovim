@@ -308,7 +308,7 @@ static int nlua_thr_api_nvim__get_runtime(lua_State *lstate)
     return lua_error(lstate);
   }
 
-  ArrayOf(String) ret = runtime_get_named_thread(is_lua, pat, all);
+  ArrayOf(String) ret = runtime_get_named_thread(luv_loop(lstate), is_lua, pat, all);
   nlua_push_Array(lstate, ret, true);
   api_free_array(ret);
   api_free_array(pat);
