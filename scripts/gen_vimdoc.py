@@ -188,7 +188,7 @@ CONFIG = {
             f'*vim.{name}()*'
             if fstem.lower() == '_editor'
             else f'*{name}()*'
-            if fstem in ('iter.lua')
+            if name[0].isupper()
             else f'*{fstem}.{name}()*'),
         'module_override': {
             # `shared` functions are exposed on the `vim` module.
@@ -202,6 +202,7 @@ CONFIG = {
             'fs': 'vim.fs',
             'secure': 'vim.secure',
             'version': 'vim.version',
+            'iter': 'vim.iter',
         },
         'append_only': [
             'shared.lua',
