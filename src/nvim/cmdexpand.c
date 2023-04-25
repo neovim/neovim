@@ -3466,8 +3466,7 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   int options = WILD_SILENT | WILD_USE_NL | WILD_ADD_SLASH
                 | WILD_NO_BEEP | WILD_HOME_REPLACE;
 
-  if (argvars[1].v_type != VAR_STRING) {
-    semsg(_(e_invarg2), "type must be a string");
+  if (tv_check_for_string_arg(argvars, 1) == FAIL) {
     return;
   }
   const char *const type = tv_get_string(&argvars[1]);

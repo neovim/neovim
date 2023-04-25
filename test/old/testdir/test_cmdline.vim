@@ -652,7 +652,7 @@ func Test_getcompletion()
 
   call assert_fails("call getcompletion('\\\\@!\\\\@=', 'buffer')", 'E871:')
   call assert_fails('call getcompletion("", "burp")', 'E475:')
-  call assert_fails('call getcompletion("abc", [])', 'E475:')
+  call assert_fails('call getcompletion("abc", [])', 'E1174:')
 endfunc
 
 " Test for getcompletion() with "fuzzy" in 'wildoptions'

@@ -337,6 +337,16 @@ func Test_assert_with_msg()
   call remove(v:errors, 0)
 endfunc
 
+func Test_override()
+  throw 'Skipped: Nvim does not support test_override()'
+  call test_override('char_avail', 1)
+  eval 1->test_override('redraw')
+  call test_override('ALL', 0)
+  call assert_fails("call test_override('xxx', 1)", 'E475:')
+  call assert_fails("call test_override('redraw', 'yes')", 'E474:')
+  call assert_fails("call test_override('redraw', 'yes')", 'E1210:')
+endfunc
+
 func Test_mouse_position()
   let save_mouse = &mouse
   set mouse=a

@@ -793,12 +793,9 @@ static void f_charidx(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->vval.v_number = -1;
 
-  if (argvars[0].v_type != VAR_STRING
-      || argvars[1].v_type != VAR_NUMBER
-      || (argvars[2].v_type != VAR_UNKNOWN
-          && argvars[2].v_type != VAR_NUMBER
-          && argvars[2].v_type != VAR_BOOL)) {
-    emsg(_(e_invarg));
+  if ((tv_check_for_string_arg(argvars, 0) == FAIL
+       || tv_check_for_number_arg(argvars, 1) == FAIL
+       || tv_check_for_opt_bool_arg(argvars, 2) == FAIL)) {
     return;
   }
 
@@ -3114,14 +3111,12 @@ static void f_glob2regpat(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "gettext()" function
 static void f_gettext(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  if (argvars[0].v_type != VAR_STRING
-      || argvars[0].vval.v_string == NULL
-      || *argvars[0].vval.v_string == NUL) {
-    semsg(_(e_invarg2), tv_get_string(&argvars[0]));
-  } else {
-    rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = xstrdup(_(argvars[0].vval.v_string));
+  if (tv_check_for_nonempty_string_arg(argvars, 0) == FAIL) {
+    return;
   }
+
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = xstrdup(_(argvars[0].vval.v_string));
 }
 
 /// "has()" function
@@ -7641,7 +7636,9 @@ static void f_settagstack(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   // default is to replace the stack.
   if (argvars[2].v_type == VAR_UNKNOWN) {
     // action = 'r';
-  } else if (argvars[2].v_type == VAR_STRING) {
+  } else if (tv_check_for_string_arg(argvars, 2) == FAIL) {
+    return;
+  } else {
     const char *actstr;
     actstr = tv_get_string_chk(&argvars[2]);
     if (actstr == NULL) {
@@ -7654,9 +7651,6 @@ static void f_settagstack(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       semsg(_(e_invact2), actstr);
       return;
     }
-  } else {
-    emsg(_(e_stringreq));
-    return;
   }
 
   if (set_tagstack(wp, d, action) == OK) {
@@ -8937,12 +8931,13 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "timer_info([timer])" function
 static void f_timer_info(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
+  tv_list_alloc_ret(rettv, kListLenUnknown);
+
+  if (tv_check_for_opt_number_arg(argvars, 0) == FAIL) {
+    return;
+  }
+
   if (argvars[0].v_type != VAR_UNKNOWN) {
-    if (argvars[0].v_type != VAR_NUMBER) {
-      emsg(_(e_number_exp));
-      return;
-    }
-    tv_list_alloc_ret(rettv, 1);
     timer_T *timer = find_timer_by_nr(tv_get_number(&argvars[0]));
     if (timer != NULL && (!timer->stopped || timer->refcount > 1)) {
       add_timer_info(rettv, timer);
@@ -9008,8 +9003,7 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "timer_stop(timerid)" function
 static void f_timer_stop(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  if (argvars[0].v_type != VAR_NUMBER) {
-    emsg(_(e_number_exp));
+  if (tv_check_for_number_arg(argvars, 0) == FAIL) {
     return;
   }
 
@@ -9136,8 +9130,7 @@ static void f_trim(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  if (argvars[1].v_type != VAR_UNKNOWN && argvars[1].v_type != VAR_STRING) {
-    semsg(_(e_invarg2), tv_get_string(&argvars[1]));
+  if (tv_check_for_opt_string_arg(argvars, 1) == FAIL) {
     return;
   }
 
