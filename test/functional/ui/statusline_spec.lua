@@ -12,178 +12,182 @@ local exec_lua = helpers.exec_lua
 local eval = helpers.eval
 local sleep = helpers.sleep
 
-describe('statusline clicks', function()
-  local screen
+local mousemodels = { "extend", "popup", "popup_setpos" }
 
-  before_each(function()
-    clear()
-    screen = Screen.new(40, 8)
-    screen:attach()
-    command('set laststatus=2 mousemodel=extend')
-    exec([=[
-      function! MyClickFunc(minwid, clicks, button, mods)
-        let g:testvar = printf("%d %d %s", a:minwid, a:clicks, a:button)
-        if a:mods !=# '    '
-          let g:testvar ..= '(' .. a:mods .. ')'
-        endif
-      endfunction
-    ]=])
-  end)
+for _, model in ipairs(mousemodels) do
+  describe('statusline clicks with mousemodel=' .. model, function()
+    local screen
 
-  it('works', function()
-    meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
-    meths.input_mouse('left', 'press', '', 0, 6, 17)
-    eq('0 1 l', eval("g:testvar"))
-    meths.input_mouse('left', 'press', '', 0, 6, 17)
-    eq('0 2 l', eval("g:testvar"))
-    meths.input_mouse('left', 'press', '', 0, 6, 17)
-    eq('0 3 l', eval("g:testvar"))
-    meths.input_mouse('left', 'press', '', 0, 6, 17)
-    eq('0 4 l', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 6, 17)
-    eq('0 1 r', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 6, 17)
-    eq('0 2 r', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 6, 17)
-    eq('0 3 r', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 6, 17)
-    eq('0 4 r', eval("g:testvar"))
-  end)
+    before_each(function()
+      clear()
+      screen = Screen.new(40, 8)
+      screen:attach()
+      command('set laststatus=2 mousemodel=' .. model)
+      exec([=[
+        function! MyClickFunc(minwid, clicks, button, mods)
+          let g:testvar = printf("%d %d %s", a:minwid, a:clicks, a:button)
+          if a:mods !=# '    '
+            let g:testvar ..= '(' .. a:mods .. ')'
+          endif
+        endfunction
+      ]=])
+      end)
 
-  it('works for winbar', function()
-    meths.set_option('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
-    meths.input_mouse('left', 'press', '', 0, 0, 17)
-    eq('0 1 l', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 0, 17)
-    eq('0 1 r', eval("g:testvar"))
-  end)
+      it('works', function()
+        meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
+        meths.input_mouse('left', 'press', '', 0, 6, 17)
+        eq('0 1 l', eval("g:testvar"))
+        meths.input_mouse('left', 'press', '', 0, 6, 17)
+        eq('0 2 l', eval("g:testvar"))
+        meths.input_mouse('left', 'press', '', 0, 6, 17)
+        eq('0 3 l', eval("g:testvar"))
+        meths.input_mouse('left', 'press', '', 0, 6, 17)
+        eq('0 4 l', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 6, 17)
+        eq('0 1 r', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 6, 17)
+        eq('0 2 r', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 6, 17)
+        eq('0 3 r', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 6, 17)
+        eq('0 4 r', eval("g:testvar"))
+      end)
 
-  it('works for winbar in floating window', function()
-    meths.open_win(0, true, { width=30, height=4, relative='editor', row=1, col=5,
-                              border = "single" })
-    meths.set_option_value('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T',
-                           { scope = 'local' })
-    meths.input_mouse('left', 'press', '', 0, 2, 23)
-    eq('0 1 l', eval("g:testvar"))
-  end)
+      it('works for winbar', function()
+        meths.set_option('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
+        meths.input_mouse('left', 'press', '', 0, 0, 17)
+        eq('0 1 l', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 0, 17)
+        eq('0 1 r', eval("g:testvar"))
+      end)
 
-  it('works when there are multiple windows', function()
-    command('split')
-    meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
-    meths.set_option('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
-    meths.input_mouse('left', 'press', '', 0, 0, 17)
-    eq('0 1 l', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 4, 17)
-    eq('0 1 r', eval("g:testvar"))
-    meths.input_mouse('middle', 'press', '', 0, 3, 17)
-    eq('0 1 m', eval("g:testvar"))
-    meths.input_mouse('left', 'press', '', 0, 6, 17)
-    eq('0 1 l', eval("g:testvar"))
-  end)
+      it('works for winbar in floating window', function()
+        meths.open_win(0, true, { width=30, height=4, relative='editor', row=1, col=5,
+        border = "single" })
+        meths.set_option_value('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T',
+        { scope = 'local' })
+        meths.input_mouse('left', 'press', '', 0, 2, 23)
+        eq('0 1 l', eval("g:testvar"))
+      end)
 
-  it('works with Lua function', function()
-    exec_lua([[
-      function clicky_func(minwid, clicks, button, mods)
-        vim.g.testvar = string.format("%d %d %s", minwid, clicks, button)
-      end
-    ]])
-    meths.set_option('statusline', 'Not clicky stuff %0@v:lua.clicky_func@Clicky stuff%T')
-    meths.input_mouse('left', 'press', '', 0, 6, 17)
-    eq('0 1 l', eval("g:testvar"))
-  end)
+      it('works when there are multiple windows', function()
+        command('split')
+        meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
+        meths.set_option('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
+        meths.input_mouse('left', 'press', '', 0, 0, 17)
+        eq('0 1 l', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 4, 17)
+        eq('0 1 r', eval("g:testvar"))
+        meths.input_mouse('middle', 'press', '', 0, 3, 17)
+        eq('0 1 m', eval("g:testvar"))
+        meths.input_mouse('left', 'press', '', 0, 6, 17)
+        eq('0 1 l', eval("g:testvar"))
+      end)
 
-  it('ignores unsupported click items', function()
-    command('tabnew | tabprevious')
-    meths.set_option('statusline', '%2TNot clicky stuff%T')
-    meths.input_mouse('left', 'press', '', 0, 6, 0)
-    eq(1, meths.get_current_tabpage().id)
-    meths.set_option('statusline', '%2XNot clicky stuff%X')
-    meths.input_mouse('left', 'press', '', 0, 6, 0)
-    eq(2, #meths.list_tabpages())
-  end)
+      it('works with Lua function', function()
+        exec_lua([[
+        function clicky_func(minwid, clicks, button, mods)
+          vim.g.testvar = string.format("%d %d %s", minwid, clicks, button)
+        end
+        ]])
+        meths.set_option('statusline', 'Not clicky stuff %0@v:lua.clicky_func@Clicky stuff%T')
+        meths.input_mouse('left', 'press', '', 0, 6, 17)
+        eq('0 1 l', eval("g:testvar"))
+      end)
 
-  it("right click works when statusline isn't focused #18994", function()
-    meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
-    meths.input_mouse('right', 'press', '', 0, 6, 17)
-    eq('0 1 r', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 6, 17)
-    eq('0 2 r', eval("g:testvar"))
-  end)
+      it('ignores unsupported click items', function()
+        command('tabnew | tabprevious')
+        meths.set_option('statusline', '%2TNot clicky stuff%T')
+        meths.input_mouse('left', 'press', '', 0, 6, 0)
+        eq(1, meths.get_current_tabpage().id)
+        meths.set_option('statusline', '%2XNot clicky stuff%X')
+        meths.input_mouse('left', 'press', '', 0, 6, 0)
+        eq(2, #meths.list_tabpages())
+      end)
 
-  it("works with modifiers #18994", function()
-    meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
-    -- Note: alternate between left and right mouse buttons to avoid triggering multiclicks
-    meths.input_mouse('left', 'press', 'S', 0, 6, 17)
-    eq('0 1 l(s   )', eval("g:testvar"))
-    meths.input_mouse('right', 'press', 'S', 0, 6, 17)
-    eq('0 1 r(s   )', eval("g:testvar"))
-    meths.input_mouse('left', 'press', 'A', 0, 6, 17)
-    eq('0 1 l(  a )', eval("g:testvar"))
-    meths.input_mouse('right', 'press', 'A', 0, 6, 17)
-    eq('0 1 r(  a )', eval("g:testvar"))
-    meths.input_mouse('left', 'press', 'AS', 0, 6, 17)
-    eq('0 1 l(s a )', eval("g:testvar"))
-    meths.input_mouse('right', 'press', 'AS', 0, 6, 17)
-    eq('0 1 r(s a )', eval("g:testvar"))
-    meths.input_mouse('left', 'press', 'T', 0, 6, 17)
-    eq('0 1 l(   m)', eval("g:testvar"))
-    meths.input_mouse('right', 'press', 'T', 0, 6, 17)
-    eq('0 1 r(   m)', eval("g:testvar"))
-    meths.input_mouse('left', 'press', 'TS', 0, 6, 17)
-    eq('0 1 l(s  m)', eval("g:testvar"))
-    meths.input_mouse('right', 'press', 'TS', 0, 6, 17)
-    eq('0 1 r(s  m)', eval("g:testvar"))
-    meths.input_mouse('left', 'press', 'C', 0, 6, 17)
-    eq('0 1 l( c  )', eval("g:testvar"))
-    -- <C-RightMouse> is for tag jump
-  end)
+      it("right click works when statusline isn't focused #18994", function()
+        meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
+        meths.input_mouse('right', 'press', '', 0, 6, 17)
+        eq('0 1 r', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 6, 17)
+        eq('0 2 r', eval("g:testvar"))
+      end)
 
-  it("works for global statusline with vertical splits #19186", function()
-    command('set laststatus=3')
-    meths.set_option('statusline', '%0@MyClickFunc@Clicky stuff%T %= %0@MyClickFunc@Clicky stuff%T')
-    command('vsplit')
-    screen:expect([[
-      ^                    │                   |
-      ~                   │~                  |
-      ~                   │~                  |
-      ~                   │~                  |
-      ~                   │~                  |
-      ~                   │~                  |
-      Clicky stuff                Clicky stuff|
-                                              |
-    ]])
+      it("works with modifiers #18994", function()
+        meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
+        -- Note: alternate between left and right mouse buttons to avoid triggering multiclicks
+        meths.input_mouse('left', 'press', 'S', 0, 6, 17)
+        eq('0 1 l(s   )', eval("g:testvar"))
+        meths.input_mouse('right', 'press', 'S', 0, 6, 17)
+        eq('0 1 r(s   )', eval("g:testvar"))
+        meths.input_mouse('left', 'press', 'A', 0, 6, 17)
+        eq('0 1 l(  a )', eval("g:testvar"))
+        meths.input_mouse('right', 'press', 'A', 0, 6, 17)
+        eq('0 1 r(  a )', eval("g:testvar"))
+        meths.input_mouse('left', 'press', 'AS', 0, 6, 17)
+        eq('0 1 l(s a )', eval("g:testvar"))
+        meths.input_mouse('right', 'press', 'AS', 0, 6, 17)
+        eq('0 1 r(s a )', eval("g:testvar"))
+        meths.input_mouse('left', 'press', 'T', 0, 6, 17)
+        eq('0 1 l(   m)', eval("g:testvar"))
+        meths.input_mouse('right', 'press', 'T', 0, 6, 17)
+        eq('0 1 r(   m)', eval("g:testvar"))
+        meths.input_mouse('left', 'press', 'TS', 0, 6, 17)
+        eq('0 1 l(s  m)', eval("g:testvar"))
+        meths.input_mouse('right', 'press', 'TS', 0, 6, 17)
+        eq('0 1 r(s  m)', eval("g:testvar"))
+        meths.input_mouse('left', 'press', 'C', 0, 6, 17)
+        eq('0 1 l( c  )', eval("g:testvar"))
+        -- <C-RightMouse> is for tag jump
+      end)
 
-    -- clickable area on the right
-    meths.input_mouse('left', 'press', '', 0, 6, 35)
-    eq('0 1 l', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 6, 35)
-    eq('0 1 r', eval("g:testvar"))
+      it("works for global statusline with vertical splits #19186", function()
+        command('set laststatus=3')
+        meths.set_option('statusline', '%0@MyClickFunc@Clicky stuff%T %= %0@MyClickFunc@Clicky stuff%T')
+        command('vsplit')
+        screen:expect([[
+        ^                    │                   |
+        ~                   │~                  |
+        ~                   │~                  |
+        ~                   │~                  |
+        ~                   │~                  |
+        ~                   │~                  |
+        Clicky stuff                Clicky stuff|
+                                                |
+        ]])
 
-    -- clickable area on the left
-    meths.input_mouse('left', 'press', '', 0, 6, 5)
-    eq('0 1 l', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 6, 5)
-    eq('0 1 r', eval("g:testvar"))
-  end)
+        -- clickable area on the right
+        meths.input_mouse('left', 'press', '', 0, 6, 35)
+        eq('0 1 l', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 6, 35)
+        eq('0 1 r', eval("g:testvar"))
 
-  it('no memory leak with zero-width click labels', function()
-    command([[
-      let &stl = '%@Test@%T%@MyClickFunc@%=%T%@Test@'
-    ]])
-    meths.input_mouse('left', 'press', '', 0, 6, 0)
-    eq('0 1 l', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 6, 39)
-    eq('0 1 r', eval("g:testvar"))
-  end)
+        -- clickable area on the left
+        meths.input_mouse('left', 'press', '', 0, 6, 5)
+        eq('0 1 l', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 6, 5)
+        eq('0 1 r', eval("g:testvar"))
+      end)
 
-  it('no memory leak with truncated click labels', function()
-    command([[
-      let &stl = '%@MyClickFunc@foo%X' .. repeat('a', 40) .. '%<t%@Test@bar%X%@Test@baz'
-    ]])
-    meths.input_mouse('left', 'press', '', 0, 6, 2)
-    eq('0 1 l', eval("g:testvar"))
-  end)
-end)
+      it('no memory leak with zero-width click labels', function()
+        command([[
+        let &stl = '%@Test@%T%@MyClickFunc@%=%T%@Test@'
+        ]])
+        meths.input_mouse('left', 'press', '', 0, 6, 0)
+        eq('0 1 l', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 6, 39)
+        eq('0 1 r', eval("g:testvar"))
+      end)
+
+      it('no memory leak with truncated click labels', function()
+        command([[
+        let &stl = '%@MyClickFunc@foo%X' .. repeat('a', 40) .. '%<t%@Test@bar%X%@Test@baz'
+        ]])
+        meths.input_mouse('left', 'press', '', 0, 6, 2)
+        eq('0 1 l', eval("g:testvar"))
+      end)
+    end)
+end
 
 describe('global statusline', function()
   local screen
