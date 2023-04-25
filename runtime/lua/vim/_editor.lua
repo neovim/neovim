@@ -829,6 +829,20 @@ function vim.print(...)
   return ...
 end
 
+--- Translate keycodes.
+---
+--- Example:
+--- <pre>lua
+---   local k = vim.keycode
+---   vim.g.mapleader = k'<bs>'
+--- </pre>
+--- @param str string String to be converted.
+--- @return string
+--- @see |nvim_replace_termcodes()|
+function vim.keycode(str)
+  return vim.api.nvim_replace_termcodes(str, true, true, true)
+end
+
 function vim._cs_remote(rcid, server_addr, connect_error, args)
   local function connection_failure_errmsg(consequence)
     local explanation
