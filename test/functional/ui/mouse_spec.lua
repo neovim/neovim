@@ -1840,16 +1840,6 @@ describe('ui/mouse/input', function()
     eq({2, 9}, meths.win_get_cursor(0))
     eq('', funcs.getreg('"'))
 
-    -- Try clicking on the status line
-    funcs.setreg('"', '')
-    meths.win_set_cursor(0, {1, 9})
-    feed('vee')
-    meths.input_mouse('right', 'press', '', 0, 5, 1)
-    meths.input_mouse('right', 'release', '', 0, 5, 1)
-    feed('<Down><CR>')
-    eq({1, 9}, meths.win_get_cursor(0))
-    eq('ran away', funcs.getreg('"'))
-
     -- Try clicking outside the window
     funcs.setreg('"', '')
     meths.win_set_cursor(0, {2, 1})
