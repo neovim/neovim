@@ -9,6 +9,8 @@ local feed = helpers.feed
 local meths = helpers.meths
 local pcall_err = helpers.pcall_err
 
+local mousemodels = { "extend", "popup", "popup_setpos" }
+
 describe('statuscolumn', function()
   local screen
   before_each(function()
@@ -420,45 +422,47 @@ describe('statuscolumn', function()
     ]])
   end)
 
-  it("works with 'statuscolumn' clicks", function()
-    command('set mousemodel=extend')
-    command([[
-      function! MyClickFunc(minwid, clicks, button, mods)
-        let g:testvar = printf("%d %d %s %d", a:minwid, a:clicks, a:button, getmousepos().line)
-        if a:mods !=# '    '
-          let g:testvar ..= '(' .. a:mods .. ')'
-        endif
-      endfunction
-      set stc=%0@MyClickFunc@%=%l%T
-    ]])
-    meths.input_mouse('left', 'press', '', 0, 0, 0)
-    eq('0 1 l 4', eval("g:testvar"))
-    meths.input_mouse('left', 'press', '', 0, 0, 0)
-    eq('0 2 l 4', eval("g:testvar"))
-    meths.input_mouse('left', 'press', '', 0, 0, 0)
-    eq('0 3 l 4', eval("g:testvar"))
-    meths.input_mouse('left', 'press', '', 0, 0, 0)
-    eq('0 4 l 4', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 3, 0)
-    eq('0 1 r 7', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 3, 0)
-    eq('0 2 r 7', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 3, 0)
-    eq('0 3 r 7', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 3, 0)
-    eq('0 4 r 7', eval("g:testvar"))
-    command('set laststatus=2 winbar=%f')
-    command('let g:testvar=""')
-    -- Check that winbar click doesn't register as statuscolumn click
-    meths.input_mouse('right', 'press', '', 0, 0, 0)
-    eq('', eval("g:testvar"))
-    -- Check that statusline click doesn't register as statuscolumn click
-    meths.input_mouse('right', 'press', '', 0, 12, 0)
-    eq('', eval("g:testvar"))
-    -- Check that cmdline click doesn't register as statuscolumn click
-    meths.input_mouse('right', 'press', '', 0, 13, 0)
-    eq('', eval("g:testvar"))
-  end)
+  for _, model in ipairs(mousemodels) do
+    it("works with 'statuscolumn' clicks with mousemodel=" .. model, function()
+      command('set mousemodel=' .. model)
+      command([[
+        function! MyClickFunc(minwid, clicks, button, mods)
+          let g:testvar = printf("%d %d %s %d", a:minwid, a:clicks, a:button, getmousepos().line)
+          if a:mods !=# '    '
+            let g:testvar ..= '(' .. a:mods .. ')'
+          endif
+        endfunction
+        set stc=%0@MyClickFunc@%=%l%T
+      ]])
+      meths.input_mouse('left', 'press', '', 0, 0, 0)
+      eq('0 1 l 4', eval("g:testvar"))
+      meths.input_mouse('left', 'press', '', 0, 0, 0)
+      eq('0 2 l 4', eval("g:testvar"))
+      meths.input_mouse('left', 'press', '', 0, 0, 0)
+      eq('0 3 l 4', eval("g:testvar"))
+      meths.input_mouse('left', 'press', '', 0, 0, 0)
+      eq('0 4 l 4', eval("g:testvar"))
+      meths.input_mouse('right', 'press', '', 0, 3, 0)
+      eq('0 1 r 7', eval("g:testvar"))
+      meths.input_mouse('right', 'press', '', 0, 3, 0)
+      eq('0 2 r 7', eval("g:testvar"))
+      meths.input_mouse('right', 'press', '', 0, 3, 0)
+      eq('0 3 r 7', eval("g:testvar"))
+      meths.input_mouse('right', 'press', '', 0, 3, 0)
+      eq('0 4 r 7', eval("g:testvar"))
+      command('set laststatus=2 winbar=%f')
+      command('let g:testvar=""')
+      -- Check that winbar click doesn't register as statuscolumn click
+      meths.input_mouse('right', 'press', '', 0, 0, 0)
+      eq('', eval("g:testvar"))
+      -- Check that statusline click doesn't register as statuscolumn click
+      meths.input_mouse('right', 'press', '', 0, 12, 0)
+      eq('', eval("g:testvar"))
+      -- Check that cmdline click doesn't register as statuscolumn click
+      meths.input_mouse('right', 'press', '', 0, 13, 0)
+      eq('', eval("g:testvar"))
+    end)
+  end
 
   it('click labels do not leak memory', function()
     command([[

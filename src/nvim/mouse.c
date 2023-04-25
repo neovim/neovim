@@ -212,22 +212,31 @@ static int get_fpos_of_mouse(pos_T *mpos)
   if (wp == NULL) {
     return IN_UNKNOWN;
   }
+  int winrow = row;
+  int wincol = col;
+
+  // compute the position in the buffer line from the posn on the screen
+  bool below_buffer = mouse_comp_pos(wp, &row, &col, &mpos->lnum);
+
+  if (!below_buffer && *wp->w_p_stc != NUL && mouse_col < win_col_off(wp)) {
+    return MOUSE_STATUSCOL;
+  }
 
   // winpos and height may change in win_enter()!
-  if (row + wp->w_winbar_height >= wp->w_height) {  // In (or below) status line
+  if (winrow + wp->w_winbar_height >= wp->w_height) {  // In (or below) status line
     return IN_STATUS_LINE;
   }
-  if (col >= wp->w_width) {  // In vertical separator line
+
+  if (winrow == -1 && wp->w_winbar_height != 0) {
+    return MOUSE_WINBAR;
+  }
+
+  if (wincol >= wp->w_width) {  // In vertical separator line
     return IN_SEP_LINE;
   }
 
-  if (wp != curwin) {
+  if (wp != curwin || below_buffer) {
     return IN_UNKNOWN;
-  }
-
-  // compute the position in the buffer line from the posn on the screen
-  if (mouse_comp_pos(curwin, &row, &col, &mpos->lnum)) {
-    return IN_STATUS_LINE;  // past bottom
   }
 
   mpos->col = vcol2col(wp, mpos->lnum, col);
@@ -530,6 +539,11 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   // shift-left button -> right button
   // alt-left button   -> alt-right button
   if (mouse_model_popup()) {
+    pos_T m_pos;
+    int m_pos_flag = get_fpos_of_mouse(&m_pos);
+    if (m_pos_flag & (IN_STATUS_LINE|MOUSE_WINBAR|MOUSE_STATUSCOL)) {
+      goto popupexit;
+    }
     if (which_button == MOUSE_RIGHT
         && !(mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
       if (!is_click) {
@@ -539,17 +553,14 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
       }
       jump_flags = 0;
       if (strcmp(p_mousem, "popup_setpos") == 0) {
-        // First set the cursor position before showing the popup
-        // menu.
+        // First set the cursor position before showing the popup menu.
         if (VIsual_active) {
-          pos_T m_pos;
-          // set MOUSE_MAY_STOP_VIS if we are outside the
-          // selection or the current window (might have false
-          // negative here)
+          // set MOUSE_MAY_STOP_VIS if we are outside the selection
+          // or the current window (might have false negative here)
           if (mouse_row < curwin->w_winrow
               || mouse_row > (curwin->w_winrow + curwin->w_height)) {
             jump_flags = MOUSE_MAY_STOP_VIS;
-          } else if (get_fpos_of_mouse(&m_pos) != IN_BUFFER) {
+          } else if (m_pos_flag != IN_BUFFER) {
             jump_flags = MOUSE_MAY_STOP_VIS;
           } else {
             if (VIsual_mode == 'V') {
@@ -593,6 +604,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
       mod_mask &= ~MOD_MASK_SHIFT;
     }
   }
+popupexit:
 
   if ((State & (MODE_NORMAL | MODE_INSERT))
       && !(mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
@@ -644,7 +656,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   in_sep_line = (jump_flags & IN_SEP_LINE);
 
   if ((in_winbar || in_status_line || in_statuscol) && is_click) {
-    // Handle click event on window bar or status lin
+    // Handle click event on window bar, status line or status column
     int click_grid = mouse_grid;
     int click_row = mouse_row;
     int click_col = mouse_col;
@@ -672,7 +684,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
         call_click_def_func(click_defs, click_col, which_button);
         break;
       default:
-        assert(false && "winbar and statusline only support %@ for clicks");
+        assert(false && "winbar, statusline and statuscolumn only support %@ for clicks");
         break;
       }
     }
