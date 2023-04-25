@@ -2204,8 +2204,7 @@ void f_mapset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const int mode = get_map_mode((char **)&which, 0);
   const bool is_abbr = tv_get_number(&argvars[1]) != 0;
 
-  if (argvars[2].v_type != VAR_DICT) {
-    emsg(_(e_dictreq));
+  if (tv_check_for_dict_arg(argvars, 2) == FAIL) {
     return;
   }
   dict_T *d = argvars[2].vval.v_dict;

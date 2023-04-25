@@ -60,6 +60,8 @@ static const char e_invalid_value_for_blob_nr[]
   = N_("E1239: Invalid value for blob: %d");
 static const char e_string_or_function_required_for_argument_nr[]
   = N_("E1256: String or function required for argument %d");
+static const char e_non_null_dict_required_for_argument_nr[]
+  = N_("E1297: Non-NULL Dictionary required for argument %d");
 
 bool tv_in_free_unref_items = false;
 
@@ -1232,8 +1234,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 
       if (argvars[2].v_type != VAR_UNKNOWN) {
         // optional third argument: {dict}
-        if (argvars[2].v_type != VAR_DICT) {
-          emsg(_(e_dictreq));
+        if (tv_check_for_dict_arg(argvars, 2) == FAIL) {
           goto theend;
         }
         info.item_compare_selfdict = argvars[2].vval.v_dict;
@@ -2993,10 +2994,10 @@ void f_values(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "has_key()" function
 void f_has_key(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  if (argvars[0].v_type != VAR_DICT) {
-    emsg(_(e_dictreq));
+  if (tv_check_for_dict_arg(argvars, 0) == FAIL) {
     return;
   }
+
   if (argvars[0].vval.v_dict == NULL) {
     return;
   }
@@ -4046,6 +4047,20 @@ int tv_check_for_dict_arg(const typval_T *const args, const int idx)
 {
   if (args[idx].v_type != VAR_DICT) {
     semsg(_(e_dict_required_for_argument_nr), idx + 1);
+    return FAIL;
+  }
+  return OK;
+}
+
+/// Give an error and return FAIL unless "args[idx]" is a non-NULL dict.
+int tv_check_for_nonnull_dict_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (tv_check_for_dict_arg(args, idx) == FAIL) {
+    return FAIL;
+  }
+  if (args[idx].vval.v_dict == NULL) {
+    semsg(_(e_non_null_dict_required_for_argument_nr), idx + 1);
     return FAIL;
   }
   return OK;

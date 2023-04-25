@@ -597,8 +597,7 @@ static void f_call(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   dict_T *selfdict = NULL;
   if (argvars[2].v_type != VAR_UNKNOWN) {
-    if (argvars[2].v_type != VAR_DICT) {
-      emsg(_(e_dictreq));
+    if (tv_check_for_dict_arg(argvars, 2) == FAIL) {
       if (owned) {
         func_unref(func);
       }
@@ -7359,8 +7358,7 @@ static void f_setcharpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 static void f_setcharsearch(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  if (argvars[0].v_type != VAR_DICT) {
-    emsg(_(e_dictreq));
+  if (tv_check_for_dict_arg(argvars, 0) == FAIL) {
     return;
   }
 
@@ -7631,8 +7629,7 @@ static void f_settagstack(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   // second argument: dict with items to set in the tag stack
-  if (argvars[1].v_type != VAR_DICT) {
-    emsg(_(e_dictreq));
+  if (tv_check_for_dict_arg(argvars, 1) == FAIL) {
     return;
   }
   dict_T *d = argvars[1].vval.v_dict;
@@ -8987,11 +8984,10 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   if (argvars[2].v_type != VAR_UNKNOWN) {
-    dict_T *dict = argvars[2].vval.v_dict;
-    if (argvars[2].v_type != VAR_DICT || dict == NULL) {
-      semsg(_(e_invarg2), tv_get_string(&argvars[2]));
+    if (tv_check_for_nonnull_dict_arg(argvars, 2) == FAIL) {
       return;
     }
+    dict_T *dict = argvars[2].vval.v_dict;
     dictitem_T *const di = tv_dict_find(dict, S_LEN("repeat"));
     if (di != NULL) {
       repeat = (int)tv_get_number(&di->di_tv);

@@ -39,7 +39,7 @@ func Test_charsearch()
   call setcharsearch({'char' : ''})
   call assert_equal('', getcharsearch().char)
 
-  call assert_fails("call setcharsearch([])", 'E715:')
+  call assert_fails("call setcharsearch([])", 'E1206:')
   enew!
 endfunc
 

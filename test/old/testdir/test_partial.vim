@@ -86,7 +86,7 @@ func Test_partial_dict()
   call assert_equal("Hello", dict.tr())
 
   call assert_fails("let F=function('setloclist', 10)", "E923:")
-  call assert_fails("let F=function('setloclist', [], [])", "E922:")
+  call assert_fails("let F=function('setloclist', [], [])", "E1206:")
 endfunc
 
 func Test_partial_implicit()

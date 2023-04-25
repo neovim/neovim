@@ -228,7 +228,7 @@ func Test_timer_errors()
   sleep 50m
   call assert_equal(3, g:call_count)
 
-  call assert_fails('call timer_start(100, "MyHandler", "abc")', 'E475:')
+  call assert_fails('call timer_start(100, "MyHandler", "abc")', 'E1206:')
   call assert_fails('call timer_start(100, [])', 'E921:')
   call assert_fails('call timer_stop("abc")', 'E39:')
 endfunc

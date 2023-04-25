@@ -651,8 +651,7 @@ void f_win_splitmove(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     dict_T *d;
     dictitem_T *di;
 
-    if (argvars[2].v_type != VAR_DICT || argvars[2].vval.v_dict == NULL) {
-      emsg(_(e_invarg));
+    if (tv_check_for_nonnull_dict_arg(argvars, 2) == FAIL) {
       return;
     }
 
@@ -796,51 +795,50 @@ void f_winrestcmd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "winrestview()" function
 void f_winrestview(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  dict_T *dict = argvars[0].vval.v_dict;
-
-  if (argvars[0].v_type != VAR_DICT || dict == NULL) {
-    emsg(_(e_invarg));
-  } else {
-    dictitem_T *di;
-    if ((di = tv_dict_find(dict, S_LEN("lnum"))) != NULL) {
-      curwin->w_cursor.lnum = (linenr_T)tv_get_number(&di->di_tv);
-    }
-    if ((di = tv_dict_find(dict, S_LEN("col"))) != NULL) {
-      curwin->w_cursor.col = (colnr_T)tv_get_number(&di->di_tv);
-    }
-    if ((di = tv_dict_find(dict, S_LEN("coladd"))) != NULL) {
-      curwin->w_cursor.coladd = (colnr_T)tv_get_number(&di->di_tv);
-    }
-    if ((di = tv_dict_find(dict, S_LEN("curswant"))) != NULL) {
-      curwin->w_curswant = (colnr_T)tv_get_number(&di->di_tv);
-      curwin->w_set_curswant = false;
-    }
-    if ((di = tv_dict_find(dict, S_LEN("topline"))) != NULL) {
-      set_topline(curwin, (linenr_T)tv_get_number(&di->di_tv));
-    }
-    if ((di = tv_dict_find(dict, S_LEN("topfill"))) != NULL) {
-      curwin->w_topfill = (int)tv_get_number(&di->di_tv);
-    }
-    if ((di = tv_dict_find(dict, S_LEN("leftcol"))) != NULL) {
-      curwin->w_leftcol = (colnr_T)tv_get_number(&di->di_tv);
-    }
-    if ((di = tv_dict_find(dict, S_LEN("skipcol"))) != NULL) {
-      curwin->w_skipcol = (colnr_T)tv_get_number(&di->di_tv);
-    }
-
-    check_cursor();
-    win_new_height(curwin, curwin->w_height);
-    win_new_width(curwin, curwin->w_width);
-    changed_window_setting();
-
-    if (curwin->w_topline <= 0) {
-      curwin->w_topline = 1;
-    }
-    if (curwin->w_topline > curbuf->b_ml.ml_line_count) {
-      curwin->w_topline = curbuf->b_ml.ml_line_count;
-    }
-    check_topfill(curwin, true);
+  if (tv_check_for_nonnull_dict_arg(argvars, 0) == FAIL) {
+    return;
   }
+
+  dict_T *dict = argvars[0].vval.v_dict;
+  dictitem_T *di;
+  if ((di = tv_dict_find(dict, S_LEN("lnum"))) != NULL) {
+    curwin->w_cursor.lnum = (linenr_T)tv_get_number(&di->di_tv);
+  }
+  if ((di = tv_dict_find(dict, S_LEN("col"))) != NULL) {
+    curwin->w_cursor.col = (colnr_T)tv_get_number(&di->di_tv);
+  }
+  if ((di = tv_dict_find(dict, S_LEN("coladd"))) != NULL) {
+    curwin->w_cursor.coladd = (colnr_T)tv_get_number(&di->di_tv);
+  }
+  if ((di = tv_dict_find(dict, S_LEN("curswant"))) != NULL) {
+    curwin->w_curswant = (colnr_T)tv_get_number(&di->di_tv);
+    curwin->w_set_curswant = false;
+  }
+  if ((di = tv_dict_find(dict, S_LEN("topline"))) != NULL) {
+    set_topline(curwin, (linenr_T)tv_get_number(&di->di_tv));
+  }
+  if ((di = tv_dict_find(dict, S_LEN("topfill"))) != NULL) {
+    curwin->w_topfill = (int)tv_get_number(&di->di_tv);
+  }
+  if ((di = tv_dict_find(dict, S_LEN("leftcol"))) != NULL) {
+    curwin->w_leftcol = (colnr_T)tv_get_number(&di->di_tv);
+  }
+  if ((di = tv_dict_find(dict, S_LEN("skipcol"))) != NULL) {
+    curwin->w_skipcol = (colnr_T)tv_get_number(&di->di_tv);
+  }
+
+  check_cursor();
+  win_new_height(curwin, curwin->w_height);
+  win_new_width(curwin, curwin->w_width);
+  changed_window_setting();
+
+  if (curwin->w_topline <= 0) {
+    curwin->w_topline = 1;
+  }
+  if (curwin->w_topline > curbuf->b_ml.ml_line_count) {
+    curwin->w_topline = curbuf->b_ml.ml_line_count;
+  }
+  check_topfill(curwin, true);
 }
 
 /// "winsaveview()" function

@@ -270,7 +270,7 @@ func Test_mapset()
   bwipe!
 
   call assert_fails('call mapset([], v:false, {})', 'E730:')
-  call assert_fails('call mapset("i", 0, "")', 'E715:')
+  call assert_fails('call mapset("i", 0, "")', 'E1206:')
   call assert_fails('call mapset("i", 0, {})', 'E460:')
 endfunc
 

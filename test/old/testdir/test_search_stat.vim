@@ -259,7 +259,7 @@ func Test_search_stat()
 endfunc
 
 func Test_searchcount_fails()
-  call assert_fails('echo searchcount("boo!")', 'E715:')
+  call assert_fails('echo searchcount("boo!")', 'E1206:')
   call assert_fails('echo searchcount({"timeout" : []})', 'E745:')
   call assert_fails('echo searchcount({"maxcount" : []})', 'E745:')
   call assert_fails('echo searchcount({"pattern" : []})', 'E730:')
