@@ -2772,8 +2772,7 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     dictitem_T *di;
     bool error = false;
 
-    if (argvars[0].v_type != VAR_DICT || argvars[0].vval.v_dict == NULL) {
-      emsg(_(e_dictreq));
+    if (tv_check_for_nonnull_dict_arg(argvars, 0) == FAIL) {
       return;
     }
     dict = argvars[0].vval.v_dict;
@@ -3348,8 +3347,7 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
   bool matchseq = false;
   long max_matches = 0;
   if (argvars[2].v_type != VAR_UNKNOWN) {
-    if (argvars[2].v_type != VAR_DICT || argvars[2].vval.v_dict == NULL) {
-      emsg(_(e_dictreq));
+    if (tv_check_for_nonnull_dict_arg(argvars, 2) == FAIL) {
       return;
     }
 

@@ -2017,8 +2017,7 @@ void f_sign_define(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  if (argvars[1].v_type != VAR_UNKNOWN && argvars[1].v_type != VAR_DICT) {
-    emsg(_(e_dictreq));
+  if (tv_check_for_opt_dict_arg(argvars, 1) == FAIL) {
     return;
   }
 
@@ -2061,12 +2060,10 @@ void f_sign_getplaced(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
 
     if (argvars[1].v_type != VAR_UNKNOWN) {
-      dict_T *dict;
-      if (argvars[1].v_type != VAR_DICT
-          || ((dict = argvars[1].vval.v_dict) == NULL)) {
-        emsg(_(e_dictreq));
+      if (tv_check_for_nonnull_dict_arg(argvars, 1) == FAIL) {
         return;
       }
+      dict_T *dict = argvars[1].vval.v_dict;
       if ((di = tv_dict_find(dict, "lnum", -1)) != NULL) {
         // get signs placed at this line
         lnum = (linenr_T)tv_get_number_chk(&di->di_tv, &notanum);
@@ -2263,11 +2260,11 @@ void f_sign_place(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   rettv->vval.v_number = -1;
 
-  if (argvars[4].v_type != VAR_UNKNOWN
-      && (argvars[4].v_type != VAR_DICT
-          || ((dict = argvars[4].vval.v_dict) == NULL))) {
-    emsg(_(e_dictreq));
-    return;
+  if (argvars[4].v_type != VAR_UNKNOWN) {
+    if (tv_check_for_nonnull_dict_arg(argvars, 4) == FAIL) {
+      return;
+    }
+    dict = argvars[4].vval.v_dict;
   }
 
   rettv->vval.v_number = sign_place_from_dict(&argvars[0], &argvars[1], &argvars[2], &argvars[3],
@@ -2415,8 +2412,7 @@ void f_sign_unplace(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    if (argvars[1].v_type != VAR_DICT) {
-      emsg(_(e_dictreq));
+    if (tv_check_for_dict_arg(argvars, 1) == FAIL) {
       return;
     }
     dict = argvars[1].vval.v_dict;

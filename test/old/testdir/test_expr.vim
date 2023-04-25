@@ -105,7 +105,7 @@ func Test_dict()
   END
   call CheckLegacyAndVim9Success(lines)
 
-  call CheckLegacyAndVim9Failure(["VAR i = has_key([], 'a')"], ['E715:', 'E1013:', 'E1206:'])
+  call CheckLegacyAndVim9Failure(["VAR i = has_key([], 'a')"], ['E1206:', 'E1013:', 'E1206:'])
 endfunc
 
 func Test_strgetchar()
