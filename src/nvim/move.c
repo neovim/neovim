@@ -57,6 +57,28 @@ typedef struct {
 # include "move.c.generated.h"
 #endif
 
+/// Reduce "n" for the screen lines skipped with "wp->w_skipcol".
+static int adjust_plines_for_skipcol(win_T *wp, int n)
+{
+  if (wp->w_skipcol == 0) {
+    return n;
+  }
+
+  int off = 0;
+  int width = wp->w_width - win_col_off(wp);
+  if (wp->w_skipcol >= width) {
+    off++;
+    int skip = wp->w_skipcol - width;
+    width -= win_col_off2(wp);
+    while (skip >= width) {
+      off++;
+      skip -= width;
+    }
+  }
+  wp->w_valid &= ~VALID_WROW;
+  return n - off;
+}
+
 // Compute wp->w_botline for the current wp->w_topline.  Can be called after
 // wp->w_topline changed.
 static void comp_botline(win_T *wp)
@@ -79,6 +101,9 @@ static void comp_botline(win_T *wp)
     linenr_T last = lnum;
     bool folded;
     int n = plines_win_full(wp, lnum, &last, &folded, true);
+    if (lnum == wp->w_topline) {
+      n = adjust_plines_for_skipcol(wp, n);
+    }
     if (lnum <= wp->w_cursor.lnum && last >= wp->w_cursor.lnum) {
       wp->w_cline_row = done;
       wp->w_cline_height = n;
@@ -565,6 +590,9 @@ static void curs_rows(win_T *wp)
       linenr_T last = lnum;
       bool folded;
       int n = plines_win_full(wp, lnum, &last, &folded, false);
+      if (lnum == wp->w_topline) {
+        n = adjust_plines_for_skipcol(wp, n);
+      }
       lnum = last + 1;
       if (folded && lnum > wp->w_cursor.lnum) {
         break;
@@ -907,7 +935,7 @@ void curs_columns(win_T *wp, int may_scroll)
     // extra could be either positive or negative
     extra = ((int)prev_skipcol - (int)wp->w_skipcol) / width;
     win_scroll_lines(wp, 0, extra);
-  } else {
+  } else if (!wp->w_p_sms) {
     wp->w_skipcol = 0;
   }
   if (prev_skipcol != wp->w_skipcol) {
@@ -1064,6 +1092,13 @@ void f_virtcol2col(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 bool scrolldown(long line_count, int byfold)
 {
   int done = 0;                // total # of physical lines done
+  int width1 = 0;
+  int width2 = 0;
+
+  if (curwin->w_p_wrap && curwin->w_p_sms) {
+    width1 = curwin->w_width - curwin_col_off();
+    width2 = width1 - curwin_col_off2();
+  }
 
   // Make sure w_topline is at the first of a sequence of folded lines.
   (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
@@ -1074,22 +1109,48 @@ bool scrolldown(long line_count, int byfold)
       curwin->w_topfill++;
       done++;
     } else {
-      if (curwin->w_topline == 1) {
+      if (curwin->w_topline == 1 && curwin->w_skipcol < width1) {
         break;
       }
-      curwin->w_topline--;
-      curwin->w_topfill = 0;
-      // A sequence of folded lines only counts for one logical line
-      linenr_T first;
-      if (hasFolding(curwin->w_topline, &first, NULL)) {
-        done++;
-        if (!byfold) {
-          line_count -= curwin->w_topline - first - 1;
+      if (curwin->w_p_wrap && curwin->w_p_sms && curwin->w_skipcol >= width1) {
+        if (curwin->w_skipcol >= width1 + width2) {
+          curwin->w_skipcol -= width2;
+        } else {
+          curwin->w_skipcol -= width1;
         }
-        curwin->w_botline -= curwin->w_topline - first;
-        curwin->w_topline = first;
+        redraw_later(curwin, UPD_NOT_VALID);
+        done++;
       } else {
-        done += plines_win_nofill(curwin, curwin->w_topline, true);
+        curwin->w_topline--;
+        curwin->w_skipcol = 0;
+        curwin->w_topfill = 0;
+        // A sequence of folded lines only counts for one logical line
+        linenr_T first;
+        if (hasFolding(curwin->w_topline, &first, NULL)) {
+          done++;
+          if (!byfold) {
+            line_count -= curwin->w_topline - first - 1;
+          }
+          curwin->w_botline -= curwin->w_topline - first;
+          curwin->w_topline = first;
+        } else {
+          if (curwin->w_p_wrap && curwin->w_p_sms) {
+            int size = (int)win_linetabsize(curwin, curwin->w_topline,
+                                            ml_get(curwin->w_topline), (colnr_T)MAXCOL);
+            if (size > width1) {
+              curwin->w_skipcol = width1;
+              size -= width1;
+              redraw_later(curwin, UPD_NOT_VALID);
+            }
+            while (size > width2) {
+              curwin->w_skipcol += width2;
+              size -= width2;
+            }
+            done++;
+          } else {
+            done += plines_win_nofill(curwin, curwin->w_topline, true);
+          }
+        }
       }
     }
     curwin->w_botline--;                // approximate w_botline
@@ -1167,6 +1228,37 @@ bool scrollup(long line_count, int byfold)
     // approximate w_botline
     curwin->w_botline += lnum - curwin->w_topline;
     curwin->w_topline = lnum;
+  } else if (curwin->w_p_wrap && curwin->w_p_sms) {
+    int off1 = curwin_col_off();
+    int off2 = off1 + curwin_col_off2();
+    int add;
+    int size = (int)win_linetabsize(curwin, curwin->w_topline,
+                                    ml_get(curwin->w_topline), (colnr_T)MAXCOL);
+    linenr_T prev_topline = curwin->w_topline;
+
+    // 'smoothscroll': increase "w_skipcol" until it goes over the end of
+    // the line, then advance to the next line.
+    for (long todo = line_count; todo > 0; todo--) {
+      add = curwin->w_width - (curwin->w_skipcol > 0 ? off2 : off1);
+      curwin->w_skipcol += add;
+      if (curwin->w_skipcol >= size) {
+        if (curwin->w_topline == curbuf->b_ml.ml_line_count) {
+          curwin->w_skipcol -= add;
+          break;
+        }
+        curwin->w_topline++;
+        curwin->w_botline++;    // approximate w_botline
+        curwin->w_skipcol = 0;
+        if (todo > 1) {
+          size = (int)win_linetabsize(curwin, curwin->w_topline,
+                                      ml_get(curwin->w_topline), (colnr_T)MAXCOL);
+        }
+      }
+    }
+    if (curwin->w_topline == prev_topline) {
+      // need to redraw even though w_topline didn't change
+      redraw_later(curwin, UPD_NOT_VALID);
+    }
   } else {
     curwin->w_topline += (linenr_T)line_count;
     curwin->w_botline += (linenr_T)line_count;            // approximate w_botline

@@ -607,7 +607,7 @@ static void handle_lnum_col(win_T *wp, winlinevars_T *wlv, int num_signs, int si
       // Draw the line number (empty space after wrapping).
       if (wlv->row == wlv->startrow + wlv->filler_lines) {
         get_line_number_str(wp, wlv->lnum, wlv->extra, sizeof(wlv->extra));
-        if (wp->w_skipcol > 0) {
+        if (wp->w_skipcol > 0 && wlv->startrow == 0) {
           for (wlv->p_extra = wlv->extra; *wlv->p_extra == ' '; wlv->p_extra++) {
             *wlv->p_extra = '-';
           }
@@ -754,7 +754,7 @@ static void handle_breakindent(win_T *wp, winlinevars_T *wlv)
           wlv->n_extra = 0;
         }
       }
-      if (wp->w_skipcol > 0 && wp->w_p_wrap && wp->w_briopt_sbr) {
+      if (wp->w_skipcol > 0 && wlv->startrow == 0 && wp->w_p_wrap && wp->w_briopt_sbr) {
         wlv->need_showbreak = false;
       }
       // Correct end of highlighted area for 'breakindent',
@@ -804,7 +804,7 @@ static void handle_showbreak_and_filler(win_T *wp, winlinevars_T *wlv)
     wlv->c_final = NUL;
     wlv->n_extra = (int)strlen(sbr);
     wlv->char_attr = win_hl_attr(wp, HLF_AT);
-    if (wp->w_skipcol == 0 || !wp->w_p_wrap) {
+    if ((wp->w_skipcol == 0 && wlv->startrow == 0) || !wp->w_p_wrap) {
       wlv->need_showbreak = false;
     }
     wlv->vcol_sbr = wlv->vcol + mb_charlen(sbr);
@@ -1379,7 +1379,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   // 'nowrap' or 'wrap' and a single line that doesn't fit: Advance to the
   // first character to be displayed.
   if (wp->w_p_wrap) {
-    v = wp->w_skipcol;
+    v = startrow == 0 ? wp->w_skipcol : 0;
   } else {
     v = wp->w_leftcol;
   }
@@ -2595,7 +2595,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     if (c == NUL) {
       // Highlight 'cursorcolumn' & 'colorcolumn' past end of the line.
       if (wp->w_p_wrap) {
-        v = wp->w_skipcol;
+        v = wlv.startrow == 0 ? wp->w_skipcol : 0;
       } else {
         v = wp->w_leftcol;
       }

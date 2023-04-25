@@ -2621,6 +2621,19 @@ static const char *did_set_showtabline(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
+/// Process the updated 'smoothscroll' option value.
+static const char *did_set_smoothscroll(optset_T *args FUNC_ATTR_UNUSED)
+{
+  win_T *win = (win_T *)args->os_win;
+  if (win->w_p_sms) {
+    return NULL;
+  }
+
+  win->w_skipcol = 0;
+  changed_line_abv_curs_win(win);
+  return NULL;
+}
+
 /// Process the new 'foldlevel' option value.
 static const char *did_set_foldlevel(optset_T *args FUNC_ATTR_UNUSED)
 {
@@ -4417,6 +4430,8 @@ static char *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return (char *)&(win->w_p_rlc);
   case PV_SCROLL:
     return (char *)&(win->w_p_scr);
+  case PV_SMS:
+    return (char *)&(win->w_p_sms);
   case PV_WRAP:
     return (char *)&(win->w_p_wrap);
   case PV_LBR:

@@ -192,6 +192,8 @@ typedef struct {
 #define w_p_rlc w_onebuf_opt.wo_rlc    // 'rightleftcmd'
   long wo_scr;
 #define w_p_scr w_onebuf_opt.wo_scr     // 'scroll'
+  int wo_sms;
+#define w_p_sms w_onebuf_opt.wo_sms     // 'smoothscroll'
   int wo_spell;
 #define w_p_spell w_onebuf_opt.wo_spell  // 'spell'
   int wo_cuc;
@@ -1163,11 +1165,12 @@ struct window_S {
   bool w_botfill;                   // true when filler lines are actually
                                     // below w_topline (at end of file)
   bool w_old_botfill;               // w_botfill at last redraw
-  colnr_T w_leftcol;                // window column number of the left most
+  colnr_T w_leftcol;                // screen column number of the left most
                                     // character in the window; used when
                                     // 'wrap' is off
-  colnr_T w_skipcol;                // starting column when a single line
-                                    // doesn't fit in the window
+  colnr_T w_skipcol;                // starting screen column for the first
+                                    // line in the window; used when 'wrap' is
+                                    // on
 
   // six fields that are only used when there is a WinScrolled autocommand
   linenr_T w_last_topline;          ///< last known value for w_topline

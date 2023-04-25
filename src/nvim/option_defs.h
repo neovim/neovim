@@ -949,6 +949,7 @@ enum {
   WV_RLC,
   WV_SCBIND,
   WV_SCROLL,
+  WV_SMS,
   WV_SISO,
   WV_SO,
   WV_SPELL,
