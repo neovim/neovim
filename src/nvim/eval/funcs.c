@@ -8944,7 +8944,7 @@ static void f_timer_info(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
     tv_list_alloc_ret(rettv, 1);
     timer_T *timer = find_timer_by_nr(tv_get_number(&argvars[0]));
-    if (timer != NULL && !timer->stopped) {
+    if (timer != NULL && (!timer->stopped || timer->refcount > 1)) {
       add_timer_info(rettv, timer);
     }
   } else {

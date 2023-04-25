@@ -6002,7 +6002,7 @@ void add_timer_info_all(typval_T *rettv)
   tv_list_alloc_ret(rettv, map_size(&timers));
   timer_T *timer;
   map_foreach_value(&timers, timer, {
-    if (!timer->stopped) {
+    if (!timer->stopped || timer->refcount > 1) {
       add_timer_info(rettv, timer);
     }
   })
