@@ -191,11 +191,10 @@ describe('listing functions using :function', function()
    endfunction]]):format(num), exec_capture(('function <lambda>%s'):format(num)))
   end)
 
-  -- FIXME: If the same function is deleted, the crash still happens. #20790
   it('does not crash if another function is deleted while listing', function()
     local screen = Screen.new(80, 24)
     screen:attach()
-    matches('Vim%(function%):E454: function list was modified', pcall_err(exec_lua, [=[
+    matches('Vim%(function%):E454: Function list was modified$', pcall_err(exec_lua, [=[
       vim.cmd([[
         func Func1()
         endfunc
@@ -210,6 +209,34 @@ describe('listing functions using :function', function()
       vim.ui_attach(ns, { ext_messages = true }, function(event, _, content)
         if event == 'msg_show' and content[1][2] == 'function Func1()'  then
           vim.cmd('delfunc Func3')
+        end
+      end)
+
+      vim.cmd('function')
+
+      vim.ui_detach(ns)
+    ]=]))
+    assert_alive()
+  end)
+
+  it('does not crash if the same function is deleted while listing', function()
+    local screen = Screen.new(80, 24)
+    screen:attach()
+    matches('Vim%(function%):E454: Function list was modified$', pcall_err(exec_lua, [=[
+      vim.cmd([[
+        func Func1()
+        endfunc
+        func Func2()
+        endfunc
+        func Func3()
+        endfunc
+      ]])
+
+      local ns = vim.api.nvim_create_namespace('test')
+
+      vim.ui_attach(ns, { ext_messages = true }, function(event, _, content)
+        if event == 'msg_show' and content[1][2] == 'function Func1()'  then
+          vim.cmd('delfunc Func2')
         end
       end)
 
