@@ -9275,10 +9275,11 @@ static void f_undotree(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   tv_dict_add_list(dict, S_LEN("entries"), u_eval_tree(curbuf->b_u_oldhead));
 }
 
-/// "virtcol(string)" function
+/// "virtcol(string, bool)" function
 static void f_virtcol(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  colnr_T vcol = 0;
+  colnr_T vcol_start = 0;
+  colnr_T vcol_end = 0;
   int fnum = curbuf->b_fnum;
 
   pos_T *fp = var2fpos(&argvars[0], false, &fnum, false);
@@ -9293,11 +9294,18 @@ static void f_virtcol(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         fp->col = (colnr_T)len;
       }
     }
-    getvvcol(curwin, fp, NULL, NULL, &vcol);
-    vcol++;
+    getvvcol(curwin, fp, &vcol_start, NULL, &vcol_end);
+    vcol_start++;
+    vcol_end++;
   }
 
-  rettv->vval.v_number = vcol;
+  if (argvars[1].v_type != VAR_UNKNOWN && tv_get_bool(&argvars[1])) {
+    tv_list_alloc_ret(rettv, 2);
+    tv_list_append_number(rettv->vval.v_list, vcol_start);
+    tv_list_append_number(rettv->vval.v_list, vcol_end);
+  } else {
+    rettv->vval.v_number = vcol_end;
+  }
 }
 
 /// "visualmode()" function
