@@ -1718,6 +1718,15 @@ is_callable({f})                                           *vim.is_callable()*
     Return: ~
         (boolean) `true` if `f` is callable, else `false`
 
+is_truthy({v})                                               *vim.is_truthy()*
+    Determine truthy/falsy in vim script.
+
+    Parameters: ~
+      • {v}  any
+
+    Return: ~
+        (boolean)
+
 iter({src}, {...})                                                *vim.iter()*
     Create an Iter |lua-iter| object from a table or iterator.
 

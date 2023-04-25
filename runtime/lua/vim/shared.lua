@@ -986,4 +986,22 @@ function vim.map(f, src, ...)
   return vim.iter(src, ...):map(f):totable()
 end
 
+--- Determine truthy/falsy in vim script.
+---@param v any
+---@return boolean
+function vim.is_truthy(v)
+  if not v then
+    -- false or nil
+    return false
+  elseif v == 0 then
+    return false
+  elseif v == '' then
+    return false
+  elseif type(v) == 'table' and vim.tbl_isempty(v) then
+    return false
+  else
+    return true
+  end
+end
+
 return vim

@@ -38,6 +38,8 @@ The following new APIs or features were added.
 • |vim.iter()| provides a generic iterator interface for tables and Lua
 iterators |luaref-in|.
 
+• |vim.is_truthy()| determine truthy/falsy in vim script.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
