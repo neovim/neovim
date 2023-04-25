@@ -441,7 +441,7 @@ bool input_blocking(void)
 // This is a replacement for the old `WaitForChar` function in os_unix.c
 static InbufPollResult inbuf_poll(int ms, MultiQueue *events)
 {
-  if (input_ready(events)) {
+  if (os_input_ready(events)) {
     return kInputAvail;
   }
 
@@ -457,14 +457,14 @@ static InbufPollResult inbuf_poll(int ms, MultiQueue *events)
   DLOG("blocking... events_enabled=%d events_pending=%d", events != NULL,
        events && !multiqueue_empty(events));
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms,
-                            input_ready(events) || input_eof);
+                            os_input_ready(events) || input_eof);
   blocking = false;
 
   if (do_profiling == PROF_YES && ms) {
     prof_inchar_exit();
   }
 
-  if (input_ready(events)) {
+  if (os_input_ready(events)) {
     return kInputAvail;
   }
   return input_eof ? kInputEof : kInputNone;
@@ -530,8 +530,8 @@ static int push_event_key(uint8_t *buf, int maxlen)
   return buf_idx;
 }
 
-// Check if there's pending input
-static bool input_ready(MultiQueue *events)
+/// Check if there's pending input already in typebuf or `events`
+bool os_input_ready(MultiQueue *events)
 {
   return (typebuf_was_filled             // API call filled typeahead
           || rbuffer_size(input_buffer)  // Input buffer filled

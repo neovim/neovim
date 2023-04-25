@@ -97,7 +97,6 @@ local init = only_separate(function()
   for _, c in ipairs(child_calls_init) do
     c.func(unpack(c.args))
   end
-  libnvim.time_init()
   libnvim.fs_init()
   libnvim.event_init()
   libnvim.early_init(nil)
