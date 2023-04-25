@@ -20,7 +20,7 @@
   (#any-of? @_vimcmd_identifier "vim.treesitter.query.set" "vim.treesitter.query.parse"))
 
 ;; highlight string as query if starts with `;; query`
-((string ("string_content") @injection.content)
+(string content: _ @injection.content
  (#set! injection.language "query")
  (#lua-match? @injection.content "^%s*;+%s?query"))
 
