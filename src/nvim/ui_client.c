@@ -65,7 +65,7 @@ uint64_t ui_client_start_server(int argc, char **argv)
 #ifdef MSWIN
     os_open_conin_fd();
 #else
-    dup(stderr_isatty ? STDERR_FILENO : STDOUT_FILENO); 
+    dup(stderr_isatty ? STDERR_FILENO : STDOUT_FILENO);
 #endif
   }
 
