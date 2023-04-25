@@ -77,6 +77,8 @@ static const char *e_funcexts = N_("E122: Function %s already exists, add ! to r
 static const char *e_funcdict = N_("E717: Dictionary entry already exists");
 static const char *e_funcref = N_("E718: Funcref required");
 static const char *e_nofunc = N_("E130: Unknown function: %s");
+static const char e_function_list_was_modified[]
+  = N_("E454: Function list was modified");
 static const char e_no_white_space_allowed_before_str_str[]
   = N_("E1068: No white space allowed before '%s': %s");
 static const char e_missing_heredoc_end_marker_str[]
@@ -1752,14 +1754,33 @@ char *printable_func_name(ufunc_T *fp)
   return fp->uf_name_exp != NULL ? fp->uf_name_exp : fp->uf_name;
 }
 
+/// When "prev_ht_changed" does not equal "ht_changed" give an error and return
+/// true.  Otherwise return false.
+static int function_list_modified(const int prev_ht_changed)
+{
+  if (prev_ht_changed != func_hashtab.ht_changed) {
+    emsg(_(e_function_list_was_modified));
+    return true;
+  }
+  return false;
+}
+
 /// List the head of the function: "name(arg1, arg2)".
 ///
 /// @param[in]  fp      Function pointer.
 /// @param[in]  indent  Indent line.
 /// @param[in]  force   Include bang "!" (i.e.: "function!").
-static void list_func_head(ufunc_T *fp, int indent, bool force)
+static int list_func_head(ufunc_T *fp, bool indent, bool force)
 {
+  const int prev_ht_changed = func_hashtab.ht_changed;
+
   msg_start();
+
+  // a callback at the more prompt may have deleted the function
+  if (function_list_modified(prev_ht_changed)) {
+    return FAIL;
+  }
+
   if (indent) {
     msg_puts("   ");
   }
@@ -1805,6 +1826,8 @@ static void list_func_head(ufunc_T *fp, int indent, bool force)
   if (p_verbose > 0) {
     last_set_msg(fp->uf_script_ctx);
   }
+
+  return OK;
 }
 
 /// Get a function name, translating "<SID>" and "<SNR>".
@@ -2085,7 +2108,7 @@ char *save_function_name(char **name, bool skip, int flags, funcdict_T *fudi)
 ///                  Otherwise functions matching "regmatch".
 static void list_functions(regmatch_T *regmatch)
 {
-  const int changed = func_hashtab.ht_changed;
+  const int prev_ht_changed = func_hashtab.ht_changed;
   size_t todo = func_hashtab.ht_used;
   const hashitem_T *const ht_array = func_hashtab.ht_array;
 
@@ -2098,9 +2121,10 @@ static void list_functions(regmatch_T *regmatch)
              && !func_name_refcount(fp->uf_name))
           : (!isdigit((uint8_t)(*fp->uf_name))
              && vim_regexec(regmatch, fp->uf_name, 0))) {
-        list_func_head(fp, false, false);
-        if (changed != func_hashtab.ht_changed) {
-          emsg(_("E454: function list was modified"));
+        if (list_func_head(fp, false, false) == FAIL) {
+          return;
+        }
+        if (function_list_modified(prev_ht_changed)) {
           return;
         }
       }
@@ -2229,27 +2253,37 @@ void ex_function(exarg_T *eap)
     if (!eap->skip && !got_int) {
       fp = find_func(name);
       if (fp != NULL) {
-        list_func_head(fp, !eap->forceit, eap->forceit);
-        for (int j = 0; j < fp->uf_lines.ga_len && !got_int; j++) {
-          if (FUNCLINE(fp, j) == NULL) {
-            continue;
-          }
-          msg_putchar('\n');
-          if (!eap->forceit) {
-            msg_outnum((long)j + 1);
-            if (j < 9) {
-              msg_putchar(' ');
+        // Check no function was added or removed from a callback, e.g. at
+        // the more prompt.  "fp" may then be invalid.
+        const int prev_ht_changed = func_hashtab.ht_changed;
+
+        if (list_func_head(fp, !eap->forceit, eap->forceit) == OK) {
+          for (int j = 0; j < fp->uf_lines.ga_len && !got_int; j++) {
+            if (FUNCLINE(fp, j) == NULL) {
+              continue;
             }
-            if (j < 99) {
-              msg_putchar(' ');
+            msg_putchar('\n');
+            if (!eap->forceit) {
+              msg_outnum((long)j + 1);
+              if (j < 9) {
+                msg_putchar(' ');
+              }
+              if (j < 99) {
+                msg_putchar(' ');
+              }
+              if (function_list_modified(prev_ht_changed)) {
+                break;
+              }
+            }
+            msg_prt_line(FUNCLINE(fp, j), false);
+            line_breakcheck();  // show multiple lines at a time!
+          }
+          if (!got_int) {
+            msg_putchar('\n');
+            if (!function_list_modified(prev_ht_changed)) {
+              msg_puts(eap->forceit ? "endfunction" : "   endfunction");
             }
           }
-          msg_prt_line(FUNCLINE(fp, j), false);
-          line_breakcheck();  // show multiple lines at a time!
-        }
-        if (!got_int) {
-          msg_putchar('\n');
-          msg_puts(eap->forceit ? "endfunction" : "   endfunction");
         }
       } else {
         emsg_funcname(N_("E123: Undefined function: %s"), name);
