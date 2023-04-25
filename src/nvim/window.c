@@ -3742,12 +3742,7 @@ static void frame_add_hsep(const frame_T *frp)
 {
   if (frp->fr_layout == FR_LEAF) {
     win_T *wp = frp->fr_win;
-    if (wp->w_hsep_height == 0) {
-      if (wp->w_height > 0) {            // don't make it negative
-        wp->w_height++;
-      }
-      wp->w_hsep_height = 1;
-    }
+    wp->w_hsep_height = 1;
   } else if (frp->fr_layout == FR_ROW) {
     // Handle all the frames in the row.
     FOR_ALL_FRAMES(frp, frp->fr_child) {
