@@ -94,6 +94,13 @@ func Test_timer_info()
   call assert_equal([], timer_info(id))
 
   call assert_fails('call timer_info("abc")', 'E39:')
+
+  " check repeat count inside the callback
+  let g:timer_repeat = []
+  let tid = timer_start(10, {tid -> execute("call add(g:timer_repeat, timer_info(tid)[0].repeat)")}, #{repeat: 3})
+  sleep 100m
+  call assert_equal([2, 1, 0], g:timer_repeat)
+  unlet g:timer_repeat
 endfunc
 
 func Test_timer_stopall()
