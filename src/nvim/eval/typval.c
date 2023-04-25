@@ -50,6 +50,8 @@ static const char e_number_required_for_argument_nr[]
   = N_("E1210: Number required for argument %d");
 static const char e_list_required_for_argument_nr[]
   = N_("E1211: List required for argument %d");
+static const char e_bool_required_for_argument_nr[]
+  = N_("E1212: Bool required for argument %d");
 static const char e_string_or_list_required_for_argument_nr[]
   = N_("E1222: String or List required for argument %d");
 static const char e_list_or_blob_required_for_argument_nr[]
@@ -4000,6 +4002,14 @@ int tv_check_for_nonempty_string_arg(const typval_T *const args, const int idx)
   return OK;
 }
 
+/// Check for an optional string argument at "idx"
+int tv_check_for_opt_string_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  return (args[idx].v_type == VAR_UNKNOWN
+          || tv_check_for_string_arg(args, idx) != FAIL) ? OK : FAIL;
+}
+
 /// Give an error and return FAIL unless "args[idx]" is a number.
 int tv_check_for_number_arg(const typval_T *const args, const int idx)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
@@ -4017,6 +4027,31 @@ int tv_check_for_opt_number_arg(const typval_T *const args, const int idx)
 {
   return (args[idx].v_type == VAR_UNKNOWN
           || tv_check_for_number_arg(args, idx) != FAIL) ? OK : FAIL;
+}
+
+/// Give an error and return FAIL unless "args[idx]" is a bool.
+int tv_check_for_bool_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (args[idx].v_type != VAR_BOOL
+      && !(args[idx].v_type == VAR_NUMBER
+           && (args[idx].vval.v_number == 0
+               || args[idx].vval.v_number == 1))) {
+    semsg(_(e_bool_required_for_argument_nr), idx + 1);
+    return FAIL;
+  }
+  return OK;
+}
+
+/// Check for an optional bool argument at "idx".
+/// Return FAIL if the type is wrong.
+int tv_check_for_opt_bool_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (args[idx].v_type == VAR_UNKNOWN) {
+    return OK;
+  }
+  return tv_check_for_bool_arg(args, idx);
 }
 
 /// Give an error and return FAIL unless "args[idx]" is a blob.

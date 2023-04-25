@@ -2406,15 +2406,12 @@ void f_sign_unplace(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   rettv->vval.v_number = -1;
 
-  if (argvars[0].v_type != VAR_STRING) {
-    emsg(_(e_invarg));
+  if (tv_check_for_string_arg(argvars, 0) == FAIL
+      || tv_check_for_opt_dict_arg(argvars, 1) == FAIL) {
     return;
   }
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    if (tv_check_for_dict_arg(argvars, 1) == FAIL) {
-      return;
-    }
     dict = argvars[1].vval.v_dict;
   }
 

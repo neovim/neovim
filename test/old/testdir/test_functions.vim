@@ -1115,11 +1115,11 @@ func Test_charidx()
   call assert_equal(-1, charidx(a, 8, 1))
   call assert_equal(-1, charidx('', 0, 1))
 
-  call assert_fails('let x = charidx([], 1)', 'E474:')
-  call assert_fails('let x = charidx("abc", [])', 'E474:')
-  call assert_fails('let x = charidx("abc", 1, [])', 'E474:')
-  call assert_fails('let x = charidx("abc", 1, -1)', 'E1023:')
-  call assert_fails('let x = charidx("abc", 1, 2)', 'E1023:')
+  call assert_fails('let x = charidx([], 1)', 'E1174:')
+  call assert_fails('let x = charidx("abc", [])', 'E1210:')
+  call assert_fails('let x = charidx("abc", 1, [])', 'E1212:')
+  call assert_fails('let x = charidx("abc", 1, -1)', 'E1212:')
+  call assert_fails('let x = charidx("abc", 1, 2)', 'E1212:')
 endfunc
 
 func Test_count()
@@ -1605,7 +1605,7 @@ func Test_trim()
   call assert_fails('eval trim("  vim  ", " ", [])', 'E745:')
   call assert_fails('eval trim("  vim  ", " ", -1)', 'E475:')
   call assert_fails('eval trim("  vim  ", " ", 3)', 'E475:')
-  call assert_fails('eval trim("  vim  ", 0)', 'E475:')
+  call assert_fails('eval trim("  vim  ", 0)', 'E1174:')
 
   let chars = join(map(range(1, 0x20) + [0xa0], {n -> n->nr2char()}), '')
   call assert_equal("x", trim(chars . "x" . chars))
@@ -2567,7 +2567,7 @@ endfunc
 
 " Test for gettext()
 func Test_gettext()
-  call assert_fails('call gettext(1)', 'E475:')
+  call assert_fails('call gettext(1)', 'E1174:')
 endfunc
 
 func Test_builtin_check()
