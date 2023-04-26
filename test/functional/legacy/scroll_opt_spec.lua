@@ -272,4 +272,33 @@ describe('smoothscroll', function()
                                               |
     ]])
   end)
+
+  -- oldtest: Test_smoothscroll_diff_mode()
+  it("works with diff mode", function()
+    screen:try_resize(40, 8)
+    exec([[
+      let text = 'just some text here'
+      call setline(1, text)
+      set smoothscroll
+      diffthis
+      new
+      call setline(1, text)
+      set smoothscroll
+      diffthis
+    ]])
+    screen:expect([[
+      - ^just some text here                   |
+      ~                                       |
+      ~                                       |
+      [No Name] [+]                           |
+      - just some text here                   |
+      ~                                       |
+      [No Name] [+]                           |
+                                              |
+    ]])
+    feed('<C-Y>')
+    screen:expect_unchanged()
+    feed('<C-E>')
+    screen:expect_unchanged()
+  end)
 end)

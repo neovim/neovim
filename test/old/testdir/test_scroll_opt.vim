@@ -158,6 +158,32 @@ func Test_smoothscroll_number()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_smoothscroll_diff_mode()
+  CheckScreendump
+
+  let lines =<< trim END
+      vim9script
+      var text = 'just some text here'
+      setline(1, text)
+      set smoothscroll
+      diffthis
+      new
+      setline(1, text)
+      set smoothscroll
+      diffthis
+  END
+  call writefile(lines, 'XSmoothDiff', 'D')
+  let buf = RunVimInTerminal('-S XSmoothDiff', #{rows: 8})
+
+  call VerifyScreenDump(buf, 'Test_smooth_diff_1', {})
+  call term_sendkeys(buf, "\<C-Y>")
+  call VerifyScreenDump(buf, 'Test_smooth_diff_1', {})
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, 'Test_smooth_diff_1', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 
 
 " vim: shiftwidth=2 sts=2 expandtab

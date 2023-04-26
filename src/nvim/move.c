@@ -1094,8 +1094,9 @@ bool scrolldown(long line_count, int byfold)
   int done = 0;                // total # of physical lines done
   int width1 = 0;
   int width2 = 0;
+  bool do_sms = curwin->w_p_wrap && curwin->w_p_sms;
 
-  if (curwin->w_p_wrap && curwin->w_p_sms) {
+  if (do_sms) {
     width1 = curwin->w_width - curwin_col_off();
     width2 = width1 + curwin_col_off2();
   }
@@ -1103,17 +1104,17 @@ bool scrolldown(long line_count, int byfold)
   // Make sure w_topline is at the first of a sequence of folded lines.
   (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
   validate_cursor();            // w_wrow needs to be valid
-  while (line_count-- > 0) {
+  for (long todo = line_count; todo > 0; todo--) {
     if (curwin->w_topfill < win_get_fill(curwin, curwin->w_topline)
         && curwin->w_topfill < curwin->w_height_inner - 1) {
       curwin->w_topfill++;
       done++;
     } else {
       // break when at the very top
-      if (curwin->w_topline == 1 && (!curwin->w_p_sms || curwin->w_skipcol < width1)) {
+      if (curwin->w_topline == 1 && (!do_sms || curwin->w_skipcol < width1)) {
         break;
       }
-      if (curwin->w_p_wrap && curwin->w_p_sms && curwin->w_skipcol >= width1) {
+      if (do_sms && curwin->w_skipcol >= width1) {
         // scroll a screen line down
         if (curwin->w_skipcol >= width1 + width2) {
           curwin->w_skipcol -= width2;
@@ -1132,12 +1133,12 @@ bool scrolldown(long line_count, int byfold)
         if (hasFolding(curwin->w_topline, &first, NULL)) {
           done++;
           if (!byfold) {
-            line_count -= curwin->w_topline - first - 1;
+            todo -= curwin->w_topline - first - 1;
           }
           curwin->w_botline -= curwin->w_topline - first;
           curwin->w_topline = first;
         } else {
-          if (curwin->w_p_wrap && curwin->w_p_sms) {
+          if (do_sms) {
             int size = (int)win_linetabsize(curwin, curwin->w_topline,
                                             ml_get(curwin->w_topline), (colnr_T)MAXCOL);
             if (size > width1) {
@@ -1209,15 +1210,15 @@ bool scrollup(long line_count, int byfold)
 {
   linenr_T topline = curwin->w_topline;
   linenr_T botline = curwin->w_botline;
-  int do_smoothscroll = curwin->w_p_wrap && curwin->w_p_sms;
+  int do_sms = curwin->w_p_wrap && curwin->w_p_sms;
 
-  if (do_smoothscroll || (byfold && hasAnyFolding(curwin)) || win_may_fill(curwin)) {
+  if (do_sms || (byfold && hasAnyFolding(curwin)) || win_may_fill(curwin)) {
     int width1 = curwin->w_width - curwin_col_off();
     int width2 = width1 + curwin_col_off2();
     int size = 0;
     linenr_T prev_topline = curwin->w_topline;
 
-    if (do_smoothscroll) {
+    if (do_sms) {
       size = (int)win_linetabsize(curwin, curwin->w_topline,
                                   ml_get(curwin->w_topline), (colnr_T)MAXCOL);
     }
@@ -1261,7 +1262,7 @@ bool scrollup(long line_count, int byfold)
           curwin->w_topline = lnum;
           curwin->w_topfill = win_get_fill(curwin, lnum);
           curwin->w_skipcol = 0;
-          if (todo > 1 && do_smoothscroll) {
+          if (todo > 1 && do_sms) {
             size = (int)win_linetabsize(curwin, curwin->w_topline,
                                         ml_get(curwin->w_topline), (colnr_T)MAXCOL);
           }
