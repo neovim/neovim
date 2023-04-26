@@ -752,6 +752,7 @@ void curs_columns(win_T *wp, int may_scroll)
   colnr_T prev_skipcol;
   long so = get_scrolloff_value(wp);
   long siso = get_sidescrolloff_value(wp);
+  bool did_sub_skipcol = false;
 
   // First make sure that w_topline is valid (after moving the cursor).
   update_topline(wp);
@@ -798,6 +799,7 @@ void curs_columns(win_T *wp, int may_scroll)
     if (wp->w_cursor.lnum == wp->w_topline
         && wp->w_wcol >= wp->w_skipcol) {
       wp->w_wcol -= wp->w_skipcol;
+      did_sub_skipcol = true;
     }
 
     // long line wrapping, adjust wp->w_wrow
@@ -912,7 +914,7 @@ void curs_columns(win_T *wp, int may_scroll)
       extra += 2;
     }
 
-    if (extra == 3 || plines <= so * 2) {
+    if (extra == 3 || wp->w_height <= so * 2) {
       // not enough room for 'scrolloff', put cursor in the middle
       n = wp->w_virtcol / width;
       if (n > wp->w_height_inner / 2) {
@@ -943,9 +945,15 @@ void curs_columns(win_T *wp, int may_scroll)
         endcol -= width;
       }
       if (endcol > wp->w_skipcol) {
-        wp->w_wrow -= (endcol - wp->w_skipcol) / width;
         wp->w_skipcol = endcol;
       }
+    }
+
+    // adjust w_wrow for the changed w_skipcol
+    if (did_sub_skipcol) {
+      wp->w_wrow -= (wp->w_skipcol - prev_skipcol) / width;
+    } else {
+      wp->w_wrow -= wp->w_skipcol / width;
     }
 
     if (wp->w_wrow >= wp->w_height_inner) {
