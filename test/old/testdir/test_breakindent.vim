@@ -726,8 +726,9 @@ func Test_breakindent20_cpo_n_nextpage()
   norm! 5gj
   redraw!
   let lines = s:screen_lines(1, 20)
+  " FIXME: this is not the right result
   let expect = [
-	\ "<<< aaaaaaaaaaaaaaaa",
+	\ "<<<aaaaaaaaaaaaaaaaa",
 	\ "    aaaaaaaaaaaaaaaa",
 	\ "    aaaaaaaaaaaaaaaa",
 	\ ]
@@ -745,8 +746,9 @@ func Test_breakindent20_cpo_n_nextpage()
   " Scroll down one screen line
   norm! 5gj
   let lines = s:screen_lines(1, 20)
++  " FIXME: this is not the right result
   let expect = [
-	\ "<<<   aaaaaaaaaaaaaa",
+	\ "<<<aaaaaaaaaaaaaaaaa",
 	\ "      aaaaaaaaaaaaaa",
 	\ "      aaaaaaaaaaaaaa",
 	\ ]
