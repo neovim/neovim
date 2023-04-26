@@ -301,4 +301,30 @@ describe('smoothscroll', function()
     feed('<C-E>')
     screen:expect_unchanged()
   end)
+
+  -- oldtest: Test_smoothscroll_wrap_scrolloff_zero()
+  it("works with zero 'scrolloff'", function()
+    screen:try_resize(40, 8)
+    exec([[
+      call setline(1, ['Line' .. (' with some text'->repeat(7))]->repeat(7))
+      set smoothscroll scrolloff=0
+      :3
+    ]])
+    screen:expect([[
+      <<<h some text with some text           |
+      Line with some text with some text with |
+      some text with some text with some text |
+      with some text with some text           |
+      ^Line with some text with some text with |
+      some text with some text with some text |
+      with some text with some text           |
+                                              |
+    ]])
+    feed('j')
+    screen:expect_unchanged()
+    feed('<C-E>j')
+    screen:expect_unchanged()
+    feed('G')
+    screen:expect_unchanged()
+  end)
 end)

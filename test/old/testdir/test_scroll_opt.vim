@@ -184,6 +184,31 @@ func Test_smoothscroll_diff_mode()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_smoothscroll_wrap_scrolloff_zero()
+  CheckScreendump
+
+  let lines =<< trim END
+      vim9script
+      setline(1, ['Line' .. (' with some text'->repeat(7))]->repeat(7))
+      set smoothscroll scrolloff=0
+      :3
+  END
+  call writefile(lines, 'XSmoothWrap', 'D')
+  let buf = RunVimInTerminal('-S XSmoothWrap', #{rows: 8, cols: 40})
+
+  call VerifyScreenDump(buf, 'Test_smooth_wrap_1', {})
+
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_smooth_wrap_2', {})
+
+  call term_sendkeys(buf, "\<C-E>j")
+  call VerifyScreenDump(buf, 'Test_smooth_wrap_3', {})
+
+  call term_sendkeys(buf, "G")
+  call VerifyScreenDump(buf, 'Test_smooth_wrap_4', {})
+
+  call StopVimInTerminal(buf)
+endfunc
 
 
 " vim: shiftwidth=2 sts=2 expandtab

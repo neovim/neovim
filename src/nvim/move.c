@@ -1627,6 +1627,7 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
 {
   int used;
   int scrolled = 0;
+  int min_scrolled = 1;
   int extra = 0;
   lineoff_T loff;
   lineoff_T boff;
@@ -1675,6 +1676,12 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
     scrolled = used;
     if (cln == curwin->w_botline) {
       scrolled -= curwin->w_empty_rows;
+    }
+    min_scrolled = scrolled;
+    if (cln > curwin->w_botline && curwin->w_p_sms && curwin->w_p_wrap) {
+      for (linenr_T lnum = curwin->w_botline + 1; lnum <= cln; lnum++) {
+        min_scrolled += plines_win_nofill(curwin, lnum, true);
+      }
     }
   }
 
@@ -1777,6 +1784,10 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
   if (line_count >= curwin->w_height_inner && line_count > min_scroll) {
     scroll_cursor_halfway(false, true);
   } else {
+    // With 'smoothscroll' scroll at least the height of the cursor line.
+    if (curwin->w_p_wrap && curwin->w_p_sms && line_count < min_scrolled) {
+      line_count = min_scrolled;
+    }
     scrollup(line_count, true);
   }
 
