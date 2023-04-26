@@ -203,7 +203,7 @@ void update_topline(win_T *wp)
     bool check_topline = false;
     // If the cursor is above or near the top of the window, scroll the window
     // to show the line the cursor is in, with 'scrolloff' context.
-    if (wp->w_topline > 1) {
+    if (wp->w_topline > 1 || wp->w_skipcol > 0) {
       // If the cursor is above topline, scrolling is always needed.
       // If the cursor is far below topline and there is no folding,
       // scrolling down is never needed.
@@ -211,6 +211,15 @@ void update_topline(win_T *wp)
         check_topline = true;
       } else if (check_top_offset()) {
         check_topline = true;
+      } else if (wp->w_skipcol > 0 && wp->w_cursor.lnum == wp->w_topline) {
+        colnr_T vcol;
+
+        // check the cursor position is visible.  Add 3 for the ">>>"
+        // displayed in the top-left.
+        getvvcol(wp, &wp->w_cursor, &vcol, NULL, NULL);
+        if (wp->w_skipcol + 3 >= vcol) {
+          check_topline = true;
+        }
       }
     }
     // Check if there are more filler lines than allowed.
@@ -1499,6 +1508,7 @@ void scroll_cursor_top(int min_scroll, int always)
   linenr_T top;                 // just above displayed lines
   linenr_T bot;                 // just below displayed lines
   linenr_T old_topline = curwin->w_topline;
+  int old_skipcol = curwin->w_skipcol;
   linenr_T old_topfill = curwin->w_topfill;
   linenr_T new_topline;
   int off = (int)get_scrolloff_value(curwin);
@@ -1588,7 +1598,13 @@ void scroll_cursor_top(int min_scroll, int always)
       }
     }
     check_topfill(curwin, false);
+    // TODO(vim): if the line doesn't fit may optimize w_skipcol
+    if (curwin->w_topline == curwin->w_cursor.lnum) {
+      curwin->w_skipcol = 0;
+      redraw_later(curwin, UPD_NOT_VALID);
+    }
     if (curwin->w_topline != old_topline
+        || curwin->w_skipcol != old_skipcol
         || curwin->w_topfill != old_topfill) {
       curwin->w_valid &=
         ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);

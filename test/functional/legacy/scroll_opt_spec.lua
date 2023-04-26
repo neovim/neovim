@@ -307,7 +307,7 @@ describe('smoothscroll', function()
     screen:try_resize(40, 8)
     exec([[
       call setline(1, ['Line' .. (' with some text'->repeat(7))]->repeat(7))
-      set smoothscroll scrolloff=0
+      set smoothscroll scrolloff=0 display=
       :3
     ]])
     screen:expect([[
@@ -322,9 +322,22 @@ describe('smoothscroll', function()
     ]])
     feed('j')
     screen:expect_unchanged()
+    -- moving cursor down - whole bottom line shows
     feed('<C-E>j')
     screen:expect_unchanged()
     feed('G')
     screen:expect_unchanged()
+    -- moving cursor up - whole top line shows
+    feed('2k')
+    screen:expect([[
+      ^Line with some text with some text with |
+      some text with some text with some text |
+      with some text with some text           |
+      Line with some text with some text with |
+      some text with some text with some text |
+      with some text with some text           |
+      @                                       |
+                                              |
+    ]])
   end)
 end)

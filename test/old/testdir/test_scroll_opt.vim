@@ -198,6 +198,7 @@ func Test_smoothscroll_wrap_scrolloff_zero()
 
   call VerifyScreenDump(buf, 'Test_smooth_wrap_1', {})
 
+  " moving cursor down - whole bottom line shows
   call term_sendkeys(buf, "j")
   call VerifyScreenDump(buf, 'Test_smooth_wrap_2', {})
 
@@ -206,6 +207,10 @@ func Test_smoothscroll_wrap_scrolloff_zero()
 
   call term_sendkeys(buf, "G")
   call VerifyScreenDump(buf, 'Test_smooth_wrap_4', {})
+
+  " moving cursor up - whole top line shows
+  call term_sendkeys(buf, "2k")
+  call VerifyScreenDump(buf, 'Test_smooth_wrap_5', {})
 
   call StopVimInTerminal(buf)
 endfunc
