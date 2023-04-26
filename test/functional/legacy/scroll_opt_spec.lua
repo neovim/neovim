@@ -49,7 +49,7 @@ describe('smoothscroll', function()
                                               |
     ]]
     local s2 = [[
-      word word word word word word word word |
+      <<<d word word word word word word word |
       word word word word                     |
       line three                              |
       long word long word long word long word |
@@ -63,7 +63,7 @@ describe('smoothscroll', function()
                                               |
     ]]
     local s3 = [[
-      word word word word                     |
+      <<<d word word word                     |
       line three                              |
       long word long word long word long word |
       long word long word long word           |
@@ -91,7 +91,7 @@ describe('smoothscroll', function()
                                               |
     ]]
     local s5 = [[
-      word word word word                     |
+      <<<d word word word                     |
       line three                              |
       long word long word long word long word |
       long word long word long word           |
@@ -105,7 +105,7 @@ describe('smoothscroll', function()
                                               |
     ]]
     local s6 = [[
-      word word word word word word word word |
+      <<<d word word word word word word word |
       word word word word                     |
       line three                              |
       long word long word long word long word |

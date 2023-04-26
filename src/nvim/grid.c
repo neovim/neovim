@@ -503,6 +503,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
   int col = 0;
   bool redraw_next;                         // redraw_this for next character
   bool clear_next = false;
+  bool topline = row == 0;
   int char_cells;                           // 1: normal char
                                             // 2: occupies two display cells
   int start_dirty = -1, end_dirty = 0;
@@ -528,6 +529,14 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
   size_t off_to = grid->line_offset[row] + (size_t)coloff;
   max_off_from = linebuf_size;
   max_off_to = grid->line_offset[row] + (size_t)grid->cols;
+
+  if (topline && wp->w_skipcol > 0) {
+    // Take care of putting "<<<" on the first line for 'smoothscroll'.
+    for (int i = 0; i < 3; i++) {
+      schar_from_ascii(linebuf_char[i], '<');
+      linebuf_attr[i] = HL_ATTR(HLF_AT);
+    }
+  }
 
   if (rlflag) {
     // Clear rest first, because it's left of the text.
