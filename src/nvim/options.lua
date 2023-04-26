@@ -832,7 +832,8 @@ return {
       alloced=true,
       redraw={'current_window'},
       varname='p_fcs',
-      defaults={if_true=''}
+      defaults={if_true=''},
+      cb='did_set_chars_option'
     },
     {
       full_name='fixendofline', abbreviation='fixeol',
@@ -1485,7 +1486,8 @@ return {
       alloced=true,
       redraw={'current_window'},
       varname='p_lcs',
-      defaults={if_true="tab:> ,trail:-,nbsp:+"}
+      defaults={if_true="tab:> ,trail:-,nbsp:+"},
+      cb='did_set_chars_option'
     },
     {
       full_name='loadplugins', abbreviation='lpl',

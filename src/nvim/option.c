@@ -1854,10 +1854,10 @@ static void didset_options2(void)
   highlight_changed();
 
   // Parse default for 'fillchars'.
-  (void)set_chars_option(curwin, &curwin->w_p_fcs, true);
+  (void)set_fillchars_option(curwin, curwin->w_p_fcs, true);
 
   // Parse default for 'listchars'.
-  (void)set_chars_option(curwin, &curwin->w_p_lcs, true);
+  (void)set_listchars_option(curwin, curwin->w_p_lcs, true);
 
   // Parse default for 'wildmode'.
   check_opt_wim();
@@ -4164,12 +4164,12 @@ void unset_global_local_option(char *name, void *from)
     break;
   case PV_LCS:
     clear_string_option(&((win_T *)from)->w_p_lcs);
-    set_chars_option((win_T *)from, &((win_T *)from)->w_p_lcs, true);
+    set_listchars_option((win_T *)from, ((win_T *)from)->w_p_lcs, true);
     redraw_later((win_T *)from, UPD_NOT_VALID);
     break;
   case PV_FCS:
     clear_string_option(&((win_T *)from)->w_p_fcs);
-    set_chars_option((win_T *)from, &((win_T *)from)->w_p_fcs, true);
+    set_fillchars_option((win_T *)from, ((win_T *)from)->w_p_fcs, true);
     redraw_later((win_T *)from, UPD_NOT_VALID);
     break;
   case PV_VE:
@@ -4749,8 +4749,8 @@ void didset_window_options(win_T *wp, bool valid_cursor)
   check_colorcolumn(wp);
   briopt_check(wp);
   fill_culopt_flags(NULL, wp);
-  set_chars_option(wp, &wp->w_p_fcs, true);
-  set_chars_option(wp, &wp->w_p_lcs, true);
+  set_fillchars_option(wp, wp->w_p_fcs, true);
+  set_listchars_option(wp, wp->w_p_lcs, true);
   parse_winhl_opt(wp);  // sets w_hl_needs_update also for w_p_winbl
   check_blending(wp);
   set_winbar_win(wp, false, valid_cursor);

@@ -1480,18 +1480,18 @@ func Test_string_option_revert_on_failure()
   if has('win32') && has('terminal')
     call add(optlist, ['termwintype', 'winpty', 'a123'])
   endif
-  if has('+toolbar')
+  if exists('+toolbar')
     call add(optlist, ['toolbar', 'text', 'a123'])
     call add(optlist, ['toolbariconsize', 'medium', 'a123'])
   endif
-  if has('+mouse')
+  if exists('+ttymouse') && !has('gui')
     call add(optlist, ['ttymouse', 'xterm', 'a123'])
   endif
-  if has('+vartabs')
+  if exists('+vartabs')
     call add(optlist, ['varsofttabstop', '12', 'a123'])
     call add(optlist, ['vartabstop', '4,20', '4,'])
   endif
-  if has('gui')
+  if exists('+winaltkeys')
     call add(optlist, ['winaltkeys', 'no', 'a123'])
   endif
   for opt in optlist

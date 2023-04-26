@@ -1131,30 +1131,79 @@ const char *did_set_comments(optset_T *args)
   return errmsg;
 }
 
-static void did_set_global_listfillchars(win_T *win, char **varp, int opt_flags,
-                                         const char **errmsg)
+/// The global 'listchars' or 'fillchars' option is changed.
+static const char *did_set_global_listfillchars(win_T *win, char *val, bool opt_lcs, int opt_flags)
 {
-  char **local_ptr = varp == &p_lcs ? &win->w_p_lcs : &win->w_p_fcs;
-  // only apply the global value to "win" when it does not have a local value
-  *errmsg = set_chars_option(win, varp, **local_ptr == NUL || !(opt_flags & OPT_GLOBAL));
-  if (*errmsg == NULL) {
-    // If the current window is set to use the global
-    // 'listchars'/'fillchars' value, clear the window-local value.
-    if (!(opt_flags & OPT_GLOBAL)) {
-      clear_string_option(local_ptr);
-    }
-    FOR_ALL_TAB_WINDOWS(tp, wp) {
-      // If the current window has a local value need to apply it
-      // again, it was changed when setting the global value.
-      // If no error was returned above, we don't expect an error
-      // here, so ignore the return value.
-      local_ptr = varp == &p_lcs ? &wp->w_p_lcs : &wp->w_p_fcs;
-      if (**local_ptr == NUL) {
-        (void)set_chars_option(wp, local_ptr, true);
+  const char *errmsg = NULL;
+  char **local_ptr = opt_lcs ? &win->w_p_lcs : &win->w_p_fcs;
+
+  // only apply the global value to "win" when it does not have a
+  // local value
+  if (opt_lcs) {
+    errmsg = set_listchars_option(win, val, **local_ptr == NUL || !(opt_flags & OPT_GLOBAL));
+  } else {
+    errmsg = set_fillchars_option(win, val, **local_ptr == NUL || !(opt_flags & OPT_GLOBAL));
+  }
+  if (errmsg != NULL) {
+    return errmsg;
+  }
+
+  // If the current window is set to use the global
+  // 'listchars'/'fillchars' value, clear the window-local value.
+  if (!(opt_flags & OPT_GLOBAL)) {
+    clear_string_option(local_ptr);
+  }
+
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    // If the current window has a local value need to apply it
+    // again, it was changed when setting the global value.
+    // If no error was returned above, we don't expect an error
+    // here, so ignore the return value.
+    if (opt_lcs) {
+      if (*wp->w_p_lcs == NUL) {
+        (void)set_listchars_option(wp, wp->w_p_lcs, true);
+      }
+    } else {
+      if (*wp->w_p_fcs == NUL) {
+        (void)set_fillchars_option(wp, wp->w_p_fcs, true);
       }
     }
-    redraw_all_later(UPD_NOT_VALID);
   }
+
+  redraw_all_later(UPD_NOT_VALID);
+
+  return NULL;
+}
+
+/// Handle the new value of 'fillchars'.
+const char *set_fillchars_option(win_T *wp, char *val, int apply)
+{
+  return set_chars_option(wp, val, false, apply);
+}
+
+/// Handle the new value of 'listchars'.
+const char *set_listchars_option(win_T *wp, char *val, int apply)
+{
+  return set_chars_option(wp, val, true, apply);
+}
+
+/// The 'fillchars' option or the 'listchars' option is changed.
+const char *did_set_chars_option(optset_T *args)
+{
+  win_T *win = (win_T *)args->os_win;
+  const char *errmsg = NULL;
+
+  if (args->os_varp == p_lcs      // global 'listchars'
+      || args->os_varp == p_fcs) {  // global 'fillchars'
+    errmsg = did_set_global_listfillchars(win, args->os_varp,
+                                          args->os_varp == p_lcs, args->os_flags);
+  } else if (args->os_varp == win->w_p_lcs) {  // local 'listchars'
+    errmsg = set_listchars_option(win, args->os_varp, true);
+  } else if (args->os_varp == win->w_p_fcs) {  // local 'fillchars'
+    errmsg = set_fillchars_option(win, args->os_varp, true);
+  }
+
+  return errmsg;
 }
 
 /// The 'verbosefile' option is changed.
@@ -2026,13 +2075,6 @@ static const char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx
              || gvarp == &p_fenc                        // 'fileencoding'
              || gvarp == &p_menc) {                     // 'makeencoding'
     did_set_encoding(buf, varp, gvarp, opt_flags, &errmsg);
-  } else if (varp == &p_lcs                             // global 'listchars'
-             || varp == &p_fcs) {                       // global 'fillchars'
-    did_set_global_listfillchars(win, varp, opt_flags, &errmsg);
-  } else if (varp == &win->w_p_lcs) {                   // local 'listchars'
-    errmsg = set_chars_option(win, varp, true);
-  } else if (varp == &win->w_p_fcs) {                   // local 'fillchars'
-    errmsg = set_chars_option(win, varp, true);
   }
 
   // If an error is detected, restore the previous value.
@@ -2231,16 +2273,17 @@ static int get_encoded_char_adv(const char **p)
 /// Handle setting 'listchars' or 'fillchars'.
 /// Assume monocell characters
 ///
-/// @param varp   either the global or the window-local value.
+/// @param val points to either the global or the window-local value.
+/// @param opt_lcs is tue for "listchars" and FALSE for "fillchars".
 /// @param apply  if false, do not store the flags, only check for errors.
 /// @return error message, NULL if it's OK.
-const char *set_chars_option(win_T *wp, char **varp, bool apply)
+static const char *set_chars_option(win_T *wp, const char *val, bool opt_lcs, bool apply)
 {
   const char *last_multispace = NULL;   // Last occurrence of "multispace:"
   const char *last_lmultispace = NULL;  // Last occurrence of "leadmultispace:"
   int multispace_len = 0;           // Length of lcs-multispace string
   int lead_multispace_len = 0;      // Length of lcs-leadmultispace string
-  const bool is_listchars = (varp == &p_lcs || varp == &wp->w_p_lcs);
+  const bool is_listchars = opt_lcs;
 
   struct chars_tab {
     int *cp;     ///< char value
@@ -2284,17 +2327,17 @@ const char *set_chars_option(win_T *wp, char **varp, bool apply)
 
   struct chars_tab *tab;
   int entries;
-  const char *value = *varp;
+  const char *value = val;
   if (is_listchars) {
     tab = lcs_tab;
     entries = ARRAY_SIZE(lcs_tab);
-    if (varp == &wp->w_p_lcs && wp->w_p_lcs[0] == NUL) {
+    if (opt_lcs && wp->w_p_lcs[0] == NUL) {
       value = p_lcs;  // local value is empty, use the global value
     }
   } else {
     tab = fcs_tab;
     entries = ARRAY_SIZE(fcs_tab);
-    if (varp == &wp->w_p_fcs && wp->w_p_fcs[0] == NUL) {
+    if (!opt_lcs && wp->w_p_fcs[0] == NUL) {
       value = p_fcs;  // local value is empty, use the global value
     }
   }
@@ -2460,17 +2503,17 @@ const char *set_chars_option(win_T *wp, char **varp, bool apply)
 /// @return  an untranslated error message if any of them is invalid, NULL otherwise.
 const char *check_chars_options(void)
 {
-  if (set_chars_option(curwin, &p_lcs, false) != NULL) {
+  if (set_listchars_option(curwin, p_lcs, false) != NULL) {
     return e_conflicts_with_value_of_listchars;
   }
-  if (set_chars_option(curwin, &p_fcs, false) != NULL) {
+  if (set_fillchars_option(curwin, p_fcs, false) != NULL) {
     return e_conflicts_with_value_of_fillchars;
   }
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (set_chars_option(wp, &wp->w_p_lcs, true) != NULL) {
+    if (set_listchars_option(wp, wp->w_p_lcs, true) != NULL) {
       return e_conflicts_with_value_of_listchars;
     }
-    if (set_chars_option(wp, &wp->w_p_fcs, true) != NULL) {
+    if (set_fillchars_option(wp, wp->w_p_fcs, true) != NULL) {
       return e_conflicts_with_value_of_fillchars;
     }
   }
