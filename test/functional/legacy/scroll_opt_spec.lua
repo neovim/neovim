@@ -14,6 +14,19 @@ describe('smoothscroll', function()
     screen:attach()
   end)
 
+  -- oldtest: Test_CtrlE_CtrlY_stop_at_end()
+  it('disabled does not break <C-E> and <C-Y> stop at end', function()
+    exec([[
+      enew
+      call setline(1, ['one', 'two'])
+      set number
+    ]])
+    feed('<C-Y>')
+    screen:expect({any = "  1 ^one"})
+    feed('<C-E><C-E><C-E>')
+    screen:expect({any = "  2 ^two"})
+  end)
+
   -- oldtest: Test_smoothscroll_CtrlE_CtrlY()
   it('works with <C-E> and <C-E>', function()
     exec([[

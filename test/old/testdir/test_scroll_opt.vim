@@ -54,6 +54,19 @@ func Test_scolloff_even_line_count()
    bwipe!
 endfunc
 
+func Test_CtrlE_CtrlY_stop_at_end()
+  enew
+  call setline(1, ['one', 'two'])
+  set number
+  exe "normal \<C-Y>"
+  call assert_equal(["  1 one   "], ScreenLines(1, 10))
+  exe "normal \<C-E>\<C-E>\<C-E>"
+  call assert_equal(["  2 two   "], ScreenLines(1, 10))
+
+  bwipe!
+  set nonumber
+endfunc
+
 func Test_smoothscroll_CtrlE_CtrlY()
   CheckScreendump
 

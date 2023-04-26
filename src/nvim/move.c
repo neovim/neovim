@@ -1109,10 +1109,12 @@ bool scrolldown(long line_count, int byfold)
       curwin->w_topfill++;
       done++;
     } else {
-      if (curwin->w_topline == 1 && curwin->w_skipcol < width1) {
+      // break when at the very top
+      if (curwin->w_topline == 1 && (!curwin->w_p_sms || curwin->w_skipcol < width1)) {
         break;
       }
       if (curwin->w_p_wrap && curwin->w_p_sms && curwin->w_skipcol >= width1) {
+        // scroll a screen line down
         if (curwin->w_skipcol >= width1 + width2) {
           curwin->w_skipcol -= width2;
         } else {
@@ -1121,6 +1123,7 @@ bool scrolldown(long line_count, int byfold)
         redraw_later(curwin, UPD_NOT_VALID);
         done++;
       } else {
+        // scroll a text line down
         curwin->w_topline--;
         curwin->w_skipcol = 0;
         curwin->w_topfill = 0;
