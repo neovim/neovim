@@ -2090,7 +2090,7 @@ void op_tilde(oparg_T *oap)
       did_change = swapchars(oap->op_type, &pos,
                              oap->end.col - pos.col + 1);
     } else {
-      for (;;) {
+      while (true) {
         did_change |= swapchars(oap->op_type, &pos,
                                 pos.lnum == oap->end.lnum ? oap->end.col + 1 :
                                 (int)strlen(ml_get_pos(&pos)));
@@ -2944,7 +2944,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   long cnt;
   const pos_T orig_start = curbuf->b_op_start;
   const pos_T orig_end = curbuf->b_op_end;
-  unsigned int cur_ve_flags = get_ve_flags();
+  unsigned cur_ve_flags = get_ve_flags();
 
   if (flags & PUT_FIXINDENT) {
     orig_indent = get_indent();
@@ -3056,7 +3056,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       // For the = register we need to split the string at NL
       // characters.
       // Loop twice: count the number of lines and save them.
-      for (;;) {
+      while (true) {
         y_size = 0;
         ptr = insert_string;
         while (ptr != NULL) {
@@ -3717,7 +3717,7 @@ end:
 /// there move it left.
 void adjust_cursor_eol(void)
 {
-  unsigned int cur_ve_flags = get_ve_flags();
+  unsigned cur_ve_flags = get_ve_flags();
 
   const bool adj_cursor = (curwin->w_cursor.col > 0
                            && gchar_cursor() == NUL
@@ -6470,7 +6470,7 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
     }
 
     if (cb_flags & CB_UNNAMEDPLUS) {
-      *name = (cb_flags & CB_UNNAMED && writing) ? '"': '+';
+      *name = (cb_flags & CB_UNNAMED && writing) ? '"' : '+';
       target = &y_regs[PLUS_REGISTER];
     } else {
       *name = '*';

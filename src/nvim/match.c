@@ -111,7 +111,7 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
   }
   m->mit_id = id;
   m->mit_priority = prio;
-  m->mit_pattern = pat == NULL ? NULL: xstrdup(pat);
+  m->mit_pattern = pat == NULL ? NULL : xstrdup(pat);
   m->mit_hlg_id = hlg_id;
   m->mit_match.regprog = regprog;
   m->mit_match.rmm_ic = false;
@@ -388,7 +388,7 @@ static int next_search_hl_pos(match_T *shl, linenr_T lnum, matchitem_T *match, c
   match->mit_pos_cur = 0;
   if (found >= 0) {
     colnr_T start = match->mit_pos_array[found].col == 0
-                    ? 0: match->mit_pos_array[found].col - 1;
+                    ? 0 : match->mit_pos_array[found].col - 1;
     colnr_T end = match->mit_pos_array[found].col == 0
                   ? MAXCOL : start + match->mit_pos_array[found].len;
 
@@ -444,7 +444,7 @@ static void next_search_hl(win_T *win, match_T *search_hl, match_T *shl, linenr_
 
   // Repeat searching for a match until one is found that includes "mincol"
   // or none is found in this line.
-  for (;;) {
+  while (true) {
     // Stop searching after passing the time limit.
     if (profile_passed_limit(shl->tm)) {
       shl->lnum = 0;                    // no match found in time

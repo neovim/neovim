@@ -484,7 +484,7 @@ static const char *check_mousescroll(char *string)
   long vertical = -1;
   long horizontal = -1;
 
-  for (;;) {
+  while (true) {
     char *end = vim_strchr(string, ',');
     size_t length = end ? (size_t)(end - string) : strlen(string);
 
@@ -654,7 +654,7 @@ static bool check_illegal_path_names(char *val, uint32_t flags)
 static void did_set_backupcopy(buf_T *buf, char *oldval, int opt_flags, const char **errmsg)
 {
   char *bkc = p_bkc;
-  unsigned int *flags = &bkc_flags;
+  unsigned *flags = &bkc_flags;
 
   if (opt_flags & OPT_LOCAL) {
     bkc = buf->b_p_bkc;
@@ -1322,7 +1322,7 @@ static void did_set_backspace(const char **errmsg)
 
 static void did_set_tagcase(buf_T *buf, int opt_flags, const char **errmsg)
 {
-  unsigned int *flags;
+  unsigned *flags;
   char *p;
 
   if (opt_flags & OPT_LOCAL) {
@@ -1391,7 +1391,7 @@ static void did_set_foldignore(win_T *win)
 static void did_set_virtualedit(win_T *win, int opt_flags, char *oldval, const char **errmsg)
 {
   char *ve = p_ve;
-  unsigned int *flags = &ve_flags;
+  unsigned *flags = &ve_flags;
 
   if (opt_flags & OPT_LOCAL) {
     ve = win->w_p_ve;
@@ -1912,10 +1912,10 @@ static int check_opt_strings(char *val, char **values, int list)
 /// @return  OK for correct value, FAIL otherwise. Empty is always OK.
 static int opt_strings_flags(char *val, char **values, unsigned *flagp, bool list)
 {
-  unsigned int new_flags = 0;
+  unsigned new_flags = 0;
 
   while (*val) {
-    for (unsigned int i = 0;; i++) {
+    for (unsigned i = 0;; i++) {
       if (values[i] == NULL) {          // val not found in values[]
         return FAIL;
       }

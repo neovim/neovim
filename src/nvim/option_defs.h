@@ -410,7 +410,7 @@ EXTERN char *p_bs;              // 'backspace'
 EXTERN char *p_bg;              // 'background'
 EXTERN int p_bk;                // 'backup'
 EXTERN char *p_bkc;             // 'backupcopy'
-EXTERN unsigned int bkc_flags;  ///< flags from 'backupcopy'
+EXTERN unsigned bkc_flags;  ///< flags from 'backupcopy'
 #define BKC_YES                0x001
 #define BKC_AUTO               0x002
 #define BKC_NO                 0x004
@@ -707,7 +707,7 @@ EXTERN long p_smc;              ///< 'synmaxcol'
 EXTERN long p_tpm;              // 'tabpagemax'
 EXTERN char *p_tal;             // 'tabline'
 EXTERN char *p_tpf;             // 'termpastefilter'
-EXTERN unsigned int tpf_flags;  ///< flags from 'termpastefilter'
+EXTERN unsigned tpf_flags;  ///< flags from 'termpastefilter'
 #define TPF_BS                 0x001
 #define TPF_HT                 0x002
 #define TPF_FF                 0x004
@@ -721,7 +721,7 @@ EXTERN char *p_spf;             ///< 'spellfile'
 EXTERN char *p_spk;             ///< 'splitkeep'
 EXTERN char *p_spl;             ///< 'spelllang'
 EXTERN char *p_spo;             // 'spelloptions'
-EXTERN unsigned int spo_flags;
+EXTERN unsigned spo_flags;
 EXTERN char *p_sps;             // 'spellsuggest'
 EXTERN int p_spr;               // 'splitright'
 EXTERN int p_sol;               // 'startofline'

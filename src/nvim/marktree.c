@@ -127,7 +127,7 @@ static inline int marktree_getp_aux(const mtnode_t *x, mtkey_t k, int *r)
   if (x->n == 0) {
     return -1;
   }
-  rr = r? r : &tr;
+  rr = r ? r : &tr;
   while (begin < end) {
     int mid = (begin + end) >> 1;
     if (key_cmp(x->key[mid], k) < 0) {

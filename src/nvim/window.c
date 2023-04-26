@@ -2886,7 +2886,7 @@ int win_close(win_T *win, bool free_buf, bool force)
     if (wp->w_p_pvw || bt_quickfix(wp->w_buffer)) {
       // If the cursor goes to the preview or the quickfix window, try
       // finding another window to go to.
-      for (;;) {
+      while (true) {
         if (wp->w_next == NULL) {
           wp = firstwin;
         } else {
@@ -4639,7 +4639,7 @@ win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, long count)
     // First go upwards in the tree of frames until we find an upwards or
     // downwards neighbor.
     frame_T *fr = foundfr;
-    for (;;) {
+    while (true) {
       if (fr == tp->tp_topframe) {
         goto end;
       }
@@ -4655,7 +4655,7 @@ win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, long count)
     }
 
     // Now go downwards to find the bottom or top frame in it.
-    for (;;) {
+    while (true) {
       if (nfr->fr_layout == FR_LEAF) {
         foundfr = nfr;
         break;
@@ -4715,7 +4715,7 @@ win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, long count)
     // First go upwards in the tree of frames until we find a left or
     // right neighbor.
     frame_T *fr = foundfr;
-    for (;;) {
+    while (true) {
       if (fr == tp->tp_topframe) {
         goto end;
       }
@@ -4731,7 +4731,7 @@ win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, long count)
     }
 
     // Now go downwards to find the leftmost or rightmost frame in it.
-    for (;;) {
+    while (true) {
       if (nfr->fr_layout == FR_LEAF) {
         foundfr = nfr;
         break;
@@ -5378,7 +5378,7 @@ static dict_T *make_win_info_dict(int width, int height, int topline, int topfil
   d->dv_refcount = 1;
 
   // not actually looping, for breaking out on error
-  while (1) {
+  while (true) {
     typval_T tv = {
       .v_lock = VAR_UNLOCKED,
       .v_type = VAR_NUMBER,
@@ -6759,7 +6759,7 @@ void command_height(void)
 static void frame_add_height(frame_T *frp, int n)
 {
   frame_new_height(frp, frp->fr_height + n, false, false);
-  for (;;) {
+  while (true) {
     frp = frp->fr_parent;
     if (frp == NULL) {
       break;
@@ -7426,7 +7426,7 @@ const char *check_colorcolumn(win_T *wp)
     return NULL;      // buffer was closed
   }
 
-  unsigned int count = 0;
+  unsigned count = 0;
   int color_cols[256];
   for (char *s = wp->w_p_cc; *s != NUL && count < 255;) {
     int col;
@@ -7479,7 +7479,7 @@ skip:
     qsort(color_cols, count, sizeof(int), int_cmp);
 
     int j = 0;
-    for (unsigned int i = 0; i < count; i++) {
+    for (unsigned i = 0; i < count; i++) {
       // skip duplicates
       if (j == 0 || wp->w_p_cc_cols[j - 1] != color_cols[i]) {
         wp->w_p_cc_cols[j++] = color_cols[i];

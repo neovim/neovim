@@ -201,7 +201,7 @@ bool hasFoldingWin(win_T *const win, const linenr_T lnum, linenr_T *const firstp
   if (first == 0) {
     // Recursively search for a fold that contains "lnum".
     garray_T *gap = &win->w_folds;
-    for (;;) {
+    while (true) {
       if (!foldFind(gap, lnum_rel, &fp)) {
         break;
       }
@@ -430,7 +430,7 @@ void foldOpenCursor(void)
 {
   checkupdate(curwin);
   if (hasAnyFolding(curwin)) {
-    for (;;) {
+    while (true) {
       int done = DONE_NOTHING;
       (void)setManualFold(curwin->w_cursor, true, false, &done);
       if (!(done & DONE_ACTION)) {
@@ -562,7 +562,7 @@ void foldCreate(win_T *wp, pos_T start, pos_T end)
     i = 0;
   } else {
     fold_T *fp;
-    for (;;) {
+    while (true) {
       if (!foldFind(gap, start_rel.lnum, &fp)) {
         break;
       }
@@ -683,7 +683,7 @@ void deleteFold(win_T *const wp, const linenr_T start, const linenr_T end, const
     garray_T *found_ga = NULL;
     linenr_T lnum_off = 0;
     bool use_level = false;
-    for (;;) {
+    while (true) {
       fold_T *fp;
       if (!foldFind(gap, lnum - lnum_off, &fp)) {
         break;
@@ -865,7 +865,7 @@ int foldMoveTo(const bool updown, const int dir, const long count)
     linenr_T lnum_found = curwin->w_cursor.lnum;
     int level = 0;
     bool last = false;
-    for (;;) {
+    while (true) {
       if (!foldFind(gap, curwin->w_cursor.lnum - lnum_off, &fp)) {
         if (!updown || gap->ga_len == 0) {
           break;
@@ -1104,7 +1104,7 @@ static int foldLevelWin(win_T *wp, linenr_T lnum)
 
   // Recursively search for a fold that contains "lnum".
   garray_T *gap = &wp->w_folds;
-  for (;;) {
+  while (true) {
     if (!foldFind(gap, lnum_rel, &fp)) {
       break;
     }
@@ -1201,7 +1201,7 @@ static linenr_T setManualFoldWin(win_T *wp, linenr_T lnum, int opening, int recu
 
   // Find the fold, open or close it.
   garray_T *gap = &wp->w_folds;
-  for (;;) {
+  while (true) {
     if (!foldFind(gap, lnum, &fp)) {
       // If there is a following fold, continue there next time.
       if (fp != NULL && fp < (fold_T *)gap->ga_data + gap->ga_len) {
@@ -2509,7 +2509,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
   }
 
   // delete following folds that end before the current line
-  for (;;) {
+  while (true) {
     fp2 = fp + 1;
     if (fp2 >= (fold_T *)gap->ga_data + gap->ga_len
         || fp2->fd_top > flp->lnum) {

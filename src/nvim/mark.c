@@ -239,7 +239,7 @@ fmark_T *get_jumplist(win_T *win, int count)
     return NULL;
   }
 
-  for (;;) {
+  while (true) {
     if (win->w_jumplistidx + count < 0
         || win->w_jumplistidx + count >= win->w_jumplistlen) {
       return NULL;

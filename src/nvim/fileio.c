@@ -943,7 +943,7 @@ retry:
           } else {
             int ni;
             long tlen = 0;
-            for (;;) {
+            while (true) {
               p = (uint8_t *)ml_get(read_buf_lnum) + read_buf_col;
               int n = (int)strlen((char *)p);
               if ((int)tlen + n + 1 > size) {
@@ -1141,7 +1141,7 @@ retry:
       }
 
       if (fio_flags != 0) {
-        unsigned int u8c;
+        unsigned u8c;
         char *dest;
         char *tail = NULL;
 
@@ -3360,7 +3360,7 @@ int readdir_core(garray_T *gap, const char *path, void *context, CheckItem check
     return FAIL;
   }
 
-  for (;;) {
+  while (true) {
     const char *p = os_scandir_next(&dir);
     if (p == NULL) {
       break;
@@ -3820,8 +3820,8 @@ long read_eintr(int fd, void *buf, size_t bufsize)
 {
   long ret;
 
-  for (;;) {
-    ret = read(fd, buf, (unsigned int)bufsize);
+  while (true) {
+    ret = read(fd, buf, (unsigned)bufsize);
     if (ret >= 0 || errno != EINTR) {
       break;
     }
@@ -3838,7 +3838,7 @@ long write_eintr(int fd, void *buf, size_t bufsize)
   // Repeat the write() so long it didn't fail, other than being interrupted
   // by a signal.
   while (ret < (long)bufsize) {
-    long wlen = write(fd, (char *)buf + ret, (unsigned int)(bufsize - (size_t)ret));
+    long wlen = write(fd, (char *)buf + ret, (unsigned)(bufsize - (size_t)ret));
     if (wlen < 0) {
       if (errno != EINTR) {
         break;

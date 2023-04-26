@@ -2505,7 +2505,7 @@ nfa_do_multibyte:
       // building the postfix form, not the NFA itself;
       // a composing char could be: a, b, c, NFA_COMPOSING
       // where 'b' and 'c' are chars with codes > 256. */
-      for (;;) {
+      while (true) {
         EMIT(c);
         if (i > 0) {
           EMIT(NFA_CONCAT);
@@ -5799,7 +5799,7 @@ static long find_match_text(colnr_T *startcol, int regstart, uint8_t *match_text
   colnr_T col = *startcol;
   int regstart_len = PTR2LEN((char *)rex.line + col);
 
-  for (;;) {
+  while (true) {
     bool match = true;
     uint8_t *s1 = match_text;
     uint8_t *s2 = rex.line + col + regstart_len;  // skip regstart
@@ -5966,7 +5966,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
   }
 
   // Run for each character.
-  for (;;) {
+  while (true) {
     int curc = utf_ptr2char((char *)rex.input);
     int clen = utfc_ptr2len((char *)rex.input);
     if (curc == NUL) {
@@ -6501,7 +6501,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 
         state = t->state->out;
         result_if_matched = (t->state->c == NFA_START_COLL);
-        for (;;) {
+        while (true) {
           if (state->c == NFA_END_COLL) {
             result = !result_if_matched;
             break;

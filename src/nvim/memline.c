@@ -392,7 +392,7 @@ void ml_setname(buf_T *buf)
   // Try all directories in the 'directory' option.
   char *dirp = p_dir;
   bool found_existing_dir = false;
-  for (;;) {
+  while (true) {
     if (*dirp == NUL) {             // tried all directories, fail
       break;
     }
@@ -479,7 +479,7 @@ void ml_open_file(buf_T *buf)
   // Try all directories in 'directory' option.
   char *dirp = p_dir;
   bool found_existing_dir = false;
-  for (;;) {
+  while (true) {
     if (*dirp == NUL) {
       break;
     }
@@ -2262,7 +2262,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
       // allocate a new pointer block
       // move some of the pointer into the new block
       // prepare for updating the parent block
-      for (;;) {             // do this twice when splitting block 1
+      while (true) {          // do this twice when splitting block 1
         hp_new = ml_new_ptr(mfp);
         if (hp_new == NULL) {             // TODO(vim): try to fix tree
           return FAIL;
@@ -2857,7 +2857,7 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
     buf->b_ml.ml_stack_top = 0;         // start at the root
   }
   // search downwards in the tree until a data block is found
-  for (;;) {
+  while (true) {
     if ((hp = mf_get(mfp, bnum, (unsigned)page_count)) == NULL) {
       goto error_noblock;
     }
@@ -3021,7 +3021,7 @@ int resolve_symlink(const char *fname, char *buf)
   // Put the result so far in tmp[], starting with the original name.
   xstrlcpy(tmp, fname, MAXPATHL);
 
-  for (;;) {
+  while (true) {
     // Limit symlink depth to 100, catch recursive loops.
     if (++depth == 100) {
       semsg(_("E773: Symlink loop for \"%s\""), fname);
@@ -3273,7 +3273,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
   // we try different names until we find one that does not exist yet
   char *fname = makeswapname(buf_fname, buf->b_ffname, buf, dir_name);
 
-  for (;;) {
+  while (true) {
     size_t n;
     if (fname == NULL) {        // must be out of memory
       break;

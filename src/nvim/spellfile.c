@@ -660,7 +660,7 @@ slang_T *spell_load_file(char *fname, char *lang, slang_T *old_lp, bool silent)
 
   // <SECTIONS>: <section> ... <sectionend>
   // <section>: <sectionID> <sectionflags> <sectionlen> (section contents)
-  for (;;) {
+  while (true) {
     n = getc(fd);                           // <sectionID> or <sectionend>
     if (n == SN_END) {
       break;
@@ -980,7 +980,7 @@ someerror:
       ga_init(&ga, 1, 100);
       for (wordnr = 0; wordnr < wcount; wordnr++) {
         ga.ga_len = 0;
-        for (;;) {
+        while (true) {
           c = getc(fd);                                     // <sugline>
           if (c < 0) {
             goto someerror;
@@ -2973,7 +2973,7 @@ static bool flag_in_afflist(int flagtype, char *afflist, unsigned flag)
     for (p = afflist; *p != NUL;) {
       int digits = getdigits_int(&p, true, 0);
       assert(digits >= 0);
-      n = (unsigned int)digits;
+      n = (unsigned)digits;
       if (n == 0) {
         n = ZERO_FLAG;
       }
@@ -3597,7 +3597,7 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
               if (store_aff_word(spin, newword, ae->ae_flags,
                                  affile, &affile->af_suff, xht,
                                  use_condit & (xht == NULL
-                                               ? ~0 :  ~CONDIT_SUF),
+                                               ? ~0 : ~CONDIT_SUF),
                                  use_flags, use_pfxlist, pfxlen) == FAIL) {
                 retval = FAIL;
               }
@@ -4442,7 +4442,7 @@ static int write_vim_spell(spellinfo_T *spin, char *fname)
   // round 1: SN_REP section
   // round 2: SN_SAL section (unless SN_SOFO is used)
   // round 3: SN_REPSAL section
-  for (unsigned int round = 1; round <= 3; round++) {
+  for (unsigned round = 1; round <= 3; round++) {
     garray_T *gap;
     if (round == 1) {
       gap = &spin->si_rep;
@@ -4505,7 +4505,7 @@ static int write_vim_spell(spellinfo_T *spin, char *fname)
       // <rep> : <repfromlen> <repfrom> <reptolen> <repto>
       // <sal> : <salfromlen> <salfrom> <saltolen> <salto>
       fromto_T *ftp = &((fromto_T *)gap->ga_data)[i];
-      for (unsigned int rr = 1; rr <= 2; rr++) {
+      for (unsigned rr = 1; rr <= 2; rr++) {
         char *p = rr == 1 ? ftp->ft_from : ftp->ft_to;
         l = strlen(p);
         assert(l < INT_MAX);
@@ -4542,7 +4542,7 @@ static int write_vim_spell(spellinfo_T *spin, char *fname)
 
     // round 1: count the bytes
     // round 2: write the bytes
-    for (unsigned int round = 1; round <= 2; round++) {
+    for (unsigned round = 1; round <= 2; round++) {
       size_t todo;
       size_t len = 0;
       hashitem_T *hi;
@@ -4665,7 +4665,7 @@ static int write_vim_spell(spellinfo_T *spin, char *fname)
 
   // <LWORDTREE>  <KWORDTREE>  <PREFIXTREE>
   spin->si_memtot = 0;
-  for (unsigned int round = 1; round <= 3; round++) {
+  for (unsigned round = 1; round <= 3; round++) {
     wordnode_T *tree;
     if (round == 1) {
       tree = spin->si_foldroot->wn_sibling;

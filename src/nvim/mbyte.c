@@ -749,7 +749,7 @@ int utfc_ptr2char(const char *p, int *pcc)
       && (uint8_t)p[len] >= 0x80
       && utf_composinglike(p, p + len)) {
     int cc = utf_ptr2char(p + len);
-    for (;;) {
+    while (true) {
       pcc[i++] = cc;
       if (i == MAX_MCO) {
         break;
@@ -889,7 +889,7 @@ int utfc_ptr2len(const char *const p)
   // Check for composing characters.  We can handle only the first six, but
   // skip all of them (otherwise the cursor would get stuck).
   int prevlen = 0;
-  for (;;) {
+  while (true) {
     if ((uint8_t)p[len] < 0x80 || !utf_composinglike(p + prevlen, p + len)) {
       return len;
     }
@@ -1051,9 +1051,9 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
 {
   // sorted list of non-overlapping intervals
   static struct clinterval {
-    unsigned int first;
-    unsigned int last;
-    unsigned int cls;
+    unsigned first;
+    unsigned last;
+    unsigned cls;
   } classes[] = {
     { 0x037e, 0x037e, 1 },              // Greek question mark
     { 0x0387, 0x0387, 1 },              // Greek ano teleia
@@ -1149,9 +1149,9 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
   // binary search in table
   while (top >= bot) {
     int mid = (bot + top) / 2;
-    if (classes[mid].last < (unsigned int)c) {
+    if (classes[mid].last < (unsigned)c) {
       bot = mid + 1;
-    } else if (classes[mid].first > (unsigned int)c) {
+    } else if (classes[mid].first > (unsigned)c) {
       top = mid - 1;
     } else {
       return (int)classes[mid].cls;
@@ -1276,7 +1276,7 @@ static int utf_strnicmp(const char *s1, const char *s2, size_t n1, size_t n2)
   int c1, c2, cdiff;
   char buffer[6];
 
-  for (;;) {
+  while (true) {
     c1 = utf_safe_read_char_adv(&s1, &n1);
     c2 = utf_safe_read_char_adv(&s2, &n2);
 
@@ -1881,7 +1881,7 @@ void utf_find_illegal(void)
   }
 
   curwin->w_cursor.coladd = 0;
-  for (;;) {
+  while (true) {
     p = get_cursor_pos_ptr();
     if (vimconv.vc_type != CONV_NONE) {
       xfree(tofree);
@@ -2299,7 +2299,7 @@ static char *iconv_string(const vimconv_T *const vcp, const char *str, size_t sl
 
   from = str;
   fromlen = slen;
-  for (;;) {
+  while (true) {
     if (len == 0 || ICONV_ERRNO == ICONV_E2BIG) {
       // Allocate enough room for most conversions.  When re-allocating
       // increase the buffer size.

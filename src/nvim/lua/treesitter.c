@@ -454,7 +454,7 @@ static int parser_parse(lua_State *L)
   // the lua GC.
   // Old tree is still owned by the lua GC.
   uint32_t n_ranges = 0;
-  TSRange *changed = old_tree ?  ts_tree_get_changed_ranges(old_tree, new_tree, &n_ranges) : NULL;
+  TSRange *changed = old_tree ? ts_tree_get_changed_ranges(old_tree, new_tree, &n_ranges) : NULL;
 
   push_tree(L, new_tree, false);  // [tree]
 

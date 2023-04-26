@@ -1484,8 +1484,8 @@ void ex_finally(exarg_T *eap)
       } else {
         pending |= (did_throw ? CSTP_THROW : 0);
       }
-      pending |= did_emsg  ? CSTP_ERROR     : 0;
-      pending |= got_int   ? CSTP_INTERRUPT : 0;
+      pending |= did_emsg ? CSTP_ERROR : 0;
+      pending |= got_int ? CSTP_INTERRUPT : 0;
       assert(pending >= CHAR_MIN && pending <= CHAR_MAX);
       cstack->cs_pending[cstack->cs_idx] = (char)pending;
 
@@ -1973,7 +1973,7 @@ void ex_endfunction(exarg_T *eap)
 int has_loop_cmd(char *p)
 {
   // skip modifiers, white space and ':'
-  for (;;) {
+  while (true) {
     while (*p == ' ' || *p == '\t' || *p == ':') {
       p++;
     }

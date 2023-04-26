@@ -172,7 +172,7 @@ static void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, typval_
   }
 
   // Default result is zero == OK.
-  for (;;) {
+  while (true) {
     if (lines->v_type == VAR_LIST) {
       // List argument, get next string.
       if (li == NULL) {

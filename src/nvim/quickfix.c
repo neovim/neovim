@@ -800,7 +800,7 @@ retry:
     memcpy(state->growbuf, IObuff, IOSIZE - 1);
     size_t growbuflen = state->linelen;
 
-    for (;;) {
+    while (true) {
       errno = 0;
       if (fgets(state->growbuf + growbuflen,
                 (int)(state->growbufsiz - growbuflen), state->fd) == NULL) {
@@ -2291,7 +2291,7 @@ static char *qf_guess_filepath(qf_list_T *qfl, char *filename)
 }
 
 /// Returns true, if a quickfix/location list with the given identifier exists.
-static bool qflist_valid(win_T *wp, unsigned int qf_id)
+static bool qflist_valid(win_T *wp, unsigned qf_id)
 {
   qf_info_T *qi = &ql_info;
 
@@ -2641,7 +2641,7 @@ static void qf_goto_win_with_qfl_file(int qf_fnum)
 {
   win_T *win = curwin;
   win_T *altwin = NULL;
-  for (;;) {
+  while (true) {
     if (win->w_buffer->b_fnum == qf_fnum) {
       break;
     }
@@ -4414,7 +4414,7 @@ static char *get_mef_name(void)
   }
 
   // Keep trying until the name doesn't exist yet.
-  for (;;) {
+  while (true) {
     if (start == -1) {
       start = (int)os_get_pid();
     } else {

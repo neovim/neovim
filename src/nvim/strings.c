@@ -373,7 +373,7 @@ int vim_stricmp(const char *s1, const char *s2)
 {
   int i;
 
-  for (;;) {
+  while (true) {
     i = (int)TOLOWER_LOC((uint8_t)(*s1)) - (int)TOLOWER_LOC((uint8_t)(*s2));
     if (i != 0) {
       return i;                             // this character different
@@ -831,10 +831,10 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap, t
       } else if (ascii_isdigit((int)(*p))) {
         // size_t could be wider than unsigned int; make sure we treat
         // argument like common implementations do
-        unsigned int uj = (unsigned)(*p++ - '0');
+        unsigned uj = (unsigned)(*p++ - '0');
 
         while (ascii_isdigit((int)(*p))) {
-          uj = 10 * uj + (unsigned int)(*p++ - '0');
+          uj = 10 * uj + (unsigned)(*p++ - '0');
         }
         min_field_width = uj;
       }
@@ -855,10 +855,10 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap, t
         } else if (ascii_isdigit((int)(*p))) {
           // size_t could be wider than unsigned int; make sure we
           // treat argument like common implementations do
-          unsigned int uj = (unsigned)(*p++ - '0');
+          unsigned uj = (unsigned)(*p++ - '0');
 
           while (ascii_isdigit((int)(*p))) {
-            uj = 10 * uj + (unsigned int)(*p++ - '0');
+            uj = 10 * uj + (unsigned)(*p++ - '0');
           }
           precision = uj;
         }
@@ -1030,10 +1030,10 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap, t
           // unsigned
           switch (length_modifier) {
           case '\0':
-            uarg = (unsigned int)(tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, unsigned int));
+            uarg = (unsigned)(tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, unsigned));
             break;
           case 'h':
-            uarg = (uint16_t)(tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, unsigned int));
+            uarg = (uint16_t)(tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, unsigned));
             break;
           case 'l':
             uarg = (tvs ? (unsigned long)tv_nr(tvs, &arg_idx) : va_arg(ap, unsigned long));

@@ -628,7 +628,7 @@ static int mf_write(memfile_T *mfp, bhdr_T *hp)
   /// to extend the file.
   /// If block 'mf_infile_count' is not in the hash list, it has been
   /// freed. Fill the space in the file with data from the current block.
-  for (;;) {
+  while (true) {
     blocknr_T nr = hp->bh_bnum;  // block nr which is being written
     if (nr > mfp->mf_infile_count) {            // beyond end of file
       nr = mfp->mf_infile_count;

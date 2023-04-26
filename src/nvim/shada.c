@@ -3168,8 +3168,8 @@ int shada_read_everything(const char *const fname, const bool forceit, const boo
 {
   return shada_read_file(fname,
                          kShaDaWantInfo|kShaDaWantMarks|kShaDaGetOldfiles
-                         |(forceit?kShaDaForceit:0)
-                         |(missing_ok?0:kShaDaMissingError));
+                         |(forceit ? kShaDaForceit : 0)
+                         |(missing_ok ? 0 : kShaDaMissingError));
 }
 
 static void shada_free_shada_entry(ShadaEntry *const entry)

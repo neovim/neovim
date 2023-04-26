@@ -546,7 +546,7 @@ void set_option_to(uint64_t channel_id, void *to, int type, String name, Object 
   // For global-win-local options -> setlocal
   // For        win-local options -> setglobal and setlocal (opt_flags == 0)
   const int opt_flags = (type == SREQ_WIN && !(flags & SOPT_GLOBAL)) ? 0 :
-                        (type == SREQ_GLOBAL)                        ? OPT_GLOBAL : OPT_LOCAL;
+                        (type == SREQ_GLOBAL) ? OPT_GLOBAL : OPT_LOCAL;
 
   WITH_SCRIPT_CONTEXT(channel_id, {
     access_option_value_for(name.data, &numval, &stringval, opt_flags, type, to, false, err);

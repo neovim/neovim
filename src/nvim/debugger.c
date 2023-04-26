@@ -126,7 +126,7 @@ void do_debug(char *cmd)
   }
 
   // Repeat getting a command and executing it.
-  for (;;) {
+  while (true) {
     msg_scroll = true;
     need_wait_return = false;
 

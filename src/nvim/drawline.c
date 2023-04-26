@@ -1516,7 +1516,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   int virt_line_index;
   int virt_line_offset = -1;
   // Repeat for the whole displayed line.
-  for (;;) {
+  while (true) {
     int has_match_conc = 0;  ///< match wants to conceal
     int decor_conceal = 0;
 

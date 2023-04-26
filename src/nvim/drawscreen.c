@@ -1715,7 +1715,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
           // bot_start to the first row that needs redrawing.
           bot_start = 0;
           int idx = 0;
-          for (;;) {
+          while (true) {
             wp->w_lines[idx] = wp->w_lines[j];
             // stop at line that didn't fit, unless it is still
             // valid (no lines deleted)
@@ -1828,7 +1828,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
       // First compute the actual start and end column.
       if (VIsual_mode == Ctrl_V) {
         colnr_T fromc, toc;
-        unsigned int save_ve_flags = curwin->w_ve_flags;
+        unsigned save_ve_flags = curwin->w_ve_flags;
 
         if (curwin->w_p_lbr) {
           curwin->w_ve_flags = VE_ALL;
@@ -1979,7 +1979,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
 
   bool eof = false;             // if true, we hit the end of the file
   bool didline = false;         // if true, we finished the last line
-  for (;;) {
+  while (true) {
     // stop updating when reached the end of the window (check for _past_
     // the end of the window is at the end of the loop)
     if (row == wp->w_grid.rows) {
@@ -2129,7 +2129,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
               int x = row + new_rows;
 
               // move entries in w_lines[] upwards
-              for (;;) {
+              while (true) {
                 // stop at last valid entry in w_lines[]
                 if (i >= wp->w_lines_valid) {
                   wp->w_lines_valid = (int)j;

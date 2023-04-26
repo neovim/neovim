@@ -418,7 +418,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
   ga_concat(gap, "v:null")
 
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
-  ga_concat(gap, ((num)? "v:true": "v:false"))
+  ga_concat(gap, ((num) ? "v:true" : "v:false"))
 
 #define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(tv, num)
 
@@ -544,7 +544,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
 
 #undef TYPVAL_ENCODE_CONV_BOOL
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
-  ga_concat(gap, ((num)? "true": "false"))
+  ga_concat(gap, ((num) ? "true" : "false"))
 
 #undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER
 #define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(tv, num) \

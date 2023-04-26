@@ -36,7 +36,7 @@
 
 void state_enter(VimState *s)
 {
-  for (;;) {
+  while (true) {
     int check_result = s->check ? s->check(s) : 1;
 
     if (!check_result) {
@@ -135,7 +135,7 @@ void state_handle_k_event(void)
 /// Return true if in the current mode we need to use virtual.
 bool virtual_active(void)
 {
-  unsigned int cur_ve_flags = get_ve_flags();
+  unsigned cur_ve_flags = get_ve_flags();
 
   // While an operator is being executed we return "virtual_op", because
   // VIsual_active has already been reset, thus we can't check for "block"

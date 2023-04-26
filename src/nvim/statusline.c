@@ -2000,7 +2000,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       // string to find the last character that will fit.
       trunc_p = out;
       width = 0;
-      for (;;) {
+      while (true) {
         width += ptr2cells(trunc_p);
         if (width >= maxwidth) {
           break;

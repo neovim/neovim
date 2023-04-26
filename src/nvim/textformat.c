@@ -318,7 +318,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
 
             if (allow_break) {
               // Break only when we are not at end of line.
-              end_foundcol = foundcol = ncc == NUL? 0 : curwin->w_cursor.col;
+              end_foundcol = foundcol = ncc == NUL ? 0 : curwin->w_cursor.col;
               break;
             }
             curwin->w_cursor.col = col;

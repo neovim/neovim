@@ -47,7 +47,7 @@ pos_T *find_start_comment(int ind_maxcomment)  // XXX
   pos_T *pos;
   int64_t cur_maxcomment = ind_maxcomment;
 
-  for (;;) {
+  while (true) {
     pos = findmatchlimit(NULL, '*', FM_BACKWARD, cur_maxcomment);
     if (pos == NULL) {
       break;
@@ -108,7 +108,7 @@ static pos_T *find_start_rawstring(int ind_maxcomment)  // XXX
   pos_T *pos;
   long cur_maxcomment = ind_maxcomment;
 
-  for (;;) {
+  while (true) {
     pos = findmatchlimit(NULL, 'R', FM_BACKWARD, cur_maxcomment);
     if (pos == NULL) {
       break;
@@ -412,7 +412,7 @@ static int cin_isinit(void)
     s = cin_skipcomment(s + 7);
   }
 
-  for (;;) {
+  while (true) {
     int i, l;
 
     for (i = 0; i < (int)ARRAY_SIZE(skip); i++) {
@@ -756,7 +756,7 @@ static int cin_ispreproc_cont(const char **pp, linenr_T *lnump, int *amount)
     candidate_amount = get_indent_lnum(lnum);
   }
 
-  for (;;) {
+  while (true) {
     if (cin_ispreproc(line)) {
       retval = true;
       *lnump = lnum;
@@ -929,7 +929,7 @@ static int cin_isfuncdecl(const char **sp, linenr_T first_lnum, linenr_T min_lnu
       // At the end: check for ',' in the next line, for this style:
       // func(arg1
       //       , arg2)
-      for (;;) {
+      while (true) {
         if (lnum >= curbuf->b_ml.ml_line_count) {
           break;
         }
@@ -1186,7 +1186,7 @@ static int cin_is_cpp_baseclass(cpp_baseclass_cache_T *cached)
   pos->lnum = lnum;
   line = ml_get(lnum);
   s = line;
-  for (;;) {
+  while (true) {
     if (*s == NUL) {
       if (lnum == curwin->w_cursor.lnum) {
         break;
@@ -2501,7 +2501,7 @@ int get_c_indent(void)
         // the usual amount relative to the conditional
         // that opens the block.
         curwin->w_cursor = cur_curpos;
-        for (;;) {
+        while (true) {
           curwin->w_cursor.lnum--;
           curwin->w_cursor.col = 0;
 

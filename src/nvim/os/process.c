@@ -72,7 +72,7 @@ static bool os_proc_tree_kill_rec(HANDLE process, int sig)
   }
 
 theend:
-  return (bool)TerminateProcess(process, (unsigned int)sig);
+  return (bool)TerminateProcess(process, (unsigned)sig);
 }
 /// Kills process `pid` and its descendants recursively.
 bool os_proc_tree_kill(int pid, int sig)

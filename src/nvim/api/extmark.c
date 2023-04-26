@@ -1168,7 +1168,7 @@ static bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, in
 
     Integer pos_row = pos.items[0].data.integer;
     Integer pos_col = pos.items[1].data.integer;
-    *row = (int)(pos_row >= 0 ? pos_row  : MAXLNUM);
+    *row = (int)(pos_row >= 0 ? pos_row : MAXLNUM);
     *col = (colnr_T)(pos_col >= 0 ? pos_col : MAXCOL);
     return true;
   } else {

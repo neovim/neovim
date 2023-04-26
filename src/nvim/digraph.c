@@ -2098,7 +2098,7 @@ void ex_loadkeymap(exarg_T *eap)
   p_cpo = "C";
 
   // Get each line of the sourced file, break at the end.
-  for (;;) {
+  while (true) {
     char *line = eap->getline(0, eap->cookie, 0, true);
 
     if (line == NULL) {

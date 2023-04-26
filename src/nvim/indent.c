@@ -527,7 +527,7 @@ int set_indent(int size, int flags)
     }
 
     // Count tabs required for indent.
-    for (;;) {
+    while (true) {
       tab_pad = tabstop_padding(ind_col, curbuf->b_p_ts, curbuf->b_p_vts_array);
       if (todo < tab_pad) {
         break;
@@ -650,7 +650,7 @@ int set_indent(int size, int flags)
       p = skipwhite(p);
     }
 
-    for (;;) {
+    while (true) {
       tab_pad = tabstop_padding(ind_done,
                                 curbuf->b_p_ts,
                                 curbuf->b_p_vts_array);
@@ -980,7 +980,7 @@ void ex_retab(exarg_T *eap)
     long col = 0;
     long vcol = 0;
     bool did_undo = false;  // called u_save for current line
-    for (;;) {
+    while (true) {
       if (ascii_iswhite(ptr[col])) {
         if (!got_tab && num_spaces == 0) {
           // First consecutive white-space

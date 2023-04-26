@@ -950,7 +950,7 @@ int copy_indent(int size, char *src)
 
     // Add tabs required for indent.
     if (!curbuf->b_p_et) {
-      for (;;) {
+      while (true) {
         tab_pad = tabstop_padding(ind_col,
                                   curbuf->b_p_ts,
                                   curbuf->b_p_vts_array);

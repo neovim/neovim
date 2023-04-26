@@ -990,7 +990,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
       && *get_showbreak_value(wp) == NUL
       && !wp->w_p_bri
       && !cts.cts_has_virt_text) {
-    for (;;) {
+    while (true) {
       head = 0;
       int c = (uint8_t)(*ptr);
 
@@ -1034,7 +1034,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
       MB_PTR_ADV(ptr);
     }
   } else {
-    for (;;) {
+    while (true) {
       // A tab gets expanded, depending on the current column
       // Other things also take up space.
       head = 0;

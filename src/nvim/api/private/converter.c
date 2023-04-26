@@ -51,7 +51,7 @@ typedef struct {
     const size_t len_ = (size_t)(len); \
     const char *const str_ = (str); \
     assert(len_ == 0 || str_ != NULL); \
-    kvi_push(edata->stack, STRING_OBJ(cbuf_to_string((len_?str_:""), len_))); \
+    kvi_push(edata->stack, STRING_OBJ(cbuf_to_string((len_ ? str_ : ""), len_))); \
   } while (0)
 
 #define TYPVAL_ENCODE_CONV_STR_STRING TYPVAL_ENCODE_CONV_STRING
@@ -275,7 +275,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
 
   case kObjectTypeBoolean:
     tv->v_type = VAR_BOOL;
-    tv->vval.v_bool = obj.data.boolean? kBoolVarTrue: kBoolVarFalse;
+    tv->vval.v_bool = obj.data.boolean ? kBoolVarTrue : kBoolVarFalse;
     break;
 
   case kObjectTypeBuffer:

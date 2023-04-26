@@ -1159,7 +1159,7 @@ static bool reg_match_visual(void)
     rex.line = (uint8_t *)reg_getline(rex.lnum);
     rex.input = rex.line + col;
 
-    unsigned int cols_u = win_linetabsize(wp, rex.reg_firstlnum + rex.lnum, (char *)rex.line, col);
+    unsigned cols_u = win_linetabsize(wp, rex.reg_firstlnum + rex.lnum, (char *)rex.line, col);
     assert(cols_u <= MAXCOL);
     colnr_T cols = (colnr_T)cols_u;
     if (cols < start || cols > end - (*p_sel == 'e')) {
@@ -1248,7 +1248,7 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
   if (bytelen != NULL) {
     *bytelen = 0;
   }
-  for (;;) {
+  while (true) {
     // Since getting one line may invalidate the other, need to make copy.
     // Slow!
     if (rex.line != reg_tofree) {
@@ -2003,7 +2003,7 @@ static int vim_regsub_both(char *source, typval_T *expr, char *dest, int destlen
           }
         }
         if (s != NULL) {
-          for (;;) {
+          while (true) {
             if (len == 0) {
               if (REG_MULTI) {
                 if (rex.reg_mmatch->endpos[no].lnum == clnum) {
