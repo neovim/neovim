@@ -660,6 +660,7 @@ let s:filename_checks = {
     \ 'wat': ['file.wat'],
     \ 'wast': ['file.wast'],
     \ 'wdl': ['file.wdl'],
+    \ 'wgsl': ['file.wgsl'],
     \ 'webmacro': ['file.wm'],
     \ 'wget': ['.wgetrc', 'wgetrc'],
     \ 'wget2': ['.wget2rc', 'wget2rc'],
