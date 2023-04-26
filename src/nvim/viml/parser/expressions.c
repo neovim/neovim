@@ -367,7 +367,7 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
       // uses recorded position to scale number down when processing exponent.
       float_T significand_part = 0;
       uvarnumber_T exp_part = 0;
-      const size_t frac_size = (size_t)(frac_end - frac_start);
+      const size_t frac_size = frac_end - frac_start;
       for (size_t i = 0; i < frac_end; i++) {
         if (i == frac_start - 1) {
           continue;
