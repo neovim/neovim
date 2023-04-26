@@ -621,6 +621,7 @@ String manipulation:					*string-functions*
 	strlen()		length of a string in bytes
 	strcharlen()		length of a string in characters
 	strchars()		number of characters in a string
+	strutf16len()		number of UTF-16 code units in a string
 	strwidth()		size of string when displayed
 	strdisplaywidth()	size of string when displayed, deals with tabs
 	setcellwidths()		set character cell width overrides
@@ -636,6 +637,7 @@ String manipulation:					*string-functions*
 	byteidx()		byte index of a character in a string
 	byteidxcomp()		like byteidx() but count composing characters
 	charidx()		character index of a byte in a string
+	utf16idx()		UTF-16 index of a byte in a string
 	repeat()		repeat a string multiple times
 	eval()			evaluate a string expression
 	execute()		execute an Ex command and get the output

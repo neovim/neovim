@@ -69,8 +69,10 @@ bufnr([{buf} [, {create}]])	Number	Number of the buffer {buf}
 bufwinid({buf})			Number	window ID of buffer {buf}
 bufwinnr({buf})			Number	window number of buffer {buf}
 byte2line({byte})		Number	line number at byte count {byte}
-byteidx({expr}, {nr})		Number	byte index of {nr}th char in {expr}
-byteidxcomp({expr}, {nr})	Number	byte index of {nr}th char in {expr}
+byteidx({expr}, {nr} [, {utf16}])
+				Number	byte index of {nr}th char in {expr}
+byteidxcomp({expr}, {nr} [, {utf16}])
+				Number	byte index of {nr}th char in {expr}
 call({func}, {arglist} [, {dict}])
 				any	call {func} with arguments {arglist}
 ceil({expr})			Float	round {expr} up
@@ -80,7 +82,7 @@ chansend({id}, {data})		Number	Writes {data} to channel
 char2nr({expr} [, {utf8}])	Number	ASCII/UTF-8 value of first char in {expr}
 charclass({string})		Number	character class of {string}
 charcol({expr} [, {winid}])	Number	column number of cursor or mark
-charidx({string}, {idx} [, {countcc}])
+charidx({string}, {idx} [, {countcc} [, {utf16}]])
 				Number	char index of byte {idx} in {string}
 chdir({dir})			String	change current working directory
 cindent({lnum})			Number	C indent for line {lnum}
@@ -501,6 +503,8 @@ strptime({format}, {timestring})
 strridx({haystack}, {needle} [, {start}])
 				Number	last index of {needle} in {haystack}
 strtrans({expr})		String	translate string to make it printable
+strutf16len({string} [, {countcc}])
+				Number	number of UTF-16 code units in {string}
 strwidth({expr})		Number	display cell length of the String {expr}
 submatch({nr} [, {list}])	String or List
 					specific match in ":s" or substitute()
@@ -545,6 +549,8 @@ undofile({name})		String	undo file name for {name}
 undotree()			List	undo file tree
 uniq({list} [, {func} [, {dict}]])
 				List	remove adjacent duplicates from a list
+utf16idx({string}, {idx} [, {countcc} [, {charidx}]])
+				Number	UTF-16 index of byte {idx} in {string}
 values({dict})			List	values in {dict}
 virtcol({expr} [, {list}])	Number or List
 					screen column of cursor or mark
@@ -982,7 +988,7 @@ byte2line({byte})					*byte2line()*
 		Can also be used as a |method|: >
 			GetOffset()->byte2line()
 
-byteidx({expr}, {nr})					*byteidx()*
+byteidx({expr}, {nr} [, {utf16}])			*byteidx()*
 		Return byte index of the {nr}th character in the String
 		{expr}.  Use zero for the first character, it then returns
 		zero.
@@ -992,6 +998,13 @@ byteidx({expr}, {nr})					*byteidx()*
 		length is added to the preceding base character.  See
 		|byteidxcomp()| below for counting composing characters
 		separately.
+		When {utf16} is present and TRUE, {nr} is used as the UTF-16
+		index in the String {expr} instead of as the character index.
+		The UTF-16 index is the index in the string when it is encoded
+		with 16-bit words.  If the specified UTF-16 index is in the
+		middle of a character (e.g. in a 4-byte character), then the
+		byte index of the first byte in the character is returned.
+		Refer to |string-offset-encoding| for more information.
 		Example : >
 			echo matchstr(str, ".", byteidx(str, 3))
 <		will display the fourth character.  Another way to do the
@@ -1003,11 +1016,17 @@ byteidx({expr}, {nr})					*byteidx()*
 		If there are less than {nr} characters -1 is returned.
 		If there are exactly {nr} characters the length of the string
 		in bytes is returned.
-
+		See |charidx()| and |utf16idx()| for getting the character and
+		UTF-16 index respectively from the byte index.
+		Examples: >
+			echo byteidx('a😊😊', 2)	returns 5
+			echo byteidx('a😊😊', 2, 1)	returns 1
+			echo byteidx('a😊😊', 3, 1)	returns 5
+<
 		Can also be used as a |method|: >
 			GetName()->byteidx(idx)
 
-byteidxcomp({expr}, {nr})					*byteidxcomp()*
+byteidxcomp({expr}, {nr} [, {utf16}])			*byteidxcomp()*
 		Like byteidx(), except that a composing character is counted
 		as a separate character.  Example: >
 			let s = 'e' .. nr2char(0x301)
@@ -1131,27 +1150,36 @@ charcol({expr} [, {winid}])				*charcol()*
 			GetPos()->col()
 <
 							*charidx()*
-charidx({string}, {idx} [, {countcc}])
+charidx({string}, {idx} [, {countcc} [, {utf16}]])
 		Return the character index of the byte at {idx} in {string}.
 		The index of the first character is zero.
 		If there are no multibyte characters the returned value is
 		equal to {idx}.
+
 		When {countcc} is omitted or |FALSE|, then composing characters
-		are not counted separately, their byte length is
-		added to the preceding base character.
+		are not counted separately, their byte length is added to the
+		preceding base character.
 		When {countcc} is |TRUE|, then composing characters are
 		counted as separate characters.
+
+		When {utf16} is present and TRUE, {idx} is used as the UTF-16
+		index in the String {expr} instead of as the byte index.
+
 		Returns -1 if the arguments are invalid or if {idx} is greater
 		than the index of the last byte in {string}.  An error is
 		given if the first argument is not a string, the second
 		argument is not a number or when the third argument is present
 		and is not zero or one.
+
 		See |byteidx()| and |byteidxcomp()| for getting the byte index
-		from the character index.
+		from the character index and |utf16idx()| for getting the
+		UTF-16 index from the character index.
+		Refer to |string-offset-encoding| for more information.
 		Examples: >
 			echo charidx('áb́ć', 3)		returns 1
 			echo charidx('áb́ć', 6, 1)	returns 4
 			echo charidx('áb́ć', 16)		returns -1
+			echo charidx('a😊😊', 4, 0, 1)	returns 2
 <
 		Can also be used as a |method|: >
 			GetName()->charidx(idx)
@@ -8332,6 +8360,28 @@ strtrans({string})					*strtrans()*
 		Can also be used as a |method|: >
 			GetString()->strtrans()
 
+strutf16len({string} [, {countcc}])			*strutf16len()*
+		The result is a Number, which is the number of UTF-16 code
+		units in String {string} (after converting it to UTF-16).
+
+		When {countcc} is TRUE, composing characters are counted
+		separately.
+		When {countcc} is omitted or FALSE, composing characters are
+		ignored.
+
+		Returns zero on error.
+
+		Also see |strlen()| and |strcharlen()|.
+		Examples: >
+		    echo strutf16len('a')		returns 1
+		    echo strutf16len('©')		returns 1
+		    echo strutf16len('😊')		returns 2
+		    echo strutf16len('ą́')		returns 1
+		    echo strutf16len('ą́', v:true)	returns 3
+
+		Can also be used as a |method|: >
+			GetText()->strutf16len()
+<
 strwidth({string})					*strwidth()*
 		The result is a Number, which is the number of display cells
 		String {string} occupies.  A Tab character is counted as one
@@ -9063,6 +9113,34 @@ uniq({list} [, {func} [, {dict}]])			*uniq()* *E882*
 
 		Can also be used as a |method|: >
 			mylist->uniq()
+<
+							*utf16idx()*
+utf16idx({string}, {idx} [, {countcc} [, {charidx}]])
+		Same as |charidx()| but returns the UTF-16 index of the byte
+		at {idx} in {string} (after converting it to UTF-16).
+
+		When {charidx} is present and TRUE, {idx} is used as the
+		character index in the String {string} instead of as the byte
+		index.
+		An {idx} in the middle of a UTF-8 sequence is rounded upwards
+		to the end of that sequence.
+
+		See |byteidx()| and |byteidxcomp()| for getting the byte index
+		from the UTF-16 index and |charidx()| for getting the
+		character index from the UTF-16 index.
+		Refer to |string-offset-encoding| for more information.
+		Examples: >
+			echo utf16idx('a😊😊', 3)	returns 2
+			echo utf16idx('a😊😊', 7)	returns 4
+			echo utf16idx('a😊😊', 1, 0, 1)	returns 2
+			echo utf16idx('a😊😊', 2, 0, 1)	returns 4
+			echo utf16idx('aą́c', 6)		returns 2
+			echo utf16idx('aą́c', 6, 1)	returns 4
+			echo utf16idx('a😊😊', 9)	returns -1
+<
+		Can also be used as a |method|: >
+			GetName()->utf16idx(idx)
+
 
 values({dict})						*values()*
 		Return a |List| with all the values of {dict}.  The |List| is
