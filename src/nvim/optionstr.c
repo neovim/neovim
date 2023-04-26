@@ -860,6 +860,24 @@ const char *did_set_background(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
+/// The 'whichwrap' option is changed.
+const char *did_set_whichwrap(optset_T *args)
+{
+  return did_set_option_listflag(args->os_varp, WW_ALL, args->os_errbuf, args->os_errbuflen);
+}
+
+/// The 'shortmess' option is changed.
+const char *did_set_shortmess(optset_T *args)
+{
+  return did_set_option_listflag(args->os_varp, SHM_ALL, args->os_errbuf, args->os_errbuflen);
+}
+
+/// The 'cpoptions' option is changed.
+const char *did_set_cpoptions(optset_T *args)
+{
+  return did_set_option_listflag(args->os_varp, CPO_VI, args->os_errbuf, args->os_errbuflen);
+}
+
 /// The 'clipboard' option is changed.
 const char *did_set_clipboard(optset_T *args FUNC_ATTR_UNUSED)
 {
@@ -870,6 +888,24 @@ const char *did_set_clipboard(optset_T *args FUNC_ATTR_UNUSED)
 const char *did_set_foldopen(optset_T *args FUNC_ATTR_UNUSED)
 {
   return did_set_opt_flags(p_fdo, p_fdo_values, &fdo_flags, true);
+}
+
+/// The 'formatoptions' option is changed.
+const char *did_set_formatoptions(optset_T *args)
+{
+  return did_set_option_listflag(args->os_varp, FO_ALL, args->os_errbuf, args->os_errbuflen);
+}
+
+/// The 'concealcursor' option is changed.
+const char *did_set_concealcursor(optset_T *args)
+{
+  return did_set_option_listflag(args->os_varp, COCU_ALL, args->os_errbuf, args->os_errbuflen);
+}
+
+/// The 'mouse' option is changed.
+const char *did_set_mouse(optset_T *args)
+{
+  return did_set_option_listflag(args->os_varp, MOUSE_ALL, args->os_errbuf, args->os_errbuflen);
 }
 
 /// The 'wildmode' option is changed.
@@ -1058,23 +1094,24 @@ const char *did_set_colorcolumn(optset_T *args)
   return check_colorcolumn(win);
 }
 
-static void did_set_comments(char **varp, char *errbuf, size_t errbuflen, const char **errmsg)
+const char *did_set_comments(optset_T *args)
 {
-  for (char *s = *varp; *s;) {
+  char *errmsg = NULL;
+  for (char *s = args->os_varp; *s;) {
     while (*s && *s != ':') {
       if (vim_strchr(COM_ALL, (uint8_t)(*s)) == NULL
           && !ascii_isdigit(*s) && *s != '-') {
-        *errmsg = illegal_char(errbuf, errbuflen, (uint8_t)(*s));
+        errmsg = illegal_char(args->os_errbuf, args->os_errbuflen, (uint8_t)(*s));
         break;
       }
       s++;
     }
     if (*s++ == NUL) {
-      *errmsg = N_("E524: Missing colon");
+      errmsg = N_("E524: Missing colon");
     } else if (*s == ',' || *s == NUL) {
-      *errmsg = N_("E525: Zero length string");
+      errmsg = N_("E525: Zero length string");
     }
-    if (*errmsg != NULL) {
+    if (errmsg != NULL) {
       break;
     }
     while (*s && *s != ',') {
@@ -1085,6 +1122,7 @@ static void did_set_comments(char **varp, char *errbuf, size_t errbuflen, const 
     }
     s = skip_to_option_part(s);
   }
+  return errmsg;
 }
 
 static void did_set_global_listfillchars(win_T *win, char **varp, int opt_flags,
@@ -1434,10 +1472,11 @@ const char *did_set_scrollopt(optset_T *args FUNC_ATTR_UNUSED)
   return did_set_opt_strings(p_sbo, p_scbopt_values, true);
 }
 
-static void did_set_complete(char **varp, char *errbuf, size_t errbuflen, const char **errmsg)
+/// The 'complete' option is changed.
+const char *did_set_complete(optset_T *args)
 {
   // check if it is a valid value for 'complete' -- Acevedo
-  for (char *s = *varp; *s;) {
+  for (char *s = args->os_varp; *s;) {
     while (*s == ',' || *s == ' ') {
       s++;
     }
@@ -1445,8 +1484,7 @@ static void did_set_complete(char **varp, char *errbuf, size_t errbuflen, const 
       break;
     }
     if (vim_strchr(".wbuksid]tU", (uint8_t)(*s)) == NULL) {
-      *errmsg = illegal_char(errbuf, errbuflen, (uint8_t)(*s));
-      break;
+      return illegal_char(args->os_errbuf, args->os_errbuflen, (uint8_t)(*s));
     }
     if (*++s != NUL && *s != ',' && *s != ' ') {
       if (s[-1] == 'k' || s[-1] == 's') {
@@ -1458,18 +1496,17 @@ static void did_set_complete(char **varp, char *errbuf, size_t errbuflen, const 
           s++;
         }
       } else {
-        if (errbuf != NULL) {
-          vim_snprintf(errbuf, errbuflen,
+        if (args->os_errbuf != NULL) {
+          vim_snprintf(args->os_errbuf, args->os_errbuflen,
                        _("E535: Illegal character after <%c>"),
                        *--s);
-          *errmsg = errbuf;
-        } else {
-          *errmsg = "";
+          return args->os_errbuf;
         }
-        break;
+        return "";
       }
     }
   }
+  return NULL;
 }
 
 /// The 'completeopt' option is changed.
@@ -1795,13 +1832,45 @@ const char *did_set_nrformats(optset_T *args)
   return did_set_opt_strings(args->os_varp, p_nf_values, true);
 }
 
-static void did_set_optexpr(char **varp)
+/// Returns TRUE if the option pointed by "varp" or "gvarp" is one of the
+/// '*expr' options: 'balloonexpr', 'diffexpr', 'foldexpr', 'foldtext',
+/// 'formatexpr', 'includeexpr', 'indentexpr', 'patchexpr', 'printexpr' or
+/// 'charconvert'.
+static int is_expr_option(win_T *win, char **varp, char **gvarp)
 {
-  char *name = get_scriptlocal_funcname(*varp);
+  return (varp == &p_dex                         // 'diffexpr'
+          || gvarp == &win->w_allbuf_opt.wo_fde  // 'foldexpr'
+          || gvarp == &win->w_allbuf_opt.wo_fdt  // 'foldtext'
+          || gvarp == &p_fex                     // 'formatexpr'
+          || gvarp == &p_inex                    // 'includeexpr'
+          || gvarp == &p_inde                    // 'indentexpr'
+          || varp == &p_pex                      // 'patchexpr'
+          || varp == &p_ccv);                    // 'charconvert'
+}
+
+/// One of the '*expr' options is changed:, 'diffexpr', 'foldexpr', 'foldtext',
+/// 'formatexpr', 'includeexpr', 'indentexpr', 'patchexpr' and 'charconvert'.
+const char *did_set_optexpr(optset_T *args)
+{
+  // If the option value starts with <SID> or s:, then replace that with
+  // the script identifier.
+  char *name = get_scriptlocal_funcname(args->os_varp);
   if (name != NULL) {
-    free_string_option(*varp);
-    *varp = name;
+    free_string_option(args->os_varp);
+    args->os_varp = name;
   }
+  return NULL;
+}
+
+/// The 'foldexpr' option is changed.
+const char *did_set_foldexpr(optset_T *args)
+{
+  win_T *win = (win_T *)args->os_win;
+  (void)did_set_optexpr(args);
+  if (foldmethodIsExpr(win)) {
+    foldUpdateAll(win);
+  }
+  return NULL;
 }
 
 /// The 'foldclose' option is changed.
@@ -1810,16 +1879,16 @@ const char *did_set_foldclose(optset_T *args FUNC_ATTR_UNUSED)
   return did_set_opt_strings(p_fcl, p_fcl_values, true);
 }
 
-// handle option that is a list of flags.
-static void did_set_option_listflag(char **varp, char *flags, char *errbuf, size_t errbuflen,
-                                    const char **errmsg)
+/// An option which is a list of flags is set.  Valid values are in 'flags'.
+static const char *did_set_option_listflag(char *varp, char *flags, char *errbuf, size_t errbuflen)
 {
-  for (char *s = *varp; *s; s++) {
+  for (char *s = varp; *s; s++) {
     if (vim_strchr(flags, (uint8_t)(*s)) == NULL) {
-      *errmsg = illegal_char(errbuf, errbuflen, (uint8_t)(*s));
-      break;
+      return illegal_char(errbuf, errbuflen, (uint8_t)(*s));
     }
   }
+
+  return NULL;
 }
 
 const char *did_set_guicursor(optset_T *args FUNC_ATTR_UNUSED)
@@ -1901,6 +1970,8 @@ static const char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx
     .os_flags = opt_flags,
     .os_oldval.string = oldval,
     .os_newval.string = value,
+    .os_errbuf = errbuf,
+    .os_errbuflen = errbuflen,
     .os_win = curwin,
     .os_buf = curbuf,
   };
@@ -1915,6 +1986,11 @@ static const char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx
     // Invoke the option specific callback function to validate and apply
     // the new option value.
     errmsg = did_set_cb(&args);
+    // When processing the '*expr' options (e.g. diffexpr, foldexpr, etc.),
+    // the did_set_cb() function may modify '*varp'.
+    if (errmsg == NULL && is_expr_option(curwin, varp, gvarp)) {
+      *varp = args.os_varp;
+    }
   } else if (varp == &p_isi                             // 'isident'
              || varp == &buf->b_p_isk                   // 'iskeyword'
              || varp == &p_isp                          // 'isprint'
@@ -1926,8 +2002,6 @@ static const char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx
     did_set_encoding(buf, varp, gvarp, opt_flags, &errmsg);
   } else if (varp == &buf->b_p_keymap) {                // 'keymap'
     did_set_keymap(buf, varp, opt_flags, value_checked, &errmsg);
-  } else if (gvarp == &p_com) {                         // 'comments'
-    did_set_comments(varp, errbuf, errbuflen, &errmsg);
   } else if (varp == &p_lcs                             // global 'listchars'
              || varp == &p_fcs) {                       // global 'fillchars'
     did_set_global_listfillchars(win, varp, opt_flags, &errmsg);
@@ -1937,35 +2011,9 @@ static const char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx
     errmsg = set_chars_option(win, varp, true);
   } else if (varp == &p_shada) {                        // 'shada'
     errmsg = did_set_shada(&opt, &opt_idx, &free_oldval, errbuf, errbuflen);
-  } else if (gvarp == &p_cpt) {                         // 'complete'
-    did_set_complete(varp, errbuf, errbuflen, &errmsg);
   } else if (gvarp == &p_ft                             // 'filetype'
              || gvarp == &p_syn) {                      // 'syntax'
     did_set_filetype_or_syntax(varp, oldval, value_checked, &value_changed, &errmsg);
-  } else if (varp == &p_dex                             // 'diffexpr'
-             || gvarp == &win->w_allbuf_opt.wo_fde      // 'foldexpr'
-             || gvarp == &win->w_allbuf_opt.wo_fdt      // 'foldtext'
-             || gvarp == &p_fex                         // 'formatexpr'
-             || gvarp == &p_inex                        // 'includeexpr'
-             || gvarp == &p_inde                        // 'indentexpr'
-             || varp == &p_pex                          // 'patchexpr'
-             || varp == &p_ccv) {                       // 'charconvert'
-    did_set_optexpr(varp);
-    if (varp == &win->w_p_fde && foldmethodIsExpr(win)) {
-      foldUpdateAll(win);
-    }
-  } else if (varp == &p_ww) {                           // 'whichwrap'
-    did_set_option_listflag(varp, WW_ALL, errbuf, errbuflen, &errmsg);
-  } else if (varp == &p_shm) {                          // 'shortmess'
-    did_set_option_listflag(varp, SHM_ALL, errbuf, errbuflen, &errmsg);
-  } else if (varp == &p_cpo) {                          // 'cpoptions'
-    did_set_option_listflag(varp, CPO_VI, errbuf, errbuflen, &errmsg);
-  } else if (varp == &buf->b_p_fo) {                    // 'formatoptions'
-    did_set_option_listflag(varp, FO_ALL, errbuf, errbuflen, &errmsg);
-  } else if (varp == &win->w_p_cocu) {                  // 'concealcursor'
-    did_set_option_listflag(varp, COCU_ALL, errbuf, errbuflen, &errmsg);
-  } else if (varp == &p_mouse) {                        // 'mouse'
-    did_set_option_listflag(varp, MOUSE_ALL, errbuf, errbuflen, &errmsg);
   }
 
   // If an error is detected, restore the previous value.

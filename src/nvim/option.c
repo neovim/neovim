@@ -2510,6 +2510,8 @@ static const char *set_bool_option(const int opt_idx, char *const varp, const in
       .os_oldval.boolean = old_value,
       .os_newval.boolean = value,
       .os_doskip = false,
+      .os_errbuf = NULL,
+      .os_errbuflen = 0,
       .os_buf = curbuf,
       .os_win = curwin
     };
@@ -3100,6 +3102,8 @@ static const char *set_num_option(int opt_idx, char *varp, long value, char *err
       .os_flags = opt_flags,
       .os_oldval.number = old_value,
       .os_newval.number = value,
+      .os_errbuf = NULL,
+      .os_errbuflen = 0,
       .os_buf = curbuf,
       .os_win = curwin
     };

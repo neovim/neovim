@@ -329,7 +329,8 @@ return {
       type='string', scope={'global'},
       secure=true,
       varname='p_ccv',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_optexpr'
     },
     {
       full_name='cindent', abbreviation='cin',
@@ -425,7 +426,8 @@ return {
       alloced=true,
       redraw={'curswant'},
       varname='p_com',
-      defaults={if_true="s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-"}
+      defaults={if_true="s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-"},
+      cb='did_set_comments'
     },
     {
       full_name='commentstring', abbreviation='cms',
@@ -453,7 +455,8 @@ return {
       deny_duplicates=true,
       alloced=true,
       varname='p_cpt',
-      defaults={if_true=".,w,b,u,t"}
+      defaults={if_true=".,w,b,u,t"},
+      cb='did_set_complete'
     },
     {
       full_name='concealcursor', abbreviation='cocu',
@@ -461,7 +464,8 @@ return {
       type='string', scope={'window'},
       alloced=true,
       redraw={'current_window'},
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_concealcursor'
     },
     {
       full_name='conceallevel', abbreviation='cole',
@@ -518,7 +522,8 @@ return {
       type='string', list='flags', scope={'global'},
       redraw={'all_windows'},
       varname='p_cpo',
-      defaults={if_true=macros('CPO_VIM')}
+      defaults={if_true=macros('CPO_VIM')},
+      cb='did_set_cpoptions'
     },
     {
       full_name='cursorbind', abbreviation='crb',
@@ -600,7 +605,8 @@ return {
       secure=true,
       redraw={'curswant'},
       varname='p_dex',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_optexpr'
     },
     {
       full_name='diffopt', abbreviation='dip',
@@ -869,7 +875,8 @@ return {
       modelineexpr=true,
       alloced=true,
       redraw={'current_window'},
-      defaults={if_true="0"}
+      defaults={if_true="0"},
+      cb='did_set_foldexpr'
     },
     {
       full_name='foldignore', abbreviation='fdi',
@@ -948,7 +955,8 @@ return {
       modelineexpr=true,
       alloced=true,
       redraw={'current_window'},
-      defaults={if_true="foldtext()"}
+      defaults={if_true="foldtext()"},
+      cb='did_set_optexpr'
     },
     {
       full_name='formatexpr', abbreviation='fex',
@@ -957,7 +965,8 @@ return {
       modelineexpr=true,
       alloced=true,
       varname='p_fex',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_optexpr'
     },
     {
       full_name='formatoptions', abbreviation='fo',
@@ -965,7 +974,8 @@ return {
       type='string', list='flags', scope={'buffer'},
       alloced=true,
       varname='p_fo',
-      defaults={if_true=macros('DFLT_FO_VIM')}
+      defaults={if_true=macros('DFLT_FO_VIM')},
+      cb='did_set_formatoptions'
     },
     {
       full_name='formatlistpat', abbreviation='flp',
@@ -1222,7 +1232,8 @@ return {
       modelineexpr=true,
       alloced=true,
       varname='p_inex',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_optexpr'
     },
     {
       full_name='incsearch', abbreviation='is',
@@ -1238,7 +1249,8 @@ return {
       modelineexpr=true,
       alloced=true,
       varname='p_inde',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_optexpr'
     },
     {
       full_name='indentkeys', abbreviation='indk',
@@ -1623,7 +1635,8 @@ return {
       short_desc=N_("the use of mouse clicks"),
       type='string', list='flags', scope={'global'},
       varname='p_mouse',
-      defaults={if_true="nvi"}
+      defaults={if_true="nvi"},
+      cb='did_set_mouse'
     },
     {
       full_name='mousefocus', abbreviation='mousef',
@@ -1686,7 +1699,8 @@ return {
       deny_duplicates=true,
       alloced=true,
       varname='p_nf',
-      defaults={if_true="bin,hex"}
+      defaults={if_true="bin,hex"},
+      cb='did_set_nrformats'
     },
     {
       full_name='number', abbreviation='nu',
@@ -1771,7 +1785,8 @@ return {
       type='string', scope={'global'},
       secure=true,
       varname='p_pex',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_optexpr'
     },
     {
       full_name='patchmode', abbreviation='pm',
@@ -2197,7 +2212,8 @@ return {
       short_desc=N_("list of flags, reduce length of messages"),
       type='string', list='flags', scope={'global'},
       varname='p_shm',
-      defaults={if_true="filnxtToOF"}
+      defaults={if_true="filnxtToOF"},
+      cb='did_set_shortmess'
     },
     {
       full_name='showbreak', abbreviation='sbr',
@@ -2839,7 +2855,8 @@ return {
       short_desc=N_("allow specified keys to cross line boundaries"),
       type='string', list='flagscomma', scope={'global'},
       varname='p_ww',
-      defaults={if_true="b,s"}
+      defaults={if_true="b,s"},
+      cb='did_set_whichwrap'
     },
     {
       full_name='wildchar', abbreviation='wc',

@@ -290,7 +290,7 @@ enum {
 #define GO_FOOTER       'F'             // add footer
 #define GO_VERTICAL     'v'             // arrange dialog buttons vertically
 #define GO_KEEPWINSIZE  'k'             // keep GUI window size
-#define GO_ALL "aAbcdefFghilmMprTvk"    // all possible flags for 'go'
+#define GO_ALL "!aAbcdefFghilLmMpPrRtTvk"  // all possible flags for 'go'
 
 // flags for 'comments' option
 #define COM_NEST        'n'             // comments strings nest
@@ -1001,6 +1001,12 @@ typedef struct {
   // When set by the called function: Stop processing the option further.
   // Currently only used for boolean options.
   int os_doskip;
+
+  // If the value specified for an option is not valid and the error message
+  // is parameterized, then the "os_errbuf" buffer is used to store the error
+  // message (when it is not NULL).
+  char *os_errbuf;
+  size_t os_errbuflen;
 
   void *os_win;
   void *os_buf;
