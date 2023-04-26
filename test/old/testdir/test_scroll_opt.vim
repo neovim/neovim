@@ -240,6 +240,28 @@ func Test_smoothscroll_wrap_long_line()
   call term_sendkeys(buf, "\<C-Y>")
   call VerifyScreenDump(buf, 'Test_smooth_long_5', {})
 
+  " 'scrolloff' set to 1, scrolling up, cursor moves screen line down
+  call term_sendkeys(buf, ":set scrolloff=1\<CR>")
+  call term_sendkeys(buf, "10|\<C-E>")
+  call VerifyScreenDump(buf, 'Test_smooth_long_6', {})
+  
+  " 'scrolloff' set to 1, scrolling down, cursor moves screen line up
+  call term_sendkeys(buf, "\<C-E>")
+  call term_sendkeys(buf, "gjgj")
+  call term_sendkeys(buf, "\<C-Y>")
+  call VerifyScreenDump(buf, 'Test_smooth_long_7', {})
+  
+  " 'scrolloff' set to 2, scrolling up, cursor moves screen line down
+  call term_sendkeys(buf, ":set scrolloff=2\<CR>")
+  call term_sendkeys(buf, "10|\<C-E>")
+  call VerifyScreenDump(buf, 'Test_smooth_long_8', {})
+  
+  " 'scrolloff' set to 2, scrolling down, cursor moves screen line up
+  call term_sendkeys(buf, "\<C-E>")
+  call term_sendkeys(buf, "gj")
+  call term_sendkeys(buf, "\<C-Y>")
+  call VerifyScreenDump(buf, 'Test_smooth_long_9', {})
+  
   call StopVimInTerminal(buf)
 endfunc
 

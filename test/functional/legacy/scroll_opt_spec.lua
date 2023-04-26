@@ -395,5 +395,47 @@ describe('smoothscroll', function()
       f text wi^th lots of text with lots of te|
                                               |
     ]])
+    -- 'scrolloff' set to 1, scrolling up, cursor moves screen line down
+    exec('set scrolloff=1')
+    feed('10|<C-E>')
+    screen:expect([[
+      <<<th lots of text with lots of text wit|
+      h lots of^ text with lots of text with lo|
+      ts of text with lots of text with lots o|
+      f text with lots of text with lots of te|
+      xt with lots of text with lots of text w|
+                                              |
+    ]])
+    -- 'scrolloff' set to 1, scrolling down, cursor moves screen line up
+    feed('<C-E>gjgj<C-Y>')
+    screen:expect([[
+      <<<th lots of text with lots of text wit|
+      h lots of text with lots of text with lo|
+      ts of text with lots of text with lots o|
+      f text wi^th lots of text with lots of te|
+      xt with lots of text with lots of text w|
+                                              |
+    ]])
+    -- 'scrolloff' set to 2, scrolling up, cursor moves screen line down
+    exec('set scrolloff=2')
+    feed('10|<C-E>')
+    screen:expect([[
+      <<<th lots of text with lots of text wit|
+      h lots of text with lots of text with lo|
+      ts of tex^t with lots of text with lots o|
+      f text with lots of text with lots of te|
+      xt with lots of text with lots of text w|
+                                              |
+    ]])
+    -- 'scrolloff' set to 2, scrolling down, cursor moves screen line up
+    feed('<C-E>gjgj<C-Y>')
+    screen:expect([[
+      <<<of text with lots of text with lots o|
+      f text with lots of text with lots of te|
+      xt with l^ots of text with lots of text w|
+      ith lots of text with lots of text with |
+      lots of text with lots of text with lots|
+                                              |
+    ]])
   end)
 end)
