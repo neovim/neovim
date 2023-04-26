@@ -193,7 +193,7 @@ static void insert_enter(InsertState *s)
     }
   }
 
-  Insstart_textlen = (colnr_T)linetabsize(get_cursor_line_ptr());
+  Insstart_textlen = linetabsize_str(get_cursor_line_ptr());
   Insstart_blank_vcol = MAXCOL;
 
   if (!did_ai) {
@@ -2251,7 +2251,7 @@ int stop_arrow(void)
       // right, except when nothing was inserted yet.
       update_Insstart_orig = false;
     }
-    Insstart_textlen = (colnr_T)linetabsize(get_cursor_line_ptr());
+    Insstart_textlen = linetabsize_str(get_cursor_line_ptr());
 
     if (u_save_cursor() == OK) {
       arrow_used = false;
