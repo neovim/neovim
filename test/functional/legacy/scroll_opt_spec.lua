@@ -340,4 +340,60 @@ describe('smoothscroll', function()
                                               |
     ]])
   end)
+
+  -- oldtest: Test_smoothscroll_wrap_long_line()
+  it("adjusts the cursor position in a long line", function()
+    screen:try_resize(40, 6)
+    exec([[
+      call setline(1, ['one', 'two', 'Line' .. (' with lots of text'->repeat(30))])
+      set smoothscroll scrolloff=0
+      normal 3G10|zt
+    ]])
+    -- scrolling up, cursor moves screen line down
+    screen:expect([[
+      Line with^ lots of text with lots of text|
+       with lots of text with lots of text wit|
+      h lots of text with lots of text with lo|
+      ts of text with lots of text with lots o|
+      f text with lots of text with lots of te|
+                                              |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      <<<th lot^s of text with lots of text wit|
+      h lots of text with lots of text with lo|
+      ts of text with lots of text with lots o|
+      f text with lots of text with lots of te|
+      xt with lots of text with lots of text w|
+                                              |
+    ]])
+    feed('5<C-E>')
+    screen:expect([[
+      <<< lots ^of text with lots of text with |
+      lots of text with lots of text with lots|
+       of text with lots of text with lots of |
+      text with lots of text with lots of text|
+       with lots of text with lots of text wit|
+                                              |
+    ]])
+    -- scrolling down, cursor moves screen line up
+    feed('5<C-Y>')
+    screen:expect([[
+      <<<th lots of text with lots of text wit|
+      h lots of text with lots of text with lo|
+      ts of text with lots of text with lots o|
+      f text with lots of text with lots of te|
+      xt with l^ots of text with lots of text w|
+                                              |
+    ]])
+    feed('<C-Y>')
+    screen:expect([[
+      Line with lots of text with lots of text|
+       with lots of text with lots of text wit|
+      h lots of text with lots of text with lo|
+      ts of text with lots of text with lots o|
+      f text wi^th lots of text with lots of te|
+                                              |
+    ]])
+  end)
 end)
