@@ -428,14 +428,36 @@ describe('smoothscroll', function()
                                               |
     ]])
     -- 'scrolloff' set to 2, scrolling down, cursor moves screen line up
-    feed('<C-E>gjgj<C-Y>')
+    feed('<C-E>gj<C-Y>')
+    screen:expect_unchanged()
+  end)
+
+  -- oldtest: Test_smoothscroll_one_long_line()
+  it("scrolls correctly when moving the cursor", function()
+    screen:try_resize(40, 6)
+    exec([[
+      call setline(1, 'with lots of text '->repeat(7))
+      set smoothscroll scrolloff=0
+    ]])
+    local s1 = [[
+      ^with lots of text with lots of text with|
+       lots of text with lots of text with lot|
+      s of text with lots of text with lots of|
+       text                                   |
+      ~                                       |
+                                              |
+    ]]
+    screen:expect(s1)
+    feed('<C-E>')
     screen:expect([[
-      <<<of text with lots of text with lots o|
-      f text with lots of text with lots of te|
-      xt with l^ots of text with lots of text w|
-      ith lots of text with lots of text with |
-      lots of text with lots of text with lots|
+      <<<ts of text with lots of text with lot|
+      ^s of text with lots of text with lots of|
+       text                                   |
+      ~                                       |
+      ~                                       |
                                               |
     ]])
+    feed('0')
+    screen:expect(s1)
   end)
 end)

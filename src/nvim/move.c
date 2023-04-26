@@ -426,7 +426,15 @@ void check_cursor_moved(win_T *wp)
                      |VALID_CHEIGHT|VALID_CROW|VALID_TOPLINE);
     wp->w_valid_cursor = wp->w_cursor;
     wp->w_valid_leftcol = wp->w_leftcol;
+    wp->w_valid_skipcol = wp->w_skipcol;
     wp->w_viewport_invalid = true;
+  } else if (wp->w_skipcol != wp->w_valid_skipcol) {
+    wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL
+                     |VALID_CHEIGHT|VALID_CROW
+                     |VALID_BOTLINE|VALID_BOTLINE_AP);
+    wp->w_valid_cursor = wp->w_cursor;
+    wp->w_valid_leftcol = wp->w_leftcol;
+    wp->w_valid_skipcol = wp->w_skipcol;
   } else if (wp->w_cursor.col != wp->w_valid_cursor.col
              || wp->w_leftcol != wp->w_valid_leftcol
              || wp->w_cursor.coladd !=
@@ -786,6 +794,12 @@ void curs_columns(win_T *wp, int may_scroll)
   } else if (wp->w_p_wrap && wp->w_width_inner != 0) {
     width = textwidth + win_col_off2(wp);
 
+    // skip columns that are not visible
+    if (wp->w_cursor.lnum == wp->w_topline
+        && wp->w_wcol >= wp->w_skipcol) {
+      wp->w_wcol -= wp->w_skipcol;
+    }
+
     // long line wrapping, adjust wp->w_wrow
     if (wp->w_wcol >= wp->w_width_inner) {
       // this same formula is used in validate_cursor_col()
@@ -929,11 +943,11 @@ void curs_columns(win_T *wp, int may_scroll)
         endcol -= width;
       }
       if (endcol > wp->w_skipcol) {
+        wp->w_wrow -= (endcol - wp->w_skipcol) / width;
         wp->w_skipcol = endcol;
       }
     }
 
-    wp->w_wrow -= wp->w_skipcol / width;
     if (wp->w_wrow >= wp->w_height_inner) {
       // small window, make sure cursor is in it
       extra = wp->w_wrow - wp->w_height_inner + 1;
@@ -953,8 +967,10 @@ void curs_columns(win_T *wp, int may_scroll)
 
   redraw_for_cursorcolumn(curwin);
 
-  // now w_leftcol is valid, avoid check_cursor_moved() thinking otherwise
+  // now w_leftcol and w_skipcol are valid, avoid check_cursor_moved()
+  // thinking otherwise
   wp->w_valid_leftcol = wp->w_leftcol;
+  wp->w_valid_skipcol = wp->w_skipcol;
 
   wp->w_valid |= VALID_WCOL|VALID_WROW|VALID_VIRTCOL;
 }
@@ -1352,13 +1368,68 @@ bool scrollup(long line_count, int byfold)
       }
       curwin->w_curswant = col;
       coladvance(curwin->w_curswant);
+
+      // validate_virtcol() marked various things as valid, but after
+      // moving the cursor they need to be recomputed
+      curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|VALID_VIRTCOL);
     }
   }
 
-  bool moved = topline != curwin->w_topline
-               || botline != curwin->w_botline;
+  bool moved = topline != curwin->w_topline || botline != curwin->w_botline;
 
   return moved;
+}
+
+/// Called after changing the cursor column: make sure that curwin->w_skipcol is
+/// valid for 'smoothscroll'.
+void adjust_skipcol(void)
+{
+  if (!curwin->w_p_wrap || !curwin->w_p_sms || curwin->w_cursor.lnum != curwin->w_topline) {
+    return;
+  }
+
+  int width1 = curwin->w_width - curwin_col_off();
+  int width2 = width1 + curwin_col_off2();
+  long so = curwin->w_p_so >= 0 ? curwin->w_p_so : p_so;
+  long scrolloff_cols = so == 0 ? 0 : width1 + (so - 1) * width2;
+  bool scrolled = false;
+
+  validate_virtcol();
+  while (curwin->w_skipcol > 0
+         && curwin->w_virtcol < curwin->w_skipcol + 3 + scrolloff_cols) {
+    // scroll a screen line down
+    if (curwin->w_skipcol >= width1 + width2) {
+      curwin->w_skipcol -= width2;
+    } else {
+      curwin->w_skipcol -= width1;
+    }
+    redraw_later(curwin, UPD_NOT_VALID);
+    scrolled = true;
+    validate_virtcol();
+  }
+  if (scrolled) {
+    return;  // don't scroll in the other direction now
+  }
+  long col = curwin->w_virtcol - curwin->w_skipcol + scrolloff_cols;
+  int row = 0;
+  if (col >= width1) {
+    col -= width1;
+    row++;
+  }
+  if (col > width2) {
+    row += (int)col / width2;
+    col = col % width2;
+  }
+  if (row >= curwin->w_height) {
+    if (curwin->w_skipcol == 0) {
+      curwin->w_skipcol += width1;
+      row--;
+    }
+    if (row >= curwin->w_height) {
+      curwin->w_skipcol += (row - curwin->w_height) * width2;
+    }
+    redraw_later(curwin, UPD_NOT_VALID);
+  }
 }
 
 /// Don't end up with too many filler lines in the window.

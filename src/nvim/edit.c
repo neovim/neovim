@@ -2449,6 +2449,7 @@ void beginline(int flags)
     }
     curwin->w_set_curswant = true;
   }
+  adjust_skipcol();
 }
 
 // oneright oneleft cursor_down cursor_up
@@ -2490,6 +2491,7 @@ int oneright(void)
   curwin->w_cursor.col += l;
 
   curwin->w_set_curswant = true;
+  adjust_skipcol();
   return OK;
 }
 
@@ -2538,6 +2540,7 @@ int oneleft(void)
   // if the character on the left of the current cursor is a multi-byte
   // character, move to its first byte
   mb_adjust_cursor();
+  adjust_skipcol();
   return OK;
 }
 

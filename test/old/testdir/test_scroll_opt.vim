@@ -265,5 +265,26 @@ func Test_smoothscroll_wrap_long_line()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_smoothscroll_one_long_line()
+  CheckScreendump
+
+  let lines =<< trim END
+      vim9script
+      setline(1, 'with lots of text '->repeat(7))
+      set smoothscroll scrolloff=0
+  END
+  call writefile(lines, 'XSmoothOneLong', 'D')
+  let buf = RunVimInTerminal('-S XSmoothOneLong', #{rows: 6, cols: 40})
+  call VerifyScreenDump(buf, 'Test_smooth_one_long_1', {})
+  
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, 'Test_smooth_one_long_2', {})
+
+  call term_sendkeys(buf, "0")
+  call VerifyScreenDump(buf, 'Test_smooth_one_long_1', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
