@@ -1504,11 +1504,28 @@ char *strrep(const char *src, const char *what, const char *rep)
 
 static void byteidx(typval_T *argvars, typval_T *rettv, int comp)
 {
+  rettv->vval.v_number = -1;
+
   const char *const str = tv_get_string_chk(&argvars[0]);
   varnumber_T idx = tv_get_number_chk(&argvars[1], NULL);
-  rettv->vval.v_number = -1;
   if (str == NULL || idx < 0) {
     return;
+  }
+
+  varnumber_T utf16idx = false;
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    utf16idx = tv_get_bool(&argvars[2]);
+    if (utf16idx < 0 || utf16idx > 1) {
+      semsg(_(e_using_number_as_bool_nr), utf16idx);
+      return;
+    }
+  }
+
+  int (*ptr2len)(const char *);
+  if (comp) {
+    ptr2len = utf_ptr2len;
+  } else {
+    ptr2len = utfc_ptr2len;
   }
 
   const char *t = str;
@@ -1516,10 +1533,15 @@ static void byteidx(typval_T *argvars, typval_T *rettv, int comp)
     if (*t == NUL) {  // EOL reached.
       return;
     }
-    if (comp) {
-      t += utf_ptr2len(t);
-    } else {
-      t += utfc_ptr2len(t);
+    if (utf16idx) {
+      const int clen = ptr2len(t);
+      const int c = (clen > 1) ? utf_ptr2char(t) : *t;
+      if (c > 0xFFFF) {
+        idx--;
+      }
+    }
+    if (idx > 0) {
+      t += ptr2len(t);
     }
   }
   rettv->vval.v_number = (varnumber_T)(t - str);
@@ -1542,24 +1564,27 @@ void f_charidx(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->vval.v_number = -1;
 
-  if ((tv_check_for_string_arg(argvars, 0) == FAIL
-       || tv_check_for_number_arg(argvars, 1) == FAIL
-       || tv_check_for_opt_bool_arg(argvars, 2) == FAIL)) {
+  if (tv_check_for_string_arg(argvars, 0) == FAIL
+      || tv_check_for_number_arg(argvars, 1) == FAIL
+      || tv_check_for_opt_bool_arg(argvars, 2) == FAIL
+      || (argvars[2].v_type != VAR_UNKNOWN
+          && tv_check_for_opt_bool_arg(argvars, 3) == FAIL)) {
     return;
   }
 
-  const char *str = tv_get_string_chk(&argvars[0]);
+  const char *const str = tv_get_string_chk(&argvars[0]);
   varnumber_T idx = tv_get_number_chk(&argvars[1], NULL);
   if (str == NULL || idx < 0) {
     return;
   }
-  int countcc = 0;
+
+  varnumber_T countcc = false;
+  varnumber_T utf16idx = false;
   if (argvars[2].v_type != VAR_UNKNOWN) {
-    countcc = (int)tv_get_number(&argvars[2]);
-  }
-  if (countcc < 0 || countcc > 1) {
-    semsg(_(e_using_number_as_bool_nr), countcc);
-    return;
+    countcc = tv_get_bool(&argvars[2]);
+    if (argvars[3].v_type != VAR_UNKNOWN) {
+      utf16idx = tv_get_bool(&argvars[3]);
+    }
   }
 
   int (*ptr2len)(const char *);
@@ -1571,9 +1596,17 @@ void f_charidx(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   const char *p;
   int len;
-  for (p = str, len = 0; p <= str + idx; len++) {
+  for (p = str, len = 0; utf16idx ? idx >= 0 : p <= str + idx; len++) {
     if (*p == NUL) {
       return;
+    }
+    if (utf16idx) {
+      idx--;
+      const int clen = ptr2len(p);
+      const int c = (clen > 1) ? utf_ptr2char(p) : *p;
+      if (c > 0xFFFF) {
+        idx--;
+      }
     }
     p += ptr2len(p);
   }
@@ -1741,6 +1774,36 @@ void f_strchars(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   } else {
     strchar_common(argvars, rettv, skipcc);
   }
+}
+
+/// "strutf16len()" function
+void f_strutf16len(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  rettv->vval.v_number = -1;
+
+  if (tv_check_for_string_arg(argvars, 0) == FAIL
+      || tv_check_for_opt_bool_arg(argvars, 1) == FAIL) {
+    return;
+  }
+
+  varnumber_T countcc = false;
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    countcc = tv_get_bool(&argvars[1]);
+  }
+
+  const char *s = tv_get_string(&argvars[0]);
+  varnumber_T len = 0;
+  int (*func_mb_ptr2char_adv)(const char **pp);
+
+  func_mb_ptr2char_adv = countcc ? mb_cptr2char_adv : mb_ptr2char_adv;
+  while (*s != NUL) {
+    const int ch = func_mb_ptr2char_adv(&s);
+    if (ch > 0xFFFF) {
+      len++;
+    }
+    len++;
+  }
+  rettv->vval.v_number = len;
 }
 
 /// "strdisplaywidth()" function
@@ -1912,6 +1975,61 @@ void f_strtrans(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = transstr(tv_get_string(&argvars[0]), true);
+}
+
+/// "utf16idx()" function
+void f_utf16idx(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  rettv->vval.v_number = -1;
+
+  if (tv_check_for_string_arg(argvars, 0) == FAIL
+      || tv_check_for_opt_number_arg(argvars, 1) == FAIL
+      || tv_check_for_opt_bool_arg(argvars, 2) == FAIL
+      || (argvars[2].v_type != VAR_UNKNOWN
+          && tv_check_for_opt_bool_arg(argvars, 3) == FAIL)) {
+    return;
+  }
+
+  const char *const str = tv_get_string_chk(&argvars[0]);
+  varnumber_T idx = tv_get_number_chk(&argvars[1], NULL);
+  if (str == NULL || idx < 0) {
+    return;
+  }
+
+  varnumber_T countcc = false;
+  varnumber_T charidx = false;
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    countcc = tv_get_bool(&argvars[2]);
+    if (argvars[3].v_type != VAR_UNKNOWN) {
+      charidx = tv_get_bool(&argvars[3]);
+    }
+  }
+
+  int (*ptr2len)(const char *);
+  if (countcc) {
+    ptr2len = utf_ptr2len;
+  } else {
+    ptr2len = utfc_ptr2len;
+  }
+
+  const char *p;
+  int len;
+  for (p = str, len = 0; charidx ? idx >= 0 : p <= str + idx; len++) {
+    if (*p == NUL) {
+      return;
+    }
+    const int clen = ptr2len(p);
+    const int c = (clen > 1) ? utf_ptr2char(p) : *p;
+    if (c > 0xFFFF) {
+      len++;
+    }
+    p += ptr2len(p);
+    if (charidx) {
+      idx--;
+    }
+  }
+
+  rettv->vval.v_number = len > 0 ? len - 1 : 0;
 }
 
 /// "tolower(string)" function

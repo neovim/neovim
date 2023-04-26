@@ -1433,6 +1433,32 @@ Examples: >
 	echo $"The square root of {{9}} is {sqrt(9)}"
 <	The square root of {9} is 3.0 ~
 
+						*string-offset-encoding*
+A string consists of multiple characters.  UTF-8 uses one byte for ASCII
+characters, two bytes for other latin characters and more bytes for other
+characters.
+
+A string offset can count characters or bytes.  Other programs may use
+UTF-16 encoding (16-bit words) and an offset of UTF-16 words.  Some functions
+use byte offsets, usually for UTF-8 encoding.  Other functions use character
+offsets, in which case the encoding doesn't matter.
+
+The different offsets for the string "a©😊" are below:
+
+  UTF-8 offsets:
+      [0]: 61, [1]: C2, [2]: A9, [3]: F0, [4]: 9F, [5]: 98, [6]: 8A
+  UTF-16 offsets:
+      [0]: 0061, [1]: 00A9, [2]: D83D, [3]: DE0A
+  UTF-32 (character) offsets:
+      [0]: 00000061, [1]: 000000A9, [2]: 0001F60A
+
+You can use the "g8" and "ga" commands on a character to see the
+decimal/hex/octal values.
+
+The functions |byteidx()|, |utf16idx()| and |charidx()| can be used to convert
+between these indices.  The functions |strlen()|, |strutf16len()| and
+|strcharlen()| return the number of bytes, UTF-16 code units and characters in
+a string respectively.
 
 ------------------------------------------------------------------------------
 option						*expr-option* *E112* *E113*
