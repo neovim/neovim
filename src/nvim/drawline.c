@@ -595,9 +595,11 @@ static int get_line_number_attr(win_T *wp, winlinevars_T *wlv)
 static void handle_lnum_col(win_T *wp, winlinevars_T *wlv, int num_signs, int sign_idx,
                             int sign_num_attr, int sign_cul_attr)
 {
+  bool has_cpo_n = vim_strchr(p_cpo, CPO_NUMCOL) != NULL;
+
   if ((wp->w_p_nu || wp->w_p_rnu)
-      && (wlv->row == wlv->startrow + wlv->filler_lines
-          || vim_strchr(p_cpo, CPO_NUMCOL) == NULL)) {
+      && (wlv->row == wlv->startrow + wlv->filler_lines || !has_cpo_n)
+      && !(has_cpo_n && wp->w_skipcol > 0 && wlv->lnum == wp->w_topline)) {
     // If 'signcolumn' is set to 'number' and a sign is present
     // in "lnum", then display the sign instead of the line
     // number.
