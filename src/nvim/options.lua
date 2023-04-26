@@ -196,7 +196,8 @@ return {
       type='string', list='comma', scope={'global'},
       deny_duplicates=true,
       varname='p_bo',
-      defaults={if_true="all"}
+      defaults={if_true="all"},
+      cb='did_set_belloff'
     },
     {
       full_name='binary', abbreviation='bin',
@@ -256,7 +257,8 @@ return {
       noglob=true,
       alloced=true,
       varname='p_bh',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_bufhidden'
     },
     {
       full_name='buflisted', abbreviation='bl',
@@ -283,7 +285,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_cmp',
-      defaults={if_true="internal,keepascii"}
+      defaults={if_true="internal,keepascii"},
+      cb='did_set_casemap'
     },
     {
       full_name='cdhome', abbreviation='cdh',
@@ -378,7 +381,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_cb',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_clipboard'
     },
     {
       full_name='cmdheight', abbreviation='ch',
@@ -402,7 +406,8 @@ return {
       type='string', list='onecomma', scope={'window'},
       deny_duplicates=true,
       redraw={'current_window'},
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_colorcolumn'
     },
     {
       full_name='columns', abbreviation='co',
@@ -542,14 +547,16 @@ return {
       type='string', list='onecomma', scope={'window'},
       deny_duplicates=true,
       redraw={'current_window_only'},
-      defaults={if_true="both"}
+      defaults={if_true="both"},
+      cb='did_set_cursorlineopt'
     },
     {
       full_name='debug',
       short_desc=N_("to \"msg\" to see all error messages"),
       type='string', scope={'global'},
       varname='p_debug',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_debug'
     },
     {
       full_name='define', abbreviation='def',
@@ -638,7 +645,8 @@ return {
       short_desc=N_("in which direction 'equalalways' works"),
       type='string', scope={'global'},
       varname='p_ead',
-      defaults={if_true="both"}
+      defaults={if_true="both"},
+      cb='did_set_eadirection'
     },
     {
       full_name='edcompatible', abbreviation='ed',
@@ -784,7 +792,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_ffs',
-      defaults={if_true=macros('DFLT_FFS_VIM')}
+      defaults={if_true=macros('DFLT_FFS_VIM')},
+      cb='did_set_fileformats'
     },
     {
       full_name='fileignorecase', abbreviation='fic',
@@ -834,7 +843,8 @@ return {
       deny_duplicates=true,
       redraw={'current_window'},
       varname='p_fcl',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_foldclose'
     },
     {
       full_name='foldcolumn', abbreviation='fdc',
@@ -928,7 +938,8 @@ return {
       deny_duplicates=true,
       redraw={'curswant'},
       varname='p_fdo',
-      defaults={if_true="block,hor,mark,percent,quickfix,search,tag,undo"}
+      defaults={if_true="block,hor,mark,percent,quickfix,search,tag,undo"},
+      cb='did_set_foldopen'
     },
     {
       full_name='foldtext', abbreviation='fdt',
@@ -1193,7 +1204,8 @@ return {
       short_desc=N_("Live preview of substitution"),
       type='string', scope={'global'},
       varname='p_icm',
-      defaults={if_true="nosplit"}
+      defaults={if_true="nosplit"},
+      cb='did_set_inccommand'
     },
     {
       full_name='include', abbreviation='inc',
@@ -1308,7 +1320,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_jop',
-      defaults={if_true=''}
+      defaults={if_true=''},
+      cb='did_set_jumpoptions'
     },
     {
       full_name='keymap', abbreviation='kmp',
@@ -1632,7 +1645,8 @@ return {
       short_desc=N_("changes meaning of mouse buttons"),
       type='string', scope={'global'},
       varname='p_mousem',
-      defaults={if_true="popup_setpos"}
+      defaults={if_true="popup_setpos"},
+      cb='did_set_mousemodel'
     },
     {
       full_name='mousemoveevent', abbreviation='mousemev',
@@ -1871,7 +1885,8 @@ return {
       short_desc=N_("Changes the way redrawing works (debug)"),
       type='string', list='onecomma', scope={'global'},
       varname='p_rdb',
-      defaults={if_true=''}
+      defaults={if_true=''},
+      cb='did_set_redrawdebug'
     },
     {
       full_name='redrawtime', abbreviation='rdt',
@@ -2006,7 +2021,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_sbo',
-      defaults={if_true="ver,jump"}
+      defaults={if_true="ver,jump"},
+      cb='did_set_scrollopt'
     },
     {
       full_name='sections', abbreviation='sect',
@@ -2037,7 +2053,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_slm',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_selectmode'
     },
     {
       full_name='sessionoptions', abbreviation='ssop',
@@ -2203,7 +2220,8 @@ return {
       short_desc=N_("change location of partial command"),
       type='string', scope={'global'},
       varname='p_sloc',
-      defaults={if_true="last"}
+      defaults={if_true="last"},
+      cb='did_set_showcmdloc'
     },
     {
       full_name='showfulltag', abbreviation='sft',
@@ -2362,7 +2380,8 @@ return {
       short_desc=N_("determines scroll behavior for split windows"),
       type='string', scope={'global'},
       varname='p_spk',
-      defaults={if_true='cursor'}
+      defaults={if_true='cursor'},
+      cb='did_set_splitkeep'
     },
     {
       full_name='splitright', abbreviation='spr',
@@ -2432,7 +2451,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_swb',
-      defaults={if_true="uselast"}
+      defaults={if_true="uselast"},
+      cb='did_set_switchbuf'
     },
     {
       full_name='synmaxcol', abbreviation='smc',
@@ -2559,7 +2579,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_tpf',
-      defaults={if_true="BS,HT,ESC,DEL"}
+      defaults={if_true="BS,HT,ESC,DEL"},
+      cb='did_set_termpastefilter'
     },
     {
       full_name='terse',
@@ -2774,7 +2795,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_vop',
-      defaults={if_true="folds,cursor,curdir"}
+      defaults={if_true="folds,cursor,curdir"},
+      cb='did_set_viewoptions'
     },
     {
       -- Alias for "shada".
@@ -2870,7 +2892,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_wop',
-      defaults={if_true='pum,tagfile'}
+      defaults={if_true='pum,tagfile'},
+      cb='did_set_wildoptions'
     },
     {
       full_name='winaltkeys', abbreviation='wak',

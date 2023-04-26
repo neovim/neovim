@@ -396,7 +396,16 @@ func Test_set_errors()
   if has('mouseshape')
     call assert_fails('se mouseshape=i-r:x', 'E547:')
   endif
-  call assert_fails('set backupext=~ patchmode=~', 'E589:')
+
+  " Test for 'backupext' and 'patchmode' set to the same value
+  set backupext=.bak
+  set patchmode=.patch
+  call assert_fails('set patchmode=.bak', 'E589:')
+  call assert_equal('.patch', &patchmode)
+  call assert_fails('set backupext=.patch', 'E589:')
+  call assert_equal('.bak', &backupext)
+  set backupext& patchmode&
+
   call assert_fails('set winminheight=10 winheight=9', 'E591:')
   call assert_fails('set winminwidth=10 winwidth=9', 'E592:')
   call assert_fails("set showbreak=\x01", 'E595:')
@@ -1342,6 +1351,76 @@ func Test_set_min_lines_columns()
   call delete('XResultsetminlines')
   let &lines = save_lines
   let &columns = save_columns
+endfunc
+
+" Test for reverting a string option value if the new value is invalid.
+func Test_string_option_revert_on_failure()
+  new
+  let optlist = [
+        \ ['ambiwidth', 'double', 'a123'],
+        \ ['background', 'dark', 'a123'],
+        \ ['backspace', 'eol', 'a123'],
+        \ ['backupcopy', 'no', 'a123'],
+        \ ['belloff', 'showmatch', 'a123'],
+        \ ['breakindentopt', 'min:10', 'list'],
+        \ ['bufhidden', 'wipe', 'a123'],
+        \ ['buftype', 'nowrite', 'a123'],
+        \ ['casemap', 'keepascii', 'a123'],
+        \ ['cedit', "\<C-Y>", 'z'],
+        \ ['colorcolumn', '10', 'z'],
+        \ ['commentstring', '#%s', 'a123'],
+        \ ['complete', '.,t', 'a'],
+        \ ['completefunc', 'MyCmplFunc', '1a-'],
+        "\ ['completeopt', 'popup', 'a123'],
+        \ ['completeopt', 'preview', 'a123'],
+        "\ ['completepopup', 'width:20', 'border'],
+        \ ['concealcursor', 'v', 'xyz'],
+        "\ ['cpoptions', 'HJ', '~'],
+        \ ['cpoptions', 'J', '~'],
+        "\ ['cryptmethod', 'zip', 'a123'],
+        \ ['cursorlineopt', 'screenline', 'a123'],
+        \ ['debug', 'throw', 'a123'],
+        \ ['diffopt', 'iwhite', 'a123'],
+        \ ['display', 'uhex', 'a123'],
+        \ ['eadirection', 'hor', 'a123'],
+        \ ['encoding', 'utf-8', 'a123'],
+        \ ['eventignore', 'TextYankPost', 'a123'],
+        \ ['fileencoding', 'utf-8', 'a123,'],
+        \ ['fileformat', 'mac', 'a123'],
+        \ ['fileformats', 'mac', 'a123'],
+        \ ['fillchars', 'diff:~', 'a123'],
+        \ ['foldclose', 'all', 'a123'],
+        \ ['foldmarker', '[[[,]]]', '[[['],
+        \ ['foldmethod', 'marker', 'a123'],
+        \ ['foldopen', 'percent', 'a123'],
+        \ ['formatoptions', 'an', '*'],
+        \ ['guicursor', 'n-v-c:block-Cursor/lCursor', 'n-v-c'],
+        \ ['helplang', 'en', 'a'],
+        "\ ['highlight', '!:CursorColumn', '8:']
+        \ ]
+  if has('gui')
+    call add(optlist, ['browsedir', 'buffer', 'a123'])
+  endif
+  if has('clipboard_working')
+    call add(optlist, ['clipboard', 'unnamed', 'a123'])
+  endif
+  if has('win32')
+    call add(optlist, ['completeslash', 'slash', 'a123'])
+  endif
+  if has('cscope')
+    call add(optlist, ['cscopequickfix', 't-', 'z-'])
+  endif
+  if !has('win32') && !has('nvim')
+    call add(optlist, ['imactivatefunc', 'MyCmplFunc', '1a-'])
+  endif
+  for opt in optlist
+    exe $"let save_opt = &{opt[0]}"
+    exe $"let &{opt[0]} = '{opt[1]}'"
+    call assert_fails($"let &{opt[0]} = '{opt[2]}'", '', opt[0])
+    call assert_equal(opt[1], eval($"&{opt[0]}"), opt[0])
+    exe $"let &{opt[0]} = save_opt"
+  endfor
+  bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

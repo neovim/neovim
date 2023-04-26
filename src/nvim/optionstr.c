@@ -698,6 +698,18 @@ const char *did_set_backupext_or_patchmode(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
+/// The 'belloff' option is changed.
+const char *did_set_belloff(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_flags(p_bo, p_bo_values, &bo_flags, true);
+}
+
+/// The 'termpastefilter' option is changed.
+const char *did_set_termpastefilter(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_flags(p_tpf, p_tpf_values, &tpf_flags, true);
+}
+
 /// The 'breakindentopt' option is changed.
 const char *did_set_breakindentopt(optset_T *args)
 {
@@ -740,11 +752,15 @@ const char *did_set_helpfile(optset_T *args FUNC_ATTR_UNUSED)
 }
 
 /// The 'cursorlineopt' option is changed.
-static void did_set_cursorlineopt(win_T *win, char **varp, const char **errmsg)
+const char *did_set_cursorlineopt(optset_T *args)
 {
-  if (**varp == NUL || fill_culopt_flags(*varp, win) != OK) {
-    *errmsg = e_invarg;
+  win_T *win = (win_T *)args->os_win;
+
+  if (*args->os_varp == NUL || fill_culopt_flags(args->os_varp, win) != OK) {
+    return e_invarg;
   }
+
+  return NULL;
 }
 
 /// The 'helplang' option is changed.
@@ -771,17 +787,29 @@ const char *did_set_highlight(optset_T *args)
   return NULL;
 }
 
-static void did_set_opt_flags(char *val, char **values, unsigned *flagp, bool list,
-                              const char **errmsg)
+static const char *did_set_opt_flags(char *val, char **values, unsigned *flagp, bool list)
 {
   if (opt_strings_flags(val, values, flagp, list) != OK) {
-    *errmsg = e_invarg;
+    return e_invarg;
   }
+  return NULL;
 }
 
-static void did_set_opt_strings(char *val, char **values, bool list, const char **errmsg)
+static const char *did_set_opt_strings(char *val, char **values, bool list)
 {
-  did_set_opt_flags(val, values, NULL, list, errmsg);
+  return did_set_opt_flags(val, values, NULL, list);
+}
+
+/// The 'selectmode' option is changed.
+const char *did_set_selectmode(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_strings(p_slm, p_slm_values, true);
+}
+
+/// The 'inccommand' option is changed.
+const char *did_set_inccommand(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_strings(p_icm, p_icm_values, false);
 }
 
 /// The 'sessionoptions' option is changed.
@@ -832,6 +860,18 @@ const char *did_set_background(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
+/// The 'clipboard' option is changed.
+const char *did_set_clipboard(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_flags(p_cb, p_cb_values, &cb_flags, true);
+}
+
+/// The 'foldopen' option is changed.
+const char *did_set_foldopen(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_flags(p_fdo, p_fdo_values, &fdo_flags, true);
+}
+
 /// The 'wildmode' option is changed.
 const char *did_set_wildmode(optset_T *args FUNC_ATTR_UNUSED)
 {
@@ -857,6 +897,12 @@ const char *did_set_eventignore(optset_T *args FUNC_ATTR_UNUSED)
     return e_invarg;
   }
   return NULL;
+}
+
+/// The 'eadirection' option is changed.
+const char *did_set_eadirection(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_strings(p_ead, p_ead_values, false);
 }
 
 // 'encoding', 'fileencoding' and 'makeencoding'
@@ -965,6 +1011,12 @@ const char *did_set_fileformat(optset_T *args)
   return NULL;
 }
 
+/// The 'fileformats' option is changed.
+const char *did_set_fileformats(optset_T *args)
+{
+  return did_set_opt_strings(p_ffs, p_ff_values, true);
+}
+
 /// The 'matchpairs' option is changed.
 const char *did_set_matchpairs(optset_T *args)
 {
@@ -997,6 +1049,13 @@ const char *did_set_cinoptions(optset_T *args FUNC_ATTR_UNUSED)
   parse_cino(curbuf);
 
   return NULL;
+}
+
+/// The 'colorcolumn' option is changed.
+const char *did_set_colorcolumn(optset_T *args)
+{
+  win_T *win = (win_T *)args->os_win;
+  return check_colorcolumn(win);
 }
 
 static void did_set_comments(char **varp, char *errbuf, size_t errbuflen, const char **errmsg)
@@ -1062,6 +1121,12 @@ const char *did_set_verbosefile(optset_T *args)
     return (char *)e_invarg;
   }
   return NULL;
+}
+
+/// The 'viewoptions' option is changed.
+const char *did_set_viewoptions(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_flags(p_vop, p_ssop_values, &vop_flags, true);
 }
 
 static int shada_idx = -1;
@@ -1241,13 +1306,32 @@ const char *did_set_spellsuggest(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
- /// The 'mkspellmem' option is changed.
+/// The 'splitkeep' option is changed.
+const char *did_set_splitkeep(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_strings(p_spk, p_spk_values, false);
+}
+
+/// The 'mkspellmem' option is changed.
 const char *did_set_mkspellmem(optset_T *args FUNC_ATTR_UNUSED)
 {
   if (spell_check_msm() != OK) {
     return e_invarg;
   }
   return NULL;
+}
+
+/// The 'mousemodel' option is changed.
+const char *did_set_mousemodel(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_strings(p_mousem, p_mousem_values, false);
+}
+
+/// The 'bufhidden' option is changed.
+const char *did_set_bufhidden(optset_T *args)
+{
+  buf_T *buf = (buf_T *)args->os_buf;
+  return did_set_opt_strings(buf->b_p_bh, p_bufhidden_values, false);
 }
 
 /// The 'buftype' option is changed.
@@ -1268,6 +1352,12 @@ const char *did_set_buftype(optset_T *args)
   buf->b_help = (buf->b_p_bt[0] == 'h');
   redraw_titles();
   return NULL;
+}
+
+/// The 'casemap' option is changed.
+const char *did_set_casemap(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_flags(p_cmp, p_cmp_values, &cmp_flags, true);
 }
 
 /// The 'statusline', 'winbar', 'tabline', 'rulerformat' or 'statuscolumn' option is changed.
@@ -1338,6 +1428,12 @@ const char *did_set_statuscolumn(optset_T *args)
   return did_set_statustabline_rulerformat(args, false, true);
 }
 
+/// The 'scrollopt' option is changed.
+const char *did_set_scrollopt(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_strings(p_sbo, p_scbopt_values, true);
+}
+
 static void did_set_complete(char **varp, char *errbuf, size_t errbuflen, const char **errmsg)
 {
   // check if it is a valid value for 'complete' -- Acevedo
@@ -1399,6 +1495,12 @@ const char *did_set_completeslash(optset_T *args)
 }
 #endif
 
+/// The 'showcmdloc' option is changed.
+const char *did_set_showcmdloc(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_strings(p_sloc, p_sloc_values, true);
+}
+
 /// The 'signcolumn' option is changed.
 const char *did_set_signcolumn(optset_T *args)
 {
@@ -1439,6 +1541,12 @@ const char *did_set_backspace(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
+/// The 'switchbuf' option is changed.
+const char *did_set_switchbuf(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_flags(p_swb, p_swb_values, &swb_flags, true);
+}
+
 /// The 'tagcase' option is changed.
 const char *did_set_tagcase(optset_T *args)
 {
@@ -1464,6 +1572,12 @@ const char *did_set_tagcase(optset_T *args)
     return e_invarg;
   }
   return NULL;
+}
+
+/// The 'debug' option is changed.
+const char *did_set_debug(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_strings(p_debug, p_debug_values, false);
 }
 
 /// The 'diffopt' option is changed.
@@ -1558,6 +1672,24 @@ const char *did_set_virtualedit(optset_T *args)
     }
   }
   return NULL;
+}
+
+/// The 'jumpoptions' option is changed.
+const char *did_set_jumpoptions(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_flags(p_jop, p_jop_values, &jop_flags, true);
+}
+
+/// The 'redrawdebug' option is changed.
+const char *did_set_redrawdebug(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_flags(p_rdb, p_rdb_values, &rdb_flags, true);
+}
+
+/// The 'wildoptions' option is changed.
+const char *did_set_wildoptions(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_flags(p_wop, p_wop_values, &wop_flags, true);
 }
 
 /// The 'lispoptions' option is changed.
@@ -1657,6 +1789,12 @@ const char *did_set_vartabstop(optset_T *args)
   return NULL;
 }
 
+/// The 'nrformats' option is changed.
+const char *did_set_nrformats(optset_T *args)
+{
+  return did_set_opt_strings(args->os_varp, p_nf_values, true);
+}
+
 static void did_set_optexpr(char **varp)
 {
   char *name = get_scriptlocal_funcname(*varp);
@@ -1664,6 +1802,12 @@ static void did_set_optexpr(char **varp)
     free_string_option(*varp);
     *varp = name;
   }
+}
+
+/// The 'foldclose' option is changed.
+const char *did_set_foldclose(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_strings(p_fcl, p_fcl_values, true);
 }
 
 // handle option that is a list of flags.
@@ -1776,30 +1920,12 @@ static const char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx
              || varp == &p_isp                          // 'isprint'
              || varp == &p_isf) {                       // 'isfname'
     did_set_isopt(buf, &did_chartab, &errmsg);
-  } else if (gvarp == &win->w_allbuf_opt.wo_culopt) {   // 'cursorlineopt'
-    did_set_cursorlineopt(win, varp, &errmsg);
-  } else if (varp == &win->w_p_cc) {                    // 'colorcolumn'
-    errmsg = check_colorcolumn(win);
-  } else if (varp == &p_jop) {                          // 'jumpoptions'
-    did_set_opt_flags(p_jop, p_jop_values, &jop_flags, true, &errmsg);
-  } else if (gvarp == &p_nf) {                          // 'nrformats'
-    did_set_opt_strings(*varp, p_nf_values, true, &errmsg);
-  } else if (varp == &p_vop) {                          // 'viewoptions'
-    did_set_opt_flags(p_vop, p_ssop_values, &vop_flags, true, &errmsg);
-  } else if (varp == &p_rdb) {                          // 'redrawdebug'
-    did_set_opt_flags(p_rdb, p_rdb_values, &rdb_flags, true, &errmsg);
-  } else if (varp == &p_sbo) {                          // 'scrollopt'
-    did_set_opt_strings(p_sbo, p_scbopt_values, true, &errmsg);
-  } else if (varp == &p_wop) {                          // 'wildoptions'
-    did_set_opt_flags(p_wop, p_wop_values, &wop_flags, true, &errmsg);
   } else if (varp == &p_enc                             // 'encoding'
              || gvarp == &p_fenc                        // 'fileencoding'
              || gvarp == &p_menc) {                     // 'makeencoding'
     did_set_encoding(buf, varp, gvarp, opt_flags, &errmsg);
   } else if (varp == &buf->b_p_keymap) {                // 'keymap'
     did_set_keymap(buf, varp, opt_flags, value_checked, &errmsg);
-  } else if (varp == &p_ffs) {                          // 'fileformats'
-    did_set_opt_strings(p_ffs, p_ff_values, true, &errmsg);
   } else if (gvarp == &p_com) {                         // 'comments'
     did_set_comments(varp, errbuf, errbuflen, &errmsg);
   } else if (varp == &p_lcs                             // global 'listchars'
@@ -1811,41 +1937,11 @@ static const char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx
     errmsg = set_chars_option(win, varp, true);
   } else if (varp == &p_shada) {                        // 'shada'
     errmsg = did_set_shada(&opt, &opt_idx, &free_oldval, errbuf, errbuflen);
-  } else if (varp == &p_slm) {                          // 'selectmode'
-    did_set_opt_strings(p_slm, p_slm_values, true, &errmsg);
-  } else if (varp == &p_mousem) {                       // 'mousemodel'
-    did_set_opt_strings(p_mousem, p_mousem_values, false, &errmsg);
-  } else if (varp == &p_swb) {                          // 'switchbuf'
-    did_set_opt_flags(p_swb, p_swb_values, &swb_flags, true, &errmsg);
-  } else if (varp == &p_spk) {                          // 'splitkeep'
-    did_set_opt_strings(p_spk, p_spk_values, false, &errmsg);
-  } else if (varp == &p_debug) {                        // 'debug'
-    did_set_opt_strings(p_debug, p_debug_values, true, &errmsg);
-  } else if (varp == &p_ead) {                          // 'eadirection'
-    did_set_opt_strings(p_ead, p_ead_values, false, &errmsg);
-  } else if (varp == &p_cb) {                           // 'clipboard'
-    did_set_opt_flags(p_cb, p_cb_values, &cb_flags, true, &errmsg);
-  } else if (gvarp == &p_bh) {                          // 'bufhidden'
-    did_set_opt_strings(buf->b_p_bh, p_bufhidden_values, false, &errmsg);
   } else if (gvarp == &p_cpt) {                         // 'complete'
     did_set_complete(varp, errbuf, errbuflen, &errmsg);
-  } else if (varp == &p_sloc) {                         // 'showcmdloc'
-    did_set_opt_strings(*varp, p_sloc_values, false, &errmsg);
-  } else if (varp == &p_bo) {
-    did_set_opt_flags(p_bo, p_bo_values, &bo_flags, true, &errmsg);
-  } else if (varp == &p_cmp) {                          // 'casemap'
-    did_set_opt_flags(p_cmp, p_cmp_values, &cmp_flags, true, &errmsg);
-  } else if (varp == &p_fdo) {                          // 'foldopen'
-    did_set_opt_flags(p_fdo, p_fdo_values, &fdo_flags, true, &errmsg);
-  } else if (varp == &p_fcl) {                          // 'foldclose'
-    did_set_opt_strings(*varp, p_fcl_values, true, &errmsg);
-  } else if (varp == &p_icm) {                          // 'inccommand'
-    did_set_opt_strings(*varp, p_icm_values, false, &errmsg);
   } else if (gvarp == &p_ft                             // 'filetype'
              || gvarp == &p_syn) {                      // 'syntax'
     did_set_filetype_or_syntax(varp, oldval, value_checked, &value_changed, &errmsg);
-  } else if (varp == &p_tpf) {
-    did_set_opt_flags(p_tpf, p_tpf_values, &tpf_flags, true, &errmsg);
   } else if (varp == &p_dex                             // 'diffexpr'
              || gvarp == &win->w_allbuf_opt.wo_fde      // 'foldexpr'
              || gvarp == &win->w_allbuf_opt.wo_fdt      // 'foldtext'
