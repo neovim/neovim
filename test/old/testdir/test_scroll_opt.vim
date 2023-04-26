@@ -105,6 +105,21 @@ func Test_smoothscroll_CtrlE_CtrlY()
   call term_sendkeys(buf, "\<C-Y>")
   call VerifyScreenDump(buf, 'Test_smoothscroll_8', {})
 
+  if has('folding')
+    call term_sendkeys(buf, ":set foldmethod=indent\<CR>")
+    " move the cursor so we can reuse the same dumps
+    call term_sendkeys(buf, "5G")
+    call term_sendkeys(buf, "\<C-E>")
+    call VerifyScreenDump(buf, 'Test_smoothscroll_1', {})
+    call term_sendkeys(buf, "\<C-E>")
+    call VerifyScreenDump(buf, 'Test_smoothscroll_2', {})
+    call term_sendkeys(buf, "7G")
+    call term_sendkeys(buf, "\<C-Y>")
+    call VerifyScreenDump(buf, 'Test_smoothscroll_7', {})
+    call term_sendkeys(buf, "\<C-Y>")
+    call VerifyScreenDump(buf, 'Test_smoothscroll_8', {})
+  endif
+
   call StopVimInTerminal(buf)
 endfunc
 
