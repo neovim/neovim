@@ -599,10 +599,11 @@ static void handle_lnum_col(win_T *wp, winlinevars_T *wlv, int num_signs, int si
 
   if ((wp->w_p_nu || wp->w_p_rnu)
       && (wlv->row == wlv->startrow + wlv->filler_lines || !has_cpo_n)
-      && !(has_cpo_n && wp->w_skipcol > 0 && wlv->lnum == wp->w_topline)) {
-    // If 'signcolumn' is set to 'number' and a sign is present
-    // in "lnum", then display the sign instead of the line
-    // number.
+      // there is no line number in a wrapped line when "n" is in
+      // 'cpoptions', but 'breakindent' assumes it anyway.
+      && !((has_cpo_n && !wp->w_p_bri) && wp->w_skipcol > 0 && wlv->lnum == wp->w_topline)) {
+    // If 'signcolumn' is set to 'number' and a sign is present in "lnum",
+    // then display the sign instead of the line number.
     if (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u' && num_signs > 0) {
       get_sign_display_info(true, wp, wlv, sign_idx, sign_cul_attr);
     } else {
