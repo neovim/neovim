@@ -1170,7 +1170,7 @@ struct window_S {
                                     // 'wrap' is off
   colnr_T w_skipcol;                // starting screen column for the first
                                     // line in the window; used when 'wrap' is
-                                    // on
+                                    // on; does not include win_col_off()
 
   // six fields that are only used when there is a WinScrolled autocommand
   linenr_T w_last_topline;          ///< last known value for w_topline

@@ -739,20 +739,14 @@ int curwin_col_off2(void)
   return win_col_off2(curwin);
 }
 
-// Compute curwin->w_wcol and curwin->w_virtcol.
-// Also updates curwin->w_wrow and curwin->w_cline_row.
-// Also updates curwin->w_leftcol.
+// Compute wp->w_wcol and wp->w_virtcol.
+// Also updates wp->w_wrow and wp->w_cline_row.
+// Also updates wp->w_leftcol.
 // @param may_scroll when true, may scroll horizontally
 void curs_columns(win_T *wp, int may_scroll)
 {
-  int n;
-  int width = 0;
   colnr_T startcol;
   colnr_T endcol;
-  colnr_T prev_skipcol;
-  long so = get_scrolloff_value(wp);
-  long siso = get_sidescrolloff_value(wp);
-  bool did_sub_skipcol = false;
 
   // First make sure that w_topline is valid (after moving the cursor).
   update_topline(wp);
@@ -782,8 +776,11 @@ void curs_columns(win_T *wp, int may_scroll)
   // Now compute w_wrow, counting screen lines from w_cline_row.
   wp->w_wrow = wp->w_cline_row;
 
-  int textwidth = wp->w_width_inner - extra;
-  if (textwidth <= 0) {
+  int n;
+  int width1 = wp->w_width - extra;  // text width for first screen line
+  int width2 = 0;                    // text width for second and later screen line
+  bool did_sub_skipcol = false;
+  if (width1 <= 0) {
     // No room for text, put cursor in last char of window.
     // If not wrapping, the last non-empty line.
     wp->w_wcol = wp->w_width_inner - 1;
@@ -793,20 +790,27 @@ void curs_columns(win_T *wp, int may_scroll)
       wp->w_wrow = wp->w_height_inner - 1 - wp->w_empty_rows;
     }
   } else if (wp->w_p_wrap && wp->w_width_inner != 0) {
-    width = textwidth + win_col_off2(wp);
+    width2 = width1 + win_col_off2(wp);
 
     // skip columns that are not visible
     if (wp->w_cursor.lnum == wp->w_topline
+        && wp->w_skipcol > 0
         && wp->w_wcol >= wp->w_skipcol) {
-      wp->w_wcol -= wp->w_skipcol;
+      // w_skipcol excludes win_col_off().  Include it here, since w_wcol
+      // counts actual screen columns.
+      if (wp->w_skipcol <= width1) {
+        wp->w_wcol -= wp->w_width;
+      } else {
+        wp->w_wcol -= wp->w_width * (((wp->w_skipcol - width1) / width2) + 1);
+      }
       did_sub_skipcol = true;
     }
 
     // long line wrapping, adjust wp->w_wrow
     if (wp->w_wcol >= wp->w_width_inner) {
       // this same formula is used in validate_cursor_col()
-      n = (wp->w_wcol - wp->w_width_inner) / width + 1;
-      wp->w_wcol -= n * width;
+      n = (wp->w_wcol - wp->w_width_inner) / width2 + 1;
+      wp->w_wcol -= n * width2;
       wp->w_wrow += n;
 
       // When cursor wraps to first char of next line in Insert
@@ -828,6 +832,7 @@ void curs_columns(win_T *wp, int may_scroll)
     // If Cursor is right of the screen, scroll leftwards
     // If we get closer to the edge than 'sidescrolloff', scroll a little
     // extra
+    long siso = get_sidescrolloff_value(wp);
     assert(siso <= INT_MAX);
     int off_left = startcol - wp->w_leftcol - (int)siso;
     int off_right =
@@ -838,8 +843,8 @@ void curs_columns(win_T *wp, int may_scroll)
       // When far off or not enough room on either side, put cursor in
       // middle of window.
       int new_leftcol;
-      if (p_ss == 0 || diff >= textwidth / 2 || off_right >= off_left) {
-        new_leftcol = wp->w_wcol - extra - textwidth / 2;
+      if (p_ss == 0 || diff >= width1 / 2 || off_right >= off_left) {
+        new_leftcol = curwin->w_wcol - extra - width1 / 2;
       } else {
         if (diff < p_ss) {
           assert(p_ss <= INT_MAX);
@@ -876,9 +881,9 @@ void curs_columns(win_T *wp, int may_scroll)
     wp->w_wrow += win_get_fill(wp, wp->w_cursor.lnum);
   }
 
-  prev_skipcol = wp->w_skipcol;
-
   int plines = 0;
+  long so = get_scrolloff_value(wp);
+  colnr_T prev_skipcol = wp->w_skipcol;
   if ((wp->w_wrow >= wp->w_height_inner
        || ((prev_skipcol > 0
             || wp->w_wrow + so >= wp->w_height_inner)
@@ -886,7 +891,7 @@ void curs_columns(win_T *wp, int may_scroll)
            >= wp->w_height_inner))
       && wp->w_height_inner != 0
       && wp->w_cursor.lnum == wp->w_topline
-      && width > 0
+      && width2 > 0
       && wp->w_width_inner != 0) {
     // Cursor past end of screen.  Happens with a single line that does
     // not fit on screen.  Find a skipcol to show the text around the
@@ -895,7 +900,7 @@ void curs_columns(win_T *wp, int may_scroll)
     // 2: Less than "p_so" lines below
     // 3: both of them
     extra = 0;
-    if (wp->w_skipcol + so * width > wp->w_virtcol) {
+    if (wp->w_skipcol + so * width2 > wp->w_virtcol) {
       extra = 1;
     }
     // Compute last display line of the buffer line that we want at the
@@ -910,13 +915,13 @@ void curs_columns(win_T *wp, int may_scroll)
     } else {
       n = plines;
     }
-    if ((colnr_T)n >= wp->w_height_inner + wp->w_skipcol / width - so) {
+    if ((colnr_T)n >= wp->w_height_inner + wp->w_skipcol / width2 - so) {
       extra += 2;
     }
 
     if (extra == 3 || wp->w_height <= so * 2) {
       // not enough room for 'scrolloff', put cursor in the middle
-      n = wp->w_virtcol / width;
+      n = wp->w_virtcol / width2;
       if (n > wp->w_height_inner / 2) {
         n -= wp->w_height_inner / 2;
       } else {
@@ -926,23 +931,22 @@ void curs_columns(win_T *wp, int may_scroll)
       if (n > plines - wp->w_height_inner + 1) {
         n = plines - wp->w_height_inner + 1;
       }
-      wp->w_skipcol = n * width;
+      wp->w_skipcol = n * width2;
     } else if (extra == 1) {
       // less than 'scrolloff' lines above, decrease skipcol
       assert(so <= INT_MAX);
-      extra = (wp->w_skipcol + (int)so * width - wp->w_virtcol
-               + width - 1) / width;
+      extra = (wp->w_skipcol + (int)so * width2 - wp->w_virtcol + width2 - 1) / width2;
       if (extra > 0) {
-        if ((colnr_T)(extra * width) > wp->w_skipcol) {
-          extra = wp->w_skipcol / width;
+        if ((colnr_T)(extra * width2) > wp->w_skipcol) {
+          extra = wp->w_skipcol / width2;
         }
-        wp->w_skipcol -= extra * width;
+        wp->w_skipcol -= extra * width2;
       }
     } else if (extra == 2) {
       // less than 'scrolloff' lines below, increase skipcol
-      endcol = (n - wp->w_height_inner + 1) * width;
+      endcol = (n - wp->w_height_inner + 1) * width2;
       while (endcol > wp->w_virtcol) {
-        endcol -= width;
+        endcol -= width2;
       }
       if (endcol > wp->w_skipcol) {
         wp->w_skipcol = endcol;
@@ -951,20 +955,20 @@ void curs_columns(win_T *wp, int may_scroll)
 
     // adjust w_wrow for the changed w_skipcol
     if (did_sub_skipcol) {
-      wp->w_wrow -= (wp->w_skipcol - prev_skipcol) / width;
+      wp->w_wrow -= (wp->w_skipcol - prev_skipcol) / width2;
     } else {
-      wp->w_wrow -= wp->w_skipcol / width;
+      wp->w_wrow -= wp->w_skipcol / width2;
     }
 
     if (wp->w_wrow >= wp->w_height_inner) {
       // small window, make sure cursor is in it
       extra = wp->w_wrow - wp->w_height_inner + 1;
-      wp->w_skipcol += extra * width;
+      wp->w_skipcol += extra * width2;
       wp->w_wrow -= extra;
     }
 
     // extra could be either positive or negative
-    extra = ((int)prev_skipcol - (int)wp->w_skipcol) / width;
+    extra = (prev_skipcol - wp->w_skipcol) / width2;
     win_scroll_lines(wp, 0, extra);
   } else if (!wp->w_p_sms) {
     wp->w_skipcol = 0;
@@ -973,7 +977,7 @@ void curs_columns(win_T *wp, int may_scroll)
     redraw_later(wp, UPD_NOT_VALID);
   }
 
-  redraw_for_cursorcolumn(curwin);
+  redraw_for_cursorcolumn(wp);
 
   // now w_leftcol and w_skipcol are valid, avoid check_cursor_moved()
   // thinking otherwise
