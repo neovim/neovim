@@ -3453,7 +3453,7 @@ endfunc
 " Test for ModeChanged pattern
 func Test_mode_changes()
   let g:index = 0
-  let g:mode_seq = ['n', 'i', 'n', 'v', 'V', 'i', 'ix', 'i', 'ic', 'i', 'n', 'no', 'n', 'V', 'v', 's', 'n']
+  let g:mode_seq = ['n', 'i', 'n', 'v', 'V', 'i', 'ix', 'i', 'ic', 'i', 'n', 'no', 'noV', 'n', 'V', 'v', 's', 'n']
   func! TestMode()
     call assert_equal(g:mode_seq[g:index], get(v:event, "old_mode"))
     call assert_equal(g:mode_seq[g:index + 1], get(v:event, "new_mode"))
@@ -3464,7 +3464,7 @@ func Test_mode_changes()
   au ModeChanged * :call TestMode()
   let g:n_to_any = 0
   au ModeChanged n:* let g:n_to_any += 1
-  call feedkeys("i\<esc>vVca\<CR>\<C-X>\<C-L>\<esc>ggdG", 'tnix')
+  call feedkeys("i\<esc>vVca\<CR>\<C-X>\<C-L>\<esc>ggdV\<MouseMove>G", 'tnix')
 
   let g:V_to_v = 0
   au ModeChanged V:v let g:V_to_v += 1
