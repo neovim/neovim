@@ -22,7 +22,7 @@
 #include "nvim/highlight.h"
 #include "nvim/log.h"
 #include "nvim/message.h"
-#include "nvim/option_defs.h"
+#include "nvim/option.h"
 #include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
@@ -530,8 +530,9 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
   max_off_from = linebuf_size;
   max_off_to = grid->line_offset[row] + (size_t)grid->cols;
 
-  if (topline && wp->w_skipcol > 0) {
-    // Take care of putting "<<<" on the first line for 'smoothscroll'.
+  if (topline && wp->w_skipcol > 0 && *get_showbreak_value(wp) == NUL) {
+    // Take care of putting "<<<" on the first line for 'smoothscroll'
+    // when 'showbreak' is not set.
     for (int i = 0; i < 3; i++) {
       schar_from_ascii(linebuf_char[i], '<');
       linebuf_attr[i] = HL_ATTR(HLF_AT);

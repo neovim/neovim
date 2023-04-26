@@ -167,7 +167,7 @@ func Test_visual_block_and_selection_exclusive()
   exe "norm! $3B\<C-v>eAx\<Esc>"
   let lines = s:screen_lines([1, 10], winwidth(0))
   let expect = [
-\ "<<<obar foobar      ",
+\ "+foobar foobar      ",
 \ "+foobar foobar      ",
 \ "+foobar foobar      ",
 \ "+foobar foobar      ",

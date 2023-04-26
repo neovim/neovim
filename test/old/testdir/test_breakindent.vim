@@ -700,7 +700,7 @@ func Test_breakindent19_sbr_nextpage()
   norm! 5gj
   let lines = s:screen_lines(1, 20)
   let expect = [
-	\ "<<<aaaaaaaaaaaaaaaaa",
+	\ ">aaaaaaaaaaaaaaaaaaa",
 	\ ">aaaaaaaaaaaaaaaaaaa",
 	\ ">aaaaaaaaaaaaaaaaaaa",
 	\ ]
