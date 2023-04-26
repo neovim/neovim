@@ -981,8 +981,11 @@ enum {
 // Argument for the callback function (opt_did_set_cb_T) invoked after an
 // option value is modified.
 typedef struct {
+  // Pointer to the option variable.  The variable can be a long (numeric
+  // option), an int (boolean option) or a char pointer (string option).
+  char *os_varp;
+  int os_idx;
   int os_flags;
-  char *os_varp;  // pointer to the option variable
 
   // old value of the option (can be a string, number or a boolean)
   union {

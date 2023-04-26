@@ -676,7 +676,8 @@ return {
       type='string', scope={'global'},
       deny_in_modelines=true,
       varname='p_enc',
-      defaults={if_true=macros('ENC_DFLT')}
+      defaults={if_true=macros('ENC_DFLT')},
+      cb='did_set_encoding'
     },
     {
       full_name='endoffile', abbreviation='eof',
@@ -771,7 +772,8 @@ return {
       alloced=true,
       redraw={'statuslines', 'current_buffer'},
       varname='p_fenc',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_encoding'
     },
     {
       full_name='fileencodings', abbreviation='fencs',
@@ -1517,7 +1519,8 @@ return {
       short_desc=N_("Converts the output of external commands"),
       type='string', scope={'global', 'buffer'},
       varname='p_menc',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_encoding'
     },
     {
       full_name='makeprg', abbreviation='mp',
