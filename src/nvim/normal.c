@@ -956,10 +956,12 @@ normal_end:
     set_reg_var(get_default_register_name());
   }
 
-  // Reset finish_op, in case it was set
   s->c = finish_op;
-  finish_op = false;
-  may_trigger_modechanged();
+  if (s->oa.op_type == OP_NOP) {
+    // Reset finish_op, in case it was set
+    finish_op = false;
+    may_trigger_modechanged();
+  }
   // Redraw the cursor with another shape, if we were in Operator-pending
   // mode or did a replace command.
   if (s->c || s->ca.cmdchar == 'r'
@@ -1729,9 +1731,9 @@ void prep_redo_num2(int regname, long num1, int cmd1, int cmd2, long num2, int c
   }
 }
 
-/// check for operator active and clear it
+/// Check for operator active and clear it.
 ///
-/// @return  true if operator was active
+/// Beep and return true if an operator was active.
 static bool checkclearop(oparg_T *oap)
 {
   if (oap->op_type == OP_NOP) {
@@ -1743,7 +1745,7 @@ static bool checkclearop(oparg_T *oap)
 
 /// Check for operator or Visual active.  Clear active operator.
 ///
-/// @return  true if operator or Visual was active.
+/// Beep and return true if an operator or Visual was active.
 static bool checkclearopq(oparg_T *oap)
 {
   if (oap->op_type == OP_NOP && !VIsual_active) {
