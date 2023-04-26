@@ -711,14 +711,14 @@ endfunc
 func Test_breakindent20_cpo_n_nextpage()
   let s:input = ""
   call s:test_windows('setl breakindent briopt=min:14 cpo+=n number')
-  call setline(1, repeat('a', 200))
+  call setline(1, repeat('abcdefghijklmnopqrst', 10))
   norm! 1gg
   redraw!
   let lines = s:screen_lines(1, 20)
   let expect = [
-	\ "  1 aaaaaaaaaaaaaaaa",
-	\ "    aaaaaaaaaaaaaaaa",
-	\ "    aaaaaaaaaaaaaaaa",
+	\ "  1 abcdefghijklmnop",
+	\ "    qrstabcdefghijkl",
+	\ "    mnopqrstabcdefgh",
 	\ ]
   call s:compare_lines(expect, lines)
   " Scroll down one screen line
@@ -726,11 +726,10 @@ func Test_breakindent20_cpo_n_nextpage()
   norm! 5gj
   redraw!
   let lines = s:screen_lines(1, 20)
-  " FIXME: this is not the right result
   let expect = [
-	\ "<<<aaaaaaaaaaaaaaaaa",
-	\ "    aaaaaaaaaaaaaaaa",
-	\ "    aaaaaaaaaaaaaaaa",
+	\ "<<< qrstabcdefghijkl",
+	\ "    mnopqrstabcdefgh",
+	\ "    ijklmnopqrstabcd",
 	\ ]
   call s:compare_lines(expect, lines)
 
@@ -738,19 +737,18 @@ func Test_breakindent20_cpo_n_nextpage()
   norm! 1gg
   let lines = s:screen_lines(1, 20)
   let expect = [
-	\ "  1 aaaaaaaaaaaaaaaa",
-	\ "      aaaaaaaaaaaaaa",
-	\ "      aaaaaaaaaaaaaa",
+	\ "  1 abcdefghijklmnop",
+	\ "      qrstabcdefghij",
+	\ "      klmnopqrstabcd",
 	\ ]
   call s:compare_lines(expect, lines)
   " Scroll down one screen line
   norm! 5gj
   let lines = s:screen_lines(1, 20)
-+  " FIXME: this is not the right result
   let expect = [
-	\ "<<<aaaaaaaaaaaaaaaaa",
-	\ "      aaaaaaaaaaaaaa",
-	\ "      aaaaaaaaaaaaaa",
+	\ "<<<   qrstabcdefghij",
+	\ "      klmnopqrstabcd",
+	\ "      efghijklmnopqr",
 	\ ]
   call s:compare_lines(expect, lines)
 
