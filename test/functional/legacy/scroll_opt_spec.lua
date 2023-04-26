@@ -181,6 +181,12 @@ describe('smoothscroll', function()
       set smoothscroll scrolloff=5
       set number cpo+=n
       :3
+      func g:DoRel()
+        set number relativenumber scrolloff=0
+        :%del
+        call setline(1, [ 'one', 'very long text '->repeat(12), 'three', ])
+        exe "normal 2Gzt\<C-E>"
+      endfunc
     ]])
     screen:expect([[
         1 one word word word word word word wo|
@@ -270,6 +276,21 @@ describe('smoothscroll', function()
       ~                                       |
       ~                                       |
                                               |
+    ]])
+    exec('call DoRel()')
+    screen:expect([[
+      2<<<ong text very long text very lon^g te|
+          xt very long text very long text ver|
+          y long text very long text very long|
+           text very long text very long text |
+        1 three                               |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      --No lines in buffer--                  |
     ]])
   end)
 

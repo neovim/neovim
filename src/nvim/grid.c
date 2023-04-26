@@ -533,9 +533,21 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
   if (topline && wp->w_skipcol > 0 && *get_showbreak_value(wp) == NUL) {
     // Take care of putting "<<<" on the first line for 'smoothscroll'
     // when 'showbreak' is not set.
-    for (int i = 0; i < 3; i++) {
-      schar_from_ascii(linebuf_char[i], '<');
-      linebuf_attr[i] = HL_ATTR(HLF_AT);
+    int off = 0;
+    int skip = 0;
+    if (wp->w_p_nu && wp->w_p_rnu) {
+      // do not overwrite the line number, change "123 text" to
+      // "123>>>xt".
+      while (skip < wp->w_width && ascii_isdigit(*linebuf_char[off])) {
+        off++;
+        skip++;
+      }
+    }
+
+    for (int i = 0; i < 3 && i + skip < wp->w_width; i++) {
+      schar_from_ascii(linebuf_char[off], '<');
+      linebuf_attr[off] = HL_ATTR(HLF_AT);
+      off++;
     }
   }
 
