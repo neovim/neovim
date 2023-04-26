@@ -721,7 +721,7 @@ func Test_backupskip()
   let &backupskip = backupskip
 endfunc
 
-func Test_copy_winopt()
+func Test_buf_copy_winopt()
   set hidden
 
   " Test copy option from current buffer in window
@@ -773,6 +773,108 @@ func Test_copy_winopt()
   bw!
 
   set hidden&
+endfunc
+
+func Test_split_copy_options()
+  let values = [
+    \['cursorbind', 1, 0],
+    \['fillchars', '"vert:-"', '"' .. &fillchars .. '"'],
+    \['list', 1, 0],
+    \['listchars', '"space:-"', '"' .. &listchars .. '"'],
+    \['number', 1, 0],
+    \['relativenumber', 1, 0],
+    \['scrollbind', 1, 0],
+    \['smoothscroll', 1, 0],
+    \['virtualedit', '"block"', '"' .. &virtualedit .. '"'],
+    "\ ['wincolor', '"Search"', '"' .. &wincolor .. '"'],
+    \['wrap', 0, 1],
+  \]
+  if has('linebreak')
+    let values += [
+      \['breakindent', 1, 0],
+      \['breakindentopt', '"min:5"', '"' .. &breakindentopt .. '"'],
+      \['linebreak', 1, 0],
+      \['numberwidth', 7, 4],
+      \['showbreak', '"++"', '"' .. &showbreak .. '"'],
+    \]
+  endif
+  if has('rightleft')
+    let values += [
+      \['rightleft', 1, 0],
+      \['rightleftcmd', '"search"', '"' .. &rightleftcmd .. '"'],
+    \]
+  endif
+  if has('statusline')
+    let values += [
+      \['statusline', '"---%f---"', '"' .. &statusline .. '"'],
+    \]
+  endif
+  if has('spell')
+    let values += [
+      \['spell', 1, 0],
+    \]
+  endif
+  if has('syntax')
+    let values += [
+      \['cursorcolumn', 1, 0],
+      \['cursorline', 1, 0],
+      \['cursorlineopt', '"screenline"', '"' .. &cursorlineopt .. '"'],
+      \['colorcolumn', '"+1"', '"' .. &colorcolumn .. '"'],
+    \]
+  endif
+  if has('diff')
+    let values += [
+      \['diff', 1, 0],
+    \]
+  endif
+  if has('conceal')
+    let values += [
+      \['concealcursor', '"nv"', '"' .. &concealcursor .. '"'],
+      \['conceallevel', '3', &conceallevel],
+    \]
+  endif
+  if has('terminal')
+    let values += [
+      \['termwinkey', '"<C-X>"', '"' .. &termwinkey .. '"'],
+      \['termwinsize', '"10x20"', '"' .. &termwinsize .. '"'],
+    \]
+  endif
+  if has('folding')
+    let values += [
+      \['foldcolumn', '"5"',  &foldcolumn],
+      \['foldenable', 0, 1],
+      \['foldexpr', '"2 + 3"', '"' .. &foldexpr .. '"'],
+      \['foldignore', '"+="', '"' .. &foldignore .. '"'],
+      \['foldlevel', 4,  &foldlevel],
+      \['foldmarker', '">>,<<"', '"' .. &foldmarker .. '"'],
+      \['foldmethod', '"marker"', '"' .. &foldmethod .. '"'],
+      \['foldminlines', 3,  &foldminlines],
+      \['foldnestmax', 17,  &foldnestmax],
+      \['foldtext', '"closed"', '"' .. &foldtext .. '"'],
+    \]
+  endif
+  if has('signs')
+    let values += [
+      \['signcolumn', '"number"', '"' .. &signcolumn .. '"'],
+    \]
+  endif
+
+  " set options to non-default value
+  for item in values
+    exe $"let &{item[0]} = {item[1]}"
+  endfor
+
+  " check values are set in new window
+  split
+  for item in values
+    exe $'call assert_equal({item[1]}, &{item[0]}, "{item[0]}")'
+  endfor
+
+  " restore
+  close
+  for item in values
+    exe $"let &{item[0]} = {item[1]}"
+  endfor
 endfunc
 
 func Test_shortmess_F()

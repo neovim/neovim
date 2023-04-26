@@ -4663,6 +4663,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_briopt = copy_option_val(from->wo_briopt);
   to->wo_scb = from->wo_scb;
   to->wo_scb_save = from->wo_scb_save;
+  to->wo_sms = from->wo_sms;
   to->wo_crb = from->wo_crb;
   to->wo_crb_save = from->wo_crb_save;
   to->wo_spell = from->wo_spell;
