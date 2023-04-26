@@ -821,7 +821,8 @@ return {
       alloced=true,
       expand=true,
       varname='p_ft',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_filetype_or_syntax'
     },
     {
       full_name='fillchars', abbreviation='fcs',
@@ -1287,7 +1288,8 @@ return {
         -- ( and ) are used in text separating fnames */
         if_true="@,48-57,/,\\,.,-,_,+,,,#,$,%,{,},[,],:,@-@,!,~,=",
         if_false="@,48-57,/,.,-,_,+,,,#,$,%,~,="
-      }
+      },
+      cb='did_set_isopt'
     },
     {
       full_name='isident', abbreviation='isi',
@@ -1299,7 +1301,8 @@ return {
         condition='MSWIN',
         if_true="@,48-57,_,128-167,224-235",
         if_false="@,48-57,_,192-255"
-      }
+      },
+      cb='did_set_isopt'
     },
     {
       full_name='iskeyword', abbreviation='isk',
@@ -1308,7 +1311,8 @@ return {
       deny_duplicates=true,
       alloced=true,
       varname='p_isk',
-      defaults={if_true="@,48-57,_,192-255"}
+      defaults={if_true="@,48-57,_,192-255"},
+      cb='did_set_isopt'
     },
     {
       full_name='isprint', abbreviation='isp',
@@ -1317,7 +1321,8 @@ return {
       deny_duplicates=true,
       redraw={'all_windows'},
       varname='p_isp',
-      defaults={if_true="@,161-255"}
+      defaults={if_true="@,161-255"},
+      cb='did_set_isopt'
     },
     {
       full_name='joinspaces', abbreviation='js',
@@ -1344,7 +1349,8 @@ return {
       alloced=true,
       redraw={'statuslines', 'current_buffer'},
       varname='p_keymap', pv_name='p_kmap',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_keymap'
     },
     {
       full_name='keymodel', abbreviation='km',
@@ -1959,7 +1965,8 @@ return {
       type='string', scope={'window'},
       alloced=true,
       redraw={'current_window'},
-      defaults={if_true="search"}
+      defaults={if_true="search"},
+      cb='did_set_rightleftcmd'
     },
     {
       full_name='ruler', abbreviation='ru',
@@ -2486,7 +2493,8 @@ return {
       normal_fname_chars=true,
       alloced=true,
       varname='p_syn',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_filetype_or_syntax'
     },
     {
       full_name='tagfunc', abbreviation='tfu',

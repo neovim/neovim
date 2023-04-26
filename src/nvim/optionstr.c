@@ -727,15 +727,17 @@ const char *did_set_breakindentopt(optset_T *args)
 
 /// The 'isident' or the 'iskeyword' or the 'isprint' or the 'isfname' option is
 /// changed.
-static void did_set_isopt(buf_T *buf, bool *did_chartab, const char **errmsg)
+const char *did_set_isopt(optset_T *args)
 {
+  buf_T *buf = (buf_T *)args->os_buf;
   // 'isident', 'iskeyword', 'isprint or 'isfname' option: refill g_chartab[]
   // If the new option is invalid, use old value.
   // 'lisp' option: refill g_chartab[] for '-' char
   if (buf_init_chartab(buf, true) == FAIL) {
-    *did_chartab = true;           // need to restore it below
-    *errmsg = e_invarg;            // error in value
+    args->os_restore_chartab = true;  // need to restore it below
+    return e_invarg;                  // error in value
   }
+  return NULL;
 }
 
 /// The 'helpfile' option is changed.
@@ -978,12 +980,14 @@ static void did_set_encoding(buf_T *buf, char **varp, char **gvarp, int opt_flag
   }
 }
 
-static void did_set_keymap(buf_T *buf, char **varp, int opt_flags, int *value_checked,
-                           const char **errmsg)
+/// The 'keymap' option has changed.
+const char *did_set_keymap(optset_T *args)
 {
-  if (!valid_filetype(*varp)) {
-    *errmsg = e_invarg;
-    return;
+  buf_T *buf = (buf_T *)args->os_buf;
+  int opt_flags = args->os_flags;
+
+  if (!valid_filetype(args->os_varp)) {
+    return e_invarg;
   }
 
   int secure_save = secure;
@@ -993,13 +997,13 @@ static void did_set_keymap(buf_T *buf, char **varp, int opt_flags, int *value_ch
   secure = 0;
 
   // load or unload key mapping tables
-  *errmsg = keymap_init();
+  const char *errmsg = keymap_init();
 
   secure = secure_save;
 
   // Since we check the value, there is no need to set P_INSECURE,
   // even when the value comes from a modeline.
-  *value_checked = true;
+  args->os_value_checked = true;
 
   if (errmsg == NULL) {
     if (*buf->b_p_keymap != NUL) {
@@ -1023,6 +1027,8 @@ static void did_set_keymap(buf_T *buf, char **varp, int opt_flags, int *value_ch
     }
     status_redraw_buf(buf);
   }
+
+  return errmsg;
 }
 
 /// The 'fileformat' option is changed.
@@ -1739,20 +1745,31 @@ const char *did_set_lispoptions(optset_T *args)
   return NULL;
 }
 
-/// The 'filetype' or the 'syntax' option is changed.
-static void did_set_filetype_or_syntax(char **varp, char *oldval, int *value_checked,
-                                       bool *value_changed, const char **errmsg)
+/// The 'rightleftcmd' option is changed.
+const char *did_set_rightleftcmd(optset_T *args)
 {
-  if (!valid_filetype(*varp)) {
-    *errmsg = e_invarg;
-    return;
+  // Currently only "search" is a supported value.
+  if (*args->os_varp != NUL && strcmp(args->os_varp, "search") != 0) {
+    return e_invarg;
   }
 
-  *value_changed = strcmp(oldval, *varp) != 0;
+  return NULL;
+}
+
+/// The 'filetype' or the 'syntax' option is changed.
+const char *did_set_filetype_or_syntax(optset_T *args)
+{
+  if (!valid_filetype(args->os_varp)) {
+    return e_invarg;
+  }
+
+  args->os_value_changed = strcmp(args->os_oldval.string, args->os_varp) != 0;
 
   // Since we check the value, there is no need to set P_INSECURE,
   // even when the value comes from a modeline.
-  *value_checked = true;
+  args->os_value_checked = true;
+
+  return NULL;
 }
 
 const char *did_set_winhl(optset_T *args)
@@ -1955,7 +1972,7 @@ static const char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx
                                              size_t errbuflen, int opt_flags, int *value_checked)
 {
   const char *errmsg = NULL;
-  bool did_chartab = false;
+  int restore_chartab = false;
   vimoption_T *opt = get_option(opt_idx);
   bool free_oldval = (opt->flags & P_ALLOCED);
   opt_did_set_cb_T did_set_cb = get_option_did_set_cb(opt_idx);
@@ -1970,6 +1987,9 @@ static const char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx
     .os_flags = opt_flags,
     .os_oldval.string = oldval,
     .os_newval.string = value,
+    .os_value_checked = false,
+    .os_value_changed = false,
+    .os_restore_chartab = false,
     .os_errbuf = errbuf,
     .os_errbuflen = errbuflen,
     .os_win = curwin,
@@ -1991,17 +2011,21 @@ static const char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx
     if (errmsg == NULL && is_expr_option(curwin, varp, gvarp)) {
       *varp = args.os_varp;
     }
-  } else if (varp == &p_isi                             // 'isident'
-             || varp == &buf->b_p_isk                   // 'iskeyword'
-             || varp == &p_isp                          // 'isprint'
-             || varp == &p_isf) {                       // 'isfname'
-    did_set_isopt(buf, &did_chartab, &errmsg);
+    // The 'filetype' and 'syntax' option callback functions may change
+    // the os_value_changed field.
+    value_changed = args.os_value_changed;
+    // The 'keymap', 'filetype' and 'syntax' option callback functions
+    // may change the os_value_checked field.
+    *value_checked = args.os_value_checked;
+    // The 'isident', 'iskeyword', 'isprint' and 'isfname' options may
+    // change the character table.  On failure, this needs to be restored.
+    restore_chartab = args.os_restore_chartab;
+  } else if (varp == &p_shada) {                        // 'shada'
+    errmsg = did_set_shada(&opt, &opt_idx, &free_oldval, errbuf, errbuflen);
   } else if (varp == &p_enc                             // 'encoding'
              || gvarp == &p_fenc                        // 'fileencoding'
              || gvarp == &p_menc) {                     // 'makeencoding'
     did_set_encoding(buf, varp, gvarp, opt_flags, &errmsg);
-  } else if (varp == &buf->b_p_keymap) {                // 'keymap'
-    did_set_keymap(buf, varp, opt_flags, value_checked, &errmsg);
   } else if (varp == &p_lcs                             // global 'listchars'
              || varp == &p_fcs) {                       // global 'fillchars'
     did_set_global_listfillchars(win, varp, opt_flags, &errmsg);
@@ -2009,11 +2033,6 @@ static const char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx
     errmsg = set_chars_option(win, varp, true);
   } else if (varp == &win->w_p_fcs) {                   // local 'fillchars'
     errmsg = set_chars_option(win, varp, true);
-  } else if (varp == &p_shada) {                        // 'shada'
-    errmsg = did_set_shada(&opt, &opt_idx, &free_oldval, errbuf, errbuflen);
-  } else if (gvarp == &p_ft                             // 'filetype'
-             || gvarp == &p_syn) {                      // 'syntax'
-    did_set_filetype_or_syntax(varp, oldval, value_checked, &value_changed, &errmsg);
   }
 
   // If an error is detected, restore the previous value.
@@ -2021,7 +2040,7 @@ static const char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx
     free_string_option(*varp);
     *varp = oldval;
     // When resetting some values, need to act on it.
-    if (did_chartab) {
+    if (restore_chartab) {
       (void)buf_init_chartab(buf, true);
     }
   } else {

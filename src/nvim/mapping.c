@@ -2386,7 +2386,7 @@ void langmap_init(void)
 
 /// Called when langmap option is set; the language map can be
 /// changed at any time!
-const char *did_set_langmap(optset_T *args FUNC_ATTR_UNUSED)
+const char *did_set_langmap(optset_T *args)
 {
   char *p;
   char *p2;
@@ -2434,11 +2434,10 @@ const char *did_set_langmap(optset_T *args FUNC_ATTR_UNUSED)
         }
       }
       if (to == NUL) {
-        // TODO(vim): Need to use errbuf argument for this error message
-        // and return it.
-        semsg(_("E357: 'langmap': Matching character missing for %s"),
-              transchar(from));
-        return NULL;
+        snprintf(args->os_errbuf, args->os_errbuflen,
+                 _("E357: 'langmap': Matching character missing for %s"),
+                 transchar(from));
+        return args->os_errbuf;
       }
 
       if (from >= 256) {
@@ -2456,10 +2455,10 @@ const char *did_set_langmap(optset_T *args FUNC_ATTR_UNUSED)
           p = p2;
           if (p[0] != NUL) {
             if (p[0] != ',') {
-              // TODO(vim): Need to use errbuf argument for this error
-              // message and return it.
-              semsg(_("E358: 'langmap': Extra characters after semicolon: %s"), p);
-              return NULL;
+              snprintf(args->os_errbuf, args->os_errbuflen,
+                       _("E358: 'langmap': Extra characters after semicolon: %s"),
+                       p);
+              return args->os_errbuf;
             }
             p++;
           }

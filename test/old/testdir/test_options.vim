@@ -45,6 +45,10 @@ func Test_isfname()
   set isfname=
   call assert_equal("~X", expand("~X"))
   set isfname&
+  " Test for setting 'isfname' to an unsupported character
+  let save_isfname = &isfname
+  call assert_fails('exe $"set isfname+={"\u1234"}"', 'E474:')
+  call assert_equal(save_isfname, &isfname)
 endfunc
 
 " Test for getting the value of 'pastetoggle'
@@ -1388,6 +1392,7 @@ func Test_string_option_revert_on_failure()
         \ ['fileencoding', 'utf-8', 'a123,'],
         \ ['fileformat', 'mac', 'a123'],
         \ ['fileformats', 'mac', 'a123'],
+        \ ['filetype', 'abc', 'a^b'],
         \ ['fillchars', 'diff:~', 'a123'],
         \ ['foldclose', 'all', 'a123'],
         \ ['foldmarker', '[[[,]]]', '[[['],
@@ -1396,7 +1401,49 @@ func Test_string_option_revert_on_failure()
         \ ['formatoptions', 'an', '*'],
         \ ['guicursor', 'n-v-c:block-Cursor/lCursor', 'n-v-c'],
         \ ['helplang', 'en', 'a'],
-        "\ ['highlight', '!:CursorColumn', '8:']
+        "\ ['highlight', '!:CursorColumn', '8:'],
+        \ ['keymodel', 'stopsel', 'a123'],
+        "\ ['keyprotocol', 'kitty:kitty', 'kitty:'],
+        \ ['lispoptions', 'expr:1', 'a123'],
+        \ ['listchars', 'tab:->', 'tab:'],
+        \ ['matchpairs', '<:>', '<:'],
+        \ ['mkspellmem', '100000,1000,100', '100000'],
+        \ ['mouse', 'nvi', 'z'],
+        \ ['mousemodel', 'extend', 'a123'],
+        \ ['nrformats', 'alpha', 'a123'],
+        \ ['omnifunc', 'MyOmniFunc', '1a-'],
+        \ ['operatorfunc', 'MyOpFunc', '1a-'],
+        "\ ['previewpopup', 'width:20', 'a123'],
+        "\ ['printoptions', 'paper:A4', 'a123:'],
+        \ ['quickfixtextfunc', 'MyQfFunc', '1a-'],
+        \ ['rulerformat', '%l', '%['],
+        \ ['scrollopt', 'hor,jump', 'a123'],
+        \ ['selection', 'exclusive', 'a123'],
+        \ ['selectmode', 'cmd', 'a123'],
+        \ ['sessionoptions', 'options', 'a123'],
+        \ ['shortmess', 'w', '2'],
+        \ ['showbreak', '>>', "\x01"],
+        \ ['showcmdloc', 'statusline', 'a123'],
+        \ ['signcolumn', 'no', 'a123'],
+        \ ['spellcapcheck', '[.?!]\+', '%\{'],
+        \ ['spellfile', 'MySpell.en.add', "\x01"],
+        \ ['spelllang', 'en', "#"],
+        \ ['spelloptions', 'camel', 'a123'],
+        \ ['spellsuggest', 'double', 'a123'],
+        \ ['splitkeep', 'topline', 'a123'],
+        \ ['statusline', '%f', '%['],
+        "\ ['swapsync', 'sync', 'a123'],
+        \ ['switchbuf', 'usetab', 'a123'],
+        \ ['syntax', 'abc', 'a^b'],
+        \ ['tabline', '%f', '%['],
+        \ ['tagcase', 'ignore', 'a123'],
+        \ ['tagfunc', 'MyTagFunc', '1a-'],
+        \ ['thesaurusfunc', 'MyThesaurusFunc', '1a-'],
+        \ ['viewoptions', 'options', 'a123'],
+        \ ['virtualedit', 'onemore', 'a123'],
+        \ ['whichwrap', '<,>', '{,}'],
+        \ ['wildmode', 'list', 'a123'],
+        \ ['wildoptions', 'pum', 'a123']
         \ ]
   if has('gui')
     call add(optlist, ['browsedir', 'buffer', 'a123'])
@@ -1411,11 +1458,49 @@ func Test_string_option_revert_on_failure()
     call add(optlist, ['cscopequickfix', 't-', 'z-'])
   endif
   if !has('win32') && !has('nvim')
-    call add(optlist, ['imactivatefunc', 'MyCmplFunc', '1a-'])
+    call add(optlist, ['imactivatefunc', 'MyActFunc', '1a-'])
+    call add(optlist, ['imstatusfunc', 'MyStatusFunc', '1a-'])
+  endif
+  if has('keymap')
+    call add(optlist, ['keymap', 'greek', '[]'])
+  endif
+  if has('mouseshape')
+    call add(optlist, ['mouseshape', 'm:no', 'a123:'])
+  endif
+  if has('win32') && has('gui')
+    call add(optlist, ['renderoptions', 'type:directx', 'type:directx,a123'])
+  endif
+  if has('rightleft')
+    call add(optlist, ['rightleftcmd', 'search', 'a123'])
+  endif
+  if has('terminal')
+    call add(optlist, ['termwinkey', '<C-L>', '<C'])
+    call add(optlist, ['termwinsize', '24x80', '100'])
+  endif
+  if has('win32') && has('terminal')
+    call add(optlist, ['termwintype', 'winpty', 'a123'])
+  endif
+  if has('+toolbar')
+    call add(optlist, ['toolbar', 'text', 'a123'])
+    call add(optlist, ['toolbariconsize', 'medium', 'a123'])
+  endif
+  if has('+mouse')
+    call add(optlist, ['ttymouse', 'xterm', 'a123'])
+  endif
+  if has('+vartabs')
+    call add(optlist, ['varsofttabstop', '12', 'a123'])
+    call add(optlist, ['vartabstop', '4,20', '4,'])
+  endif
+  if has('gui')
+    call add(optlist, ['winaltkeys', 'no', 'a123'])
   endif
   for opt in optlist
     exe $"let save_opt = &{opt[0]}"
-    exe $"let &{opt[0]} = '{opt[1]}'"
+    try
+      exe $"let &{opt[0]} = '{opt[1]}'"
+    catch
+      call assert_report($"Caught {v:exception} with {opt->string()}")
+    endtry
     call assert_fails($"let &{opt[0]} = '{opt[2]}'", '', opt[0])
     call assert_equal(opt[1], eval($"&{opt[0]}"), opt[0])
     exe $"let &{opt[0]} = save_opt"

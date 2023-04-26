@@ -1002,6 +1002,17 @@ typedef struct {
   // Currently only used for boolean options.
   int os_doskip;
 
+  // Option value was checked to be safe, no need to set P_INSECURE
+  // Used for the 'keymap', 'filetype' and 'syntax' options.
+  int os_value_checked;
+  // Option value changed.  Used for the 'filetype' and 'syntax' options.
+  int os_value_changed;
+
+  // Used by the 'isident', 'iskeyword', 'isprint' and 'isfname' options.
+  // Set to true if the character table is modified when processing the
+  // option and need to be restored because of a failure.
+  int os_restore_chartab;
+
   // If the value specified for an option is not valid and the error message
   // is parameterized, then the "os_errbuf" buffer is used to store the error
   // message (when it is not NULL).
