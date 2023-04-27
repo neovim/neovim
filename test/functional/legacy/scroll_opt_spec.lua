@@ -279,8 +279,8 @@ describe('smoothscroll', function()
     ]])
     exec('call DoRel()')
     screen:expect([[
-      2<<<ong text very long text very lon^g te|
-          xt very long text very long text ver|
+      2<<<ong text very long text very long te|
+          ^xt very long text very long text ver|
           y long text very long text very long|
            text very long text very long text |
         1 three                               |

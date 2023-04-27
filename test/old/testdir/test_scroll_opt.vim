@@ -325,5 +325,71 @@ func Test_smoothscroll_one_long_line()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test that if the current cursor is on a smooth scrolled line, we correctly
+" reposition it. Also check that we don't miscalculate the values by checking
+" the consistency between wincol() and col('.') as they are calculated
+" separately in code.
+func Test_smoothscroll_cursor_position()
+  call NewWindow(10, 20)
+  setl smoothscroll wrap
+  call setline(1, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+  func s:check_col_calc(win_col, win_line, buf_col)
+    call assert_equal(a:win_col, wincol())
+    call assert_equal(a:win_line, winline())
+    call assert_equal(a:buf_col, col('.'))
+  endfunc
+
+  call s:check_col_calc(1, 1, 1)
+  exe "normal \<C-E>"
+
+  " Move down another line to avoid blocking the <<< display
+  call s:check_col_calc(1, 2, 41)
+  exe "normal \<C-Y>"
+  call s:check_col_calc(1, 3, 41)
+  normal ggg$
+  exe "normal \<C-E>"
+
+  " Move down only 1 line when we are out of the range of the <<< display
+  call s:check_col_calc(20, 1, 40)
+  exe "normal \<C-Y>"
+  call s:check_col_calc(20, 2, 40)
+  normal gg
+
+  " Test number, where we have indented lines
+  setl number
+  call s:check_col_calc(5, 1, 1)
+  exe "normal \<C-E>"
+  call s:check_col_calc(5, 2, 33)
+  exe "normal \<C-Y>"
+  call s:check_col_calc(5, 3, 33)
+  normal ggg$
+  exe "normal \<C-E>"
+  call s:check_col_calc(20, 1, 32)
+  exe "normal \<C-Y>"
+  call s:check_col_calc(20, 2, 32)
+  normal gg
+
+  " Test number + showbreak, so test that the additional indentation works
+  setl number showbreak=+++
+  call s:check_col_calc(5, 1, 1)
+  exe "normal \<C-E>"
+  call s:check_col_calc(8, 2, 30)
+  exe "normal \<C-Y>"
+  call s:check_col_calc(8, 3, 30)
+  normal gg
+
+  " Test number + cpo+=n mode, where wrapped lines aren't indented
+  setl number cpo+=n showbreak=
+  call s:check_col_calc(5, 1, 1)
+  exe "normal \<C-E>"
+  call s:check_col_calc(1, 2, 37)
+  exe "normal \<C-Y>"
+  call s:check_col_calc(1, 3, 37)
+  normal gg
+
+  bwipeout!
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

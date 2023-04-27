@@ -815,13 +815,14 @@ void curs_columns(win_T *wp, int may_scroll)
     if (wp->w_cursor.lnum == wp->w_topline
         && wp->w_skipcol > 0
         && wp->w_wcol >= wp->w_skipcol) {
-      // w_skipcol excludes win_col_off().  Include it here, since w_wcol
-      // counts actual screen columns.
+      // Deduct by multiples of width2.  This allows the long line wrapping
+      // formula below to correctly calculate the w_wcol value when wrapping.
       if (wp->w_skipcol <= width1) {
-        wp->w_wcol -= wp->w_width;
+        wp->w_wcol -= width2;
       } else {
-        wp->w_wcol -= wp->w_width * (((wp->w_skipcol - width1) / width2) + 1);
+        wp->w_wcol -= width2 * (((wp->w_skipcol - width1) / width2) + 1);
       }
+
       did_sub_skipcol = true;
     }
 
