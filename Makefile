@@ -122,7 +122,7 @@ else
 endif
 # Build oldtest by specifying the relative .vim filename.
 .PHONY: phony_force
-test/old/testdir/%.vim: phony_force
+test/old/testdir/%.vim: phony_force nvim
 	+$(SINGLE_MAKE) -C test/old/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst test/old/testdir/%.vim,%,$@)
 
 functionaltest-lua: | nvim
