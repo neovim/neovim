@@ -4508,6 +4508,34 @@ describe('builtin popupmenu', function()
           {1:~                               }|
           pasted                          |
         ]])
+
+        -- Add a window toolbar to the window and check the :popup menu position.
+        command('setlocal winbar=TEST')
+        feed('/X<CR>:popup PopUp<CR>')
+        screen:expect([[
+          {2:TEST                            }|
+          one two three four five         |
+          and one two {7:^X}three four five    |
+          one more tw{n: Undo             }   |
+          {1:~          }{n:                  }{1:   }|
+          {1:~          }{n: Paste            }{1:   }|
+          {1:~          }{n:                  }{1:   }|
+          {1:~          }{n: Select Word      }{1:   }|
+          {1:~          }{n: Select Sentence  }{1:   }|
+          {1:~          }{n: Select Paragraph }{1:   }|
+          {1:~          }{n: Select Line      }{1:   }|
+          {1:~          }{n: Select Block     }{1:   }|
+          {1:~          }{n: Select All       }{1:   }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          :popup PopUp                    |
+        ]])
+
+        feed('<Esc>')
       end)
 
       describe('"kind" and "menu"', function()
