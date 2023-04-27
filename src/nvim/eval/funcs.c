@@ -287,13 +287,16 @@ int call_internal_method(const char *const fname, const int argcount, typval_T *
 
   typval_T argv[MAX_FUNC_ARGS + 1];
   const ptrdiff_t base_index = fdef->base_arg == BASE_LAST ? argcount : fdef->base_arg - 1;
-  memcpy(argv, argvars, (size_t)base_index * sizeof(typval_T));
-  argv[base_index] = *basetv;
-  memcpy(argv + base_index + 1, argvars + base_index,
-         (size_t)(argcount - base_index) * sizeof(typval_T));
-  argv[argcount + 1].v_type = VAR_UNKNOWN;
-
-  fdef->func(argv, rettv, fdef->data);
+  if((base_index > 0 && base_index < argcount) && argcount > 0) {
+    memcpy(argv, argvars, (size_t)base_index * sizeof(typval_T));
+    argv[base_index] = *basetv;
+    size_t copy_size =  (size_t)(argcount - base_index) * sizeof(typval_T);
+    if(copy_size > 0) {
+      memcpy(argv + base_index + 1, argvars + base_index, copy_size);
+    }
+    argv[argcount + 1].v_type = VAR_UNKNOWN;
+    fdef->func(argv, rettv, fdef->data);
+  }
   return FCERR_NONE;
 }
 
