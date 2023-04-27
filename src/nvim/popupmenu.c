@@ -1169,8 +1169,15 @@ void pum_make_popup(const char *path_name, int use_mouse_pos)
   if (!use_mouse_pos) {
     // Hack: set mouse position at the cursor so that the menu pops up
     // around there.
-    mouse_row = curwin->w_winrow + curwin->w_wrow;
-    mouse_col = curwin->w_wincol + curwin->w_wcol;
+    mouse_row = curwin->w_grid.row_offset + curwin->w_wrow;
+    mouse_col = curwin->w_grid.col_offset + curwin->w_wcol;
+    if (ui_has(kUIMultigrid)) {
+      mouse_grid = curwin->w_grid.target->handle;
+    } else if (curwin->w_grid.target != &default_grid) {
+      mouse_grid = 0;
+      mouse_row += curwin->w_winrow;
+      mouse_col += curwin->w_wincol;
+    }
   }
 
   vimmenu_T *menu = menu_find(path_name);
