@@ -1885,8 +1885,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
       // avoid that a function call in 'statusline' does this
       && !getline_equal(fgetline, cookie, get_func_line)
       // avoid that an autocommand, e.g. QuitPre, does this
-      && !getline_equal(fgetline, cookie,
-                        getnextac)) {
+      && !getline_equal(fgetline, cookie, getnextac)) {
     quitmore--;
   }
 
