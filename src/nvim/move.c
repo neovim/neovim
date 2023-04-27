@@ -79,6 +79,21 @@ static int adjust_plines_for_skipcol(win_T *wp, int n)
   return n - off;
 }
 
+/// Return how many lines "lnum" will take on the screen, taking into account
+/// whether it is the first line, whether w_skipcol is non-zero and limiting to
+/// the window height.
+static int plines_correct_topline(win_T *wp, linenr_T lnum, linenr_T *nextp, bool *foldedp)
+{
+  int n = plines_win_full(wp, lnum, nextp, foldedp, true, false);
+  if (lnum == wp->w_topline) {
+    n = adjust_plines_for_skipcol(wp, n);
+  }
+  if (n > wp->w_height) {
+    return wp->w_height;
+  }
+  return n;
+}
+
 // Compute wp->w_botline for the current wp->w_topline.  Can be called after
 // wp->w_topline changed.
 static void comp_botline(win_T *wp)
@@ -100,10 +115,7 @@ static void comp_botline(win_T *wp)
   for (; lnum <= wp->w_buffer->b_ml.ml_line_count; lnum++) {
     linenr_T last = lnum;
     bool folded;
-    int n = plines_win_full(wp, lnum, &last, &folded, true);
-    if (lnum == wp->w_topline) {
-      n = adjust_plines_for_skipcol(wp, n);
-    }
+    int n = plines_correct_topline(wp, lnum, &last, &folded);
     if (lnum <= wp->w_cursor.lnum && last >= wp->w_cursor.lnum) {
       wp->w_cline_row = done;
       wp->w_cline_height = n;
@@ -606,10 +618,7 @@ static void curs_rows(win_T *wp)
     } else {
       linenr_T last = lnum;
       bool folded;
-      int n = plines_win_full(wp, lnum, &last, &folded, false);
-      if (lnum == wp->w_topline) {
-        n = adjust_plines_for_skipcol(wp, n);
-      }
+      int n = plines_correct_topline(wp, lnum, &last, &folded);
       lnum = last + 1;
       if (folded && lnum > wp->w_cursor.lnum) {
         break;
@@ -626,7 +635,7 @@ static void curs_rows(win_T *wp)
             && (!wp->w_lines[i].wl_valid
                 || wp->w_lines[i].wl_lnum != wp->w_cursor.lnum))) {
       wp->w_cline_height = plines_win_full(wp, wp->w_cursor.lnum, NULL,
-                                           &wp->w_cline_folded, true);
+                                           &wp->w_cline_folded, true, true);
     } else if (i > wp->w_lines_valid) {
       // a line that is too long to fit on the last screen line
       wp->w_cline_height = 0;
@@ -673,7 +682,7 @@ void validate_cheight(void)
 
   curwin->w_cline_height = plines_win_full(curwin, curwin->w_cursor.lnum,
                                            NULL, &curwin->w_cline_folded,
-                                           true);
+                                           true, true);
   curwin->w_valid |= VALID_CHEIGHT;
 }
 
@@ -1261,6 +1270,14 @@ bool scrolldown(long line_count, int byfold)
   return moved;
 }
 
+/// Return TRUE if scrollup() will scroll by screen line rather than text line.
+static int scrolling_screenlines(bool byfold)
+{
+  return (curwin->w_p_wrap && curwin->w_p_sms)
+         || (byfold && hasAnyFolding(curwin))
+         || curwin->w_p_diff;
+}
+
 /// Scroll the current window up by "line_count" logical lines.  "CTRL-E"
 ///
 /// @param line_count number of lines to scroll
@@ -1271,7 +1288,7 @@ bool scrollup(long line_count, int byfold)
   linenr_T botline = curwin->w_botline;
   int do_sms = curwin->w_p_wrap && curwin->w_p_sms;
 
-  if (do_sms || (byfold && hasAnyFolding(curwin)) || win_may_fill(curwin)) {
+  if (scrolling_screenlines(byfold) || win_may_fill(curwin)) {
     int width1 = curwin->w_width - curwin_col_off();
     int width2 = width1 + curwin_col_off2();
     unsigned size = 0;
@@ -1409,7 +1426,7 @@ void adjust_skipcol(void)
   long scrolloff_cols = so == 0 ? 0 : width1 + (so - 1) * width2;
   bool scrolled = false;
 
-  validate_virtcol();
+  validate_cheight();
   if (curwin->w_cline_height == curwin->w_height) {
     // the line just fits in the window, don't scroll
     if (curwin->w_skipcol != 0) {
@@ -1419,6 +1436,7 @@ void adjust_skipcol(void)
     return;
   }
 
+  validate_virtcol();
   while (curwin->w_skipcol > 0
          && curwin->w_virtcol < curwin->w_skipcol + 3 + scrolloff_cols) {
     // scroll a screen line down
@@ -1940,11 +1958,21 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
   if (line_count >= curwin->w_height_inner && line_count > min_scroll) {
     scroll_cursor_halfway(false, true);
   } else {
-    // With 'smoothscroll' scroll at least the height of the cursor line.
-    if (curwin->w_p_wrap && curwin->w_p_sms && line_count < min_scrolled) {
+    // With 'smoothscroll' scroll at least the height of the cursor line,
+    // unless it would move the cursor.
+    if (curwin->w_p_wrap && curwin->w_p_sms && line_count < min_scrolled
+        && (curwin->w_cursor.lnum < curwin->w_topline
+            || (curwin->w_virtcol - curwin->w_skipcol >=
+                curwin->w_width - curwin_col_off()))) {
       line_count = min_scrolled;
     }
-    scrollup(line_count, true);
+    if (line_count > 0) {
+      if (scrolling_screenlines(true)) {
+        scrollup(scrolled, true);  // TODO(vim):
+      } else {
+        scrollup(line_count, true);
+      }
+    }
   }
 
   // If topline didn't change we need to restore w_botline and w_empty_rows

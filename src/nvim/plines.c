@@ -189,10 +189,11 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
 /// @param[out] nextp    if not NULL, the line after a fold
 /// @param[out] foldedp  if not NULL, whether lnum is on a fold
 /// @param[in]  cache    whether to use the window's cache for folds
+/// @param[in]  winheight when true limit to window height
 ///
 /// @return the total number of screen lines
 int plines_win_full(win_T *wp, linenr_T lnum, linenr_T *const nextp, bool *const foldedp,
-                    const bool cache)
+                    const bool cache, const bool winheight)
 {
   bool folded = hasFoldingWin(wp, lnum, NULL, nextp, cache, NULL);
   if (foldedp) {
@@ -201,9 +202,9 @@ int plines_win_full(win_T *wp, linenr_T lnum, linenr_T *const nextp, bool *const
   if (folded) {
     return 1;
   } else if (lnum == wp->w_topline) {
-    return plines_win_nofill(wp, lnum, true) + wp->w_topfill;
+    return plines_win_nofill(wp, lnum, winheight) + wp->w_topfill;
   }
-  return plines_win(wp, lnum, true);
+  return plines_win(wp, lnum, winheight);
 }
 
 int plines_m_win(win_T *wp, linenr_T first, linenr_T last)
@@ -212,7 +213,7 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last)
 
   while (first <= last) {
     linenr_T next = first;
-    count += plines_win_full(wp, first, &next, NULL, false);
+    count += plines_win_full(wp, first, &next, NULL, false, true);
     first = next + 1;
   }
   return count;
