@@ -407,6 +407,9 @@ func Test_printf_misc()
   call CheckLegacyAndVim9Success(lines)
 
   call CheckLegacyAndVim9Failure(["call printf('123', 3)"], "E767:")
+
+  " this was using uninitialized memory
+  call CheckLegacyAndVim9Failure(["eval ''->printf()"], "E119:")
 endfunc
 
 func Test_printf_float()

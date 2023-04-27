@@ -287,6 +287,9 @@ int call_internal_method(const char *const fname, const int argcount, typval_T *
 
   typval_T argv[MAX_FUNC_ARGS + 1];
   const ptrdiff_t base_index = fdef->base_arg == BASE_LAST ? argcount : fdef->base_arg - 1;
+  if (argcount < base_index) {
+    return FCERR_TOOFEW;
+  }
   memcpy(argv, argvars, (size_t)base_index * sizeof(typval_T));
   argv[base_index] = *basetv;
   memcpy(argv + base_index + 1, argvars + base_index,
