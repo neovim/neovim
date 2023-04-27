@@ -3,7 +3,36 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local exec = helpers.exec
 local exec_lua = helpers.exec_lua
+local command = helpers.command
 local feed = helpers.feed
+
+-- oldtest: Test_window_cmd_ls0_split_scrolling()
+it('scrolling with laststatus=0 and :botright split', function()
+  clear('--cmd', 'set ruler')
+  local screen = Screen.new(40, 10)
+  screen:set_default_attr_ids({
+    [1] = {reverse = true},  -- StatusLineNC
+  })
+  screen:attach()
+  exec([[
+    set laststatus=0
+    call setline(1, range(1, 100))
+    normal! G
+  ]])
+  command('botright split')
+  screen:expect([[
+    97                                      |
+    98                                      |
+    99                                      |
+    100                                     |
+    {1:[No Name] [+]         100,1          Bot}|
+    97                                      |
+    98                                      |
+    99                                      |
+    ^100                                     |
+                          100,1         Bot |
+  ]])
+end)
 
 describe('splitkeep', function()
   local screen
