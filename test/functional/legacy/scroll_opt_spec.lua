@@ -279,8 +279,8 @@ describe('smoothscroll', function()
     ]])
     exec('call DoRel()')
     screen:expect([[
-      2<<<ong text very long text very long te|
-          ^xt very long text very long text ver|
+      2<<<^ong text very long text very long te|
+          xt very long text very long text ver|
           y long text very long text very long|
            text very long text very long text |
         1 three                               |
@@ -380,8 +380,20 @@ describe('smoothscroll', function()
     screen:expect_unchanged()
     feed('G')
     screen:expect_unchanged()
-    -- moving cursor up - whole top line shows
-    feed('2k')
+    -- moving cursor up right after the >>> marker - no need to show whole line
+    feed('2gj3l2k')
+    screen:expect([[
+      <<<^h some text with some text           |
+      Line with some text with some text with |
+      some text with some text with some text |
+      with some text with some text           |
+      Line with some text with some text with |
+      some text with some text with some text |
+      with some text with some text           |
+                                              |
+    ]])
+    -- moving cursor up where the >>> marker is - whole top line shows
+    feed('2j02k')
     screen:expect([[
       ^Line with some text with some text with |
       some text with some text with some text |
@@ -524,11 +536,9 @@ describe('smoothscroll', function()
   -- oldtest: Test_smoothscroll_long_line_showbreak()
   it("cursor is not one screen line too far down", function()
     screen:try_resize(40, 6)
-    exec([[
-      " a line that spans four screen lines
-      call setline(1, 'with lots of text in one line '->repeat(6))
-      set smoothscroll scrolloff=0 showbreak=+++\ 
-    ]])
+    -- a line that spans four screen lines
+    exec("call setline(1, 'with lots of text in one line '->repeat(6))")
+    exec('set smoothscroll scrolloff=0 showbreak=+++\\ ')
     local s1 = [[
       ^with lots of text in one line with lots |
       +++ of text in one line with lots of tex|
@@ -540,8 +550,8 @@ describe('smoothscroll', function()
     screen:expect(s1)
     feed('<C-E>')
     screen:expect([[
-      +++ of text in one line with lots of tex|
-      +++ ^t in one line with lots of text in o|
+      +++ ^of text in one line with lots of tex|
+      +++ t in one line with lots of text in o|
       +++ ne line with lots of text in one lin|
       +++ e with lots of text in one line     |
       ~                                       |
