@@ -1070,11 +1070,12 @@ void ml_recover(bool checkext)
           ml_append(lnum++, _("???BLOCK MISSING"),
                     (colnr_T)0, true);
         } else {
-          // it is a data block
-          // Append all the lines in this block
+          // It is a data block.
+          // Append all the lines in this block.
           bool has_error = false;
-          // check length of block
-          // if wrong, use length in pointer block
+
+          // Check the length of the block.
+          // If wrong, use the length given in the pointer block.
           if (page_count * mfp->mf_page_size != dp->db_txt_end) {
             ml_append(lnum++,
                       _("??? from here until ???END lines" " may be messed up"),
@@ -1084,11 +1085,12 @@ void ml_recover(bool checkext)
             dp->db_txt_end = page_count * mfp->mf_page_size;
           }
 
-          // make sure there is a NUL at the end of the block
+          // Make sure there is a NUL at the end of the block so we
+          // don't go over the end when copying text.
           *((char *)dp + dp->db_txt_end - 1) = NUL;
 
-          // check number of lines in block
-          // if wrong, use count in data block
+          // Check the number of lines in the block.
+          // If wrong, use the count in the data block.
           if (line_count != dp->db_line_count) {
             ml_append(lnum++,
                       _("??? from here until ???END lines"
@@ -1098,13 +1100,27 @@ void ml_recover(bool checkext)
             has_error = true;
           }
 
+          bool did_questions = false;
           for (int i = 0; i < dp->db_line_count; i++) {
+            if ((char *)&(dp->db_index[i]) >= (char *)dp + dp->db_txt_start) {
+              // line count must be wrong
+              error++;
+              ml_append(lnum++, _("??? lines may be missing"), (colnr_T)0, true);
+              break;
+            }
+
             int txt_start = (dp->db_index[i] & DB_INDEX_MASK);
             if (txt_start <= (int)HEADER_SIZE
                 || txt_start >= (int)dp->db_txt_end) {
-              p = "???";
               error++;
+              // avoid lots of lines with "???"
+              if (did_questions) {
+                continue;
+              }
+              did_questions = true;
+              p = "???";
             } else {
+              did_questions = false;
               p = (char *)dp + txt_start;
             }
             ml_append(lnum++, p, (colnr_T)0, true);
