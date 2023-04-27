@@ -164,6 +164,19 @@ static void redraw_for_cursorcolumn(win_T *wp)
   }
 }
 
+/// Set wp->s_skipcol to zero and redraw later if needed.
+static void reset_skipcol(win_T *wp)
+{
+  if (wp->w_skipcol != 0) {
+    wp->w_skipcol = 0;
+
+    // Should use the least expensive way that displays all that changed.
+    // UPD_NOT_VALID is too expensive, UPD_REDRAW_TOP does not redraw
+    // enough when the top line gets another screen line.
+    redraw_later(wp, UPD_SOME_VALID);
+  }
+}
+
 // Update curwin->w_topline to move the cursor onto the screen.
 void update_topline(win_T *wp)
 {
@@ -360,12 +373,9 @@ void update_topline(win_T *wp)
   if (wp->w_topline != old_topline
       || wp->w_topfill != old_topfill) {
     dollar_vcol = -1;
-    if (wp->w_skipcol != 0) {
-      wp->w_skipcol = 0;
-      redraw_later(wp, UPD_NOT_VALID);
-    } else {
-      redraw_later(wp, UPD_VALID);
-    }
+    redraw_later(wp, UPD_VALID);
+    reset_skipcol(wp);
+
     // May need to set w_skipcol when cursor in w_topline.
     if (wp->w_cursor.lnum == wp->w_topline) {
       validate_cursor();
@@ -983,7 +993,7 @@ void curs_columns(win_T *wp, int may_scroll)
     wp->w_skipcol = 0;
   }
   if (prev_skipcol != wp->w_skipcol) {
-    redraw_later(wp, UPD_NOT_VALID);
+    redraw_later(wp, UPD_SOME_VALID);
   }
 
   redraw_for_cursorcolumn(wp);
@@ -1429,10 +1439,7 @@ void adjust_skipcol(void)
   validate_cheight();
   if (curwin->w_cline_height == curwin->w_height) {
     // the line just fits in the window, don't scroll
-    if (curwin->w_skipcol != 0) {
-      curwin->w_skipcol = 0;
-      redraw_later(curwin, UPD_NOT_VALID);
-    }
+    reset_skipcol(curwin);
     return;
   }
 
@@ -1758,8 +1765,7 @@ void scroll_cursor_top(int min_scroll, int always)
     check_topfill(curwin, false);
     // TODO(vim): if the line doesn't fit may optimize w_skipcol
     if (curwin->w_topline == curwin->w_cursor.lnum) {
-      curwin->w_skipcol = 0;
-      redraw_later(curwin, UPD_NOT_VALID);
+      reset_skipcol(curwin);
     }
     if (curwin->w_topline != old_topline
         || curwin->w_skipcol != old_skipcol
@@ -2115,7 +2121,7 @@ void cursor_correct(void)
     // 'smoothscroll is active
     if (curwin->w_cline_height == curwin->w_height) {
       // The cursor line just fits in the window, don't scroll.
-      curwin->w_skipcol = 0;
+      reset_skipcol(curwin);
       return;
     }
     // TODO(vim): If the cursor line doesn't fit in the window then only adjust w_skipcol.

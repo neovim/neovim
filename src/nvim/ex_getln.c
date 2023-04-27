@@ -504,6 +504,7 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
   }
 
   validate_cursor();
+
   // May redraw the status line to show the cursor position.
   if (p_ru && (curwin->w_status_height > 0 || global_stl_height() > 0)) {
     curwin->w_redr_status = true;
@@ -598,6 +599,7 @@ static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s, bool
   magic_overruled = s->magic_overruled_save;
 
   validate_cursor();          // needed for TAB
+  status_redraw_all();
   redraw_all_later(UPD_SOME_VALID);
   if (call_update_screen) {
     update_screen();
