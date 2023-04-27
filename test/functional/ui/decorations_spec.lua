@@ -122,7 +122,7 @@ describe('decorations providers', function()
     ]]}
     check_trace {
       { "start", 5 };
-      { "buf", 1 };
+      { "buf", 1, 5 };
       { "win", 1000, 1, 0, 8 };
       { "line", 1000, 1, 6 };
       { "end", 5 };
@@ -563,6 +563,23 @@ describe('decorations providers', function()
       hello6                                  |
       hello7                                  |
                                               |
+    ]])
+  end)
+
+  it('does not allow removing extmarks during on_line callbacks', function()
+    exec_lua([[
+      eok = true
+    ]])
+    setup_provider([[
+      local function on_do(kind, winid, bufnr, topline, botline_guess)
+        if kind == 'line' then
+          api.nvim_buf_set_extmark(bufnr, ns1, 1, -1, { sign_text = 'X' })
+          eok = pcall(api.nvim_buf_clear_namespace, bufnr, ns1, 0, -1)
+        end
+      end
+    ]])
+    exec_lua([[
+      assert(eok == false)
     ]])
   end)
 end)

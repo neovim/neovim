@@ -100,6 +100,11 @@ typedef struct {
   int conceal_attr;
 
   TriState spell;
+
+  // This is used to prevent removing/updating extmarks inside
+  // on_lines callbacks which is not allowed since it can lead to
+  // heap-use-after-free errors.
+  bool running_on_lines;
 } DecorState;
 
 EXTERN DecorState decor_state INIT(= { 0 });
