@@ -885,14 +885,14 @@ func Test_popup_command_dump()
       echomsg 'changed'
     endfunc
   END
-  call writefile(script, 'XtimerScript')
+  call writefile(script, 'XtimerScript', 'D')
 
   let lines =<< trim END
 	one two three four five
 	and one two Xthree four five
 	one more two three four five
   END
-  call writefile(lines, 'Xtest')
+  call writefile(lines, 'Xtest', 'D')
   let buf = RunVimInTerminal('-S XtimerScript Xtest', {})
   call term_sendkeys(buf, ":source $VIMRUNTIME/menu.vim\<CR>")
   call term_sendkeys(buf, "/X\<CR>:popup PopUp\<CR>")
@@ -910,7 +910,7 @@ func Test_popup_command_dump()
 
   " Set a timer to change a menu entry while it's displayed.  The text should
   " not change but the command does.  Making the screendump also verifies that
-  " "changed" shows up, which means the timer triggered
+  " "changed" shows up, which means the timer triggered.
   call term_sendkeys(buf, "/X\<CR>:call StartTimer() | popup PopUp\<CR>")
   call VerifyScreenDump(buf, 'Test_popup_command_04', {})
 
@@ -918,9 +918,16 @@ func Test_popup_command_dump()
   call term_sendkeys(buf, "jj\<CR>")
   call VerifyScreenDump(buf, 'Test_popup_command_05', {})
 
+  call term_sendkeys(buf, "\<Esc>")
+
+  " Add a window toolbar to the window and check the :popup menu position.
+  call term_sendkeys(buf, ":nnoremenu WinBar.TEST :\<CR>")
+  call term_sendkeys(buf, "/X\<CR>:popup PopUp\<CR>")
+  call VerifyScreenDump(buf, 'Test_popup_command_06', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+
   call StopVimInTerminal(buf)
-  call delete('Xtest')
-  call delete('XtimerScript')
 endfunc
 
 func Test_popup_complete_backwards()
