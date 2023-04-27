@@ -325,6 +325,29 @@ func Test_smoothscroll_one_long_line()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_smoothscroll_long_line_showbreak()
+  CheckScreendump
+
+  let lines =<< trim END
+      vim9script
+      # a line that spans four screen lines
+      setline(1, 'with lots of text in one line '->repeat(6))
+      set smoothscroll scrolloff=0 showbreak=+++\ 
+  END
+  call writefile(lines, 'XSmoothLongShowbreak', 'D')
+  let buf = RunVimInTerminal('-S XSmoothLongShowbreak', #{rows: 6, cols: 40})
+  call VerifyScreenDump(buf, 'Test_smooth_long_showbreak_1', {})
+  
+  " FIXME: this currently has the cursor in screen line 2, should be one up.
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, 'Test_smooth_long_showbreak_2', {})
+
+  call term_sendkeys(buf, "0")
+  call VerifyScreenDump(buf, 'Test_smooth_long_showbreak_1', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " Test that if the current cursor is on a smooth scrolled line, we correctly
 " reposition it. Also check that we don't miscalculate the values by checking
 " the consistency between wincol() and col('.') as they are calculated

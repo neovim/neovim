@@ -520,4 +520,34 @@ describe('smoothscroll', function()
     feed('0')
     screen:expect(s1)
   end)
+
+  -- oldtest: Test_smoothscroll_long_line_showbreak()
+  it("cursor is not one screen line too far down", function()
+    screen:try_resize(40, 6)
+    exec([[
+      " a line that spans four screen lines
+      call setline(1, 'with lots of text in one line '->repeat(6))
+      set smoothscroll scrolloff=0 showbreak=+++\ 
+    ]])
+    local s1 = [[
+      ^with lots of text in one line with lots |
+      +++ of text in one line with lots of tex|
+      +++ t in one line with lots of text in o|
+      +++ ne line with lots of text in one lin|
+      +++ e with lots of text in one line     |
+                                              |
+    ]]
+    screen:expect(s1)
+    feed('<C-E>')
+    screen:expect([[
+      +++ of text in one line with lots of tex|
+      +++ ^t in one line with lots of text in o|
+      +++ ne line with lots of text in one lin|
+      +++ e with lots of text in one line     |
+      ~                                       |
+                                              |
+    ]])
+    feed('0')
+    screen:expect(s1)
+  end)
 end)
