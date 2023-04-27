@@ -1445,7 +1445,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     frame_fix_width(oldwin);
     frame_fix_width(wp);
   } else {
-    bool is_stl_global = global_stl_height() > 0;
+    const bool is_stl_global = global_stl_height() > 0;
     // width and column of new window is same as current window
     if (flags & (WSP_TOP | WSP_BOT)) {
       wp->w_wincol = 0;
@@ -1461,6 +1461,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     // "new_size" of the current window goes to the new window, use
     // one row for the status line
     win_new_height(wp, new_size);
+    const int old_status_height = oldwin->w_status_height;
     if (before) {
       wp->w_hsep_height = is_stl_global ? 1 : 0;
     } else {
@@ -1469,14 +1470,18 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     }
     if (flags & (WSP_TOP | WSP_BOT)) {
       int new_fr_height = curfrp->fr_height - new_size;
-
-      if (!((flags & WSP_BOT) && p_ls == 0) && !is_stl_global) {
-        new_fr_height -= STATUS_HEIGHT;
-      } else if (is_stl_global) {
+      if (is_stl_global) {
         if (flags & WSP_BOT) {
           frame_add_hsep(curfrp);
         } else {
           new_fr_height -= 1;
+        }
+      } else {
+        if (!((flags & WSP_BOT) && p_ls == 0)) {
+          new_fr_height -= STATUS_HEIGHT;
+        }
+        if (flags & WSP_BOT) {
+          frame_add_statusline(curfrp);
         }
       }
       frame_new_height(curfrp, new_fr_height, flags & WSP_TOP, false);
@@ -1486,7 +1491,6 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
 
     if (before) {       // new window above current one
       wp->w_winrow = oldwin->w_winrow;
-
       if (is_stl_global) {
         wp->w_status_height = 0;
         oldwin->w_winrow += wp->w_height + 1;
@@ -1500,14 +1504,11 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
         wp->w_status_height = 0;
       } else {
         wp->w_winrow = oldwin->w_winrow + oldwin->w_height + STATUS_HEIGHT;
-        wp->w_status_height = oldwin->w_status_height;
+        wp->w_status_height = old_status_height;
         if (!(flags & WSP_BOT)) {
           oldwin->w_status_height = STATUS_HEIGHT;
         }
       }
-    }
-    if ((flags & WSP_BOT) && !is_stl_global) {
-      frame_add_statusline(curfrp);
     }
     frame_fix_height(wp);
     frame_fix_height(oldwin);
@@ -3587,12 +3588,7 @@ static void frame_add_statusline(frame_T *frp)
 {
   if (frp->fr_layout == FR_LEAF) {
     win_T *wp = frp->fr_win;
-    if (wp->w_status_height == 0) {
-      if (wp->w_height - STATUS_HEIGHT >= 0) {           // don't make it negative
-        wp->w_height -= STATUS_HEIGHT;
-      }
-      wp->w_status_height = STATUS_HEIGHT;
-    }
+    wp->w_status_height = STATUS_HEIGHT;
   } else if (frp->fr_layout == FR_ROW) {
     // Handle all the frames in the row.
     FOR_ALL_FRAMES(frp, frp->fr_child) {
