@@ -2150,6 +2150,7 @@ describe('plugin/shada.vim', function()
 
   teardown(function()
     os.remove(fname)
+    os.remove(fname .. '.tst')
     os.remove(fname_tmp)
   end)
 
@@ -2419,6 +2420,9 @@ describe('plugin/shada.vim', function()
 
   it('event SourceCmd', function()
     reset(fname)
+    finally(function()
+      nvim_command('set shadafile=NONE')  -- Avoid writing shada file on exit
+    end)
     wshada('\004\000\006\146\000\196\002ab')
     wshada_tmp('\004\001\006\146\000\196\002bc')
     eq(0, exc_exec('source ' .. fname))

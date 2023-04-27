@@ -19,21 +19,14 @@ describe('vim.secure', function()
     local xstate = 'Xstate'
 
     setup(function()
+      clear{env={XDG_STATE_HOME=xstate}}
       helpers.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
-    end)
-
-    teardown(function()
-      helpers.rmdir(xstate)
-    end)
-
-    before_each(function()
       helpers.write_file('Xfile', [[
         let g:foobar = 42
       ]])
-      clear{env={XDG_STATE_HOME=xstate}}
     end)
 
-    after_each(function()
+    teardown(function()
       os.remove('Xfile')
       helpers.rmdir(xstate)
     end)
@@ -175,6 +168,7 @@ describe('vim.secure', function()
     local xstate = 'Xstate'
 
     setup(function()
+      clear{env={XDG_STATE_HOME=xstate}}
       helpers.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
     end)
 
