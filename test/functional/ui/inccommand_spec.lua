@@ -745,10 +745,11 @@ describe(":substitute, 'inccommand' preserves undo", function()
 end)
 
 describe(":substitute, inccommand=split", function()
-  local screen = Screen.new(30,15)
+  local screen
 
   before_each(function()
     clear()
+    screen = Screen.new(30,15)
     common_setup(screen, "split", default_text .. default_text)
   end)
 
@@ -1413,10 +1414,11 @@ describe(":substitute, inccommand=split", function()
 end)
 
 describe("inccommand=nosplit", function()
-  local screen = Screen.new(20,10)
+  local screen
 
   before_each(function()
     clear()
+    screen = Screen.new(20,10)
     common_setup(screen, "nosplit", default_text .. default_text)
   end)
 
@@ -1644,11 +1646,12 @@ describe("inccommand=nosplit", function()
 end)
 
 describe(":substitute, 'inccommand' with a failing expression", function()
-  local screen = Screen.new(20,10)
+  local screen
   local cases = { "", "split", "nosplit" }
 
   local function refresh(case)
     clear()
+    screen = Screen.new(20,10)
     common_setup(screen, case, default_text)
   end
 
@@ -2127,9 +2130,10 @@ describe("'inccommand' with 'gdefault'", function()
 end)
 
 describe(":substitute", function()
-  local screen = Screen.new(30,15)
+  local screen
   before_each(function()
     clear()
+    screen = Screen.new(30,15)
   end)
 
   it("inccommand=split, highlights multiline substitutions", function()
@@ -2335,8 +2339,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=split, substitutions of different length",
-    function()
+  it("inccommand=split, substitutions of different length", function()
     common_setup(screen, "split", "T T123 T2T TTT T090804\nx")
 
     feed(":%s/T\\([0-9]\\+\\)/\\1\\1/g")
@@ -2872,8 +2875,8 @@ it(':substitute with inccommand during :terminal activity', function()
     return
   end
   retry(2, 40000, function()
-    local screen = Screen.new(30,15)
     clear()
+    local screen = Screen.new(30,15)
 
     command("set cmdwinheight=3")
     feed(([[:terminal "%s" REP 5000 xxx<cr>]]):format(testprg('shell-test')))
@@ -2893,8 +2896,8 @@ it(':substitute with inccommand during :terminal activity', function()
 end)
 
 it(':substitute with inccommand, timer-induced :redraw #9777', function()
-  local screen = Screen.new(30,12)
   clear()
+  local screen = Screen.new(30,12)
   command('set cmdwinheight=3')
   command('call timer_start(10, {-> execute("redraw")}, {"repeat":-1})')
   command('call timer_start(10, {-> execute("redrawstatus")}, {"repeat":-1})')
@@ -2920,8 +2923,8 @@ it(':substitute with inccommand, timer-induced :redraw #9777', function()
 end)
 
 it(':substitute with inccommand, allows :redraw before first separator is typed #18857', function()
-  local screen = Screen.new(30,6)
   clear()
+  local screen = Screen.new(30,6)
   common_setup(screen, 'split', 'foo bar baz\nbar baz fox\nbar foo baz')
   command('hi! link NormalFloat CursorLine')
   local float_buf = meths.create_buf(false, true)
@@ -2950,8 +2953,8 @@ it(':substitute with inccommand, allows :redraw before first separator is typed 
 end)
 
 it(':substitute with inccommand, does not crash if range contains invalid marks', function()
-  local screen = Screen.new(30, 6)
   clear()
+  local screen = Screen.new(30, 6)
   common_setup(screen, 'split', 'test')
   feed([[:'a,'bs]])
   screen:expect([[
@@ -2976,8 +2979,8 @@ it(':substitute with inccommand, does not crash if range contains invalid marks'
 end)
 
 it(':substitute with inccommand, no unnecessary redraw if preview is not shown', function()
-  local screen = Screen.new(60, 6)
   clear()
+  local screen = Screen.new(60, 6)
   common_setup(screen, 'split', 'test')
   feed(':ls<CR>')
   screen:expect([[
@@ -3029,8 +3032,8 @@ it(':substitute with inccommand, no unnecessary redraw if preview is not shown',
 end)
 
 it(":substitute doesn't crash with inccommand, if undo is empty #12932", function()
-  local screen = Screen.new(10,5)
   clear()
+  local screen = Screen.new(10,5)
   command('set undolevels=-1')
   common_setup(screen, 'split', 'test')
   feed(':%s/test')
@@ -3049,8 +3052,8 @@ it(":substitute doesn't crash with inccommand, if undo is empty #12932", functio
 end)
 
 it(':substitute with inccommand works properly if undo is not synced #20029', function()
-  local screen = Screen.new(30, 6)
   clear()
+  local screen = Screen.new(30, 6)
   common_setup(screen, 'nosplit', 'foo\nbar\nbaz')
   meths.set_keymap('x', '<F2>', '<Esc>`<Oaaaaa asdf<Esc>`>obbbbb asdf<Esc>V`<k:s/asdf/', {})
   feed('gg0<C-V>lljj<F2>')
@@ -3086,8 +3089,8 @@ it(':substitute with inccommand works properly if undo is not synced #20029', fu
 end)
 
 it('long :%s/ with inccommand does not collapse cmdline', function()
-  local screen = Screen.new(10,5)
   clear()
+  local screen = Screen.new(10,5)
   common_setup(screen)
   command('set inccommand=nosplit')
   feed(':%s/AAAAAAA', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',

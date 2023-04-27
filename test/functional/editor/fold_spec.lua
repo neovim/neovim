@@ -58,11 +58,11 @@ describe('Folds', function()
   describe('adjusting folds after :move', function()
     local function manually_fold_indent()
       -- setting foldmethod twice is a trick to get vim to set the folds for me
-      command('set foldmethod=indent')
-      command('set foldmethod=manual')
+      command('setlocal foldmethod=indent')
+      command('setlocal foldmethod=manual')
       -- Ensure that all folds will get closed (makes it easier to test the
       -- length of folds).
-      command('set foldminlines=0')
+      command('setlocal foldminlines=0')
       -- Start with all folds open (so :move ranges aren't affected by closed
       -- folds).
       command('%foldopen!')
@@ -83,7 +83,7 @@ describe('Folds', function()
       command(move_command)
       local after_move_folds = get_folds()
       -- Doesn't change anything, but does call foldUpdateAll()
-      command('set foldminlines=0')
+      command('setlocal foldminlines=0')
       eq(after_move_folds, get_folds())
       -- Set up the buffer with insert_string for the manual fold testing.
       command('enew!')
@@ -279,7 +279,7 @@ a]], '13m7')
     	a
     	a
     ]])
-    command('set foldmethod=indent')
+    command('setlocal foldmethod=indent')
     command('2')
     command('%foldopen')
     command('read ' .. tempfname)
@@ -317,7 +317,7 @@ a]], '13m7')
     	a
     	a
     ]])
-    command('set foldmethod=indent')
+    command('setlocal foldmethod=indent')
     command('3,5d')
     eq(5, funcs.foldclosedend(1))
   end)
@@ -333,7 +333,7 @@ a]], '13m7')
 
     }}}
     ]])
-    command('set foldmethod=marker')
+    command('setlocal foldmethod=marker')
     command('3,5d')
     command('%foldclose')
     eq(2, funcs.foldclosedend(1))
@@ -372,7 +372,7 @@ a]], '13m7')
     a
     a
     ]])
-    command('set foldmethod=expr foldexpr=TestFoldExpr(v:lnum)')
+    command('setlocal foldmethod=expr foldexpr=TestFoldExpr(v:lnum)')
     command('2')
     command('foldopen')
     command('read ' .. tempfname)
@@ -386,7 +386,7 @@ a]], '13m7')
   end)
 
   it('no folds remain if :delete makes buffer empty #19671', function()
-    command('set foldmethod=manual')
+    command('setlocal foldmethod=manual')
     funcs.setline(1, {'foo', 'bar', 'baz'})
     command('2,3fold')
     command('%delete')
@@ -394,7 +394,7 @@ a]], '13m7')
   end)
 
   it('multibyte fold markers work #20438', function()
-    command('set foldmethod=marker foldmarker=«,» commentstring=/*%s*/')
+    command('setlocal foldmethod=marker foldmarker=«,» commentstring=/*%s*/')
     insert([[
       bbbbb
       bbbbb
@@ -412,7 +412,7 @@ a]], '13m7')
     a
     b
     ]])
-    command('set foldmethod=indent shiftwidth=2')
+    command('setlocal foldmethod=indent shiftwidth=2')
     feed('gg0<C-v>jI  <Esc>') -- indent both lines using visual blockwise mode
     eq(1, funcs.foldlevel(1))
     eq(1, funcs.foldlevel(2))

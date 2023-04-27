@@ -26,6 +26,8 @@ end)
 describe('empty $HOME', function()
   local original_home = os.getenv('HOME')
 
+  before_each(clear)
+
   -- recover $HOME after each test
   after_each(function()
     if original_home ~= nil then

@@ -15,6 +15,8 @@ local set_shell_powershell = helpers.set_shell_powershell
 local skip = helpers.skip
 local is_os = helpers.is_os
 
+clear()  -- for has_powershell()
+
 describe("shell command :!", function()
   local screen
   before_each(function()
