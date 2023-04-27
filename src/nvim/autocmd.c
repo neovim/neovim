@@ -300,7 +300,7 @@ void aucmd_del_for_event_and_group(event_T event, int group)
   AutoCmdVec *const acs = &autocmds[(int)event];
   for (size_t i = 0; i < kv_size(*acs); i++) {
     AutoCmd *const ac = &kv_A(*acs, i);
-    if (ac->pat->group == group) {
+    if (ac->pat != NULL && ac->pat->group == group) {
       aucmd_del(ac);
     }
   }
@@ -2027,6 +2027,7 @@ char *getnextac(int c, void *cookie, int indent, bool do_concat)
 
   assert(apc->auidx < kv_size(*acs));
   AutoCmd *const ac = &kv_A(*acs, apc->auidx);
+  assert(ac->pat != NULL);
   bool oneshot = ac->once;
 
   if (p_verbose >= 9) {
@@ -2288,7 +2289,8 @@ bool au_exists(const char *const arg)
     AutoPat *const ap = kv_A(*acs, i).pat;
     // Only use a pattern when it has not been removed.
     // For buffer-local autocommands, path_fnamecmp() works fine.
-    if ((group == AUGROUP_ALL || ap->group == group)
+    if (ap != NULL
+        && (group == AUGROUP_ALL || ap->group == group)
         && (pattern == NULL
             || (buflocal_buf == NULL
                 ? path_fnamecmp(ap->pat, pattern) == 0
