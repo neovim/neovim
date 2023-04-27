@@ -1877,18 +1877,43 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
   // The lines of the cursor line itself are always used.
   used = plines_win_nofill(curwin, cln, true);
 
-  // If the cursor is below botline, we will at least scroll by the height
-  // of the cursor line.  Correct for empty lines, which are really part of
-  // botline.
+  // If the cursor is on or below botline, we will at least scroll by the
+  // height of the cursor line, which is "used".  Correct for empty lines,
+  // which are really part of botline.
   if (cln >= curwin->w_botline) {
     scrolled = used;
     if (cln == curwin->w_botline) {
       scrolled -= curwin->w_empty_rows;
     }
     min_scrolled = scrolled;
-    if (cln > curwin->w_botline && curwin->w_p_sms && curwin->w_p_wrap) {
-      for (linenr_T lnum = curwin->w_botline + 1; lnum <= cln; lnum++) {
-        min_scrolled += plines_win_nofill(curwin, lnum, true);
+    if (curwin->w_p_sms && curwin->w_p_wrap) {
+      // 'smoothscroll' and 'wrap' are set
+      if (cln > curwin->w_botline) {
+        // add screen lines below w_botline
+        for (linenr_T lnum = curwin->w_botline + 1; lnum <= cln; lnum++) {
+          min_scrolled += plines_win_nofill(curwin, lnum, true);
+        }
+      }
+
+      // Calculate how many screen lines the current top line of window
+      // occupies. If it is occupying more than the entire window, we
+      // need to scroll the additional clipped lines to scroll past the
+      // top line before we can move on to the other lines.
+      int top_plines = plines_win_nofill(curwin, curwin->w_topline, false);
+      int skip_lines = 0;
+      int width1 = curwin->w_width - curwin_col_off();
+      int width2 = width1 + curwin_col_off2();
+      // similar formula is used in curs_columns()
+      if (curwin->w_skipcol > width1) {
+        skip_lines += (curwin->w_skipcol - width1) / width2 + 1;
+      } else if (curwin->w_skipcol > 0) {
+        skip_lines = 1;
+      }
+
+      top_plines -= skip_lines;
+      if (top_plines > curwin->w_height) {
+        scrolled += (top_plines - curwin->w_height);
+        min_scrolled += (top_plines - curwin->w_height);
       }
     }
   }

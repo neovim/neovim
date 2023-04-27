@@ -410,7 +410,7 @@ describe('smoothscroll', function()
   it("adjusts the cursor position in a long line", function()
     screen:try_resize(40, 6)
     exec([[
-      call setline(1, ['one', 'two', 'Line' .. (' with lots of text'->repeat(30))])
+      call setline(1, ['one', 'two', 'Line' .. (' with lots of text'->repeat(30)) .. ' end', 'four'])
       set smoothscroll scrolloff=0
       normal 3G10|zt
     ]])
@@ -500,6 +500,45 @@ describe('smoothscroll', function()
       f text wi^th lots of text with lots of te|
       xt with lots of text with lots of text w|
       ith lots of text with lots of text with |
+                                              |
+    ]])
+    -- 'scrolloff' set to 0, move cursor down one line. Cursor should move properly,
+    -- and since this is a really long line, it will be put on top of the screen.
+    exec('set scrolloff=0')
+    feed('0j')
+    screen:expect([[
+      ^four                                    |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+    -- Repeat the step and move the cursor down again.
+    -- This time, use a shorter long line that is barely long enough to span more
+    -- than one window. Note that the cursor is at the bottom this time because
+    -- Vim prefers to do so if we are scrolling a few lines only.
+    exec("call setline(1, ['one', 'two', 'Line' .. (' with lots of text'->repeat(10)) .. ' end', 'four'])")
+    feed('3Gztj')
+    screen:expect([[
+      <<<th lots of text with lots of text wit|
+      h lots of text with lots of text with lo|
+      ts of text with lots of text with lots o|
+      f text with lots of text end            |
+      ^four                                    |
+                                              |
+    ]])
+    -- Repeat the step but this time start it when the line is smooth-scrolled by
+    -- one line. This tests that the offset calculation is still correct and
+    -- still end up scrolling down to the next line with cursor at bottom of
+    -- screen.
+    feed('3Gzt<C-E>j')
+    screen:expect([[
+      <<<th lots of text with lots of text wit|
+      h lots of text with lots of text with lo|
+      ts of text with lots of text with lots o|
+      f text with lots of text end            |
+      fou^r                                    |
                                               |
     ]])
   end)
