@@ -649,6 +649,14 @@ regex:match_line({bufnr}, {line_idx} [, {start}, {end}])  *regex:match_line()*
     will be relative {start}.
 
 ------------------------------------------------------------------------------
+VIM.LPEG                                                            *lua-lpeg*
+
+                                                             *vim.lpeg* *vim.re*
+The Lpeg library for parsing expression grammars is being included as
+`vim.lpeg` (https://www.inf.puc-rio.br/~roberto/lpeg/). In addition, its regex-like
+interface is available as `vim.re` (https://www.inf.puc-rio.br/~roberto/lpeg/re.html).
+
+------------------------------------------------------------------------------
 VIM.DIFF                                                            *lua-diff*
 
 vim.diff({a}, {b}, {opts})                                        *vim.diff()*

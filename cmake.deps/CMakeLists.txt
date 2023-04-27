@@ -41,6 +41,7 @@ set(DEPS_BIN_DIR "${DEPS_INSTALL_DIR}/bin")
 set(DEPS_LIB_DIR "${DEPS_INSTALL_DIR}/lib")
 set(DEPS_BUILD_DIR "${CMAKE_BINARY_DIR}/build")
 set(DEPS_DOWNLOAD_DIR "${DEPS_BUILD_DIR}/downloads")
+set(DEPS_INCLUDE_FLAGS "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/include/luajit-2.1")
 
 list(APPEND DEPS_CMAKE_ARGS -D CMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR})
 
@@ -54,6 +55,7 @@ option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ${USE_BUNDLED})
 option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
+option(USE_BUNDLED_LPEG "Use the bundled lpeg." ${USE_BUNDLED})
 #XXX(tarruda): Lua is only used for debugging the functional test client, don't
 # build it unless explicitly requested
 option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
@@ -161,6 +163,9 @@ set(LIBVTERM_SHA256 25a8ad9c15485368dfd0a8a9dca1aec8fea5c27da3fa74ec518d5d3787f0
 set(LUV_URL https://github.com/luvit/luv/archive/093a977b82077591baefe1e880d37dfa2730bd54.tar.gz)
 set(LUV_SHA256 222b38b6425f0926218e14e7da81481fdde6f9660c1feac25a53e6fb52e886e6)
 
+set(LPEG_URL http://www.inf.puc-rio.br/~roberto/lpeg/lpeg-1.0.2.tar.gz)
+set(LPEG_SHA256 48d66576051b6c78388faad09b70493093264588fcd0f258ddaab1cdd4a15ffe)
+
 set(LUA_COMPAT53_URL https://github.com/keplerproject/lua-compat-5.3/archive/v0.9.tar.gz)
 set(LUA_COMPAT53_SHA256 ad05540d2d96a48725bb79a1def35cf6652a4e2ec26376e2617c8ce2baa6f416)
 
@@ -243,6 +248,10 @@ endif()
 
 if(USE_BUNDLED_LUV)
   include(BuildLuv)
+endif()
+
+if(USE_BUNDLED_LPEG)
+  include(BuildLpeg)
 endif()
 
 if(USE_BUNDLED_GETTEXT)

@@ -1,4 +1,4 @@
-local lpeg = require('lpeg')
+local lpeg = vim.lpeg
 
 -- lpeg grammar for building api metadata from a set of header files. It
 -- ignores comments and preprocessor commands and parses a very small subset

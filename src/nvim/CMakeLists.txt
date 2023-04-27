@@ -26,6 +26,7 @@ target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBLUV_INCLUDE_DIR
 target_link_libraries(main_lib INTERFACE ${LIBLUV_LIBRARY})
 
 find_package(Iconv REQUIRED)
+find_package(Lpeg REQUIRED)
 find_package(Libtermkey 0.22 REQUIRED)
 find_package(Libvterm 0.3 REQUIRED)
 find_package(Msgpack 1.0.0 REQUIRED)
@@ -38,7 +39,9 @@ target_link_libraries(main_lib INTERFACE
   libvterm
   msgpack
   treesitter
-  unibilium)
+  unibilium
+  lpeg)
+target_link_libraries(nlua0 PUBLIC lpeg)
 
 # Libintl (not Intl) selects our FindLibintl.cmake script. #8464
 find_package(Libintl REQUIRED)
@@ -324,6 +327,7 @@ if(PREFER_LUA)
 endif()
 
 list(APPEND NLUA0_SOURCES ${PROJECT_SOURCE_DIR}/src/nlua0.c)
+
 foreach(subdir
         os
         api
@@ -443,6 +447,9 @@ add_custom_command(
     "${NVIM_VERSION_DEF_H}"
   DEPENDS "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef-$<CONFIG>.h")
 
+set(LUA_GEN ${LUA_GEN_PRG} ${GENERATOR_PRELOAD} ${PROJECT_SOURCE_DIR} $<TARGET_FILE:nlua0>)
+set(LUA_GEN_DEPS ${GENERATOR_PRELOAD} $<TARGET_FILE:nlua0>)
+
 # NVIM_GENERATED_FOR_HEADERS: generated headers to be included in headers
 # NVIM_GENERATED_FOR_SOURCES: generated headers to be included in sources
 # NVIM_GENERATED_SOURCES: generated source files
@@ -476,7 +483,7 @@ foreach(sfile ${NVIM_SOURCES}
     set(PREPROC_OUTPUT -E -o ${gf_i})
   endif()
 
-  set(depends "${HEADER_GENERATOR}" "${sfile}")
+  set(depends "${HEADER_GENERATOR}" "${sfile}" "${LUA_GEN_DEPS}")
   if("${f}" STREQUAL "version.c")
     # Ensure auto/versiondef_git.h exists after "make clean".
     list(APPEND depends update_version_stamp "${NVIM_VERSION_GIT_H}" "${NVIM_VERSION_DEF_H}")
@@ -484,7 +491,7 @@ foreach(sfile ${NVIM_SOURCES}
   add_custom_command(
     OUTPUT "${gf_c_h}" "${gf_h_h}"
     COMMAND ${CMAKE_C_COMPILER} ${sfile} ${PREPROC_OUTPUT} ${gen_cflags}
-    COMMAND "${LUA_PRG}" "${HEADER_GENERATOR}" "${sfile}" "${gf_c_h}" "${gf_h_h}" "${gf_i}"
+    COMMAND ${LUA_GEN} "${HEADER_GENERATOR}" "${sfile}" "${gf_c_h}" "${gf_h_h}" "${gf_i}"
     DEPENDS ${depends})
   list(APPEND NVIM_GENERATED_FOR_SOURCES "${gf_c_h}")
   list(APPEND NVIM_GENERATED_FOR_HEADERS "${gf_h_h}")
@@ -501,9 +508,6 @@ add_custom_command(OUTPUT ${GENERATED_UNICODE_TABLES}
     ${UNICODE_TABLES_GENERATOR}
     ${UNICODE_FILES}
 )
-
-set(LUA_GEN ${LUA_GEN_PRG} ${GENERATOR_PRELOAD} ${PROJECT_SOURCE_DIR} $<TARGET_FILE:nlua0>)
-set(LUA_GEN_DEPS ${GENERATOR_PRELOAD} $<TARGET_FILE:nlua0>)
 
 add_custom_command(
   OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_FUNCS_METADATA}
