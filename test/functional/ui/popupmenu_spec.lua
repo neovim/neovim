@@ -1023,1869 +1023,11 @@ describe('ui/ext_popupmenu', function()
   end)
 end)
 
-
-describe('builtin popupmenu', function()
-  local screen
-  before_each(function()
-    clear()
-    screen = Screen.new(32, 20)
-    screen:attach()
-    screen:set_default_attr_ids({
-      -- popup selected item / scrollbar track
-      ['s'] = {background = Screen.colors.WebGray},
-      -- popup non-selected item
-      ['n'] = {background = Screen.colors.LightMagenta},
-      -- popup scrollbar knob
-      ['c'] = {background = Screen.colors.Grey0},
-      [1] = {bold = true, foreground = Screen.colors.Blue},
-      [2] = {bold = true},
-      [3] = {reverse = true},
-      [4] = {bold = true, reverse = true},
-      [5] = {bold = true, foreground = Screen.colors.SeaGreen},
-      [6] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [7] = {background = Screen.colors.Yellow},  -- Search
-      [8] = {foreground = Screen.colors.Red},
-    })
-  end)
-
-  it('with preview-window above', function()
-    feed(':ped<CR><c-w>4+')
-    feed('iaa bb cc dd ee ff gg hh ii jj<cr>')
-    feed('<c-x><c-n>')
-    screen:expect([[
-      aa bb cc dd ee ff gg hh ii jj   |
-      aa                              |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {3:[No Name] [Preview][+]          }|
-      aa bb cc dd ee ff gg hh ii jj   |
-      aa^                              |
-      {s:aa             }{c: }{1:                }|
-      {n:bb             }{c: }{1:                }|
-      {n:cc             }{c: }{1:                }|
-      {n:dd             }{c: }{1:                }|
-      {n:ee             }{c: }{1:                }|
-      {n:ff             }{c: }{1:                }|
-      {n:gg             }{s: }{1:                }|
-      {n:hh             }{s: }{4:                }|
-      {2:-- }{5:match 1 of 10}                |
-    ]])
-  end)
-
-  it('with preview-window below', function()
-    feed(':ped<CR><c-w>4+<c-w>r')
-    feed('iaa bb cc dd ee ff gg hh ii jj<cr>')
-    feed('<c-x><c-n>')
-    screen:expect([[
-      aa bb cc dd ee ff gg hh ii jj   |
-      aa^                              |
-      {s:aa             }{c: }{1:                }|
-      {n:bb             }{c: }{1:                }|
-      {n:cc             }{c: }{1:                }|
-      {n:dd             }{c: }{1:                }|
-      {n:ee             }{c: }{1:                }|
-      {n:ff             }{c: }{1:                }|
-      {n:gg             }{s: }{1:                }|
-      {n:hh             }{s: }{4:                }|
-      aa bb cc dd ee ff gg hh ii jj   |
-      aa                              |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {3:[No Name] [Preview][+]          }|
-      {2:-- }{5:match 1 of 10}                |
-      ]])
-  end)
-
-  it('with preview-window above and tall and inverted', function()
-    feed(':ped<CR><c-w>8+')
-    feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
-    feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
-    feed('kk<cr>ll<cr>mm<cr>nn<cr>oo<cr>')
-    feed('<c-x><c-n>')
-    screen:expect([[
-      aa                              |
-      bb                              |
-      cc                              |
-      dd                              |
-      {s:aa             }{c: }{3:ew][+]          }|
-      {n:bb             }{c: }                |
-      {n:cc             }{c: }                |
-      {n:dd             }{c: }                |
-      {n:ee             }{c: }                |
-      {n:ff             }{c: }                |
-      {n:gg             }{c: }                |
-      {n:hh             }{c: }                |
-      {n:ii             }{c: }                |
-      {n:jj             }{c: }                |
-      {n:kk             }{c: }                |
-      {n:ll             }{s: }                |
-      {n:mm             }{s: }                |
-      aa^                              |
-      {4:[No Name] [+]                   }|
-      {2:-- }{5:match 1 of 15}                |
-    ]])
-  end)
-
-  it('with preview-window above and short and inverted', function()
-    feed(':ped<CR><c-w>4+')
-    feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
-    feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
-    feed('<c-x><c-n>')
-    screen:expect([[
-      aa                              |
-      bb                              |
-      cc                              |
-      dd                              |
-      ee                              |
-      ff                              |
-      gg                              |
-      hh                              |
-      {s:aa             }{c: }{3:ew][+]          }|
-      {n:bb             }{c: }                |
-      {n:cc             }{c: }                |
-      {n:dd             }{c: }                |
-      {n:ee             }{c: }                |
-      {n:ff             }{c: }                |
-      {n:gg             }{c: }                |
-      {n:hh             }{c: }                |
-      {n:ii             }{s: }                |
-      aa^                              |
-      {4:[No Name] [+]                   }|
-      {2:-- }{5:match 1 of 10}                |
-    ]])
-  end)
-
-  it('with preview-window below and inverted', function()
-    feed(':ped<CR><c-w>4+<c-w>r')
-    feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
-    feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
-    feed('<c-x><c-n>')
-    screen:expect([[
-      {s:aa             }{c: }                |
-      {n:bb             }{c: }                |
-      {n:cc             }{c: }                |
-      {n:dd             }{c: }                |
-      {n:ee             }{c: }                |
-      {n:ff             }{c: }                |
-      {n:gg             }{s: }                |
-      {n:hh             }{s: }                |
-      aa^                              |
-      {4:[No Name] [+]                   }|
-      aa                              |
-      bb                              |
-      cc                              |
-      dd                              |
-      ee                              |
-      ff                              |
-      gg                              |
-      hh                              |
-      {3:[No Name] [Preview][+]          }|
-      {2:-- }{5:match 1 of 10}                |
-    ]])
-  end)
-
-  -- oldtest: Test_pum_with_preview_win()
-  it('preview window opened during completion', function()
-    exec([[
-      funct Omni_test(findstart, base)
-        if a:findstart
-          return col(".") - 1
-        endif
-        return [#{word: "one", info: "1info"}, #{word: "two", info: "2info"}, #{word: "three", info: "3info"}]
-      endfunc
-      set omnifunc=Omni_test
-      set completeopt+=longest
-    ]])
-    feed('Gi<C-X><C-O>')
-    screen:expect([[
-      ^                                |
-      {n:one            }{1:                 }|
-      {n:two            }{1:                 }|
-      {n:three          }{1:                 }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {2:-- }{8:Back at original}             |
-    ]])
-    feed('<C-N>')
-    screen:expect([[
-      1info                           |
-                                      |
-      {1:~                               }|
-      {3:[Scratch] [Preview]             }|
-      one^                             |
-      {s:one            }{1:                 }|
-      {n:two            }{1:                 }|
-      {n:three          }{1:                 }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {4:[No Name] [+]                   }|
-      {2:-- }{5:match 1 of 3}                 |
-    ]])
-  end)
-
-  it('with vsplits', function()
-    insert('aaa aab aac\n')
-    feed(':vsplit<cr>')
-    screen:expect([[
-      aaa aab aac         │aaa aab aac|
-      ^                    │           |
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {4:[No Name] [+]        }{3:<Name] [+] }|
-      :vsplit                         |
-    ]])
-
-    feed('ibbb a<c-x><c-n>')
-    screen:expect([[
-      aaa aab aac         │aaa aab aac|
-      bbb aaa^             │bbb aaa    |
-      {1:~  }{s: aaa            }{1: }│{1:~          }|
-      {1:~  }{n: aab            }{1: }│{1:~          }|
-      {1:~  }{n: aac            }{1: }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {4:[No Name] [+]        }{3:<Name] [+] }|
-      {2:-- }{5:match 1 of 3}                 |
-    ]])
-
-    feed('<esc><c-w><c-w>oc a<c-x><c-n>')
-    screen:expect([[
-      aaa aab aac│aaa aab aac         |
-      bbb aaa    │bbb aaa             |
-      c aaa      │c aaa^               |
-      {1:~          }│{1:~}{s: aaa            }{1:   }|
-      {1:~          }│{1:~}{n: aab            }{1:   }|
-      {1:~          }│{1:~}{n: aac            }{1:   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {3:<Name] [+]  }{4:[No Name] [+]       }|
-      {2:-- }{5:match 1 of 3}                 |
-    ]])
-  end)
-
-  it('with split and scroll', function()
-    screen:try_resize(60,14)
-    command("split")
-    command("set completeopt+=noinsert")
-    command("set mouse=a")
-    insert([[
-      Lorem ipsum dolor sit amet, consectetur
-      adipisicing elit, sed do eiusmod tempor
-      incididunt ut labore et dolore magna aliqua.
-      Ut enim ad minim veniam, quis nostrud
-      exercitation ullamco laboris nisi ut aliquip ex
-      ea commodo consequat. Duis aute irure dolor in
-      reprehenderit in voluptate velit esse cillum
-      dolore eu fugiat nulla pariatur. Excepteur sint
-      occaecat cupidatat non proident, sunt in culpa
-      qui officia deserunt mollit anim id est
-      laborum.
-    ]])
-
-    screen:expect([[
-        reprehenderit in voluptate velit esse cillum              |
-        dolore eu fugiat nulla pariatur. Excepteur sint           |
-        occaecat cupidatat non proident, sunt in culpa            |
-        qui officia deserunt mollit anim id est                   |
-        laborum.                                                  |
-      ^                                                            |
-      {4:[No Name] [+]                                               }|
-        Lorem ipsum dolor sit amet, consectetur                   |
-        adipisicing elit, sed do eiusmod tempor                   |
-        incididunt ut labore et dolore magna aliqua.              |
-        Ut enim ad minim veniam, quis nostrud                     |
-        exercitation ullamco laboris nisi ut aliquip ex           |
-      {3:[No Name] [+]                                               }|
-                                                                  |
-    ]])
-
-    feed('ggOEst <c-x><c-p>')
-    screen:expect([[
-      Est ^                                                        |
-        L{n: sunt           }{s: }sit amet, consectetur                   |
-        a{n: in             }{s: }sed do eiusmod tempor                   |
-        i{n: culpa          }{s: }re et dolore magna aliqua.              |
-        U{n: qui            }{s: }eniam, quis nostrud                     |
-        e{n: officia        }{s: }co laboris nisi ut aliquip ex           |
-      {4:[No}{n: deserunt       }{s: }{4:                                        }|
-      Est{n: mollit         }{s: }                                        |
-        L{n: anim           }{s: }sit amet, consectetur                   |
-        a{n: id             }{s: }sed do eiusmod tempor                   |
-        i{n: est            }{s: }re et dolore magna aliqua.              |
-        U{n: laborum        }{c: }eniam, quis nostrud                     |
-      {3:[No}{s: Est            }{c: }{3:                                        }|
-      {2:-- Keyword Local completion (^N^P) }{5:match 1 of 65}            |
-    ]])
-
-    meths.input_mouse('wheel', 'down', '', 0, 9, 40)
-    screen:expect([[
-      Est ^                                                        |
-        L{n: sunt           }{s: }sit amet, consectetur                   |
-        a{n: in             }{s: }sed do eiusmod tempor                   |
-        i{n: culpa          }{s: }re et dolore magna aliqua.              |
-        U{n: qui            }{s: }eniam, quis nostrud                     |
-        e{n: officia        }{s: }co laboris nisi ut aliquip ex           |
-      {4:[No}{n: deserunt       }{s: }{4:                                        }|
-        i{n: mollit         }{s: }re et dolore magna aliqua.              |
-        U{n: anim           }{s: }eniam, quis nostrud                     |
-        e{n: id             }{s: }co laboris nisi ut aliquip ex           |
-        e{n: est            }{s: }at. Duis aute irure dolor in            |
-        r{n: laborum        }{c: }oluptate velit esse cillum              |
-      {3:[No}{s: Est            }{c: }{3:                                        }|
-      {2:-- Keyword Local completion (^N^P) }{5:match 1 of 65}            |
-    ]])
-
-    feed('e')
-    screen:expect([[
-      Est e^                                                       |
-        L{n: elit           } sit amet, consectetur                   |
-        a{n: eiusmod        } sed do eiusmod tempor                   |
-        i{n: et             }ore et dolore magna aliqua.              |
-        U{n: enim           }veniam, quis nostrud                     |
-        e{n: exercitation   }mco laboris nisi ut aliquip ex           |
-      {4:[No}{n: ex             }{4:                                         }|
-        i{n: ea             }ore et dolore magna aliqua.              |
-        U{n: esse           }veniam, quis nostrud                     |
-        e{n: eu             }mco laboris nisi ut aliquip ex           |
-        e{s: est            }uat. Duis aute irure dolor in            |
-        reprehenderit in voluptate velit esse cillum              |
-      {3:[No Name] [+]                                               }|
-      {2:-- Keyword Local completion (^N^P) }{5:match 1 of 65}            |
-    ]])
-
-    meths.input_mouse('wheel', 'up', '', 0, 9, 40)
-    screen:expect([[
-      Est e^                                                       |
-        L{n: elit           } sit amet, consectetur                   |
-        a{n: eiusmod        } sed do eiusmod tempor                   |
-        i{n: et             }ore et dolore magna aliqua.              |
-        U{n: enim           }veniam, quis nostrud                     |
-        e{n: exercitation   }mco laboris nisi ut aliquip ex           |
-      {4:[No}{n: ex             }{4:                                         }|
-      Est{n: ea             }                                         |
-        L{n: esse           } sit amet, consectetur                   |
-        a{n: eu             } sed do eiusmod tempor                   |
-        i{s: est            }ore et dolore magna aliqua.              |
-        Ut enim ad minim veniam, quis nostrud                     |
-      {3:[No Name] [+]                                               }|
-      {2:-- Keyword Local completion (^N^P) }{5:match 1 of 65}            |
-    ]])
-
-    feed('s')
-    screen:expect([[
-      Est es^                                                      |
-        L{n: esse           } sit amet, consectetur                   |
-        a{s: est            } sed do eiusmod tempor                   |
-        incididunt ut labore et dolore magna aliqua.              |
-        Ut enim ad minim veniam, quis nostrud                     |
-        exercitation ullamco laboris nisi ut aliquip ex           |
-      {4:[No Name] [+]                                               }|
-      Est es                                                      |
-        Lorem ipsum dolor sit amet, consectetur                   |
-        adipisicing elit, sed do eiusmod tempor                   |
-        incididunt ut labore et dolore magna aliqua.              |
-        Ut enim ad minim veniam, quis nostrud                     |
-      {3:[No Name] [+]                                               }|
-      {2:-- Keyword Local completion (^N^P) }{5:match 1 of 65}            |
-    ]])
-
-    meths.input_mouse('wheel', 'down', '', 0, 9, 40)
-    screen:expect([[
-      Est es^                                                      |
-        L{n: esse           } sit amet, consectetur                   |
-        a{s: est            } sed do eiusmod tempor                   |
-        incididunt ut labore et dolore magna aliqua.              |
-        Ut enim ad minim veniam, quis nostrud                     |
-        exercitation ullamco laboris nisi ut aliquip ex           |
-      {4:[No Name] [+]                                               }|
-        incididunt ut labore et dolore magna aliqua.              |
-        Ut enim ad minim veniam, quis nostrud                     |
-        exercitation ullamco laboris nisi ut aliquip ex           |
-        ea commodo consequat. Duis aute irure dolor in            |
-        reprehenderit in voluptate velit esse cillum              |
-      {3:[No Name] [+]                                               }|
-      {2:-- Keyword Local completion (^N^P) }{5:match 1 of 65}            |
-    ]])
-
-    feed('<bs>')
-    screen:expect([[
-      Est e^                                                       |
-        L{n: elit           } sit amet, consectetur                   |
-        a{n: eiusmod        } sed do eiusmod tempor                   |
-        i{n: et             }ore et dolore magna aliqua.              |
-        U{n: enim           }veniam, quis nostrud                     |
-        e{n: exercitation   }mco laboris nisi ut aliquip ex           |
-      {4:[No}{n: ex             }{4:                                         }|
-        i{n: ea             }ore et dolore magna aliqua.              |
-        U{n: esse           }veniam, quis nostrud                     |
-        e{n: eu             }mco laboris nisi ut aliquip ex           |
-        e{s: est            }uat. Duis aute irure dolor in            |
-        reprehenderit in voluptate velit esse cillum              |
-      {3:[No Name] [+]                                               }|
-      {2:-- Keyword Local completion (^N^P) }{5:match 1 of 65}            |
-    ]])
-
-    feed('<c-p>')
-    screen:expect([[
-      Est eu^                                                      |
-        L{n: elit           } sit amet, consectetur                   |
-        a{n: eiusmod        } sed do eiusmod tempor                   |
-        i{n: et             }ore et dolore magna aliqua.              |
-        U{n: enim           }veniam, quis nostrud                     |
-        e{n: exercitation   }mco laboris nisi ut aliquip ex           |
-      {4:[No}{n: ex             }{4:                                         }|
-        i{n: ea             }ore et dolore magna aliqua.              |
-        U{n: esse           }veniam, quis nostrud                     |
-        e{s: eu             }mco laboris nisi ut aliquip ex           |
-        e{n: est            }uat. Duis aute irure dolor in            |
-        reprehenderit in voluptate velit esse cillum              |
-      {3:[No Name] [+]                                               }|
-      {2:-- Keyword Local completion (^N^P) }{5:match 22 of 65}           |
-    ]])
-
-    meths.input_mouse('wheel', 'down', '', 0, 9, 40)
-    screen:expect([[
-      Est eu^                                                      |
-        L{n: elit           } sit amet, consectetur                   |
-        a{n: eiusmod        } sed do eiusmod tempor                   |
-        i{n: et             }ore et dolore magna aliqua.              |
-        U{n: enim           }veniam, quis nostrud                     |
-        e{n: exercitation   }mco laboris nisi ut aliquip ex           |
-      {4:[No}{n: ex             }{4:                                         }|
-        e{n: ea             }uat. Duis aute irure dolor in            |
-        r{n: esse           }voluptate velit esse cillum              |
-        d{s: eu             }nulla pariatur. Excepteur sint           |
-        o{n: est            }t non proident, sunt in culpa            |
-        qui officia deserunt mollit anim id est                   |
-      {3:[No Name] [+]                                               }|
-      {2:-- Keyword Local completion (^N^P) }{5:match 22 of 65}           |
-    ]])
-
-    funcs.complete(4, {'ea', 'eeeeeeeeeeeeeeeeee', 'ei', 'eo', 'eu', 'ey', 'eå', 'eä', 'eö'})
-    screen:expect([[
-      Est eu^                                                      |
-        {s: ea                 }t amet, consectetur                   |
-        {n: eeeeeeeeeeeeeeeeee }d do eiusmod tempor                   |
-        {n: ei                 } et dolore magna aliqua.              |
-        {n: eo                 }iam, quis nostrud                     |
-        {n: eu                 } laboris nisi ut aliquip ex           |
-      {4:[N}{n: ey                 }{4:                                      }|
-        {n: eå                 }. Duis aute irure dolor in            |
-        {n: eä                 }uptate velit esse cillum              |
-        {n: eö                 }la pariatur. Excepteur sint           |
-        occaecat cupidatat non proident, sunt in culpa            |
-        qui officia deserunt mollit anim id est                   |
-      {3:[No Name] [+]                                               }|
-      {2:-- Keyword Local completion (^N^P) }{5:match 1 of 9}             |
-    ]])
-
-    funcs.complete(4, {'ea', 'eee', 'ei', 'eo', 'eu', 'ey', 'eå', 'eä', 'eö'})
-    screen:expect([[
-      Est eu^                                                      |
-        {s: ea             }r sit amet, consectetur                   |
-        {n: eee            }, sed do eiusmod tempor                   |
-        {n: ei             }bore et dolore magna aliqua.              |
-        {n: eo             } veniam, quis nostrud                     |
-        {n: eu             }amco laboris nisi ut aliquip ex           |
-      {4:[N}{n: ey             }{4:                                          }|
-        {n: eå             }quat. Duis aute irure dolor in            |
-        {n: eä             } voluptate velit esse cillum              |
-        {n: eö             } nulla pariatur. Excepteur sint           |
-        occaecat cupidatat non proident, sunt in culpa            |
-        qui officia deserunt mollit anim id est                   |
-      {3:[No Name] [+]                                               }|
-      {2:-- INSERT --}                                                |
-    ]])
-
-    feed('<c-n>')
-    screen:expect([[
-      Esteee^                                                      |
-        {n: ea             }r sit amet, consectetur                   |
-        {s: eee            }, sed do eiusmod tempor                   |
-        {n: ei             }bore et dolore magna aliqua.              |
-        {n: eo             } veniam, quis nostrud                     |
-        {n: eu             }amco laboris nisi ut aliquip ex           |
-      {4:[N}{n: ey             }{4:                                          }|
-        {n: eå             }quat. Duis aute irure dolor in            |
-        {n: eä             } voluptate velit esse cillum              |
-        {n: eö             } nulla pariatur. Excepteur sint           |
-        occaecat cupidatat non proident, sunt in culpa            |
-        qui officia deserunt mollit anim id est                   |
-      {3:[No Name] [+]                                               }|
-      {2:-- INSERT --}                                                |
-    ]])
-
-    funcs.complete(6, {'foo', 'bar'})
-    screen:expect([[
-      Esteee^                                                      |
-        Lo{s: foo            }sit amet, consectetur                   |
-        ad{n: bar            }sed do eiusmod tempor                   |
-        incididunt ut labore et dolore magna aliqua.              |
-        Ut enim ad minim veniam, quis nostrud                     |
-        exercitation ullamco laboris nisi ut aliquip ex           |
-      {4:[No Name] [+]                                               }|
-        ea commodo consequat. Duis aute irure dolor in            |
-        reprehenderit in voluptate velit esse cillum              |
-        dolore eu fugiat nulla pariatur. Excepteur sint           |
-        occaecat cupidatat non proident, sunt in culpa            |
-        qui officia deserunt mollit anim id est                   |
-      {3:[No Name] [+]                                               }|
-      {2:-- INSERT --}                                                |
-    ]])
-
-    feed('<c-y>')
-    screen:expect([[
-      Esteefoo^                                                    |
-        Lorem ipsum dolor sit amet, consectetur                   |
-        adipisicing elit, sed do eiusmod tempor                   |
-        incididunt ut labore et dolore magna aliqua.              |
-        Ut enim ad minim veniam, quis nostrud                     |
-        exercitation ullamco laboris nisi ut aliquip ex           |
-      {4:[No Name] [+]                                               }|
-        ea commodo consequat. Duis aute irure dolor in            |
-        reprehenderit in voluptate velit esse cillum              |
-        dolore eu fugiat nulla pariatur. Excepteur sint           |
-        occaecat cupidatat non proident, sunt in culpa            |
-        qui officia deserunt mollit anim id est                   |
-      {3:[No Name] [+]                                               }|
-      {2:-- INSERT --}                                                |
-    ]])
-  end)
-
-  it('can be moved due to wrap or resize', function()
-    feed('isome long prefix before the ')
-    command("set completeopt+=noinsert,noselect")
-    command("set linebreak")
-    funcs.complete(29, {'word', 'choice', 'text', 'thing'})
-    screen:expect([[
-      some long prefix before the ^    |
-      {1:~                        }{n: word  }|
-      {1:~                        }{n: choice}|
-      {1:~                        }{n: text  }|
-      {1:~                        }{n: thing }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {2:-- INSERT --}                    |
-    ]])
-
-    feed('<c-p>')
-    screen:expect([[
-      some long prefix before the     |
-      thing^                           |
-      {n:word           }{1:                 }|
-      {n:choice         }{1:                 }|
-      {n:text           }{1:                 }|
-      {s:thing          }{1:                 }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {2:-- INSERT --}                    |
-    ]])
-
-    feed('<c-p>')
-    screen:expect([[
-      some long prefix before the text|
-      {1:^~                        }{n: word  }|
-      {1:~                        }{n: choice}|
-      {1:~                        }{s: text  }|
-      {1:~                        }{n: thing }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {2:-- INSERT --}                    |
-    ]])
-
-    screen:try_resize(30,8)
-    screen:expect([[
-      some long prefix before the   |
-      text^                          |
-      {n:word           }{1:               }|
-      {n:choice         }{1:               }|
-      {s:text           }{1:               }|
-      {n:thing          }{1:               }|
-      {1:~                             }|
-      {2:-- INSERT --}                  |
-    ]])
-
-    screen:try_resize(50,8)
-    screen:expect([[
-      some long prefix before the text^                  |
-      {1:~                          }{n: word           }{1:       }|
-      {1:~                          }{n: choice         }{1:       }|
-      {1:~                          }{s: text           }{1:       }|
-      {1:~                          }{n: thing          }{1:       }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {2:-- INSERT --}                                      |
-    ]])
-
-    screen:try_resize(25,10)
-    screen:expect([[
-      some long prefix before  |
-      the text^                 |
-      {1:~  }{n: word           }{1:      }|
-      {1:~  }{n: choice         }{1:      }|
-      {1:~  }{s: text           }{1:      }|
-      {1:~  }{n: thing          }{1:      }|
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
-      {2:-- INSERT --}             |
-    ]])
-
-    screen:try_resize(12,5)
-    screen:expect([[
-      some long   |
-      prefix      |
-      bef{n: word  }  |
-      tex{n: }^        |
-      {2:-- INSERT -} |
-    ]])
-
-    -- can't draw the pum, but check we don't crash
-    screen:try_resize(12,2)
-    screen:expect([[
-      text^        |
-      {2:-- INSERT -} |
-    ]])
-
-    -- but state is preserved, pum reappears
-    screen:try_resize(20,8)
-    screen:expect([[
-      some long prefix    |
-      before the text^     |
-      {1:~         }{n: word    }{1: }|
-      {1:~         }{n: choice  }{1: }|
-      {1:~         }{s: text    }{1: }|
-      {1:~         }{n: thing   }{1: }|
-      {1:~                   }|
-      {2:-- INSERT --}        |
-    ]])
-  end)
-
-  it('with VimResized autocmd', function()
-    feed('isome long prefix before the ')
-    command("set completeopt+=noinsert,noselect")
-    command("autocmd VimResized * redraw!")
-    command("set linebreak")
-    funcs.complete(29, {'word', 'choice', 'text', 'thing'})
-    screen:expect([[
-      some long prefix before the ^    |
-      {1:~                        }{n: word  }|
-      {1:~                        }{n: choice}|
-      {1:~                        }{n: text  }|
-      {1:~                        }{n: thing }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {2:-- INSERT --}                    |
-    ]])
-
-    screen:try_resize(16,10)
-    screen:expect([[
-      some long       |
-      prefix before   |
-      the ^            |
-      {1:~  }{n: word        }|
-      {1:~  }{n: choice      }|
-      {1:~  }{n: text        }|
-      {1:~  }{n: thing       }|
-      {1:~               }|
-      {1:~               }|
-      {2:-- INSERT --}    |
-    ]])
-  end)
-
-  it('with rightleft window', function()
-    command("set rl wildoptions+=pum")
-    feed('isome rightleft ')
-    screen:expect([[
-                      ^  tfelthgir emos|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {2:-- INSERT --}                    |
-    ]])
-
-    command("set completeopt+=noinsert,noselect")
-    funcs.complete(16, {'word', 'choice', 'text', 'thing'})
-    screen:expect([[
-                      ^  tfelthgir emos|
-      {1:  }{n:           drow}{1:              ~}|
-      {1:  }{n:         eciohc}{1:              ~}|
-      {1:  }{n:           txet}{1:              ~}|
-      {1:  }{n:          gniht}{1:              ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {2:-- INSERT --}                    |
-    ]])
-
-    feed('<c-n>')
-    screen:expect([[
-                  ^ drow tfelthgir emos|
-      {1:  }{s:           drow}{1:              ~}|
-      {1:  }{n:         eciohc}{1:              ~}|
-      {1:  }{n:           txet}{1:              ~}|
-      {1:  }{n:          gniht}{1:              ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {2:-- INSERT --}                    |
-    ]])
-
-    feed('<c-y>')
-    screen:expect([[
-                  ^ drow tfelthgir emos|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {2:-- INSERT --}                    |
-    ]])
-
-    -- not rightleft on the cmdline
-    feed('<esc>:sign ')
-    screen:expect{grid=[[
-                   drow tfelthgir emos|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      :sign ^                          |
-    ]]}
-
-    feed('<tab>')
-    screen:expect{grid=[[
-                   drow tfelthgir emos|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:     }{s: define         }{1:          ~}|
-      {1:     }{n: jump           }{1:          ~}|
-      {1:     }{n: list           }{1:          ~}|
-      {1:     }{n: place          }{1:          ~}|
-      {1:     }{n: undefine       }{1:          ~}|
-      {1:     }{n: unplace        }{1:          ~}|
-      :sign define^                    |
-    ]]}
-  end)
-
-  it('with multiline messages', function()
-    screen:try_resize(40,8)
-    feed('ixx<cr>')
-    command('imap <f2> <cmd>echoerr "very"\\|echoerr "much"\\|echoerr "error"<cr>')
-    funcs.complete(1, {'word', 'choice', 'text', 'thing'})
-    screen:expect([[
-      xx                                      |
-      word^                                    |
-      {s:word           }{1:                         }|
-      {n:choice         }{1:                         }|
-      {n:text           }{1:                         }|
-      {n:thing          }{1:                         }|
-      {1:~                                       }|
-      {2:-- INSERT --}                            |
-    ]])
-
-    feed('<f2>')
-    screen:expect([[
-      xx                                      |
-      word                                    |
-      {s:word           }{1:                         }|
-      {4:                                        }|
-      {6:very}                                    |
-      {6:much}                                    |
-      {6:error}                                   |
-      {5:Press ENTER or type command to continue}^ |
-    ]])
-
-    feed('<cr>')
-    screen:expect([[
-      xx                                      |
-      word^                                    |
-      {s:word           }{1:                         }|
-      {n:choice         }{1:                         }|
-      {n:text           }{1:                         }|
-      {n:thing          }{1:                         }|
-      {1:~                                       }|
-      {2:-- INSERT --}                            |
-    ]])
-
-    feed('<c-n>')
-    screen:expect([[
-      xx                                      |
-      choice^                                  |
-      {n:word           }{1:                         }|
-      {s:choice         }{1:                         }|
-      {n:text           }{1:                         }|
-      {n:thing          }{1:                         }|
-      {1:~                                       }|
-      {2:-- INSERT --}                            |
-    ]])
-
-    command("split")
-    screen:expect([[
-      xx                                      |
-      choice^                                  |
-      {n:word           }{1:                         }|
-      {s:choice         }{4:                         }|
-      {n:text           }                         |
-      {n:thing          }                         |
-      {3:[No Name] [+]                           }|
-      {2:-- INSERT --}                            |
-    ]])
-
-    meths.input_mouse('wheel', 'down', '', 0, 6, 15)
-    screen:expect{grid=[[
-      xx                                      |
-      choice^                                  |
-      {n:word           }{1:                         }|
-      {s:choice         }{4:                         }|
-      {n:text           }                         |
-      {n:thing          }{1:                         }|
-      {3:[No Name] [+]                           }|
-      {2:-- INSERT --}                            |
-    ]], unchanged=true}
-  end)
-
-  it('with kind, menu and abbr attributes', function()
-    screen:try_resize(40,8)
-    feed('ixx ')
-    funcs.complete(4, {{word='wordey', kind= 'x', menu='extrainfo'}, 'thing', {word='secret', abbr='sneaky', menu='bar'}})
-    screen:expect([[
-      xx wordey^                               |
-      {1:~ }{s: wordey x extrainfo }{1:                  }|
-      {1:~ }{n: thing              }{1:                  }|
-      {1:~ }{n: sneaky   bar       }{1:                  }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {2:-- INSERT --}                            |
-    ]])
-
-    feed('<c-p>')
-    screen:expect([[
-      xx ^                                     |
-      {1:~ }{n: wordey x extrainfo }{1:                  }|
-      {1:~ }{n: thing              }{1:                  }|
-      {1:~ }{n: sneaky   bar       }{1:                  }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {2:-- INSERT --}                            |
-    ]])
-
-    feed('<c-p>')
-    screen:expect([[
-      xx secret^                               |
-      {1:~ }{n: wordey x extrainfo }{1:                  }|
-      {1:~ }{n: thing              }{1:                  }|
-      {1:~ }{s: sneaky   bar       }{1:                  }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {2:-- INSERT --}                            |
-    ]])
-
-    feed('<esc>')
-    screen:expect([[
-      xx secre^t                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-                                              |
-    ]])
-  end)
-
-  it('wildoptions=pum', function()
-    screen:try_resize(32,10)
-    command('set wildmenu')
-    command('set wildoptions=pum')
-    command('set shellslash')
-    command("cd test/functional/fixtures/wildpum")
-
-    feed(':sign ')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign ^                          |
-    ]])
-
-    feed('<Tab>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{s: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
-      :sign define^                    |
-    ]])
-
-    feed('<Right><Right>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{s: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
-      :sign list^                      |
-    ]])
-
-    feed('<C-N>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{s: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
-      :sign place^                     |
-    ]])
-
-    feed('<C-P>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{s: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
-      :sign list^                      |
-    ]])
-
-    feed('<Left>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: define         }{1:           }|
-      {1:~    }{s: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
-      :sign jump^                      |
-    ]])
-
-    -- pressing <C-E> should end completion and go back to the original match
-    feed('<C-E>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign ^                          |
-    ]])
-
-    -- pressing <C-Y> should select the current match and end completion
-    feed('<Tab><C-P><C-P><C-Y>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign unplace^                   |
-    ]])
-
-    -- showing popup menu in different columns in the cmdline
-    feed('<C-U>sign define <Tab>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~           }{s: culhl=         }{1:    }|
-      {1:~           }{n: icon=          }{1:    }|
-      {1:~           }{n: linehl=        }{1:    }|
-      {1:~           }{n: numhl=         }{1:    }|
-      {1:~           }{n: text=          }{1:    }|
-      {1:~           }{n: texthl=        }{1:    }|
-      :sign define culhl=^             |
-    ]])
-
-    feed('<Space><Tab>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                  }{s: culhl=     }{1: }|
-      {1:~                  }{n: icon=      }{1: }|
-      {1:~                  }{n: linehl=    }{1: }|
-      {1:~                  }{n: numhl=     }{1: }|
-      {1:~                  }{n: text=      }{1: }|
-      {1:~                  }{n: texthl=    }{1: }|
-      :sign define culhl= culhl=^      |
-    ]])
-
-    feed('<C-U>e Xdi<Tab><Tab>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~      }{s: XdirA/         }{1:         }|
-      {1:~      }{n: XfileA         }{1:         }|
-      :e Xdir/XdirA/^                  |
-    ]])
-
-    -- Pressing <Down> on a directory name should go into that directory
-    feed('<Down>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~            }{s: XdirB/         }{1:   }|
-      {1:~            }{n: XfileB         }{1:   }|
-      :e Xdir/XdirA/XdirB/^            |
-    ]])
-
-    -- Pressing <Up> on a directory name should go to the parent directory
-    feed('<Up>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~      }{s: XdirA/         }{1:         }|
-      {1:~      }{n: XfileA         }{1:         }|
-      :e Xdir/XdirA/^                  |
-    ]])
-
-    -- Pressing <C-A> when the popup menu is displayed should list all the
-    -- matches and remove the popup menu
-    feed(':<C-U>sign <Tab><C-A>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {4:                                }|
-      :sign define jump list place und|
-      efine unplace^                   |
-    ]])
-
-    -- Pressing <Left> after that should move the cursor
-    feed('<Left>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {4:                                }|
-      :sign define jump list place und|
-      efine unplac^e                   |
-    ]])
-    feed('<End>')
-
-    -- Pressing <C-D> when the popup menu is displayed should remove the popup
-    -- menu
-    feed('<C-U>sign <Tab><C-D>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {4:                                }|
-      :sign define                    |
-      define                          |
-      :sign define^                    |
-    ]])
-
-    -- Pressing <S-Tab> should open the popup menu with the last entry selected
-    feed('<C-U><CR>:sign <S-Tab><C-P>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{s: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
-      :sign undefine^                  |
-    ]])
-
-    -- Pressing <Esc> should close the popup menu and cancel the cmd line
-    feed('<C-U><CR>:sign <Tab><Esc>')
-    screen:expect([[
-      ^                                |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-                                      |
-    ]])
-
-    -- Typing a character when the popup is open, should close the popup
-    feed(':sign <Tab>x')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign definex^                   |
-    ]])
-
-    -- When the popup is open, entering the cmdline window should close the popup
-    feed('<C-U>sign <Tab><C-F>')
-    screen:expect([[
-                                      |
-      {3:[No Name]                       }|
-      {1::}sign define                    |
-      {1::}sign define^                    |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {4:[Command Line]                  }|
-      :sign define                    |
-    ]])
-    feed(':q<CR>')
-
-    -- After the last popup menu item, <C-N> should show the original string
-    feed(':sign u<Tab><C-N><C-N>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
-      :sign u^                         |
-    ]])
-
-    -- Use the popup menu for the command name
-    feed('<C-U>bu<Tab>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {s: bufdo          }{1:                }|
-      {n: buffer         }{1:                }|
-      {n: buffers        }{1:                }|
-      {n: bunload        }{1:                }|
-      :bufdo^                          |
-    ]])
-
-    -- Pressing <BS> should remove the popup menu and erase the last character
-    feed('<C-E><C-U>sign <Tab><BS>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign defin^                     |
-    ]])
-
-    -- Pressing <C-W> should remove the popup menu and erase the previous word
-    feed('<C-E><C-U>sign <Tab><C-W>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign ^                          |
-    ]])
-
-    -- Pressing <C-U> should remove the popup menu and erase the entire line
-    feed('<C-E><C-U>sign <Tab><C-U>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :^                               |
-    ]])
-
-    -- Using <C-E> to cancel the popup menu and then pressing <Up> should recall
-    -- the cmdline from history
-    feed('sign xyz<Esc>:sign <Tab><C-E><Up>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign xyz^                       |
-    ]])
-
-    feed('<esc>')
-
-    -- Check "list" still works
-    command('set wildmode=longest,list')
-    feed(':cn<Tab>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {4:                                }|
-      :cn                             |
-      cnewer       cnoreabbrev        |
-      cnext        cnoremap           |
-      cnfile       cnoremenu          |
-      :cn^                             |
-    ]])
-    feed('s')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {4:                                }|
-      :cn                             |
-      cnewer       cnoreabbrev        |
-      cnext        cnoremap           |
-      cnfile       cnoremenu          |
-      :cns^                            |
-    ]])
-
-    feed('<esc>')
-    command('set wildmode=full')
-
-    -- Tests a directory name contained full-width characters.
-    feed(':e あいう/<Tab>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~        }{s: 123            }{1:       }|
-      {1:~        }{n: abc            }{1:       }|
-      {1:~        }{n: xyz            }{1:       }|
-      :e あいう/123^                   |
-    ]])
-    feed('<Esc>')
-
-    -- Pressing <PageDown> should scroll the menu downward
-    feed(':sign <Tab><PageDown>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{s: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
-      :sign undefine^                  |
-    ]])
-    feed('<PageDown>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{s: unplace        }{1:           }|
-      :sign unplace^                   |
-    ]])
-    feed('<PageDown>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
-      :sign ^                          |
-    ]])
-    feed('<PageDown>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{s: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
-      :sign define^                    |
-    ]])
-    feed('<C-U>sign <Tab><Right><Right><PageDown>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{s: unplace        }{1:           }|
-      :sign unplace^                   |
-    ]])
-
-    -- Pressing <PageUp> should scroll the menu upward
-    feed('<C-U>sign <Tab><PageUp>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
-      :sign ^                          |
-    ]])
-    feed('<PageUp>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{s: unplace        }{1:           }|
-      :sign unplace^                   |
-    ]])
-    feed('<PageUp>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: define         }{1:           }|
-      {1:~    }{s: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
-      :sign jump^                      |
-    ]])
-    feed('<PageUp>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{s: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
-      :sign define^                    |
-    ]])
-
-    feed('<Esc>')
-
-    -- check positioning with multibyte char in pattern
-    command("e långfile1")
-    command("sp långfile2")
-    feed(':b lå<tab>')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {4:långfile2                       }|
-                                      |
-      {1:~                               }|
-      {1:~ }{s: långfile1      }{1:              }|
-      {3:lå}{n: långfile2      }{3:              }|
-      :b långfile1^                    |
-    ]])
-
-    -- check doesn't crash on screen resize
-    screen:try_resize(20,6)
-    screen:expect([[
-                          |
-      {1:~                   }|
-      {4:långfile2           }|
-        {s: långfile1      }  |
-      {3:lå}{n: långfile2      }{3:  }|
-      :b långfile1^        |
-    ]])
-
-    screen:try_resize(50,15)
-    screen:expect([[
-                                                        |
-      {1:~                                                 }|
-      {4:långfile2                                         }|
-                                                        |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~ }{s: långfile1      }{1:                                }|
-      {3:lå}{n: långfile2      }{3:                                }|
-      :b långfile1^                                      |
-    ]])
-
-    -- position is calculated correctly with "longest"
-    feed('<esc>')
-    command('set wildmode=longest:full,full')
-    feed(':b lå<tab>')
-    screen:expect([[
-                                                        |
-      {1:~                                                 }|
-      {4:långfile2                                         }|
-                                                        |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~ }{n: långfile1      }{1:                                }|
-      {3:lå}{n: långfile2      }{3:                                }|
-      :b långfile^                                       |
-    ]])
-
-    feed('<esc>')
-    command("close")
-    command('set wildmode=full')
-
-    -- special case: when patterns ends with "/", show menu items aligned
-    -- after the "/"
-    feed(':e compdir/<tab>')
-    screen:expect([[
-                                                        |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~         }{s: file1          }{1:                        }|
-      {1:~         }{n: file2          }{1:                        }|
-      :e compdir/file1^                                  |
-    ]])
-  end)
-
-  it('wildoptions=pum with scrolled messages', function()
-    screen:try_resize(40,10)
-    command('set wildmenu')
-    command('set wildoptions=pum')
-
-    feed(':echoerr "fail"|echoerr "error"<cr>')
-    screen:expect{grid=[[
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {4:                                        }|
-      {6:fail}                                    |
-      {6:error}                                   |
-      {5:Press ENTER or type command to continue}^ |
-    ]]}
-
-    feed(':sign <tab>')
-    screen:expect{grid=[[
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~    }{s: define         }{1:                   }|
-      {1:~    }{n: jump           }{1:                   }|
-      {1:~    }{n: list           }{1:                   }|
-      {4:     }{n: place          }{4:                   }|
-      {6:fail} {n: undefine       }                   |
-      {6:error}{n: unplace        }                   |
-      :sign define^                            |
-    ]]}
-
-    feed('d')
-    screen:expect{grid=[[
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {4:                                        }|
-      {6:fail}                                    |
-      {6:error}                                   |
-      :sign defined^                           |
-    ]]}
-  end)
-
-  it('wildoptions=pum and wildmode=longest,full #11622', function()
-    screen:try_resize(30,8)
-    command('set wildmenu')
-    command('set wildoptions=pum')
-    command('set wildmode=longest,full')
-
-    -- With 'wildmode' set to 'longest,full', completing a match should display
-    -- the longest match, the wildmenu should not be displayed.
-    feed(':sign u<Tab>')
-    screen:expect{grid=[[
-                                    |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      :sign un^                      |
-    ]]}
-    eq(0, funcs.wildmenumode())
-
-    -- pressing <Tab> should display the wildmenu
-    feed('<Tab>')
-    screen:expect{grid=[[
-                                    |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~    }{s: undefine       }{1:         }|
-      {1:~    }{n: unplace        }{1:         }|
-      :sign undefine^                |
-    ]]}
-    eq(1, funcs.wildmenumode())
-
-    -- pressing <Tab> second time should select the next entry in the menu
-    feed('<Tab>')
-    screen:expect{grid=[[
-                                    |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~    }{n: undefine       }{1:         }|
-      {1:~    }{s: unplace        }{1:         }|
-      :sign unplace^                 |
-    ]]}
-  end)
-
-  it('wildoptions=pum with a wrapped line in buffer vim-patch:8.2.4655', function()
-    screen:try_resize(32, 10)
-    meths.buf_set_lines(0, 0, -1, true, { ('a'):rep(100) })
-    command('set wildoptions+=pum')
-    feed('$')
-    feed(':sign <Tab>')
-    screen:expect([[
-      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      aaaa {s: define         }           |
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
-      :sign define^                    |
-    ]])
-  end)
-
-  -- oldtest: Test_wildmenu_pum_clear_entries()
-  it('wildoptions=pum when using Ctrl-E as wildchar vim-patch:9.0.1030', function()
-    screen:try_resize(30, 10)
-    exec([[
-      set wildoptions=pum
-      set wildchar=<C-E>
-    ]])
-    feed(':sign <C-E><C-E>')
-    screen:expect([[
-                                    |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~    }{s: define         }{1:         }|
-      {1:~    }{n: jump           }{1:         }|
-      {1:~    }{n: list           }{1:         }|
-      {1:~    }{n: place          }{1:         }|
-      {1:~    }{n: undefine       }{1:         }|
-      {1:~    }{n: unplace        }{1:         }|
-      :sign define^                  |
-    ]])
-    assert_alive()
-  end)
-
-  it("'pumblend' RGB-color", function()
-    screen:try_resize(60,14)
+describe("builtin popupmenu 'pumblend'", function()
+  before_each(clear)
+
+  it('RGB-color', function()
+    local screen = Screen.new(60, 14)
     screen:set_default_attr_ids({
       [1] = {background = Screen.colors.Yellow},
       [2] = {bold = true, reverse = true},
@@ -2933,6 +1075,7 @@ describe('builtin popupmenu', function()
       [44] = {foreground = tonumber('0x3f3f3f'), background = tonumber('0x7f5d7f')},
       [45] = {background = Screen.colors.WebGray, blend=0},
     })
+    screen:attach()
     command('syntax on')
     command('set mouse=a')
     command('set pumblend=10')
@@ -3081,10 +1224,8 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it("'pumblend' 256-color (non-RGB)", function()
-    screen:detach()
-    screen = Screen.new(60, 8)
-    screen:attach({rgb=false, ext_popupmenu=false})
+  it('256-color (non-RGB)', function()
+    local screen = Screen.new(60, 8)
     screen:set_default_attr_ids({
       [1] = {foreground = Screen.colors.Grey0, background = tonumber('0x000007')},
       [2] = {foreground = tonumber('0x000055'), background = tonumber('0x000007')},
@@ -3097,6 +1238,7 @@ describe('builtin popupmenu', function()
       [9] = {bold = true},
       [10] = {foreground = tonumber('0x000002')},
     })
+    screen:attach({rgb=false})
     command('set notermguicolors pumblend=10')
     insert([[
       Lorem ipsum dolor sit amet, consectetur
@@ -3117,713 +1259,3326 @@ describe('builtin popupmenu', function()
       {9:-- Keyword Local completion (^N^P) }{10:match 1 of 3}             |
     ]])
   end)
-
-  it("'pumheight'", function()
-    screen:try_resize(32,8)
-    feed('isome long prefix before the ')
-    command("set completeopt+=noinsert,noselect")
-    command("set linebreak")
-    command("set pumheight=2")
-    funcs.complete(29, {'word', 'choice', 'text', 'thing'})
-    screen:expect([[
-      some long prefix before the ^    |
-      {1:~                       }{n: word  }{c: }|
-      {1:~                       }{n: choice}{s: }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {2:-- INSERT --}                    |
-    ]])
-  end)
-
-  it("'pumwidth'", function()
-    screen:try_resize(32,8)
-    feed('isome long prefix before the ')
-    command("set completeopt+=noinsert,noselect")
-    command("set linebreak")
-    command("set pumwidth=8")
-    funcs.complete(29, {'word', 'choice', 'text', 'thing'})
-    screen:expect([[
-      some long prefix before the ^    |
-      {1:~                        }{n: word  }|
-      {1:~                        }{n: choice}|
-      {1:~                        }{n: text  }|
-      {1:~                        }{n: thing }|
-      {1:~                               }|
-      {1:~                               }|
-      {2:-- INSERT --}                    |
-    ]])
-  end)
-
-  it('does not crash when displayed in the last column with rightleft (#12032)', function()
-    local col = 30
-    local items = {'word', 'choice', 'text', 'thing'}
-    local max_len = 0
-    for _, v in ipairs(items) do
-      max_len = max_len < #v and #v or max_len
-    end
-    screen:try_resize(col, 8)
-    command('set rightleft')
-    command('call setline(1, repeat(" ", &columns - '..max_len..'))')
-    feed('$i')
-    funcs.complete(col - max_len, items)
-    feed('<c-y>')
-    assert_alive()
-  end)
-
-  it('truncates double-width character correctly when there is no scrollbar', function()
-    screen:try_resize(32,8)
-    command('set completeopt+=menuone,noselect')
-    feed('i' .. string.rep(' ', 13))
-    funcs.complete(14, {'哦哦哦哦哦哦哦哦哦哦'})
-    screen:expect([[
-                   ^                   |
-      {1:~           }{n: 哦哦哦哦哦哦哦哦哦>}|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {2:-- INSERT --}                    |
-    ]])
-  end)
-
-  it('truncates double-width character correctly when there is scrollbar', function()
-    screen:try_resize(32,8)
-    command('set completeopt+=noselect')
-    command('set pumheight=4')
-    feed('i' .. string.rep(' ', 12))
-    local items = {}
-    for _ = 1, 8 do
-      table.insert(items, {word = '哦哦哦哦哦哦哦哦哦哦', equal = 1, dup = 1})
-    end
-    funcs.complete(13, items)
-    screen:expect([[
-                  ^                    |
-      {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{c: }|
-      {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{c: }|
-      {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{s: }|
-      {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{s: }|
-      {1:~                               }|
-      {1:~                               }|
-      {2:-- INSERT --}                    |
-    ]])
-  end)
-
-  it('supports mousemodel=popup', function()
-    screen:try_resize(32, 6)
-    exec([[
-      call setline(1, 'popup menu test')
-      set mouse=a mousemodel=popup
-
-      aunmenu PopUp
-      menu PopUp.foo :let g:menustr = 'foo'<CR>
-      menu PopUp.bar :let g:menustr = 'bar'<CR>
-      menu PopUp.baz :let g:menustr = 'baz'<CR>
-    ]])
-    feed('<RightMouse><4,0>')
-    screen:expect([[
-      ^popup menu test                 |
-      {1:~  }{n: foo }{1:                        }|
-      {1:~  }{n: bar }{1:                        }|
-      {1:~  }{n: baz }{1:                        }|
-      {1:~                               }|
-                                      |
-    ]])
-    feed('<Down>')
-    screen:expect([[
-      ^popup menu test                 |
-      {1:~  }{s: foo }{1:                        }|
-      {1:~  }{n: bar }{1:                        }|
-      {1:~  }{n: baz }{1:                        }|
-      {1:~                               }|
-                                      |
-    ]])
-    feed('<Down>')
-    screen:expect([[
-      ^popup menu test                 |
-      {1:~  }{n: foo }{1:                        }|
-      {1:~  }{s: bar }{1:                        }|
-      {1:~  }{n: baz }{1:                        }|
-      {1:~                               }|
-                                      |
-    ]])
-    feed('<CR>')
-    screen:expect([[
-      ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :let g:menustr = 'bar'          |
-    ]])
-    eq('bar', meths.get_var('menustr'))
-    feed('<RightMouse><20,2>')
-    screen:expect([[
-      ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                  }{n: foo }{1:        }|
-      {1:~                  }{n: bar }{1:        }|
-      :let g:menustr = 'b{n: baz }        |
-    ]])
-    feed('<LeftMouse><22,5>')
-    screen:expect([[
-      ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :let g:menustr = 'baz'          |
-    ]])
-    eq('baz', meths.get_var('menustr'))
-    feed('<RightMouse><4,0>')
-    screen:expect([[
-      ^popup menu test                 |
-      {1:~  }{n: foo }{1:                        }|
-      {1:~  }{n: bar }{1:                        }|
-      {1:~  }{n: baz }{1:                        }|
-      {1:~                               }|
-      :let g:menustr = 'baz'          |
-    ]])
-    feed('<RightDrag><6,3>')
-    screen:expect([[
-      ^popup menu test                 |
-      {1:~  }{n: foo }{1:                        }|
-      {1:~  }{n: bar }{1:                        }|
-      {1:~  }{s: baz }{1:                        }|
-      {1:~                               }|
-      :let g:menustr = 'baz'          |
-    ]])
-    feed('<RightRelease><6,1>')
-    screen:expect([[
-      ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :let g:menustr = 'foo'          |
-    ]])
-    eq('foo', meths.get_var('menustr'))
-    eq(false, screen.options.mousemoveevent)
-    feed('<RightMouse><4,0>')
-    screen:expect([[
-      ^popup menu test                 |
-      {1:~  }{n: foo }{1:                        }|
-      {1:~  }{n: bar }{1:                        }|
-      {1:~  }{n: baz }{1:                        }|
-      {1:~                               }|
-      :let g:menustr = 'foo'          |
-    ]])
-    eq(true, screen.options.mousemoveevent)
-    feed('<MouseMove><6,3>')
-    screen:expect([[
-      ^popup menu test                 |
-      {1:~  }{n: foo }{1:                        }|
-      {1:~  }{n: bar }{1:                        }|
-      {1:~  }{s: baz }{1:                        }|
-      {1:~                               }|
-      :let g:menustr = 'foo'          |
-    ]])
-    eq(true, screen.options.mousemoveevent)
-    feed('<LeftMouse><6,2>')
-    screen:expect([[
-      ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :let g:menustr = 'bar'          |
-    ]])
-    eq(false, screen.options.mousemoveevent)
-    eq('bar', meths.get_var('menustr'))
-  end)
-
-  -- oldtest: Test_popup_command_dump()
-  it(':popup command', function()
-    exec([[
-      func ChangeMenu()
-        aunmenu PopUp.&Paste
-        nnoremenu 1.40 PopUp.&Paste :echomsg "pasted"<CR>
-        echomsg 'changed'
-        return "\<Ignore>"
-      endfunc
-
-      let lines =<< trim END
-        one two three four five
-        and one two Xthree four five
-        one more two three four five
-      END
-      call setline(1, lines)
-
-      aunmenu *
-      source $VIMRUNTIME/menu.vim
-    ]])
-    feed('/X<CR>:popup PopUp<CR>')
-    screen:expect([[
-      one two three four five         |
-      and one two {7:^X}three four five    |
-      one more tw{n: Undo             }   |
-      {1:~          }{n:                  }{1:   }|
-      {1:~          }{n: Paste            }{1:   }|
-      {1:~          }{n:                  }{1:   }|
-      {1:~          }{n: Select Word      }{1:   }|
-      {1:~          }{n: Select Sentence  }{1:   }|
-      {1:~          }{n: Select Paragraph }{1:   }|
-      {1:~          }{n: Select Line      }{1:   }|
-      {1:~          }{n: Select Block     }{1:   }|
-      {1:~          }{n: Select All       }{1:   }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :popup PopUp                    |
-    ]])
-
-    -- go to the Paste entry in the menu
-    feed('jj')
-    screen:expect([[
-      one two three four five         |
-      and one two {7:^X}three four five    |
-      one more tw{n: Undo             }   |
-      {1:~          }{n:                  }{1:   }|
-      {1:~          }{s: Paste            }{1:   }|
-      {1:~          }{n:                  }{1:   }|
-      {1:~          }{n: Select Word      }{1:   }|
-      {1:~          }{n: Select Sentence  }{1:   }|
-      {1:~          }{n: Select Paragraph }{1:   }|
-      {1:~          }{n: Select Line      }{1:   }|
-      {1:~          }{n: Select Block     }{1:   }|
-      {1:~          }{n: Select All       }{1:   }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :popup PopUp                    |
-    ]])
-
-    -- Select a word
-    feed('j')
-    screen:expect([[
-      one two three four five         |
-      and one two {7:^X}three four five    |
-      one more tw{n: Undo             }   |
-      {1:~          }{n:                  }{1:   }|
-      {1:~          }{n: Paste            }{1:   }|
-      {1:~          }{n:                  }{1:   }|
-      {1:~          }{s: Select Word      }{1:   }|
-      {1:~          }{n: Select Sentence  }{1:   }|
-      {1:~          }{n: Select Paragraph }{1:   }|
-      {1:~          }{n: Select Line      }{1:   }|
-      {1:~          }{n: Select Block     }{1:   }|
-      {1:~          }{n: Select All       }{1:   }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :popup PopUp                    |
-    ]])
-
-    feed('<Esc>')
-
-    -- Set an <expr> mapping to change a menu entry while it's displayed.
-    -- The text should not change but the command does.
-    -- Also verify that "changed" shows up, which means the mapping triggered.
-    command('nnoremap <expr> <F2> ChangeMenu()')
-    feed('/X<CR>:popup PopUp<CR><F2>')
-    screen:expect([[
-      one two three four five         |
-      and one two {7:^X}three four five    |
-      one more tw{n: Undo             }   |
-      {1:~          }{n:                  }{1:   }|
-      {1:~          }{n: Paste            }{1:   }|
-      {1:~          }{n:                  }{1:   }|
-      {1:~          }{n: Select Word      }{1:   }|
-      {1:~          }{n: Select Sentence  }{1:   }|
-      {1:~          }{n: Select Paragraph }{1:   }|
-      {1:~          }{n: Select Line      }{1:   }|
-      {1:~          }{n: Select Block     }{1:   }|
-      {1:~          }{n: Select All       }{1:   }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      changed                         |
-    ]])
-
-    -- Select the Paste entry, executes the changed menu item.
-    feed('jj<CR>')
-    screen:expect([[
-      one two three four five         |
-      and one two {7:^X}three four five    |
-      one more two three four five    |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      pasted                          |
-    ]])
-  end)
-
-  describe('"kind" and "menu"', function()
-    before_each(function()
-      screen:try_resize(30, 8)
-      exec([[
-        func CompleteFunc( findstart, base )
-          if a:findstart
-            return 0
-          endif
-          return {
-                \ 'words': [
-                \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'W', },
-                \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'W', },
-                \ { 'word': 'aword3', 'menu': 'extra text 3', 'kind': 'W', },
-                \]}
-        endfunc
-        set completeopt=menu
-        set completefunc=CompleteFunc
-      ]])
-    end)
-
-    -- oldtest: Test_pum_highlights_default()
-    it('default highlight groups', function()
-      feed('iaw<C-X><C-u>')
-      screen:expect([[
-        aword1^                        |
-        {s:aword1 W extra text 1 }{1:        }|
-        {n:aword2 W extra text 2 }{1:        }|
-        {n:aword3 W extra text 3 }{1:        }|
-        {1:~                             }|
-        {1:~                             }|
-        {1:~                             }|
-        {2:-- }{5:match 1 of 3}               |
-      ]])
-    end)
-
-    -- oldtest: Test_pum_highlights_custom()
-    it('custom highlight groups', function()
-      exec([[
-        hi PmenuKind      guifg=Red guibg=Magenta
-        hi PmenuKindSel   guifg=Red guibg=Grey
-        hi PmenuExtra     guifg=White guibg=Magenta
-        hi PmenuExtraSel  guifg=Black guibg=Grey
-      ]])
-      local attrs = screen:get_default_attr_ids()
-      attrs.kn = {foreground = Screen.colors.Red, background = Screen.colors.Magenta}
-      attrs.ks = {foreground = Screen.colors.Red, background = Screen.colors.Grey}
-      attrs.xn = {foreground = Screen.colors.White, background = Screen.colors.Magenta}
-      attrs.xs = {foreground = Screen.colors.Black, background = Screen.colors.Grey}
-      feed('iaw<C-X><C-u>')
-      screen:expect([[
-        aword1^                        |
-        {s:aword1 }{ks:W }{xs:extra text 1 }{1:        }|
-        {n:aword2 }{kn:W }{xn:extra text 2 }{1:        }|
-        {n:aword3 }{kn:W }{xn:extra text 3 }{1:        }|
-        {1:~                             }|
-        {1:~                             }|
-        {1:~                             }|
-        {2:-- }{5:match 1 of 3}               |
-      ]], attrs)
-    end)
-  end)
 end)
 
-describe('builtin popupmenu with ui/ext_multigrid', function()
-  local screen
-  before_each(function()
-    clear()
-    screen = Screen.new(32, 20)
-    screen:attach({ext_multigrid=true})
-    screen:set_default_attr_ids({
-      -- popup selected item / scrollbar track
-      ['s'] = {background = Screen.colors.WebGray},
-      -- popup non-selected item
-      ['n'] = {background = Screen.colors.LightMagenta},
-      -- popup scrollbar knob
-      ['c'] = {background = Screen.colors.Grey0},
-      [1] = {bold = true, foreground = Screen.colors.Blue},
-      [2] = {bold = true},
-      [3] = {reverse = true},
-      [4] = {bold = true, reverse = true},
-      [5] = {bold = true, foreground = Screen.colors.SeaGreen},
-      [6] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-    })
-  end)
+describe('builtin popupmenu', function()
+  before_each(clear)
 
-  it('truncates double-width character correctly when there is no scrollbar', function()
-    screen:try_resize(32,8)
-    command('set completeopt+=menuone,noselect')
-    feed('i' .. string.rep(' ', 13))
-    funcs.complete(14, {'哦哦哦哦哦哦哦哦哦哦'})
-    screen:expect({grid=[[
-      ## grid 1
-        [2:--------------------------------]|
-        [2:--------------------------------]|
-        [2:--------------------------------]|
-        [2:--------------------------------]|
-        [2:--------------------------------]|
-        [2:--------------------------------]|
-        [2:--------------------------------]|
-        [3:--------------------------------]|
-      ## grid 2
-                     ^                   |
-        {1:~                               }|
-        {1:~                               }|
-        {1:~                               }|
-        {1:~                               }|
-        {1:~                               }|
-        {1:~                               }|
-      ## grid 3
-        {2:-- INSERT --}                    |
-      ## grid 4
-        {n: 哦哦哦哦哦哦哦哦哦>}|
-    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 12, false, 100}}})
-  end)
+  local function with_ext_multigrid(multigrid)
+    local screen
+    before_each(function()
+      screen = Screen.new(32, 20)
+      screen:set_default_attr_ids({
+        -- popup selected item / scrollbar track
+        ['s'] = {background = Screen.colors.WebGray},
+        -- popup non-selected item
+        ['n'] = {background = Screen.colors.LightMagenta},
+        -- popup scrollbar knob
+        ['c'] = {background = Screen.colors.Grey0},
+        [1] = {bold = true, foreground = Screen.colors.Blue},
+        [2] = {bold = true},
+        [3] = {reverse = true},
+        [4] = {bold = true, reverse = true},
+        [5] = {bold = true, foreground = Screen.colors.SeaGreen},
+        [6] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+        [7] = {background = Screen.colors.Yellow},  -- Search
+        [8] = {foreground = Screen.colors.Red},
+      })
+      screen:attach({ext_multigrid=multigrid})
+    end)
 
-  it('truncates double-width character correctly when there is scrollbar', function()
-    screen:try_resize(32,8)
-    command('set completeopt+=noselect')
-    command('set pumheight=4')
-    feed('i' .. string.rep(' ', 12))
-    local items = {}
-    for _ = 1, 8 do
-      table.insert(items, {word = '哦哦哦哦哦哦哦哦哦哦', equal = 1, dup = 1})
+    it('with preview-window above', function()
+      feed(':ped<CR><c-w>4+')
+      feed('iaa bb cc dd ee ff gg hh ii jj<cr>')
+      feed('<c-x><c-n>')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          {3:[No Name] [Preview][+]          }|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          {4:[No Name] [+]                   }|
+          [3:--------------------------------]|
+        ## grid 2
+          aa bb cc dd ee ff gg hh ii jj   |
+          aa^                              |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 3
+          {2:-- }{5:match 1 of 10}                |
+        ## grid 4
+          aa bb cc dd ee ff gg hh ii jj   |
+          aa                              |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 5
+          {s:aa             }{c: }|
+          {n:bb             }{c: }|
+          {n:cc             }{c: }|
+          {n:dd             }{c: }|
+          {n:ee             }{c: }|
+          {n:ff             }{c: }|
+          {n:gg             }{s: }|
+          {n:hh             }{s: }|
+        ]], float_pos={
+          [5] = {{id = -1}, "NW", 2, 2, 0, false, 100};
+        }}
+      else
+        screen:expect([[
+          aa bb cc dd ee ff gg hh ii jj   |
+          aa                              |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {3:[No Name] [Preview][+]          }|
+          aa bb cc dd ee ff gg hh ii jj   |
+          aa^                              |
+          {s:aa             }{c: }{1:                }|
+          {n:bb             }{c: }{1:                }|
+          {n:cc             }{c: }{1:                }|
+          {n:dd             }{c: }{1:                }|
+          {n:ee             }{c: }{1:                }|
+          {n:ff             }{c: }{1:                }|
+          {n:gg             }{s: }{1:                }|
+          {n:hh             }{s: }{4:                }|
+          {2:-- }{5:match 1 of 10}                |
+        ]])
+      end
+    end)
+
+    it('with preview-window below', function()
+      feed(':ped<CR><c-w>4+<c-w>r')
+      feed('iaa bb cc dd ee ff gg hh ii jj<cr>')
+      feed('<c-x><c-n>')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          {4:[No Name] [+]                   }|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          {3:[No Name] [Preview][+]          }|
+          [3:--------------------------------]|
+        ## grid 2
+          aa bb cc dd ee ff gg hh ii jj   |
+          aa^                              |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 3
+          {2:-- }{5:match 1 of 10}                |
+        ## grid 4
+          aa bb cc dd ee ff gg hh ii jj   |
+          aa                              |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 5
+          {s:aa             }{c: }|
+          {n:bb             }{c: }|
+          {n:cc             }{c: }|
+          {n:dd             }{c: }|
+          {n:ee             }{c: }|
+          {n:ff             }{c: }|
+          {n:gg             }{s: }|
+          {n:hh             }{s: }|
+        ]], float_pos={
+          [5] = {{id = -1}, "NW", 2, 2, 0, false, 100};
+        }}
+      else
+        screen:expect([[
+          aa bb cc dd ee ff gg hh ii jj   |
+          aa^                              |
+          {s:aa             }{c: }{1:                }|
+          {n:bb             }{c: }{1:                }|
+          {n:cc             }{c: }{1:                }|
+          {n:dd             }{c: }{1:                }|
+          {n:ee             }{c: }{1:                }|
+          {n:ff             }{c: }{1:                }|
+          {n:gg             }{s: }{1:                }|
+          {n:hh             }{s: }{4:                }|
+          aa bb cc dd ee ff gg hh ii jj   |
+          aa                              |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {3:[No Name] [Preview][+]          }|
+          {2:-- }{5:match 1 of 10}                |
+        ]])
+      end
+    end)
+
+    it('with preview-window above and tall and inverted', function()
+      feed(':ped<CR><c-w>8+')
+      feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
+      feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
+      feed('kk<cr>ll<cr>mm<cr>nn<cr>oo<cr>')
+      feed('<c-x><c-n>')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          {3:[No Name] [Preview][+]          }|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          {4:[No Name] [+]                   }|
+          [3:--------------------------------]|
+        ## grid 2
+          dd                              |
+          ee                              |
+          ff                              |
+          gg                              |
+          hh                              |
+          ii                              |
+          jj                              |
+          kk                              |
+          ll                              |
+          mm                              |
+          nn                              |
+          oo                              |
+          aa^                              |
+        ## grid 3
+          {2:-- }{5:match 1 of 15}                |
+        ## grid 4
+          aa                              |
+          bb                              |
+          cc                              |
+          dd                              |
+        ## grid 5
+          {s:aa             }{c: }|
+          {n:bb             }{c: }|
+          {n:cc             }{c: }|
+          {n:dd             }{c: }|
+          {n:ee             }{c: }|
+          {n:ff             }{c: }|
+          {n:gg             }{c: }|
+          {n:hh             }{c: }|
+          {n:ii             }{c: }|
+          {n:jj             }{c: }|
+          {n:kk             }{c: }|
+          {n:ll             }{s: }|
+          {n:mm             }{s: }|
+        ]], float_pos={
+          [5] = {{id = -1}, "SW", 2, 12, 0, false, 100};
+        }}
+      else
+        screen:expect([[
+          aa                              |
+          bb                              |
+          cc                              |
+          dd                              |
+          {s:aa             }{c: }{3:ew][+]          }|
+          {n:bb             }{c: }                |
+          {n:cc             }{c: }                |
+          {n:dd             }{c: }                |
+          {n:ee             }{c: }                |
+          {n:ff             }{c: }                |
+          {n:gg             }{c: }                |
+          {n:hh             }{c: }                |
+          {n:ii             }{c: }                |
+          {n:jj             }{c: }                |
+          {n:kk             }{c: }                |
+          {n:ll             }{s: }                |
+          {n:mm             }{s: }                |
+          aa^                              |
+          {4:[No Name] [+]                   }|
+          {2:-- }{5:match 1 of 15}                |
+        ]])
+      end
+    end)
+
+    it('with preview-window above and short and inverted', function()
+      feed(':ped<CR><c-w>4+')
+      feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
+      feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
+      feed('<c-x><c-n>')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          {3:[No Name] [Preview][+]          }|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          {4:[No Name] [+]                   }|
+          [3:--------------------------------]|
+        ## grid 2
+          cc                              |
+          dd                              |
+          ee                              |
+          ff                              |
+          gg                              |
+          hh                              |
+          ii                              |
+          jj                              |
+          aa^                              |
+        ## grid 3
+          {2:-- }{5:match 1 of 10}                |
+        ## grid 4
+          aa                              |
+          bb                              |
+          cc                              |
+          dd                              |
+          ee                              |
+          ff                              |
+          gg                              |
+          hh                              |
+        ## grid 5
+          {s:aa             }{c: }|
+          {n:bb             }{c: }|
+          {n:cc             }{c: }|
+          {n:dd             }{c: }|
+          {n:ee             }{c: }|
+          {n:ff             }{c: }|
+          {n:gg             }{c: }|
+          {n:hh             }{c: }|
+          {n:ii             }{s: }|
+        ]], float_pos={
+          [5] = {{id = -1}, "SW", 2, 8, 0, false, 100};
+        }}
+      else
+        screen:expect([[
+          aa                              |
+          bb                              |
+          cc                              |
+          dd                              |
+          ee                              |
+          ff                              |
+          gg                              |
+          hh                              |
+          {s:aa             }{c: }{3:ew][+]          }|
+          {n:bb             }{c: }                |
+          {n:cc             }{c: }                |
+          {n:dd             }{c: }                |
+          {n:ee             }{c: }                |
+          {n:ff             }{c: }                |
+          {n:gg             }{c: }                |
+          {n:hh             }{c: }                |
+          {n:ii             }{s: }                |
+          aa^                              |
+          {4:[No Name] [+]                   }|
+          {2:-- }{5:match 1 of 10}                |
+        ]])
+      end
+    end)
+
+    it('with preview-window below and inverted', function()
+      feed(':ped<CR><c-w>4+<c-w>r')
+      feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
+      feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
+      feed('<c-x><c-n>')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          {4:[No Name] [+]                   }|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          [4:--------------------------------]|
+          {3:[No Name] [Preview][+]          }|
+          [3:--------------------------------]|
+        ## grid 2
+          cc                              |
+          dd                              |
+          ee                              |
+          ff                              |
+          gg                              |
+          hh                              |
+          ii                              |
+          jj                              |
+          aa^                              |
+        ## grid 3
+          {2:-- }{5:match 1 of 10}                |
+        ## grid 4
+          aa                              |
+          bb                              |
+          cc                              |
+          dd                              |
+          ee                              |
+          ff                              |
+          gg                              |
+          hh                              |
+        ## grid 5
+          {s:aa             }{c: }|
+          {n:bb             }{c: }|
+          {n:cc             }{c: }|
+          {n:dd             }{c: }|
+          {n:ee             }{c: }|
+          {n:ff             }{c: }|
+          {n:gg             }{s: }|
+          {n:hh             }{s: }|
+        ]], float_pos={
+          [5] = {{id = -1}, "SW", 2, 8, 0, false, 100};
+        }}
+      else
+        screen:expect([[
+          {s:aa             }{c: }                |
+          {n:bb             }{c: }                |
+          {n:cc             }{c: }                |
+          {n:dd             }{c: }                |
+          {n:ee             }{c: }                |
+          {n:ff             }{c: }                |
+          {n:gg             }{s: }                |
+          {n:hh             }{s: }                |
+          aa^                              |
+          {4:[No Name] [+]                   }|
+          aa                              |
+          bb                              |
+          cc                              |
+          dd                              |
+          ee                              |
+          ff                              |
+          gg                              |
+          hh                              |
+          {3:[No Name] [Preview][+]          }|
+          {2:-- }{5:match 1 of 10}                |
+        ]])
+      end
+    end)
+
+    if not multigrid then
+      -- oldtest: Test_pum_with_preview_win()
+      it('preview window opened during completion', function()
+        exec([[
+          funct Omni_test(findstart, base)
+            if a:findstart
+              return col(".") - 1
+            endif
+            return [#{word: "one", info: "1info"}, #{word: "two", info: "2info"}, #{word: "three", info: "3info"}]
+          endfunc
+          set omnifunc=Omni_test
+          set completeopt+=longest
+        ]])
+        feed('Gi<C-X><C-O>')
+        screen:expect([[
+          ^                                |
+          {n:one            }{1:                 }|
+          {n:two            }{1:                 }|
+          {n:three          }{1:                 }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {2:-- }{8:Back at original}             |
+        ]])
+        feed('<C-N>')
+        screen:expect([[
+          1info                           |
+                                          |
+          {1:~                               }|
+          {3:[Scratch] [Preview]             }|
+          one^                             |
+          {s:one            }{1:                 }|
+          {n:two            }{1:                 }|
+          {n:three          }{1:                 }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {4:[No Name] [+]                   }|
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+      end)
     end
-    funcs.complete(13, items)
-    screen:expect({grid=[[
-      ## grid 1
-        [2:--------------------------------]|
-        [2:--------------------------------]|
-        [2:--------------------------------]|
-        [2:--------------------------------]|
-        [2:--------------------------------]|
-        [2:--------------------------------]|
-        [2:--------------------------------]|
-        [3:--------------------------------]|
-      ## grid 2
-                    ^                    |
-        {1:~                               }|
-        {1:~                               }|
-        {1:~                               }|
-        {1:~                               }|
-        {1:~                               }|
-        {1:~                               }|
-      ## grid 3
-        {2:-- INSERT --}                    |
-      ## grid 4
-        {n: 哦哦哦哦哦哦哦哦哦>}{c: }|
-        {n: 哦哦哦哦哦哦哦哦哦>}{c: }|
-        {n: 哦哦哦哦哦哦哦哦哦>}{s: }|
-        {n: 哦哦哦哦哦哦哦哦哦>}{s: }|
-    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 11, false, 100}}})
+
+    it('with vsplits', function()
+      screen:try_resize(32, 8)
+      insert('aaa aab aac\n')
+      feed(':vsplit<cr>')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [4:--------------------]│[2:-----------]|
+          [4:--------------------]│[2:-----------]|
+          [4:--------------------]│[2:-----------]|
+          [4:--------------------]│[2:-----------]|
+          [4:--------------------]│[2:-----------]|
+          [4:--------------------]│[2:-----------]|
+          {4:[No Name] [+]        }{3:<Name] [+] }|
+          [3:--------------------------------]|
+        ## grid 2
+          aaa aab aac|
+                     |
+          {1:~          }|
+          {1:~          }|
+          {1:~          }|
+          {1:~          }|
+        ## grid 3
+          :vsplit                         |
+        ## grid 4
+          aaa aab aac         |
+          ^                    |
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+        ]]}
+      else
+        screen:expect([[
+          aaa aab aac         │aaa aab aac|
+          ^                    │           |
+          {1:~                   }│{1:~          }|
+          {1:~                   }│{1:~          }|
+          {1:~                   }│{1:~          }|
+          {1:~                   }│{1:~          }|
+          {4:[No Name] [+]        }{3:<Name] [+] }|
+          :vsplit                         |
+        ]])
+      end
+
+      feed('ibbb a<c-x><c-n>')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [4:--------------------]│[2:-----------]|
+          [4:--------------------]│[2:-----------]|
+          [4:--------------------]│[2:-----------]|
+          [4:--------------------]│[2:-----------]|
+          [4:--------------------]│[2:-----------]|
+          [4:--------------------]│[2:-----------]|
+          {4:[No Name] [+]        }{3:<Name] [+] }|
+          [3:--------------------------------]|
+        ## grid 2
+          aaa aab aac|
+          bbb aaa    |
+          {1:~          }|
+          {1:~          }|
+          {1:~          }|
+          {1:~          }|
+        ## grid 3
+          {2:-- }{5:match 1 of 3}                 |
+        ## grid 4
+          aaa aab aac         |
+          bbb aaa^             |
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+        ## grid 5
+          {s: aaa            }|
+          {n: aab            }|
+          {n: aac            }|
+        ]], float_pos={
+          [5] = {{id = -1}, "NW", 4, 2, 3, false, 100};
+        }}
+      else
+        screen:expect([[
+          aaa aab aac         │aaa aab aac|
+          bbb aaa^             │bbb aaa    |
+          {1:~  }{s: aaa            }{1: }│{1:~          }|
+          {1:~  }{n: aab            }{1: }│{1:~          }|
+          {1:~  }{n: aac            }{1: }│{1:~          }|
+          {1:~                   }│{1:~          }|
+          {4:[No Name] [+]        }{3:<Name] [+] }|
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+      end
+
+      feed('<esc><c-w><c-w>oc a<c-x><c-n>')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|
+          {3:<Name] [+]  }{4:[No Name] [+]       }|
+          [3:--------------------------------]|
+        ## grid 2
+          aaa aab aac         |
+          bbb aaa             |
+          c aaa^               |
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+        ## grid 3
+          {2:-- }{5:match 1 of 3}                 |
+        ## grid 4
+          aaa aab aac|
+          bbb aaa    |
+          c aaa      |
+          {1:~          }|
+          {1:~          }|
+          {1:~          }|
+        ## grid 5
+          {s: aaa            }|
+          {n: aab            }|
+          {n: aac            }|
+        ]], float_pos={
+          [5] = {{id = -1}, "NW", 2, 3, 1, false, 100};
+        }}
+      else
+        screen:expect([[
+          aaa aab aac│aaa aab aac         |
+          bbb aaa    │bbb aaa             |
+          c aaa      │c aaa^               |
+          {1:~          }│{1:~}{s: aaa            }{1:   }|
+          {1:~          }│{1:~}{n: aab            }{1:   }|
+          {1:~          }│{1:~}{n: aac            }{1:   }|
+          {3:<Name] [+]  }{4:[No Name] [+]       }|
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+      end
+
+      feed('bcdef ccc a<c-x><c-n>')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|
+          {3:<Name] [+]  }{4:[No Name] [+]       }|
+          [3:--------------------------------]|
+        ## grid 2
+          aaa aab aac         |
+          bbb aaa             |
+          c aaabcdef ccc aaa^  |
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+        ## grid 3
+          {2:-- }{5:match 1 of 4}                 |
+        ## grid 4
+          aaa aab aac|
+          bbb aaa    |
+          c aaabcdef |
+          ccc aaa    |
+          {1:~          }|
+          {1:~          }|
+        ## grid 5
+          {s: aaa     }|
+          {n: aab     }|
+          {n: aac     }|
+          {n: aaabcdef}|
+        ]], float_pos={
+          [5] = {{id = -1}, "NW", 2, 3, 11, false, 100};
+        }}
+      else
+        screen:expect([[
+          aaa aab aac│aaa aab aac         |
+          bbb aaa    │bbb aaa             |
+          c aaabcdef │c aaabcdef ccc aaa^  |
+          ccc aaa    │{1:~          }{s: aaa     }|
+          {1:~          }│{1:~          }{n: aab     }|
+          {1:~          }│{1:~          }{n: aac     }|
+          {3:<Name] [+]  }{4:[No Name] [}{n: aaabcdef}|
+          {2:-- }{5:match 1 of 4}                 |
+        ]])
+      end
+    end)
+
+    if not multigrid then
+      it('with split and scroll', function()
+        screen:try_resize(60,14)
+        command("split")
+        command("set completeopt+=noinsert")
+        command("set mouse=a")
+        insert([[
+          Lorem ipsum dolor sit amet, consectetur
+          adipisicing elit, sed do eiusmod tempor
+          incididunt ut labore et dolore magna aliqua.
+          Ut enim ad minim veniam, quis nostrud
+          exercitation ullamco laboris nisi ut aliquip ex
+          ea commodo consequat. Duis aute irure dolor in
+          reprehenderit in voluptate velit esse cillum
+          dolore eu fugiat nulla pariatur. Excepteur sint
+          occaecat cupidatat non proident, sunt in culpa
+          qui officia deserunt mollit anim id est
+          laborum.
+        ]])
+
+        screen:expect([[
+            reprehenderit in voluptate velit esse cillum              |
+            dolore eu fugiat nulla pariatur. Excepteur sint           |
+            occaecat cupidatat non proident, sunt in culpa            |
+            qui officia deserunt mollit anim id est                   |
+            laborum.                                                  |
+          ^                                                            |
+          {4:[No Name] [+]                                               }|
+            Lorem ipsum dolor sit amet, consectetur                   |
+            adipisicing elit, sed do eiusmod tempor                   |
+            incididunt ut labore et dolore magna aliqua.              |
+            Ut enim ad minim veniam, quis nostrud                     |
+            exercitation ullamco laboris nisi ut aliquip ex           |
+          {3:[No Name] [+]                                               }|
+                                                                      |
+        ]])
+
+        feed('ggOEst <c-x><c-p>')
+        screen:expect([[
+          Est ^                                                        |
+            L{n: sunt           }{s: }sit amet, consectetur                   |
+            a{n: in             }{s: }sed do eiusmod tempor                   |
+            i{n: culpa          }{s: }re et dolore magna aliqua.              |
+            U{n: qui            }{s: }eniam, quis nostrud                     |
+            e{n: officia        }{s: }co laboris nisi ut aliquip ex           |
+          {4:[No}{n: deserunt       }{s: }{4:                                        }|
+          Est{n: mollit         }{s: }                                        |
+            L{n: anim           }{s: }sit amet, consectetur                   |
+            a{n: id             }{s: }sed do eiusmod tempor                   |
+            i{n: est            }{s: }re et dolore magna aliqua.              |
+            U{n: laborum        }{c: }eniam, quis nostrud                     |
+          {3:[No}{s: Est            }{c: }{3:                                        }|
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 65}            |
+        ]])
+
+        meths.input_mouse('wheel', 'down', '', 0, 9, 40)
+        screen:expect([[
+          Est ^                                                        |
+            L{n: sunt           }{s: }sit amet, consectetur                   |
+            a{n: in             }{s: }sed do eiusmod tempor                   |
+            i{n: culpa          }{s: }re et dolore magna aliqua.              |
+            U{n: qui            }{s: }eniam, quis nostrud                     |
+            e{n: officia        }{s: }co laboris nisi ut aliquip ex           |
+          {4:[No}{n: deserunt       }{s: }{4:                                        }|
+            i{n: mollit         }{s: }re et dolore magna aliqua.              |
+            U{n: anim           }{s: }eniam, quis nostrud                     |
+            e{n: id             }{s: }co laboris nisi ut aliquip ex           |
+            e{n: est            }{s: }at. Duis aute irure dolor in            |
+            r{n: laborum        }{c: }oluptate velit esse cillum              |
+          {3:[No}{s: Est            }{c: }{3:                                        }|
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 65}            |
+        ]])
+
+        feed('e')
+        screen:expect([[
+          Est e^                                                       |
+            L{n: elit           } sit amet, consectetur                   |
+            a{n: eiusmod        } sed do eiusmod tempor                   |
+            i{n: et             }ore et dolore magna aliqua.              |
+            U{n: enim           }veniam, quis nostrud                     |
+            e{n: exercitation   }mco laboris nisi ut aliquip ex           |
+          {4:[No}{n: ex             }{4:                                         }|
+            i{n: ea             }ore et dolore magna aliqua.              |
+            U{n: esse           }veniam, quis nostrud                     |
+            e{n: eu             }mco laboris nisi ut aliquip ex           |
+            e{s: est            }uat. Duis aute irure dolor in            |
+            reprehenderit in voluptate velit esse cillum              |
+          {3:[No Name] [+]                                               }|
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 65}            |
+        ]])
+
+        meths.input_mouse('wheel', 'up', '', 0, 9, 40)
+        screen:expect([[
+          Est e^                                                       |
+            L{n: elit           } sit amet, consectetur                   |
+            a{n: eiusmod        } sed do eiusmod tempor                   |
+            i{n: et             }ore et dolore magna aliqua.              |
+            U{n: enim           }veniam, quis nostrud                     |
+            e{n: exercitation   }mco laboris nisi ut aliquip ex           |
+          {4:[No}{n: ex             }{4:                                         }|
+          Est{n: ea             }                                         |
+            L{n: esse           } sit amet, consectetur                   |
+            a{n: eu             } sed do eiusmod tempor                   |
+            i{s: est            }ore et dolore magna aliqua.              |
+            Ut enim ad minim veniam, quis nostrud                     |
+          {3:[No Name] [+]                                               }|
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 65}            |
+        ]])
+
+        feed('s')
+        screen:expect([[
+          Est es^                                                      |
+            L{n: esse           } sit amet, consectetur                   |
+            a{s: est            } sed do eiusmod tempor                   |
+            incididunt ut labore et dolore magna aliqua.              |
+            Ut enim ad minim veniam, quis nostrud                     |
+            exercitation ullamco laboris nisi ut aliquip ex           |
+          {4:[No Name] [+]                                               }|
+          Est es                                                      |
+            Lorem ipsum dolor sit amet, consectetur                   |
+            adipisicing elit, sed do eiusmod tempor                   |
+            incididunt ut labore et dolore magna aliqua.              |
+            Ut enim ad minim veniam, quis nostrud                     |
+          {3:[No Name] [+]                                               }|
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 65}            |
+        ]])
+
+        meths.input_mouse('wheel', 'down', '', 0, 9, 40)
+        screen:expect([[
+          Est es^                                                      |
+            L{n: esse           } sit amet, consectetur                   |
+            a{s: est            } sed do eiusmod tempor                   |
+            incididunt ut labore et dolore magna aliqua.              |
+            Ut enim ad minim veniam, quis nostrud                     |
+            exercitation ullamco laboris nisi ut aliquip ex           |
+          {4:[No Name] [+]                                               }|
+            incididunt ut labore et dolore magna aliqua.              |
+            Ut enim ad minim veniam, quis nostrud                     |
+            exercitation ullamco laboris nisi ut aliquip ex           |
+            ea commodo consequat. Duis aute irure dolor in            |
+            reprehenderit in voluptate velit esse cillum              |
+          {3:[No Name] [+]                                               }|
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 65}            |
+        ]])
+
+        feed('<bs>')
+        screen:expect([[
+          Est e^                                                       |
+            L{n: elit           } sit amet, consectetur                   |
+            a{n: eiusmod        } sed do eiusmod tempor                   |
+            i{n: et             }ore et dolore magna aliqua.              |
+            U{n: enim           }veniam, quis nostrud                     |
+            e{n: exercitation   }mco laboris nisi ut aliquip ex           |
+          {4:[No}{n: ex             }{4:                                         }|
+            i{n: ea             }ore et dolore magna aliqua.              |
+            U{n: esse           }veniam, quis nostrud                     |
+            e{n: eu             }mco laboris nisi ut aliquip ex           |
+            e{s: est            }uat. Duis aute irure dolor in            |
+            reprehenderit in voluptate velit esse cillum              |
+          {3:[No Name] [+]                                               }|
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 65}            |
+        ]])
+
+        feed('<c-p>')
+        screen:expect([[
+          Est eu^                                                      |
+            L{n: elit           } sit amet, consectetur                   |
+            a{n: eiusmod        } sed do eiusmod tempor                   |
+            i{n: et             }ore et dolore magna aliqua.              |
+            U{n: enim           }veniam, quis nostrud                     |
+            e{n: exercitation   }mco laboris nisi ut aliquip ex           |
+          {4:[No}{n: ex             }{4:                                         }|
+            i{n: ea             }ore et dolore magna aliqua.              |
+            U{n: esse           }veniam, quis nostrud                     |
+            e{s: eu             }mco laboris nisi ut aliquip ex           |
+            e{n: est            }uat. Duis aute irure dolor in            |
+            reprehenderit in voluptate velit esse cillum              |
+          {3:[No Name] [+]                                               }|
+          {2:-- Keyword Local completion (^N^P) }{5:match 22 of 65}           |
+        ]])
+
+        meths.input_mouse('wheel', 'down', '', 0, 9, 40)
+        screen:expect([[
+          Est eu^                                                      |
+            L{n: elit           } sit amet, consectetur                   |
+            a{n: eiusmod        } sed do eiusmod tempor                   |
+            i{n: et             }ore et dolore magna aliqua.              |
+            U{n: enim           }veniam, quis nostrud                     |
+            e{n: exercitation   }mco laboris nisi ut aliquip ex           |
+          {4:[No}{n: ex             }{4:                                         }|
+            e{n: ea             }uat. Duis aute irure dolor in            |
+            r{n: esse           }voluptate velit esse cillum              |
+            d{s: eu             }nulla pariatur. Excepteur sint           |
+            o{n: est            }t non proident, sunt in culpa            |
+            qui officia deserunt mollit anim id est                   |
+          {3:[No Name] [+]                                               }|
+          {2:-- Keyword Local completion (^N^P) }{5:match 22 of 65}           |
+        ]])
+
+        funcs.complete(4, {'ea', 'eeeeeeeeeeeeeeeeee', 'ei', 'eo', 'eu', 'ey', 'eå', 'eä', 'eö'})
+        screen:expect([[
+          Est eu^                                                      |
+            {s: ea                 }t amet, consectetur                   |
+            {n: eeeeeeeeeeeeeeeeee }d do eiusmod tempor                   |
+            {n: ei                 } et dolore magna aliqua.              |
+            {n: eo                 }iam, quis nostrud                     |
+            {n: eu                 } laboris nisi ut aliquip ex           |
+          {4:[N}{n: ey                 }{4:                                      }|
+            {n: eå                 }. Duis aute irure dolor in            |
+            {n: eä                 }uptate velit esse cillum              |
+            {n: eö                 }la pariatur. Excepteur sint           |
+            occaecat cupidatat non proident, sunt in culpa            |
+            qui officia deserunt mollit anim id est                   |
+          {3:[No Name] [+]                                               }|
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 9}             |
+        ]])
+
+        funcs.complete(4, {'ea', 'eee', 'ei', 'eo', 'eu', 'ey', 'eå', 'eä', 'eö'})
+        screen:expect([[
+          Est eu^                                                      |
+            {s: ea             }r sit amet, consectetur                   |
+            {n: eee            }, sed do eiusmod tempor                   |
+            {n: ei             }bore et dolore magna aliqua.              |
+            {n: eo             } veniam, quis nostrud                     |
+            {n: eu             }amco laboris nisi ut aliquip ex           |
+          {4:[N}{n: ey             }{4:                                          }|
+            {n: eå             }quat. Duis aute irure dolor in            |
+            {n: eä             } voluptate velit esse cillum              |
+            {n: eö             } nulla pariatur. Excepteur sint           |
+            occaecat cupidatat non proident, sunt in culpa            |
+            qui officia deserunt mollit anim id est                   |
+          {3:[No Name] [+]                                               }|
+          {2:-- INSERT --}                                                |
+        ]])
+
+        feed('<c-n>')
+        screen:expect([[
+          Esteee^                                                      |
+            {n: ea             }r sit amet, consectetur                   |
+            {s: eee            }, sed do eiusmod tempor                   |
+            {n: ei             }bore et dolore magna aliqua.              |
+            {n: eo             } veniam, quis nostrud                     |
+            {n: eu             }amco laboris nisi ut aliquip ex           |
+          {4:[N}{n: ey             }{4:                                          }|
+            {n: eå             }quat. Duis aute irure dolor in            |
+            {n: eä             } voluptate velit esse cillum              |
+            {n: eö             } nulla pariatur. Excepteur sint           |
+            occaecat cupidatat non proident, sunt in culpa            |
+            qui officia deserunt mollit anim id est                   |
+          {3:[No Name] [+]                                               }|
+          {2:-- INSERT --}                                                |
+        ]])
+
+        funcs.complete(6, {'foo', 'bar'})
+        screen:expect([[
+          Esteee^                                                      |
+            Lo{s: foo            }sit amet, consectetur                   |
+            ad{n: bar            }sed do eiusmod tempor                   |
+            incididunt ut labore et dolore magna aliqua.              |
+            Ut enim ad minim veniam, quis nostrud                     |
+            exercitation ullamco laboris nisi ut aliquip ex           |
+          {4:[No Name] [+]                                               }|
+            ea commodo consequat. Duis aute irure dolor in            |
+            reprehenderit in voluptate velit esse cillum              |
+            dolore eu fugiat nulla pariatur. Excepteur sint           |
+            occaecat cupidatat non proident, sunt in culpa            |
+            qui officia deserunt mollit anim id est                   |
+          {3:[No Name] [+]                                               }|
+          {2:-- INSERT --}                                                |
+        ]])
+
+        feed('<c-y>')
+        screen:expect([[
+          Esteefoo^                                                    |
+            Lorem ipsum dolor sit amet, consectetur                   |
+            adipisicing elit, sed do eiusmod tempor                   |
+            incididunt ut labore et dolore magna aliqua.              |
+            Ut enim ad minim veniam, quis nostrud                     |
+            exercitation ullamco laboris nisi ut aliquip ex           |
+          {4:[No Name] [+]                                               }|
+            ea commodo consequat. Duis aute irure dolor in            |
+            reprehenderit in voluptate velit esse cillum              |
+            dolore eu fugiat nulla pariatur. Excepteur sint           |
+            occaecat cupidatat non proident, sunt in culpa            |
+            qui officia deserunt mollit anim id est                   |
+          {3:[No Name] [+]                                               }|
+          {2:-- INSERT --}                                                |
+        ]])
+      end)
+
+      it('can be moved due to wrap or resize', function()
+        feed('isome long prefix before the ')
+        command("set completeopt+=noinsert,noselect")
+        command("set linebreak")
+        funcs.complete(29, {'word', 'choice', 'text', 'thing'})
+        screen:expect([[
+          some long prefix before the ^    |
+          {1:~                        }{n: word  }|
+          {1:~                        }{n: choice}|
+          {1:~                        }{n: text  }|
+          {1:~                        }{n: thing }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {2:-- INSERT --}                    |
+        ]])
+
+        feed('<c-p>')
+        screen:expect([[
+          some long prefix before the     |
+          thing^                           |
+          {n:word           }{1:                 }|
+          {n:choice         }{1:                 }|
+          {n:text           }{1:                 }|
+          {s:thing          }{1:                 }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {2:-- INSERT --}                    |
+        ]])
+
+        feed('<c-p>')
+        screen:expect([[
+          some long prefix before the text|
+          {1:^~                        }{n: word  }|
+          {1:~                        }{n: choice}|
+          {1:~                        }{s: text  }|
+          {1:~                        }{n: thing }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {2:-- INSERT --}                    |
+        ]])
+
+        screen:try_resize(30,8)
+        screen:expect([[
+          some long prefix before the   |
+          text^                          |
+          {n:word           }{1:               }|
+          {n:choice         }{1:               }|
+          {s:text           }{1:               }|
+          {n:thing          }{1:               }|
+          {1:~                             }|
+          {2:-- INSERT --}                  |
+        ]])
+
+        screen:try_resize(50,8)
+        screen:expect([[
+          some long prefix before the text^                  |
+          {1:~                          }{n: word           }{1:       }|
+          {1:~                          }{n: choice         }{1:       }|
+          {1:~                          }{s: text           }{1:       }|
+          {1:~                          }{n: thing          }{1:       }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {2:-- INSERT --}                                      |
+        ]])
+
+        screen:try_resize(25,10)
+        screen:expect([[
+          some long prefix before  |
+          the text^                 |
+          {1:~  }{n: word           }{1:      }|
+          {1:~  }{n: choice         }{1:      }|
+          {1:~  }{s: text           }{1:      }|
+          {1:~  }{n: thing          }{1:      }|
+          {1:~                        }|
+          {1:~                        }|
+          {1:~                        }|
+          {2:-- INSERT --}             |
+        ]])
+
+        screen:try_resize(12,5)
+        screen:expect([[
+          some long   |
+          prefix      |
+          bef{n: word  }  |
+          tex{n: }^        |
+          {2:-- INSERT -} |
+        ]])
+
+        -- can't draw the pum, but check we don't crash
+        screen:try_resize(12,2)
+        screen:expect([[
+          text^        |
+          {2:-- INSERT -} |
+        ]])
+
+        -- but state is preserved, pum reappears
+        screen:try_resize(20,8)
+        screen:expect([[
+          some long prefix    |
+          before the text^     |
+          {1:~         }{n: word    }{1: }|
+          {1:~         }{n: choice  }{1: }|
+          {1:~         }{s: text    }{1: }|
+          {1:~         }{n: thing   }{1: }|
+          {1:~                   }|
+          {2:-- INSERT --}        |
+        ]])
+      end)
+
+      it('with VimResized autocmd', function()
+        feed('isome long prefix before the ')
+        command("set completeopt+=noinsert,noselect")
+        command("autocmd VimResized * redraw!")
+        command("set linebreak")
+        funcs.complete(29, {'word', 'choice', 'text', 'thing'})
+        screen:expect([[
+          some long prefix before the ^    |
+          {1:~                        }{n: word  }|
+          {1:~                        }{n: choice}|
+          {1:~                        }{n: text  }|
+          {1:~                        }{n: thing }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {2:-- INSERT --}                    |
+        ]])
+
+        screen:try_resize(16,10)
+        screen:expect([[
+          some long       |
+          prefix before   |
+          the ^            |
+          {1:~  }{n: word        }|
+          {1:~  }{n: choice      }|
+          {1:~  }{n: text        }|
+          {1:~  }{n: thing       }|
+          {1:~               }|
+          {1:~               }|
+          {2:-- INSERT --}    |
+        ]])
+      end)
+
+      it('with rightleft window', function()
+        command("set rl wildoptions+=pum")
+        feed('isome rightleft ')
+        screen:expect([[
+                          ^  tfelthgir emos|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {2:-- INSERT --}                    |
+        ]])
+
+        command("set completeopt+=noinsert,noselect")
+        funcs.complete(16, {'word', 'choice', 'text', 'thing'})
+        screen:expect([[
+                          ^  tfelthgir emos|
+          {1:  }{n:           drow}{1:              ~}|
+          {1:  }{n:         eciohc}{1:              ~}|
+          {1:  }{n:           txet}{1:              ~}|
+          {1:  }{n:          gniht}{1:              ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {2:-- INSERT --}                    |
+        ]])
+
+        feed('<c-n>')
+        screen:expect([[
+                      ^ drow tfelthgir emos|
+          {1:  }{s:           drow}{1:              ~}|
+          {1:  }{n:         eciohc}{1:              ~}|
+          {1:  }{n:           txet}{1:              ~}|
+          {1:  }{n:          gniht}{1:              ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {2:-- INSERT --}                    |
+        ]])
+
+        feed('<c-y>')
+        screen:expect([[
+                      ^ drow tfelthgir emos|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {2:-- INSERT --}                    |
+        ]])
+
+        -- not rightleft on the cmdline
+        feed('<esc>:sign ')
+        screen:expect{grid=[[
+                       drow tfelthgir emos|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          :sign ^                          |
+        ]]}
+
+        feed('<tab>')
+        screen:expect{grid=[[
+                       drow tfelthgir emos|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:                               ~}|
+          {1:     }{s: define         }{1:          ~}|
+          {1:     }{n: jump           }{1:          ~}|
+          {1:     }{n: list           }{1:          ~}|
+          {1:     }{n: place          }{1:          ~}|
+          {1:     }{n: undefine       }{1:          ~}|
+          {1:     }{n: unplace        }{1:          ~}|
+          :sign define^                    |
+        ]]}
+      end)
+    end
+
+    it('with rightleft vsplits', function()
+      screen:try_resize(40, 8)
+      command('set rightleft')
+      command('rightbelow vsplit')
+      command("set completeopt+=noinsert,noselect")
+      feed('isome rightleft ')
+      funcs.complete(16, {'word', 'choice', 'text', 'thing'})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          {3:[No Name] [+]       }{4:[No Name] [+]       }|
+          [3:----------------------------------------]|
+        ## grid 2
+               tfelthgir emos|
+          {1:                  ~}|
+          {1:                  ~}|
+          {1:                  ~}|
+          {1:                  ~}|
+          {1:                  ~}|
+        ## grid 3
+          {2:-- INSERT --}                            |
+        ## grid 4
+              ^  tfelthgir emos|
+          {1:                   ~}|
+          {1:                   ~}|
+          {1:                   ~}|
+          {1:                   ~}|
+          {1:                   ~}|
+        ## grid 5
+           {n:           drow}|
+           {n:         eciohc}|
+           {n:           txet}|
+           {n:          gniht}|
+        ]], float_pos={
+          [5] = {{id = -1}, "NW", 4, 1, -11, false, 100};
+        }}
+      else
+        screen:expect([[
+               tfelthgir emos│    ^  tfelthgir emos|
+          {1:          }{n:           drow}{1:              ~}|
+          {1:          }{n:         eciohc}{1:              ~}|
+          {1:          }{n:           txet}{1:              ~}|
+          {1:          }{n:          gniht}{1:              ~}|
+          {1:                  ~}│{1:                   ~}|
+          {3:[No Name] [+]       }{4:[No Name] [+]       }|
+          {2:-- INSERT --}                            |
+        ]])
+      end
+    end)
+
+    if not multigrid then
+      it('with multiline messages', function()
+        screen:try_resize(40,8)
+        feed('ixx<cr>')
+        command('imap <f2> <cmd>echoerr "very"\\|echoerr "much"\\|echoerr "error"<cr>')
+        funcs.complete(1, {'word', 'choice', 'text', 'thing'})
+        screen:expect([[
+          xx                                      |
+          word^                                    |
+          {s:word           }{1:                         }|
+          {n:choice         }{1:                         }|
+          {n:text           }{1:                         }|
+          {n:thing          }{1:                         }|
+          {1:~                                       }|
+          {2:-- INSERT --}                            |
+        ]])
+
+        feed('<f2>')
+        screen:expect([[
+          xx                                      |
+          word                                    |
+          {s:word           }{1:                         }|
+          {4:                                        }|
+          {6:very}                                    |
+          {6:much}                                    |
+          {6:error}                                   |
+          {5:Press ENTER or type command to continue}^ |
+        ]])
+
+        feed('<cr>')
+        screen:expect([[
+          xx                                      |
+          word^                                    |
+          {s:word           }{1:                         }|
+          {n:choice         }{1:                         }|
+          {n:text           }{1:                         }|
+          {n:thing          }{1:                         }|
+          {1:~                                       }|
+          {2:-- INSERT --}                            |
+        ]])
+
+        feed('<c-n>')
+        screen:expect([[
+          xx                                      |
+          choice^                                  |
+          {n:word           }{1:                         }|
+          {s:choice         }{1:                         }|
+          {n:text           }{1:                         }|
+          {n:thing          }{1:                         }|
+          {1:~                                       }|
+          {2:-- INSERT --}                            |
+        ]])
+
+        command("split")
+        screen:expect([[
+          xx                                      |
+          choice^                                  |
+          {n:word           }{1:                         }|
+          {s:choice         }{4:                         }|
+          {n:text           }                         |
+          {n:thing          }                         |
+          {3:[No Name] [+]                           }|
+          {2:-- INSERT --}                            |
+        ]])
+
+        meths.input_mouse('wheel', 'down', '', 0, 6, 15)
+        screen:expect{grid=[[
+          xx                                      |
+          choice^                                  |
+          {n:word           }{1:                         }|
+          {s:choice         }{4:                         }|
+          {n:text           }                         |
+          {n:thing          }{1:                         }|
+          {3:[No Name] [+]                           }|
+          {2:-- INSERT --}                            |
+        ]], unchanged=true}
+      end)
+
+      it('with kind, menu and abbr attributes', function()
+        screen:try_resize(40,8)
+        feed('ixx ')
+        funcs.complete(4, {{word='wordey', kind= 'x', menu='extrainfo'}, 'thing', {word='secret', abbr='sneaky', menu='bar'}})
+        screen:expect([[
+          xx wordey^                               |
+          {1:~ }{s: wordey x extrainfo }{1:                  }|
+          {1:~ }{n: thing              }{1:                  }|
+          {1:~ }{n: sneaky   bar       }{1:                  }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {2:-- INSERT --}                            |
+        ]])
+
+        feed('<c-p>')
+        screen:expect([[
+          xx ^                                     |
+          {1:~ }{n: wordey x extrainfo }{1:                  }|
+          {1:~ }{n: thing              }{1:                  }|
+          {1:~ }{n: sneaky   bar       }{1:                  }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {2:-- INSERT --}                            |
+        ]])
+
+        feed('<c-p>')
+        screen:expect([[
+          xx secret^                               |
+          {1:~ }{n: wordey x extrainfo }{1:                  }|
+          {1:~ }{n: thing              }{1:                  }|
+          {1:~ }{s: sneaky   bar       }{1:                  }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {2:-- INSERT --}                            |
+        ]])
+
+        feed('<esc>')
+        screen:expect([[
+          xx secre^t                               |
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+                                                  |
+        ]])
+      end)
+
+      it('wildoptions=pum', function()
+        screen:try_resize(32,10)
+        command('set wildmenu')
+        command('set wildoptions=pum')
+        command('set shellslash')
+        command("cd test/functional/fixtures/wildpum")
+
+        feed(':sign ')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          :sign ^                          |
+        ]])
+
+        feed('<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~    }{s: define         }{1:           }|
+          {1:~    }{n: jump           }{1:           }|
+          {1:~    }{n: list           }{1:           }|
+          {1:~    }{n: place          }{1:           }|
+          {1:~    }{n: undefine       }{1:           }|
+          {1:~    }{n: unplace        }{1:           }|
+          :sign define^                    |
+        ]])
+
+        feed('<Right><Right>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~    }{n: define         }{1:           }|
+          {1:~    }{n: jump           }{1:           }|
+          {1:~    }{s: list           }{1:           }|
+          {1:~    }{n: place          }{1:           }|
+          {1:~    }{n: undefine       }{1:           }|
+          {1:~    }{n: unplace        }{1:           }|
+          :sign list^                      |
+        ]])
+
+        feed('<C-N>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~    }{n: define         }{1:           }|
+          {1:~    }{n: jump           }{1:           }|
+          {1:~    }{n: list           }{1:           }|
+          {1:~    }{s: place          }{1:           }|
+          {1:~    }{n: undefine       }{1:           }|
+          {1:~    }{n: unplace        }{1:           }|
+          :sign place^                     |
+        ]])
+
+        feed('<C-P>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~    }{n: define         }{1:           }|
+          {1:~    }{n: jump           }{1:           }|
+          {1:~    }{s: list           }{1:           }|
+          {1:~    }{n: place          }{1:           }|
+          {1:~    }{n: undefine       }{1:           }|
+          {1:~    }{n: unplace        }{1:           }|
+          :sign list^                      |
+        ]])
+
+        feed('<Left>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~    }{n: define         }{1:           }|
+          {1:~    }{s: jump           }{1:           }|
+          {1:~    }{n: list           }{1:           }|
+          {1:~    }{n: place          }{1:           }|
+          {1:~    }{n: undefine       }{1:           }|
+          {1:~    }{n: unplace        }{1:           }|
+          :sign jump^                      |
+        ]])
+
+        -- pressing <C-E> should end completion and go back to the original match
+        feed('<C-E>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          :sign ^                          |
+        ]])
+
+        -- pressing <C-Y> should select the current match and end completion
+        feed('<Tab><C-P><C-P><C-Y>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          :sign unplace^                   |
+        ]])
+
+        -- showing popup menu in different columns in the cmdline
+        feed('<C-U>sign define <Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~           }{s: culhl=         }{1:    }|
+          {1:~           }{n: icon=          }{1:    }|
+          {1:~           }{n: linehl=        }{1:    }|
+          {1:~           }{n: numhl=         }{1:    }|
+          {1:~           }{n: text=          }{1:    }|
+          {1:~           }{n: texthl=        }{1:    }|
+          :sign define culhl=^             |
+        ]])
+
+        feed('<Space><Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                  }{s: culhl=     }{1: }|
+          {1:~                  }{n: icon=      }{1: }|
+          {1:~                  }{n: linehl=    }{1: }|
+          {1:~                  }{n: numhl=     }{1: }|
+          {1:~                  }{n: text=      }{1: }|
+          {1:~                  }{n: texthl=    }{1: }|
+          :sign define culhl= culhl=^      |
+        ]])
+
+        feed('<C-U>e Xdi<Tab><Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~      }{s: XdirA/         }{1:         }|
+          {1:~      }{n: XfileA         }{1:         }|
+          :e Xdir/XdirA/^                  |
+        ]])
+
+        -- Pressing <Down> on a directory name should go into that directory
+        feed('<Down>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~            }{s: XdirB/         }{1:   }|
+          {1:~            }{n: XfileB         }{1:   }|
+          :e Xdir/XdirA/XdirB/^            |
+        ]])
+
+        -- Pressing <Up> on a directory name should go to the parent directory
+        feed('<Up>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~      }{s: XdirA/         }{1:         }|
+          {1:~      }{n: XfileA         }{1:         }|
+          :e Xdir/XdirA/^                  |
+        ]])
+
+        -- Pressing <C-A> when the popup menu is displayed should list all the
+        -- matches and remove the popup menu
+        feed(':<C-U>sign <Tab><C-A>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {4:                                }|
+          :sign define jump list place und|
+          efine unplace^                   |
+        ]])
+
+        -- Pressing <Left> after that should move the cursor
+        feed('<Left>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {4:                                }|
+          :sign define jump list place und|
+          efine unplac^e                   |
+        ]])
+        feed('<End>')
+
+        -- Pressing <C-D> when the popup menu is displayed should remove the popup
+        -- menu
+        feed('<C-U>sign <Tab><C-D>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {4:                                }|
+          :sign define                    |
+          define                          |
+          :sign define^                    |
+        ]])
+
+        -- Pressing <S-Tab> should open the popup menu with the last entry selected
+        feed('<C-U><CR>:sign <S-Tab><C-P>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~    }{n: define         }{1:           }|
+          {1:~    }{n: jump           }{1:           }|
+          {1:~    }{n: list           }{1:           }|
+          {1:~    }{n: place          }{1:           }|
+          {1:~    }{s: undefine       }{1:           }|
+          {1:~    }{n: unplace        }{1:           }|
+          :sign undefine^                  |
+        ]])
+
+        -- Pressing <Esc> should close the popup menu and cancel the cmd line
+        feed('<C-U><CR>:sign <Tab><Esc>')
+        screen:expect([[
+          ^                                |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+                                          |
+        ]])
+
+        -- Typing a character when the popup is open, should close the popup
+        feed(':sign <Tab>x')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          :sign definex^                   |
+        ]])
+
+        -- When the popup is open, entering the cmdline window should close the popup
+        feed('<C-U>sign <Tab><C-F>')
+        screen:expect([[
+                                          |
+          {3:[No Name]                       }|
+          {1::}sign define                    |
+          {1::}sign define^                    |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {4:[Command Line]                  }|
+          :sign define                    |
+        ]])
+        feed(':q<CR>')
+
+        -- After the last popup menu item, <C-N> should show the original string
+        feed(':sign u<Tab><C-N><C-N>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~    }{n: undefine       }{1:           }|
+          {1:~    }{n: unplace        }{1:           }|
+          :sign u^                         |
+        ]])
+
+        -- Use the popup menu for the command name
+        feed('<C-U>bu<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {s: bufdo          }{1:                }|
+          {n: buffer         }{1:                }|
+          {n: buffers        }{1:                }|
+          {n: bunload        }{1:                }|
+          :bufdo^                          |
+        ]])
+
+        -- Pressing <BS> should remove the popup menu and erase the last character
+        feed('<C-E><C-U>sign <Tab><BS>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          :sign defin^                     |
+        ]])
+
+        -- Pressing <C-W> should remove the popup menu and erase the previous word
+        feed('<C-E><C-U>sign <Tab><C-W>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          :sign ^                          |
+        ]])
+
+        -- Pressing <C-U> should remove the popup menu and erase the entire line
+        feed('<C-E><C-U>sign <Tab><C-U>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          :^                               |
+        ]])
+
+        -- Using <C-E> to cancel the popup menu and then pressing <Up> should recall
+        -- the cmdline from history
+        feed('sign xyz<Esc>:sign <Tab><C-E><Up>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          :sign xyz^                       |
+        ]])
+
+        feed('<esc>')
+
+        -- Check "list" still works
+        command('set wildmode=longest,list')
+        feed(':cn<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {4:                                }|
+          :cn                             |
+          cnewer       cnoreabbrev        |
+          cnext        cnoremap           |
+          cnfile       cnoremenu          |
+          :cn^                             |
+        ]])
+        feed('s')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {4:                                }|
+          :cn                             |
+          cnewer       cnoreabbrev        |
+          cnext        cnoremap           |
+          cnfile       cnoremenu          |
+          :cns^                            |
+        ]])
+
+        feed('<esc>')
+        command('set wildmode=full')
+
+        -- Tests a directory name contained full-width characters.
+        feed(':e あいう/<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~        }{s: 123            }{1:       }|
+          {1:~        }{n: abc            }{1:       }|
+          {1:~        }{n: xyz            }{1:       }|
+          :e あいう/123^                   |
+        ]])
+        feed('<Esc>')
+
+        -- Pressing <PageDown> should scroll the menu downward
+        feed(':sign <Tab><PageDown>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~    }{n: define         }{1:           }|
+          {1:~    }{n: jump           }{1:           }|
+          {1:~    }{n: list           }{1:           }|
+          {1:~    }{n: place          }{1:           }|
+          {1:~    }{s: undefine       }{1:           }|
+          {1:~    }{n: unplace        }{1:           }|
+          :sign undefine^                  |
+        ]])
+        feed('<PageDown>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~    }{n: define         }{1:           }|
+          {1:~    }{n: jump           }{1:           }|
+          {1:~    }{n: list           }{1:           }|
+          {1:~    }{n: place          }{1:           }|
+          {1:~    }{n: undefine       }{1:           }|
+          {1:~    }{s: unplace        }{1:           }|
+          :sign unplace^                   |
+        ]])
+        feed('<PageDown>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~    }{n: define         }{1:           }|
+          {1:~    }{n: jump           }{1:           }|
+          {1:~    }{n: list           }{1:           }|
+          {1:~    }{n: place          }{1:           }|
+          {1:~    }{n: undefine       }{1:           }|
+          {1:~    }{n: unplace        }{1:           }|
+          :sign ^                          |
+        ]])
+        feed('<PageDown>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~    }{s: define         }{1:           }|
+          {1:~    }{n: jump           }{1:           }|
+          {1:~    }{n: list           }{1:           }|
+          {1:~    }{n: place          }{1:           }|
+          {1:~    }{n: undefine       }{1:           }|
+          {1:~    }{n: unplace        }{1:           }|
+          :sign define^                    |
+        ]])
+        feed('<C-U>sign <Tab><Right><Right><PageDown>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~    }{n: define         }{1:           }|
+          {1:~    }{n: jump           }{1:           }|
+          {1:~    }{n: list           }{1:           }|
+          {1:~    }{n: place          }{1:           }|
+          {1:~    }{n: undefine       }{1:           }|
+          {1:~    }{s: unplace        }{1:           }|
+          :sign unplace^                   |
+        ]])
+
+        -- Pressing <PageUp> should scroll the menu upward
+        feed('<C-U>sign <Tab><PageUp>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~    }{n: define         }{1:           }|
+          {1:~    }{n: jump           }{1:           }|
+          {1:~    }{n: list           }{1:           }|
+          {1:~    }{n: place          }{1:           }|
+          {1:~    }{n: undefine       }{1:           }|
+          {1:~    }{n: unplace        }{1:           }|
+          :sign ^                          |
+        ]])
+        feed('<PageUp>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~    }{n: define         }{1:           }|
+          {1:~    }{n: jump           }{1:           }|
+          {1:~    }{n: list           }{1:           }|
+          {1:~    }{n: place          }{1:           }|
+          {1:~    }{n: undefine       }{1:           }|
+          {1:~    }{s: unplace        }{1:           }|
+          :sign unplace^                   |
+        ]])
+        feed('<PageUp>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~    }{n: define         }{1:           }|
+          {1:~    }{s: jump           }{1:           }|
+          {1:~    }{n: list           }{1:           }|
+          {1:~    }{n: place          }{1:           }|
+          {1:~    }{n: undefine       }{1:           }|
+          {1:~    }{n: unplace        }{1:           }|
+          :sign jump^                      |
+        ]])
+        feed('<PageUp>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~    }{s: define         }{1:           }|
+          {1:~    }{n: jump           }{1:           }|
+          {1:~    }{n: list           }{1:           }|
+          {1:~    }{n: place          }{1:           }|
+          {1:~    }{n: undefine       }{1:           }|
+          {1:~    }{n: unplace        }{1:           }|
+          :sign define^                    |
+        ]])
+
+        feed('<Esc>')
+
+        -- check positioning with multibyte char in pattern
+        command("e långfile1")
+        command("sp långfile2")
+        feed(':b lå<tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {4:långfile2                       }|
+                                          |
+          {1:~                               }|
+          {1:~ }{s: långfile1      }{1:              }|
+          {3:lå}{n: långfile2      }{3:              }|
+          :b långfile1^                    |
+        ]])
+
+        -- check doesn't crash on screen resize
+        screen:try_resize(20,6)
+        screen:expect([[
+                              |
+          {1:~                   }|
+          {4:långfile2           }|
+            {s: långfile1      }  |
+          {3:lå}{n: långfile2      }{3:  }|
+          :b långfile1^        |
+        ]])
+
+        screen:try_resize(50,15)
+        screen:expect([[
+                                                            |
+          {1:~                                                 }|
+          {4:långfile2                                         }|
+                                                            |
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~ }{s: långfile1      }{1:                                }|
+          {3:lå}{n: långfile2      }{3:                                }|
+          :b långfile1^                                      |
+        ]])
+
+        -- position is calculated correctly with "longest"
+        feed('<esc>')
+        command('set wildmode=longest:full,full')
+        feed(':b lå<tab>')
+        screen:expect([[
+                                                            |
+          {1:~                                                 }|
+          {4:långfile2                                         }|
+                                                            |
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~ }{n: långfile1      }{1:                                }|
+          {3:lå}{n: långfile2      }{3:                                }|
+          :b långfile^                                       |
+        ]])
+
+        feed('<esc>')
+        command("close")
+        command('set wildmode=full')
+
+        -- special case: when patterns ends with "/", show menu items aligned
+        -- after the "/"
+        feed(':e compdir/<tab>')
+        screen:expect([[
+                                                            |
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~                                                 }|
+          {1:~         }{s: file1          }{1:                        }|
+          {1:~         }{n: file2          }{1:                        }|
+          :e compdir/file1^                                  |
+        ]])
+      end)
+
+      it('wildoptions=pum with scrolled messages', function()
+        screen:try_resize(40,10)
+        command('set wildmenu')
+        command('set wildoptions=pum')
+
+        feed(':echoerr "fail"|echoerr "error"<cr>')
+        screen:expect{grid=[[
+                                                  |
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {4:                                        }|
+          {6:fail}                                    |
+          {6:error}                                   |
+          {5:Press ENTER or type command to continue}^ |
+        ]]}
+
+        feed(':sign <tab>')
+        screen:expect{grid=[[
+                                                  |
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~    }{s: define         }{1:                   }|
+          {1:~    }{n: jump           }{1:                   }|
+          {1:~    }{n: list           }{1:                   }|
+          {4:     }{n: place          }{4:                   }|
+          {6:fail} {n: undefine       }                   |
+          {6:error}{n: unplace        }                   |
+          :sign define^                            |
+        ]]}
+
+        feed('d')
+        screen:expect{grid=[[
+                                                  |
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {4:                                        }|
+          {6:fail}                                    |
+          {6:error}                                   |
+          :sign defined^                           |
+        ]]}
+      end)
+
+      it('wildoptions=pum and wildmode=longest,full #11622', function()
+        screen:try_resize(30,8)
+        command('set wildmenu')
+        command('set wildoptions=pum')
+        command('set wildmode=longest,full')
+
+        -- With 'wildmode' set to 'longest,full', completing a match should display
+        -- the longest match, the wildmenu should not be displayed.
+        feed(':sign u<Tab>')
+        screen:expect{grid=[[
+                                        |
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          :sign un^                      |
+        ]]}
+        eq(0, funcs.wildmenumode())
+
+        -- pressing <Tab> should display the wildmenu
+        feed('<Tab>')
+        screen:expect{grid=[[
+                                        |
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~    }{s: undefine       }{1:         }|
+          {1:~    }{n: unplace        }{1:         }|
+          :sign undefine^                |
+        ]]}
+        eq(1, funcs.wildmenumode())
+
+        -- pressing <Tab> second time should select the next entry in the menu
+        feed('<Tab>')
+        screen:expect{grid=[[
+                                        |
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~    }{n: undefine       }{1:         }|
+          {1:~    }{s: unplace        }{1:         }|
+          :sign unplace^                 |
+        ]]}
+      end)
+
+      it('wildoptions=pum with a wrapped line in buffer vim-patch:8.2.4655', function()
+        screen:try_resize(32, 10)
+        meths.buf_set_lines(0, 0, -1, true, { ('a'):rep(100) })
+        command('set wildoptions+=pum')
+        feed('$')
+        feed(':sign <Tab>')
+        screen:expect([[
+          aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+          aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+          aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+          aaaa {s: define         }           |
+          {1:~    }{n: jump           }{1:           }|
+          {1:~    }{n: list           }{1:           }|
+          {1:~    }{n: place          }{1:           }|
+          {1:~    }{n: undefine       }{1:           }|
+          {1:~    }{n: unplace        }{1:           }|
+          :sign define^                    |
+        ]])
+      end)
+
+      -- oldtest: Test_wildmenu_pum_clear_entries()
+      it('wildoptions=pum when using Ctrl-E as wildchar vim-patch:9.0.1030', function()
+        screen:try_resize(30, 10)
+        exec([[
+          set wildoptions=pum
+          set wildchar=<C-E>
+        ]])
+        feed(':sign <C-E><C-E>')
+        screen:expect([[
+                                        |
+          {1:~                             }|
+          {1:~                             }|
+          {1:~    }{s: define         }{1:         }|
+          {1:~    }{n: jump           }{1:         }|
+          {1:~    }{n: list           }{1:         }|
+          {1:~    }{n: place          }{1:         }|
+          {1:~    }{n: undefine       }{1:         }|
+          {1:~    }{n: unplace        }{1:         }|
+          :sign define^                  |
+        ]])
+        assert_alive()
+      end)
+    end
+
+    it("'pumheight'", function()
+      screen:try_resize(32,8)
+      feed('isome long prefix before the ')
+      command("set completeopt+=noinsert,noselect")
+      command("set linebreak")
+      command("set pumheight=2")
+      funcs.complete(29, {'word', 'choice', 'text', 'thing'})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          some long prefix before the ^    |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 3
+          {2:-- INSERT --}                    |
+        ## grid 4
+          {n: word  }{c: }|
+          {n: choice}{s: }|
+        ]], float_pos={
+          [4] = {{id = -1}, "NW", 2, 1, 24, false, 100};
+        }}
+      else
+        screen:expect([[
+          some long prefix before the ^    |
+          {1:~                       }{n: word  }{c: }|
+          {1:~                       }{n: choice}{s: }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {2:-- INSERT --}                    |
+        ]])
+      end
+    end)
+
+    it("'pumwidth'", function()
+      screen:try_resize(32,8)
+      feed('isome long prefix before the ')
+      command("set completeopt+=noinsert,noselect")
+      command("set linebreak")
+      command("set pumwidth=8")
+      funcs.complete(29, {'word', 'choice', 'text', 'thing'})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          some long prefix before the ^    |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 3
+          {2:-- INSERT --}                    |
+        ## grid 4
+          {n: word  }|
+          {n: choice}|
+          {n: text  }|
+          {n: thing }|
+        ]], float_pos={
+          [4] = {{id = -1}, "NW", 2, 1, 25, false, 100};
+        }}
+      else
+        screen:expect([[
+          some long prefix before the ^    |
+          {1:~                        }{n: word  }|
+          {1:~                        }{n: choice}|
+          {1:~                        }{n: text  }|
+          {1:~                        }{n: thing }|
+          {1:~                               }|
+          {1:~                               }|
+          {2:-- INSERT --}                    |
+        ]])
+      end
+    end)
+
+    it('does not crash when displayed in the last column with rightleft #12032', function()
+      local col = 30
+      local items = {'word', 'choice', 'text', 'thing'}
+      local max_len = 0
+      for _, v in ipairs(items) do
+        max_len = max_len < #v and #v or max_len
+      end
+      screen:try_resize(col, 8)
+      command('set rightleft')
+      command('call setline(1, repeat(" ", &columns - '..max_len..'))')
+      feed('$i')
+      funcs.complete(col - max_len, items)
+      feed('<c-y>')
+      assert_alive()
+    end)
+
+    it('truncates double-width character correctly without scrollbar', function()
+      screen:try_resize(32, 8)
+      command('set completeopt+=menuone,noselect')
+      feed('i' .. string.rep(' ', 13))
+      funcs.complete(14, {'哦哦哦哦哦哦哦哦哦哦'})
+      if multigrid then
+        screen:expect({grid=[[
+          ## grid 1
+            [2:--------------------------------]|
+            [2:--------------------------------]|
+            [2:--------------------------------]|
+            [2:--------------------------------]|
+            [2:--------------------------------]|
+            [2:--------------------------------]|
+            [2:--------------------------------]|
+            [3:--------------------------------]|
+          ## grid 2
+                         ^                   |
+            {1:~                               }|
+            {1:~                               }|
+            {1:~                               }|
+            {1:~                               }|
+            {1:~                               }|
+            {1:~                               }|
+          ## grid 3
+            {2:-- INSERT --}                    |
+          ## grid 4
+            {n: 哦哦哦哦哦哦哦哦哦>}|
+        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 12, false, 100}}})
+      else
+        screen:expect([[
+                       ^                   |
+          {1:~           }{n: 哦哦哦哦哦哦哦哦哦>}|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {2:-- INSERT --}                    |
+        ]])
+      end
+    end)
+
+    it('truncates double-width character correctly with scrollbar', function()
+      screen:try_resize(32,8)
+      command('set completeopt+=noselect')
+      command('set pumheight=4')
+      feed('i' .. string.rep(' ', 12))
+      local items = {}
+      for _ = 1, 8 do
+        table.insert(items, {word = '哦哦哦哦哦哦哦哦哦哦', equal = 1, dup = 1})
+      end
+      funcs.complete(13, items)
+      if multigrid then
+        screen:expect({grid=[[
+          ## grid 1
+            [2:--------------------------------]|
+            [2:--------------------------------]|
+            [2:--------------------------------]|
+            [2:--------------------------------]|
+            [2:--------------------------------]|
+            [2:--------------------------------]|
+            [2:--------------------------------]|
+            [3:--------------------------------]|
+          ## grid 2
+                        ^                    |
+            {1:~                               }|
+            {1:~                               }|
+            {1:~                               }|
+            {1:~                               }|
+            {1:~                               }|
+            {1:~                               }|
+          ## grid 3
+            {2:-- INSERT --}                    |
+          ## grid 4
+            {n: 哦哦哦哦哦哦哦哦哦>}{c: }|
+            {n: 哦哦哦哦哦哦哦哦哦>}{c: }|
+            {n: 哦哦哦哦哦哦哦哦哦>}{s: }|
+            {n: 哦哦哦哦哦哦哦哦哦>}{s: }|
+        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 11, false, 100}}})
+      else
+        screen:expect([[
+                      ^                    |
+          {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{c: }|
+          {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{c: }|
+          {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{s: }|
+          {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{s: }|
+          {1:~                               }|
+          {1:~                               }|
+          {2:-- INSERT --}                    |
+        ]])
+      end
+    end)
+
+    it('supports mousemodel=popup', function()
+      screen:try_resize(32, 6)
+      exec([[
+        call setline(1, 'popup menu test')
+        set mouse=a mousemodel=popup
+
+        aunmenu PopUp
+        menu PopUp.foo :let g:menustr = 'foo'<CR>
+        menu PopUp.bar :let g:menustr = 'bar'<CR>
+        menu PopUp.baz :let g:menustr = 'baz'<CR>
+      ]])
+
+      if multigrid then
+        meths.input_mouse('right', 'press', '', 2, 0, 4)
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          ^popup menu test                 |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 3
+                                          |
+        ## grid 4
+          {n: foo }|
+          {n: bar }|
+          {n: baz }|
+        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
+      else
+        feed('<RightMouse><4,0>')
+        screen:expect([[
+          ^popup menu test                 |
+          {1:~  }{n: foo }{1:                        }|
+          {1:~  }{n: bar }{1:                        }|
+          {1:~  }{n: baz }{1:                        }|
+          {1:~                               }|
+                                          |
+        ]])
+      end
+      feed('<Down>')
+      if multigrid then
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          ^popup menu test                 |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 3
+                                          |
+        ## grid 4
+          {s: foo }|
+          {n: bar }|
+          {n: baz }|
+        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
+      else
+        screen:expect([[
+          ^popup menu test                 |
+          {1:~  }{s: foo }{1:                        }|
+          {1:~  }{n: bar }{1:                        }|
+          {1:~  }{n: baz }{1:                        }|
+          {1:~                               }|
+                                          |
+        ]])
+      end
+      feed('<Down>')
+      if multigrid then
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          ^popup menu test                 |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 3
+                                          |
+        ## grid 4
+          {n: foo }|
+          {s: bar }|
+          {n: baz }|
+        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
+      else
+        screen:expect([[
+          ^popup menu test                 |
+          {1:~  }{n: foo }{1:                        }|
+          {1:~  }{s: bar }{1:                        }|
+          {1:~  }{n: baz }{1:                        }|
+          {1:~                               }|
+                                          |
+        ]])
+      end
+      feed('<CR>')
+      if multigrid then
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          ^popup menu test                 |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 3
+          :let g:menustr = 'bar'          |
+        ]]})
+      else
+        screen:expect([[
+          ^popup menu test                 |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          :let g:menustr = 'bar'          |
+        ]])
+      end
+      eq('bar', meths.get_var('menustr'))
+
+      if multigrid then
+        meths.input_mouse('right', 'press', '', 2, 2, 20)
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          ^popup menu test                 |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 3
+          :let g:menustr = 'bar'          |
+        ## grid 4
+          {n: foo }|
+          {n: bar }|
+          {n: baz }|
+        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 3, 19, false, 250}}})
+      else
+        feed('<RightMouse><20,2>')
+        screen:expect([[
+          ^popup menu test                 |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                  }{n: foo }{1:        }|
+          {1:~                  }{n: bar }{1:        }|
+          :let g:menustr = 'b{n: baz }        |
+        ]])
+      end
+      if multigrid then
+        meths.input_mouse('left', 'press', '', 4, 2, 2)
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          ^popup menu test                 |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 3
+          :let g:menustr = 'baz'          |
+        ]]})
+      else
+        feed('<LeftMouse><22,5>')
+        screen:expect([[
+          ^popup menu test                 |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          :let g:menustr = 'baz'          |
+        ]])
+      end
+      eq('baz', meths.get_var('menustr'))
+
+      if multigrid then
+        meths.input_mouse('right', 'press', '', 2, 0, 4)
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          ^popup menu test                 |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 3
+          :let g:menustr = 'baz'          |
+        ## grid 4
+          {n: foo }|
+          {n: bar }|
+          {n: baz }|
+        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
+      else
+        feed('<RightMouse><4,0>')
+        screen:expect([[
+          ^popup menu test                 |
+          {1:~  }{n: foo }{1:                        }|
+          {1:~  }{n: bar }{1:                        }|
+          {1:~  }{n: baz }{1:                        }|
+          {1:~                               }|
+          :let g:menustr = 'baz'          |
+        ]])
+      end
+      if multigrid then
+        meths.input_mouse('right', 'drag', '', 2, 3, 6)
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          ^popup menu test                 |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 3
+          :let g:menustr = 'baz'          |
+        ## grid 4
+          {n: foo }|
+          {n: bar }|
+          {s: baz }|
+        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
+      else
+        feed('<RightDrag><6,3>')
+        screen:expect([[
+          ^popup menu test                 |
+          {1:~  }{n: foo }{1:                        }|
+          {1:~  }{n: bar }{1:                        }|
+          {1:~  }{s: baz }{1:                        }|
+          {1:~                               }|
+          :let g:menustr = 'baz'          |
+        ]])
+      end
+      if multigrid then
+        meths.input_mouse('right', 'release', '', 2, 1, 6)
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          ^popup menu test                 |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 3
+          :let g:menustr = 'foo'          |
+        ]]})
+      else
+        feed('<RightRelease><6,1>')
+        screen:expect([[
+          ^popup menu test                 |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          :let g:menustr = 'foo'          |
+        ]])
+      end
+      eq('foo', meths.get_var('menustr'))
+
+      eq(false, screen.options.mousemoveevent)
+      if multigrid then
+        meths.input_mouse('right', 'press', '', 2, 0, 4)
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          ^popup menu test                 |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 3
+          :let g:menustr = 'foo'          |
+        ## grid 4
+          {n: foo }|
+          {n: bar }|
+          {n: baz }|
+        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
+      else
+        feed('<RightMouse><4,0>')
+        screen:expect([[
+          ^popup menu test                 |
+          {1:~  }{n: foo }{1:                        }|
+          {1:~  }{n: bar }{1:                        }|
+          {1:~  }{n: baz }{1:                        }|
+          {1:~                               }|
+          :let g:menustr = 'foo'          |
+        ]])
+      end
+      eq(true, screen.options.mousemoveevent)
+      if multigrid then
+        meths.input_mouse('move', '', '', 2, 3, 6)
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          ^popup menu test                 |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 3
+          :let g:menustr = 'foo'          |
+        ## grid 4
+          {n: foo }|
+          {n: bar }|
+          {s: baz }|
+        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
+      else
+        feed('<MouseMove><6,3>')
+        screen:expect([[
+          ^popup menu test                 |
+          {1:~  }{n: foo }{1:                        }|
+          {1:~  }{n: bar }{1:                        }|
+          {1:~  }{s: baz }{1:                        }|
+          {1:~                               }|
+          :let g:menustr = 'foo'          |
+        ]])
+      end
+      eq(true, screen.options.mousemoveevent)
+      if multigrid then
+        meths.input_mouse('left', 'press', '', 2, 2, 6)
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          ^popup menu test                 |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+        ## grid 3
+          :let g:menustr = 'bar'          |
+        ]]})
+      else
+        feed('<LeftMouse><6,2>')
+        screen:expect([[
+          ^popup menu test                 |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          :let g:menustr = 'bar'          |
+        ]])
+      end
+      eq(false, screen.options.mousemoveevent)
+      eq('bar', meths.get_var('menustr'))
+
+      command('set laststatus=0 | botright split')
+      if multigrid then
+        meths.input_mouse('right', 'press', '', 5, 1, 20)
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          {3:[No Name] [+]                   }|
+          [5:--------------------------------]|
+          [5:--------------------------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          popup menu test                 |
+          {1:~                               }|
+        ## grid 3
+          :let g:menustr = 'bar'          |
+        ## grid 4
+          {n: foo }|
+          {n: bar }|
+          {n: baz }|
+        ## grid 5
+          ^popup menu test                 |
+          {1:~                               }|
+        ]], float_pos={[4] = {{id = -1}, "SW", 5, 1, 19, false, 250}}})
+      else
+        feed('<RightMouse><20,4>')
+        screen:expect([[
+          popup menu test                 |
+          {1:~                  }{n: foo }{1:        }|
+          {3:[No Name] [+]      }{n: bar }{3:        }|
+          ^popup menu test    {n: baz }        |
+          {1:~                               }|
+          :let g:menustr = 'bar'          |
+        ]])
+      end
+      if multigrid then
+        meths.input_mouse('left', 'press', '', 4, 2, 2)
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          {3:[No Name] [+]                   }|
+          [5:--------------------------------]|
+          [5:--------------------------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          popup menu test                 |
+          {1:~                               }|
+        ## grid 3
+          :let g:menustr = 'baz'          |
+        ## grid 5
+          ^popup menu test                 |
+          {1:~                               }|
+        ]]})
+      else
+        feed('<LeftMouse><22,3>')
+        screen:expect([[
+          popup menu test                 |
+          {1:~                               }|
+          {3:[No Name] [+]                   }|
+          ^popup menu test                 |
+          {1:~                               }|
+          :let g:menustr = 'baz'          |
+        ]])
+      end
+      eq('baz', meths.get_var('menustr'))
+
+      command('set winwidth=1 | rightbelow vsplit')
+      if multigrid then
+        meths.input_mouse('right', 'press', '', 6, 1, 14)
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          {3:[No Name] [+]                   }|
+          [5:---------------]│[6:----------------]|
+          [5:---------------]│[6:----------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          popup menu test                 |
+          {1:~                               }|
+        ## grid 3
+          :let g:menustr = 'baz'          |
+        ## grid 4
+          {n: foo}|
+          {n: bar}|
+          {n: baz}|
+        ## grid 5
+          popup menu test|
+          {1:~              }|
+        ## grid 6
+          ^popup menu test |
+          {1:~               }|
+        ]], float_pos={[4] = {{id = -1}, "SW", 6, 1, 12, false, 250}}})
+      else
+        feed('<RightMouse><30,4>')
+        screen:expect([[
+          popup menu test                 |
+          {1:~                           }{n: foo}|
+          {3:[No Name] [+]               }{n: bar}|
+          popup menu test│^popup menu t{n: baz}|
+          {1:~              }│{1:~               }|
+          :let g:menustr = 'baz'          |
+        ]])
+      end
+      if multigrid then
+        meths.input_mouse('left', 'press', '', 4, 0, 2)
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          {3:[No Name] [+]                   }|
+          [5:---------------]│[6:----------------]|
+          [5:---------------]│[6:----------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          popup menu test                 |
+          {1:~                               }|
+        ## grid 3
+          :let g:menustr = 'foo'          |
+        ## grid 5
+          popup menu test|
+          {1:~              }|
+        ## grid 6
+          ^popup menu test |
+          {1:~               }|
+        ]]})
+      else
+        feed('<LeftMouse><31,1>')
+        screen:expect([[
+          popup menu test                 |
+          {1:~                               }|
+          {3:[No Name] [+]                   }|
+          popup menu test│^popup menu test |
+          {1:~              }│{1:~               }|
+          :let g:menustr = 'foo'          |
+        ]])
+      end
+      eq('foo', meths.get_var('menustr'))
+    end)
+
+    if not multigrid then
+      -- oldtest: Test_popup_command_dump()
+      it(':popup command', function()
+        exec([[
+          func ChangeMenu()
+            aunmenu PopUp.&Paste
+            nnoremenu 1.40 PopUp.&Paste :echomsg "pasted"<CR>
+            echomsg 'changed'
+            return "\<Ignore>"
+          endfunc
+
+          let lines =<< trim END
+            one two three four five
+            and one two Xthree four five
+            one more two three four five
+          END
+          call setline(1, lines)
+
+          aunmenu *
+          source $VIMRUNTIME/menu.vim
+        ]])
+        feed('/X<CR>:popup PopUp<CR>')
+        screen:expect([[
+          one two three four five         |
+          and one two {7:^X}three four five    |
+          one more tw{n: Undo             }   |
+          {1:~          }{n:                  }{1:   }|
+          {1:~          }{n: Paste            }{1:   }|
+          {1:~          }{n:                  }{1:   }|
+          {1:~          }{n: Select Word      }{1:   }|
+          {1:~          }{n: Select Sentence  }{1:   }|
+          {1:~          }{n: Select Paragraph }{1:   }|
+          {1:~          }{n: Select Line      }{1:   }|
+          {1:~          }{n: Select Block     }{1:   }|
+          {1:~          }{n: Select All       }{1:   }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          :popup PopUp                    |
+        ]])
+
+        -- go to the Paste entry in the menu
+        feed('jj')
+        screen:expect([[
+          one two three four five         |
+          and one two {7:^X}three four five    |
+          one more tw{n: Undo             }   |
+          {1:~          }{n:                  }{1:   }|
+          {1:~          }{s: Paste            }{1:   }|
+          {1:~          }{n:                  }{1:   }|
+          {1:~          }{n: Select Word      }{1:   }|
+          {1:~          }{n: Select Sentence  }{1:   }|
+          {1:~          }{n: Select Paragraph }{1:   }|
+          {1:~          }{n: Select Line      }{1:   }|
+          {1:~          }{n: Select Block     }{1:   }|
+          {1:~          }{n: Select All       }{1:   }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          :popup PopUp                    |
+        ]])
+
+        -- Select a word
+        feed('j')
+        screen:expect([[
+          one two three four five         |
+          and one two {7:^X}three four five    |
+          one more tw{n: Undo             }   |
+          {1:~          }{n:                  }{1:   }|
+          {1:~          }{n: Paste            }{1:   }|
+          {1:~          }{n:                  }{1:   }|
+          {1:~          }{s: Select Word      }{1:   }|
+          {1:~          }{n: Select Sentence  }{1:   }|
+          {1:~          }{n: Select Paragraph }{1:   }|
+          {1:~          }{n: Select Line      }{1:   }|
+          {1:~          }{n: Select Block     }{1:   }|
+          {1:~          }{n: Select All       }{1:   }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          :popup PopUp                    |
+        ]])
+
+        feed('<Esc>')
+
+        -- Set an <expr> mapping to change a menu entry while it's displayed.
+        -- The text should not change but the command does.
+        -- Also verify that "changed" shows up, which means the mapping triggered.
+        command('nnoremap <expr> <F2> ChangeMenu()')
+        feed('/X<CR>:popup PopUp<CR><F2>')
+        screen:expect([[
+          one two three four five         |
+          and one two {7:^X}three four five    |
+          one more tw{n: Undo             }   |
+          {1:~          }{n:                  }{1:   }|
+          {1:~          }{n: Paste            }{1:   }|
+          {1:~          }{n:                  }{1:   }|
+          {1:~          }{n: Select Word      }{1:   }|
+          {1:~          }{n: Select Sentence  }{1:   }|
+          {1:~          }{n: Select Paragraph }{1:   }|
+          {1:~          }{n: Select Line      }{1:   }|
+          {1:~          }{n: Select Block     }{1:   }|
+          {1:~          }{n: Select All       }{1:   }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          changed                         |
+        ]])
+
+        -- Select the Paste entry, executes the changed menu item.
+        feed('jj<CR>')
+        screen:expect([[
+          one two three four five         |
+          and one two {7:^X}three four five    |
+          one more two three four five    |
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          {1:~                               }|
+          pasted                          |
+        ]])
+      end)
+
+      describe('"kind" and "menu"', function()
+        before_each(function()
+          screen:try_resize(30, 8)
+          exec([[
+            func CompleteFunc( findstart, base )
+              if a:findstart
+                return 0
+              endif
+              return {
+                    \ 'words': [
+                    \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'W', },
+                    \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'W', },
+                    \ { 'word': 'aword3', 'menu': 'extra text 3', 'kind': 'W', },
+                    \]}
+            endfunc
+            set completeopt=menu
+            set completefunc=CompleteFunc
+          ]])
+        end)
+
+        -- oldtest: Test_pum_highlights_default()
+        it('default highlight groups', function()
+          feed('iaw<C-X><C-u>')
+          screen:expect([[
+            aword1^                        |
+            {s:aword1 W extra text 1 }{1:        }|
+            {n:aword2 W extra text 2 }{1:        }|
+            {n:aword3 W extra text 3 }{1:        }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {2:-- }{5:match 1 of 3}               |
+          ]])
+        end)
+
+        -- oldtest: Test_pum_highlights_custom()
+        it('custom highlight groups', function()
+          exec([[
+            hi PmenuKind      guifg=Red guibg=Magenta
+            hi PmenuKindSel   guifg=Red guibg=Grey
+            hi PmenuExtra     guifg=White guibg=Magenta
+            hi PmenuExtraSel  guifg=Black guibg=Grey
+          ]])
+          local attrs = screen:get_default_attr_ids()
+          attrs.kn = {foreground = Screen.colors.Red, background = Screen.colors.Magenta}
+          attrs.ks = {foreground = Screen.colors.Red, background = Screen.colors.Grey}
+          attrs.xn = {foreground = Screen.colors.White, background = Screen.colors.Magenta}
+          attrs.xs = {foreground = Screen.colors.Black, background = Screen.colors.Grey}
+          feed('iaw<C-X><C-u>')
+          screen:expect([[
+            aword1^                        |
+            {s:aword1 }{ks:W }{xs:extra text 1 }{1:        }|
+            {n:aword2 }{kn:W }{xn:extra text 2 }{1:        }|
+            {n:aword3 }{kn:W }{xn:extra text 3 }{1:        }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {2:-- }{5:match 1 of 3}               |
+          ]], attrs)
+        end)
+      end)
+    end
+  end
+
+  describe('with ext_multigrid', function()
+    with_ext_multigrid(true)
   end)
 
-  it('supports mousemodel=popup', function()
-    screen:try_resize(32, 6)
-    exec([[
-      call setline(1, 'popup menu test')
-      set mouse=a mousemodel=popup
-
-      aunmenu PopUp
-      menu PopUp.foo :let g:menustr = 'foo'<CR>
-      menu PopUp.bar :let g:menustr = 'bar'<CR>
-      menu PopUp.baz :let g:menustr = 'baz'<CR>
-    ]])
-    meths.input_mouse('right', 'press', '', 2, 1, 20)
-    screen:expect({grid=[[
-    ## grid 1
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [3:--------------------------------]|
-    ## grid 2
-      ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-    ## grid 3
-                                      |
-    ## grid 4
-      {n: foo }|
-      {n: bar }|
-      {n: baz }|
-    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 2, 19, false, 250}}})
-    meths.input_mouse('left', 'press', '', 4, 2, 2)
-    screen:expect({grid=[[
-    ## grid 1
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [3:--------------------------------]|
-    ## grid 2
-      ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-    ## grid 3
-      :let g:menustr = 'baz'          |
-    ]]})
-    eq('baz', meths.get_var('menustr'))
-    meths.input_mouse('right', 'press', '', 2, 0, 4)
-    screen:expect({grid=[[
-    ## grid 1
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [3:--------------------------------]|
-    ## grid 2
-      ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-    ## grid 3
-      :let g:menustr = 'baz'          |
-    ## grid 4
-      {n: foo }|
-      {n: bar }|
-      {n: baz }|
-    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
-    meths.input_mouse('right', 'drag', '', 2, 3, 6)
-    screen:expect({grid=[[
-    ## grid 1
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [3:--------------------------------]|
-    ## grid 2
-      ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-    ## grid 3
-      :let g:menustr = 'baz'          |
-    ## grid 4
-      {n: foo }|
-      {n: bar }|
-      {s: baz }|
-    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
-    meths.input_mouse('right', 'release', '', 2, 1, 6)
-    screen:expect({grid=[[
-    ## grid 1
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [3:--------------------------------]|
-    ## grid 2
-      ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-    ## grid 3
-      :let g:menustr = 'foo'          |
-    ]]})
-    eq('foo', meths.get_var('menustr'))
-    eq(false, screen.options.mousemoveevent)
-    meths.input_mouse('right', 'press', '', 2, 0, 4)
-    screen:expect({grid=[[
-    ## grid 1
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [3:--------------------------------]|
-    ## grid 2
-      ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-    ## grid 3
-      :let g:menustr = 'foo'          |
-    ## grid 4
-      {n: foo }|
-      {n: bar }|
-      {n: baz }|
-    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
-    eq(true, screen.options.mousemoveevent)
-    meths.input_mouse('move', '', '', 2, 3, 6)
-    screen:expect({grid=[[
-    ## grid 1
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [3:--------------------------------]|
-    ## grid 2
-      ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-    ## grid 3
-      :let g:menustr = 'foo'          |
-    ## grid 4
-      {n: foo }|
-      {n: bar }|
-      {s: baz }|
-    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
-    eq(true, screen.options.mousemoveevent)
-    meths.input_mouse('left', 'press', '', 2, 2, 6)
-    screen:expect({grid=[[
-    ## grid 1
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [2:--------------------------------]|
-      [3:--------------------------------]|
-    ## grid 2
-      ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-    ## grid 3
-      :let g:menustr = 'bar'          |
-    ]]})
-    eq(false, screen.options.mousemoveevent)
-    eq('bar', meths.get_var('menustr'))
+  describe('without ext_multigrid', function()
+    with_ext_multigrid(false)
   end)
 end)
