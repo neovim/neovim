@@ -167,7 +167,7 @@ func Test_visual_block_and_selection_exclusive()
   exe "norm! $3B\<C-v>eAx\<Esc>"
   let lines = s:screen_lines([1, 10], winwidth(0))
   let expect = [
-\ "+foobar foobar      ",
+\ "<<<obar foobar      ",
 \ "+foobar foobar      ",
 \ "+foobar foobar      ",
 \ "+foobar foobar      ",
@@ -266,7 +266,7 @@ func Test_chinese_char_on_wrap_column()
   norm! $
   redraw!
   let expect=[
-\ '中aaaaaaaaaaaaaaaaa>',
+\ '<<<aaaaaaaaaaaaaaaa>',
 \ '中aaaaaaaaaaaaaaaaa>',
 \ '中aaaaaaaaaaaaaaaaa>',
 \ '中aaaaaaaaaaaaaaaaa>',

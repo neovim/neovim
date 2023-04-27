@@ -138,7 +138,7 @@ func Test_number_with_linewrap1()
   call s:validate_cursor()
   let lines = s:screen_lines(1, 3)
   let expect = [
-\ "--1 aaaa",
+\ "<<< aaaa",
 \ "    aaaa",
 \ "    aaaa",
 \ ]
