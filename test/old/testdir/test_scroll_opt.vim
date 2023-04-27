@@ -123,6 +123,41 @@ func Test_smoothscroll_CtrlE_CtrlY()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_smoothscroll_number()
+  CheckScreendump
+
+  let lines =<< trim END
+      vim9script
+      setline(1, [
+        'one ' .. 'word '->repeat(20),
+        'two ' .. 'long word '->repeat(7),
+        'line',
+        'line',
+        'line',
+      ])
+      set smoothscroll
+      set number cpo+=n
+      :3
+  END
+  call writefile(lines, 'XSmoothNumber', 'D')
+  let buf = RunVimInTerminal('-S XSmoothNumber', #{rows: 12, cols: 40})
+
+  call VerifyScreenDump(buf, 'Test_smooth_number_1', {})
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, 'Test_smooth_number_2', {})
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, 'Test_smooth_number_3', {})
+
+  call term_sendkeys(buf, ":set cpo-=n\<CR>")
+  call VerifyScreenDump(buf, 'Test_smooth_number_4', {})
+  call term_sendkeys(buf, "\<C-Y>")
+  call VerifyScreenDump(buf, 'Test_smooth_number_5', {})
+  call term_sendkeys(buf, "\<C-Y>")
+  call VerifyScreenDump(buf, 'Test_smooth_number_6', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 
 
 " vim: shiftwidth=2 sts=2 expandtab

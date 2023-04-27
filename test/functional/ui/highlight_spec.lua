@@ -704,7 +704,7 @@ describe("'listchars' highlight", function()
     feed_command('set listchars=eol:¬,precedes:< list')
     feed('90ia<esc>')
     screen:expect([[
-      {0:<}aaaaaaaaaaaaaaaaaaa|
+      {0:<<<}aaaaaaaaaaaaaaaaa|
       aaaaaaaaaaaaaaaaaaaa|
       aaaaaaaaaaaaaaaaaaaa|
       aaaaaaaaa^a{0:¬}         |

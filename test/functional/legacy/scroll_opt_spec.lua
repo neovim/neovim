@@ -173,4 +173,103 @@ describe('smoothscroll', function()
     feed('<C-Y>')
     screen:expect(s8)
   end)
+
+  -- oldtest: Test_smoothscroll_number()
+  it("works 'number' and 'cpo'+=n", function()
+    exec([[
+      call setline(1, [ 'one ' .. 'word '->repeat(20), 'two ' .. 'long word '->repeat(7), 'line', 'line', 'line', ])
+      set smoothscroll scrolloff=5
+      set number cpo+=n
+      :3
+    ]])
+    screen:expect([[
+        1 one word word word word word word wo|
+      rd word word word word word word word wo|
+      rd word word word word word             |
+        2 two long word long word long word lo|
+      ng word long word long word long word   |
+        3 ^line                                |
+        4 line                                |
+        5 line                                |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      <<<word word word word word word word wo|
+      rd word word word word word             |
+        2 two long word long word long word lo|
+      ng word long word long word long word   |
+        3 ^line                                |
+        4 line                                |
+        5 line                                |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      <<<word word word word word             |
+        2 two long word long word long word lo|
+      ng word long word long word long word   |
+        3 ^line                                |
+        4 line                                |
+        5 line                                |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+    exec('set cpo-=n')
+    screen:expect([[
+      <<< d word word word word word word     |
+        2 two long word long word long word lo|
+          ng word long word long word long wor|
+          d                                   |
+        3 ^line                                |
+        4 line                                |
+        5 line                                |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+    feed('<C-Y>')
+    screen:expect([[
+      <<< rd word word word word word word wor|
+          d word word word word word word     |
+        2 two long word long word long word lo|
+          ng word long word long word long wor|
+          d                                   |
+        3 ^line                                |
+        4 line                                |
+        5 line                                |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+    feed('<C-Y>')
+    screen:expect([[
+        1 one word word word word word word wo|
+          rd word word word word word word wor|
+          d word word word word word word     |
+        2 two long word long word long word lo|
+          ng word long word long word long wor|
+          d                                   |
+        3 ^line                                |
+        4 line                                |
+        5 line                                |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+  end)
 end)

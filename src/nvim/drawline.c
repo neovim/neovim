@@ -596,7 +596,8 @@ static void handle_lnum_col(win_T *wp, winlinevars_T *wlv, int num_signs, int si
                             int sign_num_attr, int sign_cul_attr)
 {
   if ((wp->w_p_nu || wp->w_p_rnu)
-      && (wlv->row == wlv->startrow + wlv->filler_lines
+      && ((wlv->row == wlv->startrow + wlv->filler_lines
+           && (wp->w_skipcol == 0 || wlv->row > wp->w_winrow))
           || vim_strchr(p_cpo, CPO_NUMCOL) == NULL)) {
     // If 'signcolumn' is set to 'number' and a sign is present
     // in "lnum", then display the sign instead of the line
