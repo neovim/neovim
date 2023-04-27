@@ -530,9 +530,12 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
   max_off_from = linebuf_size;
   max_off_to = grid->line_offset[row] + (size_t)grid->cols;
 
-  if (topline && wp->w_skipcol > 0 && *get_showbreak_value(wp) == NUL) {
-    // Take care of putting "<<<" on the first line for 'smoothscroll'
-    // when 'showbreak' is not set.
+  // Take care of putting "<<<" on the first line for 'smoothscroll'.
+  if (topline && wp->w_skipcol > 0
+      // do not overwrite the 'showbreak' text with "<<<"
+      && *get_showbreak_value(wp) == NUL
+      // do not overwrite the 'listchars' "precedes" text with "<<<"
+      && !(wp->w_p_list && wp->w_p_lcs_chars.prec != 0)) {
     int off = 0;
     int skip = 0;
     if (wp->w_p_nu && wp->w_p_rnu) {

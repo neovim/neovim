@@ -172,6 +172,31 @@ func Test_smoothscroll_number()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_smoothscroll_list()
+  CheckScreendump
+
+  let lines =<< trim END
+      vim9script
+      set smoothscroll scrolloff=0
+      set list
+      setline(1, [
+        'one',
+        'very long text '->repeat(12),
+        'three',
+      ])
+      exe "normal 2Gzt\<C-E>"
+  END
+  call writefile(lines, 'XSmoothList', 'D')
+  let buf = RunVimInTerminal('-S XSmoothList', #{rows: 8, cols: 40})
+
+  call VerifyScreenDump(buf, 'Test_smooth_list_1', {})
+
+  call term_sendkeys(buf, ":set listchars+=precedes:#\<CR>")
+  call VerifyScreenDump(buf, 'Test_smooth_list_2', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_smoothscroll_diff_mode()
   CheckScreendump
 

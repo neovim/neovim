@@ -294,6 +294,38 @@ describe('smoothscroll', function()
     ]])
   end)
 
+  -- oldtest: Test_smoothscroll_list()
+  it("works with list mode", function()
+    screen:try_resize(40, 8)
+    exec([[
+      set smoothscroll scrolloff=0
+      set list
+      call setline(1, [ 'one', 'very long text '->repeat(12), 'three', ])
+      exe "normal 2Gzt\<C-E>"
+    ]])
+    screen:expect([[
+      <<<t very long text very long text very |
+      ^long text very long text very long text |
+      very long text very long text very long |
+      text very long text-                    |
+      three                                   |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+    exec('set listchars+=precedes:#')
+    screen:expect([[
+      #ext very long text very long text very |
+      ^long text very long text very long text |
+      very long text very long text very long |
+      text very long text-                    |
+      three                                   |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+  end)
+
   -- oldtest: Test_smoothscroll_diff_mode()
   it("works with diff mode", function()
     screen:try_resize(40, 8)
