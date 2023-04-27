@@ -146,7 +146,7 @@ func Test_display_listchars_precedes()
 
   let lines = ScreenLines([1,10], winwidth(0)+1)
   let expect = [
-        \ "<<<a aaa a|",
+        \ "<aaa aaa a|",
         \ "a aaa aaa |",
         \ "aa aaa aaa|",
         \ " aa aaa aa|",
