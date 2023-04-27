@@ -1,0 +1,48 @@
+name: Issue Open Check
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+
+jobs:
+  issue-open-check:
+    permissions:
+      issues: write  # for actions-cool/issues-helper to update issues
+    runs-on: ubuntu-latest
+    steps:
+      - name: check issue title
+        id: check-issue
+        uses: actions/github-script@v3
+        with:
+          script: |
+            const title = context.payload.issue.title;
+            const keywords = ['api', 'treesitter', 'ui', 'lsp', 'doc'];
+            const regex = new RegExp(`\\b(${keywords.join('|')})\\b`, 'i');
+            const match = title.match(regex);
+
+            if (match) {
+              core.setOutput('keyword', match[0]);
+            } else {
+              core.setOutput('keyword', 'bug');
+            }
+
+      - name: add label
+        uses: actions-cool/issues-helper@v3
+        with:
+          actions: 'add-labels'
+          issue-number: ${{ github.event.issue.number }}
+          labels: ${{ steps.check-issue.outputs.keyword }}
+
+      - name: check invalid
+        if: (contains(github.event.issue.body, 'Step to Reproduce') == false)  && (github.event.label.name != 'enhancement')
+        uses: actions-cool/issues-helper@v3
+        with:
+          actions: 'create-comment,add-labels,close-issue'
+          issue-number: ${{ github.event.issue.number }}
+          labels: 'closed:invalid'
+          body: |
+            Hello @${{ github.event.issue.user.login }}, your issue has been closed because it does not include reproduce step.
+
