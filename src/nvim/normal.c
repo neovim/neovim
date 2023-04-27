@@ -2158,9 +2158,8 @@ void check_scrollbind(linenr_T topline_diff, long leftcol_diff)
     }
 
     // do the horizontal scroll
-    if (want_hor && curwin->w_leftcol != tgt_leftcol) {
-      curwin->w_leftcol = tgt_leftcol;
-      leftcol_changed();
+    if (want_hor) {
+      (void)set_leftcol(tgt_leftcol);
     }
   }
 
@@ -2643,7 +2642,7 @@ void scroll_redraw(int up, long count)
                scrollup(count, true) :
                scrolldown(count, true);
 
-  if (get_scrolloff_value(curwin)) {
+  if (get_scrolloff_value(curwin) > 0) {
     // Adjust the cursor position for 'scrolloff'.  Mark w_topline as
     // valid, otherwise the screen jumps back at the end of the file.
     cursor_correct();
@@ -2894,27 +2893,21 @@ static void nv_zet(cmdarg_T *cap)
   case 'h':
   case K_LEFT:
     if (!curwin->w_p_wrap) {
-      if ((colnr_T)cap->count1 > curwin->w_leftcol) {
-        curwin->w_leftcol = 0;
-      } else {
-        curwin->w_leftcol -= (colnr_T)cap->count1;
-      }
-      leftcol_changed();
+      (void)set_leftcol((colnr_T)cap->count1 > curwin->w_leftcol
+                        ? 0 : curwin->w_leftcol - (colnr_T)cap->count1);
     }
     break;
 
-  // "zL" - scroll screen left half-page
+  // "zL" - scroll window left half-page
   case 'L':
     cap->count1 *= curwin->w_width_inner / 2;
     FALLTHROUGH;
 
-  // "zl" - scroll screen to the left
+  // "zl" - scroll window to the left if not wrapping
   case 'l':
   case K_RIGHT:
     if (!curwin->w_p_wrap) {
-      // scroll the window left
-      curwin->w_leftcol += (colnr_T)cap->count1;
-      leftcol_changed();
+      (void)set_leftcol(curwin->w_leftcol + (colnr_T)cap->count1);
     }
     break;
 

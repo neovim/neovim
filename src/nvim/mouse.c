@@ -1648,8 +1648,6 @@ bool mouse_scroll_horiz(int dir)
     return false;
   }
 
-  curwin->w_leftcol = (colnr_T)leftcol;
-
   // When the line of the cursor is too short, move the cursor to the
   // longest visible line.
   if (!virtual_active()
@@ -1658,7 +1656,7 @@ bool mouse_scroll_horiz(int dir)
     curwin->w_cursor.col = 0;
   }
 
-  return leftcol_changed();
+  return set_leftcol(leftcol);
 }
 
 /// Adjusts the clicked column position when 'conceallevel' > 0
