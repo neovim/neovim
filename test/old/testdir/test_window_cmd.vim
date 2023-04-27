@@ -19,6 +19,24 @@ func Test_window_cmd_ls0_with_split()
   set ls&vim
 endfunc
 
+func Test_window_cmd_ls0_split_scrolling()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    set laststatus=0
+    call setline(1, range(1, 100))
+    normal! G
+  END
+  call writefile(lines, 'XTestLs0SplitScrolling', 'D')
+  let buf = RunVimInTerminal('-S XTestLs0SplitScrolling', #{rows: 10})
+
+  call term_sendkeys(buf, ":botright split\<CR>")
+  call WaitForAssert({-> assert_match('Bot$', term_getline(buf, 5))})
+  call assert_equal('100', term_getline(buf, 4))
+
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_window_cmd_cmdwin_with_vsp()
   let efmt = 'Expected 0 but got %d (in ls=%d, %s window)'
   for v in range(0, 2)
