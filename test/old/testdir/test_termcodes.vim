@@ -297,6 +297,8 @@ func Test_xterm_mouse_drag_to_move_tab()
         \              'Tab page 2',
         \              '#   Xtab1'], a)
 
+    " brief sleep to avoid causing a double-click
+    sleep 20m
     %bwipe!
   endfor
 
