@@ -36,6 +36,80 @@ func Test_term_mouse_left_click()
   bwipe!
 endfunc
 
+func Test_xterm_mouse_right_click_extends_visual()
+  if has('mac')
+    " throw "Skipped: test right click in visual mode does not work on macOs (why?)"
+  endif
+  let save_mouse = &mouse
+  let save_term = &term
+  " let save_ttymouse = &ttymouse
+  " call test_override('no_query_mouse', 1)
+  " set mouse=a term=xterm
+  set mouse=a
+
+  for visual_mode in ["v", "V", "\<C-V>"]
+    for ttymouse_val in g:Ttymouse_values + g:Ttymouse_dec
+      let msg = 'visual=' .. visual_mode .. ' ttymouse=' .. ttymouse_val
+      " exe 'set ttymouse=' .. ttymouse_val
+
+      call setline(1, repeat([repeat('-', 7)], 7))
+      call MouseLeftClick(4, 4)
+      call MouseLeftRelease(4, 4)
+      exe  "norm! " .. visual_mode
+
+      " Right click extends top left of visual area.
+      call MouseRightClick(2, 2)
+      call MouseRightRelease(2, 2)
+
+      " Right click extends bottom bottom right of visual area.
+      call MouseRightClick(6, 6)
+      call MouseRightRelease(6, 6)
+      norm! r1gv
+
+      " Right click shrinks top left of visual area.
+      call MouseRightClick(3, 3)
+      call MouseRightRelease(3, 3)
+
+      " Right click shrinks bottom right of visual area.
+      call MouseRightClick(5, 5)
+      call MouseRightRelease(5, 5)
+      norm! r2
+
+      if visual_mode ==# 'v'
+        call assert_equal(['-------',
+              \            '-111111',
+              \            '1122222',
+              \            '2222222',
+              \            '2222211',
+              \            '111111-',
+              \            '-------'], getline(1, '$'), msg)
+      elseif visual_mode ==# 'V'
+        call assert_equal(['-------',
+              \            '1111111',
+              \            '2222222',
+              \            '2222222',
+              \            '2222222',
+              \            '1111111',
+              \            '-------'], getline(1, '$'), msg)
+      else
+        call assert_equal(['-------',
+              \            '-11111-',
+              \            '-12221-',
+              \            '-12221-',
+              \            '-12221-',
+              \            '-11111-',
+              \            '-------'], getline(1, '$'), msg)
+      endif
+    endfor
+  endfor
+
+  let &mouse = save_mouse
+  " let &term = save_term
+  " let &ttymouse = save_ttymouse
+  " call test_override('no_query_mouse', 0)
+  bwipe!
+endfunc
+
 " Test that <C-LeftMouse> jumps to help tag and <C-RightMouse> jumps back.
 func Test_xterm_mouse_ctrl_click()
   let save_mouse = &mouse
@@ -605,6 +679,8 @@ func Test_xterm_mouse_click_in_fold_columns()
         \           map(range(1, 7), 'foldclosed(v:val)'))
 
   let &foldcolumn = save_foldcolumn
+  " Redraw at the end of the test to avoid interfering with other tests.
+  defer execute('redraw')
   " let &ttymouse = save_ttymouse
   " let &term = save_term
   let &mouse = save_mouse
