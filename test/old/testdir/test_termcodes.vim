@@ -56,13 +56,13 @@ func Test_xterm_mouse_ctrl_click()
     call MouseCtrlLeftClick(row, col)
     call MouseLeftRelease(row, col)
     call assert_match('usr_02.txt$', bufname('%'), msg)
-    call assert_equal('*usr_02.txt*', expand('<cWORD>'))
+    call assert_equal('*usr_02.txt*', expand('<cWORD>'), msg)
 
     call MouseCtrlRightClick(row, col)
     call MouseRightRelease(row, col)
     " call assert_match('help.txt$', bufname('%'), msg)
     call assert_match('usr_toc.txt$', bufname('%'), msg)
-    call assert_equal('|usr_02.txt|', expand('<cWORD>'))
+    call assert_equal('|usr_02.txt|', expand('<cWORD>'), msg)
 
     helpclose
   endfor
@@ -157,6 +157,94 @@ func Test_1xterm_mouse_wheel()
   let &mouse = save_mouse
   " let &term = save_term
   " let &ttymouse = save_ttymouse
+  bwipe!
+endfunc
+
+" Test that dragging beyond the window (at the bottom and at the top)
+" scrolls window content by the number of of lines beyond the window.
+func Test_term_mouse_drag_beyond_window()
+  let save_mouse = &mouse
+  let save_term = &term
+  " let save_ttymouse = &ttymouse
+  " call test_override('no_query_mouse', 1)
+  " set mouse=a term=xterm
+  set mouse=a
+  let col = 1
+  call setline(1, range(1, 100))
+
+  " Split into 3 windows, and go into the middle window
+  " so we test dragging mouse below and above the window.
+  2split
+  wincmd j
+  2split
+
+  for ttymouse_val in g:Ttymouse_values + g:Ttymouse_dec
+    let msg = 'ttymouse=' .. ttymouse_val
+    " exe 'set ttymouse=' .. ttymouse_val
+
+    " Line #10 at the top.
+    norm! 10zt
+    redraw
+    call assert_equal(10, winsaveview().topline, msg)
+    call assert_equal(2, winheight(0), msg)
+
+    let row = 4
+    call MouseLeftClick(row, col)
+    call assert_equal(10, winsaveview().topline, msg)
+
+    " Drag downwards. We're still in the window so topline should
+    " not change yet.
+    let row += 1
+    call MouseLeftDrag(row, col)
+    call assert_equal(10, winsaveview().topline, msg)
+
+    " We now leave the window at the bottom, so the window content should
+    " scroll by 1 line, then 2 lines (etc) as we drag further away.
+    let row += 1
+    call MouseLeftDrag(row, col)
+    call assert_equal(11, winsaveview().topline, msg)
+
+    let row += 1
+    call MouseLeftDrag(row, col)
+    call assert_equal(13, winsaveview().topline, msg)
+
+    " Now drag upwards.
+    let row -= 1
+    call MouseLeftDrag(row, col)
+    call assert_equal(14, winsaveview().topline, msg)
+
+    " We're now back in the window so the topline should not change.
+    let row -= 1
+    call MouseLeftDrag(row, col)
+    call assert_equal(14, winsaveview().topline, msg)
+
+    let row -= 1
+    call MouseLeftDrag(row, col)
+    call assert_equal(14, winsaveview().topline, msg)
+
+    " We now leave the window at the top so the window content should
+    " scroll by 1 line, then 2, then 3 (etc) in the opposite direction.
+    let row -= 1
+    call MouseLeftDrag(row, col)
+    call assert_equal(13, winsaveview().topline, msg)
+
+    let row -= 1
+    call MouseLeftDrag(row, col)
+    call assert_equal(11, winsaveview().topline, msg)
+
+    let row -= 1
+    call MouseLeftDrag(row, col)
+    call assert_equal(8, winsaveview().topline, msg)
+
+    call MouseLeftRelease(row, col)
+    call assert_equal(8, winsaveview().topline, msg)
+    call assert_equal(2, winheight(0), msg)
+  endfor
+
+  let &mouse = save_mouse
+  " let &term = save_term
+  " let &ttymouse = save_ttymouse
+  " call test_override('no_query_mouse', 0)
   bwipe!
 endfunc
 
