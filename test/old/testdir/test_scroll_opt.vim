@@ -2,6 +2,7 @@
 
 source check.vim
 source screendump.vim
+source mouse.vim
 
 func Test_reset_scroll()
   let scr = &l:scroll
@@ -467,6 +468,66 @@ func Test_smoothscroll_cursor_position()
   normal gg
 
   bwipeout!
+endfunc
+
+" Test that mouse picking is still accurate when we have smooth scrolled lines
+func Test_smoothscroll_mouse_pos()
+  CheckNotGui
+  CheckUnix
+
+  let save_mouse = &mouse
+  "let save_term = &term
+  "let save_ttymouse = &ttymouse
+  set mouse=a "term=xterm ttymouse=xterm2
+
+  call NewWindow(10, 20)
+  setl smoothscroll wrap
+  " First line will wrap to 3 physical lines. 2nd/3rd lines are short lines.
+  call setline(1, ["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", "line 2", "line 3"])
+
+  func s:check_mouse_click(row, col, buf_row, buf_col)
+    call MouseLeftClick(a:row, a:col)
+
+    call assert_equal(a:col, wincol())
+    call assert_equal(a:row, winline())
+    call assert_equal(a:buf_row, line('.'))
+    call assert_equal(a:buf_col, col('.'))
+  endfunc
+
+  " Check that clicking without scroll works first.
+  call s:check_mouse_click(3, 5, 1, 45)
+  call s:check_mouse_click(4, 1, 2, 1)
+  call s:check_mouse_click(4, 6, 2, 6)
+  call s:check_mouse_click(5, 1, 3, 1)
+  call s:check_mouse_click(5, 6, 3, 6)
+
+  " Smooth scroll, and checks that this didn't mess up mouse clicking
+  exe "normal \<C-E>"
+  call s:check_mouse_click(2, 5, 1, 45)
+  call s:check_mouse_click(3, 1, 2, 1)
+  call s:check_mouse_click(3, 6, 2, 6)
+  call s:check_mouse_click(4, 1, 3, 1)
+  call s:check_mouse_click(4, 6, 3, 6)
+
+  exe "normal \<C-E>"
+  call s:check_mouse_click(1, 5, 1, 45)
+  call s:check_mouse_click(2, 1, 2, 1)
+  call s:check_mouse_click(2, 6, 2, 6)
+  call s:check_mouse_click(3, 1, 3, 1)
+  call s:check_mouse_click(3, 6, 3, 6)
+
+  " Make a new first line 11 physical lines tall so it's taller than window
+  " height, to test overflow calculations with really long lines wrapping.
+  normal gg
+  call setline(1, "12345678901234567890"->repeat(11))
+  exe "normal 6\<C-E>"
+  call s:check_mouse_click(5, 1, 1, 201)
+  call s:check_mouse_click(6, 1, 2, 1)
+  call s:check_mouse_click(7, 1, 3, 1)
+
+  let &mouse = save_mouse
+  "let &term = save_term
+  "let &ttymouse = save_ttymouse
 endfunc
 
 
