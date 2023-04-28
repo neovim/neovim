@@ -87,40 +87,38 @@ func Test_xterm_mouse_drag_window_separator()
     let row = rowseparator
     let col = 1
 
-    if ttymouse_val ==# 'xterm' && row > 223
-      " When 'ttymouse' is 'xterm', row/col bigger than 223 are not supported.
-      continue
+    " When 'ttymouse' is 'xterm', row/col bigger than 223 are not supported.
+    if ttymouse_val !=# 'xterm' || row <= 223
+      call MouseLeftClick(row, col)
+      let row -= 1
+      call MouseLeftDrag(row, col)
+      call assert_equal(rowseparator - 1, winheight(0) + 1)
+      let row += 1
+      call MouseLeftDrag(row, col)
+      call assert_equal(rowseparator, winheight(0) + 1)
+      call MouseLeftRelease(row, col)
+      call assert_equal(rowseparator, winheight(0) + 1)
     endif
-
-    call MouseLeftClick(row, col)
-
-    let row -= 1
-    call MouseLeftDrag(row, col)
-    call assert_equal(rowseparator - 1, winheight(0) + 1)
-    let row += 1
-    call MouseLeftDrag(row, col)
-    call assert_equal(rowseparator, winheight(0) + 1)
-    call MouseLeftRelease(row, col)
-    call assert_equal(rowseparator, winheight(0) + 1)
-
     bwipe!
 
     " Split vertically and test dragging the vertical window separator.
     vsplit
     let colseparator = winwidth(0) + 1
-
     let row = 1
     let col = colseparator
-    call MouseLeftClick(row, col)
-    let col -= 1
-    call MouseLeftDrag(row, col)
-    call assert_equal(colseparator - 1, winwidth(0) + 1)
-    let col += 1
-    call MouseLeftDrag(row, col)
-    call assert_equal(colseparator, winwidth(0) + 1)
-    call MouseLeftRelease(row, col)
-    call assert_equal(colseparator, winwidth(0) + 1)
 
+    " When 'ttymouse' is 'xterm', row/col bigger than 223 are not supported.
+    if ttymouse_val !=# 'xterm' || col <= 223
+      call MouseLeftClick(row, col)
+      let col -= 1
+      call MouseLeftDrag(row, col)
+      call assert_equal(colseparator - 1, winwidth(0) + 1)
+      let col += 1
+      call MouseLeftDrag(row, col)
+      call assert_equal(colseparator, winwidth(0) + 1)
+      call MouseLeftRelease(row, col)
+      call assert_equal(colseparator, winwidth(0) + 1)
+    endif
     bwipe!
   endfor
 
@@ -191,7 +189,7 @@ func Test_xterm_mouse_click_tab()
 
     " Test clicking on tab names in the tabline at the top.
     let col = 2
-    redraw!
+    redraw
     call MouseLeftClick(row, col)
     call MouseLeftRelease(row, col)
     let a = split(execute(':tabs'), "\n")
@@ -208,6 +206,52 @@ func Test_xterm_mouse_click_tab()
         \              '#   Xfoo',
         \              'Tab page 2',
         \              '>   Xbar'], a)
+
+    %bwipe!
+  endfor
+
+  let &mouse = save_mouse
+  " let &term = save_term
+  " let &ttymouse = save_ttymouse
+endfunc
+
+func Test_xterm_mouse_click_X_to_close_tab()
+  let save_mouse = &mouse
+  let save_term = &term
+  " let save_ttymouse = &ttymouse
+  " set mouse=a term=xterm
+  set mouse=a
+  let row = 1
+  let col = &columns
+
+  for ttymouse_val in ['sgr']
+    if ttymouse_val ==# 'xterm' && col > 223
+      " When 'ttymouse' is 'xterm', row/col bigger than 223 are not supported.
+      continue
+    endif
+    " exe 'set ttymouse=' . ttymouse_val
+    e Xtab1
+    tabnew Xtab2
+    tabnew Xtab3
+    tabn 2
+
+    let a = split(execute(':tabs'), "\n")
+    call assert_equal(['Tab page 1',
+        \              '    Xtab1',
+        \              'Tab page 2',
+        \              '>   Xtab2',
+        \              'Tab page 3',
+        \              '#   Xtab3'], a)
+
+    " Click on "X" in tabline to close current tab i.e. Xtab2.
+    redraw
+    call MouseLeftClick(row, col)
+    call MouseLeftRelease(row, col)
+    let a = split(execute(':tabs'), "\n")
+    call assert_equal(['Tab page 1',
+        \              '    Xtab1',
+        \              'Tab page 2',
+        \              '>   Xtab3'], a)
 
     %bwipe!
   endfor
