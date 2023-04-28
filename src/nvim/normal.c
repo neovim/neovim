@@ -956,7 +956,7 @@ normal_end:
     set_reg_var(get_default_register_name());
   }
 
-  s->c = finish_op;
+  const bool prev_finish_op = finish_op;
   if (s->oa.op_type == OP_NOP) {
     // Reset finish_op, in case it was set
     finish_op = false;
@@ -964,7 +964,7 @@ normal_end:
   }
   // Redraw the cursor with another shape, if we were in Operator-pending
   // mode or did a replace command.
-  if (s->c || s->ca.cmdchar == 'r'
+  if (prev_finish_op || s->ca.cmdchar == 'r'
       || (s->ca.cmdchar == 'g' && s->ca.nchar == 'r')) {
     ui_cursor_shape();                  // may show different cursor shape
   }

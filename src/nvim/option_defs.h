@@ -1026,6 +1026,11 @@ typedef struct {
   void *os_buf;
 } optset_T;
 
+/// Type for the callback function that is invoked after an option value is
+/// changed to validate and apply the new value.
+///
+/// Returns NULL if the option value is valid and successfully applied.
+/// Otherwise returns an error message.
 typedef const char *(*opt_did_set_cb_T)(optset_T *args);
 
 /// Stores an identifier of a script or channel that last set an option.
