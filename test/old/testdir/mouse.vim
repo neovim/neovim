@@ -70,4 +70,16 @@ func MouseWheelDown(row, col)
   call feedkeys('', 'x!')
 endfunc
 
+func MouseWheelLeft(row, col)
+  call nvim_input_mouse('wheel', 'left', '', 0, a:row - 1, a:col - 1)
+  call getchar(1)
+  call feedkeys('', 'x!')
+endfunc
+
+func MouseWheelRight(row, col)
+  call nvim_input_mouse('wheel', 'right', '', 0, a:row - 1, a:col - 1)
+  call getchar(1)
+  call feedkeys('', 'x!')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
