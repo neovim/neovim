@@ -35,14 +35,3 @@ jobs:
           actions: 'add-labels'
           issue-number: ${{ github.event.issue.number }}
           labels: ${{ steps.check-issue.outputs.keyword }}
-
-      - name: check invalid
-        if: (contains(github.event.issue.body, 'Step to Reproduce') == false)  && (github.event.label.name != 'enhancement')
-        uses: actions-cool/issues-helper@v3
-        with:
-          actions: 'create-comment,add-labels,close-issue'
-          issue-number: ${{ github.event.issue.number }}
-          labels: 'closed:invalid'
-          body: |
-            Hello @${{ github.event.issue.user.login }}, your issue has been closed because it does not include reproduce step.
-
