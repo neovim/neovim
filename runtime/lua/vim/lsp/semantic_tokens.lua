@@ -1,7 +1,8 @@
 local api = vim.api
+local bit = require('bit')
 local handlers = require('vim.lsp.handlers')
 local util = require('vim.lsp.util')
-local bit = require('bit')
+local uv = vim.loop
 
 --- @class STTokenRange
 --- @field line integer line number 0-based
@@ -94,15 +95,38 @@ end
 ---
 ---@private
 ---@return STTokenRange[]
-local function tokens_to_ranges(data, bufnr, client)
+local function tokens_to_ranges(data, bufnr, client, request)
   local legend = client.server_capabilities.semanticTokensProvider.legend
   local token_types = legend.tokenTypes
   local token_modifiers = legend.tokenModifiers
   local ranges = {}
 
+  local start = uv.hrtime()
+  local ms_to_ns = 1000 * 1000
+  local yield_interval_ns = 5 * ms_to_ns
+  local co, is_main = coroutine.running()
+
   local line
   local start_char = 0
   for i = 1, #data, 5 do
+    -- if this function is called from the main coroutine, let it run to completion with no yield
+    if not is_main then
+      local elapsed_ns = uv.hrtime() - start
+
+      if elapsed_ns > yield_interval_ns then
+        vim.schedule(function()
+          coroutine.resume(co, util.buf_versions[bufnr])
+        end)
+        if request.version ~= coroutine.yield() then
+          -- request became stale since the last time the coroutine ran.
+          -- abandon it by yielding without a way to resume
+          coroutine.yield()
+        end
+
+        start = uv.hrtime()
+      end
+    end
+
     local delta_line = data[i]
     line = line and line + delta_line or delta_line
     local delta_start = data[i + 1]
@@ -280,7 +304,7 @@ function STHighlighter:send_request()
         local c = vim.lsp.get_client_by_id(ctx.client_id)
         local highlighter = STHighlighter.active[ctx.bufnr]
         if not err and c and highlighter then
-          highlighter:process_response(response, c, version)
+          coroutine.wrap(STHighlighter.process_response)(highlighter, response, c, version)
         end
       end, self.bufnr)
 
@@ -315,11 +339,9 @@ function STHighlighter:process_response(response, client, version)
     return
   end
 
-  -- reset active request
-  state.active_request = {}
-
   -- skip nil responses
   if response == nil then
+    state.active_request = {}
     return
   end
 
@@ -347,12 +369,19 @@ function STHighlighter:process_response(response, client, version)
     tokens = response.data
   end
 
-  -- Update the state with the new results
+  -- convert token list to highlight ranges
+  -- this could yield and run over multiple event loop iterations
+  local highlights = tokens_to_ranges(tokens, self.bufnr, client, state.active_request)
+
+  -- reset active request
+  state.active_request = {}
+
+  -- update the state with the new results
   local current_result = state.current_result
   current_result.version = version
   current_result.result_id = response.resultId
   current_result.tokens = tokens
-  current_result.highlights = tokens_to_ranges(tokens, self.bufnr, client)
+  current_result.highlights = highlights
   current_result.namespace_cleared = false
 
   -- redraw all windows displaying buffer
