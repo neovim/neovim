@@ -1776,7 +1776,7 @@ void scroll_cursor_top(int min_scroll, int always)
     scroll_cursor_halfway(false, false);
   } else {
     // If "always" is false, only adjust topline to a lower value, higher
-    // value may happen with wrapping lines
+    // value may happen with wrapping lines.
     if (new_topline < curwin->w_topline || always) {
       curwin->w_topline = new_topline;
     }
@@ -1792,7 +1792,8 @@ void scroll_cursor_top(int min_scroll, int always)
     }
     check_topfill(curwin, false);
     // TODO(vim): if the line doesn't fit may optimize w_skipcol
-    if (curwin->w_topline == curwin->w_cursor.lnum) {
+    if (curwin->w_topline == curwin->w_cursor.lnum
+        && curwin->w_skipcol >= curwin->w_cursor.col) {
       reset_skipcol(curwin);
     }
     if (curwin->w_topline != old_topline
