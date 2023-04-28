@@ -1482,6 +1482,8 @@ func Test_string_option_revert_on_failure()
   endif
   if exists('+toolbar')
     call add(optlist, ['toolbar', 'text', 'a123'])
+  endif
+  if exists('+toolbariconsize')
     call add(optlist, ['toolbariconsize', 'medium', 'a123'])
   endif
   if exists('+ttymouse') && !has('gui')
