@@ -1465,7 +1465,10 @@ void adjust_skipcol(void)
   bool scrolled = false;
 
   validate_cheight();
-  if (curwin->w_cline_height == curwin->w_height) {
+  if (curwin->w_cline_height == curwin->w_height
+      // w_cline_height may be capped at w_height, check there aren't
+      // actually more lines.
+      && plines_win(curwin, curwin->w_cursor.lnum, false) <= curwin->w_height) {
     // the line just fits in the window, don't scroll
     reset_skipcol(curwin);
     return;

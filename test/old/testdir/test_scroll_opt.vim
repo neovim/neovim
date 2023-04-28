@@ -498,6 +498,13 @@ func Test_smoothscroll_cursor_scrolloff()
   exe "normal 20h"
   call s:check_col_calc(1, 4, 61)
 
+  " cursor on last line, "gk" should not cause a scroll
+  set scrolloff=0
+  normal G0
+  call s:check_col_calc(1, 7, 1)
+  normal gk
+  call s:check_col_calc(1, 6, 101)
+
   bwipe!
 endfunc
 
