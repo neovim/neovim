@@ -8,11 +8,12 @@ source mouse.vim
 source view_util.vim
 source term_util.vim
 
-func Test_xterm_mouse_left_click()
+func Test_term_mouse_left_click()
   new
   let save_mouse = &mouse
   let save_term = &term
   " let save_ttymouse = &ttymouse
+  " call test_override('no_query_mouse', 1)
   " set mouse=a term=xterm
   set mouse=a
   call setline(1, ['line 1', 'line 2', 'line 3 is a bit longer'])
@@ -31,6 +32,7 @@ func Test_xterm_mouse_left_click()
   let &mouse = save_mouse
   " let &term = save_term
   " let &ttymouse = save_ttymouse
+  " call test_override('no_query_mouse', 0)
   bwipe!
 endfunc
 
@@ -57,7 +59,7 @@ func Test_xterm_mouse_ctrl_click()
     call assert_equal('*usr_02.txt*', expand('<cWORD>'))
 
     call MouseCtrlRightClick(row, col)
-    call MouseLeftRelease(row, col)
+    call MouseRightRelease(row, col)
     " call assert_match('help.txt$', bufname('%'), msg)
     call assert_match('usr_toc.txt$', bufname('%'), msg)
     call assert_equal('|usr_02.txt|', expand('<cWORD>'))
@@ -70,13 +72,14 @@ func Test_xterm_mouse_ctrl_click()
   " let &ttymouse = save_ttymouse
 endfunc
 
-func Test_xterm_mouse_middle_click()
+func Test_term_mouse_middle_click()
   CheckFeature clipboard_working
 
   new
   let save_mouse = &mouse
   let save_term = &term
   " let save_ttymouse = &ttymouse
+  " call test_override('no_query_mouse', 1)
   let save_quotestar = @*
   let @* = 'abc'
   " set mouse=a term=xterm
@@ -111,11 +114,14 @@ func Test_xterm_mouse_middle_click()
   let &mouse = save_mouse
   " let &term = save_term
   " let &ttymouse = save_ttymouse
+  " call test_override('no_query_mouse', 0)
   let @* = save_quotestar
   bwipe!
 endfunc
 
-func Test_xterm_mouse_wheel()
+" TODO: for unclear reasons this test fails if it comes after
+" Test_xterm_mouse_ctrl_click()
+func Test_1xterm_mouse_wheel()
   new
   let save_mouse = &mouse
   let save_term = &term
@@ -154,10 +160,11 @@ func Test_xterm_mouse_wheel()
   bwipe!
 endfunc
 
-func Test_xterm_mouse_drag_window_separator()
+func Test_term_mouse_drag_window_separator()
   let save_mouse = &mouse
   let save_term = &term
   " let save_ttymouse = &ttymouse
+  " call test_override('no_query_mouse', 1)
   " set mouse=a term=xterm
   set mouse=a
 
@@ -209,12 +216,14 @@ func Test_xterm_mouse_drag_window_separator()
   let &mouse = save_mouse
   " let &term = save_term
   " let &ttymouse = save_ttymouse
+  " call test_override('no_query_mouse', 0)
 endfunc
 
-func Test_xterm_mouse_drag_statusline()
+func Test_term_mouse_drag_statusline()
   let save_mouse = &mouse
   let save_term = &term
   " let save_ttymouse = &ttymouse
+  " call test_override('no_query_mouse', 1)
   let save_laststatus = &laststatus
   " set mouse=a term=xterm laststatus=2
   set mouse=a laststatus=2
@@ -250,13 +259,15 @@ func Test_xterm_mouse_drag_statusline()
   let &mouse = save_mouse
   " let &term = save_term
   " let &ttymouse = save_ttymouse
+  " call test_override('no_query_mouse', 0)
   let &laststatus = save_laststatus
 endfunc
 
-func Test_xterm_mouse_click_tab()
+func Test_term_mouse_click_tab()
   let save_mouse = &mouse
   let save_term = &term
   " let save_ttymouse = &ttymouse
+  " call test_override('no_query_mouse', 1)
   " set mouse=a term=xterm
   set mouse=a
   let row = 1
@@ -299,12 +310,14 @@ func Test_xterm_mouse_click_tab()
   let &mouse = save_mouse
   " let &term = save_term
   " let &ttymouse = save_ttymouse
+  " call test_override('no_query_mouse', 0)
 endfunc
 
-func Test_xterm_mouse_click_X_to_close_tab()
+func Test_term_mouse_click_X_to_close_tab()
   let save_mouse = &mouse
   let save_term = &term
   " let save_ttymouse = &ttymouse
+  " call test_override('no_query_mouse', 1)
   " set mouse=a term=xterm
   set mouse=a
   let row = 1
@@ -346,12 +359,14 @@ func Test_xterm_mouse_click_X_to_close_tab()
   let &mouse = save_mouse
   " let &term = save_term
   " let &ttymouse = save_ttymouse
+  " call test_override('no_query_mouse', 0)
 endfunc
 
-func Test_xterm_mouse_drag_to_move_tab()
+func Test_term_mouse_drag_to_move_tab()
   let save_mouse = &mouse
   let save_term = &term
   " let save_ttymouse = &ttymouse
+  " call test_override('no_query_mouse', 1)
   " Set 'mousetime' to 1 to avoid recognizing a double-click in the loop
   " set mouse=a term=xterm mousetime=1
   set mouse=a mousetime=0
@@ -393,13 +408,15 @@ func Test_xterm_mouse_drag_to_move_tab()
   let &mouse = save_mouse
   " let &term = save_term
   " let &ttymouse = save_ttymouse
+  " call test_override('no_query_mouse', 0)
   set mousetime&
 endfunc
 
-func Test_xterm_mouse_double_click_to_create_tab()
+func Test_term_mouse_double_click_to_create_tab()
   let save_mouse = &mouse
   let save_term = &term
   " let save_ttymouse = &ttymouse
+  " call test_override('no_query_mouse', 1)
   " Set 'mousetime' to a small value, so that double-click works but we don't
   " have to wait long to avoid a triple-click.
   " set mouse=a term=xterm mousetime=100
@@ -450,6 +467,7 @@ func Test_xterm_mouse_double_click_to_create_tab()
   let &mouse = save_mouse
   " let &term = save_term
   " let &ttymouse = save_ttymouse
+  " call test_override('no_query_mouse', 0)
   set mousetime&
 endfunc
 
