@@ -86,6 +86,12 @@ func Test_xterm_mouse_drag_window_separator()
     let rowseparator = winheight(0) + 1
     let row = rowseparator
     let col = 1
+
+    if ttymouse_val ==# 'xterm' && row > 223
+      " When 'ttymouse' is 'xterm', row/col bigger than 223 are not supported.
+      continue
+    endif
+
     call MouseLeftClick(row, col)
 
     let row -= 1
@@ -137,6 +143,12 @@ func Test_xterm_mouse_drag_statusline()
     let rowstatusline = winheight(0) + 1
     let row = rowstatusline
     let col = 1
+
+    if ttymouse_val ==# 'xterm' && row > 223
+      " When 'ttymouse' is 'xterm', row/col bigger than 223 are not supported.
+      continue
+    endif
+
     call MouseLeftClick(row, col)
     let row -= 1
     call MouseLeftDrag(row, col)
