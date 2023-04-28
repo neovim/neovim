@@ -1605,6 +1605,21 @@ func Test_diff_scroll()
   call delete('Xright')
 endfunc
 
+" This was scrolling too many lines.
+func Test_diff_scroll_wrap_on()
+  20new
+  40vsplit
+  call setline(1, map(range(1, 9), 'repeat(v:val, 200)'))
+  setlocal number diff so=0
+  redraw
+  normal! jj
+  call assert_equal(1, winsaveview().topline)
+  normal! j
+  call assert_equal(2, winsaveview().topline)
+  bwipe!
+  bwipe!
+endfunc
+
 " This was trying to update diffs for a buffer being closed
 func Test_diff_only()
   silent! lfile

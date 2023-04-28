@@ -1320,7 +1320,7 @@ static int scrolling_screenlines(bool byfold)
 {
   return (curwin->w_p_wrap && curwin->w_p_sms)
          || (byfold && hasAnyFolding(curwin))
-         || curwin->w_p_diff;
+         || (curwin->w_p_diff && !curwin->w_p_wrap);
 }
 
 /// Scroll the current window up by "line_count" logical lines.  "CTRL-E"
