@@ -1,5 +1,9 @@
 " Helper functions for generating mouse events
 
+let g:Ttymouse_values = ['sgr']
+let g:Ttymouse_dec = []
+let g:Ttymouse_netterm = []
+
 func MouseLeftClick(row, col)
   call nvim_input_mouse('left', 'press', '', 0, a:row - 1, a:col - 1)
   call getchar(1)

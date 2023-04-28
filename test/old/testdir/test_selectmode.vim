@@ -163,7 +163,7 @@ endfunc
 " Test double/triple/quadruple click to start 'select' mode
 func Test_term_mouse_multiple_clicks_to_select_mode()
   let save_mouse = &mouse
-  " let save_term = &term
+  let save_term = &term
   " let save_ttymouse = &ttymouse
   " call test_override('no_query_mouse', 1)
   " set mouse=a term=xterm mousetime=200
@@ -171,10 +171,9 @@ func Test_term_mouse_multiple_clicks_to_select_mode()
   set selectmode=mouse
   new
 
-  " for ttymouse_val in g:Ttymouse_values + g:Ttymouse_dec
-  "   let msg = 'ttymouse=' .. ttymouse_val
-  "   exe 'set ttymouse=' .. ttymouse_val
-  let msg = ''
+  for ttymouse_val in g:Ttymouse_values + g:Ttymouse_dec
+    let msg = 'ttymouse=' .. ttymouse_val
+    " exe 'set ttymouse=' .. ttymouse_val
 
     " Single-click and drag should 'select' the characters
     call setline(1, ['foo [foo bar] foo', 'foo'])
@@ -247,7 +246,7 @@ func Test_term_mouse_multiple_clicks_to_select_mode()
     call assert_equal("\<c-s>", mode(), msg)
     norm! x
     call assert_equal(['axaa', 'bxbb'], getline(1, '$'), msg)
-  " endfor
+  endfor
 
   let &mouse = save_mouse
   " let &term = save_term
