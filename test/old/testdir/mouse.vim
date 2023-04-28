@@ -34,6 +34,18 @@ func MouseCtrlRightClick(row, col)
   call feedkeys('', 'x!')
 endfunc
 
+func MouseAltLeftClick(row, col)
+  call nvim_input_mouse('left', 'press', 'A', 0, a:row - 1, a:col - 1)
+  call getchar(1)
+  call feedkeys('', 'x!')
+endfunc
+
+func MouseAltRightClick(row, col)
+  call nvim_input_mouse('right', 'press', 'A', 0, a:row - 1, a:col - 1)
+  call getchar(1)
+  call feedkeys('', 'x!')
+endfunc
+
 func MouseLeftRelease(row, col)
   call nvim_input_mouse('left', 'release', '', 0, a:row - 1, a:col - 1)
   call getchar(1)
@@ -66,6 +78,18 @@ endfunc
 
 func MouseWheelDown(row, col)
   call nvim_input_mouse('wheel', 'down', '', 0, a:row - 1, a:col - 1)
+  call getchar(1)
+  call feedkeys('', 'x!')
+endfunc
+
+func MouseWheelLeft(row, col)
+  call nvim_input_mouse('wheel', 'left', '', 0, a:row - 1, a:col - 1)
+  call getchar(1)
+  call feedkeys('', 'x!')
+endfunc
+
+func MouseWheelRight(row, col)
+  call nvim_input_mouse('wheel', 'right', '', 0, a:row - 1, a:col - 1)
   call getchar(1)
   call feedkeys('', 'x!')
 endfunc

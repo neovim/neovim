@@ -61,7 +61,7 @@ func Test_xterm_mouse_right_click_extends_visual()
       call MouseRightClick(2, 2)
       call MouseRightRelease(2, 2)
 
-      " Right click extends bottom bottom right of visual area.
+      " Right click extends bottom right of visual area.
       call MouseRightClick(6, 6)
       call MouseRightRelease(6, 6)
       norm! r1gv
@@ -199,10 +199,11 @@ func Test_1xterm_mouse_wheel()
   new
   let save_mouse = &mouse
   let save_term = &term
+  let save_wrap = &wrap
   " let save_ttymouse = &ttymouse
-  " set mouse=a term=xterm
-  set mouse=a
-  call setline(1, range(1, 100))
+  " set mouse=a term=xterm nowrap
+  set mouse=a nowrap
+  call setline(1, range(100000000000000, 100000000000100))
 
   for ttymouse_val in g:Ttymouse_values
     let msg = 'ttymouse=' .. ttymouse_val
@@ -226,16 +227,34 @@ func Test_1xterm_mouse_wheel()
     call MouseWheelUp(1, 1)
     call assert_equal(1, line('w0'), msg)
     call assert_equal([0, 7, 1, 0], getpos('.'), msg)
+
+    call MouseWheelRight(1, 1)
+    call assert_equal(7, 1 + virtcol(".") - wincol(), msg)
+    call assert_equal([0, 7, 7, 0], getpos('.'), msg)
+
+    call MouseWheelRight(1, 1)
+    call assert_equal(13, 1 + virtcol(".") - wincol(), msg)
+    call assert_equal([0, 7, 13, 0], getpos('.'), msg)
+
+    call MouseWheelLeft(1, 1)
+    call assert_equal(7, 1 + virtcol(".") - wincol(), msg)
+    call assert_equal([0, 7, 13, 0], getpos('.'), msg)
+
+    call MouseWheelLeft(1, 1)
+    call assert_equal(1, 1 + virtcol(".") - wincol(), msg)
+    call assert_equal([0, 7, 13, 0], getpos('.'), msg)
+
   endfor
 
   let &mouse = save_mouse
   " let &term = save_term
+  let &wrap = save_wrap
   " let &ttymouse = save_ttymouse
   bwipe!
 endfunc
 
 " Test that dragging beyond the window (at the bottom and at the top)
-" scrolls window content by the number of of lines beyond the window.
+" scrolls window content by the number of lines beyond the window.
 func Test_term_mouse_drag_beyond_window()
   let save_mouse = &mouse
   let save_term = &term
@@ -723,6 +742,53 @@ func Test_term_mouse_multiple_clicks_to_visually_select()
     call assert_equal("\<c-v>", mode(), msg)
     norm! r4
     call assert_equal(['34333333333333333', 'foo'], getline(1, '$'), msg)
+
+    " Double-click on a space character should visually select all the
+    " consecutive space characters.
+    %d
+    call setline(1, '    one two')
+    call MouseLeftClick(1, 2)
+    call MouseLeftRelease(1, 2)
+    call MouseLeftClick(1, 2)
+    call MouseLeftRelease(1, 2)
+    call assert_equal('v', mode(), msg)
+    norm! r1
+    call assert_equal(['1111one two'], getline(1, '$'), msg)
+
+    " Double-click on a word with exclusive selection
+    set selection=exclusive
+    let @" = ''
+    call MouseLeftClick(1, 10)
+    call MouseLeftRelease(1, 10)
+    call MouseLeftClick(1, 10)
+    call MouseLeftRelease(1, 10)
+    norm! y
+    call assert_equal('two', @", msg)
+
+    " Double click to select a block of text with exclusive selection
+    %d
+    call setline(1, 'one (two) three')
+    call MouseLeftClick(1, 5)
+    call MouseLeftRelease(1, 5)
+    call MouseLeftClick(1, 5)
+    call MouseLeftRelease(1, 5)
+    norm! y
+    call assert_equal(5, col("'<"), msg)
+    call assert_equal(10, col("'>"), msg)
+
+    call MouseLeftClick(1, 9)
+    call MouseLeftRelease(1, 9)
+    call MouseLeftClick(1, 9)
+    call MouseLeftRelease(1, 9)
+    norm! y
+    call assert_equal(5, col("'<"), msg)
+    call assert_equal(10, col("'>"), msg)
+    set selection&
+
+    " Click somewhere else so that the clicks above is not combined with the
+    " clicks in the next iteration.
+    call MouseRightClick(3, 10)
+    call MouseRightRelease(3, 10)
   endfor
 
   let &mouse = save_mouse
@@ -731,6 +797,42 @@ func Test_term_mouse_multiple_clicks_to_visually_select()
   set mousetime&
   " call test_override('no_query_mouse', 0)
   bwipe!
+endfunc
+
+" Test for selecting text in visual blockwise mode using Alt-LeftClick
+func Test_mouse_alt_leftclick()
+  let save_mouse = &mouse
+  let save_term = &term
+  " let save_ttymouse = &ttymouse
+  " call test_override('no_query_mouse', 1)
+  " set mouse=a term=xterm mousetime=200
+  set mouse=a mousetime=200
+  set mousemodel=popup
+  new
+  call setline(1, 'one (two) three')
+
+  for ttymouse_val in g:Ttymouse_values
+    let msg = 'ttymouse=' .. ttymouse_val
+    " exe 'set ttymouse=' .. ttymouse_val
+
+    " Left click with the Alt modifier key should extend the selection in
+    " blockwise visual mode.
+    let @" = ''
+    call MouseLeftClick(1, 3)
+    call MouseLeftRelease(1, 3)
+    call MouseAltLeftClick(1, 11)
+    call MouseLeftRelease(1, 11)
+    call assert_equal("\<C-V>", mode(), msg)
+    normal! y
+    call assert_equal('e (two) t', @")
+  endfor
+
+  let &mouse = save_mouse
+  " let &term = save_term
+  " let &ttymouse = save_ttymouse
+  set mousetime& mousemodel&
+  " call test_override('no_query_mouse', 0)
+  close!
 endfunc
 
 func Test_xterm_mouse_click_in_fold_columns()
@@ -785,6 +887,112 @@ func Test_xterm_mouse_click_in_fold_columns()
   " let &term = save_term
   let &mouse = save_mouse
   bwipe!
+endfunc
+
+" Test for the 'h' flag in the 'mouse' option. Using mouse in the help window.
+func Test_term_mouse_help_window()
+  let save_mouse = &mouse
+  let save_term = &term
+  " let save_ttymouse = &ttymouse
+  " call test_override('no_query_mouse', 1)
+  " set mouse=h term=xterm mousetime=200
+  set mouse=h mousetime=200
+
+  for ttymouse_val in g:Ttymouse_values + g:Ttymouse_dec
+    let msg = 'ttymouse=' .. ttymouse_val
+    " exe 'set ttymouse=' .. ttymouse_val
+    help
+    let @" = ''
+    call MouseLeftClick(2, 5)
+    call MouseLeftRelease(2, 5)
+    call MouseLeftClick(1, 1)
+    call MouseLeftDrag(1, 10)
+    call MouseLeftRelease(1, 10)
+    norm! y
+    call assert_equal('*help.txt*', @", msg)
+    helpclose
+
+    " Click somewhere else to make sure the left click above is not combined
+    " with the next left click and treated as a double click
+    call MouseRightClick(5, 10)
+    call MouseRightRelease(5, 10)
+  endfor
+
+  let &mouse = save_mouse
+  " let &term = save_term
+  " let &ttymouse = save_ttymouse
+  set mousetime&
+  " call test_override('no_query_mouse', 0)
+  %bw!
+endfunc
+
+" Test for the translation of various mouse terminal codes
+func Test_mouse_termcodes()
+  let save_mouse = &mouse
+  let save_term = &term
+  " let save_ttymouse = &ttymouse
+  " call test_override('no_query_mouse', 1)
+  " set mouse=a term=xterm mousetime=200
+
+  new
+  for ttymouse_val in g:Ttymouse_values + g:Ttymouse_dec + g:Ttymouse_netterm
+    let msg = 'ttymouse=' .. ttymouse_val
+    " exe 'set ttymouse=' .. ttymouse_val
+
+    let mouse_codes = [
+          \ ["\<LeftMouse>", "<LeftMouse>"],
+          \ ["\<MiddleMouse>", "<MiddleMouse>"],
+          \ ["\<RightMouse>", "<RightMouse>"],
+          \ ["\<S-LeftMouse>", "<S-LeftMouse>"],
+          \ ["\<S-MiddleMouse>", "<S-MiddleMouse>"],
+          \ ["\<S-RightMouse>", "<S-RightMouse>"],
+          \ ["\<C-LeftMouse>", "<C-LeftMouse>"],
+          \ ["\<C-MiddleMouse>", "<C-MiddleMouse>"],
+          \ ["\<C-RightMouse>", "<C-RightMouse>"],
+          \ ["\<M-LeftMouse>", "<M-LeftMouse>"],
+          \ ["\<M-MiddleMouse>", "<M-MiddleMouse>"],
+          \ ["\<M-RightMouse>", "<M-RightMouse>"],
+          \ ["\<2-LeftMouse>", "<2-LeftMouse>"],
+          \ ["\<2-MiddleMouse>", "<2-MiddleMouse>"],
+          \ ["\<2-RightMouse>", "<2-RightMouse>"],
+          \ ["\<3-LeftMouse>", "<3-LeftMouse>"],
+          \ ["\<3-MiddleMouse>", "<3-MiddleMouse>"],
+          \ ["\<3-RightMouse>", "<3-RightMouse>"],
+          \ ["\<4-LeftMouse>", "<4-LeftMouse>"],
+          \ ["\<4-MiddleMouse>", "<4-MiddleMouse>"],
+          \ ["\<4-RightMouse>", "<4-RightMouse>"],
+          \ ["\<LeftDrag>", "<LeftDrag>"],
+          \ ["\<MiddleDrag>", "<MiddleDrag>"],
+          \ ["\<RightDrag>", "<RightDrag>"],
+          \ ["\<LeftRelease>", "<LeftRelease>"],
+          \ ["\<MiddleRelease>", "<MiddleRelease>"],
+          \ ["\<RightRelease>", "<RightRelease>"],
+          \ ["\<ScrollWheelUp>", "<ScrollWheelUp>"],
+          \ ["\<S-ScrollWheelUp>", "<S-ScrollWheelUp>"],
+          \ ["\<C-ScrollWheelUp>", "<C-ScrollWheelUp>"],
+          \ ["\<ScrollWheelDown>", "<ScrollWheelDown>"],
+          \ ["\<S-ScrollWheelDown>", "<S-ScrollWheelDown>"],
+          \ ["\<C-ScrollWheelDown>", "<C-ScrollWheelDown>"],
+          \ ["\<ScrollWheelLeft>", "<ScrollWheelLeft>"],
+          \ ["\<S-ScrollWheelLeft>", "<S-ScrollWheelLeft>"],
+          \ ["\<C-ScrollWheelLeft>", "<C-ScrollWheelLeft>"],
+          \ ["\<ScrollWheelRight>", "<ScrollWheelRight>"],
+          \ ["\<S-ScrollWheelRight>", "<S-ScrollWheelRight>"],
+          \ ["\<C-ScrollWheelRight>", "<C-ScrollWheelRight>"]
+          \ ]
+
+    for [code, outstr] in mouse_codes
+      exe "normal ggC\<C-K>" . code
+      call assert_equal(outstr, getline(1), msg)
+    endfor
+  endfor
+
+  let &mouse = save_mouse
+  " let &term = save_term
+  " let &ttymouse = save_ttymouse
+  set mousetime&
+  " call test_override('no_query_mouse', 0)
+  %bw!
 endfunc
 
 " Test for translation of special key codes (<xF1>, <xF2>, etc.)
