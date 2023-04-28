@@ -19,19 +19,19 @@ jobs:
         with:
           script: |
             const title = context.payload.issue.title;
+            const titleSplit = title.split(/\s+/).map(e => e.toLowerCase());
             const keywords = ['api', 'treesitter', 'ui', 'lsp', 'doc'];
-            const regex = new RegExp(`\\b(${keywords.join('|')})\\b`, 'i');
-            const match = title.match(regex);
-
-            if (match) {
-              core.setOutput('keyword', match[0]);
-            } else {
-              core.setOutput('keyword', 'bug');
+            var match = new Set();
+            for(const keyword of keywords) {
+              if(titleSplit.includes(keyword)) {
+                match.add(keyword)
+              }
             }
-
-      - name: add label
-        uses: actions-cool/issues-helper@v3
-        with:
-          actions: 'add-labels'
-          issue-number: ${{ github.event.issue.number }}
-          labels: ${{ steps.check-issue.outputs.keyword }}
+            if(match.size !== 0){
+              github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: Array.from(match)
+              })
+            }
