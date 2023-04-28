@@ -562,6 +562,28 @@ func Test_term_mouse_drag_to_move_tab()
         \              'Tab page 2',
         \              '#   Xtab1'], a, msg)
 
+    " Switch to tab1
+    tabnext
+    let a = split(execute(':tabs'), "\n")
+    call assert_equal(['Tab page 1',
+        \              '#   Xtab2',
+        \              'Tab page 2',
+        \              '>   Xtab1'], a, msg)
+
+    " Click in tab2 and drag it to tab1.
+    " This time it is non-current tab.
+    call MouseLeftClick(row, 6)
+    call assert_equal(0, getcharmod(), msg)
+    for col in [7, 8, 9, 10]
+      call MouseLeftDrag(row, col)
+    endfor
+    call MouseLeftRelease(row, col)
+    let a = split(execute(':tabs'), "\n")
+    call assert_equal(['Tab page 1',
+        \              '#   Xtab1',
+        \              'Tab page 2',
+        \              '>   Xtab2'], a, msg)
+
     " Click elsewhere so that click in next iteration is not
     " interpreted as unwanted double-click.
     call MouseLeftClick(row, 11)
