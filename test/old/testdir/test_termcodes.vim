@@ -35,6 +35,8 @@ func Test_xterm_mouse_left_click()
 endfunc
 
 func Test_xterm_mouse_middle_click()
+  CheckFeature clipboard_working
+
   new
   let save_mouse = &mouse
   let save_term = &term
