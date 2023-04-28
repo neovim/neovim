@@ -437,6 +437,8 @@ static void tui_terminal_stop(TUIData *tui)
   }
   tinput_stop(&tui->input);
   signal_watcher_stop(&tui->winch_handle);
+  // Position the cursor on the last screen line, below all the text
+  cursor_goto(tui, tui->height - 1, 0);
   terminfo_stop(tui);
 }
 
