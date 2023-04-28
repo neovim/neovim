@@ -766,6 +766,55 @@ func Test_xxlast_highlight_RGB_color()
   hi clear
 endfunc
 
+" Test for using default highlighting group
+func Test_highlight_default()
+  highlight MySearch ctermfg=7
+  highlight default MySearch ctermfg=5
+  let hlSearch = HighlightArgs('MySearch')
+  call assert_match('ctermfg=7', hlSearch)
+
+  highlight default QFName ctermfg=3
+  call assert_match('ctermfg=3', HighlightArgs('QFName'))
+  hi clear
+endfunc
+
+" Test for 'ctermul in a highlight group
+func Test_highlight_ctermul()
+  throw 'Skipped: Nvim does not have ctermul='
+
+  CheckNotGui
+  call assert_notmatch('ctermul=', HighlightArgs('Normal'))
+  highlight Normal ctermul=3
+  call assert_match('ctermul=3', HighlightArgs('Normal'))
+  highlight Normal ctermul=NONE
+endfunc
+
+" Test for specifying 'start' and 'stop' in a highlight group
+func Test_highlight_start_stop()
+  throw 'Skipped: Nvim does not have start= or stop='
+
+  hi HlGrp1 start=<Esc>[27h;<Esc>[<Space>r;
+  call assert_match("start=^[[27h;^[[ r;", HighlightArgs('HlGrp1'))
+  hi HlGrp1 start=NONE
+  call assert_notmatch("start=", HighlightArgs('HlGrp1'))
+  hi HlGrp2 stop=<Esc>[27h;<Esc>[<Space>r;
+  call assert_match("stop=^[[27h;^[[ r;", HighlightArgs('HlGrp2'))
+  hi HlGrp2 stop=NONE
+  call assert_notmatch("stop=", HighlightArgs('HlGrp2'))
+  hi clear
+endfunc
+
+" Test for setting various 'term' attributes
+func Test_highlight_term_attr()
+  throw 'Skipped: Nvim does not have underline, etc on term='
+
+  hi HlGrp3 term=bold,underline,undercurl,strikethrough,reverse,italic,standout
+  call assert_equal('hi HlGrp3          term=bold,standout,underline,undercurl,italic,reverse,strikethrough', HighlightArgs('HlGrp3'))
+  hi HlGrp3 term=NONE
+  call assert_equal('hi HlGrp3          cleared', HighlightArgs('HlGrp3'))
+  hi clear
+endfunc
+
 func Test_highlight_clear_restores_links()
   let aaa_id = hlID('aaa')
   call assert_equal(aaa_id, 0)

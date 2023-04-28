@@ -142,6 +142,11 @@ func Test_filter_commands()
   let res = split(execute("filter /\.c$/ marks"), "\n")[1:]
   call assert_equal([" A      1    0 file.c"], res)
 
+  " Test filtering :highlight command
+  highlight MyHlGroup ctermfg=10
+  let res = split(execute("filter /MyHlGroup/ highlight"), "\n")
+  call assert_equal(["MyHlGroup      xxx ctermfg=10"], res)
+
   call setline(1, ['one', 'two', 'three'])
   1mark a
   2mark b
