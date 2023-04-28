@@ -690,9 +690,6 @@ void getout(int exitval)
 
   set_vim_var_nr(VV_EXITING, exitval);
 
-  // Position the cursor on the last screen line, below all the text
-  ui_cursor_goto(Rows - 1, 0);
-
   // Optionally print hashtable efficiency.
   hash_debug_results();
 
@@ -777,9 +774,6 @@ void getout(int exitval)
     // TODO(justinmk): this may call getout(0), clobbering exitval...
     wait_return(false);
   }
-
-  // Position the cursor again, the autocommands may have moved it
-  ui_cursor_goto(Rows - 1, 0);
 
   // Apply 'titleold'.
   if (p_title && *p_titleold != NUL) {
