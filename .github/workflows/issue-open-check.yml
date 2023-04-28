@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: check issue title
         id: check-issue
-        uses: actions/github-script@v3
+        uses: actions/github-script@v6
         with:
           script: |
             const title = context.payload.issue.title;
