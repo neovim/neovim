@@ -236,6 +236,8 @@ add_glob_target(
   FLAGS --color=always --check
   GLOB_DIRS runtime/
   GLOB_PAT *.lua
+  EXCLUDE
+    /runtime/lua/vim/re.lua
   TOUCH_STRATEGY SINGLE)
 
 add_custom_target(lintlua)

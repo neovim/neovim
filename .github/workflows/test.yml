@@ -42,6 +42,13 @@ jobs:
       - name: Install dependencies
         run: ./.github/scripts/install_deps.sh lua-check
 
+      - name: Set up Homebrew
+        id: homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - run: |
+          brew install stylua
+
       - name: Cache uncrustify
         id: cache-uncrustify
         uses: actions/cache@v3
@@ -84,12 +91,8 @@ jobs:
         run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: lintstylua
-        uses: JohnnyMorganz/stylua-action@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          version: latest
-          args: --check runtime/
+        name: stylua
+        run: cmake --build build --target lintlua-stylua
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: luacheck
