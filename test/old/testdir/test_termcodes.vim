@@ -228,25 +228,22 @@ func Test_1xterm_mouse_wheel()
     call assert_equal(1, line('w0'), msg)
     call assert_equal([0, 7, 1, 0], getpos('.'), msg)
 
-    if has('gui')
-      " Horizontal wheel scrolling currently only works when vim is
-      " compiled with gui enabled.
-      call MouseWheelRight(1, 1)
-      call assert_equal(7, 1 + virtcol(".") - wincol(), msg)
-      call assert_equal([0, 7, 7, 0], getpos('.'), msg)
+    call MouseWheelRight(1, 1)
+    call assert_equal(7, 1 + virtcol(".") - wincol(), msg)
+    call assert_equal([0, 7, 7, 0], getpos('.'), msg)
 
-      call MouseWheelRight(1, 1)
-      call assert_equal(13, 1 + virtcol(".") - wincol(), msg)
-      call assert_equal([0, 7, 13, 0], getpos('.'), msg)
+    call MouseWheelRight(1, 1)
+    call assert_equal(13, 1 + virtcol(".") - wincol(), msg)
+    call assert_equal([0, 7, 13, 0], getpos('.'), msg)
 
-      call MouseWheelLeft(1, 1)
-      call assert_equal(7, 1 + virtcol(".") - wincol(), msg)
-      call assert_equal([0, 7, 13, 0], getpos('.'), msg)
+    call MouseWheelLeft(1, 1)
+    call assert_equal(7, 1 + virtcol(".") - wincol(), msg)
+    call assert_equal([0, 7, 13, 0], getpos('.'), msg)
 
-      call MouseWheelLeft(1, 1)
-      call assert_equal(1, 1 + virtcol(".") - wincol(), msg)
-      call assert_equal([0, 7, 13, 0], getpos('.'), msg)
-    endif
+    call MouseWheelLeft(1, 1)
+    call assert_equal(1, 1 + virtcol(".") - wincol(), msg)
+    call assert_equal([0, 7, 13, 0], getpos('.'), msg)
+
   endfor
 
   let &mouse = save_mouse
