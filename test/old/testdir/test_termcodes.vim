@@ -133,8 +133,9 @@ func Test_xterm_mouse_drag_statusline()
   let save_mouse = &mouse
   let save_term = &term
   " let save_ttymouse = &ttymouse
-  " set mouse=a term=xterm
-  set mouse=a
+  let save_laststatus = &laststatus
+  " set mouse=a term=xterm laststatus=2
+  set mouse=a laststatus=2
 
   for ttymouse_val in ['sgr']
     " exe 'set ttymouse=' . ttymouse_val
@@ -161,6 +162,54 @@ func Test_xterm_mouse_drag_statusline()
     call MouseLeftRelease(row, col)
     call assert_equal(1, &cmdheight)
     call assert_equal(rowstatusline, winheight(0) + 1)
+  endfor
+
+  let &mouse = save_mouse
+  " let &term = save_term
+  " let &ttymouse = save_ttymouse
+  let &laststatus = save_laststatus
+endfunc
+
+func Test_xterm_mouse_click_tab()
+  let save_mouse = &mouse
+  let save_term = &term
+  " let save_ttymouse = &ttymouse
+  " set mouse=a term=xterm
+  set mouse=a
+  let row = 1
+
+  for ttymouse_val in ['sgr']
+    " exe 'set ttymouse=' . ttymouse_val
+    e Xfoo
+    tabnew Xbar
+
+    let a = split(execute(':tabs'), "\n")
+    call assert_equal(['Tab page 1',
+        \              '#   Xfoo',
+        \              'Tab page 2',
+        \              '>   Xbar'], a)
+
+    " Test clicking on tab names in the tabline at the top.
+    let col = 2
+    redraw!
+    call MouseLeftClick(row, col)
+    call MouseLeftRelease(row, col)
+    let a = split(execute(':tabs'), "\n")
+    call assert_equal(['Tab page 1',
+        \              '>   Xfoo',
+        \              'Tab page 2',
+        \              '#   Xbar'], a)
+
+    let col = 9
+    call MouseLeftClick(row, col)
+    call MouseLeftRelease(row, col)
+    let a = split(execute(':tabs'), "\n")
+    call assert_equal(['Tab page 1',
+        \              '#   Xfoo',
+        \              'Tab page 2',
+        \              '>   Xbar'], a)
+
+    %bwipe!
   endfor
 
   let &mouse = save_mouse
