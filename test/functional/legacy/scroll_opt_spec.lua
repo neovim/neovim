@@ -620,4 +620,30 @@ describe('smoothscroll', function()
     feed('0')
     screen:expect(s1)
   end)
+
+  -- oldtest: Test_smoothscroll_zero_width()
+  it("does not divide by zero with a narrow window", function()
+    screen:try_resize(12, 2)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.Brown},
+      [2] = {foreground = Screen.colors.Blue1, bold = true},
+    })
+    exec([[
+      call setline(1, ['a'->repeat(100)])
+      set wrap smoothscroll number laststatus=0
+      wincmd v
+      wincmd v
+      wincmd v
+      wincmd v
+    ]])
+    screen:expect([[
+      {1:  1^ }│{1: }│{1: }│{1: }│{1: }|
+                  |
+    ]])
+    feed('llllllllll<C-W>o')
+    screen:expect([[
+      {2:<<<}{1: }aa^aaaaaa|
+                  |
+    ]])
+  end)
 end)

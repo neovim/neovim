@@ -577,5 +577,32 @@ func Test_smoothscroll_mouse_pos()
   "let &ttymouse = save_ttymouse
 endfunc
 
+" this was dividing by zero
+func Test_smoothscrol_zero_width()
+  CheckScreendump
+
+  let lines =<< trim END
+      winsize 0 0
+      vsplit
+      vsplit
+      vsplit
+      vsplit
+      vsplit
+      sil norm H
+      set wrap
+      set smoothscroll
+      set number
+  END
+  call writefile(lines, 'XSmoothScrollZero', 'D')
+  let buf = RunVimInTerminal('-u NONE -i NONE -n -m -X -Z -e -s -S XSmoothScrollZero', #{rows: 6, cols: 60, wait_for_ruler: 0})
+  call TermWait(buf, 3000)
+  call VerifyScreenDump(buf, 'Test_smoothscroll_zero_1', {})
+
+  call term_sendkeys(buf, ":sil norm \<C-V>\<C-W>\<C-V>\<C-N>\<CR>")
+  call VerifyScreenDump(buf, 'Test_smoothscroll_zero_2', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
