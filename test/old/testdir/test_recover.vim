@@ -303,6 +303,21 @@ func Test_recover_corrupted_swap_file()
         \ '???END'], getline(1, '$'))
   bw!
 
+  " set the number of lines in the data block to a large value
+  let b = copy(save_b)
+  if system_64bit
+    let b[8208:8215] = 0z00FFFFFF.FFFFFF00
+  else
+    let b[8208:8211] = 0z00FFFF00
+  endif
+  call writefile(b, sn)
+  call assert_fails('recover Xfile1', 'E312:')
+  call assert_equal('Xfile1', @%)
+  call assert_equal(['??? from here until ???END lines may have been inserted/deleted',
+        \ '', '???', '??? lines may be missing',
+        \ '???END'], getline(1, '$'))
+  bw!
+
   " use an invalid text start for the lines in a data block
   let b = copy(save_b)
   if system_64bit
