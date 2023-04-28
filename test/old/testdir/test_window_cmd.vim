@@ -1734,7 +1734,7 @@ func Test_splitkeep_options()
   " let &t_WS = save_WS
 endfunc
 
-function Test_splitkeep_cmdwin_cursor_position()
+func Test_splitkeep_cmdwin_cursor_position()
   set splitkeep=screen
   call setline(1, range(&lines))
 
@@ -1759,9 +1759,9 @@ function Test_splitkeep_cmdwin_cursor_position()
 
   %bwipeout!
   set splitkeep&
-endfunction
+endfunc
 
-function Test_splitkeep_misc()
+func Test_splitkeep_misc()
   set splitkeep=screen
   set splitbelow
 
@@ -1794,7 +1794,7 @@ function Test_splitkeep_misc()
   set splitkeep&
 endfunc
 
-function Test_splitkeep_callback()
+func Test_splitkeep_callback()
   CheckScreendump
   let lines =<< trim END
     set splitkeep=screen
@@ -1827,7 +1827,7 @@ function Test_splitkeep_callback()
   call StopVimInTerminal(buf)
 endfunc
 
-function Test_splitkeep_fold()
+func Test_splitkeep_fold()
   CheckScreendump
 
   let lines =<< trim END
@@ -1857,9 +1857,9 @@ function Test_splitkeep_fold()
   call VerifyScreenDump(buf, 'Test_splitkeep_fold_4', {})
 
   call StopVimInTerminal(buf)
-endfunction
+endfunc
 
-function Test_splitkeep_status()
+func Test_splitkeep_status()
   CheckScreendump
 
   let lines =<< trim END
@@ -1877,9 +1877,9 @@ function Test_splitkeep_status()
   call VerifyScreenDump(buf, 'Test_splitkeep_status_1', {})
 
   call StopVimInTerminal(buf)
-endfunction
+endfunc
 
-function Test_new_help_window_on_error()
+func Test_new_help_window_on_error()
   help change.txt
   execute "normal! /CTRL-@\<CR>"
   silent! execute "normal! \<C-W>]"
@@ -1889,7 +1889,26 @@ function Test_new_help_window_on_error()
 
   call assert_equal(wincount, winnr('$'))
   call assert_equal(expand("<cword>"), "'mod'")
-endfunction
+endfunc
+
+func Test_smoothscroll_in_zero_width_window()
+  let save_lines = &lines
+  let save_columns = &columns
+
+  winsize 0 24
+  set cpo+=n
+  exe "noremap 0 \<C-W>n\<C-W>L"
+  norm 000000
+  set number smoothscroll
+  exe "norm \<C-Y>"
+
+  only!
+  let &lines = save_lines
+  let &columns = save_columns
+  set cpo-=n
+  unmap 0
+  set nonumber nosmoothscroll
+endfunc
 
 
 " vim: shiftwidth=2 sts=2 expandtab
