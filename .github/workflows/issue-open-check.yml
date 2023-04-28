@@ -10,7 +10,7 @@ permissions:
 jobs:
   issue-open-check:
     permissions:
-      issues: write  # for actions-cool/issues-helper to update issues
+      issues: write
     runs-on: ubuntu-latest
     steps:
       - name: check issue title
