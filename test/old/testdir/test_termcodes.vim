@@ -90,8 +90,8 @@ func Test_xterm_mouse_drag_window_separator()
     let row = rowseparator
     let col = 1
 
-    " When 'ttymouse' is 'xterm', row/col bigger than 223 are not supported.
-    if ttymouse_val !=# 'xterm' || row <= 223
+    " When 'ttymouse' is 'xterm2', row/col bigger than 223 are not supported.
+    if ttymouse_val !=# 'xterm2' || row <= 223
       call MouseLeftClick(row, col)
       let row -= 1
       call MouseLeftDrag(row, col)
@@ -110,8 +110,8 @@ func Test_xterm_mouse_drag_window_separator()
     let row = 1
     let col = colseparator
 
-    " When 'ttymouse' is 'xterm', row/col bigger than 223 are not supported.
-    if ttymouse_val !=# 'xterm' || col <= 223
+    " When 'ttymouse' is 'xterm2', row/col bigger than 223 are not supported.
+    if ttymouse_val !=# 'xterm2' || col <= 223
       call MouseLeftClick(row, col)
       let col -= 1
       call MouseLeftDrag(row, col)
@@ -147,8 +147,8 @@ func Test_xterm_mouse_drag_statusline()
     let row = rowstatusline
     let col = 1
 
-    if ttymouse_val ==# 'xterm' && row > 223
-      " When 'ttymouse' is 'xterm', row/col bigger than 223 are not supported.
+    if ttymouse_val ==# 'xterm2' && row > 223
+      " When 'ttymouse' is 'xterm2', row/col bigger than 223 are not supported.
       continue
     endif
 
@@ -230,8 +230,8 @@ func Test_xterm_mouse_click_X_to_close_tab()
   let col = &columns
 
   for ttymouse_val in ['sgr']
-    if ttymouse_val ==# 'xterm' && col > 223
-      " When 'ttymouse' is 'xterm', row/col bigger than 223 are not supported.
+    if ttymouse_val ==# 'xterm2' && col > 223
+      " When 'ttymouse' is 'xterm2', row/col bigger than 223 are not supported.
       continue
     endif
     let msg = 'ttymouse=' .. ttymouse_val
@@ -375,7 +375,7 @@ func Test_xterm_mouse_click_in_fold_columns()
   let save_term = &term
   " let save_ttymouse = &ttymouse
   let save_foldcolumn = &foldcolumn
-  " set mouse=a term=xterm foldcolumn=3
+  " set mouse=a term=xterm foldcolumn=3 ttymouse=xterm2
   set mouse=a foldcolumn=3
 
   " Create 2 nested folds.
