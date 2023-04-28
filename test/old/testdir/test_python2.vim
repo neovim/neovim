@@ -40,7 +40,7 @@ func Test_set_cursor()
 endfunc
 
 func Test_vim_function()
-  throw 'skipped: Nvim does not support vim.bindeval()'
+  throw 'Skipped: Nvim does not support vim.bindeval()'
   " Check creating vim.Function object
   py import vim
 

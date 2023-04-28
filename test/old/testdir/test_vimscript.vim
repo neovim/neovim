@@ -6705,6 +6705,11 @@ func Test_echo_and_string()
     let l = split(result, "\n")
     call assert_equal(["{'a': [], 'b': []}",
 		     \ "{'a': [], 'b': []}"], l)
+
+    call assert_fails('echo &:', 'E112:')
+    call assert_fails('echo &g:', 'E112:')
+    call assert_fails('echo &l:', 'E112:')
+
 endfunc
 
 "-------------------------------------------------------------------------------
