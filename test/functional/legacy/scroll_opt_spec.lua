@@ -500,6 +500,34 @@ describe('smoothscroll', function()
     exec('set scrolloff=0')
     feed('0j')
     screen:expect([[
+      <<<of text with lots of text with lots o|
+      f text with lots of text end            |
+      ^four                                    |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+    -- Test zt/zz/zb that they work properly when a long line is above it
+    feed('zb')
+    screen:expect([[
+      <<<th lots of text with lots of text wit|
+      h lots of text with lots of text with lo|
+      ts of text with lots of text with lots o|
+      f text with lots of text end            |
+      ^four                                    |
+                                              |
+    ]])
+    feed('zz')
+    screen:expect([[
+      <<<of text with lots of text with lots o|
+      f text with lots of text end            |
+      ^four                                    |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+    feed('zt')
+    screen:expect([[
       ^four                                    |
       ~                                       |
       ~                                       |
