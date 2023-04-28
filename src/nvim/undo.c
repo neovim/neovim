@@ -1333,6 +1333,10 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
   }
 #endif
 
+  if (p_fs && fflush(fp) == 0 && os_fsync(fd) != 0) {
+    write_ok = false;
+  }
+
 write_error:
   fclose(fp);
   if (!write_ok) {
