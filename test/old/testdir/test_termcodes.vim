@@ -17,14 +17,15 @@ func Test_xterm_mouse_click()
   set mouse=a
   call setline(1, ['line 1', 'line 2', 'line 3 is a bit longer'])
   for ttymouse_val in ['sgr']
+    let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' . ttymouse_val
     go
-    call assert_equal([0, 1, 1, 0], getpos('.'))
+    call assert_equal([0, 1, 1, 0], getpos('.'), msg)
     let row = 2
     let col = 6
     call MouseLeftClick(row, col)
     call MouseLeftRelease(row, col)
-    call assert_equal([0, 2, 6, 0], getpos('.'))
+    call assert_equal([0, 2, 6, 0], getpos('.'), msg)
   endfor
 
   let &mouse = save_mouse
@@ -43,26 +44,27 @@ func Test_xterm_mouse_wheel()
   call setline(1, range(1, 100))
 
   for ttymouse_val in ['sgr']
+    let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' . ttymouse_val
     go
-    call assert_equal(1, line('w0'))
-    call assert_equal([0, 1, 1, 0], getpos('.'))
+    call assert_equal(1, line('w0'), msg)
+    call assert_equal([0, 1, 1, 0], getpos('.'), msg)
 
     call MouseWheelDown(1, 1)
-    call assert_equal(4, line('w0'))
-    call assert_equal([0, 4, 1, 0], getpos('.'))
+    call assert_equal(4, line('w0'), msg)
+    call assert_equal([0, 4, 1, 0], getpos('.'), msg)
 
     call MouseWheelDown(1, 1)
-    call assert_equal(7, line('w0'))
-    call assert_equal([0, 7, 1, 0], getpos('.'))
+    call assert_equal(7, line('w0'), msg)
+    call assert_equal([0, 7, 1, 0], getpos('.'), msg)
 
     call MouseWheelUp(1, 1)
-    call assert_equal(4, line('w0'))
-    call assert_equal([0, 7, 1, 0], getpos('.'))
+    call assert_equal(4, line('w0'), msg)
+    call assert_equal([0, 7, 1, 0], getpos('.'), msg)
 
     call MouseWheelUp(1, 1)
-    call assert_equal(1, line('w0'))
-    call assert_equal([0, 7, 1, 0], getpos('.'))
+    call assert_equal(1, line('w0'), msg)
+    call assert_equal([0, 7, 1, 0], getpos('.'), msg)
   endfor
 
   let &mouse = save_mouse
@@ -79,6 +81,7 @@ func Test_xterm_mouse_drag_window_separator()
   set mouse=a
 
   for ttymouse_val in ['sgr']
+    let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' . ttymouse_val
 
     " Split horizontally and test dragging the horizontal window separator.
@@ -92,12 +95,12 @@ func Test_xterm_mouse_drag_window_separator()
       call MouseLeftClick(row, col)
       let row -= 1
       call MouseLeftDrag(row, col)
-      call assert_equal(rowseparator - 1, winheight(0) + 1)
+      call assert_equal(rowseparator - 1, winheight(0) + 1, msg)
       let row += 1
       call MouseLeftDrag(row, col)
-      call assert_equal(rowseparator, winheight(0) + 1)
+      call assert_equal(rowseparator, winheight(0) + 1, msg)
       call MouseLeftRelease(row, col)
-      call assert_equal(rowseparator, winheight(0) + 1)
+      call assert_equal(rowseparator, winheight(0) + 1, msg)
     endif
     bwipe!
 
@@ -112,12 +115,12 @@ func Test_xterm_mouse_drag_window_separator()
       call MouseLeftClick(row, col)
       let col -= 1
       call MouseLeftDrag(row, col)
-      call assert_equal(colseparator - 1, winwidth(0) + 1)
+      call assert_equal(colseparator - 1, winwidth(0) + 1, msg)
       let col += 1
       call MouseLeftDrag(row, col)
-      call assert_equal(colseparator, winwidth(0) + 1)
+      call assert_equal(colseparator, winwidth(0) + 1, msg)
       call MouseLeftRelease(row, col)
-      call assert_equal(colseparator, winwidth(0) + 1)
+      call assert_equal(colseparator, winwidth(0) + 1, msg)
     endif
     bwipe!
   endfor
@@ -136,9 +139,10 @@ func Test_xterm_mouse_drag_statusline()
   set mouse=a laststatus=2
 
   for ttymouse_val in ['sgr']
+    let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' . ttymouse_val
 
-    call assert_equal(1, &cmdheight)
+    call assert_equal(1, &cmdheight, msg)
     let rowstatusline = winheight(0) + 1
     let row = rowstatusline
     let col = 1
@@ -151,15 +155,15 @@ func Test_xterm_mouse_drag_statusline()
     call MouseLeftClick(row, col)
     let row -= 1
     call MouseLeftDrag(row, col)
-    call assert_equal(2, &cmdheight)
-    call assert_equal(rowstatusline - 1, winheight(0) + 1)
+    call assert_equal(2, &cmdheight, msg)
+    call assert_equal(rowstatusline - 1, winheight(0) + 1, msg)
     let row += 1
     call MouseLeftDrag(row, col)
-    call assert_equal(1, &cmdheight)
-    call assert_equal(rowstatusline, winheight(0) + 1)
+    call assert_equal(1, &cmdheight, msg)
+    call assert_equal(rowstatusline, winheight(0) + 1, msg)
     call MouseLeftRelease(row, col)
-    call assert_equal(1, &cmdheight)
-    call assert_equal(rowstatusline, winheight(0) + 1)
+    call assert_equal(1, &cmdheight, msg)
+    call assert_equal(rowstatusline, winheight(0) + 1, msg)
   endfor
 
   let &mouse = save_mouse
@@ -177,6 +181,7 @@ func Test_xterm_mouse_click_tab()
   let row = 1
 
   for ttymouse_val in ['sgr']
+    let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' . ttymouse_val
     e Xfoo
     tabnew Xbar
@@ -185,7 +190,7 @@ func Test_xterm_mouse_click_tab()
     call assert_equal(['Tab page 1',
         \              '#   Xfoo',
         \              'Tab page 2',
-        \              '>   Xbar'], a)
+        \              '>   Xbar'], a, msg)
 
     " Test clicking on tab names in the tabline at the top.
     let col = 2
@@ -196,7 +201,7 @@ func Test_xterm_mouse_click_tab()
     call assert_equal(['Tab page 1',
         \              '>   Xfoo',
         \              'Tab page 2',
-        \              '#   Xbar'], a)
+        \              '#   Xbar'], a, msg)
 
     let col = 9
     call MouseLeftClick(row, col)
@@ -205,7 +210,7 @@ func Test_xterm_mouse_click_tab()
     call assert_equal(['Tab page 1',
         \              '#   Xfoo',
         \              'Tab page 2',
-        \              '>   Xbar'], a)
+        \              '>   Xbar'], a, msg)
 
     %bwipe!
   endfor
@@ -229,6 +234,7 @@ func Test_xterm_mouse_click_X_to_close_tab()
       " When 'ttymouse' is 'xterm', row/col bigger than 223 are not supported.
       continue
     endif
+    let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' . ttymouse_val
     e Xtab1
     tabnew Xtab2
@@ -241,7 +247,7 @@ func Test_xterm_mouse_click_X_to_close_tab()
         \              'Tab page 2',
         \              '>   Xtab2',
         \              'Tab page 3',
-        \              '#   Xtab3'], a)
+        \              '#   Xtab3'], a, msg)
 
     " Click on "X" in tabline to close current tab i.e. Xtab2.
     redraw
@@ -251,7 +257,7 @@ func Test_xterm_mouse_click_X_to_close_tab()
     call assert_equal(['Tab page 1',
         \              '    Xtab1',
         \              'Tab page 2',
-        \              '>   Xtab3'], a)
+        \              '>   Xtab3'], a, msg)
 
     %bwipe!
   endfor
@@ -271,6 +277,7 @@ func Test_xterm_mouse_drag_to_move_tab()
   let row = 1
 
   for ttymouse_val in ['sgr']
+    let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' . ttymouse_val
     e Xtab1
     tabnew Xtab2
@@ -279,14 +286,14 @@ func Test_xterm_mouse_drag_to_move_tab()
     call assert_equal(['Tab page 1',
         \              '#   Xtab1',
         \              'Tab page 2',
-        \              '>   Xtab2'], a)
+        \              '>   Xtab2'], a, msg)
     redraw
 
     " Click in tab2 and drag it to tab1.
     " Check getcharmod() to verify that click is not
     " interpreted as a spurious double-click.
     call MouseLeftClick(row, 10)
-    call assert_equal(0, getcharmod())
+    call assert_equal(0, getcharmod(), msg)
     for col in [9, 8, 7, 6]
       call MouseLeftDrag(row, col)
     endfor
@@ -295,7 +302,7 @@ func Test_xterm_mouse_drag_to_move_tab()
     call assert_equal(['Tab page 1',
         \              '>   Xtab2',
         \              'Tab page 2',
-        \              '#   Xtab1'], a)
+        \              '#   Xtab1'], a, msg)
 
     " brief sleep to avoid causing a double-click
     sleep 20m
@@ -320,6 +327,7 @@ func Test_xterm_mouse_double_click_to_create_tab()
   let col = 10
 
   for ttymouse_val in ['sgr']
+    let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' . ttymouse_val
     e Xtab1
     tabnew Xtab2
@@ -328,16 +336,16 @@ func Test_xterm_mouse_double_click_to_create_tab()
     call assert_equal(['Tab page 1',
         \              '#   Xtab1',
         \              'Tab page 2',
-        \              '>   Xtab2'], a)
+        \              '>   Xtab2'], a, msg)
 
     redraw
     call MouseLeftClick(row, col)
     " Check getcharmod() to verify that first click is not
     " interpreted as a spurious double-click.
-    call assert_equal(0, getcharmod())
+    call assert_equal(0, getcharmod(), msg)
     call MouseLeftRelease(row, col)
     call MouseLeftClick(row, col)
-    call assert_equal(32, getcharmod()) " double-click
+    call assert_equal(32, getcharmod(), msg) " double-click
     call MouseLeftRelease(row, col)
     let a = split(execute(':tabs'), "\n")
     call assert_equal(['Tab page 1',
@@ -345,7 +353,7 @@ func Test_xterm_mouse_double_click_to_create_tab()
         \              'Tab page 2',
         \              '>   [No Name]',
         \              'Tab page 3',
-        \              '#   Xtab2'], a)
+        \              '#   Xtab2'], a, msg)
 
     if ttymouse_val !=# 'sgr'
       " We need to sleep, or else MouseLeftClick() in next loop
