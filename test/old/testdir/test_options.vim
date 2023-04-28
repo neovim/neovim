@@ -45,6 +45,10 @@ func Test_isfname()
   set isfname=
   call assert_equal("~X", expand("~X"))
   set isfname&
+  " Test for setting 'isfname' to an unsupported character
+  let save_isfname = &isfname
+  call assert_fails('exe $"set isfname+={"\u1234"}"', 'E474:')
+  call assert_equal(save_isfname, &isfname)
 endfunc
 
 " Test for getting the value of 'pastetoggle'
@@ -396,7 +400,16 @@ func Test_set_errors()
   if has('mouseshape')
     call assert_fails('se mouseshape=i-r:x', 'E547:')
   endif
-  call assert_fails('set backupext=~ patchmode=~', 'E589:')
+
+  " Test for 'backupext' and 'patchmode' set to the same value
+  set backupext=.bak
+  set patchmode=.patch
+  call assert_fails('set patchmode=.bak', 'E589:')
+  call assert_equal('.patch', &patchmode)
+  call assert_fails('set backupext=.patch', 'E589:')
+  call assert_equal('.bak', &backupext)
+  set backupext& patchmode&
+
   call assert_fails('set winminheight=10 winheight=9', 'E591:')
   call assert_fails('set winminwidth=10 winwidth=9', 'E592:')
   call assert_fails("set showbreak=\x01", 'E595:')
@@ -1342,6 +1355,157 @@ func Test_set_min_lines_columns()
   call delete('XResultsetminlines')
   let &lines = save_lines
   let &columns = save_columns
+endfunc
+
+" Test for reverting a string option value if the new value is invalid.
+func Test_string_option_revert_on_failure()
+  new
+  let optlist = [
+        \ ['ambiwidth', 'double', 'a123'],
+        \ ['background', 'dark', 'a123'],
+        \ ['backspace', 'eol', 'a123'],
+        \ ['backupcopy', 'no', 'a123'],
+        \ ['belloff', 'showmatch', 'a123'],
+        \ ['breakindentopt', 'min:10', 'list'],
+        \ ['bufhidden', 'wipe', 'a123'],
+        \ ['buftype', 'nowrite', 'a123'],
+        \ ['casemap', 'keepascii', 'a123'],
+        \ ['cedit', "\<C-Y>", 'z'],
+        \ ['colorcolumn', '10', 'z'],
+        \ ['commentstring', '#%s', 'a123'],
+        \ ['complete', '.,t', 'a'],
+        \ ['completefunc', 'MyCmplFunc', '1a-'],
+        "\ ['completeopt', 'popup', 'a123'],
+        \ ['completeopt', 'preview', 'a123'],
+        "\ ['completepopup', 'width:20', 'border'],
+        \ ['concealcursor', 'v', 'xyz'],
+        "\ ['cpoptions', 'HJ', '~'],
+        \ ['cpoptions', 'J', '~'],
+        "\ ['cryptmethod', 'zip', 'a123'],
+        \ ['cursorlineopt', 'screenline', 'a123'],
+        \ ['debug', 'throw', 'a123'],
+        \ ['diffopt', 'iwhite', 'a123'],
+        \ ['display', 'uhex', 'a123'],
+        \ ['eadirection', 'hor', 'a123'],
+        \ ['encoding', 'utf-8', 'a123'],
+        \ ['eventignore', 'TextYankPost', 'a123'],
+        \ ['fileencoding', 'utf-8', 'a123,'],
+        \ ['fileformat', 'mac', 'a123'],
+        \ ['fileformats', 'mac', 'a123'],
+        \ ['filetype', 'abc', 'a^b'],
+        \ ['fillchars', 'diff:~', 'a123'],
+        \ ['foldclose', 'all', 'a123'],
+        \ ['foldmarker', '[[[,]]]', '[[['],
+        \ ['foldmethod', 'marker', 'a123'],
+        \ ['foldopen', 'percent', 'a123'],
+        \ ['formatoptions', 'an', '*'],
+        \ ['guicursor', 'n-v-c:block-Cursor/lCursor', 'n-v-c'],
+        \ ['helplang', 'en', 'a'],
+        "\ ['highlight', '!:CursorColumn', '8:'],
+        \ ['keymodel', 'stopsel', 'a123'],
+        "\ ['keyprotocol', 'kitty:kitty', 'kitty:'],
+        \ ['lispoptions', 'expr:1', 'a123'],
+        \ ['listchars', 'tab:->', 'tab:'],
+        \ ['matchpairs', '<:>', '<:'],
+        \ ['mkspellmem', '100000,1000,100', '100000'],
+        \ ['mouse', 'nvi', 'z'],
+        \ ['mousemodel', 'extend', 'a123'],
+        \ ['nrformats', 'alpha', 'a123'],
+        \ ['omnifunc', 'MyOmniFunc', '1a-'],
+        \ ['operatorfunc', 'MyOpFunc', '1a-'],
+        "\ ['previewpopup', 'width:20', 'a123'],
+        "\ ['printoptions', 'paper:A4', 'a123:'],
+        \ ['quickfixtextfunc', 'MyQfFunc', '1a-'],
+        \ ['rulerformat', '%l', '%['],
+        \ ['scrollopt', 'hor,jump', 'a123'],
+        \ ['selection', 'exclusive', 'a123'],
+        \ ['selectmode', 'cmd', 'a123'],
+        \ ['sessionoptions', 'options', 'a123'],
+        \ ['shortmess', 'w', '2'],
+        \ ['showbreak', '>>', "\x01"],
+        \ ['showcmdloc', 'statusline', 'a123'],
+        \ ['signcolumn', 'no', 'a123'],
+        \ ['spellcapcheck', '[.?!]\+', '%\{'],
+        \ ['spellfile', 'MySpell.en.add', "\x01"],
+        \ ['spelllang', 'en', "#"],
+        \ ['spelloptions', 'camel', 'a123'],
+        \ ['spellsuggest', 'double', 'a123'],
+        \ ['splitkeep', 'topline', 'a123'],
+        \ ['statusline', '%f', '%['],
+        "\ ['swapsync', 'sync', 'a123'],
+        \ ['switchbuf', 'usetab', 'a123'],
+        \ ['syntax', 'abc', 'a^b'],
+        \ ['tabline', '%f', '%['],
+        \ ['tagcase', 'ignore', 'a123'],
+        \ ['tagfunc', 'MyTagFunc', '1a-'],
+        \ ['thesaurusfunc', 'MyThesaurusFunc', '1a-'],
+        \ ['viewoptions', 'options', 'a123'],
+        \ ['virtualedit', 'onemore', 'a123'],
+        \ ['whichwrap', '<,>', '{,}'],
+        \ ['wildmode', 'list', 'a123'],
+        \ ['wildoptions', 'pum', 'a123']
+        \ ]
+  if has('gui')
+    call add(optlist, ['browsedir', 'buffer', 'a123'])
+  endif
+  if has('clipboard_working')
+    call add(optlist, ['clipboard', 'unnamed', 'a123'])
+  endif
+  if has('win32')
+    call add(optlist, ['completeslash', 'slash', 'a123'])
+  endif
+  if has('cscope')
+    call add(optlist, ['cscopequickfix', 't-', 'z-'])
+  endif
+  if !has('win32') && !has('nvim')
+    call add(optlist, ['imactivatefunc', 'MyActFunc', '1a-'])
+    call add(optlist, ['imstatusfunc', 'MyStatusFunc', '1a-'])
+  endif
+  if has('keymap')
+    call add(optlist, ['keymap', 'greek', '[]'])
+  endif
+  if has('mouseshape')
+    call add(optlist, ['mouseshape', 'm:no', 'a123:'])
+  endif
+  if has('win32') && has('gui')
+    call add(optlist, ['renderoptions', 'type:directx', 'type:directx,a123'])
+  endif
+  if has('rightleft')
+    call add(optlist, ['rightleftcmd', 'search', 'a123'])
+  endif
+  if has('terminal')
+    call add(optlist, ['termwinkey', '<C-L>', '<C'])
+    call add(optlist, ['termwinsize', '24x80', '100'])
+  endif
+  if has('win32') && has('terminal')
+    call add(optlist, ['termwintype', 'winpty', 'a123'])
+  endif
+  if exists('+toolbar')
+    call add(optlist, ['toolbar', 'text', 'a123'])
+    call add(optlist, ['toolbariconsize', 'medium', 'a123'])
+  endif
+  if exists('+ttymouse') && !has('gui')
+    call add(optlist, ['ttymouse', 'xterm', 'a123'])
+  endif
+  if exists('+vartabs')
+    call add(optlist, ['varsofttabstop', '12', 'a123'])
+    call add(optlist, ['vartabstop', '4,20', '4,'])
+  endif
+  if exists('+winaltkeys')
+    call add(optlist, ['winaltkeys', 'no', 'a123'])
+  endif
+  for opt in optlist
+    exe $"let save_opt = &{opt[0]}"
+    try
+      exe $"let &{opt[0]} = '{opt[1]}'"
+    catch
+      call assert_report($"Caught {v:exception} with {opt->string()}")
+    endtry
+    call assert_fails($"let &{opt[0]} = '{opt[2]}'", '', opt[0])
+    call assert_equal(opt[1], eval($"&{opt[0]}"), opt[0])
+    exe $"let &{opt[0]} = save_opt"
+  endfor
+  bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -1687,7 +1687,7 @@ void enter_buffer(buf_T *buf)
   // May need to set the spell language.  Can only do this after the buffer
   // has been properly setup.
   if (!curbuf->b_help && curwin->w_p_spell && *curwin->w_s->b_p_spl != NUL) {
-    (void)did_set_spelllang(curwin);
+    (void)parse_spelllang(curwin);
   }
   curbuf->b_last_used = time(NULL);
 

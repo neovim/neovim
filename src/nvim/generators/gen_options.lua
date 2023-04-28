@@ -154,6 +154,9 @@ local dump_option = function(i, o)
     table.insert(defines,  { 'PV_' .. varname:sub(3):upper() , pv_name})
     w('    .indir=' .. pv_name)
   end
+  if o.cb then
+    w('    .opt_did_set_cb=' .. o.cb)
+  end
   if o.enable_if then
     w('#else')
     w('    .var=NULL')

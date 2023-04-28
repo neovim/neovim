@@ -210,20 +210,23 @@ static Callback tfu_cb;         // 'tagfunc' callback function
 /// Reads the 'tagfunc' option value and convert that to a callback value.
 /// Invoked when the 'tagfunc' option is set. The option value can be a name of
 /// a function (string), or function(<name>) or funcref(<name>) or a lambda.
-void set_tagfunc_option(const char **errmsg)
+const char *did_set_tagfunc(optset_T *args)
 {
+  buf_T *buf = (buf_T *)args->os_buf;
+
   callback_free(&tfu_cb);
-  callback_free(&curbuf->b_tfu_cb);
+  callback_free(&buf->b_tfu_cb);
 
-  if (*curbuf->b_p_tfu == NUL) {
-    return;
+  if (*buf->b_p_tfu == NUL) {
+    return NULL;
   }
 
-  if (option_set_callback_func(curbuf->b_p_tfu, &tfu_cb) == FAIL) {
-    *errmsg = e_invarg;
+  if (option_set_callback_func(buf->b_p_tfu, &tfu_cb) == FAIL) {
+    return e_invarg;
   }
 
-  callback_copy(&curbuf->b_tfu_cb, &tfu_cb);
+  callback_copy(&buf->b_tfu_cb, &tfu_cb);
+  return NULL;
 }
 
 #if defined(EXITFREE)

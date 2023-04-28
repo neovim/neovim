@@ -4277,7 +4277,7 @@ void cmdline_init(void)
 
 /// Check value of 'cedit' and set cedit_key.
 /// Returns NULL if value is OK, error message otherwise.
-const char *check_cedit(void)
+const char *did_set_cedit(optset_T *args)
 {
   if (*p_cedit == NUL) {
     cedit_key = -1;

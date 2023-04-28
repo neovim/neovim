@@ -3885,11 +3885,12 @@ static buf_T *qf_find_buf(qf_info_T *qi)
 }
 
 /// Process the 'quickfixtextfunc' option value.
-void qf_process_qftf_option(const char **errmsg)
+const char *did_set_quickfixtextfunc(optset_T *args FUNC_ATTR_UNUSED)
 {
   if (option_set_callback_func(p_qftf, &qftf_cb) == FAIL) {
-    *errmsg = e_invarg;
+    return e_invarg;
   }
+  return NULL;
 }
 
 /// Update the w:quickfix_title variable in the quickfix/location list window in

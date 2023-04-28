@@ -62,7 +62,8 @@ return {
       short_desc=N_("Arabic as a default second language"),
       type='bool', scope={'window'},
       redraw={'curswant'},
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_arabic'
     },
     {
       full_name='arabicshape', abbreviation='arshape',
@@ -86,14 +87,16 @@ return {
       type='string', scope={'global'},
       redraw={'all_windows', 'ui_option'},
       varname='p_ambw',
-      defaults={if_true="single"}
+      defaults={if_true="single"},
+      cb='did_set_ambiwidth'
     },
     {
       full_name='autochdir', abbreviation='acd',
       short_desc=N_("change directory to the file in the current window"),
       type='bool', scope={'global'},
       varname='p_acd',
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_autochdir'
     },
     {
       full_name='autoindent', abbreviation='ai',
@@ -128,7 +131,8 @@ return {
       short_desc=N_("\"dark\" or \"light\", used for highlight colors"),
       type='string', scope={'global'},
       varname='p_bg',
-      defaults={if_true="dark"}
+      defaults={if_true="dark"},
+      cb='did_set_background'
     },
     {
       full_name='backspace', abbreviation='bs',
@@ -136,7 +140,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_bs',
-      defaults={if_true="indent,eol,start"}
+      defaults={if_true="indent,eol,start"},
+      cb='did_set_backspace'
     },
     {
       full_name='backup', abbreviation='bk',
@@ -156,6 +161,7 @@ return {
         if_true="auto",
         if_false="auto"
       },
+      cb='did_set_backupcopy'
     },
     {
       full_name='backupdir', abbreviation='bdir',
@@ -173,7 +179,8 @@ return {
       type='string', scope={'global'},
       normal_fname_chars=true,
       varname='p_bex',
-      defaults={if_true="~"}
+      defaults={if_true="~"},
+      cb='did_set_backupext_or_patchmode'
     },
     {
       full_name='backupskip', abbreviation='bsk',
@@ -189,7 +196,8 @@ return {
       type='string', list='comma', scope={'global'},
       deny_duplicates=true,
       varname='p_bo',
-      defaults={if_true="all"}
+      defaults={if_true="all"},
+      cb='did_set_belloff'
     },
     {
       full_name='binary', abbreviation='bin',
@@ -197,7 +205,8 @@ return {
       type='bool', scope={'buffer'},
       redraw={'statuslines'},
       varname='p_bin',
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_binary'
     },
     {
       full_name='bomb',
@@ -206,7 +215,8 @@ return {
       no_mkrc=true,
       redraw={'statuslines'},
       varname='p_bomb',
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_eof_eol_fixeol_bomb'
     },
     {
       full_name='breakat', abbreviation='brk',
@@ -214,7 +224,8 @@ return {
       type='string', list='flags', scope={'global'},
       redraw={'all_windows'},
       varname='p_breakat',
-      defaults={if_true=" \t!@*-+;:,./?"}
+      defaults={if_true=" \t!@*-+;:,./?"},
+      cb='did_set_breakat'
     },
     {
       full_name='breakindent', abbreviation='bri',
@@ -231,6 +242,7 @@ return {
       alloced=true,
       redraw={'current_buffer'},
       defaults={if_true=""},
+      cb='did_set_breakindentopt'
     },
     {
       full_name='browsedir', abbreviation='bsdir',
@@ -245,7 +257,8 @@ return {
       noglob=true,
       alloced=true,
       varname='p_bh',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_bufhidden'
     },
     {
       full_name='buflisted', abbreviation='bl',
@@ -253,7 +266,8 @@ return {
       type='bool', scope={'buffer'},
       noglob=true,
       varname='p_bl',
-      defaults={if_true=1}
+      defaults={if_true=1},
+      cb='did_set_buflisted'
     },
     {
       full_name='buftype', abbreviation='bt',
@@ -262,7 +276,8 @@ return {
       noglob=true,
       alloced=true,
       varname='p_bt',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_buftype'
     },
     {
       full_name='casemap', abbreviation='cmp',
@@ -270,7 +285,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_cmp',
-      defaults={if_true="internal,keepascii"}
+      defaults={if_true="internal,keepascii"},
+      cb='did_set_casemap'
     },
     {
       full_name='cdhome', abbreviation='cdh',
@@ -295,7 +311,8 @@ return {
       short_desc=N_("used to open the command-line window"),
       type='string', scope={'global'},
       varname='p_cedit',
-      defaults={if_true=macros('CTRL_F_STR')}
+      defaults={if_true=macros('CTRL_F_STR')},
+      cb='did_set_cedit'
     },
     {
       full_name='channel',
@@ -312,7 +329,8 @@ return {
       type='string', scope={'global'},
       secure=true,
       varname='p_ccv',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_optexpr'
     },
     {
       full_name='cindent', abbreviation='cin',
@@ -337,7 +355,8 @@ return {
       deny_duplicates=true,
       alloced=true,
       varname='p_cino',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_cinoptions'
     },
     {
       full_name='cinwords', abbreviation='cinw',
@@ -363,7 +382,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_cb',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_clipboard'
     },
     {
       full_name='cmdheight', abbreviation='ch',
@@ -371,7 +391,8 @@ return {
       type='number', scope={'global'},
       redraw={'all_windows'},
       varname='p_ch',
-      defaults={if_true=1}
+      defaults={if_true=1},
+      cb='did_set_cmdheight'
     },
     {
       full_name='cmdwinheight', abbreviation='cwh',
@@ -386,7 +407,8 @@ return {
       type='string', list='onecomma', scope={'window'},
       deny_duplicates=true,
       redraw={'current_window'},
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_colorcolumn'
     },
     {
       full_name='columns', abbreviation='co',
@@ -404,7 +426,8 @@ return {
       alloced=true,
       redraw={'curswant'},
       varname='p_com',
-      defaults={if_true="s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-"}
+      defaults={if_true="s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-"},
+      cb='did_set_comments'
     },
     {
       full_name='commentstring', abbreviation='cms',
@@ -413,7 +436,8 @@ return {
       alloced=true,
       redraw={'curswant'},
       varname='p_cms',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_commentstring'
     },
     {
       full_name='compatible', abbreviation='cp',
@@ -431,7 +455,8 @@ return {
       deny_duplicates=true,
       alloced=true,
       varname='p_cpt',
-      defaults={if_true=".,w,b,u,t"}
+      defaults={if_true=".,w,b,u,t"},
+      cb='did_set_complete'
     },
     {
       full_name='concealcursor', abbreviation='cocu',
@@ -439,7 +464,8 @@ return {
       type='string', scope={'window'},
       alloced=true,
       redraw={'current_window'},
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_concealcursor'
     },
     {
       full_name='conceallevel', abbreviation='cole',
@@ -456,7 +482,8 @@ return {
       alloced=true,
       func=true,
       varname='p_cfu',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_completefunc'
     },
     {
       full_name='completeopt', abbreviation='cot',
@@ -464,14 +491,16 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_cot',
-      defaults={if_true="menu,preview"}
+      defaults={if_true="menu,preview"},
+      cb='did_set_completeopt'
     },
     {
       full_name='completeslash', abbreviation='csl',
       type='string', scope={'buffer'},
       varname='p_csl',
       enable_if='BACKSLASH_IN_FILENAME',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_completeslash'
     },
     {
       full_name='confirm', abbreviation='cf',
@@ -493,7 +522,8 @@ return {
       type='string', list='flags', scope={'global'},
       redraw={'all_windows'},
       varname='p_cpo',
-      defaults={if_true=macros('CPO_VIM')}
+      defaults={if_true=macros('CPO_VIM')},
+      cb='did_set_cpoptions'
     },
     {
       full_name='cursorbind', abbreviation='crb',
@@ -522,14 +552,16 @@ return {
       type='string', list='onecomma', scope={'window'},
       deny_duplicates=true,
       redraw={'current_window_only'},
-      defaults={if_true="both"}
+      defaults={if_true="both"},
+      cb='did_set_cursorlineopt'
     },
     {
       full_name='debug',
       short_desc=N_("to \"msg\" to see all error messages"),
       type='string', scope={'global'},
       varname='p_debug',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_debug'
     },
     {
       full_name='define', abbreviation='def',
@@ -563,7 +595,8 @@ return {
       type='bool', scope={'window'},
       noglob=true,
       redraw={'current_window'},
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_diff'
     },
     {
       full_name='diffexpr', abbreviation='dex',
@@ -572,7 +605,8 @@ return {
       secure=true,
       redraw={'curswant'},
       varname='p_dex',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_optexpr'
     },
     {
       full_name='diffopt', abbreviation='dip',
@@ -582,7 +616,8 @@ return {
       alloced=true,
       redraw={'current_window'},
       varname='p_dip',
-      defaults={if_true="internal,filler,closeoff"}
+      defaults={if_true="internal,filler,closeoff"},
+      cb='did_set_diffopt'
     },
     {
       full_name='digraph', abbreviation='dg',
@@ -608,14 +643,16 @@ return {
       deny_duplicates=true,
       redraw={'all_windows'},
       varname='p_dy',
-      defaults={if_true="lastline"}
+      defaults={if_true="lastline"},
+      cb='did_set_display'
     },
     {
       full_name='eadirection', abbreviation='ead',
       short_desc=N_("in which direction 'equalalways' works"),
       type='string', scope={'global'},
       varname='p_ead',
-      defaults={if_true="both"}
+      defaults={if_true="both"},
+      cb='did_set_eadirection'
     },
     {
       full_name='edcompatible', abbreviation='ed',
@@ -630,7 +667,8 @@ return {
       type='bool', scope={'global'},
       redraw={'all_windows', 'ui_option'},
       varname='p_emoji',
-      defaults={if_true=true}
+      defaults={if_true=true},
+      cb='did_set_ambiwidth'
     },
     {
       full_name='encoding', abbreviation='enc',
@@ -638,7 +676,8 @@ return {
       type='string', scope={'global'},
       deny_in_modelines=true,
       varname='p_enc',
-      defaults={if_true=macros('ENC_DFLT')}
+      defaults={if_true=macros('ENC_DFLT')},
+      cb='did_set_encoding'
     },
     {
       full_name='endoffile', abbreviation='eof',
@@ -647,7 +686,8 @@ return {
       no_mkrc=true,
       redraw={'statuslines'},
       varname='p_eof',
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_eof_eol_fixeol_bomb'
     },
     {
       full_name='endofline', abbreviation='eol',
@@ -656,14 +696,16 @@ return {
       no_mkrc=true,
       redraw={'statuslines'},
       varname='p_eol',
-      defaults={if_true=true}
+      defaults={if_true=true},
+      cb='did_set_eof_eol_fixeol_bomb'
     },
     {
       full_name='equalalways', abbreviation='ea',
       short_desc=N_("windows are automatically made the same size"),
       type='bool', scope={'global'},
       varname='p_ea',
-      defaults={if_true=true}
+      defaults={if_true=true},
+      cb='did_set_equalalways'
     },
     {
       full_name='equalprg', abbreviation='ep',
@@ -704,7 +746,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_ei',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_eventignore'
     },
     {
       full_name='expandtab', abbreviation='et',
@@ -729,7 +772,8 @@ return {
       alloced=true,
       redraw={'statuslines', 'current_buffer'},
       varname='p_fenc',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_encoding'
     },
     {
       full_name='fileencodings', abbreviation='fencs',
@@ -747,7 +791,8 @@ return {
       alloced=true,
       redraw={'curswant', 'statuslines'},
       varname='p_ff',
-      defaults={if_true=macros('DFLT_FF')}
+      defaults={if_true=macros('DFLT_FF')},
+      cb='did_set_fileformat'
     },
     {
       full_name='fileformats', abbreviation='ffs',
@@ -755,7 +800,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_ffs',
-      defaults={if_true=macros('DFLT_FFS_VIM')}
+      defaults={if_true=macros('DFLT_FFS_VIM')},
+      cb='did_set_fileformats'
     },
     {
       full_name='fileignorecase', abbreviation='fic',
@@ -777,7 +823,8 @@ return {
       alloced=true,
       expand=true,
       varname='p_ft',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_filetype_or_syntax'
     },
     {
       full_name='fillchars', abbreviation='fcs',
@@ -787,7 +834,8 @@ return {
       alloced=true,
       redraw={'current_window'},
       varname='p_fcs',
-      defaults={if_true=''}
+      defaults={if_true=''},
+      cb='did_set_chars_option'
     },
     {
       full_name='fixendofline', abbreviation='fixeol',
@@ -795,7 +843,8 @@ return {
       type='bool', scope={'buffer'},
       redraw={'statuslines'},
       varname='p_fixeol',
-      defaults={if_true=true}
+      defaults={if_true=true},
+      cb='did_set_eof_eol_fixeol_bomb'
     },
     {
       full_name='foldclose', abbreviation='fcl',
@@ -804,7 +853,8 @@ return {
       deny_duplicates=true,
       redraw={'current_window'},
       varname='p_fcl',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_foldclose'
     },
     {
       full_name='foldcolumn', abbreviation='fdc',
@@ -812,7 +862,8 @@ return {
       type='string', scope={'window'},
       alloced=true,
       redraw={'current_window'},
-      defaults={if_true="0"}
+      defaults={if_true="0"},
+      cb='did_set_foldcolumn'
     },
     {
       full_name='foldenable', abbreviation='fen',
@@ -828,7 +879,8 @@ return {
       modelineexpr=true,
       alloced=true,
       redraw={'current_window'},
-      defaults={if_true="0"}
+      defaults={if_true="0"},
+      cb='did_set_foldexpr'
     },
     {
       full_name='foldignore', abbreviation='fdi',
@@ -836,14 +888,16 @@ return {
       type='string', scope={'window'},
       alloced=true,
       redraw={'current_window'},
-      defaults={if_true="#"}
+      defaults={if_true="#"},
+      cb='did_set_foldignore'
     },
     {
       full_name='foldlevel', abbreviation='fdl',
       short_desc=N_("close folds with a level higher than this"),
       type='number', scope={'window'},
       redraw={'current_window'},
-      defaults={if_true=0}
+      defaults={if_true=0},
+      cb='did_set_foldlevel'
     },
     {
       full_name='foldlevelstart', abbreviation='fdls',
@@ -860,7 +914,8 @@ return {
       deny_duplicates=true,
       alloced=true,
       redraw={'current_window'},
-      defaults={if_true="{{{,}}}"}
+      defaults={if_true="{{{,}}}"},
+      cb='did_set_foldmarker'
     },
     {
       full_name='foldmethod', abbreviation='fdm',
@@ -868,21 +923,24 @@ return {
       type='string', scope={'window'},
       alloced=true,
       redraw={'current_window'},
-      defaults={if_true="manual"}
+      defaults={if_true="manual"},
+      cb='did_set_foldmethod'
     },
     {
       full_name='foldminlines', abbreviation='fml',
       short_desc=N_("minimum number of lines for a fold to be closed"),
       type='number', scope={'window'},
       redraw={'current_window'},
-      defaults={if_true=1}
+      defaults={if_true=1},
+      cb='did_set_foldminlines'
     },
     {
       full_name='foldnestmax', abbreviation='fdn',
       short_desc=N_("maximum fold depth"),
       type='number', scope={'window'},
       redraw={'current_window'},
-      defaults={if_true=20}
+      defaults={if_true=20},
+      cb='did_set_foldnestmax'
     },
     {
       full_name='foldopen', abbreviation='fdo',
@@ -891,7 +949,8 @@ return {
       deny_duplicates=true,
       redraw={'curswant'},
       varname='p_fdo',
-      defaults={if_true="block,hor,mark,percent,quickfix,search,tag,undo"}
+      defaults={if_true="block,hor,mark,percent,quickfix,search,tag,undo"},
+      cb='did_set_foldopen'
     },
     {
       full_name='foldtext', abbreviation='fdt',
@@ -900,7 +959,8 @@ return {
       modelineexpr=true,
       alloced=true,
       redraw={'current_window'},
-      defaults={if_true="foldtext()"}
+      defaults={if_true="foldtext()"},
+      cb='did_set_optexpr'
     },
     {
       full_name='formatexpr', abbreviation='fex',
@@ -909,7 +969,8 @@ return {
       modelineexpr=true,
       alloced=true,
       varname='p_fex',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_optexpr'
     },
     {
       full_name='formatoptions', abbreviation='fo',
@@ -917,7 +978,8 @@ return {
       type='string', list='flags', scope={'buffer'},
       alloced=true,
       varname='p_fo',
-      defaults={if_true=macros('DFLT_FO_VIM')}
+      defaults={if_true=macros('DFLT_FO_VIM')},
+      cb='did_set_formatoptions'
     },
     {
       full_name='formatlistpat', abbreviation='flp',
@@ -980,7 +1042,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_guicursor',
-      defaults={if_true="n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20"}
+      defaults={if_true="n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20"},
+      cb='did_set_guicursor'
     },
     {
       full_name='guifont', abbreviation='gfn',
@@ -1028,14 +1091,16 @@ return {
       secure=true,
       expand=true,
       varname='p_hf',
-      defaults={if_true=macros('DFLT_HELPFILE')}
+      defaults={if_true=macros('DFLT_HELPFILE')},
+      cb='did_set_helpfile'
     },
     {
       full_name='helpheight', abbreviation='hh',
       short_desc=N_("minimum height of a new help window"),
       type='number', scope={'global'},
       varname='p_hh',
-      defaults={if_true=20}
+      defaults={if_true=20},
+      cb='did_set_helpheight'
     },
     {
       full_name='helplang', abbreviation='hlg',
@@ -1043,7 +1108,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_hlg',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_helplang'
     },
     {
       full_name='hidden', abbreviation='hid',
@@ -1058,7 +1124,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_hl',
-      defaults={if_true=macros('HIGHLIGHT_INIT')}
+      defaults={if_true=macros('HIGHLIGHT_INIT')},
+      cb='did_set_highlight'
     },
     {
       full_name='history', abbreviation='hi',
@@ -1087,14 +1154,16 @@ return {
       type='bool', scope={'global'},
       redraw={'all_windows'},
       varname='p_hls',
-      defaults={if_true=true}
+      defaults={if_true=true},
+      cb='did_set_hlsearch'
     },
     {
       full_name='icon',
       short_desc=N_("Vim set the text of the window icon"),
       type='bool', scope={'global'},
       varname='p_icon',
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_title_icon'
     },
     {
       full_name='iconstring',
@@ -1102,14 +1171,16 @@ return {
       type='string', scope={'global'},
       modelineexpr=true,
       varname='p_iconstring',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_iconstring'
     },
     {
       full_name='ignorecase', abbreviation='ic',
       short_desc=N_("ignore case in search patterns"),
       type='bool', scope={'global'},
       varname='p_ic',
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_ignorecase'
     },
     {
       full_name='imcmdline', abbreviation='imc',
@@ -1130,9 +1201,8 @@ return {
       short_desc=N_("use :lmap or IM in Insert mode"),
       type='number', scope={'buffer'},
       varname='p_iminsert', pv_name='p_imi',
-      defaults={
-        if_true=macros('B_IMODE_NONE'),
-      }
+      defaults={if_true=macros('B_IMODE_NONE')},
+      cb='did_set_iminsert'
     },
     {
       full_name='imsearch', abbreviation='ims',
@@ -1148,7 +1218,8 @@ return {
       short_desc=N_("Live preview of substitution"),
       type='string', scope={'global'},
       varname='p_icm',
-      defaults={if_true="nosplit"}
+      defaults={if_true="nosplit"},
+      cb='did_set_inccommand'
     },
     {
       full_name='include', abbreviation='inc',
@@ -1165,7 +1236,8 @@ return {
       modelineexpr=true,
       alloced=true,
       varname='p_inex',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_optexpr'
     },
     {
       full_name='incsearch', abbreviation='is',
@@ -1181,7 +1253,8 @@ return {
       modelineexpr=true,
       alloced=true,
       varname='p_inde',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_optexpr'
     },
     {
       full_name='indentkeys', abbreviation='indk',
@@ -1218,7 +1291,8 @@ return {
         -- ( and ) are used in text separating fnames */
         if_true="@,48-57,/,\\,.,-,_,+,,,#,$,%,{,},[,],:,@-@,!,~,=",
         if_false="@,48-57,/,.,-,_,+,,,#,$,%,~,="
-      }
+      },
+      cb='did_set_isopt'
     },
     {
       full_name='isident', abbreviation='isi',
@@ -1230,7 +1304,8 @@ return {
         condition='MSWIN',
         if_true="@,48-57,_,128-167,224-235",
         if_false="@,48-57,_,192-255"
-      }
+      },
+      cb='did_set_isopt'
     },
     {
       full_name='iskeyword', abbreviation='isk',
@@ -1239,7 +1314,8 @@ return {
       deny_duplicates=true,
       alloced=true,
       varname='p_isk',
-      defaults={if_true="@,48-57,_,192-255"}
+      defaults={if_true="@,48-57,_,192-255"},
+      cb='did_set_isopt'
     },
     {
       full_name='isprint', abbreviation='isp',
@@ -1248,8 +1324,8 @@ return {
       deny_duplicates=true,
       redraw={'all_windows'},
       varname='p_isp',
-      defaults={if_true="@,161-255"
-      }
+      defaults={if_true="@,161-255"},
+      cb='did_set_isopt'
     },
     {
       full_name='joinspaces', abbreviation='js',
@@ -1264,7 +1340,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_jop',
-      defaults={if_true=''}
+      defaults={if_true=''},
+      cb='did_set_jumpoptions'
     },
     {
       full_name='keymap', abbreviation='kmp',
@@ -1275,7 +1352,8 @@ return {
       alloced=true,
       redraw={'statuslines', 'current_buffer'},
       varname='p_keymap', pv_name='p_kmap',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_keymap'
     },
     {
       full_name='keymodel', abbreviation='km',
@@ -1283,7 +1361,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_km',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_keymodel'
     },
     {
       full_name='keywordprg', abbreviation='kp',
@@ -1303,7 +1382,8 @@ return {
       deny_duplicates=true,
       secure=true,
       varname='p_langmap',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_langmap'
     },
     {
       full_name='langmenu', abbreviation='lm',
@@ -1318,14 +1398,16 @@ return {
       short_desc=N_("do not apply 'langmap' to mapped characters"),
       type='bool', scope={'global'},
       varname='p_lnr',
-      defaults={if_true=true}
+      defaults={if_true=true},
+      cb='did_set_langnoremap'
     },
     {
       full_name='langremap', abbreviation='lrm',
       short_desc=N_('No description'),
       type='bool', scope={'global'},
       varname='p_lrm',
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_langremap'
     },
     {
       full_name='laststatus', abbreviation='ls',
@@ -1333,7 +1415,8 @@ return {
       type='number', scope={'global'},
       redraw={'all_windows'},
       varname='p_ls',
-      defaults={if_true=2}
+      defaults={if_true=2},
+      cb='did_set_laststatus'
     },
     {
       full_name='lazyredraw', abbreviation='lz',
@@ -1370,7 +1453,8 @@ return {
       short_desc=N_("indenting for Lisp"),
       type='bool', scope={'buffer'},
       varname='p_lisp',
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_lisp'
     },
     {
       full_name='lispoptions', abbreviation='lop',
@@ -1378,7 +1462,8 @@ return {
       type='string', list='onecomma', scope={'buffer'},
       deny_duplicates=true,
       varname='p_lop', pv_name='p_lop',
-      defaults={if_true=''}
+      defaults={if_true=''},
+      cb='did_set_lispoptions'
     },
     {
       full_name='lispwords', abbreviation='lw',
@@ -1403,7 +1488,8 @@ return {
       alloced=true,
       redraw={'current_window'},
       varname='p_lcs',
-      defaults={if_true="tab:> ,trail:-,nbsp:+"}
+      defaults={if_true="tab:> ,trail:-,nbsp:+"},
+      cb='did_set_chars_option'
     },
     {
       full_name='loadplugins', abbreviation='lpl',
@@ -1433,7 +1519,8 @@ return {
       short_desc=N_("Converts the output of external commands"),
       type='string', scope={'global', 'buffer'},
       varname='p_menc',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_encoding'
     },
     {
       full_name='makeprg', abbreviation='mp',
@@ -1451,7 +1538,8 @@ return {
       deny_duplicates=true,
       alloced=true,
       varname='p_mps',
-      defaults={if_true="(:),{:},[:]"}
+      defaults={if_true="(:),{:},[:]"},
+      cb='did_set_matchpairs'
     },
     {
       full_name='matchtime', abbreviation='mat',
@@ -1502,7 +1590,8 @@ return {
       secure=true,
       expand=true,
       varname='p_msm',
-      defaults={if_true="460000,2000,500"}
+      defaults={if_true="460000,2000,500"},
+      cb='did_set_mkspellmem'
     },
     {
       full_name='modeline', abbreviation='ml',
@@ -1532,7 +1621,8 @@ return {
       type='bool', scope={'buffer'},
       noglob=true,
       varname='p_ma',
-      defaults={if_true=true}
+      defaults={if_true=true},
+      cb='did_set_modifiable'
     },
     {
       full_name='modified', abbreviation='mod',
@@ -1541,7 +1631,8 @@ return {
       no_mkrc=true,
       redraw={'statuslines'},
       varname='p_mod',
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_modified'
     },
     {
       full_name='more',
@@ -1555,7 +1646,8 @@ return {
       short_desc=N_("the use of mouse clicks"),
       type='string', list='flags', scope={'global'},
       varname='p_mouse',
-      defaults={if_true="nvi"}
+      defaults={if_true="nvi"},
+      cb='did_set_mouse'
     },
     {
       full_name='mousefocus', abbreviation='mousef',
@@ -1577,7 +1669,8 @@ return {
       short_desc=N_("changes meaning of mouse buttons"),
       type='string', scope={'global'},
       varname='p_mousem',
-      defaults={if_true="popup_setpos"}
+      defaults={if_true="popup_setpos"},
+      cb='did_set_mousemodel'
     },
     {
       full_name='mousemoveevent', abbreviation='mousemev',
@@ -1593,7 +1686,8 @@ return {
       type='string', list='comma', scope={'global'},
       vi_def=true,
       varname='p_mousescroll',
-      defaults={if_true="ver:3,hor:6"}
+      defaults={if_true="ver:3,hor:6"},
+      cb='did_set_mousescroll'
     },
     {
       full_name='mouseshape', abbreviation='mouses',
@@ -1616,21 +1710,24 @@ return {
       deny_duplicates=true,
       alloced=true,
       varname='p_nf',
-      defaults={if_true="bin,hex"}
+      defaults={if_true="bin,hex"},
+      cb='did_set_nrformats'
     },
     {
       full_name='number', abbreviation='nu',
       short_desc=N_("print the line number in front of each line"),
       type='bool', scope={'window'},
       redraw={'current_window'},
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_number_relativenumber'
     },
     {
       full_name='numberwidth', abbreviation='nuw',
       short_desc=N_("number of columns used for the line number"),
       type='number', scope={'window'},
       redraw={'current_window'},
-      defaults={if_true=4}
+      defaults={if_true=4},
+      cb='did_set_numberwidth'
     },
     {
       full_name='omnifunc', abbreviation='ofu',
@@ -1640,7 +1737,8 @@ return {
       alloced=true,
       func=true,
       varname='p_ofu',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_omnifunc'
     },
     {
       full_name='opendevice', abbreviation='odev',
@@ -1656,7 +1754,8 @@ return {
       secure=true,
       func=true,
       varname='p_opfunc',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_operatorfunc'
     },
     {
       full_name='packpath', abbreviation='pp',
@@ -1666,7 +1765,8 @@ return {
       secure=true,
       expand=true,
       varname='p_pp',
-      defaults={if_true=''}
+      defaults={if_true=''},
+      cb='did_set_runtimepackpath'
     },
     {
       full_name='paragraphs', abbreviation='para',
@@ -1681,7 +1781,8 @@ return {
       type='bool', scope={'global'},
       pri_mkrc=true,
       varname='p_paste',
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_paste'
     },
     {
       full_name='pastetoggle', abbreviation='pt',
@@ -1695,7 +1796,8 @@ return {
       type='string', scope={'global'},
       secure=true,
       varname='p_pex',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_optexpr'
     },
     {
       full_name='patchmode', abbreviation='pm',
@@ -1703,7 +1805,8 @@ return {
       type='string', scope={'global'},
       normal_fname_chars=true,
       varname='p_pm',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_backupext_or_patchmode'
     },
     {
       full_name='path', abbreviation='pa',
@@ -1734,7 +1837,8 @@ return {
       type='bool', scope={'window'},
       noglob=true,
       redraw={'statuslines'},
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_previewwindow'
     },
     {
       full_name='prompt',
@@ -1749,7 +1853,8 @@ return {
       type='number', scope={'global'},
       redraw={'ui_option'},
       varname='p_pb',
-      defaults={if_true=0}
+      defaults={if_true=0},
+      cb='did_set_pumblend'
     },
     {
       full_name='pumheight', abbreviation='ph',
@@ -1780,7 +1885,8 @@ return {
       secure=true,
       func=true,
       varname='p_qftf',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_quickfixtextfunc'
     },
     {
       full_name='quoteescape', abbreviation='qe',
@@ -1797,14 +1903,16 @@ return {
       noglob=true,
       redraw={'statuslines'},
       varname='p_ro',
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_readonly'
     },
     {
       full_name='redrawdebug', abbreviation='rdb',
       short_desc=N_("Changes the way redrawing works (debug)"),
       type='string', list='onecomma', scope={'global'},
       varname='p_rdb',
-      defaults={if_true=''}
+      defaults={if_true=''},
+      cb='did_set_redrawdebug'
     },
     {
       full_name='redrawtime', abbreviation='rdt',
@@ -1825,7 +1933,8 @@ return {
       short_desc=N_("show relative line number in front of each line"),
       type='bool', scope={'window'},
       redraw={'current_window'},
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_number_relativenumber'
     },
     {
       full_name='remap',
@@ -1861,7 +1970,8 @@ return {
       type='string', scope={'window'},
       alloced=true,
       redraw={'current_window'},
-      defaults={if_true="search"}
+      defaults={if_true="search"},
+      cb='did_set_rightleftcmd'
     },
     {
       full_name='ruler', abbreviation='ru',
@@ -1879,7 +1989,8 @@ return {
       modelineexpr=true,
       redraw={'statuslines'},
       varname='p_ruf',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_rulerformat'
     },
     {
       full_name='runtimepath', abbreviation='rtp',
@@ -1889,7 +2000,8 @@ return {
       secure=true,
       expand='nodefault',
       varname='p_rtp',
-      defaults={if_true=''}
+      defaults={if_true=''},
+      cb='did_set_runtimepackpath'
     },
     {
       full_name='scroll', abbreviation='scr',
@@ -1905,14 +2017,16 @@ return {
       type='number', scope={'buffer'},
       varname='p_scbk',
       redraw={'current_buffer'},
-      defaults={if_true=-1}
+      defaults={if_true=-1},
+      cb='did_set_scrollback'
     },
     {
       full_name='scrollbind', abbreviation='scb',
       short_desc=N_("scroll in window as other windows scroll"),
       type='bool', scope={'window'},
       pv_name='p_scbind',
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_scrollbind'
     },
     {
       full_name='scrolljump', abbreviation='sj',
@@ -1934,7 +2048,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_sbo',
-      defaults={if_true="ver,jump"}
+      defaults={if_true="ver,jump"},
+      cb='did_set_scrollopt'
     },
     {
       full_name='sections', abbreviation='sect',
@@ -1956,7 +2071,8 @@ return {
       short_desc=N_("what type of selection to use"),
       type='string', scope={'global'},
       varname='p_sel',
-      defaults={if_true="inclusive"}
+      defaults={if_true="inclusive"},
+      cb='did_set_selection'
     },
     {
       full_name='selectmode', abbreviation='slm',
@@ -1964,7 +2080,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_slm',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_selectmode'
     },
     {
       full_name='sessionoptions', abbreviation='ssop',
@@ -1972,7 +2089,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_ssop',
-      defaults={if_true="blank,buffers,curdir,folds,help,tabpages,winsize,terminal"}
+      defaults={if_true="blank,buffers,curdir,folds,help,tabpages,winsize,terminal"},
+      cb='did_set_sessionoptions',
     },
     {
       full_name='shada', abbreviation='sd',
@@ -2056,7 +2174,8 @@ return {
       type='bool', scope={'global'},
       varname='p_ssl',
       enable_if='BACKSLASH_IN_FILENAME',
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_shellslash'
     },
     {
       full_name='shelltemp', abbreviation='stmp',
@@ -2097,14 +2216,16 @@ return {
       short_desc=N_("number of spaces to use for (auto)indent step"),
       type='number', scope={'buffer'},
       varname='p_sw',
-      defaults={if_true=8}
+      defaults={if_true=8},
+      cb='did_set_shiftwidth_tabstop'
     },
     {
       full_name='shortmess', abbreviation='shm',
       short_desc=N_("list of flags, reduce length of messages"),
       type='string', list='flags', scope={'global'},
       varname='p_shm',
-      defaults={if_true="filnxtToOF"}
+      defaults={if_true="filnxtToOF"},
+      cb='did_set_shortmess'
     },
     {
       full_name='showbreak', abbreviation='sbr',
@@ -2112,7 +2233,8 @@ return {
       type='string', scope={'global', 'window'},
       redraw={'all_windows'},
       varname='p_sbr',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_showbreak'
     },
     {
       full_name='showcmd', abbreviation='sc',
@@ -2126,7 +2248,8 @@ return {
       short_desc=N_("change location of partial command"),
       type='string', scope={'global'},
       varname='p_sloc',
-      defaults={if_true="last"}
+      defaults={if_true="last"},
+      cb='did_set_showcmdloc'
     },
     {
       full_name='showfulltag', abbreviation='sft',
@@ -2155,7 +2278,8 @@ return {
       type='number', scope={'global'},
       redraw={'all_windows', 'ui_option'},
       varname='p_stal',
-      defaults={if_true=1}
+      defaults={if_true=1},
+      cb='did_set_showtabline'
     },
     {
       full_name='sidescroll', abbreviation='ss',
@@ -2177,7 +2301,8 @@ return {
       type='string', scope={'window'},
       alloced=true,
       redraw={'current_window'},
-      defaults={if_true="auto"}
+      defaults={if_true="auto"},
+      cb='did_set_signcolumn'
     },
     {
       full_name='smartcase', abbreviation='scs',
@@ -2212,7 +2337,8 @@ return {
       short_desc=N_("spell checking"),
       type='bool', scope={'window'},
       redraw={'current_window'},
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_spell'
     },
     {
       full_name='spellcapcheck', abbreviation='spc',
@@ -2221,7 +2347,8 @@ return {
       alloced=true,
       redraw={'current_buffer'},
       varname='p_spc',
-      defaults={if_true="[.?!]\\_[\\])'\"	 ]\\+"}
+      defaults={if_true="[.?!]\\_[\\])'\"	 ]\\+"},
+      cb='did_set_spellcapcheck'
     },
     {
       full_name='spellfile', abbreviation='spf',
@@ -2232,7 +2359,8 @@ return {
       alloced=true,
       expand=true,
       varname='p_spf',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_spellfile'
     },
     {
       full_name='spelllang', abbreviation='spl',
@@ -2243,7 +2371,8 @@ return {
       expand=true,
       redraw={'current_buffer'},
       varname='p_spl',
-      defaults={if_true="en"}
+      defaults={if_true="en"},
+      cb='did_set_spelllang'
     },
     {
       full_name='spellsuggest', abbreviation='sps',
@@ -2253,7 +2382,8 @@ return {
       secure=true,
       expand=true,
       varname='p_sps',
-      defaults={if_true="best"}
+      defaults={if_true="best"},
+      cb='did_set_spellsuggest'
     },
     {
       full_name='spelloptions', abbreviation='spo',
@@ -2263,7 +2393,8 @@ return {
       expand=true,
       varname='p_spo',
       redraw={'current_buffer'},
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_spelloptions'
     },
     {
       full_name='splitbelow', abbreviation='sb',
@@ -2277,7 +2408,8 @@ return {
       short_desc=N_("determines scroll behavior for split windows"),
       type='string', scope={'global'},
       varname='p_spk',
-      defaults={if_true='cursor'}
+      defaults={if_true='cursor'},
+      cb='did_set_splitkeep'
     },
     {
       full_name='splitright', abbreviation='spr',
@@ -2301,7 +2433,8 @@ return {
       redraw={'current_window'},
       secure=true,
       alloced=true,
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_statuscolumn'
     },
     {
       full_name='statusline', abbreviation='stl',
@@ -2311,7 +2444,8 @@ return {
       modelineexpr=true,
       redraw={'statuslines'},
       varname='p_stl',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_statusline'
     },
     {
       full_name='suffixes', abbreviation='su',
@@ -2336,7 +2470,8 @@ return {
       type='bool', scope={'buffer'},
       redraw={'statuslines'},
       varname='p_swf',
-      defaults={if_true=true}
+      defaults={if_true=true},
+      cb='did_set_swapfile'
     },
     {
       full_name='switchbuf', abbreviation='swb',
@@ -2344,7 +2479,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_swb',
-      defaults={if_true="uselast"}
+      defaults={if_true="uselast"},
+      cb='did_set_switchbuf'
     },
     {
       full_name='synmaxcol', abbreviation='smc',
@@ -2362,7 +2498,8 @@ return {
       normal_fname_chars=true,
       alloced=true,
       varname='p_syn',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_filetype_or_syntax'
     },
     {
       full_name='tagfunc', abbreviation='tfu',
@@ -2371,7 +2508,8 @@ return {
       secure=true,
       func=true,
       varname='p_tfu',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_tagfunc'
     },
     {
       full_name='tabline', abbreviation='tal',
@@ -2380,7 +2518,8 @@ return {
       modelineexpr=true,
       redraw={'tabline'},
       varname='p_tal',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_tabline'
     },
     {
       full_name='tabpagemax', abbreviation='tpm',
@@ -2395,7 +2534,8 @@ return {
       type='number', scope={'buffer'},
       redraw={'current_buffer'},
       varname='p_ts',
-      defaults={if_true=8}
+      defaults={if_true=8},
+      cb='did_set_shiftwidth_tabstop'
     },
     {
       full_name='tagbsearch', abbreviation='tbs',
@@ -2409,7 +2549,8 @@ return {
       short_desc=N_("how to handle case when searching in tags files"),
       type='string', scope={'global', 'buffer'},
       varname='p_tc',
-      defaults={if_true="followic"}
+      defaults={if_true="followic"},
+      cb='did_set_tagcase'
     },
     {
       full_name='taglength', abbreviation='tl',
@@ -2467,7 +2608,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_tpf',
-      defaults={if_true="BS,HT,ESC,DEL"}
+      defaults={if_true="BS,HT,ESC,DEL"},
+      cb='did_set_termpastefilter'
     },
     {
       full_name='terse',
@@ -2482,7 +2624,8 @@ return {
       type='number', scope={'buffer'},
       redraw={'current_buffer'},
       varname='p_tw',
-      defaults={if_true=0}
+      defaults={if_true=0},
+      cb='did_set_textwidth'
     },
     {
       full_name='thesaurus', abbreviation='tsr',
@@ -2502,7 +2645,8 @@ return {
       alloced=true,
       func=true,
       varname='p_tsrfu',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_thesaurusfunc'
     },
     {
       full_name='tildeop', abbreviation='top',
@@ -2530,14 +2674,16 @@ return {
       short_desc=N_("Vim set the title of the window"),
       type='bool', scope={'global'},
       varname='p_title',
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_title_icon'
     },
     {
       full_name='titlelen',
       short_desc=N_("of 'columns' used for window title"),
       type='number', scope={'global'},
       varname='p_titlelen',
-      defaults={if_true=85}
+      defaults={if_true=85},
+      cb='did_set_titlelen'
     },
     {
       full_name='titleold',
@@ -2554,7 +2700,8 @@ return {
       type='string', scope={'global'},
       modelineexpr=true,
       varname='p_titlestring',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_titlestring'
     },
     {
       full_name='ttimeout',
@@ -2595,14 +2742,16 @@ return {
       short_desc=N_("save undo information in a file"),
       type='bool', scope={'buffer'},
       varname='p_udf',
-      defaults={if_true=false}
+      defaults={if_true=false},
+      cb='did_set_undofile'
     },
     {
       full_name='undolevels', abbreviation='ul',
       short_desc=N_("maximum number of changes that can be undone"),
       type='number', scope={'global', 'buffer'},
       varname='p_ul',
-      defaults={if_true=1000}
+      defaults={if_true=1000},
+      cb='did_set_undolevels'
     },
     {
       full_name='undoreload', abbreviation='ur',
@@ -2616,7 +2765,8 @@ return {
       short_desc=N_("after this many characters flush swap file"),
       type='number', scope={'global'},
       varname='p_uc',
-      defaults={if_true=200}
+      defaults={if_true=200},
+      cb='did_set_updatecount'
     },
     {
       full_name='updatetime', abbreviation='ut',
@@ -2630,7 +2780,8 @@ return {
       short_desc=N_("list of numbers of spaces that <Tab> uses while editing"),
       type='string', list='comma', scope={'buffer'},
       varname='p_vsts',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_varsofttabstop'
     },
     {
       full_name='vartabstop', abbreviation='vts',
@@ -2638,7 +2789,8 @@ return {
       type='string', list='comma', scope={'buffer'},
       varname='p_vts',
       redraw={'current_buffer'},
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_vartabstop'
     },
     {
       full_name='verbose', abbreviation='vbs',
@@ -2654,7 +2806,8 @@ return {
       secure=true,
       expand=true,
       varname='p_vfile',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_verbosefile'
     },
     {
       full_name='viewdir', abbreviation='vdir',
@@ -2671,7 +2824,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_vop',
-      defaults={if_true="folds,cursor,curdir"}
+      defaults={if_true="folds,cursor,curdir"},
+      cb='did_set_viewoptions'
     },
     {
       -- Alias for "shada".
@@ -2692,7 +2846,8 @@ return {
       deny_duplicates=true,
       redraw={'curswant'},
       varname='p_ve',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_virtualedit'
     },
     {
       full_name='visualbell', abbreviation='vb',
@@ -2713,7 +2868,8 @@ return {
       short_desc=N_("allow specified keys to cross line boundaries"),
       type='string', list='flagscomma', scope={'global'},
       varname='p_ww',
-      defaults={if_true="b,s"}
+      defaults={if_true="b,s"},
+      cb='did_set_whichwrap'
     },
     {
       full_name='wildchar', abbreviation='wc',
@@ -2757,7 +2913,8 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=false,
       varname='p_wim',
-      defaults={if_true="full"}
+      defaults={if_true="full"},
+      cb='did_set_wildmode'
     },
     {
       full_name='wildoptions', abbreviation='wop',
@@ -2765,14 +2922,16 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_wop',
-      defaults={if_true='pum,tagfile'}
+      defaults={if_true='pum,tagfile'},
+      cb='did_set_wildoptions'
     },
     {
       full_name='winaltkeys', abbreviation='wak',
       short_desc=N_("when the windows system handles ALT keys"),
       type='string', scope={'global'},
       varname='p_wak',
-      defaults={if_true="menu"}
+      defaults={if_true="menu"},
+      cb='did_set_winaltkeys'
     },
     {
       full_name='winbar', abbreviation='wbr',
@@ -2782,14 +2941,16 @@ return {
       modelineexpr=true,
       redraw={'statuslines'},
       varname='p_wbr',
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_winbar'
     },
     {
       full_name='winblend', abbreviation='winbl',
       short_desc=N_("Controls transparency level for floating windows"),
       type='number', scope={'window'},
       redraw={'current_window'},
-      defaults={if_true=0}
+      defaults={if_true=0},
+      cb='did_set_winblend'
     },
     {
       full_name='winhighlight', abbreviation='winhl',
@@ -2798,21 +2959,24 @@ return {
       deny_duplicates=true,
       alloced=true,
       redraw={'current_window'},
-      defaults={if_true=""}
+      defaults={if_true=""},
+      cb='did_set_winhl'
     },
     {
       full_name='window', abbreviation='wi',
       short_desc=N_("nr of lines to scroll for CTRL-F and CTRL-B"),
       type='number', scope={'global'},
       varname='p_window',
-      defaults={if_true=0}
+      defaults={if_true=0},
+      cb='did_set_window'
     },
     {
       full_name='winheight', abbreviation='wh',
       short_desc=N_("minimum number of lines for the current window"),
       type='number', scope={'global'},
       varname='p_wh',
-      defaults={if_true=1}
+      defaults={if_true=1},
+      cb='did_set_winheight'
     },
     {
       full_name='winfixheight', abbreviation='wfh',
@@ -2833,28 +2997,32 @@ return {
       short_desc=N_("minimum number of lines for any window"),
       type='number', scope={'global'},
       varname='p_wmh',
-      defaults={if_true=1}
+      defaults={if_true=1},
+      cb='did_set_winminheight'
     },
     {
       full_name='winminwidth', abbreviation='wmw',
       short_desc=N_("minimal number of columns for any window"),
       type='number', scope={'global'},
       varname='p_wmw',
-      defaults={if_true=1}
+      defaults={if_true=1},
+      cb='did_set_winminwidth'
     },
     {
       full_name='winwidth', abbreviation='wiw',
       short_desc=N_("minimal number of columns for current window"),
       type='number', scope={'global'},
       varname='p_wiw',
-      defaults={if_true=20}
+      defaults={if_true=20},
+      cb='did_set_winwidth'
     },
     {
       full_name='wrap',
       short_desc=N_("lines wrap and continue on the next line"),
       type='bool', scope={'window'},
       redraw={'current_window'},
-      defaults={if_true=true}
+      defaults={if_true=true},
+      cb='did_set_wrap'
     },
     {
       full_name='wrapmargin', abbreviation='wm',

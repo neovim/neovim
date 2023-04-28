@@ -7,7 +7,7 @@
 
 // option_defs.h: definition of global variables for settable options
 
-// Flags
+// Option Flags
 #define P_BOOL         0x01U        ///< the option is boolean
 #define P_NUM          0x02U        ///< the option is numeric
 #define P_STRING       0x04U        ///< the option is a string
@@ -290,7 +290,7 @@ enum {
 #define GO_FOOTER       'F'             // add footer
 #define GO_VERTICAL     'v'             // arrange dialog buttons vertically
 #define GO_KEEPWINSIZE  'k'             // keep GUI window size
-#define GO_ALL "aAbcdefFghilmMprTvk"    // all possible flags for 'go'
+#define GO_ALL "!aAbcdefFghilLmMpPrRtTvk"  // all possible flags for 'go'
 
 // flags for 'comments' option
 #define COM_NEST        'n'             // comments strings nest
@@ -978,6 +978,56 @@ enum {
 
 #define TABSTOP_MAX 9999
 
+// Argument for the callback function (opt_did_set_cb_T) invoked after an
+// option value is modified.
+typedef struct {
+  // Pointer to the option variable.  The variable can be a long (numeric
+  // option), an int (boolean option) or a char pointer (string option).
+  char *os_varp;
+  int os_idx;
+  int os_flags;
+
+  // old value of the option (can be a string, number or a boolean)
+  union {
+    const long number;
+    const bool boolean;
+    const char *string;
+  } os_oldval;
+
+  // new value of the option (can be a string, number or a boolean)
+  union {
+    const long number;
+    const bool boolean;
+    const char *string;
+  } os_newval;
+
+  // When set by the called function: Stop processing the option further.
+  // Currently only used for boolean options.
+  int os_doskip;
+
+  // Option value was checked to be safe, no need to set P_INSECURE
+  // Used for the 'keymap', 'filetype' and 'syntax' options.
+  int os_value_checked;
+  // Option value changed.  Used for the 'filetype' and 'syntax' options.
+  int os_value_changed;
+
+  // Used by the 'isident', 'iskeyword', 'isprint' and 'isfname' options.
+  // Set to true if the character table is modified when processing the
+  // option and need to be restored because of a failure.
+  int os_restore_chartab;
+
+  // If the value specified for an option is not valid and the error message
+  // is parameterized, then the "os_errbuf" buffer is used to store the error
+  // message (when it is not NULL).
+  char *os_errbuf;
+  size_t os_errbuflen;
+
+  void *os_win;
+  void *os_buf;
+} optset_T;
+
+typedef const char *(*opt_did_set_cb_T)(optset_T *args);
+
 /// Stores an identifier of a script or channel that last set an option.
 typedef struct {
   sctx_T script_ctx;       /// script context where the option was last set
@@ -993,12 +1043,15 @@ typedef enum {
 typedef struct vimoption {
   char *fullname;        // full option name
   char *shortname;       // permissible abbreviation
-  uint32_t flags;               // see below
+  uint32_t flags;               // see above
   char *var;               // global option: pointer to variable;
                            // window-local option: VAR_WIN;
                            // buffer-local option: global value
   idopt_T indir;                // global option: PV_NONE;
                                 // local option: indirect option index
+  // callback function to invoke after an option is modified to validate and
+  // apply the new value.
+  opt_did_set_cb_T opt_did_set_cb;
   char *def_val;         // default values for variable (neovim!!)
   LastSet last_set;             // script in which the option was last set
 } vimoption_T;
