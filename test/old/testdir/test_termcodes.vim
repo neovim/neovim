@@ -16,7 +16,7 @@ func Test_xterm_mouse_left_click()
   " set mouse=a term=xterm
   set mouse=a
   call setline(1, ['line 1', 'line 2', 'line 3 is a bit longer'])
-  for ttymouse_val in ['sgr']
+  for ttymouse_val in g:Ttymouse_values + g:Ttymouse_dec + g:Ttymouse_netterm
     let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' .. ttymouse_val
     go
@@ -42,7 +42,7 @@ func Test_xterm_mouse_ctrl_click()
   " set mouse=a term=xterm
   set mouse=a
 
-  for ttymouse_val in ['sgr']
+  for ttymouse_val in g:Ttymouse_values
     let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' .. ttymouse_val
     " help
@@ -82,7 +82,7 @@ func Test_xterm_mouse_middle_click()
   " set mouse=a term=xterm
   set mouse=a
 
-  for ttymouse_val in ['sgr']
+  for ttymouse_val in g:Ttymouse_values + g:Ttymouse_dec
     let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' .. ttymouse_val
     call setline(1, ['123456789', '123456789'])
@@ -124,7 +124,7 @@ func Test_xterm_mouse_wheel()
   set mouse=a
   call setline(1, range(1, 100))
 
-  for ttymouse_val in ['sgr']
+  for ttymouse_val in g:Ttymouse_values
     let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' .. ttymouse_val
     go
@@ -161,7 +161,7 @@ func Test_xterm_mouse_drag_window_separator()
   " set mouse=a term=xterm
   set mouse=a
 
-  for ttymouse_val in ['sgr']
+  for ttymouse_val in g:Ttymouse_values + g:Ttymouse_dec
     let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' .. ttymouse_val
 
@@ -219,7 +219,7 @@ func Test_xterm_mouse_drag_statusline()
   " set mouse=a term=xterm laststatus=2
   set mouse=a laststatus=2
 
-  for ttymouse_val in ['sgr']
+  for ttymouse_val in g:Ttymouse_values + g:Ttymouse_dec
     let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' .. ttymouse_val
 
@@ -261,7 +261,7 @@ func Test_xterm_mouse_click_tab()
   set mouse=a
   let row = 1
 
-  for ttymouse_val in ['sgr']
+  for ttymouse_val in g:Ttymouse_values + g:Ttymouse_dec + g:Ttymouse_netterm
     let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' .. ttymouse_val
     e Xfoo
@@ -310,7 +310,7 @@ func Test_xterm_mouse_click_X_to_close_tab()
   let row = 1
   let col = &columns
 
-  for ttymouse_val in ['sgr']
+  for ttymouse_val in g:Ttymouse_values + g:Ttymouse_dec + g:Ttymouse_netterm
     if ttymouse_val ==# 'xterm2' && col > 223
       " When 'ttymouse' is 'xterm2', row/col bigger than 223 are not supported.
       continue
@@ -357,7 +357,7 @@ func Test_xterm_mouse_drag_to_move_tab()
   set mouse=a mousetime=0
   let row = 1
 
-  for ttymouse_val in ['sgr']
+  for ttymouse_val in g:Ttymouse_values + g:Ttymouse_dec
     let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' .. ttymouse_val
     e Xtab1
@@ -407,11 +407,19 @@ func Test_xterm_mouse_double_click_to_create_tab()
   let row = 1
   let col = 10
 
-  for ttymouse_val in ['sgr']
+  let round = 0
+  for ttymouse_val in g:Ttymouse_values + g:Ttymouse_dec
     let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' .. ttymouse_val
     e Xtab1
     tabnew Xtab2
+
+    if round > 0
+      " We need to sleep, or else the first MouseLeftClick() will be
+      " interpreted as a spurious triple-click.
+      sleep 100m
+    endif
+    let round += 1
 
     let a = split(execute(':tabs'), "\n")
     call assert_equal(['Tab page 1',
@@ -436,11 +444,6 @@ func Test_xterm_mouse_double_click_to_create_tab()
         \              'Tab page 3',
         \              '#   Xtab2'], a, msg)
 
-    if ttymouse_val !=# 'sgr'
-      " We need to sleep, or else MouseLeftClick() in next loop
-      " iteration will be interpreted as a spurious triple-click.
-      sleep 100m
-    endif
     %bwipe!
   endfor
 
