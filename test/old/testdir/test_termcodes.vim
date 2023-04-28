@@ -8,7 +8,7 @@ source mouse.vim
 source view_util.vim
 source term_util.vim
 
-func Test_xterm_mouse_click()
+func Test_xterm_mouse_left_click()
   new
   let save_mouse = &mouse
   let save_term = &term
@@ -31,6 +31,49 @@ func Test_xterm_mouse_click()
   let &mouse = save_mouse
   " let &term = save_term
   " let &ttymouse = save_ttymouse
+  bwipe!
+endfunc
+
+func Test_xterm_mouse_middle_click()
+  new
+  let save_mouse = &mouse
+  let save_term = &term
+  " let save_ttymouse = &ttymouse
+  let save_quotestar = @*
+  let @* = 'abc'
+  " set mouse=a term=xterm
+  set mouse=a
+
+  for ttymouse_val in ['sgr']
+    let msg = 'ttymouse=' .. ttymouse_val
+    " exe 'set ttymouse=' . ttymouse_val
+    call setline(1, ['123456789', '123456789'])
+
+    " Middle-click in the middle of the line pastes text where clicked.
+    let row = 1
+    let col = 6
+    call MouseMiddleClick(row, col)
+    call MouseMiddleRelease(row, col)
+    call assert_equal(['12345abc6789', '123456789'], getline(1, '$'), msg)
+
+    " Middle-click beyond end of the line pastes text at the end of the line.
+    let col = 20
+    call MouseMiddleClick(row, col)
+    call MouseMiddleRelease(row, col)
+    call assert_equal(['12345abc6789abc', '123456789'], getline(1, '$'), msg)
+
+    " Middle-click beyond the last line pastes in the last line.
+    let row = 5
+    let col = 3
+    call MouseMiddleClick(row, col)
+    call MouseMiddleRelease(row, col)
+    call assert_equal(['12345abc6789abc', '12abc3456789'], getline(1, '$'), msg)
+  endfor
+
+  let &mouse = save_mouse
+  " let &term = save_term
+  " let &ttymouse = save_ttymouse
+  let @* = save_quotestar
   bwipe!
 endfunc
 
