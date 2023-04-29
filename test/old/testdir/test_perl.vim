@@ -224,11 +224,11 @@ endfunc
 func Test_stdio()
   throw 'skipped: TODO: '
   redir =>l:out
-  perl <<EOF
+  perl << trim EOF
     VIM::Msg("&VIM::Msg");
     print "STDOUT";
     print STDERR "STDERR";
-EOF
+  EOF
   redir END
   call assert_equal(['&VIM::Msg', 'STDOUT', 'STDERR'], split(l:out, "\n"))
 endfunc
@@ -305,7 +305,16 @@ END
   perl <<
 VIM::DoCommand('let s ..= "B"')
 .
-  call assert_equal('AB', s)
+  perl << trim END
+    VIM::DoCommand('let s ..= "C"')
+  END
+  perl << trim
+    VIM::DoCommand('let s ..= "D"')
+  .
+  perl << trim eof
+    VIM::DoCommand('let s ..= "E"')
+  eof
+  call assert_equal('ABCDE', s)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

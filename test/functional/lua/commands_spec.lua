@@ -7,6 +7,7 @@ local NIL = helpers.NIL
 local eval = helpers.eval
 local feed = helpers.feed
 local clear = helpers.clear
+local matches = helpers.matches
 local meths = helpers.meths
 local exec_lua = helpers.exec_lua
 local exec_capture = helpers.exec_capture
@@ -27,22 +28,27 @@ describe(':lua command', function()
     eq('', exec_capture(
       'lua vim.api.nvim_buf_set_lines(1, 1, 2, false, {"TEST"})'))
     eq({'', 'TEST'}, curbufmeths.get_lines(0, 100, false))
-    source(dedent([[
+    source([[
       lua << EOF
         vim.api.nvim_buf_set_lines(1, 1, 2, false, {"TSET"})
-      EOF]]))
+      EOF]])
     eq({'', 'TSET'}, curbufmeths.get_lines(0, 100, false))
-    source(dedent([[
+    source([[
       lua << EOF
-        vim.api.nvim_buf_set_lines(1, 1, 2, false, {"SETT"})]]))
+        vim.api.nvim_buf_set_lines(1, 1, 2, false, {"SETT"})]])
     eq({'', 'SETT'}, curbufmeths.get_lines(0, 100, false))
-    source(dedent([[
+    source([[
       lua << EOF
         vim.api.nvim_buf_set_lines(1, 1, 2, false, {"ETTS"})
         vim.api.nvim_buf_set_lines(1, 2, 3, false, {"TTSE"})
         vim.api.nvim_buf_set_lines(1, 3, 4, false, {"STTE"})
-      EOF]]))
+      EOF]])
     eq({'', 'ETTS', 'TTSE', 'STTE'}, curbufmeths.get_lines(0, 100, false))
+    matches('.*Vim%(lua%):E15: Invalid expression: .*', pcall_err(source, [[
+      lua << eval EOF
+        {}
+      EOF
+    ]]))
   end)
   it('throws catchable errors', function()
     eq([[Vim(lua):E5107: Error loading lua [string ":lua"]:0: unexpected symbol near ')']],

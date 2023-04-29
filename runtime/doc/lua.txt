@@ -247,12 +247,12 @@ arguments separated by " " (space) instead of "\t" (tab).
         :lua =jit.version
 <
                                                                 *:lua-heredoc*
-:lua << [endmarker]
+:lua << [trim] [{endmarker}]
 {script}
 {endmarker}
-    Executes Lua script {script} from within Vimscript. {endmarker} must NOT
-    be preceded by whitespace. You can omit [endmarker] after the "<<" and use
-    a dot "." after {script} (similar to |:append|, |:insert|).
+    Executes Lua script {script} from within Vimscript. You can omit
+    [endmarker] after the "<<" and use a dot "." after {script} (similar to
+    |:append|, |:insert|). Refer to |let-heredoc| for more information.
 
     Example: >vim
         function! CurrentLineInfo()

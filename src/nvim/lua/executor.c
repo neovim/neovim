@@ -1619,7 +1619,7 @@ void ex_lua(exarg_T *const eap)
 {
   size_t len;
   char *code = script_get(eap, &len);
-  if (eap->skip) {
+  if (eap->skip || code == NULL) {
     xfree(code);
     return;
   }
