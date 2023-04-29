@@ -39,10 +39,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Install dependencies
-        run: |
-          apt-get update
-          apt-get install -y build-essential cmake gettext ninja-build unzip
+      - run: ./.github/scripts/install_deps.sh --container
       - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
         run: |
           echo 'NVIM_BUILD_TYPE=Release' >> $GITHUB_ENV
