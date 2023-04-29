@@ -229,11 +229,14 @@ endif()
 #
 # Lint
 #
-find_program(SHELLCHECK_PRG shellcheck)
-find_program(STYLUA_PRG stylua)
+option(CI_LINT "Abort if lint programs not found" OFF)
+if(CI_LINT)
+  set(LINT_REQUIRED "REQUIRED")
+endif()
+find_program(SHELLCHECK_PRG shellcheck ${LINT_REQUIRED})
+find_program(STYLUA_PRG stylua ${LINT_REQUIRED})
 
 add_glob_target(
-  REQUIRED
   TARGET lintlua-luacheck
   COMMAND ${DEPS_BIN_DIR}/luacheck
   FLAGS -q
