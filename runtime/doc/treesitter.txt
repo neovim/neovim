@@ -841,6 +841,28 @@ get_files({lang}, {query_name}, {is_included})
         string[] query_files List of files to load for given query and
         language
 
+lint({buf}, {opts})                              *vim.treesitter.query.lint()*
+    Lint treesitter queries using installed parser, or clear lint errors.
+
+    Use |treesitter-parsers| in runtimepath to check the query file in {buf}
+    for errors:
+
+    • verify that used nodes are valid identifiers in the grammar.
+    • verify that predicates and directives are valid.
+    • verify that top-level s-expressions are valid.
+
+    The found diagnostics are reported using |diagnostic-api|. By default, the
+    parser used for verification is determined by the containing folder of the
+    query file, e.g., if the path is `**/lua/highlights.scm` , the parser for the `lua` language will be used.
+
+    Parameters: ~
+      • {buf}   (integer) Buffer handle
+      • {opts}  (QueryLinterOpts|nil) Optional keyword arguments:
+                • langs (string|string[]|nil) Language(s) to use for checking
+                  the query. If multiple languages are specified, queries are
+                  validated for all of them
+                • clear (boolean) if `true`, just clear current lint errors
+
 list_directives()                     *vim.treesitter.query.list_directives()*
     Lists the currently available directives to use in queries.
 
