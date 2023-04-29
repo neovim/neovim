@@ -18,7 +18,7 @@ done
 os=$(uname -s)
 if [[ $os == Linux ]]; then
   $SUDO apt-get update
-  $SUDO apt-get install -y build-essential cmake curl gettext ninja-build pkg-config unzip
+  $SUDO apt-get install -y build-essential cmake curl gettext ninja-build unzip
   if [[ -n $TEST ]]; then
     $SUDO apt-get install -y locales-all cpanminus
   fi
