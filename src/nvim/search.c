@@ -3045,6 +3045,10 @@ static int fuzzy_match_recursive(const char *fuzpat, const char *str, uint32_t s
         return 0;
       }
 
+      int recursiveScore = 0;
+      uint32_t recursiveMatches[MAX_FUZZY_MATCHES];
+      CLEAR_FIELD(recursiveMatches);
+
       // "Copy-on-Write" srcMatches into matches
       if (first_match && srcMatches != NULL) {
         memcpy(matches, srcMatches, (size_t)nextMatch * sizeof(srcMatches[0]));
@@ -3052,8 +3056,6 @@ static int fuzzy_match_recursive(const char *fuzpat, const char *str, uint32_t s
       }
 
       // Recursive call that "skips" this match
-      uint32_t recursiveMatches[MAX_FUZZY_MATCHES];
-      int recursiveScore = 0;
       const char *const next_char = str + utfc_ptr2len(str);
       if (fuzzy_match_recursive(fuzpat, next_char, strIdx + 1, &recursiveScore, strBegin, strLen,
                                 matches, recursiveMatches,
