@@ -33,46 +33,16 @@ jobs:
     if: (github.event_name == 'pull_request' && github.base_ref == 'master') || (github.event_name == 'push' && github.ref == 'refs/heads/master')
     runs-on: ubuntu-22.04
     timeout-minutes: 10
-    env:
-      CACHE_UNCRUSTIFY: ${{ github.workspace }}/.cache/uncrustify
-      UNCRUSTIFY_VERSION: uncrustify-0.76.0
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: ./.github/scripts/install_deps.sh lua-check
-
       - name: Set up Homebrew
-        id: homebrew
         uses: Homebrew/actions/setup-homebrew@master
 
-      - run: |
-          brew install stylua
-
-      - name: Cache uncrustify
-        id: cache-uncrustify
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.CACHE_UNCRUSTIFY }}
-          key: ${{ env.UNCRUSTIFY_VERSION }}
-
-      - name: Clone uncrustify
-        if: steps.cache-uncrustify.outputs.cache-hit != 'true'
-        uses: actions/checkout@v3
-        with:
-          repository: uncrustify/uncrustify
-          ref: ${{ env.UNCRUSTIFY_VERSION }}
-          path: uncrustify
-
-      - name: Install uncrustify
-        if: steps.cache-uncrustify.outputs.cache-hit != 'true'
+      - name: Install dependencies
         run: |
-          source_dir=uncrustify
-          build_dir=uncrustify/build
-          cmake -S $source_dir -B $build_dir -G Ninja -D CMAKE_BUILD_TYPE=Release
-          cmake --build $build_dir
-          mkdir -p .cache
-          cp $build_dir/uncrustify ${{ env.CACHE_UNCRUSTIFY }}
+          ./.github/scripts/install_deps.sh lua-check
+          brew install stylua uncrustify
 
       - uses: ./.github/actions/cache
 
@@ -82,7 +52,6 @@ jobs:
           cmake --build .deps
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: configure
         run: cmake -B build -G Ninja
 
       - if: "!cancelled()"
@@ -111,8 +80,7 @@ jobs:
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: uncrustify
-        run: |
-          ${{ env.CACHE_UNCRUSTIFY }} -c ./src/uncrustify.cfg -q --replace --no-backup $(find ./src/nvim -name "*.[ch]")
+        run: cmake --build build --target lintc-uncrustify
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: suggester / uncrustify
