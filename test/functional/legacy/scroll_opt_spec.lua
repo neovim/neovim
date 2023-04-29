@@ -646,4 +646,77 @@ describe('smoothscroll', function()
                   |
     ]])
   end)
+
+  it("works with virt_lines above and below", function()
+    screen:try_resize(55, 7)
+    exec([=[
+      call setline(1, ['Line' .. (' with some text'->repeat(7))]->repeat(3))
+      set smoothscroll
+      let ns = nvim_create_namespace('')
+      call nvim_buf_set_extmark(0, ns, 0, 0, {'virt_lines':[[['virt_below1']]]})
+      call nvim_buf_set_extmark(0, ns, 1, 0, {'virt_lines':[[['virt_above1']]],'virt_lines_above':1})
+      call nvim_buf_set_extmark(0, ns, 1, 0, {'virt_lines':[[['virt_below2']]]})
+      call nvim_buf_set_extmark(0, ns, 2, 0, {'virt_lines':[[['virt_above2']]],'virt_lines_above':1})
+      norm ggL
+    ]=])
+    screen:expect([[
+      Line with some text with some text with some text with |
+      some text with some text with some text with some text |
+      virt_below1                                            |
+      virt_above1                                            |
+      ^Line with some text with some text with some text with |
+      some text with some text with some text with some text |
+                                                             |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      <<<e text with some text with some text with some text |
+      virt_below1                                            |
+      virt_above1                                            |
+      ^Line with some text with some text with some text with |
+      some text with some text with some text with some text |
+      virt_below2                                            |
+                                                             |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      virt_below1                                            |
+      virt_above1                                            |
+      ^Line with some text with some text with some text with |
+      some text with some text with some text with some text |
+      virt_below2                                            |
+      virt_above2                                            |
+                                                             |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      virt_above1                                            |
+      ^Line with some text with some text with some text with |
+      some text with some text with some text with some text |
+      virt_below2                                            |
+      virt_above2                                            |
+      Line with some text with some text with some text wi@@@|
+                                                             |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      ^Line with some text with some text with some text with |
+      some text with some text with some text with some text |
+      virt_below2                                            |
+      virt_above2                                            |
+      Line with some text with some text with some text with |
+      some text with some text with some text with some text |
+                                                             |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      <<<e text with some text with some text with some tex^t |
+      virt_below2                                            |
+      virt_above2                                            |
+      Line with some text with some text with some text with |
+      some text with some text with some text with some text |
+      ~                                                      |
+                                                             |
+    ]])
+  end)
 end)
