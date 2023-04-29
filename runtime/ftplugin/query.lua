@@ -11,6 +11,9 @@ end
 -- use treesitter over syntax
 vim.treesitter.start()
 
+-- set omnifunc
+vim.bo.omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
+
 -- query linter
 local buf = vim.api.nvim_get_current_buf()
 local query_lint_on = vim.g.query_lint_on or { 'BufEnter', 'BufWrite' }
