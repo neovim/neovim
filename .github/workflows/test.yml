@@ -41,7 +41,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          ./.github/scripts/install_deps.sh lua-check
+          ./.github/scripts/install_deps.sh
           brew install stylua uncrustify
 
       - uses: ./.github/actions/cache
@@ -141,7 +141,7 @@ jobs:
         run: mkdir -p "$LOG_DIR"
 
       - name: Install dependencies
-        run: ./.github/scripts/install_deps.sh cpanminus
+        run: ./.github/scripts/install_deps.sh --test
 
       - name: Setup interpreter packages
         run: |
