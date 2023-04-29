@@ -163,7 +163,6 @@ char *eval_all_expr_in_str(char *str)
 list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
 {
   char *marker;
-  char *p;
   int marker_indent_len = 0;
   int text_indent_len = 0;
   char *text_indent = NULL;
@@ -187,7 +186,7 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
       // The amount of indentation trimmed is the same as the indentation
       // of the first line after the :let command line.  To find the end
       // marker the indent of the :let command line is trimmed.
-      p = *eap->cmdlinep;
+      char *p = *eap->cmdlinep;
       while (ascii_iswhite(*p)) {
         p++;
         marker_indent_len++;
@@ -208,7 +207,7 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
   // The marker is the next word.
   if (*cmd != NUL && *cmd != '"') {
     marker = skipwhite(cmd);
-    p = skiptowhite(marker);
+    char *p = skiptowhite(marker);
     if (*skipwhite(p) != NUL && *skipwhite(p) != '"') {
       semsg(_(e_trailing_arg), p);
       return NULL;
@@ -238,7 +237,9 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
     xfree(theline);
     theline = eap->getline(NUL, eap->cookie, 0, false);
     if (theline == NULL) {
-      semsg(_("E990: Missing end marker '%s'"), marker);
+      if (!script_get) {
+        semsg(_("E990: Missing end marker '%s'"), marker);
+      }
       break;
     }
 
@@ -260,7 +261,7 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
 
     if (text_indent_len == -1 && *theline != NUL) {
       // set the text indent from the first line.
-      p = theline;
+      char *p = theline;
       text_indent_len = 0;
       while (ascii_iswhite(*p)) {
         p++;
