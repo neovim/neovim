@@ -3470,8 +3470,8 @@ void free_titles(void)
 
 #endif
 
-/// Get relative cursor position in window into "buf[buflen]", in the form 99%,
-/// using "Top", "Bot" or "All" when appropriate.
+/// Get relative cursor position in window into "buf[buflen]", in the localized
+/// percentage form like %99, 99%; using "Top", "Bot" or "All" when appropriate.
 void get_rel_pos(win_T *wp, char *buf, int buflen)
 {
   // Need at least 3 chars for writing.
@@ -3495,9 +3495,20 @@ void get_rel_pos(win_T *wp, char *buf, int buflen)
   } else if (above <= 0) {
     xstrlcpy(buf, _("Top"), (size_t)buflen);
   } else {
-    vim_snprintf(buf, (size_t)buflen, "%2d%%", above > 1000000L
-                 ? (int)(above / ((above + below) / 100L))
-                 : (int)(above * 100L / (above + below)));
+    int perc = (above > 1000000L
+                ? (int)(above / ((above + below) / 100L))
+                : (int)(above * 100L / (above + below)));
+
+    char *p = buf;
+    size_t l = (size_t)buflen;
+    if (perc < 10) {
+      // prepend one space
+      buf[0] = ' ';
+      p++;
+      l--;
+    }
+    // localized percentage value
+    vim_snprintf(p, l, _("%d%%"), perc);
   }
 }
 
