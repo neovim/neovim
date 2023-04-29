@@ -155,14 +155,19 @@ char *eval_all_expr_in_str(char *str)
 /// marker, then the leading indentation before the lines (matching the
 /// indentation in the 'cmd' line) is stripped.
 ///
+/// When getting lines for an embedded script (e.g. python, lua, perl, ruby,
+/// tcl, mzscheme), "script_get" is set to true. In this case, if the marker is
+/// missing, then '.' is accepted as a marker.
+///
 /// @return  a List with {lines} or NULL on failure.
-static list_T *heredoc_get(exarg_T *eap, char *cmd)
+list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
 {
   char *marker;
   char *p;
   int marker_indent_len = 0;
   int text_indent_len = 0;
   char *text_indent = NULL;
+  char dot[] = ".";
 
   if (eap->getline == NULL) {
     emsg(_("E991: cannot use =<< here"));
@@ -214,8 +219,14 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
       return NULL;
     }
   } else {
-    emsg(_("E172: Missing marker"));
-    return NULL;
+    // When getting lines for an embedded script, if the marker is missing,
+    // accept '.' as the marker.
+    if (script_get) {
+      marker = dot;
+    } else {
+      emsg(_("E172: Missing marker"));
+      return NULL;
+    }
   }
 
   char *theline = NULL;
@@ -353,7 +364,7 @@ void ex_let(exarg_T *eap)
 
   if (expr[0] == '=' && expr[1] == '<' && expr[2] == '<') {
     // HERE document
-    list_T *l = heredoc_get(eap, expr + 3);
+    list_T *l = heredoc_get(eap, expr + 3, false);
     if (l != NULL) {
       tv_list_set_ret(&rettv, l);
       if (!eap->skip) {

@@ -2571,11 +2571,18 @@ void ex_function(exarg_T *eap)
                   && (!ASCII_ISALPHA(p[2]) || p[2] == 's')))) {
         // ":python <<" continues until a dot, like ":append"
         p = skipwhite(arg + 2);
+        if (strncmp(p, "trim", 4) == 0) {
+          // Ignore leading white space.
+          p = skipwhite(p + 4);
+          heredoc_trimmed = xstrnsave(theline, (size_t)(skipwhite(theline) - theline));
+        }
         if (*p == NUL) {
           skip_until = xstrdup(".");
         } else {
-          skip_until = xstrdup(p);
+          skip_until = xstrnsave(p, (size_t)(skiptowhite(p) - p));
         }
+        do_concat = false;
+        is_heredoc = true;
       }
 
       // Check for ":let v =<< [trim] EOF"

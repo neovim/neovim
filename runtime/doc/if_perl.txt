@@ -19,7 +19,7 @@ See |provider-perl| for more information.
 			working: >
 				:perl print "Hello"
 
-:[range]perl << [endmarker]
+:[range]perl << [trim] [{endmarker}]
 {script}
 {endmarker}
 			Execute perl script {script}.

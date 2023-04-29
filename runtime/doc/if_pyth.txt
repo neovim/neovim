@@ -19,17 +19,16 @@ Commands						*python-commands*
 			the `:python` command is working: >vim
 				:python print "Hello"
 
-:[range]py[thon] << [endmarker]
+:[range]py[thon] << [trim] [{endmarker}]
 {script}
 {endmarker}
 			Execute Python script {script}.  Useful for including
 			python code in Vim scripts.  Requires Python, see
 			|script-here|.
 
-The {endmarker} below the {script} must NOT be preceded by any white space.
-
 If [endmarker] is omitted from after the "<<", a dot '.' must be used after
-{script}, like for the |:append| and |:insert| commands.
+{script}, like for the |:append| and |:insert| commands.  Refer to
+|:let-heredoc| for more information.
 
 Example: >vim
 	function! IcecreamInitialize()
@@ -597,12 +596,12 @@ variants explicitly if Python 3 is required.
 
 							*:py3* *:python3*
 :[range]py3 {stmt}
-:[range]py3 << [endmarker]
+:[range]py3 << [trim] [{endmarker}]
 {script}
 {endmarker}
 
 :[range]python3 {stmt}
-:[range]python3 << [endmarker]
+:[range]python3 << [trim] [{endmarker}]
 {script}
 {endmarker}
 	The `:py3` and `:python3` commands work similar to `:python`.  A

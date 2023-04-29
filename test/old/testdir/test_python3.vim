@@ -227,9 +227,11 @@ func Test_python3_opt_reset_local_to_global()
   " Set the global and buffer-local option values and then clear the
   " buffer-local option value.
   for opt in bopts
-    py3 pyopt = vim.bindeval("opt")
-    py3 vim.options[pyopt[0]] = pyopt[1]
-    py3 curbuf.options[pyopt[0]] = pyopt[2]
+    py3 << trim END
+      pyopt = vim.bindeval("opt")
+      vim.options[pyopt[0]] = pyopt[1]
+      curbuf.options[pyopt[0]] = pyopt[2]
+    END
     exe "call assert_equal(opt[2], &" .. opt[0] .. ")"
     exe "call assert_equal(opt[1], &g:" .. opt[0] .. ")"
     exe "call assert_equal(opt[2], &l:" .. opt[0] .. ")"
@@ -247,9 +249,11 @@ func Test_python3_opt_reset_local_to_global()
         \ ['sidescrolloff', 6, 12, -1],
         \ ['statusline', '%<%f', '%<%F', '']]
   for opt in wopts
-    py3 pyopt = vim.bindeval("opt")
-    py3 vim.options[pyopt[0]] = pyopt[1]
-    py3 curwin.options[pyopt[0]] = pyopt[2]
+    py3 << trim
+      pyopt = vim.bindeval("opt")
+      vim.options[pyopt[0]] = pyopt[1]
+      curwin.options[pyopt[0]] = pyopt[2]
+    .
     exe "call assert_equal(opt[2], &" .. opt[0] .. ")"
     exe "call assert_equal(opt[1], &g:" .. opt[0] .. ")"
     exe "call assert_equal(opt[2], &l:" .. opt[0] .. ")"
@@ -261,6 +265,23 @@ func Test_python3_opt_reset_local_to_global()
   endfor
 
   close!
+endfunc
+
+" Test for various heredoc syntax
+func Test_python3_heredoc()
+  python3 << END
+s='A'
+END
+  python3 <<
+s+='B'
+.
+  python3 << trim END
+    s+='C'
+  END
+  python3 << trim
+    s+='D'
+  .
+  call assert_equal('ABCD', pyxeval('s'))
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
