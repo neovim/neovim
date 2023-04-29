@@ -428,7 +428,10 @@ Vim.command('let s ..= "B"')
   ruby << trim
     Vim.command('let s ..= "D"')
   .
-  call assert_equal('ABCD', s)
+  ruby << trim eof
+    Vim.command('let s ..= "E"')
+  eof
+  call assert_equal('ABCDE', s)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

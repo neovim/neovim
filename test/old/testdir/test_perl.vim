@@ -311,7 +311,10 @@ VIM::DoCommand('let s ..= "B"')
   perl << trim
     VIM::DoCommand('let s ..= "D"')
   .
-  call assert_equal('ABCD', s)
+  perl << trim eof
+    VIM::DoCommand('let s ..= "E"')
+  eof
+  call assert_equal('ABCDE', s)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

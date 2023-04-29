@@ -94,7 +94,10 @@ result+='B'
   pyx << trim
     result+='D'
   .
-  call assert_equal('ABCD', pyxeval('result'))
+  pyx << trim eof
+    result+='E'
+  eof
+  call assert_equal('ABCDE', pyxeval('result'))
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
