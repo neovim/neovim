@@ -1647,7 +1647,7 @@ static void create_windows(mparm_T *parmp)
     msg_scroll = true;                  // scroll message up
     ml_recover(true);
     if (curbuf->b_ml.ml_mfp == NULL) {   // failed
-      getout(1);
+      smesg("Error loading swp files in recovery mode");
     }
     do_modelines(0);                    // do modelines
   } else {
