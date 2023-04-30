@@ -478,5 +478,26 @@ func Test_display_lastline()
   call assert_fails(':set fillchars=lastline:〇', 'E474:')
 endfunc
 
+func Test_display_long_lastline()
+  CheckScreendump
+
+  let lines =<< trim END
+    set display=lastline
+    call setline(1, [
+      \'aaaaa'->repeat(100),
+      \'bbbbb '->repeat(7) .. 'ccccc '->repeat(7) .. 'ddddd '->repeat(7)
+    \])
+  END
+
+  call writefile(lines, 'XdispLongline', 'D')
+  let buf = RunVimInTerminal('-S XdispLongline', #{rows: 14, cols: 35})
+
+  call term_sendkeys(buf, "482|")
+  call VerifyScreenDump(buf, 'Test_display_long_line_1', {})
+  call term_sendkeys(buf, "D")
+  call VerifyScreenDump(buf, 'Test_display_long_line_2', {})
+
+  call StopVimInTerminal(buf)
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
