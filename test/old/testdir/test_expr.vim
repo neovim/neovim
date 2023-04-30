@@ -69,9 +69,7 @@ func Test_op_falsy()
       call assert_equal(0z00, 0z00 ?? 456)
       call assert_equal([1], [1] ?? 456)
       call assert_equal({'one': 1}, {'one': 1} ?? 456)
-      if has('float')
-        call assert_equal(0.1, 0.1 ?? 456)
-      endif
+      call assert_equal(0.1, 0.1 ?? 456)
 
       call assert_equal(456, v:false ?? 456)
       call assert_equal(456, 0 ?? 456)
@@ -79,8 +77,23 @@ func Test_op_falsy()
       call assert_equal(456, 0z ?? 456)
       call assert_equal(456, [] ?? 456)
       call assert_equal(456, {} ?? 456)
-      if has('float')
-        call assert_equal(456, 0.0 ?? 456)
+      call assert_equal(456, 0.0 ?? 456)
+
+      call assert_equal(456, v:null ?? 456)
+      #" call assert_equal(456, v:none ?? 456)
+      call assert_equal(456, v:_null_string ?? 456)
+      call assert_equal(456, v:_null_blob ?? 456)
+      call assert_equal(456, v:_null_list ?? 456)
+      call assert_equal(456, v:_null_dict ?? 456)
+      #" Nvim doesn't have null functions
+      #" call assert_equal(456, test_null_function() ?? 456)
+      #" Nvim doesn't have null partials
+      #" call assert_equal(456, test_null_partial() ?? 456)
+      if has('job')
+        call assert_equal(456, test_null_job() ?? 456)
+      endif
+      if has('channel')
+        call assert_equal(456, test_null_channel() ?? 456)
       endif
   END
   call CheckLegacyAndVim9Success(lines)
