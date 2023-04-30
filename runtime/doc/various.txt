@@ -97,6 +97,14 @@ g8			Print the hex values of the bytes used in the
 			cursor is halfway through a multibyte character the
 			command won't move the cursor.
 
+							*gx*
+gx			Open the current path or URL under the cursor in the 
+			system's default handler with |vim.ui.open|.
+
+			To use the netrw keymap, set `use_lua_gx` to false:
+>lua
+    vim.g.use_lua_gx = false
+<
 						*:p* *:pr* *:print* *E749*
 :[range]p[rint] [flags]
 			Print [range] lines (default current line).

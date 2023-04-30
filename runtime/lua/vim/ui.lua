@@ -104,4 +104,69 @@ function M.input(opts, on_confirm)
   end
 end
 
+--- Opens a path in the system's default handler.
+--- This function utilizes `xdg-open`, `wslview`, `explorer`, or `open` commands
+--- depending on the system to open the provided path.
+---
+--- Notifies the user if unsuccessful
+---
+---@param path string Path to be opened
+---
+---@return SystemCompleted|nil result Result of command, if an appropriate one
+---could be found.
+---
+---@see |vim.system|
+---
+--- Example:
+--- <pre>lua
+--- vim.ui.open("https://neovim.io/")
+---
+--- vim.ui.open("/path/to/file")
+--- </pre>
+function M.open(path)
+  if not path or path == '' then
+    vim.notify('os_open: No path provided', vim.log.levels.ERROR)
+    return nil
+  end
+
+  local cmd
+
+  if vim.fn.has('macunix') == 1 then
+    cmd = { 'open', path }
+  elseif vim.fn.has('win32') == 1 then
+    cmd = { 'explorer', path }
+  else
+    if vim.fn.executable('wslview') == 1 then
+      cmd = { 'wslview', path }
+    elseif vim.fn.executable('xdg-open') == 1 then
+      cmd = { 'xdg-open', path }
+    else
+      vim.notify(
+        'os_open: Could not find an appropriate command to use (Is xdg-open installed?)',
+        vim.log.levels.ERROR
+      )
+
+      return nil
+    end
+  end
+
+  local ret = vim
+    .system(cmd, {
+      text = true,
+      detach = true,
+    })
+    :wait()
+
+  if ret.code ~= 0 then
+    local msg = {
+      'Failed to open path',
+      ret,
+      vim.inspect(cmd),
+    }
+    vim.notify(table.concat(msg, '\n'), vim.log.levels.ERROR)
+  end
+
+  return ret
+end
+
 return M

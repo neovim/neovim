@@ -2343,6 +2343,30 @@ input({opts}, {on_confirm})                                   *vim.ui.input()*
                       typed (it might be an empty string if nothing was
                       entered), or `nil` if the user aborted the dialog.
 
+open({path})                                                   *vim.ui.open()*
+    Opens a path in the system's default handler. This function utilizes
+    `xdg-open`, `wslview`, `explorer`, or `open` commands depending on the
+    system to open the provided path.
+
+    Notifies the user if unsuccessful
+
+    Example: >lua
+
+     vim.ui.open("https://neovim.io/")
+
+     vim.ui.open("/path/to/file")
+<
+
+    Parameters: ~
+      • {path}  (string) Path to be opened
+
+    Return: ~
+        SystemCompleted|nil result Result of command, if an appropriate one
+        could be found.
+
+    See also: ~
+      • |vim.system|
+
 select({items}, {opts}, {on_choice})                         *vim.ui.select()*
     Prompts the user to pick from a list of items, allowing arbitrary
     (potentially asynchronous) work until `on_choice`.

@@ -18,3 +18,11 @@ vim.api.nvim_create_user_command('InspectTree', function(cmd)
     vim.treesitter.inspect_tree()
   end
 end, { desc = 'Inspect treesitter language tree for buffer', count = true })
+
+if vim.g.use_lua_gx == nil or vim.g.use_lua_gx == true then
+  vim.keymap.set({ 'n', 'x' }, 'gx', function()
+    local uri = vim.fn.expand('<cfile>')
+
+    vim.ui.open(uri)
+  end, { desc = 'Open URI under cursor with system app' })
+end

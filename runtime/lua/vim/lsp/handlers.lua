@@ -573,22 +573,15 @@ M['window/showDocument'] = function(_, result, ctx, _)
 
   if result.external then
     -- TODO(lvimuser): ask the user for confirmation
-    local cmd
-    if vim.fn.has('win32') == 1 then
-      cmd = { 'cmd.exe', '/c', 'start', '""', uri }
-    elseif vim.fn.has('macunix') == 1 then
-      cmd = { 'open', uri }
-    else
-      cmd = { 'xdg-open', uri }
-    end
 
-    local ret = vim.fn.system(cmd)
-    if vim.v.shell_error ~= 0 then
+    local ret = vim.ui.open(uri)
+
+    if ret.code ~= 0 or ret == nil then
       return {
         success = false,
         error = {
           code = protocol.ErrorCodes.UnknownErrorCode,
-          message = ret,
+          message = ret and ret.stderr or 'No handler could be found',
         },
       }
     end

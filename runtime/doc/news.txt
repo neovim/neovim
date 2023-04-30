@@ -107,6 +107,9 @@ The following new APIs and features were added.
 • Bundled treesitter parser and queries (highlight, folds) for Markdown,
 Python, and Bash.
 
+• |vim.ui.open()| opens URIs using the system default handler (macOS `open`,
+Windows `explorer`, Linux `xdg-open`, etc.)
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
@@ -142,6 +145,9 @@ The following changes to existing APIs or features add new behavior.
   defined by the 'foldenable' option.
 
 • |:Man| now respects 'wrapmargin'
+
+• The |gx| command now uses |vim.ui.open()| and not netrw. Continue using
+netrw with `vim.g.use_lua_gx = false`.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
