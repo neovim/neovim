@@ -408,13 +408,13 @@ id. Thus, instead of >lua
 <
 use >lua
   -- create the highlight through an extmark
-  extid = vim.api.nvim_buf_set_extmark(buf, ns_id, hl_group, line, col_start, {end_col = col_end, hl_group = hl_group})
+  extid = vim.api.nvim_buf_set_extmark(buf, ns_id, line, col_start, {end_col = col_end, hl_group = hl_group})
 
   -- example: modify the extmark's highlight group
   vim.api.nvim_buf_set_extmark(buf, ns_id, NEW_HL_GROUP, line, col_start, {end_col = col_end, hl_group = hl_group, id = extid})
 
   -- example: change the highlight's position
-  vim.api.nvim_buf_set_extmark(buf, ns_id, hl_group, NEW_LINE, col_start, {end_col = col_end, hl_group = hl_group, id = extid})
+  vim.api.nvim_buf_set_extmark(buf, ns_id, NEW_LINE, col_start, {end_col = col_end, hl_group = NEW_HL_GROUP, id = extid})
 <
 
 Example using the Python API client (|pynvim|):
