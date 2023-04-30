@@ -173,32 +173,33 @@ P.seq = function(...)
   end
 end
 
-local Node = {}
-
-Node.Type = {
-  SNIPPET = 0,
-  TABSTOP = 1,
-  PLACEHOLDER = 2,
-  VARIABLE = 3,
-  CHOICE = 4,
-  TRANSFORM = 5,
-  FORMAT = 6,
-  TEXT = 7,
+local Node = {
+  Type = {
+    Snippet = 0,
+    Tabstop = 1,
+    Placeholder = 2,
+    Variable = 3,
+    Choice = 4,
+    Transform = 5,
+    Format = 6,
+    Text = 7,
+  }
 }
+Node.__index = Node
 
 function Node:__tostring()
   local insert_text = {}
-  if self.type == Node.Type.SNIPPET then
+  if self.type == Node.Type.Snippet then
     for _, c in ipairs(self.children) do
       table.insert(insert_text, tostring(c))
     end
-  elseif self.type == Node.Type.CHOICE then
+  elseif self.type == Node.Type.Choice then
     table.insert(insert_text, self.items[1])
-  elseif self.type == Node.Type.PLACEHOLDER then
+  elseif self.type == Node.Type.Placeholder then
     for _, c in ipairs(self.children or {}) do
       table.insert(insert_text, tostring(c))
     end
-  elseif self.type == Node.Type.TEXT then
+  elseif self.type == Node.Type.Text then
     table.insert(insert_text, self.esc)
   end
   return table.concat(insert_text, '')
@@ -224,7 +225,7 @@ S.var = P.pattern('[%a_][%w_]+')
 S.text = function(targets, specials)
   return P.map(P.take_until(targets, specials), function(value)
     return setmetatable({
-      type = Node.Type.TEXT,
+      type = Node.Type.Text,
       raw = value.raw,
       esc = value.esc,
     }, Node)
@@ -238,13 +239,13 @@ end)
 S.format = P.any(
   P.map(P.seq(S.dollar, S.int), function(values)
     return setmetatable({
-      type = Node.Type.FORMAT,
+      type = Node.Type.Format,
       capture_index = values[2],
     }, Node)
   end),
   P.map(P.seq(S.dollar, S.open, S.int, S.close), function(values)
     return setmetatable({
-      type = Node.Type.FORMAT,
+      type = Node.Type.Format,
       capture_index = values[3],
     }, Node)
   end),
@@ -266,7 +267,7 @@ S.format = P.any(
     ),
     function(values)
       return setmetatable({
-        type = Node.Type.FORMAT,
+        type = Node.Type.Format,
         capture_index = values[3],
         modifier = values[6],
       }, Node)
@@ -288,7 +289,7 @@ S.format = P.any(
     ),
     function(values)
       return setmetatable({
-        type = Node.Type.FORMAT,
+        type = Node.Type.Format,
         capture_index = values[3],
         if_text = values[5][2] and values[5][2].esc or '',
         else_text = values[5][4] and values[5][4].esc or '',
@@ -306,7 +307,7 @@ S.format = P.any(
     ),
     function(values)
       return setmetatable({
-        type = Node.Type.FORMAT,
+        type = Node.Type.Format,
         capture_index = values[3],
         if_text = values[5][2] and values[5][2].esc or '',
         else_text = '',
@@ -325,7 +326,7 @@ S.format = P.any(
     ),
     function(values)
       return setmetatable({
-        type = Node.Type.FORMAT,
+        type = Node.Type.Format,
         capture_index = values[3],
         if_text = '',
         else_text = values[6] and values[6].esc or '',
@@ -336,7 +337,7 @@ S.format = P.any(
     P.seq(S.dollar, S.open, S.int, S.colon, P.opt(P.take_until({ '}' }, { '\\' })), S.close),
     function(values)
       return setmetatable({
-        type = Node.Type.FORMAT,
+        type = Node.Type.Format,
         capture_index = values[3],
         if_text = '',
         else_text = values[5] and values[5].esc or '',
@@ -356,7 +357,7 @@ S.transform = P.map(
   ),
   function(values)
     return setmetatable({
-      type = Node.Type.TRANSFORM,
+      type = Node.Type.Transform,
       pattern = values[2].raw,
       format = values[4],
       option = values[6],
@@ -367,19 +368,19 @@ S.transform = P.map(
 S.tabstop = P.any(
   P.map(P.seq(S.dollar, S.int), function(values)
     return setmetatable({
-      type = Node.Type.TABSTOP,
+      type = Node.Type.Tabstop,
       tabstop = values[2],
     }, Node)
   end),
   P.map(P.seq(S.dollar, S.open, S.int, S.close), function(values)
     return setmetatable({
-      type = Node.Type.TABSTOP,
+      type = Node.Type.Tabstop,
       tabstop = values[3],
     }, Node)
   end),
   P.map(P.seq(S.dollar, S.open, S.int, S.transform, S.close), function(values)
     return setmetatable({
-      type = Node.Type.TABSTOP,
+      type = Node.Type.Tabstop,
       tabstop = values[3],
       transform = values[4],
     }, Node)
@@ -398,12 +399,12 @@ S.placeholder = P.any(
     ),
     function(values)
       return setmetatable({
-        type = Node.Type.PLACEHOLDER,
+        type = Node.Type.Placeholder,
         tabstop = values[3],
         -- insert empty text if opt did not match.
         children = values[5] or {
           setmetatable({
-            type = Node.Type.TEXT,
+            type = Node.Type.Text,
             raw = '',
             esc = '',
           }, Node),
@@ -427,7 +428,7 @@ S.choice = P.map(
   ),
   function(values)
     return setmetatable({
-      type = Node.Type.CHOICE,
+      type = Node.Type.Choice,
       tabstop = values[3],
       items = values[5],
     }, Node)
@@ -437,19 +438,19 @@ S.choice = P.map(
 S.variable = P.any(
   P.map(P.seq(S.dollar, S.var), function(values)
     return setmetatable({
-      type = Node.Type.VARIABLE,
+      type = Node.Type.Variable,
       name = values[2],
     }, Node)
   end),
   P.map(P.seq(S.dollar, S.open, S.var, S.close), function(values)
     return setmetatable({
-      type = Node.Type.VARIABLE,
+      type = Node.Type.Variable,
       name = values[3],
     }, Node)
   end),
   P.map(P.seq(S.dollar, S.open, S.var, S.transform, S.close), function(values)
     return setmetatable({
-      type = Node.Type.VARIABLE,
+      type = Node.Type.Variable,
       name = values[3],
       transform = values[4],
     }, Node)
@@ -465,7 +466,7 @@ S.variable = P.any(
     ),
     function(values)
       return setmetatable({
-        type = Node.Type.VARIABLE,
+        type = Node.Type.Variable,
         name = values[3],
         children = values[5],
       }, Node)
@@ -475,16 +476,16 @@ S.variable = P.any(
 
 S.snippet = P.map(P.many(P.any(S.toplevel, S.text({ '$' }, { '}', '\\' }))), function(values)
   return setmetatable({
-    type = Node.Type.SNIPPET,
+    type = Node.Type.Snippet,
     children = values,
   }, Node)
 end)
 
 local M = {}
 
----The snippet node type enum
----@types table<string, integer>
-M.NodeType = Node.Type
+---The base snippet node.
+---@type table
+M.Node = Node
 
 ---Parse snippet string and returns the AST
 ---@param input string

@@ -14,10 +14,10 @@ describe('vim.lsp._snippet', function()
 
   it('should parse only text', function()
     eq({
-      type = snippet.NodeType.SNIPPET,
+      type = snippet.Node.Type.Snippet,
       children = {
         {
-          type = snippet.NodeType.TEXT,
+          type = snippet.Node.Type.Text,
           raw = 'TE\\$\\}XT',
           esc = 'TE$}XT',
         },
@@ -27,14 +27,14 @@ describe('vim.lsp._snippet', function()
 
   it('should parse tabstop', function()
     eq({
-      type = snippet.NodeType.SNIPPET,
+      type = snippet.Node.Type.Snippet,
       children = {
         {
-          type = snippet.NodeType.TABSTOP,
+          type = snippet.Node.Type.Tabstop,
           tabstop = 1,
         },
         {
-          type = snippet.NodeType.TABSTOP,
+          type = snippet.Node.Type.Tabstop,
           tabstop = 2,
         },
       },
@@ -43,35 +43,35 @@ describe('vim.lsp._snippet', function()
 
   it('should parse placeholders', function()
     eq({
-      type = snippet.NodeType.SNIPPET,
+      type = snippet.Node.Type.Snippet,
       children = {
         {
-          type = snippet.NodeType.PLACEHOLDER,
+          type = snippet.Node.Type.Placeholder,
           tabstop = 1,
           children = {
             {
-              type = snippet.NodeType.PLACEHOLDER,
+              type = snippet.Node.Type.Placeholder,
               tabstop = 2,
               children = {
                 {
-                  type = snippet.NodeType.TEXT,
+                  type = snippet.Node.Type.Text,
                   raw = 'TE\\$\\}XT',
                   esc = 'TE$}XT',
                 },
                 {
-                  type = snippet.NodeType.TABSTOP,
+                  type = snippet.Node.Type.Tabstop,
                   tabstop = 3,
                 },
                 {
-                  type = snippet.NodeType.TABSTOP,
+                  type = snippet.Node.Type.Tabstop,
                   tabstop = 1,
                   transform = {
-                    type = snippet.NodeType.TRANSFORM,
+                    type = snippet.Node.Type.Transform,
                     pattern = 'regex',
                     option = 'i',
                     format = {
                       {
-                        type = snippet.NodeType.FORMAT,
+                        type = snippet.Node.Type.Format,
                         capture_index = 1,
                         modifier = 'upcase',
                       },
@@ -79,7 +79,7 @@ describe('vim.lsp._snippet', function()
                   },
                 },
                 {
-                  type = snippet.NodeType.TEXT,
+                  type = snippet.Node.Type.Text,
                   raw = 'TE\\$\\}XT',
                   esc = 'TE$}XT',
                 },
@@ -93,35 +93,35 @@ describe('vim.lsp._snippet', function()
 
   it('should parse variables', function()
     eq({
-      type = snippet.NodeType.SNIPPET,
+      type = snippet.Node.Type.Snippet,
       children = {
         {
-          type = snippet.NodeType.VARIABLE,
+          type = snippet.Node.Type.Variable,
           name = 'VAR',
         },
         {
-          type = snippet.NodeType.VARIABLE,
+          type = snippet.Node.Type.Variable,
           name = 'VAR',
         },
         {
-          type = snippet.NodeType.VARIABLE,
+          type = snippet.Node.Type.Variable,
           name = 'VAR',
           children = {
             {
-              type = snippet.NodeType.TABSTOP,
+              type = snippet.Node.Type.Tabstop,
               tabstop = 1,
             },
           },
         },
         {
-          type = snippet.NodeType.VARIABLE,
+          type = snippet.Node.Type.Variable,
           name = 'VAR',
           transform = {
-            type = snippet.NodeType.TRANSFORM,
+            type = snippet.Node.Type.Transform,
             pattern = 'regex',
             format = {
               {
-                type = snippet.NodeType.FORMAT,
+                type = snippet.Node.Type.Format,
                 capture_index = 1,
                 modifier = 'upcase',
               },
@@ -134,10 +134,10 @@ describe('vim.lsp._snippet', function()
 
   it('should parse choice', function()
     eq({
-      type = snippet.NodeType.SNIPPET,
+      type = snippet.Node.Type.Snippet,
       children = {
         {
-          type = snippet.NodeType.CHOICE,
+          type = snippet.Node.Type.Choice,
           tabstop = 1,
           items = {
             ',',
@@ -150,40 +150,40 @@ describe('vim.lsp._snippet', function()
 
   it('should parse format', function()
     eq({
-      type = snippet.NodeType.SNIPPET,
+      type = snippet.Node.Type.Snippet,
       children = {
         {
-          type = snippet.NodeType.VARIABLE,
+          type = snippet.Node.Type.Variable,
           name = 'VAR',
           transform = {
-            type = snippet.NodeType.TRANSFORM,
+            type = snippet.Node.Type.Transform,
             pattern = 'regex',
             format = {
               {
-                type = snippet.NodeType.FORMAT,
+                type = snippet.Node.Type.Format,
                 capture_index = 1,
                 modifier = 'upcase',
               },
               {
-                type = snippet.NodeType.FORMAT,
+                type = snippet.Node.Type.Format,
                 capture_index = 1,
                 if_text = 'if_text',
                 else_text = '',
               },
               {
-                type = snippet.NodeType.FORMAT,
+                type = snippet.Node.Type.Format,
                 capture_index = 1,
                 if_text = '',
                 else_text = 'else_text',
               },
               {
-                type = snippet.NodeType.FORMAT,
+                type = snippet.Node.Type.Format,
                 capture_index = 1,
                 else_text = 'else_text',
                 if_text = 'if_text',
               },
               {
-                type = snippet.NodeType.FORMAT,
+                type = snippet.Node.Type.Format,
                 capture_index = 1,
                 if_text = '',
                 else_text = 'else_text',
