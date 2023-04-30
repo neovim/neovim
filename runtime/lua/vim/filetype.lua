@@ -637,6 +637,7 @@ local extension = {
   nse = 'lua',
   rockspec = 'lua',
   lua = 'lua',
+  luau = 'luau',
   lrc = 'lyrics',
   m = function(path, bufnr)
     return require('vim.filetype.detect').m(bufnr)
