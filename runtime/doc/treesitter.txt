@@ -853,7 +853,7 @@ lint({buf}, {opts})                              *vim.treesitter.query.lint()*
 
     The found diagnostics are reported using |diagnostic-api|. By default, the
     parser used for verification is determined by the containing folder of the
-    query file, e.g., if the path is `**/lua/highlights.scm` , the parser for the `lua` language will be used.
+    query file, e.g., if the path ends in `/lua/highlights.scm` , the parser for the `lua` language will be used.
 
     Parameters: ~
       • {buf}   (integer) Buffer handle
@@ -874,6 +874,13 @@ list_predicates()                     *vim.treesitter.query.list_predicates()*
 
     Return: ~
         string[] List of supported predicates.
+
+omnifunc({findstart}, {base})                *vim.treesitter.query.omnifunc()*
+    Omnifunc for completing node names and predicates in treesitter queries.
+
+    Use via >lua
+      vim.bo.omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
+<
 
 parse({lang}, {query})                          *vim.treesitter.query.parse()*
     Parse {query} as a string. (If the query is in a file, the caller should
