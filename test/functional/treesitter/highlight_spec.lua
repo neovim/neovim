@@ -11,7 +11,7 @@ local eq = helpers.eq
 
 before_each(clear)
 
-local hl_query = [[
+local hl_query_c = [[
   (ERROR) @error
 
   "if" @keyword
@@ -47,7 +47,7 @@ local hl_query = [[
   (comment) @comment
 ]]
 
-local hl_text = [[
+local hl_text_c = [[
 /// Schedule Lua callback on main loop's event queue
 static int nlua_schedule(lua_State *const lstate)
 {
@@ -64,7 +64,7 @@ static int nlua_schedule(lua_State *const lstate)
   return 0;
 }]]
 
-local test_text = [[
+local test_text_c = [[
 void ui_refresh(void)
 {
   int width = INT_MAX, height = INT_MAX;
@@ -85,7 +85,7 @@ void ui_refresh(void)
   }
 }]]
 
-describe('treesitter highlighting', function()
+describe('treesitter highlighting (C)', function()
   local screen
 
   before_each(function()
@@ -105,13 +105,13 @@ describe('treesitter highlighting', function()
       [11] = {foreground = Screen.colors.Cyan4};
     }
 
-    exec_lua([[ hl_query = ... ]], hl_query)
+    exec_lua([[ hl_query = ... ]], hl_query_c)
     command [[ hi link @error ErrorMsg ]]
     command [[ hi link @warning WarningMsg ]]
   end)
 
   it('is updated with edits', function()
-    insert(hl_text)
+    insert(hl_text_c)
     screen:expect{grid=[[
       /// Schedule Lua callback on main loop's event queue             |
       static int nlua_schedule(lua_State *const lstate)                |
@@ -274,7 +274,7 @@ describe('treesitter highlighting', function()
   end)
 
   it('is updated with :sort', function()
-    insert(test_text)
+    insert(test_text_c)
     exec_lua [[
       local parser = vim.treesitter.get_parser(0, "c")
       test_hl = vim.treesitter.highlighter.new(parser, {queries = {c = hl_query}})
@@ -351,7 +351,7 @@ describe('treesitter highlighting', function()
       [1] = {bold = true, foreground = Screen.colors.SeaGreen4};
     }
 
-    insert(test_text)
+    insert(test_text_c)
 
     screen:expect{ grid= [[
       int width = INT_MAX, height = INT_MAX;                         |
@@ -510,7 +510,7 @@ describe('treesitter highlighting', function()
   end)
 
   it("supports highlighting with custom highlight groups", function()
-    insert(hl_text)
+    insert(hl_text_c)
 
     exec_lua [[
       local parser = vim.treesitter.get_parser(0, "c")
@@ -692,7 +692,7 @@ describe('treesitter highlighting', function()
   end)
 
   it("supports conceal attribute", function()
-    insert(hl_text)
+    insert(hl_text_c)
 
     -- conceal can be empty or a single cchar.
     exec_lua [=[
@@ -752,4 +752,66 @@ describe('treesitter highlighting', function()
     eq(3, get_hl"@foo.missing.exists.bar")
     eq(nil, get_hl"@total.nonsense.but.a.lot.of.dots")
   end)
+end)
+
+describe('treesitter highlighting (help)', function()
+  local screen
+
+  before_each(function()
+    screen = Screen.new(40, 6)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [1] = {foreground = Screen.colors.Blue1};
+      [2] = {bold = true, foreground = Screen.colors.Blue1};
+      [3] = {bold = true, foreground = Screen.colors.Brown};
+      [4] = {foreground = Screen.colors.Cyan4};
+      [5] = {foreground = Screen.colors.Magenta1};
+    }
+  end)
+
+  it("correctly redraws added/removed injections", function()
+    insert[[
+    >ruby
+      -- comment
+      local this_is = 'actually_lua'
+    <
+    ]]
+
+    exec_lua [[
+      vim.bo.filetype = 'help'
+      vim.treesitter.start()
+    ]]
+
+    screen:expect{grid=[[
+      {1:>ruby}                                   |
+      {1:  -- comment}                            |
+      {1:  local this_is = 'actually_lua'}        |
+      <                                       |
+      ^                                        |
+                                              |
+    ]]}
+
+    helpers.curbufmeths.set_text(0, 1, 0, 5, {'lua'})
+
+    screen:expect{grid=[[
+      {1:>lua}                                    |
+      {1:  -- comment}                            |
+      {1:  }{3:local}{1: }{4:this_is}{1: }{3:=}{1: }{5:'actually_lua'}        |
+      <                                       |
+      ^                                        |
+                                              |
+    ]]}
+
+    helpers.curbufmeths.set_text(0, 1, 0, 4, {'ruby'})
+
+    screen:expect{grid=[[
+      {1:>ruby}                                   |
+      {1:  -- comment}                            |
+      {1:  local this_is = 'actually_lua'}        |
+      <                                       |
+      ^                                        |
+                                              |
+    ]]}
+  end)
+
 end)
