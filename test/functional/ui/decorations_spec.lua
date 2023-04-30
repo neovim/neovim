@@ -8,6 +8,7 @@ local exec_lua = helpers.exec_lua
 local exec = helpers.exec
 local expect_events = helpers.expect_events
 local meths = helpers.meths
+local curbufmeths = helpers.curbufmeths
 local command = helpers.command
 
 describe('decorations providers', function()
@@ -31,8 +32,9 @@ describe('decorations providers', function()
       [12] = {foreground = tonumber('0x990000')};
       [13] = {background = Screen.colors.LightBlue};
       [14] = {background = Screen.colors.WebGray, foreground = Screen.colors.DarkBlue};
-      [15] = {special = Screen.colors.Blue1, undercurl = true},
+      [15] = {special = Screen.colors.Blue, undercurl = true},
       [16] = {special = Screen.colors.Red, undercurl = true},
+      [17] = {foreground = Screen.colors.Red},
     }
   end)
 
@@ -201,14 +203,14 @@ describe('decorations providers', function()
     feed "gg0"
 
     screen:expect{grid=[[
-    ^I am well written text.                 |
-    {15:i} am not capitalized.                   |
-    I am a {16:speling} {16:mistakke}.                |
-                                            |
-    {1:~                                       }|
-    {1:~                                       }|
-    {1:~                                       }|
-                                            |
+      ^I am well written text.                 |
+      {15:i} am not capitalized.                   |
+      I am a {16:speling} {16:mistakke}.                |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
     ]]}
 
     feed "]s"
@@ -216,14 +218,14 @@ describe('decorations providers', function()
       { "spell", 1000, 1, 1, 0, 1, -1 };
     }
     screen:expect{grid=[[
-    I am well written text.                 |
-    {15:^i} am not capitalized.                   |
-    I am a {16:speling} {16:mistakke}.                |
-                                            |
-    {1:~                                       }|
-    {1:~                                       }|
-    {1:~                                       }|
-                                            |
+      I am well written text.                 |
+      {15:^i} am not capitalized.                   |
+      I am a {16:speling} {16:mistakke}.                |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
     ]]}
 
     feed "]s"
@@ -231,43 +233,68 @@ describe('decorations providers', function()
       { "spell", 1000, 1, 2, 7, 2, -1 };
     }
     screen:expect{grid=[[
-    I am well written text.                 |
-    {15:i} am not capitalized.                   |
-    I am a {16:^speling} {16:mistakke}.                |
-                                            |
-    {1:~                                       }|
-    {1:~                                       }|
-    {1:~                                       }|
-                                            |
-    ]]}
-
-    -- spell=false with lower priority doesn't disable spell
-    local ns = meths.create_namespace "spell"
-    local id = helpers.curbufmeths.set_extmark(ns, 0, 0, { priority = 30, end_row = 2, end_col = 23, spell = false })
-
-    screen:expect{grid=[[
-    I am well written text.                 |
-    i am not capitalized.                   |
-    I am a ^speling mistakke.                |
-                                            |
-    {1:~                                       }|
-    {1:~                                       }|
-    {1:~                                       }|
-                                            |
+      I am well written text.                 |
+      {15:i} am not capitalized.                   |
+      I am a {16:^speling} {16:mistakke}.                |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
     ]]}
 
     -- spell=false with higher priority does disable spell
-    helpers.curbufmeths.set_extmark(ns, 0, 0, { id = id, priority = 10, end_row = 2, end_col = 23, spell = false })
+    local ns = meths.create_namespace "spell"
+    local id = curbufmeths.set_extmark(ns, 0, 0, { priority = 30, end_row = 2, end_col = 23, spell = false })
 
     screen:expect{grid=[[
-    I am well written text.                 |
-    {15:i} am not capitalized.                   |
-    I am a {16:^speling} {16:mistakke}.                |
-                                            |
-    {1:~                                       }|
-    {1:~                                       }|
-    {1:~                                       }|
-                                            |
+      I am well written text.                 |
+      i am not capitalized.                   |
+      I am a ^speling mistakke.                |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]}
+
+    feed "]s"
+    screen:expect{grid=[[
+      I am well written text.                 |
+      i am not capitalized.                   |
+      I am a ^speling mistakke.                |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {17:search hit BOTTOM, continuing at TOP}    |
+    ]]}
+    command('echo ""')
+
+    -- spell=false with lower priority doesn't disable spell
+    curbufmeths.set_extmark(ns, 0, 0, { id = id, priority = 10, end_row = 2, end_col = 23, spell = false })
+
+    screen:expect{grid=[[
+      I am well written text.                 |
+      {15:i} am not capitalized.                   |
+      I am a {16:^speling} {16:mistakke}.                |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]}
+
+    feed "]s"
+    screen:expect{grid=[[
+      I am well written text.                 |
+      {15:i} am not capitalized.                   |
+      I am a {16:speling} {16:^mistakke}.                |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
     ]]}
 
   end)
