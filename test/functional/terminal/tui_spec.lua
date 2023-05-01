@@ -2422,6 +2422,19 @@ describe("TUI as a client", function()
       {3:-- TERMINAL --}                                    |
     ]]}
 
+    -- grid smaller than containing terminal window is cleared properly
+    feed_data(":call setline(1,['a'->repeat(&columns)]->repeat(&lines))\n")
+    feed_data("0:set lines=2\n")
+    screen_server:expect{grid=[[
+      {1:a}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {5:[No Name] [+]                                     }|
+                                                        |
+                                                        |
+                                                        |
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
     feed_data(":q!\n")
 
     server_super:close()

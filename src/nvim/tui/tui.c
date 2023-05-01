@@ -977,7 +977,7 @@ void tui_grid_clear(TUIData *tui, Integer g)
   UGrid *grid = &tui->grid;
   ugrid_clear(grid);
   kv_size(tui->invalid_regions) = 0;
-  clear_region(tui, 0, grid->height, 0, grid->width, 0);
+  clear_region(tui, 0, tui->height, 0, tui->width, 0);
 }
 
 void tui_grid_cursor_goto(TUIData *tui, Integer grid, Integer row, Integer col)
