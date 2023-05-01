@@ -4432,4 +4432,120 @@ tohtml.tohtml({winid}, {opt})                         *tohtml.tohtml.tohtml()*
         (`string[]`)
 
 
+==============================================================================
+Lua module: net                                                      *lua-net*
+
+download({url}, {path}, {opts})                               *net.download()*
+    Asynchronously download a file. To read the response metadata, such as
+    headers and body, use |fetch()|. Accepts shares a few options with
+    |vim.net.fetch()|, but not all of them.
+
+    Example: >lua
+
+     vim.net.download("https://raw.githubusercontent.com/neovim/neovim/master/README.md",
+     ".cache/download/location/readme.md", {
+       on_complete = function ()
+         vim.notify("File Downloaded", vim.log.levels.INFO)
+       end
+     })
+<
+
+    Parameters: ~
+      • {url}   (string) url
+      • {path}  (string) A FULL download path. This function does not modify
+                the path, you should use |fnnamemodify| with relative paths.
+      • {opts}  (table|nil) Optional keyword arguments:
+                • method string|nil HTTP method to use. Defaults to GET.
+                • headers table|nil A table of key-value headers.
+                • follow_redirects boolean|nil Will follow redirects by
+                  default.
+                • data string|table|nil Data to send with the request. If a
+                  table, it will be json encoded.
+                • on_complete nil|fun() Callback function when download is
+                  complete.
+                • on_err nil|fun(errr: string[]) An optional function
+                  recieving a `stderr_buffered` string[] of curl stderr.
+                  Without providing this function, fetch() will automatically
+                  raise an error to the user. See |on_stderr| and
+                  `stderr_buffered`.
+
+fetch({url}, {opts})                                             *net.fetch()*
+    Asynchronously make HTTP requests.
+
+    Example: >lua
+
+     -- GET a url
+     vim.net.fetch("https://example.com/api/data", {
+       on_complete = function (response)
+         -- Lets read the response!
+
+         if response.ok then
+           -- Read response body
+           local body = response.body()
+         else
+       end
+     })
+
+     -- POST to a url, sending json and providing an authorization header
+     vim.net.fetch("https://example.com/api/data", {
+       method = "POST",
+       data = {
+         key = value
+       },
+       headers = {
+         Authorization = "Bearer " .. token
+       },
+       on_complete = function (response)
+         -- Lets read the response!
+
+         if response.ok then
+           -- Read json response
+           local table = response.json()
+         else
+
+         -- What went wrong?
+         vim.print(response.status)
+       end
+     })
+<
+
+    Parameters: ~
+      • {url}   (string) url
+      • {opts}  (table|nil) Optional keyword arguments:
+                • method string|nil HTTP method to use. Defaults to GET.
+                • headers table|nil A table of key-value headers.
+                • follow_redirects boolean|nil Will follow redirects by
+                  default.
+                • data string|table|nil Data to send with the request. If a
+                  table, it will be json encoded.
+                • on_complete nil|fun(response: table) Callback function when
+                  request is completed. The response has the following keys:
+                  • ok boolean Convience field showing whether or not the
+                    request was successful (status within 2XX range).
+                  • headers fun(): table<string, string> Function returning a
+                    table of response headers.
+                  • body fun(): string|nil Function returning response body.
+                    If method was HEAD, this is likely nil.
+                  • json fun(opts: table|nil): table Read the body as json.
+                    Optionally accepts opts from |vim.json.decode|. Will throw
+                    errors if body is not json-decodable.
+                  • method string The http method used in the most recent HTTP
+                    request.
+                  • status number The numerical response code. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+                  • status_text string The status text returned with the
+                    response.
+                  • size number The total amount of bytes that were
+                    downloaded. This is the size of the body/data that was
+                    transferred, excluding headers.
+                  • http_version number HTTP version used in the request.
+
+                • on_err nil|fun(errr: string[]) An optional function
+                  recieving a `stderr_buffered` string[] of curl stderr.
+                  Without providing this function, fetch() will automatically
+                  raise an error to the user. See |on_stderr| and
+                  `stderr_buffered`.
+
+    Return: ~
+        (number) jobid A job id. See |job-control|.
+
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
