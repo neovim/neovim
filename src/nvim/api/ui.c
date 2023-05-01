@@ -210,6 +210,8 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dictiona
 
   pmap_put(uint64_t)(&connected_uis, channel_id, ui);
   ui_attach_impl(ui, channel_id);
+
+  last_ui = channel_id;
 }
 
 /// @deprecated
@@ -230,6 +232,10 @@ void nvim_ui_set_focus(uint64_t channel_id, Boolean gained, Error *error)
     api_set_error(error, kErrorTypeException,
                   "UI not attached to channel: %" PRId64, channel_id);
     return;
+  }
+
+  if (gained) {
+    last_ui = channel_id;
   }
 
   do_autocmd_focusgained((bool)gained);
@@ -1045,4 +1051,12 @@ void remote_ui_inspect(UI *ui, Dictionary *info)
 {
   UIData *data = ui->data;
   PUT(*info, "chan", INTEGER_OBJ((Integer)data->channel_id));
+}
+
+void ui_request_detach(uint64_t chan, String msg)
+{
+  UI *ui = pmap_get(uint64_t)(&connected_uis, chan);
+  if (ui) {
+    remote_ui_detach(ui, msg);
+  }
 }

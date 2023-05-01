@@ -40,6 +40,9 @@ void screenshot(String path)
   FUNC_API_SINCE(7);
 void option_set(String name, Object value)
   FUNC_API_SINCE(4);
+void detach(String msg)
+  FUNC_API_SINCE(10);
+
 // Stop event is not exported as such, represented by EOF in the msgpack stream.
 void stop(void)
   FUNC_API_NOEXPORT;

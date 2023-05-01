@@ -126,5 +126,8 @@ typedef struct ui_event_callback {
 #endif
 // uncrustify:on
 
-EXTERN MultiQueue *resize_events;
+EXTERN MultiQueue *resize_events INIT(= NULL);
+EXTERN uint64_t last_ui INIT(= 0);
+EXTERN bool embed_ui_detached INIT(= false);
+
 #endif  // NVIM_UI_H

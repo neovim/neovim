@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "auto/config.h"
+#include "nvim/api/ui.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
@@ -58,6 +59,7 @@
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
+#include "nvim/msgpack_rpc/server.h"
 #include "nvim/normal.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
@@ -4858,6 +4860,32 @@ static void ex_stop(exarg_T *eap)
   resettitle();  // force updating the title
   ui_refresh();  // may have resized window
   apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
+}
+
+/// ":detach"
+static void ex_detach(exarg_T *eap)
+{
+  String msg;
+  size_t n;
+  char **addrs = server_address_list(&n);
+  if (n > 0) {
+    msg.size = (size_t)snprintf(IObuff, IOSIZE, _("Server detached. Address: %s"), addrs[0]);
+    msg.data = IObuff;
+  } else {
+    msg = STATIC_CSTR_AS_STRING("Server detached.");
+  }
+
+  if (eap->forceit) {
+    ui_call_detach(msg);
+  } else {
+    Channel *chan = find_channel(last_ui);
+    if (chan) {
+      if (last_ui == 1) {
+        embed_ui_detached = true;
+      }
+      ui_request_detach(last_ui, msg);
+    }
+  }
 }
 
 /// ":exit", ":xit" and ":wq": Write file and quit the current window.

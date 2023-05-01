@@ -1351,12 +1351,27 @@ void tui_suspend(TUIData *tui)
 {
 // on a non-UNIX system, this is a no-op
 #ifdef UNIX
-  // kill(0, SIGTSTP) won't stop the UI thread, so we must poll for SIGCONT
-  // before continuing. This is done in another callback to avoid
-  // loop_poll_events recursion
-  multiqueue_put_event(resize_events,
-                       event_create(suspend_event, 1, tui));
+  // This is done in a callback to avoid loop_poll_events recursion.
+  multiqueue_put_event(resize_events, event_create(suspend_event, 1, tui));
 #endif
+}
+
+static void detach_event(void **argv)
+  FUNC_ATTR_NORETURN
+{
+  char *data = argv[0];
+  ui_client_stop();
+  if (data != NULL) {
+    os_errmsg(data);
+    os_errmsg("\n");
+  }
+  xfree(data);
+  os_exit(0);
+}
+
+void tui_detach(TUIData *tui, String msg)
+{
+  multiqueue_put_event(resize_events, event_create(detach_event, 1, msg.data ? strdup(msg.data) : NULL));
 }
 
 void tui_set_title(TUIData *tui, String title)

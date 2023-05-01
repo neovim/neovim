@@ -313,12 +313,18 @@ int main(int argc, char **argv)
     server_init(params.listen_addr);
   }
 
-  if (params.remote) {
-    remote_request(&params, params.remote, params.server_addr, argc, argv,
-                   use_builtin_ui);
+  bool remote_ui = false;
+  if (use_builtin_ui && params.server_addr) {
+    // if just "nvim --server path", default to --remote-ui command
+    remote_ui = params.remote ? strequal(argv[params.remote], "--remote-ui") : true;
   }
 
-  bool remote_ui = (ui_client_channel_id != 0);
+  if (remote_ui || params.remote) {
+    remote_request(&params, params.remote, params.server_addr, argc, argv,
+                   remote_ui);
+  }
+
+  remote_ui = (ui_client_channel_id != 0);
 
   if (use_builtin_ui && !remote_ui) {
     ui_client_forward_stdin = !stdin_isatty;
@@ -891,20 +897,13 @@ static uint64_t server_connect(char *server_addr, const char **errmsg)
 
 /// Handle remote subcommands
 static void remote_request(mparm_T *params, int remote_args, char *server_addr, int argc,
-                           char **argv, bool ui_only)
+                           char **argv, bool remote_ui)
 {
-  bool is_ui = strequal(argv[remote_args], "--remote-ui");
-  if (ui_only && !is_ui) {
-    // TODO(bfredl): this implies always starting the TUI.
-    // if we be smart we could delay this past should_exit
-    return;
-  }
-
   const char *connect_error = NULL;
   uint64_t chan = server_connect(server_addr, &connect_error);
   Object rvobj = OBJECT_INIT;
 
-  if (is_ui) {
+  if (remote_ui) {
     if (!chan) {
       os_errmsg("Remote ui failed to start: ");
       os_errmsg(connect_error);
