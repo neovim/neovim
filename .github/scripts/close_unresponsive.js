@@ -19,13 +19,18 @@ module.exports = async ({ github, context }) => {
   const numbers = issues.data.map((e) => e.number);
 
   for (const number of numbers) {
-    const timeline = await github.rest.issues.listEventsForTimeline({
-      owner: owner,
-      repo: repo,
-      issue_number: number,
-    });
-    const data = timeline.data.filter(labeledEvent);
-    const latest_response_label = data[data.length - 1];
+    const events = await github.paginate(
+      github.rest.issues.listEventsForTimeline,
+      {
+        owner: owner,
+        repo: repo,
+        issue_number: number,
+      },
+      (response) => response.data.filter(labeledEvent)
+    );
+
+    const latest_response_label = events[events.length - 1];
+
     const created_at = new Date(latest_response_label.created_at);
     const now = new Date();
     const diff = now - created_at;
