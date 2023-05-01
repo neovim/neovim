@@ -135,81 +135,22 @@ endif()
 include(ExternalProject)
 set_directory_properties(PROPERTIES EP_PREFIX "${DEPS_BUILD_DIR}")
 
-set(LIBUV_URL https://github.com/libuv/libuv/archive/62c2374a8c005ce9e42088965f8f8af2532c177b.tar.gz CACHE STRING "")
-set(LIBUV_SHA256 c7e89137da65a1cb550ba96b892dfeeabea982bf33b9237bcf9bbcd90f2e70a1)
+file(READ deps.txt DEPENDENCIES)
+STRING(REGEX REPLACE "\n" ";" DEPENDENCIES "${DEPENDENCIES}")
+foreach(dep ${DEPENDENCIES})
+  STRING(REGEX REPLACE " " ";" dep "${dep}")
+  list(GET dep 0 name)
+  list(GET dep 1 value)
 
-set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/c-6.0.0/msgpack-c-6.0.0.tar.gz CACHE STRING "")
-set(MSGPACK_SHA256 3654f5e2c652dc52e0a993e270bb57d5702b262703f03771c152bba51602aeba)
-
-# https://github.com/LuaJIT/LuaJIT/tree/v2.1
-set(LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/224129a8e64bfa219d35cd03055bf03952f167f6.tar.gz CACHE STRING "")
-set(LUAJIT_SHA256 a9bcd9e646e2b188e1d7e3fb594e04c61dda3b332dfd0378d41be19c1eae9d09)
-
-set(LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz CACHE STRING "")
-set(LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333)
-
-set(LUAROCKS_URL https://github.com/luarocks/luarocks/archive/v3.9.2.tar.gz CACHE STRING "")
-set(LUAROCKS_SHA256 a0b36cd68586cd79966d0106bb2e5a4f5523327867995fd66bee4237062b3e3b)
-
-set(UNIBILIUM_URL https://github.com/neovim/unibilium/archive/d72c3598e7ac5d1ebf86ee268b8b4ed95c0fa628.tar.gz CACHE STRING "")
-set(UNIBILIUM_SHA256 9c4747c862ab5e3076dcf8fa8f0ea7a6b50f20ec5905618b9536655596797487)
-
-set(LIBTERMKEY_URL https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/libtermkey/0.22-1/libtermkey_0.22.orig.tar.gz CACHE STRING "")
-set(LIBTERMKEY_SHA256 6945bd3c4aaa83da83d80a045c5563da4edd7d0374c62c0d35aec09eb3014600)
-
-set(LIBVTERM_URL https://launchpad.net/libvterm/trunk/v0.3/+download/libvterm-0.3.1.tar.gz CACHE STRING "")
-set(LIBVTERM_SHA256 25a8ad9c15485368dfd0a8a9dca1aec8fea5c27da3fa74ec518d5d3787f0c397)
-
-set(LUV_URL https://github.com/luvit/luv/archive/093a977b82077591baefe1e880d37dfa2730bd54.tar.gz CACHE STRING "")
-set(LUV_SHA256 222b38b6425f0926218e14e7da81481fdde6f9660c1feac25a53e6fb52e886e6)
-
-set(LPEG_URL http://www.inf.puc-rio.br/~roberto/lpeg/lpeg-1.0.2.tar.gz CACHE STRING "")
-set(LPEG_SHA256 48d66576051b6c78388faad09b70493093264588fcd0f258ddaab1cdd4a15ffe)
-
-set(LUA_COMPAT53_URL https://github.com/keplerproject/lua-compat-5.3/archive/v0.9.tar.gz CACHE STRING "")
-set(LUA_COMPAT53_SHA256 ad05540d2d96a48725bb79a1def35cf6652a4e2ec26376e2617c8ce2baa6f416)
-
-# Windows only: cat.exe tee.exe xxd.exe
-set(CAT_URL https://github.com/neovim/deps/raw/21c5e8bdda33521a6ed497b315e03265a2785cbc/opt/cat.exe CACHE STRING "")
-set(CAT_SHA256 93b8d307bb15af3968920bdea3beb869a49d166f9164853c58a4e6ffdcae61c6)
-set(TEE_URL https://github.com/neovim/deps/raw/21c5e8bdda33521a6ed497b315e03265a2785cbc/opt/tee.exe CACHE STRING "")
-set(TEE_SHA256 950eea4e17fa3a7e89fa2c55374037b5797b3f1a54fea1304634884ab42ec14d)
-set(XXD_URL https://github.com/neovim/deps/raw/21c5e8bdda33521a6ed497b315e03265a2785cbc/opt/xxd.exe CACHE STRING "")
-set(XXD_SHA256 7a581e3882d28161cc52850f9a11d634b3eaf2c029276f093c1ed4c90e45a10c)
-
-set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.17/neovim-qt.zip CACHE STRING "")
-set(WINGUI_SHA256 502e386eef677c2c2e0c11d8cbb27f3e12b4d96818369417e8da4129c4580c25)
-
-set(WIN32YANK_X86_64_URL https://github.com/equalsraf/win32yank/releases/download/v0.1.1/win32yank-x64.zip CACHE STRING "")
-set(WIN32YANK_X86_64_SHA256 247c9a05b94387a884b49d3db13f806b1677dfc38020f955f719be6902260cd6)
-
-set(GETTEXT_URL https://ftp.gnu.org/pub/gnu/gettext/gettext-0.20.1.tar.gz CACHE STRING "")
-set(GETTEXT_SHA256 66415634c6e8c3fa8b71362879ec7575e27da43da562c798a8a2f223e6e47f5c)
-
-set(LIBICONV_URL https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.15.tar.gz CACHE STRING "")
-set(LIBICONV_SHA256 ccf536620a45458d26ba83887a983b96827001e92a13847b45e4925cc8913178)
-
-set(TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.20.2.tar.gz CACHE STRING "")
-set(TREESITTER_C_SHA256 af66fde03feb0df4faf03750102a0d265b007e5d957057b6b293c13116a70af2)
-set(TREESITTER_LUA_URL https://github.com/MunifTanjim/tree-sitter-lua/archive/v0.0.14.tar.gz CACHE STRING "")
-set(TREESITTER_LUA_SHA256 930d0370dc15b66389869355c8e14305b9ba7aafd36edbfdb468c8023395016d)
-set(TREESITTER_VIM_URL https://github.com/neovim/tree-sitter-vim/archive/v0.3.0.tar.gz CACHE STRING "")
-set(TREESITTER_VIM_SHA256 403acec3efb7cdb18ff3d68640fc823502a4ffcdfbb71cec3f98aa786c21cbe2)
-set(TREESITTER_VIMDOC_URL https://github.com/neovim/tree-sitter-vimdoc/archive/v2.0.0.tar.gz CACHE STRING "")
-set(TREESITTER_VIMDOC_SHA256 1ff8f4afd3a9599dd4c3ce87c155660b078c1229704d1a254433e33794b8f274)
-set(TREESITTER_QUERY_URL https://github.com/nvim-treesitter/tree-sitter-query/archive/v0.1.0.tar.gz CACHE STRING "")
-set(TREESITTER_QUERY_SHA256 e2b806f80e8bf1c4f4e5a96248393fe6622fc1fc6189d6896d269658f67f914c)
-set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/321a652626c63bfea3ea320083a4b14863b80270.tar.gz CACHE STRING "")
-set(TREESITTER_SHA256 8f780289d9524a680e548d891c07dab025241fffdea86f8b55921e4024a84757)
-
-get_cmake_property(ALL_VARIABLES VARIABLES)
-foreach (VAR ${ALL_VARIABLES})
-  if(VAR MATCHES "^.*URL$")
-    mark_as_advanced(${VAR})
-    if(USE_EXISTING_SRC_DIR)
-      unset(${VAR} CACHE)
+  if(name MATCHES "^.*URL$")
+    mark_as_advanced(${name})
+    if(NOT USE_EXISTING_SRC_DIR)
+      set(${name} ${value} CACHE STRING "")
     endif()
+  elseif(name MATCHES "^.*SHA256$")
+    set(${name} ${value})
   endif()
+
 endforeach()
 
 if(USE_BUNDLED_UNIBILIUM)
