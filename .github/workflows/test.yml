@@ -35,13 +35,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Homebrew
-        uses: Homebrew/actions/setup-homebrew@master
-
       - name: Install dependencies
+        run: ./.github/scripts/install_deps.sh
+
+      - name: Install stylua
         run: |
-          ./.github/scripts/install_deps.sh
-          brew install stylua
+          URL=$(curl -L https://api.github.com/repos/JohnnyMorganz/StyLua/releases/latest | jq -r '.assets[] | select(.name == "stylua-linux-x86_64.zip") | .browser_download_url')
+          wget --directory-prefix="$BIN_DIR" "$URL"
+          (cd "$BIN_DIR"; unzip stylua*.zip)
+          echo "$BIN_DIR" >> $GITHUB_PATH
 
       - uses: ./.github/actions/cache
 
