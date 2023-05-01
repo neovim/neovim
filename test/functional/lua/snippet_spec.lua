@@ -128,7 +128,7 @@ describe('vim.snippet', function()
     eq(cases[1], exec_lua([[return get_state()]]))
   end)
 
-  it('should sync same tabstop mark', function()
+  it('should sync same tabstop marks', function()
     exec_lua('vim.snippet.expand(...)', table.concat({
       'class ${1:ClassName} {',
       '\tpublic $1($2) {',
@@ -147,6 +147,16 @@ describe('vim.snippet', function()
       '',
     }, helpers.buf_lines(0))
   end)
+
+  -- it('should insert selected choice', function()
+  --   exec_lua('vim.snippet.expand(...)', table.concat({
+  --     'console.${1|log,info,warn,error|}($2);',
+  --   }, '\n'))
+  --   feed('3<CR>')
+  --   eq({
+  --     'console.warn();',
+  --   }, helpers.buf_lines(0))
+  -- end)
 
   it('should dispose directly modified non-origin mark', function()
     exec_lua('vim.snippet.expand(...)', table.concat({

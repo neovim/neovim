@@ -481,6 +481,8 @@ S.snippet = P.map(P.many(P.any(S.toplevel, S.text({ '$' }, { '}', '\\' }))), fun
   }, Node)
 end)
 
+---@alias vim.lsp.snippet.Node table
+
 local M = {}
 
 ---The base snippet node.
