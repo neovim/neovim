@@ -26,11 +26,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: ./.github/scripts/install_deps.sh
+      - run: ./.github/scripts/install_deps.sh
 
       - run: printf 'NVIM_BUILD_TYPE=Release\n' >> $GITHUB_ENV
 
+      - uses: ./.github/actions/cache
       - name: Build universal binary
         run: ./.github/scripts/build_universal_macos.sh
 
@@ -47,8 +47,7 @@ jobs:
       - name: Set up environment
         run: echo "$BIN_DIR" >> $GITHUB_PATH
 
-      - name: Install dependencies
-        run: ./.github/scripts/install_deps.sh
+      - run: ./.github/scripts/install_deps.sh
 
       - name: Install minimum required version of cmake
         run: |
@@ -63,11 +62,7 @@ jobs:
             exit 1
           }
 
-      - name: Build dependencies
-        run: make deps
-
-      - name: Build
-        run: make CMAKE_FLAGS="-D CI_BUILD=ON -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX"
-
-      - name: Install
-        run: make install
+      - uses: ./.github/actions/cache
+      - run: make deps
+      - run: make CMAKE_FLAGS="-D CI_BUILD=ON -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX"
+      - run: make install
