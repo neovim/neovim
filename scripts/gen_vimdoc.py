@@ -155,6 +155,7 @@ CONFIG = {
             'secure.lua',
             'version.lua',
             'iter.lua',
+            'net.lua',
         ],
         'files': [
             'runtime/lua/vim/iter.lua',
@@ -163,6 +164,7 @@ CONFIG = {
             'runtime/lua/vim/loader.lua',
             'runtime/lua/vim/uri.lua',
             'runtime/lua/vim/ui.lua',
+            'runtime/lua/vim/net.lua',
             'runtime/lua/vim/filetype.lua',
             'runtime/lua/vim/keymap.lua',
             'runtime/lua/vim/fs.lua',
