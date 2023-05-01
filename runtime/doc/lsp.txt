@@ -2131,27 +2131,6 @@ start({cmd}, {cmd_args}, {dispatchers}, {extra_spawn_params})
 
 
 ==============================================================================
-Lua module: vim.lsp.sync                                            *lsp-sync*
-
-                                                 *vim.lsp.sync.compute_diff()*
-compute_diff({___MissingCloseParenHere___})
-    Returns the range table for the difference between prev and curr lines
-
-    Parameters: ~
-      • {prev_lines}       (table) list of lines
-      • {curr_lines}       (table) list of lines
-      • {firstline}        (integer) line to begin search for first difference
-      • {lastline}         (integer) line to begin search in old_lines for
-                           last difference
-      • {new_lastline}     (integer) line to begin search in new_lines for
-                           last difference
-      • {offset_encoding}  (string) encoding requested by language server
-
-    Return: ~
-        (table) TextDocumentContentChangeEvent see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
-
-
-==============================================================================
 Lua module: vim.lsp.protocol                                    *lsp-protocol*
 
                                  *vim.lsp.protocol.make_client_capabilities()*
