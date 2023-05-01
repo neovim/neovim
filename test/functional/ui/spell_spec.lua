@@ -6,6 +6,8 @@ local clear = helpers.clear
 local feed = helpers.feed
 local insert = helpers.insert
 local command = helpers.command
+local meths = helpers.meths
+local curbufmeths = helpers.curbufmeths
 local is_os = helpers.is_os
 
 describe("'spell'", function()
@@ -18,11 +20,13 @@ describe("'spell'", function()
     screen:set_default_attr_ids( {
       [0] = {bold=true, foreground=Screen.colors.Blue},
       [1] = {special = Screen.colors.Red, undercurl = true},
-      [2] = {special = Screen.colors.Blue1, undercurl = true},
+      [2] = {special = Screen.colors.Blue, undercurl = true},
       [3] = {foreground = tonumber('0x6a0dad')},
       [4] = {foreground = Screen.colors.Magenta},
       [5] = {bold = true, foreground = Screen.colors.SeaGreen},
       [6] = {foreground = Screen.colors.Red},
+      [7] = {foreground = Screen.colors.Blue},
+      [8] = {foreground = Screen.colors.Blue, special = Screen.colors.Red, undercurl = true},
     })
   end)
 
@@ -74,17 +78,55 @@ describe("'spell'", function()
     ]])
   end)
 
-  it('"noplainbuffer" and syntax #20385', function()
+  it('extmarks, "noplainbuffer" and syntax #20385 #23398', function()
     command('set filetype=c')
     command('syntax on')
     command('set spell')
     insert([[
       #include <stdbool.h>
-      bool func(void);]])
+      bool func(void);
+      // I am a speling mistakke]])
+    feed('ge')
     screen:expect([[
       {3:#include }{4:<stdbool.h>}                                                            |
-      {5:bool} func({5:void})^;                                                                |
+      {5:bool} func({5:void});                                                                |
+      {7:// I am a }{8:spelin^g}{7: }{8:mistakke}                                                      |
       {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
+    feed(']s')
+    screen:expect([[
+      {3:#include }{4:<stdbool.h>}                                                            |
+      {5:bool} func({5:void});                                                                |
+      {7:// I am a }{8:speling}{7: }{8:^mistakke}                                                      |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
+    feed(']s')
+    screen:expect([[
+      {3:#include }{4:<stdbool.h>}                                                            |
+      {5:bool} func({5:void});                                                                |
+      {7:// I am a }{8:^speling}{7: }{8:mistakke}                                                      |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {6:search hit BOTTOM, continuing at TOP}                                            |
+    ]])
+    command('echo ""')
+    local ns = meths.create_namespace("spell")
+    -- extmark with spell=true enables spell
+    local id = curbufmeths.set_extmark(ns, 1, 4, { end_row = 1, end_col = 10, spell = true })
+    screen:expect([[
+      {3:#include }{4:<stdbool.h>}                                                            |
+      {5:bool} {1:func}({5:void});                                                                |
+      {7:// I am a }{8:^speling}{7: }{8:mistakke}                                                      |
       {0:~                                                                               }|
       {0:~                                                                               }|
       {0:~                                                                               }|
@@ -94,73 +136,122 @@ describe("'spell'", function()
     feed('[s')
     screen:expect([[
       {3:#include }{4:<stdbool.h>}                                                            |
-      {5:bool} func({5:void})^;                                                                |
+      {5:bool} {1:^func}({5:void});                                                                |
+      {7:// I am a }{8:speling}{7: }{8:mistakke}                                                      |
       {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
+    curbufmeths.del_extmark(ns, id)
+    -- extmark with spell=false disables spell
+    id = curbufmeths.set_extmark(ns, 2, 18, { end_row = 2, end_col = 26, spell = false })
+    screen:expect([[
+      {3:#include }{4:<stdbool.h>}                                                            |
+      {5:bool} ^func({5:void});                                                                |
+      {7:// I am a }{8:speling}{7: mistakke}                                                      |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
+    feed('[s')
+    screen:expect([[
+      {3:#include }{4:<stdbool.h>}                                                            |
+      {5:bool} func({5:void});                                                                |
+      {7:// I am a }{8:^speling}{7: mistakke}                                                      |
       {0:~                                                                               }|
       {0:~                                                                               }|
       {0:~                                                                               }|
       {0:~                                                                               }|
       {6:search hit TOP, continuing at BOTTOM}                                            |
     ]])
-    -- "noplainbuffer" shouldn't change spellchecking behavior with syntax enabled
-    command('set spelloptions+=noplainbuffer')
-    screen:expect_unchanged()
+    command('echo ""')
+    curbufmeths.del_extmark(ns, id)
+    screen:expect([[
+      {3:#include }{4:<stdbool.h>}                                                            |
+      {5:bool} func({5:void});                                                                |
+      {7:// I am a }{8:^speling}{7: }{8:mistakke}                                                      |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
     feed(']s')
     screen:expect([[
       {3:#include }{4:<stdbool.h>}                                                            |
-      {5:bool} func({5:void})^;                                                                |
+      {5:bool} func({5:void});                                                                |
+      {7:// I am a }{8:speling}{7: }{8:^mistakke}                                                      |
       {0:~                                                                               }|
       {0:~                                                                               }|
       {0:~                                                                               }|
       {0:~                                                                               }|
+                                                                                      |
+    ]])
+    -- "noplainbuffer" shouldn't change spellchecking behavior with syntax enabled
+    command('set spelloptions+=noplainbuffer')
+    screen:expect_unchanged()
+    feed('[s')
+    screen:expect([[
+      {3:#include }{4:<stdbool.h>}                                                            |
+      {5:bool} func({5:void});                                                                |
+      {7:// I am a }{8:^speling}{7: }{8:mistakke}                                                      |
       {0:~                                                                               }|
-      {6:search hit BOTTOM, continuing at TOP}                                            |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
     ]])
     -- no spellchecking with "noplainbuffer" and syntax disabled
     command('syntax off')
     screen:expect([[
       #include <stdbool.h>                                                            |
-      bool func(void)^;                                                                |
+      bool func(void);                                                                |
+      // I am a ^speling mistakke                                                      |
       {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
+    feed(']s')
+    screen:expect([[
+      #include <stdbool.h>                                                            |
+      bool func(void);                                                                |
+      // I am a ^speling mistakke                                                      |
       {0:~                                                                               }|
       {0:~                                                                               }|
       {0:~                                                                               }|
       {0:~                                                                               }|
       {6:search hit BOTTOM, continuing at TOP}                                            |
     ]])
-    feed('[s')
-    screen:expect([[
-      #include <stdbool.h>                                                            |
-      bool func(void)^;                                                                |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {6:search hit TOP, continuing at BOTTOM}                                            |
-    ]])
+    command('echo ""')
     -- everything is spellchecked without "noplainbuffer" with syntax disabled
     command('set spelloptions&')
     screen:expect([[
       #include <{1:stdbool}.h>                                                            |
-      {1:bool} {1:func}(void)^;                                                                |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {6:search hit TOP, continuing at BOTTOM}                                            |
-    ]])
-    feed(']s')
-    screen:expect([[
-      #include <{1:^stdbool}.h>                                                            |
       {1:bool} {1:func}(void);                                                                |
+      // I am a {1:^speling} {1:mistakke}                                                      |
       {0:~                                                                               }|
       {0:~                                                                               }|
       {0:~                                                                               }|
       {0:~                                                                               }|
+                                                                                      |
+    ]])
+    feed('[s')
+    screen:expect([[
+      #include <{1:stdbool}.h>                                                            |
+      {1:bool} {1:^func}(void);                                                                |
+      // I am a {1:speling} {1:mistakke}                                                      |
       {0:~                                                                               }|
-      {6:search hit BOTTOM, continuing at TOP}                                            |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
     ]])
   end)
+
 end)
