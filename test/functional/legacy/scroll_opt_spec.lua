@@ -719,4 +719,59 @@ describe('smoothscroll', function()
                                                              |
     ]])
   end)
+
+  it('<<< marker shows with tabline, winbar and splits', function()
+    screen:try_resize(40, 12)
+    exec([[
+      call setline(1, ['Line' .. (' with some text'->repeat(7))]->repeat(7))
+      set smoothscroll scrolloff=0
+      norm sj
+    ]])
+    screen:expect([[
+      <<<e text with some text with some text |
+      with some text with some text           |
+      Line with some text with some text with |
+      some text with some text with some text |
+      with some text with some text           |
+      [No Name] [+]                           |
+      <<<e text with some text with some text |
+      ^with some text with some text           |
+      Line with some text with some text with |
+      some text with some text with some te@@@|
+      [No Name] [+]                           |
+                                              |
+    ]])
+    exec('set showtabline=2')
+    feed('<C-E>')
+    screen:expect([[
+       2+ [No Name]                           |
+      <<<e text with some text with some text |
+      with some text with some text           |
+      Line with some text with some text with |
+      some text with some text with some text |
+      with some text with some text           |
+      [No Name] [+]                           |
+      <<<e text with some text with some text |
+      ^with some text with some text           |
+      Line with some text with some text wi@@@|
+      [No Name] [+]                           |
+                                              |
+    ]])
+    exec('set winbar=winbar')
+    feed('<C-w>k<C-E>')
+    screen:expect([[
+       2+ [No Name]                           |
+      winbar                                  |
+      <<<e text with some text with some text |
+      ^with some text with some text           |
+      Line with some text with some text with |
+      some text with some text with some te@@@|
+      [No Name] [+]                           |
+      winbar                                  |
+      <<<e text with some text with some text |
+      with some text with some text           |
+      [No Name] [+]                           |
+                                              |
+    ]])
+  end)
 end)
