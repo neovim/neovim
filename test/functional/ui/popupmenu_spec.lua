@@ -2658,17 +2658,16 @@ describe('builtin popupmenu', function()
     end
 
     it('with rightleft vsplits', function()
-      screen:try_resize(40, 8)
+      screen:try_resize(40, 6)
       command('set rightleft')
       command('rightbelow vsplit')
-      command("set completeopt+=noinsert,noselect")
+      command('set completeopt+=noinsert,noselect')
+      command('set pumheight=2')
       feed('isome rightleft ')
       funcs.complete(16, {'word', 'choice', 'text', 'thing'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
-          [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
           [2:-------------------]│[4:--------------------]|
           [2:-------------------]│[4:--------------------]|
           [2:-------------------]│[4:--------------------]|
@@ -2680,8 +2679,6 @@ describe('builtin popupmenu', function()
           {1:                  ~}|
           {1:                  ~}|
           {1:                  ~}|
-          {1:                  ~}|
-          {1:                  ~}|
         ## grid 3
           {2:-- INSERT --}                            |
         ## grid 4
@@ -2689,23 +2686,17 @@ describe('builtin popupmenu', function()
           {1:                   ~}|
           {1:                   ~}|
           {1:                   ~}|
-          {1:                   ~}|
-          {1:                   ~}|
         ## grid 5
-          {n:           drow }|
-          {n:         eciohc }|
-          {n:           txet }|
-          {n:          gniht }|
+          {c: }{n:           drow }|
+          {s: }{n:         eciohc }|
         ]], float_pos={
-          [5] = {{id = -1}, "NW", 4, 1, -10, false, 100};
+          [5] = {{id = -1}, "NW", 4, 1, -11, false, 100};
         }}
       else
         screen:expect([[
                tfelthgir emos│    ^  tfelthgir emos|
-          {1:          }{n:           drow }{1:             ~}|
-          {1:          }{n:         eciohc }{1:             ~}|
-          {1:          }{n:           txet }{1:             ~}|
-          {1:          }{n:          gniht }{1:             ~}|
+          {1:         }{c: }{n:           drow }{1:             ~}|
+          {1:         }{s: }{n:         eciohc }{1:             ~}|
           {1:                  ~}│{1:                   ~}|
           {3:[No Name] [+]       }{4:[No Name] [+]       }|
           {2:-- INSERT --}                            |
@@ -2720,15 +2711,11 @@ describe('builtin popupmenu', function()
           [2:-------------------]│[4:--------------------]|
           [2:-------------------]│[4:--------------------]|
           [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
           {3:[No Name] [+]       }{4:[No Name] [+]       }|
           [3:----------------------------------------]|
         ## grid 2
                tfelthgir emos|
                              |
-          {1:                  ~}|
-          {1:                  ~}|
           {1:                  ~}|
           {1:                  ~}|
         ## grid 3
@@ -2738,24 +2725,18 @@ describe('builtin popupmenu', function()
                              ^ |
           {1:                   ~}|
           {1:                   ~}|
-          {1:                   ~}|
-          {1:                   ~}|
         ## grid 5
-          {n:           drow}|
-          {n:         eciohc}|
-          {n:           txet}|
-          {n:          gniht}|
+          {c: }{n:           drow}|
+          {s: }{n:         eciohc}|
         ]], float_pos={
-          [5] = {{id = -1}, "NW", 4, 2, 5, false, 100};
+          [5] = {{id = -1}, "NW", 4, 2, 4, false, 100};
         }}
       else
         screen:expect([[
                tfelthgir emos│      tfelthgir emos|
                              │                   ^ |
-          {1:                  ~}│{1:     }{n:           drow}|
-          {1:                  ~}│{1:     }{n:         eciohc}|
-          {1:                  ~}│{1:     }{n:           txet}|
-          {1:                  ~}│{1:     }{n:          gniht}|
+          {1:                  ~}│{1:    }{c: }{n:           drow}|
+          {1:                  ~}│{1:    }{s: }{n:         eciohc}|
           {3:[No Name] [+]       }{4:[No Name] [+]       }|
           {2:-- INSERT --}                            |
         ]])
@@ -2769,15 +2750,11 @@ describe('builtin popupmenu', function()
           [2:-------------------]│[4:--------------------]|
           [2:-------------------]│[4:--------------------]|
           [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
           {3:[No Name] [+]       }{4:[No Name] [+]       }|
           [3:----------------------------------------]|
         ## grid 2
                tfelthgir emos|
                              |
-          {1:                  ~}|
-          {1:                  ~}|
           {1:                  ~}|
           {1:                  ~}|
         ## grid 3
@@ -2787,15 +2764,11 @@ describe('builtin popupmenu', function()
                               |
           {1:                   ~}|
           {1:                   ~}|
-          {1:                   ~}|
-          {1:                   ~}|
         ]]}
       else
         screen:expect([[
                tfelthgir emos│      tfelthgir emos|
                              │                    |
-          {1:                  ~}│{1:                   ~}|
-          {1:                  ~}│{1:                   ~}|
           {1:                  ~}│{1:                   ~}|
           {1:                  ~}│{1:                   ~}|
           {3:[No Name] [+]       }{4:[No Name] [+]       }|
@@ -2811,15 +2784,11 @@ describe('builtin popupmenu', function()
           [2:-------------------]│[4:--------------------]|
           [2:-------------------]│[4:--------------------]|
           [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
           {3:[No Name] [+]       }{4:[No Name] [+]       }|
           [3:----------------------------------------]|
         ## grid 2
                tfelthgir emos|
                              |
-          {1:                  ~}|
-          {1:                  ~}|
           {1:                  ~}|
           {1:                  ~}|
         ## grid 3
@@ -2829,27 +2798,19 @@ describe('builtin popupmenu', function()
                               |
           {1:                   ~}|
           {1:                   ~}|
-          {1:                   ~}|
-          {1:                   ~}|
         ## grid 5
-          {s:define         }|
-          {n:jump           }|
-          {n:list           }|
-          {n:place          }|
-          {n:undefine       }|
-          {n:unplace        }|
+          {s:define         }{c: }|
+          {n:jump           }{s: }|
         ]], float_pos={
-          [5] = {{id = -1}, "SW", 1, 7, 0, false, 250};
+          [5] = {{id = -1}, "SW", 1, 5, 0, false, 250};
         }}
       else
         screen:expect([[
                tfelthgir emos│      tfelthgir emos|
-          {s:define         }    │                    |
-          {n:jump           }{1:   ~}│{1:                   ~}|
-          {n:list           }{1:   ~}│{1:                   ~}|
-          {n:place          }{1:   ~}│{1:                   ~}|
-          {n:undefine       }{1:   ~}│{1:                   ~}|
-          {n:unplace        }{3:     }{4:[No Name] [+]       }|
+                             │                    |
+          {1:                  ~}│{1:                   ~}|
+          {s:define         }{c: }{1:  ~}│{1:                   ~}|
+          {n:jump           }{s: }{3:    }{4:[No Name] [+]       }|
           define^                                  |
         ]])
       end
