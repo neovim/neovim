@@ -111,10 +111,6 @@ end
 ---@param srow integer?
 ---@param erow integer?
 local function get_folds_levels(bufnr, info, srow, erow)
-  if not api.nvim_buf_is_valid(bufnr) then
-    return false
-  end
-
   srow = srow or 0
   erow = normalise_erow(bufnr, erow)
 
@@ -210,13 +206,25 @@ local function recompute_folds()
   vim._foldupdate()
 end
 
+--- Schedule a function only if bufnr is loaded
+---@param bufnr integer
+---@param fn function
+local function schedule_if_loaded(bufnr, fn)
+  vim.schedule(function()
+    if not api.nvim_buf_is_loaded(bufnr) then
+      return
+    end
+    fn()
+  end)
+end
+
 ---@param bufnr integer
 ---@param foldinfo TS.FoldInfo
 ---@param tree_changes Range4[]
 local function on_changedtree(bufnr, foldinfo, tree_changes)
   -- For some reason, queries seem to use the old buffer state in on_bytes.
   -- Get around this by scheduling and manually updating folds.
-  vim.schedule(function()
+  schedule_if_loaded(bufnr, function()
     for _, change in ipairs(tree_changes) do
       local srow, _, erow = Range.unpack4(change)
       get_folds_levels(bufnr, foldinfo, srow, erow)
@@ -238,7 +246,7 @@ local function on_bytes(bufnr, foldinfo, start_row, old_row, new_row)
     foldinfo:remove_range(end_row_new, end_row_old)
   elseif new_row > old_row then
     foldinfo:add_range(start_row, end_row_new)
-    vim.schedule(function()
+    schedule_if_loaded(bufnr, function()
       get_folds_levels(bufnr, foldinfo, start_row, end_row_new)
       recompute_folds()
     end)
