@@ -4435,15 +4435,14 @@ tohtml.tohtml({winid}, {opt})                         *tohtml.tohtml.tohtml()*
 ==============================================================================
 Lua module: net                                                      *lua-net*
 
-download({url}, {path}, {opts})                               *net.download()*
+download({url}, {path}, {opts})                           *vim.net.download()*
     Asynchronously download a file. To read the response metadata, such as
     headers and body, use |fetch()|. Accepts shares a few options with
     |vim.net.fetch()|, but not all of them.
 
     Example: >lua
 
-     vim.net.download("https://raw.githubusercontent.com/neovim/neovim/master/README.md",
-     ".cache/download/location/readme.md", {
+     vim.net.download("https://raw.githubusercontent.com/neovim/neovim/master/README.md", "~/.cache/download/location", {
        on_complete = function ()
          vim.notify("File Downloaded", vim.log.levels.INFO)
        end
@@ -4452,8 +4451,7 @@ download({url}, {path}, {opts})                               *net.download()*
 
     Parameters: ~
       • {url}   (string) url
-      • {path}  (string) A FULL download path. This function does not modify
-                the path, you should use |fnnamemodify| with relative paths.
+      • {path}  (string) A download path. Can be relative.
       • {opts}  (table|nil) Optional keyword arguments:
                 • method string|nil HTTP method to use. Defaults to GET.
                 • headers table|nil A table of key-value headers.
@@ -4469,7 +4467,7 @@ download({url}, {path}, {opts})                               *net.download()*
                   raise an error to the user. See |on_stderr| and
                   `stderr_buffered`.
 
-fetch({url}, {opts})                                             *net.fetch()*
+fetch({url}, {opts})                                         *vim.net.fetch()*
     Asynchronously make HTTP requests.
 
     Example: >lua
