@@ -927,6 +927,9 @@ local function gen_css(fname)
     /* Tag pseudo-header common in :help docs. */
     .help-tag-right {
       color: var(--tag-color);
+      margin-left: auto;
+      margin-right: 0;
+      float: right;
     }
     h1 .help-tag, h2 .help-tag, h3 .help-tag {
       font-size: smaller;
