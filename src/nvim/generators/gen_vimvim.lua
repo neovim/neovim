@@ -112,13 +112,12 @@ for _, au in ipairs(auevents.events) do
     w(' ' .. au)
   end
 end
-for au, _ in pairs(auevents.aliases) do
-  if not auevents.nvim_specific[au] then
-    if lld.line_length > 850 then
-      w('\n' .. vimau_start)
-    end
-    w(' ' .. au)
+for _, au in pairs(auevents.aliases) do
+  if lld.line_length > 850 then
+    w('\n' .. vimau_start)
   end
+  -- au[1] is aliased to au[2]
+  w(' ' .. au[1])
 end
 
 local nvimau_start = 'syn keyword nvimAutoEvent contained '
