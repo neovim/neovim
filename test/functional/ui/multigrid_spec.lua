@@ -37,6 +37,8 @@ describe('ext_multigrid', function()
       [18] = {bold = true, foreground = Screen.colors.Magenta},
       [19] = {foreground = Screen.colors.Brown},
       [20] = {background = Screen.colors.LightGrey},
+      [21] = {background = Screen.colors.LightMagenta},
+      [22] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue},
     })
   end)
 
@@ -1059,6 +1061,107 @@ describe('ext_multigrid', function()
       ## grid 3
                                                              |
       ]]}
+    end)
+
+    it('anchored float window "bufpos"', function()
+      insert(('c'):rep(1111))
+      screen:expect{grid=[[
+      ## grid 1
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        {11:[No Name] [+]                                        }|
+        [3:-----------------------------------------------------]|
+      ## grid 2
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccc^c                             |
+        {1:~                                                           }|
+      ## grid 3
+                                                             |
+      ]]}
+      local float_buf = meths.create_buf(false, false)
+      meths.open_win(float_buf, false, {
+        relative = 'win',
+        win = curwin(),
+        bufpos = {0, 1018},
+        anchor = 'SE',
+        width = 5,
+        height = 5,
+      })
+      screen:expect{grid=[[
+      ## grid 1
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        {11:[No Name] [+]                                        }|
+        [3:-----------------------------------------------------]|
+      ## grid 2
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|
+        cccccccccccccccccccccccccccccc^c                             |
+        {1:~                                                           }|
+      ## grid 3
+                                                             |
+      ## grid 4
+        {21:     }|
+        {22:~    }|
+        {22:~    }|
+        {22:~    }|
+        {22:~    }|
+      ]], float_pos={
+        [4] = {{id = 1001}, "SE", 2, 16, 58, true, 50};
+      }}
     end)
   end)
 
