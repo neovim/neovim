@@ -5652,6 +5652,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 	option.  Also see |ins-expandtab|.  When 'expandtab' is not set, the
 	number of spaces is minimized by using <Tab>s.
 
+			*'smoothscroll'* *'sms'* *'nosmoothscroll'* *'nosms'*
+'smoothscroll' 'sms'	boolean  (default off)
+			local to window
+	Scrolling works with screen lines.  When 'wrap' is set and the first
+	line in the window wraps part of it may not be visible, as if it is
+	above the window. "<<<" is displayed at the start of the first line,
+	highlighted with |hl-NonText|.
+	NOTE: only partly implemented, currently works with CTRL-E, CTRL-Y
+	and scrolling with the mouse.
+
 					*'softtabstop'* *'sts'*
 'softtabstop' 'sts'	number	(default 0)
 			local to buffer

@@ -2158,9 +2158,8 @@ void check_scrollbind(linenr_T topline_diff, long leftcol_diff)
     }
 
     // do the horizontal scroll
-    if (want_hor && curwin->w_leftcol != tgt_leftcol) {
-      curwin->w_leftcol = tgt_leftcol;
-      leftcol_changed();
+    if (want_hor) {
+      (void)set_leftcol(tgt_leftcol);
     }
   }
 
@@ -2432,7 +2431,7 @@ bool find_decl(char *ptr, size_t len, bool locally, bool thisblock, int flags_ar
 /// @return  true if able to move cursor, false otherwise.
 static bool nv_screengo(oparg_T *oap, int dir, long dist)
 {
-  int linelen = linetabsize(get_cursor_line_ptr());
+  int linelen = linetabsize_str(get_cursor_line_ptr());
   bool retval = true;
   bool atend = false;
   int col_off1;                 // margin offset for first screen line
@@ -2494,7 +2493,7 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
             retval = false;
             break;
           }
-          linelen = linetabsize(get_cursor_line_ptr());
+          linelen = linetabsize_str(get_cursor_line_ptr());
           if (linelen > width1) {
             int w = (((linelen - width1 - 1) / width2) + 1) * width2;
             assert(curwin->w_curswant <= INT_MAX - w);
@@ -2525,7 +2524,7 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
           if (curwin->w_curswant >= width1) {
             curwin->w_curswant -= width2;
           }
-          linelen = linetabsize(get_cursor_line_ptr());
+          linelen = linetabsize_str(get_cursor_line_ptr());
         }
       }
     }
@@ -2566,6 +2565,8 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
   if (atend) {
     curwin->w_curswant = MAXCOL;            // stick in the last column
   }
+  adjust_skipcol();
+
   return retval;
 }
 
@@ -2633,6 +2634,7 @@ static void nv_scroll_line(cmdarg_T *cap)
 void scroll_redraw(int up, long count)
 {
   linenr_T prev_topline = curwin->w_topline;
+  int prev_skipcol = curwin->w_skipcol;
   int prev_topfill = curwin->w_topfill;
   linenr_T prev_lnum = curwin->w_cursor.lnum;
 
@@ -2640,7 +2642,7 @@ void scroll_redraw(int up, long count)
                scrollup(count, true) :
                scrolldown(count, true);
 
-  if (get_scrolloff_value(curwin)) {
+  if (get_scrolloff_value(curwin) > 0) {
     // Adjust the cursor position for 'scrolloff'.  Mark w_topline as
     // valid, otherwise the screen jumps back at the end of the file.
     cursor_correct();
@@ -2651,6 +2653,7 @@ void scroll_redraw(int up, long count)
     // we get stuck at one position.  Don't move the cursor up if the
     // first line of the buffer is already on the screen
     while (curwin->w_topline == prev_topline
+           && curwin->w_skipcol == prev_skipcol
            && curwin->w_topfill == prev_topfill) {
       if (up) {
         if (curwin->w_cursor.lnum > prev_lnum
@@ -2890,27 +2893,21 @@ static void nv_zet(cmdarg_T *cap)
   case 'h':
   case K_LEFT:
     if (!curwin->w_p_wrap) {
-      if ((colnr_T)cap->count1 > curwin->w_leftcol) {
-        curwin->w_leftcol = 0;
-      } else {
-        curwin->w_leftcol -= (colnr_T)cap->count1;
-      }
-      leftcol_changed();
+      (void)set_leftcol((colnr_T)cap->count1 > curwin->w_leftcol
+                        ? 0 : curwin->w_leftcol - (colnr_T)cap->count1);
     }
     break;
 
-  // "zL" - scroll screen left half-page
+  // "zL" - scroll window left half-page
   case 'L':
     cap->count1 *= curwin->w_width_inner / 2;
     FALLTHROUGH;
 
-  // "zl" - scroll screen to the left
+  // "zl" - scroll window to the left if not wrapping
   case 'l':
   case K_RIGHT:
     if (!curwin->w_p_wrap) {
-      // scroll the window left
-      curwin->w_leftcol += (colnr_T)cap->count1;
-      leftcol_changed();
+      (void)set_leftcol(curwin->w_leftcol + (colnr_T)cap->count1);
     }
     break;
 
@@ -5493,7 +5490,7 @@ static void nv_g_cmd(cmdarg_T *cap)
   case 'M':
     oap->motion_type = kMTCharWise;
     oap->inclusive = false;
-    i = linetabsize(get_cursor_line_ptr());
+    i = linetabsize_str(get_cursor_line_ptr());
     if (cap->count0 > 0 && cap->count0 <= 100) {
       coladvance((colnr_T)(i * cap->count0 / 100));
     } else {

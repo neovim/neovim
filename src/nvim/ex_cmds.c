@@ -346,10 +346,8 @@ static int linelen(int *has_tab)
        last > first && ascii_iswhite(last[-1]); last--) {}
   char save = *last;
   *last = NUL;
-  // Get line length.
-  len = linetabsize(line);
-  // Check for embedded TAB.
-  if (has_tab != NULL) {
+  len = linetabsize_str(line);  // Get line length.
+  if (has_tab != NULL) {        // Check for embedded TAB.
     *has_tab = vim_strchr(first, TAB) != NULL;
   }
   *last = save;

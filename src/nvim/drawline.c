@@ -595,19 +595,23 @@ static int get_line_number_attr(win_T *wp, winlinevars_T *wlv)
 static void handle_lnum_col(win_T *wp, winlinevars_T *wlv, int num_signs, int sign_idx,
                             int sign_num_attr, int sign_cul_attr)
 {
+  bool has_cpo_n = vim_strchr(p_cpo, CPO_NUMCOL) != NULL;
+
   if ((wp->w_p_nu || wp->w_p_rnu)
-      && (wlv->row == wlv->startrow + wlv->filler_lines
-          || vim_strchr(p_cpo, CPO_NUMCOL) == NULL)) {
-    // If 'signcolumn' is set to 'number' and a sign is present
-    // in "lnum", then display the sign instead of the line
-    // number.
+      && (wlv->row == wlv->startrow + wlv->filler_lines || !has_cpo_n)
+      // there is no line number in a wrapped line when "n" is in
+      // 'cpoptions', but 'breakindent' assumes it anyway.
+      && !((has_cpo_n && !wp->w_p_bri) && wp->w_skipcol > 0 && wlv->lnum == wp->w_topline)) {
+    // If 'signcolumn' is set to 'number' and a sign is present in "lnum",
+    // then display the sign instead of the line number.
     if (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u' && num_signs > 0) {
       get_sign_display_info(true, wp, wlv, sign_idx, sign_cul_attr);
     } else {
       // Draw the line number (empty space after wrapping).
-      if (wlv->row == wlv->startrow + wlv->filler_lines) {
+      if (wlv->row == wlv->startrow + wlv->filler_lines
+          && (wp->w_skipcol == 0 || wlv->row > wp->w_winrow || (wp->w_p_nu && wp->w_p_rnu))) {
         get_line_number_str(wp, wlv->lnum, wlv->extra, sizeof(wlv->extra));
-        if (wp->w_skipcol > 0) {
+        if (wp->w_skipcol > 0 && wlv->startrow == 0) {
           for (wlv->p_extra = wlv->extra; *wlv->p_extra == ' '; wlv->p_extra++) {
             *wlv->p_extra = '-';
           }
@@ -754,7 +758,7 @@ static void handle_breakindent(win_T *wp, winlinevars_T *wlv)
           wlv->n_extra = 0;
         }
       }
-      if (wp->w_skipcol > 0 && wp->w_p_wrap && wp->w_briopt_sbr) {
+      if (wp->w_skipcol > 0 && wlv->startrow == 0 && wp->w_p_wrap && wp->w_briopt_sbr) {
         wlv->need_showbreak = false;
       }
       // Correct end of highlighted area for 'breakindent',
@@ -804,7 +808,7 @@ static void handle_showbreak_and_filler(win_T *wp, winlinevars_T *wlv)
     wlv->c_final = NUL;
     wlv->n_extra = (int)strlen(sbr);
     wlv->char_attr = win_hl_attr(wp, HLF_AT);
-    if (wp->w_skipcol == 0 || !wp->w_p_wrap) {
+    if (wp->w_skipcol == 0 || wlv->startrow != 0 || !wp->w_p_wrap) {
       wlv->need_showbreak = false;
     }
     wlv->vcol_sbr = wlv->vcol + mb_charlen(sbr);
@@ -1379,7 +1383,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   // 'nowrap' or 'wrap' and a single line that doesn't fit: Advance to the
   // first character to be displayed.
   if (wp->w_p_wrap) {
-    v = wp->w_skipcol;
+    v = startrow == 0 ? wp->w_skipcol : 0;
   } else {
     v = wp->w_leftcol;
   }
@@ -2595,7 +2599,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     if (c == NUL) {
       // Highlight 'cursorcolumn' & 'colorcolumn' past end of the line.
       if (wp->w_p_wrap) {
-        v = wp->w_skipcol;
+        v = wlv.startrow == 0 ? wp->w_skipcol : 0;
       } else {
         v = wp->w_leftcol;
       }

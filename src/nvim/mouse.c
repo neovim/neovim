@@ -1410,9 +1410,22 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
       } else {
         row -= win_get_fill(win, lnum);
       }
-      count = plines_win_nofill(win, lnum, true);
+      count = plines_win_nofill(win, lnum, false);
     } else {
-      count = plines_win(win, lnum, true);
+      count = plines_win(win, lnum, false);
+    }
+
+    if (win->w_skipcol > 0 && lnum == win->w_topline) {
+      // Adjust for 'smoothscroll' clipping the top screen lines.
+      // A similar formula is used in curs_columns().
+      int width1 = win->w_width_inner - win_col_off(win);
+      int skip_lines = 0;
+      if (win->w_skipcol > width1) {
+        skip_lines = (win->w_skipcol - width1) / (width1 + win_col_off2(win)) + 1;
+      } else if (win->w_skipcol > 0) {
+        skip_lines = 1;
+      }
+      count -= skip_lines;
     }
 
     if (count > row) {
@@ -1436,8 +1449,11 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
       col = off;
     }
     col += row * (win->w_width_inner - off);
-    // add skip column (for long wrapping line)
-    col += win->w_skipcol;
+
+    // Add skip column for the topline.
+    if (lnum == win->w_topline) {
+      col += win->w_skipcol;
+    }
   }
 
   if (!win->w_p_wrap) {
@@ -1648,8 +1664,6 @@ bool mouse_scroll_horiz(int dir)
     return false;
   }
 
-  curwin->w_leftcol = (colnr_T)leftcol;
-
   // When the line of the cursor is too short, move the cursor to the
   // longest visible line.
   if (!virtual_active()
@@ -1658,7 +1672,7 @@ bool mouse_scroll_horiz(int dir)
     curwin->w_cursor.col = 0;
   }
 
-  return leftcol_changed();
+  return set_leftcol(leftcol);
 }
 
 /// Adjusts the clicked column position when 'conceallevel' > 0

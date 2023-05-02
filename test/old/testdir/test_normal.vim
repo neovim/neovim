@@ -3738,15 +3738,45 @@ endfunc
 " Test for 'scrolloff' with a long line that doesn't fit in the screen
 func Test_normal_scroloff()
   10new
-  80vnew
-  call setline(1, repeat('a', 1000))
+  60vnew
+  call setline(1, ' 1 ' .. repeat('a', 57)
+             \ .. ' 2 ' .. repeat('b', 57)
+             \ .. ' 3 ' .. repeat('c', 57)
+             \ .. ' 4 ' .. repeat('d', 57)
+             \ .. ' 5 ' .. repeat('e', 57)
+             \ .. ' 6 ' .. repeat('f', 57)
+             \ .. ' 7 ' .. repeat('g', 57)
+             \ .. ' 8 ' .. repeat('h', 57)
+             \ .. ' 9 ' .. repeat('i', 57)
+             \ .. '10 ' .. repeat('j', 57)
+             \ .. '11 ' .. repeat('k', 57)
+             \ .. '12 ' .. repeat('l', 57)
+             \ .. '13 ' .. repeat('m', 57)
+             \ .. '14 ' .. repeat('n', 57)
+             \ .. '15 ' .. repeat('o', 57)
+             \ .. '16 ' .. repeat('p', 57)
+             \ .. '17 ' .. repeat('q', 57)
+             \ .. '18 ' .. repeat('r', 57)
+             \ .. '19 ' .. repeat('s', 57)
+             \ .. '20 ' .. repeat('t', 57)
+             \ .. '21 ' .. repeat('u', 57)
+             \ .. '22 ' .. repeat('v', 57)
+             \ .. '23 ' .. repeat('w', 57)
+             \ .. '24 ' .. repeat('x', 57)
+             \ .. '25 ' .. repeat('y', 57)
+             \ .. '26 ' .. repeat('z', 57)
+             \ )
   set scrolloff=10
   normal gg10gj
-  call assert_equal(8, winline())
+  call assert_equal(6, winline())
   normal 10gj
-  call assert_equal(10, winline())
+  call assert_equal(6, winline())
   normal 10gk
-  call assert_equal(3, winline())
+  call assert_equal(6, winline())
+  normal 0
+  call assert_equal(1, winline())
+  normal $
+  call assert_equal(10, winline())
   set scrolloff&
   close!
 endfunc

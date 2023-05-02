@@ -17,7 +17,6 @@ source test_global.vim
 source test_move.vim
 source test_put.vim
 source test_reltime.vim
-source test_scroll_opt.vim
 source test_searchpos.vim
 source test_set.vim
 source test_shift.vim

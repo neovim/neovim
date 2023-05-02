@@ -1447,6 +1447,26 @@ static void win_update(win_T *wp, DecorProviders *providers)
 
   init_search_hl(wp, &screen_search_hl);
 
+  // Make sure skipcol is valid, it depends on various options and the window
+  // width.
+  if (wp->w_skipcol > 0) {
+    int w = 0;
+    int width1 = wp->w_width_inner - win_col_off(wp);
+    int width2 = width1 + win_col_off2(wp);
+    int add = width1;
+
+    while (w < wp->w_skipcol) {
+      if (w > 0) {
+        add = width2;
+      }
+      w += add;
+    }
+    if (w != wp->w_skipcol) {
+      // always round down, the higher value may not be valid
+      wp->w_skipcol = w - add;
+    }
+  }
+
   // Force redraw when width of 'number' or 'relativenumber' column
   // changes.
   int nrwidth = (wp->w_p_nu || wp->w_p_rnu || *wp->w_p_stc) ? number_width(wp) : 0;

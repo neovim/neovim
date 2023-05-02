@@ -2012,6 +2012,15 @@ return {
       defaults={if_true=0}
     },
     {
+      full_name='smoothscroll', abbreviation='sms',
+      short_desc=N_("scroll by screen lines when 'wrap' is set"),
+      type='bool', scope={'window'},
+      pv_name='p_sms',
+      redraw={'current_window'},
+      defaults={if_true=0},
+      cb='did_set_smoothscroll'
+    },
+    {
       full_name='scrollback', abbreviation='scbk',
       short_desc=N_("lines to scroll with CTRL-U and CTRL-D"),
       type='number', scope={'buffer'},

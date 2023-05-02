@@ -189,10 +189,11 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
 /// @param[out] nextp    if not NULL, the line after a fold
 /// @param[out] foldedp  if not NULL, whether lnum is on a fold
 /// @param[in]  cache    whether to use the window's cache for folds
+/// @param[in]  winheight when true limit to window height
 ///
 /// @return the total number of screen lines
 int plines_win_full(win_T *wp, linenr_T lnum, linenr_T *const nextp, bool *const foldedp,
-                    const bool cache)
+                    const bool cache, const bool winheight)
 {
   bool folded = hasFoldingWin(wp, lnum, NULL, nextp, cache, NULL);
   if (foldedp) {
@@ -201,9 +202,9 @@ int plines_win_full(win_T *wp, linenr_T lnum, linenr_T *const nextp, bool *const
   if (folded) {
     return 1;
   } else if (lnum == wp->w_topline) {
-    return plines_win_nofill(wp, lnum, true) + wp->w_topfill;
+    return plines_win_nofill(wp, lnum, winheight) + wp->w_topfill;
   }
-  return plines_win(wp, lnum, true);
+  return plines_win(wp, lnum, winheight);
 }
 
 int plines_m_win(win_T *wp, linenr_T first, linenr_T last)
@@ -212,7 +213,7 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last)
 
   while (first <= last) {
     linenr_T next = first;
-    count += plines_win_full(wp, first, &next, NULL, false);
+    count += plines_win_full(wp, first, &next, NULL, false, true);
     first = next + 1;
   }
   return count;
@@ -243,12 +244,12 @@ int win_chartabsize(win_T *wp, char *p, colnr_T col)
 /// @param s
 ///
 /// @return Number of characters the string will take on the screen.
-int linetabsize(char *s)
+int linetabsize_str(char *s)
 {
   return linetabsize_col(0, s);
 }
 
-/// Like linetabsize(), but "s" starts at column "startcol".
+/// Like linetabsize_str(), but "s" starts at column "startcol".
 ///
 /// @param startcol
 /// @param s
@@ -265,7 +266,7 @@ int linetabsize_col(int startcol, char *s)
   return cts.cts_vcol;
 }
 
-/// Like linetabsize(), but for a given window instead of the current one.
+/// Like linetabsize_str(), but for a given window instead of the current one.
 ///
 /// @param wp
 /// @param line
@@ -282,6 +283,13 @@ unsigned win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T len)
   }
   clear_chartabsize_arg(&cts);
   return (unsigned)cts.cts_vcol;
+}
+
+/// Return the number of cells line "lnum" of window "wp" will take on the
+/// screen, taking into account the size of a tab and text properties.
+unsigned     linetabsize(win_T *wp, linenr_T lnum)
+{
+  return win_linetabsize(wp, lnum, ml_get_buf(wp->w_buffer, lnum, false), (colnr_T)MAXCOL);
 }
 
 /// Prepare the structure passed to chartabsize functions.

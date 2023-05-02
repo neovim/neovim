@@ -115,7 +115,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
     col = wcol;
 
     if ((addspaces || finetune) && !VIsual_active) {
-      curwin->w_curswant = linetabsize(line) + one_more;
+      curwin->w_curswant = linetabsize_str(line) + one_more;
       if (curwin->w_curswant > 0) {
         curwin->w_curswant--;
       }
@@ -129,7 +129,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
         && curwin->w_width_inner != 0
         && wcol >= (colnr_T)width
         && width > 0) {
-      csize = linetabsize(line);
+      csize = linetabsize_str(line);
       if (csize > 0) {
         csize--;
       }
@@ -439,23 +439,27 @@ void adjust_cursor_col(void)
   }
 }
 
-/// When curwin->w_leftcol has changed, adjust the cursor position.
+/// Set "curwin->w_leftcol" to "leftcol".
+/// Adjust the cursor position if needed.
 ///
 /// @return  true if the cursor was moved.
-bool leftcol_changed(void)
+bool set_leftcol(colnr_T leftcol)
 {
-  // TODO(hinidu): I think it should be colnr_T or int, but p_siso is long.
-  // Perhaps we can change p_siso to int.
-  int64_t lastcol;
-  colnr_T s, e;
-  bool retval = false;
+  // Return quickly when there is no change.
+  if (curwin->w_leftcol == leftcol) {
+    return false;
+  }
+  curwin->w_leftcol = leftcol;
 
   changed_cline_bef_curs();
-  lastcol = curwin->w_leftcol + curwin->w_width_inner - curwin_col_off() - 1;
+  // TODO(hinidu): I think it should be colnr_T or int, but p_siso is long.
+  // Perhaps we can change p_siso to int.
+  int64_t lastcol = curwin->w_leftcol + curwin->w_width_inner - curwin_col_off() - 1;
   validate_virtcol();
 
+  bool retval = false;
   // If the cursor is right or left of the screen, move it to last or first
-  // character.
+  // visible character.
   long siso = get_sidescrolloff_value(curwin);
   if (curwin->w_virtcol > (colnr_T)(lastcol - siso)) {
     retval = true;
@@ -468,6 +472,7 @@ bool leftcol_changed(void)
   // If the start of the character under the cursor is not on the screen,
   // advance the cursor one more char.  If this fails (last char of the
   // line) adjust the scrolling.
+  colnr_T s, e;
   getvvcol(curwin, &curwin->w_cursor, &s, NULL, &e);
   if (e > (colnr_T)lastcol) {
     retval = true;

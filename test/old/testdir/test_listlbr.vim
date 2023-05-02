@@ -223,7 +223,7 @@ func Test_virtual_block_and_vbA()
   exe "norm! $3B\<C-v>eAx\<Esc>"
   let lines = s:screen_lines([1, 10], winwidth(0))
   let expect = [
-\ "foobar foobar       ",
+\ "<<<bar foobar       ",
 \ "foobar foobar       ",
 \ "foobar foobar       ",
 \ "foobar foobar       ",

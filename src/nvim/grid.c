@@ -22,7 +22,7 @@
 #include "nvim/highlight.h"
 #include "nvim/log.h"
 #include "nvim/message.h"
-#include "nvim/option_defs.h"
+#include "nvim/option.h"
 #include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
@@ -503,6 +503,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
   int col = 0;
   bool redraw_next;                         // redraw_this for next character
   bool clear_next = false;
+  bool topline = row == 0;
   int char_cells;                           // 1: normal char
                                             // 2: occupies two display cells
   int start_dirty = -1, end_dirty = 0;
@@ -528,6 +529,30 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
   size_t off_to = grid->line_offset[row] + (size_t)coloff;
   max_off_from = linebuf_size;
   max_off_to = grid->line_offset[row] + (size_t)grid->cols;
+
+  // Take care of putting "<<<" on the first line for 'smoothscroll'.
+  if (topline && wp->w_skipcol > 0
+      // do not overwrite the 'showbreak' text with "<<<"
+      && *get_showbreak_value(wp) == NUL
+      // do not overwrite the 'listchars' "precedes" text with "<<<"
+      && !(wp->w_p_list && wp->w_p_lcs_chars.prec != 0)) {
+    int off = 0;
+    int skip = 0;
+    if (wp->w_p_nu && wp->w_p_rnu) {
+      // do not overwrite the line number, change "123 text" to
+      // "123>>>xt".
+      while (skip < wp->w_width_inner && ascii_isdigit(*linebuf_char[off])) {
+        off++;
+        skip++;
+      }
+    }
+
+    for (int i = 0; i < 3 && i + skip < wp->w_width_inner; i++) {
+      schar_from_ascii(linebuf_char[off], '<');
+      linebuf_attr[off] = HL_ATTR(HLF_AT);
+      off++;
+    }
+  }
 
   if (rlflag) {
     // Clear rest first, because it's left of the text.

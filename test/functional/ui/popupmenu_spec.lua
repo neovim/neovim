@@ -2396,7 +2396,7 @@ describe('builtin popupmenu', function()
         -- can't draw the pum, but check we don't crash
         screen:try_resize(12,2)
         screen:expect([[
-          text^        |
+          {1:<<<}t^        |
           {2:-- INSERT -} |
         ]])
 

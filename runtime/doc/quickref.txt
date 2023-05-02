@@ -870,6 +870,7 @@ Short explanation of each option:		*option-list*
 'smartcase'	  'scs'     no ignore case when pattern has uppercase
 'smartindent'	  'si'	    smart autoindenting for C programs
 'smarttab'	  'sta'     use 'shiftwidth' when inserting <Tab>
+'smoothscroll'	  'sms'     scroll by screen lines when 'wrap' is set
 'softtabstop'	  'sts'     number of spaces that <Tab> uses while editing
 'spell'			    enable spell checking
 'spellcapcheck'   'spc'     pattern to locate end of a sentence

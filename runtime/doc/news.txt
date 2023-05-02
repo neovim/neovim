@@ -49,6 +49,9 @@ iterators |luaref-in|.
 • Added |vim.treesitter.query.omnifunc()| for treesitter query files (set by
   default).
 
+• |'smoothscroll'| option to scroll by screen line rather than by text line
+when |'wrap'| is set.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
