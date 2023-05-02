@@ -34,15 +34,58 @@ function FoldInfo:invalidate_range(srow, erow)
   end
 end
 
+--- Efficiently remove items from middle of a list a list.
+---
+--- Calling table.remove() in a loop will re-index the tail of the table on
+--- every iteration, instead this function will re-index  the table exactly
+--- once.
+---
+--- Based on https://stackoverflow.com/questions/12394841/safely-remove-items-from-an-array-table-while-iterating/53038524#53038524
+---
+---@param t any[]
+---@param first integer
+---@param last integer
+local function list_remove(t, first, last)
+  local n = #t
+  for i = 0, n - first do
+    t[first + i] = t[last + 1 + i]
+    t[last + 1 + i] = nil
+  end
+end
+
 ---@package
 ---@param srow integer
 ---@param erow integer
 function FoldInfo:remove_range(srow, erow)
-  for i = erow - 1, srow, -1 do
-    table.remove(self.levels, i + 1)
-    table.remove(self.levels0, i + 1)
-    table.remove(self.start_counts, i + 1)
-    table.remove(self.stop_counts, i + 1)
+  list_remove(self.levels, srow + 1, erow)
+  list_remove(self.levels0, srow + 1, erow)
+  list_remove(self.start_counts, srow + 1, erow)
+  list_remove(self.stop_counts, srow + 1, erow)
+end
+
+--- Efficiently insert items into the middle of a list.
+---
+--- Calling table.insert() in a loop will re-index the tail of the table on
+--- every iteration, instead this function will re-index  the table exactly
+--- once.
+---
+--- Based on https://stackoverflow.com/questions/12394841/safely-remove-items-from-an-array-table-while-iterating/53038524#53038524
+---
+---@param t any[]
+---@param first integer
+---@param last integer
+---@param v any
+local function list_insert(t, first, last, v)
+  local n = #t
+
+  -- Shift table forward
+  for i = n - first, 0, -1 do
+    t[last + 1 + i] = t[first + i]
+  end
+
+  -- Fill in new values
+  for i = first, last do
+    t[i] = v
   end
 end
 
@@ -50,12 +93,10 @@ end
 ---@param srow integer
 ---@param erow integer
 function FoldInfo:add_range(srow, erow)
-  for i = srow, erow - 1 do
-    table.insert(self.levels, i + 1, '-1')
-    table.insert(self.levels0, i + 1, -1)
-    table.insert(self.start_counts, i + 1, nil)
-    table.insert(self.stop_counts, i + 1, nil)
-  end
+  list_insert(self.levels, srow + 1, erow, '-1')
+  list_insert(self.levels0, srow + 1, erow, -1)
+  list_insert(self.start_counts, srow + 1, erow, nil)
+  list_insert(self.stop_counts, srow + 1, erow, nil)
 end
 
 ---@package
