@@ -179,6 +179,7 @@ describe('smoothscroll', function()
     exec([[
       call setline(1, [ 'one ' .. 'word '->repeat(20), 'two ' .. 'long word '->repeat(7), 'line', 'line', 'line', ])
       set smoothscroll scrolloff=5
+      set splitkeep=topline
       set number cpo+=n
       :3
       func g:DoRel()
@@ -277,6 +278,53 @@ describe('smoothscroll', function()
       ~                                       |
                                               |
     ]])
+    exec('botright split')
+    feed('gg')
+    screen:expect([[
+        1 one word word word word word word wo|
+          rd word word word word word word wor|
+          d word word word word word word     |
+        2 two long word long word long word@@@|
+      [No Name] [+]                           |
+        1 ^one word word word word word word wo|
+          rd word word word word word word wor|
+          d word word word word word word     |
+        2 two long word long word long word lo|
+          ng word long word long word long @@@|
+      [No Name] [+]                           |
+                                              |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+        1 one word word word word word word wo|
+          rd word word word word word word wor|
+          d word word word word word word     |
+        2 two long word long word long word@@@|
+      [No Name] [+]                           |
+      <<< rd word word word word word word wor|
+          d word word word word word word^     |
+        2 two long word long word long word lo|
+          ng word long word long word long wor|
+          d                                   |
+      [No Name] [+]                           |
+                                              |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+        1 one word word word word word word wo|
+          rd word word word word word word wor|
+          d word word word word word word     |
+        2 two long word long word long word@@@|
+      [No Name] [+]                           |
+      <<< d word word word word word word^     |
+        2 two long word long word long word lo|
+          ng word long word long word long wor|
+          d                                   |
+        3 line                                |
+      [No Name] [+]                           |
+                                              |
+    ]])
+    exec('close')
     exec('call DoRel()')
     screen:expect([[
       2<<<^ong text very long text very long te|
