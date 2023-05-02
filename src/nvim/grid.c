@@ -541,13 +541,13 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
     if (wp->w_p_nu && wp->w_p_rnu) {
       // do not overwrite the line number, change "123 text" to
       // "123>>>xt".
-      while (skip < wp->w_width && ascii_isdigit(*linebuf_char[off])) {
+      while (skip < wp->w_width_inner && ascii_isdigit(*linebuf_char[off])) {
         off++;
         skip++;
       }
     }
 
-    for (int i = 0; i < 3 && i + skip < wp->w_width; i++) {
+    for (int i = 0; i < 3 && i + skip < wp->w_width_inner; i++) {
       schar_from_ascii(linebuf_char[off], '<');
       linebuf_attr[off] = HL_ATTR(HLF_AT);
       off++;

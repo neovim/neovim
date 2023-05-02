@@ -1451,7 +1451,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
   // width.
   if (wp->w_skipcol > 0) {
     int w = 0;
-    int width1 = wp->w_width - win_col_off(wp);
+    int width1 = wp->w_width_inner - win_col_off(wp);
     int width2 = width1 + win_col_off2(wp);
     int add = width1;
 
