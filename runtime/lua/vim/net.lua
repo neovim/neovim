@@ -275,8 +275,7 @@ end
 --- Accepts shares a few options with |vim.net.fetch()|, but not all of them.
 ---
 ---@param url string url
----@param path string A FULL download path. This function does not modify the path, you should use
----|fnnamemodify| with relative paths.
+---@param path string A download path. Can be relative.
 ---@param opts table|nil Optional keyword arguments:
 ---             - method string|nil HTTP method to use. Defaults to GET.
 ---             - headers table|nil A table of key-value headers.
@@ -291,8 +290,7 @@ end
 --- Example:
 --- <pre>lua
 ---
---- vim.net.download("https://raw.githubusercontent.com/neovim/neovim/master/README.md",
---- ".cache/download/location/readme.md", {
+--- vim.net.download("https://raw.githubusercontent.com/neovim/neovim/master/README.md", "~/.cache/download/location", {
 ---   on_complete = function ()
 ---     vim.notify("File Downloaded", vim.log.levels.INFO)
 ---   end
@@ -305,6 +303,8 @@ function M.download(url, path, opts)
   })
 
   opts = opts or {}
+
+  path = vim.fn.fnameescape(vim.fn.fnamemodify(path, ":p"))
 
   opts.download_location = path
 
