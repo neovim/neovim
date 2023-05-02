@@ -174,8 +174,8 @@ end
 ---             - data string|table|nil Data to send with the request. If a table, it will be json
 ---             encoded.
 ---
----             - on_complete nil|fun(response: table) Callback function when request is completed.
----             The response has the following keys:
+---             - on_complete nil|fun(response: table) Callback function when request is
+---             successfully completed. The response has the following keys:
 ---                 - ok boolean Convience field showing whether or not the request
 ---                 was successful (status within 2XX range).
 ---                 - headers fun(): table<string, string> Function returning a table of response headers.
@@ -242,14 +242,11 @@ function M.fetch(url, opts)
 
   local args = createCurlArgs(url, opts)
 
+  local out = {}
+
   local job = vim.fn.jobstart(args, {
     on_stdout = function(_, data)
-      if opts.on_complete then
-        local res = process_stdout(data)
-
-        -- Since we use stdout_buffered, it is actually most safe to call on_compete from on_stdout.
-        opts.on_complete(res)
-      end
+      out = data
     end,
     on_stderr = function(_, data)
       if opts.on_err ~= nil then
@@ -258,7 +255,14 @@ function M.fetch(url, opts)
 
       vim.notify('Failed to fetch: ' .. table.concat(data, '\n'), vim.log.levels.ERROR)
     end,
-    on_exit = function() end,
+    on_exit = function(_, code)
+      if opts.on_complete and code == 0 then
+        local res = process_stdout(data)
+
+        -- Since we use stdout_buffered, it is actually most safe to call on_compete from on_stdout.
+        opts.on_complete(res)
+      end
+    end,
     stdout_buffered = true,
     stderr_buffered = true,
   })
@@ -279,7 +283,7 @@ end
 ---             - follow_redirects boolean|nil Will follow redirects by default.
 ---             - data string|table|nil Data to send with the request. If a table, it will be json
 ---             encoded.
----             - on_complete nil|fun() Callback function when download is complete.
+---             - on_complete nil|fun() Callback function when download successfully completed.
 ---             - on_err nil|fun(errr: string[]) An optional function recieving a `stderr_buffered` string[] of curl
 ---             stderr. Without providing this function, fetch() will automatically raise an error
 ---             to the user. See |on_stderr| and `stderr_buffered`.
@@ -307,8 +311,8 @@ function M.download(url, path, opts)
   local args = createCurlArgs(url, opts)
 
   local job = vim.fn.jobstart(args, {
-    on_exit = function()
-      if opts.on_complete then
+    on_exit = function(_, code)
+      if opts.on_complete and code == 0 then
         opts.on_complete()
       end
     end,

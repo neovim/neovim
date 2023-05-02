@@ -4461,8 +4461,8 @@ download({url}, {path}, {opts})                               *net.download()*
                   default.
                 • data string|table|nil Data to send with the request. If a
                   table, it will be json encoded.
-                • on_complete nil|fun() Callback function when download is
-                  complete.
+                • on_complete nil|fun() Callback function when download
+                  successfully completed.
                 • on_err nil|fun(errr: string[]) An optional function
                   recieving a `stderr_buffered` string[] of curl stderr.
                   Without providing this function, fetch() will automatically
@@ -4519,7 +4519,8 @@ fetch({url}, {opts})                                             *net.fetch()*
                 • data string|table|nil Data to send with the request. If a
                   table, it will be json encoded.
                 • on_complete nil|fun(response: table) Callback function when
-                  request is completed. The response has the following keys:
+                  request is successfully completed. The response has the
+                  following keys:
                   • ok boolean Convience field showing whether or not the
                     request was successful (status within 2XX range).
                   • headers fun(): table<string, string> Function returning a
