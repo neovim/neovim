@@ -609,7 +609,7 @@ static void handle_lnum_col(win_T *wp, winlinevars_T *wlv, int num_signs, int si
     } else {
       // Draw the line number (empty space after wrapping).
       if (wlv->row == wlv->startrow + wlv->filler_lines
-          && (wp->w_skipcol == 0 || wlv->row > wp->w_winrow || (wp->w_p_nu && wp->w_p_rnu))) {
+          && (wp->w_skipcol == 0 || wlv->row > 0 || (wp->w_p_nu && wp->w_p_rnu))) {
         get_line_number_str(wp, wlv->lnum, wlv->extra, sizeof(wlv->extra));
         if (wp->w_skipcol > 0 && wlv->startrow == 0) {
           for (wlv->p_extra = wlv->extra; *wlv->p_extra == ' '; wlv->p_extra++) {

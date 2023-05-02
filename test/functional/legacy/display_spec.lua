@@ -195,7 +195,7 @@ describe('display', function()
     run_test_display_lastline(true)
   end)
 
-  -- oldtest: Test_display_long_lastline
+  -- oldtest: Test_display_long_lastline()
   it('display "lastline" shows correct text when end of wrapped line is deleted', function()
     local screen = Screen.new(35, 14)
     screen:attach()

@@ -1325,6 +1325,7 @@ it('win_update redraws lines properly', function()
   ]]}
 end)
 
+-- oldtest: Test_diff_rnu()
 it('diff updates line numbers below filler lines', function()
   clear()
   local screen = Screen.new(40, 14)
@@ -1401,6 +1402,7 @@ it('diff updates line numbers below filler lines', function()
   ]])
 end)
 
+-- oldtest: Test_diff_with_scroll_and_change()
 it('Align the filler lines when changing text in diff mode', function()
   clear()
   local screen = Screen.new(40, 20)

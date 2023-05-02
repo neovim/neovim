@@ -137,6 +137,7 @@ func Test_smoothscroll_number()
         'line',
       ])
       set smoothscroll
+      set splitkeep=topline
       set number cpo+=n
       :3
 
@@ -167,8 +168,16 @@ func Test_smoothscroll_number()
   call term_sendkeys(buf, "\<C-Y>")
   call VerifyScreenDump(buf, 'Test_smooth_number_6', {})
 
-  call term_sendkeys(buf, ":call DoRel()\<CR>")
+  call term_sendkeys(buf, ":botright split\<CR>gg")
   call VerifyScreenDump(buf, 'Test_smooth_number_7', {})
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, 'Test_smooth_number_8', {})
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, 'Test_smooth_number_9', {})
+  call term_sendkeys(buf, ":close\<CR>")
+
+  call term_sendkeys(buf, ":call DoRel()\<CR>")
+  call VerifyScreenDump(buf, 'Test_smooth_number_10', {})
 
   call StopVimInTerminal(buf)
 endfunc
