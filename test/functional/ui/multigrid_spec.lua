@@ -39,6 +39,7 @@ describe('ext_multigrid', function()
       [20] = {background = Screen.colors.LightGrey},
       [21] = {background = Screen.colors.LightMagenta},
       [22] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue},
+      [23] = {background = Screen.colors.Grey90},
     })
   end)
 
@@ -930,7 +931,7 @@ describe('ext_multigrid', function()
     end)
 
     it('wraps with grid width', function()
-      insert(('b'):rep(80).."\n")
+      insert(('b'):rep(160).."\n")
       screen:expect{grid=[[
       ## grid 1
         [2:-----------------------------------------------------]|
@@ -949,9 +950,51 @@ describe('ext_multigrid', function()
         [3:-----------------------------------------------------]|
       ## grid 2
         bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
-        bbbbbbbbbbbbbbbbbbbb                                        |
+        bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+        bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                    |
         ^                                                            |
         {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+      ## grid 3
+                                                             |
+      ]]}
+      feed('2gk')
+      command('setlocal cursorline cursorlineopt=screenline')
+      screen:expect{grid=[[
+      ## grid 1
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        [2:-----------------------------------------------------]|
+        {11:[No Name] [+]                                        }|
+        [3:-----------------------------------------------------]|
+      ## grid 2
+        bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+        {23:^bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}|
+        bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                    |
+                                                                    |
         {1:~                                                           }|
         {1:~                                                           }|
         {1:~                                                           }|
