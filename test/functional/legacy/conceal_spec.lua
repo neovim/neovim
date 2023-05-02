@@ -474,6 +474,39 @@ describe('Conceal', function()
     ]])
   end)
 
+  -- oldtest: Test_conceal_linebreak()
+  it('with linebreak', function()
+    local screen = Screen.new(75, 8)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+    })
+    screen:attach()
+    exec([[
+      let &wrap = v:true
+      let &conceallevel = 2
+      let &concealcursor = 'nc'
+      let &linebreak = v:true
+      let &showbreak = '+ '
+      let line = 'a`a`a`a`'
+          \ .. 'a'->repeat(&columns - 15)
+          \ .. ' b`b`'
+          \ .. 'b'->repeat(&columns - 10)
+          \ .. ' cccccc'
+      eval ['x'->repeat(&columns), '', line]->setline(1)
+      syntax region CodeSpan matchgroup=Delimiter start=/\z(`\+\)/ end=/\z1/ concealends
+    ]])
+    screen:expect([[
+      ^xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|
+                                                                                 |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa           |
+      {0:+ }bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb      |
+      {0:+ }cccccc                                                                   |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+                                                                                 |
+    ]])
+  end)
+
   -- Tests for correct display (cursor column position) with +conceal and tabulators.
   -- oldtest: Test_conceal_cursor_pos()
   it('cursor and column position with conceal and tabulators', function()
