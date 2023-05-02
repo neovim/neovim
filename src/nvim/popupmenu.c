@@ -452,6 +452,9 @@ void pum_redraw(void)
   }
   if (pum_scrollbar > 0) {
     grid_width++;
+    if (pum_rl) {
+      col_off++;
+    }
   }
 
   grid_assign_handle(&pum_grid);
