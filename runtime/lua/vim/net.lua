@@ -4,11 +4,11 @@ local M = {}
 ---@param method string|nil Http method.
 ---@return string[]
 local function createMethodArgs(method)
-  method = method and method:lower() or 'get'
+  method = method and method:upper() or 'GET'
 
-  if method == 'head' then
+  if method == 'HEAD' then
     return { '--head' }
-  elseif method == 'get' then
+  elseif method == 'GET' then
     return { '--get' }
   end
 
@@ -18,16 +18,15 @@ local function createMethodArgs(method)
   }
 end
 
----@private Create curl args for a given request.
----
----@param url string Request URL.
+---@private --- Creates a table of curl command arguments based on the provided URL and options.
+---@param url string The request URL.
 ---@param opts table Keyword arguments:
 ---             - method string|nil Http method.
 ---             - follow_redirects boolean|nil Follow redirects.
----             - data string|table|nil Data to send with the request. If a table, it will be json
+---             - data string|table|nil Data to send with the request. If a table, it will be JSON
 ---             encoded.
 ---             - headers table<string, string>|nil Headers to set on the request
----             - download_location string|nil
+---             - download_location string|nil Where to download a file if applicable.
 ---
 ---@return string[] args Curl command.
 local function createCurlArgs(url, opts)
@@ -59,7 +58,7 @@ local function createCurlArgs(url, opts)
   if opts.data ~= nil then
     if type(opts.data) == 'table' then
       vim.list_extend(args, {
-        -- Let curl do some extra stuff for json
+        -- Let curl do some extra stuff for JSON
         '--json',
         vim.json.encode(opts.data),
       })
@@ -102,8 +101,9 @@ local function createCurlArgs(url, opts)
   return args
 end
 
---- @private Process a stdout_buffered list of data into a response
---- @param data string[] Data recieved from stdout
+--- @private Processes a list of data received from buffered stdout and returns a table with response data.
+--- @param data string[] Data recieved from stdout.
+--- @return table Response A table containing processed response data.
 local function process_stdout(data)
   local cache = {}
 
@@ -115,6 +115,9 @@ local function process_stdout(data)
   local extra = {}
 
   extra = vim.json.decode(data[#data])
+
+  local status = extra.http_code and tonumber(extra.http_code) or nil
+  extra.method = extra.method:upper()
 
   ---@private
   local function read_headers()
@@ -136,7 +139,11 @@ local function process_stdout(data)
 
   ---@private
   local function read_body()
-    if cache.body == nil then
+    -- check cache, return nil if method if HEAD
+
+    if extra.method == 'HEAD' then
+      return nil
+    elseif cache.body == nil then
       local body_start = extra.num_headers + 2
       local body_end = #data - 1
       local body = table.concat(data, '\n', body_start, body_end)
@@ -145,8 +152,6 @@ local function process_stdout(data)
 
     return cache.body
   end
-
-  local status = extra.http_code and tonumber(extra.http_code) or nil
 
   return {
     headers = read_headers,
@@ -166,33 +171,36 @@ end
 
 --- Asynchronously make HTTP requests.
 ---
----@param url string url
+---@see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+---@see |job-control|
+---@see man://curl
+---
+---@param url string The request URL.
 ---@param opts table|nil Optional keyword arguments:
 ---             - method string|nil HTTP method to use. Defaults to GET.
 ---             - headers table|nil A table of key-value headers.
----             - follow_redirects boolean|nil Will follow redirects by default.
----             - data string|table|nil Data to send with the request. If a table, it will be json
----             encoded.
+---             - follow_redirects boolean|nil Whether to follow redirects. Defaults to true.
+---             - data string|table|nil Data to send with the request. If a table, it will be
+---             JSON-encoded. vim.net does not currently support form encoding.
 ---
----             - on_complete nil|fun(response: table) Callback function when request is
----             successfully completed. The response has the following keys:
----                 - ok boolean Convience field showing whether or not the request
----                 was successful (status within 2XX range).
+---             - on_complete fun(response: table)|nil Callback function when request is
+---             completed successfully. The response has the following keys:
+---                 - ok boolean Whether the request was successful (status within 2XX range).
 ---                 - headers fun(): table<string, string> Function returning a table of response headers.
 ---                 - body fun(): string|nil Function returning response body. If method was HEAD,
----                 this is likely nil.
----                 - json fun(opts: table|nil): table Read the body as json. Optionally accepts
----                 opts from |vim.json.decode|. Will throw errors if body is not json-decodable.
+---                 this is nil.
+---                 - json fun(opts: table|nil): table Read the body as JSON. Optionally accepts
+---                 opts from |vim.json.decode|. Will throw errors if body is not JSON-decodable.
 ---                 - method string The http method used in the most recent HTTP request.
----                 - status number The numerical response code. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+---                 - status number The numerical response code. 
 ---                 - status_text string The status text returned with the response.
 ---                 - size number The total amount of bytes that were downloaded. This
 ---                 is the size of the body/data that was transferred, excluding headers.
 ---                 - http_version number HTTP version used in the request.
----             - on_err nil|fun(errr: string[]) An optional function recieving a `stderr_buffered` string[] of curl
----             stderr. Without providing this function, fetch() will automatically raise an error
+---             - on_err fun(err: string[])|nil An optional function recieving a `stderr_buffered` string[] of curl
+---             stderr. Without providing this function, |fetch()| will automatically raise an error
 ---             to the user. See |on_stderr| and `stderr_buffered`.
----@return number jobid A job id. See |job-control|.
+---@return number jobid A job id.
 ---
 --- Example:
 --- <pre>lua
@@ -208,7 +216,7 @@ end
 ---   end
 --- })
 ---
---- -- POST to a url, sending json and providing an authorization header
+--- -- POST to a url, sending a table as JSON and providing an authorization header
 --- vim.net.fetch("https://example.com/api/data", {
 ---   method = "POST",
 ---   data = {
@@ -221,7 +229,7 @@ end
 ---     -- Lets read the response!
 ---
 ---     if response.ok then
----       -- Read json response
+---       -- Read JSON response
 ---       local table = response.json()
 ---     else
 ---
@@ -249,6 +257,11 @@ function M.fetch(url, opts)
       out = data
     end,
     on_stderr = function(_, data)
+      if #data == 1 and data[1] == '' then
+        -- Data is nothing but a EOL
+        return
+      end
+
       if opts.on_err ~= nil then
         return opts.on_err(data)
       end
@@ -257,7 +270,7 @@ function M.fetch(url, opts)
     end,
     on_exit = function(_, code)
       if opts.on_complete and code == 0 then
-        local res = process_stdout(data)
+        local res = process_stdout(out)
 
         -- Since we use stdout_buffered, it is actually most safe to call on_compete from on_stdout.
         opts.on_complete(res)
@@ -271,31 +284,34 @@ function M.fetch(url, opts)
 end
 
 --- Asynchronously download a file.
---- To read the response metadata, such as headers and body, use |fetch()|.
---- Accepts shares a few options with |vim.net.fetch()|, but not all of them.
+--- To read the response metadata, such as headers and body, use |vim.net.fetch()|.
+---
+--- Shares a few options with |vim.net.fetch()|, but not all of them.
+---
+---@see |job-control|
+---@see man://curl
 ---
 ---@param url string url
----@param path string A download path. Can be relative.
+---@param path string A download path, can be relative.
 ---@param opts table|nil Optional keyword arguments:
 ---             - method string|nil HTTP method to use. Defaults to GET.
----             - headers table|nil A table of key-value headers.
+---             - headers table<string, string>|nil A table of key-value headers.
 ---             - follow_redirects boolean|nil Will follow redirects by default.
----             - data string|table|nil Data to send with the request. If a table, it will be json
----             encoded.
----             - on_complete nil|fun() Callback function when download successfully completed.
----             - on_err nil|fun(errr: string[]) An optional function recieving a `stderr_buffered` string[] of curl
----             stderr. Without providing this function, fetch() will automatically raise an error
+---             - data string|table|nil Data to send with the request. If a table, it will be JSON
+---             encoded. vim.net does not currently support form encoding.
+---             - on_complete fun()|nil Callback function when download successfully completed.
+---             - on_err fun(err: string[])|nil An optional function recieving a `stderr_buffered` string[] of curl
+---             stderr. Without providing this function, |download()| will automatically raise an error
 ---             to the user. See |on_stderr| and `stderr_buffered`.
+---@return number jobid A job id. See |job-control|.
 ---
 --- Example:
 --- <pre>lua
----
---- vim.net.download("https://raw.githubusercontent.com/neovim/neovim/master/README.md", "~/.cache/download/location", {
+--- vim.net.download("https://.../path/file", "~/.cache/download/location", {
 ---   on_complete = function ()
 ---     vim.notify("File Downloaded", vim.log.levels.INFO)
 ---   end
 --- })
----
 --- </pre>
 function M.download(url, path, opts)
   vim.validate({
@@ -304,7 +320,7 @@ function M.download(url, path, opts)
 
   opts = opts or {}
 
-  path = vim.fn.fnameescape(vim.fn.fnamemodify(path, ":p"))
+  path = vim.fn.fnameescape(vim.fn.fnamemodify(path, ':p'))
 
   opts.download_location = path
 
@@ -317,6 +333,11 @@ function M.download(url, path, opts)
       end
     end,
     on_stderr = function(_, data)
+      if #data == 1 and data[1] == '' then
+        -- Data is nothing but a EOL
+        return
+      end
+
       if opts.on_err ~= nil then
         return opts.on_err(data)
       end
