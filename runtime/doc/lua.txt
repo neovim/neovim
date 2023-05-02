@@ -4437,12 +4437,13 @@ Lua module: net                                                      *lua-net*
 
 download({url}, {path}, {opts})                           *vim.net.download()*
     Asynchronously download a file. To read the response metadata, such as
-    headers and body, use |fetch()|. Accepts shares a few options with
-    |vim.net.fetch()|, but not all of them.
+    headers and body, use |vim.net.fetch()|.
+
+    Shares a few options with |vim.net.fetch()|, but not all of them.
 
     Example: >lua
 
-     vim.net.download("https://raw.githubusercontent.com/neovim/neovim/master/README.md", "~/.cache/download/location", {
+     vim.net.download("https://.../path/file", "~/.cache/download/location", {
        on_complete = function ()
          vim.notify("File Downloaded", vim.log.levels.INFO)
        end
@@ -4451,21 +4452,30 @@ download({url}, {path}, {opts})                           *vim.net.download()*
 
     Parameters: ~
       • {url}   (string) url
-      • {path}  (string) A download path. Can be relative.
+      • {path}  (string) A download path, can be relative.
       • {opts}  (table|nil) Optional keyword arguments:
                 • method string|nil HTTP method to use. Defaults to GET.
-                • headers table|nil A table of key-value headers.
+                • headers table<string, string>|nil A table of key-value
+                  headers.
                 • follow_redirects boolean|nil Will follow redirects by
                   default.
                 • data string|table|nil Data to send with the request. If a
-                  table, it will be json encoded.
-                • on_complete nil|fun() Callback function when download
+                  table, it will be JSON encoded. vim.net does not currently
+                  support form encoding.
+                • on_complete fun()|nil Callback function when download
                   successfully completed.
-                • on_err nil|fun(errr: string[]) An optional function
-                  recieving a `stderr_buffered` string[] of curl stderr.
-                  Without providing this function, fetch() will automatically
+                • on_err fun(err: string[])|nil An optional function recieving
+                  a `stderr_buffered` string[] of curl stderr. Without
+                  providing this function, |download()| will automatically
                   raise an error to the user. See |on_stderr| and
                   `stderr_buffered`.
+
+    Return: ~
+        (number) jobid A job id. See |job-control|.
+
+    See also: ~
+      • |job-control|
+      • man://curl
 
 fetch({url}, {opts})                                         *vim.net.fetch()*
     Asynchronously make HTTP requests.
@@ -4484,7 +4494,7 @@ fetch({url}, {opts})                                         *vim.net.fetch()*
        end
      })
 
-     -- POST to a url, sending json and providing an authorization header
+     -- POST to a url, sending a table as JSON and providing an authorization header
      vim.net.fetch("https://example.com/api/data", {
        method = "POST",
        data = {
@@ -4497,7 +4507,7 @@ fetch({url}, {opts})                                         *vim.net.fetch()*
          -- Lets read the response!
 
          if response.ok then
-           -- Read json response
+           -- Read JSON response
            local table = response.json()
          else
 
@@ -4508,29 +4518,30 @@ fetch({url}, {opts})                                         *vim.net.fetch()*
 <
 
     Parameters: ~
-      • {url}   (string) url
+      • {url}   (string) The request URL.
       • {opts}  (table|nil) Optional keyword arguments:
                 • method string|nil HTTP method to use. Defaults to GET.
                 • headers table|nil A table of key-value headers.
-                • follow_redirects boolean|nil Will follow redirects by
-                  default.
+                • follow_redirects boolean|nil Whether to follow redirects.
+                  Defaults to true.
                 • data string|table|nil Data to send with the request. If a
-                  table, it will be json encoded.
-                • on_complete nil|fun(response: table) Callback function when
-                  request is successfully completed. The response has the
+                  table, it will be JSON-encoded. vim.net does not currently
+                  support form encoding.
+                • on_complete fun(response: table)|nil Callback function when
+                  request is completed successfully. The response has the
                   following keys:
-                  • ok boolean Convience field showing whether or not the
-                    request was successful (status within 2XX range).
+                  • ok boolean Whether the request was successful (status
+                    within 2XX range).
                   • headers fun(): table<string, string> Function returning a
                     table of response headers.
                   • body fun(): string|nil Function returning response body.
-                    If method was HEAD, this is likely nil.
-                  • json fun(opts: table|nil): table Read the body as json.
+                    If method was HEAD, this is nil.
+                  • json fun(opts: table|nil): table Read the body as JSON.
                     Optionally accepts opts from |vim.json.decode|. Will throw
-                    errors if body is not json-decodable.
+                    errors if body is not JSON-decodable.
                   • method string The http method used in the most recent HTTP
                     request.
-                  • status number The numerical response code. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+                  • status number The numerical response code.
                   • status_text string The status text returned with the
                     response.
                   • size number The total amount of bytes that were
@@ -4538,13 +4549,17 @@ fetch({url}, {opts})                                         *vim.net.fetch()*
                     transferred, excluding headers.
                   • http_version number HTTP version used in the request.
 
-                • on_err nil|fun(errr: string[]) An optional function
-                  recieving a `stderr_buffered` string[] of curl stderr.
-                  Without providing this function, fetch() will automatically
-                  raise an error to the user. See |on_stderr| and
-                  `stderr_buffered`.
+                • on_err fun(err: string[])|nil An optional function recieving
+                  a `stderr_buffered` string[] of curl stderr. Without
+                  providing this function, |fetch()| will automatically raise
+                  an error to the user. See |on_stderr| and `stderr_buffered`.
 
     Return: ~
-        (number) jobid A job id. See |job-control|.
+        (number) jobid A job id.
+
+    See also: ~
+      • https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+      • |job-control|
+      • man://curl
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
