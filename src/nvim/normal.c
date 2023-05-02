@@ -5348,7 +5348,7 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
       colnr_T vcol;
 
       getvvcol(curwin, &curwin->w_cursor, NULL, NULL, &vcol);
-      if (vcol >= curwin->w_leftcol + curwin->w_width - col_off) {
+      if (vcol >= curwin->w_leftcol + curwin->w_width_inner - col_off) {
         curwin->w_cursor.col--;
       }
     }

@@ -966,18 +966,18 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
       // similar to what is done in validate_cursor_col()
       colnr_T col = scol;
       col += off;
-      int width = wp->w_width - off + win_col_off2(wp);
+      int width = wp->w_width_inner - off + win_col_off2(wp);
 
       // long line wrapping, adjust row
-      if (wp->w_p_wrap && col >= (colnr_T)wp->w_width && width > 0) {
+      if (wp->w_p_wrap && col >= (colnr_T)wp->w_width_inner && width > 0) {
         // use same formula as what is used in curs_columns()
-        rowoff = visible_row ? ((col - wp->w_width) / width + 1) : 0;
+        rowoff = visible_row ? ((col - wp->w_width_inner) / width + 1) : 0;
         col -= rowoff * width;
       }
 
       col -= wp->w_leftcol;
 
-      if (col >= 0 && col < wp->w_width && row + rowoff <= wp->w_height) {
+      if (col >= 0 && col < wp->w_width_inner && row + rowoff <= wp->w_height_inner) {
         coloff = col - scol + (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1;
         row += local ? 0 : wp->w_winrow + wp->w_winrow_off;
       } else {
