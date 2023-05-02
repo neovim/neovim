@@ -338,7 +338,43 @@ func Test_let_heredoc_fails()
     call assert_report('No exception thrown')
   catch /E488:/
   catch
-    call assert_report("Caught exception: " .. v:exception)
+    call assert_report('Caught exception: ' .. v:exception)
+  endtry
+
+  try
+    let &commentstring =<< trim TEXT
+      change
+      insert
+      append
+    TEXT
+    call assert_report('No exception thrown')
+  catch /E730:/
+  catch
+    call assert_report('Caught exception: ' .. v:exception)
+  endtry
+
+  try
+    let $SOME_ENV_VAR =<< trim TEXT
+      change
+      insert
+      append
+    TEXT
+    call assert_report('No exception thrown')
+  catch /E730:/
+  catch
+    call assert_report('Caught exception: ' .. v:exception)
+  endtry
+
+  try
+    let @r =<< trim TEXT
+      change
+      insert
+      append
+    TEXT
+    call assert_report('No exception thrown')
+  catch /E730:/
+  catch
+    call assert_report('Caught exception: ' .. v:exception)
   endtry
 
   let text =<< trim END
@@ -504,6 +540,32 @@ E
      z
 END
   call assert_equal(['     x', '     \y', '     z'], [a, b, c])
+
+  " unpack assignment without whitespace
+  let[a,b,c]=<<END
+change
+insert
+append
+END
+  call assert_equal(['change', 'insert', 'append'], [a, b, c])
+
+  " curly braces name and list slice assignment
+  let foo_3_bar = ['', '', '']
+  let foo_{1 + 2}_bar[ : ] =<< END
+change
+insert
+append
+END
+  call assert_equal(['change', 'insert', 'append'], foo_3_bar)
+
+  " dictionary key containing brackets and spaces
+  let d = {'abc] 123': 'baz'}
+  let d[d['abc] 123'] .. '{'] =<< END
+change
+insert
+append
+END
+  call assert_equal(['change', 'insert', 'append'], d['baz{'])
 endfunc
 
 " Test for evaluating Vim expressions in a heredoc using {expr}

@@ -2587,19 +2587,13 @@ void ex_function(exarg_T *eap)
 
       // Check for ":let v =<< [trim] EOF"
       //       and ":let [a, b] =<< [trim] EOF"
-      arg = skipwhite(skiptowhite(p));
-      if (*arg == '[') {
-        arg = vim_strchr(arg, ']');
-      }
-      if (arg != NULL) {
-        arg = skipwhite(skiptowhite(arg));
-        if (arg[0] == '='
-            && arg[1] == '<'
-            && arg[2] == '<'
-            && (p[0] == 'l'
-                && p[1] == 'e'
-                && (!ASCII_ISALNUM(p[2])
-                    || (p[2] == 't' && !ASCII_ISALNUM(p[3]))))) {
+      arg = p;
+      if (checkforcmd(&arg, "let", 2)) {
+        while (vim_strchr("$@&", *arg) != NULL) {
+          arg++;
+        }
+        arg = skipwhite(find_name_end(arg, NULL, NULL, FNE_INCL_BR));
+        if (arg[0] == '=' && arg[1] == '<' && arg[2] == '<') {
           p = skipwhite(arg + 3);
           while (true) {
             if (strncmp(p, "trim", 4) == 0) {
