@@ -205,6 +205,7 @@ CONFIG = {
             'secure': 'vim.secure',
             'version': 'vim.version',
             'iter': 'vim.iter',
+            'net': 'vim.net',
         },
         'append_only': [
             'shared.lua',
