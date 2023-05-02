@@ -252,6 +252,10 @@ function M.fetch(url, opts)
 
   local out = {}
 
+  if opts._dry then
+    return args
+  end
+
   local job = vim.fn.jobstart(args, {
     on_stdout = function(_, data)
       out = data
