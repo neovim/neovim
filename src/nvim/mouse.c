@@ -223,7 +223,7 @@ static int get_fpos_of_mouse(pos_T *mpos)
   }
 
   // winpos and height may change in win_enter()!
-  if (winrow + wp->w_winbar_height >= wp->w_height) {  // In (or below) status line
+  if (winrow + wp->w_winbar_height >= wp->w_height_inner) {  // In (or below) status line
     return IN_STATUS_LINE;
   }
 
@@ -231,7 +231,7 @@ static int get_fpos_of_mouse(pos_T *mpos)
     return MOUSE_WINBAR;
   }
 
-  if (wincol >= wp->w_width) {  // In vertical separator line
+  if (wincol >= wp->w_width_inner) {  // In vertical separator line
     return IN_SEP_LINE;
   }
 
@@ -557,10 +557,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
         if (VIsual_active) {
           // set MOUSE_MAY_STOP_VIS if we are outside the selection
           // or the current window (might have false negative here)
-          if (mouse_row < curwin->w_winrow
-              || mouse_row > (curwin->w_winrow + curwin->w_height)) {
-            jump_flags = MOUSE_MAY_STOP_VIS;
-          } else if (m_pos_flag != IN_BUFFER) {
+          if (m_pos_flag != IN_BUFFER) {
             jump_flags = MOUSE_MAY_STOP_VIS;
           } else {
             if (VIsual_mode == 'V') {
