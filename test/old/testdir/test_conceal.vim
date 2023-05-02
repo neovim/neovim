@@ -188,6 +188,32 @@ func Test_conceal_resize_term()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_conceal_linebreak()
+  CheckScreendump
+
+  let code =<< trim [CODE]
+      vim9script
+      &wrap = true
+      &conceallevel = 2
+      &concealcursor = 'nc'
+      &linebreak = true
+      &showbreak = '+ '
+      var line: string = 'a`a`a`a`'
+          .. 'a'->repeat(&columns - 15)
+          .. ' b`b`'
+          .. 'b'->repeat(&columns - 10)
+          .. ' cccccc'
+      ['x'->repeat(&columns), '', line]->setline(1)
+      syntax region CodeSpan matchgroup=Delimiter start=/\z(`\+\)/ end=/\z1/ concealends
+  [CODE]
+  call writefile(code, 'XTest_conceal_linebreak', 'D')
+  let buf = RunVimInTerminal('-S XTest_conceal_linebreak', {'rows': 8})
+  call VerifyScreenDump(buf, 'Test_conceal_linebreak_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
 " Tests for correct display (cursor column position) with +conceal and
 " tabulators.  Need to run this test in a separate Vim instance. Otherwise the
 " screen is not updated (lazy redraw) and the cursor position is wrong.
