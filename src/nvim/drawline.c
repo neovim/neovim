@@ -168,7 +168,7 @@ static void margin_columns_win(win_T *wp, int *left_col, int *right_col)
     return;
   }
 
-  width1 = wp->w_width - cur_col_off;
+  width1 = wp->w_width_inner - cur_col_off;
   width2 = width1 + win_col_off2(wp);
 
   *left_col = 0;
