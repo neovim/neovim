@@ -435,15 +435,20 @@ void pum_redraw(void)
   int col_off = 0;
   bool extra_space = false;
   if (pum_rl) {
-    col_off = pum_width;
-    if (pum_col < curwin->w_wincol + curwin->w_width - 1) {
+    col_off = pum_width - 1;
+    assert(!(State & MODE_CMDLINE));
+    int win_end_col = ui_has(kUIMultigrid) ? curwin->w_grid.cols : W_ENDCOL(curwin);
+    if (pum_col < win_end_col - 1) {
       grid_width += 1;
       extra_space = true;
     }
-  } else if (pum_col > 0) {
-    grid_width += 1;
-    col_off = 1;
-    extra_space = true;
+  } else {
+    int min_col = (!(State & MODE_CMDLINE) && ui_has(kUIMultigrid)) ? -curwin->w_wincol : 0;
+    if (pum_col > min_col) {
+      grid_width += 1;
+      col_off = 1;
+      extra_space = true;
+    }
   }
   if (pum_scrollbar > 0) {
     grid_width++;

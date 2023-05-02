@@ -5,6 +5,7 @@ local clear, feed = helpers.clear, helpers.feed
 local source = helpers.source
 local insert = helpers.insert
 local meths = helpers.meths
+local async_meths = helpers.async_meths
 local command = helpers.command
 local funcs = helpers.funcs
 local eq = helpers.eq
@@ -1978,6 +1979,54 @@ describe('builtin popupmenu', function()
           {2:-- }{5:match 1 of 4}                 |
         ]])
       end
+
+      feed('\n<c-x><c-n>')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|
+          {3:<Name] [+]  }{4:[No Name] [+]       }|
+          [3:--------------------------------]|
+        ## grid 2
+          aaa aab aac         |
+          bbb aaa             |
+          c aaabcdef ccc aaa  |
+          aaa^                 |
+          {1:~                   }|
+          {1:~                   }|
+        ## grid 3
+          {2:-- }{5:match 1 of 6}                 |
+        ## grid 4
+          aaa aab aac|
+          bbb aaa    |
+          c aaabcdef |
+          ccc aaa    |
+          aaa        |
+          {1:~          }|
+        ## grid 5
+          {s: aaa            }{c: }|
+          {n: aab            }{s: }|
+          {n: aac            }{s: }|
+        ]], float_pos={
+          [5] = {{id = -1}, "NW", 2, 4, -1, false, 100};
+        }}
+      else
+        screen:expect([[
+          aaa aab aac│aaa aab aac         |
+          bbb aaa    │bbb aaa             |
+          c aaabcdef │c aaabcdef ccc aaa  |
+          ccc aaa    │aaa^                 |
+          aaa        {s: aaa            }{c: }{1:    }|
+          {1:~          }{n: aab            }{s: }{1:    }|
+          {3:<Name] [+] }{n: aac            }{s: }{4:    }|
+          {2:-- }{5:match 1 of 6}                 |
+        ]])
+      end
     end)
 
     if not multigrid then
@@ -2488,10 +2537,10 @@ describe('builtin popupmenu', function()
         funcs.complete(16, {'word', 'choice', 'text', 'thing'})
         screen:expect([[
                           ^  tfelthgir emos|
-          {1:  }{n:           drow}{1:              ~}|
-          {1:  }{n:         eciohc}{1:              ~}|
-          {1:  }{n:           txet}{1:              ~}|
-          {1:  }{n:          gniht}{1:              ~}|
+          {1:  }{n:           drow }{1:             ~}|
+          {1:  }{n:         eciohc }{1:             ~}|
+          {1:  }{n:           txet }{1:             ~}|
+          {1:  }{n:          gniht }{1:             ~}|
           {1:                               ~}|
           {1:                               ~}|
           {1:                               ~}|
@@ -2512,10 +2561,10 @@ describe('builtin popupmenu', function()
         feed('<c-n>')
         screen:expect([[
                       ^ drow tfelthgir emos|
-          {1:  }{s:           drow}{1:              ~}|
-          {1:  }{n:         eciohc}{1:              ~}|
-          {1:  }{n:           txet}{1:              ~}|
-          {1:  }{n:          gniht}{1:              ~}|
+          {1:  }{s:           drow }{1:             ~}|
+          {1:  }{n:         eciohc }{1:             ~}|
+          {1:  }{n:           txet }{1:             ~}|
+          {1:  }{n:          gniht }{1:             ~}|
           {1:                               ~}|
           {1:                               ~}|
           {1:                               ~}|
@@ -2643,23 +2692,165 @@ describe('builtin popupmenu', function()
           {1:                   ~}|
           {1:                   ~}|
         ## grid 5
-           {n:           drow}|
-           {n:         eciohc}|
-           {n:           txet}|
-           {n:          gniht}|
+          {n:           drow }|
+          {n:         eciohc }|
+          {n:           txet }|
+          {n:          gniht }|
         ]], float_pos={
-          [5] = {{id = -1}, "NW", 4, 1, -11, false, 100};
+          [5] = {{id = -1}, "NW", 4, 1, -10, false, 100};
         }}
       else
         screen:expect([[
                tfelthgir emos│    ^  tfelthgir emos|
-          {1:          }{n:           drow}{1:              ~}|
-          {1:          }{n:         eciohc}{1:              ~}|
-          {1:          }{n:           txet}{1:              ~}|
-          {1:          }{n:          gniht}{1:              ~}|
+          {1:          }{n:           drow }{1:             ~}|
+          {1:          }{n:         eciohc }{1:             ~}|
+          {1:          }{n:           txet }{1:             ~}|
+          {1:          }{n:          gniht }{1:             ~}|
           {1:                  ~}│{1:                   ~}|
           {3:[No Name] [+]       }{4:[No Name] [+]       }|
           {2:-- INSERT --}                            |
+        ]])
+      end
+      feed('<C-E><CR>')
+      funcs.complete(1, {'word', 'choice', 'text', 'thing'})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          {3:[No Name] [+]       }{4:[No Name] [+]       }|
+          [3:----------------------------------------]|
+        ## grid 2
+               tfelthgir emos|
+                             |
+          {1:                  ~}|
+          {1:                  ~}|
+          {1:                  ~}|
+          {1:                  ~}|
+        ## grid 3
+          {2:-- INSERT --}                            |
+        ## grid 4
+                tfelthgir emos|
+                             ^ |
+          {1:                   ~}|
+          {1:                   ~}|
+          {1:                   ~}|
+          {1:                   ~}|
+        ## grid 5
+          {n:           drow}|
+          {n:         eciohc}|
+          {n:           txet}|
+          {n:          gniht}|
+        ]], float_pos={
+          [5] = {{id = -1}, "NW", 4, 2, 5, false, 100};
+        }}
+      else
+        screen:expect([[
+               tfelthgir emos│      tfelthgir emos|
+                             │                   ^ |
+          {1:                  ~}│{1:     }{n:           drow}|
+          {1:                  ~}│{1:     }{n:         eciohc}|
+          {1:                  ~}│{1:     }{n:           txet}|
+          {1:                  ~}│{1:     }{n:          gniht}|
+          {3:[No Name] [+]       }{4:[No Name] [+]       }|
+          {2:-- INSERT --}                            |
+        ]])
+      end
+      feed('<C-E>')
+      async_meths.call_function('input', {'', '', 'sign'})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          {3:[No Name] [+]       }{4:[No Name] [+]       }|
+          [3:----------------------------------------]|
+        ## grid 2
+               tfelthgir emos|
+                             |
+          {1:                  ~}|
+          {1:                  ~}|
+          {1:                  ~}|
+          {1:                  ~}|
+        ## grid 3
+          ^                                        |
+        ## grid 4
+                tfelthgir emos|
+                              |
+          {1:                   ~}|
+          {1:                   ~}|
+          {1:                   ~}|
+          {1:                   ~}|
+        ]]}
+      else
+        screen:expect([[
+               tfelthgir emos│      tfelthgir emos|
+                             │                    |
+          {1:                  ~}│{1:                   ~}|
+          {1:                  ~}│{1:                   ~}|
+          {1:                  ~}│{1:                   ~}|
+          {1:                  ~}│{1:                   ~}|
+          {3:[No Name] [+]       }{4:[No Name] [+]       }|
+          ^                                        |
+        ]])
+      end
+      command('set wildoptions+=pum')
+      feed('<Tab>')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|
+          {3:[No Name] [+]       }{4:[No Name] [+]       }|
+          [3:----------------------------------------]|
+        ## grid 2
+               tfelthgir emos|
+                             |
+          {1:                  ~}|
+          {1:                  ~}|
+          {1:                  ~}|
+          {1:                  ~}|
+        ## grid 3
+          define^                                  |
+        ## grid 4
+                tfelthgir emos|
+                              |
+          {1:                   ~}|
+          {1:                   ~}|
+          {1:                   ~}|
+          {1:                   ~}|
+        ## grid 5
+          {s:define         }|
+          {n:jump           }|
+          {n:list           }|
+          {n:place          }|
+          {n:undefine       }|
+          {n:unplace        }|
+        ]], float_pos={
+          [5] = {{id = -1}, "SW", 1, 7, 0, false, 250};
+        }}
+      else
+        screen:expect([[
+               tfelthgir emos│      tfelthgir emos|
+          {s:define         }    │                    |
+          {n:jump           }{1:   ~}│{1:                   ~}|
+          {n:list           }{1:   ~}│{1:                   ~}|
+          {n:place          }{1:   ~}│{1:                   ~}|
+          {n:undefine       }{1:   ~}│{1:                   ~}|
+          {n:unplace        }{3:     }{4:[No Name] [+]       }|
+          define^                                  |
         ]])
       end
     end)
