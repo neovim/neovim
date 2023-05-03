@@ -189,6 +189,7 @@ local function parse(filepath, dir)
         end
       elseif key ~= nil and val ~= nil then
         if key == 'root' then
+          assert(val == 'true' or val == 'false', 'root must be either "true" or "false"')
           opts.root = val == 'true'
         elseif pat and pat:match_str(filepath) then
           opts[key] = val
