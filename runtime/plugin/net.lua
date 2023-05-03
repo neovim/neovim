@@ -24,9 +24,9 @@ vim.api.nvim_create_autocmd({ 'BufReadCmd' }, {
 
       vim.net.fetch(file, {
           on_complete = function(result)
-            local body = vim.split(result.body(), '\n')
+            local text = vim.split(result.text(), '\n')
 
-            vim.api.nvim_buf_set_lines(buf, -2, -1, false, body)
+            vim.api.nvim_buf_set_lines(buf, -2, -1, false, text)
 
             vim.fn.winrestview(view)
 
