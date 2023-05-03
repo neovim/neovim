@@ -727,6 +727,15 @@ function module.assert_visible(bufnr, visible)
   end
 end
 
+function module.file_exists(path)
+  local stat, err = luv.fs_stat(path)
+  if stat then
+    return true
+  else
+    return false, err
+  end
+end
+
 local function do_rmdir(path)
   local stat = luv.fs_stat(path)
   if stat == nil then
