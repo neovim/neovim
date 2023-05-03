@@ -180,7 +180,7 @@ end
 ---             - on_complete fun(response: table)|nil Callback function when request is
 ---             completed successfully. The response has the following keys:
 ---                 - ok boolean Whether the request was successful (status within 2XX range).
----                 - headers fun(): table<string, string> Function returning a table of response headers.
+---                 - headers fun(): table<string, string[]> Function returning a table of response headers.
 ---                 - body fun(): string|nil Function returning response body. If method was HEAD,
 ---                 this is nil.
 ---                 - json fun(opts: table|nil): table Read the body as JSON. Optionally accepts
