@@ -38,7 +38,6 @@ local function createCurlArgs(url, opts)
     'curl',
 
     -- Blocks progress bars and other non-parsable things
-    -- TODO: Allow stderr
     '--no-progress-meter',
   }
 
