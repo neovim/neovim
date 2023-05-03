@@ -4509,6 +4509,79 @@ describe('builtin popupmenu', function()
         ]])
       end
       eq('foo', meths.get_var('menustr'))
+
+      command('setlocal winbar=WINBAR')
+      if multigrid then
+        meths.input_mouse('right', 'press', '', 6, 1, 14)
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          {3:[No Name] [+]                   }|
+          [5:---------------]│[6:----------------]|
+          [5:---------------]│[6:----------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          popup menu test                 |
+          {1:~                               }|
+        ## grid 3
+          :let g:menustr = 'foo'          |
+        ## grid 4
+          {n: foo}|
+          {n: bar}|
+          {n: baz}|
+        ## grid 5
+          popup menu test|
+          {1:~              }|
+        ## grid 6
+          {2:WINBAR          }|
+          ^popup menu test |
+        ]], float_pos={[4] = {{id = -1}, "SW", 6, 1, 12, false, 250}}})
+      else
+        feed('<RightMouse><30,4>')
+        screen:expect([[
+          popup menu test                 |
+          {1:~                           }{n: foo}|
+          {3:[No Name] [+]               }{n: bar}|
+          popup menu test│{2:WINBAR      }{n: baz}|
+          {1:~              }│^popup menu test |
+          :let g:menustr = 'foo'          |
+        ]])
+      end
+      if multigrid then
+        meths.input_mouse('left', 'press', '', 4, 1, 2)
+        screen:expect({grid=[[
+        ## grid 1
+          [2:--------------------------------]|
+          [2:--------------------------------]|
+          {3:[No Name] [+]                   }|
+          [5:---------------]│[6:----------------]|
+          [5:---------------]│[6:----------------]|
+          [3:--------------------------------]|
+        ## grid 2
+          popup menu test                 |
+          {1:~                               }|
+        ## grid 3
+          :let g:menustr = 'bar'          |
+        ## grid 5
+          popup menu test|
+          {1:~              }|
+        ## grid 6
+          {2:WINBAR          }|
+          ^popup menu test |
+        ]]})
+      else
+        feed('<LeftMouse><31,2>')
+        screen:expect([[
+          popup menu test                 |
+          {1:~                               }|
+          {3:[No Name] [+]                   }|
+          popup menu test│{2:WINBAR          }|
+          {1:~              }│^popup menu test |
+          :let g:menustr = 'bar'          |
+        ]])
+      end
+      eq('bar', meths.get_var('menustr'))
     end)
 
     if not multigrid then
