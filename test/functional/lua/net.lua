@@ -22,11 +22,10 @@ describe('vim.net', function()
           {
             'curl',
             '--no-progress-meter',
-            '--include',
             '--get',
             '--location',
             '--write-out',
-            '\\n%{json}',
+            '\\nBEGIN_HEADERS\\n%{header_json}\\n%{json}',
             'https://httpbin.org/get',
           },
           exec_lua([[
@@ -40,11 +39,10 @@ describe('vim.net', function()
           {
             'curl',
             '--no-progress-meter',
-            '--include',
             '--head',
             '--location',
             '--write-out',
-            '\\n%{json}',
+            '\\nBEGIN_HEADERS\\n%{header_json}\\n%{json}',
             'https://httpbin.org/head',
           },
           exec_lua([[
@@ -59,12 +57,11 @@ describe('vim.net', function()
           {
             'curl',
             '--no-progress-meter',
-            '--include',
             '--request',
             'DELETE',
             '--location',
             '--write-out',
-            '\\n%{json}',
+            '\\nBEGIN_HEADERS\\n%{header_json}\\n%{json}',
             'https://httpbin.org/delete',
           },
           exec_lua([[
