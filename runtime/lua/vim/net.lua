@@ -334,6 +334,10 @@ function M.download(url, path, opts)
 
   local args = createCurlArgs(url, opts)
 
+  if opts._dry then
+    return args
+  end
+
   local job = vim.fn.jobstart(args, {
     on_exit = function(_, code)
       if opts.on_complete and code == 0 then
