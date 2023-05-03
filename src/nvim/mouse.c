@@ -223,7 +223,7 @@ static int get_fpos_of_mouse(pos_T *mpos)
   }
 
   // winpos and height may change in win_enter()!
-  if (winrow + wp->w_winbar_height >= wp->w_height_inner) {  // In (or below) status line
+  if (winrow >= wp->w_height_inner) {  // In (or below) status line
     return IN_STATUS_LINE;
   }
 
