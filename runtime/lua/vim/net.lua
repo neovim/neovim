@@ -137,7 +137,7 @@ local function process_stdout(data)
   end
 
   ---@private
-  local function read_body()
+  local function read_text()
     -- check cache, return nil if method is HEAD
     if cache.body == nil and extra.method ~= 'HEAD' then
       local body = table.concat(data, '\n', 1, began_headers_at - 1)
@@ -150,9 +150,9 @@ local function process_stdout(data)
 
   return {
     headers = read_headers,
-    body = read_body,
+    text = read_text,
     json = function(opts)
-      return vim.json.decode(read_body(), opts and opts or {})
+      return vim.json.decode(read_text(), opts and opts or {})
     end,
     method = extra.method,
     status = status,
@@ -181,7 +181,7 @@ end
 ---             completed successfully. The response has the following keys:
 ---                 - ok boolean Whether the request was successful (status within 2XX range).
 ---                 - headers fun(): table<string, string[]> Function returning a table of response headers.
----                 - body fun(): string|nil Function returning response body. If method was HEAD,
+---                 - text fun(): string|nil Function returning response body. If method was HEAD,
 ---                 this is nil.
 ---                 - json fun(opts: table|nil): table Read the body as JSON. Optionally accepts
 ---                 opts from |vim.json.decode|. Will throw errors if body is not JSON-decodable.
@@ -203,8 +203,8 @@ end
 ---     -- Lets read the response!
 ---
 ---     if response.ok then
----       -- Read response body
----       local body = response.body()
+---       -- Read response text
+---       local body = response.text()
 ---     else
 ---   end
 --- })
