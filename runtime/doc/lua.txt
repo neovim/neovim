@@ -4439,7 +4439,8 @@ download({url}, {path}, {opts})                           *vim.net.download()*
     Asynchronously download a file. To read the response metadata, such as
     headers and body, use |vim.net.fetch()|.
 
-    Shares a few options with |vim.net.fetch()|, but not all of them.
+    Please carefully note the option differences with |vim.net.fetch()|,
+    notably `redirect`.
 
     Example: >lua
 
@@ -4457,8 +4458,12 @@ download({url}, {path}, {opts})                           *vim.net.download()*
                 • method string|nil HTTP method to use. Defaults to GET.
                 • headers table<string, string>|nil A table of key-value
                   headers.
-                • follow_redirects boolean|nil Will follow redirects by
-                  default.
+                • redirect string|nil Redirect mode. Defaults to "follow".
+                  Possible values are:
+                  • "follow": Follow all redirects incurred when fetching a
+                    resource.
+                  • "none": Ignores redirect status.
+
                 • data string|table|nil Data to send with the request. If a
                   table, it will be JSON encoded. vim.net does not currently
                   support form encoding.
@@ -4474,11 +4479,15 @@ download({url}, {path}, {opts})                           *vim.net.download()*
         (number) jobid A job id. See |job-control|.
 
     See also: ~
+      • |vim.net.fetch()|
       • |job-control|
       • man://curl
 
 fetch({url}, {opts})                                         *vim.net.fetch()*
     Asynchronously make HTTP requests.
+
+    Please carefully note the option differences with |vim.net.download()|,
+    notably `redirect`.
 
     Example: >lua
 
@@ -4522,8 +4531,13 @@ fetch({url}, {opts})                                         *vim.net.fetch()*
       • {opts}  (table|nil) Optional keyword arguments:
                 • method string|nil HTTP method to use. Defaults to GET.
                 • headers table|nil A table of key-value headers.
-                • follow_redirects boolean|nil Whether to follow redirects.
-                  Defaults to true.
+                • redirect string|nil Redirect mode. Defaults to "follow".
+                  Possible values are:
+                  • "follow": Follow all redirects incurred when fetching a
+                    resource.
+                  • "error": Throw an error using on_err or vim.notify when
+                    status is 3XX.
+
                 • data string|table|nil Data to send with the request. If a
                   table, it will be JSON-encoded. vim.net does not currently
                   support form encoding.
@@ -4547,16 +4561,17 @@ fetch({url}, {opts})                                         *vim.net.fetch()*
                     transferred, excluding headers.
                   • http_version number HTTP version used in the request.
 
-                • on_err fun(err: string[])|nil An optional function recieving
-                  a `stderr_buffered` string[] of curl stderr. Without
-                  providing this function, |vim.net.fetch()| will
-                  automatically raise an error to the user. See |on_stderr|
-                  and `stderr_buffered`.
+                • on_err fun(err: string[])|nil Function recieving a
+                  `stderr_buffered` string[] of error. err is either curl
+                  stderr or internal fetch() error. Without providing this
+                  function, |vim.net.fetch()| will automatically raise the
+                  error to the user. See |on_stderr| and `stderr_buffered`.
 
     Return: ~
         (number) jobid A job id.
 
     See also: ~
+      • |vim.net.download()|
       • https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
       • |job-control|
       • man://curl

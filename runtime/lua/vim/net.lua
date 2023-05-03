@@ -22,7 +22,7 @@ end
 ---@param url string The request URL.
 ---@param opts table Keyword arguments:
 ---             - method string|nil Http method.
----             - follow_redirects boolean|nil Follow redirects.
+---             - redirect string|nil Redirect mode.
 ---             - data string|table|nil Data to send with the request. If a table, it will be JSON
 ---             encoded.
 ---             - headers table<string, string>|nil Headers to set on the request
@@ -44,8 +44,8 @@ local function createCurlArgs(url, opts)
   -- Set http method.
   vim.list_extend(args, createMethodArgs(opts.method))
 
-  -- Follow redirects by default.
-  if opts.follow_redirects or opts.follow_redirects == nil then
+  -- redirect mode
+  if opts.redirect == 'follow' or opts.redirect == nil then
     table.insert(args, '--location')
   end
 
@@ -165,6 +165,10 @@ end
 
 --- Asynchronously make HTTP requests.
 ---
+--- Please carefully note the option differences with |vim.net.download()|, notably
+--- `redirect`.
+---
+---@see |vim.net.download()|
 ---@see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
 ---@see |job-control|
 ---@see man://curl
@@ -173,7 +177,9 @@ end
 ---@param opts table|nil Optional keyword arguments:
 ---             - method string|nil HTTP method to use. Defaults to GET.
 ---             - headers table|nil A table of key-value headers.
----             - follow_redirects boolean|nil Whether to follow redirects. Defaults to true.
+---             - redirect string|nil Redirect mode. Defaults to "follow". Possible values are:
+---                 - "follow": Follow all redirects incurred when fetching a resource.
+---                 - "error": Throw an error using on_err or vim.notify when status is 3XX.
 ---             - data string|table|nil Data to send with the request. If a table, it will be
 ---             JSON-encoded. vim.net does not currently support form encoding.
 ---
@@ -190,9 +196,10 @@ end
 ---                 - size number The total amount of bytes that were downloaded. This
 ---                 is the size of the body/data that was transferred, excluding headers.
 ---                 - http_version number HTTP version used in the request.
----             - on_err fun(err: string[])|nil An optional function recieving a `stderr_buffered` string[] of curl
----             stderr. Without providing this function, |vim.net.fetch()| will automatically raise an error
----             to the user. See |on_stderr| and `stderr_buffered`.
+---             - on_err fun(err: string[])|nil Function recieving a `stderr_buffered` string[] of error. 
+---             err is either curl stderr or internal fetch() error. Without providing this
+---             function, |vim.net.fetch()| will automatically raise the error to the user.
+---             See |on_stderr| and `stderr_buffered`.
 ---@return number jobid A job id.
 ---
 --- Example:
@@ -271,8 +278,24 @@ function M.fetch(url, opts)
       vim.notify('Failed to fetch: ' .. table.concat(data, '\n'), vim.log.levels.ERROR)
     end,
     on_exit = function(_, code)
+      local res
+
+      if opts.redirect == 'error' then
+        res = process_stdout(out)
+
+        if res.status >= 300 and res.status <= 399 then
+          local str = 'Fetch redirected to ' .. res._raw_write_out.redirect_url
+
+          if opts.on_err ~= nil then
+            return vim.notify(str, vim.log.levels.ERROR)
+          end
+
+          return opts.on_err({ str })
+        end
+      end
+
       if opts.on_complete and code == 0 then
-        local res = process_stdout(out)
+        res = res == nil and process_stdout(out) or res
 
         opts.on_complete(res)
       end
@@ -287,8 +310,10 @@ end
 --- Asynchronously download a file.
 --- To read the response metadata, such as headers and body, use |vim.net.fetch()|.
 ---
---- Shares a few options with |vim.net.fetch()|, but not all of them.
+--- Please carefully note the option differences with |vim.net.fetch()|, notably
+--- `redirect`.
 ---
+---@see |vim.net.fetch()|
 ---@see |job-control|
 ---@see man://curl
 ---
@@ -297,7 +322,9 @@ end
 ---@param opts table|nil Optional keyword arguments:
 ---             - method string|nil HTTP method to use. Defaults to GET.
 ---             - headers table<string, string>|nil A table of key-value headers.
----             - follow_redirects boolean|nil Will follow redirects by default.
+---             - redirect string|nil Redirect mode. Defaults to "follow". Possible values are:
+---                 - "follow": Follow all redirects incurred when fetching a resource.
+---                 - "none": Ignores redirect status.
 ---             - data string|table|nil Data to send with the request. If a table, it will be JSON
 ---             encoded. vim.net does not currently support form encoding.
 ---             - on_complete fun()|nil Callback function when download successfully completed.

@@ -40,7 +40,6 @@ describe('vim.net', function()
             'curl',
             '--no-progress-meter',
             '--head',
-            '--location',
             '--write-out',
             '\\nBEGIN_HEADERS\\n%{header_json}\\n%{json}',
             'https://httpbin.org/head',
@@ -48,6 +47,7 @@ describe('vim.net', function()
           exec_lua([[
             return vim.net.fetch("https://httpbin.org/head", {
               method = "head",
+              redirect = "error",
               _dry = true
             })
           ]])
@@ -92,7 +92,7 @@ describe('vim.net', function()
           },
           exec_lua([[
             return vim.net.download("https://httpbin.org/get", "./download_file", {
-              follow_redirects = false,
+              redirect = "error",
               data = "hi",
               _dry = true
             })
