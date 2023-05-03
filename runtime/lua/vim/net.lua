@@ -261,8 +261,13 @@ function M.fetch(url, opts)
       out = data
     end,
     on_stderr = function(_, data)
-      if #data == 1 and data[1] == '' then
-        -- Data is nothing but a EOL
+      if data[#data] == '' then
+        -- strip EOL
+        table.remove(data, #data)
+      end
+
+      if vim.tbl_isempty(data) then
+        -- Data was nothing but a EOL
         return
       end
 
@@ -276,7 +281,6 @@ function M.fetch(url, opts)
       if opts.on_complete and code == 0 then
         local res = process_stdout(out)
 
-        -- Since we use stdout_buffered, it is actually most safe to call on_compete from on_stdout.
         opts.on_complete(res)
       end
     end,
@@ -337,8 +341,13 @@ function M.download(url, path, opts)
       end
     end,
     on_stderr = function(_, data)
-      if #data == 1 and data[1] == '' then
-        -- Data is nothing but a EOL
+      if data[#data] == '' then
+        -- strip EOL
+        table.remove(data, #data)
+      end
+
+      if vim.tbl_isempty(data) then
+        -- Data was nothing but a EOL
         return
       end
 
