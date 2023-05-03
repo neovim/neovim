@@ -1,0 +1,58 @@
+*news.txt*    Nvim
+
+
+                            NVIM REFERENCE MANUAL
+
+
+Notable changes in Nvim 0.10 from 0.9                                    *news*
+
+For changes in Nvim 0.9, see |news-0.9|.
+
+                                       Type |gO| to see the table of contents.
+
+==============================================================================
+BREAKING CHANGES                                                *news-breaking*
+
+The following changes may require adaptations in user config or plugins.
+
+• `:behave` was removed. if you used `:behave mswin`, the following is equivalent: >vim
+
+    set selection=exclusive
+    set selectmode=mouse,key
+    set mousemodel=popup
+    set keymodel=startsel,stopsel
+
+==============================================================================
+ADDED FEATURES                                                     *news-added*
+
+The following new APIs or features were added.
+
+• Added automatic linting of treesitter query files (see |ft-query-plugin|).
+  Automatic linting can be turned off via >lua
+      vim.g.query_lint_on = {}
+<
+• Added |vim.treesitter.query.omnifunc()| for treesitter query files (set by
+  default).
+
+==============================================================================
+CHANGED FEATURES                                                 *news-changed*
+
+The following changes to existing APIs or features add new behavior.
+
+• The `workspace/didChangeWatchedFiles` LSP client capability is now enabled
+  by default.
+
+==============================================================================
+REMOVED FEATURES                                                 *news-removed*
+
+The following deprecated functions or APIs were removed.
+
+
+==============================================================================
+DEPRECATIONS                                                *news-deprecations*
+
+The following functions are now deprecated and will be removed in the next
+release.
+
+
+ vim:tw=78:ts=8:sw=2:et:ft=help:norl:
