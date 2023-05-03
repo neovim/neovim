@@ -4,102 +4,40 @@ local eq = helpers.eq
 local pathsep = helpers.get_pathsep()
 local write_file = helpers.write_file
 local mkdir_p = helpers.mkdir_p
-local rmdir = helpers.rmdir
-local is_os = helpers.is_os
+local read_file = helpers.read_file
 local meths = helpers.meths
 
--- local testdir = 'Xtest-versioncheck'
--- local vc = require('versioncheck')
+local testdir = 'Xtest-versioncheck'
+local old_news = read_file('test/functional/fixtures/news.txt')
 
--- luacheck: push ignore
-local old_news = [[
-*news.txt*    Nvim
+setup(function()
+  mkdir_p(testdir)
+  write_file(testdir .. pathsep .. 'news.txt', old_news)
+end)
 
+teardown(function()
+  helpers.rmdir(testdir)
+end)
 
-                            NVIM REFERENCE MANUAL
-
-
-Notable changes in Nvim 0.10 from 0.9                                    *news*
-
-For changes in Nvim 0.9, see |news-0.9|.
-
-                                       Type |gO| to see the table of contents.
-
-==============================================================================
-BREAKING CHANGES                                                *news-breaking*
-
-The following changes may require adaptations in user config or plugins.
-
-• 
-
-==============================================================================
-ADDED FEATURES                                                     *news-added*
-
-The following new APIs or features were added.
-
-• 
-
-==============================================================================
-CHANGED FEATURES                                                 *news-changed*
-
-The following changes to existing APIs or features add new behavior.
-
-• 
-
-==============================================================================
-REMOVED FEATURES                                                 *news-removed*
-
-The following deprecated functions or APIs were removed.
-
-• 
-
-==============================================================================
-DEPRECATIONS                                                *news-deprecations*
-
-The following functions are now deprecated and will be removed in the next
-release.
-
-• ...
-
-
- vim:tw=78:ts=8:sw=2:et:ft=help:norl:
-]]
--- luacheck: pop
-
-describe('versioncheck', function()
-  local xstate = 'Xstate'
-
-  setup(function()
-    local dir = xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim')
-    mkdir_p(dir)
-  end)
-
-  teardown(function()
-    rmdir(xstate)
-  end)
-
+describe('versioncheck module', function()
   before_each(function()
-    write_file('news.txt', old_news)
-    clear({
-      -- remove -u NONE so runtime/plugin/versioncheck.lua runs
-      args_rm = { '-u' },
-      env = { XDG_STATE_HOME = xstate },
-    })
+    -- remove -u NONE so runtime/plugin/versioncheck.lua runs
+    clear({ args_rm = { '-u' } })
+    write_file(testdir .. pathsep .. 'news.txt', old_news)
   end)
 
   after_each(function()
-    os.remove('news.txt')
-    rmdir(xstate)
+    os.remove(testdir .. pathsep .. 'news.txt')
   end)
 
   it('loads', function()
     eq(true, meths.get_var('loaded_versioncheck'))
   end)
 
-  -- it('can be disabled globally', function()
-  --   meths.set_var('loaded_versioncheck', false)
-  --   eq(false, meths.get_var('loaded_versioncheck'))
-  -- end)
+  it('can be disabled globally', function()
+    meths.set_var('loaded_versioncheck', false)
+    eq(false, meths.get_var('loaded_versioncheck'))
+  end)
 
   it('does not run when nvim run non-interactively', function()
     pending()
