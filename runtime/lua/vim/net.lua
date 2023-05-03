@@ -191,7 +191,7 @@ end
 ---                 is the size of the body/data that was transferred, excluding headers.
 ---                 - http_version number HTTP version used in the request.
 ---             - on_err fun(err: string[])|nil An optional function recieving a `stderr_buffered` string[] of curl
----             stderr. Without providing this function, |fetch()| will automatically raise an error
+---             stderr. Without providing this function, |vim.net.fetch()| will automatically raise an error
 ---             to the user. See |on_stderr| and `stderr_buffered`.
 ---@return number jobid A job id.
 ---
@@ -302,7 +302,7 @@ end
 ---             encoded. vim.net does not currently support form encoding.
 ---             - on_complete fun()|nil Callback function when download successfully completed.
 ---             - on_err fun(err: string[])|nil An optional function recieving a `stderr_buffered` string[] of curl
----             stderr. Without providing this function, |download()| will automatically raise an error
+---             stderr. Without providing this function, |vim.net.download()| will automatically raise an error
 ---             to the user. See |on_stderr| and `stderr_buffered`.
 ---@return number jobid A job id. See |job-control|.
 ---
