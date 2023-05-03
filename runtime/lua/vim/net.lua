@@ -42,11 +42,6 @@ local function createCurlArgs(url, opts)
     '--no-progress-meter',
   }
 
-  if opts.download_location == nil then
-    -- Include header information when not downloading
-    table.insert(args, '--include')
-  end
-
   -- Set http method.
   vim.list_extend(args, createMethodArgs(opts.method))
 
@@ -85,7 +80,7 @@ local function createCurlArgs(url, opts)
     -- Write additonal request metadata after the body.
     vim.list_extend(args, {
       '--write-out',
-      '\\n%{json}',
+      '\\nBEGIN_HEADERS\\n%{header_json}\\n%{json}',
     })
   else
     -- Write body contents to file.
@@ -107,31 +102,36 @@ end
 local function process_stdout(data)
   local cache = {}
 
-  -- Parse status string
-  local status_string = data[1]
-  -- Ignore these in favor of --write-out output i think
-  local _, _, status_text = status_string:match('(%S+)%s(%d+)%s(.+)\r')
-
   local extra = {}
 
   extra = vim.json.decode(data[#data])
+
+  -- Remove `json`
+  table.remove(data, #data)
+
+  -- This makes our life so much easier
+  local began_headers_at
+
+  -- In the vast majority of cases, BEGAN_HEADERS is near the end of the list.
+  -- We can loop backwards to gain some perf
+  for i = #data, 1, -1 do
+    if data[i] == 'BEGIN_HEADERS' then
+      began_headers_at = i
+      break
+    end
+  end
+
+  table.remove(data, began_headers_at)
 
   local status = extra.http_code and tonumber(extra.http_code) or nil
   extra.method = extra.method:upper()
 
   ---@private
   local function read_headers()
-    if cache.headers == nil then
-      local headers = {}
+    if began_headers_at ~= nil and cache.headers == nil then
+      local header_string = table.concat(data, nil, began_headers_at, #data)
 
-      -- Plus one to account for status line
-      for i = 2, extra.num_headers + 1 do
-        local header_line = data[i]
-        local header_key, header_value = header_line:match('^(.-):%s*(.*)$')
-        headers[header_key] = header_value
-      end
-
-      cache.headers = headers
+      cache.headers = vim.json.decode(header_string)
     end
 
     return cache.headers
@@ -139,14 +139,10 @@ local function process_stdout(data)
 
   ---@private
   local function read_body()
-    -- check cache, return nil if method if HEAD
+    -- check cache, return nil if method is HEAD
+    if cache.body == nil and extra.method ~= 'HEAD' then
+      local body = table.concat(data, '\n', 1, began_headers_at - 1)
 
-    if extra.method == 'HEAD' then
-      return nil
-    elseif cache.body == nil then
-      local body_start = extra.num_headers + 2
-      local body_end = #data - 1
-      local body = table.concat(data, '\n', body_start, body_end)
       cache.body = body
     end
 
@@ -161,7 +157,6 @@ local function process_stdout(data)
     end,
     method = extra.method,
     status = status,
-    status_text = status_text,
     ok = status and (status >= 200 and status <= 299) or false,
     size = extra.size_download and tonumber(extra.size_download) or nil,
     http_version = extra.http_version and tonumber(extra.http_version) or nil,
@@ -192,8 +187,7 @@ end
 ---                 - json fun(opts: table|nil): table Read the body as JSON. Optionally accepts
 ---                 opts from |vim.json.decode|. Will throw errors if body is not JSON-decodable.
 ---                 - method string The http method used in the most recent HTTP request.
----                 - status number The numerical response code. 
----                 - status_text string The status text returned with the response.
+---                 - status number The numerical response code.
 ---                 - size number The total amount of bytes that were downloaded. This
 ---                 is the size of the body/data that was transferred, excluding headers.
 ---                 - http_version number HTTP version used in the request.
