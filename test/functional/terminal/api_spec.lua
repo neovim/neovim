@@ -66,10 +66,10 @@ describe('api', function()
 
     screen:expect([[
       [tui] insert-mode                                 |
-      [socket 1] this is more t{4:                         }|
-      han 25 columns           {4:                         }|
-      [socket 2] input{1: }        {4:                         }|
-      {4:~                                                 }|
+      [socket 1] this is more t                         |
+      han 25 columns                                    |
+      [socket 2] input{1: }                                 |
+      {4:~                        }                         |
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
