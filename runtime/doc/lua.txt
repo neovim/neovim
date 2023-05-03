@@ -4466,9 +4466,9 @@ download({url}, {path}, {opts})                           *vim.net.download()*
                   successfully completed.
                 • on_err fun(err: string[])|nil An optional function recieving
                   a `stderr_buffered` string[] of curl stderr. Without
-                  providing this function, |download()| will automatically
-                  raise an error to the user. See |on_stderr| and
-                  `stderr_buffered`.
+                  providing this function, |vim.net.download()| will
+                  automatically raise an error to the user. See |on_stderr|
+                  and `stderr_buffered`.
 
     Return: ~
         (number) jobid A job id. See |job-control|.
@@ -4549,8 +4549,9 @@ fetch({url}, {opts})                                         *vim.net.fetch()*
 
                 • on_err fun(err: string[])|nil An optional function recieving
                   a `stderr_buffered` string[] of curl stderr. Without
-                  providing this function, |fetch()| will automatically raise
-                  an error to the user. See |on_stderr| and `stderr_buffered`.
+                  providing this function, |vim.net.fetch()| will
+                  automatically raise an error to the user. See |on_stderr|
+                  and `stderr_buffered`.
 
     Return: ~
         (number) jobid A job id.
