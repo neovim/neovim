@@ -1063,4 +1063,12 @@ func Test_mkspellmem_opt()
   call assert_fails('set mkspellmem=1000,50,0', 'E474:')
 endfunc
 
+" 'spellfile' accepts '@' on top of 'isfname'.
+func Test_spellfile_allow_at_character()
+  call mkdir('Xtest/the foo@bar,dir', 'p')
+  let &spellfile = './Xtest/the foo@bar,dir/Xspellfile.add'
+  let &spellfile = ''
+  call delete('Xtest', 'rf')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
