@@ -91,7 +91,7 @@ local function header_table_to_curl_arg_list(header_table)
   for key, values in pairs(header_table._storage) do
     for _, value in ipairs(values) do
       vim.list_extend(arg_list, {
-        '---header',
+        '--header',
         key .. ': ' .. value,
       })
     end
