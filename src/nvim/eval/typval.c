@@ -765,6 +765,17 @@ int tv_list_concat(list_T *const l1, list_T *const l2, typval_T *const tv)
   return OK;
 }
 
+list_T *tv_list_slice(list_T *ol, int n1, int n2)
+{
+  list_T *l = tv_list_alloc(n2 - n1 + 1);
+  listitem_T *item = tv_list_find(ol, n1);
+  for (; n1 <= n2; n1++) {
+    tv_list_append_tv(l, TV_LIST_ITEM_TV(item));
+    item = TV_LIST_ITEM_NEXT(rettv->vval.v_list, item);
+  }
+  return l;
+}
+
 typedef struct {
   char *s;
   char *tofree;

@@ -3683,9 +3683,6 @@ static int eval_index(char **arg, typval_T *rettv, evalarg_T *const evalarg, boo
         n1 = (int)len;
       }
       if (range) {
-        list_T *l;
-        listitem_T *item;
-
         if (n2 < 0) {
           n2 = (int)len + n2;
         } else if (n2 >= len) {
@@ -3694,12 +3691,7 @@ static int eval_index(char **arg, typval_T *rettv, evalarg_T *const evalarg, boo
         if (!empty2 && (n2 < 0 || n2 + 1 < n1)) {
           n2 = -1;
         }
-        l = tv_list_alloc(n2 - n1 + 1);
-        item = tv_list_find(rettv->vval.v_list, n1);
-        while (n1++ <= n2) {
-          tv_list_append_tv(l, TV_LIST_ITEM_TV(item));
-          item = TV_LIST_ITEM_NEXT(rettv->vval.v_list, item);
-        }
+        list_T *l = tv_list_slice(rettv->vval.v_list, n1, n2);
         tv_clear(rettv);
         tv_list_set_ret(rettv, l);
       } else {
