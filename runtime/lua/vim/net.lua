@@ -252,7 +252,8 @@ local function process_stdout(data)
     headers = read_headers,
     text = read_text,
     json = function(opts)
-      return vim.json.decode(read_text(), opts and opts or {})
+      local text = read_text()
+      return text and vim.json.decode(text, opts and opts or {}) or nil
     end,
     method = extra.method,
     status = status,
@@ -288,8 +289,9 @@ end
 ---                 - headers fun(): HeaderTable Function returning a HeaderTable of response headers.
 ---                 - text fun(): string|nil Function returning response body. If method was HEAD,
 ---                 this is nil.
----                 - json fun(opts: table|nil): table Read the body as JSON. Optionally accepts
+---                 - json fun(opts: table|nil): table|nil Read the body as JSON. Optionally accepts
 ---                 opts from |vim.json.decode|. Will throw errors if body is not JSON-decodable.
+---                 Nil if method is HEAD.
 ---                 - method string The http method used in the most recent HTTP request.
 ---                 - status number The numerical response code.
 ---                 - size number The total amount of bytes that were downloaded. This
