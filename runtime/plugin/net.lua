@@ -30,6 +30,15 @@ vim.api.nvim_create_autocmd({ 'BufReadCmd' }, {
 
             vim.fn.winrestview(view)
 
+            local ft = vim.filetype.match({
+                    filename = file,
+                    contents = vim.g.net_ft_full and text or nil
+                })
+
+            if ft then
+              vim.cmd(':set ft=' .. ft)
+            end
+
             complete = true
           end,
           on_err = function(data)
