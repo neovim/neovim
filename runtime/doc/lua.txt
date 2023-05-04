@@ -4600,7 +4600,7 @@ HeaderTable:get({self}, {key})                             *HeaderTable:get()*
       • {key}   (string) Non case-sensitive header name.
 
     Return: ~
-        string[]
+        string[] | string | nil
 
 HeaderTable:has({self}, {key})                             *HeaderTable:has()*
     Parameters: ~
