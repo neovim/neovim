@@ -2776,58 +2776,77 @@ bool tv_blob_equal(const blob_T *const b1, const blob_T *const b2)
   return true;
 }
 
+/// Returns a slice of "blob" from index "n1" to "n2" in "rettv".  The length of
+/// the blob is "len".  Returns an empty blob if the indexes are out of range.
+static int tv_blob_slice(const blob_T *blob, int len, varnumber_T n1, varnumber_T n2,
+                         bool exclusive, typval_T *rettv)
+{
+  // The resulting variable is a sub-blob.  If the indexes
+  // are out of range the result is empty.
+  if (n1 < 0) {
+    n1 = len + n1;
+    if (n1 < 0) {
+      n1 = 0;
+    }
+  }
+  if (n2 < 0) {
+    n2 = len + n2;
+  } else if (n2 >= len) {
+    n2 = len - (exclusive ? 0 : 1);
+  }
+  if (exclusive) {
+    n2--;
+  }
+  if (n1 >= len || n2 < 0 || n1 > n2) {
+    tv_clear(rettv);
+    rettv->v_type = VAR_BLOB;
+    rettv->vval.v_blob = NULL;
+  } else {
+    blob_T *const new_blob = tv_blob_alloc();
+    ga_grow(&new_blob->bv_ga, (int)(n2 - n1 + 1));
+    new_blob->bv_ga.ga_len = (int)(n2 - n1 + 1);
+    for (int i = (int)n1; i <= (int)n2; i++) {
+      tv_blob_set(new_blob, i - (int)n1, tv_blob_get(rettv->vval.v_blob, i));
+    }
+    tv_clear(rettv);
+    tv_blob_set_ret(rettv, new_blob);
+  }
+
+  return OK;
+}
+
+/// Return the byte value in "blob" at index "idx" in "rettv".  If the index is
+/// too big or negative that is an error.  The length of the blob is "len".
+static int tv_blob_index(const blob_T *blob, int len, varnumber_T idx, typval_T *rettv)
+{
+  // The resulting variable is a byte value.
+  // If the index is too big or negative that is an error.
+  if (idx < 0) {
+    idx = len + idx;
+  }
+  if (idx < len && idx >= 0) {
+    const int v = (int)tv_blob_get(rettv->vval.v_blob, (int)idx);
+    tv_clear(rettv);
+    rettv->v_type = VAR_NUMBER;
+    rettv->vval.v_number = v;
+  } else {
+    semsg(_(e_blobidx), idx);
+    return FAIL;
+  }
+
+  return OK;
+}
+
 int tv_blob_slice_or_index(const blob_T *blob, int is_range, varnumber_T n1, varnumber_T n2,
                            bool exclusive, typval_T *rettv)
 {
   int len = tv_blob_len(rettv->vval.v_blob);
+
   if (is_range) {
-    // The resulting variable is a sub-blob.  If the indexes
-    // are out of range the result is empty.
-    if (n1 < 0) {
-      n1 = len + n1;
-      if (n1 < 0) {
-        n1 = 0;
-      }
-    }
-    if (n2 < 0) {
-      n2 = len + n2;
-    } else if (n2 >= len) {
-      n2 = len - (exclusive ? 0 : 1);
-    }
-    if (exclusive) {
-      n2--;
-    }
-    if (n1 >= len || n2 < 0 || n1 > n2) {
-      tv_clear(rettv);
-      rettv->v_type = VAR_BLOB;
-      rettv->vval.v_blob = NULL;
-    } else {
-      blob_T *const new_blob = tv_blob_alloc();
-      ga_grow(&new_blob->bv_ga, (int)(n2 - n1 + 1));
-      new_blob->bv_ga.ga_len = (int)(n2 - n1 + 1);
-      for (int i = (int)n1; i <= (int)n2; i++) {
-        tv_blob_set(new_blob, i - (int)n1, tv_blob_get(rettv->vval.v_blob, i));
-      }
-      tv_clear(rettv);
-      tv_blob_set_ret(rettv, new_blob);
-    }
+    return tv_blob_slice(blob, len, n1, n2, exclusive, rettv);
   } else {
-    // The resulting variable is a byte value.
-    // If the index is too big or negative that is an error.
-    if (n1 < 0) {
-      n1 = len + n1;
-    }
-    if (n1 < len && n1 >= 0) {
-      const int v = (int)tv_blob_get(rettv->vval.v_blob, (int)n1);
-      tv_clear(rettv);
-      rettv->v_type = VAR_NUMBER;
-      rettv->vval.v_number = v;
-    } else {
-      semsg(_(e_blobidx), (int64_t)n1);
-      return FAIL;
-    }
+    return tv_blob_index(blob, len, n1, rettv);
   }
-  return OK;
 }
 
 /// Check if "n1" is a valid index for a blob with length "bloblen".
