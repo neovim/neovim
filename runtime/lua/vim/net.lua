@@ -63,10 +63,18 @@ end
 ---Get header values.
 ---@param self HeaderTable HeaderTable Instance.
 ---@param key string Non case-sensitive header name.
----@return string[]
+---@return string[] | string | nil
 function HeaderTable:get(key)
   local normalized_key = self:_normalize_key(key)
-  return self._storage[normalized_key]
+  local value = self._storage[normalized_key]
+
+  if value == nil then
+    return nil
+  elseif #value == 1 then
+    return value[1]
+  else
+    return value
+  end
 end
 
 ---@param self HeaderTable HeaderTable Instance.
