@@ -142,7 +142,7 @@ static void ga_concat_shorten_esc(garray_T *gap, const char *str)
 }
 
 /// Fill "gap" with information about an assert error.
-static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, char *exp_str,
+static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, const char *exp_str,
                               typval_T *exp_tv_arg, typval_T *got_tv_arg, assert_type_T atype)
 {
   char *tofree;
@@ -220,7 +220,13 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, char *exp_str
     ga_concat_shorten_esc(gap, tofree);
     xfree(tofree);
   } else {
+    if (atype != ASSERT_INRANGE) {
+      ga_concat(gap, "'");
+    }
     ga_concat_shorten_esc(gap, exp_str);
+    if (atype != ASSERT_INRANGE) {
+      ga_concat(gap, "'");
+    }
   }
 
   if (atype != ASSERT_NOTEQUAL) {
@@ -534,6 +540,7 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   } else if (argvars[1].v_type != VAR_UNKNOWN) {
     char buf[NUMBUFLEN];
     const char *expected;
+    const char *expected_str = NULL;
     bool error_found = false;
     int error_found_index = 1;
     char *actual = emsg_assert_fails_msg == NULL ? "[unknown]" : emsg_assert_fails_msg;
@@ -551,12 +558,14 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       expected = tv_get_string_buf_chk(tv, buf);
       if (!pattern_match(expected, actual, false)) {
         error_found = true;
+        expected_str = expected;
       } else if (tv_list_len(list) == 2) {
         tv = TV_LIST_ITEM_TV(tv_list_last(list));
         actual = get_vim_var_str(VV_ERRMSG);
         expected = tv_get_string_buf_chk(tv, buf);
         if (!pattern_match(expected, actual, false)) {
           error_found = true;
+          expected_str = expected;
         }
       }
     } else {
@@ -600,7 +609,7 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         actual_tv.v_type = VAR_STRING;
         actual_tv.vval.v_string = actual;
       }
-      fill_assert_error(&ga, &argvars[2], NULL,
+      fill_assert_error(&ga, &argvars[2], expected_str,
                         &argvars[error_found_index], &actual_tv, ASSERT_OTHER);
       ga_concat(&ga, ": ");
       assert_append_cmd_or_arg(&ga, argvars, cmd);

@@ -6,11 +6,11 @@ func Test_assert_false()
   call assert_equal(0, v:false->assert_false())
 
   call assert_equal(1, assert_false(123))
-  call assert_match("Expected False but got 123", v:errors[0])
+  call assert_match("Expected 'False' but got 123", v:errors[0])
   call remove(v:errors, 0)
 
   call assert_equal(1, 123->assert_false())
-  call assert_match("Expected False but got 123", v:errors[0])
+  call assert_match("Expected 'False' but got 123", v:errors[0])
   call remove(v:errors, 0)
 endfunc
 
@@ -21,11 +21,11 @@ func Test_assert_true()
   call assert_equal(0, v:true->assert_true())
 
   call assert_equal(1, assert_true(0))
-  call assert_match("Expected True but got 0", v:errors[0])
+  call assert_match("Expected 'True' but got 0", v:errors[0])
   call remove(v:errors, 0)
 
   call assert_equal(1, 0->assert_true())
-  call assert_match("Expected True but got 0", v:errors[0])
+  call assert_match("Expected 'True' but got 0", v:errors[0])
   call remove(v:errors, 0)
 endfunc
 
@@ -228,11 +228,11 @@ func Test_assert_fail_fails()
   call remove(v:errors, 0)
 
   call assert_equal(1, assert_fails('xxx', ['E9876']))
-  call assert_match("Expected \\['E9876'\\] but got 'E492:", v:errors[0])
+  call assert_match("Expected 'E9876' but got 'E492:", v:errors[0])
   call remove(v:errors, 0)
 
   call assert_equal(1, assert_fails('xxx', ['E492:', 'E9876']))
-  call assert_match("Expected \\['E492:', 'E9876'\\] but got 'E492:", v:errors[0])
+  call assert_match("Expected 'E9876' but got 'E492:", v:errors[0])
   call remove(v:errors, 0)
 
   call assert_equal(1, assert_fails('echo', '', 'echo command'))
