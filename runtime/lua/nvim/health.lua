@@ -394,6 +394,23 @@ local function check_terminal()
   end
 end
 
+local function check_network()
+  vim.health.start('Network (vim.net)')
+
+  if executable('curl') then
+    vim.health.ok('curl found')
+
+    local version = vim.split(vim.fn.systemlist({ 'curl', '--version' })[1], ' ')[2]
+
+    vim.health.info('curl version ' .. version .. ' was found.')
+  else
+    vim.health.error(
+      'curl could not be found. Cannot use |vim.net|.',
+      'Follow this guide to install curl https://everything.curl.dev/get.'
+    )
+  end
+end
+
 function M.check()
   check_config()
   check_runtime()
@@ -401,6 +418,7 @@ function M.check()
   check_rplugin_manifest()
   check_terminal()
   check_tmux()
+  check_network()
 end
 
 return M
