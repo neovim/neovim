@@ -7264,6 +7264,27 @@ int check_luafunc_name(const char *const str, const bool paren)
   return (int)(p - str);
 }
 
+/// Return the character "str[index]" where "index" is the character index.  If
+/// "index" is out of range NULL is returned.
+char *char_from_string(char *str, varnumber_T index)
+{
+  size_t nbyte = 0;
+  varnumber_T nchar = index;
+
+  if (str == NULL || index < 0) {
+    return NULL;
+  }
+  size_t slen = strlen(str);
+  while (nchar > 0 && nbyte < slen) {
+    nbyte += (size_t)utf_ptr2len(str + nbyte);
+    nchar--;
+  }
+  if (nbyte >= slen) {
+    return NULL;
+  }
+  return xstrnsave(str + nbyte, (size_t)utf_ptr2len(str + nbyte));
+}
+
 /// Handle:
 /// - expr[expr], expr[expr:expr] subscript
 /// - ".name" lookup
