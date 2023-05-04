@@ -121,7 +121,7 @@ static void ga_concat_shorten_esc(garray_T *gap, const char *str)
   for (const char *p = str; *p != NUL; p++) {
     int same_len = 1;
     const char *s = p;
-    const int c = mb_ptr2char_adv(&s);
+    const int c = mb_cptr2char_adv(&s);
     const int clen = (int)(s - p);
     while (*s != NUL && c == utf_ptr2char(s)) {
       same_len++;
