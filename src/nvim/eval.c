@@ -89,7 +89,7 @@
 static const char *e_missbrac = N_("E111: Missing ']'");
 static const char *e_list_end = N_("E697: Missing end of List ']': %s");
 static const char *e_cannot_slice_dictionary
-  = N_("E719: cannot slice a Dictionary");
+  = N_("E719: Cannot slice a Dictionary");
 static const char e_cannot_index_special_variable[]
   = N_("E909: Cannot index a special variable");
 static const char *e_nowhitespace
