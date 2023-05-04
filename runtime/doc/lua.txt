@@ -4550,9 +4550,10 @@ fetch({url}, {opts})                                         *vim.net.fetch()*
                   • headers fun(): HeaderTable Function returning a HeaderTable of response headers.
                   • text fun(): string|nil Function returning response body.
                     If method was HEAD, this is nil.
-                  • json fun(opts: table|nil): table Read the body as JSON.
-                    Optionally accepts opts from |vim.json.decode|. Will throw
-                    errors if body is not JSON-decodable.
+                  • json fun(opts: table|nil): table|nil Read the body as
+                    JSON. Optionally accepts opts from |vim.json.decode|. Will
+                    throw errors if body is not JSON-decodable. Nil if method
+                    is HEAD.
                   • method string The http method used in the most recent HTTP
                     request.
                   • status number The numerical response code.
