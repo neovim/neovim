@@ -4439,6 +4439,9 @@ download({url}, {path}, {opts})                           *vim.net.download()*
     Asynchronously download a file. To read the response metadata, such as
     headers and body, use |vim.net.fetch()|.
 
+    See man://curl for supported protocols. Not all protocols are fully
+    tested.
+
     Please carefully note the option differences with |vim.net.fetch()|,
     notably `redirect`.
 
@@ -4484,7 +4487,10 @@ download({url}, {path}, {opts})                           *vim.net.download()*
       • man://curl
 
 fetch({url}, {opts})                                         *vim.net.fetch()*
-    Asynchronously make HTTP requests.
+    Asynchronously make network requests.
+
+    See man://curl for supported protocols. Not all protocols are fully
+    tested.
 
     Please carefully note the option differences with |vim.net.download()|,
     notably `redirect`.
@@ -4539,6 +4545,8 @@ fetch({url}, {opts})                                         *vim.net.fetch()*
                   • "error": Throw an error using on_err or vim.notify when
                     status is 3XX.
 
+                • upload_file string|nil Path to an upload_file. Can be
+                  relative.
                 • data string|table|nil Data to send with the request. If a
                   table, it will be JSON-encoded. vim.net does not currently
                   support form encoding.

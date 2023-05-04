@@ -159,6 +159,10 @@ UI
 • |CompleteDone| now sets the `reason` key in `v:event` which specifies the reason
   for completion being done.
 
+• Added |vim.net.fetch()| for requests.
+
+• Added |vim.net.download()| for file downloads.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
@@ -166,6 +170,16 @@ These existing features changed their behavior.
 
 • N/A
 
+• `:e, :w, :[range]w!, and :r https://*,http://*,ftp://*,scp://*` can now
+  use |vim.net.fetch()|. Opt-in via >lua
+      vim.g.lua_net_enable = true
+<
+• `:e https://*,http://*,ftp://*,scp://*` now automatically matches
+  filetype using the url. Optionally, you can enable (slower) automatic
+  full-text filetype matching for editing remote files that don't have an
+  extension (for example https://neovim.io/ -> `ft=html`) via >lua
+      vim.g.lua_net_ft_full = true
+<
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
