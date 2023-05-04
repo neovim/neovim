@@ -464,6 +464,8 @@ sign_unplacelist({list})	List	unplace a list of signs
 simplify({filename})		String	simplify filename as much as possible
 sin({expr})			Float	sine of {expr}
 sinh({expr})			Float	hyperbolic sine of {expr}
+slice({expr}, {start} [, {end}])  String, List or Blob
+					slice of a String, List or Blob
 sockconnect({mode}, {address} [, {opts}])
 				Number	Connects to socket
 sort({list} [, {func} [, {dict}]])
@@ -7772,6 +7774,18 @@ sinh({expr})						*sinh()*
 
 		Can also be used as a |method|: >
 			Compute()->sinh()
+
+slice({expr}, {start} [, {end}])			*slice()*
+		Similar to using a |slice| "expr[start : end]", but "end" is
+		used exclusive.  And for a string the indexes are used as
+		character indexes instead of byte indexes.
+		When {end} is omitted the slice continues to the last item.
+		When {end} is -1 the last item is omitted.
+		Returns an empty value if {start} or {end} are invalid.
+
+		Can also be used as a |method|: >
+			GetList()->slice(offset)
+
 
 sockconnect({mode}, {address} [, {opts}])		 *sockconnect()*
 		Connect a socket to an address. If {mode} is "pipe" then

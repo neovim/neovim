@@ -765,10 +765,10 @@ int tv_list_concat(list_T *const l1, list_T *const l2, typval_T *const tv)
   return OK;
 }
 
-static list_T *tv_list_slice(list_T *ol, int n1, int n2)
+static list_T *tv_list_slice(list_T *ol, varnumber_T n1, varnumber_T n2)
 {
   list_T *l = tv_list_alloc(n2 - n1 + 1);
-  listitem_T *item = tv_list_find(ol, n1);
+  listitem_T *item = tv_list_find(ol, (int)n1);
   for (; n1 <= n2; n1++) {
     tv_list_append_tv(l, TV_LIST_ITEM_TV(item));
     item = TV_LIST_ITEM_NEXT(rettv->vval.v_list, item);
@@ -776,12 +776,12 @@ static list_T *tv_list_slice(list_T *ol, int n1, int n2)
   return l;
 }
 
-int tv_list_slice_or_index(list_T *list, bool range, int n1_arg, int n2_arg, typval_T *rettv,
-                           bool verbose)
+int tv_list_slice_or_index(list_T *list, bool range, varnumber_T n1_arg, varnumber_T n2_arg,
+                           bool exclusive, typval_T *rettv, bool verbose)
 {
   int len = tv_list_len(rettv->vval.v_list);
-  int n1 = n1_arg;
-  int n2 = n2_arg;
+  varnumber_T n1 = n1_arg;
+  varnumber_T n2 = n2_arg;
 
   if (n1 < 0) {
     n1 = len + n1;
@@ -801,7 +801,10 @@ int tv_list_slice_or_index(list_T *list, bool range, int n1_arg, int n2_arg, typ
     if (n2 < 0) {
       n2 = len + n2;
     } else if (n2 >= len) {
-      n2 = len - 1;
+      n2 = len - (exclusive ? 0 : 1);
+    }
+    if (exclusive) {
+      n2--;
     }
     if (n2 < 0 || n2 + 1 < n1) {
       n2 = -1;
@@ -2800,14 +2803,14 @@ int tv_blob_check_range(int bloblen, varnumber_T n1, varnumber_T n2, bool quiet)
 /// Set bytes "n1" to "n2" (inclusive) in "dest" to the value of "src".
 /// Caller must make sure "src" is a blob.
 /// Returns FAIL if the number of bytes does not match.
-int tv_blob_set_range(blob_T *dest, int n1, int n2, typval_T *src)
+int tv_blob_set_range(blob_T *dest, varnumber_T n1, varnumber_T n2, typval_T *src)
 {
   if (n2 - n1 + 1 != tv_blob_len(src->vval.v_blob)) {
     emsg(_("E972: Blob value does not have the right number of bytes"));
     return FAIL;
   }
 
-  for (int il = n1, ir = 0; il <= n2; il++) {
+  for (int il = (int)n1, ir = 0; il <= (int)n2; il++) {
     tv_blob_set(dest, il, tv_blob_get(src->vval.v_blob, ir++));
   }
   return OK;

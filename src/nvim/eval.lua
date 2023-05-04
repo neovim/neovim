@@ -371,6 +371,7 @@ return {
     simplify={args=1, base=1},
     sin={args=1, base=1, float_func="sin"},
     sinh={args=1, base=1, float_func="sinh"},
+    slice={args={2, 3}, base=1},
     sockconnect={args={2,3}},
     sort={args={1, 3}, base=1},
     soundfold={args=1, base=1},
