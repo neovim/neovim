@@ -3641,6 +3641,7 @@ static int eval_index_inner(typval_T *rettv, bool is_range, typval_T *var1, typv
   case VAR_PARTIAL:
   case VAR_UNKNOWN:
     break;  // Not evaluating, skipping over subscript
+
   case VAR_NUMBER:
   case VAR_STRING: {
     const char *const s = tv_get_string(rettv);
@@ -3689,56 +3690,11 @@ static int eval_index_inner(typval_T *rettv, bool is_range, typval_T *var1, typv
     rettv->vval.v_string = v;
     break;
   }
-  case VAR_BLOB: {
-    int len = tv_blob_len(rettv->vval.v_blob);
-    if (is_range) {
-      // The resulting variable is a sub-blob.  If the indexes
-      // are out of range the result is empty.
-      if (n1 < 0) {
-        n1 = len + n1;
-        if (n1 < 0) {
-          n1 = 0;
-        }
-      }
-      if (n2 < 0) {
-        n2 = len + n2;
-      } else if (n2 >= len) {
-        n2 = len - (exclusive ? 0 : 1);
-      }
-      if (exclusive) {
-        n2--;
-      }
-      if (n1 >= len || n2 < 0 || n1 > n2) {
-        tv_clear(rettv);
-        rettv->v_type = VAR_BLOB;
-        rettv->vval.v_blob = NULL;
-      } else {
-        blob_T *const blob = tv_blob_alloc();
-        ga_grow(&blob->bv_ga, (int)(n2 - n1 + 1));
-        blob->bv_ga.ga_len = (int)(n2 - n1 + 1);
-        for (int i = (int)n1; i <= (int)n2; i++) {
-          tv_blob_set(blob, i - (int)n1, tv_blob_get(rettv->vval.v_blob, i));
-        }
-        tv_clear(rettv);
-        tv_blob_set_ret(rettv, blob);
-      }
-    } else {
-      // The resulting variable is a byte value.
-      // If the index is too big or negative that is an error.
-      if (n1 < 0) {
-        n1 = len + n1;
-      }
-      if (n1 < len && n1 >= 0) {
-        const int v = (int)tv_blob_get(rettv->vval.v_blob, (int)n1);
-        tv_clear(rettv);
-        rettv->v_type = VAR_NUMBER;
-        rettv->vval.v_number = v;
-      } else {
-        semsg(_(e_blobidx), (int64_t)n1);
-      }
-    }
+
+  case VAR_BLOB:
+    tv_blob_slice_or_index(rettv->vval.v_blob, is_range, n1, n2, exclusive, rettv);
     break;
-  }
+
   case VAR_LIST:
     if (var1 == NULL) {
       n1 = 0;
@@ -3751,6 +3707,7 @@ static int eval_index_inner(typval_T *rettv, bool is_range, typval_T *var1, typv
       return FAIL;
     }
     break;
+
   case VAR_DICT: {
     if (key == NULL) {
       key = tv_get_string_chk(var1);
