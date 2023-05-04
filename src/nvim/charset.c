@@ -858,14 +858,24 @@ bool vim_iswordp_buf(const char *const p, buf_T *const buf)
   return vim_iswordc_buf(c, buf);
 }
 
-/// Check that "c" is a valid file-name character.
+/// Check that "c" is a valid file-name character as specified with the
+/// 'isfname' option.
 /// Assume characters above 0x100 are valid (multi-byte).
+/// To be used for commands like "gf".
 ///
 /// @param  c  character to check
 bool vim_isfilec(int c)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return c >= 0x100 || (c > 0 && (g_chartab[c] & CT_FNAME_CHAR));
+}
+
+/// Check if "c" is a valid file-name character, including characters left
+/// out of 'isfname' to make "gf" work, such as comma, space, '@', etc.
+bool vim_is_fname_char(int c)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return vim_isfilec(c) || c == ',' || c == ' ' || c == '@';
 }
 
 /// Check that "c" is a valid file-name character or a wildcard character
