@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nvim/api/extmark.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
@@ -30,6 +31,7 @@
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/indent.h"
+#include "nvim/lua/executor.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -1695,6 +1697,27 @@ static void foldDelMarker(buf_T *buf, linenr_T lnum, char *marker, size_t marker
   }
 }
 
+static char *get_foldtext_lua(char *fdt, char *buf, VirtText *vt, int *vtwidth)
+{
+  int len = snprintf(buf, FOLD_TEXT_LEN, "return %s", fdt);
+  Error err = ERROR_INIT;
+  Array args = ARRAY_DICT_INIT;
+  Object obj = nlua_exec(cstrn_as_string(buf, (size_t)len), args, &err);
+
+  if (!ERROR_SET(&err)) {
+    if (obj.type == kObjectTypeArray) {
+      *vt = parse_virt_text(obj.data.array, &err, vtwidth);
+      *buf = NUL;
+    } else if (obj.type == kObjectTypeString) {
+      snprintf(buf, obj.data.string.size + 1, "%s", obj.data.string.data);
+    }
+  }
+
+  api_free_object(obj);
+
+  return ERROR_SET(&err) ? NULL : buf;
+}
+
 // get_foldtext() {{{2
 /// Generates text to display
 ///
@@ -1704,7 +1727,8 @@ static void foldDelMarker(buf_T *buf, linenr_T lnum, char *marker, size_t marker
 /// @return the text for a closed fold
 ///
 /// Otherwise the result is in allocated memory.
-char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo, char *buf)
+char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo, char *buf,
+                   VirtText *vt, int *vtwidth)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   char *text = NULL;
@@ -1752,8 +1776,16 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
       current_sctx = wp->w_p_script_ctx[WV_FDT].script_ctx;
 
       emsg_off++;  // handle exceptions, but don't display errors
-      text = eval_to_string_safe(wp->w_p_fdt,
-                                 was_set_insecurely(wp, "foldtext", OPT_LOCAL));
+
+      if (strncmp(wp->w_p_fdt, "=", 1) == 0) {
+        // evaluate as lua expression
+        text = get_foldtext_lua(wp->w_p_fdt + 1, buf, vt, vtwidth);
+      } else {
+        // evaluate as vimscript expression
+        text = eval_to_string_safe(wp->w_p_fdt,
+                                   was_set_insecurely(wp, "foldtext", OPT_LOCAL));
+      }
+
       emsg_off--;
 
       if (text == NULL || did_emsg) {
@@ -3322,7 +3354,7 @@ void f_foldtextresult(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   foldinfo_T info = fold_info(curwin, lnum);
   if (info.fi_lines > 0) {
-    char *text = get_foldtext(curwin, lnum, lnum + info.fi_lines - 1, info, buf);
+    char *text = get_foldtext(curwin, lnum, lnum + info.fi_lines - 1, info, buf, NULL, NULL);
     if (text == buf) {
       text = xstrdup(text);
     }

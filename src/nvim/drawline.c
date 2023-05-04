@@ -1677,8 +1677,21 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       wlv.char_attr = win_hl_attr(wp, HLF_FL);
       linenr_T lnume = lnum + foldinfo.fi_lines - 1;
       memset(buf_fold, ' ', FOLD_TEXT_LEN);
-      wlv.p_extra = get_foldtext(wp, lnum, lnume, foldinfo, buf_fold);
+      VirtText vt = KV_INITIAL_VALUE;
+      int vtwidth = 0;
+      wlv.p_extra = get_foldtext(wp, lnum, lnume, foldinfo, buf_fold, &vt, &vtwidth);
       wlv.n_extra = (int)strlen(wlv.p_extra);
+      if (vtwidth) {
+        for (int i = wlv.col; i < wlv.col + vtwidth; i++) {
+          linebuf_attr[i] = wlv.char_attr;
+        }
+
+        int col = draw_virt_text_item(buf, wlv.col, vt, kHlModeCombine, wlv.col + vtwidth, 0);
+
+        wlv.col = col;
+        wlv.off = col;
+      }
+      kv_destroy(vt);
 
       if (wlv.p_extra != buf_fold) {
         xfree(wlv.p_extra_free);
