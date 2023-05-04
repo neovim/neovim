@@ -12,7 +12,7 @@ any other environment conditions that a plugin might care about. Nvim ships
 with healthchecks for configuration, performance, python support, ruby
 support, clipboard support, and more.
 
-To run all healthchecks, use: >
+To run all healthchecks, use: >vim
 
         :checkhealth
 <
@@ -32,17 +32,17 @@ Commands                                *health-commands*
 
 :che[ckhealth] {plugins}
                 Run healthcheck(s) for one or more plugins. E.g. to run only
-                the standard Nvim healthcheck: >
+                the standard Nvim healthcheck: >vim
                         :checkhealth nvim
 <
                 To run the healthchecks for the "foo" and "bar" plugins
                 (assuming they are on 'runtimepath' and they have implemented
-                the Lua `require("foo.health").check()` interface): >
+                the Lua `require("foo.health").check()` interface): >vim
                         :checkhealth foo bar
 <
                 To run healthchecks for Lua submodules, use dot notation or
                 "*" to refer to all submodules. For example Nvim provides
-                `vim.lsp` and `vim.treesitter`:  >
+                `vim.lsp` and `vim.treesitter`:  >vim
                         :checkhealth vim.lsp vim.treesitter
                         :checkhealth vim*
 <
@@ -100,7 +100,7 @@ All such health modules must return a Lua table containing a `check()`
 function.
 
 Copy this sample code into `lua/foo/health.lua`, replacing "foo" in the path
-with your plugin name: >
+with your plugin name: >lua
 
         local M = {}
 

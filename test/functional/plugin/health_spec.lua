@@ -130,8 +130,8 @@ describe('health.vim', function()
       local screen = Screen.new(50, 12)
       screen:attach()
       screen:set_default_attr_ids({
-        Ok = { foreground = Screen.colors.Grey3, background = 6291200 },
-        Error = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+        Ok = { foreground = Screen.colors.LightGreen },
+        Error = { foreground = Screen.colors.Red },
         Heading = { foreground = tonumber('0x6a0dad') },
         Bar = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGrey },
       })
