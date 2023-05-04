@@ -882,8 +882,8 @@ end
 ---@param cbs table An |nvim_buf_attach()|-like table argument with the following handlers:
 ---           - `on_bytes` : see |nvim_buf_attach()|, but this will be called _after_ the parsers callback.
 ---           - `on_changedtree` : a callback that will be called every time the tree has syntactical changes.
----              It will only be passed one argument, which is a table of the ranges (as node ranges) that
----              changed.
+---              It will be passed two arguments, including a table of the ranges (as node ranges) that
+---              changed, followed by the tree being changed.
 ---           - `on_child_added` : emitted when a child is added to the tree.
 ---           - `on_child_removed` : emitted when a child is removed from the tree.
 --- @param recursive? boolean Apply callbacks recursively for all children. Any new children will
