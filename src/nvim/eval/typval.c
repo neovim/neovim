@@ -795,7 +795,7 @@ int tv_list_slice_or_index(list_T *list, bool range, int n1_arg, int n2_arg, typ
       }
       return FAIL;
     }
-    n1 = len;
+    n1 = n1 < 0 ? 0 : len;
   }
   if (range) {
     if (n2 < 0) {
