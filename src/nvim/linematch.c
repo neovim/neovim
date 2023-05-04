@@ -328,9 +328,7 @@ int ***allocate_comparison_buffers(const int *diff_length, const size_t nDiffs)
           comparison_buffers[cpointer][k] = xmalloc(sizeof(int) * (size_t)diff_length[j]);
         }
         // initialize to -1
-        for (int l = 0; l < diff_length[j]; l++) {
-          comparison_buffers[cpointer][k][l] = -1;
-        }
+        memset(comparison_buffers[cpointer][k], -1, (size_t)diff_length[j]);
       }
       cpointer++;
     }
