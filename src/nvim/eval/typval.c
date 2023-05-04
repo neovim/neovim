@@ -787,8 +787,8 @@ int tv_list_slice_or_index(list_T *list, bool range, int n1_arg, int n2_arg, typ
     n1 = len + n1;
   }
   if (n1 < 0 || n1 >= len) {
-    // For a range we allow invalid values and return an empty
-    // list.  A list index out of range is an error.
+    // For a range we allow invalid values and return an empty list.
+    // A list index out of range is an error.
     if (!range) {
       if (verbose) {
         semsg(_(e_listidx), (int64_t)n1);
