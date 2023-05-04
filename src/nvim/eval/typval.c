@@ -765,6 +765,61 @@ int tv_list_concat(list_T *const l1, list_T *const l2, typval_T *const tv)
   return OK;
 }
 
+static list_T *tv_list_slice(list_T *ol, int n1, int n2)
+{
+  list_T *l = tv_list_alloc(n2 - n1 + 1);
+  listitem_T *item = tv_list_find(ol, n1);
+  for (; n1 <= n2; n1++) {
+    tv_list_append_tv(l, TV_LIST_ITEM_TV(item));
+    item = TV_LIST_ITEM_NEXT(rettv->vval.v_list, item);
+  }
+  return l;
+}
+
+int tv_list_slice_or_index(list_T *list, bool range, int n1_arg, int n2_arg, typval_T *rettv,
+                           bool verbose)
+{
+  int len = tv_list_len(rettv->vval.v_list);
+  int n1 = n1_arg;
+  int n2 = n2_arg;
+
+  if (n1 < 0) {
+    n1 = len + n1;
+  }
+  if (n1 < 0 || n1 >= len) {
+    // For a range we allow invalid values and return an empty
+    // list.  A list index out of range is an error.
+    if (!range) {
+      if (verbose) {
+        semsg(_(e_listidx), (int64_t)n1);
+      }
+      return FAIL;
+    }
+    n1 = len;
+  }
+  if (range) {
+    if (n2 < 0) {
+      n2 = len + n2;
+    } else if (n2 >= len) {
+      n2 = len - 1;
+    }
+    if (n2 < 0 || n2 + 1 < n1) {
+      n2 = -1;
+    }
+    list_T *l = tv_list_slice(rettv->vval.v_list, n1, n2);
+    tv_clear(rettv);
+    tv_list_set_ret(rettv, l);
+  } else {
+    // copy the item to "var1" to avoid that freeing the list makes it
+    // invalid.
+    typval_T var1;
+    tv_copy(TV_LIST_ITEM_TV(tv_list_find(rettv->vval.v_list, (int)n1)), &var1);
+    tv_clear(rettv);
+    *rettv = var1;
+  }
+  return OK;
+}
+
 typedef struct {
   char *s;
   char *tofree;

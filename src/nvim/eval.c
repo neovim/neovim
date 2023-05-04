@@ -3470,7 +3470,7 @@ static int eval_index(char **arg, typval_T *rettv, evalarg_T *const evalarg, boo
   bool empty1 = false;
   bool empty2 = false;
   ptrdiff_t len = -1;
-  int range = false;
+  bool range = false;
   const char *key = NULL;
 
   switch (rettv->v_type) {
@@ -3667,45 +3667,15 @@ static int eval_index(char **arg, typval_T *rettv, evalarg_T *const evalarg, boo
       }
       break;
     case VAR_LIST:
-      len = tv_list_len(rettv->vval.v_list);
-      if (n1 < 0) {
-        n1 = (int)len + n1;
+      if (empty1) {
+        n1 = 0;
       }
-      if (!empty1 && (n1 < 0 || n1 >= len)) {
-        // For a range we allow invalid values and return an empty
-        // list.  A list index out of range is an error.
-        if (!range) {
-          if (verbose) {
-            semsg(_(e_listidx), (int64_t)n1);
-          }
-          return FAIL;
-        }
-        n1 = (int)len;
+      if (empty2) {
+        n2 = -1;
       }
-      if (range) {
-        list_T *l;
-        listitem_T *item;
-
-        if (n2 < 0) {
-          n2 = (int)len + n2;
-        } else if (n2 >= len) {
-          n2 = (int)len - 1;
-        }
-        if (!empty2 && (n2 < 0 || n2 + 1 < n1)) {
-          n2 = -1;
-        }
-        l = tv_list_alloc(n2 - n1 + 1);
-        item = tv_list_find(rettv->vval.v_list, n1);
-        while (n1++ <= n2) {
-          tv_list_append_tv(l, TV_LIST_ITEM_TV(item));
-          item = TV_LIST_ITEM_NEXT(rettv->vval.v_list, item);
-        }
-        tv_clear(rettv);
-        tv_list_set_ret(rettv, l);
-      } else {
-        tv_copy(TV_LIST_ITEM_TV(tv_list_find(rettv->vval.v_list, (int)n1)), &var1);
-        tv_clear(rettv);
-        *rettv = var1;
+      if (tv_list_slice_or_index(rettv->vval.v_list,
+                                 range, n1, n2, rettv, verbose) == FAIL) {
+        return FAIL;
       }
       break;
     case VAR_DICT: {
