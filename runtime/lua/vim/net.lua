@@ -148,6 +148,14 @@ local function createCurlArgs(url, opts)
     table.insert(args, '--location')
   end
 
+  -- upload_file
+  if opts.upload_file then
+    vim.list_extend(args, {
+      '--upload-file',
+      vim.fn.fnameescape(vim.fn.fnamemodify(opts.upload_file, ':p')),
+    })
+  end
+
   if opts.data ~= nil then
     if type(opts.data) == 'table' then
       vim.list_extend(args, {
@@ -240,7 +248,11 @@ local function process_stdout(data)
   local function read_text()
     -- check cache, return nil if method is HEAD
     if cache.body == nil and extra.method ~= 'HEAD' then
-      local body = table.concat(data, '\n', 1, began_headers_at - 1)
+      -- Fix a strange case where it seems anything but HTTP will return with an extra
+      -- "" item on the end.
+      local extra_skip = (extra.scheme == 'SCP' or extra.scheme == 'FTP') and 1 or 0
+
+      local body = table.concat(data, '\n', 1, began_headers_at - 1 - extra_skip)
 
       cache.body = body
     end
@@ -264,7 +276,9 @@ local function process_stdout(data)
   }
 end
 
---- Asynchronously make HTTP requests.
+--- Asynchronously make network requests.
+---
+--- See man://curl for supported protocols. Not all protocols are fully tested.
 ---
 --- Please carefully note the option differences with |vim.net.download()|, notably
 --- `redirect`.
@@ -281,6 +295,7 @@ end
 ---             - redirect string|nil Redirect mode. Defaults to "follow". Possible values are:
 ---                 - "follow": Follow all redirects incurred when fetching a resource.
 ---                 - "error": Throw an error using on_err or vim.notify when status is 3XX.
+---             - upload_file string|nil Path to an upload_file. Can be relative.
 ---             - data string|table|nil Data to send with the request. If a table, it will be
 ---             JSON-encoded. vim.net does not currently support form encoding.
 ---             - on_complete fun(response: table)|nil Callback function when request is
@@ -410,6 +425,8 @@ end
 
 --- Asynchronously download a file.
 --- To read the response metadata, such as headers and body, use |vim.net.fetch()|.
+---
+--- See man://curl for supported protocols. Not all protocols are fully tested.
 ---
 --- Please carefully note the option differences with |vim.net.fetch()|, notably
 --- `redirect`.

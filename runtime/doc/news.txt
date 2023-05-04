@@ -49,6 +49,10 @@ iterators |luaref-in|.
 • Added |vim.treesitter.query.omnifunc()| for treesitter query files (set by
   default).
 
+• Added |vim.net.fetch()| for requests.
+
+• Added |vim.net.download()| for file downloads.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
@@ -66,6 +70,16 @@ The following changes to existing APIs or features add new behavior.
 • The `workspace/didChangeWatchedFiles` LSP client capability is now enabled
   by default.
 
+• `:e, :w, :[range]w!, and :r https://*,http://*,ftp://*,scp://*` can now
+  use |vim.net.fetch()|. Opt-in via >lua
+      vim.g.lua_net_enable = true
+<
+• `:e https://*,http://*,ftp://*,scp://*` now automatically matches
+  filetype using the url. Optionally, you can enable (slower) automatic
+  full-text filetype matching for editing remote files that don't have an
+  extension (for example https://neovim.io/ -> `ft=html`) via >lua
+      vim.g.lua_net_ft_full = true
+<
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
