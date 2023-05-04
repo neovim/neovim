@@ -1834,12 +1834,26 @@ void f_strcharpart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const size_t slen = strlen(p);
 
   int nbyte = 0;
+  varnumber_T skipcc = false;
   bool error = false;
   varnumber_T nchar = tv_get_number_chk(&argvars[1], &error);
   if (!error) {
+    if (argvars[2].v_type != VAR_UNKNOWN
+        && argvars[3].v_type != VAR_UNKNOWN) {
+      skipcc = tv_get_bool(&argvars[3]);
+      if (skipcc < 0 || skipcc > 1) {
+        semsg(_(e_using_number_as_bool_nr), skipcc);
+        return;
+      }
+    }
+
     if (nchar > 0) {
       while (nchar > 0 && (size_t)nbyte < slen) {
-        nbyte += utf_ptr2len(p + nbyte);
+        if (skipcc) {
+          nbyte += utfc_ptr2len(p + nbyte);
+        } else {
+          nbyte += utf_ptr2len(p + nbyte);
+        }
         nchar--;
       }
     } else {
@@ -1855,7 +1869,11 @@ void f_strcharpart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       if (off < 0) {
         len += 1;
       } else {
-        len += utf_ptr2len(p + off);
+        if (skipcc) {
+          len += utfc_ptr2len(p + off);
+        } else {
+          len += utf_ptr2len(p + off);
+        }
       }
       charlen--;
     }

@@ -935,7 +935,7 @@ func Test_visual_block_mode()
 endfunc
 
 func Test_visual_force_motion_feedkeys()
-    onoremap <expr> i- execute('let g:mode = mode(1)')
+    onoremap <expr> i- execute('let g:mode = mode(1)')->slice(0, 0)
     call feedkeys('dvi-', 'x')
     call assert_equal('nov', g:mode)
     call feedkeys('di-', 'x')

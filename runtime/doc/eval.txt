@@ -270,6 +270,9 @@ similar to -1. >
 	:let shortlist = mylist[2:2]	" List with one item: [3]
 	:let otherlist = mylist[:]	" make a copy of the List
 
+Notice that the last index is inclusive.  If you prefer using an exclusive
+index use the |slice()| method.
+
 If the first index is beyond the last item of the List or the second item is
 before the first item, the result is an empty list.  There is no error
 message.
@@ -1152,6 +1155,8 @@ text column numbers start with one!  Example, to get the byte under the
 cursor: >
 	:let c = getline(".")[col(".") - 1]
 
+Index zero gives the first byte.  Careful: text column numbers start with one!
+
 If the length of the String is less than the index, the result is an empty
 String.  A negative index always results in an empty string (reason: backward
 compatibility).  Use [-1:] to get the last byte.
@@ -1175,6 +1180,9 @@ expr1a and expr1b are used as a Number.
 In legacy Vim script the indexes are byte indexes.  This doesn't recognize
 multibyte encodings, see |byteidx()| for computing the indexes.  If expr8 is
 a Number it is first converted to a String.
+
+The item at index expr1b is included, it is inclusive.  For an exclusive index
+use the |slice()| function.
 
 If expr1a is omitted zero is used.  If expr1b is omitted the length of the
 string minus one is used.

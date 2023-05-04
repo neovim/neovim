@@ -765,10 +765,10 @@ int tv_list_concat(list_T *const l1, list_T *const l2, typval_T *const tv)
   return OK;
 }
 
-static list_T *tv_list_slice(list_T *ol, int n1, int n2)
+static list_T *tv_list_slice(list_T *ol, varnumber_T n1, varnumber_T n2)
 {
   list_T *l = tv_list_alloc(n2 - n1 + 1);
-  listitem_T *item = tv_list_find(ol, n1);
+  listitem_T *item = tv_list_find(ol, (int)n1);
   for (; n1 <= n2; n1++) {
     tv_list_append_tv(l, TV_LIST_ITEM_TV(item));
     item = TV_LIST_ITEM_NEXT(rettv->vval.v_list, item);
@@ -776,12 +776,12 @@ static list_T *tv_list_slice(list_T *ol, int n1, int n2)
   return l;
 }
 
-int tv_list_slice_or_index(list_T *list, bool range, int n1_arg, int n2_arg, typval_T *rettv,
-                           bool verbose)
+int tv_list_slice_or_index(list_T *list, bool range, varnumber_T n1_arg, varnumber_T n2_arg,
+                           bool exclusive, typval_T *rettv, bool verbose)
 {
   int len = tv_list_len(rettv->vval.v_list);
-  int n1 = n1_arg;
-  int n2 = n2_arg;
+  varnumber_T n1 = n1_arg;
+  varnumber_T n2 = n2_arg;
 
   if (n1 < 0) {
     n1 = len + n1;
@@ -801,7 +801,10 @@ int tv_list_slice_or_index(list_T *list, bool range, int n1_arg, int n2_arg, typ
     if (n2 < 0) {
       n2 = len + n2;
     } else if (n2 >= len) {
-      n2 = len - 1;
+      n2 = len - (exclusive ? 0 : 1);
+    }
+    if (exclusive) {
+      n2--;
     }
     if (n2 < 0 || n2 + 1 < n1) {
       n2 = -1;
@@ -2773,6 +2776,60 @@ bool tv_blob_equal(const blob_T *const b1, const blob_T *const b2)
   return true;
 }
 
+int tv_blob_slice_or_index(const blob_T *blob, int is_range, varnumber_T n1, varnumber_T n2,
+                           bool exclusive, typval_T *rettv)
+{
+  int len = tv_blob_len(rettv->vval.v_blob);
+  if (is_range) {
+    // The resulting variable is a sub-blob.  If the indexes
+    // are out of range the result is empty.
+    if (n1 < 0) {
+      n1 = len + n1;
+      if (n1 < 0) {
+        n1 = 0;
+      }
+    }
+    if (n2 < 0) {
+      n2 = len + n2;
+    } else if (n2 >= len) {
+      n2 = len - (exclusive ? 0 : 1);
+    }
+    if (exclusive) {
+      n2--;
+    }
+    if (n1 >= len || n2 < 0 || n1 > n2) {
+      tv_clear(rettv);
+      rettv->v_type = VAR_BLOB;
+      rettv->vval.v_blob = NULL;
+    } else {
+      blob_T *const new_blob = tv_blob_alloc();
+      ga_grow(&new_blob->bv_ga, (int)(n2 - n1 + 1));
+      new_blob->bv_ga.ga_len = (int)(n2 - n1 + 1);
+      for (int i = (int)n1; i <= (int)n2; i++) {
+        tv_blob_set(new_blob, i - (int)n1, tv_blob_get(rettv->vval.v_blob, i));
+      }
+      tv_clear(rettv);
+      tv_blob_set_ret(rettv, new_blob);
+    }
+  } else {
+    // The resulting variable is a byte value.
+    // If the index is too big or negative that is an error.
+    if (n1 < 0) {
+      n1 = len + n1;
+    }
+    if (n1 < len && n1 >= 0) {
+      const int v = (int)tv_blob_get(rettv->vval.v_blob, (int)n1);
+      tv_clear(rettv);
+      rettv->v_type = VAR_NUMBER;
+      rettv->vval.v_number = v;
+    } else {
+      semsg(_(e_blobidx), (int64_t)n1);
+      return FAIL;
+    }
+  }
+  return OK;
+}
+
 /// Check if "n1" is a valid index for a blob with length "bloblen".
 int tv_blob_check_index(int bloblen, varnumber_T n1, bool quiet)
 {
@@ -2800,14 +2857,14 @@ int tv_blob_check_range(int bloblen, varnumber_T n1, varnumber_T n2, bool quiet)
 /// Set bytes "n1" to "n2" (inclusive) in "dest" to the value of "src".
 /// Caller must make sure "src" is a blob.
 /// Returns FAIL if the number of bytes does not match.
-int tv_blob_set_range(blob_T *dest, int n1, int n2, typval_T *src)
+int tv_blob_set_range(blob_T *dest, varnumber_T n1, varnumber_T n2, typval_T *src)
 {
   if (n2 - n1 + 1 != tv_blob_len(src->vval.v_blob)) {
     emsg(_("E972: Blob value does not have the right number of bytes"));
     return FAIL;
   }
 
-  for (int il = n1, ir = 0; il <= n2; il++) {
+  for (int il = (int)n1, ir = 0; il <= (int)n2; il++) {
     tv_blob_set(dest, il, tv_blob_get(src->vval.v_blob, ir++));
   }
   return OK;

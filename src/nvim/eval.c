@@ -1692,7 +1692,7 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
           lp->ll_n2 = tv_blob_len(lp->ll_blob) - 1;
         }
 
-        if (tv_blob_set_range(lp->ll_blob, (int)lp->ll_n1, (int)lp->ll_n2, rettv) == FAIL) {
+        if (tv_blob_set_range(lp->ll_blob, lp->ll_n1, lp->ll_n2, rettv) == FAIL) {
           return;
         }
       } else {
@@ -3542,7 +3542,7 @@ static int eval_index(char **arg, typval_T *rettv, evalarg_T *const evalarg, boo
 
   if (evaluate) {
     int res = eval_index_inner(rettv, range,
-                               empty1 ? NULL : &var1, empty2 ? NULL : &var2,
+                               empty1 ? NULL : &var1, empty2 ? NULL : &var2, false,
                                key, keylen, verbose);
     if (!empty1) {
       tv_clear(&var1);
@@ -3592,17 +3592,31 @@ static int check_can_index(typval_T *rettv, bool evaluate, bool verbose)
   return OK;
 }
 
+/// slice() function
+void f_slice(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  if (check_can_index(argvars, true, false) == OK) {
+    tv_copy(argvars, rettv);
+    eval_index_inner(rettv, true, argvars + 1,
+                     argvars[2].v_type == VAR_UNKNOWN ? NULL : argvars + 2,
+                     true, NULL, 0, false);
+  }
+}
+
 /// Apply index or range to "rettv".
-/// "var1" is the first index, NULL for [:expr].
-/// "var2" is the second index, NULL for [expr] and [expr: ]
+///
+/// @param var1  the first index, NULL for [:expr].
+/// @param var2  the second index, NULL for [expr] and [expr: ]
+/// @param exclusive  true for slice(): second index is exclusive, use character
+///                                     index for string.
 /// Alternatively, "key" is not NULL, then key[keylen] is the dict index.
 static int eval_index_inner(typval_T *rettv, bool is_range, typval_T *var1, typval_T *var2,
-                            const char *key, ptrdiff_t keylen, bool verbose)
+                            bool exclusive, const char *key, ptrdiff_t keylen, bool verbose)
 {
-  int n1 = 0;
-  int n2 = 0;
+  varnumber_T n1 = 0;
+  varnumber_T n2 = 0;
   if (var1 != NULL && rettv->v_type != VAR_DICT) {
-    n1 = (int)tv_get_number(var1);
+    n1 = tv_get_number(var1);
   }
 
   if (is_range) {
@@ -3612,10 +3626,10 @@ static int eval_index_inner(typval_T *rettv, bool is_range, typval_T *var1, typv
       }
       return FAIL;
     }
-    if (var2 == NULL) {
-      n2 = -1;
+    if (var2 != NULL) {
+      n2 = tv_get_number(var2);
     } else {
-      n2 = (int)tv_get_number(var2);
+      n2 = VARNUMBER_MAX;
     }
   }
 
@@ -3627,12 +3641,19 @@ static int eval_index_inner(typval_T *rettv, bool is_range, typval_T *var1, typv
   case VAR_PARTIAL:
   case VAR_UNKNOWN:
     break;  // Not evaluating, skipping over subscript
+
   case VAR_NUMBER:
   case VAR_STRING: {
     const char *const s = tv_get_string(rettv);
     char *v;
     int len = (int)strlen(s);
-    if (is_range) {
+    if (exclusive) {
+      if (is_range) {
+        v = string_slice(s, n1, n2, exclusive);
+      } else {
+        v = char_from_string(s, n1);
+      }
+    } else if (is_range) {
       // The resulting variable is a substring.  If the indexes
       // are out of range the result is empty.
       if (n1 < 0) {
@@ -3645,6 +3666,9 @@ static int eval_index_inner(typval_T *rettv, bool is_range, typval_T *var1, typv
         n2 = len + n2;
       } else if (n2 >= len) {
         n2 = len;
+      }
+      if (exclusive) {
+        n2--;
       }
       if (n1 >= len || n2 < 0 || n1 > n2) {
         v = NULL;
@@ -3666,65 +3690,24 @@ static int eval_index_inner(typval_T *rettv, bool is_range, typval_T *var1, typv
     rettv->vval.v_string = v;
     break;
   }
-  case VAR_BLOB: {
-    int len = tv_blob_len(rettv->vval.v_blob);
-    if (is_range) {
-      // The resulting variable is a sub-blob.  If the indexes
-      // are out of range the result is empty.
-      if (n1 < 0) {
-        n1 = len + n1;
-        if (n1 < 0) {
-          n1 = 0;
-        }
-      }
-      if (n2 < 0) {
-        n2 = len + n2;
-      } else if (n2 >= len) {
-        n2 = len - 1;
-      }
-      if (n1 >= len || n2 < 0 || n1 > n2) {
-        tv_clear(rettv);
-        rettv->v_type = VAR_BLOB;
-        rettv->vval.v_blob = NULL;
-      } else {
-        blob_T *const blob = tv_blob_alloc();
-        ga_grow(&blob->bv_ga, n2 - n1 + 1);
-        blob->bv_ga.ga_len = n2 - n1 + 1;
-        for (int i = n1; i <= n2; i++) {
-          tv_blob_set(blob, i - n1, tv_blob_get(rettv->vval.v_blob, i));
-        }
-        tv_clear(rettv);
-        tv_blob_set_ret(rettv, blob);
-      }
-    } else {
-      // The resulting variable is a byte value.
-      // If the index is too big or negative that is an error.
-      if (n1 < 0) {
-        n1 = len + n1;
-      }
-      if (n1 < len && n1 >= 0) {
-        const int v = (int)tv_blob_get(rettv->vval.v_blob, n1);
-        tv_clear(rettv);
-        rettv->v_type = VAR_NUMBER;
-        rettv->vval.v_number = v;
-      } else {
-        semsg(_(e_blobidx), (int64_t)n1);
-      }
-    }
+
+  case VAR_BLOB:
+    tv_blob_slice_or_index(rettv->vval.v_blob, is_range, n1, n2, exclusive, rettv);
     break;
-  }
+
   case VAR_LIST:
     if (var1 == NULL) {
       n1 = 0;
     }
     if (var2 == NULL) {
-      n2 = -1;
+      n2 = VARNUMBER_MAX;
     }
     if (tv_list_slice_or_index(rettv->vval.v_list,
-                               is_range, n1, n2, rettv, verbose) == FAIL) {
+                               is_range, n1, n2, exclusive, rettv, verbose) == FAIL) {
       return FAIL;
     }
     break;
+
   case VAR_DICT: {
     if (key == NULL) {
       key = tv_get_string_chk(var1);
@@ -7262,6 +7245,88 @@ int check_luafunc_name(const char *const str, const bool paren)
     return 0;
   }
   return (int)(p - str);
+}
+
+/// Return the character "str[index]" where "index" is the character index.  If
+/// "index" is out of range NULL is returned.
+char *char_from_string(const char *str, varnumber_T index)
+{
+  size_t nbyte = 0;
+  varnumber_T nchar = index;
+
+  if (str == NULL || index < 0) {
+    return NULL;
+  }
+  size_t slen = strlen(str);
+  while (nchar > 0 && nbyte < slen) {
+    nbyte += (size_t)utf_ptr2len(str + nbyte);
+    nchar--;
+  }
+  if (nbyte >= slen) {
+    return NULL;
+  }
+  return xstrnsave(str + nbyte, (size_t)utf_ptr2len(str + nbyte));
+}
+
+/// Get the byte index for character index "idx" in string "str" with length
+/// "str_len".
+/// If going over the end return "str_len".
+/// If "idx" is negative count from the end, -1 is the last character.
+/// When going over the start return -1.
+static ssize_t char_idx2byte(const char *str, size_t str_len, varnumber_T idx)
+{
+  varnumber_T nchar = idx;
+  size_t nbyte = 0;
+
+  if (nchar >= 0) {
+    while (nchar > 0 && nbyte < str_len) {
+      nbyte += (size_t)utf_ptr2len(str + nbyte);
+      nchar--;
+    }
+  } else {
+    nbyte = str_len;
+    while (nchar < 0 && nbyte > 0) {
+      nbyte--;
+      nbyte -= (size_t)utf_head_off(str, str + nbyte);
+      nchar++;
+    }
+    if (nchar < 0) {
+      return -1;
+    }
+  }
+  return (ssize_t)nbyte;
+}
+
+/// Return the slice "str[first:last]" using character indexes.
+///
+/// @param exclusive  true for slice().
+///
+/// Return NULL when the result is empty.
+char *string_slice(const char *str, varnumber_T first, varnumber_T last, bool exclusive)
+{
+  if (str == NULL) {
+    return NULL;
+  }
+  size_t slen = strlen(str);
+  ssize_t start_byte = char_idx2byte(str, slen, first);
+  if (start_byte < 0) {
+    start_byte = 0;  // first index very negative: use zero
+  }
+  ssize_t end_byte;
+  if ((last == -1 && !exclusive) || last == VARNUMBER_MAX) {
+    end_byte = (ssize_t)slen;
+  } else {
+    end_byte = char_idx2byte(str, slen, last);
+    if (!exclusive && end_byte >= 0 && end_byte < (ssize_t)slen) {
+      // end index is inclusive
+      end_byte += utf_ptr2len(str + end_byte);
+    }
+  }
+
+  if (start_byte >= (ssize_t)slen || end_byte <= start_byte) {
+    return NULL;
+  }
+  return xstrnsave(str + start_byte, (size_t)(end_byte - start_byte));
 }
 
 /// Handle:
