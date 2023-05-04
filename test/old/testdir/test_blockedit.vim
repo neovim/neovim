@@ -29,9 +29,10 @@ func Test_blockinsert_autoindent()
   setlocal sw=2 et ft=vim
   setlocal indentkeys+=:
   exe "norm! 2Gf)\<c-v>2jA: asdf\<esc>"
+  " FIXME: what do we really expect?
   let expected =<< trim END
       var d = {
-        a: (): asdf => 0,
+      a: (): asdf => 0,
       b: (): asdf => 0,
       c: (): asdf => 0,
       }
@@ -48,9 +49,10 @@ func Test_blockinsert_autoindent()
   call setline(1, lines)
   setlocal sw=8 noet
   exe "norm! 2Gf)\<c-v>2jA: asdf\<esc>"
+  " FIXME: what do we really expect?
   let expected =<< trim END
       var d = {
-      	a: (): asdf => 0,
+      a: (): asdf => 0,
       b: (): asdf => 0,
       c: (): asdf => 0,
       }
