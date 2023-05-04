@@ -510,6 +510,7 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const int save_trylevel = trylevel;
   const int called_emsg_before = called_emsg;
   const char *wrong_arg_msg = NULL;
+  char *tofree = NULL;
 
   if (tv_check_for_string_or_number_arg(argvars, 0) == FAIL
       || tv_check_for_opt_string_or_list_arg(argvars, 1) == FAIL
@@ -560,8 +561,9 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         error_found = true;
         expected_str = expected;
       } else if (tv_list_len(list) == 2) {
+        // make a copy, an error in pattern_match() may free it
+        tofree = actual = xstrdup(get_vim_var_str(VV_ERRMSG));
         tv = TV_LIST_ITEM_TV(tv_list_last(list));
-        actual = get_vim_var_str(VV_ERRMSG);
         expected = tv_get_string_buf_chk(tv, buf);
         if (!pattern_match(expected, actual, false)) {
           error_found = true;
@@ -632,6 +634,7 @@ theend:
   msg_reset_scroll();
   lines_left = Rows;
   XFREE_CLEAR(emsg_assert_fails_msg);
+  xfree(tofree);
   set_vim_var_string(VV_ERRMSG, NULL, 0);
   if (wrong_arg_msg != NULL) {
     emsg(_(wrong_arg_msg));

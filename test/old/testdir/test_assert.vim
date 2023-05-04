@@ -277,6 +277,10 @@ func Test_assert_fail_fails()
     let exp = v:exception
   endtry
   call assert_match("E1174: String required for argument 5", exp)
+
+  call assert_equal(1, assert_fails('c0', ['', '\1']))
+  call assert_match("Expected '\\\\\\\\1' but got 'E939: Positive count required: c0': c0", v:errors[0])
+  call remove(v:errors, 0)
 endfunc
 
 func Test_assert_fails_in_try_block()
