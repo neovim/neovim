@@ -52,6 +52,8 @@ static const char e_list_required_for_argument_nr[]
   = N_("E1211: List required for argument %d");
 static const char e_bool_required_for_argument_nr[]
   = N_("E1212: Bool required for argument %d");
+static const char e_string_or_number_required_for_argument_nr[]
+  = N_("E1220: String or Number required for argument %d");
 static const char e_string_or_list_required_for_argument_nr[]
   = N_("E1222: String or List required for argument %d");
 static const char e_list_or_blob_required_for_argument_nr[]
@@ -4160,6 +4162,17 @@ int tv_check_for_opt_number_arg(const typval_T *const args, const int idx)
           || tv_check_for_number_arg(args, idx) != FAIL) ? OK : FAIL;
 }
 
+/// Give an error and return FAIL unless "args[idx]" is a float or a number.
+int tv_check_for_float_or_nr_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (args[idx].v_type != VAR_FLOAT && args[idx].v_type != VAR_NUMBER) {
+    semsg(_(e_number_required_for_argument_nr), idx + 1);
+    return FAIL;
+  }
+  return OK;
+}
+
 /// Give an error and return FAIL unless "args[idx]" is a bool.
 int tv_check_for_bool_arg(const typval_T *const args, const int idx)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
@@ -4240,6 +4253,18 @@ int tv_check_for_opt_dict_arg(const typval_T *const args, const int idx)
           || tv_check_for_dict_arg(args, idx) != FAIL) ? OK : FAIL;
 }
 
+/// Give an error and return FAIL unless "args[idx]" is a string or
+/// a number.
+int tv_check_for_string_or_number_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (args[idx].v_type != VAR_STRING && args[idx].v_type != VAR_NUMBER) {
+    semsg(_(e_string_or_number_required_for_argument_nr), idx + 1);
+    return FAIL;
+  }
+  return OK;
+}
+
 /// Give an error and return FAIL unless "args[idx]" is a string or a list.
 int tv_check_for_string_or_list_arg(const typval_T *const args, const int idx)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
@@ -4249,6 +4274,14 @@ int tv_check_for_string_or_list_arg(const typval_T *const args, const int idx)
     return FAIL;
   }
   return OK;
+}
+
+/// Check for an optional string or list argument at 'idx'
+int tv_check_for_opt_string_or_list_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  return (args[idx].v_type == VAR_UNKNOWN
+          || tv_check_for_string_or_list_arg(args, idx) != FAIL) ? OK : FAIL;
 }
 
 /// Give an error and return FAIL unless "args[idx]" is a string
