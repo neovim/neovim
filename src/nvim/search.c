@@ -59,6 +59,11 @@
 # include "search.c.generated.h"
 #endif
 
+static const char e_search_hit_top_without_match_for_str[]
+  = N_("E384: Search hit TOP without match for: %s");
+static const char e_search_hit_bottom_without_match_for_str[]
+  = N_("E385: Search hit BOTTOM without match for: %s");
+
 //  This file contains various searching-related routines. These fall into
 //  three groups:
 //  1. string searches (for /, ?, n, and N)
@@ -943,11 +948,9 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
       if (p_ws) {
         semsg(_(e_patnotf2), mr_pattern);
       } else if (lnum == 0) {
-        semsg(_("E384: search hit TOP without match for: %s"),
-              mr_pattern);
+        semsg(_(e_search_hit_top_without_match_for_str), mr_pattern);
       } else {
-        semsg(_("E385: search hit BOTTOM without match for: %s"),
-              mr_pattern);
+        semsg(_(e_search_hit_bottom_without_match_for_str), mr_pattern);
       }
     }
     return FAIL;

@@ -38,6 +38,9 @@
 # include "ex_eval.c.generated.h"
 #endif
 
+static const char e_multiple_else[] = N_("E583: Multiple :else");
+static const char e_multiple_finally[] = N_("E607: Multiple :finally");
+
 // Exception handling terms:
 //
 //      :try            ":try" command         ─┐
@@ -873,7 +876,7 @@ void ex_else(exarg_T *eap)
     skip = true;
   } else if (cstack->cs_flags[cstack->cs_idx] & CSF_ELSE) {
     if (eap->cmdidx == CMD_else) {
-      eap->errmsg = _("E583: multiple :else");
+      eap->errmsg = _(e_multiple_else);
       return;
     }
     eap->errmsg = _("E584: :elseif after :else");
@@ -1426,7 +1429,7 @@ void ex_finally(exarg_T *eap)
 
   if (cstack->cs_flags[idx] & CSF_FINALLY) {
     // Give up for a multiple ":finally" and ignore it.
-    eap->errmsg = _("E607: multiple :finally");
+    eap->errmsg = _(e_multiple_finally);
     return;
   }
   rewind_conditionals(cstack, idx, CSF_WHILE | CSF_FOR,

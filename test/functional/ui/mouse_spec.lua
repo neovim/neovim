@@ -790,7 +790,7 @@ describe('ui/mouse/input', function()
     feed('<C-LeftMouse><0,0>')
     screen:expect([[
       {6:E433: No tags file}       |
-      {6:E426: tag not found: test}|
+      {6:E426: Tag not found: test}|
       {6:ing}                      |
       {7:Press ENTER or type comma}|
       {7:nd to continue}^           |

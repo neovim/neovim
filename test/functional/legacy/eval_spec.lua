@@ -617,9 +617,9 @@ describe('eval', function()
       Executing call setreg(1, 2, [])
       Vim(call):E730: Using a List as a String
       Executing call setreg("/", ["1", "2"])
-      Vim(call):E883: search pattern and expression register may not contain two or more lines
+      Vim(call):E883: Search pattern and expression register may not contain two or more lines
       Executing call setreg("=", ["1", "2"])
-      Vim(call):E883: search pattern and expression register may not contain two or more lines
+      Vim(call):E883: Search pattern and expression register may not contain two or more lines
       Executing call setreg(1, ["", "", [], ""])
       Vim(call):E730: Using a List as a String]])
   end)

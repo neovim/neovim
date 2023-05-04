@@ -145,7 +145,7 @@ describe('writefile()', function()
          pcall_err(command, ('call writefile(%s, "%s", "b")'):format(arg, fname)))
     end
     for _, args in ipairs({'[], %s, "b"', '[], "' .. fname .. '", %s'}) do
-      eq('Vim(call):E806: using Float as a String',
+      eq('Vim(call):E806: Using Float as a String',
          pcall_err(command, ('call writefile(%s)'):format(args:format('0.0'))))
       eq('Vim(call):E730: Using a List as a String',
          pcall_err(command, ('call writefile(%s)'):format(args:format('[]'))))

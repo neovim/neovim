@@ -3,7 +3,7 @@
 
 #include "nvim/eval/typval.h"
 
-extern char *e_listidx;
+extern char *e_list_index_out_of_range_nr;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/executor.h.generated.h"

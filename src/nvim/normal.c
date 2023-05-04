@@ -106,6 +106,8 @@ static int VIsual_mode_orig = NUL;              // saved Visual mode
 # include "normal.c.generated.h"
 #endif
 
+static const char e_changelist_is_empty[] = N_("E664: Changelist is empty");
+
 static inline void normal_state_init(NormalState *s)
 {
   memset(s, 0, sizeof(NormalState));
@@ -4963,7 +4965,7 @@ static void nv_pcmark(cmdarg_T *cap)
     move_res = nv_mark_move_to(cap, flags, fm);
   } else if (cap->cmdchar == 'g') {
     if (curbuf->b_changelistlen == 0) {
-      emsg(_("E664: changelist is empty"));
+      emsg(_(e_changelist_is_empty));
     } else if (cap->count1 < 0) {
       emsg(_("E662: At start of changelist"));
     } else {

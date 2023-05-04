@@ -4927,7 +4927,7 @@ skip_add:
       const size_t newsize = (size_t)newlen * sizeof(nfa_thread_T);
 
       if ((long)(newsize >> 10) >= p_mmp) {
-        emsg(_(e_maxmempat));
+        emsg(_(e_pattern_uses_more_memory_than_maxmempattern));
         depth--;
         return NULL;
       }
@@ -5218,7 +5218,7 @@ static regsubs_T *addstate_here(nfa_list_T *l, nfa_state_T *state, regsubs_T *su
       const size_t newsize = (size_t)newlen * sizeof(nfa_thread_T);
 
       if ((long)(newsize >> 10) >= p_mmp) {
-        emsg(_(e_maxmempat));
+        emsg(_(e_pattern_uses_more_memory_than_maxmempattern));
         return NULL;
       }
       nfa_thread_T *const newl = xmalloc(newsize);

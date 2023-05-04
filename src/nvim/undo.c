@@ -137,6 +137,13 @@ typedef struct {
 # include "undo.c.generated.h"
 #endif
 
+static const char e_undo_list_corrupt[]
+  = N_("E439: Undo list corrupt");
+static const char e_undo_line_missing[]
+  = N_("E440: Undo line missing");
+static const char e_write_error_in_undo_file_str[]
+  = N_("E829: Write error in undo file: %s");
+
 // used in undo_end() to report number of added and deleted lines
 static long u_newcount, u_oldcount;
 
@@ -1340,7 +1347,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
 write_error:
   fclose(fp);
   if (!write_ok) {
-    semsg(_("E829: write error in undo file: %s"), file_name);
+    semsg(_(e_write_error_in_undo_file_str), file_name);
   }
 
   if (buf->b_ffname != NULL) {
@@ -2809,7 +2816,7 @@ static void u_unch_branch(u_header_T *uhp)
 static u_entry_T *u_get_headentry(buf_T *buf)
 {
   if (buf->b_u_newhead == NULL || buf->b_u_newhead->uh_entry == NULL) {
-    iemsg(_("E439: undo list corrupt"));
+    iemsg(_(e_undo_list_corrupt));
     return NULL;
   }
   return buf->b_u_newhead->uh_entry;
@@ -2832,7 +2839,7 @@ static void u_getbot(buf_T *buf)
     linenr_T extra = buf->b_ml.ml_line_count - uep->ue_lcount;
     uep->ue_bot = uep->ue_top + (linenr_T)uep->ue_size + 1 + extra;
     if (uep->ue_bot < 1 || uep->ue_bot > buf->b_ml.ml_line_count) {
-      iemsg(_("E440: undo line missing"));
+      iemsg(_(e_undo_line_missing));
       uep->ue_bot = uep->ue_top + 1;        // assume all lines deleted, will
                                             // get all the old lines back
                                             // without deleting the current

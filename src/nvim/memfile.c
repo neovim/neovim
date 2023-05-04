@@ -70,6 +70,8 @@
 # include "memfile.c.generated.h"
 #endif
 
+static const char e_block_was_not_locked[] = N_("E293: Block was not locked");
+
 /// Open a new or existing memory block file.
 ///
 /// @param fname  Name of file to use.
@@ -335,7 +337,7 @@ void mf_put(memfile_T *mfp, bhdr_T *hp, bool dirty, bool infile)
   unsigned flags = hp->bh_flags;
 
   if ((flags & BH_LOCKED) == 0) {
-    iemsg(_("E293: block was not locked"));
+    iemsg(_(e_block_was_not_locked));
   }
   flags &= ~BH_LOCKED;
   if (dirty) {

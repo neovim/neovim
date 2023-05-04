@@ -24,7 +24,7 @@ describe(':highlight', function()
   end)
 
   it('invalid group name', function()
-    eq('Vim(highlight):E411: highlight group not found: foo',
+    eq('Vim(highlight):E411: Highlight group not found: foo',
        exc_exec("highlight foo"))
   end)
 

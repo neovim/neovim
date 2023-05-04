@@ -182,7 +182,8 @@ typedef struct ff_search_ctx_T {
 # include "file_search.c.generated.h"
 #endif
 
-static const char e_pathtoolong[] = N_("E854: path too long for completion");
+static const char e_path_too_long_for_completion[]
+  = N_("E854: Path too long for completion");
 
 /// Initialization routine for vim_findfile().
 ///
@@ -395,7 +396,7 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
     len = 0;
     while (*wc_part != NUL) {
       if (len + 5 >= MAXPATHL) {
-        emsg(_(e_pathtoolong));
+        emsg(_(e_path_too_long_for_completion));
         break;
       }
       if (strncmp(wc_part, "**", 2) == 0) {
@@ -438,7 +439,7 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
   // create an absolute path
   if (strlen(search_ctx->ffsc_start_dir)
       + strlen(search_ctx->ffsc_fix_path) + 3 >= MAXPATHL) {
-    emsg(_(e_pathtoolong));
+    emsg(_(e_path_too_long_for_completion));
     goto error_return;
   }
   STRCPY(ff_expand_buffer, search_ctx->ffsc_start_dir);

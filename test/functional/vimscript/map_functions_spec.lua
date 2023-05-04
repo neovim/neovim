@@ -246,9 +246,9 @@ describe('mapset()', function()
   end)
 
   it('does not leak memory if lhs is missing', function()
-    eq('Vim:E460: entries missing in mapset() dict argument',
+    eq('Vim:E460: Entries missing in mapset() dict argument',
        pcall_err(exec_lua, [[vim.fn.mapset('n', false, {rhs = 'foo'})]]))
-    eq('Vim:E460: entries missing in mapset() dict argument',
+    eq('Vim:E460: Entries missing in mapset() dict argument',
        pcall_err(exec_lua, [[vim.fn.mapset('n', false, {callback = function() end})]]))
   end)
 end)

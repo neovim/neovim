@@ -40,6 +40,10 @@
 # include "eval/typval.c.generated.h"
 #endif
 
+static const char e_variable_nested_too_deep_for_unlock[]
+  = N_("E743: Variable nested too deep for (un)lock");
+static const char e_using_invalid_value_as_string[]
+  = N_("E908: Using an invalid value as a String");
 static const char e_string_required_for_argument_nr[]
   = N_("E1174: String required for argument %d");
 static const char e_non_empty_string_required_for_argument_nr[]
@@ -793,7 +797,7 @@ int tv_list_slice_or_index(list_T *list, bool range, varnumber_T n1_arg, varnumb
     // A list index out of range is an error.
     if (!range) {
       if (verbose) {
-        semsg(_(e_listidx), (int64_t)n1);
+        semsg(_(e_list_index_out_of_range_nr), (int64_t)n1);
       }
       return FAIL;
     }
@@ -987,7 +991,7 @@ void tv_list_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
   if (error) {
     // Type error: do nothing, errmsg already given.
   } else if ((item = tv_list_find(l, (int)idx)) == NULL) {
-    semsg(_(e_listidx), idx);
+    semsg(_(e_list_index_out_of_range_nr), idx);
   } else {
     if (argvars[2].v_type == VAR_UNKNOWN) {
       // Remove one item, return its value.
@@ -1001,7 +1005,7 @@ void tv_list_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
       if (error) {
         // Type error: do nothing.
       } else if ((item2 = tv_list_find(l, (int)end)) == NULL) {
-        semsg(_(e_listidx), end);
+        semsg(_(e_list_index_out_of_range_nr), end);
       } else {
         int cnt = 0;
 
@@ -1575,7 +1579,7 @@ const char *tv_list_find_str(list_T *const l, const int n)
 {
   const listitem_T *const li = tv_list_find(l, n);
   if (li == NULL) {
-    semsg(_(e_listidx), (int64_t)n);
+    semsg(_(e_list_index_out_of_range_nr), (int64_t)n);
     return NULL;
   }
   return tv_get_string(TV_LIST_ITEM_TV(li));
@@ -3583,7 +3587,7 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock, const boo
   static int recurse = 0;
 
   if (recurse >= DICT_MAXNEST) {
-    emsg(_("E743: variable nested too deep for (un)lock"));
+    emsg(_(e_variable_nested_too_deep_for_unlock));
     return;
   }
   if (deep == 0) {
@@ -3940,9 +3944,9 @@ static const char *const str_errors[] = {
   [VAR_FUNC]= N_(FUNC_ERROR),
   [VAR_LIST]= N_("E730: Using a List as a String"),
   [VAR_DICT]= N_("E731: Using a Dictionary as a String"),
-  [VAR_FLOAT]= e_float_as_string,
+  [VAR_FLOAT]= e_using_float_as_string,
   [VAR_BLOB]= N_("E976: Using a Blob as a String"),
-  [VAR_UNKNOWN]= e_inval_string,
+  [VAR_UNKNOWN]= e_using_invalid_value_as_string,
 };
 
 #undef FUNC_ERROR

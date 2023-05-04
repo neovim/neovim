@@ -100,10 +100,20 @@ static int toggle_Magic(int x)
   return (semsg((m), (c) ? "" : "\\", (a)), rc_did_emsg = true, (void *)NULL)
 #define EMSG2_RET_FAIL(m, c) \
   return (semsg((m), (c) ? "" : "\\"), rc_did_emsg = true, FAIL)
-#define EMSG_ONE_RET_NULL EMSG2_RET_NULL(_("E369: invalid item in %s%%[]"), reg_magic == MAGIC_ALL)
+#define EMSG_ONE_RET_NULL EMSG2_RET_NULL(_(e_invalid_item_in_str_brackets), reg_magic == MAGIC_ALL)
 
 #define MAX_LIMIT       (32767L << 16L)
 
+static const char e_invalid_character_after_str_at[]
+  = N_("E59: Invalid character after %s@");
+static const char e_invalid_use_of_underscore[]
+  = N_("E63: Invalid use of \\_");
+static const char e_pattern_uses_more_memory_than_maxmempattern[]
+  = N_("E363: Pattern uses more memory than 'maxmempattern'");
+static const char e_invalid_item_in_str_brackets[]
+  = N_("E369: Invalid item in %s%%[]");
+static const char e_missing_delimiter_after_search_pattern_str[]
+  = N_("E654: Missing delimiter after search pattern: %s");
 static const char e_missingbracket[] = N_("E769: Missing ] after %s[");
 static const char e_reverse_range[] = N_("E944: Reverse range in character class");
 static const char e_large_class[] = N_("E945: Range too large in character class");
@@ -491,7 +501,7 @@ char *skip_regexp_err(char *startp, int delim, int magic)
   char *p = skip_regexp(startp, delim, magic);
 
   if (*p != delim) {
-    semsg(_("E654: missing delimiter after search pattern: %s"), startp);
+    semsg(_(e_missing_delimiter_after_search_pattern_str), startp);
     return NULL;
   }
   return p;

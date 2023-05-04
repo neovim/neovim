@@ -63,6 +63,8 @@ typedef struct {
 # include "arglist.c.generated.h"
 #endif
 
+static const char e_window_layout_changed_unexpectedly[]
+  = N_("E249: Window layout changed unexpectedly");
 static const char e_cannot_change_arglist_recursively[]
   = N_("E1156: Cannot change the argument list recursively");
 
@@ -976,7 +978,7 @@ static void arg_all_open_windows(arg_all_state_T *aall, int count)
               aall->new_curwin = wp;
               aall->new_curtab = curtab;
             } else if (wp->w_frame->fr_parent != curwin->w_frame->fr_parent) {
-              emsg(_("E249: window layout changed unexpectedly"));
+              emsg(_(e_window_layout_changed_unexpectedly));
               i = count;
               break;
             } else {
