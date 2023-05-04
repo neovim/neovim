@@ -7289,8 +7289,8 @@ char *char_from_string(char *str, varnumber_T index)
 /// "str_len".
 /// If going over the end return "str_len".
 /// If "idx" is negative count from the end, -1 is the last character.
-/// When going over the start return zero.
-static size_t char_idx2byte(char *str, size_t str_len, varnumber_T idx)
+/// When going over the start return -1.
+static ssize_t char_idx2byte(char *str, size_t str_len, varnumber_T idx)
 {
   varnumber_T nchar = idx;
   size_t nbyte = 0;
@@ -7307,8 +7307,11 @@ static size_t char_idx2byte(char *str, size_t str_len, varnumber_T idx)
       nbyte -= (size_t)utf_head_off(str, str + nbyte);
       nchar++;
     }
+    if (nchar < 0) {
+      return -1;
+    }
   }
-  return nbyte;
+  return (ssize_t)nbyte;
 }
 
 /// Return the slice "str[first:last]" using character indexes.
@@ -7319,22 +7322,25 @@ char *string_slice(char *str, varnumber_T first, varnumber_T last)
     return NULL;
   }
   size_t slen = strlen(str);
-  size_t start_byte = char_idx2byte(str, slen, first);
-  size_t end_byte;
+  ssize_t start_byte = char_idx2byte(str, slen, first);
+  if (start_byte < 0) {
+    start_byte = 0;  // first index very negative: use zero
+  }
+  ssize_t end_byte;
   if (last == -1) {
-    end_byte = slen;
+    end_byte = (ssize_t)slen;
   } else {
     end_byte = char_idx2byte(str, slen, last);
-    if (end_byte < slen) {
+    if (end_byte >= 0 && end_byte < (ssize_t)slen) {
       // end index is inclusive
-      end_byte += (size_t)utf_ptr2len(str + end_byte);
+      end_byte += utf_ptr2len(str + end_byte);
     }
   }
 
-  if (start_byte >= slen || end_byte <= start_byte) {
+  if (start_byte >= (ssize_t)slen || end_byte <= start_byte) {
     return NULL;
   }
-  return xstrnsave(str + start_byte, end_byte - start_byte);
+  return xstrnsave(str + start_byte, (size_t)(end_byte - start_byte));
 }
 
 /// Handle:
