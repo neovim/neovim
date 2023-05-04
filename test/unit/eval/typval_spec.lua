@@ -1468,10 +1468,10 @@ describe('typval.c', function()
           local l = list(1, empty_list, {})
 
           eq('', tv_list_find_str(l, 0, 'E806: using Float as a String'))
-          eq('', tv_list_find_str(l, 1, 'E730: using List as a String'))
-          eq('', tv_list_find_str(l, 2, 'E731: using Dictionary as a String'))
-          eq('', tv_list_find_str(l, -1, 'E731: using Dictionary as a String'))
-          eq('', tv_list_find_str(l, -2, 'E730: using List as a String'))
+          eq('', tv_list_find_str(l, 1, 'E730: Using a List as a String'))
+          eq('', tv_list_find_str(l, 2, 'E731: Using a Dictionary as a String'))
+          eq('', tv_list_find_str(l, -1, 'E731: Using a Dictionary as a String'))
+          eq('', tv_list_find_str(l, -2, 'E730: Using a List as a String'))
           eq('', tv_list_find_str(l, -3, 'E806: using Float as a String'))
         end)
       end)
@@ -1745,7 +1745,7 @@ describe('typval.c', function()
         itp('works', function()
           local d = ffi.gc(dict({test={}}), nil)
           eq('', ffi.string(check_emsg(function() return lib.tv_dict_get_string(d, 'test', false) end,
-                                       'E731: using Dictionary as a String')))
+                                       'E731: Using a Dictionary as a String')))
           d = ffi.gc(dict({tes=int(42), t=44, te='43', xx=int(45)}), nil)
           alloc_log:clear()
           local dis = dict_items(d)
@@ -1785,7 +1785,7 @@ describe('typval.c', function()
             return s_ret
           end
           local d = ffi.gc(dict({test={}}), nil)
-          eq('', tv_dict_get_string_alloc(d, 'test', 'E731: using Dictionary as a String'))
+          eq('', tv_dict_get_string_alloc(d, 'test', 'E731: Using a Dictionary as a String'))
           d = ffi.gc(dict({tes=int(42), t=44, te='43', xx=int(45)}), nil)
           alloc_log:clear()
           eq(nil, tv_dict_get_string_alloc(d, 'test'))
@@ -2832,10 +2832,10 @@ describe('typval.c', function()
           for _, v in ipairs({
             {lib.VAR_NUMBER, nil},
             {lib.VAR_FLOAT, 'E806: using Float as a String'},
-            {lib.VAR_PARTIAL, 'E729: using Funcref as a String'},
-            {lib.VAR_FUNC, 'E729: using Funcref as a String'},
-            {lib.VAR_LIST, 'E730: using List as a String'},
-            {lib.VAR_DICT, 'E731: using Dictionary as a String'},
+            {lib.VAR_PARTIAL, 'E729: Using a Funcref as a String'},
+            {lib.VAR_FUNC, 'E729: Using a Funcref as a String'},
+            {lib.VAR_LIST, 'E730: Using a List as a String'},
+            {lib.VAR_DICT, 'E731: Using a Dictionary as a String'},
             {lib.VAR_BOOL, nil},
             {lib.VAR_SPECIAL, nil},
             {lib.VAR_UNKNOWN, 'E908: using an invalid value as a String'},
@@ -2987,10 +2987,10 @@ describe('typval.c', function()
             {lib.VAR_NUMBER, {v_number=42}, nil, '42'},
             {lib.VAR_STRING, {v_string=to_cstr('100500')}, nil, '100500'},
             {lib.VAR_FLOAT, {v_float=42.53}, 'E806: using Float as a String', ''},
-            {lib.VAR_PARTIAL, {v_partial=NULL}, 'E729: using Funcref as a String', ''},
-            {lib.VAR_FUNC, {v_string=NULL}, 'E729: using Funcref as a String', ''},
-            {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', ''},
-            {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', ''},
+            {lib.VAR_PARTIAL, {v_partial=NULL}, 'E729: Using a Funcref as a String', ''},
+            {lib.VAR_FUNC, {v_string=NULL}, 'E729: Using a Funcref as a String', ''},
+            {lib.VAR_LIST, {v_list=NULL}, 'E730: Using a List as a String', ''},
+            {lib.VAR_DICT, {v_dict=NULL}, 'E731: Using a Dictionary as a String', ''},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'v:null'},
             {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'v:true'},
             {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'v:false'},
@@ -3031,10 +3031,10 @@ describe('typval.c', function()
             {lib.VAR_NUMBER, {v_number=42}, nil, '42'},
             {lib.VAR_STRING, {v_string=to_cstr('100500')}, nil, '100500'},
             {lib.VAR_FLOAT, {v_float=42.53}, 'E806: using Float as a String', nil},
-            {lib.VAR_PARTIAL, {v_partial=NULL}, 'E729: using Funcref as a String', nil},
-            {lib.VAR_FUNC, {v_string=NULL}, 'E729: using Funcref as a String', nil},
-            {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', nil},
-            {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', nil},
+            {lib.VAR_PARTIAL, {v_partial=NULL}, 'E729: Using a Funcref as a String', nil},
+            {lib.VAR_FUNC, {v_string=NULL}, 'E729: Using a Funcref as a String', nil},
+            {lib.VAR_LIST, {v_list=NULL}, 'E730: Using a List as a String', nil},
+            {lib.VAR_DICT, {v_dict=NULL}, 'E731: Using a Dictionary as a String', nil},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'v:null'},
             {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'v:true'},
             {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'v:false'},
@@ -3073,10 +3073,10 @@ describe('typval.c', function()
             {lib.VAR_NUMBER, {v_number=42}, nil, '42'},
             {lib.VAR_STRING, {v_string=to_cstr('100500')}, nil, '100500'},
             {lib.VAR_FLOAT, {v_float=42.53}, 'E806: using Float as a String', ''},
-            {lib.VAR_PARTIAL, {v_partial=NULL}, 'E729: using Funcref as a String', ''},
-            {lib.VAR_FUNC, {v_string=NULL}, 'E729: using Funcref as a String', ''},
-            {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', ''},
-            {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', ''},
+            {lib.VAR_PARTIAL, {v_partial=NULL}, 'E729: Using a Funcref as a String', ''},
+            {lib.VAR_FUNC, {v_string=NULL}, 'E729: Using a Funcref as a String', ''},
+            {lib.VAR_LIST, {v_list=NULL}, 'E730: Using a List as a String', ''},
+            {lib.VAR_DICT, {v_dict=NULL}, 'E731: Using a Dictionary as a String', ''},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'v:null'},
             {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'v:true'},
             {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'v:false'},
@@ -3116,10 +3116,10 @@ describe('typval.c', function()
             {lib.VAR_NUMBER, {v_number=42}, nil, '42'},
             {lib.VAR_STRING, {v_string=to_cstr('100500')}, nil, '100500'},
             {lib.VAR_FLOAT, {v_float=42.53}, 'E806: using Float as a String', nil},
-            {lib.VAR_PARTIAL, {v_partial=NULL}, 'E729: using Funcref as a String', nil},
-            {lib.VAR_FUNC, {v_string=NULL}, 'E729: using Funcref as a String', nil},
-            {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', nil},
-            {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', nil},
+            {lib.VAR_PARTIAL, {v_partial=NULL}, 'E729: Using a Funcref as a String', nil},
+            {lib.VAR_FUNC, {v_string=NULL}, 'E729: Using a Funcref as a String', nil},
+            {lib.VAR_LIST, {v_list=NULL}, 'E730: Using a List as a String', nil},
+            {lib.VAR_DICT, {v_dict=NULL}, 'E731: Using a Dictionary as a String', nil},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'v:null'},
             {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'v:true'},
             {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'v:false'},

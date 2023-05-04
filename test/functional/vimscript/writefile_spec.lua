@@ -147,11 +147,11 @@ describe('writefile()', function()
     for _, args in ipairs({'[], %s, "b"', '[], "' .. fname .. '", %s'}) do
       eq('Vim(call):E806: using Float as a String',
          pcall_err(command, ('call writefile(%s)'):format(args:format('0.0'))))
-      eq('Vim(call):E730: using List as a String',
+      eq('Vim(call):E730: Using a List as a String',
          pcall_err(command, ('call writefile(%s)'):format(args:format('[]'))))
-      eq('Vim(call):E731: using Dictionary as a String',
+      eq('Vim(call):E731: Using a Dictionary as a String',
          pcall_err(command, ('call writefile(%s)'):format(args:format('{}'))))
-      eq('Vim(call):E729: using Funcref as a String',
+      eq('Vim(call):E729: Using a Funcref as a String',
          pcall_err(command, ('call writefile(%s)'):format(args:format('function("tr")'))))
     end
     eq('Vim(call):E5060: Unknown flag: «»',
