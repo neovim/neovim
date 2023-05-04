@@ -4971,9 +4971,12 @@ static int sug_filltree(spellinfo_T *spin, slang_T *slang)
   spin->si_sugtree = true;
 
   // Go through the whole case-folded tree, soundfold each word and put it
-  // in the trie.
+  // in the trie.  Bail out if the tree is empty.
   byts = slang->sl_fbyts;
   idxs = slang->sl_fidxs;
+  if (byts == NULL || idxs == NULL) {
+    return FAIL;
+  }
 
   arridx[0] = 0;
   curi[0] = 1;
