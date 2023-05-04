@@ -31,4 +31,14 @@ func Test_strcharpart()
   call assert_equal('a', strcharpart('àxb', 0, 1))
   call assert_equal('̀', strcharpart('àxb', 1, 1))
   call assert_equal('x', strcharpart('àxb', 2, 1))
+
+
+  call assert_equal('a', strcharpart('àxb', 0, 1, 0))
+  call assert_equal('à', strcharpart('àxb', 0, 1, 1))
+  call assert_equal('x', strcharpart('àxb', 1, 1, 1))
+
+  call assert_fails("let v = strcharpart('abc', 0, 0, [])", 'E745:')
+  call assert_fails("let v = strcharpart('abc', 0, 0, 2)", 'E1023:')
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
