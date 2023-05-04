@@ -53,6 +53,14 @@ func Test_assert_equal()
   call assert_equal("\b\e\f\n\t\r\\\x01\x7f", 'x')
   call assert_match('Expected ''\\b\\e\\f\\n\\t\\r\\\\\\x01\\x7f'' but got ''x''', v:errors[0])
   call remove(v:errors, 0)
+
+  " many composing characters are handled properly
+  call setline(1, ' ')
+  norm 100gr݀
+  call assert_equal(1, getline(1))
+  call assert_match("Expected 1 but got '.* occurs 100 times]'", v:errors[0])
+  call remove(v:errors, 0)
+  bwipe!
 endfunc
 
 func Test_assert_equal_dict()
