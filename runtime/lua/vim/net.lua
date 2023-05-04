@@ -166,7 +166,7 @@ local function createCurlArgs(url, opts)
   end
 
   if opts.headers ~= nil then
-    local headers
+    local headers = opts.headers
 
     if opts.headers._storage == nil then
       headers = HeaderTable.new(opts.headers)
