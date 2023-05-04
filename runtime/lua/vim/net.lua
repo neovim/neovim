@@ -1,5 +1,104 @@
 local M = {}
 
+---@class HeaderTable
+---@field private _storage table<string, string[]>
+local HeaderTable = {}
+HeaderTable.__index = HeaderTable
+
+---@private
+function HeaderTable.new(input_table)
+  local instance = setmetatable({ _storage = {} }, HeaderTable)
+  if input_table then
+    instance:_from_table(input_table)
+  end
+  return instance
+end
+
+---@private
+function HeaderTable:_normalize_key(key)
+  return key:lower()
+end
+
+---@private
+function HeaderTable:_from_table(input_table)
+  for key, value in pairs(input_table) do
+    local normalized_key = self:_normalize_key(key)
+    if type(value) == 'string' then
+      self._storage[normalized_key] = { value }
+    elseif type(value) == 'table' then
+      self._storage[normalized_key] = value
+    else
+      vim.notify('Invalid value type for key: ' .. key, vim.log.levels.ERROR)
+    end
+  end
+end
+
+---Set value of header.
+---@param self HeaderTable HeaderTable Instance.
+---@param value string[] | string Header value.
+---@param key string Non case-sensitive header name.
+function HeaderTable:set(key, value)
+  local normalized_key = self:_normalize_key(key)
+  if type(value) == 'string' then
+    self._storage[normalized_key] = { value }
+  elseif type(value) == 'table' then
+    self._storage[normalized_key] = value
+  else
+    vim.notify('Invalid value type for key: ' .. key, vim.log.levels.ERROR)
+  end
+end
+
+---Append value to header.
+---@param self HeaderTable HeaderTable Instance.
+---@param key string Non case-sensitive header name.
+function HeaderTable:append(key, value)
+  local normalized_key = self:_normalize_key(key)
+  if self._storage[normalized_key] then
+    table.insert(self._storage[normalized_key], value)
+  else
+    self._storage[normalized_key] = { value }
+  end
+end
+
+---Get header values.
+---@param self HeaderTable HeaderTable Instance.
+---@param key string Non case-sensitive header name.
+---@return string[]
+function HeaderTable:get(key)
+  local normalized_key = self:_normalize_key(key)
+  return self._storage[normalized_key]
+end
+
+---@param self HeaderTable HeaderTable Instance.
+---@param key string Non case-sensitive header name.
+---@return boolean has true if the HeaderTable contains key.
+function HeaderTable:has(key)
+  local normalized_key = self:_normalize_key(key)
+  return self._storage[normalized_key] ~= nil
+end
+
+---Create a non-case sensitive table of headers that can contain multiple values per header.
+---
+---@param input_table table<string, string[] | string> | nil Optional input table.
+---@return HeaderTable
+function M.new_headers(input_table)
+  return HeaderTable.new(input_table)
+end
+
+---@private
+local function header_table_to_curl_arg_list(header_table)
+  local arg_list = {}
+  for key, values in pairs(header_table._storage) do
+    for _, value in ipairs(values) do
+      vim.list_extend(arg_list, {
+        '---header',
+        key .. ': ' .. value,
+      })
+    end
+  end
+  return arg_list
+end
+
 ---@private Function to create method arguments. Method defaults to GET.
 ---@param method string|nil Http method.
 ---@return string[]
@@ -25,7 +124,7 @@ end
 ---             - redirect string|nil Redirect mode.
 ---             - data string|table|nil Data to send with the request. If a table, it will be JSON
 ---             encoded.
----             - headers table<string, string>|nil Headers to set on the request
+---             - headers HeaderTable | table<string, string | string[]> | nil Headers to set on the request
 ---             - download_location string|nil Where to download a file if applicable.
 ---
 ---@return string[] args Curl command.
@@ -67,12 +166,13 @@ local function createCurlArgs(url, opts)
   end
 
   if opts.headers ~= nil then
-    for key, value in pairs(opts.headers) do
-      vim.list_extend(args, {
-        '--header',
-        key .. ': ' .. value,
-      })
+    local headers
+
+    if opts.headers._storage == nil then
+      headers = HeaderTable.new(opts.headers)
     end
+
+    vim.list_extend(args, header_table_to_curl_arg_list(headers))
   end
 
   if opts.download_location == nil then
@@ -130,7 +230,7 @@ local function process_stdout(data)
     if began_headers_at ~= nil and cache.headers == nil then
       local header_string = table.concat(data, nil, began_headers_at, #data)
 
-      cache.headers = vim.json.decode(header_string)
+      cache.headers = HeaderTable.new(vim.json.decode(header_string))
     end
 
     return cache.headers
@@ -176,17 +276,16 @@ end
 ---@param url string The request URL.
 ---@param opts table|nil Optional keyword arguments:
 ---             - method string|nil HTTP method to use. Defaults to GET.
----             - headers table|nil A table of key-value headers.
+---             - headers HeaderTable | table<string, string | string[]> | nil Headers to set on the request
 ---             - redirect string|nil Redirect mode. Defaults to "follow". Possible values are:
 ---                 - "follow": Follow all redirects incurred when fetching a resource.
 ---                 - "error": Throw an error using on_err or vim.notify when status is 3XX.
 ---             - data string|table|nil Data to send with the request. If a table, it will be
 ---             JSON-encoded. vim.net does not currently support form encoding.
----
 ---             - on_complete fun(response: table)|nil Callback function when request is
 ---             completed successfully. The response has the following keys:
 ---                 - ok boolean Whether the request was successful (status within 2XX range).
----                 - headers fun(): table<string, string[]> Function returning a table of response headers.
+---                 - headers fun(): HeaderTable Function returning a HeaderTable of response headers.
 ---                 - text fun(): string|nil Function returning response body. If method was HEAD,
 ---                 this is nil.
 ---                 - json fun(opts: table|nil): table Read the body as JSON. Optionally accepts
@@ -196,7 +295,7 @@ end
 ---                 - size number The total amount of bytes that were downloaded. This
 ---                 is the size of the body/data that was transferred, excluding headers.
 ---                 - http_version number HTTP version used in the request.
----             - on_err fun(err: string[])|nil Function recieving a `stderr_buffered` string[] of error. 
+---             - on_err fun(err: string[])|nil Function recieving a `stderr_buffered` string[] of error.
 ---             err is either curl stderr or internal fetch() error. Without providing this
 ---             function, |vim.net.fetch()| will automatically raise the error to the user.
 ---             See |on_stderr| and `stderr_buffered`.
@@ -321,7 +420,7 @@ end
 ---@param path string A download path, can be relative.
 ---@param opts table|nil Optional keyword arguments:
 ---             - method string|nil HTTP method to use. Defaults to GET.
----             - headers table<string, string>|nil A table of key-value headers.
+---             - headers HeaderTable | table<string, string | string[]> | nil Headers to set on the request
 ---             - redirect string|nil Redirect mode. Defaults to "follow". Possible values are:
 ---                 - "follow": Follow all redirects incurred when fetching a resource.
 ---                 - "none": Ignores redirect status.

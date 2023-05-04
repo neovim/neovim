@@ -4456,8 +4456,8 @@ download({url}, {path}, {opts})                           *vim.net.download()*
       • {path}  (string) A download path, can be relative.
       • {opts}  (table|nil) Optional keyword arguments:
                 • method string|nil HTTP method to use. Defaults to GET.
-                • headers table<string, string>|nil A table of key-value
-                  headers.
+                • headers HeaderTable | table<string, string | string[]> | nil Headers to set on
+                  the request
                 • redirect string|nil Redirect mode. Defaults to "follow".
                   Possible values are:
                   • "follow": Follow all redirects incurred when fetching a
@@ -4530,7 +4530,8 @@ fetch({url}, {opts})                                         *vim.net.fetch()*
       • {url}   (string) The request URL.
       • {opts}  (table|nil) Optional keyword arguments:
                 • method string|nil HTTP method to use. Defaults to GET.
-                • headers table|nil A table of key-value headers.
+                • headers HeaderTable | table<string, string | string[]> | nil Headers to set on
+                  the request
                 • redirect string|nil Redirect mode. Defaults to "follow".
                   Possible values are:
                   • "follow": Follow all redirects incurred when fetching a
@@ -4546,8 +4547,7 @@ fetch({url}, {opts})                                         *vim.net.fetch()*
                   following keys:
                   • ok boolean Whether the request was successful (status
                     within 2XX range).
-                  • headers fun(): table<string, string[]> Function returning
-                    a table of response headers.
+                  • headers fun(): HeaderTable Function returning a HeaderTable of response headers.
                   • text fun(): string|nil Function returning response body.
                     If method was HEAD, this is nil.
                   • json fun(opts: table|nil): table Read the body as JSON.
@@ -4575,5 +4575,49 @@ fetch({url}, {opts})                                         *vim.net.fetch()*
       • https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
       • |job-control|
       • man://curl
+
+HeaderTable:append({self}, {key}, {value})              *HeaderTable:append()*
+    Append value to header.
+
+    Parameters: ~
+      • {self}  
+      • {key}   (string) Non case-sensitive header name.
+
+HeaderTable:get({self}, {key})                             *HeaderTable:get()*
+    Get header values.
+
+    Parameters: ~
+      • {self}  
+      • {key}   (string) Non case-sensitive header name.
+
+    Return: ~
+        string[]
+
+HeaderTable:has({self}, {key})                             *HeaderTable:has()*
+    Parameters: ~
+      • {self}  
+      • {key}   (string) Non case-sensitive header name.
+
+    Return: ~
+        (boolean) has true if the HeaderTable contains key.
+
+HeaderTable:set({self}, {key}, {value})                    *HeaderTable:set()*
+    Set value of header.
+
+    Parameters: ~
+      • {self}   
+      • {value}  string[] | string Header value.
+      • {key}    (string) Non case-sensitive header name.
+
+new_headers({input_table})                             *vim.net.new_headers()*
+    Create a non-case sensitive table of headers that can contain multiple
+    values per header.
+
+    Parameters: ~
+      • {input_table}  table<string, string[] | string> | nil Optional input
+                       table.
+
+    Return: ~
+        HeaderTable
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
