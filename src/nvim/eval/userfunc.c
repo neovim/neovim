@@ -79,6 +79,8 @@ static const char *e_funcref = N_("E718: Funcref required");
 static const char *e_nofunc = N_("E130: Unknown function: %s");
 static const char e_function_list_was_modified[]
   = N_("E454: Function list was modified");
+static const char e_function_nesting_too_deep[]
+  = N_("E1058: Function nesting too deep");
 static const char e_no_white_space_allowed_before_str_str[]
   = N_("E1068: No white space allowed before '%s': %s");
 static const char e_missing_heredoc_end_marker_str[]
@@ -2528,7 +2530,7 @@ void ex_function(exarg_T *eap)
         xfree(trans_function_name(&p, true, 0, NULL, NULL));
         if (*skipwhite(p) == '(') {
           if (nesting == MAX_FUNC_NESTING - 1) {
-            emsg(_("E1058: function nesting too deep"));
+            emsg(_(e_function_nesting_too_deep));
           } else {
             nesting++;
             indent += 2;
