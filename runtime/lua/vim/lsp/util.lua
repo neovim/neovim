@@ -253,10 +253,15 @@ local function get_lines(bufnr, rows)
   ---@private
   local function buf_lines()
     local lines = {}
-    for _, row in pairs(rows) do
+    for _, row in ipairs(rows) do
       lines[row] = (api.nvim_buf_get_lines(bufnr, row, row + 1, false) or { '' })[1]
     end
     return lines
+  end
+
+  -- use loaded buffers if available
+  if vim.fn.bufloaded(bufnr) == 1 then
+    return buf_lines()
   end
 
   local uri = vim.uri_from_bufnr(bufnr)
@@ -265,11 +270,6 @@ local function get_lines(bufnr, rows)
   -- Custom language server protocol extensions can result in servers sending URIs with custom schemes. Plugins are able to load these via `BufReadCmd` autocmds.
   if uri:sub(1, 4) ~= 'file' then
     vim.fn.bufload(bufnr)
-    return buf_lines()
-  end
-
-  -- use loaded buffers if available
-  if vim.fn.bufloaded(bufnr) == 1 then
     return buf_lines()
   end
 
