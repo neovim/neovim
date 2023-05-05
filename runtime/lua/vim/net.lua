@@ -60,7 +60,7 @@ function HeaderTable:append(key, value)
   end
 end
 
----Get first header value.
+---Get header value.
 ---For headers like cookies, use |HeaderTable:get_all|.
 ---@param self HeaderTable HeaderTable Instance.
 ---@param key string Non case-sensitive header name.
@@ -72,7 +72,7 @@ function HeaderTable:get(key)
   if value == nil then
     return nil
   elseif #value == 1 then
-    return value[1]
+    return table.concat(value, ", ")
   end
 end
 
