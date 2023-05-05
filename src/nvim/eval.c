@@ -2367,7 +2367,10 @@ int eval0(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
         semsg(_(e_invexpr2), arg);
       }
     }
-    ret = FAIL;
+
+    // Some of the expression may not have been consumed.  Do not check for
+    // a next command to avoid more errors.
+    return FAIL;
   }
 
   if (eap != NULL) {
