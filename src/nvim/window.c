@@ -667,6 +667,8 @@ void win_set_buf(Window window, Buffer buffer, bool noautocmd, Error *err)
 
   tabpage_T *tab = win_find_tabpage(win);
 
+  // no redrawing and don't set the window title
+  RedrawingDisabled++;
   if (noautocmd) {
     block_autocmds();
   }
@@ -696,6 +698,7 @@ void win_set_buf(Window window, Buffer buffer, bool noautocmd, Error *err)
   if (noautocmd) {
     unblock_autocmds();
   }
+  RedrawingDisabled--;
 }
 
 /// Create a new float.
