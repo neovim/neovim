@@ -2220,6 +2220,36 @@ func Test_BufEnter_exception()
   %bwipe!
 endfunc
 
+" Test for using try/catch when lines are joined by "|" or "\n"           {{{1
+func Test_try_catch_nextcmd()
+  func Throw()
+    throw "Failure"
+  endfunc
+
+  let lines =<< trim END
+    try
+      let s:x = Throw()
+    catch
+      let g:caught = 1
+    endtry
+  END
+
+  let g:caught = 0
+  call execute(lines)
+  call assert_equal(1, g:caught)
+
+  let g:caught = 0
+  call execute(join(lines, '|'))
+  call assert_equal(1, g:caught)
+
+  let g:caught = 0
+  call execute(join(lines, "\n"))
+  call assert_equal(1, g:caught)
+
+  unlet g:caught
+  delfunc Throw
+endfunc
+
 " Test for using try/catch in a user command with a failing expression    {{{1
 func Test_user_command_try_catch()
   let lines =<< trim END

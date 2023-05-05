@@ -2368,11 +2368,14 @@ int eval0(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
       }
     }
 
-    // Some of the expression may not have been consumed.  Do not check for
-    // a next command to avoid more errors, unless "|" is following, which
-    // could only be a command separator.
-    if (eap != NULL && skipwhite(p)[0] == '|' && skipwhite(p)[1] != '|') {
-      eap->nextcmd = check_nextcmd(p);
+    if (eap != NULL && p != NULL) {
+      // Some of the expression may not have been consumed.
+      // Only execute a next command if it cannot be a "||" operator.
+      // The next command may be "catch".
+      char *nextcmd = check_nextcmd(p);
+      if (nextcmd != NULL && *nextcmd != '|') {
+        eap->nextcmd = nextcmd;
+      }
     }
     return FAIL;
   }
