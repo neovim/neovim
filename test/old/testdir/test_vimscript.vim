@@ -7035,6 +7035,122 @@ func Test_unlet_env()
     call assert_equal('', $TESTVAR)
 endfunc
 
+func Test_refcount()
+    throw 'Skipped: Nvim does not support test_refcount()'
+    " Immediate values
+    call assert_equal(-1, test_refcount(1))
+    call assert_equal(-1, test_refcount('s'))
+    call assert_equal(-1, test_refcount(v:true))
+    call assert_equal(0, test_refcount([]))
+    call assert_equal(0, test_refcount({}))
+    call assert_equal(0, test_refcount(0zff))
+    call assert_equal(0, test_refcount({-> line('.')}))
+    call assert_equal(-1, test_refcount(0.1))
+    if has('job')
+        call assert_equal(0, test_refcount(job_start([&shell, &shellcmdflag, 'echo .'])))
+    endif
+
+    " No refcount types
+    let x = 1
+    call assert_equal(-1, test_refcount(x))
+    let x = 's'
+    call assert_equal(-1, test_refcount(x))
+    let x = v:true
+    call assert_equal(-1, test_refcount(x))
+    let x = 0.1
+    call assert_equal(-1, test_refcount(x))
+
+    " Check refcount
+    let x = []
+    call assert_equal(1, test_refcount(x))
+
+    let x = {}
+    call assert_equal(1, x->test_refcount())
+
+    let x = 0zff
+    call assert_equal(1, test_refcount(x))
+
+    let X = {-> line('.')}
+    call assert_equal(1, test_refcount(X))
+    let Y = X
+    call assert_equal(2, test_refcount(X))
+
+    if has('job')
+        let job = job_start([&shell, &shellcmdflag, 'echo .'])
+        call assert_equal(1, test_refcount(job))
+        call assert_equal(1, test_refcount(job_getchannel(job)))
+        call assert_equal(1, test_refcount(job))
+    endif
+
+    " Function arguments, copying and unassigning
+    func ExprCheck(x, i)
+        let i = a:i + 1
+        call assert_equal(i, test_refcount(a:x))
+        let Y = a:x
+        call assert_equal(i + 1, test_refcount(a:x))
+        call assert_equal(test_refcount(a:x), test_refcount(Y))
+        let Y = 0
+        call assert_equal(i, test_refcount(a:x))
+    endfunc
+    call ExprCheck([], 0)
+    call ExprCheck({}, 0)
+    call ExprCheck(0zff, 0)
+    call ExprCheck({-> line('.')}, 0)
+    if has('job')
+	call ExprCheck(job, 1)
+	call ExprCheck(job_getchannel(job), 1)
+	call job_stop(job)
+    endif
+    delfunc ExprCheck
+
+    " Regarding function
+    func Func(x) abort
+        call assert_equal(2, test_refcount(function('Func')))
+        call assert_equal(0, test_refcount(funcref('Func')))
+    endfunc
+    call assert_equal(1, test_refcount(function('Func')))
+    call assert_equal(0, test_refcount(function('Func', [1])))
+    call assert_equal(0, test_refcount(funcref('Func')))
+    call assert_equal(0, test_refcount(funcref('Func', [1])))
+    let X = function('Func')
+    let Y = X
+    call assert_equal(1, test_refcount(X))
+    let X = function('Func', [1])
+    let Y = X
+    call assert_equal(2, test_refcount(X))
+    let X = funcref('Func')
+    let Y = X
+    call assert_equal(2, test_refcount(X))
+    let X = funcref('Func', [1])
+    let Y = X
+    call assert_equal(2, test_refcount(X))
+    unlet X
+    unlet Y
+    call Func(1)
+    delfunc Func
+
+    " Function with dict
+    func DictFunc() dict
+        call assert_equal(3, test_refcount(self))
+    endfunc
+    let d = {'Func': function('DictFunc')}
+    call assert_equal(1, test_refcount(d))
+    call assert_equal(0, test_refcount(d.Func))
+    call d.Func()
+    unlet d
+    delfunc DictFunc
+
+    if has('channel')
+      call assert_equal(-1, test_refcount(test_null_job()))
+      call assert_equal(-1, test_refcount(test_null_channel()))
+    endif
+    call assert_equal(-1, test_refcount(test_null_function()))
+    call assert_equal(-1, test_refcount(test_null_partial()))
+    call assert_equal(-1, test_refcount(test_null_blob()))
+    call assert_equal(-1, test_refcount(test_null_list()))
+    call assert_equal(-1, test_refcount(test_null_dict()))
+endfunc
+
 " Test for missing :endif, :endfor, :endwhile and :endtry           {{{1
 func Test_missing_end()
   call writefile(['if 2 > 1', 'echo ">"'], 'Xscript')

@@ -894,8 +894,6 @@ endfunc
 func Test_shortmess_F2()
   e file1
   e file2
-  " Accommodate Nvim default.
-  set shortmess-=F
   call assert_match('file1', execute('bn', ''))
   call assert_match('file2', execute('bn', ''))
   set shortmess+=F
@@ -913,12 +911,12 @@ func Test_shortmess_F2()
   " call assert_false(test_getvalue('need_fileinfo'))
   call assert_true(empty(execute('bn', '')))
   " call assert_false(test_getvalue('need_fileinfo'))
-  " Accommodate Nvim default.
-  set shortmess-=F
+  set shortmess-=F  " Accommodate Nvim default.
   call assert_match('file1', execute('bn', ''))
   call assert_match('file2', execute('bn', ''))
   bwipe
   bwipe
+  " call assert_fails('call test_getvalue("abc")', 'E475:')
 endfunc
 
 func Test_local_scrolloff()
