@@ -522,14 +522,13 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  const char *const cmd = tv_get_string_chk(&argvars[0]);
-
   // trylevel must be zero for a ":throw" command to be considered failed
   trylevel = 0;
   suppress_errthrow = true;
   in_assert_fails = true;
   no_wait_return++;
 
+  const char *const cmd = tv_get_string_chk(&argvars[0]);
   do_cmdline_cmd(cmd);
 
   // reset here for any errors reported below

@@ -327,6 +327,12 @@ func Test_assert_fails_in_try_block()
   endtry
 endfunc
 
+func Test_assert_fails_in_timer()
+  " should not cause a hit-enter prompt, which isn't actually checked here
+  call timer_start(0, {-> assert_fails('call', 'E471:')})
+  sleep 10m
+endfunc
+
 func Test_assert_beeps()
   new
   call assert_equal(0, assert_beeps('normal h'))
