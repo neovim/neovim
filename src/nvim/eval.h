@@ -229,16 +229,6 @@ typedef struct {
   Callback callback;
 } timer_T;
 
-/// Type of assert_* check being performed
-typedef enum {
-  ASSERT_EQUAL,
-  ASSERT_NOTEQUAL,
-  ASSERT_MATCH,
-  ASSERT_NOTMATCH,
-  ASSERT_INRANGE,
-  ASSERT_OTHER,
-} assert_type_T;
-
 /// types for expressions.
 typedef enum {
   EXPR_UNKNOWN = 0,

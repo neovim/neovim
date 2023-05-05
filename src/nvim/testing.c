@@ -30,6 +30,16 @@
 #include "nvim/types.h"
 #include "nvim/vim.h"
 
+/// Type of assert_* check being performed
+typedef enum {
+  ASSERT_EQUAL,
+  ASSERT_NOTEQUAL,
+  ASSERT_MATCH,
+  ASSERT_NOTMATCH,
+  ASSERT_FAILS,
+  ASSERT_OTHER,
+} assert_type_T;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "testing.c.generated.h"
 #endif
@@ -220,11 +230,11 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, const char *e
     ga_concat_shorten_esc(gap, tofree);
     xfree(tofree);
   } else {
-    if (atype != ASSERT_INRANGE) {
+    if (atype == ASSERT_FAILS) {
       ga_concat(gap, "'");
     }
     ga_concat_shorten_esc(gap, exp_str);
-    if (atype != ASSERT_INRANGE) {
+    if (atype == ASSERT_FAILS) {
       ga_concat(gap, "'");
     }
   }
@@ -622,7 +632,7 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         actual_tv.vval.v_string = actual;
       }
       fill_assert_error(&ga, &argvars[2], expected_str,
-                        &argvars[error_found_index], &actual_tv, ASSERT_OTHER);
+                        &argvars[error_found_index], &actual_tv, ASSERT_FAILS);
       ga_concat(&ga, ": ");
       assert_append_cmd_or_arg(&ga, argvars, cmd);
       assert_error(&ga);
@@ -672,16 +682,9 @@ static int assert_inrange(typval_T *argvars)
     if (factual < flower || factual > fupper) {
       garray_T ga;
       prepare_assert_error(&ga);
-      if (argvars[3].v_type != VAR_UNKNOWN) {
-        char *const tofree = encode_tv2string(&argvars[3], NULL);
-        ga_concat(&ga, tofree);
-        xfree(tofree);
-      } else {
-        char msg[80];
-        vim_snprintf(msg, sizeof(msg), "Expected range %g - %g, but got %g",
-                     flower, fupper, factual);
-        ga_concat(&ga, msg);
-      }
+      char expected_str[200];
+      vim_snprintf(expected_str, sizeof(expected_str), "range %g - %g,", flower, fupper);
+      fill_assert_error(&ga, &argvars[3], expected_str, NULL, &argvars[2], ASSERT_OTHER);
       assert_error(&ga);
       ga_clear(&ga);
       return 1;
@@ -697,13 +700,11 @@ static int assert_inrange(typval_T *argvars)
     if (actual < lower || actual > upper) {
       garray_T ga;
       prepare_assert_error(&ga);
-
-      char msg[55];
-      vim_snprintf(msg, sizeof(msg),
+      char expected_str[200];
+      vim_snprintf(expected_str, sizeof(expected_str),
                    "range %" PRIdVARNUMBER " - %" PRIdVARNUMBER ",",
                    lower, upper);  // -V576
-      fill_assert_error(&ga, &argvars[3], msg, NULL, &argvars[2],
-                        ASSERT_INRANGE);
+      fill_assert_error(&ga, &argvars[3], expected_str, NULL, &argvars[2], ASSERT_OTHER);
       assert_error(&ga);
       ga_clear(&ga);
       return 1;

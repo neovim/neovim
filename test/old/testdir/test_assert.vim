@@ -9,11 +9,11 @@ func Test_assert_false()
   call assert_equal(0, v:false->assert_false())
 
   call assert_equal(1, assert_false(123))
-  call assert_match("Expected 'False' but got 123", v:errors[0])
+  call assert_match("Expected False but got 123", v:errors[0])
   call remove(v:errors, 0)
 
   call assert_equal(1, 123->assert_false())
-  call assert_match("Expected 'False' but got 123", v:errors[0])
+  call assert_match("Expected False but got 123", v:errors[0])
   call remove(v:errors, 0)
 endfunc
 
@@ -24,11 +24,11 @@ func Test_assert_true()
   call assert_equal(0, v:true->assert_true())
 
   call assert_equal(1, assert_true(0))
-  call assert_match("Expected 'True' but got 0", v:errors[0])
+  call assert_match("Expected True but got 0", v:errors[0])
   call remove(v:errors, 0)
 
   call assert_equal(1, 0->assert_true())
-  call assert_match("Expected 'True' but got 0", v:errors[0])
+  call assert_match("Expected True but got 0", v:errors[0])
   call remove(v:errors, 0)
 endfunc
 
@@ -405,8 +405,11 @@ func Test_assert_inrange()
   call remove(v:errors, 0)
 
   " Use a custom message
+  call assert_equal(1, assert_inrange(5, 7, 8, "Higher"))
+  call assert_match("Higher: Expected range 5 - 7, but got 8", v:errors[0])
+  call remove(v:errors, 0)
   call assert_equal(1, assert_inrange(5, 7, 8.0, "Higher"))
-  call assert_match("Higher", v:errors[0])
+  call assert_match("Higher: Expected range 5.0 - 7.0, but got 8.0", v:errors[0])
   call remove(v:errors, 0)
 
   " Invalid arguments
