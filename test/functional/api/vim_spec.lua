@@ -361,6 +361,12 @@ describe('API', function()
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
       eq('', eval('v:exception'))
     end)
+
+    it('gives E493 instead of prompting on backwards range', function()
+      command('split')
+      eq('Vim(windo):E493: Backwards range given: 2,1windo echo',
+         pcall_err(command, '2,1windo echo'))
+    end)
   end)
 
   describe('nvim_command_output', function()
