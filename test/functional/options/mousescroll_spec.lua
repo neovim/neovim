@@ -20,7 +20,7 @@ end
 
 describe("'mousescroll'", function()
   local invalid_arg = 'Vim(set):E474: Invalid argument: mousescroll='
-  local digit_expected = 'Vim(set):E548: digit expected: mousescroll='
+  local digit_expected = 'Vim(set):E5080: Digit expected: mousescroll='
 
   local function should_fail(val, errorstr)
     eq(errorstr..val, exc_exec('set mousescroll='..val))

@@ -4254,7 +4254,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Warning: Setting this option can make pending mappings to be aborted
 	when the mouse is moved.
 
-						*'mousescroll'*
+						*'mousescroll'* *E5080*
 'mousescroll'		string	(default "ver:3,hor:6")
 			global
 	This option controls the number of lines / columns to scroll by when

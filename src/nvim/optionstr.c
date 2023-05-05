@@ -514,7 +514,7 @@ const char *did_set_mousescroll(optset_T *args FUNC_ATTR_UNUSED)
     // Verify that only digits follow the colon.
     for (size_t i = 4; i < length; i++) {
       if (!ascii_isdigit(string[i])) {
-        return N_("E548: digit expected");
+        return N_("E5080: Digit expected");
       }
     }
 
