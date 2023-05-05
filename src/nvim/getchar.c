@@ -133,6 +133,8 @@ static size_t last_recorded_len = 0;      // number of last recorded chars
 # include "getchar.c.generated.h"
 #endif
 
+static const char e_recursive_mapping[] = N_("E223: Recursive mapping");
+
 // Free and clear a buffer.
 void free_buff(buffheader_T *buf)
 {
@@ -2135,7 +2137,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
     // Put the replacement string in front of mapstr.
     // The depth check catches ":map x y" and ":map y x".
     if (++*mapdepth >= p_mmd) {
-      emsg(_("E223: recursive mapping"));
+      emsg(_(e_recursive_mapping));
       if (State & MODE_CMDLINE) {
         redrawcmdline();
       } else {

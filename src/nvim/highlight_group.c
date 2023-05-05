@@ -119,6 +119,17 @@ enum {
 # include "highlight_group.c.generated.h"
 #endif
 
+static const char e_highlight_group_name_not_found_str[]
+  = N_("E411: Highlight group not found: %s");
+static const char e_group_has_settings_highlight_link_ignored[]
+  = N_("E414: Group has settings, highlight link ignored");
+static const char e_unexpected_equal_sign_str[]
+  = N_("E415: Unexpected equal sign: %s");
+static const char e_missing_equal_sign_str_2[]
+  = N_("E416: Missing equal sign: %s");
+static const char e_missing_argument_str[]
+  = N_("E417: Missing argument: %s");
+
 #define hl_table ((HlGroup *)((highlight_ga.ga_data)))
 
 // The default highlight groups.  These are compiled-in for fast startup and
@@ -920,7 +931,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   if (!doclear && !dolink && ends_excmd((uint8_t)(*linep))) {
     int id = syn_name2id_len(line, (size_t)(name_end - line));
     if (id == 0) {
-      semsg(_("E411: highlight group not found: %s"), line);
+      semsg(_(e_highlight_group_name_not_found_str), line);
     } else {
       highlight_list_one(id);
     }
@@ -976,7 +987,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       if (to_id > 0 && !forceit && !init
           && hl_has_settings(from_id - 1, dodefault)) {
         if (SOURCING_NAME == NULL && !dodefault) {
-          emsg(_("E414: group has settings, highlight link ignored"));
+          emsg(_(e_group_has_settings_highlight_link_ignored));
         }
       } else if (hlgroup->sg_link != to_id
                  || hlgroup->sg_script_ctx.sc_sid != current_sctx.sc_sid
@@ -1054,7 +1065,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     while (!ends_excmd((uint8_t)(*linep))) {
       const char *key_start = linep;
       if (*linep == '=') {
-        semsg(_("E415: unexpected equal sign: %s"), key_start);
+        semsg(_(e_unexpected_equal_sign_str), key_start);
         error = true;
         break;
       }
@@ -1087,7 +1098,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 
       // Check for the equal sign.
       if (*linep != '=') {
-        semsg(_("E416: missing equal sign: %s"), key_start);
+        semsg(_(e_missing_equal_sign_str_2), key_start);
         error = true;
         break;
       }
@@ -1108,7 +1119,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         linep = skiptowhite(linep);
       }
       if (linep == arg_start) {
-        semsg(_("E417: missing argument: %s"), key_start);
+        semsg(_(e_missing_argument_str), key_start);
         error = true;
         break;
       }

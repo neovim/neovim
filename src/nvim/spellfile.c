@@ -323,6 +323,10 @@ enum {
 };
 
 static const char *e_spell_trunc = N_("E758: Truncated spell file");
+static const char e_error_while_reading_sug_file_str[]
+  = N_("E782: Error while reading .sug file: %s");
+static const char e_duplicate_char_in_map_entry[]
+  = N_("E783: Duplicate char in MAP entry");
 static const char *e_illegal_character_in_word = N_("E1280: Illegal character in word");
 static const char *e_afftrailing = N_("Trailing text in %s line %d: %s");
 static const char *e_affname = N_("Affix name too long in %s line %d: %s");
@@ -956,7 +960,7 @@ void suggest_load_files(void)
       if (spell_read_tree(fd, &slang->sl_sbyts, NULL, &slang->sl_sidxs,
                           false, 0) != 0) {
 someerror:
-        semsg(_("E782: error while reading .sug file: %s"),
+        semsg(_(e_error_while_reading_sug_file_str),
               slang->sl_fname);
         slang_clear_sug(slang);
         goto nextone;
@@ -5860,7 +5864,7 @@ static void set_map_str(slang_T *lp, char *map)
         } else {
           // This should have been checked when generating the .spl
           // file.
-          emsg(_("E783: duplicate char in MAP entry"));
+          emsg(_(e_duplicate_char_in_map_entry));
           xfree(b);
         }
       } else {

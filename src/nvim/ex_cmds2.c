@@ -53,6 +53,9 @@
 # include "ex_cmds2.c.generated.h"
 #endif
 
+static const char e_compiler_not_supported_str[]
+  = N_("E666: Compiler not supported: %s");
+
 void ex_ruby(exarg_T *eap)
 {
   script_host_execute("ruby", eap);
@@ -731,7 +734,7 @@ void ex_compiler(exarg_T *eap)
     // Try lua compiler
     snprintf(buf, bufsize, "compiler/%s.lua", eap->arg);
     if (source_runtime(buf, DIP_ALL) == FAIL) {
-      semsg(_("E666: compiler not supported: %s"), eap->arg);
+      semsg(_(e_compiler_not_supported_str), eap->arg);
     }
   }
   xfree(buf);

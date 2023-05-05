@@ -52,6 +52,10 @@
 
 static const char *e_letunexp = N_("E18: Unexpected characters in :let");
 static const char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s");
+static const char e_setting_str_to_value_with_wrong_type[]
+  = N_("E963: Setting %s to value with wrong type");
+static const char e_cannot_use_heredoc_here[]
+  = N_("E991: Cannot use =<< here");
 
 /// Evaluate one Vim expression {expr} in string "p" and append the
 /// resulting string to "gap".  "p" points to the opening "{".
@@ -169,7 +173,7 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
   char dot[] = ".";
 
   if (eap->getline == NULL) {
-    emsg(_("E991: cannot use =<< here"));
+    emsg(_(e_cannot_use_heredoc_here));
     return NULL;
   }
 
@@ -1457,7 +1461,7 @@ void set_var_const(const char *name, const size_t name_len, typval_T *const tv, 
         }
         return;
       } else if (v->di_tv.v_type != tv->v_type) {
-        semsg(_("E963: setting %s to value with wrong type"), name);
+        semsg(_(e_setting_str_to_value_with_wrong_type), name);
         return;
       }
     }

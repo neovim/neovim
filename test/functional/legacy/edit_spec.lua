@@ -95,7 +95,7 @@ describe('edit', function()
       {0:~                                                           }|
       {4:                                                            }|
       ={2:{}}                                                         |
-      {5:E731: using Dictionary as a String}                          |
+      {5:E731: Using a Dictionary as a String}                        |
       {6:Press ENTER or type command to continue}^                     |
     ]])
 

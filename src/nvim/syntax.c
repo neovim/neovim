@@ -59,6 +59,12 @@ static bool did_syntax_onoff = false;
 #define SPO_COUNT       7
 
 static const char e_illegal_arg[] = N_("E390: Illegal argument: %s");
+static const char e_contains_argument_not_accepted_here[]
+  = N_("E395: Contains argument not accepted here");
+static const char e_invalid_cchar_value[]
+  = N_("E844: Invalid cchar value");
+static const char e_trailing_char_after_rsb_str_str[]
+  = N_("E890: Trailing char after ']': %s]%s");
 
 // The patterns that are being searched for are stored in a syn_pattern.
 // A match item consists of one pattern.
@@ -3874,7 +3880,7 @@ static char *get_syn_options(char *arg, syn_opt_arg_T *opt, int *conceal_char, i
 
     if (flagtab[fidx].argtype == 1) {
       if (!opt->has_cont_list) {
-        emsg(_("E395: contains argument not accepted here"));
+        emsg(_(e_contains_argument_not_accepted_here));
         return NULL;
       }
       if (get_id_list(&arg, 8, &opt->cont_list, skip) == FAIL) {
@@ -3893,7 +3899,7 @@ static char *get_syn_options(char *arg, syn_opt_arg_T *opt, int *conceal_char, i
       *conceal_char = utf_ptr2char(arg + 6);
       arg += utfc_ptr2len(arg + 6) - 1;
       if (!vim_isprintc_strict(*conceal_char)) {
-        emsg(_("E844: invalid cchar value"));
+        emsg(_(e_invalid_cchar_value));
         return NULL;
       }
       arg = skipwhite(arg + 7);
@@ -4111,8 +4117,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
             }
             if (p[1] == ']') {
               if (p[2] != NUL) {
-                semsg(_("E890: trailing char after ']': %s]%s"),
-                      kw, &p[2]);
+                semsg(_(e_trailing_char_after_rsb_str_str), kw, &p[2]);
                 goto error;
               }
               kw = p + 1;

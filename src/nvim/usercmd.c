@@ -44,10 +44,12 @@
 
 garray_T ucmds = { 0, 0, sizeof(ucmd_T), 4, NULL };
 
-static const char e_complete_used_without_allowing_arguments[]
-  = N_("E1208: -complete used without allowing arguments");
+static const char e_argument_required_for_str[]
+  = N_("E179: Argument required for %s");
 static const char e_no_such_user_defined_command_str[]
   = N_("E184: No such user-defined command: %s");
+static const char e_complete_used_without_allowing_arguments[]
+  = N_("E1208: -complete used without allowing arguments");
 static const char e_no_such_user_defined_command_in_current_buffer_str[]
   = N_("E1237: No such user-defined command in current buffer: %s");
 
@@ -808,7 +810,7 @@ invalid_count:
       }
     } else if (STRNICMP(attr, "complete", attrlen) == 0) {
       if (val == NULL) {
-        emsg(_("E179: argument required for -complete"));
+        semsg(_(e_argument_required_for_str), "-complete");
         return FAIL;
       }
 
@@ -819,7 +821,7 @@ invalid_count:
     } else if (STRNICMP(attr, "addr", attrlen) == 0) {
       *argt |= EX_RANGE;
       if (val == NULL) {
-        emsg(_("E179: argument required for -addr"));
+        semsg(_(e_argument_required_for_str), "-addr");
         return FAIL;
       }
       if (parse_addr_type_arg(val, (int)vallen, addr_type_arg) == FAIL) {

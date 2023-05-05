@@ -3087,7 +3087,7 @@ func Test_nested_if_else_errors()
     endif
   END
   call writefile(code, 'Xtest')
-  call AssertException(['source Xtest'], 'Vim(else):E583: multiple :else')
+  call AssertException(['source Xtest'], 'Vim(else):E583: Multiple :else')
 
   " :elseif after :else
   let code =<< trim END

@@ -1748,7 +1748,7 @@ static uint8_t *regatom(int *flagp)
   case Magic('U'):
     p = (uint8_t *)vim_strchr((char *)classchars, no_Magic(c));
     if (p == NULL) {
-      EMSG_RET_NULL(_("E63: invalid use of \\_"));
+      EMSG_RET_NULL(_(e_invalid_use_of_underscore));
     }
     // When '.' is followed by a composing char ignore the dot, so that
     // the composing char is matched here.
@@ -2531,7 +2531,7 @@ static uint8_t *regpiece(int *flagp)
       }
     }
     if (lop == END) {
-      EMSG2_RET_NULL(_("E59: invalid character after %s@"),
+      EMSG2_RET_NULL(_(e_invalid_character_after_str_at),
                      reg_magic == MAGIC_ALL);
     }
     // Look behind must match with behind_pos.
@@ -3436,7 +3436,7 @@ static regitem_T *regstack_push(regstate_T state, uint8_t *scan)
   regitem_T *rp;
 
   if ((long)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
-    emsg(_(e_maxmempat));
+    emsg(_(e_pattern_uses_more_memory_than_maxmempattern));
     return NULL;
   }
   ga_grow(&regstack, sizeof(regitem_T));
@@ -4402,7 +4402,7 @@ static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
             // follows.  The code is below.  Parameters are stored in
             // a regstar_T on the regstack.
             if ((long)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
-              emsg(_(e_maxmempat));
+              emsg(_(e_pattern_uses_more_memory_than_maxmempattern));
               status = RA_FAIL;
             } else {
               ga_grow(&regstack, sizeof(regstar_T));
@@ -4439,7 +4439,7 @@ static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
         case NOBEHIND:
           // Need a bit of room to store extra positions.
           if ((long)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
-            emsg(_(e_maxmempat));
+            emsg(_(e_pattern_uses_more_memory_than_maxmempattern));
             status = RA_FAIL;
           } else {
             ga_grow(&regstack, sizeof(regbehind_T));

@@ -141,7 +141,7 @@ func Test_source_sfile()
   if RunVim([], [], '--clean -s Xscript')
     call assert_equal([
           \ 'E1274: No script file name to substitute for "<script>"',
-          \ 'E498: no :source file name to substitute for "<sfile>"'],
+          \ 'E498: No :source file name to substitute for "<sfile>"'],
           \ readfile('Xresult'))
   endif
   call delete('Xscript')

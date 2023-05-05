@@ -95,6 +95,8 @@ static const char e_cannot_index_special_variable[]
 static const char *e_nowhitespace
   = N_("E274: No white space allowed before parenthesis");
 static const char *e_write2 = N_("E80: Error while writing: %s");
+static const char e_variable_nested_too_deep_for_making_copy[]
+  = N_("E698: Variable nested too deep for making a copy");
 static const char *e_string_list_or_blob_required = N_("E1098: String, List or Blob required");
 static const char e_expression_too_recursive_str[] = N_("E1169: Expression too recursive: %s");
 static const char e_dot_can_only_be_used_on_dictionary_str[]
@@ -1613,7 +1615,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
       if (lp->ll_li == NULL) {
         tv_clear(&var2);
         if (!quiet) {
-          semsg(_(e_listidx), (int64_t)lp->ll_n1);
+          semsg(_(e_list_index_out_of_range_nr), (int64_t)lp->ll_n1);
         }
         return NULL;
       }
@@ -1629,7 +1631,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
           listitem_T *ni = tv_list_find(lp->ll_list, (int)lp->ll_n2);
           if (ni == NULL) {
             if (!quiet) {
-              semsg(_(e_listidx), (int64_t)lp->ll_n2);
+              semsg(_(e_list_index_out_of_range_nr), (int64_t)lp->ll_n2);
             }
             return NULL;
           }
@@ -1642,7 +1644,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
         }
         if (lp->ll_n2 < lp->ll_n1) {
           if (!quiet) {
-            semsg(_(e_listidx), (int64_t)lp->ll_n2);
+            semsg(_(e_list_index_out_of_range_nr), (int64_t)lp->ll_n2);
           }
           return NULL;
         }
@@ -3567,7 +3569,7 @@ static int check_can_index(typval_T *rettv, bool evaluate, bool verbose)
     return FAIL;
   case VAR_FLOAT:
     if (verbose) {
-      emsg(_(e_float_as_string));
+      emsg(_(e_using_float_as_string));
     }
     return FAIL;
   case VAR_BOOL:
@@ -7692,7 +7694,7 @@ int var_item_copy(const vimconv_T *const conv, typval_T *const from, typval_T *c
   int ret = OK;
 
   if (recurse >= DICT_MAXNEST) {
-    emsg(_("E698: variable nested too deep for making a copy"));
+    emsg(_(e_variable_nested_too_deep_for_making_copy));
     return FAIL;
   }
   recurse++;

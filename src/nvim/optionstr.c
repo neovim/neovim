@@ -61,8 +61,10 @@
 
 static const char e_unclosed_expression_sequence[]
   = N_("E540: Unclosed expression sequence");
+static const char e_comma_required[]
+  = N_("E536: Comma required");
 static const char e_unbalanced_groups[]
-  = N_("E542: unbalanced groups");
+  = N_("E542: Unbalanced groups");
 static const char e_backupext_and_patchmode_are_equal[]
   = N_("E589: 'backupext' and 'patchmode' are equal");
 static const char e_showbreak_contains_unprintable_or_wide_character[]
@@ -514,7 +516,7 @@ const char *did_set_mousescroll(optset_T *args FUNC_ATTR_UNUSED)
     // Verify that only digits follow the colon.
     for (size_t i = 4; i < length; i++) {
       if (!ascii_isdigit(string[i])) {
-        return N_("E548: digit expected");
+        return N_("E5080: Digit expected");
       }
     }
 
@@ -1743,7 +1745,7 @@ const char *did_set_foldmarker(optset_T *args)
   char *p = vim_strchr(*varp, ',');
 
   if (p == NULL) {
-    return N_("E536: comma required");
+    return e_comma_required;
   }
 
   if (p == *varp || p[1] == NUL) {

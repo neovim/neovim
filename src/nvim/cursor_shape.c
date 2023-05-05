@@ -26,6 +26,8 @@
 # include "cursor_shape.c.generated.h"
 #endif
 
+static const char e_digit_expected[] = N_("E548: Digit expected");
+
 /// Handling of cursor and mouse pointer shapes in various modes.
 cursorentry_T shape_table[SHAPE_IDX_COUNT] = {
   // Values are set by 'guicursor' and 'mouseshape'.
@@ -101,7 +103,7 @@ Array mode_style_array(Arena *arena)
 /// @param what SHAPE_CURSOR or SHAPE_MOUSE ('mouseshape')
 ///
 /// @returns error message for an illegal option, NULL otherwise.
-char *parse_shape_opt(int what)
+const char *parse_shape_opt(int what)
 {
   char *colonp;
   char *commap;
@@ -194,7 +196,7 @@ char *parse_shape_opt(int what)
             if (len != 0) {
               p += len;
               if (!ascii_isdigit(*p)) {
-                return N_("E548: digit expected");
+                return e_digit_expected;
               }
               int n = getdigits_int(&p, false, 0);
               if (len == 3) {               // "ver" or "hor"

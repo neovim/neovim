@@ -56,6 +56,9 @@
 # include "autocmd.c.generated.h"
 #endif
 
+static const char e_autocommand_nesting_too_deep[]
+  = N_("E218: Autocommand nesting too deep");
+
 // Naming Conventions:
 //  - general autocmd behavior start with au_
 //  - AutoCmd start with aucmd_
@@ -1589,7 +1592,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   // Allow nesting of autocommands, but restrict the depth, because it's
   // possible to create an endless loop.
   if (nesting == 10) {
-    emsg(_("E218: autocommand nesting too deep"));
+    emsg(_(e_autocommand_nesting_too_deep));
     goto BYPASS_AU;
   }
 

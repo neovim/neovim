@@ -49,7 +49,16 @@
 #include "nvim/undo.h"
 #include "nvim/vim.h"
 
-static char *err_readonly = "is read-only (cannot override: \"W\" in 'cpoptions')";
+static const char *err_readonly = "is read-only (cannot override: \"W\" in 'cpoptions')";
+static const char e_patchmode_cant_touch_empty_original_file[]
+  = N_("E206: Patchmode: can't touch empty original file");
+static const char e_write_error_conversion_failed_make_fenc_empty_to_override[]
+  = N_("E513: Write error, conversion failed (make 'fenc' empty to override)");
+static const char e_write_error_conversion_failed_in_line_nr_make_fenc_empty_to_override[]
+  = N_("E513: Write error, conversion failed in line %" PRIdLINENR
+       " (make 'fenc' empty to override)");
+static const char e_write_error_file_system_full[]
+  = N_("E514: Write error (file system full?)");
 static const char e_no_matching_autocommands_for_buftype_str_buffer[]
   = N_("E676: No matching autocommands for buftype=%s buffer");
 
@@ -1064,7 +1073,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   if (buf->b_ml.ml_mfp == NULL) {
     // This can happen during startup when there is a stray "w" in the
     // vimrc file.
-    emsg(_(e_emptybuf));
+    emsg(_(e_empty_buffer));
     return FAIL;
   }
 
@@ -1685,20 +1694,18 @@ restore_backup:
     if (err.msg == NULL) {
       if (write_info.bw_conv_error) {
         if (write_info.bw_conv_error_lnum == 0) {
-          err = set_err(_("E513: write error, conversion failed "
-                          "(make 'fenc' empty to override)"));
+          err = set_err(_(e_write_error_conversion_failed_make_fenc_empty_to_override));
         } else {
           err = set_err(xmalloc(300));
           err.alloc = true;
           vim_snprintf(err.msg, 300,  // NOLINT(runtime/printf)
-                       _("E513: write error, conversion failed in line %" PRIdLINENR
-                         " (make 'fenc' empty to override)"),
+                       _(e_write_error_conversion_failed_in_line_nr_make_fenc_empty_to_override),
                        write_info.bw_conv_error_lnum);
         }
       } else if (got_int) {
         err = set_err(_(e_interr));
       } else {
-        err = set_err(_("E514: write error (file system full?)"));
+        err = set_err(_(e_write_error_file_system_full));
       }
     }
 
@@ -1837,7 +1844,7 @@ restore_backup:
           || (empty_fd = os_open(org,
                                  O_CREAT | O_EXCL | O_NOFOLLOW,
                                  perm < 0 ? 0666 : (perm & 0777))) < 0) {
-        emsg(_("E206: patchmode: can't touch empty original file"));
+        emsg(_(e_patchmode_cant_touch_empty_original_file));
       } else {
         close(empty_fd);
       }
