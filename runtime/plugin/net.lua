@@ -35,6 +35,40 @@ local function get_buf_tmp_path()
   return root .. '/' .. vim.b.lua_net_buf_id
 end
 
+local function get_buf_user(url)
+  if vim.b.lua_net_buf_user == nil then
+    local pattern = '(%w+:%w+)@'
+
+    local username_pass = url:match(pattern)
+
+    if username_pass then
+      local modified_url = url:gsub(pattern, '')
+      return modified_url, username_pass
+    else
+      local protocol = url:match('^([a-z]+)://')
+
+      if protocol ~= 'http' and protocol ~= 'https' then
+        local username = vim.fn.input({
+          prompt = 'username: ',
+          cancelreturn = nil,
+        })
+        local password = vim.fn.inputsecret({
+          prompt = 'password: ',
+          cancelreturn = nil,
+        })
+
+        vim.b.lua_net_buf_user = username .. ':' .. password
+
+        return url, vim.b.lua_net_buf_user
+      end
+
+      return url, nil
+    end
+  end
+
+  return vim.b.lua_net_buf_id
+end
+
 local id = vim.api.nvim_create_augroup('LuaNetwork', {
   clear = true,
 })
@@ -46,14 +80,16 @@ vim.api.nvim_create_autocmd({ 'BufReadCmd' }, {
   callback = function(ev)
     local view = vim.fn.winsaveview()
     local buf = ev.buf
-    local file = ev.file
 
     local complete = false
     local err
 
     vim.b.lua_net_buf_id = generate_path_safe_string(8)
 
+    local file, user_pass = get_buf_user(ev.file)
+
     vim.net.fetch(file, {
+      user = user_pass,
       on_complete = function(result)
         local text = vim.split(result.text(), '\n')
 
@@ -72,9 +108,17 @@ vim.api.nvim_create_autocmd({ 'BufReadCmd' }, {
 
         complete = true
       end,
-      on_err = function(data)
-        err = data
+      on_err = function(data, code)
         complete = true
+
+        if code == 67 then
+          return vim.notify(
+            'Authentication error (reading buffer): ' .. table.concat(err, '\n'),
+            vim.log.levels.ERROR
+          )
+        end
+
+        err = data
       end,
     })
 
@@ -103,12 +147,14 @@ vim.api.nvim_create_autocmd({ 'FileReadCmd' }, {
   callback = function(ev)
     local view = vim.fn.winsaveview()
     local buf = ev.buf
-    local file = ev.file
 
     local complete = false
     local err
 
+    local file, user_pass = get_buf_user(ev.file)
+
     vim.net.fetch(file, {
+      user = user_pass,
       on_complete = function(result)
         local text = vim.split(result.text(), '\n')
 
@@ -120,9 +166,17 @@ vim.api.nvim_create_autocmd({ 'FileReadCmd' }, {
 
         complete = true
       end,
-      on_err = function(data)
-        err = data
+      on_err = function(data, code)
         complete = true
+
+        if code == 67 then
+          return vim.notify(
+            'Authentication error (reading file): ' .. table.concat(err, '\n'),
+            vim.log.levels.ERROR
+          )
+        end
+
+        err = data
       end,
     })
 
@@ -142,12 +196,11 @@ vim.api.nvim_create_autocmd({ 'FileReadCmd' }, {
 })
 
 vim.api.nvim_create_autocmd({ 'BufWriteCmd' }, {
-  pattern = { 'scp://*' },
+  pattern = { 'scp://*', 'ftp://*' },
   group = id,
   desc = 'Lua Network Write Handler',
   callback = function(ev)
     local buf = ev.buf
-    local file = ev.file
 
     local complete = false
     local err
@@ -158,7 +211,10 @@ vim.api.nvim_create_autocmd({ 'BufWriteCmd' }, {
 
     vim.fn.writefile(lines, path)
 
+    local file, user_pass = get_buf_user(ev.file)
+
     vim.net.fetch(file, {
+      user = user_pass,
       upload_file = path,
       on_complete = function()
         if not string.find(vim.o.cpo, '+') then
@@ -167,7 +223,16 @@ vim.api.nvim_create_autocmd({ 'BufWriteCmd' }, {
 
         complete = true
       end,
-      on_err = function(data)
+      on_err = function(data, code)
+        complete = true
+
+        if code == 67 then
+          return vim.notify(
+            'Authentication error (writing buffer): ' .. table.concat(err, '\n'),
+            vim.log.levels.ERROR
+          )
+        end
+
         err = data
       end,
     })
@@ -196,7 +261,6 @@ vim.api.nvim_create_autocmd({ 'FileWriteCmd' }, {
   desc = 'Lua Network Partial Write Handler',
   callback = function(ev)
     local buf = ev.buf
-    local file = ev.file
 
     local complete = false
     local err
@@ -210,12 +274,24 @@ vim.api.nvim_create_autocmd({ 'FileWriteCmd' }, {
 
     vim.fn.writefile(lines, path)
 
+    local file, user_pass = get_buf_user(ev.file)
+
     vim.net.fetch(file, {
+      user = user_pass,
       upload_file = path,
       on_complete = function()
         complete = true
       end,
-      on_err = function(data)
+      on_err = function(data, code)
+        complete = true
+
+        if code == 67 then
+          return vim.notify(
+            'Authentication error (writing file): ' .. table.concat(err, '\n'),
+            vim.log.levels.ERROR
+          )
+        end
+
         err = data
       end,
     })

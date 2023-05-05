@@ -205,6 +205,13 @@ local function createCurlArgs(url, opts)
     })
   end
 
+  if opts.user ~= nil then
+    vim.list_extend(args, {
+      '--user',
+      opts.user,
+    })
+  end
+
   -- Finally, insert the request url.
   table.insert(args, url)
 
@@ -304,6 +311,7 @@ end
 ---                 - "follow": Follow all redirects incurred when fetching a resource.
 ---                 - "error": Throw an error using on_err or vim.notify when status is 3XX.
 ---             - upload_file string|nil Path to an upload_file. Can be relative.
+---             - user string|nil String in "username:password" format. Prefer over passing in url.
 ---             - data string|table|nil Data to send with the request. If a table, it will be
 ---             JSON-encoded. vim.net does not currently support form encoding.
 ---             - on_complete fun(response: table)|nil Callback function when request is
@@ -320,7 +328,7 @@ end
 ---                 - size number The total amount of bytes that were downloaded. This
 ---                 is the size of the body/data that was transferred, excluding headers.
 ---                 - http_version number HTTP version used in the request.
----             - on_err fun(err: string[])|nil Function recieving a `stderr_buffered` string[] of error.
+---             - on_err fun(err: string[], exit_code: number|nil)|nil Function recieving a `stderr_buffered` string[] of error.
 ---             err is either curl stderr or internal fetch() error. Without providing this
 ---             function, |vim.net.fetch()| will automatically raise the error to the user.
 ---             See |on_stderr| and `stderr_buffered`.
@@ -414,8 +422,12 @@ function M.fetch(url, opts)
             return vim.notify(str, vim.log.levels.ERROR)
           end
 
-          return opts.on_err({ str })
+          return opts.on_err({ str }, code)
         end
+      end
+
+      if code ~= 0 then
+        return opts.on_err(nil, code)
       end
 
       if opts.on_complete and code == 0 then
@@ -448,13 +460,14 @@ end
 ---@param opts table|nil Optional keyword arguments:
 ---             - method string|nil HTTP method to use. Defaults to GET.
 ---             - headers HeaderTable | table<string, string | string[]> | nil Headers to set on the request
+---             - user string|nil String in "username:password" format. Prefer over passing in url.
 ---             - redirect string|nil Redirect mode. Defaults to "follow". Possible values are:
 ---                 - "follow": Follow all redirects incurred when fetching a resource.
 ---                 - "none": Ignores redirect status.
 ---             - data string|table|nil Data to send with the request. If a table, it will be JSON
 ---             encoded. vim.net does not currently support form encoding.
 ---             - on_complete fun()|nil Callback function when download successfully completed.
----             - on_err fun(err: string[])|nil An optional function recieving a `stderr_buffered` string[] of curl
+---             - on_err fun(err: string[], exit_code: number)|nil An optional function recieving a `stderr_buffered` string[] of curl
 ---             stderr. Without providing this function, |vim.net.download()| will automatically raise an error
 ---             to the user. See |on_stderr| and `stderr_buffered`.
 ---@return number jobid A job id. See |job-control|.
@@ -486,6 +499,10 @@ function M.download(url, path, opts)
 
   local job = vim.fn.jobstart(args, {
     on_exit = function(_, code)
+      if code ~= 0 then
+        return opts.on_err(nil, code)
+      end
+
       if opts.on_complete and code == 0 then
         opts.on_complete()
       end
