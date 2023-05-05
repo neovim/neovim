@@ -4,6 +4,7 @@ local eval = helpers.eval
 local clear = helpers.clear
 local source = helpers.source
 local exc_exec = helpers.exc_exec
+local pcall_err = helpers.pcall_err
 local funcs = helpers.funcs
 local Screen = require('test.functional.ui.screen')
 local command = helpers.command
@@ -282,6 +283,14 @@ describe('execute()', function()
       42                                      |
       ]])
       eq('42', eval('g:mes'))
+    end)
+
+    it('gives E493 instead of prompting on backwards range for ""', function()
+      command('split')
+      eq('Vim(windo):E493: Backwards range given: 2,1windo echo',
+         pcall_err(funcs.execute, '2,1windo echo', ''))
+      eq('Vim(windo):E493: Backwards range given: 2,1windo echo',
+         pcall_err(funcs.execute, {'2,1windo echo'}, ''))
     end)
 
     it('captures but does not display output for "silent"', function()

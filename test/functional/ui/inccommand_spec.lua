@@ -1720,7 +1720,7 @@ describe("'inccommand' and :cnoremap", function()
 
   local function refresh(case, visual)
     clear()
-    screen = visual and Screen.new(50,10) or nil
+    screen = visual and Screen.new(80,10) or nil
     common_setup(screen, case, default_text)
   end
 

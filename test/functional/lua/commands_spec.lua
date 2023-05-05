@@ -214,7 +214,7 @@ describe(':luado command', function()
   end)
   it('fails in sandbox when needed', function()
     curbufmeths.set_lines(0, 1, false, {"ABC", "def", "gHi"})
-    eq('Vim(luado):E48: Not allowed in sandbox',
+    eq('Vim(luado):E48: Not allowed in sandbox: sandbox luado runs = (runs or 0) + 1',
        pcall_err(command, 'sandbox luado runs = (runs or 0) + 1'))
     eq(NIL, funcs.luaeval('runs'))
   end)

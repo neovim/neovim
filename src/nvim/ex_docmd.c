@@ -288,7 +288,7 @@ static void msg_verbose_cmd(linenr_T lnum, char *cmd)
 /// Execute a simple command line.  Used for translated commands like "*".
 int do_cmdline_cmd(const char *cmd)
 {
-  return do_cmdline((char *)cmd, NULL, NULL, DOCMD_NOWAIT|DOCMD_KEYTYPED);
+  return do_cmdline((char *)cmd, NULL, NULL, DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
 }
 
 /// do_cmdline(): execute one Ex command line
@@ -1862,7 +1862,8 @@ static bool skip_cmd(const exarg_T *eap)
 
 /// Execute one Ex command.
 ///
-/// If 'sourcing' is true, the command will be included in the error message.
+/// If "flags" has DOCMD_VERBOSE, the command will be included in the error
+/// message.
 ///
 /// 1. skip comment lines and leading space
 /// 2. handle command modifiers
