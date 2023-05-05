@@ -37,36 +37,55 @@ end
 
 local function get_buf_user(url)
   if vim.b.lua_net_buf_user == nil then
-    local pattern = '(%w+:%w+)@'
+    local s, e = url:find('://[^/]+@')
 
-    local username_pass = url:match(pattern)
+    if s and e then
+      local credentials = url:sub(s + 3, e - 1)
+      local modified_url = url:sub(1, s + 2) .. url:sub(e + 1)
 
-    if username_pass then
-      local modified_url = url:gsub(pattern, '')
-      return modified_url, username_pass
-    else
-      local protocol = url:match('^([a-z]+)://')
-
-      if protocol ~= 'http' and protocol ~= 'https' then
-        local username = vim.fn.input({
-          prompt = 'username: ',
-          cancelreturn = nil,
-        })
+      if not credentials:find(':') then
         local password = vim.fn.inputsecret({
-          prompt = 'password: ',
+          prompt = 'password (return for none): ',
           cancelreturn = nil,
         })
 
-        vim.b.lua_net_buf_user = username .. ':' .. password
+        if password ~= '' then
+          credentials = credentials .. ':' .. password
+        end
+      end
 
+      vim.b.lua_net_buf_user = credentials
+
+      return modified_url, vim.b.lua_net_buf_user
+    end
+
+    local protocol = url:match('^([a-z]+)://')
+
+    if protocol ~= 'http' and protocol ~= 'https' then
+      local username = vim.fn.input({
+        prompt = 'username (return for none): ',
+      })
+
+      if username == '' then
+        vim.b.lua_net_buf_user = username
         return url, vim.b.lua_net_buf_user
       end
 
-      return url, nil
+      local password = vim.fn.inputsecret({
+        prompt = 'password (return for none): ',
+      })
+
+      if password ~= '' then
+        vim.b.lua_net_buf_user = username .. ':' .. password
+      else
+        vim.b.lua_net_buf_user = username
+      end
+
+      return url, vim.b.lua_net_buf_user
     end
   end
 
-  return vim.b.lua_net_buf_id
+  return url, vim.b.lua_net_buf_user
 end
 
 local id = vim.api.nvim_create_augroup('LuaNetwork', {
@@ -225,6 +244,7 @@ vim.api.nvim_create_autocmd({ 'BufWriteCmd' }, {
       end,
       on_err = function(data, code)
         complete = true
+        err = data
 
         if code == 67 then
           return vim.notify(
@@ -232,8 +252,6 @@ vim.api.nvim_create_autocmd({ 'BufWriteCmd' }, {
             vim.log.levels.ERROR
           )
         end
-
-        err = data
       end,
     })
 
