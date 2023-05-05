@@ -56,6 +56,8 @@ static const char e_list_required_for_argument_nr[]
   = N_("E1211: List required for argument %d");
 static const char e_bool_required_for_argument_nr[]
   = N_("E1212: Bool required for argument %d");
+static const char e_float_or_number_required_for_argument_nr[]
+  = N_("E1219: Float or Number required for argument %d");
 static const char e_string_or_number_required_for_argument_nr[]
   = N_("E1220: String or Number required for argument %d");
 static const char e_string_or_list_required_for_argument_nr[]
@@ -4171,7 +4173,7 @@ int tv_check_for_float_or_nr_arg(const typval_T *const args, const int idx)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   if (args[idx].v_type != VAR_FLOAT && args[idx].v_type != VAR_NUMBER) {
-    semsg(_(e_number_required_for_argument_nr), idx + 1);
+    semsg(_(e_float_or_number_required_for_argument_nr), idx + 1);
     return FAIL;
   }
   return OK;
