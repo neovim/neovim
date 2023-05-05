@@ -60,10 +60,11 @@ function HeaderTable:append(key, value)
   end
 end
 
----Get header values.
+---Get first header value.
+---For headers like cookies, use |HeaderTable:get_all|.
 ---@param self HeaderTable HeaderTable Instance.
 ---@param key string Non case-sensitive header name.
----@return string[] | string | nil
+---@return string | nil
 function HeaderTable:get(key)
   local normalized_key = self:_normalize_key(key)
   local value = self._storage[normalized_key]
@@ -72,10 +73,24 @@ function HeaderTable:get(key)
     return nil
   elseif #value == 1 then
     return value[1]
+  end
+end
+
+---Get all header values.
+---@param self HeaderTable HeaderTable Instance.
+---@param key string Non case-sensitive header name.
+---@return string[] | nil
+function HeaderTable:get_all(key)
+  local normalized_key = self:_normalize_key(key)
+  local value = self._storage[normalized_key]
+
+  if value == nil then
+    return nil
   else
     return value
   end
 end
+
 
 ---@param self HeaderTable HeaderTable Instance.
 ---@param key string Non case-sensitive header name.
