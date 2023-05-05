@@ -2220,6 +2220,31 @@ func Test_BufEnter_exception()
   %bwipe!
 endfunc
 
+" Test for using try/catch in a user command with a failing expression    {{{1
+func Test_user_command_try_catch()
+  let lines =<< trim END
+      function s:throw() abort
+        throw 'error'
+      endfunction
+
+      command! Execute
+      \   try
+      \ |   let s:x = s:throw()
+      \ | catch
+      \ |   let g:caught = 'caught'
+      \ | endtry
+
+      let g:caught = 'no'
+      Execute
+      call assert_equal('caught', g:caught)
+  END
+  call writefile(lines, 'XtestTryCatch')
+  source XtestTryCatch
+
+  call delete('XtestTryCatch')
+  unlet g:caught
+endfunc
+
 " Test for using throw in a called function with following error    {{{1
 func Test_user_command_throw_in_function_call()
   let lines =<< trim END

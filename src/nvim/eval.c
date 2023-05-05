@@ -2369,7 +2369,11 @@ int eval0(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
     }
 
     // Some of the expression may not have been consumed.  Do not check for
-    // a next command to avoid more errors.
+    // a next command to avoid more errors, unless "|" is following, which
+    // could only be a command separator.
+    if (eap != NULL && skipwhite(p)[0] == '|' && skipwhite(p)[1] != '|') {
+      eap->nextcmd = check_nextcmd(p);
+    }
     return FAIL;
   }
 
