@@ -1,5 +1,8 @@
 " Test that the methods used for testing work.
 
+source check.vim
+source term_util.vim
+
 func Test_assert_false()
   call assert_equal(0, assert_false(0))
   call assert_equal(0, assert_false(v:false))
@@ -327,10 +330,21 @@ func Test_assert_fails_in_try_block()
   endtry
 endfunc
 
+" Test that assert_fails() in a timer does not cause a hit-enter prompt.
+" Requires using a terminal, in regular tests the hit-enter prompt won't be
+" triggered.
 func Test_assert_fails_in_timer()
-  " should not cause a hit-enter prompt, which isn't actually checked here
-  call timer_start(0, {-> assert_fails('call', 'E471:')})
-  sleep 10m
+  CheckRunVimInTerminal
+
+  let buf = RunVimInTerminal('', {'rows': 6})
+  let cmd = ":call timer_start(0, {-> assert_fails('call', 'E471:')})"
+  call term_sendkeys(buf, cmd)
+  call WaitForAssert({-> assert_equal(cmd, term_getline(buf, 6))})
+  call term_sendkeys(buf, "\<CR>")
+  call TermWait(buf, 100)
+  call assert_match('E471: Argument required', term_getline(buf, 6))
+
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_assert_beeps()
