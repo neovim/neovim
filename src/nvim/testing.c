@@ -531,6 +531,11 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   no_wait_return++;
 
   do_cmdline_cmd(cmd);
+
+  // reset here for any errors reported below
+  trylevel = save_trylevel;
+  suppress_errthrow = false;
+
   if (called_emsg == called_emsg_before) {
     prepare_assert_error(&ga);
     ga_concat(&ga, "command did not fail: ");
@@ -557,6 +562,9 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       }
       const typval_T *tv = TV_LIST_ITEM_TV(tv_list_first(list));
       expected = tv_get_string_buf_chk(tv, buf);
+      if (expected == NULL) {
+        goto theend;
+      }
       if (!pattern_match(expected, actual, false)) {
         error_found = true;
         expected_str = expected;
@@ -565,6 +573,9 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         tofree = actual = xstrdup(get_vim_var_str(VV_ERRMSG));
         tv = TV_LIST_ITEM_TV(tv_list_last(list));
         expected = tv_get_string_buf_chk(tv, buf);
+        if (expected == NULL) {
+          goto theend;
+        }
         if (!pattern_match(expected, actual, false)) {
           error_found = true;
           expected_str = expected;
