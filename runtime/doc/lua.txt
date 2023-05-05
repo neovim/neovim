@@ -4598,14 +4598,25 @@ HeaderTable:append({self}, {key}, {value})              *HeaderTable:append()*
       • {key}   (string) Non case-sensitive header name.
 
 HeaderTable:get({self}, {key})                             *HeaderTable:get()*
-    Get header values.
+    Get first header value. For headers like Cookies, use
+    |HeaderTable:get_all|.
 
     Parameters: ~
       • {self}  
       • {key}   (string) Non case-sensitive header name.
 
     Return: ~
-        string[] | string | nil
+        (string) | nil
+
+HeaderTable:get_all({self}, {key})                     *HeaderTable:get_all()*
+    Get all header values.
+
+    Parameters: ~
+      • {self}  
+      • {key}   (string) Non case-sensitive header name.
+
+    Return: ~
+        string[] | nil
 
 HeaderTable:has({self}, {key})                             *HeaderTable:has()*
     Parameters: ~
