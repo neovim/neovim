@@ -2367,7 +2367,17 @@ int eval0(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
         semsg(_(e_invexpr2), arg);
       }
     }
-    ret = FAIL;
+
+    if (eap != NULL && p != NULL) {
+      // Some of the expression may not have been consumed.
+      // Only execute a next command if it cannot be a "||" operator.
+      // The next command may be "catch".
+      char *nextcmd = check_nextcmd(p);
+      if (nextcmd != NULL && *nextcmd != '|') {
+        eap->nextcmd = nextcmd;
+      }
+    }
+    return FAIL;
   }
 
   if (eap != NULL) {
