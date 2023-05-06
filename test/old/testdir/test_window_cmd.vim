@@ -1879,6 +1879,23 @@ func Test_splitkeep_status()
   call StopVimInTerminal(buf)
 endfunc
 
+" skipcol is not reset unnecessarily and is copied to new window
+func Test_splitkeep_skipcol()
+  CheckScreendump
+
+  let lines =<< trim END
+    set splitkeep=topline smoothscroll splitbelow scrolloff=0
+    call setline(1, 'with lots of text in one line '->repeat(6))
+    norm 2
+    wincmd s
+  END
+
+  call writefile(lines, 'XTestSplitkeepSkipcol', 'D')
+  let buf = RunVimInTerminal('-S XTestSplitkeepSkipcol', #{rows: 12, cols: 40})
+
+  call VerifyScreenDump(buf, 'Test_splitkeep_skipcol_1', {})
+endfunc
+
 func Test_new_help_window_on_error()
   help change.txt
   execute "normal! /CTRL-@\<CR>"

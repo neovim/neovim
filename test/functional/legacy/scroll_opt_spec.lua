@@ -695,6 +695,30 @@ describe('smoothscroll', function()
     ]])
   end)
 
+  -- oldtest: Test_smoothscroll_ins_lines()
+  it("this was unnecessarily inserting lines", function()
+    screen:try_resize(40, 6)
+    exec([=[
+      set wrap smoothscroll scrolloff=0 conceallevel=2 concealcursor=nc
+      call setline(1, [
+        \'line one' .. 'with lots of text in one line '->repeat(2),
+        \'line two',
+        \'line three',
+        \'line four',
+        \'line five'
+      \])
+    ]=])
+    feed('<C-E>gjgk')
+    screen:expect([[
+      <<<lots of text in one line^             |
+      line two                                |
+      line three                              |
+      line four                               |
+      line five                               |
+                                              |
+    ]])
+  end)
+
   it("works with virt_lines above and below", function()
     screen:try_resize(55, 7)
     exec([=[

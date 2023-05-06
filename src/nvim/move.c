@@ -58,7 +58,7 @@ typedef struct {
 #endif
 
 /// Reduce "n" for the screen lines skipped with "wp->w_skipcol".
-static int adjust_plines_for_skipcol(win_T *wp, int n)
+int adjust_plines_for_skipcol(win_T *wp, int n)
 {
   if (wp->w_skipcol == 0) {
     return n;
@@ -196,7 +196,7 @@ static int skipcol_from_plines(win_T *wp, int plines_off)
   return skipcol;
 }
 
-/// Set wp->s_skipcol to zero and redraw later if needed.
+/// Set wp->w_skipcol to zero and redraw later if needed.
 static void reset_skipcol(win_T *wp)
 {
   if (wp->w_skipcol != 0) {
@@ -2267,7 +2267,7 @@ void cursor_correct(void)
   }
 
   if (curwin->w_p_sms && !curwin->w_p_wrap) {
-    // 'smoothscroll is active
+    // 'smoothscroll' is active
     if (curwin->w_cline_height == curwin->w_height_inner) {
       // The cursor line just fits in the window, don't scroll.
       reset_skipcol(curwin);

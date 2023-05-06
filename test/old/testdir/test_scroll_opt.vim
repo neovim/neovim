@@ -587,7 +587,7 @@ func Test_smoothscroll_mouse_pos()
 endfunc
 
 " this was dividing by zero
-func Test_smoothscrol_zero_width()
+func Test_smoothscroll_zero_width()
   CheckScreendump
 
   let lines =<< trim END
@@ -613,5 +613,30 @@ func Test_smoothscrol_zero_width()
   call StopVimInTerminal(buf)
 endfunc
 
+" this was unnecessarily inserting lines
+func Test_smoothscroll_ins_lines()
+  CheckScreendump
+
+  let lines =<< trim END
+      set wrap
+      set smoothscroll
+      set scrolloff=0
+      set conceallevel=2
+      call setline(1, [
+        \'line one' .. 'with lots of text in one line '->repeat(2),
+        \'line two',
+        \'line three',
+        \'line four',
+        \'line five'
+      \])
+  END
+  call writefile(lines, 'XSmoothScrollInsLines', 'D')
+  let buf = RunVimInTerminal('-S XSmoothScrollInsLines', #{rows: 6, cols: 40})
+
+  call term_sendkeys(buf, "\<C-E>gjgk")
+  call VerifyScreenDump(buf, 'Test_smooth_ins_lines', {})
+
+  call StopVimInTerminal(buf)
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
