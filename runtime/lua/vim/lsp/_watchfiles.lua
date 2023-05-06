@@ -219,8 +219,8 @@ function M.register(reg, ctx)
       local kind = w.kind
         or protocol.WatchKind.Create + protocol.WatchKind.Change + protocol.WatchKind.Delete
 
-      table.insert(watch_regs, {
-        base_dir = base_dir,
+      watch_regs[base_dir] = watch_regs[base_dir] or {}
+      table.insert(watch_regs[base_dir], {
         pattern = pattern,
         kind = kind,
       })
@@ -229,12 +229,12 @@ function M.register(reg, ctx)
 
   local callback = function(base_dir)
     return function(fullpath, change_type)
-      for _, w in ipairs(watch_regs) do
+      for _, w in ipairs(watch_regs[base_dir]) do
         change_type = to_lsp_change_type[change_type]
         -- e.g. match kind with Delete bit (0b0100) to Delete change_type (3)
         local kind_mask = bit.lshift(1, change_type - 1)
         local change_type_match = bit.band(w.kind, kind_mask) == kind_mask
-        if base_dir == w.base_dir and M._match(w.pattern, fullpath) and change_type_match then
+        if M._match(w.pattern, fullpath) and change_type_match then
           local change = {
             uri = vim.uri_from_fname(fullpath),
             type = change_type,
@@ -264,15 +264,27 @@ function M.register(reg, ctx)
     end
   end
 
-  local watching = {}
-  for _, w in ipairs(watch_regs) do
-    if not watching[w.base_dir] then
-      watching[w.base_dir] = true
-      table.insert(
-        cancels[client_id][reg.id],
-        M._watchfunc(w.base_dir, { uvflags = { recursive = true } }, callback(w.base_dir))
-      )
+  for base_dir, watches in pairs(watch_regs) do
+    local include_patterns = {}
+    for _, w in ipairs(watches) do
+      for _, p in ipairs(w.pattern) do
+        include_patterns[#include_patterns + 1] = p
+      end
     end
+
+    table.insert(
+      cancels[client_id][reg.id],
+      M._watchfunc(base_dir, {
+        uvflags = {
+          recursive = true,
+        },
+        -- include_patterns will ensure the pattern from *any* watcher definition for the
+        -- base_dir matches. This first pass prevents polling for changes to files that
+        -- will never be sent to the LSP server. A second pass in the callback is still necessary to
+        -- match a *particular* pattern+kind pair.
+        include_patterns = include_patterns,
+      }, callback(base_dir))
+    )
   end
 end
 

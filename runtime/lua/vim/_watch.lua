@@ -97,6 +97,29 @@ local function poll_internal(path, opts, callback, watches)
   watches = watches or {
     is_dir = true,
   }
+  watches.cancel = function()
+    if watches.children then
+      for _, w in pairs(watches.children) do
+        w.cancel()
+      end
+    end
+    if watches.handle then
+      stop(watches.handle)
+    end
+  end
+
+  if not watches.is_dir and opts.include_patterns then
+    local matches = false
+    for _, pattern in ipairs(opts.include_patterns) do
+      if path:match(pattern) then
+        matches = true
+        break
+      end
+    end
+    if not matches then
+      return watches.cancel
+    end
+  end
 
   if not watches.handle then
     local poll, new_err = vim.loop.new_fs_poll()
@@ -120,15 +143,6 @@ local function poll_internal(path, opts, callback, watches)
     end
   end
 
-  watches.cancel = function()
-    if watches.children then
-      for _, w in pairs(watches.children) do
-        w.cancel()
-      end
-    end
-    stop(watches.handle)
-  end
-
   if watches.is_dir then
     watches.children = watches.children or {}
     local exists = {}
@@ -150,7 +164,9 @@ local function poll_internal(path, opts, callback, watches)
       else
         watch.cancel()
         watches.children[name] = nil
-        callback(path .. '/' .. name, M.FileChangeType.Deleted)
+        if watch.handle then
+          callback(path .. '/' .. name, M.FileChangeType.Deleted)
+        end
       end
     end
     watches.children = newchildren
@@ -168,6 +184,9 @@ end
 ---@param opts (table|nil) Additional options
 ---     - interval (number|nil)
 ---                Polling interval in ms as passed to |uv.fs_poll_start()|. Defaults to 2000.
+---     - include_patterns (string[]|nil)
+---                A list of lua pattern strings. Only changes to files whose full paths match at
+---                least one pattern will be reported. When nil, changes to all files are reported.
 ---@param callback (function) The function called when new events
 ---@returns (function) A function to stop the watch.
 function M.poll(path, opts, callback)
