@@ -51,8 +51,18 @@ local Range = require('vim.treesitter._range')
 ---| 'on_child_added'
 ---| 'on_child_removed'
 
+--- @type table<TSCallbackNameOn,TSCallbackName>
+local TSCallbackNames = {
+  on_changedtree = 'changedtree',
+  on_bytes = 'bytes',
+  on_detach = 'detach',
+  on_child_added = 'child_added',
+  on_child_removed = 'child_removed',
+}
+
 ---@class LanguageTree
 ---@field private _callbacks table<TSCallbackName,function[]> Callback handlers
+---@field package _callbacks_rec table<TSCallbackName,function[]> Callback handlers (recursive)
 ---@field private _children table<string,LanguageTree> Injected languages
 ---@field private _injection_query Query Queries defining injected languages
 ---@field private _opts table Options
@@ -79,7 +89,7 @@ LanguageTree.__index = LanguageTree
 --- "injected" language parsers, which themselves may inject other languages, recursively.
 ---
 ---@param source (integer|string) Buffer or text string to parse
----@param lang string|nil Root language of this tree
+---@param lang string Root language of this tree
 ---@param opts (table|nil) Optional arguments:
 ---             - injections table Map of language to injection query strings. Overrides the
 ---                                built-in runtime file searching for language injections.
@@ -100,14 +110,14 @@ function LanguageTree.new(source, lang, opts)
       or query.get(lang, 'injections'),
     _valid = false,
     _parser = vim._create_ts_parser(lang),
-    _callbacks = {
-      changedtree = {},
-      bytes = {},
-      detach = {},
-      child_added = {},
-      child_removed = {},
-    },
+    _callbacks = {},
+    _callbacks_rec = {},
   }, LanguageTree)
+
+  for _, name in pairs(TSCallbackNames) do
+    self._callbacks[name] = {}
+    self._callbacks_rec[name] = {}
+  end
 
   return self
 end
@@ -121,6 +131,7 @@ local function tcall(f, ...)
   local start = vim.loop.hrtime()
   ---@diagnostic disable-next-line
   local r = { f(...) }
+  --- @type number
   local duration = (vim.loop.hrtime() - start) / 1000000
   return duration, unpack(r)
 end
@@ -161,6 +172,9 @@ function LanguageTree:invalidate(reload)
 
   -- buffer was reloaded, reparse all trees
   if reload then
+    for _, t in ipairs(self._trees) do
+      self:_do_callback('changedtree', t:included_ranges(true), t)
+    end
     self._trees = {}
   end
 
@@ -245,9 +259,12 @@ function LanguageTree:parse()
       if not self._valid or not self._valid[i] then
         self._parser:set_included_ranges(ranges)
         local parse_time, tree, tree_changes =
-          tcall(self._parser.parse, self._parser, self._trees[i], self._source)
+          tcall(self._parser.parse, self._parser, self._trees[i], self._source, true)
 
-        self:_do_callback('changedtree', tree_changes, tree)
+        -- Pass ranges if this is an initial parse
+        local cb_changes = self._trees[i] and tree_changes or ranges
+
+        self:_do_callback('changedtree', cb_changes, tree)
         self._trees[i] = tree
         vim.list_extend(changes, tree_changes)
 
@@ -341,7 +358,14 @@ function LanguageTree:add_child(lang)
     self:remove_child(lang)
   end
 
-  self._children[lang] = LanguageTree.new(self._source, lang, self._opts)
+  local child = LanguageTree.new(self._source, lang, self._opts)
+
+  -- Inherit recursive callbacks
+  for nm, cb in pairs(self._callbacks_rec) do
+    vim.list_extend(child._callbacks_rec[nm], cb)
+  end
+
+  self._children[lang] = child
   self:invalidate()
   self:_do_callback('child_added', self._children[lang])
 
@@ -453,6 +477,10 @@ function LanguageTree:set_included_regions(new_regions)
   end
 
   if #self:included_regions() ~= #new_regions then
+    -- TODO(lewis6991): inefficient; invalidate trees incrementally
+    for _, t in ipairs(self._trees) do
+      self:_do_callback('changedtree', t:included_ranges(true), t)
+    end
     self._trees = {}
     self:invalidate()
   else
@@ -707,6 +735,9 @@ function LanguageTree:_do_callback(cb_name, ...)
   for _, cb in ipairs(self._callbacks[cb_name]) do
     cb(...)
   end
+  for _, cb in ipairs(self._callbacks_rec[cb_name]) do
+    cb(...)
+  end
 end
 
 ---@package
@@ -855,30 +886,26 @@ end
 ---              changed.
 ---           - `on_child_added` : emitted when a child is added to the tree.
 ---           - `on_child_removed` : emitted when a child is removed from the tree.
-function LanguageTree:register_cbs(cbs)
+--- @param recursive? boolean Apply callbacks recursively for all children. Any new children will
+---                           also inherit the callbacks.
+function LanguageTree:register_cbs(cbs, recursive)
   ---@cast cbs table<TSCallbackNameOn,function>
   if not cbs then
     return
   end
 
-  if cbs.on_changedtree then
-    table.insert(self._callbacks.changedtree, cbs.on_changedtree)
+  local callbacks = recursive and self._callbacks_rec or self._callbacks
+
+  for name, cbname in pairs(TSCallbackNames) do
+    if cbs[name] then
+      table.insert(callbacks[cbname], cbs[name])
+    end
   end
 
-  if cbs.on_bytes then
-    table.insert(self._callbacks.bytes, cbs.on_bytes)
-  end
-
-  if cbs.on_detach then
-    table.insert(self._callbacks.detach, cbs.on_detach)
-  end
-
-  if cbs.on_child_added then
-    table.insert(self._callbacks.child_added, cbs.on_child_added)
-  end
-
-  if cbs.on_child_removed then
-    table.insert(self._callbacks.child_removed, cbs.on_child_removed)
+  if recursive then
+    self:for_each_child(function(child)
+      child:register_cbs(cbs, true)
+    end)
   end
 end
 
