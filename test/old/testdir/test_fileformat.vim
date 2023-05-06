@@ -73,7 +73,12 @@ func Test_fileformats()
   call s:concat_files('XXMac', 'XXEol', 'XXMacEol')
   call s:concat_files('XXUxDs', 'XXMac', 'XXUxDsMc')
 
-  new
+  " The :bwipe commands below cause us to get back to the current buffer.
+  " Avoid stray errors for various 'fileformat' values which may cause a
+  " modeline to be misinterpreted by wiping the buffer and editing a new one.
+  only!
+  bwipe!
+  enew
 
   " Test 1: try reading and writing with 'fileformats' empty
   set fileformats=

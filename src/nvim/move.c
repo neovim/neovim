@@ -2328,9 +2328,10 @@ void cursor_correct(void)
   curwin->w_viewport_invalid = true;
 }
 
-// Move screen "count" pages up or down and update screen.
-//
-// Return FAIL for failure, OK otherwise.
+/// Move screen "count" pages up ("dir" is BACKWARD) or down ("dir" is FORWARD)
+/// and update the screen.
+///
+/// @return  FAIL for failure, OK otherwise.
 int onepage(Direction dir, long count)
 {
   long n;
