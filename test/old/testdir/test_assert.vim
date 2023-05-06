@@ -324,6 +324,23 @@ func Test_assert_fail_fails()
   call remove(v:errors, 0)
 endfunc
 
+func Test_assert_wrong_arg_emsg_off()
+  CheckFeature folding
+
+  new
+  call setline(1, ['foo', 'bar'])
+  1,2fold
+
+  " This used to crash Vim
+  let &l:foldtext = 'assert_match({}, {})'
+  redraw!
+
+  let &l:foldtext = 'assert_equalfile({}, {})'
+  redraw!
+
+  bwipe!
+endfunc
+
 func Test_assert_fails_in_try_block()
   try
     call assert_equal(0, assert_fails('throw "error"'))
