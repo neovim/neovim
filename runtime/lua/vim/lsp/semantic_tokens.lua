@@ -99,6 +99,7 @@ local function tokens_to_ranges(data, bufnr, client, request)
   local legend = client.server_capabilities.semanticTokensProvider.legend
   local token_types = legend.tokenTypes
   local token_modifiers = legend.tokenModifiers
+  local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local ranges = {}
 
   local start = uv.hrtime()
@@ -137,11 +138,17 @@ local function tokens_to_ranges(data, bufnr, client, request)
     local modifiers = modifiers_from_number(data[i + 4], token_modifiers)
 
     ---@private
-    local function _get_byte_pos(char_pos)
-      return util._get_line_byte_from_position(bufnr, {
-        line = line,
-        character = char_pos,
-      }, client.offset_encoding)
+    local function _get_byte_pos(col)
+      if col > 0 then
+        local buf_line = lines[line + 1] or ''
+        local ok, result
+        ok, result = pcall(util._str_byteindex_enc, buf_line, col, client.offset_encoding)
+        if ok then
+          return result
+        end
+        return math.min(#buf_line, col)
+      end
+      return col
     end
 
     local start_col = _get_byte_pos(start_char)
