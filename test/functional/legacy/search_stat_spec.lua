@@ -10,8 +10,9 @@ describe('search stat', function()
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
       [2] = {background = Screen.colors.Yellow},  -- Search
-      [3] = {foreground = Screen.colors.Blue4, background = Screen.colors.LightGrey},  -- Folded
+      [3] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},  -- Folded
       [4] = {reverse = true},  -- IncSearch, TabLineFill
+      [5] = {foreground = Screen.colors.Red},  -- WarningMsg
     })
     screen:attach()
   end)
@@ -181,6 +182,59 @@ describe('search stat', function()
       {1:~                             }|
       {1:~                             }|
       /abc^                          |
+    ]])
+  end)
+
+  -- oldtest: Test_search_stat_backwards()
+  it('when searching backwards', function()
+    screen:try_resize(60, 10)
+    exec([[
+      set shm-=S
+      call setline(1, ['test', ''])
+    ]])
+
+    feed('*')
+    screen:expect([[
+      {2:^test}                                                        |
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      /\<test\>                                            [1/1]  |
+    ]])
+
+    feed('N')
+    screen:expect([[
+      {2:^test}                                                        |
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      ?\<test\>                                            [1/1]  |
+    ]])
+
+    command('set shm+=S')
+    feed('N')
+    -- shows "Search Hit Bottom.."
+    screen:expect([[
+      {2:^test}                                                        |
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {5:search hit TOP, continuing at BOTTOM}                        |
     ]])
   end)
 end)
