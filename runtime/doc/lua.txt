@@ -592,6 +592,8 @@ vim.highlight.on_yank({opts})                        *vim.highlight.on_yank()*
       - {on_macro} highlight when executing macro (default `false`)
       - {on_visual} highlight when yanking visual selection (default `true`)
       - {event} event structure (default |v:event|)
+      - {priority} priority of highlight (default |vim.highlight.priorities|`.user`)
+
 
 vim.highlight.range({bufnr}, {ns}, {hlgroup}, {start}, {finish}, {opts})
                                                        *vim.highlight.range()*

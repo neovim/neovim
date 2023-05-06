@@ -61,6 +61,7 @@ local yank_timer
 --              - on_macro  highlight when executing macro (default false)
 --              - on_visual highlight when yanking visual selection (default true)
 --              - event     event structure (default vim.v.event)
+--              - priority  integer priority (default |vim.highlight.priorities|`.user`)
 function M.on_yank(opts)
   vim.validate({
     opts = {
@@ -99,14 +100,11 @@ function M.on_yank(opts)
     yank_timer:close()
   end
 
-  M.range(
-    bufnr,
-    yank_ns,
-    higroup,
-    "'[",
-    "']",
-    { regtype = event.regtype, inclusive = event.inclusive, priority = M.priorities.user }
-  )
+  M.range(bufnr, yank_ns, higroup, "'[", "']", {
+    regtype = event.regtype,
+    inclusive = event.inclusive,
+    priority = opts.priority or M.priorities.user,
+  })
 
   yank_timer = vim.defer_fn(function()
     yank_timer = nil
