@@ -1565,6 +1565,29 @@ describe('TUI', function()
       {5:-- TERMINAL --}                                    |
     ]])
   end)
+
+  it('redraws on SIGWINCH even if terminal size is unchanged #23411', function()
+    child_session:request('nvim_echo', {{'foo'}}, false, {})
+    screen:expect([[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      foo                                               |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    exec_lua([[vim.loop.kill(vim.fn.jobpid(vim.bo.channel), 'sigwinch')]])
+    screen:expect([[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
 end)
 
 describe('TUI', function()

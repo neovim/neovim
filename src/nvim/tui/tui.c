@@ -1529,12 +1529,11 @@ void tui_guess_size(TUIData *tui)
     height = DFLT_ROWS;
   }
 
-  if (tui->width != width || tui->height != height) {
-    tui->width = width;
-    tui->height = height;
+  tui->width = width;
+  tui->height = height;
 
-    ui_client_set_size(width, height);
-  }
+  // Redraw on SIGWINCH event if size didn't change. #23411
+  ui_client_set_size(width, height);
 }
 
 static void unibi_goto(TUIData *tui, int row, int col)
