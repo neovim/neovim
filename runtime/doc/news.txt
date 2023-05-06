@@ -56,6 +56,8 @@ The following new APIs or features were added.
 • |Query:iter_matches()| now has the ability to set the maximum start depth
   for matches.
 
+• Added inline virtual text support to |nvim_buf_set_extmark()|.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
