@@ -259,7 +259,7 @@ enum {
   SHM_COMPLETIONSCAN = 'C',  ///< Completion scanning messages.
   SHM_RECORDING      = 'q',  ///< Short recording message.
   SHM_FILEINFO       = 'F',  ///< No file info messages.
-  SHM_SEARCHCOUNT    = 'S',  ///< Search stats: '[1/10]'
+  SHM_SEARCHCOUNT    = 'S',  ///< No search stats: '[1/10]'
   SHM_LEN            = 30,   ///< Max length of all flags together plus a NUL character.
 };
 /// Represented by 'a' flag.
