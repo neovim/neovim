@@ -254,4 +254,29 @@ describe('splitkeep', function()
                                                            |
     ]])
   end)
+
+  -- oldtest: Test_splitkeep_skipcol()
+  it('skipcol is not reset unnecessarily and is copied to new window', function()
+    screen:try_resize(40, 12)
+    exec([[
+      set splitkeep=topline smoothscroll splitbelow scrolloff=0
+      call setline(1, 'with lots of text in one line '->repeat(6))
+      norm 2
+      wincmd s
+    ]])
+    screen:expect([[
+      <<<e line with lots of text in one line |
+      with lots of text in one line with lots |
+      of text in one line                     |
+      ~                                       |
+      [No Name] [+]                           |
+      <<<e line with lots of text in one line |
+      ^with lots of text in one line with lots |
+      of text in one line                     |
+      ~                                       |
+      ~                                       |
+      [No Name] [+]                           |
+                                              |
+    ]])
+  end)
 end)
