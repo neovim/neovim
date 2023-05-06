@@ -287,11 +287,10 @@ static int assert_match_common(typval_T *argvars, assert_type_T atype)
 {
   char buf1[NUMBUFLEN];
   char buf2[NUMBUFLEN];
-  const int called_emsg_before = called_emsg;
   const char *const pat = tv_get_string_buf_chk(&argvars[0], buf1);
   const char *const text = tv_get_string_buf_chk(&argvars[1], buf2);
 
-  if (called_emsg == called_emsg_before
+  if (pat != NULL && text != NULL
       && pattern_match(pat, text, false) != (atype == ASSERT_MATCH)) {
     garray_T ga;
     prepare_assert_error(&ga);
@@ -393,12 +392,10 @@ static int assert_equalfile(typval_T *argvars)
 {
   char buf1[NUMBUFLEN];
   char buf2[NUMBUFLEN];
-  const int called_emsg_before = called_emsg;
   const char *const fname1 = tv_get_string_buf_chk(&argvars[0], buf1);
   const char *const fname2 = tv_get_string_buf_chk(&argvars[1], buf2);
-  garray_T ga;
 
-  if (called_emsg > called_emsg_before) {
+  if (fname1 == NULL || fname2 == NULL) {
     return 0;
   }
 
@@ -451,7 +448,9 @@ static int assert_equalfile(typval_T *argvars)
       fclose(fd2);
     }
   }
+
   if (IObuff[0] != NUL) {
+    garray_T ga;
     prepare_assert_error(&ga);
     if (argvars[2].v_type != VAR_UNKNOWN) {
       char *const tofree = encode_tv2echo(&argvars[2], NULL);
@@ -475,6 +474,7 @@ static int assert_equalfile(typval_T *argvars)
     ga_clear(&ga);
     return 1;
   }
+
   return 0;
 }
 
