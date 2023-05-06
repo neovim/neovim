@@ -52,6 +52,8 @@ iterators |luaref-in|.
 • |'smoothscroll'| option to scroll by screen line rather than by text line
 when |'wrap'| is set.
 
+• Added inline virtual text support to |nvim_buf_set_extmark()|.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
