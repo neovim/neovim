@@ -2101,7 +2101,12 @@ static void win_update(win_T *wp, DecorProviders *providers)
             if (hasFoldingWin(wp, l, NULL, &l, true, NULL)) {
               new_rows++;
             } else if (l == wp->w_topline) {
-              new_rows += plines_win_nofill(wp, l, true) + wp->w_topfill;
+              int n = plines_win_nofill(wp, l, false) + wp->w_topfill;
+              n = adjust_plines_for_skipcol(wp, n);
+              if (n > wp->w_height_inner) {
+                n = wp->w_height_inner;
+              }
+              new_rows += n;
             } else {
               new_rows += plines_win(wp, l, true);
             }
