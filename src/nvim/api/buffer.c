@@ -547,6 +547,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   // Another call to ml_get_buf() may free the line, so make a copy.
   str_at_start = xstrdup(ml_get_buf(buf, (linenr_T)start_row, false));
   size_t len_at_start = strlen(str_at_start);
+  start_col = start_col < 0 ? (int64_t)len_at_start + start_col + 1 : start_col;
   VALIDATE_RANGE((start_col >= 0 && (size_t)start_col <= len_at_start), "start_col", {
     goto early_end;
   });
@@ -554,6 +555,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   // Another call to ml_get_buf() may free the line, so make a copy.
   str_at_end = xstrdup(ml_get_buf(buf, (linenr_T)end_row, false));
   size_t len_at_end = strlen(str_at_end);
+  end_col = end_col < 0 ? (int64_t)len_at_end + end_col + 1 : end_col;
   VALIDATE_RANGE((end_col >= 0 && (size_t)end_col <= len_at_end), "end_col", {
     goto early_end;
   });

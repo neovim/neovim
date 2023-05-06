@@ -437,6 +437,10 @@ describe('api/buf', function()
       -- can append to a line
       set_text(1, 4, -1, 4, {' and', 'more'})
       eq({'goodbye bar', 'text and', 'more'}, get_lines(0, 3, true))
+
+      -- can use negative column numbers
+      set_text(0, -5, 0, -1, {'!'})
+      eq({'goodbye!'}, get_lines(0, 1, true))
     end)
 
     it('works with undo', function()
