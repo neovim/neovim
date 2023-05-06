@@ -834,23 +834,23 @@ bool noremap_keys(void)
   return KeyNoremap & (RM_NONE|RM_SCRIPT);
 }
 
-// Insert a string in position 'offset' in the typeahead buffer (for "@r"
-// and ":normal" command, vgetorpeek() and check_termcode())
-//
-// If noremap is REMAP_YES, new string can be mapped again.
-// If noremap is REMAP_NONE, new string cannot be mapped again.
-// If noremap is REMAP_SKIP, first char of new string cannot be mapped again,
-// but abbreviations are allowed.
-// If noremap is REMAP_SCRIPT, new string cannot be mapped again, except for
-//                             script-local mappings.
-// If noremap is > 0, that many characters of the new string cannot be mapped.
-//
-// If nottyped is true, the string does not return KeyTyped (don't use when
-// offset is non-zero!).
-//
-// If silent is true, cmd_silent is set when the characters are obtained.
-//
-// return FAIL for failure, OK otherwise
+/// Insert a string in position "offset" in the typeahead buffer (for "@r"
+/// and ":normal" command, vgetorpeek() and check_termcode())
+///
+/// If "noremap" is REMAP_YES, new string can be mapped again.
+/// If "noremap" is REMAP_NONE, new string cannot be mapped again.
+/// If "noremap" is REMAP_SKIP, first char of new string cannot be mapped again,
+/// but abbreviations are allowed.
+/// If "noremap" is REMAP_SCRIPT, new string cannot be mapped again, except for
+///                               script-local mappings.
+/// If "noremap" is > 0, that many characters of the new string cannot be mapped.
+///
+/// If "nottyped" is true, the string does not return KeyTyped (don't use when
+/// "offset" is non-zero!).
+///
+/// If "silent" is true, cmd_silent is set when the characters are obtained.
+///
+/// @return  FAIL for failure, OK otherwise
 int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
 {
   uint8_t *s1, *s2;
@@ -1351,8 +1351,8 @@ void before_blocking(void)
   }
 }
 
-/// updatescript() is called when a character can be written to the script file
-/// or when we have waited some time for a character (c == 0).
+/// updatescript() is called when a character can be written to the script
+/// file or when we have waited some time for a character (c == 0).
 ///
 /// All the changed memfiles are synced if c == 0 or when the number of typed
 /// characters reaches 'updatecount' and 'updatecount' is non-zero.

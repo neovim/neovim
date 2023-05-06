@@ -93,7 +93,7 @@ static const char e_not_an_editor_command[]
   = N_("E492: Not an editor command");
 static const char e_no_autocommand_file_name_to_substitute_for_afile[]
   = N_("E495: No autocommand file name to substitute for \"<afile>\"");
-static const char e_no_autocommand_buffer_name_to_substitute_for_abuf[]
+static const char e_no_autocommand_buffer_number_to_substitute_for_abuf[]
   = N_("E496: No autocommand buffer number to substitute for \"<abuf>\"");
 static const char e_no_autocommand_match_name_to_substitute_for_amatch[]
   = N_("E497: No autocommand match name to substitute for \"<amatch>\"");
@@ -6913,7 +6913,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
 
     case SPEC_ABUF:             // buffer number for autocommand
       if (autocmd_bufnr <= 0) {
-        *errormsg = _(e_no_autocommand_buffer_name_to_substitute_for_abuf);
+        *errormsg = _(e_no_autocommand_buffer_number_to_substitute_for_abuf);
         return NULL;
       }
       snprintf(strbuf, sizeof(strbuf), "%d", autocmd_bufnr);
