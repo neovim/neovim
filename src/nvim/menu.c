@@ -559,7 +559,7 @@ static int remove_menu(vimmenu_T **menup, char *name, int modes, bool silent)
         }
       } else if (*name != NUL) {
         if (!silent) {
-          emsg(_(e_menuothermode));
+          emsg(_(e_menu_only_exists_in_another_mode));
         }
         return FAIL;
       }
@@ -760,7 +760,7 @@ static vimmenu_T *find_menu(vimmenu_T *menu, char *name, int modes)
           emsg(_(e_notsubmenu));
           return NULL;
         } else if ((menu->modes & modes) == 0x0) {
-          emsg(_(e_menuothermode));
+          emsg(_(e_menu_only_exists_in_another_mode));
           return NULL;
         } else if (*p == NUL) {  // found a full match
           return menu;

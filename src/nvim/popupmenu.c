@@ -1083,7 +1083,7 @@ void pum_show_popupmenu(vimmenu_T *menu)
   // When there are only Terminal mode menus, using "popup Edit" results in
   // pum_size being zero.
   if (pum_size <= 0) {
-    emsg(e_menuothermode);
+    emsg(_(e_menu_only_exists_in_another_mode));
     return;
   }
 
