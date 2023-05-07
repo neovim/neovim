@@ -4,9 +4,6 @@ on:
   issues:
     types: [opened]
 
-permissions:
-  contents: read
-
 jobs:
   issue-open-check:
     permissions:
