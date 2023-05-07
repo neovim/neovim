@@ -2927,6 +2927,11 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
       }
       c1 = TO_SPECIAL(c1, c2);
     }
+    if (c1 == Ctrl_V) {
+      // CTRL-V is followed by octal, hex or other characters, reverses
+      // what AppendToRedobuffLit() does.
+      c1 = get_literal(true);
+    }
 
     if (got_int) {
       aborted = true;

@@ -1084,6 +1084,11 @@ func Test_map_cmdkey()
   unmap <F3>
   unmap! <F3>
   %bw!
+
+  " command line ending in "0" is handled without errors
+  onoremap ix <cmd>eval 0<cr>
+  call feedkeys('dix.', 'xt')
+  ounmap ix
 endfunc
 
 " text object enters visual mode
