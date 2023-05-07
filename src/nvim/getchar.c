@@ -134,6 +134,10 @@ static size_t last_recorded_len = 0;      // number of last recorded chars
 #endif
 
 static const char e_recursive_mapping[] = N_("E223: Recursive mapping");
+static const char e_cmd_mapping_must_end_with_cr[]
+  = N_("E1135: <Cmd> mapping must end with <CR>");
+static const char e_cmd_mapping_must_end_with_cr_before_second_cmd[]
+  = N_("E1136: <Cmd> mapping must end with <CR> before second <Cmd>");
 
 // Free and clear a buffer.
 void free_buff(buffheader_T *buf)
@@ -2884,7 +2888,8 @@ int fix_input_buffer(uint8_t *buf, int len)
   return len;
 }
 
-/// Get command argument for <Cmd> key
+/// Function passed to do_cmdline() to get the command after a <Cmd> key from
+/// typeahead.
 char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
 {
   garray_T line_ga;
@@ -2894,6 +2899,7 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
 
   ga_init(&line_ga, 1, 32);
 
+  // no mapping for these characters
   no_mapping++;
 
   got_int = false;
@@ -2903,16 +2909,17 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
     if (vgetorpeek(false) == NUL) {
       // incomplete <Cmd> is an error, because there is not much the user
       // could do in this state.
-      emsg(e_cmdmap_err);
+      emsg(_(e_cmd_mapping_must_end_with_cr));
       aborted = true;
       break;
     }
 
     // Get one character at a time.
     c1 = vgetorpeek(true);
+
     // Get two extra bytes for special keys
     if (c1 == K_SPECIAL) {
-      c1 = vgetorpeek(true);          // no mapping for these chars
+      c1 = vgetorpeek(true);
       c2 = vgetorpeek(true);
       if (c1 == KS_MODIFIER) {
         cmod = c2;
@@ -2928,8 +2935,8 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
     } else if (c1 == ESC) {
       aborted = true;
     } else if (c1 == K_COMMAND) {
-      // special case to give nicer error message
-      emsg(e_cmdmap_repeated);
+      // give a nicer error message for this special case
+      emsg(_(e_cmd_mapping_must_end_with_cr_before_second_cmd));
       aborted = true;
     } else if (c1 == K_SNR) {
       ga_concat(&line_ga, "<SNR>");
