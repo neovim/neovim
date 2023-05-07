@@ -979,10 +979,6 @@ func Test_map_cmdkey()
   call assert_fails('call feedkeys("\<F3>", "xt")', 'E1136:')
   call assert_equal(0, x)
 
-  noremap <F3> <Cmd><F3>let x = 2<CR>
-  call assert_fails('call feedkeys("\<F3>", "xt")', 'E1137:')
-  call assert_equal(0, x)
-
   noremap <F3> <Cmd>let x = 3
   call assert_fails('call feedkeys("\<F3>", "xt!")', 'E1255:')
   call assert_equal(0, x)
@@ -1084,11 +1080,6 @@ func Test_map_cmdkey()
   unmap <F3>
   unmap! <F3>
   %bw!
-
-  " command line ending in "0" is handled without errors
-  onoremap ix <cmd>eval 0<cr>
-  call feedkeys('dix.', 'xt')
-  ounmap ix
 endfunc
 
 " text object enters visual mode
@@ -1475,6 +1466,24 @@ func Test_map_cmdkey_redo()
   call delete('Xcmdtext')
   delfunc SelectDash
   ounmap i-
+
+  new
+  call setline(1, 'aaa bbb ccc ddd')
+
+  " command can contain special keys
+  onoremap ix <Cmd>let g:foo ..= '…'<Bar>normal! <C-Right><CR>
+  let g:foo = ''
+  call feedkeys('0dix.', 'xt')
+  call assert_equal('……', g:foo)
+  call assert_equal('ccc ddd', getline(1))
+  unlet g:foo
+
+  " command line ending in "0" is handled without errors
+  onoremap ix <Cmd>eval 0<CR>
+  call feedkeys('dix.', 'xt')
+
+  ounmap ix
+  bwipe!
 endfunc
 
 " Test for using <script> with a map to remap characters in rhs

@@ -554,6 +554,21 @@ void AppendToRedobuffLit(const char *str, int len)
   }
 }
 
+/// Append "s" to the redo buffer, leaving 3-byte special key codes unmodified
+/// and escaping other K_SPECIAL bytes.
+void AppendToRedobuffSpec(const char *s)
+{
+  while (*s != NUL) {
+    if ((uint8_t)(*s) == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
+      // Insert special key literally.
+      add_buff(&redobuff, s, 3L);
+      s += 3;
+    } else {
+      add_char_buff(&redobuff, mb_cptr2char_adv(&s));
+    }
+  }
+}
+
 /// Append a character to the redo buffer.
 /// Translates special keys, NUL, K_SPECIAL and multibyte characters.
 void AppendCharToRedobuff(int c)
@@ -2926,11 +2941,6 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
         continue;
       }
       c1 = TO_SPECIAL(c1, c2);
-    }
-    if (c1 == Ctrl_V) {
-      // CTRL-V is followed by octal, hex or other characters, reverses
-      // what AppendToRedobuffLit() does.
-      c1 = get_literal(true);
     }
 
     if (got_int) {
