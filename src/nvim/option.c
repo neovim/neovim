@@ -5133,10 +5133,11 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
   }
   if (strncmp(p, "no", 2) == 0) {
     xp->xp_context = EXPAND_BOOL_SETTINGS;
+    xp->xp_prefix = XP_PREFIX_NO;
     p += 2;
-  }
-  if (strncmp(p, "inv", 3) == 0) {
+  } else if (strncmp(p, "inv", 3) == 0) {
     xp->xp_context = EXPAND_BOOL_SETTINGS;
+    xp->xp_prefix = XP_PREFIX_INV;
     p += 3;
   }
   xp->xp_pattern = p;

@@ -282,13 +282,17 @@ func Test_set_completion()
   call feedkeys(":setglobal di\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"setglobal dictionary diff diffexpr diffopt digraph directory display', @:)
 
-  " Expand boolean options. When doing :set no<Tab>
-  " vim displays the options names without "no" but completion uses "no...".
+  " Expand boolean options. When doing :set no<Tab> Vim prefixes the option
+  " names with "no".
   call feedkeys(":set nodi\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"set nodiff digraph', @:)
+  call assert_equal('"set nodiff nodigraph', @:)
 
   call feedkeys(":set invdi\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"set invdiff digraph', @:)
+  call assert_equal('"set invdiff invdigraph', @:)
+
+  " Expanding "set noinv" does nothing.
+  call feedkeys(":set noinv\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"set noinv', @:)
 
   " Expand abbreviation of options.
   call feedkeys(":set ts\<C-A>\<C-B>\"\<CR>", 'tx')
