@@ -103,7 +103,7 @@ describe('mappings with <Cmd>', function()
       {1:~                                                                }|
       {1:~                                                                }|
       {1:~                                                                }|
-      {2:E1135: <Cmd> mapping must end with <CR>}                          |
+      {2:E1255: <Cmd> mapping must end with <CR>}                          |
     ]])
     eq(0, eval('x'))
   end)

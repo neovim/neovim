@@ -135,7 +135,7 @@ static size_t last_recorded_len = 0;      // number of last recorded chars
 
 static const char e_recursive_mapping[] = N_("E223: Recursive mapping");
 static const char e_cmd_mapping_must_end_with_cr[]
-  = N_("E1135: <Cmd> mapping must end with <CR>");
+  = N_("E1255: <Cmd> mapping must end with <CR>");
 static const char e_cmd_mapping_must_end_with_cr_before_second_cmd[]
   = N_("E1136: <Cmd> mapping must end with <CR> before second <Cmd>");
 

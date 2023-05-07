@@ -984,7 +984,7 @@ func Test_map_cmdkey()
   call assert_equal(0, x)
 
   noremap <F3> <Cmd>let x = 3
-  call assert_fails('call feedkeys("\<F3>", "xt!")', 'E1135:')
+  call assert_fails('call feedkeys("\<F3>", "xt!")', 'E1255:')
   call assert_equal(0, x)
 
   " works in various modes and sees the correct mode()
