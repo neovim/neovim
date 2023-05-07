@@ -31,7 +31,9 @@ end
 --- ready.
 ---
 ---@returns `true` if server responds.
+---@deprecated
 function M.server_ready()
+  vim.deprecate('vim.lsp.buf.server_ready', nil, '0.10.0')
   return not not vim.lsp.buf_notify(0, 'window/progress', {})
 end
 
