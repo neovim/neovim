@@ -1056,6 +1056,10 @@ static void command_line_scan(mparm_T *parmp)
           version();
           os_exit(0);
         } else if (STRICMP(argv[0] + argv_idx, "api-info") == 0) {
+#ifdef MSWIN
+          // set stdout to binary to avoid crlf in --api-info output
+          _setmode(STDOUT_FILENO, _O_BINARY);
+#endif
           FileDescriptor fp;
           const int fof_ret = file_open_fd(&fp, STDOUT_FILENO,
                                            kFileWriteOnly);
