@@ -876,7 +876,7 @@ static int insert_handle_key(InsertState *s)
     state_handle_k_event();
     goto check_pum;
 
-  case K_COMMAND:       // some command
+  case K_COMMAND:     // <Cmd>command<CR>
     do_cmdline(NULL, getcmdkeycmd, NULL, 0);
     goto check_pum;
 

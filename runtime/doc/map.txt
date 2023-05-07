@@ -290,7 +290,7 @@ Therefore the following is blocked for <expr> mappings:
 - Moving the cursor is allowed, but it is restored afterwards.
 - If the cmdline is changed, the old text and cursor position are restored.
 If you want the mapping to do any of these let the returned characters do
-that. (Or use a |<Cmd>| mapping instead.)
+that, or use a |<Cmd>| mapping instead.
 
 You can use getchar(), it consumes typeahead if there is any. E.g., if you
 have these mappings: >
@@ -324,19 +324,21 @@ be seen as a special key.
 
 						*<Cmd>* *:map-cmd*
 The <Cmd> pseudokey begins a "command mapping", which executes the command
-directly (without changing modes).  Where you might use ":...<CR>" in the
+directly without changing modes.  Where you might use ":...<CR>" in the
 {rhs} of a mapping, you can instead use "<Cmd>...<CR>".
 Example: >
-	noremap x <Cmd>echo mode(1)<cr>
+	noremap x <Cmd>echo mode(1)<CR>
 <
-This is more flexible than `:<C-U>` in visual and operator-pending mode, or
-`<C-O>:` in insert-mode, because the commands are executed directly in the
-current mode (instead of always going to normal-mode).  Visual-mode is
+This is more flexible than `:<C-U>` in Visual and Operator-pending mode, or
+`<C-O>:` in Insert mode, because the commands are executed directly in the
+current mode, instead of always going to Normal mode.  Visual mode is
 preserved, so tricks with |gv| are not needed.  Commands can be invoked
-directly in cmdline-mode (which would otherwise require timer hacks).
+directly in Command-line mode (which would otherwise require timer hacks).
+Example of using <Cmd> halfway Insert mode: >
+	nnoremap <F3> aText <Cmd>echo mode(1)<CR> Added<Esc>
 
 Unlike <expr> mappings, there are no special restrictions on the <Cmd>
-command: it is executed as if an (unrestricted) |autocommand| was invoked
+command: it is executed as if an (unrestricted) |autocmd| was invoked
 or an async event event was processed.
 
 Note:
@@ -350,7 +352,7 @@ Note:
 - In Visual mode  you can use `line('v')` and `col('v')` to get one end of the
   Visual area, the cursor is at the other end.
 
-							*E5520*
+							*E1255* *E1136*
 <Cmd> commands must terminate, that is, they must be followed by <CR> in the
 {rhs} of the mapping definition.  |Command-line| mode is never entered.
 

@@ -5858,7 +5858,11 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         if (repeat_cmdline == NULL) {
           ResetRedobuff();
         } else {
-          AppendToRedobuffLit(repeat_cmdline, -1);
+          if (cap->cmdchar == ':') {
+            AppendToRedobuffLit(repeat_cmdline, -1);
+          } else {
+            AppendToRedobuffSpec(repeat_cmdline);
+          }
           AppendToRedobuff(NL_STR);
           XFREE_CLEAR(repeat_cmdline);
         }
