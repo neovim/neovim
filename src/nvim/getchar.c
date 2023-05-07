@@ -92,8 +92,8 @@ static buffheader_T readbuf2 = { { NULL, { NUL } }, NULL, 0, 0 };
 
 static int typeahead_char = 0;          // typeahead char that's not flushed
 
-// when block_redo is true redo buffer will not be changed
-// used by edit() to repeat insertions and 'V' command for redoing
+/// When block_redo is true the redo buffer will not be changed.
+/// Used by edit() to repeat insertions.
 static int block_redo = false;
 
 static int KeyNoremap = 0;                  // remapping flags
@@ -558,6 +558,10 @@ void AppendToRedobuffLit(const char *str, int len)
 /// and escaping other K_SPECIAL bytes.
 void AppendToRedobuffSpec(const char *s)
 {
+  if (block_redo) {
+    return;
+  }
+
   while (*s != NUL) {
     if ((uint8_t)(*s) == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
       // Insert special key literally.
