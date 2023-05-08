@@ -713,3 +713,26 @@ describe('local winbar with tabs', function()
     ]]}
   end)
 end)
+
+it('winbar works properly when redrawing is postponed #23534', function()
+  clear({args = {
+    '-c', 'set laststatus=2 lazyredraw',
+    '-c', 'setlocal statusline=(statusline) winbar=(winbar)',
+    '-c', 'call nvim_input(":<Esc>")',
+  }})
+  local screen = Screen.new(60, 6)
+  screen:attach()
+  screen:set_default_attr_ids({
+    [0] = {foreground = Screen.colors.Blue, bold = true},
+    [1] = {bold = true},
+    [2] = {bold = true, reverse = true},
+  })
+  screen:expect([[
+    {1:(winbar)                                                    }|
+    ^                                                            |
+    {0:~                                                           }|
+    {0:~                                                           }|
+    {2:(statusline)                                                }|
+                                                                |
+  ]])
+end)
