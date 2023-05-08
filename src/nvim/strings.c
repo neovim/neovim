@@ -1502,7 +1502,8 @@ char *strrep(const char *src, const char *what, const char *rep)
   return ret;
 }
 
-static void byteidx(typval_T *argvars, typval_T *rettv, int comp)
+/// Implementation of "byteidx()" and "byteidxcomp()" functions
+static void byteidx_common(typval_T *argvars, typval_T *rettv, int comp)
 {
   rettv->vval.v_number = -1;
 
@@ -1516,7 +1517,9 @@ static void byteidx(typval_T *argvars, typval_T *rettv, int comp)
   if (argvars[2].v_type != VAR_UNKNOWN) {
     utf16idx = tv_get_bool(&argvars[2]);
     if (utf16idx < 0 || utf16idx > 1) {
-      semsg(_(e_using_number_as_bool_nr), utf16idx);
+      if (utf16idx != -1) {
+        semsg(_(e_using_number_as_bool_nr), utf16idx);
+      }
       return;
     }
   }
@@ -1550,13 +1553,13 @@ static void byteidx(typval_T *argvars, typval_T *rettv, int comp)
 /// "byteidx()" function
 void f_byteidx(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  byteidx(argvars, rettv, false);
+  byteidx_common(argvars, rettv, false);
 }
 
 /// "byteidxcomp()" function
 void f_byteidxcomp(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  byteidx(argvars, rettv, true);
+  byteidx_common(argvars, rettv, true);
 }
 
 /// "charidx()" function
@@ -1770,7 +1773,9 @@ void f_strchars(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     skipcc = (int)tv_get_bool(&argvars[1]);
   }
   if (skipcc < 0 || skipcc > 1) {
-    semsg(_(e_using_number_as_bool_nr), skipcc);
+    if (skipcc != -1) {
+      semsg(_(e_using_number_as_bool_nr), skipcc);
+    }
   } else {
     strchar_common(argvars, rettv, skipcc);
   }
@@ -1842,7 +1847,9 @@ void f_strcharpart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         && argvars[3].v_type != VAR_UNKNOWN) {
       skipcc = tv_get_bool(&argvars[3]);
       if (skipcc < 0 || skipcc > 1) {
-        semsg(_(e_using_number_as_bool_nr), skipcc);
+        if (skipcc != -1) {
+          semsg(_(e_using_number_as_bool_nr), skipcc);
+        }
         return;
       }
     }
