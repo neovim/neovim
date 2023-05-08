@@ -467,12 +467,10 @@ char *deref_func_name(const char *name, int *lenp, partial_T **const partialp, b
 /// @param name function name
 void emsg_funcname(const char *errmsg, const char *name)
 {
-  char *p;
+  char *p = (char *)name;
 
-  if ((uint8_t)(*name) == K_SPECIAL) {
+  if ((uint8_t)name[0] == K_SPECIAL && name[1] != NUL && name[2] != NUL) {
     p = concat_str("<SNR>", name + 3);
-  } else {
-    p = (char *)name;
   }
 
   semsg(_(errmsg), p);
@@ -1863,8 +1861,7 @@ char *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, part
 
   // Check for hard coded <SNR>: already translated function ID (from a user
   // command).
-  if ((unsigned char)(*pp)[0] == K_SPECIAL && (unsigned char)(*pp)[1] == KS_EXTRA
-      && (*pp)[2] == KE_SNR) {
+  if ((uint8_t)(*pp)[0] == K_SPECIAL && (uint8_t)(*pp)[1] == KS_EXTRA && (*pp)[2] == KE_SNR) {
     *pp += 3;
     len = get_id_len((const char **)pp) + 3;
     return xmemdupz(start, (size_t)len);
@@ -2140,7 +2137,6 @@ void ex_function(exarg_T *eap)
   char *theline;
   char *line_to_free = NULL;
   char c;
-  int saved_did_emsg;
   bool saved_wait_return = need_wait_return;
   char *name = NULL;
   char *p;
@@ -2234,7 +2230,7 @@ void ex_function(exarg_T *eap)
 
   // An error in a function call during evaluation of an expression in magic
   // braces should not cause the function not to be defined.
-  saved_did_emsg = did_emsg;
+  const int saved_did_emsg = did_emsg;
   did_emsg = false;
 
   //
