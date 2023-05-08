@@ -336,7 +336,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     grid_adjust(&grid, &row, &col);
 
     if (row < 0) {
-      return;
+      goto theend;
     }
 
     fillchar = wp->w_p_fcs_chars.wbr;
