@@ -2137,7 +2137,6 @@ void ex_function(exarg_T *eap)
   char *theline;
   char *line_to_free = NULL;
   char c;
-  int saved_did_emsg;
   bool saved_wait_return = need_wait_return;
   char *name = NULL;
   char *p;
@@ -2229,13 +2228,9 @@ void ex_function(exarg_T *eap)
     eap->skip = true;
   }
 
-  if (name == NULL) {
-    goto ret_free;
-  }
-
   // An error in a function call during evaluation of an expression in magic
   // braces should not cause the function not to be defined.
-  saved_did_emsg = did_emsg;
+  const int saved_did_emsg = did_emsg;
   did_emsg = false;
 
   //
