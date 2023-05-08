@@ -20,10 +20,10 @@ local function get_search_history(name)
     local man = require('runtime.lua.man')
     local res = {}
     man.find_path = function(sect, name)
-      table.insert(res, name)
+      table.insert(res, {sect, name})
       return nil
     end
-    local ok, rv = pcall(man.open_page, 0, {tab = 0}, args)
+    local ok, rv = pcall(man.open_page, -1, {tab = 0}, args)
     assert(not ok)
     assert(rv and rv:match('no manual entry'))
     return res
@@ -196,16 +196,32 @@ describe(':Man', function()
 
   it('tries variants with spaces, underscores #22503', function()
     eq({
-       'NAME WITH SPACES',
-       'NAME_WITH_SPACES',
+       {'', 'NAME WITH SPACES'},
+       {'', 'NAME_WITH_SPACES'},
       }, get_search_history('NAME WITH SPACES'))
     eq({
-       'some other man',
-       'some_other_man',
+       {'3', 'some other man'},
+       {'3', 'some_other_man'},
       }, get_search_history('3 some other man'))
     eq({
-       'other_man',
-       'other_man',
+       {'3x', 'some other man'},
+       {'3x', 'some_other_man'},
+      }, get_search_history('3X some other man'))
+    eq({
+       {'3tcl', 'some other man'},
+       {'3tcl', 'some_other_man'},
+      }, get_search_history('3tcl some other man'))
+    eq({
+       {'n', 'some other man'},
+       {'n', 'some_other_man'},
+      }, get_search_history('n some other man'))
+    eq({
+       {'', '123some other man'},
+       {'', '123some_other_man'},
+      }, get_search_history('123some other man'))
+    eq({
+       {'1', 'other_man'},
+       {'1', 'other_man'},
       }, get_search_history('other_man(1)'))
   end)
 end)
