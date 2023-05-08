@@ -567,8 +567,4 @@ EXTERN const size_t kTVTranslate INIT(= TV_TRANSLATE);
 # include "eval/typval.h.generated.h"
 #endif
 
-#define tv_get_bool tv_get_number
-#define tv_get_bool_chk tv_get_number_chk
-#define tv_dict_get_bool tv_dict_get_number_def
-
 #endif  // NVIM_EVAL_TYPVAL_H

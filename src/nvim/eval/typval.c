@@ -2166,6 +2166,16 @@ varnumber_T tv_dict_get_number_def(const dict_T *const d, const char *const key,
   return tv_get_number(&di->di_tv);
 }
 
+varnumber_T tv_dict_get_bool(const dict_T *const d, const char *const key, const int def)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  dictitem_T *const di = tv_dict_find(d, key, -1);
+  if (di == NULL) {
+    return def;
+  }
+  return tv_get_bool(&di->di_tv);
+}
+
 /// Converts a dict to an environment
 char **tv_dict_to_env(dict_T *denv)
 {
@@ -4047,6 +4057,18 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
     *ret_error = true;
   }
   return (ret_error == NULL ? -1 : 0);
+}
+
+varnumber_T tv_get_bool(const typval_T *const tv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return tv_get_number_chk(tv, NULL);
+}
+
+varnumber_T tv_get_bool_chk(const typval_T *const tv, bool *const ret_error)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
+{
+  return tv_get_number_chk(tv, ret_error);
 }
 
 /// Get the line number from VimL object

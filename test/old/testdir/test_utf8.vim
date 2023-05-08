@@ -29,8 +29,10 @@ func Test_strchars()
     call assert_equal(exp[i], strcharlen(inp[i]))
   endfor
 
-  call assert_fails("let v=strchars('abc', [])", 'E745:')
-  call assert_fails("let v=strchars('abc', 2)", 'E1023:')
+  call assert_fails("call strchars('abc', 2)", ['E1023:', 'E1023:'])
+  call assert_fails("call strchars('abc', -1)", ['E1023:', 'E1023:'])
+  call assert_fails("call strchars('abc', {})", ['E728:', 'E728:'])
+  call assert_fails("call strchars('abc', [])", ['E745:', 'E745:'])
 endfunc
 
 " Test for customlist completion
