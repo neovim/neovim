@@ -89,19 +89,14 @@ function(Download ROCK VER)
 endfunction()
 
 if(WIN32)
-  set(BUSTED_EXE "${DEPS_BIN_DIR}/busted.bat")
   set(LUACHECK_EXE "${DEPS_BIN_DIR}/luacheck.bat")
 else()
-  set(BUSTED_EXE "${DEPS_BIN_DIR}/busted")
   set(LUACHECK_EXE "${DEPS_BIN_DIR}/luacheck")
 endif()
 
 add_custom_target(test_deps)
 
 Download(luacheck 1.1.0-1 ${LUACHECK_EXE})
-
-Download(busted 2.1.1 ${BUSTED_EXE})
-add_dependencies(test_deps busted)
 
 if(PREFER_LUA)
   Download(coxpcall 1.17.0-1)
