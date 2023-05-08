@@ -4270,10 +4270,10 @@ The input is in the variable "line", the results in the variables "file",
 
 getting the scriptnames in a Dictionary ~
 						*scriptnames-dictionary*
-The |:scriptnames| command can be used to get a list of all script files that
-have been sourced.  There is no equivalent function or variable for this
-(because it's rarely needed).  In case you need to manipulate the list this
-code can be used: >
+The `:scriptnames` command can be used to get a list of all script files that
+have been sourced.  There is also the `getscriptinfo()` function, but the
+information returned is not exactly the same.  In case you need to manipulate
+the output of `scriptnames` this code can be used: >
     " Get the output of ":scriptnames" in the scriptnames_output variable.
     let scriptnames_output = ''
     redir => scriptnames_output
