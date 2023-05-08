@@ -638,4 +638,47 @@ func Test_smoothscroll_ins_lines()
   call StopVimInTerminal(buf)
 endfunc
 
+" this placed the cursor in the command line
+func Test_smoothscroll_cursormoved_line()
+  CheckScreendump
+
+  let lines =<< trim END
+      set smoothscroll
+      call setline(1, [
+        \'',
+        \'_'->repeat(&lines * &columns),
+        \(('_')->repeat(&columns - 2) .. 'xxx')->repeat(2)
+      \])
+      autocmd CursorMoved * eval [line('w0'), line('w$')]
+      call search('xxx')
+  END
+  call writefile(lines, 'XSmoothCursorMovedLine', 'D')
+  let buf = RunVimInTerminal('-S XSmoothCursorMovedLine', #{rows: 6})
+
+  call VerifyScreenDump(buf, 'Test_smooth_cursormoved_line', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_smoothscroll_eob()
+  CheckScreendump
+
+  let lines =<< trim END
+      set smoothscroll
+      call setline(1, ['']->repeat(100))
+      norm G
+  END
+  call writefile(lines, 'XSmoothEob', 'D')
+  let buf = RunVimInTerminal('-S XSmoothEob', #{rows: 10})
+
+  " does not scroll halfway when scrolling to end of buffer
+  call VerifyScreenDump(buf, 'Test_smooth_eob_1', {})
+
+  " cursor is not placed below window
+  call term_sendkeys(buf, ":call setline(92, 'a'->repeat(100))\<CR>\<C-B>G")
+  call VerifyScreenDump(buf, 'Test_smooth_eob_2', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
