@@ -155,7 +155,8 @@ func Test_strcharpart()
   END
   call CheckLegacyAndVim9Success(lines)
 
-  call assert_fails('echo strcharpart("", 0, 0, {})', ['E728:', 'E728:'])
+  call assert_fails('call strcharpart("", 0, 0, {})', ['E728:', 'E728:'])
+  call assert_fails('call strcharpart("", 0, 0, -1)', ['E1023:', 'E1023:'])
 endfunc
 
 func Test_getreg_empty_list()
