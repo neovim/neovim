@@ -336,6 +336,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 :scr[iptnames]		List all sourced script names, in the order they were
 			first sourced.  The number is used for the script ID
 			|<SID>|.
+			Also see `getscriptinfo()`.
 
 :scr[iptnames][!] {scriptId}			*:script*
 			Edit script {scriptId}.  Although ":scriptnames name"

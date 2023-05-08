@@ -338,8 +338,8 @@ Example of using <Cmd> halfway Insert mode: >
 	nnoremap <F3> aText <Cmd>echo mode(1)<CR> Added<Esc>
 
 Unlike <expr> mappings, there are no special restrictions on the <Cmd>
-command: it is executed as if an (unrestricted) |autocmd| was invoked
-or an async event event was processed.
+command: it is executed as if an (unrestricted) |autocommand| was invoked
+or an async event was processed.
 
 Note:
 - Because <Cmd> avoids mode-changes (unlike ":") it does not trigger
@@ -638,6 +638,7 @@ not to be matched with any key sequence.  This is useful in plugins
 							*<MouseMove>*
 The special key name "<MouseMove>" can be used to handle mouse movement.  It
 needs to be enabled with 'mousemoveevent'.
+The |getmousepos()| function can be used to obtain the mouse position.
 
 							*<Char>* *<Char->*
 To map a character by its decimal, octal or hexadecimal number the <Char>
