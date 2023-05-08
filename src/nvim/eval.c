@@ -3677,9 +3677,6 @@ static int eval_index_inner(typval_T *rettv, bool is_range, typval_T *var1, typv
       } else if (n2 >= len) {
         n2 = len;
       }
-      if (exclusive) {
-        n2--;
-      }
       if (n1 >= len || n2 < 0 || n1 > n2) {
         v = NULL;
       } else {
