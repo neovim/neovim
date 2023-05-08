@@ -2409,7 +2409,7 @@ void f_getscriptinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         return;
       }
       if (sid <= 0) {
-        semsg(e_invargNval, "sid", tv_get_string(&sid_di->di_tv));
+        semsg(_(e_invargNval), "sid", tv_get_string(&sid_di->di_tv));
         return;
       }
     } else {
