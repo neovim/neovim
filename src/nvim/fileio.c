@@ -2883,9 +2883,10 @@ int buf_check_timestamp(buf_T *buf)
   bufref_T bufref;
   set_bufref(&bufref, buf);
 
-  // If its a terminal, there is no file name, the buffer is not loaded,
-  // 'buftype' is set, we are in the middle of a save or being called
-  // recursively: ignore this buffer.
+  // If its a terminal or a FIFO, there is no file name,
+  // the buffer is not loaded, 'buftype' is set,
+  // we are in the middle of a save or being called recursively:
+  // ignore this buffer.
   if (buf->terminal
       || buf->b_ffname == NULL
       || buf->b_ml.ml_mfp == NULL
@@ -2906,6 +2907,15 @@ int buf_check_timestamp(buf_T *buf)
 
     retval = 1;
 
+    // If we have a FIFO, we do not want to reload the buffer
+    // without an explicit user request
+    // as the data could be lost.
+    if (file_info_ok
+      && (int)file_info.stat.st_mode == buf->b_orig_mode
+      && S_ISFIFO(buf->b_orig_mode)) {
+      return 0;
+    }
+
     // set b_mtime to stop further warnings (e.g., when executing
     // FileChangedShell autocmd)
     if (!file_info_ok) {
@@ -2914,7 +2924,9 @@ int buf_check_timestamp(buf_T *buf)
       buf->b_orig_size = 0;
       buf->b_orig_mode = 0;
     } else {
-      buf_store_file_info(buf, &file_info);
+      if ((int)file_info.stat.st_mode != buf->b_orig_mode ) {
+        buf_store_file_info(buf, &file_info);
+      }
     }
 
     if (os_isdir(buf->b_fname)) {
