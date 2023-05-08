@@ -2301,17 +2301,17 @@ static int get_encoded_char_adv(const char **p)
 /// Handle setting 'listchars' or 'fillchars'.
 /// Assume monocell characters
 ///
-/// @param value points to either the global or the window-local value.
-/// @param opt_lcs is tue for "listchars" and FALSE for "fillchars".
+/// @param value  points to either the global or the window-local value.
+/// @param is_listchars  is true for "listchars" and false for "fillchars".
 /// @param apply  if false, do not store the flags, only check for errors.
 /// @return error message, NULL if it's OK.
-static const char *set_chars_option(win_T *wp, const char *value, bool opt_lcs, bool apply)
+static const char *set_chars_option(win_T *wp, const char *value, const bool is_listchars,
+                                    const bool apply)
 {
   const char *last_multispace = NULL;   // Last occurrence of "multispace:"
   const char *last_lmultispace = NULL;  // Last occurrence of "leadmultispace:"
   int multispace_len = 0;           // Length of lcs-multispace string
   int lead_multispace_len = 0;      // Length of lcs-leadmultispace string
-  const bool is_listchars = opt_lcs;
 
   struct chars_tab {
     int *cp;     ///< char value
@@ -2358,13 +2358,13 @@ static const char *set_chars_option(win_T *wp, const char *value, bool opt_lcs, 
   if (is_listchars) {
     tab = lcs_tab;
     entries = ARRAY_SIZE(lcs_tab);
-    if (opt_lcs && wp->w_p_lcs[0] == NUL) {
+    if (wp->w_p_lcs[0] == NUL) {
       value = p_lcs;  // local value is empty, use the global value
     }
   } else {
     tab = fcs_tab;
     entries = ARRAY_SIZE(fcs_tab);
-    if (!opt_lcs && wp->w_p_fcs[0] == NUL) {
+    if (wp->w_p_fcs[0] == NUL) {
       value = p_fcs;  // local value is empty, use the global value
     }
   }
