@@ -323,11 +323,11 @@ func Test_smoothscroll_wrap_long_line()
   call VerifyScreenDump(buf, 'Test_smooth_long_10', {})
 
   " Test zt/zz/zb that they work properly when a long line is above it
-  call term_sendkeys(buf, "zb")
+  call term_sendkeys(buf, "zt")
   call VerifyScreenDump(buf, 'Test_smooth_long_11', {})
   call term_sendkeys(buf, "zz")
   call VerifyScreenDump(buf, 'Test_smooth_long_12', {})
-  call term_sendkeys(buf, "zt")
+  call term_sendkeys(buf, "zb")
   call VerifyScreenDump(buf, 'Test_smooth_long_13', {})
 
   " Repeat the step and move the cursor down again.
