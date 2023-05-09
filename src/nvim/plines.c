@@ -269,7 +269,7 @@ int linetabsize_col(int startcol, char *s)
   if (cts.cts_has_virt_text && cts.cts_ptr == cts.cts_line) {
     // check for virtual text in an empty line
     (void)lbr_chartabsize_adv(&cts);
-    cts.cts_vcol += cts.cts_cur_text_width;
+    cts.cts_vcol += cts.cts_cur_text_width_left + cts.cts_cur_text_width_right;
   }
   clear_chartabsize_arg(&cts);
   return cts.cts_vcol;
@@ -308,7 +308,7 @@ void win_linetabsize_cts(chartabsize_T *cts, colnr_T len)
   if (cts->cts_has_virt_text && *cts->cts_ptr == NUL
       && cts->cts_ptr == cts->cts_line) {
     (void)win_lbr_chartabsize(cts, NULL);
-    cts->cts_vcol += cts->cts_cur_text_width;
+    cts->cts_vcol += cts->cts_cur_text_width_left + cts->cts_cur_text_width_right;
   }
 }
 
@@ -323,9 +323,9 @@ void init_chartabsize_arg(chartabsize_T *cts, win_T *wp, linenr_T lnum FUNC_ATTR
   cts->cts_vcol = col;
   cts->cts_line = line;
   cts->cts_ptr = ptr;
-  cts->cts_cur_text_width = 0;
+  cts->cts_cur_text_width_left = 0;
+  cts->cts_cur_text_width_right = 0;
   cts->cts_has_virt_text = false;
-  cts->cts_has_right_gravity = true;
   cts->cts_row = lnum - 1;
 
   if (cts->cts_row >= 0) {
@@ -398,7 +398,8 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   int mb_added = 0;
   int numberextra;
 
-  cts->cts_cur_text_width = 0;
+  cts->cts_cur_text_width_left = 0;
+  cts->cts_cur_text_width_right = 0;
 
   // No 'linebreak', 'showbreak' and 'breakindent': return quickly.
   if (!wp->w_p_lbr && !wp->w_p_bri && *get_showbreak_value(wp) == NUL
@@ -419,14 +420,15 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
       mtkey_t mark = marktree_itr_current(cts->cts_iter);
       if (mark.pos.row != cts->cts_row || mark.pos.col > col) {
         break;
-      } else if (mark.pos.col >= col
-                 && mark.pos.col < col + charlen) {  // TODO(bfredl): or maybe unconditionally, what
-                                                     // if byte-misaligned?
+      } else if (mark.pos.col >= col && mark.pos.col < col + charlen) {
         if (!mt_end(mark)) {
           Decoration decor = get_decor(mark);
           if (decor.virt_text_pos == kVTInline) {
-            cts->cts_cur_text_width += decor.virt_text_width;
-            cts->cts_has_right_gravity = mt_right(mark);
+            if (mt_right(mark)) {
+              cts->cts_cur_text_width_right += decor.virt_text_width;
+            } else {
+              cts->cts_cur_text_width_left += decor.virt_text_width;
+            }
             size += decor.virt_text_width;
             if (*s == TAB) {
               // tab size changes because of the inserted text

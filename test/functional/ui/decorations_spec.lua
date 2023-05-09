@@ -1745,6 +1745,49 @@ bbbbbbb]])
       ]]}
   end)
 
+  it('cursor position is correct when inserting around virtual texts with both left and right gravity ', function()
+    insert('foo foo foo foo')
+    meths.buf_set_extmark(0, ns, 0, 8, { virt_text = {{ '>>', 'Special' }}, virt_text_pos = 'inline', right_gravity = false })
+    meths.buf_set_extmark(0, ns, 0, 8, { virt_text = {{ '<<', 'Special' }}, virt_text_pos = 'inline', right_gravity = true })
+    feed('08l')
+    screen:expect{ grid = [[
+      foo foo {28:>><<}^foo foo                               |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+
+    feed('i')
+    screen:expect { grid = [[
+      foo foo {28:>>^<<}foo foo                               |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {24:-- INSERT --}                                      |
+      ]]}
+  end)
+
   it('draws correctly with no wrap multiple virtual text, where one is hidden', function()
     insert('abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz')
     command("set nowrap")
