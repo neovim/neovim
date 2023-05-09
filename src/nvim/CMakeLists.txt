@@ -292,6 +292,7 @@ set(LUA_FILETYPE_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/filetype.lu
 set(LUA_INIT_PACKAGES_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_init_packages.lua)
 set(LUA_KEYMAP_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/keymap.lua)
 set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
+set(LUAJIT_RUNTIME_DIR ${DEPS_PREFIX}/share/luajit-2.1.0-beta3/jit)
 
 glob_wrapper(UNICODE_FILES ${UNICODE_DIR}/*.txt)
 glob_wrapper(API_HEADERS api/*.h)
@@ -797,6 +798,15 @@ endif()
 install(DIRECTORY ${BINARY_LIB_DIR}
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/nvim/
   USE_SOURCE_PERMISSIONS)
+
+if(NOT PREFER_LUA)
+  # install luajit runtime files if bundled
+  if(EXISTS ${LUAJIT_RUNTIME_DIR})
+    install(DIRECTORY ${LUAJIT_RUNTIME_DIR}
+      DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/lua
+      USE_SOURCE_PERMISSIONS)
+  endif()
+endif()
 
 add_library(libnvim STATIC EXCLUDE_FROM_ALL)
 if(MSVC)
