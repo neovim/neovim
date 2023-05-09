@@ -942,12 +942,12 @@ start_client({config})                                *vim.lsp.start_client()*
 
     Parameters: ~
       • {config}  (table) Configuration for the server:
-                  • cmd: (string[]|fun(dispatchers: table):table) command
-                    string or list treated like |jobstart()|. The command must
-                    launch the language server process. `cmd` can also be a
-                    function that creates an RPC client. The function receives
-                    a dispatchers table and must return a table with the
-                    functions `request`, `notify`, `is_closing` and
+                  • cmd: (string[]|fun(dispatchers: table):table) command a
+                    list of strings treated like |jobstart()|. The command
+                    must launch the language server process. `cmd` can also be
+                    a function that creates an RPC client. The function
+                    receives a dispatchers table and must return a table with
+                    the functions `request`, `notify`, `is_closing` and
                     `terminate` See |vim.lsp.rpc.request()| and
                     |vim.lsp.rpc.notify()| For TCP there is a built-in rpc
                     client factory: |vim.lsp.rpc.connect()|
