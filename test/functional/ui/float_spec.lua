@@ -8079,10 +8079,13 @@ describe('float window', function()
         [6] = {foreground = tonumber('0x332533'), background = tonumber('0xfff1ff')},
         [7] = {background = tonumber('0xffcfff'), bold = true, foreground = tonumber('0x0000d8')},
         [8] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue1},
-        [9] = {background = Screen.colors.LightMagenta, blend=30},
-        [10] = {foreground = Screen.colors.Red, background = Screen.colors.LightMagenta, blend=0},
-        [11] = {foreground = Screen.colors.Red, background = Screen.colors.LightMagenta, blend=80},
-        [12] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue1, blend=30},
+        [9] = {background = Screen.colors.LightMagenta, blend = 30},
+        [10] = {foreground = Screen.colors.Red, background = Screen.colors.LightMagenta, blend = 0},
+        [11] = {foreground = Screen.colors.Red, background = Screen.colors.LightMagenta, blend = 80},
+        [12] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue1, blend = 30},
+        [13] = {background = Screen.colors.LightGray, blend = 30},
+        [14] = {foreground = Screen.colors.Grey0, background = Screen.colors.Grey88},
+        [15] = {foreground = tonumber('0x939393'), background = Screen.colors.Grey88},
       })
       insert([[
         Lorem ipsum dolor sit amet, consectetur
@@ -8183,6 +8186,58 @@ describe('float window', function()
                                                             |
         ]])
       end
+
+      -- Check that 'winblend' works with NormalNC highlight
+      meths.set_option_value('winhighlight', 'NormalNC:Visual', {win = win})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [3:--------------------------------------------------]|
+        ## grid 2
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea commodo consequat. Duis aute irure dolor in    |
+          reprehenderit in voluptate velit esse cillum      |
+          dolore eu fugiat nulla pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+        ## grid 3
+                                                            |
+        ## grid 5
+          {13:test           }|
+          {13:               }|
+          {13:popup    text  }|
+        ]], float_pos={
+          [5] = {{id = 1002}, "NW", 1, 2, 5, true, 50};
+        }}
+      else
+        screen:expect([[
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea co{14:test}{15:o consequat}. Duis aute irure dolor in    |
+          repre{15:henderit in vol}uptate velit esse cillum      |
+          dolor{14:popup}{15:fugi}{14:text}{15:ul}la pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+                                                            |
+        ]])
+      end
+
+      -- Also test with global NormalNC highlight
+      meths.set_option_value('winhighlight', '', {win = win})
+      command('hi link NormalNC Visual')
+      screen:expect_unchanged(true)
+      command('hi clear NormalNC')
 
       command('hi SpecialRegion guifg=Red blend=0')
       meths.buf_add_highlight(buf, -1, "SpecialRegion", 2, 0, -1)
