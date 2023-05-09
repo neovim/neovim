@@ -198,16 +198,17 @@ function M.register(reg, ctx)
   end
   local watch_regs = {}
   for _, w in ipairs(reg.registerOptions.watchers) do
+    local relative_pattern = false
     local glob_patterns = {}
     if type(w.globPattern) == 'string' then
       for _, folder in ipairs(client.workspace_folders) do
         table.insert(glob_patterns, { baseUri = folder.uri, pattern = w.globPattern })
       end
     else
+      relative_pattern = true
       table.insert(glob_patterns, w.globPattern)
     end
     for _, glob_pattern in ipairs(glob_patterns) do
-      local pattern = parse(glob_pattern.pattern)
       local base_dir = nil
       if type(glob_pattern.baseUri) == 'string' then
         base_dir = glob_pattern.baseUri
@@ -216,8 +217,15 @@ function M.register(reg, ctx)
       end
       assert(base_dir, "couldn't identify root of watch")
       base_dir = vim.uri_to_fname(base_dir)
+
       local kind = w.kind
         or protocol.WatchKind.Create + protocol.WatchKind.Change + protocol.WatchKind.Delete
+
+      local pattern = glob_pattern.pattern
+      if relative_pattern then
+        pattern = base_dir .. '/' .. pattern
+      end
+      pattern = parse(pattern)
 
       table.insert(watch_regs, {
         base_dir = base_dir,
