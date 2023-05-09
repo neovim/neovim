@@ -901,8 +901,8 @@ end
 --- Field `cmd` in {config} is required.
 ---
 ---@param config (table) Configuration for the server:
---- - cmd: (string[]|fun(dispatchers: table):table) command string or
----       list treated like |jobstart()|. The command must launch the language server
+--- - cmd: (string[]|fun(dispatchers: table):table) command a list of
+---       strings treated like |jobstart()|. The command must launch the language server
 ---       process. `cmd` can also be a function that creates an RPC client.
 ---       The function receives a dispatchers table and must return a table with the
 ---       functions `request`, `notify`, `is_closing` and `terminate`
