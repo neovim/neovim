@@ -1053,11 +1053,8 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
 
       // make sure we don't go past the end of the line
       if (*cts.cts_ptr == NUL) {
-        // NUL at end of line only takes one column
-        incr = 1;
-        if (cts.cts_cur_text_width > 0) {
-          incr = cts.cts_cur_text_width;
-        }
+        // NUL at end of line only takes one column, unless there is virtual text
+        incr = MAX(1, cts.cts_cur_text_width_left + cts.cts_cur_text_width_right);
         on_NUL = true;
         break;
       }
@@ -1092,9 +1089,12 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
       // cursor at end
       *cursor = vcol + incr - 1;
     } else {
-      if (((State & MODE_INSERT) == 0 || !cts.cts_has_right_gravity) && !on_NUL) {
+      if (!on_NUL) {
         // cursor is after inserted text, unless on the NUL
-        vcol += cts.cts_cur_text_width;
+        vcol += cts.cts_cur_text_width_left;
+        if ((State & MODE_INSERT) == 0) {
+          vcol += cts.cts_cur_text_width_right;
+        }
       }
       // cursor at start
       *cursor = vcol + head;

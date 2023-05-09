@@ -1757,7 +1757,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
                                         selected, &decor_state);
 
         while (true) {
-          // we could already be inside an existing virt_line with multiple chunks
+          // we could already be inside an existing inline text with multiple chunks
           if (!(virt_inline_i < kv_size(virt_inline))) {
             DecorState *state = &decor_state;
             for (size_t i = 0; i < kv_size(state->active); i++) {

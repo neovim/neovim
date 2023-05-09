@@ -14,8 +14,8 @@ typedef struct {
   int cts_row;
 
   bool cts_has_virt_text;  // true if if a property inserts text
-  bool cts_has_right_gravity;
-  int cts_cur_text_width;     // width of current inserted text
+  int cts_cur_text_width_left;     // width of virtual text left of cursor
+  int cts_cur_text_width_right;     // width of virtual text right of cursor
   MarkTreeIter cts_iter[1];
   // TODO(bfredl): iterator in to the marktree for scanning virt text
 
