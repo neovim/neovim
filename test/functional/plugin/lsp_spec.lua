@@ -3855,7 +3855,7 @@ describe('LSP', function()
     end)
 
     it('correctly registers and unregisters', function()
-      local root_dir = 'some_dir'
+      local root_dir = '/some_dir'
       exec_lua(create_server_definition)
       local result = exec_lua([[
         local root_dir = ...
@@ -4009,10 +4009,9 @@ describe('LSP', function()
         local watchers = {}
         local max_kind = protocol.WatchKind.Create + protocol.WatchKind.Change + protocol.WatchKind.Delete
         for i = 0, max_kind do
-          local j = i
           table.insert(watchers, {
             globPattern = {
-              baseUri = vim.uri_from_fname('/dir'..tostring(i)),
+              baseUri = vim.uri_from_fname('/dir'),
               pattern = 'watch'..tostring(i),
             },
             kind = i,
@@ -4031,7 +4030,7 @@ describe('LSP', function()
         }, { client_id = client_id })
 
         for i = 0, max_kind do
-          local filename = 'watch'..tostring(i)
+          local filename = '/dir/watch' .. tostring(i)
           send_event(filename, vim._watch.FileChangeType.Created)
           send_event(filename, vim._watch.FileChangeType.Changed)
           send_event(filename, vim._watch.FileChangeType.Deleted)
@@ -4045,7 +4044,8 @@ describe('LSP', function()
 
       local function watched_uri(fname)
         return exec_lua([[
-            return vim.uri_from_fname(...)
+            local fname = ...
+            return vim.uri_from_fname('/dir/' .. fname)
           ]], fname)
       end
 
