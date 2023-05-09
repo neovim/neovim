@@ -212,7 +212,7 @@ preprocess_patch() {
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<\%('"${na_src_testdir}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove testdir/test_*.vim files
-  local na_src_testdir='balloon.*\|behave\.vim\|channel.*\|crypt\.vim\|cscope\.vim\|gui.*\|hardcopy\.vim\|job_fails\.vim\|json\.vim\|mzscheme\.vim\|netbeans.*\|paste\.vim\|popupwin.*\|restricted\.vim\|shortpathname\.vim\|tcl\.vim\|terminal.*\|xxd\.vim'
+  local na_src_testdir='balloon.*\|behave\.vim\|channel.*\|crypt\.vim\|cscope\.vim\|gui.*\|hardcopy\.vim\|job_fails\.vim\|json\.vim\|mzscheme\.vim\|netbeans.*\|paste\.vim\|popupwin.*\|python2\.vim\|pyx2\.vim\|restricted\.vim\|shortpathname\.vim\|tcl\.vim\|terminal.*\|xxd\.vim'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<test_\%('"${na_src_testdir}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove version.c #7555

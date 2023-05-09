@@ -8654,7 +8654,7 @@ bool eval_has_provider(const char *feat)
     return false;
   }
 
-  char name[32];  // Normalized: "python_compiled" => "python".
+  char name[32];  // Normalized: "python3_compiled" => "python3".
   snprintf(name, sizeof(name), "%s", feat);
   strchrsub(name, '_', '\0');  // Chop any "_xx" suffix.
 
