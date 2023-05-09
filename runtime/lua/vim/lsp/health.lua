@@ -32,8 +32,15 @@ function M.check()
   vim.health.start('vim.lsp: Active Clients')
   if next(clients) then
     for _, client in pairs(clients) do
+      local attached_to = table.concat(vim.tbl_keys(client.attached_buffers or {}), ',')
       report_info(
-        string.format('%s (id=%s, root_dir=%s)', client.name, client.id, client.config.root_dir)
+        string.format(
+          '%s (id=%s, root_dir=%s, attached_to=[%s])',
+          client.name,
+          client.id,
+          vim.fn.fnamemodify(client.config.root_dir, ':~'),
+          attached_to
+        )
       )
     end
   else
