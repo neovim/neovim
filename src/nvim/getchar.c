@@ -2986,7 +2986,12 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
   return line_ga.ga_data;
 }
 
-bool map_execute_lua(void)
+/// Handle a Lua mapping: get its LuaRef from typeahead and execute it.
+///
+/// @param may_repeat  save the LuaRef for redoing with "." later
+///
+/// @return  false if getting the LuaRef was aborted, true otherwise
+bool map_execute_lua(bool may_repeat)
 {
   garray_T line_ga;
   int c1 = -1;
@@ -3018,6 +3023,10 @@ bool map_execute_lua(void)
   }
 
   LuaRef ref = (LuaRef)atoi(line_ga.ga_data);
+  if (may_repeat) {
+    repeat_luaref = ref;
+  }
+
   Error err = ERROR_INIT;
   Array args = ARRAY_DICT_INIT;
   nlua_call_ref(ref, NULL, args, false, &err);

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "lauxlib.h"
 #include "nvim/ascii.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
@@ -126,4 +127,7 @@ static inline int op_reg_index(const int regname)
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ops.h.generated.h"
 #endif
+
+EXTERN LuaRef repeat_luaref INIT(= LUA_NOREF);  ///< LuaRef for "."
+
 #endif  // NVIM_OPS_H
