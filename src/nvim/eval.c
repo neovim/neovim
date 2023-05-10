@@ -8078,7 +8078,7 @@ static int store_session_globals_variable(FILE *fd, typval_T *value)
   case VAR_LIST:
     fprintf(fd, "[");
     TV_LIST_ITER(value->vval.v_list, inner_var, {
-      if (store_session_globals_variable(fd, &inner_var->li_tv) == FAIL) {
+      if (store_session_globals_variable(fd, TV_LIST_ITEM_TV(inner_var)) == FAIL) {
         return FAIL;
       }
       fprintf(fd, ",");
