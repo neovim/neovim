@@ -117,6 +117,7 @@ CONFIG = {
             'tabpage.c',
             'autocmd.c',
             'ui.c',
+            'net.c',
         ],
         # List of files/directories for doxygen to read, relative to `base_dir`
         'files': ['src/nvim/api'],

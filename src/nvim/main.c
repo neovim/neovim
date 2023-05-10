@@ -92,6 +92,7 @@
 # include "nvim/os/os_win_console.h"
 #endif
 #include "nvim/api/extmark.h"
+#include "nvim/api/net.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
@@ -167,6 +168,7 @@ bool event_teardown(void)
   server_teardown();
   signal_teardown();
   terminal_teardown();
+  net_teardown();
 
   return loop_close(&main_loop, true);
 }
