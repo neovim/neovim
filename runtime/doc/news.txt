@@ -52,6 +52,8 @@ iterators |luaref-in|.
 • |'smoothscroll'| option to scroll by screen line rather than by text line
 when |'wrap'| is set.
 
+• Allow dictionaries and lists to be stored as vimscript in a session file.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
