@@ -135,7 +135,6 @@ endif()
 include(ExternalProject)
 set_directory_properties(PROPERTIES EP_PREFIX "${DEPS_BUILD_DIR}")
 
-<<<<<<< HEAD
 file(READ deps.txt DEPENDENCIES)
 STRING(REGEX REPLACE "\n" ";" DEPENDENCIES "${DEPENDENCIES}")
 foreach(dep ${DEPENDENCIES})
