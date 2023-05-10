@@ -36,7 +36,7 @@ ADDED FEATURES                                                     *news-added*
 The following new APIs or features were added.
 
 • |vim.iter()| provides a generic iterator interface for tables and Lua
-iterators |luaref-in|.
+  iterators |luaref-in|.
 
 • Added |vim.keycode()| for translating keycodes in a string.
 
@@ -50,7 +50,7 @@ iterators |luaref-in|.
   default).
 
 • |'smoothscroll'| option to scroll by screen line rather than by text line
-when |'wrap'| is set.
+  when |'wrap'| is set.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
