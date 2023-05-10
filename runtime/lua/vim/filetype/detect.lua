@@ -1550,8 +1550,15 @@ local patterns_text = {
   ['^SNNS pattern definition file'] = 'snnspat',
   ['^SNNS result file'] = 'snnsres',
   ['^%%.-[Vv]irata'] = { 'virata', { start_lnum = 1, end_lnum = 5 } },
-  ['[0-9:%.]* *execve%('] = 'strace',
-  ['^__libc_start_main'] = 'strace',
+  function(lines)
+    if
+      -- inaccurate fast match first, then use accurate slow match
+      (lines[1]:find('execve%(') and lines[1]:find('^[0-9:%.]* *execve%('))
+      or lines[1]:find('^__libc_start_main')
+    then
+      return 'strace'
+    end
+  end,
   -- VSE JCL
   ['^\\* $$ JOB\\>'] = { 'vsejcl', { vim_regex = true } },
   ['^// *JOB\\>'] = { 'vsejcl', { vim_regex = true } },
