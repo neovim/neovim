@@ -269,7 +269,7 @@ describe(':mksession', function()
   it('restores a dictionary', function()
     command('set sessionoptions+=globals')
     helpers.exec_lua(
-    [[  
+    [[
       vim.g.TestDict = {
         list = { { dict = { value = -1.0 }}, 2, 3 },
         number = 42,
