@@ -1140,7 +1140,7 @@ static int command_line_execute(VimState *state, int key)
     } else if (s->c == K_COMMAND) {
       do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
     } else {
-      map_execute_lua();
+      map_execute_lua(false);
     }
 
     // nvim_select_popupmenu_item() can be called from the handling of
