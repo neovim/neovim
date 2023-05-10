@@ -596,7 +596,7 @@ static int terminal_execute(VimState *state, int key)
     break;
 
   case K_LUA:
-    map_execute_lua();
+    map_execute_lua(false);
     break;
 
   case Ctrl_N:
