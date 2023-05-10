@@ -133,7 +133,9 @@ if(APPLE)
 endif()
 
 include(ExternalProject)
-set_directory_properties(PROPERTIES EP_PREFIX "${DEPS_BUILD_DIR}")
+set_directory_properties(PROPERTIES
+  EP_PREFIX "${DEPS_BUILD_DIR}"
+  CMAKE_CONFIGURE_DEPENDS deps.txt)
 
 file(READ deps.txt DEPENDENCIES)
 STRING(REGEX REPLACE "\n" ";" DEPENDENCIES "${DEPENDENCIES}")
@@ -141,16 +143,9 @@ foreach(dep ${DEPENDENCIES})
   STRING(REGEX REPLACE " " ";" dep "${dep}")
   list(GET dep 0 name)
   list(GET dep 1 value)
-
-  if(name MATCHES "^.*URL$")
-    mark_as_advanced(${name})
-    if(NOT USE_EXISTING_SRC_DIR)
-      set(${name} ${value} CACHE STRING "")
-    endif()
-  elseif(name MATCHES "^.*SHA256$")
+  if(NOT ${name})
     set(${name} ${value})
   endif()
-
 endforeach()
 
 if(USE_BUNDLED_UNIBILIUM)
