@@ -398,6 +398,15 @@ void update_window_hl(win_T *wp, bool invalid)
   } else {
     wp->w_hl_attr_normalnc = hl_def[HLF_INACTIVE];
   }
+
+  // if blend= attribute is not set, 'winblend' value overrides it.
+  if (wp->w_floating && wp->w_p_winbl > 0) {
+    HlEntry entry = kv_A(attr_entries, wp->w_hl_attr_normalnc);
+    if (entry.attr.hl_blend == -1) {
+      entry.attr.hl_blend = (int)wp->w_p_winbl;
+      wp->w_hl_attr_normalnc = get_attr_entry(entry);
+    }
+  }
 }
 
 void update_ns_hl(int ns_id)
