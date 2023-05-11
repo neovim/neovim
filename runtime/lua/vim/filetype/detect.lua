@@ -1322,6 +1322,28 @@ function M.txt(bufnr)
   end
 end
 
+function M.typ(bufnr)
+  if vim.g.filetype_typ then
+    return vim.g.filetype_typ
+  end
+
+  for _, line in ipairs(getlines(bufnr, 1, 200)) do
+    if
+      findany(line, {
+        '^CASE[%s]?=[%s]?SAME$',
+        '^CASE[%s]?=[%s]?LOWER$',
+        '^CASE[%s]?=[%s]?UPPER$',
+        '^CASE[%s]?=[%s]?OPPOSITE$',
+        '^TYPE%s',
+      })
+    then
+      return 'sql'
+    end
+  end
+
+  return 'typst'
+end
+
 -- Determine if a .v file is Verilog, V, or Coq
 function M.v(bufnr)
   if vim.fn.did_filetype() ~= 0 then

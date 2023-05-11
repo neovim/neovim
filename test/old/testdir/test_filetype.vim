@@ -564,7 +564,7 @@ let s:filename_checks = {
     \ 'spice': ['file.sp', 'file.spice'],
     \ 'spup': ['file.speedup', 'file.spdata', 'file.spd'],
     \ 'spyce': ['file.spy', 'file.spi'],
-    \ 'sql': ['file.tyb', 'file.typ', 'file.tyc', 'file.pkb', 'file.pks'],
+    \ 'sql': ['file.tyb', 'file.tyc', 'file.pkb', 'file.pks'],
     \ 'sqlj': ['file.sqlj'],
     \ 'prql': ['file.prql'],
     \ 'sqr': ['file.sqr', 'file.sqi'],
@@ -2043,6 +2043,37 @@ func Test_lsl_file()
   split Xfile.lsl
   call assert_equal('larch', &filetype)
   bwipe!
+
+  filetype off
+endfunc
+
+func Test_typ_file()
+  filetype on
+
+  " SQL type file
+
+  call writefile(['CASE = LOWER'], 'Xfile.typ', 'D')
+  split Xfile.typ
+  call assert_equal('sql', &filetype)
+  bwipe!
+
+  call writefile(['TYPE foo'], 'Xfile.typ')
+  split Xfile.typ
+  call assert_equal('sql', &filetype)
+  bwipe!
+
+  " typst document
+
+  call writefile(['this is a fallback'], 'Xfile.typ')
+  split Xfile.typ
+  call assert_equal('typst', &filetype)
+  bwipe!
+
+  let g:filetype_typ = 'typst'
+  split test.typ
+  call assert_equal('typst', &filetype)
+  bwipe!
+  unlet g:filetype_typ
 
   filetype off
 endfunc
