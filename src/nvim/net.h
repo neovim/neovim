@@ -10,7 +10,14 @@
 
 void nvim_fetch(uint64_t channel_id, String url, Dict(fetch) * opts, lua_State *lstate, Error *err);
 
+int nlua_fetch(lua_State *lstate);
+
 void net_teardown(void);
+
+typedef struct {
+  char *data;
+  size_t size;
+} MemoryStruct;
 
 typedef struct {
   Dictionary dict;
@@ -18,12 +25,11 @@ typedef struct {
 } HeaderMemoryStruct;
 
 typedef struct {
-  String url;
-  Dict(fetch) opts;
   CURL *easy_handle;
   int on_complete;
   int on_err;
-  curl_mime *mime_post_data;
+  curl_mime *multipart_form;
+  char *data;
   struct curl_slist *headers;
   lua_State *lstate;
 } FetchData;

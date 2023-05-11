@@ -48,6 +48,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/net.h"
 #include "nvim/option_defs.h"
 #include "nvim/os/fileio.h"
 #include "nvim/os/os.h"
@@ -760,6 +761,10 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // ui_detach
   lua_pushcfunction(lstate, &nlua_ui_detach);
   lua_setfield(lstate, -2, "ui_detach");
+
+  // fetch
+  lua_pushcfunction(lstate, &nlua_fetch);
+  lua_setfield(lstate, -2, "fetch");
 
   nlua_common_vim_init(lstate, false, false);
 

@@ -92,7 +92,6 @@
 # include "nvim/os/os_win_console.h"
 #endif
 #include "nvim/api/extmark.h"
-#include "nvim/api/net.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
@@ -101,6 +100,7 @@
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/msgpack_rpc/server.h"
+#include "nvim/net.h"
 #include "nvim/os/signal.h"
 
 // values for "window_layout"

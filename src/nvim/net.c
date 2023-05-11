@@ -1,6 +1,7 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 #include <curl/multi.h>
+#include <lauxlib.h>
 #include <lua.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,91 +16,8 @@
 #include "nvim/memory.h"
 #include "nvim/types.h"
 
-const char *VALID_HTTP_METHODS[]
-  = { "GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS", "PATCH", "CONNECT", NULL };
-
 bool initialized = false;
 CURLSH *shared_handle = NULL;
-
-static bool is_valid_http_method(String method)
-{
-  if (method.data == NULL) {
-    return false;
-  }
-
-  for (const char **valid_method = VALID_HTTP_METHODS; *valid_method != NULL; ++valid_method) {
-    if (strncmp(method.data, *valid_method, method.size) == 0) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-static curl_mime *dict_to_mimepost(CURL *easy_handle, Dictionary *dict)
-{
-  curl_mime *form = curl_mime_init(easy_handle);
-
-  for (size_t i = 0; i < dict->size; ++i) {
-    KeyValuePair kv = dict->items[i];
-    curl_mimepart *part = curl_mime_addpart(form);
-    curl_mime_name(part, string_to_cstr(kv.key));
-    curl_mime_data(part, kv.value.data.string.data, CURL_ZERO_TERMINATED);
-  }
-
-  return form;
-}
-
-static void dict_headers(Dictionary headers_dict, struct curl_slist **headers, Error *err)
-{
-  for (size_t i = 0; i < headers_dict.size; i++) {
-    KeyValuePair header = headers_dict.items[i];
-    if (header.value.type == kObjectTypeString) {
-      // Single value header
-
-      const char *header_key = string_to_cstr(header.key);
-      const char *header_value = string_to_cstr(header.value.data.string);
-
-      size_t header_line_size = strlen(header_key) + strlen(header_value) + 3;
-
-      char *header_line = xmalloc(header_line_size);
-
-      snprintf(header_line, header_line_size, "%s: %s", header_key, header_value);
-
-      *headers = curl_slist_append(*headers, header_line);
-      XFREE_CLEAR(header_line);
-    } else if (header.value.type == kObjectTypeArray) {
-      // Multi-value header
-
-      Array header_values = header.value.data.array;
-      for (size_t j = 0; j < header_values.size; j++) {
-        if (header_values.items[j].type == kObjectTypeString) {
-          const char *header_key = string_to_cstr(header.key);
-          const char *header_value = string_to_cstr(header_values.items[j].data.string);
-          size_t header_line_size = strlen(header_key) + strlen(header_value) + 3;
-          char *header_line = xmalloc(header_line_size);
-
-          snprintf(header_line, header_line_size, "%s: %s", header_key, header_value);
-
-          *headers = curl_slist_append(*headers, header_line);
-          XFREE_CLEAR(header_line);
-        } else {
-          api_set_error(err,
-                        kErrorTypeValidation,
-                        "Invalid header value type for key '%s', expected string",
-                        string_to_cstr(header.key));
-          return;
-        }
-      }
-    } else {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Invalid header value type for key '%s', expected string | string[]",
-                    string_to_cstr(header.key));
-      return;
-    }
-  }
-}
 
 static size_t write_cb(void *contents, size_t size, size_t nmemb, void *userp)
 {
@@ -222,7 +140,6 @@ static void async_err_cb(void **argv)
 static void fetch_worker(void *arg)
 {
   FetchData *fetch_data = (FetchData *)arg;
-  // Dict(fetch) *opts = &fetch_data->opts;
   CURL *easy_handle = fetch_data->easy_handle;
 
   String response_chunk = STRING_INIT;
@@ -289,7 +206,7 @@ static void fetch_worker(void *arg)
   }
 
 cleanup:
-  curl_mime_free(fetch_data->mime_post_data);
+  curl_mime_free(fetch_data->multipart_form);
   curl_slist_free_all(fetch_data->headers);
   curl_easy_cleanup(easy_handle);
   XFREE_CLEAR(fetch_data);
@@ -343,7 +260,7 @@ cleanup:
 /// @param channel_id
 /// @param url string
 /// @param opts table|nil Optional keyword arguments:
-///   - form table<string,string>|nil Key-Value form data. Implies
+///   - multipart_form table<string,string>|nil Key-Value form data. Implies
 ///   `Content-Type: multipart/form-data`.
 ///   - data string|nil Data to send with the request.
 ///   - headers table<string, string | string[]>|nil Headers to send. A header can have
@@ -363,16 +280,8 @@ cleanup:
 ///     - `code`: `CURLcode`, see man://libcurl-errors for possible error codes. Report errors you
 ///     feel neovim itself caused to the issue tracker!
 ///     - `err`: Human readable error string, may or may not be empty.
-void nvim_fetch(uint64_t channel_id, String url, Dict(fetch) *opts, lua_State *lstate, Error *err)
-  FUNC_API_SINCE(12)
+int nlua_fetch(lua_State *lstate)
 {
-  // TODO(marshmallow): Confirm if validate macros require cleanup
-
-  if (opts->data.type != kObjectTypeNil && opts->form.type != kObjectTypeNil) {
-    api_set_error(err, kErrorTypeValidation, "form and data are mutually exclusive");
-    return;
-  }
-
   if (!initialized) {
     curl_global_init(CURL_GLOBAL_DEFAULT);
     shared_handle = curl_share_init();
@@ -381,16 +290,27 @@ void nvim_fetch(uint64_t channel_id, String url, Dict(fetch) *opts, lua_State *l
     initialized = true;
   }
 
+  char *url = (char *)luaL_checkstring(lstate, 1);
+
+  if (!url) {
+    return luaL_error(lstate, "expected url");
+  }
+  if (!lua_istable(lstate, 2)) {
+    return luaL_error(lstate, "opts must be a table");
+  }
+
   CURL *easy_handle = curl_easy_init();
 
   if (!easy_handle) {
-    api_set_error(err, kErrorTypeException, "Error initializing curl easy handle");
-    return;
+    luaL_error(lstate, "Error initializing curl easy handle");
+
+    return 0;
   }
 
+  curl_easy_setopt(easy_handle, CURLOPT_SHARE, shared_handle);
+  curl_easy_setopt(easy_handle, CURLOPT_URL, url);
+
   FetchData *fetch_data = xmalloc(sizeof(FetchData));
-  fetch_data->url = url;
-  fetch_data->opts = *opts;
   fetch_data->easy_handle = easy_handle;
   fetch_data->lstate = lstate;
 
@@ -398,82 +318,185 @@ void nvim_fetch(uint64_t channel_id, String url, Dict(fetch) *opts, lua_State *l
   fetch_data->on_err = -1;
 
   fetch_data->headers = NULL;
-  fetch_data->mime_post_data = NULL;
+  fetch_data->data = NULL;
+  fetch_data->multipart_form = NULL;
 
-  curl_easy_setopt(easy_handle, CURLOPT_SHARE, shared_handle);
-  curl_easy_setopt(easy_handle, CURLOPT_URL, url.data);
-
-  if (opts->headers.type != kObjectTypeNil) {
-    VALIDATE_T_DICT("headers", opts->headers, { return; });
-
-    dict_headers(opts->headers.data.dictionary, &fetch_data->headers, err);
-    curl_easy_setopt(easy_handle, CURLOPT_HTTPHEADER, fetch_data->headers);
+  if (!lua_istable(lstate, 2)) {
+    luaL_error(lstate, "opts must be a table");
+    return 0;
   }
 
-  if (opts->data.type != kObjectTypeNil) {
-    VALIDATE_T("data", kObjectTypeString, opts->data.type, { return; });
+  lua_pushnil(lstate);
+  while (lua_next(lstate, 2) != 0) {
+    const int KEY = -2;
+    const int VALUE = -1;
 
-    curl_easy_setopt(easy_handle, CURLOPT_POSTFIELDS, string_to_cstr(opts->data.data.string));
-  }
+    char *key = (char *)luaL_checkstring(lstate, KEY);
 
-  if (opts->form.type != kObjectTypeNil) {
-    VALIDATE_T_DICT("form", opts->form, { return; });
-
-    fetch_data->mime_post_data = dict_to_mimepost(easy_handle, &opts->form.data.dictionary);
-    curl_easy_setopt(easy_handle, CURLOPT_MIMEPOST, fetch_data->mime_post_data);
-  }
-
-  if (opts->method.type != kObjectTypeNil) {
-    VALIDATE_T("method", kObjectTypeString, opts->method.type, { return; });
-
-    const char *method = string_to_cstr(opts->method.data.string);
-
-    VALIDATE_S(is_valid_http_method(opts->method.data.string), "method", method, { return; });
-
-    if (strcmp(method, "HEAD") == 0) {
-      curl_easy_setopt(easy_handle, CURLOPT_NOBODY, 1L);
-    } else if (strcmp(method, "GET") == 0) {
-      curl_easy_setopt(easy_handle, CURLOPT_HTTPGET, 1L);
-    } else {
-      curl_easy_setopt(easy_handle, CURLOPT_CUSTOMREQUEST, opts->method.data.string);
+    if (!key) {
+      continue;
     }
-  }
 
-  if (opts->redirect.type != kObjectTypeNil) {
-    VALIDATE_T("redirect", kObjectTypeString, opts->redirect.type, { return; });
+    if (strcmp("on_complete", key) == 0) {
+      if (!lua_isfunction(lstate, VALUE)) {
+        luaL_error(lstate, "on_complete must be a function");
+        return 0;
+      }
 
-    const char *redirect = string_to_cstr(opts->redirect.data.string);
-    bool is_follow = strcmp(redirect, "follow") == 0;
+      lua_pushvalue(lstate, VALUE);
+      fetch_data->on_complete = luaL_ref(lstate, LUA_REGISTRYINDEX);
+    }
 
-    VALIDATE_S((is_follow || strcmp(redirect, "none") == 0),
-               redirect,
-               "must be either \"follow\", \"none\", or nil",
-               { return; });
+    if (strcmp("on_err", key) == 0) {
+      if (!lua_isfunction(lstate, VALUE)) {
+        luaL_error(lstate, "on_err must be a string");
+        return 0;
+      }
 
-    curl_easy_setopt(easy_handle, CURLOPT_FOLLOWLOCATION, is_follow ? 1L : 0L);
-  } else {
-    curl_easy_setopt(easy_handle, CURLOPT_FOLLOWLOCATION, 1L);
-  }
+      lua_pushvalue(lstate, VALUE);
+      fetch_data->on_err = luaL_ref(lstate, LUA_REGISTRYINDEX);
+    }
 
-  if (opts->on_complete.type != kObjectTypeNil) {
-    VALIDATE_T("on_complete", kObjectTypeLuaRef, opts->on_complete.type, { return; });
+    if (strcmp("method", key) == 0) {
+      char *method = (char *)luaL_checkstring(lstate, VALUE);
 
-    lua_rawgeti(lstate, LUA_REGISTRYINDEX, opts->on_complete.data.luaref);
-    int registry_ref = luaL_ref(lstate, LUA_REGISTRYINDEX);
-    fetch_data->on_complete = registry_ref;
-  }
+      if (!method) {
+        luaL_error(lstate, "method must be a string");
+        return 0;
+      }
 
-  if (opts->on_err.type != kObjectTypeNil) {
-    VALIDATE_T("on_err", kObjectTypeLuaRef, opts->on_err.type, { return; });
+      if (strcmp(method, "HEAD") == 0) {
+        curl_easy_setopt(easy_handle, CURLOPT_NOBODY, 1L);
+      } else if (strcmp(method, "GET") == 0) {
+        curl_easy_setopt(easy_handle, CURLOPT_HTTPGET, 1L);
+      } else {
+        curl_easy_setopt(easy_handle, CURLOPT_CUSTOMREQUEST, method);
+      }
+    }
 
-    lua_rawgeti(lstate, LUA_REGISTRYINDEX, opts->on_err.data.luaref);
-    int registry_ref = luaL_ref(lstate, LUA_REGISTRYINDEX);
-    fetch_data->on_err = registry_ref;
+    if (strcmp("headers", key) == 0) {
+      if (!lua_istable(lstate, VALUE)) {
+        luaL_error(lstate, "headers must be a table");
+        return 0;
+      }
+
+      lua_pushvalue(lstate, -1);
+
+      lua_pushnil(lstate);
+      while (lua_next(lstate, -2) != 0) {
+        if (lua_isstring(lstate, -1) || lua_istable(lstate, -1)) {
+          const char *header_key = lua_tostring(lstate, -2);
+
+          if (lua_isstring(lstate, -1)) {
+            // Single value header
+            const char *header_value = lua_tostring(lstate, -1);
+
+            size_t header_line_size = strlen(header_key) + strlen(header_value) + 3;
+            char *header_line = xmalloc(header_line_size);
+
+            snprintf(header_line, header_line_size, "%s: %s", header_key, header_value);
+
+            fetch_data->headers = curl_slist_append(fetch_data->headers, header_line);
+            XFREE_CLEAR(header_line);
+          } else {
+            // Multi-value header
+            lua_pushnil(lstate);
+            while (lua_next(lstate, -2) != 0) {
+              if (lua_isstring(lstate, -1)) {
+                const char *header_value = lua_tostring(lstate, -1);
+                size_t header_line_size = strlen(header_key) + strlen(header_value) + 3;
+                char *header_line = xmalloc(header_line_size);
+
+                snprintf(header_line, header_line_size, "%s: %s", header_key, header_value);
+
+                fetch_data->headers = curl_slist_append(fetch_data->headers, header_line);
+                XFREE_CLEAR(header_line);
+              } else {
+                char *message = NULL;
+                sprintf(message,
+                        "Invalid header value type for key '%s', expected string",
+                        lua_tostring(lstate, -2));
+                luaL_error(lstate, message);
+                return 0;
+              }
+              lua_pop(lstate, 1);
+            }
+          }
+        } else {
+          char *message = NULL;
+          sprintf(message,
+                  "Invalid header value type for key '%s', expected string | string[]",
+                  lua_tostring(lstate, -2));
+          luaL_error(lstate, message);
+          return 0;
+        }
+        lua_pop(lstate, 1);
+      }
+
+      curl_easy_setopt(easy_handle, CURLOPT_HTTPHEADER, fetch_data->headers);
+      lua_pop(lstate, 1);
+    }
+
+    if (strcmp("data", key) == 0) {
+      char *data = (char *)luaL_checkstring(lstate, VALUE);
+
+      if (!data) {
+        luaL_error(lstate, "data must be a string");
+        return 0;
+      }
+
+      if (fetch_data->multipart_form != NULL) {
+        luaL_error(lstate, "data and multipart_form are mutually exclusive");
+        return 0;
+      }
+
+      fetch_data->data = data;
+      curl_easy_setopt(easy_handle, CURLOPT_POSTFIELDS, fetch_data->data);
+    }
+
+    if (strcmp("multipart_form", key) == 0) {
+      if (!lua_istable(lstate, VALUE)) {
+        luaL_error(lstate, "form must be a table");
+        return 0;
+      }
+
+      if (fetch_data->data != NULL) {
+        luaL_error(lstate, "data and multipart_form are mutually exclusive");
+        return 0;
+      }
+
+      fetch_data->multipart_form = curl_mime_init(fetch_data->easy_handle);
+
+      lua_pushvalue(lstate, -1);
+
+      lua_pushnil(lstate);
+      while (lua_next(lstate, -2) != 0) {
+        if (!lua_isstring(lstate, -2) || !lua_isstring(lstate, -1)) {
+          lua_pop(lstate, 2);
+          continue;
+        }
+
+        curl_mimepart *part = curl_mime_addpart(fetch_data->multipart_form);
+        curl_mime_name(part, lua_tostring(lstate, -2));
+        curl_mime_data(part, lua_tostring(lstate, -1), CURL_ZERO_TERMINATED);
+
+        curl_mime_type(part, "application/octet-stream");
+
+        lua_pop(lstate, 1);
+      }
+
+      curl_easy_setopt(easy_handle, CURLOPT_MIMEPOST, fetch_data->multipart_form);
+      lua_pop(lstate, 1);
+    }
+
+    lua_pop(lstate, 1);
   }
 
   uv_thread_t fetch_thread;
   uv_thread_create(&fetch_thread, fetch_worker, fetch_data);
   pthread_detach(fetch_thread);
+
+  return 0;
 }
 
 void net_teardown(void)
