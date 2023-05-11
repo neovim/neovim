@@ -500,4 +500,22 @@ func Test_display_long_lastline()
   call StopVimInTerminal(buf)
 endfunc
 
+" Moving the cursor to a line that doesn't fit in the window should show
+" correctly.
+func Test_display_cursor_long_line()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['a', 'bbbbb '->repeat(100), 'c'])
+    norm $j
+  END
+
+  call writefile(lines, 'XdispCursorLongline', 'D')
+  let buf = RunVimInTerminal('-S XdispCursorLongline', #{rows: 8})
+
+  call VerifyScreenDump(buf, 'Test_display_cursor_long_line', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

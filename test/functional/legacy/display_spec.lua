@@ -196,7 +196,7 @@ describe('display', function()
   end)
 
   -- oldtest: Test_display_long_lastline()
-  it('display "lastline" shows correct text when end of wrapped line is deleted', function()
+  it('"lastline" shows correct text when end of wrapped line is deleted', function()
     local screen = Screen.new(35, 14)
     screen:attach()
     exec([[
@@ -239,6 +239,26 @@ describe('display', function()
       aaaaaaaaaaaaaaaaaaaaaaaaa^a         |
       bbbbb bbbbb bbbbb bbbbb bbbbb bb@@@|
                                          |
+    ]])
+  end)
+
+  -- oldtest: Test_display_cursor_long_line()
+  it("correctly shows line that doesn't fit in the window", function()
+    local screen = Screen.new(75, 8)
+    screen:attach()
+    exec([[
+      call setline(1, ['a', 'bbbbb '->repeat(100), 'c'])
+      norm $j
+    ]])
+    screen:expect([[
+      <<<bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb |
+      bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbb|
+      bb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb |
+      bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbb|
+      bb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb |
+      bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbb|
+      bb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb^ |
+                                                                                 |
     ]])
   end)
 end)

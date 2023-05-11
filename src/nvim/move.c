@@ -2090,10 +2090,9 @@ void scroll_cursor_halfway(bool atend, bool prefer_above)
   colnr_T skipcol = 0;
 
   int want_height;
-  bool smooth_scroll = false;
-  if (curwin->w_p_sms && curwin->w_p_wrap) {
+  bool do_sms = curwin->w_p_wrap && curwin->w_p_sms;
+  if (do_sms) {
     // 'smoothscroll' and 'wrap' are set
-    smooth_scroll = true;
     if (atend) {
       want_height = (curwin->w_height_inner - used) / 2;
       used = 0;
@@ -2106,7 +2105,7 @@ void scroll_cursor_halfway(bool atend, bool prefer_above)
   while (topline > 1) {
     // If using smoothscroll, we can precisely scroll to the
     // exact point where the cursor is halfway down the screen.
-    if (smooth_scroll) {
+    if (do_sms) {
       topline_back_winheight(curwin, &loff, false);
       if (loff.height == MAXCOL) {
         break;
@@ -2190,7 +2189,7 @@ void scroll_cursor_halfway(bool atend, bool prefer_above)
     if (skipcol != 0) {
       curwin->w_skipcol = skipcol;
       redraw_later(curwin, UPD_NOT_VALID);
-    } else {
+    } else if (do_sms) {
       reset_skipcol(curwin);
     }
   }
