@@ -15,7 +15,7 @@
 #include "nvim/api/ui.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
-#include "nvim/buffer_defs.h"
+#include "nvim/buffer.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/drawscreen.h"
 #include "nvim/ex_getln.h"
@@ -348,6 +348,7 @@ void ui_attach_impl(UI *ui, uint64_t chanid)
 
   uis[ui_count++] = ui;
   ui_refresh_options();
+  resettitle();
 
   for (UIExtension i = kUIGlobalCount; (int)i < kUIExtCount; i++) {
     ui_set_ext_option(ui, i, ui->ui_ext[i]);
