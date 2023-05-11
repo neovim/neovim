@@ -386,7 +386,7 @@ void nvim_fetch(uint64_t channel_id, String url, Dict(fetch) *opts, lua_State *l
     return;
   }
 
-  FetchData *fetch_data = malloc(sizeof(FetchData));
+  FetchData *fetch_data = xmalloc(sizeof(FetchData));
   fetch_data->url = url;
   fetch_data->opts = *opts;
   fetch_data->easy_handle = easy_handle;
