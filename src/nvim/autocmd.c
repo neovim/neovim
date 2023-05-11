@@ -1972,6 +1972,7 @@ static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
     PUT(data, "match", CSTR_TO_OBJ(autocmd_match));
     PUT(data, "file", CSTR_TO_OBJ(autocmd_fname));
     PUT(data, "buf", INTEGER_OBJ(autocmd_bufnr));
+    PUT(data, "winid", INTEGER_OBJ(curwin->handle));
 
     if (apc->data) {
       PUT(data, "data", copy_object(*apc->data, NULL));

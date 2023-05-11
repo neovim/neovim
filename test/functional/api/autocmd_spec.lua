@@ -249,6 +249,7 @@ describe('autocmd api', function()
         match = "Test pattern",
         file = "Test pattern",
         buf = 1,
+        winid = 1000,
       }, meths.get_var("autocmd_args"))
 
       -- Test without a group
@@ -271,6 +272,7 @@ describe('autocmd api', function()
         match = "some_pat",
         file = "some_pat",
         buf = 1,
+        winid = 1000,
       }, meths.get_var("autocmd_args"))
 
     end)
