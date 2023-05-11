@@ -13,11 +13,6 @@ void nvim_fetch(uint64_t channel_id, String url, Dict(fetch) * opts, lua_State *
 void net_teardown(void);
 
 typedef struct {
-  char *data;
-  size_t size;
-} MemoryStruct;
-
-typedef struct {
   Dictionary dict;
   bool is_final_response;
 } HeaderMemoryStruct;
@@ -37,7 +32,7 @@ typedef struct {
   int on_complete;
   lua_State *lstate;
 
-  MemoryStruct response;
+  String response;
   HeaderMemoryStruct headers;
 
   long http_response_code;

@@ -109,12 +109,12 @@ static size_t write_cb(void *contents, size_t size, size_t nmemb, void *userp)
     return 0;
   }
 
-  MemoryStruct *data = (MemoryStruct *)userp;
+  String *data = (String *)userp;
 
   char *new_buffer = xrealloc(data->data, data->size + realsize + 1);
 
   data->data = new_buffer;
-  memcpy(&(data->data[data->size]), contents, realsize);
+  strncpy(&(data->data[data->size]), contents, realsize);
   data->size += realsize;
   data->data[data->size] = 0;
 
@@ -186,20 +186,7 @@ static void async_complete_cb(void **argv)
   PUT(res_dict, "status", FLOAT_OBJ((double)code));
   PUT(res_dict, "ok", BOOLEAN_OBJ(code >= 200 && code <= 299));
 
-  Array response_lines = ARRAY_DICT_INIT;
-  char *save_ptr;
-  char *line = strtok_r(data->response.data, "\n", &save_ptr);
-
-  while (line) {
-    String str;
-    str.data = line;
-    str.size = strlen(line);
-
-    kv_push(response_lines, STRING_OBJ(str));
-    line = strtok_r(NULL, "\n", &save_ptr);
-  }
-
-  PUT(res_dict, "text", ARRAY_OBJ(response_lines));
+  PUT(res_dict, "text", STRING_OBJ(data->response));
   PUT(res_dict, "headers", DICTIONARY_OBJ(data->headers.dict));
 
   args.items[0] = DICTIONARY_OBJ(res_dict);
@@ -234,11 +221,8 @@ static void fetch_worker(void *arg)
   FetchData *fetch_data = (FetchData *)arg;
   // Dict(fetch) *opts = &fetch_data->opts;
   CURL *easy_handle = fetch_data->easy_handle;
-  MemoryStruct response_chunk;
 
-  response_chunk.data = xmalloc(1);
-  response_chunk.size = 0;
-  response_chunk.data[0] = '\0';
+  String response_chunk = STRING_INIT;
 
   HeaderMemoryStruct header_data;
 
@@ -329,7 +313,7 @@ cleanup:
 ///   - on_complete fun(response: table)|nil Optional callback when response completes. The
 ///   `response` table has the following values:
 ///     - ok: bool Response status was within 200-299 range.
-///     - text: string[] Response body lines. Empty if `method` was HEAD.
+///     - text: string Response body. Empty if `method` was HEAD.
 ///     - headers: table<string, string> Header key-values. Multiple values are sperated by `,`.
 ///     - status: number HTTP status.
 ///   - on_err fun(code: number, err: string)|nil Used when request failed. Returned values are:

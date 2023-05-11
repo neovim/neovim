@@ -3585,8 +3585,7 @@ nvim_fetch({url}, {*opts})                                      *nvim_fetch()*
                 • on_complete fun(response: table)|nil Optional callback when
                   response completes. The `response` table has the following values:
                   • ok: bool Response status was within 200-299 range.
-                  • text: string[] Response body lines. Empty if `method` was
-                    HEAD.
+                  • text: string Response body. Empty if `method` was HEAD.
                   • headers: table<string, string> Header key-values. Multiple
                     values are sperated by `,`.
                   • status: number HTTP status.
