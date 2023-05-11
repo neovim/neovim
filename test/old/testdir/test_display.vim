@@ -482,9 +482,9 @@ func Test_display_long_lastline()
   CheckScreendump
 
   let lines =<< trim END
-    set display=lastline
+    set display=lastline smoothscroll scrolloff=0
     call setline(1, [
-      \'aaaaa'->repeat(100),
+      \'aaaaa'->repeat(150),
       \'bbbbb '->repeat(7) .. 'ccccc '->repeat(7) .. 'ddddd '->repeat(7)
     \])
   END
@@ -492,10 +492,40 @@ func Test_display_long_lastline()
   call writefile(lines, 'XdispLongline', 'D')
   let buf = RunVimInTerminal('-S XdispLongline', #{rows: 14, cols: 35})
 
-  call term_sendkeys(buf, "482|")
+  call term_sendkeys(buf, "736|")
   call VerifyScreenDump(buf, 'Test_display_long_line_1', {})
+
+  " The correct part of the last line is moved into view.
   call term_sendkeys(buf, "D")
   call VerifyScreenDump(buf, 'Test_display_long_line_2', {})
+
+  " "w_skipcol" does not change because the topline is still long enough
+  " to maintain the current skipcol.
+  call term_sendkeys(buf, "g04l11gkD")
+  call VerifyScreenDump(buf, 'Test_display_long_line_3', {})
+
+  " "w_skipcol" is reset to bring the entire topline into view because
+  " the line length is now smaller than the current skipcol + marker.
+  call term_sendkeys(buf, "x")
+  call VerifyScreenDump(buf, 'Test_display_long_line_4', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
+" Moving the cursor to a line that doesn't fit in the window should show
+" correctly.
+func Test_display_cursor_long_line()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['a', 'bbbbb '->repeat(100), 'c'])
+    norm $j
+  END
+
+  call writefile(lines, 'XdispCursorLongline', 'D')
+  let buf = RunVimInTerminal('-S XdispCursorLongline', #{rows: 8})
+
+  call VerifyScreenDump(buf, 'Test_display_cursor_long_line', {})
 
   call StopVimInTerminal(buf)
 endfunc

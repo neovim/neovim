@@ -556,13 +556,13 @@ describe('smoothscroll', function()
                                               |
     ]])
     -- Test zt/zz/zb that they work properly when a long line is above it
-    feed('zb')
+    feed('zt')
     screen:expect([[
-      <<<th lots of text with lots of text wit|
-      h lots of text with lots of text with lo|
-      ts of text with lots of text with lots o|
-      f text with lots of text end            |
       ^four                                    |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
                                               |
     ]])
     feed('zz')
@@ -574,21 +574,7 @@ describe('smoothscroll', function()
       ~                                       |
                                               |
     ]])
-    feed('zt')
-    screen:expect([[
-      ^four                                    |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-                                              |
-    ]])
-    -- Repeat the step and move the cursor down again.
-    -- This time, use a shorter long line that is barely long enough to span more
-    -- than one window. Note that the cursor is at the bottom this time because
-    -- Vim prefers to do so if we are scrolling a few lines only.
-    exec("call setline(1, ['one', 'two', 'Line' .. (' with lots of text'->repeat(10)) .. ' end', 'four'])")
-    feed('3Gztj')
+    feed('zb')
     screen:expect([[
       <<<th lots of text with lots of text wit|
       h lots of text with lots of text with lo|
@@ -597,6 +583,16 @@ describe('smoothscroll', function()
       ^four                                    |
                                               |
     ]])
+    -- Repeat the step and move the cursor down again.
+    -- This time, use a shorter long line that is barely long enough to span more
+    -- than one window. Note that the cursor is at the bottom this time because
+    -- Vim prefers to do so if we are scrolling a few lines only.
+    exec("call setline(1, ['one', 'two', 'Line' .. (' with lots of text'->repeat(10)) .. ' end', 'four'])")
+    -- Currently visible lines were replaced, test that the lines and cursor
+    -- are correctly displayed.
+    screen:expect_unchanged()
+    feed('3Gztj')
+    screen:expect_unchanged()
     -- Repeat the step but this time start it when the line is smooth-scrolled by
     -- one line. This tests that the offset calculation is still correct and
     -- still end up scrolling down to the next line with cursor at bottom of

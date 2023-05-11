@@ -323,11 +323,11 @@ func Test_smoothscroll_wrap_long_line()
   call VerifyScreenDump(buf, 'Test_smooth_long_10', {})
 
   " Test zt/zz/zb that they work properly when a long line is above it
-  call term_sendkeys(buf, "zb")
+  call term_sendkeys(buf, "zt")
   call VerifyScreenDump(buf, 'Test_smooth_long_11', {})
   call term_sendkeys(buf, "zz")
   call VerifyScreenDump(buf, 'Test_smooth_long_12', {})
-  call term_sendkeys(buf, "zt")
+  call term_sendkeys(buf, "zb")
   call VerifyScreenDump(buf, 'Test_smooth_long_13', {})
 
   " Repeat the step and move the cursor down again.
@@ -335,9 +335,12 @@ func Test_smoothscroll_wrap_long_line()
   " than one window. Note that the cursor is at the bottom this time because
   " Vim prefers to do so if we are scrolling a few lines only.
   call term_sendkeys(buf, ":call setline(1, ['one', 'two', 'Line' .. (' with lots of text'->repeat(10)) .. ' end', 'four'])\<CR>")
+  " Currently visible lines were replaced, test that the lines and cursor
+  " are correctly displayed.
+  call VerifyScreenDump(buf, 'Test_smooth_long_14', {})
   call term_sendkeys(buf, "3Gzt")
   call term_sendkeys(buf, "j")
-  call VerifyScreenDump(buf, 'Test_smooth_long_14', {})
+  call VerifyScreenDump(buf, 'Test_smooth_long_15', {})
 
   " Repeat the step but this time start it when the line is smooth-scrolled by
   " one line. This tests that the offset calculation is still correct and
@@ -345,7 +348,7 @@ func Test_smoothscroll_wrap_long_line()
   " screen.
   call term_sendkeys(buf, "3Gzt")
   call term_sendkeys(buf, "\<C-E>j")
-  call VerifyScreenDump(buf, 'Test_smooth_long_15', {})
+  call VerifyScreenDump(buf, 'Test_smooth_long_16', {})
   
   call StopVimInTerminal(buf)
 endfunc
