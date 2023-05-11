@@ -3633,8 +3633,9 @@ nvim_fetch({url}, {*opts})                                      *nvim_fetch()*
 
                 • on_err fun(code: number, err: string)|nil Used when request
                   failed. Returned values are:
-                  • `code`: `CURLcode`, see man://libcurl-errors. Report
-                    errors you feel neovim itself caused to the issue tracker!
+                  • `code`: `CURLcode`, see man://libcurl-errors for possible
+                    error codes. Report errors you feel neovim itself caused
+                    to the issue tracker!
                   • `err`: Human readable error string, may or may not be
                     empty.
 

@@ -360,8 +360,8 @@ cleanup:
 ///     - headers: table<string, string> Header key-values. Multiple values are sperated by `,`.
 ///     - status: number HTTP status.
 ///   - on_err fun(code: number, err: string)|nil Used when request failed. Returned values are:
-///     - `code`: `CURLcode`, see man://libcurl-errors. Report errors you feel neovim itself caused
-///     to the issue tracker!
+///     - `code`: `CURLcode`, see man://libcurl-errors for possible error codes. Report errors you
+///     feel neovim itself caused to the issue tracker!
 ///     - `err`: Human readable error string, may or may not be empty.
 void nvim_fetch(uint64_t channel_id, String url, Dict(fetch) *opts, lua_State *lstate, Error *err)
   FUNC_API_SINCE(12)
