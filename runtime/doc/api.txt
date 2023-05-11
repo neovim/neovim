@@ -3605,6 +3605,10 @@ nvim_fetch({url}, {*opts})                                      *nvim_fetch()*
     Note:
         `opts.form` and `opts.data` are mutually exclusive.
 
+    Note:
+        User-password authentication can be achived by using a url in the
+        format of `protocol://user:pass@host...` or `protocol://user@host...`
+
     Parameters: ~
       • {url}   string
       • {opts}  table|nil Optional keyword arguments:

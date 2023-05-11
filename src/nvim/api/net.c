@@ -336,6 +336,8 @@ cleanup:
 /// </pre>
 ///
 /// @note `opts.form` and `opts.data` are mutually exclusive.
+/// @note User-password authentication can be achived by using a url in the format of
+/// `protocol://user:pass@host...` or `protocol://user@host...`
 /// @see man://libcurl-errors
 ///
 /// @param channel_id
