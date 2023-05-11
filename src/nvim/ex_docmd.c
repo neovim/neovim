@@ -4589,8 +4589,9 @@ static void ex_cquit(exarg_T *eap)
   getout(eap->addr_count > 0 ? (int)eap->line2 : EXIT_FAILURE);
 }
 
-/// ":qall": try to quit all windows
-static void ex_quit_all(exarg_T *eap)
+/// Do preparations for "qall" and "wqall".
+/// Returns FAIL when quitting should be aborted.
+int before_quit_all(exarg_T *eap)
 {
   if (cmdwin_type != 0) {
     if (eap->forceit) {
@@ -4598,19 +4599,28 @@ static void ex_quit_all(exarg_T *eap)
     } else {
       cmdwin_result = K_XF2;
     }
-    return;
+    return FAIL;
   }
 
   // Don't quit while editing the command line.
   if (text_locked()) {
     text_locked_msg();
-    return;
+    return FAIL;
   }
 
   if (before_quit_autocmds(curwin, true, eap->forceit)) {
-    return;
+    return FAIL;
   }
 
+  return OK;
+}
+
+/// ":qall": try to quit all windows
+static void ex_quit_all(exarg_T *eap)
+{
+  if (before_quit_all(eap) == FAIL) {
+    return;
+  }
   exiting = true;
   if (eap->forceit || !check_changed_any(false, false)) {
     getout(0);
