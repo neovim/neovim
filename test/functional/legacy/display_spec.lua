@@ -202,7 +202,7 @@ describe('display', function()
     exec([[
       set display=lastline smoothscroll scrolloff=0
       call setline(1, [
-        \'aaaaa'->repeat(500),
+        \'aaaaa'->repeat(150),
         \'bbbbb '->repeat(7) .. 'ccccc '->repeat(7) .. 'ddddd '->repeat(7)
       \])
     ]])
@@ -220,7 +220,7 @@ describe('display', function()
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      ^aaaaaaaaaaaaaaa                    |
                                          |
     ]])
     -- The correct part of the last line is moved into view.
