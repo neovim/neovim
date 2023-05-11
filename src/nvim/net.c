@@ -349,7 +349,7 @@ int nlua_fetch(lua_State *lstate)
 
     if (strcmp("on_err", key) == 0) {
       if (!lua_isfunction(lstate, VALUE)) {
-        luaL_error(lstate, "on_err must be a string");
+        luaL_error(lstate, "on_err must be a function");
         return 0;
       }
 
