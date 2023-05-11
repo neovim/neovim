@@ -3565,6 +3565,43 @@ Net Functions                                                        *api-net*
 nvim_fetch({url}, {*opts})                                      *nvim_fetch()*
     Perform an asyncronous network request.
 
+    Example: >lua
+    vim.net.fetch("https://example.com/api/data", {
+      on_complete = function (response)
+        -- Lets read the response!
+
+        if response.ok then
+          -- Read response text
+          local body = response.text
+        else
+      end,
+    })
+
+    -- POST to a url, sending a table as JSON and providing an authorization header
+    vim.net.fetch("https://example.com/api/data", {
+      method = "POST",
+      data = vim.json.encode({
+        key = value
+      }),
+      headers = {
+        Authorization = "Bearer " .. token
+        ["Content-Type"] = "application/json",
+        ["Accept"] = "application/json"
+      },
+      on_complete = function (response)
+        -- Lets read the response!
+
+        if response.ok then
+          -- Read JSON response
+          local table = vim.json.decode(response.test)
+        else
+
+        -- What went wrong?
+        vim.print(response.status)
+      end
+    })
+<
+
     Note:
         `opts.form` and `opts.data` are mutually exclusive.
 
