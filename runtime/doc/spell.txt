@@ -409,7 +409,7 @@ of the previous line "al." will be flagged as an error.  And when you type
 Use |CTRL-L| to redraw right away.  "[s" will also stop at a word combination
 with a line break.
 
-When encountering a line break Vim skips characters such as '*', '>' and '"',
+When encountering a line break Vim skips characters such as "*", '>' and '"',
 so that comments in C, shell and Vim code can be spell checked.
 
 

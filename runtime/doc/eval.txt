@@ -1087,7 +1087,7 @@ That works, since the String "190" is automatically converted to the Number
 	1 . 90 * 90.0
 Should be read as: >
 	1 . (90 * 90.0)
-Since '.' has lower precedence than '*'.  This does NOT work, since this
+Since '.' has lower precedence than "*".  This does NOT work, since this
 attempts to concatenate a Float and a String.
 
 When dividing a Number by zero the result depends on the value:
@@ -2210,7 +2210,7 @@ v:register	The name of the register in effect for the current normal mode
 		(use this in custom commands that take a register).
 		If none is supplied it is the default register '"', unless
 		'clipboard' contains "unnamed" or "unnamedplus", then it is
-		'*' or '+'.
+		"*" or '+'.
 		Also see |getreg()| and |setreg()|
 
 					*v:relnum* *relnum-variable*

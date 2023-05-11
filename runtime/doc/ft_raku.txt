@@ -35,7 +35,7 @@ Some of them are available with standard Vim digraphs:
 	(- ∈    ?= ≅    != ≠  ~
 	-) ∋    ?- ≃  ~
 
-The Greek alphabet is available with '*' followed by a similar Latin symbol:
+The Greek alphabet is available with "*" followed by a similar Latin symbol:
 	*p π  ~
 	*t τ  ~
 	*X ×  ~

@@ -167,7 +167,7 @@ The initial height of the help window can be set with the 'helpheight' option
 						*help-buffer-options*
 When the help buffer is created, several local options are set to make sure
 the help text is displayed as it was intended:
-    'iskeyword'		nearly all ASCII chars except ' ', '*', '"' and '|'
+    'iskeyword'		nearly all ASCII chars except ' ', "*", '"' and '|'
     'foldmethod'	"manual"
     'tabstop'		8
     'arabic'		off

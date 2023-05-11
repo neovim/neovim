@@ -1615,7 +1615,7 @@ be escaped), meta symbols have to be written with leading '%':
 	%\		The single '\' character.  Note that this has to be
 			escaped ("%\\") in ":set errorformat=" definitions.
 	%.		The single '.' character.
-	%#		The single '*'(!) character.
+	%#		The single "*"(!) character.
 	%^		The single '^' character.  Note that this is not
 			useful, the pattern already matches start of line.
 	%$		The single '$' character.  Note that this is not
