@@ -1360,6 +1360,29 @@ static int node_rawquery(lua_State *L)
     ts_query_cursor_set_point_range(cursor, (TSPoint){ start, 0 }, (TSPoint){ end, 0 });
   }
 
+  if (lua_gettop(L) >= 6 && !lua_isnil(L, 6)) {
+    if (!lua_istable(L, 6)) {
+      return luaL_error(L, "table expected");
+    }
+    lua_pushnil(L);
+    // stack: [dict, ..., nil]
+    while (lua_next(L, 6)) {
+      // stack: [dict, ..., key, value]
+      if (lua_type(L, -2) == LUA_TSTRING) {
+        char *k = (char *)lua_tostring(L, -2);
+        if (strequal("max_start_depth", k)) {
+          // TODO(lewis6991): remove ifdef when min TS version is 0.20.9
+#ifdef NVIM_TS_HAS_SET_MAX_START_DEPTH
+          uint32_t max_start_depth = (uint32_t)lua_tointeger(L, -1);
+          ts_query_cursor_set_max_start_depth(cursor, max_start_depth);
+#endif
+        }
+      }
+      lua_pop(L, 1);  // pop the value; lua_next will pop the key.
+      // stack: [dict, ..., key]
+    }
+  }
+
   TSLua_cursor *ud = lua_newuserdata(L, sizeof(*ud));  // [udata]
   ud->cursor = cursor;
   ud->predicated_match = -1;

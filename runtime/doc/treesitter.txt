@@ -939,7 +939,7 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
         metadata
 
                                                         *Query:iter_matches()*
-Query:iter_matches({self}, {node}, {source}, {start}, {stop})
+Query:iter_matches({self}, {node}, {source}, {start}, {stop}, {opts})
     Iterates the matches of self on a given range.
 
     Iterate over all matches within a {node}. The arguments are the same as
@@ -966,6 +966,11 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop})
       • {source}  (integer|string) Source buffer or string to search
       • {start}   (integer) Starting line for the search
       • {stop}    (integer) Stopping line for the search (end-exclusive)
+      • {opts}    (table|nil) Options:
+                  • max_start_depth (integer) if non-zero, sets the maximum
+                    start depth for each match. This is used to prevent
+                    traversing too deep into a tree. Requires treesitter >=
+                    0.20.9.
       • {self}
 
     Return: ~

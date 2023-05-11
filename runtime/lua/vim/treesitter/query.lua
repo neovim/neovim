@@ -686,16 +686,20 @@ end
 ---@param source (integer|string) Source buffer or string to search
 ---@param start integer Starting line for the search
 ---@param stop integer Stopping line for the search (end-exclusive)
+---@param opts table|nil Options:
+---   - max_start_depth (integer) if non-zero, sets the maximum start depth
+---     for each match. This is used to prevent traversing too deep into a tree.
+---     Requires treesitter >= 0.20.9.
 ---
 ---@return (fun(): integer, table<integer,TSNode>, table): pattern id, match, metadata
-function Query:iter_matches(node, source, start, stop)
+function Query:iter_matches(node, source, start, stop, opts)
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
   end
 
   start, stop = value_or_node_range(start, stop, node)
 
-  local raw_iter = node:_rawquery(self.query, false, start, stop)
+  local raw_iter = node:_rawquery(self.query, false, start, stop, opts)
   ---@cast raw_iter fun(): string, any
   local function iter()
     local pattern, match = raw_iter()
