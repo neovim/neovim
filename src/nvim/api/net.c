@@ -123,17 +123,20 @@ static size_t write_cb(void *contents, size_t size, size_t nmemb, void *userp)
 
 static size_t write_header_cb(void *contents, size_t size, size_t nmemb, void *userp)
 {
+  const size_t HEADER_ELEMENTS = 2;
+  const size_t MAX_LINE_LENGTH = 5;
+
   size_t realsize = size * nmemb;
   HeaderMemoryStruct *data = (HeaderMemoryStruct *)userp;
 
-  if (strncmp(contents, "HTTP/", 5) == 0) {
+  if (strncmp(contents, "HTTP/", MAX_LINE_LENGTH) == 0) {
     if (data->is_final_response) {
       api_free_dictionary(data->dict);
     }
     Dictionary header_dict = ARRAY_DICT_INIT;
     data->dict = header_dict;
     data->is_final_response = false;
-  } else if (realsize == 2 && strncmp(contents, "\r\n", 2) == 0) {
+  } else if (realsize == HEADER_ELEMENTS && strncmp(contents, "\r\n", HEADER_ELEMENTS) == 0) {
     // line is blank
     data->is_final_response = true;
   } else if (!data->is_final_response) {
