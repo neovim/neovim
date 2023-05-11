@@ -588,6 +588,9 @@ describe('smoothscroll', function()
     -- than one window. Note that the cursor is at the bottom this time because
     -- Vim prefers to do so if we are scrolling a few lines only.
     exec("call setline(1, ['one', 'two', 'Line' .. (' with lots of text'->repeat(10)) .. ' end', 'four'])")
+    -- Currently visible lines were replaced, test that the lines and cursor
+    -- are correctly displayed.
+    screen:expect_unchanged()
     feed('3Gztj')
     screen:expect_unchanged()
     -- Repeat the step but this time start it when the line is smooth-scrolled by

@@ -247,11 +247,24 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, linenr_T 
         wp->w_redr_type = UPD_VALID;
       }
 
+      linenr_T last = lnume + xtra - 1;  // last line after the change
+
+      // Reset "w_skipcol" if the topline length has become smaller to
+      // such a degree that nothing will be visible anymore, accounting
+      // for 'smoothscroll' <<< or 'listchars' "precedes" marker.
+      if (wp->w_skipcol > 0
+          && (last < wp->w_topline
+              || (wp->w_topline >= lnum
+                  && wp->w_topline < lnume
+                  && win_linetabsize(wp, wp->w_topline, ml_get(wp->w_topline), (colnr_T)MAXCOL)
+                  <= (unsigned)wp->w_skipcol + (wp->w_p_list && wp->w_p_lcs_chars.prec ? 1 : 3)))) {
+        wp->w_skipcol = 0;
+      }
+
       // Check if a change in the buffer has invalidated the cached
       // values for the cursor.
       // Update the folds for this window.  Can't postpone this, because
       // a following operator might work on the whole fold: ">>dd".
-      linenr_T last = lnume + xtra - 1;  // last line after the change
       foldUpdate(wp, lnum, last);
 
       // The change may cause lines above or below the change to become
