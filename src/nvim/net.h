@@ -1,5 +1,5 @@
-#ifndef NVIM_API_FETCH_H
-#define NVIM_API_FETCH_H
+#ifndef NVIM_FETCH_H
+#define NVIM_FETCH_H
 
 #include <bits/stdint-uintn.h>
 #include <curl/curl.h>
@@ -51,4 +51,4 @@ typedef struct {
   String error;
 } AsyncErrData;
 
-#endif  // NVIM_API_FETCH_H
+#endif  // NVIM_FETCH_H
