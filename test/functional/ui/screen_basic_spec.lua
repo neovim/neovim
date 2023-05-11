@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local spawn, set_session, clear = helpers.spawn, helpers.set_session, helpers.clear
 local feed, command = helpers.feed, helpers.command
+local curwin = helpers.curwin
 local insert = helpers.insert
 local eq = helpers.eq
 local eval = helpers.eval
@@ -183,6 +184,52 @@ local function screen_tests(linegrid)
           vim.schedule(function()
             vim.api.nvim_buf_call(%d, function() end)
           end)
+        ]], buf2))
+        command('redraw!')
+        screen:expect(function()
+          eq(expected, screen.title)
+        end)
+      end)
+
+      it('setting the buffer of another window using RPC', function()
+        local oldwin = curwin().id
+        command('split')
+        meths.win_set_buf(oldwin, buf2)
+        command('redraw!')
+        screen:expect(function()
+          eq(expected, screen.title)
+        end)
+      end)
+
+      it('setting the buffer of another window using Lua callback', function()
+        local oldwin = curwin().id
+        command('split')
+        exec_lua(string.format([[
+          vim.schedule(function()
+            vim.api.nvim_win_set_buf(%d, %d)
+          end)
+        ]], oldwin, buf2))
+        command('redraw!')
+        screen:expect(function()
+          eq(expected, screen.title)
+        end)
+      end)
+
+      it('creating a floating window using RPC', function()
+        meths.open_win(buf2, false, {
+          relative = 'editor', width = 5, height = 5, row = 0, col = 0,
+        })
+        command('redraw!')
+        screen:expect(function()
+          eq(expected, screen.title)
+        end)
+      end)
+
+      it('creating a floating window using Lua callback', function()
+        exec_lua(string.format([[
+          vim.api.nvim_open_win(%d, false, {
+            relative = 'editor', width = 5, height = 5, row = 0, col = 0,
+          })
         ]], buf2))
         command('redraw!')
         screen:expect(function()
