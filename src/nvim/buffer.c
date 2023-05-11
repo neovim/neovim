@@ -3444,7 +3444,6 @@ void resettitle(void)
 {
   ui_call_set_icon(cstr_as_string(lasticon));
   ui_call_set_title(cstr_as_string(lasttitle));
-  ui_flush();
 }
 
 #if defined(EXITFREE)
