@@ -2,7 +2,6 @@ set(LUV_CMAKE_ARGS
   -D LUA_BUILD_TYPE=System
   -D LUA_COMPAT53_DIR=${DEPS_BUILD_DIR}/src/lua-compat-5.3
   -D WITH_SHARED_LIBUV=ON
-  -D BUILD_SHARED_LIBS=OFF
   -D BUILD_STATIC_LIBS=ON
   -D BUILD_MODULE=OFF)
 
@@ -38,7 +37,7 @@ ExternalProject_Add(lua-compat-5.3
   BUILD_COMMAND ""
   INSTALL_COMMAND "")
 
-ExternalProject_Add(luv-static
+ExternalProject_Add(luv
   DEPENDS lua-compat-5.3
   URL ${LUV_URL}
   URL_HASH SHA256=${LUV_SHA256}
@@ -49,10 +48,10 @@ ExternalProject_Add(luv-static
   CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS})
 
 if(USE_BUNDLED_LUAJIT)
-  add_dependencies(luv-static luajit)
+  add_dependencies(luv luajit)
 elseif(USE_BUNDLED_LUA)
-  add_dependencies(luv-static lua)
+  add_dependencies(luv lua)
 endif()
 if(USE_BUNDLED_LIBUV)
-  add_dependencies(luv-static libuv)
+  add_dependencies(luv libuv)
 endif()
