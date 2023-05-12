@@ -419,6 +419,18 @@ func Test_smoothscroll_cursor_position()
   exe "normal \<C-Y>"
   call s:check_col_calc(1, 3, 41)
 
+   " Test "g0/g<Home>"
+  exe "normal gg\<C-E>"
+  norm $gkg0
+  call s:check_col_calc(1, 2, 21)
+
+  " Test moving the cursor behind the <<< display with 'virtualedit'
+  set virtualedit=all
+  exe "normal \<C-E>"
+  norm 3lgkh
+  call s:check_col_calc(3, 2, 23)
+  set virtualedit&
+
   normal gg3l
   exe "normal \<C-E>"
 
