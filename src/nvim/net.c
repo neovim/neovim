@@ -206,6 +206,7 @@ static void fetch_worker(void *arg)
   }
 
 cleanup:
+  XFREE_CLEAR(fetch_data->data);
   curl_mime_free(fetch_data->multipart_form);
   curl_slist_free_all(fetch_data->headers);
   curl_easy_cleanup(easy_handle);
@@ -450,7 +451,7 @@ int nlua_fetch(lua_State *lstate)
         return 0;
       }
 
-      fetch_data->data = data;
+      fetch_data->data = xstrdup(data);
       curl_easy_setopt(easy_handle, CURLOPT_POSTFIELDS, fetch_data->data);
     }
 
