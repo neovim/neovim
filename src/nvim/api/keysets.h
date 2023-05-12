@@ -172,17 +172,6 @@ typedef struct {
 } Dict(get_highlight);
 
 typedef struct {
-  Object id;
-  Object method;
-  Object on_complete;
-  Object on_err;
-  Object headers;
-  Object redirect;
-  Object form;
-  Object data;
-} Dict(fetch);
-
-typedef struct {
   Object buffer;
   Object event;
   Object group;

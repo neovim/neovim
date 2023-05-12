@@ -8,8 +8,6 @@
 #include "nvim/api/keysets.h"
 #include "nvim/api/private/defs.h"
 
-void nvim_fetch(uint64_t channel_id, String url, Dict(fetch) * opts, lua_State *lstate, Error *err);
-
 int nlua_fetch(lua_State *lstate);
 
 void net_teardown(void);
