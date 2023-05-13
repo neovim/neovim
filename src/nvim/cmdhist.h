@@ -1,7 +1,6 @@
 #ifndef NVIM_CMDHIST_H
 #define NVIM_CMDHIST_H
 
-#include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/os/time.h"

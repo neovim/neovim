@@ -4,13 +4,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/macros.h"
-#include "nvim/mark.h"
-#include "nvim/os/os.h"
-#include "nvim/os/os_defs.h"
-#include "nvim/vim.h"
+#include "nvim/option_defs.h"
 
 // Values for file_name_in_line()
 #define FNAME_MESS      1       // give error message

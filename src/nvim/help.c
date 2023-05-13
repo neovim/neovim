@@ -22,6 +22,7 @@
 #include "nvim/globals.h"
 #include "nvim/help.h"
 #include "nvim/macros.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"

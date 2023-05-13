@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 #include "nvim/api/private/defs.h"
-#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/func_attr.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

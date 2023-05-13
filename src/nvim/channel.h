@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/event/libuv_process.h"
 #include "nvim/event/multiqueue.h"
