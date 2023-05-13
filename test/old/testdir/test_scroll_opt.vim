@@ -426,8 +426,7 @@ func Test_smoothscroll_cursor_position()
 
   " Test moving the cursor behind the <<< display with 'virtualedit'
   set virtualedit=all
-  exe "normal \<C-E>"
-  norm 3lgkh
+  exe "normal \<C-E>3lgkh"
   call s:check_col_calc(3, 2, 23)
   set virtualedit&
 
@@ -497,6 +496,16 @@ func Test_smoothscroll_cursor_position()
   call s:check_col_calc(1, 2, 37)
   exe "normal \<C-Y>"
   call s:check_col_calc(1, 3, 37)
+  normal gg
+
+  " Test list + listchars "precedes", where there is always 1 overlap
+  " regardless of number and cpo-=n.
+  setl number list listchars=precedes:< cpo-=n
+  call s:check_col_calc(5, 1, 1)
+  exe "normal 2|\<C-E>"
+  call s:check_col_calc(6, 1, 18)
+  norm h
+  call s:check_col_calc(5, 2, 17)
   normal gg
 
   bwipe!
