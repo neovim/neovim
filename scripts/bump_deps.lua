@@ -69,7 +69,7 @@ run({ 'mkdir', '-p', temp_dir })
 
 local function get_dependency(dependency_name)
   local dependency_table = {
-    ['LuaJIT'] = {
+    ['luajit'] = {
       repo = 'LuaJIT/LuaJIT',
       symbol = 'LUAJIT',
     },
@@ -77,13 +77,33 @@ local function get_dependency(dependency_name)
       repo = 'libuv/libuv',
       symbol = 'LIBUV',
     },
-    ['Luv'] = {
+    ['luv'] = {
       repo = 'luvit/luv',
       symbol = 'LUV',
     },
     ['tree-sitter'] = {
       repo = 'tree-sitter/tree-sitter',
       symbol = 'TREESITTER',
+    },
+    ['tree-sitter-c'] = {
+      repo = 'tree-sitter/tree-sitter-c',
+      symbol = 'TREESITTER_C',
+    },
+    ['tree-sitter-lua'] = {
+      repo = 'MunifTanjim/tree-sitter-lua',
+      symbol = 'TREESITTER_LUA',
+    },
+    ['tree-sitter-vim'] = {
+      repo = 'neovim/tree-sitter-vim',
+      symbol = 'TREESITTER_VIM',
+    },
+    ['tree-sitter-vimdoc'] = {
+      repo = 'neovim/tree-sitter-vimdoc',
+      symbol = 'TREESITTER_VIMDOC',
+    },
+    ['tree-sitter-query'] = {
+      repo = 'nvim-treesitter/tree-sitter-query',
+      symbol = 'TREESITTER_QUERY',
     },
   }
   local dependency = dependency_table[dependency_name]
