@@ -2527,6 +2527,7 @@ int oneleft(void)
     }
 
     curwin->w_set_curswant = true;
+    adjust_skipcol();
     return OK;
   }
 

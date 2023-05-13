@@ -5272,6 +5272,7 @@ static void nv_g_home_m_cmd(cmdarg_T *cap)
     curwin->w_valid &= ~VALID_WCOL;
   }
   curwin->w_set_curswant = true;
+  adjust_skipcol();
 }
 
 /// "g_": to the last non-blank character in the line or <count> lines downward.
