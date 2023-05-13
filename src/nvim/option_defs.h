@@ -1,7 +1,7 @@
 #ifndef NVIM_OPTION_DEFS_H
 #define NVIM_OPTION_DEFS_H
 
-#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/macros.h"
 #include "nvim/types.h"
 

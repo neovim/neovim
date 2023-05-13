@@ -17,7 +17,7 @@ typedef struct {
 
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/garray.h"
 #include "nvim/grid_defs.h"
 #include "nvim/hashtab.h"

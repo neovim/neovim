@@ -6,7 +6,6 @@
 
 #include "lauxlib.h"
 #include "nvim/ascii.h"
-#include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/extmark.h"
