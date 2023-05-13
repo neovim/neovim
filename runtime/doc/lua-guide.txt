@@ -114,10 +114,10 @@ Let's assume you have the following directory structure:
     |-- after/
     |-- ftplugin/
     |-- lua/
-    |  |-- myluamodule.lua
-    |  |-- other_modules/
-    |     |-- anothermodule.lua
-    |     |-- init.lua
+    |   |-- myluamodule.lua
+    |   |-- other_modules/
+    |       |-- anothermodule.lua
+    |       |-- init.lua
     |-- plugin/
     |-- syntax/
     |-- init.vim

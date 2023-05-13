@@ -335,7 +335,7 @@ end
 --- Fold an iterator or table into a single value.
 ---
 --- Examples:
---- <pre>
+--- <pre>lua
 --- -- Create a new table with only even values
 --- local t = { a = 1, b = 2, c = 3, d = 4 }
 --- local it = vim.iter(t)
