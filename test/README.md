@@ -285,7 +285,7 @@ Number; !must be defined to function properly):
 
 - `VALGRIND_LOG` (F) (S): overrides valgrind log file name used for `VALGRIND`.
 
-- `TEST_COLORS` (F) (U) (D): enable pretty colors in test runner.
+- `TEST_COLORS` (F) (U) (D): enable pretty colors in test runner. Set to true by default.
 
 - `TEST_SKIP_FRAGILE` (F) (D): makes test suite skip some fragile tests.
 
