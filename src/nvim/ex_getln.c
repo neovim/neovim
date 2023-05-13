@@ -127,6 +127,7 @@ typedef struct command_line_state {
   int break_ctrl_c;
   expand_T xpc;
   long *b_im_ptr;
+  buf_T *b_im_ptr_buf;  ///< buffer where b_im_ptr is valid
 } CommandLineState;
 
 typedef struct cmdpreview_win_info {
@@ -736,7 +737,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool clea
     } else {
       s->b_im_ptr = &curbuf->b_p_imsearch;
     }
-
+    s->b_im_ptr_buf = curbuf;
     if (*s->b_im_ptr == B_IMODE_LMAP) {
       State |= MODE_LANGMAP;
     }
@@ -1538,20 +1539,21 @@ static int command_line_erase_chars(CommandLineState *s)
 /// language :lmap mappings and/or Input Method.
 static void command_line_toggle_langmap(CommandLineState *s)
 {
+  long *b_im_ptr = buf_valid(s->b_im_ptr_buf) ? s->b_im_ptr : NULL;
   if (map_to_exists_mode("", MODE_LANGMAP, false)) {
     // ":lmap" mappings exists, toggle use of mappings.
     State ^= MODE_LANGMAP;
-    if (s->b_im_ptr != NULL) {
+    if (b_im_ptr != NULL) {
       if (State & MODE_LANGMAP) {
-        *s->b_im_ptr = B_IMODE_LMAP;
+        *b_im_ptr = B_IMODE_LMAP;
       } else {
-        *s->b_im_ptr = B_IMODE_NONE;
+        *b_im_ptr = B_IMODE_NONE;
       }
     }
   }
 
-  if (s->b_im_ptr != NULL) {
-    if (s->b_im_ptr == &curbuf->b_p_iminsert) {
+  if (b_im_ptr != NULL) {
+    if (b_im_ptr == &curbuf->b_p_iminsert) {
       set_iminsert_global(curbuf);
     } else {
       set_imsearch_global(curbuf);

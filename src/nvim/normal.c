@@ -107,6 +107,8 @@ static int VIsual_mode_orig = NUL;              // saved Visual mode
 #endif
 
 static const char e_changelist_is_empty[] = N_("E664: Changelist is empty");
+static const char e_cmdline_window_already_open[]
+  = N_("E1292: Command-line window is already open");
 
 static inline void normal_state_init(NormalState *s)
 {
@@ -6372,6 +6374,10 @@ static void nv_record(cmdarg_T *cap)
   }
 
   if (cap->nchar == ':' || cap->nchar == '/' || cap->nchar == '?') {
+    if (cmdwin_type != 0) {
+      emsg(_(e_cmdline_window_already_open));
+      return;
+    }
     stuffcharReadbuff(cap->nchar);
     stuffcharReadbuff(K_CMDWIN);
   } else {
