@@ -886,6 +886,8 @@ end
 ---              changed.
 ---           - `on_child_added` : emitted when a child is added to the tree.
 ---           - `on_child_removed` : emitted when a child is removed from the tree.
+---           - `on_detach` : emitted when the buffer is detached, see |nvim_buf_detach_event|.
+---              Takes one argument, the number of the buffer.
 --- @param recursive? boolean Apply callbacks recursively for all children. Any new children will
 ---                           also inherit the callbacks.
 function LanguageTree:register_cbs(cbs, recursive)
