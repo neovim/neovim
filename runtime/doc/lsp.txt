@@ -1299,13 +1299,6 @@ rename({new_name}, {options})                           *vim.lsp.buf.rename()*
                     • name (string|nil): Restrict clients used for rename to
                       ones where client.name matches this field.
 
-server_ready()                                    *vim.lsp.buf.server_ready()*
-    Checks whether the language servers attached to the current buffer are
-    ready.
-
-    Return: ~
-        `true` if server responds.
-
 signature_help()                                *vim.lsp.buf.signature_help()*
     Displays signature information about the symbol under the cursor in a
     floating window.
