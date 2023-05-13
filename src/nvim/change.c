@@ -257,7 +257,8 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, linenr_T 
               || (wp->w_topline >= lnum
                   && wp->w_topline < lnume
                   && win_linetabsize(wp, wp->w_topline, ml_get(wp->w_topline), (colnr_T)MAXCOL)
-                  <= (unsigned)wp->w_skipcol + (wp->w_p_list && wp->w_p_lcs_chars.prec ? 1 : 3)))) {
+                  <= (unsigned)(wp->w_skipcol + sms_marker_overlap(wp, win_col_off(wp)
+                                                                   - win_col_off2(wp)))))) {
         wp->w_skipcol = 0;
       }
 
