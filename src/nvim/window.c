@@ -514,17 +514,43 @@ wingotofile:
       tabpage_T *oldtab = curtab;
       win_T *oldwin = curwin;
       setpcmark();
-      if (win_split(0, 0) == OK) {
+
+      // If 'switchbuf' is set to 'useopen' or 'usetab' and the
+      // file is already opened in a window, then jump to it.
+      win_T *wp = NULL;
+      if ((swb_flags & (SWB_USEOPEN | SWB_USETAB))
+          && cmdmod.cmod_tab == 0) {
+        buf_T *existing_buf = buflist_findname_exp(ptr);
+
+        if (existing_buf != NULL) {
+          if (swb_flags & SWB_USEOPEN) {
+            wp = buf_jump_open_win(existing_buf);
+          }
+
+          // If 'switchbuf' contains "usetab": jump to first
+          // window in any tab page containing "existing_buf"
+          // if one exists.
+          if (wp == NULL && (swb_flags & SWB_USETAB)) {
+            wp = buf_jump_open_tab(existing_buf);
+          }
+        }
+      }
+
+      if (wp == NULL && win_split(0, 0) == OK) {
         RESET_BINDING(curwin);
         if (do_ecmd(0, ptr, NULL, NULL, ECMD_LASTL, ECMD_HIDE, NULL) == FAIL) {
           // Failed to open the file, close the window opened for it.
           win_close(curwin, false, false);
           goto_tabpage_win(oldtab, oldwin);
-        } else if (nchar == 'F' && lnum >= 0) {
-          curwin->w_cursor.lnum = lnum;
-          check_cursor_lnum();
-          beginline(BL_SOL | BL_FIX);
+        } else {
+          wp = curwin;
         }
+      }
+
+      if (wp != NULL && nchar == 'F' && lnum >= 0) {
+        curwin->w_cursor.lnum = lnum;
+        check_cursor_lnum();
+        beginline(BL_SOL | BL_FIX);
       }
       xfree(ptr);
     }
