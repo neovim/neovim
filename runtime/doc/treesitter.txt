@@ -221,8 +221,7 @@ The following predicates are built in:
          similar to `match?`
 
     `contains?`                                *treesitter-predicate-contains?*
-        Match a string against parts of the text corresponding to a node:
-        >query
+        Match a string against parts of the text corresponding to a node: >query
             ((identifier) @foo (#contains? @foo "foo"))
             ((identifier) @foo-bar (#contains? @foo-bar "foo" "bar"))
 <
@@ -234,6 +233,19 @@ The following predicates are built in:
         This is the recommended way to check if the node matches one of many
         keywords, as it has been optimized for this.
 
+    `has-ancestor?`                        *treesitter-predicate-has-ancestor?*
+        Match any of the given node types against all ancestors of a node: >query
+            ((identifier) @variable.builtin
+              (#any-of? @variable.builtin "begin" "end")
+              (#has-ancestor? @variable.builtin range_expression))
+<
+    `has-parent?`                            *treesitter-predicate-has-parent?*
+        Match any of the given node types against the direct ancestor of a
+        node: >query
+            (((field_expression
+                 (field_identifier) @method)) @_parent
+             (#has-parent? @_parent template_method function_declarator))
+<
                                                  *lua-treesitter-not-predicate*
 Each predicate has a `not-` prefixed predicate that is just the negation of
 the predicate.
