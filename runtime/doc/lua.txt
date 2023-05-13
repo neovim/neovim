@@ -321,20 +321,22 @@ Example: >vim
     :echo luaeval('string.match(_A, "[a-z]+")', 'XYXfoo123')
     " foo
 <
+                                                                    *lua-table*
 Lua tables are used as both dictionaries and lists, so it is impossible to
 determine whether empty table is meant to be empty list or empty dictionary.
 Additionally Lua does not have integer numbers. To distinguish between these
 cases there is the following agreement:
-
+                                                                     *lua-list*
 0. Empty table is empty list.
 1. Table with N incrementally growing integral numbers, starting from 1 and
    ending with N is considered to be a list.
+                                                                     *lua-dict*
 2. Table with string keys, none of which contains NUL byte, is considered to
    be a dictionary.
 3. Table with string keys, at least one of which contains NUL byte, is also
    considered to be a dictionary, but this time it is converted to
    a |msgpack-special-map|.
-                                                             *lua-special-tbl*
+                                                              *lua-special-tbl*
 4. Table with `vim.type_idx` key may be a dictionary, a list or floating-point
    value:
    - `{[vim.type_idx]=vim.types.float, [vim.val_idx]=1}` is converted to
@@ -1432,7 +1434,7 @@ keycode({str})                                                 *vim.keycode()*
       • |nvim_replace_termcodes()|
 
 lua_omnifunc({find_start}, {_})                           *vim.lua_omnifunc()*
-    Omnifunc for completing lua values from from the runtime lua interpreter,
+    Omnifunc for completing lua values from the runtime lua interpreter,
     similar to the builtin completion for the `:lua` command.
 
     Activate using `set omnifunc=v:lua.vim.lua_omnifunc` in a lua buffer.
@@ -1881,7 +1883,7 @@ tbl_count({t})                                               *vim.tbl_count()*
       • https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
 
 tbl_deep_extend({behavior}, {...})                     *vim.tbl_deep_extend()*
-    Merges recursively two or more map-like tables.
+    Merges recursively two or more tables.
 
     Parameters: ~
       • {behavior}  (string) Decides what to do if a key is found in more than
@@ -1889,7 +1891,7 @@ tbl_deep_extend({behavior}, {...})                     *vim.tbl_deep_extend()*
                     • "error": raise an error
                     • "keep": use value from the leftmost map
                     • "force": use value from the rightmost map
-      • {...}       (table) Two or more map-like tables
+      • {...}       (table) Two or more tables
 
     Return: ~
         (table) Merged table
@@ -1898,7 +1900,7 @@ tbl_deep_extend({behavior}, {...})                     *vim.tbl_deep_extend()*
       • |vim.tbl_extend()|
 
 tbl_extend({behavior}, {...})                               *vim.tbl_extend()*
-    Merges two or more map-like tables.
+    Merges two or more tables.
 
     Parameters: ~
       • {behavior}  (string) Decides what to do if a key is found in more than
@@ -1906,7 +1908,7 @@ tbl_extend({behavior}, {...})                               *vim.tbl_extend()*
                     • "error": raise an error
                     • "keep": use value from the leftmost map
                     • "force": use value from the rightmost map
-      • {...}       (table) Two or more map-like tables
+      • {...}       (table) Two or more tables
 
     Return: ~
         (table) Merged table
@@ -2728,7 +2730,7 @@ versions (1.2.3-rc1) are not matched. >
 <
 
 cmp({v1}, {v2})                                            *vim.version.cmp()*
-    Parses and compares two version version objects (the result of
+    Parses and compares two version objects (the result of
     |vim.version.parse()|, or specified literally as a `{major, minor, patch}`
     tuple, e.g. `{1, 0, 3}`).
 

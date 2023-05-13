@@ -2866,7 +2866,7 @@ viml_pexpr_parse_no_paren_closing_error: {}
         case kENodeOperator:
           if (prev_token.type == kExprLexSpacing) {
             // For some reason "function (args)" is a function call, but
-            // "(funcref) (args)" is not. AFAIR this somehow involves
+            // "(funcref) (args)" is not. As far as I remember this somehow involves
             // compatibility and Bram was commenting that this is
             // intentionally inconsistent and he is not very happy with the
             // situation himself.

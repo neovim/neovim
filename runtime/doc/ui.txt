@@ -336,7 +336,7 @@ numerical highlight ids to the actual attributes.
 
 	Highlights are always transmitted both for both the RGB format and as
 	terminal 256-color codes, as the `rgb_attr` and `cterm_attr` parameters
-	respectively. The |ui-rgb| option has no effect effect anymore.
+	respectively. The |ui-rgb| option has no effect anymore.
 	Most external UIs will only need to store and use the `rgb_attr`
 	attributes.
 
@@ -352,7 +352,7 @@ numerical highlight ids to the actual attributes.
 	|ui-hlstate| extension explained below.
 
 ["hl_group_set", name, hl_id] ~
-	The bulitin highlight group `name` was set to use the attributes `hl_id`
+	The built-in highlight group `name` was set to use the attributes `hl_id`
 	defined by a previous `hl_attr_define` call. This event is not needed
 	to render the grids which use attribute ids directly, but is useful
 	for a UI who want to render its own elements with consistent
@@ -710,7 +710,7 @@ For command-line 'wildmenu' UI events, activate |ui-popupmenu|.
 	to distinguish different command lines active at the same time. The
 	first invoked command line has level 1, the next recursively-invoked
 	prompt has level 2. A command line invoked from the |cmdline-window|
-	has a higher level than than the edited command line.
+	has a higher level than the edited command line.
 
 ["cmdline_pos", pos, level] ~
 	Change the cursor position in the cmdline.

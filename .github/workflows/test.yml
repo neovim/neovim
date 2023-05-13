@@ -143,7 +143,7 @@ jobs:
       - name: Install dependencies
         run: ./.github/scripts/install_deps.sh --test
 
-      - name: Setup interpreter packages
+      - name: Set up interpreter packages
         run: |
           # Use default CC to avoid compilation problems when installing Python modules.
           echo "Install neovim module for Python."

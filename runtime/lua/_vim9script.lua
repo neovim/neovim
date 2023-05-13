@@ -312,7 +312,7 @@ vim9['fn'] = (function()
       -- We do have vim9script ;) that's this plugin
       ['vim9script'] = true,
 
-      -- Include some vim patches that are sometimes required by variuos vim9script plugins
+      -- Include some vim patches that are sometimes required by various vim9script plugins
       -- that we implement via vim9jit
       [ [[patch-8.2.2261]] ] = true,
       [ [[patch-8.2.4257]] ] = true,

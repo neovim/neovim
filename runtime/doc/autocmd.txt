@@ -1162,7 +1162,7 @@ Set the 'cindent' option for C files in the /vim/src directory. >
 If you have a link from "/tmp/test.c" to "/home/nobody/vim/src/test.c", and
 you start editing "/tmp/test.c", this autocommand will match.
 
-Note:  To match part of a path, but not from the root directory, use a '*' as
+Note:  To match part of a path, but not from the root directory, use a "*" as
 the first character.  Example: >
 	:autocmd BufRead */doc/*.txt	set tw=78
 This autocommand will for example be executed for "/tmp/doc/xx.txt" and
