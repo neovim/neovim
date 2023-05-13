@@ -30,6 +30,9 @@ endfunc
 
 " This was using a pointer to a freed buffer
 func Test_cmdwin_freed_buffer_ptr()
+  " this does not work on MS-Windows because renaming an open file fails
+  CheckNotMSWindows
+
   au BufEnter * next 0| file 
   edit 0
   silent! norm q/
