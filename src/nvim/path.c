@@ -2365,6 +2365,17 @@ int append_path(char *path, const char *to_append, size_t max_len)
 ///
 /// @return FAIL for failure, OK for success.
 static int path_to_absolute(const char *fname, char *buf, size_t len, int force)
+#ifdef MSWIN
+{
+  if (_fullpath(buf, fname, len) == NULL) {
+    return FAIL;
+  }
+# if defined(BACKSLASH_IN_FILENAME)
+  forward_slash(buf);
+# endif
+  return OK;
+}
+#else
 {
   const char *p;
   *buf = NUL;
@@ -2375,11 +2386,6 @@ static int path_to_absolute(const char *fname, char *buf, size_t len, int force)
   // expand it if forced or not an absolute path
   if (force || !path_is_absolute(fname)) {
     p = strrchr(fname, '/');
-#ifdef MSWIN
-    if (p == NULL) {
-      p = strrchr(fname, '\\');
-    }
-#endif
     if (p != NULL) {
       assert(p >= fname);
       memcpy(relative_directory, fname, (size_t)(p - fname + 1));
@@ -2397,6 +2403,7 @@ static int path_to_absolute(const char *fname, char *buf, size_t len, int force)
   xfree(relative_directory);
   return append_path(buf, end_of_path, len);
 }
+#endif
 
 /// Check if file `fname` is a full (absolute) path.
 ///
