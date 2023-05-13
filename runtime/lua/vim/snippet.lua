@@ -1,13 +1,13 @@
 local lsp_snippet = require('vim.lsp._snippet')
 
----@alias vim.snippet.MarkId number
----@alias vim.snippet.Tabstop number
----@alias vim.snippet.Changenr number
----@alias vim.snippet.Position { [1]: number, [2]: number } # The 0-origin utf8 byte index.
+---@alias vim.snippet.MarkId 
+---@alias vim.snippet.Tabstop integer
+---@alias vim.snippet.Changenr integer
+---@alias vim.snippet.Position { [1]: integer, [2]: integer } # The 0-origin utf8 byte index.
 ---@alias vim.snippet.Range { s: vim.snippet.Position, e: vim.snippet.Position } # The 0-origin utf8 byte index.
 
 ---@class vim.snippet.TraverseContext
----@field depth number
+---@field depth integer
 ---@field range vim.snippet.Range
 ---@field replace fun(new_node: vim.lsp.snippet.Node): nil
 
@@ -20,6 +20,24 @@ local function feedkeys(keys)
   table.insert(k, keys)
   table.insert(k, ('<Cmd>set virtualedit=%s<CR>'):format(vim.o.virtualedit))
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(table.concat(k), true, true, true), 'ni', true)
+end
+
+---Return true if range contains position.
+---@param range vim.snippet.Range
+---@param position vim.snippet.Position
+---@return boolean
+local function within(range, position)
+  -- Check the cursor is before the range start position.
+  if position[1] < range.s[1] or (position[1] == range.s[1] and position[2] < range.s[2]) then
+    return false
+  end
+
+  -- Check the cursor is after the range end position.
+  if range.e[1] < position[1] or (range.e[1] == position[1] and range.e[2] < position[2]) then
+    return false
+  end
+
+  return true
 end
 
 ---Return cursor position.
@@ -57,32 +75,29 @@ local function adjust_indent(snippet_text)
   local base_indent = get_base_indent()
 
   local adjusted_snippet_text = {}
-  local texts = vim.split(snippet_text, '\n', { plain = true })
-  for i, text in ipairs(texts) do
-    if i ~= #texts and string.match(text, '^%s*$') then
+  local snippet_lines = vim.split(snippet_text, '\n', { plain = true })
+  for i, line in ipairs(snippet_lines) do
+    if i == 1 then
+      -- Use first line as-is.
+      table.insert(adjusted_snippet_text, line)
+    elseif i ~= #snippet_lines and string.match(line, '^%s*$') then
       -- Remove space only lines except the last line.
       table.insert(adjusted_snippet_text, '')
     else
-      -- Adjust indent.
-      if i ~= 1 then
-        -- Change \t as one_indent.
-        text = string.gsub(text, '^(\t+)', function(indent)
-          return string.gsub(indent, '\t', one_indent)
-        end)
-        -- Add base_indent.
-        table.insert(adjusted_snippet_text, base_indent .. text)
-      else
-        -- Use first line as-is.
-        table.insert(adjusted_snippet_text, text)
-      end
+      -- 1. Change \t as one_indent.
+      -- 2. Add base_indent.
+      line = string.gsub(line, '^(\t+)', function(indent)
+        return string.gsub(indent, '\t', one_indent)
+      end)
+      table.insert(adjusted_snippet_text, base_indent .. line)
     end
   end
   return table.concat(adjusted_snippet_text, '\n')
 end
 
 ---Get range from extmark.
----@param ns number
----@param mark_id number
+---@param ns integer
+---@param mark_id vim.snippet.MarkId
 ---@return vim.snippet.Range
 local function get_range_from_mark(ns, mark_id)
   local mark = vim.api.nvim_buf_get_extmark_by_id(0, ns, mark_id, { details = true })
@@ -123,8 +138,8 @@ local function traverse(snippet_node, callback)
     -- Memoize starting position of this node.
     local start_position = { position[1], position[2] }
 
-    -- Traverse children or this node.
     if node.children then
+      -- Traverse children.
       for i, child in ipairs(node.children) do
         traverse_recursive(child, {
           depth = context.depth + 1,
@@ -136,6 +151,7 @@ local function traverse(snippet_node, callback)
         }, position)
       end
     else
+      -- Update position if this node is Text node.
       local texts = vim.split(tostring(node), '\n')
       position[1] = position[1] + #texts - 1
       position[2] = #texts > 1 and #texts[#texts] or (position[2] + #texts[1])
@@ -160,28 +176,23 @@ end
 local function jump_to_mark(mark)
   local range = mark:get_range()
   if mark.node.type == lsp_snippet.Node.Type.Choice then
-    feedkeys(([[<Esc><Cmd>call cursor(%s,%s)<CR>i]]):format(range.e[1] + 1, range.e[2] + 1))
-
-    -- TODO: The key-sequence is asynchronous and it can't be waited via `vim.wait` so we use `vim.schedule` here.
-    vim.schedule(function()
-      vim.ui.select(mark.node.items, {
-        prompt = 'Select a choice:'
-      }, function(choise)
-        mark:set_node_text(choise)
-        mark:sync()
-      end)
-    end)
+    feedkeys(([[<Cmd>call cursor(%s,%s)<CR><Cmd>complete(%s, %s)<CR>]]):format(
+      range.e[1] + 1,
+      range.e[2] + 1,
+      range.s[2] + 1,
+      vim.json.encode(mark.node.items)
+    ))
   else
     if range.s[1] == range.e[1] and range.s[2] == range.e[2] then
       -- jump.
       feedkeys(([[<Esc><Cmd>call cursor(%s,%s)<CR>i]]):format(range.e[1] + 1, range.e[2] + 1))
     else
-      -- select.
+      -- select text and save `'<` / `'>` register.
       feedkeys(([[<Esc><Cmd>call cursor(%s,%s)<CR>v<Cmd>call cursor(%s,%s)<CR><Esc>gvo<C-g>]]):format(
         range.s[1] + 1,
         range.s[2] + 1,
         range.e[1] + 1,
-        range.e[2]
+        range.e[2] + (vim.o.selection == 'exclusive' and 1 or 0)
       ))
     end
   end
@@ -190,7 +201,7 @@ end
 ---Resolve variables.
 ---NOTE: This function doesn't support fast-event.
 ---@param var_name string
----@return (number|string)?
+---@return (integer|string)?
 local function resolve_variable(var_name)
   if var_name == 'TM_SELECTED_TEXT' then
     return ''
@@ -220,73 +231,73 @@ local function resolve_variable(var_name)
 end
 
 ---Analyze snippet text.
----1. Normalize same tabstop nodes (e.g. `${1:foo} ${1:bar}` -> `${1:foo} ${1:foo}`)
----2. Resolve variables.
----3. Append 0-tabstop if not exist.
----4. Normalize tabstop order (0 tabstop will be a `max-tabstop + 1`).
----5. Make text to first insertion.
+--- The returned tree will have tab stops numbered sequentially starting with 1.
 ---@param snippet_text string
----@return { node: table, text: string, max_tabstop: number, min_tabstop: number }
-local function analyze_snippet(snippet_text)
-  local analyzed = {
+---@return { node: table, text: string, tabstop_count: integer }
+local function create_normalized_tree(snippet_text)
+  local normalized = {
     node = lsp_snippet.parse(snippet_text),
     text = '',
-    min_tabstop = nil,
-    max_tabstop = nil,
+    tabstop_count = 0,
   }
 
-  -- Normalize snippet nodes.
+  -- Normalize tree.
+  local tabstop_nodes_map = {}
   local has_trailing_tabstop = false
-  local origin_nodes = {} ---@type table<vim.snippet.Tabstop, vim.lsp.snippet.Node>
-  traverse(analyzed.node, function(node, context)
+  traverse(normalized.node, function(node, context)
     if type(node.tabstop) == 'number' then
-      local origin_node = origin_nodes[node.tabstop]
-      if origin_node then
-        -- Replace as cloned origin if same tabstop already exists.
-        context.replace(setmetatable(vim.tbl_deep_extend('keep', {}, origin_node), lsp_snippet.Node))
-      else
-        -- Set node as origin.
-        origin_nodes[node.tabstop] = node
-      end
-
+      -- Store 0-tabstop is exists or not.
       has_trailing_tabstop = has_trailing_tabstop or node.tabstop == 0
-      analyzed.min_tabstop = math.min(analyzed.min_tabstop or node.tabstop, node.tabstop)
-      analyzed.max_tabstop = math.max(analyzed.max_tabstop or node.tabstop, node.tabstop)
+
+      -- Replace 0-tabstop as huge number.
+      node.tabstop = node.tabstop == 0 and math.huge or node.tabstop
+
+      -- Ensure nodes per each tabstops.
+      tabstop_nodes_map[node.tabstop] = tabstop_nodes_map[node.tabstop] or {}
+      local origin_node = tabstop_nodes_map[node.tabstop][1]
+      if origin_node then
+        -- Replace as cloned origin node if same tabstop already exists.
+        -- The origin node is first node in each tabstop.
+        context.replace(setmetatable(vim.tbl_deep_extend('keep', {}, origin_node), lsp_snippet.Node))
+      end
+      table.insert(tabstop_nodes_map[node.tabstop], node)
     elseif lsp_snippet.Node.Type.Variable == node.type then
-      local resolved = resolve_variable(node.name)
+      local resolved_text = resolve_variable(node.name)
       context.replace(setmetatable({
         type = lsp_snippet.Node.Type.Text,
-        raw = resolved,
-        esc = resolved,
+        raw = resolved_text,
+        esc = resolved_text,
       }, lsp_snippet.Node))
     end
   end)
-  analyzed.min_tabstop = analyzed.min_tabstop or 0
-  analyzed.max_tabstop = analyzed.max_tabstop or 0
 
-  -- Add final tabstop if not exist.
+  -- Re-order tabstops sequentially starting from 1.
+  local tabstops = vim.tbl_keys(tabstop_nodes_map)
+  table.sort(tabstops, function(a, b) return a < b end)
+  for i, tabstop in ipairs(tabstops) do
+    for _, node in ipairs(tabstop_nodes_map[tabstop]) do
+      node.tabstop = i
+    end
+  end
+  normalized.tabstop_count = #tabstops
+
+  -- Append final-tabstop if not exists.
   if not has_trailing_tabstop then
-    table.insert(analyzed.node.children, setmetatable({
+    table.insert(normalized.node.children, setmetatable({
       type = lsp_snippet.Node.Type.Tabstop,
-      tabstop = 0,
+      tabstop = #tabstops + 1,
     }, lsp_snippet.Node))
+    normalized.tabstop_count = normalized.tabstop_count + 1
   end
 
-  -- Fix 0-tabstop to max-tabstop + 1.
-  traverse(analyzed.node, function(node)
-    if node.tabstop == 0 then
-      node.tabstop = analyzed.max_tabstop + 1
-    end
-  end)
-
   -- Create first insertion text.
-  traverse(analyzed.node, function(node)
+  traverse(normalized.node, function(node)
     if vim.tbl_contains({ lsp_snippet.Node.Type.Text, lsp_snippet.Node.Type.Choice, }, node.type) then
-      analyzed.text = analyzed.text .. tostring(node)
+      normalized.text = normalized.text .. tostring(node)
     end
   end)
 
-  return analyzed
+  return normalized
 end
 
 ---@class vim.snippet.SnippetController
@@ -302,21 +313,23 @@ local JumpDirection = {
 }
 
 ---@class vim.snippet.SnippetMark
----@field public bufnr number
----@field public ns number
+---@field public bufnr integer
+---@field public ns integer
 ---@field public mark_id vim.snippet.MarkId
 ---@field public node vim.lsp.snippet.Node
----@field public origin_node? vim.lsp.snippet.Node
 ---@field public text string
+---@field public is_origin boolean
+---@field public origin_node? vim.lsp.snippet.Node
 local SnippetMark = {}
 
 ---Create SnippetMark instance.
----@param params { ns: number, mark_id: vim.snippet.MarkId, node: vim.lsp.snippet.Node, range: vim.snippet.Range, origin_node?: vim.lsp.snippet.Node }
+---@param params { ns: integer, mark_id: vim.snippet.MarkId, node: vim.lsp.snippet.Node, range: vim.snippet.Range, origin_node?: vim.lsp.snippet.Node }
 function SnippetMark.new(params)
   local self = setmetatable({}, { __index = SnippetMark })
   self.ns = params.ns
   self.mark_id = params.mark_id
   self.node = params.node
+  self.is_origin = not params.origin_node
   self.origin_node = params.origin_node
   self.text = get_text_by_range(get_range_from_mark(params.ns, params.mark_id))
   return self
@@ -367,19 +380,19 @@ function SnippetMark:dispose()
 end
 
 ---@class vim.snippet.SnippetSession
----@field public ns number
----@field public bufnr number
+---@field public ns integer
+---@field public bufnr integer
 ---@field public marks vim.snippet.SnippetMark[]
 ---@field public history table<vim.snippet.Changenr, table<vim.snippet.MarkId, vim.snippet.Range>>
 ---@field public disposed boolean
----@field public changedtick number
----@field public current_tabstop number
----@field public snippet_mark_ns number
----@field public snippet_mark_id number
+---@field public changedtick integer
+---@field public current_tabstop integer
+---@field public snippet_mark_ns integer
+---@field public snippet_mark_id integer
 local SnippetSession = {}
 
 ---Create SnippetSession instance.
----@param bufnr number
+---@param bufnr integer
 ---@param namespace string
 function SnippetSession.new(bufnr, namespace)
   local self = setmetatable({}, { __index = SnippetSession })
@@ -395,27 +408,48 @@ function SnippetSession.new(bufnr, namespace)
   return self
 end
 
----Expand snippet to the current buffer.
----@param snippet_text string
-function SnippetSession:expand(snippet_text)
-  local analyzed = analyze_snippet(adjust_indent(snippet_text))
-  local texts = vim.split(analyzed.text, '\n')
+---Merge snippet to the current snippet session.
+---@param new_snippet_text string
+function SnippetSession:merge(new_snippet_text)
   local cursor = cursor_position()
 
+  -- Determine cursor tabstop. (prefer the current tabstop if multiple tabstops are found).
+  local cursor_tabstop
+  for i = #self.marks, 1, -1 do
+    local mark = self.marks[i]
+    if within(mark:get_range(), cursor) then
+      if not cursor_tabstop or mark.node.tabstop == self.current_tabstop then
+        cursor_tabstop = mark.node.tabstop
+      end
+    end
+  end
+  cursor_tabstop = cursor_tabstop or 1
+
   -- Insert snippet text.
-  vim.api.nvim_buf_set_text(0, cursor[1], cursor[2], cursor[1], cursor[2], texts)
+  local normalized = create_normalized_tree(adjust_indent(new_snippet_text))
+  vim.api.nvim_buf_set_text(0, cursor[1], cursor[2], cursor[1], cursor[2], vim.split(normalized.text, '\n'))
   vim.api.nvim_win_set_cursor(0, { cursor[1] + 1, cursor[2] })
 
-  -- Create tabstop marks.
+  -- Shift tabstops after cursor tabstop by new snippet tabstop count.
+  for _, mark in ipairs(self.marks) do
+    if mark.node.tabstop > cursor_tabstop then
+      mark.node.tabstop = mark.node.tabstop + normalized.tabstop_count
+    end
+  end
+
+  -- Create tabstop marks & Correct tabstops by cursor tabstop.
   local origin_nodes = {} ---@type table<vim.snippet.Tabstop, vim.lsp.snippet.Node>
-  local marks = {} ---@type vim.snippet.SnippetMark[]
-  traverse(analyzed.node, function(node, context)
+  traverse(normalized.node, function(node, context)
     if type(node.tabstop) == 'number' then
+      -- Correct tabstop by cursor tabstop.
+      node.tabstop = node.tabstop + cursor_tabstop
+
       local buffer_range = {
         s = { context.range.s[1] + cursor[1], context.range.s[2] + (context.range.s[1] == 0 and cursor[2] or 0) },
         e = { context.range.e[1] + cursor[1], context.range.e[2] + (context.range.e[1] == 0 and cursor[2] or 0) },
       } ---@type vim.snippet.Range
-      table.insert(marks, SnippetMark.new({
+
+      table.insert(self.marks, SnippetMark.new({
         ns = self.ns,
         node = node,
         origin_node = origin_nodes[node.tabstop],
@@ -429,7 +463,46 @@ function SnippetSession:expand(snippet_text)
       origin_nodes[node.tabstop] = origin_nodes[node.tabstop] or node
     end
   end)
-  self.marks = marks
+
+  -- Initialize.
+  self:sync()
+  self:jump(vim.snippet.JumpDirection.Next)
+end
+
+---Expand snippet to the current buffer.
+---@param snippet_text string
+function SnippetSession:expand(snippet_text)
+  local cursor = cursor_position()
+
+  -- Insert snippet text.
+  local normalized = create_normalized_tree(adjust_indent(snippet_text))
+  local texts = vim.split(normalized.text, '\n')
+  vim.api.nvim_buf_set_text(0, cursor[1], cursor[2], cursor[1], cursor[2], texts)
+  vim.api.nvim_win_set_cursor(0, { cursor[1] + 1, cursor[2] })
+
+  -- Create tabstop marks.
+  local origin_nodes = {} ---@type table<vim.snippet.Tabstop, vim.lsp.snippet.Node>
+  traverse(normalized.node, function(node, context)
+    if type(node.tabstop) == 'number' then
+      local buffer_range = {
+        s = { context.range.s[1] + cursor[1], context.range.s[2] + (context.range.s[1] == 0 and cursor[2] or 0) },
+        e = { context.range.e[1] + cursor[1], context.range.e[2] + (context.range.e[1] == 0 and cursor[2] or 0) },
+      } ---@type vim.snippet.Range
+
+      table.insert(self.marks, SnippetMark.new({
+        ns = self.ns,
+        node = node,
+        origin_node = origin_nodes[node.tabstop],
+        mark_id = vim.api.nvim_buf_set_extmark(self.bufnr, self.ns, buffer_range.s[1], buffer_range.s[2], {
+          end_line = buffer_range.e[1],
+          end_col = buffer_range.e[2],
+          right_gravity = false,
+          end_right_gravity = true,
+        })
+      }))
+      origin_nodes[node.tabstop] = origin_nodes[node.tabstop] or node
+    end
+  end)
 
   -- Create whole region mark.
   self.snippet_mark_id = vim.api.nvim_buf_set_extmark(self.bufnr, self.snippet_mark_ns, cursor[1], cursor[2], {
@@ -440,8 +513,9 @@ function SnippetSession:expand(snippet_text)
   })
 
   -- Initialize.
-  self.current_tabstop = analyzed.min_tabstop - 1
   self:sync()
+  self.current_tabstop = 0
+  self:jump(vim.snippet.JumpDirection.Next)
 end
 
 ---Jump to the suitable placeholder.
@@ -479,29 +553,28 @@ function SnippetSession:find_next_mark(direction)
 end
 
 ---Synchronize tabstop texts.
----0. Check buffer's changedtick.
----1. Check the changes are included in snippet range.
----2. Restore memoized state if the changes are occurred by undo/redo.
----3. Update memoized state if the changes are occurred by user input.
----4. Dispose directly modified non-origin marks.
----5. Update origin marks via buffer contents.
----6. Update non-origin marks via origin mark contents.
 function SnippetSession:sync()
   --- Ignore if the buffer isn't changed.
   local changedtick = vim.api.nvim_buf_get_changedtick(0)
   if self.changedtick == changedtick then
     return
   end
+  self.changedtick = changedtick
+
+  -- Check snippet range is not empty.
+  local snippet_range = get_range_from_mark(self.snippet_mark_ns, self.snippet_mark_id)
+  if snippet_range.s[1] == snippet_range.e[1] and snippet_range.s[2] == snippet_range.e[2] then
+    return self:dispose()
+  end
 
   -- Check the changes are included in snippet range.
   if not self:within() then
-    self:dispose()
-    return
+    return self:dispose()
   end
 
   local changenr = vim.fn.changenr()
 
-  --- Restore memoized state if changes are occurred by undo/redo.
+  -- Restore memoized state if changes are occurred by undo/redo.
   local undotree = vim.fn.undotree()
   if undotree.seq_last ~= undotree.seq_cur then
     for _, mark in ipairs(self.marks) do
@@ -510,11 +583,10 @@ function SnippetSession:sync()
         mark:set_range(self.history[changenr][mark.mark_id])
       end
     end
-    self.changedtick = changedtick
     return
   end
 
-  --- Save current state.
+  -- Save current state to history.
   self.history[changenr] = {}
   for _, mark in ipairs(self.marks) do
     self.history[changenr][mark.mark_id] = mark:get_range()
@@ -549,8 +621,6 @@ function SnippetSession:sync()
       mark:sync()
     end
   end
-
-  self.changedtick = changedtick
 end
 
 ---Return the cursor is within the snippet range or not.
@@ -565,20 +635,7 @@ function SnippetSession:within()
     return false
   end
 
-  local cursor = cursor_position()
-  local range = get_range_from_mark(self.snippet_mark_ns, self.snippet_mark_id)
-
-  -- Check the cursor is before the snippet start position.
-  if cursor[1] < range.s[1] or (cursor[1] == range.s[1] and cursor[2] < range.s[2]) then
-    return false
-  end
-
-  -- Check the cursor is after the snippet end position.
-  if range.e[1] < cursor[1] or (range.e[1] == cursor[1] and range.e[2] < cursor[2]) then
-    return false
-  end
-
-  return true
+  return within(get_range_from_mark(self.snippet_mark_ns, self.snippet_mark_id), cursor_position())
 end
 
 ---Dispose snippet session.
@@ -595,27 +652,27 @@ local M = {}
 
 M.JumpDirection = JumpDirection
 
----Return snippet session is active or not.
+---Return the cursor is in the activated snippet or not.
 ---@return boolean
-function M.is_active()
+function M.in_context()
   local session = SnippetController.session
   if not session or session.disposed then
     return false
   end
-  return true
+  return session:within()
 end
 
 ---Expand snippet text.
 ---@param snippet_text string
 function M.expand(snippet_text)
-  if SnippetController.session then
-    SnippetController.session:dispose()
+  if M.in_context() then
+    SnippetController.session:merge(snippet_text)
+    return
   end
 
   local bufnr = vim.api.nvim_get_current_buf()
   SnippetController.session = SnippetSession.new(bufnr, 'vim.snippet:' .. vim.loop.now())
   SnippetController.session:expand(snippet_text)
-  SnippetController.session:jump(M.JumpDirection.Next)
 
   local session = SnippetController.session ---@type vim.snippet.SnippetSession
   vim.api.nvim_buf_attach(bufnr, false, {
@@ -636,36 +693,33 @@ end
 ---@param direction vim.snippet.JumpDirection
 ---@return boolean
 function M.jumpable(direction)
-  if not M.is_active() or not SnippetController.session then
-    return false
+  if M.in_context() then
+    return not not SnippetController.session:find_next_mark(direction)
   end
-  return not not SnippetController.session:find_next_mark(direction)
+  return false
 end
 
 ---Jump to next placeholder.
 ---@param direction vim.snippet.JumpDirection
 function M.jump(direction)
-  if not M.is_active() or not SnippetController.session then
-    return
+  if M.in_context() then
+    SnippetController.session:jump(direction)
   end
-  SnippetController.session:jump(direction)
 end
 
 ---Sync current modification.
 function M.sync()
-  if not M.is_active() or not SnippetController.session then
-    return
+  if M.in_context() then
+    SnippetController.session:sync()
   end
-  SnippetController.session:sync()
 end
 
 ---Dispose current snippet session
 function M.dispose()
-  if not M.is_active() or not SnippetController.session then
-    return
+  if M.in_context() then
+    SnippetController.session:dispose()
+    SnippetController.session = nil
   end
-  SnippetController.session:dispose()
-  SnippetController.session = nil
 end
 
 return M

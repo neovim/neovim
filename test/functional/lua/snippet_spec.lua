@@ -21,13 +21,13 @@ describe('vim.snippet', function()
 
       function get_state()
         local m = vim.api.nvim_get_mode().mode
-        local s = vim.fn.getpos("'<")
-        local e = vim.fn.getpos("'>")
-        local c = vim.fn.getpos('.')
+        local select_s = vim.fn.getpos("'<")
+        local select_e = vim.fn.getpos("'>")
+        local cursor = vim.fn.getpos('.')
         return {
           m = m,
-          s = m ~= 's' and ({ c[2] - 1, c[3] - 1 }) or ({ s[2] - 1, s[3] - 1 }),
-          e = m ~= 's' and ({ c[2] - 1, c[3] - 1 }) or ({ e[2] - 1, e[3] - 1 }),
+          s = m ~= 's' and ({ cursor[2] - 1, cursor[3] - 1 }) or ({ select_s[2] - 1, select_s[3] - 1 }),
+          e = m ~= 's' and ({ cursor[2] - 1, cursor[3] - 1 }) or ({ select_e[2] - 1, select_e[3] }),
         }
       end
     ]])
@@ -62,34 +62,34 @@ describe('vim.snippet', function()
           '  ',
         }
       }, {
-        base_indent = [[  ]],
-        indent_setting = [[
+      base_indent = [[  ]],
+      indent_setting = [[
           vim.o.expandtab = true
           vim.o.shiftwidth = 0
           vim.o.tabstop = 2
         ]],
-        expects = {
-          '  class ClassName {',
-          '    public ClassName() {',
-          '      ',
-          '    }',
-          '  }',
-          '  ',
-        }
-      }, {
-        base_indent = [[<Tab>]],
-        indent_setting = [[
+      expects = {
+        '  class ClassName {',
+        '    public ClassName() {',
+        '      ',
+        '    }',
+        '  }',
+        '  ',
+      }
+    }, {
+      base_indent = [[<Tab>]],
+      indent_setting = [[
           vim.o.expandtab = false
         ]],
-        expects = {
-          '\tclass ClassName {',
-          '\t\tpublic ClassName() {',
-          '\t\t\t',
-          '\t\t}',
-          '\t}',
-          '\t',
-        }
+      expects = {
+        '\tclass ClassName {',
+        '\t\tpublic ClassName() {',
+        '\t\t\t',
+        '\t\t}',
+        '\t}',
+        '\t',
       }
+    }
     }) do
       clear()
       exec_lua(case.indent_setting)
@@ -99,7 +99,7 @@ describe('vim.snippet', function()
     end
   end)
 
-  it('should able to jump to all placeholders', function()
+  it('should be able to jump through all placeholders', function()
     exec_lua('vim.snippet.expand(...)', table.concat({
       'class ${1:ClassName} {',
       '\tpublic $1($2) {',
@@ -109,10 +109,10 @@ describe('vim.snippet', function()
       ''
     }, '\n'))
     local cases = {
-      { m = 's', s = { 0, 6 }, e = { 0, 14 }, },
+      { m = 's', s = { 0, 6 },  e = { 0, 15 }, },
       { m = 'i', s = { 1, 18 }, e = { 1, 18 }, },
-      { m = 'i', s = { 2, 2 }, e = { 2, 2 }, },
-      { m = 'i', s = { 5, 0 }, e = { 5, 0 }, },
+      { m = 'i', s = { 2, 2 },  e = { 2, 2 }, },
+      { m = 'i', s = { 5, 0 },  e = { 5, 0 }, },
     }
     for i = 1, #cases do
       eq(cases[i], exec_lua([[return get_state()]]))
@@ -128,7 +128,7 @@ describe('vim.snippet', function()
     eq(cases[1], exec_lua([[return get_state()]]))
   end)
 
-  it('should sync same tabstop marks', function()
+  it('should sync same tabstops', function()
     exec_lua('vim.snippet.expand(...)', table.concat({
       'class ${1:ClassName} {',
       '\tpublic $1($2) {',
@@ -148,17 +148,18 @@ describe('vim.snippet', function()
     }, helpers.buf_lines(0))
   end)
 
+  -- We can't manage `complete(...)` in test.
   -- it('should insert selected choice', function()
   --   exec_lua('vim.snippet.expand(...)', table.concat({
   --     'console.${1|log,info,warn,error|}($2);',
   --   }, '\n'))
-  --   feed('3<CR>')
+  --   feed('<C-n><C-n><C-n><C-y>')
   --   eq({
   --     'console.warn();',
   --   }, helpers.buf_lines(0))
   -- end)
 
-  it('should dispose directly modified non-origin mark', function()
+  it('should dispose directly modified non-origin tabstop', function()
     exec_lua('vim.snippet.expand(...)', table.concat({
       'class ${1:ClassName} {',
       '\tpublic $1($2) {',
@@ -167,6 +168,14 @@ describe('vim.snippet', function()
       '}',
       ''
     }, '\n'))
+    eq({
+      'class ClassName {',
+      '\tpublic ClassName() {',
+      '\t\t',
+      '\t}',
+      '}',
+      '',
+    }, helpers.buf_lines(0))
     feed('<Esc><Cmd>call cursor(2, 9)<CR>ciwDirectlyModified<C-l>')
     eq({
       'class ClassName {',
@@ -187,7 +196,6 @@ describe('vim.snippet', function()
       '}',
       ''
     }, '\n'))
-
     feed('ModifiedClassName<C-l><Tab>argument<Esc>')
     eq({
       'class ModifiedClassName {',
@@ -255,5 +263,69 @@ describe('vim.snippet', function()
     }, helpers.buf_lines(0))
   end)
 
+  it('should merge snippet with existing snippet', function()
+    exec_lua('vim.snippet.expand(...)', table.concat({
+      'class ${1:ClassName} {',
+      '\tpublic $1($2) {',
+      '\t\t${3}',
+      '\t}',
+      '}',
+      ''
+    }, '\n'))
+    feed('<Tab><Tab>') -- jump to $3
+
+    -- expand new snippet while already activating another snippet.
+    exec_lua('vim.snippet.expand(...)', table.concat({
+      'class ${1:ClassName} {',
+      '\tpublic $1($2) {',
+      '\t\t${3}',
+      '\t}',
+      '}',
+      ''
+    }, '\n'))
+    eq({
+      'class ClassName {',
+      '\tpublic ClassName() {',
+      '\t\tclass ClassName {',
+      '\t\t\tpublic ClassName() {',
+      '\t\t\t\t',
+      '\t\t\t}',
+      '\t\t}',
+      '\t\t',
+      '\t}',
+      '}',
+      '',
+    }, helpers.buf_lines(0))
+
+    -- jump through all placeholders.
+    local next_cases = {
+      { m = 's', s = { 2, 8 },  e = { 2, 17 }, },
+      { m = 'i', s = { 3, 20 }, e = { 3, 20 }, },
+      { m = 'i', s = { 4, 4 },  e = { 4, 4 }, },
+      { m = 'i', s = { 7, 2 },  e = { 7, 2 }, },
+      { m = 'i', s = { 10, 0 }, e = { 10, 0 }, },
+    }
+    for i = 1, #next_cases do
+      eq(next_cases[i], exec_lua([[return get_state()]]))
+      eq(i ~= #next_cases, exec_lua([[return vim.snippet.jumpable(vim.snippet.JumpDirection.Next)]]))
+      feed('<Tab>')
+    end
+
+    local prev_cases = {
+      { m = 'i', s = { 10, 0 }, e = { 10, 0 }, },
+      { m = 'i', s = { 7, 2 },  e = { 7, 2 }, },
+      { m = 'i', s = { 4, 4 },  e = { 4, 4 }, },
+      { m = 'i', s = { 3, 20 }, e = { 3, 20 }, },
+      { m = 's', s = { 2, 8 },  e = { 2, 17 }, },
+      { m = 's', s = { 2, 2 },  e = { 7, 2 }, },
+      { m = 'i', s = { 1, 18 }, e = { 1, 18 }, },
+      { m = 's', s = { 0, 6 },  e = { 0, 15 }, },
+    }
+    for i = 1, #prev_cases do
+      eq(prev_cases[i], exec_lua([[return get_state()]]))
+      eq(i ~= #prev_cases, exec_lua([[return vim.snippet.jumpable(vim.snippet.JumpDirection.Prev)]]))
+      feed('<S-Tab>')
+    end
+  end)
 end)
 
