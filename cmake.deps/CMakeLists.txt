@@ -9,7 +9,9 @@ endif()
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${PROJECT_SOURCE_DIR}/../cmake")
 
+include(ExternalProject)
 include(CheckCCompilerFlag)
+
 include(Util)
 
 set(DEPS_CMAKE_ARGS
@@ -17,13 +19,13 @@ set(DEPS_CMAKE_ARGS
   -D CMAKE_C_STANDARD=99
   -D CMAKE_GENERATOR=${CMAKE_GENERATOR}
   -D CMAKE_GENERATOR_PLATFORM=${CMAKE_GENERATOR_PLATFORM}
+  -D BUILD_SHARED_LIBS=OFF
   -D CMAKE_POSITION_INDEPENDENT_CODE=ON
   -D CMAKE_FIND_FRAMEWORK=${CMAKE_FIND_FRAMEWORK})
 
 set(DEPS_CMAKE_CACHE_ARGS -DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES})
 
 set_default_buildtype()
-
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(NOT isMultiConfig)
   list(APPEND DEPS_CMAKE_ARGS -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
@@ -132,7 +134,6 @@ if(APPLE)
   message(STATUS "Using deployment target ${CMAKE_OSX_DEPLOYMENT_TARGET}")
 endif()
 
-include(ExternalProject)
 set_directory_properties(PROPERTIES
   EP_PREFIX "${DEPS_BUILD_DIR}"
   CMAKE_CONFIGURE_DEPENDS deps.txt)

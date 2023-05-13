@@ -22,9 +22,11 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 include(CheckCCompilerFlag)
 include(CheckCSourceCompiles)
+include(CheckLibraryExists)
 include(FindPackageHandleStandardArgs)
+include(GNUInstallDirs)
+
 include(InstallHelpers)
-include(LuaHelpers)
 include(PreventInTreeBuilds)
 include(Util)
 

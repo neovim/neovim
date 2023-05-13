@@ -1,4 +1,4 @@
-# Luarocks recipe. Luarocks is only required when building Neovim.
+# Luarocks recipe. Luarocks is only required when testing Neovim.
 # NOTE: LuaRocks rocks need to "DEPENDS" on the previous module, because
 #       running luarocks in parallel will break, e.g. when some rocks have
 #       the same dependency.
@@ -31,7 +31,7 @@ if(UNIX)
     find_package(Luajit)
     if(LUAJIT_FOUND)
       list(APPEND LUAROCKS_OPTS
-        --with-lua-include=${LUAJIT_INCLUDE_DIRS}
+        --with-lua-include=${LUAJIT_INCLUDE_DIR}
         --with-lua-interpreter=luajit)
     endif()
 
@@ -46,7 +46,7 @@ if(UNIX)
       OUTPUT_VARIABLE LUA_VERSION
       ERROR_VARIABLE ERR
       RESULT_VARIABLE RES)
-    if(NOT RES EQUAL 0)
+    if(RES)
       message(FATAL_ERROR "Could not get LUA_VERSION with ${LUA_EXE}: ${ERR}")
     endif()
   endif()
