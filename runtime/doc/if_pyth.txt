@@ -17,7 +17,7 @@ Commands						*python-commands*
 :[range]py[thon] {stmt}
 			Execute Python statement {stmt}.  A simple check if
 			the `:python` command is working: >vim
-				:python print "Hello"
+				:python print("Hello")
 
 :[range]py[thon] << [trim] [{endmarker}]
 {script}
@@ -35,7 +35,7 @@ Example: >vim
 	python << EOF
 	class StrawberryIcecream:
 		def __call__(self):
-			print 'EAT ME'
+			print('EAT ME')
 	EOF
 	endfunction
 
@@ -100,11 +100,9 @@ To pass arguments you need to set sys.argv[] explicitly.  Example: >vim
 
 Here are some examples					*python-examples*
 >vim
-
 	:python from vim import *
-	:python from string import upper
-	:python current.line = upper(current.line)
-	:python print "Hello"
+	:python current.line = str.upper(current.line)
+	:python print("Hello")
 	:python str = current.buffer[42]
 
 Note that changes (such as the "import" statements) persist from one command
@@ -143,7 +141,7 @@ module before using it: >vim
 	:python import vim
 
 Overview >vim
-	:py print "Hello"		# displays a message
+	:py print("Hello")		# displays a message
 	:py vim.command(cmd)		# execute an Ex command
 	:py w = vim.windows[n]		# gets window "n"
 	:py cw = vim.current.window	# gets the current window
@@ -175,10 +173,6 @@ vim.command(str)					*python-command*
 		# Note the use of single quotes to delimit a string containing
 		# double quotes
 		normal('"a2dd"aP')
-<								*E659*
-	The ":python" command cannot be used recursively with Python 2.2 and
-	older.  This only works with Python 2.3 and later: >vim
-	    :py vim.command("python print 'Hello again Python'")
 
 vim.eval(str)						*python-eval*
 	Evaluates the expression str using the vim internal expression
@@ -190,8 +184,8 @@ vim.eval(str)						*python-eval*
 	Examples: >vim
 	    :py text_width = vim.eval("&tw")
 	    :py str = vim.eval("12+12")		# NB result is a string! Use
-						# string.atoi() to convert to
-						# a number.
+						# int() to convert to a
+						# number.
 
 vim.strwidth(str)					*python-strwidth*
 	Like |strwidth()|: returns number of display cells str occupies, tab
@@ -467,7 +461,7 @@ A trailing '\n' is allowed and ignored, so that you can do: >vim
 Buffer object type is available using "Buffer" attribute of vim module.
 
 Examples (assume b is the current buffer) >vim
-	:py print b.name		# write the buffer file name
+	:py print(b.name)		# write the buffer file name
 	:py b[0] = "hello!!!"		# replace the top line
 	:py b[:] = None			# delete the whole buffer
 	:py del b[:]			# delete the whole buffer
