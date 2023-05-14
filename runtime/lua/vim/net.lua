@@ -29,7 +29,7 @@ local M = {}
 ---
 ---     if response.ok then
 ---       -- Read JSON response
----       local table = vim.json.decode(response.test)
+---       local table = response.json()
 ---     else
 ---
 ---     -- What went wrong?
