@@ -110,7 +110,7 @@ static void log_client_msg(uint64_t channel_id, bool is_request, const char *nam
 # define log_server_msg(...)
 #endif
 
-static PMap(cstr_t) event_strings = MAP_INIT;
+static Set(cstr_t) event_strings = SET_INIT;
 static msgpack_sbuffer out_buffer;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -254,14 +254,12 @@ void rpc_subscribe(uint64_t id, char *event)
     abort();
   }
 
-  char *event_string = pmap_get(cstr_t)(&event_strings, event);
-
-  if (!event_string) {
-    event_string = xstrdup(event);
-    pmap_put(cstr_t)(&event_strings, event_string, event_string);
+  const char **key_alloc = NULL;
+  if (set_put_ref(cstr_t, &event_strings, event, &key_alloc)) {
+    *key_alloc = xstrdup(event);
   }
 
-  pmap_put(cstr_t)(channel->rpc.subscribed_events, event_string, event_string);
+  set_put(cstr_t, channel->rpc.subscribed_events, *key_alloc);
 }
 
 /// Unsubscribes to event broadcasts
@@ -553,9 +551,9 @@ static void broadcast_event(const char *name, Array args)
   kvec_t(Channel *) subscribed = KV_INITIAL_VALUE;
   Channel *channel;
 
-  map_foreach_value(&channels, channel, {
+  pmap_foreach_value(&channels, channel, {
     if (channel->is_rpc
-        && pmap_has(cstr_t)(channel->rpc.subscribed_events, name)) {
+        && set_has(cstr_t, channel->rpc.subscribed_events, name)) {
       kv_push(subscribed, channel);
     }
   });
@@ -583,24 +581,12 @@ end:
 
 static void unsubscribe(Channel *channel, char *event)
 {
-  char *event_string = pmap_get(cstr_t)(&event_strings, event);
-  if (!event_string) {
+  if (!set_has(cstr_t, &event_strings, event)) {
     WLOG("RPC: ch %" PRIu64 ": tried to unsubscribe unknown event '%s'",
          channel->id, event);
     return;
   }
-  pmap_del(cstr_t)(channel->rpc.subscribed_events, event_string);
-
-  map_foreach_value(&channels, channel, {
-    if (channel->is_rpc
-        && pmap_has(cstr_t)(channel->rpc.subscribed_events, event_string)) {
-      return;
-    }
-  });
-
-  // Since the string is no longer used by other channels, release it's memory
-  pmap_del(cstr_t)(&event_strings, event_string);
-  xfree(event_string);
+  set_del(cstr_t, channel->rpc.subscribed_events, event);
 }
 
 /// Mark rpc state as closed, and release its reference to the channel.
@@ -630,13 +616,7 @@ void rpc_free(Channel *channel)
   unpacker_teardown(channel->rpc.unpacker);
   xfree(channel->rpc.unpacker);
 
-  // Unsubscribe from all events
-  char *event_string;
-  map_foreach_value(channel->rpc.subscribed_events, event_string, {
-    unsubscribe(channel, event_string);
-  });
-
-  pmap_destroy(cstr_t)(channel->rpc.subscribed_events);
+  set_destroy(cstr_t, channel->rpc.subscribed_events);
   kv_destroy(channel->rpc.call_stack);
   api_free_dictionary(channel->rpc.info);
 }
@@ -733,4 +713,13 @@ const char *rpc_client_name(Channel *chan)
   }
 
   return NULL;
+}
+
+void rpc_free_all_mem(void)
+{
+  cstr_t key;
+  set_foreach(&event_strings, key, {
+    xfree((void *)key);
+  });
+  set_destroy(cstr_t, &event_strings);
 }

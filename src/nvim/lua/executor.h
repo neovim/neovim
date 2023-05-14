@@ -24,7 +24,7 @@ typedef struct {
   LuaRef empty_dict_ref;
   int ref_count;
 #if __has_feature(address_sanitizer)
-  PMap(handle_T) ref_markers;
+  PMap(int) ref_markers;
 #endif
 } nlua_ref_state_t;
 

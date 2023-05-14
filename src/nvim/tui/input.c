@@ -33,7 +33,7 @@
 #define KEY_BUFFER_SIZE 0xfff
 
 static const struct kitty_key_map_entry {
-  KittyKey key;
+  int key;
   const char *name;
 } kitty_key_map_entry[] = {
   { KITTY_KEY_ESCAPE,              "Esc" },
@@ -115,7 +115,7 @@ static const struct kitty_key_map_entry {
   { KITTY_KEY_KP_BEGIN,            "kOrigin" },
 };
 
-static Map(KittyKey, cstr_t) kitty_key_map = MAP_INIT;
+static Map(int, cstr_t) kitty_key_map = MAP_INIT;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/input.c.generated.h"
@@ -135,8 +135,8 @@ void tinput_init(TermInput *input, Loop *loop)
   input->key_buffer = rbuffer_new(KEY_BUFFER_SIZE);
 
   for (size_t i = 0; i < ARRAY_SIZE(kitty_key_map_entry); i++) {
-    map_put(KittyKey, cstr_t)(&kitty_key_map, kitty_key_map_entry[i].key,
-                              kitty_key_map_entry[i].name);
+    map_put(int, cstr_t)(&kitty_key_map, kitty_key_map_entry[i].key,
+                         kitty_key_map_entry[i].name);
   }
 
   input->in_fd = STDIN_FILENO;
@@ -162,7 +162,7 @@ void tinput_init(TermInput *input, Loop *loop)
 
 void tinput_destroy(TermInput *input)
 {
-  map_destroy(KittyKey, cstr_t)(&kitty_key_map);
+  map_destroy(int, &kitty_key_map);
   rbuffer_free(input->key_buffer);
   time_watcher_close(&input->timer_handle, NULL);
   stream_close(&input->read_stream, NULL, NULL);
@@ -231,7 +231,7 @@ static void tinput_enqueue(TermInput *input, char *buf, size_t size)
 
 static void handle_kitty_key_protocol(TermInput *input, TermKeyKey *key)
 {
-  const char *name = map_get(KittyKey, cstr_t)(&kitty_key_map, (KittyKey)key->code.codepoint);
+  const char *name = map_get(int, cstr_t)(&kitty_key_map, (int)key->code.codepoint);
   if (name) {
     char buf[64];
     size_t len = 0;
@@ -257,7 +257,7 @@ static void forward_simple_utf8(TermInput *input, TermKeyKey *key)
   char *ptr = key->utf8;
 
   if (key->code.codepoint >= 0xE000 && key->code.codepoint <= 0xF8FF
-      && map_has(KittyKey, cstr_t)(&kitty_key_map, (KittyKey)key->code.codepoint)) {
+      && map_has(int, cstr_t)(&kitty_key_map, (int)key->code.codepoint)) {
     handle_kitty_key_protocol(input, key);
     return;
   }
@@ -286,8 +286,7 @@ static void forward_modified_utf8(TermInput *input, TermKeyKey *key)
   } else {
     assert(key->modifiers);
     if (key->code.codepoint >= 0xE000 && key->code.codepoint <= 0xF8FF
-        && map_has(KittyKey, cstr_t)(&kitty_key_map,
-                                     (KittyKey)key->code.codepoint)) {
+        && map_has(int, cstr_t)(&kitty_key_map, (int)key->code.codepoint)) {
       handle_kitty_key_protocol(input, key);
       return;
     }

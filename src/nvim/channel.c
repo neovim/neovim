@@ -57,7 +57,7 @@ void channel_teardown(void)
 {
   Channel *channel;
 
-  map_foreach_value(&channels, channel, {
+  pmap_foreach_value(&channels, channel, {
     channel_close(channel->id, kChannelPartAll, NULL);
   });
 }
@@ -279,7 +279,7 @@ static void free_channel_event(void **argv)
   callback_reader_free(&chan->on_stderr);
   callback_free(&chan->on_exit);
 
-  pmap_del(uint64_t)(&channels, chan->id);
+  pmap_del(uint64_t)(&channels, chan->id, NULL);
   multiqueue_free(chan->events);
   xfree(chan);
 }
@@ -289,7 +289,7 @@ static void channel_destroy_early(Channel *chan)
   if ((chan->id != --next_chan_id)) {
     abort();
   }
-  pmap_del(uint64_t)(&channels, chan->id);
+  pmap_del(uint64_t)(&channels, chan->id, NULL);
   chan->id = 0;
 
   if ((--chan->refcount != 0)) {
@@ -938,7 +938,7 @@ Array channel_all_info(void)
 {
   Channel *channel;
   Array ret = ARRAY_DICT_INIT;
-  map_foreach_value(&channels, channel, {
+  pmap_foreach_value(&channels, channel, {
     ADD(ret, DICTIONARY_OBJ(channel_info(channel->id)));
   });
   return ret;

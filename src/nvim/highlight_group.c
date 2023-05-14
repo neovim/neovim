@@ -1420,7 +1420,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 void free_highlight(void)
 {
   ga_clear(&highlight_ga);
-  map_destroy(cstr_t, int)(&highlight_unames);
+  map_destroy(cstr_t, &highlight_unames);
   arena_mem_free(arena_finish(&highlight_arena));
 }
 

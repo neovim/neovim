@@ -108,14 +108,13 @@ static Map(int, String) map_augroup_id_to_name = MAP_INIT;
 static void augroup_map_del(int id, const char *name)
 {
   if (name != NULL) {
-    String key = map_key(String, int)(&map_augroup_name_to_id, cstr_as_string((char *)name));
-    map_del(String, int)(&map_augroup_name_to_id, key);
+    String key;
+    map_del(String, int)(&map_augroup_name_to_id, cstr_as_string((char *)name), &key);
     api_free_string(key);
   }
   if (id > 0) {
-    String mapped = map_get(int, String)(&map_augroup_id_to_name, id);
+    String mapped = map_del(int, String)(&map_augroup_id_to_name, id, NULL);
     api_free_string(mapped);
-    map_del(int, String)(&map_augroup_id_to_name, id);
   }
 }
 
@@ -543,7 +542,7 @@ void do_augroup(char *arg, int del_group)
 
     String name;
     int value;
-    map_foreach(&map_augroup_name_to_id, name, value, {
+    map_foreach(int, &map_augroup_name_to_id, name, value, {
       if (value > 0) {
         msg_puts(name.data);
       } else {
@@ -572,18 +571,15 @@ void free_all_autocmds(void)
 
   // Delete the augroup_map, including free the data
   String name;
-  int id;
-  map_foreach(&map_augroup_name_to_id, name, id, {
-    (void)id;
+  map_foreach_key(&map_augroup_name_to_id, name, {
     api_free_string(name);
   })
-  map_destroy(String, int)(&map_augroup_name_to_id);
+  map_destroy(String, &map_augroup_name_to_id);
 
-  map_foreach(&map_augroup_id_to_name, id, name, {
-    (void)id;
+  map_foreach_value(String, &map_augroup_id_to_name, name, {
     api_free_string(name);
   })
-  map_destroy(int, String)(&map_augroup_id_to_name);
+  map_destroy(int, &map_augroup_id_to_name);
 
   // aucmd_win[] is freed in win_free_all()
 }
@@ -1311,7 +1307,7 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
     block_autocmds();  // We don't want BufEnter/WinEnter autocommands.
     if (need_append) {
       win_append(lastwin, auc_win);
-      pmap_put(handle_T)(&window_handles, auc_win->handle, auc_win);
+      pmap_put(int)(&window_handles, auc_win->handle, auc_win);
       win_config_float(auc_win, auc_win->w_float_config);
     }
     // Prevent chdir() call in win_enter_ext(), through do_autochdir()
@@ -1367,7 +1363,7 @@ win_found:
     }
     // Remove the window.
     win_remove(curwin, NULL);
-    pmap_del(handle_T)(&window_handles, curwin->handle);
+    pmap_del(int)(&window_handles, curwin->handle, NULL);
     if (curwin->w_grid_alloc.chars != NULL) {
       ui_comp_remove_grid(&curwin->w_grid_alloc);
       ui_call_win_hide(curwin->w_grid_alloc.handle);

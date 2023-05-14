@@ -111,7 +111,7 @@ void remote_ui_disconnect(uint64_t channel_id)
   }
   UIData *data = ui->data;
   kv_destroy(data->call_buf);
-  pmap_del(uint64_t)(&connected_uis, channel_id);
+  pmap_del(uint64_t)(&connected_uis, channel_id, NULL);
   ui_detach_impl(ui, channel_id);
 
   // Destroy `ui`.
