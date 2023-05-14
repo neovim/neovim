@@ -2,7 +2,7 @@
 " You can also use this as a start for your own set of menus.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2022 Nov 27
+" Last Change:	2023 May 03
 
 " Note that ":an" (short for ":anoremenu") is often used to make a menu work
 " in all modes and avoid side effects from mappings defined by the user.
@@ -599,7 +599,9 @@ func s:XxdBack()
     exe ':%!' . g:xxdprogram . ' -r'
   endif
   set ft=
-  doautocmd filetypedetect BufReadPost
+  if exists('#filetypedetect') && exists('#BufReadPost')
+    doautocmd filetypedetect BufReadPost
+  endif
   let &mod = mod
 endfun
 
