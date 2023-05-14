@@ -139,6 +139,32 @@ win_T *prevwin_curwin(void)
   return is_in_cmdwin() && prevwin != NULL ? prevwin : curwin;
 }
 
+/// If the 'switchbuf' option contains "useopen" or "usetab", then try to jump
+/// to a window containing "buf".
+/// Returns the pointer to the window that was jumped to or NULL.
+win_T *swbuf_goto_win_with_buf(buf_T *buf)
+{
+  win_T *wp = NULL;
+
+  if (buf == NULL) {
+    return wp;
+  }
+
+  // If 'switchbuf' contains "useopen": jump to first window in the current
+  // tab page containing "buf" if one exists.
+  if (swb_flags & SWB_USEOPEN) {
+    wp = buf_jump_open_win(buf);
+  }
+
+  // If 'switchbuf' contains "usetab": jump to first window in any tab page
+  // containing "buf" if one exists.
+  if (wp == NULL && (swb_flags & SWB_USETAB)) {
+    wp = buf_jump_open_tab(buf);
+  }
+
+  return wp;
+}
+
 /// all CTRL-W window commands are handled here, called from normal_cmd().
 ///
 /// @param xchar  extra char from ":wincmd gx" or NUL
@@ -520,20 +546,7 @@ wingotofile:
       win_T *wp = NULL;
       if ((swb_flags & (SWB_USEOPEN | SWB_USETAB))
           && cmdmod.cmod_tab == 0) {
-        buf_T *existing_buf = buflist_findname_exp(ptr);
-
-        if (existing_buf != NULL) {
-          if (swb_flags & SWB_USEOPEN) {
-            wp = buf_jump_open_win(existing_buf);
-          }
-
-          // If 'switchbuf' contains "usetab": jump to first
-          // window in any tab page containing "existing_buf"
-          // if one exists.
-          if (wp == NULL && (swb_flags & SWB_USETAB)) {
-            wp = buf_jump_open_tab(existing_buf);
-          }
-        }
+        wp = swbuf_goto_win_with_buf(buflist_findname_exp(ptr));
       }
 
       if (wp == NULL && win_split(0, 0) == OK) {
