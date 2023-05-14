@@ -38,6 +38,8 @@ func Test_charsearch()
   " clear the character search
   call setcharsearch({'char' : ''})
   call assert_equal('', getcharsearch().char)
+  call assert_beeps('normal ;')
+  call assert_beeps('normal ,')
 
   call assert_fails("call setcharsearch([])", 'E1206:')
   enew!
