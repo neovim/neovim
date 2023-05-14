@@ -77,7 +77,7 @@ function M.fetch(url, opts)
   opts.on_complete = function(response)
     local cache = {}
 
-    if not opts.on_complete then
+    if not opts._on_complete then
       return
     end
 
