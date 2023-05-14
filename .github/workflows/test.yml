@@ -1,9 +1,6 @@
 name: test
 on:
   push:
-    branches:
-      - 'master'
-      - 'release-[0-9]+.[0-9]+'
   pull_request:
     branches:
       - 'master'
@@ -12,7 +9,7 @@ on:
       - 'contrib/**'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.repository_owner == 'neovim' && github.sha || github.ref_name }}
   cancel-in-progress: true
 
 env:
@@ -30,7 +27,6 @@ env:
 
 jobs:
   lint:
-    if: (github.event_name == 'pull_request' && github.base_ref == 'master') || (github.event_name == 'push' && github.ref == 'refs/heads/master')
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
