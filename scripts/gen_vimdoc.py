@@ -155,6 +155,7 @@ CONFIG = {
             'secure.lua',
             'version.lua',
             'iter.lua',
+            'net.lua'
         ],
         'files': [
             'runtime/lua/vim/iter.lua',
@@ -168,6 +169,7 @@ CONFIG = {
             'runtime/lua/vim/fs.lua',
             'runtime/lua/vim/secure.lua',
             'runtime/lua/vim/version.lua',
+            'runtime/lua/vim/net.lua',
             'runtime/lua/vim/_inspector.lua',
         ],
         'file_patterns': '*.lua',
@@ -203,6 +205,7 @@ CONFIG = {
             'secure': 'vim.secure',
             'version': 'vim.version',
             'iter': 'vim.iter',
+            'net': 'vim.net'
         },
         'append_only': [
             'shared.lua',

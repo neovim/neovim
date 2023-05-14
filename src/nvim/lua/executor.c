@@ -764,7 +764,7 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   // fetch
   lua_pushcfunction(lstate, &nlua_fetch);
-  lua_setfield(lstate, -2, "fetch");
+  lua_setfield(lstate, -2, "_fetch");
 
   nlua_common_vim_init(lstate, false, false);
 

@@ -105,7 +105,6 @@ static void async_complete_cb(void **argv)
   long code = data->http_response_code;
 
   PUT(res_dict, "status", FLOAT_OBJ((double)code));
-  PUT(res_dict, "ok", BOOLEAN_OBJ(code >= 200 && code <= 299));
 
   PUT(res_dict, "text", STRING_OBJ(data->response));
   PUT(res_dict, "headers", DICTIONARY_OBJ(data->headers.dict));
@@ -161,24 +160,24 @@ static void fetch_worker(void *arg)
   CURLcode res = curl_easy_perform(easy_handle);
 
   if (res != CURLE_OK) {
-    if (fetch_data->on_err != -1) {
-      AsyncErrData *async_data = xmalloc(sizeof(AsyncErrData));
-      async_data->lstate = fetch_data->lstate;
-      async_data->res = res;
-      async_data->on_err = fetch_data->on_err;
+    AsyncErrData *async_data = xmalloc(sizeof(AsyncErrData));
+    async_data->lstate = fetch_data->lstate;
+    async_data->res = res;
+    async_data->on_err = fetch_data->on_err;
 
-      async_data->error.data = error_buffer;
-      async_data->error.size = strlen(error_buffer);
-
-      Event event;
-      event.handler = async_err_cb;
-      event.argv[0] = async_data;
-
-      multiqueue_put_event(main_loop.fast_events, event);
-    } else {
-      // TODO(marshmallow (mrshmllow)): vim.notify
-      fprintf(stderr, "curl fetch failed: %s\n", curl_easy_strerror(res));
+    if (error_buffer[0] == '\0') {
+      strncpy(error_buffer, curl_easy_strerror(res), CURL_ERROR_SIZE - 1);
+      error_buffer[CURL_ERROR_SIZE - 1] = '\0';
     }
+
+    async_data->error.data = error_buffer;
+    async_data->error.size = strlen(error_buffer);
+
+    Event event;
+    event.handler = async_err_cb;
+    event.argv[0] = async_data;
+
+    multiqueue_put_event(main_loop.fast_events, event);
 
     XFREE_CLEAR(response_chunk.data);
     XFREE_CLEAR(header_data.dict);
@@ -213,74 +212,6 @@ cleanup:
   XFREE_CLEAR(fetch_data);
 }
 
-/// Perform an asyncronous network request.
-///
-/// Example:
-/// <pre>lua
-/// vim.net.fetch("https://example.com/api/data", {
-///   on_complete = function (response)
-///     -- Lets read the response!
-///
-///     if response.ok then
-///       -- Read response text
-///       local body = response.text
-///     else
-///   end,
-/// })
-///
-/// -- POST to a url, sending a table as JSON and providing an authorization header
-/// vim.net.fetch("https://example.com/api/data", {
-///   method = "POST",
-///   data = vim.json.encode({
-///     key = value
-///   }),
-///   headers = {
-///     Authorization = "Bearer " .. token
-///     ["Content-Type"] = "application/json",
-///     ["Accept"] = "application/json"
-///   },
-///   on_complete = function (response)
-///     -- Lets read the response!
-///
-///     if response.ok then
-///       -- Read JSON response
-///       local table = vim.json.decode(response.test)
-///     else
-///
-///     -- What went wrong?
-///     vim.print(response.status)
-///   end
-/// })
-/// </pre>
-///
-/// @note `opts.form` and `opts.data` are mutually exclusive.
-/// @note User-password authentication can be achived by using a url in the format of
-/// `protocol://user:pass@host...` or `protocol://user@host...`
-/// @see man://libcurl-errors
-///
-/// @param channel_id
-/// @param url string
-/// @param opts table|nil Optional keyword arguments:
-///   - multipart_form table<string,string>|nil Key-Value form data. Implies
-///   `Content-Type: multipart/form-data`.
-///   - data string|nil Data to send with the request.
-///   - headers table<string, string | string[]>|nil Headers to send. A header can have
-///   multiple values.
-///   - method string|nil HTTP method to use. Defaults to GET.
-///   - redirect string|nil Control redirect follow behavior. Defaults to `follow`.
-///   Posible values include:
-///     - `follow`: Follow all redirects when fetching a resource.
-///     - `none`: Do not follow redirects.
-///   - on_complete fun(response: table)|nil Optional callback when response completes. The
-///   `response` table has the following values:
-///     - ok: bool Response status was within 200-299 range.
-///     - text: string Response body. Empty if `method` was HEAD.
-///     - headers: table<string, string> Header key-values. Multiple values are sperated by `,`.
-///     - status: number HTTP status.
-///   - on_err fun(code: number, err: string)|nil Used when request failed. Returned values are:
-///     - `code`: `CURLcode`, see man://libcurl-errors for possible error codes. Report errors you
-///     feel neovim itself caused to the issue tracker!
-///     - `err`: Human readable error string, may or may not be empty.
 int nlua_fetch(lua_State *lstate)
 {
   if (!initialized) {
@@ -296,7 +227,10 @@ int nlua_fetch(lua_State *lstate)
   if (!url) {
     return luaL_error(lstate, "expected url");
   }
-  if (!lua_istable(lstate, 2)) {
+  if (!lua_isfunction(lstate, 2)) {
+    return luaL_error(lstate, "expected on_err");
+  }
+  if (!lua_istable(lstate, 3)) {
     return luaL_error(lstate, "opts must be a table");
   }
 
@@ -316,19 +250,15 @@ int nlua_fetch(lua_State *lstate)
   fetch_data->lstate = lstate;
 
   fetch_data->on_complete = -1;
-  fetch_data->on_err = -1;
-
   fetch_data->headers = NULL;
   fetch_data->data = NULL;
   fetch_data->multipart_form = NULL;
 
-  if (!lua_istable(lstate, 2)) {
-    luaL_error(lstate, "opts must be a table");
-    return 0;
-  }
+  lua_pushvalue(lstate, 2);
+  fetch_data->on_err = luaL_ref(lstate, LUA_REGISTRYINDEX);
 
   lua_pushnil(lstate);
-  while (lua_next(lstate, 2) != 0) {
+  while (lua_next(lstate, 3) != 0) {
     const int KEY = -2;
     const int VALUE = -1;
 
@@ -346,16 +276,6 @@ int nlua_fetch(lua_State *lstate)
 
       lua_pushvalue(lstate, VALUE);
       fetch_data->on_complete = luaL_ref(lstate, LUA_REGISTRYINDEX);
-    }
-
-    if (strcmp("on_err", key) == 0) {
-      if (!lua_isfunction(lstate, VALUE)) {
-        luaL_error(lstate, "on_err must be a function");
-        return 0;
-      }
-
-      lua_pushvalue(lstate, VALUE);
-      fetch_data->on_err = luaL_ref(lstate, LUA_REGISTRYINDEX);
     }
 
     if (strcmp("method", key) == 0) {
