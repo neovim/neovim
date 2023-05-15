@@ -31,8 +31,17 @@
 --- shouldn't be done directly in the change callback anyway as they will be very frequent. Rather
 --- a plugin that does any kind of analysis on a tree should use a timer to throttle too frequent
 --- updates.
+---
 
-local api = vim.api
+-- Debugging:
+--
+-- vim.g.__ts_debug levels:
+--    - 1. Messages from languagetree.lua
+--    - 2. Parse messages from treesitter
+--    - 2. Lex messages from treesitter
+--
+-- Log file can be found in stdpath('log')/treesitter.log
+
 local query = require('vim.treesitter.query')
 local language = require('vim.treesitter.language')
 local Range = require('vim.treesitter._range')
@@ -75,6 +84,8 @@ local TSCallbackNames = {
 ---@field private _source (integer|string) Buffer or string to parse
 ---@field private _trees TSTree[] Reference to parsed tree (one for each language)
 ---@field private _valid boolean|table<integer,boolean> If the parsed tree is valid
+---@field private _logger? fun(logtype: string, msg: string)
+---@field private _logfile? file*
 local LanguageTree = {}
 
 ---@class LanguageTreeOpts
@@ -114,12 +125,43 @@ function LanguageTree.new(source, lang, opts)
     _callbacks_rec = {},
   }, LanguageTree)
 
+  if vim.g.__ts_debug and type(vim.g.__ts_debug) == 'number' then
+    self:_set_logger()
+  end
+
   for _, name in pairs(TSCallbackNames) do
     self._callbacks[name] = {}
     self._callbacks_rec[name] = {}
   end
 
   return self
+end
+
+function LanguageTree:_set_logger()
+  local source = self:source()
+  source = type(source) == 'string' and 'text' or tostring(source)
+
+  local lang = self:lang()
+
+  local logfilename = vim.fs._join_paths(vim.fn.stdpath('log'), 'treesitter.log')
+
+  local logfile, openerr = io.open(logfilename, 'a+')
+
+  if not logfile or openerr then
+    error(string.format('Could not open file (%s) for logging: %s', logfilename, openerr))
+    return
+  end
+
+  self._logfile = logfile
+
+  self._logger = function(logtype, msg)
+    self._logfile:write(string.format('%s:%s:(%s) %s\n', source, lang, logtype, msg))
+    self._logfile:flush()
+  end
+
+  local log_lex = vim.g.__ts_debug >= 3
+  local log_parse = vim.g.__ts_debug >= 2
+  self._parser:_set_logger(log_lex, log_parse, self._logger)
 end
 
 ---@private
@@ -139,7 +181,11 @@ end
 ---@private
 ---@vararg any
 function LanguageTree:_log(...)
-  if vim.g.__ts_debug == nil then
+  if not self._logger then
+    return
+  end
+
+  if not vim.g.__ts_debug or vim.g.__ts_debug < 1 then
     return
   end
 
@@ -150,19 +196,17 @@ function LanguageTree:_log(...)
 
   local info = debug.getinfo(2, 'nl')
   local nregions = #self:included_regions()
-  local prefix =
-    string.format('%s:%d: [%s:%d] ', info.name, info.currentline, self:lang(), nregions)
+  local prefix = string.format('%s:%d: (#regions=%d) ', info.name, info.currentline, nregions)
 
-  api.nvim_out_write(prefix)
+  local msg = { prefix }
   for _, x in ipairs(args) do
     if type(x) == 'string' then
-      api.nvim_out_write(x)
+      msg[#msg + 1] = x
     else
-      api.nvim_out_write(vim.inspect(x, { newline = ' ', indent = '' }))
+      msg[#msg + 1] = vim.inspect(x, { newline = ' ', indent = '' })
     end
-    api.nvim_out_write(' ')
   end
-  api.nvim_out_write('\n')
+  self._logger('nvim', table.concat(msg, ' '))
 end
 
 --- Invalidates this parser and all its children
@@ -876,6 +920,11 @@ end
 function LanguageTree:_on_detach(...)
   self:invalidate(true)
   self:_do_callback('detach', ...)
+  if self._logfile then
+    self._logger('nvim', 'detaching')
+    self._logger = nil
+    self._logfile:close()
+  end
 end
 
 --- Registers callbacks for the |LanguageTree|.

@@ -73,9 +73,13 @@ function M.basename(file)
 end
 
 ---@private
-local function join_paths(...)
+---@param ... string
+---@return string
+function M._join_paths(...)
   return (table.concat({ ... }, '/'):gsub('//+', '/'))
 end
+
+local join_paths = M._join_paths
 
 ---@alias Iterator fun(): string?, string?
 
