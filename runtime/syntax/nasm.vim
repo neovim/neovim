@@ -3,8 +3,12 @@
 " Maintainer:	Andrii Sokolov	<andriy145@gmail.com>
 " Original Author:	Manuel M.H. Stol	<Manuel.Stol@allieddata.nl>
 " Former Maintainer:	Manuel M.H. Stol	<Manuel.Stol@allieddata.nl>
-" Contributors: Leonard König <leonard.r.koenig@gmail.com> (C string highlighting), Peter Stanhope <dev.rptr@gmail.com> (Add missing 64-bit mode registers)
-" Last Change:	2017 Jan 23
+" Contributors: 
+" 	Leonard König <leonard.r.koenig@gmail.com> (C string highlighting),
+" 	Peter Stanhope <dev.rptr@gmail.com> (Add missing 64-bit mode registers)
+" 	Frédéric Hamel <rederic.hamel123@gmail.com> (F16c support, partial AVX
+" 						     support, other)
+" Last Change:	2022 May 3
 " NASM Home:	http://www.nasm.us/
 
 
@@ -277,7 +281,7 @@ syn match   nasmInstrModifier	"\<F\(ADD\|MUL\|\(DIV\|SUB\)R\=\)\s\+TO\>"lc=5,ms=
 "  NAsm directives
 syn keyword nasmRepeat		TIMES
 syn keyword nasmDirective	ALIGN[B] INCBIN EQU NOSPLIT SPLIT
-syn keyword nasmDirective	ABSOLUTE BITS SECTION SEGMENT
+syn keyword nasmDirective	ABSOLUTE BITS SECTION SEGMENT DEFAULT
 syn keyword nasmDirective	ENDSECTION ENDSEGMENT
 syn keyword nasmDirective	__SECT__
 "  Macro created standard directives: (requires %include)
@@ -309,7 +313,7 @@ syn match   nasmStdInstruction	"\<\(CMOV\|J\|SET\)\(N\=\([ABGL]E\=\|[CEOSZ]\)\|P
 syn match   nasmStdInstruction	"\<POP\>"
 syn keyword nasmStdInstruction	AAA AAD AAM AAS ADC ADD AND
 syn keyword nasmStdInstruction	BOUND BSF BSR BSWAP BT[C] BTR BTS
-syn keyword nasmStdInstruction	CALL CBW CDQ CLC CLD CMC CMP CMPSB CMPSD CMPSW CMPSQ
+syn keyword nasmStdInstruction	CALL CBW CDQ CDQE CLC CLD CMC CMP CMPSB CMPSD CMPSW CMPSQ
 syn keyword nasmStdInstruction	CMPXCHG CMPXCHG8B CPUID CWD[E] CQO
 syn keyword nasmStdInstruction	DAA DAS DEC DIV ENTER
 syn keyword nasmStdInstruction	IDIV IMUL INC INT[O] IRET[D] IRETW IRETQ
@@ -319,6 +323,7 @@ syn keyword nasmStdInstruction	LODSW LOOP[E] LOOPNE LOOPNZ LOOPZ LSS
 syn keyword nasmStdInstruction	MOVSB MOVSD MOVSW MOVSX MOVSQ MOVZX MUL NEG NOP NOT
 syn keyword nasmStdInstruction	OR POPA[D] POPAW POPF[D] POPFW POPFQ
 syn keyword nasmStdInstruction	PUSH[AD] PUSHAW PUSHF[D] PUSHFW PUSHFQ
+syn keyword nasmStdInstruction	PAUSE
 syn keyword nasmStdInstruction	RCL RCR RETF RET[N] ROL ROR
 syn keyword nasmStdInstruction	SAHF SAL SAR SBB SCASB SCASD SCASW
 syn keyword nasmStdInstruction	SHL[D] SHR[D] STC STD STOSB STOSD STOSW STOSQ SUB
@@ -404,6 +409,62 @@ syn keyword nasmSseInstruction	MULPS MULSS
 syn keyword nasmSseInstruction	ORPS RCPPS RCPSS RSQRTPS RSQRTSS
 syn keyword nasmSseInstruction	SHUFPS SQRTPS SQRTSS STMXCSR SUBPS SUBSS
 syn keyword nasmSseInstruction	UCOMISS UNPCKHPS UNPCKLPS XORPS
+
+" F16c Instructions
+syn keyword nasmF16CInstruction VCVTPH2PS VCVTPS2PH
+
+" AVX Instructions
+syn keyword nasmAVXInstruction	VCVTDQ2PD VCVTDQ2PS VCVTPD2DQ VCVTPD2P VCVTPD2PS
+syn keyword nasmAVXInstruction	VCVTPS2DQ VCVTPS2PD
+syn keyword nasmAVXInstruction	VCVTSD2SI VCVTSD2SS VCVTSI2SD VCVTSI2SS VCVTSS2SD VCVTSS2SI
+syn keyword nasmAVXInstruction	VMAXPS VMAXSS VMINPS VMINSS VMOVAPS VMOVHLPS VMOVHPS
+syn keyword nasmAVXInstruction	VMAXPD VMAXSD VMINPD VMINSD VMOVAPD VMOVHLPD VMOVHPD
+syn keyword nasmAVXInstruction	VMOVLHPS VMOVLPS VMOVMSKPS VMOVNTPS VMOVSS VMOVUPS
+syn keyword nasmAVXInstruction	VMULPS VMULSS VPXOR
+
+syn match   nasmInstructnError  "\<VP\a\{3}R\a\>"
+syn match   nasmAVXInstruction  "\<VP\(INS\|EXT\)R[BDQW]\>"
+
+syn keyword nasmAVXInstruction VORPS VPABSB VPABSD VPABSW
+syn keyword nasmAVXInstruction PACKSSDW VPACKSSWB VPACKUSDW VPACKUSWB VPADDD
+syn keyword nasmAVXInstruction PADDQ VPADDSB VPADDSW VPADDUSB VPADDUSW
+syn keyword nasmAVXInstruction PADDW VPALIGNR VPAND VPANDN VPAVGB
+syn keyword nasmAVXInstruction PAVGW VPBLENDD VPBLENDVB VPBLENDW VPBROADCASTB
+syn keyword nasmAVXInstruction PBROADCASTD VPBROADCASTQ VPBROADCASTW VPCLMULQDQ VPCMOV
+syn keyword nasmAVXInstruction PCMPEQB VPCMPEQD VPCMPEQQ VPCMPEQW VPCMPESTRI
+syn keyword nasmAVXInstruction PCMPESTRM VPCMPGTB VPCMPGTD VPCMPGTQ VPCMPGTW
+syn keyword nasmAVXInstruction PCMPISTRI VPCMPISTRM VPCOMB VPCOMD VPCOMQ
+syn keyword nasmAVXInstruction PCOMUB VPCOMUD VPCOMUQ VPCOMUW VPCOMW
+syn keyword nasmAVXInstruction PERM2FVPERM2IVPERMD VPERMIL2PD VPERMIL2PS VPERMILPD VPERMILPS
+syn keyword nasmAVXInstruction PERMPD VPERMPS VPERMQ VPEXTRB VPEXTRD
+syn keyword nasmAVXInstruction PEXTRQ VPEXTRW VPGATHERDD VPGATHERDQ VPGATHERQD
+syn keyword nasmAVXInstruction PGATHERQQ VPHADDBD VPHADDBQ VPHADDBW VPHADDD
+syn keyword nasmAVXInstruction PHADDDQ VPHADDSW VPHADDUBQ VPHADDUBW VPHADDUDQ
+syn keyword nasmAVXInstruction PHADDUWD VPHADDUWQ VPHADDW VPHADDWD VPHADDWQ
+syn keyword nasmAVXInstruction PHMINPOSUW VPHSUBBW VPHSUBD VPHSUBDQ VPHSUBSW
+syn keyword nasmAVXInstruction PHSUBW VPHSUBWD VPINSRB VPINSRD VPINSRQ
+syn keyword nasmAVXInstruction PINSRW VPMACSDD VPMACSDQH
+syn keyword nasmAVXInstruction VPMACSDQL VPMACSSDD VPMACSSDQL VPMACSSQH VPMACSSWD
+syn keyword nasmAVXInstruction VPMACSSWW VPMACSWD VPMACSWW VPMADCSSWD VPMADCSWD
+syn keyword nasmAVXInstruction VPMADDUBSW VPMADDWD VPMASKMOVD VPMASKMOVQ VPMAXSB
+syn keyword nasmAVXInstruction VPMAXSD VPMAXSW VPMAXUB VPMAXUD VPMAXUW
+syn keyword nasmAVXInstruction VPMINSB VPMINSD VPMINSW VPMINUB VPMINUD
+syn keyword nasmAVXInstruction VPMINUW VPMOVMSKB VPMOVSXBD VPMOVSXBQ VPMOVSXBW
+syn keyword nasmAVXInstruction VPMOVSXDQ VPMOVSXWD VPMOVSXWQ VPMOVZXBD VPMOVZXBQ
+syn keyword nasmAVXInstruction VPMOVZXBW VPMOVZXDQ VPMOVZXWD VPMOVZXWQ VPMULDQ
+syn keyword nasmAVXInstruction VPMULHRSW VPMULHUW VPMULHW VPMULLD VPMULLW
+syn keyword nasmAVXInstruction VPMULUDQ VPOR VPPERM VPROTB VPROTD
+syn keyword nasmAVXInstruction VPROTQ VPROTW VPSADBW VPSHAB VPSHAD
+syn keyword nasmAVXInstruction VPSHAQ VPSHAW VPSHLB VPSHLD VPSHLQ
+syn keyword nasmAVXInstruction VPSHLW VPSHUFB VPSHUFD VPSHUFHW VPSHUFLW
+syn keyword nasmAVXInstruction VPSIGNB VPSIGND VPSIGNW VPSLLD VPSLLDQ
+syn keyword nasmAVXInstruction VPSLLQ VPSLLVD VPSLLVQ VPSLLW VPSRAD
+syn keyword nasmAVXInstruction VPSRAVD VPSRAW VPSRLD VPSRLDQ VPSRLQ
+syn keyword nasmAVXInstruction VPSRLVD VPSRLVQ VPSRLW VPSUBB VPSUBD
+syn keyword nasmAVXInstruction VPSUBQ VPSUBSB VPSUBSW VPSUBUSB VPSUBUSW
+syn keyword nasmAVXInstruction VPSUBW VPTEST VPUNPCKHBW VPUNPCKHDQ VPUNPCKHQDQ
+syn keyword nasmAVXInstruction VPUNPCKHWD VPUNPCKLBW VPUNPCKLDQ VPUNPCKLQDQ VPUNPCKLWD
+syn keyword nasmAVXInstruction VPXOR VRCPPS
 
 
 " Three Dimensional Now Packed Instructions: (requires 3DNow! unit)
@@ -515,12 +576,13 @@ hi def link nasmDbgInstruction	Debug
 hi def link nasmFpuInstruction	Statement
 hi def link nasmMmxInstruction	Statement
 hi def link nasmSseInstruction	Statement
+hi def link nasmF16cInstruction	Statement
+hi def link nasmAVXInstruction	Statement
 hi def link nasmNowInstruction	Statement
 hi def link nasmAmdInstruction	Special
 hi def link nasmCrxInstruction	Special
 hi def link nasmUndInstruction	Todo
 hi def link nasmInstructnError	Error
-
 
 let b:current_syntax = "nasm"
 

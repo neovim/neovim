@@ -1888,7 +1888,7 @@ execute({command} [, {silent}])				*execute()*
 		The default is "silent".  Note that with "silent!", unlike
 		`:redir`, error messages are dropped.
 
-		To get a list of lines use |split()| on the result: >
+		To get a list of lines use `split()` on the result: >
 			execute('args')->split("\n")
 
 <		This function is not available in the |sandbox|.
@@ -6137,17 +6137,20 @@ prompt_setcallback({buf}, {expr})			*prompt_setcallback()*
 		that was entered at the prompt.  This can be an empty string
 		if the user only typed Enter.
 		Example: >
-		   call prompt_setcallback(bufnr(''), function('s:TextEntered'))
 		   func s:TextEntered(text)
 		     if a:text == 'exit' || a:text == 'quit'
 		       stopinsert
+		       " Reset 'modified' to allow the buffer to be closed.
+		       " We assume there is nothing useful to be saved.
+		       set nomodified
 		       close
 		     else
+		       " Do something useful with "a:text".  In this example
+		       " we just repeat it.
 		       call append(line('$') - 1, 'Entered: "' .. a:text .. '"')
-		       " Reset 'modified' to allow the buffer to be closed.
-		       set nomodified
 		     endif
 		   endfunc
+		   call prompt_setcallback(bufnr(), function('s:TextEntered'))
 
 <		Can also be used as a |method|: >
 			GetBuffer()->prompt_setcallback(callback)
@@ -9294,7 +9297,7 @@ win_execute({id}, {command} [, {silent}])		*win_execute()*
 		The window will temporarily be made the current window,
 		without triggering autocommands or changing directory.  When
 		executing {command} autocommands will be triggered, this may
-		have unexpected side effects.  Use |:noautocmd| if needed.
+		have unexpected side effects.  Use `:noautocmd` if needed.
 		Example: >
 			call win_execute(winid, 'syntax enable')
 <		Doing the same with `setwinvar()` would not trigger

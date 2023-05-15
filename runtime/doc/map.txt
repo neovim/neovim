@@ -1730,7 +1730,11 @@ remains unmodified.  Also see |f-args-example| below.  Overview:
 	XX a\\\ b	   'a\ b'
 	XX a\\\\b	   'a\\b'
 	XX a\\\\ b	   'a\\', 'b'
+	XX		   [nothing]
 
+
+Note that if the "no arguments" situation is to be handled, you have to make
+sure that the function can be called without arguments.
 
 Examples for user commands: >
 

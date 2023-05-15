@@ -110,26 +110,16 @@ to the next, just like the Python REPL.
 
 							*script-here*
 When using a script language in-line, you might want to skip this when the
-language isn't supported.  Note that this mechanism doesn't work:
+language isn't supported.
 >vim
    if has('python')
      python << EOF
-       this will NOT work!
+       print("python works")
    EOF
    endif
-
-Instead, put the Python command in a function and call that function:
->vim
-    if has('python')
-      function DefPython()
-        python << EOF
-          this works
-    EOF
-      endfunction
-      call DefPython()
-    endif
-
-Note that "EOF" must be at the start of the line.
+<
+Note that "EOF" must be at the start of the line without preceding white
+space.
 
 ==============================================================================
 The vim module							*python-vim*

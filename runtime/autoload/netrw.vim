@@ -1,7 +1,7 @@
 " netrw.vim: Handles file transfer and remote directory listing across
 "            AUTOLOAD SECTION
-" Date:		Mar 15, 2023
-" Version:	172
+" Date:		May 03, 2023
+" Version:	173
 " Maintainer:	Charles E Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 2016 Charles E. Campbell {{{1
@@ -43,7 +43,7 @@ if exists("s:needspatches")
  endfor
 endif
 
-let g:loaded_netrw = "v172"
+let g:loaded_netrw = "v173"
 if !exists("s:NOTE")
  let s:NOTE    = 0
  let s:WARNING = 1
@@ -5694,7 +5694,7 @@ fun! s:NetrwEditBuf(bufnum)
    exe "sil! NetrwKeepj keepalt noswapfile b ".fnameescape(a:bufnum)
   else
 "   call Decho("exe sil! NetrwKeepj noswapfile b ".fnameescape(a:bufnum))
-   exe "sil! NetrwKeepj noswapfile b ".fnameescape(a:bufnume)
+   exe "sil! NetrwKeepj noswapfile b ".fnameescape(a:bufnum)
   endif
 "  call Dret("s:NetrwEditBuf")
 endfun
