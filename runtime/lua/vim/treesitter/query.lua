@@ -382,6 +382,39 @@ local predicate_handlers = {
 
     return string_set[node_text]
   end,
+
+  ['has-ancestor?'] = function(match, _, _, predicate)
+    local node = match[predicate[2]]
+    if not node then
+      return true
+    end
+
+    local ancestor_types = {}
+    for _, type in ipairs({ unpack(predicate, 3) }) do
+      ancestor_types[type] = true
+    end
+
+    node = node:parent()
+    while node do
+      if ancestor_types[node:type()] then
+        return true
+      end
+      node = node:parent()
+    end
+    return false
+  end,
+
+  ['has-parent?'] = function(match, _, _, predicate)
+    local node = match[predicate[2]]
+    if not node then
+      return true
+    end
+
+    if vim.list_contains({ unpack(predicate, 3) }, node:parent():type()) then
+      return true
+    end
+    return false
+  end,
 }
 
 -- As we provide lua-match? also expose vim-match?

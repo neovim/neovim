@@ -1,7 +1,7 @@
-(h1) @text.title
-(h2) @text.title
-(h3) @text.title
-(column_heading) @text.title
+(h1) @text.title.1
+(h2) @text.title.2
+(h3) @text.title.3
+(column_heading) @text.title.4
 (column_heading
    "~" @conceal (#set! conceal ""))
 (tag
