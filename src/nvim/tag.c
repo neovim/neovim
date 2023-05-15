@@ -2901,21 +2901,10 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, int keep_help)
     buf_T *const existing_buf = buflist_findname_exp(fname);
 
     if (existing_buf != NULL) {
-      const win_T *wp = NULL;
-
-      if (swb_flags & SWB_USEOPEN) {
-        wp = buf_jump_open_win(existing_buf);
-      }
-
-      // If 'switchbuf' contains "usetab": jump to first window in any tab
-      // page containing "existing_buf" if one exists
-      if (wp == NULL && (swb_flags & SWB_USETAB)) {
-        wp = buf_jump_open_tab(existing_buf);
-      }
-
-      // We've switched to the buffer, the usual loading of the file must
-      // be skipped.
-      if (wp != NULL) {
+      // If 'switchbuf' is set jump to the window containing "buf".
+      if (swbuf_goto_win_with_buf(existing_buf) != NULL) {
+        // We've switched to the buffer, the usual loading of the file
+        // must be skipped.
         getfile_result = GETFILE_SAME_FILE;
       }
     }
