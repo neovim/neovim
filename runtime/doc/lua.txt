@@ -1055,6 +1055,9 @@ vim.fn.{func}({...})                                                  *vim.fn*
     Note: The majority of functions cannot run in |api-fast| callbacks with some
     undocumented exceptions which are allowed.
 
+    Note: You cannot directly change Lua variables with a vim.fn call. For
+   	modifying variables, see |lua-guide-variables|.    
+
                                                            *lua-vim-variables*
 The Vim editor global dictionaries |g:| |w:| |b:| |t:| |v:| can be accessed
 from Lua conveniently and idiomatically by referencing the `vim.*` Lua tables
