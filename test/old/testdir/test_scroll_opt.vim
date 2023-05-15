@@ -502,7 +502,7 @@ func Test_smoothscroll_cursor_position()
   " regardless of number and cpo-=n.
   setl number list listchars=precedes:< cpo-=n
   call s:check_col_calc(5, 1, 1)
-  exe "normal 2|\<C-E>"
+  exe "normal 3|\<C-E>h"
   call s:check_col_calc(6, 1, 18)
   norm h
   call s:check_col_calc(5, 2, 17)

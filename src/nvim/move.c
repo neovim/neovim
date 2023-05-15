@@ -1502,11 +1502,11 @@ void adjust_skipcol(void)
     } else {
       curwin->w_skipcol -= width1;
     }
-    redraw_later(curwin, UPD_NOT_VALID);
     scrolled = true;
-    validate_virtcol();
   }
   if (scrolled) {
+    validate_virtcol();
+    redraw_later(curwin, UPD_NOT_VALID);
     return;  // don't scroll in the other direction now
   }
   long col = curwin->w_virtcol - curwin->w_skipcol + scrolloff_cols;

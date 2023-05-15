@@ -22,6 +22,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/move.h"
 #include "nvim/normal.h"
 #include "nvim/option_defs.h"
 #include "nvim/pos.h"
@@ -414,6 +415,7 @@ int bck_word(long count, bool bigword, bool stop)
 finished:
     stop = false;
   }
+  adjust_skipcol();
   return OK;
 }
 
@@ -518,6 +520,7 @@ int bckend_word(long count, bool bigword, bool eol)
       }
     }
   }
+  adjust_skipcol();
   return OK;
 }
 
