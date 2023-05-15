@@ -223,7 +223,7 @@ describe('vim.fs', function()
 
   describe('find()', function()
     it('works', function()
-      eq({test_build_dir}, exec_lua([[
+      eq({test_build_dir .. "/build"}, exec_lua([[
         local dir = ...
         return vim.fs.find('build', { path = dir, upward = true, type = 'directory' })
       ]], nvim_dir))
@@ -239,7 +239,7 @@ describe('vim.fs', function()
     end)
 
     it('accepts predicate as names', function()
-      eq({test_build_dir}, exec_lua([[
+      eq({test_build_dir .. "/build"}, exec_lua([[
         local dir = ...
         local opts = { path = dir, upward = true, type = 'directory' }
         return vim.fs.find(function(x) return x == 'build' end, opts)
