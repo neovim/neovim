@@ -13,14 +13,14 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  ASAN_OPTIONS: detect_leaks=1:check_initialization_order=1:handle_abort=1:handle_sigill=1:log_path=${{ github.workspace }}/build/log/asan:intercept_tls_get_addr=0
+  ASAN_OPTIONS: detect_leaks=1:check_initialization_order=1:log_path=${{ github.workspace }}/build/log/asan:intercept_tls_get_addr=0
   BIN_DIR: ${{ github.workspace }}/bin
   BUILD_DIR: ${{ github.workspace }}/build
   INSTALL_PREFIX: ${{ github.workspace }}/nvim-install
   LOG_DIR: ${{ github.workspace }}/build/log
   NVIM_LOG_FILE: ${{ github.workspace }}/build/.nvimlog
   TSAN_OPTIONS: log_path=${{ github.workspace }}/build/log/tsan
-  UBSAN_OPTIONS: "print_stacktrace=1 log_path=${{ github.workspace }}/build/log/ubsan"
+  UBSAN_OPTIONS: log_path=${{ github.workspace }}/build/log/ubsan
   VALGRIND_LOG: ${{ github.workspace }}/build/log/valgrind-%p.log
   # TEST_FILE: test/functional/core/startup_spec.lua
   # TEST_FILTER: foo
