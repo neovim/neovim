@@ -2222,3 +2222,17 @@ static void check_swap_exists_action(void)
   }
   handle_swap_exists(NULL);
 }
+
+#ifdef ENABLE_ASAN_UBSAN
+const char *__ubsan_default_options(void);
+const char *__ubsan_default_options(void)
+{
+  return "print_stacktrace=1";
+}
+
+const char *__asan_default_options(void);
+const char *__asan_default_options(void)
+{
+  return "handle_abort=1,handle_sigill=1";
+}
+#endif

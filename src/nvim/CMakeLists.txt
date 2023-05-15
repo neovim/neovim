@@ -836,6 +836,7 @@ if(ENABLE_ASAN_UBSAN)
     -fsanitize=address
     -fsanitize=undefined)
   target_link_libraries(nvim PRIVATE -fsanitize=address -fsanitize=undefined)
+  target_compile_definitions(nvim PRIVATE ENABLE_ASAN_UBSAN)
 elseif(ENABLE_MSAN)
   message(STATUS "Enabling memory sanitizer for nvim.")
   target_compile_options(nvim PRIVATE
