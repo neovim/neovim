@@ -518,14 +518,29 @@ func Test_display_cursor_long_line()
   CheckScreendump
 
   let lines =<< trim END
-    call setline(1, ['a', 'bbbbb '->repeat(100), 'c'])
+    call setline(1, ['a', 'b ' .. 'bbbbb'->repeat(150), 'c'])
     norm $j
   END
 
   call writefile(lines, 'XdispCursorLongline', 'D')
   let buf = RunVimInTerminal('-S XdispCursorLongline', #{rows: 8})
 
-  call VerifyScreenDump(buf, 'Test_display_cursor_long_line', {})
+  call VerifyScreenDump(buf, 'Test_display_cursor_long_line_1', {})
+
+  " FIXME: moving the cursor above the topline does not set w_skipcol
+  " correctly with cpo+=n and zero scrolloff (curs_columns() extra == 1).
+  call term_sendkeys(buf, ":set number cpo+=n scrolloff=0\<CR>")
+  call term_sendkeys(buf, '$0')
+  call VerifyScreenDump(buf, 'Test_display_cursor_long_line_2', {})
+
+  " Going to the start of the line with "b" did not set w_skipcol correctly
+  " with 'smoothscroll'.
+   call term_sendkeys(buf, ":set smoothscroll\<CR>")
+   call term_sendkeys(buf, '$b')
+   call VerifyScreenDump(buf, 'Test_display_cursor_long_line_3', {})
+  " Same for "ge".
+   call term_sendkeys(buf, '$ge')
+   call VerifyScreenDump(buf, 'Test_display_cursor_long_line_4', {})
 
   call StopVimInTerminal(buf)
 endfunc
