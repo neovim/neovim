@@ -1,6 +1,6 @@
 local lsp_snippet = require('vim.lsp._snippet')
 
----@alias vim.snippet.MarkId 
+---@alias vim.snippet.MarkId integer
 ---@alias vim.snippet.Tabstop integer
 ---@alias vim.snippet.Changenr integer
 ---@alias vim.snippet.Position { [1]: integer, [2]: integer } # The 0-origin utf8 byte index.
@@ -388,7 +388,7 @@ end
 ---@field public changedtick integer
 ---@field public current_tabstop integer
 ---@field public snippet_mark_ns integer
----@field public snippet_mark_id integer
+---@field public snippet_mark_id vim.snippet.MarkId
 local SnippetSession = {}
 
 ---Create SnippetSession instance.
@@ -654,7 +654,7 @@ M.JumpDirection = JumpDirection
 
 ---Return the cursor is in the activated snippet or not.
 ---@return boolean
-function M.in_context()
+function M._in_context()
   local session = SnippetController.session
   if not session or session.disposed then
     return false
@@ -662,10 +662,18 @@ function M.in_context()
   return session:within()
 end
 
+---Sync current modification.
+---NOTE: for functionaltest.
+function M._sync()
+  if M._in_context() then
+    SnippetController.session:sync()
+  end
+end
+
 ---Expand snippet text.
 ---@param snippet_text string
 function M.expand(snippet_text)
-  if M.in_context() then
+  if M._in_context() then
     SnippetController.session:merge(snippet_text)
     return
   end
@@ -693,7 +701,7 @@ end
 ---@param direction vim.snippet.JumpDirection
 ---@return boolean
 function M.jumpable(direction)
-  if M.in_context() then
+  if M._in_context() then
     return not not SnippetController.session:find_next_mark(direction)
   end
   return false
@@ -702,21 +710,14 @@ end
 ---Jump to next placeholder.
 ---@param direction vim.snippet.JumpDirection
 function M.jump(direction)
-  if M.in_context() then
+  if M._in_context() then
     SnippetController.session:jump(direction)
-  end
-end
-
----Sync current modification.
-function M.sync()
-  if M.in_context() then
-    SnippetController.session:sync()
   end
 end
 
 ---Dispose current snippet session
 function M.dispose()
-  if M.in_context() then
+  if M._in_context() then
     SnippetController.session:dispose()
     SnippetController.session = nil
   end
