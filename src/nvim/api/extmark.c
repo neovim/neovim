@@ -1222,7 +1222,7 @@ static int init_sign_text(char **sign_text, char *text)
   *sign_text = xstrnsave(text, len);
 
   if (cells == 1) {
-    strcpy(*sign_text + len - 1, " ");
+    strcpy(*sign_text + len - 1, " ");  // NOLINT(runtime/printf)
   }
 
   return OK;

@@ -514,7 +514,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
     *buf = NUL;
     len = 0;
   } else {
-    strcpy(buf, "< ");
+    strcpy(buf, "< ");  // NOLINT(runtime/printf)
     len = 2;
   }
   clen = len;
@@ -530,7 +530,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
     // Check for menu separators - replace with '|'
     int emenu = (xp->xp_context == EXPAND_MENUS || xp->xp_context == EXPAND_MENUNAMES);
     if (emenu && menu_is_separator(s)) {
-      strcpy(buf + len, transchar('|'));
+      strcpy(buf + len, transchar('|'));  // NOLINT(runtime/printf)
       l = (int)strlen(buf + len);
       len += l;
       clen += l;
@@ -543,7 +543,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
           s += l - 1;
           len += l;
         } else {
-          strcpy(buf + len, transchar_byte((uint8_t)(*s)));
+          strcpy(buf + len, transchar_byte((uint8_t)(*s)));  // NOLINT(runtime/printf)
           len += (int)strlen(buf + len);
         }
       }
@@ -911,15 +911,15 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
     for (int i = 0; i < xp->xp_numfiles; i++) {
       if (i > 0) {
         if (xp->xp_prefix == XP_PREFIX_NO) {
-          strcat(ss, "no");
+          xstrlcat(ss, "no", len);
         } else if (xp->xp_prefix == XP_PREFIX_INV) {
-          strcat(ss, "inv");
+          xstrlcat(ss, "inv", len);
         }
       }
-      strcat(ss, xp->xp_files[i]);
+      xstrlcat(ss, xp->xp_files[i], len);
 
       if (i != xp->xp_numfiles - 1) {
-        strcat(ss, (options & WILD_USE_NL) ? "\n" : " ");
+        xstrlcat(ss, (options & WILD_USE_NL) ? "\n" : " ", len);
       }
     }
   }

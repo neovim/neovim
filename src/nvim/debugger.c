@@ -784,8 +784,8 @@ static linenr_T debuggy_find(bool file, char *fname, linenr_T after, garray_T *g
   // Replace K_SNR in function name with "<SNR>".
   if (!file && (uint8_t)fname[0] == K_SPECIAL) {
     name = xmalloc(strlen(fname) + 3);
-    strcpy(name, "<SNR>");
-    strcpy(name + 5, fname + 3);
+    strcpy(name, "<SNR>");  // NOLINT(runtime/printf)
+    strcpy(name + 5, fname + 3);  // NOLINT(runtime/printf)
   }
 
   for (int i = 0; i < gap->ga_len; i++) {

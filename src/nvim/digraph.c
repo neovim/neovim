@@ -2201,7 +2201,7 @@ bool get_keymap_str(win_T *wp, char *fmt, char *buf, int len)
 
   curbuf = wp->w_buffer;
   curwin = wp;
-  strcpy(buf, "b:keymap_name");       // must be writable
+  xstrlcpy(buf, "b:keymap_name", (size_t)len);       // must be writable
   emsg_skip++;
   s = p = eval_to_string(buf, false);
   emsg_skip--;

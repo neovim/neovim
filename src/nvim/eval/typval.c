@@ -4361,10 +4361,10 @@ const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
     }
     return "";
   case VAR_BOOL:
-    strcpy(buf, encode_bool_var_names[tv->vval.v_bool]);
+    xstrlcpy(buf, encode_bool_var_names[tv->vval.v_bool], NUMBUFLEN);
     return buf;
   case VAR_SPECIAL:
-    strcpy(buf, encode_special_var_names[tv->vval.v_special]);
+    xstrlcpy(buf, encode_special_var_names[tv->vval.v_special], NUMBUFLEN);
     return buf;
   case VAR_PARTIAL:
   case VAR_FUNC:

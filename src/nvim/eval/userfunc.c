@@ -256,12 +256,12 @@ char *get_lambda_name(void)
 
 static void set_ufunc_name(ufunc_T *fp, char *name)
 {
-  strcpy(fp->uf_name, name);
+  strcpy(fp->uf_name, name);  // NOLINT(runtime/printf)
 
   if ((uint8_t)name[0] == K_SPECIAL) {
     fp->uf_name_exp = xmalloc(strlen(name) + 3);
-    strcpy(fp->uf_name_exp, "<SNR>");
-    strcat(fp->uf_name_exp, fp->uf_name + 3);
+    strcpy(fp->uf_name_exp, "<SNR>");  // NOLINT(runtime/printf)
+    strcat(fp->uf_name_exp, fp->uf_name + 3);  // NOLINT(runtime/printf)
   }
 }
 
@@ -343,7 +343,7 @@ int get_lambda_tv(char **arg, typval_T *rettv, evalarg_T *evalarg)
     size_t len = (size_t)(7 + end - start + 1);
     p = xmalloc(len);
     ((char **)(newlines.ga_data))[newlines.ga_len++] = p;
-    strcpy(p, "return ");
+    xstrlcpy(p, "return ", len);
     xstrlcpy(p + 7, start, (size_t)(end - start) + 1);
     if (strstr(p + 7, "a:") == NULL) {
       // No a: variables are used for sure.
@@ -983,7 +983,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     v = (dictitem_T *)&fc->fc_fixvar[fixvar_idx++];
 #ifndef __clang_analyzer__
     name = (char *)v->di_key;
-    strcpy(name, "self");
+    strcpy(name, "self");  // NOLINT(runtime/printf)
 #endif
     v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
     hash_add(&fc->fc_l_vars.dv_hashtab, v->di_key);
@@ -1009,7 +1009,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     v = (dictitem_T *)&fc->fc_fixvar[fixvar_idx++];
 #ifndef __clang_analyzer__
     name = (char *)v->di_key;
-    strcpy(name, "000");
+    strcpy(name, "000");  // NOLINT(runtime/printf)
 #endif
     v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
     hash_add(&fc->fc_l_avars.dv_hashtab, v->di_key);
@@ -1074,7 +1074,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
       v = xmalloc(sizeof(dictitem_T) + strlen(name));
       v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX | DI_FLAGS_ALLOC;
     }
-    strcpy(v->di_key, name);
+    strcpy(v->di_key, name);  // NOLINT(runtime/printf)
 
     // Note: the values are copied directly to avoid alloc/free.
     // "argvars" must have VAR_FIXED for v_lock.
@@ -2072,8 +2072,8 @@ char *get_scriptlocal_funcname(char *funcname)
            (int64_t)current_sctx.sc_sid);
   const int off = *funcname == 's' ? 2 : 5;
   char *newname = xmalloc(strlen(sid_buf) + strlen(funcname + off) + 1);
-  strcpy(newname, sid_buf);
-  strcat(newname, funcname + off);
+  strcpy(newname, sid_buf);  // NOLINT(runtime/printf)
+  strcat(newname, funcname + off);  // NOLINT(runtime/printf)
 
   return newname;
 }
@@ -2892,9 +2892,9 @@ char *get_user_func_name(expand_T *xp, int idx)
 
     cat_func_name(IObuff, IOSIZE, fp);
     if (xp->xp_context != EXPAND_USER_FUNC) {
-      strcat(IObuff, "(");
+      xstrlcat(IObuff, "(", IOSIZE);
       if (!fp->uf_varargs && GA_EMPTY(&fp->uf_args)) {
-        strcat(IObuff, ")");
+        xstrlcat(IObuff, ")", IOSIZE);
       }
     }
     return IObuff;
@@ -3505,10 +3505,10 @@ char *get_return_cmd(void *rettv)
     s = "";
   }
 
-  strcpy(IObuff, ":return ");
+  xstrlcpy(IObuff, ":return ", IOSIZE);
   xstrlcpy(IObuff + 8, s, IOSIZE - 8);
   if (strlen(s) + 8 >= IOSIZE) {
-    strcpy(IObuff + IOSIZE - 4, "...");
+    strcpy(IObuff + IOSIZE - 4, "...");  // NOLINT(runtime/printf)
   }
   xfree(tofree);
   return xstrdup(IObuff);
@@ -3969,7 +3969,7 @@ char *register_luafunc(LuaRef ref)
   fp->uf_script_ctx = current_sctx;
   fp->uf_luaref = ref;
 
-  strcpy(fp->uf_name, name);
+  strcpy(fp->uf_name, name);  // NOLINT(runtime/printf)
   hash_add(&func_hashtab, UF2HIKEY(fp));
 
   // coverity[leaked_storage]
