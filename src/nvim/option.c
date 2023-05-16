@@ -1626,7 +1626,7 @@ int do_set(char *arg, int opt_flags)
           int i = (int)strlen(IObuff) + 2;
           if (i + (arg - startarg) < IOSIZE) {
             // append the argument with the error
-            STRCAT(IObuff, ": ");
+            xstrlcat(IObuff, ": ", IOSIZE);
             assert(arg >= startarg);
             memmove(IObuff + i, startarg, (size_t)(arg - startarg));
             IObuff[i + (arg - startarg)] = NUL;

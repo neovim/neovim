@@ -1084,11 +1084,11 @@ char *do_bufdel(int command, char *arg, int addr_count, int start_bnr, int end_b
 
     if (deleted == 0) {
       if (command == DOBUF_UNLOAD) {
-        STRCPY(IObuff, _("E515: No buffers were unloaded"));
+        xstrlcpy(IObuff, _("E515: No buffers were unloaded"), IOSIZE);
       } else if (command == DOBUF_DEL) {
-        STRCPY(IObuff, _("E516: No buffers were deleted"));
+        xstrlcpy(IObuff, _("E516: No buffers were deleted"), IOSIZE);
       } else {
-        STRCPY(IObuff, _("E517: No buffers were wiped out"));
+        xstrlcpy(IObuff, _("E517: No buffers were wiped out"), IOSIZE);
       }
       errormsg = IObuff;
     } else if (deleted >= p_report) {

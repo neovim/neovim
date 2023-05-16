@@ -130,7 +130,7 @@ char *get_xdg_home(const XDGVarType idx)
     xstrlcpy(IObuff, appname, appname_len + 1);
 #if defined(MSWIN)
     if (idx == kXDGDataHome || idx == kXDGStateHome) {
-      STRCAT(IObuff, "-data");
+      xstrlcat(IObuff, "-data", IOSIZE);
     }
 #endif
     dir = concat_fnames_realloc(dir, IObuff, true);

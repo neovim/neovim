@@ -1547,7 +1547,7 @@ static inline char *add_dir(char *dest, const char *const dir, const size_t dir_
     xstrlcpy(IObuff, appname, appname_len + 1);
 #if defined(MSWIN)
     if (type == kXDGDataHome || type == kXDGStateHome) {
-      STRCAT(IObuff, "-data");
+      xstrlcat(IObuff, "-data", IOSIZE);
       appname_len += 5;
     }
 #endif

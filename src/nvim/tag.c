@@ -732,7 +732,7 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
                  num_matches,
                  max_num_matches != MAXCOL ? _(" or more") : "");
         if (ic) {
-          STRCAT(IObuff, _("  Using tag with different case!"));
+          xstrlcat(IObuff, _("  Using tag with different case!"), IOSIZE);
         }
         if ((num_matches > prev_num_matches || new_tag)
             && num_matches > 1) {
