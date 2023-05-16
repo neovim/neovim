@@ -67,14 +67,28 @@ static void get_linematch_results(lua_State *lstate, mmfile_t *ma, mmfile_t *mb,
                                   long count_a, long start_b, long count_b, bool iwhite)
 {
   // get the pointer to char of the start of the diff to pass it to linematch algorithm
-  const char *diff_begin[2] = { ma->ptr, mb->ptr };
+  char *diff_begin[2] = { ma->ptr, mb->ptr };
   int diff_length[2] = { (int)count_a, (int)count_b };
 
   fastforward_buf_to_lnum(&diff_begin[0], start_a + 1);
   fastforward_buf_to_lnum(&diff_begin[1], start_b + 1);
 
+  if (iwhite) {
+    for (int i = 0; i < 2; i++) {
+      size_t j = 0, k = 0, lines = diff_length[i];
+      while (lines > 0) {
+        if (diff_begin[i][j] != ' ' && diff_begin[i][j] != '\t') {
+          diff_begin[i][k++] = diff_begin[i][j];
+        }
+        if (diff_begin[i][j++] == '\n') {
+          lines--;
+        }
+      }
+    }
+  }
+
   int *decisions = NULL;
-  size_t decisions_length = linematch_nbuffers(diff_begin, diff_length, 2, &decisions, iwhite);
+  size_t decisions_length = linematch_nbuffers(diff_begin, diff_length, 2, &decisions);
 
   long lnuma = start_a, lnumb = start_b;
 
