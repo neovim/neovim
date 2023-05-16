@@ -278,6 +278,17 @@ int nlua_fetch(lua_State *lstate)
       fetch_data->on_complete = luaL_ref(lstate, LUA_REGISTRYINDEX);
     }
 
+    if (strcmp("user", key) == 0) {
+      char *user = (char *)luaL_checkstring(lstate, VALUE);
+
+      if (!user) {
+        luaL_error(lstate, "user must be a string");
+        return 0;
+      }
+
+      curl_easy_setopt(easy_handle, CURLOPT_USERPWD, user);
+    }
+
     if (strcmp("method", key) == 0) {
       char *method = (char *)luaL_checkstring(lstate, VALUE);
 

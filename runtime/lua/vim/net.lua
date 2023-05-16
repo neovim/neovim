@@ -39,8 +39,6 @@ local M = {}
 --- </pre>
 ---
 --- @note `opts.multipart_form` and `opts.data` are mutually exclusive.
---- @note User-password authentication can be achived by passing `url` in the format of
---- `protocol://user:pass@host...` or `protocol://user@host...`
 --- @see man://libcurl-errors
 ---
 --- @param url string
@@ -51,6 +49,7 @@ local M = {}
 ---   - headers table<string, string | string[]>|nil Headers to send. A header can have
 ---   multiple values.
 ---   - method string|nil HTTP method to use. Defaults to GET.
+---   - user string|nil User-password authentication in `user:pass` format.
 ---   - redirect string|nil Control redirect follow behavior. Defaults to `follow`.
 ---   Posible values include:
 ---     - `follow`: Follow all redirects when fetching a resource.
