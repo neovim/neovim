@@ -387,7 +387,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
     // '*'are changed to "star", otherwise '*' is recognized as a wildcard.
     for (int i = 0; except_tbl[i][0] != NULL; i++) {
       if (strcmp(arg, except_tbl[i][0]) == 0) {
-        STRCPY(d, except_tbl[i][1]);
+        strcpy(d, except_tbl[i][1]);
         break;
       }
     }
@@ -406,7 +406,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
       vim_snprintf(d, IOSIZE, "/\\\\%s", arg + 1);
       // Check for "/\\_$", should be "/\\_\$"
       if (d[3] == '_' && d[4] == '$') {
-        STRCPY(d + 4, "\\$");
+        strcpy(d + 4, "\\$");
       }
     } else {
       // Replace:
@@ -435,11 +435,11 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
         }
         switch (*s) {
         case '|':
-          STRCPY(d, "bar");
+          strcpy(d, "bar");
           d += 3;
           continue;
         case '"':
-          STRCPY(d, "quote");
+          strcpy(d, "quote");
           d += 5;
           continue;
         case '*':
@@ -464,7 +464,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
           if (d > IObuff && d[-1] != '_' && d[-1] != '\\') {
             *d++ = '_';                 // prepend a '_' to make x_CTRL-x
           }
-          STRCPY(d, "CTRL-");
+          strcpy(d, "CTRL-");
           d += 5;
           if (*s < ' ') {
             *d++ = (char)(*s + '@');
@@ -489,7 +489,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
         // "CTRL-\_" -> "CTRL-\\_" to avoid the special meaning of "\_" in
         // "CTRL-\_CTRL-N"
         if (STRNICMP(s, "CTRL-\\_", 7) == 0) {
-          STRCPY(d, "CTRL-\\\\");
+          strcpy(d, "CTRL-\\\\");
           d += 7;
           s += 6;
         }
@@ -1142,16 +1142,16 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
 
   // Loop over the found languages to generate a tags file for each one.
   for (j = 0; j < ga.ga_len; j += 2) {
-    STRCPY(fname, "tags-xx");
+    strcpy(fname, "tags-xx");
     fname[5] = ((char *)ga.ga_data)[j];
     fname[6] = ((char *)ga.ga_data)[j + 1];
     if (fname[5] == 'e' && fname[6] == 'n') {
       // English is an exception: use ".txt" and "tags".
       fname[4] = NUL;
-      STRCPY(ext, ".txt");
+      strcpy(ext, ".txt");
     } else {
       // Language "ab" uses ".abx" and "tags-ab".
-      STRCPY(ext, ".xxx");
+      strcpy(ext, ".xxx");
       ext[1] = fname[5];
       ext[2] = fname[6];
     }

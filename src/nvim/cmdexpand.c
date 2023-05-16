@@ -514,7 +514,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
     *buf = NUL;
     len = 0;
   } else {
-    STRCPY(buf, "< ");
+    strcpy(buf, "< ");
     len = 2;
   }
   clen = len;
@@ -530,7 +530,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
     // Check for menu separators - replace with '|'
     int emenu = (xp->xp_context == EXPAND_MENUS || xp->xp_context == EXPAND_MENUNAMES);
     if (emenu && menu_is_separator(s)) {
-      STRCPY(buf + len, transchar('|'));
+      strcpy(buf + len, transchar('|'));
       l = (int)strlen(buf + len);
       len += l;
       clen += l;
@@ -543,7 +543,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
           s += l - 1;
           len += l;
         } else {
-          STRCPY(buf + len, transchar_byte((uint8_t)(*s)));
+          strcpy(buf + len, transchar_byte((uint8_t)(*s)));
           len += (int)strlen(buf + len);
         }
       }
@@ -911,15 +911,15 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
     for (int i = 0; i < xp->xp_numfiles; i++) {
       if (i > 0) {
         if (xp->xp_prefix == XP_PREFIX_NO) {
-          STRCAT(ss, "no");
+          strcat(ss, "no");
         } else if (xp->xp_prefix == XP_PREFIX_INV) {
-          STRCAT(ss, "inv");
+          strcat(ss, "inv");
         }
       }
-      STRCAT(ss, xp->xp_files[i]);
+      strcat(ss, xp->xp_files[i]);
 
       if (i != xp->xp_numfiles - 1) {
-        STRCAT(ss, (options & WILD_USE_NL) ? "\n" : " ");
+        strcat(ss, (options & WILD_USE_NL) ? "\n" : " ");
       }
     }
   }
@@ -3218,7 +3218,7 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dir
     copy_option_part(&path, buf, MAXPATHL, ",");
     if (strlen(buf) + strlen(file) + 2 < MAXPATHL) {
       add_pathsep(buf);
-      STRCAT(buf, file);  // NOLINT
+      strcat(buf, file);  // NOLINT
 
       char **p;
       int num_p = 0;

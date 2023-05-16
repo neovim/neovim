@@ -243,15 +243,15 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   if (shell_style == STYLE_BT) {
     // change `command; command& ` to (command; command )
     if (is_fish_shell) {
-      STRCPY(command, "begin; ");
+      strcpy(command, "begin; ");
     } else {
-      STRCPY(command, "(");
+      strcpy(command, "(");
     }
-    STRCAT(command, pat[0] + 1);                // exclude first backtick
+    strcat(command, pat[0] + 1);                // exclude first backtick
     p = command + strlen(command) - 1;
     if (is_fish_shell) {
       *p-- = ';';
-      STRCAT(command, " end");
+      strcat(command, " end");
     } else {
       *p-- = ')';                                 // remove last backtick
     }
@@ -262,31 +262,31 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
       ampersand = true;
       *p = ' ';
     }
-    STRCAT(command, ">");
+    strcat(command, ">");
   } else {
-    STRCPY(command, "");
+    strcpy(command, "");
     if (shell_style == STYLE_GLOB) {
       // Assume the nonomatch option is valid only for csh like shells,
       // otherwise, this may set the positional parameters for the shell,
       // e.g. "$*".
       if (flags & EW_NOTFOUND) {
-        STRCAT(command, "set nonomatch; ");
+        strcat(command, "set nonomatch; ");
       } else {
-        STRCAT(command, "unset nonomatch; ");
+        strcat(command, "unset nonomatch; ");
       }
     }
     if (shell_style == STYLE_GLOB) {
-      STRCAT(command, "glob >");
+      strcat(command, "glob >");
     } else if (shell_style == STYLE_PRINT) {
-      STRCAT(command, "print -N >");
+      strcat(command, "print -N >");
     } else if (shell_style == STYLE_VIMGLOB) {
-      STRCAT(command, sh_vimglob_func);
+      strcat(command, sh_vimglob_func);
     } else {
-      STRCAT(command, "echo >");
+      strcat(command, "echo >");
     }
   }
 
-  STRCAT(command, tempname);
+  strcat(command, tempname);
 
   if (shell_style != STYLE_BT) {
     for (i = 0; i < num_pat; i++) {
@@ -330,7 +330,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   }
 
   if (ampersand) {
-    STRCAT(command, "&");               // put the '&' after the redirection
+    strcat(command, "&");               // put the '&' after the redirection
   }
 
   // Using zsh -G: If a pattern has no matches, it is just deleted from
@@ -535,7 +535,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
     }
 
     p = xmalloc(strlen((*file)[i]) + 1 + dir);
-    STRCPY(p, (*file)[i]);
+    strcpy(p, (*file)[i]);
     if (dir) {
       add_pathsep(p);             // add '/' to a directory name
     }

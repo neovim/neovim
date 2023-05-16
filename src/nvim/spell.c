@@ -1317,7 +1317,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
     // possible.  Note: this ml_get_buf() may make "line" invalid, check
     // for empty line first.
     bool empty_line = *skipwhite(line) == NUL;
-    STRCPY(buf, line);
+    strcpy(buf, line);
     if (lnum < wp->w_buffer->b_ml.ml_line_count) {
       spell_cat_line(buf + strlen(buf),
                      ml_get_buf(wp->w_buffer, lnum + 1, false),
@@ -1520,7 +1520,7 @@ static void spell_load_lang(char *lang)
 
   // Copy the language name to pass it to spell_load_cb() as a cookie.
   // It's truncated when an error is detected.
-  STRCPY(sl.sl_lang, lang);
+  strcpy(sl.sl_lang, lang);
   sl.sl_slang = NULL;
   sl.sl_nobreak = false;
 
@@ -1567,7 +1567,7 @@ static void spell_load_lang(char *lang)
     }
   } else if (sl.sl_slang != NULL) {
     // At least one file was loaded, now load ALL the additions.
-    STRCPY(fname_enc + strlen(fname_enc) - 3, "add.spl");
+    strcpy(fname_enc + strlen(fname_enc) - 3, "add.spl");
     do_in_runtimepath(fname_enc, DIP_ALL, spell_load_cb, &sl);
   }
 
@@ -2040,7 +2040,7 @@ char *parse_spelllang(win_T *wp)
     } else {
       // One entry in 'spellfile'.
       copy_option_part(&spf, spf_name, MAXPATHL - 5, ",");
-      STRCAT(spf_name, ".spl");
+      strcat(spf_name, ".spl");
 
       // If it was already found above then skip it.
       for (c = 0; c < ga.ga_len; c++) {
@@ -2067,7 +2067,7 @@ char *parse_spelllang(win_T *wp)
       // region name, the region is ignored otherwise.  for int_wordlist
       // use an arbitrary name.
       if (round == 0) {
-        STRCPY(lang, "internal wordlist");
+        strcpy(lang, "internal wordlist");
       } else {
         xstrlcpy(lang, path_tail(spf_name), MAXWLEN + 1);
         p = vim_strchr(lang, '.');
@@ -2620,8 +2620,8 @@ void ex_spellrepall(exarg_T *eap)
                                repl_to, strlen(repl_to)) != 0) {
       char *p = xmalloc(strlen(line) + (size_t)addlen + 1);
       memmove(p, line, (size_t)curwin->w_cursor.col);
-      STRCPY(p + curwin->w_cursor.col, repl_to);
-      STRCAT(p, line + curwin->w_cursor.col + strlen(repl_from));
+      strcpy(p + curwin->w_cursor.col, repl_to);
+      strcat(p, line + curwin->w_cursor.col + strlen(repl_from));
       ml_replace(curwin->w_cursor.lnum, p, false);
       changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
 
@@ -2718,7 +2718,7 @@ void make_case_word(char *fword, char *cword, int flags)
     onecap_copy(fword, cword, true);
   } else {
     // Use goodword as-is.
-    STRCPY(cword, fword);
+    strcpy(cword, fword);
   }
 }
 
@@ -3399,15 +3399,15 @@ static void dump_word(slang_T *slang, char *word, char *pat, Direction *dir, int
   if (pat == NULL) {
     // Add flags and regions after a slash.
     if ((flags & (WF_BANNED | WF_RARE | WF_REGION)) || keepcap) {
-      STRCPY(badword, p);
-      STRCAT(badword, "/");
+      strcpy(badword, p);
+      strcat(badword, "/");
       if (keepcap) {
-        STRCAT(badword, "=");
+        strcat(badword, "=");
       }
       if (flags & WF_BANNED) {
-        STRCAT(badword, "!");
+        strcat(badword, "!");
       } else if (flags & WF_RARE) {
-        STRCAT(badword, "?");
+        strcat(badword, "?");
       }
       if (flags & WF_REGION) {
         for (int i = 0; i < 7; i++) {

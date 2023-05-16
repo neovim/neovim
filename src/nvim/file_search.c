@@ -442,16 +442,16 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
     emsg(_(e_path_too_long_for_completion));
     goto error_return;
   }
-  STRCPY(ff_expand_buffer, search_ctx->ffsc_start_dir);
+  strcpy(ff_expand_buffer, search_ctx->ffsc_start_dir);
   add_pathsep(ff_expand_buffer);
   {
     size_t eb_len = strlen(ff_expand_buffer);
     char *buf = xmalloc(eb_len + strlen(search_ctx->ffsc_fix_path) + 1);
 
-    STRCPY(buf, ff_expand_buffer);
-    STRCPY(buf + eb_len, search_ctx->ffsc_fix_path);
+    strcpy(buf, ff_expand_buffer);
+    strcpy(buf + eb_len, search_ctx->ffsc_fix_path);
     if (os_isdir(buf)) {
-      STRCAT(ff_expand_buffer, search_ctx->ffsc_fix_path);
+      strcat(ff_expand_buffer, search_ctx->ffsc_fix_path);
       add_pathsep(ff_expand_buffer);
     } else {
       char *p = path_tail(search_ctx->ffsc_fix_path);
@@ -478,8 +478,8 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
         temp = xmalloc(strlen(search_ctx->ffsc_wc_path)
                        + strlen(search_ctx->ffsc_fix_path + len)
                        + 1);
-        STRCPY(temp, search_ctx->ffsc_fix_path + len);
-        STRCAT(temp, search_ctx->ffsc_wc_path);
+        strcpy(temp, search_ctx->ffsc_fix_path + len);
+        strcat(temp, search_ctx->ffsc_wc_path);
         xfree(search_ctx->ffsc_wc_path);
         xfree(wc_path);
         search_ctx->ffsc_wc_path = temp;
@@ -659,7 +659,7 @@ char *vim_findfile(void *search_ctx_arg)
             ff_free_stack_element(stackp);
             goto fail;
           }
-          STRCPY(file_path, search_ctx->ffsc_start_dir);
+          strcpy(file_path, search_ctx->ffsc_start_dir);
           if (!add_pathsep(file_path)) {
             ff_free_stack_element(stackp);
             goto fail;
@@ -671,7 +671,7 @@ char *vim_findfile(void *search_ctx_arg)
           ff_free_stack_element(stackp);
           goto fail;
         }
-        STRCAT(file_path, stackp->ffs_fix_path);
+        strcat(file_path, stackp->ffs_fix_path);
         if (!add_pathsep(file_path)) {
           ff_free_stack_element(stackp);
           goto fail;
@@ -766,12 +766,12 @@ char *vim_findfile(void *search_ctx_arg)
               ff_free_stack_element(stackp);
               goto fail;
             }
-            STRCPY(file_path, stackp->ffs_filearray[i]);
+            strcpy(file_path, stackp->ffs_filearray[i]);
             if (!add_pathsep(file_path)) {
               ff_free_stack_element(stackp);
               goto fail;
             }
-            STRCAT(file_path, search_ctx->ffsc_file_to_search);
+            strcat(file_path, search_ctx->ffsc_file_to_search);
 
             // Try without extra suffix and then with suffixes
             // from 'suffixesadd'.
@@ -908,11 +908,11 @@ char *vim_findfile(void *search_ctx_arg)
           + strlen(search_ctx->ffsc_fix_path) >= MAXPATHL) {
         goto fail;
       }
-      STRCPY(file_path, search_ctx->ffsc_start_dir);
+      strcpy(file_path, search_ctx->ffsc_start_dir);
       if (!add_pathsep(file_path)) {
         goto fail;
       }
-      STRCAT(file_path, search_ctx->ffsc_fix_path);
+      strcat(file_path, search_ctx->ffsc_fix_path);
 
       // create a new stack entry
       sptr = ff_create_stack_element(file_path,
@@ -1099,7 +1099,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char *fname, char *wc_p
     vp->ffv_fname[0] = NUL;
   } else {
     vp->file_id_valid = false;
-    STRCPY(vp->ffv_fname, ff_expand_buffer);
+    strcpy(vp->ffv_fname, ff_expand_buffer);
   }
 
   if (wc_path != NULL) {
@@ -1410,11 +1410,11 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
             && (options & FNAME_REL)
             && rel_fname != NULL
             && strlen(rel_fname) + l < MAXPATHL) {
-          STRCPY(NameBuff, rel_fname);
-          STRCPY(path_tail(NameBuff), *file_to_find);
+          strcpy(NameBuff, rel_fname);
+          strcpy(path_tail(NameBuff), *file_to_find);
           l = strlen(NameBuff);
         } else {
-          STRCPY(NameBuff, *file_to_find);
+          strcpy(NameBuff, *file_to_find);
           run = 2;
         }
 
@@ -1538,7 +1538,7 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause, bool pre
 
 #ifdef BACKSLASH_IN_FILENAME
   char new_dir_buf[MAXPATHL];
-  STRCPY(new_dir_buf, new_dir);
+  strcpy(new_dir_buf, new_dir);
   slash_adjust(new_dir_buf);
   new_dir = new_dir_buf;
 #endif

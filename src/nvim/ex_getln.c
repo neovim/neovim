@@ -984,7 +984,7 @@ static int command_line_handle_ctrl_bsl(CommandLineState *s)
         int len = (int)strlen(p);
         realloc_cmdbuff(len + 1);
         ccline.cmdlen = len;
-        STRCPY(ccline.cmdbuff, p);
+        strcpy(ccline.cmdbuff, p);
         xfree(p);
 
         // Restore the cursor or use the position set with
@@ -1782,7 +1782,7 @@ static int command_line_browse_history(CommandLineState *s)
       ccline.cmdbuff[len] = NUL;
     } else {
       alloc_cmdbuff((int)strlen(p));
-      STRCPY(ccline.cmdbuff, p);
+      strcpy(ccline.cmdbuff, p);
     }
 
     ccline.cmdpos = ccline.cmdlen = (int)strlen(ccline.cmdbuff);
@@ -4008,7 +4008,7 @@ void escape_fname(char **pp)
 {
   char *p = xmalloc(strlen(*pp) + 2);
   p[0] = '\\';
-  STRCPY(p + 1, *pp);
+  strcpy(p + 1, *pp);
   xfree(*pp);
   *pp = p;
 }
@@ -4162,7 +4162,7 @@ static int set_cmdline_str(const char *str, int pos)
   int len = (int)strlen(str);
   realloc_cmdbuff(len + 1);
   p->cmdlen = len;
-  STRCPY(p->cmdbuff, str);
+  strcpy(p->cmdbuff, str);
 
   p->cmdpos = pos < 0 || pos > p->cmdlen ? p->cmdlen : pos;
   new_cmdpos = p->cmdpos;

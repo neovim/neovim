@@ -327,7 +327,7 @@ char *strcase_save(const char *const orig, bool upper)
       // TODO(philix): use xrealloc() in strcase_save()
       char *s = xmalloc(strlen(res) + (size_t)(1 + newl - l));
       memcpy(s, res, (size_t)(p - res));
-      STRCPY(s + (p - res) + newl, p + l);
+      strcpy(s + (p - res) + newl, p + l);
       p = s + (p - res);
       xfree(res);
       res = s;
@@ -490,8 +490,8 @@ char *concat_str(const char *restrict str1, const char *restrict str2)
 {
   size_t l = strlen(str1);
   char *dest = xmalloc(l + strlen(str2) + 1);
-  STRCPY(dest, str1);
-  STRCPY(dest + l, str2);
+  strcpy(dest, str1);
+  strcpy(dest + l, str2);
   return dest;
 }
 
@@ -1491,13 +1491,13 @@ char *strrep(const char *src, const char *what, const char *rep)
     size_t idx = (size_t)(pos - src);
     memcpy(ptr, src, idx);
     ptr += idx;
-    STRCPY(ptr, rep);
+    strcpy(ptr, rep);
     ptr += replen;
     src = pos + whatlen;
   }
 
   // Copy remaining
-  STRCPY(ptr, src);
+  strcpy(ptr, src);
 
   return ret;
 }

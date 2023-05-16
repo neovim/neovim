@@ -1100,7 +1100,7 @@ static char *get_view_file(int c)
     }
   }
   char *retval = xmalloc(strlen(sname) + len + strlen(p_vdir) + 9);
-  STRCPY(retval, p_vdir);
+  strcpy(retval, p_vdir);
   add_pathsep(retval);
   char *s = retval + strlen(retval);
   for (char *p = sname; *p; p++) {

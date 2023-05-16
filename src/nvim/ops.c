@@ -995,9 +995,9 @@ static int stuff_yank(int regname, char *p)
   if (is_append_register(regname) && reg->y_array != NULL) {
     char **pp = &(reg->y_array[reg->y_size - 1]);
     char *lp = xmalloc(strlen(*pp) + strlen(p) + 1);
-    STRCPY(lp, *pp);
+    strcpy(lp, *pp);
     // TODO(philix): use xstpcpy() in stuff_yank()
-    STRCAT(lp, p);
+    strcat(lp, p);
     xfree(p);
     xfree(*pp);
     *pp = lp;
@@ -2758,8 +2758,8 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
         && vim_strchr(p_cpo, CPO_REGAPPEND) == NULL) {
       pnew = xmalloc(strlen(curr->y_array[curr->y_size - 1])
                      + strlen(reg->y_array[0]) + 1);
-      STRCPY(pnew, curr->y_array[--j]);
-      STRCAT(pnew, reg->y_array[0]);
+      strcpy(pnew, curr->y_array[--j]);
+      strcat(pnew, reg->y_array[0]);
       xfree(curr->y_array[j]);
       xfree(reg->y_array[0]);
       curr->y_array[j++] = pnew;
@@ -3534,8 +3534,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           ptr = ml_get(lnum) + col;
           totlen = strlen(y_array[y_size - 1]);
           newp = xmalloc((size_t)(strlen(ptr) + totlen + 1));
-          STRCPY(newp, y_array[y_size - 1]);
-          STRCAT(newp, ptr);
+          strcpy(newp, y_array[y_size - 1]);
+          strcat(newp, ptr);
           // insert second line
           ml_append(lnum, newp, (colnr_T)0, false);
           new_lnum++;
@@ -4806,7 +4806,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
       }
     }
     *ptr = NUL;
-    STRCAT(buf1, buf2);
+    strcat(buf1, buf2);
     ins_str(buf1);              // insert the new number
     endpos = curwin->w_cursor;
     if (curwin->w_cursor.col) {
@@ -4988,7 +4988,7 @@ void *get_reg_contents(int regname, int flags)
   // Copy the lines of the yank register into the string.
   len = 0;
   for (size_t i = 0; i < reg->y_size; i++) {
-    STRCPY(retval + len, reg->y_array[i]);
+    strcpy(retval + len, reg->y_array[i]);
     len += strlen(retval + len);
 
     // Insert a NL between lines and after the last line if y_type is

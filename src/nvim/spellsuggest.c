@@ -643,8 +643,8 @@ void spell_suggest(int count)
     p = xmalloc(strlen(line) - (size_t)stp->st_orglen + (size_t)stp->st_wordlen + 1);
     int c = (int)(sug.su_badptr - line);
     memmove(p, line, (size_t)c);
-    STRCPY(p + c, stp->st_word);
-    STRCAT(p, sug.su_badptr + stp->st_orglen);
+    strcpy(p + c, stp->st_word);
+    strcat(p, sug.su_badptr + stp->st_orglen);
 
     // For redo we use a change-word command.
     ResetRedobuff();
@@ -688,8 +688,8 @@ void spell_suggest_list(garray_T *gap, char *word, int maxcount, bool need_cap, 
     // The suggested word may replace only part of "word", add the not
     // replaced part.
     wcopy = xmalloc((size_t)stp->st_wordlen + strlen(sug.su_badptr + stp->st_orglen) + 1);
-    STRCPY(wcopy, stp->st_word);
-    STRCPY(wcopy + stp->st_wordlen, sug.su_badptr + stp->st_orglen);
+    strcpy(wcopy, stp->st_word);
+    strcpy(wcopy + stp->st_wordlen, sug.su_badptr + stp->st_orglen);
     ((char **)gap->ga_data)[gap->ga_len++] = wcopy;
   }
 
@@ -1071,7 +1071,7 @@ static void suggest_try_change(suginfo_T *su)
   // We make a copy of the case-folded bad word, so that we can modify it
   // to find matches (esp. REP items).  Append some more text, changing
   // chars after the bad word may help.
-  STRCPY(fword, su->su_fbadword);
+  strcpy(fword, su->su_fbadword);
   int n = (int)strlen(fword);
   char *p = su->su_badptr + su->su_badlen;
   (void)spell_casefold(curwin, p, (int)strlen(p), fword + n, MAXWLEN - n);
@@ -1412,7 +1412,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
       // If there is a word from a previous split, append.
       // For the soundfold tree don't change the case, simply append.
       if (soundfold) {
-        STRCPY(preword + sp->ts_prewordlen, tword + sp->ts_splitoff);
+        strcpy(preword + sp->ts_prewordlen, tword + sp->ts_splitoff);
       } else if (flags & WF_KEEPCAP) {
         // Must find the word in the keep-case tree.
         find_keepcap_word(slang, tword + sp->ts_splitoff, preword + sp->ts_prewordlen);
@@ -1649,7 +1649,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
 
             // Append a space to preword when splitting.
             if (!try_compound && !fword_ends) {
-              STRCAT(preword, " ");
+              strcat(preword, " ");
             }
             sp->ts_prewordlen = (uint8_t)strlen(preword);
             sp->ts_splitoff = sp->ts_twordlen;
@@ -2664,7 +2664,7 @@ static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char *ba
   if (lendiff > 0 && stp->st_wordlen + lendiff < MAXWLEN) {
     // Add part of the bad word to the good word, so that we soundfold
     // what replaces the bad word.
-    STRCPY(goodword, stp->st_word);
+    strcpy(goodword, stp->st_word);
     xstrlcpy(goodword + stp->st_wordlen,
              su->su_badptr + su->su_badlen - lendiff, (size_t)lendiff + 1);
     pgood = goodword;
@@ -2841,7 +2841,7 @@ static void add_sound_suggest(suginfo_T *su, char *goodword, int score, langp_T 
       // skip over the NUL bytes
       for (; byts[n + i] == NUL; i++) {
         if (i > byts[n]) {              // safety check
-          STRCPY(theword + wlen, "BAD");
+          strcpy(theword + wlen, "BAD");
           wlen += 3;
           goto badword;
         }

@@ -732,7 +732,7 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
                  num_matches,
                  max_num_matches != MAXCOL ? _(" or more") : "");
         if (ic) {
-          STRCAT(IObuff, _("  Using tag with different case!"));
+          strcat(IObuff, _("  Using tag with different case!"));
         }
         if ((num_matches > prev_num_matches || new_tag)
             && num_matches > 1) {
@@ -1059,14 +1059,14 @@ static int add_llist_tags(char *tag, int num_matches, char **matches)
       // If "^" is present in the tag search pattern, then
       // copy it first.
       if (*cmd_start == '^') {
-        STRCPY(cmd, "^");
+        strcpy(cmd, "^");
         cmd_start++;
         len++;
       }
 
       // Precede the tag pattern with \V to make it very
       // nomagic.
-      STRCAT(cmd, "\\V");
+      strcat(cmd, "\\V");
       len += 2;
 
       int cmd_len = (int)(cmd_end - cmd_start + 1);
@@ -1361,24 +1361,24 @@ static int find_tagfunc_tags(char *pat, garray_T *ga, int *match_count, int flag
       *p++ = MT_GL_OTH + 1;   // mtt
       *p++ = TAG_SEP;     // no tag file name
 
-      STRCPY(p, res_name);
+      strcpy(p, res_name);
       p += strlen(p);
 
       *p++ = TAB;
-      STRCPY(p, res_fname);
+      strcpy(p, res_fname);
       p += strlen(p);
 
       *p++ = TAB;
-      STRCPY(p, res_cmd);
+      strcpy(p, res_cmd);
       p += strlen(p);
 
       if (has_extra) {
-        STRCPY(p, ";\"");
+        strcpy(p, ";\"");
         p += strlen(p);
 
         if (res_kind) {
           *p++ = TAB;
-          STRCPY(p, res_kind);
+          strcpy(p, res_kind);
           p += strlen(p);
         }
 
@@ -1403,11 +1403,11 @@ static int find_tagfunc_tags(char *pat, garray_T *ga, int *match_count, int flag
           }
 
           *p++ = TAB;
-          STRCPY(p, dict_key);
+          strcpy(p, dict_key);
           p += strlen(p);
-          STRCPY(p, ":");
+          strcpy(p, ":");
           p += strlen(p);
-          STRCPY(p, tv->vval.v_string);
+          strcpy(p, tv->vval.v_string);
           p += strlen(p);
         });
       }
@@ -1474,7 +1474,7 @@ static bool findtags_in_help_init(findtags_state_T *st)
 
   // Keep "en" as the language if the file extension is ".txt"
   if (st->is_txt) {
-    STRCPY(st->help_lang, "en");
+    strcpy(st->help_lang, "en");
   } else {
     // Prefer help tags according to 'helplang'.  Put the two-letter
     // language name in help_lang[].
@@ -1482,7 +1482,7 @@ static bool findtags_in_help_init(findtags_state_T *st)
     if (i > 3 && st->tag_fname[i - 3] == '-') {
       xstrlcpy(st->help_lang, st->tag_fname + i - 2, 3);
     } else {
-      STRCPY(st->help_lang, "en");
+      strcpy(st->help_lang, "en");
     }
   }
   // When searching for a specific language skip tags files for other
@@ -1946,7 +1946,7 @@ static void findtags_string_convert(findtags_state_T *st)
     st->lbuf = conv_line;
     st->lbuf_size = len;
   } else {
-    STRCPY(st->lbuf, conv_line);
+    strcpy(st->lbuf, conv_line);
     xfree(conv_line);
   }
 }
@@ -2006,9 +2006,9 @@ static void findtags_add_match(findtags_state_T *st, tagptrs_T *tagpp, findtags_
     mfp = xmalloc(mfp_size);
 
     p = mfp;
-    STRCPY(p, tagpp->tagname);
+    strcpy(p, tagpp->tagname);
     p[len] = '@';
-    STRCPY(p + len + 1, st->help_lang);
+    strcpy(p + len + 1, st->help_lang);
     snprintf(p + len + 1 + ML_EXTRA, mfp_size - (len + 1 + ML_EXTRA), "%06d",
              help_heuristic(tagpp->tagname,
                             margs->match_re ? margs->matchoff : 0,
@@ -2058,7 +2058,7 @@ static void findtags_add_match(findtags_state_T *st, tagptrs_T *tagpp, findtags_
     mfp = xmalloc(sizeof(char) + len + 1);
     p = mfp;
     p[0] = (char)(mtt + 1);
-    STRCPY(p + 1, st->tag_fname);
+    strcpy(p + 1, st->tag_fname);
 #ifdef BACKSLASH_IN_FILENAME
     // Ignore differences in slashes, avoid adding
     // both path/file and path\file.
@@ -2066,7 +2066,7 @@ static void findtags_add_match(findtags_state_T *st, tagptrs_T *tagpp, findtags_
 #endif
     p[tag_fname_len + 1] = TAG_SEP;
     s = p + 1 + tag_fname_len + 1;
-    STRCPY(s, st->lbuf);
+    strcpy(s, st->lbuf);
   }
 
   if (mfp != NULL) {
@@ -2540,8 +2540,8 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
         return FAIL;
       }
       tnp->tn_hf_idx++;
-      STRCPY(buf, p_hf);
-      STRCPY(path_tail(buf), "tags");
+      strcpy(buf, p_hf);
+      strcpy(path_tail(buf), "tags");
 #ifdef BACKSLASH_IN_FILENAME
       slash_adjust(buf);
 #endif
@@ -2609,7 +2609,7 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
     }
   }
 
-  STRCPY(buf, fname);
+  strcpy(buf, fname);
   xfree(fname);
   return OK;
 }
@@ -3123,7 +3123,7 @@ static char *expand_tag_fname(char *fname, char *const tag_fname, const bool exp
       && !vim_isAbsName(fname)
       && (p = path_tail(tag_fname)) != tag_fname) {
     retval = xmalloc(MAXPATHL);
-    STRCPY(retval, tag_fname);
+    strcpy(retval, tag_fname);
     xstrlcpy(retval + (p - tag_fname), fname, (size_t)(MAXPATHL - (p - tag_fname)));
     // Translate names like "src/a/../b/file.c" into "src/b/file.c".
     simplify_filename(retval);

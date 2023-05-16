@@ -105,7 +105,7 @@ static signgroup_T *sign_group_ref(const char *groupname)
     // new group
     group = xmalloc(offsetof(signgroup_T, sg_name) + strlen(groupname) + 1);
 
-    STRCPY(group->sg_name, groupname);
+    strcpy(group->sg_name, groupname);
     group->sg_refcount = 1;
     group->sg_next_sign_id = 1;
     hash_add_item(&sg_table, hi, group->sg_name, hash);
@@ -944,7 +944,7 @@ static int sign_define_init_text(sign_T *sp, char *text)
   sp->sn_text = xstrnsave(text, len);
 
   if (cells == 1) {
-    STRCPY(sp->sn_text + len - 1, " ");
+    strcpy(sp->sn_text + len - 1, " ");
   }
 
   return OK;

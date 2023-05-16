@@ -452,7 +452,7 @@ int do_in_cached_path(char *name, int flags, DoInRuntimepathCB callback, void *c
     if (name == NULL) {
       (*callback)(item.path, cookie);
     } else if (buflen + strlen(name) + 2 < MAXPATHL) {
-      STRCPY(buf, item.path);
+      strcpy(buf, item.path);
       add_pathsep(buf);
       tail = buf + strlen(buf);
 
@@ -1547,7 +1547,7 @@ static inline char *add_dir(char *dest, const char *const dir, const size_t dir_
     xstrlcpy(IObuff, appname, appname_len + 1);
 #if defined(MSWIN)
     if (type == kXDGDataHome || type == kXDGStateHome) {
-      STRCAT(IObuff, "-data");
+      strcat(IObuff, "-data");
       appname_len += 5;
     }
 #endif

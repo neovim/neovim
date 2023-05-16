@@ -551,7 +551,7 @@ char *get_special_key_name(int c, int modifiers)
     size_t len = strlen(key_names_table[table_idx].name);
 
     if ((int)len + idx + 2 <= MAX_KEY_NAME_LEN) {
-      STRCPY(string + idx, key_names_table[table_idx].name);
+      strcpy(string + idx, key_names_table[table_idx].name);
       idx += (int)len;
     }
   }

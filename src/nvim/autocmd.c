@@ -688,9 +688,9 @@ char *au_event_disable(char *what)
   char *save_ei = xstrdup(p_ei);
   char *new_ei = xstrnsave(p_ei, strlen(p_ei) + strlen(what));
   if (*what == ',' && *p_ei == NUL) {
-    STRCPY(new_ei, what + 1);
+    strcpy(new_ei, what + 1);
   } else {
-    STRCAT(new_ei, what);
+    strcat(new_ei, what);
   }
   set_string_option_direct("ei", -1, new_ei, OPT_FREE, SID_NONE);
   xfree(new_ei);

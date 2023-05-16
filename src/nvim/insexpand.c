@@ -669,7 +669,7 @@ static char *ins_compl_infercase_gettext(const char *str, int char_len, int comp
       // growarray.  Add the character in the next round.
       ga_grow(&gap, IOSIZE);
       *p = NUL;
-      STRCPY(gap.ga_data, IObuff);
+      strcpy((char *)gap.ga_data, IObuff);
       gap.ga_len = (int)strlen(IObuff);
     } else {
       p += utf_char2bytes(wca[i++], p);
@@ -3832,7 +3832,7 @@ static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
             && (vim_iswordp(mb_prevptr(line, line + compl_col))))) {
       prefix = "";
     }
-    STRCPY(compl_pattern, prefix);
+    strcpy(compl_pattern, prefix);
     (void)quote_meta(compl_pattern + strlen(prefix),
                      line + compl_col, compl_length);
   } else if (--startcol < 0
@@ -3860,12 +3860,12 @@ static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
       // there's no need to call quote_meta,
       // xmalloc(7) is enough  -- Acevedo
       compl_pattern = xmalloc(7);
-      STRCPY(compl_pattern, "\\<");
+      strcpy(compl_pattern, "\\<");
       (void)quote_meta(compl_pattern + 2, line + compl_col, 1);
-      STRCAT(compl_pattern, "\\k");
+      strcat(compl_pattern, "\\k");
     } else {
       compl_pattern = xmalloc(quote_meta(NULL, line + compl_col, compl_length) + 2);
-      STRCPY(compl_pattern, "\\<");
+      strcpy(compl_pattern, "\\<");
       (void)quote_meta(compl_pattern + 2, line + compl_col, compl_length);
     }
   }

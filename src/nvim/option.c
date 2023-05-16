@@ -225,11 +225,11 @@ static void set_init_default_backupskip(void)
           == NULL) {
         ga_grow(&ga, (int)len);
         if (!GA_EMPTY(&ga)) {
-          STRCAT(ga.ga_data, ",");
+          strcat((char *)ga.ga_data, ",");
         }
-        STRCAT(ga.ga_data, p);
+        strcat((char *)ga.ga_data, p);
         add_pathsep(ga.ga_data);
-        STRCAT(ga.ga_data, "*");
+        strcat((char *)ga.ga_data, "*");
         ga.ga_len += (int)len;
       }
       xfree(item);
@@ -993,7 +993,7 @@ static char *stropt_expand_envvar(int opt_idx, char *origval, char *newval, set_
     newlen += (unsigned)strlen(origval) + 1;
   }
   newval = xmalloc(newlen);
-  STRCPY(newval, s);
+  strcpy(newval, s);
 
   return newval;
 }
@@ -1030,7 +1030,7 @@ static void stropt_remove_val(char *origval, char *newval, uint32_t flags, char 
 {
   // Remove newval[] from origval[]. (Note: "len" has been set above
   // and is used here).
-  STRCPY(newval, origval);
+  strcpy(newval, origval);
   if (*strval) {
     // may need to remove a comma
     if (flags & P_COMMA) {
@@ -1123,7 +1123,7 @@ static char *stropt_get_newval(int nextchar, int opt_idx, char **argp, char *var
       // do not add if already there
       if ((op == OP_ADDING || op == OP_PREPENDING) && s != NULL) {
         op = OP_NONE;
-        STRCPY(newval, origval);
+        strcpy(newval, origval);
       }
 
       // if no duplicate, move pointer to end of original value
@@ -1626,7 +1626,7 @@ int do_set(char *arg, int opt_flags)
           int i = (int)strlen(IObuff) + 2;
           if (i + (arg - startarg) < IOSIZE) {
             // append the argument with the error
-            STRCAT(IObuff, ": ");
+            strcat(IObuff, ": ");
             assert(arg >= startarg);
             memmove(IObuff + i, startarg, (size_t)(arg - startarg));
             IObuff[i + (arg - startarg)] = NUL;

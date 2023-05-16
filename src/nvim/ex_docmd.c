@@ -1454,7 +1454,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   }
   // Fail if command is invalid
   if (eap->cmdidx == CMD_SIZE) {
-    STRCPY(IObuff, _(e_not_an_editor_command));
+    strcpy(IObuff, _(e_not_an_editor_command));
     // If the modifier was parsed OK the error must be in the following command
     char *cmdname = after_modifier ? after_modifier : cmdline;
     append_command(cmdname);
@@ -2044,7 +2044,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // Check for wrong commands.
   if (ea.cmdidx == CMD_SIZE) {
     if (!ea.skip) {
-      STRCPY(IObuff, _(e_not_an_editor_command));
+      strcpy(IObuff, _(e_not_an_editor_command));
       // If the modifier was parsed OK the error must be in the following
       // command
       char *cmdname = after_modifier ? after_modifier : *cmdlinep;
@@ -2321,7 +2321,7 @@ doend:
   if (errormsg != NULL && *errormsg != NUL && !did_emsg) {
     if (flags & DOCMD_VERBOSE) {
       if (errormsg != IObuff) {
-        STRCPY(IObuff, errormsg);
+        strcpy(IObuff, errormsg);
         errormsg = IObuff;
       }
       append_command(*ea.cmdlinep);
@@ -2886,14 +2886,14 @@ static void append_command(char *cmd)
     // Not enough space, truncate and put in "...".
     d = IObuff + IOSIZE - 100;
     d -= utf_head_off(IObuff, d);
-    STRCPY(d, "...");
+    strcpy(d, "...");
   }
-  STRCAT(IObuff, ": ");
+  strcat(IObuff, ": ");
   d = IObuff + strlen(IObuff);
   while (*s != NUL && d - IObuff + 5 < IOSIZE) {
     if ((uint8_t)s[0] == 0xc2 && (uint8_t)s[1] == 0xa0) {
       s += 2;
-      STRCPY(d, "<a0>");
+      strcpy(d, "<a0>");
       d += 4;
     } else if (d - IObuff + utfc_ptr2len(s) + 1 >= IOSIZE) {
       break;
@@ -3743,9 +3743,9 @@ char *replace_makeprg(exarg_T *eap, char *arg, char **cmdlinep)
     if ((new_cmdline = strrep(program, "$*", arg)) == NULL) {
       // No $* in arg, build "<makeprg> <arg>" instead
       new_cmdline = xmalloc(strlen(program) + strlen(arg) + 2);
-      STRCPY(new_cmdline, program);
-      STRCAT(new_cmdline, " ");
-      STRCAT(new_cmdline, arg);
+      strcpy(new_cmdline, program);
+      strcat(new_cmdline, " ");
+      strcat(new_cmdline, arg);
     }
 
     msg_make(arg);
@@ -3943,12 +3943,12 @@ static char *repl_cmdline(exarg_T *eap, char *src, size_t srclen, char *repl, ch
 
   memmove(new_cmdline + i, repl, len);
   i += len;                             // remember the end of the string
-  STRCPY(new_cmdline + i, src + srclen);
+  strcpy(new_cmdline + i, src + srclen);
   src = new_cmdline + i;                // remember where to continue
 
   if (eap->nextcmd != NULL) {           // append next command
     i = strlen(new_cmdline) + 1;
-    STRCPY(new_cmdline + i, eap->nextcmd);
+    strcpy(new_cmdline + i, eap->nextcmd);
     eap->nextcmd = new_cmdline + i;
   }
   eap->cmd = new_cmdline + (eap->cmd - *cmdlinep);
@@ -7065,9 +7065,9 @@ char *expand_sfile(char *arg)
       size_t len = strlen(result) - srclen + strlen(repl) + 1;
       char *newres = xmalloc(len);
       memmove(newres, result, (size_t)(p - result));
-      STRCPY(newres + (p - result), repl);
+      strcpy(newres + (p - result), repl);
       len = strlen(newres);
-      STRCAT(newres, p + srclen);
+      strcat(newres, p + srclen);
       xfree(repl);
       xfree(result);
       result = newres;

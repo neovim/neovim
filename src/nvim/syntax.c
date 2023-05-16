@@ -3740,7 +3740,7 @@ static void add_keyword(char *const name, const int id, const int flags,
       : name;
 
   keyentry_T *const kp = xmalloc(offsetof(keyentry_T, keyword) + strlen(name_ic) + 1);
-  STRCPY(kp->keyword, name_ic);
+  strcpy(kp->keyword, name_ic);
   kp->k_syn.id = (int16_t)id;
   kp->k_syn.inc_tag = current_syn_inc_tag;
   kp->flags = flags;
@@ -5036,7 +5036,7 @@ static int get_id_list(char **const arg, const int keylen, int16_t **const list,
         } else {
           // Handle match of regexp with group names.
           *name = '^';
-          STRCAT(name, "$");
+          strcat(name, "$");
           regmatch.regprog = vim_regcomp(name, RE_MAGIC);
           if (regmatch.regprog == NULL) {
             failed = true;

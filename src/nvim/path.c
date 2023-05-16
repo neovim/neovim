@@ -717,7 +717,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
   // is following then find matches without any directory.
   if (!didstar && stardepth < 100 && starstar && e - s == 2
       && *path_end == '/') {
-    STRCPY(s, path_end + 1);
+    strcpy(s, path_end + 1);
     stardepth++;
     (void)do_path_expand(gap, buf, (size_t)(s - buf), flags, true);
     stardepth--;
@@ -739,20 +739,20 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
           && ((regmatch.regprog != NULL && vim_regexec(&regmatch, name, 0))
               || ((flags & EW_NOTWILD)
                   && path_fnamencmp(path + (s - buf), name, (size_t)(e - s)) == 0))) {
-        STRCPY(s, name);
+        strcpy(s, name);
         len = strlen(buf);
 
         if (starstar && stardepth < 100) {
           // For "**" in the pattern first go deeper in the tree to
           // find matches.
-          STRCPY(buf + len, "/**");  // NOLINT
-          STRCPY(buf + len + 3, path_end);
+          strcpy(buf + len, "/**");  // NOLINT
+          strcpy(buf + len + 3, path_end);
           stardepth++;
           (void)do_path_expand(gap, buf, len + 1, flags, true);
           stardepth--;
         }
 
-        STRCPY(buf + len, path_end);
+        strcpy(buf + len, path_end);
         if (path_has_exp_wildcard(path_end)) {      // handle more wildcards
           // need to expand another component of the path
           // remove backslashes for the remaining components only
@@ -869,7 +869,7 @@ static void expand_path_option(char *curdir, garray_T *gap)
       memmove(buf, curbuf->b_ffname, len);
       simplify_filename(buf);
     } else if (buf[0] == NUL) {
-      STRCPY(buf, curdir);  // relative to current directory
+      strcpy(buf, curdir);  // relative to current directory
     } else if (path_with_url(buf)) {
       continue;  // URL can't be used here
     } else if (!path_is_absolute(buf)) {
@@ -879,7 +879,7 @@ static void expand_path_option(char *curdir, garray_T *gap)
         continue;
       }
       STRMOVE(buf + len + 1, buf);
-      STRCPY(buf, curdir);
+      strcpy(buf, curdir);
       buf[len] = PATHSEP;
       simplify_filename(buf);
     }
@@ -951,7 +951,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern)
   char *file_pattern = xmalloc(len + 2);
   file_pattern[0] = '*';
   file_pattern[1] = NUL;
-  STRCAT(file_pattern, pattern);
+  strcat(file_pattern, pattern);
   char *pat = file_pat_to_reg_pat(file_pattern, NULL, NULL, true);
   xfree(file_pattern);
   if (pat == NULL) {
@@ -1026,7 +1026,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern)
       //     c:\file.txt           c:\           .\file.txt
       short_name = path_shorten_fname(path, curdir);
       if (short_name != NULL && short_name > path + 1) {
-        STRCPY(path, ".");
+        strcpy(path, ".");
         add_pathsep(path);
         STRMOVE(path + strlen(path), short_name);
       }
@@ -1050,14 +1050,14 @@ static void uniquefy_paths(garray_T *gap, char *pattern)
       short_name = path;
     }
     if (is_unique(short_name, gap, i)) {
-      STRCPY(fnames[i], short_name);
+      strcpy(fnames[i], short_name);
       continue;
     }
 
     rel_path = xmalloc(strlen(short_name) + strlen(PATHSEPSTR) + 2);
-    STRCPY(rel_path, ".");
+    strcpy(rel_path, ".");
     add_pathsep(rel_path);
-    STRCAT(rel_path, short_name);
+    strcat(rel_path, short_name);
 
     xfree(fnames[i]);
     fnames[i] = rel_path;
@@ -1481,7 +1481,7 @@ void addfile(garray_T *gap, char *f, int flags)
 
   char *p = xmalloc(strlen(f) + 1 + isdir);
 
-  STRCPY(p, f);
+  strcpy(p, f);
 #ifdef BACKSLASH_IN_FILENAME
   slash_adjust(p);
 #endif
@@ -1937,7 +1937,7 @@ void path_fix_case(char *name)
       FileInfo file_info_new;
       if (os_fileinfo_link(newname, &file_info_new)
           && os_fileinfo_id_equal(&file_info, &file_info_new)) {
-        STRCPY(tail, entry);
+        strcpy(tail, entry);
         break;
       }
     }

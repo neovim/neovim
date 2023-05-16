@@ -326,7 +326,7 @@ bool sha256_self_test(void)
       hexit = sha256_bytes((uint8_t *)sha_self_test_msg[i],
                            strlen(sha_self_test_msg[i]),
                            NULL, 0);
-      STRCPY(output, hexit);
+      strcpy(output, hexit);
     } else {
       sha256_start(&ctx);
       memset(buf, 'a', 1000);

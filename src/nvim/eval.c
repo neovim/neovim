@@ -391,7 +391,7 @@ void eval_init(void)
   for (size_t i = 0; i < ARRAY_SIZE(vimvars); i++) {
     struct vimvar *p = &vimvars[i];
     assert(strlen(p->vv_name) <= VIMVAR_KEY_LEN);
-    STRCPY(p->vv_di.di_key, p->vv_name);
+    strcpy(p->vv_di.di_key, p->vv_name);
     if (p->vv_flags & VV_RO) {
       p->vv_di.di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
     } else if (p->vv_flags & VV_RO_SBX) {
@@ -2131,7 +2131,7 @@ char *cat_prefix_varname(int prefix, const char *name)
   }
   *varnamebuf = (char)prefix;
   varnamebuf[1] = ':';
-  STRCPY(varnamebuf + 2, name);
+  strcpy(varnamebuf + 2, name);
   return varnamebuf;
 }
 
@@ -6837,9 +6837,9 @@ static char *make_expanded_name(const char *in_start, char *expr_start, char *ex
   if (temp_result != NULL) {
     retval = xmalloc(strlen(temp_result) + (size_t)(expr_start - in_start)
                      + (size_t)(in_end - expr_end) + 1);
-    STRCPY(retval, in_start);
-    STRCAT(retval, temp_result);
-    STRCAT(retval, expr_end + 1);
+    strcpy(retval, in_start);
+    strcat(retval, temp_result);
+    strcat(retval, expr_end + 1);
   }
   xfree(temp_result);
 
@@ -8497,7 +8497,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char 
     }
 
     if (ga.ga_data != NULL) {
-      STRCPY((char *)ga.ga_data + ga.ga_len, tail);
+      strcpy((char *)ga.ga_data + ga.ga_len, tail);
     }
 
     vim_regfree(regmatch.regprog);

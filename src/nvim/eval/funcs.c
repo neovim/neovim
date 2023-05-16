@@ -6974,7 +6974,7 @@ long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir
   char *pat3 = xmalloc(pat3_len);
   snprintf(pat2, pat2_len, "\\m\\(%s\\m\\)\\|\\(%s\\m\\)", spat, epat);
   if (*mpat == NUL) {
-    STRCPY(pat3, pat2);
+    strcpy(pat3, pat2);
   } else {
     snprintf(pat3, pat3_len,
              "\\m\\(%s\\m\\)\\|\\(%s\\m\\)\\|\\(%s\\m\\)", spat, epat, mpat);

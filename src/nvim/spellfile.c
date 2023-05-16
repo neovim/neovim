@@ -920,7 +920,7 @@ void suggest_load_files(void)
       if (dotp == NULL || path_fnamecmp(dotp, ".spl") != 0) {
         continue;
       }
-      STRCPY(dotp, ".sug");
+      strcpy(dotp, ".sug");
       fd = os_fopen(slang->sl_fname, "r");
       if (fd == NULL) {
         goto nextone;
@@ -1010,7 +1010,7 @@ nextone:
       if (fd != NULL) {
         fclose(fd);
       }
-      STRCPY(dotp, ".spl");
+      strcpy(dotp, ".spl");
     }
   }
 }
@@ -1994,8 +1994,8 @@ static void spell_print_node(wordnode_T *node, int depth)
     // do the siblings
     if (node->wn_sibling != NULL) {
       // get rid of all parent details except |
-      STRCPY(line1, line3);
-      STRCPY(line2, line3);
+      strcpy(line1, line3);
+      strcpy(line2, line3);
       spell_print_node(node->wn_sibling, depth);
     }
   }
@@ -2180,12 +2180,12 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
                     + strlen(items[0])
                     + strlen(items[1]) + 3, false);
         if (spin->si_info != NULL) {
-          STRCPY(p, spin->si_info);
-          STRCAT(p, "\n");
+          strcpy(p, spin->si_info);
+          strcat(p, "\n");
         }
-        STRCAT(p, items[0]);
-        STRCAT(p, " ");
-        STRCAT(p, items[1]);
+        strcat(p, items[0]);
+        strcat(p, " ");
+        strcat(p, items[1]);
         spin->si_info = p;
       } else if (is_aff_rule(items, itemcnt, "MIDWORD", 2) && midword == NULL) {
         midword = getroom_save(spin, items[1]);
@@ -2238,8 +2238,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
         // Turn flag "c" into COMPOUNDRULE compatible string "c+",
         // "Na" into "Na+", "1234" into "1234+".
         p = getroom(spin, strlen(items[1]) + 2, false);
-        STRCPY(p, items[1]);
-        STRCAT(p, "+");
+        strcpy(p, items[1]);
+        strcat(p, "+");
         compflags = p;
       } else if (is_aff_rule(items, itemcnt, "COMPOUNDRULES", 2)) {
         // We don't use the count, but do check that it's a number and
@@ -2259,10 +2259,10 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
           }
           p = getroom(spin, (size_t)l, false);
           if (compflags != NULL) {
-            STRCPY(p, compflags);
-            STRCAT(p, "/");
+            strcpy(p, compflags);
+            strcat(p, "/");
           }
-          STRCAT(p, items[1]);
+          strcat(p, items[1]);
           compflags = p;
         }
       } else if (is_aff_rule(items, itemcnt, "COMPOUNDWORDMAX", 2)
@@ -2379,7 +2379,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
                    "in %s line %d: %s"),
                  fname, lnum, items[1]);
           }
-          STRCPY(cur_aff->ah_key, items[1]);
+          strcpy(cur_aff->ah_key, items[1]);
           hash_add(tp, cur_aff->ah_key);
 
           cur_aff->ah_combine = (*items[2] == 'Y');
@@ -2892,8 +2892,8 @@ static void process_compflags(spellinfo_T *spin, afffile_T *aff, char *compflags
   }
   char *p = getroom(spin, (size_t)len, false);
   if (spin->si_compflags != NULL) {
-    STRCPY(p, spin->si_compflags);
-    STRCAT(p, "/");
+    strcpy(p, spin->si_compflags);
+    strcat(p, "/");
   }
   spin->si_compflags = p;
   uint8_t *tp = (uint8_t *)p + strlen(p);
@@ -2915,7 +2915,7 @@ static void process_compflags(spellinfo_T *spin, afffile_T *aff, char *compflags
           id = HI2CI(hi)->ci_newID;
         } else {
           ci = getroom(spin, sizeof(compitem_T), true);
-          STRCPY(ci->ci_key, key);
+          strcpy(ci->ci_key, key);
           ci->ci_flag = flag;
           // Avoid using a flag ID that has a special meaning in a
           // regexp (also inside []).
@@ -3463,7 +3463,7 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
                   MB_PTR_ADV(p);
                 }
               }
-              STRCAT(newword, p);
+              strcat(newword, p);
             } else {
               // suffix: chop/add at the end of the word
               xstrlcpy(newword, word, MAXWLEN);
@@ -3477,7 +3477,7 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
                 *p = NUL;
               }
               if (ae->ae_add != NULL) {
-                STRCAT(newword, ae->ae_add);
+                strcat(newword, ae->ae_add);
               }
             }
 
@@ -3732,7 +3732,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char *fname)
                  fname, lnum, line);
           } else {
             spin->si_region_count = (int)strlen(line) / 2;
-            STRCPY(spin->si_region_name, line);
+            strcpy(spin->si_region_name, line);
 
             // Adjust the mask for a word valid in all regions.
             spin->si_region = (1 << spin->si_region_count) - 1;

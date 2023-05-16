@@ -1270,9 +1270,9 @@ static size_t add_cmd_modifier(char *buf, char *mod_str, bool *multi_mods)
 
   if (buf != NULL) {
     if (*multi_mods) {
-      STRCAT(buf, " ");
+      strcat(buf, " ");
     }
-    STRCAT(buf, mod_str);
+    strcat(buf, mod_str);
   }
 
   *multi_mods = true;
@@ -1464,7 +1464,7 @@ static size_t uc_check_code(char *code, size_t len, char *buf, ucmd_T *cmd, exar
       if (quote == 1) {
         result = 2;
         if (buf != NULL) {
-          STRCPY(buf, "''");
+          strcpy(buf, "''");
         }
       } else {
         result = 0;
@@ -1482,7 +1482,7 @@ static size_t uc_check_code(char *code, size_t len, char *buf, ucmd_T *cmd, exar
     case 0:     // No quoting, no splitting
       result = strlen(eap->arg);
       if (buf != NULL) {
-        STRCPY(buf, eap->arg);
+        strcpy(buf, eap->arg);
       }
       break;
     case 1:     // Quote, but don't split
@@ -1513,7 +1513,7 @@ static size_t uc_check_code(char *code, size_t len, char *buf, ucmd_T *cmd, exar
 
       result = *split_len;
       if (buf != NULL && result != 0) {
-        STRCPY(buf, *split_buf);
+        strcpy(buf, *split_buf);
       }
 
       break;
@@ -1561,7 +1561,7 @@ static size_t uc_check_code(char *code, size_t len, char *buf, ucmd_T *cmd, exar
       if (quote) {
         *buf++ = '"';
       }
-      STRCPY(buf, num_buf);
+      strcpy(buf, num_buf);
       buf += num_len;
       if (quote) {
         *buf = '"';
@@ -1708,7 +1708,7 @@ int do_ucmd(exarg_T *eap, bool preview)
       }
     }
     if (buf != NULL) {              // second time here, finished
-      STRCPY(q, p);
+      strcpy(q, p);
       break;
     }
 

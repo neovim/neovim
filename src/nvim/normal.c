@@ -1931,7 +1931,7 @@ bool add_to_showcmd(int c)
 
   char *p = transchar(c);
   if (*p == ' ') {
-    STRCPY(p, "<20>");
+    strcpy(p, "<20>");
   }
   size_t old_len = strlen(showcmd_buf);
   size_t extra_len = strlen(p);
@@ -1940,7 +1940,7 @@ bool add_to_showcmd(int c)
     size_t overflow = old_len + extra_len - limit;
     memmove(showcmd_buf, showcmd_buf + overflow, old_len - overflow + 1);
   }
-  STRCAT(showcmd_buf, p);
+  strcat(showcmd_buf, p);
 
   if (char_avail()) {
     return false;
@@ -1982,7 +1982,7 @@ static void del_from_showcmd(int len)
 void push_showcmd(void)
 {
   if (p_sc) {
-    STRCPY(old_showcmd_buf, showcmd_buf);
+    strcpy(old_showcmd_buf, showcmd_buf);
   }
 }
 
@@ -1992,7 +1992,7 @@ void pop_showcmd(void)
     return;
   }
 
-  STRCPY(showcmd_buf, old_showcmd_buf);
+  strcpy(showcmd_buf, old_showcmd_buf);
 
   display_showcmd();
 }
@@ -3362,7 +3362,7 @@ static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, cha
 {
   if (kp_help) {
     // in the help buffer
-    STRCPY(buf, "he! ");
+    strcpy(buf, "he! ");
     return n;
   }
 
@@ -3371,8 +3371,8 @@ static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, cha
     if (cap->count0 != 0) {  // Send the count to the ex command.
       snprintf(buf, buf_size, "%" PRId64, (int64_t)(cap->count0));
     }
-    STRCAT(buf, kp);
-    STRCAT(buf, " ");
+    strcat(buf, kp);
+    strcat(buf, " ");
     return n;
   }
 
@@ -3401,17 +3401,17 @@ static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, cha
   }
 
   do_cmdline_cmd("tabnew");
-  STRCAT(buf, "terminal ");
+  strcat(buf, "terminal ");
   if (cap->count0 == 0 && isman_s) {
-    STRCAT(buf, "man");
+    strcat(buf, "man");
   } else {
-    STRCAT(buf, kp);
+    strcat(buf, kp);
   }
-  STRCAT(buf, " ");
+  strcat(buf, " ");
   if (cap->count0 != 0 && (isman || isman_s)) {
     snprintf(buf + strlen(buf), buf_size - strlen(buf), "%" PRId64,
              (int64_t)cap->count0);
-    STRCAT(buf, " ");
+    strcat(buf, " ");
   }
 
   *ptr_arg = ptr;
@@ -3489,7 +3489,7 @@ static void nv_ident(cmdarg_T *cap)
     curwin->w_cursor.col = (colnr_T)(ptr - get_cursor_line_ptr());
 
     if (!g_cmd && vim_iswordp(ptr)) {
-      STRCPY(buf, "\\<");
+      strcpy(buf, "\\<");
     }
     no_smartcase = true;                // don't use 'smartcase' now
     break;
@@ -3503,16 +3503,16 @@ static void nv_ident(cmdarg_T *cap)
 
   case ']':
     tag_cmd = true;
-    STRCPY(buf, "ts ");
+    strcpy(buf, "ts ");
     break;
 
   default:
     tag_cmd = true;
     if (curbuf->b_help) {
-      STRCPY(buf, "he! ");
+      strcpy(buf, "he! ");
     } else {
       if (g_cmd) {
-        STRCPY(buf, "tj ");
+        strcpy(buf, "tj ");
       } else {
         snprintf(buf, buf_size, "%" PRId64 "ta ", (int64_t)cap->count0);
       }
@@ -3532,7 +3532,7 @@ static void nv_ident(cmdarg_T *cap)
     xfree(ptr);
     char *newbuf = xrealloc(buf, strlen(buf) + strlen(p) + 1);
     buf = newbuf;
-    STRCAT(buf, p);
+    strcat(buf, p);
     xfree(p);
   } else {
     char *aux_ptr;
@@ -3572,7 +3572,7 @@ static void nv_ident(cmdarg_T *cap)
   if (cmdchar == '*' || cmdchar == '#') {
     if (!g_cmd
         && vim_iswordp(mb_prevptr(get_cursor_line_ptr(), ptr))) {
-      STRCAT(buf, "\\>");
+      strcat(buf, "\\>");
     }
 
     // put pattern in search history

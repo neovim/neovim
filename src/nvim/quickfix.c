@@ -430,7 +430,7 @@ static char *efmpat_to_regpat(const char *efmpat, char *regpat, efm_T *efminfo, 
     // Also match "c:" in the file name, even when
     // checking for a colon next: "%f:".
     // "\%(\a:\)\="
-    STRCPY(regpat, "\\%(\\a:\\)\\=");
+    strcpy(regpat, "\\%(\\a:\\)\\=");
     regpat += 10;
   }
 #endif
@@ -441,12 +441,12 @@ static char *efmpat_to_regpat(const char *efmpat, char *regpat, efm_T *efminfo, 
       // the file name.  Use ".\{-1,}x" instead (x is
       // the next character), the requirement that :999:
       // follows should work.
-      STRCPY(regpat, ".\\{-1,}");
+      strcpy(regpat, ".\\{-1,}");
       regpat += 7;
     } else {
       // File name followed by '\\' or '%': include as
       // many file name chars as possible.
-      STRCPY(regpat, "\\f\\+");
+      strcpy(regpat, "\\f\\+");
       regpat += 4;
     }
   } else {
@@ -1461,7 +1461,7 @@ static int qf_parse_fmt_s(regmatch_T *rmp, int midx, qffields_T *fields)
   if (len > CMDBUFFSIZE - 5) {
     len = CMDBUFFSIZE - 5;
   }
-  STRCPY(fields->pattern, "^\\V");
+  strcpy(fields->pattern, "^\\V");
   xstrlcat(fields->pattern, rmp->startp[midx], len + 4);
   fields->pattern[len + 3] = '\\';
   fields->pattern[len + 4] = '$';
@@ -1659,7 +1659,7 @@ static int qf_parse_multiline_pfx(int idx, qf_list_T *qfl, qffields_T *fields)
       size_t errlen  = strlen(fields->errmsg);
       qfprev->qf_text = xrealloc(qfprev->qf_text, textlen + errlen + 2);
       qfprev->qf_text[textlen] = '\n';
-      STRCPY(qfprev->qf_text + textlen + 1, fields->errmsg);
+      strcpy(qfprev->qf_text + textlen + 1, fields->errmsg);
     }
     if (qfprev->qf_nr == -1) {
       qfprev->qf_nr = fields->enr;
@@ -4422,9 +4422,9 @@ static char *get_mef_name(void)
       off += 19;
     }
     name = xmalloc(strlen(p_mef) + 30);
-    STRCPY(name, p_mef);
+    strcpy(name, p_mef);
     snprintf(name + (p - p_mef), strlen(name), "%d%d", start, off);
-    STRCAT(name, p + 2);
+    strcat(name, p + 2);
     // Don't accept a symbolic link, it's a security risk.
     FileInfo file_info;
     bool file_or_link_found = os_fileinfo_link(name, &file_info);
@@ -7086,7 +7086,7 @@ static void hgr_search_files_in_dir(qf_list_T *qfl, char *dirname, regmatch_T *p
 
   // Find all "*.txt" and "*.??x" files in the "doc" directory.
   add_pathsep(dirname);
-  STRCAT(dirname, "doc/*.\\(txt\\|??x\\)");  // NOLINT
+  strcat(dirname, "doc/*.\\(txt\\|??x\\)");  // NOLINT
   if (gen_expand_wildcards(1, &dirname, &fcount, &fnames, EW_FILE|EW_SILENT) == OK
       && fcount > 0) {
     for (int fi = 0; fi < fcount && !got_int; fi++) {

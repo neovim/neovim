@@ -200,14 +200,13 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 # define strnlen xstrnlen  // Older versions of SunOS may not have strnlen
 #endif
 
-#define STRCPY(d, s)        strcpy((char *)(d), (char *)(s))  // NOLINT(runtime/printf)
 #ifdef HAVE_STRCASECMP
-# define STRICMP(d, s)      strcasecmp((char *)(d), (char *)(s))
+# define STRICMP(d, s)      strcasecmp((d), (s))
 #else
 # ifdef HAVE_STRICMP
-#  define STRICMP(d, s)     stricmp((char *)(d), (char *)(s))
+#  define STRICMP(d, s)     stricmp((d), (s))
 # else
-#  define STRICMP(d, s)     vim_stricmp((char *)(d), (char *)(s))
+#  define STRICMP(d, s)     vim_stricmp((d), (s))
 # endif
 #endif
 
@@ -215,16 +214,14 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 #define STRMOVE(d, s)       memmove((d), (s), strlen(s) + 1)
 
 #ifdef HAVE_STRNCASECMP
-# define STRNICMP(d, s, n)  strncasecmp((char *)(d), (char *)(s), (size_t)(n))
+# define STRNICMP(d, s, n)  strncasecmp((d), (s), (size_t)(n))
 #else
 # ifdef HAVE_STRNICMP
-#  define STRNICMP(d, s, n) strnicmp((char *)(d), (char *)(s), (size_t)(n))
+#  define STRNICMP(d, s, n) strnicmp((d), (s), (size_t)(n))
 # else
-#  define STRNICMP(d, s, n) vim_strnicmp((char *)(d), (char *)(s), (size_t)(n))
+#  define STRNICMP(d, s, n) vim_strnicmp((d), (s), (size_t)(n))
 # endif
 #endif
-
-#define STRCAT(d, s)        strcat((char *)(d), (char *)(s))  // NOLINT(runtime/printf)
 
 // Character used as separated in autoload function/variable names.
 #define AUTOLOAD_CHAR '#'

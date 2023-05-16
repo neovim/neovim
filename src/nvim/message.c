@@ -3690,7 +3690,7 @@ static void copy_hotkeys_and_msg(const char *message, char *buttons, int default
                                  const bool has_hotkey[], char *hotkeys_ptr)
 {
   *confirm_msg = '\n';
-  STRCPY(confirm_msg + 1, message);
+  strcpy(confirm_msg + 1, message);
 
   char *msgp = confirm_msg + 1 + strlen(message);
 

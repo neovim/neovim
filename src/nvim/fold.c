@@ -1612,15 +1612,15 @@ static void foldAddMarker(buf_T *buf, pos_T pos, const char *marker, size_t mark
   // Check if the line ends with an unclosed comment
   skip_comment(line, false, false, &line_is_comment);
   newline = xmalloc(line_len + markerlen + strlen(cms) + 1);
-  STRCPY(newline, line);
+  strcpy(newline, line);
   // Append the marker to the end of the line
   if (p == NULL || line_is_comment) {
     xstrlcpy(newline + line_len, marker, markerlen + 1);
     added = markerlen;
   } else {
-    STRCPY(newline + line_len, cms);
+    strcpy(newline + line_len, cms);
     memcpy(newline + line_len + (p - cms), marker, markerlen);
-    STRCPY(newline + line_len + (p - cms) + markerlen, p + 2);
+    strcpy(newline + line_len + (p - cms) + markerlen, p + 2);
     added = markerlen + strlen(cms) - 2;
   }
   ml_replace_buf(buf, lnum, newline, false);
@@ -1686,7 +1686,7 @@ static void foldDelMarker(buf_T *buf, linenr_T lnum, char *marker, size_t marker
       char *newline = xmalloc(strlen(line) - len + 1);
       assert(p >= line);
       memcpy(newline, line, (size_t)(p - line));
-      STRCPY(newline + (p - line), p + len);
+      strcpy(newline + (p - line), p + len);
       ml_replace_buf(buf, lnum, newline, false);
       extmark_splice_cols(buf, (int)lnum - 1, (int)(p - line),
                           (int)len, 0, kExtmarkUndo);
@@ -3295,7 +3295,7 @@ void f_foldtext(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     char *r = xmalloc(len);
     snprintf(r, len, txt, dashes, count);
     len = strlen(r);
-    STRCAT(r, s);
+    strcat(r, s);
     // remove 'foldmarker' and 'commentstring'
     foldtext_cleanup(r + len);
     rettv->vval.v_string = r;

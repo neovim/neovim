@@ -1847,7 +1847,7 @@ char *ml_get_buf(buf_T *buf, linenr_T lnum, bool will_change)
     }
     ml_flush_line(buf);
 errorret:
-    STRCPY(questions, "???");
+    strcpy(questions, "???");
     buf->b_ml.ml_line_lnum = lnum;
     return questions;
   }
@@ -3084,13 +3084,13 @@ int resolve_symlink(const char *fname, char *buf)
     // portion of the filename (if any) and the path the symlink
     // points to.
     if (path_is_absolute(buf)) {
-      STRCPY(tmp, buf);
+      strcpy(tmp, buf);
     } else {
       char *tail = path_tail(tmp);
       if (strlen(tail) + strlen(buf) >= MAXPATHL) {
         return FAIL;
       }
-      STRCPY(tail, buf);
+      strcpy(tail, buf);
     }
   }
 

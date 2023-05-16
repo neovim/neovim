@@ -699,7 +699,7 @@ void expand_env_esc(char *restrict srcp, char *restrict dst, int dstlen, bool es
 
       if (var != NULL && *var != NUL
           && (strlen(var) + strlen(tail) + 1 < (unsigned)dstlen)) {
-        STRCPY(dst, var);
+        strcpy(dst, var);
         dstlen -= (int)strlen(var);
         int c = (int)strlen(var);
         // if var[] ends in a path separator and tail[] starts

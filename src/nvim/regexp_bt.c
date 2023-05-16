@@ -5290,7 +5290,7 @@ static uint8_t *regprop(uint8_t *op)
   char *p;
   static char buf[50];
 
-  STRCPY(buf, ":");
+  strcpy(buf, ":");
 
   switch ((int)OP(op)) {
   case BOL:
@@ -5655,7 +5655,7 @@ static uint8_t *regprop(uint8_t *op)
     break;
   }
   if (p != NULL) {
-    STRCAT(buf, p);
+    strcat(buf, p);
   }
   return (uint8_t *)buf;
 }

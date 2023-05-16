@@ -438,10 +438,10 @@ static int add_menu_path(const char *const menu_path, vimmenu_T *menuarg, const 
           menu->strings[i] = xmalloc(strlen(call_data) + 5);
           menu->strings[i][0] = c;
           if (d == 0) {
-            STRCPY(menu->strings[i] + 1, call_data);
+            strcpy(menu->strings[i] + 1, call_data);
           } else {
             menu->strings[i][1] = d;
-            STRCPY(menu->strings[i] + 2, call_data);
+            strcpy(menu->strings[i] + 2, call_data);
           }
           if (c == Ctrl_C) {
             int len = (int)strlen(menu->strings[i]);
@@ -1076,7 +1076,7 @@ char *get_menu_names(expand_T *xp, int idx)
       }
       // hack on menu separators:  use a 'magic' char for the separator
       // so that '.' in names gets escaped properly
-      STRCAT(tbuffer, "\001");
+      strcat(tbuffer, "\001");
       str = tbuffer;
     } else {
       if (should_advance) {

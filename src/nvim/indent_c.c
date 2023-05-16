@@ -2018,12 +2018,12 @@ int get_c_indent(void)
       }
       (void)copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
       if (what == COM_START) {
-        STRCPY(lead_start, lead_end);
+        strcpy(lead_start, lead_end);
         lead_start_len = (int)strlen(lead_start);
         start_off = off;
         start_align = align;
       } else if (what == COM_MIDDLE) {
-        STRCPY(lead_middle, lead_end);
+        strcpy(lead_middle, lead_end);
         lead_middle_len = (int)strlen(lead_middle);
       } else if (what == COM_END) {
         // If our line starts with the middle comment string, line it

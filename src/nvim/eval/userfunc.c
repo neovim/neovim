@@ -256,12 +256,12 @@ char *get_lambda_name(void)
 
 static void set_ufunc_name(ufunc_T *fp, char *name)
 {
-  STRCPY(fp->uf_name, name);
+  strcpy(fp->uf_name, name);
 
   if ((uint8_t)name[0] == K_SPECIAL) {
     fp->uf_name_exp = xmalloc(strlen(name) + 3);
-    STRCPY(fp->uf_name_exp, "<SNR>");
-    STRCAT(fp->uf_name_exp, fp->uf_name + 3);
+    strcpy(fp->uf_name_exp, "<SNR>");
+    strcat(fp->uf_name_exp, fp->uf_name + 3);
   }
 }
 
@@ -343,7 +343,7 @@ int get_lambda_tv(char **arg, typval_T *rettv, evalarg_T *evalarg)
     size_t len = (size_t)(7 + end - start + 1);
     p = xmalloc(len);
     ((char **)(newlines.ga_data))[newlines.ga_len++] = p;
-    STRCPY(p, "return ");
+    strcpy(p, "return ");
     xstrlcpy(p + 7, start, (size_t)(end - start) + 1);
     if (strstr(p + 7, "a:") == NULL) {
       // No a: variables are used for sure.
@@ -629,13 +629,13 @@ static char *fname_trans_sid(const char *const name, char *const fname_buf, char
   }
   char *fname;
   if ((size_t)i + strlen(name + llen) < FLEN_FIXED) {
-    STRCPY(fname_buf + i, name + llen);
+    strcpy(fname_buf + i, name + llen);
     fname = fname_buf;
   } else {
     fname = xmalloc((size_t)i + strlen(name + llen) + 1);
     *tofree = fname;
     memmove(fname, fname_buf, (size_t)i);
-    STRCPY(fname + i, name + llen);
+    strcpy(fname + i, name + llen);
   }
   return fname;
 }
@@ -675,7 +675,7 @@ static void cat_func_name(char *buf, size_t buflen, ufunc_T *fp)
 static void add_nr_var(dict_T *dp, dictitem_T *v, char *name, varnumber_T nr)
 {
 #ifndef __clang_analyzer__
-  STRCPY(v->di_key, name);
+  strcpy(v->di_key, name);
 #endif
   v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
   hash_add(&dp->dv_hashtab, v->di_key);
@@ -983,7 +983,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     v = (dictitem_T *)&fc->fc_fixvar[fixvar_idx++];
 #ifndef __clang_analyzer__
     name = (char *)v->di_key;
-    STRCPY(name, "self");
+    strcpy(name, "self");
 #endif
     v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
     hash_add(&fc->fc_l_vars.dv_hashtab, v->di_key);
@@ -1009,7 +1009,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     v = (dictitem_T *)&fc->fc_fixvar[fixvar_idx++];
 #ifndef __clang_analyzer__
     name = (char *)v->di_key;
-    STRCPY(name, "000");
+    strcpy(name, "000");
 #endif
     v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
     hash_add(&fc->fc_l_avars.dv_hashtab, v->di_key);
@@ -1074,7 +1074,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
       v = xmalloc(sizeof(dictitem_T) + strlen(name));
       v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX | DI_FLAGS_ALLOC;
     }
-    STRCPY(v->di_key, name);
+    strcpy(v->di_key, name);
 
     // Note: the values are copied directly to avoid alloc/free.
     // "argvars" must have VAR_FIXED for v_lock.
@@ -2072,8 +2072,8 @@ char *get_scriptlocal_funcname(char *funcname)
            (int64_t)current_sctx.sc_sid);
   const int off = *funcname == 's' ? 2 : 5;
   char *newname = xmalloc(strlen(sid_buf) + strlen(funcname + off) + 1);
-  STRCPY(newname, sid_buf);
-  STRCAT(newname, funcname + off);
+  strcpy(newname, sid_buf);
+  strcat(newname, funcname + off);
 
   return newname;
 }
@@ -2892,9 +2892,9 @@ char *get_user_func_name(expand_T *xp, int idx)
 
     cat_func_name(IObuff, IOSIZE, fp);
     if (xp->xp_context != EXPAND_USER_FUNC) {
-      STRCAT(IObuff, "(");
+      strcat(IObuff, "(");
       if (!fp->uf_varargs && GA_EMPTY(&fp->uf_args)) {
-        STRCAT(IObuff, ")");
+        strcat(IObuff, ")");
       }
     }
     return IObuff;
@@ -3505,10 +3505,10 @@ char *get_return_cmd(void *rettv)
     s = "";
   }
 
-  STRCPY(IObuff, ":return ");
+  strcpy(IObuff, ":return ");
   xstrlcpy(IObuff + 8, s, IOSIZE - 8);
   if (strlen(s) + 8 >= IOSIZE) {
-    STRCPY(IObuff + IOSIZE - 4, "...");
+    strcpy(IObuff + IOSIZE - 4, "...");
   }
   xfree(tofree);
   return xstrdup(IObuff);
@@ -3969,7 +3969,7 @@ char *register_luafunc(LuaRef ref)
   fp->uf_script_ctx = current_sctx;
   fp->uf_luaref = ref;
 
-  STRCPY(fp->uf_name, name);
+  strcpy(fp->uf_name, name);
   hash_add(&func_hashtab, UF2HIKEY(fp));
 
   // coverity[leaked_storage]

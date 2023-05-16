@@ -1084,11 +1084,11 @@ char *do_bufdel(int command, char *arg, int addr_count, int start_bnr, int end_b
 
     if (deleted == 0) {
       if (command == DOBUF_UNLOAD) {
-        STRCPY(IObuff, _("E515: No buffers were unloaded"));
+        strcpy(IObuff, _("E515: No buffers were unloaded"));
       } else if (command == DOBUF_DEL) {
-        STRCPY(IObuff, _("E516: No buffers were deleted"));
+        strcpy(IObuff, _("E516: No buffers were deleted"));
       } else {
-        STRCPY(IObuff, _("E517: No buffers were wiped out"));
+        strcpy(IObuff, _("E517: No buffers were wiped out"));
       }
       errormsg = IObuff;
     } else if (deleted >= p_report) {
@@ -2341,8 +2341,8 @@ int ExpandBufnames(char *pat, int *num_file, char ***file, int options)
   if (!fuzzy) {
     if (*pat == '^') {
       patc = xmalloc(strlen(pat) + 11);
-      STRCPY(patc, "\\(^\\|[\\/]\\)");
-      STRCPY(patc + 11, pat + 1);
+      strcpy(patc, "\\(^\\|[\\/]\\)");
+      strcpy(patc + 11, pat + 1);
     } else {
       patc = pat;
     }
@@ -3402,7 +3402,7 @@ void maketitle(void)
         len += utf_cp_tail_off(buf_p, buf_p + len) + 1;
         buf_p += len;
       }
-      STRCPY(icon_str, buf_p);
+      strcpy(icon_str, buf_p);
       trans_characters(icon_str, IOSIZE);
     }
   }
@@ -3524,7 +3524,7 @@ bool append_arg_number(win_T *wp, char *buf, int buflen, bool add_file)
   *p++ = ' ';
   *p++ = '(';
   if (add_file) {
-    STRCPY(p, "file ");
+    strcpy(p, "file ");
     p += 5;
   }
   vim_snprintf(p, (size_t)(buflen - (p - buf)),

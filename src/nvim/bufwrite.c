@@ -745,7 +745,7 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
       // the ones from the original file.
       // First find a file name that doesn't exist yet (use some
       // arbitrary numbers).
-      STRCPY(IObuff, fname);
+      strcpy(IObuff, fname);
       for (int i = 4913;; i += 123) {
         char *tail = path_tail(IObuff);
         size_t size = (size_t)(tail - IObuff);
@@ -1749,24 +1749,24 @@ restore_backup:
     add_quoted_fname(IObuff, IOSIZE, buf, fname);
     bool insert_space = false;
     if (write_info.bw_conv_error) {
-      STRCAT(IObuff, _(" CONVERSION ERROR"));
+      strcat(IObuff, _(" CONVERSION ERROR"));
       insert_space = true;
       if (write_info.bw_conv_error_lnum != 0) {
         vim_snprintf_add(IObuff, IOSIZE, _(" in line %" PRId64 ";"),
                          (int64_t)write_info.bw_conv_error_lnum);
       }
     } else if (notconverted) {
-      STRCAT(IObuff, _("[NOT converted]"));
+      strcat(IObuff, _("[NOT converted]"));
       insert_space = true;
     } else if (converted) {
-      STRCAT(IObuff, _("[converted]"));
+      strcat(IObuff, _("[converted]"));
       insert_space = true;
     }
     if (device) {
-      STRCAT(IObuff, _("[Device]"));
+      strcat(IObuff, _("[Device]"));
       insert_space = true;
     } else if (newfile) {
-      STRCAT(IObuff, new_file_message());
+      strcat(IObuff, new_file_message());
       insert_space = true;
     }
     if (no_eol) {
@@ -1780,9 +1780,9 @@ restore_backup:
     msg_add_lines(insert_space, (long)lnum, nchars);       // add line/char count
     if (!shortmess(SHM_WRITE)) {
       if (append) {
-        STRCAT(IObuff, shortmess(SHM_WRI) ? _(" [a]") : _(" appended"));
+        strcat(IObuff, shortmess(SHM_WRI) ? _(" [a]") : _(" appended"));
       } else {
-        STRCAT(IObuff, shortmess(SHM_WRI) ? _(" [w]") : _(" written"));
+        strcat(IObuff, shortmess(SHM_WRI) ? _(" [w]") : _(" written"));
       }
     }
 

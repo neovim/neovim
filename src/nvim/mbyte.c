@@ -1541,7 +1541,7 @@ void show_utf8(void)
     if (clen == 0) {
       // start of (composing) character, get its length
       if (i > 0) {
-        STRCPY(IObuff + rlen, "+ ");
+        strcpy(IObuff + rlen, "+ ");
         rlen += 2;
       }
       clen = utf_ptr2len(line + i);

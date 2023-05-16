@@ -1269,7 +1269,7 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
         reg_tofree = xmalloc((size_t)len);
         reg_tofreelen = (unsigned)len;
       }
-      STRCPY(reg_tofree, rex.line);
+      strcpy((char *)reg_tofree, (const char *)rex.line);
       rex.input = reg_tofree + (rex.input - rex.line);
       rex.line = reg_tofree;
     }
@@ -1557,7 +1557,7 @@ char *regtilde(char *source, int magic, bool preview)
         if (!magic) {
           p++;                                // back off backslash
         }
-        STRCPY(tmpsub + len + prevlen, p + 1);
+        strcpy(tmpsub + len + prevlen, p + 1);
 
         if (newsub != source) {               // already allocated newsub
           xfree(newsub);
@@ -1766,7 +1766,7 @@ static int vim_regsub_both(char *source, typval_T *expr, char *dest, int destlen
     // "flags & REGSUB_COPY" != 0.
     if (copy) {
       if (eval_result[nested] != NULL) {
-        STRCPY(dest, eval_result[nested]);
+        strcpy(dest, eval_result[nested]);
         dst += strlen(eval_result[nested]);
         XFREE_CLEAR(eval_result[nested]);
       }
@@ -2171,7 +2171,7 @@ char *reg_submatch(int no)
         // lines completely and end line up to end col.
         len = (ssize_t)strlen(s);
         if (round == 2) {
-          STRCPY(retval, s);
+          strcpy(retval, s);
           retval[len] = '\n';
         }
         len++;
@@ -2179,7 +2179,7 @@ char *reg_submatch(int no)
         while (lnum < rsm.sm_mmatch->endpos[no].lnum) {
           s = reg_getline_submatch(lnum++);
           if (round == 2) {
-            STRCPY(retval + len, s);
+            strcpy(retval + len, s);
           }
           len += (ssize_t)strlen(s);
           if (round == 2) {

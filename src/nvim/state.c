@@ -264,7 +264,7 @@ void may_trigger_modechanged(void)
   vim_snprintf(pattern_buf, sizeof(pattern_buf), "%s:%s", last_mode, curr_mode);
 
   apply_autocmds(EVENT_MODECHANGED, pattern_buf, NULL, false, curbuf);
-  STRCPY(last_mode, curr_mode);
+  strcpy(last_mode, curr_mode);
 
   restore_v_event(v_event, &save_v_event);
 }

@@ -1693,22 +1693,22 @@ failed:
 
 #ifdef UNIX
       if (S_ISFIFO(perm)) {             // fifo
-        STRCAT(IObuff, _("[fifo]"));
+        strcat(IObuff, _("[fifo]"));
         c = true;
       }
       if (S_ISSOCK(perm)) {            // or socket
-        STRCAT(IObuff, _("[socket]"));
+        strcat(IObuff, _("[socket]"));
         c = true;
       }
 # ifdef OPEN_CHR_FILES
       if (S_ISCHR(perm)) {                          // or character special
-        STRCAT(IObuff, _("[character special]"));
+        strcat(IObuff, _("[character special]"));
         c = true;
       }
 # endif
 #endif
       if (curbuf->b_p_ro) {
-        STRCAT(IObuff, shortmess(SHM_RO) ? _("[RO]") : _("[readonly]"));
+        strcat(IObuff, shortmess(SHM_RO) ? _("[RO]") : _("[readonly]"));
         c = true;
       }
       if (read_no_eol_lnum) {
@@ -1716,18 +1716,18 @@ failed:
         c = true;
       }
       if (ff_error == EOL_DOS) {
-        STRCAT(IObuff, _("[CR missing]"));
+        strcat(IObuff, _("[CR missing]"));
         c = true;
       }
       if (split) {
-        STRCAT(IObuff, _("[long lines split]"));
+        strcat(IObuff, _("[long lines split]"));
         c = true;
       }
       if (notconverted) {
-        STRCAT(IObuff, _("[NOT converted]"));
+        strcat(IObuff, _("[NOT converted]"));
         c = true;
       } else if (converted) {
-        STRCAT(IObuff, _("[converted]"));
+        strcat(IObuff, _("[converted]"));
         c = true;
       }
       if (conv_error != 0) {
@@ -1739,7 +1739,7 @@ failed:
                  _("[ILLEGAL BYTE in line %" PRId64 "]"), (int64_t)illegal_byte);
         c = true;
       } else if (error) {
-        STRCAT(IObuff, _("[READ ERRORS]"));
+        strcat(IObuff, _("[READ ERRORS]"));
         c = true;
       }
       if (msg_add_fileformat(fileformat)) {
@@ -2128,17 +2128,17 @@ bool msg_add_fileformat(int eol_type)
 {
 #ifndef USE_CRNL
   if (eol_type == EOL_DOS) {
-    STRCAT(IObuff, shortmess(SHM_TEXT) ? _("[dos]") : _("[dos format]"));
+    strcat(IObuff, shortmess(SHM_TEXT) ? _("[dos]") : _("[dos format]"));
     return true;
   }
 #endif
   if (eol_type == EOL_MAC) {
-    STRCAT(IObuff, shortmess(SHM_TEXT) ? _("[mac]") : _("[mac format]"));
+    strcat(IObuff, shortmess(SHM_TEXT) ? _("[mac]") : _("[mac format]"));
     return true;
   }
 #ifdef USE_CRNL
   if (eol_type == EOL_UNIX) {
-    STRCAT(IObuff, shortmess(SHM_TEXT) ? _("[unix]") : _("[unix format]"));
+    strcat(IObuff, shortmess(SHM_TEXT) ? _("[unix]") : _("[unix format]"));
     return true;
   }
 #endif
@@ -2170,7 +2170,7 @@ void msg_add_lines(int insert_space, long lnum, off_T nchars)
 /// Append message for missing line separator to IObuff.
 void msg_add_eol(void)
 {
-  STRCAT(IObuff,
+  strcat(IObuff,
          shortmess(SHM_LAST) ? _("[noeol]") : _("[Incomplete last line]"));
 }
 
@@ -2623,7 +2623,7 @@ static int rename_with_tmp(const char *const from, const char *const to)
   }
 
   char tempname[MAXPATHL + 1];
-  STRCPY(tempname, from);
+  strcpy(tempname, from);
   for (int n = 123; n < 99999; n++) {
     char *tail = path_tail(tempname);
     snprintf(tail, (size_t)((MAXPATHL + 1) - (tail - tempname - 1)), "%d", n);

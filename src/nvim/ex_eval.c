@@ -390,8 +390,8 @@ char *get_exception_string(void *value, except_type_T type, char *cmdname, int *
     if (cmdname != NULL && *cmdname != NUL) {
       size_t cmdlen = strlen(cmdname);
       ret = xstrnsave("Vim(", 4 + cmdlen + 2 + strlen(mesg));
-      STRCPY(&ret[4], cmdname);
-      STRCPY(&ret[4 + cmdlen], "):");
+      strcpy(&ret[4], cmdname);
+      strcpy(&ret[4 + cmdlen], "):");
       val = ret + 4 + cmdlen + 2;
     } else {
       ret = xstrnsave("Vim:", 4 + strlen(mesg));
@@ -411,7 +411,7 @@ char *get_exception_string(void *value, except_type_T type, char *cmdname, int *
                           || (ascii_isdigit(p[3])
                               && p[4] == ':')))))) {
         if (*p == NUL || p == mesg) {
-          STRCAT(val, mesg);  // 'E123' missing or at beginning
+          strcat(val, mesg);  // 'E123' missing or at beginning
         } else {
           // '"filename" E123: message text'
           if (mesg[0] != '"' || p - 2 < &mesg[1]
@@ -420,7 +420,7 @@ char *get_exception_string(void *value, except_type_T type, char *cmdname, int *
             continue;
           }
 
-          STRCAT(val, p);
+          strcat(val, p);
           p[-2] = NUL;
           snprintf(val + strlen(p), strlen(" (%s)"), " (%s)", &mesg[1]);
           p[-2] = '"';

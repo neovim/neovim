@@ -668,7 +668,7 @@ void ex_sort(exarg_T *eap)
     if (!unique || i == 0 || string_compare(s, sortbuf1) != 0) {
       // Copy the line into a buffer, it may become invalid in
       // ml_append(). And it's needed for "unique".
-      STRCPY(sortbuf1, s);
+      strcpy(sortbuf1, s);
       if (ml_append(lnum++, sortbuf1, (colnr_T)0, false) == FAIL) {
         break;
       }
@@ -996,13 +996,13 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     t = xmalloc(len);
     *t = NUL;
     if (newcmd != NULL) {
-      STRCAT(t, newcmd);
+      strcat(t, newcmd);
     }
     if (ins_prevcmd) {
-      STRCAT(t, prevcmd);
+      strcat(t, prevcmd);
     }
     p = t + strlen(t);
-    STRCAT(t, trailarg);
+    strcat(t, trailarg);
     xfree(newcmd);
     newcmd = t;
 
@@ -1054,9 +1054,9 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
       xfree(newcmd);
     }
     newcmd = xmalloc(strlen(prevcmd) + 2 * strlen(p_shq) + 1);
-    STRCPY(newcmd, p_shq);
-    STRCAT(newcmd, prevcmd);
-    STRCAT(newcmd, p_shq);
+    strcpy(newcmd, p_shq);
+    strcat(newcmd, prevcmd);
+    strcat(newcmd, p_shq);
     free_newcmd = true;
   }
   if (addr_count == 0) {                // :!
@@ -1868,7 +1868,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, int oth
       // for the written file.
       if (*p_dir == NUL) {
         dir = xmalloc(5);
-        STRCPY(dir, ".");
+        strcpy(dir, ".");
       } else {
         dir = xmalloc(MAXPATHL);
         p = p_dir;
@@ -4078,7 +4078,7 @@ skip:
             // the line as reference, because the substitute may
             // have changed the number of characters.  Same for
             // "prev_matchcol".
-            STRCAT(new_start, sub_firstline + copycol);
+            strcat(new_start, sub_firstline + copycol);
             matchcol = (colnr_T)strlen(sub_firstline) - matchcol;
             prev_matchcol = (colnr_T)strlen(sub_firstline)
                             - prev_matchcol;
@@ -4303,7 +4303,7 @@ bool do_sub_msg(bool count_only)
        || count_only)
       && messaging()) {
     if (got_int) {
-      STRCPY(msg_buf, _("(Interrupted) "));
+      strcpy(msg_buf, _("(Interrupted) "));
     } else {
       *msg_buf = NUL;
     }
