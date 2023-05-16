@@ -486,7 +486,6 @@ end]]
     eq({ 'any-of?', 'contains?', 'eq?', 'has-ancestor?', 'has-parent?', 'is-main?', 'lua-match?', 'match?', 'vim-match?' }, res_list)
   end)
 
-
   it('allows to set simple ranges', function()
     insert(test_text)
 
@@ -528,6 +527,7 @@ end]]
 
     eq(range_tbl, { { { 0, 0, 0, 17, 1, 508 } } })
   end)
+
   it("allows to set complex ranges", function()
     insert(test_text)
 
@@ -990,6 +990,60 @@ int x = INT_MAX;
       { 'function', 1, 0, 3, 1 },
       { 'declaration', 2, 2, 2, 12 }
     }, run_query())
+
+  end)
+
+  it('handles ranges when source is a multiline string (#20419)', function()
+    local source = [==[
+      vim.cmd[[
+        set number
+        set cmdheight=2
+        set lastsatus=2
+      ]]
+
+      set query = [[;; query
+        ((function_call
+          name: [
+            (identifier) @_cdef_identifier
+            (_ _ (identifier) @_cdef_identifier)
+          ]
+          arguments: (arguments (string content: _ @injection.content)))
+          (#set! injection.language "c")
+          (#eq? @_cdef_identifier "cdef"))
+      ]]
+    ]==]
+
+    local r = exec_lua([[
+      local parser = vim.treesitter.get_string_parser(..., 'lua')
+      parser:parse()
+      local ranges = {}
+      parser:for_each_tree(function(tstree, tree)
+        ranges[tree:lang()] = { tstree:root():range(true) }
+      end)
+      return ranges
+    ]], source)
+
+    eq({
+      lua = { 0, 6, 6, 16, 4, 438 },
+      query = { 6, 20, 113, 15, 6, 431 },
+      vim = { 1, 0, 16, 4, 6, 89 }
+    }, r)
+
+    -- The above ranges are provided directly from treesitter, however query directives may mutate
+    -- the ranges but only provide a Range4. Strip the byte entries from the ranges and make sure
+    -- add_bytes() produces the same result.
+
+    local rb = exec_lua([[
+      local r, source = ...
+      local add_bytes = require('vim.treesitter._range').add_bytes
+      for lang, range in pairs(r) do
+        r[lang] = {range[1], range[2], range[4], range[5]}
+        r[lang] = add_bytes(source, r[lang])
+      end
+      return r
+    ]], r, source)
+
+    eq(rb, r)
 
   end)
 end)
