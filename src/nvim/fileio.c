@@ -1693,22 +1693,22 @@ failed:
 
 #ifdef UNIX
       if (S_ISFIFO(perm)) {             // fifo
-        STRCAT(IObuff, _("[fifo]"));
+        xstrlcat(IObuff, _("[fifo]"), IOSIZE);
         c = true;
       }
       if (S_ISSOCK(perm)) {            // or socket
-        STRCAT(IObuff, _("[socket]"));
+        xstrlcat(IObuff, _("[socket]"), IOSIZE);
         c = true;
       }
 # ifdef OPEN_CHR_FILES
       if (S_ISCHR(perm)) {                          // or character special
-        STRCAT(IObuff, _("[character special]"));
+        xstrlcat(IObuff, _("[character special]"), IOSIZE);
         c = true;
       }
 # endif
 #endif
       if (curbuf->b_p_ro) {
-        STRCAT(IObuff, shortmess(SHM_RO) ? _("[RO]") : _("[readonly]"));
+        xstrlcat(IObuff, shortmess(SHM_RO) ? _("[RO]") : _("[readonly]"), IOSIZE);
         c = true;
       }
       if (read_no_eol_lnum) {
@@ -1716,18 +1716,18 @@ failed:
         c = true;
       }
       if (ff_error == EOL_DOS) {
-        STRCAT(IObuff, _("[CR missing]"));
+        xstrlcat(IObuff, _("[CR missing]"), IOSIZE);
         c = true;
       }
       if (split) {
-        STRCAT(IObuff, _("[long lines split]"));
+        xstrlcat(IObuff, _("[long lines split]"), IOSIZE);
         c = true;
       }
       if (notconverted) {
-        STRCAT(IObuff, _("[NOT converted]"));
+        xstrlcat(IObuff, _("[NOT converted]"), IOSIZE);
         c = true;
       } else if (converted) {
-        STRCAT(IObuff, _("[converted]"));
+        xstrlcat(IObuff, _("[converted]"), IOSIZE);
         c = true;
       }
       if (conv_error != 0) {
@@ -1739,7 +1739,7 @@ failed:
                  _("[ILLEGAL BYTE in line %" PRId64 "]"), (int64_t)illegal_byte);
         c = true;
       } else if (error) {
-        STRCAT(IObuff, _("[READ ERRORS]"));
+        xstrlcat(IObuff, _("[READ ERRORS]"), IOSIZE);
         c = true;
       }
       if (msg_add_fileformat(fileformat)) {
@@ -2128,17 +2128,17 @@ bool msg_add_fileformat(int eol_type)
 {
 #ifndef USE_CRNL
   if (eol_type == EOL_DOS) {
-    STRCAT(IObuff, shortmess(SHM_TEXT) ? _("[dos]") : _("[dos format]"));
+    xstrlcat(IObuff, shortmess(SHM_TEXT) ? _("[dos]") : _("[dos format]"), IOSIZE);
     return true;
   }
 #endif
   if (eol_type == EOL_MAC) {
-    STRCAT(IObuff, shortmess(SHM_TEXT) ? _("[mac]") : _("[mac format]"));
+    xstrlcat(IObuff, shortmess(SHM_TEXT) ? _("[mac]") : _("[mac format]"), IOSIZE);
     return true;
   }
 #ifdef USE_CRNL
   if (eol_type == EOL_UNIX) {
-    STRCAT(IObuff, shortmess(SHM_TEXT) ? _("[unix]") : _("[unix format]"));
+    xstrlcat(IObuff, shortmess(SHM_TEXT) ? _("[unix]") : _("[unix format]"), IOSIZE);
     return true;
   }
 #endif
@@ -2170,8 +2170,7 @@ void msg_add_lines(int insert_space, long lnum, off_T nchars)
 /// Append message for missing line separator to IObuff.
 void msg_add_eol(void)
 {
-  STRCAT(IObuff,
-         shortmess(SHM_LAST) ? _("[noeol]") : _("[Incomplete last line]"));
+  xstrlcat(IObuff, shortmess(SHM_LAST) ? _("[noeol]") : _("[Incomplete last line]"), IOSIZE);
 }
 
 bool time_differs(const FileInfo *file_info, long mtime, long mtime_ns) FUNC_ATTR_CONST

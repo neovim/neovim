@@ -2667,7 +2667,7 @@ void ex_undolist(exarg_T *eap)
       undo_fmt_time(IObuff + strlen(IObuff), IOSIZE - strlen(IObuff), uhp->uh_time);
       if (uhp->uh_save_nr > 0) {
         while (strlen(IObuff) < 33) {
-          STRCAT(IObuff, " ");
+          xstrlcat(IObuff, " ", IOSIZE);
         }
         vim_snprintf_add(IObuff, IOSIZE, "  %3ld", uhp->uh_save_nr);
       }

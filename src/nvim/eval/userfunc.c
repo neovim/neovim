@@ -2892,9 +2892,9 @@ char *get_user_func_name(expand_T *xp, int idx)
 
     cat_func_name(IObuff, IOSIZE, fp);
     if (xp->xp_context != EXPAND_USER_FUNC) {
-      STRCAT(IObuff, "(");
+      xstrlcat(IObuff, "(", IOSIZE);
       if (!fp->uf_varargs && GA_EMPTY(&fp->uf_args)) {
-        STRCAT(IObuff, ")");
+        xstrlcat(IObuff, ")", IOSIZE);
       }
     }
     return IObuff;
@@ -3505,7 +3505,7 @@ char *get_return_cmd(void *rettv)
     s = "";
   }
 
-  STRCPY(IObuff, ":return ");
+  xstrlcpy(IObuff, ":return ", IOSIZE);
   xstrlcpy(IObuff + 8, s, IOSIZE - 8);
   if (strlen(s) + 8 >= IOSIZE) {
     STRCPY(IObuff + IOSIZE - 4, "...");

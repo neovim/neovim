@@ -1454,7 +1454,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   }
   // Fail if command is invalid
   if (eap->cmdidx == CMD_SIZE) {
-    STRCPY(IObuff, _(e_not_an_editor_command));
+    xstrlcpy(IObuff, _(e_not_an_editor_command), IOSIZE);
     // If the modifier was parsed OK the error must be in the following command
     char *cmdname = after_modifier ? after_modifier : cmdline;
     append_command(cmdname);
@@ -2044,7 +2044,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // Check for wrong commands.
   if (ea.cmdidx == CMD_SIZE) {
     if (!ea.skip) {
-      STRCPY(IObuff, _(e_not_an_editor_command));
+      xstrlcpy(IObuff, _(e_not_an_editor_command), IOSIZE);
       // If the modifier was parsed OK the error must be in the following
       // command
       char *cmdname = after_modifier ? after_modifier : *cmdlinep;
@@ -2321,7 +2321,7 @@ doend:
   if (errormsg != NULL && *errormsg != NUL && !did_emsg) {
     if (flags & DOCMD_VERBOSE) {
       if (errormsg != IObuff) {
-        STRCPY(IObuff, errormsg);
+        xstrlcpy(IObuff, errormsg, IOSIZE);
         errormsg = IObuff;
       }
       append_command(*ea.cmdlinep);
@@ -2888,7 +2888,7 @@ static void append_command(char *cmd)
     d -= utf_head_off(IObuff, d);
     STRCPY(d, "...");
   }
-  STRCAT(IObuff, ": ");
+  xstrlcat(IObuff, ": ", IOSIZE);
   d = IObuff + strlen(IObuff);
   while (*s != NUL && d - IObuff + 5 < IOSIZE) {
     if ((uint8_t)s[0] == 0xc2 && (uint8_t)s[1] == 0xa0) {
