@@ -15,21 +15,21 @@ function(get_changed_files outvar)
 
   # Changed files that have been committed
   execute_process(
-    COMMAND git diff --name-only ${ancestor_commit}...${current_branch}
+    COMMAND git diff --diff-filter=d --name-only ${ancestor_commit}...${current_branch}
     OUTPUT_VARIABLE committed_files
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   separate_arguments(committed_files NATIVE_COMMAND ${committed_files})
 
   # Unstaged files
   execute_process(
-    COMMAND git diff --name-only
+    COMMAND git diff --diff-filter=d --name-only
     OUTPUT_VARIABLE unstaged_files
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   separate_arguments(unstaged_files NATIVE_COMMAND ${unstaged_files})
 
   # Staged files
   execute_process(
-    COMMAND git diff --cached --name-only
+    COMMAND git diff --diff-filter=d --cached --name-only
     OUTPUT_VARIABLE staged_files
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   separate_arguments(staged_files NATIVE_COMMAND ${staged_files})
