@@ -1220,8 +1220,18 @@ static int node_parent(lua_State *L)
   if (!node_check(L, 1, &node)) {
     return 0;
   }
-  TSNode parent = ts_node_parent(node);
-  push_node(L, parent, 1);
+
+  TSTreeCursor cursor = ts_tree_cursor_new(node);
+
+  if (ts_tree_cursor_goto_parent(&cursor)) {
+    TSNode parent = ts_tree_cursor_current_node(&cursor);
+    push_node(L, parent, 1);
+  } else {
+    lua_pushnil(L);
+  }
+
+  ts_tree_cursor_delete(&cursor);
+
   return 1;
 }
 
@@ -1231,8 +1241,18 @@ static int node_next_sibling(lua_State *L)
   if (!node_check(L, 1, &node)) {
     return 0;
   }
-  TSNode sibling = ts_node_next_sibling(node);
-  push_node(L, sibling, 1);
+
+  TSTreeCursor cursor = ts_tree_cursor_new(node);
+
+  if (ts_tree_cursor_goto_next_sibling(&cursor)) {
+    TSNode sibling = ts_tree_cursor_current_node(&cursor);
+    push_node(L, sibling, 1);
+  } else {
+    lua_pushnil(L);
+  }
+
+  ts_tree_cursor_delete(&cursor);
+
   return 1;
 }
 
