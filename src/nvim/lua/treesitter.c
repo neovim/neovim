@@ -20,6 +20,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/globals.h"
+#include "nvim/lua/executor.h"
 #include "nvim/lua/treesitter.h"
 #include "nvim/macros.h"
 #include "nvim/map.h"
@@ -43,6 +44,13 @@ typedef struct {
   int max_match_id;
 } TSLua_cursor;
 
+typedef struct {
+  LuaRef cb;
+  lua_State *lstate;
+  bool lex;
+  bool parse;
+} TSLuaLoggerOpts;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/treesitter.c.generated.h"
 #endif
@@ -56,6 +64,8 @@ static struct luaL_Reg parser_meta[] = {
   { "included_ranges", parser_get_ranges },
   { "set_timeout", parser_set_timeout },
   { "timeout", parser_get_timeout },
+  { "_set_logger", parser_set_logger },
+  { "_logger", parser_get_logger },
   { NULL, NULL }
 };
 
@@ -320,6 +330,12 @@ static int parser_gc(lua_State *L)
   TSParser **p = parser_check(L, 1);
   if (!p) {
     return 0;
+  }
+
+  TSLogger logger = ts_parser_logger(*p);
+  if (logger.log) {
+    TSLuaLoggerOpts *opts = (TSLuaLoggerOpts *)logger.payload;
+    xfree(opts);
   }
 
   ts_parser_delete(*p);
@@ -669,7 +685,80 @@ static int parser_get_timeout(lua_State *L)
   }
 
   lua_pushinteger(L, (long)ts_parser_timeout_micros(*p));
+  return 1;
+}
+
+static void logger_cb(void *payload, TSLogType logtype, const char *s)
+{
+  TSLuaLoggerOpts *opts = (TSLuaLoggerOpts *)payload;
+  if ((!opts->lex && logtype == TSLogTypeLex)
+      || (!opts->parse && logtype == TSLogTypeParse)) {
+    return;
+  }
+
+  lua_State *lstate = opts->lstate;
+
+  nlua_pushref(lstate, opts->cb);
+  lua_pushstring(lstate, logtype == TSLogTypeParse ? "parse" : "lex");
+  lua_pushstring(lstate, s);
+  if (lua_pcall(lstate, 2, 0, 0)) {
+    luaL_error(lstate, "Error executing treesitter logger callback");
+  }
+}
+
+static int parser_set_logger(lua_State *L)
+{
+  TSParser **p = parser_check(L, 1);
+  if (!p) {
+    return 0;
+  }
+
+  if (!lua_isboolean(L, 2)) {
+    return luaL_argerror(L, 2, "boolean expected");
+  }
+
+  if (!lua_isboolean(L, 3)) {
+    return luaL_argerror(L, 3, "boolean expected");
+  }
+
+  if (!lua_isfunction(L, 4)) {
+    return luaL_argerror(L, 4, "function expected");
+  }
+
+  TSLuaLoggerOpts *opts = xmalloc(sizeof(TSLuaLoggerOpts));
+
+  *opts = (TSLuaLoggerOpts){
+    .lex = lua_toboolean(L, 2),
+    .parse = lua_toboolean(L, 3),
+    .cb = nlua_ref_global(L, 4),
+    .lstate = L
+  };
+
+  TSLogger logger = {
+    .payload = (void *)opts,
+    .log = logger_cb
+  };
+
+  ts_parser_set_logger(*p, logger);
   return 0;
+}
+
+static int parser_get_logger(lua_State *L)
+{
+  TSParser **p = parser_check(L, 1);
+  if (!p) {
+    return 0;
+  }
+
+  TSLogger logger = ts_parser_logger(*p);
+  if (logger.log) {
+    TSLuaLoggerOpts *opts = (TSLuaLoggerOpts *)logger.payload;
+    nlua_pushref(L, opts->cb);
+  } else {
+    lua_pushnil(L);
+  }
+
+  return 1;
 }
 
 // Tree methods
