@@ -564,7 +564,7 @@ static void broadcast_event(const char *name, Array args)
   kvec_t(Channel *) subscribed = KV_INITIAL_VALUE;
   Channel *channel;
 
-  pmap_foreach_value(&channels, channel, {
+  map_foreach_value(&channels, channel, {
     if (channel->is_rpc
         && set_has(cstr_t, channel->rpc.subscribed_events, name)) {
       kv_push(subscribed, channel);

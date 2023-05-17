@@ -73,6 +73,11 @@ function Session:next_message(timeout)
     return table.remove(self._pending_messages, 1)
   end
 
+  -- if closed, only return pending messages
+  if self.closed then
+    return nil
+  end
+
   self:_run(on_request, on_notification, timeout)
   return table.remove(self._pending_messages, 1)
 end
@@ -139,6 +144,7 @@ function Session:close(signal)
   if not self._timer:is_closing() then self._timer:close() end
   if not self._prepare:is_closing() then self._prepare:close() end
   self._msgpack_rpc_stream:close(signal)
+  self.closed = true
 end
 
 function Session:_yielding_request(method, args)

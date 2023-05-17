@@ -173,7 +173,7 @@ void tslua_init(lua_State *L)
 int tslua_has_language(lua_State *L)
 {
   const char *lang_name = luaL_checkstring(L, 1);
-  lua_pushboolean(L, pmap_has(cstr_t)(&langs, lang_name));
+  lua_pushboolean(L, map_has(cstr_t, &langs, lang_name));
   return 1;
 }
 
@@ -190,7 +190,7 @@ int tslua_add_language(lua_State *L)
     symbol_name = luaL_checkstring(L, 3);
   }
 
-  if (pmap_has(cstr_t)(&langs, lang_name)) {
+  if (map_has(cstr_t, &langs, lang_name)) {
     lua_pushboolean(L, true);
     return 1;
   }
@@ -243,7 +243,7 @@ int tslua_add_language(lua_State *L)
 int tslua_remove_lang(lua_State *L)
 {
   const char *lang_name = luaL_checkstring(L, 1);
-  bool present = pmap_has(cstr_t)(&langs, lang_name);
+  bool present = map_has(cstr_t, &langs, lang_name);
   if (present) {
     cstr_t key;
     pmap_del(cstr_t)(&langs, lang_name, &key);

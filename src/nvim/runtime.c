@@ -731,7 +731,7 @@ static bool path_is_after(char *buf, size_t buflen)
 RuntimeSearchPath runtime_search_path_build(void)
 {
   kvec_t(String) pack_entries = KV_INITIAL_VALUE;
-  Map(String, handle_T) pack_used = MAP_INIT;
+  Map(String, int) pack_used = MAP_INIT;
   Set(String) rtp_used = SET_INIT;
   RuntimeSearchPath search_path = KV_INITIAL_VALUE;
   CharVec after_path = KV_INITIAL_VALUE;
@@ -744,7 +744,7 @@ RuntimeSearchPath runtime_search_path_build(void)
     String the_entry = { .data = cur_entry, .size = strlen(buf) };
 
     kv_push(pack_entries, the_entry);
-    map_put(String, handle_T)(&pack_used, the_entry, 0);
+    map_put(String, int)(&pack_used, the_entry, 0);
   }
 
   char *rtp_entry;
@@ -761,7 +761,7 @@ RuntimeSearchPath runtime_search_path_build(void)
     // fact: &rtp entries can contain wild chars
     expand_rtp_entry(&search_path, &rtp_used, buf, false);
 
-    handle_T *h = map_ref(String, handle_T)(&pack_used, cstr_as_string(buf), NULL);
+    handle_T *h = map_ref(String, int)(&pack_used, cstr_as_string(buf), NULL);
     if (h) {
       (*h)++;
       expand_pack_entry(&search_path, &rtp_used, &after_path, buf, buflen);
@@ -770,7 +770,7 @@ RuntimeSearchPath runtime_search_path_build(void)
 
   for (size_t i = 0; i < kv_size(pack_entries); i++) {
     String item = kv_A(pack_entries, i);
-    handle_T h = map_get(String, handle_T)(&pack_used, item);
+    handle_T h = map_get(String, int)(&pack_used, item);
     if (h == 0) {
       expand_pack_entry(&search_path, &rtp_used, &after_path, item.data, item.size);
     }

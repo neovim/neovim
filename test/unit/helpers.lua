@@ -139,6 +139,7 @@ local function filter_complex_blocks(body)
             or string.find(line, "_Float")
             or string.find(line, "msgpack_zone_push_finalizer")
             or string.find(line, "msgpack_unpacker_reserve_buffer")
+            or string.find(line, "value_init_")
             or string.find(line, "UUID_NULL")  -- static const uuid_t UUID_NULL = {...}
             or string.find(line, "inline _Bool")) then
       result[#result + 1] = line

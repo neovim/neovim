@@ -548,10 +548,8 @@ void marktree_clear(MarkTree *b)
     marktree_free_node(b->root);
     b->root = NULL;
   }
-  if (b->id2node->table.keys) {
-    map_destroy(uint64_t, b->id2node);
-    *b->id2node = (PMap(uint64_t)) MAP_INIT;
-  }
+  map_destroy(uint64_t, b->id2node);
+  *b->id2node = (PMap(uint64_t)) MAP_INIT;
   b->n_keys = 0;
   b->n_nodes = 0;
 }

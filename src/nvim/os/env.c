@@ -64,7 +64,7 @@ const char *os_getenv(const char *name)
     return NULL;
   }
   int r = 0;
-  if (pmap_has(cstr_t)(&envmap, name)
+  if (map_has(cstr_t, &envmap, name)
       && !!(e = (char *)pmap_get(cstr_t)(&envmap, name))) {
     if (e[0] != '\0') {
       // Found non-empty cached env var.

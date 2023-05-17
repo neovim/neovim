@@ -167,7 +167,7 @@ void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id, Dict(highlight) 
     return;
   }
   if ((attrs.rgb_ae_attr & HL_DEFAULT)
-      && map_has(ColorKey, ColorItem)(&ns_hls, ColorKey(ns_id, hl_id))) {
+      && map_has(ColorKey, &ns_hls, (ColorKey(ns_id, hl_id)))) {
     return;
   }
   DecorProvider *p = get_decor_provider(ns_id, true);

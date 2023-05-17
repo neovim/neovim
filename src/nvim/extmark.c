@@ -291,7 +291,7 @@ bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_r
   }
   uint64_t id;
   ssize_t decor_id;
-  map_foreach(ssize_t, &delete_set, id, decor_id, {
+  map_foreach(&delete_set, id, decor_id, {
     mtkey_t mark = marktree_lookup(buf->b_marktree, id, itr);
     assert(marktree_itr_valid(itr));
     marktree_del_itr(buf->b_marktree, itr, false);
