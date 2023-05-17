@@ -112,7 +112,7 @@ describe('TUI', function()
     child_session:request("nvim_exec", [[
     set more
     func! ManyErr()
-      for i in range(10)
+      for i in range(20)
         echoerr "FAIL ".i
       endfor
     endfunc
@@ -128,7 +128,35 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]]}
 
-    feed_data('d')
+    screen:try_resize(50,10)
+    screen:expect{grid=[[
+      :call ManyErr()                                   |
+      {8:Error detected while processing function ManyErr:} |
+      {11:line    2:}                                        |
+      {8:FAIL 0}                                            |
+      {8:FAIL 1}                                            |
+      {8:FAIL 2}                                            |
+                                                        |
+                                                        |
+      {10:-- More --}{1: }                                       |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    feed_data('j')
+    screen:expect{grid=[[
+      {8:Error detected while processing function ManyErr:} |
+      {11:line    2:}                                        |
+      {8:FAIL 0}                                            |
+      {8:FAIL 1}                                            |
+      {8:FAIL 2}                                            |
+      {8:FAIL 3}                                            |
+      {8:FAIL 4}                                            |
+      {8:FAIL 5}                                            |
+      {10:-- More --}{1: }                                       |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    screen:try_resize(50,7)
     screen:expect{grid=[[
       {8:FAIL 1}                                            |
       {8:FAIL 2}                                            |
