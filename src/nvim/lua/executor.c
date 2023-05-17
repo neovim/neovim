@@ -910,7 +910,7 @@ static void nlua_common_free_all_mem(lua_State *lstate)
   if (nlua_track_refs) {
     // in case there are leaked luarefs, leak the associated memory
     // to get LeakSanitizer stacktraces on exit
-    pmap_destroy(handle_T)(&ref_state->ref_markers);
+    map_destroy(int, &ref_state->ref_markers);
   }
 #endif
 
@@ -1285,7 +1285,7 @@ LuaRef nlua_ref(lua_State *lstate, nlua_ref_state_t *ref_state, int index)
 #ifdef NLUA_TRACK_REFS
     if (nlua_track_refs) {
       // dummy allocation to make LeakSanitizer track our luarefs
-      pmap_put(handle_T)(&ref_state->ref_markers, ref, xmalloc(3));
+      pmap_put(int)(&ref_state->ref_markers, ref, xmalloc(3));
     }
 #endif
   }
@@ -1305,7 +1305,7 @@ void nlua_unref(lua_State *lstate, nlua_ref_state_t *ref_state, LuaRef ref)
 #ifdef NLUA_TRACK_REFS
     // NB: don't remove entry from map to track double-unref
     if (nlua_track_refs) {
-      xfree(pmap_get(handle_T)(&ref_state->ref_markers, ref));
+      xfree(pmap_get(int)(&ref_state->ref_markers, ref));
     }
 #endif
     luaL_unref(lstate, LUA_REGISTRYINDEX, ref);

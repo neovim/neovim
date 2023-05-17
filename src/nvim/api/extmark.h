@@ -6,7 +6,6 @@
 #include "nvim/decoration.h"
 #include "nvim/macros.h"
 #include "nvim/map.h"
-#include "nvim/map_defs.h"
 #include "nvim/types.h"
 
 EXTERN Map(String, handle_T) namespace_ids INIT(= MAP_INIT);

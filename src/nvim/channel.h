@@ -15,7 +15,6 @@
 #include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/map.h"
-#include "nvim/map_defs.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/os/pty_process.h"
 #include "nvim/terminal.h"

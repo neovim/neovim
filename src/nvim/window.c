@@ -4077,7 +4077,7 @@ static tabpage_T *alloc_tabpage(void)
   static int last_tp_handle = 0;
   tabpage_T *tp = xcalloc(1, sizeof(tabpage_T));
   tp->handle = ++last_tp_handle;
-  pmap_put(handle_T)(&tabpage_handles, tp->handle, tp);
+  pmap_put(int)(&tabpage_handles, tp->handle, tp);
 
   // Init t: variables.
   tp->tp_vars = tv_dict_alloc();
@@ -4090,7 +4090,7 @@ static tabpage_T *alloc_tabpage(void)
 
 void free_tabpage(tabpage_T *tp)
 {
-  pmap_del(handle_T)(&tabpage_handles, tp->handle);
+  pmap_del(int)(&tabpage_handles, tp->handle, NULL);
   diff_clear(tp);
   for (int idx = 0; idx < SNAP_COUNT; idx++) {
     clear_snapshot(tp, idx);
@@ -5062,7 +5062,7 @@ static win_T *win_alloc(win_T *after, bool hidden)
   win_T *new_wp = xcalloc(1, sizeof(win_T));
 
   new_wp->handle = ++last_win_id;
-  pmap_put(handle_T)(&window_handles, new_wp->handle, new_wp);
+  pmap_put(int)(&window_handles, new_wp->handle, new_wp);
 
   grid_assign_handle(&new_wp->w_grid_alloc);
 
@@ -5124,7 +5124,7 @@ void free_wininfo(wininfo_T *wip, buf_T *bp)
 /// @param tp  tab page "win" is in, NULL for current
 static void win_free(win_T *wp, tabpage_T *tp)
 {
-  pmap_del(handle_T)(&window_handles, wp->handle);
+  pmap_del(int)(&window_handles, wp->handle, NULL);
   clearFolding(wp);
 
   // reduce the reference count to the argument list.

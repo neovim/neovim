@@ -646,21 +646,20 @@ int do_in_path_and_pp(char *path, char *name, int flags, DoInRuntimepathCB callb
   return done;
 }
 
-static void push_path(RuntimeSearchPath *search_path, Map(String, handle_T) *rtp_used, char *entry,
+static void push_path(RuntimeSearchPath *search_path, Set(String) *rtp_used, char *entry,
                       bool after)
 {
-  handle_T h = map_get(String, handle_T)(rtp_used, cstr_as_string(entry));
-  if (h == 0) {
-    char *allocated = xstrdup(entry);
-    map_put(String, handle_T)(rtp_used, cstr_as_string(allocated), 1);
-    kv_push(*search_path, ((SearchPathItem){ allocated, after, kNone }));
+  String *key_alloc;
+  if (set_put_ref(String, rtp_used, cstr_as_string(entry), &key_alloc)) {
+    *key_alloc = cstr_to_string(entry);
+    kv_push(*search_path, ((SearchPathItem){ key_alloc->data, after, kNone }));
   }
 }
 
-static void expand_rtp_entry(RuntimeSearchPath *search_path, Map(String, handle_T) *rtp_used,
-                             char *entry, bool after)
+static void expand_rtp_entry(RuntimeSearchPath *search_path, Set(String) *rtp_used, char *entry,
+                             bool after)
 {
-  if (map_get(String, handle_T)(rtp_used, cstr_as_string(entry))) {
+  if (set_has(String, rtp_used, cstr_as_string(entry))) {
     return;
   }
 
@@ -679,7 +678,7 @@ static void expand_rtp_entry(RuntimeSearchPath *search_path, Map(String, handle_
   }
 }
 
-static void expand_pack_entry(RuntimeSearchPath *search_path, Map(String, handle_T) *rtp_used,
+static void expand_pack_entry(RuntimeSearchPath *search_path, Set(String) *rtp_used,
                               CharVec *after_path, char *pack_entry, size_t pack_entry_len)
 {
   static char buf[MAXPATHL];
@@ -712,10 +711,8 @@ static bool path_is_after(char *buf, size_t buflen)
 RuntimeSearchPath runtime_search_path_build(void)
 {
   kvec_t(String) pack_entries = KV_INITIAL_VALUE;
-  // TODO(bfredl): these should just be sets, when Set(String) is do merge to
-  // master.
   Map(String, handle_T) pack_used = MAP_INIT;
-  Map(String, handle_T) rtp_used = MAP_INIT;
+  Set(String) rtp_used = SET_INIT;
   RuntimeSearchPath search_path = KV_INITIAL_VALUE;
   CharVec after_path = KV_INITIAL_VALUE;
 
@@ -744,7 +741,7 @@ RuntimeSearchPath runtime_search_path_build(void)
     // fact: &rtp entries can contain wild chars
     expand_rtp_entry(&search_path, &rtp_used, buf, false);
 
-    handle_T *h = map_ref(String, handle_T)(&pack_used, cstr_as_string(buf), false);
+    handle_T *h = map_ref(String, handle_T)(&pack_used, cstr_as_string(buf), NULL);
     if (h) {
       (*h)++;
       expand_pack_entry(&search_path, &rtp_used, &after_path, buf, buflen);
@@ -774,8 +771,8 @@ RuntimeSearchPath runtime_search_path_build(void)
   // strings are not owned
   kv_destroy(pack_entries);
   kv_destroy(after_path);
-  map_destroy(String, handle_T)(&pack_used);
-  map_destroy(String, handle_T)(&rtp_used);
+  map_destroy(String, &pack_used);
+  set_destroy(String, &rtp_used);
 
   return search_path;
 }

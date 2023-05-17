@@ -50,7 +50,7 @@ static Map(int, int) blendthrough_attr_entries = MAP_INIT;
 /// highlight entries private to a namespace
 static Map(ColorKey, ColorItem) ns_hls;
 typedef int NSHlAttr[HLF_COUNT + 1];
-static PMap(handle_T) ns_hl_attr;
+static PMap(int) ns_hl_attr;
 
 void highlight_init(void)
 {
@@ -277,7 +277,7 @@ bool hl_check_ns(void)
   hl_attr_active = highlight_attr;
   if (ns > 0) {
     update_ns_hl(ns);
-    NSHlAttr *hl_def = (NSHlAttr *)pmap_get(handle_T)(&ns_hl_attr, ns);
+    NSHlAttr *hl_def = (NSHlAttr *)pmap_get(int)(&ns_hl_attr, ns);
     if (hl_def) {
       hl_attr_active = *hl_def;
     }
@@ -335,7 +335,7 @@ void update_window_hl(win_T *wp, bool invalid)
   if (ns_id != wp->w_ns_hl_active || wp->w_ns_hl_attr == NULL) {
     wp->w_ns_hl_active = ns_id;
 
-    wp->w_ns_hl_attr = *(NSHlAttr *)pmap_get(handle_T)(&ns_hl_attr, ns_id);
+    wp->w_ns_hl_attr = *(NSHlAttr *)pmap_get(int)(&ns_hl_attr, ns_id);
     if (!wp->w_ns_hl_attr) {
       // No specific highlights, use the defaults.
       wp->w_ns_hl_attr = highlight_attr;
@@ -419,7 +419,7 @@ void update_ns_hl(int ns_id)
     return;
   }
 
-  NSHlAttr **alloc = (NSHlAttr **)pmap_ref(handle_T)(&ns_hl_attr, ns_id, true);
+  NSHlAttr **alloc = (NSHlAttr **)pmap_put_ref(int)(&ns_hl_attr, ns_id, NULL, NULL);
   if (*alloc == NULL) {
     *alloc = xmalloc(sizeof(**alloc));
   }
@@ -491,28 +491,28 @@ void clear_hl_tables(bool reinit)
 {
   if (reinit) {
     kv_size(attr_entries) = 1;
-    map_clear(HlEntry, int)(&attr_entry_ids);
-    map_clear(int, int)(&combine_attr_entries);
-    map_clear(int, int)(&blend_attr_entries);
-    map_clear(int, int)(&blendthrough_attr_entries);
+    map_clear(HlEntry, &attr_entry_ids);
+    map_clear(int, &combine_attr_entries);
+    map_clear(int, &blend_attr_entries);
+    map_clear(int, &blendthrough_attr_entries);
     memset(highlight_attr_last, -1, sizeof(highlight_attr_last));
     highlight_attr_set_all();
     highlight_changed();
     screen_invalidate_highlights();
   } else {
     kv_destroy(attr_entries);
-    map_destroy(HlEntry, int)(&attr_entry_ids);
-    map_destroy(int, int)(&combine_attr_entries);
-    map_destroy(int, int)(&blend_attr_entries);
-    map_destroy(int, int)(&blendthrough_attr_entries);
-    map_destroy(ColorKey, ColorItem)(&ns_hls);
+    map_destroy(HlEntry, &attr_entry_ids);
+    map_destroy(int, &combine_attr_entries);
+    map_destroy(int, &blend_attr_entries);
+    map_destroy(int, &blendthrough_attr_entries);
+    map_destroy(ColorKey, &ns_hls);
   }
 }
 
 void hl_invalidate_blends(void)
 {
-  map_clear(int, int)(&blend_attr_entries);
-  map_clear(int, int)(&blendthrough_attr_entries);
+  map_clear(int, &blend_attr_entries);
+  map_clear(int, &blendthrough_attr_entries);
   highlight_changed();
   update_window_hl(curwin, true);
 }

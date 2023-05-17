@@ -50,11 +50,6 @@
 # include "extmark.c.generated.h"
 #endif
 
-static uint32_t *buf_ns_ref(buf_T *buf, uint32_t ns_id, bool put)
-{
-  return map_ref(uint32_t, uint32_t)(buf->b_extmark_ns, ns_id, put);
-}
-
 /// Create or update an extmark
 ///
 /// must not be used during iteration!
@@ -62,7 +57,7 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
                  colnr_T end_col, Decoration *decor, bool right_gravity, bool end_right_gravity,
                  ExtmarkOp op, Error *err)
 {
-  uint32_t *ns = buf_ns_ref(buf, ns_id, true);
+  uint32_t *ns = map_put_ref(uint32_t, uint32_t)(buf->b_extmark_ns, ns_id, NULL, NULL);
   uint32_t id = idp ? *idp : 0;
   bool decor_full = false;
 
@@ -237,7 +232,7 @@ bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_r
   bool all_ns = (ns_id == 0);
   uint32_t *ns = NULL;
   if (!all_ns) {
-    ns = buf_ns_ref(buf, ns_id, false);
+    ns = map_ref(uint32_t, uint32_t)(buf->b_extmark_ns, ns_id, NULL);
     if (!ns) {
       // nothing to do
       return false;
@@ -258,15 +253,14 @@ bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_r
         || (mark.pos.row == u_row && mark.pos.col > u_col)) {
       break;
     }
-    ssize_t *del_status = map_ref(uint64_t, ssize_t)(&delete_set, mt_lookup_key(mark),
-                                                     false);
+    ssize_t *del_status = map_ref(uint64_t, ssize_t)(&delete_set, mt_lookup_key(mark), NULL);
     if (del_status) {
       marktree_del_itr(buf->b_marktree, itr, false);
       if (*del_status >= 0) {  // we had a decor_id
         DecorItem it = kv_A(decors, *del_status);
         decor_remove(buf, it.row1, mark.pos.row, mark.decor_full);
       }
-      map_del(uint64_t, ssize_t)(&delete_set, mt_lookup_key(mark));
+      map_del(uint64_t, ssize_t)(&delete_set, mt_lookup_key(mark), NULL);
       continue;
     }
 
@@ -294,7 +288,7 @@ bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_r
   }
   uint64_t id;
   ssize_t decor_id;
-  map_foreach(&delete_set, id, decor_id, {
+  map_foreach(ssize_t, &delete_set, id, decor_id, {
     mtkey_t mark = marktree_lookup(buf->b_marktree, id, itr);
     assert(marktree_itr_valid(itr));
     marktree_del_itr(buf->b_marktree, itr, false);
@@ -303,7 +297,7 @@ bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_r
       decor_remove(buf, it.row1, mark.pos.row, mark.decor_full);
     }
   });
-  map_clear(uint64_t, ssize_t)(&delete_set);
+  map_clear(uint64_t, &delete_set);
   kv_size(decors) = 0;
   return marks_cleared;
 }
@@ -424,8 +418,8 @@ void extmark_free_all(buf_T *buf)
 
   marktree_clear(buf->b_marktree);
 
-  map_destroy(uint32_t, uint32_t)(buf->b_extmark_ns);
-  map_init(uint32_t, uint32_t, buf->b_extmark_ns);
+  map_destroy(uint32_t, buf->b_extmark_ns);
+  *buf->b_extmark_ns = (Map(uint32_t, uint32_t)) MAP_INIT;
 }
 
 /// Save info for undo/redo of set marks

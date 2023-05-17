@@ -33,12 +33,10 @@
 void api_extmark_free_all_mem(void)
 {
   String name;
-  handle_T id;
-  map_foreach(&namespace_ids, name, id, {
-    (void)id;
+  map_foreach_key(&namespace_ids, name, {
     xfree(name.data);
   })
-  map_destroy(String, handle_T)(&namespace_ids);
+  map_destroy(String, &namespace_ids);
 }
 
 /// Creates a new namespace or gets an existing one. \*namespace\*
@@ -77,7 +75,7 @@ Dictionary nvim_get_namespaces(void)
   String name;
   handle_T id;
 
-  map_foreach(&namespace_ids, name, id, {
+  map_foreach(handle_T, &namespace_ids, name, id, {
     PUT(retval, name.data, INTEGER_OBJ(id));
   })
 
@@ -88,7 +86,7 @@ const char *describe_ns(NS ns_id)
 {
   String name;
   handle_T id;
-  map_foreach(&namespace_ids, name, id, {
+  map_foreach(handle_T, &namespace_ids, name, id, {
     if ((NS)id == ns_id && name.size) {
       return name.data;
     }

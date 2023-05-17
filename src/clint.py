@@ -2244,6 +2244,7 @@ def CheckSpacing(filename, clean_lines, linenum, error):
                    r'(?<!\bkbtree_t)'
                    r'(?<!\bkbitr_t)'
                    r'(?<!\bPMap)'
+                   r'(?<!\bSet)'
                    r'(?<!\bArrayOf)'
                    r'(?<!\bDictionaryOf)'
                    r'(?<!\bDict)'

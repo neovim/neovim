@@ -9,7 +9,6 @@
 #include "nvim/assert.h"
 #include "nvim/garray.h"
 #include "nvim/map.h"
-#include "nvim/map_defs.h"
 #include "nvim/pos.h"
 #include "nvim/types.h"
 
