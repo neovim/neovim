@@ -38,7 +38,7 @@ local M = {}
 --- })
 --- </pre>
 ---
---- @note `opts.multipart_form` and `opts.data` are mutually exclusive.
+--- @note `opts.multipart_form`, `opts.upload_file`, and `opts.data` are mutually exclusive.
 --- @see man://libcurl-errors
 ---
 --- @param url string
@@ -46,6 +46,7 @@ local M = {}
 ---   - multipart_form table<string,string>|nil Key-Value form data. Implies a `multipart/form-data`
 ---   request.
 ---   - data string|table|nil Data to send with the request. A table implies a JSON request.
+---   - upload_file string|nil A file to upload. Can be relative.
 ---   - headers table<string, string | string[]>|nil Headers to send. A header can have
 ---   multiple values.
 ---   - method string|nil HTTP method to use. Defaults to GET.
@@ -113,6 +114,10 @@ function M.fetch(url, opts)
   if type(opts.data) == 'table' then
     opts.data = vim.json.encode(opts.data)
     opts.headers['Content-Type'] = 'application/json'
+  end
+
+  if opts.upload_file ~= nil then
+    opts.upload_file = vim.fn.fnameescape(vim.fn.fnamemodify(opts.upload_file, ':p'))
   end
 
   return vim._fetch(url, on_err, opts)

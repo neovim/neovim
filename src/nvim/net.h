@@ -28,6 +28,7 @@ typedef struct {
   int on_err;
   curl_mime *multipart_form;
   char *data;
+  FILE *upload_file;
   struct curl_slist *headers;
   lua_State *lstate;
 } FetchData;

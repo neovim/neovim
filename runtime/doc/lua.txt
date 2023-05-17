@@ -3394,7 +3394,8 @@ fetch({url}, {opts})                                         *vim.net.fetch()*
 <
 
     Note:
-        `opts.multipart_form` and `opts.data` are mutually exclusive.
+        `opts.multipart_form`, `opts.upload_file`, and `opts.data` are
+        mutually exclusive.
 
     Parameters: ~
       • {url}   string
@@ -3403,6 +3404,7 @@ fetch({url}, {opts})                                         *vim.net.fetch()*
                   Implies a `multipart/form-data` request.
                 • data string|table|nil Data to send with the request. A table
                   implies a JSON request.
+                • upload_file string|nil A file to upload. Can be relative.
                 • headers table<string, string | string[]>|nil Headers to
                   send. A header can have multiple values.
                 • method string|nil HTTP method to use. Defaults to GET.

@@ -205,6 +205,11 @@ static void fetch_worker(void *arg)
   }
 
 cleanup:
+  if (fetch_data->upload_file != NULL) {
+    fclose(fetch_data->upload_file);
+    fetch_data->upload_file = NULL;
+  }
+
   XFREE_CLEAR(fetch_data->data);
   curl_mime_free(fetch_data->multipart_form);
   curl_slist_free_all(fetch_data->headers);
@@ -253,6 +258,7 @@ int nlua_fetch(lua_State *lstate)
   fetch_data->headers = NULL;
   fetch_data->data = NULL;
   fetch_data->multipart_form = NULL;
+  fetch_data->upload_file = NULL;
 
   lua_pushvalue(lstate, 2);
   fetch_data->on_err = luaL_ref(lstate, LUA_REGISTRYINDEX);
@@ -377,13 +383,47 @@ int nlua_fetch(lua_State *lstate)
         return 0;
       }
 
-      if (fetch_data->multipart_form != NULL) {
-        luaL_error(lstate, "data and multipart_form are mutually exclusive");
+      if (fetch_data->multipart_form != NULL || fetch_data->upload_file != NULL) {
+        luaL_error(lstate, "data, multipart_form, and file are mutually exclusive");
         return 0;
       }
 
       fetch_data->data = xstrdup(data);
       curl_easy_setopt(easy_handle, CURLOPT_POSTFIELDS, fetch_data->data);
+    }
+
+    if (strcmp("upload_file", key) == 0) {
+      char *file = (char *)luaL_checkstring(lstate, VALUE);
+
+      if (!file) {
+        luaL_error(lstate, "file must be a string");
+        return 0;
+      }
+
+      if (fetch_data->multipart_form != NULL || fetch_data->data != NULL) {
+        luaL_error(lstate, "data, multipart_form, and file are mutually exclusive");
+        return 0;
+      }
+
+      struct stat file_info;
+
+      if (stat(file, &file_info) == -1) {
+        luaL_error(lstate, "failed to stat upload file");
+        return 0;
+      }
+
+      FILE *fd = fopen(file, "rb");
+
+      if (!fd) {
+        luaL_error(lstate, "failed to read upload file");
+        return 0;
+      }
+
+      fetch_data->upload_file = fd;
+      curl_easy_setopt(easy_handle, CURLOPT_UPLOAD, 1L);
+      curl_easy_setopt(easy_handle, CURLOPT_READFUNCTION, fread);
+      curl_easy_setopt(easy_handle, CURLOPT_READDATA, fetch_data->upload_file);
+      curl_easy_setopt(easy_handle, CURLOPT_INFILESIZE_LARGE, (curl_off_t)file_info.st_size);
     }
 
     if (strcmp("multipart_form", key) == 0) {
@@ -392,8 +432,8 @@ int nlua_fetch(lua_State *lstate)
         return 0;
       }
 
-      if (fetch_data->data != NULL) {
-        luaL_error(lstate, "data and multipart_form are mutually exclusive");
+      if (fetch_data->data != NULL || fetch_data->upload_file != NULL) {
+        luaL_error(lstate, "data, multipart_form, and file are mutually exclusive");
         return 0;
       }
 
