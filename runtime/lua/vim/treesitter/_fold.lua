@@ -279,7 +279,8 @@ function M.foldexpr(lnum)
   lnum = lnum or vim.v.lnum
   local bufnr = api.nvim_get_current_buf()
 
-  if not vim.treesitter._has_parser(bufnr) or not lnum then
+  local parser = vim.F.npcall(vim.treesitter.get_parser, bufnr)
+  if not parser then
     return '0'
   end
 
@@ -287,7 +288,6 @@ function M.foldexpr(lnum)
     foldinfos[bufnr] = FoldInfo.new()
     get_folds_levels(bufnr, foldinfos[bufnr])
 
-    local parser = vim.treesitter.get_parser(bufnr)
     parser:register_cbs({
       on_changedtree = function(tree_changes)
         on_changedtree(bufnr, foldinfos[bufnr], tree_changes)

@@ -136,16 +136,6 @@ function M.get_parser(bufnr, lang, opts)
   return parsers[bufnr]
 end
 
----@package
----@param bufnr (integer|nil) Buffer number
----@return boolean
-function M._has_parser(bufnr)
-  if bufnr == nil or bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
-  return parsers[bufnr] ~= nil
-end
-
 --- Returns a string parser
 ---
 ---@param str string Text to parse
