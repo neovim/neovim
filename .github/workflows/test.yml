@@ -38,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: |
           ./.github/scripts/install_deps.sh
-          brew install stylua uncrustify
+          brew install stylua
 
       - uses: ./.github/actions/cache
 

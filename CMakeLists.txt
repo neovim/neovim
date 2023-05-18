@@ -16,6 +16,9 @@ project(nvim C)
 if(POLICY CMP0075)
   cmake_policy(SET CMP0075 NEW)
 endif()
+if(POLICY CMP0135)
+  cmake_policy(SET CMP0135 NEW)
+endif()
 
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
@@ -23,9 +26,11 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 include(CheckCCompilerFlag)
 include(CheckCSourceCompiles)
 include(CheckLibraryExists)
+include(ExternalProject)
 include(FindPackageHandleStandardArgs)
 include(GNUInstallDirs)
 
+include(Deps)
 include(InstallHelpers)
 include(PreventInTreeBuilds)
 include(Util)
@@ -107,6 +112,12 @@ endif()
 message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
 set_default_buildtype()
+get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(NOT isMultiConfig)
+  # Unlike build dependencies in cmake.deps, we assume we want dev dependencies
+  # such as Uncrustify to always be built with Release.
+  list(APPEND DEPS_CMAKE_ARGS -D CMAKE_BUILD_TYPE=Release)
+endif()
 
 # If not in a git repo (e.g., a tarball) these tokens define the complete
 # version string, else they are combined with the result of `git describe`.
@@ -221,7 +232,6 @@ endif()
 find_program(LUACHECK_PRG luacheck)
 find_program(SHELLCHECK_PRG shellcheck)
 find_program(STYLUA_PRG stylua)
-find_program(UNCRUSTIFY_PRG uncrustify)
 
 add_glob_target(
   REQUIRED
@@ -301,3 +311,13 @@ add_custom_target(uninstall
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
   add_subdirectory(cmake.packaging)
 endif()
+
+ExternalProject_Add(uncrustify
+  PREFIX ${DEPS_BUILD_DIR}
+  URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.77.1.tar.gz
+  URL_HASH SHA256=414bbc9f7860eb18a53074f9af14ed04638a633b2216a73f2629291300d37c1b
+  DOWNLOAD_NO_PROGRESS TRUE
+  DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/uncrustify
+  CMAKE_ARGS ${DEPS_CMAKE_ARGS}
+  CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS}
+  EXCLUDE_FROM_ALL TRUE)
