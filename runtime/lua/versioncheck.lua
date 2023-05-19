@@ -48,16 +48,31 @@ local function _maybe_show_diff()
 end
 
 function M.check_for_news()
-  if not vim.g.NVIM_VERSION then
+  if vim.g.NVIM_VERSION == nil then
     vim.g.NVIM_VERSION = vim.version()
     _write_news_to_cache()
   else
-    -- cache is older
-    if vim.version.cmp(vim.g.NVIM_VERSION, vim.version()) == -1 then
+    -- BUG: https://github.com/neovim/neovim/issues/23687
+    -- If we've reached this branch, we can assume `prerelease = true`
+    -- and can workaround by extracting only what we really need to compare
+    -- instead of the entire vim.version() tables
+    local cached_version = {
+      vim.g.NVIM_VERSION.major,
+      vim.g.NVIM_VERSION.minor,
+      vim.g.NVIM_VERSION.patch,
+    }
+    local version = vim.version()
+    local current_version = {
+      version.major,
+      version.minor,
+      version.patch,
+    }
+    -- cached NVIM_VERSION is less than current vim.version()
+    if vim.version.cmp(cached_version, current_version) == -1 then
       vim.g.NVIM_VERSION = vim.version()
       _maybe_show_diff()
     -- cache is equal but maybe the file sizes are not
-    elseif vim.version.cmp(vim.g.NVIM_VERSION, vim.version()) == 0 then
+    elseif vim.version.cmp(cached_version, current_version) == 0 then
       if _can_be_diffed() then
         _maybe_show_diff()
       end
