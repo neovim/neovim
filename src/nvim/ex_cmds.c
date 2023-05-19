@@ -54,7 +54,6 @@
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/input.h"
-#include "nvim/lua/executor.h"
 #include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
@@ -4803,30 +4802,4 @@ void ex_oldfiles(exarg_T *eap)
       xfree(s);
     }
   }
-}
-
-void ex_trust(exarg_T *eap)
-{
-  const char *const p = skiptowhite(eap->arg);
-  char *arg1 = xmemdupz(eap->arg, (size_t)(p - eap->arg));
-  const char *action = "allow";
-  const char *path = skipwhite(p);
-
-  if (strcmp(arg1, "++deny") == 0) {
-    action = "deny";
-  } else if (strcmp(arg1, "++remove") == 0) {
-    action = "remove";
-  } else if (*arg1 != '\0') {
-    semsg(e_invarg2, arg1);
-    goto theend;
-  }
-
-  if (path[0] == '\0') {
-    path = NULL;
-  }
-
-  nlua_trust(action, path);
-
-theend:
-  xfree(arg1);
 }
