@@ -1,7 +1,6 @@
-if vim.g.loaded_versioncheck ~= nil then
+if not vim.g.versioncheck then
   return
 end
-vim.g.loaded_versioncheck = true
 
 -- detect non-interactive startups
 if vim.tbl_contains(vim.v.argv, '-l') then
