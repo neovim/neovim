@@ -248,7 +248,6 @@ void update_topline(win_T *wp)
   }
 
   linenr_T old_topline = wp->w_topline;
-  colnr_T old_skipcol = wp->w_skipcol;
   int old_topfill = wp->w_topfill;
 
   // If the buffer is empty, always set topline to 1.
@@ -413,8 +412,8 @@ void update_topline(win_T *wp)
     dollar_vcol = -1;
     redraw_later(wp, UPD_VALID);
 
-    // Only reset w_skipcol if it was not just set to make cursor visible.
-    if (wp->w_skipcol == old_skipcol) {
+    // When 'smoothscroll' is not set, should reset w_skipcol.
+    if (!wp->w_p_sms) {
       reset_skipcol(wp);
     }
 

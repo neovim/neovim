@@ -422,12 +422,41 @@ describe('smoothscroll', function()
                                               |
     ]])
     feed('j')
-    screen:expect_unchanged()
+    screen:expect([[
+      Line with some text with some text with |
+      some text with some text with some text |
+      with some text with some text           |
+      ^Line with some text with some text with |
+      some text with some text with some text |
+      with some text with some text           |
+      @                                       |
+                                              |
+    ]])
     -- moving cursor down - whole bottom line shows
     feed('<C-E>j')
-    screen:expect_unchanged()
+    screen:expect([[
+      <<<h some text with some text           |
+      Line with some text with some text with |
+      some text with some text with some text |
+      with some text with some text           |
+      ^Line with some text with some text with |
+      some text with some text with some text |
+      with some text with some text           |
+                                              |
+    ]])
     feed('G')
-    screen:expect_unchanged()
+    -- FIXME: different from vim onwards, this had in incorrect cursor position
+    -- in vim but we show an eob line.
+    screen:expect([[
+      <<<h some text with some text           |
+      Line with some text with some text with |
+      some text with some text with some text |
+      with some text with some text           |
+      Line with some text with some text with |
+      some text with some text with some text |
+      ^with some text with some text           |
+                                              |
+    ]])
     -- moving cursor up right after the >>> marker - no need to show whole line
     feed('2gj3l2k')
     screen:expect([[
