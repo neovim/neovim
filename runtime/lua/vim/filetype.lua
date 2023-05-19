@@ -579,6 +579,7 @@ local extension = {
   ['json-patch'] = 'json',
   json5 = 'json5',
   jsonc = 'jsonc',
+  jsonl = 'jsonl',
   jsonnet = 'jsonnet',
   libsonnet = 'jsonnet',
   jsp = 'jsp',
