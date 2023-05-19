@@ -72,14 +72,14 @@ function M.basename(file)
   return file:match('[/\\]$') and '' or (file:match('[^\\/]*$'):gsub('\\', '/'))
 end
 
----@private
+--- Concatenate directories and/or file into a single path with normalization
+--- (e.g., `"foo/"` and `"bar"` get joined to `"foo/bar"`)
+---
 ---@param ... string
 ---@return string
-function M._join_paths(...)
+function M.joinpath(...)
   return (table.concat({ ... }, '/'):gsub('//+', '/'))
 end
-
-local join_paths = M._join_paths
 
 ---@alias Iterator fun(): string?, string?
 
@@ -120,14 +120,14 @@ function M.dir(path, opts)
     local dirs = { { path, 1 } }
     while #dirs > 0 do
       local dir0, level = unpack(table.remove(dirs, 1))
-      local dir = level == 1 and dir0 or join_paths(path, dir0)
+      local dir = level == 1 and dir0 or M.joinpath(path, dir0)
       local fs = vim.loop.fs_scandir(M.normalize(dir))
       while fs do
         local name, t = vim.loop.fs_scandir_next(fs)
         if not name then
           break
         end
-        local f = level == 1 and name or join_paths(dir0, name)
+        local f = level == 1 and name or M.joinpath(dir0, name)
         coroutine.yield(f, t)
         if
           opts.depth
@@ -234,7 +234,7 @@ function M.find(names, opts)
         local t = {}
         for name, type in M.dir(p) do
           if (not opts.type or opts.type == type) and names(name, p) then
-            table.insert(t, join_paths(p, name))
+            table.insert(t, M.joinpath(p, name))
           end
         end
         return t
@@ -243,7 +243,7 @@ function M.find(names, opts)
       test = function(p)
         local t = {}
         for _, name in ipairs(names) do
-          local f = join_paths(p, name)
+          local f = M.joinpath(p, name)
           local stat = vim.loop.fs_stat(f)
           if stat and (not opts.type or opts.type == stat.type) then
             t[#t + 1] = f
@@ -280,7 +280,7 @@ function M.find(names, opts)
       end
 
       for other, type_ in M.dir(dir) do
-        local f = join_paths(dir, other)
+        local f = M.joinpath(dir, other)
         if type(names) == 'function' then
           if (not opts.type or opts.type == type_) and names(other, dir) then
             if add(f) then

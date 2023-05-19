@@ -2576,6 +2576,16 @@ find({names}, {opts})                                          *vim.fs.find()*
         (table) Normalized paths |vim.fs.normalize()| of all matching files or
         directories
 
+joinpath({...})                                            *vim.fs.joinpath()*
+    Concatenate directories and/or file into a single path with normalization
+    (e.g., `"foo/"` and `"bar"` get joined to `"foo/bar"`)
+
+    Parameters: ~
+      • {...}  (string)
+
+    Return: ~
+        (string)
+
 normalize({path}, {opts})                                 *vim.fs.normalize()*
     Normalize a path to a standard format. A tilde (~) character at the
     beginning of the path is expanded to the user's home directory and any
