@@ -1228,7 +1228,9 @@ function lsp.start_client(config)
     requests = {},
     -- for $/progress report
     messages = { name = name, messages = {}, progress = {}, status = {} },
+    dynamic_capabilities = require('vim.lsp._dynamic').new(client_id),
   }
+  client.config.capabilities = config.capabilities or protocol.make_client_capabilities()
 
   -- Store the uninitialized_clients for cleanup in case we exit before initialize finishes.
   uninitialized_clients[client_id] = client
@@ -1291,10 +1293,11 @@ function lsp.start_client(config)
       -- User provided initialization options.
       initializationOptions = config.init_options,
       -- The capabilities provided by the client (editor or tool)
-      capabilities = config.capabilities or protocol.make_client_capabilities(),
+      capabilities = config.capabilities,
       -- The initial trace setting. If omitted trace is disabled ("off").
       -- trace = "off" | "messages" | "verbose";
       trace = valid_traces[config.trace] or 'off',
+      ---@param method string
     }
     if config.before_init then
       -- TODO(ashkan) handle errors here.
@@ -1314,7 +1317,10 @@ function lsp.start_client(config)
       client.server_capabilities =
         assert(result.capabilities, "initialize result doesn't contain capabilities")
       client.server_capabilities = protocol.resolve_capabilities(client.server_capabilities)
-      client.supports_method = function(method)
+      --- @param method string
+      --- @param opts? {bufnr?: number}
+      client.supports_method = function(method, opts)
+        opts = opts or {}
         local required_capability = lsp._request_name_to_capability[method]
         -- if we don't know about the method, assume that the client supports it.
         if not required_capability then
@@ -1323,6 +1329,9 @@ function lsp.start_client(config)
         if vim.tbl_get(client.server_capabilities, unpack(required_capability)) then
           return true
         else
+          if client.dynamic_capabilities:supports_registration(method) then
+            return client.dynamic_capabilities:supports(method, opts)
+          end
           return false
         end
       end
@@ -1946,7 +1955,7 @@ function lsp.buf_request(bufnr, method, params, handler)
   local supported_clients = {}
   local method_supported = false
   for_each_buffer_client(bufnr, function(client, client_id)
-    if client.supports_method(method) then
+    if client.supports_method(method, { bufnr = bufnr }) then
       method_supported = true
       table.insert(supported_clients, client_id)
     end
@@ -2002,7 +2011,7 @@ function lsp.buf_request_all(bufnr, method, params, callback)
 
   local set_expected_result_count = once(function()
     for_each_buffer_client(bufnr, function(client)
-      if client.supports_method(method) then
+      if client.supports_method(method, { bufnr = bufnr }) then
         expected_result_count = expected_result_count + 1
       end
     end)

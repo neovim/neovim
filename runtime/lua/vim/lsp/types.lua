@@ -35,3 +35,31 @@
 ---@field source string
 ---@field tags? lsp.DiagnosticTag[]
 ---@field relatedInformation DiagnosticRelatedInformation[]
+
+--- @class lsp.DocumentFilter
+--- @field language? string
+--- @field scheme? string
+--- @field pattern? string
+
+--- @alias lsp.DocumentSelector lsp.DocumentFilter[]
+
+--- @alias lsp.RegisterOptions any | lsp.StaticRegistrationOptions | lsp.TextDocumentRegistrationOptions
+
+--- @class lsp.Registration
+--- @field id string
+--- @field method string
+--- @field registerOptions? lsp.RegisterOptions
+
+--- @alias lsp.RegistrationParams {registrations: lsp.Registration[]}
+
+--- @class lsp.StaticRegistrationOptions
+--- @field id? string
+
+--- @class lsp.TextDocumentRegistrationOptions
+--- @field documentSelector? lsp.DocumentSelector
+
+--- @class lsp.Unregistration
+--- @field id string
+--- @field method string
+
+--- @alias lsp.UnregistrationParams {unregisterations: lsp.Unregistration[]}

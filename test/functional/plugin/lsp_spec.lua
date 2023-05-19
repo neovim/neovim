@@ -3765,6 +3765,96 @@ describe('LSP', function()
     end)
   end)
 
+  describe('#dynamic vim.lsp._dynamic', function()
+    it('supports dynamic registration', function()
+      local root_dir = helpers.tmpname()
+      os.remove(root_dir)
+      mkdir(root_dir)
+      local tmpfile = root_dir .. '/dynamic.foo'
+      local file = io.open(tmpfile, 'w')
+      file:close()
+
+      exec_lua(create_server_definition)
+      local result = exec_lua([[
+        local root_dir, tmpfile = ...
+
+        local server = _create_server()
+        local client_id = vim.lsp.start({
+          name = 'dynamic-test',
+          cmd = server.cmd,
+          root_dir = root_dir,
+          capabilities = {
+            textDocument = {
+              formatting = {
+                dynamicRegistration = true,
+              },
+              rangeFormatting = {
+                dynamicRegistration = true,
+              },
+            },
+          },
+        })
+
+        local expected_messages = 2 -- initialize, initialized
+
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'formatting',
+              method = 'textDocument/formatting',
+              registerOptions = {
+                documentSelector = {{
+                  pattern = root_dir .. '/*.foo',
+                }},
+              },
+            },
+          },
+        }, { client_id = client_id })
+
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'range-formatting',
+              method = 'textDocument/rangeFormatting',
+            },
+          },
+        }, { client_id = client_id })
+
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'completion',
+              method = 'textDocument/completion',
+            },
+          },
+        }, { client_id = client_id })
+
+        local result = {}
+        local function check(method, fname)
+          local bufnr = fname and vim.fn.bufadd(fname) or nil
+          local client = vim.lsp.get_client_by_id(client_id)
+          result[#result + 1] = {method = method, fname = fname, supported = client.supports_method(method, {bufnr = bufnr})}
+        end
+
+
+        check("textDocument/formatting")
+        check("textDocument/formatting", tmpfile)
+        check("textDocument/rangeFormatting")
+        check("textDocument/rangeFormatting", tmpfile)
+        check("textDocument/completion")
+
+        return result
+      ]], root_dir, tmpfile)
+
+      eq(5, #result)
+      eq({method = 'textDocument/formatting', supported = false}, result[1])
+      eq({method = 'textDocument/formatting', supported = true, fname = tmpfile}, result[2])
+      eq({method = 'textDocument/rangeFormatting', supported = true}, result[3])
+      eq({method = 'textDocument/rangeFormatting', supported = true, fname = tmpfile}, result[4])
+      eq({method = 'textDocument/completion', supported = false}, result[5])
+    end)
+  end)
+
   describe('vim.lsp._watchfiles', function()
     it('sends notifications when files change', function()
       local root_dir = helpers.tmpname()
