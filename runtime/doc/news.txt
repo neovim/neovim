@@ -40,7 +40,7 @@ The following new APIs or features were added.
   iterators |luaref-in|.
 
 • Added |vim.keycode()| for translating keycodes in a string.
-• We now offer to show detected to news.txt (prerelease
+• Nvim shows news.txt on startup if it is a prerelease that has news since the previous build.
 builds only).
 
 • Added automatic linting of treesitter query files (see |ft-query-plugin|).
