@@ -13,66 +13,41 @@ if(NOT MSVC)
   set(LUAROCKS_BUILDARGS CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER})
 endif()
 
-# Lua version, used with rocks directories.
-# Defaults to 5.1 for bundled LuaJIT/Lua.
-set(LUA_VERSION "5.1")
-
 if(UNIX)
-
-  if(USE_BUNDLED_LUAJIT)
+  if(PREFER_LUA)
+    find_package(Lua 5.1 EXACT REQUIRED)
+    get_filename_component(LUA_ROOT ${LUA_INCLUDE_DIR} DIRECTORY)
     list(APPEND LUAROCKS_OPTS
-      --with-lua=${DEPS_INSTALL_DIR}
-      --with-lua-include=${DEPS_INSTALL_DIR}/include/luajit-2.1
-      --with-lua-interpreter=luajit)
-  elseif(USE_BUNDLED_LUA)
-    list(APPEND LUAROCKS_OPTS
-      --with-lua=${DEPS_INSTALL_DIR})
+      --with-lua=${LUA_ROOT})
   else()
-    find_package(Luajit)
-    if(LUAJIT_FOUND)
-      list(APPEND LUAROCKS_OPTS
-        --with-lua-include=${LUAJIT_INCLUDE_DIR}
-        --with-lua-interpreter=luajit)
-    endif()
-
-    # Get LUA_VERSION used with rocks output.
-    if(LUAJIT_FOUND)
-      set(LUA_EXE "luajit")
-    else()
-      set(LUA_EXE "lua")
-    endif()
-    execute_process(
-      COMMAND ${LUA_EXE} -e "print(string.sub(_VERSION, 5))"
-      OUTPUT_VARIABLE LUA_VERSION
-      ERROR_VARIABLE ERR
-      RESULT_VARIABLE RES)
-    if(RES)
-      message(FATAL_ERROR "Could not get LUA_VERSION with ${LUA_EXE}: ${ERR}")
-    endif()
+    find_package(Luajit REQUIRED)
+    get_filename_component(LUA_ROOT ${LUAJIT_INCLUDE_DIR} DIRECTORY)
+    get_filename_component(LUA_ROOT ${LUA_ROOT} DIRECTORY)
+    list(APPEND LUAROCKS_OPTS
+      --with-lua=${LUA_ROOT}
+      --with-lua-include=${LUAJIT_INCLUDE_DIR}
+      --with-lua-interpreter=luajit)
   endif()
 
   set(LUAROCKS_CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/luarocks/configure
       --prefix=${DEPS_INSTALL_DIR} --force-config ${LUAROCKS_OPTS})
   set(LUAROCKS_INSTALL_COMMAND ${MAKE_PRG} -j1 bootstrap)
 elseif(MSVC OR MINGW)
-
   if(MINGW)
     set(COMPILER_FLAG /MW)
   elseif(MSVC)
     set(COMPILER_FLAG /MSVC)
   endif()
 
-  # Ignore USE_BUNDLED_LUAJIT - always ON for native Win32
+  find_package(Luajit REQUIRED)
+  # Always assume bundled luajit for native Win32
   set(LUAROCKS_INSTALL_COMMAND install.bat /FORCECONFIG /NOREG /NOADMIN /Q /F
-    /LUA ${DEPS_INSTALL_DIR}
-    /LIB ${DEPS_LIB_DIR}
-    /BIN ${DEPS_BIN_DIR}
-    /INC ${DEPS_INSTALL_DIR}/include/luajit-2.1
-    /P ${DEPS_INSTALL_DIR}/luarocks /TREE ${DEPS_INSTALL_DIR}
+    /LUA ${DEPS_PREFIX}
+    /INC ${LUAJIT_INCLUDE_DIR}
+    /P ${DEPS_INSTALL_DIR}/luarocks
+    /TREE ${DEPS_INSTALL_DIR}
     /SCRIPTS ${DEPS_BIN_DIR}
-    /CMOD ${DEPS_BIN_DIR}
-    ${COMPILER_FLAG}
-    /LUAMOD ${DEPS_BIN_DIR}/lua)
+    ${COMPILER_FLAG})
 
   set(LUAROCKS_BINARY ${DEPS_INSTALL_DIR}/luarocks/luarocks.bat)
 else()
@@ -80,21 +55,17 @@ else()
 endif()
 
 ExternalProject_Add(luarocks
-  URL ${LUAROCKS_URL}
-  URL_HASH SHA256=${LUAROCKS_SHA256}
+  URL https://github.com/luarocks/luarocks/archive/v3.9.2.tar.gz
+  URL_HASH SHA256=a0b36cd68586cd79966d0106bb2e5a4f5523327867995fd66bee4237062b3e3b
   DOWNLOAD_NO_PROGRESS TRUE
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luarocks
   BUILD_IN_SOURCE 1
   CONFIGURE_COMMAND "${LUAROCKS_CONFIGURE_COMMAND}"
   BUILD_COMMAND ""
-  INSTALL_COMMAND "${LUAROCKS_INSTALL_COMMAND}")
+  INSTALL_COMMAND "${LUAROCKS_INSTALL_COMMAND}"
+  EXCLUDE_FROM_ALL TRUE)
 
-if(USE_BUNDLED_LUAJIT)
-  add_dependencies(luarocks luajit)
-elseif(USE_BUNDLED_LUA)
-  add_dependencies(luarocks lua)
-endif()
-set(ROCKS_DIR ${DEPS_LIB_DIR}/luarocks/rocks-${LUA_VERSION})
+set(ROCKS_DIR ${DEPS_LIB_DIR}/luarocks/rocks)
 
 if(MSVC)
   # Workaround for luarocks failing to find the md5sum.exe it is shipped with.
@@ -113,7 +84,7 @@ function(Download ROCK VER)
   add_custom_command(OUTPUT ${OUTPUT}
     COMMAND ${CMAKE_COMMAND} -E env "${PATH}" ${LUAROCKS_BINARY} build ${ROCK} ${VER} ${LUAROCKS_BUILDARGS}
     DEPENDS ${CURRENT_DEP})
-  add_custom_target(${ROCK} ALL DEPENDS ${OUTPUT})
+  add_custom_target(${ROCK} DEPENDS ${OUTPUT})
   set(CURRENT_DEP ${ROCK} PARENT_SCOPE)
 endfunction()
 
@@ -125,9 +96,14 @@ else()
   set(LUACHECK_EXE "${DEPS_BIN_DIR}/luacheck")
 endif()
 
-Download(busted 2.1.1 ${BUSTED_EXE})
+add_custom_target(test_deps)
+
 Download(luacheck 1.1.0-1 ${LUACHECK_EXE})
 
-if (USE_BUNDLED_LUA OR NOT USE_BUNDLED_LUAJIT)
+Download(busted 2.1.1 ${BUSTED_EXE})
+add_dependencies(test_deps busted)
+
+if(PREFER_LUA)
   Download(coxpcall 1.17.0-1)
+  add_dependencies(test_deps coxpcall)
 endif()

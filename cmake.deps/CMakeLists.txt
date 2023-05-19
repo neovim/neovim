@@ -38,7 +38,6 @@ option(USE_BUNDLED_LIBVTERM "Use the bundled libvterm." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBUV "Use the bundled libuv." ${USE_BUNDLED})
 option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
-option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ${USE_BUNDLED})
 option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
 option(USE_BUNDLED_LPEG "Use the bundled lpeg." ${USE_BUNDLED})
 #XXX(tarruda): Lua is only used for debugging the functional test client, don't
@@ -64,45 +63,6 @@ option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing s
 find_package(Git)
 if(NOT Git_FOUND)
   message(FATAL_ERROR "Git is required to apply patches.")
-endif()
-
-if(UNIX)
-  find_program(MAKE_PRG NAMES gmake make)
-  if(NOT MAKE_PRG)
-    message(FATAL_ERROR "GNU Make is required to build the dependencies.")
-  else()
-    message(STATUS "Found GNU Make at ${MAKE_PRG}")
-  endif()
-endif()
-
-# When using make, use the $(MAKE) variable to avoid warning about the job
-# server.
-if(CMAKE_GENERATOR MATCHES "Makefiles")
-  set(MAKE_PRG "$(MAKE)")
-endif()
-
-if(MINGW AND CMAKE_GENERATOR MATCHES "Ninja")
-  find_program(MAKE_PRG NAMES mingw32-make)
-  if(NOT MAKE_PRG)
-    message(FATAL_ERROR "GNU Make for mingw32 is required to build the dependencies.")
-  else()
-    message(STATUS "Found GNU Make for mingw32: ${MAKE_PRG}")
-  endif()
-endif()
-
-set(DEPS_C_COMPILER "${CMAKE_C_COMPILER}")
-
-if(CMAKE_OSX_SYSROOT)
-  set(DEPS_C_COMPILER "${DEPS_C_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
-endif()
-
-if(CMAKE_OSX_ARCHITECTURES)
-  # The LuaJIT build does not like being passed multiple `-arch` flags
-  # so we handle a universal build the old-fashioned way.
-  set(LUAJIT_C_COMPILER "${DEPS_C_COMPILER}")
-  foreach(ARCH IN LISTS CMAKE_OSX_ARCHITECTURES)
-    set(DEPS_C_COMPILER "${DEPS_C_COMPILER} -arch ${ARCH}")
-  endforeach()
 endif()
 
 # If the macOS deployment target is not set manually (via $MACOSX_DEPLOYMENT_TARGET),
@@ -161,10 +121,6 @@ endif()
 
 if(USE_BUNDLED_LUA)
   include(BuildLua)
-endif()
-
-if(USE_BUNDLED_LUAROCKS)
-  include(BuildLuarocks)
 endif()
 
 if(USE_BUNDLED_LUV)

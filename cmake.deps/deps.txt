@@ -10,9 +10,6 @@ LUAJIT_SHA256 a9bcd9e646e2b188e1d7e3fb594e04c61dda3b332dfd0378d41be19c1eae9d09
 LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz
 LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
 
-LUAROCKS_URL https://github.com/luarocks/luarocks/archive/v3.9.2.tar.gz
-LUAROCKS_SHA256 a0b36cd68586cd79966d0106bb2e5a4f5523327867995fd66bee4237062b3e3b
-
 UNIBILIUM_URL https://github.com/neovim/unibilium/archive/d72c3598e7ac5d1ebf86ee268b8b4ed95c0fa628.tar.gz
 UNIBILIUM_SHA256 9c4747c862ab5e3076dcf8fa8f0ea7a6b50f20ec5905618b9536655596797487
 

@@ -18,3 +18,37 @@ if(APPLE)
 endif()
 
 set(DEPS_CMAKE_CACHE_ARGS -DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES})
+
+# MAKE_PRG
+if(UNIX)
+  find_program(MAKE_PRG NAMES gmake make)
+  if(NOT MAKE_PRG)
+    message(FATAL_ERROR "GNU Make is required to build the dependencies.")
+  else()
+    message(STATUS "Found GNU Make at ${MAKE_PRG}")
+  endif()
+endif()
+# When using make, use the $(MAKE) variable to avoid warning about the job
+# server.
+if(CMAKE_GENERATOR MATCHES "Makefiles")
+  set(MAKE_PRG "$(MAKE)")
+endif()
+if(MINGW AND CMAKE_GENERATOR MATCHES "Ninja")
+  find_program(MAKE_PRG NAMES mingw32-make)
+  if(NOT MAKE_PRG)
+    message(FATAL_ERROR "GNU Make for mingw32 is required to build the dependencies.")
+  else()
+    message(STATUS "Found GNU Make for mingw32: ${MAKE_PRG}")
+  endif()
+endif()
+
+# DEPS_C_COMPILER
+set(DEPS_C_COMPILER "${CMAKE_C_COMPILER}")
+if(CMAKE_OSX_SYSROOT)
+  set(DEPS_C_COMPILER "${DEPS_C_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
+endif()
+if(CMAKE_OSX_ARCHITECTURES)
+  foreach(ARCH IN LISTS CMAKE_OSX_ARCHITECTURES)
+    set(DEPS_C_COMPILER "${DEPS_C_COMPILER} -arch ${ARCH}")
+  endforeach()
+endif()

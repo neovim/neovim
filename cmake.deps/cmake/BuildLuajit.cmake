@@ -66,6 +66,11 @@ if((UNIX AND NOT APPLE) OR (APPLE AND NOT CMAKE_OSX_ARCHITECTURES))
 
 elseif(CMAKE_OSX_ARCHITECTURES AND APPLE)
 
+  set(LUAJIT_C_COMPILER "${CMAKE_C_COMPILER}")
+  if(CMAKE_OSX_SYSROOT)
+    set(LUAJIT_C_COMPILER "${LUAJIT_C_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
+  endif()
+
   # Passing multiple `-arch` flags to the LuaJIT build will cause it to fail.
   # To get a working universal build, we build each requested architecture slice
   # individually then `lipo` them all up.
