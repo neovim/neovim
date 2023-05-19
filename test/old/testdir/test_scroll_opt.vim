@@ -257,11 +257,14 @@ func Test_smoothscroll_wrap_scrolloff_zero()
   call term_sendkeys(buf, "G")
   call VerifyScreenDump(buf, 'Test_smooth_wrap_4', {})
 
-  " moving cursor up right after the >>> marker - no need to show whole line
+  call term_sendkeys(buf, "4\<C-Y>G")
+  call VerifyScreenDump(buf, 'Test_smooth_wrap_4', {})
+
+  " moving cursor up right after the <<< marker - no need to show whole line
   call term_sendkeys(buf, "2gj3l2k")
   call VerifyScreenDump(buf, 'Test_smooth_wrap_5', {})
 
-  " moving cursor up where the >>> marker is - whole top line shows
+  " moving cursor up where the <<< marker is - whole top line shows
   call term_sendkeys(buf, "2j02k")
   call VerifyScreenDump(buf, 'Test_smooth_wrap_6', {})
 
@@ -701,6 +704,32 @@ func Test_smoothscroll_eob()
   " cursor is not placed below window
   call term_sendkeys(buf, ":call setline(92, 'a'->repeat(100))\<CR>\<C-B>G")
   call VerifyScreenDump(buf, 'Test_smooth_eob_2', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
+" skipcol should not reset when doing incremental search on the same word
+func Test_smoothscroll_incsearch()
+  CheckScreendump
+
+  let lines =<< trim END
+      set smoothscroll number scrolloff=0 incsearch
+      call setline(1, repeat([''], 20))
+      call setline(11, repeat('a', 100))
+      call setline(14, 'bbbb')
+  END
+  call writefile(lines, 'XSmoothIncsearch', 'D')
+  let buf = RunVimInTerminal('-S XSmoothIncsearch', #{rows: 8, cols:40})
+
+  call term_sendkeys(buf, "/b")
+  call VerifyScreenDump(buf, 'Test_smooth_incsearch_1', {})
+  call term_sendkeys(buf, "b")
+  call VerifyScreenDump(buf, 'Test_smooth_incsearch_2', {})
+  call term_sendkeys(buf, "b")
+  call VerifyScreenDump(buf, 'Test_smooth_incsearch_3', {})
+  call term_sendkeys(buf, "b")
+  call VerifyScreenDump(buf, 'Test_smooth_incsearch_4', {})
+  call term_sendkeys(buf, "\<CR>")
 
   call StopVimInTerminal(buf)
 endfunc

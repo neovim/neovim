@@ -415,6 +415,8 @@ void update_topline(win_T *wp)
     // When 'smoothscroll' is not set, should reset w_skipcol.
     if (!wp->w_p_sms) {
       reset_skipcol(wp);
+    } else if (wp->w_skipcol != 0) {
+      redraw_later(wp, UPD_SOME_VALID);
     }
 
     // May need to set w_skipcol when cursor in w_topline.
@@ -659,7 +661,7 @@ static void curs_rows(win_T *wp)
         i--;                            // hold at inserted lines
       }
     }
-    if (valid && (lnum != wp->w_topline || !win_may_fill(wp))) {
+    if (valid && (lnum != wp->w_topline || (wp->w_skipcol == 0 && !win_may_fill(wp)))) {
       lnum = wp->w_lines[i].wl_lastlnum + 1;
       // Cursor inside folded lines, don't count this row
       if (lnum > wp->w_cursor.lnum) {
