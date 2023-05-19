@@ -4,7 +4,6 @@ local M = {}
 --- Writes runtime/doc/news.txt to stdpath('state')/news.txt
 local function _write_news_to_cache()
   local cached_news = io.open(vim.fn.stdpath('state') .. '/news.txt', 'w+')
-
   if cached_news then
     local news = io.open(vim.fs.normalize('$VIMRUNTIME/doc/news.txt'))
     if news then
@@ -49,7 +48,6 @@ local function _maybe_show_diff()
 end
 
 function M.check_for_news()
-  -- no need to compare news.txt version, cache it all for next time
   if not vim.g.NVIM_VERSION then
     vim.g.NVIM_VERSION = vim.version()
     _write_news_to_cache()
@@ -58,7 +56,7 @@ function M.check_for_news()
     if vim.version.cmp(vim.g.NVIM_VERSION, vim.version()) == -1 then
       vim.g.NVIM_VERSION = vim.version()
       _maybe_show_diff()
-    -- cache is equal but maybe the file sizes are not the same
+    -- cache is equal but maybe the file sizes are not
     elseif vim.version.cmp(vim.g.NVIM_VERSION, vim.version()) == 0 then
       if _can_be_diffed() then
         _maybe_show_diff()
