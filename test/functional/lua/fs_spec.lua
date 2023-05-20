@@ -266,6 +266,17 @@ describe('vim.fs', function()
     end)
   end)
 
+  describe('joinpath()', function()
+    it('works', function()
+      eq('foo/bar/baz', exec_lua([[
+        return vim.fs.joinpath('foo', 'bar', 'baz')
+      ]], nvim_dir))
+      eq('foo/bar/baz', exec_lua([[
+        return vim.fs.joinpath('foo', '/bar/', '/baz')
+      ]], nvim_dir))
+    end)
+  end)
+
   describe('normalize()', function()
     it('works with backward slashes', function()
       eq('C:/Users/jdoe', exec_lua [[ return vim.fs.normalize('C:\\Users\\jdoe') ]])
