@@ -428,7 +428,9 @@ describe('smoothscroll', function()
     screen:expect_unchanged()
     feed('G')
     screen:expect_unchanged()
-    -- moving cursor up right after the >>> marker - no need to show whole line
+    feed('4<C-Y>G')
+    screen:expect_unchanged()
+    -- moving cursor up right after the <<< marker - no need to show whole line
     feed('2gj3l2k')
     screen:expect([[
       <<<^h some text with some text           |
@@ -440,7 +442,7 @@ describe('smoothscroll', function()
       with some text with some text           |
                                               |
     ]])
-    -- moving cursor up where the >>> marker is - whole top line shows
+    -- moving cursor up where the <<< marker is - whole top line shows
     feed('2j02k')
     screen:expect([[
       ^Line with some text with some text with |
@@ -773,6 +775,67 @@ describe('smoothscroll', function()
                                               |
       ^                                        |
                                               |
+    ]])
+  end)
+
+  -- oldtest: Test_smoothscroll_incsearch()
+  it("does not reset skipcol when doing incremental search on the same word", function()
+    screen:try_resize(40, 8)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.Brown},
+      [2] = {foreground = Screen.colors.Blue1, bold = true},
+      [3] = {background = Screen.colors.Yellow1},
+      [4] = {reverse = true},
+    })
+    exec([[
+      set smoothscroll number scrolloff=0 incsearch
+      call setline(1, repeat([''], 20))
+      call setline(11, repeat('a', 100))
+      call setline(14, 'bbbb')
+    ]])
+    feed('/b')
+    screen:expect([[
+      {2:<<<}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaa        |
+      {1: 12 }                                    |
+      {1: 13 }                                    |
+      {1: 14 }{4:b}{3:bbb}                                |
+      {1: 15 }                                    |
+      {1: 16 }                                    |
+      {1: 17 }                                    |
+      /b^                                      |
+    ]])
+    feed('b')
+    screen:expect([[
+      {2:<<<}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaa        |
+      {1: 12 }                                    |
+      {1: 13 }                                    |
+      {1: 14 }{4:bb}{3:bb}                                |
+      {1: 15 }                                    |
+      {1: 16 }                                    |
+      {1: 17 }                                    |
+      /bb^                                     |
+    ]])
+    feed('b')
+    screen:expect([[
+      {2:<<<}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaa        |
+      {1: 12 }                                    |
+      {1: 13 }                                    |
+      {1: 14 }{4:bbb}b                                |
+      {1: 15 }                                    |
+      {1: 16 }                                    |
+      {1: 17 }                                    |
+      /bbb^                                    |
+    ]])
+    feed('b')
+    screen:expect([[
+      {2:<<<}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaa        |
+      {1: 12 }                                    |
+      {1: 13 }                                    |
+      {1: 14 }{4:bbbb}                                |
+      {1: 15 }                                    |
+      {1: 16 }                                    |
+      {1: 17 }                                    |
+      /bbbb^                                   |
     ]])
   end)
 
