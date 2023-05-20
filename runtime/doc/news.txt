@@ -31,6 +31,9 @@ The following changes may require adaptations in user config or plugins.
     set keymodel=startsel,stopsel
 <
 
+• |LspRequest| autocmd was promoted from a |User| autocmd to a first class
+  citizen.
+
 ==============================================================================
 ADDED FEATURES                                                     *news-added*
 
@@ -79,6 +82,9 @@ The following changes to existing APIs or features add new behavior.
 
 • The `workspace/didChangeWatchedFiles` LSP client capability is now enabled
   by default.
+
+• |LspRequest| autocmd callbacks now contain additional information about the LSP
+  request status update that occurred.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

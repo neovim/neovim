@@ -948,7 +948,7 @@ describe('LSP', function()
         test_name = "check_tracked_requests_cleared";
         on_init = function(_client)
           command('let g:requests = 0')
-          command('autocmd User LspRequest let g:requests+=1')
+          command('autocmd LspRequest * let g:requests+=1')
           client = _client
           client.request("slow_request")
           eq(1, eval('g:requests'))

@@ -619,19 +619,54 @@ to the callback in the "data" table. The token fields are documented in
 Note: doing anything other than calling
 |vim.lsp.semantic_tokens.highlight_token()| is considered experimental.
 
-Also the following |User| |autocommand|s are provided:
+
+LspRequest                                                        *LspRequest*
+
+For each request sent to an LSP server, this event is triggered for every
+change to the request's status. The status can be one of `pending`,
+`complete`, or `cancel` and is sent as the {type} on the "data" table passed
+to the callback function.
+
+It triggers when the initial request is sent ({type} == `pending`) and when
+the LSP server responds ({type} == `complete`). If a cancelation is requested
+using `client.cancel_request(request_id)`, then this event will trigger with
+{type} == `cancel`.
+
+When used from Lua, the client ID, request ID, and request are sent in the
+"data" table. See {requests} in |vim.lsp.client| for details on the {request}
+value. If the request type is `complete`, the request will be deleted from the
+client's pending requests table immediately after calling the event's
+callbacks. Example: >lua
+
+    vim.api.nvim_create_autocmd('LspRequest', {
+      callback = function(args)
+        local bufnr = args.buf
+        local client_id = args.data.client_id
+        local request_id = args.data.request_id
+        local request = args.data.request
+        if request.type == 'pending' then
+          -- do something with pending requests
+          track_pending(client_id, bufnr, request_id, request)
+        elseif request.type == 'cancel' then
+          -- do something with pending cancel requests
+          track_canceling(client_id, bufnr, request_id, request)
+        elseif request.type == 'complete' then
+          -- do something with finished requests. this pending
+          -- request entry is about to be removed since it is complete
+          track_finish(client_id, bufnr, request_id, request)
+        end
+      end,
+    })
+<
+
+Also the following |User| |autocommand| is provided:
 
 LspProgressUpdate                                          *LspProgressUpdate*
     Upon receipt of a progress notification from the server. See
     |vim.lsp.util.get_progress_messages()|.
 
-LspRequest                                                        *LspRequest*
-    After a change to the active set of pending LSP requests. See {requests}
-    in |vim.lsp.client|.
-
 Example: >vim
     autocmd User LspProgressUpdate redrawstatus
-    autocmd User LspRequest redrawstatus
 <
 
 ==============================================================================
@@ -764,7 +799,9 @@ client()                                                      *vim.lsp.client*
         server. Entries are key-value pairs with the key being the request ID
         while the value is a table with `type`, `bufnr`, and `method`
         key-value pairs. `type` is either "pending" for an active request, or
-        "cancel" for a cancel request.
+        "cancel" for a cancel request. It will be "complete" ephemerally while
+        executing |LspRequest| autocmds when replies are received from the
+        server.
       • {config} (table): copy of the table that was passed by the user to
         |vim.lsp.start_client()|.
       • {server_capabilities} (table): Response from the server sent on
