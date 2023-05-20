@@ -3778,6 +3778,13 @@ describe('LSP', function()
           name = 'watchfiles-test',
           cmd = server.cmd,
           root_dir = root_dir,
+          capabilities = {
+            workspace = {
+              didChangeWatchedFiles = {
+                dynamicRegistration = true,
+              },
+            },
+          },
         })
 
         local expected_messages = 2 -- initialize, initialized
@@ -3865,6 +3872,13 @@ describe('LSP', function()
           name = 'watchfiles-test',
           cmd = server.cmd,
           root_dir = root_dir,
+          capabilities = {
+            workspace = {
+              didChangeWatchedFiles = {
+                dynamicRegistration = true,
+              },
+            },
+          },
         })
 
         local expected_messages = 2 -- initialize, initialized
@@ -3982,6 +3996,13 @@ describe('LSP', function()
           name = 'watchfiles-test',
           cmd = server.cmd,
           root_dir = root_dir,
+          capabilities = {
+            workspace = {
+              didChangeWatchedFiles = {
+                dynamicRegistration = true,
+              },
+            },
+          },
         })
 
         local expected_messages = 2 -- initialize, initialized
@@ -4116,6 +4137,13 @@ describe('LSP', function()
           name = 'watchfiles-test',
           cmd = server.cmd,
           root_dir = root_dir,
+          capabilities = {
+            workspace = {
+              didChangeWatchedFiles = {
+                dynamicRegistration = true,
+              },
+            },
+          },
         })
 
         local expected_messages = 2 -- initialize, initialized
@@ -4185,6 +4213,62 @@ describe('LSP', function()
           },
         },
       }, result[3].params)
+    end)
+
+    it("ignores registrations by servers when the client doesn't advertise support", function()
+      exec_lua(create_server_definition)
+      local result = exec_lua([[
+        local server = _create_server()
+        local client_id = vim.lsp.start({
+          name = 'watchfiles-test',
+          cmd = server.cmd,
+          root_dir = 'some_dir',
+          capabilities = {
+            workspace = {
+              didChangeWatchedFiles = {
+                dynamicRegistration = false,
+              },
+            },
+          },
+        })
+
+        local watching = false
+        require('vim.lsp._watchfiles')._watchfunc = function(_, _, callback)
+          -- Since the registration is ignored, this should not execute and `watching` should stay false
+          watching = true
+          return function() end
+        end
+
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'watchfiles-test-kind',
+              method = 'workspace/didChangeWatchedFiles',
+              registerOptions = {
+                watchers = {
+                  {
+                    globPattern = '**/*',
+                  },
+                },
+              },
+            },
+          },
+        }, { client_id = client_id })
+
+        -- Ensure no errors occur when unregistering something that was never really registered.
+        vim.lsp.handlers['client/unregisterCapability'](nil, {
+          unregisterations = {
+            {
+              id = 'watchfiles-test-kind',
+              method = 'workspace/didChangeWatchedFiles',
+            },
+          },
+        }, { client_id = client_id })
+
+        return watching
+      ]])
+
+      eq(false, result)
     end)
   end)
 end)
