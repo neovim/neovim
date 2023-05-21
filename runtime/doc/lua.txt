@@ -401,7 +401,7 @@ For example consider the following Lua omnifunc handler: >lua
         return {'stuff', 'steam', 'strange things'}
       end
     end
-    vim.api.nvim_buf_set_option(0, 'omnifunc', 'v:lua.mymod.omnifunc')
+    vim.bo[buf].omnifunc = 'v:lua.mymod.omnifunc'
 
 Note: The module ("mymod" in the above example) must either be a Lua global,
 or use require() as shown above to access it from a package.

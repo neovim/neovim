@@ -141,7 +141,7 @@ describe('autocmd', function()
   describe('BufLeave autocommand', function()
     it('can wipe out the buffer created by :edit which triggered autocmd',
     function()
-      meths.set_option('hidden', true)
+      meths.set_option_value('hidden', true, {})
       curbufmeths.set_lines(0, 1, false, {
         'start of test file xx',
         'end of test file xx'})

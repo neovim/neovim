@@ -3,7 +3,6 @@ local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
 local pathsep = helpers.get_pathsep()
-local curbufmeths = helpers.curbufmeths
 local funcs = helpers.funcs
 local meths = helpers.meths
 
@@ -13,7 +12,7 @@ local function test_case(name, expected)
   local filename = testdir .. pathsep .. name
   command('edit ' .. filename)
   for opt, val in pairs(expected) do
-    eq(val, curbufmeths.get_option(opt), name)
+    eq(val, meths.get_option_value(opt, {buf=0}), name)
   end
 end
 

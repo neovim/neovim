@@ -2,7 +2,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local command = helpers.command
-local curbufmeths = helpers.curbufmeths
 local eq = helpers.eq
 local eval = helpers.eval
 local feed_command = helpers.feed_command
@@ -178,8 +177,8 @@ describe(":substitute, 'inccommand' preserves", function()
       feed_command("set inccommand=" .. case)
       insert("as")
       feed(":%s/as/glork/<enter>")
-      eq(meths.get_option('undolevels'), 139)
-      eq(curbufmeths.get_option('undolevels'), 34)
+      eq(meths.get_option_value('undolevels', {scope='global'}), 139)
+      eq(meths.get_option_value('undolevels', {buf=0}), 34)
     end)
   end
 
@@ -1192,7 +1191,7 @@ describe(":substitute, inccommand=split", function()
 
   it("deactivates if 'redrawtime' is exceeded #5602", function()
     -- prevent redraws from 'incsearch'
-    meths.set_option('incsearch', false)
+    meths.set_option_value('incsearch', false, {})
     -- Assert that 'inccommand' is ENABLED initially.
     eq("split", eval("&inccommand"))
     -- Set 'redrawtime' to minimal value, to ensure timeout is triggered.
@@ -2465,16 +2464,14 @@ describe(":substitute", function()
   end)
 
   it("inccommand=split, contraction of two subsequent NL chars", function()
-    -- luacheck: push ignore 611
     local text = [[
       AAA AA
-      
+
       BBB BB
-      
+
       CCC CC
-      
+
 ]]
-    -- luacheck: pop
 
     -- This used to crash, but more than 20 highlight entries are required
     -- to reproduce it (so that the marktree has multiple nodes)
@@ -2501,16 +2498,14 @@ describe(":substitute", function()
   end)
 
   it("inccommand=nosplit, contraction of two subsequent NL chars", function()
-    -- luacheck: push ignore 611
     local text = [[
       AAA AA
-      
+
       BBB BB
-      
+
       CCC CC
-      
+
 ]]
-    -- luacheck: pop
 
     common_setup(screen, "nosplit", string.rep(text,10))
     feed(":%s/\\n\\n/<c-v><c-m>/g")

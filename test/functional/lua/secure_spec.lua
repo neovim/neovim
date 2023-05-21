@@ -6,7 +6,7 @@ local clear = helpers.clear
 local command = helpers.command
 local pathsep = helpers.get_pathsep()
 local is_os = helpers.is_os
-local curbufmeths = helpers.curbufmeths
+local meths = helpers.meths
 local exec_lua = helpers.exec_lua
 local feed_command = helpers.feed_command
 local feed = helpers.feed
@@ -160,7 +160,7 @@ describe('vim.secure', function()
 
       -- Cannot write file
       pcall_err(command, 'write')
-      eq(true, curbufmeths.get_option('readonly'))
+      eq(true, meths.get_option_value('readonly', {buf=0}))
     end)
   end)
 

@@ -486,7 +486,7 @@ Example: create a float with scratch buffer: >vim
         \ 'row': 1, 'anchor': 'NW', 'style': 'minimal'}
     let win = nvim_open_win(buf, 0, opts)
     " optional: change highlight, otherwise Pmenu is used
-    call nvim_win_set_option(win, 'winhl', 'Normal:MyHighlight')
+    call nvim_set_option_value('winhl', 'Normal:MyHighlight', {'win': win})
 <
 
 ==============================================================================
@@ -1917,25 +1917,6 @@ nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
 ==============================================================================
 Options Functions                                                *api-options*
 
-nvim_buf_get_option({buffer}, {name})                  *nvim_buf_get_option()*
-    Gets a buffer option value
-
-    Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
-      • {name}    Option name
-
-    Return: ~
-        Option value
-
-nvim_buf_set_option({buffer}, {name}, {value})         *nvim_buf_set_option()*
-    Sets a buffer option value. Passing `nil` as value deletes the option
-    (only works if there's a global fallback)
-
-    Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
-      • {name}    Option name
-      • {value}   Option value
-
 nvim_get_all_options_info()                      *nvim_get_all_options_info()*
     Gets the option information for all options.
 
@@ -1944,15 +1925,6 @@ nvim_get_all_options_info()                      *nvim_get_all_options_info()*
 
     Return: ~
         dictionary of all options
-
-nvim_get_option({name})                                    *nvim_get_option()*
-    Gets the global value of an option.
-
-    Parameters: ~
-      • {name}  Option name
-
-    Return: ~
-        Option value (global)
 
 nvim_get_option_info2({name}, {*opts})               *nvim_get_option_info2()*
     Gets the option information for one option from arbitrary buffer or window
@@ -2010,13 +1982,6 @@ nvim_get_option_value({name}, {*opts})               *nvim_get_option_value()*
     Return: ~
         Option value
 
-nvim_set_option({name}, {value})                           *nvim_set_option()*
-    Sets the global value of an option.
-
-    Parameters: ~
-      • {name}   Option name
-      • {value}  New option value
-
                                                      *nvim_set_option_value()*
 nvim_set_option_value({name}, {value}, {*opts})
     Sets the value of an option. The behavior of this function matches that of
@@ -2033,25 +1998,6 @@ nvim_set_option_value({name}, {value}, {*opts})
                    |:setglobal| and |:setlocal|, respectively.
                  • win: |window-ID|. Used for setting window local option.
                  • buf: Buffer number. Used for setting buffer local option.
-
-nvim_win_get_option({window}, {name})                  *nvim_win_get_option()*
-    Gets a window option value
-
-    Parameters: ~
-      • {window}  Window handle, or 0 for current window
-      • {name}    Option name
-
-    Return: ~
-        Option value
-
-nvim_win_set_option({window}, {name}, {value})         *nvim_win_set_option()*
-    Sets a window option value. Passing `nil` as value deletes the option
-    (only works if there's a global fallback)
-
-    Parameters: ~
-      • {window}  Window handle, or 0 for current window
-      • {name}    Option name
-      • {value}   Option value
 
 
 ==============================================================================

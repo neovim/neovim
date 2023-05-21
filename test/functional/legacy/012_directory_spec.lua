@@ -15,7 +15,6 @@ local clear = helpers.clear
 local insert = helpers.insert
 local command = helpers.command
 local write_file = helpers.write_file
-local curbufmeths = helpers.curbufmeths
 local expect_exit = helpers.expect_exit
 local mkdir = helpers.mkdir
 
@@ -58,9 +57,9 @@ describe("'directory' option", function()
       line 3 Abcdefghij
       end of testfile]])
 
-    meths.set_option('swapfile', true)
-    curbufmeths.set_option('swapfile', true)
-    meths.set_option('directory', '.')
+    meths.set_option_value('swapfile', true, {})
+    meths.set_option_value('swapfile', true, {buf=0})
+    meths.set_option_value('directory', '.', {})
 
     -- sanity check: files should not exist yet.
     eq(nil, luv.fs_stat('.Xtest1.swp'))
@@ -72,7 +71,7 @@ describe("'directory' option", function()
     -- reading the output from :!ls.
     neq(nil, luv.fs_stat('.Xtest1.swp'))
 
-    meths.set_option('directory', './Xtest2,.')
+    meths.set_option_value('directory', './Xtest2,.', {})
     command('edit Xtest1')
     poke_eventloop()
 
@@ -81,10 +80,10 @@ describe("'directory' option", function()
 
     eq({ "Xtest1.swp", "Xtest3" }, ls_dir_sorted("Xtest2"))
 
-    meths.set_option('directory', 'Xtest.je')
+    meths.set_option_value('directory', 'Xtest.je', {})
     command('bdelete')
     command('edit Xtest2/Xtest3')
-    eq(true, curbufmeths.get_option('swapfile'))
+    eq(true, meths.get_option_value('swapfile', {buf=0}))
     poke_eventloop()
 
     eq({ "Xtest3" }, ls_dir_sorted("Xtest2"))

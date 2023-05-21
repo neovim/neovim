@@ -18,8 +18,8 @@ describe('vim.inspect_pos', function()
       vim.api.nvim_set_current_buf(buf)
       vim.api.nvim_buf_set_lines(0, 0, -1, false, {"local a = 123"})
       vim.api.nvim_buf_set_lines(buf1, 0, -1, false, {"--commentline"})
-      vim.api.nvim_buf_set_option(buf, "filetype", "lua")
-      vim.api.nvim_buf_set_option(buf1, "filetype", "lua")
+      vim.bo[buf].filetype = 'lua'
+      vim.bo[buf1].filetype = 'lua'
       vim.api.nvim_buf_set_extmark(buf, ns1, 0, 10, { hl_group = "Normal" })
       vim.api.nvim_buf_set_extmark(buf, ns2, 0, 10, { hl_group = "Normal" })
       vim.cmd("syntax on")
@@ -97,7 +97,7 @@ describe('vim.show_pos', function()
       local buf = vim.api.nvim_create_buf(true, false)
       vim.api.nvim_set_current_buf(buf)
       vim.api.nvim_buf_set_lines(0, 0, -1, false, {"local a = 123"})
-      vim.api.nvim_buf_set_option(buf, "filetype", "lua")
+      vim.bo[buf].filetype = 'lua'
       vim.cmd("syntax on")
       return {buf, vim.show_pos(0, 0, 10)}
     ]])

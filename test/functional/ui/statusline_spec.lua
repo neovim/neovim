@@ -34,7 +34,7 @@ for _, model in ipairs(mousemodels) do
       end)
 
       it('works', function()
-        meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
+        meths.set_option_value('statusline',  'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
         meths.input_mouse('left', 'press', '', 0, 6, 17)
         eq('0 1 l', eval("g:testvar"))
         meths.input_mouse('left', 'press', '', 0, 6, 17)
@@ -54,7 +54,7 @@ for _, model in ipairs(mousemodels) do
       end)
 
       it('works for winbar', function()
-        meths.set_option('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
+        meths.set_option_value('winbar',  'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
         meths.input_mouse('left', 'press', '', 0, 0, 17)
         eq('0 1 l', eval("g:testvar"))
         meths.input_mouse('right', 'press', '', 0, 0, 17)
@@ -72,8 +72,8 @@ for _, model in ipairs(mousemodels) do
 
       it('works when there are multiple windows', function()
         command('split')
-        meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
-        meths.set_option('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
+        meths.set_option_value('statusline',  'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
+        meths.set_option_value('winbar',  'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
         meths.input_mouse('left', 'press', '', 0, 0, 17)
         eq('0 1 l', eval("g:testvar"))
         meths.input_mouse('right', 'press', '', 0, 4, 17)
@@ -90,23 +90,23 @@ for _, model in ipairs(mousemodels) do
           vim.g.testvar = string.format("%d %d %s", minwid, clicks, button)
         end
         ]])
-        meths.set_option('statusline', 'Not clicky stuff %0@v:lua.clicky_func@Clicky stuff%T')
+        meths.set_option_value('statusline',  'Not clicky stuff %0@v:lua.clicky_func@Clicky stuff%T', {})
         meths.input_mouse('left', 'press', '', 0, 6, 17)
         eq('0 1 l', eval("g:testvar"))
       end)
 
       it('ignores unsupported click items', function()
         command('tabnew | tabprevious')
-        meths.set_option('statusline', '%2TNot clicky stuff%T')
+        meths.set_option_value('statusline',  '%2TNot clicky stuff%T', {})
         meths.input_mouse('left', 'press', '', 0, 6, 0)
         eq(1, meths.get_current_tabpage().id)
-        meths.set_option('statusline', '%2XNot clicky stuff%X')
+        meths.set_option_value('statusline',  '%2XNot clicky stuff%X', {})
         meths.input_mouse('left', 'press', '', 0, 6, 0)
         eq(2, #meths.list_tabpages())
       end)
 
       it("right click works when statusline isn't focused #18994", function()
-        meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
+        meths.set_option_value('statusline',  'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
         meths.input_mouse('right', 'press', '', 0, 6, 17)
         eq('0 1 r', eval("g:testvar"))
         meths.input_mouse('right', 'press', '', 0, 6, 17)
@@ -114,7 +114,7 @@ for _, model in ipairs(mousemodels) do
       end)
 
       it("works with modifiers #18994", function()
-        meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
+        meths.set_option_value('statusline',  'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
         -- Note: alternate between left and right mouse buttons to avoid triggering multiclicks
         meths.input_mouse('left', 'press', 'S', 0, 6, 17)
         eq('0 1 l(s   )', eval("g:testvar"))
@@ -143,7 +143,7 @@ for _, model in ipairs(mousemodels) do
 
       it("works for global statusline with vertical splits #19186", function()
         command('set laststatus=3')
-        meths.set_option('statusline', '%0@MyClickFunc@Clicky stuff%T %= %0@MyClickFunc@Clicky stuff%T')
+        meths.set_option_value('statusline',  '%0@MyClickFunc@Clicky stuff%T %= %0@MyClickFunc@Clicky stuff%T', {})
         command('vsplit')
         screen:expect([[
         ^                    │                   |
@@ -394,38 +394,38 @@ describe('global statusline', function()
   end)
 
   it('win_move_statusline() can reduce cmdheight to 1', function()
-    eq(1, meths.get_option('cmdheight'))
+    eq(1, meths.get_option_value('cmdheight', {}))
     funcs.win_move_statusline(0, -1)
-    eq(2, meths.get_option('cmdheight'))
+    eq(2, meths.get_option_value('cmdheight', {}))
     funcs.win_move_statusline(0, -1)
-    eq(3, meths.get_option('cmdheight'))
+    eq(3, meths.get_option_value('cmdheight', {}))
     funcs.win_move_statusline(0, 1)
-    eq(2, meths.get_option('cmdheight'))
+    eq(2, meths.get_option_value('cmdheight', {}))
     funcs.win_move_statusline(0, 1)
-    eq(1, meths.get_option('cmdheight'))
+    eq(1, meths.get_option_value('cmdheight', {}))
   end)
 
   it('mouse dragging can reduce cmdheight to 1', function()
     command('set mouse=a')
     meths.input_mouse('left', 'press', '', 0, 14, 10)
-    eq(1, meths.get_option('cmdheight'))
+    eq(1, meths.get_option_value('cmdheight', {}))
     meths.input_mouse('left', 'drag', '', 0, 13, 10)
-    eq(2, meths.get_option('cmdheight'))
+    eq(2, meths.get_option_value('cmdheight', {}))
     meths.input_mouse('left', 'drag', '', 0, 12, 10)
-    eq(3, meths.get_option('cmdheight'))
+    eq(3, meths.get_option_value('cmdheight', {}))
     meths.input_mouse('left', 'drag', '', 0, 13, 10)
-    eq(2, meths.get_option('cmdheight'))
+    eq(2, meths.get_option_value('cmdheight', {}))
     meths.input_mouse('left', 'drag', '', 0, 14, 10)
-    eq(1, meths.get_option('cmdheight'))
+    eq(1, meths.get_option_value('cmdheight', {}))
     meths.input_mouse('left', 'drag', '', 0, 15, 10)
-    eq(1, meths.get_option('cmdheight'))
+    eq(1, meths.get_option_value('cmdheight', {}))
     meths.input_mouse('left', 'drag', '', 0, 14, 10)
-    eq(1, meths.get_option('cmdheight'))
+    eq(1, meths.get_option_value('cmdheight', {}))
   end)
 
   it('cmdline row is correct after setting cmdheight #20514', function()
     command('botright split test/functional/fixtures/bigfile.txt')
-    meths.set_option('cmdheight', 1)
+    meths.set_option_value('cmdheight', 1, {})
     feed('L')
     screen:expect([[
                                                                   |
@@ -464,7 +464,7 @@ describe('global statusline', function()
       {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
                                                                   |
     ]])
-    meths.set_option('showtabline', 2)
+    meths.set_option_value('showtabline', 2, {})
     screen:expect([[
       {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
                                                                   |
@@ -483,7 +483,7 @@ describe('global statusline', function()
       {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
                                                                   |
     ]])
-    meths.set_option('cmdheight', 0)
+    meths.set_option_value('cmdheight', 0, {})
     screen:expect([[
       {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
                                                                   |
@@ -502,7 +502,7 @@ describe('global statusline', function()
       ^0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                       |
       {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
     ]])
-    meths.set_option('cmdheight', 1)
+    meths.set_option_value('cmdheight', 1, {})
     screen:expect([[
       {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
                                                                   |
@@ -526,8 +526,8 @@ end)
 
 it('statusline does not crash if it has Arabic characters #19447', function()
   clear()
-  meths.set_option('statusline', 'غً')
-  meths.set_option('laststatus', 2)
+  meths.set_option_value('statusline', 'غً', {})
+  meths.set_option_value('laststatus', 2, {})
   command('redraw!')
   assert_alive()
 end)

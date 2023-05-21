@@ -1458,9 +1458,9 @@ describe('TUI', function()
 
   it('allows grid to assume wider ambiguous-width characters than host terminal #19686', function()
     child_session:request('nvim_buf_set_lines', 0, 0, -1, true, { ('℃'):rep(60), ('℃'):rep(60) })
-    child_session:request('nvim_win_set_option', 0, 'cursorline', true)
-    child_session:request('nvim_win_set_option', 0, 'list', true)
-    child_session:request('nvim_win_set_option', 0, 'listchars', 'eol:$')
+    child_session:request('nvim_set_option_value', 'cursorline', true, {win=0})
+    child_session:request('nvim_set_option_value', 'list', true, {win=0})
+    child_session:request('nvim_set_option_value', 'listchars', 'eol:$', {win=0})
     feed_data('gg')
     local singlewidth_screen = [[
       {13:℃}{12:℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃}|
@@ -1483,9 +1483,9 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]]
     screen:expect(singlewidth_screen)
-    child_session:request('nvim_set_option', 'ambiwidth', 'double')
+    child_session:request('nvim_set_option_value', 'ambiwidth', 'double', {})
     screen:expect(doublewidth_screen)
-    child_session:request('nvim_set_option', 'ambiwidth', 'single')
+    child_session:request('nvim_set_option_value', 'ambiwidth', 'single', {})
     screen:expect(singlewidth_screen)
     child_session:request('nvim_call_function', 'setcellwidths', {{{0x2103, 0x2103, 2}}})
     screen:expect(doublewidth_screen)
