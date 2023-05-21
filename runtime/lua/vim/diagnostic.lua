@@ -611,6 +611,7 @@ end
 ---                       * format: (function) A function that takes a diagnostic as input and
 ---                                 returns a string. The return value is the text used to display
 ---                                 the diagnostic. Example:
+---                       * current: (boolean) Only show virt text in current line.
 ---                       <pre>lua
 ---                         function(diagnostic)
 ---                           if diagnostic.severity == vim.diagnostic.severity.ERROR then
@@ -985,6 +986,56 @@ M.handlers.underline = {
   end,
 }
 
+local function diagnostic_receive_opt(bufnr, diagnostics, opts)
+  if opts.virtual_text.format then
+    diagnostics = reformat_diagnostics(opts.virtual_text.format, diagnostics)
+  end
+  if
+    opts.virtual_text.source
+    and (opts.virtual_text.source ~= 'if_many' or count_sources(bufnr) > 1)
+  then
+    diagnostics = prefix_source(diagnostics)
+  end
+  return diagnostics
+end
+
+local function get_diagnostic_namespace(namespace)
+  local ns = M.get_namespace(namespace)
+  if not ns.user_data.virt_text_ns then
+    ns.user_data.virt_text_ns = api.nvim_create_namespace('')
+  end
+
+  return ns.user_data.virt_text_ns
+end
+
+local diagnostic_autocmds = {}
+
+local function show_virual_text_on_current(bufnr, namespace, opts)
+  if diagnostic_autocmds[tostring(bufnr)] then
+    return
+  end
+
+  diagnostic_autocmds[tostring(bufnr)] = api.nvim_create_autocmd('CursorHold', {
+    buffer = bufnr,
+    callback = function()
+      local virt_text_ns = get_diagnostic_namespace(namespace)
+      pcall(api.nvim_buf_clear_namespace, bufnr, virt_text_ns, 0, -1)
+      local row = api.nvim_win_get_cursor(0)[1] - 1
+      local diagnostics = M.get(bufnr, { lnum = row, severity = opts.severity })
+      local virt_texts = { { (' '):rep(4) } }
+      diagnostics = diagnostic_receive_opt(bufnr, diagnostics, opts)
+      vim.iter(diagnostics):filter(function(item)
+        virt_texts[#virt_texts + 1] = { item.message, 'Diagnostic' .. M.severity[item.severity] }
+      end)
+
+      api.nvim_buf_set_extmark(bufnr, virt_text_ns, row, 0, {
+        virt_text = virt_texts,
+        hl_mode = 'combine',
+      })
+    end,
+  })
+end
+
 M.handlers.virtual_text = {
   show = function(namespace, bufnr, diagnostics, opts)
     vim.validate({
@@ -1003,26 +1054,18 @@ M.handlers.virtual_text = {
 
     local severity
     if opts.virtual_text then
-      if opts.virtual_text.format then
-        diagnostics = reformat_diagnostics(opts.virtual_text.format, diagnostics)
+      if opts.virtual_text.current then
+        show_virual_text_on_current(bufnr, namespace, opts)
+        return
       end
-      if
-        opts.virtual_text.source
-        and (opts.virtual_text.source ~= 'if_many' or count_sources(bufnr) > 1)
-      then
-        diagnostics = prefix_source(diagnostics)
-      end
+      diagnostics = diagnostic_receive_opt(bufnr, diagnostics, opts)
+
       if opts.virtual_text.severity then
         severity = opts.virtual_text.severity
       end
     end
 
-    local ns = M.get_namespace(namespace)
-    if not ns.user_data.virt_text_ns then
-      ns.user_data.virt_text_ns = api.nvim_create_namespace('')
-    end
-
-    local virt_text_ns = ns.user_data.virt_text_ns
+    local virt_text_ns = get_diagnostic_namespace(namespace)
     local buffer_line_diagnostics = diagnostic_lines(diagnostics)
     for line, line_diagnostics in pairs(buffer_line_diagnostics) do
       if severity then
@@ -1117,6 +1160,11 @@ function M.hide(namespace, bufnr)
 
   local buffers = bufnr and { get_bufnr(bufnr) } or vim.tbl_keys(diagnostic_cache)
   for _, iter_bufnr in ipairs(buffers) do
+    if diagnostic_autocmds[tostring(iter_bufnr)] then
+      pcall(api.nvim_del_autocmd, diagnostic_autocmds[tostring(iter_bufnr)])
+      diagnostic_autocmds[tostring(bufnr)] = nil
+    end
+
     local namespaces = namespace and { namespace } or vim.tbl_keys(diagnostic_cache[iter_bufnr])
     for _, iter_namespace in ipairs(namespaces) do
       for _, handler in pairs(M.handlers) do
