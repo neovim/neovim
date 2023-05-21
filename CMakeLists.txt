@@ -35,6 +35,9 @@ include(InstallHelpers)
 include(PreventInTreeBuilds)
 include(Util)
 
+set_directory_properties(PROPERTIES
+  EP_PREFIX "${DEPS_BUILD_DIR}")
+
 set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
 
 find_program(CCACHE_PRG ccache)
@@ -229,18 +232,18 @@ endif()
 #
 # Lint
 #
-find_program(LUACHECK_PRG luacheck)
 find_program(SHELLCHECK_PRG shellcheck)
 find_program(STYLUA_PRG stylua)
 
 add_glob_target(
   REQUIRED
   TARGET lintlua-luacheck
-  COMMAND ${LUACHECK_PRG}
+  COMMAND ${DEPS_BIN_DIR}/luacheck
   FLAGS -q
   GLOB_DIRS runtime/ scripts/ src/ test/
   GLOB_PAT *.lua
   TOUCH_STRATEGY SINGLE)
+add_dependencies(lintlua-luacheck luacheck)
 
 add_glob_target(
   TARGET lintlua-stylua
@@ -313,7 +316,6 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
 ExternalProject_Add(uncrustify
-  PREFIX ${DEPS_BUILD_DIR}
   URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.77.1.tar.gz
   URL_HASH SHA256=414bbc9f7860eb18a53074f9af14ed04638a633b2216a73f2629291300d37c1b
   DOWNLOAD_NO_PROGRESS TRUE
@@ -321,3 +323,5 @@ ExternalProject_Add(uncrustify
   CMAKE_ARGS ${DEPS_CMAKE_ARGS}
   CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS}
   EXCLUDE_FROM_ALL TRUE)
+
+include(BuildLuarocks)

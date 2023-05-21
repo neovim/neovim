@@ -20,12 +20,14 @@ if(LUA_HAS_FFI)
       -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
       -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}
       -D BUILD_DIR=${CMAKE_BINARY_DIR}
+      -D DEPS_INSTALL_DIR=${DEPS_INSTALL_DIR}
       -D TEST_TYPE=unit
       -D CIRRUS_CI=$ENV{CIRRUS_CI}
       -D CI_BUILD=${CI_BUILD}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${UNITTEST_PREREQS}
     USES_TERMINAL)
+  add_dependencies(unittest test_deps)
 else()
   message(WARNING "disabling unit tests: no Luajit FFI in ${LUA_PRG}")
 endif()
@@ -41,7 +43,7 @@ add_custom_target(functionaltest
     -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
     -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}
     -D BUILD_DIR=${CMAKE_BINARY_DIR}
-    -D DEPS_PREFIX=${DEPS_PREFIX}
+    -D DEPS_INSTALL_DIR=${DEPS_INSTALL_DIR}
     -D TEST_TYPE=functional
     -D CIRRUS_CI=$ENV{CIRRUS_CI}
     -D CI_BUILD=${CI_BUILD}
@@ -56,6 +58,7 @@ add_custom_target(benchmark
     -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
     -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}
     -D BUILD_DIR=${CMAKE_BINARY_DIR}
+    -D DEPS_INSTALL_DIR=${DEPS_INSTALL_DIR}
     -D TEST_TYPE=benchmark
     -D CIRRUS_CI=$ENV{CIRRUS_CI}
     -D CI_BUILD=${CI_BUILD}
@@ -70,9 +73,14 @@ add_custom_target(functionaltest-lua
     -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
     -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}
     -D BUILD_DIR=${CMAKE_BINARY_DIR}
+    -D DEPS_INSTALL_DIR=${DEPS_INSTALL_DIR}
     -D TEST_TYPE=functional
     -D CIRRUS_CI=$ENV{CIRRUS_CI}
     -D CI_BUILD=${CI_BUILD}
     -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
   DEPENDS ${FUNCTIONALTEST_PREREQS}
   USES_TERMINAL)
+
+add_dependencies(functionaltest test_deps)
+add_dependencies(benchmark test_deps)
+add_dependencies(functionaltest-lua test_deps)
