@@ -2,7 +2,7 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 // drawline.c: Functions for drawing window lines on the screen.
-// This is the middle level, drawscreen.c is the top and grid.c/screen.c the lower level.
+// This is the middle level, drawscreen.c is the top and grid.c the lower level.
 
 #include <assert.h>
 #include <limits.h>
@@ -1594,6 +1594,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         // Draw the 'statuscolumn' if option is set.
         if (statuscol.draw) {
           if (statuscol.textp == NULL) {
+            v = (ptr - line);
             get_statuscol_str(wp, lnum, wlv.row - startrow - wlv.filler_lines, &statuscol);
             if (!end_fill) {
               // Get the line again as evaluating 'statuscolumn' may free it.

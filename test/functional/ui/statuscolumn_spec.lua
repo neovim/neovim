@@ -674,4 +674,16 @@ describe('statuscolumn', function()
     ]])
     eq(2, eval('g:stcnr'))
   end)
+
+  it('does not wrap multibyte characters at the end of a line', function()
+    screen:try_resize(33, 4)
+    command([[set spell stc=%l\ ]])
+    command('call setline(8, "This is a line that contains ᶏ multibyte character.")')
+    screen:expect([[
+      8  ^This is a line that contains ᶏ|
+          multibyte character.         |
+      9  aaaaa                         |
+                                       |
+    ]])
+  end)
 end)
