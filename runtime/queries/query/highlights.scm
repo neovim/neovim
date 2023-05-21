@@ -27,8 +27,8 @@
 ((parameters (identifier) @number)
  (#match? @number "^[-+]?[0-9]+(.[0-9]+)?$"))
 
-((program . (comment) @include)
- (#match? @include "^;\ +inherits\ *:"))
+((program . (comment)* . (comment) @include)
+ (#lua-match? @include "^;+ *inherits *:"))
 
-((program . (comment) @preproc)
- (#match? @preproc "^; +extends"))
+((program . (comment)* . (comment) @preproc)
+ (#lua-match? @preproc "^;+ *extends"))
