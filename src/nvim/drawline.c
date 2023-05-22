@@ -2114,9 +2114,24 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         bool no_plain_buffer = (wp->w_s->b_p_spo_flags & SPO_NPBUFFER) != 0;
         bool can_spell = !no_plain_buffer;
 
-        // Get syntax attribute, unless still at the start of the line
+        // Get extmark attribute, unless still at the start of the line
         // (double-wide char that doesn't fit).
         v = (ptr - line);
+        if (has_decor && v > 0) {
+          if (!attr_pri) {
+            wlv.char_attr = extmark_attr;
+          } else {
+            wlv.char_attr = hl_combine_attr(extmark_attr, wlv.char_attr);
+          }
+
+          decor_conceal = decor_state.conceal;
+          if (decor_conceal && decor_state.conceal_char) {
+            decor_conceal = 2;  // really??
+          }
+        } else if (!attr_pri) {
+          wlv.char_attr = 0;
+        }
+
         if (has_syntax && v > 0) {
           // Get the syntax attribute for the character.  If there
           // is an error, disable syntax highlighting.
@@ -2142,16 +2157,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           line = ml_get_buf(wp->w_buffer, lnum, false);
           ptr = line + v;
 
+          wlv.char_attr = hl_combine_attr(syntax_attr, wlv.char_attr);
           if (!attr_pri) {
             if (wlv.cul_attr) {
-              wlv.char_attr = 0 != wlv.line_attr_lowprio
-                ? hl_combine_attr(wlv.cul_attr, syntax_attr)
-                : hl_combine_attr(syntax_attr, wlv.cul_attr);
-            } else {
-              wlv.char_attr = syntax_attr;
+              wlv.char_attr = wlv.line_attr_lowprio != 0
+                ? hl_combine_attr(wlv.cul_attr, wlv.char_attr)
+                : hl_combine_attr(wlv.char_attr, wlv.cul_attr);
             }
-          } else {
-            wlv.char_attr = hl_combine_attr(syntax_attr, wlv.char_attr);
           }
           // no concealing past the end of the line, it interferes
           // with line highlighting.
@@ -2160,27 +2172,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           } else {
             syntax_flags = get_syntax_info(&syntax_seqnr);
           }
-        } else if (!attr_pri) {
-          wlv.char_attr = 0;
         }
-
-        if (has_decor && v > 0) {
-          if (extmark_attr != 0) {
-            if (!attr_pri) {
-              wlv.char_attr = hl_combine_attr(wlv.char_attr, extmark_attr);
-            } else {
-              wlv.char_attr = hl_combine_attr(extmark_attr, wlv.char_attr);
-            }
-          }
-
-          decor_conceal = decor_state.conceal;
-          if (decor_conceal && decor_state.conceal_char) {
-            decor_conceal = 2;  // really??
-          }
-
-          can_spell = TRISTATE_TO_BOOL(decor_state.spell, can_spell);
-        }
-
         // Check spelling (unless at the end of the line).
         // Only do this when there is no syntax highlighting, the
         // @Spell cluster is not used or the current syntax item
@@ -2188,7 +2180,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         v = (ptr - line);
         if (has_spell && v >= word_end && v > cur_checked_col) {
           spell_attr = 0;
-          if (c != 0 && ((!has_syntax && !no_plain_buffer) || can_spell)) {
+          if (c != 0 && ((!has_syntax && can_spell)
+                         || TRISTATE_TO_BOOL(decor_state.spell, can_spell))) {
             char *prev_ptr;
             char *p;
             int len;
