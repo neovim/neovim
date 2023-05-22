@@ -3055,6 +3055,40 @@ Iter:fold({self}, {init}, {f})                                   *Iter:fold()*
     Return: ~
         any
 
+Iter:join({self}, {sep}, {i}, {j})                               *Iter:join()*
+    Each element of iter is concatenated and returned. sep, i, j are the same
+    as the arguments to |table.concat()|.
+
+    The following two are equivalent
+
+    Use table.concat() >
+
+     table.concat(vim
+       .iter({ 1, 2, 3 })
+       :map(function(v)
+         return v * 2
+       end)
+       :totable(), ', ')
+<
+
+    Use Iter :join() >
+
+     vim
+       .iter({ 1, 2, 3 })
+       :map(function(v)
+         return v * 2
+       end)
+       :join(', ')
+<
+
+    Parameters: ~
+      • {sep}  (string|nil)
+      • {i}    (integer|nil)
+      • {j}    (integer|nil)
+
+    Return: ~
+        (string)
+
 Iter:last({self})                                                *Iter:last()*
     Return the last item in the iterator.
 
