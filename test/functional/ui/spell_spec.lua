@@ -254,4 +254,19 @@ describe("'spell'", function()
     ]])
   end)
 
+  it('and syntax does not clear extmark highlighting at the start of a word', function()
+    screen:try_resize(43, 3)
+    command([[
+      set spell
+      syntax match Constant "^.*$"
+      call setline(1, "This is some text without any spell errors.")
+    ]])
+    local ns = meths.create_namespace("spell")
+    curbufmeths.set_extmark(ns, 0, 0, { hl_group = 'WarningMsg', end_col = 43 })
+    screen:expect([[
+      {6:^This is some text without any spell errors.}|
+      {0:~                                          }|
+                                                 |
+    ]])
+  end)
 end)
