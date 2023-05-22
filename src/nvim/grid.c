@@ -316,8 +316,7 @@ int grid_puts_len(ScreenGrid *grid, const char *text, int textlen, int row, int 
       // When at the start of the text and overwriting the right half of a
       // two-cell character in the same grid, truncate that into a '>'.
       if (ptr == text && col > 0 && grid->chars[off][0] == 0) {
-        grid->chars[off - 1][0] = '>';
-        grid->chars[off - 1][1] = 0;
+        schar_from_ascii(grid->chars[off - 1], '>');
       }
 
       schar_copy(grid->chars[off], buf);
