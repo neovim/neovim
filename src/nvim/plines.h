@@ -17,7 +17,6 @@ typedef struct {
   int cts_cur_text_width_left;     // width of virtual text left of cursor
   int cts_cur_text_width_right;     // width of virtual text right of cursor
   MarkTreeIter cts_iter[1];
-  // TODO(bfredl): iterator in to the marktree for scanning virt text
 
   int cts_vcol;    // virtual column at current position
 } chartabsize_T;
