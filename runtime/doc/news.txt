@@ -56,6 +56,8 @@ The following new APIs or features were added.
 • |Query:iter_matches()| now has the ability to set the maximum start depth
   for matches.
 
+• |Iter:join()| combines each element of iterators.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
