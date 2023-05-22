@@ -505,8 +505,7 @@ CursorMoved			After the cursor was moved in Normal or Visual
 				"x", "rx" or "p".
 				Not always triggered when there is typeahead,
 				while executing commands in a script file, or
-				when an operator is pending. Always triggered
-				when moving to another window.
+				when an operator is pending.
 				For an example see |match-parens|.
 				Note: Cannot be skipped with |:noautocmd|.
 				Careful: This is triggered very often, don't
