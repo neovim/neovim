@@ -863,6 +863,49 @@ function ListIter.enumerate(self)
   return self
 end
 
+
+--- Each element of iter is concatenated and returned.
+--- sep, i, j are the same as the arguments to |table.concat()|.
+---
+--- The following two are equivalent
+---
+--- Use table.concat()
+--- <pre>
+--- table.concat(vim
+---   .iter({ 1, 2, 3 })
+---   :map(function(v)
+---     return v * 2
+---   end)
+---   :totable(), ', ')
+--- </pre>
+---
+--- Use Iter:join()
+--- <pre>
+--- vim
+---   .iter({ 1, 2, 3 })
+---   :map(function(v)
+---     return v * 2
+---   end)
+---   :join(', ')
+--- </pre>
+---@param sep string|nil
+---@param i integer|nil
+---@param j integer|nil
+---@return string
+function Iter.join(self, sep, i, j)
+  local t = self
+    :map(function(_, v)
+      return v
+    end)
+    :totable()
+  return table.concat(t, sep, i, j)
+end
+
+---@private
+function ListIter.join(self, sep, i, j)
+  return table.concat(self._table, sep, i, j)
+end
+
 --- Create a new Iter object from a table or iterator.
 ---
 ---@param src table|function Table or iterator to drain values from

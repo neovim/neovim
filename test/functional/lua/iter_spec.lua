@@ -346,6 +346,12 @@ describe('vim.iter', function()
     end))
   end)
 
+  it('join()', function()
+    local t = {1, 2, 3, 4, 5}
+    eq("12345", vim.iter(t):join())
+    eq("2, 3, 4", vim.iter(t):join(", ", 2, 4))
+  end)
+
   it('handles map-like tables', function()
     local it = vim.iter({ a = 1, b = 2, c = 3 }):map(function(k, v)
       if v % 2 ~= 0 then
