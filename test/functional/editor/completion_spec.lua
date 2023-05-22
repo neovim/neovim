@@ -1257,4 +1257,48 @@ describe('completion', function()
       {3:-- }{4:match 1 of 2}     |
     ]]}
   end)
+
+  it('restores extmarks if original text is restored #23653', function()
+    screen:try_resize(screen._width, 4)
+    command([[
+      call setline(1, ['aaaa'])
+      let ns_id = nvim_create_namespace('extmark')
+      let mark_id = nvim_buf_set_extmark(0, ns_id, 0, 0, { 'end_col':2, 'hl_group':'Error'})
+      let mark = nvim_buf_get_extmark_by_id(0, ns_id, mark_id, { 'details':1 })
+      inoremap <C-x> <C-r>=Complete()<CR>
+      function Complete() abort
+        call complete(1, [{ 'word': 'aaaaa' }])
+        return ''
+      endfunction
+    ]])
+    feed('A<C-X><C-E><Esc>')
+    eq(eval('mark'), eval("nvim_buf_get_extmark_by_id(0, ns_id, mark_id, { 'details':1 })"))
+    feed('A<C-N>')
+    eq(eval('mark'), eval("nvim_buf_get_extmark_by_id(0, ns_id, mark_id, { 'details':1 })"))
+    feed('<Esc>0Yppia<Esc>ggI<C-N>')
+    screen:expect([[
+      aaaa{7:^aa}aa                                                    |
+      {2:aaaa           }                                             |
+      {1:aaaaa          }                                             |
+      {3:-- Keyword completion (^N^P) }{4:match 1 of 2}                   |
+    ]])
+    feed('<C-N><C-N><Esc>')
+    eq(eval('mark'), eval("nvim_buf_get_extmark_by_id(0, ns_id, mark_id, { 'details':1 })"))
+    feed('A<C-N>')
+    eq(eval('mark'), eval("nvim_buf_get_extmark_by_id(0, ns_id, mark_id, { 'details':1 })"))
+    feed('<C-N>')
+    screen:expect([[
+      aaaaa^                                                       |
+      {1:aaaa           }                                             |
+      {2:aaaaa          }                                             |
+      {3:-- Keyword completion (^N^P) }{4:match 2 of 2}                   |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {7:aa}aa^                                                        |
+      aaaa                                                        |
+      aaaaa                                                       |
+      {3:-- INSERT --}                                                |
+    ]])
+  end)
 end)

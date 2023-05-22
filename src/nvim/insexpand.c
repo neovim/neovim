@@ -23,6 +23,7 @@
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
+#include "nvim/extmark.h"
 #include "nvim/fileio.h"
 #include "nvim/func_attr.h"
 #include "nvim/garray.h"
@@ -252,6 +253,8 @@ static colnr_T compl_col = 0;           ///< column where the text starts
                                         ///< that is being completed
 static char *compl_orig_text = NULL;    ///< text as it was before
                                         ///< completion started
+/// Undo information to restore extmarks for original text.
+static extmark_undo_vec_t compl_orig_extmarks;
 static int compl_cont_mode = 0;
 static expand_T compl_xp;
 
@@ -1569,6 +1572,7 @@ void ins_compl_clear(void)
   XFREE_CLEAR(compl_pattern);
   XFREE_CLEAR(compl_leader);
   edit_submode_extra = NULL;
+  kv_destroy(compl_orig_extmarks);
   XFREE_CLEAR(compl_orig_text);
   compl_enter_selects = false;
   // clear v:completed_item
@@ -2019,6 +2023,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
         ins_bytes_len(p + compl_len, (size_t)(len - compl_len));
       }
     }
+    restore_orig_extmarks();
     retval = true;
   }
 
@@ -2505,6 +2510,22 @@ static void ins_compl_add_dict(dict_T *dict)
   }
 }
 
+/// Save extmarks in "compl_orig_text" so that they may be restored when the
+/// completion is cancelled, or the original text is completed.
+static void save_orig_extmarks(void)
+{
+  extmark_splice_delete(curbuf, curwin->w_cursor.lnum - 1, compl_col, curwin->w_cursor.lnum - 1,
+                        compl_col + compl_length, &compl_orig_extmarks, true, kExtmarkUndo);
+}
+
+static void restore_orig_extmarks(void)
+{
+  for (long i = (int)kv_size(compl_orig_extmarks) - 1; i > -1; i--) {
+    ExtmarkUndoObject undo_info = kv_A(compl_orig_extmarks, i);
+    extmark_apply_undo(undo_info, true);
+  }
+}
+
 /// Start completion for the complete() function.
 ///
 /// @param startcol  where the matched text starts (1 is first column).
@@ -2526,10 +2547,10 @@ static void set_completion(colnr_T startcol, list_T *list)
     startcol = curwin->w_cursor.col;
   }
   compl_col = startcol;
-  compl_length = (int)curwin->w_cursor.col - (int)startcol;
+  compl_length = curwin->w_cursor.col - startcol;
   // compl_pattern doesn't need to be set
-  compl_orig_text = xstrnsave(get_cursor_line_ptr() + compl_col,
-                              (size_t)compl_length);
+  compl_orig_text = xstrnsave(get_cursor_line_ptr() + compl_col, (size_t)compl_length);
+  save_orig_extmarks();
   if (p_ic) {
     flags |= CP_ICASE;
   }
@@ -3689,11 +3710,15 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
   if (compl_no_insert && !started) {
     ins_bytes(compl_orig_text + get_compl_len());
     compl_used_match = false;
+    restore_orig_extmarks();
   } else if (insert_match) {
     if (!compl_get_longest || compl_used_match) {
       ins_compl_insert(in_compl_func);
     } else {
       ins_bytes(compl_leader + get_compl_len());
+    }
+    if (!strcmp(compl_curr_match->cp_str, compl_orig_text)) {
+      restore_orig_extmarks();
     }
   } else {
     compl_used_match = false;
@@ -4267,7 +4292,9 @@ static int ins_compl_start(void)
 
   // Always add completion for the original text.
   xfree(compl_orig_text);
+  kv_destroy(compl_orig_extmarks);
   compl_orig_text = xstrnsave(line + compl_col, (size_t)compl_length);
+  save_orig_extmarks();
   int flags = CP_ORIGINAL_TEXT;
   if (p_ic) {
     flags |= CP_ICASE;
@@ -4276,6 +4303,7 @@ static int ins_compl_start(void)
                     flags, false) != OK) {
     XFREE_CLEAR(compl_pattern);
     XFREE_CLEAR(compl_orig_text);
+    kv_destroy(compl_orig_extmarks);
     return FAIL;
   }
 
@@ -4508,6 +4536,7 @@ static unsigned quote_meta(char *dest, char *src, int len)
 void free_insexpand_stuff(void)
 {
   XFREE_CLEAR(compl_orig_text);
+  kv_destroy(compl_orig_extmarks);
   callback_free(&cfu_cb);
   callback_free(&ofu_cb);
   callback_free(&tsrfu_cb);
