@@ -98,6 +98,7 @@ typedef struct {
   int char_attr;             ///< attributes for next character
 
   int n_extra;               ///< number of extra bytes
+  int n_attr;                ///< chars with special attr
   char *p_extra;             ///< string of extra chars, plus NUL, only used
                              ///< when c_extra and c_final are NUL
   char *p_extra_free;        ///< p_extra buffer that needs to be freed
@@ -105,9 +106,12 @@ typedef struct {
   int c_extra;               ///< extra chars, all the same
   int c_final;               ///< final char, mandatory if set
 
+  bool extra_for_extmark;
+
   // saved "extra" items for when draw_state becomes WL_LINE (again)
   int saved_n_extra;
   char *saved_p_extra;
+  bool saved_extra_for_extmark;
   int saved_c_extra;
   int saved_c_final;
   int saved_char_attr;
@@ -120,6 +124,14 @@ typedef struct {
   int filler_lines;          ///< nr of filler lines to be drawn
   int filler_todo;           ///< nr of filler lines still to do + 1
   SignTextAttrs sattrs[SIGN_SHOW_MAX];  ///< sign attributes for the sign column
+
+  VirtText virt_inline;
+  size_t virt_inline_i;
+
+  bool reset_extra_attr;
+
+  int skip_cells;                   // nr of cells to skip for virtual text
+  int skipped_cells;                // nr of skipped virtual text cells
 } winlinevars_T;
 
 /// for line_putchar. Contains the state that needs to be remembered from
@@ -851,6 +863,73 @@ static void apply_cursorline_highlight(win_T *wp, winlinevars_T *wlv)
   }
 }
 
+static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t v, bool *do_save)
+{
+  while (true) {
+    // we could already be inside an existing inline text with multiple chunks
+    if (!(wlv->virt_inline_i < kv_size(wlv->virt_inline))) {
+      DecorState *state = &decor_state;
+      for (size_t i = 0; i < kv_size(state->active); i++) {
+        DecorRange *item = &kv_A(state->active, i);
+        if (item->start_row != state->row
+            || !kv_size(item->decor.virt_text)
+            || item->decor.virt_text_pos != kVTInline) {
+          continue;
+        }
+        if (item->win_col >= -1 && item->start_col == v) {
+          wlv->virt_inline = item->decor.virt_text;
+          wlv->virt_inline_i = 0;
+          item->win_col = -2;
+          break;
+        }
+      }
+    }
+
+    if (wlv->n_extra == 0 || !wlv->extra_for_extmark) {
+      wlv->reset_extra_attr = false;
+    }
+
+    if (wlv->n_extra <= 0 && wlv->virt_inline_i < kv_size(wlv->virt_inline)) {
+      VirtTextChunk vtc = kv_A(wlv->virt_inline, wlv->virt_inline_i);
+      wlv->p_extra = vtc.text;
+      wlv->n_extra = (int)strlen(wlv->p_extra);
+      wlv->extra_for_extmark = true;
+      wlv->c_extra = NUL;
+      wlv->c_final = NUL;
+      wlv->extra_attr = vtc.hl_id ? syn_id2attr(vtc.hl_id) : 0;
+      wlv->n_attr = mb_charlen(vtc.text);
+      wlv->virt_inline_i++;
+      *do_save = true;
+      // If the text didn't reach until the first window
+      // column we need to skip cells.
+      if (wlv->skip_cells > 0) {
+        int virt_text_len = wlv->n_attr;
+        if (virt_text_len > wlv->skip_cells) {
+          int len = mb_charlen2bytelen(wlv->p_extra, wlv->skip_cells);
+          wlv->n_extra -= len;
+          wlv->p_extra += len;
+          wlv->n_attr -= wlv->skip_cells;
+          // Skipped cells needed to be accounted for in vcol.
+          wlv->skipped_cells += wlv->skip_cells;
+          wlv->skip_cells = 0;
+        } else {
+          // the whole text is left of the window, drop
+          // it and advance to the next one
+          wlv->skip_cells -= virt_text_len;
+          // Skipped cells needed to be accounted for in vcol.
+          wlv->skipped_cells += virt_text_len;
+          wlv->n_attr = 0;
+          wlv->n_extra = 0;
+
+          // go to the start so the next virtual text chunk can be selected.
+          continue;
+        }
+      }
+    }
+    break;
+  }
+}
+
 static bool check_mb_utf8(int *c, int *u8cc)
 {
   if (utf_char2len(*c) > 1) {
@@ -917,6 +996,7 @@ static void win_line_start(win_T *wp, winlinevars_T *wlv, bool save_extra)
     wlv->draw_state = WL_START;
     wlv->saved_n_extra = wlv->n_extra;
     wlv->saved_p_extra = wlv->p_extra;
+    wlv->saved_extra_for_extmark = wlv->extra_for_extmark;
     wlv->saved_c_extra = wlv->c_extra;
     wlv->saved_c_final = wlv->c_final;
     wlv->saved_char_attr = wlv->char_attr;
@@ -931,6 +1011,8 @@ static void win_line_continue(winlinevars_T *wlv)
   if (wlv->saved_n_extra > 0) {
     // Continue item from end of wrapped line.
     wlv->n_extra = wlv->saved_n_extra;
+    wlv->saved_n_extra = 0;
+    wlv->extra_for_extmark = wlv->saved_extra_for_extmark;
     wlv->c_extra = wlv->saved_c_extra;
     wlv->c_final = wlv->saved_c_final;
     wlv->p_extra = wlv->saved_p_extra;
@@ -969,12 +1051,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
                                       // at end-of-line
   bool has_fold = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
 
-  int n_attr = 0;                       // chars with special attr
   int saved_attr2 = 0;                  // char_attr saved for n_attr
   int n_attr3 = 0;                      // chars with overruling special attr
   int saved_attr3 = 0;                  // char_attr saved for n_attr3
 
-  int n_skip = 0;                       // nr of chars to skip for 'nowrap'
+  int n_skip = 0;                       // nr of chars to skip for 'nowrap' or
+                                        // concealing
 
   int fromcol_prev = -2;                // start of inverting after cursor
   bool noinvcur = false;                // don't invert the cursor
@@ -986,7 +1068,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   bool area_highlighting = false;       // Visual or incsearch highlighting in this line
   int vi_attr = 0;                      // attributes for Visual and incsearch highlighting
   int area_attr = 0;                    // attributes desired by highlighting
+  int saved_area_attr = 0;              // idem for area_attr
   int search_attr = 0;                  // attributes desired by 'hlsearch'
+  int saved_search_attr = 0;            // search_attr to be used when n_extra
+                                        // goes to zero
   int vcol_save_attr = 0;               // saved attr for 'cursorcolumn'
   int syntax_attr = 0;                  // attributes desired by syntax
   bool has_syntax = false;              // this buffer has syntax highl.
@@ -1024,6 +1109,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   int prev_c1 = 0;                      // first composing char for prev_c
 
   bool search_attr_from_match = false;  // if search_attr is from :match
+  bool saved_search_attr_from_match = false;  // if search_attr is from :match
   bool has_decor = false;               // this buffer has decoration
   int win_col_offset = 0;               // offset for window columns
 
@@ -1436,6 +1522,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       }
     }
 
+    // If there the text doesn't reach to the desired column, need to skip
+    // "skip_cells" cells when virtual text follows.
+    if (!wp->w_p_wrap && v > wlv.vcol) {
+      wlv.skip_cells = (int)(v - wlv.vcol);
+    }
+
     // Adjust for when the inverted text is before the screen,
     // and when the start of the inverted text is before the screen.
     if (wlv.tocol <= wlv.vcol) {
@@ -1714,7 +1806,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       wlv.n_extra = 0;
     }
 
-    if (wlv.draw_state == WL_LINE && (area_highlighting || has_spell)) {
+    int extmark_attr = 0;
+    if (wlv.draw_state == WL_LINE
+        && (area_highlighting || has_spell || (extra_check && !has_fold))) {
       // handle Visual or match highlighting in this line
       if (wlv.vcol == wlv.fromcol
           || (wlv.vcol + 1 == wlv.fromcol && wlv.n_extra == 0
@@ -1732,7 +1826,29 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         area_active = false;
       }
 
-      if (!wlv.n_extra) {
+      if (has_decor && v >= 0) {
+        bool selected = (area_active || (area_highlighting && noinvcur
+                                         && wlv.vcol == wp->w_virtcol));
+        extmark_attr = decor_redraw_col(wp, (colnr_T)v, wlv.off,
+                                        selected, &decor_state);
+
+        bool do_save = false;
+        handle_inline_virtual_text(wp, &wlv, v, &do_save);
+        if (do_save) {
+          // restore search_attr and area_attr when n_extra is down to zero
+          // TODO(bfredl): this is ugly as fuck. look if we can do this some other way.
+          saved_search_attr = search_attr;
+          saved_area_attr = area_attr;
+          saved_search_attr_from_match = search_attr_from_match;
+          search_attr_from_match = false;
+          search_attr = 0;
+          area_attr = 0;
+          extmark_attr = 0;
+          n_skip = 0;
+        }
+      }
+
+      if (wlv.n_extra == 0) {
         // Check for start/end of 'hlsearch' and other matches.
         // After end, check for start/end of next match.
         // When another match, have to check for start again.
@@ -1750,12 +1866,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       }
 
       if (wlv.diff_hlf != (hlf_T)0) {
+        // When there is extra text (eg: virtual text) it gets the
+        // diff highlighting for the line, but not for changed text.
         if (wlv.diff_hlf == HLF_CHD && ptr - line >= change_start
             && wlv.n_extra == 0) {
           wlv.diff_hlf = HLF_TXD;                   // changed text
         }
-        if (wlv.diff_hlf == HLF_TXD && ptr - line > change_end
-            && wlv.n_extra == 0) {
+        if (wlv.diff_hlf == HLF_TXD && ((ptr - line > change_end && wlv.n_extra == 0)
+                                        || (wlv.n_extra > 0 && wlv.extra_for_extmark))) {
           wlv.diff_hlf = HLF_CHD;                   // changed line
         }
         wlv.line_attr = win_hl_attr(wp, (int)wlv.diff_hlf);
@@ -1856,6 +1974,26 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         wlv.p_extra++;
       }
       wlv.n_extra--;
+
+      // Only restore search_attr and area_attr after "n_extra" in
+      // the next screen line is also done.
+      if (wlv.n_extra <= 0) {
+        if (wlv.saved_n_extra <= 0) {
+          if (search_attr == 0) {
+            search_attr = saved_search_attr;
+          }
+          if (area_attr == 0 && *ptr != NUL) {
+            area_attr = saved_area_attr;
+          }
+
+          if (wlv.extra_for_extmark) {
+            // wlv.extra_attr should be used at this position but not
+            // any further.
+            wlv.reset_extra_attr = true;
+          }
+        }
+        wlv.extra_for_extmark = false;
+      }
     } else if (foldinfo.fi_lines > 0) {
       // skip writing the buffer line itself
       c = NUL;
@@ -1907,7 +2045,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         wlv.c_extra = NUL;
         wlv.c_final = NUL;
         if (area_attr == 0 && search_attr == 0) {
-          n_attr = wlv.n_extra + 1;
+          wlv.n_attr = wlv.n_extra + 1;
           wlv.extra_attr = win_hl_attr(wp, HLF_8);
           saved_attr2 = wlv.char_attr;               // save current attr
         }
@@ -1962,7 +2100,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         wlv.c_final = NUL;
         c = ' ';
         if (area_attr == 0 && search_attr == 0) {
-          n_attr = wlv.n_extra + 1;
+          wlv.n_attr = wlv.n_extra + 1;
           wlv.extra_attr = win_hl_attr(wp, HLF_AT);
           saved_attr2 = wlv.char_attr;             // save current attr
         }
@@ -2027,10 +2165,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         }
 
         if (has_decor && v > 0) {
-          bool selected = (area_active || (area_highlighting && noinvcur
-                                           && wlv.vcol == wp->w_virtcol));
-          int extmark_attr = decor_redraw_col(wp, (colnr_T)v - 1, wlv.off,
-                                              selected, &decor_state);
           if (extmark_attr != 0) {
             if (!attr_pri) {
               wlv.char_attr = hl_combine_attr(wlv.char_attr, extmark_attr);
@@ -2135,7 +2269,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           chartabsize_T cts;
 
           init_chartabsize_arg(&cts, wp, lnum, wlv.vcol, line, p);
+          // do not want virtual text to be counted here
+          cts.cts_has_virt_text = false;
           wlv.n_extra = win_lbr_chartabsize(&cts, NULL) - 1;
+          clear_chartabsize_arg(&cts);
 
           // We have just drawn the showbreak value, no need to add
           // space for it again.
@@ -2167,7 +2304,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
               c = ' ';
             }
           }
-          clear_chartabsize_arg(&cts);
         }
 
         in_multispace = c == ' ' && ((ptr > line + 1 && ptr[-2] == ' ') || *ptr == ' ');
@@ -2198,7 +2334,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           } else {
             c = (c == ' ') ? wp->w_p_lcs_chars.space : wp->w_p_lcs_chars.nbsp;
           }
-          n_attr = 1;
+          wlv.n_attr = 1;
           wlv.extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = wlv.char_attr;  // save current attr
           mb_c = c;
@@ -2221,7 +2357,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             c = wp->w_p_lcs_chars.space;
           }
 
-          n_attr = 1;
+          wlv.n_attr = 1;
           wlv.extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = wlv.char_attr;  // save current attr
           mb_c = c;
@@ -2337,7 +2473,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
               wlv.c_extra = wp->w_p_lcs_chars.tab2;
             }
             wlv.c_final = wp->w_p_lcs_chars.tab3;
-            n_attr = tab_len + 1;
+            wlv.n_attr = tab_len + 1;
             wlv.extra_attr = win_hl_attr(wp, HLF_0);
             saved_attr2 = wlv.char_attr;  // save current attr
             mb_c = c;
@@ -2364,15 +2500,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
               && wlv.line_attr == 0
               && wlv.line_attr_lowprio == 0) {
             // In virtualedit, visual selections may extend beyond end of line
-            if (area_highlighting && virtual_active()
-                && wlv.tocol != MAXCOL && wlv.vcol < wlv.tocol) {
-              wlv.n_extra = 0;
-            } else {
+            if (!(area_highlighting && virtual_active()
+                  && wlv.tocol != MAXCOL && wlv.vcol < wlv.tocol)) {
               wlv.p_extra = at_end_str;
-              wlv.n_extra = 1;
-              wlv.c_extra = NUL;
-              wlv.c_final = NUL;
             }
+            wlv.n_extra = 0;
           }
           if (wp->w_p_list && wp->w_p_lcs_chars.eol > 0) {
             c = wp->w_p_lcs_chars.eol;
@@ -2382,7 +2514,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           lcs_eol_one = -1;
           ptr--;  // put it back at the NUL
           wlv.extra_attr = win_hl_attr(wp, HLF_AT);
-          n_attr = 1;
+          wlv.n_attr = 1;
           mb_c = c;
           mb_utf8 = check_mb_utf8(&c, u8cc);
         } else if (c != NUL) {
@@ -2411,7 +2543,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             wlv.n_extra = byte2cells(c) - 1;
             c = (uint8_t)(*wlv.p_extra++);
           }
-          n_attr = wlv.n_extra + 1;
+          wlv.n_attr = wlv.n_extra + 1;
           wlv.extra_attr = win_hl_attr(wp, HLF_8);
           saved_attr2 = wlv.char_attr;  // save current attr
           mb_utf8 = false;   // don't draw as UTF-8
@@ -2471,7 +2603,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             }
           }
           wlv.n_extra = 0;
-          n_attr = 0;
+          wlv.n_attr = 0;
         } else if (n_skip == 0) {
           is_concealing = true;
           n_skip = 1;
@@ -2506,8 +2638,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     }
 
     // Don't override visual selection highlighting.
-    if (n_attr > 0 && wlv.draw_state == WL_LINE && !search_attr_from_match) {
+    if (wlv.n_attr > 0 && wlv.draw_state == WL_LINE && !search_attr_from_match) {
       wlv.char_attr = hl_combine_attr(wlv.char_attr, wlv.extra_attr);
+      if (wlv.reset_extra_attr) {
+        wlv.reset_extra_attr = false;
+        wlv.extra_attr = 0;
+        // search_attr_from_match can be restored now that the extra_attr has been applied
+        search_attr_from_match = saved_search_attr_from_match;
+      }
     }
 
     // Handle the case where we are in column 0 but not on the first
@@ -2527,7 +2665,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         wlv.c_extra = MB_FILLER_CHAR;
         wlv.c_final = NUL;
         wlv.n_extra = 1;
-        n_attr = 2;
+        wlv.n_attr = 2;
         wlv.extra_attr = win_hl_attr(wp, HLF_AT);
       }
       mb_c = c;
@@ -2743,7 +2881,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         && !has_fold
         && (*ptr != NUL
             || lcs_eol_one > 0
-            || (wlv.n_extra && (wlv.c_extra != NUL || *wlv.p_extra != NUL)))) {
+            || (wlv.n_extra > 0 && (wlv.c_extra != NUL || *wlv.p_extra != NUL)))) {
       c = wp->w_p_lcs_chars.ext;
       wlv.char_attr = win_hl_attr(wp, HLF_AT);
       mb_c = c;
@@ -2864,7 +3002,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             wlv.boguscols += wlv.n_extra;
           }
           wlv.n_extra = 0;
-          n_attr = 0;
+          wlv.n_attr = 0;
         }
 
         if (utf_char2cells(mb_c) > 1) {
@@ -2889,11 +3027,17 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         if (wlv.n_extra > 0) {
           wlv.vcol += wlv.n_extra;
           wlv.n_extra = 0;
-          n_attr = 0;
+          wlv.n_attr = 0;
         }
       }
     } else {
       n_skip--;
+    }
+
+    // The skipped cells need to be accounted for in vcol.
+    if (wlv.draw_state > WL_STC && wlv.skipped_cells > 0) {
+      wlv.vcol += wlv.skipped_cells;
+      wlv.skipped_cells = 0;
     }
 
     // Only advance the "wlv.vcol" when after the 'number' or
@@ -2913,7 +3057,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     }
 
     // restore attributes after last 'listchars' or 'number' char
-    if (n_attr > 0 && wlv.draw_state == WL_LINE && --n_attr == 0) {
+    if (wlv.n_attr > 0 && wlv.draw_state == WL_LINE && --wlv.n_attr == 0) {
       wlv.char_attr = saved_attr2;
     }
 

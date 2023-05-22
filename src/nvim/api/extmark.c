@@ -477,6 +477,8 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                 - "overlay": display over the specified column, without
 ///                              shifting the underlying text.
 ///                 - "right_align": display right aligned in the window.
+///                 - "inline": display at the specified column, and
+///                              shift the buffer text to the right as needed
 ///               - virt_text_win_col : position the virtual text at a fixed
 ///                                     window column (starting from the first
 ///                                     text column)
@@ -695,6 +697,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       decor.virt_text_pos = kVTOverlay;
     } else if (strequal("right_align", str.data)) {
       decor.virt_text_pos = kVTRightAlign;
+    } else if (strequal("inline", str.data)) {
+      decor.virt_text_pos = kVTInline;
     } else {
       VALIDATE_S(false, "virt_text_pos", "", {
         goto error;

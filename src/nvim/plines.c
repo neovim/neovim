@@ -102,12 +102,16 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   char *s;
   unsigned col;
   int width;
+  chartabsize_T cts;
 
   s = ml_get_buf(wp->w_buffer, lnum, false);
-  if (*s == NUL) {  // empty line
-    return 1;
+  init_chartabsize_arg(&cts, wp, lnum, 0, s, s);
+  if (*s == NUL && !cts.cts_has_virt_text) {
+    return 1;  // be quick for an empty line
   }
-  col = win_linetabsize(wp, lnum, s, MAXCOL);
+  win_linetabsize_cts(&cts, (colnr_T)MAXCOL);
+  clear_chartabsize_arg(&cts);
+  col = (unsigned)cts.cts_vcol;
 
   // If list mode is on, then the '$' at the end of the line may take up one
   // extra column.
@@ -262,6 +266,11 @@ int linetabsize_col(int startcol, char *s)
   while (*cts.cts_ptr != NUL) {
     cts.cts_vcol += lbr_chartabsize_adv(&cts);
   }
+  if (cts.cts_has_virt_text && cts.cts_ptr == cts.cts_line) {
+    // check for virtual text in an empty line
+    (void)lbr_chartabsize_adv(&cts);
+    cts.cts_vcol += cts.cts_cur_text_width_left + cts.cts_cur_text_width_right;
+  }
   clear_chartabsize_arg(&cts);
   return cts.cts_vcol;
 }
@@ -277,10 +286,7 @@ unsigned win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T len)
 {
   chartabsize_T cts;
   init_chartabsize_arg(&cts, wp, lnum, 0, line, line);
-  for (; *cts.cts_ptr != NUL && (len == MAXCOL || cts.cts_ptr < line + len);
-       MB_PTR_ADV(cts.cts_ptr)) {
-    cts.cts_vcol += win_lbr_chartabsize(&cts, NULL);
-  }
+  win_linetabsize_cts(&cts, len);
   clear_chartabsize_arg(&cts);
   return (unsigned)cts.cts_vcol;
 }
@@ -292,20 +298,43 @@ unsigned     linetabsize(win_T *wp, linenr_T lnum)
   return win_linetabsize(wp, lnum, ml_get_buf(wp->w_buffer, lnum, false), (colnr_T)MAXCOL);
 }
 
+void win_linetabsize_cts(chartabsize_T *cts, colnr_T len)
+{
+  for (; *cts->cts_ptr != NUL && (len == MAXCOL || cts->cts_ptr < cts->cts_line + len);
+       MB_PTR_ADV(cts->cts_ptr)) {
+    cts->cts_vcol += win_lbr_chartabsize(cts, NULL);
+  }
+  // check for a virtual text on an empty line
+  if (cts->cts_has_virt_text && *cts->cts_ptr == NUL
+      && cts->cts_ptr == cts->cts_line) {
+    (void)win_lbr_chartabsize(cts, NULL);
+    cts->cts_vcol += cts->cts_cur_text_width_left + cts->cts_cur_text_width_right;
+  }
+}
+
 /// Prepare the structure passed to chartabsize functions.
 ///
 /// "line" is the start of the line, "ptr" is the first relevant character.
-/// When "lnum" is zero do not use text properties that insert text.
-void init_chartabsize_arg(chartabsize_T *cts, win_T *wp, linenr_T lnum FUNC_ATTR_UNUSED,
-                          colnr_T col, char *line, char *ptr)
+/// When "lnum" is zero do not use inline virtual text.
+void init_chartabsize_arg(chartabsize_T *cts, win_T *wp, linenr_T lnum, colnr_T col, char *line,
+                          char *ptr)
 {
   cts->cts_win = wp;
   cts->cts_vcol = col;
   cts->cts_line = line;
   cts->cts_ptr = ptr;
-  cts->cts_cur_text_width = 0;
-  // TODO(bfredl): actually lookup inline virtual text here
+  cts->cts_cur_text_width_left = 0;
+  cts->cts_cur_text_width_right = 0;
   cts->cts_has_virt_text = false;
+  cts->cts_row = lnum - 1;
+
+  if (cts->cts_row >= 0) {
+    marktree_itr_get(wp->w_buffer->b_marktree, cts->cts_row, 0, cts->cts_iter);
+    mtkey_t mark = marktree_itr_current(cts->cts_iter);
+    if (mark.pos.row == cts->cts_row) {
+      cts->cts_has_virt_text = true;
+    }
+  }
 }
 
 /// Free any allocated item in "cts".
@@ -369,7 +398,8 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   int mb_added = 0;
   int numberextra;
 
-  cts->cts_cur_text_width = 0;
+  cts->cts_cur_text_width_left = 0;
+  cts->cts_cur_text_width_right = 0;
 
   // No 'linebreak', 'showbreak' and 'breakindent': return quickly.
   if (!wp->w_p_lbr && !wp->w_p_bri && *get_showbreak_value(wp) == NUL
@@ -383,7 +413,34 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   // First get normal size, without 'linebreak' or virtual text
   int size = win_chartabsize(wp, s, vcol);
   if (cts->cts_has_virt_text) {
-    // TODO(bfredl): inline virtual text
+    int tab_size = size;
+    int charlen = *s == NUL ? 1 : utf_ptr2len(s);
+    int col = (int)(s - line);
+    while (true) {
+      mtkey_t mark = marktree_itr_current(cts->cts_iter);
+      if (mark.pos.row != cts->cts_row || mark.pos.col > col) {
+        break;
+      } else if (mark.pos.col >= col && mark.pos.col < col + charlen) {
+        if (!mt_end(mark)) {
+          Decoration decor = get_decor(mark);
+          if (decor.virt_text_pos == kVTInline) {
+            if (mt_right(mark)) {
+              cts->cts_cur_text_width_right += decor.virt_text_width;
+            } else {
+              cts->cts_cur_text_width_left += decor.virt_text_width;
+            }
+            size += decor.virt_text_width;
+            if (*s == TAB) {
+              // tab size changes because of the inserted text
+              size -= tab_size;
+              tab_size = win_chartabsize(wp, s, vcol + size);
+              size += tab_size;
+            }
+          }
+        }
+      }
+      marktree_itr_next(wp->w_buffer->b_marktree, cts->cts_iter);
+    }
   }
 
   int c = (uint8_t)(*s);

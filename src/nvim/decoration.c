@@ -83,6 +83,9 @@ void decor_redraw(buf_T *buf, int row1, int row2, Decoration *decor)
 
   if (decor && decor_virt_pos(*decor)) {
     redraw_buf_line_later(buf, row1 + 1, false);
+    if (decor->virt_text_pos == kVTInline) {
+      changed_line_display_buf(buf);
+    }
   }
 
   if (decor && kv_size(decor->virt_lines)) {
@@ -95,6 +98,10 @@ void decor_remove(buf_T *buf, int row, int row2, Decoration *decor)
 {
   decor_redraw(buf, row, row2, decor);
   if (decor) {
+    if (kv_size(decor->virt_text) && decor->virt_text_pos == kVTInline) {
+      assert(buf->b_virt_text_inline > 0);
+      buf->b_virt_text_inline--;
+    }
     if (kv_size(decor->virt_lines)) {
       assert(buf->b_virt_line_blocks > 0);
       buf->b_virt_line_blocks--;

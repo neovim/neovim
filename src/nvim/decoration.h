@@ -23,9 +23,11 @@ typedef enum {
   kVTOverlay,
   kVTWinCol,
   kVTRightAlign,
+  kVTInline,
 } VirtTextPos;
 
-EXTERN const char *const virt_text_pos_str[] INIT(= { "eol", "overlay", "win_col", "right_align" });
+EXTERN const char *const virt_text_pos_str[] INIT(= { "eol", "overlay", "win_col", "right_align",
+                                                      "inline" });
 
 typedef enum {
   kHlModeUnknown,

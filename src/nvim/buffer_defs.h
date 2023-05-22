@@ -808,6 +808,7 @@ struct file_buffer {
 
   MarkTree b_marktree[1];
   Map(uint32_t, uint32_t) b_extmark_ns[1];         // extmark namespaces
+  size_t b_virt_text_inline;                       // number of inline virtual texts
   size_t b_virt_line_blocks;    // number of virt_line blocks
   size_t b_signs;               // number of sign extmarks
   size_t b_signs_with_text;     // number of sign extmarks with text
