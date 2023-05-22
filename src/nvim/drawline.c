@@ -2042,9 +2042,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         v = (ptr - line);
         if (has_spell && v >= word_end && v > cur_checked_col) {
           spell_attr = 0;
-          if (!attr_pri) {
-            wlv.char_attr = hl_combine_attr(wlv.char_attr, syntax_attr);
-          }
           if (c != 0 && ((!has_syntax && !no_plain_buffer) || can_spell)) {
             char *prev_ptr;
             char *p;
