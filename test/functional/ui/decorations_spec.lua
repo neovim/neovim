@@ -687,14 +687,14 @@ end]]
     -- can "float" beyond end of line
     meths.buf_set_extmark(0, ns, 5, 28, { virt_text={{'loopy', 'ErrorMsg'}}, virt_text_pos='overlay'})
     -- bound check: right edge of window
-    meths.buf_set_extmark(0, ns, 2, 26, { virt_text={{'bork bork bork '}, {'bork bork bork', 'ErrorMsg'}}, virt_text_pos='overlay'})
+    meths.buf_set_extmark(0, ns, 2, 26, { virt_text={{'bork bork bork'}, {(' bork'):rep(10), 'ErrorMsg'}}, virt_text_pos='overlay'})
     -- empty virt_text should not change anything
     meths.buf_set_extmark(0, ns, 6, 16, { virt_text={{''}}, virt_text_pos='overlay'})
 
     screen:expect{grid=[[
       ^for _,item in ipairs(items) do                    |
       {2:|}   local text, hl_id_cell, count = unpack(item)  |
-      {2:|}   if hl_id_cell ~= nil tbork bork bork {4:bork bork}|
+      {2:|}   if hl_id_cell ~= nil tbork bork bork{4: bork bork}|
       {2:|}   {1:|}   hl_id = hl_id_cell                        |
       {2:|}   end                                           |
       {2:|}   for _ = 1, (count or 1) {4:loopy}                 |
@@ -709,7 +709,6 @@ end]]
                                                         |
     ]]}
 
-
     -- handles broken lines
     screen:try_resize(22, 25)
     screen:expect{grid=[[
@@ -719,7 +718,7 @@ end]]
       cell, count = unpack(i|
       tem)                  |
       {2:|}   if hl_id_cell ~= n|
-      il tbork bork bork {4:bor}|
+      il tbork bork bork{4: bor}|
       {2:|}   {1:|}   hl_id = hl_id_|
       cell                  |
       {2:|}   end               |
@@ -738,6 +737,75 @@ end]]
       {1:~                     }|
       {1:~                     }|
                             |
+    ]]}
+
+    -- truncating in the middle of a char leaves a space
+    meths.buf_set_lines(0, 0, 1, true, {'for _,item in ipairs(items) do  -- 古古古'})
+    meths.buf_set_lines(0, 10, 12, true, {'    end  -- ??????????', 'end  -- ?古古古古?古古'})
+    meths.buf_set_extmark(0, ns, 0, 35, { virt_text={{'A', 'ErrorMsg'}, {'AA'}}, virt_text_pos='overlay'})
+    meths.buf_set_extmark(0, ns, 10, 19, { virt_text={{'口口口', 'ErrorMsg'}}, virt_text_pos='overlay'})
+    meths.buf_set_extmark(0, ns, 11, 21, { virt_text={{'口口口', 'ErrorMsg'}}, virt_text_pos='overlay'})
+    meths.buf_set_extmark(0, ns, 11, 8, { virt_text={{'口口', 'ErrorMsg'}}, virt_text_pos='overlay'})
+    screen:expect{grid=[[
+      ^for _,item in ipairs(i|
+      tems) do  -- {4:A}AA 古   |
+      {2:|}   local text, hl_id_|
+      cell, count = unpack(i|
+      tem)                  |
+      {2:|}   if hl_id_cell ~= n|
+      il tbork bork bork{4: bor}|
+      {2:|}   {1:|}   hl_id = hl_id_|
+      cell                  |
+      {2:|}   end               |
+      {2:|}   for _ = 1, (count |
+      or 1) {4:loopy}           |
+      {2:|}   {1:|}   local cell = l|
+      ine[colpos]           |
+      {2:|}   {1:|}   cell.text = te|
+      xt                    |
+      {2:|}   {1:|}   cell.hl_id = h|
+      l_id                  |
+      {2:|}   {1:|}   cofoo{3:bar}{4:!!}olpo|
+      s+1                   |
+          end  -- ???????{4:口 }|
+      end  -- {4:口口} 古古{4:口口 }|
+      {1:~                     }|
+      {1:~                     }|
+                            |
+    ]]}
+
+    screen:try_resize(82, 13)
+    screen:expect{grid=[[
+      ^for _,item in ipairs(items) do  -- {4:A}AA 古                                         |
+      {2:|}   local text, hl_id_cell, count = unpack(item)                                  |
+      {2:|}   if hl_id_cell ~= nil tbork bork bork{4: bork bork bork bork bork bork bork bork b}|
+      {2:|}   {1:|}   hl_id = hl_id_cell                                                        |
+      {2:|}   end                                                                           |
+      {2:|}   for _ = 1, (count or 1) {4:loopy}                                                 |
+      {2:|}   {1:|}   local cell = line[colpos]                                                 |
+      {2:|}   {1:|}   cell.text = text                                                          |
+      {2:|}   {1:|}   cell.hl_id = hl_id                                                        |
+      {2:|}   {1:|}   cofoo{3:bar}{4:!!}olpos+1                                                         |
+          end  -- ???????{4:口口口}                                                         |
+      end  -- {4:口口} 古古{4:口口口}                                                           |
+                                                                                        |
+    ]]}
+
+    meths.buf_clear_namespace(0, ns, 0, -1)
+    screen:expect{grid=[[
+      ^for _,item in ipairs(items) do  -- 古古古                                         |
+          local text, hl_id_cell, count = unpack(item)                                  |
+          if hl_id_cell ~= nil then                                                     |
+              hl_id = hl_id_cell                                                        |
+          end                                                                           |
+          for _ = 1, (count or 1) do                                                    |
+              local cell = line[colpos]                                                 |
+              cell.text = text                                                          |
+              cell.hl_id = hl_id                                                        |
+              colpos = colpos+1                                                         |
+          end  -- ??????????                                                            |
+      end  -- ?古古古古?古古                                                            |
+                                                                                        |
     ]]}
   end)
 
