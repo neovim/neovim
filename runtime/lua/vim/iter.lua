@@ -871,20 +871,11 @@ end
 function Iter.new(src, ...)
   local it = {}
   if type(src) == 'table' then
-    local t = {}
-
-    -- Check if source table can be treated like a list (indices are consecutive integers
-    -- starting from 1)
-    local count = 0
-    for _ in pairs(src) do
-      count = count + 1
-      local v = src[count]
-      if v == nil then
-        return Iter.new(pairs(src))
-      end
-      t[count] = v
+    if vim.tbl_islist(src) then
+      return ListIter.new(src)
+    else
+      return Iter.new(src)
     end
-    return ListIter.new(t)
   end
 
   if type(src) == 'function' then
