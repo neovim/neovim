@@ -863,7 +863,6 @@ function ListIter.enumerate(self)
   return self
 end
 
-
 --- Each element of iter is concatenated and returned.
 --- sep, i, j are the same as the arguments to |table.concat()|.
 ---
