@@ -81,7 +81,7 @@ describe(':mksession', function()
       local buf_count = #meths.list_bufs()
       eq(2, buf_count)
 
-      eq('terminal', meths.get_option_value('buftype', { buf = 0 }))
+      eq('terminal', meths.get_option_value('buftype', {}))
 
       test_terminal_session_disabled(2)
 
@@ -112,7 +112,7 @@ describe(':mksession', function()
 
   it('do not restore :terminal if not set in sessionoptions, only buffer #13078', function()
     command('terminal')
-    eq('terminal', meths.get_option_value('buftype', { buf = 0 }))
+    eq('terminal', meths.get_option_value('buftype', {}))
 
     local buf_count = #meths.list_bufs()
     eq(1, buf_count)
@@ -120,7 +120,7 @@ describe(':mksession', function()
     test_terminal_session_disabled(1)
 
     -- no terminal should be set
-    eq('', meths.get_option_value('buftype', { buf = 0 }))
+    eq('', meths.get_option_value('buftype', {}))
   end)
 
   it('restores tab-local working directories', function()

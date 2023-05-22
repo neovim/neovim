@@ -97,7 +97,7 @@ describe(':rubydo command', function()
 
   it('does not modify the buffer if no changes are made', function()
     command('normal :rubydo 42')
-    eq(false, meths.get_option_value('modified', {buf=0}))
+    eq(false, meths.get_option_value('modified', {}))
   end)
 end)
 

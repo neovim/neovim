@@ -1910,7 +1910,7 @@ describe('decorations: signs', function()
     }
 
     ns = meths.create_namespace 'test'
-    meths.set_option_value('signcolumn', 'auto:9', {win = 0})
+    meths.set_option_value('signcolumn', 'auto:9', {})
   end)
 
   local example_text = [[
@@ -2222,7 +2222,7 @@ l5
     ]]}
 
     -- Check truncation works too
-    meths.set_option_value('signcolumn', 'auto', {win = 0})
+    meths.set_option_value('signcolumn', 'auto', {})
 
     screen:expect{grid=[[
       S5^l1                |
@@ -2233,7 +2233,7 @@ l5
 
   it('does not set signcolumn for signs without text', function()
     screen:try_resize(20, 3)
-    meths.set_option_value('signcolumn', 'auto', {win = 0})
+    meths.set_option_value('signcolumn', 'auto', {})
     insert(example_text)
     feed 'gg'
     meths.buf_set_extmark(0, ns, 0, -1, {number_hl_group='Error'})

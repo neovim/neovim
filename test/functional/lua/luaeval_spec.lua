@@ -514,7 +514,7 @@ describe('v:lua', function()
       [5] = {bold = true, foreground = Screen.colors.SeaGreen4},
     })
     screen:attach()
-    meths.set_option_value('omnifunc', 'v:lua.mymod.omni', { buf = 0 })
+    meths.set_option_value('omnifunc', 'v:lua.mymod.omni', {})
     feed('isome st<c-x><c-o>')
     screen:expect{grid=[[
       some stuff^                                                  |

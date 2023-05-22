@@ -1458,8 +1458,8 @@ describe('TUI', function()
 
   it('allows grid to assume wider ambiguous-width characters than host terminal #19686', function()
     child_session:request('nvim_buf_set_lines', 0, 0, -1, true, { ('℃'):rep(60), ('℃'):rep(60) })
-    child_session:request('nvim_set_option_value', 'cursorline', true, {win=0})
-    child_session:request('nvim_set_option_value', 'list', true, {win=0})
+    child_session:request('nvim_set_option_value', 'cursorline', true, {})
+    child_session:request('nvim_set_option_value', 'list', true, {})
     child_session:request('nvim_set_option_value', 'listchars', 'eol:$', {win=0})
     feed_data('gg')
     local singlewidth_screen = [[

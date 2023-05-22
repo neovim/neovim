@@ -160,7 +160,7 @@ describe('vim.secure', function()
 
       -- Cannot write file
       pcall_err(command, 'write')
-      eq(true, meths.get_option_value('readonly', {buf=0}))
+      eq(true, meths.get_option_value('readonly', {}))
     end)
   end)
 

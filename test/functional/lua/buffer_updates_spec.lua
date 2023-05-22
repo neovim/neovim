@@ -415,7 +415,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     it('opening lines', function()
         local check_events = setup_eventcheck(verify, origlines)
-        -- meths.set_option_value('autoindent', true, { buf = 0 })
+        -- meths.set_option_value('autoindent', true, {})
         feed 'Go'
         check_events {
           { "test1", "bytes", 1, 4, 7, 0, 114, 0, 0, 0, 1, 0, 1 };
@@ -428,7 +428,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     it('opening lines with autoindent', function()
         local check_events = setup_eventcheck(verify, origlines)
-        meths.set_option_value('autoindent', true, { buf = 0 })
+        meths.set_option_value('autoindent', true, {})
         feed 'Go'
         check_events {
           { "test1", "bytes", 1, 4, 7, 0, 114, 0, 0, 0, 1, 0, 5 };
@@ -462,8 +462,8 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     it('continuing comments with fo=or', function()
       local check_events = setup_eventcheck(verify, {'// Comment'})
-      meths.set_option_value('formatoptions', 'ro', { buf = 0 })
-      meths.set_option_value('filetype', 'c', { buf = 0 })
+      meths.set_option_value('formatoptions', 'ro', {})
+      meths.set_option_value('filetype', 'c', {})
       feed 'A<CR>'
       check_events {
         { "test1", "bytes", 1, 4, 0, 10, 10, 0, 0, 0, 1, 3, 4 };

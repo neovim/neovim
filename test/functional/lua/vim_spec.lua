@@ -1496,7 +1496,7 @@ describe('lua stdlib', function()
   it('vim.bo', function()
     eq('', funcs.luaeval "vim.bo.filetype")
     exec_lua [[
-    vim.api.nvim_set_option_value("filetype", "markdown", {buf = 0})
+    vim.api.nvim_set_option_value("filetype", "markdown", {})
     BUF = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_set_option_value("modifiable", false, {buf = BUF})
     ]]
@@ -1519,9 +1519,9 @@ describe('lua stdlib', function()
 
   it('vim.wo', function()
     exec_lua [[
-    vim.api.nvim_set_option_value("cole", 2, {win=0})
+    vim.api.nvim_set_option_value("cole", 2, {})
     vim.cmd "split"
-    vim.api.nvim_set_option_value("cole", 2, {win=0})
+    vim.api.nvim_set_option_value("cole", 2, {})
     ]]
     eq(2, funcs.luaeval "vim.wo.cole")
     exec_lua [[
