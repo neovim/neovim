@@ -58,7 +58,7 @@ describe("'directory' option", function()
       end of testfile]])
 
     meths.set_option_value('swapfile', true, {})
-    meths.set_option_value('swapfile', true, {buf=0})
+    meths.set_option_value('swapfile', true, {})
     meths.set_option_value('directory', '.', {})
 
     -- sanity check: files should not exist yet.
@@ -83,7 +83,7 @@ describe("'directory' option", function()
     meths.set_option_value('directory', 'Xtest.je', {})
     command('bdelete')
     command('edit Xtest2/Xtest3')
-    eq(true, meths.get_option_value('swapfile', {buf=0}))
+    eq(true, meths.get_option_value('swapfile', {}))
     poke_eventloop()
 
     eq({ "Xtest3" }, ls_dir_sorted("Xtest2"))

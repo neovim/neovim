@@ -43,7 +43,7 @@ local cmdtest = function(cmd, prep, ret1)
       eq(hisline, funcs.histget(':', -2))
       eq(cmd, funcs.histget(':'))
       -- Test that command-line window was launched
-      eq('nofile', meths.get_option_value('buftype', {buf=0}))
+      eq('nofile', meths.get_option_value('buftype', {}))
       eq('n', funcs.mode(1))
       feed('<CR>')
       eq('c', funcs.mode(1))

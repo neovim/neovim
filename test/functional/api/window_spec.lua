@@ -365,11 +365,11 @@ describe('API/win', function()
 
   describe('nvim_get_option_value, nvim_set_option_value', function()
     it('works', function()
-      nvim('set_option_value', 'colorcolumn', '4,3', {win=0})
-      eq('4,3', nvim('get_option_value', 'colorcolumn', {win = 0}))
+      nvim('set_option_value', 'colorcolumn', '4,3', {})
+      eq('4,3', nvim('get_option_value', 'colorcolumn', {}))
       command("set modified hidden")
       command("enew") -- edit new buffer, window option is preserved
-      eq('4,3', nvim('get_option_value', 'colorcolumn', {win = 0}))
+      eq('4,3', nvim('get_option_value', 'colorcolumn', {}))
 
       -- global-local option
       nvim('set_option_value', 'statusline', 'window-status', {win=0})

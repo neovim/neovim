@@ -2181,8 +2181,8 @@ describe('plugin/shada.vim', function()
       '  - contents      "ab"',
       '  -               "a"',
     }, nvim_eval('getline(1, "$")'))
-    eq(false, nvim('get_option_value', 'modified', {buf=0}))
-    eq('shada', nvim('get_option_value', 'filetype', {buf=0}))
+    eq(false, nvim('get_option_value', 'modified', {}))
+    eq('shada', nvim('get_option_value', 'filetype', {}))
     nvim_command('edit ' .. fname_tmp)
     eq({
       'History entry with timestamp ' .. epoch .. ':',
@@ -2191,8 +2191,8 @@ describe('plugin/shada.vim', function()
       '  - contents      "ab"',
       '  -               "b"',
     }, nvim_eval('getline(1, "$")'))
-    eq(false, nvim('get_option_value', 'modified', {buf=0}))
-    eq('shada', nvim('get_option_value', 'filetype', {buf=0}))
+    eq(false, nvim('get_option_value', 'modified', {}))
+    eq('shada', nvim('get_option_value', 'filetype', {}))
     eq('++opt not supported', exc_exec('edit ++enc=latin1 ' .. fname))
     neq({
       'History entry with timestamp ' .. epoch .. ':',
@@ -2201,7 +2201,7 @@ describe('plugin/shada.vim', function()
       '  - contents      "ab"',
       '  -               "a"',
     }, nvim_eval('getline(1, "$")'))
-    neq(true, nvim('get_option_value', 'modified', {buf=0}))
+    neq(true, nvim('get_option_value', 'modified', {}))
   end)
 
   it('event FileReadCmd', function()
@@ -2217,8 +2217,8 @@ describe('plugin/shada.vim', function()
       '  - contents      "ab"',
       '  -               "a"',
     }, nvim_eval('getline(1, "$")'))
-    eq(true, nvim('get_option_value', 'modified', {buf=0}))
-    neq('shada', nvim('get_option_value', 'filetype', {buf=0}))
+    eq(true, nvim('get_option_value', 'modified', {}))
+    neq('shada', nvim('get_option_value', 'filetype', {}))
     nvim_command('1,$read ' .. fname_tmp)
     eq({
       '',
@@ -2233,9 +2233,9 @@ describe('plugin/shada.vim', function()
       '  - contents      "ab"',
       '  -               "b"',
     }, nvim_eval('getline(1, "$")'))
-    eq(true, nvim('get_option_value', 'modified', {buf=0}))
-    neq('shada', nvim('get_option_value', 'filetype', {buf=0}))
-    nvim('set_option_value', 'modified', false, {buf=0})
+    eq(true, nvim('get_option_value', 'modified', {}))
+    neq('shada', nvim('get_option_value', 'filetype', {}))
+    nvim('set_option_value', 'modified', false, {})
     eq('++opt not supported', exc_exec('$read ++enc=latin1 ' .. fname))
     eq({
       '',
@@ -2250,7 +2250,7 @@ describe('plugin/shada.vim', function()
       '  - contents      "ab"',
       '  -               "b"',
     }, nvim_eval('getline(1, "$")'))
-    neq(true, nvim('get_option_value', 'modified', {buf=0}))
+    neq(true, nvim('get_option_value', 'modified', {}))
   end)
 
   it('event BufWriteCmd', function()
@@ -2517,10 +2517,10 @@ describe('ftplugin/shada.vim', function()
   it('sets options correctly', function()
     nvim_command('filetype plugin indent on')
     nvim_command('setlocal filetype=shada')
-    eq(true, nvim('get_option_value', 'expandtab', {buf=0}))
-    eq(2, nvim('get_option_value', 'tabstop', {buf=0}))
-    eq(2, nvim('get_option_value', 'softtabstop', {buf=0}))
-    eq(2, nvim('get_option_value', 'shiftwidth', {buf=0}))
+    eq(true, nvim('get_option_value', 'expandtab', {}))
+    eq(2, nvim('get_option_value', 'tabstop', {}))
+    eq(2, nvim('get_option_value', 'softtabstop', {}))
+    eq(2, nvim('get_option_value', 'shiftwidth', {}))
   end)
 
   it('sets indentkeys correctly', function()

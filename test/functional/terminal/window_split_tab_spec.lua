@@ -71,7 +71,7 @@ describe(':terminal', function()
   end)
 
   it('does not change size if updated when not visible in any window #19665', function()
-    local channel = meths.get_option_value('channel', { buf = 0 })
+    local channel = meths.get_option_value('channel', {})
     command('enew')
     sleep(100)
     meths.chan_send(channel, 'foo')
