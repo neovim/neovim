@@ -342,11 +342,19 @@ static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode,
     schar_T dummy[2];
     int cells = line_putchar(buf, &s, through ? dummy : &linebuf_char[col],
                              max_col - col, false, vcol);
-    // if we failed to emit a char, we still need to advance
-    cells = MAX(cells, 1);
-
+    // If we failed to emit a char, we still need to put a space and advance.
+    if (cells < 1) {
+      schar_from_ascii(linebuf_char[col], ' ');
+      cells = 1;
+    }
     for (int c = 0; c < cells; c++) {
       linebuf_attr[col++] = attr;
+    }
+    if (col < max_col && linebuf_char[col][0] == 0) {
+      // If the left half of a double-width char is overwritten,
+      // change the right half to a space so that grid redraws properly,
+      // but don't advance the current column.
+      schar_from_ascii(linebuf_char[col], ' ');
     }
     vcol += cells;
   }
@@ -2802,6 +2810,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         wlv.col++;
         // UTF-8: Put a 0 in the second screen char.
         linebuf_char[wlv.off][0] = 0;
+        linebuf_attr[wlv.off] = linebuf_attr[wlv.off - 1];
         if (wlv.draw_state > WL_STC && wlv.filler_todo <= 0) {
           wlv.vcol++;
         }
