@@ -341,7 +341,7 @@ static int nlua_init_argv(lua_State *const L, char **argv, int argc, int lua_arg
     lua_pushstring(L, argv[lua_arg0 - 1]);
     lua_rawseti(L, -2, 0);  // _G.arg[0] = "foo.lua"
 
-    for (; lua_arg0 >= 0 && i + lua_arg0 < argc; i++) {
+    for (; i + lua_arg0 < argc; i++) {
       lua_pushstring(L, argv[i + lua_arg0]);
       lua_rawseti(L, -2, i + 1);  // _G.arg[i+1] = "--foo"
     }

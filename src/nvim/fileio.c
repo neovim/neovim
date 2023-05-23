@@ -3481,8 +3481,7 @@ void vim_deltempdir(void)
 char *vim_gettempdir(void)
 {
   static int notfound = 0;
-  bool exists = false;
-  if (vim_tempdir == NULL || !(exists = os_isdir(vim_tempdir))) {
+  if (vim_tempdir == NULL || !os_isdir(vim_tempdir)) {
     if (vim_tempdir != NULL) {
       notfound++;
       if (notfound == 1) {
