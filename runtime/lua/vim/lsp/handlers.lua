@@ -219,6 +219,10 @@ M['textDocument/codeLens'] = function(...)
   return require('vim.lsp.codelens').on_codelens(...)
 end
 
+M['textDocument/inlayHint'] = function(...)
+  return require('vim.lsp._inlay_hint').on_inlayhint(...)
+end
+
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
 M['textDocument/references'] = function(_, result, ctx, config)
   if not result or vim.tbl_isempty(result) then
@@ -610,6 +614,28 @@ M['window/showDocument'] = function(_, result, ctx, _)
     focus = result.takeFocus,
   })
   return { success = success or false }
+end
+
+---@see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_inlayHint_refresh
+M['workspace/inlayHint/refresh'] = function(err, _, ctx)
+  local inlay_hint = require('vim.lsp._inlay_hint')
+  if not inlay_hint.__explicit_buffers[ctx.bufnr] then
+    return vim.NIL
+  end
+  if err then
+    return vim.NIL
+  end
+
+  for _, bufnr in ipairs(vim.lsp.get_buffers_by_client_id(ctx.client_id)) do
+    for _, winid in ipairs(api.nvim_list_wins()) do
+      if api.nvim_win_get_buf(winid) == bufnr then
+        inlay_hint.refresh({ bufnr = bufnr })
+        break
+      end
+    end
+  end
+
+  return vim.NIL
 end
 
 -- Add boilerplate error validation and logging for all of these.

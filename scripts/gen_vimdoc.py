@@ -223,6 +223,7 @@ CONFIG = {
             'log.lua',
             'rpc.lua',
             'protocol.lua',
+            'inlay_hint.lua'
         ],
         'files': [
             'runtime/lua/vim/lsp',

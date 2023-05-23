@@ -69,3 +69,28 @@
 --- @field method string
 
 --- @alias lsp.UnregistrationParams {unregisterations: lsp.Unregistration[]}
+
+---@class lsp.Location
+---@field uri string
+---@field range lsp.Range
+
+---@class lsp.MarkupContent
+---@field kind string
+---@field value string
+
+---@class lsp.InlayHintLabelPart
+---@field value string
+---@field tooltip? string | lsp.MarkupContent
+---@field location? lsp.Location
+
+---@class lsp.TextEdit
+---@field range lsp.Range
+---@field newText string
+
+---@class lsp.InlayHint
+---@field position lsp.Position
+---@field label string | lsp.InlayHintLabelPart[]
+---@field kind? integer
+---@field textEdits? lsp.TextEdit[]
+---@field paddingLeft? boolean
+---@field paddingRight? boolean
