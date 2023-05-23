@@ -884,14 +884,14 @@ Dictionary channel_info(uint64_t id)
     stream_desc = "job";
     if (chan->stream.proc.type == kProcessTypePty) {
       const char *name = pty_process_tty_name(&chan->stream.pty);
-      PUT(info, "pty", STRING_OBJ(cstr_to_string(name)));
+      PUT(info, "pty", CSTR_TO_OBJ(name));
     }
 
     char **p = chan->stream.proc.argv;
     Array argv = ARRAY_DICT_INIT;
     if (p != NULL) {
       while (*p != NULL) {
-        ADD(argv, STRING_OBJ(cstr_to_string(*p)));
+        ADD(argv, CSTR_TO_OBJ(*p));
         p++;
       }
     }
@@ -918,7 +918,7 @@ Dictionary channel_info(uint64_t id)
   default:
     abort();
   }
-  PUT(info, "stream", STRING_OBJ(cstr_to_string(stream_desc)));
+  PUT(info, "stream", CSTR_TO_OBJ(stream_desc));
 
   if (chan->is_rpc) {
     mode_desc = "rpc";
@@ -929,7 +929,7 @@ Dictionary channel_info(uint64_t id)
   } else {
     mode_desc = "bytes";
   }
-  PUT(info, "mode", STRING_OBJ(cstr_to_string(mode_desc)));
+  PUT(info, "mode", CSTR_TO_OBJ(mode_desc));
 
   return info;
 }

@@ -1302,16 +1302,16 @@ static void show_verbose_terminfo(TUIData *tui)
 
   Array chunks = ARRAY_DICT_INIT;
   Array title = ARRAY_DICT_INIT;
-  ADD(title, STRING_OBJ(cstr_to_string("\n\n--- Terminal info --- {{{\n")));
-  ADD(title, STRING_OBJ(cstr_to_string("Title")));
+  ADD(title, CSTR_TO_OBJ("\n\n--- Terminal info --- {{{\n"));
+  ADD(title, CSTR_TO_OBJ("Title"));
   ADD(chunks, ARRAY_OBJ(title));
   Array info = ARRAY_DICT_INIT;
   String str = terminfo_info_msg(ut, tui->term);
   ADD(info, STRING_OBJ(str));
   ADD(chunks, ARRAY_OBJ(info));
   Array end_fold = ARRAY_DICT_INIT;
-  ADD(end_fold, STRING_OBJ(cstr_to_string("}}}\n")));
-  ADD(end_fold, STRING_OBJ(cstr_to_string("Title")));
+  ADD(end_fold, CSTR_TO_OBJ("}}}\n"));
+  ADD(end_fold, CSTR_TO_OBJ("Title"));
   ADD(chunks, ARRAY_OBJ(end_fold));
 
   Array args = ARRAY_DICT_INIT;
@@ -1425,7 +1425,7 @@ void tui_option_set(TUIData *tui, String name, Object value)
 
     if (ui_client_channel_id) {
       MAXSIZE_TEMP_ARRAY(args, 2);
-      ADD_C(args, STRING_OBJ(cstr_as_string("rgb")));
+      ADD_C(args, CSTR_AS_OBJ("rgb"));
       ADD_C(args, BOOLEAN_OBJ(value.data.boolean));
       rpc_send_event(ui_client_channel_id, "nvim_ui_set_option", args);
     }

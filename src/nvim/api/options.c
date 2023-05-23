@@ -188,7 +188,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
 
   switch (result) {
   case gov_string:
-    rv = STRING_OBJ(cstr_as_string(stringval));
+    rv = CSTR_AS_OBJ(stringval);
     break;
   case gov_number:
     rv = INTEGER_OBJ(numval);

@@ -1069,7 +1069,7 @@ void ex_messages(void *const eap_p)
     for (; p != NULL; p = p->next) {
       if (kv_size(p->multiattr) || (p->msg && p->msg[0])) {
         Array entry = ARRAY_DICT_INIT;
-        ADD(entry, STRING_OBJ(cstr_to_string(p->kind)));
+        ADD(entry, CSTR_TO_OBJ(p->kind));
         Array content = ARRAY_DICT_INIT;
         if (kv_size(p->multiattr)) {
           for (uint32_t i = 0; i < kv_size(p->multiattr); i++) {
@@ -1082,7 +1082,7 @@ void ex_messages(void *const eap_p)
         } else if (p->msg && p->msg[0]) {
           Array content_entry = ARRAY_DICT_INIT;
           ADD(content_entry, INTEGER_OBJ(p->attr));
-          ADD(content_entry, STRING_OBJ(cstr_to_string(p->msg)));
+          ADD(content_entry, CSTR_TO_OBJ(p->msg));
           ADD(content, ARRAY_OBJ(content_entry));
         }
         ADD(entry, ARRAY_OBJ(content));

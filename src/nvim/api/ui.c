@@ -795,7 +795,7 @@ void remote_ui_put(UI *ui, const char *cell)
   UIData *data = ui->data;
   data->client_col++;
   Array args = data->call_buf;
-  ADD_C(args, STRING_OBJ(cstr_as_string((char *)cell)));
+  ADD_C(args, CSTR_AS_OBJ((char *)cell));
   push_call(ui, "put", args);
 }
 

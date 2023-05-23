@@ -245,7 +245,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
   Dictionary filter = ARRAY_DICT_INIT;
   PUT(filter, "pattern", cmdinfo.cmdmod.cmod_filter_pat
       ? CSTR_TO_OBJ(cmdinfo.cmdmod.cmod_filter_pat)
-      : STRING_OBJ(STATIC_CSTR_TO_STRING("")));
+      : STATIC_CSTR_TO_OBJ(""));
   PUT(filter, "force", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_filter_force));
   PUT(mods, "filter", DICTIONARY_OBJ(filter));
 
@@ -438,7 +438,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
         break;
       }
 
-      ADD(args, STRING_OBJ(cstr_as_string(data_str)));
+      ADD(args, CSTR_AS_OBJ(data_str));
     }
 
     bool argc_valid;

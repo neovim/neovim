@@ -8712,7 +8712,7 @@ void ex_checkhealth(exarg_T *eap)
 {
   Error err = ERROR_INIT;
   MAXSIZE_TEMP_ARRAY(args, 1);
-  ADD_C(args, STRING_OBJ(cstr_as_string(eap->arg)));
+  ADD_C(args, CSTR_AS_OBJ(eap->arg));
   NLUA_EXEC_STATIC("return vim.health._check(...)", args, &err);
   if (!ERROR_SET(&err)) {
     return;

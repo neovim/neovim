@@ -3387,7 +3387,7 @@ static void ui_ext_cmdline_show(CmdlineInfo *line)
   } else {
     Array item = arena_array(&arena, 2);
     ADD_C(item, INTEGER_OBJ(0));
-    ADD_C(item, STRING_OBJ(cstr_as_string(line->cmdbuff)));
+    ADD_C(item, CSTR_AS_OBJ(line->cmdbuff));
     content = arena_array(&arena, 1);
     ADD_C(content, ARRAY_OBJ(item));
   }
@@ -3414,7 +3414,7 @@ void ui_ext_cmdline_block_append(size_t indent, const char *line)
 
   Array item = ARRAY_DICT_INIT;
   ADD(item, INTEGER_OBJ(0));
-  ADD(item, STRING_OBJ(cstr_as_string(buf)));
+  ADD(item, CSTR_AS_OBJ(buf));
   Array content = ARRAY_DICT_INIT;
   ADD(content, ARRAY_OBJ(item));
   ADD(cmdline_block, ARRAY_OBJ(content));

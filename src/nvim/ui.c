@@ -613,8 +613,8 @@ Array ui_array(void)
     PUT(info, "override", BOOLEAN_OBJ(ui->override));
 
     // TUI fields. (`stdin_fd` is intentionally omitted.)
-    PUT(info, "term_name", STRING_OBJ(cstr_to_string(ui->term_name)));
-    PUT(info, "term_background", STRING_OBJ(cstr_to_string(ui->term_background)));
+    PUT(info, "term_name", CSTR_TO_OBJ(ui->term_name));
+    PUT(info, "term_background", CSTR_TO_OBJ(ui->term_background));
     PUT(info, "term_colors", INTEGER_OBJ(ui->term_colors));
     PUT(info, "stdin_tty", BOOLEAN_OBJ(ui->stdin_tty));
     PUT(info, "stdout_tty", BOOLEAN_OBJ(ui->stdout_tty));

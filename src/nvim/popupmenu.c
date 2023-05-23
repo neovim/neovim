@@ -164,10 +164,10 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
         Array arr = arena_array(&arena, (size_t)size);
         for (int i = 0; i < size; i++) {
           Array item = arena_array(&arena, 4);
-          ADD_C(item, STRING_OBJ(cstr_as_string(array[i].pum_text)));
-          ADD_C(item, STRING_OBJ(cstr_as_string(array[i].pum_kind)));
-          ADD_C(item, STRING_OBJ(cstr_as_string(array[i].pum_extra)));
-          ADD_C(item, STRING_OBJ(cstr_as_string(array[i].pum_info)));
+          ADD_C(item, CSTR_AS_OBJ(array[i].pum_text));
+          ADD_C(item, CSTR_AS_OBJ(array[i].pum_kind));
+          ADD_C(item, CSTR_AS_OBJ(array[i].pum_extra));
+          ADD_C(item, CSTR_AS_OBJ(array[i].pum_info));
           ADD_C(arr, ARRAY_OBJ(item));
         }
         ui_call_popupmenu_show(arr, selected, pum_win_row, cursor_col,

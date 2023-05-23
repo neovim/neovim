@@ -628,7 +628,7 @@ static void chan_close_with_error(Channel *channel, char *msg, int loglevel)
     ChannelCallFrame *frame = kv_A(channel->rpc.call_stack, i);
     frame->returned = true;
     frame->errored = true;
-    frame->result = STRING_OBJ(cstr_to_string(msg));
+    frame->result = CSTR_TO_OBJ(msg);
   }
 
   channel_close(channel->id, kChannelPartRpc, NULL);
@@ -665,7 +665,7 @@ static WBuffer *serialize_response(uint64_t channel_id, MsgpackRpcRequestHandler
     } else {
       Array args = ARRAY_DICT_INIT;
       ADD(args, INTEGER_OBJ(err->type));
-      ADD(args, STRING_OBJ(cstr_to_string(err->msg)));
+      ADD(args, CSTR_TO_OBJ(err->msg));
       msgpack_rpc_serialize_request(0, cstr_as_string("nvim_error_event"),
                                     args, &pac);
       api_free_array(args);

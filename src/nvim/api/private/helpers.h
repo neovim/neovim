@@ -34,6 +34,7 @@
     .type = kObjectTypeString, \
     .data.string = s })
 
+#define CSTR_AS_OBJ(s) STRING_OBJ(cstr_as_string(s))
 #define CSTR_TO_OBJ(s) STRING_OBJ(cstr_to_string(s))
 
 #define BUFFER_OBJ(s) ((Object) { \
@@ -102,6 +103,9 @@
 #define STATIC_CSTR_TO_STRING(s) ((String){ \
     .data = xmemdupz(s, sizeof(s) - 1), \
     .size = sizeof(s) - 1 })
+
+#define STATIC_CSTR_AS_OBJ(s) STRING_OBJ(STATIC_CSTR_AS_STRING(s))
+#define STATIC_CSTR_TO_OBJ(s) STRING_OBJ(STATIC_CSTR_TO_STRING(s))
 
 // Helpers used by the generated msgpack-rpc api wrappers
 #define api_init_boolean
