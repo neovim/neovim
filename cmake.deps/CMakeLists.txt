@@ -88,7 +88,11 @@ foreach(dep ${DEPENDENCIES})
   list(GET dep 0 name)
   list(GET dep 1 value)
   if(NOT ${name})
-    set(${name} ${value})
+    # _URL variables must NOT be set when USE_EXISTING_SRC_DIR is set,
+    # otherwise ExternalProject will try to re-download the sources.
+    if(NOT USE_EXISTING_SRC_DIR)
+      set(${name} ${value})
+    endif()
   endif()
 endforeach()
 

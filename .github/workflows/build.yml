@@ -78,3 +78,30 @@ jobs:
 
       - name: Install
         run: make install
+
+  use-existing-src:
+    name: Test USE_EXISTING_SRC_DIR=ON builds with no network access
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install build dependencies
+        run: ./.github/scripts/install_deps.sh
+
+      - name: Build bundled dependencies
+        run: make deps
+
+      - name: Clean bundled dependencies à la neovim/deps
+        run: |
+          rm -rf ./build
+          find .deps .deps/build -maxdepth 1 '!' \( -name .deps -o -name build -o -name src \) -exec rm -r '{}' +
+          cd .deps/build/src
+          rm -rf ./*-build
+          rm -rf ./*-stamp/*-{configure,build,install,done}
+          for d in *; do (cd "$d"; rm -rf ./autom4te.cache; make clean || true; make distclean || true); done
+
+      - name: Re-build bundled dependencies with no network access
+        run: unshare --map-root-user --net make deps DEPS_CMAKE_FLAGS=-DUSE_EXISTING_SRC_DIR=ON
+
+      - name: Build
+        run: make CMAKE_FLAGS="-D CI_BUILD=ON"
