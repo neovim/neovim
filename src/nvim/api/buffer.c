@@ -518,7 +518,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
 {
   MAXSIZE_TEMP_ARRAY(scratch, 1);
   if (replacement.size == 0) {
-    ADD_C(scratch, STRING_OBJ(STATIC_CSTR_AS_STRING("")));
+    ADD_C(scratch, STATIC_CSTR_AS_OBJ(""));
     replacement = scratch;
   }
 

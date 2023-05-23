@@ -83,11 +83,11 @@ void ui_client_attach(int width, int height, char *term)
   PUT_C(opts, "ext_linegrid", BOOLEAN_OBJ(true));
   PUT_C(opts, "ext_termcolors", BOOLEAN_OBJ(true));
   if (term) {
-    PUT_C(opts, "term_name", STRING_OBJ(cstr_as_string(term)));
+    PUT_C(opts, "term_name", CSTR_AS_OBJ(term));
   }
   if (ui_client_bg_response != kNone) {
     bool is_dark = (ui_client_bg_response == kTrue);
-    PUT_C(opts, "term_background", STRING_OBJ(cstr_as_string(is_dark ? "dark" : "light")));
+    PUT_C(opts, "term_background", CSTR_AS_OBJ(is_dark ? "dark" : "light"));
   }
   PUT_C(opts, "term_colors", INTEGER_OBJ(t_colors));
   if (!ui_client_is_remote) {

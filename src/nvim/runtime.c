@@ -512,7 +512,7 @@ Array runtime_inspect(void)
   for (size_t i = 0; i < kv_size(path); i++) {
     SearchPathItem *item = &kv_A(path, i);
     Array entry = ARRAY_DICT_INIT;
-    ADD(entry, STRING_OBJ(cstr_to_string(item->path)));
+    ADD(entry, CSTR_TO_OBJ(item->path));
     ADD(entry, BOOLEAN_OBJ(item->after));
     if (item->has_lua != kNone) {
       ADD(entry, BOOLEAN_OBJ(item->has_lua == kTrue));
@@ -568,7 +568,7 @@ ArrayOf(String) runtime_get_named_common(bool lua, Array pat, bool all,
                                        item->path, pat_item.data.string.data);
         if (size < buf_len) {
           if (os_file_is_readable(buf)) {
-            ADD(rv, STRING_OBJ(cstr_to_string(buf)));
+            ADD(rv, CSTR_TO_OBJ(buf));
             if (!all) {
               goto done;
             }

@@ -254,7 +254,7 @@ Dictionary os_proc_info(int pid)
   if (pe.th32ProcessID == (DWORD)pid) {
     PUT(pinfo, "pid", INTEGER_OBJ(pid));
     PUT(pinfo, "ppid", INTEGER_OBJ((int)pe.th32ParentProcessID));
-    PUT(pinfo, "name", STRING_OBJ(cstr_to_string(pe.szExeFile)));
+    PUT(pinfo, "name", CSTR_TO_OBJ(pe.szExeFile));
   }
 
   return pinfo;

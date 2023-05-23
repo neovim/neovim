@@ -267,7 +267,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
           PUT(rv, "bufpos", ARRAY_OBJ(pos));
         }
       }
-      PUT(rv, "anchor", STRING_OBJ(cstr_to_string(float_anchor_str[config->anchor])));
+      PUT(rv, "anchor", CSTR_TO_OBJ(float_anchor_str[config->anchor]));
       PUT(rv, "row", FLOAT_OBJ(config->row));
       PUT(rv, "col", FLOAT_OBJ(config->col));
       PUT(rv, "zindex", INTEGER_OBJ(config->zindex));
@@ -283,7 +283,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
         char *hi_name = syn_id2name(hi_id);
         if (hi_name[0]) {
           ADD(tuple, STRING_OBJ(s));
-          ADD(tuple, STRING_OBJ(cstr_to_string(hi_name)));
+          ADD(tuple, CSTR_TO_OBJ(hi_name));
           ADD(border, ARRAY_OBJ(tuple));
         } else {
           ADD(border, STRING_OBJ(s));
@@ -297,7 +297,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
           Array tuple = ARRAY_DICT_INIT;
           ADD(tuple, CSTR_TO_OBJ(title_datas.items[i].text));
           if (title_datas.items[i].hl_id > 0) {
-            ADD(tuple, STRING_OBJ(cstr_to_string(syn_id2name(title_datas.items[i].hl_id))));
+            ADD(tuple, CSTR_TO_OBJ(syn_id2name(title_datas.items[i].hl_id)));
           }
           ADD(titles, ARRAY_OBJ(tuple));
         }
@@ -317,7 +317,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
 
   const char *rel = (wp->w_floating && !config->external
                      ? float_relative_str[config->relative] : "");
-  PUT(rv, "relative", STRING_OBJ(cstr_to_string(rel)));
+  PUT(rv, "relative", CSTR_TO_OBJ(rel));
 
   return rv;
 }

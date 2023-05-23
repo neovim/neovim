@@ -1252,7 +1252,7 @@ static void do_set_option_string(int opt_idx, int opt_flags, char **argp, int ne
     }
     if (options[opt_idx].flags & P_UI_OPTION) {
       ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
-                         STRING_OBJ(cstr_as_string(saved_newval)));
+                         CSTR_AS_OBJ(saved_newval));
     }
   }
   xfree(saved_origval);
@@ -3803,7 +3803,7 @@ void ui_refresh_options(void)
       value = INTEGER_OBJ(*(long *)varp);
     } else if (flags & P_STRING) {
       // cstr_as_string handles NULL string
-      value = STRING_OBJ(cstr_as_string(*(char **)varp));
+      value = CSTR_AS_OBJ(*(char **)varp);
     }
     ui_call_option_set(name, value);
   }

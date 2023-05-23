@@ -2529,15 +2529,15 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
         .capacity = 5,
         .items = ((KeyValuePair[]) {
           { STATIC_CSTR_AS_STRING("generator"),
-            STRING_OBJ(STATIC_CSTR_AS_STRING("nvim")) },
+            STATIC_CSTR_AS_OBJ("nvim") },
           { STATIC_CSTR_AS_STRING("version"),
-            STRING_OBJ(cstr_as_string(longVersion)) },
+            CSTR_AS_OBJ(longVersion) },
           { STATIC_CSTR_AS_STRING("max_kbyte"),
             INTEGER_OBJ((Integer)max_kbyte) },
           { STATIC_CSTR_AS_STRING("pid"),
             INTEGER_OBJ((Integer)os_get_pid()) },
           { STATIC_CSTR_AS_STRING("encoding"),
-            STRING_OBJ(cstr_as_string(p_enc)) },
+            CSTR_AS_OBJ(p_enc) },
         }),
       }
     }

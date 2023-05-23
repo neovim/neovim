@@ -2031,7 +2031,7 @@ static void display_showcmd(void)
     if (len > 0) {
       // placeholder for future highlight support
       ADD_C(chunk, INTEGER_OBJ(0));
-      ADD_C(chunk, STRING_OBJ(cstr_as_string(showcmd_buf)));
+      ADD_C(chunk, CSTR_AS_OBJ(showcmd_buf));
       ADD_C(content, ARRAY_OBJ(chunk));
     }
     ui_call_msg_showcmd(content);

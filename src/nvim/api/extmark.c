@@ -106,7 +106,7 @@ bool ns_initialized(uint32_t ns)
 static Object hl_group_name(int hl_id, bool hl_name)
 {
   if (hl_name) {
-    return STRING_OBJ(cstr_to_string(syn_id2name(hl_id)));
+    return CSTR_TO_OBJ(syn_id2name(hl_id));
   } else {
     return INTEGER_OBJ(hl_id);
   }
@@ -140,7 +140,7 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
       PUT(dict, "hl_eol", BOOLEAN_OBJ(decor->hl_eol));
     }
     if (decor->hl_mode) {
-      PUT(dict, "hl_mode", STRING_OBJ(cstr_to_string(hl_mode_str[decor->hl_mode])));
+      PUT(dict, "hl_mode", CSTR_TO_OBJ(hl_mode_str[decor->hl_mode]));
     }
 
     if (kv_size(decor->virt_text)) {
@@ -148,7 +148,7 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
       for (size_t i = 0; i < decor->virt_text.size; i++) {
         Array chunk = ARRAY_DICT_INIT;
         VirtTextChunk *vtc = &decor->virt_text.items[i];
-        ADD(chunk, STRING_OBJ(cstr_to_string(vtc->text)));
+        ADD(chunk, CSTR_TO_OBJ(vtc->text));
         if (vtc->hl_id > 0) {
           ADD(chunk, hl_group_name(vtc->hl_id, hl_name));
         }
@@ -160,7 +160,7 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
         PUT(dict, "virt_text_win_col", INTEGER_OBJ(decor->col));
       }
       PUT(dict, "virt_text_pos",
-          STRING_OBJ(cstr_to_string(virt_text_pos_str[decor->virt_text_pos])));
+          CSTR_TO_OBJ(virt_text_pos_str[decor->virt_text_pos]));
     }
 
     if (decor->ui_watched) {
@@ -177,7 +177,7 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
         for (size_t j = 0; j < vt->size; j++) {
           Array chunk = ARRAY_DICT_INIT;
           VirtTextChunk *vtc = &vt->items[j];
-          ADD(chunk, STRING_OBJ(cstr_to_string(vtc->text)));
+          ADD(chunk, CSTR_TO_OBJ(vtc->text));
           if (vtc->hl_id > 0) {
             ADD(chunk, hl_group_name(vtc->hl_id, hl_name));
           }
@@ -191,7 +191,7 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
     }
 
     if (decor->sign_text) {
-      PUT(dict, "sign_text", STRING_OBJ(cstr_to_string(decor->sign_text)));
+      PUT(dict, "sign_text", CSTR_TO_OBJ(decor->sign_text));
     }
 
     // uncrustify:off

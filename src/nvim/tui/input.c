@@ -547,8 +547,8 @@ static void set_bg(char *bgvalue)
 {
   if (ui_client_attached) {
     MAXSIZE_TEMP_ARRAY(args, 2);
-    ADD_C(args, STRING_OBJ(cstr_as_string("term_background")));
-    ADD_C(args, STRING_OBJ(cstr_as_string(bgvalue)));
+    ADD_C(args, CSTR_AS_OBJ("term_background"));
+    ADD_C(args, CSTR_AS_OBJ(bgvalue));
     rpc_send_event(ui_client_channel_id, "nvim_ui_set_option", args);
   }
 }
