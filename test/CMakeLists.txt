@@ -66,21 +66,5 @@ add_custom_target(benchmark
   DEPENDS ${BENCHMARK_PREREQS}
   USES_TERMINAL)
 
-add_custom_target(functionaltest-lua
-  COMMAND ${CMAKE_COMMAND}
-    -D NVIM_PRG=$<TARGET_FILE:nvim>
-    -D WORKING_DIR=${PROJECT_SOURCE_DIR}
-    -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
-    -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-    -D BUILD_DIR=${CMAKE_BINARY_DIR}
-    -D DEPS_INSTALL_DIR=${DEPS_INSTALL_DIR}
-    -D TEST_TYPE=functional
-    -D CIRRUS_CI=$ENV{CIRRUS_CI}
-    -D CI_BUILD=${CI_BUILD}
-    -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-  DEPENDS ${FUNCTIONALTEST_PREREQS}
-  USES_TERMINAL)
-
 add_dependencies(functionaltest test_deps)
 add_dependencies(benchmark test_deps)
-add_dependencies(functionaltest-lua test_deps)

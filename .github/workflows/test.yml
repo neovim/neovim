@@ -179,15 +179,10 @@ jobs:
         timeout-minutes: 5
         run: cmake --build build --target unittest
 
-      - if: matrix.flavor != 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Functionaltest
         timeout-minutes: 20
         run: cmake --build build --target functionaltest
-
-      - if: matrix.flavor == 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
-        name: Functionaltest with PUC Lua
-        timeout-minutes: 20
-        run: cmake --build build --target functionaltest-lua
 
       - if: matrix.flavor != 'tsan' && (success() || failure() && steps.abort_job.outputs.status == 'success')
         name: Oldtest
