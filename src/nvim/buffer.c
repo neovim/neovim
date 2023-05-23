@@ -3514,23 +3514,20 @@ bool append_arg_number(win_T *wp, char *buf, int buflen, bool add_file)
     return false;
   }
 
+  const char *msg;
+  switch ((wp->w_arg_idx_invalid ? 1 : 0) + (add_file ? 2 : 0)) {
+  case 0:
+    msg = _(" (%d of %d)"); break;
+  case 1:
+    msg = _(" ((%d) of %d)"); break;
+  case 2:
+    msg = _(" (file %d of %d)"); break;
+  case 3:
+    msg = _(" (file (%d) of %d)"); break;
+  }
+
   char *p = buf + strlen(buf);  // go to the end of the buffer
-
-  // Early out if the string is getting too long
-  if (p - buf + 35 >= buflen) {
-    return false;
-  }
-
-  *p++ = ' ';
-  *p++ = '(';
-  if (add_file) {
-    STRCPY(p, "file ");
-    p += 5;
-  }
-  vim_snprintf(p, (size_t)(buflen - (p - buf)),
-               wp->w_arg_idx_invalid
-               ? "(%d) of %d)"
-               : "%d of %d)", wp->w_arg_idx + 1, ARGCOUNT);
+  vim_snprintf(p, (size_t)(buflen - (p - buf)), msg, wp->w_arg_idx + 1, ARGCOUNT);
   return true;
 }
 
