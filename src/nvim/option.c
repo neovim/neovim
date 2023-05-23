@@ -3336,8 +3336,8 @@ void set_tty_background(const char *value)
   if (starting) {
     // Wait until after startup, so OptionSet is triggered.
     do_cmdline_cmd((value[0] == 'l')
-                   ? "autocmd VimEnter * ++once ++nested if &bg == '' | set bg=light | endif"
-                   : "autocmd VimEnter * ++once ++nested if &bg == '' | set bg=dark | endif");
+                   ? "autocmd VimEnter * ++once ++nested :lua if not vim.api.nvim_get_option_info2('bg', {}).was_set then vim.o.bg = 'light' end"
+                   : "autocmd VimEnter * ++once ++nested :lua if not vim.api.nvim_get_option_info2('bg', {}).was_set then vim.o.bg = 'dark' end");
   } else {
     set_option_value_give_err("bg", 0L, value, 0);
     reset_option_was_set("bg");
