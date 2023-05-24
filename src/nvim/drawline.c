@@ -2188,12 +2188,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         v = (ptr - line);
         if (has_spell && v >= word_end && v > cur_checked_col) {
           spell_attr = 0;
-          if (c != 0 && ((!has_syntax && !no_plain_buffer) || can_spell)) {
-            char *prev_ptr;
+          char *prev_ptr = ptr - mb_l;
+          // do not calculate cap_col at the end of the line or when
+          // only white space is following
+          if (c != 0 && (*skipwhite(prev_ptr) != NUL)
+              && ((!has_syntax && !no_plain_buffer) || can_spell)) {
             char *p;
-            int len;
             hlf_T spell_hlf = HLF_COUNT;
-            prev_ptr = ptr - mb_l;
             v -= mb_l - 1;
 
             // Use nextline[] if possible, it has the start of the
@@ -2206,7 +2207,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             cap_col -= (int)(prev_ptr - line);
             size_t tmplen = spell_check(wp, p, &spell_hlf, &cap_col, nochange);
             assert(tmplen <= INT_MAX);
-            len = (int)tmplen;
+            int len = (int)tmplen;
             word_end = (int)v + len;
 
             // In Insert mode only highlight a word that

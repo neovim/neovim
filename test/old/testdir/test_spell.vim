@@ -996,6 +996,29 @@ func Test_spell_screendump()
   call delete('XtestSpell')
 endfunc
 
+func Test_spell_screendump_spellcap()
+  CheckScreendump
+
+  let lines =<< trim END
+       call setline(1, [
+             \ "   This line has a sepll error. and missing caps and trailing spaces.   ",
+             \ "another missing cap here.",
+             \ "",
+             \ "and here.",
+             \ "    ",
+             \ "and here."
+             \ ])
+       set spell spelllang=en
+  END
+  call writefile(lines, 'XtestSpellCap')
+  let buf = RunVimInTerminal('-S XtestSpellCap', {'rows': 8})
+  call VerifyScreenDump(buf, 'Test_spell_2', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XtestSpellCap')
+endfunc
+
 let g:test_data_aff1 = [
       \"SET ISO8859-1",
       \"TRY esianrtolcdugmphbyfvkwjkqxz-\xEB\xE9\xE8\xEA\xEF\xEE\xE4\xE0\xE2\xF6\xFC\xFB'ESIANRTOLCDUGMPHBYFVKWJKQXZ",
