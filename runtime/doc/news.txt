@@ -58,6 +58,10 @@ The following new APIs or features were added.
 
 • Added inline virtual text support to |nvim_buf_set_extmark()|.
 
+• The terminal buffer now supports reflow (wrapped lines adapt when the buffer
+  is resized horizontally). Note: Lines that are not visible and kept in
+  |'scrollback'| are not reflown.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
