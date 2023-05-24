@@ -397,7 +397,10 @@ void changed_bytes(linenr_T lnum, colnr_T col)
   // When text has been changed at the end of the line, possibly the start of
   // the next line may have SpellCap that should be removed or it needs to be
   // displayed.  Schedule the next line for redrawing just in case.
-  if (spell_check_window(curwin) && lnum < curbuf->b_ml.ml_line_count) {
+  // Don't do this when displaying '$' at the end of changed text.
+  if (spell_check_window(curwin)
+      && lnum < curbuf->b_ml.ml_line_count
+      && vim_strchr(p_cpo, CPO_DOLLAR) == NULL) {
     redrawWinline(curwin, lnum + 1);
   }
   // notify any channels that are watching

@@ -27,6 +27,7 @@ describe("'spell'", function()
       [6] = {foreground = Screen.colors.Red},
       [7] = {foreground = Screen.colors.Blue},
       [8] = {foreground = Screen.colors.Blue, special = Screen.colors.Red, undercurl = true},
+      [9] = {bold = true},
     })
   end)
 
@@ -138,6 +139,40 @@ describe("'spell'", function()
       {0:~                                                                               }|
       {0:~                                                                               }|
                                                                                       |
+    ]])
+  end)
+
+  -- oldtest: Test_spell_compatible()
+  it([[redraws properly when using "C" and "$" is in 'cpo']], function()
+    exec([=[
+      call setline(1, [
+        \ "test "->repeat(20),
+        \ "",
+        \ "end",
+      \ ])
+      set spell cpo+=$
+    ]=])
+    feed('51|C')
+    screen:expect([[
+      {2:test} test test test test test test test test test ^test test test test test test |
+      test test test test$                                                            |
+                                                                                      |
+      {2:end}                                                                             |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {9:-- INSERT --}                                                                    |
+    ]])
+    feed('x')
+    screen:expect([[
+      {2:test} test test test test test test test test test x^est test test test test test |
+      test test test test$                                                            |
+                                                                                      |
+      {2:end}                                                                             |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {9:-- INSERT --}                                                                    |
     ]])
   end)
 
