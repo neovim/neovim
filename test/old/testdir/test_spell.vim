@@ -1014,6 +1014,10 @@ func Test_spell_screendump_spellcap()
   let buf = RunVimInTerminal('-S XtestSpellCap', {'rows': 8})
   call VerifyScreenDump(buf, 'Test_spell_2', {})
 
+  " After adding word missing Cap in next line is updated
+  call term_sendkeys(buf, "3GANot\<Esc>")
+  call VerifyScreenDump(buf, 'Test_spell_3', {})
+
   " clean up
   call StopVimInTerminal(buf)
   call delete('XtestSpellCap')

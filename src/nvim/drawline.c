@@ -1203,12 +1203,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
     }
 
-    if (wp->w_p_spell
-        && !has_fold
-        && !end_fill
-        && *wp->w_s->b_p_spl != NUL
-        && !GA_EMPTY(&wp->w_s->b_langp)
-        && *(char **)(wp->w_s->b_langp.ga_data) != NULL) {
+    if (!has_fold && !end_fill && spell_check_window(wp)) {
       // Prepare for spell checking.
       has_spell = true;
       extra_check = true;

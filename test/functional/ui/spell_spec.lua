@@ -103,6 +103,18 @@ describe("'spell'", function()
       {0:~                                                                               }|
                                                                                       |
     ]])
+    -- After adding word missing Cap in next line is updated
+    feed('3GANot<Esc>')
+    screen:expect([[
+         This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
+      {2:another} missing cap here.                                                       |
+      No^t                                                                             |
+      and here.                                                                       |
+                                                                                      |
+      {2:and} here.                                                                       |
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
   end)
 
   it('extmarks, "noplainbuffer" and syntax #20385 #23398', function()

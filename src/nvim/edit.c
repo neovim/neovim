@@ -53,6 +53,7 @@
 #include "nvim/popupmenu.h"
 #include "nvim/pos.h"
 #include "nvim/search.h"
+#include "nvim/spell.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
@@ -3393,6 +3394,14 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
   static bool disabled_redraw = false;
 
   check_spell_redraw();
+
+  // When text has been changed in this line, possibly the start of the next
+  // line may have SpellCap that should be removed or it needs to be
+  // displayed.  Schedule the next line for redrawing just in case.
+  if (spell_check_window(curwin)
+      && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
+    redrawWinline(curwin, curwin->w_cursor.lnum + 1);
+  }
 
   int temp = curwin->w_cursor.col;
   if (disabled_redraw) {
