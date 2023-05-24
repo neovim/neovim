@@ -659,6 +659,8 @@ describe('extmark decorations', function()
       [25] = {background = Screen.colors.LightRed};
       [26] = {background=Screen.colors.DarkGrey, foreground=Screen.colors.LightGrey};
       [27] = {background = Screen.colors.Plum1};
+      [28] = {underline = true, foreground = Screen.colors.SlateBlue};
+      [29] = {underline = true, background = Screen.colors.LightGrey, foreground = Screen.colors.SlateBlue};
     }
 
     ns = meths.create_namespace 'test'
@@ -1232,6 +1234,33 @@ describe('extmark decorations', function()
     meths.buf_set_extmark(0, ns, 0, 0, { end_col = 9, hl_group = 'TestUC', priority = 30 })
     meths.buf_set_extmark(0, ns, 0, 3, { end_col = 6, hl_group = 'TestBold', priority = 20 })
     screen:expect_unchanged(true)
+  end)
+
+  it('highlight applies to a full Tab #23734', function()
+    screen:try_resize(50, 8)
+    meths.buf_set_lines(0, 0, -1, true, {'asdf', '\tasdf', '\tasdf', '\tasdf', 'asdf'})
+    meths.buf_set_extmark(0, ns, 0, 0, {end_row = 5, end_col = 0, hl_group = 'Underlined'})
+    screen:expect([[
+      {28:^asdf}                                              |
+      {28:        asdf}                                      |
+      {28:        asdf}                                      |
+      {28:        asdf}                                      |
+      {28:asdf}                                              |
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]])
+    feed('<C-V>Gll')
+    screen:expect([[
+      {29:asd}{28:f}                                              |
+      {29:   }{28:     asdf}                                      |
+      {29:   }{28:     asdf}                                      |
+      {29:   }{28:     asdf}                                      |
+      {29:as}{28:^df}                                              |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {24:-- VISUAL BLOCK --}                                |
+    ]])
   end)
 end)
 

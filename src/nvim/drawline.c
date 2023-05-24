@@ -1925,6 +1925,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     // "p_extra[n_extra]".
     // For the '$' of the 'list' option, n_extra == 1, p_extra == "".
     if (wlv.n_extra > 0) {
+      if (extmark_attr != 0) {
+        if (!attr_pri) {
+          wlv.char_attr = hl_combine_attr(wlv.char_attr, extmark_attr);
+        } else {
+          wlv.char_attr = hl_combine_attr(extmark_attr, wlv.char_attr);
+        }
+      }
+
       if (wlv.c_extra != NUL || (wlv.n_extra == 1 && wlv.c_final != NUL)) {
         c = (wlv.n_extra == 1 && wlv.c_final != NUL) ? wlv.c_final : wlv.c_extra;
         mb_c = c;               // doesn't handle non-utf-8 multi-byte!
