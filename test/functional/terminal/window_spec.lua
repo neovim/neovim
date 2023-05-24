@@ -87,7 +87,7 @@ describe(':terminal window', function()
         {7:       1 }tty ready                                |
         {7:       2 }rows: 6, cols: 48                        |
         {7:       3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO|
-        {7:       4 }WXYZrows: 6, cols: 41                    |
+        {7:       4 }PQRSTUVWXYZrows: 6, cols: 41             |
         {7:       5 }{1: }                                        |
         {7:       6 }                                         |
         {3:-- TERMINAL --}                                    |
@@ -97,7 +97,7 @@ describe(':terminal window', function()
         {7:       1 }tty ready                                |
         {7:       2 }rows: 6, cols: 48                        |
         {7:       3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO|
-        {7:       4 }WXYZrows: 6, cols: 41                    |
+        {7:       4 }PQRSTUVWXYZrows: 6, cols: 41             |
         {7:       5 } abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN|
         {7:       6 }OPQRSTUVWXYZ{1: }                            |
         {3:-- TERMINAL --}                                    |
@@ -132,9 +132,9 @@ describe(':terminal window', function()
       screen:expect([[
         {7:++ 7  }                                            |
         {7:++ 8  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
-        {7:++ 9  }TUVWXYZ                                     |
+        {7:++ 9  }STUVWXYZ                                    |
         {7:++10  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
-        {7:++11  }TUVWXYZrows: 6, cols: 44                    |
+        {7:++11  }STUVWXYZrows: 6, cols: 44                   |
         {7:++12  }{1: }                                           |
         {3:-- TERMINAL --}                                    |
       ]])
