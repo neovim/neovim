@@ -22,10 +22,12 @@ typedef struct arg_node {
   QUEUE node;  // QUEUE structure.
 } ArgNode;
 
-static inline PtyProcess pty_process_init(Loop *loop, void *data)
+static inline PtyProcess pty_process_init(Loop *loop, void *data, bool process)
 {
   PtyProcess rv;
-  rv.process = process_init(loop, kProcessTypePty, data);
+  if (process) {
+    rv.process = process_init(loop, kProcessTypePty, data);
+  }
   rv.width = 80;
   rv.height = 24;
   rv.conpty = NULL;

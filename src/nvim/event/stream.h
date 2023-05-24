@@ -52,7 +52,6 @@ struct stream {
   void *close_cb_data, *internal_data;
   size_t fpos;
   size_t curmem;
-  size_t maxmem;
   size_t pending_reqs;
   size_t num_bytes;
   MultiQueue *events;

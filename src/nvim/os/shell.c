@@ -889,9 +889,6 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
   // deal with stream events as fast a possible.  It prevents closing the
   // streams while there's still data in the OS buffer (due to the process
   // exiting before all data is read).
-  if (has_input) {
-    wstream_init(&proc->in, 0);
-  }
   rstream_init(&proc->out, 0);
   rstream_start(&proc->out, data_cb, &buf);
   rstream_init(&proc->err, 0);

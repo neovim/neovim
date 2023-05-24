@@ -76,7 +76,7 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
     status = libuv_process_spawn((LibuvProcess *)proc);
     break;
   case kProcessTypePty:
-    status = pty_process_spawn((PtyProcess *)proc);
+    status = pty_process_spawn((PtyProcess *)proc, true);
     break;
   default:
     abort();
@@ -134,6 +134,7 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
   DLOG("new: pid=%d argv=[%s]", proc->pid, proc->argv[0]);
   return 0;
 }
+
 
 void process_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
 {

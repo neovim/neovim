@@ -29,6 +29,7 @@ typedef enum {
   kChannelStreamStdio,
   kChannelStreamStderr,
   kChannelStreamInternal,
+  kChannelStreamPty,  ///< only for raw pty, use Proc for process within pty
 } ChannelStreamType;
 
 typedef enum {
@@ -127,6 +128,7 @@ static inline Stream *channel_instream(Channel *chan)
 {
   switch (chan->streamtype) {
   case kChannelStreamProc:
+  case kChannelStreamPty:
     return &chan->stream.proc.in;
 
   case kChannelStreamSocket:
@@ -147,6 +149,7 @@ static inline Stream *channel_outstream(Channel *chan)
 {
   switch (chan->streamtype) {
   case kChannelStreamProc:
+  case kChannelStreamPty:
     return &chan->stream.proc.out;
 
   case kChannelStreamSocket:

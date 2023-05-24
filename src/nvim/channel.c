@@ -126,6 +126,13 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
 
     break;
 
+  case kChannelStreamPty:
+      proc = &chan->stream.proc;
+      stream_may_close(&chan->stream.pty.process.in);
+      stream_may_close(&chan->stream.pty.process.out);
+      pty_process_close_master(&chan->stream.pty);
+    break;
+
   case kChannelStreamStdio:
     if (part == kChannelPartStdin || close_main) {
       stream_may_close(&chan->stream.stdio.in);
@@ -351,7 +358,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader
       *status_out = 0;
       return NULL;
     }
-    chan->stream.pty = pty_process_init(&main_loop, chan);
+    chan->stream.pty = pty_process_init(&main_loop, chan, true);
     if (pty_width > 0) {
       chan->stream.pty.width = pty_width;
     }
@@ -400,9 +407,6 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader
     tv_dict_free(proc->env);
   }
 
-  if (has_in) {
-    wstream_init(&proc->in, 0);
-  }
   if (has_out) {
     rstream_init(&proc->out, 0);
   }
@@ -425,6 +429,26 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader
 
   *status_out = (varnumber_T)chan->id;
   return chan;
+}
+
+void channel_pty_open(Channel *chan) {
+  PtyProcess *pty = &chan->stream.pty;
+  uv_pipe_init(&pty->process.loop->uv, &pty->process.in.uv.pipe, 0);
+  uv_pipe_init(&pty->process.loop->uv, &pty->process.out.uv.pipe, 0);
+  pty->process.err.closed = true;
+  pty_process_spawn(pty, false);
+
+  stream_init(NULL, &pty->process.in, -1, STRUCT_CAST(uv_stream_t, &pty->process.in.uv.pipe));
+  pty->process.in.internal_close_cb = NULL; // TODO: hurghl
+  pty->process.refcount++;
+
+  stream_init(NULL, &pty->process.out, -1, STRUCT_CAST(uv_stream_t, &pty->process.out.uv.pipe));
+  // pty->process.out.internal_data = proc;
+  pty->process.out.internal_close_cb = NULL;
+  pty->process.refcount++;
+
+  rstream_init(&pty->process.out, 0);
+  rstream_start(&pty->process.out, on_channel_data, chan);
 }
 
 uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader on_output,
@@ -455,7 +479,6 @@ uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader
 
   channel->stream.socket.internal_close_cb = close_cb;
   channel->stream.socket.internal_data = channel;
-  wstream_init(&channel->stream.socket, 0);
   rstream_init(&channel->stream.socket, 0);
 
   if (rpc) {
@@ -480,7 +503,6 @@ void channel_from_connection(SocketWatcher *watcher)
   socket_watcher_accept(watcher, &channel->stream.socket);
   channel->stream.socket.internal_close_cb = close_cb;
   channel->stream.socket.internal_data = channel;
-  wstream_init(&channel->stream.socket, 0);
   rstream_init(&channel->stream.socket, 0);
   rpc_start(channel);
   channel_create_event(channel, watcher->addr);
@@ -524,7 +546,8 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
   }
 #endif
   rstream_init_fd(&main_loop, &channel->stream.stdio.in, stdin_dup_fd, 0);
-  wstream_init_fd(&main_loop, &channel->stream.stdio.out, stdout_dup_fd, 0);
+
+  stream_init(&main_loop, &channel->stream.stdio.out, stdout_dup_fd, NULL);
 
   if (rpc) {
     rpc_start(channel);
@@ -898,6 +921,15 @@ Dictionary channel_info(uint64_t id)
     PUT(info, "argv", ARRAY_OBJ(argv));
     break;
   }
+
+  case kChannelStreamPty: {
+    stream_desc = "pty";
+    const char *name = pty_process_tty_name(&chan->stream.pty);
+    PUT(info, "pty", CSTR_TO_OBJ(name));
+    PUT(info, "slave_fd", INTEGER_OBJ(chan->stream.pty.slave_fd));
+    break;
+  }
+
 
   case kChannelStreamStdio:
     stream_desc = "stdio";
