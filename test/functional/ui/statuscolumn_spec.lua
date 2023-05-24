@@ -196,8 +196,10 @@ describe('statuscolumn', function()
       [2] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGrey},
       [3] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
       [4] = {bold = true, foreground = Screen.colors.Brown},
-      [5] = {background = Screen.colors.Grey90},
+      [5] = {background = Screen.colors.Grey90, underline = true},
+      [6] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey, underline = true},
     })
+    command('hi! CursorLine gui=underline guibg=Grey90')
     screen:expect([[
       {1: 4│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {1:  │ }a                                                |
@@ -214,7 +216,7 @@ describe('statuscolumn', function()
       {1:10│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{0:@@@}|
                                                            |
     ]])
-    command("set stc=%C%s%=%l│\\ ")
+    command([[set stc=%C%s%=%l│\ ]])
     screen:expect_unchanged()
     command('set signcolumn=auto:2 foldcolumn=auto')
     command('sign define piet1 text=>> texthl=LineNr')
@@ -268,7 +270,7 @@ describe('statuscolumn', function()
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 7│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
-      {2:+}{4: 8│}{2:    }{4: }{5:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2:+}{4: 8│}{2:    }{4: }{6:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {2: }{1: 9│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1:10│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -286,7 +288,7 @@ describe('statuscolumn', function()
       {2: }{1: 6│}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 7│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 7│}{2:    }{1: }aaaaaa                                      |
-      {2:+}{4: 8│}{2:    }{4: }{5:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2:+}{4: 8│}{2:    }{4: }{6:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {2: }{1: 9│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 9│}{2:    }{1: }aaaaaa                                      |
       {2: }{1:10│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -304,7 +306,7 @@ describe('statuscolumn', function()
       {2: }{1: 2│}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 1│}{2:    }{1: }aaaaaa                                      |
-      {2:+}{4: 0│}{2:    }{4: }{5:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2:+}{4: 0│}{2:    }{4: }{6:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {2: }{1: 1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 1│}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 2│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -321,7 +323,7 @@ describe('statuscolumn', function()
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
-      {2:+}{4: 0│}{2:    }{4: }{5:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2:+}{4: 0│}{2:    }{4: }{6:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {2: }{1: 1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 2│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -346,7 +348,7 @@ describe('statuscolumn', function()
       {2: }{1:  │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaa          |
       {2: }{1: 1│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaa          |
-      {2:+}{4: 0│}{2:                  }{4: }{5:^+--  1 line: aaaaaaaaaaaaaaaaa}|
+      {2:+}{4: 0│}{2:                  }{4: }{6:^+--  1 line: aaaaaaaaaaaaaaaaa}|
       {2: }{1: 1│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaa          |
       {2: }{1: 2│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -372,7 +374,7 @@ describe('statuscolumn', function()
       {1:wrapped 1 6}aaaaaaaa                                  |
       {1:buffer  0 7}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {1:wrapped 1 7}aaaaaaaa                                  |
-      {4:buffer  0 8}{5:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {4:buffer  0 8}{6:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {1:buffer  0 9}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {1:wrapped 1 9}aaaaaaaa                                  |
                                                            |

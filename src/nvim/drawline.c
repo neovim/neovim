@@ -1807,8 +1807,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     }
 
     int extmark_attr = 0;
-    if (wlv.draw_state == WL_LINE
-        && (area_highlighting || has_spell || (extra_check && !has_fold))) {
+    if (wlv.draw_state == WL_LINE && !has_fold
+        && (area_highlighting || has_spell || extra_check)) {
       // handle Visual or match highlighting in this line
       if (wlv.vcol == wlv.fromcol
           || (wlv.vcol + 1 == wlv.fromcol && wlv.n_extra == 0
