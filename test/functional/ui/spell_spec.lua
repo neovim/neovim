@@ -115,6 +115,30 @@ describe("'spell'", function()
       {0:~                                                                               }|
                                                                                       |
     ]])
+    -- Deleting a full stop removes missing Cap in next line
+    feed('5Gddk$x')
+    screen:expect([[
+         This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
+      {2:another} missing cap here.                                                       |
+      Not                                                                             |
+      and her^e                                                                        |
+      and here.                                                                       |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
+    -- Undo also updates the next line (go to command line to remove message)
+    feed('u:<Esc>')
+    screen:expect([[
+         This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
+      {2:another} missing cap here.                                                       |
+      Not                                                                             |
+      and here^.                                                                       |
+      {2:and} here.                                                                       |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
   end)
 
   it('extmarks, "noplainbuffer" and syntax #20385 #23398', function()

@@ -1018,6 +1018,14 @@ func Test_spell_screendump_spellcap()
   call term_sendkeys(buf, "3GANot\<Esc>")
   call VerifyScreenDump(buf, 'Test_spell_3', {})
 
+  " Deleting a full stop removes missing Cap in next line
+  call term_sendkeys(buf, "5Gddk$x")
+  call VerifyScreenDump(buf, 'Test_spell_4', {})
+
+  " Undo also updates the next line (go to command line to remove message)
+  call term_sendkeys(buf, "u:\<Esc>")
+  call VerifyScreenDump(buf, 'Test_spell_5', {})
+
   " clean up
   call StopVimInTerminal(buf)
   call delete('XtestSpellCap')
