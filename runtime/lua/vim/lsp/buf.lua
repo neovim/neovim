@@ -634,7 +634,7 @@ local function on_code_action_results(results, ctx, options)
       end
     end
   end
-  if #action_tuples == 0 then
+  if #action_tuples == 0 and not (options and options.silent) then
     vim.notify('No code actions available', vim.log.levels.INFO)
     return
   end
@@ -707,7 +707,7 @@ local function on_code_action_results(results, ctx, options)
     return
   end
 
-  vim.ui.select(action_tuples, {
+  (options and options.select or vim.ui.select)(action_tuples, {
     prompt = 'Code actions:',
     kind = 'codeaction',
     format_item = function(action_tuple)
@@ -754,6 +754,12 @@ end
 ---           If in visual mode this defaults to the active selection.
 ---           Table must contain `start` and `end` keys with {row, col} tuples
 ---           using mark-like indexing. See |api-indexing|
+---
+---   - silent: (boolean|nil)
+---             When `true`, don't show a notification when no code actions are available
+---
+---   - select: (function|nil) See |vim.ui.select|
+---             Custom select function. Defaults to `vim.ui.select`
 ---
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
 ---@see vim.lsp.protocol.constants.CodeActionTriggerKind

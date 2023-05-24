@@ -1128,9 +1128,12 @@ code_action({options})                             *vim.lsp.buf.code_action()*
                      is applied without user query.
                    • range: (table|nil) Range for which code actions should be
                      requested. If in visual mode this defaults to the active
-                     selection. Table must contain `start` and `end` keys with
-                     {row, col} tuples using mark-like indexing. See
+                     selection. Table must contain `start` and `end` keys with {row, col} tuples using mark-like indexing. See
                      |api-indexing|
+                     • silent: (boolean|nil) When `true`, don't show a
+                       notification when no code actions are available
+                     • select: (function|nil) See |vim.ui.select| Custom
+                       select function. Defaults to `vim.ui.select`
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
