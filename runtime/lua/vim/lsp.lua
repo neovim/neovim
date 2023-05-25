@@ -1297,12 +1297,31 @@ function lsp.start_client(config)
       -- The initial trace setting. If omitted trace is disabled ("off").
       -- trace = "off" | "messages" | "verbose";
       trace = valid_traces[config.trace] or 'off',
-      ---@param method string
     }
     if config.before_init then
       -- TODO(ashkan) handle errors here.
       pcall(config.before_init, initialize_params, config)
     end
+
+    --- @param method string
+    --- @param opts? {bufnr?: number}
+    client.supports_method = function(method, opts)
+      opts = opts or {}
+      local required_capability = lsp._request_name_to_capability[method]
+      -- if we don't know about the method, assume that the client supports it.
+      if not required_capability then
+        return true
+      end
+      if vim.tbl_get(client.server_capabilities or {}, unpack(required_capability)) then
+        return true
+      else
+        if client.dynamic_capabilities:supports_registration(method) then
+          return client.dynamic_capabilities:supports(method, opts)
+        end
+        return false
+      end
+    end
+
     local _ = log.trace() and log.trace(log_prefix, 'initialize_params', initialize_params)
     rpc.request('initialize', initialize_params, function(init_err, result)
       assert(not init_err, tostring(init_err))
