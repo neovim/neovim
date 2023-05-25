@@ -38,10 +38,7 @@ function M.gen(opt)
     '--]]',
     '',
     '---@alias lsp.null nil',
-    '---@alias lsp.string string',
-    '---@alias lsp.boolean boolean',
-    '---@alias lsp.integer integer',
-    '---@alias lsp.uinteger integer',
+    '---@alias uinteger integer',
     '---@alias lsp.decimal number',
     '---@alias lsp.DocumentUri string',
     '---@alias lsp.URI string',
@@ -55,8 +52,19 @@ function M.gen(opt)
 
   local anonym_classes = {}
 
+  local simple_types = {
+    'string',
+    'boolean',
+    'integer',
+    'uinteger',
+    'decimal',
+  }
+
   local function parse_type(type)
     if type.kind == 'reference' or type.kind == 'base' then
+      if vim.tbl_contains(simple_types, type.name) then
+        return type.name
+      end
       return 'lsp.' .. type.name
     elseif type.kind == 'array' then
       return parse_type(type.element) .. '[]'

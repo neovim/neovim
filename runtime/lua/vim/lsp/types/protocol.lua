@@ -5,10 +5,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 --]]
 
 ---@alias lsp.null nil
----@alias lsp.string string
----@alias lsp.boolean boolean
----@alias lsp.integer integer
----@alias lsp.uinteger integer
+---@alias uinteger integer
 ---@alias lsp.decimal number
 ---@alias lsp.DocumentUri string
 ---@alias lsp.URI string
@@ -36,7 +33,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@field uri lsp.URI
 ---The name of the workspace folder. Used to refer to this
 ---workspace folder in the user interface.
----@field name lsp.string
+---@field name string
 
 ---The parameters of a `workspace/didChangeWorkspaceFolders` notification.
 ---@class lsp.DidChangeWorkspaceFoldersParams
@@ -74,7 +71,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The label of this color presentation. It will be shown on the color
 ---picker header. By default this is also the text that is inserted when selecting
 ---this color presentation.
----@field label lsp.string
+---@field label string
 ---An {@link TextEdit edit} which is applied to a document when selecting
 ---this presentation for the color.  When `falsy` the {@link ColorPresentation.label label}
 ---is used.
@@ -84,7 +81,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@field additionalTextEdits? lsp.TextEdit[]
 
 ---@class lsp.WorkDoneProgressOptions
----@field workDoneProgress? lsp.boolean
+---@field workDoneProgress? boolean
 
 ---General text document registration options.
 ---@class lsp.TextDocumentRegistrationOptions
@@ -102,14 +99,14 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@class lsp.FoldingRange
 ---The zero-based start line of the range to fold. The folded area starts after the line's last character.
 ---To be valid, the end must be zero or larger and smaller than the number of lines in the document.
----@field startLine lsp.uinteger
+---@field startLine uinteger
 ---The zero-based character offset from where the folded range starts. If not defined, defaults to the length of the start line.
----@field startCharacter? lsp.uinteger
+---@field startCharacter? uinteger
 ---The zero-based end line of the range to fold. The folded area ends with the line's last character.
 ---To be valid, the end must be zero or larger and smaller than the number of lines in the document.
----@field endLine lsp.uinteger
+---@field endLine uinteger
 ---The zero-based character offset before the folded range ends. If not defined, defaults to the length of the end line.
----@field endCharacter? lsp.uinteger
+---@field endCharacter? uinteger
 ---Describes the kind of the folding range such as `comment' or 'region'. The kind
 ---is used to categorize folding ranges and used by commands like 'Fold all comments'.
 ---See {@link FoldingRangeKind} for an enumeration of standardized kinds.
@@ -119,7 +116,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---will be chosen by the client.
 ---
 ---@since 3.17.0
----@field collapsedText? lsp.string
+---@field collapsedText? string
 
 ---@class lsp.FoldingRangeRegistrationOptions: lsp.TextDocumentRegistrationOptions, lsp.StaticRegistrationOptions
 
@@ -163,13 +160,13 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@since 3.16.0
 ---@class lsp.CallHierarchyItem
 ---The name of this item.
----@field name lsp.string
+---@field name string
 ---The kind of this item.
 ---@field kind lsp.SymbolKind
 ---Tags for this item.
 ---@field tags? lsp.SymbolTag[]
 ---More detail for this item, e.g. the signature of a function.
----@field detail? lsp.string
+---@field detail? string
 ---The resource identifier of this item.
 ---@field uri lsp.DocumentUri
 ---The range enclosing this symbol not including leading/trailing whitespace but everything else, e.g. comments and code.
@@ -230,13 +227,13 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---the client will include the result id in the next semantic token request.
 ---A server can then instead of computing all semantic tokens again simply
 ---send a delta.
----@field resultId? lsp.string
+---@field resultId? string
 ---The actual tokens.
----@field data lsp.uinteger[]
+---@field data uinteger[]
 
 ---@since 3.16.0
 ---@class lsp.SemanticTokensPartialResult
----@field data lsp.uinteger[]
+---@field data uinteger[]
 
 ---@since 3.16.0
 ---@class lsp.SemanticTokensRegistrationOptions: lsp.TextDocumentRegistrationOptions, lsp.StaticRegistrationOptions
@@ -247,11 +244,11 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@field textDocument lsp.TextDocumentIdentifier
 ---The result id of a previous response. The result Id can either point to a full response
 ---or a delta response depending on what was received last.
----@field previousResultId lsp.string
+---@field previousResultId string
 
 ---@since 3.16.0
 ---@class lsp.SemanticTokensDelta
----@field resultId? lsp.string
+---@field resultId? string
 ---The semantic token edits to transform a previous result into a new result.
 ---@field edits lsp.SemanticTokensEdit[]
 
@@ -275,12 +272,12 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---Indicates to show the resource in an external program.
 ---To show, for example, `https://code.visualstudio.com/`
 ---in the default WEB browser set `external` to `true`.
----@field external? lsp.boolean
+---@field external? boolean
 ---An optional property to indicate whether the editor
 ---showing the document should take focus or not.
 ---Clients might ignore this property if an external
 ---program is started.
----@field takeFocus? lsp.boolean
+---@field takeFocus? boolean
 ---An optional selection range if the document is a text
 ---document. Clients might ignore the property if an
 ---external program is started or the file is not a text
@@ -292,7 +289,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@since 3.16.0
 ---@class lsp.ShowDocumentResult
 ---A boolean indicating if the show was successful.
----@field success lsp.boolean
+---@field success boolean
 
 ---@class lsp.LinkedEditingRangeParams: lsp.TextDocumentPositionParams, lsp.WorkDoneProgressParams
 
@@ -306,7 +303,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---An optional word pattern (regular expression) that describes valid contents for
 ---the given ranges. If no pattern is provided, the client configuration's word
 ---pattern will be used.
----@field wordPattern? lsp.string
+---@field wordPattern? string
 
 ---@class lsp.LinkedEditingRangeRegistrationOptions: lsp.TextDocumentRegistrationOptions, lsp.StaticRegistrationOptions
 
@@ -383,10 +380,10 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@since 3.16.0
 ---@class lsp.Moniker
 ---The scheme of the moniker. For example tsc or .Net
----@field scheme lsp.string
+---@field scheme string
 ---The identifier of the moniker. The value is opaque in LSIF however
 ---schema owners are allowed to define the structure if they want.
----@field identifier lsp.string
+---@field identifier string
 ---The scope in which the moniker is unique
 ---@field unique lsp.UniquenessLevel
 ---The moniker kind if known.
@@ -402,13 +399,13 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@since 3.17.0
 ---@class lsp.TypeHierarchyItem
 ---The name of this item.
----@field name lsp.string
+---@field name string
 ---The kind of this item.
 ---@field kind lsp.SymbolKind
 ---Tags for this item.
 ---@field tags? lsp.SymbolTag[]
 ---More detail for this item, e.g. the signature of a function.
----@field detail? lsp.string
+---@field detail? string
 ---The resource identifier of this item.
 ---@field uri lsp.DocumentUri
 ---The range enclosing this symbol not including leading/trailing whitespace
@@ -477,7 +474,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---InlayHintLabelPart label parts.
 ---
 ---*Note* that neither the string nor the label part can be empty.
----@field label lsp.string|lsp.InlayHintLabelPart[]
+---@field label string|lsp.InlayHintLabelPart[]
 ---The kind of this hint. Can be omitted in which case the client
 ---should fall back to a reasonable default.
 ---@field kind? lsp.InlayHintKind
@@ -488,19 +485,19 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---hint itself is now obsolete.
 ---@field textEdits? lsp.TextEdit[]
 ---The tooltip text when you hover over this item.
----@field tooltip? lsp.string|lsp.MarkupContent
+---@field tooltip? string|lsp.MarkupContent
 ---Render padding before the hint.
 ---
 ---Note: Padding should use the editor's background color, not the
 ---background color of the hint itself. That means padding can be used
 ---to visually align/separate an inlay hint.
----@field paddingLeft? lsp.boolean
+---@field paddingLeft? boolean
 ---Render padding after the hint.
 ---
 ---Note: Padding should use the editor's background color, not the
 ---background color of the hint itself. That means padding can be used
 ---to visually align/separate an inlay hint.
----@field paddingRight? lsp.boolean
+---@field paddingRight? boolean
 ---A data entry field that is preserved on an inlay hint between
 ---a `textDocument/inlayHint` and a `inlayHint/resolve` request.
 ---@field data? lsp.LSPAny
@@ -517,9 +514,9 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The text document.
 ---@field textDocument lsp.TextDocumentIdentifier
 ---The additional identifier  provided during registration.
----@field identifier? lsp.string
+---@field identifier? string
 ---The result id of a previous response if provided.
----@field previousResultId? lsp.string
+---@field previousResultId? string
 
 ---A partial result for a document diagnostic report.
 ---
@@ -531,7 +528,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---
 ---@since 3.17.0
 ---@class lsp.DiagnosticServerCancellationData
----@field retriggerRequest lsp.boolean
+---@field retriggerRequest boolean
 
 ---Diagnostic registration options.
 ---
@@ -543,7 +540,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@since 3.17.0
 ---@class lsp.WorkspaceDiagnosticParams
 ---The additional identifier provided during registration.
----@field identifier? lsp.string
+---@field identifier? string
 ---The currently known diagnostic reports with their
 ---previous result ids.
 ---@field previousResultIds lsp.PreviousResultId[]
@@ -634,9 +631,9 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@proposed
 ---@class lsp.InlineCompletionItem
 ---The text to replace the range with. Must be set.
----@field insertText lsp.string|lsp.StringValue
+---@field insertText string|lsp.StringValue
 ---A text that is used to decide if this inline completion should be shown. When `falsy` the {@link InlineCompletionItem.insertText} is used.
----@field filterText? lsp.string
+---@field filterText? string
 ---The range to replace. Must begin and end on the same line.
 ---@field range? lsp.Range
 ---An optional {@link Command} that is executed *after* inserting this completion.
@@ -672,7 +669,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---(1) show the message provided by the ResponseError to the user
 ---(2) user selects retry or cancel
 ---(3) if user selected retry the initialize method is sent again.
----@field retry lsp.boolean
+---@field retry boolean
 
 ---@class lsp.InitializedParams
 
@@ -682,33 +679,33 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@field settings lsp.LSPAny
 
 ---@class lsp.DidChangeConfigurationRegistrationOptions
----@field section? lsp.string|lsp.string[]
+---@field section? string|string[]
 
 ---The parameters of a notification message.
 ---@class lsp.ShowMessageParams
 ---The message type. See {@link MessageType}
 ---@field type lsp.MessageType
 ---The actual message.
----@field message lsp.string
+---@field message string
 
 ---@class lsp.ShowMessageRequestParams
 ---The message type. See {@link MessageType}
 ---@field type lsp.MessageType
 ---The actual message.
----@field message lsp.string
+---@field message string
 ---The message action items to present.
 ---@field actions? lsp.MessageActionItem[]
 
 ---@class lsp.MessageActionItem
 ---A short title like 'Retry', 'Open Log' etc.
----@field title lsp.string
+---@field title string
 
 ---The log message parameters.
 ---@class lsp.LogMessageParams
 ---The message type. See {@link MessageType}
 ---@field type lsp.MessageType
 ---The actual message.
----@field message lsp.string
+---@field message string
 
 ---The parameters sent in an open text document notification
 ---@class lsp.DidOpenTextDocumentParams
@@ -750,7 +747,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@field textDocument lsp.TextDocumentIdentifier
 ---Optional the content when saved. Depends on the includeText value
 ---when the save notification was requested.
----@field text? lsp.string
+---@field text? string
 
 ---Save registration options.
 ---@class lsp.TextDocumentSaveRegistrationOptions: lsp.TextDocumentRegistrationOptions
@@ -769,7 +766,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@field range lsp.Range
 ---The string to be inserted. For delete operations use an
 ---empty string.
----@field newText lsp.string
+---@field newText string
 
 ---The watched files change notification's parameters.
 ---@class lsp.DidChangeWatchedFilesParams
@@ -788,7 +785,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---Optional the version number of the document the diagnostics are published for.
 ---
 ---@since 3.15.0
----@field version? lsp.integer
+---@field version? integer
 ---An array of diagnostic information items.
 ---@field diagnostics lsp.Diagnostic[]
 
@@ -808,7 +805,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---
 ---If label details are provided the label itself should
 ---be an unqualified name of the completion item.
----@field label lsp.string
+---@field label string
 ---Additional details for the label
 ---
 ---@since 3.17.0
@@ -822,26 +819,26 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@field tags? lsp.CompletionItemTag[]
 ---A human-readable string with additional information
 ---about this item, like type or symbol information.
----@field detail? lsp.string
+---@field detail? string
 ---A human-readable string that represents a doc-comment.
----@field documentation? lsp.string|lsp.MarkupContent
+---@field documentation? string|lsp.MarkupContent
 ---Indicates if this item is deprecated.
 ---@deprecated Use `tags` instead.
----@field deprecated? lsp.boolean
+---@field deprecated? boolean
 ---Select this item when showing.
 ---
 ---*Note* that only one completion item can be selected and that the
 ---tool / client decides which item that is. The rule is that the *first*
 ---item of those that match best is selected.
----@field preselect? lsp.boolean
+---@field preselect? boolean
 ---A string that should be used when comparing this item
 ---with other items. When `falsy` the {@link CompletionItem.label label}
 ---is used.
----@field sortText? lsp.string
+---@field sortText? string
 ---A string that should be used when filtering a set of
 ---completion items. When `falsy` the {@link CompletionItem.label label}
 ---is used.
----@field filterText? lsp.string
+---@field filterText? string
 ---A string that should be inserted into a document when selecting
 ---this completion. When `falsy` the {@link CompletionItem.label label}
 ---is used.
@@ -853,7 +850,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---`console` is provided it will only insert `sole`. Therefore it is
 ---recommended to use `textEdit` instead since it avoids additional client
 ---side interpretation.
----@field insertText? lsp.string
+---@field insertText? string
 ---The format of the insert text. The format applies to both the
 ---`insertText` property and the `newText` property of a provided
 ---`textEdit`. If omitted defaults to `InsertTextFormat.PlainText`.
@@ -898,7 +895,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---property is used as a text.
 ---
 ---@since 3.17.0
----@field textEditText? lsp.string
+---@field textEditText? string
 ---An optional array of additional {@link TextEdit text edits} that are applied when
 ---selecting this completion. Edits must not overlap (including the same insert position)
 ---with the main {@link CompletionItem.textEdit edit} nor with themselves.
@@ -910,7 +907,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---An optional set of characters that when pressed while this completion is active will accept it first and
 ---then type that character. *Note* that all commit characters should have `length=1` and that superfluous
 ---characters will be ignored.
----@field commitCharacters? lsp.string[]
+---@field commitCharacters? string[]
 ---An optional {@link Command command} that is executed *after* inserting this completion. *Note* that
 ---additional modifications to the current document should be described with the
 ---{@link CompletionItem.additionalTextEdits additionalTextEdits}-property.
@@ -926,7 +923,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---
 ---Recomputed lists have all their items replaced (not appended) in the
 ---incomplete completion sessions.
----@field isIncomplete lsp.boolean
+---@field isIncomplete boolean
 ---In many cases the items of an actual completion result share the same
 ---value for properties like `commitCharacters` or the range of a text
 ---edit. A completion list can therefore define item defaults which will
@@ -984,7 +981,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---
 ---In future version of the protocol this property might become
 ---mandatory to better express this.
----@field activeSignature? lsp.uinteger
+---@field activeSignature? uinteger
 ---The active parameter of the active signature. If omitted or the value
 ---lies outside the range of `signatures[activeSignature].parameters`
 ---defaults to 0 if the active signature has parameters. If
@@ -992,7 +989,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---In future version of the protocol this property might become
 ---mandatory to better express the active parameter if the
 ---active signature does have any.
----@field activeParameter? lsp.uinteger
+---@field activeParameter? uinteger
 
 ---Registration options for a {@link SignatureHelpRequest}.
 ---@class lsp.SignatureHelpRegistrationOptions: lsp.TextDocumentRegistrationOptions
@@ -1036,7 +1033,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---Indicates if this symbol is deprecated.
 ---
 ---@deprecated Use tags instead
----@field deprecated? lsp.boolean
+---@field deprecated? boolean
 ---The location of this symbol. The location's range is used by a tool
 ---to reveal the location in the editor. If the symbol is selected in the
 ---tool the range's start information is used to position the cursor. So
@@ -1055,9 +1052,9 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@class lsp.DocumentSymbol
 ---The name of this symbol. Will be displayed in the user interface and therefore must not be
 ---an empty string or a string only consisting of white spaces.
----@field name lsp.string
+---@field name string
 ---More detail for this symbol, e.g the signature of a function.
----@field detail? lsp.string
+---@field detail? string
 ---The kind of this symbol.
 ---@field kind lsp.SymbolKind
 ---Tags for this document symbol.
@@ -1067,7 +1064,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---Indicates if this symbol is deprecated.
 ---
 ---@deprecated Use tags instead
----@field deprecated? lsp.boolean
+---@field deprecated? boolean
 ---The range enclosing this symbol not including leading/trailing whitespace but everything else
 ---like comments. This information is typically used to determine if the clients cursor is
 ---inside the symbol to reveal in the symbol in the UI.
@@ -1096,9 +1093,9 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---function when invoked.
 ---@class lsp.Command
 ---Title of the command, like `save`.
----@field title lsp.string
+---@field title string
 ---The identifier of the actual command handler.
----@field command lsp.string
+---@field command string
 ---Arguments that the command handler should be
 ---invoked with.
 ---@field arguments? lsp.LSPAny[]
@@ -1109,7 +1106,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---A CodeAction must set either `edit` and/or a `command`. If both are supplied, the `edit` is applied first, then the `command` is executed.
 ---@class lsp.CodeAction
 ---A short, human-readable, title for this code action.
----@field title lsp.string
+---@field title string
 ---The kind of the code action.
 ---
 ---Used to filter code actions.
@@ -1123,7 +1120,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---A refactoring should be marked preferred if it is the most reasonable choice of actions to take.
 ---
 ---@since 3.15.0
----@field isPreferred? lsp.boolean
+---@field isPreferred? boolean
 ---Marks that the code action cannot currently be applied.
 ---
 ---Clients should follow the following guidelines regarding disabled code actions:
@@ -1159,7 +1156,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@class lsp.WorkspaceSymbolParams
 ---A query string to filter symbols by. Clients may send an empty
 ---string here to request all symbols.
----@field query lsp.string
+---@field query string
 
 ---A special workspace symbol that supports locations without a range.
 ---
@@ -1222,7 +1219,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---user settings, and localization.
 ---
 ---@since 3.15.0
----@field tooltip? lsp.string
+---@field tooltip? string
 ---A data entry field that is preserved on a document link between a
 ---DocumentLinkRequest and a DocumentLinkResolveRequest.
 ---@field data? lsp.LSPAny
@@ -1264,7 +1261,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---on type request. That is not necessarily the last character that
 ---got inserted into the document since the client could auto insert
 ---characters as well (e.g. like automatic brace completion).
----@field ch lsp.string
+---@field ch string
 ---The formatting options.
 ---@field options lsp.FormattingOptions
 
@@ -1280,7 +1277,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The new name of the symbol. If the given name is not valid the
 ---request must return a {@link ResponseError} with an
 ---appropriate message set.
----@field newName lsp.string
+---@field newName string
 
 ---Registration options for a {@link RenameRequest}.
 ---@class lsp.RenameRegistrationOptions: lsp.TextDocumentRegistrationOptions
@@ -1290,7 +1287,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The parameters of a {@link ExecuteCommandRequest}.
 ---@class lsp.ExecuteCommandParams
 ---The identifier of the actual command handler.
----@field command lsp.string
+---@field command string
 ---Arguments that the command should be invoked with.
 ---@field arguments? lsp.LSPAny[]
 
@@ -1302,7 +1299,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---An optional label of the workspace edit. This label is
 ---presented in the user interface for example on an undo
 ---stack to undo the workspace edit.
----@field label? lsp.string
+---@field label? string
 ---The edits to apply.
 ---@field edit lsp.WorkspaceEdit
 
@@ -1311,15 +1308,15 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@since 3.17 renamed from ApplyWorkspaceEditResponse
 ---@class lsp.ApplyWorkspaceEditResult
 ---Indicates whether the edit was applied or not.
----@field applied lsp.boolean
+---@field applied boolean
 ---An optional textual description for why the edit was not applied.
 ---This may be used by the server for diagnostic logging or to provide
 ---a suitable error for a request that triggered the edit.
----@field failureReason? lsp.string
+---@field failureReason? string
 ---Depending on the client's failure handling strategy `failedChange` might
 ---contain the index of the change that failed. This property is only available
 ---if the client signals a `failureHandlingStrategy` in its client capabilities.
----@field failedChange? lsp.uinteger
+---@field failedChange? uinteger
 
 ---@class lsp.WorkDoneProgressBegin
 ---@field kind "begin"
@@ -1327,24 +1324,24 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---the kind of operation being performed.
 ---
 ---Examples: "Indexing" or "Linking dependencies".
----@field title lsp.string
+---@field title string
 ---Controls if a cancel button should show to allow the user to cancel the
 ---long running operation. Clients that don't support cancellation are allowed
 ---to ignore the setting.
----@field cancellable? lsp.boolean
+---@field cancellable? boolean
 ---Optional, more detailed associated progress message. Contains
 ---complementary information to the `title`.
 ---
 ---Examples: "3/25 files", "project/src/module2", "node_modules/some_dep".
 ---If unset, the previous progress message (if any) is still valid.
----@field message? lsp.string
+---@field message? string
 ---Optional progress percentage to display (value 100 is considered 100%).
 ---If not provided infinite progress is assumed and clients are allowed
 ---to ignore the `percentage` value in subsequent in report notifications.
 ---
 ---The value should be steadily rising. Clients are free to ignore values
 ---that are not following this rule. The value range is [0, 100].
----@field percentage? lsp.uinteger
+---@field percentage? uinteger
 
 ---@class lsp.WorkDoneProgressReport
 ---@field kind "report"
@@ -1352,37 +1349,37 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---
 ---Clients that don't support cancellation or don't support controlling the button's
 ---enablement state are allowed to ignore the property.
----@field cancellable? lsp.boolean
+---@field cancellable? boolean
 ---Optional, more detailed associated progress message. Contains
 ---complementary information to the `title`.
 ---
 ---Examples: "3/25 files", "project/src/module2", "node_modules/some_dep".
 ---If unset, the previous progress message (if any) is still valid.
----@field message? lsp.string
+---@field message? string
 ---Optional progress percentage to display (value 100 is considered 100%).
 ---If not provided infinite progress is assumed and clients are allowed
 ---to ignore the `percentage` value in subsequent in report notifications.
 ---
 ---The value should be steadily rising. Clients are free to ignore values
 ---that are not following this rule. The value range is [0, 100]
----@field percentage? lsp.uinteger
+---@field percentage? uinteger
 
 ---@class lsp.WorkDoneProgressEnd
 ---@field kind "end"
 ---Optional, a final message indicating to for example indicate the outcome
 ---of the operation.
----@field message? lsp.string
+---@field message? string
 
 ---@class lsp.SetTraceParams
 ---@field value lsp.TraceValues
 
 ---@class lsp.LogTraceParams
----@field message lsp.string
----@field verbose? lsp.string
+---@field message string
+---@field verbose? string
 
 ---@class lsp.CancelParams
 ---The request id to cancel.
----@field id lsp.integer|lsp.string
+---@field id integer|string
 
 ---@class lsp.ProgressParams
 ---The progress token provided by the client or server.
@@ -1449,7 +1446,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@class lsp.StaticRegistrationOptions
 ---The id used to register the request. The id can be used to deregister
 ---the request again. See also Registration#id.
----@field id? lsp.string
+---@field id? string
 
 ---@class lsp.TypeDefinitionOptions
 
@@ -1462,9 +1459,9 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 
 ---@class lsp.ConfigurationItem
 ---The scope to get the configuration section for.
----@field scopeUri? lsp.string
+---@field scopeUri? string
 ---The configuration section asked for.
----@field section? lsp.string
+---@field section? string
 
 ---A literal to identify a text document in the client.
 ---@class lsp.TextDocumentIdentifier
@@ -1474,13 +1471,13 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---Represents a color in RGBA space.
 ---@class lsp.Color
 ---The red component of this color in the range [0-1].
----@field red lsp.decimal
+---@field red decimal
 ---The green component of this color in the range [0-1].
----@field green lsp.decimal
+---@field green decimal
 ---The blue component of this color in the range [0-1].
----@field blue lsp.decimal
+---@field blue decimal
 ---The alpha component of this color in the range [0-1].
----@field alpha lsp.decimal
+---@field alpha decimal
 
 ---@class lsp.DocumentColorOptions
 
@@ -1520,7 +1517,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---
 ---If a line number is greater than the number of lines in a document, it defaults back to the number of lines in the document.
 ---If a line number is negative, it defaults to 0.
----@field line lsp.uinteger
+---@field line uinteger
 ---Character offset on a line in a document (zero-based).
 ---
 ---The meaning of this offset is determined by the negotiated
@@ -1528,7 +1525,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---
 ---If the character value is greater than the line length it defaults back to the
 ---line length.
----@field character lsp.uinteger
+---@field character uinteger
 
 ---@class lsp.SelectionRangeOptions
 
@@ -1543,18 +1540,18 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@field legend lsp.SemanticTokensLegend
 ---Server supports providing semantic tokens for a specific range
 ---of a document.
----@field range? lsp.boolean|anonym6
+---@field range? boolean|anonym6
 ---Server supports providing semantic tokens for a full document.
----@field full? lsp.boolean|anonym7
+---@field full? boolean|anonym7
 
 ---@since 3.16.0
 ---@class lsp.SemanticTokensEdit
 ---The start offset of the edit.
----@field start lsp.uinteger
+---@field start uinteger
 ---The count of elements to remove.
----@field deleteCount lsp.uinteger
+---@field deleteCount uinteger
 ---The elements to insert.
----@field data? lsp.uinteger[]
+---@field data? uinteger[]
 
 ---@class lsp.LinkedEditingRangeOptions
 
@@ -1563,7 +1560,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@since 3.16.0
 ---@class lsp.FileCreate
 ---A file:// URI for the location of the file/folder being created.
----@field uri lsp.string
+---@field uri string
 
 ---Describes textual changes on a text document. A TextDocumentEdit describes all changes
 ---on a document version Si and after they are applied move the document to version Si+1.
@@ -1613,13 +1610,13 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@class lsp.ChangeAnnotation
 ---A human-readable string describing the actual change. The string
 ---is rendered prominent in the user interface.
----@field label lsp.string
+---@field label string
 ---A flag which indicates that user confirmation is needed
 ---before applying the change.
----@field needsConfirmation? lsp.boolean
+---@field needsConfirmation? boolean
 ---A human-readable string which is rendered less prominent in
 ---the user interface.
----@field description? lsp.string
+---@field description? string
 
 ---A filter to describe in which file operation requests or notifications
 ---the server is interested in receiving.
@@ -1627,7 +1624,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@since 3.16.0
 ---@class lsp.FileOperationFilter
 ---A Uri scheme like `file` or `untitled`.
----@field scheme? lsp.string
+---@field scheme? string
 ---The actual file operation pattern.
 ---@field pattern lsp.FileOperationPattern
 
@@ -1636,16 +1633,16 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@since 3.16.0
 ---@class lsp.FileRename
 ---A file:// URI for the original location of the file/folder being renamed.
----@field oldUri lsp.string
+---@field oldUri string
 ---A file:// URI for the new location of the file/folder being renamed.
----@field newUri lsp.string
+---@field newUri string
 
 ---Represents information on a file/folder delete.
 ---
 ---@since 3.16.0
 ---@class lsp.FileDelete
 ---A file:// URI for the location of the file/folder being deleted.
----@field uri lsp.string
+---@field uri string
 
 ---@class lsp.MonikerOptions
 
@@ -1657,7 +1654,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@since 3.17.0
 ---@class lsp.InlineValueContext
 ---The stack frame (as a DAP Id) where the execution has stopped.
----@field frameId lsp.integer
+---@field frameId integer
 ---The document range where execution has stopped.
 ---Typically the end position of the range denotes the line where the inline values are shown.
 ---@field stoppedLocation lsp.Range
@@ -1669,7 +1666,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The document range for which the inline value applies.
 ---@field range lsp.Range
 ---The text of the inline value.
----@field text lsp.string
+---@field text string
 
 ---Provide inline value through a variable lookup.
 ---If only a range is specified, the variable name will be extracted from the underlying document.
@@ -1681,9 +1678,9 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The range is used to extract the variable name from the underlying document.
 ---@field range lsp.Range
 ---If specified the name of the variable to look up.
----@field variableName? lsp.string
+---@field variableName? string
 ---How to perform the lookup.
----@field caseSensitiveLookup lsp.boolean
+---@field caseSensitiveLookup boolean
 
 ---Provide an inline value through an expression evaluation.
 ---If only a range is specified, the expression will be extracted from the underlying document.
@@ -1695,7 +1692,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The range is used to extract the evaluatable expression from the underlying document.
 ---@field range lsp.Range
 ---If specified the expression overrides the extracted expression.
----@field expression? lsp.string
+---@field expression? string
 
 ---Inline value options used during static registration.
 ---
@@ -1708,11 +1705,11 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@since 3.17.0
 ---@class lsp.InlayHintLabelPart
 ---The value of this label part.
----@field value lsp.string
+---@field value string
 ---The tooltip text when you hover over this label part. Depending on
 ---the client capability `inlayHint.resolveSupport` clients might resolve
 ---this property late using the resolve request.
----@field tooltip? lsp.string|lsp.MarkupContent
+---@field tooltip? string|lsp.MarkupContent
 ---An optional source code location that represents this
 ---label part.
 ---
@@ -1757,7 +1754,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The type of the Markup
 ---@field kind lsp.MarkupKind
 ---The content itself
----@field value lsp.string
+---@field value string
 
 ---Inlay hint options used during static registration.
 ---
@@ -1765,7 +1762,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@class lsp.InlayHintOptions
 ---The server provides support to resolve additional
 ---information for an inlay hint item.
----@field resolveProvider? lsp.boolean
+---@field resolveProvider? boolean
 
 ---A full diagnostic report with a set of related documents.
 ---
@@ -1802,7 +1799,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---An optional result id. If provided it will
 ---be sent on the next diagnostic request for the
 ---same document.
----@field resultId? lsp.string
+---@field resultId? string
 ---The actual items.
 ---@field items lsp.Diagnostic[]
 
@@ -1818,7 +1815,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@field kind "unchanged"
 ---A result id which will be sent on the next
 ---diagnostic request for the same document.
----@field resultId lsp.string
+---@field resultId string
 
 ---Diagnostic options.
 ---
@@ -1826,14 +1823,14 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@class lsp.DiagnosticOptions
 ---An optional identifier under which the diagnostics are
 ---managed by the client.
----@field identifier? lsp.string
+---@field identifier? string
 ---Whether the language has inter file dependencies meaning that
 ---editing code in one file can result in a different diagnostic
 ---set in another file. Inter file dependencies are common for
 ---most programming languages and typically uncommon for linters.
----@field interFileDependencies lsp.boolean
+---@field interFileDependencies boolean
 ---The server provides support for workspace diagnostics as well.
----@field workspaceDiagnostics lsp.boolean
+---@field workspaceDiagnostics boolean
 
 ---A previous result id in a workspace pull request.
 ---
@@ -1843,7 +1840,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---result id.
 ---@field uri lsp.DocumentUri
 ---The value of the previous result id.
----@field value lsp.string
+---@field value string
 
 ---A notebook document.
 ---
@@ -1852,10 +1849,10 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The notebook document's uri.
 ---@field uri lsp.URI
 ---The type of the notebook.
----@field notebookType lsp.string
+---@field notebookType string
 ---The version number of this document (it will increase after each
 ---change, including undo/redo).
----@field version lsp.integer
+---@field version integer
 ---Additional metadata stored with the notebook
 ---document.
 ---
@@ -1870,19 +1867,19 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The text document's uri.
 ---@field uri lsp.DocumentUri
 ---The text document's language identifier.
----@field languageId lsp.string
+---@field languageId string
 ---The version number of this document (it will increase after each
 ---change, including undo/redo).
----@field version lsp.integer
+---@field version integer
 ---The content of the opened text document.
----@field text lsp.string
+---@field text string
 
 ---A versioned notebook document identifier.
 ---
 ---@since 3.17.0
 ---@class lsp.VersionedNotebookDocumentIdentifier
 ---The version number of this notebook document.
----@field version lsp.integer
+---@field version integer
 ---The notebook document's uri.
 ---@field uri lsp.URI
 
@@ -1928,7 +1925,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The kind of string value.
 ---@field kind "snippet"
 ---The snippet string.
----@field value lsp.string
+---@field value string
 
 ---Inline completion options used during static registration.
 ---
@@ -1940,9 +1937,9 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@class lsp.Registration
 ---The id used to register the request. The id can be used to deregister
 ---the request again.
----@field id lsp.string
+---@field id string
 ---The method / capability to register for.
----@field method lsp.string
+---@field method string
 ---Options necessary for the registration.
 ---@field registerOptions? lsp.LSPAny
 
@@ -1950,9 +1947,9 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@class lsp.Unregistration
 ---The id used to unregister the request or notification. Usually an id
 ---provided during the register request.
----@field id lsp.string
+---@field id string
 ---The method to unregister for.
----@field method lsp.string
+---@field method string
 
 ---The initialize parameters
 ---@class lsp._InitializeParams
@@ -1961,7 +1958,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---
 ---Is `null` if the process has not been started by another process.
 ---If the parent process is not alive then the server should exit.
----@field processId lsp.integer|lsp.null
+---@field processId integer|lsp.null
 ---Information about the client
 ---
 ---@since 3.15.0
@@ -1974,12 +1971,12 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---(See https://en.wikipedia.org/wiki/IETF_language_tag)
 ---
 ---@since 3.16.0
----@field locale? lsp.string
+---@field locale? string
 ---The rootPath of the workspace. Is null
 ---if no folder is open.
 ---
 ---@deprecated in favour of rootUri.
----@field rootPath? lsp.string|lsp.null
+---@field rootPath? string|lsp.null
 ---The rootUri of the workspace. Is null if no
 ---folder is open. If both `rootPath` and `rootUri` are set
 ---`rootUri` wins.
@@ -2027,59 +2024,59 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The server provides completion support.
 ---@field completionProvider? lsp.CompletionOptions
 ---The server provides hover support.
----@field hoverProvider? lsp.boolean|lsp.HoverOptions
+---@field hoverProvider? boolean|lsp.HoverOptions
 ---The server provides signature help support.
 ---@field signatureHelpProvider? lsp.SignatureHelpOptions
 ---The server provides Goto Declaration support.
----@field declarationProvider? lsp.boolean|lsp.DeclarationOptions|lsp.DeclarationRegistrationOptions
+---@field declarationProvider? boolean|lsp.DeclarationOptions|lsp.DeclarationRegistrationOptions
 ---The server provides goto definition support.
----@field definitionProvider? lsp.boolean|lsp.DefinitionOptions
+---@field definitionProvider? boolean|lsp.DefinitionOptions
 ---The server provides Goto Type Definition support.
----@field typeDefinitionProvider? lsp.boolean|lsp.TypeDefinitionOptions|lsp.TypeDefinitionRegistrationOptions
+---@field typeDefinitionProvider? boolean|lsp.TypeDefinitionOptions|lsp.TypeDefinitionRegistrationOptions
 ---The server provides Goto Implementation support.
----@field implementationProvider? lsp.boolean|lsp.ImplementationOptions|lsp.ImplementationRegistrationOptions
+---@field implementationProvider? boolean|lsp.ImplementationOptions|lsp.ImplementationRegistrationOptions
 ---The server provides find references support.
----@field referencesProvider? lsp.boolean|lsp.ReferenceOptions
+---@field referencesProvider? boolean|lsp.ReferenceOptions
 ---The server provides document highlight support.
----@field documentHighlightProvider? lsp.boolean|lsp.DocumentHighlightOptions
+---@field documentHighlightProvider? boolean|lsp.DocumentHighlightOptions
 ---The server provides document symbol support.
----@field documentSymbolProvider? lsp.boolean|lsp.DocumentSymbolOptions
+---@field documentSymbolProvider? boolean|lsp.DocumentSymbolOptions
 ---The server provides code actions. CodeActionOptions may only be
 ---specified if the client states that it supports
 ---`codeActionLiteralSupport` in its initial `initialize` request.
----@field codeActionProvider? lsp.boolean|lsp.CodeActionOptions
+---@field codeActionProvider? boolean|lsp.CodeActionOptions
 ---The server provides code lens.
 ---@field codeLensProvider? lsp.CodeLensOptions
 ---The server provides document link support.
 ---@field documentLinkProvider? lsp.DocumentLinkOptions
 ---The server provides color provider support.
----@field colorProvider? lsp.boolean|lsp.DocumentColorOptions|lsp.DocumentColorRegistrationOptions
+---@field colorProvider? boolean|lsp.DocumentColorOptions|lsp.DocumentColorRegistrationOptions
 ---The server provides workspace symbol support.
----@field workspaceSymbolProvider? lsp.boolean|lsp.WorkspaceSymbolOptions
+---@field workspaceSymbolProvider? boolean|lsp.WorkspaceSymbolOptions
 ---The server provides document formatting.
----@field documentFormattingProvider? lsp.boolean|lsp.DocumentFormattingOptions
+---@field documentFormattingProvider? boolean|lsp.DocumentFormattingOptions
 ---The server provides document range formatting.
----@field documentRangeFormattingProvider? lsp.boolean|lsp.DocumentRangeFormattingOptions
+---@field documentRangeFormattingProvider? boolean|lsp.DocumentRangeFormattingOptions
 ---The server provides document formatting on typing.
 ---@field documentOnTypeFormattingProvider? lsp.DocumentOnTypeFormattingOptions
 ---The server provides rename support. RenameOptions may only be
 ---specified if the client states that it supports
 ---`prepareSupport` in its initial `initialize` request.
----@field renameProvider? lsp.boolean|lsp.RenameOptions
+---@field renameProvider? boolean|lsp.RenameOptions
 ---The server provides folding provider support.
----@field foldingRangeProvider? lsp.boolean|lsp.FoldingRangeOptions|lsp.FoldingRangeRegistrationOptions
+---@field foldingRangeProvider? boolean|lsp.FoldingRangeOptions|lsp.FoldingRangeRegistrationOptions
 ---The server provides selection range support.
----@field selectionRangeProvider? lsp.boolean|lsp.SelectionRangeOptions|lsp.SelectionRangeRegistrationOptions
+---@field selectionRangeProvider? boolean|lsp.SelectionRangeOptions|lsp.SelectionRangeRegistrationOptions
 ---The server provides execute command support.
 ---@field executeCommandProvider? lsp.ExecuteCommandOptions
 ---The server provides call hierarchy support.
 ---
 ---@since 3.16.0
----@field callHierarchyProvider? lsp.boolean|lsp.CallHierarchyOptions|lsp.CallHierarchyRegistrationOptions
+---@field callHierarchyProvider? boolean|lsp.CallHierarchyOptions|lsp.CallHierarchyRegistrationOptions
 ---The server provides linked editing range support.
 ---
 ---@since 3.16.0
----@field linkedEditingRangeProvider? lsp.boolean|lsp.LinkedEditingRangeOptions|lsp.LinkedEditingRangeRegistrationOptions
+---@field linkedEditingRangeProvider? boolean|lsp.LinkedEditingRangeOptions|lsp.LinkedEditingRangeRegistrationOptions
 ---The server provides semantic tokens support.
 ---
 ---@since 3.16.0
@@ -2087,19 +2084,19 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The server provides moniker support.
 ---
 ---@since 3.16.0
----@field monikerProvider? lsp.boolean|lsp.MonikerOptions|lsp.MonikerRegistrationOptions
+---@field monikerProvider? boolean|lsp.MonikerOptions|lsp.MonikerRegistrationOptions
 ---The server provides type hierarchy support.
 ---
 ---@since 3.17.0
----@field typeHierarchyProvider? lsp.boolean|lsp.TypeHierarchyOptions|lsp.TypeHierarchyRegistrationOptions
+---@field typeHierarchyProvider? boolean|lsp.TypeHierarchyOptions|lsp.TypeHierarchyRegistrationOptions
 ---The server provides inline values.
 ---
 ---@since 3.17.0
----@field inlineValueProvider? lsp.boolean|lsp.InlineValueOptions|lsp.InlineValueRegistrationOptions
+---@field inlineValueProvider? boolean|lsp.InlineValueOptions|lsp.InlineValueRegistrationOptions
 ---The server provides inlay hints.
 ---
 ---@since 3.17.0
----@field inlayHintProvider? lsp.boolean|lsp.InlayHintOptions|lsp.InlayHintRegistrationOptions
+---@field inlayHintProvider? boolean|lsp.InlayHintOptions|lsp.InlayHintRegistrationOptions
 ---The server has support for pull model diagnostics.
 ---
 ---@since 3.17.0
@@ -2108,7 +2105,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---
 ---@since 3.18.0
 ---@proposed
----@field inlineCompletionProvider? lsp.boolean|lsp.InlineCompletionOptions
+---@field inlineCompletionProvider? boolean|lsp.InlineCompletionOptions
 ---Workspace specific server capabilities.
 ---@field workspace? anonym12
 ---Experimental server capabilities.
@@ -2117,12 +2114,12 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---A text document identifier to denote a specific version of a text document.
 ---@class lsp.VersionedTextDocumentIdentifier: lsp.TextDocumentIdentifier
 ---The version number of this document.
----@field version lsp.integer
+---@field version integer
 
 ---Save options.
 ---@class lsp.SaveOptions
 ---The client is supposed to include the content on save.
----@field includeText? lsp.boolean
+---@field includeText? boolean
 
 ---An event describing a file change.
 ---@class lsp.FileEvent
@@ -2150,7 +2147,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---client to interpret diagnostics as error, warning, info or hint.
 ---@field severity? lsp.DiagnosticSeverity
 ---The diagnostic's code, which usually appear in the user interface.
----@field code? lsp.integer|lsp.string
+---@field code? integer|string
 ---An optional property to describe the error code.
 ---Requires the code field (above) to be present/not null.
 ---
@@ -2159,9 +2156,9 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---A human-readable string describing the source of this
 ---diagnostic, e.g. 'typescript' or 'super lint'. It usually
 ---appears in the user interface.
----@field source? lsp.string
+---@field source? string
 ---The diagnostic's message. It usually appears in the user interface
----@field message lsp.string
+---@field message string
 ---Additional metadata about the diagnostic.
 ---
 ---@since 3.15.0
@@ -2181,7 +2178,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@field triggerKind lsp.CompletionTriggerKind
 ---The trigger character (a single character) that has trigger code complete.
 ---Is undefined if `triggerKind !== CompletionTriggerKind.TriggerCharacter`
----@field triggerCharacter? lsp.string
+---@field triggerCharacter? string
 
 ---Additional details for a completion item label.
 ---
@@ -2189,17 +2186,17 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@class lsp.CompletionItemLabelDetails
 ---An optional string which is rendered less prominently directly after {@link CompletionItem.label label},
 ---without any spacing. Should be used for function signatures and type annotations.
----@field detail? lsp.string
+---@field detail? string
 ---An optional string which is rendered less prominently after {@link CompletionItem.detail}. Should be used
 ---for fully qualified names and file paths.
----@field description? lsp.string
+---@field description? string
 
 ---A special text edit to provide an insert and a replace operation.
 ---
 ---@since 3.16.0
 ---@class lsp.InsertReplaceEdit
 ---The string to be inserted.
----@field newText lsp.string
+---@field newText string
 ---The range if the insert is requested
 ---@field insert lsp.Range
 ---The range if the replace is requested.
@@ -2215,7 +2212,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---
 ---If code complete should automatically be trigger on characters not being valid inside
 ---an identifier (for example `.` in JavaScript) list them in `triggerCharacters`.
----@field triggerCharacters? lsp.string[]
+---@field triggerCharacters? string[]
 ---The list of all possible characters that commit a completion. This field can be used
 ---if clients don't support individual commit characters per completion item. See
 ---`ClientCapabilities.textDocument.completion.completionItem.commitCharactersSupport`
@@ -2224,10 +2221,10 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---completion item the ones on the completion item win.
 ---
 ---@since 3.2.0
----@field allCommitCharacters? lsp.string[]
+---@field allCommitCharacters? string[]
 ---The server provides support to resolve additional
 ---information for a completion item.
----@field resolveProvider? lsp.boolean
+---@field resolveProvider? boolean
 ---The server supports the following `CompletionItem` specific
 ---capabilities.
 ---
@@ -2246,12 +2243,12 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---Character that caused signature help to be triggered.
 ---
 ---This is undefined when `triggerKind !== SignatureHelpTriggerKind.TriggerCharacter`
----@field triggerCharacter? lsp.string
+---@field triggerCharacter? string
 ---`true` if signature help was already showing when it was triggered.
 ---
 ---Retriggers occurs when the signature help is already active and can be caused by actions such as
 ---typing a trigger character, a cursor move, or document content changes.
----@field isRetrigger lsp.boolean
+---@field isRetrigger boolean
 ---The currently active `SignatureHelp`.
 ---
 ---The `activeSignatureHelp` has its `SignatureHelp.activeSignature` field updated based on
@@ -2264,10 +2261,10 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@class lsp.SignatureInformation
 ---The label of this signature. Will be shown in
 ---the UI.
----@field label lsp.string
+---@field label string
 ---The human-readable doc-comment of this signature. Will be shown
 ---in the UI but can be omitted.
----@field documentation? lsp.string|lsp.MarkupContent
+---@field documentation? string|lsp.MarkupContent
 ---The parameters of this signature.
 ---@field parameters? lsp.ParameterInformation[]
 ---The index of the active parameter.
@@ -2275,19 +2272,19 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---If provided, this is used in place of `SignatureHelp.activeParameter`.
 ---
 ---@since 3.16.0
----@field activeParameter? lsp.uinteger
+---@field activeParameter? uinteger
 
 ---Server Capabilities for a {@link SignatureHelpRequest}.
 ---@class lsp.SignatureHelpOptions
 ---List of characters that trigger signature help automatically.
----@field triggerCharacters? lsp.string[]
+---@field triggerCharacters? string[]
 ---List of characters that re-trigger signature help.
 ---
 ---These trigger characters are only active when signature help is already showing. All trigger characters
 ---are also counted as re-trigger characters.
 ---
 ---@since 3.15.0
----@field retriggerCharacters? lsp.string[]
+---@field retriggerCharacters? string[]
 
 ---Server Capabilities for a {@link DefinitionRequest}.
 ---@class lsp.DefinitionOptions
@@ -2296,7 +2293,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---requesting references.
 ---@class lsp.ReferenceContext
 ---Include the declaration of the current symbol.
----@field includeDeclaration lsp.boolean
+---@field includeDeclaration boolean
 
 ---Reference options.
 ---@class lsp.ReferenceOptions
@@ -2307,7 +2304,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---A base for all symbol information.
 ---@class lsp.BaseSymbolInformation
 ---The name of this symbol.
----@field name lsp.string
+---@field name string
 ---The kind of this symbol.
 ---@field kind lsp.SymbolKind
 ---Tags for this symbol.
@@ -2318,7 +2315,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---user interface purposes (e.g. to render a qualifier in the user interface
 ---if necessary). It can't be used to re-infer a hierarchy for the document
 ---symbols.
----@field containerName? lsp.string
+---@field containerName? string
 
 ---Provider options for a {@link DocumentSymbolRequest}.
 ---@class lsp.DocumentSymbolOptions
@@ -2326,7 +2323,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---are shown for the same document.
 ---
 ---@since 3.16.0
----@field label? lsp.string
+---@field label? string
 
 ---Contains additional diagnostic information about the context in which
 ---a {@link CodeActionProvider.provideCodeActions code action} is run.
@@ -2358,7 +2355,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---information for a code action.
 ---
 ---@since 3.16.0
----@field resolveProvider? lsp.boolean
+---@field resolveProvider? boolean
 
 ---Server capabilities for a {@link WorkspaceSymbolRequest}.
 ---@class lsp.WorkspaceSymbolOptions
@@ -2366,36 +2363,36 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---information for a workspace symbol.
 ---
 ---@since 3.17.0
----@field resolveProvider? lsp.boolean
+---@field resolveProvider? boolean
 
 ---Code Lens provider options of a {@link CodeLensRequest}.
 ---@class lsp.CodeLensOptions
 ---Code lens has a resolve provider as well.
----@field resolveProvider? lsp.boolean
+---@field resolveProvider? boolean
 
 ---Provider options for a {@link DocumentLinkRequest}.
 ---@class lsp.DocumentLinkOptions
 ---Document links have a resolve provider as well.
----@field resolveProvider? lsp.boolean
+---@field resolveProvider? boolean
 
 ---Value-object describing what options formatting should use.
 ---@class lsp.FormattingOptions
 ---Size of a tab in spaces.
----@field tabSize lsp.uinteger
+---@field tabSize uinteger
 ---Prefer spaces over tabs.
----@field insertSpaces lsp.boolean
+---@field insertSpaces boolean
 ---Trim trailing whitespace on a line.
 ---
 ---@since 3.15.0
----@field trimTrailingWhitespace? lsp.boolean
+---@field trimTrailingWhitespace? boolean
 ---Insert a newline character at the end of the file if one does not exist.
 ---
 ---@since 3.15.0
----@field insertFinalNewline? lsp.boolean
+---@field insertFinalNewline? boolean
 ---Trim all newlines after the final newline at the end of the file.
 ---
 ---@since 3.15.0
----@field trimFinalNewlines? lsp.boolean
+---@field trimFinalNewlines? boolean
 
 ---Provider options for a {@link DocumentFormattingRequest}.
 ---@class lsp.DocumentFormattingOptions
@@ -2406,28 +2403,28 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---Provider options for a {@link DocumentOnTypeFormattingRequest}.
 ---@class lsp.DocumentOnTypeFormattingOptions
 ---A character on which formatting should be triggered, like `{`.
----@field firstTriggerCharacter lsp.string
+---@field firstTriggerCharacter string
 ---More trigger characters.
----@field moreTriggerCharacter? lsp.string[]
+---@field moreTriggerCharacter? string[]
 
 ---Provider options for a {@link RenameRequest}.
 ---@class lsp.RenameOptions
 ---Renames should be checked and tested before being executed.
 ---
 ---@since version 3.12.0
----@field prepareProvider? lsp.boolean
+---@field prepareProvider? boolean
 
 ---The server capabilities of a {@link ExecuteCommandRequest}.
 ---@class lsp.ExecuteCommandOptions
 ---The commands to be executed on the server
----@field commands lsp.string[]
+---@field commands string[]
 
 ---@since 3.16.0
 ---@class lsp.SemanticTokensLegend
 ---The token types a server uses.
----@field tokenTypes lsp.string[]
+---@field tokenTypes string[]
 ---The token modifiers a server uses.
----@field tokenModifiers lsp.string[]
+---@field tokenModifiers string[]
 
 ---A text document identifier to optionally denote a specific version of a text document.
 ---@class lsp.OptionalVersionedTextDocumentIdentifier: lsp.TextDocumentIdentifier
@@ -2436,7 +2433,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---(the server has not received an open notification before) the server can send
 ---`null` to indicate that the version is unknown and the content on disk is the
 ---truth (as specified with document content ownership).
----@field version lsp.integer|lsp.null
+---@field version integer|lsp.null
 
 ---A special text edit with an additional change annotation.
 ---
@@ -2448,7 +2445,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---A generic resource operation.
 ---@class lsp.ResourceOperation
 ---The resource operation kind.
----@field kind lsp.string
+---@field kind string
 ---An optional annotation identifier describing the operation.
 ---
 ---@since 3.16.0
@@ -2457,23 +2454,23 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---Options to create a file.
 ---@class lsp.CreateFileOptions
 ---Overwrite existing file. Overwrite wins over `ignoreIfExists`
----@field overwrite? lsp.boolean
+---@field overwrite? boolean
 ---Ignore if exists.
----@field ignoreIfExists? lsp.boolean
+---@field ignoreIfExists? boolean
 
 ---Rename file options
 ---@class lsp.RenameFileOptions
 ---Overwrite target if existing. Overwrite wins over `ignoreIfExists`
----@field overwrite? lsp.boolean
+---@field overwrite? boolean
 ---Ignores if target exists.
----@field ignoreIfExists? lsp.boolean
+---@field ignoreIfExists? boolean
 
 ---Delete file options
 ---@class lsp.DeleteFileOptions
 ---Delete the content recursively if a folder is denoted.
----@field recursive? lsp.boolean
+---@field recursive? boolean
 ---Ignore the operation if the file doesn't exist.
----@field ignoreIfNotExists? lsp.boolean
+---@field ignoreIfNotExists? boolean
 
 ---A pattern to describe in which file operation requests or notifications
 ---the server is interested in receiving.
@@ -2487,7 +2484,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---- `{}` to group sub patterns into an OR expression. (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
 ---- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
 ---- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
----@field glob lsp.string
+---@field glob string
 ---Whether to match files or folders with this pattern.
 ---
 ---Matches both if undefined.
@@ -2503,7 +2500,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@field uri lsp.DocumentUri
 ---The version number for which the diagnostics are reported.
 ---If the document is not marked as open `null` can be provided.
----@field version lsp.integer|lsp.null
+---@field version integer|lsp.null
 
 ---An unchanged document diagnostic report for a workspace diagnostic result.
 ---
@@ -2513,7 +2510,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@field uri lsp.DocumentUri
 ---The version number for which the diagnostics are reported.
 ---If the document is not marked as open `null` can be provided.
----@field version lsp.integer|lsp.null
+---@field version integer|lsp.null
 
 ---A notebook cell.
 ---
@@ -2542,9 +2539,9 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@since 3.17.0
 ---@class lsp.NotebookCellArrayChange
 ---The start oftest of the cell that changed.
----@field start lsp.uinteger
+---@field start uinteger
 ---The deleted cells
----@field deleteCount lsp.uinteger
+---@field deleteCount uinteger
 ---The new cells, if any
 ---@field cells? lsp.NotebookCell[]
 
@@ -2556,7 +2553,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The range that will be replaced if this completion item is accepted.
 ---@field range lsp.Range
 ---The text the range will be replaced with if this completion is accepted.
----@field text lsp.string
+---@field text string
 
 ---Defines the capabilities provided by the client.
 ---@class lsp.ClientCapabilities
@@ -2580,19 +2577,19 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@class lsp.TextDocumentSyncOptions
 ---Open and close notifications are sent to the server. If omitted open close notification should not
 ---be sent.
----@field openClose? lsp.boolean
+---@field openClose? boolean
 ---Change notifications are sent to the server. See TextDocumentSyncKind.None, TextDocumentSyncKind.Full
 ---and TextDocumentSyncKind.Incremental. If omitted it defaults to TextDocumentSyncKind.None.
 ---@field change? lsp.TextDocumentSyncKind
 ---If present will save notifications are sent to the server. If omitted the notification should not be
 ---sent.
----@field willSave? lsp.boolean
+---@field willSave? boolean
 ---If present will save wait until requests are sent to the server. If omitted the request should not be
 ---sent.
----@field willSaveWaitUntil? lsp.boolean
+---@field willSaveWaitUntil? boolean
 ---If present save notifications are sent to the server. If omitted the notification should not be
 ---sent.
----@field save? lsp.boolean|lsp.SaveOptions
+---@field save? boolean|lsp.SaveOptions
 
 ---Options specific to a notebook plus its cells
 ---to be synced to the server.
@@ -2612,7 +2609,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@field notebookSelector anonym15|anonym17[]
 ---Whether save notification should be forwarded to
 ---the server. Will only be honored if mode === `notebook`.
----@field save? lsp.boolean
+---@field save? boolean
 
 ---Registration options specific to a notebook.
 ---
@@ -2621,7 +2618,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 
 ---@class lsp.WorkspaceFoldersServerCapabilities
 ---The server has support for workspace folders
----@field supported? lsp.boolean
+---@field supported? boolean
 ---Whether the server wants to receive workspace folder
 ---change notifications.
 ---
@@ -2629,7 +2626,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---under which the notification is registered on the client
 ---side. The ID can be used to unregister for these events
 ---using the `client/unregisterCapability` request.
----@field changeNotifications? lsp.string|lsp.boolean
+---@field changeNotifications? string|boolean
 
 ---Options for notifications/requests for user operations on files.
 ---
@@ -2662,7 +2659,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The location of this related diagnostic information.
 ---@field location lsp.Location
 ---The message of this related diagnostic information.
----@field message lsp.string
+---@field message string
 
 ---Represents a parameter of a callable-signature. A parameter can
 ---have a label and a doc-comment.
@@ -2675,10 +2672,10 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---
 ---*Note*: a label of type string should be a substring of its containing signature label.
 ---Its intended use case is to highlight the parameter label part in the `SignatureInformation.label`.
----@field label lsp.string|{ [1]: lsp.uinteger, [2]: lsp.uinteger }
+---@field label string|{ [1]: uinteger, [2]: uinteger }
 ---The human-readable doc-comment of this parameter. Will be shown
 ---in the UI but can be omitted.
----@field documentation? lsp.string|lsp.MarkupContent
+---@field documentation? string|lsp.MarkupContent
 
 ---A notebook cell text document filter denotes a cell text
 ---document by different properties.
@@ -2689,35 +2686,35 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---containing the notebook cell. If a string
 ---value is provided it matches against the
 ---notebook type. '*' matches every notebook.
----@field notebook lsp.string|lsp.NotebookDocumentFilter
+---@field notebook string|lsp.NotebookDocumentFilter
 ---A language id like `python`.
 ---
 ---Will be matched against the language id of the
 ---notebook cell document. '*' matches every language.
----@field language? lsp.string
+---@field language? string
 
 ---Matching options for the file operation pattern.
 ---
 ---@since 3.16.0
 ---@class lsp.FileOperationPatternOptions
 ---The pattern should be matched ignoring casing.
----@field ignoreCase? lsp.boolean
+---@field ignoreCase? boolean
 
 ---@class lsp.ExecutionSummary
 ---A strict monotonically increasing value
 ---indicating the execution order of a cell
 ---inside a notebook.
----@field executionOrder lsp.uinteger
+---@field executionOrder uinteger
 ---Whether the execution was successful or
 ---not if known by the client.
----@field success? lsp.boolean
+---@field success? boolean
 
 ---Workspace specific client capabilities.
 ---@class lsp.WorkspaceClientCapabilities
 ---The client supports applying batch edits
 ---to the workspace by supporting the request
 ---'workspace/applyEdit'
----@field applyEdit? lsp.boolean
+---@field applyEdit? boolean
 ---Capabilities specific to `WorkspaceEdit`s.
 ---@field workspaceEdit? lsp.WorkspaceEditClientCapabilities
 ---Capabilities specific to the `workspace/didChangeConfiguration` notification.
@@ -2731,11 +2728,11 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The client has support for workspace folders.
 ---
 ---@since 3.6.0
----@field workspaceFolders? lsp.boolean
+---@field workspaceFolders? boolean
 ---The client supports `workspace/configuration` requests.
 ---
 ---@since 3.6.0
----@field configuration? lsp.boolean
+---@field configuration? boolean
 ---Capabilities specific to the semantic token requests scoped to the
 ---workspace.
 ---
@@ -2882,7 +2879,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---capabilities.
 ---
 ---@since 3.15.0
----@field workDoneProgress? lsp.boolean
+---@field workDoneProgress? boolean
 ---Capabilities specific to the showMessage request.
 ---
 ---@since 3.16.0
@@ -2945,7 +2942,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 
 ---@class lsp.WorkspaceEditClientCapabilities
 ---The client supports versioned document changes in `WorkspaceEdit`s
----@field documentChanges? lsp.boolean
+---@field documentChanges? boolean
 ---The resource operations the client supports. Clients should at least
 ---support 'create', 'rename' and 'delete' files and folders.
 ---
@@ -2963,7 +2960,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---character.
 ---
 ---@since 3.16.0
----@field normalizesLineEndings? lsp.boolean
+---@field normalizesLineEndings? boolean
 ---Whether the client in general supports change annotations on text edits,
 ---create file, rename file and delete file changes.
 ---
@@ -2972,23 +2969,23 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 
 ---@class lsp.DidChangeConfigurationClientCapabilities
 ---Did change configuration notification supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 
 ---@class lsp.DidChangeWatchedFilesClientCapabilities
 ---Did change watched files notification supports dynamic registration. Please note
 ---that the current protocol doesn't support static configuration for file changes
 ---from the server side.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---Whether the client has support for {@link  RelativePattern relative pattern}
 ---or not.
 ---
 ---@since 3.17.0
----@field relativePatternSupport? lsp.boolean
+---@field relativePatternSupport? boolean
 
 ---Client capabilities for a {@link WorkspaceSymbolRequest}.
 ---@class lsp.WorkspaceSymbolClientCapabilities
 ---Symbol request supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---Specific capabilities for the `SymbolKind` in the `workspace/symbol` request.
 ---@field symbolKind? anonym20
 ---The client supports tags on `SymbolInformation`.
@@ -3006,7 +3003,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The client capabilities of a {@link ExecuteCommandRequest}.
 ---@class lsp.ExecuteCommandClientCapabilities
 ---Execute command supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 
 ---@since 3.16.0
 ---@class lsp.SemanticTokensWorkspaceClientCapabilities
@@ -3017,7 +3014,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---semantic tokens currently shown. It should be used with absolute care
 ---and is useful for situation where a server for example detects a project
 ---wide change that requires such a calculation.
----@field refreshSupport? lsp.boolean
+---@field refreshSupport? boolean
 
 ---@since 3.16.0
 ---@class lsp.CodeLensWorkspaceClientCapabilities
@@ -3028,7 +3025,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---code lenses currently shown. It should be used with absolute care and is
 ---useful for situation where a server for example detect a project wide
 ---change that requires such a calculation.
----@field refreshSupport? lsp.boolean
+---@field refreshSupport? boolean
 
 ---Capabilities relating to events from file operations by the user in the client.
 ---
@@ -3038,19 +3035,19 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@since 3.16.0
 ---@class lsp.FileOperationClientCapabilities
 ---Whether the client supports dynamic registration for file requests/notifications.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---The client has support for sending didCreateFiles notifications.
----@field didCreate? lsp.boolean
+---@field didCreate? boolean
 ---The client has support for sending willCreateFiles requests.
----@field willCreate? lsp.boolean
+---@field willCreate? boolean
 ---The client has support for sending didRenameFiles notifications.
----@field didRename? lsp.boolean
+---@field didRename? boolean
 ---The client has support for sending willRenameFiles requests.
----@field willRename? lsp.boolean
+---@field willRename? boolean
 ---The client has support for sending didDeleteFiles notifications.
----@field didDelete? lsp.boolean
+---@field didDelete? boolean
 ---The client has support for sending willDeleteFiles requests.
----@field willDelete? lsp.boolean
+---@field willDelete? boolean
 
 ---Client workspace capabilities specific to inline values.
 ---
@@ -3063,7 +3060,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---inline values currently shown. It should be used with absolute care and is
 ---useful for situation where a server for example detects a project wide
 ---change that requires such a calculation.
----@field refreshSupport? lsp.boolean
+---@field refreshSupport? boolean
 
 ---Client workspace capabilities specific to inlay hints.
 ---
@@ -3076,7 +3073,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---inlay hints currently shown. It should be used with absolute care and
 ---is useful for situation where a server for example detects a project wide
 ---change that requires such a calculation.
----@field refreshSupport? lsp.boolean
+---@field refreshSupport? boolean
 
 ---Workspace client capabilities specific to diagnostic pull requests.
 ---
@@ -3089,24 +3086,24 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---pulled diagnostics currently shown. It should be used with absolute care and
 ---is useful for situation where a server for example detects a project wide
 ---change that requires such a calculation.
----@field refreshSupport? lsp.boolean
+---@field refreshSupport? boolean
 
 ---@class lsp.TextDocumentSyncClientCapabilities
 ---Whether text document synchronization supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---The client supports sending will save notifications.
----@field willSave? lsp.boolean
+---@field willSave? boolean
 ---The client supports sending a will save request and
 ---waits for a response providing text edits which will
 ---be applied to the document before it is saved.
----@field willSaveWaitUntil? lsp.boolean
+---@field willSaveWaitUntil? boolean
 ---The client supports did save notifications.
----@field didSave? lsp.boolean
+---@field didSave? boolean
 
 ---Completion client capabilities
 ---@class lsp.CompletionClientCapabilities
 ---Whether completion supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---The client supports the following `CompletionItem` specific
 ---capabilities.
 ---@field completionItem? anonym26
@@ -3119,7 +3116,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@field insertTextMode? lsp.InsertTextMode
 ---The client supports to send additional context information for a
 ---`textDocument/completion` request.
----@field contextSupport? lsp.boolean
+---@field contextSupport? boolean
 ---The client supports the following `CompletionList` specific
 ---capabilities.
 ---
@@ -3128,7 +3125,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 
 ---@class lsp.HoverClientCapabilities
 ---Whether hover supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---Client supports the following content formats for the content
 ---property. The order describes the preferred format of the client.
 ---@field contentFormat? lsp.MarkupKind[]
@@ -3136,7 +3133,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---Client Capabilities for a {@link SignatureHelpRequest}.
 ---@class lsp.SignatureHelpClientCapabilities
 ---Whether signature help supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---The client supports the following `SignatureInformation`
 ---specific properties.
 ---@field signatureInformation? anonym30
@@ -3146,67 +3143,67 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---`SignatureHelpOptions`.
 ---
 ---@since 3.15.0
----@field contextSupport? lsp.boolean
+---@field contextSupport? boolean
 
 ---@since 3.14.0
 ---@class lsp.DeclarationClientCapabilities
 ---Whether declaration supports dynamic registration. If this is set to `true`
 ---the client supports the new `DeclarationRegistrationOptions` return value
 ---for the corresponding server capability as well.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---The client supports additional metadata in the form of declaration links.
----@field linkSupport? lsp.boolean
+---@field linkSupport? boolean
 
 ---Client Capabilities for a {@link DefinitionRequest}.
 ---@class lsp.DefinitionClientCapabilities
 ---Whether definition supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---The client supports additional metadata in the form of definition links.
 ---
 ---@since 3.14.0
----@field linkSupport? lsp.boolean
+---@field linkSupport? boolean
 
 ---Since 3.6.0
 ---@class lsp.TypeDefinitionClientCapabilities
 ---Whether implementation supports dynamic registration. If this is set to `true`
 ---the client supports the new `TypeDefinitionRegistrationOptions` return value
 ---for the corresponding server capability as well.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---The client supports additional metadata in the form of definition links.
 ---
 ---Since 3.14.0
----@field linkSupport? lsp.boolean
+---@field linkSupport? boolean
 
 ---@since 3.6.0
 ---@class lsp.ImplementationClientCapabilities
 ---Whether implementation supports dynamic registration. If this is set to `true`
 ---the client supports the new `ImplementationRegistrationOptions` return value
 ---for the corresponding server capability as well.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---The client supports additional metadata in the form of definition links.
 ---
 ---@since 3.14.0
----@field linkSupport? lsp.boolean
+---@field linkSupport? boolean
 
 ---Client Capabilities for a {@link ReferencesRequest}.
 ---@class lsp.ReferenceClientCapabilities
 ---Whether references supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 
 ---Client Capabilities for a {@link DocumentHighlightRequest}.
 ---@class lsp.DocumentHighlightClientCapabilities
 ---Whether document highlight supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 
 ---Client Capabilities for a {@link DocumentSymbolRequest}.
 ---@class lsp.DocumentSymbolClientCapabilities
 ---Whether document symbol supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---Specific capabilities for the `SymbolKind` in the
 ---`textDocument/documentSymbol` request.
 ---@field symbolKind? anonym31
 ---The client supports hierarchical document symbols.
----@field hierarchicalDocumentSymbolSupport? lsp.boolean
+---@field hierarchicalDocumentSymbolSupport? boolean
 ---The client supports tags on `SymbolInformation`. Tags are supported on
 ---`DocumentSymbol` if `hierarchicalDocumentSymbolSupport` is set to true.
 ---Clients supporting tags have to handle unknown tags gracefully.
@@ -3217,12 +3214,12 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---registering a document symbol provider.
 ---
 ---@since 3.16.0
----@field labelSupport? lsp.boolean
+---@field labelSupport? boolean
 
 ---The Client Capabilities of a {@link CodeActionRequest}.
 ---@class lsp.CodeActionClientCapabilities
 ---Whether code action supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---The client support code action literals of type `CodeAction` as a valid
 ---response of the `textDocument/codeAction` request. If the property is not
 ---set the request can only return `Command` literals.
@@ -3232,17 +3229,17 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---Whether code action supports the `isPreferred` property.
 ---
 ---@since 3.15.0
----@field isPreferredSupport? lsp.boolean
+---@field isPreferredSupport? boolean
 ---Whether code action supports the `disabled` property.
 ---
 ---@since 3.16.0
----@field disabledSupport? lsp.boolean
+---@field disabledSupport? boolean
 ---Whether code action supports the `data` property which is
 ---preserved between a `textDocument/codeAction` and a
 ---`codeAction/resolve` request.
 ---
 ---@since 3.16.0
----@field dataSupport? lsp.boolean
+---@field dataSupport? boolean
 ---Whether the client supports resolving additional code action
 ---properties via a separate `codeAction/resolve` request.
 ---
@@ -3255,51 +3252,51 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---for confirmation.
 ---
 ---@since 3.16.0
----@field honorsChangeAnnotations? lsp.boolean
+---@field honorsChangeAnnotations? boolean
 
 ---The client capabilities  of a {@link CodeLensRequest}.
 ---@class lsp.CodeLensClientCapabilities
 ---Whether code lens supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 
 ---The client capabilities of a {@link DocumentLinkRequest}.
 ---@class lsp.DocumentLinkClientCapabilities
 ---Whether document link supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---Whether the client supports the `tooltip` property on `DocumentLink`.
 ---
 ---@since 3.15.0
----@field tooltipSupport? lsp.boolean
+---@field tooltipSupport? boolean
 
 ---@class lsp.DocumentColorClientCapabilities
 ---Whether implementation supports dynamic registration. If this is set to `true`
 ---the client supports the new `DocumentColorRegistrationOptions` return value
 ---for the corresponding server capability as well.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 
 ---Client capabilities of a {@link DocumentFormattingRequest}.
 ---@class lsp.DocumentFormattingClientCapabilities
 ---Whether formatting supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 
 ---Client capabilities of a {@link DocumentRangeFormattingRequest}.
 ---@class lsp.DocumentRangeFormattingClientCapabilities
 ---Whether range formatting supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 
 ---Client capabilities of a {@link DocumentOnTypeFormattingRequest}.
 ---@class lsp.DocumentOnTypeFormattingClientCapabilities
 ---Whether on type formatting supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 
 ---@class lsp.RenameClientCapabilities
 ---Whether rename supports dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---Client supports testing for validity of rename operations
 ---before execution.
 ---
 ---@since 3.12.0
----@field prepareSupport? lsp.boolean
+---@field prepareSupport? boolean
 ---Client supports the default behavior result.
 ---
 ---The value indicates the default behavior used by the
@@ -3314,22 +3311,22 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---for confirmation.
 ---
 ---@since 3.16.0
----@field honorsChangeAnnotations? lsp.boolean
+---@field honorsChangeAnnotations? boolean
 
 ---@class lsp.FoldingRangeClientCapabilities
 ---Whether implementation supports dynamic registration for folding range
 ---providers. If this is set to `true` the client supports the new
 ---`FoldingRangeRegistrationOptions` return value for the corresponding
 ---server capability as well.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---The maximum number of folding ranges that the client prefers to receive
 ---per document. The value serves as a hint, servers are free to follow the
 ---limit.
----@field rangeLimit? lsp.uinteger
+---@field rangeLimit? uinteger
 ---If set, the client signals that it only supports folding complete lines.
 ---If set, client will ignore specified `startCharacter` and `endCharacter`
 ---properties in a FoldingRange.
----@field lineFoldingOnly? lsp.boolean
+---@field lineFoldingOnly? boolean
 ---Specific options for the folding range kind.
 ---
 ---@since 3.17.0
@@ -3343,12 +3340,12 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---Whether implementation supports dynamic registration for selection range providers. If this is set to `true`
 ---the client supports the new `SelectionRangeRegistrationOptions` return value for the corresponding server
 ---capability as well.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 
 ---The publish diagnostic client capabilities.
 ---@class lsp.PublishDiagnosticsClientCapabilities
 ---Whether the clients accepts diagnostics with related information.
----@field relatedInformation? lsp.boolean
+---@field relatedInformation? boolean
 ---Client supports the tag property to provide meta data about a diagnostic.
 ---Clients supporting tags have to handle unknown tags gracefully.
 ---
@@ -3358,31 +3355,31 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---`textDocument/publishDiagnostics` notification's parameter.
 ---
 ---@since 3.15.0
----@field versionSupport? lsp.boolean
+---@field versionSupport? boolean
 ---Client supports a codeDescription property
 ---
 ---@since 3.16.0
----@field codeDescriptionSupport? lsp.boolean
+---@field codeDescriptionSupport? boolean
 ---Whether code action supports the `data` property which is
 ---preserved between a `textDocument/publishDiagnostics` and
 ---`textDocument/codeAction` request.
 ---
 ---@since 3.16.0
----@field dataSupport? lsp.boolean
+---@field dataSupport? boolean
 
 ---@since 3.16.0
 ---@class lsp.CallHierarchyClientCapabilities
 ---Whether implementation supports dynamic registration. If this is set to `true`
 ---the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 ---return value for the corresponding server capability as well.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 
 ---@since 3.16.0
 ---@class lsp.SemanticTokensClientCapabilities
 ---Whether implementation supports dynamic registration. If this is set to `true`
 ---the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 ---return value for the corresponding server capability as well.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---Which requests the client supports and might send to the server
 ---depending on the server's capability. Please note that clients might not
 ---show semantic tokens or degrade some of the user experience if a range
@@ -3393,22 +3390,22 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---even decide to not show any semantic tokens at all.
 ---@field requests anonym41
 ---The token types that the client supports.
----@field tokenTypes lsp.string[]
+---@field tokenTypes string[]
 ---The token modifiers that the client supports.
----@field tokenModifiers lsp.string[]
+---@field tokenModifiers string[]
 ---The token formats the clients supports.
 ---@field formats lsp.TokenFormat[]
 ---Whether the client supports tokens that can overlap each other.
----@field overlappingTokenSupport? lsp.boolean
+---@field overlappingTokenSupport? boolean
 ---Whether the client supports tokens that can span multiple lines.
----@field multilineTokenSupport? lsp.boolean
+---@field multilineTokenSupport? boolean
 ---Whether the client allows the server to actively cancel a
 ---semantic token request, e.g. supports returning
 ---LSPErrorCodes.ServerCancelled. If a server does the client
 ---needs to retrigger the request.
 ---
 ---@since 3.17.0
----@field serverCancelSupport? lsp.boolean
+---@field serverCancelSupport? boolean
 ---Whether the client uses semantic tokens to augment existing
 ---syntax tokens. If set to `true` client side created syntax
 ---tokens and semantic tokens are both used for colorization. If
@@ -3419,7 +3416,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---specified.
 ---
 ---@since 3.17.0
----@field augmentsSyntaxTokens? lsp.boolean
+---@field augmentsSyntaxTokens? boolean
 
 ---Client capabilities for the linked editing range request.
 ---
@@ -3428,7 +3425,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---Whether implementation supports dynamic registration. If this is set to `true`
 ---the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 ---return value for the corresponding server capability as well.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 
 ---Client capabilities specific to the moniker request.
 ---
@@ -3437,28 +3434,28 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---Whether moniker supports dynamic registration. If this is set to `true`
 ---the client supports the new `MonikerRegistrationOptions` return value
 ---for the corresponding server capability as well.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 
 ---@since 3.17.0
 ---@class lsp.TypeHierarchyClientCapabilities
 ---Whether implementation supports dynamic registration. If this is set to `true`
 ---the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 ---return value for the corresponding server capability as well.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 
 ---Client capabilities specific to inline values.
 ---
 ---@since 3.17.0
 ---@class lsp.InlineValueClientCapabilities
 ---Whether implementation supports dynamic registration for inline value providers.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 
 ---Inlay hint client capabilities.
 ---
 ---@since 3.17.0
 ---@class lsp.InlayHintClientCapabilities
 ---Whether inlay hints support dynamic registration.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---Indicates which properties a client can resolve lazily on an inlay
 ---hint.
 ---@field resolveSupport? anonym42
@@ -3470,9 +3467,9 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---Whether implementation supports dynamic registration. If this is set to `true`
 ---the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 ---return value for the corresponding server capability as well.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---Whether the clients supports related documents for document diagnostic pulls.
----@field relatedDocumentSupport? lsp.boolean
+---@field relatedDocumentSupport? boolean
 
 ---Client capabilities specific to inline completions.
 ---
@@ -3480,7 +3477,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@proposed
 ---@class lsp.InlineCompletionClientCapabilities
 ---Whether implementation supports dynamic registration for inline completion providers.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 
 ---Notebook specific client capabilities.
 ---
@@ -3490,9 +3487,9 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---set to `true` the client supports the new
 ---`(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 ---return value for the corresponding server capability as well.
----@field dynamicRegistration? lsp.boolean
+---@field dynamicRegistration? boolean
 ---The client supports sending execution summary data per cell.
----@field executionSummarySupport? lsp.boolean
+---@field executionSummarySupport? boolean
 
 ---Show message request client capabilities
 ---@class lsp.ShowMessageRequestClientCapabilities
@@ -3505,30 +3502,30 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@class lsp.ShowDocumentClientCapabilities
 ---The client has support for the showDocument
 ---request.
----@field support lsp.boolean
+---@field support boolean
 
 ---Client capabilities specific to regular expressions.
 ---
 ---@since 3.16.0
 ---@class lsp.RegularExpressionsClientCapabilities
 ---The engine's name.
----@field engine lsp.string
+---@field engine string
 ---The engine's version.
----@field version? lsp.string
+---@field version? string
 
 ---Client capabilities specific to the used markdown parser.
 ---
 ---@since 3.16.0
 ---@class lsp.MarkdownClientCapabilities
 ---The name of the parser.
----@field parser lsp.string
+---@field parser string
 ---The version of the parser.
----@field version? lsp.string
+---@field version? string
 ---A list of HTML tags that the client allows / supports in
 ---Markdown.
 ---
 ---@since 3.17.0
----@field allowedTags? lsp.string[]
+---@field allowedTags? string[]
 
 ---A set of predefined token types. This set is not fixed
 ---an clients can specify additional token types via the
@@ -3885,7 +3882,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---convenience it is allowed and assumed that all these properties are
 ---optional as well.
 ---@since 3.17.0
----@alias lsp.LSPAny lsp.LSPObject|lsp.LSPArray|lsp.string|lsp.integer|lsp.uinteger|lsp.decimal|lsp.boolean|lsp.null
+---@alias lsp.LSPAny lsp.LSPObject|lsp.LSPArray|string|integer|uinteger|decimal|boolean|lsp.null
 
 ---The declaration of a symbol representation as one or many {@link Location locations}.
 ---@alias lsp.Declaration lsp.Location|lsp.Location[]
@@ -3926,10 +3923,10 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The use of a string as a document filter is deprecated @since 3.16.0.
 ---@alias lsp.DocumentSelector lsp.DocumentFilter[]
 
----@alias lsp.ProgressToken lsp.integer|lsp.string
+---@alias lsp.ProgressToken integer|string
 
 ---An identifier to refer to a change annotation stored with a workspace edit.
----@alias lsp.ChangeAnnotationIdentifier lsp.string
+---@alias lsp.ChangeAnnotationIdentifier string
 
 ---A workspace diagnostic document report.
 ---
@@ -3952,7 +3949,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---
 ---Note that markdown strings will be sanitized - that means html will be escaped.
 ---@deprecated use MarkupContent instead.
----@alias lsp.MarkedString lsp.string|anonym48
+---@alias lsp.MarkedString string|anonym48
 
 ---A document filter describes a top level text document or
 ---a notebook cell document.
@@ -3962,7 +3959,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 
 ---LSP object definition.
 ---@since 3.17.0
----@alias lsp.LSPObject table<lsp.string, lsp.LSPAny>
+---@alias lsp.LSPObject table<string, lsp.LSPAny>
 
 ---The glob pattern. Either a string pattern or a relative pattern.
 ---
@@ -4003,13 +4000,13 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
 ---
 ---@since 3.17.0
----@alias lsp.Pattern lsp.string
+---@alias lsp.Pattern string
 
 ---@class anonym1
 ---The name of the server as defined by the server.
----@field name lsp.string
+---@field name string
 ---The server's version as defined by the server.
----@field version? lsp.string
+---@field version? string
 
 ---@class anonym3
 ---@field insert lsp.Range
@@ -4019,7 +4016,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---A default commit character set.
 ---
 ---@since 3.17.0
----@field commitCharacters? lsp.string[]
+---@field commitCharacters? string[]
 ---A default edit range.
 ---
 ---@since 3.17.0
@@ -4041,7 +4038,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---Human readable description of why the code action is currently disabled.
 ---
 ---This is displayed in the code actions UI.
----@field reason lsp.string
+---@field reason string
 
 ---@class anonym5
 ---@field uri lsp.DocumentUri
@@ -4050,7 +4047,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 
 ---@class anonym7
 ---The server supports deltas for full documents.
----@field delta? lsp.boolean
+---@field delta? boolean
 
 ---@class anonym9
 ---The change to the cell array.
@@ -4076,9 +4073,9 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 
 ---@class anonym11
 ---The name of the client as defined by the client.
----@field name lsp.string
+---@field name string
 ---The client's version as defined by the client.
----@field version? lsp.string
+---@field version? string
 
 ---@class anonym12
 ---The server supports workspace folder.
@@ -4096,43 +4093,43 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---receiving a completion item in a resolve call.
 ---
 ---@since 3.17.0
----@field labelDetailsSupport? lsp.boolean
+---@field labelDetailsSupport? boolean
 
 ---@class anonym15
----@field language lsp.string
+---@field language string
 
 ---@class anonym14
 ---The notebook to be synced If a string
 ---value is provided it matches against the
 ---notebook type. '*' matches every notebook.
----@field notebook lsp.string|lsp.NotebookDocumentFilter
+---@field notebook string|lsp.NotebookDocumentFilter
 ---The cells of the matching notebook to be synced.
 ---@field cells? anonym15[]
 
 ---@class anonym17
----@field language lsp.string
+---@field language string
 
 ---@class anonym16
 ---The notebook to be synced If a string
 ---value is provided it matches against the
 ---notebook type. '*' matches every notebook.
----@field notebook? lsp.string|lsp.NotebookDocumentFilter
+---@field notebook? string|lsp.NotebookDocumentFilter
 ---The cells of the matching notebook to be synced.
 ---@field cells anonym17[]
 
 ---@class anonym18
 ---The client will actively cancel the request.
----@field cancel lsp.boolean
+---@field cancel boolean
 ---The list of requests for which the client
 ---will retry the request if it receives a
 ---response with error code `ContentModified`
----@field retryOnContentModified lsp.string[]
+---@field retryOnContentModified string[]
 
 ---@class anonym19
 ---Whether the client groups edits with equal labels into tree nodes,
 ---for instance all edits labelled with "Changes in Strings" would
 ---be a tree node.
----@field groupsOnLabel? lsp.boolean
+---@field groupsOnLabel? boolean
 
 ---@class anonym20
 ---The symbol kind values the client supports. When this
@@ -4152,7 +4149,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@class anonym22
 ---The properties that a client can resolve lazily. Usually
 ---`location.range`
----@field properties lsp.string[]
+---@field properties string[]
 
 ---@class anonym24
 ---The tags supported by the client.
@@ -4160,7 +4157,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 
 ---@class anonym25
 ---The properties that a client can resolve lazily.
----@field properties lsp.string[]
+---@field properties string[]
 
 ---@class anonym26
 ---@field valueSet lsp.InsertTextMode[]
@@ -4172,16 +4169,16 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---and `${3:foo}`. `$0` defines the final tab stop, it defaults to
 ---the end of the snippet. Placeholders with equal identifiers are linked,
 ---that is typing in one will update others too.
----@field snippetSupport? lsp.boolean
+---@field snippetSupport? boolean
 ---Client supports commit characters on a completion item.
----@field commitCharactersSupport? lsp.boolean
+---@field commitCharactersSupport? boolean
 ---Client supports the following content formats for the documentation
 ---property. The order describes the preferred format of the client.
 ---@field documentationFormat? lsp.MarkupKind[]
 ---Client supports the deprecated property on a completion item.
----@field deprecatedSupport? lsp.boolean
+---@field deprecatedSupport? boolean
 ---Client supports the preselect property on a completion item.
----@field preselectSupport? lsp.boolean
+---@field preselectSupport? boolean
 ---Client supports the tag property on a completion item. Clients supporting
 ---tags have to handle unknown tags gracefully. Clients especially need to
 ---preserve unknown tags when sending a completion item back to the server in
@@ -4193,7 +4190,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---completion item is inserted in the text or should replace text.
 ---
 ---@since 3.16.0
----@field insertReplaceSupport? lsp.boolean
+---@field insertReplaceSupport? boolean
 ---Indicates which properties a client can resolve lazily on a completion
 ---item. Before version 3.16.0 only the predefined properties `documentation`
 ---and `details` could be resolved lazily.
@@ -4210,7 +4207,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---details (see also `CompletionItemLabelDetails`).
 ---
 ---@since 3.17.0
----@field labelDetailsSupport? lsp.boolean
+---@field labelDetailsSupport? boolean
 
 ---@class anonym27
 ---The completion item kind values the client supports. When this
@@ -4232,14 +4229,14 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---no properties are supported.
 ---
 ---@since 3.17.0
----@field itemDefaults? lsp.string[]
+---@field itemDefaults? string[]
 
 ---@class anonym30
 ---The client supports processing label offsets instead of a
 ---simple label string.
 ---
 ---@since 3.14.0
----@field labelOffsetSupport? lsp.boolean
+---@field labelOffsetSupport? boolean
 
 ---@class anonym29
 ---Client supports the following content formats for the documentation
@@ -4251,7 +4248,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---literal.
 ---
 ---@since 3.16.0
----@field activeParameterSupport? lsp.boolean
+---@field activeParameterSupport? boolean
 
 ---@class anonym31
 ---The symbol kind values the client supports. When this
@@ -4282,7 +4279,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 
 ---@class anonym35
 ---The properties that a client can resolve lazily.
----@field properties lsp.string[]
+---@field properties string[]
 
 ---@class anonym36
 ---The folding range kind values the client supports. When this
@@ -4296,7 +4293,7 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---folding ranges to display custom labels instead of the default text.
 ---
 ---@since 3.17.0
----@field collapsedText? lsp.boolean
+---@field collapsedText? boolean
 
 ---@class anonym38
 ---The tags supported by the client.
@@ -4307,32 +4304,32 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---@class anonym41
 ---The client will send the `textDocument/semanticTokens/full/delta` request if
 ---the server provides a corresponding handler.
----@field delta? lsp.boolean
+---@field delta? boolean
 
 ---@class anonym39
 ---The client will send the `textDocument/semanticTokens/range` request if
 ---the server provides a corresponding handler.
----@field range? lsp.boolean|anonym40
+---@field range? boolean|anonym40
 ---The client will send the `textDocument/semanticTokens/full` request if
 ---the server provides a corresponding handler.
----@field full? lsp.boolean|anonym41
+---@field full? boolean|anonym41
 
 ---@class anonym42
 ---The properties that a client can resolve lazily.
----@field properties lsp.string[]
+---@field properties string[]
 
 ---@class anonym43
 ---Whether the client supports additional attributes which
 ---are preserved and send back to the server in the
 ---request's response.
----@field additionalPropertiesSupport? lsp.boolean
+---@field additionalPropertiesSupport? boolean
 
 ---@class anonym44
 ---@field range lsp.Range
----@field placeholder lsp.string
+---@field placeholder string
 
 ---@class anonym45
----@field defaultBehavior lsp.boolean
+---@field defaultBehavior boolean
 
 ---@class anonym46
 ---The range of the document that changed.
@@ -4340,62 +4337,62 @@ nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
 ---The optional length of the range that got replaced.
 ---
 ---@deprecated use range instead.
----@field rangeLength? lsp.uinteger
+---@field rangeLength? uinteger
 ---The new text for the provided range.
----@field text lsp.string
+---@field text string
 
 ---@class anonym47
 ---The new text of the whole document.
----@field text lsp.string
+---@field text string
 
 ---@class anonym48
----@field language lsp.string
----@field value lsp.string
+---@field language string
+---@field value string
 
 ---@class anonym49
 ---A language id, like `typescript`.
----@field language lsp.string
+---@field language string
 ---A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
----@field scheme? lsp.string
+---@field scheme? string
 ---A glob pattern, like `*.{ts,js}`.
----@field pattern? lsp.string
+---@field pattern? string
 
 ---@class anonym50
 ---A language id, like `typescript`.
----@field language? lsp.string
+---@field language? string
 ---A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
----@field scheme lsp.string
+---@field scheme string
 ---A glob pattern, like `*.{ts,js}`.
----@field pattern? lsp.string
+---@field pattern? string
 
 ---@class anonym51
 ---A language id, like `typescript`.
----@field language? lsp.string
+---@field language? string
 ---A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
----@field scheme? lsp.string
+---@field scheme? string
 ---A glob pattern, like `*.{ts,js}`.
----@field pattern lsp.string
+---@field pattern string
 
 ---@class anonym52
 ---The type of the enclosing notebook.
----@field notebookType lsp.string
+---@field notebookType string
 ---A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
----@field scheme? lsp.string
+---@field scheme? string
 ---A glob pattern.
----@field pattern? lsp.string
+---@field pattern? string
 
 ---@class anonym53
 ---The type of the enclosing notebook.
----@field notebookType? lsp.string
+---@field notebookType? string
 ---A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
----@field scheme lsp.string
+---@field scheme string
 ---A glob pattern.
----@field pattern? lsp.string
+---@field pattern? string
 
 ---@class anonym54
 ---The type of the enclosing notebook.
----@field notebookType? lsp.string
+---@field notebookType? string
 ---A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
----@field scheme? lsp.string
+---@field scheme? string
 ---A glob pattern.
----@field pattern lsp.string
+---@field pattern string
