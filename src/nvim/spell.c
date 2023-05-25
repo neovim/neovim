@@ -1312,7 +1312,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
     } else if (curline && wp == curwin) {
       // For spellbadword(): check if first word needs a capital.
       col = (colnr_T)getwhitecols(line);
-      if (check_need_cap(lnum, col)) {
+      if (check_need_cap(curwin, lnum, col)) {
         capcol = col;
       }
 
@@ -2536,25 +2536,24 @@ int spell_casefold(const win_T *wp, char *str, int len, char *buf, int buflen)
 }
 
 // Check if the word at line "lnum" column "col" is required to start with a
-// capital.  This uses 'spellcapcheck' of the current buffer.
-bool check_need_cap(linenr_T lnum, colnr_T col)
+// capital.  This uses 'spellcapcheck' of the buffer in window "wp".
+bool check_need_cap(win_T *wp, linenr_T lnum, colnr_T col)
 {
-  bool need_cap = false;
-
-  if (curwin->w_s->b_cap_prog == NULL) {
+  if (wp->w_s->b_cap_prog == NULL) {
     return false;
   }
 
-  char *line = get_cursor_line_ptr();
+  bool need_cap = false;
+  char *line = col ? ml_get_buf(wp->w_buffer, lnum, false) : NULL;
   char *line_copy = NULL;
   colnr_T endcol = 0;
-  if (getwhitecols(line) >= (int)col) {
+  if (col == 0 || getwhitecols(line) >= col) {
     // At start of line, check if previous line is empty or sentence
     // ends there.
     if (lnum == 1) {
       need_cap = true;
     } else {
-      line = ml_get(lnum - 1);
+      line = ml_get_buf(wp->w_buffer, lnum - 1, false);
       if (*skipwhite(line) == NUL) {
         need_cap = true;
       } else {
@@ -2571,13 +2570,13 @@ bool check_need_cap(linenr_T lnum, colnr_T col)
   if (endcol > 0) {
     // Check if sentence ends before the bad word.
     regmatch_T regmatch = {
-      .regprog = curwin->w_s->b_cap_prog,
+      .regprog = wp->w_s->b_cap_prog,
       .rm_ic = false
     };
     char *p = line + endcol;
     while (true) {
       MB_PTR_BACK(line, p);
-      if (p == line || spell_iswordp_nmw(p, curwin)) {
+      if (p == line || spell_iswordp_nmw(p, wp)) {
         break;
       }
       if (vim_regexec(&regmatch, p, 0)
@@ -2586,7 +2585,7 @@ bool check_need_cap(linenr_T lnum, colnr_T col)
         break;
       }
     }
-    curwin->w_s->b_cap_prog = regmatch.regprog;
+    wp->w_s->b_cap_prog = regmatch.regprog;
   }
 
   xfree(line_copy);
@@ -3601,7 +3600,7 @@ static bool spell_expand_need_cap;
 
 void spell_expand_check_cap(colnr_T col)
 {
-  spell_expand_need_cap = check_need_cap(curwin->w_cursor.lnum, col);
+  spell_expand_need_cap = check_need_cap(curwin, curwin->w_cursor.lnum, col);
 }
 
 // Get list of spelling suggestions.

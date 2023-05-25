@@ -1028,7 +1028,7 @@ static void win_line_continue(winlinevars_T *wlv)
 /// @param lnum         line to display
 /// @param startrow     first row relative to window grid
 /// @param endrow       last grid row to be redrawn
-/// @param nochange     not updating for changed text
+/// @param mod_top      top line updated for changed text
 /// @param number_only  only update the number column
 /// @param foldinfo     fold info for this line
 /// @param[in, out] providers  decoration providers active this line
@@ -1036,7 +1036,7 @@ static void win_line_continue(winlinevars_T *wlv)
 ///                            or explicitly return `false`.
 ///
 /// @return             the number of last row the line occupies.
-int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, bool number_only,
+int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int mod_top, bool number_only,
              foldinfo_T foldinfo, DecorProviders *providers, char **provider_err)
 {
   winlinevars_T wlv;                  // variables passed between functions
@@ -1227,12 +1227,16 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
       // When there was a sentence end in the previous line may require a
       // word starting with capital in this line.  In line 1 always check
-      // the first word.
-      if (lnum != capcol_lnum) {
-        cap_col = -1;
-      }
-      if (lnum == 1) {
+      // the first word.  Also check for sentence end in the line above
+      // when updating the first row in a window, the top line with
+      // changed text in a window, or if the previous line is folded.
+      if (lnum == 1
+          || ((startrow == 0 || mod_top == lnum
+               || hasFoldingWin(wp, lnum - 1, NULL, NULL, true, NULL))
+              && check_need_cap(wp, lnum, 0))) {
         cap_col = 0;
+      } else if (lnum != capcol_lnum) {
+        cap_col = -1;
       }
       capcol_lnum = 0;
     }
@@ -2207,7 +2211,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
               p = prev_ptr;
             }
             cap_col -= (int)(prev_ptr - line);
-            size_t tmplen = spell_check(wp, p, &spell_hlf, &cap_col, nochange);
+            size_t tmplen = spell_check(wp, p, &spell_hlf, &cap_col, mod_top == 0);
             assert(tmplen <= INT_MAX);
             int len = (int)tmplen;
             word_end = (int)v + len;

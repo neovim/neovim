@@ -2222,9 +2222,8 @@ static void win_update(win_T *wp, DecorProviders *providers)
         }
 
         // Display one line
-        row = win_line(wp, lnum, srow,
-                       foldinfo.fi_lines ? srow : wp->w_grid.rows,
-                       mod_top == 0, false, foldinfo, &line_providers, &provider_err);
+        row = win_line(wp, lnum, srow, foldinfo.fi_lines ? srow : wp->w_grid.rows,
+                       mod_top, false, foldinfo, &line_providers, &provider_err);
 
         if (foldinfo.fi_lines == 0) {
           wp->w_lines[idx].wl_folded = false;
@@ -2261,7 +2260,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         // text doesn't need to be drawn, but the number column does.
         foldinfo_T info = wp->w_p_cul && lnum == wp->w_cursor.lnum ?
                           cursorline_fi : fold_info(wp, lnum);
-        (void)win_line(wp, lnum, srow, wp->w_grid.rows, true, true,
+        (void)win_line(wp, lnum, srow, wp->w_grid.rows, mod_top, true,
                        info, &line_providers, &provider_err);
       }
 
@@ -2359,7 +2358,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         // for ml_line_count+1 and only draw filler lines
         foldinfo_T info = { 0 };
         row = win_line(wp, wp->w_botline, row, wp->w_grid.rows,
-                       false, false, info, &line_providers, &provider_err);
+                       mod_top, false, info, &line_providers, &provider_err);
       }
     } else if (dollar_vcol == -1) {
       wp->w_botline = lnum;
