@@ -43,6 +43,7 @@
 #include "nvim/plines.h"
 #include "nvim/pos.h"
 #include "nvim/search.h"
+#include "nvim/spell.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/textformat.h"
@@ -393,6 +394,15 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 {
   changedOneline(curbuf, lnum);
   changed_common(lnum, col, lnum + 1, 0);
+  // When text has been changed at the end of the line, possibly the start of
+  // the next line may have SpellCap that should be removed or it needs to be
+  // displayed.  Schedule the next line for redrawing just in case.
+  // Don't do this when displaying '$' at the end of changed text.
+  if (spell_check_window(curwin)
+      && lnum < curbuf->b_ml.ml_line_count
+      && vim_strchr(p_cpo, CPO_DOLLAR) == NULL) {
+    redrawWinline(curwin, lnum + 1);
+  }
   // notify any channels that are watching
   buf_updates_send_changes(curbuf, lnum, 1, 1);
 

@@ -3,9 +3,9 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
+local exec = helpers.exec
 local feed = helpers.feed
 local insert = helpers.insert
-local command = helpers.command
 local meths = helpers.meths
 local curbufmeths = helpers.curbufmeths
 local is_os = helpers.is_os
@@ -27,12 +27,13 @@ describe("'spell'", function()
       [6] = {foreground = Screen.colors.Red},
       [7] = {foreground = Screen.colors.Blue},
       [8] = {foreground = Screen.colors.Blue, special = Screen.colors.Red, undercurl = true},
+      [9] = {bold = true},
     })
   end)
 
   it('joins long lines #7937', function()
     if is_os('openbsd') then pending('FIXME #12104', function() end) return end
-    command('set spell')
+    exec('set spell')
     insert([[
     Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
     tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
@@ -57,31 +58,128 @@ describe("'spell'", function()
 
   -- oldtest: Test_spell_screendump()
   it('has correct highlight at start of line', function()
-    insert([[
-    "This is some text without any spell errors.  Everything",
-    "should just be black, nothing wrong here.",
-    "",
-    "This line has a sepll error. and missing caps.",
-    "And and this is the the duplication.",
-    "with missing caps here.",
-    ]])
-    command('set spell spelllang=en_nz')
+    exec([=[
+      call setline(1, [
+        \"This is some text without any spell errors.  Everything",
+        \"should just be black, nothing wrong here.",
+        \"",
+        \"This line has a sepll error. and missing caps.",
+        \"And and this is the the duplication.",
+        \"with missing caps here.",
+      \])
+      set spell spelllang=en_nz
+    ]=])
     screen:expect([[
-    "This is some text without any spell errors.  Everything",                      |
-    "should just be black, nothing wrong here.",                                    |
-    "",                                                                             |
-    "This line has a {1:sepll} error. {2:and} missing caps.",                               |
-    "{1:And and} this is {1:the the} duplication.",                                         |
-    "with missing caps here.",                                                      |
-    ^                                                                                |
-                                                                                    |
+      ^This is some text without any spell errors.  Everything                         |
+      should just be black, nothing wrong here.                                       |
+                                                                                      |
+      This line has a {1:sepll} error. {2:and} missing caps.                                  |
+      {1:And and} this is {1:the the} duplication.                                            |
+      {2:with} missing caps here.                                                         |
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
+  end)
+
+  -- oldtest: Test_spell_screendump_spellcap()
+  it('has correct highlight at start of line with trailing space', function()
+    exec([=[
+      call setline(1, [
+        \"   This line has a sepll error. and missing caps and trailing spaces.   ",
+        \"another missing cap here.",
+        \"",
+        \"and here.",
+        \"    ",
+        \"and here."
+      \])
+      set spell spelllang=en
+    ]=])
+    screen:expect([[
+      ^   This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
+      {2:another} missing cap here.                                                       |
+                                                                                      |
+      {2:and} here.                                                                       |
+                                                                                      |
+      {2:and} here.                                                                       |
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
+    -- After adding word missing Cap in next line is updated
+    feed('3GANot<Esc>')
+    screen:expect([[
+         This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
+      {2:another} missing cap here.                                                       |
+      No^t                                                                             |
+      and here.                                                                       |
+                                                                                      |
+      {2:and} here.                                                                       |
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
+    -- Deleting a full stop removes missing Cap in next line
+    feed('5Gddk$x')
+    screen:expect([[
+         This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
+      {2:another} missing cap here.                                                       |
+      Not                                                                             |
+      and her^e                                                                        |
+      and here.                                                                       |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
+    -- Undo also updates the next line (go to command line to remove message)
+    feed('u:<Esc>')
+    screen:expect([[
+         This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
+      {2:another} missing cap here.                                                       |
+      Not                                                                             |
+      and here^.                                                                       |
+      {2:and} here.                                                                       |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
+  end)
+
+  -- oldtest: Test_spell_compatible()
+  it([[redraws properly when using "C" and "$" is in 'cpo']], function()
+    exec([=[
+      call setline(1, [
+        \ "test "->repeat(20),
+        \ "",
+        \ "end",
+      \ ])
+      set spell cpo+=$
+    ]=])
+    feed('51|C')
+    screen:expect([[
+      {2:test} test test test test test test test test test ^test test test test test test |
+      test test test test$                                                            |
+                                                                                      |
+      {2:end}                                                                             |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {9:-- INSERT --}                                                                    |
+    ]])
+    feed('x')
+    screen:expect([[
+      {2:test} test test test test test test test test test x^est test test test test test |
+      test test test test$                                                            |
+                                                                                      |
+      {2:end}                                                                             |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {9:-- INSERT --}                                                                    |
     ]])
   end)
 
   it('extmarks, "noplainbuffer" and syntax #20385 #23398', function()
-    command('set filetype=c')
-    command('syntax on')
-    command('set spell')
+    exec('set filetype=c')
+    exec('syntax on')
+    exec('set spell')
     insert([[
       #include <stdbool.h>
       bool func(void);
@@ -119,7 +217,7 @@ describe("'spell'", function()
       {0:~                                                                               }|
       {6:search hit BOTTOM, continuing at TOP}                                            |
     ]])
-    command('echo ""')
+    exec('echo ""')
     local ns = meths.create_namespace("spell")
     -- extmark with spell=true enables spell
     local id = curbufmeths.set_extmark(ns, 1, 4, { end_row = 1, end_col = 10, spell = true })
@@ -168,7 +266,7 @@ describe("'spell'", function()
       {0:~                                                                               }|
       {6:search hit TOP, continuing at BOTTOM}                                            |
     ]])
-    command('echo ""')
+    exec('echo ""')
     curbufmeths.del_extmark(ns, id)
     screen:expect([[
       {3:#include }{4:<stdbool.h>}                                                            |
@@ -192,7 +290,7 @@ describe("'spell'", function()
                                                                                       |
     ]])
     -- "noplainbuffer" shouldn't change spellchecking behavior with syntax enabled
-    command('set spelloptions+=noplainbuffer')
+    exec('set spelloptions+=noplainbuffer')
     screen:expect_unchanged()
     feed('[s')
     screen:expect([[
@@ -206,7 +304,7 @@ describe("'spell'", function()
                                                                                       |
     ]])
     -- no spellchecking with "noplainbuffer" and syntax disabled
-    command('syntax off')
+    exec('syntax off')
     screen:expect([[
       #include <stdbool.h>                                                            |
       bool func(void);                                                                |
@@ -228,9 +326,9 @@ describe("'spell'", function()
       {0:~                                                                               }|
       {6:search hit BOTTOM, continuing at TOP}                                            |
     ]])
-    command('echo ""')
+    exec('echo ""')
     -- everything is spellchecked without "noplainbuffer" with syntax disabled
-    command('set spelloptions&')
+    exec('set spelloptions&')
     screen:expect([[
       #include <{1:stdbool}.h>                                                            |
       {1:bool} {1:func}(void);                                                                |
@@ -256,7 +354,7 @@ describe("'spell'", function()
 
   it('and syntax does not clear extmark highlighting at the start of a word', function()
     screen:try_resize(43, 3)
-    command([[
+    exec([[
       set spell
       syntax match Constant "^.*$"
       call setline(1, "This is some text without any spell errors.")

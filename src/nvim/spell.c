@@ -1189,11 +1189,19 @@ bool spell_valid_case(int wordflags, int treeflags)
                  || (wordflags & WF_ONECAP) != 0));
 }
 
-// Returns true if spell checking is not enabled.
+/// Return true if spell checking is enabled for "wp".
+bool spell_check_window(win_T *wp)
+{
+  return wp->w_p_spell
+         && *wp->w_s->b_p_spl != NUL
+         && wp->w_s->b_langp.ga_len > 0
+         && *(char **)(wp->w_s->b_langp.ga_data) != NULL;
+}
+
+/// Return true and give an error if spell checking is not enabled.
 bool no_spell_checking(win_T *wp)
 {
-  if (!wp->w_p_spell || *wp->w_s->b_p_spl == NUL
-      || GA_EMPTY(&wp->w_s->b_langp)) {
+  if (!wp->w_p_spell || *wp->w_s->b_p_spl == NUL || GA_EMPTY(&wp->w_s->b_langp)) {
     emsg(_(e_no_spell));
     return true;
   }

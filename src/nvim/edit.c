@@ -53,6 +53,7 @@
 #include "nvim/popupmenu.h"
 #include "nvim/pos.h"
 #include "nvim/search.h"
+#include "nvim/spell.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
@@ -1526,8 +1527,8 @@ void edit_unputchar(void)
   }
 }
 
-// Called when p_dollar is set: display a '$' at the end of the changed text
-// Only works when cursor is in the line that changes.
+/// Called when "$" is in 'cpoptions': display a '$' at the end of the changed
+/// text.  Only works when cursor is in the line that changes.
 void display_dollar(colnr_T col_arg)
 {
   colnr_T col = col_arg < 0 ? 0 : col_arg;
