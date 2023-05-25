@@ -42,9 +42,10 @@ describe("folded lines", function()
         [9] = {bold = true, foreground = Screen.colors.Brown},
         [10] = {background = Screen.colors.LightGrey, underline = true},
         [11] = {bold=true},
-        [12] = {background = Screen.colors.Grey90, underline = true},
-        [13] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey, underline = true},
-        [14] = {background = Screen.colors.LightGray},
+        [12] = {foreground = Screen.colors.Red},
+        [13] = {foreground = Screen.colors.Red, background = Screen.colors.LightGrey},
+        [14] = {background = Screen.colors.Red},
+        [15] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Red},
       })
     end)
 
@@ -88,10 +89,9 @@ describe("folded lines", function()
       end
     end)
 
-    it("foldcolumn highlighted with CursorLineFold when 'cursorline' is set", function()
+    local function test_folded_cursorline()
       command("set number cursorline foldcolumn=2")
       command("hi link CursorLineFold Search")
-      command("hi! CursorLine gui=underline guibg=Grey90")
       insert(content1)
       feed("ggzf3jj")
       if multigrid then
@@ -239,6 +239,22 @@ describe("folded lines", function()
                                                        |
         ]])
       end
+    end
+
+    describe("when 'cursorline' is set", function()
+      it('with high-priority CursorLine', function()
+        command("hi! CursorLine guibg=NONE guifg=Red gui=NONE")
+        test_folded_cursorline()
+      end)
+
+      it('with low-priority CursorLine', function()
+        command("hi! CursorLine guibg=NONE guifg=NONE gui=underline")
+        local attrs = screen:get_default_attr_ids()
+        attrs[12] = {underline = true}
+        attrs[13] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey, underline = true}
+        screen:set_default_attr_ids(attrs)
+        test_folded_cursorline()
+      end)
     end)
 
     it("work with spell", function()
@@ -2017,7 +2033,8 @@ describe("folded lines", function()
       end
     end)
 
-    it('Folded highlight does not disappear in Visual selection #19691', function()
+    it('Folded and Visual highlights are combined #19691', function()
+      command('hi! Visual guibg=Red')
       insert([[
         " foo
         " {{{1
@@ -2044,9 +2061,9 @@ describe("folded lines", function()
           [3:---------------------------------------------]|
         ## grid 2
           {14:" fo}o                                        |
-          {5:+--  3 lines: "······························}|
+          {15:+-- }{5: 3 lines: "······························}|
           {14:" ba}r                                        |
-          {5:+--  3 lines: "······························}|
+          {15:+-- }{5: 3 lines: "······························}|
           {14:" b}^az                                        |
           {1:~                                            }|
           {1:~                                            }|
@@ -2056,9 +2073,9 @@ describe("folded lines", function()
       else
         screen:expect([[
           {14:" fo}o                                        |
-          {5:+--  3 lines: "······························}|
+          {15:+-- }{5: 3 lines: "······························}|
           {14:" ba}r                                        |
-          {5:+--  3 lines: "······························}|
+          {15:+-- }{5: 3 lines: "······························}|
           {14:" b}^az                                        |
           {1:~                                            }|
           {1:~                                            }|

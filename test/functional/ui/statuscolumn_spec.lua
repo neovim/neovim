@@ -196,10 +196,10 @@ describe('statuscolumn', function()
       [2] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGrey},
       [3] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
       [4] = {bold = true, foreground = Screen.colors.Brown},
-      [5] = {background = Screen.colors.Grey90, underline = true},
-      [6] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey, underline = true},
+      [5] = {foreground = Screen.colors.Red},
+      [6] = {foreground = Screen.colors.Red, background = Screen.colors.LightGrey},
     })
-    command('hi! CursorLine gui=underline guibg=Grey90')
+    command('hi! CursorLine guifg=Red guibg=NONE')
     screen:expect([[
       {1: 4│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {1:  │ }a                                                |
