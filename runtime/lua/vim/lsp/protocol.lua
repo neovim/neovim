@@ -753,6 +753,7 @@ function protocol.make_client_capabilities()
       },
       definition = {
         linkSupport = true,
+        dynamicRegistration = true,
       },
       implementation = {
         linkSupport = true,
