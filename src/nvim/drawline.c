@@ -1049,7 +1049,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
   static char *at_end_str = "";       // used for p_extra when displaying curwin->w_p_lcs_chars.eol
                                       // at end-of-line
-  bool has_fold = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
+  const bool has_fold = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
 
   int saved_attr2 = 0;                  // char_attr saved for n_attr
   int n_attr3 = 0;                      // chars with overruling special attr
@@ -1075,6 +1075,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   int vcol_save_attr = 0;               // saved attr for 'cursorcolumn'
   int syntax_attr = 0;                  // attributes desired by syntax
   bool has_syntax = false;              // this buffer has syntax highl.
+  int folded_attr = 0;                  // attributes for folded line
   int save_did_emsg;
   int eol_hl_off = 0;                   // 1 if highlighted char after EOL
   bool draw_color_col = false;          // highlight colorcolumn
@@ -1159,7 +1160,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   wlv.vcol_sbr = -1;
 
   buf_T *buf = wp->w_buffer;
-  bool end_fill = (lnum == buf->b_ml.ml_line_count + 1);
+  const bool end_fill = (lnum == buf->b_ml.ml_line_count + 1);
 
   if (!number_only) {
     // To speed up the loop below, set extra_check when there is linebreak,
@@ -1760,7 +1761,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         && wlv.col == win_col_offset
         && wlv.n_extra == 0
         && wlv.row == startrow + wlv.filler_lines) {
-      wlv.char_attr = win_hl_attr(wp, HLF_FL);
+      wlv.char_attr = folded_attr = win_hl_attr(wp, HLF_FL);
 
       linenr_T lnume = lnum + foldinfo.fi_lines - 1;
       memset(buf_fold, ' ', FOLD_TEXT_LEN);
@@ -1802,7 +1803,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     }
 
     int extmark_attr = 0;
-    if (wlv.draw_state == WL_LINE && !has_fold
+    if (wlv.draw_state == WL_LINE
         && (area_highlighting || has_spell || extra_check)) {
       // handle Visual or match highlighting in this line
       if (wlv.vcol == wlv.fromcol
@@ -1821,63 +1822,65 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         area_active = false;
       }
 
-      if (has_decor && v >= 0) {
-        bool selected = (area_active || (area_highlighting && noinvcur
-                                         && wlv.vcol == wp->w_virtcol));
-        extmark_attr = decor_redraw_col(wp, (colnr_T)v, wlv.off,
-                                        selected, &decor_state);
+      if (!has_fold) {
+        if (has_decor && v >= 0) {
+          bool selected = (area_active || (area_highlighting && noinvcur
+                                           && wlv.vcol == wp->w_virtcol));
+          extmark_attr = decor_redraw_col(wp, (colnr_T)v, wlv.off,
+                                          selected, &decor_state);
 
-        bool do_save = false;
-        handle_inline_virtual_text(wp, &wlv, v, &do_save);
-        if (do_save) {
-          // restore search_attr and area_attr when n_extra is down to zero
-          // TODO(bfredl): this is ugly as fuck. look if we can do this some other way.
-          saved_search_attr = search_attr;
-          saved_area_attr = area_attr;
-          saved_search_attr_from_match = search_attr_from_match;
-          search_attr_from_match = false;
-          search_attr = 0;
-          area_attr = 0;
-          extmark_attr = 0;
-          n_skip = 0;
+          bool do_save = false;
+          handle_inline_virtual_text(wp, &wlv, v, &do_save);
+          if (do_save) {
+            // restore search_attr and area_attr when n_extra is down to zero
+            // TODO(bfredl): this is ugly as fuck. look if we can do this some other way.
+            saved_search_attr = search_attr;
+            saved_area_attr = area_attr;
+            saved_search_attr_from_match = search_attr_from_match;
+            search_attr_from_match = false;
+            search_attr = 0;
+            area_attr = 0;
+            extmark_attr = 0;
+            n_skip = 0;
+          }
         }
-      }
 
-      if (wlv.n_extra == 0) {
-        // Check for start/end of 'hlsearch' and other matches.
-        // After end, check for start/end of next match.
-        // When another match, have to check for start again.
-        v = (ptr - line);
-        search_attr = update_search_hl(wp, lnum, (colnr_T)v, &line, &screen_search_hl,
-                                       &has_match_conc, &match_conc, lcs_eol_one,
-                                       &on_last_col, &search_attr_from_match);
-        ptr = line + v;  // "line" may have been changed
+        if (wlv.n_extra == 0) {
+          // Check for start/end of 'hlsearch' and other matches.
+          // After end, check for start/end of next match.
+          // When another match, have to check for start again.
+          v = (ptr - line);
+          search_attr = update_search_hl(wp, lnum, (colnr_T)v, &line, &screen_search_hl,
+                                         &has_match_conc, &match_conc, lcs_eol_one,
+                                         &on_last_col, &search_attr_from_match);
+          ptr = line + v;  // "line" may have been changed
 
-        // Do not allow a conceal over EOL otherwise EOL will be missed
-        // and bad things happen.
-        if (*ptr == NUL) {
-          has_match_conc = 0;
+          // Do not allow a conceal over EOL otherwise EOL will be missed
+          // and bad things happen.
+          if (*ptr == NUL) {
+            has_match_conc = 0;
+          }
         }
-      }
 
-      if (wlv.diff_hlf != (hlf_T)0) {
-        // When there is extra text (eg: virtual text) it gets the
-        // diff highlighting for the line, but not for changed text.
-        if (wlv.diff_hlf == HLF_CHD && ptr - line >= change_start
-            && wlv.n_extra == 0) {
-          wlv.diff_hlf = HLF_TXD;                   // changed text
-        }
-        if (wlv.diff_hlf == HLF_TXD && ((ptr - line > change_end && wlv.n_extra == 0)
-                                        || (wlv.n_extra > 0 && wlv.extra_for_extmark))) {
-          wlv.diff_hlf = HLF_CHD;                   // changed line
-        }
-        wlv.line_attr = win_hl_attr(wp, (int)wlv.diff_hlf);
-        // Overlay CursorLine onto diff-mode highlight.
-        if (wlv.cul_attr) {
-          wlv.line_attr = 0 != wlv.line_attr_lowprio  // Low-priority CursorLine
-            ? hl_combine_attr(hl_combine_attr(wlv.cul_attr, wlv.line_attr),
-                              hl_get_underline())
-            : hl_combine_attr(wlv.line_attr, wlv.cul_attr);
+        if (wlv.diff_hlf != (hlf_T)0) {
+          // When there is extra text (eg: virtual text) it gets the
+          // diff highlighting for the line, but not for changed text.
+          if (wlv.diff_hlf == HLF_CHD && ptr - line >= change_start
+              && wlv.n_extra == 0) {
+            wlv.diff_hlf = HLF_TXD;                   // changed text
+          }
+          if (wlv.diff_hlf == HLF_TXD && ((ptr - line > change_end && wlv.n_extra == 0)
+                                          || (wlv.n_extra > 0 && wlv.extra_for_extmark))) {
+            wlv.diff_hlf = HLF_CHD;                   // changed line
+          }
+          wlv.line_attr = win_hl_attr(wp, (int)wlv.diff_hlf);
+          // Overlay CursorLine onto diff-mode highlight.
+          if (wlv.cul_attr) {
+            wlv.line_attr = 0 != wlv.line_attr_lowprio  // Low-priority CursorLine
+              ? hl_combine_attr(hl_combine_attr(wlv.cul_attr, wlv.line_attr),
+                                hl_get_underline())
+              : hl_combine_attr(wlv.line_attr, wlv.cul_attr);
+          }
         }
       }
 
@@ -1907,6 +1910,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         } else {
           wlv.char_attr = 0;
         }
+      }
+
+      if (folded_attr != 0) {
+        wlv.char_attr = hl_combine_attr(folded_attr, wlv.char_attr);
       }
     }
 
