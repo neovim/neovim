@@ -119,9 +119,13 @@ end
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#client_registerCapability
 M['client/registerCapability'] = function(_, result, ctx)
   local client_id = ctx.client_id
+  ---@type lsp.Client
   local client = vim.lsp.get_client_by_id(client_id)
 
   client.dynamic_capabilities:register(result.registrations)
+  for bufnr, _ in ipairs(client.attached_buffers) do
+    vim.lsp._set_defaults(client, bufnr)
+  end
 
   ---@type string[]
   local unsupported = {}
