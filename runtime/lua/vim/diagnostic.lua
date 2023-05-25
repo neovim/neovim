@@ -83,8 +83,12 @@ local function to_severity(severity)
   return severity
 end
 
----@private
-local function filter_by_severity(severity, diagnostics)
+--- Filter a table of diagnostics by severity.
+---
+---@param severity table A list of severities from |vim.diagnostic.severity|.
+---@param diagnostics table List of diagnostics |diagnostic-structure|.
+---@return table[] diagnostics |diagnostic-structure|.
+M.filter_by_severity = function(severity, diagnostics)
   if not severity then
     return diagnostics
   end
@@ -132,8 +136,12 @@ local function prefix_source(diagnostics)
   end, diagnostics)
 end
 
----@private
-local function reformat_diagnostics(format, diagnostics)
+--- Returns a copy of the diagnostics with their message reformatted.
+---
+---@param format string A formatting string.
+---@param diagnostics table List of diagnostics |diagnostic-structure|.
+---@return table[] diagnostics |diagnostic-structure|.
+M.reformat_diagnostics = function(format, diagnostics)
   vim.validate({
     format = { format, 'f' },
     diagnostics = { diagnostics, 't' },
@@ -444,7 +452,7 @@ local function get_diagnostics(bufnr, opts, clamp)
   end
 
   if opts.severity then
-    diagnostics = filter_by_severity(opts.severity, diagnostics)
+    diagnostics = M.filter_by_severity(opts.severity, diagnostics)
   end
 
   return diagnostics
@@ -874,7 +882,7 @@ M.handlers.signs = {
     opts = opts or {}
 
     if opts.signs and opts.signs.severity then
-      diagnostics = filter_by_severity(opts.signs.severity, diagnostics)
+      diagnostics = M.filter_by_severity(opts.signs.severity, diagnostics)
     end
 
     define_default_signs()
@@ -936,7 +944,7 @@ M.handlers.underline = {
     opts = opts or {}
 
     if opts.underline and opts.underline.severity then
-      diagnostics = filter_by_severity(opts.underline.severity, diagnostics)
+      diagnostics = M.filter_by_severity(opts.underline.severity, diagnostics)
     end
 
     local ns = M.get_namespace(namespace)
@@ -1004,7 +1012,7 @@ M.handlers.virtual_text = {
     local severity
     if opts.virtual_text then
       if opts.virtual_text.format then
-        diagnostics = reformat_diagnostics(opts.virtual_text.format, diagnostics)
+        diagnostics = M.reformat_diagnostics(opts.virtual_text.format, diagnostics)
       end
       if
         opts.virtual_text.source
@@ -1026,7 +1034,7 @@ M.handlers.virtual_text = {
     local buffer_line_diagnostics = diagnostic_lines(diagnostics)
     for line, line_diagnostics in pairs(buffer_line_diagnostics) do
       if severity then
-        line_diagnostics = filter_by_severity(severity, line_diagnostics)
+        line_diagnostics = M.filter_by_severity(severity, line_diagnostics)
       end
       local virt_texts = M._get_virt_text_chunks(line_diagnostics, opts.virtual_text)
 
@@ -1380,7 +1388,7 @@ function M.open_float(opts, ...)
   end
 
   if opts.format then
-    diagnostics = reformat_diagnostics(opts.format, diagnostics)
+    diagnostics = M.reformat_diagnostics(opts.format, diagnostics)
   end
 
   if opts.source and (opts.source ~= 'if_many' or count_sources(bufnr) > 1) then
