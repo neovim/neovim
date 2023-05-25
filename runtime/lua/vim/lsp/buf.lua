@@ -683,11 +683,7 @@ local function on_code_action_results(results, ctx, options)
     --
     local client = vim.lsp.get_client_by_id(action_tuple[1])
     local action = action_tuple[2]
-    if
-      not action.edit
-      and client
-      and vim.tbl_get(client.server_capabilities, 'codeActionProvider', 'resolveProvider')
-    then
+    if not action.edit and client and client.supports_method('codeAction/resolve') then
       client.request('codeAction/resolve', action, function(err, resolved_action)
         if err then
           vim.notify(err.code .. ': ' .. err.message, vim.log.levels.ERROR)
