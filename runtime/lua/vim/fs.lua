@@ -348,7 +348,11 @@ function M.normalize(path, opts)
     path = path:gsub('%$([%w_]+)', vim.uv.os_getenv)
   end
 
-  return (path:gsub('\\', '/'):gsub('/+', '/'):gsub('(.)/$', '%1'))
+  path = path:gsub('\\', '/'):gsub('/+', '/')
+  if iswin and path:match('^%w:/$') then
+    return path
+  end
+  return (path:gsub('(.)/$', '%1'))
 end
 
 return M

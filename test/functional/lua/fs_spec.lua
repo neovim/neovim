@@ -301,5 +301,10 @@ describe('vim.fs', function()
         return vim.fs.normalize('$XDG_CONFIG_HOME/nvim')
       ]], xdg_config_home))
     end)
+    if is_os('win') then
+      it('Last slash is not truncated from root drive', function()
+        eq('C:/', exec_lua [[ return vim.fs.normalize('C:/') ]])
+      end)
+    end
   end)
 end)
