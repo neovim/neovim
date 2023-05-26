@@ -143,7 +143,7 @@ function LanguageTree:_set_logger()
 
   local lang = self:lang()
 
-  local logfilename = vim.fs._join_paths(vim.fn.stdpath('log'), 'treesitter.log')
+  local logfilename = vim.fs.joinpath(vim.fn.stdpath('log'), 'treesitter.log')
 
   local logfile, openerr = io.open(logfilename, 'a+')
 
