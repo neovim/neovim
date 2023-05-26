@@ -12,6 +12,7 @@ set nowrapscan
 set report=9999
 set modeline
 set debug=throw
+set nomore
 
 au! SwapExists * call HandleSwapExists()
 func HandleSwapExists()
