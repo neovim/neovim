@@ -4875,9 +4875,6 @@ static void ex_stop(exarg_T *eap)
   ui_call_suspend();
   ui_flush();
 
-  maketitle();
-  resettitle();  // force updating the title
-  ui_refresh();  // may have resized window
   apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
 }
 
