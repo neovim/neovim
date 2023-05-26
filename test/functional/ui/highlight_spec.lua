@@ -526,6 +526,41 @@ describe('highlight', function()
     })
 
   end)
+
+  it("'diff', syntax and extmark", function()
+    local screen = Screen.new(25,10)
+    screen:attach()
+    exec([[
+      new
+      call setline(1, ['', '01234 6789'])
+      windo diffthis
+      wincmd w
+      syn match WarningMsg "^.*$"
+      call nvim_buf_add_highlight(0, -1, 'ErrorMsg', 1, 2, 8)
+    ]])
+    screen:expect([[
+      {1:  }^                       |
+      {1:  }{2:01}{3:234 67}{2:89}{5:             }|
+      {4:~                        }|
+      {4:~                        }|
+      {7:[No Name] [+]            }|
+      {1:  }                       |
+      {1:  }{6:-----------------------}|
+      {4:~                        }|
+      {8:[No Name]                }|
+                               |
+    ]],{
+      [0] = {Screen.colors.WebGray, foreground = Screen.colors.DarkBlue},
+      [1] = {background = Screen.colors.Grey, foreground = Screen.colors.Blue4},
+      [2] = {foreground = Screen.colors.Red, background = Screen.colors.LightBlue},
+      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.LightBlue},
+      [4] = {bold = true, foreground = Screen.colors.Blue},
+      [5] = {background = Screen.colors.LightBlue},
+      [6] = {bold = true, background = Screen.colors.LightCyan, foreground = Screen.colors.Blue1},
+      [7] = {reverse = true, bold = true},
+      [8] = {reverse = true},
+    })
+  end)
 end)
 
 describe("'listchars' highlight", function()
