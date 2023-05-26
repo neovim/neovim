@@ -50,6 +50,7 @@ lsp._request_name_to_capability = {
   ['textDocument/codeAction'] = { 'codeActionProvider' },
   ['textDocument/codeLens'] = { 'codeLensProvider' },
   ['codeLens/resolve'] = { 'codeLensProvider', 'resolveProvider' },
+  ['codeAction/resolve'] = { 'codeActionProvider', 'resolveProvider' },
   ['workspace/executeCommand'] = { 'executeCommandProvider' },
   ['workspace/symbol'] = { 'workspaceSymbolProvider' },
   ['textDocument/references'] = { 'referencesProvider' },
