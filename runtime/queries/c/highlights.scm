@@ -117,12 +117,19 @@
  (preproc_defined)
 ]  @function.macro
 
-(field_identifier) @property
+(((field_expression
+     (field_identifier) @property)) @_parent
+ (#not-has-parent? @_parent template_method function_declarator call_expression))
+
+(field_designator) @property
+(((field_identifier) @property)
+ (#has-ancestor? @property field_declaration)
+ (#not-has-ancestor? @property function_declarator))
+
 (statement_identifier) @label
 
 [
  (type_identifier)
- (sized_type_specifier)
  (type_descriptor)
 ] @type
 
@@ -137,6 +144,8 @@
   declarator: (type_identifier) @type.definition)
 
 (primitive_type) @type.builtin
+
+(sized_type_specifier _ @type.builtin type: _?)
 
 ((identifier) @constant
  (#lua-match? @constant "^[A-Z][A-Z0-9_]+$"))
@@ -163,6 +172,10 @@
     field: (field_identifier) @function.call))
 (function_declarator
   declarator: (identifier) @function)
+(function_declarator
+  declarator: (parenthesized_declarator
+                (pointer_declarator
+                  declarator: (field_identifier) @function)))
 (preproc_function_def
   name: (identifier) @function.macro)
 
