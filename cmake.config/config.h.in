@@ -45,10 +45,6 @@
 #cmakedefine HAVE_DIRFD_AND_FLOCK
 #cmakedefine HAVE_FORKPTY
 
-#ifndef UNIT_TESTING
-#cmakedefine LOG_LIST_ACTIONS
-#endif
-
 #cmakedefine HAVE_BE64TOH
 #cmakedefine ORDER_BIG_ENDIAN
 #define ENDIAN_INCLUDE_FILE <@ENDIAN_INCLUDE_FILE@>
