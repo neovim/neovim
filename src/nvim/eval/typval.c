@@ -82,70 +82,6 @@ bool tv_in_free_unref_items = false;
 const char *const tv_empty_string = "";
 
 //{{{1 Lists
-//{{{2 List log
-#ifdef LOG_LIST_ACTIONS
-ListLog *list_log_first = NULL;
-ListLog *list_log_last = NULL;
-
-/// Write list log to the given file
-///
-/// @param[in]  fname  File to write log to. Will be appended to if already
-///                    present.
-void list_write_log(const char *const fname)
-  FUNC_ATTR_NONNULL_ALL
-{
-  FileDescriptor fp;
-  const int fo_ret = file_open(&fp, fname, kFileCreate|kFileAppend, 0600);
-  if (fo_ret != 0) {
-    semsg(_("E5142: Failed to open file %s: %s"), fname, os_strerror(fo_ret));
-    return;
-  }
-  for (ListLog *chunk = list_log_first; chunk != NULL;) {
-    for (size_t i = 0; i < chunk->size; i++) {
-      char buf[10 + 1 + ((16 + 3) * 3) + (8 + 2) + 2];
-      //       act  :     hex  " c:"      len "[]" "\n\0"
-      const ListLogEntry entry = chunk->entries[i];
-      const size_t snp_len = (size_t)snprintf(buf, sizeof(buf),
-                                              "%-10.10s: l:%016" PRIxPTR "[%08d] 1:%016" PRIxPTR " 2:%016" PRIxPTR
-                                              "\n",
-                                              entry.action, entry.l, entry.len, entry.li1,
-                                              entry.li2);
-      assert(snp_len + 1 == sizeof(buf));
-      const ptrdiff_t fw_ret = file_write(&fp, buf, snp_len);
-      if (fw_ret != (ptrdiff_t)snp_len) {
-        assert(fw_ret < 0);
-        if (i) {
-          memmove(chunk->entries, chunk->entries + i,
-                  sizeof(chunk->entries[0]) * (chunk->size - i));
-          chunk->size -= i;
-        }
-        semsg(_("E5143: Failed to write to file %s: %s"),
-              fname, os_strerror((int)fw_ret));
-        return;
-      }
-    }
-    list_log_first = chunk->next;
-    xfree(chunk);
-    chunk = list_log_first;
-  }
-  const int fc_ret = file_close(&fp, true);
-  if (fc_ret != 0) {
-    semsg(_("E5144: Failed to close file %s: %s"), fname, os_strerror(fc_ret));
-  }
-}
-
-# ifdef EXITFREE
-/// Free list log
-void list_free_log(void)
-{
-  for (ListLog *chunk = list_log_first; chunk != NULL;) {
-    list_log_first = chunk->next;
-    xfree(chunk);
-    chunk = list_log_first;
-  }
-}
-# endif
-#endif
 //{{{2 List item
 
 /// Allocate a list item
@@ -252,7 +188,6 @@ list_T *tv_list_alloc(const ptrdiff_t len)
   list->lv_used_prev = NULL;
   list->lv_used_next = gc_first_list;
   gc_first_list = list;
-  list_log(list, NULL, (void *)(uintptr_t)len, "alloc");
   list->lua_table_ref = LUA_NOREF;
   return list;
 }
@@ -283,8 +218,6 @@ void tv_list_init_static10(staticList10_T *const sl)
     li->li_prev = li - 1;
     li->li_next = li + 1;
   }
-  list_log((const list_T *)sl, &sl->sl_items[0], &sl->sl_items[SL_SIZE - 1],
-           "s10init");
 #undef SL_SIZE
 }
 
@@ -296,7 +229,6 @@ void tv_list_init_static(list_T *const l)
 {
   CLEAR_POINTER(l);
   l->lv_refcount = DO_NOT_FREE_CNT;
-  list_log(l, NULL, NULL, "sinit");
 }
 
 /// Free items contained in a list
@@ -305,7 +237,6 @@ void tv_list_init_static(list_T *const l)
 void tv_list_free_contents(list_T *const l)
   FUNC_ATTR_NONNULL_ALL
 {
-  list_log(l, NULL, NULL, "freecont");
   for (listitem_T *item = l->lv_first; item != NULL; item = l->lv_first) {
     // Remove the item before deleting it.
     l->lv_first = item->li_next;
@@ -335,7 +266,6 @@ void tv_list_free_list(list_T *const l)
   if (l->lv_used_next != NULL) {
     l->lv_used_next->lv_used_prev = l->lv_used_prev;
   }
-  list_log(l, NULL, NULL, "freelist");
 
   NLUA_CLEAR_REF(l->lua_table_ref);
   xfree(l);
@@ -382,7 +312,6 @@ void tv_list_unref(list_T *const l)
 void tv_list_drop_items(list_T *const l, listitem_T *const item, listitem_T *const item2)
   FUNC_ATTR_NONNULL_ALL
 {
-  list_log(l, item, item2, "drop");
   // Notify watchers.
   for (listitem_T *ip = item; ip != item2->li_next; ip = ip->li_next) {
     l->lv_len--;
@@ -400,14 +329,12 @@ void tv_list_drop_items(list_T *const l, listitem_T *const item, listitem_T *con
     item->li_prev->li_next = item2->li_next;
   }
   l->lv_idx_item = NULL;
-  list_log(l, l->lv_first, l->lv_last, "afterdrop");
 }
 
 /// Like tv_list_drop_items, but also frees all removed items
 void tv_list_remove_items(list_T *const l, listitem_T *const item, listitem_T *const item2)
   FUNC_ATTR_NONNULL_ALL
 {
-  list_log(l, item, item2, "remove");
   tv_list_drop_items(l, item, item2);
   for (listitem_T *li = item;;) {
     tv_clear(TV_LIST_ITEM_TV(li));
@@ -431,7 +358,6 @@ void tv_list_move_items(list_T *const l, listitem_T *const item, listitem_T *con
                         list_T *const tgt_l, const int cnt)
   FUNC_ATTR_NONNULL_ALL
 {
-  list_log(l, item, item2, "move");
   tv_list_drop_items(l, item, item2);
   item->li_prev = tgt_l->lv_last;
   item2->li_next = NULL;
@@ -442,7 +368,6 @@ void tv_list_move_items(list_T *const l, listitem_T *const item, listitem_T *con
   }
   tgt_l->lv_last = item2;
   tgt_l->lv_len += cnt;
-  list_log(tgt_l, tgt_l->lv_first, tgt_l->lv_last, "movetgt");
 }
 
 /// Insert list item
@@ -470,7 +395,6 @@ void tv_list_insert(list_T *const l, listitem_T *const ni, listitem_T *const ite
     }
     item->li_prev = ni;
     l->lv_len++;
-    list_log(l, ni, item, "insert");
   }
 }
 
@@ -496,7 +420,6 @@ void tv_list_insert_tv(list_T *const l, typval_T *const tv, listitem_T *const it
 void tv_list_append(list_T *const l, listitem_T *const item)
   FUNC_ATTR_NONNULL_ALL
 {
-  list_log(l, item, NULL, "append");
   if (l->lv_last == NULL) {
     // empty list
     l->lv_first = item;
@@ -1416,7 +1339,6 @@ void tv_list_reverse(list_T *const l)
   if (tv_list_len(l) <= 1) {
     return;
   }
-  list_log(l, NULL, NULL, "reverse");
 #define SWAP(a, b) \
   do { \
     tmp = (a); \
@@ -1454,7 +1376,6 @@ void tv_list_item_sort(list_T *const l, ListSortItem *const ptrs,
   if (len <= 1) {
     return;
   }
-  list_log(l, NULL, NULL, "sort");
   int i = 0;
   TV_LIST_ITER(l, li, {
     ptrs[i].item = li;
@@ -1543,7 +1464,6 @@ listitem_T *tv_list_find(list_T *const l, int n)
   // Cache the used index.
   l->lv_idx = idx;
   l->lv_idx_item = item;
-  list_log(l, l->lv_idx_item, (void *)(uintptr_t)l->lv_idx, "find");
 
   return item;
 }
