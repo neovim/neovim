@@ -277,35 +277,34 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
   bool do_eol = state->eol_col > -1;
   for (size_t i = 0; i < kv_size(state->active); i++) {
     DecorRange *item = &kv_A(state->active, i);
-    if (!(item->start_row == state->row
-          && (kv_size(item->decor.virt_text) || item->decor.ui_watched))) {
+    if (!(item->start_row == state->row && decor_virt_pos(&item->decor))) {
       continue;
     }
-    if (item->win_col == -1) {
+    if (item->draw_col == -1) {
       if (item->decor.virt_text_pos == kVTRightAlign) {
         right_pos -= item->decor.virt_text_width;
-        item->win_col = right_pos;
+        item->draw_col = right_pos;
       } else if (item->decor.virt_text_pos == kVTEndOfLine && do_eol) {
-        item->win_col = state->eol_col;
+        item->draw_col = state->eol_col;
       } else if (item->decor.virt_text_pos == kVTWinCol) {
-        item->win_col = MAX(item->decor.col + col_off, 0);
+        item->draw_col = MAX(item->decor.col + col_off, 0);
       }
     }
-    if (item->win_col < 0) {
+    if (item->draw_col < 0) {
       continue;
     }
     int col = 0;
     if (item->decor.ui_watched) {
       // send mark position to UI
-      col = item->win_col;
+      col = item->draw_col;
       WinExtmark m = { (NS)item->ns_id, item->mark_id, win_row, col };
       kv_push(win_extmark_arr, m);
     }
     if (kv_size(item->decor.virt_text)) {
-      col = draw_virt_text_item(buf, item->win_col, item->decor.virt_text,
-                                item->decor.hl_mode, max_col, item->win_col - col_off);
+      col = draw_virt_text_item(buf, item->draw_col, item->decor.virt_text,
+                                item->decor.hl_mode, max_col, item->draw_col - col_off);
     }
-    item->win_col = -2;  // deactivate
+    item->draw_col = INT_MIN;  // deactivate
     if (item->decor.virt_text_pos == kVTEndOfLine && do_eol) {
       state->eol_col = col + 1;
     }
@@ -876,10 +875,10 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
             || item->decor.virt_text_pos != kVTInline) {
           continue;
         }
-        if (item->win_col >= -1 && item->start_col == v) {
+        if (item->draw_col >= -1 && item->start_col == v) {
           wlv->virt_inline = item->decor.virt_text;
           wlv->virt_inline_i = 0;
-          item->win_col = -2;
+          item->draw_col = INT_MIN;
           break;
         }
       }
