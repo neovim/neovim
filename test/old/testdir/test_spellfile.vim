@@ -1063,4 +1063,24 @@ func Test_mkspellmem_opt()
   call assert_fails('set mkspellmem=1000,50,0', 'E474:')
 endfunc
 
+" 'spellfile' accepts '@' on top of 'isfname'.
+func Test_spellfile_allow_at_character()
+  call mkdir('Xtest/the foo@bar,dir', 'p')
+  let &spellfile = './Xtest/the foo@bar,dir/Xspellfile.add'
+  let &spellfile = ''
+  call delete('Xtest', 'rf')
+endfunc
+
+" this was using a NULL pointer
+func Test_mkspell_empty_dic()
+  call writefile(['1'], 'XtestEmpty.dic')
+  call writefile(['SOFOFROM abcd', 'SOFOTO ABCD', 'SAL CIA X'], 'XtestEmpty.aff')
+  mkspell! XtestEmpty.spl XtestEmpty
+
+  call delete('XtestEmpty.dic')
+  call delete('XtestEmpty.aff')
+  call delete('XtestEmpty.spl')
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab
