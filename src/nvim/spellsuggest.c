@@ -509,7 +509,7 @@ void spell_suggest(int count)
   // Get the word and its length.
 
   // Figure out if the word should be capitalised.
-  int need_cap = check_need_cap(curwin->w_cursor.lnum, curwin->w_cursor.col);
+  int need_cap = check_need_cap(curwin, curwin->w_cursor.lnum, curwin->w_cursor.col);
 
   // Make a copy of current line since autocommands may free the line.
   line = xstrdup(get_cursor_line_ptr());

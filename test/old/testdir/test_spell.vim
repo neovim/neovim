@@ -1003,12 +1003,25 @@ func Test_spell_screendump_spellcap()
   call VerifyScreenDump(buf, 'Test_spell_3', {})
 
   " Deleting a full stop removes missing Cap in next line
-  call term_sendkeys(buf, "5Gddk$x")
+  call term_sendkeys(buf, "5Gdd\<C-L>k$x")
   call VerifyScreenDump(buf, 'Test_spell_4', {})
 
   " Undo also updates the next line (go to command line to remove message)
   call term_sendkeys(buf, "u:\<Esc>")
   call VerifyScreenDump(buf, 'Test_spell_5', {})
+
+  " Folding an empty line does not remove Cap in next line
+  call term_sendkeys(buf, "uzfk:\<Esc>")
+  call VerifyScreenDump(buf, 'Test_spell_6', {})
+
+  " Folding the end of a sentence does not remove Cap in next line
+  " and editing a line does not remove Cap in current line
+  call term_sendkeys(buf, "Jzfkk$x")
+  call VerifyScreenDump(buf, 'Test_spell_7', {})
+
+  " Cap is correctly applied in the first row of a window
+  call term_sendkeys(buf, "\<C-E>\<C-L>")
+  call VerifyScreenDump(buf, 'Test_spell_8', {})
 
   " clean up
   call StopVimInTerminal(buf)

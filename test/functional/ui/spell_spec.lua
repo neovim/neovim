@@ -28,6 +28,7 @@ describe("'spell'", function()
       [7] = {foreground = Screen.colors.Blue},
       [8] = {foreground = Screen.colors.Blue, special = Screen.colors.Red, undercurl = true},
       [9] = {bold = true},
+      [10] = {background = Screen.colors.LightGrey, foreground = Screen.colors.DarkBlue},
     })
   end)
 
@@ -82,7 +83,7 @@ describe("'spell'", function()
   end)
 
   -- oldtest: Test_spell_screendump_spellcap()
-  it('has correct highlight at start of line with trailing space', function()
+  it('SpellCap highlight at start of line', function()
     exec([=[
       call setline(1, [
         \"   This line has a sepll error. and missing caps and trailing spaces.   ",
@@ -117,7 +118,7 @@ describe("'spell'", function()
                                                                                       |
     ]])
     -- Deleting a full stop removes missing Cap in next line
-    feed('5Gddk$x')
+    feed('5Gdd<C-L>k$x')
     screen:expect([[
          This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
       {2:another} missing cap here.                                                       |
@@ -136,6 +137,43 @@ describe("'spell'", function()
       Not                                                                             |
       and here^.                                                                       |
       {2:and} here.                                                                       |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
+    -- Folding an empty line does not remove Cap in next line
+    feed('uzfk:<Esc>')
+    screen:expect([[
+         This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
+      {2:another} missing cap here.                                                       |
+      Not                                                                             |
+      {10:^+--  2 lines: and here.·························································}|
+      {2:and} here.                                                                       |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
+    -- Folding the end of a sentence does not remove Cap in next line
+    -- and editing a line does not remove Cap in current line
+    feed('Jzfkk$x')
+    screen:expect([[
+         This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
+      {2:another} missing cap her^e                                                        |
+      {10:+--  2 lines: Not·······························································}|
+      {2:and} here.                                                                       |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
+    -- Cap is correctly applied in the first row of a window
+    feed('<C-E><C-L>')
+    screen:expect([[
+      {2:another} missing cap her^e                                                        |
+      {10:+--  2 lines: Not·······························································}|
+      {2:and} here.                                                                       |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
       {0:~                                                                               }|
       {0:~                                                                               }|
                                                                                       |
