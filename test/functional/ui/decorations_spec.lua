@@ -825,6 +825,26 @@ describe('extmark decorations', function()
       end  -- ?古古古古?古古                                                            |
                                                                                         |
     ]]}
+
+    screen:try_resize(50, 2)
+    command('set nowrap')
+    meths.buf_set_lines(0, 12, 12, true, {'-- ' .. ('…'):rep(57)})
+    feed('G')
+    meths.buf_set_extmark(0, ns, 12, 123, { virt_text={{'!!!!!', 'ErrorMsg'}}, virt_text_pos='overlay', virt_text_hide=true})
+    screen:expect{grid=[[
+      ^-- …………………………………………………………………………………………………………{4:!!!!!}……|
+                                                        |
+    ]]}
+    feed('40zl')
+    screen:expect{grid=[[
+      ^………{4:!!!!!}………………………………                              |
+                                                        |
+    ]]}
+    feed('10zl')
+    screen:expect{grid=[[
+      ^…………………………                                        |
+                                                        |
+    ]]}
   end)
 
   it('can have virtual text of overlay position and styling', function()
