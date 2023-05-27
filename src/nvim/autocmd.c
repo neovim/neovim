@@ -1355,11 +1355,13 @@ void aucmd_restbuf(aco_save_T *aco)
       }
     }
 win_found:
+    ;
+    const bool save_stop_insert_mode = stop_insert_mode;
     // May need to stop Insert mode if we were in a prompt buffer.
     leaving_window(curwin);
     // Do not stop Insert mode when already in Insert mode before.
     if (aco->save_State & MODE_INSERT) {
-      stop_insert_mode = false;
+      stop_insert_mode = save_stop_insert_mode;
     }
     // Remove the window.
     win_remove(curwin, NULL);
