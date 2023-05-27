@@ -78,18 +78,6 @@ jobs:
         name: uncrustify
         run: cmake --build build --target lintc-uncrustify
 
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: suggester / uncrustify
-        uses: reviewdog/action-suggester@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          tool_name: uncrustify
-          cleanup: false
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: check uncrustify
-        run: git diff --color --exit-code
-
   posix:
     name: ${{ matrix.runner }} ${{ matrix.flavor }} (cc=${{ matrix.cc }})
     strategy:
