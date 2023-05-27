@@ -61,6 +61,38 @@ describe('runtime:', function()
 
       eq('vim', eval('g:colorscheme'))
     end)
+
+    it("loads lua colorscheme in 'rtp' if vim version only exists in 'pp' #23724", function()
+      local pack_dir = 'Test_Pack'
+      mkdir_p(pack_dir)
+      finally(function()
+        rmdir(pack_dir)
+      end)
+      exec('set pp+=' .. pack_dir)
+
+      local pack_opt_dir = pack_dir .. sep .. 'pack' .. sep .. 'some_name' .. sep .. 'opt'
+      local colors_opt_dir = pack_opt_dir .. sep .. 'some_pack' .. sep .. 'colors'
+      mkdir_p(colors_opt_dir)
+
+      local rtp_colorscheme_file = colorscheme_folder .. sep .. 'new_colorscheme'
+      local pp_opt_colorscheme_file = colors_opt_dir .. sep .. 'new_colorscheme'
+
+      write_file(pp_opt_colorscheme_file .. '.lua', [[vim.g.colorscheme = 'lua_pp']])
+      exec('colorscheme new_colorscheme')
+      eq('lua_pp', eval('g:colorscheme'))
+
+      write_file(pp_opt_colorscheme_file .. '.vim', [[let g:colorscheme = 'vim_pp']])
+      exec('colorscheme new_colorscheme')
+      eq('vim_pp', eval('g:colorscheme'))
+
+      write_file(rtp_colorscheme_file .. '.lua', [[vim.g.colorscheme = 'lua_rtp']])
+      exec('colorscheme new_colorscheme')
+      eq('lua_rtp', eval('g:colorscheme'))
+
+      write_file(rtp_colorscheme_file .. '.vim', [[let g:colorscheme = 'vim_rtp']])
+      exec('colorscheme new_colorscheme')
+      eq('vim_rtp', eval('g:colorscheme'))
+    end)
   end)
 
   describe('compiler', function()
