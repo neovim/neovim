@@ -153,6 +153,7 @@ void filemess(buf_T *buf, char *name, char *s, int attr)
 int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
              linenr_T lines_to_read, exarg_T *eap, int flags, bool silent)
 {
+  int retval = FAIL;  // jump to "theend" instead of returning
   int fd = stdin_fd >= 0 ? stdin_fd : 0;
   int newfile = (flags & READ_NEW);
   int check_readonly;
@@ -240,7 +241,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
       && vim_strchr(p_cpo, CPO_FNAMER) != NULL
       && !(flags & READ_DUMMY)) {
     if (set_rw_fname(fname, sfname) == FAIL) {
-      return FAIL;
+      goto theend;
     }
   }
 
@@ -284,10 +285,9 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     if (newfile) {
       if (apply_autocmds_exarg(EVENT_BUFREADCMD, NULL, sfname,
                                false, curbuf, eap)) {
-        int status = OK;
-
+        retval = OK;
         if (aborting()) {
-          status = FAIL;
+          retval = FAIL;
         }
 
         // The BufReadCmd code usually uses ":read" to get the text and
@@ -295,14 +295,15 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
         // consider this to work like ":edit", thus reset the
         // BF_NOTEDITED flag.  Then ":write" will work to overwrite the
         // same file.
-        if (status == OK) {
+        if (retval == OK) {
           curbuf->b_flags &= ~BF_NOTEDITED;
         }
-        return status;
+        goto theend;
       }
     } else if (apply_autocmds_exarg(EVENT_FILEREADCMD, sfname, sfname,
                                     false, NULL, eap)) {
-      return aborting() ? FAIL : OK;
+      retval = aborting() ? FAIL : OK;
+      goto theend;
     }
 
     curbuf->b_op_start = orig_start;
@@ -310,7 +311,8 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     if (flags & READ_NOFILE) {
       // Return NOTDONE instead of FAIL so that BufEnter can be triggered
       // and other operations don't fail.
-      return NOTDONE;
+      retval = NOTDONE;
+      goto theend;
     }
   }
 
@@ -328,7 +330,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
       filemess(curbuf, fname, _("Illegal file name"), 0);
       msg_end();
       msg_scroll = msg_save;
-      return FAIL;
+      goto theend;
     }
 
     // If the name ends in a path separator, we can't open it.  Check here,
@@ -340,7 +342,8 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
       }
       msg_end();
       msg_scroll = msg_save;
-      return NOTDONE;
+      retval = NOTDONE;
+      goto theend;
     }
   }
 
@@ -365,12 +368,13 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
         if (!silent) {
           filemess(curbuf, fname, _(msg_is_a_directory), 0);
         }
+        retval = NOTDONE;
       } else {
         filemess(curbuf, fname, _("is not a file"), 0);
       }
       msg_end();
       msg_scroll = msg_save;
-      return S_ISDIR(perm) ? NOTDONE : FAIL;
+      goto theend;
     }
   }
 
@@ -431,7 +435,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   if (fd < 0) {                     // cannot open at all
     msg_scroll = msg_save;
     if (!newfile) {
-      return FAIL;
+      goto theend;
     }
     if (perm == UV_ENOENT) {  // check if the file exists
       // Set the 'new-file' flag, so that when the file has
@@ -450,7 +454,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
             || (using_b_fname
                 && (old_b_fname != curbuf->b_fname))) {
           emsg(_(e_auchangedbuf));
-          return FAIL;
+          goto theend;
         }
       }
       if (!silent) {
@@ -472,10 +476,10 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
       // remember the current fileformat
       save_file_ff(curbuf);
 
-      if (aborting()) {             // autocmds may abort script processing
-        return FAIL;
+      if (!aborting()) {  // autocmds may abort script processing
+        retval = OK;      // a new file is not an error
       }
-      return OK;                  // a new file is not an error
+      goto theend;
     }
 #if defined(UNIX) && defined(EOVERFLOW)
     filemess(curbuf, sfname, ((fd == UV_EFBIG) ? _("[File too big]") :
@@ -491,7 +495,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
 #endif
     curbuf->b_p_ro = true;                  // must use "w!" now
 
-    return FAIL;
+    goto theend;
   }
 
   // Only set the 'ro' flag for readonly files the first time they are
@@ -526,7 +530,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
       if (!read_buffer) {
         close(fd);
       }
-      return FAIL;
+      goto theend;
     }
 #ifdef UNIX
     // Set swap file protection bits after creating it.
@@ -561,7 +565,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     if (!read_buffer && !read_stdin) {
       close(fd);
     }
-    return FAIL;
+    goto theend;
   }
 
   no_wait_return++;         // don't wait for return yet
@@ -617,7 +621,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
       no_wait_return--;
       msg_scroll = msg_save;
       curbuf->b_p_ro = true;            // must use "w!" now
-      return FAIL;
+      goto theend;
     }
     // Don't allow the autocommands to change the current buffer.
     // Try to re-open the file.
@@ -636,7 +640,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
         emsg(_("E201: *ReadPre autocommands must not change current buffer"));
       }
       curbuf->b_p_ro = true;            // must use "w!" now
-      return FAIL;
+      goto theend;
     }
   }
 
@@ -1684,7 +1688,8 @@ failed:
       }
       msg_scroll = msg_save;
       check_marks_read();
-      return OK;                // an interrupt isn't really an error
+      retval = OK;        // an interrupt isn't really an error
+      goto theend;
     }
 
     if (!filtering && !(flags & READ_DUMMY) && !silent) {
@@ -1860,10 +1865,18 @@ failed:
     }
   }
 
-  if (recoverymode && error) {
-    return FAIL;
+  if (!(recoverymode && error)) {
+    retval = OK;
   }
-  return OK;
+
+theend:
+  if (curbuf->b_ml.ml_mfp != NULL
+      && curbuf->b_ml.ml_mfp->mf_dirty == MF_DIRTY_YES_NOSYNC) {
+    // OK to sync the swap file now
+    curbuf->b_ml.ml_mfp->mf_dirty = MF_DIRTY_YES;
+  }
+
+  return retval;
 }
 
 #ifdef OPEN_CHR_FILES
