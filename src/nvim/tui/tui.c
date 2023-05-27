@@ -381,8 +381,10 @@ static void terminfo_stop(TUIData *tui)
   unibi_out(tui, unibi_keypad_local);
   // Disable extended keys before exiting alternate screen.
   unibi_out_ext(tui, tui->unibi_ext.disable_extended_keys);
-  unibi_out(tui, unibi_exit_ca_mode);
+  // May restore old title before exiting alternate screen.
   tui_set_title(tui, (String)STRING_INIT);
+  // Exit alternate screen.
+  unibi_out(tui, unibi_exit_ca_mode);
   if (tui->cursor_color_changed) {
     unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
   }
