@@ -1,9 +1,7 @@
-local lpeg = require('lpeg')
 local helpers = require('test.functional.helpers')(after_each)
 
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
-local has_err = require('luassert').has.errors
 
 describe('vim.lsp._watchfiles', function()
   before_each(helpers.clear)

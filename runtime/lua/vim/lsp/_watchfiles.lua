@@ -18,30 +18,30 @@ local function parse(pattern)
 
   local pathsep = '/'
 
-  function class(inv, ranges)
+  local function class(inv, ranges)
     for i, r in ipairs(ranges) do
       ranges[i] = r[1] .. r[2]
     end
-    patt = l.R(unpack(ranges))
+    local patt = l.R(unpack(ranges))
     if inv == '!' then
       patt = P(1) - patt
     end
     return patt
   end
 
-  function add(acc, a)
+  local function add(acc, a)
     return acc + a
   end
 
-  function mul(acc, m)
+  local function mul(acc, m)
     return acc * m
   end
 
-  function star(stars, after)
+  local function star(stars, after)
     return (-after * (l.P(1) - pathsep)) ^ #stars * after
   end
 
-  function dstar(after)
+  local function dstar(after)
     return (-after * l.P(1)) ^ 0 * after
   end
 
