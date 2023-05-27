@@ -940,25 +940,30 @@ describe('extmark decorations', function()
     ]]}
   end)
 
-  it('can have virtual text of fixed win_col position', function()
+  it('can have virtual text of right_align and fixed win_col position', function()
     insert(example_text)
     feed 'gg'
     meths.buf_set_extmark(0, ns, 1, 0, { virt_text={{'Very', 'ErrorMsg'}},   virt_text_win_col=31, hl_mode='blend'})
+    meths.buf_set_extmark(0, ns, 1, 0, { virt_text={{'VERY', 'ErrorMsg'}}, virt_text_pos='right_align', hl_mode='blend'})
     meths.buf_set_extmark(0, ns, 2, 10, { virt_text={{'Much', 'ErrorMsg'}},   virt_text_win_col=31, hl_mode='blend'})
+    meths.buf_set_extmark(0, ns, 2, 10, { virt_text={{'MUCH', 'ErrorMsg'}}, virt_text_pos='right_align', hl_mode='blend'})
     meths.buf_set_extmark(0, ns, 3, 15, { virt_text={{'Error', 'ErrorMsg'}}, virt_text_win_col=31, hl_mode='blend'})
+    meths.buf_set_extmark(0, ns, 3, 15, { virt_text={{'ERROR', 'ErrorMsg'}}, virt_text_pos='right_align', hl_mode='blend'})
     meths.buf_set_extmark(0, ns, 7, 21, { virt_text={{'-', 'NonText'}}, virt_text_win_col=4, hl_mode='blend'})
+    meths.buf_set_extmark(0, ns, 7, 21, { virt_text={{'-', 'NonText'}}, virt_text_pos='right_align', hl_mode='blend'})
     -- empty virt_text should not change anything
     meths.buf_set_extmark(0, ns, 8, 0, { virt_text={{''}}, virt_text_win_col=14, hl_mode='blend'})
+    meths.buf_set_extmark(0, ns, 8, 0, { virt_text={{''}}, virt_text_pos='right_align', hl_mode='blend'})
 
     screen:expect{grid=[[
       ^for _,item in ipairs(items) do                    |
-          local text, hl_id_cell, cou{4:Very} unpack(item)  |
-          if hl_id_cell ~= nil then  {4:Much}               |
-              hl_id = hl_id_cell     {4:Error}              |
+          local text, hl_id_cell, cou{4:Very} unpack(ite{4:VERY}|
+          if hl_id_cell ~= nil then  {4:Much}           {4:MUCH}|
+              hl_id = hl_id_cell     {4:Error}         {4:ERROR}|
           end                                           |
           for _ = 1, (count or 1) do                    |
               local cell = line[colpos]                 |
-          {1:-}   cell.text = text                          |
+          {1:-}   cell.text = text                         {1:-}|
               cell.hl_id = hl_id                        |
               colpos = colpos+1                         |
           end                                           |
@@ -971,14 +976,14 @@ describe('extmark decorations', function()
     feed '3G12|i<cr><esc>'
     screen:expect{grid=[[
       for _,item in ipairs(items) do                    |
-          local text, hl_id_cell, cou{4:Very} unpack(item)  |
-          if hl_i                    {4:Much}               |
+          local text, hl_id_cell, cou{4:Very} unpack(ite{4:VERY}|
+          if hl_i                    {4:Much}           {4:MUCH}|
       ^d_cell ~= nil then                                |
-              hl_id = hl_id_cell     {4:Error}              |
+              hl_id = hl_id_cell     {4:Error}         {4:ERROR}|
           end                                           |
           for _ = 1, (count or 1) do                    |
               local cell = line[colpos]                 |
-          {1:-}   cell.text = text                          |
+          {1:-}   cell.text = text                         {1:-}|
               cell.hl_id = hl_id                        |
               colpos = colpos+1                         |
           end                                           |
@@ -990,13 +995,13 @@ describe('extmark decorations', function()
     feed 'u:<cr>'
     screen:expect{grid=[[
       for _,item in ipairs(items) do                    |
-          local text, hl_id_cell, cou{4:Very} unpack(item)  |
-          if hl_i^d_cell ~= nil then  {4:Much}               |
-              hl_id = hl_id_cell     {4:Error}              |
+          local text, hl_id_cell, cou{4:Very} unpack(ite{4:VERY}|
+          if hl_i^d_cell ~= nil then  {4:Much}           {4:MUCH}|
+              hl_id = hl_id_cell     {4:Error}         {4:ERROR}|
           end                                           |
           for _ = 1, (count or 1) do                    |
               local cell = line[colpos]                 |
-          {1:-}   cell.text = text                          |
+          {1:-}   cell.text = text                         {1:-}|
               cell.hl_id = hl_id                        |
               colpos = colpos+1                         |
           end                                           |
@@ -1009,18 +1014,94 @@ describe('extmark decorations', function()
     feed '8|i<cr><esc>'
     screen:expect{grid=[[
       for _,item in ipairs(items) do                    |
-          local text, hl_id_cell, cou{4:Very} unpack(item)  |
+          local text, hl_id_cell, cou{4:Very} unpack(ite{4:VERY}|
           if                                            |
-      ^hl_id_cell ~= nil then         {4:Much}               |
-              hl_id = hl_id_cell     {4:Error}              |
+      ^hl_id_cell ~= nil then         {4:Much}           {4:MUCH}|
+              hl_id = hl_id_cell     {4:Error}         {4:ERROR}|
           end                                           |
           for _ = 1, (count or 1) do                    |
               local cell = line[colpos]                 |
-          {1:-}   cell.text = text                          |
+          {1:-}   cell.text = text                         {1:-}|
               cell.hl_id = hl_id                        |
               colpos = colpos+1                         |
           end                                           |
       end                                               |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+
+    feed 'jI-- <esc>..........'
+    screen:expect{grid=[[
+      for _,item in ipairs(items) do                    |
+          local text, hl_id_cell, cou{4:Very} unpack(ite{4:VERY}|
+          if                                            |
+      hl_id_cell ~= nil then         {4:Much}           {4:MUCH}|
+              --^ -- -- -- -- -- -- --{4:Error}- -- hl_i{4:ERROR}|
+      l_id_cell                                         |
+          end                                           |
+          for _ = 1, (count or 1) do                    |
+              local cell = line[colpos]                 |
+          {1:-}   cell.text = text                         {1:-}|
+              cell.hl_id = hl_id                        |
+              colpos = colpos+1                         |
+          end                                           |
+      end                                               |
+                                                        |
+    ]]}
+
+    feed '.'
+    screen:expect{grid=[[
+      for _,item in ipairs(items) do                    |
+          local text, hl_id_cell, cou{4:Very} unpack(ite{4:VERY}|
+          if                                            |
+      hl_id_cell ~= nil then         {4:Much}           {4:MUCH}|
+              --^ -- -- -- -- -- -- -- -- -- -- -- hl_id |
+      = hl_id_cell                   {4:Error}         {4:ERROR}|
+          end                                           |
+          for _ = 1, (count or 1) do                    |
+              local cell = line[colpos]                 |
+          {1:-}   cell.text = text                         {1:-}|
+              cell.hl_id = hl_id                        |
+              colpos = colpos+1                         |
+          end                                           |
+      end                                               |
+                                                        |
+    ]]}
+
+    command 'set nowrap'
+    screen:expect{grid=[[
+      for _,item in ipairs(items) do                    |
+          local text, hl_id_cell, cou{4:Very} unpack(ite{4:VERY}|
+          if                                            |
+      hl_id_cell ~= nil then         {4:Much}           {4:MUCH}|
+              --^ -- -- -- -- -- -- --{4:Error}- -- -- h{4:ERROR}|
+          end                                           |
+          for _ = 1, (count or 1) do                    |
+              local cell = line[colpos]                 |
+          {1:-}   cell.text = text                         {1:-}|
+              cell.hl_id = hl_id                        |
+              colpos = colpos+1                         |
+          end                                           |
+      end                                               |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+
+    feed('8zl')
+    screen:expect{grid=[[
+      em in ipairs(items) do                            |
+      l text, hl_id_cell, count = unp{4:Very}item)      {4:VERY}|
+                                                        |
+      ll ~= nil then                 {4:Much}           {4:MUCH}|
+      --^ -- -- -- -- -- -- -- -- -- -{4:Error}hl_id = h{4:ERROR}|
+                                                        |
+      _ = 1, (count or 1) do                            |
+      local cell = line[colpos]                         |
+      cell{1:-}text = text                                 {1:-}|
+      cell.hl_id = hl_id                                |
+      colpos = colpos+1                                 |
+                                                        |
+                                                        |
       {1:~                                                 }|
                                                         |
     ]]}

@@ -82,7 +82,11 @@ typedef struct {
   Decoration decor;
   int attr_id;  // cached lookup of decor.hl_id
   bool virt_text_owned;
-  int win_col;
+  /// Screen column to draw the virtual text.
+  /// When -1, the virtual text may be drawn after deciding where.
+  /// When -3, the virtual text should be drawn on a later screen line.
+  /// When INT_MIN, the virtual text should no longer be drawn.
+  int draw_col;
   uint64_t ns_id;
   uint64_t mark_id;
 } DecorRange;

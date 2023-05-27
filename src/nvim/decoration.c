@@ -81,7 +81,7 @@ void decor_redraw(buf_T *buf, int row1, int row2, Decoration *decor)
     }
   }
 
-  if (decor && decor_virt_pos(*decor)) {
+  if (decor && decor_virt_pos(decor)) {
     redraw_buf_line_later(buf, row1 + 1, false);
     if (decor->virt_text_pos == kVTInline) {
       changed_line_display_buf(buf);
@@ -202,9 +202,9 @@ Decoration get_decor(mtkey_t mark)
 }
 
 /// @return true if decor has a virtual position (virtual text or ui_watched)
-static bool decor_virt_pos(Decoration decor)
+bool decor_virt_pos(const Decoration *const decor)
 {
-  return kv_size(decor.virt_text) || decor.ui_watched;
+  return kv_size(decor->virt_text) || decor->ui_watched;
 }
 
 bool decor_redraw_start(win_T *wp, int top_row, DecorState *state)
@@ -232,7 +232,7 @@ bool decor_redraw_start(win_T *wp, int top_row, DecorState *state)
 
     // Exclude start marks if the end mark position is above the top row
     // Exclude end marks if we have already added the start mark
-    if ((mt_start(mark) && altpos.row < top_row && !decor_virt_pos(decor))
+    if ((mt_start(mark) && altpos.row < top_row && !decor_virt_pos(&decor))
         || (mt_end(mark) && altpos.row >= top_row)) {
       goto next_mark;
     }
@@ -342,7 +342,7 @@ next_mark:
     bool active = false, keep = true;
     if (item.end_row < state->row
         || (item.end_row == state->row && item.end_col <= col)) {
-      if (!(item.start_row >= state->row && decor_virt_pos(item.decor))) {
+      if (!(item.start_row >= state->row && decor_virt_pos(&item.decor))) {
         keep = false;
       }
     } else {
@@ -372,10 +372,19 @@ next_mark:
     if (active && item.decor.spell != kNone) {
       spell = item.decor.spell;
     }
-    if ((item.start_row == state->row && item.start_col <= col)
-        && decor_virt_pos(item.decor)
-        && item.decor.virt_text_pos == kVTOverlay && item.win_col == -1) {
-      item.win_col = (item.decor.virt_text_hide && hidden) ? -2 : win_col;
+    if (item.start_row == state->row && decor_virt_pos(&item.decor)
+        && item.draw_col != INT_MIN) {
+      if (item.start_col <= col) {
+        if (item.decor.virt_text_pos == kVTOverlay && item.draw_col == -1) {
+          item.draw_col = (item.decor.virt_text_hide && hidden) ? INT_MIN : win_col;
+        } else if (item.draw_col == -3) {
+          item.draw_col = -1;
+        }
+      } else if (wp->w_p_wrap
+                 && (item.decor.virt_text_pos == kVTRightAlign
+                     || item.decor.virt_text_pos == kVTWinCol)) {
+        item.draw_col = -3;
+      }
     }
     if (keep) {
       kv_A(state->active, j++) = item;
@@ -550,7 +559,7 @@ bool decor_redraw_eol(win_T *wp, DecorState *state, int *eol_attr, int eol_col)
   bool has_virttext = false;
   for (size_t i = 0; i < kv_size(state->active); i++) {
     DecorRange item = kv_A(state->active, i);
-    if (item.start_row == state->row && decor_virt_pos(item.decor)) {
+    if (item.start_row == state->row && decor_virt_pos(&item.decor)) {
       has_virttext = true;
     }
 
