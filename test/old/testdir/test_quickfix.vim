@@ -6280,5 +6280,28 @@ func Test_setqflist_cb_arg()
   call setqflist([], 'f')
 endfunc
 
+" Test that setqflist() should not prevent :stopinsert from working
+func Test_setqflist_stopinsert()
+  new
+  call setqflist([], 'f')
+  copen
+  cclose
+  func StopInsert()
+    stopinsert
+    call setqflist([{'text': 'foo'}])
+    return ''
+  endfunc
+
+  call setline(1, 'abc')
+  call cursor(1, 1)
+  call feedkeys("i\<C-R>=StopInsert()\<CR>$", 'tnix')
+  call assert_equal('foo', getqflist()[0].text)
+  call assert_equal([0, 1, 3, 0, v:maxcol], getcurpos())
+  call assert_equal(['abc'], getline(1, '$'))
+
+  delfunc StopInsert
+  call setqflist([], 'f')
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
