@@ -7,6 +7,7 @@ local meths = helpers.meths
 local feed = helpers.feed
 local feed_command = helpers.feed_command
 local write_file = helpers.write_file
+local tmpname = helpers.tmpname
 local exec = helpers.exec
 local exc_exec = helpers.exc_exec
 local exec_lua = helpers.exec_lua
@@ -179,56 +180,65 @@ describe(':source', function()
     os.remove(test_file)
   end)
 
-  it('can source selected region in lua file', function()
-    local test_file = 'test.lua'
+  describe('can source current buffer', function()
+    local function test_source_lua_curbuf()
+      it('selected region', function()
+        insert([[
+          vim.g.b = 5
+          vim.g.b = 6
+          vim.g.b = 7
+          a = [=[
+           "\ a
+            \ b]=]
+        ]])
+        feed('dd')
 
-    write_file (test_file, [[
-      vim.g.b = 5
-      vim.g.b = 6
-      vim.g.b = 7
-      a = [=[
-       "\ a
-        \ b]=]
-    ]])
+        feed('ggjV')
+        feed_command(':source')
+        eq(6, eval('g:b'))
 
-    command('edit '..test_file)
+        feed('GVkk')
+        feed_command(':source')
+        eq('   "\\ a\n    \\ b', exec_lua('return _G.a'))
+      end)
 
-    feed('ggjV')
-    feed_command(':source')
-    eq(6, eval('g:b'))
+      it('whole buffer', function()
+        insert([[
+          vim.g.c = 10
+          vim.g.c = 11
+          vim.g.c = 12
+          a = [=[
+            \ 1
+           "\ 2]=]
+          vim.g.sfile_value = vim.fn.expand('<sfile>')
+          vim.g.stack_value = vim.fn.expand('<stack>')
+          vim.g.script_value = vim.fn.expand('<script>')
+        ]])
+        feed('dd')
 
-    feed('GVkk')
-    feed_command(':source')
-    eq('   "\\ a\n    \\ b', exec_lua('return _G.a'))
+        feed_command(':source')
 
-    os.remove(test_file)
-  end)
+        eq(12, eval('g:c'))
+        eq('    \\ 1\n   "\\ 2', exec_lua('return _G.a'))
+        eq(':source (no file)', meths.get_var('sfile_value'))
+        eq(':source (no file)', meths.get_var('stack_value'))
+        eq(':source (no file)', meths.get_var('script_value'))
+      end)
+    end
 
-  it('can source current lua buffer without argument', function()
-    local test_file = 'test.lua'
+    describe('with ft=lua', function()
+      before_each(function()
+        command('setlocal ft=lua')
+      end)
+      test_source_lua_curbuf()
+    end)
 
-    write_file(test_file, [[
-      vim.g.c = 10
-      vim.g.c = 11
-      vim.g.c = 12
-      a = [=[
-        \ 1
-       "\ 2]=]
-      vim.g.sfile_value = vim.fn.expand('<sfile>')
-      vim.g.stack_value = vim.fn.expand('<stack>')
-      vim.g.script_value = vim.fn.expand('<script>')
-    ]])
-
-    command('edit '..test_file)
-    feed_command(':source')
-
-    eq(12, eval('g:c'))
-    eq('    \\ 1\n   "\\ 2', exec_lua('return _G.a'))
-    eq(':source (no file)', meths.get_var('sfile_value'))
-    eq(':source (no file)', meths.get_var('stack_value'))
-    eq(':source (no file)', meths.get_var('script_value'))
-
-    os.remove(test_file)
+    describe('with .lua extension', function()
+      before_each(function()
+        command('edit ' .. tmpname() .. '.lua')
+      end)
+      test_source_lua_curbuf()
+    end)
   end)
 
   it("doesn't throw E484 for lua parsing/runtime errors", function()

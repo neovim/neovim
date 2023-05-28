@@ -92,6 +92,9 @@ The following changes to existing APIs or features add new behavior.
 • |LspRequest| autocmd callbacks now contain additional information about the LSP
   request status update that occurred.
 
+• `:source` without arguments treats a buffer with its 'filetype' set to "lua"
+  as Lua code regardless of its extension.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 

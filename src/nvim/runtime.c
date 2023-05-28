@@ -1926,8 +1926,8 @@ static void cmd_source_buffer(const exarg_T *const eap)
     .buf = ga.ga_data,
     .offset = 0,
   };
-  if (curbuf->b_fname
-      && path_with_extension(curbuf->b_fname, "lua")) {
+  if (strequal(curbuf->b_p_ft, "lua")
+      || (curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua"))) {
     nlua_source_using_linegetter(get_str_line, (void *)&cookie, ":source (no file)");
   } else {
     source_using_linegetter((void *)&cookie, get_str_line, ":source (no file)");
