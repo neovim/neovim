@@ -837,9 +837,10 @@ describe('extmark decorations', function()
     screen:try_resize(50, 3)
     command('set nowrap')
     meths.buf_set_lines(0, 0, -1, true, {'-- ' .. ('…'):rep(57)})
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_text={{'?????', 'ErrorMsg'}}, virt_text_pos='overlay', virt_text_hide=true})
     meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'!!!!!', 'ErrorMsg'}}, virt_text_pos='overlay', virt_text_hide=true})
     screen:expect{grid=[[
-      ^-- …………………………………………………………………………………………………………{4:!!!!!}……|
+      {4:^?????}……………………………………………………………………………………………………{4:!!!!!}……|
       {1:~                                                 }|
                                                         |
     ]]}
@@ -849,7 +850,13 @@ describe('extmark decorations', function()
       {1:~                                                 }|
                                                         |
     ]]}
-    feed('10zl')
+    feed('3zl')
+    screen:expect{grid=[[
+      {4:^!!!!!}………………………………                                 |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+    feed('7zl')
     screen:expect{grid=[[
       ^…………………………                                        |
       {1:~                                                 }|
@@ -858,7 +865,7 @@ describe('extmark decorations', function()
 
     command('set wrap smoothscroll')
     screen:expect{grid=[[
-      -- …………………………………………………………………………………………………………{4:!!!!!}……|
+      {4:?????}……………………………………………………………………………………………………{4:!!!!!}……|
       ^…………………………                                        |
                                                         |
     ]]}
@@ -876,7 +883,7 @@ describe('extmark decorations', function()
     ]]}
     feed('<C-Y>')
     screen:expect{grid=[[
-      -- …………………………………………………………………………………………………|
+      {4:?????}……………………………………………………………………………………………|
       ………{4:!!!!!}……………………………^…                    |
                                               |
     ]]}
