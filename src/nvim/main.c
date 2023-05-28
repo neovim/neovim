@@ -250,6 +250,11 @@ int main(int argc, char **argv)
 
   argv0 = argv[0];
 
+  if (!appname_is_valid()) {
+    os_errmsg("$NVIM_APPNAME is not a valid file name.\n");
+    exit(1);
+  }
+
   if (argc > 1 && STRICMP(argv[1], "-ll") == 0) {
     if (argc == 2) {
       print_mainerr(err_arg_missing, argv[1]);

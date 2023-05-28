@@ -14,6 +14,7 @@ local ok = helpers.ok
 local funcs = helpers.funcs
 local insert = helpers.insert
 local neq = helpers.neq
+local nvim_prog = helpers.nvim_prog
 local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
 local alter_slashes = helpers.alter_slashes
@@ -603,6 +604,10 @@ describe('stdpath()', function()
       eq(appname, funcs.fnamemodify(funcs.stdpath('data_dirs')[1], ':t'))
     end
     assert_alive()  -- Check for crash. #8393
+
+    --  Check that nvim rejects invalid APPNAMEs
+    local child = funcs.jobstart({ nvim_prog }, {env={NVIM_APPNAME='a/b\\c'}})
+    eq(1, funcs.jobwait({child}, 3000)[1])
   end)
 
   context('returns a String', function()

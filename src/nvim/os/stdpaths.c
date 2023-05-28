@@ -69,6 +69,19 @@ const char *get_appname(void)
   return env_val;
 }
 
+/// Ensure that APPNAME is valid. In particular, it cannot contain directory separators.
+bool appname_is_valid(void)
+{
+  const char *appname = get_appname();
+  const size_t appname_len = strlen(appname);
+  for (size_t i = 0; i < appname_len; i++) {
+    if (appname[i] == PATHSEP) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /// Return XDG variable value
 ///
 /// @param[in]  idx  XDG variable to use.
