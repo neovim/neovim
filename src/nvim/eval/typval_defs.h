@@ -375,25 +375,4 @@ typedef struct {
 
 typedef int (*ListSorter)(const void *, const void *);
 
-#ifdef LOG_LIST_ACTIONS
-/// List actions log entry
-typedef struct {
-  uintptr_t l;  ///< List log entry belongs to.
-  uintptr_t li1;  ///< First list item log entry belongs to, if applicable.
-  uintptr_t li2;  ///< Second list item log entry belongs to, if applicable.
-  int len;  ///< List length when log entry was created.
-  const char *action;  ///< Logged action.
-} ListLogEntry;
-
-typedef struct list_log ListLog;
-
-/// List actions log
-struct list_log {
-  ListLog *next;  ///< Next chunk or NULL.
-  size_t capacity;  ///< Number of entries in current chunk.
-  size_t size;  ///< Current chunk size.
-  ListLogEntry entries[];  ///< Actual log entries.
-};
-#endif
-
 #endif  // NVIM_EVAL_TYPVAL_DEFS_H

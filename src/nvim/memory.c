@@ -816,7 +816,6 @@ void free_all_mem(void)
   grid_free_all_mem();
 
   clear_hl_tables(false);
-  list_free_log();
 
   check_quickfix_busy();
 

@@ -775,5 +775,4 @@ void f_test_write_list_log(typval_T *const argvars, typval_T *const rettv, EvalF
   if (fname == NULL) {
     return;
   }
-  list_write_log(fname);
 }
