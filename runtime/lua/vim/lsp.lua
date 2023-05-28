@@ -50,6 +50,7 @@ lsp._request_name_to_capability = {
   ['textDocument/codeAction'] = { 'codeActionProvider' },
   ['textDocument/codeLens'] = { 'codeLensProvider' },
   ['codeLens/resolve'] = { 'codeLensProvider', 'resolveProvider' },
+  ['codeAction/resolve'] = { 'codeActionProvider', 'resolveProvider' },
   ['workspace/executeCommand'] = { 'executeCommandProvider' },
   ['workspace/symbol'] = { 'workspaceSymbolProvider' },
   ['textDocument/references'] = { 'referencesProvider' },
@@ -886,6 +887,47 @@ function lsp.start(config, opts)
   return client_id
 end
 
+---@private
+-- Determines whether the given option can be set by `set_defaults`.
+local function is_empty_or_default(bufnr, option)
+  if vim.bo[bufnr][option] == '' then
+    return true
+  end
+
+  local info = vim.api.nvim_get_option_info2(option, { buf = bufnr })
+  local scriptinfo = vim.tbl_filter(function(e)
+    return e.sid == info.last_set_sid
+  end, vim.fn.getscriptinfo())
+
+  if #scriptinfo ~= 1 then
+    return false
+  end
+
+  return vim.startswith(scriptinfo[1].name, vim.fn.expand('$VIMRUNTIME'))
+end
+
+---@private
+---@param client lsp.Client
+function lsp._set_defaults(client, bufnr)
+  if
+    client.supports_method('textDocument/definition') and is_empty_or_default(bufnr, 'tagfunc')
+  then
+    vim.bo[bufnr].tagfunc = 'v:lua.vim.lsp.tagfunc'
+  end
+  if
+    client.supports_method('textDocument/completion') and is_empty_or_default(bufnr, 'omnifunc')
+  then
+    vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
+  end
+  if
+    client.supports_method('textDocument/rangeFormatting')
+    and is_empty_or_default(bufnr, 'formatprg')
+    and is_empty_or_default(bufnr, 'formatexpr')
+  then
+    vim.bo[bufnr].formatexpr = 'v:lua.vim.lsp.formatexpr()'
+  end
+end
+
 -- FIXME: DOC: Currently all methods on the `vim.lsp.client` object are
 -- documented twice: Here, and on the methods themselves (e.g.
 -- `client.request()`). This is a workaround for the vimdoc generator script
@@ -1091,43 +1133,6 @@ function lsp.start_client(config)
   end
 
   ---@private
-  -- Determines whether the given option can be set by `set_defaults`.
-  local function is_empty_or_default(bufnr, option)
-    if vim.bo[bufnr][option] == '' then
-      return true
-    end
-
-    local info = vim.api.nvim_get_option_info2(option, { buf = bufnr })
-    local scriptinfo = vim.tbl_filter(function(e)
-      return e.sid == info.last_set_sid
-    end, vim.fn.getscriptinfo())
-
-    if #scriptinfo ~= 1 then
-      return false
-    end
-
-    return vim.startswith(scriptinfo[1].name, vim.fn.expand('$VIMRUNTIME'))
-  end
-
-  ---@private
-  local function set_defaults(client, bufnr)
-    local capabilities = client.server_capabilities
-    if capabilities.definitionProvider and is_empty_or_default(bufnr, 'tagfunc') then
-      vim.bo[bufnr].tagfunc = 'v:lua.vim.lsp.tagfunc'
-    end
-    if capabilities.completionProvider and is_empty_or_default(bufnr, 'omnifunc') then
-      vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
-    end
-    if
-      capabilities.documentRangeFormattingProvider
-      and is_empty_or_default(bufnr, 'formatprg')
-      and is_empty_or_default(bufnr, 'formatexpr')
-    then
-      vim.bo[bufnr].formatexpr = 'v:lua.vim.lsp.formatexpr()'
-    end
-  end
-
-  ---@private
   --- Reset defaults set by `set_defaults`.
   --- Must only be called if the last client attached to a buffer exits.
   local function unset_defaults(bufnr)
@@ -1228,7 +1233,9 @@ function lsp.start_client(config)
     requests = {},
     -- for $/progress report
     messages = { name = name, messages = {}, progress = {}, status = {} },
+    dynamic_capabilities = require('vim.lsp._dynamic').new(client_id),
   }
+  client.config.capabilities = config.capabilities or protocol.make_client_capabilities()
 
   -- Store the uninitialized_clients for cleanup in case we exit before initialize finishes.
   uninitialized_clients[client_id] = client
@@ -1291,7 +1298,7 @@ function lsp.start_client(config)
       -- User provided initialization options.
       initializationOptions = config.init_options,
       -- The capabilities provided by the client (editor or tool)
-      capabilities = config.capabilities or protocol.make_client_capabilities(),
+      capabilities = config.capabilities,
       -- The initial trace setting. If omitted trace is disabled ("off").
       -- trace = "off" | "messages" | "verbose";
       trace = valid_traces[config.trace] or 'off',
@@ -1300,6 +1307,26 @@ function lsp.start_client(config)
       -- TODO(ashkan) handle errors here.
       pcall(config.before_init, initialize_params, config)
     end
+
+    --- @param method string
+    --- @param opts? {bufnr?: number}
+    client.supports_method = function(method, opts)
+      opts = opts or {}
+      local required_capability = lsp._request_name_to_capability[method]
+      -- if we don't know about the method, assume that the client supports it.
+      if not required_capability then
+        return true
+      end
+      if vim.tbl_get(client.server_capabilities or {}, unpack(required_capability)) then
+        return true
+      else
+        if client.dynamic_capabilities:supports_registration(method) then
+          return client.dynamic_capabilities:supports(method, opts)
+        end
+        return false
+      end
+    end
+
     local _ = log.trace() and log.trace(log_prefix, 'initialize_params', initialize_params)
     rpc.request('initialize', initialize_params, function(init_err, result)
       assert(not init_err, tostring(init_err))
@@ -1314,18 +1341,6 @@ function lsp.start_client(config)
       client.server_capabilities =
         assert(result.capabilities, "initialize result doesn't contain capabilities")
       client.server_capabilities = protocol.resolve_capabilities(client.server_capabilities)
-      client.supports_method = function(method)
-        local required_capability = lsp._request_name_to_capability[method]
-        -- if we don't know about the method, assume that the client supports it.
-        if not required_capability then
-          return true
-        end
-        if vim.tbl_get(client.server_capabilities, unpack(required_capability)) then
-          return true
-        else
-          return false
-        end
-      end
 
       if next(config.settings) then
         client.notify('workspace/didChangeConfiguration', { settings = config.settings })
@@ -1522,7 +1537,7 @@ function lsp.start_client(config)
   function client._on_attach(bufnr)
     text_document_did_open_handler(bufnr, client)
 
-    set_defaults(client, bufnr)
+    lsp._set_defaults(client, bufnr)
 
     nvim_exec_autocmds('LspAttach', {
       buffer = bufnr,
@@ -1946,7 +1961,7 @@ function lsp.buf_request(bufnr, method, params, handler)
   local supported_clients = {}
   local method_supported = false
   for_each_buffer_client(bufnr, function(client, client_id)
-    if client.supports_method(method) then
+    if client.supports_method(method, { bufnr = bufnr }) then
       method_supported = true
       table.insert(supported_clients, client_id)
     end
@@ -2002,7 +2017,7 @@ function lsp.buf_request_all(bufnr, method, params, callback)
 
   local set_expected_result_count = once(function()
     for_each_buffer_client(bufnr, function(client)
-      if client.supports_method(method) then
+      if client.supports_method(method, { bufnr = bufnr }) then
         expected_result_count = expected_result_count + 1
       end
     end)

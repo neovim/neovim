@@ -36,6 +36,7 @@ ADDED FEATURES                                                     *news-added*
 
 The following new APIs or features were added.
 
+• Dynamic registration of LSP capabilities. An implication of this change is that checking a client's `server_capabilities` is no longer a sufficient indicator to see if a server supports a feature. Instead use `client.supports_method(<method>)`. It considers both the dynamic capabilities and static `server_capabilities`.
 • |vim.iter()| provides a generic iterator interface for tables and Lua
   iterators |luaref-in|.
 

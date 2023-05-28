@@ -118,22 +118,30 @@ end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#client_registerCapability
 M['client/registerCapability'] = function(_, result, ctx)
-  local log_unsupported = false
+  local client_id = ctx.client_id
+  ---@type lsp.Client
+  local client = vim.lsp.get_client_by_id(client_id)
+
+  client.dynamic_capabilities:register(result.registrations)
+  for bufnr, _ in ipairs(client.attached_buffers) do
+    vim.lsp._set_defaults(client, bufnr)
+  end
+
+  ---@type string[]
+  local unsupported = {}
   for _, reg in ipairs(result.registrations) do
     if reg.method == 'workspace/didChangeWatchedFiles' then
       require('vim.lsp._watchfiles').register(reg, ctx)
-    else
-      log_unsupported = true
+    elseif not client.dynamic_capabilities:supports_registration(reg.method) then
+      unsupported[#unsupported + 1] = reg.method
     end
   end
-  if log_unsupported then
-    local client_id = ctx.client_id
+  if #unsupported > 0 then
     local warning_tpl = 'The language server %s triggers a registerCapability '
-      .. 'handler despite dynamicRegistration set to false. '
+      .. 'handler for %s despite dynamicRegistration set to false. '
       .. 'Report upstream, this warning is harmless'
-    local client = vim.lsp.get_client_by_id(client_id)
     local client_name = client and client.name or string.format('id=%d', client_id)
-    local warning = string.format(warning_tpl, client_name)
+    local warning = string.format(warning_tpl, client_name, table.concat(unsupported, ', '))
     log.warn(warning)
   end
   return vim.NIL
@@ -141,6 +149,10 @@ end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#client_unregisterCapability
 M['client/unregisterCapability'] = function(_, result, ctx)
+  local client_id = ctx.client_id
+  local client = vim.lsp.get_client_by_id(client_id)
+  client.dynamic_capabilities:unregister(result.unregisterations)
+
   for _, unreg in ipairs(result.unregisterations) do
     if unreg.method == 'workspace/didChangeWatchedFiles' then
       require('vim.lsp._watchfiles').unregister(unreg, ctx)
