@@ -82,6 +82,8 @@ The following new APIs or features were added.
 
 • |vim.system()| for running system commands.
 
+• |nvim_set_keymap()| now supports abbreviations.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

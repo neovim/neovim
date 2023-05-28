@@ -2603,13 +2603,21 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     goto fail_and_free;
   }
 
-  if (mode.size > 1) {
+  bool is_abbrev = false;
+  if (mode.size > 2) {
     api_set_error(err, kErrorTypeValidation, "Shortname is too long: %s", mode.data);
     goto fail_and_free;
+  } else if (mode.size == 2) {
+    if ((mode.data[0] != '!' && mode.data[0] != 'i' && mode.data[0] != 'c')
+        || mode.data[1] != 'a') {
+      api_set_error(err, kErrorTypeValidation, "Shortname is too long: %s", mode.data);
+      goto fail_and_free;
+    }
+    is_abbrev = true;
   }
   int mode_val;  // integer value of the mapping mode, to be passed to do_map()
   char *p = (mode.size) ? mode.data : "m";
-  if (strncmp(p, "!", 2) == 0) {
+  if (*p == '!') {
     mode_val = get_map_mode(&p, true);  // mapmode-ic
   } else {
     mode_val = get_map_mode(&p, false);
@@ -2654,7 +2662,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     maptype_val = MAPTYPE_NOREMAP;
   }
 
-  switch (buf_do_map(maptype_val, &parsed_args, mode_val, 0, target_buf)) {
+  switch (buf_do_map(maptype_val, &parsed_args, mode_val, is_abbrev, target_buf)) {
   case 0:
     break;
   case 1:

@@ -988,6 +988,54 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq("\nn  lhs           rhs\n                 map description",
        helpers.exec_capture("nmap lhs"))
   end)
+
+  it('can define !-mode abbreviations with lua callbacks', function()
+    exec_lua [[
+      GlobalCount = 0
+      vim.api.nvim_set_keymap('!a', 'foo', '', {expr = true, callback = function()
+        GlobalCount = GlobalCount + 1
+        return tostring(GlobalCount)
+      end})
+    ]]
+
+    feed 'iThe foo and the bar and the foo again<esc>'
+    eq('The 1 and the bar and the 2 again', meths.get_current_line())
+
+    feed ':let x = "The foo is the one"<cr>'
+    eq('The 3 is the one', meths.eval'x')
+  end)
+
+  it('can define insert mode abbreviations with lua callbacks', function()
+    exec_lua [[
+      GlobalCount = 0
+      vim.api.nvim_set_keymap('ia', 'foo', '', {expr = true, callback = function()
+        GlobalCount = GlobalCount + 1
+        return tostring(GlobalCount)
+      end})
+    ]]
+
+    feed 'iThe foo and the bar and the foo again<esc>'
+    eq('The 1 and the bar and the 2 again', meths.get_current_line())
+
+    feed ':let x = "The foo is the one"<cr>'
+    eq('The foo is the one', meths.eval'x')
+  end)
+
+  it('can define cmdline mode abbreviations with lua callbacks', function()
+    exec_lua [[
+      GlobalCount = 0
+      vim.api.nvim_set_keymap('ca', 'foo', '', {expr = true, callback = function()
+        GlobalCount = GlobalCount + 1
+        return tostring(GlobalCount)
+      end})
+    ]]
+
+    feed 'iThe foo and the bar and the foo again<esc>'
+    eq('The foo and the bar and the foo again', meths.get_current_line())
+
+    feed ':let x = "The foo is the one"<cr>'
+    eq('The 1 is the one', meths.eval'x')
+  end)
 end)
 
 describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
