@@ -1547,6 +1547,7 @@ local filename = {
   ['man.config'] = 'manconf',
   ['maxima-init.mac'] = 'maxima',
   ['meson.build'] = 'meson',
+  ['meson.options'] = 'meson',
   ['meson_options.txt'] = 'meson',
   ['/etc/conf.modules'] = 'modconf',
   ['/etc/modules'] = 'modconf',
