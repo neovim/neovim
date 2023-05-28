@@ -426,7 +426,7 @@ describe('highlight', function()
       ^                         |
       {2:~                        }|
                                |
-    ]],{
+    ]], {
       [1] = {strikethrough = true},
       [2] = {bold = true, foreground = Screen.colors.Blue1},
     })
@@ -515,7 +515,7 @@ describe('highlight', function()
               {1:neovim} tabbed^    |
       {0:~                        }|
       {5:-- INSERT --}             |
-    ]],{
+    ]], {
       [0] = {bold=true, foreground=Screen.colors.Blue},
       [1] = {background = Screen.colors.Yellow, foreground = Screen.colors.Red,
              special = Screen.colors.Red},
@@ -527,7 +527,7 @@ describe('highlight', function()
 
   end)
 
-  it("'diff', syntax and extmark", function()
+  it("'diff', syntax and extmark #23722", function()
     local screen = Screen.new(25,10)
     screen:attach()
     exec([[
@@ -549,7 +549,7 @@ describe('highlight', function()
       {4:~                        }|
       {8:[No Name]                }|
                                |
-    ]],{
+    ]], {
       [0] = {Screen.colors.WebGray, foreground = Screen.colors.DarkBlue},
       [1] = {background = Screen.colors.Grey, foreground = Screen.colors.Blue4},
       [2] = {foreground = Screen.colors.Red, background = Screen.colors.LightBlue},
