@@ -603,7 +603,7 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fo
     mtkey_t mark = marktree_itr_current(itr);
     if (mark.pos.row < 0 || mark.pos.row >= end_row) {
       break;
-    } else if (marktree_decor_level(mark) < kDecorLevelVirtLine) {
+    } else if (mt_end(mark) || marktree_decor_level(mark) < kDecorLevelVirtLine) {
       goto next_mark;
     }
     bool above = mark.pos.row > (lnum - 2);
