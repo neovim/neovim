@@ -1727,7 +1727,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int mod_top, bo
         sign_idx = 0;
         wlv.draw_state = WL_LINE;
         if (has_decor && wlv.row == startrow + wlv.filler_lines) {
-          // hide virt_text on text hidden by 'nowrap'
+          // hide virt_text on text hidden by 'nowrap' or 'smoothscroll'
           decor_redraw_col(wp, (colnr_T)(ptr - line), wlv.off, true, &decor_state);
         }
         win_line_continue(&wlv);  // use wlv.saved_ values

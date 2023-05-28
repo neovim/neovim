@@ -483,8 +483,9 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                                     window column (starting from the first
 ///                                     text column)
 ///               - virt_text_hide : hide the virtual text when the background
-///                                  text is selected or hidden due to
-///                                  horizontal scroll 'nowrap'
+///                                  text is selected or hidden because of
+///                                  scrolling with 'nowrap' or 'smoothscroll'.
+///                                  Currently only affects "overlay" virt_text.
 ///               - hl_mode : control how highlights are combined with the
 ///                           highlights of the text. Currently only affects
 ///                           virt_text highlights, but might affect `hl_group`
