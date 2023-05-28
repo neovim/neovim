@@ -15,7 +15,7 @@ local wshada, sdrcmd, shada_fname =
 
 local mock_file_path = '/a/b/'
 if helpers.is_os('win') then
-  mock_file_path = 'C:/a/'
+  mock_file_path = 'C:\\a\\'
 end
 
 describe('ShaDa history merging code', function()

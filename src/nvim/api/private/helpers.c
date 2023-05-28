@@ -21,6 +21,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_eval.h"
+#include "nvim/fileio.h"
 #include "nvim/garray.h"
 #include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
@@ -301,6 +302,12 @@ buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
   if (!rv) {
     api_set_error(err, kErrorTypeValidation, "Invalid buffer id: %d", buffer);
   }
+
+#if defined(BACKSLASH_IN_FILENAME)
+  if (rv && rv->b_ffname) {
+    forward_slash(rv->b_ffname);
+  }
+#endif
 
   return rv;
 }

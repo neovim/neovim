@@ -1003,6 +1003,10 @@ String nvim_buf_get_name(Buffer buffer, Arena *arena, Error *err)
     return rv;
   }
 
+#if defined(BACKSLASH_IN_FILENAME)
+  slash_adjust(buf->b_ffname);
+#endif
+
   return cstr_as_string(buf->b_ffname);
 }
 
