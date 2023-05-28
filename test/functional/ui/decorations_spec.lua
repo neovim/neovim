@@ -827,25 +827,54 @@ describe('extmark decorations', function()
       end  -- ?古古古古?古古                                                            |
                                                                                         |
     ]]}
+  end)
 
-    screen:try_resize(50, 2)
+  it('virt_text_hide hides overlay virtual text when extmark is off-screen', function()
+    screen:try_resize(50, 3)
     command('set nowrap')
-    meths.buf_set_lines(0, 12, 12, true, {'-- ' .. ('…'):rep(57)})
-    feed('G')
-    meths.buf_set_extmark(0, ns, 12, 123, { virt_text={{'!!!!!', 'ErrorMsg'}}, virt_text_pos='overlay', virt_text_hide=true})
+    meths.buf_set_lines(0, 0, -1, true, {'-- ' .. ('…'):rep(57)})
+    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'!!!!!', 'ErrorMsg'}}, virt_text_pos='overlay', virt_text_hide=true})
     screen:expect{grid=[[
       ^-- …………………………………………………………………………………………………………{4:!!!!!}……|
+      {1:~                                                 }|
                                                         |
     ]]}
     feed('40zl')
     screen:expect{grid=[[
       ^………{4:!!!!!}………………………………                              |
+      {1:~                                                 }|
                                                         |
     ]]}
     feed('10zl')
     screen:expect{grid=[[
       ^…………………………                                        |
+      {1:~                                                 }|
                                                         |
+    ]]}
+
+    command('set wrap smoothscroll')
+    screen:expect{grid=[[
+      -- …………………………………………………………………………………………………………{4:!!!!!}……|
+      ^…………………………                                        |
+                                                        |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+      {1:<<<}………………^…                                        |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+    screen:try_resize(40, 3)
+    screen:expect{grid=[[
+      {1:<<<}{4:!!!!!}……………………………^…                    |
+      {1:~                                       }|
+                                              |
+    ]]}
+    feed('<C-Y>')
+    screen:expect{grid=[[
+      -- …………………………………………………………………………………………………|
+      ………{4:!!!!!}……………………………^…                    |
+                                              |
     ]]}
   end)
 
