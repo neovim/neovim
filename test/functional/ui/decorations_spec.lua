@@ -1946,6 +1946,30 @@ if (h->n_buckets < new_n_buckets) { // expand
     ]]}
   end)
 
+  it('does not show twice if end_row or end_col is specified #18622', function()
+    insert([[
+      aaa
+      bbb
+      ccc
+      ddd]])
+    meths.buf_set_extmark(0, ns, 0, 0, {end_row = 2, virt_lines = {{{'VIRT LINE 1', 'NonText'}}}})
+    meths.buf_set_extmark(0, ns, 3, 0, {end_col = 2, virt_lines = {{{'VIRT LINE 2', 'NonText'}}}})
+    screen:expect{grid=[[
+      aaa                                               |
+      {1:VIRT LINE 1}                                       |
+      bbb                                               |
+      ccc                                               |
+      dd^d                                               |
+      {1:VIRT LINE 2}                                       |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+  end)
+
 end)
 
 describe('decorations: signs', function()
