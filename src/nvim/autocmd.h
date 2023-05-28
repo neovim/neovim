@@ -66,6 +66,7 @@ struct AutoPatCmd_S {
   event_T event;            ///< Current event
   sctx_T script_ctx;        ///< Script context where it is defined
   int arg_bufnr;            ///< Initially equal to <abuf>, set to zero when buf is deleted
+  int arg_winid;            ///< Winid which execute current autocmd
   Object *data;             ///< Arbitrary data
   AutoPatCmd *next;         ///< Chain of active apc-s for auto-invalidation
 };

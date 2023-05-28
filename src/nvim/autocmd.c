@@ -1751,6 +1751,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     .group = group,
     .event = event,
     .arg_bufnr = autocmd_bufnr,
+    .arg_winid = curwin->handle,
   };
   aucmd_next(&patcmd);
 
@@ -1972,7 +1973,7 @@ static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
     PUT(data, "match", CSTR_TO_OBJ(autocmd_match));
     PUT(data, "file", CSTR_TO_OBJ(autocmd_fname));
     PUT(data, "buf", INTEGER_OBJ(autocmd_bufnr));
-    PUT(data, "winid", INTEGER_OBJ(curwin->handle));
+    PUT(data, "winid", INTEGER_OBJ(apc->arg_winid));
 
     if (apc->data) {
       PUT(data, "data", copy_object(*apc->data, NULL));
