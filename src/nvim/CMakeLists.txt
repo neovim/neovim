@@ -394,9 +394,6 @@ endif()
 if($ENV{CI})
   # Don't debug log on CI, it gets too verbose in the main build log.
   # TODO(bfredl): debug log level also exposes some errors with EXITFREE in ASAN build.
-  set(LOG_DEBUG FALSE)
-elseif(LOG_DEBUG)
-  target_compile_definitions(nvim PRIVATE NVIM_LOG_DEBUG)
 else()
   # Minimize logging for release-type builds.
   target_compile_definitions(nvim PRIVATE $<$<CONFIG:Debug>:NVIM_LOG_DEBUG>)
