@@ -3280,9 +3280,11 @@ static int check_regexp_delim(int c)
 ///
 /// The usual escapes are supported as described in the regexp docs.
 ///
-/// @param do_buf_event If `true`, send buffer updates.
+/// @param cmdpreview_ns  The namespace to show 'inccommand' preview highlights.
+///                       If <= 0, preview shouldn't be shown.
 /// @return 0, 1 or 2. See show_cmdpreview() for more information on what the return value means.
-static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T cmdpreview_bufnr)
+static int do_sub(exarg_T *eap, const proftime_T timeout, const long cmdpreview_ns,
+                  const handle_T cmdpreview_bufnr)
 {
 #define ADJUST_SUB_FIRSTLNUM() \
   do { \
@@ -3400,7 +3402,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
       MB_PTR_ADV(cmd);
     }
 
-    if (!eap->skip && !cmdpreview) {
+    if (!eap->skip && cmdpreview_ns <= 0) {
       sub_set_replacement((SubReplacementString) {
         .sub = xstrdup(sub),
         .timestamp = os_time(),
@@ -3420,7 +3422,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
     endcolumn = (curwin->w_curswant == MAXCOL);
   }
 
-  if (sub != NULL && sub_joining_lines(eap, pat, sub, cmd, !cmdpreview)) {
+  if (sub != NULL && sub_joining_lines(eap, pat, sub, cmd, cmdpreview_ns <= 0)) {
     return 0;
   }
 
@@ -3465,7 +3467,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
   }
 
   if (search_regcomp(pat, NULL, RE_SUBST, which_pat,
-                     (cmdpreview ? 0 : SEARCH_HIS), &regmatch) == FAIL) {
+                     (cmdpreview_ns > 0 ? 0 : SEARCH_HIS), &regmatch) == FAIL) {
     if (subflags.do_error) {
       emsg(_(e_invcmd));
     }
@@ -3494,7 +3496,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
     sub = xstrdup(sub);
     sub_copy = sub;
   } else {
-    char *newsub = regtilde(sub, magic_isset(), cmdpreview);
+    char *newsub = regtilde(sub, magic_isset(), cmdpreview_ns > 0);
     if (newsub != sub) {
       // newsub was allocated, free it later.
       sub_copy = newsub;
@@ -3508,7 +3510,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
 
   for (linenr_T lnum = eap->line1;
        lnum <= line2 && !got_quit && !aborting()
-       && (!cmdpreview || preview_lines.lines_needed <= (linenr_T)p_cwh
+       && (cmdpreview_ns <= 0 || preview_lines.lines_needed <= (linenr_T)p_cwh
            || lnum <= curwin->w_botline);
        lnum++) {
     long nmatch = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
@@ -3669,7 +3671,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
           }
         }
 
-        if (subflags.do_ask && !cmdpreview) {
+        if (subflags.do_ask && cmdpreview_ns <= 0) {
           int typed = 0;
 
           // change State to MODE_CONFIRM, so that the mouse works
@@ -3882,7 +3884,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
         // Save the line numbers for the preview buffer
         // NOTE: If the pattern matches a final newline, the next line will
         // be shown also, but should not be highlighted. Intentional for now.
-        if (cmdpreview && !has_second_delim) {
+        if (cmdpreview_ns > 0 && !has_second_delim) {
           current_match.start.col = regmatch.startpos[0].col;
           if (current_match.end.lnum == 0) {
             current_match.end.lnum = sub_firstlnum + (linenr_T)nmatch - 1;
@@ -3897,7 +3899,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
 
         // 3. Substitute the string. During 'inccommand' preview only do this if
         //    there is a replace pattern.
-        if (!cmdpreview || has_second_delim) {
+        if (cmdpreview_ns <= 0 || has_second_delim) {
           long lnum_start = lnum;  // save the start lnum
           int save_ma = curbuf->b_p_ma;
           int save_sandbox = sandbox;
@@ -4147,7 +4149,7 @@ skip:
 
 #define PUSH_PREVIEW_LINES() \
   do { \
-    if (cmdpreview) { \
+    if (cmdpreview_ns > 0) { \
       linenr_T match_lines = current_match.end.lnum \
                              - current_match.start.lnum +1; \
       if (preview_lines.subresults.size > 0) { \
@@ -4230,7 +4232,7 @@ skip:
           beginline(BL_WHITE | BL_FIX);
         }
       }
-      if (!cmdpreview && !do_sub_msg(subflags.do_count) && subflags.do_ask && p_ch > 0) {
+      if (cmdpreview_ns <= 0 && !do_sub_msg(subflags.do_count) && subflags.do_ask && p_ch > 0) {
         msg("");
       }
     } else {
@@ -4269,7 +4271,7 @@ skip:
   int retv = 0;
 
   // Show 'inccommand' preview if there are matched lines.
-  if (cmdpreview && !aborting()) {
+  if (cmdpreview_ns > 0 && !aborting()) {
     if (got_quit || profile_passed_limit(timeout)) {  // Too slow, disable.
       set_string_option_direct("icm", -1, "", OPT_FREE, SID_NONE);
     } else if (*p_icm != NUL && pat != NULL) {
