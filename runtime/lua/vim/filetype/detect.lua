@@ -771,14 +771,14 @@ end
 function M.mod(path, bufnr)
   if vim.g.filetype_mod then
     return vim.g.filetype_mod
+  elseif matchregex(path, [[\c\<go\.mod$]]) then
+    return 'gomod'
   elseif is_lprolog(bufnr) then
     return 'lprolog'
   elseif matchregex(nextnonblank(bufnr, 1), [[\%(\<MODULE\s\+\w\+\s*;\|^\s*(\*\)]]) then
     return 'modula2'
   elseif is_rapid(bufnr) then
     return 'rapid'
-  elseif matchregex(path, [[\c\<go\.mod$]]) then
-    return 'gomod'
   else
     -- Nothing recognized, assume modsim3
     return 'modsim3'
