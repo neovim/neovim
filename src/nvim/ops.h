@@ -123,6 +123,15 @@ static inline int op_reg_index(const int regname)
   }
 }
 
+/// @see get_yank_register
+/// @return  true when register should be inserted literally
+/// (selection or clipboard)
+static inline bool is_literal_register(const int regname)
+  FUNC_ATTR_CONST
+{
+  return regname == '*' || regname == '+';
+}
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ops.h.generated.h"
 #endif
