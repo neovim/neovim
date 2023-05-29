@@ -235,7 +235,7 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   aucmd_prepbuf(&aco, buf);
 
   refresh_screen(rv, buf);
-  set_option_value("buftype", 0, "terminal", OPT_LOCAL);  // -V666
+  set_option_value("buftype", STATIC_CSTR_AS_OPTVAL("terminal"), OPT_LOCAL);  // -V666
 
   // Default settings for terminal buffers
   buf->b_p_ma = false;     // 'nomodifiable'
@@ -243,8 +243,8 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   buf->b_p_scbk =          // 'scrollback' (initialize local from global)
                   (p_scbk < 0) ? 10000 : MAX(1, p_scbk);
   buf->b_p_tw = 0;         // 'textwidth'
-  set_option_value("wrap", false, NULL, OPT_LOCAL);
-  set_option_value("list", false, NULL, OPT_LOCAL);
+  set_option_value("wrap", BOOLEAN_OPTVAL(false), OPT_LOCAL);
+  set_option_value("list", BOOLEAN_OPTVAL(false), OPT_LOCAL);
   if (buf->b_ffname != NULL) {
     buf_set_term_title(buf, buf->b_ffname, strlen(buf->b_ffname));
   }

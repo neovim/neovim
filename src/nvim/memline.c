@@ -977,7 +977,7 @@ void ml_recover(bool checkext)
     set_fileformat(b0_ff - 1, OPT_LOCAL);
   }
   if (b0_fenc != NULL) {
-    set_option_value_give_err("fenc", 0L, b0_fenc, OPT_LOCAL);
+    set_option_value_give_err("fenc", CSTR_AS_OPTVAL(b0_fenc), OPT_LOCAL);
     xfree(b0_fenc);
   }
   unchanged(curbuf, true, true);

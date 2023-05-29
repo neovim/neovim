@@ -653,7 +653,7 @@ void fix_help_buffer(void)
   // Set filetype to "help".
   if (strcmp(curbuf->b_p_ft, "help") != 0) {
     curbuf->b_ro_locked++;
-    set_option_value_give_err("ft", 0L, "help", OPT_LOCAL);
+    set_option_value_give_err("ft", STATIC_CSTR_AS_OPTVAL("help"), OPT_LOCAL);
     curbuf->b_ro_locked--;
   }
 

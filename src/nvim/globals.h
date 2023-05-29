@@ -1033,6 +1033,8 @@ INIT(= N_("E5767: Cannot use :undo! to redo or move to a different undo branch")
 
 EXTERN const char e_trustfile[] INIT(= N_("E5570: Cannot update trust file: %s"));
 
+EXTERN const char e_unknown_option2[] INIT(= N_("E355: Unknown option: %s"));
+
 EXTERN const char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
 EXTERN const char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));
 

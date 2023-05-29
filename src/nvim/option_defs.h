@@ -1,6 +1,7 @@
 #ifndef NVIM_OPTION_DEFS_H
 #define NVIM_OPTION_DEFS_H
 
+#include "nvim/api/private/defs.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/macros.h"
 #include "nvim/types.h"
@@ -1079,5 +1080,25 @@ typedef struct vimoption {
 // Options local to a window have a value local to a buffer and global to all
 // buffers.  Indicate this by setting "var" to VAR_WIN.
 #define VAR_WIN ((char *)-1)
+
+// Option value type
+typedef enum {
+  kOptValTypeNil = 0,
+  kOptValTypeBoolean,
+  kOptValTypeNumber,
+  kOptValTypeString,
+} OptValType;
+
+// Option value
+typedef struct {
+  OptValType type;
+
+  union {
+    // Vim boolean options are actually tri-states because they have a third "None" value.
+    TriState boolean;
+    Integer number;
+    String string;
+  } data;
+} OptVal;
 
 #endif  // NVIM_OPTION_DEFS_H
