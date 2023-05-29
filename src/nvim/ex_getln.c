@@ -1597,7 +1597,7 @@ static int command_line_insert_reg(CommandLineState *s)
 
   bool literally = false;
   if (s->c != ESC) {               // use ESC to cancel inserting register
-    literally = i == Ctrl_R;
+    literally = i == Ctrl_R || is_literal_register(s->c);
     cmdline_paste(s->c, literally, false);
 
     // When there was a serious error abort getting the

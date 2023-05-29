@@ -854,15 +854,6 @@ static bool is_append_register(int regname)
   return ASCII_ISUPPER(regname);
 }
 
-/// @see get_yank_register
-/// @returns true when register should be inserted literally
-/// (selection or clipboard)
-static inline bool is_literal_register(int regname)
-  FUNC_ATTR_CONST
-{
-  return regname == '*' || regname == '+';
-}
-
 /// @return  a copy of contents in register `name` for use in do_put. Should be
 ///          freed by caller.
 yankreg_T *copy_register(int name)

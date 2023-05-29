@@ -512,6 +512,36 @@ describe('search highlighting', function()
       {1:~                   }│{1:~                  }|
       /file^                                   |
     ]])
+    feed('<Esc>')
+
+    command('set rtp^=test/functional/fixtures')
+    -- incsearch works after c_CTRL-R inserts clipboard register
+
+    command('let @* = "first"')
+    feed('/<C-R>*')
+    screen:expect([[
+      the {3:first} line      │the {2:first} line     |
+      in a little file    │in a little file   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      /first^                                  |
+    ]])
+    feed('<Esc>')
+
+    command('let @+ = "little"')
+    feed('/<C-R>+')
+    screen:expect([[
+      the first line      │the first line     |
+      in a {3:little} file    │in a {2:little} file   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      /little^                                 |
+    ]])
+    feed('<Esc>')
   end)
 
   it('works with incsearch and offset', function()

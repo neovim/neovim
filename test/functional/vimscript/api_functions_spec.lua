@@ -133,7 +133,7 @@ describe('eval-API', function()
     })
 
     command("set ft=vim")
-    command("let &rtp='build/runtime/,'.&rtp")
+    command("set rtp^=build/runtime/")
     command("syntax on")
     insert([[
       call bufnr('%')
