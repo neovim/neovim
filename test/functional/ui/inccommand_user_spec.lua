@@ -401,6 +401,40 @@ describe("'inccommand' for user commands", function()
     feed('e')
     assert_alive()
   end)
+
+  it('no crash when adding highlight after :substitute #21495', function()
+    command('set inccommand=nosplit')
+    exec_lua([[
+      vim.api.nvim_create_user_command("Crash", function() end, {
+        preview = function(_, preview_ns, _)
+          vim.cmd("%s/text/cats/g")
+          vim.api.nvim_buf_add_highlight(0, preview_ns, "Search", 0, 0, -1)
+          return 1
+        end,
+      })
+    ]])
+    feed(':C')
+    screen:expect([[
+      {1:  cats on line 1}                        |
+        more cats on line 2                   |
+        oh no, even more cats                 |
+        will the cats ever stop               |
+        oh well                               |
+        did the cats stop                     |
+        why won't it stop                     |
+        make the cats stop                    |
+                                              |
+      {2:~                                       }|
+      {2:~                                       }|
+      {2:~                                       }|
+      {2:~                                       }|
+      {2:~                                       }|
+      {2:~                                       }|
+      {2:~                                       }|
+      :C^                                      |
+    ]])
+    assert_alive()
+  end)
 end)
 
 describe("'inccommand' with multiple buffers", function()
