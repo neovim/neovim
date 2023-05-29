@@ -2058,9 +2058,10 @@ static void run_linematch_algorithm(diff_T *dp)
 {
   // define buffers for diff algorithm
   mmfile_t diffbufs_mm[DB_COUNT];
-  const char *diffbufs[DB_COUNT];
+  char *diffbufs[DB_COUNT];
   int diff_length[DB_COUNT];
   size_t ndiffs = 0;
+  const bool iwhite = (diff_flags & (DIFF_IWHITEALL | DIFF_IWHITE)) > 0;
   for (int i = 0; i < DB_COUNT; i++) {
     if (curtab->tp_diffbuf[i] != NULL) {
       // write the contents of the entire buffer to
@@ -2071,6 +2072,17 @@ static void run_linematch_algorithm(diff_T *dp)
       // we want to get the char* to the diff buffer that was just written
       // we add it to the array of char*, diffbufs
       diffbufs[ndiffs] = diffbufs_mm[ndiffs].ptr;
+      if (iwhite) {
+        size_t j = 0, k = 0, lines = (size_t)dp->df_count[i];
+        while (lines > 0) {
+          if (diffbufs[ndiffs][j] != ' ' && diffbufs[ndiffs][j] != '\t') {
+            diffbufs[ndiffs][k++] = diffbufs[ndiffs][j];
+          }
+          if (diffbufs[ndiffs][j++] == '\n') {
+            lines--;
+          }
+        }
+      }
 
       // keep track of the length of this diff block to pass it to the linematch
       // algorithm
@@ -2084,8 +2096,7 @@ static void run_linematch_algorithm(diff_T *dp)
   // we will get the output of the linematch algorithm in the format of an array
   // of integers (*decisions) and the length of that array (decisions_length)
   int *decisions = NULL;
-  const bool iwhite = (diff_flags & (DIFF_IWHITEALL | DIFF_IWHITE)) > 0;
-  size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, iwhite);
+  size_t decisions_length = linematch_nbuffers((const char**)diffbufs, diff_length, ndiffs, &decisions);
 
   for (size_t i = 0; i < ndiffs; i++) {
     XFREE_CLEAR(diffbufs_mm[i].ptr);
