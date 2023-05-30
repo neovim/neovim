@@ -701,6 +701,189 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
   return arg;
 }
 
+/// Set an environment variable, part of ex_let_one().
+static char *ex_let_env(char *arg, typval_T *const tv, const bool is_const,
+                        const char *const endchars, const char *const op)
+  FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (is_const) {
+    emsg(_("E996: Cannot lock an environment variable"));
+    return NULL;
+  }
+
+  // Find the end of the name.
+  char *arg_end = NULL;
+  arg++;
+  char *name = arg;
+  int len = get_env_len((const char **)&arg);
+  if (len == 0) {
+    semsg(_(e_invarg2), name - 1);
+  } else {
+    if (op != NULL && vim_strchr("+-*/%", (uint8_t)(*op)) != NULL) {
+      semsg(_(e_letwrong), op);
+    } else if (endchars != NULL
+               && vim_strchr(endchars, (uint8_t)(*skipwhite(arg))) == NULL) {
+      emsg(_(e_letunexp));
+    } else if (!check_secure()) {
+      char *tofree = NULL;
+      const char c1 = name[len];
+      name[len] = NUL;
+      const char *p = tv_get_string_chk(tv);
+      if (p != NULL && op != NULL && *op == '.') {
+        char *s = vim_getenv(name);
+        if (s != NULL) {
+          tofree = concat_str(s, p);
+          p = tofree;
+          xfree(s);
+        }
+      }
+      if (p != NULL) {
+        vim_setenv_ext(name, p);
+        arg_end = arg;
+      }
+      name[len] = c1;
+      xfree(tofree);
+    }
+  }
+  return arg_end;
+}
+
+/// Set an option, part of ex_let_one().
+static char *ex_let_option(char *arg, typval_T *const tv, const bool is_const,
+                           const char *const endchars, const char *const op)
+  FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (is_const) {
+    emsg(_("E996: Cannot lock an option"));
+    return NULL;
+  }
+
+  // Find the end of the name.
+  char *arg_end = NULL;
+  int scope;
+  char *const p = (char *)find_option_end((const char **)&arg, &scope);
+  if (p == NULL
+      || (endchars != NULL
+          && vim_strchr(endchars, (uint8_t)(*skipwhite(p))) == NULL)) {
+    emsg(_(e_letunexp));
+  } else {
+    varnumber_T n = 0;
+    getoption_T opt_type;
+    long numval;
+    char *stringval = NULL;
+    const char *s = NULL;
+    bool failed = false;
+    uint32_t opt_p_flags;
+    char *tofree = NULL;
+
+    const char c1 = *p;
+    *p = NUL;
+
+    opt_type = get_option_value(arg, &numval, &stringval, &opt_p_flags, scope);
+    if (opt_type == gov_bool
+        || opt_type == gov_number
+        || opt_type == gov_hidden_bool
+        || opt_type == gov_hidden_number) {
+      // number, possibly hidden
+      n = (long)tv_get_number(tv);
+    }
+
+    if ((opt_p_flags & P_FUNC) && tv_is_func(*tv)) {
+      // If the option can be set to a function reference or a lambda
+      // and the passed value is a function reference, then convert it to
+      // the name (string) of the function reference.
+      s = tofree = encode_tv2string(tv, NULL);
+    } else if (tv->v_type != VAR_BOOL && tv->v_type != VAR_SPECIAL) {
+      // Avoid setting a string option to the text "v:false" or similar.
+      s = tv_get_string_chk(tv);
+    }
+
+    if (op != NULL && *op != '=') {
+      if (((opt_type == gov_bool || opt_type == gov_number) && *op == '.')
+          || (opt_type == gov_string && *op != '.')) {
+        semsg(_(e_letwrong), op);
+        failed = true;  // don't set the value
+      } else {
+        // number or bool
+        if (opt_type == gov_number || opt_type == gov_bool) {
+          switch (*op) {
+          case '+':
+            n = numval + n; break;
+          case '-':
+            n = numval - n; break;
+          case '*':
+            n = numval * n; break;
+          case '/':
+            n = num_divide(numval, n); break;
+          case '%':
+            n = num_modulus(numval, n); break;
+          }
+          s = NULL;
+        } else if (opt_type == gov_string && stringval != NULL && s != NULL) {
+          // string
+          char *const oldstringval = stringval;
+          stringval = concat_str(stringval, s);
+          xfree(oldstringval);
+          s = stringval;
+        }
+      }
+    }
+
+    if (!failed) {
+      if (opt_type != gov_string || s != NULL) {
+        const char *err = set_option_value(arg, (long)n, s, scope);
+        arg_end = p;
+        if (err != NULL) {
+          emsg(_(err));
+        }
+      } else {
+        emsg(_(e_stringreq));
+      }
+    }
+    *p = c1;
+    xfree(stringval);
+    xfree(tofree);
+  }
+  return arg_end;
+}
+
+/// Set a register, part of ex_let_one().
+static char *ex_let_register(char *arg, typval_T *const tv, const bool is_const,
+                             const char *const endchars, const char *const op)
+  FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (is_const) {
+    emsg(_("E996: Cannot lock a register"));
+    return NULL;
+  }
+
+  char *arg_end = NULL;
+  arg++;
+  if (op != NULL && vim_strchr("+-*/%", (uint8_t)(*op)) != NULL) {
+    semsg(_(e_letwrong), op);
+  } else if (endchars != NULL
+             && vim_strchr(endchars, (uint8_t)(*skipwhite(arg + 1))) == NULL) {
+    emsg(_(e_letunexp));
+  } else {
+    char *ptofree = NULL;
+    const char *p = tv_get_string_chk(tv);
+    if (p != NULL && op != NULL && *op == '.') {
+      char *s = get_reg_contents(*arg == '@' ? '"' : *arg, kGRegExprSrc);
+      if (s != NULL) {
+        ptofree = concat_str(s, p);
+        p = ptofree;
+        xfree(s);
+      }
+    }
+    if (p != NULL) {
+      write_reg_contents(*arg == '@' ? '"' : *arg, p, (ssize_t)strlen(p), false);
+      arg_end = arg + 1;
+    }
+    xfree(ptofree);
+  }
+  return arg_end;
+}
+
 /// Set one item of `:let var = expr` or `:let [v1, v2] = list` to its value
 ///
 /// @param[in]  arg  Start of the variable name.
@@ -718,172 +901,21 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
 {
   char *arg_end = NULL;
 
-  // ":let $VAR = expr": Set environment variable.
   if (*arg == '$') {
-    if (is_const) {
-      emsg(_("E996: Cannot lock an environment variable"));
-      return NULL;
-    }
-    // Find the end of the name.
-    arg++;
-    char *name = arg;
-    int len = get_env_len((const char **)&arg);
-    if (len == 0) {
-      semsg(_(e_invarg2), name - 1);
-    } else {
-      if (op != NULL && vim_strchr("+-*/%", (uint8_t)(*op)) != NULL) {
-        semsg(_(e_letwrong), op);
-      } else if (endchars != NULL
-                 && vim_strchr(endchars, (uint8_t)(*skipwhite(arg))) == NULL) {
-        emsg(_(e_letunexp));
-      } else if (!check_secure()) {
-        char *tofree = NULL;
-        const char c1 = name[len];
-        name[len] = NUL;
-        const char *p = tv_get_string_chk(tv);
-        if (p != NULL && op != NULL && *op == '.') {
-          char *s = vim_getenv(name);
-          if (s != NULL) {
-            tofree = concat_str(s, p);
-            p = tofree;
-            xfree(s);
-          }
-        }
-        if (p != NULL) {
-          vim_setenv_ext(name, p);
-          arg_end = arg;
-        }
-        name[len] = c1;
-        xfree(tofree);
-      }
-    }
+    // ":let $VAR = expr": Set environment variable.
+    return ex_let_env(arg, tv, is_const, endchars, op);
+  } else if (*arg == '&') {
     // ":let &option = expr": Set option value.
     // ":let &l:option = expr": Set local option value.
     // ":let &g:option = expr": Set global option value.
-  } else if (*arg == '&') {
-    if (is_const) {
-      emsg(_("E996: Cannot lock an option"));
-      return NULL;
-    }
-    // Find the end of the name.
-    int scope;
-    char *const p = (char *)find_option_end((const char **)&arg, &scope);
-    if (p == NULL
-        || (endchars != NULL
-            && vim_strchr(endchars, (uint8_t)(*skipwhite(p))) == NULL)) {
-      emsg(_(e_letunexp));
-    } else {
-      varnumber_T n = 0;
-      getoption_T opt_type;
-      long numval;
-      char *stringval = NULL;
-      const char *s = NULL;
-      bool failed = false;
-      uint32_t opt_p_flags;
-      char *tofree = NULL;
-
-      const char c1 = *p;
-      *p = NUL;
-
-      opt_type = get_option_value(arg, &numval, &stringval, &opt_p_flags, scope);
-      if (opt_type == gov_bool
-          || opt_type == gov_number
-          || opt_type == gov_hidden_bool
-          || opt_type == gov_hidden_number) {
-        // number, possibly hidden
-        n = (long)tv_get_number(tv);
-      }
-
-      if ((opt_p_flags & P_FUNC) && tv_is_func(*tv)) {
-        // If the option can be set to a function reference or a lambda
-        // and the passed value is a function reference, then convert it to
-        // the name (string) of the function reference.
-        s = tofree = encode_tv2string(tv, NULL);
-      } else if (tv->v_type != VAR_BOOL && tv->v_type != VAR_SPECIAL) {
-        // Avoid setting a string option to the text "v:false" or similar.
-        s = tv_get_string_chk(tv);
-      }
-
-      if (op != NULL && *op != '=') {
-        if (((opt_type == gov_bool || opt_type == gov_number) && *op == '.')
-            || (opt_type == gov_string && *op != '.')) {
-          semsg(_(e_letwrong), op);
-          failed = true;  // don't set the value
-        } else {
-          // number or bool
-          if (opt_type == gov_number || opt_type == gov_bool) {
-            switch (*op) {
-            case '+':
-              n = numval + n; break;
-            case '-':
-              n = numval - n; break;
-            case '*':
-              n = numval * n; break;
-            case '/':
-              n = num_divide(numval, n); break;
-            case '%':
-              n = num_modulus(numval, n); break;
-            }
-            s = NULL;
-          } else if (opt_type == gov_string && stringval != NULL && s != NULL) {
-            // string
-            char *const oldstringval = stringval;
-            stringval = concat_str(stringval, s);
-            xfree(oldstringval);
-            s = stringval;
-          }
-        }
-      }
-
-      if (!failed) {
-        if (opt_type != gov_string || s != NULL) {
-          const char *err = set_option_value(arg, (long)n, s, scope);
-          arg_end = p;
-          if (err != NULL) {
-            emsg(_(err));
-          }
-        } else {
-          emsg(_(e_stringreq));
-        }
-      }
-      *p = c1;
-      xfree(stringval);
-      xfree(tofree);
-    }
-    // ":let @r = expr": Set register contents.
+    return ex_let_option(arg, tv, is_const, endchars, op);
   } else if (*arg == '@') {
-    if (is_const) {
-      emsg(_("E996: Cannot lock a register"));
-      return NULL;
-    }
-    arg++;
-    if (op != NULL && vim_strchr("+-*/%", (uint8_t)(*op)) != NULL) {
-      semsg(_(e_letwrong), op);
-    } else if (endchars != NULL
-               && vim_strchr(endchars, (uint8_t)(*skipwhite(arg + 1))) == NULL) {
-      emsg(_(e_letunexp));
-    } else {
-      char *ptofree = NULL;
-      const char *p = tv_get_string_chk(tv);
-      if (p != NULL && op != NULL && *op == '.') {
-        char *s = get_reg_contents(*arg == '@' ? '"' : *arg, kGRegExprSrc);
-        if (s != NULL) {
-          ptofree = concat_str(s, p);
-          p = ptofree;
-          xfree(s);
-        }
-      }
-      if (p != NULL) {
-        write_reg_contents(*arg == '@' ? '"' : *arg, p, (ssize_t)strlen(p), false);
-        arg_end = arg + 1;
-      }
-      xfree(ptofree);
-    }
+    // ":let @r = expr": Set register contents.
+    return ex_let_register(arg, tv, is_const, endchars, op);
+  } else if (eval_isnamec1(*arg) || *arg == '{') {
     // ":let var = expr": Set internal variable.
     // ":let {expr} = expr": Idem, name made with curly braces
-  } else if (eval_isnamec1(*arg) || *arg == '{') {
     lval_T lv;
-
     char *const p = get_lval(arg, tv, &lv, false, false, 0, FNE_CHECK_START);
     if (p != NULL && lv.ll_name != NULL) {
       if (endchars != NULL && vim_strchr(endchars, (uint8_t)(*skipwhite(p))) == NULL) {
