@@ -76,6 +76,8 @@ The following new APIs or features were added.
   is resized horizontally). Note: Lines that are not visible and kept in
   |'scrollback'| are not reflown.
 
+• |vim.system()| for running system commands.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

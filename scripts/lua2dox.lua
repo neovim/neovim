@@ -340,6 +340,7 @@ function TLua2DoX_filter.filter(this, AppStamp, Filename)
 
         if vim.startswith(line, '---@cast')
           or vim.startswith(line, '---@diagnostic')
+          or vim.startswith(line, '---@overload')
           or vim.startswith(line, '---@type') then
           -- Ignore LSP directives
           outStream:writeln('// gg:"' .. line .. '"')

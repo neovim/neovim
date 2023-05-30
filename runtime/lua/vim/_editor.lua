@@ -42,10 +42,6 @@ for k, v in pairs({
   vim._submodules[k] = v
 end
 
--- Remove at Nvim 1.0
----@deprecated
-vim.loop = vim.uv
-
 -- There are things which have special rules in vim._init_packages
 -- for legacy reasons (uri) or for performance (_inspector).
 -- most new things should go into a submodule namespace ( vim.foobar.do_thing() )
@@ -69,13 +65,73 @@ vim.log = {
   },
 }
 
--- Internal-only until comments in #8107 are addressed.
--- Returns:
---    {errcode}, {output}
-function vim._system(cmd)
-  local out = vim.fn.system(cmd)
-  local err = vim.v.shell_error
-  return err, out
+-- TODO(lewis6991): document that the signature is system({cmd}, [{opts},] {on_exit})
+--- Run a system command
+---
+--- Examples:
+--- <pre>lua
+---
+---   local on_exit = function(obj)
+---     print(obj.code)
+---     print(obj.signal)
+---     print(obj.stdout)
+---     print(obj.stderr)
+---   end
+---
+---   -- Run asynchronously
+---   vim.system({'echo', 'hello'}, { text = true }, on_exit)
+---
+---   -- Run synchronously
+---   local obj = vim.system({'echo', 'hello'}, { text = true }):wait()
+---   -- { code = 0, signal = 0, stdout = 'hello', stderr = '' }
+---
+--- </pre>
+---
+--- See |uv.spawn()| for more details.
+---
+--- @param cmd (string[]) Command to execute
+--- @param opts (SystemOpts|nil) Options:
+---   - cwd: (string) Set the current working directory for the sub-process.
+---   - env: table<string,string> Set environment variables for the new process. Inherits the
+---     current environment with `NVIM` set to |v:servername|.
+---   - clear_env: (boolean) `env` defines the job environment exactly, instead of merging current
+---     environment.
+---   - stdin: (string|string[]|boolean) If `true`, then a pipe to stdin is opened and can be written
+---     to via the `write()` method to SystemObj. If string or string[] then will be written to stdin
+---     and closed. Defaults to `false`.
+---   - stdout: (boolean|function)
+---     Handle output from stdout. When passed as a function must have the signature `fun(err: string, data: string)`.
+---     Defaults to `true`
+---   - stderr: (boolean|function)
+---     Handle output from stdout. When passed as a function must have the signature `fun(err: string, data: string)`.
+---     Defaults to `true`.
+---   - text: (boolean) Handle stdout and stderr as text. Replaces `\r\n` with `\n`.
+---   - timeout: (integer)
+---   - detach: (boolean) If true, spawn the child process in a detached state - this will make it
+---     a process group leader, and will effectively enable the child to keep running after the
+---     parent exits. Note that the child process will still keep the parent's event loop alive
+---     unless the parent process calls |uv.unref()| on the child's process handle.
+---
+--- @param on_exit (function|nil) Called when subprocess exits. When provided, the command runs
+---   asynchronously. Receives SystemCompleted object, see return of SystemObj:wait().
+---
+--- @return SystemObj Object with the fields:
+---   - pid (integer) Process ID
+---   - wait (fun(timeout: integer|nil): SystemCompleted)
+---     - SystemCompleted is an object with the fields:
+---      - code: (integer)
+---      - signal: (integer)
+---      - stdout: (string), nil if stdout argument is passed
+---      - stderr: (string), nil if stderr argument is passed
+---   - kill (fun(signal: integer))
+---   - write (fun(data: string|nil)) Requires `stdin=true`. Pass `nil` to close the stream.
+---   - is_closing (fun(): boolean)
+function vim.system(cmd, opts, on_exit)
+  if type(opts) == 'function' then
+    on_exit = opts
+    opts = nil
+  end
+  return require('vim._system').run(cmd, opts, on_exit)
 end
 
 -- Gets process info from the `ps` command.
@@ -85,13 +141,14 @@ function vim._os_proc_info(pid)
     error('invalid pid')
   end
   local cmd = { 'ps', '-p', pid, '-o', 'comm=' }
-  local err, name = vim._system(cmd)
-  if 1 == err and vim.trim(name) == '' then
+  local r = vim.system(cmd):wait()
+  local name = assert(r.stdout)
+  if r.code == 1 and vim.trim(name) == '' then
     return {} -- Process not found.
-  elseif 0 ~= err then
+  elseif r.code ~= 0 then
     error('command failed: ' .. vim.fn.string(cmd))
   end
-  local _, ppid = vim._system({ 'ps', '-p', pid, '-o', 'ppid=' })
+  local ppid = assert(vim.system({ 'ps', '-p', pid, '-o', 'ppid=' }):wait().stdout)
   -- Remove trailing whitespace.
   name = vim.trim(name):gsub('^.*/', '')
   ppid = tonumber(ppid) or -1
@@ -109,14 +166,14 @@ function vim._os_proc_children(ppid)
     error('invalid ppid')
   end
   local cmd = { 'pgrep', '-P', ppid }
-  local err, rv = vim._system(cmd)
-  if 1 == err and vim.trim(rv) == '' then
+  local r = vim.system(cmd):wait()
+  if r.code == 1 and vim.trim(r.stdout) == '' then
     return {} -- Process not found.
-  elseif 0 ~= err then
+  elseif r.code ~= 0 then
     error('command failed: ' .. vim.fn.string(cmd))
   end
   local children = {}
-  for s in rv:gmatch('%S+') do
+  for s in r.stdout:gmatch('%S+') do
     local i = tonumber(s)
     if i ~= nil then
       table.insert(children, i)
@@ -1005,5 +1062,9 @@ function vim._init_defaults()
 end
 
 require('vim._meta')
+
+-- Remove at Nvim 1.0
+---@deprecated
+vim.loop = vim.uv
 
 return vim

@@ -14,79 +14,19 @@ local function man_error(msg)
 end
 
 -- Run a system command and timeout after 30 seconds.
----@param cmd_ string[]
+---@param cmd string[]
 ---@param silent boolean?
----@param env string[]
+---@param env? table<string,string|number>
 ---@return string
-local function system(cmd_, silent, env)
-  local stdout_data = {} ---@type string[]
-  local stderr_data = {} ---@type string[]
-  local stdout = assert(vim.uv.new_pipe(false))
-  local stderr = assert(vim.uv.new_pipe(false))
+local function system(cmd, silent, env)
+  local r = vim.system(cmd, { env = env, timeout = 10000 }):wait()
 
-  local done = false
-  local exit_code ---@type integer?
-
-  -- We use the `env` command here rather than the env option to vim.uv.spawn since spawn will
-  -- completely overwrite the environment when we just want to modify the existing one.
-  --
-  -- Overwriting mainly causes problems NixOS which relies heavily on a non-standard environment.
-  local cmd = cmd_
-  if env then
-    cmd = { 'env' }
-    vim.list_extend(cmd, env)
-    vim.list_extend(cmd, cmd_)
-  end
-
-  local handle
-  handle = vim.uv.spawn(cmd[1], {
-    args = vim.list_slice(cmd, 2),
-    stdio = { nil, stdout, stderr },
-  }, function(code)
-    exit_code = code
-    stdout:close()
-    stderr:close()
-    handle:close()
-    done = true
-  end)
-
-  if handle then
-    stdout:read_start(function(_, data)
-      stdout_data[#stdout_data + 1] = data
-    end)
-    stderr:read_start(function(_, data)
-      stderr_data[#stderr_data + 1] = data
-    end)
-  else
-    stdout:close()
-    stderr:close()
-    if not silent then
-      local cmd_str = table.concat(cmd, ' ')
-      man_error(string.format('command error: %s', cmd_str))
-    end
-    return ''
-  end
-
-  vim.wait(30000, function()
-    return done
-  end)
-
-  if not done then
-    if handle then
-      handle:close()
-      stdout:close()
-      stderr:close()
-    end
+  if r.code ~= 0 and not silent then
     local cmd_str = table.concat(cmd, ' ')
-    man_error(string.format('command timed out: %s', cmd_str))
+    man_error(string.format("command error '%s': %s", cmd_str, r.stderr))
   end
 
-  if exit_code ~= 0 and not silent then
-    local cmd_str = table.concat(cmd, ' ')
-    man_error(string.format("command error '%s': %s", cmd_str, table.concat(stderr_data)))
-  end
-
-  return table.concat(stdout_data)
+  return assert(r.stdout)
 end
 
 ---@param line string
@@ -312,7 +252,7 @@ local function get_path(sect, name, silent)
   end
 
   local lines = system(cmd, silent)
-  local results = vim.split(lines or {}, '\n', { trimempty = true })
+  local results = vim.split(lines, '\n', { trimempty = true })
 
   if #results == 0 then
     return
@@ -505,9 +445,9 @@ local function get_page(path, silent)
   -- http://comments.gmane.org/gmane.editors.vim.devel/29085
   -- Set MAN_KEEP_FORMATTING so Debian man doesn't discard backspaces.
   return system(cmd, silent, {
-    'MANPAGER=cat',
-    'MANWIDTH=' .. manwidth,
-    'MAN_KEEP_FORMATTING=1',
+    MANPAGER = 'cat',
+    MANWIDTH = manwidth,
+    MAN_KEEP_FORMATTING = 1,
   })
 end
 
