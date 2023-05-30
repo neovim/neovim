@@ -23,6 +23,9 @@ The following changes may require adaptations in user config or plugins.
 • "#" followed by a digit no longer stands for a function key at the start of
   the lhs of a mapping.
 
+• Buffer names now follow RFC3986 for detecting a scheme, meaning
+  "svn+ssh", "ed2k", and "iris.xpc" are now treated as URI schemes
+
 • `:behave` was removed. if you used `:behave mswin`, the following is equivalent: >vim
 
     set selection=exclusive
