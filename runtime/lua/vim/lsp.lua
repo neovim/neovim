@@ -799,7 +799,9 @@ end
 ---    to the server. Entries are key-value pairs with the key
 ---    being the request ID while the value is a table with `type`,
 ---    `bufnr`, and `method` key-value pairs. `type` is either "pending"
----    for an active request, or "cancel" for a cancel request.
+---    for an active request, or "cancel" for a cancel request. It will
+---    be "complete" ephemerally while executing |LspRequest| autocmds
+---    when replies are received from the server.
 ---
 ---  - {config} (table): copy of the table that was passed by the user
 ---    to |vim.lsp.start_client()|.
@@ -1408,13 +1410,24 @@ function lsp.start_client(config)
         { method = method, client_id = client_id, bufnr = bufnr, params = params }
       )
     end, function(request_id)
+      local request = client.requests[request_id]
+      request.type = 'complete'
+      nvim_exec_autocmds('LspRequest', {
+        buffer = bufnr,
+        modeline = false,
+        data = { client_id = client_id, request_id = request_id, request = request },
+      })
       client.requests[request_id] = nil
-      nvim_exec_autocmds('User', { pattern = 'LspRequest', modeline = false })
     end)
 
     if success and request_id then
-      client.requests[request_id] = { type = 'pending', bufnr = bufnr, method = method }
-      nvim_exec_autocmds('User', { pattern = 'LspRequest', modeline = false })
+      local request = { type = 'pending', bufnr = bufnr, method = method }
+      client.requests[request_id] = request
+      nvim_exec_autocmds('LspRequest', {
+        buffer = bufnr,
+        modeline = false,
+        data = { client_id = client_id, request_id = request_id, request = request },
+      })
     end
 
     return success, request_id
@@ -1486,7 +1499,11 @@ function lsp.start_client(config)
     local request = client.requests[id]
     if request and request.type == 'pending' then
       request.type = 'cancel'
-      nvim_exec_autocmds('User', { pattern = 'LspRequest', modeline = false })
+      nvim_exec_autocmds('LspRequest', {
+        buffer = request.bufnr,
+        modeline = false,
+        data = { client_id = client_id, request_id = id, request = request },
+      })
     end
     return rpc.notify('$/cancelRequest', { id = id })
   end
