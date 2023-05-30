@@ -696,6 +696,11 @@ local function gen_one(fname, to_fname, old, commit)
     <link href="/css/main.css" rel="stylesheet">
     <link href="help.css" rel="stylesheet">
     <link href="/highlight/styles/neovim.min.css" rel="stylesheet">
+
+    <!-- algolia docsearch https://docsearch.algolia.com/docs/docsearch-v3/ -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3" />
+    <link rel="preconnect" href="https://X185E15FPG-dsn.algolia.net" crossorigin />
+
     <script src="/highlight/highlight.min.js"></script>
     <script>hljs.highlightAll();</script>
     <title>%s - Neovim docs</title>
@@ -766,12 +771,13 @@ local function gen_one(fname, to_fname, old, commit)
   main = ([[
   <header class="container">
     <nav class="navbar navbar-expand-lg">
-      <div>
+      <div class="container-fluid">
         <a href="/" class="navbar-brand" aria-label="logo">
           <!--TODO: use <img src="….svg"> here instead. Need one that has green lettering instead of gray. -->
           %s
           <!--<img src="https://neovim.io/logos/neovim-logo.svg" width="173" height="50" alt="Neovim" />-->
         </a>
+        <div id="docsearch"></div> <!-- algolia docsearch https://docsearch.algolia.com/docs/docsearch-v3/ -->
       </div>
     </nav>
   </header>
@@ -825,6 +831,18 @@ local function gen_one(fname, to_fname, old, commit)
       parse_errors: %d %s | <span title="%s">noise_lines: %d</span>
       </div>
     <div>
+
+    <!-- algolia docsearch https://docsearch.algolia.com/docs/docsearch-v3/ -->
+    <script src="https://cdn.jsdelivr.net/npm/@docsearch/js@3"></script>
+    <script type="module">
+      docsearch({
+        container: '#docsearch',
+        appId: 'X185E15FPG',
+        apiKey: 'b5e6b2f9c636b2b471303205e59832ed',
+        indexName: 'nvim',
+      });
+    </script>
+
   </footer>
   ]]):format(
     os.date('%Y-%m-%d %H:%M'), commit, commit:sub(1, 7), #stats.parse_errors, bug_link,
