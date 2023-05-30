@@ -44,7 +44,6 @@ jobs:
       - name: 'Request reviewers'
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.TEAM_REVIEW }}
           script: |
             const script = require('./.github/scripts/reviews.js')
             await script({github, context})
