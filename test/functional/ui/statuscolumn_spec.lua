@@ -424,6 +424,21 @@ describe('statuscolumn', function()
     ]])
   end)
 
+  it('does not corrupt the screen with minwid sign item', function()
+    screen:try_resize(screen._width, 3)
+    screen:set_default_attr_ids({
+      [0] = {foreground = Screen.colors.Brown},
+      [1] = {foreground = Screen.colors.Blue4, background = Screen.colors.Gray},
+    })
+    command([[set stc=%6s\ %l]])
+    exec_lua('vim.api.nvim_buf_set_extmark(0, ns, 7, 0, {sign_text = "𒀀"})')
+    screen:expect([[
+      {0:    𒀀  8}^aaaaa                                        |
+      {0:    }{1:  }{0: 9}aaaaa                                        |
+                                                           |
+    ]])
+  end)
+
   for _, model in ipairs(mousemodels) do
     it("works with 'statuscolumn' clicks with mousemodel=" .. model, function()
       command('set mousemodel=' .. model)
