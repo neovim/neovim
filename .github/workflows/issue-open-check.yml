@@ -1,0 +1,34 @@
+name: Issue Open Check
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  issue-open-check:
+    permissions:
+      issues: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: check issue title
+        id: check-issue
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const title = context.payload.issue.title;
+            const titleSplit = title.split(/\s+/).map(e => e.toLowerCase());
+            const keywords = ['api', 'treesitter', 'ui', 'lsp', 'doc'];
+            var match = new Set();
+            for(const keyword of keywords) {
+              if(titleSplit.includes(keyword)) {
+                match.add(keyword)
+              }
+            }
+            if(match.size !== 0){
+              github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: Array.from(match)
+              })
+            }
