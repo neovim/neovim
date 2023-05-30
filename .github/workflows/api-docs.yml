@@ -1,23 +1,11 @@
-# Autogenerate the API docs on new commit to important branches
-# Also work as a check for PR's to not forget committing their doc changes
-# called from api-docs-check.yml
+# Check if any PR needs to run the autogenerate script
 name: Autogenerate API docs
 on:
-  push:
+  pull_request:
     paths:
       - 'src/nvim/api/*.[ch]'
       - 'runtime/lua/**.lua'
       - 'runtime/doc/**'
-    branches:
-      - 'master'
-      - 'release-[0-9]+.[0-9]+'
-  workflow_dispatch:
-  workflow_call:
-    inputs:
-      check_only:
-        type: boolean
-        default: false
-        required: false
 
 jobs:
   regen-api-docs:
@@ -25,50 +13,26 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: rhysd/action-setup-vim@v1
         with:
           neovim: true
           version: nightly
       - uses: actions/checkout@v3
-        with:
-          # Fetch depth 0 is required if called through workflow_call. In order
-          # to create a PR we need to access other branches, which requires a
-          # full clone.
-          fetch-depth: 0
-
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y doxygen python3 python3-msgpack
 
-      - name: Set up git config
-        run: |
-          git config --global user.name 'marvim'
-          git config --global user.email 'marvim@users.noreply.github.com'
-
-      - run: printf 'DOC_BRANCH=marvim/api-doc-update/%s\n' ${GITHUB_REF#refs/heads/} >> $GITHUB_ENV
-
       - name: Generate docs
         id: docs
         run: |
-          git checkout -b ${DOC_BRANCH}
           python3 scripts/gen_vimdoc.py
           printf 'UPDATED_DOCS=%s\n' $([ -z "$(git diff)" ]; echo $?) >> $GITHUB_OUTPUT
 
       - name: FAIL, PR has not committed doc changes
-        if: ${{ steps.docs.outputs.UPDATED_DOCS != 0 && inputs.check_only }}
+        if: ${{ steps.docs.outputs.UPDATED_DOCS != 0 }}
         run: |
           echo "Job failed, run ./scripts/gen_vimdoc.py and commit your doc changes"
           echo "The doc generation produces the following changes:"
           git diff --color --exit-code
-
-      - name: Automatic PR
-        if: ${{ steps.docs.outputs.UPDATED_DOCS != 0 && !inputs.check_only }}
-        run: |
-          git add -u
-          git commit -m 'docs: regenerate [skip ci]'
-          git push --force https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY} ${DOC_BRANCH}
-          gh pr create --draft --fill --base ${GITHUB_REF#refs/heads/} --head ${DOC_BRANCH} || true
