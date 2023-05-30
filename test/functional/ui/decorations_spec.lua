@@ -2227,31 +2227,52 @@ bbbbbbb]])
   end)
 
   it('does not crash at column 0 when folded in a wide window', function()
-    screen:try_resize(82, 4)
+    screen:try_resize(82, 5)
     command('hi! CursorLine guibg=NONE guifg=Red gui=NONE')
     command('set cursorline')
     insert([[
       aaaaa
       bbbbb
+
       ccccc]])
     meths.buf_set_extmark(0, ns, 0, 0, { virt_text = {{'foo'}}, virt_text_pos = 'inline' })
+    meths.buf_set_extmark(0, ns, 2, 0, { virt_text = {{'bar'}}, virt_text_pos = 'inline' })
     screen:expect{grid=[[
       fooaaaaa                                                                          |
       bbbbb                                                                             |
+      bar                                                                               |
       {16:cccc^c                                                                             }|
                                                                                         |
     ]]}
     command('1,2fold')
     screen:expect{grid=[[
       {17:+--  2 lines: aaaaa·······························································}|
+      bar                                                                               |
       {16:cccc^c                                                                             }|
       {1:~                                                                                 }|
                                                                                         |
     ]]}
-    feed('k')
+    feed('2k')
     screen:expect{grid=[[
       {18:^+--  2 lines: aaaaa·······························································}|
+      bar                                                                               |
       ccccc                                                                             |
+      {1:~                                                                                 }|
+                                                                                        |
+    ]]}
+    command('3,4fold')
+    screen:expect{grid=[[
+      {18:^+--  2 lines: aaaaa·······························································}|
+      {17:+--  2 lines: ccccc·······························································}|
+      {1:~                                                                                 }|
+      {1:~                                                                                 }|
+                                                                                        |
+    ]]}
+    feed('j')
+    screen:expect{grid=[[
+      {17:+--  2 lines: aaaaa·······························································}|
+      {18:^+--  2 lines: ccccc·······························································}|
+      {1:~                                                                                 }|
       {1:~                                                                                 }|
                                                                                         |
     ]]}
