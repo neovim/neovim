@@ -433,7 +433,9 @@ void decor_redraw_signs(buf_T *buf, int row, int *num_signs, SignTextAttrs sattr
         if (sattrs[j - 1].priority >= decor->priority) {
           break;
         }
-        sattrs[j] = sattrs[j - 1];
+        if (j < SIGN_SHOW_MAX) {
+          sattrs[j] = sattrs[j - 1];
+        }
       }
       if (j < SIGN_SHOW_MAX) {
         sattrs[j] = (SignTextAttrs) {
