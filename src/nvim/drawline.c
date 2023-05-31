@@ -1377,9 +1377,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
     line_attr_lowprio_save = wlv.line_attr_lowprio;
   }
 
-  line = end_fill ? "" : ml_get_buf(wp->w_buffer, lnum, false);
-  ptr = line;
-
   if (spv->spv_has_spell && !number_only) {
     // Prepare for spell checking.
     extra_check = true;
@@ -1389,28 +1386,36 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
     if (lnum == spv->spv_checked_lnum) {
       cur_checked_col = spv->spv_checked_col;
     }
-    if (lnum != spv->spv_capcol_lnum) {
+    // Previous line was not spell checked, check for capital. This happens
+    // for the first line in an updated region or after a closed fold.
+    if (spv->spv_capcol_lnum == 0 && check_need_cap(wp, lnum, 0)) {
+      spv->spv_cap_col = 0;
+    } else if (lnum != spv->spv_capcol_lnum) {
       spv->spv_cap_col = -1;
     }
     spv->spv_checked_lnum = 0;
-
-    // For checking first word with a capital skip white space.
-    if (spv->spv_cap_col == 0) {
-      spv->spv_cap_col = (int)getwhitecols(line);
-    } else if (*skipwhite(line) == NUL) {
-      // If current line is empty, check first word in next line for capital.
-      spv->spv_cap_col = 0;
-      spv->spv_capcol_lnum = lnum + 1;
-    }
 
     // Get the start of the next line, so that words that wrap to the
     // next line are found too: "et<line-break>al.".
     // Trick: skip a few chars for C/shell/Vim comments
     nextline[SPWORDLEN] = NUL;
     if (lnum < wp->w_buffer->b_ml.ml_line_count) {
-      spell_cat_line(nextline + SPWORDLEN,
-                     ml_get_buf(wp->w_buffer, lnum + 1, false), SPWORDLEN);
+      line = ml_get_buf(wp->w_buffer, lnum + 1, false);
+      spell_cat_line(nextline + SPWORDLEN, line, SPWORDLEN);
     }
+    line = end_fill ? "" : ml_get_buf(wp->w_buffer, lnum, false);
+
+    // If current line is empty, check first word in next line for capital.
+    ptr = skipwhite(line);
+    if (*ptr == NUL) {
+      spv->spv_cap_col = 0;
+      spv->spv_capcol_lnum = lnum + 1;
+    }
+    // For checking first word with a capital skip white space.
+    else if (spv->spv_cap_col == 0) {
+      spv->spv_cap_col = (int)(ptr - line);
+    }
+
     // Copy the end of the current line into nextline[].
     if (nextline[SPWORDLEN] == NUL) {
       // No next line or it is empty.
@@ -1433,6 +1438,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       }
     }
   }
+
+  line = end_fill ? "" : ml_get_buf(wp->w_buffer, lnum, false);
+  ptr = line;
 
   colnr_T trailcol = MAXCOL;  // start of trailing spaces
   colnr_T leadcol = 0;        // start of leading spaces

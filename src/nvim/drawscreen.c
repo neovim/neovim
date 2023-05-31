@@ -1995,11 +1995,9 @@ static void win_update(win_T *wp, DecorProviders *providers)
   spellvars_T spv = { 0 };
   linenr_T lnum = wp->w_topline;  // first line shown in window
   // Initialize spell related variables for the first drawn line.
-  spv.spv_has_spell = spell_check_window(wp);
-  if (spv.spv_has_spell) {
+  if (spell_check_window(wp)) {
+    spv.spv_has_spell = true;
     spv.spv_unchanged = mod_top == 0;
-    spv.spv_capcol_lnum = mod_top ? mod_top : lnum;
-    spv.spv_cap_col = check_need_cap(wp, spv.spv_capcol_lnum, 0) ? 0 : -1;
   }
 
   // Update all the window rows.
@@ -2242,16 +2240,10 @@ static void win_update(win_T *wp, DecorProviders *providers)
           syntax_last_parsed = lnum;
         } else {
           foldinfo.fi_lines--;
-          linenr_T lnume = lnum + foldinfo.fi_lines;
           wp->w_lines[idx].wl_folded = true;
-          wp->w_lines[idx].wl_lastlnum = lnume;
-
-          // Check if the line after this fold requires a capital.
-          if (spv.spv_has_spell && check_need_cap(wp, lnume + 1, 0)) {
-            spv.spv_cap_col = 0;
-            spv.spv_capcol_lnum = lnume + 1;
-          }
+          wp->w_lines[idx].wl_lastlnum = lnum + foldinfo.fi_lines;
           did_update = DID_FOLD;
+          spv.spv_capcol_lnum = 0;
         }
       }
 
@@ -2288,6 +2280,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
       }
       lnum = wp->w_lines[idx - 1].wl_lastlnum + 1;
       did_update = DID_NONE;
+      spv.spv_capcol_lnum = 0;
     }
 
     // 'statuscolumn' width has changed or errored, start from the top.
