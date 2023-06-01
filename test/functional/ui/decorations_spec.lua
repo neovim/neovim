@@ -10,6 +10,7 @@ local expect_events = helpers.expect_events
 local meths = helpers.meths
 local curbufmeths = helpers.curbufmeths
 local command = helpers.command
+local assert_alive = helpers.assert_alive
 
 describe('decorations providers', function()
   local screen
@@ -80,7 +81,7 @@ describe('decorations providers', function()
       local ns2 = api.nvim_create_namespace "ns2"
       api.nvim_set_decoration_provider(ns2, {})
     ]])
-    helpers.assert_alive()
+    assert_alive()
   end)
 
   it('leave a trace', function()
@@ -1075,7 +1076,7 @@ end]]
       {1:~                                                 }|
                                                         |
     ]]}
-    helpers.assert_alive()
+    assert_alive()
   end)
 
   it('conceal #19007', function()
