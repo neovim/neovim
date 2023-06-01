@@ -62,7 +62,7 @@
 #include "nvim/getchar.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/grid_defs.h"
+#include "nvim/grid.h"
 #include "nvim/hashtab.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
@@ -6745,7 +6745,9 @@ static void f_screenchar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (row < 0 || row >= grid->rows || col < 0 || col >= grid->cols) {
     c = -1;
   } else {
-    c = utf_ptr2char((char *)grid->chars[grid->line_offset[row] + (size_t)col]);
+    char buf[MB_MAXBYTES + 1];
+    grid_getbytes(grid, row, col, buf, NULL);
+    c = utf_ptr2char(buf);
   }
   rettv->vval.v_number = c;
 }
@@ -6763,10 +6765,13 @@ static void f_screenchars(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     tv_list_alloc_ret(rettv, 0);
     return;
   }
+
+  char buf[MB_MAXBYTES + 1];
+  grid_getbytes(grid, row, col, buf, NULL);
   int pcc[MAX_MCO];
-  int c = utfc_ptr2char((char *)grid->chars[grid->line_offset[row] + (size_t)col], pcc);
+  int c = utfc_ptr2char(buf, pcc);
   int composing_len = 0;
-  while (pcc[composing_len] != 0) {
+  while (composing_len < MAX_MCO && pcc[composing_len] != 0) {
     composing_len++;
   }
   tv_list_alloc_ret(rettv, composing_len + 1);
@@ -6806,7 +6811,9 @@ static void f_screenstring(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
     return;
   }
 
-  rettv->vval.v_string = xstrdup((char *)grid->chars[grid->line_offset[row] + (size_t)col]);
+  char buf[MB_MAXBYTES + 1];
+  grid_getbytes(grid, row, col, buf, NULL);
+  rettv->vval.v_string = xstrdup(buf);
 }
 
 /// "search()" function
@@ -7201,7 +7208,7 @@ static void f_serverstop(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 /// Set the cursor or mark position.
-/// If 'charpos' is true, then use the column number as a character offset.
+/// If "charpos" is true, then use the column number as a character offset.
 /// Otherwise use the column number as a byte offset.
 static void set_position(typval_T *argvars, typval_T *rettv, bool charpos)
 {

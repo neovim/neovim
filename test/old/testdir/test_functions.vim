@@ -2834,6 +2834,34 @@ func Test_screen_functions()
   call assert_equal(-1, screenattr(-1, -1))
   call assert_equal(-1, screenchar(-1, -1))
   call assert_equal([], screenchars(-1, -1))
+
+  " Run this in a separate Vim instance to avoid messing up.
+  let after =<< trim [CODE]
+    scriptencoding utf-8
+    call setline(1, '口')
+    redraw
+    call assert_equal(0, screenattr(1, 1))
+    call assert_equal(char2nr('口'), screenchar(1, 1))
+    call assert_equal([char2nr('口')], screenchars(1, 1))
+    call assert_equal('口', screenstring(1, 1))
+    call writefile(v:errors, 'Xresult')
+    qall!
+  [CODE]
+
+  let encodings = ['utf-8', 'cp932', 'cp936', 'cp949', 'cp950']
+  if !has('win32')
+    let encodings += ['euc-jp']
+  endif
+  if has('nvim')
+    let encodings = ['utf-8']
+  endif
+  for enc in encodings
+    let msg = 'enc=' .. enc
+    if RunVim([], after, $'--clean --cmd "set encoding={enc}"')
+      call assert_equal([], readfile('Xresult'), msg)
+    endif
+    call delete('Xresult')
+  endfor
 endfunc
 
 " Test for getcurpos() and setpos()
