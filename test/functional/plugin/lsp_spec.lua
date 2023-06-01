@@ -218,6 +218,34 @@ describe('LSP', function()
       })
     end)
 
+    it("should set the client's offset_encoding when positionEncoding capability is supported", function()
+      clear()
+      exec_lua(create_server_definition)
+      local result = exec_lua([[
+        local server = _create_server({
+          capabilities = {
+            positionEncoding = "utf-8"
+          },
+        })
+
+        local client_id = vim.lsp.start({
+          name = 'dummy',
+          cmd = server.cmd,
+        })
+
+        if not client_id then
+          return 'vim.lsp.start did not return client_id'
+        end
+
+        local client = vim.lsp.get_client_by_id(client_id)
+        if not client then
+          return 'No client found with id ' .. client_id
+        end
+        return client.offset_encoding
+      ]])
+      eq('utf-8', result)
+    end)
+
     it('should succeed with manual shutdown', function()
       if is_ci() then
         pending('hangs the build on CI #14028, re-enable with freeze timeout #14204')

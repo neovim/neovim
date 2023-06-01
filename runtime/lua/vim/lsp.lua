@@ -1344,6 +1344,10 @@ function lsp.start_client(config)
         assert(result.capabilities, "initialize result doesn't contain capabilities")
       client.server_capabilities = protocol.resolve_capabilities(client.server_capabilities)
 
+      if client.server_capabilities.positionEncoding then
+        client.offset_encoding = client.server_capabilities.positionEncoding
+      end
+
       if next(config.settings) then
         client.notify('workspace/didChangeConfiguration', { settings = config.settings })
       end
