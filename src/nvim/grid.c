@@ -138,8 +138,9 @@ void grid_putchar(ScreenGrid *grid, int c, int row, int col, int attr)
   grid_puts(grid, buf, row, col, attr);
 }
 
-/// get a single character directly from grid.chars into "bytes[]".
-/// Also return its attribute in *attrp;
+/// Get a single character directly from grid.chars into "bytes", which must
+/// have a size of "MB_MAXBYTES + 1".
+/// If "attrp" is not NULL, return the character's attribute in "*attrp".
 void grid_getbytes(ScreenGrid *grid, int row, int col, char *bytes, int *attrp)
 {
   grid_adjust(&grid, &row, &col);
@@ -150,7 +151,9 @@ void grid_getbytes(ScreenGrid *grid, int row, int col, char *bytes, int *attrp)
   }
 
   size_t off = grid->line_offset[row] + (size_t)col;
-  *attrp = grid->attrs[off];
+  if (attrp != NULL) {
+    *attrp = grid->attrs[off];
+  }
   schar_copy(bytes, grid->chars[off]);
 }
 
