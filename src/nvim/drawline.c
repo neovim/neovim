@@ -1403,16 +1403,16 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       line = ml_get_buf(wp->w_buffer, lnum + 1, false);
       spell_cat_line(nextline + SPWORDLEN, line, SPWORDLEN);
     }
-    line = end_fill ? "" : ml_get_buf(wp->w_buffer, lnum, false);
+    assert(!end_fill);
+    line = ml_get_buf(wp->w_buffer, lnum, false);
 
     // If current line is empty, check first word in next line for capital.
     ptr = skipwhite(line);
     if (*ptr == NUL) {
       spv->spv_cap_col = 0;
       spv->spv_capcol_lnum = lnum + 1;
-    }
-    // For checking first word with a capital skip white space.
-    else if (spv->spv_cap_col == 0) {
+    } else if (spv->spv_cap_col == 0) {
+      // For checking first word with a capital skip white space.
       spv->spv_cap_col = (int)(ptr - line);
     }
 

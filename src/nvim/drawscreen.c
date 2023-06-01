@@ -2230,8 +2230,10 @@ static void win_update(win_T *wp, DecorProviders *providers)
         }
 
         // Display one line
-        row = win_line(wp, lnum, srow, foldinfo.fi_lines ? srow : wp->w_grid.rows,
-                       false, &spv, foldinfo, &line_providers, &provider_err);
+        spellvars_T zero_spv = { 0 };
+        row = win_line(wp, lnum, srow, foldinfo.fi_lines ? srow : wp->w_grid.rows, false,
+                       foldinfo.fi_lines ? &zero_spv : &spv,
+                       foldinfo, &line_providers, &provider_err);
 
         if (foldinfo.fi_lines == 0) {
           wp->w_lines[idx].wl_folded = false;
@@ -2366,9 +2368,10 @@ static void win_update(win_T *wp, DecorProviders *providers)
       if (j > 0 && !wp->w_botfill && row < wp->w_grid.rows) {
         // Display filler text below last line. win_line() will check
         // for ml_line_count+1 and only draw filler lines
-        foldinfo_T info = { 0 };
-        row = win_line(wp, wp->w_botline, row, wp->w_grid.rows,
-                       false, &spv, info, &line_providers, &provider_err);
+        spellvars_T zero_spv = { 0 };
+        foldinfo_T zero_foldinfo = { 0 };
+        row = win_line(wp, wp->w_botline, row, wp->w_grid.rows, false, &zero_spv,
+                       zero_foldinfo, &line_providers, &provider_err);
       }
     } else if (dollar_vcol == -1) {
       wp->w_botline = lnum;
