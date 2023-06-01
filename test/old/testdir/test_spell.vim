@@ -962,6 +962,7 @@ func Test_spell_screendump()
   CheckScreendump
 
   let lines =<< trim END
+       call test_override('alloc_lines', 1)
        call setline(1, [
              \ "This is some text without any spell errors.  Everything",
              \ "should just be black, nothing wrong here.",
@@ -984,6 +985,7 @@ func Test_spell_screendump_spellcap()
   CheckScreendump
 
   let lines =<< trim END
+       call test_override('alloc_lines', 1)
        call setline(1, [
              \ "   This line has a sepll error. and missing caps and trailing spaces.   ",
              \ "another missing cap here.",
@@ -1023,6 +1025,14 @@ func Test_spell_screendump_spellcap()
   call term_sendkeys(buf, "\<C-E>\<C-L>")
   call VerifyScreenDump(buf, 'Test_spell_8', {})
 
+  " Adding an empty line does not remove Cap in "mod_bot" area
+  call term_sendkeys(buf, "zbO\<Esc>")
+  call VerifyScreenDump(buf, 'Test_spell_9', {})
+
+  " Multiple empty lines does not remove Cap in the line after
+  call term_sendkeys(buf, "O\<Esc>\<C-L>")
+  call VerifyScreenDump(buf, 'Test_spell_10', {})
+
   " clean up
   call StopVimInTerminal(buf)
 endfunc
@@ -1031,6 +1041,7 @@ func Test_spell_compatible()
   CheckScreendump
 
   let lines =<< trim END
+       call test_override('alloc_lines', 1)
        call setline(1, [
              \ "test "->repeat(20),
              \ "",

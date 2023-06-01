@@ -178,6 +178,30 @@ describe("'spell'", function()
       {0:~                                                                               }|
                                                                                       |
     ]])
+    -- Adding an empty line does not remove Cap in "mod_bot" area
+    feed('zbO<Esc>')
+    screen:expect([[
+         This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
+      ^                                                                                |
+      {2:another} missing cap here                                                        |
+      {10:+--  2 lines: Not·······························································}|
+      {2:and} here.                                                                       |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
+    -- Multiple empty lines does not remove Cap in the line after
+    feed('O<Esc><C-L>')
+    screen:expect([[
+         This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
+      ^                                                                                |
+                                                                                      |
+      {2:another} missing cap here                                                        |
+      {10:+--  2 lines: Not·······························································}|
+      {2:and} here.                                                                       |
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
   end)
 
   -- oldtest: Test_spell_compatible()
