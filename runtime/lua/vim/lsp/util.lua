@@ -694,15 +694,18 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
   local matches = {}
 
   for _, completion_item in ipairs(items) do
-    local info = ' '
+    local info = ''
     local documentation = completion_item.documentation
     if documentation then
       if type(documentation) == 'string' and documentation ~= '' then
         info = documentation
       elseif type(documentation) == 'table' and type(documentation.value) == 'string' then
         info = documentation.value
-        -- else
-        -- TODO(ashkan) Validation handling here?
+      else
+        vim.notify(
+          ('invalid documentation value %s'):format(vim.inspect(documentation)),
+          vim.log.levels.WARN
+        )
       end
     end
 
@@ -712,7 +715,7 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
       abbr = completion_item.label,
       kind = M._get_completion_item_kind_name(completion_item.kind),
       menu = completion_item.detail or '',
-      info = info,
+      info = #info > 0 and info or nil,
       icase = 1,
       dup = 1,
       empty = 1,
