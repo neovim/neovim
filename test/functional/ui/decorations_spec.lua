@@ -3342,8 +3342,8 @@ l5
     insert(example_test3)
     feed 'gg'
 
-    helpers.command('sign define Oldsign text=O3')
-    helpers.command([[exe 'sign place 42 line=1 name=Oldsign priority=10 buffer=' . bufnr('')]])
+    command('sign define Oldsign text=O3')
+    command([[exe 'sign place 42 line=1 name=Oldsign priority=10 buffer=' . bufnr('')]])
 
     meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S4', priority=100})
     meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S2', priority=5})
@@ -3364,6 +3364,39 @@ l5
       {1:  }l2                |
                           |
     ]]}
+  end)
+
+  it('does not overflow with many old signs #23852', function()
+    screen:try_resize(20, 3)
+
+    command('set signcolumn:auto:9')
+    command('sign define Oldsign text=O3')
+    command([[exe 'sign place 01 line=1 name=Oldsign priority=10 buffer=' . bufnr('')]])
+    command([[exe 'sign place 02 line=1 name=Oldsign priority=10 buffer=' . bufnr('')]])
+    command([[exe 'sign place 03 line=1 name=Oldsign priority=10 buffer=' . bufnr('')]])
+    command([[exe 'sign place 04 line=1 name=Oldsign priority=10 buffer=' . bufnr('')]])
+    command([[exe 'sign place 05 line=1 name=Oldsign priority=10 buffer=' . bufnr('')]])
+    command([[exe 'sign place 06 line=1 name=Oldsign priority=10 buffer=' . bufnr('')]])
+    command([[exe 'sign place 07 line=1 name=Oldsign priority=10 buffer=' . bufnr('')]])
+    command([[exe 'sign place 08 line=1 name=Oldsign priority=10 buffer=' . bufnr('')]])
+    command([[exe 'sign place 09 line=1 name=Oldsign priority=10 buffer=' . bufnr('')]])
+    screen:expect{grid=[[
+      O3O3O3O3O3O3O3O3O3^  |
+      {2:~                   }|
+                          |
+    ]]}
+
+    meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S1', priority=1})
+    screen:expect_unchanged()
+
+    meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S5', priority=200})
+    screen:expect{grid=[[
+      O3O3O3O3O3O3O3O3S5^  |
+      {2:~                   }|
+                          |
+    ]]}
+
+    assert_alive()
   end)
 
   it('does not set signcolumn for signs without text', function()
