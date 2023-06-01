@@ -2212,7 +2212,7 @@ module.cmds = {
   },
   {
     command='registers',
-    flags=bit.bor(EXTRA, NOTRLCOM, TRLBAR, CMDWIN, LOCK_OK),
+    flags=bit.bor(EXTRA, NOTRLCOM, TRLBAR, SBOXOK, CMDWIN, LOCK_OK),
     addr_type='ADDR_NONE',
     func='ex_display',
   },
