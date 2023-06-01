@@ -55,8 +55,9 @@ func Test_display_registers()
     call feedkeys("i\<C-R>=2*4\n\<esc>")
     call feedkeys(":ls\n", 'xt')
 
-    let a = execute('display')
-    let b = execute('registers')
+    " these commands work in the sandbox
+    let a = execute('sandbox display')
+    let b = execute('sandbox registers')
 
     call assert_equal(a, b)
     call assert_match('^\nType Name Content\n'
