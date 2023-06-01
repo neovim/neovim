@@ -117,6 +117,7 @@ typedef struct {
   int coloff;
   int cur_attr;
   int clear_width;
+  bool wrap;
 } GridLineEvent;
 
 #endif  // NVIM_GRID_DEFS_H
