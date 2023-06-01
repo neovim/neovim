@@ -2275,7 +2275,8 @@ end
 ---@param client_id (integer)
 ---@return boolean stopped true if client is stopped, false otherwise.
 function lsp.client_is_stopped(client_id)
-  return active_clients[client_id] == nil
+  assert(client_id, 'missing client_id param')
+  return active_clients[client_id] == nil and not uninitialized_clients[client_id]
 end
 
 --- Gets a map of client_id:client pairs for the given buffer, where each value
