@@ -17,6 +17,6 @@ runs:
     - uses: actions/cache@v3
       with:
         path: .deps
-        key: ${{ env.CACHE_KEY }}-${{ hashFiles('cmake**', 'ci/**',
+        key: ${{ env.CACHE_KEY }}-${{ hashFiles('cmake**',
           '.github/workflows/test.yml', 'CMakeLists.txt',
           'runtime/CMakeLists.txt', 'src/nvim/**/CMakeLists.txt') }}
