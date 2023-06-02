@@ -2493,10 +2493,12 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
           curwin->w_curswant -= width2;
         } else {
           // to previous line
-          if (!cursor_up_inner(curwin, 1)) {
+          if (curwin->w_cursor.lnum <= 1) {
             retval = false;
             break;
           }
+          cursor_up_inner(curwin, 1);
+
           linelen = linetabsize_str(get_cursor_line_ptr());
           if (linelen > width1) {
             int w = (((linelen - width1 - 1) / width2) + 1) * width2;
@@ -2516,11 +2518,13 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
           curwin->w_curswant += width2;
         } else {
           // to next line
-          if (!cursor_down_inner(curwin, 1)) {
+          if (curwin->w_cursor.lnum >= curwin->w_buffer->b_ml.ml_line_count) {
             retval = false;
             break;
           }
+          cursor_down_inner(curwin, 1);
           curwin->w_curswant %= width2;
+
           // Check if the cursor has moved below the number display
           // when width1 < width2 (with cpoptions+=n). Subtract width2
           // to get a negative value for w_curswant, which will get

@@ -1763,9 +1763,20 @@ endfunc
 
 func Test_splitkeep_misc()
   set splitkeep=screen
-  set splitbelow
 
   call setline(1, range(1, &lines))
+  " Cursor is adjusted to start and end of buffer
+  norm M
+  wincmd s
+  resize 1
+  call assert_equal(1, line('.'))
+  wincmd j
+  norm GM
+  resize 1
+  call assert_equal(&lines, line('.'))
+  only!
+
+  set splitbelow
   norm Gzz
   let top = line('w0')
   " No scroll when aucmd_win is opened
