@@ -3484,6 +3484,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           if (lnum == curwin->w_cursor.lnum) {
             // make sure curwin->w_virtcol is updated
             changed_cline_bef_curs();
+            invalidate_botline();
             curwin->w_cursor.col += (colnr_T)(totlen - 1);
           }
           changed_bytes(lnum, col);

@@ -70,4 +70,29 @@ describe('put', function()
                                                                                       |
     ]])
   end)
+
+  -- oldtest: Test_put_in_last_displayed_line()
+  it('in last displayed line', function()
+    local screen = Screen.new(75, 10)
+    screen:attach()
+    source([[
+      autocmd CursorMoved * eval line('w$')
+      let @a = 'x'->repeat(&columns * 2 - 2)
+      eval range(&lines)->setline(1)
+      call feedkeys('G"ap')
+    ]])
+
+    screen:expect([[
+      2                                                                          |
+      3                                                                          |
+      4                                                                          |
+      5                                                                          |
+      6                                                                          |
+      7                                                                          |
+      8                                                                          |
+      9xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|
+      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx^x |
+                                                                                 |
+    ]])
+  end)
 end)

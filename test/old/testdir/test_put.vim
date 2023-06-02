@@ -266,5 +266,23 @@ func Test_put_other_window()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_put_in_last_displayed_line()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      vim9script
+      autocmd CursorMoved * eval line('w$')
+      @a = 'x'->repeat(&columns * 2 - 2)
+      range(&lines)->setline(1)
+      feedkeys('G"ap')
+  END
+  call writefile(lines, 'Xtest_put_last_line', 'D')
+  let buf = RunVimInTerminal('-S Xtest_put_last_line', #{rows: 10})
+
+  call VerifyScreenDump(buf, 'Test_put_in_last_displayed_line_1', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
