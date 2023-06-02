@@ -109,13 +109,13 @@ local function system(cmd, ...)
   end
 
   if not is_blank(stdin) then
-    vim.cmd([[call jobsend(jobid, stdin)]])
+    vim.api.nvim_chan_send(jobid, stdin)
   end
 
   local res = vim.fn.jobwait({ jobid }, 30000)
   if res[1] == -1 then
     error('Command timed out: ' .. shellify(cmd))
-    vim.cmd([[call jobstop(jobid)]])
+    vim.fn.jobstop(jobid)
   elseif shell_error() and not ignore_error then
     local emsg = 'Command error (job='
       .. jobid
