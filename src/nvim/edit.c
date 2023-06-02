@@ -2549,15 +2549,10 @@ int oneleft(void)
 
 /// Move the cursor up "n" lines in window "wp".
 /// Takes care of closed folds.
-/// Returns the new cursor line or zero for failure.
-linenr_T cursor_up_inner(win_T *wp, long n)
+void cursor_up_inner(win_T *wp, long n)
 {
   linenr_T lnum = wp->w_cursor.lnum;
 
-  // This fails if the cursor is already in the first line.
-  if (lnum <= 1) {
-    return 0;
-  }
   if (n >= lnum) {
     lnum = 1;
   } else if (hasAnyFolding(wp)) {
@@ -2587,15 +2582,16 @@ linenr_T cursor_up_inner(win_T *wp, long n)
   }
 
   wp->w_cursor.lnum = lnum;
-  return lnum;
 }
 
 /// @param upd_topline  When true: update topline
 int cursor_up(long n, int upd_topline)
 {
-  if (n > 0 && cursor_up_inner(curwin, n) == 0) {
+  // This fails if the cursor is already in the first line.
+  if (n > 0 && curwin->w_cursor.lnum <= 1) {
     return FAIL;
   }
+  cursor_up_inner(curwin, n);
 
   // try to advance to the column we want to be at
   coladvance(curwin->w_curswant);
@@ -2609,18 +2605,11 @@ int cursor_up(long n, int upd_topline)
 
 /// Move the cursor down "n" lines in window "wp".
 /// Takes care of closed folds.
-/// Returns the new cursor line or zero for failure.
-linenr_T cursor_down_inner(win_T *wp, long n)
+void cursor_down_inner(win_T *wp, long n)
 {
   linenr_T lnum = wp->w_cursor.lnum;
   linenr_T line_count = wp->w_buffer->b_ml.ml_line_count;
 
-  // Move to last line of fold, will fail if it's the end-of-file.
-  (void)hasFoldingWin(wp, lnum, NULL, &lnum, true, NULL);
-  // This fails if the cursor is already in the last line.
-  if (lnum >= line_count) {
-    return FAIL;
-  }
   if (lnum + n >= line_count) {
     lnum = line_count;
   } else if (hasAnyFolding(wp)) {
@@ -2628,6 +2617,7 @@ linenr_T cursor_down_inner(win_T *wp, long n)
 
     // count each sequence of folded lines as one logical line
     while (n--) {
+      // Move to last line of fold, will fail if it's the end-of-file.
       if (hasFoldingWin(wp, lnum, NULL, &last, true, NULL)) {
         lnum = last + 1;
       } else {
@@ -2645,15 +2635,16 @@ linenr_T cursor_down_inner(win_T *wp, long n)
   }
 
   wp->w_cursor.lnum = lnum;
-  return lnum;
 }
 
 /// @param upd_topline  When true: update topline
 int cursor_down(long n, int upd_topline)
 {
-  if (n > 0 && cursor_down_inner(curwin, n) == 0) {
+  // This fails if the cursor is already in the last line.
+  if (n > 0 && curwin->w_cursor.lnum >= curwin->w_buffer->b_ml.ml_line_count) {
     return FAIL;
   }
+  cursor_down_inner(curwin, n);
 
   // try to advance to the column we want to be at
   coladvance(curwin->w_curswant);
