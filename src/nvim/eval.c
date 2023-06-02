@@ -6511,6 +6511,10 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
   pos.coladd = 0;
 
   if (name[0] == 'w' && dollar_lnum) {
+    // the "w_valid" flags are not reset when moving the cursor, but they
+    // do matter for update_topline() and validate_botline().
+    check_cursor_moved(curwin);
+
     pos.col = 0;
     if (name[1] == '0') {               // "w0": first visible line
       update_topline(curwin);

@@ -548,18 +548,20 @@ void set_topline(win_T *wp, linenr_T lnum)
   redraw_later(wp, UPD_VALID);
 }
 
-// Call this function when the length of the cursor line (in screen
-// characters) has changed, and the change is before the cursor.
-// Need to take care of w_botline separately!
+/// Call this function when the length of the cursor line (in screen
+/// characters) has changed, and the change is before the cursor.
+/// If the line length changed the number of screen lines might change,
+/// requiring updating w_topline.  That may also invalidate w_crow.
+/// Need to take care of w_botline separately!
 void changed_cline_bef_curs(void)
 {
-  curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL
+  curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL|VALID_CROW
                        |VALID_CHEIGHT|VALID_TOPLINE);
 }
 
 void changed_cline_bef_curs_win(win_T *wp)
 {
-  wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL
+  wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL|VALID_CROW
                    |VALID_CHEIGHT|VALID_TOPLINE);
 }
 
