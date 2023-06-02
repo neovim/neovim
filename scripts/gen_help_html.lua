@@ -461,6 +461,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     local hname = (node_text():gsub('%-%-%-%-+', ''):gsub('%=%=%=%=+', ''):gsub('%*.*%*', ''))
     -- Use the first *tag* node as the heading anchor, if any.
     local tagnode = first(root, 'tag')
+    -- Use the *tag* as the heading anchor id, if possible.
     local tagname = tagnode and url_encode(node_text(tagnode:child(1), false)) or to_heading_tag(hname)
     if node_name == 'h1' or #headings == 0 then
       table.insert(headings, { name = hname, subheadings = {}, tag = tagname })
@@ -468,9 +469,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       table.insert(headings[#headings].subheadings, { name = hname, subheadings = {}, tag = tagname })
     end
     local el = node_name == 'h1' and 'h2' or 'h3'
-    -- If we are re-using the *tag*, this heading anchor is redundant.
-    local a = tagnode and '' or ('<a name="%s"></a>'):format(tagname)
-    return ('%s<%s class="help-heading">%s</%s>\n'):format(a, el, text, el)
+    return ('<%s id="%s" class="help-heading">%s</%s>\n'):format(el, tagname, text, el)
   elseif node_name == 'column_heading' or node_name == 'column_name' then
     if root:has_error() then
       return text
@@ -563,12 +562,14 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       return ''
     end
     local el = in_heading and 'span' or 'code'
-    local s = ('%s<a name="%s"></a><%s class="%s">%s</%s>'):format(ws(), url_encode(tagname), el, cssclass, trimmed, el)
+    local s = ('%s<%s id="%s" class="%s">%s</%s>'):format(ws(), el, url_encode(tagname), cssclass, trimmed, el)
     if opt.old then
         s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
 
     if in_heading and prev ~= 'tag' then
+      -- Don't set "id", let the heading use the tag as its "id" (used by search engines).
+      s = ('%s<%s class="%s">%s</%s>'):format(ws(), el, cssclass, trimmed, el)
       -- Start the <span> container for tags in a heading.
       -- This makes "justify-content:space-between" right-align the tags.
       --    <h2>foo bar<span>tag1 tag2</span></h2>
@@ -643,7 +644,7 @@ local function parse_buf(fname)
     buf = fname
     vim.cmd('sbuffer '..tostring(fname))          -- Buffer number.
   end
-  -- vim.treesitter.require_language('help', './build/lib/nvim/parser/vimdoc.so')
+  -- vim.treesitter.language.add('vimdoc', { path = vim.fn.expand('~/Library/Caches/tree-sitter/lib/vimdoc.so') })
   local lang_tree = vim.treesitter.get_parser(buf)
   return lang_tree, buf
 end
@@ -784,7 +785,7 @@ local function gen_one(fname, to_fname, old, commit)
 
   <div class="container golden-grid help-body">
   <div class="col-wide">
-  <a name="%s"></a><a name="%s"></a><h1>%s</h1>
+  <a name="%s"></a><h1 id="%s">%s</h1>
   <p>
     <i>
     Nvim <code>:help</code> pages, <a href="https://github.com/neovim/neovim/blob/master/scripts/gen_help_html.lua">generated</a>
@@ -795,7 +796,7 @@ local function gen_one(fname, to_fname, old, commit)
   <hr/>
   %s
   </div>
-  ]]):format(logo_svg, stats.first_tags[1] or '', stats.first_tags[2] or '', title, vim.fs.basename(fname), main)
+  ]]):format(logo_svg, stats.first_tags[2] or '', stats.first_tags[1] or '', title, vim.fs.basename(fname), main)
 
   local toc = [[
     <div class="col-narrow toc">
