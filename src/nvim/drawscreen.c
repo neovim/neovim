@@ -1985,7 +1985,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
   if (wp->w_p_cul) {
     // Make sure that the cursorline on a closed fold is redrawn
     cursorline_fi = fold_info(wp, wp->w_cursor.lnum);
-    if (cursorline_fi.fi_level > 0 && cursorline_fi.fi_lines > 0) {
+    if (cursorline_fi.fi_level != 0 && cursorline_fi.fi_lines > 0) {
       wp->w_cursorline = cursorline_fi.fi_lnum;
     }
   }
@@ -2231,8 +2231,8 @@ static void win_update(win_T *wp, DecorProviders *providers)
 
         // Display one line
         spellvars_T zero_spv = { 0 };
-        row = win_line(wp, lnum, srow, foldinfo.fi_lines ? srow : wp->w_grid.rows, false,
-                       foldinfo.fi_lines ? &zero_spv : &spv,
+        row = win_line(wp, lnum, srow, foldinfo.fi_lines > 0 ? srow : wp->w_grid.rows, false,
+                       foldinfo.fi_lines > 0 ? &zero_spv : &spv,
                        foldinfo, &line_providers, &provider_err);
 
         if (foldinfo.fi_lines == 0) {

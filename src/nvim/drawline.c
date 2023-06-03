@@ -421,7 +421,7 @@ size_t fill_foldcolumn(char *p, win_T *wp, foldinfo_T foldinfo, linenr_T lnum)
   size_t char_counter = 0;
   int symbol = 0;
   int len = 0;
-  bool closed = foldinfo.fi_lines > 0;
+  bool closed = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
   // Init to all spaces.
   memset(p, ' ', MAX_MCO * (size_t)fdc + 1);
 
@@ -1813,13 +1813,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         area_active = false;
       }
 
-      if (!has_fold) {
-        if (has_decor && v >= 0) {
-          bool selected = (area_active || (area_highlighting && noinvcur
-                                           && wlv.vcol == wp->w_virtcol));
-          extmark_attr = decor_redraw_col(wp, (colnr_T)v, wlv.off,
-                                          selected, &decor_state);
+      if (has_decor && v >= 0) {
+        bool selected = (area_active || (area_highlighting && noinvcur
+                                         && wlv.vcol == wp->w_virtcol));
+        extmark_attr = decor_redraw_col(wp, (colnr_T)v, wlv.off, selected, &decor_state);
 
+        if (!has_fold) {
           bool do_save = false;
           handle_inline_virtual_text(wp, &wlv, v, &do_save);
           if (do_save) {
@@ -1835,43 +1834,43 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
             n_skip = 0;
           }
         }
+      }
 
-        if (wlv.n_extra == 0) {
-          // Check for start/end of 'hlsearch' and other matches.
-          // After end, check for start/end of next match.
-          // When another match, have to check for start again.
-          v = (ptr - line);
-          search_attr = update_search_hl(wp, lnum, (colnr_T)v, &line, &screen_search_hl,
-                                         &has_match_conc, &match_conc, lcs_eol_one,
-                                         &on_last_col, &search_attr_from_match);
-          ptr = line + v;  // "line" may have been changed
+      if (wlv.n_extra == 0) {
+        // Check for start/end of 'hlsearch' and other matches.
+        // After end, check for start/end of next match.
+        // When another match, have to check for start again.
+        v = (ptr - line);
+        search_attr = update_search_hl(wp, lnum, (colnr_T)v, &line, &screen_search_hl,
+                                       &has_match_conc, &match_conc, lcs_eol_one,
+                                       &on_last_col, &search_attr_from_match);
+        ptr = line + v;  // "line" may have been changed
 
-          // Do not allow a conceal over EOL otherwise EOL will be missed
-          // and bad things happen.
-          if (*ptr == NUL) {
-            has_match_conc = 0;
-          }
+        // Do not allow a conceal over EOL otherwise EOL will be missed
+        // and bad things happen.
+        if (*ptr == NUL) {
+          has_match_conc = 0;
         }
+      }
 
-        if (wlv.diff_hlf != (hlf_T)0) {
-          // When there is extra text (eg: virtual text) it gets the
-          // diff highlighting for the line, but not for changed text.
-          if (wlv.diff_hlf == HLF_CHD && ptr - line >= change_start
-              && wlv.n_extra == 0) {
-            wlv.diff_hlf = HLF_TXD;                   // changed text
-          }
-          if (wlv.diff_hlf == HLF_TXD && ((ptr - line > change_end && wlv.n_extra == 0)
-                                          || (wlv.n_extra > 0 && wlv.extra_for_extmark))) {
-            wlv.diff_hlf = HLF_CHD;                   // changed line
-          }
-          wlv.line_attr = win_hl_attr(wp, (int)wlv.diff_hlf);
-          // Overlay CursorLine onto diff-mode highlight.
-          if (wlv.cul_attr) {
-            wlv.line_attr = 0 != wlv.line_attr_lowprio  // Low-priority CursorLine
-              ? hl_combine_attr(hl_combine_attr(wlv.cul_attr, wlv.line_attr),
-                                hl_get_underline())
-              : hl_combine_attr(wlv.line_attr, wlv.cul_attr);
-          }
+      if (wlv.diff_hlf != (hlf_T)0) {
+        // When there is extra text (eg: virtual text) it gets the
+        // diff highlighting for the line, but not for changed text.
+        if (wlv.diff_hlf == HLF_CHD && ptr - line >= change_start
+            && wlv.n_extra == 0) {
+          wlv.diff_hlf = HLF_TXD;                   // changed text
+        }
+        if (wlv.diff_hlf == HLF_TXD && ((ptr - line > change_end && wlv.n_extra == 0)
+                                        || (wlv.n_extra > 0 && wlv.extra_for_extmark))) {
+          wlv.diff_hlf = HLF_CHD;                   // changed line
+        }
+        wlv.line_attr = win_hl_attr(wp, (int)wlv.diff_hlf);
+        // Overlay CursorLine onto diff-mode highlight.
+        if (wlv.cul_attr) {
+          wlv.line_attr = 0 != wlv.line_attr_lowprio  // Low-priority CursorLine
+            ? hl_combine_attr(hl_combine_attr(wlv.cul_attr, wlv.line_attr),
+                              hl_get_underline())
+            : hl_combine_attr(wlv.line_attr, wlv.cul_attr);
         }
       }
 
@@ -1983,7 +1982,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         }
         wlv.extra_for_extmark = false;
       }
-    } else if (foldinfo.fi_lines > 0) {
+    } else if (has_fold) {
       // skip writing the buffer line itself
       c = NUL;
     } else {
@@ -2753,8 +2752,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
                       ? 1 : 0);
 
       if (has_decor) {
-        has_virttext = decor_redraw_eol(wp, &decor_state, &wlv.line_attr,
-                                        wlv.col + eol_skip);
+        has_virttext = decor_redraw_eol(wp, &decor_state, &wlv.line_attr, wlv.col + eol_skip);
       }
 
       if (((wp->w_p_cuc
@@ -2848,7 +2846,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       if (wp == curwin && lnum == curwin->w_cursor.lnum) {
         curwin->w_cline_row = startrow;
         curwin->w_cline_height = wlv.row - startrow;
-        curwin->w_cline_folded = foldinfo.fi_lines > 0;
+        curwin->w_cline_folded = has_fold;
         curwin->w_valid |= (VALID_CHEIGHT|VALID_CROW);
         conceal_cursor_used = conceal_cursor_line(curwin);
       }

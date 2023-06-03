@@ -666,6 +666,7 @@ describe('extmark decorations', function()
       [30] = {foreground = Screen.colors.DarkCyan, background = Screen.colors.LightGray, underline = true};
       [31] = {underline = true, foreground = Screen.colors.DarkCyan};
       [32] = {underline = true};
+      [33] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGray};
     }
 
     ns = meths.create_namespace 'test'
@@ -1143,6 +1144,46 @@ describe('extmark decorations', function()
                                                         |
                                                         |
       {1:~                                                 }|
+                                                        |
+    ]]}
+  end)
+
+  it('can have virtual text on folded line', function()
+    insert([[
+      11111
+      22222
+      33333]])
+    command('1,2fold')
+    command('set nowrap')
+    screen:try_resize(50, 3)
+    feed('zb')
+    -- XXX: the behavior of overlay virtual text at non-zero column is strange:
+    -- 1. With 'wrap' it is never shown.
+    -- 2. With 'nowrap' it is shown only if the extmark is hidden before leftcol.
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_text = {{'AA', 'Underlined'}}, hl_mode = 'combine', virt_text_pos = 'overlay' })
+    meths.buf_set_extmark(0, ns, 0, 1, { virt_text = {{'BB', 'Underlined'}}, hl_mode = 'combine', virt_text_win_col = 10 })
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text = {{'CC', 'Underlined'}}, hl_mode = 'combine', virt_text_pos = 'right_align' })
+    screen:expect{grid=[[
+      {29:AA}{33:-  2 lin}{29:BB}{33:: 11111·····························}{29:CC}|
+      3333^3                                             |
+                                                        |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      {29:AA}{33:-  2 lin}{29:BB}{33:: 11111·····························}{29:CC}|
+      333^3                                              |
+                                                        |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      {29:AA}{33:-  2 lin}{29:BB}{33:: 11111·····························}{29:CC}|
+      33^3                                               |
+                                                        |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      {29:AA}{33:-  2 lin}{29:BB}{33:: 11111·····························}{29:CC}|
+      3^3                                                |
                                                         |
     ]]}
   end)
