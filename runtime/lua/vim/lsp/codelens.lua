@@ -180,6 +180,9 @@ end
 ---@param bufnr integer
 ---@param client_id integer
 function M.save(lenses, bufnr, client_id)
+  if not api.nvim_buf_is_valid(bufnr) then
+    return
+  end
   local lenses_by_client = lens_cache_by_buf[bufnr]
   if not lenses_by_client then
     lenses_by_client = {}
