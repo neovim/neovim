@@ -285,6 +285,22 @@ describe('API/win', function()
       eq(2, window('get_height', nvim('list_wins')[2]))
     end)
 
+    it('correctly handles height=1', function()
+      nvim('command', 'split')
+      nvim('set_current_win', nvim('list_wins')[1])
+      window('set_height', nvim('list_wins')[2], 1)
+      eq(1, window('get_height', nvim('list_wins')[2]))
+    end)
+
+    it('correctly handles height=1 with a winbar', function()
+      nvim('command', 'set winbar=foobar')
+      nvim('command', 'set winminheight=0')
+      nvim('command', 'split')
+      nvim('set_current_win', nvim('list_wins')[1])
+      window('set_height', nvim('list_wins')[2], 1)
+      eq(1, window('get_height', nvim('list_wins')[2]))
+    end)
+
     it('do not cause ml_get errors with foldmethod=expr #19989', function()
       insert([[
         aaaaa
