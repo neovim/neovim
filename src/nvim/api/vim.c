@@ -2180,7 +2180,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
       wp->w_cursorline = win_cursorline_standout(wp) ? wp->w_cursor.lnum : 0;
 
       if (wp->w_p_cul) {
-        if (statuscol.foldinfo.fi_level > 0 && statuscol.foldinfo.fi_lines > 0) {
+        if (statuscol.foldinfo.fi_level != 0 && statuscol.foldinfo.fi_lines > 0) {
           wp->w_cursorline = statuscol.foldinfo.fi_lnum;
         }
         statuscol.use_cul = lnum == wp->w_cursorline && (wp->w_p_culopt_flags & CULOPT_NBR);
