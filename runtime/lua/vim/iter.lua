@@ -51,6 +51,8 @@
 --- In addition to the |vim.iter()| function, the |vim.iter| module provides
 --- convenience functions like |vim.iter.filter()| and |vim.iter.totable()|.
 
+---@class IterMod
+---@operator call:Iter
 local M = {}
 
 ---@class Iter
@@ -974,6 +976,7 @@ function M.map(f, src, ...)
   return Iter.new(src, ...):map(f):totable()
 end
 
+---@type IterMod
 return setmetatable(M, {
   __call = function(_, ...)
     return Iter.new(...)
