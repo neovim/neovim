@@ -667,6 +667,32 @@ describe('smoothscroll', function()
     screen:expect(s1)
   end)
 
+  -- oldtest: Test_smoothscroll_marker_over_double_width_dump()
+  it('marker is drawn over double-width char correctly', function()
+    screen:try_resize(40, 6)
+    exec([[
+      call setline(1, 'a'->repeat(&columns) .. '口'->repeat(10))
+      setlocal smoothscroll
+    ]])
+    screen:expect([[
+      ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      口口口口口口口口口口                    |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      <<< 口口口口口口口^口                    |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+  end)
+
   -- oldtest: Test_smoothscroll_zero_width()
   it("does not divide by zero with a narrow window", function()
     screen:try_resize(12, 2)
