@@ -135,6 +135,10 @@ end
 ---@param bufnr integer
 ---@param client_id integer
 function M.display(lenses, bufnr, client_id)
+  if not api.nvim_buf_is_valid(bufnr) then
+    return
+  end
+
   local ns = namespaces[client_id]
   if not lenses or not next(lenses) then
     api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
@@ -202,6 +206,9 @@ end
 
 ---@private
 local function resolve_lenses(lenses, bufnr, client_id, callback)
+  if not api.nvim_buf_is_valid(bufnr) then
+    return
+  end
   lenses = lenses or {}
   local num_lens = vim.tbl_count(lenses)
   if num_lens == 0 then
