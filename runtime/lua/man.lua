@@ -21,13 +21,13 @@ end
 local function system(cmd_, silent, env)
   local stdout_data = {} ---@type string[]
   local stderr_data = {} ---@type string[]
-  local stdout = assert(vim.loop.new_pipe(false))
-  local stderr = assert(vim.loop.new_pipe(false))
+  local stdout = assert(vim.uv.new_pipe(false))
+  local stderr = assert(vim.uv.new_pipe(false))
 
   local done = false
   local exit_code ---@type integer?
 
-  -- We use the `env` command here rather than the env option to vim.loop.spawn since spawn will
+  -- We use the `env` command here rather than the env option to vim.uv.spawn since spawn will
   -- completely overwrite the environment when we just want to modify the existing one.
   --
   -- Overwriting mainly causes problems NixOS which relies heavily on a non-standard environment.
@@ -39,7 +39,7 @@ local function system(cmd_, silent, env)
   end
 
   local handle
-  handle = vim.loop.spawn(cmd[1], {
+  handle = vim.uv.spawn(cmd[1], {
     args = vim.list_slice(cmd, 2),
     stdio = { nil, stdout, stderr },
   }, function(code)

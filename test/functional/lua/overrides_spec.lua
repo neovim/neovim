@@ -119,7 +119,7 @@ describe('print', function()
     exec_lua([[
       local cmd = ...
       function test()
-        local timer = vim.loop.new_timer()
+        local timer = vim.uv.new_timer()
         local done = false
         timer:start(10, 0, function()
           print("very fast")
@@ -130,7 +130,7 @@ describe('print', function()
         -- loop until we know for sure the callback has been executed
         while not done do
           os.execute(cmd)
-          vim.loop.run("nowait") -- fake os_breakcheck()
+          vim.uv.run("nowait") -- fake os_breakcheck()
         end
         print("very slow")
         vim.api.nvim_command("sleep 1m") -- force deferred event processing

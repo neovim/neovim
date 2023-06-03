@@ -513,7 +513,7 @@ vim9['import'] = (function()
 
   imported.absolute = setmetatable({}, {
     __index = function(self, name)
-      if vim.loop.fs_stat(name) then
+      if vim.uv.fs_stat(name) then
         local result = loadfile(name)()
         rawset(self, name, result)
 

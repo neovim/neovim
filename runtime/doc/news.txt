@@ -129,4 +129,6 @@ release.
   - |nvim_win_get_option()|	Use |nvim_get_option_value()| instead.
   - |nvim_win_set_option()|	Use |nvim_set_option_value()| instead.
 
+• `vim.loop` has been renamed to `vim.uv`.
+
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:

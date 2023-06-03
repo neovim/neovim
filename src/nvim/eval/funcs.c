@@ -3238,7 +3238,7 @@ static bool has_wsl(void)
   static TriState has_wsl = kNone;
   if (has_wsl == kNone) {
     Error err = ERROR_INIT;
-    Object o = nlua_exec(STATIC_CSTR_AS_STRING("return vim.loop.os_uname()['release']:lower()"
+    Object o = nlua_exec(STATIC_CSTR_AS_STRING("return vim.uv.os_uname()['release']:lower()"
                                                ":match('microsoft') and true or false"),
                          (Array)ARRAY_DICT_INIT, &err);
     assert(!ERROR_SET(&err));

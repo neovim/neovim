@@ -12,10 +12,10 @@ describe('autocmd perf', function()
     exec_lua([[
       out = {}
       function start()
-        ts = vim.loop.hrtime()
+        ts = vim.uv.hrtime()
       end
       function stop(name)
-        out[#out+1] = ('%14.6f ms - %s'):format((vim.loop.hrtime() - ts) / 1000000, name)
+        out[#out+1] = ('%14.6f ms - %s'):format((vim.uv.hrtime() - ts) / 1000000, name)
       end
     ]])
   end)

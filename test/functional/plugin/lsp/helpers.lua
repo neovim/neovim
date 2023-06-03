@@ -99,7 +99,7 @@ local function fake_lsp_server_setup(test_name, timeout_ms, options, settings)
         end;
       });
       workspace_folders = {{
-          uri = 'file://' .. vim.loop.cwd(),
+          uri = 'file://' .. vim.uv.cwd(),
           name = 'test_folder',
       }};
       on_init = function(client, result)

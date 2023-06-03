@@ -5,8 +5,8 @@
 
 								      *luvref*
 This file documents the Lua bindings for the LibUV library which is used for
-Nvim's event-loop and is accessible from Lua via |vim.loop| (e.g., |uv.version()|
-is exposed as `vim.loop.version()`).
+Nvim's event-loop and is accessible from Lua via |vim.uv| (e.g., |uv.version()|
+is exposed as `vim.uv.version()`).
 
 For information about this manual, see |luv-credits|.
 
@@ -29,7 +29,7 @@ TCP Echo Server Example ~
 Here is a small example showing a TCP echo server:
 
     >lua
-    local uv = vim.loop
+    local uv = vim.uv
 
     local server = uv.new_tcp()
     server:bind("127.0.0.1", 1337)

@@ -182,11 +182,11 @@ void ui_refresh(void)
     local function q(n)
       return exec_lua ([[
         local query, n = ...
-        local before = vim.loop.hrtime()
+        local before = vim.uv.hrtime()
         for i=1,n,1 do
           cquery = vim.treesitter.query.parse("c", ...)
         end
-        local after = vim.loop.hrtime()
+        local after = vim.uv.hrtime()
         return after - before
       ]], long_query, n)
     end

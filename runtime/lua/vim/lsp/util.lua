@@ -4,7 +4,7 @@ local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
 local highlight = require('vim.highlight')
-local uv = vim.loop
+local uv = vim.uv
 
 local npcall = vim.F.npcall
 local split = vim.split

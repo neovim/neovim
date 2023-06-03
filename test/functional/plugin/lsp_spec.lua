@@ -65,7 +65,7 @@ describe('LSP', function()
             vim.v.progpath, '-l', fake_lsp_code, test_name;
           };
           workspace_folders = {{
-              uri = 'file://' .. vim.loop.cwd(),
+              uri = 'file://' .. vim.uv.cwd(),
               name = 'test_folder',
           }};
         }
@@ -2059,7 +2059,7 @@ describe('LSP', function()
         }
       }
       exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16')
-      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
+      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', tmpfile))
     end)
     it('Supports file creation in folder that needs to be created with CreateFile payload', function()
       local tmpfile = helpers.tmpname()
@@ -2075,7 +2075,7 @@ describe('LSP', function()
         }
       }
       exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16')
-      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
+      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', tmpfile))
     end)
     it('createFile does not touch file if it exists and ignoreIfExists is set', function()
       local tmpfile = helpers.tmpname()
@@ -2093,7 +2093,7 @@ describe('LSP', function()
         }
       }
       exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16')
-      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
+      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', tmpfile))
       eq('Dummy content', read_file(tmpfile))
     end)
     it('createFile overrides file if overwrite is set', function()
@@ -2113,7 +2113,7 @@ describe('LSP', function()
         }
       }
       exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16')
-      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
+      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', tmpfile))
       eq('', read_file(tmpfile))
     end)
     it('DeleteFile delete file and buffer', function()
@@ -2134,7 +2134,7 @@ describe('LSP', function()
         }
       }
       eq(true, pcall(exec_lua, 'vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16'))
-      eq(false, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
+      eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', tmpfile))
       eq(false, exec_lua('return vim.api.nvim_buf_is_loaded(vim.fn.bufadd(...))', tmpfile))
     end)
     it('DeleteFile fails if file does not exist and ignoreIfNotExists is false', function()
@@ -2153,7 +2153,7 @@ describe('LSP', function()
         }
       }
       eq(false, pcall(exec_lua, 'vim.lsp.util.apply_workspace_edit(...)', edit))
-      eq(false, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
+      eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', tmpfile))
     end)
   end)
 
@@ -2223,9 +2223,9 @@ describe('LSP', function()
         return vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
       ]], old, new)
       eq({'Test content'}, lines)
-      local exists = exec_lua('return vim.loop.fs_stat(...) ~= nil', old)
+      local exists = exec_lua('return vim.uv.fs_stat(...) ~= nil', old)
       eq(false, exists)
-      exists = exec_lua('return vim.loop.fs_stat(...) ~= nil', new)
+      exists = exec_lua('return vim.uv.fs_stat(...) ~= nil', new)
       eq(true, exists)
       os.remove(new)
     end)
@@ -2266,9 +2266,9 @@ describe('LSP', function()
 	return vim.fn.bufloaded(oldbufnr)
       ]], old_dir, new_dir, pathsep)
       eq(0, lines)
-      eq(false, exec_lua('return vim.loop.fs_stat(...) ~= nil', old_dir))
-      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', new_dir))
-      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', new_dir .. pathsep .. file))
+      eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old_dir))
+      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new_dir))
+      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new_dir .. pathsep .. file))
       eq('Test content', read_file(new_dir .. pathsep .. file))
 
       os.remove(new_dir)
@@ -2286,7 +2286,7 @@ describe('LSP', function()
         vim.lsp.util.rename(old, new, { ignoreIfExists = true })
       ]], old, new)
 
-      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', old))
+      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
       eq('New file', read_file(new))
 
       exec_lua([[
@@ -2296,7 +2296,7 @@ describe('LSP', function()
         vim.lsp.util.rename(old, new, { overwrite = false })
       ]], old, new)
 
-      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', old))
+      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
       eq('New file', read_file(new))
     end)
     it('Does override target if overwrite is true', function()
@@ -2311,8 +2311,8 @@ describe('LSP', function()
         vim.lsp.util.rename(old, new, { overwrite = true })
       ]], old, new)
 
-      eq(false, exec_lua('return vim.loop.fs_stat(...) ~= nil', old))
-      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', new))
+      eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
+      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new))
       eq('Old file\n', read_file(new))
     end)
   end)
@@ -3697,7 +3697,7 @@ describe('LSP', function()
   describe('cmd', function()
     it('can connect to lsp server via rpc.connect', function()
       local result = exec_lua [[
-        local uv = vim.loop
+        local uv = vim.uv
         local server = uv.new_tcp()
         local init = nil
         server:bind('127.0.0.1', 0)
@@ -3725,7 +3725,7 @@ describe('LSP', function()
   describe('handlers', function()
     it('handler can return false as response', function()
       local result = exec_lua [[
-        local uv = vim.loop
+        local uv = vim.uv
         local server = uv.new_tcp()
         local messages = {}
         local responses = {}

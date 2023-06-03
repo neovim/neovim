@@ -30,7 +30,7 @@ local function check_runtime()
   local bad_files_msg = ''
   for k, _ in pairs(bad_files) do
     local path = ('%s/%s'):format(vim.env.VIMRUNTIME, k)
-    if vim.loop.fs_stat(path) then
+    if vim.uv.fs_stat(path) then
       bad_files[k] = true
       bad_files_msg = ('%s%s\n'):format(bad_files_msg, path)
     end

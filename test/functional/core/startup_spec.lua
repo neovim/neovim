@@ -110,7 +110,7 @@ describe('startup', function()
       exec_lua [[
         local asan_options = os.getenv 'ASAN_OPTIONS'
         if asan_options ~= nil and asan_options ~= '' then
-          vim.loop.os_setenv('ASAN_OPTIONS', asan_options..':detect_leaks=0')
+          vim.uv.os_setenv('ASAN_OPTIONS', asan_options..':detect_leaks=0')
         end
       ]]
       -- nvim -l foo.lua -arg1 -- a b c
