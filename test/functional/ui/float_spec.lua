@@ -79,7 +79,7 @@ describe('float window', function()
           api.nvim_buf_set_lines(buf, 0, -1, true, contents)
           local winnr = vim.fn.win_id2win(floatwin)
           api.nvim_command('wincmd p')
-          api.nvim_command('autocmd CursorMoved * ++once '..winnr..'wincmd c')
+          api.nvim_command('autocmd BufEnter * ++once '..winnr..'wincmd c')
           return buf, floatwin
         end
         crashes{'foo'}
