@@ -1679,6 +1679,54 @@ describe('LSP', function()
         'foobar';
       }, buf_lines(1))
     end)
+    it('it restores marks', function()
+      local edits = {
+        make_edit(1, 0, 2, 5, "foobar");
+        make_edit(4, 0, 5, 0, "barfoo");
+      }
+      eq(true, exec_lua('return vim.api.nvim_buf_set_mark(1, "a", 2, 1, {})'))
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
+      eq({
+        'First line of text';
+        'foobar line of text';
+        'Fourth line of text';
+        'barfoo';
+      }, buf_lines(1))
+      local mark = exec_lua('return vim.api.nvim_buf_get_mark(1, "a")')
+      eq({ 2, 1 }, mark)
+    end)
+
+    it('it restores marks to last valid col', function()
+      local edits = {
+        make_edit(1, 0, 2, 15, "foobar");
+        make_edit(4, 0, 5, 0, "barfoo");
+      }
+      eq(true, exec_lua('return vim.api.nvim_buf_set_mark(1, "a", 2, 10, {})'))
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
+      eq({
+        'First line of text';
+        'foobarext';
+        'Fourth line of text';
+        'barfoo';
+      }, buf_lines(1))
+      local mark = exec_lua('return vim.api.nvim_buf_get_mark(1, "a")')
+      eq({ 2, 9 }, mark)
+    end)
+
+    it('it restores marks to last valid line', function()
+      local edits = {
+        make_edit(1, 0, 4, 5, "foobar");
+        make_edit(4, 0, 5, 0, "barfoo");
+      }
+      eq(true, exec_lua('return vim.api.nvim_buf_set_mark(1, "a", 4, 1, {})'))
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
+      eq({
+        'First line of text';
+        'foobaro';
+      }, buf_lines(1))
+      local mark = exec_lua('return vim.api.nvim_buf_get_mark(1, "a")')
+      eq({ 2, 1 }, mark)
+    end)
 
     describe('cursor position', function()
       it('don\'t fix the cursor if the range contains the cursor', function()
