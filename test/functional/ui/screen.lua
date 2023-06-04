@@ -947,6 +947,7 @@ end
 
 function Screen:_handle_grid_line(grid, row, col, items)
   assert(self._options.ext_linegrid)
+  assert(#items > 0)
   local line = self._grids[grid].rows[row+1]
   local colpos = col+1
   local hl_id = 0
