@@ -47,17 +47,25 @@ local function parse(pattern)
 
   local p = P({
     'Pattern',
-    Pattern = Cf(V('Elem') ^ 0 * Cc(l.P(-1)), mul) * V('End'),
-    Elem = V('DStar') + V('Star') + V('Ques') + V('Class') + V('CondList') + V('Literal'),
+    Pattern = V('Elem') ^ -1 * V('End'),
+    Elem = Cf(
+      (V('DStar') + V('Star') + V('Ques') + V('Class') + V('CondList') + V('Literal'))
+        * (V('Elem') + V('End')),
+      mul
+    ),
     DStar = P('**') * (P(pathsep) * (V('Elem') + V('End')) + V('End')) / dstar,
     Star = C(P('*') ^ 1) * (V('Elem') + V('End')) / star,
     Ques = P('?') * Cc(l.P(1) - pathsep),
     Class = P('[') * C(P('!') ^ -1) * Ct(Ct(C(1) * '-' * C(P(1) - ']')) ^ 1 * ']') / class,
     CondList = P('{') * Cf(V('Cond') * (P(',') * V('Cond')) ^ 0, add) * '}',
-    Cond = Cf(
-      (V('Star') + V('Ques') + V('Class') + V('CondList') + (V('Literal') - S(',}'))) ^ 1,
-      mul
-    ) + Cc(l.P(0)),
+    -- TODO: '*' inside a {} condition is interpreted literally but should probably have the same
+    -- wildcard semantics it usually has.
+    -- Fixing this is non-trivial because '*' should match non-greedily up to "the rest of the
+    -- pattern" which in all other cases is the entire succeeding part of the pattern, but at the end of a {}
+    -- condition means "everything after the {}" where several other options separated by ',' may
+    -- exist in between that should not be matched by '*'.
+    Cond = Cf((V('Ques') + V('Class') + V('CondList') + (V('Literal') - S(',}'))) ^ 1, mul)
+      + Cc(l.P(0)),
     Literal = P(1) / l.P,
     End = P(-1) * Cc(l.P(-1)),
   })
