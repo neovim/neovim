@@ -1090,6 +1090,7 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
       row += local ? 0 : wp->w_winrow + wp->w_winrow_off;
       coloff = (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1 + off;
     } else {
+      assert(lnum == pos->lnum);
       getvcol(wp, pos, &scol, &ccol, &ecol);
 
       // similar to what is done in validate_cursor_col()
