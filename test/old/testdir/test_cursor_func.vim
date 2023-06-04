@@ -125,7 +125,40 @@ func Test_screenpos()
 	\ 'curscol': wincol + 7,
 	\ 'endcol': wincol + 7}, winid->screenpos(line('$'), 8))
   call assert_equal({'row': 0, 'col': 0, 'curscol': 0, 'endcol': 0},
-        \ winid->screenpos(line('$'), 22))
+	\ winid->screenpos(line('$'), 22))
+
+  1split
+  normal G$
+  redraw
+  call assert_equal({'row': winrow + 0,
+	\ 'col': wincol + 20 - 1,
+	\ 'curscol': wincol + 20 - 1,
+	\ 'endcol': wincol + 20 - 1},
+	\ screenpos(win_getid(), line('.'), col('.')))
+
+  " w_skipcol should be subtracted
+  setlocal nowrap
+  normal 050zl$
+  call assert_equal({'row': winrow + 0,
+	\ 'col': wincol + 10 - 1,
+	\ 'curscol': wincol + 10 - 1,
+	\ 'endcol': wincol + 10 - 1},
+	\ screenpos(win_getid(), line('.'), col('.')))
+
+  " w_skipcol should only matter for the topline
+" FIXME: This fails because pline_m_win() does not take w_skipcol into
+" account.  If it does, then other tests fail.
+"  wincmd +
+"  setlocal wrap smoothscroll
+"  call setline(line('$') + 1, 'last line')
+"  exe "normal \<C-E>G$"
+"  redraw
+"  call assert_equal({'row': winrow + 1,
+"	\ 'col': wincol + 9 - 1,
+"	\ 'curscol': wincol + 9 - 1,
+"	\ 'endcol': wincol + 9 - 1},
+"	\ screenpos(win_getid(), line('.'), col('.')))
+  close
 
   close
   call assert_equal({}, screenpos(999, 1, 1))

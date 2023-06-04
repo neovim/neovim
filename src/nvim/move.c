@@ -972,6 +972,10 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
       col += off;
       int width = wp->w_width_inner - off + win_col_off2(wp);
 
+      if (pos->lnum == wp->w_topline) {
+        col -= wp->w_skipcol;
+      }
+
       // long line wrapping, adjust row
       if (wp->w_p_wrap && col >= (colnr_T)wp->w_width_inner && width > 0) {
         // use same formula as what is used in curs_columns()
