@@ -130,13 +130,14 @@ func Test_screenpos()
   1split
   normal G$
   redraw
+  " w_skipcol should be subtracted
   call assert_equal({'row': winrow + 0,
 	\ 'col': wincol + 20 - 1,
 	\ 'curscol': wincol + 20 - 1,
 	\ 'endcol': wincol + 20 - 1},
 	\ screenpos(win_getid(), line('.'), col('.')))
 
-  " w_skipcol should be subtracted
+  " w_leftcol should be subtracted
   setlocal nowrap
   normal 050zl$
   call assert_equal({'row': winrow + 0,
@@ -203,6 +204,19 @@ func Test_screenpos_diff()
   windo diffthis
   wincmd w
   call assert_equal(#{col: 3, row: 7, endcol: 3, curscol: 3}, screenpos(0, 4, 1))
+  call assert_equal(#{col: 3, row: 8, endcol: 3, curscol: 3}, screenpos(0, 5, 1))
+  exe "normal! 3\<C-E>"
+  call assert_equal(#{col: 3, row: 4, endcol: 3, curscol: 3}, screenpos(0, 4, 1))
+  call assert_equal(#{col: 3, row: 5, endcol: 3, curscol: 3}, screenpos(0, 5, 1))
+  exe "normal! \<C-E>"
+  call assert_equal(#{col: 3, row: 3, endcol: 3, curscol: 3}, screenpos(0, 4, 1))
+  call assert_equal(#{col: 3, row: 4, endcol: 3, curscol: 3}, screenpos(0, 5, 1))
+  exe "normal! \<C-E>"
+  call assert_equal(#{col: 3, row: 2, endcol: 3, curscol: 3}, screenpos(0, 4, 1))
+  call assert_equal(#{col: 3, row: 3, endcol: 3, curscol: 3}, screenpos(0, 5, 1))
+  exe "normal! \<C-E>"
+  call assert_equal(#{col: 3, row: 1, endcol: 3, curscol: 3}, screenpos(0, 4, 1))
+  call assert_equal(#{col: 3, row: 2, endcol: 3, curscol: 3}, screenpos(0, 5, 1))
 
   windo diffoff
   bwipe!
