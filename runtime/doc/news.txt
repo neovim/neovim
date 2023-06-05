@@ -44,11 +44,9 @@ The following new APIs or features were added.
 • Neovim's LSP client now always saves and restores named buffer marks when
   applying text edits.
 
-• Nvim's LSP client now advertises the general.positionEncodings client
-  capability to indicate to servers that it supports utf-8, utf-16, and utf-32
-  encodings. If the server responds with the positionEncoding capability in
-  its initialization response, Nvim automatically sets the client's
-  `offset_encoding` field.
+• Nvim now supports the `positionEncoding` server capability. If a server
+  responds with the `positionEncoding` capability in its initialization
+  response, Nvim automatically sets the client's `offset_encoding` field.
 
 • Dynamic registration of LSP capabilities. An implication of this change is
   that checking a client's `server_capabilities` is no longer a sufficient
