@@ -104,9 +104,6 @@ The following changes to existing APIs or features add new behavior.
 • `:source` without arguments treats a buffer with its 'filetype' set to "lua"
   as Lua code regardless of its extension.
 
-• `:checkhealth` buffer now implements |folds|. The initial folding status is
-  defined by the |foldenable| option.
-
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
