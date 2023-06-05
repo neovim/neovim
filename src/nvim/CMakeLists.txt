@@ -23,7 +23,17 @@ endif()
 
 find_package(Luv 1.43.0 REQUIRED)
 target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LUV_INCLUDE_DIR})
-target_link_libraries(main_lib INTERFACE ${LUV_LIBRARY})
+
+if(${USE_LUV})
+  # Use "luv" as imported library, to work around CMake using "-lluv" for "luv.so". Found in #10407
+  add_library(luv UNKNOWN IMPORTED)
+  set_property(TARGET luv PROPERTY IMPORTED_LOCATION ${LUV_LIBRARY})
+
+  #Use "luv" as imported library, to work around CMake using "-lluv" for "luv.so". Found in #10407
+  target_link_libraries(main_lib INTERFACE luv)
+else()
+  target_link_libraries(main_lib INTERFACE ${LUV_LIBRARY})
+endif()
 
 find_package(Iconv REQUIRED)
 find_package(Lpeg REQUIRED)
