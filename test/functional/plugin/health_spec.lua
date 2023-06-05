@@ -163,7 +163,7 @@ describe('health.vim', function()
         ──────────────────────────────────────────────────|
         +WE  4 lines: foo: ·······························|
         ──────────────────────────────────────────────────|
-        +--  8 lines: success1: health#success1#check·····|
+        +--  8 lines: test_plug.success1: require("test_pl|
         ~                                                 |
                                                           |
       ]]}
