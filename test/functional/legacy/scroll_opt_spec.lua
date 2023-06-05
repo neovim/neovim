@@ -174,6 +174,24 @@ describe('smoothscroll', function()
     screen:expect(s8)
   end)
 
+  -- oldtest: Test_smoothscroll_multibyte()
+  it('works with multibyte characters', function()
+    screen:try_resize(40, 6)
+    exec([[
+      set scrolloff=0 smoothscroll
+      call setline(1, [repeat('ϛ', 45), repeat('2', 36)])
+      exe "normal G35l\<C-E>k"
+    ]])
+    screen:expect([[
+      ϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛ^ϛϛϛϛϛ|
+      ϛϛϛϛϛ                                   |
+      222222222222222222222222222222222222    |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+  end)
+
   -- oldtest: Test_smoothscroll_number()
   it("works 'number' and 'cpo'+=n", function()
     exec([[
