@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 
-local lfs = require('lfs')
+local luv = require('luv')
 
 local eq = helpers.eq
 local clear = helpers.clear
@@ -9,13 +9,13 @@ local meths = helpers.meths
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 local bufmeths = helpers.bufmeths
-local winmeths = helpers.winmeths
 local curbufmeths = helpers.curbufmeths
 local curwinmeths = helpers.curwinmeths
 local curtabmeths = helpers.curtabmeths
 local get_pathsep = helpers.get_pathsep
 local rmdir = helpers.rmdir
 local pcall_err = helpers.pcall_err
+local mkdir = helpers.mkdir
 
 local fname = 'Xtest-functional-eval-buf_functions'
 local fname2 = fname .. '.2'
@@ -62,7 +62,7 @@ describe('bufname() function', function()
     eq('', funcs.bufname('X'))
   end)
   before_each(function()
-    lfs.mkdir(dirname)
+    mkdir(dirname)
   end)
   after_each(function()
     rmdir(dirname)
@@ -70,7 +70,7 @@ describe('bufname() function', function()
   it('returns expected buffer name', function()
     eq('', funcs.bufname('%'))  -- Buffer has no name yet
     command('file ' .. fname)
-    local wd = lfs.currentdir()
+    local wd = luv.cwd()
     local sep = get_pathsep()
     local curdirname = funcs.fnamemodify(wd, ':t')
     for _, arg in ipairs({'%', 1, 'X', wd}) do
@@ -103,7 +103,7 @@ describe('bufnr() function', function()
   it('returns expected buffer number', function()
     eq(1, funcs.bufnr('%'))
     command('file ' .. fname)
-    local wd = lfs.currentdir()
+    local wd = luv.cwd()
     local curdirname = funcs.fnamemodify(wd, ':t')
     eq(1, funcs.bufnr(fname))
     eq(1, funcs.bufnr(wd))
@@ -144,7 +144,7 @@ describe('bufwinnr() function', function()
     eq(-1, funcs.bufwinnr('X'))
   end)
   before_each(function()
-    lfs.mkdir(dirname)
+    mkdir(dirname)
   end)
   after_each(function()
     rmdir(dirname)
@@ -188,7 +188,7 @@ describe('getbufline() function', function()
     eq({}, funcs.getbufline(1, -1, 9999))
   end)
   it('returns expected lines', function()
-    meths.set_option('hidden', true)
+    meths.set_option_value('hidden', true, {})
     command('file ' .. fname)
     curbufmeths.set_lines(0, 1, false, {'foo\0', '\0bar', 'baz'})
     command('edit ' .. fname2)
@@ -268,24 +268,25 @@ describe('setbufvar() function', function()
   end)
   it('may set options, including window-local and global values', function()
     local buf1 = meths.get_current_buf()
-    eq(false, curwinmeths.get_option('number'))
+    eq(false, meths.get_option_value('number', {}))
     command('split')
     command('new')
     eq(2, bufmeths.get_number(curwinmeths.get_buf()))
     funcs.setbufvar(1, '&number', true)
     local windows = curtabmeths.list_wins()
-    eq(false, winmeths.get_option(windows[1], 'number'))
-    eq(true, winmeths.get_option(windows[2], 'number'))
-    eq(false, winmeths.get_option(windows[3], 'number'))
-    eq(false, winmeths.get_option(meths.get_current_win(), 'number'))
+    eq(false, meths.get_option_value('number', {win=windows[1].id}))
+    eq(true, meths.get_option_value('number', {win=windows[2].id}))
+    eq(false, meths.get_option_value('number', {win=windows[3].id}))
+    eq(false, meths.get_option_value('number', {win=meths.get_current_win().id}))
 
-    eq(true, meths.get_option('hidden'))
+
+    eq(true, meths.get_option_value('hidden', {}))
     funcs.setbufvar(1, '&hidden', 0)
-    eq(false, meths.get_option('hidden'))
+    eq(false, meths.get_option_value('hidden', {}))
 
-    eq(false, bufmeths.get_option(buf1, 'autoindent'))
+    eq(false, meths.get_option_value('autoindent', {buf=buf1.id}))
     funcs.setbufvar(1, '&autoindent', true)
-    eq(true, bufmeths.get_option(buf1, 'autoindent'))
+    eq(true, meths.get_option_value('autoindent', {buf=buf1.id}))
     eq('Vim(call):E355: Unknown option: xxx',
        exc_exec('call setbufvar(1, "&xxx", 0)'))
   end)

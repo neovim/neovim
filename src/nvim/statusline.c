@@ -336,7 +336,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     grid_adjust(&grid, &row, &col);
 
     if (row < 0) {
-      return;
+      goto theend;
     }
 
     fillchar = wp->w_p_fcs_chars.wbr;
@@ -348,7 +348,8 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   } else {
     row = is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp);
     fillchar = fillchar_status(&attr, wp);
-    maxwidth = is_stl_global ? Columns : wp->w_width;
+    const bool in_status_line = wp->w_status_height != 0 || is_stl_global;
+    maxwidth = in_status_line && !is_stl_global ? wp->w_width : Columns;
     stl_clear_click_defs(wp->w_status_click_defs, wp->w_status_click_defs_size);
     wp->w_status_click_defs = stl_alloc_click_defs(wp->w_status_click_defs, maxwidth,
                                                    &wp->w_status_click_defs_size);
@@ -374,8 +375,8 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
       if (col < (maxwidth + 1) / 2) {
         col = (maxwidth + 1) / 2;
       }
-      maxwidth = maxwidth - col;
-      if (!wp->w_status_height && !is_stl_global) {
+      maxwidth -= col;
+      if (!in_status_line) {
         grid = &msg_grid_adj;
         row = Rows - 1;
         maxwidth--;  // writing in last column may cause scrolling
@@ -388,7 +389,9 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
       opt_scope = ((*wp->w_p_stl != NUL) ? OPT_LOCAL : 0);
     }
 
-    col += is_stl_global ? 0 : wp->w_wincol;
+    if (in_status_line && !is_stl_global) {
+      col += wp->w_wincol;
+    }
   }
 
   if (maxwidth <= 0) {
@@ -494,7 +497,8 @@ void win_redr_ruler(win_T *wp)
 
   // Don't draw the ruler while doing insert-completion, it might overwrite
   // the (long) mode message.
-  if (wp == lastwin && lastwin->w_status_height == 0 && !is_stl_global) {
+  win_T *ruler_win = curwin->w_status_height == 0 ? curwin : lastwin_nofloating();
+  if (wp == ruler_win && ruler_win->w_status_height == 0 && !is_stl_global) {
     if (edit_submode != NULL) {
       return;
     }
@@ -507,7 +511,7 @@ void win_redr_ruler(win_T *wp)
 
   // Check if not in Insert mode and the line is empty (will show "0-1").
   int empty_line = (State & MODE_INSERT) == 0
-                   && *ml_get_buf(curwin->w_buffer, curwin->w_cursor.lnum, false) == NUL;
+                   && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, false) == NUL;
 
   int width;
   int row;
@@ -592,7 +596,7 @@ void win_redr_ruler(win_T *wp)
     MAXSIZE_TEMP_ARRAY(content, 1);
     MAXSIZE_TEMP_ARRAY(chunk, 2);
     ADD_C(chunk, INTEGER_OBJ(attr));
-    ADD_C(chunk, STRING_OBJ(cstr_as_string(buffer)));
+    ADD_C(chunk, CSTR_AS_OBJ(buffer));
     ADD_C(content, ARRAY_OBJ(chunk));
     ui_call_msg_ruler(content);
     did_show_ext_ruler = true;
@@ -985,7 +989,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
     };
     set_var(S_LEN("g:statusline_winid"), &tv, false);
 
-    usefmt = eval_to_string_safe(fmt + 2, NULL, use_sandbox);
+    usefmt = eval_to_string_safe(fmt + 2, use_sandbox);
     if (usefmt == NULL) {
       usefmt = fmt;
     }
@@ -1027,6 +1031,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
   int evaldepth  = 0;
 
   int curitem = 0;
+  int foldsignitem = -1;
   bool prevchar_isflag = true;
   bool prevchar_isitem = false;
 
@@ -1373,6 +1378,9 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
     // An invalid item was specified.
     // Continue processing on the next character of the format string.
     if (vim_strchr(STL_ALL, (uint8_t)(*fmt_p)) == NULL) {
+      if (*fmt_p == NUL) {  // can happen with "%0"
+        break;
+      }
       fmt_p++;
       continue;
     }
@@ -1443,8 +1451,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       // Store the current buffer number as a string variable
       vim_snprintf(buf_tmp, sizeof(buf_tmp), "%d", curbuf->b_fnum);
       set_internal_string_var("g:actual_curbuf", buf_tmp);
-      vim_snprintf((char *)win_tmp, sizeof(win_tmp), "%d", curwin->handle);
-      set_internal_string_var("g:actual_curwin", (char *)win_tmp);
+      vim_snprintf(win_tmp, sizeof(win_tmp), "%d", curwin->handle);
+      set_internal_string_var("g:actual_curwin", win_tmp);
 
       buf_T *const save_curbuf = curbuf;
       win_T *const save_curwin = curwin;
@@ -1457,7 +1465,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       }
 
       // Note: The result stored in `t` is unused.
-      str = eval_to_string_safe(out_p, &t, use_sandbox);
+      str = eval_to_string_safe(out_p, use_sandbox);
 
       curwin = save_curwin;
       curbuf = save_curbuf;
@@ -1482,7 +1490,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       // If the output of the expression needs to be evaluated
       // replace the %{} block with the result of evaluation
       if (reevaluate && str != NULL && *str != 0
-          && strchr((const char *)str, '%') != NULL
+          && strchr(str, '%') != NULL
           && evaldepth < MAX_STL_EVAL_DEPTH) {
         size_t parsed_usefmt = (size_t)(block_start - usefmt);
         size_t str_length = strlen(str);
@@ -1512,7 +1520,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
 
     case STL_LINE:
       // Overload %l with v:lnum for 'statuscolumn'
-      if (opt_name != NULL && strcmp(opt_name, "statuscolumn") == 0) {
+      if (stcp != NULL) {
         if (wp->w_p_nu && !get_vim_var_nr(VV_VIRTNUM)) {
           num = (int)get_vim_var_nr(VV_LNUM);
         }
@@ -1617,7 +1625,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
     case STL_ROFLAG:
     case STL_ROFLAG_ALT:
       // Overload %r with v:relnum for 'statuscolumn'
-      if (opt_name != NULL && strcmp(opt_name, "statuscolumn") == 0) {
+      if (stcp != NULL) {
         if (wp->w_p_rnu && !get_vim_var_nr(VV_VIRTNUM)) {
           num = (int)get_vim_var_nr(VV_RELNUM);
         }
@@ -1648,39 +1656,32 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       if (width == 0) {
         break;
       }
+      foldsignitem = curitem;
 
-      char *p;
+      char *p = NULL;
       if (fold) {
         size_t n = fill_foldcolumn(out_p, wp, stcp->foldinfo, (linenr_T)get_vim_var_nr(VV_LNUM));
-        stl_items[curitem].minwid = win_hl_attr(wp, stcp->use_cul ? HLF_CLF : HLF_FC);
+        stl_items[curitem].minwid = -((stcp->use_cul ? HLF_CLF : HLF_FC) + 1);
         p = out_p;
         p[n] = NUL;
       }
 
-      *buf_tmp = NUL;
+      size_t buflen = 0;
       varnumber_T virtnum = get_vim_var_nr(VV_VIRTNUM);
-      for (int i = 0; i <= width; i++) {
-        if (i == width) {
-          if (*buf_tmp == NUL) {
-            break;
-          }
-          stl_items[curitem].minwid = 0;
-        } else if (!fold) {
+      for (int i = 0; i < width; i++) {
+        if (!fold) {
           SignTextAttrs *sattr = virtnum ? NULL : sign_get_attr(i, stcp->sattrs, wp->w_scwidth);
           p = sattr && sattr->text ? sattr->text : "  ";
-          stl_items[curitem].minwid = sattr ? stcp->sign_cul_attr ? stcp->sign_cul_attr
-                                                                  : sattr->hl_attr_id
-                                            : win_hl_attr(wp, stcp->use_cul ? HLF_CLS : HLF_SC);
+          stl_items[curitem].minwid = -(sattr ? stcp->sign_cul_id ? stcp->sign_cul_id
+                                        : sattr->hl_id : (stcp->use_cul ? HLF_CLS : HLF_SC) + 1);
         }
         stl_items[curitem].type = Highlight;
-        stl_items[curitem].start = out_p + strlen(buf_tmp);
+        stl_items[curitem].start = out_p + buflen;
+        xstrlcpy(buf_tmp + buflen, p, TMPLEN - buflen);
+        buflen += strlen(p);
         curitem++;
-        if (i == width) {
-          str = buf_tmp;
-          break;
-        }
-        STRCAT(buf_tmp, p);
       }
+      str = buf_tmp;
       break;
     }
 
@@ -1823,6 +1824,13 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
           }
         }
         minwid = 0;
+        // For a 'statuscolumn' sign or fold item, shift the added items
+        if (foldsignitem >= 0) {
+          ptrdiff_t offset = out_p - stl_items[foldsignitem].start;
+          for (int i = foldsignitem; i < curitem; i++) {
+            stl_items[i].start += offset;
+          }
+        }
       } else {
         // Note: The negative value denotes a left aligned item.
         //       Here we switch the minimum width back to a positive value.
@@ -1841,6 +1849,14 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
         }
       }
       // }
+
+      // For a 'statuscolumn' sign or fold item, add an item to reset the highlight group
+      if (foldsignitem >= 0) {
+        foldsignitem = -1;
+        stl_items[curitem].type = Highlight;
+        stl_items[curitem].start = out_p;
+        stl_items[curitem].minwid = 0;
+      }
 
       // For left-aligned items, fill any remaining space with the fillchar
       for (; l < minwid && out_p < out_end_p; l++) {
@@ -1991,7 +2007,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       // string to find the last character that will fit.
       trunc_p = out;
       width = 0;
-      for (;;) {
+      while (true) {
         width += ptr2cells(trunc_p);
         if (width >= maxwidth) {
           break;

@@ -455,7 +455,7 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   int ret = 0;
   assert(s1[s1_len] == NUL);
   assert(s2[s2_len] == NUL);
-  do {
+  while (true) {
     nul1 = memchr(s1, NUL, s1_len);
     nul2 = memchr(s2, NUL, s2_len);
     ret = STRICMP(s1, s2);
@@ -479,7 +479,7 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
     } else {
       break;
     }
-  } while (true);
+  }
   lua_pop(lstate, 2);
   lua_pushnumber(lstate, (lua_Number)((ret > 0) - (ret < 0)));
   return 1;
@@ -610,6 +610,19 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
   lua_pushvalue(lstate, -3);
   lua_setfield(lstate, -2, "mpack");
   lua_pop(lstate, 3);
+
+  // vim.lpeg
+  int luaopen_lpeg(lua_State *);
+  luaopen_lpeg(lstate);
+  lua_pushvalue(lstate, -1);
+  lua_setfield(lstate, -4, "lpeg");
+
+  // package.loaded.lpeg = vim.lpeg
+  lua_getglobal(lstate, "package");
+  lua_getfield(lstate, -1, "loaded");
+  lua_pushvalue(lstate, -3);
+  lua_setfield(lstate, -2, "lpeg");
+  lua_pop(lstate, 4);
 
   // vim.diff
   lua_pushcfunction(lstate, &nlua_xdl_diff);

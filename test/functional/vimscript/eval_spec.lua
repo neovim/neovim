@@ -12,7 +12,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local lfs = require('lfs')
+local mkdir = helpers.mkdir
 local clear = helpers.clear
 local eq = helpers.eq
 local exc_exec = helpers.exc_exec
@@ -56,11 +56,11 @@ end)
 describe("backtick expansion", function()
   setup(function()
     clear()
-    lfs.mkdir("test-backticks")
+    mkdir("test-backticks")
     write_file("test-backticks/file1", "test file 1")
     write_file("test-backticks/file2", "test file 2")
     write_file("test-backticks/file3", "test file 3")
-    lfs.mkdir("test-backticks/subdir")
+    mkdir("test-backticks/subdir")
     write_file("test-backticks/subdir/file4", "test file 4")
     -- Long path might cause "Press ENTER" prompt; use :silent to avoid it.
     command('silent cd test-backticks')
@@ -191,11 +191,10 @@ describe('listing functions using :function', function()
    endfunction]]):format(num), exec_capture(('function <lambda>%s'):format(num)))
   end)
 
-  -- FIXME: If the same function is deleted, the crash still happens. #20790
   it('does not crash if another function is deleted while listing', function()
     local screen = Screen.new(80, 24)
     screen:attach()
-    matches('Vim%(function%):E454: function list was modified', pcall_err(exec_lua, [=[
+    matches('Vim%(function%):E454: Function list was modified$', pcall_err(exec_lua, [=[
       vim.cmd([[
         func Func1()
         endfunc
@@ -219,4 +218,67 @@ describe('listing functions using :function', function()
     ]=]))
     assert_alive()
   end)
+
+  it('does not crash if the same function is deleted while listing', function()
+    local screen = Screen.new(80, 24)
+    screen:attach()
+    matches('Vim%(function%):E454: Function list was modified$', pcall_err(exec_lua, [=[
+      vim.cmd([[
+        func Func1()
+        endfunc
+        func Func2()
+        endfunc
+        func Func3()
+        endfunc
+      ]])
+
+      local ns = vim.api.nvim_create_namespace('test')
+
+      vim.ui_attach(ns, { ext_messages = true }, function(event, _, content)
+        if event == 'msg_show' and content[1][2] == 'function Func1()'  then
+          vim.cmd('delfunc Func2')
+        end
+      end)
+
+      vim.cmd('function')
+
+      vim.ui_detach(ns)
+    ]=]))
+    assert_alive()
+  end)
+end)
+
+it('no double-free in garbage collection #16287', function()
+  clear()
+  -- Don't use exec() here as using a named script reproduces the issue better.
+  write_file('Xgarbagecollect.vim', [[
+    func Foo() abort
+      let s:args = [a:000]
+      let foo0 = ""
+      let foo1 = ""
+      let foo2 = ""
+      let foo3 = ""
+      let foo4 = ""
+      let foo5 = ""
+      let foo6 = ""
+      let foo7 = ""
+      let foo8 = ""
+      let foo9 = ""
+      let foo10 = ""
+      let foo11 = ""
+      let foo12 = ""
+      let foo13 = ""
+      let foo14 = ""
+    endfunc
+
+    set updatetime=1
+    call Foo()
+    call Foo()
+  ]])
+  finally(function()
+    os.remove('Xgarbagecollect.vim')
+  end)
+  command('source Xgarbagecollect.vim')
+  sleep(10)
+  assert_alive()
 end)

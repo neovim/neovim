@@ -53,6 +53,7 @@
 #include "nvim/popupmenu.h"
 #include "nvim/pos.h"
 #include "nvim/search.h"
+#include "nvim/spell.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
@@ -193,7 +194,7 @@ static void insert_enter(InsertState *s)
     }
   }
 
-  Insstart_textlen = (colnr_T)linetabsize(get_cursor_line_ptr());
+  Insstart_textlen = linetabsize_str(get_cursor_line_ptr());
   Insstart_blank_vcol = MAXCOL;
 
   if (!did_ai) {
@@ -232,7 +233,7 @@ static void insert_enter(InsertState *s)
   stop_insert_mode = false;
 
   // need to position cursor again when on a TAB
-  if (gchar_cursor() == TAB) {
+  if (gchar_cursor() == TAB || curbuf->b_virt_text_inline > 0) {
     curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL);
   }
 
@@ -876,12 +877,12 @@ static int insert_handle_key(InsertState *s)
     state_handle_k_event();
     goto check_pum;
 
-  case K_COMMAND:       // some command
+  case K_COMMAND:     // <Cmd>command<CR>
     do_cmdline(NULL, getcmdkeycmd, NULL, 0);
     goto check_pum;
 
   case K_LUA:
-    map_execute_lua();
+    map_execute_lua(false);
 
 check_pum:
     // nvim_select_popupmenu_item() can be called from the handling of
@@ -1526,10 +1527,11 @@ void edit_unputchar(void)
   }
 }
 
-// Called when p_dollar is set: display a '$' at the end of the changed text
-// Only works when cursor is in the line that changes.
-void display_dollar(colnr_T col)
+/// Called when "$" is in 'cpoptions': display a '$' at the end of the changed
+/// text.  Only works when cursor is in the line that changes.
+void display_dollar(colnr_T col_arg)
 {
+  colnr_T col = col_arg < 0 ? 0 : col_arg;
   colnr_T save_col;
 
   if (!redrawing()) {
@@ -1858,7 +1860,7 @@ int get_literal(bool no_simplify)
   no_mapping++;                 // don't map the next key hits
   cc = 0;
   i = 0;
-  for (;;) {
+  while (true) {
     nc = plain_vgetc();
     if (!no_simplify) {
       nc = merge_modifiers(nc, &mod_mask);
@@ -1955,7 +1957,7 @@ static void insert_special(int c, int allow_modmask, int ctrlv)
     allow_modmask = true;
   }
   if (IS_SPECIAL(c) || (mod_mask && allow_modmask)) {
-    char *p = (char *)get_special_key_name(c, mod_mask);
+    char *p = get_special_key_name(c, mod_mask);
     int len = (int)strlen(p);
     c = (uint8_t)p[len - 1];
     if (len > 2) {
@@ -2251,7 +2253,7 @@ int stop_arrow(void)
       // right, except when nothing was inserted yet.
       update_Insstart_orig = false;
     }
-    Insstart_textlen = (colnr_T)linetabsize(get_cursor_line_ptr());
+    Insstart_textlen = linetabsize_str(get_cursor_line_ptr());
 
     if (u_save_cursor() == OK) {
       arrow_used = false;
@@ -2356,7 +2358,7 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
 
       curwin->w_cursor = *end_insert_pos;
       check_cursor_col();        // make sure it is not past the line
-      for (;;) {
+      while (true) {
         if (gchar_cursor() == NUL && curwin->w_cursor.col > 0) {
           curwin->w_cursor.col--;
         }
@@ -2449,6 +2451,7 @@ void beginline(int flags)
     }
     curwin->w_set_curswant = true;
   }
+  adjust_skipcol();
 }
 
 // oneright oneleft cursor_down cursor_up
@@ -2490,6 +2493,7 @@ int oneright(void)
   curwin->w_cursor.col += l;
 
   curwin->w_set_curswant = true;
+  adjust_skipcol();
   return OK;
 }
 
@@ -2505,7 +2509,7 @@ int oneleft(void)
 
     // We might get stuck on 'showbreak', skip over it.
     width = 1;
-    for (;;) {
+    while (true) {
       coladvance(v - width);
       // getviscol() is slow, skip it when 'showbreak' is empty,
       // 'breakindent' is not set and there are no multi-byte
@@ -2525,6 +2529,7 @@ int oneleft(void)
     }
 
     curwin->w_set_curswant = true;
+    adjust_skipcol();
     return OK;
   }
 
@@ -2538,20 +2543,16 @@ int oneleft(void)
   // if the character on the left of the current cursor is a multi-byte
   // character, move to its first byte
   mb_adjust_cursor();
+  adjust_skipcol();
   return OK;
 }
 
 /// Move the cursor up "n" lines in window "wp".
 /// Takes care of closed folds.
-/// Returns the new cursor line or zero for failure.
-linenr_T cursor_up_inner(win_T *wp, long n)
+void cursor_up_inner(win_T *wp, long n)
 {
   linenr_T lnum = wp->w_cursor.lnum;
 
-  // This fails if the cursor is already in the first line.
-  if (lnum <= 1) {
-    return 0;
-  }
   if (n >= lnum) {
     lnum = 1;
   } else if (hasAnyFolding(wp)) {
@@ -2581,15 +2582,16 @@ linenr_T cursor_up_inner(win_T *wp, long n)
   }
 
   wp->w_cursor.lnum = lnum;
-  return lnum;
 }
 
 /// @param upd_topline  When true: update topline
 int cursor_up(long n, int upd_topline)
 {
-  if (n > 0 && cursor_up_inner(curwin, n) == 0) {
+  // This fails if the cursor is already in the first line.
+  if (n > 0 && curwin->w_cursor.lnum <= 1) {
     return FAIL;
   }
+  cursor_up_inner(curwin, n);
 
   // try to advance to the column we want to be at
   coladvance(curwin->w_curswant);
@@ -2603,18 +2605,11 @@ int cursor_up(long n, int upd_topline)
 
 /// Move the cursor down "n" lines in window "wp".
 /// Takes care of closed folds.
-/// Returns the new cursor line or zero for failure.
-linenr_T cursor_down_inner(win_T *wp, long n)
+void cursor_down_inner(win_T *wp, long n)
 {
   linenr_T lnum = wp->w_cursor.lnum;
   linenr_T line_count = wp->w_buffer->b_ml.ml_line_count;
 
-  // Move to last line of fold, will fail if it's the end-of-file.
-  (void)hasFoldingWin(wp, lnum, NULL, &lnum, true, NULL);
-  // This fails if the cursor is already in the last line.
-  if (lnum >= line_count) {
-    return FAIL;
-  }
   if (lnum + n >= line_count) {
     lnum = line_count;
   } else if (hasAnyFolding(wp)) {
@@ -2622,6 +2617,7 @@ linenr_T cursor_down_inner(win_T *wp, long n)
 
     // count each sequence of folded lines as one logical line
     while (n--) {
+      // Move to last line of fold, will fail if it's the end-of-file.
       if (hasFoldingWin(wp, lnum, NULL, &last, true, NULL)) {
         lnum = last + 1;
       } else {
@@ -2639,15 +2635,16 @@ linenr_T cursor_down_inner(win_T *wp, long n)
   }
 
   wp->w_cursor.lnum = lnum;
-  return lnum;
 }
 
 /// @param upd_topline  When true: update topline
 int cursor_down(long n, int upd_topline)
 {
-  if (n > 0 && cursor_down_inner(curwin, n) == 0) {
+  // This fails if the cursor is already in the last line.
+  if (n > 0 && curwin->w_cursor.lnum >= curwin->w_buffer->b_ml.ml_line_count) {
     return FAIL;
   }
+  cursor_down_inner(curwin, n);
 
   // try to advance to the column we want to be at
   coladvance(curwin->w_curswant);
@@ -2699,7 +2696,7 @@ int stuff_inserted(int c, long count, int no_esc)
   }
 
   do {
-    stuffReadbuff((const char *)ptr);
+    stuffReadbuff(ptr);
     // A trailing "0" is inserted as "<C-V>048", "^" as "<C-V>^".
     if (last) {
       stuffReadbuff(last == '0' ? "\026\060\064\070" : "\026^");
@@ -2886,7 +2883,7 @@ static void mb_replace_pop_ins(int cc)
   }
 
   // Handle composing chars.
-  for (;;) {
+  while (true) {
     int c = replace_pop();
     if (c == -1) {                // stack empty
       break;
@@ -3466,7 +3463,7 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
   State = MODE_NORMAL;
   may_trigger_modechanged();
   // need to position cursor again when on a TAB
-  if (gchar_cursor() == TAB) {
+  if (gchar_cursor() == TAB || curbuf->b_virt_text_inline > 0) {
     curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL);
   }
 

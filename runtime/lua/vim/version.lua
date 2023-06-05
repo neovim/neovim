@@ -333,7 +333,7 @@ local function create_err_msg(v)
   return string.format('invalid version: %s (%s)', tostring(v), type(v))
 end
 
---- Parses and compares two version version objects (the result of |vim.version.parse()|, or
+--- Parses and compares two version objects (the result of |vim.version.parse()|, or
 --- specified literally as a `{major, minor, patch}` tuple, e.g. `{1, 0, 3}`).
 ---
 --- Example:

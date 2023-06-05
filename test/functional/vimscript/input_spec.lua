@@ -222,17 +222,17 @@ describe('input()', function()
     eq('DEF2', meths.get_var('var'))
   end)
   it('errors out on invalid inputs', function()
-    eq('Vim(call):E730: using List as a String',
+    eq('Vim(call):E730: Using a List as a String',
        exc_exec('call input([])'))
-    eq('Vim(call):E730: using List as a String',
+    eq('Vim(call):E730: Using a List as a String',
        exc_exec('call input("", [])'))
-    eq('Vim(call):E730: using List as a String',
+    eq('Vim(call):E730: Using a List as a String',
        exc_exec('call input("", "", [])'))
-    eq('Vim(call):E730: using List as a String',
+    eq('Vim(call):E730: Using a List as a String',
        exc_exec('call input({"prompt": []})'))
-    eq('Vim(call):E730: using List as a String',
+    eq('Vim(call):E730: Using a List as a String',
        exc_exec('call input({"default": []})'))
-    eq('Vim(call):E730: using List as a String',
+    eq('Vim(call):E730: Using a List as a String',
        exc_exec('call input({"completion": []})'))
     eq('Vim(call):E5050: {opts} must be the only argument',
        exc_exec('call input({}, "default")'))
@@ -418,17 +418,17 @@ describe('inputdialog()', function()
     eq('DEF2', meths.get_var('var'))
   end)
   it('errors out on invalid inputs', function()
-    eq('Vim(call):E730: using List as a String',
+    eq('Vim(call):E730: Using a List as a String',
        exc_exec('call inputdialog([])'))
-    eq('Vim(call):E730: using List as a String',
+    eq('Vim(call):E730: Using a List as a String',
        exc_exec('call inputdialog("", [])'))
-    eq('Vim(call):E730: using List as a String',
+    eq('Vim(call):E730: Using a List as a String',
        exc_exec('call inputdialog("", "", [])'))
-    eq('Vim(call):E730: using List as a String',
+    eq('Vim(call):E730: Using a List as a String',
        exc_exec('call inputdialog({"prompt": []})'))
-    eq('Vim(call):E730: using List as a String',
+    eq('Vim(call):E730: Using a List as a String',
        exc_exec('call inputdialog({"default": []})'))
-    eq('Vim(call):E730: using List as a String',
+    eq('Vim(call):E730: Using a List as a String',
        exc_exec('call inputdialog({"completion": []})'))
     eq('Vim(call):E5050: {opts} must be the only argument',
        exc_exec('call inputdialog({}, "default")'))
@@ -452,8 +452,8 @@ end)
 describe('confirm()', function()
   -- oldtest: Test_confirm()
   it('works', function()
-    meths.set_option('more', false)  -- Avoid hit-enter prompt
-    meths.set_option('laststatus', 2)
+    meths.set_option_value('more', false, {})  -- Avoid hit-enter prompt
+    meths.set_option_value('laststatus', 2, {})
     -- screen:expect() calls are needed to avoid feeding input too early
     screen:expect({any = '%[No Name%]'})
 
@@ -512,13 +512,13 @@ describe('confirm()', function()
       eq(1, meths.get_var('a'))
     end
 
-    eq('Vim(call):E730: using List as a String',
+    eq('Vim(call):E730: Using a List as a String',
        pcall_err(command, 'call confirm([])'))
-    eq('Vim(call):E730: using List as a String',
+    eq('Vim(call):E730: Using a List as a String',
        pcall_err(command, 'call confirm("Are you sure?", [])'))
     eq('Vim(call):E745: Using a List as a Number',
        pcall_err(command, 'call confirm("Are you sure?", "&Yes\n&No\n", [])'))
-    eq('Vim(call):E730: using List as a String',
+    eq('Vim(call):E730: Using a List as a String',
        pcall_err(command, 'call confirm("Are you sure?", "&Yes\n&No\n", 0, [])'))
   end)
 

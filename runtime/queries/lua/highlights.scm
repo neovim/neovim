@@ -127,8 +127,14 @@
 
 (identifier) @variable
 
+((identifier) @constant.builtin
+  (#eq? @constant.builtin "_VERSION"))
+
 ((identifier) @variable.builtin
- (#any-of? @variable.builtin "_G" "_VERSION" "debug" "io" "jit" "math" "os" "package" "self" "string" "table" "utf8"))
+  (#eq? @variable.builtin "self"))
+
+((identifier) @namespace.builtin
+  (#any-of? @namespace.builtin "_G" "debug" "io" "jit" "math" "os" "package" "string" "table" "utf8"))
 
 ((identifier) @keyword.coroutine
   (#eq? @keyword.coroutine "coroutine"))
@@ -209,6 +215,8 @@
 (number) @number
 
 (string) @string @spell
+
+(escape_sequence) @string.escape
 
 ;; Error
 (ERROR) @error

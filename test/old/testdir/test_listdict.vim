@@ -1,5 +1,7 @@
 " Tests for the List and Dict types
 
+source vim9.vim
+
 func TearDown()
   " Run garbage collection after every test
   call test_garbagecollect_now()
@@ -37,6 +39,23 @@ func Test_list_slice()
   let l[:1] += [1, 2]
   let l[2:] -= [1]
   call assert_equal([2, 4, 2], l)
+
+  let lines =<< trim END
+      VAR l = [1, 2]
+      call assert_equal([1, 2], l[:])
+      call assert_equal([2], l[-1 : -1])
+      call assert_equal([1, 2], l[-2 : -1])
+  END
+  call CheckLegacyAndVim9Success(lines)
+
+  let l = [1, 2]
+  call assert_equal([], l[-3 : -1])
+
+  let lines =<< trim END
+      var l = [1, 2]
+      assert_equal([1, 2], l[-3 : -1])
+  END
+  call CheckDefAndScriptSuccess(lines)
 endfunc
 
 " List identity
@@ -699,7 +718,7 @@ func Test_reverse_sort_uniq()
 
   call assert_fails('call reverse("")', 'E899:')
   call assert_fails('call uniq([1, 2], {x, y -> []})', 'E745:')
-  call assert_fails("call sort([1, 2], function('min'), 1)", "E715:")
+  call assert_fails("call sort([1, 2], function('min'), 1)", "E1206:")
   call assert_fails("call sort([1, 2], function('invalid_func'))", "E700:")
   call assert_fails("call sort([1, 2], function('min'))", "E118:")
 endfunc
@@ -747,6 +766,12 @@ func Test_reduce()
 
   call assert_equal(42, reduce(v:_null_list, function('add'), 42))
   call assert_equal(42, reduce(v:_null_blob, function('add'), 42))
+
+  " should not crash
+  " Nvim doesn't have null functions
+  " call assert_fails('echo reduce([1], test_null_function())', 'E1132:')
+  " Nvim doesn't have null partials
+  " call assert_fails('echo reduce([1], test_null_partial())', 'E1132:')
 endfunc
 
 " splitting a string to a List using split()
@@ -794,6 +819,7 @@ func Test_listdict_compare_complex()
   call assert_true(dict4 == dict4copy)
 endfunc
 
+" Test for extending lists and dictionaries
 func Test_listdict_extend()
   " Test extend() with lists
 
@@ -1028,6 +1054,9 @@ func Test_listdict_index()
   call assert_fails("let l[1.1] = 4", 'E806:')
   call assert_fails("let l[:i] = [4, 5]", 'E121:')
   call assert_fails("let l[:3.2] = [4, 5]", 'E806:')
+  " Nvim doesn't have test_unknown()
+  " let t = test_unknown()
+  " call assert_fails("echo t[0]", 'E685:')
 endfunc
 
 " Test for a null list
@@ -1079,8 +1108,20 @@ func Test_null_dict()
   call assert_equal(0, values(d))
   call assert_false(has_key(d, 'k'))
   call assert_equal('{}', string(d))
-  call assert_fails('let x = v:_null_dict[10]')
+  call assert_fails('let x = d[10]')
   call assert_equal({}, {})
+  call assert_equal(0, len(copy(d)))
+  call assert_equal(0, count(d, 'k'))
+  call assert_equal({}, deepcopy(d))
+  call assert_equal(20, get(d, 'k', 20))
+  call assert_equal(0, min(d))
+  call assert_equal(0, max(d))
+  call assert_equal(0, remove(d, 'k'))
+  call assert_equal('{}', string(d))
+  " call assert_equal(0, extend(d, d, 0))
+  lockvar d
+  call assert_equal(1, islocked('d'))
+  unlockvar d
 endfunc
 
 " Test for the indexof() function

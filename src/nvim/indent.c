@@ -427,7 +427,7 @@ int get_indent_str_vtab(const char *ptr, long ts, long *vts, bool list)
       } else {
         // In list mode, when tab is not set, count screen char width
         // for Tab, displays: ^I
-        count += ptr2cells((char *)ptr);
+        count += ptr2cells(ptr);
       }
     } else if (*ptr == ' ') {
       count++;  // count a space for one
@@ -527,7 +527,7 @@ int set_indent(int size, int flags)
     }
 
     // Count tabs required for indent.
-    for (;;) {
+    while (true) {
       tab_pad = tabstop_padding(ind_col, curbuf->b_p_ts, curbuf->b_p_vts_array);
       if (todo < tab_pad) {
         break;
@@ -650,7 +650,7 @@ int set_indent(int size, int flags)
       p = skipwhite(p);
     }
 
-    for (;;) {
+    while (true) {
       tab_pad = tabstop_padding(ind_done,
                                 curbuf->b_p_ts,
                                 curbuf->b_p_vts_array);
@@ -980,7 +980,7 @@ void ex_retab(exarg_T *eap)
     long col = 0;
     long vcol = 0;
     bool did_undo = false;  // called u_save for current line
-    for (;;) {
+    while (true) {
       if (ascii_iswhite(ptr[col])) {
         if (!got_tab && num_spaces == 0) {
           // First consecutive white-space
@@ -1122,6 +1122,7 @@ int get_expr_indent(void)
   int save_set_curswant;
   int save_State;
   int use_sandbox = was_set_insecurely(curwin, "indentexpr", OPT_LOCAL);
+  const sctx_T save_sctx = current_sctx;
 
   // Save and restore cursor position and curswant, in case it was changed
   // * via :normal commands.
@@ -1134,6 +1135,7 @@ int get_expr_indent(void)
     sandbox++;
   }
   textlock++;
+  current_sctx = curbuf->b_p_script_ctx[BV_INDE].script_ctx;
 
   // Need to make a copy, the 'indentexpr' option could be changed while
   // evaluating it.
@@ -1145,6 +1147,7 @@ int get_expr_indent(void)
     sandbox--;
   }
   textlock--;
+  current_sctx = save_sctx;
 
   // Restore the cursor position so that 'indentexpr' doesn't need to.
   // Pretend to be in Insert mode, allow cursor past end of line for "o"

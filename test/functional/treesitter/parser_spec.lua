@@ -182,11 +182,11 @@ void ui_refresh(void)
     local function q(n)
       return exec_lua ([[
         local query, n = ...
-        local before = vim.loop.hrtime()
+        local before = vim.uv.hrtime()
         for i=1,n,1 do
           cquery = vim.treesitter.query.parse("c", ...)
         end
-        local after = vim.loop.hrtime()
+        local after = vim.uv.hrtime()
         return after - before
       ]], long_query, n)
     end
@@ -483,9 +483,8 @@ end]]
     return list
     ]]
 
-    eq({ 'any-of?', 'contains?', 'eq?', 'is-main?', 'lua-match?', 'match?', 'vim-match?' }, res_list)
+    eq({ 'any-of?', 'contains?', 'eq?', 'has-ancestor?', 'has-parent?', 'is-main?', 'lua-match?', 'match?', 'vim-match?' }, res_list)
   end)
-
 
   it('allows to set simple ranges', function()
     insert(test_text)
@@ -528,6 +527,7 @@ end]]
 
     eq(range_tbl, { { { 0, 0, 0, 17, 1, 508 } } })
   end)
+
   it("allows to set complex ranges", function()
     insert(test_text)
 
@@ -627,8 +627,8 @@ end]]
     before_each(function()
       insert([[
 int x = INT_MAX;
-#define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
-#define READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
+#define READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+#define READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
 #define VALUE 123
 #define VALUE1 123
 #define VALUE2 123
@@ -650,8 +650,8 @@ int x = INT_MAX;
           {3, 14, 3, 17}, -- VALUE 123
           {4, 15, 4, 18}, -- VALUE1 123
           {5, 15, 5, 18}, -- VALUE2 123
-          {1, 26, 1, 65}, -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
-          {2, 29, 2, 68}  -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
+          {1, 26, 1, 63}, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+          {2, 29, 2, 66}  -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
 
         helpers.feed('ggo<esc>')
@@ -661,8 +661,8 @@ int x = INT_MAX;
           {4, 14, 4, 17}, -- VALUE 123
           {5, 15, 5, 18}, -- VALUE1 123
           {6, 15, 6, 18}, -- VALUE2 123
-          {2, 26, 2, 65}, -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
-          {3, 29, 3, 68}  -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
+          {2, 26, 2, 63}, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+          {3, 29, 3, 66}  -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
       end)
     end)
@@ -682,8 +682,8 @@ int x = INT_MAX;
           {3, 14, 5, 18}, -- VALUE 123
                           -- VALUE1 123
                           -- VALUE2 123
-          {1, 26, 2, 68}  -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
-                          -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
+          {1, 26, 2, 66}  -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+                          -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
 
         helpers.feed('ggo<esc>')
@@ -694,8 +694,8 @@ int x = INT_MAX;
           {4, 14, 6, 18}, -- VALUE 123
                           -- VALUE1 123
                           -- VALUE2 123
-          {2, 26, 3, 68}  -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
-                          -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
+          {2, 26, 3, 66}  -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+                          -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
       end)
     end)
@@ -722,8 +722,8 @@ int x = INT_MAX;
           {3, 14, 5, 18}, -- VALUE 123
                           -- VALUE1 123
                           -- VALUE2 123
-          {1, 26, 2, 68}  -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
-                          -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
+          {1, 26, 2, 66}  -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+                          -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
 
         helpers.feed('ggo<esc>')
@@ -734,8 +734,8 @@ int x = INT_MAX;
           {4, 14, 6, 18}, -- VALUE 123
                           -- VALUE1 123
                           -- VALUE2 123
-          {2, 26, 3, 68}  -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
-                          -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
+          {2, 26, 3, 66}  -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+                          -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
       end)
 
@@ -768,8 +768,8 @@ int x = INT_MAX;
           {3, 15, 3, 16}, -- VALUE 123
           {4, 16, 4, 17}, -- VALUE1 123
           {5, 16, 5, 17}, -- VALUE2 123
-          {1, 26, 1, 65}, -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
-          {2, 29, 2, 68}  -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
+          {1, 26, 1, 63}, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+          {2, 29, 2, 66}  -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
       end)
       it("should list all directives", function()
@@ -947,5 +947,103 @@ int x = INT_MAX;
       [15] = '2',
       [16] = '1',
       [17] = '0' }, get_fold_levels())
+  end)
+
+  it('tracks the root range properly (#22911)', function()
+    insert([[
+      int main() {
+        int x = 3;
+      }]])
+
+    local query0 = [[
+      (declaration) @declaration
+      (function_definition) @function
+    ]]
+
+    exec_lua([[
+      vim.treesitter.start(0, 'c')
+    ]])
+
+    local function run_query()
+      return exec_lua([[
+      local query = vim.treesitter.query.parse("c", ...)
+      parser = vim.treesitter.get_parser()
+      tree = parser:parse()[1]
+      res = {}
+      for id, node in query:iter_captures(tree:root()) do
+        table.insert(res, {query.captures[id], node:range()})
+      end
+      return res
+      ]], query0)
+    end
+
+    eq({
+      { 'function', 0, 0, 2, 1 },
+      { 'declaration', 1, 2, 1, 12 }
+    }, run_query())
+
+    helpers.command'normal ggO'
+    insert('int a;')
+
+    eq({
+      { 'declaration', 0, 0, 0, 6 },
+      { 'function', 1, 0, 3, 1 },
+      { 'declaration', 2, 2, 2, 12 }
+    }, run_query())
+
+  end)
+
+  it('handles ranges when source is a multiline string (#20419)', function()
+    local source = [==[
+      vim.cmd[[
+        set number
+        set cmdheight=2
+        set lastsatus=2
+      ]]
+
+      set query = [[;; query
+        ((function_call
+          name: [
+            (identifier) @_cdef_identifier
+            (_ _ (identifier) @_cdef_identifier)
+          ]
+          arguments: (arguments (string content: _ @injection.content)))
+          (#set! injection.language "c")
+          (#eq? @_cdef_identifier "cdef"))
+      ]]
+    ]==]
+
+    local r = exec_lua([[
+      local parser = vim.treesitter.get_string_parser(..., 'lua')
+      parser:parse()
+      local ranges = {}
+      parser:for_each_tree(function(tstree, tree)
+        ranges[tree:lang()] = { tstree:root():range(true) }
+      end)
+      return ranges
+    ]], source)
+
+    eq({
+      lua = { 0, 6, 6, 16, 4, 438 },
+      query = { 6, 20, 113, 15, 6, 431 },
+      vim = { 1, 0, 16, 4, 6, 89 }
+    }, r)
+
+    -- The above ranges are provided directly from treesitter, however query directives may mutate
+    -- the ranges but only provide a Range4. Strip the byte entries from the ranges and make sure
+    -- add_bytes() produces the same result.
+
+    local rb = exec_lua([[
+      local r, source = ...
+      local add_bytes = require('vim.treesitter._range').add_bytes
+      for lang, range in pairs(r) do
+        r[lang] = {range[1], range[2], range[4], range[5]}
+        r[lang] = add_bytes(source, r[lang])
+      end
+      return r
+    ]], r, source)
+
+    eq(rb, r)
+
   end)
 end)

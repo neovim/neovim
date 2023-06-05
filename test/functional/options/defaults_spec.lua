@@ -14,6 +14,7 @@ local ok = helpers.ok
 local funcs = helpers.funcs
 local insert = helpers.insert
 local neq = helpers.neq
+local nvim_prog = helpers.nvim_prog
 local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
 local alter_slashes = helpers.alter_slashes
@@ -202,8 +203,8 @@ describe('startup defaults', function()
     clear{args={}, args_rm={'-i'}, env=env}
     -- Default 'shadafile' is empty.
     -- This means use the default location. :help shada-file-name
-    eq('', meths.get_option('shadafile'))
-    eq('', meths.get_option('viminfofile'))
+    eq('', meths.get_option_value('shadafile', {}))
+    eq('', meths.get_option_value('viminfofile', {}))
     -- Check that shada data (such as v:oldfiles) is saved/restored.
     command('edit Xtest-foo')
     command('write')
@@ -227,13 +228,13 @@ describe('startup defaults', function()
       args_rm={'runtimepath'},
     }
     -- Defaults to &runtimepath.
-    eq(meths.get_option('runtimepath'), meths.get_option('packpath'))
+    eq(meths.get_option_value('runtimepath', {}), meths.get_option_value('packpath', {}))
 
     -- Does not follow modifications to runtimepath.
     meths.command('set runtimepath+=foo')
-    neq(meths.get_option('runtimepath'), meths.get_option('packpath'))
+    neq(meths.get_option_value('runtimepath', {}), meths.get_option_value('packpath', {}))
     meths.command('set packpath+=foo')
-    eq(meths.get_option('runtimepath'), meths.get_option('packpath'))
+    eq(meths.get_option_value('runtimepath', {}), meths.get_option_value('packpath', {}))
   end)
 
   it('v:progpath is set to the absolute path', function()
@@ -318,10 +319,10 @@ describe('XDG defaults', function()
         USER=nil,
       }})
 
-      eq('.', meths.get_option('backupdir'))
-      eq('.', meths.get_option('viewdir'))
-      eq('.', meths.get_option('directory'))
-      eq('.', meths.get_option('undodir'))
+      eq('.', meths.get_option_value('backupdir', {}))
+      eq('.', meths.get_option_value('viewdir', {}))
+      eq('.', meths.get_option_value('directory', {}))
+      eq('.', meths.get_option_value('undodir', {}))
       ok((funcs.tempname()):len() > 4)
     end)
   end)
@@ -383,7 +384,7 @@ describe('XDG defaults', function()
           .. ',' .. root_path .. ('/b'):rep(2048) .. '/nvim/after'
           .. ',' .. root_path .. ('/a'):rep(2048) .. '/nvim/after'
           .. ',' .. root_path .. ('/x'):rep(4096) .. '/nvim/after'
-      ):gsub('\\', '/')), (meths.get_option('runtimepath')):gsub('\\', '/'))
+      ):gsub('\\', '/')), (meths.get_option_value('runtimepath', {})):gsub('\\', '/'))
       meths.command('set runtimepath&')
       meths.command('set backupdir&')
       meths.command('set directory&')
@@ -407,15 +408,15 @@ describe('XDG defaults', function()
           .. ',' .. root_path .. ('/b'):rep(2048) .. '/nvim/after'
           .. ',' .. root_path .. ('/a'):rep(2048) .. '/nvim/after'
           .. ',' .. root_path .. ('/x'):rep(4096) .. '/nvim/after'
-      ):gsub('\\', '/')), (meths.get_option('runtimepath')):gsub('\\', '/'))
+      ):gsub('\\', '/')), (meths.get_option_value('runtimepath', {})):gsub('\\', '/'))
       eq('.,' .. root_path .. ('/X'):rep(4096).. '/' .. state_dir .. '/backup//',
-         (meths.get_option('backupdir'):gsub('\\', '/')))
+         (meths.get_option_value('backupdir', {}):gsub('\\', '/')))
       eq(root_path .. ('/X'):rep(4096) .. '/' .. state_dir .. '/swap//',
-         (meths.get_option('directory')):gsub('\\', '/'))
+         (meths.get_option_value('directory', {})):gsub('\\', '/'))
       eq(root_path .. ('/X'):rep(4096) .. '/' .. state_dir .. '/undo//',
-         (meths.get_option('undodir')):gsub('\\', '/'))
+         (meths.get_option_value('undodir', {})):gsub('\\', '/'))
       eq(root_path .. ('/X'):rep(4096) .. '/'  ..  state_dir .. '/view//',
-         (meths.get_option('viewdir')):gsub('\\', '/'))
+         (meths.get_option_value('viewdir', {})):gsub('\\', '/'))
     end)
   end)
 
@@ -450,7 +451,7 @@ describe('XDG defaults', function()
           .. ',$XDG_CONFIG_HOME/' .. data_dir .. '/site/after'
           .. ',$XDG_DATA_DIRS/nvim/after'
           .. ',$XDG_DATA_HOME/nvim/after'
-      ):gsub('\\', '/')), (meths.get_option('runtimepath')):gsub('\\', '/'))
+      ):gsub('\\', '/')), (meths.get_option_value('runtimepath', {})):gsub('\\', '/'))
       meths.command('set runtimepath&')
       meths.command('set backupdir&')
       meths.command('set directory&')
@@ -466,15 +467,15 @@ describe('XDG defaults', function()
           .. ',$XDG_CONFIG_HOME/' .. data_dir .. '/site/after'
           .. ',$XDG_DATA_DIRS/nvim/after'
           .. ',$XDG_DATA_HOME/nvim/after'
-      ):gsub('\\', '/')), (meths.get_option('runtimepath')):gsub('\\', '/'))
+      ):gsub('\\', '/')), (meths.get_option_value('runtimepath', {})):gsub('\\', '/'))
       eq(('.,$XDG_CONFIG_HOME/' .. state_dir .. '/backup//'),
-          meths.get_option('backupdir'):gsub('\\', '/'))
+          meths.get_option_value('backupdir', {}):gsub('\\', '/'))
       eq(('$XDG_CONFIG_HOME/' .. state_dir .. '/swap//'),
-          meths.get_option('directory'):gsub('\\', '/'))
+          meths.get_option_value('directory', {}):gsub('\\', '/'))
       eq(('$XDG_CONFIG_HOME/' .. state_dir .. '/undo//'),
-          meths.get_option('undodir'):gsub('\\', '/'))
+          meths.get_option_value('undodir', {}):gsub('\\', '/'))
       eq(('$XDG_CONFIG_HOME/' .. state_dir .. '/view//'),
-          meths.get_option('viewdir'):gsub('\\', '/'))
+          meths.get_option_value('viewdir', {}):gsub('\\', '/'))
       meths.command('set all&')
       eq(('$XDG_DATA_HOME/nvim'
           .. ',$XDG_DATA_DIRS/nvim'
@@ -486,15 +487,15 @@ describe('XDG defaults', function()
           .. ',$XDG_CONFIG_HOME/' .. data_dir .. '/site/after'
           .. ',$XDG_DATA_DIRS/nvim/after'
           .. ',$XDG_DATA_HOME/nvim/after'
-      ):gsub('\\', '/'), (meths.get_option('runtimepath')):gsub('\\', '/'))
+      ):gsub('\\', '/'), (meths.get_option_value('runtimepath', {})):gsub('\\', '/'))
       eq(('.,$XDG_CONFIG_HOME/' .. state_dir .. '/backup//'),
-          meths.get_option('backupdir'):gsub('\\', '/'))
+          meths.get_option_value('backupdir', {}):gsub('\\', '/'))
       eq(('$XDG_CONFIG_HOME/' .. state_dir .. '/swap//'),
-          meths.get_option('directory'):gsub('\\', '/'))
+          meths.get_option_value('directory', {}):gsub('\\', '/'))
       eq(('$XDG_CONFIG_HOME/' .. state_dir .. '/undo//'),
-          meths.get_option('undodir'):gsub('\\', '/'))
+          meths.get_option_value('undodir', {}):gsub('\\', '/'))
       eq(('$XDG_CONFIG_HOME/' .. state_dir .. '/view//'),
-          meths.get_option('viewdir'):gsub('\\', '/'))
+          meths.get_option_value('viewdir', {}):gsub('\\', '/'))
       eq(nil, (funcs.tempname()):match('XDG_RUNTIME_DIR'))
     end)
   end)
@@ -529,7 +530,7 @@ describe('XDG defaults', function()
           .. ',-\\,-\\,-' .. path_sep .. 'nvim' .. path_sep .. 'after'
           .. ',\\,-\\,-\\,' .. path_sep .. 'nvim' .. path_sep .. 'after'
           .. ',\\, \\, \\,' .. path_sep .. 'nvim' .. path_sep .. 'after'
-      ), meths.get_option('runtimepath'))
+      ), meths.get_option_value('runtimepath', {}))
       meths.command('set runtimepath&')
       meths.command('set backupdir&')
       meths.command('set directory&')
@@ -549,15 +550,15 @@ describe('XDG defaults', function()
           .. ',-\\,-\\,-' .. path_sep ..'nvim' .. path_sep ..'after'
           .. ',\\,-\\,-\\,' .. path_sep ..'nvim' .. path_sep ..'after'
           .. ',\\, \\, \\,' .. path_sep ..'nvim' .. path_sep ..'after'
-      ), meths.get_option('runtimepath'))
+      ), meths.get_option_value('runtimepath', {}))
       eq('.,\\,=\\,=\\,' .. path_sep .. state_dir .. '' .. path_sep ..'backup' .. (path_sep):rep(2),
-          meths.get_option('backupdir'))
+          meths.get_option_value('backupdir', {}))
       eq('\\,=\\,=\\,' .. path_sep ..'' .. state_dir .. '' .. path_sep ..'swap' .. (path_sep):rep(2),
-          meths.get_option('directory'))
+          meths.get_option_value('directory', {}))
       eq('\\,=\\,=\\,' .. path_sep ..'' .. state_dir .. '' .. path_sep ..'undo' .. (path_sep):rep(2),
-          meths.get_option('undodir'))
+          meths.get_option_value('undodir', {}))
       eq('\\,=\\,=\\,' .. path_sep ..'' .. state_dir .. '' .. path_sep ..'view' .. (path_sep):rep(2),
-          meths.get_option('viewdir'))
+          meths.get_option_value('viewdir', {}))
     end)
   end)
 end)
@@ -603,6 +604,10 @@ describe('stdpath()', function()
       eq(appname, funcs.fnamemodify(funcs.stdpath('data_dirs')[1], ':t'))
     end
     assert_alive()  -- Check for crash. #8393
+
+    --  Check that nvim rejects invalid APPNAMEs
+    local child = funcs.jobstart({ nvim_prog }, {env={NVIM_APPNAME='a/b\\c'}})
+    eq(1, funcs.jobwait({child}, 3000)[1])
   end)
 
   context('returns a String', function()
@@ -892,8 +897,8 @@ describe('stdpath()', function()
     end)
 
     it('on non-strings', function()
-      eq('Vim(call):E731: using Dictionary as a String', exc_exec('call stdpath({"eris": 23})'))
-      eq('Vim(call):E730: using List as a String', exc_exec('call stdpath([23])'))
+      eq('Vim(call):E731: Using a Dictionary as a String', exc_exec('call stdpath({"eris": 23})'))
+      eq('Vim(call):E730: Using a List as a String', exc_exec('call stdpath([23])'))
     end)
   end)
 end)

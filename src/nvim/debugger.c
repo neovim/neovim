@@ -126,7 +126,7 @@ void do_debug(char *cmd)
   }
 
   // Repeat getting a command and executing it.
-  for (;;) {
+  while (true) {
     msg_scroll = true;
     need_wait_return = false;
 
@@ -494,7 +494,7 @@ static typval_T *eval_expr_no_emsg(struct debuggy *const bp)
 {
   // Disable error messages, a bad expression would make Vim unusable.
   emsg_off++;
-  typval_T *const tv = eval_expr(bp->dbg_name);
+  typval_T *const tv = eval_expr(bp->dbg_name, NULL);
   emsg_off--;
   return tv;
 }

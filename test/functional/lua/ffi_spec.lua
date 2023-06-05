@@ -25,7 +25,6 @@ describe('ffi.cdef', function()
       local ffi = require('ffi')
 
       ffi.cdef[[
-        typedef unsigned char char_u;
         typedef struct window_S win_T;
         typedef struct {} stl_hlrec_t;
         typedef struct {} StlClickRecord;

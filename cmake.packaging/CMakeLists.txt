@@ -1,6 +1,7 @@
 set(CPACK_PACKAGE_NAME "Neovim")
 set(CPACK_PACKAGE_VENDOR "neovim.io")
 set(CPACK_PACKAGE_FILE_NAME "nvim")
+set(CPACK_PACKAGE_DIRECTORY ${PROJECT_BINARY_DIR})
 
 # From the GitHub About section
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Vim-fork focused on extensibility and usability.")
@@ -34,8 +35,12 @@ if(WIN32)
   set(CPACK_WIX_UPGRADE_GUID "207A1A70-7B0C-418A-A153-CA6883E38F4D")
   set(CPACK_WIX_PRODUCT_ICON ${PROJECT_SOURCE_DIR}/runtime/neovim.ico)
 
-  # We use a wix patch to add further options to the installer. At present, it's just to add neovim to the path
-  # on installation, however, it can be extended.
+  # Create start menu and desktop shortcuts
+  set(CPACK_WIX_PROGRAM_MENU_FOLDER "${CPACK_PACKAGE_NAME}")
+  set(CPACK_PACKAGE_EXECUTABLES "nvim" "Neovim" "nvim-qt" "Neovim Qt")
+  set(CPACK_CREATE_DESKTOP_LINKS "nvim-qt")
+
+  # We use a wix patch to add further options to the installer.
   # See: https://cmake.org/cmake/help/v3.7/module/CPackWIX.html#variable:CPACK_WIX_PATCH_FILE
   list(APPEND CPACK_WIX_EXTENSIONS WixUtilExtension)
   list(APPEND CPACK_WIX_PATCH_FILE ${CMAKE_CURRENT_LIST_DIR}/WixPatch.xml)

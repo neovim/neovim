@@ -622,7 +622,7 @@ void ex_history(exarg_T *eap)
     }
     histype1 = get_histtype(arg, (size_t)(end - arg), false);
     if (histype1 == HIST_INVALID) {
-      if (STRNICMP(arg, "all", end - (char *)arg) == 0) {
+      if (STRNICMP(arg, "all", end - arg) == 0) {
         histype1 = 0;
         histype2 = HIST_COUNT - 1;
       } else {
@@ -641,9 +641,10 @@ void ex_history(exarg_T *eap)
   }
 
   for (; !got_int && histype1 <= histype2; histype1++) {
-    STRCPY(IObuff, "\n      #  ");
+    xstrlcpy(IObuff, "\n      #  ", IOSIZE);
     assert(history_names[histype1] != NULL);
-    STRCAT(STRCAT(IObuff, history_names[histype1]), " history");
+    xstrlcat(IObuff, history_names[histype1], IOSIZE);
+    xstrlcat(IObuff, " history", IOSIZE);
     msg_puts_title(IObuff);
     int idx = hisidx[histype1];
     histentry_T *hist = history[histype1];
@@ -669,7 +670,7 @@ void ex_history(exarg_T *eap)
             trunc_string(hist[i].hisstr, IObuff + strlen(IObuff),
                          Columns - 10, IOSIZE - (int)strlen(IObuff));
           } else {
-            STRCAT(IObuff, hist[i].hisstr);
+            xstrlcat(IObuff, hist[i].hisstr, IOSIZE);
           }
           msg_outtrans(IObuff);
         }

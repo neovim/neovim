@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "lauxlib.h"
 #include "nvim/ascii.h"
-#include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/extmark.h"
@@ -123,7 +123,19 @@ static inline int op_reg_index(const int regname)
   }
 }
 
+/// @see get_yank_register
+/// @return  true when register should be inserted literally
+/// (selection or clipboard)
+static inline bool is_literal_register(const int regname)
+  FUNC_ATTR_CONST
+{
+  return regname == '*' || regname == '+';
+}
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ops.h.generated.h"
 #endif
+
+EXTERN LuaRef repeat_luaref INIT(= LUA_NOREF);  ///< LuaRef for "."
+
 #endif  // NVIM_OPS_H

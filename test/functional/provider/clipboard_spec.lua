@@ -301,7 +301,7 @@ end)
 
 describe('clipboard (with fake clipboard.vim)', function()
   local function reset(...)
-    clear('--cmd', 'let &rtp = "test/functional/fixtures,".&rtp', ...)
+    clear('--cmd', 'set rtp^=test/functional/fixtures', ...)
   end
 
   before_each(function()

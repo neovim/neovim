@@ -43,6 +43,7 @@
 #include "nvim/plines.h"
 #include "nvim/pos.h"
 #include "nvim/search.h"
+#include "nvim/spell.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/textformat.h"
@@ -247,11 +248,25 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, linenr_T 
         wp->w_redr_type = UPD_VALID;
       }
 
+      linenr_T last = lnume + xtra - 1;  // last line after the change
+
+      // Reset "w_skipcol" if the topline length has become smaller to
+      // such a degree that nothing will be visible anymore, accounting
+      // for 'smoothscroll' <<< or 'listchars' "precedes" marker.
+      if (wp->w_skipcol > 0
+          && (last < wp->w_topline
+              || (wp->w_topline >= lnum
+                  && wp->w_topline < lnume
+                  && win_linetabsize(wp, wp->w_topline, ml_get(wp->w_topline), (colnr_T)MAXCOL)
+                  <= (unsigned)(wp->w_skipcol + sms_marker_overlap(wp, win_col_off(wp)
+                                                                   - win_col_off2(wp)))))) {
+        wp->w_skipcol = 0;
+      }
+
       // Check if a change in the buffer has invalidated the cached
       // values for the cursor.
       // Update the folds for this window.  Can't postpone this, because
       // a following operator might work on the whole fold: ">>dd".
-      linenr_T last = lnume + xtra - 1;  // last line after the change
       foldUpdate(wp, lnum, last);
 
       // The change may cause lines above or below the change to become
@@ -379,6 +394,15 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 {
   changedOneline(curbuf, lnum);
   changed_common(lnum, col, lnum + 1, 0);
+  // When text has been changed at the end of the line, possibly the start of
+  // the next line may have SpellCap that should be removed or it needs to be
+  // displayed.  Schedule the next line for redrawing just in case.
+  // Don't do this when displaying '$' at the end of changed text.
+  if (spell_check_window(curwin)
+      && lnum < curbuf->b_ml.ml_line_count
+      && vim_strchr(p_cpo, CPO_DOLLAR) == NULL) {
+    redrawWinline(curwin, lnum + 1);
+  }
   // notify any channels that are watching
   buf_updates_send_changes(curbuf, lnum, 1, 1);
 
@@ -399,13 +423,13 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 /// insert/delete bytes at column
 ///
 /// Like changed_bytes() but also adjust extmark for "new" bytes.
-void inserted_bytes(linenr_T lnum, colnr_T col, int old, int new)
+void inserted_bytes(linenr_T lnum, colnr_T start_col, int old_col, int new_col)
 {
   if (curbuf_splice_pending == 0) {
-    extmark_splice_cols(curbuf, (int)lnum - 1, col, old, new, kExtmarkUndo);
+    extmark_splice_cols(curbuf, (int)lnum - 1, start_col, old_col, new_col, kExtmarkUndo);
   }
 
-  changed_bytes(lnum, col);
+  changed_bytes(lnum, start_col);
 }
 
 /// Appended "count" lines below line "lnum" in the current buffer.
@@ -711,8 +735,7 @@ void ins_char_bytes(char *buf, size_t charlen)
   // Copy bytes after the changed character(s).
   char *p = newp + col;
   if (linelen > col + oldlen) {
-    memmove(p + newlen, oldp + col + oldlen,
-            (size_t)(linelen - col - oldlen));
+    memmove(p + newlen, oldp + col + oldlen, linelen - col - oldlen);
   }
 
   // Insert or overwrite the new character.
@@ -951,7 +974,7 @@ int copy_indent(int size, char *src)
 
     // Add tabs required for indent.
     if (!curbuf->b_p_et) {
-      for (;;) {
+      while (true) {
         tab_pad = tabstop_padding(ind_col,
                                   curbuf->b_p_ts,
                                   curbuf->b_p_vts_array);
@@ -1311,7 +1334,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           }
 
           // find start of middle part
-          (void)copy_option_part(&p, (char *)lead_middle, COM_MAX_LEN, ",");
+          (void)copy_option_part(&p, lead_middle, COM_MAX_LEN, ",");
           require_blank = false;
         }
 
@@ -1322,7 +1345,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           }
           p++;
         }
-        (void)copy_option_part(&p, (char *)lead_middle, COM_MAX_LEN, ",");
+        (void)copy_option_part(&p, lead_middle, COM_MAX_LEN, ",");
 
         while (*p && p[-1] != ':') {  // find end of end flags
           // Check whether we allow automatic ending of comments
@@ -1331,7 +1354,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           }
           p++;
         }
-        size_t n = copy_option_part(&p, (char *)lead_end, COM_MAX_LEN, ",");
+        size_t n = copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
 
         if (end_comment_pending == -1) {  // we can set it now
           end_comment_pending = (unsigned char)lead_end[n - 1];
@@ -1352,7 +1375,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         // Doing "o" on a start of comment inserts the middle leader.
         if (lead_len > 0) {
           if (current_flag == COM_START) {
-            lead_repl = (char *)lead_middle;
+            lead_repl = lead_middle;
             lead_repl_len = (int)strlen(lead_middle);
           }
 

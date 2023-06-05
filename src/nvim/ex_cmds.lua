@@ -197,12 +197,6 @@ module.cmds = {
     func='ex_bunload',
   },
   {
-    command='behave',
-    flags=bit.bor(BANG, NEEDARG, WORD1, TRLBAR, CMDWIN, LOCK_OK),
-    addr_type='ADDR_NONE',
-    func='ex_behave',
-  },
-  {
     command='belowright',
     flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
     addr_type='ADDR_NONE',
@@ -640,7 +634,7 @@ module.cmds = {
     command='const',
     flags=bit.bor(EXTRA, NOTRLCOM, SBOXOK, CMDWIN, LOCK_OK),
     addr_type='ADDR_NONE',
-    func='ex_const',
+    func='ex_let',
   },
   {
     command='copen',
@@ -719,6 +713,12 @@ module.cmds = {
     flags=bit.bor(RANGE, ZEROR, TRLBAR, CMDWIN, LOCK_OK),
     addr_type='ADDR_OTHER',
     func='ex_debuggreedy',
+  },
+  {
+    command='defer',
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, SBOXOK, CMDWIN, LOCK_OK),
+    addr_type='ADDR_NONE',
+    func='ex_call',
   },
   {
     command='delcommand',
@@ -2212,7 +2212,7 @@ module.cmds = {
   },
   {
     command='registers',
-    flags=bit.bor(EXTRA, NOTRLCOM, TRLBAR, CMDWIN, LOCK_OK),
+    flags=bit.bor(EXTRA, NOTRLCOM, TRLBAR, SBOXOK, CMDWIN, LOCK_OK),
     addr_type='ADDR_NONE',
     func='ex_display',
   },

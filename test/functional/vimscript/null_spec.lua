@@ -65,7 +65,7 @@ describe('NULL', function()
 
     -- Correct behaviour
     null_expr_test('can be indexed with error message for empty list', 'L[0]',
-                   'E684: list index out of range: 0', nil)
+                   'E684: List index out of range: 0', nil)
     null_expr_test('can be splice-indexed', 'L[:]', 0, {})
     null_expr_test('is not locked', 'islocked("v:_null_list")', 0, 0)
     null_test('is accepted by :for', 'for x in L|throw x|endfor', 0)
@@ -80,7 +80,7 @@ describe('NULL', function()
     null_expr_test('can be copied', 'copy(L)', 0, {})
     null_expr_test('can be deepcopied', 'deepcopy(L)', 0, {})
     null_expr_test('does not crash when indexed', 'L[1]',
-                        'E684: list index out of range: 1', nil)
+                        'E684: List index out of range: 1', nil)
     null_expr_test('does not crash call()', 'call("arglistid", L)', 0, 0)
     null_expr_test('does not crash col()', 'col(L)', 0, 0)
     null_expr_test('does not crash virtcol()', 'virtcol(L)', 0, 0)

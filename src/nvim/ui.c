@@ -15,7 +15,7 @@
 #include "nvim/api/ui.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
-#include "nvim/buffer_defs.h"
+#include "nvim/buffer.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/drawscreen.h"
 #include "nvim/ex_getln.h"
@@ -127,10 +127,10 @@ void ui_free_all_mem(void)
   kv_destroy(call_buf);
 
   UIEventCallback *event_cb;
-  map_foreach_value(&ui_event_cbs, event_cb, {
+  pmap_foreach_value(&ui_event_cbs, event_cb, {
     free_ui_event_callback(event_cb);
   })
-  pmap_destroy(uint32_t)(&ui_event_cbs);
+  map_destroy(uint32_t, &ui_event_cbs);
 }
 #endif
 
@@ -348,6 +348,7 @@ void ui_attach_impl(UI *ui, uint64_t chanid)
 
   uis[ui_count++] = ui;
   ui_refresh_options();
+  resettitle();
 
   for (UIExtension i = kUIGlobalCount; (int)i < kUIExtCount; i++) {
     ui_set_ext_option(ui, i, ui->ui_ext[i]);
@@ -439,7 +440,7 @@ void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol, 
                              MIN(clearcol, (int)grid->cols - 1));
     ui_call_flush();
     uint64_t wd = (uint64_t)labs(p_wd);
-    os_microdelay(wd * 1000U, true);
+    os_sleep(wd);
     pending_cursor_update = true;  // restore the cursor later
   }
 }
@@ -521,7 +522,7 @@ void ui_flush(void)
   ui_call_flush();
 
   if (p_wd && (rdb_flags & RDB_FLUSH)) {
-    os_microdelay((uint64_t)labs(p_wd) * 1000U, true);
+    os_sleep((uint64_t)labs(p_wd));
   }
 }
 
@@ -613,8 +614,8 @@ Array ui_array(void)
     PUT(info, "override", BOOLEAN_OBJ(ui->override));
 
     // TUI fields. (`stdin_fd` is intentionally omitted.)
-    PUT(info, "term_name", STRING_OBJ(cstr_to_string(ui->term_name)));
-    PUT(info, "term_background", STRING_OBJ(cstr_to_string(ui->term_background)));
+    PUT(info, "term_name", CSTR_TO_OBJ(ui->term_name));
+    PUT(info, "term_background", CSTR_TO_OBJ(ui->term_background));
     PUT(info, "term_colors", INTEGER_OBJ(ui->term_colors));
     PUT(info, "stdin_tty", BOOLEAN_OBJ(ui->stdin_tty));
     PUT(info, "stdout_tty", BOOLEAN_OBJ(ui->stdout_tty));
@@ -660,7 +661,7 @@ void ui_call_event(char *name, Array args)
 {
   UIEventCallback *event_cb;
   bool handled = false;
-  map_foreach_value(&ui_event_cbs, event_cb, {
+  pmap_foreach_value(&ui_event_cbs, event_cb, {
     Error err = ERROR_INIT;
     Object res = nlua_call_ref(event_cb->cb, name, args, false, &err);
     if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
@@ -686,7 +687,7 @@ void ui_cb_update_ext(void)
   for (size_t i = 0; i < kUIGlobalCount; i++) {
     UIEventCallback *event_cb;
 
-    map_foreach_value(&ui_event_cbs, event_cb, {
+    pmap_foreach_value(&ui_event_cbs, event_cb, {
       if (event_cb->ext_widgets[i]) {
         ui_cb_ext[i] = true;
         break;
@@ -710,9 +711,9 @@ void ui_add_cb(uint32_t ns_id, LuaRef cb, bool *ext_widgets)
     event_cb->ext_widgets[kUICmdline] = true;
   }
 
-  UIEventCallback **item = (UIEventCallback **)pmap_ref(uint32_t)(&ui_event_cbs, ns_id, true);
+  ptr_t *item = pmap_put_ref(uint32_t)(&ui_event_cbs, ns_id, NULL, NULL);
   if (*item) {
-    free_ui_event_callback(*item);
+    free_ui_event_callback((UIEventCallback *)(*item));
   }
   *item = event_cb;
 
@@ -723,8 +724,8 @@ void ui_add_cb(uint32_t ns_id, LuaRef cb, bool *ext_widgets)
 void ui_remove_cb(uint32_t ns_id)
 {
   if (pmap_has(uint32_t)(&ui_event_cbs, ns_id)) {
-    free_ui_event_callback(pmap_get(uint32_t)(&ui_event_cbs, ns_id));
-    pmap_del(uint32_t)(&ui_event_cbs, ns_id);
+    UIEventCallback *item = pmap_del(uint32_t)(&ui_event_cbs, ns_id, NULL);
+    free_ui_event_callback(item);
   }
   ui_cb_update_ext();
   ui_refresh();

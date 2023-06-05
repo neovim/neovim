@@ -303,7 +303,7 @@ func Test_CmdErrors()
   call assert_fails('com! -complete=xxx DoCmd :', 'E180:')
   call assert_fails('com! -complete=custom DoCmd :', 'E467:')
   call assert_fails('com! -complete=customlist DoCmd :', 'E467:')
-  call assert_fails('com! -complete=behave,CustomComplete DoCmd :', 'E468:')
+  " call assert_fails('com! -complete=behave,CustomComplete DoCmd :', 'E468:')
   call assert_fails('com! -complete=file DoCmd :', 'E1208:')
   call assert_fails('com! -nargs=0 -complete=file DoCmd :', 'E1208:')
   call assert_fails('com! -nargs=x DoCmd :', 'E176:')
@@ -391,9 +391,9 @@ func Test_CmdCompletion()
   call feedkeys(":com DoC\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"com DoC', @:)
 
-  com! -nargs=1 -complete=behave DoCmd :
-  call feedkeys(":DoCmd \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"DoCmd mswin xterm', @:)
+  " com! -nargs=1 -complete=behave DoCmd :
+  " call feedkeys(":DoCmd \<C-A>\<C-B>\"\<CR>", 'tx')
+  " call assert_equal('"DoCmd mswin xterm', @:)
 
   " Test for file name completion
   com! -nargs=1 -complete=file DoCmd :

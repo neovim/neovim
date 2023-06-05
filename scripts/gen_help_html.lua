@@ -461,6 +461,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     local hname = (node_text():gsub('%-%-%-%-+', ''):gsub('%=%=%=%=+', ''):gsub('%*.*%*', ''))
     -- Use the first *tag* node as the heading anchor, if any.
     local tagnode = first(root, 'tag')
+    -- Use the *tag* as the heading anchor id, if possible.
     local tagname = tagnode and url_encode(node_text(tagnode:child(1), false)) or to_heading_tag(hname)
     if node_name == 'h1' or #headings == 0 then
       table.insert(headings, { name = hname, subheadings = {}, tag = tagname })
@@ -468,9 +469,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       table.insert(headings[#headings].subheadings, { name = hname, subheadings = {}, tag = tagname })
     end
     local el = node_name == 'h1' and 'h2' or 'h3'
-    -- If we are re-using the *tag*, this heading anchor is redundant.
-    local a = tagnode and '' or ('<a name="%s"></a>'):format(tagname)
-    return ('%s<%s class="help-heading">%s</%s>\n'):format(a, el, text, el)
+    return ('<%s id="%s" class="help-heading">%s</%s>\n'):format(el, tagname, text, el)
   elseif node_name == 'column_heading' or node_name == 'column_name' then
     if root:has_error() then
       return text
@@ -491,7 +490,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       return ''  -- Discard common "noise" lines.
     end
     -- XXX: Avoid newlines (too much whitespace) after block elements in old (preformatted) layout.
-    local div = opt.old and root:child(0) and vim.tbl_contains({'column_heading', 'h1', 'h2', 'h3'}, root:child(0):type())
+    local div = opt.old and root:child(0) and vim.list_contains({'column_heading', 'h1', 'h2', 'h3'}, root:child(0):type())
     return string.format('%s%s', div and trim(text) or text, div and '' or '\n')
   elseif node_name == 'line_li' then
     local sib = root:prev_sibling()
@@ -522,7 +521,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
     return s
-  elseif vim.tbl_contains({'codespan', 'keycode'}, node_name) then
+  elseif vim.list_contains({'codespan', 'keycode'}, node_name) then
     if root:has_error() then
       return text
     end
@@ -554,7 +553,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     if root:has_error() then
       return text
     end
-    local in_heading = vim.tbl_contains({'h1', 'h2', 'h3'}, parent)
+    local in_heading = vim.list_contains({'h1', 'h2', 'h3'}, parent)
     local cssclass = (not in_heading and get_indent(node_text()) > 8) and 'help-tag-right' or 'help-tag'
     local tagname = node_text(root:child(1), false)
     if vim.tbl_count(stats.first_tags) < 2 then
@@ -563,12 +562,14 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       return ''
     end
     local el = in_heading and 'span' or 'code'
-    local s = ('%s<a name="%s"></a><%s class="%s">%s</%s>'):format(ws(), url_encode(tagname), el, cssclass, trimmed, el)
+    local s = ('%s<%s id="%s" class="%s">%s</%s>'):format(ws(), el, url_encode(tagname), cssclass, trimmed, el)
     if opt.old then
         s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
 
     if in_heading and prev ~= 'tag' then
+      -- Don't set "id", let the heading use the tag as its "id" (used by search engines).
+      s = ('%s<%s class="%s">%s</%s>'):format(ws(), el, cssclass, trimmed, el)
       -- Start the <span> container for tags in a heading.
       -- This makes "justify-content:space-between" right-align the tags.
       --    <h2>foo bar<span>tag1 tag2</span></h2>
@@ -601,7 +602,7 @@ local function get_helpfiles(include)
   for f, type in vim.fs.dir(dir) do
     if (vim.endswith(f, '.txt')
         and type == 'file'
-        and (not include or vim.tbl_contains(include, f))) then
+        and (not include or vim.list_contains(include, f))) then
       local fullpath = vim.fn.fnamemodify(('%s/%s'):format(dir, f), ':p')
       table.insert(rv, fullpath)
     end
@@ -643,7 +644,7 @@ local function parse_buf(fname)
     buf = fname
     vim.cmd('sbuffer '..tostring(fname))          -- Buffer number.
   end
-  -- vim.treesitter.require_language('help', './build/lib/nvim/parser/vimdoc.so')
+  -- vim.treesitter.language.add('vimdoc', { path = vim.fn.expand('~/Library/Caches/tree-sitter/lib/vimdoc.so') })
   local lang_tree = vim.treesitter.get_parser(buf)
   return lang_tree, buf
 end
@@ -696,6 +697,11 @@ local function gen_one(fname, to_fname, old, commit)
     <link href="/css/main.css" rel="stylesheet">
     <link href="help.css" rel="stylesheet">
     <link href="/highlight/styles/neovim.min.css" rel="stylesheet">
+
+    <!-- algolia docsearch https://docsearch.algolia.com/docs/docsearch-v3/ -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3" />
+    <link rel="preconnect" href="https://X185E15FPG-dsn.algolia.net" crossorigin />
+
     <script src="/highlight/highlight.min.js"></script>
     <script>hljs.highlightAll();</script>
     <title>%s - Neovim docs</title>
@@ -766,19 +772,20 @@ local function gen_one(fname, to_fname, old, commit)
   main = ([[
   <header class="container">
     <nav class="navbar navbar-expand-lg">
-      <div>
+      <div class="container-fluid">
         <a href="/" class="navbar-brand" aria-label="logo">
           <!--TODO: use <img src="….svg"> here instead. Need one that has green lettering instead of gray. -->
           %s
           <!--<img src="https://neovim.io/logos/neovim-logo.svg" width="173" height="50" alt="Neovim" />-->
         </a>
+        <div id="docsearch"></div> <!-- algolia docsearch https://docsearch.algolia.com/docs/docsearch-v3/ -->
       </div>
     </nav>
   </header>
 
   <div class="container golden-grid help-body">
   <div class="col-wide">
-  <a name="%s"></a><a name="%s"></a><h1>%s</h1>
+  <a name="%s"></a><h1 id="%s">%s</h1>
   <p>
     <i>
     Nvim <code>:help</code> pages, <a href="https://github.com/neovim/neovim/blob/master/scripts/gen_help_html.lua">generated</a>
@@ -789,7 +796,7 @@ local function gen_one(fname, to_fname, old, commit)
   <hr/>
   %s
   </div>
-  ]]):format(logo_svg, stats.first_tags[1] or '', stats.first_tags[2] or '', title, vim.fs.basename(fname), main)
+  ]]):format(logo_svg, stats.first_tags[2] or '', stats.first_tags[1] or '', title, vim.fs.basename(fname), main)
 
   local toc = [[
     <div class="col-narrow toc">
@@ -825,6 +832,18 @@ local function gen_one(fname, to_fname, old, commit)
       parse_errors: %d %s | <span title="%s">noise_lines: %d</span>
       </div>
     <div>
+
+    <!-- algolia docsearch https://docsearch.algolia.com/docs/docsearch-v3/ -->
+    <script src="https://cdn.jsdelivr.net/npm/@docsearch/js@3"></script>
+    <script type="module">
+      docsearch({
+        container: '#docsearch',
+        appId: 'X185E15FPG',
+        apiKey: 'b5e6b2f9c636b2b471303205e59832ed',
+        indexName: 'nvim',
+      });
+    </script>
+
   </footer>
   ]]):format(
     os.date('%Y-%m-%d %H:%M'), commit, commit:sub(1, 7), #stats.parse_errors, bug_link,
@@ -927,6 +946,9 @@ local function gen_css(fname)
     /* Tag pseudo-header common in :help docs. */
     .help-tag-right {
       color: var(--tag-color);
+      margin-left: auto;
+      margin-right: 0;
+      float: right;
     }
     h1 .help-tag, h2 .help-tag, h3 .help-tag {
       font-size: smaller;

@@ -706,6 +706,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'autowriteall' for that.
 	Some buffers will not be written, specifically when 'buftype' is
 	"nowrite", "nofile", "terminal" or "prompt".
+	USE WITH CARE: If you make temporary changes to a buffer that you
+	don't want to be saved this option may cause it to be saved anyway.
+	Renaming the buffer with ":file {name}" may help avoid this.
 
 			 *'autowriteall'* *'awa'* *'noautowriteall'* *'noawa'*
 'autowriteall' 'awa'	boolean	(default off)
@@ -1324,7 +1327,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			register.  When "unnamed" is also included to the
 			option, yank and delete operations (but not put)
 			will additionally copy the text into register
-			'*'. See |clipboard|.
+			"*". See |clipboard|.
 
 						*'cmdheight'* *'ch'*
 'cmdheight' 'ch'	number	(default 1)
@@ -1390,7 +1393,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	insert a space.
 
 					*'commentstring'* *'cms'* *E537*
-'commentstring' 'cms'	string	(default "/*%s*/")
+'commentstring' 'cms'	string	(default "")
 			local to buffer
 	A template for a comment.  The "%s" in the value is replaced with the
 	comment text.  Currently only used to add markers for folding, see
@@ -2563,7 +2566,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 'foldexpr' 'fde'	string (default: "0")
 			local to window
 	The expression used for when 'foldmethod' is "expr".  It is evaluated
-	for each line to obtain its fold level.  See |fold-expr|.
+	for each line to obtain its fold level.  The context is set to the
+	script where 'foldexpr' was set, script-local items can be accessed.
+	See |fold-expr| for the usage.
 
 	The expression will be evaluated in the |sandbox| if set from a
 	modeline, see |sandbox-option|.
@@ -2679,7 +2684,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 'foldtext' 'fdt'	string (default: "foldtext()")
 			local to window
 	An expression which is used to specify the text displayed for a closed
-	fold.  See |fold-foldtext|.
+	fold.  The context is set to the script where 'foldexpr' was set,
+	script-local items can be accessed.  See |fold-foldtext| for the
+	usage.
 
 	The expression will be evaluated in the |sandbox| if set from a
 	modeline, see |sandbox-option|.
@@ -2720,7 +2727,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the script ID (|local-function|). Example: >
 		set formatexpr=s:MyFormatExpr()
 		set formatexpr=<SID>SomeFormatExpr()
-<
+<	Otherwise, the expression is evaluated in the context of the script
+	where the option was set, thus script-local items are available.
+
 	The expression will be evaluated in the |sandbox| when set from a
 	modeline, see |sandbox-option|.  That stops the option from working,
 	since changing the buffer text is not allowed.
@@ -2768,8 +2777,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 'fsync' 'fs'		boolean	(default off)
 			global
 	When on, the OS function fsync() will be called after saving a file
-	(|:write|, |writefile()|, …), |swap-file| and |shada-file|. This
-	flushes the file to disk, ensuring that it is safely written.
+	(|:write|, |writefile()|, …), |swap-file|, |undo-persistence| and |shada-file|.
+	This flushes the file to disk, ensuring that it is safely written.
 	Slow on some systems: writing buffers, quitting Nvim, and other
 	operations may sometimes take a few seconds.
 
@@ -3332,9 +3341,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	If the expression starts with s: or |<SID>|, then it is replaced with
 	the script ID (|local-function|). Example: >
-		set includeexpr=s:MyIncludeExpr(v:fname)
-		set includeexpr=<SID>SomeIncludeExpr(v:fname)
-<
+		setlocal includeexpr=s:MyIncludeExpr(v:fname)
+		setlocal includeexpr=<SID>SomeIncludeExpr(v:fname)
+<	Otherwise, the expression is evaluated in the context of the script
+	where the option was set, thus script-local items are available.
+
 	The expression will be evaluated in the |sandbox| when set from a
 	modeline, see |sandbox-option|.
 	This option cannot be set in a modeline when 'modelineexpr' is off.
@@ -3389,11 +3400,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The expression is evaluated with |v:lnum| set to the line number for
 	which the indent is to be computed.  The cursor is also in this line
 	when the expression is evaluated (but it may be moved around).
+
 	If the expression starts with s: or |<SID>|, then it is replaced with
 	the script ID (|local-function|). Example: >
 		set indentexpr=s:MyIndentExpr()
 		set indentexpr=<SID>SomeIndentExpr()
-<
+<	Otherwise, the expression is evaluated in the context of the script
+	where the option was set, thus script-local items are available.
+
 	The expression must return the number of spaces worth of indent.  It
 	can return "-1" to keep the current indent (this means 'autoindent' is
 	used for the indent).
@@ -3512,7 +3526,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	that is not white space or punctuation).
 	For C programs you could use "a-z,A-Z,48-57,_,.,-,>".
 	For a help file it is set to all non-blank printable characters except
-	'*', '"' and '|' (so that CTRL-] on a command finds the help for that
+	"*", '"' and '|' (so that CTRL-] on a command finds the help for that
 	command).
 	When the 'lisp' option is on the '-' character is always included.
 	This option also influences syntax highlighting, unless the syntax
@@ -3589,7 +3603,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   stopsel	Using a not-shifted special key stops selection.
 	Special keys in this context are the cursor keys, <End>, <Home>,
 	<PageUp> and <PageDown>.
-	The 'keymodel' option is set by the |:behave| command.
 
 					*'keywordprg'* *'kp'*
 'keywordprg' 'kp'	string	(default ":Man", Windows: ":help")
@@ -4168,21 +4181,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'mousehide'	hide mouse pointer while typing text
 	'selectmode'	whether to start Select mode or Visual mode
 
-	The :behave command provides some "profiles" for mouse behavior.
-								*:behave* *:be*
-	:be[have] {model}	Set behavior for mouse and selection.  Valid
-				arguments are:
-				   mswin	MS-Windows behavior
-				   xterm	Xterm behavior
-
-				Using ":behave" changes these options:
-				option		mswin			xterm	~
-				'selectmode'	"mouse,key"		""
-				'mousemodel'	"popup"			"extend"
-				'keymodel'	"startsel,stopsel"	""
-				'selection'	"exclusive"		"inclusive"
-
-
 			*'mousefocus'* *'mousef'* *'nomousefocus'* *'nomousef'*
 'mousefocus' 'mousef'	boolean	(default off)
 			global
@@ -4250,8 +4248,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    "g<LeftMouse>"  is "<C-LeftMouse>	(jump to tag under mouse click)
 	    "g<RightMouse>" is "<C-RightMouse>	("CTRL-T")
 
-	The 'mousemodel' option is set by the |:behave| command.
-
 	      *'mousemoveevent'* *'mousemev'* *'nomousemoveevent'* *'nomousemev'*
 'mousemoveevent' 'mousemev'  boolean	(default off)
 			global
@@ -4261,7 +4257,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Warning: Setting this option can make pending mappings to be aborted
 	when the mouse is moved.
 
-						*'mousescroll'*
+						*'mousescroll'* *E5080*
 'mousescroll'		string	(default "ver:3,hor:6")
 			global
 	This option controls the number of lines / columns to scroll by when
@@ -4846,7 +4842,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  pack/		packages |:packadd|
 	  parser/	|treesitter| syntax parsers
 	  plugin/	plugin scripts |write-plugin|
-	  query/	|treesitter| queries
+	  queries/	|treesitter| queries
 	  rplugin/	|remote-plugin| scripts
 	  spell/	spell checking files |spell|
 	  syntax/	syntax files |mysyntaxfile|
@@ -4916,6 +4912,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	top are deleted if new lines exceed this limit.
 	Minimum is 1, maximum is 100000.
 	Only in |terminal| buffers.
+
+	Note: Lines that are not visible and kept in scrollback are not
+	reflown when the terminal buffer is resized horizontally.
 
 			*'scrollbind'* *'scb'* *'noscrollbind'* *'noscb'*
 'scrollbind' 'scb'	boolean  (default off)
@@ -5013,8 +5012,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	backwards, you cannot include the last character of a line, when
 	starting in Normal mode and 'virtualedit' empty.
 
-	The 'selection' option is set by the |:behave| command.
-
 						*'selectmode'* *'slm'*
 'selectmode' 'slm'	string	(default "")
 			global
@@ -5025,7 +5022,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   key		when using shifted special keys
 	   cmd		when using "v", "V" or CTRL-V
 	See |Select-mode|.
-	The 'selectmode' option is set by the |:behave| command.
 
 						*'sessionoptions'* *'ssop'*
 'sessionoptions' 'ssop'	string	(default: "blank,buffers,curdir,folds,
@@ -5235,9 +5231,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 							*shell-powershell*
 	To use PowerShell: >
 		let &shell = executable('pwsh') ? 'pwsh' : 'powershell'
-		let &shellcmdflag = '-NoLogo -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new();$PSDefaultParameterValues[''Out-File:Encoding'']=''utf8'';'
+		let &shellcmdflag = '-NoLogo -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new();$PSDefaultParameterValues[''Out-File:Encoding'']=''utf8'';Remove-Alias -Force -ErrorAction SilentlyContinue tee;'
 		let &shellredir = '2>&1 | %%{ "$_" } | Out-File %s; exit $LastExitCode'
-		let &shellpipe  = '2>&1 | %%{ "$_" } | Tee-Object %s; exit $LastExitCode'
+		let &shellpipe  = '2>&1 | %%{ "$_" } | tee %s; exit $LastExitCode'
 		set shellquote= shellxquote=
 
 <	This option cannot be set from a |modeline| or in the |sandbox|, for
@@ -5397,7 +5393,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	function to get the effective shiftwidth value.
 
 						*'shortmess'* *'shm'*
-'shortmess' 'shm'	string	(default "filnxtToOF")
+'shortmess' 'shm'	string	(default "filnxtToOCF")
 			global
 	This option helps to avoid all the |hit-enter| prompts caused by file
 	messages, for example  with CTRL-G, and to avoid some other messages.
@@ -5662,6 +5658,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 	option.  Also see |ins-expandtab|.  When 'expandtab' is not set, the
 	number of spaces is minimized by using <Tab>s.
 
+			*'smoothscroll'* *'sms'* *'nosmoothscroll'* *'nosms'*
+'smoothscroll' 'sms'	boolean  (default off)
+			local to window
+	Scrolling works with screen lines.  When 'wrap' is set and the first
+	line in the window wraps part of it may not be visible, as if it is
+	above the window. "<<<" is displayed at the start of the first line,
+	highlighted with |hl-NonText|.
+	NOTE: only partly implemented, currently works with CTRL-E, CTRL-Y
+	and scrolling with the mouse.
+
 					*'softtabstop'* *'sts'*
 'softtabstop' 'sts'	number	(default 0)
 			local to buffer
@@ -5706,6 +5712,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Name of the word list file where words are added for the |zg| and |zw|
 	commands.  It must end in ".{encoding}.add".  You need to include the
 	path, otherwise the file is placed in the current directory.
+	The path may include characters from 'isfname', space, comma and '@'.
 								*E765*
 	It may also be a comma-separated list of names.  A count before the
 	|zg| and |zw| commands can be used to access each.  This allows using
@@ -5878,11 +5885,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	When "on" the commands listed below move the cursor to the first
 	non-blank of the line.  When off the cursor is kept in the same column
-	(if possible).  This applies to the commands: CTRL-D, CTRL-U, CTRL-B,
-	CTRL-F, "G", "H", "M", "L", gg, and to the commands "d", "<<" and ">>"
-	with a linewise operator, with "%" with a count and to buffer changing
-	commands (CTRL-^, :bnext, :bNext, etc.).  Also for an Ex command that
-	only has a line number, e.g., ":25" or ":+".
+	(if possible).  This applies to the commands:
+	- CTRL-D, CTRL-U, CTRL-B, CTRL-F, "G", "H", "M", "L", "gg"
+	- "d", "<<" and ">>" with a linewise operator
+	- "%" with a count
+	- buffer changing commands (CTRL-^, :bnext, :bNext, etc.)
+	- Ex commands that only have a line number, e.g., ":25" or ":+".
 	In case of buffer changing commands the cursor is placed at the column
 	where it was the last time the buffer was edited.
 
@@ -6199,16 +6207,18 @@ A jump table for the options with a short description can be found at |Q_op|.
 'switchbuf' 'swb'	string	(default "uselast")
 			global
 	This option controls the behavior when switching between buffers.
-	Mostly for |quickfix| commands some values are also used for other
-	commands, as mentioned below.
+	This option is checked, when
+	- jumping to errors with the |quickfix| commands (|:cc|, |:cn|, |:cp|,
+	  etc.)
+	- jumping to a tag using the |:stag| command.
+	- opening a file using the |CTRL-W_f| or |CTRL-W_F| command.
+	- jumping to a buffer using a buffer split command (e.g.  |:sbuffer|,
+	  |:sbnext|, or |:sbrewind|).
 	Possible values (comma-separated list):
-	   useopen	If included, jump to the first open window that
-			contains the specified buffer (if there is one).
-			Otherwise: Do not examine other windows.
-			This setting is checked with |quickfix| commands, when
-			jumping to errors (":cc", ":cn", "cp", etc.).  It is
-			also used in all buffer related split commands, for
-			example ":sbuffer", ":sbnext", or ":sbrewind".
+	   useopen	If included, jump to the first open window in the
+			current tab page that contains the specified buffer
+			(if there is one).  Otherwise: Do not examine other
+			windows.
 	   usetab	Like "useopen", but also consider windows in other tab
 			pages.
 	   split	If included, split the current window before loading
@@ -7256,7 +7266,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'writedelay'* *'wd'*
 'writedelay' 'wd'	number	(default 0)
 			global
-	Only takes effect toghether with 'redrawdebug'.
+	Only takes effect together with 'redrawdebug'.
 	The number of milliseconds to wait after each line or each flush
 
  vim:tw=78:ts=8:noet:ft=help:norl:

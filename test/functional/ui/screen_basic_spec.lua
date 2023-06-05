@@ -5,8 +5,7 @@ local feed, command = helpers.feed, helpers.command
 local insert = helpers.insert
 local eq = helpers.eq
 local eval = helpers.eval
-local funcs, meths, exec_lua = helpers.funcs, helpers.meths, helpers.exec_lua
-local is_os = helpers.is_os
+local funcs, meths = helpers.funcs, helpers.meths
 
 describe('screen', function()
   local screen
@@ -118,76 +117,11 @@ local function screen_tests(linegrid)
       screen:expect(function()
         eq(expected, screen.title)
       end)
-    end)
-
-    it('has correct default title with unnamed file', function()
-      local expected = '[No Name] - NVIM'
-      command('set title')
+      screen:detach()
+      screen.title = nil
+      screen:attach()
       screen:expect(function()
         eq(expected, screen.title)
-      end)
-    end)
-
-    it('has correct default title with named file', function()
-      local expected = (is_os('win') and 'myfile (C:\\mydir) - NVIM' or 'myfile (/mydir) - NVIM')
-      command('set title')
-      command(is_os('win') and 'file C:\\mydir\\myfile' or 'file /mydir/myfile')
-      screen:expect(function()
-        eq(expected, screen.title)
-      end)
-    end)
-
-    describe('is not changed by', function()
-      local file1 = is_os('win') and 'C:\\mydir\\myfile1' or '/mydir/myfile1'
-      local file2 = is_os('win') and 'C:\\mydir\\myfile2' or '/mydir/myfile2'
-      local expected = (is_os('win') and 'myfile1 (C:\\mydir) - NVIM' or 'myfile1 (/mydir) - NVIM')
-      local buf2
-
-      before_each(function()
-        command('edit '..file1)
-        buf2 = funcs.bufadd(file2)
-        command('set title')
-      end)
-
-      it('calling setbufvar() to set an option in a hidden buffer from i_CTRL-R', function()
-        command([[inoremap <F2> <C-R>=setbufvar(]]..buf2..[[, '&autoindent', 1) ? '' : ''<CR>]])
-        feed('i<F2><Esc>')
-        command('redraw!')
-        screen:expect(function()
-          eq(expected, screen.title)
-        end)
-      end)
-
-      it('an RPC call to nvim_buf_set_option in a hidden buffer', function()
-        meths.buf_set_option(buf2, 'autoindent', true)
-        command('redraw!')
-        screen:expect(function()
-          eq(expected, screen.title)
-        end)
-      end)
-
-      it('a Lua callback calling nvim_buf_set_option in a hidden buffer', function()
-        exec_lua(string.format([[
-          vim.schedule(function()
-            vim.api.nvim_buf_set_option(%d, 'autoindent', true)
-          end)
-        ]], buf2))
-        command('redraw!')
-        screen:expect(function()
-          eq(expected, screen.title)
-        end)
-      end)
-
-      it('a Lua callback calling nvim_buf_call in a hidden buffer', function()
-        exec_lua(string.format([[
-          vim.schedule(function()
-            vim.api.nvim_buf_call(%d, function() end)
-          end)
-        ]], buf2))
-        command('redraw!')
-        screen:expect(function()
-          eq(expected, screen.title)
-        end)
       end)
     end)
   end)
@@ -197,6 +131,12 @@ local function screen_tests(linegrid)
       local expected = 'test-icon'
       command('set iconstring='..expected)
       command('set icon')
+      screen:expect(function()
+        eq(expected, screen.icon)
+      end)
+      screen:detach()
+      screen.icon = nil
+      screen:attach()
       screen:expect(function()
         eq(expected, screen.icon)
       end)
@@ -900,7 +840,7 @@ local function screen_tests(linegrid)
       command([[autocmd VimResized * redrawtabline]])
       command([[autocmd VimResized * lua vim.api.nvim_echo({ { 'Hello' } }, false, {})]])
       command([[autocmd VimResized * let g:echospace = v:echospace]])
-      meths.set_option('showtabline', 2)
+      meths.set_option_value('showtabline', 2, {})
       screen:expect([[
         {2: + [No Name] }{3:            }|
         resiz^e                   |
@@ -1128,8 +1068,8 @@ it('CTRL-F or CTRL-B scrolls a page after UI attach/resize #20605', function()
   clear()
   local screen = Screen.new(100, 100)
   screen:attach()
-  eq(100, meths.get_option('lines'))
-  eq(99, meths.get_option('window'))
+  eq(100, meths.get_option_value('lines', {}))
+  eq(99, meths.get_option_value('window', {}))
   eq(99, meths.win_get_height(0))
   feed('1000o<Esc>')
   eq(903, funcs.line('w0'))
@@ -1143,8 +1083,8 @@ it('CTRL-F or CTRL-B scrolls a page after UI attach/resize #20605', function()
   eq(903, funcs.line('w0'))
   feed('G')
   screen:try_resize(50, 50)
-  eq(50, meths.get_option('lines'))
-  eq(49, meths.get_option('window'))
+  eq(50, meths.get_option_value('lines', {}))
+  eq(49, meths.get_option_value('window', {}))
   eq(49, meths.win_get_height(0))
   eq(953, funcs.line('w0'))
   feed('<C-B>')
@@ -1155,4 +1095,19 @@ it('CTRL-F or CTRL-B scrolls a page after UI attach/resize #20605', function()
   eq(906, funcs.line('w0'))
   feed('<C-F>')
   eq(953, funcs.line('w0'))
+end)
+
+it("showcmd doesn't cause empty grid_line with redrawdebug=compositor #22593", function()
+  clear()
+  local screen = Screen.new(30, 2)
+  screen:set_default_attr_ids({
+    [0] = {bold = true, foreground = Screen.colors.Blue},
+  })
+  screen:attach()
+  command('set showcmd redrawdebug=compositor')
+  feed('d')
+  screen:expect{grid=[[
+    ^                              |
+                       d          |
+  ]]}
 end)

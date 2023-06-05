@@ -9,7 +9,6 @@
 #include "nvim/assert.h"
 #include "nvim/garray.h"
 #include "nvim/map.h"
-#include "nvim/map_defs.h"
 #include "nvim/pos.h"
 #include "nvim/types.h"
 
@@ -77,7 +76,7 @@ typedef struct {
 #define MARKTREE_END_FLAG (((uint64_t)1) << 63)
 static inline uint64_t mt_lookup_id(uint32_t ns, uint32_t id, bool enda)
 {
-  return (uint64_t)ns << 32 | id | (enda?MARKTREE_END_FLAG:0);
+  return (uint64_t)ns << 32 | id | (enda ? MARKTREE_END_FLAG : 0);
 }
 #undef MARKTREE_END_FLAG
 

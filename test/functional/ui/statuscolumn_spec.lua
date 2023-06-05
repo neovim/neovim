@@ -9,12 +9,15 @@ local feed = helpers.feed
 local meths = helpers.meths
 local pcall_err = helpers.pcall_err
 
+local mousemodels = { "extend", "popup", "popup_setpos" }
+
 describe('statuscolumn', function()
   local screen
   before_each(function()
     clear('--cmd', 'set number nuw=1 | call setline(1, repeat(["aaaaa"], 16)) | norm GM')
     screen = Screen.new()
     screen:attach()
+    exec_lua('ns = vim.api.nvim_create_namespace("")')
   end)
 
   it("fails with invalid 'statuscolumn'", function()
@@ -193,8 +196,10 @@ describe('statuscolumn', function()
       [2] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGrey},
       [3] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
       [4] = {bold = true, foreground = Screen.colors.Brown},
-      [5] = {background = Screen.colors.Grey90},
+      [5] = {foreground = Screen.colors.Red},
+      [6] = {foreground = Screen.colors.Red, background = Screen.colors.LightGrey},
     })
+    command('hi! CursorLine guifg=Red guibg=NONE')
     screen:expect([[
       {1: 4│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {1:  │ }a                                                |
@@ -211,7 +216,7 @@ describe('statuscolumn', function()
       {1:10│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{0:@@@}|
                                                            |
     ]])
-    command("set stc=%C%s%=%l│\\ ")
+    command([[set stc=%C%s%=%l│\ ]])
     screen:expect_unchanged()
     command('set signcolumn=auto:2 foldcolumn=auto')
     command('sign define piet1 text=>> texthl=LineNr')
@@ -265,7 +270,7 @@ describe('statuscolumn', function()
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 7│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
-      {2:+}{4: 8│}{2:    }{4: }{5:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2:+}{4: 8│}{2:    }{4: }{6:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {2: }{1: 9│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1:10│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -283,7 +288,7 @@ describe('statuscolumn', function()
       {2: }{1: 6│}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 7│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 7│}{2:    }{1: }aaaaaa                                      |
-      {2:+}{4: 8│}{2:    }{4: }{5:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2:+}{4: 8│}{2:    }{4: }{6:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {2: }{1: 9│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 9│}{2:    }{1: }aaaaaa                                      |
       {2: }{1:10│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -301,7 +306,7 @@ describe('statuscolumn', function()
       {2: }{1: 2│}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 1│}{2:    }{1: }aaaaaa                                      |
-      {2:+}{4: 0│}{2:    }{4: }{5:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2:+}{4: 0│}{2:    }{4: }{6:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {2: }{1: 1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 1│}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 2│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -318,7 +323,7 @@ describe('statuscolumn', function()
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
-      {2:+}{4: 0│}{2:    }{4: }{5:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2:+}{4: 0│}{2:    }{4: }{6:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {2: }{1: 1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 2│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -343,7 +348,7 @@ describe('statuscolumn', function()
       {2: }{1:  │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaa          |
       {2: }{1: 1│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaa          |
-      {2:+}{4: 0│}{2:                  }{4: }{5:^+--  1 line: aaaaaaaaaaaaaaaaa}|
+      {2:+}{4: 0│}{2:                  }{4: }{6:^+--  1 line: aaaaaaaaaaaaaaaaa}|
       {2: }{1: 1│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaa          |
       {2: }{1: 2│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -352,7 +357,6 @@ describe('statuscolumn', function()
     ]])
     -- Status column is re-evaluated for virt_lines, buffer line, and wrapped line
     exec_lua([[
-      local ns = vim.api.nvim_create_namespace("ns")
       vim.api.nvim_buf_set_extmark(0, ns, 5, 0, {
         virt_lines_above = true, virt_lines = {{{"virt_line above", ""}}} })
       vim.api.nvim_buf_set_extmark(0, ns, 4, 0, { virt_lines = {{{"virt_line", ""}}} })
@@ -370,14 +374,13 @@ describe('statuscolumn', function()
       {1:wrapped 1 6}aaaaaaaa                                  |
       {1:buffer  0 7}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {1:wrapped 1 7}aaaaaaaa                                  |
-      {4:buffer  0 8}{5:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {4:buffer  0 8}{6:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {1:buffer  0 9}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {1:wrapped 1 9}aaaaaaaa                                  |
                                                            |
     ]])
     -- Also test virt_lines at the end of buffer
     exec_lua([[
-      local ns = vim.api.nvim_create_namespace("ns")
       vim.api.nvim_buf_set_extmark(0, ns, 15, 0, { virt_lines = {{{"END", ""}}} })
     ]])
     feed('Gzz')
@@ -397,44 +400,86 @@ describe('statuscolumn', function()
       {0:~                                                    }|
                                                            |
     ]])
+    -- Also test virt_lines when 'cpoptions' includes "n"
+    exec_lua([[
+      vim.opt.cpoptions:append("n")
+      vim.api.nvim_buf_set_extmark(0, ns, 14, 0, { virt_lines = {{{"virt_line1", ""}}} })
+      vim.api.nvim_buf_set_extmark(0, ns, 14, 0, { virt_lines = {{{"virt_line2", ""}}} })
+    ]])
+    screen:expect([[
+      {1:buffer  0 13}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaa                                            |
+      {1:buffer  0 14}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaa                                            |
+      {1:buffer  0 15}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaa                                            |
+      {1:virtual-2 15}virt_line1                               |
+      {1:virtual-2 15}virt_line2                               |
+      {1:buffer  0 16}{5:^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {5:aaaaaaaaa                                            }|
+      {1:virtual-1 16}END                                      |
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]])
   end)
 
-  it("works with 'statuscolumn' clicks", function()
-    command('set mousemodel=extend')
-    command([[
-      function! MyClickFunc(minwid, clicks, button, mods)
-        let g:testvar = printf("%d %d %s %d", a:minwid, a:clicks, a:button, getmousepos().line)
-        if a:mods !=# '    '
-          let g:testvar ..= '(' .. a:mods .. ')'
-        endif
-      endfunction
-      set stc=%0@MyClickFunc@%=%l%T
+  it('does not corrupt the screen with minwid sign item', function()
+    screen:try_resize(screen._width, 3)
+    screen:set_default_attr_ids({
+      [0] = {foreground = Screen.colors.Brown},
+      [1] = {foreground = Screen.colors.Blue4, background = Screen.colors.Gray},
+    })
+    command([[set stc=%6s\ %l]])
+    exec_lua('vim.api.nvim_buf_set_extmark(0, ns, 7, 0, {sign_text = "𒀀"})')
+    screen:expect([[
+      {0:    𒀀  8}^aaaaa                                        |
+      {0:    }{1:  }{0: 9}aaaaa                                        |
+                                                           |
     ]])
-    meths.input_mouse('left', 'press', '', 0, 0, 0)
-    eq('0 1 l 4', eval("g:testvar"))
-    meths.input_mouse('left', 'press', '', 0, 0, 0)
-    eq('0 2 l 4', eval("g:testvar"))
-    meths.input_mouse('left', 'press', '', 0, 0, 0)
-    eq('0 3 l 4', eval("g:testvar"))
-    meths.input_mouse('left', 'press', '', 0, 0, 0)
-    eq('0 4 l 4', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 3, 0)
-    eq('0 1 r 7', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 3, 0)
-    eq('0 2 r 7', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 3, 0)
-    eq('0 3 r 7', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 3, 0)
-    eq('0 4 r 7', eval("g:testvar"))
-    command('set laststatus=2 winbar=%f')
-    command('let g:testvar=""')
-    -- Check that winbar click doesn't register as statuscolumn click
-    meths.input_mouse('right', 'press', '', 0, 0, 0)
-    eq('', eval("g:testvar"))
-    -- Check that statusline click doesn't register as statuscolumn click
-    meths.input_mouse('right', 'press', '', 0, 12, 0)
-    eq('', eval("g:testvar"))
   end)
+
+  for _, model in ipairs(mousemodels) do
+    it("works with 'statuscolumn' clicks with mousemodel=" .. model, function()
+      command('set mousemodel=' .. model)
+      command([[
+        function! MyClickFunc(minwid, clicks, button, mods)
+          let g:testvar = printf("%d %d %s %d", a:minwid, a:clicks, a:button, getmousepos().line)
+          if a:mods !=# '    '
+            let g:testvar ..= '(' .. a:mods .. ')'
+          endif
+        endfunction
+        set stc=%0@MyClickFunc@%=%l%T
+      ]])
+      meths.input_mouse('left', 'press', '', 0, 0, 0)
+      eq('0 1 l 4', eval("g:testvar"))
+      meths.input_mouse('left', 'press', '', 0, 0, 0)
+      eq('0 2 l 4', eval("g:testvar"))
+      meths.input_mouse('left', 'press', '', 0, 0, 0)
+      eq('0 3 l 4', eval("g:testvar"))
+      meths.input_mouse('left', 'press', '', 0, 0, 0)
+      eq('0 4 l 4', eval("g:testvar"))
+      meths.input_mouse('right', 'press', '', 0, 3, 0)
+      eq('0 1 r 7', eval("g:testvar"))
+      meths.input_mouse('right', 'press', '', 0, 3, 0)
+      eq('0 2 r 7', eval("g:testvar"))
+      meths.input_mouse('right', 'press', '', 0, 3, 0)
+      eq('0 3 r 7', eval("g:testvar"))
+      meths.input_mouse('right', 'press', '', 0, 3, 0)
+      eq('0 4 r 7', eval("g:testvar"))
+      command('set laststatus=2 winbar=%f')
+      command('let g:testvar=""')
+      -- Check that winbar click doesn't register as statuscolumn click
+      meths.input_mouse('right', 'press', '', 0, 0, 0)
+      eq('', eval("g:testvar"))
+      -- Check that statusline click doesn't register as statuscolumn click
+      meths.input_mouse('right', 'press', '', 0, 12, 0)
+      eq('', eval("g:testvar"))
+      -- Check that cmdline click doesn't register as statuscolumn click
+      meths.input_mouse('right', 'press', '', 0, 13, 0)
+      eq('', eval("g:testvar"))
+    end)
+  end
 
   it('click labels do not leak memory', function()
     command([[
@@ -455,7 +500,6 @@ describe('statuscolumn', function()
     for _ = 0,8 do command('norm zfjzo') end
     -- 'statuscolumn' is not drawn for `virt_lines_leftcol` lines
     exec_lua([[
-      local ns = vim.api.nvim_create_namespace("ns")
       vim.api.nvim_buf_set_extmark(0, ns, 6, 0, {
         virt_lines_leftcol = true, virt_lines = {{{"virt", ""}}} })
       vim.api.nvim_buf_set_extmark(0, ns, 7, 0, {
@@ -559,38 +603,104 @@ describe('statuscolumn', function()
   end)
 
   it("has correct width with custom sign column when (un)placing signs", function()
-    screen:try_resize(screen._width, 6)
+    screen:try_resize(screen._width, 3)
     exec_lua([[
       vim.cmd.norm('gg')
       vim.o.signcolumn = 'no'
       vim.fn.sign_define('sign', { text = 'ss' })
       _G.StatusCol = function()
         local s = vim.fn.sign_getplaced(1)[1].signs
+        local es = vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {type = "sign"})
         local sign = ''
-        if #s > 0 then
-          sign = vim.v.lnum == 5 and 'ss' or '  '
+        local signs = #s + #es
+        if signs > 0 then
+          sign = (vim.v.lnum == 2 and 'ss' or '  '):rep(signs)
         end
         return vim.v.lnum .. '%=' .. sign
       end
       vim.o.statuscolumn = "%!v:lua.StatusCol()"
-      vim.fn.sign_place(0, '', 'sign', 1, { lnum = 5 })
     ]])
+    command('sign place 1 line=2 name=sign')
     screen:expect([[
       1   ^aaaaa                                            |
-      2   aaaaa                                            |
-      3   aaaaa                                            |
-      4   aaaaa                                            |
-      5 ssaaaaa                                            |
+      2 ssaaaaa                                            |
+                                                           |
+    ]])
+    command('sign place 2 line=2 name=sign')
+    screen:expect([[
+      1     ^aaaaa                                          |
+      2 ssssaaaaa                                          |
+                                                           |
+    ]])
+    command('sign unplace 2')
+    screen:expect([[
+      1   ^aaaaa                                            |
+      2 ssaaaaa                                            |
                                                            |
     ]])
     command('sign unplace 1')
     screen:expect([[
       1 ^aaaaa                                              |
       2 aaaaa                                              |
-      3 aaaaa                                              |
-      4 aaaaa                                              |
-      5 aaaaa                                              |
                                                            |
+    ]])
+    -- Also for extmark signs
+    exec_lua('id1 = vim.api.nvim_buf_set_extmark(0, ns, 1, 0, {sign_text = "ss"})')
+    screen:expect([[
+      1   ^aaaaa                                            |
+      2 ssaaaaa                                            |
+                                                           |
+    ]])
+    exec_lua('id2 = vim.api.nvim_buf_set_extmark(0, ns, 1, 0, {sign_text = "ss"})')
+    screen:expect([[
+      1     ^aaaaa                                          |
+      2 ssssaaaaa                                          |
+                                                           |
+    ]])
+    exec_lua("vim.api.nvim_buf_del_extmark(0, ns, id1)")
+    screen:expect([[
+      1   ^aaaaa                                            |
+      2 ssaaaaa                                            |
+                                                           |
+    ]])
+    exec_lua("vim.api.nvim_buf_del_extmark(0, ns, id2)")
+    screen:expect([[
+      1 ^aaaaa                                              |
+      2 aaaaa                                              |
+                                                           |
+    ]])
+    -- In all windows
+    command('wincmd v | set ls=0')
+    command('sign place 1 line=2 name=sign')
+    screen:expect([[
+      1   ^aaaaa                 │1   aaaaa                 |
+      2 ssaaaaa                 │2 ssaaaaa                 |
+                                                           |
+    ]])
+  end)
+
+  it("is only evaluated twice, once to estimate and once to draw", function()
+    command([[
+      let g:stcnr = 0
+      func! Stc()
+        let g:stcnr += 1
+        return '12345'
+      endfunc
+      set stc=%!Stc()
+      norm ggdG
+    ]])
+    eq(2, eval('g:stcnr'))
+  end)
+
+  it('does not wrap multibyte characters at the end of a line', function()
+    screen:try_resize(33, 4)
+    command([[set spell stc=%l\ ]])
+    command('call setline(8, "This is a line that contains ᶏ multibyte character.")')
+    screen:expect([[
+      8  ^This is a line that contains ᶏ|
+          multibyte character.         |
+      9  aaaaa                         |
+                                       |
     ]])
   end)
 end)

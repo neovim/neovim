@@ -4,6 +4,7 @@ local eval = helpers.eval
 local clear = helpers.clear
 local source = helpers.source
 local exc_exec = helpers.exc_exec
+local pcall_err = helpers.pcall_err
 local funcs = helpers.funcs
 local Screen = require('test.functional.ui.screen')
 local command = helpers.command
@@ -93,17 +94,17 @@ describe('execute()', function()
   it('captures errors', function()
     local ret
     ret = exc_exec('call execute(0.0)')
-    eq('Vim(call):E806: using Float as a String', ret)
+    eq('Vim(call):E806: Using a Float as a String', ret)
     ret = exc_exec('call execute(v:_null_dict)')
-    eq('Vim(call):E731: using Dictionary as a String', ret)
+    eq('Vim(call):E731: Using a Dictionary as a String', ret)
     ret = exc_exec('call execute(function("tr"))')
-    eq('Vim(call):E729: using Funcref as a String', ret)
+    eq('Vim(call):E729: Using a Funcref as a String', ret)
     ret = exc_exec('call execute(["echo 42", 0.0, "echo 44"])')
-    eq('Vim:E806: using Float as a String', ret)
+    eq('Vim:E806: Using a Float as a String', ret)
     ret = exc_exec('call execute(["echo 42", v:_null_dict, "echo 44"])')
-    eq('Vim:E731: using Dictionary as a String', ret)
+    eq('Vim:E731: Using a Dictionary as a String', ret)
     ret = exc_exec('call execute(["echo 42", function("tr"), "echo 44"])')
-    eq('Vim:E729: using Funcref as a String', ret)
+    eq('Vim:E729: Using a Funcref as a String', ret)
   end)
 
   it('captures output with highlights', function()
@@ -284,6 +285,14 @@ describe('execute()', function()
       eq('42', eval('g:mes'))
     end)
 
+    it('gives E493 instead of prompting on backwards range for ""', function()
+      command('split')
+      eq('Vim(windo):E493: Backwards range given: 2,1windo echo',
+         pcall_err(funcs.execute, '2,1windo echo', ''))
+      eq('Vim(windo):E493: Backwards range given: 2,1windo echo',
+         pcall_err(funcs.execute, {'2,1windo echo'}, ''))
+    end)
+
     it('captures but does not display output for "silent"', function()
       local screen = Screen.new(40, 5)
       screen:attach()
@@ -322,10 +331,10 @@ describe('execute()', function()
     it('propagates errors for "" and "silent"', function()
       local ret
       ret = exc_exec('call execute(0.0, "")')
-      eq('Vim(call):E806: using Float as a String', ret)
+      eq('Vim(call):E806: Using a Float as a String', ret)
 
       ret = exc_exec('call execute(v:_null_dict, "silent")')
-      eq('Vim(call):E731: using Dictionary as a String', ret)
+      eq('Vim(call):E731: Using a Dictionary as a String', ret)
 
       ret = exc_exec('call execute("echo add(1, 1)", "")')
       eq('Vim(echo):E897: List or Blob required', ret)

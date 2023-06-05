@@ -11,7 +11,7 @@ describe(':terminal mouse', function()
 
   before_each(function()
     clear()
-    nvim('set_option', 'statusline', '==========')
+    nvim('set_option_value', 'statusline', '==========', {})
     command('highlight StatusLine cterm=NONE')
     command('highlight StatusLineNC cterm=NONE')
     command('highlight VertSplit cterm=NONE')
@@ -352,7 +352,7 @@ describe(':terminal mouse', function()
       end)
 
       it('handles terminal size when switching buffers', function()
-        nvim('set_option', 'hidden', true)
+        nvim('set_option_value', 'hidden', true, {})
         feed('<c-\\><c-n><c-w><c-w>')
         screen:expect([[
           {7: 27 }line                 │line30                  |

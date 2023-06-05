@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/normal.h"
 #include "nvim/pos.h"
 #include "nvim/regexp_defs.h"
@@ -185,6 +185,7 @@ struct exarg {
   char *nextcmd;                ///< next command (NULL if none)
   char *cmd;                    ///< the name of the command (except for :make)
   char **cmdlinep;              ///< pointer to pointer of allocated cmdline
+  char *cmdline_tofree;         ///< free later
   cmdidx_T cmdidx;              ///< the index for the command
   uint32_t argt;                ///< flags for the command
   int skip;                     ///< don't execute the command, only parse it
@@ -221,11 +222,18 @@ struct exarg {
 #define EXFLAG_NR       0x02    // '#': number
 #define EXFLAG_PRINT    0x04    // 'p': print
 
+typedef enum {
+  XP_PREFIX_NONE,  ///< prefix not used
+  XP_PREFIX_NO,    ///< "no" prefix for bool option
+  XP_PREFIX_INV,   ///< "inv" prefix for bool option
+} xp_prefix_T;
+
 // used for completion on the command line
 struct expand {
   char *xp_pattern;             // start of item to expand
   int xp_context;               // type of expansion
   size_t xp_pattern_len;        // bytes in xp_pattern before cursor
+  xp_prefix_T xp_prefix;
   char *xp_arg;                 // completion function
   LuaRef xp_luaref;             // Ref to Lua completion function
   sctx_T xp_script_ctx;         // SCTX for completion function

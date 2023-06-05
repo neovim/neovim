@@ -1,4 +1,4 @@
-local lpeg = require('lpeg')
+local lpeg = vim.lpeg
 
 -- lpeg grammar for building api metadata from a set of header files. It
 -- ignores comments and preprocessor commands and parses a very small subset
@@ -55,5 +55,11 @@ local c_proto = Ct(
   fill * P(';')
   )
 
-local grammar = Ct((c_proto + c_comment + c_preproc + ws) ^ 1)
+local c_field = Ct(Cg(c_id, 'type') * ws * Cg(c_id, 'name') * fill * P(';') * fill)
+local c_keyset = Ct(
+   P('typedef') * ws * P('struct') * fill * P('{') * fill *
+   Cg(Ct(c_field ^ 1), 'fields') *
+   P('}') * fill * P('Dict') * fill * P('(') * Cg(c_id, 'keyset_name') * fill * P(')') * P(';'))
+
+local grammar = Ct((c_proto + c_comment + c_preproc + ws + c_keyset) ^ 1)
 return {grammar=grammar, typed_container=typed_container}

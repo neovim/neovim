@@ -108,8 +108,8 @@
 ///     The default value for floats are 50.  In general, values below 100 are
 ///     recommended, unless there is a good reason to overshadow builtin
 ///     elements.
-///   - style: Configure the appearance of the window. Currently only takes
-///       one non-empty value:
+///   - style: (optional) Configure the appearance of the window. Currently
+///       only supports one value:
 ///       - "minimal"  Nvim will display the window with many UI options
 ///                    disabled. This is useful when displaying a temporary
 ///                    float where the text should not be edited. Disables
@@ -222,9 +222,11 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
     win_config_float(win, fconfig);
     win->w_pos_changed = true;
   }
-  if (fconfig.style == kWinStyleMinimal) {
-    win_set_minimal_style(win);
-    didset_window_options(win, true);
+  if (HAS_KEY(config->style)) {
+    if (fconfig.style == kWinStyleMinimal) {
+      win_set_minimal_style(win);
+      didset_window_options(win, true);
+    }
   }
 }
 
@@ -265,7 +267,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
           PUT(rv, "bufpos", ARRAY_OBJ(pos));
         }
       }
-      PUT(rv, "anchor", STRING_OBJ(cstr_to_string(float_anchor_str[config->anchor])));
+      PUT(rv, "anchor", CSTR_TO_OBJ(float_anchor_str[config->anchor]));
       PUT(rv, "row", FLOAT_OBJ(config->row));
       PUT(rv, "col", FLOAT_OBJ(config->col));
       PUT(rv, "zindex", INTEGER_OBJ(config->zindex));
@@ -275,13 +277,13 @@ Dictionary nvim_win_get_config(Window window, Error *err)
       for (size_t i = 0; i < 8; i++) {
         Array tuple = ARRAY_DICT_INIT;
 
-        String s = cstrn_to_string((const char *)config->border_chars[i], sizeof(schar_T));
+        String s = cstrn_to_string(config->border_chars[i], sizeof(schar_T));
 
         int hi_id = config->border_hl_ids[i];
         char *hi_name = syn_id2name(hi_id);
         if (hi_name[0]) {
           ADD(tuple, STRING_OBJ(s));
-          ADD(tuple, STRING_OBJ(cstr_to_string((const char *)hi_name)));
+          ADD(tuple, CSTR_TO_OBJ(hi_name));
           ADD(border, ARRAY_OBJ(tuple));
         } else {
           ADD(border, STRING_OBJ(s));
@@ -293,10 +295,9 @@ Dictionary nvim_win_get_config(Window window, Error *err)
         VirtText title_datas = config->title_chunks;
         for (size_t i = 0; i < title_datas.size; i++) {
           Array tuple = ARRAY_DICT_INIT;
-          ADD(tuple, CSTR_TO_OBJ((const char *)title_datas.items[i].text));
+          ADD(tuple, CSTR_TO_OBJ(title_datas.items[i].text));
           if (title_datas.items[i].hl_id > 0) {
-            ADD(tuple,
-                STRING_OBJ(cstr_to_string((const char *)syn_id2name(title_datas.items[i].hl_id))));
+            ADD(tuple, CSTR_TO_OBJ(syn_id2name(title_datas.items[i].hl_id)));
           }
           ADD(titles, ARRAY_OBJ(tuple));
         }
@@ -316,7 +317,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
 
   const char *rel = (wp->w_floating && !config->external
                      ? float_relative_str[config->relative] : "");
-  PUT(rv, "relative", STRING_OBJ(cstr_to_string(rel)));
+  PUT(rv, "relative", CSTR_TO_OBJ(rel));
 
   return rv;
 }

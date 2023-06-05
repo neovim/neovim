@@ -19,6 +19,24 @@ func Test_window_cmd_ls0_with_split()
   set ls&vim
 endfunc
 
+func Test_window_cmd_ls0_split_scrolling()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    set laststatus=0
+    call setline(1, range(1, 100))
+    normal! G
+  END
+  call writefile(lines, 'XTestLs0SplitScrolling', 'D')
+  let buf = RunVimInTerminal('-S XTestLs0SplitScrolling', #{rows: 10})
+
+  call term_sendkeys(buf, ":botright split\<CR>")
+  call WaitForAssert({-> assert_match('Bot$', term_getline(buf, 5))})
+  call assert_equal('100', term_getline(buf, 4))
+
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_window_cmd_cmdwin_with_vsp()
   let efmt = 'Expected 0 but got %d (in ls=%d, %s window)'
   for v in range(0, 2)
@@ -119,10 +137,9 @@ endfunc
 
 " Test the ":wincmd ^" and "<C-W>^" commands.
 func Test_window_split_edit_alternate()
-
   " Test for failure when the alternate buffer/file no longer exists.
   edit Xfoo | %bw
-  call assert_fails(':wincmd ^', 'E23')
+  call assert_fails(':wincmd ^', 'E23:')
 
   " Test for the expected behavior when we have two named buffers.
   edit Xfoo | edit Xbar
@@ -152,12 +169,11 @@ endfunc
 
 " Test the ":[count]wincmd ^" and "[count]<C-W>^" commands.
 func Test_window_split_edit_bufnr()
-
   %bwipeout
   let l:nr = bufnr('%') + 1
-  call assert_fails(':execute "normal! ' . l:nr . '\<C-W>\<C-^>"', 'E92')
-  call assert_fails(':' . l:nr . 'wincmd ^', 'E16')
-  call assert_fails(':0wincmd ^', 'E16')
+  call assert_fails(':execute "normal! ' . l:nr . '\<C-W>\<C-^>"', 'E92:')
+  call assert_fails(':' . l:nr . 'wincmd ^', 'E16:')
+  call assert_fails(':0wincmd ^', 'E16:')
 
   edit Xfoo | edit Xbar | edit Xbaz
   let l:foo_nr = bufnr('Xfoo')
@@ -737,7 +753,7 @@ func Test_relative_cursor_position_in_one_line_window()
 
   only!
   bwipe!
-  call assert_fails('call winrestview(v:_null_dict)', 'E474:')
+  call assert_fails('call winrestview(v:_null_dict)', 'E1297:')
 endfunc
 
 func Test_relative_cursor_position_after_move_and_resize()
@@ -938,7 +954,7 @@ func Test_winrestview()
   call assert_equal(view, winsaveview())
 
   bwipe!
-  call assert_fails('call winrestview(v:_null_dict)', 'E474:')
+  call assert_fails('call winrestview(v:_null_dict)', 'E1297:')
 endfunc
 
 func Test_win_splitmove()
@@ -969,7 +985,7 @@ func Test_win_splitmove()
   call assert_equal(bufname(winbufnr(2)), 'b')
   call assert_equal(bufname(winbufnr(3)), 'a')
   call assert_equal(bufname(winbufnr(4)), 'd')
-  call assert_fails('call win_splitmove(winnr(), winnr("k"), v:_null_dict)', 'E474:')
+  call assert_fails('call win_splitmove(winnr(), winnr("k"), v:_null_dict)', 'E1297:')
   only | bd
 
   call assert_fails('call win_splitmove(winnr(), 123)', 'E957:')
@@ -1718,7 +1734,7 @@ func Test_splitkeep_options()
   " let &t_WS = save_WS
 endfunc
 
-function Test_splitkeep_cmdwin_cursor_position()
+func Test_splitkeep_cmdwin_cursor_position()
   set splitkeep=screen
   call setline(1, range(&lines))
 
@@ -1743,13 +1759,24 @@ function Test_splitkeep_cmdwin_cursor_position()
 
   %bwipeout!
   set splitkeep&
-endfunction
+endfunc
 
-function Test_splitkeep_misc()
+func Test_splitkeep_misc()
   set splitkeep=screen
-  set splitbelow
 
   call setline(1, range(1, &lines))
+  " Cursor is adjusted to start and end of buffer
+  norm M
+  wincmd s
+  resize 1
+  call assert_equal(1, line('.'))
+  wincmd j
+  norm GM
+  resize 1
+  call assert_equal(&lines, line('.'))
+  only!
+
+  set splitbelow
   norm Gzz
   let top = line('w0')
   " No scroll when aucmd_win is opened
@@ -1778,7 +1805,7 @@ function Test_splitkeep_misc()
   set splitkeep&
 endfunc
 
-function Test_splitkeep_callback()
+func Test_splitkeep_callback()
   CheckScreendump
   let lines =<< trim END
     set splitkeep=screen
@@ -1811,7 +1838,7 @@ function Test_splitkeep_callback()
   call StopVimInTerminal(buf)
 endfunc
 
-function Test_splitkeep_fold()
+func Test_splitkeep_fold()
   CheckScreendump
 
   let lines =<< trim END
@@ -1841,9 +1868,9 @@ function Test_splitkeep_fold()
   call VerifyScreenDump(buf, 'Test_splitkeep_fold_4', {})
 
   call StopVimInTerminal(buf)
-endfunction
+endfunc
 
-function Test_splitkeep_status()
+func Test_splitkeep_status()
   CheckScreendump
 
   let lines =<< trim END
@@ -1861,9 +1888,26 @@ function Test_splitkeep_status()
   call VerifyScreenDump(buf, 'Test_splitkeep_status_1', {})
 
   call StopVimInTerminal(buf)
-endfunction
+endfunc
 
-function Test_new_help_window_on_error()
+" skipcol is not reset unnecessarily and is copied to new window
+func Test_splitkeep_skipcol()
+  CheckScreendump
+
+  let lines =<< trim END
+    set splitkeep=topline smoothscroll splitbelow scrolloff=0
+    call setline(1, 'with lots of text in one line '->repeat(6))
+    norm 2
+    wincmd s
+  END
+
+  call writefile(lines, 'XTestSplitkeepSkipcol', 'D')
+  let buf = RunVimInTerminal('-S XTestSplitkeepSkipcol', #{rows: 12, cols: 40})
+
+  call VerifyScreenDump(buf, 'Test_splitkeep_skipcol_1', {})
+endfunc
+
+func Test_new_help_window_on_error()
   help change.txt
   execute "normal! /CTRL-@\<CR>"
   silent! execute "normal! \<C-W>]"
@@ -1873,7 +1917,26 @@ function Test_new_help_window_on_error()
 
   call assert_equal(wincount, winnr('$'))
   call assert_equal(expand("<cword>"), "'mod'")
-endfunction
+endfunc
+
+func Test_smoothscroll_in_zero_width_window()
+  let save_lines = &lines
+  let save_columns = &columns
+
+  winsize 0 24
+  set cpo+=n
+  exe "noremap 0 \<C-W>n\<C-W>L"
+  norm 000000
+  set number smoothscroll
+  exe "norm \<C-Y>"
+
+  only!
+  let &lines = save_lines
+  let &columns = save_columns
+  set cpo-=n
+  unmap 0
+  set nonumber nosmoothscroll
+endfunc
 
 
 " vim: shiftwidth=2 sts=2 expandtab

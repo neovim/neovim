@@ -31,7 +31,9 @@ end
 --- ready.
 ---
 ---@returns `true` if server responds.
+---@deprecated
 function M.server_ready()
+  vim.deprecate('vim.lsp.buf.server_ready', nil, '0.10.0')
   return not not vim.lsp.buf_notify(0, 'window/progress', {})
 end
 
@@ -679,13 +681,16 @@ local function on_code_action_results(results, ctx, options)
     --  command: string
     --  arguments?: any[]
     --
+    ---@type lsp.Client
     local client = vim.lsp.get_client_by_id(action_tuple[1])
     local action = action_tuple[2]
-    if
-      not action.edit
-      and client
-      and vim.tbl_get(client.server_capabilities, 'codeActionProvider', 'resolveProvider')
-    then
+
+    local reg = client.dynamic_capabilities:get('textDocument/codeAction', { bufnr = ctx.bufnr })
+
+    local supports_resolve = vim.tbl_get(reg or {}, 'registerOptions', 'resolveProvider')
+      or client.supports_method('codeAction/resolve')
+
+    if not action.edit and client and supports_resolve then
       client.request('codeAction/resolve', action, function(err, resolved_action)
         if err then
           vim.notify(err.code .. ': ' .. err.message, vim.log.levels.ERROR)
@@ -806,4 +811,3 @@ function M.execute_command(command_params)
 end
 
 return M
--- vim:sw=2 ts=2 et

@@ -613,15 +613,15 @@ describe('eval', function()
       Executing call setreg(1, 2, 3, 4)
       Vim(call):E118: Too many arguments for function: setreg
       Executing call setreg([], 2)
-      Vim(call):E730: using List as a String
+      Vim(call):E730: Using a List as a String
       Executing call setreg(1, 2, [])
-      Vim(call):E730: using List as a String
+      Vim(call):E730: Using a List as a String
       Executing call setreg("/", ["1", "2"])
-      Vim(call):E883: search pattern and expression register may not contain two or more lines
+      Vim(call):E883: Search pattern and expression register may not contain two or more lines
       Executing call setreg("=", ["1", "2"])
-      Vim(call):E883: search pattern and expression register may not contain two or more lines
+      Vim(call):E883: Search pattern and expression register may not contain two or more lines
       Executing call setreg(1, ["", "", [], ""])
-      Vim(call):E730: using List as a String]])
+      Vim(call):E730: Using a List as a String]])
   end)
 
   it('function name not starting with a capital', function()

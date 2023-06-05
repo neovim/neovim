@@ -241,6 +241,7 @@ local extension = {
   copyright = function(path, bufnr)
     return require('vim.filetype.detect').copyright(bufnr)
   end,
+  corn = 'corn',
   csh = function(path, bufnr)
     return require('vim.filetype.detect').csh(path, bufnr)
   end,
@@ -257,6 +258,10 @@ local extension = {
   tcc = 'cpp',
   hxx = 'cpp',
   hpp = 'cpp',
+  ccm = 'cpp',
+  cppm = 'cpp',
+  cxxm = 'cpp',
+  ['c++m'] = 'cpp',
   cpp = function(path, bufnr)
     return vim.g.cynlib_syntax_for_cpp and 'cynlib' or 'cpp'
   end,
@@ -575,6 +580,7 @@ local extension = {
   ['json-patch'] = 'json',
   json5 = 'json5',
   jsonc = 'jsonc',
+  jsonl = 'jsonl',
   jsonnet = 'jsonnet',
   libsonnet = 'jsonnet',
   jsp = 'jsp',
@@ -633,6 +639,7 @@ local extension = {
   nse = 'lua',
   rockspec = 'lua',
   lua = 'lua',
+  luau = 'luau',
   lrc = 'lyrics',
   m = function(path, bufnr)
     return require('vim.filetype.detect').m(bufnr)
@@ -992,7 +999,9 @@ local extension = {
   spi = 'spyce',
   spy = 'spyce',
   tyc = 'sql',
-  typ = 'sql',
+  typ = function(path, bufnr)
+    return require('vim.filetype.detect').typ(bufnr)
+  end,
   pkb = 'sql',
   tyb = 'sql',
   pks = 'sql',
@@ -1073,6 +1082,8 @@ local extension = {
   uit = 'uil',
   uil = 'uil',
   ungram = 'ungrammar',
+  usd = 'usd',
+  usda = 'usd',
   sba = 'vb',
   vb = 'vb',
   dsm = 'vb',
@@ -1087,7 +1098,9 @@ local extension = {
   vr = 'vera',
   vri = 'vera',
   vrh = 'vera',
-  v = 'verilog',
+  v = function(path, bufnr)
+    return require('vim.filetype.detect').v(bufnr)
+  end,
   va = 'verilogams',
   vams = 'verilogams',
   vhdl = 'vhdl',
@@ -1465,6 +1478,7 @@ local filename = {
   ['.gprc'] = 'gp',
   ['/.gnupg/gpg.conf'] = 'gpg',
   ['/.gnupg/options'] = 'gpg',
+  ['Jenkinsfile'] = 'groovy',
   ['/var/backups/gshadow.bak'] = 'group',
   ['/etc/gshadow'] = 'group',
   ['/etc/group-'] = 'group',
@@ -1517,6 +1531,7 @@ local filename = {
   ['.lsl'] = function(path, bufnr)
     return require('vim.filetype.detect').lsl(bufnr)
   end,
+  ['.busted'] = 'lua',
   ['.luacheckrc'] = 'lua',
   ['lynx.cfg'] = 'lynx',
   ['m3overrides'] = 'm3build',
@@ -1533,6 +1548,7 @@ local filename = {
   ['man.config'] = 'manconf',
   ['maxima-init.mac'] = 'maxima',
   ['meson.build'] = 'meson',
+  ['meson.options'] = 'meson',
   ['meson_options.txt'] = 'meson',
   ['/etc/conf.modules'] = 'modconf',
   ['/etc/modules'] = 'modconf',

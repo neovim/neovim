@@ -266,7 +266,7 @@ func Test_chinese_char_on_wrap_column()
   norm! $
   redraw!
   let expect=[
-\ '中aaaaaaaaaaaaaaaaa>',
+\ '<<<aaaaaaaaaaaaaaaa>',
 \ '中aaaaaaaaaaaaaaaaa>',
 \ '中aaaaaaaaaaaaaaaaa>',
 \ '中aaaaaaaaaaaaaaaaa>',

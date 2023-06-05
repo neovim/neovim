@@ -1,4 +1,4 @@
-local lfs = require('lfs')
+local luv = require('luv')
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
@@ -28,18 +28,18 @@ describe('Command-line option', function()
       os.remove(dollar_fname)
     end)
     it('treats - as stdin', function()
-      eq(nil, lfs.attributes(fname))
+      eq(nil, luv.fs_stat(fname))
       funcs.system(
         {nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE', '--headless',
          '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
          '-s', '-', fname},
         {':call setline(1, "42")', ':wqall!', ''})
       eq(0, eval('v:shell_error'))
-      local attrs = lfs.attributes(fname)
+      local attrs = luv.fs_stat(fname)
       eq(#('42\n'), attrs.size)
     end)
     it('does not expand $VAR', function()
-      eq(nil, lfs.attributes(fname))
+      eq(nil, luv.fs_stat(fname))
       eq(true, not not dollar_fname:find('%$%w+'))
       write_file(dollar_fname, ':call setline(1, "100500")\n:wqall!\n')
       funcs.system(
@@ -47,7 +47,7 @@ describe('Command-line option', function()
          '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
          '-s', dollar_fname, fname})
       eq(0, eval('v:shell_error'))
-      local attrs = lfs.attributes(fname)
+      local attrs = luv.fs_stat(fname)
       eq(#('100500\n'), attrs.size)
     end)
     it('does not crash after reading from stdin in non-headless mode', function()
@@ -121,7 +121,7 @@ describe('Command-line option', function()
            '--cmd', 'language C',
            '-s', fname, '-s', dollar_fname, fname_2}))
       eq(2, eval('v:shell_error'))
-      eq(nil, lfs.attributes(fname_2))
+      eq(nil, luv.fs_stat(fname_2))
     end)
   end)
 end)

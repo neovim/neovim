@@ -369,11 +369,11 @@ func Test_tagfunc_callback()
     bw!
 
     # Test for using a script-local function name
-    def s:LocalTagFunc(pat: string, flags: string, info: dict<any> ): any
+    def LocalTagFunc(pat: string, flags: string, info: dict<any> ): any
       g:LocalTagFuncArgs = [pat, flags, info]
       return null
     enddef
-    &tagfunc = s:LocalTagFunc
+    &tagfunc = LocalTagFunc
     new
     g:LocalTagFuncArgs = []
     assert_fails('tag a12', 'E433:')

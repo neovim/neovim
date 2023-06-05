@@ -93,7 +93,27 @@ non-zero number it means TRUE: >
 	:" executed
 To test for a non-empty string, use empty(): >
 	:if !empty("foo")
-<
+
+<						*falsy* *truthy*
+An expression can be used as a condition, ignoring the type and only using
+whether the value is "sort of true" or "sort of false".  Falsy is:
+	the number zero
+	empty string, blob, list or dictionary
+Other values are truthy.  Examples:
+	0	falsy
+	1	truthy
+	-1	truthy
+	0.0	falsy
+	0.1	truthy
+	''	falsy
+	'x'	truthy
+	[]	falsy
+	[0]	truthy
+	{}	falsy
+	#{x: 1} truthy
+	0z	falsy
+	0z00	truthy
+
 							*non-zero-arg*
 Function arguments often behave slightly different from |TRUE|: If the
 argument is present and it evaluates to a non-zero Number, |v:true| or a
@@ -119,7 +139,7 @@ You will not get an error if you try to change the type of a variable.
 
 
 1.2 Function references ~
-							*Funcref* *E695* *E718*
+					*Funcref* *E695* *E718* *E1192*
 A Funcref variable is obtained with the |function()| function, the |funcref()|
 function or created with the lambda expression |expr-lambda|.  It can be used
 in an expression in the place of a function name, before the parenthesis
@@ -249,6 +269,9 @@ similar to -1. >
 	:let endlist = mylist[2:]	" from item 2 to the end: [3, "four"]
 	:let shortlist = mylist[2:2]	" List with one item: [3]
 	:let otherlist = mylist[:]	" make a copy of the List
+
+Notice that the last index is inclusive.  If you prefer using an exclusive
+index use the |slice()| method.
 
 If the first index is beyond the last item of the List or the second item is
 before the first item, the result is an empty list.  There is no error
@@ -841,9 +864,12 @@ All expressions within one level are parsed from left to right.
 
 
 ------------------------------------------------------------------------------
-expr1							*expr1* *ternary* *E109*
+expr1				*expr1* *ternary* *falsy-operator* *??* *E109*
 
-expr2 ? expr1 : expr1
+The ternary operator: expr2 ? expr1 : expr1
+The falsy operator:   expr2 ?? expr1
+
+Ternary operator ~
 
 The expression before the '?' is evaluated to a number.  If it evaluates to
 |TRUE|, the result is the value of the expression between the '?' and ':',
@@ -865,6 +891,23 @@ To keep this readable, using |line-continuation| is suggested: >
 
 You should always put a space before the ':', otherwise it can be mistaken for
 use in a variable such as "a:1".
+
+Falsy operator ~
+
+This is also known as the "null coalescing operator", but that's too
+complicated, thus we just call it the falsy operator.
+
+The expression before the '??' is evaluated.  If it evaluates to
+|truthy|, this is used as the result.  Otherwise the expression after the '??'
+is evaluated and used as the result.  This is most useful to have a default
+value for an expression that may result in zero or empty: >
+	echo theList ?? 'list is empty'
+	echo GetName() ?? 'unknown'
+
+These are similar, but not equal: >
+	expr2 ?? expr1
+	expr2 ? expr2 : expr1
+In the second line "expr2" is evaluated twice.
 
 
 ------------------------------------------------------------------------------
@@ -1044,7 +1087,7 @@ That works, since the String "190" is automatically converted to the Number
 	1 . 90 * 90.0
 Should be read as: >
 	1 . (90 * 90.0)
-Since '.' has lower precedence than '*'.  This does NOT work, since this
+Since '.' has lower precedence than "*".  This does NOT work, since this
 attempts to concatenate a Float and a String.
 
 When dividing a Number by zero the result depends on the value:
@@ -1112,6 +1155,8 @@ text column numbers start with one!  Example, to get the byte under the
 cursor: >
 	:let c = getline(".")[col(".") - 1]
 
+Index zero gives the first byte.  Careful: text column numbers start with one!
+
 If the length of the String is less than the index, the result is an empty
 String.  A negative index always results in an empty string (reason: backward
 compatibility).  Use [-1:] to get the last byte.
@@ -1135,6 +1180,9 @@ expr1a and expr1b are used as a Number.
 In legacy Vim script the indexes are byte indexes.  This doesn't recognize
 multibyte encodings, see |byteidx()| for computing the indexes.  If expr8 is
 a Number it is first converted to a String.
+
+The item at index expr1b is included, it is inclusive.  For an exclusive index
+use the |slice()| function.
 
 If expr1a is omitted zero is used.  If expr1b is omitted the length of the
 string minus one is used.
@@ -1196,7 +1244,7 @@ Note that the dot is also used for String concatenation.  To avoid confusion
 always put spaces around the dot for String concatenation.
 
 
-expr8(expr1, ...)	|Funcref| function call
+expr8(expr1, ...)	|Funcref| function call		*E1085*
 
 When expr8 is a |Funcref| type variable, invoke the function it refers to.
 
@@ -1365,6 +1413,60 @@ to be doubled.  These two commands are equivalent: >
 	if a =~ "\\s*"
 	if a =~ '\s*'
 
+
+------------------------------------------------------------------------------
+interpolated-string				*$quote* *interpolated-string*
+
+$"string"		interpolated string constant		*expr-$quote*
+$'string'		interpolated literal string constant	*expr-$'*
+
+Interpolated strings are an extension of the |string| and |literal-string|,
+allowing the inclusion of Vim script expressions (see |expr1|).  Any
+expression returning a value can be enclosed between curly braces.  The value
+is converted to a string.  All the text and results of the expressions
+are concatenated to make a new string.
+								*E1278*
+To include an opening brace '{' or closing brace '}' in the string content
+double it.  For double quoted strings using a backslash also works.  A single
+closing brace '}' will result in an error.
+
+Examples: >
+	let your_name = input("What's your name? ")
+<	What's your name?  Peter ~
+>
+	echo
+	echo $"Hello, {your_name}!"
+<	Hello, Peter! ~
+>
+	echo $"The square root of {{9}} is {sqrt(9)}"
+<	The square root of {9} is 3.0 ~
+
+						*string-offset-encoding*
+A string consists of multiple characters.  UTF-8 uses one byte for ASCII
+characters, two bytes for other latin characters and more bytes for other
+characters.
+
+A string offset can count characters or bytes.  Other programs may use
+UTF-16 encoding (16-bit words) and an offset of UTF-16 words.  Some functions
+use byte offsets, usually for UTF-8 encoding.  Other functions use character
+offsets, in which case the encoding doesn't matter.
+
+The different offsets for the string "a©😊" are below:
+
+  UTF-8 offsets:
+      [0]: 61, [1]: C2, [2]: A9, [3]: F0, [4]: 9F, [5]: 98, [6]: 8A
+  UTF-16 offsets:
+      [0]: 0061, [1]: 00A9, [2]: D83D, [3]: DE0A
+  UTF-32 (character) offsets:
+      [0]: 00000061, [1]: 000000A9, [2]: 0001F60A
+
+You can use the "g8" and "ga" commands on a character to see the
+decimal/hex/octal values.
+
+The functions |byteidx()|, |utf16idx()| and |charidx()| can be used to convert
+between these indices.  The functions |strlen()|, |strutf16len()| and
+|strcharlen()| return the number of bytes, UTF-16 code units and characters in
+a string respectively.
 
 ------------------------------------------------------------------------------
 option						*expr-option* *E112* *E113*
@@ -2108,7 +2210,7 @@ v:register	The name of the register in effect for the current normal mode
 		(use this in custom commands that take a register).
 		If none is supplied it is the default register '"', unless
 		'clipboard' contains "unnamed" or "unnamedplus", then it is
-		'*' or '+'.
+		"*" or '+'.
 		Also see |getreg()| and |setreg()|
 
 					*v:relnum* *relnum-variable*
@@ -2499,15 +2601,31 @@ This does NOT work: >
 			|List| item.
 
 						*:let=<<* *:let-heredoc*
-						*E990* *E991* *E172* *E221*
-:let {var-name} =<< [trim] {endmarker}
+					*E990* *E991* *E172* *E221* *E1145*
+:let {var-name} =<< [trim] [eval] {endmarker}
 text...
 text...
 {endmarker}
 			Set internal variable {var-name} to a |List|
 			containing the lines of text bounded by the string
-			{endmarker}. The lines of text is used as a
-			|literal-string|.
+			{endmarker}.
+
+			If "eval" is not specified, then each line of text is
+			used as a |literal-string|, except that single quotes
+			does not need to be doubled.
+			If "eval" is specified, then any Vim expression in the
+			form {expr} is evaluated and the result replaces the
+			expression, like with |interpolated-string|.
+			Example where $HOME is expanded: >
+				let lines =<< trim eval END
+				  some text
+				  See the file {$HOME}/.vimrc
+				  more text
+				END
+<			There can be multiple Vim expressions in a single line
+			but an expression cannot span multiple lines.  If any
+			expression evaluation fails, then the assignment fails.
+
 			{endmarker} must not contain white space.
 			{endmarker} cannot start with a lower case character.
 			The last line should end only with the {endmarker}
@@ -2557,6 +2675,13 @@ text...
 					1 2 3 4
 					5 6 7 8
 				DATA
+
+				let code =<< trim eval CODE
+				   let v = {10 + 20}
+				   let h = "{$HOME}"
+				   let s = "{Str1()} abc {Str2()}"
+				   let n = {MyFunc(3, 4)}
+				CODE
 <
 								*E121*
 :let {var-name}	..	List the value of variable {var-name}.  Multiple
@@ -4145,10 +4270,10 @@ The input is in the variable "line", the results in the variables "file",
 
 getting the scriptnames in a Dictionary ~
 						*scriptnames-dictionary*
-The |:scriptnames| command can be used to get a list of all script files that
-have been sourced.  There is no equivalent function or variable for this
-(because it's rarely needed).  In case you need to manipulate the list this
-code can be used: >
+The `:scriptnames` command can be used to get a list of all script files that
+have been sourced.  There is also the `getscriptinfo()` function, but the
+information returned is not exactly the same.  In case you need to manipulate
+the output of `scriptnames` this code can be used: >
     " Get the output of ":scriptnames" in the scriptnames_output variable.
     let scriptnames_output = ''
     redir => scriptnames_output

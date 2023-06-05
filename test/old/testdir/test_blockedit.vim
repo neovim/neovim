@@ -18,6 +18,7 @@ endfunc
 func Test_blockinsert_autoindent()
   new
   let lines =<< trim END
+      vim9script
       var d = {
       a: () => 0,
       b: () => 0,
@@ -28,40 +29,42 @@ func Test_blockinsert_autoindent()
   filetype plugin indent on
   setlocal sw=2 et ft=vim
   setlocal indentkeys+=:
-  exe "norm! 2Gf)\<c-v>2jA: asdf\<esc>"
+  exe "norm! 3Gf)\<c-v>2jA: asdf\<esc>"
   let expected =<< trim END
+      vim9script
       var d = {
         a: (): asdf => 0,
       b: (): asdf => 0,
       c: (): asdf => 0,
       }
   END
-  call assert_equal(expected, getline(1, 5))
+  call assert_equal(expected, getline(1, 6))
 
   " insert on the next column should do exactly the same
   :%dele
   call setline(1, lines)
-  exe "norm! 2Gf)l\<c-v>2jI: asdf\<esc>"
-  call assert_equal(expected, getline(1, 5))
+  exe "norm! 3Gf)l\<c-v>2jI: asdf\<esc>"
+  call assert_equal(expected, getline(1, 6))
 
   :%dele
   call setline(1, lines)
   setlocal sw=8 noet
-  exe "norm! 2Gf)\<c-v>2jA: asdf\<esc>"
+  exe "norm! 3Gf)\<c-v>2jA: asdf\<esc>"
   let expected =<< trim END
+      vim9script
       var d = {
       	a: (): asdf => 0,
       b: (): asdf => 0,
       c: (): asdf => 0,
       }
   END
-  call assert_equal(expected, getline(1, 5))
+  call assert_equal(expected, getline(1, 6))
 
   " insert on the next column should do exactly the same
   :%dele
   call setline(1, lines)
-  exe "norm! 2Gf)l\<c-v>2jI: asdf\<esc>"
-  call assert_equal(expected, getline(1, 5))
+  exe "norm! 3Gf)l\<c-v>2jI: asdf\<esc>"
+  call assert_equal(expected, getline(1, 6))
 
   filetype off
   bwipe!

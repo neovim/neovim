@@ -106,8 +106,8 @@
 # include "buffer.c.generated.h"
 #endif
 
-static char *e_auabort = N_("E855: Autocommands caused command to abort");
-static char e_attempt_to_delete_buffer_that_is_in_use_str[]
+static const char *e_auabort = N_("E855: Autocommands caused command to abort");
+static const char e_attempt_to_delete_buffer_that_is_in_use_str[]
   = N_("E937: Attempt to delete a buffer that is in use: %s");
 
 // Number of times free_buffer() was called.
@@ -248,6 +248,11 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags_arg)
     return FAIL;
   }
 
+  // Do not sync this buffer yet, may first want to read the file.
+  if (curbuf->b_ml.ml_mfp != NULL) {
+    curbuf->b_ml.ml_mfp->mf_dirty = MF_DIRTY_YES_NOSYNC;
+  }
+
   // The autocommands in readfile() may change the buffer, but only AFTER
   // reading the file.
   set_bufref(&old_curbuf, curbuf);
@@ -268,7 +273,7 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags_arg)
     int save_bin = curbuf->b_p_bin;
     int perm;
 
-    perm = os_getperm((const char *)curbuf->b_ffname);
+    perm = os_getperm(curbuf->b_ffname);
     if (perm >= 0 && (0 || S_ISFIFO(perm)
                       || S_ISSOCK(perm)
 # ifdef OPEN_CHR_FILES
@@ -314,6 +319,12 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags_arg)
     if (retval == OK) {
       retval = read_buffer(true, eap, flags);
     }
+  }
+
+  // Can now sync this buffer in ml_sync_all().
+  if (curbuf->b_ml.ml_mfp != NULL
+      && curbuf->b_ml.ml_mfp->mf_dirty == MF_DIRTY_YES_NOSYNC) {
+    curbuf->b_ml.ml_mfp->mf_dirty = MF_DIRTY_YES;
   }
 
   // if first time loading this buffer, init b_chartab[]
@@ -833,7 +844,7 @@ void buf_freeall(buf_T *buf, int flags)
 /// itself (not the file, that must have been done already).
 static void free_buffer(buf_T *buf)
 {
-  pmap_del(handle_T)(&buffer_handles, buf->b_fnum);
+  pmap_del(int)(&buffer_handles, buf->b_fnum, NULL);
   buf_free_count++;
   // b:changedtick uses an item in buf_T.
   free_buffer_stuff(buf, kBffClearWinInfo);
@@ -1084,11 +1095,11 @@ char *do_bufdel(int command, char *arg, int addr_count, int start_bnr, int end_b
 
     if (deleted == 0) {
       if (command == DOBUF_UNLOAD) {
-        STRCPY(IObuff, _("E515: No buffers were unloaded"));
+        xstrlcpy(IObuff, _("E515: No buffers were unloaded"), IOSIZE);
       } else if (command == DOBUF_DEL) {
-        STRCPY(IObuff, _("E516: No buffers were deleted"));
+        xstrlcpy(IObuff, _("E516: No buffers were deleted"), IOSIZE);
       } else {
-        STRCPY(IObuff, _("E517: No buffers were wiped out"));
+        xstrlcpy(IObuff, _("E517: No buffers were wiped out"), IOSIZE);
       }
       errormsg = IObuff;
     } else if (deleted >= p_report) {
@@ -1403,7 +1414,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     if (buf == NULL) {          // No previous buffer, Try 2'nd approach
       forward = true;
       buf = curbuf->b_next;
-      for (;;) {
+      while (true) {
         if (buf == NULL) {
           if (!forward) {               // tried both directions
             break;
@@ -1459,16 +1470,11 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
 
   // make "buf" the current buffer
   if (action == DOBUF_SPLIT) {      // split window first
-    // If 'switchbuf' contains "useopen": jump to first window containing
-    // "buf" if one exists
-    if ((swb_flags & SWB_USEOPEN) && buf_jump_open_win(buf)) {
+    // If 'switchbuf' is set jump to the window containing "buf".
+    if (swbuf_goto_win_with_buf(buf) != NULL) {
       return OK;
     }
-    // If 'switchbuf' contains "usetab": jump to first window in any tab
-    // page containing "buf" if one exists
-    if ((swb_flags & SWB_USETAB) && buf_jump_open_tab(buf)) {
-      return OK;
-    }
+
     if (win_split(0, 0) == FAIL) {
       return FAIL;
     }
@@ -1687,7 +1693,7 @@ void enter_buffer(buf_T *buf)
   // May need to set the spell language.  Can only do this after the buffer
   // has been properly setup.
   if (!curbuf->b_help && curwin->w_p_spell && *curwin->w_s->b_p_spl != NUL) {
-    (void)did_set_spelllang(curwin);
+    (void)parse_spelllang(curwin);
   }
   curbuf->b_last_used = time(NULL);
 
@@ -1870,7 +1876,7 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
     lastbuf = buf;
 
     buf->b_fnum = top_file_num++;
-    pmap_put(handle_T)(&buffer_handles, buf->b_fnum, buf);
+    pmap_put(int)(&buffer_handles, buf->b_fnum, buf);
     if (top_file_num < 0) {  // wrap around (may cause duplicates)
       emsg(_("W14: Warning: List of file names overflow"));
       if (emsg_silent == 0 && !in_assert_fails) {
@@ -2072,17 +2078,8 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
   }
 
   if (options & GETF_SWITCH) {
-    // If 'switchbuf' contains "useopen": jump to first window containing
-    // "buf" if one exists
-    if (swb_flags & SWB_USEOPEN) {
-      wp = buf_jump_open_win(buf);
-    }
-
-    // If 'switchbuf' contains "usetab": jump to first window in any tab
-    // page containing "buf" if one exists
-    if (wp == NULL && (swb_flags & SWB_USETAB)) {
-      wp = buf_jump_open_tab(buf);
-    }
+    // If 'switchbuf' is set jump to the window containing "buf".
+    wp = swbuf_goto_win_with_buf(buf);
 
     // If 'switchbuf' contains "split", "vsplit" or "newtab" and the
     // current buffer isn't empty: open new tab or window
@@ -2231,7 +2228,7 @@ int buflist_findpat(const char *pattern, const char *pattern_end, bool unlisted,
     // Repeat this for finding an unlisted buffer if there was no matching
     // listed buffer.
 
-    pat = file_pat_to_reg_pat((char *)pattern, (char *)pattern_end, NULL, false);
+    pat = file_pat_to_reg_pat(pattern, pattern_end, NULL, false);
     if (pat == NULL) {
       return -1;
     }
@@ -2241,7 +2238,7 @@ int buflist_findpat(const char *pattern, const char *pattern_end, bool unlisted,
     // First try finding a listed buffer.  If not found and "unlisted"
     // is true, try finding an unlisted buffer.
     find_listed = true;
-    for (;;) {
+    while (true) {
       for (attempt = 0; attempt <= 3; attempt++) {
         // may add '^' and '$'
         if (toggledollar) {
@@ -3180,7 +3177,7 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
   bool dontwrite = bt_dontwrite(curbuf);
   vim_snprintf_add(buffer, IOSIZE, "\"%s%s%s%s%s%s",
                    curbufIsChanged()
-                   ? (shortmess(SHM_MOD) ?  " [+]" : _(" [Modified]")) : " ",
+                   ? (shortmess(SHM_MOD) ? " [+]" : _(" [Modified]")) : " ",
                    (curbuf->b_flags & BF_NOTEDITED) && !dontwrite
                    ? _("[Not edited]") : "",
                    (curbuf->b_flags & BF_NEW) && !dontwrite
@@ -3309,8 +3306,7 @@ void maketitle(void)
                                      SPACE_FOR_FNAME + 1);
         buf_p += MIN(size, SPACE_FOR_FNAME);
       } else {
-        buf_p += transstr_buf((const char *)path_tail(curbuf->b_fname),
-                              -1, buf_p, SPACE_FOR_FNAME + 1, true);
+        buf_p += transstr_buf(path_tail(curbuf->b_fname), -1, buf_p, SPACE_FOR_FNAME + 1, true);
       }
 
       switch (bufIsChanged(curbuf)
@@ -3459,7 +3455,6 @@ void resettitle(void)
 {
   ui_call_set_icon(cstr_as_string(lasticon));
   ui_call_set_title(cstr_as_string(lasttitle));
-  ui_flush();
 }
 
 #if defined(EXITFREE)
@@ -3471,8 +3466,8 @@ void free_titles(void)
 
 #endif
 
-/// Get relative cursor position in window into "buf[buflen]", in the form 99%,
-/// using "Top", "Bot" or "All" when appropriate.
+/// Get relative cursor position in window into "buf[buflen]", in the localized
+/// percentage form like %99, 99%; using "Top", "Bot" or "All" when appropriate.
 void get_rel_pos(win_T *wp, char *buf, int buflen)
 {
   // Need at least 3 chars for writing.
@@ -3496,9 +3491,20 @@ void get_rel_pos(win_T *wp, char *buf, int buflen)
   } else if (above <= 0) {
     xstrlcpy(buf, _("Top"), (size_t)buflen);
   } else {
-    vim_snprintf(buf, (size_t)buflen, "%2d%%", above > 1000000L
-                 ? (int)(above / ((above + below) / 100L))
-                 : (int)(above * 100L / (above + below)));
+    int perc = (above > 1000000L
+                ? (int)(above / ((above + below) / 100L))
+                : (int)(above * 100L / (above + below)));
+
+    char *p = buf;
+    size_t l = (size_t)buflen;
+    if (perc < 10) {
+      // prepend one space
+      buf[0] = ' ';
+      p++;
+      l--;
+    }
+    // localized percentage value
+    vim_snprintf(p, l, _("%d%%"), perc);
   }
 }
 
@@ -3518,23 +3524,20 @@ bool append_arg_number(win_T *wp, char *buf, int buflen, bool add_file)
     return false;
   }
 
+  const char *msg;
+  switch ((wp->w_arg_idx_invalid ? 1 : 0) + (add_file ? 2 : 0)) {
+  case 0:
+    msg = _(" (%d of %d)"); break;
+  case 1:
+    msg = _(" ((%d) of %d)"); break;
+  case 2:
+    msg = _(" (file %d of %d)"); break;
+  case 3:
+    msg = _(" (file (%d) of %d)"); break;
+  }
+
   char *p = buf + strlen(buf);  // go to the end of the buffer
-
-  // Early out if the string is getting too long
-  if (p - buf + 35 >= buflen) {
-    return false;
-  }
-
-  *p++ = ' ';
-  *p++ = '(';
-  if (add_file) {
-    STRCPY(p, "file ");
-    p += 5;
-  }
-  vim_snprintf(p, (size_t)(buflen - (p - buf)),
-               wp->w_arg_idx_invalid
-               ? "(%d) of %d)"
-               : "%d of %d)", wp->w_arg_idx + 1, ARGCOUNT);
+  vim_snprintf(p, (size_t)(buflen - (p - buf)), msg, wp->w_arg_idx + 1, ARGCOUNT);
   return true;
 }
 
@@ -3557,7 +3560,7 @@ void fname_expand(buf_T *buf, char **ffname, char **sfname)
 #ifdef MSWIN
   if (!buf->b_p_bin) {
     // If the file name is a shortcut file, use the file it links to.
-    char *rfname = os_resolve_shortcut((const char *)(*ffname));
+    char *rfname = os_resolve_shortcut(*ffname);
     if (rfname != NULL) {
       xfree(*ffname);
       *ffname = rfname;
@@ -3610,7 +3613,7 @@ void ex_buffer_all(exarg_T *eap)
   if (had_tab > 0) {
     goto_tabpage_tp(first_tabpage, true, true);
   }
-  for (;;) {
+  while (true) {
     tpnext = curtab->tp_next;
     for (wp = firstwin; wp != NULL; wp = wpnext) {
       wpnext = wp->w_next;

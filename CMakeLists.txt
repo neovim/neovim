@@ -16,23 +16,37 @@ project(nvim C)
 if(POLICY CMP0075)
   cmake_policy(SET CMP0075 NEW)
 endif()
+if(POLICY CMP0135)
+  cmake_policy(SET CMP0135 NEW)
+endif()
 
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 include(CheckCCompilerFlag)
 include(CheckCSourceCompiles)
+include(CheckLibraryExists)
+include(ExternalProject)
 include(FindPackageHandleStandardArgs)
+include(GNUInstallDirs)
+
+include(Deps)
 include(InstallHelpers)
-include(LuaHelpers)
 include(PreventInTreeBuilds)
 include(Util)
+
+set_directory_properties(PROPERTIES
+  EP_PREFIX "${DEPS_BUILD_DIR}")
 
 set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
 
 find_program(CCACHE_PRG ccache)
 if(CCACHE_PRG)
   set(CMAKE_C_COMPILER_LAUNCHER ${CMAKE_COMMAND} -E env CCACHE_SLOPPINESS=pch_defines,time_macros ${CCACHE_PRG})
+endif()
+
+if(NOT CI_BUILD)
+  set(CMAKE_INSTALL_MESSAGE NEVER)
 endif()
 
 # Prefer our bundled versions of dependencies.
@@ -101,27 +115,26 @@ endif()
 message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
 set_default_buildtype()
+get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(NOT isMultiConfig)
+  # Unlike build dependencies in cmake.deps, we assume we want dev dependencies
+  # such as Uncrustify to always be built with Release.
+  list(APPEND DEPS_CMAKE_ARGS -D CMAKE_BUILD_TYPE=Release)
+endif()
 
 # If not in a git repo (e.g., a tarball) these tokens define the complete
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
-set(NVIM_VERSION_MINOR 9)
+set(NVIM_VERSION_MINOR 10)
 set(NVIM_VERSION_PATCH 0)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
-set(NVIM_API_LEVEL 11)         # Bump this after any API change.
+set(NVIM_API_LEVEL 11)        # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
-set(NVIM_API_PRERELEASE true)
-
-# Default to -O2 on release builds.
-if(CMAKE_C_FLAGS_RELEASE MATCHES "-O3")
-  message(STATUS "Replacing -O3 in CMAKE_C_FLAGS_RELEASE with -O2")
-  string(REPLACE "-O3" "-O2" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-endif()
+set(NVIM_API_PRERELEASE false)
 
 # Build-type: RelWithDebInfo
-
 # /Og means something different in MSVC
 if(CMAKE_C_COMPILER_ID MATCHES "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang")
    set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -Og -g")
@@ -133,10 +146,7 @@ if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
   string(REPLACE "  " " " CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}") # Remove duplicate whitespace
 endif()
 
-option(LOG_LIST_ACTIONS "Add list actions logging" OFF)
-
 option(ENABLE_ASAN_UBSAN "Enable Clang address & undefined behavior sanitizer for nvim binary." OFF)
-option(LOG_DEBUG "Enable debug log messages even in a release build" OFF)
 option(ENABLE_MSAN "Enable Clang memory sanitizer for nvim binary." OFF)
 option(ENABLE_TSAN "Enable Clang thread sanitizer for nvim binary." OFF)
 
@@ -163,27 +173,20 @@ foreach(CFGNAME ${CMAKE_CONFIGURATION_TYPES})
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFGNAME} ${CMAKE_BINARY_DIR}/lib)
 endforeach()
 
-set(LUA_DEPENDENCIES lpeg mpack bit)
 if(NOT LUA_PRG)
   foreach(CURRENT_LUA_PRG luajit lua5.1 lua5.2 lua)
     unset(_CHECK_LUA_PRG CACHE)
-    unset(LUA_PRG_WORKS)
     find_program(_CHECK_LUA_PRG ${CURRENT_LUA_PRG})
 
     if(_CHECK_LUA_PRG)
-      check_lua_deps(${_CHECK_LUA_PRG} "${LUA_DEPENDENCIES}" LUA_PRG_WORKS)
-      if(LUA_PRG_WORKS)
-        set(LUA_PRG "${_CHECK_LUA_PRG}" CACHE FILEPATH "Path to a program.")
-        break()
-      endif()
+      set(LUA_PRG "${_CHECK_LUA_PRG}" CACHE FILEPATH "Path to a program.")
+      break()
     endif()
   endforeach()
   unset(_CHECK_LUA_PRG CACHE)
-else()
-  check_lua_deps(${LUA_PRG} "${LUA_DEPENDENCIES}" LUA_PRG_WORKS)
 endif()
 
-if(NOT LUA_PRG_WORKS)
+if(NOT LUA_PRG)
   message(FATAL_ERROR "Failed to find a Lua 5.1-compatible interpreter")
 endif()
 
@@ -226,19 +229,18 @@ endif()
 #
 # Lint
 #
-find_program(LUACHECK_PRG luacheck)
 find_program(SHELLCHECK_PRG shellcheck)
 find_program(STYLUA_PRG stylua)
-find_program(UNCRUSTIFY_PRG uncrustify)
 
 add_glob_target(
   REQUIRED
   TARGET lintlua-luacheck
-  COMMAND ${LUACHECK_PRG}
+  COMMAND ${DEPS_BIN_DIR}/luacheck
   FLAGS -q
   GLOB_DIRS runtime/ scripts/ src/ test/
   GLOB_PAT *.lua
   TOUCH_STRATEGY SINGLE)
+add_dependencies(lintlua-luacheck luacheck)
 
 add_glob_target(
   TARGET lintlua-stylua
@@ -246,6 +248,8 @@ add_glob_target(
   FLAGS --color=always --check
   GLOB_DIRS runtime/
   GLOB_PAT *.lua
+  EXCLUDE
+    /runtime/lua/vim/re.lua
   TOUCH_STRATEGY SINGLE)
 
 add_custom_target(lintlua)
@@ -262,9 +266,7 @@ add_glob_target(
   TOUCH_STRATEGY SINGLE)
 
 add_custom_target(lintcommit
-  COMMAND ${PROJECT_BINARY_DIR}/bin/nvim -u NONE -es -c [[lua require('scripts.lintcommit').main({trace=false})]]
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-  VERBATIM)
+  COMMAND $<TARGET_FILE:nvim> -u NONE -l ${PROJECT_SOURCE_DIR}/scripts/lintcommit.lua main)
 add_dependencies(lintcommit nvim)
 
 add_custom_target(lint)
@@ -309,3 +311,14 @@ add_custom_target(uninstall
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
   add_subdirectory(cmake.packaging)
 endif()
+
+ExternalProject_Add(uncrustify
+  URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.77.1.tar.gz
+  URL_HASH SHA256=414bbc9f7860eb18a53074f9af14ed04638a633b2216a73f2629291300d37c1b
+  DOWNLOAD_NO_PROGRESS TRUE
+  DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/uncrustify
+  CMAKE_ARGS ${DEPS_CMAKE_ARGS}
+  CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS}
+  EXCLUDE_FROM_ALL TRUE)
+
+include(BuildLuarocks)

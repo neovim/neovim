@@ -318,7 +318,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
 
             if (allow_break) {
               // Break only when we are not at end of line.
-              end_foundcol = foundcol = ncc == NUL? 0 : curwin->w_cursor.col;
+              end_foundcol = foundcol = ncc == NUL ? 0 : curwin->w_cursor.col;
               break;
             }
             curwin->w_cursor.col = col;
@@ -634,7 +634,7 @@ static bool paragraph_start(linenr_T lnum)
 void auto_format(bool trailblank, bool prev_line)
 {
   colnr_T len;
-  char *new, *pnew;
+  char *linep, *plinep;
   int cc;
 
   if (!has_format_option(FO_AUTO)) {
@@ -705,13 +705,13 @@ void auto_format(bool trailblank, bool prev_line)
   // need to add a space when 'w' is in 'formatoptions' to keep a paragraph
   // formatted.
   if (!wasatend && has_format_option(FO_WHITE_PAR)) {
-    new = get_cursor_line_ptr();
-    len = (colnr_T)strlen(new);
+    linep = get_cursor_line_ptr();
+    len = (colnr_T)strlen(linep);
     if (curwin->w_cursor.col == len) {
-      pnew = xstrnsave(new, (size_t)len + 2);
-      pnew[len] = ' ';
-      pnew[len + 1] = NUL;
-      ml_replace(curwin->w_cursor.lnum, pnew, false);
+      plinep = xstrnsave(linep, (size_t)len + 2);
+      plinep[len] = ' ';
+      plinep[len + 1] = NUL;
+      ml_replace(curwin->w_cursor.lnum, plinep, false);
       // remove the space later
       did_add_space = true;
     } else {
@@ -881,6 +881,7 @@ void op_formatexpr(oparg_T *oap)
 int fex_format(linenr_T lnum, long count, int c)
 {
   int use_sandbox = was_set_insecurely(curwin, "formatexpr", OPT_LOCAL);
+  const sctx_T save_sctx = current_sctx;
 
   // Set v:lnum to the first line number and v:count to the number of lines.
   // Set v:char to the character to be inserted (can be NUL).
@@ -890,6 +891,8 @@ int fex_format(linenr_T lnum, long count, int c)
 
   // Make a copy, the option could be changed while calling it.
   char *fex = xstrdup(curbuf->b_p_fex);
+  current_sctx = curbuf->b_p_script_ctx[BV_FEX].script_ctx;
+
   // Evaluate the function.
   if (use_sandbox) {
     sandbox++;
@@ -901,6 +904,7 @@ int fex_format(linenr_T lnum, long count, int c)
 
   set_vim_var_string(VV_CHAR, NULL, -1);
   xfree(fex);
+  current_sctx = save_sctx;
 
   return r;
 }

@@ -39,7 +39,7 @@ int nlua_spell_check(lua_State *lstate)
   const int wo_spell_save = curwin->w_p_spell;
 
   if (!curwin->w_p_spell) {
-    did_set_spelllang(curwin);
+    parse_spelllang(curwin);
     curwin->w_p_spell = true;
   }
 
@@ -69,10 +69,10 @@ int nlua_spell_check(lua_State *lstate)
       lua_pushlstring(lstate, str, len);
       lua_rawseti(lstate, -2, 1);
 
-      result = attr == HLF_SPB ? "bad"   :
-               attr == HLF_SPR ? "rare"  :
+      result = attr == HLF_SPB ? "bad" :
+               attr == HLF_SPR ? "rare" :
                attr == HLF_SPL ? "local" :
-               attr == HLF_SPC ? "caps"  :
+               attr == HLF_SPC ? "caps" :
                NULL;
 
       assert(result != NULL);

@@ -50,8 +50,8 @@
 /// The character for each menu mode
 static char *menu_mode_chars[] = { "n", "v", "s", "o", "i", "c", "tl", "t" };
 
-static char e_notsubmenu[] = N_("E327: Part of menu-item path is not sub-menu");
-static char e_nomenu[] = N_("E329: No menu \"%s\"");
+static const char e_notsubmenu[] = N_("E327: Part of menu-item path is not sub-menu");
+static const char e_nomenu[] = N_("E329: No menu \"%s\"");
 
 // Return true if "name" is a window toolbar menu name.
 static bool menu_is_winbar(const char *const name)
@@ -88,7 +88,7 @@ void ex_menu(exarg_T *eap)
   modes = get_menu_cmd_modes(eap->cmd, eap->forceit, &noremap, &unmenu);
   arg = eap->arg;
 
-  for (;;) {
+  while (true) {
     if (strncmp(arg, "<script>", 8) == 0) {
       noremap = REMAP_SCRIPT;
       arg = skipwhite(arg + 8);
@@ -559,7 +559,7 @@ static int remove_menu(vimmenu_T **menup, char *name, int modes, bool silent)
         }
       } else if (*name != NUL) {
         if (!silent) {
-          emsg(_(e_menuothermode));
+          emsg(_(e_menu_only_exists_in_another_mode));
         }
         return FAIL;
       }
@@ -760,7 +760,7 @@ static vimmenu_T *find_menu(vimmenu_T *menu, char *name, int modes)
           emsg(_(e_notsubmenu));
           return NULL;
         } else if ((menu->modes & modes) == 0x0) {
-          emsg(_(e_menuothermode));
+          emsg(_(e_menu_only_exists_in_another_mode));
           return NULL;
         } else if (*p == NUL) {  // found a full match
           return menu;
@@ -1343,7 +1343,7 @@ static char *menu_text(const char *str, int *mnemonic, char **actext)
 bool menu_is_menubar(const char *const name)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  return !menu_is_popup((char *)name)
+  return !menu_is_popup(name)
          && !menu_is_toolbar(name)
          && !menu_is_winbar(name)
          && *name != MNU_HIDDEN_CHAR;
@@ -1450,7 +1450,8 @@ void show_popupmenu(void)
 
 /// Execute "menu".  Use by ":emenu" and the window toolbar.
 /// @param eap  NULL for the window toolbar.
-/// @param mode_idx  specify a MENU_INDEX_ value, use -1 to depend on the current state
+/// @param mode_idx  specify a MENU_INDEX_ value,
+///                  use MENU_INDEX_INVALID to depend on the current state
 void execute_menu(const exarg_T *eap, vimmenu_T *menu, int mode_idx)
   FUNC_ATTR_NONNULL_ARG(2)
 {
@@ -1458,7 +1459,7 @@ void execute_menu(const exarg_T *eap, vimmenu_T *menu, int mode_idx)
 
   if (idx < 0) {
     // Use the Insert mode entry when returning to Insert mode.
-    if (((State & MODE_INSERT) || restart_edit) && !current_sctx.sc_sid) {
+    if (((State & MODE_INSERT) || restart_edit) && current_sctx.sc_sid == 0) {
       idx = MENU_INDEX_INSERT;
     } else if (State & MODE_CMDLINE) {
       idx = MENU_INDEX_CMDLINE;
@@ -1612,7 +1613,7 @@ static vimmenu_T *menu_getbyname(char *name_arg)
 void ex_emenu(exarg_T *eap)
 {
   char *arg = eap->arg;
-  int mode_idx = -1;
+  int mode_idx = MENU_INDEX_INVALID;
 
   if (arg[0] && ascii_iswhite(arg[1])) {
     switch (arg[0]) {

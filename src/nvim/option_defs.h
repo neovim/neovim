@@ -1,13 +1,13 @@
 #ifndef NVIM_OPTION_DEFS_H
 #define NVIM_OPTION_DEFS_H
 
-#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/macros.h"
 #include "nvim/types.h"
 
 // option_defs.h: definition of global variables for settable options
 
-// Flags
+// Option Flags
 #define P_BOOL         0x01U        ///< the option is boolean
 #define P_NUM          0x02U        ///< the option is numeric
 #define P_STRING       0x04U        ///< the option is a string
@@ -259,7 +259,8 @@ enum {
   SHM_COMPLETIONSCAN = 'C',  ///< Completion scanning messages.
   SHM_RECORDING      = 'q',  ///< Short recording message.
   SHM_FILEINFO       = 'F',  ///< No file info messages.
-  SHM_SEARCHCOUNT    = 'S',  ///< Search stats: '[1/10]'
+  SHM_SEARCHCOUNT    = 'S',  ///< No search stats: '[1/10]'
+  SHM_LEN            = 30,   ///< Max length of all flags together plus a NUL character.
 };
 /// Represented by 'a' flag.
 #define SHM_ALL_ABBREVIATIONS ((char[]) { \
@@ -289,7 +290,7 @@ enum {
 #define GO_FOOTER       'F'             // add footer
 #define GO_VERTICAL     'v'             // arrange dialog buttons vertically
 #define GO_KEEPWINSIZE  'k'             // keep GUI window size
-#define GO_ALL "aAbcdefFghilmMprTvk"    // all possible flags for 'go'
+#define GO_ALL "!aAbcdefFghilLmMpPrRtTvk"  // all possible flags for 'go'
 
 // flags for 'comments' option
 #define COM_NEST        'n'             // comments strings nest
@@ -409,7 +410,7 @@ EXTERN char *p_bs;              // 'backspace'
 EXTERN char *p_bg;              // 'background'
 EXTERN int p_bk;                // 'backup'
 EXTERN char *p_bkc;             // 'backupcopy'
-EXTERN unsigned int bkc_flags;  ///< flags from 'backupcopy'
+EXTERN unsigned bkc_flags;  ///< flags from 'backupcopy'
 #define BKC_YES                0x001
 #define BKC_AUTO               0x002
 #define BKC_NO                 0x004
@@ -706,7 +707,7 @@ EXTERN long p_smc;              ///< 'synmaxcol'
 EXTERN long p_tpm;              // 'tabpagemax'
 EXTERN char *p_tal;             // 'tabline'
 EXTERN char *p_tpf;             // 'termpastefilter'
-EXTERN unsigned int tpf_flags;  ///< flags from 'termpastefilter'
+EXTERN unsigned tpf_flags;  ///< flags from 'termpastefilter'
 #define TPF_BS                 0x001
 #define TPF_HT                 0x002
 #define TPF_FF                 0x004
@@ -720,7 +721,7 @@ EXTERN char *p_spf;             ///< 'spellfile'
 EXTERN char *p_spk;             ///< 'splitkeep'
 EXTERN char *p_spl;             ///< 'spelllang'
 EXTERN char *p_spo;             // 'spelloptions'
-EXTERN unsigned int spo_flags;
+EXTERN unsigned spo_flags;
 EXTERN char *p_sps;             // 'spellsuggest'
 EXTERN int p_spr;               // 'splitright'
 EXTERN int p_sol;               // 'startofline'
@@ -948,6 +949,7 @@ enum {
   WV_RLC,
   WV_SCBIND,
   WV_SCROLL,
+  WV_SMS,
   WV_SISO,
   WV_SO,
   WV_SPELL,
@@ -977,6 +979,61 @@ enum {
 
 #define TABSTOP_MAX 9999
 
+// Argument for the callback function (opt_did_set_cb_T) invoked after an
+// option value is modified.
+typedef struct {
+  // Pointer to the option variable.  The variable can be a long (numeric
+  // option), an int (boolean option) or a char pointer (string option).
+  char *os_varp;
+  int os_idx;
+  int os_flags;
+
+  // old value of the option (can be a string, number or a boolean)
+  union {
+    const long number;
+    const bool boolean;
+    const char *string;
+  } os_oldval;
+
+  // new value of the option (can be a string, number or a boolean)
+  union {
+    const long number;
+    const bool boolean;
+    const char *string;
+  } os_newval;
+
+  // When set by the called function: Stop processing the option further.
+  // Currently only used for boolean options.
+  int os_doskip;
+
+  // Option value was checked to be safe, no need to set P_INSECURE
+  // Used for the 'keymap', 'filetype' and 'syntax' options.
+  int os_value_checked;
+  // Option value changed.  Used for the 'filetype' and 'syntax' options.
+  int os_value_changed;
+
+  // Used by the 'isident', 'iskeyword', 'isprint' and 'isfname' options.
+  // Set to true if the character table is modified when processing the
+  // option and need to be restored because of a failure.
+  int os_restore_chartab;
+
+  // If the value specified for an option is not valid and the error message
+  // is parameterized, then the "os_errbuf" buffer is used to store the error
+  // message (when it is not NULL).
+  char *os_errbuf;
+  size_t os_errbuflen;
+
+  void *os_win;
+  void *os_buf;
+} optset_T;
+
+/// Type for the callback function that is invoked after an option value is
+/// changed to validate and apply the new value.
+///
+/// Returns NULL if the option value is valid and successfully applied.
+/// Otherwise returns an error message.
+typedef const char *(*opt_did_set_cb_T)(optset_T *args);
+
 /// Stores an identifier of a script or channel that last set an option.
 typedef struct {
   sctx_T script_ctx;       /// script context where the option was last set
@@ -992,12 +1049,15 @@ typedef enum {
 typedef struct vimoption {
   char *fullname;        // full option name
   char *shortname;       // permissible abbreviation
-  uint32_t flags;               // see below
-  char_u *var;             // global option: pointer to variable;
+  uint32_t flags;               // see above
+  char *var;               // global option: pointer to variable;
                            // window-local option: VAR_WIN;
                            // buffer-local option: global value
   idopt_T indir;                // global option: PV_NONE;
                                 // local option: indirect option index
+  // callback function to invoke after an option is modified to validate and
+  // apply the new value.
+  opt_did_set_cb_T opt_did_set_cb;
   char *def_val;         // default values for variable (neovim!!)
   LastSet last_set;             // script in which the option was last set
 } vimoption_T;
@@ -1018,6 +1078,6 @@ typedef struct vimoption {
 
 // Options local to a window have a value local to a buffer and global to all
 // buffers.  Indicate this by setting "var" to VAR_WIN.
-#define VAR_WIN ((char_u *)-1)
+#define VAR_WIN ((char *)-1)
 
 #endif  // NVIM_OPTION_DEFS_H

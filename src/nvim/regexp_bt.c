@@ -1513,7 +1513,7 @@ static void regtail(uint8_t *p, uint8_t *val)
 
   // Find last node.
   uint8_t *scan = p;
-  for (;;) {
+  while (true) {
     uint8_t *temp = regnext(scan);
     if (temp == NULL) {
       break;
@@ -1748,7 +1748,7 @@ static uint8_t *regatom(int *flagp)
   case Magic('U'):
     p = (uint8_t *)vim_strchr((char *)classchars, no_Magic(c));
     if (p == NULL) {
-      EMSG_RET_NULL(_("E63: invalid use of \\_"));
+      EMSG_RET_NULL(_(e_invalid_use_of_underscore));
     }
     // When '.' is followed by a composing char ignore the dot, so that
     // the composing char is matched here.
@@ -2427,7 +2427,7 @@ do_multibyte:
           int l;
 
           // Need to get composing character too.
-          for (;;) {
+          while (true) {
             l = utf_ptr2len((char *)regparse);
             if (!utf_composinglike(regparse, regparse + l)) {
               break;
@@ -2531,7 +2531,7 @@ static uint8_t *regpiece(int *flagp)
       }
     }
     if (lop == END) {
-      EMSG2_RET_NULL(_("E59: invalid character after %s@"),
+      EMSG2_RET_NULL(_(e_invalid_character_after_str_at),
                      reg_magic == MAGIC_ALL);
     }
     // Look behind must match with behind_pos.
@@ -2683,7 +2683,7 @@ static uint8_t *regbranch(int *flagp)
   *flagp = WORST | HASNL;               // Tentatively.
 
   ret = regnode(BRANCH);
-  for (;;) {
+  while (true) {
     latest = regconcat(&flags);
     if (latest == NULL) {
       return NULL;
@@ -3436,7 +3436,7 @@ static regitem_T *regstack_push(regstate_T state, uint8_t *scan)
   regitem_T *rp;
 
   if ((long)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
-    emsg(_(e_maxmempat));
+    emsg(_(e_pattern_uses_more_memory_than_maxmempattern));
     return NULL;
   }
   ga_grow(&regstack, sizeof(regitem_T));
@@ -3536,10 +3536,10 @@ static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
   backpos.ga_len = 0;
 
   // Repeat until "regstack" is empty.
-  for (;;) {
+  while (true) {
     // Some patterns may take a long time to match, e.g., "\([a-z]\+\)\+Q".
     // Allow interrupting them with CTRL-C.
-    fast_breakcheck();
+    reg_breakcheck();
 
 #ifdef REGEXP_DEBUG
     if (scan != NULL && regnarrate) {
@@ -3550,7 +3550,7 @@ static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
 
     // Repeat for items that can be matched sequentially, without using the
     // regstack.
-    for (;;) {
+    while (true) {
       if (got_int || scan == NULL) {
         status = RA_FAIL;
         break;
@@ -4402,7 +4402,7 @@ static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
             // follows.  The code is below.  Parameters are stored in
             // a regstar_T on the regstack.
             if ((long)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
-              emsg(_(e_maxmempat));
+              emsg(_(e_pattern_uses_more_memory_than_maxmempattern));
               status = RA_FAIL;
             } else {
               ga_grow(&regstack, sizeof(regstar_T));
@@ -4439,7 +4439,7 @@ static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
         case NOBEHIND:
           // Need a bit of room to store extra positions.
           if ((long)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
-            emsg(_(e_maxmempat));
+            emsg(_(e_pattern_uses_more_memory_than_maxmempattern));
             status = RA_FAIL;
           } else {
             ga_grow(&regstack, sizeof(regbehind_T));
@@ -4770,7 +4770,7 @@ static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
         }
 
         // Repeat until we found a position where it could match.
-        for (;;) {
+        while (true) {
           if (status != RA_BREAK) {
             // Tried first position already, advance.
             if (rp->rs_state == RS_STAR_LONG) {
@@ -4792,7 +4792,7 @@ static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
                   break;
                 }
                 rex.input = rex.line + strlen((char *)rex.line);
-                fast_breakcheck();
+                reg_breakcheck();
               } else {
                 MB_PTR_BACK(rex.line, rex.input);
               }
@@ -5155,6 +5155,7 @@ static int bt_regexec_nl(regmatch_T *rmp, uint8_t *line, colnr_T col, bool line_
   rex.reg_win = NULL;
   rex.reg_ic = rmp->rm_ic;
   rex.reg_icombine = false;
+  rex.reg_nobreak = rmp->regprog->re_flags & RE_NOBREAK;
   rex.reg_maxcol = 0;
 
   long r = bt_regexec_both(line, col, NULL, NULL);

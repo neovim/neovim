@@ -70,6 +70,8 @@
 # include "memfile.c.generated.h"
 #endif
 
+static const char e_block_was_not_locked[] = N_("E293: Block was not locked");
+
 /// Open a new or existing memory block file.
 ///
 /// @param fname  Name of file to use.
@@ -101,7 +103,7 @@ memfile_T *mf_open(char *fname, int flags)
   mfp->mf_free_first = NULL;         // free list is empty
   mfp->mf_used_first = NULL;         // used list is empty
   mfp->mf_used_last = NULL;
-  mfp->mf_dirty = false;
+  mfp->mf_dirty = MF_DIRTY_NO;
   mf_hash_init(&mfp->mf_hash);
   mf_hash_init(&mfp->mf_trans);
   mfp->mf_page_size = MEMFILE_PAGE_SIZE;
@@ -157,7 +159,7 @@ memfile_T *mf_open(char *fname, int flags)
 int mf_open_file(memfile_T *mfp, char *fname)
 {
   if (mf_do_open(mfp, fname, O_RDWR | O_CREAT | O_EXCL)) {
-    mfp->mf_dirty = true;
+    mfp->mf_dirty = MF_DIRTY_YES;
     return OK;
   }
 
@@ -267,7 +269,7 @@ bhdr_T *mf_new(memfile_T *mfp, bool negative, unsigned page_count)
     }
   }
   hp->bh_flags = BH_LOCKED | BH_DIRTY;    // new block is always dirty
-  mfp->mf_dirty = true;
+  mfp->mf_dirty = MF_DIRTY_YES;
   hp->bh_page_count = page_count;
   mf_ins_used(mfp, hp);
   mf_ins_hash(mfp, hp);
@@ -300,7 +302,12 @@ bhdr_T *mf_get(memfile_T *mfp, blocknr_T nr, unsigned page_count)
 
     // could check here if the block is in the free list
 
-    hp = mf_alloc_bhdr(mfp, page_count);
+    if (page_count > 0) {
+      hp = mf_alloc_bhdr(mfp, page_count);
+    }
+    if (hp == NULL) {
+      return NULL;
+    }
 
     hp->bh_bnum = nr;
     hp->bh_flags = 0;
@@ -330,12 +337,14 @@ void mf_put(memfile_T *mfp, bhdr_T *hp, bool dirty, bool infile)
   unsigned flags = hp->bh_flags;
 
   if ((flags & BH_LOCKED) == 0) {
-    iemsg(_("E293: block was not locked"));
+    iemsg(_(e_block_was_not_locked));
   }
   flags &= ~BH_LOCKED;
   if (dirty) {
     flags |= BH_DIRTY;
-    mfp->mf_dirty = true;
+    if (mfp->mf_dirty != MF_DIRTY_YES_NOSYNC) {
+      mfp->mf_dirty = MF_DIRTY_YES;
+    }
   }
   hp->bh_flags = flags;
   if (infile) {
@@ -375,8 +384,9 @@ int mf_sync(memfile_T *mfp, int flags)
 {
   int got_int_save = got_int;
 
-  if (mfp->mf_fd < 0) {         // there is no file, nothing to do
-    mfp->mf_dirty = false;
+  if (mfp->mf_fd < 0) {
+    // there is no file, nothing to do
+    mfp->mf_dirty = MF_DIRTY_NO;
     return FAIL;
   }
 
@@ -419,7 +429,7 @@ int mf_sync(memfile_T *mfp, int flags)
   // If the whole list is flushed, the memfile is not dirty anymore.
   // In case of an error, dirty flag is also set, to avoid trying all the time.
   if (hp == NULL || status == FAIL) {
-    mfp->mf_dirty = false;
+    mfp->mf_dirty = MF_DIRTY_NO;
   }
 
   if (flags & MFS_FLUSH) {
@@ -442,7 +452,7 @@ void mf_set_dirty(memfile_T *mfp)
       hp->bh_flags |= BH_DIRTY;
     }
   }
-  mfp->mf_dirty = true;
+  mfp->mf_dirty = MF_DIRTY_YES;
 }
 
 /// Insert block in front of memfile's hash list.
@@ -623,7 +633,7 @@ static int mf_write(memfile_T *mfp, bhdr_T *hp)
   /// to extend the file.
   /// If block 'mf_infile_count' is not in the hash list, it has been
   /// freed. Fill the space in the file with data from the current block.
-  for (;;) {
+  while (true) {
     blocknr_T nr = hp->bh_bnum;  // block nr which is being written
     if (nr > mfp->mf_infile_count) {            // beyond end of file
       nr = mfp->mf_infile_count;
@@ -800,7 +810,7 @@ static bool mf_do_open(memfile_T *mfp, char *fname, int flags)
     emsg(_("E300: Swap file already exists (symlink attack?)"));
   } else {
     // try to open the file
-    mfp->mf_fd = MCH_OPEN_RW((char *)mfp->mf_fname, flags | O_NOFOLLOW);
+    mfp->mf_fd = MCH_OPEN_RW(mfp->mf_fname, flags | O_NOFOLLOW);
   }
 
   // If the file cannot be opened, use memory only

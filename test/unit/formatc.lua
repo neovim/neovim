@@ -154,6 +154,8 @@ local C_keywords = set {  -- luacheck: ignore
 --
 --  The first one will have a lot of false positives (the line '{' for
 --  example), the second one is more unique.
+--- @param string
+--- @return string
 local function formatc(str)
   local toks = TokeniseC(str)
   local result = {}

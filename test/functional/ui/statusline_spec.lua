@@ -12,178 +12,182 @@ local exec_lua = helpers.exec_lua
 local eval = helpers.eval
 local sleep = helpers.sleep
 
-describe('statusline clicks', function()
-  local screen
+local mousemodels = { "extend", "popup", "popup_setpos" }
 
-  before_each(function()
-    clear()
-    screen = Screen.new(40, 8)
-    screen:attach()
-    command('set laststatus=2 mousemodel=extend')
-    exec([=[
-      function! MyClickFunc(minwid, clicks, button, mods)
-        let g:testvar = printf("%d %d %s", a:minwid, a:clicks, a:button)
-        if a:mods !=# '    '
-          let g:testvar ..= '(' .. a:mods .. ')'
-        endif
-      endfunction
-    ]=])
-  end)
+for _, model in ipairs(mousemodels) do
+  describe('statusline clicks with mousemodel=' .. model, function()
+    local screen
 
-  it('works', function()
-    meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
-    meths.input_mouse('left', 'press', '', 0, 6, 17)
-    eq('0 1 l', eval("g:testvar"))
-    meths.input_mouse('left', 'press', '', 0, 6, 17)
-    eq('0 2 l', eval("g:testvar"))
-    meths.input_mouse('left', 'press', '', 0, 6, 17)
-    eq('0 3 l', eval("g:testvar"))
-    meths.input_mouse('left', 'press', '', 0, 6, 17)
-    eq('0 4 l', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 6, 17)
-    eq('0 1 r', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 6, 17)
-    eq('0 2 r', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 6, 17)
-    eq('0 3 r', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 6, 17)
-    eq('0 4 r', eval("g:testvar"))
-  end)
+    before_each(function()
+      clear()
+      screen = Screen.new(40, 8)
+      screen:attach()
+      command('set laststatus=2 mousemodel=' .. model)
+      exec([=[
+        function! MyClickFunc(minwid, clicks, button, mods)
+          let g:testvar = printf("%d %d %s", a:minwid, a:clicks, a:button)
+          if a:mods !=# '    '
+            let g:testvar ..= '(' .. a:mods .. ')'
+          endif
+        endfunction
+      ]=])
+      end)
 
-  it('works for winbar', function()
-    meths.set_option('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
-    meths.input_mouse('left', 'press', '', 0, 0, 17)
-    eq('0 1 l', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 0, 17)
-    eq('0 1 r', eval("g:testvar"))
-  end)
+      it('works', function()
+        meths.set_option_value('statusline',  'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
+        meths.input_mouse('left', 'press', '', 0, 6, 17)
+        eq('0 1 l', eval("g:testvar"))
+        meths.input_mouse('left', 'press', '', 0, 6, 17)
+        eq('0 2 l', eval("g:testvar"))
+        meths.input_mouse('left', 'press', '', 0, 6, 17)
+        eq('0 3 l', eval("g:testvar"))
+        meths.input_mouse('left', 'press', '', 0, 6, 17)
+        eq('0 4 l', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 6, 17)
+        eq('0 1 r', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 6, 17)
+        eq('0 2 r', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 6, 17)
+        eq('0 3 r', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 6, 17)
+        eq('0 4 r', eval("g:testvar"))
+      end)
 
-  it('works for winbar in floating window', function()
-    meths.open_win(0, true, { width=30, height=4, relative='editor', row=1, col=5,
-                              border = "single" })
-    meths.set_option_value('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T',
-                           { scope = 'local' })
-    meths.input_mouse('left', 'press', '', 0, 2, 23)
-    eq('0 1 l', eval("g:testvar"))
-  end)
+      it('works for winbar', function()
+        meths.set_option_value('winbar',  'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
+        meths.input_mouse('left', 'press', '', 0, 0, 17)
+        eq('0 1 l', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 0, 17)
+        eq('0 1 r', eval("g:testvar"))
+      end)
 
-  it('works when there are multiple windows', function()
-    command('split')
-    meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
-    meths.set_option('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
-    meths.input_mouse('left', 'press', '', 0, 0, 17)
-    eq('0 1 l', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 4, 17)
-    eq('0 1 r', eval("g:testvar"))
-    meths.input_mouse('middle', 'press', '', 0, 3, 17)
-    eq('0 1 m', eval("g:testvar"))
-    meths.input_mouse('left', 'press', '', 0, 6, 17)
-    eq('0 1 l', eval("g:testvar"))
-  end)
+      it('works for winbar in floating window', function()
+        meths.open_win(0, true, { width=30, height=4, relative='editor', row=1, col=5,
+        border = "single" })
+        meths.set_option_value('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T',
+        { scope = 'local' })
+        meths.input_mouse('left', 'press', '', 0, 2, 23)
+        eq('0 1 l', eval("g:testvar"))
+      end)
 
-  it('works with Lua function', function()
-    exec_lua([[
-      function clicky_func(minwid, clicks, button, mods)
-        vim.g.testvar = string.format("%d %d %s", minwid, clicks, button)
-      end
-    ]])
-    meths.set_option('statusline', 'Not clicky stuff %0@v:lua.clicky_func@Clicky stuff%T')
-    meths.input_mouse('left', 'press', '', 0, 6, 17)
-    eq('0 1 l', eval("g:testvar"))
-  end)
+      it('works when there are multiple windows', function()
+        command('split')
+        meths.set_option_value('statusline',  'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
+        meths.set_option_value('winbar',  'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
+        meths.input_mouse('left', 'press', '', 0, 0, 17)
+        eq('0 1 l', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 4, 17)
+        eq('0 1 r', eval("g:testvar"))
+        meths.input_mouse('middle', 'press', '', 0, 3, 17)
+        eq('0 1 m', eval("g:testvar"))
+        meths.input_mouse('left', 'press', '', 0, 6, 17)
+        eq('0 1 l', eval("g:testvar"))
+      end)
 
-  it('ignores unsupported click items', function()
-    command('tabnew | tabprevious')
-    meths.set_option('statusline', '%2TNot clicky stuff%T')
-    meths.input_mouse('left', 'press', '', 0, 6, 0)
-    eq(1, meths.get_current_tabpage().id)
-    meths.set_option('statusline', '%2XNot clicky stuff%X')
-    meths.input_mouse('left', 'press', '', 0, 6, 0)
-    eq(2, #meths.list_tabpages())
-  end)
+      it('works with Lua function', function()
+        exec_lua([[
+        function clicky_func(minwid, clicks, button, mods)
+          vim.g.testvar = string.format("%d %d %s", minwid, clicks, button)
+        end
+        ]])
+        meths.set_option_value('statusline',  'Not clicky stuff %0@v:lua.clicky_func@Clicky stuff%T', {})
+        meths.input_mouse('left', 'press', '', 0, 6, 17)
+        eq('0 1 l', eval("g:testvar"))
+      end)
 
-  it("right click works when statusline isn't focused #18994", function()
-    meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
-    meths.input_mouse('right', 'press', '', 0, 6, 17)
-    eq('0 1 r', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 6, 17)
-    eq('0 2 r', eval("g:testvar"))
-  end)
+      it('ignores unsupported click items', function()
+        command('tabnew | tabprevious')
+        meths.set_option_value('statusline',  '%2TNot clicky stuff%T', {})
+        meths.input_mouse('left', 'press', '', 0, 6, 0)
+        eq(1, meths.get_current_tabpage().id)
+        meths.set_option_value('statusline',  '%2XNot clicky stuff%X', {})
+        meths.input_mouse('left', 'press', '', 0, 6, 0)
+        eq(2, #meths.list_tabpages())
+      end)
 
-  it("works with modifiers #18994", function()
-    meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
-    -- Note: alternate between left and right mouse buttons to avoid triggering multiclicks
-    meths.input_mouse('left', 'press', 'S', 0, 6, 17)
-    eq('0 1 l(s   )', eval("g:testvar"))
-    meths.input_mouse('right', 'press', 'S', 0, 6, 17)
-    eq('0 1 r(s   )', eval("g:testvar"))
-    meths.input_mouse('left', 'press', 'A', 0, 6, 17)
-    eq('0 1 l(  a )', eval("g:testvar"))
-    meths.input_mouse('right', 'press', 'A', 0, 6, 17)
-    eq('0 1 r(  a )', eval("g:testvar"))
-    meths.input_mouse('left', 'press', 'AS', 0, 6, 17)
-    eq('0 1 l(s a )', eval("g:testvar"))
-    meths.input_mouse('right', 'press', 'AS', 0, 6, 17)
-    eq('0 1 r(s a )', eval("g:testvar"))
-    meths.input_mouse('left', 'press', 'T', 0, 6, 17)
-    eq('0 1 l(   m)', eval("g:testvar"))
-    meths.input_mouse('right', 'press', 'T', 0, 6, 17)
-    eq('0 1 r(   m)', eval("g:testvar"))
-    meths.input_mouse('left', 'press', 'TS', 0, 6, 17)
-    eq('0 1 l(s  m)', eval("g:testvar"))
-    meths.input_mouse('right', 'press', 'TS', 0, 6, 17)
-    eq('0 1 r(s  m)', eval("g:testvar"))
-    meths.input_mouse('left', 'press', 'C', 0, 6, 17)
-    eq('0 1 l( c  )', eval("g:testvar"))
-    -- <C-RightMouse> is for tag jump
-  end)
+      it("right click works when statusline isn't focused #18994", function()
+        meths.set_option_value('statusline',  'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
+        meths.input_mouse('right', 'press', '', 0, 6, 17)
+        eq('0 1 r', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 6, 17)
+        eq('0 2 r', eval("g:testvar"))
+      end)
 
-  it("works for global statusline with vertical splits #19186", function()
-    command('set laststatus=3')
-    meths.set_option('statusline', '%0@MyClickFunc@Clicky stuff%T %= %0@MyClickFunc@Clicky stuff%T')
-    command('vsplit')
-    screen:expect([[
-      ^                    │                   |
-      ~                   │~                  |
-      ~                   │~                  |
-      ~                   │~                  |
-      ~                   │~                  |
-      ~                   │~                  |
-      Clicky stuff                Clicky stuff|
-                                              |
-    ]])
+      it("works with modifiers #18994", function()
+        meths.set_option_value('statusline',  'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
+        -- Note: alternate between left and right mouse buttons to avoid triggering multiclicks
+        meths.input_mouse('left', 'press', 'S', 0, 6, 17)
+        eq('0 1 l(s   )', eval("g:testvar"))
+        meths.input_mouse('right', 'press', 'S', 0, 6, 17)
+        eq('0 1 r(s   )', eval("g:testvar"))
+        meths.input_mouse('left', 'press', 'A', 0, 6, 17)
+        eq('0 1 l(  a )', eval("g:testvar"))
+        meths.input_mouse('right', 'press', 'A', 0, 6, 17)
+        eq('0 1 r(  a )', eval("g:testvar"))
+        meths.input_mouse('left', 'press', 'AS', 0, 6, 17)
+        eq('0 1 l(s a )', eval("g:testvar"))
+        meths.input_mouse('right', 'press', 'AS', 0, 6, 17)
+        eq('0 1 r(s a )', eval("g:testvar"))
+        meths.input_mouse('left', 'press', 'T', 0, 6, 17)
+        eq('0 1 l(   m)', eval("g:testvar"))
+        meths.input_mouse('right', 'press', 'T', 0, 6, 17)
+        eq('0 1 r(   m)', eval("g:testvar"))
+        meths.input_mouse('left', 'press', 'TS', 0, 6, 17)
+        eq('0 1 l(s  m)', eval("g:testvar"))
+        meths.input_mouse('right', 'press', 'TS', 0, 6, 17)
+        eq('0 1 r(s  m)', eval("g:testvar"))
+        meths.input_mouse('left', 'press', 'C', 0, 6, 17)
+        eq('0 1 l( c  )', eval("g:testvar"))
+        -- <C-RightMouse> is for tag jump
+      end)
 
-    -- clickable area on the right
-    meths.input_mouse('left', 'press', '', 0, 6, 35)
-    eq('0 1 l', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 6, 35)
-    eq('0 1 r', eval("g:testvar"))
+      it("works for global statusline with vertical splits #19186", function()
+        command('set laststatus=3')
+        meths.set_option_value('statusline',  '%0@MyClickFunc@Clicky stuff%T %= %0@MyClickFunc@Clicky stuff%T', {})
+        command('vsplit')
+        screen:expect([[
+        ^                    │                   |
+        ~                   │~                  |
+        ~                   │~                  |
+        ~                   │~                  |
+        ~                   │~                  |
+        ~                   │~                  |
+        Clicky stuff                Clicky stuff|
+                                                |
+        ]])
 
-    -- clickable area on the left
-    meths.input_mouse('left', 'press', '', 0, 6, 5)
-    eq('0 1 l', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 6, 5)
-    eq('0 1 r', eval("g:testvar"))
-  end)
+        -- clickable area on the right
+        meths.input_mouse('left', 'press', '', 0, 6, 35)
+        eq('0 1 l', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 6, 35)
+        eq('0 1 r', eval("g:testvar"))
 
-  it('no memory leak with zero-width click labels', function()
-    command([[
-      let &stl = '%@Test@%T%@MyClickFunc@%=%T%@Test@'
-    ]])
-    meths.input_mouse('left', 'press', '', 0, 6, 0)
-    eq('0 1 l', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 6, 39)
-    eq('0 1 r', eval("g:testvar"))
-  end)
+        -- clickable area on the left
+        meths.input_mouse('left', 'press', '', 0, 6, 5)
+        eq('0 1 l', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 6, 5)
+        eq('0 1 r', eval("g:testvar"))
+      end)
 
-  it('no memory leak with truncated click labels', function()
-    command([[
-      let &stl = '%@MyClickFunc@foo%X' .. repeat('a', 40) .. '%<t%@Test@bar%X%@Test@baz'
-    ]])
-    meths.input_mouse('left', 'press', '', 0, 6, 2)
-    eq('0 1 l', eval("g:testvar"))
-  end)
-end)
+      it('no memory leak with zero-width click labels', function()
+        command([[
+        let &stl = '%@Test@%T%@MyClickFunc@%=%T%@Test@'
+        ]])
+        meths.input_mouse('left', 'press', '', 0, 6, 0)
+        eq('0 1 l', eval("g:testvar"))
+        meths.input_mouse('right', 'press', '', 0, 6, 39)
+        eq('0 1 r', eval("g:testvar"))
+      end)
+
+      it('no memory leak with truncated click labels', function()
+        command([[
+        let &stl = '%@MyClickFunc@foo%X' .. repeat('a', 40) .. '%<t%@Test@bar%X%@Test@baz'
+        ]])
+        meths.input_mouse('left', 'press', '', 0, 6, 2)
+        eq('0 1 l', eval("g:testvar"))
+      end)
+    end)
+end
 
 describe('global statusline', function()
   local screen
@@ -390,38 +394,38 @@ describe('global statusline', function()
   end)
 
   it('win_move_statusline() can reduce cmdheight to 1', function()
-    eq(1, meths.get_option('cmdheight'))
+    eq(1, meths.get_option_value('cmdheight', {}))
     funcs.win_move_statusline(0, -1)
-    eq(2, meths.get_option('cmdheight'))
+    eq(2, meths.get_option_value('cmdheight', {}))
     funcs.win_move_statusline(0, -1)
-    eq(3, meths.get_option('cmdheight'))
+    eq(3, meths.get_option_value('cmdheight', {}))
     funcs.win_move_statusline(0, 1)
-    eq(2, meths.get_option('cmdheight'))
+    eq(2, meths.get_option_value('cmdheight', {}))
     funcs.win_move_statusline(0, 1)
-    eq(1, meths.get_option('cmdheight'))
+    eq(1, meths.get_option_value('cmdheight', {}))
   end)
 
   it('mouse dragging can reduce cmdheight to 1', function()
     command('set mouse=a')
     meths.input_mouse('left', 'press', '', 0, 14, 10)
-    eq(1, meths.get_option('cmdheight'))
+    eq(1, meths.get_option_value('cmdheight', {}))
     meths.input_mouse('left', 'drag', '', 0, 13, 10)
-    eq(2, meths.get_option('cmdheight'))
+    eq(2, meths.get_option_value('cmdheight', {}))
     meths.input_mouse('left', 'drag', '', 0, 12, 10)
-    eq(3, meths.get_option('cmdheight'))
+    eq(3, meths.get_option_value('cmdheight', {}))
     meths.input_mouse('left', 'drag', '', 0, 13, 10)
-    eq(2, meths.get_option('cmdheight'))
+    eq(2, meths.get_option_value('cmdheight', {}))
     meths.input_mouse('left', 'drag', '', 0, 14, 10)
-    eq(1, meths.get_option('cmdheight'))
+    eq(1, meths.get_option_value('cmdheight', {}))
     meths.input_mouse('left', 'drag', '', 0, 15, 10)
-    eq(1, meths.get_option('cmdheight'))
+    eq(1, meths.get_option_value('cmdheight', {}))
     meths.input_mouse('left', 'drag', '', 0, 14, 10)
-    eq(1, meths.get_option('cmdheight'))
+    eq(1, meths.get_option_value('cmdheight', {}))
   end)
 
   it('cmdline row is correct after setting cmdheight #20514', function()
     command('botright split test/functional/fixtures/bigfile.txt')
-    meths.set_option('cmdheight', 1)
+    meths.set_option_value('cmdheight', 1, {})
     feed('L')
     screen:expect([[
                                                                   |
@@ -460,7 +464,7 @@ describe('global statusline', function()
       {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
                                                                   |
     ]])
-    meths.set_option('showtabline', 2)
+    meths.set_option_value('showtabline', 2, {})
     screen:expect([[
       {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
                                                                   |
@@ -479,7 +483,7 @@ describe('global statusline', function()
       {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
                                                                   |
     ]])
-    meths.set_option('cmdheight', 0)
+    meths.set_option_value('cmdheight', 0, {})
     screen:expect([[
       {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
                                                                   |
@@ -498,7 +502,7 @@ describe('global statusline', function()
       ^0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                       |
       {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
     ]])
-    meths.set_option('cmdheight', 1)
+    meths.set_option_value('cmdheight', 1, {})
     screen:expect([[
       {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
                                                                   |
@@ -522,8 +526,8 @@ end)
 
 it('statusline does not crash if it has Arabic characters #19447', function()
   clear()
-  meths.set_option('statusline', 'غً')
-  meths.set_option('laststatus', 2)
+  meths.set_option_value('statusline', 'غً', {})
+  meths.set_option_value('laststatus', 2, {})
   command('redraw!')
   assert_alive()
 end)
@@ -621,4 +625,94 @@ it('K_EVENT does not trigger a statusline redraw unnecessarily', function()
   ]])
   sleep(50)
   eq(1, eval('g:counter < 50'), 'g:counter=' .. eval('g:counter'))
+end)
+
+it('statusline is redrawn on recording state change #22683', function()
+  clear()
+  local screen = Screen.new(40, 4)
+  screen:attach()
+  command('set ls=2 stl=%{repeat(reg_recording(),5)}')
+  feed('qQ')
+  screen:expect([[
+    ^                                        |
+    ~                                       |
+    QQQQQ                                   |
+    recording @Q                            |
+  ]])
+end)
+
+it('ruler is redrawn in cmdline with redrawstatus #22804', function()
+  clear()
+  local screen = Screen.new(40, 2)
+  screen:attach()
+  command([[
+    let g:n = 'initial value'
+    set ls=1 ru ruf=%{g:n}
+    redraw
+    let g:n = 'other value'
+    redrawstatus
+  ]])
+  screen:expect([[
+    ^                                        |
+                          other value       |
+  ]])
+end)
+
+it("shows correct ruler in cmdline with no statusline", function()
+  clear()
+  local screen = Screen.new(30, 8)
+  screen:set_default_attr_ids {
+    [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+    [2] = {bold = true, reverse = true},  -- StatusLine
+    [3] = {reverse = true},  -- StatusLineNC
+  }
+  screen:attach()
+  -- Use long ruler to check 'ruler' with 'rulerformat' set has correct width.
+  command [[
+    set ruler rulerformat=%{winnr()}longlonglong ls=0 winwidth=10
+    split
+    wincmd b
+    vsplit
+    wincmd t
+    wincmd |
+    mode
+  ]]
+  -- Window 1 is current. It has a statusline, so cmdline should show the
+  -- last window's ruler, which has no statusline.
+  command '1wincmd w'
+  screen:expect [[
+    ^                              |
+    {1:~                             }|
+    {1:~                             }|
+    {2:[No Name]      1longlonglong  }|
+                   │              |
+    {1:~              }│{1:~             }|
+    {1:~              }│{1:~             }|
+                   3longlonglong  |
+  ]]
+  -- Window 2 is current. It has no statusline, so cmdline should show its
+  -- ruler instead.
+  command '2wincmd w'
+  screen:expect [[
+                                  |
+    {1:~                             }|
+    {1:~                             }|
+    {3:[No Name]      1longlonglong  }|
+    ^               │              |
+    {1:~              }│{1:~             }|
+    {1:~              }│{1:~             }|
+                   2longlonglong  |
+  ]]
+  -- Window 3 is current. Cmdline should again show its ruler.
+  command '3wincmd w'
+  screen:expect [[
+                                  |
+    {1:~                             }|
+    {1:~                             }|
+    {3:[No Name]      1longlonglong  }|
+                   │^              |
+    {1:~              }│{1:~             }|
+    {1:~              }│{1:~             }|
+                   3longlonglong  |
+  ]]
 end)

@@ -10,7 +10,7 @@ describe('buffer', function()
   before_each(function()
     clear()
     meths.ui_attach(80, 24, {})
-    meths.set_option('hidden', false)
+    meths.set_option_value('hidden', false, {})
   end)
 
   it('deleting a modified buffer with :confirm', function()

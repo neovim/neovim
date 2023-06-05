@@ -3,6 +3,9 @@ local helpers = require("test.functional.helpers")(after_each)
 local eq, command = helpers.eq, helpers.command
 local clear = helpers.clear
 local eval, exc_exec = helpers.eval, helpers.exc_exec
+local exec = helpers.exec
+local funcs = helpers.funcs
+local meths = helpers.meths
 
 describe(':highlight', function()
   local screen
@@ -21,7 +24,7 @@ describe(':highlight', function()
   end)
 
   it('invalid group name', function()
-    eq('Vim(highlight):E411: highlight group not found: foo',
+    eq('Vim(highlight):E411: Highlight group not found: foo',
        exc_exec("highlight foo"))
   end)
 
@@ -44,5 +47,21 @@ describe(':highlight', function()
     command('highlight NonText gui=undercurl,underline')
     eq('', eval('synIDattr(hlID("NonText"), "undercurl", "gui")'))
     eq('1', eval('synIDattr(hlID("NonText"), "underline", "gui")'))
+  end)
+
+  it('clear', function()
+    meths.set_var('colors_name', 'foo')
+    eq(1, funcs.exists('g:colors_name'))
+    command('hi clear')
+    eq(0, funcs.exists('g:colors_name'))
+    meths.set_var('colors_name', 'foo')
+    eq(1, funcs.exists('g:colors_name'))
+    exec([[
+      func HiClear()
+        hi clear
+      endfunc
+    ]])
+    funcs.HiClear()
+    eq(0, funcs.exists('g:colors_name'))
   end)
 end)

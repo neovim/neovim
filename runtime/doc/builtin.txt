@@ -60,17 +60,19 @@ browse({save}, {title}, {initdir}, {default})
 				String	put up a file requester
 browsedir({title}, {initdir})	String	put up a directory requester
 bufadd({name})			Number	add a buffer to the buffer list
-bufexists({expr})		Number	|TRUE| if buffer {expr} exists
-buflisted({expr})		Number	|TRUE| if buffer {expr} is listed
-bufload({expr})			Number	load buffer {expr} if not loaded yet
-bufloaded({expr})		Number	|TRUE| if buffer {expr} is loaded
-bufname([{expr}])		String	Name of the buffer {expr}
-bufnr([{expr} [, {create}]])	Number	Number of the buffer {expr}
-bufwinid({expr})		Number	|window-ID| of buffer {expr}
-bufwinnr({expr})		Number	window number of buffer {expr}
+bufexists({buf})		Number	|TRUE| if buffer {buf} exists
+buflisted({buf})		Number	|TRUE| if buffer {buf} is listed
+bufload({buf})			Number	load buffer {buf} if not loaded yet
+bufloaded({buf})		Number	|TRUE| if buffer {buf} is loaded
+bufname([{buf}])		String	Name of the buffer {buf}
+bufnr([{buf} [, {create}]])	Number	Number of the buffer {buf}
+bufwinid({buf})			Number	window ID of buffer {buf}
+bufwinnr({buf})			Number	window number of buffer {buf}
 byte2line({byte})		Number	line number at byte count {byte}
-byteidx({expr}, {nr})		Number	byte index of {nr}th char in {expr}
-byteidxcomp({expr}, {nr})	Number	byte index of {nr}th char in {expr}
+byteidx({expr}, {nr} [, {utf16}])
+				Number	byte index of {nr}th char in {expr}
+byteidxcomp({expr}, {nr} [, {utf16}])
+				Number	byte index of {nr}th char in {expr}
 call({func}, {arglist} [, {dict}])
 				any	call {func} with arguments {arglist}
 ceil({expr})			Float	round {expr} up
@@ -80,7 +82,7 @@ chansend({id}, {data})		Number	Writes {data} to channel
 char2nr({expr} [, {utf8}])	Number	ASCII/UTF-8 value of first char in {expr}
 charclass({string})		Number	character class of {string}
 charcol({expr} [, {winid}])	Number	column number of cursor or mark
-charidx({string}, {idx} [, {countcc}])
+charidx({string}, {idx} [, {countcc} [, {utf16}]])
 				Number	char index of byte {idx} in {string}
 chdir({dir})			String	change current working directory
 cindent({lnum})			Number	C indent for line {lnum}
@@ -223,7 +225,7 @@ getreg([{regname} [, 1 [, {list}]]])
 				String or List   contents of a register
 getreginfo([{regname}])		Dict	information about a register
 getregtype([{regname}])		String	type of a register
-getscriptinfo()		List	list of sourced scripts
+getscriptinfo([{opts}])		List	list of sourced scripts
 gettabinfo([{expr}])		List	list of tab pages
 gettabvar({nr}, {varname} [, {def}])
 				any	variable {varname} in tab {nr} or {def}
@@ -462,6 +464,8 @@ sign_unplacelist({list})	List	unplace a list of signs
 simplify({filename})		String	simplify filename as much as possible
 sin({expr})			Float	sine of {expr}
 sinh({expr})			Float	hyperbolic sine of {expr}
+slice({expr}, {start} [, {end}])  String, List or Blob
+					slice of a String, List or Blob
 sockconnect({mode}, {address} [, {opts}])
 				Number	Connects to socket
 sort({list} [, {func} [, {dict}]])
@@ -482,7 +486,7 @@ str2list({expr} [, {utf8}])	List	convert each character of {expr} to
 str2nr({expr} [, {base} [, {quoted}]])
 				Number	convert String to Number
 strcharlen({expr})		Number	character length of the String {expr}
-strcharpart({str}, {start} [, {len}])
+strcharpart({str}, {start} [, {len} [, {skipcc}]])
 				String	{len} characters of {str} at
 					character {start}
 strchars({expr} [, {skipcc}])	Number	character count of the String {expr}
@@ -501,11 +505,14 @@ strptime({format}, {timestring})
 strridx({haystack}, {needle} [, {start}])
 				Number	last index of {needle} in {haystack}
 strtrans({expr})		String	translate string to make it printable
+strutf16len({string} [, {countcc}])
+				Number	number of UTF-16 code units in {string}
 strwidth({expr})		Number	display cell length of the String {expr}
 submatch({nr} [, {list}])	String or List
 					specific match in ":s" or substitute()
 substitute({expr}, {pat}, {sub}, {flags})
 				String	all {pat} in {expr} replaced with {sub}
+swapfilelist()			List	swap files found in 'directory'
 swapinfo({fname})		Dict	information about swap file {fname}
 swapname({buf})			String	swap file of buffer {buf}
 synID({lnum}, {col}, {trans})	Number	syntax ID at {lnum} and {col}
@@ -544,8 +551,11 @@ undofile({name})		String	undo file name for {name}
 undotree()			List	undo file tree
 uniq({list} [, {func} [, {dict}]])
 				List	remove adjacent duplicates from a list
+utf16idx({string}, {idx} [, {countcc} [, {charidx}]])
+				Number	UTF-16 index of byte {idx} in {string}
 values({dict})			List	values in {dict}
-virtcol({expr})			Number	screen column of cursor or mark
+virtcol({expr} [, {list}])	Number or List
+					screen column of cursor or mark
 virtcol2col({winid}, {lnum}, {col})
 				Number  byte index of a character on screen
 visualmode([expr])		String	last visual mode used
@@ -636,6 +646,7 @@ add({object}, {expr})					*add()*
 and({expr}, {expr})					*and()*
 		Bitwise AND on the two arguments.  The arguments are converted
 		to a number.  A List, Dict or Float argument causes an error.
+		Also see `or()` and `xor()`.
 		Example: >
 			:let flag = and(bits, 0x80)
 <		Can also be used as a |method|: >
@@ -979,7 +990,7 @@ byte2line({byte})					*byte2line()*
 		Can also be used as a |method|: >
 			GetOffset()->byte2line()
 
-byteidx({expr}, {nr})					*byteidx()*
+byteidx({expr}, {nr} [, {utf16}])			*byteidx()*
 		Return byte index of the {nr}th character in the String
 		{expr}.  Use zero for the first character, it then returns
 		zero.
@@ -989,6 +1000,13 @@ byteidx({expr}, {nr})					*byteidx()*
 		length is added to the preceding base character.  See
 		|byteidxcomp()| below for counting composing characters
 		separately.
+		When {utf16} is present and TRUE, {nr} is used as the UTF-16
+		index in the String {expr} instead of as the character index.
+		The UTF-16 index is the index in the string when it is encoded
+		with 16-bit words.  If the specified UTF-16 index is in the
+		middle of a character (e.g. in a 4-byte character), then the
+		byte index of the first byte in the character is returned.
+		Refer to |string-offset-encoding| for more information.
 		Example : >
 			echo matchstr(str, ".", byteidx(str, 3))
 <		will display the fourth character.  Another way to do the
@@ -1000,11 +1018,17 @@ byteidx({expr}, {nr})					*byteidx()*
 		If there are less than {nr} characters -1 is returned.
 		If there are exactly {nr} characters the length of the string
 		in bytes is returned.
-
+		See |charidx()| and |utf16idx()| for getting the character and
+		UTF-16 index respectively from the byte index.
+		Examples: >
+			echo byteidx('a😊😊', 2)	returns 5
+			echo byteidx('a😊😊', 2, 1)	returns 1
+			echo byteidx('a😊😊', 3, 1)	returns 5
+<
 		Can also be used as a |method|: >
 			GetName()->byteidx(idx)
 
-byteidxcomp({expr}, {nr})					*byteidxcomp()*
+byteidxcomp({expr}, {nr} [, {utf16}])			*byteidxcomp()*
 		Like byteidx(), except that a composing character is counted
 		as a separate character.  Example: >
 			let s = 'e' .. nr2char(0x301)
@@ -1128,27 +1152,36 @@ charcol({expr} [, {winid}])				*charcol()*
 			GetPos()->col()
 <
 							*charidx()*
-charidx({string}, {idx} [, {countcc}])
+charidx({string}, {idx} [, {countcc} [, {utf16}]])
 		Return the character index of the byte at {idx} in {string}.
 		The index of the first character is zero.
 		If there are no multibyte characters the returned value is
 		equal to {idx}.
+
 		When {countcc} is omitted or |FALSE|, then composing characters
-		are not counted separately, their byte length is
-		added to the preceding base character.
+		are not counted separately, their byte length is added to the
+		preceding base character.
 		When {countcc} is |TRUE|, then composing characters are
 		counted as separate characters.
+
+		When {utf16} is present and TRUE, {idx} is used as the UTF-16
+		index in the String {expr} instead of as the byte index.
+
 		Returns -1 if the arguments are invalid or if {idx} is greater
 		than the index of the last byte in {string}.  An error is
 		given if the first argument is not a string, the second
 		argument is not a number or when the third argument is present
 		and is not zero or one.
+
 		See |byteidx()| and |byteidxcomp()| for getting the byte index
-		from the character index.
+		from the character index and |utf16idx()| for getting the
+		UTF-16 index from the character index.
+		Refer to |string-offset-encoding| for more information.
 		Examples: >
 			echo charidx('áb́ć', 3)		returns 1
 			echo charidx('áb́ć', 6, 1)	returns 4
 			echo charidx('áb́ć', 16)		returns -1
+			echo charidx('a😊😊', 4, 0, 1)	returns 2
 <
 		Can also be used as a |method|: >
 			GetName()->charidx(idx)
@@ -1841,6 +1874,7 @@ execute({command} [, {silent}])				*execute()*
 		Execute {command} and capture its output.
 		If {command} is a |String|, returns {command} output.
 		If {command} is a |List|, returns concatenated outputs.
+		Line continuations in {command} are not recognized.
 		Examples: >
 			echo execute('echon "foo"')
 <			foo >
@@ -1854,7 +1888,7 @@ execute({command} [, {silent}])				*execute()*
 		The default is "silent".  Note that with "silent!", unlike
 		`:redir`, error messages are dropped.
 
-		To get a list of lines use |split()| on the result: >
+		To get a list of lines use `split()` on the result: >
 			execute('args')->split("\n")
 
 <		This function is not available in the |sandbox|.
@@ -1967,7 +2001,7 @@ exists({expr})	The result is a Number, which is |TRUE| if {expr} is
 		Can also be used as a |method|: >
 			Varname()->exists()
 
-exp({expr})						*exp()*
+exp({expr})							*exp()*
 		Return the exponential of {expr} as a |Float| in the range
 		[0, inf].
 		{expr} must evaluate to a |Float| or a |Number|.
@@ -2523,7 +2557,7 @@ funcref({name} [, {arglist}] [, {dict}])
 		Can also be used as a |method|: >
 			GetFuncname()->funcref([arg])
 <
-				*function()* *partial* *E700* *E922* *E923*
+				*function()* *partial* *E700* *E923*
 function({name} [, {arglist}] [, {dict}])
 		Return a |Funcref| variable that refers to function {name}.
 		{name} can be the name of a user defined function or an
@@ -3003,7 +3037,6 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		arglist		file names in argument list
 		augroup		autocmd groups
 		buffer		buffer names
-		behave		|:behave| suboptions
 		breakpoint	|:breakadd| and |:breakdel| suboptions
 		cmdline		|cmdline-completion| result
 		color		color schemes
@@ -3577,16 +3610,42 @@ getregtype([{regname}])					*getregtype()*
 		Can also be used as a |method|: >
 			GetRegname()->getregtype()
 
-getscriptinfo()					*getscriptinfo()*
+getscriptinfo([{opts}])					*getscriptinfo()*
 		Returns a |List| with information about all the sourced Vim
-		scripts in the order they were sourced.
+		scripts in the order they were sourced, like what
+		`:scriptnames` shows.
+
+		The optional Dict argument {opts} supports the following
+		optional items:
+		    name	Script name match pattern. If specified,
+				and "sid" is not specified, information about
+				scripts with a name that match the pattern
+				"name" are returned.
+		    sid		Script ID |<SID>|.  If specified, only
+				information about the script with ID "sid" is
+				returned and "name" is ignored.
 
 		Each item in the returned List is a |Dict| with the following
 		items:
-		    autoload	always set to FALSE.
-		    name	vim script file name.
-		    sid		script ID |<SID>|.
+		    autoload	Always set to FALSE.
+		    functions   List of script-local function names defined in
+				the script.  Present only when a particular
+				script is specified using the "sid" item in
+				{opts}.
+		    name	Vim script file name.
+		    sid		Script ID |<SID>|.
+		    variables   A dictionary with the script-local variables.
+				Present only when the a particular script is
+				specified using the "sid" item in {opts}.
+				Note that this is a copy, the value of
+				script-local variables cannot be changed using
+				this dictionary.
+		    version	Vimscript version, always 1
 
+		Examples: >
+			:echo getscriptinfo({'name': 'myscript'})
+			:echo getscriptinfo({'sid': 15}).variables
+<
 gettabinfo([{tabnr}])					*gettabinfo()*
 		If {tabnr} is not specified, then information about all the
 		tab pages is returned as a |List|. Each List item is a
@@ -3868,8 +3927,8 @@ has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 		{feature} argument is a feature name like "nvim-0.2.1" or
 		"win32", see below.  See also |exists()|.
 
-		To get the system name use |vim.loop|.os_uname() in Lua: >
-			:lua print(vim.loop.os_uname().sysname)
+		To get the system name use |vim.uv|.os_uname() in Lua: >lua
+			print(vim.uv.os_uname().sysname)
 
 <		If the code has a syntax error then Vimscript may skip the
 		rest of the line.  Put |:if| and |:endif| on separate lines to
@@ -4969,7 +5028,7 @@ maparg({name} [, {mode} [, {abbr} [, {dict}]]])			*maparg()*
 			     "!"     Insert and Commandline mode
 				     (|mapmode-ic|)
 		  "sid"	     The script local ID, used for <sid> mappings
-			     (|<SID>|).
+			     (|<SID>|).  Negative for special contexts.
 		  "lnum"     The line number in "sid", zero if unknown.
 		  "nowait"   Do not wait for other, longer mappings.
 			     (|:map-<nowait>|).
@@ -5547,8 +5606,24 @@ mkdir({name} [, {flags} [, {prot}]])
 		When {flags} is present it must be a string.  An empty string
 		has no effect.
 
-		If {flags} is "p" then intermediate directories are created as
-		necessary.
+		If {flags} contains "p" then intermediate directories are
+		created as necessary.
+
+		If {flags} contains "D" then {name} is deleted at the end of
+		the current function, as with: >
+			defer delete({name}, 'd')
+<
+		If {flags} contains "R" then {name} is deleted recursively at
+		the end of the current function, as with: >
+			defer delete({name}, 'rf')
+<		Note that when {name} has more than one part and "p" is used
+		some directories may already exist.  Only the first one that
+		is created and what it contains is scheduled to be deleted.
+		E.g. when using: >
+			call mkdir('subdir/tmp/autoload', 'pR')
+<		and "subdir" already exists then "subdir/tmp" will be
+		scheduled for deletion, like with: >
+			defer delete('subdir/tmp', 'rf')
 
 		If {prot} is given it is used to set the protection bits of
 		the new directory.  The default is 0o755 (rwxr-xr-x: r/w for
@@ -5939,7 +6014,7 @@ printf({fmt}, {expr1} ...)				*printf()*
 			be applied, see below.
 
 		A field width or precision, or both, may be indicated by an
-		asterisk '*' instead of a digit string.  In this case, a
+		asterisk "*" instead of a digit string.  In this case, a
 		Number argument supplies the field width or precision.  A
 		negative field width is treated as a left adjustment flag
 		followed by a positive field width; a negative precision is
@@ -6062,17 +6137,20 @@ prompt_setcallback({buf}, {expr})			*prompt_setcallback()*
 		that was entered at the prompt.  This can be an empty string
 		if the user only typed Enter.
 		Example: >
-		   call prompt_setcallback(bufnr(''), function('s:TextEntered'))
 		   func s:TextEntered(text)
 		     if a:text == 'exit' || a:text == 'quit'
 		       stopinsert
+		       " Reset 'modified' to allow the buffer to be closed.
+		       " We assume there is nothing useful to be saved.
+		       set nomodified
 		       close
 		     else
+		       " Do something useful with "a:text".  In this example
+		       " we just repeat it.
 		       call append(line('$') - 1, 'Entered: "' .. a:text .. '"')
-		       " Reset 'modified' to allow the buffer to be closed.
-		       set nomodified
 		     endif
 		   endfunc
+		   call prompt_setcallback(bufnr(), function('s:TextEntered'))
 
 <		Can also be used as a |method|: >
 			GetBuffer()->prompt_setcallback(callback)
@@ -7700,6 +7778,19 @@ sinh({expr})						*sinh()*
 		Can also be used as a |method|: >
 			Compute()->sinh()
 
+slice({expr}, {start} [, {end}])			*slice()*
+		Similar to using a |slice| "expr[start : end]", but "end" is
+		used exclusive.  And for a string the indexes are used as
+		character indexes instead of byte indexes.
+		Also, composing characters are not counted.
+		When {end} is omitted the slice continues to the last item.
+		When {end} is -1 the last item is omitted.
+		Returns an empty value if {start} or {end} are invalid.
+
+		Can also be used as a |method|: >
+			GetList()->slice(offset)
+
+
 sockconnect({mode}, {address} [, {opts}])		 *sockconnect()*
 		Connect a socket to an address. If {mode} is "pipe" then
 		{address} should be the path of a local domain socket (on
@@ -8042,12 +8133,16 @@ strcharlen({string})					*strcharlen()*
 			GetText()->strcharlen()
 
 
-strcharpart({src}, {start} [, {len}])			*strcharpart()*
+strcharpart({src}, {start} [, {len} [, {skipcc}]])		*strcharpart()*
 		Like |strpart()| but using character index and length instead
-		of byte index and length.  Composing characters are counted
-		separately.
+		of byte index and length.
+		When {skipcc} is omitted or zero, composing characters are
+		counted separately.
+		When {skipcc} set to 1, Composing characters are ignored,
+		similar to  |slice()|.
 		When a character index is used where a character does not
-		exist it is assumed to be one character.  For example: >
+		exist it is omitted and counted as one character.  For
+		example: >
 			strcharpart('abc', -1, 2)
 <		results in 'a'.
 
@@ -8287,6 +8382,28 @@ strtrans({string})					*strtrans()*
 		Can also be used as a |method|: >
 			GetString()->strtrans()
 
+strutf16len({string} [, {countcc}])			*strutf16len()*
+		The result is a Number, which is the number of UTF-16 code
+		units in String {string} (after converting it to UTF-16).
+
+		When {countcc} is TRUE, composing characters are counted
+		separately.
+		When {countcc} is omitted or FALSE, composing characters are
+		ignored.
+
+		Returns zero on error.
+
+		Also see |strlen()| and |strcharlen()|.
+		Examples: >
+		    echo strutf16len('a')		returns 1
+		    echo strutf16len('©')		returns 1
+		    echo strutf16len('😊')		returns 2
+		    echo strutf16len('ą́')		returns 1
+		    echo strutf16len('ą́', v:true)	returns 3
+
+		Can also be used as a |method|: >
+			GetText()->strutf16len()
+<
 strwidth({string})					*strwidth()*
 		The result is a Number, which is the number of display cells
 		String {string} occupies.  A Tab character is counted as one
@@ -8375,6 +8492,17 @@ substitute({string}, {pat}, {sub}, {flags})		*substitute()*
 
 		Can also be used as a |method|: >
 			GetString()->substitute(pat, sub, flags)
+
+swapfilelist()						*swapfilelist()*
+		Returns a list of swap file names, like what "vim -r" shows.
+		See the |-r| command argument.  The 'directory' option is used
+		for the directories to inspect.  If you only want to get a
+		list of swap files in the current directory then temporarily
+		set 'directory' to a dot: >
+			let save_dir = &directory
+			let &directory = '.'
+			let swapfiles = swapfilelist()
+			let &directory = save_dir
 
 swapinfo({fname})					*swapinfo()*
 		The result is a dictionary, which holds information about the
@@ -9007,6 +9135,34 @@ uniq({list} [, {func} [, {dict}]])			*uniq()* *E882*
 
 		Can also be used as a |method|: >
 			mylist->uniq()
+<
+							*utf16idx()*
+utf16idx({string}, {idx} [, {countcc} [, {charidx}]])
+		Same as |charidx()| but returns the UTF-16 index of the byte
+		at {idx} in {string} (after converting it to UTF-16).
+
+		When {charidx} is present and TRUE, {idx} is used as the
+		character index in the String {string} instead of as the byte
+		index.
+		An {idx} in the middle of a UTF-8 sequence is rounded upwards
+		to the end of that sequence.
+
+		See |byteidx()| and |byteidxcomp()| for getting the byte index
+		from the UTF-16 index and |charidx()| for getting the
+		character index from the UTF-16 index.
+		Refer to |string-offset-encoding| for more information.
+		Examples: >
+			echo utf16idx('a😊😊', 3)	returns 2
+			echo utf16idx('a😊😊', 7)	returns 4
+			echo utf16idx('a😊😊', 1, 0, 1)	returns 2
+			echo utf16idx('a😊😊', 2, 0, 1)	returns 4
+			echo utf16idx('aą́c', 6)		returns 2
+			echo utf16idx('aą́c', 6, 1)	returns 4
+			echo utf16idx('a😊😊', 9)	returns -1
+<
+		Can also be used as a |method|: >
+			GetName()->utf16idx(idx)
+
 
 values({dict})						*values()*
 		Return a |List| with all the values of {dict}.  The |List| is
@@ -9016,7 +9172,7 @@ values({dict})						*values()*
 		Can also be used as a |method|: >
 			mydict->values()
 
-virtcol({expr})						*virtcol()*
+virtcol({expr} [, {list}])				*virtcol()*
 		The result is a Number, which is the screen column of the file
 		position given with {expr}.  That is, the last screen position
 		occupied by the character at that position, when the screen
@@ -9025,13 +9181,17 @@ virtcol({expr})						*virtcol()*
 		the <Tab>.  For example, for a <Tab> in column 1, with 'ts'
 		set to 8, it returns 8. |conceal| is ignored.
 		For the byte position use |col()|.
+
 		For the use of {expr} see |col()|.
-		When 'virtualedit' is used {expr} can be [lnum, col, off], where
-		"off" is the offset in screen columns from the start of the
-		character.  E.g., a position within a <Tab> or after the last
-		character.  When "off" is omitted zero is used.
-		When Virtual editing is active in the current mode, a position
-		beyond the end of the line can be returned. |'virtualedit'|
+
+		When 'virtualedit' is used {expr} can be [lnum, col, off],
+		where "off" is the offset in screen columns from the start of
+		the character.  E.g., a position within a <Tab> or after the
+		last character.  When "off" is omitted zero is used.  When
+		Virtual editing is active in the current mode, a position
+		beyond the end of the line can be returned.  Also see
+		|'virtualedit'|
+
 		The accepted positions are:
 		    .	    the cursor position
 		    $	    the end of the cursor line (the result is the
@@ -9043,11 +9203,22 @@ virtcol({expr})						*virtcol()*
 			    cursor is the end).  When not in Visual mode
 			    returns the cursor position.  Differs from |'<| in
 			    that it's updated right away.
+
+		If {list} is present and non-zero then virtcol() returns a List
+		with the first and last screen position occupied by the
+		character.
+
 		Note that only marks in the current file can be used.
 		Examples: >
-  virtcol(".")	   with text "foo^Lbar", with cursor on the "^L", returns 5
-  virtcol("$")	   with text "foo^Lbar", returns 9
-  virtcol("'t")    with text "	  there", with 't at 'h', returns 6
+			" With text "foo^Lbar" and cursor on the "^L":
+
+			virtcol(".")	" returns 5
+			virtcol(".", 1)	" returns [4, 5]
+			virtcol("$")	" returns 9
+
+			" With text "	  there", with 't at 'h':
+
+			virtcol("'t")	" returns 6
 <		The first column is 1.  0 is returned for an error.
 		A more advanced example that echoes the maximum length of
 		all lines: >
@@ -9126,7 +9297,7 @@ win_execute({id}, {command} [, {silent}])		*win_execute()*
 		The window will temporarily be made the current window,
 		without triggering autocommands or changing directory.  When
 		executing {command} autocommands will be triggered, this may
-		have unexpected side effects.  Use |:noautocmd| if needed.
+		have unexpected side effects.  Use `:noautocmd` if needed.
 		Example: >
 			call win_execute(winid, 'syntax enable')
 <		Doing the same with `setwinvar()` would not trigger
@@ -9482,31 +9653,43 @@ writefile({object}, {fname} [, {flags}])
 		When {object} is a |List| write it to file {fname}.  Each list
 		item is separated with a NL.  Each list item must be a String
 		or Number.
-		When {flags} contains "b" then binary mode is used: There will
-		not be a NL after the last list item.  An empty item at the
-		end does cause the last line in the file to end in a NL.
-
-		When {object} is a |Blob| write the bytes to file {fname}
-		unmodified.
-
-		When {flags} contains "a" then append mode is used, lines are
-		appended to the file: >
-			:call writefile(["foo"], "event.log", "a")
-			:call writefile(["bar"], "event.log", "a")
-<
-		When {flags} contains "S" fsync() call is not used, with "s"
-		it is used, 'fsync' option applies by default. No fsync()
-		means that writefile() will finish faster, but writes may be
-		left in OS buffers and not yet written to disk. Such changes
-		will disappear if system crashes before OS does writing.
-
 		All NL characters are replaced with a NUL character.
 		Inserting CR characters needs to be done before passing {list}
 		to writefile().
+
+		When {object} is a |Blob| write the bytes to file {fname}
+		unmodified, also when binary mode is not specified.
+
+		{flags} must be a String.  These characters are recognized:
+
+		'b'  Binary mode is used: There will not be a NL after the
+		     last list item.  An empty item at the end does cause the
+		     last line in the file to end in a NL.
+
+		'a'  Append mode is used, lines are appended to the file: >
+			:call writefile(["foo"], "event.log", "a")
+			:call writefile(["bar"], "event.log", "a")
+<
+		'D'  Delete the file when the current function ends.  This
+		     works like: >
+			:defer delete({fname})
+<		     Fails when not in a function.  Also see |:defer|.
+
+		's'  fsync() is called after writing the file.  This flushes
+		     the file to disk, if possible.  This takes more time but
+		     avoids losing the file if the system crashes.
+
+		'S'  fsync() is not called, even when 'fsync' is set.
+
+		     When {flags} does not contain "S" or "s" then fsync() is
+		     called if the 'fsync' option is set.
+
 		An existing file is overwritten, if possible.
+
 		When the write fails -1 is returned, otherwise 0.  There is an
 		error message if the file can't be created or when writing
 		fails.
+
 		Also see |readfile()|.
 		To copy a file byte for byte: >
 			:let fl = readfile("foo", "b")

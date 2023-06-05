@@ -178,7 +178,7 @@ end
 describe('Command-line coloring', function()
   it('works', function()
     set_color_cb('RainBowParens')
-    meths.set_option('more', false)
+    meths.set_option_value('more', false, {})
     start_prompt()
     screen:expect([[
                                               |
@@ -854,11 +854,11 @@ describe('Ex commands coloring', function()
       :#                                      |
       {ERR:Error detected while processing :}       |
       {ERR:E605: Exception not caught: 42}          |
-      {ERR:E749: empty buffer}                      |
+      {ERR:E749: Empty buffer}                      |
       {PE:Press ENTER or type command to continue}^ |
     ]])
     feed('<CR>')
-    eq('Error detected while processing :\nE605: Exception not caught: 42\nE749: empty buffer',
+    eq('Error detected while processing :\nE605: Exception not caught: 42\nE749: Empty buffer',
        exec_capture('messages'))
   end)
   it('errors out when failing to get callback', function()

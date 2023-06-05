@@ -4,10 +4,15 @@
 -- other:
 -- 1) index => item
 -- 2) item => index
+--- @class Set
+--- @field nelem integer
+--- @field items string[]
+--- @field tbl table
 local Set = {}
 
+--- @param items? string[]
 function Set:new(items)
-  local obj = {}
+  local obj = {} --- @ type Set
   setmetatable(obj, self)
   self.__index = self
 
@@ -26,8 +31,9 @@ function Set:new(items)
   return obj
 end
 
+--- @return Set
 function Set:copy()
-  local obj = {}
+  local obj = {} --- @ type Set
   obj.nelem = self.nelem
   obj.tbl = {}
   obj.items = {}
@@ -43,6 +49,7 @@ function Set:copy()
 end
 
 -- adds the argument Set to this Set
+--- @param other Set
 function Set:union(other)
   for e in other:iterator() do
     self:add(e)
@@ -57,6 +64,7 @@ function Set:union_table(t)
 end
 
 -- subtracts the argument Set from this Set
+--- @param other Set
 function Set:diff(other)
   if other:size() > self:size() then
     -- this set is smaller than the other set
@@ -75,6 +83,7 @@ function Set:diff(other)
   end
 end
 
+--- @param it string
 function Set:add(it)
   if not self:contains(it) then
     local idx = #self.tbl + 1
@@ -84,6 +93,7 @@ function Set:add(it)
   end
 end
 
+--- @param it string
 function Set:remove(it)
   if self:contains(it) then
     local idx = self.items[it]
@@ -93,10 +103,13 @@ function Set:remove(it)
   end
 end
 
+--- @param it string
+--- @return boolean
 function Set:contains(it)
   return self.items[it] or false
 end
 
+--- @return integer
 function Set:size()
   return self.nelem
 end
@@ -113,29 +126,18 @@ function Set:iterator()
   return pairs(self.items)
 end
 
+--- @return string[]
 function Set:to_table()
   -- there might be gaps in @tbl, so we have to be careful and sort first
-  local keys
-  do
-    local _accum_0 = { }
-    local _len_0 = 1
-    for idx, _ in pairs(self.tbl) do
-      _accum_0[_len_0] = idx
-      _len_0 = _len_0 + 1
-    end
-    keys = _accum_0
+  local keys = {} --- @type string[]
+  for idx, _ in pairs(self.tbl) do
+    keys[#keys+1] = idx
   end
+
   table.sort(keys)
-  local copy
-  do
-    local _accum_0 = { }
-    local _len_0 = 1
-    for _index_0 = 1, #keys do
-      local idx = keys[_index_0]
-      _accum_0[_len_0] = self.tbl[idx]
-      _len_0 = _len_0 + 1
-    end
-    copy = _accum_0
+  local copy = {} --- @type string[]
+  for _, idx in ipairs(keys) do
+    copy[#copy+1] = self.tbl[idx]
   end
   return copy
 end

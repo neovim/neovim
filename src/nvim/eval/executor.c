@@ -20,7 +20,8 @@
 # include "eval/executor.c.generated.h"  // IWYU pragma: export
 #endif
 
-char *e_listidx = N_("E684: list index out of range: %" PRId64);
+char *e_list_index_out_of_range_nr
+  = N_("E684: List index out of range: %" PRId64);
 
 /// Handle tv1 += tv2, -=, *=, /=,  %=, .=
 ///

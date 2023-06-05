@@ -247,12 +247,12 @@ arguments separated by " " (space) instead of "\t" (tab).
         :lua =jit.version
 <
                                                                 *:lua-heredoc*
-:lua << [endmarker]
+:lua << [trim] [{endmarker}]
 {script}
 {endmarker}
-    Executes Lua script {script} from within Vimscript. {endmarker} must NOT
-    be preceded by whitespace. You can omit [endmarker] after the "<<" and use
-    a dot "." after {script} (similar to |:append|, |:insert|).
+    Executes Lua script {script} from within Vimscript. You can omit
+    [endmarker] after the "<<" and use a dot "." after {script} (similar to
+    |:append|, |:insert|). Refer to |let-heredoc| for more information.
 
     Example: >vim
         function! CurrentLineInfo()
@@ -321,20 +321,22 @@ Example: >vim
     :echo luaeval('string.match(_A, "[a-z]+")', 'XYXfoo123')
     " foo
 <
+                                                                    *lua-table*
 Lua tables are used as both dictionaries and lists, so it is impossible to
 determine whether empty table is meant to be empty list or empty dictionary.
 Additionally Lua does not have integer numbers. To distinguish between these
 cases there is the following agreement:
-
+                                                                     *lua-list*
 0. Empty table is empty list.
 1. Table with N incrementally growing integral numbers, starting from 1 and
    ending with N is considered to be a list.
+                                                                     *lua-dict*
 2. Table with string keys, none of which contains NUL byte, is considered to
    be a dictionary.
 3. Table with string keys, at least one of which contains NUL byte, is also
    considered to be a dictionary, but this time it is converted to
    a |msgpack-special-map|.
-                                                             *lua-special-tbl*
+                                                              *lua-special-tbl*
 4. Table with `vim.type_idx` key may be a dictionary, a list or floating-point
    value:
    - `{[vim.type_idx]=vim.types.float, [vim.val_idx]=1}` is converted to
@@ -399,7 +401,7 @@ For example consider the following Lua omnifunc handler: >lua
         return {'stuff', 'steam', 'strange things'}
       end
     end
-    vim.api.nvim_buf_set_option(0, 'omnifunc', 'v:lua.mymod.omnifunc')
+    vim.bo[buf].omnifunc = 'v:lua.mymod.omnifunc'
 
 Note: The module ("mymod" in the above example) must either be a Lua global,
 or use require() as shown above to access it from a package.
@@ -447,29 +449,24 @@ Note that underscore-prefixed functions (e.g. "_os_proc_children") are
 internal/private and must not be used by plugins.
 
 ------------------------------------------------------------------------------
-VIM.LOOP                                                   *lua-loop* *vim.loop*
+VIM.UV                                                   *lua-loop* *vim.uv*
 
-`vim.loop` exposes all features of the Nvim event-loop. This is a low-level
-API that provides functionality for networking, filesystem, and process
-management. Try this command to see available functions: >vim
-
-    :lua print(vim.inspect(vim.loop))
-<
-Internally, `vim.loop` wraps the "luv" Lua bindings for the LibUV library;
-see |luv-intro| for a full reference manual.
+`vim.uv` exposes the "luv" Lua bindings for the libUV library that Nvim uses
+for networking, filesystem, and process management, see |luvref.txt|.
+In particular, it allows interacting with the main Nvim |luv-event-loop|.
 
                                                     *E5560* *lua-loop-callbacks*
 It is an error to directly invoke `vim.api` functions (except |api-fast|) in
-`vim.loop` callbacks. For example, this is an error: >lua
+`vim.uv` callbacks. For example, this is an error: >lua
 
-    local timer = vim.loop.new_timer()
+    local timer = vim.uv.new_timer()
     timer:start(1000, 0, function()
       vim.api.nvim_command('echomsg "test"')
     end)
 <
 To avoid the error use |vim.schedule_wrap()| to defer the callback: >lua
 
-    local timer = vim.loop.new_timer()
+    local timer = vim.uv.new_timer()
     timer:start(1000, 0, vim.schedule_wrap(function()
       vim.api.nvim_command('echomsg "test"')
     end))
@@ -482,7 +479,7 @@ Example: repeating timer
     2. Execute it with ":luafile %". >lua
 
     -- Create a timer handle (implementation detail: uv_timer_t).
-    local timer = vim.loop.new_timer()
+    local timer = vim.uv.new_timer()
     local i = 0
     -- Waits 1000ms, then repeats every 750ms until timer:close().
     timer:start(1000, 750, function()
@@ -502,7 +499,7 @@ Example: File-change detection                                    *watch-file*
     5. Observe that the file reloads in Nvim (because on_change() calls
        |:checktime|). >lua
 
-    local w = vim.loop.new_fs_event()
+    local w = vim.uv.new_fs_event()
     local function on_change(err, fname, status)
       -- Do work...
       vim.api.nvim_command('checktime')
@@ -526,11 +523,11 @@ Example: TCP echo-server                                          *tcp-server*
     4. Connect from any TCP client (e.g. "nc 0.0.0.0 36795"): >lua
 
     local function create_server(host, port, on_connect)
-      local server = vim.loop.new_tcp()
+      local server = vim.uv.new_tcp()
       server:bind(host, port)
       server:listen(128, function(err)
         assert(not err, err)  -- Check for errors.
-        local sock = vim.loop.new_tcp()
+        local sock = vim.uv.new_tcp()
         server:accept(sock)  -- Accept client connection.
         on_connect(sock)  -- Start reading messages.
       end)
@@ -551,14 +548,14 @@ Example: TCP echo-server                                          *tcp-server*
 Multithreading                                            *lua-loop-threading*
 
 Plugins can perform work in separate (os-level) threads using the threading
-APIs in luv, for instance `vim.loop.new_thread`. Note that every thread
+APIs in luv, for instance `vim.uv.new_thread`. Note that every thread
 gets its own separate lua interpreter state, with no access to lua globals
 in the main thread. Neither can the state of the editor (buffers, windows,
 etc) be directly accessed from threads.
 
 A subset of the `vim.*` API is available in threads. This includes:
 
-- `vim.loop` with a separate event loop per thread.
+- `vim.uv` with a separate event loop per thread.
 - `vim.mpack` and `vim.json` (useful for serializing messages between threads)
 - `require` in threads can use lua packages from the global |package.path|
 - `print()` and `vim.inspect`
@@ -592,6 +589,8 @@ vim.highlight.on_yank({opts})                        *vim.highlight.on_yank()*
       - {on_macro} highlight when executing macro (default `false`)
       - {on_visual} highlight when yanking visual selection (default `true`)
       - {event} event structure (default |v:event|)
+      - {priority} priority of highlight (default |vim.highlight.priorities|`.user`)
+
 
 vim.highlight.range({bufnr}, {ns}, {hlgroup}, {start}, {finish}, {opts})
                                                        *vim.highlight.range()*
@@ -649,6 +648,14 @@ regex:match_line({bufnr}, {line_idx} [, {start}, {end}])  *regex:match_line()*
     will be relative {start}.
 
 ------------------------------------------------------------------------------
+VIM.LPEG                                                            *lua-lpeg*
+
+                                                             *vim.lpeg* *vim.re*
+The Lpeg library for parsing expression grammars is being included as
+`vim.lpeg` (https://www.inf.puc-rio.br/~roberto/lpeg/). In addition, its regex-like
+interface is available as `vim.re` (https://www.inf.puc-rio.br/~roberto/lpeg/re.html).
+
+------------------------------------------------------------------------------
 VIM.DIFF                                                            *lua-diff*
 
 vim.diff({a}, {b}, {opts})                                        *vim.diff()*
@@ -685,9 +692,10 @@ vim.diff({a}, {b}, {opts})                                        *vim.diff()*
                    • "unified": (default) String in unified format.
                    • "indices": Array of hunk locations.
                    Note: This option is ignored if `on_hunk` is used.
-                 • `linematch` (boolean): Run linematch on the resulting hunks
-                   from xdiff. Requires `result_type = indices`, ignored
-                   otherwise.
+                 • `linematch` (boolean|integer): Run linematch on the resulting hunks
+                   from xdiff. When integer, only hunks upto this size in
+                   lines are run through linematch. Requires `result_type = indices`,
+                   ignored otherwise.
                  • `algorithm` (string):
                    Diff algorithm to use. Values:
                    • "myers"      the default algorithm
@@ -872,7 +880,7 @@ vim.defer_fn({fn}, {timeout})                                   *vim.defer_fn*
       • {timeout}   Time in ms to wait before calling {fn}
 
     Returns: ~
-        |vim.loop|.new_timer() object
+        |vim.uv|.new_timer() object
 
 vim.wait({time} [, {callback}, {interval}, {fast_only}])          *vim.wait()*
     Wait for {time} in milliseconds until {callback} returns `true`.
@@ -1403,8 +1411,25 @@ inspect({object}, {options})                                   *vim.inspect()*
       • https://github.com/kikito/inspect.lua
       • https://github.com/mpeterv/vinspect
 
+keycode({str})                                                 *vim.keycode()*
+    Translate keycodes.
+
+    Example: >lua
+      local k = vim.keycode
+      vim.g.mapleader = k'<bs>'
+<
+
+    Parameters: ~
+      • {str}  string String to be converted.
+
+    Return: ~
+        string
+
+    See also: ~
+      • |nvim_replace_termcodes()|
+
 lua_omnifunc({find_start}, {_})                           *vim.lua_omnifunc()*
-    Omnifunc for completing lua values from from the runtime lua interpreter,
+    Omnifunc for completing lua values from the runtime lua interpreter,
     similar to the builtin completion for the `:lua` command.
 
     Activate using `set omnifunc=v:lua.vim.lua_omnifunc` in a lua buffer.
@@ -1515,9 +1540,10 @@ region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})         *vim.region()*
 
     Parameters: ~
       • {bufnr}      (integer) number of buffer
-      • {pos1}       integer[] (line, column) tuple marking beginning of
-                     region
-      • {pos2}       integer[] (line, column) tuple marking end of region
+      • {pos1}       integer[]|string start of region as a (line, column)
+                     tuple or string accepted by |getpos()|
+      • {pos2}       integer[]|string end of region as a (line, column) tuple
+                     or string accepted by |getpos()|
       • {regtype}    (string) type of selection, see |setreg()|
       • {inclusive}  (boolean) indicating whether column of pos2 is inclusive
 
@@ -1696,6 +1722,19 @@ is_callable({f})                                           *vim.is_callable()*
     Return: ~
         (boolean) `true` if `f` is callable, else `false`
 
+list_contains({t}, {value})                              *vim.list_contains()*
+    Checks if a list-like table (integer keys without gaps) contains `value`.
+
+    Parameters: ~
+      • {t}      (table) Table to check (must be list-like, not validated)
+      • {value}  any Value to compare
+
+    Return: ~
+        (boolean) `true` if `t` contains `value`
+
+    See also: ~
+      • |vim.tbl_contains()| for checking values in general tables
+
 list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
     Extends a list-like table with the values of another list-like table.
 
@@ -1795,15 +1834,30 @@ tbl_add_reverse_lookup({o})                     *vim.tbl_add_reverse_lookup()*
     Return: ~
         (table) o
 
-tbl_contains({t}, {value})                                *vim.tbl_contains()*
-    Checks if a list-like (vector) table contains `value`.
+tbl_contains({t}, {value}, {opts})                        *vim.tbl_contains()*
+    Checks if a table contains a given value, specified either directly or via
+    a predicate that is checked for each value.
+
+    Example: >lua
+
+      vim.tbl_contains({ 'a', { 'b', 'c' } }, function(v)
+        return vim.deep_equal(v, { 'b', 'c' })
+      end, { predicate = true })
+      -- true
+<
 
     Parameters: ~
       • {t}      (table) Table to check
-      • {value}  any Value to compare
+      • {value}  any Value to compare or predicate function reference
+      • {opts}   (table|nil) Keyword arguments |kwargs|:
+                 • predicate: (boolean) `value` is a function reference to be
+                   checked (default false)
 
     Return: ~
         (boolean) `true` if `t` contains `value`
+
+    See also: ~
+      • |vim.list_contains()| for checking values in list-like tables
 
 tbl_count({t})                                               *vim.tbl_count()*
     Counts the number of non-nil values in table `t`.
@@ -1824,7 +1878,7 @@ tbl_count({t})                                               *vim.tbl_count()*
       • https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
 
 tbl_deep_extend({behavior}, {...})                     *vim.tbl_deep_extend()*
-    Merges recursively two or more map-like tables.
+    Merges recursively two or more tables.
 
     Parameters: ~
       • {behavior}  (string) Decides what to do if a key is found in more than
@@ -1832,7 +1886,7 @@ tbl_deep_extend({behavior}, {...})                     *vim.tbl_deep_extend()*
                     • "error": raise an error
                     • "keep": use value from the leftmost map
                     • "force": use value from the rightmost map
-      • {...}       (table) Two or more map-like tables
+      • {...}       (table) Two or more tables
 
     Return: ~
         (table) Merged table
@@ -1841,7 +1895,7 @@ tbl_deep_extend({behavior}, {...})                     *vim.tbl_deep_extend()*
       • |vim.tbl_extend()|
 
 tbl_extend({behavior}, {...})                               *vim.tbl_extend()*
-    Merges two or more map-like tables.
+    Merges two or more tables.
 
     Parameters: ~
       • {behavior}  (string) Decides what to do if a key is found in more than
@@ -1849,7 +1903,7 @@ tbl_extend({behavior}, {...})                               *vim.tbl_extend()*
                     • "error": raise an error
                     • "keep": use value from the leftmost map
                     • "force": use value from the rightmost map
-      • {...}       (table) Two or more map-like tables
+      • {...}       (table) Two or more tables
 
     Return: ~
         (table) Merged table
@@ -1898,6 +1952,20 @@ tbl_get({o}, {...})                                            *vim.tbl_get()*
     Return: ~
         any Nested value indexed by key (if it exists), else nil
 
+tbl_isarray({t})                                           *vim.tbl_isarray()*
+    Tests if a Lua table can be treated as an array (a table indexed by
+    integers).
+
+    Empty table `{}` is assumed to be an array, unless it was created by
+    |vim.empty_dict()| or returned as a dict-like |API| or Vimscript result,
+    for example from |rpcrequest()| or |vim.fn|.
+
+    Parameters: ~
+      • {t}  (table)
+
+    Return: ~
+        (boolean) `true` if array-like table, else `false`.
+
 tbl_isempty({t})                                           *vim.tbl_isempty()*
     Checks if a table is empty.
 
@@ -1911,17 +1979,18 @@ tbl_isempty({t})                                           *vim.tbl_isempty()*
       • https://github.com/premake/premake-core/blob/master/src/base/table.lua
 
 tbl_islist({t})                                             *vim.tbl_islist()*
-    Tests if a Lua table can be treated as an array.
+    Tests if a Lua table can be treated as a list (a table indexed by
+    consecutive integers starting from 1).
 
-    Empty table `{}` is assumed to be an array, unless it was created by
+    Empty table `{}` is assumed to be an list, unless it was created by
     |vim.empty_dict()| or returned as a dict-like |API| or Vimscript result,
     for example from |rpcrequest()| or |vim.fn|.
 
     Parameters: ~
-      • {t}  (table) Table
+      • {t}  (table)
 
     Return: ~
-        (boolean) `true` if array-like table, else `false`
+        (boolean) `true` if list-like table, else `false`.
 
 tbl_keys({t})                                                 *vim.tbl_keys()*
     Return a list of all keys used in a table. However, the order of the
@@ -2001,7 +2070,7 @@ validate({opt})                                               *vim.validate()*
       vim.validate{arg1={{'foo'}, {'table', 'string'}}, arg2={'foo', {'table', 'string'}}}
          --> NOP (success)
 
-      vim.validate{arg1={1, {'string', table'}}}
+      vim.validate{arg1={1, {'string', 'table'}}}
          --> error('arg1: expected string|table, got number')
 <
 
@@ -2457,7 +2526,7 @@ find({names}, {opts})                                          *vim.fs.find()*
      -- location of Cargo.toml from the current buffer's path
      local cargo = vim.fs.find('Cargo.toml', {
        upward = true,
-       stop = vim.loop.os_homedir(),
+       stop = vim.uv.os_homedir(),
        path = vim.fs.dirname(vim.api.nvim_buf_get_name(0)),
      })
 
@@ -2501,6 +2570,16 @@ find({names}, {opts})                                          *vim.fs.find()*
     Return: ~
         (table) Normalized paths |vim.fs.normalize()| of all matching files or
         directories
+
+joinpath({...})                                            *vim.fs.joinpath()*
+    Concatenate directories and/or file into a single path with normalization
+    (e.g., `"foo/"` and `"bar"` get joined to `"foo/bar"`)
+
+    Parameters: ~
+      • {...}  (string)
+
+    Return: ~
+        (string)
 
 normalize({path}, {opts})                                 *vim.fs.normalize()*
     Normalize a path to a standard format. A tilde (~) character at the
@@ -2656,7 +2735,7 @@ versions (1.2.3-rc1) are not matched. >
 <
 
 cmp({v1}, {v2})                                            *vim.version.cmp()*
-    Parses and compares two version version objects (the result of
+    Parses and compares two version objects (the result of
     |vim.version.parse()|, or specified literally as a `{major, minor, patch}`
     tuple, e.g. `{1, 0, 3}`).
 
@@ -2771,5 +2850,512 @@ range({spec})                                            *vim.version.range()*
 
     See also: ~
       • # https://github.com/npm/node-semver#ranges
+
+
+==============================================================================
+Lua module: iter                                                    *lua-iter*
+
+
+The *vim.iter* module provides a generic "iterator" interface over tables
+and iterator functions.
+
+*vim.iter()* wraps its table or function argument into an *Iter* object
+with methods (such as |Iter:filter()| and |Iter:map()|) that transform the
+underlying source data. These methods can be chained together to create
+iterator "pipelines". Each pipeline stage receives as input the output
+values from the prior stage. The values used in the first stage of the
+pipeline depend on the type passed to this function:
+
+• List tables pass only the value of each element
+• Non-list tables pass both the key and value of each element
+• Function iterators pass all of the values returned by their respective
+  function
+
+Examples: >lua
+
+   local it = vim.iter({ 1, 2, 3, 4, 5 })
+   it:map(function(v)
+     return v * 3
+   end)
+   it:rev()
+   it:skip(2)
+   it:totable()
+   -- { 9, 6, 3 }
+
+   vim.iter(ipairs({ 1, 2, 3, 4, 5 })):map(function(i, v)
+     if i > 2 then return v end
+   end):totable()
+   -- { 3, 4, 5 }
+
+   local it = vim.iter(vim.gsplit('1,2,3,4,5', ','))
+   it:map(function(s) return tonumber(s) end)
+   for i, d in it:enumerate() do
+     print(string.format("Column %d is %d", i, d))
+   end
+   -- Column 1 is 1
+   -- Column 2 is 2
+   -- Column 3 is 3
+   -- Column 4 is 4
+   -- Column 5 is 5
+
+   vim.iter({ a = 1, b = 2, c = 3, z = 26 }):any(function(k, v)
+     return k == 'z'
+   end)
+   -- true
+
+<
+
+In addition to the |vim.iter()| function, the |vim.iter| module provides
+convenience functions like |vim.iter.filter()| and |vim.iter.totable()|.
+
+filter({f}, {src}, {...})                                  *vim.iter.filter()*
+    Filter a table or iterator.
+
+    This is a convenience function that performs: >lua
+
+     vim.iter(src):filter(f):totable()
+<
+
+    Parameters: ~
+      • {f}    function(...):bool Filter function. Accepts the current
+               iterator or table values as arguments and returns true if those
+               values should be kept in the final table
+      • {src}  table|function Table or iterator function to filter
+
+    Return: ~
+        (table)
+
+    See also: ~
+      • |Iter:filter()|
+
+Iter:all({self}, {pred})                                          *Iter:all()*
+    Return true if all of the items in the iterator match the given predicate.
+
+    Parameters: ~
+      • {pred}  function(...):bool Predicate function. Takes all values
+                returned from the previous stage in the pipeline as arguments
+                and returns true if the predicate matches.
+
+Iter:any({self}, {pred})                                          *Iter:any()*
+    Return true if any of the items in the iterator match the given predicate.
+
+    Parameters: ~
+      • {pred}  function(...):bool Predicate function. Takes all values
+                returned from the previous stage in the pipeline as arguments
+                and returns true if the predicate matches.
+
+Iter:each({self}, {f})                                           *Iter:each()*
+    Call a function once for each item in the pipeline.
+
+    This is used for functions which have side effects. To modify the values
+    in the iterator, use |Iter:map()|.
+
+    This function drains the iterator.
+
+    Parameters: ~
+      • {f}  function(...) Function to execute for each item in the pipeline.
+             Takes all of the values returned by the previous stage in the
+             pipeline as arguments.
+
+Iter:enumerate({self})                                      *Iter:enumerate()*
+    Add an iterator stage that returns the current iterator count as well as
+    the iterator value.
+
+    For list tables, prefer >lua
+
+     vim.iter(ipairs(t))
+<
+
+    over >lua
+
+     vim.iter(t):enumerate()
+<
+
+    as the former is faster.
+
+    Example: >lua
+
+     local it = vim.iter(vim.gsplit('abc', '')):enumerate()
+     it:next()
+     -- 1   'a'
+     it:next()
+     -- 2   'b'
+     it:next()
+     -- 3   'c'
+<
+
+    Return: ~
+        Iter
+
+Iter:filter({self}, {f})                                       *Iter:filter()*
+    Add a filter step to the iterator pipeline.
+
+    Example: >lua
+
+     local bufs = vim.iter(vim.api.nvim_list_bufs()):filter(vim.api.nvim_buf_is_loaded)
+<
+
+    Parameters: ~
+      • {f}  function(...):bool Takes all values returned from the previous
+             stage in the pipeline and returns false or nil if the current
+             iterator element should be removed.
+
+    Return: ~
+        Iter
+
+Iter:find({self}, {f})                                           *Iter:find()*
+    Find the first value in the iterator that satisfies the given predicate.
+
+    Advances the iterator. Returns nil and drains the iterator if no value is
+    found.
+
+    Examples: >lua
+
+     local it = vim.iter({ 3, 6, 9, 12 })
+     it:find(12)
+     -- 12
+
+     local it = vim.iter({ 3, 6, 9, 12 })
+     it:find(20)
+     -- nil
+
+     local it = vim.iter({ 3, 6, 9, 12 })
+     it:find(function(v) return v % 4 == 0 end)
+     -- 12
+<
+
+    Return: ~
+        any
+
+Iter:fold({self}, {init}, {f})                                   *Iter:fold()*
+    Fold an iterator or table into a single value.
+
+    Examples: >lua
+
+     -- Create a new table with only even values
+     local t = { a = 1, b = 2, c = 3, d = 4 }
+     local it = vim.iter(t)
+     it:filter(function(k, v) return v % 2 == 0 end)
+     it:fold({}, function(t, k, v)
+       t[k] = v
+       return t
+     end)
+     -- { b = 2, d = 4 }
+<
+
+    Parameters: ~
+      • {init}  any Initial value of the accumulator.
+      • {f}     function(acc:any, ...):A Accumulation function.
+
+    Return: ~
+        any
+
+Iter:last({self})                                                *Iter:last()*
+    Return the last item in the iterator.
+
+    Drains the iterator.
+
+    Example: >lua
+
+     local it = vim.iter(vim.gsplit('abcdefg', ''))
+     it:last()
+     -- 'g'
+
+     local it = vim.iter({ 3, 6, 9, 12, 15 })
+     it:last()
+     -- 15
+<
+
+    Return: ~
+        any
+
+Iter:map({self}, {f})                                             *Iter:map()*
+    Add a map step to the iterator pipeline.
+
+    If the map function returns nil, the value is filtered from the iterator.
+
+    Example: >lua
+
+     local it = vim.iter({ 1, 2, 3, 4 }):map(function(v)
+       if v % 2 == 0 then
+         return v * 3
+       end
+     end)
+     it:totable()
+     -- { 6, 12 }
+<
+
+    Parameters: ~
+      • {f}  function(...):any Mapping function. Takes all values returned
+             from the previous stage in the pipeline as arguments and returns
+             one or more new values, which are used in the next pipeline
+             stage. Nil return values are filtered from the output.
+
+    Return: ~
+        Iter
+
+Iter:next({self})                                                *Iter:next()*
+    Return the next value from the iterator.
+
+    Example: >lua
+
+     local it = vim.iter(string.gmatch('1 2 3', 'd+')):map(tonumber)
+     it:next()
+     -- 1
+     it:next()
+     -- 2
+     it:next()
+     -- 3
+<
+
+    Return: ~
+        any
+
+Iter:nextback({self})                                        *Iter:nextback()*
+    Return the next value from the end of the iterator.
+
+    Only supported for iterators on list-like tables.
+
+    Example: >lua
+
+     local it = vim.iter({1, 2, 3, 4})
+     it:nextback()
+     -- 4
+     it:nextback()
+     -- 3
+<
+
+    Return: ~
+        any
+
+Iter:nth({self}, {n})                                             *Iter:nth()*
+    Return the nth value in the iterator.
+
+    This function advances the iterator.
+
+    Example: >lua
+
+     local it = vim.iter({ 3, 6, 9, 12 })
+     it:nth(2)
+     -- 6
+     it:nth(2)
+     -- 12
+<
+
+    Parameters: ~
+      • {n}  (number) The index of the value to return.
+
+    Return: ~
+        any
+
+Iter:nthback({self}, {n})                                     *Iter:nthback()*
+    Return the nth value from the end of the iterator.
+
+    This function advances the iterator.
+
+    Only supported for iterators on list-like tables.
+
+    Example: >lua
+
+     local it = vim.iter({ 3, 6, 9, 12 })
+     it:nthback(2)
+     -- 9
+     it:nthback(2)
+     -- 3
+<
+
+    Parameters: ~
+      • {n}  (number) The index of the value to return.
+
+    Return: ~
+        any
+
+Iter:peek({self})                                                *Iter:peek()*
+    Peek at the next value in the iterator without consuming it.
+
+    Only supported for iterators on list-like tables.
+
+    Example: >lua
+
+     local it = vim.iter({ 3, 6, 9, 12 })
+     it:peek()
+     -- 3
+     it:peek()
+     -- 3
+     it:next()
+     -- 3
+<
+
+    Return: ~
+        any
+
+Iter:peekback({self})                                        *Iter:peekback()*
+    Return the next value from the end of the iterator without consuming it.
+
+    Only supported for iterators on list-like tables.
+
+    Example: >lua
+
+     local it = vim.iter({1, 2, 3, 4})
+     it:peekback()
+     -- 4
+     it:peekback()
+     -- 4
+     it:nextback()
+     -- 4
+<
+
+    Return: ~
+        any
+
+Iter:rev({self})                                                  *Iter:rev()*
+    Reverse an iterator.
+
+    Only supported for iterators on list-like tables.
+
+    Example: >lua
+
+     local it = vim.iter({ 3, 6, 9, 12 }):rev()
+     it:totable()
+     -- { 12, 9, 6, 3 }
+<
+
+    Return: ~
+        Iter
+
+Iter:rfind({self}, {f})                                         *Iter:rfind()*
+    Find the first value in the iterator that satisfies the given predicate,
+    starting from the end.
+
+    Advances the iterator. Returns nil and drains the iterator if no value is
+    found.
+
+    Only supported for iterators on list-like tables.
+
+    Examples: >lua
+
+     local it = vim.iter({ 1, 2, 3, 2, 1 }):enumerate()
+     it:rfind(1)
+     -- 5   1
+     it:rfind(1)
+     -- 1   1
+<
+
+    Return: ~
+        any
+
+    See also: ~
+      • Iter.find
+
+Iter:skip({self}, {n})                                           *Iter:skip()*
+    Skip values in the iterator.
+
+    Example: >lua
+
+     local it = vim.iter({ 3, 6, 9, 12 }):skip(2)
+     it:next()
+     -- 9
+<
+
+    Parameters: ~
+      • {n}  (number) Number of values to skip.
+
+    Return: ~
+        Iter
+
+Iter:skipback({self}, {n})                                   *Iter:skipback()*
+    Skip values in the iterator starting from the end.
+
+    Only supported for iterators on list-like tables.
+
+    Example: >lua
+
+     local it = vim.iter({ 1, 2, 3, 4, 5 }):skipback(2)
+     it:next()
+     -- 1
+     it:nextback()
+     -- 3
+<
+
+    Parameters: ~
+      • {n}  (number) Number of values to skip.
+
+    Return: ~
+        Iter
+
+Iter:slice({self}, {first}, {last})                             *Iter:slice()*
+    Slice an iterator, changing its start and end positions.
+
+    This is equivalent to :skip(first - 1):skipback(len - last + 1)
+
+    Only supported for iterators on list-like tables.
+
+    Parameters: ~
+      • {first}  (number)
+      • {last}   (number)
+
+    Return: ~
+        Iter
+
+Iter:totable({self})                                          *Iter:totable()*
+    Collect the iterator into a table.
+
+    The resulting table depends on the initial source in the iterator
+    pipeline. List-like tables and function iterators will be collected into a
+    list-like table. If multiple values are returned from the final stage in
+    the iterator pipeline, each value will be included in a table.
+
+    Examples: >lua
+
+     vim.iter(string.gmatch('100 20 50', 'd+')):map(tonumber):totable()
+     -- { 100, 20, 50 }
+
+     vim.iter({ 1, 2, 3 }):map(function(v) return v, 2 * v end):totable()
+     -- { { 1, 2 }, { 2, 4 }, { 3, 6 } }
+
+     vim.iter({ a = 1, b = 2, c = 3 }):filter(function(k, v) return v % 2 ~= 0 end):totable()
+     -- { { 'a', 1 }, { 'c', 3 } }
+<
+
+    The generated table is a list-like table with consecutive, numeric
+    indices. To create a map-like table with arbitrary keys, use
+    |Iter:fold()|.
+
+    Return: ~
+        (table)
+
+map({f}, {src}, {...})                                        *vim.iter.map()*
+    Map and filter a table or iterator.
+
+    This is a convenience function that performs: >lua
+
+     vim.iter(src):map(f):totable()
+<
+
+    Parameters: ~
+      • {f}    function(...):?any Map function. Accepts the current iterator
+               or table values as arguments and returns one or more new
+               values. Nil values are removed from the final table.
+      • {src}  table|function Table or iterator function to filter
+
+    Return: ~
+        (table)
+
+    See also: ~
+      • |Iter:map()|
+
+totable({f}, {...})                                       *vim.iter.totable()*
+    Collect an iterator into a table.
+
+    This is a convenience function that performs: >lua
+
+     vim.iter(f):totable()
+<
+
+    Parameters: ~
+      • {f}  (function) Iterator function
+
+    Return: ~
+        (table)
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

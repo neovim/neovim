@@ -8,7 +8,7 @@ describe('TextYankPost', function()
     clear()
 
     -- emulate the clipboard so system clipboard isn't affected
-    command('let &rtp = "test/functional/fixtures,".&rtp')
+    command('set rtp^=test/functional/fixtures')
 
     command('let g:count = 0')
     command('autocmd TextYankPost * let g:event = copy(v:event)')

@@ -3,7 +3,36 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local exec = helpers.exec
 local exec_lua = helpers.exec_lua
+local command = helpers.command
 local feed = helpers.feed
+
+-- oldtest: Test_window_cmd_ls0_split_scrolling()
+it('scrolling with laststatus=0 and :botright split', function()
+  clear('--cmd', 'set ruler')
+  local screen = Screen.new(40, 10)
+  screen:set_default_attr_ids({
+    [1] = {reverse = true},  -- StatusLineNC
+  })
+  screen:attach()
+  exec([[
+    set laststatus=0
+    call setline(1, range(1, 100))
+    normal! G
+  ]])
+  command('botright split')
+  screen:expect([[
+    97                                      |
+    98                                      |
+    99                                      |
+    100                                     |
+    {1:[No Name] [+]         100,1          Bot}|
+    97                                      |
+    98                                      |
+    99                                      |
+    ^100                                     |
+                          100,1         Bot |
+  ]])
+end)
 
 describe('splitkeep', function()
   local screen
@@ -116,6 +145,7 @@ describe('splitkeep', function()
   -- oldtest: Test_splitkeep_fold()
   it('does not scroll when window has closed folds', function()
     exec([[
+      set commentstring=/*%s*/
       set splitkeep=screen
       set foldmethod=marker
       set number
@@ -222,6 +252,31 @@ describe('splitkeep', function()
       ~                                                    |
       [No Name]                                            |
                                                            |
+    ]])
+  end)
+
+  -- oldtest: Test_splitkeep_skipcol()
+  it('skipcol is not reset unnecessarily and is copied to new window', function()
+    screen:try_resize(40, 12)
+    exec([[
+      set splitkeep=topline smoothscroll splitbelow scrolloff=0
+      call setline(1, 'with lots of text in one line '->repeat(6))
+      norm 2
+      wincmd s
+    ]])
+    screen:expect([[
+      <<<e line with lots of text in one line |
+      with lots of text in one line with lots |
+      of text in one line                     |
+      ~                                       |
+      [No Name] [+]                           |
+      <<<e line with lots of text in one line |
+      ^with lots of text in one line with lots |
+      of text in one line                     |
+      ~                                       |
+      ~                                       |
+      [No Name] [+]                           |
+                                              |
     ]])
   end)
 end)

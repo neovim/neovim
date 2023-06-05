@@ -52,22 +52,6 @@
 // Because `uv_os_getenv` requires allocating, we must manage a map to maintain
 // the behavior of `os_getenv`.
 static PMap(cstr_t) envmap = MAP_INIT;
-static uv_mutex_t mutex;
-
-void env_init(void)
-{
-  uv_mutex_init(&mutex);
-}
-
-void os_env_var_lock(void)
-{
-  uv_mutex_lock(&mutex);
-}
-
-void os_env_var_unlock(void)
-{
-  uv_mutex_unlock(&mutex);
-}
 
 /// Like getenv(), but returns NULL if the variable is empty.
 /// @see os_env_exists
@@ -79,7 +63,6 @@ const char *os_getenv(const char *name)
   if (name[0] == '\0') {
     return NULL;
   }
-  uv_mutex_lock(&mutex);
   int r = 0;
   if (pmap_has(cstr_t)(&envmap, name)
       && !!(e = (char *)pmap_get(cstr_t)(&envmap, name))) {
@@ -105,8 +88,6 @@ const char *os_getenv(const char *name)
   }
   pmap_put(cstr_t)(&envmap, xstrdup(name), e);
 end:
-  // Must do this before ELOG, log.c may call os_setenv.
-  uv_mutex_unlock(&mutex);
   if (r != 0 && r != UV_ENOENT && r != UV_UNKNOWN) {
     ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }
@@ -158,7 +139,6 @@ int os_setenv(const char *name, const char *value, int overwrite)
     return 0;
   }
 #endif
-  uv_mutex_lock(&mutex);
   int r;
 #ifdef MSWIN
   // libintl uses getenv() for LC_ALL/LANG/etc., so we must use _putenv_s().
@@ -173,8 +153,6 @@ int os_setenv(const char *name, const char *value, int overwrite)
   // Destroy the old map item. Do this AFTER uv_os_setenv(), because `value`
   // could be a previous os_getenv() result.
   pmap_del2(&envmap, name);
-  // Must do this before ELOG, log.c may call os_setenv.
-  uv_mutex_unlock(&mutex);
   if (r != 0) {
     ELOG("uv_os_setenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }
@@ -188,11 +166,8 @@ int os_unsetenv(const char *name)
   if (name[0] == '\0') {
     return -1;
   }
-  uv_mutex_lock(&mutex);
   pmap_del2(&envmap, name);
   int r = uv_os_unsetenv(name);
-  // Must do this before ELOG, log.c may call os_setenv.
-  uv_mutex_unlock(&mutex);
   if (r != 0) {
     ELOG("uv_os_unsetenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }
@@ -519,10 +494,8 @@ static char *os_homedir(void)
 {
   homedir_buf[0] = NUL;
   size_t homedir_size = MAXPATHL;
-  uv_mutex_lock(&mutex);
   // http://docs.libuv.org/en/v1.x/misc.html#c.uv_os_homedir
   int ret_value = uv_os_homedir(homedir_buf, &homedir_size);
-  uv_mutex_unlock(&mutex);
   if (ret_value == 0 && homedir_size < MAXPATHL) {
     return homedir_buf;
   }
@@ -603,7 +576,7 @@ void expand_env_esc(char *restrict srcp, char *restrict dst, int dstlen, bool es
     if (src[0] == '`' && src[1] == '=') {
       var = src;
       src += 2;
-      (void)skip_expr(&src);
+      (void)skip_expr(&src, NULL);
       if (*src == '`') {
         src++;
       }
@@ -845,7 +818,7 @@ const void *vim_env_iter(const char delim, const char *const val, const void *co
                          const char **const dir, size_t *const len)
   FUNC_ATTR_NONNULL_ARG(2, 4, 5) FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const char *varval = (const char *)iter;
+  const char *varval = iter;
   if (varval == NULL) {
     varval = val;
   }
@@ -876,7 +849,7 @@ const void *vim_env_iter_rev(const char delim, const char *const val, const void
                              const char **const dir, size_t *const len)
   FUNC_ATTR_NONNULL_ARG(2, 4, 5) FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const char *varend = (const char *)iter;
+  const char *varend = iter;
   if (varend == NULL) {
     varend = val + strlen(val) - 1;
   }
@@ -1060,7 +1033,7 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
   }
 
   if (buf != NULL && buf->b_help) {
-    const size_t dlen = xstrlcpy(dst, path_tail((char *)src), dstlen);
+    const size_t dlen = xstrlcpy(dst, path_tail(src), dstlen);
     return MIN(dlen, dstlen - 1);
   }
 
@@ -1098,7 +1071,7 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
   }
 
   if (!one) {
-    src = skipwhite((char *)src);
+    src = skipwhite(src);
   }
   char *dst_p = dst;
   while (*src && dstlen > 0) {
@@ -1111,7 +1084,7 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
     // er's home directory)).
     char *p = homedir;
     size_t len = dirlen;
-    for (;;) {
+    while (true) {
       if (len
           && path_fnamencmp(src, p, len) == 0
           && (vim_ispathsep(src[len])

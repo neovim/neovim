@@ -514,7 +514,7 @@ describe('v:lua', function()
       [5] = {bold = true, foreground = Screen.colors.SeaGreen4},
     })
     screen:attach()
-    meths.buf_set_option(0, 'omnifunc', 'v:lua.mymod.omni')
+    meths.set_option_value('omnifunc', 'v:lua.mymod.omni', {})
     feed('isome st<c-x><c-o>')
     screen:expect{grid=[[
       some stuff^                                                  |
@@ -526,7 +526,7 @@ describe('v:lua', function()
       {1:~                                                           }|
       {4:-- Omni completion (^O^N^P) }{5:match 1 of 3}                    |
     ]]}
-    meths.set_option('operatorfunc', 'v:lua.mymod.noisy')
+    meths.set_option_value('operatorfunc', 'v:lua.mymod.noisy', {})
     feed('<Esc>g@g@')
     eq("hey line", meths.get_current_line())
   end)
@@ -539,13 +539,13 @@ describe('v:lua', function()
   end)
 
   it('throw errors for invalid use', function()
-    eq('Vim(let):E15: Invalid expression: v:lua.func', pcall_err(command, "let g:Func = v:lua.func"))
-    eq('Vim(let):E15: Invalid expression: v:lua', pcall_err(command, "let g:Func = v:lua"))
-    eq("Vim(let):E15: Invalid expression: v:['lua']", pcall_err(command, "let g:Func = v:['lua']"))
+    eq([[Vim(let):E15: Invalid expression: "v:lua.func"]], pcall_err(command, "let g:Func = v:lua.func"))
+    eq([[Vim(let):E15: Invalid expression: "v:lua"]], pcall_err(command, "let g:Func = v:lua"))
+    eq([[Vim(let):E15: Invalid expression: "v:['lua']"]], pcall_err(command, "let g:Func = v:['lua']"))
 
-    eq("Vim:E15: Invalid expression: v:['lua'].foo()", pcall_err(eval, "v:['lua'].foo()"))
+    eq([[Vim:E15: Invalid expression: "v:['lua'].foo()"]], pcall_err(eval, "v:['lua'].foo()"))
     eq("Vim(call):E461: Illegal variable name: v:['lua']", pcall_err(command, "call v:['lua'].baar()"))
-    eq("Vim:E117: Unknown function: v:lua", pcall_err(eval, "v:lua()"))
+    eq("Vim:E1085: Not a callable type: v:lua", pcall_err(eval, "v:lua()"))
 
     eq("Vim(let):E46: Cannot change read-only variable \"v:['lua']\"", pcall_err(command, "let v:['lua'] = 'xx'"))
     eq("Vim(let):E46: Cannot change read-only variable \"v:lua\"", pcall_err(command, "let v:lua = 'xx'"))
@@ -553,7 +553,7 @@ describe('v:lua', function()
     eq("Vim:E107: Missing parentheses: v:lua.func", pcall_err(eval, "'bad'->v:lua.func"))
     eq("Vim:E274: No white space allowed before parenthesis", pcall_err(eval, "'bad'->v:lua.func ()"))
     eq("Vim:E107: Missing parentheses: v:lua", pcall_err(eval, "'bad'->v:lua"))
-    eq("Vim:E117: Unknown function: v:lua", pcall_err(eval, "'bad'->v:lua()"))
-    eq("Vim:E15: Invalid expression: v:lua.()", pcall_err(eval, "'bad'->v:lua.()"))
+    eq("Vim:E1085: Not a callable type: v:lua", pcall_err(eval, "'bad'->v:lua()"))
+    eq([[Vim:E15: Invalid expression: "v:lua.()"]], pcall_err(eval, "'bad'->v:lua.()"))
   end)
 end)

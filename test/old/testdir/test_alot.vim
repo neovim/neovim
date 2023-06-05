@@ -2,7 +2,6 @@
 " This makes testing go faster, since Vim doesn't need to restart.
 
 source test_backup.vim
-source test_behave.vim
 source test_compiler.vim
 source test_ex_equal.vim
 source test_ex_undo.vim
@@ -18,7 +17,6 @@ source test_global.vim
 source test_move.vim
 source test_put.vim
 source test_reltime.vim
-source test_scroll_opt.vim
 source test_searchpos.vim
 source test_set.vim
 source test_shift.vim

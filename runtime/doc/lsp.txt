@@ -517,7 +517,7 @@ groups are derived from the token's type and modifiers:
   • `@lsp.type.<type>.<ft>` for the type
   • `@lsp.mod.<mod>.<ft>` for each modifier
   • `@lsp.typemod.<type>.<mod>.<ft>` for each modifier
-Use |:Inspect| to view the higlights for a specific token. Use |:hi| or
+Use |:Inspect| to view the highlights for a specific token. Use |:hi| or
 |nvim_set_hl()| to change the appearance of semantic highlights: >vim
 
     hi @lsp.type.function guifg=Yellow        " function names are yellow
@@ -619,19 +619,54 @@ to the callback in the "data" table. The token fields are documented in
 Note: doing anything other than calling
 |vim.lsp.semantic_tokens.highlight_token()| is considered experimental.
 
-Also the following |User| |autocommand|s are provided:
+
+LspRequest                                                        *LspRequest*
+
+For each request sent to an LSP server, this event is triggered for every
+change to the request's status. The status can be one of `pending`,
+`complete`, or `cancel` and is sent as the {type} on the "data" table passed
+to the callback function.
+
+It triggers when the initial request is sent ({type} == `pending`) and when
+the LSP server responds ({type} == `complete`). If a cancelation is requested
+using `client.cancel_request(request_id)`, then this event will trigger with
+{type} == `cancel`.
+
+When used from Lua, the client ID, request ID, and request are sent in the
+"data" table. See {requests} in |vim.lsp.client| for details on the {request}
+value. If the request type is `complete`, the request will be deleted from the
+client's pending requests table immediately after calling the event's
+callbacks. Example: >lua
+
+    vim.api.nvim_create_autocmd('LspRequest', {
+      callback = function(args)
+        local bufnr = args.buf
+        local client_id = args.data.client_id
+        local request_id = args.data.request_id
+        local request = args.data.request
+        if request.type == 'pending' then
+          -- do something with pending requests
+          track_pending(client_id, bufnr, request_id, request)
+        elseif request.type == 'cancel' then
+          -- do something with pending cancel requests
+          track_canceling(client_id, bufnr, request_id, request)
+        elseif request.type == 'complete' then
+          -- do something with finished requests. this pending
+          -- request entry is about to be removed since it is complete
+          track_finish(client_id, bufnr, request_id, request)
+        end
+      end,
+    })
+<
+
+Also the following |User| |autocommand| is provided:
 
 LspProgressUpdate                                          *LspProgressUpdate*
     Upon receipt of a progress notification from the server. See
     |vim.lsp.util.get_progress_messages()|.
 
-LspRequest                                                        *LspRequest*
-    After a change to the active set of pending LSP requests. See {requests}
-    in |vim.lsp.client|.
-
 Example: >vim
     autocmd User LspProgressUpdate redrawstatus
-    autocmd User LspRequest redrawstatus
 <
 
 ==============================================================================
@@ -764,7 +799,9 @@ client()                                                      *vim.lsp.client*
         server. Entries are key-value pairs with the key being the request ID
         while the value is a table with `type`, `bufnr`, and `method`
         key-value pairs. `type` is either "pending" for an active request, or
-        "cancel" for a cancel request.
+        "cancel" for a cancel request. It will be "complete" ephemerally while
+        executing |LspRequest| autocmds when replies are received from the
+        server.
       • {config} (table): copy of the table that was passed by the user to
         |vim.lsp.start_client()|.
       • {server_capabilities} (table): Response from the server sent on
@@ -800,8 +837,8 @@ formatexpr({opts})                                      *vim.lsp.formatexpr()*
 
     Currently only supports a single client. This can be set via `setlocal
     formatexpr=v:lua.vim.lsp.formatexpr()` but will typically or in
-    `on_attach` via `vim.api.nvim_buf_set_option(bufnr, 'formatexpr',
-    'v:lua.vim.lsp.formatexpr(#{timeout_ms:250})')`.
+    `on_attach` via `vim.bo[bufnr].formatexpr =
+    'v:lua.vim.lsp.formatexpr(#{timeout_ms:250})'`.
 
     Parameters: ~
       • {opts}  (table) options for customizing the formatting expression
@@ -942,20 +979,20 @@ start_client({config})                                *vim.lsp.start_client()*
 
     Parameters: ~
       • {config}  (table) Configuration for the server:
-                  • cmd: (table|string|fun(dispatchers: table):table) command
-                    string or list treated like |jobstart()|. The command must
-                    launch the language server process. `cmd` can also be a
-                    function that creates an RPC client. The function receives
-                    a dispatchers table and must return a table with the
-                    functions `request`, `notify`, `is_closing` and
+                  • cmd: (string[]|fun(dispatchers: table):table) command a
+                    list of strings treated like |jobstart()|. The command
+                    must launch the language server process. `cmd` can also be
+                    a function that creates an RPC client. The function
+                    receives a dispatchers table and must return a table with
+                    the functions `request`, `notify`, `is_closing` and
                     `terminate` See |vim.lsp.rpc.request()| and
                     |vim.lsp.rpc.notify()| For TCP there is a built-in rpc
                     client factory: |vim.lsp.rpc.connect()|
                   • cmd_cwd: (string, default=|getcwd()|) Directory to launch
                     the `cmd` process. Not related to `root_dir`.
                   • cmd_env: (table) Environment flags to pass to the LSP on
-                    spawn. Must be specified using a map-like table.
-                    Non-string values are coerced to string. Example: >
+                    spawn. Must be specified using a table. Non-string values
+                    are coerced to string. Example: >
 
                        { PORT = 8080; HOST = "0.0.0.0"; }
 <
@@ -1298,13 +1335,6 @@ rename({new_name}, {options})                           *vim.lsp.buf.rename()*
                       Clients matching the predicate are included.
                     • name (string|nil): Restrict clients used for rename to
                       ones where client.name matches this field.
-
-server_ready()                                    *vim.lsp.buf.server_ready()*
-    Checks whether the language servers attached to the current buffer are
-    ready.
-
-    Return: ~
-        `true` if server responds.
 
 signature_help()                                *vim.lsp.buf.signature_help()*
     Displays signature information about the symbol under the cursor in a
@@ -2128,27 +2158,6 @@ start({cmd}, {cmd_args}, {dispatchers}, {extra_spawn_params})
         • `request()` |vim.lsp.rpc.request()|
         • `is_closing()` returns a boolean indicating if the RPC is closing.
         • `terminate()` terminates the RPC client.
-
-
-==============================================================================
-Lua module: vim.lsp.sync                                            *lsp-sync*
-
-                                                 *vim.lsp.sync.compute_diff()*
-compute_diff({___MissingCloseParenHere___})
-    Returns the range table for the difference between prev and curr lines
-
-    Parameters: ~
-      • {prev_lines}       (table) list of lines
-      • {curr_lines}       (table) list of lines
-      • {firstline}        (integer) line to begin search for first difference
-      • {lastline}         (integer) line to begin search in old_lines for
-                           last difference
-      • {new_lastline}     (integer) line to begin search in new_lines for
-                           last difference
-      • {offset_encoding}  (string) encoding requested by language server
-
-    Return: ~
-        (table) TextDocumentContentChangeEvent see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
 
 
 ==============================================================================

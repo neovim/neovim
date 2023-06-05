@@ -28,9 +28,11 @@ augroup filetypeplugin
       " When there is a dot it is used to separate filetype names.  Thus for
       " "aaa.bbb" load "aaa" and then "bbb".
       for name in split(s, '\.')
-        exe 'runtime! ftplugin/' . name . '.vim ftplugin/' . name . '_*.vim ftplugin/' . name . '/*.vim'
-        " Load lua ftplugins
-        exe printf('runtime! ftplugin/%s.lua ftplugin/%s_*.lua ftplugin/%s/*.lua', name, name, name)
+        " Load Lua ftplugins after Vim ftplugins _per directory_
+        " TODO(clason): use nvim__get_runtime when supports globs and modeline
+        exe printf('runtime! ftplugin/%s.vim ftplugin/%s.lua', name, name)
+        exe printf('runtime! ftplugin/%s_*.vim ftplugin/%s_*.lua', name, name)
+        exe printf('runtime! ftplugin/%s/*.vim ftplugin/%s/*.lua', name, name)
       endfor
     endif
   endfunc

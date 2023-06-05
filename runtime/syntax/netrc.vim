@@ -2,6 +2,7 @@
 " Language:             netrc(5) configuration file
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
 " Latest Revision:      2010-01-03
+" Last Change:		2023 Feb 27 by Keith Smiley
 
 if exists("b:current_syntax")
   finish
@@ -35,6 +36,8 @@ syn keyword netrcSpecial    contained anonymous
 syn match   netrcInit       contained '\<init$'
                           \ nextgroup=netrcMacro skipwhite skipnl
 
+syn match   netrcComment    '#.*$'
+
 syn sync fromstart
 
 hi def link netrcKeyword    Keyword
@@ -45,6 +48,7 @@ hi def link netrcPassword   String
 hi def link netrcMacroName  String
 hi def link netrcSpecial    Special
 hi def link netrcInit       Special
+hi def link netrcComment    Comment
 
 let b:current_syntax = "netrc"
 

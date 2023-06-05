@@ -1,5 +1,8 @@
 local api = vim.api
 
+---@class TSPlaygroundModule
+local M = {}
+
 ---@class TSPlayground
 ---@field ns integer API namespace
 ---@field opts table Options table with the following keys:
@@ -144,7 +147,7 @@ local decor_ns = api.nvim_create_namespace('ts.playground')
 ---@param end_lnum integer
 ---@param end_col integer
 ---@return string
-local function get_range_str(lnum, col, end_col, end_lnum)
+local function get_range_str(lnum, col, end_lnum, end_col)
   if lnum == end_lnum then
     return string.format('[%d:%d - %d]', lnum + 1, col + 1, end_col)
   end
@@ -212,4 +215,225 @@ function TSPlayground:iter()
   return ipairs(self.opts.anon and self.nodes or self.named)
 end
 
-return TSPlayground
+--- @class InspectTreeOpts
+--- @field lang string? The language of the source buffer. If omitted, the
+---                     filetype of the source buffer is used.
+--- @field bufnr integer? Buffer to draw the tree into. If omitted, a new
+---                       buffer is created.
+--- @field winid integer? Window id to display the tree buffer in. If omitted,
+---                       a new window is created with {command}.
+--- @field command string? Vimscript command to create the window. Default
+---                       value is "60vnew". Only used when {winid} is nil.
+--- @field title (string|fun(bufnr:integer):string|nil) Title of the window. If a
+---                       function, it accepts the buffer number of the source
+---                       buffer as its only argument and should return a string.
+
+--- @param opts InspectTreeOpts
+function M.inspect_tree(opts)
+  vim.validate({
+    opts = { opts, 't', true },
+  })
+
+  opts = opts or {}
+
+  local buf = api.nvim_get_current_buf()
+  local win = api.nvim_get_current_win()
+  local pg = assert(TSPlayground:new(buf, opts.lang))
+
+  -- Close any existing playground window
+  if vim.b[buf].playground then
+    local w = vim.b[buf].playground
+    if api.nvim_win_is_valid(w) then
+      api.nvim_win_close(w, true)
+    end
+  end
+
+  local w = opts.winid
+  if not w then
+    vim.cmd(opts.command or '60vnew')
+    w = api.nvim_get_current_win()
+  end
+
+  local b = opts.bufnr
+  if b then
+    api.nvim_win_set_buf(w, b)
+  else
+    b = api.nvim_win_get_buf(w)
+  end
+
+  vim.b[buf].playground = w
+
+  vim.wo[w].scrolloff = 5
+  vim.wo[w].wrap = false
+  vim.wo[w].foldmethod = 'manual' -- disable folding
+  vim.bo[b].buflisted = false
+  vim.bo[b].buftype = 'nofile'
+  vim.bo[b].bufhidden = 'wipe'
+  vim.b[b].disable_query_linter = true
+  vim.bo[b].filetype = 'query'
+
+  local title --- @type string?
+  local opts_title = opts.title
+  if not opts_title then
+    local bufname = api.nvim_buf_get_name(buf)
+    title = string.format('Syntax tree for %s', vim.fn.fnamemodify(bufname, ':.'))
+  elseif type(opts_title) == 'function' then
+    title = opts_title(buf)
+  end
+
+  assert(type(title) == 'string', 'Window title must be a string')
+  api.nvim_buf_set_name(b, title)
+
+  pg:draw(b)
+
+  api.nvim_buf_clear_namespace(buf, pg.ns, 0, -1)
+  api.nvim_buf_set_keymap(b, 'n', '<CR>', '', {
+    desc = 'Jump to the node under the cursor in the source buffer',
+    callback = function()
+      local row = api.nvim_win_get_cursor(w)[1]
+      local pos = pg:get(row)
+      api.nvim_set_current_win(win)
+      api.nvim_win_set_cursor(win, { pos.lnum + 1, pos.col })
+    end,
+  })
+  api.nvim_buf_set_keymap(b, 'n', 'a', '', {
+    desc = 'Toggle anonymous nodes',
+    callback = function()
+      local row, col = unpack(api.nvim_win_get_cursor(w))
+      local curnode = pg:get(row)
+      while curnode and not curnode.named do
+        row = row - 1
+        curnode = pg:get(row)
+      end
+
+      pg.opts.anon = not pg.opts.anon
+      pg:draw(b)
+
+      if not curnode then
+        return
+      end
+
+      local id = curnode.id
+      for i, node in pg:iter() do
+        if node.id == id then
+          api.nvim_win_set_cursor(w, { i, col })
+          break
+        end
+      end
+    end,
+  })
+  api.nvim_buf_set_keymap(b, 'n', 'I', '', {
+    desc = 'Toggle language display',
+    callback = function()
+      pg.opts.lang = not pg.opts.lang
+      pg:draw(b)
+    end,
+  })
+
+  local group = api.nvim_create_augroup('treesitter/playground', {})
+
+  api.nvim_create_autocmd('CursorMoved', {
+    group = group,
+    buffer = b,
+    callback = function()
+      api.nvim_buf_clear_namespace(buf, pg.ns, 0, -1)
+      local row = api.nvim_win_get_cursor(w)[1]
+      local pos = pg:get(row)
+      api.nvim_buf_set_extmark(buf, pg.ns, pos.lnum, pos.col, {
+        end_row = pos.end_lnum,
+        end_col = math.max(0, pos.end_col),
+        hl_group = 'Visual',
+      })
+
+      local topline, botline = vim.fn.line('w0', win), vim.fn.line('w$', win)
+
+      -- Move the cursor if highlighted range is completely out of view
+      if pos.lnum < topline and pos.end_lnum < topline then
+        api.nvim_win_set_cursor(win, { pos.end_lnum + 1, 0 })
+      elseif pos.lnum > botline and pos.end_lnum > botline then
+        api.nvim_win_set_cursor(win, { pos.lnum + 1, 0 })
+      end
+    end,
+  })
+
+  api.nvim_create_autocmd('CursorMoved', {
+    group = group,
+    buffer = buf,
+    callback = function()
+      if not api.nvim_buf_is_loaded(b) then
+        return true
+      end
+
+      api.nvim_buf_clear_namespace(b, pg.ns, 0, -1)
+
+      local cursor_node = vim.treesitter.get_node({
+        bufnr = buf,
+        lang = opts.lang,
+        ignore_injections = false,
+      })
+      if not cursor_node then
+        return
+      end
+
+      local cursor_node_id = cursor_node:id()
+      for i, v in pg:iter() do
+        if v.id == cursor_node_id then
+          local start = v.depth
+          local end_col = start + #v.text
+          api.nvim_buf_set_extmark(b, pg.ns, i - 1, start, {
+            end_col = end_col,
+            hl_group = 'Visual',
+          })
+          api.nvim_win_set_cursor(w, { i, 0 })
+          break
+        end
+      end
+    end,
+  })
+
+  api.nvim_create_autocmd({ 'TextChanged', 'InsertLeave' }, {
+    group = group,
+    buffer = buf,
+    callback = function()
+      if not api.nvim_buf_is_loaded(b) then
+        return true
+      end
+
+      pg = assert(TSPlayground:new(buf, opts.lang))
+      pg:draw(b)
+    end,
+  })
+
+  api.nvim_create_autocmd('BufLeave', {
+    group = group,
+    buffer = b,
+    callback = function()
+      api.nvim_buf_clear_namespace(buf, pg.ns, 0, -1)
+    end,
+  })
+
+  api.nvim_create_autocmd('BufLeave', {
+    group = group,
+    buffer = buf,
+    callback = function()
+      if not api.nvim_buf_is_loaded(b) then
+        return true
+      end
+
+      api.nvim_buf_clear_namespace(b, pg.ns, 0, -1)
+    end,
+  })
+
+  api.nvim_create_autocmd('BufHidden', {
+    group = group,
+    buffer = buf,
+    once = true,
+    callback = function()
+      if api.nvim_win_is_valid(w) then
+        api.nvim_win_close(w, true)
+      end
+    end,
+  })
+end
+
+return M

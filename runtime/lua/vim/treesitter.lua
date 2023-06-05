@@ -1,4 +1,4 @@
-local a = vim.api
+local api = vim.api
 local LanguageTree = require('vim.treesitter.languagetree')
 local Range = require('vim.treesitter._range')
 
@@ -80,7 +80,7 @@ function M._create_parser(bufnr, lang, opts)
 
   local source = self:source() --[[@as integer]]
 
-  a.nvim_buf_attach(
+  api.nvim_buf_attach(
     source,
     false,
     { on_bytes = bytes_cb, on_detach = detach_cb, on_reload = reload_cb, preview = true }
@@ -109,7 +109,7 @@ function M.get_parser(bufnr, lang, opts)
   opts = opts or {}
 
   if bufnr == nil or bufnr == 0 then
-    bufnr = a.nvim_get_current_buf()
+    bufnr = api.nvim_get_current_buf()
   end
 
   if not valid_lang(lang) then
@@ -134,16 +134,6 @@ function M.get_parser(bufnr, lang, opts)
   parsers[bufnr]:register_cbs(opts.buf_attach_cbs)
 
   return parsers[bufnr]
-end
-
----@package
----@param bufnr (integer|nil) Buffer number
----@return boolean
-function M._has_parser(bufnr)
-  if bufnr == nil or bufnr == 0 then
-    bufnr = a.nvim_get_current_buf()
-  end
-  return parsers[bufnr] ~= nil
 end
 
 --- Returns a string parser
@@ -229,7 +219,7 @@ local function buf_range_get_text(buf, range)
     end_col = -1
     end_row = end_row - 1
   end
-  local lines = a.nvim_buf_get_text(buf, start_row, start_col, end_row, end_col, {})
+  local lines = api.nvim_buf_get_text(buf, start_row, start_col, end_row, end_col, {})
   return table.concat(lines, '\n')
 end
 
@@ -294,7 +284,7 @@ end
 ---@return table[] List of captures `{ capture = "name", metadata = { ... } }`
 function M.get_captures_at_pos(bufnr, row, col)
   if bufnr == 0 then
-    bufnr = a.nvim_get_current_buf()
+    bufnr = api.nvim_get_current_buf()
   end
   local buf_highlighter = M.highlighter.active[bufnr]
 
@@ -345,8 +335,8 @@ end
 ---@return string[] List of capture names
 function M.get_captures_at_cursor(winnr)
   winnr = winnr or 0
-  local bufnr = a.nvim_win_get_buf(winnr)
-  local cursor = a.nvim_win_get_cursor(winnr)
+  local bufnr = api.nvim_win_get_buf(winnr)
+  local cursor = api.nvim_win_get_cursor(winnr)
 
   local data = M.get_captures_at_pos(bufnr, cursor[1] - 1, cursor[2])
 
@@ -374,7 +364,7 @@ function M.get_node(opts)
   local bufnr = opts.bufnr
 
   if not bufnr or bufnr == 0 then
-    bufnr = a.nvim_get_current_buf()
+    bufnr = api.nvim_get_current_buf()
   end
 
   local row, col
@@ -383,10 +373,10 @@ function M.get_node(opts)
     row, col = opts.pos[1], opts.pos[2]
   else
     assert(
-      bufnr == a.nvim_get_current_buf(),
+      bufnr == api.nvim_get_current_buf(),
       'Position must be explicitly provided when not using the current buffer'
     )
-    local pos = a.nvim_win_get_cursor(0)
+    local pos = api.nvim_win_get_cursor(0)
     -- Subtract one to account for 1-based row indexing in nvim_win_get_cursor
     row, col = pos[1] - 1, pos[2]
   end
@@ -417,7 +407,7 @@ end
 function M.get_node_at_pos(bufnr, row, col, opts)
   vim.deprecate('vim.treesitter.get_node_at_pos()', 'vim.treesitter.get_node()', '0.10')
   if bufnr == 0 then
-    bufnr = a.nvim_get_current_buf()
+    bufnr = api.nvim_get_current_buf()
   end
   local ts_range = { row, col, row, col }
 
@@ -440,7 +430,7 @@ end
 function M.get_node_at_cursor(winnr)
   vim.deprecate('vim.treesitter.get_node_at_cursor()', 'vim.treesitter.get_node():type()', '0.10')
   winnr = winnr or 0
-  local bufnr = a.nvim_win_get_buf(winnr)
+  local bufnr = api.nvim_win_get_buf(winnr)
 
   return M.get_node({ bufnr = bufnr, ignore_injections = false }):type()
 end
@@ -465,7 +455,7 @@ end
 ---@param bufnr (integer|nil) Buffer to be highlighted (default: current buffer)
 ---@param lang (string|nil) Language of the parser (default: buffer filetype)
 function M.start(bufnr, lang)
-  bufnr = bufnr or a.nvim_get_current_buf()
+  bufnr = bufnr or api.nvim_get_current_buf()
   local parser = M.get_parser(bufnr, lang)
   M.highlighter.new(parser)
 end
@@ -474,7 +464,7 @@ end
 ---
 ---@param bufnr (integer|nil) Buffer to stop highlighting (default: current buffer)
 function M.stop(bufnr)
-  bufnr = bufnr or a.nvim_get_current_buf()
+  bufnr = bufnr or api.nvim_get_current_buf()
 
   if M.highlighter.active[bufnr] then
     M.highlighter.active[bufnr]:destroy()
@@ -502,208 +492,8 @@ end
 ---                        function, it accepts the buffer number of the source buffer as its only
 ---                        argument and should return a string.
 function M.inspect_tree(opts)
-  vim.validate({
-    opts = { opts, 't', true },
-  })
-
-  opts = opts or {}
-
-  local Playground = require('vim.treesitter.playground')
-  local buf = a.nvim_get_current_buf()
-  local win = a.nvim_get_current_win()
-  local pg = assert(Playground:new(buf, opts.lang))
-
-  -- Close any existing playground window
-  if vim.b[buf].playground then
-    local w = vim.b[buf].playground
-    if a.nvim_win_is_valid(w) then
-      a.nvim_win_close(w, true)
-    end
-  end
-
-  local w = opts.winid
-  if not w then
-    vim.cmd(opts.command or '60vnew')
-    w = a.nvim_get_current_win()
-  end
-
-  local b = opts.bufnr
-  if b then
-    a.nvim_win_set_buf(w, b)
-  else
-    b = a.nvim_win_get_buf(w)
-  end
-
-  vim.b[buf].playground = w
-
-  vim.wo[w].scrolloff = 5
-  vim.wo[w].wrap = false
-  vim.bo[b].buflisted = false
-  vim.bo[b].buftype = 'nofile'
-  vim.bo[b].bufhidden = 'wipe'
-  vim.bo[b].filetype = 'query'
-
-  local title = opts.title
-  if not title then
-    local bufname = a.nvim_buf_get_name(buf)
-    title = string.format('Syntax tree for %s', vim.fn.fnamemodify(bufname, ':.'))
-  elseif type(title) == 'function' then
-    title = title(buf)
-  end
-
-  assert(type(title) == 'string', 'Window title must be a string')
-  a.nvim_buf_set_name(b, title)
-
-  pg:draw(b)
-
-  a.nvim_buf_clear_namespace(buf, pg.ns, 0, -1)
-  a.nvim_buf_set_keymap(b, 'n', '<CR>', '', {
-    desc = 'Jump to the node under the cursor in the source buffer',
-    callback = function()
-      local row = a.nvim_win_get_cursor(w)[1]
-      local pos = pg:get(row)
-      a.nvim_set_current_win(win)
-      a.nvim_win_set_cursor(win, { pos.lnum + 1, pos.col })
-    end,
-  })
-  a.nvim_buf_set_keymap(b, 'n', 'a', '', {
-    desc = 'Toggle anonymous nodes',
-    callback = function()
-      local row, col = unpack(a.nvim_win_get_cursor(w))
-      local curnode = pg:get(row)
-      while curnode and not curnode.named do
-        row = row - 1
-        curnode = pg:get(row)
-      end
-
-      pg.opts.anon = not pg.opts.anon
-      pg:draw(b)
-
-      if not curnode then
-        return
-      end
-
-      local id = curnode.id
-      for i, node in pg:iter() do
-        if node.id == id then
-          a.nvim_win_set_cursor(w, { i, col })
-          break
-        end
-      end
-    end,
-  })
-  a.nvim_buf_set_keymap(b, 'n', 'I', '', {
-    desc = 'Toggle language display',
-    callback = function()
-      pg.opts.lang = not pg.opts.lang
-      pg:draw(b)
-    end,
-  })
-
-  local group = a.nvim_create_augroup('treesitter/playground', {})
-
-  a.nvim_create_autocmd('CursorMoved', {
-    group = group,
-    buffer = b,
-    callback = function()
-      a.nvim_buf_clear_namespace(buf, pg.ns, 0, -1)
-      local row = a.nvim_win_get_cursor(w)[1]
-      local pos = pg:get(row)
-      a.nvim_buf_set_extmark(buf, pg.ns, pos.lnum, pos.col, {
-        end_row = pos.end_lnum,
-        end_col = math.max(0, pos.end_col),
-        hl_group = 'Visual',
-      })
-
-      local topline, botline = vim.fn.line('w0', win), vim.fn.line('w$', win)
-
-      -- Move the cursor if highlighted range is completely out of view
-      if pos.lnum < topline and pos.end_lnum < topline then
-        a.nvim_win_set_cursor(win, { pos.end_lnum + 1, 0 })
-      elseif pos.lnum > botline and pos.end_lnum > botline then
-        a.nvim_win_set_cursor(win, { pos.lnum + 1, 0 })
-      end
-    end,
-  })
-
-  a.nvim_create_autocmd('CursorMoved', {
-    group = group,
-    buffer = buf,
-    callback = function()
-      if not a.nvim_buf_is_loaded(b) then
-        return true
-      end
-
-      a.nvim_buf_clear_namespace(b, pg.ns, 0, -1)
-
-      local cursor_node = M.get_node({
-        bufnr = buf,
-        lang = opts.lang,
-        ignore_injections = false,
-      })
-      if not cursor_node then
-        return
-      end
-
-      local cursor_node_id = cursor_node:id()
-      for i, v in pg:iter() do
-        if v.id == cursor_node_id then
-          local start = v.depth
-          local end_col = start + #v.text
-          a.nvim_buf_set_extmark(b, pg.ns, i - 1, start, {
-            end_col = end_col,
-            hl_group = 'Visual',
-          })
-          a.nvim_win_set_cursor(w, { i, 0 })
-          break
-        end
-      end
-    end,
-  })
-
-  a.nvim_create_autocmd({ 'TextChanged', 'InsertLeave' }, {
-    group = group,
-    buffer = buf,
-    callback = function()
-      if not a.nvim_buf_is_loaded(b) then
-        return true
-      end
-
-      pg = assert(Playground:new(buf, opts.lang))
-      pg:draw(b)
-    end,
-  })
-
-  a.nvim_create_autocmd('BufLeave', {
-    group = group,
-    buffer = b,
-    callback = function()
-      a.nvim_buf_clear_namespace(buf, pg.ns, 0, -1)
-    end,
-  })
-
-  a.nvim_create_autocmd('BufLeave', {
-    group = group,
-    buffer = buf,
-    callback = function()
-      if not a.nvim_buf_is_loaded(b) then
-        return true
-      end
-
-      a.nvim_buf_clear_namespace(b, pg.ns, 0, -1)
-    end,
-  })
-
-  a.nvim_create_autocmd('BufHidden', {
-    group = group,
-    buffer = buf,
-    once = true,
-    callback = function()
-      if a.nvim_win_is_valid(w) then
-        a.nvim_win_close(w, true)
-      end
-    end,
-  })
+  ---@cast opts InspectTreeOpts
+  require('vim.treesitter.playground').inspect_tree(opts)
 end
 
 --- Returns the fold level for {lnum} in the current buffer. Can be set directly to 'foldexpr':

@@ -134,4 +134,3 @@ return {
   uri_to_fname = uri_to_fname,
   uri_to_bufnr = uri_to_bufnr,
 }
--- vim:sw=2 ts=2 et

@@ -2,7 +2,7 @@
 " Language:	R Documentation (Help), *.Rd
 " Author:	Jakson Alves de Aquino <jalvesaq@gmail.com>
 " Homepage:     https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	Feb 25, 2023
+" Last Change:	Mon Feb 27, 2023  07:01PM
 
 
 " Only load this indent file when no other was loaded.

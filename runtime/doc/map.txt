@@ -290,7 +290,7 @@ Therefore the following is blocked for <expr> mappings:
 - Moving the cursor is allowed, but it is restored afterwards.
 - If the cmdline is changed, the old text and cursor position are restored.
 If you want the mapping to do any of these let the returned characters do
-that. (Or use a |<Cmd>| mapping instead.)
+that, or use a |<Cmd>| mapping instead.
 
 You can use getchar(), it consumes typeahead if there is any. E.g., if you
 have these mappings: >
@@ -324,20 +324,22 @@ be seen as a special key.
 
 						*<Cmd>* *:map-cmd*
 The <Cmd> pseudokey begins a "command mapping", which executes the command
-directly (without changing modes).  Where you might use ":...<CR>" in the
+directly without changing modes.  Where you might use ":...<CR>" in the
 {rhs} of a mapping, you can instead use "<Cmd>...<CR>".
 Example: >
-	noremap x <Cmd>echo mode(1)<cr>
+	noremap x <Cmd>echo mode(1)<CR>
 <
-This is more flexible than `:<C-U>` in visual and operator-pending mode, or
-`<C-O>:` in insert-mode, because the commands are executed directly in the
-current mode (instead of always going to normal-mode).  Visual-mode is
+This is more flexible than `:<C-U>` in Visual and Operator-pending mode, or
+`<C-O>:` in Insert mode, because the commands are executed directly in the
+current mode, instead of always going to Normal mode.  Visual mode is
 preserved, so tricks with |gv| are not needed.  Commands can be invoked
-directly in cmdline-mode (which would otherwise require timer hacks).
+directly in Command-line mode (which would otherwise require timer hacks).
+Example of using <Cmd> halfway Insert mode: >
+	nnoremap <F3> aText <Cmd>echo mode(1)<CR> Added<Esc>
 
 Unlike <expr> mappings, there are no special restrictions on the <Cmd>
 command: it is executed as if an (unrestricted) |autocommand| was invoked
-or an async event event was processed.
+or an async event was processed.
 
 Note:
 - Because <Cmd> avoids mode-changes (unlike ":") it does not trigger
@@ -350,7 +352,7 @@ Note:
 - In Visual mode  you can use `line('v')` and `col('v')` to get one end of the
   Visual area, the cursor is at the other end.
 
-							*E5520*
+							*E1255* *E1136*
 <Cmd> commands must terminate, that is, they must be followed by <CR> in the
 {rhs} of the mapping definition.  |Command-line| mode is never entered.
 
@@ -540,28 +542,10 @@ See |:verbose-cmd| for more information.
 
 1.5 MAPPING SPECIAL KEYS				*:map-special-keys*
 
-There are two ways to map a special key:
-1. The Vi-compatible method: Map the key code.  Often this is a sequence that
-   starts with <Esc>.  To enter a mapping like this you type ":map " and then
-   you have to type CTRL-V before hitting the function key.  Note that when
-   the key code for the key is in the |terminfo| entry, it will automatically
-   be translated into the internal code and become the second way of mapping.
-2. The second method is to use the internal code for the function key.  To
-   enter such a mapping type CTRL-K and then hit the function key, or use
-   the form "#1", "#2", .. "#9", "#0", "<Up>", "<S-Down>", "<S-F7>", etc.
-   (see table of keys |key-notation|, all keys from <Up> can be used).  The
-   first ten function keys can be defined in two ways: Just the number, like
-   "#2", and with "<F>", like "<F2>".  Both stand for function key 2.  "#0"
-   refers to function key 10.
-
-DETAIL: Vim first checks if a sequence from the keyboard is mapped.  If it
-isn't the terminal key codes are tried.  If a terminal code is found it is
-replaced with the internal code.  Then the check for a mapping is done again
-(so you can map an internal code to something else).  What is written into the
-script file depends on what is recognized. If the terminal key code was
-recognized as a mapping the key code itself is written to the script file.  If
-it was recognized as a terminal code the internal code is written to the
-script file.
+To map a function key, use the internal code for it.  To enter such a mapping
+type CTRL-K and then hit the function key, or use the form "<F2>", "<F10>",
+"<Up>", "<S-Down>", "<S-F7>", etc. (see table of keys |key-notation|, all keys
+from <Up> can be used).
 
 
 1.6 SPECIAL CHARACTERS					*:map-special-chars*
@@ -654,6 +638,7 @@ not to be matched with any key sequence.  This is useful in plugins
 							*<MouseMove>*
 The special key name "<MouseMove>" can be used to handle mouse movement.  It
 needs to be enabled with 'mousemoveevent'.
+The |getmousepos()| function can be used to obtain the mouse position.
 
 							*<Char>* *<Char->*
 To map a character by its decimal, octal or hexadecimal number the <Char>
@@ -1340,6 +1325,11 @@ can have arguments, or have a range specified.  Arguments are subject to
 completion as filenames, buffers, etc.  Exactly how this works depends upon the
 command's attributes, which are specified when the command is defined.
 
+When defining a user command in a script, it will be able to call functions
+local to the script and use mappings local to the script.  When the user
+invokes the user command, it will run in the context of the script it was
+defined in.  This matters if |<SID>| is used in a command.
+
 There are a number of attributes, split into four categories: argument
 handling, completion behavior, range handling, and special cases.  The
 attributes are described below, by category.
@@ -1740,7 +1730,11 @@ remains unmodified.  Also see |f-args-example| below.  Overview:
 	XX a\\\ b	   'a\ b'
 	XX a\\\\b	   'a\\b'
 	XX a\\\\ b	   'a\\', 'b'
+	XX		   [nothing]
 
+
+Note that if the "no arguments" situation is to be handled, you have to make
+sure that the function can be called without arguments.
 
 Examples for user commands: >
 
@@ -1788,9 +1782,5 @@ errors and the "update" command to write modified buffers): >
 This will invoke: >
 	:call Allargs("%s/foo/bar/ge|update")
 <
-When defining a user command in a script, it will be able to call functions
-local to the script and use mappings local to the script.  When the user
-invokes the user command, it will run in the context of the script it was
-defined in.  This matters if |<SID>| is used in a command.
 
  vim:tw=78:ts=8:noet:ft=help:norl:

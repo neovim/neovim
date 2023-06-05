@@ -8,7 +8,7 @@ describe('glob2regpat()', function()
   before_each(clear)
 
   it('handles invalid input', function()
-    eq('Vim(call):E806: using Float as a String',
+    eq('Vim(call):E806: Using a Float as a String',
        exc_exec('call glob2regpat(1.33)'))
   end)
   it('returns ^$ for empty input', function()

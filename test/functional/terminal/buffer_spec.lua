@@ -197,7 +197,7 @@ describe(':terminal buffer', function()
 
   it('handles loss of focus gracefully', function()
     -- Change the statusline to avoid printing the file name, which varies.
-    nvim('set_option', 'statusline', '==========')
+    nvim('set_option_value', 'statusline', '==========', {})
     feed_command('set laststatus=0')
 
     -- Save the buffer number of the terminal for later testing.
@@ -281,6 +281,7 @@ describe(':terminal buffer', function()
   end)
 
   it('requires bang (!) to close a running job #15402', function()
+    skip(is_os('win'), "Test freezes the CI and makes it time out")
     eq('Vim(wqall):E948: Job still running', exc_exec('wqall'))
     for _, cmd in ipairs({ 'bdelete', '%bdelete', 'bwipeout', 'bunload' }) do
       matches('^Vim%('..cmd:gsub('%%', '')..'%):E89: term://.*tty%-test.* will be killed %(add %! to override%)$',

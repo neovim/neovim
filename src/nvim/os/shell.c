@@ -144,7 +144,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
 
   bool is_fish_shell =
 #if defined(UNIX)
-    strncmp((char *)invocation_path_tail(p_sh, NULL), "fish", 4) == 0;
+    strncmp(invocation_path_tail(p_sh, NULL), "fish", 4) == 0;
 #else
     false;
 #endif
@@ -876,7 +876,7 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
     // Failed, probably 'shell' is not executable.
     if (!silent) {
       msg_puts(_("\nshell failed to start: "));
-      msg_outtrans((char *)os_strerror(status));
+      msg_outtrans(os_strerror(status));
       msg_puts(": ");
       msg_outtrans(prog);
       msg_putchar('\n');
@@ -1180,7 +1180,7 @@ static size_t tokenize(const char *const str, char **const argv)
     }
 
     argc++;
-    p = (const char *)skipwhite((p + len));
+    p = skipwhite((p + len));
   }
 
   return argc;
@@ -1225,7 +1225,7 @@ static void read_input(DynamicBuffer *buf)
   linenr_T lnum = curbuf->b_op_start.lnum;
   char *lp = ml_get(lnum);
 
-  for (;;) {
+  while (true) {
     l = strlen(lp + written);
     if (l == 0) {
       len = 0;

@@ -621,6 +621,7 @@ String manipulation:					*string-functions*
 	strlen()		length of a string in bytes
 	strcharlen()		length of a string in characters
 	strchars()		number of characters in a string
+	strutf16len()		number of UTF-16 code units in a string
 	strwidth()		size of string when displayed
 	strdisplaywidth()	size of string when displayed, deals with tabs
 	setcellwidths()		set character cell width overrides
@@ -629,6 +630,8 @@ String manipulation:					*string-functions*
 	submatch()		get a specific match in ":s" and substitute()
 	strpart()		get part of a string using byte index
 	strcharpart()		get part of a string using char index
+	slice()			take a slice of a string, using char index in
+				Vim9 script
 	strgetchar()		get character from a string using char index
 	expand()		expand special keywords
 	expandcmd()		expand a command like done for `:edit`
@@ -636,6 +639,7 @@ String manipulation:					*string-functions*
 	byteidx()		byte index of a character in a string
 	byteidxcomp()		like byteidx() but count composing characters
 	charidx()		character index of a byte in a string
+	utf16idx()		UTF-16 index of a byte in a string
 	repeat()		repeat a string multiple times
 	eval()			evaluate a string expression
 	execute()		execute an Ex command and get the output
@@ -657,6 +661,7 @@ List manipulation:					*list-functions*
 	filter()		remove selected items from a List
 	map()			change each List item
 	reduce()		reduce a List to a value
+	slice()			take a slice of a List
 	sort()			sort a List
 	reverse()		reverse the order of a List or Blob
 	uniq()			remove copies of repeated adjacent items
@@ -883,6 +888,7 @@ Buffers, windows and the argument list:
 	getwininfo()		get a list with window information
 	getchangelist()		get a list of change list entries
 	getjumplist()		get a list of jump list entries
+	swapfilelist()		list of existing swap files in 'directory'
 	swapinfo()		information about a swap file
 	swapname()		get the swap file path of a buffer
 

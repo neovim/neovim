@@ -63,12 +63,13 @@ local function rm_file_if_present(path_to_file)
 end
 
 local nvim_src_dir = vim.fn.getcwd()
+local deps_file = nvim_src_dir .. '/' .. 'cmake.deps/deps.txt'
 local temp_dir = nvim_src_dir .. '/tmp'
 run({ 'mkdir', '-p', temp_dir })
 
 local function get_dependency(dependency_name)
   local dependency_table = {
-    ['LuaJIT'] = {
+    ['luajit'] = {
       repo = 'LuaJIT/LuaJIT',
       symbol = 'LUAJIT',
     },
@@ -76,13 +77,33 @@ local function get_dependency(dependency_name)
       repo = 'libuv/libuv',
       symbol = 'LIBUV',
     },
-    ['Luv'] = {
+    ['luv'] = {
       repo = 'luvit/luv',
       symbol = 'LUV',
     },
     ['tree-sitter'] = {
       repo = 'tree-sitter/tree-sitter',
       symbol = 'TREESITTER',
+    },
+    ['tree-sitter-c'] = {
+      repo = 'tree-sitter/tree-sitter-c',
+      symbol = 'TREESITTER_C',
+    },
+    ['tree-sitter-lua'] = {
+      repo = 'MunifTanjim/tree-sitter-lua',
+      symbol = 'TREESITTER_LUA',
+    },
+    ['tree-sitter-vim'] = {
+      repo = 'neovim/tree-sitter-vim',
+      symbol = 'TREESITTER_VIM',
+    },
+    ['tree-sitter-vimdoc'] = {
+      repo = 'neovim/tree-sitter-vimdoc',
+      symbol = 'TREESITTER_VIMDOC',
+    },
+    ['tree-sitter-query'] = {
+      repo = 'nvim-treesitter/tree-sitter-query',
+      symbol = 'TREESITTER_QUERY',
     },
   }
   local dependency = dependency_table[dependency_name]
@@ -127,26 +148,24 @@ end
 local function write_cmakelists_line(symbol, kind, value)
   require_executable('sed')
 
-  local cmakelists_path = nvim_src_dir .. '/' .. 'cmake.deps/CMakeLists.txt'
   run_die({
     'sed',
     '-i',
     '-e',
-    's/set('
+    's/'
       .. symbol
       .. '_'
       .. kind
       .. '.*$'
-      .. '/set('
+      .. '/'
       .. symbol
       .. '_'
       .. kind
       .. ' '
       .. value
-      .. ')'
       .. '/',
-    cmakelists_path,
-  }, 'Failed to write ' .. cmakelists_path)
+    deps_file,
+  }, 'Failed to write ' .. deps_file)
 end
 
 local function explicit_create_branch(dep)
@@ -181,8 +200,6 @@ local function update_cmakelists(dependency, archive, comment)
 
   verify_branch(dependency.name)
 
-  local changed_file = nvim_src_dir .. '/' .. 'cmake.deps/CMakeLists.txt'
-
   p('Updating ' .. dependency.name .. ' to ' .. archive.url .. '\n')
   write_cmakelists_line(dependency.symbol, 'URL', archive.url:gsub('/', '\\/'))
   write_cmakelists_line(dependency.symbol, 'SHA256', archive.sha)
@@ -190,7 +207,7 @@ local function update_cmakelists(dependency, archive, comment)
     {
       'git',
       'commit',
-      changed_file,
+      deps_file,
       '-m',
       commit_prefix .. 'bump ' .. dependency.name .. ' to ' .. comment,
     },
@@ -201,10 +218,9 @@ end
 local function verify_cmakelists_committed()
   require_executable('git')
 
-  local cmakelists_path = nvim_src_dir .. '/' .. 'cmake.deps/CMakeLists.txt'
   run_die(
-    { 'git', 'diff', '--quiet', 'HEAD', '--', cmakelists_path },
-    cmakelists_path .. ' has uncommitted changes'
+    { 'git', 'diff', '--quiet', 'HEAD', '--', deps_file },
+    deps_file .. ' has uncommitted changes'
   )
 end
 

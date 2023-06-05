@@ -460,7 +460,7 @@ func Test_invalid_name()
 endfunc
 
 func Test_ownsyntax()
-  new Xfoo
+  new XfooOwnSyntax
   call setline(1, '#define FOO')
   syntax on
   set filetype=c

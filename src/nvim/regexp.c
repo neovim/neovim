@@ -97,31 +97,41 @@ static int toggle_Magic(int x)
 #define EMSG2_RET_NULL(m, c) \
   return (semsg((m), (c) ? "" : "\\"), rc_did_emsg = true, (void *)NULL)
 #define EMSG3_RET_NULL(m, c, a) \
-  return (semsg((const char *)(m), (c) ? "" : "\\", (a)), rc_did_emsg = true, (void *)NULL)
+  return (semsg((m), (c) ? "" : "\\", (a)), rc_did_emsg = true, (void *)NULL)
 #define EMSG2_RET_FAIL(m, c) \
   return (semsg((m), (c) ? "" : "\\"), rc_did_emsg = true, FAIL)
-#define EMSG_ONE_RET_NULL EMSG2_RET_NULL(_("E369: invalid item in %s%%[]"), reg_magic == MAGIC_ALL)
+#define EMSG_ONE_RET_NULL EMSG2_RET_NULL(_(e_invalid_item_in_str_brackets), reg_magic == MAGIC_ALL)
 
 #define MAX_LIMIT       (32767L << 16L)
 
-static char e_missingbracket[] = N_("E769: Missing ] after %s[");
-static char e_reverse_range[] = N_("E944: Reverse range in character class");
-static char e_large_class[] = N_("E945: Range too large in character class");
-static char e_unmatchedpp[] = N_("E53: Unmatched %s%%(");
-static char e_unmatchedp[] = N_("E54: Unmatched %s(");
-static char e_unmatchedpar[] = N_("E55: Unmatched %s)");
-static char e_z_not_allowed[] = N_("E66: \\z( not allowed here");
-static char e_z1_not_allowed[] = N_("E67: \\z1 - \\z9 not allowed here");
-static char e_missing_sb[] = N_("E69: Missing ] after %s%%[");
-static char e_empty_sb[] = N_("E70: Empty %s%%[]");
-static char e_recursive[] = N_("E956: Cannot use pattern recursively");
-static char e_regexp_number_after_dot_pos_search_chr[]
+static const char e_invalid_character_after_str_at[]
+  = N_("E59: Invalid character after %s@");
+static const char e_invalid_use_of_underscore[]
+  = N_("E63: Invalid use of \\_");
+static const char e_pattern_uses_more_memory_than_maxmempattern[]
+  = N_("E363: Pattern uses more memory than 'maxmempattern'");
+static const char e_invalid_item_in_str_brackets[]
+  = N_("E369: Invalid item in %s%%[]");
+static const char e_missing_delimiter_after_search_pattern_str[]
+  = N_("E654: Missing delimiter after search pattern: %s");
+static const char e_missingbracket[] = N_("E769: Missing ] after %s[");
+static const char e_reverse_range[] = N_("E944: Reverse range in character class");
+static const char e_large_class[] = N_("E945: Range too large in character class");
+static const char e_unmatchedpp[] = N_("E53: Unmatched %s%%(");
+static const char e_unmatchedp[] = N_("E54: Unmatched %s(");
+static const char e_unmatchedpar[] = N_("E55: Unmatched %s)");
+static const char e_z_not_allowed[] = N_("E66: \\z( not allowed here");
+static const char e_z1_not_allowed[] = N_("E67: \\z1 - \\z9 not allowed here");
+static const char e_missing_sb[] = N_("E69: Missing ] after %s%%[");
+static const char e_empty_sb[] = N_("E70: Empty %s%%[]");
+static const char e_recursive[] = N_("E956: Cannot use pattern recursively");
+static const char e_regexp_number_after_dot_pos_search_chr[]
   = N_("E1204: No Number allowed after .: '\\%%%c'");
-static char e_nfa_regexp_missing_value_in_chr[]
+static const char e_nfa_regexp_missing_value_in_chr[]
   = N_("E1273: (NFA regexp) missing value in '\\%%%c'");
-static char e_atom_engine_must_be_at_start_of_pattern[]
+static const char e_atom_engine_must_be_at_start_of_pattern[]
   = N_("E1281: Atom '\\%%#=%c' must be at the start of the pattern");
-static char e_substitute_nesting_too_deep[] = N_("E1290: substitute nesting too deep");
+static const char e_substitute_nesting_too_deep[] = N_("E1290: substitute nesting too deep");
 
 #define NOT_MULTI       0
 #define MULTI_ONE       1
@@ -491,7 +501,7 @@ char *skip_regexp_err(char *startp, int delim, int magic)
   char *p = skip_regexp(startp, delim, magic);
 
   if (*p != delim) {
-    semsg(_("E654: missing delimiter after search pattern: %s"), startp);
+    semsg(_(e_missing_delimiter_after_search_pattern_str), startp);
     return NULL;
   }
   return p;
@@ -989,6 +999,8 @@ typedef struct {
   // flag in the regexp.  Defaults to false, always.
   bool reg_icombine;
 
+  bool reg_nobreak;
+
   // Copy of "rmm_maxcol": maximum column to search for a match.  Zero when
   // there is no maximum.
   colnr_T reg_maxcol;
@@ -1010,6 +1022,13 @@ typedef struct {
 
 static regexec_T rex;
 static bool rex_in_use = false;
+
+static void reg_breakcheck(void)
+{
+  if (!rex.reg_nobreak) {
+    fast_breakcheck();
+  }
+}
 
 // Return true if character 'c' is included in 'iskeyword' option for
 // "reg_buf" buffer.
@@ -1150,7 +1169,7 @@ static bool reg_match_visual(void)
     rex.line = (uint8_t *)reg_getline(rex.lnum);
     rex.input = rex.line + col;
 
-    unsigned int cols_u = win_linetabsize(wp, rex.reg_firstlnum + rex.lnum, (char *)rex.line, col);
+    unsigned cols_u = win_linetabsize(wp, rex.reg_firstlnum + rex.lnum, (char *)rex.line, col);
     assert(cols_u <= MAXCOL);
     colnr_T cols = (colnr_T)cols_u;
     if (cols < start || cols > end - (*p_sel == 'e')) {
@@ -1221,7 +1240,7 @@ static void reg_nextline(void)
 {
   rex.line = (uint8_t *)reg_getline(++rex.lnum);
   rex.input = rex.line;
-  fast_breakcheck();
+  reg_breakcheck();
 }
 
 // Check whether a backreference matches.
@@ -1239,7 +1258,7 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
   if (bytelen != NULL) {
     *bytelen = 0;
   }
-  for (;;) {
+  while (true) {
     // Since getting one line may invalidate the other, need to make copy.
     // Slow!
     if (rex.line != reg_tofree) {
@@ -1812,7 +1831,7 @@ static int vim_regsub_both(char *source, typval_T *expr, char *dest, int destlen
         }
         tv_clear(&rettv);
       } else {
-        eval_result[nested] = eval_to_string(source + 2, NULL, true);
+        eval_result[nested] = eval_to_string(source + 2, true);
       }
       nesting--;
 
@@ -1994,7 +2013,7 @@ static int vim_regsub_both(char *source, typval_T *expr, char *dest, int destlen
           }
         }
         if (s != NULL) {
-          for (;;) {
+          while (true) {
             if (len == 0) {
               if (REG_MULTI) {
                 if (rex.reg_mmatch->endpos[no].lnum == clnum) {
@@ -2237,12 +2256,12 @@ list_T *reg_submatch_list(int no)
       tv_list_append_string(list, s, ecol);
     }
   } else {
-    s = (const char *)rsm.sm_match->startp[no];
+    s = rsm.sm_match->startp[no];
     if (s == NULL || rsm.sm_match->endp[no] == NULL) {
       return NULL;
     }
     list = tv_list_alloc(1);
-    tv_list_append_string(list, s, (const char *)rsm.sm_match->endp[no] - s);
+    tv_list_append_string(list, s, rsm.sm_match->endp[no] - s);
   }
 
   tv_list_ref(list);
@@ -2265,6 +2284,7 @@ static void init_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_
   rex.reg_line_lbr = false;
   rex.reg_ic = rmp->rmm_ic;
   rex.reg_icombine = false;
+  rex.reg_nobreak = rmp->regprog->re_flags & RE_NOBREAK;
   rex.reg_maxcol = rmp->rmm_maxcol;
 }
 

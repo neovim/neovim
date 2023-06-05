@@ -38,7 +38,7 @@ func T25_F()
         if loops == 2
           try
             Xpath 'f' . loops
-          finally
+          final
             Xpath 'g' . loops
           endtry
         endif
@@ -50,19 +50,20 @@ func T25_F()
   Xpath 'i'
 endfunc
 
+" Also try using "fina" and "final" and "finall" as abbraviations.
 func T25_G()
   if 1
     try
       Xpath 'A'
       call T25_F()
       Xpath 'B'
-    finally
+    fina
       Xpath 'C'
     endtry
   else
     try
       Xpath 'D'
-    finally
+    finall
       Xpath 'E'
     endtry
   endif
@@ -2218,6 +2219,61 @@ func Test_BufEnter_exception()
   augroup END
   augroup! bufenter_exception
   %bwipe!
+endfunc
+
+" Test for using try/catch when lines are joined by "|" or "\n"           {{{1
+func Test_try_catch_nextcmd()
+  func Throw()
+    throw "Failure"
+  endfunc
+
+  let lines =<< trim END
+    try
+      let s:x = Throw()
+    catch
+      let g:caught = 1
+    endtry
+  END
+
+  let g:caught = 0
+  call execute(lines)
+  call assert_equal(1, g:caught)
+
+  let g:caught = 0
+  call execute(join(lines, '|'))
+  call assert_equal(1, g:caught)
+
+  let g:caught = 0
+  call execute(join(lines, "\n"))
+  call assert_equal(1, g:caught)
+
+  unlet g:caught
+  delfunc Throw
+endfunc
+
+" Test for using try/catch in a user command with a failing expression    {{{1
+func Test_user_command_try_catch()
+  let lines =<< trim END
+      function s:throw() abort
+        throw 'error'
+      endfunction
+
+      command! Execute
+      \   try
+      \ |   let s:x = s:throw()
+      \ | catch
+      \ |   let g:caught = 'caught'
+      \ | endtry
+
+      let g:caught = 'no'
+      Execute
+      call assert_equal('caught', g:caught)
+  END
+  call writefile(lines, 'XtestTryCatch')
+  source XtestTryCatch
+
+  call delete('XtestTryCatch')
+  unlet g:caught
 endfunc
 
 " Test for using throw in a called function with following error    {{{1

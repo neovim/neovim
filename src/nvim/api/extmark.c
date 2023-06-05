@@ -33,12 +33,10 @@
 void api_extmark_free_all_mem(void)
 {
   String name;
-  handle_T id;
-  map_foreach(&namespace_ids, name, id, {
-    (void)id;
+  map_foreach_key(&namespace_ids, name, {
     xfree(name.data);
   })
-  map_destroy(String, handle_T)(&namespace_ids);
+  map_destroy(String, &namespace_ids);
 }
 
 /// Creates a new namespace or gets an existing one. \*namespace\*
@@ -77,7 +75,7 @@ Dictionary nvim_get_namespaces(void)
   String name;
   handle_T id;
 
-  map_foreach(&namespace_ids, name, id, {
+  map_foreach(handle_T, &namespace_ids, name, id, {
     PUT(retval, name.data, INTEGER_OBJ(id));
   })
 
@@ -88,7 +86,7 @@ const char *describe_ns(NS ns_id)
 {
   String name;
   handle_T id;
-  map_foreach(&namespace_ids, name, id, {
+  map_foreach(handle_T, &namespace_ids, name, id, {
     if ((NS)id == ns_id && name.size) {
       return name.data;
     }
@@ -105,7 +103,16 @@ bool ns_initialized(uint32_t ns)
   return ns < (uint32_t)next_namespace_id;
 }
 
-static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict)
+static Object hl_group_name(int hl_id, bool hl_name)
+{
+  if (hl_name) {
+    return CSTR_TO_OBJ(syn_id2name(hl_id));
+  } else {
+    return INTEGER_OBJ(hl_id);
+  }
+}
+
+static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict, bool hl_name)
 {
   Array rv = ARRAY_DICT_INIT;
   if (id) {
@@ -117,6 +124,8 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
   if (add_dict) {
     Dictionary dict = ARRAY_DICT_INIT;
 
+    PUT(dict, "ns_id", INTEGER_OBJ((Integer)extmark->ns_id));
+
     PUT(dict, "right_gravity", BOOLEAN_OBJ(extmark->right_gravity));
 
     if (extmark->end_row >= 0) {
@@ -127,12 +136,11 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
 
     const Decoration *decor = &extmark->decor;
     if (decor->hl_id) {
-      String name = cstr_to_string((const char *)syn_id2name(decor->hl_id));
-      PUT(dict, "hl_group", STRING_OBJ(name));
+      PUT(dict, "hl_group", hl_group_name(decor->hl_id, hl_name));
       PUT(dict, "hl_eol", BOOLEAN_OBJ(decor->hl_eol));
     }
     if (decor->hl_mode) {
-      PUT(dict, "hl_mode", STRING_OBJ(cstr_to_string(hl_mode_str[decor->hl_mode])));
+      PUT(dict, "hl_mode", CSTR_TO_OBJ(hl_mode_str[decor->hl_mode]));
     }
 
     if (kv_size(decor->virt_text)) {
@@ -140,10 +148,9 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
       for (size_t i = 0; i < decor->virt_text.size; i++) {
         Array chunk = ARRAY_DICT_INIT;
         VirtTextChunk *vtc = &decor->virt_text.items[i];
-        ADD(chunk, STRING_OBJ(cstr_to_string(vtc->text)));
+        ADD(chunk, CSTR_TO_OBJ(vtc->text));
         if (vtc->hl_id > 0) {
-          ADD(chunk,
-              STRING_OBJ(cstr_to_string((const char *)syn_id2name(vtc->hl_id))));
+          ADD(chunk, hl_group_name(vtc->hl_id, hl_name));
         }
         ADD(chunks, ARRAY_OBJ(chunk));
       }
@@ -153,7 +160,7 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
         PUT(dict, "virt_text_win_col", INTEGER_OBJ(decor->col));
       }
       PUT(dict, "virt_text_pos",
-          STRING_OBJ(cstr_to_string(virt_text_pos_str[decor->virt_text_pos])));
+          CSTR_TO_OBJ(virt_text_pos_str[decor->virt_text_pos]));
     }
 
     if (decor->ui_watched) {
@@ -170,10 +177,9 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
         for (size_t j = 0; j < vt->size; j++) {
           Array chunk = ARRAY_DICT_INIT;
           VirtTextChunk *vtc = &vt->items[j];
-          ADD(chunk, STRING_OBJ(cstr_to_string(vtc->text)));
+          ADD(chunk, CSTR_TO_OBJ(vtc->text));
           if (vtc->hl_id > 0) {
-            ADD(chunk,
-                STRING_OBJ(cstr_to_string((const char *)syn_id2name(vtc->hl_id))));
+            ADD(chunk, hl_group_name(vtc->hl_id, hl_name));
           }
           ADD(chunks, ARRAY_OBJ(chunk));
         }
@@ -184,8 +190,42 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
       PUT(dict, "virt_lines_leftcol", BOOLEAN_OBJ(virt_lines_leftcol));
     }
 
-    if (decor->hl_id || kv_size(decor->virt_text) || decor->ui_watched) {
+    if (decor->sign_text) {
+      PUT(dict, "sign_text", CSTR_TO_OBJ(decor->sign_text));
+    }
+
+    // uncrustify:off
+
+    struct { char *name; const int val; } hls[] = {
+      { "sign_hl_group"      , decor->sign_hl_id       },
+      { "number_hl_group"    , decor->number_hl_id     },
+      { "line_hl_group"      , decor->line_hl_id       },
+      { "cursorline_hl_group", decor->cursorline_hl_id },
+      { NULL, 0 },
+    };
+
+    // uncrustify:on
+
+    for (int j = 0; hls[j].name; j++) {
+      if (hls[j].val) {
+        PUT(dict, hls[j].name, hl_group_name(hls[j].val, hl_name));
+      }
+    }
+
+    if (decor->sign_text
+        || decor->hl_id
+        || kv_size(decor->virt_text)
+        || decor->ui_watched) {
       PUT(dict, "priority", INTEGER_OBJ(decor->priority));
+    }
+
+    if (decor->conceal) {
+      String name = cstr_to_string((char *)&decor->conceal_char);
+      PUT(dict, "conceal", STRING_OBJ(name));
+    }
+
+    if (decor->spell != kNone) {
+      PUT(dict, "spell", BOOLEAN_OBJ(decor->spell == kTrue));
     }
 
     if (dict.size) {
@@ -203,6 +243,7 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
 /// @param id  Extmark id
 /// @param opts  Optional parameters. Keys:
 ///          - details: Whether to include the details dict
+///          - hl_name: Whether to include highlight group name instead of id, true if omitted
 /// @param[out] err   Error details, if any
 /// @return 0-indexed (row, col) tuple or empty list () if extmark id was
 /// absent
@@ -224,18 +265,19 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
   });
 
   bool details = false;
+  bool hl_name = true;
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
     if (strequal("details", k.data)) {
-      if (v->type == kObjectTypeBoolean) {
-        details = v->data.boolean;
-      } else if (v->type == kObjectTypeInteger) {
-        details = v->data.integer;
-      } else {
-        VALIDATE_EXP(false, "details", "Boolean or Integer", api_typename(v->type), {
-          return rv;
-        });
+      details = api_object_to_bool(*v, "details", false, err);
+      if (ERROR_SET(err)) {
+        return rv;
+      }
+    } else if (strequal("hl_name", k.data)) {
+      hl_name = api_object_to_bool(*v, "hl_name", false, err);
+      if (ERROR_SET(err)) {
+        return rv;
       }
     } else {
       VALIDATE_S(false, "'opts' key", k.data, {
@@ -248,7 +290,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
   if (extmark.row < 0) {
     return rv;
   }
-  return extmark_to_array(&extmark, false, details);
+  return extmark_to_array(&extmark, false, details, hl_name);
 }
 
 /// Gets |extmarks| in "traversal order" from a |charwise| region defined by
@@ -267,29 +309,31 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 ///
 /// Example:
 /// <pre>lua
-///   local a   = vim.api
-///   local pos = a.nvim_win_get_cursor(0)
-///   local ns  = a.nvim_create_namespace('my-plugin')
+///   local api = vim.api
+///   local pos = api.nvim_win_get_cursor(0)
+///   local ns  = api.nvim_create_namespace('my-plugin')
 ///   -- Create new extmark at line 1, column 1.
-///   local m1  = a.nvim_buf_set_extmark(0, ns, 0, 0, {})
+///   local m1  = api.nvim_buf_set_extmark(0, ns, 0, 0, {})
 ///   -- Create new extmark at line 3, column 1.
-///   local m2  = a.nvim_buf_set_extmark(0, ns, 2, 0, {})
+///   local m2  = api.nvim_buf_set_extmark(0, ns, 2, 0, {})
 ///   -- Get extmarks only from line 3.
-///   local ms  = a.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
+///   local ms  = api.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
 ///   -- Get all marks in this buffer + namespace.
-///   local all = a.nvim_buf_get_extmarks(0, ns, 0, -1, {})
+///   local all = api.nvim_buf_get_extmarks(0, ns, 0, -1, {})
 ///   print(vim.inspect(ms))
 /// </pre>
 ///
 /// @param buffer  Buffer handle, or 0 for current buffer
-/// @param ns_id  Namespace id from |nvim_create_namespace()|
+/// @param ns_id  Namespace id from |nvim_create_namespace()| or -1 for all namespaces
 /// @param start  Start of range: a 0-indexed (row, col) or valid extmark id
 /// (whose position defines the bound). |api-indexing|
 /// @param end  End of range (inclusive): a 0-indexed (row, col) or valid
 /// extmark id (whose position defines the bound). |api-indexing|
 /// @param opts  Optional parameters. Keys:
 ///          - limit:  Maximum number of marks to return
-///          - details Whether to include the details dict
+///          - details: Whether to include the details dict
+///          - hl_name: Whether to include highlight group name instead of id, true if omitted
+///          - type: Filter marks by type: "highlight", "sign", "virt_text" and "virt_lines"
 /// @param[out] err   Error details, if any
 /// @return List of [extmark_id, row, col] tuples in "traversal order".
 Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object end, Dictionary opts,
@@ -303,12 +347,20 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
     return rv;
   }
 
-  VALIDATE_INT(ns_initialized((uint32_t)ns_id), "ns_id", ns_id, {
-    return rv;
-  });
+  bool all_ns;
+  if (ns_id == -1) {
+    all_ns = true;
+  } else {
+    VALIDATE_INT(ns_initialized((uint32_t)ns_id), "ns_id", ns_id, {
+      return rv;
+    });
+    all_ns = false;
+  }
 
   Integer limit = -1;
   bool details = false;
+  bool hl_name = true;
+  ExtmarkType type = kExtmarkNone;
 
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
@@ -319,12 +371,29 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
       });
       limit = v->data.integer;
     } else if (strequal("details", k.data)) {
-      if (v->type == kObjectTypeBoolean) {
-        details = v->data.boolean;
-      } else if (v->type == kObjectTypeInteger) {
-        details = v->data.integer;
+      details = api_object_to_bool(*v, "details", false, err);
+      if (ERROR_SET(err)) {
+        return rv;
+      }
+    } else if (strequal("hl_name", k.data)) {
+      hl_name = api_object_to_bool(*v, "hl_name", false, err);
+      if (ERROR_SET(err)) {
+        return rv;
+      }
+    } else if (strequal("type", k.data)) {
+      VALIDATE_EXP(v->type == kObjectTypeString, "type", "String", api_typename(v->type), {
+        return rv;
+      });
+      if (strequal(v->data.string.data, "sign")) {
+        type = kExtmarkSign;
+      } else if (strequal(v->data.string.data, "virt_text")) {
+        type = kExtmarkVirtText;
+      } else if (strequal(v->data.string.data, "virt_lines")) {
+        type = kExtmarkVirtLines;
+      } else if (strequal(v->data.string.data, "highlight")) {
+        type = kExtmarkHighlight;
       } else {
-        VALIDATE_EXP(false, "details", "Boolean or Integer", api_typename(v->type), {
+        VALIDATE_EXP(false, "type", "sign, virt_text, virt_lines or highlight", v->data.string.data, {
           return rv;
         });
       }
@@ -359,11 +428,11 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
     reverse = true;
   }
 
-  ExtmarkInfoArray marks = extmark_get(buf, (uint32_t)ns_id, l_row, l_col,
-                                       u_row, u_col, (int64_t)limit, reverse);
+  ExtmarkInfoArray marks = extmark_get(buf, (uint32_t)ns_id, l_row, l_col, u_row,
+                                       u_col, (int64_t)limit, reverse, all_ns, type);
 
   for (size_t i = 0; i < kv_size(marks); i++) {
-    ADD(rv, ARRAY_OBJ(extmark_to_array(&kv_A(marks, i), true, (bool)details)));
+    ADD(rv, ARRAY_OBJ(extmark_to_array(&kv_A(marks, i), true, (bool)details, hl_name)));
   }
 
   kv_destroy(marks);
@@ -408,12 +477,15 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                 - "overlay": display over the specified column, without
 ///                              shifting the underlying text.
 ///                 - "right_align": display right aligned in the window.
+///                 - "inline": display at the specified column, and
+///                              shift the buffer text to the right as needed
 ///               - virt_text_win_col : position the virtual text at a fixed
 ///                                     window column (starting from the first
 ///                                     text column)
 ///               - virt_text_hide : hide the virtual text when the background
-///                                  text is selected or hidden due to
-///                                  horizontal scroll 'nowrap'
+///                                  text is selected or hidden because of
+///                                  scrolling with 'nowrap' or 'smoothscroll'.
+///                                  Currently only affects "overlay" virt_text.
 ///               - hl_mode : control how highlights are combined with the
 ///                           highlights of the text. Currently only affects
 ///                           virt_text highlights, but might affect `hl_group`
@@ -626,6 +698,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       decor.virt_text_pos = kVTOverlay;
     } else if (strequal("right_align", str.data)) {
       decor.virt_text_pos = kVTRightAlign;
+    } else if (strequal("inline", str.data)) {
+      decor.virt_text_pos = kVTInline;
     } else {
       VALIDATE_S(false, "virt_text_pos", "", {
         goto error;
@@ -803,7 +877,10 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
     extmark_set(buf, (uint32_t)ns_id, &id, (int)line, (colnr_T)col, line2, col2,
                 has_decor ? &decor : NULL, right_gravity, end_right_gravity,
-                kExtmarkNoUndo);
+                kExtmarkNoUndo, err);
+    if (ERROR_SET(err)) {
+      goto error;
+    }
   }
 
   return (Integer)id;
@@ -831,6 +908,11 @@ Boolean nvim_buf_del_extmark(Buffer buffer, Integer ns_id, Integer id, Error *er
   VALIDATE_INT(ns_initialized((uint32_t)ns_id), "ns_id", ns_id, {
     return false;
   });
+
+  if (decor_state.running_on_lines) {
+    api_set_error(err, kErrorTypeValidation, "Cannot remove extmarks during on_line callbacks");
+    return false;
+  }
 
   return extmark_del(buf, (uint32_t)ns_id, (uint32_t)id);
 }
@@ -922,7 +1004,7 @@ Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, In
   extmark_set(buf, ns, NULL,
               (int)line, (colnr_T)col_start,
               end_line, (colnr_T)col_end,
-              &decor, true, false, kExtmarkNoUndo);
+              &decor, true, false, kExtmarkNoUndo, NULL);
   return ns_id;
 }
 
@@ -950,6 +1032,11 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
   VALIDATE_RANGE((line_start >= 0 && line_start < MAXLNUM), "line number", {
     return;
   });
+
+  if (decor_state.running_on_lines) {
+    api_set_error(err, kErrorTypeValidation, "Cannot remove extmarks during on_line callbacks");
+    return;
+  }
 
   if (line_end < 0 || line_end > MAXLNUM) {
     line_end = MAXLNUM;
@@ -980,10 +1067,12 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 /// for the extmarks set/modified inside the callback anyway.
 ///
 /// Note: doing anything other than setting extmarks is considered experimental.
-/// Doing things like changing options are not expliticly forbidden, but is
+/// Doing things like changing options are not explicitly forbidden, but is
 /// likely to have unexpected consequences (such as 100% CPU consumption).
 /// doing `vim.rpcnotify` should be OK, but `vim.rpcrequest` is quite dubious
 /// for the moment.
+///
+/// Note: It is not allowed to remove or update extmarks in 'on_line' callbacks.
 ///
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param opts  Table of callbacks:
@@ -1097,7 +1186,7 @@ static bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, in
 
     Integer pos_row = pos.items[0].data.integer;
     Integer pos_col = pos.items[1].data.integer;
-    *row = (int)(pos_row >= 0 ? pos_row  : MAXLNUM);
+    *row = (int)(pos_row >= 0 ? pos_row : MAXLNUM);
     *col = (colnr_T)(pos_col >= 0 ? pos_col : MAXCOL);
     return true;
   } else {

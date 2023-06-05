@@ -85,15 +85,25 @@
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
-static char e_ambiguous_use_of_user_defined_command[]
+static const char e_ambiguous_use_of_user_defined_command[]
   = N_("E464: Ambiguous use of user-defined command");
-static char e_not_an_editor_command[]
+static const char e_no_call_stack_to_substitute_for_stack[]
+  = N_("E489: No call stack to substitute for \"<stack>\"");
+static const char e_not_an_editor_command[]
   = N_("E492: Not an editor command");
-static char e_no_source_file_name_to_substitute_for_sfile[]
-  = N_("E498: no :source file name to substitute for \"<sfile>\"");
-static char e_no_call_stack_to_substitute_for_stack[]
-  = N_("E489: no call stack to substitute for \"<stack>\"");
-static char e_no_script_file_name_to_substitute_for_script[]
+static const char e_no_autocommand_file_name_to_substitute_for_afile[]
+  = N_("E495: No autocommand file name to substitute for \"<afile>\"");
+static const char e_no_autocommand_buffer_number_to_substitute_for_abuf[]
+  = N_("E496: No autocommand buffer number to substitute for \"<abuf>\"");
+static const char e_no_autocommand_match_name_to_substitute_for_amatch[]
+  = N_("E497: No autocommand match name to substitute for \"<amatch>\"");
+static const char e_no_source_file_name_to_substitute_for_sfile[]
+  = N_("E498: No :source file name to substitute for \"<sfile>\"");
+static const char e_no_line_number_to_use_for_slnum[]
+  = N_("E842: No line number to use for \"<slnum>\"");
+static const char e_no_line_number_to_use_for_sflnum[]
+  = N_("E961: No line number to use for \"<sflnum>\"");
+static const char e_no_script_file_name_to_substitute_for_script[]
   = N_("E1274: No script file name to substitute for \"<script>\"");
 
 static int quitmore = 0;
@@ -220,7 +230,7 @@ void do_exmode(void)
     if ((prev_line != curwin->w_cursor.lnum
          || changedtick != buf_get_changedtick(curbuf)) && !ex_no_reprint) {
       if (curbuf->b_ml.ml_flags & ML_EMPTY) {
-        emsg(_(e_emptybuf));
+        emsg(_(e_empty_buffer));
       } else {
         if (ex_pressedreturn) {
           // Make sure the message overwrites the right line and isn't throttled.
@@ -238,7 +248,7 @@ void do_exmode(void)
       }
     } else if (ex_pressedreturn && !ex_no_reprint) {  // must be at EOF
       if (curbuf->b_ml.ml_flags & ML_EMPTY) {
-        emsg(_(e_emptybuf));
+        emsg(_(e_empty_buffer));
       } else {
         emsg(_("E501: At end-of-file"));
       }
@@ -278,7 +288,7 @@ static void msg_verbose_cmd(linenr_T lnum, char *cmd)
 /// Execute a simple command line.  Used for translated commands like "*".
 int do_cmdline_cmd(const char *cmd)
 {
-  return do_cmdline((char *)cmd, NULL, NULL, DOCMD_NOWAIT|DOCMD_KEYTYPED);
+  return do_cmdline((char *)cmd, NULL, NULL, DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
 }
 
 /// do_cmdline(): execute one Ex command line
@@ -484,24 +494,6 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
       }
     }
 
-    if (cstack.cs_looplevel > 0) {
-      // Inside a while/for loop we need to store the lines and use them
-      // again.  Pass a different "fgetline" function to do_one_cmd()
-      // below, so that it stores lines in or reads them from
-      // "lines_ga".  Makes it possible to define a function inside a
-      // while/for loop.
-      cmd_getline = get_loop_line;
-      cmd_cookie = (void *)&cmd_loop_cookie;
-      cmd_loop_cookie.lines_gap = &lines_ga;
-      cmd_loop_cookie.current_line = current_line;
-      cmd_loop_cookie.getline = fgetline;
-      cmd_loop_cookie.cookie = cookie;
-      cmd_loop_cookie.repeating = (current_line < lines_ga.ga_len);
-    } else {
-      cmd_getline = fgetline;
-      cmd_cookie = cookie;
-    }
-
     // 2. If no line given, get an allocated line with fgetline().
     if (next_cmdline == NULL) {
       // Need to set msg_didout for the first line after an ":if",
@@ -540,15 +532,37 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
     }
     cmdline_copy = next_cmdline;
 
-    // Save the current line when inside a ":while" or ":for", and when
-    // the command looks like a ":while" or ":for", because we may need it
-    // later.  When there is a '|' and another command, it is stored
-    // separately, because we need to be able to jump back to it from an
+    int current_line_before = 0;
+    // Inside a while/for loop, and when the command looks like a ":while"
+    // or ":for", the line is stored, because we may need it later when
+    // looping.
+    //
+    // When there is a '|' and another command, it is stored separately,
+    // because we need to be able to jump back to it from an
     // :endwhile/:endfor.
-    if (current_line == lines_ga.ga_len
-        && (cstack.cs_looplevel || has_loop_cmd(next_cmdline))) {
-      store_loop_line(&lines_ga, next_cmdline);
+    //
+    // Pass a different "fgetline" function to do_one_cmd() below,
+    // that it stores lines in or reads them from "lines_ga".  Makes it
+    // possible to define a function inside a while/for loop.
+    if ((cstack.cs_looplevel > 0 || has_loop_cmd(next_cmdline))) {
+      cmd_getline = get_loop_line;
+      cmd_cookie = (void *)&cmd_loop_cookie;
+      cmd_loop_cookie.lines_gap = &lines_ga;
+      cmd_loop_cookie.current_line = current_line;
+      cmd_loop_cookie.getline = fgetline;
+      cmd_loop_cookie.cookie = cookie;
+      cmd_loop_cookie.repeating = (current_line < lines_ga.ga_len);
+
+      // Save the current line when encountering it the first time.
+      if (current_line == lines_ga.ga_len) {
+        store_loop_line(&lines_ga, next_cmdline);
+      }
+      current_line_before = current_line;
+    } else {
+      cmd_getline = fgetline;
+      cmd_cookie = cookie;
     }
+
     did_endif = false;
 
     if (count++ == 0) {
@@ -651,7 +665,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
       } else if (cstack.cs_lflags & CSL_HAD_LOOP) {
         // For a ":while" or ":for" we need to remember the line number.
         cstack.cs_lflags &= ~CSL_HAD_LOOP;
-        cstack.cs_line[cstack.cs_idx] = current_line - 1;
+        cstack.cs_line[cstack.cs_idx] = current_line_before;
       }
     }
 
@@ -1440,7 +1454,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   }
   // Fail if command is invalid
   if (eap->cmdidx == CMD_SIZE) {
-    STRCPY(IObuff, _(e_not_an_editor_command));
+    xstrlcpy(IObuff, _(e_not_an_editor_command), IOSIZE);
     // If the modifier was parsed OK the error must be in the following command
     char *cmdname = after_modifier ? after_modifier : cmdline;
     append_command(cmdname);
@@ -1848,7 +1862,8 @@ static bool skip_cmd(const exarg_T *eap)
 
 /// Execute one Ex command.
 ///
-/// If 'sourcing' is true, the command will be included in the error message.
+/// If "flags" has DOCMD_VERBOSE, the command will be included in the error
+/// message.
 ///
 /// 1. skip comment lines and leading space
 /// 2. handle command modifiers
@@ -1881,8 +1896,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
       // avoid that a function call in 'statusline' does this
       && !getline_equal(fgetline, cookie, get_func_line)
       // avoid that an autocommand, e.g. QuitPre, does this
-      && !getline_equal(fgetline, cookie,
-                        getnextac)) {
+      && !getline_equal(fgetline, cookie, getnextac)) {
     quitmore--;
   }
 
@@ -2030,7 +2044,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // Check for wrong commands.
   if (ea.cmdidx == CMD_SIZE) {
     if (!ea.skip) {
-      STRCPY(IObuff, _(e_not_an_editor_command));
+      xstrlcpy(IObuff, _(e_not_an_editor_command), IOSIZE);
       // If the modifier was parsed OK the error must be in the following
       // command
       char *cmdname = after_modifier ? after_modifier : *cmdlinep;
@@ -2307,7 +2321,7 @@ doend:
   if (errormsg != NULL && *errormsg != NUL && !did_emsg) {
     if (flags & DOCMD_VERBOSE) {
       if (errormsg != IObuff) {
-        STRCPY(IObuff, errormsg);
+        xstrlcpy(IObuff, errormsg, IOSIZE);
         errormsg = IObuff;
       }
       append_command(*ea.cmdlinep);
@@ -2328,6 +2342,7 @@ doend:
   }
 
   ex_nesting_level--;
+  xfree(ea.cmdline_tofree);
 
   return ea.nextcmd;
 }
@@ -2366,7 +2381,7 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, cmdmod_T *cmod, bool 
   CLEAR_POINTER(cmod);
 
   // Repeat until no more command modifiers are found.
-  for (;;) {
+  while (true) {
     while (*eap->cmd == ' '
            || *eap->cmd == '\t'
            || *eap->cmd == ':') {
@@ -2695,7 +2710,7 @@ int parse_cmd_address(exarg_T *eap, char **errormsg, bool silent)
   int ret = FAIL;
 
   // Repeat for all ',' or ';' separated addresses.
-  for (;;) {
+  while (true) {
     eap->line1 = eap->line2;
     eap->line2 = get_cmd_default_range(eap);
     eap->cmd = skipwhite(eap->cmd);
@@ -2873,7 +2888,7 @@ static void append_command(char *cmd)
     d -= utf_head_off(IObuff, d);
     STRCPY(d, "...");
   }
-  STRCAT(IObuff, ": ");
+  xstrlcat(IObuff, ": ", IOSIZE);
   d = IObuff + strlen(IObuff);
   while (*s != NUL && d - IObuff + 5 < IOSIZE) {
     if ((uint8_t)s[0] == 0xc2 && (uint8_t)s[1] == 0xa0) {
@@ -2986,6 +3001,11 @@ char *find_ex_command(exarg_T *eap, int *full)
       eap->cmdidx = CMD_bang;
     }
     assert(eap->cmdidx >= 0);
+
+    if (len == 3 && strncmp("def", eap->cmd, 3) == 0) {
+      // Make :def an unknown command to avoid confusing behavior. #23149
+      eap->cmdidx = CMD_SIZE;
+    }
 
     for (; (int)eap->cmdidx < CMD_SIZE;
          eap->cmdidx = (cmdidx_T)((int)eap->cmdidx + 1)) {
@@ -3141,6 +3161,11 @@ void f_fullcommand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 cmdidx_T excmd_get_cmdidx(const char *cmd, size_t len)
 {
+  if (len == 3 && strncmp("def", cmd, 3) == 0) {
+    // Make :def an unknown command to avoid confusing behavior. #23149
+    return CMD_SIZE;
+  }
+
   cmdidx_T idx;
 
   if (!one_letter_cmd(cmd, &idx)) {
@@ -3449,7 +3474,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
       }
     }
 
-    for (;;) {
+    while (true) {
       cmd = skipwhite(cmd);
       if (*cmd != '-' && *cmd != '+' && !ascii_isdigit(*cmd)) {
         break;
@@ -3750,7 +3775,7 @@ int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
     // Skip over `=expr`, wildcards in it are not expanded.
     if (p[0] == '`' && p[1] == '=') {
       p += 2;
-      (void)skip_expr(&p);
+      (void)skip_expr(&p, NULL);
       if (*p == '`') {
         p++;
       }
@@ -3969,7 +3994,7 @@ void separate_nextcmd(exarg_T *eap)
     } else if (p[0] == '`' && p[1] == '=' && (eap->argt & EX_XFILE)) {
       // Skip over `=expr` when wildcards are expanded.
       p += 2;
-      (void)skip_expr(&p);
+      (void)skip_expr(&p, NULL);
       if (*p == NUL) {  // stop at NUL after CTRL-V
         break;
       }
@@ -4432,7 +4457,7 @@ static void ex_colorscheme(exarg_T *eap)
     char *expr = xstrdup("g:colors_name");
 
     emsg_off++;
-    char *p = eval_to_string(expr, NULL, false);
+    char *p = eval_to_string(expr, false);
     emsg_off--;
     xfree(expr);
 
@@ -4452,7 +4477,7 @@ static void ex_highlight(exarg_T *eap)
   if (*eap->arg == NUL && eap->cmd[2] == '!') {
     msg(_("Greetings, Vim user!"));
   }
-  do_highlight((const char *)eap->arg, eap->forceit, false);
+  do_highlight(eap->arg, eap->forceit, false);
 }
 
 /// Call this function if we thought we were going to exit, but we won't
@@ -4564,8 +4589,9 @@ static void ex_cquit(exarg_T *eap)
   getout(eap->addr_count > 0 ? (int)eap->line2 : EXIT_FAILURE);
 }
 
-/// ":qall": try to quit all windows
-static void ex_quit_all(exarg_T *eap)
+/// Do preparations for "qall" and "wqall".
+/// Returns FAIL when quitting should be aborted.
+int before_quit_all(exarg_T *eap)
 {
   if (cmdwin_type != 0) {
     if (eap->forceit) {
@@ -4573,19 +4599,28 @@ static void ex_quit_all(exarg_T *eap)
     } else {
       cmdwin_result = K_XF2;
     }
-    return;
+    return FAIL;
   }
 
   // Don't quit while editing the command line.
   if (text_locked()) {
     text_locked_msg();
-    return;
+    return FAIL;
   }
 
   if (before_quit_autocmds(curwin, true, eap->forceit)) {
-    return;
+    return FAIL;
   }
 
+  return OK;
+}
+
+/// ":qall": try to quit all windows
+static void ex_quit_all(exarg_T *eap)
+{
+  if (before_quit_all(eap) == FAIL) {
+    return;
+  }
   exiting = true;
   if (eap->forceit || !check_changed_any(false, false)) {
     getout(0);
@@ -4840,9 +4875,6 @@ static void ex_stop(exarg_T *eap)
   ui_call_suspend();
   ui_flush();
 
-  maketitle();
-  resettitle();  // force updating the title
-  ui_refresh();  // may have resized window
   apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
 }
 
@@ -4886,7 +4918,7 @@ static void ex_exit(exarg_T *eap)
 static void ex_print(exarg_T *eap)
 {
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
-    emsg(_(e_emptybuf));
+    emsg(_(e_empty_buffer));
   } else {
     for (; !got_int; os_breakcheck()) {
       print_line(eap->line1,
@@ -4971,8 +5003,13 @@ void ex_splitview(exarg_T *eap)
   }
 
   if (eap->cmdidx == CMD_sfind || eap->cmdidx == CMD_tabfind) {
+    char *file_to_find = NULL;
+    char *search_ctx = NULL;
     fname = find_file_in_path(eap->arg, strlen(eap->arg),
-                              FNAME_MESS, true, curbuf->b_ffname);
+                              FNAME_MESS, true, curbuf->b_ffname,
+                              &file_to_find, &search_ctx);
+    xfree(file_to_find);
+    vim_findfile_cleanup(search_ctx);
     if (fname == NULL) {
       goto theend;
     }
@@ -5164,17 +5201,23 @@ static void ex_resize(exarg_T *eap)
 /// ":find [+command] <file>" command.
 static void ex_find(exarg_T *eap)
 {
+  char *file_to_find = NULL;
+  char *search_ctx = NULL;
   char *fname = find_file_in_path(eap->arg, strlen(eap->arg),
-                                  FNAME_MESS, true, curbuf->b_ffname);
+                                  FNAME_MESS, true, curbuf->b_ffname,
+                                  &file_to_find, &search_ctx);
   if (eap->addr_count > 0) {
-    // Repeat finding the file "count" times.  This matters when it
-    // appears several times in the path.
+    // Repeat finding the file "count" times.  This matters when it appears
+    // several times in the path.
     linenr_T count = eap->line2;
     while (fname != NULL && --count > 0) {
       xfree(fname);
-      fname = find_file_in_path(NULL, 0, FNAME_MESS, false, curbuf->b_ffname);
+      fname = find_file_in_path(NULL, 0, FNAME_MESS, false, curbuf->b_ffname,
+                                &file_to_find, &search_ctx);
     }
   }
+  xfree(file_to_find);
+  vim_findfile_cleanup(search_ctx);
 
   if (fname == NULL) {
     return;
@@ -5206,18 +5249,17 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
     if (*eap->arg == NUL) {
       // Special case:  ":global/pat/visual\NLvi-commands"
       if (global_busy) {
-        int rd = RedrawingDisabled;
-        int nwr = no_wait_return;
-        int ms = msg_scroll;
-
         if (eap->nextcmd != NULL) {
-          stuffReadbuff((const char *)eap->nextcmd);
+          stuffReadbuff(eap->nextcmd);
           eap->nextcmd = NULL;
         }
 
+        const int save_rd = RedrawingDisabled;
         RedrawingDisabled = 0;
+        const int save_nwr = no_wait_return;
         no_wait_return = 0;
         need_wait_return = false;
+        const int save_ms = msg_scroll;
         msg_scroll = 0;
         redraw_all_later(UPD_NOT_VALID);
         pending_exmode_active = true;
@@ -5225,9 +5267,9 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
         normal_enter(false, true);
 
         pending_exmode_active = false;
-        RedrawingDisabled = rd;
-        no_wait_return = nwr;
-        msg_scroll = ms;
+        RedrawingDisabled = save_rd;
+        no_wait_return = save_nwr;
+        msg_scroll = save_ms;
       }
       return;
     }
@@ -6552,7 +6594,7 @@ static void ex_findpat(exarg_T *eap)
   }
   if (!eap->skip) {
     find_pattern_in_path(eap->arg, 0, strlen(eap->arg), whole, !eap->forceit,
-                         *eap->cmd == 'd' ?  FIND_DEFINE : FIND_ANY,
+                         *eap->cmd == 'd' ? FIND_DEFINE : FIND_ANY,
                          n, action, eap->line1, eap->line2);
   }
 }
@@ -6870,7 +6912,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       }
       result = autocmd_fname;
       if (result == NULL) {
-        *errormsg = _("E495: no autocommand file name to substitute for \"<afile>\"");
+        *errormsg = _(e_no_autocommand_file_name_to_substitute_for_afile);
         return NULL;
       }
       result = path_try_shorten_fname(result);
@@ -6878,7 +6920,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
 
     case SPEC_ABUF:             // buffer number for autocommand
       if (autocmd_bufnr <= 0) {
-        *errormsg = _("E496: no autocommand buffer number to substitute for \"<abuf>\"");
+        *errormsg = _(e_no_autocommand_buffer_number_to_substitute_for_abuf);
         return NULL;
       }
       snprintf(strbuf, sizeof(strbuf), "%d", autocmd_bufnr);
@@ -6888,7 +6930,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
     case SPEC_AMATCH:           // match name for autocommand
       result = autocmd_match;
       if (result == NULL) {
-        *errormsg = _("E497: no autocommand match name to substitute for \"<amatch>\"");
+        *errormsg = _(e_no_autocommand_match_name_to_substitute_for_amatch);
         return NULL;
       }
       break;
@@ -6920,7 +6962,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
 
     case SPEC_SLNUM:            // line in file for ":so" command
       if (SOURCING_NAME == NULL || SOURCING_LNUM == 0) {
-        *errormsg = _("E842: no line number to use for \"<slnum>\"");
+        *errormsg = _(e_no_line_number_to_use_for_slnum);
         return NULL;
       }
       snprintf(strbuf, sizeof(strbuf), "%" PRIdLINENR, SOURCING_LNUM);
@@ -6929,7 +6971,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
 
     case SPEC_SFLNUM:  // line in script file
       if (current_sctx.sc_lnum + SOURCING_LNUM == 0) {
-        *errormsg = _("E961: no line number to use for \"<sflnum>\"");
+        *errormsg = _(e_no_line_number_to_use_for_sflnum);
         return NULL;
       }
       snprintf(strbuf, sizeof(strbuf), "%" PRIdLINENR,
@@ -7058,24 +7100,6 @@ void dialog_msg(char *buff, char *format, char *fname)
   vim_snprintf(buff, DIALOG_MSG_SIZE, format, fname);
 }
 
-/// ":behave {mswin,xterm}"
-static void ex_behave(exarg_T *eap)
-{
-  if (strcmp(eap->arg, "mswin") == 0) {
-    set_option_value_give_err("selection", 0L, "exclusive", 0);
-    set_option_value_give_err("selectmode", 0L, "mouse,key", 0);
-    set_option_value_give_err("mousemodel", 0L, "popup", 0);
-    set_option_value_give_err("keymodel", 0L, "startsel,stopsel", 0);
-  } else if (strcmp(eap->arg, "xterm") == 0) {
-    set_option_value_give_err("selection", 0L, "inclusive", 0);
-    set_option_value_give_err("selectmode", 0L, "", 0);
-    set_option_value_give_err("mousemodel", 0L, "extend", 0);
-    set_option_value_give_err("keymodel", 0L, "", 0);
-  } else {
-    semsg(_(e_invarg2), eap->arg);
-  }
-}
-
 static TriState filetype_detect = kNone;
 static TriState filetype_plugin = kNone;
 static TriState filetype_indent = kNone;
@@ -7103,7 +7127,7 @@ static void ex_filetype(exarg_T *eap)
   bool indent = false;
 
   // Accept "plugin" and "indent" in any order.
-  for (;;) {
+  while (true) {
     if (strncmp(arg, "plugin", 6) == 0) {
       plugin = true;
       arg = skipwhite(arg + 6);

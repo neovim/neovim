@@ -1,9 +1,15 @@
 local pretty = require 'pl.pretty'
 local global_helpers = require('test.helpers')
 
--- Colors are disabled by default. #15610
 local colors = setmetatable({}, {__index = function() return function(s) return s == nil and '' or tostring(s) end end})
+
+local enable_colors = true
 if os.getenv "TEST_COLORS" then
+  local test_colors = os.getenv("TEST_COLORS"):lower()
+  local disable_colors = test_colors == 'false' or test_colors == '0' or test_colors == 'no' or test_colors == 'off'
+  enable_colors = not disable_colors
+end
+if enable_colors then
   colors = require 'term.colors'
 end
 
@@ -204,7 +210,7 @@ return function(options)
 
   handler.fileStart = function(file)
     fileTestCount = 0
-    io.write(fileStartString:format(file.name))
+    io.write(fileStartString:format(vim.fs.normalize(file.name)))
     io.flush()
     return nil, true
   end
@@ -213,7 +219,7 @@ return function(options)
     local elapsedTime_ms = getElapsedTime(file)
     local tests = (fileTestCount == 1 and 'test' or 'tests')
     fileCount = fileCount + 1
-    io.write(fileEndString:format(fileTestCount, tests, file.name, elapsedTime_ms))
+    io.write(fileEndString:format(fileTestCount, tests, vim.fs.normalize(file.name), elapsedTime_ms))
     io.flush()
     return nil, true
   end

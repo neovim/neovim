@@ -110,16 +110,16 @@ func RunServer(cmd, testfunc, args)
   try
     let g:currentJob = RunCommand(pycmd)
 
-    " Wait for up to 2 seconds for the port number to be there.
+    " Wait for some time for the port number to be there.
     let port = GetPort()
     if port == 0
-      call assert_false(1, "Can't start " . a:cmd)
+      call assert_report(strftime("%H:%M:%S") .. " Can't start " .. a:cmd)
       return
     endif
 
     call call(function(a:testfunc), [port])
   catch
-    call assert_false(1, 'Caught exception: "' . v:exception . '" in ' . v:throwpoint)
+    call assert_report('Caught exception: "' . v:exception . '" in ' . v:throwpoint)
   finally
     call s:kill_server(a:cmd)
   endtry

@@ -244,10 +244,10 @@ static int nfa_classcodes[] = {
   NFA_UPPER, NFA_NUPPER
 };
 
-static char e_nul_found[] = N_("E865: (NFA) Regexp end encountered prematurely");
-static char e_misplaced[] = N_("E866: (NFA regexp) Misplaced %c");
-static char e_ill_char_class[] = N_("E877: (NFA regexp) Invalid character class: %" PRId64);
-static char e_value_too_large[] = N_("E951: \\% value too large");
+static const char e_nul_found[] = N_("E865: (NFA) Regexp end encountered prematurely");
+static const char e_misplaced[] = N_("E866: (NFA regexp) Misplaced %c");
+static const char e_ill_char_class[] = N_("E877: (NFA regexp) Invalid character class: %" PRId64);
+static const char e_value_too_large[] = N_("E951: \\% value too large");
 
 // Since the out pointers in the list are always
 // uninitialized, we use the pointers themselves
@@ -1918,7 +1918,7 @@ static int nfa_regatom(void)
   case Magic('|'):
   case Magic('&'):
   case Magic(')'):
-    semsg(_(e_misplaced), (int64_t)no_Magic(c));  // -V1037
+    semsg(_(e_misplaced), (char)no_Magic(c));  // -V1037
     return FAIL;
 
   case Magic('='):
@@ -1928,7 +1928,7 @@ static int nfa_regatom(void)
   case Magic('*'):
   case Magic('{'):
     // these should follow an atom, not form an atom
-    semsg(_(e_misplaced), (int64_t)no_Magic(c));
+    semsg(_(e_misplaced), (char)no_Magic(c));
     return FAIL;
 
   case Magic('~'): {
@@ -2505,7 +2505,7 @@ nfa_do_multibyte:
       // building the postfix form, not the NFA itself;
       // a composing char could be: a, b, c, NFA_COMPOSING
       // where 'b' and 'c' are chars with codes > 256. */
-      for (;;) {
+      while (true) {
         EMIT(c);
         if (i > 0) {
           EMIT(NFA_CONCAT);
@@ -3274,7 +3274,7 @@ static void nfa_set_code(int c)
 }
 
 static FILE *log_fd;
-static uint8_t e_log_open_failed[] =
+static const uint8_t e_log_open_failed[] =
   N_("Could not open temporary log file for writing, displaying on stderr... ");
 
 // Print the postfix notation of the current regexp.
@@ -4927,7 +4927,7 @@ skip_add:
       const size_t newsize = (size_t)newlen * sizeof(nfa_thread_T);
 
       if ((long)(newsize >> 10) >= p_mmp) {
-        emsg(_(e_maxmempat));
+        emsg(_(e_pattern_uses_more_memory_than_maxmempattern));
         depth--;
         return NULL;
       }
@@ -5218,7 +5218,7 @@ static regsubs_T *addstate_here(nfa_list_T *l, nfa_state_T *state, regsubs_T *su
       const size_t newsize = (size_t)newlen * sizeof(nfa_thread_T);
 
       if ((long)(newsize >> 10) >= p_mmp) {
-        emsg(_(e_maxmempat));
+        emsg(_(e_pattern_uses_more_memory_than_maxmempattern));
         return NULL;
       }
       nfa_thread_T *const newl = xmalloc(newsize);
@@ -5252,9 +5252,9 @@ static regsubs_T *addstate_here(nfa_list_T *l, nfa_state_T *state, regsubs_T *su
 }
 
 // Check character class "class" against current character c.
-static int check_char_class(int class, int c)
+static int check_char_class(int cls, int c)
 {
-  switch (class) {
+  switch (cls) {
   case NFA_CLASS_ALNUM:
     if (c >= 1 && c < 128 && isalnum(c)) {
       return OK;
@@ -5353,7 +5353,7 @@ static int check_char_class(int class, int c)
 
   default:
     // should not be here :P
-    siemsg(_(e_ill_char_class), (int64_t)class);
+    siemsg(_(e_ill_char_class), (int64_t)cls);
     return FAIL;
   }
   return FAIL;
@@ -5799,7 +5799,7 @@ static long find_match_text(colnr_T *startcol, int regstart, uint8_t *match_text
   colnr_T col = *startcol;
   int regstart_len = PTR2LEN((char *)rex.line + col);
 
-  for (;;) {
+  while (true) {
     bool match = true;
     uint8_t *s1 = match_text;
     uint8_t *s2 = rex.line + col + regstart_len;  // skip regstart
@@ -5890,7 +5890,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
   regsubs_T *r;
   // Some patterns may take a long time to match, especially when using
   // recursive_regmatch(). Allow interrupting them with CTRL-C.
-  fast_breakcheck();
+  reg_breakcheck();
   if (got_int) {
     return false;
   }
@@ -5966,7 +5966,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
   }
 
   // Run for each character.
-  for (;;) {
+  while (true) {
     int curc = utf_ptr2char((char *)rex.input);
     int clen = utfc_ptr2len((char *)rex.input);
     if (curc == NUL) {
@@ -6020,7 +6020,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
     for (listidx = 0; listidx < thislist->n; listidx++) {
       // If the list gets very long there probably is something wrong.
       // At least allow interrupting with CTRL-C.
-      fast_breakcheck();
+      reg_breakcheck();
       if (got_int) {
         break;
       }
@@ -6501,7 +6501,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 
         state = t->state->out;
         result_if_matched = (t->state->c == NFA_START_COLL);
-        for (;;) {
+        while (true) {
           if (state->c == NFA_END_COLL) {
             result = !result_if_matched;
             break;
@@ -7168,7 +7168,7 @@ nextchar:
     }
 
     // Allow interrupting with CTRL-C.
-    line_breakcheck();
+    reg_breakcheck();
     if (got_int) {
       break;
     }
@@ -7591,6 +7591,7 @@ static int nfa_regexec_nl(regmatch_T *rmp, uint8_t *line, colnr_T col, bool line
   rex.reg_win = NULL;
   rex.reg_ic = rmp->rm_ic;
   rex.reg_icombine = false;
+  rex.reg_nobreak = rmp->regprog->re_flags & RE_NOBREAK;
   rex.reg_maxcol = 0;
   return (int)nfa_regexec_both(line, col, NULL, NULL);
 }

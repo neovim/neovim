@@ -664,6 +664,7 @@ char *arena_memdupz(Arena *arena, const char *buf, size_t size)
 # include "nvim/getchar.h"
 # include "nvim/grid.h"
 # include "nvim/mark.h"
+# include "nvim/msgpack_rpc/channel.h"
 # include "nvim/ops.h"
 # include "nvim/option.h"
 # include "nvim/os/os.h"
@@ -782,7 +783,7 @@ void free_all_mem(void)
   first_tabpage = NULL;
 
   // message history
-  for (;;) {
+  while (true) {
     if (delete_first_msg() == FAIL) {
       break;
     }
@@ -815,7 +816,6 @@ void free_all_mem(void)
   grid_free_all_mem();
 
   clear_hl_tables(false);
-  list_free_log();
 
   check_quickfix_busy();
 
@@ -823,6 +823,7 @@ void free_all_mem(void)
 
   ui_free_all_mem();
   nlua_free_all_mem();
+  rpc_free_all_mem();
 
   // should be last, in case earlier free functions deallocates arenas
   arena_free_reuse_blks();

@@ -72,7 +72,7 @@ static bool os_proc_tree_kill_rec(HANDLE process, int sig)
   }
 
 theend:
-  return (bool)TerminateProcess(process, (unsigned int)sig);
+  return (bool)TerminateProcess(process, (unsigned)sig);
 }
 /// Kills process `pid` and its descendants recursively.
 bool os_proc_tree_kill(int pid, int sig)
@@ -254,7 +254,7 @@ Dictionary os_proc_info(int pid)
   if (pe.th32ProcessID == (DWORD)pid) {
     PUT(pinfo, "pid", INTEGER_OBJ(pid));
     PUT(pinfo, "ppid", INTEGER_OBJ((int)pe.th32ParentProcessID));
-    PUT(pinfo, "name", STRING_OBJ(cstr_to_string(pe.szExeFile)));
+    PUT(pinfo, "name", CSTR_TO_OBJ(pe.szExeFile));
   }
 
   return pinfo;

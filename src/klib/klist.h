@@ -38,7 +38,7 @@
     kmptype_t **buf; \
   } kmp_##name##_t; \
   static inline kmp_##name##_t *kmp_init_##name(void) { \
-    return xcalloc(1, sizeof(kmp_##name##_t)); \
+    return (kmp_##name##_t *)xcalloc(1, sizeof(kmp_##name##_t)); \
   } \
   static inline void kmp_destroy_##name(kmp_##name##_t *mp) \
   REAL_FATTR_UNUSED; \
@@ -52,7 +52,7 @@
   static inline kmptype_t *kmp_alloc_##name(kmp_##name##_t *mp) { \
     mp->cnt++; \
     if (mp->n == 0) { \
-      return xcalloc(1, sizeof(kmptype_t)); \
+      return (kmptype_t *)xcalloc(1, sizeof(kmptype_t)); \
     } \
     return mp->buf[--mp->n]; \
   } \
@@ -60,7 +60,7 @@
     mp->cnt--; \
     if (mp->n == mp->max) { \
       mp->max = mp->max ? (mp->max << 1) : 16; \
-      mp->buf = xrealloc(mp->buf, sizeof(kmptype_t *) * mp->max); \
+      mp->buf = (kmptype_t **)xrealloc(mp->buf, sizeof(kmptype_t *) * mp->max); \
     } \
     mp->buf[mp->n++] = p; \
   }
@@ -84,7 +84,7 @@
     size_t size; \
   } kl_##name##_t; \
   static inline kl_##name##_t *kl_init_##name(void) { \
-    kl_##name##_t *kl = xcalloc(1, sizeof(kl_##name##_t)); \
+    kl_##name##_t *kl = (kl_##name##_t *)xcalloc(1, sizeof(kl_##name##_t)); \
     kl->mp = kmp_init(name); \
     kl->head = kl->tail = kmp_alloc(name, kl->mp); \
     kl->head->next = 0; \

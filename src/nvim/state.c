@@ -36,7 +36,7 @@
 
 void state_enter(VimState *s)
 {
-  for (;;) {
+  while (true) {
     int check_result = s->check ? s->check(s) : 1;
 
     if (!check_result) {
@@ -92,7 +92,7 @@ getkey:
     }
 
 #ifdef NVIM_LOG_DEBUG
-    char *keyname = key == K_EVENT ? "K_EVENT" : (char *)get_special_key_name(key, mod_mask);
+    char *keyname = key == K_EVENT ? "K_EVENT" : get_special_key_name(key, mod_mask);
     DLOG("input: %s", keyname);
 #endif
 
@@ -135,7 +135,7 @@ void state_handle_k_event(void)
 /// Return true if in the current mode we need to use virtual.
 bool virtual_active(void)
 {
-  unsigned int cur_ve_flags = get_ve_flags();
+  unsigned cur_ve_flags = get_ve_flags();
 
   // While an operator is being executed we return "virtual_op", because
   // VIsual_active has already been reset, thus we can't check for "block"

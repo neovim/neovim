@@ -75,7 +75,7 @@ local function reopenwithfolds(b)
   local tick = reopen(b, origlines)
 
   -- use markers for folds, make all folds open by default
-  command('setlocal foldmethod=marker foldlevel=20')
+  command('setlocal foldmethod=marker foldlevel=20 commentstring=/*%s*/')
 
   -- add a fold
   command('2,4fold')

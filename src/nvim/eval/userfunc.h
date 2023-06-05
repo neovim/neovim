@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "nvim/eval/typval.h"
+#include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/garray.h"
@@ -27,10 +27,10 @@ struct funccal_entry;
 #define FC_DELETED  0x10          // :delfunction used while uf_refcount > 0
 #define FC_REMOVED  0x20          // function redefined while uf_refcount > 0
 #define FC_SANDBOX  0x40          // function defined in the sandbox
-#define FC_DEAD     0x80          // function kept only for reference to dfunc
-#define FC_EXPORT   0x100         // "export def Func()"
+// #define FC_DEAD     0x80          // function kept only for reference to dfunc
+// #define FC_EXPORT   0x100         // "export def Func()"
 #define FC_NOARGS   0x200         // no a: variables in lambda
-#define FC_VIM9     0x400         // defined in vim9 script file
+// #define FC_VIM9     0x400         // defined in vim9 script file
 #define FC_LUAREF  0x800          // luaref callback
 
 /// Structure used by trans_function_name()
@@ -74,6 +74,8 @@ typedef struct {
   partial_T *fe_partial;  ///< for extra arguments
   dict_T *fe_selfdict;    ///< Dictionary for "self"
   typval_T *fe_basetv;    ///< base for base->method()
+  bool fe_found_var;      ///< if the function is not found then give an
+                          ///< error that a variable is not callable.
 } funcexe_T;
 
 #define FUNCEXE_INIT (funcexe_T) { \
@@ -85,6 +87,7 @@ typedef struct {
   .fe_partial = NULL, \
   .fe_selfdict = NULL, \
   .fe_basetv = NULL, \
+  .fe_found_var = false, \
 }
 
 #define FUNCARG(fp, j)  ((char **)(fp->uf_args.ga_data))[j]

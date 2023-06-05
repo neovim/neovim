@@ -29,8 +29,10 @@ func Test_strchars()
     call assert_equal(exp[i], strcharlen(inp[i]))
   endfor
 
-  call assert_fails("let v=strchars('abc', [])", 'E745:')
-  call assert_fails("let v=strchars('abc', 2)", 'E1023:')
+  call assert_fails("call strchars('abc', 2)", ['E1023:', 'E1023:'])
+  call assert_fails("call strchars('abc', -1)", ['E1023:', 'E1023:'])
+  call assert_fails("call strchars('abc', {})", ['E728:', 'E728:'])
+  call assert_fails("call strchars('abc', [])", ['E745:', 'E745:'])
 endfunc
 
 " Test for customlist completion
@@ -86,7 +88,20 @@ func Test_screenchar_utf8()
   call assert_equal("B", screenstring(1, 2))
   call assert_equal("C\u0308", screenstring(1, 3))
 
-  " 2-cells, with composing characters 
+  " 1-cell, with 6 composing characters
+  set maxcombine=6
+  call setline(1, ["ABC" .. repeat("\u0308", 6)])
+  redraw
+  call assert_equal([0x0041], screenchars(1, 1))
+  call assert_equal([0x0042], 1->screenchars(2))
+  " This should not use uninitialized memory
+  call assert_equal([0x0043] + repeat([0x0308], 6), screenchars(1, 3))
+  call assert_equal("A", screenstring(1, 1))
+  call assert_equal("B", screenstring(1, 2))
+  call assert_equal("C" .. repeat("\u0308", 6), screenstring(1, 3))
+  set maxcombine&
+
+  " 2-cells, with composing characters
   let text = "\u3042\u3044\u3046\u3099"
   call setline(1, text)
   redraw

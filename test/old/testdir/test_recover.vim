@@ -259,6 +259,14 @@ func Test_recover_corrupted_swap_file()
   call assert_equal(['???EMPTY BLOCK'], getline(1, '$'))
   bw!
 
+  " set the number of pointers in a pointer block to a large value
+  let b = copy(save_b)
+  let b[4098:4099] = 0zFFFF
+  call writefile(b, sn)
+  call assert_fails('recover Xfile1', 'E1364:')
+  call assert_equal('Xfile1', @%)
+  bw!
+
   " set the block number in a pointer entry to a negative number
   let b = copy(save_b)
   if system_64bit
@@ -292,6 +300,21 @@ func Test_recover_corrupted_swap_file()
   call assert_fails('recover Xfile1', 'E312:')
   call assert_equal('Xfile1', @%)
   call assert_equal(['??? from here until ???END lines may have been inserted/deleted',
+        \ '???END'], getline(1, '$'))
+  bw!
+
+  " set the number of lines in the data block to a large value
+  let b = copy(save_b)
+  if system_64bit
+    let b[8208:8215] = 0z00FFFFFF.FFFFFF00
+  else
+    let b[8208:8211] = 0z00FFFF00
+  endif
+  call writefile(b, sn)
+  call assert_fails('recover Xfile1', 'E312:')
+  call assert_equal('Xfile1', @%)
+  call assert_equal(['??? from here until ???END lines may have been inserted/deleted',
+        \ '', '???', '??? lines may be missing',
         \ '???END'], getline(1, '$'))
   bw!
 

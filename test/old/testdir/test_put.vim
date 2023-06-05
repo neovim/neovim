@@ -1,6 +1,7 @@
 " Tests for put commands, e.g. ":put", "p", "gp", "P", "gP", etc.
 
 source check.vim
+source screendump.vim
 
 func Test_put_block()
   new
@@ -244,6 +245,43 @@ func Test_put_visual_block_mode()
 
   bwipe!
   set ve=
+endfunc
+
+func Test_put_other_window()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      40vsplit
+      0put ='some text at the top'
+      put ='  one more text'
+      put ='  two more text'
+      put ='  three more text'
+      put ='  four more text'
+  END
+  call writefile(lines, 'Xtest_put_other', 'D')
+  let buf = RunVimInTerminal('-S Xtest_put_other', #{rows: 10})
+
+  call VerifyScreenDump(buf, 'Test_put_other_window_1', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_put_in_last_displayed_line()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      vim9script
+      autocmd CursorMoved * eval line('w$')
+      @a = 'x'->repeat(&columns * 2 - 2)
+      range(&lines)->setline(1)
+      feedkeys('G"ap')
+  END
+  call writefile(lines, 'Xtest_put_last_line', 'D')
+  let buf = RunVimInTerminal('-S Xtest_put_last_line', #{rows: 10})
+
+  call VerifyScreenDump(buf, 'Test_put_in_last_displayed_line_1', {})
+
+  call StopVimInTerminal(buf)
 endfunc
 
 

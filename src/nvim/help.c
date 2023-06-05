@@ -22,6 +22,7 @@
 #include "nvim/globals.h"
 #include "nvim/help.h"
 #include "nvim/macros.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -976,7 +977,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
       }
       p1 = vim_strchr(IObuff, '*');       // find first '*'
       while (p1 != NULL) {
-        p2 = strchr((const char *)p1 + 1, '*');  // Find second '*'.
+        p2 = strchr(p1 + 1, '*');  // Find second '*'.
         if (p2 != NULL && p2 > p1 + 1) {         // Skip "*" and "**".
           for (s = p1 + 1; s < p2; s++) {
             if (*s == ' ' || *s == '\t' || *s == '|') {
@@ -1154,7 +1155,7 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
       ext[1] = fname[5];
       ext[2] = fname[6];
     }
-    helptags_one(dirname, (char *)ext, (char *)fname, add_help_tags, ignore_writeerr);
+    helptags_one(dirname, ext, fname, add_help_tags, ignore_writeerr);
   }
 
   ga_clear(&ga);

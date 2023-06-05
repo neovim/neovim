@@ -124,41 +124,13 @@ This adds the 'l' flag to 'guioptions'.
 Standards are wonderful.  In Microsoft Windows, you can use the mouse to
 select text in a standard manner.  The X Window system also has a standard
 system for using the mouse.  Unfortunately, these two standards are not the
-same.
-   Fortunately, you can customize Vim.  You can make the behavior of the mouse
-work like an X Window system mouse or a Microsoft Windows mouse.  The following
-command makes the mouse behave like an X Window mouse: >
+same. Fortunately, you can customize Vim.
 
-	:behave xterm
+The following commands makes the mouse work more like a Microsoft Windows mouse: >
 
-The following command makes the mouse work like a Microsoft Windows mouse: >
-
-	:behave mswin
-
-The default behavior of the mouse on Unix systems is xterm.  The default
-behavior on Windows systems is selected during the installation process.  For
-details about what the two behaviors are, see |:behave|.  Here follows a
-summary.
-
-
-XTERM MOUSE BEHAVIOR
-
-Left mouse click		position the cursor
-Left mouse drag			select text in Visual mode
-Middle mouse click		paste text from the clipboard
-Right mouse click		extend the selected text until the mouse
-				pointer
-
-
-MSWIN MOUSE BEHAVIOR
-
-Left mouse click		position the cursor
-Left mouse drag			select text in Select mode (see |09.4|)
-Left mouse click, with Shift	extend the selected text until the mouse
-				pointer
-Middle mouse click		paste text from the clipboard
-Right mouse click		display a pop-up menu
-
+	set selection=exclusive
+	set selectmode=mouse,key
+	set keymodel=startsel,stopsel
 
 The mouse can be further tuned.  Check out these options if you want to change
 the way how the mouse works:

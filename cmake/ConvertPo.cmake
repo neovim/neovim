@@ -6,7 +6,7 @@ execute_process(
   OUTPUT_VARIABLE trans
   ERROR_VARIABLE err
   RESULT_VARIABLE res)
-if(NOT res EQUAL 0)
+if(res)
   message(FATAL_ERROR "iconv failed to run correctly: ${err}")
 endif()
 

@@ -10,11 +10,11 @@ freebsd_task:
   timeout_in: 30m
   install_script:
     - pkg update -f
-    - pkg install -y cmake gmake ninja pkgconf unzip wget gettext python libffi git
+    - pkg install -y cmake gmake ninja unzip wget gettext python git
   build_deps_script:
     - gmake deps
   build_script:
-    - gmake nvim
+    - gmake CMAKE_EXTRA_FLAGS="-DCI_BUILD=ON" nvim
   workaround_script:
     # Run tests as user "cirrus" instead of root. This is required for the
     # permission-related tests to work correctly.
@@ -26,3 +26,13 @@ freebsd_task:
     - sudo -u cirrus gmake unittest
   oldtest_script:
     - sudo -u cirrus gmake oldtest
+
+external_deps_task:
+  container:
+    dockerfile: ci/Dockerfile.external_deps
+  deps_script:
+    - cmake -S cmake.deps --preset external_deps
+    - cmake --build .deps
+  build_script:
+    - cmake --preset ci
+    - cmake --build build

@@ -417,4 +417,48 @@ describe('named marks view', function()
                   |
       ]])
   end)
+
+  it('fallback to standard behavior when mark is loaded from shada', function()
+    local screen = Screen.new(10, 6)
+    screen:attach()
+    command('edit ' .. file1)
+    feed('G')
+    feed('mA')
+    screen:expect([[
+      26 line     |
+      27 line     |
+      28 line     |
+      29 line     |
+      ^30 line     |
+                  |
+    ]])
+    command('set shadafile=Xtestfile-functional-editor-marks-shada')
+    finally(function()
+      command('set shadafile=NONE')
+      os.remove('Xtestfile-functional-editor-marks-shada')
+    end)
+    command('wshada!')
+    command('bwipe!')
+    screen:expect([[
+      ^            |
+      ~           |
+      ~           |
+      ~           |
+      ~           |
+                  |
+    ]])
+    command('rshada!')
+    command('edit ' .. file1)
+    feed('`"')
+    screen:expect([[
+      26 line     |
+      27 line     |
+      28 line     |
+      29 line     |
+      ^30 line     |
+                  |
+    ]])
+    feed('`A')
+    screen:expect_unchanged()
+  end)
 end)

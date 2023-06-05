@@ -245,7 +245,7 @@ func s:StartDebug_term(dict)
 
   " Create a hidden terminal window to communicate with gdb
   let s:comm_job_id = jobstart('tail -f /dev/null;#gdb communication', {
-        \ 'on_stdout': function('s:CommOutput'),
+        \ 'on_stdout': function('s:JobOutCallback', {'last_line': '', 'real_cb': function('s:CommOutput')}),
         \ 'pty': v:true,
         \ })
   " hide terminal buffer
@@ -430,7 +430,7 @@ func s:StartDebug_prompt(dict)
   " call ch_log('executing "' . join(gdb_cmd) . '"')
   let s:gdbjob = jobstart(gdb_cmd, {
     \ 'on_exit': function('s:EndPromptDebug'),
-    \ 'on_stdout': function('s:GdbOutCallback'),
+    \ 'on_stdout': function('s:JobOutCallback', {'last_line': '', 'real_cb': function('s:GdbOutCallback')}),
     \ })
   if s:gdbjob == 0
     echoerr 'invalid argument (or job table is full) while starting gdb job'
@@ -592,6 +592,23 @@ func s:PromptInterrupt()
   else
     call jobstop(s:gdbjob)
   endif
+endfunc
+
+" Wrapper around job callback that handles partial lines (:h channel-lines).
+" It should be called from a Dictionary with the following keys:
+" - last_line: the last (partial) line received
+" - real_cb: a callback that assumes full lines
+func s:JobOutCallback(jobid, data, event) dict
+  let eof = (a:data == [''])
+  let msgs = a:data
+  let msgs[0] = self.last_line .. msgs[0]
+  if eof
+    let self.last_line = ''
+  else
+    let self.last_line = msgs[-1]
+    unlet msgs[-1]
+  endif
+  call self.real_cb(a:jobid, msgs, a:event)
 endfunc
 
 " Function called when gdb outputs text.
@@ -893,7 +910,7 @@ func s:InstallCommands()
   command Program call s:GotoProgram()
   command Source call s:GotoSourcewinOrCreateIt()
   command Asm call s:GotoAsmwinOrCreateIt()
-  command Winbar call s:InstallWinbar()
+  command Winbar call s:InstallWinbar(1)
 
   let map = 1
   if exists('g:termdebug_config')
@@ -914,14 +931,7 @@ func s:InstallCommands()
   endif
 
   if has('menu') && &mouse != ''
-    " install the window toolbar by default, can be disabled in the config
-    let winbar = 1
-    if exists('g:termdebug_config')
-      let winbar = get(g:termdebug_config, 'winbar', 1)
-    endif
-    if winbar
-      call s:InstallWinbar()
-    endif
+    call s:InstallWinbar(0)
 
     let popup = 1
     if exists('g:termdebug_config')
@@ -946,7 +956,7 @@ endfunc
 " let s:winbar_winids = []
 
 " Install the window toolbar in the current window.
-func s:InstallWinbar()
+func s:InstallWinbar(force)
   " if has('menu') && &mouse != ''
   "   nnoremenu WinBar.Step   :Step<CR>
   "   nnoremenu WinBar.Next   :Over<CR>
@@ -1318,11 +1328,11 @@ function! s:OpenHoverPreview(lines, filetype) abort
             \ })
 
       if a:filetype isnot v:null
-        call nvim_win_set_option(float_win_id, 'filetype', a:filetype)
+        call nvim_set_option_value('filetype', a:filetype, { 'win' : float_win_id })
       endif
 
-      call nvim_buf_set_option(buf, 'modified', v:false)
-      call nvim_buf_set_option(buf, 'modifiable', v:false)
+      call nvim_set_option_value('modified', v:false, { 'buf' : buf })
+      call nvim_set_option_value('modifiable', v:false, { 'buf' : buf })
 
       " Unlike preview window, :pclose does not close window. Instead, close
       " hover window automatically when cursor is moved.
@@ -1353,7 +1363,7 @@ func s:GotoSourcewinOrCreateIt()
   if !win_gotoid(s:sourcewin)
     new
     let s:sourcewin = win_getid(winnr())
-    call s:InstallWinbar()
+    call s:InstallWinbar(0)
   endif
 endfunc
 
@@ -1476,7 +1486,7 @@ func s:HandleCursor(msg)
           " TODO: find existing window
           exe 'split ' . fnameescape(fname)
           let s:sourcewin = win_getid(winnr())
-          call s:InstallWinbar()
+          call s:InstallWinbar(0)
         else
           exe 'edit ' . fnameescape(fname)
         endif

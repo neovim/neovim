@@ -463,7 +463,7 @@ func Test_sign_funcs()
   call assert_fails('call sign_define("sign4", {"text" : "===>"})', 'E239:')
   " call assert_fails('call sign_define("sign5", {"text" : ""})', 'E239:')
   call assert_fails('call sign_define({})', 'E731:')
-  call assert_fails('call sign_define("sign6", [])', 'E715:')
+  call assert_fails('call sign_define("sign6", [])', 'E1206:')
 
   " Tests for sign_getdefined()
   call assert_equal([], sign_getdefined("none"))
@@ -490,8 +490,7 @@ func Test_sign_funcs()
   " Tests for invalid arguments to sign_place()
   call assert_fails('call sign_place([], "", "mySign", 1)', 'E745:')
   call assert_fails('call sign_place(5, "", "mySign", -1)', 'E158:')
-  call assert_fails('call sign_place(-1, "", "sign1", "Xsign", [])',
-	      \ 'E715:')
+  call assert_fails('call sign_place(-1, "", "sign1", "Xsign", [])', 'E1206:')
   call assert_fails('call sign_place(-1, "", "sign1", "Xsign",
 	      \ {"lnum" : 30})', 'E474:')
   call assert_fails('call sign_place(10, "", "xsign1x", "Xsign",
@@ -526,7 +525,7 @@ func Test_sign_funcs()
   call assert_fails("call sign_getplaced('dummy.sign')", 'E158:')
   call assert_fails('call sign_getplaced("&")', 'E158:')
   call assert_fails('call sign_getplaced(-1)', 'E158:')
-  call assert_fails('call sign_getplaced("Xsign", [])', 'E715:')
+  call assert_fails('call sign_getplaced("Xsign", [])', 'E1206:')
   call assert_equal([{'bufnr' : bufnr(''), 'signs' : []}],
 	      \ sign_getplaced('Xsign', {'lnum' : 1000000}))
   call assert_fails("call sign_getplaced('Xsign', {'lnum' : []})",
@@ -549,7 +548,7 @@ func Test_sign_funcs()
 	      \ {'id' : 20, 'buffer' : '&'})", 'E158:')
   call assert_fails("call sign_unplace('g1',
 	      \ {'id' : 20, 'buffer' : 200})", 'E158:')
-  call assert_fails("call sign_unplace('g1', 'mySign')", 'E715:')
+  call assert_fails("call sign_unplace('g1', 'mySign')", 'E1206:')
 
   call sign_unplace('*')
 
@@ -701,7 +700,7 @@ func Test_sign_group()
   call assert_equal([], sign_getplaced(bnum, {'group' : '*'})[0].signs)
 
   " Error case
-  call assert_fails("call sign_unplace({})", 'E474:')
+  call assert_fails("call sign_unplace({})", 'E1174:')
 
   " Place a sign in the global group and try to delete it using a group
   call assert_equal(5, sign_place(5, '', 'sign1', bnum, {'lnum' : 10}))
@@ -1568,8 +1567,7 @@ func Test_sign_priority()
 	      \ s[0].signs)
 
   " Error case
-  call assert_fails("call sign_place(1, 'g1', 'sign1', 'Xsign',
-	      \ [])", 'E715:')
+  call assert_fails("call sign_place(1, 'g1', 'sign1', 'Xsign', [])", 'E1206:')
   call assert_fails("call sign_place(1, 'g1', 'sign1', 'Xsign',
 	      \ {'priority' : []})", 'E745:')
   call sign_unplace('*')

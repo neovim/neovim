@@ -100,7 +100,7 @@ describe('print', function()
       pcall_err(command, 'lua bad_custom_error()'))
   end)
   it('prints strings with NULs and NLs correctly', function()
-    meths.set_option('more', true)
+    meths.set_option_value('more', true, {})
     eq('abc ^@ def\nghi^@^@^@jkl\nTEST\n\n\nT\n',
        exec_capture([[lua print("abc \0 def\nghi\0\0\0jkl\nTEST\n\n\nT\n")]]))
     eq('abc ^@ def\nghi^@^@^@jkl\nTEST\n\n\nT^@',
@@ -119,7 +119,7 @@ describe('print', function()
     exec_lua([[
       local cmd = ...
       function test()
-        local timer = vim.loop.new_timer()
+        local timer = vim.uv.new_timer()
         local done = false
         timer:start(10, 0, function()
           print("very fast")
@@ -130,7 +130,7 @@ describe('print', function()
         -- loop until we know for sure the callback has been executed
         while not done do
           os.execute(cmd)
-          vim.loop.run("nowait") -- fake os_breakcheck()
+          vim.uv.run("nowait") -- fake os_breakcheck()
         end
         print("very slow")
         vim.api.nvim_command("sleep 1m") -- force deferred event processing

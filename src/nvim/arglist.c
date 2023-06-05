@@ -63,7 +63,9 @@ typedef struct {
 # include "arglist.c.generated.h"
 #endif
 
-static char e_cannot_change_arglist_recursively[]
+static const char e_window_layout_changed_unexpectedly[]
+  = N_("E249: Window layout changed unexpectedly");
+static const char e_cannot_change_arglist_recursively[]
   = N_("E1156: Cannot change the argument list recursively");
 
 enum {
@@ -852,7 +854,7 @@ static void arg_all_close_unused_windows(arg_all_state_T *aall)
   if (aall->had_tab > 0) {
     goto_tabpage_tp(first_tabpage, true, true);
   }
-  for (;;) {
+  while (true) {
     win_T *wpnext = NULL;
     tabpage_T *tpnext = curtab->tp_next;
     for (win_T *wp = firstwin; wp != NULL; wp = wpnext) {
@@ -976,7 +978,7 @@ static void arg_all_open_windows(arg_all_state_T *aall, int count)
               aall->new_curwin = wp;
               aall->new_curtab = curtab;
             } else if (wp->w_frame->fr_parent != curwin->w_frame->fr_parent) {
-              emsg(_("E249: window layout changed unexpectedly"));
+              emsg(_(e_window_layout_changed_unexpectedly));
               i = count;
               break;
             } else {
@@ -1071,12 +1073,19 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
   aall.alist->al_refcount++;
   arglist_locked = true;
 
+  tabpage_T *const new_lu_tp = curtab;
+
   // Try closing all windows that are not in the argument list.
   // Also close windows that are not full width;
   // When 'hidden' or "forceit" set the buffer becomes hidden.
   // Windows that have a changed buffer and can't be hidden won't be closed.
   // When the ":tab" modifier was used do this for all tab pages.
   arg_all_close_unused_windows(&aall);
+
+  // Now set the last used tabpage to where we started.
+  if (valid_tabpage(new_lu_tp)) {
+    lastused_tabpage = new_lu_tp;
+  }
 
   // Open a window for files in the argument list that don't have one.
   // ARGCOUNT may change while doing this, because of autocommands.
@@ -1141,7 +1150,7 @@ char *arg_all(void)
   // Do this loop two times:
   // first time: compute the total length
   // second time: concatenate the names
-  for (;;) {
+  while (true) {
     int len = 0;
     for (int idx = 0; idx < ARGCOUNT; idx++) {
       char *p = alist_name(&ARGLIST[idx]);
@@ -1230,8 +1239,7 @@ static void get_arglist_as_rettv(aentry_T *arglist, int argcount, typval_T *rett
   tv_list_alloc_ret(rettv, argcount);
   if (arglist != NULL) {
     for (int idx = 0; idx < argcount; idx++) {
-      tv_list_append_string(rettv->vval.v_list,
-                            (const char *)alist_name(&arglist[idx]), -1);
+      tv_list_append_string(rettv->vval.v_list, alist_name(&arglist[idx]), -1);
     }
   }
 }
@@ -1267,7 +1275,7 @@ void f_argv(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_string = NULL;
   int idx = (int)tv_get_number_chk(&argvars[0], NULL);
   if (arglist != NULL && idx >= 0 && idx < argcount) {
-    rettv->vval.v_string = xstrdup((const char *)alist_name(&arglist[idx]));
+    rettv->vval.v_string = xstrdup(alist_name(&arglist[idx]));
   } else if (idx == -1) {
     get_arglist_as_rettv(arglist, argcount, rettv);
   }

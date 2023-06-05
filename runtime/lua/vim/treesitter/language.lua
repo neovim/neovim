@@ -1,4 +1,4 @@
-local a = vim.api
+local api = vim.api
 
 ---@class TSLanguageModule
 local M = {}
@@ -27,6 +27,11 @@ function M.get_lang(filetype)
   if filetype == '' then
     return
   end
+  if ft_to_lang[filetype] then
+    return ft_to_lang[filetype]
+  end
+  -- support subfiletypes like html.glimmer
+  filetype = vim.split(filetype, '.', { plain = true })[1]
   return ft_to_lang[filetype]
 end
 
@@ -89,7 +94,7 @@ function M.add(lang, opts)
     end
 
     local fname = 'parser/' .. lang .. '.*'
-    local paths = a.nvim_get_runtime_file(fname, false)
+    local paths = api.nvim_get_runtime_file(fname, false)
     if #paths == 0 then
       error("no parser for '" .. lang .. "' language, see :help treesitter-parsers")
     end

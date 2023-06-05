@@ -26,7 +26,7 @@ end
 
 function M.properties.charset(bufnr, val)
   assert(
-    vim.tbl_contains({ 'utf-8', 'utf-8-bom', 'latin1', 'utf-16be', 'utf-16le' }, val),
+    vim.list_contains({ 'utf-8', 'utf-8-bom', 'latin1', 'utf-16be', 'utf-16le' }, val),
     'charset must be one of "utf-8", "utf-8-bom", "latin1", "utf-16be", or "utf-16le"'
   )
   if val == 'utf-8' or val == 'utf-8-bom' then
@@ -189,6 +189,7 @@ local function parse(filepath, dir)
         end
       elseif key ~= nil and val ~= nil then
         if key == 'root' then
+          assert(val == 'true' or val == 'false', 'root must be either "true" or "false"')
           opts.root = val == 'true'
         elseif pat and pat:match_str(filepath) then
           opts[key] = val
@@ -207,6 +208,10 @@ end
 ---@private
 function M.config(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return
+  end
+
   local path = vim.fs.normalize(vim.api.nvim_buf_get_name(bufnr))
   if vim.bo[bufnr].buftype ~= '' or not vim.bo[bufnr].modifiable or path == '' then
     return

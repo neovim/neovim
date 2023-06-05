@@ -22,16 +22,14 @@ describe(':make', function()
     end)
 
     it('captures stderr & non zero exit code #14349', function ()
-      nvim('set_option', 'makeprg', testprg('shell-test')..' foo')
+      nvim('set_option_value', 'makeprg', testprg('shell-test')..' foo', {})
       local out = eval('execute("make")')
-      -- Make program exit code correctly captured
-      matches('\nshell returned 3', out)
       -- Error message is captured in the file and printed in the footer
-      matches('\n.*%: Unknown first argument%: foo', out)
+      matches('[\r\n]+.*[\r\n]+Unknown first argument%: foo[\r\n]+%(1 of 1%)%: Unknown first argument%: foo', out)
     end)
 
     it('captures stderr & zero exit code #14349', function ()
-      nvim('set_option', 'makeprg', testprg('shell-test'))
+      nvim('set_option_value', 'makeprg', testprg('shell-test'), {})
       local out = eval('execute("make")')
       -- Ensure there are no "shell returned X" messages between
       -- command and last line (indicating zero exit)

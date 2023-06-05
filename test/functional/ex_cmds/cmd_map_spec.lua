@@ -90,7 +90,7 @@ describe('mappings with <Cmd>', function()
       {1:~                                                                }|
       {1:~                                                                }|
       {1:~                                                                }|
-      {2:E5521: <Cmd> mapping must end with <CR> before second <Cmd>}      |
+      {2:E1136: <Cmd> mapping must end with <CR> before second <Cmd>}      |
     ]])
 
     command('noremap <F3> <Cmd>let x = 3')
@@ -103,7 +103,7 @@ describe('mappings with <Cmd>', function()
       {1:~                                                                }|
       {1:~                                                                }|
       {1:~                                                                }|
-      {2:E5520: <Cmd> mapping must end with <CR>}                          |
+      {2:E1255: <Cmd> mapping must end with <CR>}                          |
     ]])
     eq(0, eval('x'))
   end)

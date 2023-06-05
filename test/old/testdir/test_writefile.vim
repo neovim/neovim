@@ -924,19 +924,49 @@ endfunc
 " Test for ':write ++bin' and ':write ++nobin'
 func Test_write_binary_file()
   " create a file without an eol/eof character
-  call writefile(0z616161, 'Xfile1', 'b')
-  new Xfile1
-  write ++bin Xfile2
-  write ++nobin Xfile3
-  call assert_equal(0z616161, readblob('Xfile2'))
+  call writefile(0z616161, 'Xwbfile1', 'b')
+  new Xwbfile1
+  write ++bin Xwbfile2
+  write ++nobin Xwbfile3
+  call assert_equal(0z616161, readblob('Xwbfile2'))
   if has('win32')
-    call assert_equal(0z6161610D.0A, readblob('Xfile3'))
+    call assert_equal(0z6161610D.0A, readblob('Xwbfile3'))
   else
-    call assert_equal(0z6161610A, readblob('Xfile3'))
+    call assert_equal(0z6161610A, readblob('Xwbfile3'))
   endif
-  call delete('Xfile1')
-  call delete('Xfile2')
-  call delete('Xfile3')
+  call delete('Xwbfile1')
+  call delete('Xwbfile2')
+  call delete('Xwbfile3')
+endfunc
+
+func DoWriteDefer()
+  call writefile(['some text'], 'XdeferDelete', 'D')
+  call assert_equal(['some text'], readfile('XdeferDelete'))
+endfunc
+
+" def DefWriteDefer()
+"   writefile(['some text'], 'XdefdeferDelete', 'D')
+"   assert_equal(['some text'], readfile('XdefdeferDelete'))
+" enddef
+
+func Test_write_with_deferred_delete()
+  call DoWriteDefer()
+  call assert_equal('', glob('XdeferDelete'))
+  " call DefWriteDefer()
+  " call assert_equal('', glob('XdefdeferDelete'))
+endfunc
+
+func DoWriteFile()
+  call writefile(['text'], 'Xthefile', 'D')
+  cd ..
+endfunc
+
+func Test_write_defer_delete_chdir()
+  let dir = getcwd()
+  call DoWriteFile()
+  call assert_notequal(dir, getcwd())
+  call chdir(dir)
+  call assert_equal('', glob('Xthefile'))
 endfunc
 
 " Check that buffer is written before triggering QuitPre

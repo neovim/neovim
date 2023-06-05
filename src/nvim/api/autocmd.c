@@ -114,7 +114,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
     break;
   case kObjectTypeInteger:
     group = (int)opts->group.data.integer;
-    char *name = augroup_name(group);
+    char *name = group == 0 ? NULL : augroup_name(group);
     VALIDATE_INT(augroup_exists(name), "group", opts->group.data.integer, {
       goto cleanup;
     });
@@ -225,8 +225,12 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
       continue;
     }
 
-    for (AutoPat *ap = au_get_autopat_for_event(event); ap != NULL; ap = ap->next) {
-      if (ap->cmds == NULL) {
+    AutoCmdVec *acs = au_get_autocmds_for_event(event);
+    for (size_t i = 0; i < kv_size(*acs); i++) {
+      AutoCmd *const ac = &kv_A(*acs, i);
+      AutoPat *const ap = ac->pat;
+
+      if (ap == NULL) {
         continue;
       }
 
@@ -238,19 +242,16 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
       // Skip 'pattern' from invalid patterns if passed.
       if (pattern_filter_count > 0) {
         bool passed = false;
-        for (int i = 0; i < pattern_filter_count; i++) {
-          assert(i < AUCMD_MAX_PATTERNS);
-          assert(pattern_filters[i]);
+        for (int j = 0; j < pattern_filter_count; j++) {
+          assert(j < AUCMD_MAX_PATTERNS);
+          assert(pattern_filters[j]);
 
-          char *pat = pattern_filters[i];
+          char *pat = pattern_filters[j];
           int patlen = (int)strlen(pat);
 
           if (aupat_is_buflocal(pat, patlen)) {
-            aupat_normalize_buflocal_pat(pattern_buflocal,
-                                         pat,
-                                         patlen,
+            aupat_normalize_buflocal_pat(pattern_buflocal, pat, patlen,
                                          aupat_get_buflocal_nr(pat, patlen));
-
             pat = pattern_buflocal;
           }
 
@@ -265,85 +266,71 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
         }
       }
 
-      for (AutoCmd *ac = ap->cmds; ac != NULL; ac = ac->next) {
-        if (aucmd_exec_is_deleted(ac->exec)) {
-          continue;
-        }
+      Dictionary autocmd_info = ARRAY_DICT_INIT;
 
-        Dictionary autocmd_info = ARRAY_DICT_INIT;
-
-        if (ap->group != AUGROUP_DEFAULT) {
-          PUT(autocmd_info, "group", INTEGER_OBJ(ap->group));
-          PUT(autocmd_info, "group_name", CSTR_TO_OBJ(augroup_name(ap->group)));
-        }
-
-        if (ac->id > 0) {
-          PUT(autocmd_info, "id", INTEGER_OBJ(ac->id));
-        }
-
-        if (ac->desc != NULL) {
-          PUT(autocmd_info, "desc", CSTR_TO_OBJ(ac->desc));
-        }
-
-        if (ac->exec.type == CALLABLE_CB) {
-          PUT(autocmd_info, "command", STRING_OBJ(STRING_INIT));
-
-          Callback *cb = &ac->exec.callable.cb;
-          switch (cb->type) {
-          case kCallbackLua:
-            if (nlua_ref_is_function(cb->data.luaref)) {
-              PUT(autocmd_info, "callback", LUAREF_OBJ(api_new_luaref(cb->data.luaref)));
-            }
-            break;
-          case kCallbackFuncref:
-          case kCallbackPartial:
-            PUT(autocmd_info, "callback", STRING_OBJ(cstr_as_string(callback_to_string(cb))));
-            break;
-          default:
-            abort();
-          }
-        } else {
-          PUT(autocmd_info,
-              "command",
-              STRING_OBJ(cstr_as_string(xstrdup(ac->exec.callable.cmd))));
-        }
-
-        PUT(autocmd_info,
-            "pattern",
-            STRING_OBJ(cstr_to_string(ap->pat)));
-
-        PUT(autocmd_info,
-            "event",
-            STRING_OBJ(cstr_to_string((char *)event_nr2name(event))));
-
-        PUT(autocmd_info, "once", BOOLEAN_OBJ(ac->once));
-
-        if (ap->buflocal_nr) {
-          PUT(autocmd_info, "buflocal", BOOLEAN_OBJ(true));
-          PUT(autocmd_info, "buffer", INTEGER_OBJ(ap->buflocal_nr));
-        } else {
-          PUT(autocmd_info, "buflocal", BOOLEAN_OBJ(false));
-        }
-
-        // TODO(sctx): It would be good to unify script_ctx to actually work with lua
-        //  right now it's just super weird, and never really gives you the info that
-        //  you would expect from this.
-        //
-        //  I think we should be able to get the line number, filename, etc. from lua
-        //  when we're executing something, and it should be easy to then save that
-        //  info here.
-        //
-        //  I think it's a big loss not getting line numbers of where options, autocmds,
-        //  etc. are set (just getting "Sourced (lua)" or something is not that helpful.
-        //
-        //  Once we do that, we can put these into the autocmd_info, but I don't think it's
-        //  useful to do that at this time.
-        //
-        // PUT(autocmd_info, "sid", INTEGER_OBJ(ac->script_ctx.sc_sid));
-        // PUT(autocmd_info, "lnum", INTEGER_OBJ(ac->script_ctx.sc_lnum));
-
-        ADD(autocmd_list, DICTIONARY_OBJ(autocmd_info));
+      if (ap->group != AUGROUP_DEFAULT) {
+        PUT(autocmd_info, "group", INTEGER_OBJ(ap->group));
+        PUT(autocmd_info, "group_name", CSTR_TO_OBJ(augroup_name(ap->group)));
       }
+
+      if (ac->id > 0) {
+        PUT(autocmd_info, "id", INTEGER_OBJ(ac->id));
+      }
+
+      if (ac->desc != NULL) {
+        PUT(autocmd_info, "desc", CSTR_TO_OBJ(ac->desc));
+      }
+
+      if (ac->exec.type == CALLABLE_CB) {
+        PUT(autocmd_info, "command", STRING_OBJ(STRING_INIT));
+
+        Callback *cb = &ac->exec.callable.cb;
+        switch (cb->type) {
+        case kCallbackLua:
+          if (nlua_ref_is_function(cb->data.luaref)) {
+            PUT(autocmd_info, "callback", LUAREF_OBJ(api_new_luaref(cb->data.luaref)));
+          }
+          break;
+        case kCallbackFuncref:
+        case kCallbackPartial:
+          PUT(autocmd_info, "callback", CSTR_AS_OBJ(callback_to_string(cb)));
+          break;
+        default:
+          abort();
+        }
+      } else {
+        PUT(autocmd_info, "command", CSTR_TO_OBJ(ac->exec.callable.cmd));
+      }
+
+      PUT(autocmd_info, "pattern", CSTR_TO_OBJ(ap->pat));
+      PUT(autocmd_info, "event", CSTR_TO_OBJ(event_nr2name(event)));
+      PUT(autocmd_info, "once", BOOLEAN_OBJ(ac->once));
+
+      if (ap->buflocal_nr) {
+        PUT(autocmd_info, "buflocal", BOOLEAN_OBJ(true));
+        PUT(autocmd_info, "buffer", INTEGER_OBJ(ap->buflocal_nr));
+      } else {
+        PUT(autocmd_info, "buflocal", BOOLEAN_OBJ(false));
+      }
+
+      // TODO(sctx): It would be good to unify script_ctx to actually work with lua
+      //  right now it's just super weird, and never really gives you the info that
+      //  you would expect from this.
+      //
+      //  I think we should be able to get the line number, filename, etc. from lua
+      //  when we're executing something, and it should be easy to then save that
+      //  info here.
+      //
+      //  I think it's a big loss not getting line numbers of where options, autocmds,
+      //  etc. are set (just getting "Sourced (lua)" or something is not that helpful.
+      //
+      //  Once we do that, we can put these into the autocmd_info, but I don't think it's
+      //  useful to do that at this time.
+      //
+      // PUT(autocmd_info, "sid", INTEGER_OBJ(ac->script_ctx.sc_sid));
+      // PUT(autocmd_info, "lnum", INTEGER_OBJ(ac->script_ctx.sc_lnum));
+
+      ADD(autocmd_list, DICTIONARY_OBJ(autocmd_info));
     }
   }
 
@@ -360,7 +347,7 @@ cleanup:
 ///     vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
 ///       pattern = {"*.c", "*.h"},
 ///       callback = function(ev)
-///         print(string.format('event fired: %s', vim.inspect(ev)))
+///         print(string.format('event fired: \%s', vim.inspect(ev)))
 ///       end
 ///     })
 /// </pre>
@@ -488,7 +475,7 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
   }
 
   if (patterns.size == 0) {
-    ADD(patterns, STRING_OBJ(STATIC_CSTR_TO_STRING("*")));
+    ADD(patterns, STATIC_CSTR_TO_OBJ("*"));
   }
 
   VALIDATE_R((event_array.size > 0), "event", {
@@ -600,7 +587,7 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Error *err)
   // When we create the autocmds, we want to say that they are all matched, so that's *
   // but when we clear them, we want to say that we didn't pass a pattern, so that's NUL
   if (patterns.size == 0) {
-    ADD(patterns, STRING_OBJ(STATIC_CSTR_TO_STRING("")));
+    ADD(patterns, STATIC_CSTR_TO_OBJ(""));
   }
 
   // If we didn't pass any events, that means clear all events.
@@ -608,7 +595,7 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Error *err)
     FOR_ALL_AUEVENTS(event) {
       FOREACH_ITEM(patterns, pat_object, {
         char *pat = pat_object.data.string.data;
-        if (!clear_autocmd(event, (char *)pat, au_group, err)) {
+        if (!clear_autocmd(event, pat, au_group, err)) {
           goto cleanup;
         }
       });
@@ -619,7 +606,7 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Error *err)
 
       FOREACH_ITEM(patterns, pat_object, {
         char *pat = pat_object.data.string.data;
-        if (!clear_autocmd(event_nr, (char *)pat, au_group, err)) {
+        if (!clear_autocmd(event_nr, pat, au_group, err)) {
           goto cleanup;
         }
       });
@@ -663,7 +650,7 @@ Integer nvim_create_augroup(uint64_t channel_id, String name, Dict(create_augrou
 
     if (clear_autocmds) {
       FOR_ALL_AUEVENTS(event) {
-        aupat_del_for_event_and_group(event, augroup);
+        aucmd_del_for_event_and_group(event, augroup);
       }
     }
   });
@@ -684,7 +671,7 @@ void nvim_del_augroup_by_id(Integer id, Error *err)
   FUNC_API_SINCE(9)
 {
   TRY_WRAP(err, {
-    char *name = augroup_name((int)id);
+    char *name = id == 0 ? NULL : augroup_name((int)id);
     augroup_del(name, false);
   });
 }
@@ -746,7 +733,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
     break;
   case kObjectTypeInteger:
     au_group = (int)opts->group.data.integer;
-    char *name = augroup_name(au_group);
+    char *name = au_group == 0 ? NULL : augroup_name(au_group);
     VALIDATE_INT(augroup_exists(name), "group", (int64_t)au_group, {
       goto cleanup;
     });
@@ -776,7 +763,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
   }
 
   if (patterns.size == 0) {
-    ADD(patterns, STRING_OBJ(STATIC_CSTR_TO_STRING("")));
+    ADD(patterns, STATIC_CSTR_TO_OBJ(""));
   }
 
   if (HAS_KEY(opts->data)) {
@@ -840,7 +827,7 @@ static int get_augroup_from_object(Object group, Error *err)
     return au_group;
   case kObjectTypeInteger:
     au_group = (int)group.data.integer;
-    char *name = augroup_name(au_group);
+    char *name = au_group == 0 ? NULL : augroup_name(au_group);
     VALIDATE_INT(augroup_exists(name), "group", (int64_t)au_group, {
       return AUGROUP_ERROR;
     });
@@ -866,7 +853,7 @@ static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Ob
     Object *v = &pattern;
 
     if (v->type == kObjectTypeString) {
-      char *pat = v->data.string.data;
+      const char *pat = v->data.string.data;
       size_t patlen = aucmd_pattern_length(pat);
       while (patlen) {
         ADD(*patterns, STRING_OBJ(cbuf_to_string(pat, patlen)));
@@ -881,7 +868,7 @@ static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Ob
 
       Array array = v->data.array;
       FOREACH_ITEM(array, entry, {
-        char *pat = entry.data.string.data;
+        const char *pat = entry.data.string.data;
         size_t patlen = aucmd_pattern_length(pat);
         while (patlen) {
           ADD(*patterns, STRING_OBJ(cbuf_to_string(pat, patlen)));
@@ -907,7 +894,7 @@ static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Ob
     }
 
     snprintf((char *)pattern_buflocal, BUFLOCAL_PAT_LEN, "<buffer=%d>", (int)buf->handle);
-    ADD(*patterns, STRING_OBJ(cstr_to_string(pattern_buflocal)));
+    ADD(*patterns, CSTR_TO_OBJ(pattern_buflocal));
   }
 
   return true;

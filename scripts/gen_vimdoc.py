@@ -154,8 +154,10 @@ CONFIG = {
             'fs.lua',
             'secure.lua',
             'version.lua',
+            'iter.lua',
         ],
         'files': [
+            'runtime/lua/vim/iter.lua',
             'runtime/lua/vim/_editor.lua',
             'runtime/lua/vim/shared.lua',
             'runtime/lua/vim/loader.lua',
@@ -185,6 +187,8 @@ CONFIG = {
         'fn_helptag_fmt': lambda fstem, name: (
             f'*vim.{name}()*'
             if fstem.lower() == '_editor'
+            else f'*{name}()*'
+            if name[0].isupper()
             else f'*{fstem}.{name}()*'),
         'module_override': {
             # `shared` functions are exposed on the `vim` module.
@@ -198,6 +202,7 @@ CONFIG = {
             'fs': 'vim.fs',
             'secure': 'vim.secure',
             'version': 'vim.version',
+            'iter': 'vim.iter',
         },
         'append_only': [
             'shared.lua',
@@ -217,7 +222,6 @@ CONFIG = {
             'util.lua',
             'log.lua',
             'rpc.lua',
-            'sync.lua',
             'protocol.lua',
         ],
         'files': [

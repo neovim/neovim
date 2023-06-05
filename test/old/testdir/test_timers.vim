@@ -93,7 +93,13 @@ func Test_timer_info()
   call timer_stop(id)
   call assert_equal([], timer_info(id))
 
-  call assert_fails('call timer_info("abc")', 'E39:')
+  call assert_fails('call timer_info("abc")', 'E1210:')
+
+  " check repeat count inside the callback
+  let g:timer_repeat = []
+  let tid = timer_start(10, {tid -> execute("call add(g:timer_repeat, timer_info(tid)[0].repeat)")}, #{repeat: 3})
+  call WaitForAssert({-> assert_equal([2, 1, 0], g:timer_repeat)})
+  unlet g:timer_repeat
 endfunc
 
 func Test_timer_stopall()
@@ -228,9 +234,9 @@ func Test_timer_errors()
   sleep 50m
   call assert_equal(3, g:call_count)
 
-  call assert_fails('call timer_start(100, "MyHandler", "abc")', 'E475:')
+  call assert_fails('call timer_start(100, "MyHandler", "abc")', 'E1206:')
   call assert_fails('call timer_start(100, [])', 'E921:')
-  call assert_fails('call timer_stop("abc")', 'E39:')
+  call assert_fails('call timer_stop("abc")', 'E1210:')
 endfunc
 
 func FuncWithCaughtError(timer)

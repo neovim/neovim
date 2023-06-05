@@ -3,8 +3,6 @@ local shared = vim
 local assert = require('luassert')
 local busted = require('busted')
 local luv = require('luv')
-local lfs = require('lfs')
-local relpath = require('pl.path').relpath
 local Paths = require('test.cmakeconfig.paths')
 
 assert:set_parameter('TableFormatLevel', 100)
@@ -22,6 +20,41 @@ local module = {
   REMOVE_THIS = {},
 }
 
+--- @param p string
+--- @return string
+local function relpath(p)
+  p = vim.fs.normalize(p)
+  local cwd = luv.cwd()
+  return p:gsub("^" .. cwd)
+end
+
+--- @param path string
+--- @return boolean
+function module.isdir(path)
+  if not path then
+    return false
+  end
+  local stat = luv.fs_stat(path)
+  if not stat then
+    return false
+  end
+  return stat.type == 'directory'
+end
+
+--- @param path string
+--- @return boolean
+function module.isfile(path)
+  if not path then
+    return false
+  end
+  local stat = luv.fs_stat(path)
+  if not stat then
+    return false
+  end
+  return stat.type == 'file'
+end
+
+--- @return string
 function module.argss_to_cmd(...)
   local cmd = ''
   for i = 1, select('#', ...) do
@@ -228,16 +261,16 @@ function module.glob(initial_path, re, exc_re)
   while #paths_to_check > 0 do
     local cur_path = paths_to_check[#paths_to_check]
     paths_to_check[#paths_to_check] = nil
-    for e in lfs.dir(cur_path) do
+    for e in vim.fs.dir(cur_path) do
       local full_path = cur_path .. '/' .. e
       local checked_path = full_path:sub(#initial_path + 1)
       if (not is_excluded(checked_path)) and e:sub(1, 1) ~= '.' then
-        local attrs = lfs.attributes(full_path)
-        if attrs then
-          local check_key = attrs.dev .. ':' .. tostring(attrs.ino)
+        local stat = luv.fs_stat(full_path)
+        if stat then
+          local check_key = stat.dev .. ':' .. tostring(stat.ino)
           if not checked_files[check_key] then
             checked_files[check_key] = true
-            if attrs.mode == 'directory' then
+            if stat.type == 'directory' then
               paths_to_check[#paths_to_check + 1] = full_path
             elseif not re or checked_path:match(re) then
               ret[#ret + 1] = full_path
@@ -253,8 +286,8 @@ end
 function module.check_logs()
   local log_dir = os.getenv('LOG_DIR')
   local runtime_errors = {}
-  if log_dir and lfs.attributes(log_dir, 'mode') == 'directory' then
-    for tail in lfs.dir(log_dir) do
+  if log_dir and module.isdir(log_dir) then
+    for tail in vim.fs.dir(log_dir) do
       if tail:sub(1, 30) == 'valgrind-' or tail:find('san%.') then
         local file = log_dir .. '/' .. tail
         local fd = io.open(file)
@@ -436,6 +469,7 @@ function module.check_cores(app, force) -- luacheck: ignore
   end
 end
 
+--- @return string?
 function module.repeated_read_cmd(...)
   for _ = 1, 10 do
     local stream = module.popen_r(...)
@@ -535,6 +569,9 @@ function module.concat_tables(...)
   return ret
 end
 
+--- @param str string
+--- @param leave_indent? boolean
+--- @return string
 function module.dedent(str, leave_indent)
   -- find minimum common indent across lines
   local indent = nil
@@ -841,6 +878,11 @@ function module.read_nvim_log(logfile, ci_rename)
     os.rename(logfile, logfile .. '.displayed')
   end
   return log
+end
+
+function module.mkdir(path)
+  -- 493 is 0755 in decimal
+  return luv.fs_mkdir(path, 493)
 end
 
 module = shared.tbl_extend('error', module, Paths, shared, require('test.deprecated'))

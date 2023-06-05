@@ -1,4 +1,4 @@
-local a = vim.api
+local api = vim.api
 local language = require('vim.treesitter.language')
 
 ---@class Query
@@ -74,7 +74,7 @@ end
 ---@return string[] query_files List of files to load for given query and language
 function M.get_files(lang, query_name, is_included)
   local query_path = string.format('queries/%s/%s.scm', lang, query_name)
-  local lang_files = dedupe_files(a.nvim_get_runtime_file(query_path, true))
+  local lang_files = dedupe_files(api.nvim_get_runtime_file(query_path, true))
 
   if #lang_files == 0 then
     return {}
@@ -382,6 +382,39 @@ local predicate_handlers = {
 
     return string_set[node_text]
   end,
+
+  ['has-ancestor?'] = function(match, _, _, predicate)
+    local node = match[predicate[2]]
+    if not node then
+      return true
+    end
+
+    local ancestor_types = {}
+    for _, type in ipairs({ unpack(predicate, 3) }) do
+      ancestor_types[type] = true
+    end
+
+    node = node:parent()
+    while node do
+      if ancestor_types[node:type()] then
+        return true
+      end
+      node = node:parent()
+    end
+    return false
+  end,
+
+  ['has-parent?'] = function(match, _, _, predicate)
+    local node = match[predicate[2]]
+    if not node then
+      return true
+    end
+
+    if vim.list_contains({ unpack(predicate, 3) }, node:parent():type()) then
+      return true
+    end
+    return false
+  end,
 }
 
 -- As we provide lua-match? also expose vim-match?
@@ -458,7 +491,7 @@ local directive_handlers = {
       metadata[id] = {}
     end
 
-    local pattern, replacement = pred[3], pred[3]
+    local pattern, replacement = pred[3], pred[4]
     assert(type(pattern) == 'string')
     assert(type(replacement) == 'string')
 
@@ -609,10 +642,10 @@ end
 ---
 --- {source} is needed if the query contains predicates; then the caller
 --- must ensure to use a freshly parsed tree consistent with the current
---- text of the buffer (if relevant). {start_row} and {end_row} can be used to limit
+--- text of the buffer (if relevant). {start} and {stop} can be used to limit
 --- matches inside a row range (this is typically used with root node
 --- as the {node}, i.e., to get syntax highlight matches in the current
---- viewport). When omitted, the {start} and {end} row values are used from the given node.
+--- viewport). When omitted, the {start} and {stop} row values are used from the given node.
 ---
 --- The iterator returns three values: a numeric id identifying the capture,
 --- the captured node, and metadata from any directives processing the match.
@@ -635,7 +668,7 @@ end
 ---@return (fun(): integer, TSNode, TSMetadata): capture id, capture node, metadata
 function Query:iter_captures(node, source, start, stop)
   if type(source) == 'number' and source == 0 then
-    source = vim.api.nvim_get_current_buf()
+    source = api.nvim_get_current_buf()
   end
 
   start, stop = value_or_node_range(start, stop, node)
@@ -686,16 +719,20 @@ end
 ---@param source (integer|string) Source buffer or string to search
 ---@param start integer Starting line for the search
 ---@param stop integer Stopping line for the search (end-exclusive)
+---@param opts table|nil Options:
+---   - max_start_depth (integer) if non-zero, sets the maximum start depth
+---     for each match. This is used to prevent traversing too deep into a tree.
+---     Requires treesitter >= 0.20.9.
 ---
 ---@return (fun(): integer, table<integer,TSNode>, table): pattern id, match, metadata
-function Query:iter_matches(node, source, start, stop)
+function Query:iter_matches(node, source, start, stop, opts)
   if type(source) == 'number' and source == 0 then
-    source = vim.api.nvim_get_current_buf()
+    source = api.nvim_get_current_buf()
   end
 
   start, stop = value_or_node_range(start, stop, node)
 
-  local raw_iter = node:_rawquery(self.query, false, start, stop)
+  local raw_iter = node:_rawquery(self.query, false, start, stop, opts)
   ---@cast raw_iter fun(): string, any
   local function iter()
     local pattern, match = raw_iter()
@@ -712,6 +749,45 @@ function Query:iter_matches(node, source, start, stop)
     return pattern, match, metadata
   end
   return iter
+end
+
+---@class QueryLinterOpts
+---@field langs (string|string[]|nil)
+---@field clear (boolean)
+
+--- Lint treesitter queries using installed parser, or clear lint errors.
+---
+--- Use |treesitter-parsers| in runtimepath to check the query file in {buf} for errors:
+---
+---   - verify that used nodes are valid identifiers in the grammar.
+---   - verify that predicates and directives are valid.
+---   - verify that top-level s-expressions are valid.
+---
+--- The found diagnostics are reported using |diagnostic-api|.
+--- By default, the parser used for verification is determined by the containing folder
+--- of the query file, e.g., if the path ends in `/lua/highlights.scm`, the parser for the
+--- `lua` language will be used.
+---@param buf (integer) Buffer handle
+---@param opts (QueryLinterOpts|nil) Optional keyword arguments:
+---   - langs (string|string[]|nil) Language(s) to use for checking the query.
+---            If multiple languages are specified, queries are validated for all of them
+---   - clear (boolean) if `true`, just clear current lint errors
+function M.lint(buf, opts)
+  if opts and opts.clear then
+    require('vim.treesitter._query_linter').clear(buf)
+  else
+    require('vim.treesitter._query_linter').lint(buf, opts)
+  end
+end
+
+--- Omnifunc for completing node names and predicates in treesitter queries.
+---
+--- Use via
+--- <pre>lua
+---   vim.bo.omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
+--- </pre>
+function M.omnifunc(findstart, base)
+  return require('vim.treesitter._query_linter').omnifunc(findstart, base)
 end
 
 return M

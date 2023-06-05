@@ -154,7 +154,7 @@ the recover command:
 :rec[over]! [file]	Like ":recover", but any changes in the current
 			buffer are lost.
 
-							*E312* *E309* *E310*
+						*E312* *E309* *E310* *E1364*
 Vim has some intelligence about what to do if the swap file is corrupt in
 some way.  If Vim has doubt about what it found, it will give an error
 message and insert lines with "???" in the text.  If you see an error message

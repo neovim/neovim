@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local lfs = require('lfs')
+local luv = require('luv')
 local neq, eq, command = helpers.neq, helpers.eq, helpers.command
 local clear, curbufmeths = helpers.clear, helpers.curbufmeths
 local exc_exec, expect, eval = helpers.exc_exec, helpers.expect, helpers.eval
@@ -32,8 +32,8 @@ describe('eval-API', function()
     local err = exc_exec('call nvim_get_current_buf("foo")')
     eq('Vim(call):E118: Too many arguments for function: nvim_get_current_buf', err)
 
-    err = exc_exec('call nvim_set_option("hlsearch")')
-    eq('Vim(call):E119: Not enough arguments for function: nvim_set_option', err)
+    err = exc_exec('call nvim_set_option_value("hlsearch")')
+    eq('Vim(call):E119: Not enough arguments for function: nvim_set_option_value', err)
 
     err = exc_exec('call nvim_buf_set_lines(1, 0, -1, [], ["list"])')
     eq('Vim(call):E5555: API call: Wrong type for argument 4 when calling nvim_buf_set_lines, expecting Boolean', err)
@@ -118,7 +118,7 @@ describe('eval-API', function()
   end)
 
   it('are highlighted by vim.vim syntax file', function()
-    if lfs.attributes("build/runtime/syntax/vim/generated.vim",'uid') == nil then
+    if luv.fs_stat("build/runtime/syntax/vim/generated.vim").uid == nil then
       pending("runtime was not built, skipping test")
       return
     end
@@ -133,7 +133,7 @@ describe('eval-API', function()
     })
 
     command("set ft=vim")
-    command("let &rtp='build/runtime/,'.&rtp")
+    command("set rtp^=build/runtime/")
     command("syntax on")
     insert([[
       call bufnr('%')

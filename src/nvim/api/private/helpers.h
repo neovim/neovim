@@ -34,6 +34,7 @@
     .type = kObjectTypeString, \
     .data.string = s })
 
+#define CSTR_AS_OBJ(s) STRING_OBJ(cstr_as_string(s))
 #define CSTR_TO_OBJ(s) STRING_OBJ(cstr_to_string(s))
 
 #define BUFFER_OBJ(s) ((Object) { \
@@ -103,6 +104,9 @@
     .data = xmemdupz(s, sizeof(s) - 1), \
     .size = sizeof(s) - 1 })
 
+#define STATIC_CSTR_AS_OBJ(s) STRING_OBJ(STATIC_CSTR_AS_STRING(s))
+#define STATIC_CSTR_TO_OBJ(s) STRING_OBJ(STATIC_CSTR_TO_STRING(s))
+
 // Helpers used by the generated msgpack-rpc api wrappers
 #define api_init_boolean
 #define api_init_integer
@@ -122,13 +126,13 @@
 #define api_free_window(value)
 #define api_free_tabpage(value)
 
-EXTERN PMap(handle_T) buffer_handles INIT(= MAP_INIT);
-EXTERN PMap(handle_T) window_handles INIT(= MAP_INIT);
-EXTERN PMap(handle_T) tabpage_handles INIT(= MAP_INIT);
+EXTERN PMap(int) buffer_handles INIT(= MAP_INIT);
+EXTERN PMap(int) window_handles INIT(= MAP_INIT);
+EXTERN PMap(int) tabpage_handles INIT(= MAP_INIT);
 
-#define handle_get_buffer(h) pmap_get(handle_T)(&buffer_handles, (h))
-#define handle_get_window(h) pmap_get(handle_T)(&window_handles, (h))
-#define handle_get_tabpage(h) pmap_get(handle_T)(&tabpage_handles, (h))
+#define handle_get_buffer(h) pmap_get(int)(&buffer_handles, (h))
+#define handle_get_window(h) pmap_get(int)(&window_handles, (h))
+#define handle_get_tabpage(h) pmap_get(int)(&tabpage_handles, (h))
 
 /// Structure used for saving state for :try
 ///
@@ -181,7 +185,6 @@ typedef struct {
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/helpers.h.generated.h"
-# include "keysets.h.generated.h"
 #endif
 
 #define WITH_SCRIPT_CONTEXT(channel_id, code) \

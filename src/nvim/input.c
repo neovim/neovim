@@ -93,7 +93,7 @@ int get_keystroke(MultiQueue *events)
   int save_mapped_ctrl_c = mapped_ctrl_c;
 
   mapped_ctrl_c = 0;        // mappings are not used here
-  for (;;) {
+  while (true) {
     // flush output before waiting
     ui_flush();
     // Leave some room for check_termcode() to insert a key code into (max
@@ -179,7 +179,7 @@ int get_number(int colon, int *mouse_used)
 
   no_mapping++;
   allow_keys++;  // no mapping here, but recognize keys
-  for (;;) {
+  while (true) {
     ui_cursor_goto(msg_row, msg_col);
     int c = safe_vgetc();
     if (ascii_isdigit(c)) {

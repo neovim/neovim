@@ -106,6 +106,7 @@ struct TUIData {
   bool bce;
   bool mouse_enabled;
   bool mouse_move_enabled;
+  bool title_enabled;
   bool busy, is_invisible, want_invisible;
   bool cork, overflow;
   bool set_cursor_color_as_str;
@@ -209,7 +210,7 @@ void tui_enable_extkeys(TUIData *tui)
   unibi_out_ext(tui, tui->unibi_ext.enable_extended_keys);
 }
 
-static size_t unibi_pre_fmt_str(TUIData *tui, unsigned int unibi_index, char *buf, size_t len)
+static size_t unibi_pre_fmt_str(TUIData *tui, unsigned unibi_index, char *buf, size_t len)
 {
   const char *str = unibi_get_str(tui->ut, unibi_index);
   if (!str) {
@@ -325,8 +326,6 @@ static void terminfo_start(TUIData *tui)
   // Enter alternate screen, save title, and clear.
   // NOTE: Do this *before* changing terminal settings. #6433
   unibi_out(tui, unibi_enter_ca_mode);
-  // Save title/icon to the "stack". #4063
-  unibi_out_ext(tui, tui->unibi_ext.save_title);
   unibi_out(tui, unibi_keypad_xmit);
   unibi_out(tui, unibi_clear_screen);
   // Ask the terminal to send us the background color.
@@ -382,9 +381,10 @@ static void terminfo_stop(TUIData *tui)
   unibi_out(tui, unibi_keypad_local);
   // Disable extended keys before exiting alternate screen.
   unibi_out_ext(tui, tui->unibi_ext.disable_extended_keys);
+  // May restore old title before exiting alternate screen.
+  tui_set_title(tui, (String)STRING_INIT);
+  // Exit alternate screen.
   unibi_out(tui, unibi_exit_ca_mode);
-  // Restore title/icon from the "stack". #4063
-  unibi_out_ext(tui, tui->unibi_ext.restore_title);
   if (tui->cursor_color_changed) {
     unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
   }
@@ -437,6 +437,8 @@ static void tui_terminal_stop(TUIData *tui)
   }
   tinput_stop(&tui->input);
   signal_watcher_stop(&tui->winch_handle);
+  // Position the cursor on the last screen line, below all the text
+  cursor_goto(tui, tui->height - 1, 0);
   terminfo_stop(tui);
 }
 
@@ -975,7 +977,7 @@ void tui_grid_clear(TUIData *tui, Integer g)
   UGrid *grid = &tui->grid;
   ugrid_clear(grid);
   kv_size(tui->invalid_regions) = 0;
-  clear_region(tui, 0, grid->height, 0, grid->width, 0);
+  clear_region(tui, 0, tui->height, 0, tui->width, 0);
 }
 
 void tui_grid_cursor_goto(TUIData *tui, Integer grid, Integer row, Integer col)
@@ -1302,16 +1304,16 @@ static void show_verbose_terminfo(TUIData *tui)
 
   Array chunks = ARRAY_DICT_INIT;
   Array title = ARRAY_DICT_INIT;
-  ADD(title, STRING_OBJ(cstr_to_string("\n\n--- Terminal info --- {{{\n")));
-  ADD(title, STRING_OBJ(cstr_to_string("Title")));
+  ADD(title, CSTR_TO_OBJ("\n\n--- Terminal info --- {{{\n"));
+  ADD(title, CSTR_TO_OBJ("Title"));
   ADD(chunks, ARRAY_OBJ(title));
   Array info = ARRAY_DICT_INIT;
   String str = terminfo_info_msg(ut, tui->term);
   ADD(info, STRING_OBJ(str));
   ADD(chunks, ARRAY_OBJ(info));
   Array end_fold = ARRAY_DICT_INIT;
-  ADD(end_fold, STRING_OBJ(cstr_to_string("}}}\n")));
-  ADD(end_fold, STRING_OBJ(cstr_to_string("Title")));
+  ADD(end_fold, CSTR_TO_OBJ("}}}\n"));
+  ADD(end_fold, CSTR_TO_OBJ("Title"));
   ADD(chunks, ARRAY_OBJ(end_fold));
 
   Array args = ARRAY_DICT_INIT;
@@ -1359,17 +1361,29 @@ void tui_suspend(TUIData *tui)
 
 void tui_set_title(TUIData *tui, String title)
 {
-  if (!(title.data && unibi_get_str(tui->ut, unibi_to_status_line)
+  if (!(unibi_get_str(tui->ut, unibi_to_status_line)
         && unibi_get_str(tui->ut, unibi_from_status_line))) {
     return;
   }
-  unibi_out(tui, unibi_to_status_line);
-  out(tui, title.data, title.size);
-  unibi_out(tui, unibi_from_status_line);
+  if (title.size > 0) {
+    if (!tui->title_enabled) {
+      // Save title/icon to the "stack". #4063
+      unibi_out_ext(tui, tui->unibi_ext.save_title);
+      tui->title_enabled = true;
+    }
+    unibi_out(tui, unibi_to_status_line);
+    out(tui, title.data, title.size);
+    unibi_out(tui, unibi_from_status_line);
+  } else if (tui->title_enabled) {
+    // Restore title/icon from the "stack". #4063
+    unibi_out_ext(tui, tui->unibi_ext.restore_title);
+    tui->title_enabled = false;
+  }
 }
 
 void tui_set_icon(TUIData *tui, String icon)
-{}
+{
+}
 
 void tui_screenshot(TUIData *tui, String path)
 {
@@ -1413,7 +1427,7 @@ void tui_option_set(TUIData *tui, String name, Object value)
 
     if (ui_client_channel_id) {
       MAXSIZE_TEMP_ARRAY(args, 2);
-      ADD_C(args, STRING_OBJ(cstr_as_string("rgb")));
+      ADD_C(args, CSTR_AS_OBJ("rgb"));
       ADD_C(args, BOOLEAN_OBJ(value.data.boolean));
       rpc_send_event(ui_client_channel_id, "nvim_ui_set_option", args);
     }
@@ -1526,12 +1540,11 @@ void tui_guess_size(TUIData *tui)
     height = DFLT_ROWS;
   }
 
-  if (tui->width != width || tui->height != height) {
-    tui->width = width;
-    tui->height = height;
+  tui->width = width;
+  tui->height = height;
 
-    ui_client_set_size(width, height);
-  }
+  // Redraw on SIGWINCH event if size didn't change. #23411
+  ui_client_set_size(width, height);
 }
 
 static void unibi_goto(TUIData *tui, int row, int col)
@@ -1616,7 +1629,7 @@ static void pad(void *ctx, size_t delay, int scale FUNC_ATTR_UNUSED, int force)
   }
 
   flush_buf(tui);
-  uv_sleep((unsigned int)(delay/10));
+  uv_sleep((unsigned)(delay/10));
 }
 
 static void unibi_set_if_empty(unibi_term *ut, enum unibi_string str, const char *val)

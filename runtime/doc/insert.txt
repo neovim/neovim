@@ -114,7 +114,7 @@ CTRL-R {register}				*i_CTRL-R*
 				the last delete or yank
 			'%'	the current file name
 			'#'	the alternate file name
-			'*'	the clipboard contents (X11: primary selection)
+			"*"	the clipboard contents (X11: primary selection)
 			'+'	the clipboard contents
 			'/'	the last search pattern
 			':'	the last command-line
@@ -1392,7 +1392,7 @@ other versions of HTML. Features:
 - after "<" complete tag name depending on context (no div suggestion inside
   of an a tag); '/>' indicates empty tags
 - inside of tag complete proper attributes (no width attribute for an a tag);
-  show also type of attribute; '*' indicates required attributes
+  show also type of attribute; "*" indicates required attributes
 - when attribute has limited number of possible values help to complete them
 - complete names of entities
 - complete values of "class" and "id" attributes with data obtained from

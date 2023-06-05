@@ -23,6 +23,7 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
+#include "nvim/bufwrite.h"
 #include "nvim/change.h"
 #include "nvim/channel.h"
 #include "nvim/charset.h"
@@ -53,7 +54,6 @@
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/input.h"
-#include "nvim/lua/executor.h"
 #include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
@@ -125,6 +125,9 @@ typedef struct {
 # include "ex_cmds.c.generated.h"
 #endif
 
+static const char e_non_numeric_argument_to_z[]
+  = N_("E144: Non-numeric argument to :z");
+
 /// ":ascii" and "ga" implementation
 void do_ascii(const exarg_T *const eap)
 {
@@ -149,8 +152,8 @@ void do_ascii(const exarg_T *const eap)
     char buf1[20];
     if (vim_isprintc_strict(c) && (c < ' ' || c > '~')) {
       char buf3[7];
-      transchar_nonprint(curbuf, (char_u *)buf3, c);
-      vim_snprintf(buf1, sizeof(buf1), "  <%s>", (char *)buf3);
+      transchar_nonprint(curbuf, buf3, c);
+      vim_snprintf(buf1, sizeof(buf1), "  <%s>", buf3);
     } else {
       buf1[0] = NUL;
     }
@@ -345,10 +348,8 @@ static int linelen(int *has_tab)
        last > first && ascii_iswhite(last[-1]); last--) {}
   char save = *last;
   *last = NUL;
-  // Get line length.
-  len = linetabsize(line);
-  // Check for embedded TAB.
-  if (has_tab != NULL) {
+  len = linetabsize_str(line);  // Get line length.
+  if (has_tab != NULL) {        // Check for embedded TAB.
     *has_tab = vim_strchr(first, TAB) != NULL;
   }
   *last = save;
@@ -933,6 +934,17 @@ void free_prev_shellcmd(void)
 
 #endif
 
+/// Check that "prevcmd" is not NULL.  If it is NULL then give an error message
+/// and return false.
+static int prevcmd_is_set(void)
+{
+  if (prevcmd == NULL) {
+    emsg(_(e_noprev));
+    return false;
+  }
+  return true;
+}
+
 /// Handle the ":!cmd" command.  Also for ":r !cmd" and ":w !cmd"
 /// Bangs in the argument are replaced with the previously entered command.
 /// Remember the argument.
@@ -974,8 +986,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
       len += strlen(newcmd);
     }
     if (ins_prevcmd) {
-      if (prevcmd == NULL) {
-        emsg(_(e_noprev));
+      if (!prevcmd_is_set()) {
         xfree(newcmd);
         return;
       }
@@ -1012,10 +1023,20 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     }
   } while (trailarg != NULL);
 
-  xfree(prevcmd);
-  prevcmd = newcmd;
+  // Only set "prevcmd" if there is a command to run, otherwise keep te one
+  // we have.
+  if (strlen(newcmd) > 0) {
+    xfree(prevcmd);
+    prevcmd = newcmd;
+  } else {
+    free_newcmd = true;
+  }
 
   if (bangredo) {  // put cmd in redo buffer for ! command
+    if (!prevcmd_is_set()) {
+      goto theend;
+    }
+
     // If % or # appears in the command, it must have been escaped.
     // Reescape them, so that redoing them does not substitute them by the
     // buffername.
@@ -1028,6 +1049,9 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   }
   // Add quotes around the command, for shells that need them.
   if (*p_shq != NUL) {
+    if (free_newcmd) {
+      xfree(newcmd);
+    }
     newcmd = xmalloc(strlen(prevcmd) + 2 * strlen(p_shq) + 1);
     STRCPY(newcmd, p_shq);
     STRCAT(newcmd, prevcmd);
@@ -1050,6 +1074,8 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     do_filter(line1, line2, eap, newcmd, do_in, do_out);
     apply_autocmds(EVENT_SHELLFILTERPOST, NULL, NULL, false, curbuf);
   }
+
+theend:
   if (free_newcmd) {
     xfree(newcmd);
   }
@@ -1361,12 +1387,12 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
 {
   bool is_fish_shell =
 #if defined(UNIX)
-    strncmp((char *)invocation_path_tail(p_sh, NULL), "fish", 4) == 0;
+    strncmp(invocation_path_tail(p_sh, NULL), "fish", 4) == 0;
 #else
     false;
 #endif
-  bool is_pwsh = strncmp((char *)invocation_path_tail(p_sh, NULL), "pwsh", 4) == 0
-                 || strncmp((char *)invocation_path_tail(p_sh, NULL), "powershell",
+  bool is_pwsh = strncmp(invocation_path_tail(p_sh, NULL), "pwsh", 4) == 0
+                 || strncmp(invocation_path_tail(p_sh, NULL), "powershell",
                             10) == 0;
 
   size_t len = strlen(cmd) + 1;  // At least enough space for cmd + NULL.
@@ -1376,7 +1402,7 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
                                   : 0;
 
   if (itmp != NULL) {
-    len += is_pwsh  ? strlen(itmp) + sizeof("& { Get-Content " " | & " " }") - 1 + 6  // +6: #20530
+    len += is_pwsh ? strlen(itmp) + sizeof("& { Get-Content " " | & " " }") - 1 + 6  // +6: #20530
                     : strlen(itmp) + sizeof(" { " " < " " } ") - 1;
   }
   if (otmp != NULL) {
@@ -1388,7 +1414,7 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
   if (is_pwsh) {
     if (itmp != NULL) {
       xstrlcpy(buf, "& { Get-Content ", len - 1);  // FIXME: should we add "-Encoding utf8"?
-      xstrlcat(buf, (const char *)itmp, len - 1);
+      xstrlcat(buf, itmp, len - 1);
       xstrlcat(buf, " | & ", len - 1);  // FIXME: add `&` ourself or leave to user?
       xstrlcat(buf, cmd, len - 1);
       xstrlcat(buf, " }", len - 1);
@@ -1401,7 +1427,7 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
     // redirecting input and/or output.
     if (itmp != NULL || otmp != NULL) {
       char *fmt = is_fish_shell ? "begin; %s; end"
-        :       "(%s)";
+        : "(%s)";
       vim_snprintf(buf, len, fmt, cmd);
     } else {
       xstrlcpy(buf, cmd, len);
@@ -1409,7 +1435,7 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
 
     if (itmp != NULL) {
       xstrlcat(buf, " < ", len - 1);
-      xstrlcat(buf, (const char *)itmp, len - 1);
+      xstrlcat(buf, itmp, len - 1);
     }
 #else
     // For shells that don't understand braces around commands, at least allow
@@ -1426,9 +1452,9 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
         }
       }
       xstrlcat(buf, " < ", len);
-      xstrlcat(buf, (const char *)itmp, len);
+      xstrlcat(buf, itmp, len);
       if (*p_shq == NUL) {
-        const char *const p = find_pipe((const char *)cmd);
+        const char *const p = find_pipe(cmd);
         if (p != NULL) {
           xstrlcat(buf, " ", len - 1);  // Insert a space before the '|' for DOS
           xstrlcat(buf, p, len - 1);
@@ -1899,6 +1925,9 @@ void do_wqall(exarg_T *eap)
   int save_forceit = eap->forceit;
 
   if (eap->cmdidx == CMD_xall || eap->cmdidx == CMD_wqall) {
+    if (before_quit_all(eap) == FAIL) {
+      return;
+    }
     exiting = true;
   }
 
@@ -2614,7 +2643,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
   // If the window options were changed may need to set the spell language.
   // Can only do this after the buffer has been properly setup.
   if (did_get_winopts && curwin->w_p_spell && *curwin->w_s->b_p_spl != NUL) {
-    (void)did_set_spelllang(curwin);
+    (void)parse_spelllang(curwin);
   }
 
   if (command == NULL) {
@@ -2756,7 +2785,7 @@ void ex_append(exarg_T *eap)
     State |= MODE_LANGMAP;
   }
 
-  for (;;) {
+  while (true) {
     msg_scroll = true;
     need_wait_return = false;
     if (curbuf->b_p_ai) {
@@ -2928,7 +2957,7 @@ void ex_z(exarg_T *eap)
 
   if (*x != 0) {
     if (!ascii_isdigit(*x)) {
-      emsg(_("E144: non-numeric argument to :z"));
+      emsg(_(e_non_numeric_argument_to_z));
       return;
     }
     bigness = atol(x);
@@ -3251,9 +3280,11 @@ static int check_regexp_delim(int c)
 ///
 /// The usual escapes are supported as described in the regexp docs.
 ///
-/// @param do_buf_event If `true`, send buffer updates.
+/// @param cmdpreview_ns  The namespace to show 'inccommand' preview highlights.
+///                       If <= 0, preview shouldn't be shown.
 /// @return 0, 1 or 2. See show_cmdpreview() for more information on what the return value means.
-static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T cmdpreview_bufnr)
+static int do_sub(exarg_T *eap, const proftime_T timeout, const long cmdpreview_ns,
+                  const handle_T cmdpreview_bufnr)
 {
 #define ADJUST_SUB_FIRSTLNUM() \
   do { \
@@ -3371,7 +3402,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
       MB_PTR_ADV(cmd);
     }
 
-    if (!eap->skip && !cmdpreview) {
+    if (!eap->skip && cmdpreview_ns <= 0) {
       sub_set_replacement((SubReplacementString) {
         .sub = xstrdup(sub),
         .timestamp = os_time(),
@@ -3391,7 +3422,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
     endcolumn = (curwin->w_curswant == MAXCOL);
   }
 
-  if (sub != NULL && sub_joining_lines(eap, pat, sub, cmd, !cmdpreview)) {
+  if (sub != NULL && sub_joining_lines(eap, pat, sub, cmd, cmdpreview_ns <= 0)) {
     return 0;
   }
 
@@ -3436,7 +3467,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
   }
 
   if (search_regcomp(pat, NULL, RE_SUBST, which_pat,
-                     (cmdpreview ? 0 : SEARCH_HIS), &regmatch) == FAIL) {
+                     (cmdpreview_ns > 0 ? 0 : SEARCH_HIS), &regmatch) == FAIL) {
     if (subflags.do_error) {
       emsg(_(e_invcmd));
     }
@@ -3465,7 +3496,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
     sub = xstrdup(sub);
     sub_copy = sub;
   } else {
-    char *newsub = regtilde(sub, magic_isset(), cmdpreview);
+    char *newsub = regtilde(sub, magic_isset(), cmdpreview_ns > 0);
     if (newsub != sub) {
       // newsub was allocated, free it later.
       sub_copy = newsub;
@@ -3479,7 +3510,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
 
   for (linenr_T lnum = eap->line1;
        lnum <= line2 && !got_quit && !aborting()
-       && (!cmdpreview || preview_lines.lines_needed <= (linenr_T)p_cwh
+       && (cmdpreview_ns <= 0 || preview_lines.lines_needed <= (linenr_T)p_cwh
            || lnum <= curwin->w_botline);
        lnum++) {
     long nmatch = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
@@ -3555,7 +3586,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
       // 3. substitute the string.
       // 4. if subflags.do_all is set, find next match
       // 5. break if there isn't another match in this line
-      for (;;) {
+      while (true) {
         SubResult current_match = {
           .start = { 0, 0 },
           .end   = { 0, 0 },
@@ -3640,7 +3671,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
           }
         }
 
-        if (subflags.do_ask && !cmdpreview) {
+        if (subflags.do_ask && cmdpreview_ns <= 0) {
           int typed = 0;
 
           // change State to MODE_CONFIRM, so that the mouse works
@@ -3853,7 +3884,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
         // Save the line numbers for the preview buffer
         // NOTE: If the pattern matches a final newline, the next line will
         // be shown also, but should not be highlighted. Intentional for now.
-        if (cmdpreview && !has_second_delim) {
+        if (cmdpreview_ns > 0 && !has_second_delim) {
           current_match.start.col = regmatch.startpos[0].col;
           if (current_match.end.lnum == 0) {
             current_match.end.lnum = sub_firstlnum + (linenr_T)nmatch - 1;
@@ -3868,7 +3899,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
 
         // 3. Substitute the string. During 'inccommand' preview only do this if
         //    there is a replace pattern.
-        if (!cmdpreview || has_second_delim) {
+        if (cmdpreview_ns <= 0 || has_second_delim) {
           long lnum_start = lnum;  // save the start lnum
           int save_ma = curbuf->b_p_ma;
           int save_sandbox = sandbox;
@@ -4118,7 +4149,7 @@ skip:
 
 #define PUSH_PREVIEW_LINES() \
   do { \
-    if (cmdpreview) { \
+    if (cmdpreview_ns > 0) { \
       linenr_T match_lines = current_match.end.lnum \
                              - current_match.start.lnum +1; \
       if (preview_lines.subresults.size > 0) { \
@@ -4201,7 +4232,7 @@ skip:
           beginline(BL_WHITE | BL_FIX);
         }
       }
-      if (!cmdpreview && !do_sub_msg(subflags.do_count) && subflags.do_ask && p_ch > 0) {
+      if (cmdpreview_ns <= 0 && !do_sub_msg(subflags.do_count) && subflags.do_ask && p_ch > 0) {
         msg("");
       }
     } else {
@@ -4240,7 +4271,7 @@ skip:
   int retv = 0;
 
   // Show 'inccommand' preview if there are matched lines.
-  if (cmdpreview && !aborting()) {
+  if (cmdpreview_ns > 0 && !aborting()) {
     if (got_quit || profile_passed_limit(timeout)) {  // Too slow, disable.
       set_string_option_direct("icm", -1, "", OPT_FREE, SID_NONE);
     } else if (*p_icm != NUL && pat != NULL) {
@@ -4288,7 +4319,7 @@ bool do_sub_msg(bool count_only)
                                 "%" PRId64 " matches on %" PRId64 " lines", sub_nsubs)
                      : NGETTEXT("%" PRId64 " substitution on %" PRId64 " lines",
                                 "%" PRId64 " substitutions on %" PRId64 " lines", sub_nsubs);
-    vim_snprintf_add((char *)msg_buf, sizeof(msg_buf),
+    vim_snprintf_add(msg_buf, sizeof(msg_buf),
                      NGETTEXT(msg_single, msg_plural, sub_nlines),
                      (int64_t)sub_nsubs, (int64_t)sub_nlines);
     if (msg(msg_buf)) {
@@ -4745,7 +4776,7 @@ void ex_oldfiles(exarg_T *eap)
     if (!message_filtered(fname)) {
       msg_outnum(nr);
       msg_puts(": ");
-      msg_outtrans((char *)tv_get_string(TV_LIST_ITEM_TV(li)));
+      msg_outtrans(tv_get_string(TV_LIST_ITEM_TV(li)));
       msg_clr_eos();
       msg_putchar('\n');
       os_breakcheck();
@@ -4773,30 +4804,4 @@ void ex_oldfiles(exarg_T *eap)
       xfree(s);
     }
   }
-}
-
-void ex_trust(exarg_T *eap)
-{
-  const char *const p = skiptowhite(eap->arg);
-  char *arg1 = xmemdupz(eap->arg, (size_t)(p - eap->arg));
-  const char *action = "allow";
-  const char *path = skipwhite(p);
-
-  if (strcmp(arg1, "++deny") == 0) {
-    action = "deny";
-  } else if (strcmp(arg1, "++remove") == 0) {
-    action = "remove";
-  } else if (*arg1 != '\0') {
-    semsg(e_invarg2, arg1);
-    goto theend;
-  }
-
-  if (path[0] == '\0') {
-    path = NULL;
-  }
-
-  nlua_trust(action, path);
-
-theend:
-  xfree(arg1);
 }

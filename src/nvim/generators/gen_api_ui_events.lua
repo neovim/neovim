@@ -1,19 +1,15 @@
-local mpack = require('mpack')
+local mpack = vim.mpack
 
-local nvimdir = arg[1]
-package.path = nvimdir .. '/?.lua;' .. package.path
-
-assert(#arg == 6)
-local input = io.open(arg[2], 'rb')
-local call_output = io.open(arg[3], 'wb')
-local remote_output = io.open(arg[4], 'wb')
-local metadata_output = io.open(arg[5], 'wb')
-local client_output = io.open(arg[6], 'wb')
+assert(#arg == 5)
+local input = io.open(arg[1], 'rb')
+local call_output = io.open(arg[2], 'wb')
+local remote_output = io.open(arg[3], 'wb')
+local metadata_output = io.open(arg[4], 'wb')
+local client_output = io.open(arg[5], 'wb')
 
 local c_grammar = require('generators.c_grammar')
 local events = c_grammar.grammar:match(input:read('*all'))
 
-_G.vim = loadfile(nvimdir..'/../../runtime/lua/vim/shared.lua')()
 local hashy = require'generators.hashy'
 
 local function write_signature(output, ev, prefix, notype)
@@ -194,7 +190,7 @@ for _,ev in ipairs(events) do
   end
 end
 
-local packed = mpack.pack(exported_events)
+local packed = mpack.encode(exported_events)
 local dump_bin_array = require("generators.dump_bin_array")
 dump_bin_array(metadata_output, 'ui_events_metadata', packed)
 metadata_output:close()

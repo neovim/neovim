@@ -2,7 +2,7 @@
 " Language:	R
 " Author:	Jakson Alves de Aquino <jalvesaq@gmail.com>
 " Homepage:     https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	Wed Oct 26, 2022  12:04PM
+" Last Change:	Mon Feb 27, 2023  07:16PM
 
 
 " Only load this indent file when no other was loaded.
@@ -110,7 +110,7 @@ function s:RDelete_parens(line)
   return line1
 endfunction
 
-function! s:Get_paren_balance(line, o, c)
+function s:Get_paren_balance(line, o, c)
   let line2 = substitute(a:line, a:o, "", "g")
   let openp = strlen(a:line) - strlen(line2)
   let line3 = substitute(line2, a:c, "", "g")
@@ -118,7 +118,7 @@ function! s:Get_paren_balance(line, o, c)
   return openp - closep
 endfunction
 
-function! s:Get_matching_brace(linenr, o, c, delbrace)
+function s:Get_matching_brace(linenr, o, c, delbrace)
   let line = SanitizeRLine(getline(a:linenr))
   if a:delbrace == 1
     let line = substitute(line, '{$', "", "")
@@ -134,7 +134,7 @@ endfunction
 
 " This function is buggy because there 'if's without 'else'
 " It must be rewritten relying more on indentation
-function! s:Get_matching_if(linenr, delif)
+function s:Get_matching_if(linenr, delif)
   let line = SanitizeRLine(getline(a:linenr))
   if a:delif
     let line = substitute(line, "if", "", "g")
@@ -162,7 +162,7 @@ function! s:Get_matching_if(linenr, delif)
   endif
 endfunction
 
-function! s:Get_last_paren_idx(line, o, c, pb)
+function s:Get_last_paren_idx(line, o, c, pb)
   let blc = a:pb
   let line = substitute(a:line, '\t', s:curtabstop, "g")
   let theidx = -1

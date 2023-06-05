@@ -426,7 +426,7 @@ describe('highlight', function()
       ^                         |
       {2:~                        }|
                                |
-    ]],{
+    ]], {
       [1] = {strikethrough = true},
       [2] = {bold = true, foreground = Screen.colors.Blue1},
     })
@@ -515,7 +515,7 @@ describe('highlight', function()
               {1:neovim} tabbed^    |
       {0:~                        }|
       {5:-- INSERT --}             |
-    ]],{
+    ]], {
       [0] = {bold=true, foreground=Screen.colors.Blue},
       [1] = {background = Screen.colors.Yellow, foreground = Screen.colors.Red,
              special = Screen.colors.Red},
@@ -525,6 +525,41 @@ describe('highlight', function()
       [5] = {bold=true},
     })
 
+  end)
+
+  it("'diff', syntax and extmark #23722", function()
+    local screen = Screen.new(25,10)
+    screen:attach()
+    exec([[
+      new
+      call setline(1, ['', '01234 6789'])
+      windo diffthis
+      wincmd w
+      syn match WarningMsg "^.*$"
+      call nvim_buf_add_highlight(0, -1, 'ErrorMsg', 1, 2, 8)
+    ]])
+    screen:expect([[
+      {1:  }^                       |
+      {1:  }{2:01}{3:234 67}{2:89}{5:             }|
+      {4:~                        }|
+      {4:~                        }|
+      {7:[No Name] [+]            }|
+      {1:  }                       |
+      {1:  }{6:-----------------------}|
+      {4:~                        }|
+      {8:[No Name]                }|
+                               |
+    ]], {
+      [0] = {Screen.colors.WebGray, foreground = Screen.colors.DarkBlue},
+      [1] = {background = Screen.colors.Grey, foreground = Screen.colors.Blue4},
+      [2] = {foreground = Screen.colors.Red, background = Screen.colors.LightBlue},
+      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.LightBlue},
+      [4] = {bold = true, foreground = Screen.colors.Blue},
+      [5] = {background = Screen.colors.LightBlue},
+      [6] = {bold = true, background = Screen.colors.LightCyan, foreground = Screen.colors.Blue1},
+      [7] = {reverse = true, bold = true},
+      [8] = {reverse = true},
+    })
   end)
 end)
 
@@ -1411,10 +1446,10 @@ describe('ColorColumn highlight', function()
       [3] = {foreground = Screen.colors.Brown},  -- LineNr
       [4] = {foreground = Screen.colors.Brown, bold = true},  -- CursorLineNr
       [5] = {foreground = Screen.colors.Blue, bold = true},  -- NonText
-      -- NonText and ColorColumn
       [6] = {foreground = Screen.colors.Blue, background = Screen.colors.LightRed, bold = true},
       [7] = {reverse = true, bold = true},  -- StatusLine
       [8] = {reverse = true},  -- StatusLineNC
+      [9] = {background = Screen.colors.Grey90, foreground = Screen.colors.Red},
     })
     screen:attach()
   end)
@@ -1497,6 +1532,25 @@ describe('ColorColumn highlight', function()
       {5:~                                       }|
       {5:~                                       }|
       {5:~                                       }|
+                                              |
+    ]])
+  end)
+
+  it('is combined with low-priority CursorLine highlight #23016', function()
+    screen:try_resize(40, 2)
+    command('set colorcolumn=30 cursorline')
+    screen:expect([[
+      {2:^                             }{1: }{2:          }|
+                                              |
+    ]])
+    command('hi clear ColorColumn')
+    screen:expect([[
+      {2:^                                        }|
+                                              |
+    ]])
+    command('hi ColorColumn guifg=Red')
+    screen:expect([[
+      {2:^                             }{9: }{2:          }|
                                               |
     ]])
   end)
@@ -2430,6 +2484,23 @@ describe("'winhighlight' highlight", function()
       more text                               |
       {4:[No Name]                        }{1:1,1 All}|
                                               |
+    ]]}
+  end)
+
+  it('can link to empty highlight group', function()
+    command 'hi NormalNC guibg=Red' -- czerwone time
+    command 'set winhl=NormalNC:Normal'
+    command 'split'
+
+    screen:expect{grid=[[
+      ^                    |
+      {0:~                   }|
+      {0:~                   }|
+      {3:[No Name]           }|
+                          |
+      {0:~                   }|
+      {4:[No Name]           }|
+                          |
     ]]}
   end)
 end)

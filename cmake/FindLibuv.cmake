@@ -1,15 +1,7 @@
 find_path(LIBUV_INCLUDE_DIR uv.h)
-
-list(APPEND LIBUV_NAMES uv_a uv)
-
-find_library(LIBUV_LIBRARY NAMES ${LIBUV_NAMES})
-
-mark_as_advanced(LIBUV_INCLUDE_DIR LIBUV_LIBRARY)
+find_library(LIBUV_LIBRARY NAMES uv_a uv)
 
 set(LIBUV_LIBRARIES ${LIBUV_LIBRARY})
-set(LIBUV_INCLUDE_DIRS ${LIBUV_INCLUDE_DIR})
-
-include(CheckLibraryExists)
 
 check_library_exists(dl dlopen "dlfcn.h" HAVE_LIBDL)
 if(HAVE_LIBDL)

@@ -14,7 +14,7 @@ PenaltyReturnTypeOnItsOwnLine: 200
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
-BinPackParameters: false
+BinPackParameters: true
 BreakBeforeBinaryOperators: true
 BreakBeforeTernaryOperators: true
 ContinuationIndentWidth: 2
@@ -23,7 +23,7 @@ AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: No
 AlwaysBreakTemplateDeclarations: No
 AlignEscapedNewlines: DontAlign
-BinPackArguments: false
+BinPackArguments: true
 BraceWrapping:
   AfterClass:      false
   AfterControlStatement: false

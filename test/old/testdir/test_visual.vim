@@ -485,14 +485,16 @@ endfunc
 
 func Test_visual_block_put_invalid()
   enew!
-  behave mswin
+  " behave mswin
+  set selection=exclusive
   norm yy
   norm v)Ps/^/	
   " this was causing the column to become negative
   silent norm ggv)P
 
   bwipe!
-  behave xterm
+  " behave xterm
+  set selection&
 endfunc
 
 " Visual modes (v V CTRL-V) followed by an operator; count; repeating
@@ -933,7 +935,7 @@ func Test_visual_block_mode()
 endfunc
 
 func Test_visual_force_motion_feedkeys()
-    onoremap <expr> i- execute('let g:mode = mode(1)')
+    onoremap <expr> i- execute('let g:mode = mode(1)')->slice(0, 0)
     call feedkeys('dvi-', 'x')
     call assert_equal('nov', g:mode)
     call feedkeys('di-', 'x')

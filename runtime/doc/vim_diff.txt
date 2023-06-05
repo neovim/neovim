@@ -34,6 +34,7 @@ Defaults					            *nvim-defaults*
 - 'backspace' defaults to "indent,eol,start"
 - 'backupdir' defaults to .,~/.local/state/nvim/backup// (|xdg|), auto-created
 - 'belloff' defaults to "all"
+- 'commentstring' defaults to ""
 - 'compatible' is always disabled
 - 'complete' excludes "i"
 - 'directory' defaults to ~/.local/state/nvim/swap// (|xdg|), auto-created
@@ -56,7 +57,7 @@ Defaults					            *nvim-defaults*
 - 'nrformats' defaults to "bin,hex"
 - 'ruler' is enabled
 - 'sessionoptions' includes "unix,slash", excludes "options"
-- 'shortmess' includes "F", excludes "S"
+- 'shortmess' includes "CF", excludes "S"
 - 'showcmd' is enabled
 - 'sidescroll' defaults to 1
 - 'smarttab' is enabled
@@ -254,6 +255,8 @@ Highlight groups:
   |hl-TermCursorNC|
   |hl-WinSeparator| highlights window separators
   |hl-Whitespace| highlights 'listchars' whitespace
+  |hl-WinBar| highlights 'winbar'
+  |hl-WinBarNC| highlights non-current window 'winbar'
 
 Input/Mappings:
   ALT (|META|) chords always work (even in the |TUI|). Map |<M-| with any key:
@@ -493,8 +496,10 @@ Macro/|recording| behavior
   the results of keys from 'keymap'.
 
 Mappings:
-  Creating a mapping for a simplifiable key (e.g. <C-I>) doesn't replace an
+- Creating a mapping for a simplifiable key (e.g. <C-I>) doesn't replace an
   existing mapping for its simplified form (e.g. <Tab>).
+- "#" followed by a digit doesn't stand for a function key at the start of the
+  lhs of a mapping.
 
 Motion:
   The |jumplist| avoids useless/phantom jumps.
@@ -551,6 +556,7 @@ Aliases:
   vimdiff   (alias for "nvim -d" |diff-mode|)
 
 Commands:
+  :behave
   :fixdel
   :hardcopy
   :helpfind
@@ -568,6 +574,7 @@ Commands:
   :cscope
   :lcscope
   :scscope
+  :Vimuntar
 
 Compile-time features:
   Emacs tags support
@@ -758,6 +765,9 @@ Hardcopy:
                                                                      *hardcopy*
   `:hardcopy` was removed. Instead, use `:TOhtml` and print the resulting HTML
   using a web browser or some other HTML viewer.
+
+Bundled plugins:
+  vimball                                                             *vimball*
 
 ==============================================================================
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:

@@ -53,7 +53,7 @@ syn case ignore
 syn keyword vimGroup contained	Comment Constant String Character Number Boolean Float Identifier Function Statement Conditional Repeat Label Operator Keyword Exception PreProc Include Define Macro PreCondit Type StorageClass Structure Typedef Special SpecialChar Tag Delimiter SpecialComment Debug Underlined Ignore Error Todo
 
 " Default highlighting groups {{{2
-syn keyword vimHLGroup contained	ColorColumn Cursor CursorColumn CursorIM CursorLine CursorLineFold CursorLineNr CursorLineSign DiffAdd DiffChange DiffDelete DiffText Directory EndOfBuffer ErrorMsg FoldColumn Folded IncSearch LineNr MatchParen Menu MessageWindow ModeMsg MoreMsg NonText Normal Pmenu PmenuSbar PmenuSel PmenuThumb Question QuickFixLine Scrollbar Search SignColumn SpecialKey SpellBad SpellCap SpellLocal SpellRare StatusLine StatusLineNC TabLine TabLineFill TabLineSel Title Tooltip VertSplit Visual WarningMsg WildMenu
+syn keyword vimHLGroup contained	ColorColumn Cursor CursorColumn CursorIM CursorLine CursorLineFold CursorLineNr CursorLineSign DiffAdd DiffChange DiffDelete DiffText Directory EndOfBuffer ErrorMsg FoldColumn Folded IncSearch LineNr MatchParen Menu MessageWindow ModeMsg MoreMsg NonText Normal Pmenu PmenuExtra PmenuExtraSel PmenuKind PmenuKindSel PmenuSbar PmenuSel PmenuThumb Question QuickFixLine Scrollbar Search SignColumn SpecialKey SpellBad SpellCap SpellLocal SpellRare StatusLine StatusLineNC TabLine TabLineFill TabLineSel Title Tooltip VertSplit Visual WarningMsg WildMenu
 syn match vimHLGroup contained	"Conceal"
 syn keyword vimOnlyHLGroup contained	LineNrAbove LineNrBelow StatusLineTerm Terminal VisualNOS
 syn keyword nvimHLGroup contained	Substitute TermCursor TermCursorNC
@@ -61,7 +61,7 @@ syn keyword nvimHLGroup contained	Substitute TermCursor TermCursorNC
 syn case match
 " Special Vim Highlighting (not automatic) {{{1
 
-" Set up folding commands {{{2
+" Set up folding commands for this syntax highlighting file {{{2
 if exists("g:vimsyn_folding") && g:vimsyn_folding =~# '[afhlmpPrt]'
  if g:vimsyn_folding =~# 'a'
   com! -nargs=* VimFolda <args> fold

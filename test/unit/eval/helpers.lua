@@ -349,7 +349,7 @@ local special_vals = nil
 lua2typvalt = function(l, processed)
   if not special_vals then
     special_vals = {
-      [null_string] = {'VAR_STRING', {v_string=ffi.cast('char_u*', nil)}},
+      [null_string] = {'VAR_STRING', {v_string=ffi.cast('char*', nil)}},
       [null_list] = {'VAR_LIST', {v_list=ffi.cast('list_T*', nil)}},
       [null_dict] = {'VAR_DICT', {v_dict=ffi.cast('dict_T*', nil)}},
       [nil_value] = {'VAR_SPECIAL', {v_special=eval.kSpecialVarNull}},
@@ -512,7 +512,8 @@ end
 local function eval0(expr)
   local tv = ffi.gc(ffi.new('typval_T', {v_type=eval.VAR_UNKNOWN}),
                     eval.tv_clear)
-  if eval.eval0(to_cstr(expr), tv, nil, true) == 0 then
+  local evalarg = ffi.new('evalarg_T', {eval_flags = eval.EVAL_EVALUATE})
+  if eval.eval0(to_cstr(expr), tv, nil, evalarg) == 0 then
     return nil
   else
     return tv

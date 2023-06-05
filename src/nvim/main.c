@@ -30,6 +30,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/userfunc.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/stream.h"
 #include "nvim/ex_cmds.h"
@@ -48,6 +49,7 @@
 #include "nvim/keycodes.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
+#include "nvim/lua/secure.h"
 #include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
@@ -172,10 +174,9 @@ bool event_teardown(void)
 
 /// Performs early initialization.
 ///
-/// Needed for unit tests. Must be called after `time_init()`.
+/// Needed for unit tests.
 void early_init(mparm_T *paramp)
 {
-  env_init();
   estack_init();
   cmdline_init();
   eval_init();          // init global variables
@@ -249,6 +250,11 @@ int main(int argc, char **argv)
 
   argv0 = argv[0];
 
+  if (!appname_is_valid()) {
+    os_errmsg("$NVIM_APPNAME is not a valid file name.\n");
+    exit(1);
+  }
+
   if (argc > 1 && STRICMP(argv[1], "-ll") == 0) {
     if (argc == 2) {
       print_mainerr(err_arg_missing, argv[1]);
@@ -261,15 +267,10 @@ int main(int argc, char **argv)
   mparm_T params;         // various parameters passed between
                           // main() and other functions.
   char *cwd = NULL;       // current working dir on startup
-  time_init();
 
   // Many variables are in `params` so that we can pass them around easily.
   // `argc` and `argv` are also copied, so that they can be changed.
   init_params(&params, argc, argv);
-
-  // Since os_open is called during the init_startuptime, we need to call
-  // fs_init before it.
-  fs_init();
 
   init_startuptime(&params);
 
@@ -448,8 +449,7 @@ int main(int argc, char **argv)
 
   // If using the runtime (-u is not NONE), enable syntax & filetype plugins.
   if (!vimrc_none || params.clean) {
-    // Sources filetype.lua and filetype.vim unless the user explicitly disabled it with :filetype
-    // off.
+    // Sources filetype.lua unless the user explicitly disabled it with :filetype off.
     filetype_maybe_enable();
     // Sources syntax/syntax.vim. We do this *after* the user startup scripts so that users can
     // disable syntax highlighting with `:syntax off` if they wish.
@@ -465,7 +465,7 @@ int main(int argc, char **argv)
   // Recovery mode without a file name: List swap files.
   // Uses the 'dir' option, therefore it must be after the initializations.
   if (recoverymode && fname == NULL) {
-    recover_names(NULL, true, 0, NULL);
+    recover_names(NULL, true, NULL, 0, NULL);
     os_exit(0);
   }
 
@@ -690,8 +690,8 @@ void getout(int exitval)
 
   set_vim_var_nr(VV_EXITING, exitval);
 
-  // Position the cursor on the last screen line, below all the text
-  ui_cursor_goto(Rows - 1, 0);
+  // Invoked all deferred functions in the function stack.
+  invoke_all_defer();
 
   // Optionally print hashtable efficiency.
   hash_debug_results();
@@ -777,9 +777,6 @@ void getout(int exitval)
     // TODO(justinmk): this may call getout(0), clobbering exitval...
     wait_return(false);
   }
-
-  // Position the cursor again, the autocommands may have moved it
-  ui_cursor_goto(Rows - 1, 0);
 
   // Apply 'titleold'.
   if (p_title && *p_titleold != NUL) {
@@ -1064,6 +1061,10 @@ static void command_line_scan(mparm_T *parmp)
           version();
           os_exit(0);
         } else if (STRICMP(argv[0] + argv_idx, "api-info") == 0) {
+#ifdef MSWIN
+          // set stdout to binary to avoid crlf in --api-info output
+          _setmode(STDOUT_FILENO, _O_BINARY);
+#endif
           FileDescriptor fp;
           const int fof_ret = file_open_fd(&fp, STDOUT_FILENO,
                                            kFileWriteOnly);
@@ -1477,7 +1478,7 @@ static void init_startuptime(mparm_T *paramp)
 {
   for (int i = 1; i < paramp->argc - 1; i++) {
     if (STRICMP(paramp->argv[i], "--startuptime") == 0) {
-      time_fd = os_fopen(paramp->argv[i + 1], "a");
+      time_fd = fopen(paramp->argv[i + 1], "a");
       time_start("--- NVIM STARTING ---");
       break;
     }
@@ -2122,7 +2123,7 @@ static int execute_env(char *env)
   current_sctx.sc_sid = SID_ENV;
   current_sctx.sc_seq = 0;
   current_sctx.sc_lnum = 0;
-  do_cmdline_cmd((char *)initstr);
+  do_cmdline_cmd(initstr);
 
   estack_pop();
   current_sctx = save_current_sctx;
@@ -2231,3 +2232,17 @@ static void check_swap_exists_action(void)
   }
   handle_swap_exists(NULL);
 }
+
+#ifdef ENABLE_ASAN_UBSAN
+const char *__ubsan_default_options(void);
+const char *__ubsan_default_options(void)
+{
+  return "print_stacktrace=1";
+}
+
+const char *__asan_default_options(void);
+const char *__asan_default_options(void)
+{
+  return "handle_abort=1,handle_sigill=1";
+}
+#endif

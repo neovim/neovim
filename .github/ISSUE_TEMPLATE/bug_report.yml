@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        _Before reporting:_ search [existing issues](https://github.com/neovim/neovim/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and check the [FAQ](https://github.com/neovim/neovim/wiki/FAQ). Usage or "How to" questions belong on the [stackoverflow](https://vi.stackexchange.com/) and will be closed.
+        _Before reporting:_ run `make distclean` when encountering build issues, search [existing issues](https://github.com/neovim/neovim/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and check the [FAQ](https://github.com/neovim/neovim/wiki/FAQ). Usage or "How to" questions belong on the [stackoverflow](https://vi.stackexchange.com/) and will be closed.
 
   - type: textarea
     attributes:
@@ -20,6 +20,7 @@ body:
       description: |
         - For build failures: list the exact steps including CMake flags (if any).
         - For startup or shell-related problems: try `env -i TERM=ansi-256color "$(which nvim)"`.
+        - See [Minimal-reproduction-template](https://github.com/neovim/neovim/wiki/Minimal-reproduction-template) for how to create a minimal configuration.
       placeholder: |
         nvim --clean
         :edit foo

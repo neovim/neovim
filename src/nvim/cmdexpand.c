@@ -897,12 +897,27 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
   if (mode == WILD_ALL && xp->xp_numfiles > 0 && !got_int) {
     size_t len = 0;
     for (int i = 0; i < xp->xp_numfiles; i++) {
+      if (i > 0) {
+        if (xp->xp_prefix == XP_PREFIX_NO) {
+          len += 2;   // prefix "no"
+        } else if (xp->xp_prefix == XP_PREFIX_INV) {
+          len += 3;   // prefix "inv"
+        }
+      }
       len += strlen(xp->xp_files[i]) + 1;
     }
     ss = xmalloc(len);
     *ss = NUL;
     for (int i = 0; i < xp->xp_numfiles; i++) {
+      if (i > 0) {
+        if (xp->xp_prefix == XP_PREFIX_NO) {
+          STRCAT(ss, "no");
+        } else if (xp->xp_prefix == XP_PREFIX_INV) {
+          STRCAT(ss, "inv");
+        }
+      }
       STRCAT(ss, xp->xp_files[i]);
+
       if (i != xp->xp_numfiles - 1) {
         STRCAT(ss, (options & WILD_USE_NL) ? "\n" : " ");
       }
@@ -927,6 +942,7 @@ void ExpandInit(expand_T *xp)
 {
   CLEAR_POINTER(xp);
   xp->xp_backslash = XP_BS_NONE;
+  xp->xp_prefix = XP_PREFIX_NONE;
   xp->xp_numfiles = -1;
 }
 
@@ -959,7 +975,7 @@ static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, in
       msg_outtrans_attr(matches[j], HL_ATTR(HLF_D));
       p = matches[j] + strlen(matches[j]) + 1;
       msg_advance(maxlen + 1);
-      msg_puts((const char *)p);
+      msg_puts(p);
       msg_advance(maxlen + 3);
       msg_outtrans_long_attr(p + 2, HL_ATTR(HLF_D));
       break;
@@ -1328,8 +1344,8 @@ char *addstar(char *fname, size_t len, int context)
 ///  EXPAND_FILES            After command with EX_XFILE set, or after setting
 ///                          with P_EXPAND set.  eg :e ^I, :w>>^I
 ///  EXPAND_DIRECTORIES      In some cases this is used instead of the latter
-///                          when we know only directories are of interest.  eg
-///                          :set dir=^I
+///                          when we know only directories are of interest.
+///                          E.g.  :set dir=^I  and  :cd ^I
 ///  EXPAND_SHELLCMD         After ":!cmd", ":r !cmd"  or ":w !cmd".
 ///  EXPAND_SETTINGS         Complete variable names.  eg :set d^I
 ///  EXPAND_BOOL_SETTINGS    Complete boolean variables only,  eg :set no^I
@@ -1438,7 +1454,7 @@ static const char *set_cmd_index(const char *cmd, exarg_T *eap, expand_T *xp, in
       p = cmd + 1;
     } else if (cmd[0] >= 'A' && cmd[0] <= 'Z') {
       eap->cmd = (char *)cmd;
-      p = (const char *)find_ucmd(eap, (char *)p, NULL, xp, complp);
+      p = find_ucmd(eap, (char *)p, NULL, xp, complp);
       if (p == NULL) {
         eap->cmdidx = CMD_SIZE;  // Ambiguous user command.
       }
@@ -1464,7 +1480,7 @@ static void set_context_for_wildcard_arg(exarg_T *eap, const char *arg, bool use
   // Allow spaces within back-quotes to count as part of the argument
   // being expanded.
   xp->xp_pattern = skipwhite(arg);
-  const char *p = (const char *)xp->xp_pattern;
+  const char *p = xp->xp_pattern;
   while (*p != NUL) {
     int c = utf_ptr2char(p);
     if (c == '\\' && p[1] != NUL) {
@@ -1517,7 +1533,7 @@ static void set_context_for_wildcard_arg(exarg_T *eap, const char *arg, bool use
 
   // Check for environment variable.
   if (*xp->xp_pattern == '$') {
-    for (p = (const char *)xp->xp_pattern + 1; *p != NUL; p++) {
+    for (p = xp->xp_pattern + 1; *p != NUL; p++) {
       if (!vim_isIDc((uint8_t)(*p))) {
         break;
       }
@@ -1533,12 +1549,11 @@ static void set_context_for_wildcard_arg(exarg_T *eap, const char *arg, bool use
   }
   // Check for user names.
   if (*xp->xp_pattern == '~') {
-    for (p = (const char *)xp->xp_pattern + 1; *p != NUL && *p != '/'; p++) {}
+    for (p = xp->xp_pattern + 1; *p != NUL && *p != '/'; p++) {}
     // Complete ~user only if it partially matches a user name.
     // A full match ~user<Tab> will be replaced by user's home
     // directory i.e. something like ~user<Tab> -> /home/user/
-    if (*p == NUL && p > (const char *)xp->xp_pattern + 1
-        && match_user(xp->xp_pattern + 1) >= 1) {
+    if (*p == NUL && p > xp->xp_pattern + 1 && match_user(xp->xp_pattern + 1) >= 1) {
       xp->xp_context = EXPAND_USER;
       xp->xp_pattern++;
     }
@@ -1550,13 +1565,13 @@ static void set_context_for_wildcard_arg(exarg_T *eap, const char *arg, bool use
 static const char *set_context_in_filter_cmd(expand_T *xp, const char *arg)
 {
   if (*arg != NUL) {
-    arg = (const char *)skip_vimgrep_pat((char *)arg, NULL, NULL);
+    arg = skip_vimgrep_pat((char *)arg, NULL, NULL);
   }
   if (arg == NULL || *arg == NUL) {
     xp->xp_context = EXPAND_NOTHING;
     return NULL;
   }
-  return (const char *)skipwhite(arg);
+  return skipwhite(arg);
 }
 
 /// Set the completion context for the :match command. Returns a pointer to the
@@ -1566,13 +1581,13 @@ static const char *set_context_in_match_cmd(expand_T *xp, const char *arg)
   if (*arg == NUL || !ends_excmd(*arg)) {
     // also complete "None"
     set_context_in_echohl_cmd(xp, arg);
-    arg = (const char *)skipwhite(skiptowhite(arg));
+    arg = skipwhite(skiptowhite(arg));
     if (*arg != NUL) {
       xp->xp_context = EXPAND_NOTHING;
-      arg = (const char *)skip_regexp((char *)arg + 1, (uint8_t)(*arg), magic_isset());
+      arg = skip_regexp((char *)arg + 1, (uint8_t)(*arg), magic_isset());
     }
   }
-  return (const char *)find_nextcmd(arg);
+  return find_nextcmd(arg);
 }
 
 /// Returns a pointer to the next command after a :global or a :v command.
@@ -1605,7 +1620,7 @@ static const char *find_cmd_after_substitute_cmd(const char *arg)
   if (delim) {
     // Skip "from" part.
     arg++;
-    arg = (const char *)skip_regexp((char *)arg, delim, magic_isset());
+    arg = skip_regexp((char *)arg, delim, magic_isset());
 
     if (arg[0] != NUL && arg[0] == delim) {
       // Skip "to" part.
@@ -1637,7 +1652,7 @@ static const char *find_cmd_after_substitute_cmd(const char *arg)
 static const char *find_cmd_after_isearch_cmd(expand_T *xp, const char *arg)
 {
   // Skip count.
-  arg = (const char *)skipwhite(skipdigits(arg));
+  arg = skipwhite(skipdigits(arg));
   if (*arg != '/') {
     return NULL;
   }
@@ -1649,7 +1664,7 @@ static const char *find_cmd_after_isearch_cmd(expand_T *xp, const char *arg)
     }
   }
   if (*arg) {
-    arg = (const char *)skipwhite(arg + 1);
+    arg = skipwhite(arg + 1);
 
     // Check for trailing illegal characters.
     if (*arg == NUL || strchr("|\"\n", *arg) == NULL) {
@@ -1666,7 +1681,7 @@ static const char *find_cmd_after_isearch_cmd(expand_T *xp, const char *arg)
 static const char *set_context_in_unlet_cmd(expand_T *xp, const char *arg)
 {
   while ((xp->xp_pattern = strchr(arg, ' ')) != NULL) {
-    arg = (const char *)xp->xp_pattern + 1;
+    arg = xp->xp_pattern + 1;
   }
 
   xp->xp_context = EXPAND_USER_VARS;
@@ -1683,7 +1698,7 @@ static const char *set_context_in_unlet_cmd(expand_T *xp, const char *arg)
 /// Set the completion context for the :language command. Always returns NULL.
 static const char *set_context_in_lang_cmd(expand_T *xp, const char *arg)
 {
-  const char *p = (const char *)skiptowhite(arg);
+  const char *p = skiptowhite(arg);
   if (*p == NUL) {
     xp->xp_context = EXPAND_LANGUAGE;
     xp->xp_pattern = (char *)arg;
@@ -1876,11 +1891,11 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_dsplit:
     return find_cmd_after_isearch_cmd(xp, arg);
   case CMD_autocmd:
-    return (const char *)set_context_in_autocmd(xp, (char *)arg, false);
+    return set_context_in_autocmd(xp, (char *)arg, false);
 
   case CMD_doautocmd:
   case CMD_doautoall:
-    return (const char *)set_context_in_autocmd(xp, (char *)arg, true);
+    return set_context_in_autocmd(xp, (char *)arg, true);
   case CMD_set:
     set_context_in_set_cmd(xp, (char *)arg, 0);
     break;
@@ -1957,7 +1972,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_bwipeout:
   case CMD_bunload:
     while ((xp->xp_pattern = strchr(arg, ' ')) != NULL) {
-      arg = (const char *)xp->xp_pattern + 1;
+      arg = xp->xp_pattern + 1;
     }
     FALLTHROUGH;
   case CMD_buffer:
@@ -2063,7 +2078,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_tunmenu:
   case CMD_popup:
   case CMD_emenu:
-    return (const char *)set_context_in_menu_cmd(xp, cmd, (char *)arg, forceit);
+    return set_context_in_menu_cmd(xp, cmd, (char *)arg, forceit);
 
   case CMD_colorscheme:
     xp->xp_context = EXPAND_COLORS;
@@ -2105,10 +2120,6 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
     xp->xp_context = EXPAND_CHECKHEALTH;
     xp->xp_pattern = (char *)arg;
     break;
-  case CMD_behave:
-    xp->xp_context = EXPAND_BEHAVE;
-    xp->xp_pattern = (char *)arg;
-    break;
 
   case CMD_messages:
     xp->xp_context = EXPAND_MESSAGES;
@@ -2126,7 +2137,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
 
   case CMD_argdelete:
     while ((xp->xp_pattern = vim_strchr(arg, ' ')) != NULL) {
-      arg = (const char *)(xp->xp_pattern + 1);
+      arg = (xp->xp_pattern + 1);
     }
     xp->xp_context = EXPAND_ARGLIST;
     xp->xp_pattern = (char *)arg;
@@ -2186,7 +2197,7 @@ static const char *set_one_cmd_context(expand_T *xp, const char *buff)
   }
 
   // 3. skip over a range specifier of the form: addr [,addr] [;addr] ..
-  cmd = (const char *)skip_range(cmd, &xp->xp_context);
+  cmd = skip_range(cmd, &xp->xp_context);
   xp->xp_pattern = (char *)cmd;
   if (*cmd == NUL) {
     return NULL;
@@ -2218,7 +2229,7 @@ static const char *set_one_cmd_context(expand_T *xp, const char *buff)
     ea.argt = excmd_get_argt(ea.cmdidx);
   }
 
-  const char *arg = (const char *)skipwhite(p);
+  const char *arg = skipwhite(p);
 
   // Skip over ++argopt argument
   if ((ea.argt & EX_ARGOPT) && *arg != NUL && strncmp(arg, "++", 2) == 0) {
@@ -2226,7 +2237,7 @@ static const char *set_one_cmd_context(expand_T *xp, const char *buff)
     while (*p && !ascii_isspace(*p)) {
       MB_PTR_ADV(p);
     }
-    arg = (const char *)skipwhite(p);
+    arg = skipwhite(p);
   }
 
   if (ea.cmdidx == CMD_write || ea.cmdidx == CMD_update) {
@@ -2234,7 +2245,7 @@ static const char *set_one_cmd_context(expand_T *xp, const char *buff)
       if (*++arg == '>') {
         arg++;
       }
-      arg = (const char *)skipwhite(arg);
+      arg = skipwhite(arg);
     } else if (*arg == '!' && ea.cmdidx == CMD_write) {  // :w !filter
       arg++;
       usefilter = true;
@@ -2253,14 +2264,14 @@ static const char *set_one_cmd_context(expand_T *xp, const char *buff)
     while (*arg == *cmd) {  // allow any number of '>' or '<'
       arg++;
     }
-    arg = (const char *)skipwhite(arg);
+    arg = skipwhite(arg);
   }
 
   // Does command allow "+command"?
   if ((ea.argt & EX_CMDARG) && !usefilter && *arg == '+') {
     // Check if we're in the +command
     p = arg + 1;
-    arg = (const char *)skip_cmd_arg((char *)arg, false);
+    arg = skip_cmd_arg((char *)arg, false);
 
     // Still touching the command after '+'?
     if (*arg == NUL) {
@@ -2268,7 +2279,7 @@ static const char *set_one_cmd_context(expand_T *xp, const char *buff)
     }
 
     // Skip space(s) after +command to get to the real argument.
-    arg = (const char *)skipwhite(arg);
+    arg = skipwhite(arg);
   }
 
   // Check for '|' to separate commands and '"' to start comments.
@@ -2344,7 +2355,7 @@ void set_cmd_context(expand_T *xp, char *str, int len, int col, int use_ccline)
     old_char = str[col];
   }
   str[col] = NUL;
-  const char *nextcomm = (const char *)str;
+  const char *nextcomm = str;
 
   if (use_ccline && ccline->cmdfirstc == '=') {
     // pass CMD_SIZE because there is no real command
@@ -2480,19 +2491,6 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
 }
 
 /// Function given to ExpandGeneric() to obtain the possible arguments of the
-/// ":behave {mswin,xterm}" command.
-static char *get_behave_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
-{
-  if (idx == 0) {
-    return "mswin";
-  }
-  if (idx == 1) {
-    return "xterm";
-  }
-  return NULL;
-}
-
-/// Function given to ExpandGeneric() to obtain the possible arguments of the
 /// ":breakadd {expr, file, func, here}" command.
 /// ":breakdel {func, file, here}" command.
 static char *get_breakadd_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
@@ -2586,7 +2584,6 @@ static int ExpandOther(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches
     int escaped;
   } tab[] = {
     { EXPAND_COMMANDS, get_command_name, false, true },
-    { EXPAND_BEHAVE, get_behave_arg, true, true },
     { EXPAND_MAPCLEAR, get_mapclear_arg, true, true },
     { EXPAND_MESSAGES, get_messages_arg, true, true },
     { EXPAND_HISTORY, get_history_arg, true, true },
@@ -2922,7 +2919,7 @@ static void expand_shellcmd_onedir(char *buf, char *s, size_t l, char *pat, char
       // Check if this name was already found.
       hash_T hash = hash_hash(name + l);
       hashitem_T *hi =
-        hash_lookup(ht, (const char *)(name + l), strlen(name + l), hash);
+        hash_lookup(ht, name + l, strlen(name + l), hash);
       if (HASHITEM_EMPTY(hi)) {
         // Remove the path that was prepended.
         STRMOVE(name, name + l);
@@ -3166,7 +3163,7 @@ static int ExpandUserList(expand_T *xp, char ***matches, int *numMatches)
       continue;  // Skip non-string items and empty strings.
     }
 
-    GA_APPEND(char *, &ga, xstrdup((const char *)TV_LIST_ITEM_TV(li)->vval.v_string));
+    GA_APPEND(char *, &ga, xstrdup(TV_LIST_ITEM_TV(li)->vval.v_string));
   });
   tv_list_unref(retlist);
 
@@ -3195,7 +3192,7 @@ static int ExpandUserLua(expand_T *xp, int *num_file, char ***file)
       continue;  // Skip non-string items and empty strings.
     }
 
-    GA_APPEND(char *, &ga, xstrdup((const char *)TV_LIST_ITEM_TV(li)->vval.v_string));
+    GA_APPEND(char *, &ga, xstrdup(TV_LIST_ITEM_TV(li)->vval.v_string));
   });
   tv_list_unref(retlist);
 
@@ -3485,8 +3482,7 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   int options = WILD_SILENT | WILD_USE_NL | WILD_ADD_SLASH
                 | WILD_NO_BEEP | WILD_HOME_REPLACE;
 
-  if (argvars[1].v_type != VAR_STRING) {
-    semsg(_(e_invarg2), "type must be a string");
+  if (tv_check_for_string_arg(argvars, 1) == FAIL) {
     return;
   }
   const char *const type = tv_get_string(&argvars[1]);
@@ -3551,8 +3547,7 @@ theend:
   tv_list_alloc_ret(rettv, xpc.xp_numfiles);
 
   for (int i = 0; i < xpc.xp_numfiles; i++) {
-    tv_list_append_string(rettv->vval.v_list, (const char *)xpc.xp_files[i],
-                          -1);
+    tv_list_append_string(rettv->vval.v_list, xpc.xp_files[i], -1);
   }
   xfree(pat);
   ExpandCleanup(&xpc);

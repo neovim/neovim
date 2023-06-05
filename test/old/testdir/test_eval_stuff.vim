@@ -36,9 +36,70 @@ func Test_mkdir_p()
   endtry
   " 'p' doesn't suppress real errors
   call writefile([], 'Xfile')
-  call assert_fails('call mkdir("Xfile", "p")', 'E739')
+  call assert_fails('call mkdir("Xfile", "p")', 'E739:')
   call delete('Xfile')
   call delete('Xmkdir', 'rf')
+  call assert_equal(0, mkdir(v:_null_string))
+  call assert_fails('call mkdir([])', 'E730:')
+  call assert_fails('call mkdir("abc", [], [])', 'E745:')
+endfunc
+
+func DoMkdirDel(name)
+  call mkdir(a:name, 'pD')
+  call assert_true(isdirectory(a:name))
+endfunc
+
+func DoMkdirDelAddFile(name)
+  call mkdir(a:name, 'pD')
+  call assert_true(isdirectory(a:name))
+  call writefile(['text'], a:name .. '/file')
+endfunc
+
+func DoMkdirDelRec(name)
+  call mkdir(a:name, 'pR')
+  call assert_true(isdirectory(a:name))
+endfunc
+
+func DoMkdirDelRecAddFile(name)
+  call mkdir(a:name, 'pR')
+  call assert_true(isdirectory(a:name))
+  call writefile(['text'], a:name .. '/file')
+endfunc
+
+func Test_mkdir_defer_del()
+  " Xtopdir/tmp is created thus deleted, not Xtopdir itself
+  call mkdir('Xtopdir', 'R')
+  call DoMkdirDel('Xtopdir/tmp')
+  call assert_true(isdirectory('Xtopdir'))
+  call assert_false(isdirectory('Xtopdir/tmp'))
+
+  " Deletion fails because "tmp" contains "sub"
+  call DoMkdirDel('Xtopdir/tmp/sub')
+  call assert_true(isdirectory('Xtopdir'))
+  call assert_true(isdirectory('Xtopdir/tmp'))
+  call delete('Xtopdir/tmp', 'rf')
+
+  " Deletion fails because "tmp" contains "file"
+  call DoMkdirDelAddFile('Xtopdir/tmp')
+  call assert_true(isdirectory('Xtopdir'))
+  call assert_true(isdirectory('Xtopdir/tmp'))
+  call assert_true(filereadable('Xtopdir/tmp/file'))
+  call delete('Xtopdir/tmp', 'rf')
+
+  " Xtopdir/tmp is created thus deleted, not Xtopdir itself
+  call DoMkdirDelRec('Xtopdir/tmp')
+  call assert_true(isdirectory('Xtopdir'))
+  call assert_false(isdirectory('Xtopdir/tmp'))
+
+  " Deletion works even though "tmp" contains "sub"
+  call DoMkdirDelRec('Xtopdir/tmp/sub')
+  call assert_true(isdirectory('Xtopdir'))
+  call assert_false(isdirectory('Xtopdir/tmp'))
+
+  " Deletion works even though "tmp" contains "file"
+  call DoMkdirDelRecAddFile('Xtopdir/tmp')
+  call assert_true(isdirectory('Xtopdir'))
+  call assert_false(isdirectory('Xtopdir/tmp'))
 endfunc
 
 func Test_line_continuation()
@@ -203,6 +264,21 @@ func Test_vvar_scriptversion1()
   call assert_equal(15, 0O17)
   call assert_equal(18, 018)
   call assert_equal(511, 0o777)
+endfunc
+
+func Test_execute_cmd_with_null()
+  call assert_fails('execute v:_null_list', 'E730:')
+  call assert_fails('execute v:_null_dict', 'E731:')
+  call assert_fails('execute v:_null_blob', 'E976:')
+  execute v:_null_string
+  " Nvim doesn't have null partials
+  " call assert_fails('execute test_null_partial()', 'E729:')
+  " Nvim doesn't have test_unknown()
+  " call assert_fails('execute test_unknown()', 'E908:')
+  if has('job')
+    call assert_fails('execute test_null_job()', 'E908:')
+    call assert_fails('execute test_null_channel()', 'E908:')
+  endif
 endfunc
 
 func Test_number_max_min_size()
@@ -387,6 +463,11 @@ func Test_modified_char_no_escape_special()
   nunmap <F2>
   unlet g:got_m_ellipsis
   nunmap <M-…>
+endfunc
+
+func Test_eval_string_in_special_key()
+  " this was using the '{' inside <> as the start of an interpolated string
+  silent! echo 0{1-$"\<S--{>n|nö%
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

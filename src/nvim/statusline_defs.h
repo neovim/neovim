@@ -62,8 +62,8 @@ typedef struct statuscol statuscol_T;
 struct statuscol {
   int width;                           ///< width of the status column
   int cur_attr;                        ///< current attributes in text
-  int num_attr;                        ///< attributes used for line number
-  int sign_cul_attr;                   ///< cursorline sign attr
+  int num_attr;                        ///< default highlight attr
+  int sign_cul_id;                     ///< cursorline sign highlight id
   int truncate;                        ///< truncated width
   bool draw;                           ///< whether to draw the statuscolumn
   bool use_cul;                        ///< whether to use cursorline attrs

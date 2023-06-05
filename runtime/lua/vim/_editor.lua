@@ -36,12 +36,15 @@ for k, v in pairs({
   keymap = true,
   ui = true,
   health = true,
-  fs = true,
   secure = true,
   _watch = true,
 }) do
   vim._submodules[k] = v
 end
+
+-- Remove at Nvim 1.0
+---@deprecated
+vim.loop = vim.uv
 
 -- There are things which have special rules in vim._init_packages
 -- for legacy reasons (uri) or for performance (_inspector).
@@ -160,7 +163,7 @@ do
   ---                - 3: ends the paste (exactly once)
   ---@returns boolean # false if client should cancel the paste.
   function vim.paste(lines, phase)
-    local now = vim.loop.now()
+    local now = vim.uv.now()
     local is_first_chunk = phase < 2
     local is_last_chunk = phase == -1 or phase == 3
     if is_first_chunk then -- Reset flags.
@@ -403,8 +406,8 @@ end
 --- Input and output positions are (0,0)-indexed and indicate byte positions.
 ---
 ---@param bufnr integer number of buffer
----@param pos1 integer[] (line, column) tuple marking beginning of region
----@param pos2 integer[] (line, column) tuple marking end of region
+---@param pos1 integer[]|string start of region as a (line, column) tuple or string accepted by |getpos()|
+---@param pos2 integer[]|string end of region as a (line, column) tuple or string accepted by |getpos()|
 ---@param regtype string type of selection, see |setreg()|
 ---@param inclusive boolean indicating whether column of pos2 is inclusive
 ---@return table region Table of the form `{linenr = {startcol,endcol}}`.
@@ -413,6 +416,24 @@ end
 function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
+  end
+
+  if type(pos1) == 'string' then
+    local pos = vim.fn.getpos(pos1)
+    pos1 = { pos[2] - 1, pos[3] - 1 + pos[4] }
+  end
+  if type(pos2) == 'string' then
+    local pos = vim.fn.getpos(pos2)
+    pos2 = { pos[2] - 1, pos[3] - 1 + pos[4] }
+  end
+
+  if pos1[1] > pos2[1] or (pos1[1] == pos2[1] and pos1[2] > pos2[2]) then
+    pos1, pos2 = pos2, pos1
+  end
+
+  -- getpos() may return {0,0,0,0}
+  if pos1[1] < 0 or pos1[2] < 0 then
+    return {}
   end
 
   -- check that region falls within current buffer
@@ -466,7 +487,7 @@ end
 ---@return table timer luv timer object
 function vim.defer_fn(fn, timeout)
   vim.validate({ fn = { fn, 'c', true } })
-  local timer = vim.loop.new_timer()
+  local timer = vim.uv.new_timer()
   timer:start(
     timeout,
     0,
@@ -761,7 +782,7 @@ do
   -- some bugs, so fake the two-step dance for now.
   local matches
 
-  --- Omnifunc for completing lua values from from the runtime lua interpreter,
+  --- Omnifunc for completing lua values from the runtime lua interpreter,
   --- similar to the builtin completion for the `:lua` command.
   ---
   --- Activate using `set omnifunc=v:lua.vim.lua_omnifunc` in a lua buffer.
@@ -810,6 +831,20 @@ function vim.print(...)
   end
 
   return ...
+end
+
+--- Translate keycodes.
+---
+--- Example:
+--- <pre>lua
+---   local k = vim.keycode
+---   vim.g.mapleader = k'<bs>'
+--- </pre>
+--- @param str string String to be converted.
+--- @return string
+--- @see |nvim_replace_termcodes()|
+function vim.keycode(str)
+  return vim.api.nvim_replace_termcodes(str, true, true, true)
 end
 
 function vim._cs_remote(rcid, server_addr, connect_error, args)

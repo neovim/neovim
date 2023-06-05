@@ -57,7 +57,7 @@ void channel_teardown(void)
 {
   Channel *channel;
 
-  map_foreach_value(&channels, channel, {
+  pmap_foreach_value(&channels, channel, {
     channel_close(channel->id, kChannelPartAll, NULL);
   });
 }
@@ -81,7 +81,7 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
       // allow double close, even though we can't say what parts was valid.
       return true;
     }
-    *error = (const char *)e_invchan;
+    *error = e_invchan;
     return false;
   }
 
@@ -91,19 +91,19 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
     if (chan->is_rpc) {
       rpc_close(chan);
     } else if (part == kChannelPartRpc) {
-      *error = (const char *)e_invstream;
+      *error = e_invstream;
       return false;
     }
   } else if ((part == kChannelPartStdin || part == kChannelPartStdout)
              && chan->is_rpc) {
-    *error = (const char *)e_invstreamrpc;
+    *error = e_invstreamrpc;
     return false;
   }
 
   switch (chan->streamtype) {
   case kChannelStreamSocket:
     if (!close_main) {
-      *error = (const char *)e_invstream;
+      *error = e_invstream;
       return false;
     }
     stream_may_close(&chan->stream.socket);
@@ -134,14 +134,14 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
       stream_may_close(&chan->stream.stdio.out);
     }
     if (part == kChannelPartStderr) {
-      *error = (const char *)e_invstream;
+      *error = e_invstream;
       return false;
     }
     break;
 
   case kChannelStreamStderr:
     if (part != kChannelPartAll && part != kChannelPartStderr) {
-      *error = (const char *)e_invstream;
+      *error = e_invstream;
       return false;
     }
     if (!chan->stream.err.closed) {
@@ -156,7 +156,7 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
 
   case kChannelStreamInternal:
     if (!close_main) {
-      *error = (const char *)e_invstream;
+      *error = e_invstream;
       return false;
     }
     if (chan->term) {
@@ -279,7 +279,7 @@ static void free_channel_event(void **argv)
   callback_reader_free(&chan->on_stderr);
   callback_free(&chan->on_exit);
 
-  pmap_del(uint64_t)(&channels, chan->id);
+  pmap_del(uint64_t)(&channels, chan->id, NULL);
   multiqueue_free(chan->events);
   xfree(chan);
 }
@@ -289,7 +289,7 @@ static void channel_destroy_early(Channel *chan)
   if ((chan->id != --next_chan_id)) {
     abort();
   }
-  pmap_del(uint64_t)(&channels, chan->id);
+  pmap_del(uint64_t)(&channels, chan->id, NULL);
   chan->id = 0;
 
   if ((--chan->refcount != 0)) {
@@ -831,13 +831,12 @@ static void term_close(void *data)
   multiqueue_put(chan->events, term_delayed_free, 1, data);
 }
 
-void channel_info_changed(Channel *chan, bool new)
+void channel_info_changed(Channel *chan, bool new_chan)
 {
-  event_T event = new ? EVENT_CHANOPEN : EVENT_CHANINFO;
+  event_T event = new_chan ? EVENT_CHANOPEN : EVENT_CHANINFO;
   if (has_event(event)) {
     channel_incref(chan);
-    multiqueue_put(main_loop.events, set_info_event,
-                   2, chan, event);
+    multiqueue_put(main_loop.events, set_info_event, 2, chan, event);
   }
 }
 
@@ -885,14 +884,14 @@ Dictionary channel_info(uint64_t id)
     stream_desc = "job";
     if (chan->stream.proc.type == kProcessTypePty) {
       const char *name = pty_process_tty_name(&chan->stream.pty);
-      PUT(info, "pty", STRING_OBJ(cstr_to_string(name)));
+      PUT(info, "pty", CSTR_TO_OBJ(name));
     }
 
     char **p = chan->stream.proc.argv;
     Array argv = ARRAY_DICT_INIT;
     if (p != NULL) {
       while (*p != NULL) {
-        ADD(argv, STRING_OBJ(cstr_to_string(*p)));
+        ADD(argv, CSTR_TO_OBJ(*p));
         p++;
       }
     }
@@ -919,7 +918,7 @@ Dictionary channel_info(uint64_t id)
   default:
     abort();
   }
-  PUT(info, "stream", STRING_OBJ(cstr_to_string(stream_desc)));
+  PUT(info, "stream", CSTR_TO_OBJ(stream_desc));
 
   if (chan->is_rpc) {
     mode_desc = "rpc";
@@ -930,7 +929,7 @@ Dictionary channel_info(uint64_t id)
   } else {
     mode_desc = "bytes";
   }
-  PUT(info, "mode", STRING_OBJ(cstr_to_string(mode_desc)));
+  PUT(info, "mode", CSTR_TO_OBJ(mode_desc));
 
   return info;
 }
@@ -939,7 +938,7 @@ Array channel_all_info(void)
 {
   Channel *channel;
   Array ret = ARRAY_DICT_INIT;
-  map_foreach_value(&channels, channel, {
+  pmap_foreach_value(&channels, channel, {
     ADD(ret, DICTIONARY_OBJ(channel_info(channel->id)));
   });
   return ret;

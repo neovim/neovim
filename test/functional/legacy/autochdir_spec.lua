@@ -1,8 +1,8 @@
-local lfs = require('lfs')
 local helpers = require('test.functional.helpers')(after_each)
 local clear, eq, matches = helpers.clear, helpers.eq, helpers.matches
 local eval, command, call, meths = helpers.eval, helpers.command, helpers.call, helpers.meths
 local source, exec_capture = helpers.source, helpers.exec_capture
+local mkdir = helpers.mkdir
 
 local function expected_empty()
   eq({}, meths.get_vvar('errors'))
@@ -12,7 +12,7 @@ describe('autochdir behavior', function()
   local dir = 'Xtest_functional_legacy_autochdir'
 
   before_each(function()
-    lfs.mkdir(dir)
+    mkdir(dir)
     clear()
     command('set shellslash')
   end)

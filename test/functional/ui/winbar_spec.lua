@@ -31,7 +31,7 @@ describe('winbar', function()
       [10] = {background = Screen.colors.LightGrey, underline = true},
       [11] = {background = Screen.colors.LightGrey, underline = true, bold = true, foreground = Screen.colors.Magenta},
     })
-    meths.set_option('winbar', 'Set Up The Bars')
+    meths.set_option_value('winbar', 'Set Up The Bars', {})
   end)
 
   it('works', function()
@@ -114,6 +114,41 @@ describe('winbar', function()
       {2:[No Name]                     [No Name]                     }|
                                                                   |
     ]])
+    -- 'showcmdloc' "statusline" should not interfere with winbar redrawing #23030
+    command('set showcmd showcmdloc=statusline')
+    feed('<C-W>w')
+    feed('<C-W>')
+    screen:expect([[
+      {6:Set Up The Bars              }│{6:Set Up The Bars               }|
+                                   │                              |
+      {3:~                            }│{3:~                             }|
+      {3:~                            }│{2:[No Name]                     }|
+      {3:~                            }│{5:Set Up The Bars               }|
+      {3:~                            }│^                              |
+      {3:~                            }│{3:~                             }|
+      {3:~                            }│{4:[No Name]          ^W         }|
+      {3:~                            }│{6:Set Up The Bars               }|
+      {3:~                            }│                              |
+      {3:~                            }│{3:~                             }|
+      {2:[No Name]                     [No Name]                     }|
+                                                                  |
+    ]])
+    feed('w<C-W>W')
+    screen:expect([[
+      {6:Set Up The Bars              }│{6:Set Up The Bars               }|
+                                   │                              |
+      {3:~                            }│{3:~                             }|
+      {3:~                            }│{2:[No Name]                     }|
+      {3:~                            }│{5:Set Up The Bars               }|
+      {3:~                            }│^                              |
+      {3:~                            }│{3:~                             }|
+      {3:~                            }│{4:[No Name]                     }|
+      {3:~                            }│{6:Set Up The Bars               }|
+      {3:~                            }│                              |
+      {3:~                            }│{3:~                             }|
+      {2:[No Name]                     [No Name]                     }|
+                                                                  |
+    ]])
   end)
 
   it('works when switching value of \'winbar\'', function()
@@ -171,7 +206,7 @@ describe('winbar', function()
     insert [[
       just some
       random text]]
-    meths.set_option('winbar', 'Hello, I am a ruler: %l,%c')
+    meths.set_option_value('winbar', 'Hello, I am a ruler: %l,%c', {})
     screen:expect{grid=[[
       {1:Hello, I am a ruler: 2,11                                   }|
       just some                                                   |
@@ -415,7 +450,7 @@ describe('winbar', function()
                                                                   |
                                                                   |
     ]])
-    eq(3, meths.get_option('cmdheight'))
+    eq(3, meths.get_option_value('cmdheight', {}))
 
     meths.input_mouse('left', 'drag', '', 1, 11, 10)
     screen:expect([[
@@ -433,7 +468,7 @@ describe('winbar', function()
       {2:[No Name]                                                   }|
                                                                   |
     ]])
-    eq(1, meths.get_option('cmdheight'))
+    eq(1, meths.get_option_value('cmdheight', {}))
   end)
 
   it('properly equalizes window height for window-local value', function()
@@ -677,4 +712,27 @@ describe('local winbar with tabs', function()
                                                                   |
     ]]}
   end)
+end)
+
+it('winbar works properly when redrawing is postponed #23534', function()
+  clear({args = {
+    '-c', 'set laststatus=2 lazyredraw',
+    '-c', 'setlocal statusline=(statusline) winbar=(winbar)',
+    '-c', 'call nvim_input(":<Esc>")',
+  }})
+  local screen = Screen.new(60, 6)
+  screen:attach()
+  screen:set_default_attr_ids({
+    [0] = {foreground = Screen.colors.Blue, bold = true},
+    [1] = {bold = true},
+    [2] = {bold = true, reverse = true},
+  })
+  screen:expect([[
+    {1:(winbar)                                                    }|
+    ^                                                            |
+    {0:~                                                           }|
+    {0:~                                                           }|
+    {2:(statusline)                                                }|
+                                                                |
+  ]])
 end)

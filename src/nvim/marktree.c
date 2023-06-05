@@ -127,7 +127,7 @@ static inline int marktree_getp_aux(const mtnode_t *x, mtkey_t k, int *r)
   if (x->n == 0) {
     return -1;
   }
-  rr = r? r : &tr;
+  rr = r ? r : &tr;
   while (begin < end) {
     int mid = (begin + end) >> 1;
     if (key_cmp(x->key[mid], k) < 0) {
@@ -359,7 +359,7 @@ uint64_t marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
   }
 
   b->n_keys--;
-  pmap_del(uint64_t)(b->id2node, id);
+  pmap_del(uint64_t)(b->id2node, id, NULL);
 
   // 5.
   bool itr_dirty = false;
@@ -549,8 +549,8 @@ void marktree_clear(MarkTree *b)
     b->root = NULL;
   }
   if (b->id2node->table.keys) {
-    pmap_destroy(uint64_t)(b->id2node);
-    pmap_init(uint64_t, b->id2node);
+    map_destroy(uint64_t, b->id2node);
+    *b->id2node = (PMap(uint64_t)) MAP_INIT;
   }
   b->n_keys = 0;
   b->n_nodes = 0;
@@ -1216,7 +1216,7 @@ void mt_inspect_node(MarkTree *b, garray_T *ga, mtnode_t *n, mtpos_t off)
   for (int i = 0; i < n->n; i++) {
     mtpos_t p = n->key[i].pos;
     unrelative(off, &p);
-    snprintf((char *)buf, sizeof(buf), "%d/%d", p.row, p.col);
+    snprintf(buf, sizeof(buf), "%d/%d", p.row, p.col);
     ga_concat(ga, buf);
     if (n->level) {
       mt_inspect_node(b, ga, n->ptr[i + 1], p);

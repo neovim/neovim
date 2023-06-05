@@ -453,7 +453,7 @@ void spell_suggest(int count)
   const int wo_spell_save = curwin->w_p_spell;
 
   if (!curwin->w_p_spell) {
-    did_set_spelllang(curwin);
+    parse_spelllang(curwin);
     curwin->w_p_spell = true;
   }
 
@@ -509,7 +509,7 @@ void spell_suggest(int count)
   // Get the word and its length.
 
   // Figure out if the word should be capitalised.
-  int need_cap = check_need_cap(curwin->w_cursor.lnum, curwin->w_cursor.col);
+  int need_cap = check_need_cap(curwin, curwin->w_cursor.lnum, curwin->w_cursor.col);
 
   // Make a copy of current line since autocommands may free the line.
   line = xstrdup(get_cursor_line_ptr());
@@ -1926,7 +1926,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
 
       // skip over NUL bytes
       n = sp->ts_arridx;
-      for (;;) {
+      while (true) {
         if (sp->ts_curi > byts[n]) {
           // Only NUL bytes at this node, go to next state.
           PROF_STORE(sp->ts_state)
@@ -2794,7 +2794,7 @@ static void add_sound_suggest(suginfo_T *su, char *goodword, int score, langp_T 
   // remember the words that have been done.
   hash_T hash = hash_hash(goodword);
   const size_t goodword_len = strlen(goodword);
-  hashitem_T *hi = hash_lookup(&slang->sl_sounddone, (const char *)goodword, goodword_len, hash);
+  hashitem_T *hi = hash_lookup(&slang->sl_sounddone, goodword, goodword_len, hash);
   if (HASHITEM_EMPTY(hi)) {
     sft = xmalloc(offsetof(sftword_T, sft_word) + goodword_len + 1);
     sft->sft_score = (int16_t)score;
@@ -2959,7 +2959,7 @@ static int soundfold_find(slang_T *slang, char *word)
   uint8_t *byts = slang->sl_sbyts;
   idx_T *idxs = slang->sl_sidxs;
 
-  for (;;) {
+  while (true) {
     // First byte is the number of possible bytes.
     int len = byts[arridx++];
 
@@ -3077,7 +3077,7 @@ static void add_suggestion(suginfo_T *su, garray_T *gap, const char *goodword, i
   // "thee the" is added next to changing the first "the" the "thee".
   const char *pgood = goodword + strlen(goodword);
   char *pbad = su->su_badptr + badlenarg;
-  for (;;) {
+  while (true) {
     goodlen = (int)(pgood - goodword);
     badlen = (int)(pbad - su->su_badptr);
     if (goodlen <= 0 || badlen <= 0) {
@@ -3671,9 +3671,9 @@ static int spell_edit_score_limit_w(slang_T *slang, const char *badword, const c
   int score = 0;
   int minscore = limit + 1;
 
-  for (;;) {
+  while (true) {
     // Skip over an equal part, score remains the same.
-    for (;;) {
+    while (true) {
       bc = wbadword[bi];
       gc = wgoodword[gi];
 

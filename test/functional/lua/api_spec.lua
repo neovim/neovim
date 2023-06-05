@@ -103,9 +103,9 @@ describe('luaeval(vim.api.…)', function()
     eq(NIL, funcs.luaeval('vim.api.nvim__id(nil)'))
 
     -- API strings from Blobs can work as NUL-terminated C strings
-    eq('Vim(call):E5555: API call: Vim:E15: Invalid expression: ',
+    eq('Vim(call):E5555: API call: Vim:E15: Invalid expression: ""',
        exc_exec('call nvim_eval(v:_null_blob)'))
-    eq('Vim(call):E5555: API call: Vim:E15: Invalid expression: ',
+    eq('Vim(call):E5555: API call: Vim:E15: Invalid expression: ""',
        exc_exec('call nvim_eval(0z)'))
     eq(1, eval('nvim_eval(0z31)'))
 

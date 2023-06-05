@@ -3,7 +3,7 @@ local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 local clear = helpers.clear
 local is_os = helpers.is_os
-local lfs = require('lfs')
+local mkdir = helpers.mkdir
 
 describe('vim._watch', function()
   before_each(function()
@@ -14,7 +14,7 @@ describe('vim._watch', function()
     it('detects file changes', function()
       local root_dir = helpers.tmpname()
       os.remove(root_dir)
-      lfs.mkdir(root_dir)
+      mkdir(root_dir)
 
       local result = exec_lua(
         [[
@@ -102,7 +102,7 @@ describe('vim._watch', function()
     it('detects file changes', function()
       local root_dir = helpers.tmpname()
       os.remove(root_dir)
-      lfs.mkdir(root_dir)
+      mkdir(root_dir)
 
       local result = exec_lua(
         [[
@@ -121,10 +121,6 @@ describe('vim._watch', function()
         local stop = vim._watch.poll(root_dir, { interval = poll_interval_ms }, function(path, change_type)
           table.insert(events, { path = path, change_type = change_type })
         end)
-
-        -- polling generates Created events for the existing entries when it starts.
-        expected_events = expected_events + 1
-        wait_for_events()
 
         vim.wait(100)
 
@@ -158,39 +154,35 @@ describe('vim._watch', function()
         root_dir
       )
 
-      eq(5, #result)
-      eq({
-        change_type = exec_lua([[return vim._watch.FileChangeType.Created]]),
-        path = root_dir,
-      }, result[1])
+      eq(4, #result)
       eq({
         change_type = exec_lua([[return vim._watch.FileChangeType.Created]]),
         path = root_dir .. '/file',
-      }, result[2])
+      }, result[1])
       eq({
         change_type = exec_lua([[return vim._watch.FileChangeType.Changed]]),
         path = root_dir,
-      }, result[3])
+      }, result[2])
       -- The file delete and corresponding directory change events do not happen in any
       -- particular order, so allow either
-      if result[4].path == root_dir then
+      if result[3].path == root_dir then
         eq({
           change_type = exec_lua([[return vim._watch.FileChangeType.Changed]]),
           path = root_dir,
-        }, result[4])
+        }, result[3])
         eq({
           change_type = exec_lua([[return vim._watch.FileChangeType.Deleted]]),
           path = root_dir .. '/file',
-        }, result[5])
+        }, result[4])
       else
         eq({
           change_type = exec_lua([[return vim._watch.FileChangeType.Deleted]]),
           path = root_dir .. '/file',
-        }, result[4])
+        }, result[3])
         eq({
           change_type = exec_lua([[return vim._watch.FileChangeType.Changed]]),
           path = root_dir,
-        }, result[5])
+        }, result[4])
       end
     end)
   end)

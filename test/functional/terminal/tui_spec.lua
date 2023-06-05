@@ -112,7 +112,7 @@ describe('TUI', function()
     child_session:request("nvim_exec", [[
     set more
     func! ManyErr()
-      for i in range(10)
+      for i in range(20)
         echoerr "FAIL ".i
       endfor
     endfunc
@@ -128,7 +128,35 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]]}
 
-    feed_data('d')
+    screen:try_resize(50,10)
+    screen:expect{grid=[[
+      :call ManyErr()                                   |
+      {8:Error detected while processing function ManyErr:} |
+      {11:line    2:}                                        |
+      {8:FAIL 0}                                            |
+      {8:FAIL 1}                                            |
+      {8:FAIL 2}                                            |
+                                                        |
+                                                        |
+      {10:-- More --}{1: }                                       |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    feed_data('j')
+    screen:expect{grid=[[
+      {8:Error detected while processing function ManyErr:} |
+      {11:line    2:}                                        |
+      {8:FAIL 0}                                            |
+      {8:FAIL 1}                                            |
+      {8:FAIL 2}                                            |
+      {8:FAIL 3}                                            |
+      {8:FAIL 4}                                            |
+      {8:FAIL 5}                                            |
+      {10:-- More --}{1: }                                       |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    screen:try_resize(50,7)
     screen:expect{grid=[[
       {8:FAIL 1}                                            |
       {8:FAIL 2}                                            |
@@ -1430,9 +1458,9 @@ describe('TUI', function()
 
   it('allows grid to assume wider ambiguous-width characters than host terminal #19686', function()
     child_session:request('nvim_buf_set_lines', 0, 0, -1, true, { ('℃'):rep(60), ('℃'):rep(60) })
-    child_session:request('nvim_win_set_option', 0, 'cursorline', true)
-    child_session:request('nvim_win_set_option', 0, 'list', true)
-    child_session:request('nvim_win_set_option', 0, 'listchars', 'eol:$')
+    child_session:request('nvim_set_option_value', 'cursorline', true, {})
+    child_session:request('nvim_set_option_value', 'list', true, {})
+    child_session:request('nvim_set_option_value', 'listchars', 'eol:$', {win=0})
     feed_data('gg')
     local singlewidth_screen = [[
       {13:℃}{12:℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃}|
@@ -1455,9 +1483,9 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]]
     screen:expect(singlewidth_screen)
-    child_session:request('nvim_set_option', 'ambiwidth', 'double')
+    child_session:request('nvim_set_option_value', 'ambiwidth', 'double', {})
     screen:expect(doublewidth_screen)
-    child_session:request('nvim_set_option', 'ambiwidth', 'single')
+    child_session:request('nvim_set_option_value', 'ambiwidth', 'single', {})
     screen:expect(singlewidth_screen)
     child_session:request('nvim_call_function', 'setcellwidths', {{{0x2103, 0x2103, 2}}})
     screen:expect(doublewidth_screen)
@@ -1526,7 +1554,7 @@ describe('TUI', function()
   end)
 
   it('no assert failure on deadly signal #21896', function()
-    exec_lua([[vim.loop.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     screen:expect({any = '%[Process exited 1%]'})
   end)
 
@@ -1563,6 +1591,29 @@ describe('TUI', function()
       {4:[No Name]                                         }|
       {5:-- INSERT --}                                      |
       {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('redraws on SIGWINCH even if terminal size is unchanged #23411', function()
+    child_session:request('nvim_echo', {{'foo'}}, false, {})
+    screen:expect([[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      foo                                               |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigwinch')]])
+    screen:expect([[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
     ]])
   end)
 end)
@@ -2422,6 +2473,19 @@ describe("TUI as a client", function()
       {3:-- TERMINAL --}                                    |
     ]]}
 
+    -- grid smaller than containing terminal window is cleared properly
+    feed_data(":call setline(1,['a'->repeat(&columns)]->repeat(&lines))\n")
+    feed_data("0:set lines=2\n")
+    screen_server:expect{grid=[[
+      {1:a}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {5:[No Name] [+]                                     }|
+                                                        |
+                                                        |
+                                                        |
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
     feed_data(":q!\n")
 
     server_super:close()
@@ -2453,7 +2517,7 @@ describe("TUI as a client", function()
 
     -- No heap-use-after-free when receiving UI events after deadly signal #22184
     server:request('nvim_input', ('a'):rep(1000))
-    exec_lua([[vim.loop.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     screen:expect({any = '%[Process exited 1%]'})
 
     eq(0, meths.get_vvar('shell_error'))

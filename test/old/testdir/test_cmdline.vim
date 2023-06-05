@@ -453,10 +453,10 @@ func Test_getcompletion()
   let l = getcompletion('blahblah', 'augroup')
   call assert_equal([], l)
 
-  let l = getcompletion('', 'behave')
-  call assert_true(index(l, 'mswin') >= 0)
-  let l = getcompletion('not', 'behave')
-  call assert_equal([], l)
+  " let l = getcompletion('', 'behave')
+  " call assert_true(index(l, 'mswin') >= 0)
+  " let l = getcompletion('not', 'behave')
+  " call assert_equal([], l)
 
   let l = getcompletion('', 'color')
   call assert_true(index(l, 'default') >= 0)
@@ -652,7 +652,7 @@ func Test_getcompletion()
 
   call assert_fails("call getcompletion('\\\\@!\\\\@=', 'buffer')", 'E871:')
   call assert_fails('call getcompletion("", "burp")', 'E475:')
-  call assert_fails('call getcompletion("abc", [])', 'E475:')
+  call assert_fails('call getcompletion("abc", [])', 'E1174:')
 endfunc
 
 " Test for getcompletion() with "fuzzy" in 'wildoptions'
@@ -719,7 +719,7 @@ endfunc
 func Test_shellcmd_completion()
   let save_path = $PATH
 
-  call mkdir('Xpathdir/Xpathsubdir', 'p')
+  call mkdir('Xpathdir/Xpathsubdir', 'pR')
   call writefile([''], 'Xpathdir/Xfile.exe')
   call setfperm('Xpathdir/Xfile.exe', 'rwx------')
 
@@ -735,17 +735,15 @@ func Test_shellcmd_completion()
   call insert(expected, 'Xfile.exe')
   call assert_equal(expected, actual)
 
-  call delete('Xpathdir', 'rf')
   let $PATH = save_path
 endfunc
 
 func Test_expand_star_star()
-  call mkdir('a/b', 'p')
-  call writefile(['asdfasdf'], 'a/b/fileXname')
-  call feedkeys(":find **/fileXname\<Tab>\<CR>", 'xt')
-  call assert_equal('find a/b/fileXname', @:)
+  call mkdir('a/b/c', 'pR')
+  call writefile(['asdfasdf'], 'a/b/c/fileXname')
+  call feedkeys(":find a/**/fileXname\<Tab>\<CR>", 'xt')
+  call assert_equal('find a/b/c/fileXname', @:)
   bwipe!
-  call delete('a', 'rf')
 endfunc
 
 func Test_cmdline_paste()
@@ -2770,6 +2768,7 @@ endfunc
 
 " :behave suboptions fuzzy completion
 func Test_fuzzy_completion_behave()
+  throw 'Skipped: Nvim removed :behave'
   set wildoptions&
   call feedkeys(":behave xm\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"behave xm', @:)
@@ -3475,16 +3474,23 @@ func Test_cmdline_complete_bang_cmd_argument()
   call assert_equal('"!vim test_cmdline.vim', @:)
 endfunc
 
-func Check_completion()
-  call assert_equal('let a', getcmdline())
-  call assert_equal(6, getcmdpos())
-  call assert_equal(7, getcmdscreenpos())
-  call assert_equal('var', getcmdcompltype())
-  return ''
+func Call_cmd_funcs()
+  return string([getcmdpos(), getcmdscreenpos(), getcmdcompltype()])
 endfunc
 
 func Test_screenpos_and_completion()
-  call feedkeys(":let a\<C-R>=Check_completion()\<CR>\<Esc>", "xt")
+  call assert_equal(0, getcmdpos())
+  call assert_equal(0, getcmdscreenpos())
+  call assert_equal('', getcmdcompltype())
+
+  cnoremap <expr> <F2> string([getcmdpos(), getcmdscreenpos(), getcmdcompltype()])
+  call feedkeys(":let a\<F2>\<C-B>\"\<CR>", "xt")
+  call assert_equal("\"let a[6, 7, 'var']", @:)
+  call feedkeys(":quit \<F2>\<C-B>\"\<CR>", "xt")
+  call assert_equal("\"quit [6, 7, '']", @:)
+  call feedkeys(":nosuchcommand \<F2>\<C-B>\"\<CR>", "xt")
+  call assert_equal("\"nosuchcommand [15, 16, '']", @:)
+  cunmap <F2>
 endfunc
 
 func Test_recursive_register()
@@ -3532,6 +3538,14 @@ endfunc
 
 func Test_setcmdline()
   func SetText(text, pos)
+    call assert_equal(0, setcmdline(v:_null_string))
+    call assert_equal('', getcmdline())
+    call assert_equal(1, getcmdpos())
+
+    call assert_equal(0, setcmdline(''[: -1]))
+    call assert_equal('', getcmdline())
+    call assert_equal(1, getcmdpos())
+
     autocmd CmdlineChanged * let g:cmdtype = expand('<afile>')
     call assert_equal(0, setcmdline(a:text))
     call assert_equal(a:text, getcmdline())
@@ -3581,6 +3595,19 @@ func Test_setcmdline()
   call feedkeys(":a\<CR>", 'tx')
   call assert_equal('let foo=0', @:)
   cunmap a
+endfunc
+
+func Test_rulerformat_position()
+  CheckScreendump
+
+  let buf = RunVimInTerminal('', #{rows: 2, cols: 20})
+  call term_sendkeys(buf, ":set ruler rulerformat=longish\<CR>")
+  call term_sendkeys(buf, ":set laststatus=0 winwidth=1\<CR>")
+  call term_sendkeys(buf, "\<C-W>v\<C-W>|\<C-W>p")
+  call VerifyScreenDump(buf, 'Test_rulerformat_position', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

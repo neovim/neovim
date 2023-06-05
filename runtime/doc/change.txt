@@ -427,6 +427,11 @@ Note similarly, when 'nrformats' includes "bin", binary numbers with a leading
 '0x' or '0X' can be interpreted as hexadecimal rather than binary since '0b'
 are valid hexadecimal digits.
 
+When the number under the cursor is too big to fit into 64 bits, it will be
+rounded off to the nearest number that can be represented, and the
+addition/subtraction is skipped.  E.g. CTRL-X on 18446744073709551616 results
+in 18446744073709551615.  Same for larger numbers, such as 18446744073709551618.
+
 The CTRL-A command is very useful in a macro.  Example: Use the following
 steps to make a numbered list.
 

@@ -54,6 +54,9 @@ require('vim.shared')
 vim._submodules = {
   inspect = true,
   version = true,
+  fs = true,
+  iter = true,
+  re = true,
 }
 
 -- These are for loading runtime modules in the vim namespace lazily.

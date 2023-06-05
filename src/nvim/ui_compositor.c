@@ -439,7 +439,7 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
 static void compose_debug(Integer startrow, Integer endrow, Integer startcol, Integer endcol,
                           int syn_id, bool delay)
 {
-  if (!(rdb_flags & RDB_COMPOSITOR)) {
+  if (!(rdb_flags & RDB_COMPOSITOR) || startcol >= endcol) {
     return;
   }
 
@@ -467,7 +467,7 @@ static void debug_delay(Integer lines)
   ui_call_flush();
   uint64_t wd = (uint64_t)labs(p_wd);
   uint64_t factor = (uint64_t)MAX(MIN(lines, 5), 1);
-  os_microdelay(factor * wd * 1000U, true);
+  os_sleep(factor * wd);
 }
 
 static void compose_area(Integer startrow, Integer endrow, Integer startcol, Integer endcol)
@@ -580,11 +580,11 @@ void ui_comp_msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep
              && (msg_current_row < Rows || (scrolled && !msg_was_scrolled))) {
     int delta = msg_current_row - (int)row;
     if (msg_grid.blending) {
-      int first_row = MAX((int)row - (scrolled?1:0), 0);
+      int first_row = MAX((int)row - (scrolled ? 1 : 0), 0);
       compose_area(first_row, Rows - delta, 0, Columns);
     } else {
       // scroll separator together with message text
-      int first_row = MAX((int)row - (msg_was_scrolled?1:0), 0);
+      int first_row = MAX((int)row - (msg_was_scrolled ? 1 : 0), 0);
       ui_composed_call_grid_scroll(1, first_row, Rows, 0, Columns, delta, 0);
       if (scrolled && !msg_was_scrolled && row > 0) {
         compose_area(row - 1, row, 0, Columns);
@@ -602,8 +602,8 @@ void ui_comp_msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep
 static bool curgrid_covered_above(int row)
 {
   bool above_msg = (kv_A(layers, kv_size(layers) - 1) == &msg_grid
-                    && row < msg_current_row - (msg_was_scrolled?1:0));
-  return kv_size(layers) - (above_msg?1:0) > curgrid->comp_index + 1;
+                    && row < msg_current_row - (msg_was_scrolled ? 1 : 0));
+  return kv_size(layers) - (above_msg ? 1 : 0) > curgrid->comp_index + 1;
 }
 
 void ui_comp_grid_scroll(Integer grid, Integer top, Integer bot, Integer left, Integer right,

@@ -1,20 +1,8 @@
-local nvimsrcdir = arg[1]
-local includedir = arg[2]
-local autodir = arg[3]
+local includedir = arg[1]
+local autodir = arg[2]
 
-if nvimsrcdir == '--help' then
-  print ([[
-Usage:
-  lua genex_cmds.lua src/nvim build/include build/src/nvim/auto
-
-Will generate files build/include/ex_cmds_enum.generated.h with cmdidx_T
-enum and build/src/nvim/auto/ex_cmds_defs.generated.h with main Ex commands
-definitions.
-]])
-  os.exit(0)
-end
-
-package.path = nvimsrcdir .. '/?.lua;' .. package.path
+-- Will generate files ex_cmds_enum.generated.h with cmdidx_T enum
+-- and ex_cmds_defs.generated.h with main Ex commands definitions.
 
 local enumfname = includedir .. '/ex_cmds_enum.generated.h'
 local defsfname = autodir .. '/ex_cmds_defs.generated.h'
@@ -41,7 +29,7 @@ static const uint16_t cmdidxs1[%u] = {
 -- Values in cmdidxs2[c1][c2] are relative to cmdidxs1[c1] so that they
 -- fit in a byte.
 local cmdidxs2_out = string.format([[
-static const char_u cmdidxs2[%u][%u] = {
+static const uint8_t cmdidxs2[%u][%u] = {
   /*           a   b   c   d   e   f   g   h   i   j   k   l   m   n   o   p   q   r   s   t   u   v   w   x   y   z */
 ]], a_to_z, a_to_z)
 
@@ -67,6 +55,7 @@ defsfile:write(string.format([[
 #include "nvim/help.h"
 #include "nvim/indent.h"
 #include "nvim/lua/executor.h"
+#include "nvim/lua/secure.h"
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
 #include "nvim/match.h"

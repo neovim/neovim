@@ -112,7 +112,7 @@ e	Reindent a line that starts with "else" when you type the second 'e'.
 =~word	Like =word, but ignore case.
 
 If you really want to reindent when you type 'o', 'O', 'e', '0', '<', '>',
-'*', ':' or '!', use "<o>", "<O>", "<e>", "<0>", "<<>", "<>>", "<*>", "<:>" or
+"*", ':' or '!', use "<o>", "<O>", "<e>", "<0>", "<<>", "<>>", "<*>", "<:>" or
 "<!>", respectively, for those keys.
 
 For an emacs-style indent mode where lines aren't indented every time you

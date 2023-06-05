@@ -1,37 +1,22 @@
-local mpack = require('mpack')
-
--- we need at least 4 arguments since the last two are output files
-if arg[1] == '--help' then
-  print('Usage: genmsgpack.lua args')
-  print('Args: 1: source directory')
-  print('      2: dispatch output file (dispatch_wrappers.generated.h)')
-  print('      3: functions metadata output file (funcs_metadata.generated.h)')
-  print('      4: API metadata output file (api_metadata.mpack)')
-  print('      5: lua C bindings output file (lua_api_c_bindings.generated.c)')
-  print('      rest: C files where API functions are defined')
-end
-assert(#arg >= 4)
-local functions = {}
-
-local nvimdir = arg[1]
-package.path = nvimdir .. '/?.lua;' .. package.path
-
-_G.vim = loadfile(nvimdir..'/../../runtime/lua/vim/shared.lua')()
-_G.vim.inspect = loadfile(nvimdir..'/../../runtime/lua/vim/inspect.lua')()
+local mpack = vim.mpack
 
 local hashy = require'generators.hashy'
+
+assert(#arg >= 5)
+-- output h file with generated dispatch functions (dispatch_wrappers.generated.h)
+local dispatch_outputf = arg[1]
+-- output h file with packed metadata (funcs_metadata.generated.h)
+local funcs_metadata_outputf = arg[2]
+-- output metadata mpack file, for use by other build scripts (api_metadata.mpack)
+local mpack_outputf = arg[3]
+local lua_c_bindings_outputf = arg[4] -- lua_api_c_bindings.generated.c
+local keysets_outputf = arg[5] -- keysets_defs.generated.h
+
+local functions = {}
 
 -- names of all headers relative to the source root (for inclusion in the
 -- generated file)
 local headers = {}
-
--- output h file with generated dispatch functions
-local dispatch_outputf = arg[2]
--- output h file with packed metadata
-local funcs_metadata_outputf = arg[3]
--- output metadata mpack file, for use by other build scripts
-local mpack_outputf = arg[4]
-local lua_c_bindings_outputf = arg[5]
 
 -- set of function names, used to detect duplicates
 local function_names = {}
@@ -40,6 +25,55 @@ local c_grammar = require('generators.c_grammar')
 
 local function startswith(String,Start)
   return string.sub(String,1,string.len(Start))==Start
+end
+
+local function add_function(fn)
+  local public = startswith(fn.name, "nvim_") or fn.deprecated_since
+  if public and not fn.noexport then
+    functions[#functions + 1] = fn
+    function_names[fn.name] = true
+    if #fn.parameters >= 2 and fn.parameters[2][1] == 'Array' and fn.parameters[2][2] == 'uidata' then
+      -- function receives the "args" as a parameter
+      fn.receives_array_args = true
+      -- remove the args parameter
+      table.remove(fn.parameters, 2)
+    end
+    if #fn.parameters ~= 0 and fn.parameters[1][2] == 'channel_id' then
+      -- this function should receive the channel id
+      fn.receives_channel_id = true
+      -- remove the parameter since it won't be passed by the api client
+      table.remove(fn.parameters, 1)
+    end
+    if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'error' then
+      -- function can fail if the last parameter type is 'Error'
+      fn.can_fail = true
+      -- remove the error parameter, msgpack has it's own special field
+      -- for specifying errors
+      fn.parameters[#fn.parameters] = nil
+    end
+    if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'arena' then
+      -- return value is allocated in an arena
+      fn.arena_return = true
+      fn.parameters[#fn.parameters] = nil
+    end
+    if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'lstate' then
+      fn.has_lua_imp = true
+      fn.parameters[#fn.parameters] = nil
+    end
+  end
+end
+
+local keysets = {}
+
+local function add_keyset(val)
+  local keys = {}
+  for _,field in ipairs(val.fields) do
+    if field.type ~= 'Object' then
+      error 'not yet implemented: types other than Object'
+    end
+    table.insert(keys, field.name)
+  end
+  table.insert(keysets, {val.keyset_name, keys})
 end
 
 -- read each input file, parse and append to the api metadata
@@ -55,39 +89,11 @@ for i = 6, #arg do
 
   local tmp = c_grammar.grammar:match(input:read('*all'))
   for j = 1, #tmp do
-    local fn = tmp[j]
-    local public = startswith(fn.name, "nvim_") or fn.deprecated_since
-    if public and not fn.noexport then
-      functions[#functions + 1] = tmp[j]
-      function_names[fn.name] = true
-      if #fn.parameters >= 2 and fn.parameters[2][1] == 'Array' and fn.parameters[2][2] == 'uidata' then
-        -- function receives the "args" as a parameter
-        fn.receives_array_args = true
-        -- remove the args parameter
-        table.remove(fn.parameters, 2)
-      end
-      if #fn.parameters ~= 0 and fn.parameters[1][2] == 'channel_id' then
-        -- this function should receive the channel id
-        fn.receives_channel_id = true
-        -- remove the parameter since it won't be passed by the api client
-        table.remove(fn.parameters, 1)
-      end
-      if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'error' then
-        -- function can fail if the last parameter type is 'Error'
-        fn.can_fail = true
-        -- remove the error parameter, msgpack has it's own special field
-        -- for specifying errors
-        fn.parameters[#fn.parameters] = nil
-      end
-      if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'arena' then
-        -- return value is allocated in an arena
-        fn.arena_return = true
-        fn.parameters[#fn.parameters] = nil
-      end
-      if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'lstate' then
-        fn.has_lua_imp = true
-        fn.parameters[#fn.parameters] = nil
-      end
+    local val = tmp[j]
+    if val.keyset_name then
+      add_keyset(val)
+    else
+      add_function(val)
     end
   end
   input:close()
@@ -187,7 +193,7 @@ end
 -- serialize the API metadata using msgpack and embed into the resulting
 -- binary for easy querying by clients
 local funcs_metadata_output = io.open(funcs_metadata_outputf, 'wb')
-local packed = mpack.pack(exported_functions)
+local packed = mpack.encode(exported_functions)
 local dump_bin_array = require("generators.dump_bin_array")
 dump_bin_array(funcs_metadata_output, 'funcs_metadata', packed)
 funcs_metadata_output:close()
@@ -195,6 +201,7 @@ funcs_metadata_output:close()
 -- start building the dispatch wrapper output
 local output = io.open(dispatch_outputf, 'wb')
 
+local keysets_defs = io.open(keysets_outputf, 'wb')
 
 -- ===========================================================================
 -- NEW API FILES MUST GO HERE.
@@ -223,6 +230,52 @@ output:write([[
 #include "nvim/ui_client.h"
 
 ]])
+
+for _,keyset in ipairs(keysets) do
+  local name, keys = unpack(keyset)
+  local special = {}
+  local function sanitize(key)
+    if special[key] then
+      return key .. "_"
+    end
+    return key
+  end
+
+  for i = 1,#keys do
+    if vim.endswith(keys[i], "_") then
+      keys[i] = string.sub(keys[i],1, #(keys[i]) - 1)
+      special[keys[i]] = true
+    end
+  end
+  local neworder, hashfun = hashy.hashy_hash(name, keys, function (idx)
+    return name.."_table["..idx.."].str"
+  end)
+
+  keysets_defs:write("extern KeySetLink "..name.."_table[];\n")
+
+  output:write("KeySetLink "..name.."_table[] = {\n")
+  for _, key in ipairs(neworder) do
+    output:write('  {"'..key..'", offsetof(KeyDict_'..name..", "..sanitize(key)..")},\n")
+  end
+    output:write('  {NULL, 0},\n')
+  output:write("};\n\n")
+
+  output:write(hashfun)
+
+  output:write([[
+Object *KeyDict_]]..name..[[_get_field(void *retval, const char *str, size_t len)
+{
+  int hash = ]]..name..[[_hash(str, len);
+  if (hash == -1) {
+    return NULL;
+  }
+
+  return (Object *)((char *)retval + ]]..name..[[_table[hash].ptr_off);
+}
+
+]])
+  keysets_defs:write("#define api_free_keydict_"..name.."(x) api_free_keydict(x, "..name.."_table)\n")
+end
 
 local function real_type(type)
   local rv = type
@@ -444,7 +497,7 @@ output:write(hashfun)
 output:close()
 
 local mpack_output = io.open(mpack_outputf, 'wb')
-mpack_output:write(mpack.pack(functions))
+mpack_output:write(mpack.encode(functions))
 mpack_output:close()
 
 local function include_headers(output_handle, headers_to_include)
@@ -475,6 +528,7 @@ output:write([[
 #include "nvim/func_attr.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
 #include "nvim/memory.h"
@@ -670,3 +724,4 @@ output:write([[
 ]])
 
 output:close()
+keysets_defs:close()

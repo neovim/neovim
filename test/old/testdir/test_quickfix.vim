@@ -2425,6 +2425,16 @@ func Xproperty_tests(cchar)
     call assert_equal(246, d.context)
     " set other Vim data types as context
     call g:Xsetlist([], 'a', {'context' : v:_null_blob})
+    if has('channel')
+      call g:Xsetlist([], 'a', {'context' : test_null_channel()})
+    endif
+    if has('job')
+      call g:Xsetlist([], 'a', {'context' : test_null_job()})
+    endif
+    " Nvim doesn't have null functions
+    " call g:Xsetlist([], 'a', {'context' : test_null_function()})
+    " Nvim doesn't have null partials
+    " call g:Xsetlist([], 'a', {'context' : test_null_partial()})
     call g:Xsetlist([], 'a', {'context' : ''})
     call test_garbagecollect_now()
     if a:cchar == 'l'
@@ -6240,28 +6250,6 @@ func Test_very_long_error_line()
   call setqflist([], 'f')
 endfunc
 
-" The test depends on deferred delete and string interpolation, which haven't
-" been ported, so override it with a rewrite that doesn't use these features.
-func! Test_very_long_error_line()
-  let msg = repeat('abcdefghijklmn', 146)
-  let emsg = 'Xlonglines.c:1:' . msg
-  call writefile([msg, emsg], 'Xerror')
-  cfile Xerror
-  call delete('Xerror')
-  cwindow
-  call assert_equal('|| ' .. msg, getline(1))
-  call assert_equal('Xlonglines.c|1| ' .. msg, getline(2))
-  cclose
-
-  let l = execute('clist!')->split("\n")
-  call assert_equal([' 1: ' .. msg, ' 2 Xlonglines.c:1: ' .. msg], l)
-
-  let l = execute('cc')->split("\n")
-  call assert_equal(['(2 of 2): ' .. msg], l)
-
-  call setqflist([], 'f')
-endfunc
-
 " In the quickfix window, spaces at the beginning of an informational line
 " should not be removed but should be removed from an error line.
 func Test_info_line_with_space()
@@ -6292,5 +6280,28 @@ func Test_setqflist_cb_arg()
   call setqflist([], 'f')
 endfunc
 
+" Test that setqflist() should not prevent :stopinsert from working
+func Test_setqflist_stopinsert()
+  new
+  call setqflist([], 'f')
+  copen
+  cclose
+  func StopInsert()
+    stopinsert
+    call setqflist([{'text': 'foo'}])
+    return ''
+  endfunc
+
+  call setline(1, 'abc')
+  call cursor(1, 1)
+  call feedkeys("i\<C-R>=StopInsert()\<CR>$", 'tnix')
+  call assert_equal('foo', getqflist()[0].text)
+  call assert_equal([0, 1, 3, 0, v:maxcol], getcurpos())
+  call assert_equal(['abc'], getline(1, '$'))
+
+  delfunc StopInsert
+  call setqflist([], 'f')
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

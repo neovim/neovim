@@ -187,8 +187,8 @@ typedef enum {
   CP_FAST = 32,          ///< use fast_breakcheck instead of os_breakcheck
 } cp_flags_T;
 
-static char e_hitend[] = N_("Hit end of paragraph");
-static char e_compldel[] = N_("E840: Completion function deleted text");
+static const char e_hitend[] = N_("Hit end of paragraph");
+static const char e_compldel[] = N_("E840: Completion function deleted text");
 
 // All the current matches are stored in a list.
 // "compl_first_match" points to the start of the list.
@@ -1067,14 +1067,14 @@ static bool pum_enough_matches(void)
 {
   // Don't display the popup menu if there are no matches or there is only
   // one (ignoring the original text).
-  compl_T *compl = compl_first_match;
+  compl_T *comp = compl_first_match;
   int i = 0;
   do {
-    if (compl == NULL || (!match_at_original_text(compl) && ++i == 2)) {
+    if (comp == NULL || (!match_at_original_text(comp) && ++i == 2)) {
       break;
     }
-    compl = compl->cp_next;
-  } while (!is_first_match(compl));
+    comp = comp->cp_next;
+  } while (!is_first_match(comp));
 
   if (strstr(p_cot, "menuone") != NULL) {
     return i >= 1;
@@ -1138,7 +1138,7 @@ static int ins_compl_build_pum(void)
 {
   // Need to build the popup menu list.
   compl_match_arraysize = 0;
-  compl_T *compl = compl_first_match;
+  compl_T *comp = compl_first_match;
 
   // If it's user complete function and refresh_always,
   // do not use "compl_leader" as prefix filter.
@@ -1149,13 +1149,13 @@ static int ins_compl_build_pum(void)
   const int lead_len = compl_leader != NULL ? (int)strlen(compl_leader) : 0;
 
   do {
-    if (!match_at_original_text(compl)
+    if (!match_at_original_text(comp)
         && (compl_leader == NULL
-            || ins_compl_equal(compl, compl_leader, (size_t)lead_len))) {
+            || ins_compl_equal(comp, compl_leader, (size_t)lead_len))) {
       compl_match_arraysize++;
     }
-    compl = compl->cp_next;
-  } while (compl != NULL && !is_first_match(compl));
+    comp = comp->cp_next;
+  } while (comp != NULL && !is_first_match(comp));
 
   if (compl_match_arraysize == 0) {
     return -1;
@@ -1172,46 +1172,46 @@ static int ins_compl_build_pum(void)
   bool did_find_shown_match = false;
   int cur = -1;
   int i = 0;
-  compl = compl_first_match;
+  comp = compl_first_match;
   do {
-    if (!match_at_original_text(compl)
+    if (!match_at_original_text(comp)
         && (compl_leader == NULL
-            || ins_compl_equal(compl, compl_leader, (size_t)lead_len))) {
+            || ins_compl_equal(comp, compl_leader, (size_t)lead_len))) {
       if (!shown_match_ok) {
-        if (compl == compl_shown_match || did_find_shown_match) {
+        if (comp == compl_shown_match || did_find_shown_match) {
           // This item is the shown match or this is the
           // first displayed item after the shown match.
-          compl_shown_match = compl;
+          compl_shown_match = comp;
           did_find_shown_match = true;
           shown_match_ok = true;
         } else {
           // Remember this displayed match for when the
           // shown match is just below it.
-          shown_compl = compl;
+          shown_compl = comp;
         }
         cur = i;
       }
 
-      if (compl->cp_text[CPT_ABBR] != NULL) {
-        compl_match_array[i].pum_text = compl->cp_text[CPT_ABBR];
+      if (comp->cp_text[CPT_ABBR] != NULL) {
+        compl_match_array[i].pum_text = comp->cp_text[CPT_ABBR];
       } else {
-        compl_match_array[i].pum_text = compl->cp_str;
+        compl_match_array[i].pum_text = comp->cp_str;
       }
-      compl_match_array[i].pum_kind = compl->cp_text[CPT_KIND];
-      compl_match_array[i].pum_info = compl->cp_text[CPT_INFO];
-      if (compl->cp_text[CPT_MENU] != NULL) {
-        compl_match_array[i++].pum_extra = compl->cp_text[CPT_MENU];
+      compl_match_array[i].pum_kind = comp->cp_text[CPT_KIND];
+      compl_match_array[i].pum_info = comp->cp_text[CPT_INFO];
+      if (comp->cp_text[CPT_MENU] != NULL) {
+        compl_match_array[i++].pum_extra = comp->cp_text[CPT_MENU];
       } else {
-        compl_match_array[i++].pum_extra = compl->cp_fname;
+        compl_match_array[i++].pum_extra = comp->cp_fname;
       }
     }
 
-    if (compl == compl_shown_match) {
+    if (comp == compl_shown_match) {
       did_find_shown_match = true;
 
       // When the original text is the shown match don't set
       // compl_shown_match.
-      if (match_at_original_text(compl)) {
+      if (match_at_original_text(comp)) {
         shown_match_ok = true;
       }
 
@@ -1222,8 +1222,8 @@ static int ins_compl_build_pum(void)
         shown_match_ok = true;
       }
     }
-    compl = compl->cp_next;
-  } while (compl != NULL && !is_first_match(compl));
+    comp = comp->cp_next;
+  } while (comp != NULL && !is_first_match(comp));
 
   if (!shown_match_ok) {  // no displayed match at all
     cur = -1;
@@ -1414,7 +1414,7 @@ static int thesaurus_add_words_in_line(char *fname, char **buf_arg, int dir, con
     // different classes, only separate words
     // with single-byte non-word characters.
     while (*ptr != NUL) {
-      const int l = utfc_ptr2len((const char *)ptr);
+      const int l = utfc_ptr2len(ptr);
 
       if (l < 2 && !vim_iswordc((uint8_t)(*ptr))) {
         break;
@@ -1750,7 +1750,7 @@ void ins_compl_addleader(int c)
   if ((cc = utf_char2len(c)) > 1) {
     char buf[MB_MAXBYTES + 1];
 
-    utf_char2bytes(c, (char *)buf);
+    utf_char2bytes(c, buf);
     buf[cc] = NUL;
     ins_char_bytes(buf, (size_t)cc);
   } else {
@@ -2257,14 +2257,14 @@ static void copy_global_to_buflocal_cb(Callback *globcb, Callback *bufcb)
 /// Invoked when the 'completefunc' option is set. The option value can be a
 /// name of a function (string), or function(<name>) or funcref(<name>) or a
 /// lambda expression.
-void set_completefunc_option(char **errmsg)
+const char *did_set_completefunc(optset_T *args FUNC_ATTR_UNUSED)
 {
   if (option_set_callback_func(curbuf->b_p_cfu, &cfu_cb) == FAIL) {
-    *errmsg = e_invarg;
-    return;
+    return e_invarg;
   }
 
   set_buflocal_cfu_callback(curbuf);
+  return NULL;
 }
 
 /// Copy the global 'completefunc' callback function to the buffer-local
@@ -2278,13 +2278,14 @@ void set_buflocal_cfu_callback(buf_T *buf)
 /// Invoked when the 'omnifunc' option is set. The option value can be a
 /// name of a function (string), or function(<name>) or funcref(<name>) or a
 /// lambda expression.
-void set_omnifunc_option(buf_T *buf, char **errmsg)
+const char *did_set_omnifunc(optset_T *args)
 {
+  buf_T *buf = (buf_T *)args->os_buf;
   if (option_set_callback_func(buf->b_p_ofu, &ofu_cb) == FAIL) {
-    *errmsg = e_invarg;
-    return;
+    return e_invarg;
   }
   set_buflocal_ofu_callback(buf);
+  return NULL;
 }
 
 /// Copy the global 'omnifunc' callback function to the buffer-local 'omnifunc'
@@ -2298,7 +2299,7 @@ void set_buflocal_ofu_callback(buf_T *buf)
 /// Invoked when the 'thesaurusfunc' option is set. The option value can be a
 /// name of a function (string), or function(<name>) or funcref(<name>) or a
 /// lambda expression.
-void set_thesaurusfunc_option(char **errmsg)
+const char *did_set_thesaurusfunc(optset_T *args FUNC_ATTR_UNUSED)
 {
   int retval;
 
@@ -2310,9 +2311,7 @@ void set_thesaurusfunc_option(char **errmsg)
     retval = option_set_callback_func(p_tsrfu, &tsrfu_cb);
   }
 
-  if (retval == FAIL) {
-    *errmsg = e_invarg;
-  }
+  return retval == FAIL ? e_invarg : NULL;
 }
 
 /// Mark the global 'completefunc' 'omnifunc' and 'thesaurusfunc' callbacks with
@@ -2515,7 +2514,7 @@ static void ins_compl_add_dict(dict_T *dict)
   compl_opt_refresh_always = false;
   di_refresh = tv_dict_find(dict, S_LEN("refresh"));
   if (di_refresh != NULL && di_refresh->di_tv.v_type == VAR_STRING) {
-    const char *v = (const char *)di_refresh->di_tv.vval.v_string;
+    const char *v = di_refresh->di_tv.vval.v_string;
 
     if (v != NULL && strcmp(v, "always") == 0) {
       compl_opt_refresh_always = true;
@@ -2651,7 +2650,7 @@ static void ins_compl_update_sequence_numbers(void)
   compl_T *match;
 
   if (compl_dir_forward()) {
-    // search backwards for the first valid (!= -1) number.
+    // Search backwards for the first valid (!= -1) number.
     // This should normally succeed already at the first loop
     // cycle, so it's fast!
     for (match = compl_curr_match->cp_prev;
@@ -2671,7 +2670,7 @@ static void ins_compl_update_sequence_numbers(void)
     }
   } else {  // BACKWARD
     assert(compl_direction == BACKWARD);
-    // search forwards (upwards) for the first valid (!= -1)
+    // Search forwards (upwards) for the first valid (!= -1)
     // number.  This should normally succeed already at the
     // first loop cycle, so it's fast!
     for (match = compl_curr_match->cp_next;
@@ -2682,8 +2681,7 @@ static void ins_compl_update_sequence_numbers(void)
       }
     }
     if (match != NULL) {
-      // go down and assign all numbers which are not
-      // assigned yet
+      // go down and assign all numbers which are not assigned yet
       for (match = match->cp_prev;
            match && match->cp_number == -1;
            match = match->cp_prev) {
@@ -3148,7 +3146,7 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
   }
   bool looped_around = false;
   int found_new_match = FAIL;
-  for (;;) {
+  while (true) {
     bool cont_s_ipos = false;
 
     msg_silent++;  // Don't want messages for wrapscan.
@@ -3312,7 +3310,7 @@ static int ins_compl_get_exp(pos_T *ini)
   st.cur_match_pos = compl_dir_forward() ? &st.last_match_pos : &st.first_match_pos;
 
   // For ^N/^P loop over all the flags/windows/buffers in 'complete'
-  for (;;) {
+  while (true) {
     found_new_match = FAIL;
     st.set_match_pos = false;
 
@@ -4301,7 +4299,7 @@ static void ins_compl_show_statusmsg(void)
     if (edit_submode_extra != NULL) {
       if (!p_smd) {
         msg_hist_off = true;
-        msg_attr((const char *)edit_submode_extra,
+        msg_attr(edit_submode_extra,
                  (edit_submode_highl < HLF_COUNT
                   ? HL_ATTR(edit_submode_highl) : 0));
         msg_hist_off = false;

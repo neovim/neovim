@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
-local lfs = require('lfs')
+local luv = require('luv')
 
+local mkdir = helpers.mkdir
 local clear = helpers.clear
 local eq = helpers.eq
 local funcs = helpers.funcs
@@ -19,16 +20,16 @@ local ddname_tail = '2'
 local ddname = dname .. '/' .. ddname_tail
 
 before_each(function()
-  lfs.mkdir(dname)
-  lfs.mkdir(ddname)
+  mkdir(dname)
+  mkdir(ddname)
   clear()
 end)
 
 after_each(function()
   os.remove(fname)
   os.remove(dfname)
-  lfs.rmdir(ddname)
-  lfs.rmdir(dname)
+  luv.fs_rmdir(ddname)
+  luv.fs_rmdir(dname)
 end)
 
 describe('writefile()', function()
@@ -144,13 +145,13 @@ describe('writefile()', function()
          pcall_err(command, ('call writefile(%s, "%s", "b")'):format(arg, fname)))
     end
     for _, args in ipairs({'[], %s, "b"', '[], "' .. fname .. '", %s'}) do
-      eq('Vim(call):E806: using Float as a String',
+      eq('Vim(call):E806: Using a Float as a String',
          pcall_err(command, ('call writefile(%s)'):format(args:format('0.0'))))
-      eq('Vim(call):E730: using List as a String',
+      eq('Vim(call):E730: Using a List as a String',
          pcall_err(command, ('call writefile(%s)'):format(args:format('[]'))))
-      eq('Vim(call):E731: using Dictionary as a String',
+      eq('Vim(call):E731: Using a Dictionary as a String',
          pcall_err(command, ('call writefile(%s)'):format(args:format('{}'))))
-      eq('Vim(call):E729: using Funcref as a String',
+      eq('Vim(call):E729: Using a Funcref as a String',
          pcall_err(command, ('call writefile(%s)'):format(args:format('function("tr")'))))
     end
     eq('Vim(call):E5060: Unknown flag: «»',

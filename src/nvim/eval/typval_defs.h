@@ -206,7 +206,7 @@ typedef struct {
   struct { \
     typval_T di_tv;  /* Structure that holds scope dictionary itself. */ \
     uint8_t di_flags;  /* Flags. */ \
-    char_u di_key[__VA_ARGS__];  /* Key value. */  /* NOLINT(runtime/arrays)*/ \
+    char di_key[__VA_ARGS__];  /* Key value. */  /* NOLINT(runtime/arrays)*/ \
   }
 
 /// Structure to hold a scope dictionary
@@ -284,27 +284,27 @@ enum { FIXVAR_CNT = 12, };
 typedef struct funccall_S funccall_T;
 
 struct funccall_S {
-  ufunc_T *func;  ///< Function being called.
-  int linenr;  ///< Next line to be executed.
-  int returned;  ///< ":return" used.
-  /// Fixed variables for arguments.
-  TV_DICTITEM_STRUCT(VAR_SHORT_LEN + 1) fixvar[FIXVAR_CNT];
-  dict_T l_vars;  ///< l: local function variables.
-  ScopeDictDictItem l_vars_var;  ///< Variable for l: scope.
-  dict_T l_avars;  ///< a: argument variables.
-  ScopeDictDictItem l_avars_var;  ///< Variable for a: scope.
-  list_T l_varlist;  ///< List for a:000.
-  listitem_T l_listitems[MAX_FUNC_ARGS];  ///< List items for a:000.
-  typval_T *rettv;  ///< Return value.
-  linenr_T breakpoint;  ///< Next line with breakpoint or zero.
-  int dbg_tick;  ///< debug_tick when breakpoint was set.
-  int level;  ///< Top nesting level of executed function.
-  proftime_T prof_child;  ///< Time spent in a child.
-  funccall_T *caller;  ///< Calling function or NULL; or next funccal in
-                       ///< list pointed to by previous_funccal.
-  int fc_refcount;  ///< Number of user functions that reference this funccall.
-  int fc_copyID;  ///< CopyID used for garbage collection.
-  garray_T fc_funcs;  ///< List of ufunc_T* which keep a reference to "func".
+  ufunc_T *fc_func;                  ///< Function being called.
+  int fc_linenr;                     ///< Next line to be executed.
+  int fc_returned;                   ///< ":return" used.
+  TV_DICTITEM_STRUCT(VAR_SHORT_LEN + 1) fc_fixvar[FIXVAR_CNT];  ///< Fixed variables for arguments.
+  dict_T fc_l_vars;                  ///< l: local function variables.
+  ScopeDictDictItem fc_l_vars_var;   ///< Variable for l: scope.
+  dict_T fc_l_avars;                 ///< a: argument variables.
+  ScopeDictDictItem fc_l_avars_var;  ///< Variable for a: scope.
+  list_T fc_l_varlist;                       ///< List for a:000.
+  listitem_T fc_l_listitems[MAX_FUNC_ARGS];  ///< List items for a:000.
+  typval_T *fc_rettv;                ///< Return value.
+  linenr_T fc_breakpoint;            ///< Next line with breakpoint or zero.
+  int fc_dbg_tick;                   ///< "debug_tick" when breakpoint was set.
+  int fc_level;                      ///< Top nesting level of executed function.
+  garray_T fc_defer;                 ///< Functions to be called on return.
+  proftime_T fc_prof_child;          ///< Time spent in a child.
+  funccall_T *fc_caller;             ///< Calling function or NULL; or next funccal in
+                                     ///< list pointed to by previous_funccal.
+  int fc_refcount;                   ///< Number of user functions that reference this funccall.
+  int fc_copyID;                     ///< CopyID used for garbage collection.
+  garray_T fc_ufuncs;                ///< List of ufunc_T* which keep a reference to "fc_func".
 };
 
 /// Structure to hold info for a user function.
@@ -374,26 +374,5 @@ typedef struct {
 } ListSortItem;
 
 typedef int (*ListSorter)(const void *, const void *);
-
-#ifdef LOG_LIST_ACTIONS
-/// List actions log entry
-typedef struct {
-  uintptr_t l;  ///< List log entry belongs to.
-  uintptr_t li1;  ///< First list item log entry belongs to, if applicable.
-  uintptr_t li2;  ///< Second list item log entry belongs to, if applicable.
-  int len;  ///< List length when log entry was created.
-  const char *action;  ///< Logged action.
-} ListLogEntry;
-
-typedef struct list_log ListLog;
-
-/// List actions log
-struct list_log {
-  ListLog *next;  ///< Next chunk or NULL.
-  size_t capacity;  ///< Number of entries in current chunk.
-  size_t size;  ///< Current chunk size.
-  ListLogEntry entries[];  ///< Actual log entries.
-};
-#endif
 
 #endif  // NVIM_EVAL_TYPVAL_DEFS_H

@@ -47,11 +47,11 @@ typedef struct digraph {
   result_T result;
 } digr_T;
 
-static char e_digraph_must_be_just_two_characters_str[]
+static const char e_digraph_must_be_just_two_characters_str[]
   = N_("E1214: Digraph must be just two characters: %s");
-static char e_digraph_argument_must_be_one_character_str[]
+static const char e_digraph_argument_must_be_one_character_str[]
   = N_("E1215: Digraph must be one character: %s");
-static char e_digraph_setlist_argument_must_be_list_of_lists_with_two_items[]
+static const char e_digraph_setlist_argument_must_be_list_of_lists_with_two_items[]
   = N_("E1216: digraph_setlist() argument must be a list of lists with two items");
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -2098,7 +2098,7 @@ void ex_loadkeymap(exarg_T *eap)
   p_cpo = "C";
 
   // Get each line of the sourced file, break at the end.
-  for (;;) {
+  while (true) {
     char *line = eap->getline(0, eap->cookie, 0, true);
 
     if (line == NULL) {
@@ -2203,7 +2203,7 @@ bool get_keymap_str(win_T *wp, char *fmt, char *buf, int len)
   curwin = wp;
   STRCPY(buf, "b:keymap_name");       // must be writable
   emsg_skip++;
-  s = p = eval_to_string(buf, NULL, false);
+  s = p = eval_to_string(buf, false);
   emsg_skip--;
   curbuf = old_curbuf;
   curwin = old_curwin;

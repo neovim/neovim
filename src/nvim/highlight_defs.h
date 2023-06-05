@@ -247,8 +247,8 @@ typedef struct {
 
 /// highlight attributes with associated priorities
 typedef struct {
-  int attr_id;
+  int hl_id;
   int priority;
-} HlPriAttr;
+} HlPriId;
 
 #endif  // NVIM_HIGHLIGHT_DEFS_H

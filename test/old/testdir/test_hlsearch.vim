@@ -85,4 +85,23 @@ func Test_hlsearch_Ctrl_R()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_hlsearch_clipboard()
+  CheckRunVimInTerminal
+  CheckFeature clipboard_working
+
+  let lines =<< trim END
+      set incsearch hlsearch
+      let @* = "text"
+      put *
+  END
+  call writefile(lines, 'XhlsearchClipboard', 'D')
+  let buf = RunVimInTerminal('-S XhlsearchClipboard', #{rows: 6, cols: 60})
+
+  call term_sendkeys(buf, "/\<C-R>*")
+  call VerifyScreenDump(buf, 'Test_hlsearch_ctrlr_1', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

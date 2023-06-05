@@ -1,11 +1,11 @@
 #ifndef NVIM_API_EXTMARK_H
 #define NVIM_API_EXTMARK_H
 
+#include "nvim/api/keysets.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/decoration.h"
 #include "nvim/macros.h"
 #include "nvim/map.h"
-#include "nvim/map_defs.h"
 #include "nvim/types.h"
 
 EXTERN Map(String, handle_T) namespace_ids INIT(= MAP_INIT);

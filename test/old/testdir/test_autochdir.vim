@@ -30,9 +30,9 @@ func Test_set_filename_other_window()
   CheckFunction test_autochdir
   let cwd = getcwd()
   call test_autochdir()
-  call mkdir('Xa')
-  call mkdir('Xb')
-  call mkdir('Xc')
+  call mkdir('Xa', 'R')
+  call mkdir('Xb', 'R')
+  call mkdir('Xc', 'R')
   try
     args Xa/aaa.txt Xb/bbb.txt
     set acd
@@ -44,9 +44,6 @@ func Test_set_filename_other_window()
   finally
     set noacd
     call chdir(cwd)
-    call delete('Xa', 'rf')
-    call delete('Xb', 'rf')
-    call delete('Xc', 'rf')
     bwipe! aaa.txt
     bwipe! bbb.txt
     bwipe! ccc.txt
@@ -59,10 +56,10 @@ func Test_acd_win_execute()
   set acd
   call test_autochdir()
 
-  call mkdir('Xfile')
+  call mkdir('XacdDir', 'R')
   let winid = win_getid()
-  new Xfile/file
-  call assert_match('testdir.Xfile$', getcwd())
+  new XacdDir/file
+  call assert_match('testdir.XacdDir$', getcwd())
   cd ..
   call assert_match('testdir$', getcwd())
   call win_execute(winid, 'echo')
@@ -71,7 +68,6 @@ func Test_acd_win_execute()
   bwipe!
   set noacd
   call chdir(cwd)
-  call delete('Xfile', 'rf')
 endfunc
 
 func Test_verbose_pwd()
@@ -82,7 +78,7 @@ func Test_verbose_pwd()
   edit global.txt
   call assert_match('\[global\].*testdir$', execute('verbose pwd'))
 
-  call mkdir('Xautodir')
+  call mkdir('Xautodir', 'R')
   split Xautodir/local.txt
   lcd Xautodir
   call assert_match('\[window\].*testdir[/\\]Xautodir', execute('verbose pwd'))
@@ -116,7 +112,6 @@ func Test_verbose_pwd()
 
   bwipe!
   call chdir(cwd)
-  call delete('Xautodir', 'rf')
 endfunc
 
 func Test_multibyte()

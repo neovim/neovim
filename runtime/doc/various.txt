@@ -32,7 +32,8 @@ CTRL-L			Clears and redraws the screen.  The redraw may happen
 						*:redraws* *:redrawstatus*
 :redraws[tatus][!]	Redraws the status line and window bar of the current
 			window, or all status lines and window bars if "!" is
-			included. Useful if 'statusline' or 'winbar' includes
+			included. Redraws the commandline instead if it contains
+			the 'ruler'. Useful if 'statusline' or 'winbar' includes
 			an item that doesn't cause automatic updating.
 
 						*:redrawt* *:redrawtabline*

@@ -64,7 +64,7 @@ describe(':terminal window', function()
         {7:       1 }tty ready                                |
         {7:       2 }rows: 6, cols: 48                        |
         {7:       3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO|
-        {7:       4 }WXYZrows: 6, cols: 41                    |
+        {7:       4 }PQRSTUVWXYZrows: 6, cols: 41             |
         {7:       5 }{1: }                                        |
         {7:       6 }                                         |
         {3:-- TERMINAL --}                                    |
@@ -74,7 +74,7 @@ describe(':terminal window', function()
         {7:       1 }tty ready                                |
         {7:       2 }rows: 6, cols: 48                        |
         {7:       3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO|
-        {7:       4 }WXYZrows: 6, cols: 41                    |
+        {7:       4 }PQRSTUVWXYZrows: 6, cols: 41             |
         {7:       5 } abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN|
         {7:       6 }OPQRSTUVWXYZ{1: }                            |
         {3:-- TERMINAL --}                                    |

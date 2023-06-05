@@ -56,7 +56,7 @@ Using the underscore after `:d` avoids clobbering registers or the clipboard.
 This also makes it faster.
 
 Instead of the '/' which surrounds the {pattern}, you can use any other
-single byte character, but not an alphabetic character, '\', '"' or '|'.
+single byte character, but not an alphabetic character, '\', '"', '|' or '!'.
 This is useful if you want to include a '/' in the search pattern or
 replacement string.
 
@@ -183,7 +183,10 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
 					*:so* *:source* *load-vim-script*
 :[range]so[urce] [file]	Runs |Ex| commands or Lua code (".lua" files) from
-			[file], or current buffer if no [file].
+			[file].
+			If no [file], the current buffer is used, and it is
+			treated as Lua code if its 'filetype' is "lua" or its
+			file name ends with ".lua".
 			Triggers the |SourcePre| autocommand.
 							*:source!*
 :[range]so[urce]! {file}
@@ -336,6 +339,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 :scr[iptnames]		List all sourced script names, in the order they were
 			first sourced.  The number is used for the script ID
 			|<SID>|.
+			Also see `getscriptinfo()`.
 
 :scr[iptnames][!] {scriptId}			*:script*
 			Edit script {scriptId}.  Although ":scriptnames name"

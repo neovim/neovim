@@ -210,8 +210,8 @@ describe('system()', function()
     end)
 
     it('prints verbose information', function()
-      nvim('set_option', 'shell', 'fake_shell')
-      nvim('set_option', 'shellcmdflag', 'cmdflag')
+      nvim('set_option_value', 'shell', 'fake_shell', {})
+      nvim('set_option_value', 'shellcmdflag', 'cmdflag', {})
 
       screen:try_resize(72, 14)
       feed(':4verbose echo system("echo hi")<cr>')
@@ -393,7 +393,7 @@ describe('system()', function()
   end)
 
   describe('with output containing NULs', function()
-    local fname = 'Xtest'
+    local fname = 'Xtest_functional_vimscript_system_nuls'
 
     before_each(create_file_with_nuls(fname))
     after_each(delete_file(fname))
@@ -549,7 +549,7 @@ describe('systemlist()', function()
   end)
 
   describe('with output containing NULs', function()
-    local fname = 'Xtest'
+    local fname = 'Xtest_functional_vimscript_systemlist_nuls'
 
     before_each(function()
       command('set ff=unix')

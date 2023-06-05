@@ -4,7 +4,7 @@
 -- - "dir", in directory relative to current dir
 
 local helpers = require('test.functional.helpers')(after_each)
-local lfs = require('lfs')
+local luv = require('luv')
 
 local eq = helpers.eq
 local neq = helpers.neq
@@ -15,12 +15,12 @@ local clear = helpers.clear
 local insert = helpers.insert
 local command = helpers.command
 local write_file = helpers.write_file
-local curbufmeths = helpers.curbufmeths
 local expect_exit = helpers.expect_exit
+local mkdir = helpers.mkdir
 
 local function ls_dir_sorted(dirname)
   local files = {}
-  for f in lfs.dir(dirname) do
+  for f in vim.fs.dir(dirname) do
     if f ~= "." and f~= ".." then
       table.insert(files, f)
     end
@@ -38,8 +38,8 @@ describe("'directory' option", function()
       end of testfile
       ]]
     write_file('Xtest1', text)
-    lfs.mkdir('Xtest.je')
-    lfs.mkdir('Xtest2')
+    mkdir('Xtest.je')
+    mkdir('Xtest2')
     write_file('Xtest2/Xtest3', text)
     clear()
   end)
@@ -57,33 +57,33 @@ describe("'directory' option", function()
       line 3 Abcdefghij
       end of testfile]])
 
-    meths.set_option('swapfile', true)
-    curbufmeths.set_option('swapfile', true)
-    meths.set_option('directory', '.')
+    meths.set_option_value('swapfile', true, {})
+    meths.set_option_value('swapfile', true, {})
+    meths.set_option_value('directory', '.', {})
 
     -- sanity check: files should not exist yet.
-    eq(nil, lfs.attributes('.Xtest1.swp'))
+    eq(nil, luv.fs_stat('.Xtest1.swp'))
 
     command('edit! Xtest1')
     poke_eventloop()
     eq('Xtest1', funcs.buffer_name('%'))
     -- Verify that the swapfile exists. In the legacy test this was done by
     -- reading the output from :!ls.
-    neq(nil, lfs.attributes('.Xtest1.swp'))
+    neq(nil, luv.fs_stat('.Xtest1.swp'))
 
-    meths.set_option('directory', './Xtest2,.')
+    meths.set_option_value('directory', './Xtest2,.', {})
     command('edit Xtest1')
     poke_eventloop()
 
     -- swapfile should no longer exist in CWD.
-    eq(nil, lfs.attributes('.Xtest1.swp'))
+    eq(nil, luv.fs_stat('.Xtest1.swp'))
 
     eq({ "Xtest1.swp", "Xtest3" }, ls_dir_sorted("Xtest2"))
 
-    meths.set_option('directory', 'Xtest.je')
+    meths.set_option_value('directory', 'Xtest.je', {})
     command('bdelete')
     command('edit Xtest2/Xtest3')
-    eq(true, curbufmeths.get_option('swapfile'))
+    eq(true, meths.get_option_value('swapfile', {}))
     poke_eventloop()
 
     eq({ "Xtest3" }, ls_dir_sorted("Xtest2"))
