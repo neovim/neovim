@@ -865,6 +865,48 @@ describe('smoothscroll', function()
     ]])
   end)
 
+  -- oldtest: Test_smoothscroll_multi_skipcol()
+  it('scrolling mulitple lines and stopping at non-zero skipcol', function()
+    screen:try_resize(40, 10)
+    screen:set_default_attr_ids({
+      [0] = {foreground = Screen.colors.Blue, bold = true},
+      [1] = {background = Screen.colors.Grey90},
+    })
+    exec([[
+      setlocal cursorline scrolloff=0 smoothscroll
+      call setline(1, repeat([''], 9))
+      call setline(3, repeat('a', 50))
+      call setline(8, 'bbb')
+      call setline(9, 'ccc')
+      redraw
+    ]])
+    screen:expect([[
+      {1:^                                        }|
+                                              |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaa                              |
+                                              |
+                                              |
+                                              |
+                                              |
+      bbb                                     |
+                                              |
+    ]])
+    feed('3<C-E>')
+    screen:expect([[
+      {0:<<<}{1:aaaaaa^a                              }|
+                                              |
+                                              |
+                                              |
+                                              |
+      bbb                                     |
+      ccc                                     |
+      {0:~                                       }|
+      {0:~                                       }|
+                                              |
+    ]])
+  end)
+
   it("works with virt_lines above and below", function()
     screen:try_resize(55, 7)
     exec([=[
