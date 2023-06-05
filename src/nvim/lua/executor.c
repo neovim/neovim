@@ -580,6 +580,9 @@ static void nlua_common_vim_init(lua_State *lstate, bool is_thread, bool is_stan
   lua_pushvalue(lstate, -1);
   lua_setfield(lstate, -3, "uv");
 
+  lua_pushvalue(lstate, -1);
+  lua_setfield(lstate, -3, "loop");  // deprecated
+
   // package.loaded.luv = vim.uv
   // otherwise luv will be reinitialized when require'luv'
   lua_getglobal(lstate, "package");
