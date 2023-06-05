@@ -587,7 +587,6 @@ func Test_edit_CTRL_G()
 endfunc
 
 func Test_edit_CTRL_I()
-  set include=^\\s*#\\s*include
   " Tab in completion mode
   let path=expand("%:p:h")
   new

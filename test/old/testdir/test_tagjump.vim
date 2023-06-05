@@ -161,7 +161,6 @@ endfunc
 
 " Tests for [ CTRL-I and CTRL-W CTRL-I commands
 function Test_keyword_jump()
-  set include=^\\s*#\\s*include
   call writefile(["#include Xinclude", "",
 	      \ "",
 	      \ "/* test text test tex start here",
@@ -1299,7 +1298,6 @@ endfunc
 " Test for :dsearch, :dlist, :djump and :dsplit commands
 " Test for [d, ]d, [D, ]D, [ CTRL-D, ] CTRL-D and CTRL-W d commands
 func Test_macro_search()
-  set define=^\\s*#\\s*define
   new
   call setline(1, ['#define FOO 1', '#define FOO 2', '#define FOO 3',
         \ '#define FOO 4', '#define FOO 5'])
