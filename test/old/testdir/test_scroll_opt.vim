@@ -780,7 +780,7 @@ func Test_smoothscroll_incsearch()
       call setline(14, 'bbbb')
   END
   call writefile(lines, 'XSmoothIncsearch', 'D')
-  let buf = RunVimInTerminal('-S XSmoothIncsearch', #{rows: 8, cols:40})
+  let buf = RunVimInTerminal('-S XSmoothIncsearch', #{rows: 8, cols: 40})
 
   call term_sendkeys(buf, "/b")
   call VerifyScreenDump(buf, 'Test_smooth_incsearch_1', {})
@@ -791,6 +791,32 @@ func Test_smoothscroll_incsearch()
   call term_sendkeys(buf, "b")
   call VerifyScreenDump(buf, 'Test_smooth_incsearch_4', {})
   call term_sendkeys(buf, "\<CR>")
+
+  call StopVimInTerminal(buf)
+endfunc
+
+" Test scrolling multiple lines and stopping at non-zero skipcol.
+func Test_smoothscroll_multi_skipcol()
+  CheckScreendump
+
+  let lines =<< trim END
+      setlocal cursorline scrolloff=0 smoothscroll
+      call setline(1, repeat([''], 8))
+      call setline(3, repeat('a', 50))
+      call setline(4, repeat('a', 50))
+      call setline(7, 'bbb')
+      call setline(8, 'ccc')
+      redraw
+  END
+  call writefile(lines, 'XSmoothMultiSkipcol', 'D')
+  let buf = RunVimInTerminal('-S XSmoothMultiSkipcol', #{rows: 10, cols: 40})
+  call VerifyScreenDump(buf, 'Test_smooth_multi_skipcol_1', {})
+
+  call term_sendkeys(buf, "3\<C-E>")
+  call VerifyScreenDump(buf, 'Test_smooth_multi_skipcol_2', {})
+
+  call term_sendkeys(buf, "2\<C-E>")
+  call VerifyScreenDump(buf, 'Test_smooth_multi_skipcol_3', {})
 
   call StopVimInTerminal(buf)
 endfunc
