@@ -124,6 +124,21 @@ func Test_smoothscroll_CtrlE_CtrlY()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_smoothscroll_multibyte()
+  CheckScreendump
+
+  let lines =<< trim END
+      set scrolloff=0 smoothscroll
+      call setline(1, [repeat('ϛ', 45), repeat('2', 36)])
+      exe "normal G35l\<C-E>k"
+  END
+  call writefile(lines, 'XSmoothMultibyte', 'D')
+  let buf = RunVimInTerminal('-S XSmoothMultibyte', #{rows: 6, cols: 40})
+  call VerifyScreenDump(buf, 'Test_smoothscroll_multi_1', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_smoothscroll_number()
   CheckScreendump
 
