@@ -6,7 +6,8 @@ local protocol = require('vim.lsp.protocol')
 local M = {}
 
 ---@private
----Parses the raw pattern into an |lpeg| pattern.
+--- Parses the raw pattern into an |lpeg| pattern. LPeg patterns natively support the "this" or "that"
+--- alternative constructions described in the LSP spec that cannot be expressed in a standard Lua pattern.
 ---
 ---@param pattern string The raw glob pattern
 ---@return userdata An |lpeg| representation of the pattern, or nil if the pattern is invalid.
