@@ -1218,9 +1218,9 @@ LanguageTree:trees({self})                              *LanguageTree:trees()*
 
 
 ==============================================================================
-Lua module: vim.treesitter.playground              *lua-treesitter-playground*
+Lua module: vim.treesitter.dev                            *lua-treesitter-dev*
 
-inspect_tree({opts})                *vim.treesitter.playground.inspect_tree()*
+inspect_tree({opts})                       *vim.treesitter.dev.inspect_tree()*
     Parameters: ~
       • {opts}  InspectTreeOpts
 
