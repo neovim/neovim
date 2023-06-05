@@ -1029,7 +1029,7 @@ func Test_efm1()
       ﻿"Xtestfile", line 6 col 19; this is an error
       gcc -c -DHAVE_CONFIsing-prototypes -I/usr/X11R6/include  version.c
       Xtestfile:9: parse error before `asd'
-      make: *** [vim] Error 1
+      make: *** [src/vim/testdir/Makefile:100: test_quickfix] Error 1
       in file "Xtestfile" linenr 10: there is an error
 
       2 returned
