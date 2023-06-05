@@ -6,7 +6,7 @@ local keymap = {}
 ---   -- Map to a Lua function:
 ---   vim.keymap.set('n', 'lhs', function() print("real lua function") end)
 ---   -- Map to multiple modes:
----   vim.keymap.set({'n', 'v'}, '<leader>lr', vim.lsp.buf.references, { buffer=true })
+---   vim.keymap.set({'n', 'v'}, '<leader>lr', vim.lsp.buf.references, { buffer = true })
 ---   -- Buffer-local mapping:
 ---   vim.keymap.set('n', '<leader>w', "<cmd>w<cr>", { silent = true, buffer = 5 })
 ---   -- Expr mapping:
