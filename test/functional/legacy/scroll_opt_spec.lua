@@ -874,10 +874,11 @@ describe('smoothscroll', function()
     })
     exec([[
       setlocal cursorline scrolloff=0 smoothscroll
-      call setline(1, repeat([''], 9))
+      call setline(1, repeat([''], 8))
       call setline(3, repeat('a', 50))
-      call setline(8, 'bbb')
-      call setline(9, 'ccc')
+      call setline(4, repeat('a', 50))
+      call setline(7, 'bbb')
+      call setline(8, 'ccc')
       redraw
     ]])
     screen:expect([[
@@ -885,8 +886,8 @@ describe('smoothscroll', function()
                                               |
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       aaaaaaaaaa                              |
-                                              |
-                                              |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaa                              |
                                               |
                                               |
       bbb                                     |
@@ -895,12 +896,25 @@ describe('smoothscroll', function()
     feed('3<C-E>')
     screen:expect([[
       {0:<<<}{1:aaaaaa^a                              }|
-                                              |
-                                              |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaa                              |
                                               |
                                               |
       bbb                                     |
       ccc                                     |
+      {0:~                                       }|
+      {0:~                                       }|
+                                              |
+    ]])
+    feed('2<C-E>')
+    screen:expect([[
+      {0:<<<}{1:aaaaaa^a                              }|
+                                              |
+                                              |
+      bbb                                     |
+      ccc                                     |
+      {0:~                                       }|
+      {0:~                                       }|
       {0:~                                       }|
       {0:~                                       }|
                                               |
