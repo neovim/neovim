@@ -34,6 +34,7 @@ describe("api_info()['version']", function()
     local minor   = version['minor']
     local patch   = version['patch']
     local prerelease = version['prerelease']
+    local build   = version['build']
     eq("number", type(major))
     eq("number", type(minor))
     eq("number", type(patch))
@@ -42,6 +43,7 @@ describe("api_info()['version']", function()
     eq(0, funcs.has("nvim-"..major.."."..minor.."."..(patch + 1)))
     eq(0, funcs.has("nvim-"..major.."."..(minor + 1).."."..patch))
     eq(0, funcs.has("nvim-"..(major + 1).."."..minor.."."..patch))
+    assert(build == nil or type(build) == 'string')
   end)
 end)
 
