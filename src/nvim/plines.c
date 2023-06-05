@@ -136,8 +136,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
 /// used from the start of the line to the given column number.
 int plines_win_col(win_T *wp, linenr_T lnum, long column)
 {
-  // Check for filler lines above this buffer line.  When folded the result
-  // is one line anyway.
+  // Check for filler lines above this buffer line.
   int lines = win_get_fill(wp, lnum);
 
   if (!wp->w_p_wrap) {
