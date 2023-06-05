@@ -2233,7 +2233,7 @@ return {
       short_desc=N_("list of flags, reduce length of messages"),
       type='string', list='flags', scope={'global'},
       varname='p_shm',
-      defaults={if_true="filnxtToOF"},
+      defaults={if_true="filnxtToOCF"},
       cb='did_set_shortmess'
     },
     {

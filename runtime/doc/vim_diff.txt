@@ -57,7 +57,7 @@ Defaults					            *nvim-defaults*
 - 'nrformats' defaults to "bin,hex"
 - 'ruler' is enabled
 - 'sessionoptions' includes "unix,slash", excludes "options"
-- 'shortmess' includes "F", excludes "S"
+- 'shortmess' includes "CF", excludes "S"
 - 'showcmd' is enabled
 - 'sidescroll' defaults to 1
 - 'smarttab' is enabled
