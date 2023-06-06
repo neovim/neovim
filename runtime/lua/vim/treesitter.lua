@@ -493,7 +493,7 @@ end
 ---                        argument and should return a string.
 function M.inspect_tree(opts)
   ---@cast opts InspectTreeOpts
-  require('vim.treesitter.playground').inspect_tree(opts)
+  require('vim.treesitter.dev').inspect_tree(opts)
 end
 
 --- Returns the fold level for {lnum} in the current buffer. Can be set directly to 'foldexpr':
