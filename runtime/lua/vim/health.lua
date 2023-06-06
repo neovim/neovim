@@ -2,6 +2,40 @@ local M = {}
 
 local s_output = {}
 
+-- Returns the fold text of the current healthcheck section
+function M.foldtext()
+  local foldtext = vim.fn.foldtext()
+
+  if vim.bo.filetype ~= 'checkhealth' then
+    return foldtext
+  end
+
+  if vim.b.failedchecks == nil then
+    vim.b.failedchecks = vim.empty_dict()
+  end
+
+  if vim.b.failedchecks[foldtext] == nil then
+    local warning = '- WARNING '
+    local warninglen = string.len(warning)
+    local err = '- ERROR '
+    local errlen = string.len(err)
+    local failedchecks = vim.b.failedchecks
+    failedchecks[foldtext] = false
+
+    local foldcontent = vim.api.nvim_buf_get_lines(0, vim.v.foldstart - 1, vim.v.foldend, false)
+    for _, line in ipairs(foldcontent) do
+      if string.sub(line, 1, warninglen) == warning or string.sub(line, 1, errlen) == err then
+        failedchecks[foldtext] = true
+        break
+      end
+    end
+
+    vim.b.failedchecks = failedchecks
+  end
+
+  return vim.b.failedchecks[foldtext] and '+WE' .. foldtext:sub(4) or foldtext
+end
+
 -- From a path return a list [{name}, {func}, {type}] representing a healthcheck
 local function filepath_to_healthcheck(path)
   path = vim.fs.normalize(path)
