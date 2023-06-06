@@ -18,6 +18,7 @@ typedef struct {
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/extmark_defs.h"
 #include "nvim/garray.h"
 #include "nvim/grid_defs.h"
 #include "nvim/hashtab.h"
@@ -25,9 +26,6 @@ typedef struct {
 #include "nvim/map.h"
 #include "nvim/mark_defs.h"
 #include "nvim/marktree.h"
-// for float window title
-#include "nvim/extmark_defs.h"
-// for click definitions
 #include "nvim/option_defs.h"
 #include "nvim/pos.h"
 #include "nvim/statusline_defs.h"
