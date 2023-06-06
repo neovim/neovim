@@ -60,7 +60,8 @@ end
 
 ---@private
 local function normalize(path)
-  return vim.fs.normalize(path, { expand_env = false })
+  path = vim.fs.normalize(path, { expand_env = false })
+  return path:sub(-1) == '/' and path:sub(1, -2) or path
 end
 
 --- Gets the rtp excluding after directories.

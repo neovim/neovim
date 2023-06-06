@@ -38,6 +38,8 @@ The following changes may require adaptations in user config or plugins.
 
 • Renamed `vim.treesitter.playground` to `vim.treesitter.dev`.
 
+• |vim.fs.normalize()| now leaves trailing slash.
+
 ==============================================================================
 ADDED FEATURES                                                     *news-added*
 
