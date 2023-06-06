@@ -839,7 +839,8 @@ void show_cursor_info_later(bool force)
       || curwin->w_topfill != curwin->w_stl_topfill
       || empty_line != curwin->w_stl_empty
       || reg_recording != curwin->w_stl_recording
-      || state != curwin->w_stl_state) {
+      || state != curwin->w_stl_state
+      || (VIsual_active && VIsual_mode != curwin->w_stl_visual_mode)) {
     if (curwin->w_status_height || global_stl_height()) {
       curwin->w_redr_status = true;
     } else {
@@ -862,8 +863,11 @@ void show_cursor_info_later(bool force)
   curwin->w_stl_topline = curwin->w_topline;
   curwin->w_stl_line_count = curwin->w_buffer->b_ml.ml_line_count;
   curwin->w_stl_topfill = curwin->w_topfill;
-  curwin->w_stl_state = state;
   curwin->w_stl_recording = reg_recording;
+  curwin->w_stl_state = state;
+  if (VIsual_active) {
+    curwin->w_stl_visual_mode = VIsual_mode;
+  }
 }
 
 /// @return true when postponing displaying the mode message: when not redrawing
