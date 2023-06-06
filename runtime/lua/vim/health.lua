@@ -17,14 +17,14 @@ function M.foldtext()
   if vim.b.failedchecks[foldtext] == nil then
     local warning = '- WARNING '
     local warninglen = string.len(warning)
-    local error = '- ERROR '
-    local errorlen = string.len(error)
+    local err = '- ERROR '
+    local errlen = string.len(err)
     local failedchecks = vim.b.failedchecks
     failedchecks[foldtext] = false
 
     local foldcontent = vim.api.nvim_buf_get_lines(0, vim.v.foldstart - 1, vim.v.foldend, false)
     for _, line in ipairs(foldcontent) do
-      if string.sub(line, 1, warninglen) == warning or string.sub(line, 1, errorlen) == error then
+      if string.sub(line, 1, warninglen) == warning or string.sub(line, 1, errlen) == err then
         failedchecks[foldtext] = true
         break
       end
