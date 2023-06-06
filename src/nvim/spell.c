@@ -2597,9 +2597,11 @@ void ex_spellrepall(exarg_T *eap)
     emsg(_("E752: No previous spell replacement"));
     return;
   }
-  int addlen = (int)(strlen(repl_to) - strlen(repl_from));
+  const size_t repl_from_len = strlen(repl_from);
+  const size_t repl_to_len = strlen(repl_to);
+  int addlen = (int)(repl_to_len - repl_from_len);
 
-  size_t frompatlen = strlen(repl_from) + 7;
+  const size_t frompatlen = repl_from_len + 7;
   char *frompat = xmalloc(frompatlen);
   snprintf(frompat, frompatlen, "\\V\\<%s\\>", repl_from);
   p_ws = false;
@@ -2616,14 +2618,15 @@ void ex_spellrepall(exarg_T *eap)
     // Only replace when the right word isn't there yet.  This happens
     // when changing "etc" to "etc.".
     char *line = get_cursor_line_ptr();
-    if (addlen <= 0 || strncmp(line + curwin->w_cursor.col,
-                               repl_to, strlen(repl_to)) != 0) {
+    if (addlen <= 0
+        || strncmp(line + curwin->w_cursor.col, repl_to, repl_to_len) != 0) {
       char *p = xmalloc(strlen(line) + (size_t)addlen + 1);
       memmove(p, line, (size_t)curwin->w_cursor.col);
       STRCPY(p + curwin->w_cursor.col, repl_to);
-      STRCAT(p, line + curwin->w_cursor.col + strlen(repl_from));
+      STRCAT(p, line + curwin->w_cursor.col + repl_from_len);
       ml_replace(curwin->w_cursor.lnum, p, false);
-      changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
+      inserted_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col,
+                     (int)repl_from_len, (int)repl_to_len);
 
       if (curwin->w_cursor.lnum != prev_lnum) {
         sub_nlines++;
@@ -2631,7 +2634,7 @@ void ex_spellrepall(exarg_T *eap)
       }
       sub_nsubs++;
     }
-    curwin->w_cursor.col += (colnr_T)strlen(repl_to);
+    curwin->w_cursor.col += (colnr_T)repl_to_len;
   }
 
   p_ws = save_ws;
