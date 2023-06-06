@@ -706,7 +706,7 @@ describe('api/buf', function()
       nvim('set_option_value', 'define', 'test', {buf = 0})
       eq('test', nvim('get_option_value', 'define', {buf = 0}))
       -- Doesn't change the global value
-      eq([[^\s*#\s*define]], nvim('get_option_value', 'define', {scope='global'}))
+      eq("", nvim('get_option_value', 'define', {scope='global'}))
     end)
 
     it('returns values for unset local options', function()
