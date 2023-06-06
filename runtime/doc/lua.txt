@@ -2832,11 +2832,15 @@ range({spec})                                            *vim.version.range()*
       }
 <
 
-    `:has()` checks if a version is in the range (inclusive `from` , exclusive `to` ). Example: >lua
+    `:has()` checks if a version is in the range (inclusive `from`, exclusive
+    `to`).
+
+    Example: >lua
 
       local r = vim.version.range('1.0.0 - 2.0.0')
-      print(r:has('1.9.9'))  -- true
-      print(r:has('2.0.0'))  -- false
+      print(r:has('1.9.9'))       -- true
+      print(r:has('2.0.0'))       -- false
+      print(r:has(vim.version())) -- check against current Nvim version
 <
 
     Or use cmp(), eq(), lt(), and gt() to compare `.to` and `.from` directly: >lua
