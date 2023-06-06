@@ -3,14 +3,14 @@ local api = vim.api
 ---@class TSDevModule
 local M = {}
 
----@class TSView
+---@class TSTreeView
 ---@field ns integer API namespace
 ---@field opts table Options table with the following keys:
 ---                  - anon (boolean): If true, display anonymous nodes
 ---                  - lang (boolean): If true, display the language alongside each node
 ---@field nodes TSP.Node[]
 ---@field named TSP.Node[]
-local TSView = {}
+local TSTreeView = {}
 
 ---@class TSP.Node
 ---@field id integer Node id
@@ -87,11 +87,11 @@ end
 ---@param bufnr integer Source buffer number
 ---@param lang string|nil Language of source buffer
 ---
----@return TSView|nil
+---@return TSTreeView|nil
 ---@return string|nil Error message, if any
 ---
 ---@package
-function TSView:new(bufnr, lang)
+function TSTreeView:new(bufnr, lang)
   local ok, parser = pcall(vim.treesitter.get_parser, bufnr or 0, lang)
   if not ok then
     return nil, 'No parser available for the given buffer'
@@ -158,7 +158,7 @@ end
 ---
 ---@param bufnr integer Buffer number to write into.
 ---@package
-function TSView:draw(bufnr)
+function TSTreeView:draw(bufnr)
   vim.bo[bufnr].modifiable = true
   local lines = {} ---@type string[]
   local lang_hl_marks = {} ---@type table[]
@@ -200,7 +200,7 @@ end
 ---@param i integer Node number to get
 ---@return TSP.Node
 ---@package
-function TSView:get(i)
+function TSTreeView:get(i)
   local t = self.opts.anon and self.nodes or self.named
   return t[i]
 end
@@ -211,7 +211,7 @@ end
 ---@return table
 ---@return integer
 ---@package
-function TSView:iter()
+function TSTreeView:iter()
   return ipairs(self.opts.anon and self.nodes or self.named)
 end
 
@@ -228,6 +228,8 @@ end
 ---                       function, it accepts the buffer number of the source
 ---                       buffer as its only argument and should return a string.
 
+--- @private
+---
 --- @param opts InspectTreeOpts
 function M.inspect_tree(opts)
   vim.validate({
@@ -238,7 +240,7 @@ function M.inspect_tree(opts)
 
   local buf = api.nvim_get_current_buf()
   local win = api.nvim_get_current_win()
-  local pg = assert(TSView:new(buf, opts.lang))
+  local pg = assert(TSTreeView:new(buf, opts.lang))
 
   -- Close any existing dev window
   if vim.b[buf].dev then
@@ -399,7 +401,7 @@ function M.inspect_tree(opts)
         return true
       end
 
-      pg = assert(TSView:new(buf, opts.lang))
+      pg = assert(TSTreeView:new(buf, opts.lang))
       pg:draw(b)
     end,
   })
