@@ -20,7 +20,6 @@
 #define BOOLEAN_OBJ(b) ((Object) { \
     .type = kObjectTypeBoolean, \
     .data.boolean = b })
-#define BOOL(b) BOOLEAN_OBJ(b)
 
 #define INTEGER_OBJ(i) ((Object) { \
     .type = kObjectTypeInteger, \
