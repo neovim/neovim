@@ -627,17 +627,69 @@ it('K_EVENT does not trigger a statusline redraw unnecessarily', function()
   eq(1, eval('g:counter < 50'), 'g:counter=' .. eval('g:counter'))
 end)
 
-it('statusline is redrawn on recording state change #22683', function()
+it('statusline is redrawn on various state changes', function()
   clear()
   local screen = Screen.new(40, 4)
   screen:attach()
+
+  -- recording state change #22683
   command('set ls=2 stl=%{repeat(reg_recording(),5)}')
+  screen:expect([[
+    ^                                        |
+    ~                                       |
+                                            |
+                                            |
+  ]])
   feed('qQ')
   screen:expect([[
     ^                                        |
     ~                                       |
     QQQQQ                                   |
     recording @Q                            |
+  ]])
+  feed('q')
+  screen:expect([[
+    ^                                        |
+    ~                                       |
+                                            |
+                                            |
+  ]])
+
+  -- Visual mode change #23932
+  command('set ls=2 stl=%{mode(1)}')
+  screen:expect([[
+    ^                                        |
+    ~                                       |
+    n                                       |
+                                            |
+  ]])
+  feed('v')
+  screen:expect([[
+    ^                                        |
+    ~                                       |
+    v                                       |
+    -- VISUAL --                            |
+  ]])
+  feed('V')
+  screen:expect([[
+    ^                                        |
+    ~                                       |
+    V                                       |
+    -- VISUAL LINE --                       |
+  ]])
+  feed('<C-V>')
+  screen:expect([[
+    ^                                        |
+    ~                                       |
+    ^V                                      |
+    -- VISUAL BLOCK --                      |
+  ]])
+  feed('<Esc>')
+  screen:expect([[
+    ^                                        |
+    ~                                       |
+    n                                       |
+                                            |
   ]])
 end)
 
