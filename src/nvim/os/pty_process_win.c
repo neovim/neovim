@@ -7,7 +7,7 @@
 
 #include "nvim/ascii.h"
 #include "nvim/eval/typval.h"
-#include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/os/os.h"
 #include "nvim/os/pty_conpty_win.h"

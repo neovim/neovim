@@ -1,7 +1,7 @@
 #ifndef NVIM_UNDO_DEFS_H
 #define NVIM_UNDO_DEFS_H
 
-#include <time.h>  // for time_t
+#include <time.h>
 
 #include "nvim/extmark_defs.h"
 #include "nvim/mark_defs.h"
