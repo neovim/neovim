@@ -6139,11 +6139,11 @@ static Dictionary vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, wi
   PUT(dict, "scope", CSTR_TO_OBJ(scope));
 
   // welcome to the jungle
-  PUT(dict, "global_local", BOOL(opt->indir & PV_BOTH));
-  PUT(dict, "commalist", BOOL(opt->flags & P_COMMA));
-  PUT(dict, "flaglist", BOOL(opt->flags & P_FLAGLIST));
+  PUT(dict, "global_local", BOOLEAN_OBJ(opt->indir & PV_BOTH));
+  PUT(dict, "commalist", BOOLEAN_OBJ(opt->flags & P_COMMA));
+  PUT(dict, "flaglist", BOOLEAN_OBJ(opt->flags & P_FLAGLIST));
 
-  PUT(dict, "was_set", BOOL(opt->flags & P_WAS_SET));
+  PUT(dict, "was_set", BOOLEAN_OBJ(opt->flags & P_WAS_SET));
 
   LastSet last_set = { .channel_id = 0 };
   if (req_scope == OPT_GLOBAL) {
@@ -6177,13 +6177,13 @@ static Dictionary vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, wi
     def = INTEGER_OBJ((Integer)(intptr_t)def_val);
   } else if (opt->flags & P_BOOL) {
     type = "boolean";
-    def = BOOL((intptr_t)def_val);
+    def = BOOLEAN_OBJ((intptr_t)def_val);
   } else {
     type = ""; def = NIL;
   }
   PUT(dict, "type", CSTR_TO_OBJ(type));
   PUT(dict, "default", def);
-  PUT(dict, "allows_duplicates", BOOL(!(opt->flags & P_NODUP)));
+  PUT(dict, "allows_duplicates", BOOLEAN_OBJ(!(opt->flags & P_NODUP)));
 
   return dict;
 }
