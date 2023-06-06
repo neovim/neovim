@@ -2606,7 +2606,7 @@ void ex_spellrepall(exarg_T *eap)
   }
   const size_t repl_from_len = strlen(repl_from);
   const size_t repl_to_len = strlen(repl_to);
-  int addlen = (int)(repl_to_len - repl_from_len);
+  const int addlen = (int)(repl_to_len - repl_from_len);
 
   const size_t frompatlen = repl_from_len + 7;
   char *frompat = xmalloc(frompatlen);

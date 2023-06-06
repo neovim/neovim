@@ -281,7 +281,7 @@ func Test_compl_with_CTRL_X_CTRL_K_using_spell()
   set spell& spelllang& dictionary& ignorecase&
 endfunc
 
-func Test_spellreall()
+func Test_spellrepall()
   new
   set spell
   call assert_fails('spellrepall', 'E752:')
