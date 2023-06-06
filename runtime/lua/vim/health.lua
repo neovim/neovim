@@ -2,11 +2,11 @@ local M = {}
 
 local s_output = {}
 
--- Fold a healthcheck section
+-- Returns the fold text of the current healthcheck section
 function M.foldtext()
   local foldtext = vim.fn.foldtext()
 
-  if vim.api.nvim_buf_get_name(0) ~= 'health://' then
+  if vim.bo.filetype ~= 'checkhealth' then
     return foldtext
   end
 
