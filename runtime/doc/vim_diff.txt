@@ -61,6 +61,7 @@ Defaults					            *nvim-defaults*
 - 'showcmd' is enabled
 - 'sidescroll' defaults to 1
 - 'smarttab' is enabled
+- 'smoothscroll' is enabled
 - 'startofline' is disabled
 - 'switchbuf' defaults to "uselast"
 - 'tabpagemax' defaults to 50

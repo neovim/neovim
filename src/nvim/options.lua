@@ -2017,7 +2017,7 @@ return {
       type='bool', scope={'window'},
       pv_name='p_sms',
       redraw={'current_window'},
-      defaults={if_true=0},
+      defaults={if_true=true},
       cb='did_set_smoothscroll'
     },
     {

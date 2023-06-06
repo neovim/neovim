@@ -5659,7 +5659,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	number of spaces is minimized by using <Tab>s.
 
 			*'smoothscroll'* *'sms'* *'nosmoothscroll'* *'nosms'*
-'smoothscroll' 'sms'	boolean  (default off)
+'smoothscroll' 'sms'	boolean  (default on)
 			local to window
 	Scrolling works with screen lines.  When 'wrap' is set and the first
 	line in the window wraps part of it may not be visible, as if it is
