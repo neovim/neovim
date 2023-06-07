@@ -3719,7 +3719,7 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
   } else if (!optval_match_type(v, opt_idx)) {
     char *rep = optval_to_cstr(v);
     char *valid_types = option_get_valid_types(opt_idx);
-    snprintf(errbuf, IOSIZE, _("E5383: Allowed types for option '%s': %s. Got %s value: %s"),
+    snprintf(errbuf, IOSIZE, _("Invalid value for option '%s': expected %s, got %s %s"),
              name, valid_types, optval_type_names[v.type], rep);
     xfree(rep);
     xfree(valid_types);
