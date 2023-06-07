@@ -151,24 +151,19 @@ static Object optval_as_object(OptVal o)
 }
 
 /// Consume an API Object and convert it to an OptVal.
-static OptVal object_as_optval(Object o, Error *err)
+static OptVal object_as_optval(Object o, bool *error)
 {
   switch (o.type) {
   case kObjectTypeNil:
     return NIL_OPTVAL;
-    break;
   case kObjectTypeBoolean:
     return BOOLEAN_OPTVAL(o.data.boolean);
-    break;
   case kObjectTypeInteger:
     return NUMBER_OPTVAL(o.data.integer);
-    break;
   case kObjectTypeString:
     return STRING_OPTVAL(o.data.string);
-    break;
   default:
-    // Some Object types don't have an OptVal equivalent. Error out in those cases.
-    api_set_error(err, kErrorTypeException, "Invalid option value");
+    *error = true;
     return NIL_OPTVAL;
   }
 }
@@ -281,13 +276,13 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
     }
   }
 
-  OptVal optval = object_as_optval(value, err);
+  bool error = false;
+  OptVal optval = object_as_optval(value, &error);
 
   // Handle invalid option value type.
-  if (ERROR_SET(err)) {
-    api_clear_error(err);
-
-    VALIDATE_EXP(false, name.data, "Integer/Boolean/String", api_typename(value.type), {
+  if (error) {
+    // Don't use `name` in the error message here, because `name` can be any String.
+    VALIDATE_EXP(false, "value", "Integer/Boolean/String", api_typename(value.type), {
       return;
     });
   }
