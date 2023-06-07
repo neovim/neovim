@@ -336,6 +336,7 @@ EXTERN struct caller_scope {
   sctx_T script_ctx;
   estack_T es_entry;
   char *autocmd_fname, *autocmd_match;
+  bool autocmd_fname_full;
   int autocmd_bufnr;
   void *funccalp;
 } provider_caller_scope;
@@ -759,6 +760,7 @@ EXTERN char *last_cmdline INIT(= NULL);        // last command line (for ":)
 EXTERN char *repeat_cmdline INIT(= NULL);      // command line for "."
 EXTERN char *new_last_cmdline INIT(= NULL);    // new value for last_cmdline
 EXTERN char *autocmd_fname INIT(= NULL);       // fname for <afile> on cmdline
+EXTERN bool autocmd_fname_full INIT(= false);  // autocmd_fname is full path
 EXTERN int autocmd_bufnr INIT(= 0);            // fnum for <abuf> on cmdline
 EXTERN char *autocmd_match INIT(= NULL);       // name for <amatch> on cmdline
 EXTERN bool did_cursorhold INIT(= false);      // set when CursorHold t'gerd
