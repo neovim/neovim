@@ -8192,6 +8192,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
     .es_entry = ((estack_T *)exestack.ga_data)[exestack.ga_len - 1],
     .autocmd_fname = autocmd_fname,
     .autocmd_match = autocmd_match,
+    .autocmd_fname_full = autocmd_fname_full,
     .autocmd_bufnr = autocmd_bufnr,
     .funccalp = (void *)get_current_funccal()
   };

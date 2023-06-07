@@ -1751,6 +1751,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
 
   // Save the autocmd_* variables and info about the current buffer.
   char *save_autocmd_fname = autocmd_fname;
+  bool save_autocmd_fname_full = autocmd_fname_full;
   int save_autocmd_bufnr = autocmd_bufnr;
   char *save_autocmd_match = autocmd_match;
   int save_autocmd_busy = autocmd_busy;
@@ -1779,6 +1780,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     // Allocate MAXPATHL for when eval_vars() resolves the fullpath.
     autocmd_fname = xstrnsave(autocmd_fname, MAXPATHL);
   }
+  autocmd_fname_full = false;  // call FullName_save() later
 
   // Set the buffer number to be used for <abuf>.
   if (buf == NULL) {
@@ -1959,6 +1961,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   estack_pop();
   xfree(autocmd_fname);
   autocmd_fname = save_autocmd_fname;
+  autocmd_fname_full = save_autocmd_fname_full;
   autocmd_bufnr = save_autocmd_bufnr;
   autocmd_match = save_autocmd_match;
   current_sctx = save_current_sctx;

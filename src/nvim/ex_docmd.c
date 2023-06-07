@@ -6864,12 +6864,10 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       break;
 
     case SPEC_AFILE:  // file name for autocommand
-      if (autocmd_fname != NULL
-          && !path_is_absolute(autocmd_fname)
-          // For CmdlineEnter and related events, <afile> is not a path! #9348
-          && !strequal("/", autocmd_fname)) {
+      if (autocmd_fname != NULL && !autocmd_fname_full) {
         // Still need to turn the fname into a full path.  It was
         // postponed to avoid a delay when <afile> is not used.
+        autocmd_fname_full = true;
         result = FullName_save(autocmd_fname, false);
         // Copy into `autocmd_fname`, don't reassign it. #8165
         xstrlcpy(autocmd_fname, result, MAXPATHL);
