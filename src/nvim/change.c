@@ -43,6 +43,7 @@
 #include "nvim/plines.h"
 #include "nvim/pos.h"
 #include "nvim/search.h"
+#include "nvim/spell.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/textformat.h"
@@ -247,11 +248,25 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, linenr_T 
         wp->w_redr_type = UPD_VALID;
       }
 
+      linenr_T last = lnume + xtra - 1;  // last line after the change
+
+      // Reset "w_skipcol" if the topline length has become smaller to
+      // such a degree that nothing will be visible anymore, accounting
+      // for 'smoothscroll' <<< or 'listchars' "precedes" marker.
+      if (wp->w_skipcol > 0
+          && (last < wp->w_topline
+              || (wp->w_topline >= lnum
+                  && wp->w_topline < lnume
+                  && win_linetabsize(wp, wp->w_topline, ml_get(wp->w_topline), (colnr_T)MAXCOL)
+                  <= (unsigned)(wp->w_skipcol + sms_marker_overlap(wp, win_col_off(wp)
+                                                                   - win_col_off2(wp)))))) {
+        wp->w_skipcol = 0;
+      }
+
       // Check if a change in the buffer has invalidated the cached
       // values for the cursor.
       // Update the folds for this window.  Can't postpone this, because
       // a following operator might work on the whole fold: ">>dd".
-      linenr_T last = lnume + xtra - 1;  // last line after the change
       foldUpdate(wp, lnum, last);
 
       // The change may cause lines above or below the change to become
@@ -379,6 +394,15 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 {
   changedOneline(curbuf, lnum);
   changed_common(lnum, col, lnum + 1, 0);
+  // When text has been changed at the end of the line, possibly the start of
+  // the next line may have SpellCap that should be removed or it needs to be
+  // displayed.  Schedule the next line for redrawing just in case.
+  // Don't do this when displaying '$' at the end of changed text.
+  if (spell_check_window(curwin)
+      && lnum < curbuf->b_ml.ml_line_count
+      && vim_strchr(p_cpo, CPO_DOLLAR) == NULL) {
+    redrawWinline(curwin, lnum + 1);
+  }
   // notify any channels that are watching
   buf_updates_send_changes(curbuf, lnum, 1, 1);
 

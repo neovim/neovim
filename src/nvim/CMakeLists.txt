@@ -9,7 +9,7 @@ if(TARGET libuv::uv_a)
 else()
   # Fall back to find module for older libuv versions that don't provide config file
   find_package(Libuv 1.28.0 REQUIRED MODULE)
-  target_include_directories(libuv SYSTEM BEFORE INTERFACE ${LIBUV_INCLUDE_DIRS})
+  target_include_directories(libuv SYSTEM BEFORE INTERFACE ${LIBUV_INCLUDE_DIR})
   target_link_libraries(libuv INTERFACE ${LIBUV_LIBRARIES})
 endif()
 
@@ -21,9 +21,9 @@ elseif(APPLE)
   set_target_properties(nlua0 PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 endif()
 
-find_package(Libluv 1.43.0 REQUIRED)
-target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBLUV_INCLUDE_DIR})
-target_link_libraries(main_lib INTERFACE ${LIBLUV_LIBRARY})
+find_package(Luv 1.43.0 REQUIRED)
+target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LUV_INCLUDE_DIR})
+target_link_libraries(main_lib INTERFACE ${LUV_LIBRARY})
 
 find_package(Iconv REQUIRED)
 find_package(Lpeg REQUIRED)
@@ -61,11 +61,11 @@ if(PREFER_LUA)
   find_package(Luajit)
 else()
   find_package(Luajit REQUIRED)
-  target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LUAJIT_INCLUDE_DIRS})
-  target_link_libraries(main_lib INTERFACE ${LUAJIT_LIBRARIES})
-  target_include_directories(nlua0 SYSTEM BEFORE PUBLIC ${LUAJIT_INCLUDE_DIRS})
+  target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LUAJIT_INCLUDE_DIR})
+  target_link_libraries(main_lib INTERFACE ${LUAJIT_LIBRARY})
+  target_include_directories(nlua0 SYSTEM BEFORE PUBLIC ${LUAJIT_INCLUDE_DIR})
   if(WIN32)
-    target_link_libraries(nlua0 PUBLIC ${LUAJIT_LIBRARIES})
+    target_link_libraries(nlua0 PUBLIC ${LUAJIT_LIBRARY})
   endif()
 endif()
 
@@ -292,6 +292,7 @@ set(LUA_FILETYPE_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/filetype.lu
 set(LUA_INIT_PACKAGES_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_init_packages.lua)
 set(LUA_KEYMAP_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/keymap.lua)
 set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
+set(LUAJIT_RUNTIME_DIR ${DEPS_PREFIX}/share/luajit-2.1.0-beta3/jit)
 
 glob_wrapper(UNICODE_FILES ${UNICODE_DIR}/*.txt)
 glob_wrapper(API_HEADERS api/*.h)
@@ -393,9 +394,6 @@ endif()
 if($ENV{CI})
   # Don't debug log on CI, it gets too verbose in the main build log.
   # TODO(bfredl): debug log level also exposes some errors with EXITFREE in ASAN build.
-  set(LOG_DEBUG FALSE)
-elseif(LOG_DEBUG)
-  target_compile_definitions(nvim PRIVATE NVIM_LOG_DEBUG)
 else()
   # Minimize logging for release-type builds.
   target_compile_definitions(nvim PRIVATE $<$<CONFIG:Debug>:NVIM_LOG_DEBUG>)
@@ -705,59 +703,6 @@ if(WIN32)
       -P ${PROJECT_SOURCE_DIR}/cmake/WindowsDllCopy.cmake)
   add_dependencies(nvim_runtime_deps nvim_dll_deps)
 
-  if(USE_BUNDLED_NVIMQT)
-    set(NVIMQT_DEPS
-      # Dependencies for neovim-qt
-      bearer/qgenericbearer.dll
-      iconengines/qsvgicon.dll
-      imageformats/qgif.dll
-      imageformats/qicns.dll
-      imageformats/qico.dll
-      imageformats/qjpeg.dll
-      imageformats/qsvg.dll
-      imageformats/qtga.dll
-      imageformats/qtiff.dll
-      imageformats/qwbmp.dll
-      imageformats/qwebp.dll
-      platforms/qwindows.dll
-      styles/qwindowsvistastyle.dll
-      translations/qt_ar.qm
-      translations/qt_bg.qm
-      translations/qt_ca.qm
-      translations/qt_cs.qm
-      translations/qt_da.qm
-      translations/qt_de.qm
-      translations/qt_en.qm
-      translations/qt_es.qm
-      translations/qt_fi.qm
-      translations/qt_fr.qm
-      translations/qt_gd.qm
-      translations/qt_he.qm
-      translations/qt_hu.qm
-      translations/qt_it.qm
-      translations/qt_ja.qm
-      translations/qt_ko.qm
-      translations/qt_lv.qm
-      translations/qt_pl.qm
-      translations/qt_ru.qm
-      translations/qt_sk.qm
-      translations/qt_uk.qm
-      D3Dcompiler_47.dll
-      libEGL.dll
-      libgcc_s_seh-1.dll
-      libGLESv2.dll
-      libstdc++-6.dll
-      libwinpthread-1.dll
-      nvim-qt.exe
-      opengl32sw.dll
-      Qt5Core.dll
-      Qt5Gui.dll
-      Qt5Network.dll
-      Qt5Svg.dll
-      Qt5Widgets.dll
-      )
-  endif()
-
   # A CMake script is used for copying the files to avoid the
   # "command line is too long" error that occurs when Ninja tries running
   # a command that exceeds the length limit (8191 characters) on Windows.
@@ -768,9 +713,7 @@ if(WIN32)
       cat.exe
       tee.exe
       win32yank.exe
-      xxd.exe
-
-      ${NVIMQT_DEPS})
+      xxd.exe)
   get_filename_component(DEP_FILE_DIR ${DEP_FILE} DIRECTORY)
   set(EXTERNAL_BLOBS_SCRIPT "${EXTERNAL_BLOBS_SCRIPT}\n"
     "file(COPY \"${DEPS_PREFIX}/bin/${DEP_FILE}\"
@@ -797,6 +740,15 @@ endif()
 install(DIRECTORY ${BINARY_LIB_DIR}
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/nvim/
   USE_SOURCE_PERMISSIONS)
+
+if(NOT PREFER_LUA)
+  # install luajit runtime files if bundled
+  if(EXISTS ${LUAJIT_RUNTIME_DIR})
+    install(DIRECTORY ${LUAJIT_RUNTIME_DIR}
+      DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/lua
+      USE_SOURCE_PERMISSIONS)
+  endif()
+endif()
 
 add_library(libnvim STATIC EXCLUDE_FROM_ALL)
 if(MSVC)
@@ -826,6 +778,7 @@ if(ENABLE_ASAN_UBSAN)
     -fsanitize=address
     -fsanitize=undefined)
   target_link_libraries(nvim PRIVATE -fsanitize=address -fsanitize=undefined)
+  target_compile_definitions(nvim PRIVATE ENABLE_ASAN_UBSAN)
 elseif(ENABLE_MSAN)
   message(STATUS "Enabling memory sanitizer for nvim.")
   target_compile_options(nvim PRIVATE
@@ -877,18 +830,13 @@ add_glob_target(
   EXCLUDE
     tui/terminfo_defs.h)
 
-add_custom_target(uncrustify-version
-  COMMAND ${CMAKE_COMMAND}
-    -D UNCRUSTIFY_PRG=${UNCRUSTIFY_PRG}
-    -D CONFIG_FILE=${PROJECT_SOURCE_DIR}/src/uncrustify.cfg
-    -P ${PROJECT_SOURCE_DIR}/cmake/CheckUncrustifyVersion.cmake)
-
+set(UNCRUSTIFY_PRG ${DEPS_BIN_DIR}/uncrustify)
 add_glob_target(
   TARGET lintc-uncrustify
   COMMAND ${UNCRUSTIFY_PRG}
   FLAGS -c "${PROJECT_SOURCE_DIR}/src/uncrustify.cfg" -q --check
   FILES ${LINT_NVIM_SOURCES})
-add_dependencies(lintc-uncrustify uncrustify-version)
+add_dependencies(lintc-uncrustify uncrustify)
 
 add_custom_target(lintc)
 add_dependencies(lintc lintc-clint lintc-uncrustify)
@@ -899,7 +847,7 @@ add_custom_target(formatc
     -D LANG=c
     -P ${PROJECT_SOURCE_DIR}/cmake/Format.cmake
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
-add_dependencies(formatc uncrustify-version)
+add_dependencies(formatc uncrustify)
 
 add_custom_target(generated-sources DEPENDS
   ${NVIM_GENERATED_FOR_SOURCES}

@@ -42,6 +42,10 @@ for k, v in pairs({
   vim._submodules[k] = v
 end
 
+-- Remove at Nvim 1.0
+---@deprecated
+vim.loop = vim.uv
+
 -- There are things which have special rules in vim._init_packages
 -- for legacy reasons (uri) or for performance (_inspector).
 -- most new things should go into a submodule namespace ( vim.foobar.do_thing() )
@@ -159,7 +163,7 @@ do
   ---                - 3: ends the paste (exactly once)
   ---@returns boolean # false if client should cancel the paste.
   function vim.paste(lines, phase)
-    local now = vim.loop.now()
+    local now = vim.uv.now()
     local is_first_chunk = phase < 2
     local is_last_chunk = phase == -1 or phase == 3
     if is_first_chunk then -- Reset flags.
@@ -483,7 +487,7 @@ end
 ---@return table timer luv timer object
 function vim.defer_fn(fn, timeout)
   vim.validate({ fn = { fn, 'c', true } })
-  local timer = vim.loop.new_timer()
+  local timer = vim.uv.new_timer()
   timer:start(
     timeout,
     0,
@@ -778,7 +782,7 @@ do
   -- some bugs, so fake the two-step dance for now.
   local matches
 
-  --- Omnifunc for completing lua values from from the runtime lua interpreter,
+  --- Omnifunc for completing lua values from the runtime lua interpreter,
   --- similar to the builtin completion for the `:lua` command.
   ---
   --- Activate using `set omnifunc=v:lua.vim.lua_omnifunc` in a lua buffer.

@@ -51,6 +51,8 @@
 --- In addition to the |vim.iter()| function, the |vim.iter| module provides
 --- convenience functions like |vim.iter.filter()| and |vim.iter.totable()|.
 
+---@class IterMod
+---@operator call:Iter
 local M = {}
 
 ---@class Iter
@@ -64,7 +66,7 @@ end
 ---@class ListIter : Iter
 ---@field _table table Underlying table data
 ---@field _head number Index to the front of a table iterator
----@field _tail number Index to the end of a table iterator
+---@field _tail number Index to the end of a table iterator (exclusive)
 local ListIter = {}
 ListIter.__index = setmetatable(ListIter, Iter)
 ListIter.__call = function(self)
@@ -319,23 +321,39 @@ end
 
 ---@private
 function ListIter.totable(self)
-  if self._head == 1 and self._tail == #self._table + 1 and self.next == ListIter.next then
-    -- Sanitize packed table values
-    if getmetatable(self._table[1]) == packedmt then
-      for i = 1, #self._table do
-        self._table[i] = sanitize(self._table[i])
-      end
-    end
-    return self._table
+  if self.next ~= ListIter.next or self._head >= self._tail then
+    return Iter.totable(self)
   end
 
-  return Iter.totable(self)
+  local needs_sanitize = getmetatable(self._table[1]) == packedmt
+
+  -- Reindex and sanitize.
+  local len = self._tail - self._head
+
+  if needs_sanitize then
+    for i = 1, len do
+      self._table[i] = sanitize(self._table[self._head - 1 + i])
+    end
+  else
+    for i = 1, len do
+      self._table[i] = self._table[self._head - 1 + i]
+    end
+  end
+
+  for i = len + 1, table.maxn(self._table) do
+    self._table[i] = nil
+  end
+
+  self._head = 1
+  self._tail = len + 1
+
+  return self._table
 end
 
 --- Fold an iterator or table into a single value.
 ---
 --- Examples:
---- <pre>
+--- <pre>lua
 --- -- Create a new table with only even values
 --- local t = { a = 1, b = 2, c = 3, d = 4 }
 --- local it = vim.iter(t)
@@ -974,6 +992,7 @@ function M.map(f, src, ...)
   return Iter.new(src, ...):map(f):totable()
 end
 
+---@type IterMod
 return setmetatable(M, {
   __call = function(_, ...)
     return Iter.new(...)

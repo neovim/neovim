@@ -2096,13 +2096,13 @@ static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhs
                                 : cstr_as_string(str2special_save(mp->m_str, false, true))));
   }
   if (mp->m_desc != NULL) {
-    PUT(dict, "desc", STRING_OBJ(cstr_to_string(mp->m_desc)));
+    PUT(dict, "desc", CSTR_TO_OBJ(mp->m_desc));
   }
-  PUT(dict, "lhs", STRING_OBJ(cstr_as_string(lhs)));
-  PUT(dict, "lhsraw", STRING_OBJ(cstr_to_string(mp->m_keys)));
+  PUT(dict, "lhs", CSTR_AS_OBJ(lhs));
+  PUT(dict, "lhsraw", CSTR_TO_OBJ(mp->m_keys));
   if (lhsrawalt != NULL) {
     // Also add the value for the simplified entry.
-    PUT(dict, "lhsrawalt", STRING_OBJ(cstr_to_string(lhsrawalt)));
+    PUT(dict, "lhsrawalt", CSTR_TO_OBJ(lhsrawalt));
   }
   PUT(dict, "noremap", INTEGER_OBJ(noremap_value));
   PUT(dict, "script", INTEGER_OBJ(mp->m_noremap == REMAP_SCRIPT ? 1 : 0));
@@ -2115,7 +2115,7 @@ static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhs
   if (mp->m_replace_keycodes) {
     PUT(dict, "replace_keycodes", INTEGER_OBJ(1));
   }
-  PUT(dict, "mode", STRING_OBJ(cstr_as_string(mapmode)));
+  PUT(dict, "mode", CSTR_AS_OBJ(mapmode));
 
   return dict;
 }

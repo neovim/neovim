@@ -81,6 +81,18 @@ func Test_exiting()
 	  \ readfile('Xtestout'))
   endif
   call delete('Xtestout')
+
+  " ExitPre autocommand also executed on :wqall
+  let after =<< trim [CODE]
+    au QuitPre * call writefile(["QuitPre"], "Xtestout", "a")
+    au ExitPre * call writefile(["ExitPre"], "Xtestout", "a")
+    wqall
+  [CODE]
+
+  if RunVim([], after, '')
+    call assert_equal(['QuitPre', 'ExitPre'], readfile('Xtestout'))
+  endif
+  call delete('Xtestout')
 endfunc
 
 " Test for getting the Vim exit code from v:exiting

@@ -1,6 +1,6 @@
 local M = {}
 
-local iswin = vim.loop.os_uname().sysname == 'Windows_NT'
+local iswin = vim.uv.os_uname().sysname == 'Windows_NT'
 
 --- Iterate over all the parents of the given file or directory.
 ---
@@ -72,8 +72,12 @@ function M.basename(file)
   return file:match('[/\\]$') and '' or (file:match('[^\\/]*$'):gsub('\\', '/'))
 end
 
----@private
-local function join_paths(...)
+--- Concatenate directories and/or file into a single path with normalization
+--- (e.g., `"foo/"` and `"bar"` get joined to `"foo/bar"`)
+---
+---@param ... string
+---@return string
+function M.joinpath(...)
   return (table.concat({ ... }, '/'):gsub('//+', '/'))
 end
 
@@ -102,12 +106,12 @@ function M.dir(path, opts)
   })
 
   if not opts.depth or opts.depth == 1 then
-    local fs = vim.loop.fs_scandir(M.normalize(path))
+    local fs = vim.uv.fs_scandir(M.normalize(path))
     return function()
       if not fs then
         return
       end
-      return vim.loop.fs_scandir_next(fs)
+      return vim.uv.fs_scandir_next(fs)
     end
   end
 
@@ -116,14 +120,14 @@ function M.dir(path, opts)
     local dirs = { { path, 1 } }
     while #dirs > 0 do
       local dir0, level = unpack(table.remove(dirs, 1))
-      local dir = level == 1 and dir0 or join_paths(path, dir0)
-      local fs = vim.loop.fs_scandir(M.normalize(dir))
+      local dir = level == 1 and dir0 or M.joinpath(path, dir0)
+      local fs = vim.uv.fs_scandir(M.normalize(dir))
       while fs do
-        local name, t = vim.loop.fs_scandir_next(fs)
+        local name, t = vim.uv.fs_scandir_next(fs)
         if not name then
           break
         end
-        local f = level == 1 and name or join_paths(dir0, name)
+        local f = level == 1 and name or M.joinpath(dir0, name)
         coroutine.yield(f, t)
         if
           opts.depth
@@ -154,7 +158,7 @@ end
 --- -- location of Cargo.toml from the current buffer's path
 --- local cargo = vim.fs.find('Cargo.toml', {
 ---   upward = true,
----   stop = vim.loop.os_homedir(),
+---   stop = vim.uv.os_homedir(),
 ---   path = vim.fs.dirname(vim.api.nvim_buf_get_name(0)),
 --- })
 ---
@@ -208,7 +212,7 @@ function M.find(names, opts)
 
   names = type(names) == 'string' and { names } or names
 
-  local path = opts.path or vim.loop.cwd()
+  local path = opts.path or vim.uv.cwd()
   local stop = opts.stop
   local limit = opts.limit or 1
 
@@ -230,7 +234,7 @@ function M.find(names, opts)
         local t = {}
         for name, type in M.dir(p) do
           if (not opts.type or opts.type == type) and names(name, p) then
-            table.insert(t, join_paths(p, name))
+            table.insert(t, M.joinpath(p, name))
           end
         end
         return t
@@ -239,8 +243,8 @@ function M.find(names, opts)
       test = function(p)
         local t = {}
         for _, name in ipairs(names) do
-          local f = join_paths(p, name)
-          local stat = vim.loop.fs_stat(f)
+          local f = M.joinpath(p, name)
+          local stat = vim.uv.fs_stat(f)
           if stat and (not opts.type or opts.type == stat.type) then
             t[#t + 1] = f
           end
@@ -276,7 +280,7 @@ function M.find(names, opts)
       end
 
       for other, type_ in M.dir(dir) do
-        local f = join_paths(dir, other)
+        local f = M.joinpath(dir, other)
         if type(names) == 'function' then
           if (not opts.type or opts.type == type_) and names(other, dir) then
             if add(f) then
@@ -333,7 +337,7 @@ function M.normalize(path, opts)
   })
 
   if path:sub(1, 1) == '~' then
-    local home = vim.loop.os_homedir() or '~'
+    local home = vim.uv.os_homedir() or '~'
     if home:sub(-1) == '\\' or home:sub(-1) == '/' then
       home = home:sub(1, -2)
     end
@@ -341,7 +345,7 @@ function M.normalize(path, opts)
   end
 
   if opts.expand_env == nil or opts.expand_env then
-    path = path:gsub('%$([%w_]+)', vim.loop.os_getenv)
+    path = path:gsub('%$([%w_]+)', vim.uv.os_getenv)
   end
 
   path = path:gsub('\\', '/'):gsub('/+', '/')

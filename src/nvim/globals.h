@@ -336,6 +336,7 @@ EXTERN struct caller_scope {
   sctx_T script_ctx;
   estack_T es_entry;
   char *autocmd_fname, *autocmd_match;
+  bool autocmd_fname_full;
   int autocmd_bufnr;
   void *funccalp;
 } provider_caller_scope;
@@ -759,6 +760,7 @@ EXTERN char *last_cmdline INIT(= NULL);        // last command line (for ":)
 EXTERN char *repeat_cmdline INIT(= NULL);      // command line for "."
 EXTERN char *new_last_cmdline INIT(= NULL);    // new value for last_cmdline
 EXTERN char *autocmd_fname INIT(= NULL);       // fname for <afile> on cmdline
+EXTERN bool autocmd_fname_full INIT(= false);  // autocmd_fname is full path
 EXTERN int autocmd_bufnr INIT(= 0);            // fnum for <abuf> on cmdline
 EXTERN char *autocmd_match INIT(= NULL);       // name for <amatch> on cmdline
 EXTERN bool did_cursorhold INIT(= false);      // set when CursorHold t'gerd
@@ -993,7 +995,8 @@ EXTERN const char e_notset[] INIT(= N_("E764: Option '%s' is not set"));
 EXTERN const char e_invalidreg[] INIT(= N_("E850: Invalid register name"));
 EXTERN const char e_dirnotf[] INIT(= N_("E919: Directory not found in '%s': \"%s\""));
 EXTERN const char e_au_recursive[] INIT(= N_("E952: Autocommand caused recursive behavior"));
-EXTERN const char e_menuothermode[] INIT(= N_("E328: Menu only exists in another mode"));
+EXTERN const char e_menu_only_exists_in_another_mode[]
+INIT(= N_("E328: Menu only exists in another mode"));
 EXTERN const char e_autocmd_close[] INIT(= N_("E813: Cannot close autocmd window"));
 EXTERN const char e_listarg[] INIT(= N_("E686: Argument of %s must be a List"));
 EXTERN const char e_unsupportedoption[] INIT(= N_("E519: Option not supported"));
@@ -1002,10 +1005,6 @@ EXTERN const char e_using_float_as_string[] INIT(= N_("E806: Using a Float as a 
 EXTERN const char e_cannot_edit_other_buf[] INIT(= N_("E788: Not allowed to edit another buffer now"));
 EXTERN const char e_using_number_as_bool_nr[] INIT(= N_("E1023: Using a Number as a Bool: %d"));
 EXTERN const char e_not_callable_type_str[] INIT(= N_("E1085: Not a callable type: %s"));
-
-EXTERN const char e_cmdmap_err[] INIT(= N_("E5520: <Cmd> mapping must end with <CR>"));
-EXTERN const char e_cmdmap_repeated[]
-INIT(= N_("E5521: <Cmd> mapping must end with <CR> before second <Cmd>"));
 
 EXTERN const char e_api_error[] INIT(= N_("E5555: API call: %s"));
 
@@ -1035,6 +1034,8 @@ EXTERN const char e_undobang_cannot_redo_or_move_branch[]
 INIT(= N_("E5767: Cannot use :undo! to redo or move to a different undo branch"));
 
 EXTERN const char e_trustfile[] INIT(= N_("E5570: Cannot update trust file: %s"));
+
+EXTERN const char e_unknown_option2[] INIT(= N_("E355: Unknown option: %s"));
 
 EXTERN const char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
 EXTERN const char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));

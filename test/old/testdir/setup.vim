@@ -3,12 +3,14 @@ if exists('s:did_load')
   set backspace=
   set commentstring=/*%s*/
   set complete=.,w,b,u,t,i
+  set define=^\\s*#\\s*define
   set directory&
   set directory^=.
   set display=
   set fillchars=vert:\|,foldsep:\|,fold:-
   set formatoptions=tcq
   set fsync
+  set include=^\\s*#\\s*include
   set laststatus=1
   set listchars=eol:$
   set joinspaces

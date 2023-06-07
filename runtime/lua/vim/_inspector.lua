@@ -90,7 +90,7 @@ function vim.inspect_pos(bufnr, row, col, filter)
     nsmap[id] = name
   end
 
-  --- Convert an extmark tuple into a map-like table
+  --- Convert an extmark tuple into a table
   --- @private
   local function to_map(extmark)
     extmark = {

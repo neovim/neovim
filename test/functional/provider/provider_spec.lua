@@ -7,7 +7,7 @@ local pcall_err = helpers.pcall_err
 
 describe('providers', function()
   before_each(function()
-    clear('--cmd', 'let &rtp = "test/functional/fixtures,".&rtp')
+    clear('--cmd', 'set rtp^=test/functional/fixtures')
   end)
 
   it('with #Call(), missing g:loaded_xx_provider', function()

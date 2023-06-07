@@ -107,6 +107,8 @@ static int VIsual_mode_orig = NUL;              // saved Visual mode
 #endif
 
 static const char e_changelist_is_empty[] = N_("E664: Changelist is empty");
+static const char e_cmdline_window_already_open[]
+  = N_("E1292: Command-line window is already open");
 
 static inline void normal_state_init(NormalState *s)
 {
@@ -2029,7 +2031,7 @@ static void display_showcmd(void)
     if (len > 0) {
       // placeholder for future highlight support
       ADD_C(chunk, INTEGER_OBJ(0));
-      ADD_C(chunk, STRING_OBJ(cstr_as_string(showcmd_buf)));
+      ADD_C(chunk, CSTR_AS_OBJ(showcmd_buf));
       ADD_C(content, ARRAY_OBJ(chunk));
     }
     ui_call_msg_showcmd(content);
@@ -2491,10 +2493,12 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
           curwin->w_curswant -= width2;
         } else {
           // to previous line
-          if (!cursor_up_inner(curwin, 1)) {
+          if (curwin->w_cursor.lnum <= 1) {
             retval = false;
             break;
           }
+          cursor_up_inner(curwin, 1);
+
           linelen = linetabsize_str(get_cursor_line_ptr());
           if (linelen > width1) {
             int w = (((linelen - width1 - 1) / width2) + 1) * width2;
@@ -2514,11 +2518,13 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
           curwin->w_curswant += width2;
         } else {
           // to next line
-          if (!cursor_down_inner(curwin, 1)) {
+          if (curwin->w_cursor.lnum >= curwin->w_buffer->b_ml.ml_line_count) {
             retval = false;
             break;
           }
+          cursor_down_inner(curwin, 1);
           curwin->w_curswant %= width2;
+
           // Check if the cursor has moved below the number display
           // when width1 < width2 (with cpoptions+=n). Subtract width2
           // to get a negative value for w_curswant, which will get
@@ -3232,7 +3238,7 @@ static void nv_colon(cmdarg_T *cap)
   }
 
   if (is_lua) {
-    cmd_result = map_execute_lua();
+    cmd_result = map_execute_lua(true);
   } else {
     // get a command line and execute it
     cmd_result = do_cmdline(NULL, is_cmdkey ? getcmdkeycmd : getexline, NULL,
@@ -5272,6 +5278,7 @@ static void nv_g_home_m_cmd(cmdarg_T *cap)
     curwin->w_valid &= ~VALID_WCOL;
   }
   curwin->w_set_curswant = true;
+  adjust_skipcol();
 }
 
 /// "g_": to the last non-blank character in the line or <count> lines downward.
@@ -6371,6 +6378,10 @@ static void nv_record(cmdarg_T *cap)
   }
 
   if (cap->nchar == ':' || cap->nchar == '/' || cap->nchar == '?') {
+    if (cmdwin_type != 0) {
+      emsg(_(e_cmdline_window_already_open));
+      return;
+    }
     stuffcharReadbuff(cap->nchar);
     stuffcharReadbuff(K_CMDWIN);
   } else {

@@ -3,6 +3,7 @@
 source shared.vim
 source check.vim
 source screendump.vim
+source term_util.vim
 
 func Test_abbreviation()
   " abbreviation with 0x80 should work
@@ -968,6 +969,469 @@ func Test_map_cpo_special_keycode()
   mapclear!
 endfunc
 
+" Test for <Cmd> key in maps to execute commands
+func Test_map_cmdkey()
+  new
+
+  " Error cases
+  let x = 0
+  noremap <F3> <Cmd><Cmd>let x = 1<CR>
+  call assert_fails('call feedkeys("\<F3>", "xt")', 'E1136:')
+  call assert_equal(0, x)
+
+  noremap <F3> <Cmd>let x = 3
+  call assert_fails('call feedkeys("\<F3>", "xt!")', 'E1255:')
+  call assert_equal(0, x)
+
+  " works in various modes and sees the correct mode()
+  noremap <F3> <Cmd>let m = mode(1)<CR>
+  noremap! <F3> <Cmd>let m = mode(1)<CR>
+
+  " normal mode
+  call feedkeys("\<F3>", 'xt')
+  call assert_equal('n', m)
+
+  " visual mode
+  call feedkeys("v\<F3>", 'xt!')
+  call assert_equal('v', m)
+  " shouldn't leave the visual mode
+  call assert_equal('v', mode(1))
+  call feedkeys("\<Esc>", 'xt')
+  call assert_equal('n', mode(1))
+
+  " visual mapping in select mode
+  call feedkeys("gh\<F3>", 'xt!')
+  call assert_equal('v', m)
+  " shouldn't leave select mode
+  call assert_equal('s', mode(1))
+  call feedkeys("\<Esc>", 'xt')
+  call assert_equal('n', mode(1))
+
+  " select mode mapping
+  snoremap <F3> <Cmd>let m = mode(1)<cr>
+  call feedkeys("gh\<F3>", 'xt!')
+  call assert_equal('s', m)
+  " shouldn't leave select mode
+  call assert_equal('s', mode(1))
+  call feedkeys("\<Esc>", 'xt')
+  call assert_equal('n', mode(1))
+
+  " operator-pending mode
+  call feedkeys("d\<F3>", 'xt!')
+  call assert_equal('no', m)
+  " leaves the operator-pending mode
+  call assert_equal('n', mode(1))
+
+  " insert mode
+  call feedkeys("i\<F3>abc", 'xt')
+  call assert_equal('i', m)
+  call assert_equal('abc', getline('.'))
+
+  " replace mode
+  call feedkeys("0R\<F3>two", 'xt')
+  call assert_equal('R', m)
+  call assert_equal('two', getline('.'))
+
+  " virtual replace mode
+  call setline('.', "one\ttwo")
+  call feedkeys("4|gR\<F3>xxx", 'xt')
+  call assert_equal('Rv', m)
+  call assert_equal("onexxx\ttwo", getline('.'))
+
+  " cmdline mode
+  call feedkeys(":\<F3>\"xxx\<CR>", 'xt!')
+  call assert_equal('c', m)
+  call assert_equal('"xxx', @:)
+
+  " terminal mode
+  if CanRunVimInTerminal()
+    tnoremap <F3> <Cmd>let m = mode(1)<CR>
+    let buf = Run_shell_in_terminal({})
+    call feedkeys("\<F3>", 'xt')
+    call assert_equal('t', m)
+    call assert_equal('t', mode(1))
+    call StopShellInTerminal(buf)
+    call TermWait(buf)
+    close!
+    tunmap <F3>
+  endif
+
+  " invoke cmdline mode recursively
+  noremap! <F2> <Cmd>norm! :foo<CR>
+  %d
+  call setline(1, ['some short lines', 'of test text'])
+  call feedkeys(":bar\<F2>x\<C-B>\"\r", 'xt')
+  call assert_equal('"barx', @:)
+  unmap! <F2>
+
+  " test for calling a <SID> function
+  let lines =<< trim END
+    map <F2> <Cmd>call <SID>do_it()<CR>
+    func s:do_it()
+      let g:x = 32
+    endfunc
+  END
+  call writefile(lines, 'Xscript')
+  source Xscript
+  call feedkeys("\<F2>", 'xt')
+  call assert_equal(32, g:x)
+  call delete('Xscript')
+
+  unmap <F3>
+  unmap! <F3>
+  %bw!
+endfunc
+
+" text object enters visual mode
+func TextObj()
+  if mode() !=# "v"
+    normal! v
+  end
+  call cursor(1, 3)
+  normal! o
+  call cursor(2, 4)
+endfunc
+
+func s:cmdmap(lhs, rhs)
+  exe 'noremap ' .. a:lhs .. ' <Cmd>' .. a:rhs .. '<CR>'
+  exe 'noremap! ' .. a:lhs .. ' <Cmd>' .. a:rhs .. '<CR>'
+endfunc
+
+func s:cmdunmap(lhs)
+  exe 'unmap ' .. a:lhs
+  exe 'unmap! ' .. a:lhs
+endfunc
+
+" Map various <Fx> keys used by the <Cmd> key tests
+func s:setupMaps()
+  call s:cmdmap('<F3>', 'let m = mode(1)')
+  call s:cmdmap('<F4>', 'normal! ww')
+  call s:cmdmap('<F5>', 'normal! "ay')
+  call s:cmdmap('<F6>', 'throw "very error"')
+  call s:cmdmap('<F7>', 'call TextObj()')
+  call s:cmdmap('<F8>', 'startinsert')
+  call s:cmdmap('<F9>', 'stopinsert')
+endfunc
+
+" Remove the mappings setup by setupMaps()
+func s:cleanupMaps()
+  call s:cmdunmap('<F3>')
+  call s:cmdunmap('<F4>')
+  call s:cmdunmap('<F5>')
+  call s:cmdunmap('<F6>')
+  call s:cmdunmap('<F7>')
+  call s:cmdunmap('<F8>')
+  call s:cmdunmap('<F9>')
+endfunc
+
+" Test for <Cmd> mapping in normal mode
+func Test_map_cmdkey_normal_mode()
+  new
+  call s:setupMaps()
+
+  " check v:count and v:register works
+  call s:cmdmap('<F2>', 'let s = [mode(1), v:count, v:register]')
+  call feedkeys("\<F2>", 'xt')
+  call assert_equal(['n', 0, '"'], s)
+  call feedkeys("7\<F2>", 'xt')
+  call assert_equal(['n', 7, '"'], s)
+  call feedkeys("\"e\<F2>", 'xt')
+  call assert_equal(['n', 0, 'e'], s)
+  call feedkeys("5\"k\<F2>", 'xt')
+  call assert_equal(['n', 5, 'k'], s)
+  call s:cmdunmap('<F2>')
+
+  call setline(1, ['some short lines', 'of test text'])
+  call feedkeys("\<F7>y", 'xt')
+  call assert_equal("me short lines\nof t", @")
+  call assert_equal('v', getregtype('"'))
+  call assert_equal([0, 1, 3, 0], getpos("'<"))
+  call assert_equal([0, 2, 4, 0], getpos("'>"))
+
+  " startinsert
+  %d
+  call feedkeys("\<F8>abc", 'xt')
+  call assert_equal('abc', getline(1))
+
+  " feedkeys are not executed immediately
+  noremap ,a <Cmd>call feedkeys("aalpha") \| let g:a = getline(2)<CR>
+  %d
+  call setline(1, ['some short lines', 'of test text'])
+  call cursor(2, 3)
+  call feedkeys(",a\<F3>", 'xt')
+  call assert_equal('of test text', g:a)
+  call assert_equal('n', m)
+  call assert_equal(['some short lines', 'of alphatest text'], getline(1, '$'))
+  nunmap ,a
+
+  " feedkeys(..., 'x') is executed immediately, but insert mode is aborted
+  noremap ,b <Cmd>call feedkeys("abeta", 'x') \| let g:b = getline(2)<CR>
+  call feedkeys(",b\<F3>", 'xt')
+  call assert_equal('n', m)
+  call assert_equal('of alphabetatest text', g:b)
+  nunmap ,b
+
+  call s:cleanupMaps()
+  %bw!
+endfunc
+
+" Test for <Cmd> mapping with the :normal command
+func Test_map_cmdkey_normal_cmd()
+  new
+  noremap ,x <Cmd>call append(1, "xx") \| call append(1, "aa")<CR>
+  noremap ,f <Cmd>nosuchcommand<CR>
+  noremap ,e <Cmd>throw "very error" \| call append(1, "yy")<CR>
+  noremap ,m <Cmd>echoerr "The message." \| call append(1, "zz")<CR>
+  noremap ,w <Cmd>for i in range(5) \| if i==1 \| echoerr "Err" \| endif \| call append(1, i) \| endfor<CR>
+
+  call setline(1, ['some short lines', 'of test text'])
+  exe "norm ,x\r"
+  call assert_equal(['some short lines', 'aa', 'xx', 'of test text'], getline(1, '$'))
+
+  call assert_fails('norm ,f', 'E492:')
+  call assert_fails('norm ,e', 'very error')
+  call assert_fails('norm ,m', 'The message.')
+  call assert_equal(['some short lines', 'aa', 'xx', 'of test text'], getline(1, '$'))
+
+  %d
+  let caught_err = 0
+  try
+    exe "normal ,w"
+  catch /Vim(echoerr):Err/
+    let caught_err = 1
+  endtry
+  call assert_equal(1, caught_err)
+  call assert_equal(['', '0'], getline(1, '$'))
+
+  %d
+  call assert_fails('normal ,w', 'Err')
+  call assert_equal(['', '4', '3', '2' ,'1', '0'], getline(1, '$'))
+  call assert_equal(1, line('.'))
+
+  nunmap ,x
+  nunmap ,f
+  nunmap ,e
+  nunmap ,m
+  nunmap ,w
+  %bw!
+endfunc
+
+" Test for <Cmd> mapping in visual mode
+func Test_map_cmdkey_visual_mode()
+  new
+  set showmode
+  call s:setupMaps()
+
+  call setline(1, ['some short lines', 'of test text'])
+  call feedkeys("v\<F4>", 'xt!')
+  call assert_equal(['v', 1, 12], [mode(1), col('v'), col('.')])
+
+  " can invoke an opeartor, ending the visual mode
+  let @a = ''
+  call feedkeys("\<F5>", 'xt!')
+  call assert_equal('n', mode(1))
+  call assert_equal('some short l', @a)
+
+  " error doesn't interrupt visual mode
+  call assert_fails('call feedkeys("ggvw\<F6>", "xt!")', 'E605:')
+  call assert_equal(['v', 1, 6], [mode(1), col('v'), col('.')])
+  call feedkeys("\<F7>", 'xt!')
+  call assert_equal(['v', 1, 3, 2, 4], [mode(1), line('v'), col('v'), line('.'), col('.')])
+
+  " startinsert gives "-- (insert) VISUAL --" mode
+  call feedkeys("\<F8>", 'xt!')
+  call assert_equal(['v', 1, 3, 2, 4], [mode(1), line('v'), col('v'), line('.'), col('.')])
+  redraw!
+  call assert_match('^-- (insert) VISUAL --', Screenline(&lines))
+  call feedkeys("\<Esc>new ", 'x')
+  call assert_equal(['some short lines', 'of new test text'], getline(1, '$'))
+
+  call s:cleanupMaps()
+  set showmode&
+  %bw!
+endfunc
+
+" Test for <Cmd> mapping in select mode
+func Test_map_cmdkey_select_mode()
+  new
+  set showmode
+  call s:setupMaps()
+
+  snoremap <F1> <cmd>throw "very error"<CR>
+  snoremap <F2> <cmd>normal! <c-g>"by<CR>
+  call setline(1, ['some short lines', 'of test text'])
+
+  call feedkeys("gh\<F4>", "xt!")
+  call assert_equal(['s', 1, 12], [mode(1), col('v'), col('.')])
+  redraw!
+  call assert_match('^-- SELECT --', Screenline(&lines))
+
+  " visual mapping in select mode restarts select mode after operator
+  let @a = ''
+  call feedkeys("\<F5>", 'xt!')
+  call assert_equal('s', mode(1))
+  call assert_equal('some short l', @a)
+
+  " select mode mapping works, and does not restart select mode
+  let @b = ''
+  call feedkeys("\<F2>", 'xt!')
+  call assert_equal('n', mode(1))
+  call assert_equal('some short l', @b)
+
+  " error doesn't interrupt temporary visual mode
+  call assert_fails('call feedkeys("\<Esc>ggvw\<C-G>\<F6>", "xt!")', 'E605:')
+  redraw!
+  call assert_match('^-- VISUAL --', Screenline(&lines))
+  " quirk: restoration of select mode is not performed
+  call assert_equal(['v', 1, 6], [mode(1), col('v'), col('.')])
+
+  " error doesn't interrupt select mode
+  call assert_fails('call feedkeys("\<Esc>ggvw\<C-G>\<F1>", "xt!")', 'E605:')
+  redraw!
+  call assert_match('^-- SELECT --', Screenline(&lines))
+  call assert_equal(['s', 1, 6], [mode(1), col('v'), col('.')])
+
+  call feedkeys("\<F7>", 'xt!')
+  redraw!
+  call assert_match('^-- SELECT --', Screenline(&lines))
+  call assert_equal(['s', 1, 3, 2, 4], [mode(1), line('v'), col('v'), line('.'), col('.')])
+
+  " startinsert gives "-- SELECT (insert) --" mode
+  call feedkeys("\<F8>", 'xt!')
+  redraw!
+  call assert_match('^-- (insert) SELECT --', Screenline(&lines))
+  call assert_equal(['s', 1, 3, 2, 4], [mode(1), line('v'), col('v'), line('.'), col('.')])
+  call feedkeys("\<Esc>new ", 'x')
+  call assert_equal(['some short lines', 'of new test text'], getline(1, '$'))
+
+  sunmap <F1>
+  sunmap <F2>
+  call s:cleanupMaps()
+  set showmode&
+  %bw!
+endfunc
+
+" Test for <Cmd> mapping in operator-pending mode
+func Test_map_cmdkey_op_pending_mode()
+  new
+  call s:setupMaps()
+
+  call setline(1, ['some short lines', 'of test text'])
+  call feedkeys("d\<F4>", 'xt')
+  call assert_equal(['lines', 'of test text'], getline(1, '$'))
+  call assert_equal(['some short '], getreg('"', 1, 1))
+  " create a new undo point
+  let &undolevels = &undolevels
+
+  call feedkeys(".", 'xt')
+  call assert_equal(['test text'], getline(1, '$'))
+  call assert_equal(['lines', 'of '], getreg('"', 1, 1))
+  " create a new undo point
+  let &undolevels = &undolevels
+
+  call feedkeys("uu", 'xt')
+  call assert_equal(['some short lines', 'of test text'], getline(1, '$'))
+
+  " error aborts operator-pending, operator not performed
+  call assert_fails('call feedkeys("d\<F6>", "xt")', 'E605:')
+  call assert_equal(['some short lines', 'of test text'], getline(1, '$'))
+
+  call feedkeys("\"bd\<F7>", 'xt')
+  call assert_equal(['soest text'], getline(1, '$'))
+  call assert_equal(['me short lines', 'of t'], getreg('b', 1, 1))
+
+  " startinsert aborts operator
+  call feedkeys("d\<F8>cc", 'xt')
+  call assert_equal(['soccest text'], getline(1, '$'))
+
+  call s:cleanupMaps()
+  %bw!
+endfunc
+
+" Test for <Cmd> mapping in insert mode
+func Test_map_cmdkey_insert_mode()
+  new
+  call s:setupMaps()
+
+  call setline(1, ['some short lines', 'of test text'])
+  " works the same as <C-O>w<C-O>w
+  call feedkeys("iindeed \<F4>little ", 'xt')
+  call assert_equal(['indeed some short little lines', 'of test text'], getline(1, '$'))
+  call assert_fails('call feedkeys("i\<F6> 2", "xt")', 'E605:')
+  call assert_equal(['indeed some short little 2 lines', 'of test text'], getline(1, '$'))
+
+  " Note when entering visual mode from InsertEnter autocmd, an async event,
+  " or a <Cmd> mapping, vim ends up in undocumented "INSERT VISUAL" mode.
+  call feedkeys("i\<F7>stuff ", 'xt')
+  call assert_equal(['indeed some short little 2 lines', 'of stuff test text'], getline(1, '$'))
+  call assert_equal(['v', 1, 3, 2, 9], [mode(1), line('v'), col('v'), line('.'), col('.')])
+
+  call feedkeys("\<F5>", 'xt')
+  call assert_equal(['deed some short little 2 lines', 'of stuff '], getreg('a', 1, 1))
+
+  " also works as part of abbreviation
+  abbr foo <Cmd>let g:y = 17<CR>bar
+  exe "normal i\<space>foo "
+  call assert_equal(17, g:y)
+  call assert_equal('in bar deed some short little 2 lines', getline(1))
+  unabbr foo
+
+  " :startinsert does nothing
+  call setline(1, 'foo bar')
+  call feedkeys("ggi\<F8>vim", 'xt')
+  call assert_equal('vimfoo bar', getline(1))
+
+  " :stopinsert works
+  call feedkeys("ggi\<F9>Abc", 'xt')
+  call assert_equal('vimfoo barbc', getline(1))
+
+  call s:cleanupMaps()
+  %bw!
+endfunc
+
+" Test for <Cmd> mapping in insert-completion mode
+func Test_map_cmdkey_insert_complete_mode()
+  new
+  call s:setupMaps()
+
+  call setline(1, 'some short lines')
+  call feedkeys("os\<C-X>\<C-N>\<F3>\<C-N> ", 'xt')
+  call assert_equal('ic', m)
+  call assert_equal(['some short lines', 'short '], getline(1, '$'))
+
+  call s:cleanupMaps()
+  %bw!
+endfunc
+
+" Test for <Cmd> mapping in cmdline mode
+func Test_map_cmdkey_cmdline_mode()
+  new
+  call s:setupMaps()
+
+  call setline(1, ['some short lines', 'of test text'])
+  let x = 0
+  call feedkeys(":let x\<F3>= 10\r", 'xt')
+  call assert_equal('c', m)
+  call assert_equal(10, x)
+
+  " exception doesn't leave cmdline mode
+  call assert_fails('call feedkeys(":let x\<F6>= 20\r", "xt")', 'E605:')
+  call assert_equal(20, x)
+
+  " move cursor in the buffer from cmdline mode
+  call feedkeys(":let x\<F4>= 30\r", 'xt')
+  call assert_equal(30, x)
+  call assert_equal(12, col('.'))
+
+  " :startinsert takes effect after leaving cmdline mode
+  call feedkeys(":let x\<F8>= 40\rnew ", 'xt')
+  call assert_equal(40, x)
+  call assert_equal('some short new lines', getline(1))
+
+  call s:cleanupMaps()
+  %bw!
+endfunc
+
 func Test_map_cmdkey_redo()
   func SelectDash()
     call search('^---\n\zs', 'bcW')
@@ -1002,6 +1466,24 @@ func Test_map_cmdkey_redo()
   call delete('Xcmdtext')
   delfunc SelectDash
   ounmap i-
+
+  new
+  call setline(1, 'aaa bbb ccc ddd')
+
+  " command can contain special keys
+  onoremap ix <Cmd>let g:foo ..= '…'<Bar>normal! <C-Right><CR>
+  let g:foo = ''
+  call feedkeys('0dix.', 'xt')
+  call assert_equal('……', g:foo)
+  call assert_equal('ccc ddd', getline(1))
+  unlet g:foo
+
+  " command line ending in "0" is handled without errors
+  onoremap ix <Cmd>eval 0<CR>
+  call feedkeys('dix.', 'xt')
+
+  ounmap ix
+  bwipe!
 endfunc
 
 " Test for using <script> with a map to remap characters in rhs

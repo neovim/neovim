@@ -46,7 +46,7 @@ function M.watch(path, opts, callback)
 
   path = vim.fs.normalize(path)
   local uvflags = opts and opts.uvflags or {}
-  local handle, new_err = vim.loop.new_fs_event()
+  local handle, new_err = vim.uv.new_fs_event()
   assert(not new_err, new_err)
   local _, start_err = handle:start(path, uvflags, function(err, filename, events)
     assert(not err, err)
@@ -57,7 +57,7 @@ function M.watch(path, opts, callback)
     end
     local change_type = events.change and M.FileChangeType.Changed or 0
     if events.rename then
-      local _, staterr, staterrname = vim.loop.fs_stat(fullpath)
+      local _, staterr, staterrname = vim.uv.fs_stat(fullpath)
       if staterrname == 'ENOENT' then
         change_type = M.FileChangeType.Deleted
       else
@@ -108,21 +108,15 @@ local function poll_internal(path, opts, callback, watches)
     end
   end
 
-  if not watches.is_dir and opts.include_patterns then
-    local matches = false
-    for _, pattern in ipairs(opts.include_patterns) do
-      if path:match(pattern) then
-        matches = true
-        break
-      end
-    end
-    if not matches then
-      return watches.cancel
-    end
+  local function incl_match()
+    return not opts.include_pattern or opts.include_pattern:match(path) ~= nil
+  end
+  if not watches.is_dir and not incl_match() then
+    return watches.cancel
   end
 
   if not watches.handle then
-    local poll, new_err = vim.loop.new_fs_poll()
+    local poll, new_err = vim.uv.new_fs_poll()
     assert(not new_err, new_err)
     watches.handle = poll
     local _, start_err = poll:start(
@@ -184,9 +178,9 @@ end
 ---@param opts (table|nil) Additional options
 ---     - interval (number|nil)
 ---                Polling interval in ms as passed to |uv.fs_poll_start()|. Defaults to 2000.
----     - include_patterns (string[]|nil)
----                A list of lua pattern strings. Only changes to files whose full paths match at
----                least one pattern will be reported. When nil, changes to all files are reported.
+---     - include_pattern (LPeg pattern|nil)
+---                An |lpeg| pattern. Only changes to files whose full paths match the pattern
+---                will be reported. When nil, matches all files.
 ---@param callback (function) The function called when new events
 ---@returns (function) A function to stop the watch.
 function M.poll(path, opts, callback)

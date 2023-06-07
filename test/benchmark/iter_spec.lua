@@ -35,9 +35,9 @@ describe('vim.iter perf', function()
     local stats = {}
     local result
     for _ = 1, N do
-      local tic = vim.loop.hrtime()
+      local tic = vim.uv.hrtime()
       result = f(input)
-      local toc = vim.loop.hrtime()
+      local toc = vim.uv.hrtime()
       stats[#stats + 1] = (toc - tic) / 1000000
     end
     table.sort(stats)

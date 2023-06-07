@@ -321,20 +321,22 @@ Example: >vim
     :echo luaeval('string.match(_A, "[a-z]+")', 'XYXfoo123')
     " foo
 <
+                                                                    *lua-table*
 Lua tables are used as both dictionaries and lists, so it is impossible to
 determine whether empty table is meant to be empty list or empty dictionary.
 Additionally Lua does not have integer numbers. To distinguish between these
 cases there is the following agreement:
-
+                                                                     *lua-list*
 0. Empty table is empty list.
 1. Table with N incrementally growing integral numbers, starting from 1 and
    ending with N is considered to be a list.
+                                                                     *lua-dict*
 2. Table with string keys, none of which contains NUL byte, is considered to
    be a dictionary.
 3. Table with string keys, at least one of which contains NUL byte, is also
    considered to be a dictionary, but this time it is converted to
    a |msgpack-special-map|.
-                                                             *lua-special-tbl*
+                                                              *lua-special-tbl*
 4. Table with `vim.type_idx` key may be a dictionary, a list or floating-point
    value:
    - `{[vim.type_idx]=vim.types.float, [vim.val_idx]=1}` is converted to
@@ -399,7 +401,7 @@ For example consider the following Lua omnifunc handler: >lua
         return {'stuff', 'steam', 'strange things'}
       end
     end
-    vim.api.nvim_buf_set_option(0, 'omnifunc', 'v:lua.mymod.omnifunc')
+    vim.bo[buf].omnifunc = 'v:lua.mymod.omnifunc'
 
 Note: The module ("mymod" in the above example) must either be a Lua global,
 or use require() as shown above to access it from a package.
@@ -447,29 +449,24 @@ Note that underscore-prefixed functions (e.g. "_os_proc_children") are
 internal/private and must not be used by plugins.
 
 ------------------------------------------------------------------------------
-VIM.LOOP                                                   *lua-loop* *vim.loop*
+VIM.UV                                                   *lua-loop* *vim.uv*
 
-`vim.loop` exposes all features of the Nvim event-loop. This is a low-level
-API that provides functionality for networking, filesystem, and process
-management. Try this command to see available functions: >vim
-
-    :lua print(vim.inspect(vim.loop))
-<
-Internally, `vim.loop` wraps the "luv" Lua bindings for the LibUV library;
-see |luv-intro| for a full reference manual.
+`vim.uv` exposes the "luv" Lua bindings for the libUV library that Nvim uses
+for networking, filesystem, and process management, see |luvref.txt|.
+In particular, it allows interacting with the main Nvim |luv-event-loop|.
 
                                                     *E5560* *lua-loop-callbacks*
 It is an error to directly invoke `vim.api` functions (except |api-fast|) in
-`vim.loop` callbacks. For example, this is an error: >lua
+`vim.uv` callbacks. For example, this is an error: >lua
 
-    local timer = vim.loop.new_timer()
+    local timer = vim.uv.new_timer()
     timer:start(1000, 0, function()
       vim.api.nvim_command('echomsg "test"')
     end)
 <
 To avoid the error use |vim.schedule_wrap()| to defer the callback: >lua
 
-    local timer = vim.loop.new_timer()
+    local timer = vim.uv.new_timer()
     timer:start(1000, 0, vim.schedule_wrap(function()
       vim.api.nvim_command('echomsg "test"')
     end))
@@ -482,7 +479,7 @@ Example: repeating timer
     2. Execute it with ":luafile %". >lua
 
     -- Create a timer handle (implementation detail: uv_timer_t).
-    local timer = vim.loop.new_timer()
+    local timer = vim.uv.new_timer()
     local i = 0
     -- Waits 1000ms, then repeats every 750ms until timer:close().
     timer:start(1000, 750, function()
@@ -502,7 +499,7 @@ Example: File-change detection                                    *watch-file*
     5. Observe that the file reloads in Nvim (because on_change() calls
        |:checktime|). >lua
 
-    local w = vim.loop.new_fs_event()
+    local w = vim.uv.new_fs_event()
     local function on_change(err, fname, status)
       -- Do work...
       vim.api.nvim_command('checktime')
@@ -526,11 +523,11 @@ Example: TCP echo-server                                          *tcp-server*
     4. Connect from any TCP client (e.g. "nc 0.0.0.0 36795"): >lua
 
     local function create_server(host, port, on_connect)
-      local server = vim.loop.new_tcp()
+      local server = vim.uv.new_tcp()
       server:bind(host, port)
       server:listen(128, function(err)
         assert(not err, err)  -- Check for errors.
-        local sock = vim.loop.new_tcp()
+        local sock = vim.uv.new_tcp()
         server:accept(sock)  -- Accept client connection.
         on_connect(sock)  -- Start reading messages.
       end)
@@ -551,14 +548,14 @@ Example: TCP echo-server                                          *tcp-server*
 Multithreading                                            *lua-loop-threading*
 
 Plugins can perform work in separate (os-level) threads using the threading
-APIs in luv, for instance `vim.loop.new_thread`. Note that every thread
+APIs in luv, for instance `vim.uv.new_thread`. Note that every thread
 gets its own separate lua interpreter state, with no access to lua globals
 in the main thread. Neither can the state of the editor (buffers, windows,
 etc) be directly accessed from threads.
 
 A subset of the `vim.*` API is available in threads. This includes:
 
-- `vim.loop` with a separate event loop per thread.
+- `vim.uv` with a separate event loop per thread.
 - `vim.mpack` and `vim.json` (useful for serializing messages between threads)
 - `require` in threads can use lua packages from the global |package.path|
 - `print()` and `vim.inspect`
@@ -592,6 +589,8 @@ vim.highlight.on_yank({opts})                        *vim.highlight.on_yank()*
       - {on_macro} highlight when executing macro (default `false`)
       - {on_visual} highlight when yanking visual selection (default `true`)
       - {event} event structure (default |v:event|)
+      - {priority} priority of highlight (default |vim.highlight.priorities|`.user`)
+
 
 vim.highlight.range({bufnr}, {ns}, {hlgroup}, {start}, {finish}, {opts})
                                                        *vim.highlight.range()*
@@ -881,7 +880,7 @@ vim.defer_fn({fn}, {timeout})                                   *vim.defer_fn*
       • {timeout}   Time in ms to wait before calling {fn}
 
     Returns: ~
-        |vim.loop|.new_timer() object
+        |vim.uv|.new_timer() object
 
 vim.wait({time} [, {callback}, {interval}, {fast_only}])          *vim.wait()*
     Wait for {time} in milliseconds until {callback} returns `true`.
@@ -1430,7 +1429,7 @@ keycode({str})                                                 *vim.keycode()*
       • |nvim_replace_termcodes()|
 
 lua_omnifunc({find_start}, {_})                           *vim.lua_omnifunc()*
-    Omnifunc for completing lua values from from the runtime lua interpreter,
+    Omnifunc for completing lua values from the runtime lua interpreter,
     similar to the builtin completion for the `:lua` command.
 
     Activate using `set omnifunc=v:lua.vim.lua_omnifunc` in a lua buffer.
@@ -1879,7 +1878,7 @@ tbl_count({t})                                               *vim.tbl_count()*
       • https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
 
 tbl_deep_extend({behavior}, {...})                     *vim.tbl_deep_extend()*
-    Merges recursively two or more map-like tables.
+    Merges recursively two or more tables.
 
     Parameters: ~
       • {behavior}  (string) Decides what to do if a key is found in more than
@@ -1887,7 +1886,7 @@ tbl_deep_extend({behavior}, {...})                     *vim.tbl_deep_extend()*
                     • "error": raise an error
                     • "keep": use value from the leftmost map
                     • "force": use value from the rightmost map
-      • {...}       (table) Two or more map-like tables
+      • {...}       (table) Two or more tables
 
     Return: ~
         (table) Merged table
@@ -1896,7 +1895,7 @@ tbl_deep_extend({behavior}, {...})                     *vim.tbl_deep_extend()*
       • |vim.tbl_extend()|
 
 tbl_extend({behavior}, {...})                               *vim.tbl_extend()*
-    Merges two or more map-like tables.
+    Merges two or more tables.
 
     Parameters: ~
       • {behavior}  (string) Decides what to do if a key is found in more than
@@ -1904,7 +1903,7 @@ tbl_extend({behavior}, {...})                               *vim.tbl_extend()*
                     • "error": raise an error
                     • "keep": use value from the leftmost map
                     • "force": use value from the rightmost map
-      • {...}       (table) Two or more map-like tables
+      • {...}       (table) Two or more tables
 
     Return: ~
         (table) Merged table
@@ -2527,7 +2526,7 @@ find({names}, {opts})                                          *vim.fs.find()*
      -- location of Cargo.toml from the current buffer's path
      local cargo = vim.fs.find('Cargo.toml', {
        upward = true,
-       stop = vim.loop.os_homedir(),
+       stop = vim.uv.os_homedir(),
        path = vim.fs.dirname(vim.api.nvim_buf_get_name(0)),
      })
 
@@ -2571,6 +2570,16 @@ find({names}, {opts})                                          *vim.fs.find()*
     Return: ~
         (table) Normalized paths |vim.fs.normalize()| of all matching files or
         directories
+
+joinpath({...})                                            *vim.fs.joinpath()*
+    Concatenate directories and/or file into a single path with normalization
+    (e.g., `"foo/"` and `"bar"` get joined to `"foo/bar"`)
+
+    Parameters: ~
+      • {...}  (string)
+
+    Return: ~
+        (string)
 
 normalize({path}, {opts})                                 *vim.fs.normalize()*
     Normalize a path to a standard format. A tilde (~) character at the
@@ -2726,7 +2735,7 @@ versions (1.2.3-rc1) are not matched. >
 <
 
 cmp({v1}, {v2})                                            *vim.version.cmp()*
-    Parses and compares two version version objects (the result of
+    Parses and compares two version objects (the result of
     |vim.version.parse()|, or specified literally as a `{major, minor, patch}`
     tuple, e.g. `{1, 0, 3}`).
 
@@ -2823,11 +2832,15 @@ range({spec})                                            *vim.version.range()*
       }
 <
 
-    `:has()` checks if a version is in the range (inclusive `from` , exclusive `to` ). Example: >lua
+    `:has()` checks if a version is in the range (inclusive `from`, exclusive
+    `to`).
+
+    Example: >lua
 
       local r = vim.version.range('1.0.0 - 2.0.0')
-      print(r:has('1.9.9'))  -- true
-      print(r:has('2.0.0'))  -- false
+      print(r:has('1.9.9'))       -- true
+      print(r:has('2.0.0'))       -- false
+      print(r:has(vim.version())) -- check against current Nvim version
 <
 
     Or use cmp(), eq(), lt(), and gt() to compare `.to` and `.from` directly: >lua
@@ -3021,7 +3034,7 @@ Iter:find({self}, {f})                                           *Iter:find()*
 Iter:fold({self}, {init}, {f})                                   *Iter:fold()*
     Fold an iterator or table into a single value.
 
-    Examples: >
+    Examples: >lua
 
      -- Create a new table with only even values
      local t = { a = 1, b = 2, c = 3, d = 4 }

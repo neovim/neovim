@@ -58,6 +58,7 @@
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
+#include "nvim/option_defs.h"
 #include "nvim/optionstr.h"
 #include "nvim/os/fileio.h"
 #include "nvim/os/fs_defs.h"
@@ -3677,9 +3678,6 @@ static int eval_index_inner(typval_T *rettv, bool is_range, typval_T *var1, typv
       } else if (n2 >= len) {
         n2 = len;
       }
-      if (exclusive) {
-        n2--;
-      }
       if (n1 >= len || n2 < 0 || n1 > n2) {
         v = NULL;
       } else {
@@ -3773,38 +3771,38 @@ int eval_option(const char **const arg, typval_T *const rettv, const bool evalua
     return OK;
   }
 
-  long numval;
-  char *stringval;
   int ret = OK;
-
+  bool hidden;
   char c = *option_end;
   *option_end = NUL;
-  getoption_T opt_type = get_option_value(*arg, &numval,
-                                          rettv == NULL ? NULL : &stringval, NULL, scope);
+  OptVal value = get_option_value(*arg, NULL, scope, &hidden);
 
-  if (opt_type == gov_unknown) {
-    if (rettv != NULL) {
+  if (rettv != NULL) {
+    switch (value.type) {
+    case kOptValTypeNil:
       semsg(_("E113: Unknown option: %s"), *arg);
-    }
-    ret = FAIL;
-  } else if (rettv != NULL) {
-    if (opt_type == gov_hidden_string) {
-      rettv->v_type = VAR_STRING;
-      rettv->vval.v_string = NULL;
-    } else if (opt_type == gov_hidden_bool || opt_type == gov_hidden_number) {
+      ret = FAIL;
+      break;
+    case kOptValTypeBoolean:
       rettv->v_type = VAR_NUMBER;
-      rettv->vval.v_number = 0;
-    } else if (opt_type == gov_bool || opt_type == gov_number) {
+      rettv->vval.v_number = value.data.boolean;
+      break;
+    case kOptValTypeNumber:
       rettv->v_type = VAR_NUMBER;
-      rettv->vval.v_number = numval;
-    } else {                          // string option
+      rettv->vval.v_number = value.data.number;
+      break;
+    case kOptValTypeString:
       rettv->v_type = VAR_STRING;
-      rettv->vval.v_string = stringval;
+      rettv->vval.v_string = value.data.string.data;
+      break;
     }
-  } else if (working && (opt_type == gov_hidden_bool
-                         || opt_type == gov_hidden_number
-                         || opt_type == gov_hidden_string)) {
-    ret = FAIL;
+  } else {
+    // Value isn't being used, free it.
+    optval_free(value);
+
+    if (value.type == kOptValTypeNil || (working && hidden)) {
+      ret = FAIL;
+    }
   }
 
   *option_end = c;                  // put back for error messages
@@ -4523,7 +4521,7 @@ bool garbage_collect(bool testing)
   // Channels
   {
     Channel *data;
-    map_foreach_value(&channels, data, {
+    pmap_foreach_value(&channels, data, {
       set_ref_in_callback_reader(&data->on_data, copyID, NULL, NULL);
       set_ref_in_callback_reader(&data->on_stderr, copyID, NULL, NULL);
       set_ref_in_callback(&data->on_exit, copyID, NULL, NULL);
@@ -4533,7 +4531,7 @@ bool garbage_collect(bool testing)
   // Timers
   {
     timer_T *timer;
-    map_foreach_value(&timers, timer, {
+    pmap_foreach_value(&timers, timer, {
       set_ref_in_callback(&timer->callback, copyID, NULL, NULL);
     })
   }
@@ -5989,7 +5987,7 @@ void add_timer_info_all(typval_T *rettv)
 {
   tv_list_alloc_ret(rettv, map_size(&timers));
   timer_T *timer;
-  map_foreach_value(&timers, timer, {
+  pmap_foreach_value(&timers, timer, {
     if (!timer->stopped || timer->refcount > 1) {
       add_timer_info(rettv, timer);
     }
@@ -6087,7 +6085,7 @@ static void timer_close_cb(TimeWatcher *tw, void *data)
   timer_T *timer = (timer_T *)data;
   multiqueue_free(timer->tw.events);
   callback_free(&timer->callback);
-  pmap_del(uint64_t)(&timers, (uint64_t)timer->timer_id);
+  pmap_del(uint64_t)(&timers, (uint64_t)timer->timer_id, NULL);
   timer_decref(timer);
 }
 
@@ -6101,7 +6099,7 @@ static void timer_decref(timer_T *timer)
 void timer_stop_all(void)
 {
   timer_T *timer;
-  map_foreach_value(&timers, timer, {
+  pmap_foreach_value(&timers, timer, {
     timer_stop(timer);
   })
 }
@@ -6514,6 +6512,10 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
   pos.coladd = 0;
 
   if (name[0] == 'w' && dollar_lnum) {
+    // the "w_valid" flags are not reset when moving the cursor, but they
+    // do matter for update_topline() and validate_botline().
+    check_cursor_moved(curwin);
+
     pos.col = 0;
     if (name[1] == '0') {               // "w0": first visible line
       update_topline(curwin);
@@ -8515,7 +8517,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char 
     // If it's still empty it was changed and restored, need to restore in
     // the complicated way.
     if (*p_cpo == NUL) {
-      set_option_value_give_err("cpo", 0L, save_cpo, 0);
+      set_option_value_give_err("cpo", CSTR_AS_OPTVAL(save_cpo), 0);
     }
     free_string_option(save_cpo);
   }
@@ -8607,6 +8609,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
     .es_entry = ((estack_T *)exestack.ga_data)[exestack.ga_len - 1],
     .autocmd_fname = autocmd_fname,
     .autocmd_match = autocmd_match,
+    .autocmd_fname_full = autocmd_fname_full,
     .autocmd_bufnr = autocmd_bufnr,
     .funccalp = (void *)get_current_funccal()
   };
@@ -8657,7 +8660,7 @@ bool eval_has_provider(const char *feat)
     return false;
   }
 
-  char name[32];  // Normalized: "python_compiled" => "python".
+  char name[32];  // Normalized: "python3_compiled" => "python3".
   snprintf(name, sizeof(name), "%s", feat);
   strchrsub(name, '_', '\0');  // Chop any "_xx" suffix.
 
@@ -8715,7 +8718,7 @@ void ex_checkhealth(exarg_T *eap)
 {
   Error err = ERROR_INIT;
   MAXSIZE_TEMP_ARRAY(args, 1);
-  ADD_C(args, STRING_OBJ(cstr_as_string(eap->arg)));
+  ADD_C(args, CSTR_AS_OBJ(eap->arg));
   NLUA_EXEC_STATIC("return vim.health._check(...)", args, &err);
   if (!ERROR_SET(&err)) {
     return;

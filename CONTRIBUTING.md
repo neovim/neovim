@@ -187,7 +187,7 @@ master build. To view the defects, just request access; you will be approved.
   ```
 - When running Neovim, use
   ```
-  UBSAN_OPTIONS=print_stacktrace=1 ASAN_OPTIONS=log_path=/tmp/nvim_asan,handle_abort=1,handle_sigill=1 nvim args...
+  ASAN_OPTIONS=log_path=/tmp/nvim_asan nvim args...
   ```
 - If Neovim exits unexpectedly, check `/tmp/nvim_asan.{PID}` (or your preferred `log_path`) for log files with error messages.
 

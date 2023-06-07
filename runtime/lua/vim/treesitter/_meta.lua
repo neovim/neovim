@@ -31,17 +31,21 @@ local TSNode = {}
 
 ---@param query userdata
 ---@param captures true
----@param start integer
----@param end_ integer
+---@param start? integer
+---@param end_? integer
+---@param opts? table
 ---@return fun(): integer, TSNode, any
-function TSNode:_rawquery(query, captures, start, end_) end
+function TSNode:_rawquery(query, captures, start, end_, opts) end
 
 ---@param query userdata
 ---@param captures false
----@param start integer
----@param end_ integer
+---@param start? integer
+---@param end_? integer
+---@param opts? table
 ---@return fun(): string, any
-function TSNode:_rawquery(query, captures, start, end_) end
+function TSNode:_rawquery(query, captures, start, end_, opts) end
+
+---@alias TSLoggerCallback fun(logtype: 'parse'|'lex', msg: string)
 
 ---@class TSParser
 ---@field parse fun(self: TSParser, tree: TSTree?, source: integer|string, include_bytes: boolean?): TSTree, integer[]
@@ -50,6 +54,8 @@ function TSNode:_rawquery(query, captures, start, end_) end
 ---@field set_included_ranges fun(self: TSParser, ranges: Range6[])
 ---@field set_timeout fun(self: TSParser, timeout: integer)
 ---@field timeout fun(self: TSParser): integer
+---@field _set_logger fun(self: TSParser, lex: boolean, parse: boolean, cb: TSLoggerCallback)
+---@field _logger fun(self: TSParser): TSLoggerCallback
 
 ---@class TSTree
 ---@field root fun(self: TSTree): TSNode

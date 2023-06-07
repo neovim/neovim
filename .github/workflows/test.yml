@@ -1,9 +1,6 @@
 name: test
 on:
   push:
-    branches:
-      - 'master'
-      - 'release-[0-9]+.[0-9]+'
   pull_request:
     branches:
       - 'master'
@@ -12,25 +9,24 @@ on:
       - 'contrib/**'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.repository_owner == 'neovim' && github.sha || github.ref_name }}
   cancel-in-progress: true
 
 env:
-  ASAN_OPTIONS: detect_leaks=1:check_initialization_order=1:handle_abort=1:handle_sigill=1:log_path=${{ github.workspace }}/build/log/asan:intercept_tls_get_addr=0
+  ASAN_OPTIONS: detect_leaks=1:check_initialization_order=1:log_path=${{ github.workspace }}/build/log/asan:intercept_tls_get_addr=0
   BIN_DIR: ${{ github.workspace }}/bin
   BUILD_DIR: ${{ github.workspace }}/build
   INSTALL_PREFIX: ${{ github.workspace }}/nvim-install
   LOG_DIR: ${{ github.workspace }}/build/log
   NVIM_LOG_FILE: ${{ github.workspace }}/build/.nvimlog
   TSAN_OPTIONS: log_path=${{ github.workspace }}/build/log/tsan
-  UBSAN_OPTIONS: "print_stacktrace=1 log_path=${{ github.workspace }}/build/log/ubsan"
+  UBSAN_OPTIONS: log_path=${{ github.workspace }}/build/log/ubsan
   VALGRIND_LOG: ${{ github.workspace }}/build/log/valgrind-%p.log
   # TEST_FILE: test/functional/core/startup_spec.lua
   # TEST_FILTER: foo
 
 jobs:
   lint:
-    if: (github.event_name == 'pull_request' && github.base_ref == 'master') || (github.event_name == 'push' && github.ref == 'refs/heads/master')
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
@@ -42,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: |
           ./.github/scripts/install_deps.sh
-          brew install stylua uncrustify
+          brew install stylua
 
       - uses: ./.github/actions/cache
 
@@ -82,18 +78,6 @@ jobs:
         name: uncrustify
         run: cmake --build build --target lintc-uncrustify
 
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: suggester / uncrustify
-        uses: reviewdog/action-suggester@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          tool_name: uncrustify
-          cleanup: false
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: check uncrustify
-        run: git diff --color --exit-code
-
   posix:
     name: ${{ matrix.runner }} ${{ matrix.flavor }} (cc=${{ matrix.cc }})
     strategy:
@@ -117,9 +101,7 @@ jobs:
             flags: -D CMAKE_FIND_FRAMEWORK=NEVER
             deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER
 
-            # functionaltest-lua is our dumping ground for non-mainline configurations.
-            # 1. Check that the tests pass with PUC Lua instead of LuaJIT.
-            # 2. No treesitter parsers installed.
+            # Check that the tests pass with PUC Lua instead of LuaJIT.
           - flavor: functionaltest-lua
             cc: gcc
             runner: ubuntu-22.04
@@ -143,7 +125,7 @@ jobs:
       - name: Install dependencies
         run: ./.github/scripts/install_deps.sh --test
 
-      - name: Setup interpreter packages
+      - name: Set up interpreter packages
         run: |
           # Use default CC to avoid compilation problems when installing Python modules.
           echo "Install neovim module for Python."
@@ -183,15 +165,10 @@ jobs:
         timeout-minutes: 5
         run: cmake --build build --target unittest
 
-      - if: matrix.flavor != 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Functionaltest
         timeout-minutes: 20
         run: cmake --build build --target functionaltest
-
-      - if: matrix.flavor == 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
-        name: Functionaltest with PUC Lua
-        timeout-minutes: 20
-        run: cmake --build build --target functionaltest-lua
 
       - if: matrix.flavor != 'tsan' && (success() || failure() && steps.abort_job.outputs.status == 'success')
         name: Oldtest

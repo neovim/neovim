@@ -34,7 +34,7 @@ local ft_option_cache = {} ---@type table<string,table<string,any>>
 --- @param path string
 --- @return integer
 local function hash(path)
-  local mtime0 = vim.loop.fs_stat(path).mtime
+  local mtime0 = vim.uv.fs_stat(path).mtime
   return mtime0.sec * 1000000000 + mtime0.nsec
 end
 

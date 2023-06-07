@@ -1096,6 +1096,8 @@ func Test_byteidx()
   " error cases
   call assert_fails("call byteidx([], 0)", 'E730:')
   call assert_fails("call byteidx('abc', [])", 'E745:')
+  call assert_fails("call byteidx('abc', 0, {})", ['E728:', 'E728:'])
+  call assert_fails("call byteidx('abc', 0, -1)", ['E1023:', 'E1023:'])
 endfunc
 
 " Test for byteidxcomp() using a character index
@@ -1135,6 +1137,8 @@ func Test_byteidxcomp()
   " error cases
   call assert_fails("call byteidxcomp([], 0)", 'E730:')
   call assert_fails("call byteidxcomp('abc', [])", 'E745:')
+  call assert_fails("call byteidxcomp('abc', 0, {})", ['E728:', 'E728:'])
+  call assert_fails("call byteidxcomp('abc', 0, -1)", ['E1023:', 'E1023:'])
 endfunc
 
 " Test for byteidx() using a UTF-16 index
@@ -2830,6 +2834,34 @@ func Test_screen_functions()
   call assert_equal(-1, screenattr(-1, -1))
   call assert_equal(-1, screenchar(-1, -1))
   call assert_equal([], screenchars(-1, -1))
+
+  " Run this in a separate Vim instance to avoid messing up.
+  let after =<< trim [CODE]
+    scriptencoding utf-8
+    call setline(1, '口')
+    redraw
+    call assert_equal(0, screenattr(1, 1))
+    call assert_equal(char2nr('口'), screenchar(1, 1))
+    call assert_equal([char2nr('口')], screenchars(1, 1))
+    call assert_equal('口', screenstring(1, 1))
+    call writefile(v:errors, 'Xresult')
+    qall!
+  [CODE]
+
+  let encodings = ['utf-8', 'cp932', 'cp936', 'cp949', 'cp950']
+  if !has('win32')
+    let encodings += ['euc-jp']
+  endif
+  if has('nvim')
+    let encodings = ['utf-8']
+  endif
+  for enc in encodings
+    let msg = 'enc=' .. enc
+    if RunVim([], after, $'--clean --cmd "set encoding={enc}"')
+      call assert_equal([], readfile('Xresult'), msg)
+    endif
+    call delete('Xresult')
+  endfor
 endfunc
 
 " Test for getcurpos() and setpos()

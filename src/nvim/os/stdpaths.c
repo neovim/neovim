@@ -69,6 +69,19 @@ const char *get_appname(void)
   return env_val;
 }
 
+/// Ensure that APPNAME is valid. In particular, it cannot contain directory separators.
+bool appname_is_valid(void)
+{
+  const char *appname = get_appname();
+  const size_t appname_len = strlen(appname);
+  for (size_t i = 0; i < appname_len; i++) {
+    if (appname[i] == PATHSEP) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /// Return XDG variable value
 ///
 /// @param[in]  idx  XDG variable to use.
@@ -130,7 +143,7 @@ char *get_xdg_home(const XDGVarType idx)
     xstrlcpy(IObuff, appname, appname_len + 1);
 #if defined(MSWIN)
     if (idx == kXDGDataHome || idx == kXDGStateHome) {
-      STRCAT(IObuff, "-data");
+      xstrlcat(IObuff, "-data", IOSIZE);
     }
 #endif
     dir = concat_fnames_realloc(dir, IObuff, true);

@@ -5,19 +5,23 @@ local eq = helpers.eq
 local eval = helpers.eval
 local funcs = helpers.funcs
 local source = helpers.source
+local command = helpers.command
 
 describe('CursorMoved', function()
   before_each(clear)
 
-  it('is triggered by changing windows', function()
+  it('is triggered after BufEnter when changing or splitting windows #11878 #12031', function()
     source([[
-    let g:cursormoved = 0
-    vsplit
-    autocmd CursorMoved * let g:cursormoved += 1
-    wincmd w
-    wincmd w
+    call setline(1, 'foo')
+    let g:log = []
+    autocmd BufEnter * let g:log += ['BufEnter' .. expand("<abuf>")]
+    autocmd CursorMoved * let g:log += ['CursorMoved' .. expand("<abuf>")]
     ]])
-    eq(2, eval('g:cursormoved'))
+    eq({}, eval('g:log'))
+    command('new')
+    eq({'BufEnter2', 'CursorMoved2'}, eval('g:log'))
+    command('wincmd w')
+    eq({'BufEnter2', 'CursorMoved2', 'BufEnter1', 'CursorMoved1'}, eval('g:log'))
   end)
 
   it("is not triggered by functions that don't change the window", function()

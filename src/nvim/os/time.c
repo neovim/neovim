@@ -74,7 +74,7 @@ void os_delay(uint64_t ms, bool ignoreinput)
 ///
 /// This blocks even "fast" events which is quite disruptive. This should only
 /// be used in debug code. Prefer os_delay() and decide if the delay should be
-/// interupted by input or only a CTRL-C.
+/// interrupted by input or only a CTRL-C.
 ///
 /// @see uv_sleep() (libuv v1.34.0)
 ///

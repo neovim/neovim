@@ -107,6 +107,7 @@ describe('vim._watch', function()
       local result = exec_lua(
         [[
         local root_dir = ...
+        local lpeg = vim.lpeg
 
         local events = {}
 
@@ -118,13 +119,10 @@ describe('vim._watch', function()
           assert(vim.wait(poll_wait_ms, function() return #events == expected_events end), 'Timed out waiting for expected number of events. Current events seen so far: ' .. vim.inspect(events))
         end
 
-        local root_dir_pattern = "^"..root_dir:gsub("[^%w]", "%%%0").."$" -- match root_dir literally
+        local incl = lpeg.P(root_dir) * lpeg.P("/file")^-1 * lpeg.P(-1)
         local stop = vim._watch.poll(root_dir, {
             interval = poll_interval_ms,
-            include_patterns = {
-              "file$",
-              root_dir_pattern,
-            },
+            include_pattern = incl,
           }, function(path, change_type)
           table.insert(events, { path = path, change_type = change_type })
         end)

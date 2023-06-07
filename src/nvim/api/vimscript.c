@@ -502,7 +502,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, E
     };
     err_dict.items[0] = (KeyValuePair) {
       .key = STATIC_CSTR_TO_STRING("message"),
-      .value = STRING_OBJ(cstr_to_string(east.err.msg)),
+      .value = CSTR_TO_OBJ(east.err.msg),
     };
     if (east.err.arg == NULL) {
       err_dict.items[1] = (KeyValuePair) {
@@ -539,7 +539,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, E
       chunk_arr.items[0] = INTEGER_OBJ((Integer)chunk.start.line);
       chunk_arr.items[1] = INTEGER_OBJ((Integer)chunk.start.col);
       chunk_arr.items[2] = INTEGER_OBJ((Integer)chunk.end_col);
-      chunk_arr.items[3] = STRING_OBJ(cstr_to_string(chunk.group));
+      chunk_arr.items[3] = CSTR_TO_OBJ(chunk.group);
       hl.items[i] = ARRAY_OBJ(chunk_arr);
     }
     ret.items[ret.size++] = (KeyValuePair) {
@@ -616,7 +616,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, E
         kv_drop(ast_conv_stack, 1);
         ret_node->items[ret_node->size++] = (KeyValuePair) {
           .key = STATIC_CSTR_TO_STRING("type"),
-          .value = STRING_OBJ(cstr_to_string(east_node_type_tab[node->type])),
+          .value = CSTR_TO_OBJ(east_node_type_tab[node->type]),
         };
         Array start_array = {
           .items = xmalloc(2 * sizeof(start_array.items[0])),
@@ -701,11 +701,11 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, E
         case kExprNodeComparison:
           ret_node->items[ret_node->size++] = (KeyValuePair) {
             .key = STATIC_CSTR_TO_STRING("cmp_type"),
-            .value = STRING_OBJ(cstr_to_string(eltkn_cmp_type_tab[node->data.cmp.type])),
+            .value = CSTR_TO_OBJ(eltkn_cmp_type_tab[node->data.cmp.type]),
           };
           ret_node->items[ret_node->size++] = (KeyValuePair) {
             .key = STATIC_CSTR_TO_STRING("ccs_strategy"),
-            .value = STRING_OBJ(cstr_to_string(ccs_tab[node->data.cmp.ccs])),
+            .value = CSTR_TO_OBJ(ccs_tab[node->data.cmp.ccs]),
           };
           ret_node->items[ret_node->size++] = (KeyValuePair) {
             .key = STATIC_CSTR_TO_STRING("invert"),

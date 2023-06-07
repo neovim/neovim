@@ -1502,7 +1502,8 @@ char *strrep(const char *src, const char *what, const char *rep)
   return ret;
 }
 
-static void byteidx(typval_T *argvars, typval_T *rettv, int comp)
+/// Implementation of "byteidx()" and "byteidxcomp()" functions
+static void byteidx_common(typval_T *argvars, typval_T *rettv, int comp)
 {
   rettv->vval.v_number = -1;
 
@@ -1514,7 +1515,11 @@ static void byteidx(typval_T *argvars, typval_T *rettv, int comp)
 
   varnumber_T utf16idx = false;
   if (argvars[2].v_type != VAR_UNKNOWN) {
-    utf16idx = tv_get_bool(&argvars[2]);
+    bool error = false;
+    utf16idx = tv_get_bool_chk(&argvars[2], &error);
+    if (error) {
+      return;
+    }
     if (utf16idx < 0 || utf16idx > 1) {
       semsg(_(e_using_number_as_bool_nr), utf16idx);
       return;
@@ -1550,13 +1555,13 @@ static void byteidx(typval_T *argvars, typval_T *rettv, int comp)
 /// "byteidx()" function
 void f_byteidx(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  byteidx(argvars, rettv, false);
+  byteidx_common(argvars, rettv, false);
 }
 
 /// "byteidxcomp()" function
 void f_byteidxcomp(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  byteidx(argvars, rettv, true);
+  byteidx_common(argvars, rettv, true);
 }
 
 /// "charidx()" function
@@ -1764,16 +1769,21 @@ void f_strcharlen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "strchars()" function
 void f_strchars(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  int skipcc = false;
+  varnumber_T skipcc = false;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    skipcc = (int)tv_get_bool(&argvars[1]);
+    bool error = false;
+    skipcc = tv_get_bool_chk(&argvars[1], &error);
+    if (error) {
+      return;
+    }
+    if (skipcc < 0 || skipcc > 1) {
+      semsg(_(e_using_number_as_bool_nr), skipcc);
+      return;
+    }
   }
-  if (skipcc < 0 || skipcc > 1) {
-    semsg(_(e_using_number_as_bool_nr), skipcc);
-  } else {
-    strchar_common(argvars, rettv, skipcc);
-  }
+
+  strchar_common(argvars, rettv, skipcc);
 }
 
 /// "strutf16len()" function
@@ -1840,7 +1850,10 @@ void f_strcharpart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (!error) {
     if (argvars[2].v_type != VAR_UNKNOWN
         && argvars[3].v_type != VAR_UNKNOWN) {
-      skipcc = tv_get_bool(&argvars[3]);
+      skipcc = tv_get_bool_chk(&argvars[3], &error);
+      if (error) {
+        return;
+      }
       if (skipcc < 0 || skipcc > 1) {
         semsg(_(e_using_number_as_bool_nr), skipcc);
         return;

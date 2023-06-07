@@ -225,9 +225,9 @@ describe('cmdline', function()
       [3] = {reverse = true},  -- TabLineFill
     })
     screen:attach()
-    meths.set_option('laststatus', 2)
-    meths.set_option('showtabline', 2)
-    meths.set_option('cmdheight', 1)
+    meths.set_option_value('laststatus', 2, {})
+    meths.set_option_value('showtabline', 2, {})
+    meths.set_option_value('cmdheight', 1, {})
     screen:expect([[
       {2: [No Name] }{3:                                                 }|
       ^                                                            |
@@ -247,10 +247,10 @@ describe('cmdline', function()
       [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
     }
     screen:attach()
-    meths.set_option('ruler', true)
-    meths.set_option('rulerformat', 'longish')
-    meths.set_option('laststatus', 0)
-    meths.set_option('winwidth', 1)
+    meths.set_option_value('ruler', true, {})
+    meths.set_option_value('rulerformat', 'longish', {})
+    meths.set_option_value('laststatus', 0, {})
+    meths.set_option_value('winwidth', 1, {})
     feed [[<C-W>v<C-W>|<C-W>p]]
     screen:expect [[
                         │^ |

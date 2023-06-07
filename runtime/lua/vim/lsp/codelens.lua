@@ -97,6 +97,7 @@ function M.run()
   else
     vim.ui.select(options, {
       prompt = 'Code lenses:',
+      kind = 'codelens',
       format_item = function(option)
         return option.lens.command.title
       end,

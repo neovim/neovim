@@ -300,4 +300,65 @@ func Test_gf_subdirs_wildcard()
   set path&
 endfunc
 
+" Test for 'switchbuf' with gf and gF commands
+func Test_gf_switchbuf()
+  call writefile(repeat(["aaa"], 10), "Xtest1", 'D')
+  edit Xtest1
+  new
+  call setline(1, ['Xtest1'])
+
+  " Test for 'useopen'
+  set switchbuf=useopen
+  call cursor(1, 1)
+  exe "normal \<C-W>f"
+  call assert_equal([2, 2], [winnr(), winnr('$')])
+  close
+
+  " If the file is opened in another tabpage, then it should not be considered
+  tabedit Xtest1
+  tabfirst
+  exe "normal \<C-W>f"
+  call assert_equal([1, 2], [winnr(), winnr('$')])
+  call assert_equal([1, 2], [tabpagenr(), tabpagenr('$')])
+  close
+
+  " Test for 'usetab'
+  set switchbuf=usetab
+  exe "normal \<C-W>f"
+  call assert_equal([1, 1], [winnr(), winnr('$')])
+  call assert_equal([2, 2], [tabpagenr(), tabpagenr('$')])
+  %bw!
+
+  " Test for CTRL-W_F with 'useopen'
+  set isfname-=:
+  call setline(1, ['Xtest1:5'])
+  set switchbuf=useopen
+  split +1 Xtest1
+  wincmd b
+  exe "normal \<C-W>F"
+  call assert_equal([1, 2], [winnr(), winnr('$')])
+  call assert_equal(5, line('.'))
+  close
+
+  " If the file is opened in another tabpage, then it should not be considered
+  tabedit +1 Xtest1
+  tabfirst
+  exe "normal \<C-W>F"
+  call assert_equal([1, 2], [winnr(), winnr('$')])
+  call assert_equal(5, line('.'))
+  call assert_equal([1, 2], [tabpagenr(), tabpagenr('$')])
+  close
+
+  " Test for CTRL_W_F with 'usetab'
+  set switchbuf=usetab
+  exe "normal \<C-W>F"
+  call assert_equal([2, 2], [tabpagenr(), tabpagenr('$')])
+  call assert_equal([1, 1], [winnr(), winnr('$')])
+  call assert_equal(5, line('.'))
+
+  set switchbuf=
+  set isfname&
+  %bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

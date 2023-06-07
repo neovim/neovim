@@ -6,7 +6,6 @@
 
 #include "nvim/api/private/dispatch.h"
 #include "nvim/buffer_defs.h"
-#include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/types.h"
 

@@ -531,7 +531,7 @@ static void find_runtime_cb(char *fname, void *cookie)
 {
   Array *rv = (Array *)cookie;
   if (fname != NULL) {
-    ADD(*rv, STRING_OBJ(cstr_to_string(fname)));
+    ADD(*rv, CSTR_TO_OBJ(fname));
   }
 }
 
@@ -910,10 +910,10 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
   if (scratch) {
     aco_save_T aco;
     aucmd_prepbuf(&aco, buf);
-    set_option_value("bufhidden", 0L, "hide", OPT_LOCAL);
-    set_option_value("buftype", 0L, "nofile", OPT_LOCAL);
-    set_option_value("swapfile", 0L, NULL, OPT_LOCAL);
-    set_option_value("modeline", 0L, NULL, OPT_LOCAL);  // 'nomodeline'
+    set_option_value("bufhidden", STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL);
+    set_option_value("buftype", STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL);
+    set_option_value("swapfile", BOOLEAN_OPTVAL(false), OPT_LOCAL);
+    set_option_value("modeline", BOOLEAN_OPTVAL(false), OPT_LOCAL);  // 'nomodeline'
     aucmd_restbuf(&aco);
   }
   return buf->b_fnum;
@@ -1383,7 +1383,7 @@ Dictionary nvim_get_mode(void)
   get_mode(modestr);
   bool blocked = input_blocking();
 
-  PUT(rv, "mode", STRING_OBJ(cstr_to_string(modestr)));
+  PUT(rv, "mode", CSTR_TO_OBJ(modestr));
   PUT(rv, "blocking", BOOLEAN_OBJ(blocked));
 
   return rv;
@@ -1926,7 +1926,7 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Arena *arena, E
   }
   ret = arena_array(arena, 3);
   size_t off = g->line_offset[(size_t)row] + (size_t)col;
-  ADD_C(ret, STRING_OBJ(cstr_as_string((char *)g->chars[off])));
+  ADD_C(ret, CSTR_AS_OBJ((char *)g->chars[off]));
   int attr = g->attrs[off];
   ADD_C(ret, DICTIONARY_OBJ(hl_get_attr_by_id(attr, true, arena, err)));
   // will not work first time
@@ -2035,7 +2035,7 @@ Array nvim_get_mark(String name, Dictionary opts, Error *err)
   ADD(rv, INTEGER_OBJ(row));
   ADD(rv, INTEGER_OBJ(col));
   ADD(rv, INTEGER_OBJ(bufnr));
-  ADD(rv, STRING_OBJ(cstr_to_string(filename)));
+  ADD(rv, CSTR_TO_OBJ(filename));
 
   if (allocated) {
     xfree(filename);
@@ -2180,7 +2180,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
       wp->w_cursorline = win_cursorline_standout(wp) ? wp->w_cursor.lnum : 0;
 
       if (wp->w_p_cul) {
-        if (statuscol.foldinfo.fi_level > 0 && statuscol.foldinfo.fi_lines > 0) {
+        if (statuscol.foldinfo.fi_level != 0 && statuscol.foldinfo.fi_lines > 0) {
           wp->w_cursorline = statuscol.foldinfo.fi_lnum;
         }
         statuscol.use_cul = lnum == wp->w_cursorline && (wp->w_p_culopt_flags & CULOPT_NBR);

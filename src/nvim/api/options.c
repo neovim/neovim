@@ -113,16 +113,59 @@ static buf_T *do_ft_buf(char *filetype, aco_save_T *aco, Error *err)
   aucmd_prepbuf(aco, ftbuf);
 
   TRY_WRAP(err, {
-    set_option_value("bufhidden", 0L, "hide", OPT_LOCAL);
-    set_option_value("buftype", 0L, "nofile", OPT_LOCAL);
-    set_option_value("swapfile", 0L, NULL, OPT_LOCAL);
-    set_option_value("modeline", 0L, NULL, OPT_LOCAL);  // 'nomodeline'
+    set_option_value("bufhidden", STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL);
+    set_option_value("buftype", STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL);
+    set_option_value("swapfile", BOOLEAN_OPTVAL(false), OPT_LOCAL);
+    set_option_value("modeline", BOOLEAN_OPTVAL(false), OPT_LOCAL);  // 'nomodeline'
 
     ftbuf->b_p_ft = xstrdup(filetype);
     do_filetype_autocmd(ftbuf, false);
   });
 
   return ftbuf;
+}
+
+/// Consume an OptVal and convert it to an API Object.
+static Object optval_as_object(OptVal o)
+{
+  switch (o.type) {
+  case kOptValTypeNil:
+    return NIL;
+  case kOptValTypeBoolean:
+    switch (o.data.boolean) {
+    case kFalse:
+    case kTrue:
+      return BOOLEAN_OBJ(o.data.boolean);
+    case kNone:
+      return NIL;
+    default:
+      abort();
+    }
+  case kOptValTypeNumber:
+    return INTEGER_OBJ(o.data.number);
+  case kOptValTypeString:
+    return STRING_OBJ(o.data.string);
+  default:
+    abort();
+  }
+}
+
+/// Consume an API Object and convert it to an OptVal.
+static OptVal object_as_optval(Object o, bool *error)
+{
+  switch (o.type) {
+  case kObjectTypeNil:
+    return NIL_OPTVAL;
+  case kObjectTypeBoolean:
+    return BOOLEAN_OPTVAL(o.data.boolean);
+  case kObjectTypeInteger:
+    return NUMBER_OPTVAL(o.data.integer);
+  case kObjectTypeString:
+    return STRING_OPTVAL(o.data.string);
+  default:
+    *error = true;
+    return NIL_OPTVAL;
+  }
 }
 
 /// Gets the value of an option. The behavior of this function matches that of
@@ -147,6 +190,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   FUNC_API_SINCE(9)
 {
   Object rv = OBJECT_INIT;
+  OptVal value = NIL_OPTVAL;
 
   int scope = 0;
   int opt_type = SREQ_GLOBAL;
@@ -154,14 +198,14 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   char *filetype = NULL;
 
   if (!validate_option_value_args(opts, &scope, &opt_type, &from, &filetype, err)) {
-    return rv;
+    goto err;
   }
 
   aco_save_T aco;
 
   buf_T *ftbuf = do_ft_buf(filetype, &aco, err);
   if (ERROR_SET(err)) {
-    return rv;
+    goto err;
   }
 
   if (ftbuf != NULL) {
@@ -169,10 +213,8 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     from = ftbuf;
   }
 
-  long numval = 0;
-  char *stringval = NULL;
-  getoption_T result = access_option_value_for(name.data, &numval, &stringval, scope, opt_type,
-                                               from, true, err);
+  bool hidden;
+  value = get_option_value_for(name.data, NULL, scope, &hidden, opt_type, from, err);
 
   if (ftbuf != NULL) {
     // restore curwin/curbuf and a few other things
@@ -183,35 +225,16 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   }
 
   if (ERROR_SET(err)) {
-    return rv;
+    goto err;
   }
 
-  switch (result) {
-  case gov_string:
-    rv = STRING_OBJ(cstr_as_string(stringval));
-    break;
-  case gov_number:
-    rv = INTEGER_OBJ(numval);
-    break;
-  case gov_bool:
-    switch (numval) {
-    case 0:
-    case 1:
-      rv = BOOLEAN_OBJ(numval);
-      break;
-    default:
-      // Boolean options that return something other than 0 or 1 should return nil. Currently this
-      // only applies to 'autoread' which uses -1 as a local value to indicate "unset"
-      rv = NIL;
-      break;
-    }
-    break;
-  default:
-    VALIDATE_S(false, "option", name.data, {
-      return rv;
-    });
-  }
+  VALIDATE_S(!hidden && value.type != kOptValTypeNil, "option", name.data, {
+    goto err;
+  });
 
+  return optval_as_object(value);
+err:
+  optval_free(value);
   return rv;
 }
 
@@ -253,30 +276,19 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
     }
   }
 
-  long numval = 0;
-  char *stringval = NULL;
+  bool error = false;
+  OptVal optval = object_as_optval(value, &error);
 
-  switch (value.type) {
-  case kObjectTypeInteger:
-    numval = (long)value.data.integer;
-    break;
-  case kObjectTypeBoolean:
-    numval = value.data.boolean ? 1 : 0;
-    break;
-  case kObjectTypeString:
-    stringval = value.data.string.data;
-    break;
-  case kObjectTypeNil:
-    scope |= OPT_CLEAR;
-    break;
-  default:
-    VALIDATE_EXP(false, name.data, "Integer/Boolean/String", api_typename(value.type), {
+  // Handle invalid option value type.
+  if (error) {
+    // Don't use `name` in the error message here, because `name` can be any String.
+    VALIDATE_EXP(false, "value", "Integer/Boolean/String", api_typename(value.type), {
       return;
     });
   }
 
   WITH_SCRIPT_CONTEXT(channel_id, {
-    access_option_value_for(name.data, &numval, &stringval, scope, opt_type, to, false, err);
+    set_option_value_for(name.data, optval, scope, opt_type, to, err);
   });
 }
 
@@ -341,284 +353,135 @@ Dictionary nvim_get_option_info2(String name, Dict(option) *opts, Error *err)
   return get_vimoption(name, scope, buf, win, err);
 }
 
-/// Sets the global value of an option.
+/// Switch current context to get/set option value for window/buffer.
 ///
-/// @param channel_id
-/// @param name     Option name
-/// @param value    New option value
-/// @param[out] err Error details, if any
-void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
-  FUNC_API_SINCE(1)
-{
-  set_option_to(channel_id, NULL, SREQ_GLOBAL, name, value, err);
-}
-
-/// Gets the global value of an option.
+/// @param[out]  ctx       Current context. switchwin_T for window and aco_save_T for buffer.
+/// @param[in]   opt_type  Option type. See SREQ_* in option_defs.h.
+/// @param[in]   from      Target buffer/window.
+/// @param[out]  err       Error message, if any.
 ///
-/// @param name     Option name
-/// @param[out] err Error details, if any
-/// @return         Option value (global)
-Object nvim_get_option(String name, Arena *arena, Error *err)
-  FUNC_API_SINCE(1)
+/// @return  true if context was switched, false otherwise.
+static bool switch_option_context(void *const ctx, int opt_type, void *const from, Error *err)
 {
-  return get_option_from(NULL, SREQ_GLOBAL, name, err);
-}
+  switch (opt_type) {
+  case SREQ_WIN: {
+    win_T *const win = (win_T *)from;
+    switchwin_T *const switchwin = (switchwin_T *)ctx;
 
-/// Gets a buffer option value
-///
-/// @param buffer     Buffer handle, or 0 for current buffer
-/// @param name       Option name
-/// @param[out] err   Error details, if any
-/// @return Option value
-Object nvim_buf_get_option(Buffer buffer, String name, Arena *arena, Error *err)
-  FUNC_API_SINCE(1)
-{
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-
-  if (!buf) {
-    return (Object)OBJECT_INIT;
-  }
-
-  return get_option_from(buf, SREQ_BUF, name, err);
-}
-
-/// Sets a buffer option value. Passing `nil` as value deletes the option (only
-/// works if there's a global fallback)
-///
-/// @param channel_id
-/// @param buffer     Buffer handle, or 0 for current buffer
-/// @param name       Option name
-/// @param value      Option value
-/// @param[out] err   Error details, if any
-void nvim_buf_set_option(uint64_t channel_id, Buffer buffer, String name, Object value, Error *err)
-  FUNC_API_SINCE(1)
-{
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-
-  if (!buf) {
-    return;
-  }
-
-  set_option_to(channel_id, buf, SREQ_BUF, name, value, err);
-}
-
-/// Gets a window option value
-///
-/// @param window   Window handle, or 0 for current window
-/// @param name     Option name
-/// @param[out] err Error details, if any
-/// @return Option value
-Object nvim_win_get_option(Window window, String name, Arena *arena, Error *err)
-  FUNC_API_SINCE(1)
-{
-  win_T *win = find_window_by_handle(window, err);
-
-  if (!win) {
-    return (Object)OBJECT_INIT;
-  }
-
-  return get_option_from(win, SREQ_WIN, name, err);
-}
-
-/// Sets a window option value. Passing `nil` as value deletes the option (only
-/// works if there's a global fallback)
-///
-/// @param channel_id
-/// @param window   Window handle, or 0 for current window
-/// @param name     Option name
-/// @param value    Option value
-/// @param[out] err Error details, if any
-void nvim_win_set_option(uint64_t channel_id, Window window, String name, Object value, Error *err)
-  FUNC_API_SINCE(1)
-{
-  win_T *win = find_window_by_handle(window, err);
-
-  if (!win) {
-    return;
-  }
-
-  set_option_to(channel_id, win, SREQ_WIN, name, value, err);
-}
-
-/// Gets the value of a global or local (buffer, window) option.
-///
-/// @param from If `type` is `SREQ_WIN` or `SREQ_BUF`, this must be a pointer
-///        to the window or buffer.
-/// @param type One of `SREQ_GLOBAL`, `SREQ_WIN` or `SREQ_BUF`
-/// @param name The option name
-/// @param[out] err Details of an error that may have occurred
-/// @return the option value
-static Object get_option_from(void *from, int type, String name, Error *err)
-{
-  Object rv = OBJECT_INIT;
-
-  VALIDATE_S(name.size > 0, "option name", "<empty>", {
-    return rv;
-  });
-
-  // Return values
-  int64_t numval;
-  char *stringval = NULL;
-
-  int flags = get_option_value_strict(name.data, &numval, &stringval, type, from);
-  VALIDATE_S(flags != 0, "option name", name.data, {
-    return rv;
-  });
-
-  if (flags & SOPT_BOOL) {
-    rv.type = kObjectTypeBoolean;
-    rv.data.boolean = numval ? true : false;
-  } else if (flags & SOPT_NUM) {
-    rv.type = kObjectTypeInteger;
-    rv.data.integer = numval;
-  } else if (flags & SOPT_STRING) {
-    if (!stringval) {
-      api_set_error(err, kErrorTypeException, "Failed to get option '%s'", name.data);
-      return rv;
+    if (win == curwin) {
+      return false;
     }
-    rv.type = kObjectTypeString;
-    rv.data.string.data = stringval;
-    rv.data.string.size = strlen(stringval);
-  } else {
-    api_set_error(err, kErrorTypeException, "Unknown type for option '%s'", name.data);
-  }
 
-  return rv;
-}
+    if (switch_win_noblock(switchwin, win, win_find_tabpage(win), true)
+        == FAIL) {
+      restore_win_noblock(switchwin, true);
 
-/// Sets the value of a global or local (buffer, window) option.
-///
-/// @param to If `type` is `SREQ_WIN` or `SREQ_BUF`, this must be a pointer
-///        to the window or buffer.
-/// @param type One of `SREQ_GLOBAL`, `SREQ_WIN` or `SREQ_BUF`
-/// @param name The option name
-/// @param[out] err Details of an error that may have occurred
-void set_option_to(uint64_t channel_id, void *to, int type, String name, Object value, Error *err)
-{
-  VALIDATE_S(name.size > 0, "option name", "<empty>", {
-    return;
-  });
-
-  int flags = get_option_value_strict(name.data, NULL, NULL, type, to);
-  VALIDATE_S(flags != 0, "option name", name.data, {
-    return;
-  });
-
-  if (value.type == kObjectTypeNil) {
-    if (type == SREQ_GLOBAL) {
-      api_set_error(err, kErrorTypeException, "Cannot unset option '%s'", name.data);
-      return;
-    } else if (!(flags & SOPT_GLOBAL)) {
-      api_set_error(err, kErrorTypeException,
-                    "Cannot unset option '%s' because it doesn't have a global value",
-                    name.data);
-      return;
-    } else {
-      unset_global_local_option(name.data, to);
-      return;
-    }
-  }
-
-  long numval = 0;
-  char *stringval = NULL;
-
-  if (flags & SOPT_BOOL) {
-    VALIDATE(value.type == kObjectTypeBoolean, "Option '%s' value must be Boolean", name.data, {
-      return;
-    });
-    numval = value.data.boolean;
-  } else if (flags & SOPT_NUM) {
-    VALIDATE(value.type == kObjectTypeInteger, "Option '%s' value must be Integer", name.data, {
-      return;
-    });
-    VALIDATE((value.data.integer <= INT_MAX && value.data.integer >= INT_MIN),
-             "Option '%s' value is out of range", name.data, {
-      return;
-    });
-    numval = (int)value.data.integer;
-  } else {
-    VALIDATE(value.type == kObjectTypeString, "Option '%s' value must be String", name.data, {
-      return;
-    });
-    stringval = value.data.string.data;
-  }
-
-  // For global-win-local options -> setlocal
-  // For        win-local options -> setglobal and setlocal (opt_flags == 0)
-  const int opt_flags = (type == SREQ_WIN && !(flags & SOPT_GLOBAL)) ? 0 :
-                        (type == SREQ_GLOBAL) ? OPT_GLOBAL : OPT_LOCAL;
-
-  WITH_SCRIPT_CONTEXT(channel_id, {
-    access_option_value_for(name.data, &numval, &stringval, opt_flags, type, to, false, err);
-  });
-}
-
-static getoption_T access_option_value(char *key, long *numval, char **stringval, int opt_flags,
-                                       bool get, Error *err)
-{
-  if (get) {
-    return get_option_value(key, numval, stringval, NULL, opt_flags);
-  } else {
-    const char *errmsg;
-    if ((errmsg = set_option_value(key, *numval, *stringval, opt_flags))) {
       if (try_end(err)) {
-        return 0;
+        return false;
       }
-
-      api_set_error(err, kErrorTypeException, "%s", errmsg);
+      api_set_error(err, kErrorTypeException, "Problem while switching windows");
+      return false;
     }
-    return 0;
+    return true;
+  }
+  case SREQ_BUF: {
+    buf_T *const buf = (buf_T *)from;
+    aco_save_T *const aco = (aco_save_T *)ctx;
+
+    if (buf == curbuf) {
+      return false;
+    }
+    aucmd_prepbuf(aco, buf);
+    return true;
+  }
+  case SREQ_GLOBAL:
+    return false;
+  default:
+    abort();  // This should never happen.
   }
 }
 
-static getoption_T access_option_value_for(char *key, long *numval, char **stringval, int opt_flags,
-                                           int opt_type, void *from, bool get, Error *err)
+/// Restore context after getting/setting option for window/buffer. See switch_option_context() for
+/// params.
+static void restore_option_context(void *const ctx, const int opt_type)
 {
-  bool need_switch = false;
-  switchwin_T switchwin;
-  aco_save_T aco;
-  getoption_T result = 0;
-
-  try_start();
   switch (opt_type) {
   case SREQ_WIN:
-    need_switch = (win_T *)from != curwin;
-    if (need_switch) {
-      if (switch_win_noblock(&switchwin, (win_T *)from, win_find_tabpage((win_T *)from), true)
-          == FAIL) {
-        restore_win_noblock(&switchwin, true);
-        if (try_end(err)) {
-          return result;
-        }
-        api_set_error(err, kErrorTypeException, "Problem while switching windows");
-        return result;
-      }
-    }
-    result = access_option_value(key, numval, stringval, opt_flags, get, err);
-    if (need_switch) {
-      restore_win_noblock(&switchwin, true);
-    }
+    restore_win_noblock((switchwin_T *)ctx, true);
     break;
   case SREQ_BUF:
-    need_switch = (buf_T *)from != curbuf;
-    if (need_switch) {
-      aucmd_prepbuf(&aco, (buf_T *)from);
-    }
-    result = access_option_value(key, numval, stringval, opt_flags, get, err);
-    if (need_switch) {
-      aucmd_restbuf(&aco);
-    }
+    aucmd_restbuf((aco_save_T *)ctx);
     break;
   case SREQ_GLOBAL:
-    result = access_option_value(key, numval, stringval, opt_flags, get, err);
     break;
+  default:
+    abort();  // This should never happen.
   }
+}
 
+/// Get option value for buffer / window.
+///
+/// @param[in]   name      Option name.
+/// @param[out]  flagsp    Set to the option flags (P_xxxx) (if not NULL).
+/// @param[in]   scope     Option scope (can be OPT_LOCAL, OPT_GLOBAL or a combination).
+/// @param[out]  hidden    Whether option is hidden.
+/// @param[in]   opt_type  Option type. See SREQ_* in option_defs.h.
+/// @param[in]   from      Target buffer/window.
+/// @param[out]  err       Error message, if any.
+///
+/// @return  Option value. Must be freed by caller.
+OptVal get_option_value_for(const char *const name, uint32_t *flagsp, int scope, bool *hidden,
+                            const int opt_type, void *const from, Error *err)
+{
+  switchwin_T switchwin;
+  aco_save_T aco;
+  void *ctx = opt_type == SREQ_WIN ? (void *)&switchwin
+                                   : (opt_type == SREQ_BUF ? (void *)&aco : NULL);
+
+  bool switched = switch_option_context(ctx, opt_type, from, err);
   if (ERROR_SET(err)) {
-    return result;
+    return NIL_OPTVAL;
   }
 
-  try_end(err);
+  OptVal retv = get_option_value(name, flagsp, scope, hidden);
 
-  return result;
+  if (switched) {
+    restore_option_context(ctx, opt_type);
+  }
+
+  return retv;
+}
+
+/// Set option value for buffer / window.
+///
+/// @param[in]   name       Option name.
+/// @param[in]   value      Option value.
+/// @param[in]   opt_flags  Flags: OPT_LOCAL, OPT_GLOBAL, or 0 (both).
+///                         If OPT_CLEAR is set, the value of the option
+///                         is cleared  (the exact semantics of this depend
+///                         on the option).
+/// @param[in]   opt_type   Option type. See SREQ_* in option_defs.h.
+/// @param[in]   from       Target buffer/window.
+/// @param[out]  err        Error message, if any.
+void set_option_value_for(const char *const name, OptVal value, const int opt_flags,
+                          const int opt_type, void *const from, Error *err)
+{
+  switchwin_T switchwin;
+  aco_save_T aco;
+  void *ctx = opt_type == SREQ_WIN ? (void *)&switchwin
+                                   : (opt_type == SREQ_BUF ? (void *)&aco : NULL);
+
+  bool switched = switch_option_context(ctx, opt_type, from, err);
+  if (ERROR_SET(err)) {
+    return;
+  }
+
+  const char *const errmsg = set_option_value(name, value, opt_flags);
+  if (errmsg) {
+    api_set_error(err, kErrorTypeException, "%s", errmsg);
+  }
+
+  if (switched) {
+    restore_option_context(ctx, opt_type);
+  }
 }

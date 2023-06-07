@@ -706,6 +706,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'autowriteall' for that.
 	Some buffers will not be written, specifically when 'buftype' is
 	"nowrite", "nofile", "terminal" or "prompt".
+	USE WITH CARE: If you make temporary changes to a buffer that you
+	don't want to be saved this option may cause it to be saved anyway.
+	Renaming the buffer with ":file {name}" may help avoid this.
 
 			 *'autowriteall'* *'awa'* *'noautowriteall'* *'noawa'*
 'autowriteall' 'awa'	boolean	(default off)
@@ -1324,7 +1327,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			register.  When "unnamed" is also included to the
 			option, yank and delete operations (but not put)
 			will additionally copy the text into register
-			'*'. See |clipboard|.
+			"*". See |clipboard|.
 
 						*'cmdheight'* *'ch'*
 'cmdheight' 'ch'	number	(default 1)
@@ -1393,8 +1396,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 'commentstring' 'cms'	string	(default "")
 			local to buffer
 	A template for a comment.  The "%s" in the value is replaced with the
-	comment text.  Currently only used to add markers for folding, see
-	|fold-marker|.
+	comment text.  For example, C uses "/*%s*/". Currently only used to
+	add markers for folding, see |fold-marker|.
 
 						*'complete'* *'cpt'* *E535*
 'complete' 'cpt'	string	(default: ".,w,b,u,t")
@@ -1858,7 +1861,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'indentexpr'.
 
 						*'define'* *'def'*
-'define' 'def'		string	(default "^\s*#\s*define")
+'define' 'def'		string	(default "")
 			global or local to buffer |global-local|
 	Pattern to be used to find a macro definition.  It is a search
 	pattern, just like for the "/" command.  This option is used for the
@@ -1867,8 +1870,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		{match with 'define'}{non-ID chars}{defined name}{non-ID char}
 	See |option-backslash| about inserting backslashes to include a space
 	or backslash.
-	The default value is for C programs.  For C++ this value would be
-	useful, to include const type declarations: >
+	For C++ this value would be useful, to include const type declarations: >
 		^\(#\s*define\|[a-z]*\s*const\s*[a-z]*\)
 <	You can also use "\ze" just before the name and continue the pattern
 	to check what is following.  E.g. for Javascript, if a function is
@@ -3306,12 +3308,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|Command-line-mode| is done.
 
 						*'include'* *'inc'*
-'include' 'inc'		string	(default "^\s*#\s*include")
+'include' 'inc'		string	(default "")
 			global or local to buffer |global-local|
 	Pattern to be used to find an include command.  It is a search
-	pattern, just like for the "/" command (See |pattern|).  The default
-	value is for C programs.  This option is used for the commands "[i",
-	"]I", "[d", etc.
+	pattern, just like for the "/" command (See |pattern|).  This option
+	is used for the commands "[i", "]I", "[d", etc.
 	Normally the 'isfname' option is used to recognize the file name that
 	comes after the matched pattern.  But if "\zs" appears in the pattern
 	then the text matched from "\zs" to the end, or until "\ze" if it
@@ -3523,7 +3524,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	that is not white space or punctuation).
 	For C programs you could use "a-z,A-Z,48-57,_,.,-,>".
 	For a help file it is set to all non-blank printable characters except
-	'*', '"' and '|' (so that CTRL-] on a command finds the help for that
+	"*", '"' and '|' (so that CTRL-] on a command finds the help for that
 	command).
 	When the 'lisp' option is on the '-' character is always included.
 	This option also influences syntax highlighting, unless the syntax
@@ -4486,8 +4487,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Only normal file name characters can be used, "/\*?[|<>" are illegal.
 
 				*'path'* *'pa'* *E343* *E345* *E347* *E854*
-'path' 'pa'		string	(default on Unix: ".,/usr/include,,"
-				   other systems: ".,,")
+'path' 'pa'		string	(default: ".,,")
 			global or local to buffer |global-local|
 	This is a list of directories which will be searched when using the
 	|gf|, [f, ]f, ^Wf, |:find|, |:sfind|, |:tabfind| and other commands,
@@ -4909,6 +4909,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	top are deleted if new lines exceed this limit.
 	Minimum is 1, maximum is 100000.
 	Only in |terminal| buffers.
+
+	Note: Lines that are not visible and kept in scrollback are not
+	reflown when the terminal buffer is resized horizontally.
 
 			*'scrollbind'* *'scb'* *'noscrollbind'* *'noscb'*
 'scrollbind' 'scb'	boolean  (default off)
@@ -5387,7 +5390,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	function to get the effective shiftwidth value.
 
 						*'shortmess'* *'shm'*
-'shortmess' 'shm'	string	(default "filnxtToOF")
+'shortmess' 'shm'	string	(default "filnxtToOCF")
 			global
 	This option helps to avoid all the |hit-enter| prompts caused by file
 	messages, for example  with CTRL-G, and to avoid some other messages.
@@ -6201,16 +6204,18 @@ A jump table for the options with a short description can be found at |Q_op|.
 'switchbuf' 'swb'	string	(default "uselast")
 			global
 	This option controls the behavior when switching between buffers.
-	Mostly for |quickfix| commands some values are also used for other
-	commands, as mentioned below.
+	This option is checked, when
+	- jumping to errors with the |quickfix| commands (|:cc|, |:cn|, |:cp|,
+	  etc.)
+	- jumping to a tag using the |:stag| command.
+	- opening a file using the |CTRL-W_f| or |CTRL-W_F| command.
+	- jumping to a buffer using a buffer split command (e.g.  |:sbuffer|,
+	  |:sbnext|, or |:sbrewind|).
 	Possible values (comma-separated list):
-	   useopen	If included, jump to the first open window that
-			contains the specified buffer (if there is one).
-			Otherwise: Do not examine other windows.
-			This setting is checked with |quickfix| commands, when
-			jumping to errors (":cc", ":cn", "cp", etc.).  It is
-			also used in all buffer related split commands, for
-			example ":sbuffer", ":sbnext", or ":sbrewind".
+	   useopen	If included, jump to the first open window in the
+			current tab page that contains the specified buffer
+			(if there is one).  Otherwise: Do not examine other
+			windows.
 	   usetab	Like "useopen", but also consider windows in other tab
 			pages.
 	   split	If included, split the current window before loading

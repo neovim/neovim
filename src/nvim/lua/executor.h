@@ -8,7 +8,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/assert.h"
-#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/func_attr.h"
 #include "nvim/lua/converter.h"
@@ -24,7 +24,7 @@ typedef struct {
   LuaRef empty_dict_ref;
   int ref_count;
 #if __has_feature(address_sanitizer)
-  PMap(handle_T) ref_markers;
+  PMap(int) ref_markers;
 #endif
 } nlua_ref_state_t;
 

@@ -121,11 +121,12 @@ let s:filename_checks = {
     \ 'cobol': ['file.cbl', 'file.cob', 'file.lib'],
     \ 'coco': ['file.atg'],
     \ 'conaryrecipe': ['file.recipe'],
-    \ 'conf': ['auto.master'],
+    \ 'conf': ['auto.master', 'file.conf'],
     \ 'config': ['configure.in', 'configure.ac', '/etc/hostname.file', 'any/etc/hostname.file'],
     \ 'confini': ['/etc/pacman.conf', 'any/etc/pacman.conf', 'mpv.conf', 'any/.aws/config', 'any/.aws/credentials', 'file.nmconnection'],
     \ 'context': ['tex/context/any/file.tex', 'file.mkii', 'file.mkiv', 'file.mkvi', 'file.mkxl', 'file.mklx'],
     \ 'cook': ['file.cook'],
+    \ 'corn': ['file.corn'],
     \ 'cpon': ['file.cpon'],
     \ 'cpp': ['file.cxx', 'file.c++', 'file.hh', 'file.hxx', 'file.hpp', 'file.ipp', 'file.moc', 'file.tcc', 'file.inl', 'file.tlh', 'file.cppm', 'file.ccm', 'file.cxxm', 'file.c++m'],
     \ 'cqlang': ['file.cql'],
@@ -305,6 +306,7 @@ let s:filename_checks = {
     \ 'json': ['file.json', 'file.jsonp', 'file.json-patch', 'file.webmanifest', 'Pipfile.lock', 'file.ipynb', '.prettierrc', '.firebaserc', '.stylelintrc', 'file.slnf'],
     \ 'json5': ['file.json5'],
     \ 'jsonc': ['file.jsonc', '.babelrc', '.eslintrc', '.jsfmtrc', '.jshintrc', '.hintrc', '.swrc', 'jsconfig.json', 'tsconfig.json', 'tsconfig.test.json', 'tsconfig-test.json'],
+    \ 'jsonl': ['file.jsonl'],
     \ 'jsonnet': ['file.jsonnet', 'file.libsonnet'],
     \ 'jsp': ['file.jsp'],
     \ 'julia': ['file.jl'],
@@ -369,7 +371,7 @@ let s:filename_checks = {
     \            'file.wxm', 'maxima-init.mac'],
     \ 'mel': ['file.mel'],
     \ 'mermaid': ['file.mmd', 'file.mmdc', 'file.mermaid'],
-    \ 'meson': ['meson.build', 'meson_options.txt'],
+    \ 'meson': ['meson.build', 'meson.options', 'meson_options.txt'],
     \ 'messages': ['/log/auth', '/log/cron', '/log/daemon', '/log/debug', '/log/kern', '/log/lpr', '/log/mail', '/log/messages', '/log/news/news', '/log/syslog', '/log/user',
     \     '/log/auth.log', '/log/cron.log', '/log/daemon.log', '/log/debug.log', '/log/kern.log', '/log/lpr.log', '/log/mail.log', '/log/messages.log', '/log/news/news.log', '/log/syslog.log', '/log/user.log',
     \     '/log/auth.err', '/log/cron.err', '/log/daemon.err', '/log/debug.err', '/log/kern.err', '/log/lpr.err', '/log/mail.err', '/log/messages.err', '/log/news/news.err', '/log/syslog.err', '/log/user.err',
@@ -564,7 +566,7 @@ let s:filename_checks = {
     \ 'spice': ['file.sp', 'file.spice'],
     \ 'spup': ['file.speedup', 'file.spdata', 'file.spd'],
     \ 'spyce': ['file.spy', 'file.spi'],
-    \ 'sql': ['file.tyb', 'file.typ', 'file.tyc', 'file.pkb', 'file.pks'],
+    \ 'sql': ['file.tyb', 'file.tyc', 'file.pkb', 'file.pks'],
     \ 'sqlj': ['file.sqlj'],
     \ 'prql': ['file.prql'],
     \ 'sqr': ['file.sqr', 'file.sqi'],
@@ -638,6 +640,7 @@ let s:filename_checks = {
     \ 'upstreamdat': ['upstream.dat', 'UPSTREAM.DAT', 'upstream.file.dat', 'UPSTREAM.FILE.DAT', 'file.upstream.dat', 'FILE.UPSTREAM.DAT'],
     \ 'upstreaminstalllog': ['upstreaminstall.log', 'UPSTREAMINSTALL.LOG', 'upstreaminstall.file.log', 'UPSTREAMINSTALL.FILE.LOG', 'file.upstreaminstall.log', 'FILE.UPSTREAMINSTALL.LOG'],
     \ 'upstreamlog': ['fdrupstream.log', 'upstream.log', 'UPSTREAM.LOG', 'upstream.file.log', 'UPSTREAM.FILE.LOG', 'file.upstream.log', 'FILE.UPSTREAM.LOG', 'UPSTREAM-file.log', 'UPSTREAM-FILE.LOG'],
+    \ 'usd': ['file.usda', 'file.usd'],
     \ 'usserverlog': ['usserver.log', 'USSERVER.LOG', 'usserver.file.log', 'USSERVER.FILE.LOG', 'file.usserver.log', 'FILE.USSERVER.LOG'],
     \ 'usw2kagtlog': ['usw2kagt.log', 'USW2KAGT.LOG', 'usw2kagt.file.log', 'USW2KAGT.FILE.LOG', 'file.usw2kagt.log', 'FILE.USW2KAGT.LOG'],
     \ 'vala': ['file.vala'],
@@ -708,19 +711,20 @@ func CheckItems(checks)
     for i in range(0, len(names) - 1)
       new
       try
-        exe 'edit ' . fnameescape(names[i])
+        exe 'edit ' .. fnameescape(names[i])
       catch
-	call assert_report('cannot edit "' . names[i] . '": ' . v:exception)
+	call assert_report('cannot edit "' .. names[i] .. '": ' .. v:exception)
       endtry
       if &filetype == '' && &readonly
 	" File exists but not able to edit it (permission denied)
       else
         let expected = ft == 'none' ? '' : ft
-	call assert_equal(expected, &filetype, 'with file name: ' . names[i])
+	call assert_equal(expected, &filetype, 'with file name: ' .. names[i])
       endif
       bwipe!
     endfor
   endfor
+
   set swapfile&
 endfunc
 
@@ -1446,6 +1450,12 @@ func Test_mod_file()
   bwipe!
   call delete('go.mod')
 
+  call writefile(['module M'], 'go.mod')
+  split go.mod
+  call assert_equal('gomod', &filetype)
+  bwipe!
+  call delete('go.mod')
+
   filetype off
 endfunc
 
@@ -2043,6 +2053,37 @@ func Test_lsl_file()
   split Xfile.lsl
   call assert_equal('larch', &filetype)
   bwipe!
+
+  filetype off
+endfunc
+
+func Test_typ_file()
+  filetype on
+
+  " SQL type file
+
+  call writefile(['CASE = LOWER'], 'Xfile.typ', 'D')
+  split Xfile.typ
+  call assert_equal('sql', &filetype)
+  bwipe!
+
+  call writefile(['TYPE foo'], 'Xfile.typ')
+  split Xfile.typ
+  call assert_equal('sql', &filetype)
+  bwipe!
+
+  " typst document
+
+  call writefile(['this is a fallback'], 'Xfile.typ')
+  split Xfile.typ
+  call assert_equal('typst', &filetype)
+  bwipe!
+
+  let g:filetype_typ = 'typst'
+  split test.typ
+  call assert_equal('typst', &filetype)
+  bwipe!
+  unlet g:filetype_typ
 
   filetype off
 endfunc

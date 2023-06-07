@@ -103,7 +103,7 @@ memfile_T *mf_open(char *fname, int flags)
   mfp->mf_free_first = NULL;         // free list is empty
   mfp->mf_used_first = NULL;         // used list is empty
   mfp->mf_used_last = NULL;
-  mfp->mf_dirty = false;
+  mfp->mf_dirty = MF_DIRTY_NO;
   mf_hash_init(&mfp->mf_hash);
   mf_hash_init(&mfp->mf_trans);
   mfp->mf_page_size = MEMFILE_PAGE_SIZE;
@@ -159,7 +159,7 @@ memfile_T *mf_open(char *fname, int flags)
 int mf_open_file(memfile_T *mfp, char *fname)
 {
   if (mf_do_open(mfp, fname, O_RDWR | O_CREAT | O_EXCL)) {
-    mfp->mf_dirty = true;
+    mfp->mf_dirty = MF_DIRTY_YES;
     return OK;
   }
 
@@ -269,7 +269,7 @@ bhdr_T *mf_new(memfile_T *mfp, bool negative, unsigned page_count)
     }
   }
   hp->bh_flags = BH_LOCKED | BH_DIRTY;    // new block is always dirty
-  mfp->mf_dirty = true;
+  mfp->mf_dirty = MF_DIRTY_YES;
   hp->bh_page_count = page_count;
   mf_ins_used(mfp, hp);
   mf_ins_hash(mfp, hp);
@@ -342,7 +342,9 @@ void mf_put(memfile_T *mfp, bhdr_T *hp, bool dirty, bool infile)
   flags &= ~BH_LOCKED;
   if (dirty) {
     flags |= BH_DIRTY;
-    mfp->mf_dirty = true;
+    if (mfp->mf_dirty != MF_DIRTY_YES_NOSYNC) {
+      mfp->mf_dirty = MF_DIRTY_YES;
+    }
   }
   hp->bh_flags = flags;
   if (infile) {
@@ -382,8 +384,9 @@ int mf_sync(memfile_T *mfp, int flags)
 {
   int got_int_save = got_int;
 
-  if (mfp->mf_fd < 0) {         // there is no file, nothing to do
-    mfp->mf_dirty = false;
+  if (mfp->mf_fd < 0) {
+    // there is no file, nothing to do
+    mfp->mf_dirty = MF_DIRTY_NO;
     return FAIL;
   }
 
@@ -426,7 +429,7 @@ int mf_sync(memfile_T *mfp, int flags)
   // If the whole list is flushed, the memfile is not dirty anymore.
   // In case of an error, dirty flag is also set, to avoid trying all the time.
   if (hp == NULL || status == FAIL) {
-    mfp->mf_dirty = false;
+    mfp->mf_dirty = MF_DIRTY_NO;
   }
 
   if (flags & MFS_FLUSH) {
@@ -449,7 +452,7 @@ void mf_set_dirty(memfile_T *mfp)
       hp->bh_flags |= BH_DIRTY;
     }
   }
-  mfp->mf_dirty = true;
+  mfp->mf_dirty = MF_DIRTY_YES;
 }
 
 /// Insert block in front of memfile's hash list.

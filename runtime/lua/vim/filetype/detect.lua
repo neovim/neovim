@@ -196,6 +196,9 @@ function M.conf(path, bufnr)
   if vim.fn.did_filetype() ~= 0 or path:find(vim.g.ft_ignore_pat) then
     return
   end
+  if path:find('%.conf$') then
+    return 'conf'
+  end
   for _, line in ipairs(getlines(bufnr, 1, 5)) do
     if line:find('^#') then
       return 'conf'
@@ -771,14 +774,14 @@ end
 function M.mod(path, bufnr)
   if vim.g.filetype_mod then
     return vim.g.filetype_mod
+  elseif matchregex(path, [[\c\<go\.mod$]]) then
+    return 'gomod'
   elseif is_lprolog(bufnr) then
     return 'lprolog'
   elseif matchregex(nextnonblank(bufnr, 1), [[\%(\<MODULE\s\+\w\+\s*;\|^\s*(\*\)]]) then
     return 'modula2'
   elseif is_rapid(bufnr) then
     return 'rapid'
-  elseif matchregex(path, [[\c\<go\.mod$]]) then
-    return 'gomod'
   else
     -- Nothing recognized, assume modsim3
     return 'modsim3'
@@ -1320,6 +1323,28 @@ function M.txt(bufnr)
   if not getlines(bufnr, -1):find('vim:.*ft=help') then
     return 'text'
   end
+end
+
+function M.typ(bufnr)
+  if vim.g.filetype_typ then
+    return vim.g.filetype_typ
+  end
+
+  for _, line in ipairs(getlines(bufnr, 1, 200)) do
+    if
+      findany(line, {
+        '^CASE[%s]?=[%s]?SAME$',
+        '^CASE[%s]?=[%s]?LOWER$',
+        '^CASE[%s]?=[%s]?UPPER$',
+        '^CASE[%s]?=[%s]?OPPOSITE$',
+        '^TYPE%s',
+      })
+    then
+      return 'sql'
+    end
+  end
+
+  return 'typst'
 end
 
 -- Determine if a .v file is Verilog, V, or Coq

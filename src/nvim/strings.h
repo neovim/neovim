@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include "klib/kvec.h"
-#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/types.h"
 
 /// Append string to string and return pointer to the next byte

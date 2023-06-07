@@ -9,6 +9,9 @@ endif
 runtime! ftplugin/help.vim
 
 setlocal wrap breakindent linebreak
+setlocal foldexpr=getline(v:lnum-1)=~'^=\\{78}$'?'>1':(getline(v:lnum)=~'^=\\{78}'?0:'=')
+setlocal foldmethod=expr
+setlocal foldtext=v:lua.require('vim.health').foldtext()
 let &l:iskeyword='!-~,^*,^|,^",192-255'
 
 if exists("b:undo_ftplugin")

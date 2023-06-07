@@ -55,6 +55,7 @@ defsfile:write(string.format([[
 #include "nvim/help.h"
 #include "nvim/indent.h"
 #include "nvim/lua/executor.h"
+#include "nvim/lua/secure.h"
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
 #include "nvim/match.h"

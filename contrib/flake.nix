@@ -106,7 +106,6 @@
 
               # ASAN_OPTIONS=detect_leaks=1
               export ASAN_OPTIONS="log_path=./test.log:abort_on_error=1"
-              export UBSAN_OPTIONS=print_stacktrace=1
 
               # for treesitter functionaltests
               mkdir -p runtime/parser

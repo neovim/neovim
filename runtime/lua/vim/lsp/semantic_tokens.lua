@@ -2,7 +2,7 @@ local api = vim.api
 local bit = require('bit')
 local handlers = require('vim.lsp.handlers')
 local util = require('vim.lsp.util')
-local uv = vim.loop
+local uv = vim.uv
 
 --- @class STTokenRange
 --- @field line integer line number 0-based

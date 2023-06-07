@@ -169,7 +169,7 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   .sb_popline  = term_sb_pop,
 };
 
-static PMap(ptr_t) invalidated_terminals = MAP_INIT;
+static Set(ptr_t) invalidated_terminals = SET_INIT;
 
 void terminal_init(void)
 {
@@ -183,10 +183,10 @@ void terminal_teardown(void)
   time_watcher_stop(&refresh_timer);
   multiqueue_free(refresh_timer.events);
   time_watcher_close(&refresh_timer, NULL);
-  pmap_destroy(ptr_t)(&invalidated_terminals);
+  set_destroy(ptr_t, &invalidated_terminals);
   // terminal_destroy might be called after terminal_teardown is invoked
   // make sure it is in an empty, valid state
-  pmap_init(ptr_t, &invalidated_terminals);
+  invalidated_terminals = (Set(ptr_t)) SET_INIT;
 }
 
 static void term_output_callback(const char *s, size_t len, void *user_data)
@@ -220,6 +220,7 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   // Set up screen
   rv->vts = vterm_obtain_screen(rv->vt);
   vterm_screen_enable_altscreen(rv->vts, true);
+  vterm_screen_enable_reflow(rv->vts, true);
   // delete empty lines at the end of the buffer
   vterm_screen_set_callbacks(rv->vts, &vterm_screen_callbacks, rv);
   vterm_screen_set_damage_merge(rv->vts, VTERM_DAMAGE_SCROLL);
@@ -234,7 +235,7 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   aucmd_prepbuf(&aco, buf);
 
   refresh_screen(rv, buf);
-  set_option_value("buftype", 0, "terminal", OPT_LOCAL);  // -V666
+  set_option_value("buftype", STATIC_CSTR_AS_OPTVAL("terminal"), OPT_LOCAL);  // -V666
 
   // Default settings for terminal buffers
   buf->b_p_ma = false;     // 'nomodifiable'
@@ -242,8 +243,8 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   buf->b_p_scbk =          // 'scrollback' (initialize local from global)
                   (p_scbk < 0) ? 10000 : MAX(1, p_scbk);
   buf->b_p_tw = 0;         // 'textwidth'
-  set_option_value("wrap", false, NULL, OPT_LOCAL);
-  set_option_value("list", false, NULL, OPT_LOCAL);
+  set_option_value("wrap", BOOLEAN_OPTVAL(false), OPT_LOCAL);
+  set_option_value("list", BOOLEAN_OPTVAL(false), OPT_LOCAL);
   if (buf->b_ffname != NULL) {
     buf_set_term_title(buf, buf->b_ffname, strlen(buf->b_ffname));
   }
@@ -596,7 +597,7 @@ static int terminal_execute(VimState *state, int key)
     break;
 
   case K_LUA:
-    map_execute_lua();
+    map_execute_lua(false);
     break;
 
   case Ctrl_N:
@@ -652,12 +653,12 @@ void terminal_destroy(Terminal **termpp)
   }
 
   if (!term->refcount) {
-    if (pmap_has(ptr_t)(&invalidated_terminals, term)) {
+    if (set_has(ptr_t, &invalidated_terminals, term)) {
       // flush any pending changes to the buffer
       block_autocmds();
       refresh_terminal(term);
       unblock_autocmds();
-      pmap_del(ptr_t)(&invalidated_terminals, term);
+      set_del(ptr_t, &invalidated_terminals, term);
     }
     for (size_t i = 0; i < term->sb_current; i++) {
       xfree(term->sb_buffer[i]);
@@ -1027,7 +1028,7 @@ static int term_sb_push(int cols, const VTermScreenCell *cells, void *data)
   }
 
   memcpy(sbrow->cells, cells, sizeof(cells[0]) * c);
-  pmap_put(ptr_t)(&invalidated_terminals, term, NULL);
+  set_put(ptr_t, &invalidated_terminals, term);
 
   return 1;
 }
@@ -1068,7 +1069,7 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
   }
 
   xfree(sbrow);
-  pmap_put(ptr_t)(&invalidated_terminals, term, NULL);
+  set_put(ptr_t, &invalidated_terminals, term);
 
   return 1;
 }
@@ -1524,7 +1525,7 @@ static void invalidate_terminal(Terminal *term, int start_row, int end_row)
     term->invalid_end = MAX(term->invalid_end, end_row);
   }
 
-  pmap_put(ptr_t)(&invalidated_terminals, term, NULL);
+  set_put(ptr_t, &invalidated_terminals, term);
   if (!refresh_pending) {
     time_watcher_start(&refresh_timer, refresh_timer_cb, REFRESH_DELAY, 0);
     refresh_pending = true;
@@ -1567,10 +1568,10 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
   void *stub; (void)(stub);
   // don't process autocommands while updating terminal buffers
   block_autocmds();
-  map_foreach(&invalidated_terminals, term, stub, {
+  set_foreach(&invalidated_terminals, term, {
     refresh_terminal(term);
   });
-  pmap_clear(ptr_t)(&invalidated_terminals);
+  set_clear(ptr_t, &invalidated_terminals);
   unblock_autocmds();
 }
 

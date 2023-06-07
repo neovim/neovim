@@ -13,6 +13,13 @@ func Test_search_cmds()
   call assert_equal([0, 1, 43, 0], getpos('.'))
   normal! ,
   call assert_equal([0, 1, 28, 0], getpos('.'))
+  call assert_equal('最', getcharsearch().char)
+  call setcharsearch({'char' : ''})
+  call assert_equal('', getcharsearch().char)
+  call assert_beeps('normal ;')
+  call assert_equal([0, 1, 28, 0], getpos('.'))
+  call assert_beeps('normal ,')
+  call assert_equal([0, 1, 28, 0], getpos('.'))
   bw!
 endfunc
 

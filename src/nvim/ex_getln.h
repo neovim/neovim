@@ -4,7 +4,6 @@
 #include <stdbool.h>
 
 #include "klib/kvec.h"
-#include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/types.h"

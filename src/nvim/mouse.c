@@ -1310,14 +1310,13 @@ retnomove:
         }
         first = false;
 
-        if (hasFolding(curwin->w_topline, NULL, &curwin->w_topline)
-            && curwin->w_topline == curbuf->b_ml.ml_line_count) {
-          break;
-        }
-
         if (curwin->w_topfill > 0) {
           curwin->w_topfill--;
         } else {
+          if (hasFolding(curwin->w_topline, NULL, &curwin->w_topline)
+              && curwin->w_topline == curbuf->b_ml.ml_line_count) {
+            break;
+          }
           curwin->w_topline++;
           curwin->w_topfill = win_get_fill(curwin, curwin->w_topline);
         }
@@ -1403,8 +1402,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
 
   while (row > 0) {
     // Don't include filler lines in "count"
-    if (win_may_fill(win)
-        && !hasFoldingWin(win, lnum, NULL, NULL, true, NULL)) {
+    if (win_may_fill(win)) {
       if (lnum == win->w_topline) {
         row -= win->w_topfill;
       } else {

@@ -12,7 +12,7 @@ unlet! b:current_syntax
 syn case match
 
 syn keyword DiagnosticError ERROR[:]
-syn keyword DiagnosticWarning WARNING[:]
+syn keyword DiagnosticWarn WARNING[:]
 syn keyword DiagnosticOk OK[:]
 syn match helpSectionDelim "^======*\n.*$"
 syn match healthHeadingChar "=" conceal cchar=─ contained containedin=helpSectionDelim

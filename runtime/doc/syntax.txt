@@ -5020,7 +5020,7 @@ stop={term-list}				*term-list* *highlight-stop*
 	highlighted area.  This should undo the "start" argument.
 	Otherwise the screen will look messed up.
 
-        {term-list} is a a string with escape sequences. This is any string of
+        {term-list} is a string with escape sequences. This is any string of
         characters, except that it can't start with "t_" and blanks are not
         allowed.  The <> notation is recognized here, so you can use things
         like "<Esc>" and "<Space>".  Example:
@@ -5058,10 +5058,10 @@ ctermbg={color-nr}				*ctermbg*
 
 	The number under "NR-16" is used for 16-color terminals ('t_Co'
 	greater than or equal to 16).  The number under "NR-8" is used for
-	8-color terminals ('t_Co' less than 16).  The '*' indicates that the
+	8-color terminals ('t_Co' less than 16).  The "*" indicates that the
 	bold attribute is set for ctermfg.  In many 8-color terminals (e.g.,
 	"linux"), this causes the bright colors to appear.  This doesn't work
-	for background colors!	Without the '*' the bold attribute is removed.
+	for background colors!	Without the "*" the bold attribute is removed.
 	If you want to set the bold attribute in a different way, put a
 	"cterm=" argument AFTER the "ctermfg=" or "ctermbg=" argument.	Or use
 	a number instead of a color name.
