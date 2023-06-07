@@ -1082,6 +1082,7 @@ local extension = {
   uit = 'uil',
   uil = 'uil',
   ungram = 'ungrammar',
+  url = 'urlshortcut',
   usd = 'usd',
   usda = 'usd',
   sba = 'vb',
