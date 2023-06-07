@@ -248,12 +248,11 @@ static int get_fpos_of_mouse(pos_T *mpos)
 
 void do_move_autocmd(int screenrow, int screencol) {
 	Dictionary data = ARRAY_DICT_INIT;
-	PUT(data, "screenrow", INTEGER_OBJ(screenrow));
-	PUT(data, "screencol", INTEGER_OBJ(screencol));
+	PUT(data, "screenrow", INTEGER_OBJ(screenrow + 1));
+	PUT(data, "screencol", INTEGER_OBJ(screencol + 1));
 	Object obj = DICTIONARY_OBJ(data);
 	apply_autocmds_group(EVENT_MOUSEMOVED, NULL, NULL, false, AUGROUP_ALL, NULL, NULL, &obj);
 	api_free_dictionary(data);
-	api_free_object(obj);
 }
 
 /// Do the appropriate action for the current mouse click in the current mode.
