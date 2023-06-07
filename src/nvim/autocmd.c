@@ -1828,6 +1828,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
         || event == EVENT_USER || event == EVENT_WINCLOSED
         || event == EVENT_WINRESIZED || event == EVENT_WINSCROLLED) {
       fname = xstrdup(fname);
+      autocmd_fname_full = true;  // don't expand it later
     } else {
       fname = FullName_save(fname, false);
     }
