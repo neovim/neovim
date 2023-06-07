@@ -3428,8 +3428,8 @@ static char *optval_to_cstr(OptVal o)
 
 // Get an allocated string containing a list of valid types for an option.
 // For options with a singular type, it returns the name of the type. For options with multiple
-// possible types, it returns a comma separated list of types. For example, if an option can be a
-// number, boolean or string, the function returns "Number, Boolean, String"
+// possible types, it returns a slash separated list of types. For example, if an option can be a
+// number, boolean or string, the function returns "Number/Boolean/String"
 static char *option_get_valid_types(int opt_idx)
 {
   uint32_t flags = options[opt_idx].flags;
@@ -3443,7 +3443,7 @@ static char *option_get_valid_types(int opt_idx)
     if (type_count == 0) { \
       kv_concat(str, typename); \
     } else { \
-      kv_printf(str, ", %s", typename); \
+      kv_printf(str, "/%s", typename); \
     } \
     type_count++; \
   } while (0);
