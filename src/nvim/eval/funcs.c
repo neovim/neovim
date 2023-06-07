@@ -6604,6 +6604,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   sctx_T save_current_sctx;
   char *save_autocmd_fname, *save_autocmd_match;
+  bool save_autocmd_fname_full;
   int save_autocmd_bufnr;
   funccal_entry_T funccal_entry;
 
@@ -6613,6 +6614,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     save_current_sctx = current_sctx;
     save_autocmd_fname = autocmd_fname;
     save_autocmd_match = autocmd_match;
+    save_autocmd_fname_full = autocmd_fname_full;
     save_autocmd_bufnr = autocmd_bufnr;
     save_funccal(&funccal_entry);
 
@@ -6621,6 +6623,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     ((estack_T *)exestack.ga_data)[exestack.ga_len++] = provider_caller_scope.es_entry;
     autocmd_fname = provider_caller_scope.autocmd_fname;
     autocmd_match = provider_caller_scope.autocmd_match;
+    autocmd_fname_full = provider_caller_scope.autocmd_fname_full;
     autocmd_bufnr = provider_caller_scope.autocmd_bufnr;
     set_current_funccal((funccall_T *)(provider_caller_scope.funccalp));
   }
@@ -6638,6 +6641,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     exestack.ga_len--;
     autocmd_fname = save_autocmd_fname;
     autocmd_match = save_autocmd_match;
+    autocmd_fname_full = save_autocmd_fname_full;
     autocmd_bufnr = save_autocmd_bufnr;
     restore_funccal();
   }
