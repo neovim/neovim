@@ -7216,7 +7216,7 @@ static void ex_setfiletype(exarg_T *eap)
     arg += 9;
   }
 
-  set_option_value_give_err("filetype", 0L, arg, OPT_LOCAL);
+  set_option_value_give_err("filetype", CSTR_AS_OPTVAL(arg), OPT_LOCAL);
   if (arg != eap->arg) {
     did_filetype = false;
   }

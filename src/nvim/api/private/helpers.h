@@ -94,7 +94,7 @@
 
 #define cbuf_as_string(d, s) ((String) { .data = d, .size = s })
 
-#define STATIC_CSTR_AS_STRING(s) ((String) { .data = s, .size = sizeof(s) - 1 })
+#define STATIC_CSTR_AS_STRING(s) ((String) { .data = s, .size = sizeof("" s) - 1 })
 
 /// Create a new String instance, putting data in allocated memory
 ///

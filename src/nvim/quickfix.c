@@ -3612,12 +3612,12 @@ static int qf_goto_cwindow(const qf_info_T *qi, bool resize, int sz, bool vertsp
 static void qf_set_cwindow_options(void)
 {
   // switch off 'swapfile'
-  set_option_value_give_err("swf", 0L, NULL, OPT_LOCAL);
-  set_option_value_give_err("bt", 0L, "quickfix", OPT_LOCAL);
-  set_option_value_give_err("bh", 0L, "hide", OPT_LOCAL);
+  set_option_value_give_err("swf", BOOLEAN_OPTVAL(false), OPT_LOCAL);
+  set_option_value_give_err("bt", STATIC_CSTR_AS_OPTVAL("quickfix"), OPT_LOCAL);
+  set_option_value_give_err("bh", STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL);
   RESET_BINDING(curwin);
   curwin->w_p_diff = false;
-  set_option_value_give_err("fdm", 0L, "manual", OPT_LOCAL);
+  set_option_value_give_err("fdm", STATIC_CSTR_AS_OPTVAL("manual"), OPT_LOCAL);
 }
 
 // Open a new quickfix or location list window, load the quickfix buffer and
@@ -4176,7 +4176,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
     // resembles reading a file into a buffer, it's more logical when using
     // autocommands.
     curbuf->b_ro_locked++;
-    set_option_value_give_err("ft", 0L, "qf", OPT_LOCAL);
+    set_option_value_give_err("ft", STATIC_CSTR_AS_OPTVAL("qf"), OPT_LOCAL);
     curbuf->b_p_ma = false;
 
     keep_filetype = true;                 // don't detect 'filetype'
@@ -7183,7 +7183,7 @@ void ex_helpgrep(exarg_T *eap)
     // Darn, some plugin changed the value.  If it's still empty it was
     // changed and restored, need to restore in the complicated way.
     if (*p_cpo == NUL) {
-      set_option_value_give_err("cpo", 0L, save_cpo, 0);
+      set_option_value_give_err("cpo", CSTR_AS_OPTVAL(save_cpo), 0);
     }
     if (save_cpo_allocated) {
       free_string_option(save_cpo);

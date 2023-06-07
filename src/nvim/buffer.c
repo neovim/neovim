@@ -4304,9 +4304,9 @@ int buf_open_scratch(handle_T bufnr, char *bufname)
   apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
   (void)setfname(curbuf, bufname, NULL, true);
   apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
-  set_option_value_give_err("bh", 0L, "hide", OPT_LOCAL);
-  set_option_value_give_err("bt", 0L, "nofile", OPT_LOCAL);
-  set_option_value_give_err("swf", 0L, NULL, OPT_LOCAL);
+  set_option_value_give_err("bh", STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL);
+  set_option_value_give_err("bt", STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL);
+  set_option_value_give_err("swf", BOOLEAN_OPTVAL(false), OPT_LOCAL);
   RESET_BINDING(curwin);
   return OK;
 }

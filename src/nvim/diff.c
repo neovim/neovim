@@ -1389,14 +1389,14 @@ void ex_diffthis(exarg_T *eap)
   diff_win_options(curwin, true);
 }
 
-static void set_diff_option(win_T *wp, int value)
+static void set_diff_option(win_T *wp, bool value)
 {
   win_T *old_curwin = curwin;
 
   curwin = wp;
   curbuf = curwin->w_buffer;
   curbuf->b_ro_locked++;
-  set_option_value_give_err("diff", (long)value, NULL, OPT_LOCAL);
+  set_option_value_give_err("diff", BOOLEAN_OPTVAL(value), OPT_LOCAL);
   curbuf->b_ro_locked--;
   curwin = old_curwin;
   curbuf = curwin->w_buffer;

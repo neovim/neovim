@@ -3171,17 +3171,15 @@ void ex_spelldump(exarg_T *eap)
   if (no_spell_checking(curwin)) {
     return;
   }
-  char *spl;
-  long dummy;
-  (void)get_option_value("spl", &dummy, &spl, NULL, OPT_LOCAL);
+  OptVal spl = get_option_value("spl", NULL, OPT_LOCAL, NULL);
 
   // Create a new empty buffer in a new window.
   do_cmdline_cmd("new");
 
   // enable spelling locally in the new window
-  set_option_value_give_err("spell", true, "", OPT_LOCAL);
-  set_option_value_give_err("spl",  dummy, spl, OPT_LOCAL);
-  xfree(spl);
+  set_option_value_give_err("spell", BOOLEAN_OPTVAL(true), OPT_LOCAL);
+  set_option_value_give_err("spl", spl, OPT_LOCAL);
+  optval_free(spl);
 
   if (!buf_is_empty(curbuf)) {
     return;
