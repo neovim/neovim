@@ -127,6 +127,7 @@ return {
     'WinNew',                 -- when entering a new window
     'WinResized',             -- after a window was resized
     'WinScrolled',            -- after a window was scrolled or resized
+    'MouseMoved'              -- after the mouse has been moved
   },
   aliases = {
     {
@@ -163,5 +164,6 @@ return {
     TermOpen=true,
     UIEnter=true,
     UILeave=true,
+    MouseMoved=true
   },
 }

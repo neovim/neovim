@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "nvim/ascii.h"
+#include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
@@ -339,7 +340,8 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   }
 
   if (c == K_MOUSEMOVE) {
-    // Mouse moved without a button pressed.
+	// Mouse moved without a button pressed, just execute the autocmd.
+	apply_autocmds(EVENT_MOUSEMOVED, NULL, NULL, false, NULL);
     return false;
   }
 
@@ -398,6 +400,8 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   // "d<MOUSE>"), or it is the middle button that is held down, ignore
   // drag/release events.
   if (!is_click && which_button == MOUSE_MIDDLE) {
+	// Execute the MouseMoved autocmd for middleclick-drag
+	apply_autocmds(EVENT_MOUSEMOVED, NULL, NULL, false, NULL);
     return false;
   }
 
@@ -466,6 +470,8 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   // When dragging or button-up stay in the same window.
   if (!is_click) {
     jump_flags |= MOUSE_FOCUS | MOUSE_DID_MOVE;
+	// Execute the MouseMoved autocmd
+	apply_autocmds(EVENT_MOUSEMOVED, NULL, NULL, false, NULL);
   }
 
   start_visual.lnum = 0;
