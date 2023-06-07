@@ -246,7 +246,8 @@ static int get_fpos_of_mouse(pos_T *mpos)
   return IN_BUFFER;
 }
 
-void do_move_autocmd(int screenrow, int screencol) {
+/// Execute mouse move autocmd.
+static void do_move_autocmd(int screenrow, int screencol) {
 	Dictionary data = ARRAY_DICT_INIT;
 	PUT(data, "screenrow", INTEGER_OBJ(screenrow + 1));
 	PUT(data, "screencol", INTEGER_OBJ(screencol + 1));
