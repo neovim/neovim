@@ -107,6 +107,13 @@ local to_lsp_change_type = {
   [watch.FileChangeType.Deleted] = protocol.FileChangeType.Deleted,
 }
 
+--- Default excludes the same as VSCode's `files.watcherExclude` setting.
+--- https://github.com/microsoft/vscode/blob/eef30e7165e19b33daa1e15e92fa34ff4a5df0d3/src/vs/workbench/contrib/files/browser/files.contribution.ts#L261
+---@type Lpeg pattern
+M._poll_exclude_pattern = parse('**/.git/{objects,subtree-cache}/**')
+  + parse('**/node_modules/*/**')
+  + parse('**/.hg/store/**')
+
 --- Registers the workspace/didChangeWatchedFiles capability dynamically.
 ---
 ---@param reg table LSP Registration object.
@@ -214,6 +221,7 @@ function M.register(reg, ctx)
         -- will never be sent to the LSP server. A second pass in the callback is still necessary to
         -- match a *particular* pattern+kind pair.
         include_pattern = include_pattern,
+        exclude_pattern = M._poll_exclude_pattern,
       }, callback(base_dir))
     )
   end

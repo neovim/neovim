@@ -111,7 +111,10 @@ local function poll_internal(path, opts, callback, watches)
   local function incl_match()
     return not opts.include_pattern or opts.include_pattern:match(path) ~= nil
   end
-  if not watches.is_dir and not incl_match() then
+  local function excl_match()
+    return opts.exclude_pattern and opts.exclude_pattern:match(path) ~= nil
+  end
+  if not watches.is_dir and not incl_match() or excl_match() then
     return watches.cancel
   end
 
@@ -180,7 +183,13 @@ end
 ---                Polling interval in ms as passed to |uv.fs_poll_start()|. Defaults to 2000.
 ---     - include_pattern (LPeg pattern|nil)
 ---                An |lpeg| pattern. Only changes to files whose full paths match the pattern
----                will be reported. When nil, matches all files.
+---                will be reported. Only matches against non-directoriess, all directories will
+---                be watched for new potentially-matching files. exclude_pattern can be used to
+---                filter out directories. When nil, matches any file name.
+---     - exclude_pattern (LPeg pattern|nil)
+---                An |lpeg| pattern. Only changes to files and directories whose full path does
+---                not match the pattern will be reported. Matches against both files and
+---                directories. When nil, matches nothing.
 ---@param callback (function) The function called when new events
 ---@returns (function) A function to stop the watch.
 function M.poll(path, opts, callback)
