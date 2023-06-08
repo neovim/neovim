@@ -353,11 +353,40 @@ end
 
 --- Process and return progress reports from lsp server
 ---@private
+---@deprecated Use vim.lsp.status() or access client.progress directly
 function M.get_progress_messages()
+  vim.deprecate('vim.lsp.util.get_progress_messages', 'vim.lsp.status', '0.11.0')
   local new_messages = {}
   local progress_remove = {}
 
   for _, client in ipairs(vim.lsp.get_active_clients()) do
+    local groups = {}
+    for progress in client.progress do
+      local value = progress.value
+      if type(value) == 'table' and value.kind then
+        local group = groups[progress.token]
+        if not group then
+          group = {
+            done = false,
+            progress = true,
+            title = 'empty title',
+          }
+          groups[progress.token] = group
+        end
+        group.title = value.title or group.title
+        group.cancellable = value.cancellable or group.cancellable
+        if value.kind == 'end' then
+          group.done = true
+        end
+        group.message = value.message or group.message
+        group.percentage = value.percentage or group.percentage
+      end
+    end
+
+    for _, group in pairs(groups) do
+      table.insert(new_messages, group)
+    end
+
     local messages = client.messages
     local data = messages
     for token, ctx in pairs(data.progress) do

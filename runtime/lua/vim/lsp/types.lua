@@ -1,6 +1,12 @@
 ---@meta
 
----@alias lsp-handler fun(err: lsp.ResponseError|nil, result: any, context: table, config: table|nil)
+---@alias lsp-handler fun(err: lsp.ResponseError|nil, result: any, context: lsp.HandlerContext, config: table|nil)
+
+---@class lsp.HandlerContext
+---@field method string
+---@field client_id integer
+---@field bufnr integer
+---@field params any
 
 ---@class lsp.ResponseError
 ---@field code integer
