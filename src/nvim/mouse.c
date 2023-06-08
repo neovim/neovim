@@ -263,7 +263,7 @@ static void do_mousemove_autocmd(int screenrow, int screencol) {
 	}
 
 	Object obj = DICTIONARY_OBJ(data);
-	apply_autocmds_group(EVENT_MOUSEMOVED, NULL, NULL, false, AUGROUP_ALL, NULL, NULL, &obj);
+	apply_autocmds_group(EVENT_MOUSEMOVE, NULL, NULL, false, AUGROUP_ALL, NULL, NULL, &obj);
 	api_free_object(obj);
 }
 
