@@ -889,6 +889,17 @@ end
 function Iter.new(src, ...)
   local it = {}
   if type(src) == 'table' then
+    local mt = getmetatable(src)
+    if mt and type(mt.__call) == 'function' then
+      ---@private
+      function it.next()
+        return src()
+      end
+
+      setmetatable(it, Iter)
+      return it
+    end
+
     local t = {}
 
     -- Check if source table can be treated like a list (indices are consecutive integers
