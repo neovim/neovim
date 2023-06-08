@@ -779,6 +779,192 @@ something
 
     end)
   end)
+  describe('setup a diff with 2 files and set linematch:30', function()
+    before_each(function()
+      feed(':set diffopt+=linematch:30<cr>')
+      local f1 = [[
+// abc d
+// d
+// d
+      ]]
+      local f2 = [[
+
+abc d
+d
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+
+    it('display results', function()
+      screen:expect([[
+      {1:  }{10:  1 }{4:^                                           }│{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  2 }{9:abc d                                      }│{1:  }{10:  1 }{8:// }{9:abc d                                    }|
+      {1:  }{10:  3 }{9:d                                          }│{1:  }{10:  2 }{8:// }{9:d                                        }|
+      {1:  }{10:    }{2:-------------------------------------------}│{1:  }{10:  3 }{4:// d                                        }|
+      {1:  }{10:  4 }                                           │{1:  }{10:  4 }                                            |
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+      :e                                                                                                  |
+      ]])
+    end)
+  end)
+  describe('setup a diff with 2 files and set linematch:30, with ignore white', function()
+    before_each(function()
+      feed(':set diffopt+=linematch:30<cr>:set diffopt+=iwhiteall<cr>')
+      local f1 = [[
+void testFunction () {
+  for (int i = 0; i < 10; i++) {
+    for (int j = 0; j < 10; j++) {
+    }
+  }
+}
+      ]]
+      local f2 = [[
+void testFunction () {
+  // for (int j = 0; j < 10; i++) {
+  // }
+}
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+
+    it('display results', function()
+      screen:expect([[
+      {1:  }{10:  1 }^void testFunction () {                     │{1:  }{10:  1 }void testFunction () {                      |
+      {1:  }{10:    }{2:-------------------------------------------}│{1:  }{10:  2 }{4:  for (int i = 0; i < 10; i++) {            }|
+      {1:  }{10:  2 }{9:  }{8:// for (int j = 0; j < 10; i}{9:++) {        }│{1:  }{10:  3 }{9:    }{8:for (int j = 0; j < 10; j}{9:++) {          }|
+      {1:  }{10:  3 }{9:  }{8:// }{9:}                                     }│{1:  }{10:  4 }{9:    }                                       }|
+      {1:  }{10:    }{2:-------------------------------------------}│{1:  }{10:  5 }{4:  }                                         }|
+      {1:  }{10:  4 }}                                          │{1:  }{10:  6 }}                                           |
+      {1:  }{10:  5 }                                           │{1:  }{10:  7 }                                            |
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+      :e                                                                                                  |
+      ]])
+    end)
+  end)
+  describe('a diff that would result in multiple groups before grouping optimization', function()
+    before_each(function()
+      feed(':set diffopt+=linematch:30<cr>')
+      local f1 = [[
+!A
+!B
+!C
+      ]]
+      local f2 = [[
+?Z
+?A
+?B
+?C
+?A
+?B
+?B
+?C
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+
+    it('display results', function()
+      screen:expect([[
+      {1:  }{10:  1 }{4:^?Z                                         }│{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  2 }{8:?}{9:A                                         }│{1:  }{10:  1 }{8:!}{9:A                                          }|
+      {1:  }{10:  3 }{8:?}{9:B                                         }│{1:  }{10:  2 }{8:!}{9:B                                          }|
+      {1:  }{10:  4 }{8:?}{9:C                                         }│{1:  }{10:  3 }{8:!}{9:C                                          }|
+      {1:  }{10:  5 }{4:?A                                         }│{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  6 }{4:?B                                         }│{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  7 }{4:?B                                         }│{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  8 }{4:?C                                         }│{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  9 }                                           │{1:  }{10:  4 }                                            |
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+      :e                                                                                                  |
+      ]])
+    end)
+  end)
+  describe('a diff that would result in multiple groups before grouping optimization', function()
+    before_each(function()
+      feed(':set diffopt+=linematch:30<cr>')
+      local f1 = [[
+!A
+!B
+!C
+      ]]
+      local f2 = [[
+?A
+?Z
+?B
+?C
+?A
+?B
+?C
+?C
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+
+    it('display results', function()
+      screen:expect([[
+      {1:  }{10:  1 }{4:^?A                                         }│{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  2 }{4:?Z                                         }│{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  3 }{4:?B                                         }│{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  4 }{4:?C                                         }│{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  5 }{8:?}{9:A                                         }│{1:  }{10:  1 }{8:!}{9:A                                          }|
+      {1:  }{10:  6 }{8:?}{9:B                                         }│{1:  }{10:  2 }{8:!}{9:B                                          }|
+      {1:  }{10:  7 }{8:?}{9:C                                         }│{1:  }{10:  3 }{8:!}{9:C                                          }|
+      {1:  }{10:  8 }{4:?C                                         }│{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  9 }                                           │{1:  }{10:  4 }                                            |
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {6:~                                                }│{6:~                                                 }|
+      {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+      :e                                                                                                  |
+      ]])
+    end)
+  end)
   describe('setup a diff with 2 files and set linematch:10', function()
     before_each(function()
       feed(':set diffopt+=linematch:10<cr>')

@@ -858,7 +858,7 @@ get_active_clients({filter})                    *vim.lsp.get_active_clients()*
                   • name (string): Only return clients with the given name
 
     Return: ~
-        (table) List of |vim.lsp.client| objects
+        lsp.Client []: List of |vim.lsp.client| objects
 
                                           *vim.lsp.get_buffers_by_client_id()*
 get_buffers_by_client_id({client_id})
@@ -961,7 +961,7 @@ start({config}, {opts})                                      *vim.lsp.start()*
     Parameters: ~
       • {config}  (table) Same configuration as documented in
                   |vim.lsp.start_client()|
-      • {opts}    nil|table Optional keyword arguments:
+      • {opts}    (nil|lsp.StartOpts) Optional keyword arguments:
                   • reuse_client (fun(client: client, config: table): boolean)
                     Predicate used to decide if a client should be re-used.
                     Used on all running clients. The default implementation
@@ -970,7 +970,7 @@ start({config}, {opts})                                      *vim.lsp.start()*
                     re-using a client (0 for current).
 
     Return: ~
-        (number|nil) client_id
+        (integer|nil) client_id
 
 start_client({config})                                *vim.lsp.start_client()*
     Starts and initializes a client with the given configuration.
@@ -978,7 +978,7 @@ start_client({config})                                *vim.lsp.start_client()*
     Field `cmd` in {config} is required.
 
     Parameters: ~
-      • {config}  (table) Configuration for the server:
+      • {config}  ( lsp.ClientConfig ) Configuration for the server:
                   • cmd: (string[]|fun(dispatchers: table):table) command a
                     list of strings treated like |jobstart()|. The command
                     must launch the language server process. `cmd` can also be
@@ -1108,7 +1108,7 @@ stop_client({client_id}, {force})                      *vim.lsp.stop_client()*
                      thereof
       • {force}      (boolean|nil) shutdown forcefully
 
-tagfunc({...})                                             *vim.lsp.tagfunc()*
+tagfunc({pattern}, {flags})                                *vim.lsp.tagfunc()*
     Provides an interface between the built-in client and 'tagfunc'.
 
     When used with normal mode commands (e.g. |CTRL-]|) this will invoke the
@@ -2167,6 +2167,9 @@ Lua module: vim.lsp.protocol                                    *lsp-protocol*
 make_client_capabilities()
     Gets a new ClientCapabilities object describing the LSP client
     capabilities.
+
+    Return: ~
+        lsp.ClientCapabilities
 
                                      *vim.lsp.protocol.resolve_capabilities()*
 resolve_capabilities({server_capabilities})
