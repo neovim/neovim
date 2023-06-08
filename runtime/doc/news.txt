@@ -76,6 +76,9 @@ The following new APIs or features were added.
   is resized horizontally). Note: Lines that are not visible and kept in
   |'scrollback'| are not reflown.
 
+• Added |MouseMove| autocmd event for responding to mouse events without
+  mappings.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
