@@ -247,7 +247,7 @@ static int get_fpos_of_mouse(pos_T *mpos)
 }
 
 /// Execute mouse move autocmd.
-static void do_move_autocmd(int screenrow, int screencol) {
+static void do_mousemove_autocmd(int screenrow, int screencol) {
 	Dictionary data = ARRAY_DICT_INIT;
 	PUT(data, "screenrow", INTEGER_OBJ(screenrow + 1));
 	PUT(data, "screencol", INTEGER_OBJ(screencol + 1));
@@ -362,7 +362,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
 
   if (c == K_MOUSEMOVE) {
 	// Mouse moved without a button pressed, just execute the autocmd.
-	do_move_autocmd(mouse_row, mouse_col);
+	do_mousemove_autocmd(mouse_row, mouse_col);
     return false;
   }
 
@@ -422,7 +422,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   // drag/release events.
   if (!is_click && which_button == MOUSE_MIDDLE) {
 	// Execute the MouseMoved autocmd for middleclick-drag
-	do_move_autocmd(mouse_row, mouse_col);
+	do_mousemove_autocmd(mouse_row, mouse_col);
     return false;
   }
 
@@ -492,7 +492,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   if (!is_click) {
     jump_flags |= MOUSE_FOCUS | MOUSE_DID_MOVE;
 	// Execute the MouseMoved autocmd
-	do_move_autocmd(mouse_row, mouse_col);
+	do_mousemove_autocmd(mouse_row, mouse_col);
   }
 
   start_visual.lnum = 0;
