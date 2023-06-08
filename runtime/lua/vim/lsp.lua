@@ -1327,7 +1327,7 @@ function lsp.start_client(config)
     dynamic_capabilities = require('vim.lsp._dynamic').new(client_id),
   }
 
-  ---@type table<string|integer, table[]>
+  ---@type table<string|integer, string> title of unfinished progress sequences by token
   client.progress.pending = {}
 
   --- @type lsp.ClientCapabilities
