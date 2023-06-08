@@ -1128,6 +1128,14 @@ WinResized			After a window in the current tab page changed
 				Same behavior as |WinScrolled| for the
 				pattern, triggering and recursiveness.
 
+
+							*MouseMove*
+MouseMove			After the mouse is moved. Similar to the `<MouseMove>`
+				mapping.
+
+				Unlike the `<MouseMove>` mapping, it also triggers when
+				dragging.
+
 ==============================================================================
 6. Patterns					*autocmd-pattern* *{aupat}*
 
