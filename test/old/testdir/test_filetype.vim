@@ -772,6 +772,7 @@ let s:script_checks = {
       \ 'expect': [['#!/path/expect']],
       \ 'gnuplot': [['#!/path/gnuplot']],
       \ 'make': [['#!/path/make']],
+      \ 'nix': [['#!/path/nix-shell']],
       \ 'pike': [['#!/path/pike'],
       \          ['#!/path/pike0'],
       \          ['#!/path/pike9']],
@@ -818,6 +819,7 @@ let s:script_env_checks = {
       \ 'scheme': [['#!/usr/bin/env VAR=val --ignore-environment scheme']],
       \ 'python': [['#!/usr/bin/env VAR=val -S python -w -T']],
       \ 'wml': [['#!/usr/bin/env VAR=val --split-string wml']],
+      \ 'nix': [['#!/usr/bin/env nix-shell']],
       \ }
 
 func Run_script_detection(test_dict)
