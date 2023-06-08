@@ -165,6 +165,23 @@ describe('ui/mouse/input', function()
       ]]
       eq(1, #meths.get_autocmds { event = "MouseMove", group = "MouseTesting" })
     end)
+
+    it('returns an accurate mouse position', function()
+      exec_lua [[
+        local id
+        id = vim.api.nvim_create_autocmd('MouseMove', {
+          callback = function(ev)
+            vim.api.nvim_del_autocmd(id)
+            vim.g.mouse_move_test_data = ev.data
+          end
+        })
+      ]]
+      feed('<MouseMove><5,3>')
+      local data = exec_lua('return vim.g.mouse_move_test_data')
+      local mpos = exec_lua('return vim.fn.getmousepos()')
+      eq(data.screencol, mpos.screencol)
+      eq(data.screenrow, mpos.screenrow)
+    end)
   end)
 
   describe('tab drag', function()
