@@ -264,7 +264,7 @@ static void do_move_autocmd(int screenrow, int screencol) {
 
 	Object obj = DICTIONARY_OBJ(data);
 	apply_autocmds_group(EVENT_MOUSEMOVED, NULL, NULL, false, AUGROUP_ALL, NULL, NULL, &obj);
-	api_free_dictionary(data);
+	api_free_object(obj);
 }
 
 /// Do the appropriate action for the current mouse click in the current mode.
