@@ -4,7 +4,7 @@ local clear, feed, meths = helpers.clear, helpers.feed, helpers.meths
 local insert, feed_command = helpers.insert, helpers.feed_command
 local eq, funcs = helpers.eq, helpers.funcs
 local command = helpers.command
-local exec = helpers.exec
+local exec, exec_lua, eval = helpers.exec, helpers.exec_lua, helpers.eval
 
 describe('ui/mouse/input', function()
   local screen
@@ -129,6 +129,42 @@ describe('ui/mouse/input', function()
       {0:~                        }|
       {2:-- VISUAL BLOCK --}       |
     ]])
+  end)
+
+  describe('mouse move autocmd', function()
+    before_each(function()
+      exec_lua [[
+        vim.o.mousemoveevent = true
+      ]]
+    end)
+
+    it('moving mouse triggers MouseMove autocmd', function()
+      exec_lua [[
+        local id
+        id = vim.api.nvim_create_autocmd('MouseMove', {
+          callback = function()
+            vim.api.nvim_del_autocmd(id)
+            vim.g.count = (vim.g.count or 0) + 1
+          end
+        })
+      ]]
+      feed('<MouseMove><0,0>')
+      eq(1, eval('g:count'))
+    end)
+
+    it('can create MouseMove autocmd', function()
+      exec_lua [[
+        local group = vim.api.nvim_create_augroup("MouseTesting", { clear = true })
+        local id
+        id = vim.api.nvim_create_autocmd('MouseMove', {
+          group = group,
+          callback = function()
+            vim.api.nvim_del_autocmd(id)
+          end
+        })
+      ]]
+      eq(1, #meths.get_autocmds { event = "MouseMove", group = "MouseTesting" })
+    end)
   end)
 
   describe('tab drag', function()
