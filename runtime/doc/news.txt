@@ -59,6 +59,8 @@ The following new APIs or features were added.
 • |vim.iter()| provides a generic iterator interface for tables and Lua
   iterators |luaref-in|.
 
+• Added |vim.ringbuf()| to create ring buffers.
+
 • Added |vim.keycode()| for translating keycodes in a string.
 
 • Added |vim.treesitter.query.omnifunc()| for treesitter query files (set by
