@@ -248,23 +248,23 @@ static int get_fpos_of_mouse(pos_T *mpos)
 
 /// Execute mouse move autocmd.
 static void do_mousemove_autocmd(int screenrow, int screencol) {
-	Dictionary data = ARRAY_DICT_INIT;
-	PUT(data, "screenrow", INTEGER_OBJ(screenrow + 1));
-	PUT(data, "screencol", INTEGER_OBJ(screencol + 1));
+  Dictionary data = ARRAY_DICT_INIT;
+  PUT(data, "screenrow", INTEGER_OBJ(screenrow + 1));
+  PUT(data, "screencol", INTEGER_OBJ(screencol + 1));
 
-	pos_T buf_pos;
-	buf_pos.lnum = screenrow;
-	buf_pos.col = screencol;
+  pos_T buf_pos;
+  buf_pos.lnum = screenrow;
+  buf_pos.col = screencol;
 
-	// If the mouse is hovering over a buffer, provide buffer-local row and col numbers.
-	if (get_fpos_of_mouse(&buf_pos) == IN_BUFFER) {
-		PUT(data, "line", INTEGER_OBJ(buf_pos.lnum));
-		PUT(data, "column", INTEGER_OBJ(buf_pos.col));
-	}
+  // If the mouse is hovering over a buffer, provide buffer-local row and col numbers.
+  if (get_fpos_of_mouse(&buf_pos) == IN_BUFFER) {
+    PUT(data, "line", INTEGER_OBJ(buf_pos.lnum));
+    PUT(data, "column", INTEGER_OBJ(buf_pos.col));
+  }
 
-	Object obj = DICTIONARY_OBJ(data);
-	apply_autocmds_group(EVENT_MOUSEMOVE, NULL, NULL, false, AUGROUP_ALL, NULL, NULL, &obj);
-	api_free_object(obj);
+  Object obj = DICTIONARY_OBJ(data);
+  apply_autocmds_group(EVENT_MOUSEMOVE, NULL, NULL, false, AUGROUP_ALL, NULL, NULL, &obj);
+  api_free_object(obj);
 }
 
 /// Do the appropriate action for the current mouse click in the current mode.
