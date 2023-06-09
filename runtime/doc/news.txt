@@ -33,8 +33,8 @@ The following changes may require adaptations in user config or plugins.
 • When switching windows, |CursorMoved| autocommands trigger when Nvim is back
   in the main loop rather than immediately. This is more compatible with Vim.
 
-• |LspRequest| autocmd was promoted from a |User| autocmd to a first class
-  citizen.
+• |LspRequest| and LspProgressUpdate (renamed to |LspProgress|) autocmds were
+  promoted from a |User| autocmd to first class citizen.
 
 • Renamed `vim.treesitter.playground` to `vim.treesitter.dev`.
 
@@ -42,6 +42,8 @@ The following changes may require adaptations in user config or plugins.
 ADDED FEATURES                                                     *news-added*
 
 The following new APIs or features were added.
+
+• Added |vim.lsp.status()| to consume the last progress messages as a string.
 
 • Neovim's LSP client now always saves and restores named buffer marks when
   applying text edits.
@@ -141,6 +143,9 @@ release.
   - |nvim_set_option()|		Use |nvim_set_option_value()| instead.
   - |nvim_win_get_option()|	Use |nvim_get_option_value()| instead.
   - |nvim_win_set_option()|	Use |nvim_set_option_value()| instead.
+
+• vim.lsp functions:
+  - |vim.lsp.util.get_progress_messages()|	Use |vim.lsp.status()| instead.
 
 • `vim.loop` has been renamed to `vim.uv`.
 

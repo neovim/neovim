@@ -659,14 +659,20 @@ callbacks. Example: >lua
     })
 <
 
-Also the following |User| |autocommand| is provided:
+LspProgress                                                       *LspProgress*
+    Upon receipt of a progress notification from the server. Notifications can
+    be polled from a `progress` ring buffer of a |vim.lsp.client| or use
+    |vim.lsp.status()| to get an aggregate message
 
-LspProgressUpdate                                          *LspProgressUpdate*
-    Upon receipt of a progress notification from the server. See
-    |vim.lsp.util.get_progress_messages()|.
+    If the server sends a "work done progress", the `pattern` is set to `kind`
+    (one of `begin`, `report` or `end`).
+
+    When used from Lua, the event contains a `data` table with `client_id` and
+    `result` properties. `result` will contain the request params sent by the
+    server.
 
 Example: >vim
-    autocmd User LspProgressUpdate redrawstatus
+    autocmd LspProgress * redrawstatus
 <
 
 ==============================================================================
@@ -806,6 +812,8 @@ client()                                                      *vim.lsp.client*
         |vim.lsp.start_client()|.
       • {server_capabilities} (table): Response from the server sent on
         `initialize` describing the server's capabilities.
+      • {progress} A ring buffer (|vim.ringbuf()|) containing progress
+        messages sent by the server.
 
 client_is_stopped({client_id})                   *vim.lsp.client_is_stopped()*
     Checks whether a client is stopped.
@@ -1091,6 +1099,13 @@ start_client({config})                                *vim.lsp.start_client()*
         (integer|nil) client_id. |vim.lsp.get_client_by_id()| Note: client may
         not be fully initialized. Use `on_init` to do any actions once the
         client has been initialized.
+
+status()                                                    *vim.lsp.status()*
+    Consumes the latest progress messages from all clients and formats them as
+    a string. Empty if there are no clients or if no new messages
+
+    Return: ~
+        (string)
 
 stop_client({client_id}, {force})                      *vim.lsp.stop_client()*
     Stops a client(s).
