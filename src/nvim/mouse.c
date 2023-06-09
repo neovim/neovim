@@ -247,11 +247,25 @@ static int get_fpos_of_mouse(pos_T *mpos)
 }
 
 /// Execute mouse move autocmd.
-static void do_mousemove_autocmd(int screenrow, int screencol)
+static void do_mousemove_autocmd(int screenrow, int screencol, bool is_drag, int button)
 {
   Dictionary data = ARRAY_DICT_INIT;
   PUT(data, "screenrow", INTEGER_OBJ(screenrow + 1));
   PUT(data, "screencol", INTEGER_OBJ(screencol + 1));
+
+  if (is_drag) {
+    switch (button) {
+    case MOUSE_LEFT:
+      PUT(data, "dragging", STATIC_CSTR_TO_OBJ("l"));
+      break;
+    case MOUSE_MIDDLE:
+      PUT(data, "dragging", STATIC_CSTR_TO_OBJ("m"));
+      break;
+    case MOUSE_RIGHT:
+      PUT(data, "dragging", STATIC_CSTR_TO_OBJ("r"));
+      break;
+    }
+  }
 
   pos_T buf_pos;
   buf_pos.lnum = screenrow;
@@ -363,7 +377,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
 
   if (c == K_MOUSEMOVE) {
     // Mouse moved without a button pressed, just execute the autocmd.
-    do_mousemove_autocmd(mouse_row, mouse_col);
+    do_mousemove_autocmd(mouse_row, mouse_col, is_drag, which_button);
     return false;
   }
 
@@ -423,7 +437,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   // drag/release events.
   if (!is_click && which_button == MOUSE_MIDDLE) {
     // Execute the MouseMoved autocmd for middleclick-drag
-    do_mousemove_autocmd(mouse_row, mouse_col);
+    do_mousemove_autocmd(mouse_row, mouse_col, is_drag, which_button);
     return false;
   }
 
@@ -493,7 +507,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   if (!is_click) {
     jump_flags |= MOUSE_FOCUS | MOUSE_DID_MOVE;
     // Execute the MouseMoved autocmd
-    do_mousemove_autocmd(mouse_row, mouse_col);
+    do_mousemove_autocmd(mouse_row, mouse_col, is_drag, which_button);
   }
 
   start_visual.lnum = 0;
