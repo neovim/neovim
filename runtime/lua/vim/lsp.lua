@@ -894,7 +894,7 @@ function lsp.start(config, opts)
   return client_id
 end
 
---- Consumes the latest progress messages from all clients and formats them as string.
+--- Consumes the latest progress messages from all clients and formats them as a string.
 --- Empty if there are no clients or if no new messages
 ---
 ---@return string

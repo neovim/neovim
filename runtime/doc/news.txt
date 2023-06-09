@@ -43,7 +43,7 @@ ADDED FEATURES                                                     *news-added*
 
 The following new APIs or features were added.
 
-• Added |vim.lsp.status()| to consume the last progress messages as string.
+• Added |vim.lsp.status()| to consume the last progress messages as a string.
 
 • Neovim's LSP client now always saves and restores named buffer marks when
   applying text edits.
