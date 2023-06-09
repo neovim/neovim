@@ -29,8 +29,15 @@
 # define _PATHSEPSTR "/"
 #endif
 
+// FILETYPE_FILE        used for file type detection
+// FTPLUGIN_FILE        used for loading filetype plugin files
+// INDENT_FILE          used for loading indent files
+// FTOFF_FILE           used for file type detection
+// FTPLUGOF_FILE        used for loading settings files
+// INDOFF_FILE          used for loading indent files
+
 #ifndef FILETYPE_FILE
-# define FILETYPE_FILE "filetype.lua filetype.vim"
+# define FILETYPE_FILE  "filetype.lua filetype.vim"
 #endif
 
 #ifndef FTPLUGIN_FILE

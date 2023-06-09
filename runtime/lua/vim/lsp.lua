@@ -807,6 +807,9 @@ end
 ---
 ---  - {server_capabilities} (table): Response from the server sent on
 ---    `initialize` describing the server's capabilities.
+---
+---  - {progress} A ring buffer (|vim.ringbuf()|) containing progress messages
+---    sent by the server.
 function lsp.client()
   error()
 end
@@ -889,6 +892,50 @@ function lsp.start(config, opts)
   end
   lsp.buf_attach_client(bufnr, client_id)
   return client_id
+end
+
+--- Consumes the latest progress messages from all clients and formats them as a string.
+--- Empty if there are no clients or if no new messages
+---
+---@return string
+function lsp.status()
+  local percentage = nil
+  local groups = {}
+  for _, client in ipairs(vim.lsp.get_active_clients()) do
+    for progress in client.progress do
+      local value = progress.value
+      if type(value) == 'table' and value.kind then
+        local group = groups[progress.token]
+        if not group then
+          group = {}
+          groups[progress.token] = group
+        end
+        group.title = value.title or group.title
+        group.message = value.message or group.message
+        if value.percentage then
+          percentage = math.max(percentage or 0, value.percentage)
+        end
+      end
+      -- else: Doesn't look like work done progress and can be in any format
+      -- Just ignore it as there is no sensible way to display it
+    end
+  end
+  local messages = {}
+  for _, group in pairs(groups) do
+    if group.title then
+      table.insert(
+        messages,
+        group.message and (group.title .. ': ' .. group.message) or group.title
+      )
+    elseif group.message then
+      table.insert(messages, group.message)
+    end
+  end
+  local message = table.concat(messages, ', ')
+  if percentage then
+    return string.format('%03d: %s', percentage, message)
+  end
+  return message
 end
 
 ---@private
@@ -1266,10 +1313,23 @@ function lsp.start_client(config)
 
     --- @type table<integer,{ type: string, bufnr: integer, method: string}>
     requests = {},
-    -- for $/progress report
+
+    --- Contains $/progress report messages.
+    --- They have the format {token: integer|string, value: any}
+    --- For "work done progress", value will be one of:
+    --- - lsp.WorkDoneProgressBegin,
+    --- - lsp.WorkDoneProgressReport (extended with title from Begin)
+    --- - lsp.WorkDoneProgressEnd    (extended with title from Begin)
+    progress = vim.ringbuf(50),
+
+    ---@deprecated use client.progress instead
     messages = { name = name, messages = {}, progress = {}, status = {} },
     dynamic_capabilities = require('vim.lsp._dynamic').new(client_id),
   }
+
+  ---@type table<string|integer, string> title of unfinished progress sequences by token
+  client.progress.pending = {}
+
   --- @type lsp.ClientCapabilities
   client.config.capabilities = config.capabilities or protocol.make_client_capabilities()
 
