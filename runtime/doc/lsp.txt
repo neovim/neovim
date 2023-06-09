@@ -1102,7 +1102,7 @@ start_client({config})                                *vim.lsp.start_client()*
 
 status()                                                    *vim.lsp.status()*
     Consumes the latest progress messages from all clients and formats them as
-    string. Empty if there are no clients or if no new messages
+    a string. Empty if there are no clients or if no new messages
 
     Return: ~
         (string)
