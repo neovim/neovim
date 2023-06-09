@@ -14,8 +14,8 @@
 --- - Non-list tables pass both the key and value of each element
 --- - Function iterators pass all of the values returned by their respective
 ---   function
---- - Tables with with a metatable implementing __call is treated as function
----   iterator
+--- - Tables with a metatable implementing __call are treated as function
+---   iterators
 ---
 --- Examples:
 --- <pre>lua
