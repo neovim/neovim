@@ -11,6 +11,7 @@ M.FileChangeType = vim.tbl_add_reverse_lookup({
 --- Joins filepath elements by static '/' separator
 ---
 ---@param ... (string) The path elements.
+---@return string
 local function filepath_join(...)
   return table.concat({ ... }, '/')
 end
@@ -36,7 +37,7 @@ end
 ---     - uvflags (table|nil)
 ---                Same flags as accepted by |uv.fs_event_start()|
 ---@param callback (function) The function called when new events
----@returns (function) A function to stop the watch
+---@return (function) A function to stop the watch
 function M.watch(path, opts, callback)
   vim.validate({
     path = { path, 'string', false },
@@ -75,10 +76,25 @@ end
 
 local default_poll_interval_ms = 2000
 
+--- @class watch.Watches
+--- @field is_dir boolean
+--- @field children? table<string,watch.Watches>
+--- @field cancel? fun()
+--- @field started? boolean
+--- @field handle? uv_fs_poll_t
+
+--- @class watch.PollOpts
+--- @field interval? integer
+--- @field include_pattern? userdata
+--- @field exclude_pattern? userdata
+
 ---@private
 --- Implementation for poll, hiding internally-used parameters.
 ---
----@param watches (table|nil) A tree structure to maintain state for recursive watches.
+---@param path string
+---@param opts watch.PollOpts
+---@param callback fun(patch: string, filechangetype: integer)
+---@param watches (watch.Watches|nil) A tree structure to maintain state for recursive watches.
 ---     - handle (uv_fs_poll_t)
 ---               The libuv handle
 ---     - cancel (function)
@@ -88,9 +104,10 @@ local default_poll_interval_ms = 2000
 ---               be invoked recursively)
 ---     - children (table|nil)
 ---               A mapping of directory entry name to its recursive watches
---      - started (boolean|nil)
---                Whether or not the watcher has first been initialized. Used
---                to prevent a flood of Created events on startup.
+---     - started (boolean|nil)
+---               Whether or not the watcher has first been initialized. Used
+---               to prevent a flood of Created events on startup.
+---@return fun() Cancel function
 local function poll_internal(path, opts, callback, watches)
   path = vim.fs.normalize(path)
   local interval = opts and opts.interval or default_poll_interval_ms
@@ -142,7 +159,7 @@ local function poll_internal(path, opts, callback, watches)
 
   if watches.is_dir then
     watches.children = watches.children or {}
-    local exists = {}
+    local exists = {} --- @type table<string,true>
     for name, ftype in vim.fs.dir(path) do
       exists[name] = true
       if not watches.children[name] then
@@ -154,7 +171,7 @@ local function poll_internal(path, opts, callback, watches)
       end
     end
 
-    local newchildren = {}
+    local newchildren = {} ---@type table<string,watch.Watches>
     for name, watch in pairs(watches.children) do
       if exists[name] then
         newchildren[name] = watch

@@ -129,10 +129,10 @@ function M.register(reg, ctx)
   then
     return
   end
-  local watch_regs = {}
+  local watch_regs = {} --- @type table<string,{pattern:userdata,kind:integer}>
   for _, w in ipairs(reg.registerOptions.watchers) do
     local relative_pattern = false
-    local glob_patterns = {}
+    local glob_patterns = {} --- @type {baseUri:string, pattern: string}[]
     if type(w.globPattern) == 'string' then
       for _, folder in ipairs(client.workspace_folders) do
         table.insert(glob_patterns, { baseUri = folder.uri, pattern = w.globPattern })
@@ -142,7 +142,7 @@ function M.register(reg, ctx)
       table.insert(glob_patterns, w.globPattern)
     end
     for _, glob_pattern in ipairs(glob_patterns) do
-      local base_dir = nil
+      local base_dir = nil ---@type string?
       if type(glob_pattern.baseUri) == 'string' then
         base_dir = glob_pattern.baseUri
       elseif type(glob_pattern.baseUri) == 'table' then
@@ -151,6 +151,7 @@ function M.register(reg, ctx)
       assert(base_dir, "couldn't identify root of watch")
       base_dir = vim.uri_to_fname(base_dir)
 
+      ---@type integer
       local kind = w.kind
         or protocol.WatchKind.Create + protocol.WatchKind.Change + protocol.WatchKind.Delete
 
