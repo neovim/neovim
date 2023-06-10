@@ -933,7 +933,7 @@ function lsp.status()
   end
   local message = table.concat(messages, ', ')
   if percentage then
-    return string.format('%03d: %s', percentage, message)
+    return string.format('%3d%%: %s', percentage, message)
   end
   return message
 end
