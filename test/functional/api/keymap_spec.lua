@@ -400,6 +400,9 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   -- maparg(), which does not accept "!" (though it returns "!" in its output
   -- if getting a mapping set with |:map!|).
   local function normalize_mapmode(mode, generate_expected)
+    if mode:sub(-1) == 'a' then
+      mode = mode:sub(1, -2)
+    end
     if not generate_expected and mode == '!' then
       -- Cannot retrieve mapmode-ic mappings with "!", but can with "i" or "c".
       mode = 'i'
@@ -435,7 +438,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
   -- Gets a maparg() dict from Nvim, if one exists.
   local function get_mapargs(mode, lhs)
-    local mapargs = funcs.maparg(lhs, normalize_mapmode(mode), false, true)
+    local mapargs = funcs.maparg(lhs, normalize_mapmode(mode), mode:sub(-1) == 'a', true)
     -- drop "lhsraw" and "lhsrawalt" which are hard to check
     mapargs.lhsraw = nil
     mapargs.lhsrawalt = nil
@@ -744,7 +747,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   end)
 
   -- Perform exhaustive tests of basic functionality
-  local mapmodes = {'n', 'v', 'x', 's', 'o', '!', 'i', 'l', 'c', 't', ''}
+  local mapmodes = {'n', 'v', 'x', 's', 'o', '!', 'i', 'l', 'c', 't', '', 'ia', 'ca', '!a'}
   for _, mapmode in ipairs(mapmodes) do
     it('can set/unset normal mappings in mapmode '..mapmode, function()
       meths.set_keymap(mapmode, 'lhs', 'rhs', {})
@@ -773,11 +776,9 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   -- remove some map arguments that are harder to test, or were already tested
   optnames = {'nowait', 'silent', 'expr', 'noremap'}
   for _, mapmode in ipairs(mapmodes) do
-    local printable_mode = normalize_mapmode(mapmode)
-
     -- Test with single mappings
     for _, maparg in ipairs(optnames) do
-      it('can set/unset '..printable_mode..'-mappings with maparg: '..maparg,
+      it('can set/unset '..mapmode..'-mappings with maparg: '..maparg,
           function()
         meths.set_keymap(mapmode, 'lhs', 'rhs', {[maparg] = true})
         eq(generate_mapargs(mapmode, 'lhs', 'rhs', {[maparg] = true}),
@@ -785,7 +786,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
         meths.del_keymap(mapmode, 'lhs')
         eq({}, get_mapargs(mapmode, 'lhs'))
       end)
-      it ('can set/unset '..printable_mode..'-mode mappings with maparg '..
+      it ('can set/unset '..mapmode..'-mode mappings with maparg '..
           maparg..', whose value is false', function()
         meths.set_keymap(mapmode, 'lhs', 'rhs', {[maparg] = false})
         eq(generate_mapargs(mapmode, 'lhs', 'rhs'),
@@ -798,7 +799,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     -- Test with triplets of mappings, one of which is false
     for i = 1, (#optnames - 2) do
       local opt1, opt2, opt3 = optnames[i], optnames[i + 1], optnames[i + 2]
-      it('can set/unset '..printable_mode..'-mode mappings with mapargs '..
+      it('can set/unset '..mapmode..'-mode mappings with mapargs '..
           opt1..', '..opt2..', '..opt3, function()
         local opts = {[opt1] = true, [opt2] = false, [opt3] = true}
         meths.set_keymap(mapmode, 'lhs', 'rhs', opts)
