@@ -266,8 +266,6 @@ describe('ShaDa support code', function()
   end)
 
   it('does not store unlisted buffer', function()
-    skip(is_os('win'))
-
     local fname = funcs.getcwd() .. '/file'
     meths.set_var('__fname', fname)
     nvim_command('edit `=__fname`')
