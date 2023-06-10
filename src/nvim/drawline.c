@@ -92,7 +92,7 @@ typedef struct {
   int fromcol;               ///< start of inverting
   int tocol;                 ///< end of inverting
 
-  long vcol_sbr;             ///< virtual column after showbreak
+  colnr_T vcol_sbr;          ///< virtual column after showbreak
   bool need_showbreak;       ///< overlong line, skipping first x chars
 
   int char_attr;             ///< attributes for next character
@@ -832,6 +832,12 @@ static void handle_showbreak_and_filler(win_T *wp, winlinevars_T *wlv)
       wlv->need_showbreak = false;
     }
     wlv->vcol_sbr = wlv->vcol + mb_charlen(sbr);
+
+    // Correct start of highlighted area for 'showbreak'.
+    if (wlv->fromcol >= wlv->vcol && wlv->fromcol < wlv->vcol_sbr) {
+      wlv->fromcol = wlv->vcol_sbr;
+    }
+
     // Correct end of highlighted area for 'showbreak',
     // required when 'linebreak' is also set.
     if (wlv->tocol == wlv->vcol) {

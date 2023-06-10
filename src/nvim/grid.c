@@ -540,7 +540,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
     size_t skip = 0;
     if (wp->w_p_nu && wp->w_p_rnu) {
       // do not overwrite the line number, change "123 text" to
-      // "123>>>xt".
+      // "123<<<xt".
       while (skip < max_off_from && ascii_isdigit(*linebuf_char[off])) {
         off++;
         skip++;
