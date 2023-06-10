@@ -2563,7 +2563,7 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
        -- Map to a Lua function:
        vim.keymap.set('n', 'lhs', function() print("real lua function") end)
        -- Map to multiple modes:
-       vim.keymap.set({'n', 'v'}, '<leader>lr', vim.lsp.buf.references, { buffer=true })
+       vim.keymap.set({'n', 'v'}, '<leader>lr', vim.lsp.buf.references, { buffer = true })
        -- Buffer-local mapping:
        vim.keymap.set('n', '<leader>w', "<cmd>w<cr>", { silent = true, buffer = 5 })
        -- Expr mapping:
@@ -2697,8 +2697,8 @@ find({names}, {opts})                                          *vim.fs.find()*
         directories
 
 joinpath({...})                                            *vim.fs.joinpath()*
-    Concatenate directories and/or file into a single path with normalization
-    (e.g., `"foo/"` and `"bar"` get joined to `"foo/bar"`)
+    Concatenate directories and/or file paths into a single path with
+    normalization (e.g., `"foo/"` and `"bar"` get joined to `"foo/bar"`)
 
     Parameters: ~
       • {...}  (string)
