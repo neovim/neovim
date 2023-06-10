@@ -458,7 +458,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
         // Replace "^x" by "CTRL-X". Don't do this for "^_" to make
         // ":help i_^_CTRL-D" work.
         // Insert '-' before and after "CTRL-X" when applicable.
-        if (*s < ' '
+        if ((uint8_t)(*s) < ' '
             || (*s == '^' && s[1]
                 && (ASCII_ISALPHA(s[1]) || vim_strchr("?@[\\]^", (uint8_t)s[1]) != NULL))) {
           if (d > IObuff && d[-1] != '_' && d[-1] != '\\') {
