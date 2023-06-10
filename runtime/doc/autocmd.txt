@@ -1136,6 +1136,25 @@ MouseMove			After the mouse is moved. Similar to the `<MouseMove>`
 				Unlike the `<MouseMove>` mapping, it also triggers when
 				dragging.
 
+				|v:event| is set with information about the mouse position,
+				which can be used like this: >
+
+				   vim.api.nvim_create_autocmd("MouseMove", {
+				     callback = function(ev)
+				       -- "l", "m", "r", or nil if no mousebtn is pressed
+				       local dragging = ev.data.dragging
+
+				       -- buffer-local line and column, only present if
+				       -- hovering over buffer
+				       local line = ev.data.line
+				       local col = ev.data.column
+
+				       -- absolute row and col, always present
+				       local screenrow = ev.data.screenrow
+				       local screencol = ev.data.screencol
+				     end
+				   })
+
 ==============================================================================
 6. Patterns					*autocmd-pattern* *{aupat}*
 
