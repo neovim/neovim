@@ -902,9 +902,10 @@ Note: these are typed literally, they are not special keys!
 		   write.  *E495*
 							*:<abuf>* *<abuf>*
 	<abuf>     When executing autocommands, is replaced with the currently
-		   effective buffer number (for ":r file" and ":so file" it is
-		   the current buffer, the file being read/sourced is not in a
-		   buffer).  *E496*
+		   effective buffer number.  It is not set for all events,
+		   also see |bufnr()|.  For ":r file" and ":so file" it is the
+		   current buffer, the file being read/sourced is not in a
+		   buffer.  *E496*
 							*:<amatch>* *<amatch>*
 	<amatch>   When executing autocommands, is replaced with the match for
 		   which this autocommand was executed.  *E497*

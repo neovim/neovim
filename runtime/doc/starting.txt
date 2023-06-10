@@ -426,9 +426,11 @@ accordingly, proceeding as follows:
 
 2. Process the arguments
 	The options and file names from the command that start Vim are
-	inspected.  Buffers are created for all files (but not loaded yet).
+	inspected.
 	The |-V| argument can be used to display or log what happens next,
 	useful for debugging the initializations.
+	The |--cmd| arguments are executed.
+	Buffers are created for all files (but not loaded yet).
 
 3. Start a server (unless |--listen| was given) and set |v:servername|.
 
