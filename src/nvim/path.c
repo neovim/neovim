@@ -2087,15 +2087,15 @@ char *path_shorten_fname(char *full_path, char *dir_name)
   assert(dir_name != NULL);
   size_t len = strlen(dir_name);
 
-  // If dir_name is a path head, full_path can always be made relative.
-  if (len == (size_t)path_head_length() && is_path_head(dir_name)) {
-    return full_path + len;
-  }
-
   // If full_path and dir_name do not match, it's impossible to make one
   // relative to the other.
   if (path_fnamencmp(dir_name, full_path, len) != 0) {
     return NULL;
+  }
+
+  // If dir_name is a path head, full_path can always be made relative.
+  if (len == (size_t)path_head_length() && is_path_head(dir_name)) {
+    return full_path + len;
   }
 
   char *p = full_path + len;

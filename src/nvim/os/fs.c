@@ -14,6 +14,19 @@
 #include <sys/stat.h>
 #include <uv.h>
 
+#ifdef MSWIN
+# include <shlobj.h>
+#endif
+
+#if defined(HAVE_ACL)
+# ifdef HAVE_SYS_ACL_H
+#  include <sys/acl.h>
+# endif
+# ifdef HAVE_SYS_ACCESS_H
+#  include <sys/access.h>
+# endif
+#endif
+
 #include "auto/config.h"
 #include "nvim/ascii.h"
 #include "nvim/gettext.h"
@@ -731,15 +744,6 @@ int os_setperm(const char *const name, int perm)
   return (r == kLibuvSuccess ? OK : FAIL);
 }
 
-#if defined(HAVE_ACL)
-# ifdef HAVE_SYS_ACL_H
-#  include <sys/acl.h>
-# endif
-# ifdef HAVE_SYS_ACCESS_H
-#  include <sys/access.h>
-# endif
-#endif
-
 // Return a pointer to the ACL of file "fname" in allocated memory.
 // Return NULL if the ACL is not available for whatever reason.
 vim_acl_T os_get_acl(const char *fname)
@@ -1225,8 +1229,6 @@ char *os_realpath(const char *name, char *buf)
 }
 
 #ifdef MSWIN
-# include <shlobj.h>
-
 /// When "fname" is the name of a shortcut (*.lnk) resolve the file it points
 /// to and return that name in allocated memory.
 /// Otherwise NULL is returned.

@@ -910,10 +910,10 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
   if (scratch) {
     aco_save_T aco;
     aucmd_prepbuf(&aco, buf);
-    set_option_value("bufhidden", 0L, "hide", OPT_LOCAL);
-    set_option_value("buftype", 0L, "nofile", OPT_LOCAL);
-    set_option_value("swapfile", 0L, NULL, OPT_LOCAL);
-    set_option_value("modeline", 0L, NULL, OPT_LOCAL);  // 'nomodeline'
+    set_option_value("bufhidden", STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL);
+    set_option_value("buftype", STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL);
+    set_option_value("swapfile", BOOLEAN_OPTVAL(false), OPT_LOCAL);
+    set_option_value("modeline", BOOLEAN_OPTVAL(false), OPT_LOCAL);  // 'nomodeline'
     aucmd_restbuf(&aco);
   }
   return buf->b_fnum;
@@ -1420,6 +1420,7 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 /// @param channel_id
 /// @param  mode  Mode short-name (map command prefix: "n", "i", "v", "x", …)
 ///               or "!" for |:map!|, or empty string for |:map|.
+///               "ia", "ca" or "!a" for abbreviation in Insert mode, Cmdline mode, or both, respectively
 /// @param  lhs   Left-hand-side |{lhs}| of the mapping.
 /// @param  rhs   Right-hand-side |{rhs}| of the mapping.
 /// @param  opts  Optional parameters map: Accepts all |:map-arguments| as keys except |<buffer>|,

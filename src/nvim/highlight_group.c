@@ -1280,7 +1280,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
                   if (dark != -1
                       && dark != (*p_bg == 'd')
                       && !option_was_set("bg")) {
-                    set_option_value_give_err("bg", 0L, (dark ? "dark" : "light"), 0);
+                    set_option_value_give_err("bg", CSTR_AS_OPTVAL(dark ? "dark" : "light"), 0);
                     reset_option_was_set("bg");
                   }
                 }

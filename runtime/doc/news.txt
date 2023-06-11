@@ -33,19 +33,24 @@ The following changes may require adaptations in user config or plugins.
 • When switching windows, |CursorMoved| autocommands trigger when Nvim is back
   in the main loop rather than immediately. This is more compatible with Vim.
 
-• |LspRequest| autocmd was promoted from a |User| autocmd to a first class
-  citizen.
+• |LspRequest| and LspProgressUpdate (renamed to |LspProgress|) autocmds were
+  promoted from a |User| autocmd to first class citizen.
+
+• Renamed `vim.treesitter.playground` to `vim.treesitter.dev`.
 
 ==============================================================================
 ADDED FEATURES                                                     *news-added*
 
 The following new APIs or features were added.
 
-• Nvim's LSP client now advertises the general.positionEncodings client
-  capability to indicate to servers that it supports utf-8, utf-16, and utf-32
-  encodings. If the server responds with the positionEncoding capability in
-  its initialization response, Nvim automatically sets the client's
-  `offset_encoding` field.
+• Added |vim.lsp.status()| to consume the last progress messages as a string.
+
+• Neovim's LSP client now always saves and restores named buffer marks when
+  applying text edits.
+
+• Nvim now supports the `positionEncoding` server capability. If a server
+  responds with the `positionEncoding` capability in its initialization
+  response, Nvim automatically sets the client's `offset_encoding` field.
 
 • Dynamic registration of LSP capabilities. An implication of this change is
   that checking a client's `server_capabilities` is no longer a sufficient
@@ -56,13 +61,9 @@ The following new APIs or features were added.
 • |vim.iter()| provides a generic iterator interface for tables and Lua
   iterators |luaref-in|.
 
-• Added |vim.keycode()| for translating keycodes in a string.
+• Added |vim.ringbuf()| to create ring buffers.
 
-• Added automatic linting of treesitter query files (see |ft-query-plugin|).
-  Automatic linting can be turned off via >lua
-      vim.g.query_lint_on = {}
-<
-• Enabled treesitter highlighting for treesitter query files by default.
+• Added |vim.keycode()| for translating keycodes in a string.
 
 • Added |vim.treesitter.query.omnifunc()| for treesitter query files (set by
   default).
@@ -79,6 +80,10 @@ The following new APIs or features were added.
   is resized horizontally). Note: Lines that are not visible and kept in
   |'scrollback'| are not reflown.
 
+• |vim.system()| for running system commands.
+
+• |nvim_set_keymap()| and |nvim_del_keymap()| now support abbreviations.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
@@ -93,6 +98,13 @@ The following changes to existing APIs or features add new behavior.
 • vim.diagnostic.config() now accepts a function for the virtual_text.prefix
   option, which allows for rendering e.g., diagnostic severities differently.
 
+• Defaults:
+  • 'shortmess' includes the "C" flag.
+  • Automatic linting of treesitter query files (see |ft-query-plugin|).
+    Can be disabled via: >lua
+      vim.g.query_lint_on = {}
+<  • Enabled treesitter highlighting for treesitter query files.
+
 • The `workspace/didChangeWatchedFiles` LSP client capability is now enabled
   by default.
 
@@ -101,6 +113,9 @@ The following changes to existing APIs or features add new behavior.
 
 • `:source` without arguments treats a buffer with its 'filetype' set to "lua"
   as Lua code regardless of its extension.
+
+• |:checkhealth| buffer now implements |folding|. The initial folding status is
+  defined by the 'foldenable' option.
 
 • The |shada| file no longer contains entries for 'nobuflisted' buffers. 
 
@@ -132,6 +147,9 @@ release.
   - |nvim_set_option()|		Use |nvim_set_option_value()| instead.
   - |nvim_win_get_option()|	Use |nvim_get_option_value()| instead.
   - |nvim_win_set_option()|	Use |nvim_set_option_value()| instead.
+
+• vim.lsp functions:
+  - |vim.lsp.util.get_progress_messages()|	Use |vim.lsp.status()| instead.
 
 • `vim.loop` has been renamed to `vim.uv`.
 

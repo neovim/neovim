@@ -1,16 +1,16 @@
 local api = vim.api
 
----@class TSPlaygroundModule
+---@class TSDevModule
 local M = {}
 
----@class TSPlayground
+---@class TSTreeView
 ---@field ns integer API namespace
 ---@field opts table Options table with the following keys:
 ---                  - anon (boolean): If true, display anonymous nodes
 ---                  - lang (boolean): If true, display the language alongside each node
 ---@field nodes TSP.Node[]
 ---@field named TSP.Node[]
-local TSPlayground = {}
+local TSTreeView = {}
 
 ---@class TSP.Node
 ---@field id integer Node id
@@ -82,16 +82,16 @@ local function traverse(node, depth, lang, injections, tree)
   return tree
 end
 
---- Create a new Playground object.
+--- Create a new treesitter view.
 ---
 ---@param bufnr integer Source buffer number
 ---@param lang string|nil Language of source buffer
 ---
----@return TSPlayground|nil
+---@return TSTreeView|nil
 ---@return string|nil Error message, if any
 ---
 ---@package
-function TSPlayground:new(bufnr, lang)
+function TSTreeView:new(bufnr, lang)
   local ok, parser = pcall(vim.treesitter.get_parser, bufnr or 0, lang)
   if not ok then
     return nil, 'No parser available for the given buffer'
@@ -139,7 +139,7 @@ function TSPlayground:new(bufnr, lang)
   return t
 end
 
-local decor_ns = api.nvim_create_namespace('ts.playground')
+local decor_ns = api.nvim_create_namespace('ts.dev')
 
 ---@private
 ---@param lnum integer
@@ -154,11 +154,11 @@ local function get_range_str(lnum, col, end_lnum, end_col)
   return string.format('[%d:%d - %d:%d]', lnum + 1, col + 1, end_lnum + 1, end_col)
 end
 
---- Write the contents of this Playground into {bufnr}.
+--- Write the contents of this View into {bufnr}.
 ---
 ---@param bufnr integer Buffer number to write into.
 ---@package
-function TSPlayground:draw(bufnr)
+function TSTreeView:draw(bufnr)
   vim.bo[bufnr].modifiable = true
   local lines = {} ---@type string[]
   local lang_hl_marks = {} ---@type table[]
@@ -193,25 +193,25 @@ function TSPlayground:draw(bufnr)
   vim.bo[bufnr].modifiable = false
 end
 
---- Get node {i} from this Playground object.
+--- Get node {i} from this View.
 ---
 --- The node number is dependent on whether or not anonymous nodes are displayed.
 ---
 ---@param i integer Node number to get
 ---@return TSP.Node
 ---@package
-function TSPlayground:get(i)
+function TSTreeView:get(i)
   local t = self.opts.anon and self.nodes or self.named
   return t[i]
 end
 
---- Iterate over all of the nodes in this Playground object.
+--- Iterate over all of the nodes in this View.
 ---
----@return (fun(): integer, TSP.Node) Iterator over all nodes in this Playground
+---@return (fun(): integer, TSP.Node) Iterator over all nodes in this View
 ---@return table
 ---@return integer
 ---@package
-function TSPlayground:iter()
+function TSTreeView:iter()
   return ipairs(self.opts.anon and self.nodes or self.named)
 end
 
@@ -228,6 +228,8 @@ end
 ---                       function, it accepts the buffer number of the source
 ---                       buffer as its only argument and should return a string.
 
+--- @private
+---
 --- @param opts InspectTreeOpts
 function M.inspect_tree(opts)
   vim.validate({
@@ -238,11 +240,11 @@ function M.inspect_tree(opts)
 
   local buf = api.nvim_get_current_buf()
   local win = api.nvim_get_current_win()
-  local pg = assert(TSPlayground:new(buf, opts.lang))
+  local pg = assert(TSTreeView:new(buf, opts.lang))
 
-  -- Close any existing playground window
-  if vim.b[buf].playground then
-    local w = vim.b[buf].playground
+  -- Close any existing dev window
+  if vim.b[buf].dev then
+    local w = vim.b[buf].dev
     if api.nvim_win_is_valid(w) then
       api.nvim_win_close(w, true)
     end
@@ -261,7 +263,7 @@ function M.inspect_tree(opts)
     b = api.nvim_win_get_buf(w)
   end
 
-  vim.b[buf].playground = w
+  vim.b[buf].dev = w
 
   vim.wo[w].scrolloff = 5
   vim.wo[w].wrap = false
@@ -330,7 +332,7 @@ function M.inspect_tree(opts)
     end,
   })
 
-  local group = api.nvim_create_augroup('treesitter/playground', {})
+  local group = api.nvim_create_augroup('treesitter/dev', {})
 
   api.nvim_create_autocmd('CursorMoved', {
     group = group,
@@ -399,7 +401,7 @@ function M.inspect_tree(opts)
         return true
       end
 
-      pg = assert(TSPlayground:new(buf, opts.lang))
+      pg = assert(TSTreeView:new(buf, opts.lang))
       pg:draw(b)
     end,
   })

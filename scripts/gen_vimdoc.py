@@ -275,7 +275,7 @@ CONFIG = {
             'query.lua',
             'highlighter.lua',
             'languagetree.lua',
-            'playground.lua',
+            'dev.lua',
         ],
         'files': [
             'runtime/lua/vim/treesitter.lua',

@@ -4,6 +4,15 @@ local matches = helpers.matches
 local pcall_err = helpers.pcall_err
 
 describe('vim.iter', function()
+  it('new() on iterable class instance', function()
+    local rb = vim.ringbuf(3)
+    rb:push("a")
+    rb:push("b")
+
+    local it = vim.iter(rb)
+    eq({"a", "b"}, it:totable())
+  end)
+
   it('filter()', function()
     local function odd(v)
       return v % 2 ~= 0

@@ -87,7 +87,7 @@ static void api_parse_enter(mpack_parser_t *parser, mpack_node_t *node)
     *result = NIL;
     break;
   case MPACK_TOKEN_BOOLEAN:
-    *result = BOOL(mpack_unpack_boolean(node->tok));
+    *result = BOOLEAN_OBJ(mpack_unpack_boolean(node->tok));
     break;
   case MPACK_TOKEN_SINT:
     *result = INTEGER_OBJ(mpack_unpack_sint(node->tok));

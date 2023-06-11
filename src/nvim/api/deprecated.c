@@ -709,14 +709,13 @@ static void set_option_to(uint64_t channel_id, void *to, int type, String name, 
     }
   }
 
-  long numval = 0;
-  char *stringval = NULL;
+  OptVal optval = NIL_OPTVAL;
 
   if (flags & SOPT_BOOL) {
     VALIDATE(value.type == kObjectTypeBoolean, "Option '%s' value must be Boolean", name.data, {
       return;
     });
-    numval = value.data.boolean;
+    optval = BOOLEAN_OPTVAL(value.data.boolean);
   } else if (flags & SOPT_NUM) {
     VALIDATE(value.type == kObjectTypeInteger, "Option '%s' value must be Integer", name.data, {
       return;
@@ -725,12 +724,12 @@ static void set_option_to(uint64_t channel_id, void *to, int type, String name, 
              "Option '%s' value is out of range", name.data, {
       return;
     });
-    numval = (int)value.data.integer;
+    optval = NUMBER_OPTVAL(value.data.integer);
   } else {
     VALIDATE(value.type == kObjectTypeString, "Option '%s' value must be String", name.data, {
       return;
     });
-    stringval = value.data.string.data;
+    optval = STRING_OPTVAL(value.data.string);
   }
 
   // For global-win-local options -> setlocal
@@ -739,6 +738,6 @@ static void set_option_to(uint64_t channel_id, void *to, int type, String name, 
                         (type == SREQ_GLOBAL) ? OPT_GLOBAL : OPT_LOCAL;
 
   WITH_SCRIPT_CONTEXT(channel_id, {
-    access_option_value_for(name.data, &numval, &stringval, opt_flags, type, to, false, err);
+    set_option_value_for(name.data, optval, opt_flags, type, to, err);
   });
 }

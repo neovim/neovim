@@ -340,7 +340,6 @@ static void shift_block(oparg_T *oap, int amount)
   const int ts_val = (int)curbuf->b_p_ts;
   struct block_def bd;
   int incr;
-  int i = 0, j = 0;
   const int old_p_ri = p_ri;
 
   p_ri = 0;                     // don't want revins in indent
@@ -391,40 +390,36 @@ static void shift_block(oparg_T *oap, int amount)
     bd.start_vcol = cts.cts_vcol;
     clear_chartabsize_arg(&cts);
 
+    int tabs = 0, spaces = 0;
     // OK, now total=all the VWS reqd, and textstart points at the 1st
     // non-ws char in the block.
     if (!curbuf->b_p_et) {
-      tabstop_fromto(ws_vcol, ws_vcol + total, ts_val, curbuf->b_p_vts_array, &i, &j);
+      tabstop_fromto(ws_vcol, ws_vcol + total,
+                     ts_val, curbuf->b_p_vts_array, &tabs, &spaces);
     } else {
-      j = total;
+      spaces = total;
     }
 
     // if we're splitting a TAB, allow for it
-    int col_pre = bd.pre_whitesp_c - (bd.startspaces != 0);
+    const int col_pre = bd.pre_whitesp_c - (bd.startspaces != 0);
     bd.textcol -= col_pre;
-    const int len = (int)strlen(bd.textstart) + 1;
-    int col = bd.textcol + i + j + len;
-    assert(col >= 0);
-    newp = xmalloc((size_t)col);
-    memset(newp, NUL, (size_t)col);
+
+    const size_t new_line_len  // the length of the line after the block shift
+      = (size_t)bd.textcol + (size_t)tabs + (size_t)spaces + strlen(bd.textstart);
+    newp = xmalloc(new_line_len + 1);
     memmove(newp, oldp, (size_t)bd.textcol);
     startcol = bd.textcol;
     oldlen = (int)(bd.textstart - old_textstart) + col_pre;
-    newlen = i + j;
-    memset(newp + bd.textcol, TAB, (size_t)i);
-    memset(newp + bd.textcol + i, ' ', (size_t)j);
-    // the end
-    memmove(newp + bd.textcol + i + j, bd.textstart, (size_t)len);
+    newlen = tabs + spaces;
+    memset(newp + bd.textcol, TAB, (size_t)tabs);
+    memset(newp + bd.textcol + tabs, ' ', (size_t)spaces);
+    // Note that STRMOVE() copies the trailing NUL.
+    STRMOVE(newp + bd.textcol + tabs + spaces, bd.textstart);
   } else {  // left
-    colnr_T destination_col;      // column to which text in block will
-                                  // be shifted
     char *verbatim_copy_end;      // end of the part of the line which is
                                   // copied verbatim
     colnr_T verbatim_copy_width;  // the (displayed) width of this part
                                   // of line
-    size_t fill;                  // nr of spaces that replace a TAB
-    size_t new_line_len;          // the length of the line after the
-                                  // block shift
     char *non_white = bd.textstart;
 
     // Firstly, let's find the first non-whitespace character that is
@@ -460,7 +455,7 @@ static void shift_block(oparg_T *oap, int amount)
         ? block_space_width
         : total;
     // The column to which we will shift the text.
-    destination_col = non_white_col - shift_amount;
+    const colnr_T destination_col = non_white_col - shift_amount;
 
     // Now let's find out how much of the beginning of the line we can
     // reuse without modification.
@@ -491,7 +486,8 @@ static void shift_block(oparg_T *oap, int amount)
     // part of the line that will be copied, it means we encountered a tab
     // character, which we will have to partly replace with spaces.
     assert(destination_col - verbatim_copy_width >= 0);
-    fill = (size_t)(destination_col - verbatim_copy_width);
+    const size_t fill  // nr of spaces that replace a TAB
+      = (size_t)(destination_col - verbatim_copy_width);
 
     assert(verbatim_copy_end - oldp >= 0);
     const size_t verbatim_diff = (size_t)(verbatim_copy_end - oldp);
@@ -499,14 +495,16 @@ static void shift_block(oparg_T *oap, int amount)
     // - the beginning of the original line up to "verbatim_copy_end",
     // - "fill" number of spaces,
     // - the rest of the line, pointed to by non_white.
-    new_line_len = verbatim_diff + fill + strlen(non_white) + 1;
+    const size_t new_line_len  // the length of the line after the block shift
+      = verbatim_diff + fill + strlen(non_white);
 
-    newp = xmalloc(new_line_len);
+    newp = xmalloc(new_line_len + 1);
     startcol = (int)verbatim_diff;
     oldlen = bd.textcol + (int)(non_white - bd.textstart) - (int)verbatim_diff;
     newlen = (int)fill;
     memmove(newp, oldp, verbatim_diff);
     memset(newp + verbatim_diff, ' ', fill);
+    // Note that STRMOVE() copies the trailing NUL.
     STRMOVE(newp + verbatim_diff + fill, non_white);
   }
   // replace the line

@@ -5720,7 +5720,7 @@ static void init_spellfile(void)
                      && strstr(path_tail(fname), ".ascii.") != NULL)
                     ? "ascii"
                     : spell_enc()));
-      set_option_value_give_err("spellfile", 0L, buf, OPT_LOCAL);
+      set_option_value_give_err("spellfile", CSTR_AS_OPTVAL(buf), OPT_LOCAL);
       break;
     }
     aspath = false;

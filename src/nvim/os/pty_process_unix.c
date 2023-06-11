@@ -11,6 +11,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
+#include <uv.h>
 
 // forkpty is not in POSIX, so headers are platform-specific
 #if defined(__FreeBSD__) || defined(__DragonFly__)
@@ -30,8 +31,6 @@
 #ifdef __APPLE__
 # include <crt_externs.h>
 #endif
-
-#include <uv.h>
 
 #include "auto/config.h"
 #include "klib/klist.h"

@@ -1435,8 +1435,12 @@ describe('API', function()
         pcall_err(nvim, 'set_option_value', 'scrolloff', 1, {scope = 'bogus'}))
       eq("Invalid 'scope': expected String, got Integer",
         pcall_err(nvim, 'get_option_value', 'scrolloff', {scope = 42}))
-      eq("Invalid 'scrolloff': expected Integer/Boolean/String, got Array",
+      eq("Invalid 'value': expected Integer/Boolean/String, got Array",
         pcall_err(nvim, 'set_option_value', 'scrolloff', {}, {}))
+      eq("Invalid value for option 'scrolloff': expected Number, got Boolean true",
+        pcall_err(nvim, 'set_option_value', 'scrolloff', true, {}))
+      eq("Invalid value for option 'scrolloff': expected Number, got String \"wrong\"",
+        pcall_err(nvim, 'set_option_value', 'scrolloff', 'wrong', {}))
     end)
 
     it('can get local values when global value is set', function()

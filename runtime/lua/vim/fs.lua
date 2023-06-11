@@ -72,7 +72,7 @@ function M.basename(file)
   return file:match('[/\\]$') and '' or (file:match('[^\\/]*$'):gsub('\\', '/'))
 end
 
---- Concatenate directories and/or file into a single path with normalization
+--- Concatenate directories and/or file paths into a single path with normalization
 --- (e.g., `"foo/"` and `"bar"` get joined to `"foo/bar"`)
 ---
 ---@param ... string

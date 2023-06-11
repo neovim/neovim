@@ -593,6 +593,7 @@ let s:filename_checks = {
     \ 'sysctl': ['/etc/sysctl.conf', '/etc/sysctl.d/file.conf', 'any/etc/sysctl.conf', 'any/etc/sysctl.d/file.conf'],
     \ 'systemd': ['any/systemd/file.automount', 'any/systemd/file.dnssd', 'any/systemd/file.link', 'any/systemd/file.mount', 'any/systemd/file.netdev', 'any/systemd/file.network', 'any/systemd/file.nspawn', 'any/systemd/file.path', 'any/systemd/file.service', 'any/systemd/file.slice', 'any/systemd/file.socket', 'any/systemd/file.swap', 'any/systemd/file.target', 'any/systemd/file.timer', '/etc/systemd/some.conf.d/file.conf', '/etc/systemd/system/some.d/file.conf', '/etc/systemd/system/some.d/.#file', '/etc/systemd/system/.#otherfile', '/home/user/.config/systemd/user/some.d/mine.conf', '/home/user/.config/systemd/user/some.d/.#file', '/home/user/.config/systemd/user/.#otherfile', '/.config/systemd/user/.#', '/.config/systemd/user/.#-file', '/.config/systemd/user/file.d/.#', '/.config/systemd/user/file.d/.#-file', '/.config/systemd/user/file.d/file.conf', '/etc/systemd/file.conf.d/file.conf', '/etc/systemd/system/.#', '/etc/systemd/system/.#-file', '/etc/systemd/system/file.d/.#', '/etc/systemd/system/file.d/.#-file', '/etc/systemd/system/file.d/file.conf', '/systemd/file.automount', '/systemd/file.dnssd', '/systemd/file.link', '/systemd/file.mount', '/systemd/file.netdev', '/systemd/file.network', '/systemd/file.nspawn', '/systemd/file.path', '/systemd/file.service', '/systemd/file.slice', '/systemd/file.socket', '/systemd/file.swap', '/systemd/file.target', '/systemd/file.timer', 'any/.config/systemd/user/.#', 'any/.config/systemd/user/.#-file', 'any/.config/systemd/user/file.d/.#', 'any/.config/systemd/user/file.d/.#-file', 'any/.config/systemd/user/file.d/file.conf', 'any/etc/systemd/file.conf.d/file.conf', 'any/etc/systemd/system/.#', 'any/etc/systemd/system/.#-file', 'any/etc/systemd/system/file.d/.#', 'any/etc/systemd/system/file.d/.#-file', 'any/etc/systemd/system/file.d/file.conf'],
     \ 'systemverilog': ['file.sv', 'file.svh'],
+    \ 'trace32': ['file.cmm', 'file.t32'],
     \ 'tags': ['tags'],
     \ 'tak': ['file.tak'],
     \ 'tal': ['file.tal'],
@@ -640,6 +641,7 @@ let s:filename_checks = {
     \ 'upstreamdat': ['upstream.dat', 'UPSTREAM.DAT', 'upstream.file.dat', 'UPSTREAM.FILE.DAT', 'file.upstream.dat', 'FILE.UPSTREAM.DAT'],
     \ 'upstreaminstalllog': ['upstreaminstall.log', 'UPSTREAMINSTALL.LOG', 'upstreaminstall.file.log', 'UPSTREAMINSTALL.FILE.LOG', 'file.upstreaminstall.log', 'FILE.UPSTREAMINSTALL.LOG'],
     \ 'upstreamlog': ['fdrupstream.log', 'upstream.log', 'UPSTREAM.LOG', 'upstream.file.log', 'UPSTREAM.FILE.LOG', 'file.upstream.log', 'FILE.UPSTREAM.LOG', 'UPSTREAM-file.log', 'UPSTREAM-FILE.LOG'],
+    \ 'urlshortcut': ['file.url'],
     \ 'usd': ['file.usda', 'file.usd'],
     \ 'usserverlog': ['usserver.log', 'USSERVER.LOG', 'usserver.file.log', 'USSERVER.FILE.LOG', 'file.usserver.log', 'FILE.USSERVER.LOG'],
     \ 'usw2kagtlog': ['usw2kagt.log', 'USW2KAGT.LOG', 'usw2kagt.file.log', 'USW2KAGT.FILE.LOG', 'file.usw2kagt.log', 'FILE.USW2KAGT.LOG'],
@@ -771,6 +773,7 @@ let s:script_checks = {
       \ 'expect': [['#!/path/expect']],
       \ 'gnuplot': [['#!/path/gnuplot']],
       \ 'make': [['#!/path/make']],
+      \ 'nix': [['#!/path/nix-shell']],
       \ 'pike': [['#!/path/pike'],
       \          ['#!/path/pike0'],
       \          ['#!/path/pike9']],
@@ -817,6 +820,7 @@ let s:script_env_checks = {
       \ 'scheme': [['#!/usr/bin/env VAR=val --ignore-environment scheme']],
       \ 'python': [['#!/usr/bin/env VAR=val -S python -w -T']],
       \ 'wml': [['#!/usr/bin/env VAR=val --split-string wml']],
+      \ 'nix': [['#!/usr/bin/env nix-shell']],
       \ }
 
 func Run_script_detection(test_dict)

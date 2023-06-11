@@ -32,11 +32,6 @@ local tbl_map = helpers.tbl_map
 local tbl_filter = helpers.tbl_filter
 local endswith = helpers.endswith
 
-local testfile = 'Xtest_startuptime'
-after_each(function()
-  os.remove(testfile)
-end)
-
 describe('startup', function()
   it('--clean', function()
     clear()
@@ -46,6 +41,10 @@ describe('startup', function()
   end)
 
   it('--startuptime', function()
+    local testfile = 'Xtest_startuptime'
+    finally(function()
+      os.remove(testfile)
+    end)
     clear({ args = {'--startuptime', testfile}})
     assert_log('sourcing', testfile, 100)
     assert_log("require%('vim%._editor'%)", testfile, 100)
@@ -81,13 +80,7 @@ describe('startup', function()
 end)
 
 describe('startup', function()
-  before_each(function()
-    clear()
-    os.remove('Xtest_startup_ttyout')
-  end)
-  after_each(function()
-    os.remove('Xtest_startup_ttyout')
-  end)
+  before_each(clear)
 
   describe('-l Lua', function()
     local function assert_l_out(expected, nvim_args, lua_args, script, input)
@@ -258,6 +251,10 @@ describe('startup', function()
     if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
+    os.remove('Xtest_startup_ttyout')
+    finally(function()
+      os.remove('Xtest_startup_ttyout')
+    end)
     -- Running in :terminal
     command([[exe printf("terminal %s -u NONE -i NONE --cmd \"]]
             ..nvim_set..[[\"]]
@@ -275,6 +272,10 @@ describe('startup', function()
     if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
+    os.remove('Xtest_startup_ttyout')
+    finally(function()
+      os.remove('Xtest_startup_ttyout')
+    end)
     -- Running in :terminal
     command([[exe printf("terminal echo foo | ]]  -- Input from a pipe.
             ..[[%s -u NONE -i NONE --cmd \"]]
@@ -334,28 +335,6 @@ describe('startup', function()
                     { '' }))
   end)
 
-  it('-e/-E interactive #7679', function()
-    clear('-e')
-    local screen = Screen.new(25, 3)
-    screen:attach()
-    feed("put ='from -e'<CR>")
-    screen:expect([[
-      :put ='from -e'          |
-      from -e                  |
-      :^                        |
-    ]])
-
-    clear('-E')
-    screen = Screen.new(25, 3)
-    screen:attach()
-    feed("put ='from -E'<CR>")
-    screen:expect([[
-      :put ='from -E'          |
-      from -E                  |
-      :^                        |
-    ]])
-  end)
-
   it('stdin with -es/-Es #7679', function()
     local input = { 'append', 'line1', 'line2', '.', '%print', '' }
     local inputstr = table.concat(input, '\n')
@@ -411,23 +390,6 @@ describe('startup', function()
     end
   end)
 
-  it('-e sets ex mode', function()
-    local screen = Screen.new(25, 3)
-    clear('-e')
-    screen:attach()
-    -- Verify we set the proper mode both before and after :vi.
-    feed("put =mode(1)<CR>vi<CR>:put =mode(1)<CR>")
-    screen:expect([[
-      cv                       |
-      ^n                        |
-      :put =mode(1)            |
-    ]])
-
-    eq('cv\n',
-       funcs.system({nvim_prog, '-n', '-es' },
-                    { 'put =mode(1)', 'print', '' }))
-  end)
-
   it('fails on --embed with -es/-Es/-l', function()
     matches('nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
       funcs.system({nvim_prog, '--embed', '-es' }))
@@ -435,17 +397,6 @@ describe('startup', function()
       funcs.system({nvim_prog, '--embed', '-Es' }))
     matches('nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
       funcs.system({nvim_prog, '--embed', '-l', 'foo.lua' }))
-  end)
-
-  it('does not crash if --embed is given twice', function()
-    clear{args={'--embed'}}
-    assert_alive()
-  end)
-
-  it('does not crash when expanding cdpath during early_init', function()
-    clear{env={CDPATH='~doesnotexist'}}
-    assert_alive()
-    eq(',~doesnotexist', eval('&cdpath'))
   end)
 
   it('ENTER dismisses early message #7967', function()
@@ -473,24 +424,6 @@ describe('startup', function()
     ]])
   end)
 
-  it("sets 'shortmess' when loading other tabs", function()
-    clear({args={'-p', 'a', 'b', 'c'}})
-    local screen = Screen.new(25, 4)
-    screen:attach()
-    screen:expect({grid=[[
-        {1: a }{2: b  c }{3:               }{2:X}|
-        ^                         |
-        {4:~                        }|
-                                 |
-          ]],
-      attr_ids={
-        [1] = {bold = true},
-        [2] = {background = Screen.colors.LightGrey, underline = true},
-        [3] = {reverse = true},
-        [4] = {bold = true, foreground = Screen.colors.Blue1},
-    }})
-  end)
-
   it('fixed hang issue with --headless (#11386)', function()
     local expected = ''
     local period = 100
@@ -516,14 +449,108 @@ describe('startup', function()
                                '+q' })
     eq('[\'+q\'] 1', out)
   end)
+end)
 
+describe('startup', function()
+  it('-e/-E interactive #7679', function()
+    clear('-e')
+    local screen = Screen.new(25, 3)
+    screen:attach()
+    feed("put ='from -e'<CR>")
+    screen:expect([[
+      :put ='from -e'          |
+      from -e                  |
+      :^                        |
+    ]])
+
+    clear('-E')
+    screen = Screen.new(25, 3)
+    screen:attach()
+    feed("put ='from -E'<CR>")
+    screen:expect([[
+      :put ='from -E'          |
+      from -E                  |
+      :^                        |
+    ]])
+  end)
+
+  it('-e sets ex mode', function()
+    local screen = Screen.new(25, 3)
+    clear('-e')
+    screen:attach()
+    -- Verify we set the proper mode both before and after :vi.
+    feed("put =mode(1)<CR>vi<CR>:put =mode(1)<CR>")
+    screen:expect([[
+      cv                       |
+      ^n                        |
+      :put =mode(1)            |
+    ]])
+
+    eq('cv\n',
+       funcs.system({nvim_prog, '-n', '-es' },
+                    { 'put =mode(1)', 'print', '' }))
+  end)
+
+  it('-d does not diff non-arglist windows #13720 #21289', function()
+    write_file('Xdiff.vim', [[
+      let bufnr = nvim_create_buf(0, 1)
+      let config = {
+            \   'relative': 'editor',
+            \   'focusable': v:false,
+            \   'width': 1,
+            \   'height': 1,
+            \   'row': 3,
+            \   'col': 3
+            \ }
+      autocmd WinEnter * call nvim_open_win(bufnr, v:false, config)]])
+    finally(function()
+      os.remove('Xdiff.vim')
+    end)
+    clear{args={'-u', 'Xdiff.vim', '-d', 'Xdiff.vim', 'Xdiff.vim'}}
+    eq(true, meths.get_option_value('diff', {win = funcs.win_getid(1)}))
+    eq(true, meths.get_option_value('diff', {win = funcs.win_getid(2)}))
+    local float_win = funcs.win_getid(3)
+    eq('editor', meths.win_get_config(float_win).relative)
+    eq(false, meths.get_option_value('diff', {win = float_win}))
+  end)
+
+  it('does not crash if --embed is given twice', function()
+    clear{args={'--embed'}}
+    assert_alive()
+  end)
+
+  it('does not crash when expanding cdpath during early_init', function()
+    clear{env={CDPATH='~doesnotexist'}}
+    assert_alive()
+    eq(',~doesnotexist', eval('&cdpath'))
+  end)
+
+  it("sets 'shortmess' when loading other tabs", function()
+    clear({args={'-p', 'a', 'b', 'c'}})
+    local screen = Screen.new(25, 4)
+    screen:attach()
+    screen:expect({grid=[[
+        {1: a }{2: b  c }{3:               }{2:X}|
+        ^                         |
+        {4:~                        }|
+                                 |
+          ]],
+      attr_ids={
+        [1] = {bold = true},
+        [2] = {background = Screen.colors.LightGrey, underline = true},
+        [3] = {reverse = true},
+        [4] = {bold = true, foreground = Screen.colors.Blue1},
+    }})
+  end)
+end)
+
+describe('startup', function()
   local function pack_clear(cmd)
     -- add packages after config dir in rtp but before config/after
     clear{args={'--cmd', 'set packpath=test/functional/fixtures', '--cmd', 'let paths=split(&rtp, ",")', '--cmd', 'let &rtp = paths[0]..",test/functional/fixtures,test/functional/fixtures/middle,"..join(paths[1:],",")', '--cmd', cmd}, env={XDG_CONFIG_HOME='test/functional/fixtures/'},
           args_rm={'runtimepath'},
     }
   end
-
 
   it("handles &packpath during startup", function()
     pack_clear [[
@@ -631,13 +658,13 @@ describe('startup', function()
   end)
 
   it('window widths are correct when modelines set &columns with tabpages', function()
-    write_file('tab1.noft', 'vim: columns=81')
-    write_file('tab2.noft', 'vim: columns=81')
+    write_file('Xtab1.noft', 'vim: columns=81')
+    write_file('Xtab2.noft', 'vim: columns=81')
     finally(function()
-      os.remove('tab1.noft')
-      os.remove('tab2.noft')
+      os.remove('Xtab1.noft')
+      os.remove('Xtab2.noft')
     end)
-    clear({args = {'-p', 'tab1.noft', 'tab2.noft'}})
+    clear({args = {'-p', 'Xtab1.noft', 'Xtab2.noft'}})
     eq(81, meths.win_get_width(0))
     command('tabnext')
     eq(81, meths.win_get_width(0))
@@ -721,15 +748,16 @@ describe('user config init', function()
   end)
 
   it('loads init.lua from XDG config home by default', function()
-    clear{ args_rm={'-u' }, env=xenv }
+    clear{ args_rm={'-u'}, env=xenv }
 
     eq(1, eval('g:lua_rc'))
     eq(funcs.fnamemodify(init_lua_path, ':p'), eval('$MYVIMRC'))
   end)
 
-  describe('with existing .exrc in cwd', function()
+  describe('loads existing', function()
     local exrc_path = '.exrc'
     local xstate = 'Xstate'
+    local xstateenv = { XDG_CONFIG_HOME=xconfig, XDG_DATA_HOME=xdata, XDG_STATE_HOME=xstate }
 
     local function setup_exrc_file(filename)
       exrc_path = filename
@@ -759,10 +787,10 @@ describe('user config init', function()
     end)
 
     for _, filename in ipairs({ '.exrc', '.nvimrc', '.nvim.lua' }) do
-      it('loads ' .. filename, function ()
+      it(filename .. ' in cwd', function()
         setup_exrc_file(filename)
 
-        clear{ args_rm = {'-u'}, env={ XDG_CONFIG_HOME=xconfig, XDG_STATE_HOME=xstate } }
+        clear{ args_rm={'-u'}, env=xstateenv }
         -- The 'exrc' file is not trusted, and the prompt is skipped because there is no UI.
         eq('---', eval('g:exrc_file'))
 
@@ -794,7 +822,7 @@ describe('user config init', function()
           -- TERMINAL --                                    |
         ]], filename, string.rep(' ', 50 - #filename)))
 
-        clear{ args_rm = {'-u'}, env={ XDG_CONFIG_HOME=xconfig, XDG_STATE_HOME=xstate } }
+        clear{ args_rm={'-u'}, env=xstateenv }
         -- The 'exrc' file is now trusted.
         eq(filename, eval('g:exrc_file'))
       end)

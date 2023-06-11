@@ -92,7 +92,7 @@ typedef struct {
   int fromcol;               ///< start of inverting
   int tocol;                 ///< end of inverting
 
-  long vcol_sbr;             ///< virtual column after showbreak
+  colnr_T vcol_sbr;          ///< virtual column after showbreak
   bool need_showbreak;       ///< overlong line, skipping first x chars
 
   int char_attr;             ///< attributes for next character
@@ -111,6 +111,7 @@ typedef struct {
   // saved "extra" items for when draw_state becomes WL_LINE (again)
   int saved_n_extra;
   char *saved_p_extra;
+  char *saved_p_extra_free;
   bool saved_extra_for_extmark;
   int saved_c_extra;
   int saved_c_final;
@@ -831,6 +832,12 @@ static void handle_showbreak_and_filler(win_T *wp, winlinevars_T *wlv)
       wlv->need_showbreak = false;
     }
     wlv->vcol_sbr = wlv->vcol + mb_charlen(sbr);
+
+    // Correct start of highlighted area for 'showbreak'.
+    if (wlv->fromcol >= wlv->vcol && wlv->fromcol < wlv->vcol_sbr) {
+      wlv->fromcol = wlv->vcol_sbr;
+    }
+
     // Correct end of highlighted area for 'showbreak',
     // required when 'linebreak' is also set.
     if (wlv->tocol == wlv->vcol) {
@@ -995,6 +1002,9 @@ static void win_line_start(win_T *wp, winlinevars_T *wlv, bool save_extra)
     wlv->draw_state = WL_START;
     wlv->saved_n_extra = wlv->n_extra;
     wlv->saved_p_extra = wlv->p_extra;
+    xfree(wlv->saved_p_extra_free);
+    wlv->saved_p_extra_free = wlv->p_extra_free;
+    wlv->p_extra_free = NULL;
     wlv->saved_extra_for_extmark = wlv->extra_for_extmark;
     wlv->saved_c_extra = wlv->c_extra;
     wlv->saved_c_final = wlv->c_final;
@@ -1011,10 +1021,13 @@ static void win_line_continue(winlinevars_T *wlv)
     // Continue item from end of wrapped line.
     wlv->n_extra = wlv->saved_n_extra;
     wlv->saved_n_extra = 0;
-    wlv->extra_for_extmark = wlv->saved_extra_for_extmark;
     wlv->c_extra = wlv->saved_c_extra;
     wlv->c_final = wlv->saved_c_final;
     wlv->p_extra = wlv->saved_p_extra;
+    xfree(wlv->p_extra_free);
+    wlv->p_extra_free = wlv->saved_p_extra_free;
+    wlv->saved_p_extra_free = NULL;
+    wlv->extra_for_extmark = wlv->saved_extra_for_extmark;
     wlv->char_attr = wlv->saved_char_attr;
   } else {
     wlv->char_attr = 0;
@@ -3138,5 +3151,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
   kv_destroy(virt_lines);
   xfree(wlv.p_extra_free);
+  xfree(wlv.saved_p_extra_free);
   return wlv.row;
 }

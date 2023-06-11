@@ -6610,9 +6610,6 @@ void scroll_to_fraction(win_T *wp, int prev_height)
   }
 
   if (wp == curwin) {
-    if (get_scrolloff_value(wp)) {
-      update_topline(wp);
-    }
     curs_columns(wp, false);        // validate w_wrow
   }
   if (prev_height > 0) {
@@ -6668,11 +6665,8 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
     if (valid_cursor) {
       changed_line_abv_curs_win(wp);
       invalidate_botline_win(wp);
-      if (wp == curwin) {
-        skip_update_topline = (*p_spk != 'c');
-        update_topline(wp);
+      if (wp == curwin && *p_spk == 'c') {
         curs_columns(wp, true);  // validate w_wrow
-        skip_update_topline = false;
       }
     }
     redraw_later(wp, UPD_NOT_VALID);

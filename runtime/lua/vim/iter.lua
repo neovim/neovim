@@ -14,6 +14,8 @@
 --- - Non-list tables pass both the key and value of each element
 --- - Function iterators pass all of the values returned by their respective
 ---   function
+--- - Tables with a metatable implementing __call are treated as function
+---   iterators
 ---
 --- Examples:
 --- <pre>lua
@@ -46,6 +48,12 @@
 ---     return k == 'z'
 ---   end)
 ---   -- true
+---
+---   local rb = vim.ringbuf(3)
+---   rb:push("a")
+---   rb:push("b")
+---   vim.iter(rb):totable()
+---   -- { "a", "b" }
 --- </pre>
 ---
 --- In addition to the |vim.iter()| function, the |vim.iter| module provides
@@ -889,6 +897,17 @@ end
 function Iter.new(src, ...)
   local it = {}
   if type(src) == 'table' then
+    local mt = getmetatable(src)
+    if mt and type(mt.__call) == 'function' then
+      ---@private
+      function it.next()
+        return src()
+      end
+
+      setmetatable(it, Iter)
+      return it
+    end
+
     local t = {}
 
     -- Check if source table can be treated like a list (indices are consecutive integers

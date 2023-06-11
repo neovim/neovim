@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #ifndef MSWIN
-# include <signal.h>  // for sigset_t
+# include <signal.h>
 #endif
 
 #include "nvim/autocmd.h"

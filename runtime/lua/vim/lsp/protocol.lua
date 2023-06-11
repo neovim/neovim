@@ -632,13 +632,12 @@ export interface WorkspaceClientCapabilities {
 
 --- Gets a new ClientCapabilities object describing the LSP client
 --- capabilities.
+--- @return lsp.ClientCapabilities
 function protocol.make_client_capabilities()
   return {
     general = {
       positionEncodings = {
-        'utf-8',
         'utf-16',
-        'utf-32',
       },
     },
     textDocument = {

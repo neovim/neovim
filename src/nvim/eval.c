@@ -58,6 +58,7 @@
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
+#include "nvim/option_defs.h"
 #include "nvim/optionstr.h"
 #include "nvim/os/fileio.h"
 #include "nvim/os/fs_defs.h"
@@ -3770,38 +3771,38 @@ int eval_option(const char **const arg, typval_T *const rettv, const bool evalua
     return OK;
   }
 
-  long numval;
-  char *stringval;
   int ret = OK;
-
+  bool hidden;
   char c = *option_end;
   *option_end = NUL;
-  getoption_T opt_type = get_option_value(*arg, &numval,
-                                          rettv == NULL ? NULL : &stringval, NULL, scope);
+  OptVal value = get_option_value(*arg, NULL, scope, &hidden);
 
-  if (opt_type == gov_unknown) {
-    if (rettv != NULL) {
+  if (rettv != NULL) {
+    switch (value.type) {
+    case kOptValTypeNil:
       semsg(_("E113: Unknown option: %s"), *arg);
-    }
-    ret = FAIL;
-  } else if (rettv != NULL) {
-    if (opt_type == gov_hidden_string) {
-      rettv->v_type = VAR_STRING;
-      rettv->vval.v_string = NULL;
-    } else if (opt_type == gov_hidden_bool || opt_type == gov_hidden_number) {
+      ret = FAIL;
+      break;
+    case kOptValTypeBoolean:
       rettv->v_type = VAR_NUMBER;
-      rettv->vval.v_number = 0;
-    } else if (opt_type == gov_bool || opt_type == gov_number) {
+      rettv->vval.v_number = value.data.boolean;
+      break;
+    case kOptValTypeNumber:
       rettv->v_type = VAR_NUMBER;
-      rettv->vval.v_number = numval;
-    } else {                          // string option
+      rettv->vval.v_number = value.data.number;
+      break;
+    case kOptValTypeString:
       rettv->v_type = VAR_STRING;
-      rettv->vval.v_string = stringval;
+      rettv->vval.v_string = value.data.string.data;
+      break;
     }
-  } else if (working && (opt_type == gov_hidden_bool
-                         || opt_type == gov_hidden_number
-                         || opt_type == gov_hidden_string)) {
-    ret = FAIL;
+  } else {
+    // Value isn't being used, free it.
+    optval_free(value);
+
+    if (value.type == kOptValTypeNil || (working && hidden)) {
+      ret = FAIL;
+    }
   }
 
   *option_end = c;                  // put back for error messages
@@ -8516,7 +8517,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char 
     // If it's still empty it was changed and restored, need to restore in
     // the complicated way.
     if (*p_cpo == NUL) {
-      set_option_value_give_err("cpo", 0L, save_cpo, 0);
+      set_option_value_give_err("cpo", CSTR_AS_OPTVAL(save_cpo), 0);
     }
     free_string_option(save_cpo);
   }
@@ -8608,6 +8609,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
     .es_entry = ((estack_T *)exestack.ga_data)[exestack.ga_len - 1],
     .autocmd_fname = autocmd_fname,
     .autocmd_match = autocmd_match,
+    .autocmd_fname_full = autocmd_fname_full,
     .autocmd_bufnr = autocmd_bufnr,
     .funccalp = (void *)get_current_funccal()
   };

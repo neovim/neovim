@@ -7,6 +7,12 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+// Note: Some systems need both string.h and strings.h (Savage).
+#include <string.h>
+#ifdef HAVE_STRINGS_H
+# include <strings.h>
+#endif
+
 #ifdef MSWIN
 # include "nvim/os/win_defs.h"
 #else
@@ -35,12 +41,6 @@
 
 // Command-processing buffer. Use large buffers for all platforms.
 #define CMDBUFFSIZE 1024
-
-// Note: Some systems need both string.h and strings.h (Savage).
-#include <string.h>
-#ifdef HAVE_STRINGS_H
-# include <strings.h>
-#endif
 
 /// Converts libuv error (negative int) to error description string.
 #define os_strerror uv_strerror

@@ -1216,12 +1216,4 @@ LanguageTree:trees({self})                              *LanguageTree:trees()*
     Parameters: ~
       • {self}
 
-
-==============================================================================
-Lua module: vim.treesitter.playground              *lua-treesitter-playground*
-
-inspect_tree({opts})                *vim.treesitter.playground.inspect_tree()*
-    Parameters: ~
-      • {opts}  InspectTreeOpts
-
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

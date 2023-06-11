@@ -38,8 +38,7 @@
 /// @param winheight when true limit to window height
 int plines_win(win_T *wp, linenr_T lnum, bool winheight)
 {
-  // Check for filler lines above this buffer line.  When folded the result
-  // is one line anyway.
+  // Check for filler lines above this buffer line.
   return plines_win_nofill(wp, lnum, winheight) + win_get_fill(wp, lnum);
 }
 
@@ -137,8 +136,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
 /// used from the start of the line to the given column number.
 int plines_win_col(win_T *wp, linenr_T lnum, long column)
 {
-  // Check for filler lines above this buffer line.  When folded the result
-  // is one line anyway.
+  // Check for filler lines above this buffer line.
   int lines = win_get_fill(wp, lnum);
 
   if (!wp->w_p_wrap) {
@@ -199,16 +197,12 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
 int plines_win_full(win_T *wp, linenr_T lnum, linenr_T *const nextp, bool *const foldedp,
                     const bool cache, const bool winheight)
 {
-  bool folded = hasFoldingWin(wp, lnum, NULL, nextp, cache, NULL);
-  if (foldedp) {
+  bool folded = hasFoldingWin(wp, lnum, &lnum, nextp, cache, NULL);
+  if (foldedp != NULL) {
     *foldedp = folded;
   }
-  if (folded) {
-    return 1;
-  } else if (lnum == wp->w_topline) {
-    return plines_win_nofill(wp, lnum, winheight) + wp->w_topfill;
-  }
-  return plines_win(wp, lnum, winheight);
+  return ((folded ? 1 : plines_win_nofill(wp, lnum, winheight)) +
+          (lnum == wp->w_topline ? wp->w_topfill : win_get_fill(wp, lnum)));
 }
 
 int plines_m_win(win_T *wp, linenr_T first, linenr_T last)

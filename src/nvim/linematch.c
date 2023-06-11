@@ -2,6 +2,7 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
@@ -10,14 +11,19 @@
 #include "nvim/macros.h"
 #include "nvim/memory.h"
 
-// struct for running the diff linematch algorithm
-typedef struct {
-  int *df_decision;  // to keep track of this path traveled
-  int df_lev_score;  // to keep track of the total score of this path
-  size_t df_path_idx;   // current index of this path
-} diffcmppath_T;
-
 #define LN_MAX_BUFS 8
+#define LN_DECISION_MAX 255  // pow(2, LN_MAX_BUFS(8)) - 1 = 255
+
+// struct for running the diff linematch algorithm
+typedef struct diffcmppath_S diffcmppath_T;
+struct diffcmppath_S {
+  int df_lev_score;  // to keep track of the total score of this path
+  size_t df_path_n;   // current index of this path
+  int df_choice_mem[LN_DECISION_MAX + 1];
+  int df_choice[LN_DECISION_MAX];
+  diffcmppath_T *df_decision[LN_DECISION_MAX];  // to keep track of this path traveled
+  size_t df_optimal_choice;
+};
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "linematch.c.generated.h"
@@ -62,26 +68,6 @@ static int matching_chars_iwhite(const char *s1, const char *s2)
   xfree(strsproc[0]);
   xfree(strsproc[1]);
   return matching;
-}
-
-/// update the path of a point in the diff linematch algorithm
-/// @param diffcmppath
-/// @param score
-/// @param to
-/// @param from
-/// @param choice
-static void update_path_flat(diffcmppath_T *diffcmppath, int score, size_t to, size_t from,
-                             const int choice)
-{
-  size_t path_idx = diffcmppath[from].df_path_idx;
-
-  for (size_t k = 0; k < path_idx; k++) {
-    diffcmppath[to].df_decision[k] = diffcmppath[from].df_decision[k];
-  }
-
-  diffcmppath[to].df_decision[path_idx] = choice;
-  diffcmppath[to].df_lev_score = score;
-  diffcmppath[to].df_path_idx = path_idx + 1;
 }
 
 #define MATCH_CHAR_MAX_LEN 800
@@ -206,17 +192,14 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
       int matched_chars = count_n_matched_chars(current_lines, ndiffs, iwhite);
       int score = diffcmppath[unwrapped_idx_from].df_lev_score + matched_chars;
       if (score > diffcmppath[unwrapped_idx_to].df_lev_score) {
-        update_path_flat(diffcmppath, score, unwrapped_idx_to, unwrapped_idx_from, *choice);
-      }
-    } else {
-      // initialize the 0, 0, 0 ... choice
-      size_t i = 0;
-      while (i < ndiffs && df_iters[i] == 0) {
-        i++;
-        if (i == ndiffs) {
-          diffcmppath[0].df_lev_score = 0;
-          diffcmppath[0].df_path_idx = 0;
-        }
+        diffcmppath[unwrapped_idx_to].df_path_n = 1;
+        diffcmppath[unwrapped_idx_to].df_decision[0] = &diffcmppath[unwrapped_idx_from];
+        diffcmppath[unwrapped_idx_to].df_choice[0] = *choice;
+        diffcmppath[unwrapped_idx_to].df_lev_score = score;
+      } else if (score == diffcmppath[unwrapped_idx_to].df_lev_score) {
+        size_t k = diffcmppath[unwrapped_idx_to].df_path_n++;
+        diffcmppath[unwrapped_idx_to].df_decision[k] = &diffcmppath[unwrapped_idx_from];
+        diffcmppath[unwrapped_idx_to].df_choice[k] = *choice;
       }
     }
     return;
@@ -245,8 +228,7 @@ static size_t unwrap_indexes(const int *values, const int *diff_len, const size_
   for (size_t k = 0; k < ndiffs; k++) {
     num_unwrap_scalar /= (size_t)diff_len[k] + 1;
 
-    // (k == 0) space optimization
-    int n = k == 0 ? values[k] % 2 : values[k];
+    int n = values[k];
     path_idx += num_unwrap_scalar * (size_t)n;
   }
   return path_idx;
@@ -354,7 +336,7 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
   size_t memsize_decisions = 0;
   for (size_t i = 0; i < ndiffs; i++) {
     assert(diff_len[i] >= 0);
-    memsize *= i == 0 ? 2 : (size_t)(diff_len[i] + 1);
+    memsize *= (size_t)(diff_len[i] + 1);
     memsize_decisions += (size_t)diff_len[i];
   }
 
@@ -362,7 +344,11 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
   diffcmppath_T *diffcmppath = xmalloc(sizeof(diffcmppath_T) * memsize);
   // allocate memory here
   for (size_t i = 0; i < memsize; i++) {
-    diffcmppath[i].df_decision = xmalloc(memsize_decisions * sizeof(int));
+    diffcmppath[i].df_lev_score = 0;
+    diffcmppath[i].df_path_n = 0;
+    for (size_t j = 0; j < (size_t)pow(2, (double)ndiffs); j++) {
+      diffcmppath[i].df_choice_mem[j] = -1;
+    }
   }
 
   // memory for avoiding repetitive calculations of score
@@ -370,18 +356,49 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
   populate_tensor(df_iters, 0, diffcmppath, diff_len, ndiffs, diff_blk, iwhite);
 
   const size_t u = unwrap_indexes(diff_len, diff_len, ndiffs);
-  const size_t best_path_idx = diffcmppath[u].df_path_idx;
-  const int *best_path_decisions = diffcmppath[u].df_decision;
+  diffcmppath_T *startNode = &diffcmppath[u];
 
-  *decisions = xmalloc(sizeof(int) * best_path_idx);
-  for (size_t i = 0; i < best_path_idx; i++) {
-    (*decisions)[i] = best_path_decisions[i];
+  *decisions = xmalloc(sizeof(int) * memsize_decisions);
+  size_t n_optimal = 0;
+  test_charmatch_paths(startNode, 0);
+  while (startNode->df_path_n > 0) {
+    size_t j = startNode->df_optimal_choice;
+    (*decisions)[n_optimal++] = startNode->df_choice[j];
+    startNode = startNode->df_decision[j];
+  }
+  // reverse array
+  for (size_t i = 0; i < (n_optimal / 2); i++) {
+    int tmp = (*decisions)[i];
+    (*decisions)[i] = (*decisions)[n_optimal - 1 - i];
+    (*decisions)[n_optimal - 1 - i] = tmp;
   }
 
-  for (size_t i = 0; i < memsize; i++) {
-    xfree(diffcmppath[i].df_decision);
-  }
   xfree(diffcmppath);
 
-  return best_path_idx;
+  return n_optimal;
+}
+
+// returns the minimum amount of path changes from start to end
+static size_t test_charmatch_paths(diffcmppath_T *node, int lastdecision)
+{
+  // memoization
+  if (node->df_choice_mem[lastdecision] == -1) {
+    if (node->df_path_n == 0) {
+      // we have reached the end of the tree
+      node->df_choice_mem[lastdecision] = 0;
+    } else {
+      size_t minimum_turns = SIZE_MAX;  // the minimum amount of turns required to reach the end
+      for (size_t i = 0; i < node->df_path_n; i++) {
+        // recurse
+        size_t t = test_charmatch_paths(node->df_decision[i], node->df_choice[i]) +
+                   (lastdecision != node->df_choice[i] ? 1 : 0);
+        if (t < minimum_turns) {
+          node->df_optimal_choice = i;
+          minimum_turns = t;
+        }
+      }
+      node->df_choice_mem[lastdecision] = (int)minimum_turns;
+    }
+  }
+  return (size_t)node->df_choice_mem[lastdecision];
 }

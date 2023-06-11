@@ -174,6 +174,24 @@ describe('smoothscroll', function()
     screen:expect(s8)
   end)
 
+  -- oldtest: Test_smoothscroll_multibyte()
+  it('works with multibyte characters', function()
+    screen:try_resize(40, 6)
+    exec([[
+      set scrolloff=0 smoothscroll
+      call setline(1, [repeat('ϛ', 45), repeat('2', 36)])
+      exe "normal G35l\<C-E>k"
+    ]])
+    screen:expect([[
+      ϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛ^ϛϛϛϛϛ|
+      ϛϛϛϛϛ                                   |
+      222222222222222222222222222222222222    |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+  end)
+
   -- oldtest: Test_smoothscroll_number()
   it("works 'number' and 'cpo'+=n", function()
     exec([[
@@ -862,6 +880,62 @@ describe('smoothscroll', function()
       {1: 16 }                                    |
       {1: 17 }                                    |
       /bbbb^                                   |
+    ]])
+  end)
+
+  -- oldtest: Test_smoothscroll_multi_skipcol()
+  it('scrolling mulitple lines and stopping at non-zero skipcol', function()
+    screen:try_resize(40, 10)
+    screen:set_default_attr_ids({
+      [0] = {foreground = Screen.colors.Blue, bold = true},
+      [1] = {background = Screen.colors.Grey90},
+    })
+    exec([[
+      setlocal cursorline scrolloff=0 smoothscroll
+      call setline(1, repeat([''], 8))
+      call setline(3, repeat('a', 50))
+      call setline(4, repeat('a', 50))
+      call setline(7, 'bbb')
+      call setline(8, 'ccc')
+      redraw
+    ]])
+    screen:expect([[
+      {1:^                                        }|
+                                              |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaa                              |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaa                              |
+                                              |
+                                              |
+      bbb                                     |
+                                              |
+    ]])
+    feed('3<C-E>')
+    screen:expect([[
+      {0:<<<}{1:aaaaaa^a                              }|
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaa                              |
+                                              |
+                                              |
+      bbb                                     |
+      ccc                                     |
+      {0:~                                       }|
+      {0:~                                       }|
+                                              |
+    ]])
+    feed('2<C-E>')
+    screen:expect([[
+      {0:<<<}{1:aaaaaa^a                              }|
+                                              |
+                                              |
+      bbb                                     |
+      ccc                                     |
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
+                                              |
     ]])
   end)
 

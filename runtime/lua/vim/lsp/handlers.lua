@@ -9,7 +9,7 @@ local M = {}
 
 ---@private
 --- Writes to error buffer.
----@param ... (table of strings) Will be concatenated before being written
+---@param ... string Will be concatenated before being written
 local function err_message(...)
   vim.notify(table.concat(vim.tbl_flatten({ ... })), vim.log.levels.ERROR)
   api.nvim_command('redraw')
@@ -20,63 +20,52 @@ M['workspace/executeCommand'] = function(_, _, _, _)
   -- Error handling is done implicitly by wrapping all handlers; see end of this file
 end
 
----@private
-local function progress_handler(_, result, ctx, _)
-  local client_id = ctx.client_id
-  local client = vim.lsp.get_client_by_id(client_id)
-  local client_name = client and client.name or string.format('id=%d', client_id)
+--see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#progress
+---@param result lsp.ProgressParams
+---@param ctx lsp.HandlerContext
+M['$/progress'] = function(_, result, ctx)
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
   if not client then
-    err_message('LSP[', client_name, '] client has shut down during progress update')
+    err_message('LSP[id=', tostring(ctx.client_id), '] client has shut down during progress update')
     return vim.NIL
   end
-  local val = result.value -- unspecified yet
-  local token = result.token -- string or number
+  local kind = nil
+  local value = result.value
 
-  if type(val) ~= 'table' then
-    val = { content = val }
-  end
-  if val.kind then
-    if val.kind == 'begin' then
-      client.messages.progress[token] = {
-        title = val.title,
-        cancellable = val.cancellable,
-        message = val.message,
-        percentage = val.percentage,
-      }
-    elseif val.kind == 'report' then
-      client.messages.progress[token].cancellable = val.cancellable
-      client.messages.progress[token].message = val.message
-      client.messages.progress[token].percentage = val.percentage
-    elseif val.kind == 'end' then
-      if client.messages.progress[token] == nil then
-        err_message('LSP[', client_name, '] received `end` message with no corresponding `begin`')
-      else
-        client.messages.progress[token].message = val.message
-        client.messages.progress[token].done = true
+  if type(value) == 'table' then
+    kind = value.kind
+    -- Carry over title of `begin` messages to `report` and `end` messages
+    -- So that consumers always have it available, even if they consume a
+    -- subset of the full sequence
+    if kind == 'begin' then
+      client.progress.pending[result.token] = value.title
+    else
+      value.title = client.progress.pending[result.token]
+      if kind == 'end' then
+        client.progress.pending[result.token] = nil
       end
     end
-  else
-    client.messages.progress[token] = val
-    client.messages.progress[token].done = true
   end
 
-  api.nvim_exec_autocmds('User', { pattern = 'LspProgressUpdate', modeline = false })
+  client.progress:push(result)
+
+  api.nvim_exec_autocmds('LspProgress', {
+    pattern = kind,
+    modeline = false,
+    data = { client_id = ctx.client_id, result = result },
+  })
 end
 
---see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#progress
-M['$/progress'] = progress_handler
-
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_workDoneProgress_create
+---@param result lsp.WorkDoneProgressCreateParams
+---@param ctx lsp.HandlerContext
 M['window/workDoneProgress/create'] = function(_, result, ctx)
-  local client_id = ctx.client_id
-  local client = vim.lsp.get_client_by_id(client_id)
-  local token = result.token -- string or number
-  local client_name = client and client.name or string.format('id=%d', client_id)
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
   if not client then
-    err_message('LSP[', client_name, '] client has shut down while creating progress report')
+    err_message('LSP[id=', tostring(ctx.client_id), '] client has shut down during progress update')
     return vim.NIL
   end
-  client.messages.progress[token] = {}
+  client.progress:push(result)
   return vim.NIL
 end
 

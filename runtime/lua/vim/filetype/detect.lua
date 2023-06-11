@@ -1459,6 +1459,7 @@ local patterns_hashbang = {
   ['gforth\\>'] = { 'forth', { vim_regex = true } },
   ['icon\\>'] = { 'icon', { vim_regex = true } },
   guile = 'scheme',
+  ['nix%-shell'] = 'nix',
 }
 
 ---@private
@@ -1491,7 +1492,7 @@ local function match_from_hashbang(contents, path, dispatch_extension)
   elseif matchregex(first_line, [[^#!\s*[^/\\ ]*\>\([^/\\]\|$\)]]) then
     name = vim.fn.substitute(first_line, [[^#!\s*\([^/\\ ]*\>\).*]], '\\1', '')
   else
-    name = vim.fn.substitute(first_line, [[^#!\s*\S*[/\\]\(\i\+\).*]], '\\1', '')
+    name = vim.fn.substitute(first_line, [[^#!\s*\S*[/\\]\(\f\+\).*]], '\\1', '')
   end
 
   -- tcl scripts may have #!/bin/sh in the first line and "exec wish" in the

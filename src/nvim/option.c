@@ -394,7 +394,7 @@ void set_init_1(bool clean_arg)
   // NOTE: mlterm's author is being asked to 'set' a variable
   //       instead of an environment variable due to inheritance.
   if (os_env_exists("MLTERM")) {
-    set_option_value_give_err("tbidi", 1L, NULL, 0);
+    set_option_value_give_err("tbidi", BOOLEAN_OPTVAL(true), 0);
   }
 
   didset_options2();
@@ -2424,7 +2424,7 @@ static const char *did_set_arabic(optset_T *args)
     p_deco = true;
 
     // Force-set the necessary keymap for arabic.
-    errmsg = set_option_value("keymap", 0L, "arabic", OPT_LOCAL);
+    errmsg = set_option_value("keymap", STATIC_CSTR_AS_OPTVAL("arabic"), OPT_LOCAL);
   } else {
     // 'arabic' is reset, handle various sub-settings.
     if (!p_tbidi) {
@@ -3339,7 +3339,7 @@ void set_tty_background(const char *value)
                    ? "autocmd VimEnter * ++once ++nested :lua if not vim.api.nvim_get_option_info2('bg', {}).was_set then vim.o.bg = 'light' end"
                    : "autocmd VimEnter * ++once ++nested :lua if not vim.api.nvim_get_option_info2('bg', {}).was_set then vim.o.bg = 'dark' end");
   } else {
-    set_option_value_give_err("bg", 0L, value, 0);
+    set_option_value_give_err("bg", CSTR_AS_OPTVAL((char *)value), 0);
     reset_option_was_set("bg");
   }
 }
@@ -3355,32 +3355,153 @@ int findoption(const char *const arg)
   return findoption_len(arg, strlen(arg));
 }
 
+void optval_free(OptVal o)
+{
+  switch (o.type) {
+  case kOptValTypeNil:
+  case kOptValTypeBoolean:
+  case kOptValTypeNumber:
+    break;
+  case kOptValTypeString:
+    api_free_string(o.data.string);
+    break;
+  }
+}
+
+OptVal optval_copy(OptVal o)
+{
+  switch (o.type) {
+  case kOptValTypeNil:
+  case kOptValTypeBoolean:
+  case kOptValTypeNumber:
+    return o;
+  case kOptValTypeString:
+    return STRING_OPTVAL(copy_string(o.data.string, NULL));
+  default:
+    abort();
+  }
+}
+
+// Match type of OptVal with the type of the target option. Returns true if the types match and
+// false otherwise.
+static bool optval_match_type(OptVal o, int opt_idx)
+{
+  assert(opt_idx >= 0);
+  uint32_t flags = options[opt_idx].flags;
+
+  switch (o.type) {
+  case kOptValTypeNil:
+    return false;
+  case kOptValTypeBoolean:
+    return flags & P_BOOL;
+  case kOptValTypeNumber:
+    return flags & P_NUM;
+  case kOptValTypeString:
+    return flags & P_STRING;
+  default:
+    abort();
+  }
+}
+
+// Return C-string representation of OptVal. Caller must free the returned C-string.
+static char *optval_to_cstr(OptVal o)
+{
+  switch (o.type) {
+  case kOptValTypeNil:
+    return xstrdup("");
+  case kOptValTypeBoolean:
+    return xstrdup(o.data.boolean ? "true" : "false");
+  case kOptValTypeNumber: {
+    char *buf = xmalloc(NUMBUFLEN);
+    snprintf(buf, NUMBUFLEN, "%" PRId64, o.data.number);
+    return buf;
+  }
+  case kOptValTypeString: {
+    char *buf = xmalloc(o.data.string.size + 3);
+    snprintf(buf, o.data.string.size + 3, "\"%s\"", o.data.string.data);
+    return buf;
+  }
+  default:
+    abort();
+  }
+}
+
+// Get an allocated string containing a list of valid types for an option.
+// For options with a singular type, it returns the name of the type. For options with multiple
+// possible types, it returns a slash separated list of types. For example, if an option can be a
+// number, boolean or string, the function returns "Number/Boolean/String"
+static char *option_get_valid_types(int opt_idx)
+{
+  uint32_t flags = options[opt_idx].flags;
+  uint32_t type_count = 0;
+
+  StringBuilder str = KV_INITIAL_VALUE;
+  kv_resize(str, 32);
+
+#define OPTION_ADD_TYPE(typename) \
+  do { \
+    if (type_count == 0) { \
+      kv_concat(str, typename); \
+    } else { \
+      kv_printf(str, "/%s", typename); \
+    } \
+    type_count++; \
+  } while (0);
+
+  if (flags & P_NUM) {
+    OPTION_ADD_TYPE("Number");
+  }
+  if (flags & P_BOOL) {
+    OPTION_ADD_TYPE("Boolean");
+  }
+  if (flags & P_STRING) {
+    OPTION_ADD_TYPE("String");
+  }
+
+  if (type_count == 0) {
+    abort();
+  }
+
+  // Ensure that the string is NUL-terminated.
+  kv_push(str, NUL);
+  return str.items;
+
+#undef OPTION_ADD_TYPE
+}
+
 /// Gets the value for an option.
 ///
-/// @param stringval  NULL when only checking existence
-/// @param flagsp     set to the option flags (P_xxxx) (if not NULL)
+/// @param[in]   name    Option name.
+/// @param[out]  flagsp  Set to the option flags (P_xxxx) (if not NULL).
+/// @param[in]   scope   Option scope (can be OPT_LOCAL, OPT_GLOBAL or a combination).
+/// @param[out]  hidden  Whether option is hidden.
 ///
-/// @returns:
-///           Number option: gov_number, *numval gets value.
-///           Tottle option: gov_bool,   *numval gets value.
-///           String option: gov_string, *stringval gets allocated string.
-///           Hidden Number option: gov_hidden_number.
-///           Hidden Toggle option: gov_hidden_bool.
-///           Hidden String option: gov_hidden_string.
-///           Unknown option: gov_unknown.
-getoption_T get_option_value(const char *name, long *numval, char **stringval, uint32_t *flagsp,
-                             int scope)
+/// @return  Option value. Returns NIL_OPTVAL for invalid options. Return value must be freed by
+///          caller.
+OptVal get_option_value(const char *name, uint32_t *flagsp, int scope, bool *hidden)
 {
-  if (get_tty_option(name, stringval)) {
-    return gov_string;
+  // Make sure that hidden and flagsp are never returned uninitialized
+  if (hidden != NULL) {
+    *hidden = false;
+  }
+  if (flagsp != NULL) {
+    *flagsp = 0;
+  }
+
+  char *str;
+  if (get_tty_option(name, &str)) {
+    return CSTR_AS_OPTVAL(str);
   }
 
   int opt_idx = findoption(name);
   if (opt_idx < 0) {  // option not in the table
-    return gov_unknown;
+    return NIL_OPTVAL;
   }
 
   char *varp = get_varp_scope(&(options[opt_idx]), scope);
+  if (hidden != NULL) {
+    *hidden = varp == NULL;
+  }
 
   if (flagsp != NULL) {
     // Return the P_xxxx option flags.
@@ -3388,30 +3509,23 @@ getoption_T get_option_value(const char *name, long *numval, char **stringval, u
   }
 
   if (options[opt_idx].flags & P_STRING) {
-    if (varp == NULL) {  // hidden option
-      return gov_hidden_string;
-    }
-    if (stringval != NULL) {
-      *stringval = xstrdup(*(char **)(varp));
-    }
-    return gov_string;
+    return varp == NULL ? STRING_OPTVAL(STRING_INIT) : CSTR_TO_OPTVAL(*(char **)(varp));
   }
 
-  if (varp == NULL) {  // hidden option
-    return (options[opt_idx].flags & P_NUM) ? gov_hidden_number : gov_hidden_bool;
-  }
   if (options[opt_idx].flags & P_NUM) {
-    *numval = *(long *)varp;
+    return NUMBER_OPTVAL(varp == NULL ? 0 : (*(long *)varp));
   } else {
     // Special case: 'modified' is b_changed, but we also want to consider
     // it set when 'ff' or 'fenc' changed.
-    if ((int *)varp == &curbuf->b_changed) {
-      *numval = curbufIsChanged();
+    if (varp == NULL) {
+      return BOOLEAN_OPTVAL(false);
+    } else if ((int *)varp == &curbuf->b_changed) {
+      return BOOLEAN_OPTVAL(curbufIsChanged());
     } else {
-      *numval = (long)(*(int *)varp);
+      int n = *(int *)varp;
+      return BOOLEAN_OPTVAL(n == 0 ? kFalse : (n >= 1 ? kTrue : kNone));
     }
   }
-  return (options[opt_idx].flags & P_NUM) ? gov_number : gov_bool;
 }
 
 // Returns the option attributes and its value. Unlike the above function it
@@ -3544,20 +3658,25 @@ vimoption_T *get_option(int opt_idx)
 
 /// Set the value of an option
 ///
-/// @param[in]  name  Option name.
-/// @param[in]  number  New value for the number or boolean option.
-/// @param[in]  string  New value for string option.
+/// @param[in]  name       Option name.
+/// @param[in]  value      Option value. If NIL_OPTVAL, the option value is cleared.
 /// @param[in]  opt_flags  Flags: OPT_LOCAL, OPT_GLOBAL, or 0 (both).
 ///                        If OPT_CLEAR is set, the value of the option
 ///                        is cleared  (the exact semantics of this depend
 ///                        on the option).
 ///
 /// @return NULL on success, an untranslated error message on error.
-const char *set_option_value(const char *const name, const long number, const char *const string,
-                             const int opt_flags)
+const char *set_option_value(const char *const name, const OptVal value, int opt_flags)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  static char errbuf[80];
+  static const char *optval_type_names[] = {
+    [kOptValTypeNil] = "Nil",
+    [kOptValTypeBoolean] = "Boolean",
+    [kOptValTypeNumber] = "Number",
+    [kOptValTypeString] = "String"
+  };
+
+  static char errbuf[IOSIZE];
 
   if (is_tty_option(name)) {
     return NULL;  // Fail silently; many old vimrcs set t_xx options.
@@ -3565,23 +3684,14 @@ const char *set_option_value(const char *const name, const long number, const ch
 
   int opt_idx = findoption(name);
   if (opt_idx < 0) {
-    semsg(_("E355: Unknown option: %s"), name);
-    return NULL;
+    snprintf(errbuf, IOSIZE, _(e_unknown_option2), name);
+    return errbuf;
   }
 
   uint32_t flags = options[opt_idx].flags;
   // Disallow changing some options in the sandbox
   if (sandbox > 0 && (flags & P_SECURE)) {
-    emsg(_(e_sandbox));
-    return NULL;
-  }
-
-  if (flags & P_STRING) {
-    const char *s = string;
-    if (s == NULL || opt_flags & OPT_CLEAR) {
-      s = "";
-    }
-    return set_string_option(opt_idx, s, opt_flags, errbuf, sizeof(errbuf));
+    return _(e_sandbox);
   }
 
   char *varp = get_varp_scope(&(options[opt_idx]), opt_flags);
@@ -3590,46 +3700,81 @@ const char *set_option_value(const char *const name, const long number, const ch
     return NULL;
   }
 
-  if (number == 0 && string != NULL) {
-    int idx;
+  const char *errmsg = NULL;
+  // Copy the value so we can modify the copy.
+  OptVal v = optval_copy(value);
 
-    // Either we are given a string or we are setting option
-    // to zero.
-    for (idx = 0; string[idx] == '0'; idx++) {}
-    if (string[idx] != NUL || idx == 0) {
-      // There's another character after zeros or the string
-      // is empty.  In both cases, we are trying to set a
-      // num option using a string.
-      semsg(_("E521: Number required: &%s = '%s'"),
-            name, string);
-      return NULL;  // do nothing as we hit an error
+  if (v.type == kOptValTypeNil) {
+    opt_flags |= OPT_CLEAR;
+
+    // Change the type of the OptVal to the type used by the option so that it can be cleared.
+    // TODO(famiu): Clean up all of this after set_(num|bool|string)_option() is unified.
+    if (flags & P_BOOL) {
+      v.type = kOptValTypeBoolean;
+    } else if (flags & P_NUM) {
+      v.type = kOptValTypeNumber;
+    } else if (flags & P_STRING) {
+      v.type = kOptValTypeString;
     }
+  } else if (!optval_match_type(v, opt_idx)) {
+    char *rep = optval_to_cstr(v);
+    char *valid_types = option_get_valid_types(opt_idx);
+    snprintf(errbuf, IOSIZE, _("Invalid value for option '%s': expected %s, got %s %s"),
+             name, valid_types, optval_type_names[v.type], rep);
+    xfree(rep);
+    xfree(valid_types);
+    errmsg = errbuf;
+    goto end;
   }
-  long numval = number;
-  if (opt_flags & OPT_CLEAR) {
-    if ((int *)varp == &curbuf->b_p_ar) {
-      numval = -1;
-    } else if ((long *)varp == &curbuf->b_p_ul) {
-      numval = NO_LOCAL_UNDOLEVEL;
-    } else if ((long *)varp == &curwin->w_p_so || (long *)varp == &curwin->w_p_siso) {
-      numval = -1;
-    } else {
-      char *s = NULL;
-      (void)get_option_value(name, &numval, &s, NULL, OPT_GLOBAL);
+
+  switch (v.type) {
+  case kOptValTypeNil:
+    abort();  // This will never happen.
+  case kOptValTypeBoolean: {
+    if (opt_flags & OPT_CLEAR) {
+      if ((int *)varp == &curbuf->b_p_ar) {
+        v.data.boolean = kNone;
+      } else {
+        v = get_option_value(name, NULL, OPT_GLOBAL, NULL);
+      }
     }
+    errmsg = set_bool_option(opt_idx, varp, (int)v.data.boolean, opt_flags);
+    break;
   }
-  if (flags & P_NUM) {
-    return set_num_option(opt_idx, varp, numval, errbuf, sizeof(errbuf), opt_flags);
+  case kOptValTypeNumber: {
+    if (opt_flags & OPT_CLEAR) {
+      if ((long *)varp == &curbuf->b_p_ul) {
+        v.data.number = NO_LOCAL_UNDOLEVEL;
+      } else if ((long *)varp == &curwin->w_p_so || (long *)varp == &curwin->w_p_siso) {
+        v.data.number = -1;
+      } else {
+        v = get_option_value(name, NULL, OPT_GLOBAL, NULL);
+      }
+    }
+    errmsg = set_num_option(opt_idx, varp, (long)v.data.number, errbuf, sizeof(errbuf), opt_flags);
+    break;
   }
-  return set_bool_option(opt_idx, varp, (int)numval, opt_flags);
+  case kOptValTypeString: {
+    const char *s = v.data.string.data;
+    if (s == NULL || opt_flags & OPT_CLEAR) {
+      s = "";
+    }
+    errmsg = set_string_option(opt_idx, s, opt_flags, errbuf, sizeof(errbuf));
+    break;
+  }
+  }
+
+end:
+  optval_free(v);  // Free the copied OptVal.
+  return errmsg;
 }
 
 /// Call set_option_value() and when an error is returned report it.
 ///
 /// @param opt_flags  OPT_LOCAL or 0 (both)
-void set_option_value_give_err(const char *name, long number, const char *string, int opt_flags)
+void set_option_value_give_err(const char *name, OptVal value, int opt_flags)
 {
-  const char *errmsg = set_option_value(name, number, string, opt_flags);
+  const char *errmsg = set_option_value(name, value, opt_flags);
 
   if (errmsg != NULL) {
     emsg(_(errmsg));
@@ -6139,11 +6284,11 @@ static Dictionary vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, wi
   PUT(dict, "scope", CSTR_TO_OBJ(scope));
 
   // welcome to the jungle
-  PUT(dict, "global_local", BOOL(opt->indir & PV_BOTH));
-  PUT(dict, "commalist", BOOL(opt->flags & P_COMMA));
-  PUT(dict, "flaglist", BOOL(opt->flags & P_FLAGLIST));
+  PUT(dict, "global_local", BOOLEAN_OBJ(opt->indir & PV_BOTH));
+  PUT(dict, "commalist", BOOLEAN_OBJ(opt->flags & P_COMMA));
+  PUT(dict, "flaglist", BOOLEAN_OBJ(opt->flags & P_FLAGLIST));
 
-  PUT(dict, "was_set", BOOL(opt->flags & P_WAS_SET));
+  PUT(dict, "was_set", BOOLEAN_OBJ(opt->flags & P_WAS_SET));
 
   LastSet last_set = { .channel_id = 0 };
   if (req_scope == OPT_GLOBAL) {
@@ -6177,13 +6322,13 @@ static Dictionary vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, wi
     def = INTEGER_OBJ((Integer)(intptr_t)def_val);
   } else if (opt->flags & P_BOOL) {
     type = "boolean";
-    def = BOOL((intptr_t)def_val);
+    def = BOOLEAN_OBJ((intptr_t)def_val);
   } else {
     type = ""; def = NIL;
   }
   PUT(dict, "type", CSTR_TO_OBJ(type));
   PUT(dict, "default", def);
-  PUT(dict, "allows_duplicates", BOOL(!(opt->flags & P_NODUP)));
+  PUT(dict, "allows_duplicates", BOOLEAN_OBJ(!(opt->flags & P_NODUP)));
 
   return dict;
 }

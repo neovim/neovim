@@ -1,152 +1,81 @@
 local bit = require('bit')
+local lpeg = require('lpeg')
 local watch = require('vim._watch')
 local protocol = require('vim.lsp.protocol')
 
 local M = {}
 
 ---@private
----Parses the raw pattern into a number of Lua-native patterns.
+--- Parses the raw pattern into an |lpeg| pattern. LPeg patterns natively support the "this" or "that"
+--- alternative constructions described in the LSP spec that cannot be expressed in a standard Lua pattern.
 ---
 ---@param pattern string The raw glob pattern
----@return table A list of Lua patterns. A match with any of them matches the input glob pattern.
+---@return userdata An |lpeg| representation of the pattern, or nil if the pattern is invalid.
 local function parse(pattern)
-  local patterns = { '' }
+  local l = lpeg
 
-  local path_sep = '[/\\]'
-  local non_path_sep = '[^/\\]'
+  local P, S, V = lpeg.P, lpeg.S, lpeg.V
+  local C, Cc, Ct, Cf = lpeg.C, lpeg.Cc, lpeg.Ct, lpeg.Cf
 
-  local function append(chunks)
-    local new_patterns = {}
-    for _, p in ipairs(patterns) do
-      for _, chunk in ipairs(chunks) do
-        table.insert(new_patterns, p .. chunk)
-      end
+  local pathsep = '/'
+
+  local function class(inv, ranges)
+    for i, r in ipairs(ranges) do
+      ranges[i] = r[1] .. r[2]
     end
-    patterns = new_patterns
+    local patt = l.R(unpack(ranges))
+    if inv == '!' then
+      patt = P(1) - patt
+    end
+    return patt
   end
 
-  local function split(s, sep)
-    local segments = {}
-    local segment = ''
-    local in_braces = false
-    local in_brackets = false
-    for i = 1, #s do
-      local c = string.sub(s, i, i)
-      if c == sep and not in_braces and not in_brackets then
-        table.insert(segments, segment)
-        segment = ''
-      else
-        if c == '{' then
-          in_braces = true
-        elseif c == '}' then
-          in_braces = false
-        elseif c == '[' then
-          in_brackets = true
-        elseif c == ']' then
-          in_brackets = false
-        end
-        segment = segment .. c
-      end
-    end
-    if segment ~= '' then
-      table.insert(segments, segment)
-    end
-    return segments
+  local function add(acc, a)
+    return acc + a
   end
 
-  local function escape(c)
-    if
-      c == '?'
-      or c == '.'
-      or c == '('
-      or c == ')'
-      or c == '%'
-      or c == '['
-      or c == ']'
-      or c == '*'
-      or c == '+'
-      or c == '-'
-    then
-      return '%' .. c
-    end
-    return c
+  local function mul(acc, m)
+    return acc * m
   end
 
-  local segments = split(pattern, '/')
-  for i, segment in ipairs(segments) do
-    local last_seg = i == #segments
-    if segment == '**' then
-      local chunks = {
-        path_sep .. '-',
-        '.-' .. path_sep,
-      }
-      if last_seg then
-        chunks = { '.-' }
-      end
-      append(chunks)
-    else
-      local in_braces = false
-      local brace_val = ''
-      local in_brackets = false
-      local bracket_val = ''
-      for j = 1, #segment do
-        local char = string.sub(segment, j, j)
-        if char ~= '}' and in_braces then
-          brace_val = brace_val .. char
-        else
-          if in_brackets and (char ~= ']' or bracket_val == '') then
-            local res
-            if char == '-' then
-              res = char
-            elseif bracket_val == '' and char == '!' then
-              res = '^'
-            elseif char == '/' then
-              res = ''
-            else
-              res = escape(char)
-            end
-            bracket_val = bracket_val .. res
-          else
-            if char == '{' then
-              in_braces = true
-            elseif char == '[' then
-              in_brackets = true
-            elseif char == '}' then
-              local choices = split(brace_val, ',')
-              local parsed_choices = {}
-              for _, choice in ipairs(choices) do
-                table.insert(parsed_choices, parse(choice))
-              end
-              append(vim.tbl_flatten(parsed_choices))
-              in_braces = false
-              brace_val = ''
-            elseif char == ']' then
-              append({ '[' .. bracket_val .. ']' })
-              in_brackets = false
-              bracket_val = ''
-            elseif char == '?' then
-              append({ non_path_sep })
-            elseif char == '*' then
-              append({ non_path_sep .. '-' })
-            else
-              append({ escape(char) })
-            end
-          end
-        end
-      end
-
-      if not last_seg and (segments[i + 1] ~= '**' or i + 1 < #segments) then
-        append({ path_sep })
-      end
-    end
+  local function star(stars, after)
+    return (-after * (l.P(1) - pathsep)) ^ #stars * after
   end
 
-  return patterns
+  local function dstar(after)
+    return (-after * l.P(1)) ^ 0 * after
+  end
+
+  local p = P({
+    'Pattern',
+    Pattern = V('Elem') ^ -1 * V('End'),
+    Elem = Cf(
+      (V('DStar') + V('Star') + V('Ques') + V('Class') + V('CondList') + V('Literal'))
+        * (V('Elem') + V('End')),
+      mul
+    ),
+    DStar = P('**') * (P(pathsep) * (V('Elem') + V('End')) + V('End')) / dstar,
+    Star = C(P('*') ^ 1) * (V('Elem') + V('End')) / star,
+    Ques = P('?') * Cc(l.P(1) - pathsep),
+    Class = P('[') * C(P('!') ^ -1) * Ct(Ct(C(1) * '-' * C(P(1) - ']')) ^ 1 * ']') / class,
+    CondList = P('{') * Cf(V('Cond') * (P(',') * V('Cond')) ^ 0, add) * '}',
+    -- TODO: '*' inside a {} condition is interpreted literally but should probably have the same
+    -- wildcard semantics it usually has.
+    -- Fixing this is non-trivial because '*' should match non-greedily up to "the rest of the
+    -- pattern" which in all other cases is the entire succeeding part of the pattern, but at the end of a {}
+    -- condition means "everything after the {}" where several other options separated by ',' may
+    -- exist in between that should not be matched by '*'.
+    Cond = Cf((V('Ques') + V('Class') + V('CondList') + (V('Literal') - S(',}'))) ^ 1, mul)
+      + Cc(l.P(0)),
+    Literal = P(1) / l.P,
+    End = P(-1) * Cc(l.P(-1)),
+  })
+
+  return p:match(pattern)
 end
 
 ---@private
 --- Implementation of LSP 3.17.0's pattern matching: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#pattern
---- Modeled after VSCode's implementation: https://github.com/microsoft/vscode/blob/0319eed971719ad48e9093daba9d65a5013ec5ab/src/vs/base/common/glob.ts#L509
 ---
 ---@param pattern string|table The glob pattern (raw or parsed) to match.
 ---@param s string The string to match against pattern.
@@ -155,15 +84,7 @@ function M._match(pattern, s)
   if type(pattern) == 'string' then
     pattern = parse(pattern)
   end
-  -- Since Lua's built-in string pattern matching does not have an alternate
-  -- operator like '|', `parse` will construct one pattern for each possible
-  -- alternative. Any pattern that matches thus matches the glob.
-  for _, p in ipairs(pattern) do
-    if s:match('^' .. p .. '$') then
-      return true
-    end
-  end
-  return false
+  return pattern:match(s) ~= nil
 end
 
 M._watchfunc = (vim.fn.has('win32') == 1 or vim.fn.has('mac') == 1) and watch.watch or watch.poll
@@ -226,11 +147,11 @@ function M.register(reg, ctx)
       local kind = w.kind
         or protocol.WatchKind.Create + protocol.WatchKind.Change + protocol.WatchKind.Delete
 
-      local pattern = glob_pattern.pattern
+      local pattern = parse(glob_pattern.pattern)
+      assert(pattern, 'invalid pattern: ' .. glob_pattern.pattern)
       if relative_pattern then
-        pattern = base_dir .. '/' .. pattern
+        pattern = lpeg.P(base_dir .. '/') * pattern
       end
-      pattern = parse(pattern)
 
       table.insert(watch_regs, {
         base_dir = base_dir,

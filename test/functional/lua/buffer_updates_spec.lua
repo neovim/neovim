@@ -1164,11 +1164,16 @@ describe('lua: nvim_buf_attach on_bytes', function()
     end)
 
     it("works with accepting spell suggestions", function()
-      local check_events = setup_eventcheck(verify, {"hallo"})
+      local check_events = setup_eventcheck(verify, {"hallo world", "hallo world"})
 
       feed("gg0z=4<cr><cr>") -- accepts 'Hello'
       check_events {
         { "test1", "bytes", 1, 3, 0, 0, 0, 0, 2, 2, 0, 2, 2 };
+      }
+
+      command("spellrepall") -- replaces whole words
+      check_events {
+        { "test1", "bytes", 1, 4, 1, 0, 12, 0, 5, 5, 0, 5, 5 };
       }
     end)
 

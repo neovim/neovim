@@ -1069,21 +1069,20 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
   bool visible_row = false;
   bool is_folded = false;
 
-  if (pos->lnum >= wp->w_topline && pos->lnum <= wp->w_botline) {
-    linenr_T lnum = pos->lnum;
+  linenr_T lnum = pos->lnum;
+  if (lnum >= wp->w_topline && lnum <= wp->w_botline) {
     is_folded = hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
     row = plines_m_win(wp, wp->w_topline, lnum - 1) + 1;
     // Add filler lines above this buffer line.
-    row += win_get_fill(wp, lnum);
+    row += lnum == wp->w_topline ? wp->w_topfill : win_get_fill(wp, lnum);
     visible_row = true;
-  } else if (!local || pos->lnum < wp->w_topline) {
+  } else if (!local || lnum < wp->w_topline) {
     row = 0;
   } else {
     row = wp->w_height_inner;
   }
 
-  bool existing_row = (pos->lnum > 0
-                       && pos->lnum <= wp->w_buffer->b_ml.ml_line_count);
+  bool existing_row = (lnum > 0 && lnum <= wp->w_buffer->b_ml.ml_line_count);
 
   if ((local || visible_row) && existing_row) {
     const colnr_T off = win_col_off(wp);
@@ -1091,12 +1090,17 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
       row += local ? 0 : wp->w_winrow + wp->w_winrow_off;
       coloff = (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1 + off;
     } else {
+      assert(lnum == pos->lnum);
       getvcol(wp, pos, &scol, &ccol, &ecol);
 
       // similar to what is done in validate_cursor_col()
       colnr_T col = scol;
       col += off;
       int width = wp->w_width_inner - off + win_col_off2(wp);
+
+      if (lnum == wp->w_topline) {
+        col -= wp->w_skipcol;
+      }
 
       // long line wrapping, adjust row
       if (wp->w_p_wrap && col >= (colnr_T)wp->w_width_inner && width > 0) {
@@ -1340,7 +1344,7 @@ bool scrollup(long line_count, int byfold)
     int width1 = curwin->w_width_inner - curwin_col_off();
     int width2 = width1 + curwin_col_off2();
     unsigned size = 0;
-    linenr_T prev_topline = curwin->w_topline;
+    const colnr_T prev_skipcol = curwin->w_skipcol;
 
     if (do_sms) {
       size = linetabsize(curwin, curwin->w_topline);
@@ -1392,8 +1396,9 @@ bool scrollup(long line_count, int byfold)
       }
     }
 
-    if (curwin->w_topline == prev_topline) {
-      // need to redraw even though w_topline didn't change
+    if (prev_skipcol > 0 || curwin->w_skipcol > 0) {
+      // need to redraw more, because wl_size of the (new) topline may
+      // now be invalid
       redraw_later(curwin, UPD_NOT_VALID);
     }
   } else {
@@ -1821,10 +1826,13 @@ void scroll_cursor_top(int min_scroll, int always)
       }
     }
     check_topfill(curwin, false);
-    // TODO(vim): if the line doesn't fit may optimize w_skipcol
-    if (curwin->w_topline == curwin->w_cursor.lnum
-        && curwin->w_skipcol >= curwin->w_cursor.col) {
-      reset_skipcol(curwin);
+    if (curwin->w_topline == curwin->w_cursor.lnum) {
+      validate_virtcol();
+      if (curwin->w_skipcol >= curwin->w_virtcol) {
+        // TODO(vim): if the line doesn't fit may optimize w_skipcol instead
+        // of making it zero
+        reset_skipcol(curwin);
+      }
     }
     if (curwin->w_topline != old_topline
         || curwin->w_skipcol != old_skipcol

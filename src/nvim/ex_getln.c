@@ -4357,7 +4357,7 @@ static int open_cmdwin(void)
     return Ctrl_C;
   }
   // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
-  set_option_value_give_err("bh", 0L, "wipe", OPT_LOCAL);
+  set_option_value_give_err("bh", STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL);
   curbuf->b_p_ma = true;
   curwin->w_p_fen = false;
   curwin->w_p_rl = cmdmsg_rl;
@@ -4375,7 +4375,7 @@ static int open_cmdwin(void)
       add_map("<Tab>", "<C-X><C-V>", MODE_INSERT, true);
       add_map("<Tab>", "a<C-X><C-V>", MODE_NORMAL, true);
     }
-    set_option_value_give_err("ft", 0L, "vim", OPT_LOCAL);
+    set_option_value_give_err("ft", STATIC_CSTR_AS_OPTVAL("vim"), OPT_LOCAL);
   }
   curbuf->b_ro_locked--;
 

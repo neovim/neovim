@@ -1603,6 +1603,11 @@ void f_charidx(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   int len;
   for (p = str, len = 0; utf16idx ? idx >= 0 : p <= str + idx; len++) {
     if (*p == NUL) {
+      // If the index is exactly the number of bytes or utf-16 code units
+      // in the string then return the length of the string in characters.
+      if (utf16idx ? (idx == 0) : (p == (str + idx))) {
+        rettv->vval.v_number = len;
+      }
       return;
     }
     if (utf16idx) {
@@ -2047,6 +2052,11 @@ void f_utf16idx(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   int len;
   for (p = str, len = 0; charidx ? idx >= 0 : p <= str + idx; len++) {
     if (*p == NUL) {
+      // If the index is exactly the number of bytes or characters in the
+      // string then return the length of the string in utf-16 code units.
+      if (charidx ? (idx == 0) : (p == (str + idx))) {
+        rettv->vval.v_number = len;
+      }
       return;
     }
     const int clen = ptr2len(p);

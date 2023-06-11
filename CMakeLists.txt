@@ -289,21 +289,10 @@ install_helper(
   FILES ${CMAKE_SOURCE_DIR}/src/man/nvim.1
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
-if(EXISTS "${DEPS_PREFIX}/share/nvim-qt")
-  option(USE_BUNDLED_NVIMQT "Bundle neovim-qt" ON)
-else()
-  option(USE_BUNDLED_NVIMQT "Bundle neovim-qt" OFF)
-endif()
-
 add_subdirectory(src/nvim)
 add_subdirectory(cmake.config)
 add_subdirectory(runtime)
 add_subdirectory(test)
-if(WIN32 AND USE_BUNDLED_NVIMQT)
-  install_helper(
-    FILES ${DEPS_PREFIX}/share/nvim-qt/runtime/plugin/nvim_gui_shim.vim
-    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim-qt/runtime/plugin)
-endif()
 
 add_custom_target(uninstall
   COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/UninstallHelper.cmake)

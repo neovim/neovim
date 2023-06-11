@@ -228,23 +228,28 @@ describe('autocmd api', function()
     end)
 
     it('receives an args table', function()
-      local res = exec_lua [[
-        local group_id = vim.api.nvim_create_augroup("TestGroup", {})
-        local autocmd_id = vim.api.nvim_create_autocmd("User", {
+      local group_id = meths.create_augroup("TestGroup", {})
+      -- Having an existing autocmd calling expand("<afile>") shouldn't change args #18964
+      meths.create_autocmd('User', {
+        group = 'TestGroup',
+        pattern = 'Te*',
+        command = 'call expand("<afile>")',
+      })
+
+      local autocmd_id = exec_lua [[
+        return vim.api.nvim_create_autocmd("User", {
           group = "TestGroup",
           pattern = "Te*",
           callback = function(args)
             vim.g.autocmd_args = args
           end,
         })
-
-        return {group_id, autocmd_id}
       ]]
 
       meths.exec_autocmds("User", {pattern = "Test pattern"})
       eq({
-        id = res[2],
-        group = res[1],
+        id = autocmd_id,
+        group = group_id,
         event = "User",
         match = "Test pattern",
         file = "Test pattern",
@@ -252,27 +257,24 @@ describe('autocmd api', function()
       }, meths.get_var("autocmd_args"))
 
       -- Test without a group
-      res = exec_lua [[
-        local autocmd_id = vim.api.nvim_create_autocmd("User", {
+      autocmd_id = exec_lua [[
+        return vim.api.nvim_create_autocmd("User", {
           pattern = "*",
           callback = function(args)
             vim.g.autocmd_args = args
           end,
         })
-
-        return {autocmd_id}
       ]]
 
       meths.exec_autocmds("User", {pattern = "some_pat"})
       eq({
-        id = res[1],
+        id = autocmd_id,
         group = nil,
         event = "User",
         match = "some_pat",
         file = "some_pat",
         buf = 1,
       }, meths.get_var("autocmd_args"))
-
     end)
 
     it('can receive arbitrary data', function()
