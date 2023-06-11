@@ -226,13 +226,11 @@ function Range:has(version)
   if type(version) == 'string' then
     ---@diagnostic disable-next-line: cast-local-type
     version = M.parse(version)
-  else
+  elseif getmetatable(version) ~= Version then
     -- Need metatable to compare versions.
     version = setmetatable(vim.deepcopy(version), Version)
   end
   if version then
-    -- Workaround: vim.version() reports "prerelease" as a boolean.
-    version.prerelease = version.prerelease or nil
     if version.prerelease ~= self.from.prerelease then
       return false
     end
@@ -423,8 +421,12 @@ function M.parse(version, opts)
 end
 
 setmetatable(M, {
+  --- Returns the current Nvim version.
   __call = function()
-    return vim.fn.api_info().version
+    local version = vim.fn.api_info().version
+    -- Workaround: vim.fn.api_info().version reports "prerelease" as a boolean.
+    version.prerelease = version.prerelease and 'dev' or nil
+    return setmetatable(version, Version)
   end,
 })
 
