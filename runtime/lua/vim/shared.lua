@@ -456,7 +456,7 @@ end
 --- </pre>
 ---
 ---@param o table Table to index
----@param ... string Optional strings (0 or more, variadic) via which to index the table
+---@param ... any Optional keys (0 or more, variadic) via which to index the table
 ---
 ---@return any Nested value indexed by key (if it exists), else nil
 function vim.tbl_get(o, ...)
