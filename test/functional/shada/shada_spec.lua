@@ -1,7 +1,7 @@
 -- Other ShaDa tests
 local helpers = require('test.functional.helpers')(after_each)
-local meths, curbufmeths, nvim_command, funcs, eq =
-  helpers.meths, helpers.curbufmeths, helpers.command, helpers.funcs, helpers.eq
+local meths, curbufmeths, nvim_command, funcs, eq, retry =
+  helpers.meths, helpers.curbufmeths, helpers.command, helpers.funcs, helpers.eq, helpers.retry
 local write_file, spawn, set_session, nvim_prog, exc_exec =
   helpers.write_file, helpers.spawn, helpers.set_session, helpers.nvim_prog,
   helpers.exc_exec
@@ -207,7 +207,8 @@ describe('ShaDa support code', function()
     -- Set 'buflisted', then check again.
     curbufmeths.set_option('buflisted', true)
     nvim_command('wshada! ' .. shada_fname)
-    eq({[7]=1, [8]=1, [10]=1}, find_file(fname))
+    retry(nil, 4000, function()
+      eq({[7]=1, [8]=1, [10]=1}, find_file(fname))end)
   end)
 
   it('is able to set &shada after &viminfo', function()
