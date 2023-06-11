@@ -349,7 +349,7 @@ Note:
 - The command is not echo'ed, no need for <silent>.
 - The {rhs} is not subject to abbreviations nor to other mappings, even if the
   mapping is recursive.
-- In Visual mode  you can use `line('v')` and `col('v')` to get one end of the
+- In Visual mode you can use `line('v')` and `col('v')` to get one end of the
   Visual area, the cursor is at the other end.
 
 							*E1255* *E1136*

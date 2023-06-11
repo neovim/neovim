@@ -1762,7 +1762,7 @@ static tagmatch_status_T findtags_parse_line(findtags_state_T *st, tagptrs_T *ta
     if (st->state == TS_BINARY) {
       int tagcmp;
       // Simplistic check for unsorted tags file.
-      int i = (int)tagpp->tagname[0];
+      int i = (uint8_t)tagpp->tagname[0];
       if (margs->sortic) {
         i = TOUPPER_ASC(tagpp->tagname[0]);
       }

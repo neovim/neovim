@@ -3230,9 +3230,10 @@ describe('LSP', function()
           eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result, ctx)
-          -- Don't compare & assert params, they're not relevant for the testcase
+          -- Don't compare & assert params and version, they're not relevant for the testcase
           -- This allows us to be lazy and avoid declaring them
           ctx.params = nil
+          ctx.version = nil
 
           eq(table.remove(test.expected_handlers), {err, result, ctx}, "expected handler")
           if ctx.method == 'start' then
@@ -3314,6 +3315,7 @@ describe('LSP', function()
         end,
         on_handler = function(err, result, ctx)
           ctx.params = nil -- don't compare in assert
+          ctx.version = nil
           eq(table.remove(expected_handlers), { err, result, ctx })
           if ctx.method == 'start' then
             exec_lua([[

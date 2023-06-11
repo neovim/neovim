@@ -111,7 +111,7 @@ zuG			Undo |zW| and |zG|, remove the word from the internal
 			list, like with |zW|.
 
 							*:spellra* *:spellrare*
-:[count]spellr[are] {word}
+:[count]spellra[re] {word}
 			Add {word} as a rare word to 'spellfile', similar to
 			|zw|.  Without count the first name is used, with
 			a count of two the second entry, etc.
@@ -124,7 +124,7 @@ zuG			Undo |zW| and |zG|, remove the word from the internal
 		nnoremap z/  :exe ':spellrare! ' .. expand('<cWORD>')<CR>
 <			|:spellundo|, |zuw|, or |zuW| can be used to undo this.
 
-:spellr[rare]! {word}	Add {word} as a rare word to the internal word
+:spellra[re]! {word}	Add {word} as a rare word to the internal word
 			list, similar to |zW|.
 
 :[count]spellu[ndo] {word}				*:spellu* *:spellundo*

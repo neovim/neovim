@@ -1233,7 +1233,7 @@ clearmatches([{win}])					*clearmatches()*
 		Can also be used as a |method|: >
 			GetWin()->clearmatches()
 <
-col({expr} [, {winid})					*col()*
+col({expr} [, {winid}])					*col()*
 		The result is a Number, which is the byte index of the column
 		position given with {expr}.  The accepted positions are:
 		    .	    the cursor position
@@ -1296,7 +1296,7 @@ complete({startcol}, {matches})			*complete()* *E785*
 		Example: >
 	inoremap <F5> <C-R>=ListMonths()<CR>
 
-	func! ListMonths()
+	func ListMonths()
 	  call complete(col('.'), ['January', 'February', 'March',
 		\ 'April', 'May', 'June', 'July', 'August', 'September',
 		\ 'October', 'November', 'December'])
@@ -1540,7 +1540,7 @@ cursor({list})
 		This is like the return value of |getpos()| or |getcurpos()|,
 		but without the first item.
 
-		To position the cursor using the character count, use
+		To position the cursor using {col} as the character count, use
 		|setcursorcharpos()|.
 
 		Does not change the jumplist.
@@ -3637,7 +3637,7 @@ getscriptinfo([{opts}])					*getscriptinfo()*
 		    name	Vim script file name.
 		    sid		Script ID |<SID>|.
 		    variables   A dictionary with the script-local variables.
-				Present only when the a particular script is
+				Present only when a particular script is
 				specified using the "sid" item in {opts}.
 				Note that this is a copy, the value of
 				script-local variables cannot be changed using
@@ -5626,7 +5626,7 @@ mkdir({name} [, {flags} [, {prot}]])
 <		and "subdir" already exists then "subdir/tmp" will be
 		scheduled for deletion, like with: >
 			defer delete('subdir/tmp', 'rf')
-
+<
 		If {prot} is given it is used to set the protection bits of
 		the new directory.  The default is 0o755 (rwxr-xr-x: r/w for
 		the user, readable for others).  Use 0o700 to make it

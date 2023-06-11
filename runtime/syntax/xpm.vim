@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	X Pixmap
 " Maintainer:	Ronald Schild <rs@scutum.de>
-" Last Change:	2023 May 11
+" Last Change:	2023 May 24
 " Version:	5.4n.2
 "               Jemma Nelson added termguicolors support
 "               Dominique Pellé fixed spelling support
@@ -42,7 +42,7 @@ function s:CreateSyntax() abort
 	    let values = split(s[1 : -2])
 
 	    " Values string invalid, bail out
-	    if len(values) != 4
+	    if len(values) != 4 && len(values) != 6 && len(values) != 7
 	       return
 	    endif
 
@@ -100,8 +100,8 @@ function s:CreateSyntax() abort
 	    endif
 
 	    " escape meta characters in patterns
-	    let s = escape(s, '/\*^$.~[] ')
-	    let chars = escape(chars, '/\*^$.~[] ')
+	    let s = escape(s, '/\*^$.~[]')
+	    let chars = escape(chars, '/\*^$.~[]')
 
 	    " now create syntax items
 	    " highlight the color string as normal string (no pixel string)

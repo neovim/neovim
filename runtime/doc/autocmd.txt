@@ -774,6 +774,9 @@ OptionSet			After setting an option (except during
 				the option. Similarly |v:option_oldglobal| is
 				only set when |:set| or |:setglobal| was used.
 
+				This does not set |<abuf>|, you could use
+				|bufnr()|.
+
 				Note that when setting a |global-local| string
 				option with |:set|, then |v:option_old| is the
 				old global value. However, for all other kinds

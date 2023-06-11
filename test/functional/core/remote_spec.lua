@@ -8,6 +8,7 @@ local exec_lua = helpers.exec_lua
 local expect = helpers.expect
 local funcs = helpers.funcs
 local insert = helpers.insert
+local nvim_prog = helpers.nvim_prog
 local new_argv = helpers.new_argv
 local neq = helpers.neq
 local set_session = helpers.set_session
@@ -38,10 +39,11 @@ describe('Remote', function()
       server:close()
     end)
 
+    -- Run a `nvim --remote*` command and return { stdout, stderr } of the process
     local function run_remote(...)
       set_session(server)
       local addr = funcs.serverlist()[1]
-      local client_argv = new_argv({args={'--server', addr, ...}})
+      local client_argv = { nvim_prog, '--clean', '--headless', '--server', addr, ... }
 
       -- Create an nvim instance just to run the remote-invoking nvim. We want
       -- to wait for the remote instance to exit and calling jobwait blocks
@@ -50,32 +52,43 @@ describe('Remote', function()
       local client_starter = spawn(new_argv(), false, nil, true)
       set_session(client_starter)
       -- Call jobstart() and jobwait() in the same RPC request to reduce flakiness.
-      eq({ 0 }, exec_lua([[return vim.fn.jobwait({ vim.fn.jobstart(...) })]], client_argv))
+      eq({ 0 }, exec_lua([[return vim.fn.jobwait({ vim.fn.jobstart(..., {
+        stdout_buffered = true,
+        stderr_buffered = true,
+        on_stdout = function(_, data, _)
+          _G.Remote_stdout = table.concat(data, '\n')
+        end,
+        on_stderr = function(_, data, _)
+          _G.Remote_stderr = table.concat(data, '\n')
+        end,
+      }) })]], client_argv))
+      local res = exec_lua([[return { _G.Remote_stdout, _G.Remote_stderr }]])
       client_starter:close()
       set_session(server)
+      return res
     end
 
     it('edit a single file', function()
-      run_remote('--remote', fname)
+      eq({ '', '' }, run_remote('--remote', fname))
       expect(contents)
       eq(2, #funcs.getbufinfo())
     end)
 
     it('tab edit a single file with a non-changed buffer', function()
-      run_remote('--remote-tab', fname)
+      eq({ '', '' }, run_remote('--remote-tab', fname))
       expect(contents)
       eq(1, #funcs.gettabinfo())
     end)
 
     it('tab edit a single file with a changed buffer', function()
       insert('hello')
-      run_remote('--remote-tab', fname)
+      eq({ '', '' }, run_remote('--remote-tab', fname))
       expect(contents)
       eq(2, #funcs.gettabinfo())
     end)
 
     it('edit multiple files', function()
-      run_remote('--remote', fname, other_fname)
+      eq({ '', '' }, run_remote('--remote', fname, other_fname))
       expect(contents)
       command('next')
       expect(other_contents)
@@ -83,7 +96,7 @@ describe('Remote', function()
     end)
 
     it('send keys', function()
-      run_remote('--remote-send', ':edit '..fname..'<CR><C-W>v')
+      eq({ '', '' }, run_remote('--remote-send', ':edit '..fname..'<CR><C-W>v'))
       expect(contents)
       eq(2, #funcs.getwininfo())
       -- Only a single buffer as we're using edit and not drop like --remote does
@@ -91,8 +104,12 @@ describe('Remote', function()
     end)
 
     it('evaluate expressions', function()
-      run_remote('--remote-expr', 'setline(1, "Yo")')
+      eq({ '0', '' }, run_remote('--remote-expr', 'setline(1, "Yo")'))
+      eq({ 'Yo', '' }, run_remote('--remote-expr', 'getline(1)'))
       expect('Yo')
+      eq({ '1.25', '' }, run_remote('--remote-expr', '1.25'))
+      eq({ 'no', '' }, run_remote('--remote-expr', '0z6E6F'))
+      eq({ '\t', '' }, run_remote('--remote-expr', '"\t"'))
     end)
   end)
 
@@ -113,7 +130,7 @@ describe('Remote', function()
     eq(nil, string.find(exec_capture('messages'), 'E247:'))
   end)
 
-  pending('exits with error on', function()
+  describe('exits with error on', function()
     local function run_and_check_exit_code(...)
       local bogus_argv = new_argv(...)
 

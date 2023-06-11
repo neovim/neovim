@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:      Structurizr DSL
 " Maintainer:    Bastian Venthur <venthur@debian.org>
-" Last Change:   2022-02-15
+" Last Change:   2022-05-22
 " Remark:        For a language reference, see
 "                https://github.com/structurizr/dsl
 
@@ -26,6 +26,7 @@ syn keyword skeyword configuration
 syn keyword skeyword container
 syn keyword skeyword containerinstance
 syn keyword skeyword custom
+syn keyword skeyword default
 syn keyword skeyword deployment
 syn keyword skeyword deploymentenvironment
 syn keyword skeyword deploymentgroup
@@ -40,6 +41,7 @@ syn keyword skeyword group
 syn keyword skeyword healthcheck
 syn keyword skeyword include
 syn keyword skeyword infrastructurenode
+syn keyword skeyword instances
 syn keyword skeyword model
 syn keyword skeyword person
 syn keyword skeyword perspectives
@@ -54,6 +56,7 @@ syn keyword skeyword tags
 syn keyword skeyword technology
 syn keyword skeyword terminology
 syn keyword skeyword theme
+syn keyword skeyword themes
 syn keyword skeyword title
 syn keyword skeyword url
 syn keyword skeyword users

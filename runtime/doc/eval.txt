@@ -2799,7 +2799,7 @@ text...
 				let mylist = [1, 2, 3]
 				lockvar 0 mylist
 				let mylist[0] = 77	" OK
-				call add(mylist, 4]	" OK
+				call add(mylist, 4)	" OK
 				let mylist = [7, 8, 9]  " Error!
 <								*E743*
 			For unlimited depth use [!] and omit [depth].
