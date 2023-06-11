@@ -43,7 +43,6 @@
   "." STR(NVIM_VERSION_MINOR) "." STR(NVIM_VERSION_PATCH) \
   NVIM_VERSION_PRERELEASE
 #endif
-
 #define NVIM_VERSION_LONG "NVIM " NVIM_VERSION_MEDIUM  // NOLINT(bugprone-suspicious-missing-comma)
 
 char *Version = VIM_VERSION_SHORT;
