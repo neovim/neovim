@@ -940,14 +940,13 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
     if rcid == 0 then
       return { errmsg = connection_failure_errmsg('Send failed.') }
     end
-    vim.fn.rpcrequest(rcid, 'nvim_input', args[2])
+    vim.rpcrequest(rcid, 'nvim_input', args[2])
     return { should_exit = true, tabbed = false }
   elseif subcmd == 'expr' then
     if rcid == 0 then
       return { errmsg = connection_failure_errmsg('Send expression failed.') }
     end
-    local expr = 'string(' .. args[2] .. ')'
-    local res = vim.fn.rpcrequest(rcid, 'nvim_eval', expr)
+    local res = tostring(vim.rpcrequest(rcid, 'nvim_eval', args[2]))
     return { result = res, should_exit = true, tabbed = false }
   elseif subcmd ~= '' then
     return { errmsg = 'Unknown option argument: ' .. args[1] }

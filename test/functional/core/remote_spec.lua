@@ -8,7 +8,6 @@ local exec_lua = helpers.exec_lua
 local expect = helpers.expect
 local funcs = helpers.funcs
 local insert = helpers.insert
-local is_os = helpers.is_os
 local nvim_prog = helpers.nvim_prog
 local new_argv = helpers.new_argv
 local neq = helpers.neq
@@ -105,10 +104,12 @@ describe('Remote', function()
     end)
 
     it('evaluate expressions', function()
-      local linesep = is_os('win') and '\r\n' or '\n'
-      eq({ "function('get')" .. linesep, '' }, run_remote('--remote-expr', 'function("get")'))
-      eq({ '0' .. linesep, '' }, run_remote('--remote-expr', 'setline(1, "Yo")'))
+      eq({ '0', '' }, run_remote('--remote-expr', 'setline(1, "Yo")'))
+      eq({ 'Yo', '' }, run_remote('--remote-expr', 'getline(1)'))
       expect('Yo')
+      eq({ '1.25', '' }, run_remote('--remote-expr', '1.25'))
+      eq({ 'no', '' }, run_remote('--remote-expr', '0z6E6F'))
+      eq({ '\t', '' }, run_remote('--remote-expr', '"\t"'))
     end)
   end)
 

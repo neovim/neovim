@@ -967,7 +967,6 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
         os_exit(2);
       }
       os_msg(rvobj.data.dictionary.items[i].value.data.string.data);
-      os_msg("\n");
     } else if (strequal(rvobj.data.dictionary.items[i].key.data, "tabbed")) {
       if (rvobj.data.dictionary.items[i].value.type != kObjectTypeBoolean) {
         os_errmsg("vim._cs_remote returned an unexpected type for 'tabbed'\n");
