@@ -53,10 +53,7 @@ end
 local function guess_query_lang(buf)
   local filename = api.nvim_buf_get_name(buf)
   if filename ~= '' then
-    local ok, query_lang = pcall(vim.fn.fnamemodify, filename, ':p:h:t')
-    if ok then
-      return query_lang
-    end
+    return vim.F.npcall(vim.fn.fnamemodify, filename, ':p:h:t')
   end
 end
 
@@ -270,11 +267,8 @@ function M.lint(buf, opts)
   for i = 1, math.max(1, #opts.langs) do
     local lang = opts.langs[i]
 
-    --- @type boolean, (table|nil)
-    local ok, parser_info = pcall(vim.treesitter.language.inspect, lang)
-    if not ok then
-      parser_info = nil
-    end
+    --- @type (table|nil)
+    local parser_info = vim.F.npcall(vim.treesitter.language.inspect, lang)
 
     local parser = vim.treesitter.get_parser(buf)
     parser:parse()
