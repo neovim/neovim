@@ -701,6 +701,24 @@ buf_detach_client({bufnr}, {client_id})          *vim.lsp.buf_detach_client()*
       • {bufnr}      (integer) Buffer handle, or 0 for current
       • {client_id}  (integer) Client id
 
+buf_inlay_hint_disable({bufnr})             *vim.lsp.buf_inlay_hint_disable()*
+    Disable inlay hints for a buffer
+
+    Parameters: ~
+      • {bufnr}  (integer|nil) Buffer handle, or nil for current
+
+buf_inlay_hint_enable({bufnr})               *vim.lsp.buf_inlay_hint_enable()*
+    Enable inlay hints for a buffer
+
+    Parameters: ~
+      • {bufnr}  (integer|nil) Buffer handle, or nil for current
+
+buf_inlay_hint_toggle({bufnr})               *vim.lsp.buf_inlay_hint_toggle()*
+    Toggle inlay hints for a buffer
+
+    Parameters: ~
+      • {bufnr}  (integer|nil) Buffer handle, or nil for current
+
 buf_is_attached({bufnr}, {client_id})              *vim.lsp.buf_is_attached()*
     Checks if a buffer is attached for a particular client.
 

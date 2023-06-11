@@ -17,11 +17,10 @@ local hint_cache_by_buf = setmetatable({}, {
 
 local namespace = api.nvim_create_namespace('vim_lsp_inlayhint')
 
-M.__explicit_buffers = {}
+M.__buffers = {}
 
 --- |lsp-handler| for the method `textDocument/inlayHint`
 --- Store hints for a specific buffer and client
---- Resolves unresolved hints
 ---@private
 function M.on_inlayhint(err, result, ctx, _)
   if err then
@@ -113,10 +112,11 @@ end
 ---@private
 function M.refresh(opts)
   opts = opts or {}
-  local bufnr = opts.bufnr or 0
+  local bufnr = resolve_bufnr(opts.bufnr or 0)
+  if not (M.__buffers[bufnr] and M.__buffers[bufnr].enabled) then
+    return
+  end
   local only_visible = opts.only_visible or false
-  bufnr = resolve_bufnr(bufnr)
-  M.__explicit_buffers[bufnr] = true
   local buffer_windows = {}
   for _, winid in ipairs(api.nvim_list_wins()) do
     if api.nvim_win_get_buf(winid) == bufnr then
@@ -149,24 +149,76 @@ end
 
 --- Clear inlay hints
 ---
----@param client_id integer|nil filter by client_id. All clients if nil
----@param bufnr integer|nil filter by buffer. All buffers if nil
+---@param bufnr (integer|nil) Buffer handle, or nil for current
 ---@private
-function M.clear(client_id, bufnr)
-  local buffers = bufnr and { resolve_bufnr(bufnr) } or vim.tbl_keys(hint_cache_by_buf)
-  for _, iter_bufnr in ipairs(buffers) do
-    M.__explicit_buffers[iter_bufnr] = false
-    local bufstate = hint_cache_by_buf[iter_bufnr]
-    local client_lens = (bufstate or {}).client_hint or {}
-    local client_ids = client_id and { client_id } or vim.tbl_keys(client_lens)
-    for _, iter_client_id in ipairs(client_ids) do
-      if bufstate then
-        bufstate.client_hint[iter_client_id] = {}
-      end
+local function clear(bufnr)
+  bufnr = resolve_bufnr(bufnr or 0)
+  local bufstate = hint_cache_by_buf[bufnr]
+  local client_lens = (bufstate or {}).client_hint or {}
+  local client_ids = vim.tbl_keys(client_lens)
+  for _, iter_client_id in ipairs(client_ids) do
+    if bufstate then
+      bufstate.client_hint[iter_client_id] = {}
     end
-    api.nvim_buf_clear_namespace(iter_bufnr, namespace, 0, -1)
   end
+  api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
   vim.cmd('redraw!')
+end
+
+---@private
+local function reset_timer(reset_bufnr)
+  local timer = M.__buffers[reset_bufnr].timer
+  if timer then
+    M.__buffers[reset_bufnr].timer = nil
+    if not timer:is_closing() then
+      timer:stop()
+      timer:close()
+    end
+  end
+end
+
+---@private
+local function make_request(request_bufnr)
+  reset_timer(request_bufnr)
+  M.refresh({ bufnr = request_bufnr })
+end
+
+---@private
+function M.enable(bufnr)
+  bufnr = resolve_bufnr(bufnr or 0)
+  if not (M.__buffers[bufnr] and M.__buffers[bufnr].enabled) then
+    M.__buffers[bufnr] = { enabled = true, timer = nil }
+    M.refresh({ bufnr = bufnr })
+    api.nvim_buf_attach(bufnr, true, {
+      on_lines = function(_, cb_bufnr)
+        if not M.__buffers[cb_bufnr].enabled then
+          return true
+        end
+        reset_timer(cb_bufnr)
+        M.__buffers[cb_bufnr].timer = vim.defer_fn(function()
+          make_request(cb_bufnr)
+        end, 200)
+      end,
+    })
+  end
+end
+
+---@private
+function M.disable(bufnr)
+  bufnr = resolve_bufnr(bufnr or 0)
+  M.__buffers[bufnr].enabled = false
+  M.__buffers[bufnr].timer = nil
+  clear(bufnr)
+end
+
+---@private
+function M.toggle(bufnr)
+  bufnr = resolve_bufnr(bufnr or 0)
+  if M.__buffers and M.__buffers[bufnr].enabled then
+    M.disable(bufnr)
+  else
+    M.enable(bufnr)
+  end
 end
 
 api.nvim_set_decoration_provider(namespace, {
