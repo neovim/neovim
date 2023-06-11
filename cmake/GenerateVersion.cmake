@@ -14,7 +14,7 @@ if(RES)
   return()
 endif()
 
-# Extract build info: "145-g0f9113907" => "g0f9113907"
+# Extract build info: "v0.9.0-145-g0f9113907" => "g0f9113907"
 string(REGEX REPLACE ".*\\-" "" NVIM_VERSION_BUILD "${GIT_TAG}")
 
 # `git describe` annotates the most recent tagged release; for pre-release
