@@ -202,6 +202,8 @@ specification. These LSP requests/notifications are defined by default:
     textDocument/rangeFormatting
     textDocument/references
     textDocument/rename
+    textDocument/semanticTokens/full
+    textDocument/semanticTokens/full/delta
     textDocument/signatureHelp
     textDocument/typeDefinition*
     window/logMessage
