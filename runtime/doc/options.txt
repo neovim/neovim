@@ -5391,7 +5391,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'shortmess'* *'shm'*
 'shortmess' 'shm'	string	(default "filnxtToOCF")
-			global
+			global					*E1336*
 	This option helps to avoid all the |hit-enter| prompts caused by file
 	messages, for example  with CTRL-G, and to avoid some other messages.
 	It is a list of flags:

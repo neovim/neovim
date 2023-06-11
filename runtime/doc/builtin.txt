@@ -3637,7 +3637,7 @@ getscriptinfo([{opts}])					*getscriptinfo()*
 		    name	Vim script file name.
 		    sid		Script ID |<SID>|.
 		    variables   A dictionary with the script-local variables.
-				Present only when the a particular script is
+				Present only when a particular script is
 				specified using the "sid" item in {opts}.
 				Note that this is a copy, the value of
 				script-local variables cannot be changed using
