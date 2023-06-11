@@ -2071,8 +2071,8 @@ tbl_get({o}, {...})                                            *vim.tbl_get()*
 
     Parameters: ~
       • {o}    (table) Table to index
-      • {...}  (string) Optional strings (0 or more, variadic) via which to
-               index the table
+      • {...}  any Optional keys (0 or more, variadic) via which to index the
+               table
 
     Return: ~
         any Nested value indexed by key (if it exists), else nil
