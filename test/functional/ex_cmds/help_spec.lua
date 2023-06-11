@@ -30,7 +30,7 @@ describe(':help', function()
     eq(1002, funcs.win_getid())
   end)
 
-  it('multibyte help tags work #23978', function()
+  it('multibyte help tags work #23975', function()
     mkdir('Xhelptags')
     finally(function()
       rmdir('Xhelptags')
