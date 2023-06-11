@@ -932,7 +932,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
     or subcmd == 'tab-wait'
     or subcmd == 'tab-wait-silent'
   then
-    return { errmsg = 'E5600: Wait commands not yet implemented in nvim' }
+    return { errmsg = 'E5600: Wait commands not yet implemented in Nvim' }
   elseif subcmd == 'tab-silent' then
     f_tab = true
     f_silent = true
@@ -946,8 +946,9 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
     if rcid == 0 then
       return { errmsg = connection_failure_errmsg('Send expression failed.') }
     end
-    print(vim.fn.rpcrequest(rcid, 'nvim_eval', args[2]))
-    return { should_exit = true, tabbed = false }
+    local expr = 'string(' .. args[2] .. ')'
+    local res = vim.fn.rpcrequest(rcid, 'nvim_eval', expr)
+    return { result = res, should_exit = true, tabbed = false }
   elseif subcmd ~= '' then
     return { errmsg = 'Unknown option argument: ' .. args[1] }
   end
