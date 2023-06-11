@@ -641,6 +641,12 @@ function protocol.make_client_capabilities()
       },
     },
     textDocument = {
+      inlayHint = {
+        dynamicRegistration = false,
+        resolveSupport = {
+          properties = {},
+        },
+      },
       semanticTokens = {
         dynamicRegistration = false,
         tokenTypes = {
@@ -852,6 +858,9 @@ function protocol.make_client_capabilities()
       didChangeWatchedFiles = {
         dynamicRegistration = true,
         relativePatternSupport = true,
+      },
+      inlayHint = {
+        refreshSupport = true,
       },
     },
     experimental = nil,

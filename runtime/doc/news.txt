@@ -84,6 +84,8 @@ The following new APIs or features were added.
 
 • |nvim_set_keymap()| and |nvim_del_keymap()| now support abbreviations.
 
+• Added |lsp-handler| for inlay hints: `textDocument/inlayHint` and
+  `workspace/inlayHint/refresh`
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

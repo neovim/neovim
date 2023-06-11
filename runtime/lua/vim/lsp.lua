@@ -17,6 +17,7 @@ local if_nil = vim.F.if_nil
 
 local lsp = {
   protocol = protocol,
+  _inlay_hint = require('vim.lsp._inlay_hint'),
 
   handlers = default_handlers,
 
@@ -60,6 +61,8 @@ lsp._request_name_to_capability = {
   ['textDocument/documentHighlight'] = { 'documentHighlightProvider' },
   ['textDocument/semanticTokens/full'] = { 'semanticTokensProvider' },
   ['textDocument/semanticTokens/full/delta'] = { 'semanticTokensProvider' },
+  ['textDocument/inlayHint'] = { 'inlayHintProvider' },
+  ['inlayHint/resolve'] = { 'inlayHintProvider', 'resolveProvider' },
 }
 
 -- TODO improve handling of scratch buffers with LSP attached.
@@ -1498,16 +1501,20 @@ function lsp.start_client(config)
     end
     -- Ensure pending didChange notifications are sent so that the server doesn't operate on a stale state
     changetracking.flush(client, bufnr)
+    local version = util.buf_versions[bufnr]
     bufnr = resolve_bufnr(bufnr)
     if log.debug() then
       log.debug(log_prefix, 'client.request', client_id, method, params, handler, bufnr)
     end
     local success, request_id = rpc.request(method, params, function(err, result)
-      handler(
-        err,
-        result,
-        { method = method, client_id = client_id, bufnr = bufnr, params = params }
-      )
+      local context = {
+        method = method,
+        client_id = client_id,
+        bufnr = bufnr,
+        params = params,
+        version = version,
+      }
+      handler(err, result, context)
     end, function(request_id)
       local request = client.requests[request_id]
       request.type = 'complete'
