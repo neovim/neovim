@@ -195,6 +195,21 @@ describe('ShaDa support code', function()
     eq({}, find_file(fname))
   end)
 
+  it('does not store unlisted buffer', function()
+    local fname = funcs.getcwd() .. '/file'
+    meths.set_var('__fname', fname)
+    nvim_command('edit `=__fname`')
+    curbufmeths.set_option('buflisted', false)
+    nvim_command('wshada! ' .. shada_fname)
+
+    eq({}, find_file(fname))
+
+    -- Set 'buflisted', then check again.
+    curbufmeths.set_option('buflisted', true)
+    nvim_command('wshada! ' .. shada_fname)
+    eq({[7]=1, [8]=1, [10]=1}, find_file(fname))
+  end)
+
   it('is able to set &shada after &viminfo', function()
     meths.set_option_value('viminfo', '\'10', {})
     eq('\'10', meths.get_option_value('viminfo', {}))
@@ -263,20 +278,5 @@ describe('ShaDa support code', function()
     eq('', funcs.getreg('a'))
     session:close()
     os.remove('NONE')
-  end)
-
-  it('does not store unlisted buffer', function()
-    local fname = funcs.getcwd() .. '/file'
-    meths.set_var('__fname', fname)
-    nvim_command('edit `=__fname`')
-    curbufmeths.set_option('buflisted', false)
-    nvim_command('wshada! ' .. shada_fname)
-
-    eq({}, find_file(fname))
-
-    -- Set 'buflisted', then check again.
-    curbufmeths.set_option('buflisted', true)
-    nvim_command('wshada! ' .. shada_fname)
-    eq({[7]=1, [8]=1, [10]=1}, find_file(fname))
   end)
 end)
