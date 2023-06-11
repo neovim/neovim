@@ -16,8 +16,20 @@ local hint_cache_by_buf = setmetatable({}, {
 })
 
 local namespace = api.nvim_create_namespace('vim_lsp_inlayhint')
+local augroup = api.nvim_create_augroup('vim_lsp_inlayhint', {})
+local __buffers = {}
 
-M.__buffers = {}
+---@private
+local function reset_timer(reset_bufnr)
+  local timer = __buffers[reset_bufnr].timer
+  if timer then
+    __buffers[reset_bufnr].timer = nil
+    if not timer:is_closing() then
+      timer:stop()
+      timer:close()
+    end
+  end
+end
 
 --- |lsp-handler| for the method `textDocument/inlayHint`
 --- Store hints for a specific buffer and client
@@ -113,7 +125,7 @@ end
 function M.refresh(opts)
   opts = opts or {}
   local bufnr = resolve_bufnr(opts.bufnr or 0)
-  if not (M.__buffers[bufnr] and M.__buffers[bufnr].enabled) then
+  if not (__buffers[bufnr] and __buffers[bufnr].enabled) then
     return
   end
   local only_visible = opts.only_visible or false
@@ -153,6 +165,7 @@ end
 ---@private
 local function clear(bufnr)
   bufnr = resolve_bufnr(bufnr or 0)
+  reset_timer(bufnr)
   local bufstate = hint_cache_by_buf[bufnr]
   local client_lens = (bufstate or {}).client_hint or {}
   local client_ids = vim.tbl_keys(client_lens)
@@ -162,19 +175,7 @@ local function clear(bufnr)
     end
   end
   api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
-  vim.cmd('redraw!')
-end
-
----@private
-local function reset_timer(reset_bufnr)
-  local timer = M.__buffers[reset_bufnr].timer
-  if timer then
-    M.__buffers[reset_bufnr].timer = nil
-    if not timer:is_closing() then
-      timer:stop()
-      timer:close()
-    end
-  end
+  api.nvim__buf_redraw_range(bufnr, 0, -1)
 end
 
 ---@private
@@ -186,19 +187,34 @@ end
 ---@private
 function M.enable(bufnr)
   bufnr = resolve_bufnr(bufnr or 0)
-  if not (M.__buffers[bufnr] and M.__buffers[bufnr].enabled) then
-    M.__buffers[bufnr] = { enabled = true, timer = nil }
+  if not (__buffers[bufnr] and __buffers[bufnr].enabled) then
+    __buffers[bufnr] = { enabled = true, timer = nil }
     M.refresh({ bufnr = bufnr })
     api.nvim_buf_attach(bufnr, true, {
       on_lines = function(_, cb_bufnr)
-        if not M.__buffers[cb_bufnr].enabled then
+        if not __buffers[cb_bufnr].enabled then
           return true
         end
         reset_timer(cb_bufnr)
-        M.__buffers[cb_bufnr].timer = vim.defer_fn(function()
+        __buffers[cb_bufnr].timer = vim.defer_fn(function()
           make_request(cb_bufnr)
         end, 200)
       end,
+      on_reload = function(_, cb_bufnr)
+        clear(cb_bufnr)
+        M.refresh({ bufnr = cb_bufnr })
+      end,
+      on_detach = function(_, cb_bufnr)
+        clear(cb_bufnr)
+      end,
+    })
+    api.nvim_create_autocmd('LspDetach', {
+      buffer = bufnr,
+      callback = function(opts)
+        clear(opts.buf)
+      end,
+      once = true,
+      group = augroup,
     })
   end
 end
@@ -206,15 +222,14 @@ end
 ---@private
 function M.disable(bufnr)
   bufnr = resolve_bufnr(bufnr or 0)
-  M.__buffers[bufnr].enabled = false
-  M.__buffers[bufnr].timer = nil
   clear(bufnr)
+  __buffers[bufnr] = nil
 end
 
 ---@private
 function M.toggle(bufnr)
   bufnr = resolve_bufnr(bufnr or 0)
-  if M.__buffers and M.__buffers[bufnr].enabled then
+  if __buffers[bufnr] and __buffers[bufnr].enabled then
     M.disable(bufnr)
   else
     M.enable(bufnr)
