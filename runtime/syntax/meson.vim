@@ -3,7 +3,7 @@
 " License:	VIM License
 " Maintainer:	Nirbheek Chauhan <nirbheek.chauhan@gmail.com>
 "		Liam Beguin <liambeguin@gmail.com>
-" Last Change:	2021 Aug 16
+" Last Change:	2023 May 27
 " Credits:	Zvezdan Petkovic <zpetkovic@acm.org>
 "		Neil Schemenauer <nas@meson.ca>
 "		Dmitry Vasiliev
@@ -68,6 +68,7 @@ syn keyword mesonBuiltin
   \ add_global_link_arguments
   \ add_languages
   \ add_project_arguments
+  \ add_project_dependencies
   \ add_project_link_arguments
   \ add_test_setup
   \ alias_target
@@ -99,6 +100,7 @@ syn keyword mesonBuiltin
   \ install_headers
   \ install_man
   \ install_subdir
+  \ install_symlink
   \ install_emptydir
   \ is_disabler
   \ is_variable
@@ -115,6 +117,7 @@ syn keyword mesonBuiltin
   \ shared_library
   \ shared_module
   \ static_library
+  \ structured_sources
   \ subdir
   \ subdir_done
   \ subproject
@@ -125,6 +128,7 @@ syn keyword mesonBuiltin
   \ vcs_tag
   \ warning
   \ range
+  \ debug
 
 if exists("meson_space_error_highlight")
   " trailing whitespace
@@ -146,7 +150,7 @@ hi def link mesonEscape		Special
 hi def link mesonNumber		Number
 hi def link mesonBuiltin	Function
 hi def link mesonBoolean	Boolean
-if exists("meson_space_error_higlight")
+if exists("meson_space_error_highlight")
   hi def link mesonSpaceError	Error
 endif
 

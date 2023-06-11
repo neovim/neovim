@@ -44,6 +44,13 @@ functions.
 			unless "!" is given.
 			{name} may be a |Dictionary| |Funcref| entry: >
 				:function dict.init
+<			Note that {name} is not an expression, you cannot use
+			a variable that is a function reference.  You can use
+			this dirty trick to list the function referred to with
+			variable "Funcref": >
+				let g:MyFuncref = Funcref
+				func g:MyFuncref
+				unlet g:MyFuncref
 
 :fu[nction] /{pattern}	List functions with a name matching {pattern}.
 			Example that lists all functions ending with "File": >
@@ -72,8 +79,7 @@ See |:verbose-cmd| for more information.
 			name has a colon in the name, e.g. for "foo:bar()".
 			Before that patch no error was given).
 
-			{name} can also be a |Dictionary| entry that is a
-			|Funcref|: >
+			{name} may be a |Dictionary| |Funcref| entry: >
 				:function dict.init(arg)
 <			"dict" must be an existing dictionary.  The entry
 			"init" is added if it didn't exist yet.  Otherwise [!]

@@ -260,8 +260,8 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			'runtimepath'.
 
 			If the filetype detection was already enabled (this
-			is usually done with a "syntax enable" or "filetype
-			on" command in your |init.vim|, or automatically during
+			is usually done with a `syntax enable` or `filetype on`
+			command in your |vimrc|, or automatically during
 			|initialization|), and the package was found in
 			"pack/*/opt/{name}", this command will also look
 			for "{name}/ftdetect/*.vim" files.

@@ -392,8 +392,8 @@ If there is no g:termdebug_config you can use: >vim
 	let g:termdebug_map_K = 0
 <
 						*termdebug_disasm_window*
-If you want the Asm window shown by default, set the flag to 1.
-the "disasm_window_height" entry can be used to set the window height: >vim
+If you want the Asm window shown by default, set the "disasm_window" flag to
+1.  The "disasm_window_height" entry can be used to set the window height: >vim
 	let g:termdebug_config['disasm_window'] = 1
 	let g:termdebug_config['disasm_window_height'] = 15
 If there is no g:termdebug_config you can use: >vim
