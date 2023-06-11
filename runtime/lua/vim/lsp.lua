@@ -1509,24 +1509,28 @@ function lsp.start_client(config)
         { method = method, client_id = client_id, bufnr = bufnr, params = params }
       )
     end, function(request_id)
-      local request = client.requests[request_id]
-      request.type = 'complete'
-      nvim_exec_autocmds('LspRequest', {
-        buffer = bufnr,
-        modeline = false,
-        data = { client_id = client_id, request_id = request_id, request = request },
-      })
+      if vim.api.nvim_buf_is_valid(bufnr) then
+        local request = client.requests[request_id]
+        request.type = 'complete'
+        nvim_exec_autocmds('LspRequest', {
+          buffer = bufnr,
+          modeline = false,
+          data = { client_id = client_id, request_id = request_id, request = request },
+        })
+      end
       client.requests[request_id] = nil
     end)
 
     if success and request_id then
-      local request = { type = 'pending', bufnr = bufnr, method = method }
-      client.requests[request_id] = request
-      nvim_exec_autocmds('LspRequest', {
-        buffer = bufnr,
-        modeline = false,
-        data = { client_id = client_id, request_id = request_id, request = request },
-      })
+      if vim.api.nvim_buf_is_valid(bufnr) then
+        local request = { type = 'pending', bufnr = bufnr, method = method }
+        client.requests[request_id] = request
+        nvim_exec_autocmds('LspRequest', {
+          buffer = bufnr,
+          modeline = false,
+          data = { client_id = client_id, request_id = request_id, request = request },
+        })
+      end
     end
 
     return success, request_id
@@ -1598,11 +1602,13 @@ function lsp.start_client(config)
     local request = client.requests[id]
     if request and request.type == 'pending' then
       request.type = 'cancel'
-      nvim_exec_autocmds('LspRequest', {
-        buffer = request.bufnr,
-        modeline = false,
-        data = { client_id = client_id, request_id = id, request = request },
-      })
+      if vim.api.nvim_buf_is_valid(request.bufnr) then
+        nvim_exec_autocmds('LspRequest', {
+          buffer = request.bufnr,
+          modeline = false,
+          data = { client_id = client_id, request_id = id, request = request },
+        })
+      end
     end
     return rpc.notify('$/cancelRequest', { id = id })
   end
