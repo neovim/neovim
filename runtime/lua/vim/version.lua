@@ -425,7 +425,7 @@ setmetatable(M, {
   __call = function()
     local version = vim.fn.api_info().version
     -- Workaround: vim.fn.api_info().version reports "prerelease" as a boolean.
-    version.prerelease = version.prerelease or nil
+    version.prerelease = version.prerelease and 'dev' or nil
     return setmetatable(version, Version)
   end,
 })
