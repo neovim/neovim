@@ -123,10 +123,17 @@ func Test_list_unlet()
   unlet l[2:3]
   call assert_equal([0, 1], l)
 
-  let l = [0, 1, 2, 3]
-  call assert_fails('unlet l[2:1]', 'E684:')
-  let l = [0, 1, 2, 3]
-  call assert_fails('unlet l[-1:2]', 'E684:')
+  let lines =<< trim END
+      VAR l = [0, 1, 2, 3]
+      unlet l[2 : 1]
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E684:')
+
+  let lines =<< trim END
+      VAR l = [0, 1, 2, 3]
+      unlet l[-1 : 2]
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E684:')
 endfunc
 
 " assignment to a list
@@ -140,9 +147,33 @@ func Test_list_assign()
   END
   call CheckLegacyAndVim9Success(lines)
 
-  let l = [0, 1, 2, 3]
-  call assert_fails('let [va, vb] = l', 'E687:')
-  call assert_fails('let [va, vb] = l[1:1]', 'E688:')
+  let lines =<< trim END
+      let l = [0, 1, 2, 3]
+      let [va, vb] = l
+  END
+  call CheckScriptFailure(lines, 'E687:')
+  let lines =<< trim END
+      var l = [0, 1, 2, 3]
+      var va = 0
+      var vb = 0
+      [va, vb] = l
+  END
+  call CheckScriptFailure(['vim9script'] + lines, 'E687:')
+  call CheckDefExecFailure(lines, 'E1093: Expected 2 items but got 4')
+
+  let lines =<< trim END
+      let l = [0, 1, 2, 3]
+      let [va, vb] = l[1:1]
+  END
+  call CheckScriptFailure(lines, 'E688:')
+  let lines =<< trim END
+      var l = [0, 1, 2, 3]
+      var va = 0
+      var vb = 0
+      [va, vb] = l[1 : 1]
+  END
+  call CheckScriptFailure(['vim9script'] + lines, 'E688:')
+  call CheckDefExecFailure(lines, 'E1093: Expected 2 items but got 1')
 endfunc
 
 " test for range assign
@@ -265,23 +296,29 @@ endfunc
 
 " Dictionary identity
 func Test_dict_identity()
-  let d = {001: 'asd', 'b': [1, 2, function('strlen')], -1: {'a': 1},}
-  let dd = d
-  let dx = copy(d)
-  call assert_true(d == dd)
-  call assert_false(d isnot dd)
-  call assert_true(d is dd)
-  call assert_true(d == dx)
-  call assert_false(d is dx)
-  call assert_true(d isnot dx)
+  let lines =<< trim END
+      VAR d = {'1': 'asd', 'b': [1, 2, function('strlen')], -1: {'a': 1}, }
+      VAR dd = d
+      VAR dx = copy(d)
+      call assert_true(d == dd)
+      call assert_false(d isnot dd)
+      call assert_true(d is dd)
+      call assert_true(d == dx)
+      call assert_false(d is dx)
+      call assert_true(d isnot dx)
+  END
+  call CheckLegacyAndVim9Success(lines)
 endfunc
 
 " removing items with :unlet
 func Test_dict_unlet()
-  let d = {'b':'bbb', '1': 99, '3': 33, '-1': {'a': 1}}
-  unlet d.b
-  unlet d[-1]
-  call assert_equal({'1': 99, '3': 33}, d)
+  let lines =<< trim END
+      VAR d = {'b': 'bbb', '1': 99, '3': 33, '-1': {'a': 1}}
+      unlet d.b
+      unlet d[-1]
+      call assert_equal({'1': 99, '3': 33}, d)
+  END
+  call CheckLegacyAndVim9Success(lines)
 endfunc
 
 " manipulating a big Dictionary (hashtable.c has a border of 1000 entries)
@@ -349,8 +386,30 @@ func Test_dict_assign()
   let d._ = 2
   call assert_equal({'1': 1, '_': 2}, d)
 
-  let n = 0
-  call assert_fails('let n.key = 3', 'E1203: Dot can only be used on a dictionary: n.key = 3')
+  let lines =<< trim END
+      VAR d = {}
+      LET d.a = 1
+      LET d._ = 2
+      call assert_equal({'a': 1, '_': 2}, d)
+  END
+  call CheckLegacyAndVim9Success(lines)
+
+  let lines =<< trim END
+    let n = 0
+    let n.key = 3
+  END
+  call CheckScriptFailure(lines, 'E1203: Dot can only be used on a dictionary: n.key = 3')
+  let lines =<< trim END
+    vim9script
+    var n = 0
+    n.key = 3
+  END
+  call CheckScriptFailure(lines, 'E1203: Dot can only be used on a dictionary: n.key = 3')
+  let lines =<< trim END
+    var n = 0
+    n.key = 3
+  END
+  call CheckDefFailure(lines, 'E1141:')
 endfunc
 
 " Function in script-local List or Dict
@@ -367,13 +426,41 @@ endfunc
 
 " Test removing items in a dictionary
 func Test_dict_func_remove()
-  let d = {1:'a', 2:'b', 3:'c'}
-  call assert_equal('b', remove(d, 2))
-  call assert_equal({1:'a', 3:'c'}, d)
+  let lines =<< trim END
+      VAR d = {1: 'a', 2: 'b', 3: 'c'}
+      call assert_equal('b', remove(d, 2))
+      call assert_equal({1: 'a', 3: 'c'}, d)
+  END
+  call CheckLegacyAndVim9Success(lines)
 
-  call assert_fails("call remove(d, 1, 2)", 'E118:')
-  call assert_fails("call remove(d, 'a')", 'E716:')
-  call assert_fails("call remove(d, [])", 'E730:')
+  let lines =<< trim END
+      VAR d = {1: 'a', 3: 'c'}
+      call remove(d, 1, 2)
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E118:')
+
+  let lines =<< trim END
+      VAR d = {1: 'a', 3: 'c'}
+      call remove(d, 'a')
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E716:')
+
+  let lines =<< trim END
+      let d = {1: 'a', 3: 'c'}
+      call remove(d, [])
+  END
+  call CheckScriptFailure(lines, 'E730:')
+  let lines =<< trim END
+      vim9script
+      var d = {1: 'a', 3: 'c'}
+      call remove(d, [])
+  END
+  call CheckScriptFailure(lines, 'E1174: String required for argument 2')
+  let lines =<< trim END
+      var d = {1: 'a', 3: 'c'}
+      call remove(d, [])
+  END
+  call CheckDefExecFailure(lines, 'E1013: Argument 2: type mismatch, expected string but got list<unknown>')
 endfunc
 
 " Nasty: remove func from Dict that's being called (works)
@@ -389,7 +476,7 @@ endfunc
 func Test_dict_literal_keys()
   call assert_equal({'one': 1, 'two2': 2, '3three': 3, '44': 4}, #{one: 1, two2: 2, 3three: 3, 44: 4},)
 
-  " why *{} cannot be used
+  " why *{} cannot be used for a literal dictionary
   let blue = 'blue'
   call assert_equal('6', trim(execute('echo 2 *{blue: 3}.blue')))
 endfunc
@@ -581,15 +668,13 @@ endfunc
 
 " No :unlet after lock on dict:
 func Test_dict_lock_unlet()
-  unlet! d
   let d = {'a': 99, 'b': 100}
   lockvar 1 d
-  call assert_fails('unlet d.a', 'E741')
+  call assert_fails('unlet d.a', 'E741:')
 endfunc
 
 " unlet after lock on dict item
 func Test_dict_item_lock_unlet()
-  unlet! d
   let d = {'a': 99, 'b': 100}
   lockvar d.a
   unlet d.a
@@ -598,7 +683,6 @@ endfunc
 
 " filter() after lock on dict item
 func Test_dict_lock_filter()
-  unlet! d
   let d = {'a': 99, 'b': 100}
   lockvar d.a
   call filter(d, 'v:key != "a"')
@@ -607,7 +691,6 @@ endfunc
 
 " map() after lock on dict
 func Test_dict_lock_map()
-  unlet! d
   let d = {'a': 99, 'b': 100}
   lockvar 1 d
   call map(d, 'v:val + 200')
@@ -616,16 +699,14 @@ endfunc
 
 " No extend() after lock on dict item
 func Test_dict_lock_extend()
-  unlet! d
   let d = {'a': 99, 'b': 100}
   lockvar d.a
-  call assert_fails("call extend(d, {'a' : 123})", 'E741')
+  call assert_fails("call extend(d, {'a' : 123})", 'E741:')
   call assert_equal({'a': 99, 'b': 100}, d)
 endfunc
 
 " Cannot use += with a locked dict
 func Test_dict_lock_operator()
-  unlet! d
   let d = {}
   lockvar d
   call assert_fails("let d += {'k' : 10}", 'E741:')
@@ -634,7 +715,7 @@ endfunc
 
 " No remove() of write-protected scope-level variable
 func Tfunc1(this_is_a_long_parameter_name)
-  call assert_fails("call remove(a:, 'this_is_a_long_parameter_name')", 'E742')
+  call assert_fails("call remove(a:, 'this_is_a_long_parameter_name')", 'E742:')
 endfunc
 func Test_dict_scope_var_remove()
   call Tfunc1('testval')
@@ -642,10 +723,10 @@ endfunc
 
 " No extend() of write-protected scope-level variable
 func Test_dict_scope_var_extend()
-  call assert_fails("call extend(a:, {'this_is_a_long_parameter_name': 1234})", 'E742')
+  call assert_fails("call extend(a:, {'this_is_a_long_parameter_name': 1234})", 'E742:')
 endfunc
 func Tfunc2(this_is_a_long_parameter_name)
-  call assert_fails("call extend(a:, {'this_is_a_long_parameter_name': 1234})", 'E742')
+  call assert_fails("call extend(a:, {'this_is_a_long_parameter_name': 1234})", 'E742:')
 endfunc
 func Test_dict_scope_var_extend_overwrite()
   call Tfunc2('testval')
@@ -725,9 +806,6 @@ endfunc
 
 func Test_func_arg_list()
   call s:arg_list_test(1, 2, [3, 4], {5: 6})
-endfunc
-
-func Test_dict_item_locked()
 endfunc
 
 " Tests for reverse(), sort(), uniq()
