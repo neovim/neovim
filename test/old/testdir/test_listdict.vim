@@ -657,10 +657,14 @@ func Test_list_locked_var_unlet()
       call assert_equal(expected[depth][u][1], ps)
     endfor
   endfor
-  " Deleting a list range should fail if the range is locked
+
+  " Deleting a list range with locked items works, but changing the items
+  " fails.
   let l = [1, 2, 3, 4]
   lockvar l[1:2]
-  call assert_fails('unlet l[1:2]', 'E741:')
+  call assert_fails('let l[1:2] = [8, 9]', 'E741:')
+  unlet l[1:2]
+  call assert_equal([1, 4], l)
   unlet l
 endfunc
 
