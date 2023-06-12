@@ -594,6 +594,119 @@ tv_list_copy_error:
   return NULL;
 }
 
+/// Get the list item in "l" with index "n1".  "n1" is adjusted if needed.
+/// Return NULL if there is no such item.
+listitem_T *tv_list_check_range_index_one(list_T *const l, long *const n1, const bool quiet)
+{
+  listitem_T *li = tv_list_find_index(l, n1);
+  if (li == NULL) {
+    if (!quiet) {
+      semsg(_(e_list_index_out_of_range_nr), (int64_t)n1);
+    }
+    return NULL;
+  }
+  return li;
+}
+
+/// Check that "n2" can be used as the second index in a range of list "l".
+/// If "n1" or "n2" is negative it is changed to the positive index.
+/// "li1" is the item for item "n1".
+/// Return OK or FAIL.
+int tv_list_check_range_index_two(list_T *const l, long *const n1, const listitem_T *const li1,
+                                  long *const n2, const bool quiet)
+{
+  if (*n2 < 0) {
+    listitem_T *ni = tv_list_find(l, (int)(*n2));
+    if (ni == NULL) {
+      if (!quiet) {
+        semsg(_(e_list_index_out_of_range_nr), (int64_t)(*n2));
+      }
+      return FAIL;
+    }
+    *n2 = tv_list_idx_of_item(l, ni);
+  }
+
+  // Check that n2 isn't before n1.
+  if (*n1 < 0) {
+    *n1 = tv_list_idx_of_item(l, li1);
+  }
+  if (*n2 < *n1) {
+    if (!quiet) {
+      semsg(_(e_list_index_out_of_range_nr), (int64_t)(*n2));
+    }
+    return FAIL;
+  }
+  return OK;
+}
+
+/// Assign values from list "src" into a range of "dest".
+/// "idx1_arg" is the index of the first item in "dest" to be replaced.
+/// "idx2" is the index of last item to be replaced, but when "empty_idx2" is
+/// true then replace all items after "idx1".
+/// "op" is the operator, normally "=" but can be "+=" and the like.
+/// "varname" is used for error messages.
+/// Returns OK or FAIL.
+int tv_list_assign_range(list_T *const dest, list_T *const src, const long idx1_arg,
+                         const long idx2, const bool empty_idx2, const char *const op,
+                         const char *const varname)
+{
+  long idx1 = idx1_arg;
+  listitem_T *const first_li = tv_list_find_index(dest, &idx1);
+  listitem_T *src_li;
+
+  // Check whether any of the list items is locked before making any changes.
+  long idx = idx1;
+  listitem_T *dest_li = first_li;
+  for (src_li = tv_list_first(src); src_li != NULL && dest_li != NULL;) {
+    if (value_check_lock(TV_LIST_ITEM_TV(dest_li)->v_lock, varname, TV_CSTRING)) {
+      return FAIL;
+    }
+    src_li = TV_LIST_ITEM_NEXT(src, src_li);
+    if (src_li == NULL || (!empty_idx2 && idx2 == idx)) {
+      break;
+    }
+    dest_li = TV_LIST_ITEM_NEXT(dest, dest_li);
+    idx++;
+  }
+
+  // Assign the List values to the list items.
+  idx = idx1;
+  dest_li = first_li;
+  for (src_li = tv_list_first(src); src_li != NULL;) {
+    if (op != NULL && *op != '=') {
+      eexe_mod_op(TV_LIST_ITEM_TV(dest_li), TV_LIST_ITEM_TV(src_li), op);
+    } else {
+      tv_clear(TV_LIST_ITEM_TV(dest_li));
+      tv_copy(TV_LIST_ITEM_TV(src_li), TV_LIST_ITEM_TV(dest_li));
+    }
+    src_li = TV_LIST_ITEM_NEXT(src, src_li);
+    if (src_li == NULL || (!empty_idx2 && idx2 == idx)) {
+      break;
+    }
+    assert(dest_li != NULL);
+    if (TV_LIST_ITEM_NEXT(dest, dest_li) == NULL) {
+      // Need to add an empty item.
+      tv_list_append_number(dest, 0);
+      // "dest_li" may have become invalid after append, don’t use it.
+      dest_li = tv_list_last(dest);  // Valid again.
+    } else {
+      dest_li = TV_LIST_ITEM_NEXT(dest, dest_li);
+    }
+    idx++;
+  }
+  if (src_li != NULL) {
+    emsg(_("E710: List value has more items than target"));
+    return FAIL;
+  }
+  if (empty_idx2
+      ? (dest_li != NULL && TV_LIST_ITEM_NEXT(dest, dest_li) != NULL)
+      : idx != idx2) {
+    emsg(_("E711: List value has not enough items"));
+    return FAIL;
+  }
+  return OK;
+}
+
 /// Flatten up to "maxitems" in "list", starting at "first" to depth "maxdepth".
 /// When "first" is NULL use the first item.
 /// Does nothing if "maxdepth" is 0.
