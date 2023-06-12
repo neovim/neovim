@@ -810,24 +810,27 @@ endfunc
 
 " Tests for reverse(), sort(), uniq()
 func Test_reverse_sort_uniq()
-  let l = ['-0', 'A11', 2, 2, 'xaaa', 4, 'foo', 'foo6', 'foo', [0, 1, 2], 'x8', [0, 1, 2], 1.5]
-  call assert_equal(['-0', 'A11', 2, 'xaaa', 4, 'foo', 'foo6', 'foo', [0, 1, 2], 'x8', [0, 1, 2], 1.5], uniq(copy(l)))
-  call assert_equal([1.5, [0, 1, 2], 'x8', [0, 1, 2], 'foo', 'foo6', 'foo', 4, 'xaaa', 2, 2, 'A11', '-0'], reverse(l))
-  call assert_equal([1.5, [0, 1, 2], 'x8', [0, 1, 2], 'foo', 'foo6', 'foo', 4, 'xaaa', 2, 2, 'A11', '-0'], reverse(reverse(l)))
-  if has('float')
-    call assert_equal(['-0', 'A11', 'foo', 'foo', 'foo6', 'x8', 'xaaa', 1.5, 2, 2, 4, [0, 1, 2], [0, 1, 2]], sort(l))
-    call assert_equal([[0, 1, 2], [0, 1, 2], 4, 2, 2, 1.5, 'xaaa', 'x8', 'foo6', 'foo', 'foo', 'A11', '-0'], reverse(sort(l)))
-    call assert_equal(['-0', 'A11', 'foo', 'foo', 'foo6', 'x8', 'xaaa', 1.5, 2, 2, 4, [0, 1, 2], [0, 1, 2]], sort(reverse(sort(l))))
-    call assert_equal(['-0', 'A11', 'foo', 'foo6', 'x8', 'xaaa', 1.5, 2, 4, [0, 1, 2]], uniq(sort(l)))
+  let lines =<< trim END
+      VAR l = ['-0', 'A11', 2, 2, 'xaaa', 4, 'foo', 'foo6', 'foo', [0, 1, 2], 'x8', [0, 1, 2], 1.5]
+      call assert_equal(['-0', 'A11', 2, 'xaaa', 4, 'foo', 'foo6', 'foo', [0, 1, 2], 'x8', [0, 1, 2], 1.5], uniq(copy(l)))
+      call assert_equal([1.5, [0, 1, 2], 'x8', [0, 1, 2], 'foo', 'foo6', 'foo', 4, 'xaaa', 2, 2, 'A11', '-0'], reverse(l))
+      call assert_equal([1.5, [0, 1, 2], 'x8', [0, 1, 2], 'foo', 'foo6', 'foo', 4, 'xaaa', 2, 2, 'A11', '-0'], reverse(reverse(l)))
+      if has('float')
+        call assert_equal(['-0', 'A11', 'foo', 'foo', 'foo6', 'x8', 'xaaa', 1.5, 2, 2, 4, [0, 1, 2], [0, 1, 2]], sort(l))
+        call assert_equal([[0, 1, 2], [0, 1, 2], 4, 2, 2, 1.5, 'xaaa', 'x8', 'foo6', 'foo', 'foo', 'A11', '-0'], reverse(sort(l)))
+        call assert_equal(['-0', 'A11', 'foo', 'foo', 'foo6', 'x8', 'xaaa', 1.5, 2, 2, 4, [0, 1, 2], [0, 1, 2]], sort(reverse(sort(l))))
+        call assert_equal(['-0', 'A11', 'foo', 'foo6', 'x8', 'xaaa', 1.5, 2, 4, [0, 1, 2]], uniq(sort(l)))
 
-    let l = [7, 9, 'one', 18, 12, 22, 'two', 10.0e-16, -1, 'three', 0xff, 0.22, 'four']
-    call assert_equal([-1, 'one', 'two', 'three', 'four', 1.0e-15, 0.22, 7, 9, 12, 18, 22, 255], sort(copy(l), 'n'))
+        LET l = [7, 9, 'one', 18, 12, 22, 'two', 10.0e-16, -1, 'three', 0xff, 0.22, 'four']
+        call assert_equal([-1, 'one', 'two', 'three', 'four', 1.0e-15, 0.22, 7, 9, 12, 18, 22, 255], sort(copy(l), 'n'))
 
-    let l = [7, 9, 18, 12, 22, 10.0e-16, -1, 0xff, 0, -0, 0.22, 'bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', {}, []]
-    call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 1))
-    call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 'i'))
-    call assert_equal(['BAR', 'Bar', 'FOO', 'FOOBAR', 'Foo', 'bar', 'foo', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l)))
-  endif
+        LET l = [7, 9, 18, 12, 22, 10.0e-16, -1, 0xff, 0, -0, 0.22, 'bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', {}, []]
+        call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 1))
+        call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 'i'))
+        call assert_equal(['BAR', 'Bar', 'FOO', 'FOOBAR', 'Foo', 'bar', 'foo', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l)))
+      endif
+  END
+  call CheckLegacyAndVim9Success(lines)
 
   call assert_fails('call reverse("")', 'E899:')
   call assert_fails('call uniq([1, 2], {x, y -> []})', 'E745:')
@@ -838,28 +841,34 @@ endfunc
 
 " reduce a list or a blob
 func Test_reduce()
-  call assert_equal(1, reduce([], { acc, val -> acc + val }, 1))
-  call assert_equal(10, reduce([1, 3, 5], { acc, val -> acc + val }, 1))
-  call assert_equal(2 * (2 * ((2 * 1) + 2) + 3) + 4, reduce([2, 3, 4], { acc, val -> 2 * acc + val }, 1))
-  call assert_equal('a x y z', ['x', 'y', 'z']->reduce({ acc, val -> acc .. ' ' .. val}, 'a'))
-  call assert_equal(#{ x: 1, y: 1, z: 1 }, ['x', 'y', 'z']->reduce({ acc, val -> extend(acc, { val: 1 }) }, {}))
-  call assert_equal([0, 1, 2, 3], reduce([1, 2, 3], function('add'), [0]))
+  let lines =<< trim END
+      call assert_equal(1, reduce([], LSTART acc, val LMIDDLE acc + val LEND, 1))
+      call assert_equal(10, reduce([1, 3, 5], LSTART acc, val LMIDDLE acc + val LEND, 1))
+      call assert_equal(2 * (2 * ((2 * 1) + 2) + 3) + 4, reduce([2, 3, 4], LSTART acc, val LMIDDLE 2 * acc + val LEND, 1))
+      call assert_equal('a x y z', ['x', 'y', 'z']->reduce(LSTART acc, val LMIDDLE acc .. ' ' .. val LEND, 'a'))
+      call assert_equal([0, 1, 2, 3], reduce([1, 2, 3], function('add'), [0]))
 
-  let l = ['x', 'y', 'z']
-  call assert_equal(42, reduce(l, function('get'), #{ x: #{ y: #{ z: 42 } } }))
-  call assert_equal(['x', 'y', 'z'], l)
+      VAR l = ['x', 'y', 'z']
+      call assert_equal(42, reduce(l, function('get'), {'x': {'y': {'z': 42 } } }))
+      call assert_equal(['x', 'y', 'z'], l)
 
-  call assert_equal(1, reduce([1], { acc, val -> acc + val }))
-  call assert_equal('x y z', reduce(['x', 'y', 'z'], { acc, val -> acc .. ' ' .. val }))
-  call assert_equal(120, range(1, 5)->reduce({ acc, val -> acc * val }))
+      call assert_equal(1, reduce([1], LSTART acc, val LMIDDLE acc + val LEND))
+      call assert_equal('x y z', reduce(['x', 'y', 'z'], LSTART acc, val LMIDDLE acc .. ' ' .. val LEND))
+      call assert_equal(120, range(1, 5)->reduce(LSTART acc, val LMIDDLE acc * val LEND))
+
+      call assert_equal(1, reduce(0z, LSTART acc, val LMIDDLE acc + val LEND, 1))
+      call assert_equal(1 + 0xaf + 0xbf + 0xcf, reduce(0zAFBFCF, LSTART acc, val LMIDDLE acc + val LEND, 1))
+      call assert_equal(2 * (2 * 1 + 0xaf) + 0xbf, 0zAFBF->reduce(LSTART acc, val LMIDDLE 2 * acc + val LEND, 1))
+
+      call assert_equal(0xff, reduce(0zff, LSTART acc, val LMIDDLE acc + val LEND))
+      call assert_equal(2 * (2 * 0xaf + 0xbf) + 0xcf, reduce(0zAFBFCF, LSTART acc, val LMIDDLE 2 * acc + val LEND))
+  END
+  call CheckLegacyAndVim9Success(lines)
+
+  call assert_equal({'x': 1, 'y': 1, 'z': 1 }, ['x', 'y', 'z']->reduce({ acc, val -> extend(acc, { val: 1 }) }, {}))
+  " vim9 assert_equal({'x': 1, 'y': 1, 'z': 1 }, ['x', 'y', 'z']->reduce((acc, val) => extend(acc, {[val]: 1 }), {}))
+
   call assert_fails("call reduce([], { acc, val -> acc + val })", 'E998: Reduce of an empty List with no initial value')
-
-  call assert_equal(1, reduce(0z, { acc, val -> acc + val }, 1))
-  call assert_equal(1 + 0xaf + 0xbf + 0xcf, reduce(0zAFBFCF, { acc, val -> acc + val }, 1))
-  call assert_equal(2 * (2 * 1 + 0xaf) + 0xbf, 0zAFBF->reduce({ acc, val -> 2 * acc + val }, 1))
-
-  call assert_equal(0xff, reduce(0zff, { acc, val -> acc + val }))
-  call assert_equal(2 * (2 * 0xaf + 0xbf) + 0xcf, reduce(0zAFBFCF, { acc, val -> 2 * acc + val }))
   call assert_fails("call reduce(0z, { acc, val -> acc + val })", 'E998: Reduce of an empty Blob with no initial value')
 
   call assert_fails("call reduce({}, { acc, val -> acc + val }, 1)", 'E897:')
@@ -889,29 +898,36 @@ endfunc
 
 " splitting a string to a List using split()
 func Test_str_split()
-  call assert_equal(['aa', 'bb'], split('  aa  bb '))
-  call assert_equal(['aa', 'bb'], split('  aa  bb  ', '\W\+', 0))
-  call assert_equal(['', 'aa', 'bb', ''], split('  aa  bb  ', '\W\+', 1))
-  call assert_equal(['', '', 'aa', '', 'bb', '', ''], split('  aa  bb  ', '\W', 1))
-  call assert_equal(['aa', '', 'bb'], split(':aa::bb:', ':', 0))
-  call assert_equal(['', 'aa', '', 'bb', ''], split(':aa::bb:', ':', 1))
-  call assert_equal(['aa', '', 'bb', 'cc', ''], split('aa,,bb, cc,', ',\s*', 1))
-  call assert_equal(['a', 'b', 'c'], split('abc', '\zs'))
-  call assert_equal(['', 'a', '', 'b', '', 'c', ''], split('abc', '\zs', 1))
+  let lines =<< trim END
+      call assert_equal(['aa', 'bb'], split('  aa  bb '))
+      call assert_equal(['aa', 'bb'], split('  aa  bb  ', '\W\+', 0))
+      call assert_equal(['', 'aa', 'bb', ''], split('  aa  bb  ', '\W\+', 1))
+      call assert_equal(['', '', 'aa', '', 'bb', '', ''], split('  aa  bb  ', '\W', 1))
+      call assert_equal(['aa', '', 'bb'], split(':aa::bb:', ':', 0))
+      call assert_equal(['', 'aa', '', 'bb', ''], split(':aa::bb:', ':', 1))
+      call assert_equal(['aa', '', 'bb', 'cc', ''], split('aa,,bb, cc,', ',\s*', 1))
+      call assert_equal(['a', 'b', 'c'], split('abc', '\zs'))
+      call assert_equal(['', 'a', '', 'b', '', 'c', ''], split('abc', '\zs', 1))
+      call assert_equal(['abc'], split('abc', '\\%('))
+  END
+  call CheckLegacyAndVim9Success(lines)
+
   call assert_fails("call split('abc', [])", 'E730:')
   call assert_fails("call split('abc', 'b', [])", 'E745:')
-  call assert_equal(['abc'], split('abc', '\\%('))
 endfunc
 
 " compare recursively linked list and dict
 func Test_listdict_compare()
-  let l = [1, 2, 3, 4]
-  let d = {'1': 1, '2': l, '3': 3}
-  let l[1] = d
-  call assert_true(l == l)
-  call assert_true(d == d)
-  call assert_false(l != deepcopy(l))
-  call assert_false(d != deepcopy(d))
+  let lines =<< trim END
+      VAR l = [1, 2, 3, '4']
+      VAR d = {'1': 1, '2': l, '3': 3}
+      LET l[1] = d
+      call assert_true(l == l)
+      call assert_true(d == d)
+      call assert_false(l != deepcopy(l))
+      call assert_false(d != deepcopy(d))
+  END
+  call CheckLegacyAndVim9Success(lines)
 
   " comparison errors
   call assert_fails('echo [1, 2] =~ {}', 'E691:')
@@ -922,14 +938,17 @@ endfunc
 
   " compare complex recursively linked list and dict
 func Test_listdict_compare_complex()
-  let l = []
-  call add(l, l)
-  let dict4 = {"l": l}
-  call add(dict4.l, dict4)
-  let lcopy = deepcopy(l)
-  let dict4copy = deepcopy(dict4)
-  call assert_true(l == lcopy)
-  call assert_true(dict4 == dict4copy)
+  let lines =<< trim END
+      VAR l = []
+      call add(l, l)
+      VAR dict4 = {"l": l}
+      call add(dict4.l, dict4)
+      VAR lcopy = deepcopy(l)
+      VAR dict4copy = deepcopy(dict4)
+      call assert_true(l == lcopy)
+      call assert_true(dict4 == dict4copy)
+  END
+  call CheckLegacyAndVim9Success(lines)
 endfunc
 
 " Test for extending lists and dictionaries
@@ -937,33 +956,36 @@ func Test_listdict_extend()
   " Test extend() with lists
 
   " Pass the same List to extend()
-  let l = [1, 2, 3]
-  call assert_equal([1, 2, 3, 1, 2, 3], extend(l, l))
-  call assert_equal([1, 2, 3, 1, 2, 3], l)
+  let lines =<< trim END
+      VAR l = [1, 2, 3]
+      call assert_equal([1, 2, 3, 1, 2, 3], extend(l, l))
+      call assert_equal([1, 2, 3, 1, 2, 3], l)
 
-  let l = [1, 2, 3]
-  call assert_equal([1, 2, 3, 4, 5, 6], extend(l, [4, 5, 6]))
-  call assert_equal([1, 2, 3, 4, 5, 6], l)
+      LET l = [1, 2, 3]
+      call assert_equal([1, 2, 3, 4, 5, 6], extend(l, [4, 5, 6]))
+      call assert_equal([1, 2, 3, 4, 5, 6], l)
 
-  let l = [1, 2, 3]
-  call extend(l, [4, 5, 6], 0)
-  call assert_equal([4, 5, 6, 1, 2, 3], l)
+      LET l = [1, 2, 3]
+      call extend(l, [4, 5, 6], 0)
+      call assert_equal([4, 5, 6, 1, 2, 3], l)
 
-  let l = [1, 2, 3]
-  call extend(l, [4, 5, 6], 1)
-  call assert_equal([1, 4, 5, 6, 2, 3], l)
+      LET l = [1, 2, 3]
+      call extend(l, [4, 5, 6], 1)
+      call assert_equal([1, 4, 5, 6, 2, 3], l)
 
-  let l = [1, 2, 3]
-  call extend(l, [4, 5, 6], 3)
-  call assert_equal([1, 2, 3, 4, 5, 6], l)
+      LET l = [1, 2, 3]
+      call extend(l, [4, 5, 6], 3)
+      call assert_equal([1, 2, 3, 4, 5, 6], l)
 
-  let l = [1, 2, 3]
-  call extend(l, [4, 5, 6], -1)
-  call assert_equal([1, 2, 4, 5, 6, 3], l)
+      LET l = [1, 2, 3]
+      call extend(l, [4, 5, 6], -1)
+      call assert_equal([1, 2, 4, 5, 6, 3], l)
 
-  let l = [1, 2, 3]
-  call extend(l, [4, 5, 6], -3)
-  call assert_equal([4, 5, 6, 1, 2,  3], l)
+      LET l = [1, 2, 3]
+      call extend(l, [4, 5, 6], -3)
+      call assert_equal([4, 5, 6, 1, 2,  3], l)
+  END
+  call CheckLegacyAndVim9Success(lines)
 
   let l = [1, 2, 3]
   call assert_fails("call extend(l, [4, 5, 6], 4)", 'E684:')
@@ -975,21 +997,24 @@ func Test_listdict_extend()
   " Test extend() with dictionaries.
 
   " Pass the same Dict to extend()
-  let d = { 'a': {'b': 'B'}}
-  call extend(d, d)
-  call assert_equal({'a': {'b': 'B'}}, d)
+  let lines =<< trim END
+      VAR d = {'a': {'b': 'B'}, 'x': 9}
+      call extend(d, d)
+      call assert_equal({'a': {'b': 'B'}, 'x': 9}, d)
 
-  let d = {'a': 'A', 'b': 'B'}
-  call assert_equal({'a': 'A', 'b': 0, 'c': 'C'}, extend(d, {'b': 0, 'c':'C'}))
-  call assert_equal({'a': 'A', 'b': 0, 'c': 'C'}, d)
+      LET d = {'a': 'A', 'b': 9}
+      call assert_equal({'a': 'A', 'b': 0, 'c': 'C'}, extend(d, {'b': 0, 'c': 'C'}))
+      call assert_equal({'a': 'A', 'b': 0, 'c': 'C'}, d)
 
-  let d = {'a': 'A', 'b': 'B'}
-  call extend(d, {'a': 'A', 'b': 0, 'c': 'C'}, "force")
-  call assert_equal({'a': 'A', 'b': 0, 'c': 'C'}, d)
+      LET d = {'a': 'A', 'b': 9}
+      call extend(d, {'a': 'A', 'b': 0, 'c': 'C'}, "force")
+      call assert_equal({'a': 'A', 'b': 0, 'c': 'C'}, d)
 
-  let d = {'a': 'A', 'b': 'B'}
-  call extend(d, {'b': 0, 'c':'C'}, "keep")
-  call assert_equal({'a': 'A', 'b': 'B', 'c': 'C'}, d)
+      LET d = {'a': 'A', 'b': 9}
+      call extend(d, {'b': 0, 'c': 'C'}, "keep")
+      call assert_equal({'a': 'A', 'b': 9, 'c': 'C'}, d)
+  END
+  call CheckLegacyAndVim9Success(lines)
 
   let d = {'a': 'A', 'b': 'B'}
   call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 'error')", 'E737:')
@@ -1006,18 +1031,21 @@ func Test_listdict_extend()
   call assert_fails("call extend(g:, {'-!' : 10})", 'E461:')
 
   " Extend a list with itself.
-  let l = [1, 5, 7]
-  call extend(l, l, 0)
-  call assert_equal([1, 5, 7, 1, 5, 7], l)
-  let l = [1, 5, 7]
-  call extend(l, l, 1)
-  call assert_equal([1, 1, 5, 7, 5, 7], l)
-  let l = [1, 5, 7]
-  call extend(l, l, 2)
-  call assert_equal([1, 5, 1, 5, 7, 7], l)
-  let l = [1, 5, 7]
-  call extend(l, l, 3)
-  call assert_equal([1, 5, 7, 1, 5, 7], l)
+  let lines =<< trim END
+      VAR l = [1, 5, 7]
+      call extend(l, l, 0)
+      call assert_equal([1, 5, 7, 1, 5, 7], l)
+      LET l = [1, 5, 7]
+      call extend(l, l, 1)
+      call assert_equal([1, 1, 5, 7, 5, 7], l)
+      LET l = [1, 5, 7]
+      call extend(l, l, 2)
+      call assert_equal([1, 5, 1, 5, 7, 7], l)
+      LET l = [1, 5, 7]
+      call extend(l, l, 3)
+      call assert_equal([1, 5, 7, 1, 5, 7], l)
+  END
+  call CheckLegacyAndVim9Success(lines)
 endfunc
 
 func Test_listdict_extendnew()
@@ -1216,9 +1244,9 @@ func Test_null_dict()
   call assert_equal({}, d)
   call assert_equal(0, len(d))
   call assert_equal(1, empty(d))
-  call assert_equal(0, items(d))
-  call assert_equal(0, keys(d))
-  call assert_equal(0, values(d))
+  call assert_equal([], items(d))
+  call assert_equal([], keys(d))
+  call assert_equal([], values(d))
   call assert_false(has_key(d, 'k'))
   call assert_equal('{}', string(d))
   call assert_fails('let x = d[10]')

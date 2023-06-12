@@ -3019,11 +3019,12 @@ static void tv_dict_list(typval_T *const tv, typval_T *const rettv, const DictLi
     emsg(_(e_dictreq));
     return;
   }
-  if (tv->vval.v_dict == NULL) {
-    return;
-  }
 
   tv_list_alloc_ret(rettv, tv_dict_len(tv->vval.v_dict));
+  if (tv->vval.v_dict == NULL) {
+    // NULL dict behaves like an empty dict
+    return;
+  }
 
   TV_DICT_ITER(tv->vval.v_dict, di, {
     typval_T tv_item = { .v_lock = VAR_UNLOCKED };
