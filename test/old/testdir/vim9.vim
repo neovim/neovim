@@ -2,6 +2,10 @@
 " Use a different file name for each run.
 let s:sequence = 1
 
+func CheckDefExecFailure(lines, error, lnum = -3)
+  return
+endfunc
+
 func CheckScriptFailure(lines, error, lnum = -3)
   if get(a:lines, 0, '') ==# 'vim9script'
     return
