@@ -27,9 +27,9 @@ local keymap = {}
 ---                        - "replace_keycodes" defaults to `true` if "expr" is `true`.
 ---                        - "noremap": inverse of "remap" (see below).
 ---                      - Also accepts:
----                        - "buffer" number|boolean Creates buffer-local mapping, `0` or `true`
+---                        - "buffer": (number|boolean) Creates buffer-local mapping, `0` or `true`
 ---                        for current buffer.
----                        - remap: (boolean) Make the mapping recursive. Inverses "noremap".
+---                        - "remap": (boolean) Make the mapping recursive. Inverse of "noremap".
 ---                        Defaults to `false`.
 ---@see |nvim_set_keymap()|
 function keymap.set(mode, lhs, rhs, opts)
@@ -83,8 +83,8 @@ end
 ---   vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buffer = 5 })
 --- </pre>
 ---@param opts table|nil A table of optional arguments:
----                      - buffer: (number or boolean) Remove a mapping from the given buffer.
----                      When "true" or 0, use the current buffer.
+---                      - "buffer": (number|boolean) Remove a mapping from the given buffer.
+---                        When `0` or `true`, use the current buffer.
 ---@see |vim.keymap.set()|
 ---
 function keymap.del(modes, lhs, opts)

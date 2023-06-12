@@ -534,9 +534,9 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   return region
 end
 
---- Defers calling `fn` until `timeout` ms passes.
+--- Defers calling {fn} until {timeout} ms passes.
 ---
---- Use to do a one-shot timer that calls `fn`
+--- Use to do a one-shot timer that calls {fn}
 --- Note: The {fn} is |vim.schedule_wrap()|ped automatically, so API functions are
 --- safe to call.
 ---@param fn function Callback to call once `timeout` expires

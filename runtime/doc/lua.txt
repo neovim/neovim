@@ -867,21 +867,6 @@ vim.schedule({callback})                                      *vim.schedule()*
     Schedules {callback} to be invoked soon by the main event-loop. Useful
     to avoid |textlock| or other temporary restrictions.
 
-
-vim.defer_fn({fn}, {timeout})                                   *vim.defer_fn*
-    Defers calling {fn} until {timeout} ms passes. Use to do a one-shot timer
-    that calls {fn}.
-
-    Note: The {fn} is |vim.schedule_wrap()|ped automatically, so API functions are
-    safe to call.
-
-    Parameters: ~
-      • {fn}        Callback to call once {timeout} expires
-      • {timeout}   Time in ms to wait before calling {fn}
-
-    Returns: ~
-        |vim.uv|.new_timer() object
-
 vim.wait({time} [, {callback}, {interval}, {fast_only}])          *vim.wait()*
     Wait for {time} in milliseconds until {callback} returns `true`.
 
@@ -1376,10 +1361,10 @@ connection_failure_errmsg({consequence})
     TODO: Documentation
 
 defer_fn({fn}, {timeout})                                     *vim.defer_fn()*
-    Defers calling `fn` until `timeout` ms passes.
+    Defers calling {fn} until {timeout} ms passes.
 
-    Use to do a one-shot timer that calls `fn` Note: The {fn} is |vim.schedule_wrap()|ped automatically, so API functions
-    are safe to call.
+    Use to do a one-shot timer that calls {fn} Note: The {fn} is
+    |vim.schedule_wrap()|ped automatically, so API functions are safe to call.
 
     Parameters: ~
       • {fn}       (function) Callback to call once `timeout` expires
@@ -2551,8 +2536,8 @@ del({modes}, {lhs}, {opts})                                 *vim.keymap.del()*
 
     Parameters: ~
       • {opts}  (table|nil) A table of optional arguments:
-                • buffer: (number or boolean) Remove a mapping from the given
-                  buffer. When "true" or 0, use the current buffer.
+                • "buffer": (number|boolean) Remove a mapping from the given
+                  buffer. When `0` or `true`, use the current buffer.
 
     See also: ~
       • |vim.keymap.set()|
@@ -2586,9 +2571,9 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                   • "noremap": inverse of "remap" (see below).
 
                 • Also accepts:
-                  • "buffer" number|boolean Creates buffer-local mapping, `0`
-                    or `true` for current buffer.
-                  • remap: (boolean) Make the mapping recursive. Inverses
+                  • "buffer": (number|boolean) Creates buffer-local mapping,
+                    `0` or `true` for current buffer.
+                  • "remap": (boolean) Make the mapping recursive. Inverse of
                     "noremap". Defaults to `false`.
 
     See also: ~
