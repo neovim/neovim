@@ -186,6 +186,12 @@ func Test_list_range_assign()
       call assert_equal([5, 6], l)
   END
   call CheckLegacyAndVim9Success(lines)
+
+  let lines =<< trim END
+    var l = [7]
+    l[:] = ['text']
+  END
+  call CheckDefAndScriptFailure(lines, 'E1012:', 2)
 endfunc
 
 " Test removing items in list
