@@ -1609,12 +1609,9 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
 
       lp->ll_dict = NULL;
       lp->ll_list = lp->ll_tv->vval.v_list;
-      lp->ll_li = tv_list_find_index(lp->ll_list, &lp->ll_n1);
+      lp->ll_li = tv_list_check_range_index_one(lp->ll_list, &lp->ll_n1, quiet);
       if (lp->ll_li == NULL) {
         tv_clear(&var2);
-        if (!quiet) {
-          semsg(_(e_list_index_out_of_range_nr), (int64_t)lp->ll_n1);
-        }
         return NULL;
       }
 
@@ -1625,25 +1622,9 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
       if (lp->ll_range && !lp->ll_empty2) {
         lp->ll_n2 = (long)tv_get_number(&var2);  // Is number or string.
         tv_clear(&var2);
-        if (lp->ll_n2 < 0) {
-          listitem_T *ni = tv_list_find(lp->ll_list, (int)lp->ll_n2);
-          if (ni == NULL) {
-            if (!quiet) {
-              semsg(_(e_list_index_out_of_range_nr), (int64_t)lp->ll_n2);
-            }
-            return NULL;
-          }
-          lp->ll_n2 = tv_list_idx_of_item(lp->ll_list, ni);
-        }
-
-        // Check that lp->ll_n2 isn't before lp->ll_n1.
-        if (lp->ll_n1 < 0) {
-          lp->ll_n1 = tv_list_idx_of_item(lp->ll_list, lp->ll_li);
-        }
-        if (lp->ll_n2 < lp->ll_n1) {
-          if (!quiet) {
-            semsg(_(e_list_index_out_of_range_nr), (int64_t)lp->ll_n2);
-          }
+        if (tv_list_check_range_index_two(lp->ll_list,
+                                          &lp->ll_n1, lp->ll_li,
+                                          &lp->ll_n2, quiet) == FAIL) {
           return NULL;
         }
       }
@@ -1672,7 +1653,6 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
                   const char *op)
 {
   int cc;
-  listitem_T *ri;
   dictitem_T *di;
 
   if (lp->ll_tv == NULL) {
@@ -1733,60 +1713,13 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
                               lp->ll_name, TV_CSTRING)) {
     // Skip
   } else if (lp->ll_range) {
-    listitem_T *ll_li = lp->ll_li;
-    int ll_n1 = (int)lp->ll_n1;
-
     if (is_const) {
       emsg(_("E996: Cannot lock a range"));
       return;
     }
 
-    // Check whether any of the list items is locked
-    for (ri = tv_list_first(rettv->vval.v_list);
-         ri != NULL && ll_li != NULL;) {
-      if (value_check_lock(TV_LIST_ITEM_TV(ll_li)->v_lock, lp->ll_name,
-                           TV_CSTRING)) {
-        return;
-      }
-      ri = TV_LIST_ITEM_NEXT(rettv->vval.v_list, ri);
-      if (ri == NULL || (!lp->ll_empty2 && lp->ll_n2 == ll_n1)) {
-        break;
-      }
-      ll_li = TV_LIST_ITEM_NEXT(lp->ll_list, ll_li);
-      ll_n1++;
-    }
-
-    // Assign the List values to the list items.
-    for (ri = tv_list_first(rettv->vval.v_list); ri != NULL;) {
-      if (op != NULL && *op != '=') {
-        eexe_mod_op(TV_LIST_ITEM_TV(lp->ll_li), TV_LIST_ITEM_TV(ri), op);
-      } else {
-        tv_clear(TV_LIST_ITEM_TV(lp->ll_li));
-        tv_copy(TV_LIST_ITEM_TV(ri), TV_LIST_ITEM_TV(lp->ll_li));
-      }
-      ri = TV_LIST_ITEM_NEXT(rettv->vval.v_list, ri);
-      if (ri == NULL || (!lp->ll_empty2 && lp->ll_n2 == lp->ll_n1)) {
-        break;
-      }
-      assert(lp->ll_li != NULL);
-      if (TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li) == NULL) {
-        // Need to add an empty item.
-        tv_list_append_number(lp->ll_list, 0);
-        // ll_li may have become invalid after append, don’t use it.
-        lp->ll_li = tv_list_last(lp->ll_list);  // Valid again.
-      } else {
-        lp->ll_li = TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li);
-      }
-      lp->ll_n1++;
-    }
-    if (ri != NULL) {
-      emsg(_("E710: List value has more items than target"));
-    } else if (lp->ll_empty2
-               ? (lp->ll_li != NULL
-                  && TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li) != NULL)
-               : lp->ll_n1 != lp->ll_n2) {
-      emsg(_("E711: List value has not enough items"));
-    }
+    (void)tv_list_assign_range(lp->ll_list, rettv->vval.v_list,
+                               lp->ll_n1, lp->ll_n2, lp->ll_empty2, op, lp->ll_name);
   } else {
     typval_T oldtv = TV_INITIAL_VALUE;
     dict_T *dict = lp->ll_dict;

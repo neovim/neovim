@@ -178,11 +178,14 @@ endfunc
 
 " test for range assign
 func Test_list_range_assign()
-  let l = [0]
-  let l[:] = [1, 2]
-  call assert_equal([1, 2], l)
-  let l[-4:-1] = [5, 6]
-  call assert_equal([5, 6], l)
+  let lines =<< trim END
+      VAR l = [0]
+      LET l[:] = [1, 2]
+      call assert_equal([1, 2], l)
+      LET l[-4 : -1] = [5, 6]
+      call assert_equal([5, 6], l)
+  END
+  call CheckLegacyAndVim9Success(lines)
 endfunc
 
 " Test removing items in list
