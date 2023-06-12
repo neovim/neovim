@@ -60,68 +60,89 @@ endfunc
 
 " List identity
 func Test_list_identity()
-  let l = [1, 'as''d', [1, 2, function("strlen")], {'a': 1},]
-  let ll = l
-  let lx = copy(l)
-  call assert_true(l == ll)
-  call assert_false(l isnot ll)
-  call assert_true(l is ll)
-  call assert_true(l == lx)
-  call assert_false(l is lx)
-  call assert_true(l isnot lx)
+  let lines =<< trim END
+      VAR l = [1, 'as''d', [1, 2, function("strlen")], {'a': 1},]
+      VAR ll = l
+      VAR lx = copy(l)
+      call assert_true(l == ll)
+      call assert_false(l isnot ll)
+      call assert_true(l is ll)
+      call assert_true(l == lx)
+      call assert_false(l is lx)
+      call assert_true(l isnot lx)
+  END
+  call CheckLegacyAndVim9Success(lines)
 endfunc
 
 " removing items with :unlet
 func Test_list_unlet()
-  let l = [1, 'as''d', [1, 2, function("strlen")], {'a': 1},]
-  unlet l[2]
-  call assert_equal([1, 'as''d', {'a': 1}], l)
-  let l = range(8)
-  unlet l[:3]
-  unlet l[1:]
-  call assert_equal([4], l)
+  let lines =<< trim END
+      VAR l = [1, 'as''d', [1, 2, function("strlen")], {'a': 1},]
+      unlet l[2]
+      call assert_equal([1, 'as''d', {'a': 1}], l)
+      LET l = range(8)
+      unlet l[: 3]
+      unlet l[1 :]
+      call assert_equal([4], l)
 
-  " removing items out of range: silently skip items that don't exist
-  let l = [0, 1, 2, 3]
-  call assert_fails('unlet l[2:1]', 'E684')
+      #" removing items out of range: silently skip items that don't exist
+      LET l = [0, 1, 2, 3]
+      unlet l[2 : 2]
+      call assert_equal([0, 1, 3], l)
+      LET l = [0, 1, 2, 3]
+      unlet l[2 : 3]
+      call assert_equal([0, 1], l)
+      LET l = [0, 1, 2, 3]
+      unlet l[2 : 4]
+      call assert_equal([0, 1], l)
+      LET l = [0, 1, 2, 3]
+      unlet l[2 : 5]
+      call assert_equal([0, 1], l)
+      LET l = [0, 1, 2, 3]
+      unlet l[-2 : 2]
+      call assert_equal([0, 1, 3], l)
+      LET l = [0, 1, 2, 3]
+      unlet l[-3 : 2]
+      call assert_equal([0, 3], l)
+      LET l = [0, 1, 2, 3]
+      unlet l[-4 : 2]
+      call assert_equal([3], l)
+      LET l = [0, 1, 2, 3]
+      unlet l[-5 : 2]
+      call assert_equal([3], l)
+      LET l = [0, 1, 2, 3]
+      unlet l[-6 : 2]
+      call assert_equal([3], l)
+  END
+  call CheckLegacyAndVim9Success(lines)
+
   let l = [0, 1, 2, 3]
   unlet l[2:2]
   call assert_equal([0, 1, 3], l)
   let l = [0, 1, 2, 3]
   unlet l[2:3]
   call assert_equal([0, 1], l)
+
   let l = [0, 1, 2, 3]
-  unlet l[2:4]
-  call assert_equal([0, 1], l)
+  call assert_fails('unlet l[2:1]', 'E684:')
   let l = [0, 1, 2, 3]
-  unlet l[2:5]
-  call assert_equal([0, 1], l)
-  let l = [0, 1, 2, 3]
-  call assert_fails('unlet l[-1:2]', 'E684')
-  let l = [0, 1, 2, 3]
-  unlet l[-2:2]
-  call assert_equal([0, 1, 3], l)
-  let l = [0, 1, 2, 3]
-  unlet l[-3:2]
-  call assert_equal([0, 3], l)
-  let l = [0, 1, 2, 3]
-  unlet l[-4:2]
-  call assert_equal([3], l)
-  let l = [0, 1, 2, 3]
-  unlet l[-5:2]
-  call assert_equal([3], l)
-  let l = [0, 1, 2, 3]
-  unlet l[-6:2]
-  call assert_equal([3], l)
+  call assert_fails('unlet l[-1:2]', 'E684:')
 endfunc
 
 " assignment to a list
 func Test_list_assign()
+  let lines =<< trim END
+      VAR l = [0, 1, 2, 3]
+      VAR va = 0
+      VAR vb = 0
+      LET [va, vb] = l[2 : 3]
+      call assert_equal([2, 3], [va, vb])
+  END
+  call CheckLegacyAndVim9Success(lines)
+
   let l = [0, 1, 2, 3]
-  let [va, vb] = l[2:3]
-  call assert_equal([2, 3], [va, vb])
-  call assert_fails('let [va, vb] = l', 'E687')
-  call assert_fails('let [va, vb] = l[1:1]', 'E688')
+  call assert_fails('let [va, vb] = l', 'E687:')
+  call assert_fails('let [va, vb] = l[1:1]', 'E688:')
 endfunc
 
 " test for range assign
@@ -135,31 +156,34 @@ endfunc
 
 " Test removing items in list
 func Test_list_func_remove()
-  " Test removing 1 element
-  let l = [1, 2, 3, 4]
-  call assert_equal(1, remove(l, 0))
-  call assert_equal([2, 3, 4], l)
+  let lines =<< trim END
+      #" Test removing 1 element
+      VAR l = [1, 2, 3, 4]
+      call assert_equal(1, remove(l, 0))
+      call assert_equal([2, 3, 4], l)
 
-  let l = [1, 2, 3, 4]
-  call assert_equal(2, remove(l, 1))
-  call assert_equal([1, 3, 4], l)
+      LET l = [1, 2, 3, 4]
+      call assert_equal(2, remove(l, 1))
+      call assert_equal([1, 3, 4], l)
 
-  let l = [1, 2, 3, 4]
-  call assert_equal(4, remove(l, -1))
-  call assert_equal([1, 2, 3], l)
+      LET l = [1, 2, 3, 4]
+      call assert_equal(4, remove(l, -1))
+      call assert_equal([1, 2, 3], l)
 
-  " Test removing range of element(s)
-  let l = [1, 2, 3, 4]
-  call assert_equal([3], remove(l, 2, 2))
-  call assert_equal([1, 2, 4], l)
+      #" Test removing range of element(s)
+      LET l = [1, 2, 3, 4]
+      call assert_equal([3], remove(l, 2, 2))
+      call assert_equal([1, 2, 4], l)
 
-  let l = [1, 2, 3, 4]
-  call assert_equal([2, 3], remove(l, 1, 2))
-  call assert_equal([1, 4], l)
+      LET l = [1, 2, 3, 4]
+      call assert_equal([2, 3], remove(l, 1, 2))
+      call assert_equal([1, 4], l)
 
-  let l = [1, 2, 3, 4]
-  call assert_equal([2, 3], remove(l, -3, -2))
-  call assert_equal([1, 4], l)
+      LET l = [1, 2, 3, 4]
+      call assert_equal([2, 3], remove(l, -3, -2))
+      call assert_equal([1, 4], l)
+  END
+  call CheckLegacyAndVim9Success(lines)
 
   " Test invalid cases
   let l = [1, 2, 3, 4]
@@ -172,15 +196,20 @@ endfunc
 
 " List add() function
 func Test_list_add()
-  let l = []
-  call add(l, 1)
-  call add(l, [2, 3])
-  call add(l, [])
-  call add(l, v:_null_list)
-  call add(l, {'k' : 3})
-  call add(l, {})
-  call add(l, v:_null_dict)
-  call assert_equal([1, [2, 3], [], [], {'k' : 3}, {}, {}], l)
+  let lines =<< trim END
+      VAR l = []
+      call add(l, 1)
+      call add(l, [2, 3])
+      call add(l, [])
+      call add(l, v:_null_list)
+      call add(l, {'k': 3})
+      call add(l, {})
+      call add(l, v:_null_dict)
+      call assert_equal([1, [2, 3], [], [], {'k': 3}, {}, {}], l)
+  END
+  call CheckLegacyAndVim9Success(lines)
+
+  " weird legacy behavior
   " call assert_equal(1, add(v:_null_list, 4))
 endfunc
 
@@ -188,11 +217,21 @@ endfunc
 
 func Test_dict()
   " Creating Dictionary directly with different types
+  let lines =<< trim END
+      VAR d = {'1': 'asd', 'b': [1, 2, function('strlen')], '-1': {'a': 1}, }
+      call assert_equal("{'1': 'asd', 'b': [1, 2, function('strlen')], '-1': {'a': 1}}", string(d))
+      call assert_equal('asd', d.1)
+      call assert_equal(['-1', '1', 'b'], sort(keys(d)))
+      call assert_equal(['asd', [1, 2, function('strlen')], {'a': 1}], values(d))
+      call extend(d, {3: 33, 1: 99})
+      call extend(d, {'b': 'bbb', 'c': 'ccc'}, "keep")
+      call assert_equal({'c': 'ccc', '1': 99, 'b': [1, 2, function('strlen')], '3': 33, '-1': {'a': 1}}, d)
+  END
+  call CheckLegacyAndVim9Success(lines)
+
   let d = {001: 'asd', 'b': [1, 2, function('strlen')], -1: {'a': 1},}
   call assert_equal("{'1': 'asd', 'b': [1, 2, function('strlen')], '-1': {'a': 1}}", string(d))
-  call assert_equal('asd', d.1)
-  call assert_equal(['-1', '1', 'b'], sort(keys(d)))
-  call assert_equal(['asd', [1, 2, function('strlen')], {'a': 1}], values(d))
+
   let v = []
   for [key, val] in items(d)
     call extend(v, [key, val])
@@ -200,12 +239,8 @@ func Test_dict()
   endfor
   call assert_equal(['1','asd','b',[1, 2, function('strlen')],'-1',{'a': 1}], v)
 
-  call extend(d, {3:33, 1:99})
-  call extend(d, {'b':'bbb', 'c':'ccc'}, "keep")
-  call assert_fails("call extend(d, {3:333,4:444}, 'error')", 'E737')
-  call assert_equal({'c': 'ccc', '1': 99, 'b': [1, 2, function('strlen')], '3': 33, '-1': {'a': 1}}, d)
-  call filter(d, 'v:key =~ ''[ac391]''')
-  call assert_equal({'c': 'ccc', '1': 99, '3': 33, '-1': {'a': 1}}, d)
+  call extend(d, {3: 33, 1: 99})
+  call assert_fails("call extend(d, {3:333,4:444}, 'error')", 'E737:')
 
   " duplicate key
   call assert_fails("let d = {'k' : 10, 'k' : 20}", 'E721:')
