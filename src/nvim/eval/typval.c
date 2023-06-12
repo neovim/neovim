@@ -1507,6 +1507,21 @@ const char *tv_list_find_str(list_T *const l, const int n)
   return tv_get_string(TV_LIST_ITEM_TV(li));
 }
 
+/// Like tv_list_find() but when a negative index is used that is not found use
+/// zero and set "idx" to zero.  Used for first index of a range.
+listitem_T *tv_list_find_index(list_T *const l, long *const idx)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  listitem_T *li = tv_list_find(l, (int)(*idx));
+  if (li == NULL) {
+    if (*idx < 0) {
+      *idx = 0;
+      li = tv_list_find(l, (int)(*idx));
+    }
+  }
+  return li;
+}
+
 /// Locate item in a list and return its index
 ///
 /// @param[in]  l  List to search.

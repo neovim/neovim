@@ -1604,13 +1604,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
 
       lp->ll_dict = NULL;
       lp->ll_list = lp->ll_tv->vval.v_list;
-      lp->ll_li = tv_list_find(lp->ll_list, (int)lp->ll_n1);
-      if (lp->ll_li == NULL) {
-        if (lp->ll_n1 < 0) {
-          lp->ll_n1 = 0;
-          lp->ll_li = tv_list_find(lp->ll_list, (int)lp->ll_n1);
-        }
-      }
+      lp->ll_li = tv_list_find_index(lp->ll_list, &lp->ll_n1);
       if (lp->ll_li == NULL) {
         tv_clear(&var2);
         if (!quiet) {
