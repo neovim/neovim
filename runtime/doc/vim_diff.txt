@@ -762,7 +762,7 @@ TUI:
 
 Cscope:
                                                                       *cscope*
-  Cscope support has been removed in favour of LSP based solutions.
+  Cscope support has been removed in favour of plugin-based solutions.
 
 Hardcopy:
                                                                      *hardcopy*
