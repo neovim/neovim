@@ -1178,12 +1178,19 @@ endfunc
 
 " List and dict indexing tests
 func Test_listdict_index()
-  call assert_fails('echo function("min")[0]', 'E695:')
-  call assert_fails('echo v:true[0]', 'E909:')
+  call CheckLegacyAndVim9Failure(['echo function("min")[0]'], 'E695:')
+  call CheckLegacyAndVim9Failure(['echo v:true[0]'], 'E909:')
+  call CheckLegacyAndVim9Failure(['echo v:null[0]'], 'E909:')
+
   let d = {'k' : 10}
   call assert_fails('echo d.', 'E15:')
-  call assert_fails('echo d[1:2]', 'E719:')
+  call CheckDefAndScriptFailure2(['var d = {k: 10}', 'echo d.'], 'E1127', 'E15:')
+
+  call CheckLegacyAndVim9Failure(['VAR d = {"k": 10}', 'echo d[1 : 2]'], 'E719:')
+
   call assert_fails("let v = [4, 6][{-> 1}]", 'E729:')
+  call CheckDefAndScriptFailure2(['var v = [4, 6][() => 1]'], 'E1012', 'E703:')
+
   call assert_fails("let v = range(5)[2:[]]", 'E730:')
   call assert_fails("let v = range(5)[2:{-> 2}(]", ['E15:', 'E116:'])
   call assert_fails("let v = range(5)[2:3", 'E111:')

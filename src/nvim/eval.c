@@ -89,20 +89,25 @@
 
 static const char *e_missbrac = N_("E111: Missing ']'");
 static const char *e_list_end = N_("E697: Missing end of List ']': %s");
-static const char *e_cannot_slice_dictionary
+static const char e_cannot_slice_dictionary[]
   = N_("E719: Cannot slice a Dictionary");
 static const char e_cannot_index_special_variable[]
   = N_("E909: Cannot index a special variable");
 static const char *e_nowhitespace
   = N_("E274: No white space allowed before parenthesis");
 static const char *e_write2 = N_("E80: Error while writing: %s");
+static const char e_cannot_index_a_funcref[]
+  = N_("E695: Cannot index a Funcref");
 static const char e_variable_nested_too_deep_for_making_copy[]
   = N_("E698: Variable nested too deep for making a copy");
-static const char *e_string_list_or_blob_required = N_("E1098: String, List or Blob required");
-static const char e_expression_too_recursive_str[] = N_("E1169: Expression too recursive: %s");
+static const char e_string_list_or_blob_required[]
+  = N_("E1098: String, List or Blob required");
+static const char e_expression_too_recursive_str[]
+  = N_("E1169: Expression too recursive: %s");
 static const char e_dot_can_only_be_used_on_dictionary_str[]
   = N_("E1203: Dot can only be used on a dictionary: %s");
-static const char e_empty_function_name[] = N_("E1192: Empty function name");
+static const char e_empty_function_name[]
+  = N_("E1192: Empty function name");
 
 static char * const namespace_char = "abglstvw";
 
@@ -3567,7 +3572,7 @@ static int check_can_index(typval_T *rettv, bool evaluate, bool verbose)
   case VAR_FUNC:
   case VAR_PARTIAL:
     if (verbose) {
-      emsg(_("E695: Cannot index a Funcref"));
+      emsg(_(e_cannot_index_a_funcref));
     }
     return FAIL;
   case VAR_FLOAT:
