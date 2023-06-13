@@ -128,6 +128,7 @@ typedef struct {
 
   VirtText virt_inline;
   size_t virt_inline_i;
+  ptrdiff_t virt_inline_v;
 
   bool reset_extra_attr;
 
@@ -875,65 +876,58 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
     wlv->reset_extra_attr = false;
   }
 
-  while (wlv->n_extra == 0) {
-    if (wlv->virt_inline_i >= kv_size(wlv->virt_inline)) {
-      // need to find inline virtual text
-      wlv->virt_inline = VIRTTEXT_EMPTY;
-      wlv->virt_inline_i = 0;
-      DecorState *state = &decor_state;
-      for (size_t i = 0; i < kv_size(state->active); i++) {
-        DecorRange *item = &kv_A(state->active, i);
-        if (item->start_row != state->row
-            || !kv_size(item->decor.virt_text)
-            || item->decor.virt_text_pos != kVTInline) {
-          continue;
-        }
-        if (item->draw_col >= -1 && item->start_col == v) {
-          wlv->virt_inline = item->decor.virt_text;
-          item->draw_col = INT_MIN;
-          break;
-        }
+  if (v != wlv->virt_inline_v) {
+    wlv->virt_inline = VIRTTEXT_EMPTY;
+    wlv->virt_inline_i = 0;
+    wlv->virt_inline_v = v;
+    DecorState *state = &decor_state;
+    for (size_t i = 0; i < kv_size(state->active); i++) {
+      DecorRange *item = &kv_A(state->active, i);
+      if (item->start_row != state->row
+          || !kv_size(item->decor.virt_text)
+          || item->decor.virt_text_pos != kVTInline) {
+        continue;
       }
-      if (!kv_size(wlv->virt_inline)) {
-        // no more inline virtual text here
-        break;
+      if (item->draw_col >= -1 && item->start_col == v) {
+        item->draw_col = INT_MIN;
+        kv_splice(wlv->virt_inline, item->decor.virt_text);
       }
-    } else {
-      // already inside existing inline virtual text with multiple chunks
-      VirtTextChunk vtc = kv_A(wlv->virt_inline, wlv->virt_inline_i);
-      wlv->p_extra = vtc.text;
-      wlv->n_extra = (int)strlen(wlv->p_extra);
-      wlv->extra_for_extmark = true;
-      wlv->c_extra = NUL;
-      wlv->c_final = NUL;
-      wlv->extra_attr = vtc.hl_id ? syn_id2attr(vtc.hl_id) : 0;
-      wlv->n_attr = mb_charlen(vtc.text);
-      wlv->virt_inline_i++;
-      *do_save = true;
-      // If the text didn't reach until the first window
-      // column we need to skip cells.
-      if (wlv->skip_cells > 0) {
-        int virt_text_len = wlv->n_attr;
-        if (virt_text_len > wlv->skip_cells) {
-          int len = mb_charlen2bytelen(wlv->p_extra, wlv->skip_cells);
-          wlv->n_extra -= len;
-          wlv->p_extra += len;
-          wlv->n_attr -= wlv->skip_cells;
-          // Skipped cells needed to be accounted for in vcol.
-          wlv->skipped_cells += wlv->skip_cells;
-          wlv->skip_cells = 0;
-        } else {
-          // the whole text is left of the window, drop
-          // it and advance to the next one
-          wlv->skip_cells -= virt_text_len;
-          // Skipped cells needed to be accounted for in vcol.
-          wlv->skipped_cells += virt_text_len;
-          wlv->n_attr = 0;
-          wlv->n_extra = 0;
+    }
+  }
 
-          // go to the start so the next virtual text chunk can be selected.
-          continue;
-        }
+  while (wlv->n_extra == 0 && wlv->virt_inline_i < kv_size(wlv->virt_inline)) {
+    VirtTextChunk vtc = kv_A(wlv->virt_inline, wlv->virt_inline_i);
+    wlv->p_extra = vtc.text;
+    wlv->n_extra = (int)strlen(wlv->p_extra);
+    wlv->extra_for_extmark = true;
+    wlv->c_extra = NUL;
+    wlv->c_final = NUL;
+    wlv->extra_attr = vtc.hl_id ? syn_id2attr(vtc.hl_id) : 0;
+    wlv->n_attr = mb_charlen(vtc.text);
+    wlv->virt_inline_i++;
+    *do_save = true;
+    // If the text didn't reach until the first window
+    // column we need to skip cells.
+    if (wlv->skip_cells > 0) {
+      int virt_text_len = wlv->n_attr;
+      if (virt_text_len > wlv->skip_cells) {
+        int len = mb_charlen2bytelen(wlv->p_extra, wlv->skip_cells);
+        wlv->n_extra -= len;
+        wlv->p_extra += len;
+        wlv->n_attr -= wlv->skip_cells;
+        // Skipped cells needed to be accounted for in vcol.
+        wlv->skipped_cells += wlv->skip_cells;
+        wlv->skip_cells = 0;
+      } else {
+        // the whole text is left of the window, drop
+        // it and advance to the next one
+        wlv->skip_cells -= virt_text_len;
+        // Skipped cells needed to be accounted for in vcol.
+        wlv->skipped_cells += virt_text_len;
+        wlv->n_attr = 0;
+        wlv->n_extra = 0;
+        // go to the start so the next virtual text chunk can be selected.
+        continue;
       }
     }
   }
@@ -1167,6 +1161,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
   wlv.fromcol = -10;
   wlv.tocol = MAXCOL;
   wlv.vcol_sbr = -1;
+  wlv.virt_inline_v = -1;
 
   buf_T *buf = wp->w_buffer;
   const bool end_fill = (lnum == buf->b_ml.ml_line_count + 1);
