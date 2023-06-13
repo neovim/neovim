@@ -1519,7 +1519,7 @@ function lsp.start_client(config)
       local request = client.requests[request_id]
       request.type = 'complete'
       nvim_exec_autocmds('LspRequest', {
-        buffer = bufnr,
+        buffer = api.nvim_buf_is_valid(bufnr) and bufnr or nil,
         modeline = false,
         data = { client_id = client_id, request_id = request_id, request = request },
       })
