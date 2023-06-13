@@ -136,6 +136,10 @@ end
 ---@param bufnr integer
 ---@param client_id integer
 function M.display(lenses, bufnr, client_id)
+  if not api.nvim_buf_is_loaded(bufnr) then
+    return
+  end
+
   local ns = namespaces[client_id]
   if not lenses or not next(lenses) then
     api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
@@ -181,6 +185,10 @@ end
 ---@param bufnr integer
 ---@param client_id integer
 function M.save(lenses, bufnr, client_id)
+  if not api.nvim_buf_is_loaded(bufnr) then
+    return
+  end
+
   local lenses_by_client = lens_cache_by_buf[bufnr]
   if not lenses_by_client then
     lenses_by_client = {}
@@ -221,19 +229,24 @@ local function resolve_lenses(lenses, bufnr, client_id, callback)
       countdown()
     else
       client.request('codeLens/resolve', lens, function(_, result)
-        if result and result.command then
+        if api.nvim_buf_is_loaded(bufnr) and result and result.command then
           lens.command = result.command
           -- Eager display to have some sort of incremental feedback
           -- Once all lenses got resolved there will be a full redraw for all lenses
           -- So that multiple lens per line are properly displayed
-          api.nvim_buf_set_extmark(
-            bufnr,
-            ns,
-            lens.range.start.line,
-            0,
-            { virt_text = { { lens.command.title, 'LspCodeLens' } }, hl_mode = 'combine' }
-          )
+
+          local num_lines = api.nvim_buf_line_count(bufnr)
+          if lens.range.start.line <= num_lines then
+            api.nvim_buf_set_extmark(
+              bufnr,
+              ns,
+              lens.range.start.line,
+              0,
+              { virt_text = { { lens.command.title, 'LspCodeLens' } }, hl_mode = 'combine' }
+            )
+          end
         end
+
         countdown()
       end, bufnr)
     end
