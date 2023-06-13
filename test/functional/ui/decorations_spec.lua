@@ -1618,6 +1618,51 @@ describe('decorations: inline virtual text', function()
     ]]}
   end)
 
+  it('works with empty chunk', function()
+    insert(example_text)
+    feed 'gg'
+    screen:expect{grid=[[
+      ^for _,item in ipairs(items) do                    |
+          local text, hl_id_cell, count = unpack(item)  |
+          if hl_id_cell ~= nil then                     |
+              hl_id = hl_id_cell                        |
+          end                                           |
+          for _ = 1, (count or 1) do                    |
+              local cell = line[colpos]                 |
+              cell.text = text                          |
+              cell.hl_id = hl_id                        |
+                                                        |
+    ]]}
+
+    meths.buf_set_extmark(0, ns, 1, 14, {virt_text={{''}, {': ', 'Special'}, {'string', 'Type'}}, virt_text_pos='inline'})
+    screen:expect{grid=[[
+      ^for _,item in ipairs(items) do                    |
+          local text{10:: }{3:string}, hl_id_cell, count = unpack|
+      (item)                                            |
+          if hl_id_cell ~= nil then                     |
+              hl_id = hl_id_cell                        |
+          end                                           |
+          for _ = 1, (count or 1) do                    |
+              local cell = line[colpos]                 |
+              cell.text = text                          |
+                                                        |
+    ]]}
+
+    feed('jf,')
+    screen:expect{grid=[[
+      for _,item in ipairs(items) do                    |
+          local text{10:: }{3:string}^, hl_id_cell, count = unpack|
+      (item)                                            |
+          if hl_id_cell ~= nil then                     |
+              hl_id = hl_id_cell                        |
+          end                                           |
+          for _ = 1, (count or 1) do                    |
+              local cell = line[colpos]                 |
+              cell.text = text                          |
+                                                        |
+    ]]}
+  end)
+
   it('cursor positions are correct with multiple inline virtual text', function()
     insert('12345678')
     meths.buf_set_extmark(0, ns, 0, 4,
@@ -2013,7 +2058,7 @@ bbbbbbb]])
       ]]}
   end)
 
-  it('cursor position is correct when inserting around virtual texts with both left and right gravity ', function()
+  it('cursor position is correct when inserting around virtual texts with both left and right gravity', function()
     insert('foo foo foo foo')
     meths.buf_set_extmark(0, ns, 0, 8, { virt_text = {{ '>>', 'Special' }}, virt_text_pos = 'inline', right_gravity = false })
     meths.buf_set_extmark(0, ns, 0, 8, { virt_text = {{ '<<', 'Special' }}, virt_text_pos = 'inline', right_gravity = true })
