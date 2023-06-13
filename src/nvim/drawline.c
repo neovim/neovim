@@ -871,9 +871,15 @@ static void apply_cursorline_highlight(win_T *wp, winlinevars_T *wlv)
 
 static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t v, bool *do_save)
 {
-  while (true) {
-    // we could already be inside an existing inline text with multiple chunks
-    if (!(wlv->virt_inline_i < kv_size(wlv->virt_inline))) {
+  if (wlv->n_extra == 0 || !wlv->extra_for_extmark) {
+    wlv->reset_extra_attr = false;
+  }
+
+  while (wlv->n_extra == 0) {
+    if (wlv->virt_inline_i >= kv_size(wlv->virt_inline)) {
+      // need to find inline virtual text
+      wlv->virt_inline = VIRTTEXT_EMPTY;
+      wlv->virt_inline_i = 0;
       DecorState *state = &decor_state;
       for (size_t i = 0; i < kv_size(state->active); i++) {
         DecorRange *item = &kv_A(state->active, i);
@@ -884,18 +890,16 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
         }
         if (item->draw_col >= -1 && item->start_col == v) {
           wlv->virt_inline = item->decor.virt_text;
-          wlv->virt_inline_i = 0;
           item->draw_col = INT_MIN;
           break;
         }
       }
-    }
-
-    if (wlv->n_extra == 0 || !wlv->extra_for_extmark) {
-      wlv->reset_extra_attr = false;
-    }
-
-    if (wlv->n_extra <= 0 && wlv->virt_inline_i < kv_size(wlv->virt_inline)) {
+      if (!kv_size(wlv->virt_inline)) {
+        // no more inline virtual text here
+        break;
+      }
+    } else {
+      // already inside existing inline virtual text with multiple chunks
       VirtTextChunk vtc = kv_A(wlv->virt_inline, wlv->virt_inline_i);
       wlv->p_extra = vtc.text;
       wlv->n_extra = (int)strlen(wlv->p_extra);
@@ -932,7 +936,6 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
         }
       }
     }
-    break;
   }
 }
 
