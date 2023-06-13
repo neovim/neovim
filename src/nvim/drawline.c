@@ -1137,10 +1137,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   int bg_attr = win_bg_attr(wp);
 
   int linestatus = 0;
+  bool diffchars_lim_exceeded = false;
+  size_t diffchars_line_len = 0;
+  int *hlresult = NULL;
   wlv.filler_lines = diff_check_with_linestatus(wp, lnum, &linestatus);
   if (wlv.filler_lines < 0 || linestatus < 0) {
     if (wlv.filler_lines == -1 || linestatus == -1) {
-      if (diff_find_change(wp, lnum, &change_start, &change_end)) {
+      if (diff_find_change(wp, lnum, &change_start, &change_end, &hlresult,
+          &diffchars_lim_exceeded, &diffchars_line_len)) {
         wlv.diff_hlf = HLF_ADD;             // added line
       } else if (change_start == 0) {
         wlv.diff_hlf = HLF_TXD;             // changed text
@@ -1721,16 +1725,32 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       }
 
       if (wlv.diff_hlf != (hlf_T)0) {
-        // When there is extra text (eg: virtual text) it gets the
-        // diff highlighting for the line, but not for changed text.
-        if (wlv.diff_hlf == HLF_CHD && ptr - line >= change_start
-            && wlv.n_extra == 0) {
-          wlv.diff_hlf = HLF_TXD;                   // changed text
+        if (chardiff() && !diffchars_lim_exceeded) {
+          if (wlv.diff_hlf != HLF_ADD) {
+            if (hlresult == NULL) {
+              wlv.diff_hlf = HLF_CHD;
+            }  else if (hlresult[0] == 2) {
+              wlv.diff_hlf = HLF_ADD;
+            } else if ((size_t)(ptr - line) < diffchars_line_len && (hlresult[ptr - line] == 1 || hlresult[ptr - line] == -2)) {
+              wlv.diff_hlf = HLF_TXD;
+            } else {
+              wlv.diff_hlf = HLF_CHD;
+            }
+          }
+        } else {
+          // When there is extra text (eg: virtual text) it gets the
+          // diff highlighting for the line, but not for changed text.
+          if (wlv.diff_hlf == HLF_CHD && ptr - line >= change_start
+              && wlv.n_extra == 0) {
+            wlv.diff_hlf = HLF_TXD;                   // changed text
+          }
+          if (wlv.diff_hlf == HLF_TXD && ((ptr - line > change_end && wlv.n_extra == 0)
+                                          || (wlv.n_extra > 0 && wlv.extra_for_extmark))) {
+            wlv.diff_hlf = HLF_CHD;                   // changed line
+          }
         }
-        if (wlv.diff_hlf == HLF_TXD && ((ptr - line > change_end && wlv.n_extra == 0)
-                                        || (wlv.n_extra > 0 && wlv.extra_for_extmark))) {
-          wlv.diff_hlf = HLF_CHD;                   // changed line
-        }
+
+
         wlv.line_attr = win_hl_attr(wp, (int)wlv.diff_hlf);
         // Overlay CursorLine onto diff-mode highlight.
         if (wlv.cul_attr) {

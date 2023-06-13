@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "auto/config.h"
 #include "nvim/ascii_defs.h"
@@ -84,11 +85,15 @@ static bool diff_need_update = false;  // ex_diffupdate needs to be called
 #define DIFF_CLOSE_OFF  0x400   // diffoff when closing window
 #define DIFF_FOLLOWWRAP 0x800   // follow the wrap option
 #define DIFF_LINEMATCH  0x1000  // match most similar lines within diff
+#define DIFF_CHARDIFF   0x2000  // character-wise matching
+#define DIFF_WORDDIFF   0x4000  // character-wise matching
 #define ALL_WHITE_DIFF (DIFF_IWHITE | DIFF_IWHITEALL | DIFF_IWHITEEOL)
 static int diff_flags = DIFF_INTERNAL | DIFF_FILLER | DIFF_CLOSE_OFF;
 
 static int diff_algorithm = 0;
 static int linematch_lines = 0;
+static int chardiff_chars = 0;
+static int worddiff_words = 0;
 
 #define LBUFLEN 50               // length of line in diff file
 
@@ -130,6 +135,11 @@ typedef enum {
   DIFF_NONE,
 } diffstyle_T;
 
+typedef enum {
+  LINEMATCH,
+  CHARMATCH,
+  WORDMATCH
+} diff_allignment_T;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "diff.c.generated.h"
 #endif
@@ -532,6 +542,7 @@ static diff_T *diff_alloc_new(tabpage_T *tp, diff_T *dprev, diff_T *dp)
 {
   diff_T *dnew = xmalloc(sizeof(*dnew));
 
+  dnew->charmatchp = NULL;
   dnew->is_linematched = false;
   dnew->df_next = dp;
   if (dprev == NULL) {
@@ -546,6 +557,7 @@ static diff_T *diff_alloc_new(tabpage_T *tp, diff_T *dprev, diff_T *dp)
 static diff_T *diff_free(tabpage_T *tp, diff_T *dprev, diff_T *dp)
 {
   diff_T *ret = dp->df_next;
+  xfree(dp->charmatchp);
   xfree(dp);
 
   if (dprev == NULL) {
@@ -1801,6 +1813,11 @@ void diff_clear(tabpage_T *tp)
   tp->tp_first_diff = NULL;
 }
 
+/// Return true if char diff option is enabled.
+bool chardiff(void) {
+  return (diff_flags & DIFF_CHARDIFF) || (diff_flags & DIFF_WORDDIFF);
+}
+
 /// Return true if the options are set to use diff linematch.
 bool diff_linematch(diff_T *dp)
 {
@@ -2044,13 +2061,23 @@ static void apply_linematch_results(diff_T *dp, size_t decisions_length, const i
   dp->is_linematched = true;
 }
 
-static void run_linematch_algorithm(diff_T *dp)
+static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignment)
 {
   // define buffers for diff algorithm
-  mmfile_t diffbufs_mm[DB_COUNT];
-  const char *diffbufs[DB_COUNT];
-  int diff_length[DB_COUNT];
+  mmfile_t diffbufs_mm[DB_COUNT] = { 0 };
+  char *diffbufs[DB_COUNT] = { 0 };
+  int diff_length[DB_COUNT] = { 0 };
+  int diff_lines[DB_COUNT] = { 0 };
   size_t ndiffs = 0;
+  size_t total_word_count = 0;
+  size_t total_chars_length = 0;
+  size_t *word_offset_size[DB_COUNT] = { 0 };  // mapping array used for charmatch
+  size_t *word_offset[DB_COUNT] = { 0 };  // mapping array used for charmatch
+  size_t word_offset_result_index[DB_COUNT] = { 0 };  // mapping array used for charmatch
+  size_t *iwhite_index_offset = NULL;  // mapping array used for charmatch
+  size_t result_diff_start_pos[DB_COUNT]; // the position in the result array where this
+                                          // an array for index mapping with iwhite
+  const bool iwhite = (diff_flags & (DIFF_IWHITEALL | DIFF_IWHITE)) > 0;
   for (int i = 0; i < DB_COUNT; i++) {
     if (curtab->tp_diffbuf[i] != NULL) {
       // write the contents of the entire buffer to
@@ -2062,28 +2089,166 @@ static void run_linematch_algorithm(diff_T *dp)
       // we add it to the array of char*, diffbufs
       diffbufs[ndiffs] = diffbufs_mm[ndiffs].ptr;
 
-      // keep track of the length of this diff block to pass it to the linematch
-      // algorithm
-      diff_length[ndiffs] = dp->df_count[i];
+      diff_lines[ndiffs] = dp->df_count[i];
+      if (diff_allignment == CHARMATCH || diff_allignment == WORDMATCH) {
+        // before removing whitespace for charmatch
+        result_diff_start_pos[ndiffs] = total_chars_length;
+        // get the length of each of the diffs
+        int lines = dp->df_count[i];
+        const char *p = diffbufs[ndiffs];
+        while (lines) {
+          total_chars_length++; // increment the total characters counter
+          if (*p == '\n') { lines--; }
+          p++;
+        }
+      } else if (diff_allignment == LINEMATCH) {
+        // LINEMATCH
+        // keep track of the length of this diff block to pass it to the linematch
+        // algorithm
+        diff_length[ndiffs] = dp->df_count[i];
+      }
 
       // increment the amount of diff buffers we are passing to the algorithm
       ndiffs++;
     }
   }
 
+  if (iwhite && (diff_allignment == CHARMATCH || diff_allignment == WORDMATCH)) {
+    // allocate array for index mapping of result array
+    iwhite_index_offset = xmalloc(total_chars_length * sizeof(size_t));
+    for (size_t i = 0; i < total_chars_length; i++) {
+      iwhite_index_offset[i] = 99;
+    }
+  }
+  if (diff_allignment == WORDMATCH) {
+    for (size_t i = 0; i < ndiffs; i++) {
+      word_offset[i] = xmalloc(total_chars_length * sizeof(size_t));
+      word_offset_size[i] = xmalloc(total_chars_length * sizeof(size_t));
+      for (size_t j = 0; j < total_chars_length; j++) {
+        word_offset[i][j] = 99;
+        word_offset_size[i][j] = 0;
+      }
+    }
+  }
+  for (size_t i = 0; i < ndiffs; i++) {
+    int cls = INT_MIN;
+    size_t j = 0, k = 0, lines = (size_t)diff_lines[i], w = result_diff_start_pos[i];
+    while (lines > 0) {
+      if (iwhite ? (diffbufs[i][j] != ' ' && diffbufs[i][j] != '\t') : 1) {
+        if (diff_allignment == CHARMATCH || diff_allignment == WORDMATCH) {
+          // a character which is not a blank
+          if (diff_allignment == WORDMATCH) {
+            if (utf_class(diffbufs[i][j]) != cls || diffbufs[i][j] == '\n') {
+              word_offset[i][diff_length[i]] = k;
+              diff_length[i]++;
+              total_word_count++;
+            }
+            word_offset_size[i][diff_length[i] - 1]++;
+            cls = utf_class(diffbufs[i][j]);
+          } else {
+            // we are matching characters, not words
+            diff_length[i]++;
+          }
+          if (iwhite) {
+            iwhite_index_offset[w++] = j - k;
+          }
+        }
+        diffbufs[i][k++] = diffbufs[i][j];
+      } else if (diff_allignment == WORDMATCH) {
+        // we are ignoring whitespace and this is a whitespace ' ' or '\t' reset the class definition
+        cls = INT_MIN;
+      }
+      if (diffbufs[i][j++] == '\n') { lines--; }
+    }
+  }
+
   // we will get the output of the linematch algorithm in the format of an array
   // of integers (*decisions) and the length of that array (decisions_length)
-  int *decisions = NULL;
-  const bool iwhite = (diff_flags & (DIFF_IWHITEALL | DIFF_IWHITE)) > 0;
-  size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, iwhite);
+  if (diff_allignment == LINEMATCH) {
+    int *decisions = NULL;
+    size_t decisions_length = linematch_nbuffers((const char**)diffbufs, diff_length, ndiffs, &decisions, 0, NULL, NULL);
+    apply_linematch_results(dp, decisions_length, decisions);
+    xfree(decisions);
+  } else if (diff_allignment == CHARMATCH || diff_allignment == WORDMATCH) {
+    dp->charmatchp = xmalloc(total_chars_length * sizeof(int)); // will hold results
+    dp->n_charmatch = total_chars_length;
+
+    bool lim_exceeded = false;
+    if (diff_allignment == CHARMATCH && total_chars_length > (size_t)chardiff_chars) {
+      lim_exceeded = true;
+    } else if (diff_allignment == WORDMATCH && total_word_count > (size_t)worddiff_words) {
+      lim_exceeded = true;
+    }
+
+    if (lim_exceeded == true) {
+      // do not run charmatch on the entire diff block
+      // we will attempt to run charmatch on the individual lines later
+      // for now, just initialize the result memory
+      for (size_t i = 0; i < total_chars_length; i++) {
+        dp->charmatchp[i] = -1; // -1 indicates that algorithm has not yet ran
+      }
+    } else {
+      int *decisions = NULL;
+      for (size_t i = 0; i < total_chars_length; i++) {
+        dp->charmatchp[i] = 0; // default to not highlighted
+      }
+
+      // check is this a line that does not exist in other buffers?
+      // if so, highlight it as a 'newline', and we don't need to run the algorithm
+      bool newline = true;
+      for (size_t i = 0, c = 0; i < ndiffs; i++) {
+        if (diff_length[i] > 0) {
+          c++;
+        }
+        if (c > 1) {
+          newline = false;
+          break;
+        }
+      }
+
+      if (newline == true) {
+        for (size_t i = 0; i < total_chars_length; i++) {
+          dp->charmatchp[i] = 2;
+        }
+      } else {
+        size_t decisions_length = linematch_nbuffers((const char**)diffbufs, diff_length, ndiffs, &decisions, 1, word_offset, word_offset_size);
+        for (size_t i = 0; i < decisions_length; i++) {
+          // write to result
+          // is it a comparison
+          // check for if this is a 'newline'
+          if (decisions[i] == (pow(2, (double)ndiffs) - 1)) {
+            // it's a comparison of all the buffers (don't highlight)
+            for (size_t j = 0; j < ndiffs; j++) {
+              for (size_t k = 0; k < (diff_allignment == WORDMATCH ? word_offset_size[j][word_offset_result_index[j]] : 1); k++) {
+                size_t l = result_diff_start_pos[j]++;
+                dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[l] + l : l] = 0;
+              }
+              word_offset_result_index[j]++;
+            }
+          } else {
+            // it's a skip in a single buffer (highlight as changed)
+            for (size_t j = 0; j < ndiffs; j++) {
+              if (decisions[i] & (1 << j)) {
+                for (size_t k = 0; k < (diff_allignment == WORDMATCH ? word_offset_size[j][word_offset_result_index[j]] : 1); k++) {
+                  size_t l = result_diff_start_pos[j]++;
+                  dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[l] + l : l] = 1;
+                }
+                word_offset_result_index[j]++;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 
   for (size_t i = 0; i < ndiffs; i++) {
+    xfree(word_offset[i]);
+    xfree(word_offset_size[i]);
     XFREE_CLEAR(diffbufs_mm[i].ptr);
   }
 
-  apply_linematch_results(dp, decisions_length, decisions);
-
-  xfree(decisions);
 }
 
 /// Check diff status for line "lnum" in buffer "buf":
@@ -2148,7 +2313,7 @@ int diff_check_with_linestatus(win_T *wp, linenr_T lnum, int *linestatus)
   // above the screen.
   if (lnum >= wp->w_topline && lnum < wp->w_botline
       && !dp->is_linematched && diff_linematch(dp)) {
-    run_linematch_algorithm(dp);
+    run_alignment_algorithm(dp, LINEMATCH);
   }
 
   if (dp->is_linematched) {
@@ -2455,6 +2620,8 @@ int diffopt_changed(void)
 {
   int diff_context_new = 6;
   int linematch_lines_new = 0;
+  int chardiff_chars_new = 0;
+  int worddiff_words_new = 0;
   int diff_flags_new = 0;
   int diff_foldcolumn_new = 2;
   int diff_algorithm_new = 0;
@@ -2530,6 +2697,14 @@ int diffopt_changed(void)
       p += 10;
       linematch_lines_new = getdigits_int(&p, false, linematch_lines_new);
       diff_flags_new |= DIFF_LINEMATCH;
+    } else if ((strncmp(p, "chardiff:", 9) == 0) && ascii_isdigit(p[9])) {
+      p += 9;
+      chardiff_chars_new = getdigits_int(&p, false, chardiff_chars_new);
+      diff_flags_new |= DIFF_CHARDIFF;
+    } else if ((strncmp(p, "worddiff:", 9) == 0) && ascii_isdigit(p[9])) {
+      p += 9;
+      worddiff_words_new = getdigits_int(&p, false, worddiff_words_new);
+      diff_flags_new |= DIFF_WORDDIFF;
     }
 
     if ((*p != ',') && (*p != NUL)) {
@@ -2559,6 +2734,8 @@ int diffopt_changed(void)
   diff_flags = diff_flags_new;
   diff_context = diff_context_new == 0 ? 1 : diff_context_new;
   linematch_lines = linematch_lines_new;
+  chardiff_chars = chardiff_chars_new;
+  worddiff_words = worddiff_words_new;
   diff_foldcolumn = diff_foldcolumn_new;
   diff_algorithm = diff_algorithm_new;
 
@@ -2606,7 +2783,8 @@ bool diffopt_filler(void)
 /// @param  endp    last char of the change
 ///
 /// @return true if the line was added, no other buffer has it.
-bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
+bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hlresult,
+    bool* diffchars_lim_exceeded, size_t *diffchars_line_len)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   // Make a copy of the line, the next ml_get() will invalidate it.
@@ -2647,6 +2825,93 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   bool added = true;
 
   linenr_T off = lnum - dp->df_lnum[idx];
+  if (chardiff()) {
+    diff_allignment_T diff_allignment;
+    if (diff_flags & DIFF_CHARDIFF) {
+      // if both chardiff & worddiff are enabled, it will pick chardiff
+      diff_allignment = CHARMATCH;
+    } else if (diff_flags & DIFF_WORDDIFF) {
+      diff_allignment = WORDMATCH;
+    }
+    if (dp->charmatchp == NULL) {
+      // get the first buffers
+      // try running on the whole diff buffer first
+      run_alignment_algorithm(dp, diff_allignment);
+    }
+    size_t charcount = 0;
+    for (int i = 0; i < DB_COUNT; i++) {
+      // for each diff buffer
+      if (curtab->tp_diffbuf[i] != NULL) {
+        for (int j = 0; j < dp->df_count[i]; j++) {
+          // for each line in that buffer
+          // get a pointer to the line
+          char *diffline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j, false);
+          while (*diffline != '\0') { diffline++; charcount++; }
+          charcount++;
+        }
+      }
+    }
+    if (dp->n_charmatch != charcount) {
+      // we need to re run if the length of the diff has changed
+      // count the number of characters in this diff
+      // the line is currently being edited in insert mode, so pause highlighting until the diff is
+      // recalculated, then resume the charmatch highlighting
+      (*hlresult) = NULL;
+    } else {
+      // charmatchp is not null, is the whole thing already diffed?
+      // get the correct offset for hlresult
+      //
+      // if the character count is not null
+      size_t hlresult_line_offset = 0;
+      // get the offset for the highlight of this line
+      *diffchars_line_len = strlen(ml_get_buf(curtab->tp_diffbuf[idx], dp->df_lnum[idx] + off, false));
+      hlresult_line_offset = get_buffer_position(idx, dp, off);
+      if (*(dp->charmatchp + hlresult_line_offset) == -1) {
+        diff_T dp_tmp;
+        for (int i = 0; i < DB_COUNT; i++) {
+          if (curtab->tp_diffbuf[i] != NULL) {
+            dp_tmp.df_lnum[i] = dp->df_lnum[i] + off;
+            dp_tmp.df_count[i] = off < dp->df_count[i] ? 1 : 0;
+          }
+        }
+        // this line has not yet been calculated
+        // run charmatch on this line of the diff
+        // figure out how many buffers we are diffing
+        // what line number is this in each buffer?
+        run_alignment_algorithm(&dp_tmp, diff_allignment);
+        if (dp_tmp.n_charmatch > 0) {
+          for (int i = 0, p = 0; i < DB_COUNT; i++) {
+            if (curtab->tp_diffbuf[i] != NULL) {
+              // get the offset in the original charmatchp
+              if (off < dp->df_count[i]) {
+                size_t length = strlen(ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + off, false)) + 1;
+                size_t k = get_buffer_position(i, dp, off);
+                for (size_t m = 0; m < length; m++) {
+                  int val = dp_tmp.charmatchp[p++];
+                  dp->charmatchp[k + m] = val == -1 ? -2 : val; // if this individual line is still
+                                                                // too long to diff, mark it as a
+                                                                // -2, meaning it's been attempted
+                                                                // already
+                }
+              }
+            }
+          }
+          // extract the results from here
+        }
+        xfree(dp_tmp.charmatchp);
+      }
+      (*hlresult) = dp->charmatchp + hlresult_line_offset;
+    }
+    if ((*hlresult) == NULL) {
+      return false;
+    } else if ((*hlresult)[0] != -2) {  // -2 indicates that we've attempted a character wise diff with the
+      return false;                     // entire block, and with this individual line, and still exceeded
+    } else {                            // the character limit
+                                        //
+      *diffchars_lim_exceeded = true;   // go to the default highlighting behaviour without character
+    }                                   // wise matching
+  }
+
   for (int i = 0; i < DB_COUNT; i++) {
     if ((curtab->tp_diffbuf[i] != NULL) && (i != idx)) {
       // Skip lines that are not in the other change (filler lines).
@@ -3482,4 +3747,21 @@ static int xdiff_out(int start_a, int count_a, int start_b, int count_b, void *p
     .count_new = count_b,
   }));
   return 0;
+}
+
+// get the position in the character diff buffer of this line
+static size_t get_buffer_position(const int idx, diff_T *dp, linenr_T offset) {
+  size_t comparison_mem_offset = 0;
+  for (int i = 0; i < DB_COUNT; i++) {
+    if ((curtab->tp_diffbuf[i] != NULL)) {
+      for (int j = 0; j < ((i == idx) ? offset : dp->df_count[i]); j++) {
+        char *diffline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j, false);
+        while (*diffline != '\0') { diffline++; comparison_mem_offset++; }
+        comparison_mem_offset++; // count the '\0' character as the newline marker for each line
+      }
+      if (i == idx) { break; }
+    }
+  }
+  // what is the line length for this pointer?
+  return comparison_mem_offset;
 }

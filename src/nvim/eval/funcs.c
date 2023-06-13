@@ -1384,6 +1384,9 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   static int change_start = 0;
   static int change_end = 0;
   static hlf_T hlID = (hlf_T)0;
+  bool diffchars_lim_exceeded = false;
+  size_t diffchars_line_len = 0;
+  int *hlresult = NULL;
 
   if (lnum < 0) {       // ignore type error in {lnum} arg
     lnum = 0;
@@ -1398,7 +1401,8 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       if (filler_lines == -1 || linestatus == -1) {
         change_start = MAXCOL;
         change_end = -1;
-        if (diff_find_change(curwin, lnum, &change_start, &change_end)) {
+        if (diff_find_change(curwin, lnum, &change_start, &change_end, &hlresult,
+            &diffchars_lim_exceeded, &diffchars_line_len)) {
           hlID = HLF_ADD;               // added line
         } else {
           hlID = HLF_CHD;               // changed line
@@ -1416,11 +1420,27 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   if (hlID == HLF_CHD || hlID == HLF_TXD) {
     int col = (int)tv_get_number(&argvars[1]) - 1;  // Ignore type error in {col}.
-    if (col >= change_start && col <= change_end) {
-      hlID = HLF_TXD;  // Changed text.
+                                                    //
+    if (chardiff() && !diffchars_lim_exceeded) {
+      if (hlID != HLF_ADD) {
+        if (hlresult == NULL) {
+          hlID = HLF_CHD;
+        } else if (hlresult[0] == 2) {
+          hlID = HLF_ADD;
+        } else if (col < diffchars_line_len && (hlresult[col] == 1 || hlresult[col] == -2)) {
+          hlID = HLF_TXD;
+        } else {
+          hlID = HLF_CHD;
+        }
+      }
     } else {
-      hlID = HLF_CHD;  // Changed line.
+      if (col >= change_start && col <= change_end) {
+        hlID = HLF_TXD;  // Changed text.
+      } else {
+        hlID = HLF_CHD;  // Changed line.
+      }
     }
+
   }
   rettv->vval.v_number = hlID == (hlf_T)0 ? 0 : (hlID + 1);
 }
