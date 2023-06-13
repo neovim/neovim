@@ -43,7 +43,7 @@ uint64_t ui_client_start_server(int argc, char **argv)
   varnumber_T exit_status;
   char **args = xmalloc(((size_t)(2 + argc)) * sizeof(char *));
   int args_idx = 0;
-  args[args_idx++] = xstrdup(get_vim_var_str(VV_PROGPATH));
+  args[args_idx++] = xstrdup(argv[0]);
   args[args_idx++] = xstrdup("--embed");
   for (int i = 1; i < argc; i++) {
     args[args_idx++] = xstrdup(argv[i]);
