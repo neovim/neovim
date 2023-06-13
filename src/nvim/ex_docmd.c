@@ -1690,7 +1690,7 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
       && !(eap->cmdidx == CMD_file && *eap->arg == NUL)
       && !IS_USER_CMDIDX(eap->cmdidx)
       && curbuf_locked()) {
-    ERROR(_(e_cannot_edit_other_buf));
+    goto end;
   }
 
   correct_range(eap);
