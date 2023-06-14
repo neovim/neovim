@@ -1,7 +1,7 @@
 local bit = require('bit')
-local lpeg = require('lpeg')
 local watch = require('vim._watch')
 local protocol = require('vim.lsp.protocol')
+local lpeg = vim.lpeg
 
 local M = {}
 
@@ -107,6 +107,13 @@ local to_lsp_change_type = {
   [watch.FileChangeType.Deleted] = protocol.FileChangeType.Deleted,
 }
 
+--- Default excludes the same as VSCode's `files.watcherExclude` setting.
+--- https://github.com/microsoft/vscode/blob/eef30e7165e19b33daa1e15e92fa34ff4a5df0d3/src/vs/workbench/contrib/files/browser/files.contribution.ts#L261
+---@type Lpeg pattern
+M._poll_exclude_pattern = parse('**/.git/{objects,subtree-cache}/**')
+  + parse('**/node_modules/*/**')
+  + parse('**/.hg/store/**')
+
 --- Registers the workspace/didChangeWatchedFiles capability dynamically.
 ---
 ---@param reg table LSP Registration object.
@@ -122,10 +129,10 @@ function M.register(reg, ctx)
   then
     return
   end
-  local watch_regs = {}
+  local watch_regs = {} --- @type table<string,{pattern:userdata,kind:integer}>
   for _, w in ipairs(reg.registerOptions.watchers) do
     local relative_pattern = false
-    local glob_patterns = {}
+    local glob_patterns = {} --- @type {baseUri:string, pattern: string}[]
     if type(w.globPattern) == 'string' then
       for _, folder in ipairs(client.workspace_folders) do
         table.insert(glob_patterns, { baseUri = folder.uri, pattern = w.globPattern })
@@ -135,7 +142,7 @@ function M.register(reg, ctx)
       table.insert(glob_patterns, w.globPattern)
     end
     for _, glob_pattern in ipairs(glob_patterns) do
-      local base_dir = nil
+      local base_dir = nil ---@type string?
       if type(glob_pattern.baseUri) == 'string' then
         base_dir = glob_pattern.baseUri
       elseif type(glob_pattern.baseUri) == 'table' then
@@ -144,6 +151,7 @@ function M.register(reg, ctx)
       assert(base_dir, "couldn't identify root of watch")
       base_dir = vim.uri_to_fname(base_dir)
 
+      ---@type integer
       local kind = w.kind
         or protocol.WatchKind.Create + protocol.WatchKind.Change + protocol.WatchKind.Delete
 
@@ -153,8 +161,8 @@ function M.register(reg, ctx)
         pattern = lpeg.P(base_dir .. '/') * pattern
       end
 
-      table.insert(watch_regs, {
-        base_dir = base_dir,
+      watch_regs[base_dir] = watch_regs[base_dir] or {}
+      table.insert(watch_regs[base_dir], {
         pattern = pattern,
         kind = kind,
       })
@@ -163,12 +171,12 @@ function M.register(reg, ctx)
 
   local callback = function(base_dir)
     return function(fullpath, change_type)
-      for _, w in ipairs(watch_regs) do
+      for _, w in ipairs(watch_regs[base_dir]) do
         change_type = to_lsp_change_type[change_type]
         -- e.g. match kind with Delete bit (0b0100) to Delete change_type (3)
         local kind_mask = bit.lshift(1, change_type - 1)
         local change_type_match = bit.band(w.kind, kind_mask) == kind_mask
-        if base_dir == w.base_dir and M._match(w.pattern, fullpath) and change_type_match then
+        if M._match(w.pattern, fullpath) and change_type_match then
           local change = {
             uri = vim.uri_from_fname(fullpath),
             type = change_type,
@@ -198,15 +206,25 @@ function M.register(reg, ctx)
     end
   end
 
-  local watching = {}
-  for _, w in ipairs(watch_regs) do
-    if not watching[w.base_dir] then
-      watching[w.base_dir] = true
-      table.insert(
-        cancels[client_id][reg.id],
-        M._watchfunc(w.base_dir, { uvflags = { recursive = true } }, callback(w.base_dir))
-      )
-    end
+  for base_dir, watches in pairs(watch_regs) do
+    local include_pattern = vim.iter(watches):fold(lpeg.P(false), function(acc, w)
+      return acc + w.pattern
+    end)
+
+    table.insert(
+      cancels[client_id][reg.id],
+      M._watchfunc(base_dir, {
+        uvflags = {
+          recursive = true,
+        },
+        -- include_pattern will ensure the pattern from *any* watcher definition for the
+        -- base_dir matches. This first pass prevents polling for changes to files that
+        -- will never be sent to the LSP server. A second pass in the callback is still necessary to
+        -- match a *particular* pattern+kind pair.
+        include_pattern = include_pattern,
+        exclude_pattern = M._poll_exclude_pattern,
+      }, callback(base_dir))
+    )
   end
 end
 
