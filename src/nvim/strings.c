@@ -2014,6 +2014,9 @@ void f_strtrans(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 /// "utf16idx()" function
+///
+/// Converts a byte or character offset in a string to the corresponding UTF-16
+/// code unit offset.
 void f_utf16idx(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->vval.v_number = -1;
@@ -2050,6 +2053,7 @@ void f_utf16idx(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   const char *p;
   int len;
+  int utf16idx = 0;
   for (p = str, len = 0; charidx ? idx >= 0 : p <= str + idx; len++) {
     if (*p == NUL) {
       // If the index is exactly the number of bytes or characters in the
@@ -2059,6 +2063,7 @@ void f_utf16idx(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       }
       return;
     }
+    utf16idx = len;
     const int clen = ptr2len(p);
     const int c = (clen > 1) ? utf_ptr2char(p) : *p;
     if (c > 0xFFFF) {
@@ -2070,7 +2075,7 @@ void f_utf16idx(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
   }
 
-  rettv->vval.v_number = len > 0 ? len - 1 : 0;
+  rettv->vval.v_number = utf16idx;
 }
 
 /// "tolower(string)" function
