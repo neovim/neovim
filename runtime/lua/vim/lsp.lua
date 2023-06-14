@@ -2269,6 +2269,7 @@ function lsp.omnifunc(findstart, base)
   local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
 
   local params = util.make_position_params()
+  local group_name = 'Omnifunc' .. bufnr
 
   local items = {}
   lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, result, ctx)
@@ -2300,6 +2301,27 @@ function lsp.omnifunc(findstart, base)
     -- TODO(ashkan): is this the best way to do this?
     vim.list_extend(items, matches)
     vim.fn.complete(startbyte + 1, items)
+
+    local ok = pcall(api.nvim_get_autocmds, { group = group_name })
+    if not ok then
+      api.nvim_create_autocmd('CompleteDonePre', {
+        group = api.nvim_create_augroup(group_name, { clear = false }),
+        buffer = ctx.bufnr,
+        callback = function(args)
+          local textedits = vim.tbl_get(
+            vim.v.completed_item,
+            'user_data',
+            'nvim',
+            'lsp',
+            'completion_item',
+            'additionalTextEdits'
+          )
+          if textedits then
+            util.apply_text_edits(textedits, args.buf, client.offset_encoding)
+          end
+        end,
+      })
+    end
   end)
 
   -- Return -2 to signal that we should continue completion so that we can
