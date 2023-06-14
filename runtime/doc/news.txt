@@ -23,7 +23,12 @@ The following changes may require adaptations in user config or plugins.
 • "#" followed by a digit no longer stands for a function key at the start of
   the lhs of a mapping.
 
-• `:behave` was removed. if you used `:behave mswin`, the following is equivalent: >vim
+• `:behave` was removed.
+  - If you used `:behave xterm`, the following is equivalent: >vim
+
+    set mousemodel=extend
+<
+  - If you used `:behave mswin`, the following is equivalent: >vim
 
     set selection=exclusive
     set selectmode=mouse,key
