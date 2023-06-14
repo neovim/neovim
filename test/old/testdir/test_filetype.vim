@@ -40,9 +40,35 @@ func Test_other_type()
   filetype off
 endfunc
 
+" If $XDG_CONFIG_HOME is set return "fname" expanded in a list.
+" Otherwise return an empty list.
+func s:WhenConfigHome(fname)
+  if exists('$XDG_CONFIG_HOME')
+    return [expand(a:fname)]
+  endif
+  return []
+endfunc
+
+" Return the name used for the $XDG_CONFIG_HOME directory.
+func s:GetConfigHome()
+  return getcwd() .. '/Xdg_config_home'
+endfunc
+
+" saved value of $XDG_CONFIG_HOME
+let s:saveConfigHome = ''
+
+func s:SetupConfigHome()
+  " Nvim on Windows may use $XDG_CONFIG_HOME, and runnvim.sh sets it.
+  " if empty(windowsversion())
+    let s:saveConfigHome = $XDG_CONFIG_HOME
+    call setenv("XDG_CONFIG_HOME", s:GetConfigHome())
+  " endif
+endfunc
+
 " Filetypes detected just from matching the file name.
 " First one is checking that these files have no filetype.
-let s:filename_checks = {
+func s:GetFilenameChecks() abort
+  return {
     \ 'none': ['bsd', 'some-bsd'],
     \ '8th': ['file.8th'],
     \ 'a2ps': ['/etc/a2ps.cfg', '/etc/a2ps/file.cfg', 'a2psrc', '.a2psrc', 'any/etc/a2ps.cfg', 'any/etc/a2ps/file.cfg'],
@@ -94,7 +120,7 @@ let s:filename_checks = {
     \ 'bzr': ['bzr_log.any', 'bzr_log.file'],
     \ 'c': ['enlightenment/file.cfg', 'file.qc', 'file.c', 'some-enlightenment/file.cfg'],
     \ 'cabal': ['file.cabal'],
-    \ 'cabalconfig': ['cabal.config'],
+    \ 'cabalconfig': ['cabal.config', expand("$HOME/.config/cabal/config")] + s:WhenConfigHome('$XDG_CONFIG_HOME/cabal/config'),
     \ 'cabalproject': ['cabal.project', 'cabal.project.local'],
     \ 'cairo': ['file.cairo'],
     \ 'calendar': ['calendar', '/.calendar/file', '/share/calendar/any/calendar.file', '/share/calendar/calendar.file', 'any/share/calendar/any/calendar.file', 'any/share/calendar/calendar.file'],
@@ -228,10 +254,10 @@ let s:filename_checks = {
     \ 'gedcom': ['file.ged', 'lltxxxxx.txt', '/tmp/lltmp', '/tmp/lltmp-file', 'any/tmp/lltmp', 'any/tmp/lltmp-file'],
     \ 'gemtext': ['file.gmi', 'file.gemini'],
     \ 'gift': ['file.gift'],
-    \ 'gitattributes': ['file.git/info/attributes', '.gitattributes', '/.config/git/attributes', '/etc/gitattributes', '/usr/local/etc/gitattributes', 'some.git/info/attributes'],
+    \ 'gitattributes': ['file.git/info/attributes', '.gitattributes', '/.config/git/attributes', '/etc/gitattributes', '/usr/local/etc/gitattributes', 'some.git/info/attributes'] + s:WhenConfigHome('$XDG_CONFIG_HOME/git/attributes'),
     \ 'gitcommit': ['COMMIT_EDITMSG', 'MERGE_MSG', 'TAG_EDITMSG', 'NOTES_EDITMSG', 'EDIT_DESCRIPTION'],
-    \ 'gitconfig': ['file.git/config', 'file.git/config.worktree', 'file.git/worktrees/x/config.worktree', '.gitconfig', '.gitmodules', 'file.git/modules//config', '/.config/git/config', '/etc/gitconfig', '/usr/local/etc/gitconfig', '/etc/gitconfig.d/file', 'any/etc/gitconfig.d/file', '/.gitconfig.d/file', 'any/.config/git/config', 'any/.gitconfig.d/file', 'some.git/config', 'some.git/modules/any/config'],
-    \ 'gitignore': ['file.git/info/exclude', '.gitignore', '/.config/git/ignore', 'some.git/info/exclude'],
+    \ 'gitconfig': ['file.git/config', 'file.git/config.worktree', 'file.git/worktrees/x/config.worktree', '.gitconfig', '.gitmodules', 'file.git/modules//config', '/.config/git/config', '/etc/gitconfig', '/usr/local/etc/gitconfig', '/etc/gitconfig.d/file', 'any/etc/gitconfig.d/file', '/.gitconfig.d/file', 'any/.config/git/config', 'any/.gitconfig.d/file', 'some.git/config', 'some.git/modules/any/config'] + s:WhenConfigHome('$XDG_CONFIG_HOME/git/config'),
+    \ 'gitignore': ['file.git/info/exclude', '.gitignore', '/.config/git/ignore', 'some.git/info/exclude'] + s:WhenConfigHome('$XDG_CONFIG_HOME/git/ignore'),
     \ 'gitolite': ['gitolite.conf', '/gitolite-admin/conf/file', 'any/gitolite-admin/conf/file'],
     \ 'gitrebase': ['git-rebase-todo'],
     \ 'gitsendemail': ['.gitsendemail.msg.xxxxxx'],
@@ -702,6 +728,7 @@ let s:filename_checks = {
     \
     \ 'help': [$VIMRUNTIME . '/doc/help.txt'],
     \ }
+endfunc
 
 let s:filename_case_checks = {
     \ 'modula2': ['file.DEF'],
@@ -732,8 +759,14 @@ func CheckItems(checks)
 endfunc
 
 func Test_filetype_detection()
+  call s:SetupConfigHome()
+  if !empty(s:saveConfigHome)
+    defer setenv("XDG_CONFIG_HOME", s:saveConfigHome)
+  endif
+  call mkdir(s:GetConfigHome(), 'R')
+
   filetype on
-  call CheckItems(s:filename_checks)
+  call CheckItems(s:GetFilenameChecks())
   if has('fname_case')
     call CheckItems(s:filename_case_checks)
   endif

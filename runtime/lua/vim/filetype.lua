@@ -1809,6 +1809,8 @@ local pattern = {
   ['bzr_log%..*'] = 'bzr',
   ['.*enlightenment/.*%.cfg'] = 'c',
   ['${HOME}/cabal%.config'] = 'cabalconfig',
+  ['${HOME}/%.config/cabal/config'] = 'cabalconfig',
+  ['${XDG_CONFIG_HOME}/cabal/config'] = 'cabalconfig',
   ['cabal%.project%..*'] = starsetf('cabalproject'),
   ['.*/%.calendar/.*'] = starsetf('calendar'),
   ['.*/share/calendar/.*/calendar%..*'] = starsetf('calendar'),
@@ -2490,7 +2492,7 @@ local function match_pattern(name, path, tail, pat)
         return_early = true
         return nil
       end
-      return vim.env[env]
+      return vim.pesc(vim.env[env])
     end)
     if return_early then
       return false
