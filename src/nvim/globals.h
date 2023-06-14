@@ -29,8 +29,15 @@
 # define _PATHSEPSTR "/"
 #endif
 
+// FILETYPE_FILE        used for file type detection
+// FTPLUGIN_FILE        used for loading filetype plugin files
+// INDENT_FILE          used for loading indent files
+// FTOFF_FILE           used for file type detection
+// FTPLUGOF_FILE        used for loading settings files
+// INDOFF_FILE          used for loading indent files
+
 #ifndef FILETYPE_FILE
-# define FILETYPE_FILE "filetype.lua filetype.vim"
+# define FILETYPE_FILE  "filetype.lua filetype.vim"
 #endif
 
 #ifndef FTPLUGIN_FILE
@@ -336,6 +343,7 @@ EXTERN struct caller_scope {
   sctx_T script_ctx;
   estack_T es_entry;
   char *autocmd_fname, *autocmd_match;
+  bool autocmd_fname_full;
   int autocmd_bufnr;
   void *funccalp;
 } provider_caller_scope;
@@ -759,6 +767,7 @@ EXTERN char *last_cmdline INIT(= NULL);        // last command line (for ":)
 EXTERN char *repeat_cmdline INIT(= NULL);      // command line for "."
 EXTERN char *new_last_cmdline INIT(= NULL);    // new value for last_cmdline
 EXTERN char *autocmd_fname INIT(= NULL);       // fname for <afile> on cmdline
+EXTERN bool autocmd_fname_full INIT(= false);  // autocmd_fname is full path
 EXTERN int autocmd_bufnr INIT(= 0);            // fnum for <abuf> on cmdline
 EXTERN char *autocmd_match INIT(= NULL);       // name for <amatch> on cmdline
 EXTERN bool did_cursorhold INIT(= false);      // set when CursorHold t'gerd
@@ -1032,6 +1041,8 @@ EXTERN const char e_undobang_cannot_redo_or_move_branch[]
 INIT(= N_("E5767: Cannot use :undo! to redo or move to a different undo branch"));
 
 EXTERN const char e_trustfile[] INIT(= N_("E5570: Cannot update trust file: %s"));
+
+EXTERN const char e_unknown_option2[] INIT(= N_("E355: Unknown option: %s"));
 
 EXTERN const char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
 EXTERN const char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));

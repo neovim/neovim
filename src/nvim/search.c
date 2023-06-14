@@ -1519,7 +1519,7 @@ int searchc(cmdarg_T *cap, int t_cmd)
       }
     }
   } else {            // repeat previous search
-    if (*lastc == NUL && lastc_bytelen == 1) {
+    if (*lastc == NUL && lastc_bytelen <= 1) {
       return FAIL;
     }
     if (dir) {        // repeat in opposite direction
@@ -1562,7 +1562,7 @@ int searchc(cmdarg_T *cap, int t_cmd)
         }
         col -= utf_head_off(p, p + col - 1) + 1;
       }
-      if (lastc_bytelen == 1) {
+      if (lastc_bytelen <= 1) {
         if (p[col] == c && stop) {
           break;
         }

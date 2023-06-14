@@ -349,7 +349,7 @@ Note:
 - The command is not echo'ed, no need for <silent>.
 - The {rhs} is not subject to abbreviations nor to other mappings, even if the
   mapping is recursive.
-- In Visual mode  you can use `line('v')` and `col('v')` to get one end of the
+- In Visual mode you can use `line('v')` and `col('v')` to get one end of the
   Visual area, the cursor is at the other end.
 
 							*E1255* *E1136*
@@ -1391,7 +1391,7 @@ completion can be enabled:
 	-complete=highlight	highlight groups
 	-complete=history	:history suboptions
 	-complete=locale	locale names (as output of locale -a)
-	-complete=lua		Lua expression
+	-complete=lua		Lua expression |:lua|
 	-complete=mapclear	buffer argument
 	-complete=mapping	mapping name
 	-complete=menu		menus
@@ -1730,7 +1730,11 @@ remains unmodified.  Also see |f-args-example| below.  Overview:
 	XX a\\\ b	   'a\ b'
 	XX a\\\\b	   'a\\b'
 	XX a\\\\ b	   'a\\', 'b'
+	XX		   [nothing]
 
+
+Note that if the "no arguments" situation is to be handled, you have to make
+sure that the function can be called without arguments.
 
 Examples for user commands: >
 

@@ -293,17 +293,17 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
           break;
         case kCallbackFuncref:
         case kCallbackPartial:
-          PUT(autocmd_info, "callback", STRING_OBJ(cstr_as_string(callback_to_string(cb))));
+          PUT(autocmd_info, "callback", CSTR_AS_OBJ(callback_to_string(cb)));
           break;
         default:
           abort();
         }
       } else {
-        PUT(autocmd_info, "command", STRING_OBJ(cstr_as_string(xstrdup(ac->exec.callable.cmd))));
+        PUT(autocmd_info, "command", CSTR_TO_OBJ(ac->exec.callable.cmd));
       }
 
-      PUT(autocmd_info, "pattern", STRING_OBJ(cstr_to_string(ap->pat)));
-      PUT(autocmd_info, "event", STRING_OBJ(cstr_to_string(event_nr2name(event))));
+      PUT(autocmd_info, "pattern", CSTR_TO_OBJ(ap->pat));
+      PUT(autocmd_info, "event", CSTR_TO_OBJ(event_nr2name(event)));
       PUT(autocmd_info, "once", BOOLEAN_OBJ(ac->once));
 
       if (ap->buflocal_nr) {
@@ -347,7 +347,7 @@ cleanup:
 ///     vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
 ///       pattern = {"*.c", "*.h"},
 ///       callback = function(ev)
-///         print(string.format('event fired: %s', vim.inspect(ev)))
+///         print(string.format('event fired: \%s', vim.inspect(ev)))
 ///       end
 ///     })
 /// </pre>
@@ -475,7 +475,7 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
   }
 
   if (patterns.size == 0) {
-    ADD(patterns, STRING_OBJ(STATIC_CSTR_TO_STRING("*")));
+    ADD(patterns, STATIC_CSTR_TO_OBJ("*"));
   }
 
   VALIDATE_R((event_array.size > 0), "event", {
@@ -587,7 +587,7 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Error *err)
   // When we create the autocmds, we want to say that they are all matched, so that's *
   // but when we clear them, we want to say that we didn't pass a pattern, so that's NUL
   if (patterns.size == 0) {
-    ADD(patterns, STRING_OBJ(STATIC_CSTR_TO_STRING("")));
+    ADD(patterns, STATIC_CSTR_TO_OBJ(""));
   }
 
   // If we didn't pass any events, that means clear all events.
@@ -763,7 +763,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
   }
 
   if (patterns.size == 0) {
-    ADD(patterns, STRING_OBJ(STATIC_CSTR_TO_STRING("")));
+    ADD(patterns, STATIC_CSTR_TO_OBJ(""));
   }
 
   if (HAS_KEY(opts->data)) {
@@ -894,7 +894,7 @@ static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Ob
     }
 
     snprintf((char *)pattern_buflocal, BUFLOCAL_PAT_LEN, "<buffer=%d>", (int)buf->handle);
-    ADD(*patterns, STRING_OBJ(cstr_to_string(pattern_buflocal)));
+    ADD(*patterns, CSTR_TO_OBJ(pattern_buflocal));
   }
 
   return true;

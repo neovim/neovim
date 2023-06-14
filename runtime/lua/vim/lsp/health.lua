@@ -22,7 +22,7 @@ function M.check()
   local log_path = vim.lsp.get_log_path()
   report_info(string.format('Log path: %s', log_path))
 
-  local log_file = vim.loop.fs_stat(log_path)
+  local log_file = vim.uv.fs_stat(log_path)
   local log_size = log_file and log_file.size or 0
 
   local report_fn = (log_size / 1000000 > 100 and report_warn or report_info)

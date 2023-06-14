@@ -248,6 +248,11 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags_arg)
     return FAIL;
   }
 
+  // Do not sync this buffer yet, may first want to read the file.
+  if (curbuf->b_ml.ml_mfp != NULL) {
+    curbuf->b_ml.ml_mfp->mf_dirty = MF_DIRTY_YES_NOSYNC;
+  }
+
   // The autocommands in readfile() may change the buffer, but only AFTER
   // reading the file.
   set_bufref(&old_curbuf, curbuf);
@@ -314,6 +319,12 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags_arg)
     if (retval == OK) {
       retval = read_buffer(true, eap, flags);
     }
+  }
+
+  // Can now sync this buffer in ml_sync_all().
+  if (curbuf->b_ml.ml_mfp != NULL
+      && curbuf->b_ml.ml_mfp->mf_dirty == MF_DIRTY_YES_NOSYNC) {
+    curbuf->b_ml.ml_mfp->mf_dirty = MF_DIRTY_YES;
   }
 
   // if first time loading this buffer, init b_chartab[]
@@ -833,7 +844,7 @@ void buf_freeall(buf_T *buf, int flags)
 /// itself (not the file, that must have been done already).
 static void free_buffer(buf_T *buf)
 {
-  pmap_del(handle_T)(&buffer_handles, buf->b_fnum);
+  pmap_del(int)(&buffer_handles, buf->b_fnum, NULL);
   buf_free_count++;
   // b:changedtick uses an item in buf_T.
   free_buffer_stuff(buf, kBffClearWinInfo);
@@ -1084,11 +1095,11 @@ char *do_bufdel(int command, char *arg, int addr_count, int start_bnr, int end_b
 
     if (deleted == 0) {
       if (command == DOBUF_UNLOAD) {
-        STRCPY(IObuff, _("E515: No buffers were unloaded"));
+        xstrlcpy(IObuff, _("E515: No buffers were unloaded"), IOSIZE);
       } else if (command == DOBUF_DEL) {
-        STRCPY(IObuff, _("E516: No buffers were deleted"));
+        xstrlcpy(IObuff, _("E516: No buffers were deleted"), IOSIZE);
       } else {
-        STRCPY(IObuff, _("E517: No buffers were wiped out"));
+        xstrlcpy(IObuff, _("E517: No buffers were wiped out"), IOSIZE);
       }
       errormsg = IObuff;
     } else if (deleted >= p_report) {
@@ -1459,16 +1470,11 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
 
   // make "buf" the current buffer
   if (action == DOBUF_SPLIT) {      // split window first
-    // If 'switchbuf' contains "useopen": jump to first window containing
-    // "buf" if one exists
-    if ((swb_flags & SWB_USEOPEN) && buf_jump_open_win(buf)) {
+    // If 'switchbuf' is set jump to the window containing "buf".
+    if (swbuf_goto_win_with_buf(buf) != NULL) {
       return OK;
     }
-    // If 'switchbuf' contains "usetab": jump to first window in any tab
-    // page containing "buf" if one exists
-    if ((swb_flags & SWB_USETAB) && buf_jump_open_tab(buf)) {
-      return OK;
-    }
+
     if (win_split(0, 0) == FAIL) {
       return FAIL;
     }
@@ -1870,7 +1876,7 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
     lastbuf = buf;
 
     buf->b_fnum = top_file_num++;
-    pmap_put(handle_T)(&buffer_handles, buf->b_fnum, buf);
+    pmap_put(int)(&buffer_handles, buf->b_fnum, buf);
     if (top_file_num < 0) {  // wrap around (may cause duplicates)
       emsg(_("W14: Warning: List of file names overflow"));
       if (emsg_silent == 0 && !in_assert_fails) {
@@ -2072,17 +2078,8 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
   }
 
   if (options & GETF_SWITCH) {
-    // If 'switchbuf' contains "useopen": jump to first window containing
-    // "buf" if one exists
-    if (swb_flags & SWB_USEOPEN) {
-      wp = buf_jump_open_win(buf);
-    }
-
-    // If 'switchbuf' contains "usetab": jump to first window in any tab
-    // page containing "buf" if one exists
-    if (wp == NULL && (swb_flags & SWB_USETAB)) {
-      wp = buf_jump_open_tab(buf);
-    }
+    // If 'switchbuf' is set jump to the window containing "buf".
+    wp = swbuf_goto_win_with_buf(buf);
 
     // If 'switchbuf' contains "split", "vsplit" or "newtab" and the
     // current buffer isn't empty: open new tab or window
@@ -3458,7 +3455,6 @@ void resettitle(void)
 {
   ui_call_set_icon(cstr_as_string(lasticon));
   ui_call_set_title(cstr_as_string(lasttitle));
-  ui_flush();
 }
 
 #if defined(EXITFREE)
@@ -3528,23 +3524,20 @@ bool append_arg_number(win_T *wp, char *buf, int buflen, bool add_file)
     return false;
   }
 
+  const char *msg;
+  switch ((wp->w_arg_idx_invalid ? 1 : 0) + (add_file ? 2 : 0)) {
+  case 0:
+    msg = _(" (%d of %d)"); break;
+  case 1:
+    msg = _(" ((%d) of %d)"); break;
+  case 2:
+    msg = _(" (file %d of %d)"); break;
+  case 3:
+    msg = _(" (file (%d) of %d)"); break;
+  }
+
   char *p = buf + strlen(buf);  // go to the end of the buffer
-
-  // Early out if the string is getting too long
-  if (p - buf + 35 >= buflen) {
-    return false;
-  }
-
-  *p++ = ' ';
-  *p++ = '(';
-  if (add_file) {
-    STRCPY(p, "file ");
-    p += 5;
-  }
-  vim_snprintf(p, (size_t)(buflen - (p - buf)),
-               wp->w_arg_idx_invalid
-               ? "(%d) of %d)"
-               : "%d of %d)", wp->w_arg_idx + 1, ARGCOUNT);
+  vim_snprintf(p, (size_t)(buflen - (p - buf)), msg, wp->w_arg_idx + 1, ARGCOUNT);
   return true;
 }
 
@@ -4311,9 +4304,9 @@ int buf_open_scratch(handle_T bufnr, char *bufname)
   apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
   (void)setfname(curbuf, bufname, NULL, true);
   apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
-  set_option_value_give_err("bh", 0L, "hide", OPT_LOCAL);
-  set_option_value_give_err("bt", 0L, "nofile", OPT_LOCAL);
-  set_option_value_give_err("swf", 0L, NULL, OPT_LOCAL);
+  set_option_value_give_err("bh", STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL);
+  set_option_value_give_err("bt", STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL);
+  set_option_value_give_err("swf", BOOLEAN_OPTVAL(false), OPT_LOCAL);
   RESET_BINDING(curwin);
   return OK;
 }

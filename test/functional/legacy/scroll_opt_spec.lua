@@ -174,6 +174,24 @@ describe('smoothscroll', function()
     screen:expect(s8)
   end)
 
+  -- oldtest: Test_smoothscroll_multibyte()
+  it('works with multibyte characters', function()
+    screen:try_resize(40, 6)
+    exec([[
+      set scrolloff=0 smoothscroll
+      call setline(1, [repeat('ϛ', 45), repeat('2', 36)])
+      exe "normal G35l\<C-E>k"
+    ]])
+    screen:expect([[
+      ϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛ^ϛϛϛϛϛ|
+      ϛϛϛϛϛ                                   |
+      222222222222222222222222222222222222    |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+  end)
+
   -- oldtest: Test_smoothscroll_number()
   it("works 'number' and 'cpo'+=n", function()
     exec([[
@@ -428,7 +446,9 @@ describe('smoothscroll', function()
     screen:expect_unchanged()
     feed('G')
     screen:expect_unchanged()
-    -- moving cursor up right after the >>> marker - no need to show whole line
+    feed('4<C-Y>G')
+    screen:expect_unchanged()
+    -- moving cursor up right after the <<< marker - no need to show whole line
     feed('2gj3l2k')
     screen:expect([[
       <<<^h some text with some text           |
@@ -440,7 +460,7 @@ describe('smoothscroll', function()
       with some text with some text           |
                                               |
     ]])
-    -- moving cursor up where the >>> marker is - whole top line shows
+    -- moving cursor up where the <<< marker is - whole top line shows
     feed('2j02k')
     screen:expect([[
       ^Line with some text with some text with |
@@ -556,13 +576,13 @@ describe('smoothscroll', function()
                                               |
     ]])
     -- Test zt/zz/zb that they work properly when a long line is above it
-    feed('zb')
+    feed('zt')
     screen:expect([[
-      <<<th lots of text with lots of text wit|
-      h lots of text with lots of text with lo|
-      ts of text with lots of text with lots o|
-      f text with lots of text end            |
       ^four                                    |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
                                               |
     ]])
     feed('zz')
@@ -574,21 +594,7 @@ describe('smoothscroll', function()
       ~                                       |
                                               |
     ]])
-    feed('zt')
-    screen:expect([[
-      ^four                                    |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-                                              |
-    ]])
-    -- Repeat the step and move the cursor down again.
-    -- This time, use a shorter long line that is barely long enough to span more
-    -- than one window. Note that the cursor is at the bottom this time because
-    -- Vim prefers to do so if we are scrolling a few lines only.
-    exec("call setline(1, ['one', 'two', 'Line' .. (' with lots of text'->repeat(10)) .. ' end', 'four'])")
-    feed('3Gztj')
+    feed('zb')
     screen:expect([[
       <<<th lots of text with lots of text wit|
       h lots of text with lots of text with lo|
@@ -597,6 +603,16 @@ describe('smoothscroll', function()
       ^four                                    |
                                               |
     ]])
+    -- Repeat the step and move the cursor down again.
+    -- This time, use a shorter long line that is barely long enough to span more
+    -- than one window. Note that the cursor is at the bottom this time because
+    -- Vim prefers to do so if we are scrolling a few lines only.
+    exec("call setline(1, ['one', 'two', 'Line' .. (' with lots of text'->repeat(10)) .. ' end', 'four'])")
+    -- Currently visible lines were replaced, test that the lines and cursor
+    -- are correctly displayed.
+    screen:expect_unchanged()
+    feed('3Gztj')
+    screen:expect_unchanged()
     -- Repeat the step but this time start it when the line is smooth-scrolled by
     -- one line. This tests that the offset calculation is still correct and
     -- still end up scrolling down to the next line with cursor at bottom of
@@ -667,6 +683,32 @@ describe('smoothscroll', function()
     ]])
     feed('0')
     screen:expect(s1)
+  end)
+
+  -- oldtest: Test_smoothscroll_marker_over_double_width_dump()
+  it('marker is drawn over double-width char correctly', function()
+    screen:try_resize(40, 6)
+    exec([[
+      call setline(1, 'a'->repeat(&columns) .. '口'->repeat(10))
+      setlocal smoothscroll
+    ]])
+    screen:expect([[
+      ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      口口口口口口口口口口                    |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      <<< 口口口口口口口^口                    |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
   end)
 
   -- oldtest: Test_smoothscroll_zero_width()
@@ -776,6 +818,123 @@ describe('smoothscroll', function()
                                               |
                                               |
       ^                                        |
+                                              |
+    ]])
+  end)
+
+  -- oldtest: Test_smoothscroll_incsearch()
+  it("does not reset skipcol when doing incremental search on the same word", function()
+    screen:try_resize(40, 8)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.Brown},
+      [2] = {foreground = Screen.colors.Blue1, bold = true},
+      [3] = {background = Screen.colors.Yellow1},
+      [4] = {reverse = true},
+    })
+    exec([[
+      set smoothscroll number scrolloff=0 incsearch
+      call setline(1, repeat([''], 20))
+      call setline(11, repeat('a', 100))
+      call setline(14, 'bbbb')
+    ]])
+    feed('/b')
+    screen:expect([[
+      {2:<<<}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaa        |
+      {1: 12 }                                    |
+      {1: 13 }                                    |
+      {1: 14 }{4:b}{3:bbb}                                |
+      {1: 15 }                                    |
+      {1: 16 }                                    |
+      {1: 17 }                                    |
+      /b^                                      |
+    ]])
+    feed('b')
+    screen:expect([[
+      {2:<<<}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaa        |
+      {1: 12 }                                    |
+      {1: 13 }                                    |
+      {1: 14 }{4:bb}{3:bb}                                |
+      {1: 15 }                                    |
+      {1: 16 }                                    |
+      {1: 17 }                                    |
+      /bb^                                     |
+    ]])
+    feed('b')
+    screen:expect([[
+      {2:<<<}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaa        |
+      {1: 12 }                                    |
+      {1: 13 }                                    |
+      {1: 14 }{4:bbb}b                                |
+      {1: 15 }                                    |
+      {1: 16 }                                    |
+      {1: 17 }                                    |
+      /bbb^                                    |
+    ]])
+    feed('b')
+    screen:expect([[
+      {2:<<<}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaa        |
+      {1: 12 }                                    |
+      {1: 13 }                                    |
+      {1: 14 }{4:bbbb}                                |
+      {1: 15 }                                    |
+      {1: 16 }                                    |
+      {1: 17 }                                    |
+      /bbbb^                                   |
+    ]])
+  end)
+
+  -- oldtest: Test_smoothscroll_multi_skipcol()
+  it('scrolling mulitple lines and stopping at non-zero skipcol', function()
+    screen:try_resize(40, 10)
+    screen:set_default_attr_ids({
+      [0] = {foreground = Screen.colors.Blue, bold = true},
+      [1] = {background = Screen.colors.Grey90},
+    })
+    exec([[
+      setlocal cursorline scrolloff=0 smoothscroll
+      call setline(1, repeat([''], 8))
+      call setline(3, repeat('a', 50))
+      call setline(4, repeat('a', 50))
+      call setline(7, 'bbb')
+      call setline(8, 'ccc')
+      redraw
+    ]])
+    screen:expect([[
+      {1:^                                        }|
+                                              |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaa                              |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaa                              |
+                                              |
+                                              |
+      bbb                                     |
+                                              |
+    ]])
+    feed('3<C-E>')
+    screen:expect([[
+      {0:<<<}{1:aaaaaa^a                              }|
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaa                              |
+                                              |
+                                              |
+      bbb                                     |
+      ccc                                     |
+      {0:~                                       }|
+      {0:~                                       }|
+                                              |
+    ]])
+    feed('2<C-E>')
+    screen:expect([[
+      {0:<<<}{1:aaaaaa^a                              }|
+                                              |
+                                              |
+      bbb                                     |
+      ccc                                     |
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
                                               |
     ]])
   end)

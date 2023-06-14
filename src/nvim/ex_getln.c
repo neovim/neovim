@@ -127,6 +127,7 @@ typedef struct command_line_state {
   int break_ctrl_c;
   expand_T xpc;
   long *b_im_ptr;
+  buf_T *b_im_ptr_buf;  ///< buffer where b_im_ptr is valid
 } CommandLineState;
 
 typedef struct cmdpreview_win_info {
@@ -736,7 +737,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool clea
     } else {
       s->b_im_ptr = &curbuf->b_p_imsearch;
     }
-
+    s->b_im_ptr_buf = curbuf;
     if (*s->b_im_ptr == B_IMODE_LMAP) {
       State |= MODE_LANGMAP;
     }
@@ -1140,7 +1141,7 @@ static int command_line_execute(VimState *state, int key)
     } else if (s->c == K_COMMAND) {
       do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
     } else {
-      map_execute_lua();
+      map_execute_lua(false);
     }
 
     // nvim_select_popupmenu_item() can be called from the handling of
@@ -1538,20 +1539,21 @@ static int command_line_erase_chars(CommandLineState *s)
 /// language :lmap mappings and/or Input Method.
 static void command_line_toggle_langmap(CommandLineState *s)
 {
+  long *b_im_ptr = buf_valid(s->b_im_ptr_buf) ? s->b_im_ptr : NULL;
   if (map_to_exists_mode("", MODE_LANGMAP, false)) {
     // ":lmap" mappings exists, toggle use of mappings.
     State ^= MODE_LANGMAP;
-    if (s->b_im_ptr != NULL) {
+    if (b_im_ptr != NULL) {
       if (State & MODE_LANGMAP) {
-        *s->b_im_ptr = B_IMODE_LMAP;
+        *b_im_ptr = B_IMODE_LMAP;
       } else {
-        *s->b_im_ptr = B_IMODE_NONE;
+        *b_im_ptr = B_IMODE_NONE;
       }
     }
   }
 
-  if (s->b_im_ptr != NULL) {
-    if (s->b_im_ptr == &curbuf->b_p_iminsert) {
+  if (b_im_ptr != NULL) {
+    if (b_im_ptr == &curbuf->b_p_iminsert) {
       set_iminsert_global(curbuf);
     } else {
       set_imsearch_global(curbuf);
@@ -1595,7 +1597,7 @@ static int command_line_insert_reg(CommandLineState *s)
 
   bool literally = false;
   if (s->c != ESC) {               // use ESC to cancel inserting register
-    literally = i == Ctrl_R;
+    literally = i == Ctrl_R || is_literal_register(s->c);
     cmdline_paste(s->c, literally, false);
 
     // When there was a serious error abort getting the
@@ -3385,7 +3387,7 @@ static void ui_ext_cmdline_show(CmdlineInfo *line)
   } else {
     Array item = arena_array(&arena, 2);
     ADD_C(item, INTEGER_OBJ(0));
-    ADD_C(item, STRING_OBJ(cstr_as_string(line->cmdbuff)));
+    ADD_C(item, CSTR_AS_OBJ(line->cmdbuff));
     content = arena_array(&arena, 1);
     ADD_C(content, ARRAY_OBJ(item));
   }
@@ -3412,7 +3414,7 @@ void ui_ext_cmdline_block_append(size_t indent, const char *line)
 
   Array item = ARRAY_DICT_INIT;
   ADD(item, INTEGER_OBJ(0));
-  ADD(item, STRING_OBJ(cstr_as_string(buf)));
+  ADD(item, CSTR_AS_OBJ(buf));
   Array content = ARRAY_DICT_INIT;
   ADD(content, ARRAY_OBJ(item));
   ADD(cmdline_block, ARRAY_OBJ(content));
@@ -4355,7 +4357,7 @@ static int open_cmdwin(void)
     return Ctrl_C;
   }
   // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
-  set_option_value_give_err("bh", 0L, "wipe", OPT_LOCAL);
+  set_option_value_give_err("bh", STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL);
   curbuf->b_p_ma = true;
   curwin->w_p_fen = false;
   curwin->w_p_rl = cmdmsg_rl;
@@ -4373,7 +4375,7 @@ static int open_cmdwin(void)
       add_map("<Tab>", "<C-X><C-V>", MODE_INSERT, true);
       add_map("<Tab>", "a<C-X><C-V>", MODE_NORMAL, true);
     }
-    set_option_value_give_err("ft", 0L, "vim", OPT_LOCAL);
+    set_option_value_give_err("ft", STATIC_CSTR_AS_OPTVAL("vim"), OPT_LOCAL);
   }
   curbuf->b_ro_locked--;
 

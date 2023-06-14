@@ -2848,6 +2848,7 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
   // Add the message, skipping leading whitespace and newlines.
   ga_concat(gap, IObuff);
   qf_fmt_text(gap, skipwhite(qf_ptr->qf_text));
+  ga_append(gap, NUL);
 
   // Output the message.  Overwrite to avoid scrolling when the 'O'
   // flag is present in 'shortmess'; But when not jumping, print the
@@ -3123,9 +3124,7 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
     msg_puts_attr(":", qfSepAttr);
   }
   garray_T *gap = qfga_get();
-  if (qfp->qf_lnum == 0) {
-    ga_append(gap, NUL);
-  } else {
+  if (qfp->qf_lnum != 0) {
     qf_range_text(gap, qfp);
   }
   ga_concat(gap, qf_types(qfp->qf_type, qfp->qf_nr));
@@ -3135,6 +3134,7 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   if (qfp->qf_pattern != NULL) {
     gap = qfga_get();
     qf_fmt_text(gap, qfp->qf_pattern);
+    ga_append(gap, NUL);
     msg_puts(gap->ga_data);
     msg_puts_attr(":", qfSepAttr);
   }
@@ -3145,6 +3145,7 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   // with ^^^^.
   gap = qfga_get();
   qf_fmt_text(gap, (fname != NULL || qfp->qf_lnum != 0) ? skipwhite(qfp->qf_text) : qfp->qf_text);
+  ga_append(gap, NUL);
   msg_prt_line(gap->ga_data, false);
 }
 
@@ -3229,7 +3230,6 @@ static void qf_fmt_text(garray_T *gap, const char *restrict text)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *p = text;
-
   while (*p != NUL) {
     if (*p == '\n') {
       ga_append(gap, ' ');
@@ -3242,8 +3242,6 @@ static void qf_fmt_text(garray_T *gap, const char *restrict text)
       ga_append(gap, (uint8_t)(*p++));
     }
   }
-
-  ga_append(gap, NUL);
 }
 
 /// Add the range information from the lnum, col, end_lnum, and end_col values
@@ -3268,7 +3266,6 @@ static void qf_range_text(garray_T *gap, const qfline_T *qfp)
       len += strlen(buf + len);
     }
   }
-  buf[len] = NUL;
 
   ga_concat_len(gap, buf, len);
 }
@@ -3612,12 +3609,12 @@ static int qf_goto_cwindow(const qf_info_T *qi, bool resize, int sz, bool vertsp
 static void qf_set_cwindow_options(void)
 {
   // switch off 'swapfile'
-  set_option_value_give_err("swf", 0L, NULL, OPT_LOCAL);
-  set_option_value_give_err("bt", 0L, "quickfix", OPT_LOCAL);
-  set_option_value_give_err("bh", 0L, "hide", OPT_LOCAL);
+  set_option_value_give_err("swf", BOOLEAN_OPTVAL(false), OPT_LOCAL);
+  set_option_value_give_err("bt", STATIC_CSTR_AS_OPTVAL("quickfix"), OPT_LOCAL);
+  set_option_value_give_err("bh", STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL);
   RESET_BINDING(curwin);
   curwin->w_p_diff = false;
-  set_option_value_give_err("fdm", 0L, "manual", OPT_LOCAL);
+  set_option_value_give_err("fdm", STATIC_CSTR_AS_OPTVAL("manual"), OPT_LOCAL);
 }
 
 // Open a new quickfix or location list window, load the quickfix buffer and
@@ -3983,7 +3980,6 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
   // for this entry, then use it.
   if (qftf_str != NULL && *qftf_str != NUL) {
     ga_concat(gap, qftf_str);
-    ga_append(gap, NUL);
   } else {
     buf_T *errbuf;
     if (qfp->qf_module != NULL) {
@@ -4026,6 +4022,7 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
     qf_fmt_text(gap, gap->ga_len > 3 ? skipwhite(qfp->qf_text) : qfp->qf_text);
   }
 
+  ga_append(gap, NUL);
   if (ml_append_buf(buf, lnum, gap->ga_data, gap->ga_len, false) == FAIL) {
     return FAIL;
   }
@@ -4176,7 +4173,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
     // resembles reading a file into a buffer, it's more logical when using
     // autocommands.
     curbuf->b_ro_locked++;
-    set_option_value_give_err("ft", 0L, "qf", OPT_LOCAL);
+    set_option_value_give_err("ft", STATIC_CSTR_AS_OPTVAL("qf"), OPT_LOCAL);
     curbuf->b_p_ma = false;
 
     keep_filetype = true;                 // don't detect 'filetype'
@@ -7183,7 +7180,7 @@ void ex_helpgrep(exarg_T *eap)
     // Darn, some plugin changed the value.  If it's still empty it was
     // changed and restored, need to restore in the complicated way.
     if (*p_cpo == NUL) {
-      set_option_value_give_err("cpo", 0L, save_cpo, 0);
+      set_option_value_give_err("cpo", CSTR_AS_OPTVAL(save_cpo), 0);
     }
     if (save_cpo_allocated) {
       free_string_option(save_cpo);

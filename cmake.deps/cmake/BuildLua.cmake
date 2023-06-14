@@ -51,12 +51,3 @@ ExternalProject_Add(lua
   BUILD_IN_SOURCE 1
   BUILD_COMMAND ${MAKE_PRG} ${LUA_INSTALL_TOP_ARG} ${LUA_TARGET}
   INSTALL_COMMAND ${MAKE_PRG} ${LUA_INSTALL_TOP_ARG} install)
-
-set(BUSTED ${DEPS_BIN_DIR}/busted)
-set(BUSTED_LUA ${BUSTED}-lua)
-
-add_custom_command(OUTPUT ${BUSTED_LUA}
-  COMMAND sed -e 's/^exec/exec $$LUA_DEBUGGER/' -e 's/jit//g' < ${BUSTED} > ${BUSTED_LUA} && chmod +x ${BUSTED_LUA}
-  DEPENDS lua busted ${BUSTED})
-add_custom_target(busted-lua ALL
-  DEPENDS ${DEPS_BIN_DIR}/busted-lua)

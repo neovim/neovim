@@ -1,5 +1,3 @@
--- Tests for ":highlight".
-
 local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed = helpers.clear, helpers.feed
@@ -8,10 +6,11 @@ local eq = helpers.eq
 local poke_eventloop = helpers.poke_eventloop
 local exc_exec = helpers.exc_exec
 local feed_command = helpers.feed_command
+local exec = helpers.exec
+
+before_each(clear)
 
 describe(':highlight', function()
-  setup(clear)
-
   it('is working', function()
     local screen = Screen.new(35, 10)
     screen:attach()
@@ -92,5 +91,32 @@ describe(':highlight', function()
 
 
       Group3         xxx cleared]])
+  end)
+end)
+
+describe('Visual selection highlight', function()
+  -- oldtest: Test_visual_sbr()
+  it("when 'showbreak' is set", function()
+    local screen = Screen.new(60, 6)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {background = Screen.colors.LightGrey},  -- Visual
+      [2] = {bold = true},  -- ModeMsg
+    })
+    screen:attach()
+    exec([[
+      set showbreak=>
+      call setline(1, 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.')
+      exe "normal! z1\<CR>"
+    ]])
+    feed('v$')
+    screen:expect([[
+      {0:>}{1:n, no sea takimata sanctus est Lorem ipsum dolor sit amet.}^ |
+                                                                  |
+                                                                  |
+                                                                  |
+                                                                  |
+      {2:-- VISUAL --}                                                |
+    ]])
   end)
 end)

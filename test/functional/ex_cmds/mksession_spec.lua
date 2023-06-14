@@ -81,13 +81,13 @@ describe(':mksession', function()
       local buf_count = #meths.list_bufs()
       eq(2, buf_count)
 
-      eq('terminal', meths.buf_get_option(0, 'buftype'))
+      eq('terminal', meths.get_option_value('buftype', {}))
 
       test_terminal_session_disabled(2)
 
       -- no terminal should be set. As a side effect we end up with a blank buffer
-      eq('', meths.buf_get_option(meths.list_bufs()[1], 'buftype'))
-      eq('', meths.buf_get_option(meths.list_bufs()[2], 'buftype'))
+      eq('', meths.get_option_value('buftype', { buf = meths.list_bufs()[1] }))
+      eq('', meths.get_option_value('buftype', { buf = meths.list_bufs()[2] }))
     end
   )
 
@@ -112,7 +112,7 @@ describe(':mksession', function()
 
   it('do not restore :terminal if not set in sessionoptions, only buffer #13078', function()
     command('terminal')
-    eq('terminal', meths.buf_get_option(0, 'buftype'))
+    eq('terminal', meths.get_option_value('buftype', {}))
 
     local buf_count = #meths.list_bufs()
     eq(1, buf_count)
@@ -120,7 +120,7 @@ describe(':mksession', function()
     test_terminal_session_disabled(1)
 
     -- no terminal should be set
-    eq('', meths.buf_get_option(0, 'buftype'))
+    eq('', meths.get_option_value('buftype', {}))
   end)
 
   it('restores tab-local working directories', function()
@@ -249,7 +249,7 @@ describe(':mksession', function()
       style = 'minimal',
     }
     meths.open_win(buf, false, config)
-    local cmdheight = meths.get_option('cmdheight')
+    local cmdheight = meths.get_option_value('cmdheight', {})
     command('mksession ' .. session_file)
 
     -- Create a new test instance of Nvim.
@@ -262,7 +262,7 @@ describe(':mksession', function()
     -- window was not restored.
     eq(1, funcs.winnr('$'))
     -- The command-line height should remain the same as it was.
-    eq(cmdheight, meths.get_option('cmdheight'))
+    eq(cmdheight, meths.get_option_value('cmdheight', {}))
 
     os.remove(tmpfile)
   end)

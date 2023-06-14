@@ -411,7 +411,7 @@ use >lua
   extid = vim.api.nvim_buf_set_extmark(buf, ns_id, line, col_start, {end_col = col_end, hl_group = hl_group})
 
   -- example: modify the extmark's highlight group
-  vim.api.nvim_buf_set_extmark(buf, ns_id, NEW_HL_GROUP, line, col_start, {end_col = col_end, hl_group = hl_group, id = extid})
+  vim.api.nvim_buf_set_extmark(buf, ns_id, line, col_start, {end_col = col_end, hl_group = NEW_HL_GROUP, id = extid})
 
   -- example: change the highlight's position
   vim.api.nvim_buf_set_extmark(buf, ns_id, NEW_LINE, col_start, {end_col = col_end, hl_group = NEW_HL_GROUP, id = extid})
@@ -486,7 +486,7 @@ Example: create a float with scratch buffer: >vim
         \ 'row': 1, 'anchor': 'NW', 'style': 'minimal'}
     let win = nvim_open_win(buf, 0, opts)
     " optional: change highlight, otherwise Pmenu is used
-    call nvim_win_set_option(win, 'winhl', 'Normal:MyHighlight')
+    call nvim_set_option_value('winhl', 'Normal:MyHighlight', {'win': win})
 <
 
 ==============================================================================
@@ -1486,14 +1486,16 @@ nvim_set_keymap({mode}, {lhs}, {rhs}, {*opts})             *nvim_set_keymap()*
 
     Parameters: ~
       • {mode}  Mode short-name (map command prefix: "n", "i", "v", "x", …) or
-                "!" for |:map!|, or empty string for |:map|.
+                "!" for |:map!|, or empty string for |:map|. "ia", "ca" or
+                "!a" for abbreviation in Insert mode, Cmdline mode, or both,
+                respectively
       • {lhs}   Left-hand-side |{lhs}| of the mapping.
       • {rhs}   Right-hand-side |{rhs}| of the mapping.
       • {opts}  Optional parameters map: Accepts all |:map-arguments| as keys
                 except |<buffer>|, values are booleans (default false). Also:
                 • "noremap" non-recursive mapping |:noremap|
                 • "desc" human-readable description.
-                • "callback" Lua function called when the mapping is executed.
+                • "callback" Lua function called in place of {rhs}.
                 • "replace_keycodes" (boolean) When "expr" is true, replace
                   keycodes in the resulting string (see
                   |nvim_replace_termcodes()|). Returning nil from the Lua
@@ -1795,6 +1797,7 @@ nvim_create_user_command({name}, {command}, {*opts})
                    • fargs: (table) The args split by unescaped whitespace
                      (when more than one argument is allowed), if any
                      |<f-args>|
+                   • nargs: (string) Number of arguments |:command-nargs|
                    • bang: (boolean) "true" if the command was executed with a
                      ! modifier |<bang>|
                    • line1: (number) The starting line of the command range
@@ -1916,25 +1919,6 @@ nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
 ==============================================================================
 Options Functions                                                *api-options*
 
-nvim_buf_get_option({buffer}, {name})                  *nvim_buf_get_option()*
-    Gets a buffer option value
-
-    Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
-      • {name}    Option name
-
-    Return: ~
-        Option value
-
-nvim_buf_set_option({buffer}, {name}, {value})         *nvim_buf_set_option()*
-    Sets a buffer option value. Passing `nil` as value deletes the option
-    (only works if there's a global fallback)
-
-    Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
-      • {name}    Option name
-      • {value}   Option value
-
 nvim_get_all_options_info()                      *nvim_get_all_options_info()*
     Gets the option information for all options.
 
@@ -1943,15 +1927,6 @@ nvim_get_all_options_info()                      *nvim_get_all_options_info()*
 
     Return: ~
         dictionary of all options
-
-nvim_get_option({name})                                    *nvim_get_option()*
-    Gets the global value of an option.
-
-    Parameters: ~
-      • {name}  Option name
-
-    Return: ~
-        Option value (global)
 
 nvim_get_option_info2({name}, {*opts})               *nvim_get_option_info2()*
     Gets the option information for one option from arbitrary buffer or window
@@ -2009,13 +1984,6 @@ nvim_get_option_value({name}, {*opts})               *nvim_get_option_value()*
     Return: ~
         Option value
 
-nvim_set_option({name}, {value})                           *nvim_set_option()*
-    Sets the global value of an option.
-
-    Parameters: ~
-      • {name}   Option name
-      • {value}  New option value
-
                                                      *nvim_set_option_value()*
 nvim_set_option_value({name}, {value}, {*opts})
     Sets the value of an option. The behavior of this function matches that of
@@ -2032,25 +2000,6 @@ nvim_set_option_value({name}, {value}, {*opts})
                    |:setglobal| and |:setlocal|, respectively.
                  • win: |window-ID|. Used for setting window local option.
                  • buf: Buffer number. Used for setting buffer local option.
-
-nvim_win_get_option({window}, {name})                  *nvim_win_get_option()*
-    Gets a window option value
-
-    Parameters: ~
-      • {window}  Window handle, or 0 for current window
-      • {name}    Option name
-
-    Return: ~
-        Option value
-
-nvim_win_set_option({window}, {name}, {value})         *nvim_win_set_option()*
-    Sets a window option value. Passing `nil` as value deletes the option
-    (only works if there's a global fallback)
-
-    Parameters: ~
-      • {window}  Window handle, or 0 for current window
-      • {name}    Option name
-      • {value}   Option value
 
 
 ==============================================================================
@@ -2661,12 +2610,15 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {*opts})
                     • "overlay": display over the specified column, without
                       shifting the underlying text.
                     • "right_align": display right aligned in the window.
+                    • "inline": display at the specified column, and shift the
+                      buffer text to the right as needed
 
                   • virt_text_win_col : position the virtual text at a fixed
                     window column (starting from the first text column)
                   • virt_text_hide : hide the virtual text when the background
-                    text is selected or hidden due to horizontal scroll
-                    'nowrap'
+                    text is selected or hidden because of scrolling with
+                    'nowrap' or 'smoothscroll'. Currently only affects
+                    "overlay" virt_text.
                   • hl_mode : control how highlights are combined with the
                     highlights of the text. Currently only affects virt_text
                     highlights, but might affect `hl_group` in later versions.
@@ -3292,7 +3244,7 @@ nvim_create_autocmd({event}, {*opts})                  *nvim_create_autocmd()*
         vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
           pattern = {"*.c", "*.h"},
           callback = function(ev)
-            print(string.format('event fired: s', vim.inspect(ev)))
+            print(string.format('event fired: %s', vim.inspect(ev)))
           end
         })
 <

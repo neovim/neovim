@@ -14,24 +14,24 @@ local retry = helpers.retry
 
 before_each(clear)
 
-describe('vim.loop', function()
+describe('vim.uv', function()
 
   it('version', function()
-    assert(funcs.luaeval('vim.loop.version()')>=72961, "libuv version too old")
-    matches("(%d+)%.(%d+)%.(%d+)", funcs.luaeval('vim.loop.version_string()'))
+    assert(funcs.luaeval('vim.uv.version()')>=72961, "libuv version too old")
+    matches("(%d+)%.(%d+)%.(%d+)", funcs.luaeval('vim.uv.version_string()'))
   end)
 
   it('timer', function()
     exec_lua('vim.api.nvim_set_var("coroutine_cnt", 0)', {})
 
     local code=[[
-      local loop = vim.loop
+      local uv = vim.uv
 
       local touch = 0
       local function wait(ms)
         local this = coroutine.running()
         assert(this)
-        local timer = loop.new_timer()
+        local timer = uv.new_timer()
         timer:start(ms, 0, vim.schedule_wrap(function ()
           timer:close()
           touch = touch + 1
@@ -73,7 +73,7 @@ describe('vim.loop', function()
 
     -- deferred API functions are disabled, as their safety can't be guaranteed
     exec_lua([[
-      local timer = vim.loop.new_timer()
+      local timer = vim.uv.new_timer()
       timer:start(20, 0, function ()
         _G.is_fast = vim.in_fast_event()
         timer:close()
@@ -101,7 +101,7 @@ describe('vim.loop', function()
     -- callbacks can be scheduled to be executed in the main event loop
     -- where the entire API is available
     exec_lua([[
-      local timer = vim.loop.new_timer()
+      local timer = vim.uv.new_timer()
       timer:start(20, 0, vim.schedule_wrap(function ()
         _G.is_fast = vim.in_fast_event()
         timer:close()
@@ -127,7 +127,7 @@ describe('vim.loop', function()
 
     -- fast (not deferred) API functions are allowed to be called directly
     exec_lua([[
-      local timer = vim.loop.new_timer()
+      local timer = vim.uv.new_timer()
       timer:start(20, 0, function ()
         timer:close()
         -- input is queued for processing after the callback returns
@@ -151,6 +151,6 @@ describe('vim.loop', function()
   end)
 
   it("is equal to require('luv')", function()
-    eq(true, exec_lua("return vim.loop == require('luv')"))
+    eq(true, exec_lua("return vim.uv == require('luv')"))
   end)
 end)

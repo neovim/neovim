@@ -17,6 +17,18 @@ describe('version', function()
     eq({ major = 42, minor = 3, patch = 99 }, exec_lua("return vim.version.parse('v42.3.99')"))
   end)
 
+  it('version() returns Nvim version', function()
+    local expected = exec_lua('return vim.fn.api_info().version')
+    local actual = exec_lua('return vim.version()')
+    eq(expected.major, actual.major)
+    eq(expected.minor, actual.minor)
+    eq(expected.patch, actual.patch)
+    eq(expected.prerelease and 'dev' or nil, actual.prerelease)
+
+    -- tostring() #23863
+    matches([[%d+%.%d+%.%d+]], exec_lua('return tostring(vim.version())'))
+  end)
+
   describe('_version()', function()
     local tests = {
       ['v1.2.3'] = { major = 1, minor = 2, patch = 3 },
@@ -40,6 +52,8 @@ describe('version', function()
       ['=1.2.3'] = { from = { 1, 2, 3 }, to = { 1, 2, 4 } },
       ['>1.2.3'] = { from = { 1, 2, 4 } },
       ['>=1.2.3'] = { from = { 1, 2, 3 } },
+      ['<1.2.3'] = { from = { 0, 0, 0 }, to = { 1, 2, 3 } },
+      ['<=1.2.3'] = { from = { 0, 0, 0 }, to = { 1, 2, 4 } },
       ['~1.2.3'] = { from = { 1, 2, 3 }, to = { 1, 3, 0 } },
       ['^1.2.3'] = { from = { 1, 2, 3 }, to = { 2, 0, 0 } },
       ['^0.2.3'] = { from = { 0, 2, 3 }, to = { 0, 3, 0 } },

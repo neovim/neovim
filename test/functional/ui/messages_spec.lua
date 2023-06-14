@@ -1273,7 +1273,7 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
       {1:~                                                           }|
                                                                   |
     ]])
-    eq(1, meths.get_option('cmdheight'))
+    eq(1, meths.get_option_value('cmdheight', {}))
   end)
 end)
 

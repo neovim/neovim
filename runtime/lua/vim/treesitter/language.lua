@@ -27,6 +27,11 @@ function M.get_lang(filetype)
   if filetype == '' then
     return
   end
+  if ft_to_lang[filetype] then
+    return ft_to_lang[filetype]
+  end
+  -- support subfiletypes like html.glimmer
+  filetype = vim.split(filetype, '.', { plain = true })[1]
   return ft_to_lang[filetype]
 end
 

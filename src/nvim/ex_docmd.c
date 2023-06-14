@@ -1454,7 +1454,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   }
   // Fail if command is invalid
   if (eap->cmdidx == CMD_SIZE) {
-    STRCPY(IObuff, _(e_not_an_editor_command));
+    xstrlcpy(IObuff, _(e_not_an_editor_command), IOSIZE);
     // If the modifier was parsed OK the error must be in the following command
     char *cmdname = after_modifier ? after_modifier : cmdline;
     append_command(cmdname);
@@ -1690,7 +1690,7 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
       && !(eap->cmdidx == CMD_file && *eap->arg == NUL)
       && !IS_USER_CMDIDX(eap->cmdidx)
       && curbuf_locked()) {
-    ERROR(_(e_cannot_edit_other_buf));
+    goto end;
   }
 
   correct_range(eap);
@@ -2044,7 +2044,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // Check for wrong commands.
   if (ea.cmdidx == CMD_SIZE) {
     if (!ea.skip) {
-      STRCPY(IObuff, _(e_not_an_editor_command));
+      xstrlcpy(IObuff, _(e_not_an_editor_command), IOSIZE);
       // If the modifier was parsed OK the error must be in the following
       // command
       char *cmdname = after_modifier ? after_modifier : *cmdlinep;
@@ -2321,7 +2321,7 @@ doend:
   if (errormsg != NULL && *errormsg != NUL && !did_emsg) {
     if (flags & DOCMD_VERBOSE) {
       if (errormsg != IObuff) {
-        STRCPY(IObuff, errormsg);
+        xstrlcpy(IObuff, errormsg, IOSIZE);
         errormsg = IObuff;
       }
       append_command(*ea.cmdlinep);
@@ -2888,7 +2888,7 @@ static void append_command(char *cmd)
     d -= utf_head_off(IObuff, d);
     STRCPY(d, "...");
   }
-  STRCAT(IObuff, ": ");
+  xstrlcat(IObuff, ": ", IOSIZE);
   d = IObuff + strlen(IObuff);
   while (*s != NUL && d - IObuff + 5 < IOSIZE) {
     if ((uint8_t)s[0] == 0xc2 && (uint8_t)s[1] == 0xa0) {
@@ -4589,8 +4589,9 @@ static void ex_cquit(exarg_T *eap)
   getout(eap->addr_count > 0 ? (int)eap->line2 : EXIT_FAILURE);
 }
 
-/// ":qall": try to quit all windows
-static void ex_quit_all(exarg_T *eap)
+/// Do preparations for "qall" and "wqall".
+/// Returns FAIL when quitting should be aborted.
+int before_quit_all(exarg_T *eap)
 {
   if (cmdwin_type != 0) {
     if (eap->forceit) {
@@ -4598,19 +4599,28 @@ static void ex_quit_all(exarg_T *eap)
     } else {
       cmdwin_result = K_XF2;
     }
-    return;
+    return FAIL;
   }
 
   // Don't quit while editing the command line.
   if (text_locked()) {
     text_locked_msg();
-    return;
+    return FAIL;
   }
 
   if (before_quit_autocmds(curwin, true, eap->forceit)) {
-    return;
+    return FAIL;
   }
 
+  return OK;
+}
+
+/// ":qall": try to quit all windows
+static void ex_quit_all(exarg_T *eap)
+{
+  if (before_quit_all(eap) == FAIL) {
+    return;
+  }
   exiting = true;
   if (eap->forceit || !check_changed_any(false, false)) {
     getout(0);
@@ -4865,9 +4875,6 @@ static void ex_stop(exarg_T *eap)
   ui_call_suspend();
   ui_flush();
 
-  maketitle();
-  resettitle();  // force updating the title
-  ui_refresh();  // may have resized window
   apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
 }
 
@@ -6892,12 +6899,10 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       break;
 
     case SPEC_AFILE:  // file name for autocommand
-      if (autocmd_fname != NULL
-          && !path_is_absolute(autocmd_fname)
-          // For CmdlineEnter and related events, <afile> is not a path! #9348
-          && !strequal("/", autocmd_fname)) {
+      if (autocmd_fname != NULL && !autocmd_fname_full) {
         // Still need to turn the fname into a full path.  It was
         // postponed to avoid a delay when <afile> is not used.
+        autocmd_fname_full = true;
         result = FullName_save(autocmd_fname, false);
         // Copy into `autocmd_fname`, don't reassign it. #8165
         xstrlcpy(autocmd_fname, result, MAXPATHL);
@@ -7209,7 +7214,7 @@ static void ex_setfiletype(exarg_T *eap)
     arg += 9;
   }
 
-  set_option_value_give_err("filetype", 0L, arg, OPT_LOCAL);
+  set_option_value_give_err("filetype", CSTR_AS_OPTVAL(arg), OPT_LOCAL);
   if (arg != eap->arg) {
     did_filetype = false;
   }

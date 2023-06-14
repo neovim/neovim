@@ -37,7 +37,7 @@ describe('treesitter perf', function()
         return "qq" .. acc .. "q"
       end
 
-      local start = vim.loop.hrtime()
+      local start = vim.uv.hrtime()
       keys(mk_keys(10))
 
       for _ = 1, 100 do
@@ -45,7 +45,7 @@ describe('treesitter perf', function()
         vim.cmd'redraw!'
       end
 
-      return vim.loop.hrtime() - start
+      return vim.uv.hrtime() - start
     ]]
 
   end)

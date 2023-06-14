@@ -208,6 +208,10 @@ end
 ---@private
 function M.config(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return
+  end
+
   local path = vim.fs.normalize(vim.api.nvim_buf_get_name(bufnr))
   if vim.bo[bufnr].buftype ~= '' or not vim.bo[bufnr].modifiable or path == '' then
     return

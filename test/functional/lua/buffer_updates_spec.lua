@@ -415,7 +415,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     it('opening lines', function()
         local check_events = setup_eventcheck(verify, origlines)
-        -- meths.buf_set_option(0, 'autoindent', true)
+        -- meths.set_option_value('autoindent', true, {})
         feed 'Go'
         check_events {
           { "test1", "bytes", 1, 4, 7, 0, 114, 0, 0, 0, 1, 0, 1 };
@@ -428,7 +428,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     it('opening lines with autoindent', function()
         local check_events = setup_eventcheck(verify, origlines)
-        meths.buf_set_option(0, 'autoindent', true)
+        meths.set_option_value('autoindent', true, {})
         feed 'Go'
         check_events {
           { "test1", "bytes", 1, 4, 7, 0, 114, 0, 0, 0, 1, 0, 5 };
@@ -462,8 +462,8 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     it('continuing comments with fo=or', function()
       local check_events = setup_eventcheck(verify, {'// Comment'})
-      meths.buf_set_option(0, 'formatoptions', 'ro')
-      meths.buf_set_option(0, 'filetype', 'c')
+      meths.set_option_value('formatoptions', 'ro', {})
+      meths.set_option_value('filetype', 'c', {})
       feed 'A<CR>'
       check_events {
         { "test1", "bytes", 1, 4, 0, 10, 10, 0, 0, 0, 1, 3, 4 };
@@ -603,7 +603,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
     it('inccomand=nosplit and substitute', function()
       local check_events = setup_eventcheck(verify,
                                             {"abcde", "12345"})
-      meths.set_option('inccommand', 'nosplit')
+      meths.set_option_value('inccommand', 'nosplit', {})
 
       -- linewise substitute
       feed(':%s/bcd/')
@@ -998,7 +998,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
     it("virtual edit", function ()
       local check_events = setup_eventcheck(verify, { "", "	" })
 
-      meths.set_option("virtualedit", "all")
+      meths.set_option_value('virtualedit', "all", {})
 
       feed [[<Right><Right>iab<ESC>]]
 
@@ -1164,11 +1164,16 @@ describe('lua: nvim_buf_attach on_bytes', function()
     end)
 
     it("works with accepting spell suggestions", function()
-      local check_events = setup_eventcheck(verify, {"hallo"})
+      local check_events = setup_eventcheck(verify, {"hallo world", "hallo world"})
 
       feed("gg0z=4<cr><cr>") -- accepts 'Hello'
       check_events {
         { "test1", "bytes", 1, 3, 0, 0, 0, 0, 2, 2, 0, 2, 2 };
+      }
+
+      command("spellrepall") -- replaces whole words
+      check_events {
+        { "test1", "bytes", 1, 4, 1, 0, 12, 0, 5, 5, 0, 5, 5 };
       }
     end)
 

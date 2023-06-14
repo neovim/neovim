@@ -218,9 +218,9 @@ func Test_Ex_echo_backslash()
   let bsl = '\\\\'
   let bsl2 = '\\\'
   call assert_fails('call feedkeys("Qecho " .. bsl .. "\nvisual\n", "xt")',
-        \ "E15: Invalid expression: \\\\")
+        \ 'E15: Invalid expression: "\\"')
   call assert_fails('call feedkeys("Qecho " .. bsl2 .. "\nm\nvisual\n", "xt")',
-        \ "E15: Invalid expression: \\\nm")
+        \ "E15: Invalid expression: \"\\\nm\"")
 endfunc
 
 func Test_ex_mode_errors()

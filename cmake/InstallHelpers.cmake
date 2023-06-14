@@ -7,9 +7,6 @@ if(CMAKE_SYSTEM_NAME MATCHES "BSD" AND NOT DEFINED CMAKE_INSTALL_MANDIR)
   endif()
 endif()
 
-# For $CMAKE_INSTALL_{DATAROOT,MAN, ...}DIR
-include(GNUInstallDirs)
-
 # This will create any directories that need to be created in the destination
 # path with the typical owner, group, and user permissions--independent of the
 # umask setting.

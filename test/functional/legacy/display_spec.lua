@@ -196,17 +196,17 @@ describe('display', function()
   end)
 
   -- oldtest: Test_display_long_lastline()
-  it('display "lastline" shows correct text when end of wrapped line is deleted', function()
+  it('"lastline" shows correct text when end of wrapped line is deleted', function()
     local screen = Screen.new(35, 14)
     screen:attach()
     exec([[
-      set display=lastline scrolloff=5
+      set display=lastline smoothscroll scrolloff=0
       call setline(1, [
-        \'aaaaa'->repeat(100),
+        \'aaaaa'->repeat(150),
         \'bbbbb '->repeat(7) .. 'ccccc '->repeat(7) .. 'ddddd '->repeat(7)
       \])
     ]])
-    feed('482|')
+    feed('736|')
     screen:expect([[
       <<<aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -219,10 +219,11 @@ describe('display', function()
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      aaaaaaaaaaaaaaaaaaaaaaaaaa^aaaaaaaaa|
-      aaaaaaaaaa                         |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      ^aaaaaaaaaaaaaaa                    |
                                          |
     ]])
+    -- The correct part of the last line is moved into view.
     feed('D')
     screen:expect([[
       <<<aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -236,9 +237,106 @@ describe('display', function()
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      aaaaaaaaaaaaaaaaaaaaaaaaa^a         |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa^a|
       bbbbb bbbbb bbbbb bbbbb bbbbb bb@@@|
                                          |
+    ]])
+    -- "w_skipcol" does not change because the topline is still long enough
+    -- to maintain the current skipcol.
+    feed('g04l11gkD')
+    screen:expect([[
+      <<<^a                               |
+      bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb|
+       bbbbb ccccc ccccc ccccc ccccc cccc|
+      c ccccc ccccc ddddd ddddd ddddd ddd|
+      dd ddddd ddddd ddddd               |
+      ~                                  |
+      ~                                  |
+      ~                                  |
+      ~                                  |
+      ~                                  |
+      ~                                  |
+      ~                                  |
+      ~                                  |
+                                         |
+    ]])
+    -- "w_skipcol" is reset to bring the entire topline into view because
+    -- the line length is now smaller than the current skipcol + marker.
+    feed('x')
+    screen:expect([[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aa^a                                |
+      bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb|
+       bbbbb ccccc ccccc ccccc ccccc cccc|
+      c ccccc ccccc ddddd ddddd ddddd @@@|
+                                         |
+    ]])
+  end)
+
+  -- oldtest: Test_display_cursor_long_line()
+  it("correctly shows line that doesn't fit in the window", function()
+    local screen = Screen.new(75, 8)
+    screen:attach()
+    exec([[
+      call setline(1, ['a', 'b ' .. 'bbbbb'->repeat(150), 'c'])
+      norm $j
+    ]])
+    screen:expect([[
+      <<<bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      b^b                                                                         |
+                                                                                 |
+    ]])
+    -- FIXME: moving the cursor above the topline does not set w_skipcol
+    -- correctly with cpo+=n and zero scrolloff (curs_columns() extra == 1).
+    exec('set number cpo+=n scrolloff=0')
+    feed('$0')
+    screen:expect([[
+      <<<b^bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+                                                                                 |
+    ]])
+    -- Going to the start of the line with "b" did not set w_skipcol correctly with 'smoothscroll'.
+    exec('set smoothscroll')
+    feed('$b')
+    screen:expect([[
+        2 b ^bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+                                                                                 |
+    ]])
+    -- Same for "ge".
+    feed('$ge')
+    screen:expect([[
+        2 ^b bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+                                                                                 |
     ]])
   end)
 end)

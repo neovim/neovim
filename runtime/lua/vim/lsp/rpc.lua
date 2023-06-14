@@ -1,4 +1,4 @@
-local uv = vim.loop
+local uv = vim.uv
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 local validate, schedule, schedule_wrap = vim.validate, vim.schedule, vim.schedule_wrap
@@ -12,32 +12,6 @@ local is_win = uv.os_uname().version:find('Windows')
 local function is_dir(filename)
   local stat = uv.fs_stat(filename)
   return stat and stat.type == 'directory' or false
-end
-
----@private
---- Merges current process env with the given env and returns the result as
---- a list of "k=v" strings.
----
---- <pre>
---- Example:
----
----  in:    { PRODUCTION="false", PATH="/usr/bin/", PORT=123, HOST="0.0.0.0", }
----  out:   { "PRODUCTION=false", "PATH=/usr/bin/", "PORT=123", "HOST=0.0.0.0", }
---- </pre>
----@param env (table) table of environment variable assignments
----@returns (table) list of `"k=v"` strings
-local function env_merge(env)
-  if env == nil then
-    return env
-  end
-  -- Merge.
-  env = vim.tbl_extend('force', vim.fn.environ(), env)
-  local final_env = {}
-  for k, v in pairs(env) do
-    assert(type(k) == 'string', 'env must be a dict')
-    table.insert(final_env, k .. '=' .. tostring(v))
-  end
-  return final_env
 end
 
 ---@private
@@ -658,89 +632,85 @@ end
 --- - `is_closing()` returns a boolean indicating if the RPC is closing.
 --- - `terminate()` terminates the RPC client.
 local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
-  local _ = log.info()
-    and log.info('Starting RPC client', { cmd = cmd, args = cmd_args, extra = extra_spawn_params })
+  if log.info() then
+    log.info('Starting RPC client', { cmd = cmd, args = cmd_args, extra = extra_spawn_params })
+  end
+
   validate({
     cmd = { cmd, 's' },
     cmd_args = { cmd_args, 't' },
     dispatchers = { dispatchers, 't', true },
   })
 
-  if extra_spawn_params and extra_spawn_params.cwd then
+  extra_spawn_params = extra_spawn_params or {}
+
+  if extra_spawn_params.cwd then
     assert(is_dir(extra_spawn_params.cwd), 'cwd must be a directory')
   end
 
   dispatchers = merge_dispatchers(dispatchers)
-  local stdin = uv.new_pipe(false)
-  local stdout = uv.new_pipe(false)
-  local stderr = uv.new_pipe(false)
-  local handle, pid
+
+  local sysobj ---@type SystemObj
 
   local client = new_client(dispatchers, {
     write = function(msg)
-      stdin:write(msg)
+      sysobj:write(msg)
     end,
     is_closing = function()
-      return handle == nil or handle:is_closing()
+      return sysobj == nil or sysobj:is_closing()
     end,
     terminate = function()
-      if handle then
-        handle:kill(15)
-      end
+      sysobj:kill(15)
     end,
   })
 
-  ---@private
-  --- Callback for |vim.loop.spawn()| Closes all streams and runs the `on_exit` dispatcher.
-  ---@param code (integer) Exit code
-  ---@param signal (integer) Signal that was used to terminate (if any)
-  local function onexit(code, signal)
-    stdin:close()
-    stdout:close()
-    stderr:close()
-    handle:close()
-    dispatchers.on_exit(code, signal)
+  local handle_body = function(body)
+    client:handle_body(body)
   end
-  local spawn_params = {
-    args = cmd_args,
-    stdio = { stdin, stdout, stderr },
-    detached = not is_win,
-  }
-  if extra_spawn_params then
-    spawn_params.cwd = extra_spawn_params.cwd
-    spawn_params.env = env_merge(extra_spawn_params.env)
-    if extra_spawn_params.detached ~= nil then
-      spawn_params.detached = extra_spawn_params.detached
+
+  local stdout_handler = create_read_loop(handle_body, nil, function(err)
+    client:on_error(client_errors.READ_ERROR, err)
+  end)
+
+  local stderr_handler = function(_, chunk)
+    if chunk and log.error() then
+      log.error('rpc', cmd, 'stderr', chunk)
     end
   end
-  handle, pid = uv.spawn(cmd, spawn_params, onexit)
-  if handle == nil then
-    stdin:close()
-    stdout:close()
-    stderr:close()
+
+  local detached = not is_win
+  if extra_spawn_params.detached ~= nil then
+    detached = extra_spawn_params.detached
+  end
+
+  local cmd1 = { cmd }
+  vim.list_extend(cmd1, cmd_args)
+
+  local ok, sysobj_or_err = pcall(vim.system, cmd1, {
+    stdin = true,
+    stdout = stdout_handler,
+    stderr = stderr_handler,
+    cwd = extra_spawn_params.cwd,
+    env = extra_spawn_params.env,
+    detach = detached,
+  }, function(obj)
+    dispatchers.on_exit(obj.code, obj.signal)
+  end)
+
+  if not ok then
+    local err = sysobj_or_err --[[@as string]]
     local msg = string.format('Spawning language server with cmd: `%s` failed', cmd)
-    if string.match(pid, 'ENOENT') then
+    if string.match(err, 'ENOENT') then
       msg = msg
         .. '. The language server is either not installed, missing from PATH, or not executable.'
     else
-      msg = msg .. string.format(' with error message: %s', pid)
+      msg = msg .. string.format(' with error message: %s', err)
     end
     vim.notify(msg, vim.log.levels.WARN)
     return
   end
 
-  stderr:read_start(function(_, chunk)
-    if chunk then
-      local _ = log.error() and log.error('rpc', cmd, 'stderr', chunk)
-    end
-  end)
-
-  local handle_body = function(body)
-    client:handle_body(body)
-  end
-  stdout:read_start(create_read_loop(handle_body, nil, function(err)
-    client:on_error(client_errors.READ_ERROR, err)
-  end))
+  sysobj = sysobj_or_err --[[@as SystemObj]]
 
   return public_client(client)
 end

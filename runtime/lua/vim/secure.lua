@@ -51,7 +51,7 @@ end
 ---        trusted, or nil otherwise.
 function M.read(path)
   vim.validate({ path = { path, 's' } })
-  local fullpath = vim.loop.fs_realpath(vim.fs.normalize(path))
+  local fullpath = vim.uv.fs_realpath(vim.fs.normalize(path))
   if not fullpath then
     return nil
   end
@@ -149,13 +149,13 @@ function M.trust(opts)
 
   local fullpath
   if path then
-    fullpath = vim.loop.fs_realpath(vim.fs.normalize(path))
+    fullpath = vim.uv.fs_realpath(vim.fs.normalize(path))
   elseif bufnr then
     local bufname = vim.api.nvim_buf_get_name(bufnr)
     if bufname == '' then
       return false, 'buffer is not associated with a file'
     end
-    fullpath = vim.loop.fs_realpath(vim.fs.normalize(bufname))
+    fullpath = vim.uv.fs_realpath(vim.fs.normalize(bufname))
   else
     error('one of "path" or "bufnr" is required')
   end

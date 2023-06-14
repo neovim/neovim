@@ -989,6 +989,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
   }
 
   chartabsize_T cts;
+  bool on_NUL = false;
   init_chartabsize_arg(&cts, wp, pos->lnum, 0, line, line);
 
   // This function is used very often, do some speed optimizations.
@@ -1052,8 +1053,9 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
 
       // make sure we don't go past the end of the line
       if (*cts.cts_ptr == NUL) {
-        // NUL at end of line only takes one column
-        incr = 1;
+        // NUL at end of line only takes one column, unless there is virtual text
+        incr = MAX(1, cts.cts_cur_text_width_left + cts.cts_cur_text_width_right);
+        on_NUL = true;
         break;
       }
 
@@ -1079,8 +1081,6 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
   }
 
   if (cursor != NULL) {
-    // cursor is after inserted text
-    vcol += cts.cts_cur_text_width;
     if ((*ptr == TAB)
         && (State & MODE_NORMAL)
         && !wp->w_p_list
@@ -1089,6 +1089,13 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
       // cursor at end
       *cursor = vcol + incr - 1;
     } else {
+      if (!on_NUL) {
+        // cursor is after inserted text, unless on the NUL
+        vcol += cts.cts_cur_text_width_left;
+        if ((State & MODE_INSERT) == 0) {
+          vcol += cts.cts_cur_text_width_right;
+        }
+      }
       // cursor at start
       *cursor = vcol + head;
     }

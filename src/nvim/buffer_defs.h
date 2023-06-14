@@ -17,7 +17,8 @@ typedef struct {
 
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
+#include "nvim/extmark_defs.h"
 #include "nvim/garray.h"
 #include "nvim/grid_defs.h"
 #include "nvim/hashtab.h"
@@ -25,9 +26,6 @@ typedef struct {
 #include "nvim/map.h"
 #include "nvim/mark_defs.h"
 #include "nvim/marktree.h"
-// for float window title
-#include "nvim/extmark_defs.h"
-// for click definitions
 #include "nvim/option_defs.h"
 #include "nvim/pos.h"
 #include "nvim/statusline_defs.h"
@@ -808,6 +806,7 @@ struct file_buffer {
 
   MarkTree b_marktree[1];
   Map(uint32_t, uint32_t) b_extmark_ns[1];         // extmark namespaces
+  size_t b_virt_text_inline;                       // number of inline virtual texts
   size_t b_virt_line_blocks;    // number of virt_line blocks
   size_t b_signs;               // number of sign extmarks
   size_t b_signs_with_text;     // number of sign extmarks with text
@@ -1291,8 +1290,9 @@ struct window_S {
   linenr_T w_stl_line_count;         // line count when last redrawn
   int w_stl_topfill;                 // topfill when last redrawn
   char w_stl_empty;                  // true if elements show 0-1 (empty line)
-  int w_stl_state;                   // State when last redrawn
   int w_stl_recording;               // reg_recording when last redrawn
+  int w_stl_state;                   // get_real_state() when last redrawn
+  int w_stl_visual_mode;             // VIsual_mode when last redrawn
 
   int w_alt_fnum;                   // alternate file (for # and CTRL-^)
 

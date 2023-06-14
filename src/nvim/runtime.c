@@ -512,7 +512,7 @@ Array runtime_inspect(void)
   for (size_t i = 0; i < kv_size(path); i++) {
     SearchPathItem *item = &kv_A(path, i);
     Array entry = ARRAY_DICT_INIT;
-    ADD(entry, STRING_OBJ(cstr_to_string(item->path)));
+    ADD(entry, CSTR_TO_OBJ(item->path));
     ADD(entry, BOOLEAN_OBJ(item->after));
     if (item->has_lua != kNone) {
       ADD(entry, BOOLEAN_OBJ(item->has_lua == kTrue));
@@ -568,7 +568,7 @@ ArrayOf(String) runtime_get_named_common(bool lua, Array pat, bool all,
                                        item->path, pat_item.data.string.data);
         if (size < buf_len) {
           if (os_file_is_readable(buf)) {
-            ADD(rv, STRING_OBJ(cstr_to_string(buf)));
+            ADD(rv, CSTR_TO_OBJ(buf));
             if (!all) {
               goto done;
             }
@@ -646,21 +646,20 @@ int do_in_path_and_pp(char *path, char *name, int flags, DoInRuntimepathCB callb
   return done;
 }
 
-static void push_path(RuntimeSearchPath *search_path, Map(String, handle_T) *rtp_used, char *entry,
+static void push_path(RuntimeSearchPath *search_path, Set(String) *rtp_used, char *entry,
                       bool after)
 {
-  handle_T h = map_get(String, handle_T)(rtp_used, cstr_as_string(entry));
-  if (h == 0) {
-    char *allocated = xstrdup(entry);
-    map_put(String, handle_T)(rtp_used, cstr_as_string(allocated), 1);
-    kv_push(*search_path, ((SearchPathItem){ allocated, after, kNone }));
+  String *key_alloc;
+  if (set_put_ref(String, rtp_used, cstr_as_string(entry), &key_alloc)) {
+    *key_alloc = cstr_to_string(entry);
+    kv_push(*search_path, ((SearchPathItem){ key_alloc->data, after, kNone }));
   }
 }
 
-static void expand_rtp_entry(RuntimeSearchPath *search_path, Map(String, handle_T) *rtp_used,
-                             char *entry, bool after)
+static void expand_rtp_entry(RuntimeSearchPath *search_path, Set(String) *rtp_used, char *entry,
+                             bool after)
 {
-  if (map_get(String, handle_T)(rtp_used, cstr_as_string(entry))) {
+  if (set_has(String, rtp_used, cstr_as_string(entry))) {
     return;
   }
 
@@ -679,7 +678,7 @@ static void expand_rtp_entry(RuntimeSearchPath *search_path, Map(String, handle_
   }
 }
 
-static void expand_pack_entry(RuntimeSearchPath *search_path, Map(String, handle_T) *rtp_used,
+static void expand_pack_entry(RuntimeSearchPath *search_path, Set(String) *rtp_used,
                               CharVec *after_path, char *pack_entry, size_t pack_entry_len)
 {
   static char buf[MAXPATHL];
@@ -712,10 +711,8 @@ static bool path_is_after(char *buf, size_t buflen)
 RuntimeSearchPath runtime_search_path_build(void)
 {
   kvec_t(String) pack_entries = KV_INITIAL_VALUE;
-  // TODO(bfredl): these should just be sets, when Set(String) is do merge to
-  // master.
   Map(String, handle_T) pack_used = MAP_INIT;
-  Map(String, handle_T) rtp_used = MAP_INIT;
+  Set(String) rtp_used = SET_INIT;
   RuntimeSearchPath search_path = KV_INITIAL_VALUE;
   CharVec after_path = KV_INITIAL_VALUE;
 
@@ -744,7 +741,7 @@ RuntimeSearchPath runtime_search_path_build(void)
     // fact: &rtp entries can contain wild chars
     expand_rtp_entry(&search_path, &rtp_used, buf, false);
 
-    handle_T *h = map_ref(String, handle_T)(&pack_used, cstr_as_string(buf), false);
+    handle_T *h = map_ref(String, handle_T)(&pack_used, cstr_as_string(buf), NULL);
     if (h) {
       (*h)++;
       expand_pack_entry(&search_path, &rtp_used, &after_path, buf, buflen);
@@ -774,8 +771,8 @@ RuntimeSearchPath runtime_search_path_build(void)
   // strings are not owned
   kv_destroy(pack_entries);
   kv_destroy(after_path);
-  map_destroy(String, handle_T)(&pack_used);
-  map_destroy(String, handle_T)(&rtp_used);
+  map_destroy(String, &pack_used);
+  set_destroy(String, &rtp_used);
 
   return search_path;
 }
@@ -1009,7 +1006,7 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
     xstrlcat(new_rtp, afterdir, new_rtp_capacity);
   }
 
-  set_option_value_give_err("rtp", 0L, new_rtp, 0);
+  set_option_value_give_err("rtp", CSTR_AS_OPTVAL(new_rtp), 0);
   xfree(new_rtp);
   retval = OK;
 
@@ -1547,7 +1544,7 @@ static inline char *add_dir(char *dest, const char *const dir, const size_t dir_
     xstrlcpy(IObuff, appname, appname_len + 1);
 #if defined(MSWIN)
     if (type == kXDGDataHome || type == kXDGStateHome) {
-      STRCAT(IObuff, "-data");
+      xstrlcat(IObuff, "-data", IOSIZE);
       appname_len += 5;
     }
 #endif
@@ -1929,8 +1926,8 @@ static void cmd_source_buffer(const exarg_T *const eap)
     .buf = ga.ga_data,
     .offset = 0,
   };
-  if (curbuf->b_fname
-      && path_with_extension(curbuf->b_fname, "lua")) {
+  if (strequal(curbuf->b_p_ft, "lua")
+      || (curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua"))) {
     nlua_source_using_linegetter(get_str_line, (void *)&cookie, ":source (no file)");
   } else {
     source_using_linegetter((void *)&cookie, get_str_line, ":source (no file)");

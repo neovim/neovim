@@ -439,7 +439,7 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
 static void compose_debug(Integer startrow, Integer endrow, Integer startcol, Integer endcol,
                           int syn_id, bool delay)
 {
-  if (!(rdb_flags & RDB_COMPOSITOR)) {
+  if (!(rdb_flags & RDB_COMPOSITOR) || startcol >= endcol) {
     return;
   }
 

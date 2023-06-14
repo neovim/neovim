@@ -101,12 +101,13 @@ local function check_emsg(f, msg)
     saved_last_msg_hist = nil
   end
   local ret = {f()}
+  local last_msg = lib.last_msg_hist ~= nil and ffi.string(lib.last_msg_hist.msg) or nil
   if msg ~= nil then
-    eq(msg, ffi.string(lib.last_msg_hist.msg))
+    eq(msg, last_msg)
     neq(saved_last_msg_hist, lib.last_msg_hist)
   else
     if saved_last_msg_hist ~= lib.last_msg_hist then
-      eq(nil, ffi.string(lib.last_msg_hist.msg))
+      eq(nil, last_msg)
     else
       eq(saved_last_msg_hist, lib.last_msg_hist)
     end
@@ -1429,15 +1430,16 @@ describe('typval.c', function()
       end
       describe('str()', function()
         itp('returns correct string', function()
-          local l = list(int(1), int(2), int(3), int(4), int(5))
+          local l = list(int(1), 2.5, int(3), int(4), int(5))
           alloc_log:clear()
 
           eq('1', tv_list_find_str(l, -5))
+          eq('2.5', tv_list_find_str(l, 1))
           eq('5', tv_list_find_str(l, 4))
           eq('3', tv_list_find_str(l, 2))
           eq('3', tv_list_find_str(l, -3))
 
-          alloc_log:check({})
+          alloc_log:check({a.freed(alloc_log.null)})
         end)
         itp('returns string when used with VAR_STRING items', function()
           local l = list('1', '2', '3', '4', '5')
@@ -1465,14 +1467,12 @@ describe('typval.c', function()
           eq(nil, tv_list_find_str(l, 5, 'E684: List index out of range: 5'))
         end)
         itp('fails with error message on invalid types', function()
-          local l = list(1, empty_list, {})
+          local l = list(empty_list, {})
 
-          eq('', tv_list_find_str(l, 0, 'E806: Using a Float as a String'))
-          eq('', tv_list_find_str(l, 1, 'E730: Using a List as a String'))
-          eq('', tv_list_find_str(l, 2, 'E731: Using a Dictionary as a String'))
+          eq('', tv_list_find_str(l, 0, 'E730: Using a List as a String'))
+          eq('', tv_list_find_str(l, 1, 'E731: Using a Dictionary as a String'))
           eq('', tv_list_find_str(l, -1, 'E731: Using a Dictionary as a String'))
           eq('', tv_list_find_str(l, -2, 'E730: Using a List as a String'))
-          eq('', tv_list_find_str(l, -3, 'E806: Using a Float as a String'))
         end)
       end)
     end)
@@ -1765,18 +1765,24 @@ describe('typval.c', function()
           neq(s42, s43)
           eq(s43, dis.te.di_tv.vval.v_string)
           alloc_log:check({})
-          eq('', ffi.string(check_emsg(function() return lib.tv_dict_get_string(d, 't', false) end,
-                                       'E806: Using a Float as a String')))
+          local s44 = check_emsg(function() return lib.tv_dict_get_string(d, 't', false) end,
+                                 nil)
+          eq('44.0', ffi.string(s44))
+          alloc_log:check({a.freed(alloc_log.null)})
         end)
         itp('allocates a string copy when requested', function()
-          local function tv_dict_get_string_alloc(d, key, emsg)
+          local function tv_dict_get_string_alloc(d, key, emsg, is_float)
             alloc_log:clear()
             local ret = check_emsg(function() return lib.tv_dict_get_string(d, key, true) end,
                                    emsg)
             local s_ret = (ret ~= nil) and ffi.string(ret) or nil
             if not emsg then
               if s_ret then
-                alloc_log:check({a.str(ret, s_ret)})
+                if is_float then
+                  alloc_log:check({a.freed(alloc_log.null), a.str(ret, s_ret)})
+                else
+                  alloc_log:check({a.str(ret, s_ret)})
+                end
               else
                 alloc_log:check({})
               end
@@ -1792,18 +1798,22 @@ describe('typval.c', function()
           eq('42', tv_dict_get_string_alloc(d, 'tes'))
           eq('45', tv_dict_get_string_alloc(d, 'xx'))
           eq('43', tv_dict_get_string_alloc(d, 'te'))
-          eq('', tv_dict_get_string_alloc(d, 't', 'E806: Using a Float as a String'))
+          eq('44.0', tv_dict_get_string_alloc(d, 't', nil, true))
         end)
       end)
       describe('get_string_buf()', function()
-        local function tv_dict_get_string_buf(d, key, buf, emsg)
+        local function tv_dict_get_string_buf(d, key, is_float, buf, emsg)
           buf = buf or ffi.gc(lib.xmalloc(lib.NUMBUFLEN), lib.xfree)
           alloc_log:clear()
           local ret = check_emsg(function() return lib.tv_dict_get_string_buf(d, key, buf) end,
                                  emsg)
           local s_ret = (ret ~= nil) and ffi.string(ret) or nil
           if not emsg then
-            alloc_log:check({})
+            if is_float then
+              alloc_log:check({a.freed(alloc_log.null)})
+            else
+              alloc_log:check({})
+            end
           end
           return s_ret, ret, buf
         end
@@ -1827,16 +1837,16 @@ describe('typval.c', function()
           s, r, b = tv_dict_get_string_buf(d, 'test')
           neq(r, b)
           eq('tset', s)
-          s, r, b = tv_dict_get_string_buf(d, 't', nil, 'E806: Using a Float as a String')
-          neq(r, b)
-          eq('', s)
+          s, r, b = tv_dict_get_string_buf(d, 't', true)
+          eq(r, b)
+          eq('1.0', s)
           s, r, b = tv_dict_get_string_buf(d, 'te')
           eq(r, b)
           eq('2', s)
         end)
       end)
       describe('get_string_buf_chk()', function()
-        local function tv_dict_get_string_buf_chk(d, key, len, buf, def, emsg)
+        local function tv_dict_get_string_buf_chk(d, key, is_float, len, buf, def, emsg)
           buf = buf or ffi.gc(lib.xmalloc(lib.NUMBUFLEN), lib.xfree)
           def = def or ffi.gc(lib.xstrdup('DEFAULT'), lib.xfree)
           len = len or #key
@@ -1845,7 +1855,11 @@ describe('typval.c', function()
                                  emsg)
           local s_ret = (ret ~= nil) and ffi.string(ret) or nil
           if not emsg then
-            alloc_log:check({})
+            if is_float then
+              alloc_log:check({a.freed(alloc_log.null)})
+            else
+              alloc_log:check({})
+            end
           end
           return s_ret, ret, buf, def
         end
@@ -1870,10 +1884,10 @@ describe('typval.c', function()
           neq(r, b)
           neq(r, def)
           eq('tset', s)
-          s, r, b, def = tv_dict_get_string_buf_chk(d, 'test', 1, nil, nil, 'E806: Using a Float as a String')
-          neq(r, b)
+          s, r, b, def = tv_dict_get_string_buf_chk(d, 'test', true, 1)
+          eq(r, b)
           neq(r, def)
-          eq(nil, s)
+          eq('1.0', s)
           s, r, b, def = tv_dict_get_string_buf_chk(d, 'te')
           eq(r, b)
           neq(r, def)
@@ -2831,7 +2845,7 @@ describe('typval.c', function()
           alloc_log:clear()
           for _, v in ipairs({
             {lib.VAR_NUMBER, nil},
-            {lib.VAR_FLOAT, 'E806: Using a Float as a String'},
+            {lib.VAR_FLOAT, nil},
             {lib.VAR_PARTIAL, 'E729: Using a Funcref as a String'},
             {lib.VAR_FUNC, 'E729: Using a Funcref as a String'},
             {lib.VAR_LIST, 'E730: Using a List as a String'},
@@ -2978,15 +2992,47 @@ describe('typval.c', function()
           end
         end)
       end)
+
+      local function test_string_fn(input, fn)
+        for _, v in ipairs(input) do
+          -- Using to_cstr in place of Neovim allocated string, cannot
+          -- tv_clear() that.
+          local tv = ffi.gc(typvalt(v[1], v[2]), nil)
+          alloc_log:check({})
+          local emsg = v[3]
+          local ret = v[4]
+          eq(ret, check_emsg(function()
+            local res, buf = fn(tv)
+            if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_FLOAT
+               or tv.v_type == lib.VAR_SPECIAL or tv.v_type == lib.VAR_BOOL then
+              eq(buf, res)
+            else
+              neq(buf, res)
+            end
+            if res ~= nil then
+              return ffi.string(res)
+            else
+              return nil
+            end
+          end, emsg))
+          if emsg then
+            alloc_log:clear()
+          elseif tv.v_type == lib.VAR_FLOAT then
+            alloc_log:check({a.freed(alloc_log.null)})
+          else
+            alloc_log:check({})
+          end
+        end
+      end
       describe('string()', function()
         itp('works', function()
           local buf = lib.tv_get_string(lua2typvalt(int(1)))
           local buf_chk = lib.tv_get_string_chk(lua2typvalt(int(1)))
           neq(buf, buf_chk)
-          for _, v in ipairs({
+          test_string_fn({
             {lib.VAR_NUMBER, {v_number=42}, nil, '42'},
             {lib.VAR_STRING, {v_string=to_cstr('100500')}, nil, '100500'},
-            {lib.VAR_FLOAT, {v_float=42.53}, 'E806: Using a Float as a String', ''},
+            {lib.VAR_FLOAT, {v_float=42.53}, nil, '42.53'},
             {lib.VAR_PARTIAL, {v_partial=NULL}, 'E729: Using a Funcref as a String', ''},
             {lib.VAR_FUNC, {v_string=NULL}, 'E729: Using a Funcref as a String', ''},
             {lib.VAR_LIST, {v_list=NULL}, 'E730: Using a List as a String', ''},
@@ -2995,42 +3041,18 @@ describe('typval.c', function()
             {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'v:true'},
             {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'v:false'},
             {lib.VAR_UNKNOWN, nil, 'E908: Using an invalid value as a String', ''},
-          }) do
-            -- Using to_cstr in place of Neovim allocated string, cannot
-            -- tv_clear() that.
-            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
-            alloc_log:check({})
-            local emsg = v[3]
-            local ret = v[4]
-            eq(ret, check_emsg(function()
-              local res = lib.tv_get_string(tv)
-              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL
-                  or tv.v_type == lib.VAR_BOOL then
-                eq(buf, res)
-              else
-                neq(buf, res)
-              end
-              if res ~= nil then
-                return ffi.string(res)
-              else
-                return nil
-              end
-            end, emsg))
-            if emsg then
-              alloc_log:clear()
-            else
-              alloc_log:check({})
-            end
-          end
+          }, function(tv)
+            return lib.tv_get_string(tv), buf
+          end)
         end)
       end)
       describe('string_chk()', function()
         itp('works', function()
           local buf = lib.tv_get_string_chk(lua2typvalt(int(1)))
-          for _, v in ipairs({
+          test_string_fn({
             {lib.VAR_NUMBER, {v_number=42}, nil, '42'},
             {lib.VAR_STRING, {v_string=to_cstr('100500')}, nil, '100500'},
-            {lib.VAR_FLOAT, {v_float=42.53}, 'E806: Using a Float as a String', nil},
+            {lib.VAR_FLOAT, {v_float=42.53}, nil, '42.53'},
             {lib.VAR_PARTIAL, {v_partial=NULL}, 'E729: Using a Funcref as a String', nil},
             {lib.VAR_FUNC, {v_string=NULL}, 'E729: Using a Funcref as a String', nil},
             {lib.VAR_LIST, {v_list=NULL}, 'E730: Using a List as a String', nil},
@@ -3039,40 +3061,17 @@ describe('typval.c', function()
             {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'v:true'},
             {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'v:false'},
             {lib.VAR_UNKNOWN, nil, 'E908: Using an invalid value as a String', nil},
-          }) do
-            -- Using to_cstr, cannot free with tv_clear
-            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
-            alloc_log:check({})
-            local emsg = v[3]
-            local ret = v[4]
-            eq(ret, check_emsg(function()
-              local res = lib.tv_get_string_chk(tv)
-              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL
-                  or tv.v_type == lib.VAR_BOOL then
-                eq(buf, res)
-              else
-                neq(buf, res)
-              end
-              if res ~= nil then
-                return ffi.string(res)
-              else
-                return nil
-              end
-            end, emsg))
-            if emsg then
-              alloc_log:clear()
-            else
-              alloc_log:check({})
-            end
-          end
+          }, function(tv)
+            return lib.tv_get_string_chk(tv), buf
+          end)
         end)
       end)
       describe('string_buf()', function()
         itp('works', function()
-          for _, v in ipairs({
+          test_string_fn({
             {lib.VAR_NUMBER, {v_number=42}, nil, '42'},
             {lib.VAR_STRING, {v_string=to_cstr('100500')}, nil, '100500'},
-            {lib.VAR_FLOAT, {v_float=42.53}, 'E806: Using a Float as a String', ''},
+            {lib.VAR_FLOAT, {v_float=42.53}, nil, '42.53'},
             {lib.VAR_PARTIAL, {v_partial=NULL}, 'E729: Using a Funcref as a String', ''},
             {lib.VAR_FUNC, {v_string=NULL}, 'E729: Using a Funcref as a String', ''},
             {lib.VAR_LIST, {v_list=NULL}, 'E730: Using a List as a String', ''},
@@ -3081,41 +3080,18 @@ describe('typval.c', function()
             {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'v:true'},
             {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'v:false'},
             {lib.VAR_UNKNOWN, nil, 'E908: Using an invalid value as a String', ''},
-          }) do
-            -- Using to_cstr, cannot free with tv_clear
-            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
-            alloc_log:check({})
-            local emsg = v[3]
-            local ret = v[4]
-            eq(ret, check_emsg(function()
-              local buf = ffi.new('char[?]', lib.NUMBUFLEN, {0})
-              local res = lib.tv_get_string_buf(tv, buf)
-              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL
-                  or tv.v_type == lib.VAR_BOOL then
-                eq(buf, res)
-              else
-                neq(buf, res)
-              end
-              if res ~= nil then
-                return ffi.string(res)
-              else
-                return nil
-              end
-            end, emsg))
-            if emsg then
-              alloc_log:clear()
-            else
-              alloc_log:check({})
-            end
-          end
+          }, function(tv)
+            local buf = ffi.new('char[?]', lib.NUMBUFLEN, {0})
+            return lib.tv_get_string_buf(tv, buf), buf
+          end)
         end)
       end)
       describe('string_buf_chk()', function()
         itp('works', function()
-          for _, v in ipairs({
+          test_string_fn({
             {lib.VAR_NUMBER, {v_number=42}, nil, '42'},
             {lib.VAR_STRING, {v_string=to_cstr('100500')}, nil, '100500'},
-            {lib.VAR_FLOAT, {v_float=42.53}, 'E806: Using a Float as a String', nil},
+            {lib.VAR_FLOAT, {v_float=42.53}, nil, '42.53'},
             {lib.VAR_PARTIAL, {v_partial=NULL}, 'E729: Using a Funcref as a String', nil},
             {lib.VAR_FUNC, {v_string=NULL}, 'E729: Using a Funcref as a String', nil},
             {lib.VAR_LIST, {v_list=NULL}, 'E730: Using a List as a String', nil},
@@ -3124,33 +3100,10 @@ describe('typval.c', function()
             {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'v:true'},
             {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'v:false'},
             {lib.VAR_UNKNOWN, nil, 'E908: Using an invalid value as a String', nil},
-          }) do
-            -- Using to_cstr, cannot free with tv_clear
-            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
-            alloc_log:check({})
-            local emsg = v[3]
-            local ret = v[4]
-            eq(ret, check_emsg(function()
-              local buf = ffi.new('char[?]', lib.NUMBUFLEN, {0})
-              local res = lib.tv_get_string_buf_chk(tv, buf)
-              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL
-                  or tv.v_type == lib.VAR_BOOL then
-                eq(buf, res)
-              else
-                neq(buf, res)
-              end
-              if res ~= nil then
-                return ffi.string(res)
-              else
-                return nil
-              end
-            end, emsg))
-            if emsg then
-              alloc_log:clear()
-            else
-              alloc_log:check({})
-            end
-          end
+          }, function(tv)
+            local buf = ffi.new('char[?]', lib.NUMBUFLEN, {0})
+            return lib.tv_get_string_buf_chk(tv, buf), buf
+          end)
         end)
       end)
     end)

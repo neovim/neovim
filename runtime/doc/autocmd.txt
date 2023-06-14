@@ -505,8 +505,7 @@ CursorMoved			After the cursor was moved in Normal or Visual
 				"x", "rx" or "p".
 				Not always triggered when there is typeahead,
 				while executing commands in a script file, or
-				when an operator is pending. Always triggered
-				when moving to another window.
+				when an operator is pending.
 				For an example see |match-parens|.
 				Note: Cannot be skipped with |:noautocmd|.
 				Careful: This is triggered very often, don't
@@ -774,6 +773,9 @@ OptionSet			After setting an option (except during
 				or |:setlocal| or a |modeline| was used to set
 				the option. Similarly |v:option_oldglobal| is
 				only set when |:set| or |:setglobal| was used.
+
+				This does not set |<abuf>|, you could use
+				|bufnr()|.
 
 				Note that when setting a |global-local| string
 				option with |:set|, then |v:option_old| is the
@@ -1162,7 +1164,7 @@ Set the 'cindent' option for C files in the /vim/src directory. >
 If you have a link from "/tmp/test.c" to "/home/nobody/vim/src/test.c", and
 you start editing "/tmp/test.c", this autocommand will match.
 
-Note:  To match part of a path, but not from the root directory, use a '*' as
+Note:  To match part of a path, but not from the root directory, use a "*" as
 the first character.  Example: >
 	:autocmd BufRead */doc/*.txt	set tw=78
 This autocommand will for example be executed for "/tmp/doc/xx.txt" and

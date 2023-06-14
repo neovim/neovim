@@ -754,7 +754,7 @@ describe('json_encode() function', function()
   end)
 
   it('ignores improper values in &isprint', function()
-    meths.set_option('isprint', '1')
+    meths.set_option_value('isprint', '1', {})
     eq(1, eval('"\1" =~# "\\\\p"'))
     eq('"\\u0001"', funcs.json_encode('\1'))
   end)

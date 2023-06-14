@@ -167,19 +167,21 @@ func XlistTests(cchar)
 	      \ {'lnum':20,'col':10,'type':'e','text':'Error','nr':22},
 	      \ {'lnum':30,'col':15,'type':'i','text':'Info','nr':33},
 	      \ {'lnum':40,'col':20,'type':'x', 'text':'Other','nr':44},
-	      \ {'lnum':50,'col':25,'type':"\<C-A>",'text':'one','nr':55}])
+	      \ {'lnum':50,'col':25,'type':"\<C-A>",'text':'one','nr':55},
+	      \ {'lnum':0,'type':'e','text':'Check type field is output even when lnum==0. ("error" was not output by v9.0.0736.)','nr':66}])
   let l = split(execute('Xlist', ""), "\n")
   call assert_equal([' 1:10 col 5 warning  11: Warning',
 	      \ ' 2:20 col 10 error  22: Error',
 	      \ ' 3:30 col 15 info  33: Info',
 	      \ ' 4:40 col 20 x  44: Other',
-	      \ ' 5:50 col 25  55: one'], l)
+	      \ ' 5:50 col 25  55: one',
+              \ ' 6 error  66: Check type field is output even when lnum==0. ("error" was not output by v9.0.0736.)'], l)
 
   " Test for module names, one needs to explicitly set `'valid':v:true` so
   call g:Xsetlist([
-        \ {'lnum':10,'col':5,'type':'W','module':'Data.Text','text':'ModuleWarning','nr':11,'valid':v:true},
-        \ {'lnum':20,'col':10,'type':'W','module':'Data.Text','filename':'Data/Text.hs','text':'ModuleWarning','nr':22,'valid':v:true},
-        \ {'lnum':30,'col':15,'type':'W','filename':'Data/Text.hs','text':'FileWarning','nr':33,'valid':v:true}])
+	\ {'lnum':10,'col':5,'type':'W','module':'Data.Text','text':'ModuleWarning','nr':11,'valid':v:true},
+	\ {'lnum':20,'col':10,'type':'W','module':'Data.Text','filename':'Data/Text.hs','text':'ModuleWarning','nr':22,'valid':v:true},
+	\ {'lnum':30,'col':15,'type':'W','filename':'Data/Text.hs','text':'FileWarning','nr':33,'valid':v:true}])
   let l = split(execute('Xlist', ""), "\n")
   call assert_equal([' 1 Data.Text:10 col 5 warning  11: ModuleWarning',
 	\ ' 2 Data.Text:20 col 10 warning  22: ModuleWarning',
@@ -1029,7 +1031,7 @@ func Test_efm1()
       ﻿"Xtestfile", line 6 col 19; this is an error
       gcc -c -DHAVE_CONFIsing-prototypes -I/usr/X11R6/include  version.c
       Xtestfile:9: parse error before `asd'
-      make: *** [vim] Error 1
+      make: *** [src/vim/testdir/Makefile:100: test_quickfix] Error 1
       in file "Xtestfile" linenr 10: there is an error
 
       2 returned
@@ -6280,5 +6282,35 @@ func Test_setqflist_cb_arg()
   call setqflist([], 'f')
 endfunc
 
+" Test that setqflist() should not prevent :stopinsert from working
+func Test_setqflist_stopinsert()
+  new
+  call setqflist([], 'f')
+  copen
+  cclose
+  func StopInsert()
+    stopinsert
+    call setqflist([{'text': 'foo'}])
+    return ''
+  endfunc
+
+  call setline(1, 'abc')
+  call cursor(1, 1)
+  call feedkeys("i\<C-R>=StopInsert()\<CR>$", 'tnix')
+  call assert_equal('foo', getqflist()[0].text)
+  call assert_equal([0, 1, 3, 0, v:maxcol], getcurpos())
+  call assert_equal(['abc'], getline(1, '$'))
+
+  delfunc StopInsert
+  call setqflist([], 'f')
+  bwipe!
+endfunc
+
+func Test_quickfix_buffer_contents()
+  call setqflist([{'filename':'filename', 'pattern':'pattern', 'text':'text'}])
+  copen
+  call assert_equal(['filename|pattern| text'], getline(1, '$'))  " The assert failed with Vim v9.0.0736; '| text' did not appear after the pattern.
+  call setqflist([], 'f')
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

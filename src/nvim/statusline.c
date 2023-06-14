@@ -596,7 +596,7 @@ void win_redr_ruler(win_T *wp)
     MAXSIZE_TEMP_ARRAY(content, 1);
     MAXSIZE_TEMP_ARRAY(chunk, 2);
     ADD_C(chunk, INTEGER_OBJ(attr));
-    ADD_C(chunk, STRING_OBJ(cstr_as_string(buffer)));
+    ADD_C(chunk, CSTR_AS_OBJ(buffer));
     ADD_C(content, ARRAY_OBJ(chunk));
     ui_call_msg_ruler(content);
     did_show_ext_ruler = true;
@@ -1031,6 +1031,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
   int evaldepth  = 0;
 
   int curitem = 0;
+  int foldsignitem = -1;
   bool prevchar_isflag = true;
   bool prevchar_isitem = false;
 
@@ -1655,6 +1656,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       if (width == 0) {
         break;
       }
+      foldsignitem = curitem;
 
       char *p = NULL;
       if (fold) {
@@ -1664,32 +1666,22 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
         p[n] = NUL;
       }
 
-      *buf_tmp = NUL;
+      size_t buflen = 0;
       varnumber_T virtnum = get_vim_var_nr(VV_VIRTNUM);
-      for (int i = 0; i <= width; i++) {
-        if (i == width) {
-          if (*buf_tmp == NUL) {
-            break;
-          }
-          stl_items[curitem].minwid = 0;
-        } else if (!fold) {
+      for (int i = 0; i < width; i++) {
+        if (!fold) {
           SignTextAttrs *sattr = virtnum ? NULL : sign_get_attr(i, stcp->sattrs, wp->w_scwidth);
           p = sattr && sattr->text ? sattr->text : "  ";
           stl_items[curitem].minwid = -(sattr ? stcp->sign_cul_id ? stcp->sign_cul_id
                                         : sattr->hl_id : (stcp->use_cul ? HLF_CLS : HLF_SC) + 1);
         }
-        size_t buflen = strlen(buf_tmp);
         stl_items[curitem].type = Highlight;
         stl_items[curitem].start = out_p + buflen;
+        xstrlcpy(buf_tmp + buflen, p, TMPLEN - buflen);
+        buflen += strlen(p);
         curitem++;
-        if (i == width) {
-          str = buf_tmp;
-          break;
-        }
-        int rc = snprintf(buf_tmp + buflen, sizeof(buf_tmp) - buflen, "%s", p);
-        (void)rc;  // Avoid unused warning on release build
-        assert(rc > 0);
       }
+      str = buf_tmp;
       break;
     }
 
@@ -1832,6 +1824,13 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
           }
         }
         minwid = 0;
+        // For a 'statuscolumn' sign or fold item, shift the added items
+        if (foldsignitem >= 0) {
+          ptrdiff_t offset = out_p - stl_items[foldsignitem].start;
+          for (int i = foldsignitem; i < curitem; i++) {
+            stl_items[i].start += offset;
+          }
+        }
       } else {
         // Note: The negative value denotes a left aligned item.
         //       Here we switch the minimum width back to a positive value.
@@ -1850,6 +1849,14 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
         }
       }
       // }
+
+      // For a 'statuscolumn' sign or fold item, add an item to reset the highlight group
+      if (foldsignitem >= 0) {
+        foldsignitem = -1;
+        stl_items[curitem].type = Highlight;
+        stl_items[curitem].start = out_p;
+        stl_items[curitem].minwid = 0;
+      }
 
       // For left-aligned items, fill any remaining space with the fillchar
       for (; l < minwid && out_p < out_end_p; l++) {

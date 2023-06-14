@@ -510,6 +510,8 @@ void ml_open_file(buf_T *buf)
       continue;
     }
     if (mf_open_file(mfp, fname) == OK) {       // consumes fname!
+      // don't sync yet in ml_sync_all()
+      mfp->mf_dirty = MF_DIRTY_YES_NOSYNC;
       ml_upd_block0(buf, UB_SAME_DIR);
 
       // Flush block zero, so others can read it
@@ -975,7 +977,7 @@ void ml_recover(bool checkext)
     set_fileformat(b0_ff - 1, OPT_LOCAL);
   }
   if (b0_fenc != NULL) {
-    set_option_value_give_err("fenc", 0L, b0_fenc, OPT_LOCAL);
+    set_option_value_give_err("fenc", CSTR_AS_OPTVAL(b0_fenc), OPT_LOCAL);
     xfree(b0_fenc);
   }
   unchanged(curbuf, true, true);
@@ -1714,7 +1716,7 @@ void ml_sync_all(int check_file, int check_char, bool do_fsync)
         need_check_timestamps = true;           // give message later
       }
     }
-    if (buf->b_ml.ml_mfp->mf_dirty) {
+    if (buf->b_ml.ml_mfp->mf_dirty == MF_DIRTY_YES) {
       (void)mf_sync(buf->b_ml.ml_mfp, (check_char ? MFS_STOP : 0)
                     | (do_fsync && bufIsChanged(buf) ? MFS_FLUSH : 0));
       if (check_char && os_char_avail()) {      // character available now

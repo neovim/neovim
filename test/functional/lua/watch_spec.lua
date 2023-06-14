@@ -107,6 +107,7 @@ describe('vim._watch', function()
       local result = exec_lua(
         [[
         local root_dir = ...
+        local lpeg = vim.lpeg
 
         local events = {}
 
@@ -118,7 +119,13 @@ describe('vim._watch', function()
           assert(vim.wait(poll_wait_ms, function() return #events == expected_events end), 'Timed out waiting for expected number of events. Current events seen so far: ' .. vim.inspect(events))
         end
 
-        local stop = vim._watch.poll(root_dir, { interval = poll_interval_ms }, function(path, change_type)
+        local incl = lpeg.P(root_dir) * lpeg.P("/file")^-1
+        local excl = lpeg.P(root_dir..'/file.unwatched')
+        local stop = vim._watch.poll(root_dir, {
+            interval = poll_interval_ms,
+            include_pattern = incl,
+            exclude_pattern = excl,
+          }, function(path, change_type)
           table.insert(events, { path = path, change_type = change_type })
         end)
 
@@ -127,12 +134,17 @@ describe('vim._watch', function()
         local watched_path = root_dir .. '/file'
         local watched, err = io.open(watched_path, 'w')
         assert(not err, err)
+        local unwatched_path = root_dir .. '/file.unwatched'
+        local unwatched, err = io.open(unwatched_path, 'w')
+        assert(not err, err)
 
         expected_events = expected_events + 2
         wait_for_events()
 
         watched:close()
         os.remove(watched_path)
+        unwatched:close()
+        os.remove(unwatched_path)
 
         expected_events = expected_events + 2
         wait_for_events()

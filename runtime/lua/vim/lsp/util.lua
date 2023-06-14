@@ -4,7 +4,7 @@ local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
 local highlight = require('vim.highlight')
-local uv = vim.loop
+local uv = vim.uv
 
 local npcall = vim.F.npcall
 local split = vim.split
@@ -353,11 +353,40 @@ end
 
 --- Process and return progress reports from lsp server
 ---@private
+---@deprecated Use vim.lsp.status() or access client.progress directly
 function M.get_progress_messages()
+  vim.deprecate('vim.lsp.util.get_progress_messages', 'vim.lsp.status', '0.11.0')
   local new_messages = {}
   local progress_remove = {}
 
   for _, client in ipairs(vim.lsp.get_active_clients()) do
+    local groups = {}
+    for progress in client.progress do
+      local value = progress.value
+      if type(value) == 'table' and value.kind then
+        local group = groups[progress.token]
+        if not group then
+          group = {
+            done = false,
+            progress = true,
+            title = 'empty title',
+          }
+          groups[progress.token] = group
+        end
+        group.title = value.title or group.title
+        group.cancellable = value.cancellable or group.cancellable
+        if value.kind == 'end' then
+          group.done = true
+        end
+        group.message = value.message or group.message
+        group.percentage = value.percentage or group.percentage
+      end
+    end
+
+    for _, group in pairs(groups) do
+      table.insert(new_messages, group)
+    end
+
     local messages = client.messages
     local data = messages
     for token, ctx in pairs(data.progress) do
@@ -401,7 +430,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   if not api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
   end
-  api.nvim_buf_set_option(bufnr, 'buflisted', true)
+  vim.bo[bufnr].buflisted = true
 
   -- Fix reversed range and indexing each text_edits
   local index = 0
@@ -450,6 +479,14 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
       col = cursor[2],
     }
   end)()
+
+  -- save and restore local marks since they get deleted by nvim_buf_set_lines
+  local marks = {}
+  for _, m in pairs(vim.fn.getmarklist(bufnr or vim.api.nvim_get_current_buf())) do
+    if m.mark:match("^'[a-z]$") then
+      marks[m.mark:sub(2, 2)] = { m.pos[2], m.pos[3] - 1 } -- api-indexed
+    end
+  end
 
   -- Apply text edits.
   local is_cursor_fixed = false
@@ -518,6 +555,20 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
 
   local max = api.nvim_buf_line_count(bufnr)
 
+  -- no need to restore marks that still exist
+  for _, m in pairs(vim.fn.getmarklist(bufnr or vim.api.nvim_get_current_buf())) do
+    marks[m.mark:sub(2, 2)] = nil
+  end
+  -- restore marks
+  for mark, pos in pairs(marks) do
+    if pos then
+      -- make sure we don't go out of bounds
+      pos[1] = math.min(pos[1], max)
+      pos[2] = math.min(pos[2], #(get_line(bufnr, pos[1] - 1) or ''))
+      vim.api.nvim_buf_set_mark(bufnr or 0, mark, pos[1], pos[2], {})
+    end
+  end
+
   -- Apply fixed cursor position.
   if is_cursor_fixed then
     local is_valid_cursor = true
@@ -530,11 +581,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
 
   -- Remove final line if needed
   local fix_eol = has_eol_text_edit
-  fix_eol = fix_eol
-    and (
-      api.nvim_buf_get_option(bufnr, 'eol')
-      or (api.nvim_buf_get_option(bufnr, 'fixeol') and not api.nvim_buf_get_option(bufnr, 'binary'))
-    )
+  fix_eol = fix_eol and (vim.bo[bufnr].eol or (vim.bo[bufnr].fixeol and not vim.bo[bufnr].binary))
   fix_eol = fix_eol and get_line(bufnr, max - 1) == ''
   if fix_eol then
     api.nvim_buf_set_lines(bufnr, -2, -1, false, {})
@@ -698,15 +745,18 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
   local matches = {}
 
   for _, completion_item in ipairs(items) do
-    local info = ' '
+    local info = ''
     local documentation = completion_item.documentation
     if documentation then
       if type(documentation) == 'string' and documentation ~= '' then
         info = documentation
       elseif type(documentation) == 'table' and type(documentation.value) == 'string' then
         info = documentation.value
-        -- else
-        -- TODO(ashkan) Validation handling here?
+      else
+        vim.notify(
+          ('invalid documentation value %s'):format(vim.inspect(documentation)),
+          vim.log.levels.WARN
+        )
       end
     end
 
@@ -716,7 +766,7 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
       abbr = completion_item.label,
       kind = M._get_completion_item_kind_name(completion_item.kind),
       menu = completion_item.detail or '',
-      info = info,
+      info = #info > 0 and info or nil,
       icase = 1,
       dup = 1,
       empty = 1,
@@ -1076,7 +1126,7 @@ function M.make_floating_popup_options(width, height, opts)
 
   local wincol = opts.relative == 'mouse' and vim.fn.getmousepos().column or vim.fn.wincol()
 
-  if wincol + width + (opts.offset_x or 0) <= api.nvim_get_option('columns') then
+  if wincol + width + (opts.offset_x or 0) <= vim.o.columns then
     anchor = anchor .. 'W'
     col = 0
   else
@@ -1142,7 +1192,7 @@ function M.show_document(location, offset_encoding, opts)
     or focus and api.nvim_get_current_win()
     or create_window_without_focus()
 
-  api.nvim_buf_set_option(bufnr, 'buflisted', true)
+  vim.bo[bufnr].buflisted = true
   api.nvim_win_set_buf(win, bufnr)
   if focus then
     api.nvim_set_current_win(win)
@@ -1201,12 +1251,12 @@ function M.preview_location(location, opts)
   end
   local range = location.targetRange or location.range
   local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range['end'].line + 1, false)
-  local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
+  local syntax = vim.bo[bufnr].syntax
   if syntax == '' then
     -- When no syntax is set, we use filetype as fallback. This might not result
     -- in a valid syntax definition. See also ft detection in stylize_markdown.
     -- An empty syntax is more common now with TreeSitter, since TS disables syntax.
-    syntax = api.nvim_buf_get_option(bufnr, 'filetype')
+    syntax = vim.bo[bufnr].filetype
   end
   opts = opts or {}
   opts.focus_id = 'location'
@@ -1665,7 +1715,7 @@ function M.open_floating_preview(contents, syntax, opts)
     contents = M.stylize_markdown(floating_bufnr, contents, opts)
   else
     if syntax then
-      api.nvim_buf_set_option(floating_bufnr, 'syntax', syntax)
+      vim.bo[floating_bufnr].syntax = syntax
     end
     api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
   end
@@ -1681,16 +1731,16 @@ function M.open_floating_preview(contents, syntax, opts)
   local float_option = M.make_floating_popup_options(width, height, opts)
   local floating_winnr = api.nvim_open_win(floating_bufnr, false, float_option)
   if do_stylize then
-    api.nvim_win_set_option(floating_winnr, 'conceallevel', 2)
-    api.nvim_win_set_option(floating_winnr, 'concealcursor', 'n')
+    vim.wo[floating_winnr].conceallevel = 2
+    vim.wo[floating_winnr].concealcursor = 'n'
   end
   -- disable folding
-  api.nvim_win_set_option(floating_winnr, 'foldenable', false)
+  vim.wo[floating_winnr].foldenable = false
   -- soft wrapping
-  api.nvim_win_set_option(floating_winnr, 'wrap', opts.wrap)
+  vim.wo[floating_winnr].wrap = opts.wrap
 
-  api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
-  api.nvim_buf_set_option(floating_bufnr, 'bufhidden', 'wipe')
+  vim.bo[floating_bufnr].modifiable = false
+  vim.bo[floating_bufnr].bufhidden = 'wipe'
   api.nvim_buf_set_keymap(
     floating_bufnr,
     'n',

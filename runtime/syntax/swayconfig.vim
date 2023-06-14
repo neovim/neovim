@@ -2,9 +2,9 @@
 " Language: sway window manager config
 " Original Author: James Eapen <james.eapen@vai.org>
 " Maintainer: James Eapen <james.eapen@vai.org>
-" Version: 0.1.6
-" Reference version (jamespeapen/swayconfig.vim): 0.11.6
-" Last Change: 2022 Aug 08
+" Version: 0.2.1
+" Reference version (jamespeapen/swayconfig.vim): 0.12.1
+" Last Change: 2023 Mar 20
 
 " References:
 " http://i3wm.org/docs/userguide.html#configuring
@@ -58,6 +58,10 @@ syn match swayConfigClientColor /^\s*client.\w\+\s\+.*$/ contains=i3ConfigClient
 syn keyword swayConfigInputKeyword input contained
 syn match swayConfigInput /^\s*input\s\+.*$/ contains=swayConfigInputKeyword
 
+" Seat config
+syn keyword swayConfigSeatKeyword seat contained
+syn match swayConfigSeat /^\s*seat\s\+.*$/ contains=swayConfigSeatKeyword
+
 " set display outputs
 syn match swayConfigOutput /^\s*output\s\+.*$/ contains=i3ConfigOutput
 
@@ -65,6 +69,10 @@ syn match swayConfigOutput /^\s*output\s\+.*$/ contains=i3ConfigOutput
 syn keyword swayConfigFocusKeyword focus contained
 syn keyword swayConfigFocusType output contained
 syn match swayConfigFocus /^\s*focus\soutput\s.*$/ contains=swayConfigFocusKeyword,swayConfigFocusType
+
+" mouse warping
+syn keyword swayConfigMouseWarpingType container contained
+syn match swayConfigMouseWarping /^\s*mouse_warping\s\+\(output\|container\|none\)\s\?$/ contains=i3ConfigMouseWarpingKeyword,i3ConfigMouseWarpingType,swayConfigMouseWarpingType
 
 " focus follows mouse
 syn clear i3ConfigFocusFollowsMouseType
@@ -80,7 +88,7 @@ syn match swayConfigXwaylandModifier /^\s*xwayland\s\+\(enable\|disable\|force\)
 
 " Group mode/bar
 syn clear i3ConfigBlock
-syn region swayConfigBlock start=+.*s\?{$+ end=+^}$+ contains=i3ConfigBlockKeyword,i3ConfigString,i3ConfigBind,i3ConfigInitializeKeyword,i3ConfigComment,i3ConfigFont,i3ConfigFocusWrappingType,i3ConfigColor,i3ConfigVariable,swayConfigInputKeyword,i3ConfigOutput transparent keepend extend
+syn region swayConfigBlock start=+.*s\?{$+ end=+^}$+ contains=i3ConfigBlockKeyword,i3ConfigString,i3ConfigBind,i3ConfigInitializeKeyword,i3ConfigComment,i3ConfigFont,i3ConfigFocusWrappingType,i3ConfigColor,i3ConfigVariable,swayConfigInputKeyword,swayConfigSeatKeyword,i3ConfigOutput transparent keepend extend
 
 "hi def link swayConfigError                         Error
 hi def link i3ConfigFloating                        Error
@@ -89,6 +97,8 @@ hi def link swayConfigFloatingMouseAction           Type
 hi def link swayConfigFocusKeyword                  Type
 hi def link swayConfigSmartBorderKeyword            Type
 hi def link swayConfigInputKeyword                  Type
+hi def link swayConfigSeatKeyword                   Type
+hi def link swayConfigMouseWarpingType              Type
 hi def link swayConfigFocusFollowsMouseType         Type
 hi def link swayConfigBindGestureCommand            Identifier
 hi def link swayConfigBindGestureDirection          Constant

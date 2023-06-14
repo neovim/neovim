@@ -2096,13 +2096,13 @@ static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhs
                                 : cstr_as_string(str2special_save(mp->m_str, false, true))));
   }
   if (mp->m_desc != NULL) {
-    PUT(dict, "desc", STRING_OBJ(cstr_to_string(mp->m_desc)));
+    PUT(dict, "desc", CSTR_TO_OBJ(mp->m_desc));
   }
-  PUT(dict, "lhs", STRING_OBJ(cstr_as_string(lhs)));
-  PUT(dict, "lhsraw", STRING_OBJ(cstr_to_string(mp->m_keys)));
+  PUT(dict, "lhs", CSTR_AS_OBJ(lhs));
+  PUT(dict, "lhsraw", CSTR_TO_OBJ(mp->m_keys));
   if (lhsrawalt != NULL) {
     // Also add the value for the simplified entry.
-    PUT(dict, "lhsrawalt", STRING_OBJ(cstr_to_string(lhsrawalt)));
+    PUT(dict, "lhsrawalt", CSTR_TO_OBJ(lhsrawalt));
   }
   PUT(dict, "noremap", INTEGER_OBJ(noremap_value));
   PUT(dict, "script", INTEGER_OBJ(mp->m_noremap == REMAP_SCRIPT ? 1 : 0));
@@ -2115,7 +2115,7 @@ static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhs
   if (mp->m_replace_keycodes) {
     PUT(dict, "replace_keycodes", INTEGER_OBJ(1));
   }
-  PUT(dict, "mode", STRING_OBJ(cstr_as_string(mapmode)));
+  PUT(dict, "mode", CSTR_AS_OBJ(mapmode));
 
   return dict;
 }
@@ -2603,13 +2603,21 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     goto fail_and_free;
   }
 
-  if (mode.size > 1) {
+  bool is_abbrev = false;
+  if (mode.size > 2) {
     api_set_error(err, kErrorTypeValidation, "Shortname is too long: %s", mode.data);
     goto fail_and_free;
+  } else if (mode.size == 2) {
+    if ((mode.data[0] != '!' && mode.data[0] != 'i' && mode.data[0] != 'c')
+        || mode.data[1] != 'a') {
+      api_set_error(err, kErrorTypeValidation, "Shortname is too long: %s", mode.data);
+      goto fail_and_free;
+    }
+    is_abbrev = true;
   }
   int mode_val;  // integer value of the mapping mode, to be passed to do_map()
   char *p = (mode.size) ? mode.data : "m";
-  if (strncmp(p, "!", 2) == 0) {
+  if (*p == '!') {
     mode_val = get_map_mode(&p, true);  // mapmode-ic
   } else {
     mode_val = get_map_mode(&p, false);
@@ -2654,7 +2662,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     maptype_val = MAPTYPE_NOREMAP;
   }
 
-  switch (buf_do_map(maptype_val, &parsed_args, mode_val, 0, target_buf)) {
+  switch (buf_do_map(maptype_val, &parsed_args, mode_val, is_abbrev, target_buf)) {
   case 0:
     break;
   case 1:

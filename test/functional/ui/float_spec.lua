@@ -79,7 +79,7 @@ describe('float window', function()
           api.nvim_buf_set_lines(buf, 0, -1, true, contents)
           local winnr = vim.fn.win_id2win(floatwin)
           api.nvim_command('wincmd p')
-          api.nvim_command('autocmd CursorMoved * ++once '..winnr..'wincmd c')
+          api.nvim_command('autocmd BufEnter * ++once '..winnr..'wincmd c')
           return buf, floatwin
         end
         crashes{'foo'}
@@ -105,7 +105,7 @@ describe('float window', function()
 
   it('opened with correct height', function()
     local height = exec_lua([[
-      vim.api.nvim_set_option("winheight", 20)
+      vim.go.winheight = 20
       local bufnr = vim.api.nvim_create_buf(false, true)
 
       local opts = {
@@ -127,7 +127,7 @@ describe('float window', function()
 
   it('opened with correct width', function()
     local width = exec_lua([[
-      vim.api.nvim_set_option("winwidth", 20)
+      vim.go.winwidth = 20
       local bufnr = vim.api.nvim_create_buf(false, true)
 
       local opts = {
@@ -427,36 +427,36 @@ describe('float window', function()
   it("no segfault when setting minimal style after clearing local 'fillchars' #19510", function()
     local float_opts = {relative = 'editor', row = 1, col = 1, width = 1, height = 1}
     local float_win = meths.open_win(0, true, float_opts)
-    meths.win_set_option(float_win, 'fillchars', NIL)
+    meths.set_option_value('fillchars', NIL, {win=float_win.id})
     float_opts.style = 'minimal'
     meths.win_set_config(float_win, float_opts)
     assert_alive()
-  end)
+    end)
 
-  it("should re-apply 'style' when present", function()
+    it("should re-apply 'style' when present", function()
     local float_opts = {style = 'minimal', relative = 'editor', row = 1, col = 1, width = 1, height = 1}
     local float_win = meths.open_win(0, true, float_opts)
-    meths.win_set_option(float_win, 'number', true)
+    meths.set_option_value('number', true, { win = float_win })
     float_opts.row = 2
     meths.win_set_config(float_win, float_opts)
-    eq(false, meths.win_get_option(float_win, 'number'))
+    eq(false, meths.get_option_value('number', { win = float_win }))
   end)
 
   it("should not re-apply 'style' when missing", function()
     local float_opts = {style = 'minimal', relative = 'editor', row = 1, col = 1, width = 1, height = 1}
     local float_win = meths.open_win(0, true, float_opts)
-    meths.win_set_option(float_win, 'number', true)
+    meths.set_option_value('number', true, { win = float_win })
     float_opts.row = 2
     float_opts.style = nil
     meths.win_set_config(float_win, float_opts)
-    eq(true, meths.win_get_option(float_win, 'number'))
+    eq(true, meths.get_option_value('number', { win = float_win }))
   end)
 
   it("'scroll' is computed correctly when opening float with splitkeep=screen #20684", function()
-    meths.set_option('splitkeep', 'screen')
+    meths.set_option_value('splitkeep', 'screen', {})
     local float_opts = {relative = 'editor', row = 1, col = 1, width = 10, height = 10}
     local float_win = meths.open_win(0, true, float_opts)
-    eq(5, meths.win_get_option(float_win, 'scroll'))
+    eq(5, meths.get_option_value('scroll', {win=float_win.id}))
   end)
 
   describe('with only one tabpage,', function()
@@ -4553,8 +4553,8 @@ describe('float window', function()
     describe('and completion', function()
       before_each(function()
         local buf = meths.create_buf(false,false)
-        local win = meths.open_win(buf, true, {relative='editor', width=12, height=4, row=2, col=5})
-        meths.win_set_option(win , 'winhl', 'Normal:ErrorMsg')
+        local win = meths.open_win(buf, true, {relative='editor', width=12, height=4, row=2, col=5}).id
+        meths.set_option_value('winhl', 'Normal:ErrorMsg', {win=win})
         if multigrid then
           screen:expect{grid=[[
           ## grid 1
@@ -7823,7 +7823,7 @@ describe('float window', function()
       local buf = meths.create_buf(false,false)
       meths.buf_set_lines(buf, 0, -1, true, {'foo', 'bar', 'baz'})
       local float_win = meths.open_win(buf, false, {relative='editor', width=20, height=4, row=1, col=5})
-      meths.win_set_option(float_win, 'winbar', 'floaty bar')
+      meths.set_option_value('winbar', 'floaty bar', {win=float_win.id})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -8079,10 +8079,13 @@ describe('float window', function()
         [6] = {foreground = tonumber('0x332533'), background = tonumber('0xfff1ff')},
         [7] = {background = tonumber('0xffcfff'), bold = true, foreground = tonumber('0x0000d8')},
         [8] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue1},
-        [9] = {background = Screen.colors.LightMagenta, blend=30},
-        [10] = {foreground = Screen.colors.Red, background = Screen.colors.LightMagenta, blend=0},
-        [11] = {foreground = Screen.colors.Red, background = Screen.colors.LightMagenta, blend=80},
-        [12] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue1, blend=30},
+        [9] = {background = Screen.colors.LightMagenta, blend = 30},
+        [10] = {foreground = Screen.colors.Red, background = Screen.colors.LightMagenta, blend = 0},
+        [11] = {foreground = Screen.colors.Red, background = Screen.colors.LightMagenta, blend = 80},
+        [12] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue1, blend = 30},
+        [13] = {background = Screen.colors.LightGray, blend = 30},
+        [14] = {foreground = Screen.colors.Grey0, background = Screen.colors.Grey88},
+        [15] = {foreground = tonumber('0x939393'), background = Screen.colors.Grey88},
       })
       insert([[
         Lorem ipsum dolor sit amet, consectetur
@@ -8141,7 +8144,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_set_option(win, "winblend", 30)
+      meths.set_option_value("winblend", 30, {win=win.id})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -8183,6 +8186,58 @@ describe('float window', function()
                                                             |
         ]])
       end
+
+      -- Check that 'winblend' works with NormalNC highlight
+      meths.set_option_value('winhighlight', 'NormalNC:Visual', {win = win})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [3:--------------------------------------------------]|
+        ## grid 2
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea commodo consequat. Duis aute irure dolor in    |
+          reprehenderit in voluptate velit esse cillum      |
+          dolore eu fugiat nulla pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+        ## grid 3
+                                                            |
+        ## grid 5
+          {13:test           }|
+          {13:               }|
+          {13:popup    text  }|
+        ]], float_pos={
+          [5] = {{id = 1002}, "NW", 1, 2, 5, true, 50};
+        }}
+      else
+        screen:expect([[
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea co{14:test}{15:o consequat}. Duis aute irure dolor in    |
+          repre{15:henderit in vol}uptate velit esse cillum      |
+          dolor{14:popup}{15:fugi}{14:text}{15:ul}la pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+                                                            |
+        ]])
+      end
+
+      -- Also test with global NormalNC highlight
+      meths.set_option_value('winhighlight', '', {win = win})
+      command('hi link NormalNC Visual')
+      screen:expect_unchanged(true)
+      command('hi clear NormalNC')
 
       command('hi SpecialRegion guifg=Red blend=0')
       meths.buf_add_highlight(buf, -1, "SpecialRegion", 2, 0, -1)
@@ -8397,7 +8452,7 @@ describe('float window', function()
       -- at least. Also check invisible EndOfBuffer region blends correctly.
       meths.buf_set_lines(buf, 0, -1, true, {" x x  x   xx", "  x x  x   x"})
       win = meths.open_win(buf, false, {relative='editor', width=12, height=3, row=0, col=11, style='minimal'})
-      meths.win_set_option(win, 'winblend', 30)
+      meths.set_option_value('winblend', 30, {win=win.id})
       screen:set_default_attr_ids({
         [1] = {foreground = tonumber('0xb282b2'), background = tonumber('0xffcfff')},
         [2] = {foreground = Screen.colors.Grey0, background = tonumber('0xffcfff')},
@@ -8639,7 +8694,7 @@ describe('float window', function()
     it("correctly orders multiple opened floats (current last)", function()
       local buf = meths.create_buf(false,false)
       local win = meths.open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
-      meths.win_set_option(win, "winhl", "Normal:ErrorMsg,EndOfBuffer:ErrorMsg")
+      meths.set_option_value("winhl", "Normal:ErrorMsg,EndOfBuffer:ErrorMsg", {win=win.id})
 
       if multigrid then
         screen:expect{grid=[[
@@ -8684,10 +8739,10 @@ describe('float window', function()
       exec_lua [[
         local buf = vim.api.nvim_create_buf(false,false)
         local win = vim.api.nvim_open_win(buf, false, {relative='editor', width=16, height=2, row=3, col=8})
-        vim.api.nvim_win_set_option(win, "winhl", "EndOfBuffer:Normal")
+        vim.wo[win].winhl = "EndOfBuffer:Normal"
         buf = vim.api.nvim_create_buf(false,false)
         win = vim.api.nvim_open_win(buf, true, {relative='editor', width=12, height=2, row=4, col=10})
-        vim.api.nvim_win_set_option(win, "winhl", "Normal:Search,EndOfBuffer:Search")
+        vim.wo[win].winhl = "Normal:Search,EndOfBuffer:Search"
       ]]
 
       if multigrid then
@@ -8744,7 +8799,7 @@ describe('float window', function()
     it("correctly orders multiple opened floats (non-current last)", function()
       local buf = meths.create_buf(false,false)
       local win = meths.open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
-      meths.win_set_option(win, "winhl", "Normal:ErrorMsg,EndOfBuffer:ErrorMsg")
+      meths.set_option_value("winhl", "Normal:ErrorMsg,EndOfBuffer:ErrorMsg", {win=win.id})
 
       if multigrid then
         screen:expect{grid=[[
@@ -8789,10 +8844,10 @@ describe('float window', function()
       exec_lua [[
         local buf = vim.api.nvim_create_buf(false,false)
         local win = vim.api.nvim_open_win(buf, true, {relative='editor', width=12, height=2, row=4, col=10})
-        vim.api.nvim_win_set_option(win, "winhl", "Normal:Search,EndOfBuffer:Search")
+        vim.wo[win].winhl = "Normal:Search,EndOfBuffer:Search"
         buf = vim.api.nvim_create_buf(false,false)
         win = vim.api.nvim_open_win(buf, false, {relative='editor', width=16, height=2, row=3, col=8})
-        vim.api.nvim_win_set_option(win, "winhl", "EndOfBuffer:Normal")
+        vim.wo[win].winhl = "EndOfBuffer:Normal"
       ]]
 
       if multigrid then
@@ -8849,11 +8904,11 @@ describe('float window', function()
     it('can use z-index', function()
       local buf = meths.create_buf(false,false)
       local win1 = meths.open_win(buf, false, {relative='editor', width=20, height=3, row=1, col=5, zindex=30})
-      meths.win_set_option(win1, "winhl", "Normal:ErrorMsg,EndOfBuffer:ErrorMsg")
+      meths.set_option_value("winhl", "Normal:ErrorMsg,EndOfBuffer:ErrorMsg", {win=win1.id})
       local win2 = meths.open_win(buf, false, {relative='editor', width=20, height=3, row=2, col=6, zindex=50})
-      meths.win_set_option(win2, "winhl", "Normal:Search,EndOfBuffer:Search")
+      meths.set_option_value("winhl", "Normal:Search,EndOfBuffer:Search", {win=win2.id})
       local win3 = meths.open_win(buf, false, {relative='editor', width=20, height=3, row=3, col=7, zindex=40})
-      meths.win_set_option(win3, "winhl", "Normal:Question,EndOfBuffer:Question")
+      meths.set_option_value("winhl", "Normal:Question,EndOfBuffer:Question", {win=win3.id})
 
       if multigrid then
         screen:expect{grid=[[
@@ -8912,7 +8967,7 @@ describe('float window', function()
     it('can use winbar', function()
       local buf = meths.create_buf(false,false)
       local win1 = meths.open_win(buf, false, {relative='editor', width=15, height=3, row=1, col=5})
-      meths.win_set_option(win1, 'winbar', 'floaty bar')
+      meths.set_option_value('winbar', 'floaty bar', {win=win1.id})
 
       if multigrid then
         screen:expect{grid=[[

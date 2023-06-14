@@ -745,7 +745,7 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
       // the ones from the original file.
       // First find a file name that doesn't exist yet (use some
       // arbitrary numbers).
-      STRCPY(IObuff, fname);
+      xstrlcpy(IObuff, fname, IOSIZE);
       for (int i = 4913;; i += 123) {
         char *tail = path_tail(IObuff);
         size_t size = (size_t)(tail - IObuff);
@@ -1749,24 +1749,24 @@ restore_backup:
     add_quoted_fname(IObuff, IOSIZE, buf, fname);
     bool insert_space = false;
     if (write_info.bw_conv_error) {
-      STRCAT(IObuff, _(" CONVERSION ERROR"));
+      xstrlcat(IObuff, _(" CONVERSION ERROR"), IOSIZE);
       insert_space = true;
       if (write_info.bw_conv_error_lnum != 0) {
         vim_snprintf_add(IObuff, IOSIZE, _(" in line %" PRId64 ";"),
                          (int64_t)write_info.bw_conv_error_lnum);
       }
     } else if (notconverted) {
-      STRCAT(IObuff, _("[NOT converted]"));
+      xstrlcat(IObuff, _("[NOT converted]"), IOSIZE);
       insert_space = true;
     } else if (converted) {
-      STRCAT(IObuff, _("[converted]"));
+      xstrlcat(IObuff, _("[converted]"), IOSIZE);
       insert_space = true;
     }
     if (device) {
-      STRCAT(IObuff, _("[Device]"));
+      xstrlcat(IObuff, _("[Device]"), IOSIZE);
       insert_space = true;
     } else if (newfile) {
-      STRCAT(IObuff, new_file_message());
+      xstrlcat(IObuff, new_file_message(), IOSIZE);
       insert_space = true;
     }
     if (no_eol) {
@@ -1780,9 +1780,9 @@ restore_backup:
     msg_add_lines(insert_space, (long)lnum, nchars);       // add line/char count
     if (!shortmess(SHM_WRITE)) {
       if (append) {
-        STRCAT(IObuff, shortmess(SHM_WRI) ? _(" [a]") : _(" appended"));
+        xstrlcat(IObuff, shortmess(SHM_WRI) ? _(" [a]") : _(" appended"), IOSIZE);
       } else {
-        STRCAT(IObuff, shortmess(SHM_WRI) ? _(" [w]") : _(" written"));
+        xstrlcat(IObuff, shortmess(SHM_WRI) ? _(" [w]") : _(" written"), IOSIZE);
       }
     }
 

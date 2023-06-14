@@ -3,9 +3,9 @@ local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
 local pathsep = helpers.get_pathsep()
-local curbufmeths = helpers.curbufmeths
 local funcs = helpers.funcs
 local meths = helpers.meths
+local exec_lua = helpers.exec_lua
 
 local testdir = 'Xtest-editorconfig'
 
@@ -13,7 +13,7 @@ local function test_case(name, expected)
   local filename = testdir .. pathsep .. name
   command('edit ' .. filename)
   for opt, val in pairs(expected) do
-    eq(val, curbufmeths.get_option(opt), name)
+    eq(val, meths.get_option_value(opt, {buf=0}), name)
   end
 end
 
@@ -206,5 +206,16 @@ But not this one
     meths.buf_set_var(bufnr, 'editorconfig', false)
     test_case('3_space.txt', { shiftwidth = 42 })
     test_case('4_space.py', { shiftwidth = 4 })
+  end)
+
+  it('does not operate on invalid buffers', function()
+    local ok, err = unpack(exec_lua([[
+      vim.cmd.edit('test.txt')
+      local bufnr = vim.api.nvim_get_current_buf()
+      vim.cmd.bwipeout(bufnr)
+      return {pcall(require('editorconfig').config, bufnr)}
+    ]]))
+
+    eq(true, ok, err)
   end)
 end)

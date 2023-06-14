@@ -44,8 +44,8 @@ Copyright 2005-2017:					*tar-copyright*
 	the file mentioned in the tarball.  If the current directory is not
 	correct for that path, :TarDiff will fail to find the associated file.
 
-	If the [filename] is given, that that filename (and path) will be used
-	to specify the associated file.
+	If the [filename] is given, that filename (and path) will be used to
+	specify the associated file.
 
 
    PREVENTING LOADING~

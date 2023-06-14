@@ -164,10 +164,10 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
         Array arr = arena_array(&arena, (size_t)size);
         for (int i = 0; i < size; i++) {
           Array item = arena_array(&arena, 4);
-          ADD_C(item, STRING_OBJ(cstr_as_string(array[i].pum_text)));
-          ADD_C(item, STRING_OBJ(cstr_as_string(array[i].pum_kind)));
-          ADD_C(item, STRING_OBJ(cstr_as_string(array[i].pum_extra)));
-          ADD_C(item, STRING_OBJ(cstr_as_string(array[i].pum_info)));
+          ADD_C(item, CSTR_AS_OBJ(array[i].pum_text));
+          ADD_C(item, CSTR_AS_OBJ(array[i].pum_kind));
+          ADD_C(item, CSTR_AS_OBJ(array[i].pum_extra));
+          ADD_C(item, CSTR_AS_OBJ(array[i].pum_info));
           ADD_C(arr, ARRAY_OBJ(item));
         }
         ui_call_popupmenu_show(arr, selected, pum_win_row, cursor_col,
@@ -780,11 +780,11 @@ static bool pum_set_selected(int n, int repeat)
           if (res == OK) {
             // Edit a new, empty buffer. Set options for a "wipeout"
             // buffer.
-            set_option_value_give_err("swf", 0L, NULL, OPT_LOCAL);
-            set_option_value_give_err("bl", 0L, NULL, OPT_LOCAL);
-            set_option_value_give_err("bt", 0L, "nofile", OPT_LOCAL);
-            set_option_value_give_err("bh", 0L, "wipe", OPT_LOCAL);
-            set_option_value_give_err("diff", 0L, NULL, OPT_LOCAL);
+            set_option_value_give_err("swf", BOOLEAN_OPTVAL(false), OPT_LOCAL);
+            set_option_value_give_err("bl", BOOLEAN_OPTVAL(false), OPT_LOCAL);
+            set_option_value_give_err("bt", STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL);
+            set_option_value_give_err("bh", STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL);
+            set_option_value_give_err("diff", BOOLEAN_OPTVAL(false), OPT_LOCAL);
           }
         }
 

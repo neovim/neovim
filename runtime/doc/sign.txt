@@ -468,7 +468,7 @@ sign_getplaced([{buf} [, {dict}]])			*sign_getplaced()*
 		   id		select sign with this identifier
 		   lnum		select signs placed in this line. For the use
 				of {lnum}, see |line()|.
-		If {group} is '*', then signs in all the groups including the
+		If {group} is "*", then signs in all the groups including the
 		global group are returned. If {group} is not supplied or is an
 		empty string, then only signs in the global group are
 		returned.  If no arguments are supplied, then signs in the
@@ -683,7 +683,7 @@ sign_unplace({group} [, {dict}])			*sign_unplace()*
 		is similar to the |:sign-unplace| command.
 
 		{group} is the sign group name. To use the global sign group,
-		use an empty string.  If {group} is set to '*', then all the
+		use an empty string.  If {group} is set to "*", then all the
 		groups including the global group are used.
 		The signs in {group} are selected based on the entries in
 		{dict}.  The following optional entries in {dict} are
@@ -735,7 +735,7 @@ sign_unplacelist({list})				*sign_unplacelist()*
 				the buffers.
 		    group	sign group name. If not specified or set to an
 				empty string, then the global sign group is
-				used. If set to '*', then all the groups
+				used. If set to "*", then all the groups
 				including the global group are used.
 		    id		sign identifier. If not specified, then all
 				the signs in the specified group are removed.

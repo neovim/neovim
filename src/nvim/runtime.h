@@ -5,7 +5,6 @@
 
 #include "klib/kvec.h"
 #include "nvim/autocmd.h"
-#include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_eval_defs.h"

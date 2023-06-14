@@ -1167,11 +1167,13 @@ charidx({string}, {idx} [, {countcc} [, {utf16}]])
 		When {utf16} is present and TRUE, {idx} is used as the UTF-16
 		index in the String {expr} instead of as the byte index.
 
-		Returns -1 if the arguments are invalid or if {idx} is greater
-		than the index of the last byte in {string}.  An error is
-		given if the first argument is not a string, the second
-		argument is not a number or when the third argument is present
-		and is not zero or one.
+		Returns -1 if the arguments are invalid or if there are less
+		than {idx} bytes. If there are exactly {idx} bytes the length
+		of the string in characters is returned.
+
+		An error is given and -1 is returned if the first argument is
+		not a string, the second argument is not a number or when the
+		third argument is present and is not zero or one.
 
 		See |byteidx()| and |byteidxcomp()| for getting the byte index
 		from the character index and |utf16idx()| for getting the
@@ -1231,7 +1233,7 @@ clearmatches([{win}])					*clearmatches()*
 		Can also be used as a |method|: >
 			GetWin()->clearmatches()
 <
-col({expr} [, {winid})					*col()*
+col({expr} [, {winid}])					*col()*
 		The result is a Number, which is the byte index of the column
 		position given with {expr}.  The accepted positions are:
 		    .	    the cursor position
@@ -1294,7 +1296,7 @@ complete({startcol}, {matches})			*complete()* *E785*
 		Example: >
 	inoremap <F5> <C-R>=ListMonths()<CR>
 
-	func! ListMonths()
+	func ListMonths()
 	  call complete(col('.'), ['January', 'February', 'March',
 		\ 'April', 'May', 'June', 'July', 'August', 'September',
 		\ 'October', 'November', 'December'])
@@ -1538,7 +1540,7 @@ cursor({list})
 		This is like the return value of |getpos()| or |getcurpos()|,
 		but without the first item.
 
-		To position the cursor using the character count, use
+		To position the cursor using {col} as the character count, use
 		|setcursorcharpos()|.
 
 		Does not change the jumplist.
@@ -1888,7 +1890,7 @@ execute({command} [, {silent}])				*execute()*
 		The default is "silent".  Note that with "silent!", unlike
 		`:redir`, error messages are dropped.
 
-		To get a list of lines use |split()| on the result: >
+		To get a list of lines use `split()` on the result: >
 			execute('args')->split("\n")
 
 <		This function is not available in the |sandbox|.
@@ -3635,7 +3637,7 @@ getscriptinfo([{opts}])					*getscriptinfo()*
 		    name	Vim script file name.
 		    sid		Script ID |<SID>|.
 		    variables   A dictionary with the script-local variables.
-				Present only when the a particular script is
+				Present only when a particular script is
 				specified using the "sid" item in {opts}.
 				Note that this is a copy, the value of
 				script-local variables cannot be changed using
@@ -3927,8 +3929,8 @@ has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 		{feature} argument is a feature name like "nvim-0.2.1" or
 		"win32", see below.  See also |exists()|.
 
-		To get the system name use |vim.loop|.os_uname() in Lua: >
-			:lua print(vim.loop.os_uname().sysname)
+		To get the system name use |vim.uv|.os_uname() in Lua: >lua
+			print(vim.uv.os_uname().sysname)
 
 <		If the code has a syntax error then Vimscript may skip the
 		rest of the line.  Put |:if| and |:endif| on separate lines to
@@ -5624,7 +5626,7 @@ mkdir({name} [, {flags} [, {prot}]])
 <		and "subdir" already exists then "subdir/tmp" will be
 		scheduled for deletion, like with: >
 			defer delete('subdir/tmp', 'rf')
-
+<
 		If {prot} is given it is used to set the protection bits of
 		the new directory.  The default is 0o755 (rwxr-xr-x: r/w for
 		the user, readable for others).  Use 0o700 to make it
@@ -6014,7 +6016,7 @@ printf({fmt}, {expr1} ...)				*printf()*
 			be applied, see below.
 
 		A field width or precision, or both, may be indicated by an
-		asterisk '*' instead of a digit string.  In this case, a
+		asterisk "*" instead of a digit string.  In this case, a
 		Number argument supplies the field width or precision.  A
 		negative field width is treated as a left adjustment flag
 		followed by a positive field width; a negative precision is
@@ -6137,17 +6139,20 @@ prompt_setcallback({buf}, {expr})			*prompt_setcallback()*
 		that was entered at the prompt.  This can be an empty string
 		if the user only typed Enter.
 		Example: >
-		   call prompt_setcallback(bufnr(''), function('s:TextEntered'))
 		   func s:TextEntered(text)
 		     if a:text == 'exit' || a:text == 'quit'
 		       stopinsert
+		       " Reset 'modified' to allow the buffer to be closed.
+		       " We assume there is nothing useful to be saved.
+		       set nomodified
 		       close
 		     else
+		       " Do something useful with "a:text".  In this example
+		       " we just repeat it.
 		       call append(line('$') - 1, 'Entered: "' .. a:text .. '"')
-		       " Reset 'modified' to allow the buffer to be closed.
-		       set nomodified
 		     endif
 		   endfunc
+		   call prompt_setcallback(bufnr(), function('s:TextEntered'))
 
 <		Can also be used as a |method|: >
 			GetBuffer()->prompt_setcallback(callback)
@@ -9135,14 +9140,18 @@ uniq({list} [, {func} [, {dict}]])			*uniq()* *E882*
 <
 							*utf16idx()*
 utf16idx({string}, {idx} [, {countcc} [, {charidx}]])
-		Same as |charidx()| but returns the UTF-16 index of the byte
-		at {idx} in {string} (after converting it to UTF-16).
+		Same as |charidx()| but returns the UTF-16 code unit index of
+		the byte at {idx} in {string} (after converting it to UTF-16).
 
 		When {charidx} is present and TRUE, {idx} is used as the
 		character index in the String {string} instead of as the byte
 		index.
-		An {idx} in the middle of a UTF-8 sequence is rounded upwards
-		to the end of that sequence.
+		An {idx} in the middle of a UTF-8 sequence is rounded
+		downwards to the beginning of that sequence.
+
+		Returns -1 if the arguments are invalid or if there are less
+		than {idx} bytes in {string}. If there are exactly {idx} bytes
+		the length of the string in UTF-16 code units is returned.
 
 		See |byteidx()| and |byteidxcomp()| for getting the byte index
 		from the UTF-16 index and |charidx()| for getting the
@@ -9294,7 +9303,7 @@ win_execute({id}, {command} [, {silent}])		*win_execute()*
 		The window will temporarily be made the current window,
 		without triggering autocommands or changing directory.  When
 		executing {command} autocommands will be triggered, this may
-		have unexpected side effects.  Use |:noautocmd| if needed.
+		have unexpected side effects.  Use `:noautocmd` if needed.
 		Example: >
 			call win_execute(winid, 'syntax enable')
 <		Doing the same with `setwinvar()` would not trigger

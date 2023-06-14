@@ -9,21 +9,13 @@ endif()
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${PROJECT_SOURCE_DIR}/../cmake")
 
+include(ExternalProject)
 include(CheckCCompilerFlag)
+
+include(Deps)
 include(Util)
 
-set(DEPS_CMAKE_ARGS
-  -D CMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-  -D CMAKE_C_STANDARD=99
-  -D CMAKE_GENERATOR=${CMAKE_GENERATOR}
-  -D CMAKE_GENERATOR_PLATFORM=${CMAKE_GENERATOR_PLATFORM}
-  -D CMAKE_POSITION_INDEPENDENT_CODE=ON
-  -D CMAKE_FIND_FRAMEWORK=${CMAKE_FIND_FRAMEWORK})
-
-set(DEPS_CMAKE_CACHE_ARGS -DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES})
-
 set_default_buildtype()
-
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(NOT isMultiConfig)
   list(APPEND DEPS_CMAKE_ARGS -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
@@ -36,14 +28,7 @@ if(HAS_OG_FLAG)
   set(DEFAULT_MAKE_CFLAGS CFLAGS+=-Og ${DEFAULT_MAKE_CFLAGS})
 endif()
 
-set(DEPS_INSTALL_DIR "${CMAKE_BINARY_DIR}/usr")
-set(DEPS_BIN_DIR "${DEPS_INSTALL_DIR}/bin")
-set(DEPS_LIB_DIR "${DEPS_INSTALL_DIR}/lib")
-set(DEPS_BUILD_DIR "${CMAKE_BINARY_DIR}/build")
-set(DEPS_DOWNLOAD_DIR "${DEPS_BUILD_DIR}/downloads")
 set(DEPS_INCLUDE_FLAGS "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/include/luajit-2.1")
-
-list(APPEND DEPS_CMAKE_ARGS -D CMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR})
 
 option(USE_BUNDLED "Use bundled dependencies." ON)
 
@@ -53,7 +38,6 @@ option(USE_BUNDLED_LIBVTERM "Use the bundled libvterm." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBUV "Use the bundled libuv." ${USE_BUNDLED})
 option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
-option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ${USE_BUNDLED})
 option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
 option(USE_BUNDLED_LPEG "Use the bundled lpeg." ${USE_BUNDLED})
 #XXX(tarruda): Lua is only used for debugging the functional test client, don't
@@ -70,54 +54,11 @@ else()
   option(USE_BUNDLED_LIBICONV "Use the bundled version of libiconv." OFF)
 endif()
 
-if(WIN32)
-  option(USE_BUNDLED_NVIMQT "Bundle neovim-qt" ON)
-endif()
-
 option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing source directory." OFF)
 
 find_package(Git)
 if(NOT Git_FOUND)
   message(FATAL_ERROR "Git is required to apply patches.")
-endif()
-
-if(UNIX)
-  find_program(MAKE_PRG NAMES gmake make)
-  if(NOT MAKE_PRG)
-    message(FATAL_ERROR "GNU Make is required to build the dependencies.")
-  else()
-    message(STATUS "Found GNU Make at ${MAKE_PRG}")
-  endif()
-endif()
-
-# When using make, use the $(MAKE) variable to avoid warning about the job
-# server.
-if(CMAKE_GENERATOR MATCHES "Makefiles")
-  set(MAKE_PRG "$(MAKE)")
-endif()
-
-if(MINGW AND CMAKE_GENERATOR MATCHES "Ninja")
-  find_program(MAKE_PRG NAMES mingw32-make)
-  if(NOT MAKE_PRG)
-    message(FATAL_ERROR "GNU Make for mingw32 is required to build the dependencies.")
-  else()
-    message(STATUS "Found GNU Make for mingw32: ${MAKE_PRG}")
-  endif()
-endif()
-
-set(DEPS_C_COMPILER "${CMAKE_C_COMPILER}")
-
-if(CMAKE_OSX_SYSROOT)
-  set(DEPS_C_COMPILER "${DEPS_C_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
-endif()
-
-if(CMAKE_OSX_ARCHITECTURES)
-  # The LuaJIT build does not like being passed multiple `-arch` flags
-  # so we handle a universal build the old-fashioned way.
-  set(LUAJIT_C_COMPILER "${DEPS_C_COMPILER}")
-  foreach(ARCH IN LISTS CMAKE_OSX_ARCHITECTURES)
-    set(DEPS_C_COMPILER "${DEPS_C_COMPILER} -arch ${ARCH}")
-  endforeach()
 endif()
 
 # If the macOS deployment target is not set manually (via $MACOSX_DEPLOYMENT_TARGET),
@@ -132,8 +73,9 @@ if(APPLE)
   message(STATUS "Using deployment target ${CMAKE_OSX_DEPLOYMENT_TARGET}")
 endif()
 
-include(ExternalProject)
-set_directory_properties(PROPERTIES EP_PREFIX "${DEPS_BUILD_DIR}")
+set_directory_properties(PROPERTIES
+  EP_PREFIX "${DEPS_BUILD_DIR}"
+  CMAKE_CONFIGURE_DEPENDS deps.txt)
 
 file(READ deps.txt DEPENDENCIES)
 STRING(REGEX REPLACE "\n" ";" DEPENDENCIES "${DEPENDENCIES}")
@@ -141,16 +83,13 @@ foreach(dep ${DEPENDENCIES})
   STRING(REGEX REPLACE " " ";" dep "${dep}")
   list(GET dep 0 name)
   list(GET dep 1 value)
-
-  if(name MATCHES "^.*URL$")
-    mark_as_advanced(${name})
+  if(NOT ${name})
+    # _URL variables must NOT be set when USE_EXISTING_SRC_DIR is set,
+    # otherwise ExternalProject will try to re-download the sources.
     if(NOT USE_EXISTING_SRC_DIR)
-      set(${name} ${value} CACHE STRING "")
+      set(${name} ${value})
     endif()
-  elseif(name MATCHES "^.*SHA256$")
-    set(${name} ${value})
   endif()
-
 endforeach()
 
 if(USE_BUNDLED_UNIBILIUM)
@@ -184,10 +123,6 @@ if(USE_BUNDLED_LUA)
   include(BuildLua)
 endif()
 
-if(USE_BUNDLED_LUAROCKS)
-  include(BuildLuarocks)
-endif()
-
 if(USE_BUNDLED_LUV)
   include(BuildLuv)
 endif()
@@ -218,12 +153,6 @@ if(WIN32)
   GetExecutable(TARGET cat)
   GetExecutable(TARGET tee)
   GetExecutable(TARGET xxd)
-
-  if(USE_BUNDLED_NVIMQT)
-    GetBinaryDep(TARGET wingui
-      INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_BIN_DIR}
-      COMMAND ${CMAKE_COMMAND} -E copy_directory share ${DEPS_INSTALL_DIR}/share)
-  endif()
 
   GetBinaryDep(TARGET win32yank_X86_64
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_BIN_DIR})

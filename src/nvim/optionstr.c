@@ -2250,7 +2250,7 @@ void save_clear_shm_value(void)
 
   if (++set_shm_recursive == 1) {
     STRCPY(shm_buf, p_shm);
-    set_option_value_give_err("shm", 0L, "", 0);
+    set_option_value_give_err("shm", STATIC_CSTR_AS_OPTVAL(""), 0);
   }
 }
 
@@ -2258,7 +2258,7 @@ void save_clear_shm_value(void)
 void restore_shm_value(void)
 {
   if (--set_shm_recursive == 0) {
-    set_option_value_give_err("shm", 0L, shm_buf, 0);
+    set_option_value_give_err("shm", CSTR_AS_OPTVAL(shm_buf), 0);
     memset(shm_buf, 0, SHM_LEN);
   }
 }

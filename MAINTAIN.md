@@ -25,7 +25,7 @@ The forecasting problem might be solved with an explicit priority system (like
 Bram's todo.txt). Meanwhile the Neovim priority system is defined by:
 
 * PRs nearing completion.
-* Issue labels. E.g. the `+plan` label increases the ticket's priority merely
+* Issue labels. E.g. the `has:plan` label increases the ticket's priority merely
   for having a plan written down: it is _closer to completion_ than tickets
   without a plan.
 * Comment activity or new information.
@@ -89,7 +89,7 @@ These dependencies are "vendored" (inlined), we must update the sources manually
     * send improvements upstream!
 * `src/xdiff/`: [xdiff](https://github.com/git/git/tree/master/xdiff)
 * `src/cjson/`: [lua-cjson](https://github.com/openresty/lua-cjson)
-* `src/nvim/lib/`: [Klib](https://github.com/attractivechaos/klib)
+* `src/klib/`: [Klib](https://github.com/attractivechaos/klib)
 * `runtime/lua/vim/inspect.lua`: [inspect.lua](https://github.com/kikito/inspect.lua)
 * `src/nvim/tui/terminfo_defs.h`: terminfo definitions
     * Run `scripts/update_terminfo.sh` to update these definitions.

@@ -17,14 +17,14 @@ jobs:
           script: |
             const title = context.payload.issue.title;
             const titleSplit = title.split(/\s+/).map(e => e.toLowerCase());
-            const keywords = ['api', 'treesitter', 'ui', 'lsp', 'doc'];
+            const keywords = ['api', 'treesitter', 'ui', 'lsp'];
             var match = new Set();
-            for(const keyword of keywords) {
-              if(titleSplit.includes(keyword)) {
+            for (const keyword of keywords) {
+              if (titleSplit.includes(keyword)) {
                 match.add(keyword)
               }
             }
-            if(match.size !== 0){
+            if (match.size !== 0) {
               github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,

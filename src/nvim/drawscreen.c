@@ -95,6 +95,7 @@
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
 #include "nvim/search.h"
+#include "nvim/spell.h"
 #include "nvim/state.h"
 #include "nvim/statusline.h"
 #include "nvim/syntax.h"
@@ -838,7 +839,8 @@ void show_cursor_info_later(bool force)
       || curwin->w_topfill != curwin->w_stl_topfill
       || empty_line != curwin->w_stl_empty
       || reg_recording != curwin->w_stl_recording
-      || state != curwin->w_stl_state) {
+      || state != curwin->w_stl_state
+      || (VIsual_active && VIsual_mode != curwin->w_stl_visual_mode)) {
     if (curwin->w_status_height || global_stl_height()) {
       curwin->w_redr_status = true;
     } else {
@@ -861,8 +863,11 @@ void show_cursor_info_later(bool force)
   curwin->w_stl_topline = curwin->w_topline;
   curwin->w_stl_line_count = curwin->w_buffer->b_ml.ml_line_count;
   curwin->w_stl_topfill = curwin->w_topfill;
-  curwin->w_stl_state = state;
   curwin->w_stl_recording = reg_recording;
+  curwin->w_stl_state = state;
+  if (VIsual_active) {
+    curwin->w_stl_visual_mode = VIsual_mode;
+  }
 }
 
 /// @return true when postponing displaying the mode message: when not redrawing
@@ -1984,18 +1989,25 @@ static void win_update(win_T *wp, DecorProviders *providers)
   if (wp->w_p_cul) {
     // Make sure that the cursorline on a closed fold is redrawn
     cursorline_fi = fold_info(wp, wp->w_cursor.lnum);
-    if (cursorline_fi.fi_level > 0 && cursorline_fi.fi_lines > 0) {
+    if (cursorline_fi.fi_level != 0 && cursorline_fi.fi_lines > 0) {
       wp->w_cursorline = cursorline_fi.fi_lnum;
     }
   }
 
   win_check_ns_hl(wp);
 
+  spellvars_T spv = { 0 };
+  linenr_T lnum = wp->w_topline;  // first line shown in window
+  // Initialize spell related variables for the first drawn line.
+  if (spell_check_window(wp)) {
+    spv.spv_has_spell = true;
+    spv.spv_unchanged = mod_top == 0;
+  }
+
   // Update all the window rows.
   int idx = 0;                    // first entry in w_lines[].wl_size
   int row = 0;                    // current window row to display
   int srow = 0;                   // starting row of the current line
-  linenr_T lnum = wp->w_topline;  // first line shown in window
 
   bool eof = false;             // if true, we hit the end of the file
   bool didline = false;         // if true, we finished the last line
@@ -2222,9 +2234,10 @@ static void win_update(win_T *wp, DecorProviders *providers)
         }
 
         // Display one line
-        row = win_line(wp, lnum, srow,
-                       foldinfo.fi_lines ? srow : wp->w_grid.rows,
-                       mod_top == 0, false, foldinfo, &line_providers, &provider_err);
+        spellvars_T zero_spv = { 0 };
+        row = win_line(wp, lnum, srow, foldinfo.fi_lines > 0 ? srow : wp->w_grid.rows, false,
+                       foldinfo.fi_lines > 0 ? &zero_spv : &spv,
+                       foldinfo, &line_providers, &provider_err);
 
         if (foldinfo.fi_lines == 0) {
           wp->w_lines[idx].wl_folded = false;
@@ -2236,6 +2249,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
           wp->w_lines[idx].wl_folded = true;
           wp->w_lines[idx].wl_lastlnum = lnum + foldinfo.fi_lines;
           did_update = DID_FOLD;
+          spv.spv_capcol_lnum = 0;
         }
       }
 
@@ -2261,7 +2275,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         // text doesn't need to be drawn, but the number column does.
         foldinfo_T info = wp->w_p_cul && lnum == wp->w_cursor.lnum ?
                           cursorline_fi : fold_info(wp, lnum);
-        (void)win_line(wp, lnum, srow, wp->w_grid.rows, true, true,
+        (void)win_line(wp, lnum, srow, wp->w_grid.rows, true, &spv,
                        info, &line_providers, &provider_err);
       }
 
@@ -2272,6 +2286,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
       }
       lnum = wp->w_lines[idx - 1].wl_lastlnum + 1;
       did_update = DID_NONE;
+      spv.spv_capcol_lnum = 0;
     }
 
     // 'statuscolumn' width has changed or errored, start from the top.
@@ -2357,9 +2372,10 @@ static void win_update(win_T *wp, DecorProviders *providers)
       if (j > 0 && !wp->w_botfill && row < wp->w_grid.rows) {
         // Display filler text below last line. win_line() will check
         // for ml_line_count+1 and only draw filler lines
-        foldinfo_T info = { 0 };
-        row = win_line(wp, wp->w_botline, row, wp->w_grid.rows,
-                       false, false, info, &line_providers, &provider_err);
+        spellvars_T zero_spv = { 0 };
+        foldinfo_T zero_foldinfo = { 0 };
+        row = win_line(wp, wp->w_botline, row, wp->w_grid.rows, false, &zero_spv,
+                       zero_foldinfo, &line_providers, &provider_err);
       }
     } else if (dollar_vcol == -1) {
       wp->w_botline = lnum;

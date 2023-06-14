@@ -10,13 +10,13 @@ ${NVIM_VERSION}
 
 1. Download **nvim-win64.zip**
 2. Extract the zip
-3. Run `nvim-qt.exe`
+3. Run `nvim.exe` on your CLI of choice
 
 #### MSI
 
 1. Download **nvim-win64.msi**
 2. Run the MSI
-3. Search and run `nvim-qt.exe` or run `nvim.exe` on your CLI of choice
+3. Run `nvim.exe` on your CLI of choice
 
 ### macOS
 

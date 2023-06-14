@@ -31,7 +31,7 @@ describe('winbar', function()
       [10] = {background = Screen.colors.LightGrey, underline = true},
       [11] = {background = Screen.colors.LightGrey, underline = true, bold = true, foreground = Screen.colors.Magenta},
     })
-    meths.set_option('winbar', 'Set Up The Bars')
+    meths.set_option_value('winbar', 'Set Up The Bars', {})
   end)
 
   it('works', function()
@@ -206,7 +206,7 @@ describe('winbar', function()
     insert [[
       just some
       random text]]
-    meths.set_option('winbar', 'Hello, I am a ruler: %l,%c')
+    meths.set_option_value('winbar', 'Hello, I am a ruler: %l,%c', {})
     screen:expect{grid=[[
       {1:Hello, I am a ruler: 2,11                                   }|
       just some                                                   |
@@ -450,7 +450,7 @@ describe('winbar', function()
                                                                   |
                                                                   |
     ]])
-    eq(3, meths.get_option('cmdheight'))
+    eq(3, meths.get_option_value('cmdheight', {}))
 
     meths.input_mouse('left', 'drag', '', 1, 11, 10)
     screen:expect([[
@@ -468,7 +468,7 @@ describe('winbar', function()
       {2:[No Name]                                                   }|
                                                                   |
     ]])
-    eq(1, meths.get_option('cmdheight'))
+    eq(1, meths.get_option_value('cmdheight', {}))
   end)
 
   it('properly equalizes window height for window-local value', function()

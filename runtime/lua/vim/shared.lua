@@ -361,7 +361,7 @@ local function tbl_extend(behavior, deep_extend, ...)
   return ret
 end
 
---- Merges two or more map-like tables.
+--- Merges two or more tables.
 ---
 ---@see |extend()|
 ---
@@ -369,13 +369,13 @@ end
 ---      - "error": raise an error
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
----@param ... table Two or more map-like tables
+---@param ... table Two or more tables
 ---@return table Merged table
 function vim.tbl_extend(behavior, ...)
   return tbl_extend(behavior, false, ...)
 end
 
---- Merges recursively two or more map-like tables.
+--- Merges recursively two or more tables.
 ---
 ---@see |vim.tbl_extend()|
 ---
@@ -385,7 +385,7 @@ end
 ---      - "error": raise an error
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
----@param ... T2 Two or more map-like tables
+---@param ... T2 Two or more tables
 ---@return T1|T2 (table) Merged table
 function vim.tbl_deep_extend(behavior, ...)
   return tbl_extend(behavior, true, ...)
@@ -456,7 +456,7 @@ end
 --- </pre>
 ---
 ---@param o table Table to index
----@param ... string Optional strings (0 or more, variadic) via which to index the table
+---@param ... any Optional keys (0 or more, variadic) via which to index the table
 ---
 ---@return any Nested value indexed by key (if it exists), else nil
 function vim.tbl_get(o, ...)
@@ -879,6 +879,100 @@ function vim.defaulttable(create)
       return rawget(tbl, key)
     end,
   })
+end
+
+do
+  ---@class vim.Ringbuf<T>
+  ---@field private _items table[]
+  ---@field private _idx_read integer
+  ---@field private _idx_write integer
+  ---@field private _size integer
+  local Ringbuf = {}
+
+  --- Clear all items
+  function Ringbuf.clear(self)
+    self._items = {}
+    self._idx_read = 0
+    self._idx_write = 0
+  end
+
+  --- Adds an item, overriding the oldest item if the buffer is full.
+  ---@generic T
+  ---@param item T
+  function Ringbuf.push(self, item)
+    self._items[self._idx_write] = item
+    self._idx_write = (self._idx_write + 1) % self._size
+    if self._idx_write == self._idx_read then
+      self._idx_read = (self._idx_read + 1) % self._size
+    end
+  end
+
+  --- Removes and returns the first unread item
+  ---@generic T
+  ---@return T?
+  function Ringbuf.pop(self)
+    local idx_read = self._idx_read
+    if idx_read == self._idx_write then
+      return nil
+    end
+    local item = self._items[idx_read]
+    self._items[idx_read] = nil
+    self._idx_read = (idx_read + 1) % self._size
+    return item
+  end
+
+  --- Returns the first unread item without removing it
+  ---@generic T
+  ---@return T?
+  function Ringbuf.peek(self)
+    if self._idx_read == self._idx_write then
+      return nil
+    end
+    return self._items[self._idx_read]
+  end
+
+  --- Create a ring buffer limited to a maximal number of items.
+  --- Once the buffer is full, adding a new entry overrides the oldest entry.
+  ---
+  --- <pre>
+  ---   local ringbuf = vim.ringbuf(4)
+  ---   ringbuf:push("a")
+  ---   ringbuf:push("b")
+  ---   ringbuf:push("c")
+  ---   ringbuf:push("d")
+  ---   ringbuf:push("e")    -- overrides "a"
+  ---   print(ringbuf:pop()) -- returns "b"
+  ---   print(ringbuf:pop()) -- returns "c"
+  ---
+  ---   -- Can be used as iterator. Pops remaining items:
+  ---   for val in ringbuf do
+  ---     print(val)
+  ---   end
+  --- </pre>
+  ---
+  --- Returns a Ringbuf instance with the following methods:
+  ---
+  --- - |Ringbuf:push()|
+  --- - |Ringbuf:pop()|
+  --- - |Ringbuf:peek()|
+  --- - |Ringbuf:clear()|
+  ---
+  ---@param size integer
+  ---@return vim.Ringbuf ringbuf (table)
+  function vim.ringbuf(size)
+    local ringbuf = {
+      _items = {},
+      _size = size + 1,
+      _idx_read = 0,
+      _idx_write = 0,
+    }
+    return setmetatable(ringbuf, {
+      __index = Ringbuf,
+      __call = function(self)
+        return self:pop()
+      end,
+    })
+  end
 end
 
 return vim

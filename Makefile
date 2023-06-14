@@ -126,7 +126,7 @@ test/old/testdir/%.vim: phony_force nvim
 	+$(SINGLE_MAKE) -C test/old/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst test/old/testdir/%.vim,%,$@)
 
 functionaltest-lua: | nvim
-	$(BUILD_TOOL) -C build $@
+	$(BUILD_TOOL) -C build functionaltest
 
 FORMAT=formatc formatlua format
 LINT=lintlua lintsh lintc clang-tidy lintcommit lint

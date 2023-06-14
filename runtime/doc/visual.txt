@@ -398,7 +398,7 @@ selected text: >
 (In the <> notation |<>|, when typing it you should type it literally; you
 need to remove the 'B' flag from 'cpoptions')
 
-Note that special characters (like '.' and '*') will cause problems.
+Note that special characters (like '.' and "*") will cause problems.
 
 Visual-block Examples					*blockwise-examples*
 With the following text, I will indicate the commands to produce the block and

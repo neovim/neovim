@@ -1189,11 +1189,19 @@ bool spell_valid_case(int wordflags, int treeflags)
                  || (wordflags & WF_ONECAP) != 0));
 }
 
-// Returns true if spell checking is not enabled.
+/// Return true if spell checking is enabled for "wp".
+bool spell_check_window(win_T *wp)
+{
+  return wp->w_p_spell
+         && *wp->w_s->b_p_spl != NUL
+         && wp->w_s->b_langp.ga_len > 0
+         && *(char **)(wp->w_s->b_langp.ga_data) != NULL;
+}
+
+/// Return true and give an error if spell checking is not enabled.
 bool no_spell_checking(win_T *wp)
 {
-  if (!wp->w_p_spell || *wp->w_s->b_p_spl == NUL
-      || GA_EMPTY(&wp->w_s->b_langp)) {
+  if (!wp->w_p_spell || *wp->w_s->b_p_spl == NUL || GA_EMPTY(&wp->w_s->b_langp)) {
     emsg(_(e_no_spell));
     return true;
   }
@@ -1304,7 +1312,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
     } else if (curline && wp == curwin) {
       // For spellbadword(): check if first word needs a capital.
       col = (colnr_T)getwhitecols(line);
-      if (check_need_cap(lnum, col)) {
+      if (check_need_cap(curwin, lnum, col)) {
         capcol = col;
       }
 
@@ -2528,25 +2536,24 @@ int spell_casefold(const win_T *wp, char *str, int len, char *buf, int buflen)
 }
 
 // Check if the word at line "lnum" column "col" is required to start with a
-// capital.  This uses 'spellcapcheck' of the current buffer.
-bool check_need_cap(linenr_T lnum, colnr_T col)
+// capital.  This uses 'spellcapcheck' of the buffer in window "wp".
+bool check_need_cap(win_T *wp, linenr_T lnum, colnr_T col)
 {
-  bool need_cap = false;
-
-  if (curwin->w_s->b_cap_prog == NULL) {
+  if (wp->w_s->b_cap_prog == NULL) {
     return false;
   }
 
-  char *line = get_cursor_line_ptr();
+  bool need_cap = false;
+  char *line = col ? ml_get_buf(wp->w_buffer, lnum, false) : NULL;
   char *line_copy = NULL;
   colnr_T endcol = 0;
-  if (getwhitecols(line) >= (int)col) {
+  if (col == 0 || getwhitecols(line) >= col) {
     // At start of line, check if previous line is empty or sentence
     // ends there.
     if (lnum == 1) {
       need_cap = true;
     } else {
-      line = ml_get(lnum - 1);
+      line = ml_get_buf(wp->w_buffer, lnum - 1, false);
       if (*skipwhite(line) == NUL) {
         need_cap = true;
       } else {
@@ -2563,13 +2570,13 @@ bool check_need_cap(linenr_T lnum, colnr_T col)
   if (endcol > 0) {
     // Check if sentence ends before the bad word.
     regmatch_T regmatch = {
-      .regprog = curwin->w_s->b_cap_prog,
+      .regprog = wp->w_s->b_cap_prog,
       .rm_ic = false
     };
     char *p = line + endcol;
     while (true) {
       MB_PTR_BACK(line, p);
-      if (p == line || spell_iswordp_nmw(p, curwin)) {
+      if (p == line || spell_iswordp_nmw(p, wp)) {
         break;
       }
       if (vim_regexec(&regmatch, p, 0)
@@ -2578,7 +2585,7 @@ bool check_need_cap(linenr_T lnum, colnr_T col)
         break;
       }
     }
-    curwin->w_s->b_cap_prog = regmatch.regprog;
+    wp->w_s->b_cap_prog = regmatch.regprog;
   }
 
   xfree(line_copy);
@@ -2597,9 +2604,11 @@ void ex_spellrepall(exarg_T *eap)
     emsg(_("E752: No previous spell replacement"));
     return;
   }
-  int addlen = (int)(strlen(repl_to) - strlen(repl_from));
+  const size_t repl_from_len = strlen(repl_from);
+  const size_t repl_to_len = strlen(repl_to);
+  const int addlen = (int)(repl_to_len - repl_from_len);
 
-  size_t frompatlen = strlen(repl_from) + 7;
+  const size_t frompatlen = repl_from_len + 7;
   char *frompat = xmalloc(frompatlen);
   snprintf(frompat, frompatlen, "\\V\\<%s\\>", repl_from);
   p_ws = false;
@@ -2616,14 +2625,15 @@ void ex_spellrepall(exarg_T *eap)
     // Only replace when the right word isn't there yet.  This happens
     // when changing "etc" to "etc.".
     char *line = get_cursor_line_ptr();
-    if (addlen <= 0 || strncmp(line + curwin->w_cursor.col,
-                               repl_to, strlen(repl_to)) != 0) {
+    if (addlen <= 0
+        || strncmp(line + curwin->w_cursor.col, repl_to, repl_to_len) != 0) {
       char *p = xmalloc(strlen(line) + (size_t)addlen + 1);
       memmove(p, line, (size_t)curwin->w_cursor.col);
       STRCPY(p + curwin->w_cursor.col, repl_to);
-      STRCAT(p, line + curwin->w_cursor.col + strlen(repl_from));
+      STRCAT(p, line + curwin->w_cursor.col + repl_from_len);
       ml_replace(curwin->w_cursor.lnum, p, false);
-      changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
+      inserted_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col,
+                     (int)repl_from_len, (int)repl_to_len);
 
       if (curwin->w_cursor.lnum != prev_lnum) {
         sub_nlines++;
@@ -2631,7 +2641,7 @@ void ex_spellrepall(exarg_T *eap)
       }
       sub_nsubs++;
     }
-    curwin->w_cursor.col += (colnr_T)strlen(repl_to);
+    curwin->w_cursor.col += (colnr_T)repl_to_len;
   }
 
   p_ws = save_ws;
@@ -3161,17 +3171,15 @@ void ex_spelldump(exarg_T *eap)
   if (no_spell_checking(curwin)) {
     return;
   }
-  char *spl;
-  long dummy;
-  (void)get_option_value("spl", &dummy, &spl, NULL, OPT_LOCAL);
+  OptVal spl = get_option_value("spl", NULL, OPT_LOCAL, NULL);
 
   // Create a new empty buffer in a new window.
   do_cmdline_cmd("new");
 
   // enable spelling locally in the new window
-  set_option_value_give_err("spell", true, "", OPT_LOCAL);
-  set_option_value_give_err("spl",  dummy, spl, OPT_LOCAL);
-  xfree(spl);
+  set_option_value_give_err("spell", BOOLEAN_OPTVAL(true), OPT_LOCAL);
+  set_option_value_give_err("spl", spl, OPT_LOCAL);
+  optval_free(spl);
 
   if (!buf_is_empty(curbuf)) {
     return;
@@ -3593,7 +3601,7 @@ static bool spell_expand_need_cap;
 
 void spell_expand_check_cap(colnr_T col)
 {
-  spell_expand_need_cap = check_need_cap(curwin->w_cursor.lnum, col);
+  spell_expand_need_cap = check_need_cap(curwin, curwin->w_cursor.lnum, col);
 }
 
 // Get list of spelling suggestions.

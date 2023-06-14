@@ -223,6 +223,7 @@ CONFIG = {
             'log.lua',
             'rpc.lua',
             'protocol.lua',
+            'inlay_hint.lua'
         ],
         'files': [
             'runtime/lua/vim/lsp',
@@ -275,7 +276,7 @@ CONFIG = {
             'query.lua',
             'highlighter.lua',
             'languagetree.lua',
-            'playground.lua',
+            'dev.lua',
         ],
         'files': [
             'runtime/lua/vim/treesitter.lua',

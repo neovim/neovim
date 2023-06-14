@@ -16,17 +16,27 @@ project(nvim C)
 if(POLICY CMP0075)
   cmake_policy(SET CMP0075 NEW)
 endif()
+if(POLICY CMP0135)
+  cmake_policy(SET CMP0135 NEW)
+endif()
 
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 include(CheckCCompilerFlag)
 include(CheckCSourceCompiles)
+include(CheckLibraryExists)
+include(ExternalProject)
 include(FindPackageHandleStandardArgs)
+include(GNUInstallDirs)
+
+include(Deps)
 include(InstallHelpers)
-include(LuaHelpers)
 include(PreventInTreeBuilds)
 include(Util)
+
+set_directory_properties(PROPERTIES
+  EP_PREFIX "${DEPS_BUILD_DIR}")
 
 set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
 
@@ -105,6 +115,12 @@ endif()
 message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
 set_default_buildtype()
+get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(NOT isMultiConfig)
+  # Unlike build dependencies in cmake.deps, we assume we want dev dependencies
+  # such as Uncrustify to always be built with Release.
+  list(APPEND DEPS_CMAKE_ARGS -D CMAKE_BUILD_TYPE=Release)
+endif()
 
 # If not in a git repo (e.g., a tarball) these tokens define the complete
 # version string, else they are combined with the result of `git describe`.
@@ -130,10 +146,7 @@ if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
   string(REPLACE "  " " " CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}") # Remove duplicate whitespace
 endif()
 
-option(LOG_LIST_ACTIONS "Add list actions logging" OFF)
-
 option(ENABLE_ASAN_UBSAN "Enable Clang address & undefined behavior sanitizer for nvim binary." OFF)
-option(LOG_DEBUG "Enable debug log messages even in a release build" OFF)
 option(ENABLE_MSAN "Enable Clang memory sanitizer for nvim binary." OFF)
 option(ENABLE_TSAN "Enable Clang thread sanitizer for nvim binary." OFF)
 
@@ -216,19 +229,18 @@ endif()
 #
 # Lint
 #
-find_program(LUACHECK_PRG luacheck)
 find_program(SHELLCHECK_PRG shellcheck)
 find_program(STYLUA_PRG stylua)
-find_program(UNCRUSTIFY_PRG uncrustify)
 
 add_glob_target(
   REQUIRED
   TARGET lintlua-luacheck
-  COMMAND ${LUACHECK_PRG}
+  COMMAND ${DEPS_BIN_DIR}/luacheck
   FLAGS -q
   GLOB_DIRS runtime/ scripts/ src/ test/
   GLOB_PAT *.lua
   TOUCH_STRATEGY SINGLE)
+add_dependencies(lintlua-luacheck luacheck)
 
 add_glob_target(
   TARGET lintlua-stylua
@@ -277,21 +289,10 @@ install_helper(
   FILES ${CMAKE_SOURCE_DIR}/src/man/nvim.1
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
-if(EXISTS "${DEPS_PREFIX}/share/nvim-qt")
-  option(USE_BUNDLED_NVIMQT "Bundle neovim-qt" ON)
-else()
-  option(USE_BUNDLED_NVIMQT "Bundle neovim-qt" OFF)
-endif()
-
 add_subdirectory(src/nvim)
 add_subdirectory(cmake.config)
 add_subdirectory(runtime)
 add_subdirectory(test)
-if(WIN32 AND USE_BUNDLED_NVIMQT)
-  install_helper(
-    FILES ${DEPS_PREFIX}/share/nvim-qt/runtime/plugin/nvim_gui_shim.vim
-    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim-qt/runtime/plugin)
-endif()
 
 add_custom_target(uninstall
   COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/UninstallHelper.cmake)
@@ -299,3 +300,14 @@ add_custom_target(uninstall
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
   add_subdirectory(cmake.packaging)
 endif()
+
+ExternalProject_Add(uncrustify
+  URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.77.1.tar.gz
+  URL_HASH SHA256=414bbc9f7860eb18a53074f9af14ed04638a633b2216a73f2629291300d37c1b
+  DOWNLOAD_NO_PROGRESS TRUE
+  DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/uncrustify
+  CMAKE_ARGS ${DEPS_CMAKE_ARGS}
+  CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS}
+  EXCLUDE_FROM_ALL TRUE)
+
+include(BuildLuarocks)

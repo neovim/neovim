@@ -43,7 +43,7 @@ uint64_t ui_client_start_server(int argc, char **argv)
   varnumber_T exit_status;
   char **args = xmalloc(((size_t)(2 + argc)) * sizeof(char *));
   int args_idx = 0;
-  args[args_idx++] = xstrdup(get_vim_var_str(VV_PROGPATH));
+  args[args_idx++] = xstrdup(argv[0]);
   args[args_idx++] = xstrdup("--embed");
   for (int i = 1; i < argc; i++) {
     args[args_idx++] = xstrdup(argv[i]);
@@ -83,11 +83,11 @@ void ui_client_attach(int width, int height, char *term)
   PUT_C(opts, "ext_linegrid", BOOLEAN_OBJ(true));
   PUT_C(opts, "ext_termcolors", BOOLEAN_OBJ(true));
   if (term) {
-    PUT_C(opts, "term_name", STRING_OBJ(cstr_as_string(term)));
+    PUT_C(opts, "term_name", CSTR_AS_OBJ(term));
   }
   if (ui_client_bg_response != kNone) {
     bool is_dark = (ui_client_bg_response == kTrue);
-    PUT_C(opts, "term_background", STRING_OBJ(cstr_as_string(is_dark ? "dark" : "light")));
+    PUT_C(opts, "term_background", CSTR_AS_OBJ(is_dark ? "dark" : "light"));
   }
   PUT_C(opts, "term_colors", INTEGER_OBJ(t_colors));
   if (!ui_client_is_remote) {

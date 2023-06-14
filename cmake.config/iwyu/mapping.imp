@@ -194,7 +194,6 @@
   { include: [ '"nvim/extmark_defs.h"', public, '"nvim/extmark.h"', public ] },
   { include: [ '"nvim/grid_defs.h"', public, '"nvim/grid.h"', public ] },
   { include: [ '"nvim/highlight_defs.h"', public, '"nvim/highlight.h"', public ] },
-  { include: [ '"nvim/map_defs.h"', public, '"nvim/map.h"', public ] },
   { include: [ '"nvim/mark_defs.h"', public, '"nvim/mark.h"', public ] },
   { include: [ '"nvim/mbyte_defs.h"', public, '"nvim/mbyte.h"', public ] },
   { include: [ '"nvim/memfile_defs.h"', public, '"nvim/memfile.h"', public ] },

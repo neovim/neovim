@@ -58,6 +58,7 @@
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
+#include "nvim/option_defs.h"
 #include "nvim/optionstr.h"
 #include "nvim/os/fileio.h"
 #include "nvim/os/fs_defs.h"
@@ -88,20 +89,25 @@
 
 static const char *e_missbrac = N_("E111: Missing ']'");
 static const char *e_list_end = N_("E697: Missing end of List ']': %s");
-static const char *e_cannot_slice_dictionary
+static const char e_cannot_slice_dictionary[]
   = N_("E719: Cannot slice a Dictionary");
 static const char e_cannot_index_special_variable[]
   = N_("E909: Cannot index a special variable");
 static const char *e_nowhitespace
   = N_("E274: No white space allowed before parenthesis");
 static const char *e_write2 = N_("E80: Error while writing: %s");
+static const char e_cannot_index_a_funcref[]
+  = N_("E695: Cannot index a Funcref");
 static const char e_variable_nested_too_deep_for_making_copy[]
   = N_("E698: Variable nested too deep for making a copy");
-static const char *e_string_list_or_blob_required = N_("E1098: String, List or Blob required");
-static const char e_expression_too_recursive_str[] = N_("E1169: Expression too recursive: %s");
+static const char e_string_list_or_blob_required[]
+  = N_("E1098: String, List or Blob required");
+static const char e_expression_too_recursive_str[]
+  = N_("E1169: Expression too recursive: %s");
 static const char e_dot_can_only_be_used_on_dictionary_str[]
   = N_("E1203: Dot can only be used on a dictionary: %s");
-static const char e_empty_function_name[] = N_("E1192: Empty function name");
+static const char e_empty_function_name[]
+  = N_("E1192: Empty function name");
 
 static char * const namespace_char = "abglstvw";
 
@@ -1603,18 +1609,9 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
 
       lp->ll_dict = NULL;
       lp->ll_list = lp->ll_tv->vval.v_list;
-      lp->ll_li = tv_list_find(lp->ll_list, (int)lp->ll_n1);
-      if (lp->ll_li == NULL) {
-        if (lp->ll_n1 < 0) {
-          lp->ll_n1 = 0;
-          lp->ll_li = tv_list_find(lp->ll_list, (int)lp->ll_n1);
-        }
-      }
+      lp->ll_li = tv_list_check_range_index_one(lp->ll_list, &lp->ll_n1, quiet);
       if (lp->ll_li == NULL) {
         tv_clear(&var2);
-        if (!quiet) {
-          semsg(_(e_list_index_out_of_range_nr), (int64_t)lp->ll_n1);
-        }
         return NULL;
       }
 
@@ -1625,25 +1622,9 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
       if (lp->ll_range && !lp->ll_empty2) {
         lp->ll_n2 = (long)tv_get_number(&var2);  // Is number or string.
         tv_clear(&var2);
-        if (lp->ll_n2 < 0) {
-          listitem_T *ni = tv_list_find(lp->ll_list, (int)lp->ll_n2);
-          if (ni == NULL) {
-            if (!quiet) {
-              semsg(_(e_list_index_out_of_range_nr), (int64_t)lp->ll_n2);
-            }
-            return NULL;
-          }
-          lp->ll_n2 = tv_list_idx_of_item(lp->ll_list, ni);
-        }
-
-        // Check that lp->ll_n2 isn't before lp->ll_n1.
-        if (lp->ll_n1 < 0) {
-          lp->ll_n1 = tv_list_idx_of_item(lp->ll_list, lp->ll_li);
-        }
-        if (lp->ll_n2 < lp->ll_n1) {
-          if (!quiet) {
-            semsg(_(e_list_index_out_of_range_nr), (int64_t)lp->ll_n2);
-          }
+        if (tv_list_check_range_index_two(lp->ll_list,
+                                          &lp->ll_n1, lp->ll_li,
+                                          &lp->ll_n2, quiet) == FAIL) {
           return NULL;
         }
       }
@@ -1672,7 +1653,6 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
                   const char *op)
 {
   int cc;
-  listitem_T *ri;
   dictitem_T *di;
 
   if (lp->ll_tv == NULL) {
@@ -1733,60 +1713,13 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
                               lp->ll_name, TV_CSTRING)) {
     // Skip
   } else if (lp->ll_range) {
-    listitem_T *ll_li = lp->ll_li;
-    int ll_n1 = (int)lp->ll_n1;
-
     if (is_const) {
       emsg(_("E996: Cannot lock a range"));
       return;
     }
 
-    // Check whether any of the list items is locked
-    for (ri = tv_list_first(rettv->vval.v_list);
-         ri != NULL && ll_li != NULL;) {
-      if (value_check_lock(TV_LIST_ITEM_TV(ll_li)->v_lock, lp->ll_name,
-                           TV_CSTRING)) {
-        return;
-      }
-      ri = TV_LIST_ITEM_NEXT(rettv->vval.v_list, ri);
-      if (ri == NULL || (!lp->ll_empty2 && lp->ll_n2 == ll_n1)) {
-        break;
-      }
-      ll_li = TV_LIST_ITEM_NEXT(lp->ll_list, ll_li);
-      ll_n1++;
-    }
-
-    // Assign the List values to the list items.
-    for (ri = tv_list_first(rettv->vval.v_list); ri != NULL;) {
-      if (op != NULL && *op != '=') {
-        eexe_mod_op(TV_LIST_ITEM_TV(lp->ll_li), TV_LIST_ITEM_TV(ri), op);
-      } else {
-        tv_clear(TV_LIST_ITEM_TV(lp->ll_li));
-        tv_copy(TV_LIST_ITEM_TV(ri), TV_LIST_ITEM_TV(lp->ll_li));
-      }
-      ri = TV_LIST_ITEM_NEXT(rettv->vval.v_list, ri);
-      if (ri == NULL || (!lp->ll_empty2 && lp->ll_n2 == lp->ll_n1)) {
-        break;
-      }
-      assert(lp->ll_li != NULL);
-      if (TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li) == NULL) {
-        // Need to add an empty item.
-        tv_list_append_number(lp->ll_list, 0);
-        // ll_li may have become invalid after append, don’t use it.
-        lp->ll_li = tv_list_last(lp->ll_list);  // Valid again.
-      } else {
-        lp->ll_li = TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li);
-      }
-      lp->ll_n1++;
-    }
-    if (ri != NULL) {
-      emsg(_("E710: List value has more items than target"));
-    } else if (lp->ll_empty2
-               ? (lp->ll_li != NULL
-                  && TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li) != NULL)
-               : lp->ll_n1 != lp->ll_n2) {
-      emsg(_("E711: List value has not enough items"));
-    }
+    (void)tv_list_assign_range(lp->ll_list, rettv->vval.v_list,
+                               lp->ll_n1, lp->ll_n2, lp->ll_empty2, op, lp->ll_name);
   } else {
     typval_T oldtv = TV_INITIAL_VALUE;
     dict_T *dict = lp->ll_dict;
@@ -3572,7 +3505,7 @@ static int check_can_index(typval_T *rettv, bool evaluate, bool verbose)
   case VAR_FUNC:
   case VAR_PARTIAL:
     if (verbose) {
-      emsg(_("E695: Cannot index a Funcref"));
+      emsg(_(e_cannot_index_a_funcref));
     }
     return FAIL;
   case VAR_FLOAT:
@@ -3770,38 +3703,38 @@ int eval_option(const char **const arg, typval_T *const rettv, const bool evalua
     return OK;
   }
 
-  long numval;
-  char *stringval;
   int ret = OK;
-
+  bool hidden;
   char c = *option_end;
   *option_end = NUL;
-  getoption_T opt_type = get_option_value(*arg, &numval,
-                                          rettv == NULL ? NULL : &stringval, NULL, scope);
+  OptVal value = get_option_value(*arg, NULL, scope, &hidden);
 
-  if (opt_type == gov_unknown) {
-    if (rettv != NULL) {
+  if (rettv != NULL) {
+    switch (value.type) {
+    case kOptValTypeNil:
       semsg(_("E113: Unknown option: %s"), *arg);
-    }
-    ret = FAIL;
-  } else if (rettv != NULL) {
-    if (opt_type == gov_hidden_string) {
-      rettv->v_type = VAR_STRING;
-      rettv->vval.v_string = NULL;
-    } else if (opt_type == gov_hidden_bool || opt_type == gov_hidden_number) {
+      ret = FAIL;
+      break;
+    case kOptValTypeBoolean:
       rettv->v_type = VAR_NUMBER;
-      rettv->vval.v_number = 0;
-    } else if (opt_type == gov_bool || opt_type == gov_number) {
+      rettv->vval.v_number = value.data.boolean;
+      break;
+    case kOptValTypeNumber:
       rettv->v_type = VAR_NUMBER;
-      rettv->vval.v_number = numval;
-    } else {                          // string option
+      rettv->vval.v_number = value.data.number;
+      break;
+    case kOptValTypeString:
       rettv->v_type = VAR_STRING;
-      rettv->vval.v_string = stringval;
+      rettv->vval.v_string = value.data.string.data;
+      break;
     }
-  } else if (working && (opt_type == gov_hidden_bool
-                         || opt_type == gov_hidden_number
-                         || opt_type == gov_hidden_string)) {
-    ret = FAIL;
+  } else {
+    // Value isn't being used, free it.
+    optval_free(value);
+
+    if (value.type == kOptValTypeNil || (working && hidden)) {
+      ret = FAIL;
+    }
   }
 
   *option_end = c;                  // put back for error messages
@@ -4520,7 +4453,7 @@ bool garbage_collect(bool testing)
   // Channels
   {
     Channel *data;
-    map_foreach_value(&channels, data, {
+    pmap_foreach_value(&channels, data, {
       set_ref_in_callback_reader(&data->on_data, copyID, NULL, NULL);
       set_ref_in_callback_reader(&data->on_stderr, copyID, NULL, NULL);
       set_ref_in_callback(&data->on_exit, copyID, NULL, NULL);
@@ -4530,7 +4463,7 @@ bool garbage_collect(bool testing)
   // Timers
   {
     timer_T *timer;
-    map_foreach_value(&timers, timer, {
+    pmap_foreach_value(&timers, timer, {
       set_ref_in_callback(&timer->callback, copyID, NULL, NULL);
     })
   }
@@ -5986,7 +5919,7 @@ void add_timer_info_all(typval_T *rettv)
 {
   tv_list_alloc_ret(rettv, map_size(&timers));
   timer_T *timer;
-  map_foreach_value(&timers, timer, {
+  pmap_foreach_value(&timers, timer, {
     if (!timer->stopped || timer->refcount > 1) {
       add_timer_info(rettv, timer);
     }
@@ -6084,7 +6017,7 @@ static void timer_close_cb(TimeWatcher *tw, void *data)
   timer_T *timer = (timer_T *)data;
   multiqueue_free(timer->tw.events);
   callback_free(&timer->callback);
-  pmap_del(uint64_t)(&timers, (uint64_t)timer->timer_id);
+  pmap_del(uint64_t)(&timers, (uint64_t)timer->timer_id, NULL);
   timer_decref(timer);
 }
 
@@ -6098,7 +6031,7 @@ static void timer_decref(timer_T *timer)
 void timer_stop_all(void)
 {
   timer_T *timer;
-  map_foreach_value(&timers, timer, {
+  pmap_foreach_value(&timers, timer, {
     timer_stop(timer);
   })
 }
@@ -6511,6 +6444,10 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
   pos.coladd = 0;
 
   if (name[0] == 'w' && dollar_lnum) {
+    // the "w_valid" flags are not reset when moving the cursor, but they
+    // do matter for update_topline() and validate_botline().
+    check_cursor_moved(curwin);
+
     pos.col = 0;
     if (name[1] == '0') {               // "w0": first visible line
       update_topline(curwin);
@@ -8512,7 +8449,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char 
     // If it's still empty it was changed and restored, need to restore in
     // the complicated way.
     if (*p_cpo == NUL) {
-      set_option_value_give_err("cpo", 0L, save_cpo, 0);
+      set_option_value_give_err("cpo", CSTR_AS_OPTVAL(save_cpo), 0);
     }
     free_string_option(save_cpo);
   }
@@ -8604,6 +8541,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
     .es_entry = ((estack_T *)exestack.ga_data)[exestack.ga_len - 1],
     .autocmd_fname = autocmd_fname,
     .autocmd_match = autocmd_match,
+    .autocmd_fname_full = autocmd_fname_full,
     .autocmd_bufnr = autocmd_bufnr,
     .funccalp = (void *)get_current_funccal()
   };
@@ -8712,7 +8650,7 @@ void ex_checkhealth(exarg_T *eap)
 {
   Error err = ERROR_INIT;
   MAXSIZE_TEMP_ARRAY(args, 1);
-  ADD_C(args, STRING_OBJ(cstr_as_string(eap->arg)));
+  ADD_C(args, CSTR_AS_OBJ(eap->arg));
   NLUA_EXEC_STATIC("return vim.health._check(...)", args, &err);
   if (!ERROR_SET(&err)) {
     return;

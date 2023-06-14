@@ -24,7 +24,7 @@ describe('vim.highlight.on_yank', function()
   it('does not close timer twice', function()
     exec_lua([[
       vim.highlight.on_yank({timeout = 10, on_macro = true, event = {operator = "y"}})
-      vim.loop.sleep(10)
+      vim.uv.sleep(10)
       vim.schedule(function()
         vim.highlight.on_yank({timeout = 0, on_macro = true, event = {operator = "y"}})
       end)

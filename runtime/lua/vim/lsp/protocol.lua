@@ -632,9 +632,21 @@ export interface WorkspaceClientCapabilities {
 
 --- Gets a new ClientCapabilities object describing the LSP client
 --- capabilities.
+--- @return lsp.ClientCapabilities
 function protocol.make_client_capabilities()
   return {
+    general = {
+      positionEncodings = {
+        'utf-16',
+      },
+    },
     textDocument = {
+      inlayHint = {
+        dynamicRegistration = false,
+        resolveSupport = {
+          properties = {},
+        },
+      },
       semanticTokens = {
         dynamicRegistration = false,
         tokenTypes = {
@@ -697,7 +709,7 @@ function protocol.make_client_capabilities()
         didSave = true,
       },
       codeAction = {
-        dynamicRegistration = false,
+        dynamicRegistration = true,
 
         codeActionLiteralSupport = {
           codeActionKind = {
@@ -713,6 +725,12 @@ function protocol.make_client_capabilities()
         resolveSupport = {
           properties = { 'edit' },
         },
+      },
+      formatting = {
+        dynamicRegistration = true,
+      },
+      rangeFormatting = {
+        dynamicRegistration = true,
       },
       completion = {
         dynamicRegistration = false,
@@ -747,6 +765,7 @@ function protocol.make_client_capabilities()
       },
       definition = {
         linkSupport = true,
+        dynamicRegistration = true,
       },
       implementation = {
         linkSupport = true,
@@ -755,7 +774,7 @@ function protocol.make_client_capabilities()
         linkSupport = true,
       },
       hover = {
-        dynamicRegistration = false,
+        dynamicRegistration = true,
         contentFormat = { protocol.MarkupKind.Markdown, protocol.MarkupKind.PlainText },
       },
       signatureHelp = {
@@ -790,7 +809,7 @@ function protocol.make_client_capabilities()
         hierarchicalDocumentSymbolSupport = true,
       },
       rename = {
-        dynamicRegistration = false,
+        dynamicRegistration = true,
         prepareSupport = true,
       },
       publishDiagnostics = {
@@ -839,6 +858,9 @@ function protocol.make_client_capabilities()
       didChangeWatchedFiles = {
         dynamicRegistration = true,
         relativePatternSupport = true,
+      },
+      inlayHint = {
+        refreshSupport = true,
       },
     },
     experimental = nil,

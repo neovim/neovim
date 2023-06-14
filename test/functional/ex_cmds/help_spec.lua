@@ -4,6 +4,10 @@ local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
 local funcs = helpers.funcs
+local meths = helpers.meths
+local mkdir = helpers.mkdir
+local rmdir = helpers.rmdir
+local write_file = helpers.write_file
 
 describe(':help', function()
   before_each(clear)
@@ -24,5 +28,18 @@ describe(':help', function()
     command('quit')
     -- Before #9773, Nvim would crash on quitting the help window.
     eq(1002, funcs.win_getid())
+  end)
+
+  it('multibyte help tags work #23975', function()
+    mkdir('Xhelptags')
+    finally(function()
+      rmdir('Xhelptags')
+    end)
+    mkdir('Xhelptags/doc')
+    write_file('Xhelptags/doc/Xhelptags.txt', '*…*')
+    command('helptags Xhelptags/doc')
+    command('set rtp+=Xhelptags')
+    command('help …')
+    eq('*…*', meths.get_current_line())
   end)
 end)

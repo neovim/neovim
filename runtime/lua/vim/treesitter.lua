@@ -136,16 +136,6 @@ function M.get_parser(bufnr, lang, opts)
   return parsers[bufnr]
 end
 
----@package
----@param bufnr (integer|nil) Buffer number
----@return boolean
-function M._has_parser(bufnr)
-  if bufnr == nil or bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
-  return parsers[bufnr] ~= nil
-end
-
 --- Returns a string parser
 ---
 ---@param str string Text to parse
@@ -503,7 +493,7 @@ end
 ---                        argument and should return a string.
 function M.inspect_tree(opts)
   ---@cast opts InspectTreeOpts
-  require('vim.treesitter.playground').inspect_tree(opts)
+  require('vim.treesitter.dev').inspect_tree(opts)
 end
 
 --- Returns the fold level for {lnum} in the current buffer. Can be set directly to 'foldexpr':

@@ -29,29 +29,63 @@ The following changes may require adaptations in user config or plugins.
     set selectmode=mouse,key
     set mousemodel=popup
     set keymodel=startsel,stopsel
+<
+• When switching windows, |CursorMoved| autocommands trigger when Nvim is back
+  in the main loop rather than immediately. This is more compatible with Vim.
+
+• |LspRequest| and LspProgressUpdate (renamed to |LspProgress|) autocmds were
+  promoted from a |User| autocmd to first class citizen.
+
+• Renamed `vim.treesitter.playground` to `vim.treesitter.dev`.
 
 ==============================================================================
 ADDED FEATURES                                                     *news-added*
 
 The following new APIs or features were added.
 
+• Added |vim.lsp.status()| to consume the last progress messages as a string.
+
+• Neovim's LSP client now always saves and restores named buffer marks when
+  applying text edits.
+
+• Nvim now supports the `positionEncoding` server capability. If a server
+  responds with the `positionEncoding` capability in its initialization
+  response, Nvim automatically sets the client's `offset_encoding` field.
+
+• Dynamic registration of LSP capabilities. An implication of this change is
+  that checking a client's `server_capabilities` is no longer a sufficient
+  indicator to see if a server supports a feature. Instead use
+  `client.supports_method(<method>)`. It considers both the dynamic
+  capabilities and static `server_capabilities`.
+
 • |vim.iter()| provides a generic iterator interface for tables and Lua
-iterators |luaref-in|.
+  iterators |luaref-in|.
+
+• Added |vim.ringbuf()| to create ring buffers.
 
 • Added |vim.keycode()| for translating keycodes in a string.
-
-• Added automatic linting of treesitter query files (see |ft-query-plugin|).
-  Automatic linting can be turned off via >lua
-      vim.g.query_lint_on = {}
-<
-• Enabled treesitter highlighting for treesitter query files by default.
 
 • Added |vim.treesitter.query.omnifunc()| for treesitter query files (set by
   default).
 
 • |'smoothscroll'| option to scroll by screen line rather than by text line
-when |'wrap'| is set.
+  when |'wrap'| is set.
 
+• |Query:iter_matches()| now has the ability to set the maximum start depth
+  for matches.
+
+• Added inline virtual text support to |nvim_buf_set_extmark()|.
+
+• The terminal buffer now supports reflow (wrapped lines adapt when the buffer
+  is resized horizontally). Note: Lines that are not visible and kept in
+  |'scrollback'| are not reflown.
+
+• |vim.system()| for running system commands.
+
+• |nvim_set_keymap()| and |nvim_del_keymap()| now support abbreviations.
+
+• Added |lsp-handler| for inlay hints: `textDocument/inlayHint` and
+  `workspace/inlayHint/refresh`
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
@@ -66,8 +100,24 @@ The following changes to existing APIs or features add new behavior.
 • vim.diagnostic.config() now accepts a function for the virtual_text.prefix
   option, which allows for rendering e.g., diagnostic severities differently.
 
+• Defaults:
+  • 'shortmess' includes the "C" flag.
+  • Automatic linting of treesitter query files (see |ft-query-plugin|).
+    Can be disabled via: >lua
+      vim.g.query_lint_on = {}
+<  • Enabled treesitter highlighting for treesitter query files.
+
 • The `workspace/didChangeWatchedFiles` LSP client capability is now enabled
   by default.
+
+• |LspRequest| autocmd callbacks now contain additional information about the LSP
+  request status update that occurred.
+
+• `:source` without arguments treats a buffer with its 'filetype' set to "lua"
+  as Lua code regardless of its extension.
+
+• |:checkhealth| buffer now implements |folding|. The initial folding status is
+  defined by the 'foldenable' option.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
@@ -80,14 +130,27 @@ The following deprecated functions or APIs were removed.
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*
 
-The following functions are now deprecated and will be removed in the next
+The following functions are now deprecated and will be removed in a future
 release.
 
 • Checkhealth functions:
-  - |health#report_error|, |vim.health.report_error()|	Use Lua |vim.health.error()| instead.
-  - |health#report_info|, |vim.health.report_info()|	Use Lua |vim.health.info()| instead.
-  - |health#report_ok|, |vim.health.report_ok()|	Use Lua |vim.health.ok()| instead.
-  - |health#report_start|, |vim.health.report_start()|	Use Lua |vim.health.start()| instead.
-  - |health#report_warn|, |vim.health.report_warn()|	Use Lua |vim.health.warn()| instead.
+  - |health#report_error|, |vim.health.report_error()|	Use |vim.health.error()| instead.
+  - |health#report_info|, |vim.health.report_info()|	Use |vim.health.info()| instead.
+  - |health#report_ok|, |vim.health.report_ok()|	Use |vim.health.ok()| instead.
+  - |health#report_start|, |vim.health.report_start()|	Use |vim.health.start()| instead.
+  - |health#report_warn|, |vim.health.report_warn()|	Use |vim.health.warn()| instead.
+
+• |API| functions:
+  - |nvim_buf_get_option()|	Use |nvim_get_option_value()| instead.
+  - |nvim_buf_set_option()|	Use |nvim_set_option_value()| instead.
+  - |nvim_get_option()|		Use |nvim_get_option_value()| instead.
+  - |nvim_set_option()|		Use |nvim_set_option_value()| instead.
+  - |nvim_win_get_option()|	Use |nvim_get_option_value()| instead.
+  - |nvim_win_set_option()|	Use |nvim_set_option_value()| instead.
+
+• vim.lsp functions:
+  - |vim.lsp.util.get_progress_messages()|	Use |vim.lsp.status()| instead.
+
+• `vim.loop` has been renamed to `vim.uv`.
 
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:

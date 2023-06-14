@@ -241,6 +241,7 @@ local extension = {
   copyright = function(path, bufnr)
     return require('vim.filetype.detect').copyright(bufnr)
   end,
+  corn = 'corn',
   csh = function(path, bufnr)
     return require('vim.filetype.detect').csh(path, bufnr)
   end,
@@ -579,6 +580,7 @@ local extension = {
   ['json-patch'] = 'json',
   json5 = 'json5',
   jsonc = 'jsonc',
+  jsonl = 'jsonl',
   jsonnet = 'jsonnet',
   libsonnet = 'jsonnet',
   jsp = 'jsp',
@@ -997,7 +999,9 @@ local extension = {
   spi = 'spyce',
   spy = 'spyce',
   tyc = 'sql',
-  typ = 'sql',
+  typ = function(path, bufnr)
+    return require('vim.filetype.detect').typ(bufnr)
+  end,
   pkb = 'sql',
   tyb = 'sql',
   pks = 'sql',
@@ -1029,6 +1033,8 @@ local extension = {
   swift = 'swift',
   svh = 'systemverilog',
   sv = 'systemverilog',
+  cmm = 'trace32',
+  t32 = 'trace32',
   td = 'tablegen',
   tak = 'tak',
   tal = 'tal',
@@ -1078,6 +1084,9 @@ local extension = {
   uit = 'uil',
   uil = 'uil',
   ungram = 'ungrammar',
+  url = 'urlshortcut',
+  usd = 'usd',
+  usda = 'usd',
   sba = 'vb',
   vb = 'vb',
   dsm = 'vb',
@@ -1542,6 +1551,7 @@ local filename = {
   ['man.config'] = 'manconf',
   ['maxima-init.mac'] = 'maxima',
   ['meson.build'] = 'meson',
+  ['meson.options'] = 'meson',
   ['meson_options.txt'] = 'meson',
   ['/etc/conf.modules'] = 'modconf',
   ['/etc/modules'] = 'modconf',

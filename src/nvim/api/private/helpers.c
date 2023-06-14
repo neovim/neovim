@@ -660,10 +660,10 @@ static void init_ui_event_metadata(Dictionary *metadata)
   msgpack_unpacked_destroy(&unpacked);
   PUT(*metadata, "ui_events", ui_events);
   Array ui_options = ARRAY_DICT_INIT;
-  ADD(ui_options, STRING_OBJ(cstr_to_string("rgb")));
+  ADD(ui_options, CSTR_TO_OBJ("rgb"));
   for (UIExtension i = 0; i < kUIExtCount; i++) {
     if (ui_ext_names[i][0] != '_') {
-      ADD(ui_options, STRING_OBJ(cstr_to_string(ui_ext_names[i])));
+      ADD(ui_options, CSTR_TO_OBJ(ui_ext_names[i]));
     }
   }
   PUT(*metadata, "ui_options", ARRAY_OBJ(ui_options));
@@ -692,17 +692,17 @@ static void init_type_metadata(Dictionary *metadata)
   Dictionary buffer_metadata = ARRAY_DICT_INIT;
   PUT(buffer_metadata, "id",
       INTEGER_OBJ(kObjectTypeBuffer - EXT_OBJECT_TYPE_SHIFT));
-  PUT(buffer_metadata, "prefix", STRING_OBJ(cstr_to_string("nvim_buf_")));
+  PUT(buffer_metadata, "prefix", CSTR_TO_OBJ("nvim_buf_"));
 
   Dictionary window_metadata = ARRAY_DICT_INIT;
   PUT(window_metadata, "id",
       INTEGER_OBJ(kObjectTypeWindow - EXT_OBJECT_TYPE_SHIFT));
-  PUT(window_metadata, "prefix", STRING_OBJ(cstr_to_string("nvim_win_")));
+  PUT(window_metadata, "prefix", CSTR_TO_OBJ("nvim_win_"));
 
   Dictionary tabpage_metadata = ARRAY_DICT_INIT;
   PUT(tabpage_metadata, "id",
       INTEGER_OBJ(kObjectTypeTabpage - EXT_OBJECT_TYPE_SHIFT));
-  PUT(tabpage_metadata, "prefix", STRING_OBJ(cstr_to_string("nvim_tabpage_")));
+  PUT(tabpage_metadata, "prefix", CSTR_TO_OBJ("nvim_tabpage_"));
 
   PUT(types, "Buffer", DICTIONARY_OBJ(buffer_metadata));
   PUT(types, "Window", DICTIONARY_OBJ(window_metadata));

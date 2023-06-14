@@ -158,7 +158,12 @@ configure_file (
   "${PROJECT_BINARY_DIR}/cmake.config/auto/config.h"
   )
 
-configure_file(versiondef.h.in auto/versiondef.h.gen)
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.15)
+  configure_file(versiondef.h.in auto/versiondef.h.gen)
+else()
+  configure_file(versiondef_old.h.in auto/versiondef.h.gen)
+endif()
+
 file(GENERATE
   OUTPUT "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef-$<CONFIG>.h"
   INPUT "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h.gen")

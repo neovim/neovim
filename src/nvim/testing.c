@@ -418,11 +418,11 @@ static int assert_equalfile(typval_T *argvars)
         const int c2 = fgetc(fd2);
         if (c1 == EOF) {
           if (c2 != EOF) {
-            STRCPY(IObuff, "first file is shorter");
+            xstrlcpy(IObuff, "first file is shorter", IOSIZE);
           }
           break;
         } else if (c2 == EOF) {
-          STRCPY(IObuff, "second file is shorter");
+          xstrlcpy(IObuff, "second file is shorter", IOSIZE);
           break;
         } else {
           line1[lineidx] = (char)c1;
@@ -775,5 +775,4 @@ void f_test_write_list_log(typval_T *const argvars, typval_T *const rettv, EvalF
   if (fname == NULL) {
     return;
   }
-  list_write_log(fname);
 }

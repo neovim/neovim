@@ -3131,7 +3131,7 @@ static int spell_read_dic(spellinfo_T *spin, char *fname, afffile_T *affile)
     // Remove CR, LF and white space from the end.  White space halfway through
     // the word is kept to allow multi-word terms like "et al.".
     l = (int)strlen(line);
-    while (l > 0 && line[l - 1] <= ' ') {
+    while (l > 0 && (uint8_t)line[l - 1] <= ' ') {
       l--;
     }
     if (l == 0) {
@@ -5720,7 +5720,7 @@ static void init_spellfile(void)
                      && strstr(path_tail(fname), ".ascii.") != NULL)
                     ? "ascii"
                     : spell_enc()));
-      set_option_value_give_err("spellfile", 0L, buf, OPT_LOCAL);
+      set_option_value_give_err("spellfile", CSTR_AS_OPTVAL(buf), OPT_LOCAL);
       break;
     }
     aspath = false;
