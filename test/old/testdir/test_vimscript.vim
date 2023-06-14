@@ -6997,10 +6997,7 @@ func Test_compound_assignment_operators()
     call assert_equal(6, &scrolljump)
     let &scrolljump %= 5
     call assert_equal(1, &scrolljump)
-    " A different error is shown due to a change in implementation of option
-    " values.
-    " call assert_fails('let &scrolljump .= "j"', 'E734:')
-    call assert_fails('let &scrolljump .= "j"', 'E521:')
+    call assert_fails('let &scrolljump .= "j"', ['E734:', 'E734:'])
     set scrolljump&vim
 
     let &foldlevelstart = 2

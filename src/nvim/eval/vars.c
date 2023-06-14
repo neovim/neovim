@@ -769,17 +769,28 @@ static char *ex_let_option(char *arg, typval_T *const tv, const bool is_const,
     return NULL;
   }
 
-  bool hidden;
-  bool error;
   const char c1 = *p;
   *p = NUL;
 
-  OptVal curval = get_option_value(arg, NULL, scope, &hidden);
-  OptVal newval = tv_to_optval(tv, arg, scope, &error);
+  uint32_t opt_p_flags;
+  bool hidden;
+  OptVal curval = get_option_value(arg, &opt_p_flags, scope, &hidden);
+  OptVal newval = NIL_OPTVAL;
+  if (curval.type == kOptValTypeNil && arg[0] != 't' && arg[1] != '_') {
+    semsg(_(e_unknown_option2), arg);
+    goto theend;
+  }
+  if (op != NULL && *op != '='
+      && ((curval.type != kOptValTypeString && *op == '.')
+          || (curval.type == kOptValTypeString && *op != '.'))) {
+    semsg(_(e_letwrong), op);
+    goto theend;
+  }
 
-  // Ignore errors for num types
-  if (newval.type != kOptValTypeNumber && newval.type != kOptValTypeBoolean && error) {
-    goto end;
+  bool error;
+  newval = tv_to_optval(tv, arg, opt_p_flags, &error);
+  if (error) {
+    goto theend;
   }
 
   // Don't assume current and new values are of the same type in order to future-proof the code for
@@ -789,61 +800,47 @@ static char *ex_let_option(char *arg, typval_T *const tv, const bool is_const,
   const bool is_string = curval.type == kOptValTypeString && newval.type == kOptValTypeString;
 
   if (op != NULL && *op != '=') {
-    if (!hidden && ((is_num && *op == '.') || (is_string && *op != '.'))) {
-      semsg(_(e_letwrong), op);
-      goto end;
-    } else {
-      // number or bool
-      if (!hidden && is_num) {
-        Integer cur_n = curval.type == kOptValTypeNumber ? curval.data.number : curval.data.boolean;
-        Integer new_n = newval.type == kOptValTypeNumber ? newval.data.number : newval.data.boolean;
+    if (!hidden && is_num) {  // number or bool
+      Integer cur_n = curval.type == kOptValTypeNumber ? curval.data.number : curval.data.boolean;
+      Integer new_n = newval.type == kOptValTypeNumber ? newval.data.number : newval.data.boolean;
 
-        switch (*op) {
-        case '+':
-          new_n = cur_n + new_n; break;
-        case '-':
-          new_n = cur_n - new_n; break;
-        case '*':
-          new_n = cur_n * new_n; break;
-        case '/':
-          new_n = num_divide(cur_n, new_n); break;
-        case '%':
-          new_n = num_modulus(cur_n, new_n); break;
-        }
-
-        // clamp boolean values
-        if (newval.type == kOptValTypeBoolean && (new_n > 1 || new_n < -1)) {
-          new_n = (new_n > 1) ? 1 : -1;
-        }
-
-        newval = kOptValTypeNumber ? NUMBER_OPTVAL(new_n) : BOOLEAN_OPTVAL((TriState)new_n);
-      } else if (!hidden && is_string && curval.data.string.data != NULL
-                 && newval.data.string.data != NULL) {
-        // string
-        OptVal newval_old = newval;
-        newval = CSTR_AS_OPTVAL(concat_str(curval.data.string.data, newval.data.string.data));
-        optval_free(newval_old);
+      switch (*op) {
+      case '+':
+        new_n = cur_n + new_n; break;
+      case '-':
+        new_n = cur_n - new_n; break;
+      case '*':
+        new_n = cur_n * new_n; break;
+      case '/':
+        new_n = num_divide(cur_n, new_n); break;
+      case '%':
+        new_n = num_modulus(cur_n, new_n); break;
       }
+
+      // clamp boolean values
+      if (newval.type == kOptValTypeBoolean && (new_n > 1 || new_n < -1)) {
+        new_n = (new_n > 1) ? 1 : -1;
+      }
+
+      newval = kOptValTypeNumber ? NUMBER_OPTVAL(new_n) : BOOLEAN_OPTVAL((TriState)new_n);
+    } else if (!hidden && is_string
+               && curval.data.string.data != NULL && newval.data.string.data != NULL) {  // string
+      OptVal newval_old = newval;
+      newval = CSTR_AS_OPTVAL(concat_str(curval.data.string.data, newval.data.string.data));
+      optval_free(newval_old);
     }
   }
 
-  // If new value is a string and is NULL, show an error if it's not a hidden option.
-  // For hidden options, just pass the value to `set_option_value` and let it fail silently.
-  if (hidden || newval.type != kOptValTypeString || newval.data.string.data != NULL) {
-    const char *err = set_option_value(arg, newval, scope);
-    arg_end = p;
-    if (err != NULL) {
-      emsg(_(err));
-    }
-  } else {
-    emsg(_(e_stringreq));
+  const char *err = set_option_value(arg, newval, scope);
+  arg_end = p;
+  if (err != NULL) {
+    emsg(_(err));
   }
 
-end:
+theend:
   *p = c1;
   optval_free(curval);
   optval_free(newval);
-
   return arg_end;
 }
 
@@ -1813,25 +1810,18 @@ static void getwinvar(typval_T *argvars, typval_T *rettv, int off)
 ///
 /// @param[in]   tv      typval to convert.
 /// @param[in]   option  Option name.
-/// @param[in]   scope   Option scope.
+/// @param[in]   flags   Option flags.
 /// @param[out]  error   Whether an error occured.
 ///
 /// @return  Typval converted to OptVal. Must be freed by caller.
 ///          Returns NIL_OPTVAL for invalid option name.
-static OptVal tv_to_optval(typval_T *tv, const char *option, int scope, bool *error)
+static OptVal tv_to_optval(typval_T *tv, const char *option, uint32_t flags, bool *error)
 {
   OptVal value = NIL_OPTVAL;
   char nbuf[NUMBUFLEN];
-  uint32_t flags;
   bool err = false;
 
-  OptVal curval = get_option_value(option, &flags, scope, NULL);
-
-  // TODO(famiu): Delegate all of these type-checks to set_option_value()
-  if (curval.type == kOptValTypeNil) {
-    // Invalid option name,
-    value = NIL_OPTVAL;
-  } else if ((flags & P_FUNC) && tv_is_func(*tv)) {
+  if ((flags & P_FUNC) && tv_is_func(*tv)) {
     // If the option can be set to a function reference or a lambda
     // and the passed value is a function reference, then convert it to
     // the name (string) of the function reference.
@@ -1839,29 +1829,31 @@ static OptVal tv_to_optval(typval_T *tv, const char *option, int scope, bool *er
     err = strval == NULL;
     value = CSTR_AS_OPTVAL(strval);
   } else if (flags & (P_NUM | P_BOOL)) {
-    varnumber_T n = tv_get_number_chk(tv, &err);
-    // This could be either "0" or a string that's not a number. So we need to check if it's
-    // actually a number.
+    varnumber_T n = (flags & P_NUM) ? tv_get_number_chk(tv, &err)
+                                    : tv_get_bool_chk(tv, &err);
+    // This could be either "0" or a string that's not a number.
+    // So we need to check if it's actually a number.
     if (!err && tv->v_type == VAR_STRING && n == 0) {
       unsigned idx;
       for (idx = 0; tv->vval.v_string[idx] == '0'; idx++) {}
       if (tv->vval.v_string[idx] != NUL || idx == 0) {
         // There's another character after zeros or the string is empty.
         // In both cases, we are trying to set a num option using a string.
+        err = true;
         semsg(_("E521: Number required: &%s = '%s'"), option, tv->vval.v_string);
       }
     }
     value = (flags & P_NUM) ? NUMBER_OPTVAL(n)
                             : BOOLEAN_OPTVAL(n == 0 ? kFalse : (n >= 1 ? kTrue : kNone));
-  } else if (flags & P_STRING || is_tty_option(option)) {
-    // Avoid setting string option to a boolean.
-    if (tv->v_type == VAR_BOOL) {
-      err = true;
-      emsg(_(e_stringreq));
-    } else {
+  } else if ((flags & P_STRING) || is_tty_option(option)) {
+    // Avoid setting string option to a boolean or a special value.
+    if (tv->v_type != VAR_BOOL && tv->v_type != VAR_SPECIAL) {
       const char *strval = tv_get_string_buf_chk(tv, nbuf);
       err = strval == NULL;
       value = CSTR_TO_OPTVAL(strval);
+    } else if (flags & P_STRING) {
+      err = true;
+      emsg(_(e_stringreq));
     }
   } else {
     abort();  // This should never happen.
@@ -1870,19 +1862,23 @@ static OptVal tv_to_optval(typval_T *tv, const char *option, int scope, bool *er
   if (error != NULL) {
     *error = err;
   }
-  optval_free(curval);
   return value;
 }
 
 /// Set option "varname" to the value of "varp" for the current buffer/window.
 static void set_option_from_tv(const char *varname, typval_T *varp)
 {
-  bool error = false;
-  OptVal value = tv_to_optval(varp, varname, OPT_LOCAL, &error);
-
-  if (!error && value.type == kOptValTypeNil) {
+  int opt_idx = findoption(varname);
+  if (opt_idx < 0) {
     semsg(_(e_unknown_option2), varname);
-  } else if (!error) {
+    return;
+  }
+  uint32_t opt_p_flags = get_option(opt_idx)->flags;
+
+  bool error = false;
+  OptVal value = tv_to_optval(varp, varname, opt_p_flags, &error);
+
+  if (!error) {
     set_option_value_give_err(varname, value, OPT_LOCAL);
   }
 
