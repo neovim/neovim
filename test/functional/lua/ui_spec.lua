@@ -48,18 +48,17 @@ describe('vim.ui', function()
   end)
 
   describe('input', function()
-    it('can input text', function()
-      local result = exec_lua[[
-        local opts = {
-            prompt = 'Input: ',
-        }
+    local function check_input(input_fn, opts)
+      local code = [[
+        local opts = ...
         local input
         local cb = function(item)
           input = item
         end
-        -- input would require input and block the test;
         local prompt
-        vim.fn.input = function(opts)
+        -- Override either 'vim.fn.input' or 'vim.fn.inputsecret' (calling
+        -- vim.ui.input directly would require input and block the test)
+        %s = function(opts)
           prompt = opts.prompt
           return "Inputted text"
         end
@@ -67,6 +66,24 @@ describe('vim.ui', function()
         vim.wait(100, function() return input ~= nil end)
         return {input, prompt}
       ]]
+      return exec_lua(code:format(input_fn), opts)
+    end
+
+    it('can input text', function()
+      local opts = {
+        prompt = 'Input: ',
+      }
+      local result = check_input('vim.fn.input', opts)
+      eq('Inputted text', result[1])
+      eq('Input: ', result[2])
+    end)
+
+    it('can input secret text', function()
+      local opts = {
+        prompt = 'Input: ',
+        secret = true,
+      }
+      local result = check_input('vim.fn.inputsecret', opts)
       eq('Inputted text', result[1])
       eq('Input: ', result[2])
     end)

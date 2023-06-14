@@ -73,9 +73,9 @@ end
 ---               Function that will be used for highlighting
 ---               user inputs.
 ---     - secret (boolean|nil)
----               If `true`, the user's input will be shown as
----               a series of asterisks ("*") (defaults to `false`).
----               See |inputsecret()|
+---               (default: false) If `true`, user input is hidden (displayed as asterisks "*")
+---               instead of echoed.
+---               See |inputsecret()|.
 ---
 ---@param on_confirm function ((input|nil) -> ())
 ---               Called once the user confirms or abort the input.
