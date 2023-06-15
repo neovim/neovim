@@ -667,6 +667,8 @@ describe('extmark decorations', function()
       [31] = {underline = true, foreground = Screen.colors.DarkCyan};
       [32] = {underline = true};
       [33] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGray};
+      [34] = {background = Screen.colors.Yellow};
+      [35] = {background = Screen.colors.Yellow, bold = true, foreground = Screen.colors.Blue};
     }
 
     ns = meths.create_namespace 'test'
@@ -886,6 +888,25 @@ describe('extmark decorations', function()
     screen:expect{grid=[[
       {4:?????}……………………………………………………………………………………………|
       ………{4:!!!!!}……………………………^…                    |
+                                              |
+    ]]}
+  end)
+
+  it('overlay virtual text works on and after a TAB #24022', function()
+    screen:try_resize(40, 3)
+    meths.buf_set_lines(0, 0, -1, true, {'\t\tline 1'})
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_text = {{'AA', 'Search'}}, virt_text_pos = 'overlay', hl_mode = 'combine' })
+    meths.buf_set_extmark(0, ns, 0, 1, { virt_text = {{'BB', 'Search'}}, virt_text_pos = 'overlay', hl_mode = 'combine' })
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text = {{'CC', 'Search'}}, virt_text_pos = 'overlay', hl_mode = 'combine' })
+    screen:expect{grid=[[
+      {34:AA}     ^ {34:BB}      {34:CC}ne 1                  |
+      {1:~                                       }|
+                                              |
+    ]]}
+    command('setlocal list listchars=tab:<->')
+    screen:expect{grid=[[
+      {35:^AA}{1:----->}{35:BB}{1:----->}{34:CC}ne 1                  |
+      {1:~                                       }|
                                               |
     ]]}
   end)
