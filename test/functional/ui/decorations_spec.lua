@@ -1315,6 +1315,26 @@ describe('extmark decorations', function()
       ]])
   end)
 
+  it('conceal works just before truncated double-width char #21486', function()
+    screen:try_resize(40, 4)
+    meths.buf_set_lines(0, 0, -1, true, {'', ('a'):rep(37) .. '<>古'})
+    meths.buf_set_extmark(0, ns, 1, 37, {end_col=39, conceal=''})
+    command('setlocal conceallevel=2')
+    screen:expect{grid=[[
+      ^                                        |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{1:>}  |
+      古                                      |
+                                              |
+    ]]}
+    feed('j')
+    screen:expect{grid=[[
+                                              |
+      ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa<>{1:>}|
+      古                                      |
+                                              |
+    ]]}
+  end)
+
   it('avoids redraw issue #20651', function()
     exec_lua[[
       vim.cmd.normal'10oXXX'
