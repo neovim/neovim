@@ -91,6 +91,9 @@ The following new APIs or features were added.
 
 • Added |lsp-handler| for inlay hints: `textDocument/inlayHint` and
   `workspace/inlayHint/refresh`
+
+• |nvim_buf_delete()| now supports a `delete` option to simulate the behavior
+  of |:bdelete|
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

@@ -1056,7 +1056,8 @@ Boolean nvim_buf_is_loaded(Buffer buffer)
 /// @param buffer Buffer handle, or 0 for current buffer
 /// @param opts  Optional parameters. Keys:
 ///          - force:  Force deletion and ignore unsaved changes.
-///          - unload: Unloaded only, do not delete. See |:bunload|
+///          - unload: Unload only, do not delete. See |:bunload|
+///          - delete: Delete buffer only, do not wipe it out. See |:bdelete|
 void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_CHECK_TEXTLOCK
@@ -1069,6 +1070,7 @@ void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
 
   bool force = false;
   bool unload = false;
+  bool delete = false;
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
     Object v = opts.items[i].value;
@@ -1076,6 +1078,8 @@ void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
       force = api_object_to_bool(v, "force", false, err);
     } else if (strequal("unload", k.data)) {
       unload = api_object_to_bool(v, "unload", false, err);
+    } else if (strequal("delete", k.data)) {
+      delete = api_object_to_bool(v, "delete", false, err);
     } else {
       VALIDATE_S(false, "'opts' key", k.data, {
         return;
@@ -1087,14 +1091,19 @@ void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
     return;
   }
 
-  int result = do_buffer(unload ? DOBUF_UNLOAD : DOBUF_WIPE,
+  VALIDATE(!delete || !unload, "%s", "Cannot use both 'unload' and 'delete'", {
+    return;
+  });
+
+  int result = do_buffer(unload ? DOBUF_UNLOAD : (delete ? DOBUF_DEL : DOBUF_WIPE),
                          DOBUF_FIRST,
                          FORWARD,
                          buf->handle,
                          force);
 
   if (result == FAIL) {
-    api_set_error(err, kErrorTypeException, "Failed to unload buffer.");
+    api_set_error(err, kErrorTypeException, "Failed to %s buffer.",
+                  unload ? "unload" : (delete ? "delete" : "wipeout"));
     return;
   }
 }

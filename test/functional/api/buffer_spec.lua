@@ -776,12 +776,26 @@ describe('api/buf', function()
     end)
 
     it('allows for just unloading', function()
-      nvim('command', 'new')
+      -- A named buffer is required since Nvim automatically deletes unnamed buffers, even when
+      -- asked to unload.
+      nvim('command', 'new | e foo.txt')
       local b = nvim('get_current_buf')
       ok(buffer('is_valid', b))
       nvim('buf_delete', b, { unload = true })
       ok(not buffer('is_loaded', b))
       ok(buffer('is_valid', b))
+      ok(nvim('get_option_value', 'buflisted', { buf = b }))
+    end)
+
+    it('allows deletion without wipeout', function()
+      -- Named buffer is required for the same reason as above.
+      nvim('command', 'new | e foo.txt')
+      local b = nvim('get_current_buf')
+      ok(buffer('is_valid', b))
+      nvim('buf_delete', b, { delete = true })
+      ok(not buffer('is_loaded', b))
+      ok(buffer('is_valid', b))
+      ok(not nvim('get_option_value', 'buflisted', { buf = b }))
     end)
   end)
 

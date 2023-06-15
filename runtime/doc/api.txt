@@ -2162,7 +2162,9 @@ nvim_buf_delete({buffer}, {opts})                          *nvim_buf_delete()*
       • {buffer}  Buffer handle, or 0 for current buffer
       • {opts}    Optional parameters. Keys:
                   • force: Force deletion and ignore unsaved changes.
-                  • unload: Unloaded only, do not delete. See |:bunload|
+                  • unload: Unload only, do not delete. See |:bunload|
+                  • delete: Delete buffer only, do not wipe it out. See
+                    |:bdelete|
 
 nvim_buf_detach({buffer})                                  *nvim_buf_detach()*
     Deactivates buffer-update events on the channel.
