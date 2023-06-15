@@ -841,7 +841,7 @@ static char *find_longest_match(expand_T *xp, int options)
 char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
 {
   char *ss = NULL;
-  static int findex;
+  static int findex;                  // TODO(vim): Move into expand_T
   static char *orig_save = NULL;      // kept value of orig
   int orig_saved = false;
 
@@ -871,7 +871,10 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
       cmdline_pum_remove();
     }
   }
-  findex = 0;
+  // TODO(vim): Remove condition if "findex" is part of expand_T ?
+  if (mode != WILD_EXPAND_FREE && mode != WILD_ALL && mode != WILD_ALL_KEEP) {
+    findex = 0;
+  }
 
   if (mode == WILD_FREE) {      // only release file name
     return NULL;
