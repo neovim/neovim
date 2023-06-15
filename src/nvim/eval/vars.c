@@ -817,12 +817,11 @@ static char *ex_let_option(char *arg, typval_T *const tv, const bool is_const,
         new_n = num_modulus(cur_n, new_n); break;
       }
 
-      // clamp boolean values
-      if (newval.type == kOptValTypeBoolean && (new_n > 1 || new_n < -1)) {
-        new_n = (new_n > 1) ? 1 : -1;
+      if (curval.type == kOptValTypeNumber) {
+        newval = NUMBER_OPTVAL(new_n);
+      } else {
+        newval = BOOLEAN_OPTVAL(new_n == 0 ? kFalse : (new_n >= 1 ? kTrue : kNone));
       }
-
-      newval = kOptValTypeNumber ? NUMBER_OPTVAL(new_n) : BOOLEAN_OPTVAL((TriState)new_n);
     } else if (!hidden && is_string
                && curval.data.string.data != NULL && newval.data.string.data != NULL) {  // string
       OptVal newval_old = newval;
