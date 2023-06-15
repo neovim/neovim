@@ -1251,6 +1251,30 @@ func Test_cmdline_complete_various()
   call assert_equal('"py3file', @:)
 endfunc
 
+" Test that expanding a pattern doesn't interfere with cmdline completion.
+func Test_expand_during_cmdline_completion()
+  func ExpandStuff()
+    badd <script>:p:h/README.*
+    call assert_equal(expand('<script>:p:h') .. '/README.txt', bufname('$'))
+    $bwipe
+    call assert_equal('README.txt', expand('README.*'))
+    call assert_equal(['README.txt'], getcompletion('README.*', 'file'))
+  endfunc
+  augroup test_CmdlineChanged
+    autocmd!
+    autocmd CmdlineChanged * call ExpandStuff()
+  augroup END
+
+  call feedkeys(":sign \<Tab>\<Tab>\<Tab>\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"sign place', @:)
+
+  augroup test_CmdlineChanged
+    au!
+  augroup END
+  augroup! test_CmdlineChanged
+  delfunc ExpandStuff
+endfunc
+
 " Test for 'wildignorecase'
 func Test_cmdline_wildignorecase()
   CheckUnix
@@ -1790,6 +1814,7 @@ func Test_cmd_bang_E135()
   augroup test_cmd_filter_E135
     au!
   augroup END
+  augroup! test_cmd_filter_E135
   %bwipe!
 endfunc
 
@@ -2278,7 +2303,7 @@ endfunc
 func Test_cmd_map_cmdlineChanged()
   let g:log = []
   cnoremap <F1> l<Cmd><CR>s
-  augroup test
+  augroup test_CmdlineChanged
     autocmd!
     autocmd CmdlineChanged : let g:log += [getcmdline()]
   augroup END
@@ -2294,9 +2319,10 @@ func Test_cmd_map_cmdlineChanged()
 
   unlet g:log
   cunmap <F1>
-  augroup test
+  augroup test_CmdlineChanged
     autocmd!
   augroup END
+  augroup! test_CmdlineChanged
 endfunc
 
 " Test for the 'suffixes' option
