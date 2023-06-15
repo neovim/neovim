@@ -3787,14 +3787,6 @@ bool is_option_allocated(const char *name)
   return idx >= 0 && (options[idx].flags & P_ALLOCED);
 }
 
-/// Return true if "name" is a string option.
-/// Returns false if option "name" does not exist.
-bool is_string_option(const char *name)
-{
-  int idx = findoption(name);
-  return idx >= 0 && (options[idx].flags & P_STRING);
-}
-
 // Translate a string like "t_xx", "<t_xx>" or "<S-Tab>" to a key number.
 // When "has_lt" is true there is a '<' before "*arg_arg".
 // Returns 0 when the key is not recognized.
