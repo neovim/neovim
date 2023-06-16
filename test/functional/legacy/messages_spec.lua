@@ -49,6 +49,54 @@ describe('messages', function()
     ]])
   end)
 
+  -- oldtest: Test_message_not_cleared_after_mode()
+  it('clearing mode does not remove message', function()
+    screen = Screen.new(60, 10)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+    })
+    screen:attach()
+    exec([[
+      nmap <silent> gx :call DebugSilent('normal')<CR>
+      vmap <silent> gx :call DebugSilent('visual')<CR>
+      function DebugSilent(arg)
+          echomsg "from DebugSilent" a:arg
+      endfunction
+      set showmode
+      set cmdheight=1
+      call setline(1, ['one', 'two', 'three'])
+    ]])
+
+    feed('gx')
+    screen:expect([[
+      ^one                                                         |
+      two                                                         |
+      three                                                       |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      from DebugSilent normal                                     |
+    ]])
+
+    -- removing the mode message used to also clear the intended message
+    feed('vEgx')
+    screen:expect([[
+      ^one                                                         |
+      two                                                         |
+      three                                                       |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      from DebugSilent visual                                     |
+    ]])
+  end)
+
   describe('more prompt', function()
     before_each(function()
       command('set more')
