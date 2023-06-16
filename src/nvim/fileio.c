@@ -3618,7 +3618,7 @@ bool match_file_list(char *list, char *sfname, char *ffname)
   // try all patterns in 'wildignore'
   char *p = list;
   while (*p) {
-    char buf[100];
+    char buf[MAXPATHL];
     copy_option_part(&p, buf, ARRAY_SIZE(buf), ",");
     char allow_dirs;
     char *regpat = file_pat_to_reg_pat(buf, NULL, &allow_dirs, false);
