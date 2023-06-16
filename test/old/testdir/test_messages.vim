@@ -341,6 +341,41 @@ func Test_message_more_scrollback()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_message_not_cleared_after_mode()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      nmap <silent> gx :call DebugSilent('normal')<CR>
+      vmap <silent> gx :call DebugSilent('visual')<CR>
+      function DebugSilent(arg)
+          echomsg "from DebugSilent" a:arg
+      endfunction
+      set showmode
+      set cmdheight=1
+      call test_settime(1)
+      call setline(1, ['one', 'NoSuchFile', 'three'])
+  END
+  call writefile(lines, 'XmessageMode', 'D')
+  let buf = RunVimInTerminal('-S XmessageMode', {'rows': 10})
+
+  call term_sendkeys(buf, 'gx')
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_message_not_cleared_after_mode_1', {})
+
+  " removing the mode message used to also clear the intended message
+  call term_sendkeys(buf, 'vEgx')
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_message_not_cleared_after_mode_2', {})
+
+  " removing the mode message used to also clear the error message
+  call term_sendkeys(buf, ":set cmdheight=2\<CR>")
+  call term_sendkeys(buf, '2GvEgf')
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_message_not_cleared_after_mode_3', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " Test verbose message before echo command
 func Test_echo_verbose_system()
   CheckRunVimInTerminal
