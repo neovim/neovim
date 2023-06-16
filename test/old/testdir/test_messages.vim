@@ -352,7 +352,8 @@ func Test_message_not_cleared_after_mode()
       endfunction
       set showmode
       set cmdheight=1
-      call setline(1, ['one', 'two', 'three'])
+      call test_settime(1)
+      call setline(1, ['one', 'NoSuchFile', 'three'])
   END
   call writefile(lines, 'XmessageMode', 'D')
   let buf = RunVimInTerminal('-S XmessageMode', {'rows': 10})
@@ -365,6 +366,12 @@ func Test_message_not_cleared_after_mode()
   call term_sendkeys(buf, 'vEgx')
   call TermWait(buf)
   call VerifyScreenDump(buf, 'Test_message_not_cleared_after_mode_2', {})
+
+  " removing the mode message used to also clear the error message
+  call term_sendkeys(buf, ":set cmdheight=2\<CR>")
+  call term_sendkeys(buf, '2GvEgf')
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_message_not_cleared_after_mode_3', {})
 
   call StopVimInTerminal(buf)
 endfunc
