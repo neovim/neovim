@@ -6,24 +6,25 @@ local M = {}
 ---@class lsp._inlay_hint.bufstate
 ---@field version integer
 ---@field client_hint table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
+---@field enabled boolean
+---@field timer uv.uv_timer_t
 
 ---@type table<integer, lsp._inlay_hint.bufstate>
-local hint_cache_by_buf = setmetatable({}, {
-  __index = function(t, b)
-    local key = b > 0 and b or api.nvim_get_current_buf()
-    return rawget(t, key)
+local bufstates = setmetatable({}, {
+  __index = function(tbl, idx)
+    local key = (idx and idx > 0) and idx or api.nvim_get_current_buf()
+    return rawget(tbl, key)
   end,
 })
 
 local namespace = api.nvim_create_namespace('vim_lsp_inlayhint')
 local augroup = api.nvim_create_augroup('vim_lsp_inlayhint', {})
-local __buffers = {}
 
 ---@private
 local function reset_timer(reset_bufnr)
-  local timer = __buffers[reset_bufnr].timer
+  local timer = bufstates[reset_bufnr].timer
   if timer then
-    __buffers[reset_bufnr].timer = nil
+    bufstates[reset_bufnr].timer = nil
     if not timer:is_closing() then
       timer:stop()
       timer:close()
@@ -47,21 +48,20 @@ function M.on_inlayhint(err, result, ctx, _)
   if not result then
     return
   end
-  local bufstate = hint_cache_by_buf[bufnr]
-  if not bufstate then
-    bufstate = {
-      client_hint = vim.defaulttable(),
-      version = ctx.version,
-    }
-    hint_cache_by_buf[bufnr] = bufstate
+  local bufstate = bufstates[bufnr]
+  if not bufstate.client_hint or bufstate.version then
+    bufstate.client_hint = vim.defaulttable()
+    bufstate.version = ctx.version
     api.nvim_buf_attach(bufnr, false, {
-      on_detach = function(_, b)
-        api.nvim_buf_clear_namespace(b, namespace, 0, -1)
-        hint_cache_by_buf[b] = nil
+      on_detach = function(_, cb_bufnr)
+        api.nvim_buf_clear_namespace(cb_bufnr, namespace, 0, -1)
+        bufstates[cb_bufnr].version = nil
+        bufstates[cb_bufnr].client_hint = nil
       end,
-      on_reload = function(_, b)
-        api.nvim_buf_clear_namespace(b, namespace, 0, -1)
-        hint_cache_by_buf[b] = nil
+      on_reload = function(_, cb_bufnr)
+        api.nvim_buf_clear_namespace(cb_bufnr, namespace, 0, -1)
+        bufstates[cb_bufnr].version = nil
+        bufstates[cb_bufnr].client_hint = nil
       end,
     })
   end
@@ -125,7 +125,8 @@ end
 function M.refresh(opts)
   opts = opts or {}
   local bufnr = resolve_bufnr(opts.bufnr or 0)
-  if not (__buffers[bufnr] and __buffers[bufnr].enabled) then
+  local bufstate = bufstates[bufnr]
+  if not (bufstate and bufstate.enabled) then
     return
   end
   local only_visible = opts.only_visible or false
@@ -166,7 +167,7 @@ end
 local function clear(bufnr)
   bufnr = resolve_bufnr(bufnr or 0)
   reset_timer(bufnr)
-  local bufstate = hint_cache_by_buf[bufnr]
+  local bufstate = bufstates[bufnr]
   local client_lens = (bufstate or {}).client_hint or {}
   local client_ids = vim.tbl_keys(client_lens)
   for _, iter_client_id in ipairs(client_ids) do
@@ -187,25 +188,28 @@ end
 ---@private
 function M.enable(bufnr)
   bufnr = resolve_bufnr(bufnr or 0)
-  if not (__buffers[bufnr] and __buffers[bufnr].enabled) then
-    __buffers[bufnr] = { enabled = true, timer = nil }
+  local bufstate = bufstates[bufnr]
+  if not (bufstate and bufstate.enabled) then
+    bufstates[bufnr] = { enabled = true, timer = nil }
     M.refresh({ bufnr = bufnr })
     api.nvim_buf_attach(bufnr, true, {
       on_lines = function(_, cb_bufnr)
-        if not __buffers[cb_bufnr].enabled then
+        if not bufstates[cb_bufnr].enabled then
           return true
         end
         reset_timer(cb_bufnr)
-        __buffers[cb_bufnr].timer = vim.defer_fn(function()
+        bufstates[bufnr].timer = vim.defer_fn(function()
           make_request(cb_bufnr)
         end, 200)
       end,
       on_reload = function(_, cb_bufnr)
         clear(cb_bufnr)
+        bufstates[cb_bufnr] = nil
         M.refresh({ bufnr = cb_bufnr })
       end,
       on_detach = function(_, cb_bufnr)
         clear(cb_bufnr)
+        bufstates[cb_bufnr] = nil
       end,
     })
     api.nvim_create_autocmd('LspDetach', {
@@ -223,13 +227,15 @@ end
 function M.disable(bufnr)
   bufnr = resolve_bufnr(bufnr or 0)
   clear(bufnr)
-  __buffers[bufnr] = nil
+  bufstates[bufnr].enabled = nil
+  bufstates[bufnr].timer = nil
 end
 
 ---@private
 function M.toggle(bufnr)
   bufnr = resolve_bufnr(bufnr or 0)
-  if __buffers[bufnr] and __buffers[bufnr].enabled then
+  local bufstate = bufstates[bufnr]
+  if bufstate and bufstate.enabled then
     M.disable(bufnr)
   else
     M.enable(bufnr)
@@ -238,7 +244,7 @@ end
 
 api.nvim_set_decoration_provider(namespace, {
   on_win = function(_, _, bufnr, topline, botline)
-    local bufstate = hint_cache_by_buf[bufnr]
+    local bufstate = bufstates[bufnr]
     if not bufstate then
       return
     end
