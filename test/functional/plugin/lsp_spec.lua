@@ -3357,22 +3357,22 @@ describe('LSP', function()
                 vim.lsp.commands['executed_preferred'] = function()
                 end
               end
-              vim.lsp.commands['quickfix_command'] = function(cmd)
-                vim.lsp.commands['executed_quickfix'] = function()
+              vim.lsp.commands['type_annotate_command'] = function(cmd)
+                vim.lsp.commands['executed_type_annotate'] = function()
                 end
               end
               local bufnr = vim.api.nvim_get_current_buf()
               vim.lsp.buf_attach_client(bufnr, TEST_RPC_CLIENT_ID)
               vim.lsp.buf.code_action({ filter = function(a) return a.isPreferred end, apply = true, })
               vim.lsp.buf.code_action({
-                  -- expect to be returned actions 'quickfix' and 'quickfix.foo'
-                  context = { only = {'quickfix'}, },
+                  -- expect to be returned actions 'type-annotate' and 'type-annotate.foo'
+                  context = { only = { 'type-annotate' }, },
                   apply = true,
                   filter = function(a)
-                      if a.kind == 'quickfix.foo' then
-                        vim.lsp.commands['filtered_quickfix_foo'] = function() end
+                      if a.kind == 'type-annotate.foo' then
+                        vim.lsp.commands['filtered_type_annotate_foo'] = function() end
                         return false
-                      elseif a.kind == 'quickfix' then
+                      elseif a.kind == 'type-annotate' then
                         return true
                       else
                         assert(nil, 'unreachable')
@@ -3382,8 +3382,8 @@ describe('LSP', function()
             ]])
           elseif ctx.method == 'shutdown' then
             eq('function', exec_lua[[return type(vim.lsp.commands['executed_preferred'])]])
-            eq('function', exec_lua[[return type(vim.lsp.commands['filtered_quickfix_foo'])]])
-            eq('function', exec_lua[[return type(vim.lsp.commands['executed_quickfix'])]])
+            eq('function', exec_lua[[return type(vim.lsp.commands['filtered_type_annotate_foo'])]])
+            eq('function', exec_lua[[return type(vim.lsp.commands['executed_type_annotate'])]])
             client.stop()
           end
         end
