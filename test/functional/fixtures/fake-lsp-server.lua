@@ -831,21 +831,21 @@ function tests.code_action_filter()
         isPreferred = true,
         command = 'preferred_command',
       }
-      local quickfix_action = {
+      local type_annotate_action = {
         title = 'Action 3',
-        kind = 'quickfix',
-        command = 'quickfix_command',
+        kind = 'type-annotate',
+        command = 'type_annotate_command',
       }
-      local quickfix_foo_action = {
+      local type_annotate_foo_action = {
         title = 'Action 4',
-        kind = 'quickfix.foo',
-        command = 'quickfix_foo_command',
+        kind = 'type-annotate.foo',
+        command = 'type_annotate_foo_command',
       }
       expect_request('textDocument/codeAction', function()
-        return nil, { action, preferred_action, quickfix_action, quickfix_foo_action, }
+        return nil, { action, preferred_action, type_annotate_action, type_annotate_foo_action, }
       end)
       expect_request('textDocument/codeAction', function()
-        return nil, { action, preferred_action, quickfix_action, quickfix_foo_action, }
+        return nil, { action, preferred_action, type_annotate_action, type_annotate_foo_action, }
       end)
       notify('shutdown')
     end;
