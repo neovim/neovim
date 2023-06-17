@@ -118,7 +118,7 @@ end
 ---@private
 function M.refresh(opts)
   opts = opts or {}
-  local bufnr = resolve_bufnr(opts.bufnr or 0)
+  local bufnr = resolve_bufnr(opts.bufnr)
   local bufstate = bufstates[bufnr]
   if not (bufstate and bufstate.enabled) then
     return
@@ -159,7 +159,7 @@ end
 ---@param bufnr (integer|nil) Buffer handle, or nil for current
 ---@private
 local function clear(bufnr)
-  bufnr = resolve_bufnr(bufnr or 0)
+  bufnr = resolve_bufnr(bufnr)
   reset_timer(bufnr)
   local bufstate = bufstates[bufnr]
   local client_lens = (bufstate or {}).client_hint or {}
@@ -181,7 +181,7 @@ end
 
 ---@private
 function M.enable(bufnr)
-  bufnr = resolve_bufnr(bufnr or 0)
+  bufnr = resolve_bufnr(bufnr)
   local bufstate = bufstates[bufnr]
   if not (bufstate and bufstate.enabled) then
     bufstates[bufnr] = { enabled = true, timer = nil }
@@ -219,7 +219,7 @@ end
 
 ---@private
 function M.disable(bufnr)
-  bufnr = resolve_bufnr(bufnr or 0)
+  bufnr = resolve_bufnr(bufnr)
   clear(bufnr)
   bufstates[bufnr].enabled = nil
   bufstates[bufnr].timer = nil
@@ -227,7 +227,7 @@ end
 
 ---@private
 function M.toggle(bufnr)
-  bufnr = resolve_bufnr(bufnr or 0)
+  bufnr = resolve_bufnr(bufnr)
   local bufstate = bufstates[bufnr]
   if bufstate and bufstate.enabled then
     M.disable(bufnr)
