@@ -43,7 +43,7 @@ function M.on_inlayhint(err, result, ctx, _)
     return
   end
   local bufstate = bufstates[bufnr]
-  if not bufstate.client_hint or bufstate.version then
+  if not (bufstate.client_hint and bufstate.version) then
     bufstate.client_hint = vim.defaulttable()
     bufstate.version = ctx.version
     api.nvim_buf_attach(bufnr, false, {
