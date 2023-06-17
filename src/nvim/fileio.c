@@ -990,7 +990,8 @@ retry:
           }
         } else {
           // Read bytes from the file.
-          size = read_eintr(fd, ptr, (size_t)size);
+          size_t read_size = (size_t)size;
+          size = read_eintr(fd, ptr, read_size);
         }
 
         if (size <= 0) {
