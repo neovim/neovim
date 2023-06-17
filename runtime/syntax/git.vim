@@ -82,7 +82,7 @@ syn match  gitHashAbbrev /\<\x\{4,39\}\.\.\./he=e-3 contained nextgroup=gitHashA
 syn match  gitHashStage /\<\x\{4,\}\>/              contained nextgroup=gitStage skipwhite contains=@NoSpell
 syn match  gitStage     /\<\d\t\@=/                 contained contains=@NoSpell
 syn match gitHEAD /HEAD ->/
-syn match gitBranch /(.*)/ contains=gitHEAD contains=gitHashAbbrev
+syn match gitBranch / (.\{-}) / contains=gitHEAD contains=gitHashAbbrev
 
 
 syn match  gitNotesHeader /^Notes:\ze\n    /
