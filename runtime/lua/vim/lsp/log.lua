@@ -154,7 +154,7 @@ function log.set_level(level)
 end
 
 --- Gets the current log level.
----@return string current log level
+---@return integer current log level
 function log.get_level()
   return current_log_level
 end
