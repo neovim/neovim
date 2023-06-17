@@ -81,6 +81,8 @@ syn match  gitHashAbbrev /\<\x\{4,\}\>/             contained nextgroup=gitHashA
 syn match  gitHashAbbrev /\<\x\{4,39\}\.\.\./he=e-3 contained nextgroup=gitHashAbbrev skipwhite contains=@NoSpell
 syn match  gitHashStage /\<\x\{4,\}\>/              contained nextgroup=gitStage skipwhite contains=@NoSpell
 syn match  gitStage     /\<\d\t\@=/                 contained contains=@NoSpell
+syn match gitHEAD /HEAD ->/
+syn match gitBranch /(.*)/ contains=gitHEAD contains=gitHashAbbrev
 
 
 syn match  gitNotesHeader /^Notes:\ze\n    /
@@ -107,5 +109,7 @@ hi def link gitStage             gitType
 hi def link gitType              Type
 hi def link gitDiffAdded         diffAdded
 hi def link gitDiffRemoved       diffRemoved
+hi def link gitBranch            String
+hi def link gitHEAD              Special
 
 let b:current_syntax = "git"
