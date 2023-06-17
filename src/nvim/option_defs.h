@@ -9,52 +9,49 @@
 // option_defs.h: definition of global variables for settable options
 
 // Option Flags
-#define P_BOOL         0x01U        ///< the option is boolean
-#define P_NUM          0x02U        ///< the option is numeric
-#define P_STRING       0x04U        ///< the option is a string
-#define P_ALLOCED      0x08U        ///< the string option is in allocated memory,
+#define P_ALLOCED      0x01U        ///< the string option is in allocated memory,
                                     ///< must use free_string_option() when
                                     ///< assigning new value. Not set if default is
                                     ///< the same.
-#define P_EXPAND       0x10U        ///< environment expansion.  NOTE: P_EXPAND can
+#define P_EXPAND       0x02U        ///< environment expansion.  NOTE: P_EXPAND can
                                     ///< never be used for local or hidden options
-#define P_NODEFAULT    0x40U        ///< don't set to default value
-#define P_DEF_ALLOCED  0x80U        ///< default value is in allocated memory, must
+#define P_NODEFAULT    0x08U        ///< don't set to default value
+#define P_DEF_ALLOCED  0x10U        ///< default value is in allocated memory, must
                                     ///< use free() when assigning new value
-#define P_WAS_SET      0x100U       ///< option has been set/reset
-#define P_NO_MKRC      0x200U       ///< don't include in :mkvimrc output
+#define P_WAS_SET      0x20U        ///< option has been set/reset
+#define P_NO_MKRC      0x40U        ///< don't include in :mkvimrc output
 
 // when option changed, what to display:
-#define P_UI_OPTION    0x400U       ///< send option to remote UI
-#define P_RTABL        0x800U       ///< redraw tabline
-#define P_RSTAT        0x1000U      ///< redraw status lines
-#define P_RWIN         0x2000U      ///< redraw current window and recompute text
-#define P_RBUF         0x4000U      ///< redraw current buffer and recompute text
-#define P_RALL         0x6000U      ///< redraw all windows
-#define P_RCLR         0x7000U      ///< clear and redraw all
+#define P_UI_OPTION    0x80U        ///< send option to remote UI
+#define P_RTABL        0x100U       ///< redraw tabline
+#define P_RSTAT        0x200U       ///< redraw status lines
+#define P_RWIN         0x400U       ///< redraw current window and recompute text
+#define P_RBUF         0x800U       ///< redraw current buffer and recompute text
+#define P_RALL         0xC00U       ///< redraw all windows
+#define P_RCLR         0xE00U       ///< clear and redraw all
 
-#define P_COMMA        0x8000U      ///< comma separated list
-#define P_ONECOMMA     0x18000U     ///< P_COMMA and cannot have two consecutive
+#define P_COMMA        0x1000U      ///< comma separated list
+#define P_ONECOMMA     0x3000U      ///< P_COMMA and cannot have two consecutive
                                     ///< commas
-#define P_NODUP        0x20000U     ///< don't allow duplicate strings
-#define P_FLAGLIST     0x40000U     ///< list of single-char flags
+#define P_NODUP        0x4000U      ///< don't allow duplicate strings
+#define P_FLAGLIST     0x8000U      ///< list of single-char flags
 
-#define P_SECURE       0x80000U     ///< cannot change in modeline or secure mode
-#define P_GETTEXT      0x100000U    ///< expand default value with _()
-#define P_NOGLOB       0x200000U    ///< do not use local value for global vimrc
-#define P_NFNAME       0x400000U    ///< only normal file name chars allowed
-#define P_INSECURE     0x800000U    ///< option was set from a modeline
-#define P_PRI_MKRC     0x1000000U   ///< priority for :mkvimrc (setting option
+#define P_SECURE       0x10000U     ///< cannot change in modeline or secure mode
+#define P_GETTEXT      0x20000U     ///< expand default value with _()
+#define P_NOGLOB       0x40000U     ///< do not use local value for global vimrc
+#define P_NFNAME       0x80000U     ///< only normal file name chars allowed
+#define P_INSECURE     0x100000U    ///< option was set from a modeline
+#define P_PRI_MKRC     0x200000U    ///< priority for :mkvimrc (setting option
                                     ///< has side effects)
-#define P_NO_ML        0x2000000U   ///< not allowed in modeline
-#define P_CURSWANT     0x4000000U   ///< update curswant required; not needed
+#define P_NO_ML        0x400000U    ///< not allowed in modeline
+#define P_CURSWANT     0x800000U    ///< update curswant required; not needed
                                     ///< when there is a redraw flag
-#define P_NDNAME       0x8000000U   ///< only normal dir name chars allowed
-#define P_RWINONLY     0x10000000U  ///< only redraw current window
-#define P_MLE          0x20000000U  ///< under control of 'modelineexpr'
-#define P_FUNC         0x40000000U  ///< accept a function reference or a lambda
+#define P_NDNAME       0x1000000U   ///< only normal dir name chars allowed
+#define P_RWINONLY     0x2000000U   ///< only redraw current window
+#define P_MLE          0x4000000U   ///< under control of 'modelineexpr'
+#define P_FUNC         0x8000000U   ///< accept a function reference or a lambda
 
-#define P_NO_DEF_EXP   0x80000000U  ///< Do not expand default value.
+#define P_NO_DEF_EXP   0x10000000U  ///< Do not expand default value.
 
 /// Flags for option-setting functions
 ///
@@ -1047,20 +1044,44 @@ typedef enum {
   PV_MAXVAL = 0xffff,  // to avoid warnings for value out of range
 } idopt_T;
 
+// Option value type
+typedef enum {
+  kOptValTypeNil = 0,
+  kOptValTypeBoolean,
+  kOptValTypeNumber,
+  kOptValTypeString,
+  // This represents the amount of option value types and must be kept at the end of the enum
+  kOptValTypeCount
+} OptValType;
+
+// Option value
+typedef struct {
+  OptValType type;
+
+  union {
+    // Vim boolean options are actually tri-states because they have a third "None" value.
+    TriState boolean;
+    Integer number;
+    String string;
+  } data;
+} OptVal;
+
 typedef struct vimoption {
-  char *fullname;        // full option name
-  char *shortname;       // permissible abbreviation
-  uint32_t flags;               // see above
-  char *var;               // global option: pointer to variable;
-                           // window-local option: VAR_WIN;
-                           // buffer-local option: global value
-  idopt_T indir;                // global option: PV_NONE;
-                                // local option: indirect option index
-  // callback function to invoke after an option is modified to validate and
-  // apply the new value.
-  opt_did_set_cb_T opt_did_set_cb;
-  char *def_val;         // default values for variable (neovim!!)
-  LastSet last_set;             // script in which the option was last set
+  char *fullname;                   // full option name
+  char *shortname;                  // permissible abbreviation
+  uint32_t flags;                   // see above
+  char *var;                        // global option: pointer to variable;
+                                    // window-local option: VAR_WIN;
+                                    // buffer-local option: global value
+  idopt_T indir;                    // global option: PV_NONE;
+                                    // local option: indirect option index
+  
+  opt_did_set_cb_T opt_did_set_cb;  // callback function to invoke after an option is modified to
+                                    // validate and apply the new value.
+  char *def_val;                    // default values for variable (neovim!!)
+  LastSet last_set;                 // script in which the option was last set
+
+  bool types[kOptValTypeCount];     // whether option supports an option value type
 } vimoption_T;
 
 // The options that are local to a window or buffer have "indir" set to one of
@@ -1080,25 +1101,5 @@ typedef struct vimoption {
 // Options local to a window have a value local to a buffer and global to all
 // buffers.  Indicate this by setting "var" to VAR_WIN.
 #define VAR_WIN ((char *)-1)
-
-// Option value type
-typedef enum {
-  kOptValTypeNil = 0,
-  kOptValTypeBoolean,
-  kOptValTypeNumber,
-  kOptValTypeString,
-} OptValType;
-
-// Option value
-typedef struct {
-  OptValType type;
-
-  union {
-    // Vim boolean options are actually tri-states because they have a third "None" value.
-    TriState boolean;
-    Integer number;
-    String string;
-  } data;
-} OptVal;
 
 #endif  // NVIM_OPTION_DEFS_H

@@ -14,12 +14,6 @@ local options = require('options')
 
 local cstr = options.cstr
 
-local type_flags={
-  bool='P_BOOL',
-  number='P_NUM',
-  string='P_STRING',
-}
-
 local redraw_flags={
   ui_option='P_UI_OPTION',
   tabline='P_RTABL',
@@ -38,8 +32,23 @@ local list_flags={
   flagscomma='P_COMMA|P_FLAGLIST',
 }
 
+local type_names={
+  ['nil']='kOptValTypeNil',
+  number='kOptValTypeNumber',
+  bool='kOptValTypeBoolean',
+  string='kOptValTypeString',
+}
+
+local get_types = function(o)
+  local ret = {}
+  for _, t in ipairs(o.types) do
+    ret[#ret+1] = ('        [%s]=true'):format(type_names[t])
+  end
+  return table.concat(ret, ',\n')
+end
+
 local get_flags = function(o)
-  local ret = {type_flags[o.type]}
+  local ret = {'0'}
   local add_flag = function(f)
     ret[1] = ret[1] .. '|' .. f
   end
@@ -126,7 +135,9 @@ local dump_option = function(i, o)
   if o.abbreviation then
     w('    .shortname=' .. cstr(o.abbreviation))
   end
+  w('    .types={\n' .. get_types(o) .. '\n    }')
   w('    .flags=' .. get_flags(o))
+
   if o.enable_if then
     w(get_cond(o.enable_if))
   end
