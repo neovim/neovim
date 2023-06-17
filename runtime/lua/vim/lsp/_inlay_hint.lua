@@ -6,17 +6,11 @@ local M = {}
 ---@class lsp._inlay_hint.bufstate
 ---@field version integer
 ---@field client_hint table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
----@field enabled boolean
----@field timer uv.uv_timer_t
+---@field enabled boolean Whether inlay hints are enabled for the buffer
+---@field timer uv.uv_timer_t? Debounce timer associated with the buffer
 
 ---@type table<integer, lsp._inlay_hint.bufstate>
-local bufstates = setmetatable({}, {
-  __index = function(tbl, idx)
-    local key = (idx and idx > 0) and idx or api.nvim_get_current_buf()
-    return rawget(tbl, key)
-  end,
-})
-
+local bufstates = {}
 local namespace = api.nvim_create_namespace('vim_lsp_inlayhint')
 local augroup = api.nvim_create_augroup('vim_lsp_inlayhint', {})
 
@@ -106,7 +100,7 @@ end
 
 ---@private
 local function resolve_bufnr(bufnr)
-  return bufnr == 0 and api.nvim_get_current_buf() or bufnr
+  return (bufnr and bufnr > 0) and bufnr or api.nvim_get_current_buf()
 end
 
 --- Refresh inlay hints for a buffer
@@ -198,7 +192,7 @@ function M.enable(bufnr)
           return true
         end
         reset_timer(cb_bufnr)
-        bufstates[bufnr].timer = vim.defer_fn(function()
+        bufstates[cb_bufnr].timer = vim.defer_fn(function()
           make_request(cb_bufnr)
         end, 200)
       end,
