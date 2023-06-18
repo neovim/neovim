@@ -281,6 +281,12 @@ describe('vim.fs', function()
     it('works with backward slashes', function()
       eq('C:/Users/jdoe', exec_lua [[ return vim.fs.normalize('C:\\Users\\jdoe') ]])
     end)
+    it('removes trailing /', function()
+      eq('/home/user', exec_lua [[ return vim.fs.normalize('/home/user/') ]])
+    end)
+    it('works with /', function()
+      eq('/', exec_lua [[ return vim.fs.normalize('/') ]])
+    end)
     it('works with ~', function()
       eq( exec_lua([[
       local home = ...
