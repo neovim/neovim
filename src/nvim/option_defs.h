@@ -1058,7 +1058,7 @@ typedef struct {
   OptValType type;
 
   union {
-    // Vim boolean options are actually tri-states because they have a third "None" value.
+    // Vim global-local boolean options are actually tri-states.
     TriState boolean;
     Integer number;
     String string;
