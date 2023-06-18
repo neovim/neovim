@@ -6,7 +6,6 @@ local protocol = require('vim.lsp.protocol')
 local util = require('vim.lsp.util')
 local sync = require('vim.lsp.sync')
 local semantic_tokens = require('vim.lsp.semantic_tokens')
-local inlay_hint = require('vim.lsp._inlay_hint')
 
 local api = vim.api
 local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_exec_autocmds =
@@ -2397,24 +2396,6 @@ function lsp.buf_get_clients(bufnr)
     result[client.id] = client
   end
   return result
-end
-
---- Enable inlay hints for a buffer
----@param bufnr (integer|nil) Buffer handle, or nil for current
-function lsp.buf_inlay_hint_enable(bufnr)
-  inlay_hint.enable(bufnr)
-end
-
---- Disable inlay hints for a buffer
----@param bufnr (integer|nil) Buffer handle, or nil for current
-function lsp.buf_inlay_hint_disable(bufnr)
-  inlay_hint.disable(bufnr)
-end
-
---- Toggle inlay hints for a buffer
----@param bufnr (integer|nil) Buffer handle, or nil for current
-function lsp.buf_inlay_hint_toggle(bufnr)
-  inlay_hint.toggle(bufnr)
 end
 
 -- Log level dictionary with reverse lookup as well.
