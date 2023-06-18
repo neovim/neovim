@@ -1050,8 +1050,7 @@ typedef enum {
   kOptValTypeBoolean,
   kOptValTypeNumber,
   kOptValTypeString,
-  // This represents the amount of option value types and must be kept at the end of the enum
-  kOptValTypeCount
+  kOptValTypeCount  // Must be last.
 } OptValType;
 
 // Option value
