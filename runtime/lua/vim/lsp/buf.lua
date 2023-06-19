@@ -646,21 +646,7 @@ local function on_code_action_results(results, ctx, options)
     end
     if action.command then
       local command = type(action.command) == 'table' and action.command or action
-      local fn = client.commands[command.command] or vim.lsp.commands[command.command]
-      if fn then
-        local enriched_ctx = vim.deepcopy(ctx)
-        enriched_ctx.client_id = client.id
-        fn(command, enriched_ctx)
-      else
-        -- Not using command directly to exclude extra properties,
-        -- see https://github.com/python-lsp/python-lsp-server/issues/146
-        local params = {
-          command = command.command,
-          arguments = command.arguments,
-          workDoneToken = command.workDoneToken,
-        }
-        client.request('workspace/executeCommand', params, nil, ctx.bufnr)
-      end
+      client._exec_cmd(command, ctx)
     end
   end
 
@@ -697,7 +683,7 @@ local function on_code_action_results(results, ctx, options)
           return
         end
         apply_action(resolved_action, client)
-      end)
+      end, ctx.bufnr)
     else
       apply_action(action, client)
     end

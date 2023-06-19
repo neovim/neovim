@@ -1,6 +1,6 @@
 ---@meta
 
----@alias lsp-handler fun(err: lsp.ResponseError|nil, result: any, context: lsp.HandlerContext, config: table|nil)
+---@alias lsp-handler fun(err: lsp.ResponseError|nil, result: any, context: lsp.HandlerContext, config: table|nil): any?
 
 ---@class lsp.HandlerContext
 ---@field method string

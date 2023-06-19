@@ -33,30 +33,12 @@ local function execute_lens(lens, bufnr, client_id)
 
   local client = vim.lsp.get_client_by_id(client_id)
   assert(client, 'Client is required to execute lens, client_id=' .. client_id)
-  local command = lens.command
-  local fn = client.commands[command.command] or vim.lsp.commands[command.command]
-  if fn then
-    fn(command, { bufnr = bufnr, client_id = client_id })
-    return
-  end
-  -- Need to use the client that returned the lens → must not use buf_request
-  local command_provider = client.server_capabilities.executeCommandProvider
-  local commands = type(command_provider) == 'table' and command_provider.commands or {}
-  if not vim.list_contains(commands, command.command) then
-    vim.notify(
-      string.format(
-        'Language server does not support command `%s`. This command may require a client extension.',
-        command.command
-      ),
-      vim.log.levels.WARN
-    )
-    return
-  end
-  client.request('workspace/executeCommand', command, function(...)
+
+  client._exec_cmd(lens.command, { bufnr = bufnr }, function(...)
     local result = vim.lsp.handlers['workspace/executeCommand'](...)
     M.refresh()
     return result
-  end, bufnr)
+  end)
 end
 
 --- Return all lenses for the given buffer
