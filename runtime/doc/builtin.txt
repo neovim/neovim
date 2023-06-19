@@ -8842,10 +8842,13 @@ termopen({cmd} [, {opts}])			*termopen()*
 		to the current (unmodified) buffer. Parameters and behavior
 		are the same as |jobstart()| except "pty", "width", "height",
 		and "TERM" are ignored: "height" and "width" are taken from
-		the current window.
-		Returns the same values as |jobstart()|.
+		the current window. Note that termopen() implies a "pty" arg
+		to jobstart(), and thus has the implications documented at
+		|jobstart()|.
 
-		Terminal environment is initialized as in ||jobstart-env|,
+		Returns the same values as jobstart().
+
+		Terminal environment is initialized as in |jobstart-env|,
 		except $TERM is set to "xterm-256color". Full behavior is
 		described in |terminal|.
 

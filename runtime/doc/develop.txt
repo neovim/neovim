@@ -478,6 +478,8 @@ External UIs are expected to implement these common features:
 - Consider the "option_set" |ui-global| event as a hint for other GUI
   behaviors. Various UI-related options ('guifont', 'ambiwidth', …) are
   published in this event. See also "mouse_on", "mouse_off".
+- UIs generally should NOT set |$NVIM_APPNAME| (unless explicitly requested by
+  the user).
 
 
  vim:tw=78:ts=8:sw=4:et:ft=help:norl:

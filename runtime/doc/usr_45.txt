@@ -190,8 +190,7 @@ font.  Example: >
 
    xterm -u8 -fn -misc-fixed-medium-r-normal--18-120-100-100-c-90-iso10646-1
 
-Now you can run Vim inside this terminal.  Set 'encoding' to "utf-8" as
-before.  That's all.
+Now you can run Vim inside this terminal.
 
 
 USING UNICODE IN AN ORDINARY TERMINAL

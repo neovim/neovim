@@ -1002,10 +1002,18 @@ Log levels are one of the values defined in `vim.log.levels`:
 ------------------------------------------------------------------------------
 LUA-VIMSCRIPT BRIDGE                                           *lua-vimscript*
 
-Nvim Lua provides an interface to Vimscript variables and functions, and
-editor commands and options.
+Nvim Lua provides an interface or "bridge" to Vimscript variables and
+functions, and editor commands and options.
 
-See also https://github.com/nanotee/nvim-lua-guide.
+Objects passed over this bridge are COPIED (marshalled): there are no
+"references". |lua-guide-variables| For example, using `vim.fn.remove()` on
+a Lua list copies the list object to Vimscript and does NOT modify the Lua
+list: >lua
+
+    local list = { 1, 2, 3 }
+    vim.fn.remove(list, 0)
+    vim.print(list)  --> "{ 1, 2, 3 }"
+
 
 vim.call({func}, {...})                                           *vim.call()*
     Invokes |vim-function| or |user-function| {func} with arguments {...}.
