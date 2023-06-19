@@ -1133,7 +1133,7 @@ nvim_list_chans()                                          *nvim_list_chans()*
         specified at |nvim_get_chan_info()|.
 
 nvim_list_runtime_paths()                          *nvim_list_runtime_paths()*
-    Gets the paths contained in 'runtimepath'.
+    Gets the paths contained in |runtime-search-path|.
 
     Return: ~
         List of paths
