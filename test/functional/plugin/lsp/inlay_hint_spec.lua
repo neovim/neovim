@@ -72,7 +72,7 @@ describe('inlay hints', function()
       ]])
 
         insert(text)
-        exec_lua([[vim.lsp.buf.inlay_hint(true, bufnr)]])
+        exec_lua([[vim.lsp.buf.inlay_hint(bufnr, true)]])
         screen:expect({
           grid = [[
   auto add(int a, int b)-> int { return a + b; }    |
@@ -98,7 +98,7 @@ describe('inlay hints', function()
       ]])
 
         insert(text)
-        exec_lua([[vim.lsp.buf.inlay_hint(true, bufnr)]])
+        exec_lua([[vim.lsp.buf.inlay_hint(bufnr, true)]])
         screen:expect({
           grid = [[
   auto add(int a, int b)-> int { return a + b; }    |
@@ -112,7 +112,7 @@ describe('inlay hints', function()
                                                     |
 ]]
         })
-        exec_lua([[vim.lsp.buf.inlay_hint(false, bufnr)]])
+        exec_lua([[vim.lsp.buf.inlay_hint(bufnr, false)]])
         screen:expect({
           grid = [[
   auto add(int a, int b) { return a + b; }          |
