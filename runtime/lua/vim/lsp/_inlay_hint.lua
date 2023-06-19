@@ -11,9 +11,11 @@ local M = {}
 
 ---@type table<integer, lsp._inlay_hint.bufstate>
 local bufstates = {}
+
 local namespace = api.nvim_create_namespace('vim_lsp_inlayhint')
 local augroup = api.nvim_create_augroup('vim_lsp_inlayhint', {})
 
+--- Reset the request debounce timer of a buffer
 ---@private
 local function reset_timer(reset_bufnr)
   local timer = bufstates[reset_bufnr].timer
@@ -100,25 +102,19 @@ end
 
 ---@private
 local function resolve_bufnr(bufnr)
-  return (bufnr and bufnr > 0) and bufnr or api.nvim_get_current_buf()
+  return bufnr > 0 and bufnr or api.nvim_get_current_buf()
 end
 
 --- Refresh inlay hints for a buffer
 ---
---- It is recommended to trigger this using an autocmd or via keymap.
 ---@param opts (nil|table) Optional arguments
 ---  - bufnr (integer, default: 0): Buffer whose hints to refresh
 ---  - only_visible (boolean, default: false): Whether to only refresh hints for the visible regions of the buffer
 ---
---- Example:
---- <pre>vim
----   autocmd BufEnter,InsertLeave,BufWritePost <buffer> lua vim.lsp._inlay_hint.refresh()
---- </pre>
----
 ---@private
 function M.refresh(opts)
   opts = opts or {}
-  local bufnr = resolve_bufnr(opts.bufnr)
+  local bufnr = resolve_bufnr(opts.bufnr or 0)
   local bufstate = bufstates[bufnr]
   if not (bufstate and bufstate.enabled) then
     return
@@ -155,8 +151,7 @@ function M.refresh(opts)
 end
 
 --- Clear inlay hints
----
----@param bufnr (integer|nil) Buffer handle, or nil for current
+---@param bufnr (integer) Buffer handle, or 0 for current
 ---@private
 local function clear(bufnr)
   bufnr = resolve_bufnr(bufnr)
@@ -179,6 +174,8 @@ local function make_request(request_bufnr)
   M.refresh({ bufnr = request_bufnr })
 end
 
+--- Enable inlay hints for a buffer
+---@param bufnr (integer) Buffer handle, or 0 for current
 ---@private
 function M.enable(bufnr)
   bufnr = resolve_bufnr(bufnr)
@@ -217,6 +214,8 @@ function M.enable(bufnr)
   end
 end
 
+--- Disable inlay hints for a buffer
+---@param bufnr (integer) Buffer handle, or 0 for current
 ---@private
 function M.disable(bufnr)
   bufnr = resolve_bufnr(bufnr)
@@ -225,6 +224,8 @@ function M.disable(bufnr)
   bufstates[bufnr].timer = nil
 end
 
+--- Toggle inlay hints for a buffer
+---@param bufnr (integer) Buffer handle, or 0 for current
 ---@private
 function M.toggle(bufnr)
   bufnr = resolve_bufnr(bufnr)

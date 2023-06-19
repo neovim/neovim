@@ -811,10 +811,10 @@ function M.execute_command(command_params)
 end
 
 --- Enable/disable/toggle inlay hints for a buffer
+---@param bufnr (integer) Buffer handle, or 0 for current
 ---@param enable (boolean|nil) true/false to enable/disable, nil to toggle
----@param bufnr (integer|nil) Buffer handle, or nil for current
-function M.inlay_hint(enable, bufnr)
-  vim.validate({ enable = { enable, { 'boolean', 'nil' } }, bufnr = { bufnr, { 'number', 'nil' } } })
+function M.inlay_hint(bufnr, enable)
+  vim.validate({ enable = { enable, { 'boolean', 'nil' } }, bufnr = { bufnr, 'number' } })
   local inlay_hint = require('vim.lsp._inlay_hint')
   if enable then
     inlay_hint.enable(bufnr)
