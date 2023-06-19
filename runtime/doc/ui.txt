@@ -199,7 +199,7 @@ the editor.
 	The following keys are deprecated:
 
 	`hl_id`:	Use `attr_id` instead.
-	`hl_lm`:	Use `attr_id_lm` instead.
+	`id_lm`:	Use `attr_id_lm` instead.
 
 ["option_set", name, value] ~
 	UI-related option changed, where `name` is one of:

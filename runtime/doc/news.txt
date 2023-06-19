@@ -44,9 +44,13 @@ The following changes may require adaptations in user config or plugins.
 • Renamed `vim.treesitter.playground` to `vim.treesitter.dev`.
 
 ==============================================================================
-ADDED FEATURES                                                     *news-added*
+NEW FEATURES                                                    *news-features*
 
-The following new APIs or features were added.
+The following new APIs and features were added.
+
+• Performance:
+  • 'diffopt' "linematch" scoring algorithm now favours larger and less groups
+    https://github.com/neovim/neovim/pull/23611
 
 • Added |vim.lsp.status()| to consume the last progress messages as a string.
 

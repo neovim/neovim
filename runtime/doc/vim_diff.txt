@@ -15,6 +15,9 @@ centralized reference of the differences.
 ==============================================================================
 Configuration						    *nvim-config*
 
+User configuration and data files are found in standard |base-directories|
+(see also |$NVIM_APPNAME|).  Note in particular:
+
 - Use `$XDG_CONFIG_HOME/nvim/init.vim` instead of `.vimrc` for your |config|.
 - Use `$XDG_CONFIG_HOME/nvim` instead of `.vim` to store configuration files.
 - Use `$XDG_STATE_HOME/nvim/shada/main.shada` instead of `.viminfo` for persistent
@@ -29,7 +32,7 @@ Defaults					            *nvim-defaults*
   ":syntax off" to |init.vim|.
 
 - 'autoindent' is enabled
-- 'autoread' is enabled
+- 'autoread' is enabled (works in all UIs, including terminal)
 - 'background' defaults to "dark" (unless set automatically by the terminal/UI)
 - 'backspace' defaults to "indent,eol,start"
 - 'backupdir' defaults to .,~/.local/state/nvim/backup// (|xdg|), auto-created
@@ -195,7 +198,7 @@ server.
 External plugins run in separate processes. |remote-plugin| This improves
 stability and allows those plugins to work without blocking the editor. Even
 "legacy" Python and Ruby plugins which use the old Vim interfaces (|if_pyth|,
-|if_ruby|) run out-of-process.
+|if_ruby|) run out-of-process, so they cannot crash Nvim.
 
 Platform and I/O facilities are built upon libuv. Nvim benefits from libuv
 features and bug fixes, and other projects benefit from improvements to libuv
@@ -273,6 +276,7 @@ Normal commands:
   |Q| replays the last recorded macro instead of switching to Ex mode (|gQ|).
 
 Options:
+  'autoread'    works in the terminal (if it supports "focus" events)
   'cpoptions'   flags: |cpo-_|
   'diffopt'     "linematch" feature
   'exrc'        searches for ".nvim.lua", ".nvimrc", or ".exrc" files. The
@@ -293,7 +297,6 @@ Options:
   'shortmess'   "F" flag does not affect output from autocommands
   'signcolumn'  supports up to 9 dynamic/fixed columns
   'statuscolumn' full control of columns using 'statusline' format
-  'statusline'  supports unlimited alignment sections
   'tabline'     %@Func@foo%X can call any function on mouse-click
   'ttimeout', 'ttimeoutlen' behavior was simplified
   'winblend'    pseudo-transparency in floating windows |api-floatwin|
@@ -382,9 +385,9 @@ These Nvim features were later integrated into Vim.
 - 'statusline' supports unlimited alignment sections
 
 ==============================================================================
-Changed features					 *nvim-changed*
+Other changes						 *nvim-changed*
 
-This section lists various low-level details about other behavior changes.
+This section documents various low-level behavior changes.
 
 |mkdir()| behaviour changed:
 1. Assuming /tmp/foo does not exist and /tmp can be written to
@@ -399,21 +402,21 @@ This section lists various low-level details about other behavior changes.
    structures.
 2. |string()| fails immediately on nested containers, not when recursion limit
    was exceeded.
-2. When |:echo| encounters duplicate containers like >vim
+3. When |:echo| encounters duplicate containers like >vim
 
        let l = []
        echo [l, l]
 <
    it does not use "[...]" (was: "[[], [...]]", now: "[[], []]"). "..." is
    only used for recursive containers.
-3. |:echo| printing nested containers adds "@level" after "..." designating
+4. |:echo| printing nested containers adds "@level" after "..." designating
    the level at which recursive container was printed: |:echo-self-refer|.
    Same thing applies to |string()| (though it uses construct like
    "{E724@level}"), but this is not reliable because |string()| continues to
    error out.
-4. Stringifyed infinite and NaN values now use |str2float()| and can be evaled
+5. Stringifyed infinite and NaN values now use |str2float()| and can be evaled
    back.
-5. (internal) Trying to print or stringify VAR_UNKNOWN in Vim results in 
+6. (internal) Trying to print or stringify VAR_UNKNOWN in Vim results in 
    nothing, E908, in Nvim it is internal error.
 
 |json_decode()| behaviour changed:
@@ -634,7 +637,10 @@ Options:
   'highlight' (Names of builtin |highlight-groups| cannot be changed.)
   *'hkmap'* *'hk'* use `set keymap=hebrew` instead.
   *'hkmapp'* *'hkp'* use `set keymap=hebrewp` instead.
-  *'pastetoggle'* *'pt'*
+
+  *'pastetoggle'* *'pt'* Just Paste It.™ |paste| is handled automatically when
+  you paste text using your terminal's or GUI's paste feature (CTRL-SHIFT-v,
+  CMD-v (macOS), middle-click, …).
 
   *'imactivatefunc'* *'imaf'*
   *'imactivatekey'* *'imak'*
@@ -705,6 +711,11 @@ Options:
 Performance:
   Folds are not updated during insert-mode.
 
+Plugins:
+
+- logiPat
+- rrhelper
+
 Providers:
 
 - *if_lua* : Nvim |Lua| API is not compatible with Vim's "if_lua".
@@ -762,7 +773,8 @@ TUI:
 
 Cscope:
                                                                       *cscope*
-  Cscope support has been removed in favour of plugin-based solutions.
+  Cscope support was removed in favour of plugin-based solutions such as:
+  https://github.com/dhananjaylatkar/cscope_maps.nvim
 
 Hardcopy:
                                                                      *hardcopy*

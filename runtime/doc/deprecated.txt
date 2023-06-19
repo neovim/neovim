@@ -163,27 +163,21 @@ OPTIONS
 - 'viewoptions'		Flags "unix", "slash" are ignored and always enabled.
 - *'viminfo'*		Deprecated alias to 'shada' option.
 - *'viminfofile'*	Deprecated alias to 'shadafile' option.
-- *'paste'* *'nopaste'*	This option is obsolete; |paste| is handled automatically.
+- *'paste'* *'nopaste'*	Just Paste It.™  The 'paste' option is obsolete:
+			|paste| is handled automatically when you paste text
+			using your terminal's or GUI's paste feature
+			(CTRL-SHIFT-v, CMD-v (macOS), middle-click, …).
 			Enables "paste mode":
-			  - mappings in Insert mode and Command-line mode are
-			    disabled
-			  - abbreviations are disabled
-			  - 'autoindent' is reset
-			  - 'expandtab' is reset
-			  - 'formatoptions' is used like it is empty
-			  - 'revins' is reset
-			  - 'ruler' is reset
-			  - 'showmatch' is reset
-			  - 'smartindent' is reset
-			  - 'smarttab' is reset
-			  - 'softtabstop' is set to 0
-			  - 'textwidth' is set to 0
-			  - 'wrapmargin' is set to 0
-			These options keep their value, but their effect is
-			disabled:
-			  - 'cindent'
-			  - 'indentexpr'
-			  - 'lisp'
+			  - Disables mappings in Insert, Cmdline mode.
+			  - Disables abbreviations.
+			  - Resets 'autoindent' 'expandtab' 'revins' 'ruler'
+			    'showmatch' 'smartindent' 'smarttab' 'softtabstop'
+			    'textwidth' 'wrapmargin'.
+			  - Treats 'formatoptions' as empty.
+			  - Disables the effect of these options:
+			    - 'cindent'
+			    - 'indentexpr'
+			    - 'lisp'
 
 UI EXTENSIONS
 - *ui-wildmenu*		Use |ui-cmdline| with |ui-popupmenu| instead. Enabled

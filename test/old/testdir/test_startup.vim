@@ -125,15 +125,15 @@ func Test_help_arg()
     " check if  couple of lines are there
     let found = []
     for line in lines
-      if line =~ '-R.*Read-only mode'
-        call add(found, 'Readonly mode')
+      if line =~ '-l.*Execute Lua'
+        call add(found, 'Execute Lua')
       endif
       " Watch out for a second --version line in the Gnome version.
       if line =~ '--version.*Print version information'
         call add(found, "--version")
       endif
     endfor
-    call assert_equal(['Readonly mode', '--version'], found)
+    call assert_equal(['Execute Lua', '--version'], found)
   endif
   call delete('Xtestout')
 endfunc

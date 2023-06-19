@@ -130,10 +130,14 @@ DOCUMENTATION						*dev-doc*
   (docstrings, user manual, website materials, newsletters, …). Don't mince
   words. Personality and flavor, used sparingly, are welcome--but in general,
   optimize for the reader's time and energy: be "precise yet concise".
-    - See https://developers.google.com/style/tone
     - Prefer the active voice: "Foo does X", not "X is done by Foo".
-- Start function docstrings with present tense ("Gets"), not imperative
-  ("Get"). This tends to reduce ambiguity and improve clarity. >
+    - "The words you choose are an essential part of the user experience."
+      https://developer.apple.com/design/human-interface-guidelines/foundations/writing/
+    - "...without being overly colloquial or frivolous."
+      https://developers.google.com/style/tone
+- Write docstrings (as opposed to inline comments) with present tense ("Gets"),
+  not imperative ("Get"). This tends to reduce ambiguity and improve clarity
+  by describing "What" instead of "How". >
     GOOD:
     /// Gets a highlight definition.
     BAD:
@@ -272,6 +276,12 @@ See also |dev-naming|.
   - mimic the pairs() or ipairs() interface if the function is intended to be
     used in a "for" loop.
 
+Interface conventions ~
+
+- When accepting a buffer id, etc., 0 means "current buffer", nil means "all
+  buffers".  Likewise for window id, tabpage id, etc.
+  - Examples: |vim.lsp.codelens.clear()| |vim.diagnostic.enable()|
+
 
 API DESIGN GUIDELINES					*dev-api*
 
@@ -346,6 +356,7 @@ Use consistent names for {noun} (nouns) in API functions: buffer is called
 
 Do NOT use these deprecated nouns:
     - buffer
+    - callback      Use on_foo instead
     - command
     - window
 
