@@ -1384,20 +1384,23 @@ STATE DIRECTORY (DEFAULT) ~
     Unix:         ~/.local/state              ~/.local/state/nvim
     Windows:      ~/AppData/Local             ~/AppData/Local/nvim-data
 
-Note: Throughout the user manual these defaults are used as placeholders, e.g.
+Note: Throughout the help pages these defaults are used as placeholders, e.g.
 "~/.config" is understood to mean "$XDG_CONFIG_HOME or ~/.config".
 
 NVIM_APPNAME					*$NVIM_APPNAME*
-The XDG directories used by Nvim can be further configured by setting the
-`$NVIM_APPNAME` environment variable. This variable controls the directory
-Neovim will look for (and auto-create) in the various XDG parent directories.
-For example, setting `$NVIM_APPNAME` to "neovim" before running Neovim will
-result in Neovim looking for configuration files in `$XDG_CONFIG_HOME/neovim`
-instead of `$XDG_CONFIG_HOME/nvim`.
+The standard directories can be further configured by the `$NVIM_APPNAME`
+environment variable. This variable controls the sub-directory that Nvim will
+read from (and auto-create) in each of the base directories. For example,
+setting `$NVIM_APPNAME` to "foo" before starting will cause Nvim to look for
+configuration files in `$XDG_CONFIG_HOME/foo` instead of
+`$XDG_CONFIG_HOME/nvim`.
 
-Note: Similarly to the $XDG environment variables, when
-`$XDG_CONFIG_HOME/nvim` is mentioned, it should be understood as
-`$XDG_CONFIG_HOME/$NVIM_APPNAME`.
+One use-case for $NVIM_APPNAME is to "isolate" Nvim applications.
+Alternatively, for true isolation, on Linux you can use cgroups namespaces: >
+    systemd-run --user -qt -p PrivateUsers=yes -p BindPaths=/home/user/profile_xy:/home/user/.config/nvim nvim
+
+Note: Throughout the help pages, wherever `$XDG_CONFIG_…/nvim` is mentioned it
+is understood to mean `$XDG_CONFIG_…/$NVIM_APPNAME`.
 
 LOG FILE					*log* *$NVIM_LOG_FILE* *E5430*
 Besides 'debug' and 'verbose', Nvim keeps a general log file for internal

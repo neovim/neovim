@@ -1298,7 +1298,6 @@ will probably never match.
 When "\Z" appears anywhere in the pattern, all composing characters are
 ignored.  Thus only the base characters need to match, the composing
 characters may be different and the number of composing characters may differ.
-Only relevant when 'encoding' is "utf-8".
 Exception: If the pattern starts with one or more composing characters, these
 must match.
 							*/\%C*

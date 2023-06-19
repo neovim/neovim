@@ -151,7 +151,7 @@ from the host TTY, or if Nvim is |--headless| it uses default values: >vim
 When channels are opened with the `rpc` option set to true, the channel can be
 used for remote method calls in both directions, see |msgpack-rpc|. Note that
 rpc channels are implicitly trusted and the process at the other end can
-invoke any |api| function!
+invoke any |API| function!
 
 ==============================================================================
 4. Standard IO channel					    *channel-stdio*

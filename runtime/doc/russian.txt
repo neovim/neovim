@@ -34,7 +34,6 @@ enter Normal mode command, you can also set 'langmap' option:
     :set langmap=ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯ;ABCDEFGHIJKLMNOPQRSTUVWXYZ,
     фисвуапршолдьтщзйкыегмцчня;abcdefghijklmnopqrstuvwxyz
 
-This is in utf-8, you cannot read this if your 'encoding' is not utf-8.
 You have to type this command in one line, it is wrapped for the sake of
 readability.
 

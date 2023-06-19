@@ -62,7 +62,6 @@ local exclude_invalid = {
   ["'string'"] = "eval.txt",
   Query = 'treesitter.txt',
   ['eq?'] = 'treesitter.txt',
-  ['lsp-request'] = 'lsp.txt',
   matchit = 'vim_diff.txt',
   ['matchit.txt'] = 'help.txt',
   ["set!"] = "treesitter.txt",
@@ -70,7 +69,6 @@ local exclude_invalid = {
   ['v:_null_dict'] = 'builtin.txt',
   ['v:_null_list'] = 'builtin.txt',
   ['v:_null_string'] = 'builtin.txt',
-  ['vim.lsp.buf_request()'] = 'lsp.txt',
   ['vim.lsp.util.get_progress_messages()'] = 'lsp.txt',
 }
 

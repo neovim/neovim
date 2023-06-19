@@ -117,6 +117,13 @@ internally and are no longer exposed as part of the API. Instead, use
 - *vim.lsp.diagnostic.set_virtual_text()*
 
 LSP FUNCTIONS
+- *vim.lsp.buf.server_ready()*
+  Use |LspAttach| instead, depending on your use-case. "Server ready" is not
+  part of the LSP spec, so the Nvim LSP client cannot meaningfully implement
+  it. "Ready" is ambiguous because:
+  - Language servers may finish analyzing the workspace, but edits can always
+    re-trigger analysis/builds.
+  - Language servers can serve some requests even while processing changes.
 - *vim.lsp.buf.range_code_action()*		Use |vim.lsp.buf.code_action()| with
 						the `range` parameter.
 - *vim.lsp.util.diagnostics_to_items()*		Use |vim.diagnostic.toqflist()| instead.

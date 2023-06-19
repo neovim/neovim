@@ -82,9 +82,8 @@ You must be in the right directory, otherwise Vim can't find the swap file.
 ==============================================================================
 *11.2*	Where is the swap file?
 
-Vim can store the swap file in several places.  Normally it is in the same
-directory as the original file.  To find it, change to the directory of the
-file, and use: >
+Vim can store the swap file in several places.  To find it, change to the
+directory of the file, and use: >
 
 	vim -r
 

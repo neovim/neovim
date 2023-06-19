@@ -88,13 +88,10 @@ g8			Print the hex values of the bytes used in the
 
 							*8g8*
 8g8			Find an illegal UTF-8 byte sequence at or after the
-			cursor.  This works in two situations:
-			1. when 'encoding' is any 8-bit encoding
-			2. when 'encoding' is "utf-8" and 'fileencoding' is
-			   any 8-bit encoding
-			Thus it can be used when editing a file that was
-			supposed to be UTF-8 but was read as if it is an 8-bit
-			encoding because it contains illegal bytes.
+			cursor.
+			Can be used when editing a file that was supposed to
+			be UTF-8 but was read as if it is an 8-bit encoding
+			because it contains illegal bytes.
 			Does not wrap around the end of the file.
 			Note that when the cursor is on an illegal byte or the
 			cursor is halfway through a multibyte character the
