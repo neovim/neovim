@@ -678,6 +678,10 @@ buf_attach_client({bufnr}, {client_id})          *vim.lsp.buf_attach_client()*
       • {bufnr}      (integer) Buffer handle, or 0 for current
       • {client_id}  (integer) Client id
 
+    Return: ~
+        (boolean) success `true` if client was attached successfully; `false`
+        otherwise
+
 buf_detach_client({bufnr}, {client_id})          *vim.lsp.buf_detach_client()*
     Detaches client from the specified buffer. Note: While the server is
     notified that the text document (buffer) was closed, it is still able to
