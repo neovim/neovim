@@ -231,6 +231,7 @@ static const char *highlight_init_both[] = {
   "default link DiagnosticSignOk DiagnosticOk",
   "default DiagnosticDeprecated cterm=strikethrough gui=strikethrough guisp=Red",
   "default link DiagnosticUnnecessary Comment",
+  "default link LspInlayHint Special",
 
   // Text
   "default link @text.literal Comment",
