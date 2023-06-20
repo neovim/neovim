@@ -207,9 +207,11 @@ end
 ---@private
 function M.disable(bufnr)
   bufnr = resolve_bufnr(bufnr)
-  clear(bufnr)
-  bufstates[bufnr].enabled = nil
-  bufstates[bufnr].timer = nil
+  if bufstates[bufnr] and bufstates[bufnr].enabled then
+    clear(bufnr)
+    bufstates[bufnr].enabled = nil
+    bufstates[bufnr].timer = nil
+  end
 end
 
 --- Toggle inlay hints for a buffer
