@@ -17,7 +17,6 @@ local if_nil = vim.F.if_nil
 
 local lsp = {
   protocol = protocol,
-  _inlay_hint = require('vim.lsp._inlay_hint'),
 
   handlers = default_handlers,
 

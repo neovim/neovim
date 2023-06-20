@@ -619,9 +619,6 @@ end
 ---@see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_inlayHint_refresh
 M['workspace/inlayHint/refresh'] = function(err, _, ctx)
   local inlay_hint = require('vim.lsp._inlay_hint')
-  if not inlay_hint.__explicit_buffers[ctx.bufnr] then
-    return vim.NIL
-  end
   if err then
     return vim.NIL
   end
