@@ -1759,6 +1759,7 @@ end
 ---
 ---@param bufnr (integer) Buffer handle, or 0 for current
 ---@param client_id (integer) Client id
+---@return boolean success `true` if client was attached successfully; `false` otherwise
 function lsp.buf_attach_client(bufnr, client_id)
   validate({
     bufnr = { bufnr, 'n', true },
@@ -1847,7 +1848,7 @@ function lsp.buf_attach_client(bufnr, client_id)
   end
 
   if buffer_client_ids[client_id] then
-    return
+    return true
   end
   -- This is our first time attaching this client to this buffer.
   buffer_client_ids[client_id] = true
