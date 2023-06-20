@@ -1,3 +1,5 @@
+// Upstream: https://github.com/openresty/lua-cjson/blob/master/lua_cjson.c
+
 /* Lua CJSON - JSON support for Lua
  *
  * Copyright (c) 2010-2012  Mark Pulford <mark@kyne.com.au>
@@ -252,6 +254,7 @@ static json_config_t *json_fetch_config(lua_State *l)
 /* Ensure the correct number of arguments have been provided.
  * Pad with nil to allow other functions to simply check arg[i]
  * to find whether an argument was provided */
+/*
 static json_config_t *json_arg_init(lua_State *l, int args)
 {
     luaL_argcheck(l, lua_gettop(l) <= args, args + 1,
@@ -262,8 +265,10 @@ static json_config_t *json_arg_init(lua_State *l, int args)
 
     return json_fetch_config(l);
 }
+*/
 
 /* Process integer options for configuration functions */
+/*
 static int json_integer_option(lua_State *l, int optindex, int *setting,
                                int min, int max)
 {
@@ -281,8 +286,10 @@ static int json_integer_option(lua_State *l, int optindex, int *setting,
 
     return 1;
 }
+*/
 
 /* Process enumerated arguments for a configuration function */
+/*
 static int json_enum_option(lua_State *l, int optindex, int *setting,
                             const char **options, int bool_true)
 {
@@ -307,11 +314,13 @@ static int json_enum_option(lua_State *l, int optindex, int *setting,
 
     return 1;
 }
+*/
 
 /* Configures handling of extremely sparse arrays:
  * convert: Convert extremely sparse arrays into objects? Otherwise error.
  * ratio: 0: always allow sparse; 1: never allow sparse; >1: use ratio
  * safe: Always use an array when the max index <= safe */
+/*
 static int json_cfg_encode_sparse_array(lua_State *l)
 {
     json_config_t *cfg = json_arg_init(l, 3);
@@ -322,42 +331,52 @@ static int json_cfg_encode_sparse_array(lua_State *l)
 
     return 3;
 }
+*/
 
 /* Configures the maximum number of nested arrays/objects allowed when
  * encoding */
+/*
 static int json_cfg_encode_max_depth(lua_State *l)
 {
     json_config_t *cfg = json_arg_init(l, 1);
 
     return json_integer_option(l, 1, &cfg->encode_max_depth, 1, INT_MAX);
 }
+*/
 
 /* Configures the maximum number of nested arrays/objects allowed when
  * encoding */
+/*
 static int json_cfg_decode_max_depth(lua_State *l)
 {
     json_config_t *cfg = json_arg_init(l, 1);
 
     return json_integer_option(l, 1, &cfg->decode_max_depth, 1, INT_MAX);
 }
+*/
 
 /* Configures number precision when converting doubles to text */
+/*
 static int json_cfg_encode_number_precision(lua_State *l)
 {
     json_config_t *cfg = json_arg_init(l, 1);
 
     return json_integer_option(l, 1, &cfg->encode_number_precision, 1, 16);
 }
+*/
 
 /* Configures how to treat empty table when encode lua table */
+/*
 static int json_cfg_encode_empty_table_as_object(lua_State *l)
 {
     json_config_t *cfg = json_arg_init(l, 1);
 
     return json_enum_option(l, 1, &cfg->encode_empty_table_as_object, NULL, 1);
 }
+*/
 
 /* Configures how to decode arrays */
+/*
 static int json_cfg_decode_array_with_array_mt(lua_State *l)
 {
     json_config_t *cfg = json_arg_init(l, 1);
@@ -366,8 +385,10 @@ static int json_cfg_decode_array_with_array_mt(lua_State *l)
 
     return 1;
 }
+*/
 
 /* Configures JSON encoding buffer persistence */
+/*
 static int json_cfg_encode_keep_buffer(lua_State *l)
 {
     json_config_t *cfg = json_arg_init(l, 1);
@@ -377,7 +398,7 @@ static int json_cfg_encode_keep_buffer(lua_State *l)
 
     json_enum_option(l, 1, &cfg->encode_keep_buffer, NULL, 1);
 
-    /* Init / free the buffer if the setting has changed */
+    // Init / free the buffer if the setting has changed
     if (old_value ^ cfg->encode_keep_buffer) {
         if (cfg->encode_keep_buffer)
             strbuf_init(&cfg->encode_buf, 0);
@@ -387,6 +408,7 @@ static int json_cfg_encode_keep_buffer(lua_State *l)
 
     return 1;
 }
+*/
 
 #if defined(DISABLE_INVALID_NUMBERS) && !defined(USE_INTERNAL_FPCONV)
 void json_verify_invalid_number_setting(lua_State *l, int *setting)
@@ -400,6 +422,7 @@ void json_verify_invalid_number_setting(lua_State *l, int *setting)
 #define json_verify_invalid_number_setting(l, s)    do { } while(0)
 #endif
 
+/*
 static int json_cfg_encode_invalid_numbers(lua_State *l)
 {
     static const char *options[] = { "off", "on", "null", NULL };
@@ -411,7 +434,9 @@ static int json_cfg_encode_invalid_numbers(lua_State *l)
 
     return 1;
 }
+*/
 
+/*
 static int json_cfg_decode_invalid_numbers(lua_State *l)
 {
     json_config_t *cfg = json_arg_init(l, 1);
@@ -422,7 +447,9 @@ static int json_cfg_decode_invalid_numbers(lua_State *l)
 
     return 1;
 }
+*/
 
+/*
 static int json_cfg_encode_escape_forward_slash(lua_State *l)
 {
     int            ret;
@@ -436,6 +463,7 @@ static int json_cfg_encode_escape_forward_slash(lua_State *l)
     }
     return ret;
 }
+*/
 
 static int json_destroy_config(lua_State *l)
 {
@@ -1417,9 +1445,9 @@ static int json_decode(lua_State *l)
         lua_getfield(l, 2, "luanil");
 
         /* We only handle the luanil option for now */
-        if (lua_isnil(l, -1)) { 
-            lua_pop(l, 1); 
-            break; 
+        if (lua_isnil(l, -1)) {
+            lua_pop(l, 1);
+            break;
         }
 
         luaL_checktype(l, -1, LUA_TTABLE);
@@ -1534,6 +1562,8 @@ int lua_cjson_new(lua_State *l)
     luaL_Reg reg[] = {
         { "encode", json_encode },
         { "decode", json_decode },
+        // Nvim: don't expose options which cause global side-effects.
+        /*
         { "encode_empty_table_as_object", json_cfg_encode_empty_table_as_object },
         { "decode_array_with_array_mt", json_cfg_decode_array_with_array_mt },
         { "encode_sparse_array", json_cfg_encode_sparse_array },
@@ -1544,6 +1574,7 @@ int lua_cjson_new(lua_State *l)
         { "encode_invalid_numbers", json_cfg_encode_invalid_numbers },
         { "decode_invalid_numbers", json_cfg_decode_invalid_numbers },
         { "encode_escape_forward_slash", json_cfg_encode_escape_forward_slash },
+        */
         { "new", lua_cjson_new },
         { NULL, NULL }
     };
@@ -1589,23 +1620,31 @@ int lua_cjson_new(lua_State *l)
     json_create_config(l);
     compat_luaL_setfuncs(l, reg, 1);
 
-    /* Set cjson.null */
+    // Nvim: don't expose "null", it is identical to vim.NIL.
+    /*
     nlua_pushref(l, nlua_get_nil_ref(l));
     lua_setfield(l, -2, "null");
+    */
 
-    /* Set cjson.empty_array_mt */
+    // Nvim: don't expose empty_array_mt.
+    /*
     lua_pushlightuserdata(l, json_lightudata_mask(&json_empty_array));
     lua_rawget(l, LUA_REGISTRYINDEX);
     lua_setfield(l, -2, "empty_array_mt");
+    */
 
-    /* Set cjson.array_mt */
+    // Nvim: don't expose array_mt.
+    /*
     lua_pushlightuserdata(l, json_lightudata_mask(&json_array));
     lua_rawget(l, LUA_REGISTRYINDEX);
     lua_setfield(l, -2, "array_mt");
+    */
 
-    /* Set cjson.empty_array */
+    // Nvim: don't expose empty_array.
+    /*
     lua_pushlightuserdata(l, json_lightudata_mask(&json_array));
     lua_setfield(l, -2, "empty_array");
+    */
 
     /* Set module name / version fields */
     lua_pushliteral(l, CJSON_MODNAME);
