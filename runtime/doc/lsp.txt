@@ -462,6 +462,8 @@ LspReferenceText          used for highlighting "text" references
 LspReferenceRead          used for highlighting "read" references
                                                           *hl-LspReferenceWrite*
 LspReferenceWrite         used for highlighting "write" references
+                                                          *hl-LspInlayHint*
+LspInlayHint              used for highlighting inlay hints
 
 
                                                       *lsp-highlight-codelens*
