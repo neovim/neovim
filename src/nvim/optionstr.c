@@ -352,7 +352,7 @@ void set_string_option_direct(const char *name, int opt_idx, const char *val, in
     return;
   }
 
-  assert((void *)opt->var != (void *)&p_shada);
+  assert(opt->var != &p_shada);
 
   s = xstrdup(val);
   {
@@ -2067,7 +2067,7 @@ static const char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx
   bool value_changed = false;
 
   optset_T args = {
-    .os_varp = (char *)varp,
+    .os_varp = varp,
     .os_idx = opt_idx,
     .os_flags = opt_flags,
     .os_oldval.string = oldval,
