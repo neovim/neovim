@@ -48,18 +48,6 @@ function M.on_inlayhint(err, result, ctx, _)
   if not (bufstate.client_hint and bufstate.version) then
     bufstate.client_hint = vim.defaulttable()
     bufstate.version = ctx.version
-    api.nvim_buf_attach(bufnr, false, {
-      on_detach = function(_, cb_bufnr)
-        api.nvim_buf_clear_namespace(cb_bufnr, namespace, 0, -1)
-        bufstates[cb_bufnr].version = nil
-        bufstates[cb_bufnr].client_hint = nil
-      end,
-      on_reload = function(_, cb_bufnr)
-        api.nvim_buf_clear_namespace(cb_bufnr, namespace, 0, -1)
-        bufstates[cb_bufnr].version = nil
-        bufstates[cb_bufnr].client_hint = nil
-      end,
-    })
   end
   local hints_by_client = bufstate.client_hint
   local client = vim.lsp.get_client_by_id(client_id)
