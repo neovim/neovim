@@ -1654,6 +1654,46 @@ function lsp.start_client(config)
   end
 
   ---@private
+  --- Execute a lsp command, either via client command function (if available)
+  --- or via workspace/executeCommand (if supported by the server)
+  ---
+  ---@param command lsp.Command
+  ---@param context? {bufnr: integer}
+  ---@param handler? lsp-handler only called if a server command
+  function client._exec_cmd(command, context, handler)
+    context = vim.deepcopy(context or {})
+    context.bufnr = context.bufnr or api.nvim_get_current_buf()
+    context.client_id = client.id
+    local cmdname = command.command
+    local fn = client.commands[cmdname] or lsp.commands[cmdname]
+    if fn then
+      fn(command, context)
+      return
+    end
+
+    local command_provider = client.server_capabilities.executeCommandProvider
+    local commands = type(command_provider) == 'table' and command_provider.commands or {}
+    if not vim.list_contains(commands, cmdname) then
+      vim.notify_once(
+        string.format(
+          'Language server `%s` does not support command `%s`. This command may require a client extension.',
+          client.name,
+          cmdname
+        ),
+        vim.log.levels.WARN
+      )
+      return
+    end
+    -- Not using command directly to exclude extra properties,
+    -- see https://github.com/python-lsp/python-lsp-server/issues/146
+    local params = {
+      command = command.command,
+      arguments = command.arguments,
+    }
+    client.request('workspace/executeCommand', params, handler, context.bufnr)
+  end
+
+  ---@private
   --- Runs the on_attach function from the client's config if it was defined.
   ---@param bufnr integer Buffer number
   function client._on_attach(bufnr)

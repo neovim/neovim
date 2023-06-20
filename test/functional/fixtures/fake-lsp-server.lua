@@ -788,6 +788,9 @@ function tests.code_action_server_side_command()
           codeActionProvider = {
             resolveProvider = false,
           },
+          executeCommandProvider = {
+            commands = {"dummy1"}
+          },
         },
       }
     end,
