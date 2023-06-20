@@ -985,7 +985,7 @@ enum {
 typedef struct {
   // Pointer to the option variable.  The variable can be a long (numeric
   // option), an int (boolean option) or a char pointer (string option).
-  char *os_varp;
+  void *os_varp;
   int os_idx;
   int os_flags;
 
@@ -1048,19 +1048,19 @@ typedef enum {
 } idopt_T;
 
 typedef struct vimoption {
-  char *fullname;        // full option name
-  char *shortname;       // permissible abbreviation
-  uint32_t flags;               // see above
-  char *var;               // global option: pointer to variable;
-                           // window-local option: VAR_WIN;
-                           // buffer-local option: global value
-  idopt_T indir;                // global option: PV_NONE;
-                                // local option: indirect option index
-  // callback function to invoke after an option is modified to validate and
-  // apply the new value.
+  char *fullname;   // full option name
+  char *shortname;  // permissible abbreviation
+  uint32_t flags;   // see above
+  void *var;        // global option: pointer to variable;
+                    // window-local option: VAR_WIN;
+                    // buffer-local option: global value
+  idopt_T indir;    // global option: PV_NONE;
+                    // local option: indirect option index
+                    // callback function to invoke after an option is modified to validate and
+                    // apply the new value.
   opt_did_set_cb_T opt_did_set_cb;
-  char *def_val;         // default values for variable (neovim!!)
-  LastSet last_set;             // script in which the option was last set
+  void *def_val;     // default values for variable (neovim!!)
+  LastSet last_set;  // script in which the option was last set
 } vimoption_T;
 
 // The options that are local to a window or buffer have "indir" set to one of

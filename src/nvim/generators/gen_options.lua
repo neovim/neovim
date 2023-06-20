@@ -108,7 +108,7 @@ local value_dumpers = {
 }
 
 local get_value = function(v)
-  return '(char *) ' .. value_dumpers[type(v)](v)
+  return '(void *) ' .. value_dumpers[type(v)](v)
 end
 
 local get_defaults = function(d,n)
@@ -131,7 +131,7 @@ local dump_option = function(i, o)
     w(get_cond(o.enable_if))
   end
   if o.varname then
-    w('    .var=(char *)&' .. o.varname)
+    w('    .var=&' .. o.varname)
   elseif #o.scope == 1 and o.scope[1] == 'window' then
     w('    .var=VAR_WIN')
   end
