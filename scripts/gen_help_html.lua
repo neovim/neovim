@@ -43,6 +43,7 @@ local M = {}
 -- All other files are "legacy" files which require fixed-width layout.
 local new_layout = {
   ['api.txt'] = true,
+  ['lsp.txt'] = true,
   ['channel.txt'] = true,
   ['deprecated.txt'] = true,
   ['develop.txt'] = true,

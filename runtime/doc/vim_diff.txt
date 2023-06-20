@@ -564,7 +564,8 @@ Aliases:
 Commands:
   :behave
   :fixdel
-  :hardcopy
+  *hardcopy* `:hardcopy` was removed. Instead, use `:TOhtml` and print the
+  resulting HTML using a web browser or other HTML viewer.
   :helpfind
   :mode (no longer accepts an argument)
   :open
@@ -585,6 +586,11 @@ Commands:
 Compile-time features:
   Emacs tags support
   X11 integration (see |x11-selection|)
+
+Cscope:
+                                                                      *cscope*
+  Cscope support was removed in favour of plugin-based solutions such as:
+  https://github.com/dhananjaylatkar/cscope_maps.nvim
 
 Eval:
   Vim9script
@@ -715,6 +721,7 @@ Plugins:
 
 - logiPat
 - rrhelper
+- *vimball*
 
 Providers:
 
@@ -770,19 +777,6 @@ TUI:
   Vim issues a "request version" sequence to the terminal at startup and looks
   at how the terminal is sending CSI.  Nvim does not issue such a sequence and
   always uses 7-bit control sequences.
-
-Cscope:
-                                                                      *cscope*
-  Cscope support was removed in favour of plugin-based solutions such as:
-  https://github.com/dhananjaylatkar/cscope_maps.nvim
-
-Hardcopy:
-                                                                     *hardcopy*
-  `:hardcopy` was removed. Instead, use `:TOhtml` and print the resulting HTML
-  using a web browser or some other HTML viewer.
-
-Bundled plugins:
-  vimball                                                             *vimball*
 
 ==============================================================================
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:
