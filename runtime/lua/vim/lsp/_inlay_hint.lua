@@ -252,18 +252,18 @@ api.nvim_set_decoration_provider(namespace, {
               text = text .. part.value
             end
           end
+          local vt = {}
           if hint.paddingLeft then
-            text = ' ' .. text
+            vt[#vt + 1] = { ' ' }
           end
+          vt[#vt + 1] = { text, 'LspInlayHint' }
           if hint.paddingRight then
-            text = text .. ' '
+            vt[#vt + 1] = { ' ' }
           end
           api.nvim_buf_set_extmark(bufnr, namespace, lnum, hint.position.character, {
             virt_text_pos = 'inline',
             ephemeral = false,
-            virt_text = {
-              { text, 'LspInlayHint' },
-            },
+            virt_text = vt,
             hl_mode = 'combine',
           })
         end
