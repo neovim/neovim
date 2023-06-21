@@ -292,7 +292,11 @@ function M.disable(bufnr)
     clear(bufnr)
     bufstates[bufnr].enabled = nil
     bufstates[bufnr].timer = nil
-    vim.wo.colorcolumn = bufstates[bufnr].color_column
+
+    if bufstates[bufnr].color_column ~= nil then
+      vim.wo.colorcolumn = bufstates[bufnr].color_column
+    end
+
     bufstates[bufnr].color_column = nil
   end
 end
