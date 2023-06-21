@@ -1789,7 +1789,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         wlv.reset_extra_attr = false;
       }
 
-      if (has_decor && v >= 0 && wlv.n_extra == 0) {
+      if (has_decor && wlv.n_extra == 0) {
         bool selected = (area_active || (area_highlighting && noinvcur
                                          && wlv.vcol == wp->w_virtcol));
         extmark_attr = decor_redraw_col(wp, (colnr_T)v, wlv.off, selected, &decor_state);
@@ -1812,7 +1812,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         }
       }
 
-      if (wlv.n_extra == 0) {
+      if (!has_fold && wlv.n_extra == 0) {
         // Check for start/end of 'hlsearch' and other matches.
         // After end, check for start/end of next match.
         // When another match, have to check for start again.
