@@ -439,6 +439,15 @@ end
 --- `remove_child` must be called on the parent to remove it.
 function LanguageTree:destroy()
   -- Cleanup here
+
+  -- Clear all callbacks
+  self._callbacks = {}
+  self._callbacks_rec = {}
+  for _, cbname in pairs(TSCallbackNames) do
+    self._callbacks[cbname] = {}
+    self._callbacks_rec[cbname] = {}
+  end
+
   for _, child in pairs(self._children) do
     child:destroy()
   end

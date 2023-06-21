@@ -1046,4 +1046,38 @@ int x = INT_MAX;
     eq(rb, r)
 
   end)
+
+  it('clears all callbacks when destroying a parser', function()
+    insert([[
+      print "Hello, world!"
+    ]])
+    exec_lua([[
+      parser = vim.treesitter.get_parser(0, "lua")
+      parser:register_cbs ({
+        on_bytes = function() end,
+        on_changedtree = function() end,
+        on_child_added = function() end,
+        on_child_removed = function() end,
+      })
+      parser:register_cbs ({
+        on_bytes = function() end,
+        on_changedtree = function() end,
+        on_child_added = function() end,
+        on_child_removed = function() end,
+      }, true)
+      parser:destroy()
+    ]])
+
+    eq(0, exec_lua("return #parser._callbacks.bytes"))
+    eq(0, exec_lua("return #parser._callbacks.changedtree"))
+    eq(0, exec_lua("return #parser._callbacks.child_added"))
+    eq(0, exec_lua("return #parser._callbacks.child_removed"))
+    eq(0, exec_lua("return #parser._callbacks.detach"))
+
+    eq(0, exec_lua("return #parser._callbacks_rec.bytes"))
+    eq(0, exec_lua("return #parser._callbacks_rec.changedtree"))
+    eq(0, exec_lua("return #parser._callbacks_rec.child_added"))
+    eq(0, exec_lua("return #parser._callbacks_rec.child_removed"))
+    eq(0, exec_lua("return #parser._callbacks_rec.detach"))
+  end)
 end)
