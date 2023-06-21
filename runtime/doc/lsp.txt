@@ -238,6 +238,11 @@ For |lsp-response|, each |lsp-handler| has this signature: >
                                     The parameters used in the original
                                     request which resulted in this handler
                                     call.
+                        {version}   (number) Document version at time of
+                                    request. Handlers can compare this to the
+                                    current document version to check if the
+                                    response is "stale".
+                                    See also |b:changedtick|.
         {config}    (table)
                         Configuration for the handler.
 
