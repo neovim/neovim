@@ -1308,6 +1308,9 @@ inlay_hint({bufnr}, {enable})                       *vim.lsp.buf.inlay_hint()*
     Parameters: ~
       • {bufnr}   (integer) Buffer handle, or 0 for current
       • {enable}  (boolean|nil) true/false to enable/disable, nil to toggle
+      • {opts}    (lsp.InlayHintsOpts|nil) Optional keyword arguments
+                  • color_column (boolean|nil) Shift color column to the right
+                    for accurate column highlighting
 
 list_workspace_folders()                *vim.lsp.buf.list_workspace_folders()*
     List workspace folders.

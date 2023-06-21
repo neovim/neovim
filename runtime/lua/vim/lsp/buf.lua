@@ -799,15 +799,21 @@ end
 --- Enable/disable/toggle inlay hints for a buffer
 ---@param bufnr (integer) Buffer handle, or 0 for current
 ---@param enable (boolean|nil) true/false to enable/disable, nil to toggle
-function M.inlay_hint(bufnr, enable)
-  vim.validate({ enable = { enable, { 'boolean', 'nil' } }, bufnr = { bufnr, 'number' } })
+---@param opts (InlayHintsOpts|nil) Optional keyword arguments
+---   - color_column (boolean|nil) Shift color column to the right for accurate column highlighting
+function M.inlay_hint(bufnr, enable, opts)
+  vim.validate({
+    enable = { enable, { 'boolean', 'nil' } },
+    bufnr = { bufnr, 'number' },
+    opts = { opts, 't', true },
+  })
   local inlay_hint = require('vim.lsp._inlay_hint')
   if enable then
-    inlay_hint.enable(bufnr)
+    inlay_hint.enable(bufnr, opts)
   elseif enable == false then
     inlay_hint.disable(bufnr)
   else
-    inlay_hint.toggle(bufnr)
+    inlay_hint.toggle(bufnr, opts)
   end
 end
 
