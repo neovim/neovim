@@ -8,7 +8,7 @@ local M = {}
 ---@field client_hint table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
 ---@field enabled boolean Whether inlay hints are enabled for the buffer
 ---@field timer uv.uv_timer_t? Debounce timer associated with the buffer
----@field color_column boolean Whether to use color column for inlay hints
+---@field color_column string|nil The color column associated with the buffer
 
 ---@type table<integer, lsp._inlay_hint.bufstate>
 local bufstates = {}
@@ -165,7 +165,7 @@ local function make_request(request_bufnr)
 end
 
 ---@private
-local function add_color_column_extmark(bufnr, line, lnum, color_columns, text_width, ephemeral, offsets)
+local function add_color_column_extmark(bufnr, line, lnum, color_columns, text_width, offsets)
   for _, column in ipairs(color_columns) do
     local first_char = column:sub(1, 1)
 
@@ -177,7 +177,7 @@ local function add_color_column_extmark(bufnr, line, lnum, color_columns, text_w
       column = text_width - column:sub(2)
     end
 
-    local col = math.floor(tonumber(column) or 0)
+    local col = math.floor(tonumber(column) or 0) - 1
 
     if col < 0 then
       return
@@ -207,48 +207,11 @@ local function add_color_column_extmark(bufnr, line, lnum, color_columns, text_w
       virt_text_pos = 'overlay',
       priority = 1,
       hl_mode = 'combine',
-      ephemeral = ephemeral or false,
+      ephemeral = virt_text_value ~= ' ',
       virt_text = {
-        { virt_text_value, 'LspInlayHintsColorColumn' } }
+        { virt_text_value, 'ColorColumn' } }
     })
   end
-end
-
----@private
-local function swap_highlights(ns_ids, groups)
-  if next(ns_ids) == nil then
-    return
-  end
-
-  if next(groups) == nil then
-    return
-  end
-
-  local ns_id_a = ns_ids[1]
-  local ns_id_b = ns_ids[2] or ns_id_a
-
-  local group_a = groups[1]
-  local group_b = groups[2] or group_a
-
-  local opts_a = api.nvim_get_hl(ns_id_a, { name = group_a })
-  local opts_b = api.nvim_get_hl(ns_id_b, { name = group_b })
-
-  if next(opts_a) == nil or (next(opts_a) == nil and next(opts_b) == nil) then
-    return
-  end
-
-  if next(opts_b) == nil then
-    if (ns_id_b ~= 0) then
-      api.nvim_set_hl_ns(ns_id_b)
-    end
-
-    api.nvim_set_hl(ns_id_a, group_a, {})
-    api.nvim_set_hl(ns_id_b, group_b, opts_a)
-    return
-  end
-
-  api.nvim_set_hl(ns_id_a, group_a, opts_b)
-  api.nvim_set_hl(ns_id_b, group_b, opts_a)
 end
 
 ---@class InlayHintsOpts
@@ -260,19 +223,18 @@ end
 ---   - color_column (boolean|nil) Shift color column to the right for accurate column highlighting
 ---@private
 function M.enable(bufnr, opts)
-  if opts and opts.color_column then
-    swap_highlights({ 0, namespace }, { 'ColorColumn', 'LspInlayHintsColorColumn' })
-  end
-
   bufnr = resolve_bufnr(bufnr)
   local bufstate = bufstates[bufnr]
   if not (bufstate and bufstate.enabled) then
-    bufstates[bufnr] = { enabled = true, timer = nil, color_column = (opts and opts.color_column) or false }
+    bufstates[bufnr] = { enabled = true, timer = nil, color_column = (opts and opts.color_column) and vim.wo.colorcolumn or nil }
     M.refresh({ bufnr = bufnr })
     api.nvim_buf_attach(bufnr, true, {
       on_lines = function(_, cb_bufnr)
         if not bufstates[cb_bufnr].enabled then
           return true
+        end
+        if bufstates[bufnr].color_column ~= nil then
+          vim.wo.colorcolumn = ''
         end
         reset_timer(cb_bufnr)
         bufstates[cb_bufnr].timer = vim.defer_fn(function()
@@ -280,6 +242,9 @@ function M.enable(bufnr, opts)
         end, 200)
       end,
       on_reload = function(_, cb_bufnr)
+        if bufstates[bufnr].color_column ~= nil then
+          vim.wo.colorcolumn = ''
+        end
         clear(cb_bufnr)
         bufstates[cb_bufnr] = nil
         M.refresh({ bufnr = cb_bufnr })
@@ -288,6 +253,16 @@ function M.enable(bufnr, opts)
         clear(cb_bufnr)
         bufstates[cb_bufnr] = nil
       end,
+    })
+    api.nvim_create_autocmd('OptionSet', {
+      pattern = 'colorcolumn',
+      callback = function()
+        if vim.wo.colorcolumn ~= '' and bufstates[bufnr].color_column ~= nil then
+          bufstates[bufnr].color_column = vim.wo.colorcolumn
+          vim.wo.colorcolumn = ''
+        end
+      end,
+      group = augroup,
     })
     api.nvim_create_autocmd('LspDetach', {
       buffer = bufnr,
@@ -309,11 +284,7 @@ function M.disable(bufnr)
     clear(bufnr)
     bufstates[bufnr].enabled = nil
     bufstates[bufnr].timer = nil
-
-    if bufstates[bufnr].color_column then
-      swap_highlights({ namespace, 0 }, { 'LspInlayHintsColorColumn', 'ColorColumn' })
-    end
-
+    vim.wo.colorcolumn = bufstates[bufnr].color_column
     bufstates[bufnr].color_column = nil
   end
 end
@@ -350,8 +321,8 @@ api.nvim_set_decoration_provider(namespace, {
     local color_columns = {}
     local text_width = 0
 
-    if bufstate.color_column then
-      for column in string.gmatch(vim.wo.colorcolumn, '[^,]+') do
+    if bufstate.color_column ~= nil then
+      for column in string.gmatch(bufstate.color_column, '[^,]+') do
         table.insert(color_columns, column)
       end
       text_width = vim.bo.textwidth
@@ -363,7 +334,7 @@ api.nvim_set_decoration_provider(namespace, {
       for _, hints_by_lnum in pairs(hints_by_client) do
         local line_hints = hints_by_lnum[lnum] or {}
 
-        if bufstate.color_column and next(line_hints) == nil and line ~= nil then
+        if bufstate.color_column ~= nil and next(line_hints) == nil and line ~= nil then
           add_color_column_extmark(bufnr, line, lnum, color_columns, text_width)
         end
 
@@ -395,8 +366,8 @@ api.nvim_set_decoration_provider(namespace, {
           offsets[hint.position.character] = #text
         end
 
-        if bufstate.color_column and line ~= nil then
-          add_color_column_extmark(bufnr, line, lnum, color_columns, text_width, true, offsets)
+        if bufstate.color_column ~= nil and line ~= nil then
+          add_color_column_extmark(bufnr, line, lnum, color_columns, text_width, offsets)
         end
       end
     end
