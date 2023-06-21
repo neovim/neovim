@@ -226,7 +226,11 @@ function M.enable(bufnr, opts)
   bufnr = resolve_bufnr(bufnr)
   local bufstate = bufstates[bufnr]
   if not (bufstate and bufstate.enabled) then
-    bufstates[bufnr] = { enabled = true, timer = nil, color_column = (opts and opts.color_column) and vim.wo.colorcolumn or nil }
+    bufstates[bufnr] = {
+      enabled = true,
+      timer = nil,
+      color_column = (opts and opts.color_column) and vim.wo.colorcolumn or nil
+    }
     M.refresh({ bufnr = bufnr })
     api.nvim_buf_attach(bufnr, true, {
       on_lines = function(_, cb_bufnr)
