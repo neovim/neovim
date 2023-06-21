@@ -436,7 +436,7 @@ local function get_page(path, silent)
   elseif vim.env.MANWIDTH then
     manwidth = vim.env.MANWIDTH
   else
-    manwidth = api.nvim_win_get_width(0)
+    manwidth = api.nvim_win_get_width(0) - vim.o.wrapmargin
   end
 
   local cmd = localfile_arg and { 'man', '-l', path } or { 'man', path }
