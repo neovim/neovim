@@ -1,18 +1,55 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
-local NIL = helpers.NIL
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
+local pcall_err = helpers.pcall_err
 
-describe('vim.json.decode function', function()
+describe('vim.json.decode()', function()
   before_each(function()
     clear()
   end)
 
   it('parses null, true, false', function()
-    eq(NIL, exec_lua([[return vim.json.decode('null')]]))
+    eq(vim.NIL, exec_lua([[return vim.json.decode('null')]]))
     eq(true, exec_lua([[return vim.json.decode('true')]]))
     eq(false, exec_lua([[return vim.json.decode('false')]]))
+  end)
+
+  it('validation', function()
+    eq('Expected object key string but found invalid token at character 2',
+      pcall_err(exec_lua, [[return vim.json.decode('{a:"b"}')]]))
+  end)
+
+  it('options', function()
+    local jsonstr = '{"arr":[1,2,null],"bar":[3,7],"foo":{"a":"b"},"baz":null}'
+    eq({
+        arr = { 1, 2, vim.NIL },
+        bar = { 3, 7 },
+        baz = vim.NIL,
+        foo = { a = 'b' },
+      },
+      exec_lua([[return vim.json.decode(..., {})]], jsonstr))
+    eq({
+        arr = { 1, 2, vim.NIL },
+        bar = { 3, 7 },
+        -- baz = nil,
+        foo = { a = 'b' },
+      },
+      exec_lua([[return vim.json.decode(..., { luanil = { object = true } })]], jsonstr))
+    eq({
+        arr = { 1, 2 },
+        bar = { 3, 7 },
+        baz = vim.NIL,
+        foo = { a = 'b' },
+      },
+      exec_lua([[return vim.json.decode(..., { luanil = { array = true } })]], jsonstr))
+    eq({
+        arr = { 1, 2 },
+        bar = { 3, 7 },
+        -- baz = nil,
+        foo = { a = 'b' },
+      },
+      exec_lua([[return vim.json.decode(..., { luanil = { array = true, object = true } })]], jsonstr))
   end)
 
   it('parses integer numbers', function()
@@ -60,7 +97,7 @@ describe('vim.json.decode function', function()
 
   it('parses containers', function()
     eq({1}, exec_lua([[return vim.json.decode('[1]')]]))
-    eq({NIL, 1}, exec_lua([[return vim.json.decode('[null, 1]')]]))
+    eq({vim.NIL, 1}, exec_lua([[return vim.json.decode('[null, 1]')]]))
     eq({['1']=2}, exec_lua([[return vim.json.decode('{"1": 2}')]]))
     eq({['1']=2, ['3']={{['4']={['5']={{}, 1}}}}},
        exec_lua([[return vim.json.decode('{"1": 2, "3": [{"4": {"5": [ [], 1]}}]}')]]))
@@ -88,43 +125,43 @@ describe('vim.json.decode function', function()
 
 end)
 
-describe('vim.json.encode function', function()
+describe('vim.json.encode()', function()
   before_each(function()
     clear()
   end)
 
-   it('dumps strings', function()
-     eq('"Test"', exec_lua([[return vim.json.encode('Test')]]))
-     eq('""', exec_lua([[return vim.json.encode('')]]))
-     eq('"\\t"', exec_lua([[return vim.json.encode('\t')]]))
-     eq('"\\n"', exec_lua([[return vim.json.encode('\n')]]))
-     -- vim.fn.json_encode return \\u001B
-     eq('"\\u001b"', exec_lua([[return vim.json.encode('\27')]]))
-     eq('"þÿþ"', exec_lua([[return vim.json.encode('þÿþ')]]))
-   end)
+  it('dumps strings', function()
+    eq('"Test"', exec_lua([[return vim.json.encode('Test')]]))
+    eq('""', exec_lua([[return vim.json.encode('')]]))
+    eq('"\\t"', exec_lua([[return vim.json.encode('\t')]]))
+    eq('"\\n"', exec_lua([[return vim.json.encode('\n')]]))
+    -- vim.fn.json_encode return \\u001B
+    eq('"\\u001b"', exec_lua([[return vim.json.encode('\27')]]))
+    eq('"þÿþ"', exec_lua([[return vim.json.encode('þÿþ')]]))
+  end)
 
-   it('dumps numbers', function()
-     eq('0', exec_lua([[return vim.json.encode(0)]]))
-     eq('10', exec_lua([[return vim.json.encode(10)]]))
-     eq('-10', exec_lua([[return vim.json.encode(-10)]]))
-   end)
+  it('dumps numbers', function()
+    eq('0', exec_lua([[return vim.json.encode(0)]]))
+    eq('10', exec_lua([[return vim.json.encode(10)]]))
+    eq('-10', exec_lua([[return vim.json.encode(-10)]]))
+  end)
 
-   it('dumps floats', function()
-     eq('10.5', exec_lua([[return vim.json.encode(10.5)]]))
-     eq('-10.5', exec_lua([[return vim.json.encode(-10.5)]]))
-     eq('-1e-05', exec_lua([[return vim.json.encode(-1e-5)]]))
-   end)
+  it('dumps floats', function()
+    eq('10.5', exec_lua([[return vim.json.encode(10.5)]]))
+    eq('-10.5', exec_lua([[return vim.json.encode(-10.5)]]))
+    eq('-1e-05', exec_lua([[return vim.json.encode(-1e-5)]]))
+  end)
 
-   it('dumps lists', function()
-     eq('[]', exec_lua([[return vim.json.encode({})]]))
-     eq('[[]]', exec_lua([[return vim.json.encode({{}})]]))
-     eq('[[],[]]', exec_lua([[return vim.json.encode({{}, {}})]]))
-   end)
+  it('dumps lists', function()
+    eq('[]', exec_lua([[return vim.json.encode({})]]))
+    eq('[[]]', exec_lua([[return vim.json.encode({{}})]]))
+    eq('[[],[]]', exec_lua([[return vim.json.encode({{}, {}})]]))
+  end)
 
-   it('dumps dictionaries', function()
-     eq('{}', exec_lua([[return vim.json.encode(vim.empty_dict())]]))
-     eq('{"d":[]}', exec_lua([[return vim.json.encode({d={}})]]))
-   end)
+  it('dumps dictionaries', function()
+    eq('{}', exec_lua([[return vim.json.encode(vim.empty_dict())]]))
+    eq('{"d":[]}', exec_lua([[return vim.json.encode({d={}})]]))
+  end)
 
   it('dumps vim.NIL', function()
     eq('null', exec_lua([[return vim.json.encode(vim.NIL)]]))

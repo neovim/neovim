@@ -43,6 +43,11 @@ The following changes may require adaptations in user config or plugins.
 
 • Renamed `vim.treesitter.playground` to `vim.treesitter.dev`.
 
+• Removed functions from the |vim.json| module:
+  • Unnecessary, undocumented functions which caused global side-effects.
+  • `vim.json.null` is redundant with `vim.NIL`.
+  • `vim.json.array_mt` (and related) is redundant with `vim.empty_dict()`.
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 
