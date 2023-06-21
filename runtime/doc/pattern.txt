@@ -432,8 +432,6 @@ after:	  \v	   \m	    \M	     \V		matches ~
 	  \\	   \\	    \\	     \\		literal backslash
 	  \{	   {	    {	     {		literal curly brace
 
-{only Vim supports \m, \M, \v and \V}
-
 If you want to you can make a pattern immune to the 'magic' option being set
 or not by putting "\m" or "\M" at the start of the pattern.
 
@@ -455,7 +453,7 @@ More explanation and examples below, follow the links.		*E64* *E871*
 	\{n}	\{n}	n		exactly
 	\{n,}	\{n,}	at least n	as many as possible
 	\{,m}	\{,m}	0 to m		as many as possible
-	\{}	\{}	0 or more	as many as possible (same as *)
+	\{}	\{}	0 or more	as many as possible (same as "*")
 
 |/\{-|	\{-n,m}	\{-n,m}	n to m		as few as possible
 	\{-n}	\{-n}	n		exactly
@@ -633,7 +631,7 @@ overview.
 \{n}	Matches n of the preceding atom
 \{n,}	Matches at least n of the preceding atom, as many as possible
 \{,m}	Matches 0 to m of the preceding atom, as many as possible
-\{}	Matches 0 or more of the preceding atom, as many as possible (like *)
+\{}	Matches 0 or more of the preceding atom, as many as possible (like "*")
 							*/\{-*
 \{-n,m}	matches n to m of the preceding atom, as few as possible
 \{-n}	matches n of the preceding atom
@@ -1256,7 +1254,6 @@ letters only.
 When "\c" appears anywhere in the pattern, the whole pattern is handled like
 'ignorecase' is on.  The actual value of 'ignorecase' and 'smartcase' is
 ignored.  "\C" does the opposite: Force matching case for the whole pattern.
-{only Vim supports \c and \C}
 Note that 'ignorecase', "\c" and "\C" are not used for the character classes.
 
 Examples:
@@ -1338,11 +1335,10 @@ difference between them is mostly just notation;  here's a summary of where
 they differ:
 
 Capability			in Vimspeak	in Perlspeak ~
-----------------------------------------------------------------
 force case insensitivity	\c		(?i)
 force case sensitivity		\C		(?-i)
 backref-less grouping		\%(atom\)	(?:atom)
-conservative quantifiers	\{-n,m}		*?, +?, ??, {}?
+conservative quantifiers	\{-n,m}		`*?,` +?, ??, {}?
 0-width match			atom\@=		(?=atom)
 0-width non-match		atom\@!		(?!atom)
 0-width preceding match		atom\@<=	(?<=atom)
