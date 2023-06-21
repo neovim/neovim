@@ -1345,7 +1345,6 @@ function lsp.start_client(config)
       messages = 'messages',
       verbose = 'verbose',
     }
-    local version = vim.version()
 
     local workspace_folders --- @type table[]?
     local root_uri --- @type string?
@@ -1379,7 +1378,7 @@ function lsp.start_client(config)
       -- since 3.15.0
       clientInfo = {
         name = 'Neovim',
-        version = string.format('%s.%s.%s', version.major, version.minor, version.patch),
+        version = tostring(vim.version()),
       },
       -- The rootPath of the workspace. Is null if no folder is open.
       --
