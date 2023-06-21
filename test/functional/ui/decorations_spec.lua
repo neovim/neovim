@@ -1594,6 +1594,7 @@ describe('decorations: inline virtual text', function()
       [16] = {foreground = Screen.colors.Red};
       [17] = {background = Screen.colors.LightGrey, foreground = Screen.colors.DarkBlue};
       [18] = {background = Screen.colors.LightGrey, foreground = Screen.colors.Red};
+      [19] = {background = Screen.colors.LightRed};
     }
 
     ns = meths.create_namespace 'test'
@@ -1723,7 +1724,21 @@ describe('decorations: inline virtual text', function()
       {1:~                                                 }|
       {1:~                                                 }|
                                                         |
-      ]]}
+    ]]}
+    -- colorcolumn positions are correct
+    exec('set colorcolumn=4,6')
+    screen:expect{grid=[[
+      123{19:4}{10: virtual text  virtual text }^5{19:6}78              |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
   end)
 
   it('adjusts cursor location correctly when inserting around inline virtual text', function()

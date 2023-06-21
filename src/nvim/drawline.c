@@ -82,6 +82,7 @@ typedef struct {
   int col;                   ///< visual column on screen, after wrapping
   int boguscols;             ///< nonexistent columns added to "col" to force wrapping
   int vcol_off;              ///< offset for concealed characters
+  int virt_text_off;         ///< offset for inline virtual text
 
   int off;                   ///< offset relative start of line
 
@@ -931,6 +932,7 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
           continue;
         }
       }
+      wlv->virt_text_off += wlv->n_extra;
     }
   }
 }
@@ -1139,7 +1141,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
   bool is_concealing  = false;
   int did_wcol        = false;
   int old_boguscols = 0;
-#define VCOL_HLC (wlv.vcol - wlv.vcol_off)
+#define VCOL_HLC (wlv.vcol - wlv.vcol_off - (wlv.virt_inline_i ? MAXCOL : wlv.virt_text_off))
 #define FIX_FOR_BOGUSCOLS \
   { \
     wlv.n_extra += wlv.vcol_off; \
