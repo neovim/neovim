@@ -231,14 +231,16 @@ function M.enable(bufnr, opts)
       timer = nil,
       color_column = (opts and opts.color_column) and vim.wo.colorcolumn or nil
     }
+
+    if bufstates[bufnr].color_column ~= nil then
+      vim.wo.colorcolumn = ''
+    end
+
     M.refresh({ bufnr = bufnr })
     api.nvim_buf_attach(bufnr, true, {
       on_lines = function(_, cb_bufnr)
         if not bufstates[cb_bufnr].enabled then
           return true
-        end
-        if bufstates[bufnr].color_column ~= nil then
-          vim.wo.colorcolumn = ''
         end
         reset_timer(cb_bufnr)
         bufstates[cb_bufnr].timer = vim.defer_fn(function()
