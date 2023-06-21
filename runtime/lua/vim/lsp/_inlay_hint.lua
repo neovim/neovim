@@ -261,6 +261,10 @@ function M.enable(bufnr, opts)
     api.nvim_create_autocmd('OptionSet', {
       pattern = 'colorcolumn',
       callback = function()
+        if not (bufstates[bufnr] and bufstates[bufnr].enabled) then
+          return
+        end
+
         if vim.wo.colorcolumn ~= '' and bufstates[bufnr].color_column ~= nil then
           bufstates[bufnr].color_column = vim.wo.colorcolumn
           vim.wo.colorcolumn = ''
