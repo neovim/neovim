@@ -568,7 +568,7 @@ end
 ---
 ---@param msg string Content of the notification to show to the user.
 ---@param level integer|nil One of the values from |vim.log.levels|.
---- @param opts (table|nil) Options:
+---@param opts table|nil Options:
 ---   - history: (boolean) if true, add to |message-history|.
 function vim.notify(msg, level, opts) -- luacheck: no unused args
   opts = opts or {}
