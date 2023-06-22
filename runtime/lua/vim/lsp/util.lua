@@ -360,7 +360,7 @@ function M.get_progress_messages()
   local new_messages = {}
   local progress_remove = {}
 
-  for _, client in ipairs(vim.lsp.get_active_clients()) do
+  for _, client in ipairs(vim.lsp.get_clients()) do
     local groups = {}
     for progress in client.progress do
       local value = progress.value
@@ -1841,7 +1841,7 @@ function M.locations_to_items(locations, offset_encoding)
       'locations_to_items must be called with valid offset encoding',
       vim.log.levels.WARN
     )
-    offset_encoding = vim.lsp.get_active_clients({ bufnr = 0 })[1].offset_encoding
+    offset_encoding = vim.lsp.get_clients({ bufnr = 0 })[1].offset_encoding
   end
 
   local items = {}
@@ -2036,7 +2036,7 @@ function M._get_offset_encoding(bufnr)
 
   local offset_encoding
 
-  for _, client in pairs(vim.lsp.get_active_clients({ bufnr = bufnr })) do
+  for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
     if client.offset_encoding == nil then
       vim.notify_once(
         string.format(
@@ -2183,7 +2183,7 @@ function M.character_offset(buf, row, col, offset_encoding)
       'character_offset must be called with valid offset encoding',
       vim.log.levels.WARN
     )
-    offset_encoding = vim.lsp.get_active_clients({ bufnr = buf })[1].offset_encoding
+    offset_encoding = vim.lsp.get_clients({ bufnr = buf })[1].offset_encoding
   end
   -- If the col is past the EOL, use the line length.
   if col > #line then

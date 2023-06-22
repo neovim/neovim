@@ -28,7 +28,7 @@ function M.check()
   local report_fn = (log_size / 1000000 > 100 and report_warn or report_info)
   report_fn(string.format('Log size: %d KB', log_size / 1000))
 
-  local clients = vim.lsp.get_active_clients()
+  local clients = vim.lsp.get_clients()
   vim.health.start('vim.lsp: Active Clients')
   if next(clients) then
     for _, client in pairs(clients) do

@@ -129,7 +129,7 @@ LSP FUNCTIONS
 - *vim.lsp.util.diagnostics_to_items()*		Use |vim.diagnostic.toqflist()| instead.
 - *vim.lsp.util.set_qflist()*			Use |setqflist()| instead.
 - *vim.lsp.util.set_loclist()*			Use |setloclist()| instead.
-- *vim.lsp.buf_get_clients()*			Use |vim.lsp.get_active_clients()| with
+- *vim.lsp.buf_get_clients()*			Use |vim.lsp.get_clients()| with
 						{buffer=bufnr} instead.
 - *vim.lsp.buf.formatting()*			Use |vim.lsp.buf.format()| with
 						{async=true} instead.
@@ -139,7 +139,8 @@ LSP FUNCTIONS
 						or |vim.lsp.buf.format()| instead.
 - *vim.lsp.util.get_progress_messages()*	Use |vim.lsp.status()| or access
 						`progress` of |vim.lsp.client|
-- *vim.lsp.for_each_buffer_client()*		Use |vim.lsp.get_active_clients()|
+- *vim.lsp.get_active_clients()*		Use |vim.lsp.get_clients()|
+- *vim.lsp.for_each_buffer_client()*		Use |vim.lsp.get_clients()|
 
 TREESITTER FUNCTIONS
 - *vim.treesitter.language.require_language()*	Use |vim.treesitter.language.add()|
