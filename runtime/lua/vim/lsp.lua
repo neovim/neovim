@@ -372,7 +372,7 @@ do
   --- @field lines string[] snapshot of buffer lines from last didChange
   --- @field lines_tmp string[]
   --- @field pending_changes table[] List of debounced changes in incremental sync mode
-  --- @field timer nil|uv_timer_t uv_timer
+  --- @field timer nil|userdata uv_timer_t
   --- @field last_flush nil|number uv.hrtime of the last flush/didChange-notification
   --- @field needs_flush boolean true if buffer updates haven't been sent to clients/servers yet
   --- @field refs integer how many clients are using this group
@@ -1183,7 +1183,7 @@ function lsp.start_client(config)
   ---
   ---@param code (integer) Error code
   ---@param err (...) Other arguments may be passed depending on the error kind
-  ---@see `vim.lsp.rpc.client_errors` for possible errors. Use
+  ---@see vim.lsp.rpc.client_errors for possible errors. Use
   ---`vim.lsp.rpc.client_errors[code]` to get a human-friendly name.
   function dispatch.on_error(code, err)
     if log.error() then
@@ -2366,7 +2366,7 @@ function lsp.formatexpr(opts)
       }
       local response =
         client.request_sync('textDocument/rangeFormatting', params, timeout_ms, bufnr)
-      if response.result then
+      if response and response.result then
         lsp.util.apply_text_edits(response.result, 0, client.offset_encoding)
         return 0
       end
