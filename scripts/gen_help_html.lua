@@ -144,11 +144,11 @@ local function trim(s, dir)
   return vim.fn.trim(s, '\r\t\n ', dir or 0)
 end
 
--- Remove common punctuation from URLs.
---
--- TODO: fix this in the parser instead... https://github.com/neovim/tree-sitter-vimdoc
---
--- @returns (fixed_url, removed_chars) where `removed_chars` is in the order found in the input.
+--- Removes common punctuation from URLs.
+---
+--- TODO: fix this in the parser instead... https://github.com/neovim/tree-sitter-vimdoc
+---
+--- @returns (fixed_url, removed_chars) where `removed_chars` is in the order found in the input.
 local function fix_url(url)
   local removed_chars = ''
   local fixed_url = url
@@ -162,7 +162,7 @@ local function fix_url(url)
   return fixed_url, removed_chars
 end
 
--- Checks if a given line is a "noise" line that doesn't look good in HTML form.
+--- Checks if a given line is a "noise" line that doesn't look good in HTML form.
 local function is_noise(line, noise_lines)
   if (
     -- First line is always noise.
@@ -187,7 +187,7 @@ local function is_noise(line, noise_lines)
   return false
 end
 
--- Creates a github issue URL at neovim/tree-sitter-vimdoc with prefilled content.
+--- Creates a github issue URL at neovim/tree-sitter-vimdoc with prefilled content.
 local function get_bug_url_vimdoc(fname, to_fname, sample_text)
   local this_url = string.format('https://neovim.io/doc/user/%s', vim.fs.basename(to_fname))
   local bug_url = ('https://github.com/neovim/tree-sitter-vimdoc/issues/new?labels=bug&title=parse+error%3A+'
@@ -200,7 +200,7 @@ local function get_bug_url_vimdoc(fname, to_fname, sample_text)
   return bug_url
 end
 
--- Creates a github issue URL at neovim/neovim with prefilled content.
+--- Creates a github issue URL at neovim/neovim with prefilled content.
 local function get_bug_url_nvim(fname, to_fname, sample_text, token_name)
   local this_url = string.format('https://neovim.io/doc/user/%s', vim.fs.basename(to_fname))
   local bug_url = ('https://github.com/neovim/neovim/issues/new?labels=bug&title=user+docs+HTML%3A+'
@@ -215,7 +215,7 @@ local function get_bug_url_nvim(fname, to_fname, sample_text, token_name)
   return bug_url
 end
 
--- Gets a "foo.html" name from a "foo.txt" helpfile name.
+--- Gets a "foo.html" name from a "foo.txt" helpfile name.
 local function get_helppage(f)
   if not f then
     return nil
@@ -230,9 +230,9 @@ local function get_helppage(f)
   return (f:gsub('%.txt$', '.html'))
 end
 
--- Counts leading spaces (tab=8) to decide the indent size of multiline text.
---
--- Blank lines (empty or whitespace-only) are ignored.
+--- Counts leading spaces (tab=8) to decide the indent size of multiline text.
+---
+--- Blank lines (empty or whitespace-only) are ignored.
 local function get_indent(s)
   local min_indent = nil
   for line in vim.gsplit(s, '\n') do
@@ -244,7 +244,7 @@ local function get_indent(s)
   return min_indent or 0
 end
 
--- Removes the common indent level, after expanding tabs to 8 spaces.
+--- Removes the common indent level, after expanding tabs to 8 spaces.
 local function trim_indent(s)
   local indent_size = get_indent(s)
   local trimmed = ''
@@ -255,7 +255,7 @@ local function trim_indent(s)
   return trimmed:sub(1, -2)
 end
 
--- Gets raw buffer text in the node's range (+/- an offset), as a newline-delimited string.
+--- Gets raw buffer text in the node's range (+/- an offset), as a newline-delimited string.
 local function getbuflinestr(node, bufnr, offset)
   local line1, _, line2, _ = node:range()
   line1 = line1 - offset
@@ -264,8 +264,8 @@ local function getbuflinestr(node, bufnr, offset)
   return table.concat(lines, '\n')
 end
 
--- Gets the whitespace just before `node` from the raw buffer text.
--- Needed for preformatted `old` lines.
+--- Gets the whitespace just before `node` from the raw buffer text.
+--- Needed for preformatted `old` lines.
 local function getws(node, bufnr)
   local line1, c1, line2, _ = node:range()
   local raw = vim.fn.getbufline(bufnr, line1 + 1, line2 + 1)[1]
@@ -282,7 +282,7 @@ local function get_tagname(node, bufnr)
   return helppage, tag
 end
 
--- Returns true if the given invalid tagname is a false positive.
+--- Returns true if the given invalid tagname is a false positive.
 local function ignore_invalid(s)
   return not not (
     exclude_invalid[s]
@@ -314,7 +314,7 @@ local function has_ancestor(node, ancestor_name)
   return false
 end
 
--- Gets the first matching child node matching `name`.
+--- Gets the first matching child node matching `name`.
 local function first(node, name)
   for c, _ in node:iter_children() do
     if c:named() and c:type() == name then
@@ -336,7 +336,7 @@ local function validate_link(node, bufnr, fname)
   return helppage, tagname, ignored
 end
 
--- TODO: port the logic from scripts/check_urls.vim
+--- TODO: port the logic from scripts/check_urls.vim
 local function validate_url(text, fname)
   local ignored = false
   if vim.fs.basename(fname) == 'pi_netrw.txt' then
@@ -347,7 +347,7 @@ local function validate_url(text, fname)
   return ignored
 end
 
--- Traverses the tree at `root` and checks that |tag| links point to valid helptags.
+--- Traverses the tree at `root` and checks that |tag| links point to valid helptags.
 local function visit_validate(root, level, lang_tree, opt, stats)
   level = level or 0
   local node_name = (root.named and root:named()) and root:type() or nil
@@ -609,7 +609,7 @@ local function get_helpfiles(include)
   return rv
 end
 
--- Populates the helptags map.
+--- Populates the helptags map.
 local function get_helptags(help_dir)
   local m = {}
   -- Load a random help file to convince taglist() to do its job.
@@ -624,17 +624,19 @@ local function get_helptags(help_dir)
   return m
 end
 
--- Use the vimdoc parser defined in the build, not whatever happens to be installed on the system.
+--- Use the vimdoc parser defined in the build, not whatever happens to be installed on the system.
 local function ensure_runtimepath()
   if not vim.o.runtimepath:find('build/lib/nvim/') then
     vim.cmd[[set runtimepath^=./build/lib/nvim/]]
   end
 end
 
--- Opens `fname` in a buffer and gets a treesitter parser for the buffer contents.
---
--- @returns lang_tree, bufnr
-local function parse_buf(fname)
+--- Opens `fname` in a buffer and gets a treesitter parser for the buffer contents.
+---
+--- @param fname string help file to parse
+--- @param parser_path string? path to non-default vimdoc.so
+--- @returns lang_tree, bufnr
+local function parse_buf(fname, parser_path)
   local buf
   if type(fname) == 'string' then
     vim.cmd('split '..vim.fn.fnameescape(fname))  -- Filename.
@@ -643,21 +645,25 @@ local function parse_buf(fname)
     buf = fname
     vim.cmd('sbuffer '..tostring(fname))          -- Buffer number.
   end
-  -- vim.treesitter.language.add('vimdoc', { path = vim.fn.expand('~/Library/Caches/tree-sitter/lib/vimdoc.so') })
+  if parser_path then
+    vim.treesitter.language.add('vimdoc', { path = parser_path })
+  end
   local lang_tree = vim.treesitter.get_parser(buf)
   return lang_tree, buf
 end
 
--- Validates one :help file `fname`:
---  - checks that |tag| links point to valid helptags.
---  - recursively counts parse errors ("ERROR" nodes)
---
--- @returns { invalid_links: number, parse_errors: number }
-local function validate_one(fname)
+--- Validates one :help file `fname`:
+---  - checks that |tag| links point to valid helptags.
+---  - recursively counts parse errors ("ERROR" nodes)
+---
+--- @param fname string help file to validate
+--- @param parser_path string? path to non-default vimdoc.so
+--- @returns { invalid_links: number, parse_errors: number }
+local function validate_one(fname, parser_path)
   local stats = {
     parse_errors = {},
   }
-  local lang_tree, buf = parse_buf(fname)
+  local lang_tree, buf = parse_buf(fname, parser_path)
   for _, tree in ipairs(lang_tree:trees()) do
     visit_validate(tree:root(), 0, tree, { buf = buf, fname = fname, }, stats)
   end
@@ -666,20 +672,21 @@ local function validate_one(fname)
   return stats
 end
 
--- Generates HTML from one :help file `fname` and writes the result to `to_fname`.
---
--- @param fname Source :help file
--- @param to_fname Destination .html file
--- @param old boolean Preformat paragraphs (for old :help files which are full of arbitrary whitespace)
---
--- @returns html, stats
-local function gen_one(fname, to_fname, old, commit)
+--- Generates HTML from one :help file `fname` and writes the result to `to_fname`.
+---
+--- @param fname string Source :help file
+--- @param to_fname string Destination .html file
+--- @param old boolean Preformat paragraphs (for old :help files which are full of arbitrary whitespace)
+--- @param parser_path string? path to non-default vimdoc.so
+---
+--- @returns html, stats
+local function gen_one(fname, to_fname, old, commit, parser_path)
   local stats = {
     noise_lines = {},
     parse_errors = {},
     first_tags = {},  -- Track the first few tags in doc.
   }
-  local lang_tree, buf = parse_buf(fname)
+  local lang_tree, buf = parse_buf(fname, parser_path)
   local headings = {}  -- Headings (for ToC). 2-dimensional: h1 contains h2/h3.
   local title = to_titlecase(basename_noext(fname))
 
@@ -1059,18 +1066,20 @@ end
 --- @param include table|nil Process only these filenames. Example: {'api.txt', 'autocmd.txt', 'channel.txt'}
 ---
 --- @returns info dict
-function M.gen(help_dir, to_dir, include, commit)
+function M.gen(help_dir, to_dir, include, commit, parser_path)
   vim.validate{
     help_dir={help_dir, function(d) return vim.fn.isdirectory(d) == 1 end, 'valid directory'},
     to_dir={to_dir, 's'},
     include={include, 't', true},
     commit={commit, 's', true},
+    parser_path={parser_path, function(f) return f == nil or vim.fn.filereadable(vim.fn.expand(f)) == 1 end, 'valid vimdoc.{so,dll} filepath'},
   }
 
   local err_count = 0
   ensure_runtimepath()
   tagmap = get_helptags(help_dir)
   helpfiles = get_helpfiles(include)
+  parser_path = parser_path and vim.fn.expand(parser_path) or nil
 
   print(('output dir: %s'):format(to_dir))
   vim.fn.mkdir(to_dir, 'p')
@@ -1079,7 +1088,7 @@ function M.gen(help_dir, to_dir, include, commit)
   for _, f in ipairs(helpfiles) do
     local helpfile = vim.fs.basename(f)
     local to_fname = ('%s/%s'):format(to_dir, get_helppage(helpfile))
-    local html, stats = gen_one(f, to_fname, not new_layout[helpfile], commit or '?')
+    local html, stats = gen_one(f, to_fname, not new_layout[helpfile], commit or '?', parser_path)
     tofile(to_fname, html)
     print(('generated (%-4s errors): %-15s => %s'):format(#stats.parse_errors, helpfile, vim.fs.basename(to_fname)))
     err_count = err_count + #stats.parse_errors
@@ -1102,19 +1111,21 @@ end
 -- This is 10x faster than gen(), for use in CI.
 --
 -- @returns results dict
-function M.validate(help_dir, include)
+function M.validate(help_dir, include, parser_path)
   vim.validate{
     help_dir={help_dir, function(d) return vim.fn.isdirectory(d) == 1 end, 'valid directory'},
     include={include, 't', true},
+    parser_path={parser_path, function(f) return f == nil or vim.fn.filereadable(vim.fn.expand(f)) == 1 end, 'valid vimdoc.{so,dll} filepath'},
   }
   local err_count = 0
   ensure_runtimepath()
   tagmap = get_helptags(help_dir)
   helpfiles = get_helpfiles(include)
+  parser_path = parser_path and vim.fn.expand(parser_path) or nil
 
   for _, f in ipairs(helpfiles) do
     local helpfile = vim.fs.basename(f)
-    local rv = validate_one(f)
+    local rv = validate_one(f, parser_path)
     print(('validated (%-4s errors): %s'):format(#rv.parse_errors, helpfile))
     err_count = err_count + #rv.parse_errors
   end
