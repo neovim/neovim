@@ -642,7 +642,7 @@ function protocol.make_client_capabilities()
     },
     textDocument = {
       inlayHint = {
-        dynamicRegistration = false,
+        dynamicRegistration = true,
         resolveSupport = {
           properties = {},
         },
