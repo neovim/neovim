@@ -701,7 +701,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     } else if (strequal("inline", str.data)) {
       decor.virt_text_pos = kVTInline;
     } else {
-      VALIDATE_S(false, "virt_text_pos", "", {
+      VALIDATE_S(false, "virt_text_pos", str.data, {
         goto error;
       });
     }
@@ -719,7 +719,11 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   OPTION_TO_BOOL(decor.virt_text_hide, virt_text_hide, false);
   OPTION_TO_BOOL(decor.hl_eol, hl_eol, false);
 
-  if (opts->hl_mode.type == kObjectTypeString) {
+  if (HAS_KEY(opts->hl_mode)) {
+    VALIDATE_T("hl_mode", kObjectTypeString, opts->hl_mode.type, {
+      goto error;
+    });
+
     String str = opts->hl_mode.data.string;
     if (strequal("replace", str.data)) {
       decor.hl_mode = kHlModeReplace;
@@ -728,14 +732,10 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     } else if (strequal("blend", str.data)) {
       decor.hl_mode = kHlModeBlend;
     } else {
-      VALIDATE_S(false, "virt_text_pos", "", {
+      VALIDATE_S(false, "hl_mode", str.data, {
         goto error;
       });
     }
-  } else if (HAS_KEY(opts->hl_mode)) {
-    VALIDATE_T("hl_mode", kObjectTypeString, opts->hl_mode.type, {
-      goto error;
-    });
   }
 
   bool virt_lines_leftcol = false;
