@@ -144,6 +144,9 @@ end
 ---@private
 local function clear(bufnr)
   bufnr = resolve_bufnr(bufnr)
+  if not bufstates[bufnr] then
+    return
+  end
   reset_timer(bufnr)
   local bufstate = bufstates[bufnr]
   local client_lens = (bufstate or {}).client_hint or {}
