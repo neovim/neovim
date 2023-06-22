@@ -81,7 +81,7 @@ Project layout
     ├─ runtime/         plugins and docs
     ├─ src/nvim/        application source code (see src/nvim/README.md)
     │  ├─ api/          API subsystem
-    │  ├─ eval/         VimL subsystem
+    │  ├─ eval/         Vimscript subsystem
     │  ├─ event/        event-loop subsystem
     │  ├─ generators/   code generation (pre-compilation)
     │  ├─ lib/          generic data structures

@@ -101,8 +101,8 @@ function s:msgpack_init_python() abort
   " @return Formatted timestamp.
   "
   " @warning Without +python or +python3 this function does not work correctly. 
-  "          The VimL code contains “reference” implementation which does not 
-  "          really work because of precision loss.
+  "          The Vimscript code contains “reference” implementation which does
+  "          not really work because of precision loss.
   function s:msgpack_dict_strftime(format, timestamp)
     return msgpack#strftime(a:format, +msgpack#int_dict_to_str(a:timestamp))
   endfunction
@@ -541,8 +541,8 @@ let s:MSGPACK_SPECIAL_OBJECTS = {
 \}
 
 ""
-" Convert msgpack object dumped by msgpack#string() to a VimL object suitable 
-" for msgpackdump().
+" Convert msgpack object dumped by msgpack#string() to a Vimscript object
+" suitable for msgpackdump().
 "
 " @param[in]  s             String to evaluate.
 " @param[in]  special_objs  Additional special objects, in the same format as 

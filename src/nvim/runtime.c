@@ -1770,7 +1770,7 @@ static FILE *fopen_noinh_readbin(char *filename)
   return fdopen(fd_tmp, READBIN);
 }
 
-/// Concatenate VimL line if it starts with a line continuation into a growarray
+/// Concatenate Vimscript line if it starts with a line continuation into a growarray
 /// (excluding the continuation chars and leading whitespace)
 ///
 /// @note Growsize of the growarray may be changed to speed up concatenations!

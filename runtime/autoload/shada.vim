@@ -487,7 +487,7 @@ let s:SHADA_ENTRY_OBJECT_SEQUENCE = ['type', 'timestamp', 'length', 'data']
 ""
 " Convert list returned by msgpackparse() to a list of ShaDa objects
 "
-" @param[in]  mpack  List of VimL objects returned by msgpackparse().
+" @param[in]  mpack  List of Vimscript objects returned by msgpackparse().
 "
 " @return List of dictionaries with keys type, timestamp, length and data. Each 
 "         dictionary describes one ShaDa entry.

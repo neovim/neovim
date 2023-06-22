@@ -9,7 +9,7 @@ local command = helpers.command
 local eval = helpers.eval
 
 
-describe('VimL dictionary notifications', function()
+describe('Vimscript dictionary notifications', function()
   local channel
 
   before_each(function()

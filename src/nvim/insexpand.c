@@ -2432,7 +2432,7 @@ theend:
   }
 }
 
-/// Add a match to the list of matches from VimL object
+/// Add a match to the list of matches from Vimscript object
 ///
 /// @param[in]  tv  Object to get matches from.
 /// @param[in]  dir  Completion direction.

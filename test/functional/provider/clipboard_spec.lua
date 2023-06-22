@@ -211,7 +211,7 @@ describe('clipboard', function()
     eq('', eval('provider#clipboard#Error()'))
   end)
 
-  it('g:clipboard using VimL functions', function()
+  it('g:clipboard using Vimscript functions', function()
     -- Implements a fake clipboard provider. cache_enabled is meaningless here.
     source([[let g:clipboard = {
             \  'name': 'custom',
@@ -245,7 +245,7 @@ describe('clipboard', function()
     eq({{'star', ''}, 'b'}, eval("g:dummy_clipboard_star"))
   end)
 
-  describe('g:clipboard[paste] VimL function', function()
+  describe('g:clipboard[paste] Vimscript function', function()
     it('can return empty list for empty clipboard', function()
       source([[let g:dummy_clipboard = []
               let g:clipboard = {

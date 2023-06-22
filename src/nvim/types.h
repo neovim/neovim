@@ -18,7 +18,7 @@ typedef int handle_T;
 // absent callback etc.
 typedef int LuaRef;
 
-/// Type used for VimL VAR_FLOAT values
+/// Type used for Vimscript VAR_FLOAT values
 typedef double float_T;
 
 typedef struct MsgpackRpcRequestHandler MsgpackRpcRequestHandler;

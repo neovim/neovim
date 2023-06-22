@@ -183,7 +183,7 @@ typedef struct {
   int idx;  ///< Container index (used to detect self-referencing structures).
 } TVPopStackItem;
 
-/// Convert lua object to VimL typval_T
+/// Convert lua object to Vimscript typval_T
 ///
 /// Should pop exactly one value from lua stack.
 ///
@@ -601,7 +601,7 @@ static bool typval_conv_special = false;
 #undef TYPVAL_ENCODE_CONV_RECURSE
 #undef TYPVAL_ENCODE_ALLOW_SPECIALS
 
-/// Convert VimL typval_T to lua value
+/// Convert Vimscript typval_T to lua value
 ///
 /// Should leave single value in lua stack. May only fail if lua failed to grow
 /// stack.
@@ -628,8 +628,7 @@ bool nlua_push_typval(lua_State *lstate, typval_T *const tv, bool special)
 
 /// Push value which is a type index
 ///
-/// Used for all “typed” tables: i.e. for all tables which represent VimL
-/// values.
+/// Used for all “typed” tables: i.e. for all tables which represent Vimscript values.
 static inline void nlua_push_type_idx(lua_State *lstate)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -657,7 +656,7 @@ static inline void nlua_push_type(lua_State *lstate, ObjectType type)
   lua_pushnumber(lstate, (lua_Number)type);
 }
 
-/// Create lua table which has an entry that determines its VimL type
+/// Create Lua table which has an entry that determines its Vimscript type
 ///
 /// @param[out]  lstate  Lua state.
 /// @param[in]   narr    Number of “array” entries to be populated later.

@@ -227,7 +227,7 @@ static inline int json_decoder_pop(ValuesStackItem obj, ValuesStack *const stack
 ///
 /// @param[out]  ret_tv  Address where new special dictionary is saved.
 /// @param[in]  len  Expected number of items to be populated before list
-///                  becomes accessible from VimL. It is still valid to
+///                  becomes accessible from Vimscript. It is still valid to
 ///                  underpopulate a list, value only controls how many elements
 ///                  will be allocated in advance. @see ListLenSpecials.
 ///
@@ -645,7 +645,7 @@ parse_json_number_ret:
     } \
   } while (0)
 
-/// Convert JSON string into VimL object
+/// Convert JSON string into Vimscript object
 ///
 /// @param[in]  buf  String to convert. UTF-8 encoding is assumed.
 /// @param[in]  buf_len  Length of the string.
@@ -921,7 +921,7 @@ json_decode_string_ret:
 
 #undef DICT_LEN
 
-/// Convert msgpack object to a VimL one
+/// Convert msgpack object to a Vimscript one
 int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {

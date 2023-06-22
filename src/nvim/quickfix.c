@@ -7276,7 +7276,7 @@ void f_getqflist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   get_qf_loc_list(true, NULL, &argvars[0], rettv);
 }
 
-/// Create quickfix/location list from VimL values
+/// Create quickfix/location list from Vimscript values
 ///
 /// Used by `setqflist()` and `setloclist()` functions. Accepts invalid
 /// args argument in which case errors out, including VAR_UNKNOWN parameters.

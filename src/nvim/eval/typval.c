@@ -170,7 +170,7 @@ void tv_list_watch_fix(list_T *const l, const listitem_T *const item)
 /// Caller should take care of the reference count.
 ///
 /// @param[in]  len  Expected number of items to be populated before list
-///                  becomes accessible from VimL. It is still valid to
+///                  becomes accessible from Vimscript. It is still valid to
 ///                  underpopulate a list, value only controls how many elements
 ///                  will be allocated in advance. Currently does nothing.
 ///                  @see ListLenSpecials.
@@ -398,7 +398,7 @@ void tv_list_insert(list_T *const l, listitem_T *const ni, listitem_T *const ite
   }
 }
 
-/// Insert VimL value into a list
+/// Insert Vimscript value into a list
 ///
 /// @param[out]  l  List to insert to.
 /// @param[in,out]  tv  Value to insert. Is copied (@see tv_copy()) to an
@@ -434,7 +434,7 @@ void tv_list_append(list_T *const l, listitem_T *const item)
   item->li_next = NULL;
 }
 
-/// Append VimL value to the end of list
+/// Append Vimscript value to the end of list
 ///
 /// @param[out]  l  List to append to.
 /// @param[in,out]  tv  Value to append. Is copied (@see tv_copy()) to an
@@ -3086,7 +3086,7 @@ void f_list2blob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 ///
 /// @param[out]  ret_tv  Structure where list is saved.
 /// @param[in]  len  Expected number of items to be populated before list
-///                  becomes accessible from VimL. It is still valid to
+///                  becomes accessible from Vimscript. It is still valid to
 ///                  underpopulate a list, value only controls how many elements
 ///                  will be allocated in advance. @see ListLenSpecials.
 ///
@@ -3538,7 +3538,7 @@ void tv_clear(typval_T *const tv)
 
 //{{{3 Free
 
-/// Free allocated VimL object and value stored inside
+/// Free allocated Vimscript object and value stored inside
 ///
 /// @param  tv  Object to free.
 void tv_free(typval_T *tv)
@@ -3716,7 +3716,7 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock, const boo
   recurse--;
 }
 
-/// Check whether VimL value is locked itself or refers to a locked container
+/// Check whether Vimscript value is locked itself or refers to a locked container
 ///
 /// @warning Fixed container is not the same as locked.
 ///
@@ -3815,7 +3815,7 @@ bool value_check_lock(VarLockStatus lock, const char *name, size_t name_len)
 
 static int tv_equal_recurse_limit;
 
-/// Compare two VimL values
+/// Compare two Vimscript values
 ///
 /// Like "==", but strings and numbers are different, as well as floats and
 /// numbers.
@@ -4011,7 +4011,7 @@ static const char *const str_errors[] = {
 
 #undef FUNC_ERROR
 
-/// Check that given value is a VimL String or can be "cast" to it.
+/// Check that given value is a Vimscript String or can be "cast" to it.
 ///
 /// Error messages are compatible with tv_get_string_chk() previously used for
 /// the same purpose.
@@ -4044,7 +4044,7 @@ bool tv_check_str(const typval_T *const tv)
 
 //{{{2 Get
 
-/// Get the number value of a VimL object
+/// Get the number value of a Vimscript object
 ///
 /// @note Use tv_get_number_chk() if you need to determine whether there was an
 ///       error.
@@ -4060,7 +4060,7 @@ varnumber_T tv_get_number(const typval_T *const tv)
   return tv_get_number_chk(tv, &error);
 }
 
-/// Get the number value of a VimL object
+/// Get the number value of a Vimscript object
 ///
 /// @param[in]  tv  Object to get value from.
 /// @param[out]  ret_error  If type error occurred then `true` will be written
@@ -4119,7 +4119,7 @@ varnumber_T tv_get_bool_chk(const typval_T *const tv, bool *const ret_error)
   return tv_get_number_chk(tv, ret_error);
 }
 
-/// Get the line number from VimL object
+/// Get the line number from Vimscript object
 ///
 /// @param[in]  tv  Object to get value from. Is expected to be a number or
 ///                 a special string like ".", "$", … (works with current buffer
@@ -4142,7 +4142,7 @@ linenr_T tv_get_lnum(const typval_T *const tv)
   return lnum;
 }
 
-/// Get the floating-point value of a VimL object
+/// Get the floating-point value of a Vimscript object
 ///
 /// Raises an error if object is not number or floating-point.
 ///
@@ -4385,7 +4385,7 @@ int tv_check_for_list_or_blob_arg(const typval_T *const args, const int idx)
   return OK;
 }
 
-/// Get the string value of a "stringish" VimL object.
+/// Get the string value of a "stringish" Vimscript object.
 ///
 /// @param[in]  tv  Object to get value of.
 /// @param  buf  Buffer used to hold numbers and special variables converted to
@@ -4430,7 +4430,7 @@ const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
   return NULL;
 }
 
-/// Get the string value of a "stringish" VimL object.
+/// Get the string value of a "stringish" Vimscript object.
 ///
 /// @warning For number and special values it uses a single, static buffer. It
 ///          may be used only once, next call to tv_get_string may reuse it. Use
@@ -4449,7 +4449,7 @@ const char *tv_get_string_chk(const typval_T *const tv)
   return tv_get_string_buf_chk(tv, mybuf);
 }
 
-/// Get the string value of a "stringish" VimL object.
+/// Get the string value of a "stringish" Vimscript object.
 ///
 /// @warning For number and special values it uses a single, static buffer. It
 ///          may be used only once, next call to tv_get_string may reuse it. Use
@@ -4471,7 +4471,7 @@ const char *tv_get_string(const typval_T *const tv)
   return tv_get_string_buf((typval_T *)tv, mybuf);
 }
 
-/// Get the string value of a "stringish" VimL object.
+/// Get the string value of a "stringish" Vimscript object.
 ///
 /// @note tv_get_string_chk() and tv_get_string_buf_chk() are similar, but
 ///       return NULL on error.

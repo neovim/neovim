@@ -346,15 +346,15 @@ describe('API', function()
       os.remove(fname)
     end)
 
-    it('VimL validation error: fails with specific error', function()
+    it('Vimscript validation error: fails with specific error', function()
       local status, rv = pcall(nvim, "command", "bogus_command")
       eq(false, status)                       -- nvim_command() failed.
-      eq("E492:", string.match(rv, "E%d*:"))  -- VimL error was returned.
+      eq("E492:", string.match(rv, "E%d*:"))  -- Vimscript error was returned.
       eq('', nvim('eval', 'v:errmsg'))        -- v:errmsg was not updated.
       eq('', eval('v:exception'))
     end)
 
-    it('VimL execution error: fails with specific error', function()
+    it('Vimscript execution error: fails with specific error', function()
       local status, rv = pcall(nvim, "command", "buffer 23487")
       eq(false, status)                 -- nvim_command() failed.
       eq("E86: Buffer 23487 does not exist", string.match(rv, "E%d*:.*"))
@@ -422,7 +422,7 @@ describe('API', function()
       eq(':!echo foo\r\n\nfoo'..win_lf..'\n', nvim('command_output', [[!echo foo]]))
     end)
 
-    it('VimL validation error: fails with specific error', function()
+    it('Vimscript validation error: fails with specific error', function()
       local status, rv = pcall(nvim, "command_output", "bogus commannnd")
       eq(false, status)                 -- nvim_command_output() failed.
       eq("E492: Not an editor command: bogus commannnd",
@@ -432,7 +432,7 @@ describe('API', function()
       eq({mode='n', blocking=false}, nvim("get_mode"))
     end)
 
-    it('VimL execution error: fails with specific error', function()
+    it('Vimscript execution error: fails with specific error', function()
       local status, rv = pcall(nvim, "command_output", "buffer 42")
       eq(false, status)                 -- nvim_command_output() failed.
       eq("E86: Buffer 42 does not exist", string.match(rv, "E%d*:.*"))
@@ -463,7 +463,7 @@ describe('API', function()
       eq(2, request("vim_eval", "1+1"))
     end)
 
-    it("VimL error: returns error details, does NOT update v:errmsg", function()
+    it("Vimscript error: returns error details, does NOT update v:errmsg", function()
       eq('Vim:E121: Undefined variable: bogus',
         pcall_err(request, 'nvim_eval', 'bogus expression'))
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
@@ -478,7 +478,7 @@ describe('API', function()
       eq('foo', nvim('call_function', 'simplify', {'this/./is//redundant/../../../foo'}))
     end)
 
-    it("VimL validation error: returns specific error, does NOT update v:errmsg", function()
+    it("Vimscript validation error: returns specific error, does NOT update v:errmsg", function()
       eq('Vim:E117: Unknown function: bogus function',
         pcall_err(request, 'nvim_call_function', 'bogus function', {'arg1'}))
       eq('Vim:E119: Not enough arguments for function: atan',
@@ -487,7 +487,7 @@ describe('API', function()
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
     end)
 
-    it("VimL error: returns error details, does NOT update v:errmsg", function()
+    it("Vimscript error: returns error details, does NOT update v:errmsg", function()
       eq('Vim:E808: Number or Float required',
         pcall_err(request, 'nvim_call_function', 'atan', {'foo'}))
       eq('Vim:Invalid channel stream "xxx"',
@@ -498,7 +498,7 @@ describe('API', function()
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
     end)
 
-    it("VimL exception: returns exception details, does NOT update v:errmsg", function()
+    it("Vimscript exception: returns exception details, does NOT update v:errmsg", function()
       source([[
         function! Foo() abort
           throw 'wtf'
@@ -523,7 +523,7 @@ describe('API', function()
   end)
 
   describe('nvim_call_dict_function', function()
-    it('invokes VimL dict function', function()
+    it('invokes Vimscript dict function', function()
       source([[
         function! F(name) dict
           return self.greeting.', '.a:name.'!'
@@ -653,7 +653,7 @@ describe('API', function()
   end)
 
   describe('nvim_input', function()
-    it("VimL error: does NOT fail, updates v:errmsg", function()
+    it("Vimscript error: does NOT fail, updates v:errmsg", function()
       local status, _ = pcall(nvim, "input", ":call bogus_fn()<CR>")
       local v_errnum = string.match(nvim("eval", "v:errmsg"), "E%d*:")
       eq(true, status)        -- nvim_input() did not fail.

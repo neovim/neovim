@@ -191,7 +191,7 @@ describe('swapfile detection', function()
     feed('e')  -- Chose "Edit" at the swap dialog.
     screen2:expect(expected_no_dialog)
 
-    -- With API (via eval/VimL) call and shortmess+=F
+    -- With API (via eval/Vimscript) call and shortmess+=F
     feed(':call nvim_command("edit %")<CR>')
     screen2:expect{any=[[Found a swap file by the name ".*]]
                        ..[[Xtest_swapdialog_dir[/\].*]]..testfile..[[%.swp"]]}

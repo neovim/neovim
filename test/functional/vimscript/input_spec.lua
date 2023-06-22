@@ -552,7 +552,7 @@ describe('confirm()', function()
     feed(':silent edit foo<cr>')
     check_and_clear(':silent edit foo         |\n')
 
-    -- With API (via eval/VimL) call and shortmess+=F
+    -- With API (via eval/Vimscript) call and shortmess+=F
     feed(':call nvim_command("edit x")<cr>')
     check_and_clear(':call nvim_command("edit |\n')
 

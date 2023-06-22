@@ -3,7 +3,7 @@
 
 /// @file encode.c
 ///
-/// File containing functions for encoding and decoding VimL values.
+/// File containing functions for encoding and decoding Vimscript values.
 ///
 /// Split out from eval.c.
 

@@ -1,10 +1,10 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/// VimL expression parser
+/// Vimscript expression parser
 
 // Planned incompatibilities (to be included into vim_diff.txt when this parser
-// will be an actual part of VimL evaluation process):
+// will be an actual part of Vimscript evaluation process):
 //
 // 1. Expressions are first fully parsed and only then executed.  This means
 //    that while ":echo [system('touch abc')" will create file "abc" in Vim and
@@ -89,7 +89,7 @@ typedef enum {
 
 /// Parse type: what is being parsed currently
 typedef enum {
-  /// Parsing regular VimL expression
+  /// Parsing regular Vimscript expression
   kEPTExpr = 0,
   /// Parsing lambda arguments
   ///
@@ -171,7 +171,7 @@ static inline float_T scale_number(const float_T num, const uint8_t base,
   return ret;
 }
 
-/// Get next token for the VimL expression input
+/// Get next token for the Vimscript expression input
 ///
 /// @param  pstate  Parser state.
 /// @param[in]  flags  Flags, @see LexExprFlags.
@@ -1168,7 +1168,7 @@ static struct {
   // represented as "list(comma(a, comma(b, comma(c, d))))" then if it is
   // "list(comma(comma(comma(a, b), c), d))" in which case you will need to
   // traverse all three comma() structures. And with comma operator (including
-  // actual comma operator from C which is not present in VimL) nobody cares
+  // actual comma operator from C which is not present in Vimscript) nobody cares
   // about associativity, only about order of execution.
   [kExprNodeComma] = { kEOpLvlComma, kEOpAssRight },
 
@@ -1915,7 +1915,7 @@ static const uint8_t base_to_prefix_length[] = {
   [16] = 2,
 };
 
-/// Parse one VimL expression
+/// Parse one Vimscript expression
 ///
 /// @param  pstate  Parser state.
 /// @param[in]  flags  Additional flags, see ExprParserFlags

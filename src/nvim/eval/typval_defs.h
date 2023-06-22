@@ -10,7 +10,7 @@
 #include "nvim/pos.h"
 #include "nvim/types.h"
 
-/// Type used for VimL VAR_NUMBER values
+/// Type used for Vimscript VAR_NUMBER values
 typedef int64_t varnumber_T;
 typedef uint64_t uvarnumber_T;
 
@@ -100,7 +100,7 @@ typedef enum {
   VAR_FIXED = 2,     ///< Locked forever.
 } VarLockStatus;
 
-/// VimL variable types, for use in typval_T.v_type
+/// Vimscript variable types, for use in typval_T.v_type
 typedef enum {
   VAR_UNKNOWN = 0,  ///< Unknown (unspecified) value.
   VAR_NUMBER,       ///< Number, .v_number is used.

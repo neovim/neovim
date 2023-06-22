@@ -8,7 +8,7 @@
 -- base  For methods: the argument to use as the base argument (1-indexed):
 --       base->method()
 --       Defaults to BASE_NONE (function cannot be used as a method).
--- func  Name of the C function which implements the VimL function. Defaults to
+-- func  Name of the C function which implements the Vimscript function. Defaults to
 --       `f_{funcname}`.
 -- fast  Function can run in |api-fast| events. Defaults to false.
 
