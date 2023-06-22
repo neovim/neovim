@@ -265,7 +265,7 @@ function module.nvim_prog_abs()
   end
 end
 
--- Executes an ex-command. VimL errors manifest as client (lua) errors, but
+-- Executes an ex-command. Vimscript errors manifest as client (lua) errors, but
 -- v:errmsg will not be updated.
 function module.command(cmd)
   module.request('nvim_command', cmd)
@@ -289,26 +289,26 @@ function module.expect_exit(fn_or_timeout, ...)
   end
 end
 
--- Evaluates a VimL expression.
--- Fails on VimL error, but does not update v:errmsg.
+-- Evaluates a Vimscript expression.
+-- Fails on Vimscript error, but does not update v:errmsg.
 function module.eval(expr)
   return module.request('nvim_eval', expr)
 end
 
--- Executes a VimL function via RPC.
--- Fails on VimL error, but does not update v:errmsg.
+-- Executes a Vimscript function via RPC.
+-- Fails on Vimscript error, but does not update v:errmsg.
 function module.call(name, ...)
   return module.request('nvim_call_function', name, {...})
 end
 
--- Executes a VimL function via Lua.
--- Fails on VimL error, but does not update v:errmsg.
+-- Executes a Vimscript function via Lua.
+-- Fails on Vimscript error, but does not update v:errmsg.
 function module.call_lua(name, ...)
   return module.exec_lua([[return vim.call(...)]], name, ...)
 end
 
 -- Sends user input to Nvim.
--- Does not fail on VimL error, but v:errmsg will be updated.
+-- Does not fail on Vimscript error, but v:errmsg will be updated.
 local function nvim_feed(input)
   while #input > 0 do
     local written = module.request('nvim_input', input)
@@ -518,7 +518,7 @@ function module.insert(...)
   nvim_feed('<ESC>')
 end
 
--- Executes an ex-command by user input. Because nvim_input() is used, VimL
+-- Executes an ex-command by user input. Because nvim_input() is used, Vimscript
 -- errors will not manifest as client (lua) errors. Use command() for that.
 function module.feed_command(...)
   for _, v in ipairs({...}) do

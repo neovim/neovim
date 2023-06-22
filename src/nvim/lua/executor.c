@@ -1487,7 +1487,7 @@ int nlua_source_using_linegetter(LineGetter fgetline, void *cookie, char *name)
 
 /// Call a LuaCallable given some typvals
 ///
-/// Used to call any lua callable passed from Lua into VimL
+/// Used to call any Lua callable passed from Lua into Vimscript.
 ///
 /// @param[in]  lstate Lua State
 /// @param[in]  lua_cb Lua Callable
@@ -1622,7 +1622,7 @@ bool nlua_is_deferred_safe(void)
 ///
 /// Used for :lua.
 ///
-/// @param  eap  VimL command being run.
+/// @param  eap  Vimscript command being run.
 void ex_lua(exarg_T *const eap)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1654,7 +1654,7 @@ void ex_lua(exarg_T *const eap)
 ///
 /// Used for :luado.
 ///
-/// @param  eap  VimL command being run.
+/// @param  eap  Vimscript command being run.
 void ex_luado(exarg_T *const eap)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1735,7 +1735,7 @@ void ex_luado(exarg_T *const eap)
 ///
 /// Used for :luafile.
 ///
-/// @param  eap  VimL command being run.
+/// @param  eap  Vimscript command being run.
 void ex_luafile(exarg_T *const eap)
   FUNC_ATTR_NONNULL_ALL
 {

@@ -312,7 +312,7 @@ static inline void tv_blob_set(blob_T *const blob, int idx, uint8_t c)
   ((uint8_t *)blob->bv_ga.ga_data)[idx] = c;
 }
 
-/// Initialize VimL object
+/// Initialize Vimscript object
 ///
 /// Initializes to unlocked VAR_UNKNOWN object.
 ///
@@ -424,7 +424,7 @@ static inline bool tv_get_float_chk(const typval_T *tv, float_T *ret_f)
 ///
 /// Raises an error if object is not number or floating-point.
 ///
-/// @param[in]  tv  VimL object to get value from.
+/// @param[in]  tv  Vimscript object to get value from.
 /// @param[out]  ret_f  Location where resulting float is stored.
 ///
 /// @return true in case of success, false if tv is not a number or float.

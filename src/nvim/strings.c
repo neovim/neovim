@@ -500,13 +500,10 @@ static const char *const e_printf =
 
 /// Get number argument from idxp entry in tvs
 ///
-/// Will give an error message for VimL entry with invalid type or for
-/// insufficient entries.
+/// Will give an error message for Vimscript entry with invalid type or for insufficient entries.
 ///
-/// @param[in]  tvs  List of VimL values. List is terminated by VAR_UNKNOWN
-///                  value.
-/// @param[in,out]  idxp  Index in a list. Will be incremented. Indexing starts
-///                       at 1.
+/// @param[in]  tvs  List of Vimscript values. List is terminated by VAR_UNKNOWN value.
+/// @param[in,out]  idxp  Index in a list. Will be incremented. Indexing starts at 1.
 ///
 /// @return Number value or 0 in case of error.
 static varnumber_T tv_nr(typval_T *tvs, int *idxp)
@@ -530,10 +527,10 @@ static varnumber_T tv_nr(typval_T *tvs, int *idxp)
 
 /// Get string argument from idxp entry in tvs
 ///
-/// Will give an error message for VimL entry with invalid type or for
+/// Will give an error message for Vimscript entry with invalid type or for
 /// insufficient entries.
 ///
-/// @param[in]  tvs  List of VimL values. List is terminated by VAR_UNKNOWN
+/// @param[in]  tvs  List of Vimscript values. List is terminated by VAR_UNKNOWN
 ///                  value.
 /// @param[in,out]  idxp  Index in a list. Will be incremented.
 /// @param[out]  tofree  If the idxp entry in tvs is not a String or a Number,
@@ -564,7 +561,7 @@ static const char *tv_str(typval_T *tvs, int *idxp, char **const tofree)
 
 /// Get pointer argument from the next entry in tvs
 ///
-/// Will give an error message for VimL entry with invalid type or for
+/// Will give an error message for Vimscript entry with invalid type or for
 /// insufficient entries.
 ///
 /// @param[in]  tvs  List of typval_T values.
@@ -595,11 +592,10 @@ static const void *tv_ptr(const typval_T *const tvs, int *const idxp)
 
 /// Get float argument from idxp entry in tvs
 ///
-/// Will give an error message for VimL entry with invalid type or for
+/// Will give an error message for Vimscript entry with invalid type or for
 /// insufficient entries.
 ///
-/// @param[in]  tvs  List of VimL values. List is terminated by VAR_UNKNOWN
-///                  value.
+/// @param[in]  tvs  List of Vimscript values. List is terminated by VAR_UNKNOWN value.
 /// @param[in,out]  idxp  Index in a list. Will be incremented.
 ///
 /// @return Floating-point value or zero in case of error.
@@ -727,7 +723,7 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap)
 /// @param[in]  str_m  String length.
 /// @param[in]  fmt  String format.
 /// @param[in]  ap  Values that should be formatted. Ignored if tvs is not NULL.
-/// @param[in]  tvs  Values that should be formatted, for printf() VimL
+/// @param[in]  tvs  Values that should be formatted, for printf() Vimscript
 ///                  function. Must be NULL in other cases.
 ///
 /// @return Number of bytes excluding NUL byte that would be written to the

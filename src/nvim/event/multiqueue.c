@@ -40,7 +40,7 @@
 //
 // The main reason for this queue hierarchy is to allow focusing on a single
 // event emitter while blocking the main loop. For example, if the `jobwait`
-// VimL function is called on job1, the main loop will temporarily stop polling
+// Vimscript function is called on job1, the main loop will temporarily stop polling
 // the event loop queue and poll job1 queue instead. Same with channels, when
 // calling `rpcrequest` we want to temporarily stop processing events from
 // other sources and focus on a specific channel.

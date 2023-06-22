@@ -5364,7 +5364,7 @@ theend:
   xfree(trans_name);
 }
 
-/// Get the line number from VimL object
+/// Get the line number from Vimscript object
 ///
 /// @note Unlike tv_get_lnum(), this one supports only "$" special string.
 ///
@@ -5517,9 +5517,9 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
   cmd_silent = cmd_silent_save;
 }
 
-/// Builds a process argument vector from a VimL object (typval_T).
+/// Builds a process argument vector from a Vimscript object (typval_T).
 ///
-/// @param[in]  cmd_tv      VimL object
+/// @param[in]  cmd_tv      Vimscript object
 /// @param[out] cmd         Returns the command or executable name.
 /// @param[out] executable  Returns `false` if argv[0] is not executable.
 ///
@@ -6192,7 +6192,7 @@ int read_blob(FILE *const fd, typval_T *rettv, off_T offset, off_T size_arg)
 /// @param[out] len  Length of the resulting string or -1 on error.
 /// @param[in]  endnl If true, the output will end in a newline (if a list).
 /// @param[in]  crlf  If true, list items will be joined with CRLF (if a list).
-/// @returns an allocated string if `tv` represents a VimL string, list, or
+/// @returns an allocated string if `tv` represents a Vimscript string, list, or
 ///          number; NULL otherwise.
 char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl, bool crlf)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
@@ -6338,7 +6338,7 @@ int buf_charidx_to_byteidx(buf_T *buf, linenr_T lnum, int charidx)
   return (int)(t - str);
 }
 
-/// Translate a VimL object into a position
+/// Translate a Vimscript object into a position
 ///
 /// Accepts VAR_LIST and VAR_STRING objects. Does not give an error for invalid
 /// type.
