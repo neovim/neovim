@@ -1740,7 +1740,7 @@ local function text_document_did_save_handler(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
   local text = once(buf_get_full_text)
-  for_each_buffer_client(bufnr, function(client)
+  for _, client in ipairs(lsp.get_active_clients({ bufnr = bufnr })) do
     local name = api.nvim_buf_get_name(bufnr)
     local old_name = changetracking._get_and_set_name(client, bufnr, name)
     if old_name and name ~= old_name then
@@ -1772,7 +1772,7 @@ local function text_document_did_save_handler(bufnr)
         text = included_text,
       })
     end
-  end)
+  end
 end
 
 --- Implements the `textDocument/did…` notifications required to track a buffer
@@ -1808,7 +1808,7 @@ function lsp.buf_attach_client(bufnr, client_id)
       buffer = bufnr,
       desc = 'vim.lsp: textDocument/willSave',
       callback = function(ctx)
-        for_each_buffer_client(ctx.buf, function(client)
+        for _, client in ipairs(lsp.get_active_clients({ bufnr = ctx.buf })) do
           local params = {
             textDocument = {
               uri = uri,
@@ -1827,7 +1827,7 @@ function lsp.buf_attach_client(bufnr, client_id)
               log.error(vim.inspect(err))
             end
           end
-        end)
+        end
       end,
     })
     api.nvim_create_autocmd('BufWritePost', {
@@ -1843,23 +1843,23 @@ function lsp.buf_attach_client(bufnr, client_id)
       on_lines = text_document_did_change_handler,
       on_reload = function()
         local params = { textDocument = { uri = uri } }
-        for_each_buffer_client(bufnr, function(client, _)
+        for _, client in ipairs(lsp.get_active_clients({ bufnr = bufnr })) do
           changetracking.reset_buf(client, bufnr)
           if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
             client.notify('textDocument/didClose', params)
           end
           text_document_did_open_handler(bufnr, client)
-        end)
+        end
       end,
       on_detach = function()
         local params = { textDocument = { uri = uri } }
-        for_each_buffer_client(bufnr, function(client, _)
+        for _, client in ipairs(lsp.get_active_clients({ bufnr = bufnr })) do
           changetracking.reset_buf(client, bufnr)
           if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
             client.notify('textDocument/didClose', params)
           end
           client.attached_buffers[bufnr] = nil
-        end)
+        end
         util.buf_versions[bufnr] = nil
         all_buffer_active_clients[bufnr] = nil
       end,
@@ -1932,7 +1932,7 @@ function lsp.buf_detach_client(bufnr, client_id)
     all_buffer_active_clients[bufnr] = nil
   end
 
-  local namespace = vim.lsp.diagnostic.get_namespace(client_id)
+  local namespace = lsp.diagnostic.get_namespace(client_id)
   vim.diagnostic.reset(namespace, bufnr)
 
   vim.notify(string.format('Detached buffer (id: %d) from client (id: %d)', bufnr, client_id))
@@ -2104,33 +2104,29 @@ function lsp.buf_request(bufnr, method, params, handler)
     handler = { handler, 'f', true },
   })
 
-  local supported_clients = {}
+  bufnr = resolve_bufnr(bufnr)
   local method_supported = false
-  for_each_buffer_client(bufnr, function(client, client_id)
+  local clients = lsp.get_active_clients({ bufnr = bufnr })
+  local client_request_ids = {}
+  for _, client in ipairs(clients) do
     if client.supports_method(method, { bufnr = bufnr }) then
       method_supported = true
-      table.insert(supported_clients, client_id)
+
+      local request_success, request_id = client.request(method, params, handler, bufnr)
+      -- This could only fail if the client shut down in the time since we looked
+      -- it up and we did the request, which should be rare.
+      if request_success then
+        client_request_ids[client.id] = request_id
+      end
     end
-  end)
+  end
 
   -- if has client but no clients support the given method, notify the user
-  if
-    not tbl_isempty(all_buffer_active_clients[resolve_bufnr(bufnr)] or {}) and not method_supported
-  then
+  if next(clients) and not method_supported then
     vim.notify(lsp._unsupported_method(method), vim.log.levels.ERROR)
     nvim_command('redraw')
     return {}, function() end
   end
-
-  local client_request_ids = {}
-  for_each_buffer_client(bufnr, function(client, client_id, resolved_bufnr)
-    local request_success, request_id = client.request(method, params, handler, resolved_bufnr)
-    -- This could only fail if the client shut down in the time since we looked
-    -- it up and we did the request, which should be rare.
-    if request_success then
-      client_request_ids[client_id] = request_id
-    end
-  end, supported_clients)
 
   local function _cancel_all_requests()
     for client_id, request_id in pairs(client_request_ids) do
@@ -2159,11 +2155,11 @@ function lsp.buf_request_all(bufnr, method, params, handler)
   local expected_result_count = 0
 
   local set_expected_result_count = once(function()
-    for_each_buffer_client(bufnr, function(client)
+    for _, client in ipairs(lsp.get_active_clients({ bufnr = bufnr })) do
       if client.supports_method(method, { bufnr = bufnr }) then
         expected_result_count = expected_result_count + 1
       end
-    end)
+    end
   end)
 
   local function _sync_handler(err, result, ctx)
@@ -2226,11 +2222,11 @@ function lsp.buf_notify(bufnr, method, params)
     method = { method, 's' },
   })
   local resp = false
-  for_each_buffer_client(bufnr, function(client, _client_id, _resolved_bufnr)
+  for _, client in ipairs(lsp.get_active_clients({ bufnr = bufnr })) do
     if client.rpc.notify(method, params) then
       resp = true
     end
-  end)
+  end
   return resp
 end
 
@@ -2371,7 +2367,7 @@ function lsp.formatexpr(opts)
       local response =
         client.request_sync('textDocument/rangeFormatting', params, timeout_ms, bufnr)
       if response.result then
-        vim.lsp.util.apply_text_edits(response.result, 0, client.offset_encoding)
+        lsp.util.apply_text_edits(response.result, 0, client.offset_encoding)
         return 0
       end
     end
@@ -2452,6 +2448,7 @@ function lsp.get_log_path()
   return log.get_filename()
 end
 
+---@private
 --- Invokes a function for each LSP client attached to a buffer.
 ---
 ---@param bufnr integer Buffer number
@@ -2463,6 +2460,7 @@ end
 ---                 print(vim.inspect(client))
 ---               end)
 ---             </pre>
+---@deprecated use lsp.get_active_clients({ bufnr = bufnr }) with regular loop
 function lsp.for_each_buffer_client(bufnr, fn)
   return for_each_buffer_client(bufnr, fn)
 end

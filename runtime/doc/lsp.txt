@@ -751,21 +751,6 @@ client_is_stopped({client_id})                   *vim.lsp.client_is_stopped()*
     Return: ~
         (boolean) stopped true if client is stopped, false otherwise.
 
-                                            *vim.lsp.for_each_buffer_client()*
-for_each_buffer_client({bufnr}, {fn})
-    Invokes a function for each LSP client attached to a buffer.
-
-    Parameters: ~
-      • {bufnr}  (integer) Buffer number
-      • {fn}     (function) Function to run on each client attached to buffer
-                 {bufnr}. The function takes the client, client ID, and buffer
-                 number as arguments. Example: >lua
-
-                   vim.lsp.for_each_buffer_client(0, function(client, client_id, bufnr)
-                     print(vim.inspect(client))
-                   end)
-<
-
 formatexpr({opts})                                      *vim.lsp.formatexpr()*
     Provides an interface between the built-in client and a `formatexpr`
     function.

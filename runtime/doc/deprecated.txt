@@ -139,6 +139,7 @@ LSP FUNCTIONS
 						or |vim.lsp.buf.format()| instead.
 - *vim.lsp.util.get_progress_messages()*	Use |vim.lsp.status()| or access
 						`progress` of |vim.lsp.client|
+- *vim.lsp.for_each_buffer_client()*		Use |vim.lsp.get_active_clients()|
 
 TREESITTER FUNCTIONS
 - *vim.treesitter.language.require_language()*	Use |vim.treesitter.language.add()|
