@@ -544,7 +544,7 @@ String nvim__get_lib_dir(void)
 ///
 /// @param pat pattern of files to search for
 /// @param all whether to return all matches or only the first
-/// @param opts is_lua: only search lua subdirs
+/// @param opts is_lua: only search Lua subdirs
 /// @return list of absolute paths to the found files
 ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, Error *err)
   FUNC_API_SINCE(8)
@@ -941,7 +941,7 @@ fail:
 ///
 /// @param buffer the buffer to use (expected to be empty)
 /// @param opts   Optional parameters.
-///          - on_input: lua callback for input sent, i e keypresses in terminal
+///          - on_input: Lua callback for input sent, i e keypresses in terminal
 ///            mode. Note: keypresses are sent raw as they would be to the pty
 ///            master end. For instance, a carriage return is sent
 ///            as a "\r", not as a "\n". |textlock| applies. It is possible
@@ -1009,7 +1009,7 @@ static void term_write(char *buf, size_t size, void *data)  // NOLINT(readabilit
 
 static void term_resize(uint16_t width, uint16_t height, void *data)
 {
-  // TODO(bfredl): lua callback
+  // TODO(bfredl): Lua callback
 }
 
 static void term_close(void *data)

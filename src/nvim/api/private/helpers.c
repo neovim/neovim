@@ -40,10 +40,10 @@
 # include "api/private/ui_events_metadata.generated.h"
 #endif
 
-/// Start block that may cause VimL exceptions while evaluating another code
+/// Start block that may cause Vimscript exceptions while evaluating another code
 ///
-/// Used when caller is supposed to be operating when other VimL code is being
-/// processed and that “other VimL code” must not be affected.
+/// Used when caller is supposed to be operating when other Vimscript code is being
+/// processed and that “other Vimscript code” must not be affected.
 ///
 /// @param[out]  tstate  Location where try state should be saved.
 void try_enter(TryState *const tstate)
@@ -806,7 +806,7 @@ bool api_object_to_bool(Object obj, const char *what, bool nil_value, Error *err
   } else if (obj.type == kObjectTypeInteger) {
     return obj.data.integer;  // C semantics: non-zero int is true
   } else if (obj.type == kObjectTypeNil) {
-    return nil_value;  // caller decides what NIL (missing retval in lua) means
+    return nil_value;  // caller decides what NIL (missing retval in Lua) means
   } else {
     api_set_error(err, kErrorTypeValidation, "%s is not a boolean", what);
     return false;

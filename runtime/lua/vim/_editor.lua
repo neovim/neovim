@@ -3,7 +3,7 @@
 -- Lua code lives in one of three places:
 --    1. runtime/lua/vim/ (the runtime): For "nice to have" features, e.g. the
 --       `inspect` and `lpeg` modules.
---    2. runtime/lua/vim/shared.lua: pure lua functions which always
+--    2. runtime/lua/vim/shared.lua: pure Lua functions which always
 --       are available. Used in the test runner, as well as worker threads
 --       and processes launched from Nvim.
 --    3. runtime/lua/vim/_editor.lua: Code which directly interacts with
@@ -839,10 +839,10 @@ do
   -- some bugs, so fake the two-step dance for now.
   local matches
 
-  --- Omnifunc for completing lua values from the runtime lua interpreter,
+  --- Omnifunc for completing Lua values from the runtime Lua interpreter,
   --- similar to the builtin completion for the `:lua` command.
   ---
-  --- Activate using `set omnifunc=v:lua.vim.lua_omnifunc` in a lua buffer.
+  --- Activate using `set omnifunc=v:lua.vim.lua_omnifunc` in a Lua buffer.
   function vim.lua_omnifunc(find_start, _)
     if find_start == 1 then
       local line = vim.api.nvim_get_current_line()

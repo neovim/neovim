@@ -1076,7 +1076,7 @@ end
 ---       `initialize_result.offsetEncoding` if `capabilities.offsetEncoding` was
 ---       sent to it. You can only modify the `client.offset_encoding` here before
 ---       any notifications are sent. Most language servers expect to be sent client specified settings after
----       initialization. Neovim does not make this assumption. A
+---       initialization. Nvim does not make this assumption. A
 ---       `workspace/didChangeConfiguration` notification should be sent
 ---        to the server during on_init.
 ---

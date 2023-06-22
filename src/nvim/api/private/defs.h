@@ -42,10 +42,10 @@ typedef enum {
 /// Mask for all internal calls
 #define INTERNAL_CALL_MASK (((uint64_t)1) << (sizeof(uint64_t) * 8 - 1))
 
-/// Internal call from VimL code
+/// Internal call from Vimscript code
 #define VIML_INTERNAL_CALL INTERNAL_CALL_MASK
 
-/// Internal call from lua code
+/// Internal call from Lua code
 #define LUA_INTERNAL_CALL (VIML_INTERNAL_CALL + 1)
 
 static inline bool is_internal_call(uint64_t channel_id)

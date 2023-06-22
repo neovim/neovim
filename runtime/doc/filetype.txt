@@ -619,7 +619,7 @@ To use Nvim as a manpager: >
      export MANPAGER='nvim +Man!'
 
 Note that when running `man` from the shell and with that `MANPAGER` in your
-environment, `man` will pre-format the manpage using `groff`. Thus, Neovim
+environment, `man` will pre-format the manpage using `groff`. Thus, Nvim
 will inevitably display the manual page as it was passed to it from stdin. One
 of the caveats of this is that the width will _always_ be hard-wrapped and not
 soft wrapped as with `g:man_hardwrap=0`. You can set in your environment: >

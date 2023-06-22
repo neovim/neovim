@@ -135,8 +135,8 @@ EXTERN PMap(int) tabpage_handles INIT(= MAP_INIT);
 
 /// Structure used for saving state for :try
 ///
-/// Used when caller is supposed to be operating when other VimL code is being
-/// processed and that “other VimL code” must not be affected.
+/// Used when caller is supposed to be operating when other Vimscript code is being
+/// processed and that “other Vimscript code” must not be affected.
 typedef struct {
   except_T *current_exception;
   msglist_T *private_msg_list;

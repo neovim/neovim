@@ -100,7 +100,7 @@ ADVANCED EDITING
 ------------------------------------------------------------------------------
 API (EXTENSIBILITY/SCRIPTING/PLUGINS)
 
-|api|			Nvim API via RPC, Lua and VimL
+|api|			Nvim API via RPC, Lua and Vimscript
 |ui|			Nvim UI protocol
 |lua-guide|		Nvim Lua guide
 |lua|			Lua API

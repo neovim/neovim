@@ -109,7 +109,7 @@ The following new APIs or features were added.
   (or the Vimscript equivalent) to their |config| file.
 
 • A new environment variable named NVIM_APPNAME enables configuring the
-  directories where Neovim should find its configuration and state files. See
+  directories where Nvim should find its configuration and state files. See
   `:help $NVIM_APPNAME` .
 
 • Added support for running Lua scripts from shell using |-l|. >
@@ -117,9 +117,9 @@ The following new APIs or features were added.
 <  Also works with stdin: >
       echo "print(42)" | nvim -l -
 
-• Added an omnifunc implementation for lua, |vim.lua_omnifunc()|
+• Added an omnifunc implementation for Lua, |vim.lua_omnifunc()|
 
-• Added a new experimental |lua-loader| that byte-compiles and caches lua files.
+• Added a new experimental |lua-loader| that byte-compiles and caches Lua files.
   To enable the new loader, add the following at the top of your |init.lua|: >lua
     vim.loader.enable()
 
@@ -223,7 +223,7 @@ The following changes to existing APIs or features add new behavior.
 • The `win_viewport` UI event now contains information about virtual lines,
   meaning that smooth scrolling can now be implemented more consistently.
 
-• The `:= {expr}` syntax can be used to evaluate a lua expression, as
+• The `:= {expr}` syntax can be used to evaluate a Lua expression, as
   a shorter form of `:lua ={expr}`. `:=` and `:[range]=` without argument
   are unchanged. However `:=#` and similar variants using |ex-flags|
   are no longer supported.

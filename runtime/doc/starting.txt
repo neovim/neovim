@@ -241,8 +241,8 @@ argument.
 
 							*-ll*
 -ll {script} [args]
-		Execute a lua script, similarly to |-l|, but the editor is not
-		initialized. This gives a lua environment similar to a worker
+		Execute a Lua script, similarly to |-l|, but the editor is not
+		initialized. This gives a Lua environment similar to a worker
 		thread. See |lua-loop-threading|.
 
 		Unlike `-l` no prior arguments are allowed.
@@ -918,7 +918,7 @@ Shada ("shared data") file			*shada* *shada-file*
 If you exit Vim and later start it again, you would normally lose a lot of
 information.  The ShaDa file can be used to remember that information, which
 enables you to continue where you left off.  Its name is the abbreviation of
-SHAred DAta because it is used for sharing data between Neovim sessions.
+SHAred DAta because it is used for sharing data between Nvim sessions.
 
 This is introduced in section |21.3| of the user manual.
 
@@ -1010,16 +1010,16 @@ MERGING							*shada-merging*
 
 When writing ShaDa files with |:wshada| without bang or at regular exit
 information in the existing ShaDa file is merged with information from current
-Neovim instance.  For this purpose ShaDa files store timestamps associated
+Nvim instance.  For this purpose ShaDa files store timestamps associated
 with ShaDa entries.  Specifically the following is being done:
 
 1. History lines are merged, ordered by timestamp.  Maximum amount of items in
    ShaDa file is defined by 'shada' option (|shada-/|, |shada-:|, |shada-@|,
    etc: one suboption for each character that represents history name
    (|:history|)).
-2. Local marks and changes for files that were not opened by Neovim are copied
-   to new ShaDa file. Marks for files that were opened by Neovim are merged,
-   changes to files opened by Neovim are ignored. |shada-'|
+2. Local marks and changes for files that were not opened by Nvim are copied
+   to new ShaDa file. Marks for files that were opened by Nvim are merged,
+   changes to files opened by Nvim are ignored. |shada-'|
 3. Jump list is merged: jumps are ordered by timestamp, identical jumps
    (identical position AND timestamp) are squashed.
 4. Search patterns and substitute strings are not merged: search pattern or
@@ -1027,14 +1027,14 @@ with ShaDa entries.  Specifically the following is being done:
    to ShaDa file.
 5. For each register entity with greatest timestamp is the only saved.
    |shada-<|
-6. All saved variables are saved from current Neovim instance. Additionally
+6. All saved variables are saved from current Nvim instance. Additionally
    existing variable values are copied, meaning that the only way to remove
    variable from a ShaDa file is either removing it by hand or disabling
    writing variables completely. |shada-!|
 7. For each global mark entity with greatest timestamp is the only saved.
 8. Buffer list and header are the only entries which are not merged in any
    fashion: the only header and buffer list present are the ones from the
-   Neovim instance which was last writing the file. |shada-%|
+   Nvim instance which was last writing the file. |shada-%|
 
 COMPATIBILITY						*shada-compatibility*
 
@@ -1059,13 +1059,13 @@ ShaDa files are forward and backward compatible.  This means that
    history types. |history|
 6. Unknown keys found in register, local mark, global mark, change, jump and
    search pattern entries are saved internally and dumped when writing.
-   Entries created during Neovim session never have such additions.
+   Entries created during Nvim session never have such additions.
 7. Additional elements found in replacement string and history entries are
-   saved internally and dumped. Entries created during Neovim session never
+   saved internally and dumped. Entries created during Nvim session never
    have such additions.
 8. Additional elements found in variable entries are simply ignored when
    reading. When writing new variables they will be preserved during merging,
-   but that's all. Variable values dumped from current Neovim session never
+   but that's all. Variable values dumped from current Nvim session never
    have additional elements, even if variables themselves were obtained by
    reading ShaDa files.
 
@@ -1102,7 +1102,7 @@ start with an existing one to get the format right.  You need to understand
 MessagePack (or, more likely, find software that is able to use it) format to
 do this.  This can be useful in order to create a second file, say
 "~/.my.shada" which could contain certain settings that you always want when
-you first start Neovim.  For example, you can preload registers with
+you first start Nvim.  For example, you can preload registers with
 particular data, or put certain commands in the command line history.  A line
 in your |config| file like >
 	:rshada! ~/.my.shada
@@ -1112,12 +1112,12 @@ file name, using the ":autocmd" command (see |:autocmd|).  More information on
 ShaDa file format is contained in |shada-format| section.
 
 					  *E136* *E929* *shada-error-handling*
-Some errors make Neovim leave temporary file named `{basename}.tmp.X` (X is
+Some errors make Nvim leave temporary file named `{basename}.tmp.X` (X is
 any free letter from `a` to `z`) while normally it will create this file,
 write to it and then rename `{basename}.tmp.X` to `{basename}`. Such errors
 include:
 
-- Errors which make Neovim think that read file is not a ShaDa file at all:
+- Errors which make Nvim think that read file is not a ShaDa file at all:
   non-ShaDa files are not overwritten for safety reasons to avoid accidentally
   destroying an unrelated file.  This could happen e.g. when typing "nvim -i
   file" in place of "nvim -R file" (yes, somebody did that at least with Vim).
@@ -1125,26 +1125,26 @@ include:
 - If writing to the temporary file failed: e.g. because of the insufficient
   space left.
 - If renaming file failed: e.g. because of insufficient permissions.
-- If target ShaDa file has different from the Neovim instance's owners (user
+- If target ShaDa file has different from the Nvim instance's owners (user
   and group) and changing them failed.  Unix-specific, applies only when
-  Neovim was launched from root.
+  Nvim was launched from root.
 
 Do not forget to remove the temporary file or replace the target file with
 temporary one after getting one of the above errors or all attempts to create
 a ShaDa file may fail with |E929|.  If you got one of them when using
-|:wshada| (and not when exiting Neovim: i.e. when you have Neovim session
+|:wshada| (and not when exiting Nvim: i.e. when you have Nvim session
 running) you have additional options:
 
 - First thing which you should consider if you got any error, except failure
   to write to the temporary file: remove existing file and replace it with the
-  temporary file.  Do it even if you have running Neovim instance.
+  temporary file.  Do it even if you have running Nvim instance.
 - Fix the permissions and/or file ownership, free some space and attempt to
   write again.  Do not remove the existing file.
 - Use |:wshada| with bang.  Does not help in case of permission error.  If
   target file was actually the ShaDa file some information may be lost in this
   case.  To make the matters slightly better use |:rshada| prior to writing,
   but this still will loose buffer-local marks and change list entries for any
-  file which is not opened in the current Neovim instance.
+  file which is not opened in the current Nvim instance.
 - Remove the target file from shell and use |:wshada|.  Consequences are not
   different from using |:wshada| with bang, but "rm -f" works in some cases
   when you don't have write permissions.
@@ -1211,7 +1211,7 @@ exactly four MessagePack objects:
                        Key        Data ~
                        generator  Binary, software used to generate ShaDa
                                   file. Is equal to "nvim" when ShaDa file was
-                                  written by Neovim.
+                                  written by Nvim.
                        version    Binary, generator version.
                        encoding   Binary, effective 'encoding' value.
                        max_kbyte  Integer, effective |shada-s| limit value.

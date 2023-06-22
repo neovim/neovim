@@ -306,7 +306,7 @@ end:
 /// make their usage simpler with |vim.cmd()|. For example, instead of
 /// `vim.cmd.bdelete{ count = 2 }`, you may do `vim.cmd.bdelete(2)`.
 ///
-/// On execution error: fails with VimL error, updates v:errmsg.
+/// On execution error: fails with Vimscript error, updates v:errmsg.
 ///
 /// @see |nvim_exec2()|
 /// @see |nvim_command()|

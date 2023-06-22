@@ -989,8 +989,8 @@ start_client({config})                                *vim.lsp.start_client()*
                     if `capabilities.offsetEncoding` was sent to it. You can
                     only modify the `client.offset_encoding` here before any
                     notifications are sent. Most language servers expect to be
-                    sent client specified settings after initialization.
-                    Neovim does not make this assumption. A
+                    sent client specified settings after initialization. Nvim
+                    does not make this assumption. A
                     `workspace/didChangeConfiguration` notification should be
                     sent to the server during on_init.
                   • on_exit Callback (code, signal, client_id) invoked on
@@ -1191,8 +1191,7 @@ format({options})                                       *vim.lsp.buf.format()*
                    fields:
                    • formatting_options (table|nil): Can be used to specify
                      FormattingOptions. Some unspecified options will be
-                     automatically derived from the current Neovim options.
-                     See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#formattingOptions
+                     automatically derived from the current Nvim options. See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#formattingOptions
                    • timeout_ms (integer|nil, default 1000): Time in
                      milliseconds to block for formatting requests. No effect
                      if async=true

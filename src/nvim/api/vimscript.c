@@ -38,7 +38,7 @@
 /// Unlike |nvim_command()| this function supports heredocs, script-scope (s:),
 /// etc.
 ///
-/// On execution error: fails with VimL error, updates v:errmsg.
+/// On execution error: fails with Vimscript error, updates v:errmsg.
 ///
 /// @see |execute()|
 /// @see |nvim_command()|
@@ -126,7 +126,7 @@ theend:
 
 /// Executes an Ex command.
 ///
-/// On execution error: fails with VimL error, updates v:errmsg.
+/// On execution error: fails with Vimscript error, updates v:errmsg.
 ///
 /// Prefer using |nvim_cmd()| or |nvim_exec2()| over this. To evaluate multiple lines of Vim script
 /// or an Ex command directly, use |nvim_exec2()|. To construct an Ex command using a structured
@@ -143,12 +143,12 @@ void nvim_command(String command, Error *err)
   try_end(err);
 }
 
-/// Evaluates a VimL |expression|.
+/// Evaluates a Vimscript |expression|.
 /// Dictionaries and Lists are recursively expanded.
 ///
-/// On execution error: fails with VimL error, updates v:errmsg.
+/// On execution error: fails with Vimscript error, updates v:errmsg.
 ///
-/// @param expr     VimL expression string
+/// @param expr     Vimscript expression string
 /// @param[out] err Error details, if any
 /// @return         Evaluation result or expanded object
 Object nvim_eval(String expr, Error *err)
@@ -192,7 +192,7 @@ Object nvim_eval(String expr, Error *err)
   return rv;
 }
 
-/// Calls a VimL function.
+/// Calls a Vimscript function.
 ///
 /// @param fn Function name
 /// @param args Function arguments
@@ -258,9 +258,9 @@ free_vim_args:
   return rv;
 }
 
-/// Calls a VimL function with the given arguments.
+/// Calls a Vimscript function with the given arguments.
 ///
-/// On execution error: fails with VimL error, updates v:errmsg.
+/// On execution error: fails with Vimscript error, updates v:errmsg.
 ///
 /// @param fn       Function to call
 /// @param args     Function arguments packed in an Array
@@ -272,12 +272,12 @@ Object nvim_call_function(String fn, Array args, Error *err)
   return _call_function(fn, args, NULL, err);
 }
 
-/// Calls a VimL |Dictionary-function| with the given arguments.
+/// Calls a Vimscript |Dictionary-function| with the given arguments.
 ///
-/// On execution error: fails with VimL error, updates v:errmsg.
+/// On execution error: fails with Vimscript error, updates v:errmsg.
 ///
-/// @param dict Dictionary, or String evaluating to a VimL |self| dict
-/// @param fn Name of the function defined on the VimL dict
+/// @param dict Dictionary, or String evaluating to a Vimscript |self| dict
+/// @param fn Name of the function defined on the Vimscript dict
 /// @param args Function arguments packed in an Array
 /// @param[out] err Error details, if any
 /// @return Result of the function call
@@ -363,7 +363,7 @@ typedef struct {
 typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 /// @endcond
 
-/// Parse a VimL expression.
+/// Parse a Vimscript expression.
 ///
 /// @param[in]  expr  Expression to parse. Always treated as a single line.
 /// @param[in]  flags Flags:
