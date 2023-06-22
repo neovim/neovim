@@ -897,14 +897,16 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
     } else {
       // already inside existing inline virtual text with multiple chunks
       VirtTextChunk vtc = kv_A(wlv->virt_inline, wlv->virt_inline_i);
+      wlv->virt_inline_i++;
       wlv->p_extra = vtc.text;
-      wlv->n_extra = (int)strlen(wlv->p_extra);
-      wlv->extra_for_extmark = true;
+      wlv->n_extra = (int)strlen(vtc.text);
+      if (wlv->n_extra == 0) {
+        continue;
+      }
       wlv->c_extra = NUL;
       wlv->c_final = NUL;
       wlv->extra_attr = vtc.hl_id ? syn_id2attr(vtc.hl_id) : 0;
       wlv->n_attr = mb_charlen(vtc.text);
-      wlv->virt_inline_i++;
       // If the text didn't reach until the first window
       // column we need to skip cells.
       if (wlv->skip_cells > 0) {
@@ -925,11 +927,12 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
           wlv->skipped_cells += virt_text_len;
           wlv->n_attr = 0;
           wlv->n_extra = 0;
-
           // go to the start so the next virtual text chunk can be selected.
           continue;
         }
       }
+      assert(wlv->n_extra > 0);
+      wlv->extra_for_extmark = true;
     }
   }
 }

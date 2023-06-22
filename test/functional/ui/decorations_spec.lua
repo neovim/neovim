@@ -2216,6 +2216,51 @@ bbbbbbb]])
       ]]}
   end)
 
+  it('hidden virtual text does not interfere with Visual highlight', function()
+    insert('abcdef')
+    command('set nowrap')
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_text = { { 'XXX', 'Special' } }, virt_text_pos = 'inline' })
+    feed('V2zl')
+    screen:expect{grid=[[
+      {10:X}{7:abcde}^f                                           |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {8:-- VISUAL LINE --}                                 |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      {7:abcde}^f                                            |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {8:-- VISUAL LINE --}                                 |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      {7:bcde}^f                                             |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {8:-- VISUAL LINE --}                                 |
+    ]]}
+  end)
+
   it('highlighting is correct when virtual text wraps with number', function()
     insert([[
     test
@@ -2279,9 +2324,11 @@ bbbbbbb]])
     9000
     0009
     ]])
+    insert('aaa\tbbb')
     command("set diff")
-    meths.buf_set_extmark(0, ns, 0, 1,
-      { virt_text = { { 'test', 'Special' } }, virt_text_pos = 'inline', right_gravity = false })
+    meths.buf_set_extmark(0, ns, 0, 1, { virt_text = { { 'test', 'Special' } }, virt_text_pos = 'inline', right_gravity = false })
+    meths.buf_set_extmark(0, ns, 5, 0, { virt_text = { { '!', 'Special' } }, virt_text_pos = 'inline' })
+    meths.buf_set_extmark(0, ns, 5, 3, { virt_text = { { '' } }, virt_text_pos = 'inline' })
     command("vnew")
     insert([[
     000
@@ -2290,6 +2337,7 @@ bbbbbbb]])
     000
     000
     ]])
+    insert('aaabbb')
     command("set diff")
     feed('gg0')
     screen:expect { grid = [[
@@ -2298,10 +2346,24 @@ bbbbbbb]])
       {9:000                      }│{9:000}{5:9}{9:                    }|
       {9:000                      }│{5:9}{9:000                    }|
       {9:000                      }│{9:000}{5:9}{9:                    }|
-                               │                        |
+      {9:aaabbb                   }│{14:!}{9:aaa}{5:    }{9:bbb             }|
       {1:~                        }│{1:~                       }|
       {1:~                        }│{1:~                       }|
       {15:[No Name] [+]             }{13:[No Name] [+]           }|
+                                                        |
+      ]]}
+    command('wincmd w | set nowrap')
+    feed('zl')
+    screen:expect { grid = [[
+      {9:000                      }│{14:test}{9:000                 }|
+      {9:000                      }│{9:00}{5:9}{9:                     }|
+      {9:000                      }│{9:00}{5:9}{9:                     }|
+      {9:000                      }│{9:000                     }|
+      {9:000                      }│{9:00}{5:9}{9:                     }|
+      {9:aaabbb                   }│{9:aaa}{5:    }{9:bb^b              }|
+      {1:~                        }│{1:~                       }|
+      {1:~                        }│{1:~                       }|
+      {13:[No Name] [+]             }{15:[No Name] [+]           }|
                                                         |
       ]]}
   end)
