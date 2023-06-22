@@ -568,14 +568,20 @@ end
 ---
 ---@param msg string Content of the notification to show to the user.
 ---@param level integer|nil One of the values from |vim.log.levels|.
----@param opts table|nil Optional parameters. Unused by default.
+--- @param opts (table|nil) Options:
+---   - history: (boolean) if true, add to |message-history|.
 function vim.notify(msg, level, opts) -- luacheck: no unused args
+  opts = opts or {}
+  local history = true
+  if type(opts.history) == 'boolean' and not opts.history then
+    history = false
+  end
   if level == vim.log.levels.ERROR then
     vim.api.nvim_err_writeln(msg)
   elseif level == vim.log.levels.WARN then
-    vim.api.nvim_echo({ { msg, 'WarningMsg' } }, true, {})
+    vim.api.nvim_echo({ { msg, 'WarningMsg' } }, history, {})
   else
-    vim.api.nvim_echo({ { msg } }, true, {})
+    vim.api.nvim_echo({ { msg } }, history, {})
   end
 end
 
