@@ -2316,6 +2316,38 @@ bbbbbbb]])
       ]]}
   end)
 
+  it('smoothscroll works correctly when virtual text wraps', function()
+    insert('foobar')
+    meths.buf_set_extmark(0, ns, 0, 3,
+      { virt_text = { { string.rep('X', 55), 'Special' } }, virt_text_pos = 'inline' })
+    command('setlocal smoothscroll')
+    screen:expect{grid=[[
+      foo{10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {10:XXXXXXXX}ba^r                                       |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+      {1:<<<}{10:XXXXX}ba^r                                       |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+  end)
+
   it('in diff mode is highlighted correct', function()
     insert([[
     9000
