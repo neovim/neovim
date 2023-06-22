@@ -89,6 +89,11 @@ local exclude_invalid_urls = {
   ["http://www.jclark.com/"] = "quickfix.txt",
 }
 
+-- Deprecated, brain-damaged files that I don't care about.
+local ignore_errors = {
+  ['pi_netrw.txt'] = true,
+}
+
 local function tofile(fname, text)
   local f = io.open(fname, 'w')
   if not f then
@@ -293,7 +298,10 @@ local function ignore_invalid(s)
   )
 end
 
-local function ignore_parse_error(s)
+local function ignore_parse_error(fname, s)
+  if ignore_errors[vim.fs.basename(fname)] then
+    return true
+  end
   return (
     -- Ignore parse errors for unclosed tag.
     -- This is common in vimdocs and is treated as plaintext by :help.
@@ -339,7 +347,7 @@ end
 --- TODO: port the logic from scripts/check_urls.vim
 local function validate_url(text, fname)
   local ignored = false
-  if vim.fs.basename(fname) == 'pi_netrw.txt' then
+  if ignore_errors[vim.fs.basename(fname)] then
     ignored = true
   elseif text:find('http%:') and not exclude_invalid_urls[text] then
     invalid_urls[text] = vim.fs.basename(fname)
@@ -366,7 +374,7 @@ local function visit_validate(root, level, lang_tree, opt, stats)
   end
 
   if node_name == 'ERROR' then
-    if ignore_parse_error(text) then
+    if ignore_parse_error(opt.fname, text) then
       return
     end
     -- Store the raw text to give context to the error report.
@@ -579,7 +587,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     end
     return s
   elseif node_name == 'ERROR' then
-    if ignore_parse_error(trimmed) then
+    if ignore_parse_error(opt.fname, trimmed) then
       return text
     end
 
