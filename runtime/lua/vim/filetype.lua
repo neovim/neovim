@@ -1174,6 +1174,7 @@ local extension = {
   zir = 'zir',
   zu = 'zimbu',
   zut = 'zimbutempl',
+  zs = 'zserio',
   zsh = 'zsh',
   vala = 'vala',
   web = function(path, bufnr)
