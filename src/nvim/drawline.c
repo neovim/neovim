@@ -869,7 +869,7 @@ static void apply_cursorline_highlight(win_T *wp, winlinevars_T *wlv)
   }
 }
 
-static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t v, bool *do_save)
+static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t v)
 {
   while (wlv->n_extra == 0) {
     if (wlv->virt_inline_i >= kv_size(wlv->virt_inline)) {
@@ -905,7 +905,6 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
       wlv->extra_attr = vtc.hl_id ? syn_id2attr(vtc.hl_id) : 0;
       wlv->n_attr = mb_charlen(vtc.text);
       wlv->virt_inline_i++;
-      *do_save = true;
       // If the text didn't reach until the first window
       // column we need to skip cells.
       if (wlv->skip_cells > 0) {
@@ -1795,9 +1794,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         extmark_attr = decor_redraw_col(wp, (colnr_T)v, wlv.off, selected, &decor_state);
 
         if (!has_fold) {
-          bool do_save = false;
-          handle_inline_virtual_text(wp, &wlv, v, &do_save);
-          if (do_save) {
+          handle_inline_virtual_text(wp, &wlv, v);
+          if (wlv.n_extra > 0) {
             // restore search_attr and area_attr when n_extra is down to zero
             // TODO(bfredl): this is ugly as fuck. look if we can do this some other way.
             saved_search_attr = search_attr;

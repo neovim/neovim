@@ -1675,9 +1675,11 @@ describe('decorations: inline virtual text', function()
                                                         |
     ]]}
 
+    meths.buf_set_extmark(0, ns, 0, 5, {virt_text={{''}, {''}}, virt_text_pos='inline'})
     meths.buf_set_extmark(0, ns, 1, 14, {virt_text={{''}, {': ', 'Special'}, {'string', 'Type'}}, virt_text_pos='inline'})
+    feed('V')
     screen:expect{grid=[[
-      ^for _,item in ipairs(items) do                    |
+      ^f{7:or _,item in ipairs(items) do}                    |
           local text{10:: }{3:string}, hl_id_cell, count = unpack|
       (item)                                            |
           if hl_id_cell ~= nil then                     |
@@ -1686,10 +1688,10 @@ describe('decorations: inline virtual text', function()
           for _ = 1, (count or 1) do                    |
               local cell = line[colpos]                 |
               cell.text = text                          |
-                                                        |
+      {8:-- VISUAL LINE --}                                 |
     ]]}
 
-    feed('jf,')
+    feed('<Esc>jf,')
     screen:expect{grid=[[
       for _,item in ipairs(items) do                    |
           local text{10:: }{3:string}^, hl_id_cell, count = unpack|
