@@ -2145,17 +2145,22 @@ end
 ---@param method (string) LSP method name
 ---@param params (table|nil) Parameters to send to the server
 ---@param handler fun(results: table<integer, {error: lsp.ResponseError, result: any}>) (function)
+---@param filter (function) filter client
 --- Handler called after all requests are completed. Server results are passed as
 --- a `client_id:result` map.
 ---
 ---@return fun() cancel Function that cancels all requests.
-function lsp.buf_request_all(bufnr, method, params, handler)
+function lsp.buf_request_all(bufnr, method, params, handler, filter)
   local results = {}
   local result_count = 0
   local expected_result_count = 0
 
   local set_expected_result_count = once(function()
-    for _, client in ipairs(lsp.get_active_clients({ bufnr = bufnr })) do
+    local clients = lsp.get_active_clients({ bufnr = bufnr })
+    if filter then
+      clients = vim.iter(clients):filter(filter)
+    end
+    for _, client in ipairs(clients) do
       if client.supports_method(method, { bufnr = bufnr }) then
         expected_result_count = expected_result_count + 1
       end
