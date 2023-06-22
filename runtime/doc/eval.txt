@@ -39,7 +39,7 @@ List		An ordered sequence of items, see |List| for details.
 
 Dictionary	An associative, unordered array: Each entry has a key and a
 		value. |Dictionary|
-		Examples:
+		Examples: >
 			{"blue": "#0000ff", "red": "#ff0000"}
 			#{blue: "#0000ff", red: "#ff0000"}
 

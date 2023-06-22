@@ -16,7 +16,7 @@ For a basic explanation, see section |40.3| in the user manual.
 You can specify commands to be executed automatically when reading or writing
 a file, when entering or leaving a buffer or window, and when exiting Vim.
 For example, you can create an autocommand to set the 'cindent' option for
-files matching *.c.  You can also use autocommands to implement advanced
+files matching `*.c`.  You can also use autocommands to implement advanced
 features, such as editing compressed files (see |gzip-example|).  The usual
 place to put autocommands is in your vimrc file.
 
@@ -197,7 +197,7 @@ For READING FILES there are four kinds of events possible:
 Vim uses only one of these four kinds when reading a file.  The "Pre" and
 "Post" events are both triggered, before and after reading the file.
 
-Note that the autocommands for the *ReadPre events and all the Filter events
+Note that the autocommands for the "*ReadPre" events and all the Filter events
 are not allowed to change the current buffer (you will get an error message if
 this happens).  This is to prevent the file to be read into the wrong buffer.
 
@@ -1001,7 +1001,7 @@ TextChangedT			After a change was made to the text in the
 							*TextYankPost*
 TextYankPost			Just after a |yank| or |deleting| command, but not
 				if the black hole register |quote_| is used nor
-				for |setreg()|. Pattern must be *.
+				for |setreg()|. Pattern must be "*".
 				Sets these |v:event| keys:
 				    inclusive
 				    operator
@@ -1417,8 +1417,8 @@ When there is a matching "*Cmd" autocommand, it is assumed it will do the
 writing.  No further writing is done and the other events are not triggered.
 |Cmd-event|
 
-Note that the *WritePost commands should undo any changes to the buffer that
-were caused by the *WritePre commands; otherwise, writing the file will have
+Note that the "*WritePost" commands should undo any changes to the buffer that
+were caused by the "*WritePre" commands; otherwise, writing the file will have
 the side effect of changing the buffer.
 
 Before executing the autocommands, the buffer from which the lines are to be
@@ -1426,15 +1426,15 @@ written temporarily becomes the current buffer.  Unless the autocommands
 change the current buffer or delete the previously current buffer, the
 previously current buffer is made the current buffer again.
 
-The *WritePre and *AppendPre autocommands must not delete the buffer from
+The "*WritePre" and "*AppendPre" autocommands must not delete the buffer from
 which the lines are to be written.
 
 The '[ and '] marks have a special position:
-- Before the *ReadPre event the '[ mark is set to the line just above where
+- Before the "*ReadPre" event the '[ mark is set to the line just above where
   the new lines will be inserted.
-- Before the *ReadPost event the '[ mark is set to the first line that was
+- Before the "*ReadPost" event the '[ mark is set to the first line that was
   just read, the '] mark to the last line.
-- Before executing the *WriteCmd, *WritePre and *AppendPre autocommands the '[
+- Before executing the "*WriteCmd", "*WritePre" and "*AppendPre" autocommands the '[
   mark is set to the first line that will be written, the '] mark to the last
   line.
 Careful: '[ and '] change when using commands that change the buffer.
@@ -1542,7 +1542,7 @@ To read a skeleton (template) file when opening a new file: >
   :autocmd BufNewFile  *.h	0r ~/vim/skeleton.h
   :autocmd BufNewFile  *.java	0r ~/vim/skeleton.java
 
-To insert the current date and time in a *.html file when writing it: >
+To insert the current date and time in a "*.html" file when writing it: >
 
   :autocmd BufWritePre,FileWritePre *.html   ks|call LastMod()|'s
   :fun LastMod()

@@ -197,19 +197,19 @@ be preferred names for highlight groups that are common for many languages.
 These are the suggested group names (if syntax highlighting works properly
 you can see the actual color, except for "Ignore"):
 
-	*Comment	any comment
+	 Comment	any comment
 
-	*Constant	any constant
+	 Constant	any constant
 	 String		a string constant: "this is a string"
 	 Character	a character constant: 'c', '\n'
 	 Number		a number constant: 234, 0xff
 	 Boolean	a boolean constant: TRUE, false
 	 Float		a floating point constant: 2.3e10
 
-	*Identifier	any variable name
+	 Identifier	any variable name
 	 Function	function name (also: methods for classes)
 
-	*Statement	any statement
+	 Statement	any statement
 	 Conditional	if, then, else, endif, switch, etc.
 	 Repeat		for, do, while, etc.
 	 Label		case, default, etc.
@@ -217,31 +217,31 @@ you can see the actual color, except for "Ignore"):
 	 Keyword	any other keyword
 	 Exception	try, catch, throw
 
-	*PreProc	generic Preprocessor
+	 PreProc	generic Preprocessor
 	 Include	preprocessor #include
 	 Define		preprocessor #define
 	 Macro		same as Define
 	 PreCondit	preprocessor #if, #else, #endif, etc.
 
-	*Type		int, long, char, etc.
+	 Type		int, long, char, etc.
 	 StorageClass	static, register, volatile, etc.
 	 Structure	struct, union, enum, etc.
 	 Typedef	A typedef
 
-	*Special	any special symbol
+	 Special	any special symbol
 	 SpecialChar	special character in a constant
 	 Tag		you can use CTRL-] on this
 	 Delimiter	character that needs attention
 	 SpecialComment	special things inside a comment
 	 Debug		debugging statements
 
-	*Underlined	text that stands out, HTML links
+	 Underlined	text that stands out, HTML links
 
-	*Ignore		left blank, hidden  |hl-Ignore|
+	 Ignore		left blank, hidden  |hl-Ignore|
 
-	*Error		any erroneous construct
+	 Error		any erroneous construct
 
-	*Todo		anything that needs extra attention; mostly the
+	 Todo		anything that needs extra attention; mostly the
 			keywords TODO FIXME and XXX
 
 The names marked with * are the preferred groups; the others are minor groups.
@@ -893,7 +893,7 @@ nasm_no_warn		potentially risky syntax not as ToDo
 
 ASPPERL and ASPVBS			*ft-aspperl-syntax* *ft-aspvbs-syntax*
 
-*.asp and *.asa files could be either Perl or Visual Basic script.  Since it's
+`*.asp` and `*.asa` files could be either Perl or Visual Basic script.  Since it's
 hard to detect this you can set two global variables to tell Vim what you are
 using.	For Perl script use: >
 	:let g:filetype_asa = "aspperl"
@@ -979,7 +979,7 @@ Variable		Highlight ~
 *c_ansi_typedefs*		 ... but do standard ANSI types
 *c_ansi_constants*	 ... but do standard ANSI constants
 *c_no_utf*		don't highlight \u and \U in strings
-*c_syntax_for_h*		for *.h files use C syntax instead of C++ and use objc
+*c_syntax_for_h*		for `*.h` files use C syntax instead of C++ and use objc
 			syntax instead of objcpp
 *c_no_if0*		don't highlight "#if 0" blocks as comments
 *c_no_cformat*		don't highlight %-formats in strings
@@ -987,7 +987,7 @@ Variable		Highlight ~
 *c_no_c11*		don't highlight C11 standard items
 *c_no_bsd*		don't highlight BSD specific types
 
-When 'foldmethod' is set to "syntax" then /* */ comments and { } blocks will
+When 'foldmethod' is set to "syntax" then `/* */` comments and { } blocks will
 become a fold.  If you don't want comments to become a fold use: >
 	:let c_no_comment_fold = 1
 "#if 0" blocks are also folded, unless: >
@@ -1034,7 +1034,7 @@ CH						*ch.vim* *ft-ch-syntax*
 C/C++ interpreter.  Ch has similar syntax highlighting to C and builds upon
 the C syntax file.  See |c.vim| for all the settings that are available for C.
 
-By setting a variable you can tell Vim to use Ch syntax for *.h files, instead
+By setting a variable you can tell Vim to use Ch syntax for `*.h` files, instead
 of C or C++: >
 	:let ch_syntax_for_h = 1
 
@@ -1296,7 +1296,7 @@ dosbatch_colons_comment variable to anything: >
 
    :let dosbatch_colons_comment = 1
 
-There is an option that covers whether *.btm files should be detected as type
+There is an option that covers whether `*.btm` files should be detected as type
 "dosbatch" (MS-DOS batch files) or type "btm" (4DOS batch files).  The latter
 is used by default.  You may select the former with the following line: >
 
@@ -1427,13 +1427,13 @@ Euphoria version 3.1.1 (https://www.rapideuphoria.com/) is still necessary
 for developing applications for the DOS platform, which Euphoria version 4
 (https://www.openeuphoria.org/) does not support.
 
-The following file extensions are auto-detected as Euphoria file type:
+The following file extensions are auto-detected as Euphoria file type: >
 
 	*.e, *.eu, *.ew, *.ex, *.exu, *.exw
 	*.E, *.EU, *.EW, *.EX, *.EXU, *.EXW
 
 To select syntax highlighting file for Euphoria, as well as for
-auto-detecting the *.e and *.E file extensions as Euphoria file type,
+auto-detecting the `*.e` and `*.E` file extensions as Euphoria file type,
 add the following line to your startup file: >
 
 	:let g:filetype_euphoria = "euphoria3"
@@ -1442,7 +1442,7 @@ add the following line to your startup file: >
 
 	:let g:filetype_euphoria = "euphoria4"
 
-Elixir and Euphoria share the *.ex file extension.  If the filetype is
+Elixir and Euphoria share the `*.ex` file extension.  If the filetype is
 specifically set as Euphoria with the g:filetype_euphoria variable, or the
 file is determined to be Euphoria based on keywords in the file, then the
 filetype will be set as Euphoria. Otherwise, the filetype will default to
@@ -1469,11 +1469,11 @@ ELIXIR						*elixir.vim* *ft-elixir-syntax*
 Elixir is a dynamic, functional language for building scalable and
 maintainable applications.
 
-The following file extensions are auto-detected as Elixir file types:
+The following file extensions are auto-detected as Elixir file types: >
 
 	*.ex, *.exs, *.eex, *.leex, *.lock
 
-Elixir and Euphoria share the *.ex file extension. If the filetype is
+Elixir and Euphoria share the `*.ex` file extension. If the filetype is
 specifically set as Euphoria with the g:filetype_euphoria variable, or the
 file is determined to be Euphoria based on keywords in the file, then the
 filetype will be set as Euphoria. Otherwise, the filetype will default to
@@ -1905,7 +1905,7 @@ IA64				*ia64.vim* *intel-itanium* *ft-ia64-syntax*
 Highlighting for the Intel Itanium 64 assembly language.  See |asm.vim| for
 how to recognize this filetype.
 
-To have *.inc files be recognized as IA64, add this to your vimrc file: >
+To have `*.inc` files be recognized as IA64, add this to your vimrc file: >
 	:let g:filetype_inc = "ia64"
 
 
@@ -2118,7 +2118,7 @@ set "lite_minlines" to the value you desire.  Example: >
 LPC						*lpc.vim* *ft-lpc-syntax*
 
 LPC stands for a simple, memory-efficient language: Lars Pensjö C.  The
-file name of LPC is usually *.c.  Recognizing these files as LPC would bother
+file name of LPC is usually `*.c`.  Recognizing these files as LPC would bother
 users writing only C programs.	If you want to use LPC syntax in Vim, you
 should set a variable in your vimrc file: >
 
@@ -2153,7 +2153,7 @@ For LPC4 series of LPC: >
 
 For uLPC series of LPC:
 uLPC has been developed to Pike, so you should use Pike syntax
-instead, and the name of your source file should be *.pike
+instead, and the name of your source file should be `*.pike`
 
 
 LUA						*lua.vim* *ft-lua-syntax*
@@ -2230,7 +2230,7 @@ the start of a region, for example 500 lines: >
 
 MATHEMATICA		*mma.vim* *ft-mma-syntax* *ft-mathematica-syntax*
 
-Empty *.m files will automatically be presumed to be Matlab files unless you
+Empty `*.m` files will automatically be presumed to be Matlab files unless you
 have the following in your vimrc: >
 
 	let filetype_m = "mma"
@@ -2437,7 +2437,7 @@ keywords, etc): >
 
 
 The option pascal_symbol_operator controls whether symbol operators such as +,
-*, .., etc. are displayed using the Operator color or not.  To colorize symbol
+`*`, .., etc. are displayed using the Operator color or not.  To colorize symbol
 operators, add the following line to your startup file: >
 
    :let pascal_symbol_operator=1
@@ -2600,7 +2600,7 @@ x = 0 to sync from start.
 PLAINTEX				*plaintex.vim* *ft-plaintex-syntax*
 
 TeX is a typesetting language, and plaintex is the file type for the "plain"
-variant of TeX.  If you never want your *.tex files recognized as plain TeX,
+variant of TeX.  If you never want your `*.tex` files recognized as plain TeX,
 see |ft-tex-plugin|.
 
 This syntax file has the option >
@@ -3149,7 +3149,7 @@ The syntax/sh.vim file provides several levels of syntax-based folding: >
 	let g:sh_fold_enabled= 1     (enable function folding)
 	let g:sh_fold_enabled= 2     (enable heredoc folding)
 	let g:sh_fold_enabled= 4     (enable if/do/for folding)
->
+
 then various syntax items (ie. HereDocuments and function bodies) become
 syntax-foldable (see |:syn-fold|).  You also may add these together
 to get multiple types of folding: >
@@ -3446,8 +3446,8 @@ has a starred form (ie. eqnarray*).
 					*tex-style* *b:tex_stylish*
  Tex: Starting a New Style? ~
 
-One may use "\makeatletter" in *.tex files, thereby making the use of "@" in
-commands available.  However, since the *.tex file doesn't have one of the
+One may use "\makeatletter" in `*.tex` files, thereby making the use of "@" in
+commands available.  However, since the `*.tex` file doesn't have one of the
 following suffices: sty cls clo dtx ltx, the syntax highlighting will flag
 such use of @ as an error.  To solve this: >
 
@@ -3491,7 +3491,7 @@ substitution will not be made.
  Tex: Controlling iskeyword~
 
 Normally, LaTeX keywords support 0-9, a-z, A-z, and 192-255 only. Latex
-keywords don't support the underscore - except when in *.sty files.  The
+keywords don't support the underscore - except when in `*.sty` files.  The
 syntax highlighting script handles this with the following logic:
 
 	* If g:tex_stylish exists and is 1
@@ -3715,7 +3715,7 @@ Vim understands three types of syntax items:
 
 Several syntax ITEMs can be put into one syntax GROUP.	For a syntax group
 you can give highlighting attributes.  For example, you could have an item
-to define a "/* .. */" comment and another one that defines a "// .." comment,
+to define a `/* .. */` comment and another one that defines a "// .." comment,
 and put them both in the "Comment" group.  You can then specify that a
 "Comment" will be in bold font and have a blue color.  You are free to make
 one highlight group for one syntax item, or put all items into one group.
@@ -4473,19 +4473,19 @@ Notes:
   matched.  This doesn't work: "a\nb"ms=e.  You can make the highlighting
   start in another line, this does work: "a\nb"hs=e.
 
-Example (match a comment but don't highlight the /* and */): >
+Example (match a comment but don't highlight the `/* and */`): >vim
   :syntax region Comment start="/\*"hs=e+1 end="\*/"he=s-1
-<
+< >
 	/* this is a comment */
 	  ^^^^^^^^^^^^^^^^^^^	  highlighted
-
-A more complicated Example: >
-  :syn region Exa matchgroup=Foo start="foo"hs=s+2,rs=e+2 matchgroup=Bar end="bar"me=e-1,he=e-1,re=s-1
 <
+A more complicated Example: >vim
+  :syn region Exa matchgroup=Foo start="foo"hs=s+2,rs=e+2 matchgroup=Bar end="bar"me=e-1,he=e-1,re=s-1
+< >
 	 abcfoostringbarabc
 	    mmmmmmmmmmm	    match
 	      sssrrreee	    highlight start/region/end ("Foo", "Exa" and "Bar")
-
+<
 Leading context			*:syn-lc* *:syn-leading* *:syn-context*
 
 Note: This is an obsolete feature, only included for backwards compatibility
@@ -4785,7 +4785,7 @@ matches, nextgroup, etc.  But there are a few differences:
 - When a match with a sync pattern is found, the rest of the line (or group of
   continued lines) is searched for another match.  The last match is used.
   This is used when a line can contain both the start end the end of a region
-  (e.g., in a C-comment like /* this */, the last "*/" is used).
+  (e.g., in a C-comment like `/* this */`, the last "*/" is used).
 
 There are two ways how a match with a sync pattern can be used:
 1. Parsing for highlighting starts where redrawing starts (and where the
@@ -5481,14 +5481,14 @@ memory Vim will consume.
 Only highlighting typedefs, unions and structs can be done too.  For this you
 must use Universal Ctags (https://ctags.io) or Exuberant ctags.
 
-Put these lines in your Makefile:
+Put these lines in your Makefile: >
 
-# Make a highlight file for types.  Requires Universal/Exuberant ctags and awk
-types: types.vim
-types.vim: *.[ch]
-	ctags --c-kinds=gstu -o- *.[ch] |\
-		awk 'BEGIN{printf("syntax keyword Type\t")}\
-			{printf("%s ", $$1)}END{print ""}' > $@
+    # Make a highlight file for types.  Requires Universal/Exuberant ctags and awk
+    types: types.vim
+    types.vim: *.[ch]
+	    ctags --c-kinds=gstu -o- *.[ch] |\
+		    awk 'BEGIN{printf("syntax keyword Type\t")}\
+			    {printf("%s ", $$1)}END{print ""}' > $@
 
 And put these lines in your vimrc: >
 

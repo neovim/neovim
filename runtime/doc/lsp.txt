@@ -24,26 +24,23 @@ QUICKSTART                                              *lsp-quickstart*
 Nvim provides an LSP client, but the servers are provided by third parties.
 Follow these steps to get LSP features:
 
-  1. Install language servers using your package manager or by
-     following the upstream installation instruction.
+1. Install language servers using your package manager or by following the
+   upstream installation instruction. You can find language servers here:
+   https://microsoft.github.io/language-server-protocol/implementors/servers/
 
-     A list of language servers is available at:
+2. Configure the LSP client per language server. See |vim.lsp.start()| or use
+   this minimal example as a guide: >lua
 
-     https://microsoft.github.io/language-server-protocol/implementors/servers/
-
-  2. Configure the LSP client per language server.
-     A minimal example:
->lua
     vim.lsp.start({
       name = 'my-server-name',
       cmd = {'name-of-language-server-executable'},
       root_dir = vim.fs.dirname(vim.fs.find({'setup.py', 'pyproject.toml'}, { upward = true })[1]),
     })
 <
-     See |vim.lsp.start()| for details.
+3. Check that the server attached to the buffer: >
+    :lua =vim.lsp.get_active_clients()
 
-  3. Configure keymaps and autocmds to utilize LSP features.
-     See |lsp-config|.
+4. Configure keymaps and autocmds to use LSP features. See |lsp-config|.
 
                                                         *lsp-config*
                                                         *lsp-defaults*
@@ -103,11 +100,9 @@ calls behind capability checks:
 <
 
 To learn what capabilities are available you can run the following command in
-a buffer with a started LSP client:
+a buffer with a started LSP client: >vim
 
->vim
     :lua =vim.lsp.get_active_clients()[1].server_capabilities
-<
 
 Full list of features provided by default can be found in |lsp-buf|.
 
@@ -115,26 +110,20 @@ Full list of features provided by default can be found in |lsp-buf|.
 FAQ                                                     *lsp-faq*
 
 - Q: How to force-reload LSP?
-  A: Stop all clients, then reload the buffer. >vim
-
+- A: Stop all clients, then reload the buffer. >vim
      :lua vim.lsp.stop_client(vim.lsp.get_active_clients())
      :edit
 
 - Q: Why isn't completion working?
-  A: In the buffer where you want to use LSP, check that 'omnifunc' is set to
-     "v:lua.vim.lsp.omnifunc": >vim
-
-     :verbose set omnifunc?
-
-<     Some other plugin may be overriding the option. To avoid that, you could
-     set the option in an |after-directory| ftplugin, e.g.
-     "after/ftplugin/python.vim".
+- A: In the buffer where you want to use LSP, check that 'omnifunc' is set to
+     "v:lua.vim.lsp.omnifunc": `:verbose set omnifunc?`
+     - Some other plugin may be overriding the option. To avoid that you could
+       set the option in an |after-directory| ftplugin, e.g.
+       "after/ftplugin/python.vim".
 
 - Q: How do I run a request synchronously (e.g. for formatting on file save)?
-  A: Check if the function has an `async` parameter and set the value to
-  false.
-
-     E.g. code formatting: >vim
+- A: Check if the function has an `async` parameter and set the value to
+  false. E.g. code formatting: >vim
 
      " Auto-format *.rs (rust) files prior to saving them
      " (async = false is the default for format)
@@ -142,7 +131,7 @@ FAQ                                                     *lsp-faq*
 <
                                                            *lsp-vs-treesitter*
 - Q: How do LSP and Treesitter compare?
-  A: LSP requires a client and language server. The language server uses
+- A: LSP requires a client and language server. The language server uses
      semantic analysis to understand code at a project level. This provides
      language servers with the ability to rename across files, find
      definitions in external libraries and more.
@@ -173,129 +162,72 @@ when creating a new client. Keys are LSP method names: >vim
                                                                   *lsp-method*
 
 Methods are the names of requests and notifications as defined by the LSP
-specification. These LSP requests/notifications are defined by default:
+specification. These LSP requests/notifications are defined by default in the
+Nvim LSP client (but depends on server support):
 
-    callHierarchy/incomingCalls
-    callHierarchy/outgoingCalls
-    textDocument/codeAction
-    textDocument/completion
-    textDocument/declaration*
-    textDocument/definition
-    textDocument/documentHighlight
-    textDocument/documentSymbol
-    textDocument/formatting
-    textDocument/hover
-    textDocument/implementation*
-    textDocument/inlayHint
-    textDocument/publishDiagnostics
-    textDocument/rangeFormatting
-    textDocument/references
-    textDocument/rename
-    textDocument/semanticTokens/full
-    textDocument/semanticTokens/full/delta
-    textDocument/signatureHelp
-    textDocument/typeDefinition*
-    window/logMessage
-    window/showMessage
-    window/showDocument
-    window/showMessageRequest
-    workspace/applyEdit
-    workspace/inlayHint/refresh
-    workspace/symbol
-
-* NOTE: These are sometimes not implemented by servers.
+- callHierarchy/incomingCalls
+- callHierarchy/outgoingCalls
+- textDocument/codeAction
+- textDocument/completion
+- textDocument/declaration*
+- textDocument/definition
+- textDocument/documentHighlight
+- textDocument/documentSymbol
+- textDocument/formatting
+- textDocument/hover
+- textDocument/implementation*
+- textDocument/inlayHint
+- textDocument/publishDiagnostics
+- textDocument/rangeFormatting
+- textDocument/references
+- textDocument/rename
+- textDocument/semanticTokens/full
+- textDocument/semanticTokens/full/delta
+- textDocument/signatureHelp
+- textDocument/typeDefinition*
+- window/logMessage
+- window/showMessage
+- window/showDocument
+- window/showMessageRequest
+- workspace/applyEdit
+- workspace/inlayHint/refresh
+- workspace/symbol
 
                                                                  *lsp-handler*
+LSP handlers are functions that handle |lsp-response|s to requests made by Nvim
+to the server. (Notifications, as opposed to requests, are fire-and-forget:
+there is no response, so they can't be handled. |lsp-notification|)
 
-LSP handlers are functions with signatures designed to handle LSP responses
-and notifications.
+Each response handler has this signature: >
 
-For |lsp-response|, each |lsp-handler| has this signature: >
-
-  function(err, result, ctx, config)
+    function(err, result, ctx, config)
 <
     Parameters: ~
-        {err}       (table|nil)
-                        When the language server is unable to complete a
-                        request, a table with information about the error is
-                        sent. Otherwise, it is `nil`. See |lsp-response|.
-        {result}    (Result | Params | nil)
-                        When the language server is able to successfully
-                        complete a request, this contains the `result` key of
-                        the response. See |lsp-response|.
-        {ctx}       (table)
-                        Context describes additional calling state associated
-                        with the handler. It consists of the following key,
-                        value pairs:
-
-                        {method}    (string)
-                                    The |lsp-method| name.
-                        {client_id} (number)
-                                    The ID of the |vim.lsp.client|.
-                        {bufnr}     (Buffer)
-                                    Buffer handle, or 0 for current.
-                        {params}    (table|nil)
-                                    The parameters used in the original
-                                    request which resulted in this handler
-                                    call.
-                        {version}   (number) Document version at time of
-                                    request. Handlers can compare this to the
-                                    current document version to check if the
-                                    response is "stale".
-                                    See also |b:changedtick|.
-        {config}    (table)
-                        Configuration for the handler.
-
-                        Each handler can define its own configuration table
-                        that allows users to customize the behavior of a
-                        particular handler.
-
-                        To configure a particular |lsp-handler|, see:
-                            |lsp-handler-configuration|
-
+        - {err}     (table|nil) Error info dict, or `nil` if the request
+                    completed.
+        - {result}  (Result | Params | nil) `result` key of the |lsp-response| or
+                    `nil` if the request failed.
+        - {ctx}     (table) Table of calling state associated with the
+                    handler, with these keys:
+                    - {method}  (string) |lsp-method| name.
+                    - {client_id} (number) |vim.lsp.client| identifier.
+                    - {bufnr}   (Buffer) Buffer handle.
+                    - {params}  (table|nil) Request parameters table.
+                    - {version} (number) Document version at time of
+                                request. Handlers can compare this to the
+                                current document version to check if the
+                                response is "stale". See also |b:changedtick|.
+        - {config}  (table) Handler-defined configuration table, which allows
+                    users to customize handler behavior.
+                    For an example, see:
+                        |vim.lsp.diagnostic.on_publish_diagnostics()|
+                    To configure a particular |lsp-handler|, see:
+                        |lsp-handler-configuration|
 
     Returns: ~
-        The |lsp-handler| can respond by returning two values: `result, err`
-        Where `err` must be shaped like an RPC error:
-            `{ code, message, data? }`
-
-        You can use |vim.lsp.rpc.rpc_response_error()| to create this object.
-
-For |lsp-notification|, each |lsp-handler| has this signature: >
-
-  function(err, result, ctx, config)
-<
-    Parameters: ~
-        {err}       (nil)
-                        This is always `nil`.
-                        See |lsp-notification|
-        {result}    (Result)
-                        This contains the `params` key of the notification.
-                        See |lsp-notification|
-        {ctx}       (table)
-                        Context describes additional calling state associated
-                        with the handler. It consists of the following key,
-                        value pairs:
-
-                        {method}    (string)
-                                        The |lsp-method| name.
-                        {client_id} (number)
-                                        The ID of the |vim.lsp.client|.
-        {config}    (table)
-                        Configuration for the handler.
-
-                        Each handler can define its own configuration table
-                        that allows users to customize the behavior of a
-                        particular handler.
-
-                        For an example, see:
-                            |vim.lsp.diagnostic.on_publish_diagnostics()|
-
-                        To configure a particular |lsp-handler|, see:
-                            |lsp-handler-configuration|
-
-    Returns: ~
-        The |lsp-handler|'s return value will be ignored.
+        Two values `result, err` where `err` is shaped like an RPC error: >
+            { code, message, data? }
+<        You can use |vim.lsp.rpc.rpc_response_error()| to create this object.
 
                                                    *lsp-handler-configuration*
 
@@ -419,12 +351,12 @@ name: >lua
 <
 
                                                                 *lsp-response*
-For the format of the response message, see:
-    https://microsoft.github.io/language-server-protocol/specifications/specification-current/#responseMessage
+LSP response shape:
+https://microsoft.github.io/language-server-protocol/specifications/specification-current/#responseMessage
 
                                                                 *lsp-notification*
-For the format of the notification message, see:
-    https://microsoft.github.io/language-server-protocol/specifications/specification-current/#notificationMessage
+LSP notification shape:
+https://microsoft.github.io/language-server-protocol/specifications/specification-current/#notificationMessage
 
                                                                 *lsp-on-list-handler*
 
