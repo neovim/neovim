@@ -902,35 +902,19 @@ end
 ---@return string
 function lsp.status()
   local percentage = nil
-  local groups = {}
+  local messages = {}
   for _, client in ipairs(vim.lsp.get_active_clients()) do
     for progress in client.progress do
       local value = progress.value
       if type(value) == 'table' and value.kind then
-        local group = groups[progress.token]
-        if not group then
-          group = {}
-          groups[progress.token] = group
-        end
-        group.title = value.title or group.title
-        group.message = value.message or group.message
+        local message = value.message and (value.title .. ': ' .. value.message) or value.title
+        messages[#messages + 1] = message
         if value.percentage then
           percentage = math.max(percentage or 0, value.percentage)
         end
       end
       -- else: Doesn't look like work done progress and can be in any format
       -- Just ignore it as there is no sensible way to display it
-    end
-  end
-  local messages = {}
-  for _, group in pairs(groups) do
-    if group.title then
-      table.insert(
-        messages,
-        group.message and (group.title .. ': ' .. group.message) or group.title
-      )
-    elseif group.message then
-      table.insert(messages, group.message)
     end
   end
   local message = table.concat(messages, ', ')
