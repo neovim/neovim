@@ -125,7 +125,7 @@ function Version:__tostring()
   if self.prerelease then
     ret = ret .. '-' .. self.prerelease
   end
-  if self.build then
+  if self.build and self.build ~= vim.NIL then
     ret = ret .. '+' .. self.build
   end
   return ret
