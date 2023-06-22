@@ -1525,7 +1525,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
     // If there the text doesn't reach to the desired column, need to skip
     // "skip_cells" cells when virtual text follows.
-    if (!wp->w_p_wrap && v > wlv.vcol) {
+    if ((!wp->w_p_wrap || (lnum == wp->w_topline && wp->w_skipcol > 0)) && v > wlv.vcol) {
       wlv.skip_cells = (int)(v - wlv.vcol);
     }
 
