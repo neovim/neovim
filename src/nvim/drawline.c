@@ -128,6 +128,7 @@ typedef struct {
 
   VirtText virt_inline;
   size_t virt_inline_i;
+  HlMode virt_inline_hl_mode;
 
   bool reset_extra_attr;
 
@@ -886,6 +887,7 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
         }
         if (item->draw_col >= -1 && item->start_col == v) {
           wlv->virt_inline = item->decor.virt_text;
+          wlv->virt_inline_hl_mode = item->decor.hl_mode;
           item->draw_col = INT_MIN;
           break;
         }
@@ -1798,7 +1800,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
         if (!has_fold) {
           handle_inline_virtual_text(wp, &wlv, v);
-          if (wlv.n_extra > 0) {
+          if (wlv.n_extra > 0 && wlv.virt_inline_hl_mode <= kHlModeReplace) {
             // restore search_attr and area_attr when n_extra is down to zero
             // TODO(bfredl): this is ugly as fuck. look if we can do this some other way.
             saved_search_attr = search_attr;

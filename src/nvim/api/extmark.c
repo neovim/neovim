@@ -478,7 +478,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                              shifting the underlying text.
 ///                 - "right_align": display right aligned in the window.
 ///                 - "inline": display at the specified column, and
-///                              shift the buffer text to the right as needed
+///                             shift the buffer text to the right as needed
 ///               - virt_text_win_col : position the virtual text at a fixed
 ///                                     window column (starting from the first
 ///                                     text column)
@@ -490,10 +490,10 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                           highlights of the text. Currently only affects
 ///                           virt_text highlights, but might affect `hl_group`
 ///                           in later versions.
-///                 - "replace": only show the virt_text color. This is the
-///                              default
-///                 - "combine": combine with background text color
+///                 - "replace": only show the virt_text color. This is the default.
+///                 - "combine": combine with background text color.
 ///                 - "blend": blend with background text color.
+///                            Not supported for "inline" virt_text.
 ///
 ///               - virt_lines : virtual lines to add next to this mark
 ///                   This should be an array over lines, where each line in
@@ -730,6 +730,11 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     } else if (strequal("combine", str.data)) {
       decor.hl_mode = kHlModeCombine;
     } else if (strequal("blend", str.data)) {
+      if (decor.virt_text_pos == kVTInline) {
+        VALIDATE(false, "%s", "cannot use 'blend' hl_mode with inline virtual text", {
+          goto error;
+        });
+      }
       decor.hl_mode = kHlModeBlend;
     } else {
       VALIDATE_S(false, "hl_mode", str.data, {
