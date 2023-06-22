@@ -99,8 +99,8 @@ Examples:
    scripting is performed by an external host process implemented in ~2k lines
    of Python.
 
-The provider framework invokes VimL from C.  It is composed of two functions
-in eval.c:
+The provider framework invokes Vimscript from C.  It is composed of two
+functions in eval.c:
 
 - eval_call_provider(name, method, arguments, discard): calls
   provider#{name}#Call with the method and arguments. If discard is true, any
@@ -429,7 +429,7 @@ Examples of API-client package names:
 - GOOD: nvim-racket
 - GOOD: pynvim
 - BAD:  python-client
-- BAD:  neovim
+- BAD:  neovim_
 
 API client implementation guidelines ~
 

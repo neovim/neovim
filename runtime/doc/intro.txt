@@ -83,7 +83,7 @@ For the most recent information about sponsoring look on the Vim web site:
 	https://www.vim.org/sponsor/
 
 
-Neovim development is funded separately from Vim:
+Nvim development is funded separately from Vim:
 
 	https://neovim.io/#sponsor
 

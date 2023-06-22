@@ -575,8 +575,8 @@ Python 3						*python3*
 
 As Python 3 is the only supported version in Nvim, "python" is synonymous
 with "python3" in the current version. However, code that aims to support older
-versions of Neovim, as well as Vim, should prefer to use "python3"
-variants explicitly if Python 3 is required.
+versions of Nvim, as well as Vim, should prefer to use "python3" variants
+explicitly if Python 3 is required.
 
 							*:py3* *:python3*
 :[range]py3 {stmt}

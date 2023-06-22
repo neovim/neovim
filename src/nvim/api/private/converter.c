@@ -256,7 +256,7 @@ Object vim_to_object(typval_T *obj)
   return ret;
 }
 
-/// Converts from type Object to a VimL value.
+/// Converts from type Object to a Vimscript value.
 ///
 /// @param obj  Object to convert from.
 /// @param tv   Conversion result is placed here. On failure member v_type is
@@ -283,7 +283,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
   case kObjectTypeTabpage:
   case kObjectTypeInteger:
     STATIC_ASSERT(sizeof(obj.data.integer) <= sizeof(varnumber_T),
-                  "Integer size must be <= VimL number size");
+                  "Integer size must be <= Vimscript number size");
     tv->v_type = VAR_NUMBER;
     tv->vval.v_number = (varnumber_T)obj.data.integer;
     break;

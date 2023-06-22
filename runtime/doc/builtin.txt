@@ -5703,7 +5703,7 @@ mode([expr])	Return a string that indicates the current mode.
 			DoFull()->mode()
 
 msgpackdump({list} [, {type}])				*msgpackdump()*
-		Convert a list of VimL objects to msgpack. Returned value is a
+		Convert a list of Vimscript objects to msgpack. Returned value is a
 		|readfile()|-style list. When {type} contains "B", a |Blob| is
 		returned instead. Example: >
 			call writefile(msgpackdump([{}]), 'fname.mpack', 'b')
@@ -5723,7 +5723,7 @@ msgpackdump({list} [, {type}])				*msgpackdump()*
 
 msgpackparse({data})					*msgpackparse()*
 		Convert a |readfile()|-style list or a |Blob| to a list of
-		VimL objects.
+		Vimscript objects.
 		Example: >
 			let fname = expand('~/.config/nvim/shada/main.shada')
 			let mpack = readfile(fname, 'b')

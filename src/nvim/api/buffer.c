@@ -112,7 +112,7 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 ///               - byte count of previous contents
 ///               - deleted_codepoints (if `utf_sizes` is true)
 ///               - deleted_codeunits (if `utf_sizes` is true)
-///             - on_bytes: lua callback invoked on change.
+///             - on_bytes: Lua callback invoked on change.
 ///               This callback receives more granular information about the
 ///               change compared to on_lines.
 ///               Return `true` to detach.
@@ -1250,11 +1250,11 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 /// buffer/window currently, like |termopen()|.
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
-/// @param fun        Function to call inside the buffer (currently lua callable
+/// @param fun        Function to call inside the buffer (currently Lua callable
 ///                   only)
 /// @param[out] err   Error details, if any
-/// @return           Return value of function. NB: will deepcopy lua values
-///                   currently, use upvalues to send lua references in and out.
+/// @return           Return value of function. NB: will deepcopy Lua values
+///                   currently, use upvalues to send Lua references in and out.
 Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_LUA_ONLY

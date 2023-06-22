@@ -239,7 +239,7 @@ local to_vim_value = {
   end,
 }
 
---- Convert a lua value to a vimoption_T value
+--- Convert a Lua value to a vimoption_T value
 local function convert_value_to_vim(name, info, value)
   if value == nil then
     return vim.NIL
@@ -250,7 +250,7 @@ local function convert_value_to_vim(name, info, value)
   return to_vim_value[info.metatype](info, value)
 end
 
--- Map of OptionType to functions that take vimoption_T values and convert to lua values.
+-- Map of OptionType to functions that take vimoption_T values and convert to Lua values.
 -- Each function takes (info, vim_value) -> lua_value
 local to_lua_value = {
   boolean = passthrough,

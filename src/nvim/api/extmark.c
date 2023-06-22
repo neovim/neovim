@@ -1048,7 +1048,7 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 
 /// Set or change decoration provider for a |namespace|
 ///
-/// This is a very general purpose interface for having lua callbacks
+/// This is a very general purpose interface for having Lua callbacks
 /// being triggered during the redraw code.
 ///
 /// The expected usage is to set |extmarks| for the currently

@@ -108,7 +108,7 @@ to the next.
 ==============================================================================
 2. The VIM module					*perl-vim*
 
-Perl code gets all of its access to Neovim via the "VIM" module.
+Perl code gets all of its access to Nvim via the "VIM" module.
 
 Overview >
 	print "Hello"				# displays a message

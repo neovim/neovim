@@ -70,7 +70,6 @@ local exclude_invalid = {
   ['v:_null_dict'] = 'builtin.txt',
   ['v:_null_list'] = 'builtin.txt',
   ['v:_null_string'] = 'builtin.txt',
-  ['vim.lsp.util.get_progress_messages()'] = 'lsp.txt',
 }
 
 -- False-positive "invalid URLs".
@@ -359,6 +358,8 @@ end
 local function visit_validate(root, level, lang_tree, opt, stats)
   level = level or 0
   local node_name = (root.named and root:named()) and root:type() or nil
+  -- Parent kind (string).
+  local parent = root:parent() and root:parent():type() or nil
   local toplevel = level < 1
   local function node_text(node)
     return vim.treesitter.get_node_text(node or root, opt.buf)
@@ -380,13 +381,13 @@ local function visit_validate(root, level, lang_tree, opt, stats)
     -- Store the raw text to give context to the error report.
     local sample_text = not toplevel and getbuflinestr(root, opt.buf, 3) or '[top level!]'
     table.insert(stats.parse_errors, sample_text)
-  elseif node_name == 'word' or node_name == 'uppercase_name' then
-    if spell_dict[text] then
-      if not invalid_spelling[text] then
-        invalid_spelling[text] = { vim.fs.basename(opt.fname) }
-      else
-        table.insert(invalid_spelling[text], vim.fs.basename(opt.fname))
-      end
+  elseif (node_name == 'word' or node_name == 'uppercase_name')
+    and (not vim.tbl_contains({'codespan', 'taglink', 'tag'}, parent))
+  then
+    local text_nopunct = vim.fn.trim(text, '.,', 0)  -- Ignore some punctuation.
+    if spell_dict[text_nopunct] then
+      invalid_spelling[text_nopunct] = invalid_spelling[text_nopunct] or {}
+      invalid_spelling[text_nopunct][vim.fs.basename(opt.fname)] = node_text(root:parent())
     end
   elseif node_name == 'url' then
     local fixed_url, _ = fix_url(trim(text))
@@ -544,7 +545,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
   elseif node_name == 'language' then
     language = node_text(root)
     return ''
-  elseif node_name == 'code' then
+  elseif node_name == 'code' then  -- Highlighted codeblock (child).
     if is_blank(text) then
       return ''
     end
