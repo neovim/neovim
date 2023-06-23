@@ -951,9 +951,15 @@ fail:
 /// @return Channel id, or 0 on error
 Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
   FUNC_API_SINCE(7)
+  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
+    return 0;
+  }
+
+  if (cmdwin_type != 0 && buf == curbuf) {
+    api_set_error(err, kErrorTypeException, "%s", _(e_cmdwin));
     return 0;
   }
 

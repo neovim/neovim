@@ -515,6 +515,7 @@ end:
 void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, Integer start_col,
                        Integer end_row, Integer end_col, ArrayOf(String) replacement, Error *err)
   FUNC_API_SINCE(7)
+  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
   MAXSIZE_TEMP_ARRAY(scratch, 1);
   if (replacement.size == 0) {

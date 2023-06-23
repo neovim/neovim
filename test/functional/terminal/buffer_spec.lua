@@ -498,3 +498,17 @@ if is_os('win') then
     end)
   end)
 end
+
+describe('termopen()', function()
+  before_each(clear)
+
+  it('disallowed when textlocked and in cmdwin buffer', function()
+    command("autocmd TextYankPost <buffer> ++once call termopen('foo')")
+    matches("Vim%(call%):E565: Not allowed to change text or change window$",
+      pcall_err(command, "normal! yy"))
+
+    feed("q:")
+    eq("Vim:E11: Invalid in command-line window; <CR> executes, CTRL-C quits",
+      pcall_err(funcs.termopen, "bar"))
+  end)
+end)
