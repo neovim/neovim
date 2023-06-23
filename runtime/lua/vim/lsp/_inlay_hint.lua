@@ -144,6 +144,9 @@ end
 ---@private
 local function clear(bufnr)
   bufnr = resolve_bufnr(bufnr)
+  if not bufstates[bufnr] then
+    return
+  end
   reset_timer(bufnr)
   local bufstate = bufstates[bufnr]
   local client_lens = (bufstate or {}).client_hint or {}
@@ -184,7 +187,9 @@ function M.enable(bufnr)
       end,
       on_reload = function(_, cb_bufnr)
         clear(cb_bufnr)
-        bufstates[cb_bufnr] = nil
+        if bufstates[cb_bufnr] and bufstates[cb_bufnr].enabled then
+          bufstates[cb_bufnr] = { enabled = true }
+        end
         M.refresh({ bufnr = cb_bufnr })
       end,
       on_detach = function(_, cb_bufnr)
