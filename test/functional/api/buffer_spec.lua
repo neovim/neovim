@@ -105,6 +105,17 @@ describe('api/buf', function()
       -- it's impossible to get out-of-bounds errors for an unloaded buffer
       eq({}, buffer('get_lines', bufnr, 8888, 9999, 1))
     end)
+
+    it('does not leak memory', function()
+      exec_lua[[
+        local bufnr = vim.api.nvim_create_buf(false, true)
+
+        local lines = vim.fn['repeat']({''}, 1000)
+        for _ = 1, 10000 do
+          vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
+        end
+      ]]
+    end)
   end)
 
   describe('deprecated: {get,set,del}_line', function()
