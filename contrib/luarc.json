@@ -13,6 +13,9 @@
           "teardown",
           "finally",
           "lfs"
+        ],
+        "disable": [
+          "luadoc-miss-see-name"
         ]
     },
     "workspace": {
