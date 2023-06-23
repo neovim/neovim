@@ -48,7 +48,7 @@ jobs:
           cmake --build .deps
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        run: cmake -B build -G Ninja
+        run: cmake -B build -G Ninja -D CI_LINT=ON
 
       - if: "!cancelled()"
         name: Determine if run should be aborted
