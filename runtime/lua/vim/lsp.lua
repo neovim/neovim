@@ -2457,7 +2457,7 @@ end
 ---                   buffer number as arguments. Example:
 ---             <pre>lua
 ---               vim.lsp.for_each_buffer_client(0, function(client, client_id, bufnr)
----                 print(vim.inspect(client))
+---                 vim.print(client)
 ---               end)
 ---             </pre>
 ---@deprecated use lsp.get_active_clients({ bufnr = bufnr }) with regular loop

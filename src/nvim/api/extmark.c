@@ -320,7 +320,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 ///   local ms  = api.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
 ///   -- Get all marks in this buffer + namespace.
 ///   local all = api.nvim_buf_get_extmarks(0, ns, 0, -1, {})
-///   print(vim.inspect(ms))
+///   vim.print(ms)
 /// </pre>
 ///
 /// @param buffer  Buffer handle, or 0 for current buffer

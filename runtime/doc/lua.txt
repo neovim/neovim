@@ -14,7 +14,7 @@ INTRODUCTION                                                       *lua-intro*
 The Lua 5.1 script engine is builtin and always available. Try this command to
 get an idea of what lurks beneath: >vim
 
-    :lua print(vim.inspect(package.loaded))
+    :lua vim.print(package.loaded)
 
 Nvim includes a "standard library" |lua-stdlib| for Lua.  It complements the
 "editor stdlib" (|builtin-functions| and |Ex-commands|) and the |API|, all of
@@ -423,7 +423,7 @@ is unnecessary.
 
 You can peek at the module properties: >vim
 
-    :lua print(vim.inspect(vim))
+    :lua vim.print(vim)
 
 Result is something like this: >
 
@@ -1414,6 +1414,7 @@ inspect({object}, {options})                                   *vim.inspect()*
     Gets a human-readable representation of the given object.
 
     See also: ~
+      • |vim.print()|
       • https://github.com/kikito/inspect.lua
       • https://github.com/mpeterv/vinspect
 
@@ -1538,6 +1539,7 @@ print({...})                                                     *vim.print()*
 
     See also: ~
       • |vim.inspect()|
+      • |:=|
 
 region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})         *vim.region()*
     Get a table of lines with start, end columns for a region marked by two
@@ -3172,7 +3174,7 @@ Iter:find({self}, {f})                                           *Iter:find()*
         any
 
 Iter:fold({self}, {init}, {f})                                   *Iter:fold()*
-    Fold an iterator or table into a single value.
+    Fold ("reduce") an iterator or table into a single value.
 
     Examples: >lua
 

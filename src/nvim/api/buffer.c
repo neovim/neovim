@@ -84,7 +84,7 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 /// Activates buffer-update events on a channel, or as Lua callbacks.
 ///
 /// Example (Lua): capture buffer updates in a global `events` variable
-/// (use "print(vim.inspect(events))" to see its contents):
+/// (use "vim.print(events)" to see its contents):
 /// <pre>lua
 ///   events = {}
 ///   vim.api.nvim_buf_attach(0, false, {

@@ -171,8 +171,8 @@ g8			Print the hex values of the bytes used in the
 			Like ":z" or ":z!", but number the lines.
 
 							*:=*
-:=			Without arg: Print the last line number.
-			with args: equivalent to `:lua ={expr}`. see |:lua|
+:= [args]		Without [args]: prints the last line number.
+			With [args]: equivalent to `:lua ={expr}`. see |:lua|
 
 :{range}=		Prints the last line number in {range}.  For example,
 			this prints the current line number: >

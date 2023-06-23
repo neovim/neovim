@@ -209,7 +209,7 @@ any of these approaches:
      nvim --api-info | python -c 'import msgpack, sys, yaml; yaml.dump(msgpack.unpackb(sys.stdin.buffer.read()), sys.stdout)'
 <
   3. Use the |api_info()| Vimscript function. >vim
-     :lua print(vim.inspect(vim.fn.api_info()))
+     :lua vim.print(vim.fn.api_info())
 <     Example using |filter()| to exclude non-deprecated API functions: >vim
      :new|put =map(filter(api_info().functions, '!has_key(v:val,''deprecated_since'')'), 'v:val.name')
 
@@ -2030,7 +2030,7 @@ whether a buffer is loaded.
 nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
     Activates buffer-update events on a channel, or as Lua callbacks.
 
-    Example (Lua): capture buffer updates in a global `events` variable (use "print(vim.inspect(events))" to see its contents): >lua
+    Example (Lua): capture buffer updates in a global `events` variable (use "vim.print(events)" to see its contents): >lua
       events = {}
       vim.api.nvim_buf_attach(0, false, {
         on_lines=function(...) table.insert(events, {...}) end})
@@ -2554,7 +2554,7 @@ nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
       local ms  = api.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
       -- Get all marks in this buffer + namespace.
       local all = api.nvim_buf_get_extmarks(0, ns, 0, -1, {})
-      print(vim.inspect(ms))
+      vim.print(ms)
 <
 
     Parameters: ~

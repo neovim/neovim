@@ -656,7 +656,7 @@ api_info()						*api_info()*
 		Returns Dictionary of |api-metadata|.
 
 		View it in a nice human-readable format: >
-		       :lua print(vim.inspect(vim.fn.api_info()))
+		       :lua vim.print(vim.fn.api_info())
 
 append({lnum}, {text})					*append()*
 		When {text} is a |List|: Append each item of the |List| as a

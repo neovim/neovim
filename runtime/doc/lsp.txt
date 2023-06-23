@@ -154,16 +154,17 @@ The `vim.lsp.buf_…` functions perform operations for all LSP clients attached
 to the given buffer. |lsp-buf|
 
 LSP request/response handlers are implemented as Lua functions (see
-|lsp-handler|). The |vim.lsp.handlers| table defines default handlers used
-when creating a new client. Keys are LSP method names: >vim
-
-    :lua print(vim.inspect(vim.tbl_keys(vim.lsp.handlers)))
-<
+|lsp-handler|).
                                                                   *lsp-method*
 
-Methods are the names of requests and notifications as defined by the LSP
-specification. These LSP requests/notifications are defined by default in the
-Nvim LSP client (but depends on server support):
+Requests and notifications defined by the LSP specification are referred to as
+"LSP methods". The Nvim LSP client provides default handlers in the global
+|vim.lsp.handlers| table, you can list them with this command: >vim
+
+    :lua vim.print(vim.tbl_keys(vim.lsp.handlers))
+<
+They are also listed below. Note that handlers depend on server support: they
+won't run if your server doesn't support them.
 
 - callHierarchy/incomingCalls
 - callHierarchy/outgoingCalls
@@ -190,8 +191,11 @@ Nvim LSP client (but depends on server support):
 - window/showDocument
 - window/showMessageRequest
 - workspace/applyEdit
+- workspace/configuration
+- workspace/executeCommand
 - workspace/inlayHint/refresh
 - workspace/symbol
+- workspace/workspaceFolders
 
                                                                  *lsp-handler*
 LSP handlers are functions that handle |lsp-response|s to requests made by Nvim
