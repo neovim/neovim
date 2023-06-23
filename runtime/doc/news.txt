@@ -98,7 +98,7 @@ The following new APIs and features were added.
 
 • |nvim_set_keymap()| and |nvim_del_keymap()| now support abbreviations.
 
-• Implemented LSP inlay hints: |vim.lsp.buf.inlay_hint()|
+• Implemented LSP inlay hints: |vim.lsp.inlay_hint()|
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_inlayHint
 
 ==============================================================================

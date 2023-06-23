@@ -2474,6 +2474,13 @@ function lsp.with(handler, override_config)
   end
 end
 
+--- Enable/disable/toggle inlay hints for a buffer
+---@param bufnr (integer) Buffer handle, or 0 for current
+---@param enable (boolean|nil) true/false to enable/disable, nil to toggle
+function lsp.inlay_hint(bufnr, enable)
+  return require('vim.lsp.inlay_hint')(bufnr, enable)
+end
+
 --- Helper function to use when implementing a handler.
 --- This will check that all of the keys in the user configuration
 --- are valid keys and make sense to include for this handler.
