@@ -2183,6 +2183,46 @@ function M.lookup_section(settings, section)
   return settings
 end
 
+---@private
+--- Request updated LSP information for a buffer.
+---
+---@param method string LSP method to call
+---@param opts (nil|table) Optional arguments
+---  - bufnr (integer, default: 0): Buffer to refresh
+---  - only_visible (boolean, default: false): Whether to only refresh for the visible regions of the buffer
+function M._refresh(method, opts)
+  opts = opts or {}
+  local bufnr = opts.bufnr
+  if bufnr == nil or bufnr == 0 then
+    bufnr = api.nvim_get_current_buf()
+  end
+  local only_visible = opts.only_visible or false
+  for _, window in ipairs(api.nvim_list_wins()) do
+    if api.nvim_win_get_buf(window) == bufnr then
+      local first = vim.fn.line('w0', window)
+      local last = vim.fn.line('w$', window)
+      local params = {
+        textDocument = M.make_text_document_params(bufnr),
+        range = {
+          start = { line = first - 1, character = 0 },
+          ['end'] = { line = last, character = 0 },
+        },
+      }
+      vim.lsp.buf_request(bufnr, method, params)
+    end
+  end
+  if not only_visible then
+    local params = {
+      textDocument = M.make_text_document_params(bufnr),
+      range = {
+        start = { line = 0, character = 0 },
+        ['end'] = { line = api.nvim_buf_line_count(bufnr), character = 0 },
+      },
+    }
+    vim.lsp.buf_request(bufnr, method, params)
+  end
+end
+
 M._get_line_byte_from_position = get_line_byte_from_position
 
 ---@nodoc

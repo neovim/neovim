@@ -73,6 +73,7 @@ return {
     'LspAttach',              -- after an LSP client attaches to a buffer
     'LspDetach',              -- after an LSP client detaches from a buffer
     'LspRequest',             -- after an LSP request is started, canceled, or completed
+    'LspNotify',              -- after an LSP notice has been sent to the server
     'LspTokenUpdate',         -- after a visible LSP token is updated
     'LspProgress',            -- after a LSP progress update
     'MenuPopup',              -- just before popup menu is displayed
@@ -154,6 +155,7 @@ return {
     DiagnosticChanged=true,
     LspAttach=true,
     LspDetach=true,
+    LspNotify=true,
     LspRequest=true,
     LspProgress=true,
     LspTokenUpdate=true,

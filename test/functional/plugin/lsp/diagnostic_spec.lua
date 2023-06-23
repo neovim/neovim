@@ -1,9 +1,12 @@
 local helpers = require('test.functional.helpers')(after_each)
+local lsp_helpers = require('test.functional.plugin.lsp.helpers')
 
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
 local neq = require('test.helpers').neq
+
+local create_server_definition = lsp_helpers.create_server_definition
 
 describe('vim.lsp.diagnostic', function()
   local fake_uri
@@ -263,6 +266,99 @@ describe('vim.lsp.diagnostic', function()
       ]]
       neq(bufnr, -1)
       eq(exec_lua([[return #vim.diagnostic.get(...)]], bufnr), 0)
+    end)
+  end)
+
+  describe('vim.lsp.diagnostic.on_diagnostic', function()
+    before_each(function()
+      exec_lua(create_server_definition)
+      exec_lua([[
+        server = _create_server({
+          capabilities = {
+            diagnosticProvider = {
+            }
+          }
+        })
+
+        function get_extmarks(bufnr, client_id)
+          local namespace = vim.lsp.diagnostic.get_namespace(client_id, true)
+          local ns = vim.diagnostic.get_namespace(namespace)
+          local extmarks = {}
+          if ns.user_data.virt_text_ns then
+            for _, e in pairs(vim.api.nvim_buf_get_extmarks(bufnr, ns.user_data.virt_text_ns, 0, -1, {details=true})) do
+              table.insert(extmarks, e)
+            end
+          end
+          if ns.user_data.underline_ns then
+            for _, e in pairs(vim.api.nvim_buf_get_extmarks(bufnr, ns.user_data.underline_ns, 0, -1, {details=true})) do
+              table.insert(extmarks, e)
+            end
+          end
+          return extmarks
+        end
+
+        client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+      ]])
+    end)
+
+    it('adds diagnostics to vim.diagnostics', function()
+      local diags = exec_lua([[
+        vim.lsp.diagnostic.on_diagnostic(nil,
+          {
+            kind = 'full',
+            items = {
+              make_error('Pull Diagnostic', 4, 4, 4, 4),
+            }
+          },
+          {
+            params = {
+              textDocument = { uri = fake_uri },
+            },
+            uri = fake_uri,
+            client_id = client_id,
+          },
+          {}
+        )
+
+        return vim.diagnostic.get(diagnostic_bufnr)
+      ]])
+      eq(1, #diags)
+      eq('Pull Diagnostic', diags[1].message)
+    end)
+
+    it('allows configuring the virtual text via vim.lsp.with', function()
+      local expected_spacing = 10
+      local extmarks = exec_lua(
+        [[
+        Diagnostic = vim.lsp.with(vim.lsp.diagnostic.on_diagnostic, {
+          virtual_text = {
+            spacing = ...,
+          },
+        })
+
+        Diagnostic(nil,
+          {
+            kind = 'full',
+            items = {
+              make_error('Pull Diagnostic', 4, 4, 4, 4),
+            }
+          },
+          {
+            params = {
+              textDocument = { uri = fake_uri },
+            },
+            uri = fake_uri,
+            client_id = client_id,
+          },
+          {}
+        )
+
+        return get_extmarks(diagnostic_bufnr, client_id)
+      ]],
+        expected_spacing
+      )
+      eq(2, #extmarks)
+      eq(expected_spacing, #extmarks[1][4].virt_text[1][1])
     end)
   end)
 end)

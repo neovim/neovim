@@ -214,6 +214,10 @@ M['textDocument/publishDiagnostics'] = function(...)
   return require('vim.lsp.diagnostic').on_publish_diagnostics(...)
 end
 
+M['textDocument/diagnostic'] = function(...)
+  return require('vim.lsp.diagnostic').on_diagnostic(...)
+end
+
 M['textDocument/codeLens'] = function(...)
   return require('vim.lsp.codelens').on_codelens(...)
 end

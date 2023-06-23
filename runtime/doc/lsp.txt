@@ -175,6 +175,7 @@ won't run if your server doesn't support them.
 - textDocument/completion
 - textDocument/declaration*
 - textDocument/definition
+- textDocument/diagnostic
 - textDocument/documentHighlight
 - textDocument/documentSymbol
 - textDocument/formatting
@@ -553,6 +554,27 @@ to the callback in the "data" table. The token fields are documented in
 Note: doing anything other than calling
 |vim.lsp.semantic_tokens.highlight_token()| is considered experimental.
 
+LspNotify                                                          *LspNotify*
+
+This event is triggered after each successful notification sent to an LSP server.
+
+When used from Lua, the client_id, LSP method, and parameters are sent in the
+"data" table. Example: >lua
+
+    vim.api.nvim_create_autocmd('LspNotify', {
+      callback = function(args)
+        local bufnr = args.buf
+        local client_id = args.data.client_id
+        local method = args.data.method
+        local params = args.data.params
+
+        -- do something with the notification
+        if method == 'textDocument/...' then
+          update_buffer(bufnr)
+        end
+      end,
+    })
+<
 
 LspRequest                                                        *LspRequest*
 
@@ -1328,12 +1350,44 @@ workspace_symbol({query}, {options})          *vim.lsp.buf.workspace_symbol()*
 ==============================================================================
 Lua module: vim.lsp.diagnostic                                *lsp-diagnostic*
 
-get_namespace({client_id})                *vim.lsp.diagnostic.get_namespace()*
+                                          *vim.lsp.diagnostic.get_namespace()*
+get_namespace({client_id}, {is_pull})
     Get the diagnostic namespace associated with an LSP client
-    |vim.diagnostic|.
+    |vim.diagnostic| for diagnostics
 
     Parameters: ~
       • {client_id}  (integer) The id of the LSP client
+      • {is_pull}    (boolean) Whether the namespace is for a pull or push
+                     client
+
+                                          *vim.lsp.diagnostic.on_diagnostic()*
+on_diagnostic({_}, {result}, {ctx}, {config})
+    |lsp-handler| for the method "textDocument/diagnostic"
+
+    See |vim.diagnostic.config()| for configuration options. Handler-specific
+    configuration can be set using |vim.lsp.with()|: >lua
+
+     vim.lsp.handlers["textDocument/diagnostic"] = vim.lsp.with(
+       vim.lsp.diagnostic.on_diagnostic, {
+         -- Enable underline, use default values
+         underline = true,
+         -- Enable virtual text, override spacing to 4
+         virtual_text = {
+           spacing = 4,
+         },
+         -- Use a function to dynamically turn signs off
+         -- and on, using buffer local variables
+         signs = function(namespace, bufnr)
+           return vim.b[bufnr].show_signs == true
+         end,
+         -- Disable a feature
+         update_in_insert = false,
+       }
+     )
+<
+
+    Parameters: ~
+      • {config}  (table) Configuration table (see |vim.diagnostic.config()|).
 
                                  *vim.lsp.diagnostic.on_publish_diagnostics()*
 on_publish_diagnostics({_}, {result}, {ctx}, {config})
