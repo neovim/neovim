@@ -145,6 +145,7 @@ EVENTS
 • |:delmarks| now triggers the |MarkSet| autocommand with line==col==0, same
   as |nvim_buf_del_mark()|
 • |TextPutPre| and |TextPutPost| are triggered before/after putting text.
+• |TabMoved| is triggered when tabs are reordered.
 
 HIGHLIGHTS
 

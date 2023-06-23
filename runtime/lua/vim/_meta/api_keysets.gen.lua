@@ -194,6 +194,7 @@ error('Cannot require a meta file')
 --- |'TabClosedPre'
 --- |'TabEnter'
 --- |'TabLeave'
+--- |'TabMoved'
 --- |'TabNew'
 --- |'TabNewEntered'
 --- |'TermChanged'

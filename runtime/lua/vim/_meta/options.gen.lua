@@ -2240,6 +2240,7 @@ vim.go.ei = vim.go.eventignore
 --- 	`TabClosedPre`,
 --- 	`TabEnter`,
 --- 	`TabLeave`,
+--- 	`TabMoved`,
 --- 	`TabNew`,
 --- 	`TabNewEntered`,
 --- 	`TermClose`,

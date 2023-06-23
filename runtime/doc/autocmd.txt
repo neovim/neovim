@@ -1165,6 +1165,14 @@ TabEnter			Just after entering a |tabpage|.
 TabLeave			Just before leaving a |tabpage|.
 				After WinLeave.
 
+							*TabMoved*
+TabMoved			After a |tabpage| is moved.
+				See |:tabmove|. <amatch> expands to the
+				affected |tabpage-number| before the move.
+				The |event-data| has these keys (type: `vim.event.tabmoved.data`)
+				- tabnr_old: |tabpage-number| before the move.
+				- tabnr_new: |tabpage-number| after the move.
+
 							*TabNew*
 TabNew				When creating a new |tabpage|.
 				After WinEnter.

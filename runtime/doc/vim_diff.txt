@@ -341,6 +341,7 @@ Events (autocommands):
 - |RecordingLeave|
 - |SearchWrapped|
 - |Signal|
+- |TabMoved|
 - |TabNewEntered|
 - |TermClose|
 - |TermOpen|

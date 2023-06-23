@@ -113,6 +113,7 @@ return {
     TabClosedPre = false, -- before closing a tab page
     TabEnter = false, -- after entering a tab page
     TabLeave = false, -- before leaving a tab page
+    TabMoved = false, -- after a tab was moved
     TabNew = false, -- when creating a new tab
     TabNewEntered = false, -- after entering a new tab
     TermChanged = false, -- after changing 'term'
@@ -171,6 +172,7 @@ return {
     RecordingEnter = true,
     RecordingLeave = true,
     Signal = true,
+    TabMoved = true,
     TabNewEntered = true,
     TermClose = true,
     TermOpen = true,

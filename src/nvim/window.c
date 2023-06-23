@@ -5005,6 +5005,7 @@ void tabpage_move(int nr)
     return;
   }
 
+  int old_nr = tabpage_index(curtab);
   tabpage_T *tp_dst = tp;
 
   // Remove the current tab page from the list of tab pages.
@@ -5035,6 +5036,15 @@ void tabpage_move(int nr)
 
   // Need to redraw the tabline.  Tab page contents doesn't change.
   redraw_tabline = true;
+
+  if (has_event(EVENT_TABMOVED)) {
+    char prev_idx[NUMBUFLEN];
+    vim_snprintf(prev_idx, NUMBUFLEN, "%i", old_nr);
+    MAXSIZE_TEMP_DICT(data, 2);
+    PUT_C(data, "tabnr_old", INTEGER_OBJ(old_nr));
+    PUT_C(data, "tabnr_new", INTEGER_OBJ(tabpage_index(curtab)));
+    aucmd_defer(EVENT_TABMOVED, prev_idx, NULL, AUGROUP_ALL, curbuf, NULL, &DICT_OBJ(data));
+  }
 }
 
 /// Go to another window.

@@ -1843,6 +1843,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
         || event == EVENT_SPELLFILEMISSING
         || event == EVENT_SYNTAX
         || event == EVENT_TABCLOSED
+        || event == EVENT_TABMOVED
         || event == EVENT_USER
         || event == EVENT_WINCLOSED
         || event == EVENT_WINRESIZED
