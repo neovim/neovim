@@ -100,8 +100,9 @@ return {
     'TabClosed',              -- a tab has closed
     'TabEnter',               -- after entering a tab page
     'TabLeave',               -- before leaving a tab page
-    'TabNew',                 -- when creating a new tab
+    'TabMoved',               -- after a tab was moved
     'TabNewEntered',          -- after entering a new tab
+    'TabNew',                 -- when creating a new tab
     'TermChanged',            -- after changing 'term'
     'TermClose',              -- after the process exits
     'TermEnter',              -- after entering Terminal mode
@@ -160,6 +161,7 @@ return {
     RecordingEnter=true,
     RecordingLeave=true,
     Signal=true,
+    TabMoved=true,
     TabNewEntered=true,
     TermClose=true,
     TermOpen=true,
