@@ -705,7 +705,7 @@ let s:filename_checks = {
 
 let s:filename_case_checks = {
     \ 'modula2': ['file.DEF'],
-    \ 'bzl': ['file.BUILD', 'BUILD'],
+    \ 'bzl': ['file.BUILD', 'BUILD', 'BUCK'],
     \ }
 
 func CheckItems(checks)

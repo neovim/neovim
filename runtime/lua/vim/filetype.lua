@@ -1372,6 +1372,7 @@ local filename = {
   ['named.root'] = 'bindzone',
   WORKSPACE = 'bzl',
   ['WORKSPACE.bzlmod'] = 'bzl',
+  BUCK = 'bzl',
   BUILD = 'bzl',
   ['cabal.project'] = 'cabalproject',
   ['cabal.config'] = 'cabalconfig',
