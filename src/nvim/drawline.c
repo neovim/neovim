@@ -134,6 +134,7 @@ typedef struct {
 
   int skip_cells;                   // nr of cells to skip for virtual text
   int skipped_cells;                // nr of skipped virtual text cells
+  bool more_virt_inline_chunks;     // indicates if there is more inline virtual text after n_extra
 } winlinevars_T;
 
 /// for line_putchar. Contains the state that needs to be remembered from
@@ -870,6 +871,25 @@ static void apply_cursorline_highlight(win_T *wp, winlinevars_T *wlv)
   }
 }
 
+// Checks if there is more inline virtual text that need to be drawn
+// and sets has_more_virt_inline_chunks to reflect that.
+static bool has_more_inline_virt(winlinevars_T *wlv, ptrdiff_t v)
+{
+  DecorState *state = &decor_state;
+  for (size_t i = 0; i < kv_size(state->active); i++) {
+    DecorRange *item = &kv_A(state->active, i);
+    if (item->start_row != state->row
+        || !kv_size(item->decor.virt_text)
+        || item->decor.virt_text_pos != kVTInline) {
+      continue;
+    }
+    if (item->draw_col >= -1 && item->start_col >= v) {
+      return true;
+    }
+  }
+  return false;
+}
+
 static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t v)
 {
   while (wlv->n_extra == 0) {
@@ -892,6 +912,7 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
           break;
         }
       }
+      wlv->more_virt_inline_chunks = has_more_inline_virt(wlv, v);
       if (!kv_size(wlv->virt_inline)) {
         // no more inline virtual text here
         break;
@@ -909,6 +930,11 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
       wlv->c_final = NUL;
       wlv->extra_attr = vtc.hl_id ? syn_id2attr(vtc.hl_id) : 0;
       wlv->n_attr = mb_charlen(vtc.text);
+
+      // Checks if there is more inline virtual text chunks that need to be drawn.
+      wlv->more_virt_inline_chunks = has_more_inline_virt(wlv, v)
+                                     || wlv->virt_inline_i < kv_size(wlv->virt_inline);
+
       // If the text didn't reach until the first window
       // column we need to skip cells.
       if (wlv->skip_cells > 0) {
@@ -2874,7 +2900,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         && !has_fold
         && (*ptr != NUL
             || lcs_eol_one > 0
-            || (wlv.n_extra > 0 && (wlv.c_extra != NUL || *wlv.p_extra != NUL)))) {
+            || (wlv.n_extra > 0 && (wlv.c_extra != NUL || *wlv.p_extra != NUL))
+            || wlv.more_virt_inline_chunks)) {
       c = wp->w_p_lcs_chars.ext;
       wlv.char_attr = win_hl_attr(wp, HLF_AT);
       mb_c = c;
@@ -3064,7 +3091,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
             || (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL
                 && wlv.p_extra != at_end_str)
             || (wlv.n_extra != 0
-                && (wlv.c_extra != NUL || *wlv.p_extra != NUL)))) {
+                && (wlv.c_extra != NUL || *wlv.p_extra != NUL)) || wlv.more_virt_inline_chunks)) {
       bool wrap = wp->w_p_wrap       // Wrapping enabled.
                   && wlv.filler_todo <= 0          // Not drawing diff filler lines.
                   && lcs_eol_one != -1         // Haven't printed the lcs_eol character.

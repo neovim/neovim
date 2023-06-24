@@ -2506,6 +2506,28 @@ bbbbbbb]])
                                                                                         |
     ]]}
   end)
+
+  it('list "extends" is drawn with only inline virtual text offscreen', function()
+    command('set nowrap')
+    command('set list')
+    command('set listchars+=extends:c')
+    meths.buf_set_extmark(0, ns, 0, 0,
+      { virt_text = { { 'test', 'Special' } }, virt_text_pos = 'inline' })
+    insert(string.rep('a', 50))
+    feed('gg0')
+    screen:expect { grid = [[
+      ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{1:c}|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+      ]]}
+  end)
 end)
 
 describe('decorations: virtual lines', function()
