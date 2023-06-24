@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2022 Nov 10
+" Last Change: 2023 Jun 24
 "
 " WORK IN PROGRESS - The basics works stable, more to come
 " Note: In general you need at least GDB 7.12 because this provides the
@@ -87,6 +87,8 @@ func s:Breakpoint2SignNumber(id, subid)
   return s:break_id + a:id * 1000 + a:subid
 endfunction
 
+" Define or adjust the default highlighting, using background "new".
+" When the 'background' option is set then "old" has the old value.
 func s:Highlight(init, old, new)
   let default = a:init ? 'default ' : ''
   if a:new ==# 'light' && a:old !=# 'light'
@@ -96,9 +98,21 @@ func s:Highlight(init, old, new)
   endif
 endfunc
 
-call s:Highlight(1, '', &background)
-hi default debugBreakpoint term=reverse ctermbg=red guibg=red
-hi default debugBreakpointDisabled term=reverse ctermbg=gray guibg=gray
+" Define the default highlighting, using the current 'background' value.
+func s:InitHighlight()
+  call s:Highlight(1, '', &background)
+  hi default debugBreakpoint term=reverse ctermbg=red guibg=red
+  hi default debugBreakpointDisabled term=reverse ctermbg=gray guibg=gray
+endfunc
+
+" Setup an autocommand to redefine the default highlight when the colorscheme
+" is changed.
+func s:InitAutocmd()
+  augroup TermDebug
+    autocmd!
+    autocmd ColorScheme * call s:InitHighlight()
+  augroup END
+endfunc
 
 " Get the command to execute the debugger as a list, defaults to ["gdb"].
 func s:GetCommand()
@@ -1663,6 +1677,9 @@ func s:BufUnloaded()
     endfor
   endfor
 endfunc
+
+call s:InitHighlight()
+call s:InitAutocmd()
 
 let &cpo = s:keepcpo
 unlet s:keepcpo
