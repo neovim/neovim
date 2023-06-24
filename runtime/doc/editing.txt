@@ -804,8 +804,8 @@ first line (the last line in Ex mode).
 
 							*{arglist}*
 The wildcards in the argument list are expanded and the file names are sorted.
-Thus you can use the command "vim *.c" to edit all the C files.  From within
-Vim the command ":n *.c" does the same.
+Thus you can use the command `vim *.c` to edit all the C files.  From within
+Vim the command `:n *.c` does the same.
 
 White space is used to separate file names.  Put a backslash before a space or
 tab to include it in a file name.  E.g., to edit the single file "foo bar": >
@@ -889,7 +889,7 @@ Example: >
 	:args *.c
 	:argdo set ff=unix | update
 This sets the 'fileformat' option to "unix" and writes the file if it is now
-changed.  This is done for all *.c files.
+changed.  This is done for all `*.c` files.
 
 Example: >
 	:args *.[ch]
@@ -1245,8 +1245,8 @@ If you want to always use ":confirm", set the 'confirm' option.
 			|:diffsplit|, |:diffpatch|, |:pedit|, |:redir|,
 			|:source|, |:update|, |:visual|, |:vsplit|,
 			and |:qall| if 'confirm' is set.
-			{only in Win32 GUI, in console `browse edit` works
-			if the FileExplorer autocommand group exists}
+			Note: only in Win32 GUI; in console `:browse edit`
+			works if the FileExplorer autocommand group exists.
 			When ":browse" is not possible you get an error
 			message.  If {command} doesn't support browsing, the
 			{command} is executed without a dialog.

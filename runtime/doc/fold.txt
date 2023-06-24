@@ -253,7 +253,7 @@ This does not work properly when:
   know what to do.
 - Folds nearby use a level number in their marker which gets in the way.
 - The line is inside a comment, 'commentstring' isn't empty and nested
-  comments don't work.  For example with C: adding /* {{{ */ inside a comment
+  comments don't work.  For example with C: adding `/* {{{ */` inside a comment
   will truncate the existing comment.  Either put the marker before or after
   the comment, or add the marker manually.
 Generally it's not a good idea to let Vim create markers when you already have

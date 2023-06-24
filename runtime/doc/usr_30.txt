@@ -517,12 +517,12 @@ The other way around works just as well: >
 
 One of the great things about Vim is that it understands comments.  You can
 ask Vim to format a comment and it will do the right thing.
-   Suppose, for example, that you have the following comment:
+   Suppose, for example, that you have the following comment: >c
 
-	/* ~
-	 * This is a test ~
-	 * of the text formatting. ~
-	 */ ~
+	/*
+	 * This is a test
+	 * of the text formatting.
+	 */
 
 You then ask Vim to format it by positioning the cursor at the start of the
 comment and type: >
@@ -530,33 +530,33 @@ comment and type: >
 	gq]/
 
 "gq" is the operator to format text.  "]/" is the motion that takes you to the
-end of a comment.  The result is:
+end of a comment.  The result is: >c
 
-	/* ~
-	 * This is a test of the text formatting. ~
-	 */ ~
+	/*
+	 * This is a test of the text formatting.
+	 */
 
 Notice that Vim properly handled the beginning of each line.
   An alternative is to select the text that is to be formatted in Visual mode
 and type "gq".
 
 To add a new line to the comment, position the cursor on the middle line and
-press "o".  The result looks like this:
+press "o".  The result looks like this: >c
 
-	/* ~
-	 * This is a test of the text formatting. ~
-	 * ~
-	 */ ~
+	/*
+	 * This is a test of the text formatting.
+	 *
+	 */
 
 Vim has automatically inserted a star and a space for you.  Now you can type
 the comment text.  When it gets longer than 'textwidth', Vim will break the
-line.  Again, the star is inserted automatically:
+line.  Again, the star is inserted automatically: >c
 
-	/* ~
-	 * This is a test of the text formatting. ~
-	 * Typing a lot of text here will make Vim ~
-	 * break ~
-	 */ ~
+	/*
+	 * This is a test of the text formatting.
+	 * Typing a lot of text here will make Vim
+	 * break
+	 */
 
 For this to work some flags must be present in 'formatoptions':
 

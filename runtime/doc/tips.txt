@@ -47,7 +47,7 @@ is an overview with tags to jump to:
 
 |gf|			Go to file name under the cursor.
 
-|%|			Go to matching (), {}, [], /* */, #if, #else, #endif.
+|%|			Go to matching (), {}, [], `/* */`, #if, #else, #endif.
 |[/|			Go to previous start of comment.
 |]/|			Go to next end of comment.
 |[#|			Go back to unclosed #if, #ifdef, or #else.
@@ -196,7 +196,7 @@ charset.c
 digraph.c
 ...
 
-and I want to rename *.c *.bla.  I'd do it like this: >
+and I want to rename `*.c` `*.bla`.  I'd do it like this: >
 
 	$ vim
 	:r !ls *.c

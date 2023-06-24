@@ -159,7 +159,7 @@ RECURSIVE MAPPING
 When a mapping triggers itself, it will run forever.  This can be used to
 repeat an action an unlimited number of times.
    For example, you have a list of files that contain a version number in the
-first line.  You edit these files with "vim *.txt".  You are now editing the
+first line.  You edit these files with `vim *.txt`.  You are now editing the
 first file.  Define this mapping: >
 
 	:map ,, :s/5.1/5.2/<CR>:wnext<CR>,,
@@ -622,7 +622,7 @@ Example: >
 
 	:autocmd BufReadPost *.log normal G
 
-This will make the cursor jump to the last line of *.log files when you start
+This will make the cursor jump to the last line of `*.log` files when you start
 to edit it.
    Using the ":normal" command is a bit tricky.  First of all, make sure its
 argument is a complete command, including all the arguments.  When you use "i"

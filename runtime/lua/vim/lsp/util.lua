@@ -178,8 +178,8 @@ local _str_byteindex_enc = M._str_byteindex_enc
 --- CAUTION: Changes in-place!
 ---
 ---@param lines (table) Original list of strings
----@param A (table) Start position; a 2-tuple of {line, col} numbers
----@param B (table) End position; a 2-tuple of {line, col} numbers
+---@param A (table) Start position; a 2-tuple of {line,col} numbers
+---@param B (table) End position; a 2-tuple of {line,col} numbers
 ---@param new_lines A list of strings to replace the original
 ---@returns (table) The modified {lines} object
 function M.set_lines(lines, A, B, new_lines)
@@ -2075,9 +2075,9 @@ end
 --- Using the given range in the current buffer, creates an object that
 --- is similar to |vim.lsp.util.make_range_params()|.
 ---
----@param start_pos integer[]|nil {row, col} mark-indexed position.
+---@param start_pos integer[]|nil {row,col} mark-indexed position.
 --- Defaults to the start of the last visual selection.
----@param end_pos integer[]|nil {row, col} mark-indexed position.
+---@param end_pos integer[]|nil {row,col} mark-indexed position.
 --- Defaults to the end of the last visual selection.
 ---@param bufnr integer|nil buffer handle or 0 for current, defaults to current
 ---@param offset_encoding "utf-8"|"utf-16"|"utf-32"|nil defaults to `offset_encoding` of first client of `bufnr`

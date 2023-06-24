@@ -841,19 +841,19 @@ Expression syntax summary, from least to most significant:
 
 |expr9|	number			number constant
 	"string"		string constant, backslash is special
-	'string'		string constant, ' is doubled
+	`'string'`		string constant, ' is doubled
 	[expr1, ...]		|List|
-	{expr1: expr1, ...}	|Dictionary|
+	`{expr1: expr1, ...}`	|Dictionary|
 	#{key: expr1, ...}	|Dictionary|
 	&option			option value
 	(expr1)			nested expression
 	variable		internal variable
 	va{ria}ble		internal variable with curly braces
 	$VAR			environment variable
-	@r			contents of register 'r'
+	@r			contents of register "r"
 	function(expr1, ...)	function call
 	func{ti}on(expr1, ...)	function call with curly braces
-	{args -> expr1}		lambda expression
+	`{args -> expr1}`	lambda expression
 
 
 "..." indicates that the operations in this level can be concatenated.
@@ -1547,7 +1547,7 @@ See below |functions|.
 ------------------------------------------------------------------------------
 lambda expression				*expr-lambda* *lambda*
 
-{args -> expr1}		lambda expression			*E451*
+`{args -> expr1}`	lambda expression			*E451*
 
 A lambda expression creates a new unnamed function which returns the result of
 evaluating |expr1|.  Lambda expressions differ from |user-function|s in
@@ -1846,7 +1846,7 @@ v:ctype		The current locale setting for characters of the runtime
 v:dying		Normally zero.  When a deadly signal is caught it's set to
 		one.  When multiple signals are caught the number increases.
 		Can be used in an autocommand to check if Vim didn't
-		terminate normally. {only works on Unix}
+		terminate normally.
 		Example: >
 	:au VimLeave * if v:dying | echo "\nAAAAaaaarrrggghhhh!!!\n" | endif
 <		Note: if another deadly signal is caught when v:dying is one,
@@ -2493,7 +2493,7 @@ This does NOT work: >
 			*:let/=* *:let%=* *:let.=* *:let..=* *E734*
 :let {var} += {expr1}	Like ":let {var} = {var} + {expr1}".
 :let {var} -= {expr1}	Like ":let {var} = {var} - {expr1}".
-:let {var} *= {expr1}	Like ":let {var} = {var} * {expr1}".
+`:let {var} *= {expr1}`	Like ":let {var} = {var} * {expr1}".
 :let {var} /= {expr1}	Like ":let {var} = {var} / {expr1}".
 :let {var} %= {expr1}	Like ":let {var} = {var} % {expr1}".
 :let {var} .= {expr1}	Like ":let {var} = {var} . {expr1}".

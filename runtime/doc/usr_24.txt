@@ -241,11 +241,11 @@ some other editors it's called intellisense, but that is a trademark.
 
 The key to Omni completion is CTRL-X CTRL-O.  Obviously the O stands for Omni
 here, so that you can remember it easier.  Let's use an example for editing C
-source:
+source: >
 
-	{ ~
-	    struct foo *p; ~
-	    p-> ~
+	{
+	    struct foo *p;
+	    p->
 
 The cursor is after "p->".  Now type CTRL-X CTRL-O.  Vim will offer you a list
 of alternatives, which are the items that "struct foo" contains.  That is
@@ -270,13 +270,13 @@ work.
 
 If you press CTRL-A, the editor inserts the text you typed the last time you
 were in Insert mode.
-   Assume, for example, that you have a file that begins with the following:
+   Assume, for example, that you have a file that begins with the following: >
 
 	"file.h" ~
 	/* Main program begins */ ~
 
 You edit this file by inserting "#include " at the beginning of the first
-line:
+line: >
 
 	#include "file.h" ~
 	/* Main program begins */ ~
@@ -286,13 +286,13 @@ now start to insert a new "#include" line.  So you type: >
 
 	i CTRL-A
 
-The result is as follows:
+The result is as follows: >
 
 	#include "file.h" ~
 	#include /* Main program begins */ ~
 
 The "#include " was inserted because CTRL-A inserts the text of the previous
-insert.  Now you type  "main.h"<Enter>  to finish the line:
+insert.  Now you type  "main.h"<Enter>  to finish the line: >
 
 
 	#include "file.h" ~
@@ -429,7 +429,7 @@ mistake.
 
 LISTING ABBREVIATIONS
 
-The ":abbreviate" command lists the abbreviations:
+The ":abbreviate" command lists the abbreviations: >
 
 	:abbreviate
 	i  #e		  ****************************************/

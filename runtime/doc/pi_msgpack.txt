@@ -6,7 +6,7 @@ Copyright: (c) 2015 by Nikolay Pavlov
 The Apache license applies to the files in this package, including 
 runtime/autoload/msgpack.vim, runtime/doc/pi_msgpack.txt and 
 test/functional/plugin/msgpack_spec.lua.  Like anything else that's free, 
-msgpack.vim and its associated files are provided *as is* and comes with no 
+msgpack.vim and its associated files are provided as is and comes with no 
 warranty of any kind, either expressed or implied.  No guarantees of 
 merchantability.  No guarantees of suitability for any purpose.  By using this 
 plugin, you agree that in no event will the copyright holder be liable for any 

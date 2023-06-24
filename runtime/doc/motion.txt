@@ -1230,7 +1230,7 @@ remembered.
 			([{}])		parenthesis or (curly/square) brackets
 					(this can be changed with the
 					'matchpairs' option)
-			/* */		start or end of C-style comment
+			`/* */`		start or end of C-style comment
 			#if, #ifdef, #else, #elif, #endif
 					C preprocessor conditionals (when the
 					cursor is on the # or no ([{

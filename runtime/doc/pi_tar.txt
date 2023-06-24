@@ -11,7 +11,7 @@ Copyright 2005-2017:					*tar-copyright*
 	package, including tarPlugin.vim, tar.vim, and pi_tar.txt.  Like
 	anything else that's except use "tar.vim" instead of "VIM".  Like
 	anything else that's free, tar.vim and its associated files are
-	provided *as is* and comes with no warranty of any kind, either
+	provided as is and comes with no warranty of any kind, either
 	expressed or implied.  No guarantees of merchantability.  No
 	guarantees of suitability for any purpose.  By using this plugin, you
 	agree that in no event will the copyright holder be liable for any
@@ -27,7 +27,7 @@ Copyright 2005-2017:					*tar-copyright*
 ==============================================================================
 2. Usage					*tar-usage* *tar-manual*
 
-   When one edits a *.tar file, this plugin will handle displaying a
+   When one edits a `*.tar` file, this plugin will handle displaying a
    contents page.  Select a file to edit by moving the cursor atop
    the desired file, then hit the <return> key.  After editing, one may
    also write to the file.  Currently, one may not make a new file in
@@ -121,8 +121,8 @@ Copyright 2005-2017:					*tar-copyright*
 		May 28, 2008	* various security improvements.  Now requires
 				  patch 299 which provides the fnameescape()
 				  function
-		May 30, 2008	* allows one to view *.gz and *.bz2 files that
-				  are in *.tar files.
+		May 30, 2008	* allows one to view `*.gz` and `*.bz2` files that
+				  are in `*.tar` files.
 	v12	Sep 07, 2007	* &shq now used if not the empty string for
 				  g:tar_shq
 	v10	May 02, 2006	* now using "redraw then echo" to show messages,

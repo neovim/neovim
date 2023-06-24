@@ -317,9 +317,9 @@ standard Vim help files, except for the first line.  If you are writing a new
 help file it's best to copy one of the existing files and use it as a
 template.
 
-The first line in a help file should have the following format:
+The first line in a help file should have the following format: >
 
-*plugin_name.txt*	{short description of the plugin}
+	*plugin_name.txt*	{short description of the plugin}
 
 The first field is a help tag where ":help plugin_name" will jump to.  The
 remainder of the line, after a Tab, describes the plugin purpose in a short
@@ -383,8 +383,8 @@ The following are highlighted differently in a Vim help file:
 
 The word "Note", "Notes" and similar automagically receive distinctive
 highlighting.  So do these:
-	*Todo	something to do
-	*Error	something wrong
+	Todo	something to do
+	Error	something wrong
 
 You can find the details in $VIMRUNTIME/syntax/help.vim
 

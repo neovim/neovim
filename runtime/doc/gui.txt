@@ -466,12 +466,11 @@ If no argument is given after :menu at all, then ALL menu items are shown
 for the appropriate mode (e.g., Command-line mode for :cmenu).
 
 Special characters in the list, just before the rhs:
-*	The menu was defined with "nore" to disallow remapping.
-&	The menu was defined with "<script>" to allow remapping script-local
-	mappings only.
-s	The menu was defined with "<silent>" to avoid showing what it is
-	mapped to when triggered.
--	The menu was disabled.
+• * Menu was defined with "nore" to disallow remapping.
+• & Menu was defined with "<script>" to allow remapping script-local mappings.
+• s Menu was defined with "<silent>" to avoid showing what it is mapped to
+    when triggered.
+• - Menu was disabled.
 
 Note that hitting <Tab> while entering a menu name after a menu command may
 be used to complete the name of the menu item.

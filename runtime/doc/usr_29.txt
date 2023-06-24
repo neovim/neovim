@@ -307,9 +307,9 @@ tags file.  Example: >
 	:psearch popen
 
 This will show the "stdio.h" file in the preview window, with the function
-prototype for popen():
+prototype for popen(): >c
 
-	FILE	*popen __P((const char *, const char *)); ~
+	FILE	*popen __P((const char *, const char *));
 
 You can specify the height of the preview window, when it is opened, with the
 'previewheight' option.
@@ -319,13 +319,13 @@ You can specify the height of the preview window, when it is opened, with the
 
 Since a program is structured, Vim can recognize items in it.  Specific
 commands can be used to move around.
-   C programs often contain constructs like this:
+   C programs often contain constructs like this: >c
 
-	#ifdef USE_POPEN ~
-	    fd = popen("ls", "r") ~
-	#else ~
-	    fd = fopen("tmp", "w") ~
-	#endif ~
+	#ifdef USE_POPEN
+	    fd = popen("ls", "r")
+	#else
+	    fd = fopen("tmp", "w")
+	#endif
 
 But then much longer, and possibly nested.  Position the cursor on the
 "#ifdef" and press %.  Vim will jump to the "#else".  Pressing % again takes
@@ -424,7 +424,7 @@ work on () pairs instead of {} pairs.
 MOVING IN COMMENTS
 
 To move back to the start of a comment use "[/".  Move forward to the end of a
-comment with "]/".  This only works for /* - */ comments.
+comment with "]/".  This only works for `/* - */` comments.
 >
 	  +->	  +-> /*
 	  |    [/ |    * A comment about      --+
@@ -446,10 +446,10 @@ You are editing a C program and wonder if a variable is declared as "int" or
 
 Vim will list the matching lines it can find.  Not only in the current file,
 but also in all included files (and files included in them, etc.).  The result
-looks like this:
+looks like this: >
 
-	structs.h ~
-	 1:   29     unsigned     column;    /* column number */ ~
+	structs.h
+	 1:   29     unsigned     column;    /* column number */
 
 The advantage over using tags or the preview window is that included files are
 searched.  In most cases this results in the right declaration to be found.

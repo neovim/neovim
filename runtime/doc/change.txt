@@ -1490,7 +1490,7 @@ white space).  Three types of comments can be used:
   lines.  An example is this list with dashes.
 - Three-piece comments that have a start string, an end string, and optional
   lines in between.  The strings for the start, middle and end are different.
-  An example is the C style comment:
+  An example is the C style comment: >
 	/*
 	 * this is a C comment
 	 */
@@ -1565,20 +1565,20 @@ When you hit Return in a C-comment, Vim will insert the middle comment leader
 for the new line: " * ".  To close this comment you just have to type "/"
 before typing anything else on the new line.  This will replace the
 middle-comment leader with the end-comment leader and apply any specified
-alignment, leaving just " */".  There is no need to hit Backspace first.
+alignment, leaving just `" */"`.  There is no need to hit Backspace first.
 
 When there is a match with a middle part, but there also is a matching end
 part which is longer, the end part is used.  This makes a C style comment work
 without requiring the middle part to end with a space.
 
 Here is an example of alignment flags at work to make a comment stand out
-(kind of looks like a 1 too). Consider comment string: >
+(kind of looks like a 1 too). Consider comment string: >vim
 	:set comments=sr:/***,m:**,ex-2:******/
-<
+>
                                    /*** ~
                                      **<--right aligned from "r" flag ~
                                      ** ~
-offset 2 spaces for the "-2" flag--->** ~
+ offset 2 spaces for the "-2" flag-->** ~
                                    ******/ ~
 In this case, the first comment was typed, then return was pressed 4 times,
 then "/" was pressed to end the comment.
@@ -1741,10 +1741,10 @@ happens with formatting and auto-wrapping.  Opening a line after a line
 starting with "/*" or "*" and containing "*/", will cause no comment leader to
 be inserted, and the indent of the new line is taken from the line containing
 the start of the comment.
-E.g.:
-    /* ~
-     * Your typical comment. ~
-     */ ~
+E.g.: >
+    /*
+     * Your typical comment.
+     */
     The indent on this line is the same as the start of the above
     comment.
 

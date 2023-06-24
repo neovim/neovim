@@ -820,13 +820,13 @@ Type					effect ~
 					the clipboard ("* and "+ registers)
     {menu-entry}			what the menu is defined to in
 					Cmdline-mode.
-    <LeftMouse>				next page (*)
+    <LeftMouse>				next page*
 
 Any other key causes the meaning of the keys to be displayed.
 
-(*)  Clicking the left mouse button only works:
-     - For the GUI: in the last line of the screen.
-     - When 'r' is included in 'mouse' (but then selecting text won't work).
+* Clicking the left mouse button only works:
+    - For the GUI: in the last line of the screen.
+    - When 'r' is included in 'mouse' (but then selecting text won't work).
 
 
 Note: The typed key is directly obtained from the terminal, it is not mapped

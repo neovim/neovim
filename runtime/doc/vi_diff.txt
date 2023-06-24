@@ -11,9 +11,9 @@ Differences between Vim and Vi				*vi-differences*
 ==============================================================================
 1. Limits						*limits*
 
-Vim has only a few limits for the files that can be edited {Vi: can not handle
+Vim has only a few limits for the files that can be edited. Vi cannot handle
 <Nul> characters and characters above 128, has limited line length, many other
-limits}.
+limits.
 
 Maximum line length	   2147483647 characters
 Maximum number of lines	   2147483647 lines
@@ -44,7 +44,7 @@ kept in memory:  Command-line history, error messages for Quickfix mode, etc.
 
 Support for different systems.
 	Vim can be used on:
-	- Modern Unix systems (*BSD, Linux, etc.)
+	- Modern Unix systems (BSD, Linux, etc.)
 	- Windows (XP SP 2 or greater)
 	- OS X
 

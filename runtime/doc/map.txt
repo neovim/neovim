@@ -1051,8 +1051,7 @@ typed after an abbreviation: >
 There are no default abbreviations.
 
 Abbreviations are never recursive.  You can use ":ab f f-o-o" without any
-problem.  But abbreviations can be mapped.  {some versions of Vi support
-recursive abbreviations, for no apparent reason}
+problem.  But abbreviations can be mapped.
 
 				*:abbreviate-local* *:abbreviate-<buffer>*
 Just like mappings, abbreviations can be local to a buffer.  This is mostly

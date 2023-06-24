@@ -122,7 +122,7 @@ end
 ---@private
 ---@param bufnr integer
 ---@param mode "v"|"V"
----@return table {start={row, col}, end={row, col}} using (1, 0) indexing
+---@return table {start={row,col}, end={row,col}} using (1, 0) indexing
 local function range_from_selection(bufnr, mode)
   -- TODO: Use `vim.region()` instead https://github.com/neovim/neovim/pull/13896
 
@@ -189,7 +189,7 @@ end
 ---         Restrict formatting to the client with name (client.name) matching this field.
 ---
 ---     - range (table|nil) Range to format.
----         Table must contain `start` and `end` keys with {row, col} tuples using
+---         Table must contain `start` and `end` keys with {row,col} tuples using
 ---         (1,0) indexing.
 ---         Defaults to current selection in visual mode
 ---         Defaults to `nil` in other modes, formatting the full buffer
@@ -741,7 +741,7 @@ end
 ---  - range: (table|nil)
 ---           Range for which code actions should be requested.
 ---           If in visual mode this defaults to the active selection.
----           Table must contain `start` and `end` keys with {row, col} tuples
+---           Table must contain `start` and `end` keys with {row,col} tuples
 ---           using mark-like indexing. See |api-indexing|
 ---
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction

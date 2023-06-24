@@ -35,10 +35,10 @@ Some of them are available with standard Vim digraphs:
 	(- ∈    ?= ≅    != ≠  ~
 	-) ∋    ?- ≃  ~
 
-The Greek alphabet is available with "*" followed by a similar Latin symbol:
-	*p π  ~
-	*t τ  ~
-	*X ×  ~
+The Greek alphabet is available with "*" followed by a similar Latin symbol: >
+	*p π
+	*t τ
+	*X ×
 
 Numbers, subscripts and superscripts are available with 's' and 'S':
 	0s ₀    0S ⁰  ~

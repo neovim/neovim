@@ -123,12 +123,12 @@ That file is found in 'runtimepath' first.  Then use this in
 
 What will happen now is that Vim searches for "filetype.vim" files in each
 directory in 'runtimepath'.  First ~/.config/nvim/filetype.vim is found.  The
-autocommand to catch *.txt files is defined there.  Then Vim finds the
+autocommand to catch `*.txt` files is defined there.  Then Vim finds the
 filetype.vim file in $VIMRUNTIME, which is halfway 'runtimepath'.  Finally
 ~/.config/nvim/after/filetype.vim is found and the autocommand for detecting 
 ruby files in /usr/share/scripts is added.
    When you now edit /usr/share/scripts/README.txt, the autocommands are
-checked in the order in which they were defined.  The *.txt pattern matches,
+checked in the order in which they were defined.  The `*.txt` pattern matches,
 thus "setf text" is executed to set the filetype to "text".  The pattern for
 ruby matches too, and the "setf ruby" is executed.  But since 'filetype' was
 already set to "text", nothing happens here.

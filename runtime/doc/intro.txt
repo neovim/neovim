@@ -517,16 +517,15 @@ CTRL-O in Insert mode you get a beep but you are still in Insert mode, type
 <Esc> again.
 
 							*i_esc*
-		TO mode						    ~
-		Normal	Visual	Select	Insert	  Replace   Cmd-line  Ex ~
-FROM mode								 ~
-Normal			v V ^V	  `*4`	 *1	   R gR     : / ? !   Q
-Visual		 `*2`		  ^G	 c C	    --	      :       --
-Select		 `*5`	^O ^G		 `*6`	    --	      --      --
-Insert		 <Esc>	  --	  --		  <Insert>    --      --
-Replace		 <Esc>	  --	  --	<Insert>	      --      --
-Command-line	 `*3`	  --	  --	 :start	    --		      --
-Ex		 :vi	  --	  --	 --	    --	      --
+ FROM mode	TO mode						    ~
+		Normal	Visual	Select	Insert	  Replace   Cmd-line  Ex >
+ Normal			v V ^V	  *4	 *1	   R gR     : / ? !   Q
+ Visual		 *2		  ^G	 c C	    --	      :       --
+ Select		 *5	^O ^G		 *6	    --	      --      --
+ Insert		 <Esc>	  --	  --		  <Insert>    --      --
+ Replace		 <Esc>	  --	  --	<Insert>	      --      --
+ Command-line	 `*3`	  --	  --	 :start	    --		      --
+ Ex		 :vi	  --	  --	 --	    --	      --
 
 -- not possible
 

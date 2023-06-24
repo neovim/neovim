@@ -59,7 +59,7 @@ playback.
    Let's assume you have a directory with C++ files, all ending in ".cpp".
 There is a function called "GetResp" that you want to rename to "GetAnswer".
 
-	vim *.cpp		Start Vim, defining the argument list to
+	vim `*.cpp`		Start Vim, defining the argument list to
 				contain all the C++ files.  You are now in the
 				first file.
 	qq			Start recording into the q register
@@ -331,7 +331,7 @@ program files, for example, enter the following command: >
 	:grep error_string *.c
 
 This causes Vim to search for the string "error_string" in all the specified
-files (*.c).  The editor will now open the first file where a match is found
+files (`*.c`).  The editor will now open the first file where a match is found
 and position the cursor on the first matching line.  To go to the next
 matching line (no matter in what file it is), use the ":cnext" command.  To go
 to the previous match, use the ":cprev" command.  Use ":clist" to see all the

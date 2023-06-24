@@ -728,7 +728,7 @@ You can create as many additional key maps as you like.  Generally, the maps
 will be specifying different syntax highlight groups.
 
 If you do not wish the default maps created or the key choices do not work on
-your platform (often a case on *nix) you define the following variable in
+your platform (often a case on unix) you define the following variable in
 your |init.vim|: >
     let g:omni_sql_no_default_maps = 1
 
@@ -738,7 +738,7 @@ which allows you to make customizations without changing the files that are
 included with the Vim distribution.  If you wish to customize the maps
 create an after/ftplugin/sql.vim (see |after-directory|) and place the same
 maps from the ftplugin/sql.vim in it using your own key strokes.  <C-C> was
-chosen since it will work on both Windows and *nix platforms.  On the windows
+chosen since it will work on both Windows and unix platforms.  On the windows
 platform you can also use <C-Space> or ALT keys.
 
 

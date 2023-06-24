@@ -187,8 +187,8 @@ vim.foreach_rtp(callable)				*python-foreach_rtp*
 	are no longer paths. If stopped in case callable returned non-None,
 	vim.foreach_rtp function returns the value returned by callable.
 
-vim.chdir(*args, **kwargs)				*python-chdir*
-vim.fchdir(*args, **kwargs)				*python-fchdir*
+`vim.chdir(*args, **kwargs)`				*python-chdir*
+`vim.fchdir(*args, **kwargs)`				*python-fchdir*
 	Run os.chdir or os.fchdir, then all appropriate vim stuff.
 	Note: you should not use these functions directly, use os.chdir and
 	      os.fchdir instead. Behavior of vim.fchdir is undefined in case

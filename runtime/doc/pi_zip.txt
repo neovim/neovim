@@ -10,7 +10,7 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
 	The VIM LICENSE (see |copyright|) applies to the files in this
 	package, including zipPlugin.vim, zip.vim, and pi_zip.vim.  except use
 	"zip.vim" instead of "VIM".  Like anything else that's free, zip.vim
-	and its associated files are provided *as is* and comes with no
+	and its associated files are provided as is and comes with no
 	warranty of any kind, either expressed or implied.  No guarantees of
 	merchantability.  No guarantees of suitability for any purpose.  By
 	using this plugin, you agree that in no event will the copyright
@@ -27,7 +27,7 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
 ==============================================================================
 2. Usage						*zip-usage* *zip-manual*
 
-   When one edits a *.zip file, this plugin will handle displaying a
+   When one edits a `*.zip` file, this plugin will handle displaying a
    contents page.  Select a file to edit by moving the cursor atop
    the desired file, then hit the <return> key.  After editing, one may
    also write to the file.  Currently, one may not make a new file in
@@ -102,7 +102,7 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
 
 ==============================================================================
 4. History							*zip-history* {{{1
-   v33 Dec 07, 2021 * *.xlam mentioned twice in zipPlugin
+   v33 Dec 07, 2021 * `*.xlam` mentioned twice in zipPlugin
    v32 Oct 22, 2021 * to avoid an issue with a vim 8.2 patch, zipfile: has
 		      been changed to zipfile:// . This often shows up
 		      as zipfile:/// with zipped files that are root-based.
@@ -114,8 +114,8 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
 		      the command actually to be attempted in zip#Read()
 		      and zip#Write()
 		    * added the extraction of a file capability
-       Nov 30, 2015 * added *.epub to the |g:zipPlugin_ext| list
-       Sep 13, 2016 * added *.apk to the |g:zipPlugin_ext| list and
+       Nov 30, 2015 * added `*.epub` to the |g:zipPlugin_ext| list
+       Sep 13, 2016 * added `*.apk` to the |g:zipPlugin_ext| list and
 		      sorted the suffices.
    v27 Jul 02, 2013 * sanity check: zipfile must have "PK" as its first
 		      two bytes.

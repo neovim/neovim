@@ -19,7 +19,7 @@ You can avoid loading this plugin by setting the "loaded_gzip" variable: >
 The plugin installs autocommands to intercept reading and writing of files
 with these extensions:
 
-	extension	compression ~
+	extension	compression >
 	*.Z		compress (Lempel-Ziv)
 	*.gz		gzip
 	*.bz2		bzip2

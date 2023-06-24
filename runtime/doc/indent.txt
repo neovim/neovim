@@ -553,9 +553,9 @@ The examples below assume a 'shiftwidth' of 4.
 	      20 lines).
 
 								*cino-star*
-	*N    Vim searches for unclosed comments at most N lines away.  This
+	`*N`    Vim searches for unclosed comments at most N lines away.  This
 	      limits the time needed to search for the start of a comment.
-	      If your /* */ comments stop indenting after N lines this is the
+	      If your `/* */` comments stop indenting after N lines this is the
 	      value you will want to change.
 	      (default 70 lines).
 
