@@ -2507,6 +2507,42 @@ bbbbbbb]])
     ]]}
   end)
 
+  it('does not crash at right edge of wide window #23848', function()
+    screen:try_resize(82, 5)
+    meths.buf_set_extmark(0, ns, 0, 0, {virt_text = {{('a'):rep(82)}, {'b'}}, virt_text_pos = 'inline'})
+    screen:expect{grid=[[
+      ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      b                                                                                 |
+      {1:~                                                                                 }|
+      {1:~                                                                                 }|
+                                                                                        |
+    ]]}
+    command('set nowrap')
+    screen:expect{grid=[[
+      ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:~                                                                                 }|
+      {1:~                                                                                 }|
+      {1:~                                                                                 }|
+                                                                                        |
+    ]]}
+    feed('82i0<Esc>0')
+    screen:expect{grid=[[
+      ^0000000000000000000000000000000000000000000000000000000000000000000000000000000000|
+      {1:~                                                                                 }|
+      {1:~                                                                                 }|
+      {1:~                                                                                 }|
+                                                                                        |
+    ]]}
+    command('set wrap')
+    screen:expect{grid=[[
+      ^0000000000000000000000000000000000000000000000000000000000000000000000000000000000|
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      b                                                                                 |
+      {1:~                                                                                 }|
+                                                                                        |
+    ]]}
+  end)
+
   it('list "extends" is drawn with only inline virtual text offscreen', function()
     command('set nowrap')
     command('set list')
