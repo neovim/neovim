@@ -2189,7 +2189,7 @@ local pattern = {
   ['.*/etc/profile'] = function(path, bufnr)
     return require('vim.filetype.detect').sh(path, M.getlines(bufnr))
   end,
-  ['bash%-fc[%-%.]'] = function(path, bufnr)
+  ['bash%-fc[%-%.].*'] = function(path, bufnr)
     return require('vim.filetype.detect').sh(path, M.getlines(bufnr), 'bash')
   end,
   ['%.tcshrc.*'] = function(path, bufnr)
