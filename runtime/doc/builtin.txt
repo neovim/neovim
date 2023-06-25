@@ -5383,7 +5383,7 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 <		results in `['two one', 'one two']` . >
 		   :echo ['one two', 'two one']->matchfuzzy('two one',
 						\ {'matchseq': 1})
-<		results in ['two one'].
+<		results in `['two one']`.
 
 matchfuzzypos({list}, {str} [, {dict}])			*matchfuzzypos()*
 		Same as |matchfuzzy()|, but returns the list of matched
@@ -5405,7 +5405,7 @@ matchfuzzypos({list}, {str} [, {dict}])			*matchfuzzypos()*
 <		results in [["lacy", "clay"], [[0, 1], [1, 2]], [153, 133]] >
 			:echo [{'text': 'hello', 'id' : 10}]
 				\ ->matchfuzzypos('ll', {'key' : 'text'})
-<		results in [[{"id": 10, "text": "hello"}], [[2, 3]], [127]]
+<		results in `[[{"id": 10, "text": "hello"}], [[2, 3]], [127]]`
 
 matchlist({expr}, {pat} [, {start} [, {count}]])		*matchlist()*
 		Same as |match()|, but return a |List|.  The first item in the
@@ -9507,11 +9507,11 @@ winlayout([{tabnr}])					*winlayout()*
 		For a leaf window, it returns:
 			["leaf", {winid}]
 		For horizontally split windows, which form a column, it
-		returns:
+		returns: >
 			["col", [{nested list of windows}]]
-		For vertically split windows, which form a row, it returns:
+<		For vertically split windows, which form a row, it returns: >
 			["row", [{nested list of windows}]]
-
+<
 		Example: >
 			" Only one window in the tab page
 			:echo winlayout()

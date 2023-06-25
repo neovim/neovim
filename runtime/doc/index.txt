@@ -475,7 +475,7 @@ tag		command		   action in op-pending and Visual mode	~
 |v_a)|		a)		   same as ab
 |v_a<|		a<		   "a <>" from '<' to the matching '>'
 |v_a>|		a>		   same as a<
-|v_aB|		aB		   "a Block" from "[{" to "]}" (with brackets)
+|v_aB|		aB		   "a Block" from `[{` to `]}` (with brackets)
 |v_aW|		aW		   "a WORD" (with white space)
 |v_a[|		a[		   "a []" from '[' to the matching ']'
 |v_a]|		a]		   same as a[
@@ -493,7 +493,7 @@ tag		command		   action in op-pending and Visual mode	~
 |v_i)|		i)		   same as ib
 |v_i<|		i<		   "inner <>" from '<' to the matching '>'
 |v_i>|		i>		   same as i<
-|v_iB|		iB		   "inner Block" from "[{" and "]}"
+|v_iB|		iB		   "inner Block" from `[{` and `]}`
 |v_iW|		iW		   "inner WORD"
 |v_i[|		i[		   "inner []" from '[' to the matching ']'
 |v_i]|		i]		   same as i[

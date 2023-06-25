@@ -620,15 +620,15 @@ it			"inner tag block", select [count] tag blocks, from the
 
 a}							*v_a}* *a}* *a{*
 a{							*v_aB* *v_a{* *aB*
-aB			"a Block", select [count] Blocks, from "[count] [{" to
-			the matching '}', including the '{' and '}' (see
+aB			"a Block", select [count] Blocks, from `[count] [{` to
+			the matching "}", including the "{" and "}" (see
 			|[{|).
 			When used in Visual mode it is made charwise.
 
 i}							*v_i}* *i}* *i{*
 i{							*v_iB* *v_i{* *iB*
-iB			"inner Block", select [count] Blocks, from "[count] [{"
-			to the matching '}', excluding the '{' and '}' (see
+iB			"inner Block", select [count] Blocks, from `[count] [{`
+			to the matching "}", excluding the "{" and "}" (see
 			|[{|).
 			When used in Visual mode it is made charwise.
 
@@ -1279,9 +1279,9 @@ remembered.
 			|exclusive| motion.
 
 The above four commands can be used to go to the start or end of the current
-code block.  It is like doing "%" on the '(', ')', '{' or '}' at the other
+code block.  It is like doing "%" on the "(", ")", "{" or "}" at the other
 end of the code block, but you can do this from anywhere in the code block.
-Very useful for C programs.  Example: When standing on "case x:", "[{" will
+Very useful for C programs.  Example: When standing on "case x:", `[{` will
 bring you back to the switch statement.
 
 						*]m*

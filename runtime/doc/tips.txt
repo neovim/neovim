@@ -59,8 +59,8 @@ is an overview with tags to jump to:
 
 |v_ab|			Select "a block" from "[(" to "])", including braces
 |v_ib|			Select "inner block" from "[(" to "])"
-|v_aB|			Select "a block" from "[{" to "]}", including brackets
-|v_iB|			Select "inner block" from "[{" to "]}"
+|v_aB|			Select "a block" from `[{` to `]}`, including brackets
+|v_iB|			Select "inner block" from `[{` to `]}`
 
 ==============================================================================
 Finding where identifiers are used			*ident-search*

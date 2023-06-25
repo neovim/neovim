@@ -574,7 +574,7 @@ The examples below assume a 'shiftwidth' of 4.
 	      them like every other preprocessor directive.
 
 
-The defaults, spelled out in full, are:
+The defaults, spelled out in full, are: >
 	cinoptions=>s,e0,n0,f0,{0,}0,^0,L-1,:s,=s,l0,b0,gs,hs,N0,E0,ps,ts,is,+s,
 			c3,C0,/0,(2s,us,U0,w0,W0,k0,m0,j0,J0,)20,*70,#0,P0
 
@@ -1060,19 +1060,19 @@ be configured by setting the following keys in the |Dictionary|
 b:sh_indent_defaults to a specific amount or to a |Funcref| that references a
 function that will return the amount desired:
 
-b:sh_indent_options['default']	Default amount of indent.
+b:sh_indent_options["default"]	Default amount of indent.
 
-b:sh_indent_options['continuation-line']
+b:sh_indent_options["continuation-line"]
 				Amount of indent to add to a continued line.
 
-b:sh_indent_options['case-labels']
+b:sh_indent_options["case-labels"]
 				Amount of indent to add for case labels.
 				(not actually implemented)
 
-b:sh_indent_options['case-statements']
+b:sh_indent_options["case-statements"]
 				Amount of indent to add for case statements.
 
-b:sh_indent_options['case-breaks']
+b:sh_indent_options["case-breaks"]
 				Amount of indent to add (or more likely
 				remove) for case breaks.
 

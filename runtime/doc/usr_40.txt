@@ -501,7 +501,7 @@ See |autocmd-events| for a complete list of events.
 PATTERNS
 
 The {file-pattern} argument can actually be a comma-separated list of file
-patterns.  For example: "*.c,*.h" matches files ending in ".c" and ".h".
+patterns.  For example: `*.c,*.h` matches files ending in ".c" and ".h".
    The usual file wildcards can be used.  Here is a summary of the most often
 used ones:
 

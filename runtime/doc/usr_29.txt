@@ -361,7 +361,7 @@ MOVING IN CODE BLOCKS
 In C code blocks are enclosed in {}.  These can get pretty long.  To move to
 the start of the outer block use the "[[" command.  Use "][" to find the end.
 This assumes that the "{" and "}" are in the first column.
-   The "[{" command moves to the start of the current block.  It skips over
+   The [{ command moves to the start of the current block.  It skips over
 pairs of {} at the same level.  "]}" jumps to the end.
    An overview:
 
@@ -410,7 +410,7 @@ That also works when they are many lines apart.
 
 MOVING IN BRACES
 
-The "[(" and "])" commands work similar to "[{" and "]}", except that they
+The [( and ]) commands work similar to [{ and ]}, except that they
 work on () pairs instead of {} pairs.
 >
 				  [(
