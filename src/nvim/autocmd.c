@@ -1784,11 +1784,13 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     }
 
     const int save_did_emsg = did_emsg;
+    const bool save_ex_pressedreturn = get_pressedreturn();
 
     // Execute the autocmd. The `getnextac` callback handles iteration.
     do_cmdline(NULL, getnextac, &patcmd, DOCMD_NOWAIT | DOCMD_VERBOSE | DOCMD_REPEAT);
 
     did_emsg += save_did_emsg;
+    set_pressedreturn(save_ex_pressedreturn);
 
     if (nesting == 1) {
       // restore cursor and topline, unless they were changed

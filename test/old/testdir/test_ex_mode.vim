@@ -244,6 +244,12 @@ func Test_ex_mode_errors()
 
   au! CmdLineEnter
   delfunc ExEnterFunc
+
+  au CmdlineEnter * :
+  call feedkeys("gQecho 1\r", 'xt')
+
+  au! CmdlineEnter
+
   quit
 endfunc
 
