@@ -50,8 +50,8 @@ You can see these items:
 1.  The name of the browsing tool and its version number
 2.  The name of the browsing directory
 3.  The method of sorting (may be by name, time, or size)
-4.  How names are to be sorted (directories first, then *.h files,
-    *.c files, etc)
+4.  How names are to be sorted (directories first, then `*.h` files,
+    `*.c` files, etc)
 5.  How to get help (use the <F1> key), and an abbreviated listing
     of available commands
 6.  A listing of files, including "../", which allows one to list

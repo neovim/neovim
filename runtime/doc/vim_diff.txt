@@ -459,8 +459,9 @@ Lua interface (|lua.txt|):
 - `:lua print("a\0b")` will print `a^@b`, like with `:echomsg "a\nb"` . In Vim
   that prints `a` and `b` on separate lines, exactly like
   `:lua print("a\nb")` .
-- `:lua error('TEST')` emits the error “E5105: Error while calling Lua chunk:
-  [string "<Vimscript compiled string>"]:1: TEST”, whereas Vim emits only “TEST”.
+- `:lua error('TEST')` emits the error: >
+  E5108: Error executing lua: [string "<Vimscript compiled string>"]:1: TEST
+<  whereas Vim emits only "TEST".
 - Lua has direct access to Nvim |API| via `vim.api`.
 - Lua package.path and package.cpath are automatically updated according to
   'runtimepath': |lua-require|.

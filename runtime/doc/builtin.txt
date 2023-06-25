@@ -656,7 +656,7 @@ api_info()						*api_info()*
 		Returns Dictionary of |api-metadata|.
 
 		View it in a nice human-readable format: >
-		       :lua print(vim.inspect(vim.fn.api_info()))
+		       :lua vim.print(vim.fn.api_info())
 
 append({lnum}, {text})					*append()*
 		When {text} is a |List|: Append each item of the |List| as a
@@ -1939,7 +1939,7 @@ exists({expr})	The result is a Number, which is |TRUE| if {expr} is
 			$ENVNAME	environment variable (could also be
 					done by comparing with an empty
 					string)
-			*funcname	built-in function (see |functions|)
+			`*funcname`	built-in function (see |functions|)
 					or user defined function (see
 					|user-function|). Also works for a
 					variable that is a Funcref.
@@ -3019,7 +3019,7 @@ getcmdtype()						*getcmdtype()*
 		    /	forward search command
 		    ?	backward search command
 		    @	|input()| command
-		    -	|:insert| or |:append| command
+		    `-`	|:insert| or |:append| command
 		    =	|i_CTRL-R_=|
 		Only works when editing the command line, thus requires use of
 		|c_CTRL-\_e| or |c_CTRL-R_=| or an expression mapping.
@@ -3364,20 +3364,26 @@ getmatches([{win}])					*getmatches()*
 		If {win} is specified, use the window with this number or
 		window ID instead of the current window.  If {win} is invalid,
 		an empty list is returned.
-		Example: >
+		Example: >vim
 			:echo getmatches()
-<			[{"group": "MyGroup1", "pattern": "TODO",
+>
+ 			[{"group": "MyGroup1", "pattern": "TODO",
 			"priority": 10, "id": 1}, {"group": "MyGroup2",
-			"pattern": "FIXME", "priority": 10, "id": 2}] >
+			"pattern": "FIXME", "priority": 10, "id": 2}]
+>vim
 			:let m = getmatches()
 			:call clearmatches()
 			:echo getmatches()
-<			[] >
+>
+			[]
+>vim
 			:call setmatches(m)
 			:echo getmatches()
-<			[{"group": "MyGroup1", "pattern": "TODO",
+>
+			[{"group": "MyGroup1", "pattern": "TODO",
 			"priority": 10, "id": 1}, {"group": "MyGroup2",
-			"pattern": "FIXME", "priority": 10, "id": 2}] >
+			"pattern": "FIXME", "priority": 10, "id": 2}]
+>vim
 			:unlet m
 <
 getmousepos()						*getmousepos()*
@@ -8268,7 +8274,7 @@ string({expr})	Return {expr} converted to a String.  If {expr} is a Number,
 			Funcref		`function('name')`
 			Blob		0z00112233.44556677.8899
 			List		[item, item]
-			Dictionary	{key: value, key: value}
+			Dictionary	`{key: value, key: value}`
 		Note that in String values the ' character is doubled.
 		Also see |strtrans()|.
 		Note 2: Output format is mostly compatible with YAML, except

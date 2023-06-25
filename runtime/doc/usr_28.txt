@@ -277,7 +277,7 @@ Try it: >
 
 	:set foldmethod=marker
 
-Example text, as it could appear in a C program:
+Example text, as it could appear in a C program: >
 
 	/* foobar () {{{ */
 	int foobar()
@@ -292,7 +292,7 @@ Notice that the folded line will display the text before the marker.  This is
 very useful to tell what the fold contains.
 
 It's quite annoying when the markers don't pair up correctly after moving some
-lines around.  This can be avoided by using numbered markers.  Example:
+lines around.  This can be avoided by using numbered markers.  Example: >
 
 	/* global variables {{{1 */
 	int varA, varB;

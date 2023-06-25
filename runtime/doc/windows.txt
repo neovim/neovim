@@ -631,7 +631,7 @@ times than |WinResized|, it may slow down editing a bit.
 
 The information provided by |WinScrolled| is a dictionary for each window that
 has changes, using the window ID as the key, and a total count of the changes
-with the key "all".  Example value for |v:event|:
+with the key "all".  Example value for |v:event|: >
 	{
 	   all: {width: 0, height: 2, leftcol: 0, skipcol: 0, topline: 1, topfill: 0},
 	   1003: {width: 0, height: -1, leftcol: 0, skipcol: 0, topline: 0, topfill: 0},
@@ -1090,7 +1090,7 @@ list of buffers. |unlisted-buffer|
 		  a	an active buffer: it is loaded and visible
 		  h	a hidden buffer: It is loaded, but currently not
 			   displayed in a window |hidden-buffer|
-		   -	a buffer with 'modifiable' off
+		   `-`	a buffer with 'modifiable' off
 		   =	a readonly buffer
 		   R	a terminal buffer with a running job
 		   F	a terminal buffer with a finished job
@@ -1101,7 +1101,7 @@ list of buffers. |unlisted-buffer|
 		[flags] can be a combination of the following characters,
 		which restrict the buffers to be listed:
 			+	modified buffers
-			-	buffers with 'modifiable' off
+			`-`	buffers with 'modifiable' off
 			=	readonly buffers
 			a	active buffers
 			u	unlisted buffers (overrides the "!")

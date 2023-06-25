@@ -379,7 +379,9 @@ local function visit_validate(root, level, lang_tree, opt, stats)
       return
     end
     -- Store the raw text to give context to the error report.
-    local sample_text = not toplevel and getbuflinestr(root, opt.buf, 3) or '[top level!]'
+    local sample_text = not toplevel and getbuflinestr(root, opt.buf, 0) or '[top level!]'
+    -- Flatten the sample text to a single, truncated line.
+    sample_text = vim.trim(sample_text):gsub('[\t\n]', ' '):sub(1, 80)
     table.insert(stats.parse_errors, sample_text)
   elseif (node_name == 'word' or node_name == 'uppercase_name')
     and (not vim.tbl_contains({'codespan', 'taglink', 'tag'}, parent))
@@ -667,7 +669,7 @@ end
 ---
 --- @param fname string help file to validate
 --- @param parser_path string? path to non-default vimdoc.so
---- @returns { invalid_links: number, parse_errors: number }
+--- @returns { invalid_links: number, parse_errors: string[] }
 local function validate_one(fname, parser_path)
   local stats = {
     parse_errors = {},
@@ -1127,6 +1129,7 @@ function M.validate(help_dir, include, parser_path)
     parser_path={parser_path, function(f) return f == nil or vim.fn.filereadable(vim.fn.expand(f)) == 1 end, 'valid vimdoc.{so,dll} filepath'},
   }
   local err_count = 0
+  local files_to_errors = {}
   ensure_runtimepath()
   tagmap = get_helptags(help_dir)
   helpfiles = get_helpfiles(include)
@@ -1136,6 +1139,10 @@ function M.validate(help_dir, include, parser_path)
     local helpfile = vim.fs.basename(f)
     local rv = validate_one(f, parser_path)
     print(('validated (%-4s errors): %s'):format(#rv.parse_errors, helpfile))
+    if #rv.parse_errors > 0 then
+      files_to_errors[helpfile] = rv.parse_errors
+      vim.print(('%s'):format(vim.iter(rv.parse_errors):fold('', function(s, v) return s..'\n    '..v end)))
+    end
     err_count = err_count + #rv.parse_errors
   end
 
@@ -1145,6 +1152,7 @@ function M.validate(help_dir, include, parser_path)
     invalid_links = invalid_links,
     invalid_urls = invalid_urls,
     invalid_spelling = invalid_spelling,
+    parse_errors = files_to_errors,
   }
 end
 

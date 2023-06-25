@@ -676,9 +676,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	line.
 	When 'smartindent' or 'cindent' is on the indent is changed in
 	a different way.
-	{small difference from Vi: After the indent is deleted when typing
-	<Esc> or <CR>, the cursor position when moving up or down is after the
-	deleted indent; Vi puts the cursor somewhere in the deleted indent}.
 
 				 *'autoread'* *'ar'* *'noautoread'* *'noar'*
 'autoread' 'ar'		boolean	(default on)
@@ -1866,9 +1863,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Pattern to be used to find a macro definition.  It is a search
 	pattern, just like for the "/" command.  This option is used for the
 	commands like "[i" and "[d" |include-search|.  The 'isident' option is
-	used to recognize the defined name after the match:
+	used to recognize the defined name after the match: >
 		{match with 'define'}{non-ID chars}{defined name}{non-ID char}
-	See |option-backslash| about inserting backslashes to include a space
+<	See |option-backslash| about inserting backslashes to include a space
 	or backslash.
 	For C++ this value would be useful, to include const type declarations: >
 		^\(#\s*define\|[a-z]*\s*const\s*[a-z]*\)
@@ -4042,9 +4039,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	per word depends very much on how similar the words are, that's why
 	this tuning is complicated.
 
-	There are three numbers, separated by commas:
+	There are three numbers, separated by commas: >
 		{start},{inc},{added}
-
+<
 	For most languages the uncompressed word tree fits in memory.  {start}
 	gives the amount of memory in Kbyte that can be used before any
 	compression is done.  It should be a bit smaller than the amount of

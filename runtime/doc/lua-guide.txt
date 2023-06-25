@@ -218,7 +218,7 @@ Vimscript are automatically converted:
     print(vim.fn.printf('Hello from %s', 'Lua'))
 
     local reversed_list = vim.fn.reverse({ 'a', 'b', 'c' })
-    print(vim.inspect(reversed_list)) -- { "c", "b", "a" }
+    vim.print(reversed_list) -- { "c", "b", "a" }
 
     local function print_stdout(chan_id, data, name)
       print(data[1])
@@ -261,7 +261,7 @@ Data types are converted automatically. For example:
       key2 = 300
     }
 
-    print(vim.inspect(vim.g.some_global_variable))
+    vim.print(vim.g.some_global_variable)
     --> { key1 = "value", key2 = 300 }
 <
 You can target specific buffers (via number), windows (via |window-ID|), or

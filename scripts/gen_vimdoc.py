@@ -2,7 +2,7 @@
 """Generates Nvim :help docs from C/Lua docstrings, using Doxygen.
 
 Also generates *.mpack files. To inspect the *.mpack structure:
-    :new | put=v:lua.vim.inspect(v:lua.vim.mpack.unpack(readfile('runtime/doc/api.mpack','B')))
+    :new | put=v:lua.vim.inspect(v:lua.vim.mpack.decode(readfile('runtime/doc/api.mpack','B')))
 
 Flow:
     main

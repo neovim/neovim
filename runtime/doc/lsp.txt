@@ -154,16 +154,17 @@ The `vim.lsp.buf_…` functions perform operations for all LSP clients attached
 to the given buffer. |lsp-buf|
 
 LSP request/response handlers are implemented as Lua functions (see
-|lsp-handler|). The |vim.lsp.handlers| table defines default handlers used
-when creating a new client. Keys are LSP method names: >vim
-
-    :lua print(vim.inspect(vim.tbl_keys(vim.lsp.handlers)))
-<
+|lsp-handler|).
                                                                   *lsp-method*
 
-Methods are the names of requests and notifications as defined by the LSP
-specification. These LSP requests/notifications are defined by default in the
-Nvim LSP client (but depends on server support):
+Requests and notifications defined by the LSP specification are referred to as
+"LSP methods". The Nvim LSP client provides default handlers in the global
+|vim.lsp.handlers| table, you can list them with this command: >vim
+
+    :lua vim.print(vim.tbl_keys(vim.lsp.handlers))
+<
+They are also listed below. Note that handlers depend on server support: they
+won't run if your server doesn't support them.
 
 - callHierarchy/incomingCalls
 - callHierarchy/outgoingCalls
@@ -190,8 +191,11 @@ Nvim LSP client (but depends on server support):
 - window/showDocument
 - window/showMessageRequest
 - workspace/applyEdit
+- workspace/configuration
+- workspace/executeCommand
 - workspace/inlayHint/refresh
 - workspace/symbol
+- workspace/workspaceFolders
 
                                                                  *lsp-handler*
 LSP handlers are functions that handle |lsp-response|s to requests made by Nvim
@@ -1093,7 +1097,7 @@ code_action({options})                             *vim.lsp.buf.code_action()*
                    • range: (table|nil) Range for which code actions should be
                      requested. If in visual mode this defaults to the active
                      selection. Table must contain `start` and `end` keys with
-                     {row, col} tuples using mark-like indexing. See
+                     {row,col} tuples using mark-like indexing. See
                      |api-indexing|
 
     See also: ~
@@ -1200,7 +1204,7 @@ format({options})                                       *vim.lsp.buf.format()*
                    • name (string|nil): Restrict formatting to the client with
                      name (client.name) matching this field.
                    • range (table|nil) Range to format. Table must contain
-                     `start` and `end` keys with {row, col} tuples using (1,0)
+                     `start` and `end` keys with {row,col} tuples using (1,0)
                      indexing. Defaults to current selection in visual mode
                      Defaults to `nil` in other modes, formatting the full
                      buffer
@@ -1728,9 +1732,9 @@ make_given_range_params({start_pos}, {end_pos}, {bufnr}, {offset_encoding})
     similar to |vim.lsp.util.make_range_params()|.
 
     Parameters: ~
-      • {start_pos}        integer[]|nil {row, col} mark-indexed position.
+      • {start_pos}        integer[]|nil {row,col} mark-indexed position.
                            Defaults to the start of the last visual selection.
-      • {end_pos}          integer[]|nil {row, col} mark-indexed position.
+      • {end_pos}          integer[]|nil {row,col} mark-indexed position.
                            Defaults to the end of the last visual selection.
       • {bufnr}            (integer|nil) buffer handle or 0 for current,
                            defaults to current
@@ -1867,8 +1871,8 @@ set_lines({lines}, {A}, {B}, {new_lines})           *vim.lsp.util.set_lines()*
 
     Parameters: ~
       • {lines}      (table) Original list of strings
-      • {A}          (table) Start position; a 2-tuple of {line, col} numbers
-      • {B}          (table) End position; a 2-tuple of {line, col} numbers
+      • {A}          (table) Start position; a 2-tuple of {line,col} numbers
+      • {B}          (table) End position; a 2-tuple of {line,col} numbers
       • {new_lines}  A list of strings to replace the original
 
     Return: ~

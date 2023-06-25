@@ -184,6 +184,7 @@ end
 
 --- Gets a human-readable representation of the given object.
 ---
+---@see |vim.print()|
 ---@see https://github.com/kikito/inspect.lua
 ---@see https://github.com/mpeterv/vinspect
 local function inspect(object, options) -- luacheck: no unused
@@ -870,6 +871,7 @@ end
 --- </pre>
 ---
 --- @see |vim.inspect()|
+--- @see |:=|
 --- @return any # given arguments.
 function vim.print(...)
   if vim.in_fast_event() then

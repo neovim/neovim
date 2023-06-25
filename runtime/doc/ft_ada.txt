@@ -112,8 +112,8 @@ NOTE: "gnat xref -v" is very tricky to use as it has almost no diagnostic
     your .ali files.
 2)  "gnat xref -v ../Include/adacl.ads" won't work - use  the "gnat xref -v
     -aI../Include adacl.ads" instead.
-3)  "gnat xref -v -aI../Include *.ad?" won't work - use "cd ../Include" and
-    then "gnat xref -v *.ad?"
+3)  `gnat xref -v -aI../Include *.ad?` won't work - use "cd ../Include" and
+    then `gnat xref -v *.ad?`
 4)  Project manager support is completely broken - don't even try "gnat xref
     -Padacl.gpr".
 5)  Vim is faster when the tags file is sorted - use "sort --unique

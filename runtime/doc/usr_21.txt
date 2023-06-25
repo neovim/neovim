@@ -426,7 +426,7 @@ a line of text that tells Vim the values of options, to be used in this file
 only.
    A typical example is a C program where you make indents by a multiple of 4
 spaces.  This requires setting the 'shiftwidth' option to 4.  This modeline
-will do that:
+will do that: >
 
 	/* vim:set shiftwidth=4: */ ~
 

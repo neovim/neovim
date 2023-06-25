@@ -119,7 +119,7 @@ would also be spawned, which could take seconds!
 
 With the manifest, each host will only be loaded when required. Continuing with
 the example, say the Java plugin is a semantic completion engine for Java code.
-If it defines the autocommand "BufEnter *.java", then the Java host is spawned
+If it defines the autocommand `BufEnter *.java`, then the Java host is spawned
 only when Nvim loads a buffer matching "*.java".
 
 If the explicit call to |:UpdateRemotePlugins| seems inconvenient, try to see

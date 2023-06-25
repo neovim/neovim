@@ -824,7 +824,7 @@ resulting file, when executed with a ":source" command:
 9. Restores the Views for all the windows, as with |:mkview|.  But
    'sessionoptions' is used instead of 'viewoptions'.
 10. If a file exists with the same name as the Session file, but ending in
-   "x.vim" (for eXtra), executes that as well.  You can use *x.vim files to
+   "x.vim" (for eXtra), executes that as well.  You can use `*x.vim` files to
    specify additional settings and actions associated with a given Session,
    such as creating menu items in the GUI version.
 
@@ -908,7 +908,7 @@ found.
 
 You might want to clean up your 'viewdir' directory now and then.
 
-To automatically save and restore views for *.c files: >
+To automatically save and restore views for `*.c` files: >
 	au BufWinLeave *.c mkview
 	au BufWinEnter *.c silent! loadview
 

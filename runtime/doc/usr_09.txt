@@ -63,10 +63,10 @@ Vim will set the title to show the name of the current file.  First comes the
 name of the file.  Then some special characters and the directory of the file
 in parens.  These special characters can be present:
 
-	-	The file cannot be modified (e.g., a help file)
-	+	The file contains changes
-	=	The file is read-only
-	=+	The file is read-only, contains changes anyway
+	• -	The file cannot be modified (e.g., a help file)
+	• +	The file contains changes
+	• =	The file is read-only
+	• =+	The file is read-only, contains changes anyway
 
 If nothing is shown you have an ordinary, unchanged file.
 
@@ -223,7 +223,7 @@ Remember, "y" is yank, which is Vim's copy command.
 	"+P
 
 It's the same as for the current selection, but uses the plus (+) register
-instead of the star (*) register.
+instead of the star "*" register.
 
 ==============================================================================
 *09.4*	Select mode

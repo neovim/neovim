@@ -40,9 +40,6 @@ CTRL-D			Scroll window Downwards in the buffer.  The number of
 			difference).  When the cursor is on the last line of
 			the buffer nothing happens and a beep is produced.
 			See also 'startofline' option.
-			{difference from vi: Vim scrolls 'scroll' screen
-			lines, instead of file lines; makes a difference when
-			lines wrap}
 
 <S-Down>	or				*<S-Down>* *<kPageDown>*
 <PageDown>	or				*<PageDown>* *CTRL-F*

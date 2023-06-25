@@ -359,7 +359,7 @@ function ListIter.totable(self)
   return self._table
 end
 
---- Fold an iterator or table into a single value.
+--- Fold ("reduce") an iterator or table into a single value.
 ---
 --- Examples:
 --- <pre>lua

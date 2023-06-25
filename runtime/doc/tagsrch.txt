@@ -695,7 +695,7 @@ do not have an absolute path.
 The 'comments' option is used for the commands that display a single line or
 jump to a line.  It defines patterns that may start a comment.  Those lines
 are ignored for the search, unless [!] is used.  One exception: When the line
-matches the pattern "^# *define" it is not considered to be a comment.
+matches the pattern `"^# *define"` it is not considered to be a comment.
 
 If you want to list matches, and then select one to jump to, you could use a
 mapping to do that for you.  Here is an example: >
@@ -838,7 +838,7 @@ Common arguments for the commands above:
 [!]	When included, find matches in lines that are recognized as comments.
 	When excluded, a match is ignored when the line is recognized as a
 	comment (according to 'comments'), or the match is in a C comment
-	(after "//" or inside /* */).  Note that a match may be missed if a
+	(after "//" or inside `/* */`).  Note that a match may be missed if a
 	line is recognized as a comment, but the comment ends halfway the line.
 	And if the line is a comment, but it is not recognized (according to
 	'comments') a match may be found in it anyway.  Example: >
