@@ -944,6 +944,7 @@ local function gen_css(fname)
       padding-top: 10px;
       padding-bottom: 10px;
     }
+
     .old-help-para {
       padding-top: 10px;
       padding-bottom: 10px;
@@ -953,6 +954,12 @@ local function gen_css(fname)
       font-size: 16px;
       font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
     }
+    .old-help-para pre {
+      /* All text in .old-help-para is formatted as "white-space:pre" so text following <pre> is
+         already visually separated by the linebreak. */
+      margin-bottom: 0;
+    }
+
     a.help-tag, a.help-tag:focus, a.help-tag:hover {
       color: inherit;
       text-decoration: none;
@@ -1005,6 +1012,9 @@ local function gen_css(fname)
       /* font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace; */
       font-size: 16px;
       margin-top: 10px;
+    }
+    pre:last-child {
+      margin-bottom: 0;
     }
     pre:hover,
     .help-heading:hover {
