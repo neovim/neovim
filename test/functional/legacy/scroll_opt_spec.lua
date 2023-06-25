@@ -939,6 +939,48 @@ describe('smoothscroll', function()
     ]])
   end)
 
+  -- oldtest: Test_smoothscroll_zero_width_scroll_cursor_bot()
+  it('does not divide by zero in zero-width window', function()
+    screen:try_resize(12, 19)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.Brown};  -- LineNr
+      [2] = {bold = true, reverse = true};  -- StatusLine
+      [3] = {reverse = true};  -- StatusLineNC
+    })
+    exec([[
+      silent normal yy
+      silent normal 19p
+      winsize 0 19
+      vsplit
+      vertical resize 0
+      set foldcolumn=1
+      set number
+      set smoothscroll
+      silent normal 20G
+    ]])
+    screen:expect([[
+      {1: }│          |
+      {1: }│          |
+      {1: }│          |
+      {1: }│          |
+      {1: }│          |
+      {1: }│          |
+      {1: }│          |
+      {1: }│          |
+      {1: }│          |
+      {1: }│          |
+      {1: }│          |
+      {1: }│          |
+      {1: }│          |
+      {1: }│          |
+      {1: }│          |
+      {1: }│          |
+      {1:^ }│          |
+      {2:< }{3:<ame] [+] }|
+                  |
+    ]])
+  end)
+
   it("works with virt_lines above and below", function()
     screen:try_resize(55, 7)
     exec([=[
