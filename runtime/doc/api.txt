@@ -280,7 +280,7 @@ nvim_buf_lines_event[{buf}, {changedtick}, {firstline}, {lastline}, {linedata}, 
     changed but not the buffer contents. {linedata} contains the changed
     screen lines. This happens when 'inccommand' shows a buffer preview.
 
-    Properties:~
+    Properties: ~
         {buf} API buffer handle (buffer number)
 
         {changedtick} value of |b:changedtick| for the buffer. If you send an
@@ -313,7 +313,7 @@ nvim_buf_changedtick_event[{buf}, {changedtick}]  *nvim_buf_changedtick_event*
     When |b:changedtick| was incremented but no text was changed. Relevant for
     undo/redo.
 
-    Properties:~
+    Properties: ~
         {buf} API buffer handle (buffer number)
         {changedtick} new value of |b:changedtick| for the buffer
 
@@ -326,7 +326,7 @@ nvim_buf_detach_event[{buf}]                           *nvim_buf_detach_event*
       |:checktime| or 'autoread'.
     - Generally: whenever the buffer contents are unloaded from memory.
 
-    Properties:~
+    Properties: ~
         {buf} API buffer handle (buffer number)
 
 

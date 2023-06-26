@@ -48,7 +48,7 @@
 ///
 /// \brief For more information on buffers, see |buffers|
 ///
-/// Unloaded Buffers:~
+/// Unloaded Buffers: ~
 ///
 /// Buffers may be unloaded by the |:bunload| command or the buffer's
 /// |'bufhidden'| option. When a buffer is unloaded its file contents are freed

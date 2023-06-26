@@ -3830,7 +3830,7 @@ coroutine.yield({...})                                       *coroutine.yield()*
         to `yield` are passed as extra results to `resume`.
 
 ==============================================================================
-5.3 - Modules                                                 *luaref-libModule*
+5.3 Modules                                                 *luaref-libModule*
 
 The package library provides basic facilities for loading and building modules
 in Lua. It exports two of its functions directly in the global environment:
@@ -3960,7 +3960,7 @@ package.seeall({module})                                      *package.seeall()*
         global environment. To be used as an option to function {module}.
 
 ==============================================================================
-5.4 - String Manipulation                                     *luaref-libString*
+5.4 String Manipulation                                     *luaref-libString*
 
 This library provides generic functions for string manipulation, such as
 finding and extracting substrings, and pattern matching. When indexing a
@@ -4199,9 +4199,8 @@ instance, `%S` represents all non-space characters.
 The definitions of letter, space, and other character groups depend on the
 current locale. In particular, the class `[a-z]` may not be equivalent to `%l`.
 
-                                                            *luaref-patternitem*
-Pattern Item:~
--------------
+PATTERN ITEM                                                *luaref-patternitem*
+
 A pattern item may be
 
    - a single character class, which matches any single character in the
@@ -4226,17 +4225,15 @@ A pattern item may be
       `y` where the count reaches 0. For instance, the item `%b()` matches
       expressions with balanced parentheses.
 
-                                                                *luaref-pattern*
-Pattern:~
---------
+PATTERN                                                         *luaref-pattern*
+
 A pattern is a sequence of pattern items. A `^` at the beginning of a pattern
 anchors the match at the beginning of the subject string. A `$` at the end of
 a pattern anchors the match at the end of the subject string. At other
 positions, `^` and `$` have no special meaning and represent themselves.
 
-                                                                *luaref-capture*
-Captures:~
----------
+CAPTURES                                                        *luaref-capture*
+
 A pattern may contain sub-patterns enclosed in parentheses; they describe
 captures. When a match succeeds, the substrings of the subject string that
 match captures are stored (captured) for future use. Captures are numbered
