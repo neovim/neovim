@@ -1049,7 +1049,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
       // A tab gets expanded, depending on the current column
       // Other things also take up space.
       head = 0;
-      incr = win_lbr_chartabsize(&cts, &head);
+      incr = win_lbr_chartabsize(&cts, &head, NULL);
 
       // make sure we don't go past the end of the line
       if (*cts.cts_ptr == NUL) {

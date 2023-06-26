@@ -1558,7 +1558,7 @@ colnr_T vcol2col(win_T *const wp, const linenr_T lnum, const colnr_T vcol)
   chartabsize_T cts;
   init_chartabsize_arg(&cts, wp, lnum, 0, line, line);
   while (cts.cts_vcol < vcol && *cts.cts_ptr != NUL) {
-    cts.cts_vcol += win_lbr_chartabsize(&cts, NULL);
+    cts.cts_vcol += win_lbr_chartabsize(&cts, NULL, NULL);
     MB_PTR_ADV(cts.cts_ptr);
   }
   clear_chartabsize_arg(&cts);

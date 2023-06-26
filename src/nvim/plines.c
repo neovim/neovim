@@ -154,7 +154,7 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
 
   init_chartabsize_arg(&cts, wp, lnum, 0, line, line);
   while (*cts.cts_ptr != NUL && --column >= 0) {
-    cts.cts_vcol += win_lbr_chartabsize(&cts, NULL);
+    cts.cts_vcol += win_lbr_chartabsize(&cts, NULL, NULL);
     MB_PTR_ADV(cts.cts_ptr);
   }
 
@@ -166,7 +166,7 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   col = cts.cts_vcol;
   if (*cts.cts_ptr == TAB && (State & MODE_NORMAL)
       && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
-    col += win_lbr_chartabsize(&cts, NULL) - 1;
+    col += win_lbr_chartabsize(&cts, NULL, NULL) - 1;
   }
   clear_chartabsize_arg(&cts);
 
@@ -296,12 +296,12 @@ void win_linetabsize_cts(chartabsize_T *cts, colnr_T len)
 {
   for (; *cts->cts_ptr != NUL && (len == MAXCOL || cts->cts_ptr < cts->cts_line + len);
        MB_PTR_ADV(cts->cts_ptr)) {
-    cts->cts_vcol += win_lbr_chartabsize(cts, NULL);
+    cts->cts_vcol += win_lbr_chartabsize(cts, NULL, NULL);
   }
   // check for a virtual text on an empty line
   if (cts->cts_has_virt_text && *cts->cts_ptr == NUL
       && cts->cts_ptr == cts->cts_line) {
-    (void)win_lbr_chartabsize(cts, NULL);
+    (void)win_lbr_chartabsize(cts, NULL, NULL);
     cts->cts_vcol += cts->cts_cur_text_width_left + cts->cts_cur_text_width_right;
   }
 }
@@ -348,11 +348,11 @@ int lbr_chartabsize(chartabsize_T *cts)
   if (!curwin->w_p_lbr && *get_showbreak_value(curwin) == NUL
       && !curwin->w_p_bri && !cts->cts_has_virt_text) {
     if (curwin->w_p_wrap) {
-      return win_nolbr_chartabsize(cts, NULL);
+      return win_nolbr_chartabsize(cts, NULL, NULL);
     }
     return win_chartabsize(curwin, cts->cts_ptr, cts->cts_vcol);
   }
-  return win_lbr_chartabsize(cts, NULL);
+  return win_lbr_chartabsize(cts, NULL, NULL);
 }
 
 /// Call lbr_chartabsize() and advance the pointer.
@@ -381,7 +381,7 @@ int lbr_chartabsize_adv(chartabsize_T *cts)
 /// @param headp
 ///
 /// @return The number of characters taken up on the screen.
-int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
+int win_lbr_chartabsize(chartabsize_T *cts, int *headp, int *mb_addedp)
 {
   win_T *wp = cts->cts_win;
   char *line = cts->cts_line;  // start of the line
@@ -399,7 +399,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   if (!wp->w_p_lbr && !wp->w_p_bri && *get_showbreak_value(wp) == NUL
       && !cts->cts_has_virt_text) {
     if (wp->w_p_wrap) {
-      return win_nolbr_chartabsize(cts, headp);
+      return win_nolbr_chartabsize(cts, headp, mb_addedp);
     }
     return win_chartabsize(wp, s, vcol);
   }
@@ -559,6 +559,9 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   if (headp != NULL) {
     *headp = added + mb_added;
   }
+  if (mb_addedp != NULL) {
+    *mb_addedp = mb_added;
+  }
   return size;
 }
 
@@ -572,7 +575,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
 /// @param headp
 ///
 /// @return The number of characters take up on the screen.
-static int win_nolbr_chartabsize(chartabsize_T *cts, int *headp)
+static int win_nolbr_chartabsize(chartabsize_T *cts, int *headp, int *mb_addedp)
 {
   win_T *wp = cts->cts_win;
   char *s = cts->cts_ptr;
@@ -591,6 +594,9 @@ static int win_nolbr_chartabsize(chartabsize_T *cts, int *headp)
   if ((n == 2) && (MB_BYTE2LEN((uint8_t)(*s)) > 1) && in_win_border(wp, col)) {
     if (headp != NULL) {
       *headp = 1;
+    }
+    if (mb_addedp != NULL) {
+      *mb_addedp = 1;
     }
     return 3;
   }

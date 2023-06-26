@@ -2428,7 +2428,7 @@ bbbbbbb]])
       ]]}
   end)
 
-  it('correctly draws when overflowing virtual text is followed by tab with no wrap', function()
+  it('correctly draws when overflowing virtual text is followed by TAB with no wrap', function()
     command('set nowrap')
     feed('i<TAB>test<ESC>')
     meths.buf_set_extmark(
@@ -2453,6 +2453,57 @@ bbbbbbb]])
                                                         |
       ]],
     })
+  end)
+
+  it('with double-width chars is scrolled correctly with no wrap #24155', function()
+    screen:try_resize(50, 2)
+    command('set nowrap')
+    insert('口口口')
+    meths.buf_set_extmark(0, ns, 0, 3, { virt_text = {{'古古', 'Special'}}, virt_text_pos = 'inline' })
+    screen:expect{grid=[[
+      口{10:古古}口^口                                        |
+                                                        |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      {1:<}{10:古古}口^口                                         |
+                                                        |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      {10:古古}口^口                                          |
+                                                        |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      {1:<}{10:古}口^口                                           |
+                                                        |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      {10:古}口^口                                            |
+                                                        |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      {1:<}口^口                                             |
+                                                        |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      口^口                                              |
+                                                        |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      {1:<}^口                                               |
+                                                        |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      ^口                                                |
+                                                        |
+    ]]}
   end)
 
   it('does not crash at column 0 when folded in a wide window', function()

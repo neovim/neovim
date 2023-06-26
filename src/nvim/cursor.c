@@ -148,7 +148,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
     init_chartabsize_arg(&cts, curwin, pos->lnum, 0, line, line);
     while (cts.cts_vcol <= wcol && *cts.cts_ptr != NUL) {
       // Count a tab for what it's worth (if list mode not on)
-      csize = win_lbr_chartabsize(&cts, &head);
+      csize = win_lbr_chartabsize(&cts, &head, NULL);
       MB_PTR_ADV(cts.cts_ptr);
       cts.cts_vcol += csize;
     }
