@@ -162,9 +162,7 @@ local function get_folds_levels(bufnr, info, srow, erow)
 
   local parser = ts.get_parser(bufnr)
 
-  if not parser:is_valid() then
-    return
-  end
+  parser:parse()
 
   parser:for_each_tree(function(tree, ltree)
     local query = ts.query.get(ltree:lang(), 'folds')
@@ -283,10 +281,12 @@ local function on_bytes(bufnr, foldinfo, start_row, old_row, new_row)
   local end_row_old = start_row + old_row
   local end_row_new = start_row + new_row
 
-  if new_row < old_row then
-    foldinfo:remove_range(end_row_new, end_row_old)
-  elseif new_row > old_row then
-    foldinfo:add_range(start_row, end_row_new)
+  if new_row ~= old_row then
+    if new_row < old_row then
+      foldinfo:remove_range(end_row_new, end_row_old)
+    else
+      foldinfo:add_range(start_row, end_row_new)
+    end
     schedule_if_loaded(bufnr, function()
       get_folds_levels(bufnr, foldinfo, start_row, end_row_new)
       recompute_folds()
