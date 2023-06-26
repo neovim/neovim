@@ -1361,7 +1361,7 @@ static void command_line_scan(mparm_T *parmp)
           }
           parmp->luaf = argv[0];
           argc--;
-          if (argc > 0) {  // Lua args after "-l <file>".
+          if (argc >= 0) {  // Lua args after "-l <file>".
             parmp->lua_arg0 = parmp->argc - argc;
             argc = 0;
           }
