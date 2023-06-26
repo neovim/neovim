@@ -735,11 +735,17 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
     return s
-  elseif vim.list_contains({ 'codespan', 'keycode' }, node_name) then
+  elseif vim.list_contains({ 'codespan', 'keycode', 'optional' }, node_name) then
     if root:has_error() then
       return text
     end
-    local s = ('%s<code>%s</code>'):format(ws(), trimmed)
+    local class = node_name == 'optional' and ' class="optional"' or ''
+    local s = (
+      node_name == 'keycode'
+        -- TODO: use <kbd>. Currently has a layout issue, example: ":help _".
+        and ('%s<code>%s</code>'):format(ws(), trimmed)
+      or ('%s<code%s>%s</code>'):format(ws(), class, trimmed)
+    )
     if opt.old and node_name == 'codespan' then
       s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
