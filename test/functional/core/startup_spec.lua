@@ -144,6 +144,18 @@ describe('startup', function()
     end)
 
     it('sets _G.arg', function()
+      -- nvim -l foo.lua
+      assert_l_out([[
+          bufs:
+          nvim args: 3
+          lua args: {
+            [0] = "test/functional/fixtures/startup.lua"
+          }]],
+        {},
+        {}
+      )
+      eq(0, eval('v:shell_error'))
+
       -- nvim -l foo.lua [args]
       assert_l_out([[
           bufs:
