@@ -17,10 +17,11 @@ describe("multibyte rendering", function()
     screen = Screen.new(60, 6)
     screen:attach({rgb=true})
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [1] = {bold = true, foreground = Screen.colors.Blue},
       [2] = {background = Screen.colors.WebGray},
       [3] = {background = Screen.colors.LightMagenta},
       [4] = {bold = true},
+      [5] = {foreground = Screen.colors.Blue},
     })
   end)
 
@@ -117,6 +118,19 @@ describe("multibyte rendering", function()
       {1:~                                                           }|
       {4:-- INSERT --}                                                |
     ]])
+  end)
+
+  it('0xffff is shown as 4 hex digits', function()
+    command([[call setline(1, "\uFFFF!!!")]])
+    feed('$')
+    screen:expect{grid=[[
+      {5:<ffff>}!!^!                                                   |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+                                                                  |
+    ]]}
   end)
 
   it('works with a lot of unicode (zalgo) text', function()
