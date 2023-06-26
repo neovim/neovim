@@ -357,10 +357,11 @@ parameter, surround it in backticks, eg. `~/.path/to/init.vim`.
 
 HIGHLIGHTING
 
-To define a column heading, use a tilde character at the end of the line.
-This will highlight the column heading in a different color.  E.g.
+To define a column heading, use a tilde character at the end of the line,
+preceded by a space. This will highlight the column heading in a different
+color.  E.g.
 
-Column heading~
+Column heading ~
 
 To separate sections in a help file, place a series of '=' characters in a
 line starting from the first column.  The section separator line is highlighted
