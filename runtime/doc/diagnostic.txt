@@ -53,6 +53,9 @@ indicated with (+):
     code: The diagnostic code
     user_data: Arbitrary data plugins or users can add
 
+In the return value of |vim.diagnostic.get()|, keys `bufnr`, `end_lnum`,
+`end_col`, and `severity` are guaranteed to be present.
+
 Diagnostics use the same indexing as the rest of the Nvim API (i.e. 0-based
 rows and columns). |api-indexing|
 
@@ -478,7 +481,7 @@ get({bufnr}, {opts})                                    *vim.diagnostic.get()*
                  • severity: See |diagnostic-severity|.
 
     Return: ~
-        Diagnostic [] table A list of diagnostic items |diagnostic-structure|.
+        Diagnostic [] table A list of diagnostic items |diagnostic-structure|. Keys `bufnr` , `end_lnum` , `end_col` , and `severity` are guaranteed to be present.
 
 get_namespace({namespace})                    *vim.diagnostic.get_namespace()*
     Get namespace metadata.
