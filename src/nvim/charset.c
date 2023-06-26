@@ -645,8 +645,8 @@ size_t transchar_hex(char *const buf, const int c)
   size_t i = 0;
 
   buf[i++] = '<';
-  if (c > 255) {
-    if (c > 255 * 256) {
+  if (c > 0xFF) {
+    if (c > 0xFFFF) {
       buf[i++] = (char)nr2hex((unsigned)c >> 20);
       buf[i++] = (char)nr2hex((unsigned)c >> 16);
     }
