@@ -252,7 +252,7 @@ arguments separated by " " (space) instead of "\t" (tab).
 {endmarker}
     Executes Lua script {script} from within Vimscript. You can omit
     [endmarker] after the "<<" and use a dot "." after {script} (similar to
-    |:append|, |:insert|). Refer to |let-heredoc| for more information.
+    |:append|, |:insert|). Refer to |:let-heredoc| for more information.
 
     Example: >vim
         function! CurrentLineInfo()
