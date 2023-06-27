@@ -466,6 +466,7 @@ func s:GetFilenameChecks() abort
     \ 'pccts': ['file.g'],
     \ 'pcmk': ['file.pcmk'],
     \ 'pdf': ['file.pdf'],
+    \ 'pem': ['file.pem', 'file.cer', 'file.crt', 'file.csr'],
     \ 'perl': ['file.plx', 'file.al', 'file.psgi', 'gitolite.rc', '.gitolite.rc', 'example.gitolite.rc', '.latexmkrc', 'latexmkrc'],
     \ 'pf': ['pf.conf'],
     \ 'pfmain': ['main.cf', 'main.cf.proto'],
