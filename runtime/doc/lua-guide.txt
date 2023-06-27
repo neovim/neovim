@@ -30,7 +30,7 @@ The purpose of this guide is to introduce the different ways of interacting
 with Nvim through Lua (the "API"). This API consists of three different
 layers:
 
-1. The "Vim API" inherited from Vim: |ex-commands| and |builtin-functions| as
+1. The "Vim API" inherited from Vim: |Ex-commands| and |builtin-functions| as
 well as |user-function|s in Vimscript. These are accessed through |vim.cmd()|
 and |vim.fn| respectively, which are discussed under |lua-guide-vimscript|
 below.
@@ -80,7 +80,7 @@ exactly like for a Vimscript file:
     :source ~/programs/baz/myluafile.lua
 <
 Finally, you can include Lua code in a Vimscript file by putting it inside a
-|lua-heredoc| block:
+|:lua-heredoc| block:
 >vim
     lua << EOF
       local tbl = {1, 2, 3}
@@ -199,8 +199,8 @@ this allows you to pass multiple commands to a single call of |vim.cmd()|:
       highlight link Warning Error
     ]])
 <
-This is the converse of |lua-heredoc| and allows you to include Vimscript code in
-your `init.lua`.
+This is the converse of |:lua-heredoc| and allows you to include Vimscript
+code in your `init.lua`.
 
 If you want to build your Vim command programmatically, the following form can
 be useful (all these are equivalent to the corresponding line above):

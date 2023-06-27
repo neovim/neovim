@@ -1110,7 +1110,7 @@ to terminal mode.
 You found it, Arthur!				*holy-grail*
 
 ==============================================================================
-6. EX commands				*ex-commands* *ex-cmd-index* *:index*
+6. EX commands				*Ex-commands* *ex-cmd-index* *:index*
 
 This is a brief but complete listing of all the ":" commands, without
 mentioning any arguments.  The optional part of the command name is inside [].

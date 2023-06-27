@@ -293,7 +293,7 @@ local function ignore_invalid(s)
     -- Strings like |~/====| appear in various places and the parser thinks they are links, but they
     -- are just table borders.
     or s:find('===')
-    or s:find('---')
+    or s:find('%-%-%-')
   )
 end
 

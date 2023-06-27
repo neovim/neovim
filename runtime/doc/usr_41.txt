@@ -1333,7 +1333,7 @@ is a List with arguments.
 Function references are most useful in combination with a Dictionary, as is
 explained in the next section.
 
-More information about defining your own functions here: |user-functions|.
+More information about defining your own functions here: |user-function|.
 
 ==============================================================================
 *41.8*	Lists and Dictionaries

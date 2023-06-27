@@ -4444,7 +4444,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 				*'packpath'* *'pp'*
 'packpath' 'pp'		string	(default: see 'runtimepath')
-	Directories used to find packages.  See |packages| and |rtp-packages|.
+	Directories used to find packages.
+	See |packages| and |packages-runtimepath|.
 
 
 						*'paragraphs'* *'para'*

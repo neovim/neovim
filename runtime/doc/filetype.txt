@@ -668,9 +668,8 @@ QUERY					                *ft-query-plugin*
 
 
 Linting of tree-sitter queries for installed parsers using
-|lua-treesitter-query_linter| is enabled by default on
-`BufEnter` and `BufWrite`. To change the events that
-trigger linting, use >lua
+|vim.treesitter.query.lint()| is enabled by default on `BufEnter` and
+`BufWrite`. To change the events that trigger linting, use >lua
 
 	vim.g.query_lint_on = { 'InsertLeave', 'TextChanged' }
 <
