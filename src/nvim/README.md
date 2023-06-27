@@ -208,15 +208,11 @@ To debug the main process, you can debug the nvim binary with the `--headless`
 flag which does not launch the TUI and will allow you to set breakpoints in code
 not related to TUI rendering like so:
 
-```
-lldb -- ./build/bin/nvim --headless --listen ~/.cache/nvim/debug-server.pipe
-```
+    lldb -- ./build/bin/nvim --headless --listen ~/.cache/nvim/debug-server.pipe
 
 You can then attach to the headless process to interact with the editor like so:
 
-```
-./build/bin/nvim --remote-ui --server ~/.cache/nvim/debug-server.pipe
-```
+    ./build/bin/nvim --remote-ui --server ~/.cache/nvim/debug-server.pipe
 
 Conversely for debugging TUI rendering, you can start a headless process and
 debug the remote-ui process multiple times without losing editor state.

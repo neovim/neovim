@@ -393,6 +393,12 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
   VALIDATE(!is_cmd_ni(ea.cmdidx), "Command not implemented: %s", cmdname, {
     goto end;
   });
+  const char *fullname = IS_USER_CMDIDX(ea.cmdidx)
+    ? get_user_command_name(ea.useridx, ea.cmdidx)
+    : get_command_name(NULL, ea.cmdidx);
+  VALIDATE(strncmp(fullname, cmdname, strlen(cmdname)) == 0, "Invalid command: \"%s\"", cmdname, {
+    goto end;
+  });
 
   // Get the command flags so that we can know what type of arguments the command uses.
   // Not required for a user command since `find_ex_command` already deals with it in that case.

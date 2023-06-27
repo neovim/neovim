@@ -335,8 +335,7 @@ describe('API', function()
       nvim('command', 'edit '..fname)
       nvim('command', 'normal itesting\napi')
       nvim('command', 'w')
-      local f = io.open(fname)
-      ok(f ~= nil)
+      local f = assert(io.open(fname))
       if is_os('win') then
         eq('testing\r\napi\r\n', f:read('*a'))
       else
@@ -3950,7 +3949,7 @@ describe('API', function()
         }
       }, meths.parse_cmd('MyCommand test it', {}))
     end)
-    it('errors for invalid command', function()
+    it('validates command', function()
       eq('Error while parsing command line', pcall_err(meths.parse_cmd, '', {}))
       eq('Error while parsing command line', pcall_err(meths.parse_cmd, '" foo', {}))
       eq('Error while parsing command line: E492: Not an editor command: Fubar',
@@ -4096,6 +4095,11 @@ describe('API', function()
         pcall_err(meths.cmd, { cmd = "put", args = {}, reg = '=' }, {}))
       eq("Invalid 'reg': expected single character, got xx",
         pcall_err(meths.cmd, { cmd = "put", args = {}, reg = 'xx' }, {}))
+
+      -- #20681
+      eq('Invalid command: "win_getid"', pcall_err(meths.cmd, { cmd = 'win_getid'}, {}))
+      eq('Invalid command: "echo "hi""', pcall_err(meths.cmd, { cmd = 'echo "hi"'}, {}))
+      eq('Invalid command: "win_getid"', pcall_err(exec_lua, [[return vim.cmd.win_getid{}]]))
 
       -- Lua call allows empty {} for dict item.
       eq('', exec_lua([[return vim.cmd{ cmd = "set", args = {}, magic = {} }]]))
