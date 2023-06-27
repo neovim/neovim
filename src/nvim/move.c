@@ -1954,17 +1954,19 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
       int top_plines = plines_win_nofill(curwin, curwin->w_topline, false);
       int skip_lines = 0;
       int width1 = curwin->w_width_inner - curwin_col_off();
-      int width2 = width1 + curwin_col_off2();
-      // similar formula is used in curs_columns()
-      if (curwin->w_skipcol > width1) {
-        skip_lines += (curwin->w_skipcol - width1) / width2 + 1;
-      } else if (curwin->w_skipcol > 0) {
-        skip_lines = 1;
-      }
+      if (width1 > 0) {
+        int width2 = width1 + curwin_col_off2();
+        // similar formula is used in curs_columns()
+        if (curwin->w_skipcol > width1) {
+          skip_lines += (curwin->w_skipcol - width1) / width2 + 1;
+        } else if (curwin->w_skipcol > 0) {
+          skip_lines = 1;
+        }
 
-      top_plines -= skip_lines;
-      if (top_plines > curwin->w_height_inner) {
-        scrolled += (top_plines - curwin->w_height_inner);
+        top_plines -= skip_lines;
+        if (top_plines > curwin->w_height_inner) {
+          scrolled += (top_plines - curwin->w_height_inner);
+        }
       }
     }
   }

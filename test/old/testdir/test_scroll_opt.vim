@@ -836,4 +836,26 @@ func Test_smoothscroll_multi_skipcol()
   call StopVimInTerminal(buf)
 endfunc
 
+" this was dividing by zero bug in scroll_cursor_bot
+func Test_smoothscroll_zero_width_scroll_cursor_bot()
+  CheckScreendump
+
+  let lines =<< trim END
+      silent normal yy
+      silent normal 19p
+      set cpoptions+=n
+      vsplit
+      vertical resize 0
+      set foldcolumn=1
+      set number
+      set smoothscroll
+      silent normal 20G
+  END
+  call writefile(lines, 'XSmoothScrollZeroBot', 'D')
+  let buf = RunVimInTerminal('-u NONE -S XSmoothScrollZeroBot', #{rows: 19})
+  call VerifyScreenDump(buf, 'Test_smoothscroll_zero_bot', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
