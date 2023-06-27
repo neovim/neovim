@@ -767,7 +767,7 @@ end
 ---                        - namespace: (number) Limit diagnostics to the given namespace.
 ---                        - lnum: (number) Limit diagnostics to the given line number.
 ---                        - severity: See |diagnostic-severity|.
----@return Diagnostic[] table A list of diagnostic items |diagnostic-structure|.
+---@return Diagnostic[] table A list of diagnostic items |diagnostic-structure|. Keys `bufnr`, `end_lnum`, `end_col`, and `severity` are guaranteed to be present.
 function M.get(bufnr, opts)
   vim.validate({
     bufnr = { bufnr, 'n', true },

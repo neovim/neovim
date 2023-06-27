@@ -478,7 +478,7 @@ get({bufnr}, {opts})                                    *vim.diagnostic.get()*
                  • severity: See |diagnostic-severity|.
 
     Return: ~
-        Diagnostic [] table A list of diagnostic items |diagnostic-structure|.
+        Diagnostic [] table A list of diagnostic items |diagnostic-structure|. Keys `bufnr` , `end_lnum` , `end_col` , and `severity` are guaranteed to be present.
 
 get_namespace({namespace})                    *vim.diagnostic.get_namespace()*
     Get namespace metadata.
