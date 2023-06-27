@@ -447,6 +447,9 @@ end
 ---@private
 ---@param region Range6[]
 local function region_tostr(region)
+  if #region == 0 then
+    return '[]'
+  end
   local srow, scol = region[1][1], region[1][2]
   local erow, ecol = region[#region][4], region[#region][5]
   return string.format('[%d:%d-%d:%d]', srow, scol, erow, ecol)
