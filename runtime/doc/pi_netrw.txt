@@ -437,6 +437,11 @@ settings are described below, in |netrw-browser-options|, and in
   *g:netrw_silent*	=0 : transfers done normally
 			=1 : transfers done silently
 
+ *g:netrw_use_notify*     =1 use nvim_notify instead of a separate
+			   errorwindow. This is useful when plugins override
+			   the vim.notify function with custom notification
+			   handling
+
  *g:netrw_use_errorwindow* =2: messages from netrw will use a popup window
 			     Move the mouse and pause to remove the popup window.
 			     (default value if popup windows are available)

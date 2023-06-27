@@ -95,6 +95,7 @@ fun! netrwSettings#NetrwSettings()
   put =''
   put ='+ Netrw Messages'
   put ='let g:netrw_use_errorwindow    = '.g:netrw_use_errorwindow
+  put ='let g:netrw_use_notify         = '.g:netrw_use_notify
 
   put = ''
   put ='+ Netrw Browser Control'

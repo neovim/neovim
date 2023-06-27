@@ -77,6 +77,14 @@ fun! netrw#ErrorMsg(level,msg,errnum)
    return
   endif
 
+  if g:netrw_use_notify == 1
+    " nvim has levels 0 for trace and 1 for debug. Info, Warning and Error are
+    " thus shifted by 2
+    let level= a:level + 2
+    call nvim_notify(a:msg, level, {})
+    return
+  endif
+
   if a:level == 1
    let level= "**warning** (netrw) "
   elseif a:level == 2
@@ -215,6 +223,9 @@ if (v:version > 802 || (v:version == 802 && has("patch486"))) && has("balloon_ev
   call s:NetrwInit("g:netrw_use_errorwindow",2)
 else
   call s:NetrwInit("g:netrw_use_errorwindow",1)
+endif
+if !exists("g:netrw_use_notify")
+  let g:netrw_use_notify= 0
 endif
 
 if !exists("g:netrw_dav_cmd")
