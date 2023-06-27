@@ -629,6 +629,7 @@ int main(int argc, char **argv)
   }
 
   if (params.luaf != NULL) {
+    info_message = true;  // use os_msg(), not os_errmsg()
     bool lua_ok = nlua_exec_file(params.luaf);
     TIME_MSG("executing Lua -l script");
     getout(lua_ok ? 0 : 1);
