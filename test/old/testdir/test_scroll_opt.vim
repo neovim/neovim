@@ -843,7 +843,7 @@ func Test_smoothscroll_zero_width_scroll_cursor_bot()
   let lines =<< trim END
       silent normal yy
       silent normal 19p
-      winsize 0 19
+      set cpoptions+=n
       vsplit
       vertical resize 0
       set foldcolumn=1
@@ -852,9 +852,7 @@ func Test_smoothscroll_zero_width_scroll_cursor_bot()
       silent normal 20G
   END
   call writefile(lines, 'XSmoothScrollZeroBot', 'D')
-  let buf = RunVimInTerminal('-u NONE -S XSmoothScrollZeroBot', #{rows: 19, wait_for_ruler: 0})
-  call TermWait(buf, 1000)
-
+  let buf = RunVimInTerminal('-u NONE -S XSmoothScrollZeroBot', #{rows: 19})
   call VerifyScreenDump(buf, 'Test_smoothscroll_zero_bot', {})
 
   call StopVimInTerminal(buf)
