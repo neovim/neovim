@@ -3,6 +3,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
+local matches = helpers.matches
 local feed = helpers.feed
 local eval = helpers.eval
 local clear = helpers.clear
@@ -12,21 +13,24 @@ local write_file = helpers.write_file
 local is_os = helpers.is_os
 local skip = helpers.skip
 
-describe('Command-line option', function()
+describe('command-line option', function()
   describe('-s', function()
     local fname = 'Xtest-functional-core-main-s'
     local fname_2 = fname .. '.2'
     local nonexistent_fname = fname .. '.nonexistent'
     local dollar_fname = '$' .. fname
+
     before_each(function()
       clear()
       os.remove(fname)
       os.remove(dollar_fname)
     end)
+
     after_each(function()
       os.remove(fname)
       os.remove(dollar_fname)
     end)
+
     it('treats - as stdin', function()
       eq(nil, luv.fs_stat(fname))
       funcs.system(
@@ -38,6 +42,7 @@ describe('Command-line option', function()
       local attrs = luv.fs_stat(fname)
       eq(#('42\n'), attrs.size)
     end)
+
     it('does not expand $VAR', function()
       eq(nil, luv.fs_stat(fname))
       eq(true, not not dollar_fname:find('%$%w+'))
@@ -50,6 +55,7 @@ describe('Command-line option', function()
       local attrs = luv.fs_stat(fname)
       eq(#('100500\n'), attrs.size)
     end)
+
     it('does not crash after reading from stdin in non-headless mode', function()
       skip(is_os('win'))
       local screen = Screen.new(40, 8)
@@ -100,6 +106,7 @@ describe('Command-line option', function()
       ]])
       ]=]
     end)
+
     it('errors out when trying to use nonexistent file with -s', function()
       eq(
         'Cannot open for reading: "'..nonexistent_fname..'": no such file or directory\n',
@@ -110,6 +117,7 @@ describe('Command-line option', function()
            '-s', nonexistent_fname}))
       eq(2, eval('v:shell_error'))
     end)
+
     it('errors out when trying to use -s twice', function()
       write_file(fname, ':call setline(1, "1")\n:wqall!\n')
       write_file(dollar_fname, ':call setline(1, "2")\n:wqall!\n')
@@ -123,5 +131,12 @@ describe('Command-line option', function()
       eq(2, eval('v:shell_error'))
       eq(nil, luv.fs_stat(fname_2))
     end)
+  end)
+
+  it('nvim -v, :version', function()
+    matches('Run ":verbose version"', funcs.execute(':version'))
+    matches('Compilation: .*Run :checkhealth', funcs.execute(':verbose version'))
+    matches('Run "nvim %-V1 %-v"', funcs.system({nvim_prog_abs(), '-v'}))
+    matches('Compilation: .*Run :checkhealth', funcs.system({nvim_prog_abs(), '-V1', '-v'}))
   end)
 end)

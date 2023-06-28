@@ -66,6 +66,8 @@ set(ENV{SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_NAME})  # used by test/helpers.lua.
 set(ENV{DEPS_INSTALL_DIR} ${DEPS_INSTALL_DIR})  # used by test/busted_runner.lua
 
 execute_process(
+  # Note: because of "-ll" (low-level interpreter mode), some modules like
+  # _editor.lua are not loaded.
   COMMAND ${NVIM_PRG} -ll ${WORKING_DIR}/test/busted_runner.lua -v -o test.busted.outputHandlers.${BUSTED_OUTPUT_TYPE}
     --lazy --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
     --lpath=${BUILD_DIR}/?.lua
