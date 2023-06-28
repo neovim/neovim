@@ -643,6 +643,13 @@ tabs.
 	only count as one line. When scrolling more than a full screen it is
 	an approximate value.
 
+	All updates, such as `grid_line`, in a batch affects the new viewport,
+	despite the fact that `win_viewport` is received after the updates.
+	Applications implementing, for example, smooth scrolling should take
+	this into account and keep the grid separated from what's displayed on
+	the screen and copy it to the viewport destination once `win_viewport`
+	is received.
+
 ["win_extmark", grid, win, ns_id, mark_id, row, col] ~
 	Updates the position of an extmark which is currently visible in a
 	window. Only emitted if the mark has the `ui_watched` attribute. 
