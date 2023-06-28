@@ -245,7 +245,7 @@ endfunc
 func Test_shell_no_prevcmd()
   " this doesn't do anything, just check it doesn't crash
   let after =<< trim END
-    exe "normal !!\<CR>"
+    exe "normal :!!\<CR>"
     call writefile([v:errmsg, 'done'], 'Xtestdone')
     qall!
   END
