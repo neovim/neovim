@@ -1162,10 +1162,17 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
   FreeWild(filecount, files);
 }
 
-static void helptags_cb(char *fname, void *cookie)
+static bool helptags_cb(int num_fnames, char **fnames, bool all, void *cookie)
   FUNC_ATTR_NONNULL_ALL
 {
-  do_helptags(fname, *(bool *)cookie, true);
+  for (int i = 0; i < num_fnames; i++) {
+    do_helptags(fnames[i], *(bool *)cookie, true);
+    if (!all) {
+      return true;
+    }
+  }
+
+  return num_fnames > 0;
 }
 
 /// ":helptags"

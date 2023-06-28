@@ -729,13 +729,9 @@ void ex_compiler(exarg_T *eap)
   do_unlet(S_LEN("g:current_compiler"), true);
   do_unlet(S_LEN("b:current_compiler"), true);
 
-  snprintf(buf, bufsize, "compiler/%s.vim", eap->arg);
-  if (source_runtime(buf, DIP_ALL) == FAIL) {
-    // Try lua compiler
-    snprintf(buf, bufsize, "compiler/%s.lua", eap->arg);
-    if (source_runtime(buf, DIP_ALL) == FAIL) {
-      semsg(_(e_compiler_not_supported_str), eap->arg);
-    }
+  snprintf(buf, bufsize, "compiler/%s.*", eap->arg);
+  if (source_runtime_vim_lua(buf, DIP_ALL) == FAIL) {
+    semsg(_(e_compiler_not_supported_str), eap->arg);
   }
   xfree(buf);
 

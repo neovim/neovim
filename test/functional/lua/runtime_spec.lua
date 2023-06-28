@@ -118,12 +118,14 @@ describe('runtime:', function()
 
     it('loads vim compilers when both lua and vim version exist', function()
       local compiler_file = compiler_folder .. sep .. 'new_compiler'
-      write_file(compiler_file..'.vim', [[let b:compiler = 'vim']])
-      write_file(compiler_file..'.lua', [[vim.b.compiler = 'lua']])
+      exec('let b:compiler = "compiler"')
+      write_file(compiler_file..'.vim', [[let b:compiler = b:compiler.'_vim']])
+      write_file(compiler_file..'.lua', [[vim.b.compiler = vim.b.compiler..'_lua']])
 
       exec('compiler new_compiler')
 
-      eq('vim', eval('b:compiler'))
+      -- lua version is sourced after vim
+      eq('compiler_vim_lua', eval('b:compiler'))
     end)
   end)
 

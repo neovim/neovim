@@ -527,12 +527,17 @@ ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Error *err)
   return rv;
 }
 
-static void find_runtime_cb(char *fname, void *cookie)
+static bool find_runtime_cb(int num_fnames, char **fnames, bool all, void *cookie)
 {
   Array *rv = (Array *)cookie;
-  if (fname != NULL) {
-    ADD(*rv, CSTR_TO_OBJ(fname));
+  for (int i = 0; i < num_fnames; i++) {
+    ADD(*rv, CSTR_TO_OBJ(fnames[i]));
+    if (!all) {
+      return true;
+    }
   }
+
+  return num_fnames > 0;
 }
 
 String nvim__get_lib_dir(void)
