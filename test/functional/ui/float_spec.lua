@@ -8086,11 +8086,16 @@ describe('float window', function()
         [13] = {background = Screen.colors.LightGray, blend = 30},
         [14] = {foreground = Screen.colors.Grey0, background = Screen.colors.Grey88},
         [15] = {foreground = tonumber('0x939393'), background = Screen.colors.Grey88},
+        [16] = {bold = true, special = Screen.colors.Green, underline = true, foreground = Screen.colors.Green};
+        [17] = {special = tonumber('0xb2a9b2'), bold = true, background = tonumber('0xffcfff'), underline = true, foreground = tonumber('0xb2a9b2')};
+        [18] = {blend = 80, background = Screen.colors.LightMagenta, special = Screen.colors.Blue1, reverse = true, foreground = Screen.colors.Red, strikethrough = true, standout = true, undercurl = true};
+        [19] = {special = tonumber('0x6666ff'), background = tonumber('0xffcccc'), foreground = tonumber('0x99a399'), standout = true, strikethrough = true, undercurl = true};
+        [20] = {background = tonumber('0xffcccc'), special = tonumber('0x336600'), foreground = tonumber('0x336600'), bold = true, standout = true, strikethrough = true, undercurl = true};
+        [21] = {reverse = true, standout = true, blend = 30, undercurl = true, special = Screen.colors.Blue1, background = Screen.colors.Plum1, foreground = Screen.colors.Red1, strikethrough = true};
+        [22] = {foreground = tonumber('0xd8b2d8'), standout = true, undercurl = true, special = tonumber('0x2626ff'), background = tonumber('0xff4c4c'), strikethrough = true};
+        [23] = {bold = true, standout = true, undercurl = true, special = tonumber('0xb22600'), background = tonumber('0xff4c4c'), foreground = tonumber('0xb22600'), strikethrough = true};
       })
       insert([[
-        Lorem ipsum dolor sit amet, consectetur
-        adipisicing elit, sed do eiusmod tempor
-        incididunt ut labore et dolore magna aliqua.
         Ut enim ad minim veniam, quis nostrud
         exercitation ullamco laboris nisi ut aliquip ex
         ea commodo consequat. Duis aute irure dolor in
@@ -8369,6 +8374,98 @@ describe('float window', function()
           laborum^.                                          |
                                                             |
         ]])
+      end
+
+      command('hi SpecialRegion gui=reverse,standout,strikethrough,undercurl guisp=Blue')
+      command('hi SpecialRegionBack guifg=Green gui=bold,underline guisp=Green')
+      meths.buf_add_highlight(0, -1, "SpecialRegionBack", 2, 0, -1)
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [3:--------------------------------------------------]|
+        ## grid 2
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          {16:ea commodo consequat. Duis aute irure dolor in}    |
+          reprehenderit in voluptate velit esse cillum      |
+          dolore eu fugiat nulla pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+        ## grid 3
+                                                            |
+        ## grid 5
+          {18:popup    text}{9:  }|
+          {12:~              }|
+          {12:~              }|
+        ]], float_pos={
+          [5] = {{id = 1002}, "NW", 1, 2, 5, true, 50};
+        }}
+      else
+        screen:expect{grid=[[
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          {16:ea co}{19:popup}{20: con}{19:text}{17:at}{16:. Duis aute irure dolor in}    |
+          repre{7:~}{3:enderit in vol}uptate velit esse cillum      |
+          dolor{7:~}{3: eu fugiat nul}la pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+                                                            |
+        ]]}
+      end
+
+      command('hi SpecialRegion blend=NONE')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [3:--------------------------------------------------]|
+        ## grid 2
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          {16:ea commodo consequat. Duis aute irure dolor in}    |
+          reprehenderit in voluptate velit esse cillum      |
+          dolore eu fugiat nulla pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+        ## grid 3
+                                                            |
+        ## grid 5
+          {21:popup    text}{9:  }|
+          {12:~              }|
+          {12:~              }|
+        ]], float_pos={
+          [5] = {{id = 1002}, "NW", 1, 2, 5, true, 50};
+        }}
+      else
+        screen:expect{grid=[[
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          {16:ea co}{22:popup}{23: con}{22:text}{17:at}{16:. Duis aute irure dolor in}    |
+          repre{7:~}{3:enderit in vol}uptate velit esse cillum      |
+          dolor{7:~}{3: eu fugiat nul}la pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+                                                            |
+        ]]}
       end
     end)
 

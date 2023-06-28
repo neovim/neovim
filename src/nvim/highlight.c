@@ -668,6 +668,14 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
 
   if (*through) {
     cattrs = battrs;
+    cattrs.rgb_ae_attr =
+      hl_combine_ae(cattrs.rgb_ae_attr,
+                    fattrs.rgb_ae_attr &
+                    (HL_INVERSE | HL_UNDERLINE_MASK | HL_STANDOUT | HL_STRIKETHROUGH));
+    cattrs.cterm_ae_attr =
+      hl_combine_ae(cattrs.cterm_ae_attr,
+                    fattrs.cterm_ae_attr &
+                    (HL_INVERSE | HL_UNDERLINE_MASK | HL_STANDOUT | HL_STRIKETHROUGH));
     cattrs.rgb_fg_color = rgb_blend(ratio, battrs.rgb_fg_color,
                                     fattrs.rgb_bg_color);
     if (cattrs.rgb_ae_attr & (HL_UNDERLINE_MASK)) {
@@ -684,7 +692,14 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
   } else {
     cattrs = fattrs;
     if (ratio >= 50) {
-      cattrs.rgb_ae_attr = hl_combine_ae(battrs.rgb_ae_attr, cattrs.rgb_ae_attr);
+      cattrs.rgb_ae_attr
+        = hl_combine_ae(battrs.rgb_ae_attr &
+                        (HL_INVERSE | HL_UNDERLINE_MASK | HL_STANDOUT | HL_STRIKETHROUGH),
+                        cattrs.rgb_ae_attr);
+      cattrs.cterm_ae_attr
+        = hl_combine_ae(battrs.cterm_ae_attr &
+                        (HL_INVERSE | HL_UNDERLINE_MASK | HL_STANDOUT | HL_STRIKETHROUGH),
+                        cattrs.cterm_ae_attr);
     }
     cattrs.rgb_fg_color = rgb_blend(ratio/2, battrs.rgb_fg_color,
                                     fattrs.rgb_fg_color);
