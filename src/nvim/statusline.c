@@ -905,9 +905,9 @@ int build_statuscol_str(win_T *wp, linenr_T lnum, long relnum, statuscol_T *stcp
   // Only update click definitions once per window per redraw
   if (fillclick) {
     stl_clear_click_defs(wp->w_statuscol_click_defs, wp->w_statuscol_click_defs_size);
-    wp->w_statuscol_click_defs = stl_alloc_click_defs(wp->w_statuscol_click_defs, width,
+    wp->w_statuscol_click_defs = stl_alloc_click_defs(wp->w_statuscol_click_defs, stcp->width,
                                                       &wp->w_statuscol_click_defs_size);
-    stl_fill_click_defs(wp->w_statuscol_click_defs, clickrec, stcp->text, width, false);
+    stl_fill_click_defs(wp->w_statuscol_click_defs, clickrec, stcp->text, stcp->width, false);
   }
 
   return width;
