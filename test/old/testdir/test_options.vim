@@ -939,12 +939,16 @@ func Test_local_scrolloff()
   wincmd w
   call assert_equal(5, &so)
   wincmd w
+  call assert_equal(3, &so)
   setlocal so<
   call assert_equal(5, &so)
+  setglob so=8
+  call assert_equal(8, &so)
+  call assert_equal(-1, &l:so)
   setlocal so=0
   call assert_equal(0, &so)
   setlocal so=-1
-  call assert_equal(5, &so)
+  call assert_equal(8, &so)
 
   call assert_equal(7, &siso)
   setlocal siso=3
@@ -952,12 +956,16 @@ func Test_local_scrolloff()
   wincmd w
   call assert_equal(7, &siso)
   wincmd w
+  call assert_equal(3, &siso)
   setlocal siso<
   call assert_equal(7, &siso)
+  setglob siso=4
+  call assert_equal(4, &siso)
+  call assert_equal(-1, &l:siso)
   setlocal siso=0
   call assert_equal(0, &siso)
   setlocal siso=-1
-  call assert_equal(7, &siso)
+  call assert_equal(4, &siso)
 
   close
   set so&
