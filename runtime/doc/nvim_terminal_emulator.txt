@@ -493,6 +493,20 @@ If there is no g:termdebug_config you can use: >vim
 	let g:termdebug_popup = 0
 
 
+Change default signs ~
+							*termdebug_signs*
+Termdebug uses the last two characters of the breakpoint ID in the
+signcolumn to represent breakpoints. For example, breakpoint ID 133
+will be displayed as `33`.
+
+If you want to customize the breakpoint signs: >vim
+	let g:termdebug_config['sign'] = '>>'
+If there is no g:terminal_config yet you can use: >vim
+	let g:termdebug_config = {'sign': '>>'}
+
+After this, breakpoints will be displayed as `>>` in the signcolumn.
+
+
 Vim window width ~
 							*termdebug_wide*
 To change the width of the Vim window when debugging starts and use a vertical
