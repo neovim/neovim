@@ -3511,8 +3511,8 @@ void msg_advance(int col)
 /// @param textfiel  IObuff for inputdialog(), NULL otherwise
 /// @param ex_cmd  when true pressing : accepts default and starts Ex command
 /// @returns 0 if cancelled, otherwise the nth button (1-indexed).
-int do_dialog(int type, char *title, char *message, char *buttons, int dfltbutton, char *textfield,
-              int ex_cmd)
+int do_dialog(int type, const char *title, const char *message, const char *buttons, int dfltbutton,
+              const char *textfield, int ex_cmd)
 {
   int retval = 0;
   char *hotkeys;
@@ -3619,7 +3619,7 @@ static int copy_char(const char *from, char *to, bool lowercase)
 ///                        corresponding button has a hotkey
 ///
 /// @return Pointer to memory allocated for storing hotkeys
-static char *console_dialog_alloc(const char *message, char *buttons, bool has_hotkey[])
+static char *console_dialog_alloc(const char *message, const char *buttons, bool has_hotkey[])
 {
   int lenhotkey = HOTK_LEN;  // count first button
   has_hotkey[0] = false;
@@ -3627,7 +3627,7 @@ static char *console_dialog_alloc(const char *message, char *buttons, bool has_h
   // Compute the size of memory to allocate.
   int len = 0;
   int idx = 0;
-  char *r = buttons;
+  const char *r = buttons;
   while (*r) {
     if (*r == DLG_BUTTON_SEP) {
       len += 3;                         // '\n' -> ', '; 'x' -> '(x)'
@@ -3673,7 +3673,7 @@ static char *console_dialog_alloc(const char *message, char *buttons, bool has_h
 /// The hotkeys can be multi-byte characters, but without combining chars.
 ///
 /// @return  an allocated string with hotkeys.
-static char *msg_show_console_dialog(char *message, char *buttons, int dfltbutton)
+static char *msg_show_console_dialog(const char *message, const char *buttons, int dfltbutton)
   FUNC_ATTR_NONNULL_RET
 {
   bool has_hotkey[HAS_HOTKEY_LEN] = { false };
@@ -3693,7 +3693,7 @@ static char *msg_show_console_dialog(char *message, char *buttons, int dfltbutto
 /// @param has_hotkey An element in this array is true if corresponding button
 ///                   has a hotkey
 /// @param[out] hotkeys_ptr Pointer to the memory location where hotkeys will be copied
-static void copy_hotkeys_and_msg(const char *message, char *buttons, int default_button_idx,
+static void copy_hotkeys_and_msg(const char *message, const char *buttons, int default_button_idx,
                                  const bool has_hotkey[], char *hotkeys_ptr)
 {
   *confirm_msg = '\n';
@@ -3716,7 +3716,7 @@ static void copy_hotkeys_and_msg(const char *message, char *buttons, int default
   }
 
   int idx = 0;
-  char *r = buttons;
+  const char *r = buttons;
   while (*r) {
     if (*r == DLG_BUTTON_SEP) {
       *msgp++ = ',';

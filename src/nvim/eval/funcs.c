@@ -873,8 +873,7 @@ static void f_confirm(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   if (!error) {
-    rettv->vval.v_number = do_dialog(type, NULL, (char *)message, (char *)buttons, def, NULL,
-                                     false);
+    rettv->vval.v_number = do_dialog(type, NULL, message, buttons, def, NULL, false);
   }
 }
 

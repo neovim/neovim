@@ -389,7 +389,7 @@ typedef struct {
 static int string_compare(const void *s1, const void *s2) FUNC_ATTR_NONNULL_ALL
 {
   if (sort_lc) {
-    return strcoll((char *)s1, (char *)s2);
+    return strcoll((const char *)s1, (const char *)s2);
   }
   return sort_ic ? STRICMP(s1, s2) : strcmp(s1, s2);
 }
