@@ -188,7 +188,7 @@ function M.enable(bufnr)
       on_reload = function(_, cb_bufnr)
         clear(cb_bufnr)
         if bufstates[cb_bufnr] and bufstates[cb_bufnr].enabled then
-          bufstates[cb_bufnr] = { enabled = true }
+          bufstates[cb_bufnr] = { enabled = true, applied = {} }
         end
         M.refresh({ bufnr = cb_bufnr })
       end,
