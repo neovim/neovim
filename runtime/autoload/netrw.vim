@@ -211,10 +211,8 @@ let g:netrw_localmovecmdopt    = ""
 
 " ---------------------------------------------------------------------
 " Default values for netrw's global protocol variables {{{2
-if (v:version > 802 || (v:version == 802 && has("patch486"))) && has("balloon_eval") && !exists("s:initbeval") && !exists("g:netrw_nobeval") && has("syntax") && exists("g:syntax_on") && has("mouse")
-  call s:NetrwInit("g:netrw_use_errorwindow",2)
-else
-  call s:NetrwInit("g:netrw_use_errorwindow",1)
+if !exists("g:netrw_use_errorwindow")
+  let g:netrw_use_errorwindow = 0
 endif
 
 if !exists("g:netrw_dav_cmd")
