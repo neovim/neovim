@@ -747,6 +747,11 @@ static void get_statuscol_display_info(statuscol_T *stcp, winlinevars_T *wlv)
     }
     // Skip over empty highlight sections
   } while (wlv->n_extra == 0 && stcp->textp < stcp->text_end);
+  if (wlv->n_extra > 0) {
+    static char transbuf[MAX_NUMBERWIDTH * MB_MAXBYTES + 1];
+    wlv->n_extra = (int)transstr_buf(wlv->p_extra, wlv->n_extra, transbuf, sizeof transbuf, true);
+    wlv->p_extra = transbuf;
+  }
 }
 
 static void handle_breakindent(win_T *wp, winlinevars_T *wlv)
