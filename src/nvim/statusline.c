@@ -263,6 +263,7 @@ void stl_fill_click_defs(StlClickDefinition *click_defs, StlClickRecord *click_r
   };
   for (int i = 0; click_recs[i].start != NULL; i++) {
     len += vim_strnsize(buf, (int)(click_recs[i].start - buf));
+    assert(len <= width);
     if (col < len) {
       while (col < len) {
         click_defs[col++] = cur_click_def;
@@ -2049,17 +2050,6 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
 
       // Put a `<` to mark where we truncated at
       *trunc_p = '<';
-
-      if (width + 1 < maxwidth) {
-        // Advance the pointer to the end of the string
-        trunc_p = trunc_p + strlen(trunc_p);
-      }
-
-      // Fill up for half a double-wide character.
-      while (++width < maxwidth) {
-        MB_CHAR2BYTES(fillchar, trunc_p);
-        *trunc_p = NUL;
-      }
       // }
 
       // { Change the start point for items based on
@@ -2081,6 +2071,17 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
         }
       }
       // }
+
+      if (width + 1 < maxwidth) {
+        // Advance the pointer to the end of the string
+        trunc_p = trunc_p + strlen(trunc_p);
+      }
+
+      // Fill up for half a double-wide character.
+      while (++width < maxwidth) {
+        MB_CHAR2BYTES(fillchar, trunc_p);
+        *trunc_p = NUL;
+      }
     }
     width = maxwidth;
 
