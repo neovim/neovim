@@ -204,7 +204,7 @@ static inline void clear_hist_entry(histentry_T *hisptr)
 /// If 'move_to_front' is true, matching entry is moved to end of history.
 ///
 /// @param move_to_front  Move the entry to the front if it exists
-static int in_history(int type, char *str, int move_to_front, int sep)
+static int in_history(int type, const char *str, int move_to_front, int sep)
 {
   int last_i = -1;
 
@@ -238,7 +238,7 @@ static int in_history(int type, char *str, int move_to_front, int sep)
   }
 
   list_T *const list = history[type][i].additional_elements;
-  str = history[type][i].hisstr;
+  char *const save_hisstr = history[type][i].hisstr;
   while (i != hisidx[type]) {
     if (++i >= hislen) {
       i = 0;
@@ -248,7 +248,7 @@ static int in_history(int type, char *str, int move_to_front, int sep)
   }
   tv_list_unref(list);
   history[type][i].hisnum = ++hisnum[type];
-  history[type][i].hisstr = str;
+  history[type][i].hisstr = save_hisstr;
   history[type][i].timestamp = os_time();
   history[type][i].additional_elements = NULL;
   return true;
@@ -295,7 +295,7 @@ static int last_maptick = -1;           // last seen maptick
 /// @param histype  may be one of the HIST_ values.
 /// @param in_map   consider maptick when inside a mapping
 /// @param sep      separator character used (search hist)
-void add_to_history(int histype, char *new_entry, int in_map, int sep)
+void add_to_history(int histype, const char *new_entry, int in_map, int sep)
 {
   histentry_T *hisptr;
 
@@ -538,7 +538,7 @@ void f_histadd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   init_history();
-  add_to_history(histype, (char *)str, false, NUL);
+  add_to_history(histype, str, false, NUL);
   rettv->vval.v_number = true;
 }
 
