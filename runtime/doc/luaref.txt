@@ -4361,7 +4361,7 @@ math.frexp({x})                                                   *math.frexp()*
         absolute value of `m` is in the range `[0.5, 1)` (or zero when {x} is
         zero).
 
-math.huge                                                          *math.huge()*
+math.huge                                                            *math.huge*
         The value `HUGE_VAL`, a value larger than or equal to any other
         numerical value.
 
@@ -4384,7 +4384,7 @@ math.modf({x})                                                     *math.modf()*
         Returns two numbers, the integral part of {x} and the fractional part
         of {x}.
 
-math.pi                                                              *math.pi()*
+math.pi                                                                *math.pi*
         The value of `pi`.
 
 math.pow({x}, {y})                                                  *math.pow()*
