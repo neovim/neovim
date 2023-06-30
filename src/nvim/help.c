@@ -319,7 +319,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
     { "[*",          "[star" },
     { "]*",          "]star" },
     { ":*",          ":star" },
-    { "/*",          "/star" },  // NOLINT
+    { "/*",          "/star" },
     { "/\\*",        "/\\\\star" },
     { "\"*",         "quotestar" },
     { "**",          "starstar" },
@@ -717,7 +717,7 @@ void fix_help_buffer(void)
 
           // Find all "doc/ *.txt" files in this directory.
           if (!add_pathsep(NameBuff)
-              || xstrlcat(NameBuff, "doc/*.??[tx]",  // NOLINT
+              || xstrlcat(NameBuff, "doc/*.??[tx]",
                           sizeof(NameBuff)) >= MAXPATHL) {
             emsg(_(e_fnametoolong));
             continue;
@@ -878,7 +878,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
   // Find all *.txt files.
   size_t dirlen = xstrlcpy(NameBuff, dir, sizeof(NameBuff));
   if (dirlen >= MAXPATHL
-      || xstrlcat(NameBuff, "/**/*", sizeof(NameBuff)) >= MAXPATHL  // NOLINT
+      || xstrlcat(NameBuff, "/**/*", sizeof(NameBuff)) >= MAXPATHL
       || xstrlcat(NameBuff, ext, sizeof(NameBuff)) >= MAXPATHL) {
     emsg(_(e_fnametoolong));
     return;

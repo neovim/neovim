@@ -1165,25 +1165,6 @@ def CheckForMultilineCommentsAndStrings(filename, clean_lines, linenum, error):
               'Use C++11 raw strings or concatenation instead.')
 
 
-def CheckForOldStyleComments(filename, line, linenum, error):
-    """Logs an error if we see /*-style comment
-
-    Args:
-      filename: The name of the current file.
-      line: The text of the line to check.
-      linenum: The number of the line to check.
-      error: The function to call with any errors found.
-    """
-    # hack: allow /* inside comment line. Could be extended to allow them inside
-    # any // comment.
-    if line.find('/*') >= 0 and line[-1] != '\\' and not _RE_COMMENTLINE.match(line):
-        error(filename, linenum, 'readability/old_style_comment', 5,
-              '/*-style comment found, it should be replaced with //-style.  '
-              '/*-style comments are only allowed inside macros.  '
-              'Note that you should not use /*-style comments to document '
-              'macros itself, use doxygen-style comments for this.')
-
-
 threading_list = (
     ('asctime(', 'os_asctime_r('),
     ('ctime(', 'os_ctime_r('),
@@ -2641,7 +2622,6 @@ def ProcessLine(filename, clean_lines, line,
         return
     CheckForFunctionLengths(filename, clean_lines, line, function_state, error)
     CheckForMultilineCommentsAndStrings(filename, clean_lines, line, error)
-    CheckForOldStyleComments(filename, init_lines[line], line, error)
     CheckStyle(filename, clean_lines, line, error)
     CheckLanguage(filename, clean_lines, line, error)
     CheckForNonStandardConstructs(filename, clean_lines, line, error)

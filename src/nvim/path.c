@@ -745,7 +745,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
         if (starstar && stardepth < 100) {
           // For "**" in the pattern first go deeper in the tree to
           // find matches.
-          STRCPY(buf + len, "/**");  // NOLINT
+          STRCPY(buf + len, "/**");
           STRCPY(buf + len + 3, path_end);
           stardepth++;
           (void)do_path_expand(gap, buf, len + 1, flags, true);

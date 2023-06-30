@@ -599,7 +599,7 @@ int do_in_path_and_pp(char *path, char *name, int flags, DoInRuntimepathCB callb
   }
 
   if ((done == FAIL || (flags & DIP_ALL)) && (flags & DIP_START)) {
-    char *start_dir = "pack/*/start/*/%s%s";  // NOLINT
+    char *start_dir = "pack/*/start/*/%s%s";
     size_t len = strlen(start_dir) + strlen(name) + 6;
     char *s = xmallocz(len);  // TODO(bfredl): get rid of random allocations
     char *suffix = (flags & DIP_AFTER) ? "after/" : "";
@@ -610,7 +610,7 @@ int do_in_path_and_pp(char *path, char *name, int flags, DoInRuntimepathCB callb
     xfree(s);
 
     if (done == FAIL || (flags & DIP_ALL)) {
-      start_dir = "start/*/%s%s";  // NOLINT
+      start_dir = "start/*/%s%s";
       len = strlen(start_dir) + strlen(name) + 6;
       s = xmallocz(len);
 
@@ -622,7 +622,7 @@ int do_in_path_and_pp(char *path, char *name, int flags, DoInRuntimepathCB callb
   }
 
   if ((done == FAIL || (flags & DIP_ALL)) && (flags & DIP_OPT)) {
-    char *opt_dir = "pack/*/opt/*/%s";  // NOLINT
+    char *opt_dir = "pack/*/opt/*/%s";
     size_t len = strlen(opt_dir) + strlen(name);
     char *s = xmallocz(len);
 
@@ -632,7 +632,7 @@ int do_in_path_and_pp(char *path, char *name, int flags, DoInRuntimepathCB callb
     xfree(s);
 
     if (done == FAIL || (flags & DIP_ALL)) {
-      opt_dir = "opt/*/%s";  // NOLINT
+      opt_dir = "opt/*/%s";
       len = strlen(opt_dir) + strlen(name);
       s = xmallocz(len);
 
@@ -682,7 +682,7 @@ static void expand_pack_entry(RuntimeSearchPath *search_path, Set(String) *rtp_u
                               CharVec *after_path, char *pack_entry, size_t pack_entry_len)
 {
   static char buf[MAXPATHL];
-  char *(start_pat[]) = { "/pack/*/start/*", "/start/*" };  // NOLINT
+  char *(start_pat[]) = { "/pack/*/start/*", "/start/*" };
   for (int i = 0; i < 2; i++) {
     if (pack_entry_len + strlen(start_pat[i]) + 1 > sizeof buf) {
       continue;
@@ -1022,15 +1022,15 @@ theend:
 /// load these from filetype.vim)
 static int load_pack_plugin(bool opt, char *fname)
 {
-  static const char *ftpat = "%s/ftdetect/*.vim";  // NOLINT
+  static const char *ftpat = "%s/ftdetect/*.vim";
 
   char *const ffname = fix_fname(fname);
   size_t len = strlen(ffname) + strlen(ftpat);
   char *pat = xmallocz(len);
 
-  vim_snprintf(pat, len, "%s/plugin/**/*.vim", ffname);  // NOLINT
+  vim_snprintf(pat, len, "%s/plugin/**/*.vim", ffname);
   source_all_matches(pat);
-  vim_snprintf(pat, len, "%s/plugin/**/*.lua", ffname);  // NOLINT
+  vim_snprintf(pat, len, "%s/plugin/**/*.lua", ffname);
   source_all_matches(pat);
 
   char *cmd = xstrdup("g:did_load_filetypes");
@@ -1041,7 +1041,7 @@ static int load_pack_plugin(bool opt, char *fname)
     do_cmdline_cmd("augroup filetypedetect");
     vim_snprintf(pat, len, ftpat, ffname);
     source_all_matches(pat);
-    vim_snprintf(pat, len, "%s/ftdetect/*.lua", ffname);  // NOLINT
+    vim_snprintf(pat, len, "%s/ftdetect/*.lua", ffname);
     source_all_matches(pat);
     do_cmdline_cmd("augroup END");
   }
@@ -1115,7 +1115,7 @@ static bool pack_has_entries(char *buf)
 static void add_pack_start_dir(char *fname, void *cookie)
 {
   static char buf[MAXPATHL];
-  char *(start_pat[]) = { "/start/*", "/pack/*/start/*" };  // NOLINT
+  char *(start_pat[]) = { "/start/*", "/pack/*/start/*" };
   for (int i = 0; i < 2; i++) {
     if (strlen(fname) + strlen(start_pat[i]) + 1 > MAXPATHL) {
       continue;
@@ -1132,9 +1132,9 @@ static void add_pack_start_dir(char *fname, void *cookie)
 void load_start_packages(void)
 {
   did_source_packages = true;
-  do_in_path(p_pp, "pack/*/start/*", DIP_ALL + DIP_DIR,  // NOLINT
+  do_in_path(p_pp, "pack/*/start/*", DIP_ALL + DIP_DIR,
              add_start_pack_plugin, &APP_LOAD);
-  do_in_path(p_pp, "start/*", DIP_ALL + DIP_DIR,  // NOLINT
+  do_in_path(p_pp, "start/*", DIP_ALL + DIP_DIR,
              add_start_pack_plugin, &APP_LOAD);
 }
 
@@ -1156,8 +1156,8 @@ void load_plugins(void)
 {
   if (p_lpl) {
     char *rtp_copy = p_rtp;
-    char *const plugin_pattern_vim = "plugin/**/*.vim";  // NOLINT
-    char *const plugin_pattern_lua = "plugin/**/*.lua";  // NOLINT
+    char *const plugin_pattern_vim = "plugin/**/*.vim";
+    char *const plugin_pattern_lua = "plugin/**/*.lua";
 
     if (!did_source_packages) {
       rtp_copy = xstrdup(p_rtp);
@@ -1186,7 +1186,7 @@ void load_plugins(void)
 /// ":packadd[!] {name}"
 void ex_packadd(exarg_T *eap)
 {
-  static const char *plugpat = "pack/*/%s/%s";    // NOLINT
+  static const char *plugpat = "pack/*/%s/%s";
   int res = OK;
 
   // Round 1: use "start", round 2: use "opt".
@@ -1233,16 +1233,16 @@ expand:
     }
 
     if (flags & DIP_START) {
-      memcpy(tail - 15, "pack/*/start/*/", 15);  // NOLINT
+      memcpy(tail - 15, "pack/*/start/*/", 15);
       globpath(p_pp, tail - 15, gap, glob_flags, expand_dirs);
-      memcpy(tail - 8, "start/*/", 8);  // NOLINT
+      memcpy(tail - 8, "start/*/", 8);
       globpath(p_pp, tail - 8, gap, glob_flags, expand_dirs);
     }
 
     if (flags & DIP_OPT) {
-      memcpy(tail - 13, "pack/*/opt/*/", 13);  // NOLINT
+      memcpy(tail - 13, "pack/*/opt/*/", 13);
       globpath(p_pp, tail - 13, gap, glob_flags, expand_dirs);
-      memcpy(tail - 6, "opt/*/", 6);  // NOLINT
+      memcpy(tail - 6, "opt/*/", 6);
       globpath(p_pp, tail - 6, gap, glob_flags, expand_dirs);
     }
 
@@ -1368,9 +1368,9 @@ int ExpandPackAddDir(char *pat, int *num_file, char ***file)
 
   size_t buflen = pat_len + 26;
   char *s = xmalloc(buflen);
-  snprintf(s, buflen, "pack/*/opt/%s*", pat);  // NOLINT
+  snprintf(s, buflen, "pack/*/opt/%s*", pat);
   globpath(p_pp, s, &ga, 0, true);
-  snprintf(s, buflen, "opt/%s*", pat);  // NOLINT
+  snprintf(s, buflen, "opt/%s*", pat);
   globpath(p_pp, s, &ga, 0, true);
   xfree(s);
 

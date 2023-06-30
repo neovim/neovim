@@ -702,8 +702,8 @@ void ex_compiler(exarg_T *eap)
 
   if (*eap->arg == NUL) {
     // List all compiler scripts.
-    do_cmdline_cmd("echo globpath(&rtp, 'compiler/*.vim')");  // NOLINT
-    do_cmdline_cmd("echo globpath(&rtp, 'compiler/*.lua')");  // NOLINT
+    do_cmdline_cmd("echo globpath(&rtp, 'compiler/*.vim')");
+    do_cmdline_cmd("echo globpath(&rtp, 'compiler/*.lua')");
     return;
   }
 
