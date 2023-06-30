@@ -997,8 +997,8 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     }
   } while (trailarg != NULL);
 
-  // Only set "prevcmd" if there is a command to run, otherwise if
-  // prevcmd is not set, set it to &shell
+  // Only set "prevcmd" if there is a command to run, otherwise keep the one
+  // we have.
   if (strlen(newcmd) > 0) {
     xfree(prevcmd);
     prevcmd = newcmd;
