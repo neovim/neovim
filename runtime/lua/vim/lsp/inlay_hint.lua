@@ -245,9 +245,9 @@ local function toggle(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local bufstate = bufstates[bufnr]
   if bufstate and bufstate.enabled then
-    M.disable(bufnr)
+    disable(bufnr)
   else
-    M.enable(bufnr)
+    enable(bufnr)
   end
 end
 
