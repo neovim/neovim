@@ -417,6 +417,10 @@ The following changes to existing APIs or features add new behavior.
 
 • |--startuptime| reports the startup times for both processes (TUI + server) as separate sections.
 
+• |:range!| pipes by default to |'shell'| if a {filter} external
+  program is not given.
+  https://github.com/neovim/neovim/pull/23720
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
