@@ -735,10 +735,10 @@ static void get_statuscol_display_info(statuscol_T *stcp, winlinevars_T *wlv)
     wlv->draw_state = WL_STC;
     wlv->char_attr = stcp->cur_attr;
     wlv->p_extra = stcp->textp;
-    wlv->n_extra =
-      (int)((stcp->hlrecp->start ? stcp->hlrecp->start : stcp->text_end) - stcp->textp);
+    char *const section_end = stcp->hlrecp->start ? stcp->hlrecp->start : stcp->text_end;
+    wlv->n_extra = (int)(section_end - stcp->textp);
     // Prepare for next highlight section if not yet at the end
-    if (stcp->textp + wlv->n_extra < stcp->text_end) {
+    if (section_end < stcp->text_end) {
       int hl = stcp->hlrecp->userhl;
       stcp->textp = stcp->hlrecp->start;
       stcp->cur_attr = hl < 0 ? syn_id2attr(-hl) : stcp->num_attr;

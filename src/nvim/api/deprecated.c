@@ -709,7 +709,7 @@ static void set_option_to(uint64_t channel_id, void *to, int type, String name, 
     }
   }
 
-  OptVal optval = NIL_OPTVAL;
+  OptVal optval;
 
   if (flags & SOPT_BOOL) {
     VALIDATE(value.type == kObjectTypeBoolean, "Option '%s' value must be Boolean", name.data, {

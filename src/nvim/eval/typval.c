@@ -673,6 +673,7 @@ int tv_list_assign_range(list_T *const dest, list_T *const src, const long idx1_
   idx = idx1;
   dest_li = first_li;
   for (src_li = tv_list_first(src); src_li != NULL;) {
+    assert(dest_li != NULL);
     if (op != NULL && *op != '=') {
       eexe_mod_op(TV_LIST_ITEM_TV(dest_li), TV_LIST_ITEM_TV(src_li), op);
     } else {
@@ -683,7 +684,6 @@ int tv_list_assign_range(list_T *const dest, list_T *const src, const long idx1_
     if (src_li == NULL || (!empty_idx2 && idx2 == idx)) {
       break;
     }
-    assert(dest_li != NULL);
     if (TV_LIST_ITEM_NEXT(dest, dest_li) == NULL) {
       // Need to add an empty item.
       tv_list_append_number(dest, 0);
@@ -1622,7 +1622,7 @@ const char *tv_list_find_str(list_T *const l, const int n)
 
 /// Like tv_list_find() but when a negative index is used that is not found use
 /// zero and set "idx" to zero.  Used for first index of a range.
-listitem_T *tv_list_find_index(list_T *const l, long *const idx)
+static listitem_T *tv_list_find_index(list_T *const l, long *const idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   listitem_T *li = tv_list_find(l, (int)(*idx));
