@@ -64,7 +64,7 @@ describe('inlay hints', function()
     end)
 
     it(
-      'inlay hints are applied when vim.lsp.buf.inlay_hint(true) is called',
+      'inlay hints are applied when vim.lsp.inlay_hint(true) is called',
       function()
         local res = exec_lua([[
           bufnr = vim.api.nvim_get_current_buf()
@@ -79,7 +79,7 @@ describe('inlay hints', function()
 
 
         insert(text)
-        exec_lua([[vim.lsp.buf.inlay_hint(bufnr, true)]])
+        exec_lua([[vim.lsp.inlay_hint(bufnr, true)]])
         screen:expect({
           grid = [[
   auto add(int a, int b)-> int { return a + b; }    |
@@ -96,7 +96,7 @@ describe('inlay hints', function()
       end)
 
     it(
-      'inlay hints are cleared when vim.lsp.buf.inlay_hint(false) is called',
+      'inlay hints are cleared when vim.lsp.inlay_hint(false) is called',
       function()
         exec_lua([[
         bufnr = vim.api.nvim_get_current_buf()
@@ -105,7 +105,7 @@ describe('inlay hints', function()
       ]])
 
         insert(text)
-        exec_lua([[vim.lsp.buf.inlay_hint(bufnr, true)]])
+        exec_lua([[vim.lsp.inlay_hint(bufnr, true)]])
         screen:expect({
           grid = [[
   auto add(int a, int b)-> int { return a + b; }    |
@@ -119,7 +119,7 @@ describe('inlay hints', function()
                                                     |
 ]]
         })
-        exec_lua([[vim.lsp.buf.inlay_hint(bufnr, false)]])
+        exec_lua([[vim.lsp.inlay_hint(bufnr, false)]])
         screen:expect({
           grid = [[
   auto add(int a, int b) { return a + b; }          |

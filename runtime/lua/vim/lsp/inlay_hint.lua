@@ -101,7 +101,7 @@ end
 ---  - only_visible (boolean, default: false): Whether to only refresh hints for the visible regions of the buffer
 ---
 ---@private
-function M.refresh(opts)
+local function refresh(opts)
   opts = opts or {}
   local bufnr = resolve_bufnr(opts.bufnr or 0)
   local bufstate = bufstates[bufnr]
@@ -139,6 +139,24 @@ function M.refresh(opts)
   end
 end
 
+--- |lsp-handler| for the method `textDocument/inlayHint/refresh`
+---@private
+function M.on_refresh(err, _, ctx, _)
+  if err then
+    return vim.NIL
+  end
+  for _, bufnr in ipairs(vim.lsp.get_buffers_by_client_id(ctx.client_id)) do
+    for _, winid in ipairs(api.nvim_list_wins()) do
+      if api.nvim_win_get_buf(winid) == bufnr then
+        refresh({ bufnr = bufnr })
+        break
+      end
+    end
+  end
+
+  return vim.NIL
+end
+
 --- Clear inlay hints
 ---@param bufnr (integer) Buffer handle, or 0 for current
 ---@private
@@ -163,18 +181,18 @@ end
 ---@private
 local function make_request(request_bufnr)
   reset_timer(request_bufnr)
-  M.refresh({ bufnr = request_bufnr })
+  refresh({ bufnr = request_bufnr })
 end
 
 --- Enable inlay hints for a buffer
 ---@param bufnr (integer) Buffer handle, or 0 for current
 ---@private
-function M.enable(bufnr)
+local function enable(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local bufstate = bufstates[bufnr]
   if not (bufstate and bufstate.enabled) then
     bufstates[bufnr] = { enabled = true, timer = nil, applied = {} }
-    M.refresh({ bufnr = bufnr })
+    refresh({ bufnr = bufnr })
     api.nvim_buf_attach(bufnr, true, {
       on_lines = function(_, cb_bufnr)
         if not bufstates[cb_bufnr].enabled then
@@ -190,7 +208,7 @@ function M.enable(bufnr)
         if bufstates[cb_bufnr] and bufstates[cb_bufnr].enabled then
           bufstates[cb_bufnr] = { enabled = true, applied = {} }
         end
-        M.refresh({ bufnr = cb_bufnr })
+        refresh({ bufnr = cb_bufnr })
       end,
       on_detach = function(_, cb_bufnr)
         clear(cb_bufnr)
@@ -211,7 +229,7 @@ end
 --- Disable inlay hints for a buffer
 ---@param bufnr (integer) Buffer handle, or 0 for current
 ---@private
-function M.disable(bufnr)
+local function disable(bufnr)
   bufnr = resolve_bufnr(bufnr)
   if bufstates[bufnr] and bufstates[bufnr].enabled then
     clear(bufnr)
@@ -223,7 +241,7 @@ end
 --- Toggle inlay hints for a buffer
 ---@param bufnr (integer) Buffer handle, or 0 for current
 ---@private
-function M.toggle(bufnr)
+local function toggle(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local bufstate = bufstates[bufnr]
   if bufstate and bufstate.enabled then
@@ -281,4 +299,15 @@ api.nvim_set_decoration_provider(namespace, {
   end,
 })
 
-return M
+return setmetatable(M, {
+  __call = function(_, bufnr, enable_)
+    vim.validate({ enable = { enable_, { 'boolean', 'nil' } }, bufnr = { bufnr, 'number' } })
+    if enable_ then
+      enable(bufnr)
+    elseif enable_ == false then
+      disable(bufnr)
+    else
+      toggle(bufnr)
+    end
+  end,
+})
