@@ -477,6 +477,10 @@ The following changes to existing APIs or features add new behavior.
     than a boolean "force" argument. To force a predicate or directive to
     override an existing predicate or directive, use `{ force = true }`.
 
+• |:range!| pipes by default to |'shell'| if a {filter} external
+  program is not given.
+  https://github.com/neovim/neovim/pull/23720
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
