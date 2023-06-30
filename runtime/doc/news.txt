@@ -38,6 +38,9 @@ The following changes may require adaptations in user config or plugins.
 • When switching windows, |CursorMoved| autocommands trigger when Nvim is back
   in the main loop rather than immediately. This is more compatible with Vim.
 
+• |-l| ensures output ends with a newline if the script prints messages and
+  doesn't cause Nvim to exit.
+
 • |LspRequest| and LspProgressUpdate (renamed to |LspProgress|) autocmds were
   promoted from a |User| autocmd to first class citizen.
 
