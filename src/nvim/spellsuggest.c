@@ -1175,7 +1175,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
   // word).
   int depth = 0;
   trystate_T *sp = &stack[0];
-  CLEAR_POINTER(sp);  // -V1068
+  CLEAR_POINTER(sp);  // -V1086
   sp->ts_curi = 1;
 
   if (soundfold) {
