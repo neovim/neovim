@@ -717,13 +717,13 @@ static void fmarks_check_one(xfmark_T *fm, char *name, buf_T *buf)
 
 /// Check the position in @a fm is valid.
 ///
-/// Emit error message and return accordingly.
-///
 /// Checks for:
 /// - NULL raising unknown mark error.
 /// - Line number <= 0 raising mark not set.
 /// - Line number > buffer line count, raising invalid mark.
+///
 /// @param fm[in]  File mark to check.
+/// @param errormsg[out]  Error message, if any.
 ///
 /// @return  true if the mark passes all the above checks, else false.
 bool mark_check(fmark_T *fm, const char **errormsg)
@@ -746,9 +746,11 @@ bool mark_check(fmark_T *fm, const char **errormsg)
 }
 
 /// Check if a mark line number is greater than the buffer line count, and set e_markinval.
+///
 /// @note  Should be done after the buffer is loaded into memory.
 /// @param buf  Buffer where the mark is set.
 /// @param fm  Mark to check.
+/// @param errormsg[out]  Error message, if any.
 /// @return  true if below line count else false.
 bool mark_check_line_bounds(buf_T *buf, fmark_T *fm, const char **errormsg)
 {

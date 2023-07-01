@@ -3241,16 +3241,17 @@ static const char *addr_error(cmd_addr_T addr_type)
   }
 }
 
-/// Get a single EX address
+/// Gets a single EX address.
 ///
-/// Set ptr to the next character after the part that was interpreted.
-/// Set ptr to NULL when an error is encountered.
-/// This may set the last used search pattern.
+/// Sets ptr to the next character after the part that was interpreted.
+/// Sets ptr to NULL when an error is encountered (stored in `errormsg`).
+/// May set the last used search pattern.
 ///
 /// @param skip           only skip the address, don't use it
 /// @param silent         no errors or side effects
 /// @param to_other_file  flag: may jump to other file
 /// @param address_count  1 for first, >1 after comma
+/// @param errormsg       Error message, if any
 ///
 /// @return               MAXLNUM when no Ex address was found.
 static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int skip, bool silent,

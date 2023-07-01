@@ -3467,6 +3467,7 @@ describe('API', function()
       end)
     end)
   end)
+
   describe('nvim_parse_cmd', function()
     it('works', function()
       eq({
@@ -4048,7 +4049,13 @@ describe('API', function()
       meths.cmd(meths.parse_cmd("set cursorline", {}), {})
       eq(true, meths.get_option_value("cursorline", {}))
     end)
+    it('no side-effects (error messages) in pcall() #20339', function()
+      eq({ false, 'Error while parsing command line: E16: Invalid range' },
+        exec_lua([=[return {pcall(vim.api.nvim_parse_cmd, "'<,'>n", {})}]=]))
+      eq('', eval('v:errmsg'))
+    end)
   end)
+
   describe('nvim_cmd', function()
     it('works', function ()
       meths.cmd({ cmd = "set", args = { "cursorline" } }, {})
