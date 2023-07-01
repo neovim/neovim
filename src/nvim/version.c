@@ -2700,33 +2700,39 @@ void list_version(void)
   msg(longVersion);
   msg(version_buildtype);
   list_lua_version();
-#ifndef NDEBUG
-  msg(version_cflags);
-#endif
 
-  version_msg("\n\n");
+  if (p_verbose > 0) {
+#ifndef NDEBUG
+    msg(version_cflags);
+#endif
+    version_msg("\n\n");
 
 #ifdef SYS_VIMRC_FILE
-  version_msg(_("   system vimrc file: \""));
-  version_msg(SYS_VIMRC_FILE);
-  version_msg("\"\n");
-#endif  // ifdef SYS_VIMRC_FILE
+    version_msg(_("   system vimrc file: \""));
+    version_msg(SYS_VIMRC_FILE);
+    version_msg("\"\n");
+#endif
+
 #ifdef HAVE_PATHDEF
+    if (*default_vim_dir != NUL) {
+      version_msg(_("  fall-back for $VIM: \""));
+      version_msg(default_vim_dir);
+      version_msg("\"\n");
+    }
 
-  if (*default_vim_dir != NUL) {
-    version_msg(_("  fall-back for $VIM: \""));
-    version_msg(default_vim_dir);
-    version_msg("\"\n");
+    if (*default_vimruntime_dir != NUL) {
+      version_msg(_(" f-b for $VIMRUNTIME: \""));
+      version_msg(default_vimruntime_dir);
+      version_msg("\"\n");
+    }
+#endif
   }
 
-  if (*default_vimruntime_dir != NUL) {
-    version_msg(_(" f-b for $VIMRUNTIME: \""));
-    version_msg(default_vimruntime_dir);
-    version_msg("\"\n");
-  }
-#endif  // ifdef HAVE_PATHDEF
-
-  version_msg("\nRun :checkhealth for more info");
+  version_msg(p_verbose > 0
+              ? "\nRun :checkhealth for more info"
+              : (starting
+                 ? "\nRun \"nvim -V1 -v\" for more info"
+                 : "\nRun \":verbose version\" for more info"));
 }
 
 /// Show the intro message when not editing a file.
