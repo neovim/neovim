@@ -629,6 +629,8 @@ int main(int argc, char **argv)
   }
 
   if (params.luaf != NULL) {
+    // Like "--cmd", "+", "-c" and "-S", don't truncate messages.
+    msg_scroll = true;
     bool lua_ok = nlua_exec_file(params.luaf);
     TIME_MSG("executing Lua -l script");
     getout(lua_ok ? 0 : 1);
