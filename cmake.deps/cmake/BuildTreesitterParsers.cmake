@@ -34,7 +34,7 @@ function(BuildTSParser)
     CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS})
 endfunction()
 
-foreach(lang c lua vim vimdoc query)
+foreach(lang c lua vim vimdoc query python)
   BuildTSParser(LANG ${lang})
 endforeach()
 BuildTSParser(LANG markdown CMAKE_FILE MarkdownParserCMakeLists.txt)
