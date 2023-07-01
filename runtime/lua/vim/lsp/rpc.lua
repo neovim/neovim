@@ -36,7 +36,7 @@ end
 local function parse_headers(header)
   assert(type(header) == 'string', 'header must be a string')
   local headers = {}
-  for line in vim.gsplit(header, '\r\n', true) do
+  for line in vim.gsplit(header, '\r\n', { plain = true }) do
     if line == '' then
       break
     end

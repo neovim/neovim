@@ -581,9 +581,9 @@ function M.document_highlight()
 end
 
 --- Removes document highlights from current buffer.
----
-function M.clear_references()
-  util.buf_clear_references()
+--- @param bufnr integer|nil
+function M.clear_references(bufnr)
+  util.buf_clear_references(bufnr or 0)
 end
 
 ---@private

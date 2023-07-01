@@ -880,7 +880,7 @@ end
 
 --- Creates a normalized object describing LSP server capabilities.
 ---@param server_capabilities table Table of capabilities supported by the server
----@return table Normalized table of capabilities
+---@return table|nil Normalized table of capabilities
 function protocol.resolve_capabilities(server_capabilities)
   local TextDocumentSyncKind = protocol.TextDocumentSyncKind
   local textDocumentSync = server_capabilities.textDocumentSync
@@ -898,7 +898,8 @@ function protocol.resolve_capabilities(server_capabilities)
   elseif type(textDocumentSync) == 'number' then
     -- Backwards compatibility
     if not TextDocumentSyncKind[textDocumentSync] then
-      return nil, 'Invalid server TextDocumentSyncKind for textDocumentSync'
+      vim.notify('Invalid server TextDocumentSyncKind for textDocumentSync', vim.log.levels.ERROR)
+      return nil
     end
     server_capabilities.textDocumentSync = {
       openClose = true,
@@ -910,7 +911,11 @@ function protocol.resolve_capabilities(server_capabilities)
       },
     }
   elseif type(textDocumentSync) ~= 'table' then
-    return nil, string.format('Invalid type for textDocumentSync: %q', type(textDocumentSync))
+    vim.notify(
+      string.format('Invalid type for textDocumentSync: %q', type(textDocumentSync)),
+      vim.log.levels.ERROR
+    )
+    return nil
   end
   return server_capabilities
 end
