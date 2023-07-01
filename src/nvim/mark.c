@@ -541,7 +541,11 @@ MarkMoveRes mark_move_to(fmark_T *fm, MarkMove flags)
 {
   static fmark_T fm_copy = INIT_FMARK;
   MarkMoveRes res = kMarkMoveSuccess;
-  if (!mark_check(fm)) {
+  const char *errormsg = NULL;
+  if (!mark_check(fm, &errormsg)) {
+    if (errormsg != NULL) {
+      emsg(errormsg);
+    }
     res = kMarkMoveFailed;
     goto end;
   }
@@ -557,7 +561,10 @@ MarkMoveRes mark_move_to(fmark_T *fm, MarkMove flags)
       goto end;
     }
     // Check line count now that the **destination buffer is loaded**.
-    if (!mark_check_line_bounds(curbuf, fm)) {
+    if (!mark_check_line_bounds(curbuf, fm, &errormsg)) {
+      if (errormsg != NULL) {
+        emsg(errormsg);
+      }
       res |= kMarkMoveFailed;
       goto end;
     }
@@ -710,43 +717,45 @@ static void fmarks_check_one(xfmark_T *fm, char *name, buf_T *buf)
 
 /// Check the position in @a fm is valid.
 ///
-/// Emit error message and return accordingly.
-///
 /// Checks for:
 /// - NULL raising unknown mark error.
 /// - Line number <= 0 raising mark not set.
 /// - Line number > buffer line count, raising invalid mark.
+///
 /// @param fm[in]  File mark to check.
+/// @param errormsg[out]  Error message, if any.
 ///
 /// @return  true if the mark passes all the above checks, else false.
-bool mark_check(fmark_T *fm)
+bool mark_check(fmark_T *fm, const char **errormsg)
 {
   if (fm == NULL) {
-    emsg(_(e_umark));
+    *errormsg = _(e_umark);
     return false;
   } else if (fm->mark.lnum <= 0) {
     // In both cases it's an error but only raise when equals to 0
     if (fm->mark.lnum == 0) {
-      emsg(_(e_marknotset));
+      *errormsg = _(e_marknotset);
     }
     return false;
   }
   // Only check for valid line number if the buffer is loaded.
-  if (fm->fnum == curbuf->handle && !mark_check_line_bounds(curbuf, fm)) {
+  if (fm->fnum == curbuf->handle && !mark_check_line_bounds(curbuf, fm, errormsg)) {
     return false;
   }
   return true;
 }
 
 /// Check if a mark line number is greater than the buffer line count, and set e_markinval.
+///
 /// @note  Should be done after the buffer is loaded into memory.
 /// @param buf  Buffer where the mark is set.
 /// @param fm  Mark to check.
+/// @param errormsg[out]  Error message, if any.
 /// @return  true if below line count else false.
-bool mark_check_line_bounds(buf_T *buf, fmark_T *fm)
+bool mark_check_line_bounds(buf_T *buf, fmark_T *fm, const char **errormsg)
 {
   if (buf != NULL && fm->mark.lnum > buf->b_ml.ml_line_count) {
-    emsg(_(e_markinval));
+    *errormsg = _(e_markinval);
     return false;
   }
   return true;

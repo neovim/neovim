@@ -3979,7 +3979,7 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
   int sgl_id = 1;
   char *group_name_end;
   char *rest;
-  char *errormsg = NULL;
+  const char *errormsg = NULL;
   int prev_toplvl_grp;
   int prev_syn_inc_tag;
   bool source = false;

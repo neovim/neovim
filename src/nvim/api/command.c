@@ -109,7 +109,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
   exarg_T ea;
   CmdParseInfo cmdinfo;
   char *cmdline = string_to_cstr(str);
-  char *errormsg = NULL;
+  const char *errormsg = NULL;
 
   if (!parse_cmdline(cmdline, &ea, &cmdinfo, &errormsg)) {
     if (errormsg != NULL) {

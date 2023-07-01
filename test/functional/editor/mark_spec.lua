@@ -161,7 +161,7 @@ describe('named marks', function()
     feed('ifoo<Esc>mA')
     command('enew')
     feed('ibar<Esc>')
-    eq('Vim(print):E20: Mark not set', pcall_err(command, [['Aprint]]))
+    eq("Vim(print):E20: Mark not set: 'Aprint", pcall_err(command, [['Aprint]]))
   end)
 
   it("leave a context mark when moving with '", function()

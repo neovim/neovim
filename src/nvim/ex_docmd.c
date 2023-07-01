@@ -1342,7 +1342,7 @@ void set_cmd_count(exarg_T *eap, linenr_T count, bool validate)
   }
 }
 
-static int parse_count(exarg_T *eap, char **errormsg, bool validate)
+static int parse_count(exarg_T *eap, const char **errormsg, bool validate)
 {
   // Check for a count.  When accepting a EX_BUFNAME, don't use "123foo" as a
   // count, it's a buffer name.
@@ -1396,7 +1396,7 @@ bool is_cmd_ni(cmdidx_T cmdidx)
 /// @param[out] errormsg Error message, if any
 ///
 /// @return Success or failure
-bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **errormsg)
+bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const char **errormsg)
 {
   char *after_modifier = NULL;
   bool retval = false;
@@ -1564,7 +1564,7 @@ static void shift_cmd_args(exarg_T *eap)
   xfree(oldarglens);
 }
 
-static int execute_cmd0(int *retv, exarg_T *eap, char **errormsg, bool preview)
+static int execute_cmd0(int *retv, exarg_T *eap, const char **errormsg, bool preview)
 {
   // If filename expansion is enabled, expand filenames
   if (eap->argt & EX_XFILE) {
@@ -1649,7 +1649,7 @@ static int execute_cmd0(int *retv, exarg_T *eap, char **errormsg, bool preview)
 /// @param preview Execute command preview callback instead of actual command
 int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
 {
-  char *errormsg = NULL;
+  const char *errormsg = NULL;
   int retv = 0;
 
 #undef ERROR
@@ -1881,7 +1881,7 @@ static bool skip_cmd(const exarg_T *eap)
 static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter fgetline,
                         void *cookie)
 {
-  char *errormsg = NULL;  // error message
+  const char *errormsg = NULL;  // error message
   const int save_reg_executing = reg_executing;
   const bool save_pending_end_reg_executing = pending_end_reg_executing;
 
@@ -2376,7 +2376,7 @@ char *ex_errmsg(const char *const msg, const char *const arg)
 /// - set 'eventignore' to "all" for ":noautocmd"
 ///
 /// @return  FAIL when the command is not to be executed.
-int parse_command_modifiers(exarg_T *eap, char **errormsg, cmdmod_T *cmod, bool skip_only)
+int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod, bool skip_only)
 {
   CLEAR_POINTER(cmod);
 
@@ -2557,7 +2557,10 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, cmdmod_T *cmod, bool 
       if (checkforcmd(&p, "tab", 3)) {
         if (!skip_only) {
           int tabnr = (int)get_address(eap, &eap->cmd, ADDR_TABS, eap->skip, skip_only,
-                                       false, 1);
+                                       false, 1, errormsg);
+          if (eap->cmd == NULL) {
+            return false;
+          }
 
           if (tabnr == MAXLNUM) {
             cmod->cmod_tab = tabpage_index(curtab) + 1;
@@ -2701,7 +2704,7 @@ void undo_cmdmod(cmdmod_T *cmod)
 /// May set the last search pattern, unless "silent" is true.
 ///
 /// @return  FAIL and set "errormsg" or return OK.
-int parse_cmd_address(exarg_T *eap, char **errormsg, bool silent)
+int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
   FUNC_ATTR_NONNULL_ALL
 {
   int address_count = 1;
@@ -2715,7 +2718,7 @@ int parse_cmd_address(exarg_T *eap, char **errormsg, bool silent)
     eap->line2 = get_cmd_default_range(eap);
     eap->cmd = skipwhite(eap->cmd);
     lnum = get_address(eap, &eap->cmd, eap->addr_type, eap->skip, silent,
-                       eap->addr_count == 0, address_count++);
+                       eap->addr_count == 0, address_count++, errormsg);
     if (eap->cmd == NULL) {  // error detected
       goto theend;
     }
@@ -2794,13 +2797,13 @@ int parse_cmd_address(exarg_T *eap, char **errormsg, bool silent)
         eap->cmd++;
         if (!eap->skip) {
           fmark_T *fm = mark_get_visual(curbuf, '<');
-          if (!mark_check(fm)) {
+          if (!mark_check(fm, errormsg)) {
             goto theend;
           }
           assert(fm != NULL);
           eap->line1 = fm->mark.lnum;
           fm = mark_get_visual(curbuf, '>');
-          if (!mark_check(fm)) {
+          if (!mark_check(fm, errormsg)) {
             goto theend;
           }
           assert(fm != NULL);
@@ -3229,29 +3232,30 @@ char *skip_range(const char *cmd, int *ctx)
   return (char *)cmd;
 }
 
-static void addr_error(cmd_addr_T addr_type)
+static const char *addr_error(cmd_addr_T addr_type)
 {
   if (addr_type == ADDR_NONE) {
-    emsg(_(e_norange));
+    return _(e_norange);
   } else {
-    emsg(_(e_invrange));
+    return _(e_invrange);
   }
 }
 
-/// Get a single EX address
+/// Gets a single EX address.
 ///
-/// Set ptr to the next character after the part that was interpreted.
-/// Set ptr to NULL when an error is encountered.
-/// This may set the last used search pattern.
+/// Sets ptr to the next character after the part that was interpreted.
+/// Sets ptr to NULL when an error is encountered (stored in `errormsg`).
+/// May set the last used search pattern.
 ///
 /// @param skip           only skip the address, don't use it
 /// @param silent         no errors or side effects
 /// @param to_other_file  flag: may jump to other file
 /// @param address_count  1 for first, >1 after comma
+/// @param errormsg       Error message, if any
 ///
 /// @return               MAXLNUM when no Ex address was found.
 static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int skip, bool silent,
-                            int to_other_file, int address_count)
+                            int to_other_file, int address_count, const char **errormsg)
   FUNC_ATTR_NONNULL_ALL
 {
   int c;
@@ -3287,7 +3291,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
       case ADDR_NONE:
       case ADDR_TABS_RELATIVE:
       case ADDR_UNSIGNED:
-        addr_error(addr_type);
+        *errormsg = addr_error(addr_type);
         cmd = NULL;
         goto error;
         break;
@@ -3332,7 +3336,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
       case ADDR_NONE:
       case ADDR_TABS_RELATIVE:
       case ADDR_UNSIGNED:
-        addr_error(addr_type);
+        *errormsg = addr_error(addr_type);
         cmd = NULL;
         goto error;
         break;
@@ -3357,7 +3361,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
         goto error;
       }
       if (addr_type != ADDR_LINES) {
-        addr_error(addr_type);
+        *errormsg = addr_error(addr_type);
         cmd = NULL;
         goto error;
       }
@@ -3373,7 +3377,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
           // Jumped to another file.
           lnum = curwin->w_cursor.lnum;
         } else {
-          if (!mark_check(fm)) {
+          if (!mark_check(fm, errormsg)) {
             cmd = NULL;
             goto error;
           }
@@ -3387,7 +3391,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
     case '?':                           // '/' or '?' - search
       c = (uint8_t)(*cmd++);
       if (addr_type != ADDR_LINES) {
-        addr_error(addr_type);
+        *errormsg = addr_error(addr_type);
         cmd = NULL;
         goto error;
       }
@@ -3436,7 +3440,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
     case '\\':                      // "\?", "\/" or "\&", repeat search
       cmd++;
       if (addr_type != ADDR_LINES) {
-        addr_error(addr_type);
+        *errormsg = addr_error(addr_type);
         cmd = NULL;
         goto error;
       }
@@ -3445,7 +3449,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
       } else if (*cmd == '?' || *cmd == '/') {
         i = RE_SEARCH;
       } else {
-        emsg(_(e_backslash));
+        *errormsg = _(e_backslash);
         cmd = NULL;
         goto error;
       }
@@ -3527,13 +3531,13 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
         // "number", "+number" or "-number"
         n = getdigits_int32(&cmd, false, MAXLNUM);
         if (n == MAXLNUM) {
-          emsg(_(e_line_number_out_of_range));
+          *errormsg = _(e_line_number_out_of_range);
           goto error;
         }
       }
 
       if (addr_type == ADDR_TABS_RELATIVE) {
-        emsg(_(e_invrange));
+        *errormsg = _(e_invrange);
         cmd = NULL;
         goto error;
       } else if (addr_type == ADDR_LOADED_BUFFERS || addr_type == ADDR_BUFFERS) {
@@ -3549,7 +3553,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
           lnum -= n;
         } else {
           if (n >= INT32_MAX - lnum) {
-            emsg(_(e_line_number_out_of_range));
+            *errormsg = _(e_line_number_out_of_range);
             goto error;
           }
           lnum += n;
@@ -3762,7 +3766,7 @@ char *replace_makeprg(exarg_T *eap, char *arg, char **cmdlinep)
 /// When an error is detected, "errormsgp" is set to a non-NULL pointer.
 ///
 /// @return  FAIL for failure, OK otherwise.
-int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
+int expand_filename(exarg_T *eap, char **cmdlinep, const char **errormsgp)
 {
   // Skip a regexp pattern for ":vimgrep[add] pat file..."
   char *p = skip_grep_pat(eap);
@@ -5855,8 +5859,12 @@ static void ex_put(exarg_T *eap)
 /// Handle ":copy" and ":move".
 static void ex_copymove(exarg_T *eap)
 {
-  long n = get_address(eap, &eap->arg, eap->addr_type, false, false, false, 1);
+  const char *errormsg = NULL;
+  long n = get_address(eap, &eap->arg, eap->addr_type, false, false, false, 1, &errormsg);
   if (eap->arg == NULL) {  // error detected
+    if (errormsg != NULL) {
+      emsg(errormsg);
+    }
     eap->nextcmd = NULL;
     return;
   }
@@ -6770,8 +6778,8 @@ ssize_t find_cmdline_var(const char *src, size_t *usedlen)
 /// @return          an allocated string if a valid match was found.
 ///                  Returns NULL if no match was found.  "usedlen" then still contains the
 ///                  number of characters to skip.
-char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnump, char **errormsg,
-                int *escaped, bool empty_is_error)
+char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnump,
+                const char **errormsg, int *escaped, bool empty_is_error)
 {
   char *result;
   char *resultbuf = NULL;
@@ -7044,7 +7052,7 @@ char *expand_sfile(char *arg)
     } else {
       // replace "<sfile>" with the sourced file name, and do ":" stuff
       size_t srclen;
-      char *errormsg;
+      const char *errormsg;
       char *repl = eval_vars(p, result, &srclen, NULL, &errormsg, NULL, true);
       if (errormsg != NULL) {
         if (*errormsg) {
