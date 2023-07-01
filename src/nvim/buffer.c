@@ -475,7 +475,7 @@ static bool can_unload_buffer(buf_T *buf)
 ///               Possible values:
 ///                 0            buffer becomes hidden
 ///                 DOBUF_UNLOAD buffer is unloaded
-///                 DOBUF_DELETE buffer is unloaded and removed from buffer list
+///                 DOBUF_DEL    buffer is unloaded and removed from buffer list
 ///                 DOBUF_WIPE   buffer is unloaded and really deleted
 ///               When doing all but the first one on the current buffer, the
 ///               caller should get a new buffer very soon!

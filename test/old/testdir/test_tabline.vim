@@ -133,7 +133,7 @@ func Test_tabline_empty_group()
   tabnew
   redraw!
 
-  tabclose
+  bw!
   set tabline=
 endfunc
 
@@ -202,6 +202,30 @@ func Test_tabline_showcmd()
   call VerifyScreenDump(buf, 'Test_tabline_showcmd_5', {})
 
   call StopVimInTerminal(buf)
+endfunc
+
+func TruncTabLine()
+  return '%1T口口%2Ta' .. repeat('b', &columns - 4) .. '%999X%#TabLine#c'
+endfunc
+
+" Test 'tabline' with truncated double-width label at the start.
+func Test_tabline_truncated_double_width()
+  tabnew
+  redraw
+  call assert_match('X$', Screenline(1))
+  let attr_TabLineFill = screenattr(1, &columns - 1)
+  let attr_TabLine = screenattr(1, &columns)
+  call assert_notequal(attr_TabLine, attr_TabLineFill)
+
+  set tabline=%!TruncTabLine()
+  redraw
+  call assert_equal('<a' .. repeat('b', &columns - 4) .. 'c', Screenline(1))
+  call assert_equal(attr_TabLineFill, screenattr(1, &columns - 2))
+  call assert_equal(attr_TabLine, screenattr(1, &columns - 1))
+  call assert_equal(attr_TabLine, screenattr(1, &columns))
+
+  bw!
+  set tabline=
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
