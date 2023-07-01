@@ -783,7 +783,7 @@ int x = INT_MAX;
         return list
         ]]
 
-        eq({ 'gsub!', 'offset!', 'set!' }, res_list)
+        eq({ 'gsub!', 'inject-language!', 'offset!', 'set!', 'trim!' }, res_list)
       end)
     end)
   end)

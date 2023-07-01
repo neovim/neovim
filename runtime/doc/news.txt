@@ -101,6 +101,8 @@ The following new APIs and features were added.
 • Implemented LSP inlay hints: |vim.lsp.inlay_hint()|
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_inlayHint
 
+• Bundled Markdown parser for treesitter highlighting and folding.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
@@ -120,7 +122,8 @@ The following changes to existing APIs or features add new behavior.
   • Automatic linting of treesitter query files (see |ft-query-plugin|).
     Can be disabled via: >lua
       vim.g.query_lint_on = {}
-<  • Enabled treesitter highlighting for treesitter query files.
+<
+  • Enabled treesitter highlighting for treesitter query files.
 
 • The `workspace/didChangeWatchedFiles` LSP client capability is now enabled
   by default.

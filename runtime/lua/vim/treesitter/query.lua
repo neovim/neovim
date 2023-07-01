@@ -475,7 +475,6 @@ local directive_handlers = {
       metadata[capture_id].range = range
     end
   end,
-
   -- Transform the content of the node
   -- Example: (#gsub! @_node ".*%.(.*)" "%1")
   ['gsub!'] = function(match, _, bufnr, pred, metadata)
@@ -496,6 +495,65 @@ local directive_handlers = {
     assert(type(replacement) == 'string')
 
     metadata[id].text = text:gsub(pattern, replacement)
+  end,
+  -- Trim blank lines from end of the node
+  -- Example: (#trim! @fold)
+  -- TODO(clason): generalize to arbitrary whitespace removal
+  ['trim!'] = function(match, _, bufnr, pred, metadata)
+    local node = match[pred[2]]
+    if not node then
+      return
+    end
+
+    local start_row, start_col, end_row, end_col = node:range()
+
+    -- Don't trim if region ends in middle of a line
+    if end_col ~= 0 then
+      return
+    end
+
+    while true do
+      -- As we only care when end_col == 0, always inspect one line above end_row.
+      local end_line = vim.api.nvim_buf_get_lines(bufnr, end_row - 1, end_row, true)[1]
+
+      if end_line ~= '' then
+        break
+      end
+
+      end_row = end_row - 1
+    end
+
+    -- If this produces an invalid range, we just skip it.
+    if start_row < end_row or (start_row == end_row and start_col <= end_col) then
+      metadata.range = { start_row, start_col, end_row, end_col }
+    end
+  end,
+  -- Set injection language from node text, interpreted first as language and then as filetype
+  -- Example: (#inject-language! @_lang)
+  ['inject-language!'] = function(match, _, bufnr, pred, metadata)
+    local id = pred[2]
+    local node = match[id]
+    if not node then
+      return
+    end
+
+    -- TODO(clason): replace by refactored `ts.has_parser` API
+    local has_parser = function(lang)
+      return vim._ts_has_language(lang)
+        or #vim.api.nvim_get_runtime_file('parser/' .. lang .. '.*', false) > 0
+    end
+
+    local alias = vim.treesitter.get_node_text(node, bufnr, { metadata = metadata[id] })
+    if not alias then
+      return
+    elseif has_parser(alias) then
+      metadata['injection.language'] = alias
+    else
+      local lang = vim.treesitter.language.get_lang(alias)
+      if lang and has_parser(lang) then
+        metadata['injection.language'] = lang
+      end
+    end
   end,
 }
 
