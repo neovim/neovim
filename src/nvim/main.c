@@ -633,6 +633,10 @@ int main(int argc, char **argv)
     msg_scroll = true;
     bool lua_ok = nlua_exec_file(params.luaf);
     TIME_MSG("executing Lua -l script");
+    if (msg_didout) {
+      msg_putchar('\n');
+      msg_didout = false;
+    }
     getout(lua_ok ? 0 : 1);
   }
 

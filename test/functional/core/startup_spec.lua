@@ -131,12 +131,12 @@ describe('startup', function()
     end)
 
     it('executes stdin "-"', function()
-      assert_l_out('arg0=- args=2 whoa',
+      assert_l_out('arg0=- args=2 whoa\n',
         nil,
         { 'arg1', 'arg 2' },
         '-',
         "print(('arg0=%s args=%d %s'):format(_G.arg[0], #_G.arg, 'whoa'))")
-      assert_l_out('biiig input: 1000042',
+      assert_l_out('biiig input: 1000042\n',
         nil,
         nil,
         '-',
@@ -145,11 +145,12 @@ describe('startup', function()
     end)
 
     it('does not truncate long print() message', function()
-      assert_l_out(('k'):rep(1234),
-        nil,
-        nil,
-        '-',
-        "print(('k'):rep(1234))")
+      assert_l_out(('k'):rep(1234) .. '\n', nil, nil, '-', "print(('k'):rep(1234))")
+    end)
+
+    it('does not add newline when unnecessary', function()
+      assert_l_out('', nil, nil, '-', '')
+      assert_l_out('foobar\n', nil, nil, '-', [[print('foobar\n')]])
     end)
 
     it('sets _G.arg', function()
@@ -159,7 +160,8 @@ describe('startup', function()
           nvim args: 3
           lua args: {
             [0] = "test/functional/fixtures/startup.lua"
-          }]],
+          }
+          ]],
         {},
         {}
       )
@@ -171,7 +173,8 @@ describe('startup', function()
           nvim args: 7
           lua args: { "-arg1", "--arg2", "--", "arg3",
             [0] = "test/functional/fixtures/startup.lua"
-          }]],
+          }
+          ]],
         {},
         { '-arg1', '--arg2', '--', 'arg3' }
       )
@@ -183,7 +186,8 @@ describe('startup', function()
           nvim args: 10
           lua args: { "-arg1", "arg 2", "--", "file3", "file4",
             [0] = "test/functional/fixtures/startup.lua"
-          }]],
+          }
+          ]],
         { 'file1', 'file2', },
         { '-arg1', 'arg 2', '--', 'file3', 'file4' }
       )
@@ -195,7 +199,8 @@ describe('startup', function()
           nvim args: 5
           lua args: { "-c", "set wrap?",
             [0] = "test/functional/fixtures/startup.lua"
-          }]],
+          }
+          ]],
         {},
         { '-c', 'set wrap?' }
       )
@@ -211,7 +216,8 @@ describe('startup', function()
           nvim args: 7
           lua args: { "-c", "set wrap?",
             [0] = "test/functional/fixtures/startup.lua"
-          }]],
+          }
+          ]],
         { '-c', 'set wrap?' },
         { '-c', 'set wrap?' }
       )
@@ -219,7 +225,7 @@ describe('startup', function()
     end)
 
     it('disables swapfile/shada/config/plugins', function()
-      assert_l_out('updatecount=0 shadafile=NONE loadplugins=false scripts=1',
+      assert_l_out('updatecount=0 shadafile=NONE loadplugins=false scripts=1\n',
         nil,
         nil,
         '-',

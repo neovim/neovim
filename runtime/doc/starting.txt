@@ -227,6 +227,8 @@ argument.
 		
 		Sets 'verbose' to 1 (like "-V1"), so Lua `print()` writes to
 		output.
+		If {script} prints messages and doesn't cause Nvim to exit,
+		Nvim ensures output ends with a newline.
 
 		Arguments before "-l" are processed before executing {script}.
 		This example quits before executing "foo.lua": >
