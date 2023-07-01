@@ -101,8 +101,8 @@ The following new APIs and features were added.
 • Implemented LSP inlay hints: |vim.lsp.inlay_hint()|
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_inlayHint
 
-• Bundled treesitter parser and queries (highlight, folds) for Markdown and
-Python.
+• Bundled treesitter parser and queries (highlight, folds) for Markdown,
+Python, and Bash.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
