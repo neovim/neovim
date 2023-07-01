@@ -101,10 +101,11 @@ describe('startup', function()
     it('os.exit() sets Nvim exitcode', function()
       -- tricky: LeakSanitizer triggers on os.exit() and disrupts the return value, disable it
       exec_lua [[
-        local asan_options = os.getenv 'ASAN_OPTIONS'
-        if asan_options ~= nil and asan_options ~= '' then
-          vim.uv.os_setenv('ASAN_OPTIONS', asan_options..':detect_leaks=0')
+        local asan_options = os.getenv('ASAN_OPTIONS') or ''
+        if asan_options ~= '' then
+          asan_options = asan_options .. ':'
         end
+        vim.uv.os_setenv('ASAN_OPTIONS', asan_options .. ':detect_leaks=0')
       ]]
       -- nvim -l foo.lua -arg1 -- a b c
       assert_l_out([[
@@ -141,6 +142,14 @@ describe('startup', function()
         '-',
         ('print("biiig input: "..("%s"):len())'):format(string.rep('x', (1000 * 1000) + 42)))
       eq(0, eval('v:shell_error'))
+    end)
+
+    it('does not truncate long print() message', function()
+      assert_l_out(('k'):rep(1234),
+        nil,
+        nil,
+        '-',
+        "print(('k'):rep(1234))")
     end)
 
     it('sets _G.arg', function()
@@ -217,6 +226,15 @@ describe('startup', function()
         [[print(('updatecount=%d shadafile=%s loadplugins=%s scripts=%d'):format(
           vim.o.updatecount, vim.o.shadafile, tostring(vim.o.loadplugins), math.max(1, #vim.fn.getscriptinfo())))]])
     end)
+  end)
+
+  it('--cmd/-c/+ do not truncate long Lua print() message with --headless', function()
+    local out = funcs.system({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless',
+                               '--cmd', 'lua print(("A"):rep(1234))',
+                               '-c', 'lua print(("B"):rep(1234))',
+                               '+lua print(("C"):rep(1234))',
+                               '+q' })
+    eq(('A'):rep(1234) .. '\r\n' .. ('B'):rep(1234) .. '\r\n' .. ('C'):rep(1234), out)
   end)
 
   it('pipe at both ends: has("ttyin")==0 has("ttyout")==0', function()
