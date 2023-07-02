@@ -30,14 +30,8 @@ do
     -- https://tools.ietf.org/html/rfc3986#section-2.2
     rfc3986 = "^A-Za-z0-9%-._~!$&'()*+,;=:@/",
   }
-  local sbyte, tohex = string.byte
-  if jit then
-    tohex = require('bit').tohex
-  else
-    tohex = function(b)
-      return string.format('%02x', b)
-    end
-  end
+  local sbyte = string.byte
+  local tohex = require('bit').tohex
 
   ---@private
   local function percent_encode_char(char)

@@ -44,7 +44,7 @@ do
   vim.fn.mkdir(vim.fn.stdpath('log'), 'p')
 
   --- Returns the log filename.
-  ---@returns (string) log filename
+  ---@return string log filename
   function log.get_filename()
     return logfilename
   end

@@ -94,7 +94,8 @@ end
 ---@param line string the line to index into
 ---@param byte integer the byte idx
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil (default: utf-8)
----@returns table<string, int> byte_idx and char_idx of first change position
+---@return integer byte_idx of first change position
+---@return integer char_idx of first change position
 local function align_end_position(line, byte, offset_encoding)
   local char
   -- If on the first byte, or an empty string: the trivial case
@@ -129,7 +130,7 @@ end
 ---@param lastline integer lastline from on_lines, adjusted to 1-index
 ---@param new_lastline integer new_lastline from on_lines, adjusted to 1-index
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil (fallback to utf-8)
----@returns table<int, int> line_idx, byte_idx, and char_idx of first change position
+---@return table result table include line_idx, byte_idx, and char_idx of first change position
 local function compute_start_range(
   prev_lines,
   curr_lines,
@@ -209,7 +210,8 @@ end
 ---@param lastline integer
 ---@param new_lastline integer
 ---@param offset_encoding string
----@returns (int, int) end_line_idx and end_col_idx of range
+---@return integer|table end_line_idx and end_col_idx of range
+---@return table|nil end_col_idx of range
 local function compute_end_range(
   prev_lines,
   curr_lines,
@@ -310,7 +312,7 @@ end
 ---@param lines table list of lines
 ---@param start_range table table returned by first_difference
 ---@param end_range table new_end_range returned by last_difference
----@returns string text extracted from defined region
+---@return string text extracted from defined region
 local function extract_text(lines, start_range, end_range, line_ending)
   if not lines[start_range.line_idx] then
     return ''
@@ -392,7 +394,7 @@ end
 ---@param lastline integer line to begin search in old_lines for last difference
 ---@param new_lastline integer line to begin search in new_lines for last difference
 ---@param offset_encoding string encoding requested by language server
----@returns table TextDocumentContentChangeEvent see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
+---@return table TextDocumentContentChangeEvent see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
 function M.compute_diff(
   prev_lines,
   curr_lines,

@@ -1518,7 +1518,7 @@ paste({lines}, {phase})                                          *vim.paste()*
                  • 3: ends the paste (exactly once)
 
     Return: ~
-        (boolean) # false if client should cancel the paste.
+        (boolean) result false if client should cancel the paste.
 
     See also: ~
       • |paste| @alias paste_phase -1 | 1 | 2 | 3
@@ -2637,7 +2637,7 @@ basename({file})                                           *vim.fs.basename()*
       • {file}  (string) File or directory
 
     Return: ~
-        (string) Basename of {file}
+        (string|nil) Basename of {file}
 
 dir({path}, {opts})                                             *vim.fs.dir()*
     Return an iterator over the files and directories located in {path}
@@ -2664,7 +2664,7 @@ dirname({file})                                             *vim.fs.dirname()*
       • {file}  (string) File or directory
 
     Return: ~
-        (string) Parent directory of {file}
+        (string|nil) Parent directory of {file}
 
 find({names}, {opts})                                          *vim.fs.find()*
     Find files or directories in the given path.
