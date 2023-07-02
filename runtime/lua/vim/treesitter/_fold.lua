@@ -232,20 +232,40 @@ local M = {}
 ---@type table<integer,TS.FoldInfo>
 local foldinfos = {}
 
-local function recompute_folds()
+--- Update the folds in the windows that contain the buffer and use expr foldmethod (assuming that
+--- the user doesn't use different foldexpr for the same buffer).
+---
+--- Nvim usually automatically updates folds when text changes, but it doesn't work here because
+--- FoldInfo update is scheduled. So we do it manually.
+local function foldupdate(bufnr)
+  local function do_update()
+    for _, win in ipairs(vim.fn.win_findbuf(bufnr)) do
+      api.nvim_win_call(win, function()
+        if vim.wo.foldmethod == 'expr' then
+          vim._foldupdate()
+        end
+      end)
+    end
+  end
+
   if api.nvim_get_mode().mode == 'i' then
     -- foldUpdate() is guarded in insert mode. So update folds on InsertLeave
     api.nvim_create_autocmd('InsertLeave', {
       once = true,
-      callback = vim._foldupdate,
+      callback = do_update,
     })
     return
   end
 
-  vim._foldupdate()
+  do_update()
 end
 
---- Schedule a function only if bufnr is loaded
+--- Schedule a function only if bufnr is loaded.
+--- We schedule fold level computation for the following reasons:
+--- * queries seem to use the old buffer state in on_bytes for some unknown reason;
+--- * to avoid textlock;
+--- * to avoid infinite recursion:
+---   get_folds_levels → parse → _do_callback → on_changedtree → get_folds_levels.
 ---@param bufnr integer
 ---@param fn function
 local function schedule_if_loaded(bufnr, fn)
@@ -261,14 +281,12 @@ end
 ---@param foldinfo TS.FoldInfo
 ---@param tree_changes Range4[]
 local function on_changedtree(bufnr, foldinfo, tree_changes)
-  -- For some reason, queries seem to use the old buffer state in on_bytes.
-  -- Get around this by scheduling and manually updating folds.
   schedule_if_loaded(bufnr, function()
     for _, change in ipairs(tree_changes) do
       local srow, _, erow = Range.unpack4(change)
       get_folds_levels(bufnr, foldinfo, srow, erow)
     end
-    recompute_folds()
+    foldupdate(bufnr)
   end)
 end
 
@@ -289,7 +307,7 @@ local function on_bytes(bufnr, foldinfo, start_row, old_row, new_row)
     end
     schedule_if_loaded(bufnr, function()
       get_folds_levels(bufnr, foldinfo, start_row, end_row_new)
-      recompute_folds()
+      foldupdate(bufnr)
     end)
   end
 end
