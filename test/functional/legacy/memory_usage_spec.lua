@@ -13,7 +13,7 @@ local is_os = helpers.is_os
 local is_ci = helpers.is_ci
 
 local function isasan()
-  local version = eval('execute("version")')
+  local version = eval('execute("verbose version")')
   return version:match('-fsanitize=[a-z,]*address')
 end
 
