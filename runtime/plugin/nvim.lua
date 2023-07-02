@@ -19,10 +19,15 @@ vim.api.nvim_create_user_command('InspectTree', function(cmd)
   end
 end, { desc = 'Inspect treesitter language tree for buffer', count = true })
 
-if vim.g.use_lua_gx == nil or vim.g.use_lua_gx == true then
-  vim.keymap.set({ 'n', 'x' }, 'gx', function()
-    local uri = vim.fn.expand('<cfile>')
-
-    vim.ui.open(uri)
-  end, { desc = 'Open URI under cursor with system app' })
+-- TODO: use vim.region() when it lands... #13896 #16843
+local function get_visual_selection()
+  local save_a = vim.fn.getreginfo('a')
+  vim.cmd[[norm! "ay]]
+  local selection = vim.fn.getreg('a', 1)
+  vim.fn.setreg('a', save_a)
+  return selection
 end
+
+local gx_desc = 'Opens filepath or URI under cursor with the system handler (file explorer, web browser, …)'
+vim.keymap.set({ 'n' }, 'gx', function() vim.ui.open(vim.fn.expand('<cfile>')) end, { desc = gx_desc })
+vim.keymap.set({ 'x' }, 'gx', function() vim.ui.open(get_visual_selection()) end, { desc = gx_desc })

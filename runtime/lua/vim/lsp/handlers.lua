@@ -576,12 +576,12 @@ M['window/showDocument'] = function(_, result, ctx, _)
 
     local ret = vim.ui.open(uri)
 
-    if ret.code ~= 0 or ret == nil then
+    if ret == nil or ret.code ~= 0 then
       return {
         success = false,
         error = {
           code = protocol.ErrorCodes.UnknownErrorCode,
-          message = ret and ret.stderr or 'No handler could be found',
+          message = ret and ret.stderr or 'No handler found',
         },
       }
     end
@@ -593,7 +593,7 @@ M['window/showDocument'] = function(_, result, ctx, _)
   local client = vim.lsp.get_client_by_id(client_id)
   local client_name = client and client.name or string.format('id=%d', client_id)
   if not client then
-    err_message({ 'LSP[', client_name, '] client has shut down after sending ', ctx.method })
+    err_message('LSP[', client_name, '] client has shut down after sending ', ctx.method)
     return vim.NIL
   end
 

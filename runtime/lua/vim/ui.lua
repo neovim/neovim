@@ -104,69 +104,54 @@ function M.input(opts, on_confirm)
   end
 end
 
---- Opens a path in the system's default handler.
---- This function utilizes `xdg-open`, `wslview`, `explorer`, or `open` commands
---- depending on the system to open the provided path.
+--- Opens `path` with the system default handler (macOS `open`, Windows `explorer.exe`, Linux
+--- `xdg-open`, …), or shows a message on failure.
 ---
---- Notifies the user if unsuccessful
+--- Expands "~/" and environment variables in filesystem paths.
 ---
----@param path string Path to be opened
----
----@return SystemCompleted|nil result Result of command, if an appropriate one
----could be found.
----
----@see |vim.system|
----
---- Example:
+--- Examples:
 --- <pre>lua
 --- vim.ui.open("https://neovim.io/")
----
---- vim.ui.open("/path/to/file")
+--- vim.ui.open("~/path/to/file")
+--- vim.ui.open("$VIMRUNTIME")
 --- </pre>
+---
+---@param path string Path or URL to open
+---
+---@return SystemCompleted|nil result Command result, or nil if not found.
+---
+---@see |vim.system()|
 function M.open(path)
-  if not path or path == '' then
-    vim.notify('os_open: No path provided', vim.log.levels.ERROR)
-    return nil
+  vim.validate{
+    path={path, 'string'}
+  }
+  local is_uri = path:match('%w+:')
+  if not is_uri then
+    path = vim.fn.expand(path)
   end
 
   local cmd
 
-  if vim.fn.has('macunix') == 1 then
+  if vim.fn.has('mac') == 1 then
     cmd = { 'open', path }
   elseif vim.fn.has('win32') == 1 then
     cmd = { 'explorer', path }
+  elseif vim.fn.executable('wslview') == 1 then
+    cmd = { 'wslview', path }
+  elseif vim.fn.executable('xdg-open') == 1 then
+    cmd = { 'xdg-open', path }
   else
-    if vim.fn.executable('wslview') == 1 then
-      cmd = { 'wslview', path }
-    elseif vim.fn.executable('xdg-open') == 1 then
-      cmd = { 'xdg-open', path }
-    else
-      vim.notify(
-        'os_open: Could not find an appropriate command to use (Is xdg-open installed?)',
-        vim.log.levels.ERROR
-      )
-
-      return nil
-    end
+    vim.notify('vim.ui.open: no handler found (tried: wslview, xdg-open)', vim.log.levels.ERROR)
+    return nil
   end
 
-  local ret = vim
-    .system(cmd, {
-      text = true,
-      detach = true,
-    })
-    :wait()
-
-  if ret.code ~= 0 then
-    local msg = {
-      'Failed to open path',
-      ret,
-      vim.inspect(cmd),
-    }
-    vim.notify(table.concat(msg, '\n'), vim.log.levels.ERROR)
+  local rv = vim.system(cmd, { text = true, detach = true, }):wait()
+  if rv.code ~= 0 then
+    local msg = ('vim.ui.open: command failed (%d): %s'):format(rv.code, vim.inspect(cmd))
+    vim.notify(msg, vim.log.levels.ERROR)
   end
 
-  return ret
+  return rv
 end
 
 return M
