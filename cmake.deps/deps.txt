@@ -19,8 +19,8 @@ LIBTERMKEY_SHA256 6945bd3c4aaa83da83d80a045c5563da4edd7d0374c62c0d35aec09eb30146
 LIBVTERM_URL https://github.com/neovim/deps/raw/6c0a5213d062f2210fd5fecb9524ac27ca018ef4/opt/libvterm-0.3.2.tar.gz
 LIBVTERM_SHA256 91eb5088069f4e6edab69e14c4212f6da0192e65695956dc048016a0dab8bcf6
 
-LUV_URL https://github.com/luvit/luv/archive/c1497c0ffd3e1400a137ac99a614159a685f716b.tar.gz
-LUV_SHA256 fc8c8c777454b78e09c06bd177860da9b79804affc967b015ecccb75b3af6893
+LUV_URL https://github.com/luvit/luv/archive/1.45.0-0.tar.gz
+LUV_SHA256 97e89940f9eeaa8dfb34f1c19f80dd373299c42719d15228ec790f415d4e4965
 
 LPEG_URL https://github.com/neovim/deps/raw/aa004f1b2b6470a92363cba8e1cc1874141dacc4/opt/lpeg-1.0.2.tar.gz
 LPEG_SHA256 48d66576051b6c78388faad09b70493093264588fcd0f258ddaab1cdd4a15ffe
