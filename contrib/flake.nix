@@ -46,6 +46,15 @@
                   };
                 }))
             (mapAttrs (const final.fetchurl))
+            (self: self // {
+              markdown = final.stdenv.mkDerivation {
+                inherit (self.markdown) name;
+                src = self.markdown;
+                installPhase = ''
+                  mv tree-sitter-markdown $out
+                '';
+              };
+            })
           ];
         }).overrideAttrs (oa: rec {
           version = self.shortRev or "dirty";
