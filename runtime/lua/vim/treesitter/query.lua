@@ -195,6 +195,12 @@ function M.set(lang, query_name, text)
   explicit_queries[lang][query_name] = M.parse(lang, text)
 end
 
+--- `false` if query files didn't exist or were empty
+---@type table<string, table<string, Query|false>>
+local query_get_cache = vim.defaulttable(function()
+  return setmetatable({}, { __mode = 'v' })
+end)
+
 ---@deprecated
 function M.get_query(...)
   vim.deprecate('vim.treesitter.query.get_query()', 'vim.treesitter.query.get()', '0.10')
@@ -212,16 +218,28 @@ function M.get(lang, query_name)
     return explicit_queries[lang][query_name]
   end
 
+  local cached = query_get_cache[lang][query_name]
+  if cached then
+    return cached
+  elseif cached == false then
+    return nil
+  end
+
   local query_files = M.get_files(lang, query_name)
   local query_string = read_query_files(query_files)
 
-  if #query_string > 0 then
-    return M.parse(lang, query_string)
+  if #query_string == 0 then
+    query_get_cache[lang][query_name] = false
+    return nil
   end
+
+  local query = M.parse(lang, query_string)
+  query_get_cache[lang][query_name] = query
+  return query
 end
 
----@type {[string]: {[string]: Query}}
-local query_cache = vim.defaulttable(function()
+---@type table<string, table<string, Query>>
+local query_parse_cache = vim.defaulttable(function()
   return setmetatable({}, { __mode = 'v' })
 end)
 
@@ -250,7 +268,7 @@ end
 ---@return Query Parsed query
 function M.parse(lang, query)
   language.add(lang)
-  local cached = query_cache[lang][query]
+  local cached = query_parse_cache[lang][query]
   if cached then
     return cached
   end
@@ -259,7 +277,7 @@ function M.parse(lang, query)
   self.query = vim._ts_parse_query(lang, query)
   self.info = self.query:inspect()
   self.captures = self.info.captures
-  query_cache[lang][query] = self
+  query_parse_cache[lang][query] = self
   return self
 end
 
