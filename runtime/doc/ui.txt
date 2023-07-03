@@ -640,7 +640,8 @@ tabs.
 	the top line of a window moved since `win_viewport` was last emitted.
 	It is intended to be used to implement smooth scrolling. For this
 	purpose it only counts "virtual" or "displayed" lines, so folds
-	only count as one line.
+	only count as one line. When scrolling more than a full screen it is
+	an approximate value.
 
 ["win_extmark", grid, win, ns_id, mark_id, row, col] ~
 	Updates the position of an extmark which is currently visible in a
