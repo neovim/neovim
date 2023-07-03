@@ -78,14 +78,14 @@ Example of a typical "redraw" batch in a single RPC notification: >
       [
 	['grid_resize', [2, 77, 36]],
 	['grid_line',
-	  [2, 0, 0, [[' ' , 0, 77]]],
-	  [2, 1, 0, [['~', 7], [' ', 7, 76]]],
-	  [2, 9, 0, [['~', 7], [' ', 7, 76]]], 
+	  [2, 0, 0, [[' ' , 0, 77]], false],
+	  [2, 1, 0, [['~', 7], [' ', 7, 76]], false],
+	  [2, 9, 0, [['~', 7], [' ', 7, 76]], false],
 	  ...
-	  [2, 35, 0, [['~', 7], [' ', 7, 76]]],
-	  [1, 36, 0, [['[', 9], ['N'], ['o'], [' '], ['N'], ['a'], ['m'], ['e'], [']']]],
-	  [1, 36, 9, [[' ', 9, 50]]],
-	  [1, 36, 59, [['0', 9], [','], ['0'], ['-' ], ['1'], [' ', 9, 10], ['A'], ['l', 9, 2]]]
+	  [2, 35, 0, [['~', 7], [' ', 7, 76]], false],
+	  [1, 36, 0, [['[', 9], ['N'], ['o'], [' '], ['N'], ['a'], ['m'], ['e'], [']']], false],
+	  [1, 36, 9, [[' ', 9, 50]], false],
+	  [1, 36, 59, [['0', 9], [','], ['0'], ['-' ], ['1'], [' ', 9, 10], ['A'], ['l', 9, 2]], false]
 	],
 	['msg_showmode', [[]]],
 	['win_pos', [2, 1000, 0, 0, 77, 36]],
@@ -360,7 +360,7 @@ numerical highlight ids to the actual attributes.
 	use the |hl-Pmenu| family of builtin highlights.
 
 							    *ui-event-grid_line*
-["grid_line", grid, row, col_start, cells] ~
+["grid_line", grid, row, col_start, cells, wrap] ~
 	Redraw a continuous part of a `row` on a `grid`, starting at the column
 	`col_start`. `cells` is an array of arrays each with 1 to 3 items:
 	`[text(, hl_id, repeat)]` . `text` is the UTF-8 text that should be put in
@@ -378,6 +378,12 @@ numerical highlight ids to the actual attributes.
 	rest should remain unchanged. A whitespace char, repeated
 	enough to cover the remaining line, will be sent when the rest of the
 	line should be cleared.
+
+	`wrap` is a boolean indicating that this line wraps to the next row.
+	When redrawing a line which wraps to the next row, Nvim will emit a
+	`grid_line` event covering the last column of the line with `wrap` set
+	to true, followed immediately by a `grid_line` event starting at the
+	first column of the next row.
 
 ["grid_clear", grid] ~
 	Clear a `grid`.
