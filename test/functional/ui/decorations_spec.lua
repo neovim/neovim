@@ -1835,7 +1835,7 @@ describe('decorations: inline virtual text', function()
       ]]}
   end)
 
-  it('text is drawn correctly when inserting a wrapping virtual text on an empty line', function()
+  it('text is drawn correctly with a wrapping virtual text', function()
     feed('o<esc>')
     insert([[aaaaaaa
 
@@ -1899,6 +1899,40 @@ bbbbbbb]])
       {1:~                                                 }|
                                                         |
       ]]}
+
+    feed('ggic')
+    screen:expect { grid = [[
+      c{10:^XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {10:XX}                                                |
+      aaaaaaa                                           |
+      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      bbbbbbb                                           |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {8:-- INSERT --}                                      |
+      ]]}
+  end)
+
+  it('regexp \\%V does not count trailing virtual text', function()
+    screen:try_resize(50, 4)
+    meths.buf_set_lines(0, 0, -1, true, {'foofoo', '', 'foofoo'})
+    meths.buf_set_extmark(0, ns, 1, 0, { virt_text = {{'barbarbar', 'Special'}}, virt_text_pos = 'inline' })
+    feed([[<C-V>G5l<Esc>/foo\n\%V<CR>]])
+    screen:expect{grid=[[
+      foo{12:^foo }                                           |
+      {10:barbarbar}                                         |
+      foofoo                                            |
+      {16:search hit BOTTOM, continuing at TOP}              |
+    ]]}
+    feed([[jIbaz<Esc>/foo\nbaz\%V<CR>]])
+    screen:expect{grid=[[
+      foo{12:^foo }                                           |
+      {12:baz}{10:barbarbar}                                      |
+      foofoo                                            |
+      {16:search hit BOTTOM, continuing at TOP}              |
+    ]]}
   end)
 
   it('cursor position is correct with virtual text attached to hard tabs', function()
