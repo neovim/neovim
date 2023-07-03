@@ -287,7 +287,7 @@ unsigned win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T len)
 
 /// Return the number of cells line "lnum" of window "wp" will take on the
 /// screen, taking into account the size of a tab and text properties.
-unsigned     linetabsize(win_T *wp, linenr_T lnum)
+unsigned linetabsize(win_T *wp, linenr_T lnum)
 {
   return win_linetabsize(wp, lnum, ml_get_buf(wp->w_buffer, lnum, false), (colnr_T)MAXCOL);
 }
@@ -298,9 +298,8 @@ void win_linetabsize_cts(chartabsize_T *cts, colnr_T len)
        MB_PTR_ADV(cts->cts_ptr)) {
     cts->cts_vcol += win_lbr_chartabsize(cts, NULL);
   }
-  // check for a virtual text on an empty line
-  if (cts->cts_has_virt_text && *cts->cts_ptr == NUL
-      && cts->cts_ptr == cts->cts_line) {
+  // check for a virtual text after the end of the line
+  if (len == MAXCOL && cts->cts_has_virt_text && *cts->cts_ptr == NUL) {
     (void)win_lbr_chartabsize(cts, NULL);
     cts->cts_vcol += cts->cts_cur_text_width_left + cts->cts_cur_text_width_right;
   }
@@ -406,15 +405,15 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
 
   // First get normal size, without 'linebreak' or virtual text
   int size = win_chartabsize(wp, s, vcol);
+
   if (cts->cts_has_virt_text) {
     int tab_size = size;
-    int charlen = *s == NUL ? 1 : utf_ptr2len(s);
     int col = (int)(s - line);
     while (true) {
       mtkey_t mark = marktree_itr_current(cts->cts_iter);
       if (mark.pos.row != cts->cts_row || mark.pos.col > col) {
         break;
-      } else if (mark.pos.col >= col && mark.pos.col < col + charlen) {
+      } else if (mark.pos.col == col) {
         if (!mt_end(mark)) {
           Decoration decor = get_decor(mark);
           if (decor.virt_text_pos == kVTInline) {
