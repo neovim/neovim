@@ -1551,7 +1551,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   bool retval = false;
   static int nesting = 0;
   char *save_cmdarg;
-  long save_cmdbang;
+  varnumber_T save_cmdbang;
   static int filechangeshell_busy = false;
   proftime_T wait_time;
   bool did_save_redobuff = false;

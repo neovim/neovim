@@ -46,8 +46,8 @@ typedef struct oparg_S {
   bool is_VIsual;               // operator on Visual area
   colnr_T start_vcol;           // start col for block mode operator
   colnr_T end_vcol;             // end col for block mode operator
-  long prev_opcount;            // ca.opcount saved for K_EVENT
-  long prev_count0;             // ca.count0 saved for K_EVENT
+  int prev_opcount;             // ca.opcount saved for K_EVENT
+  int prev_count0;              // ca.count0 saved for K_EVENT
   bool excl_tr_ws;              // exclude trailing whitespace for yank of a
                                 // block
 } oparg_T;
@@ -61,9 +61,9 @@ typedef struct cmdarg_S {
   int ncharC1;                  // first composing character (optional)
   int ncharC2;                  // second composing character (optional)
   int extra_char;               // yet another character (optional)
-  long opcount;                 // count before an operator
-  long count0;                  // count before command, default 0
-  long count1;                  // count before command, default 1
+  int opcount;                  // count before an operator
+  int count0;                   // count before command, default 0
+  int count1;                   // count before command, default 1
   int arg;                      // extra argument from nv_cmds[]
   int retval;                   // return: CA_* values
   char *searchbuf;              // return: pointer to search pattern or NULL

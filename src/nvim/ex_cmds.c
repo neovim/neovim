@@ -462,7 +462,7 @@ void ex_sort(exarg_T *eap)
   char *s2;
   char c;                             // temporary character storage
   bool unique = false;
-  long deleted;
+  linenr_T deleted;
   colnr_T start_col;
   colnr_T end_col;
   int sort_what = 0;
@@ -689,13 +689,12 @@ void ex_sort(exarg_T *eap)
   }
 
   // Adjust marks for deleted (or added) lines and prepare for displaying.
-  deleted = (long)count - (lnum - eap->line2);
+  deleted = (linenr_T)count - (lnum - eap->line2);
   if (deleted > 0) {
-    mark_adjust(eap->line2 - (linenr_T)deleted, eap->line2, (long)MAXLNUM, (linenr_T)(-deleted),
-                kExtmarkNOOP);
+    mark_adjust(eap->line2 - deleted, eap->line2, (long)MAXLNUM, -deleted, kExtmarkNOOP);
     msgmore(-deleted);
   } else if (deleted < 0) {
-    mark_adjust(eap->line2, MAXLNUM, (linenr_T)(-deleted), 0L, kExtmarkNOOP);
+    mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, kExtmarkNOOP);
   }
 
   if (change_occurred || deleted != 0) {
@@ -703,7 +702,7 @@ void ex_sort(exarg_T *eap)
                    (int)count, 0, old_count,
                    lnum - eap->line2, 0, new_count, kExtmarkUndo);
 
-    changed_lines(eap->line1, 0, eap->line2 + 1, (linenr_T)(-deleted), true);
+    changed_lines(eap->line1, 0, eap->line2 + 1, -deleted, true);
   }
 
   curwin->w_cursor.lnum = eap->line1;
@@ -3900,7 +3899,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const long cmdpreview_
         // 3. Substitute the string. During 'inccommand' preview only do this if
         //    there is a replace pattern.
         if (cmdpreview_ns <= 0 || has_second_delim) {
-          long lnum_start = lnum;  // save the start lnum
+          linenr_T lnum_start = lnum;  // save the start lnum
           int save_ma = curbuf->b_p_ma;
           int save_sandbox = sandbox;
           if (subflags.do_count) {
@@ -4038,7 +4037,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const long cmdpreview_
           }
           extmark_splice(curbuf, (int)lnum_start - 1, start_col,
                          end.lnum - start.lnum, matchcols, replaced_bytes,
-                         lnum - (linenr_T)lnum_start, subcols, sublen - 1, kExtmarkUndo);
+                         lnum - lnum_start, subcols, sublen - 1, kExtmarkUndo);
         }
 
         // 4. If subflags.do_all is set, find next match.

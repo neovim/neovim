@@ -999,10 +999,10 @@ void *getline_cookie(LineGetter fgetline, void *cookie)
 /// ":bwipeout", etc.
 ///
 /// @return  the buffer number.
-static int compute_buffer_local_count(cmd_addr_T addr_type, linenr_T lnum, long offset)
+static int compute_buffer_local_count(cmd_addr_T addr_type, linenr_T lnum, int offset)
 {
   buf_T *nextbuf;
-  long count = offset;
+  int count = offset;
 
   buf_T *buf = firstbuf;
   while (buf->b_next != NULL && buf->b_fnum < lnum) {
@@ -5391,8 +5391,8 @@ static void ex_syncbind(exarg_T *eap)
 {
   win_T *save_curwin = curwin;
   buf_T *save_curbuf = curbuf;
-  long topline;
-  long y;
+  linenr_T topline;
+  int y;
   linenr_T old_linenr = curwin->w_cursor.lnum;
 
   setpcmark();
@@ -5719,7 +5719,7 @@ static void ex_sleep(exarg_T *eap)
     setcursor_mayforce(true);
   }
 
-  long len = eap->line2;
+  linenr_T len = eap->line2;
   switch (*eap->arg) {
   case 'm':
     break;
@@ -5732,7 +5732,7 @@ static void ex_sleep(exarg_T *eap)
 }
 
 /// Sleep for "msec" milliseconds, but return early on CTRL-C.
-void do_sleep(long msec)
+void do_sleep(int64_t msec)
 {
   ui_flush();  // flush before waiting
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, msec, got_int);
@@ -5860,7 +5860,7 @@ static void ex_put(exarg_T *eap)
 static void ex_copymove(exarg_T *eap)
 {
   const char *errormsg = NULL;
-  long n = get_address(eap, &eap->arg, eap->addr_type, false, false, false, 1, &errormsg);
+  linenr_T n = get_address(eap, &eap->arg, eap->addr_type, false, false, false, 1, &errormsg);
   if (eap->arg == NULL) {  // error detected
     if (errormsg != NULL) {
       emsg(errormsg);
@@ -5877,11 +5877,11 @@ static void ex_copymove(exarg_T *eap)
   }
 
   if (eap->cmdidx == CMD_move) {
-    if (do_move(eap->line1, eap->line2, (linenr_T)n) == FAIL) {
+    if (do_move(eap->line1, eap->line2, n) == FAIL) {
       return;
     }
   } else {
-    ex_copy(eap->line1, eap->line2, (linenr_T)n);
+    ex_copy(eap->line1, eap->line2, n);
   }
   u_clearline();
   beginline(BL_SOL | BL_FIX);
@@ -5991,7 +5991,7 @@ static void ex_undo(exarg_T *eap)
     return;
   }
 
-  long step = eap->line2;
+  linenr_T step = eap->line2;
 
   if (eap->forceit) {             // undo! 123
     // change number for "undo!" must be lesser than current change number
@@ -6579,9 +6579,9 @@ static void ex_findpat(exarg_T *eap)
     break;
   }
 
-  long n = 1;
+  int n = 1;
   if (ascii_isdigit(*eap->arg)) {  // get count
-    n = getdigits_long(&eap->arg, false, 0);
+    n = getdigits_int(&eap->arg, false, 0);
     eap->arg = skipwhite(eap->arg);
   }
   if (*eap->arg == '/') {   // Match regexp, not just whole words

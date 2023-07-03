@@ -6198,13 +6198,13 @@ dict_T *get_winbuf_options(const int bufopt)
 
 /// Return the effective 'scrolloff' value for the current window, using the
 /// global value when appropriate.
-long get_scrolloff_value(win_T *wp)
+linenr_T get_scrolloff_value(win_T *wp)
 {
   // Disallow scrolloff in terminal-mode. #11915
   if (State & MODE_TERMINAL) {
     return 0;
   }
-  return wp->w_p_so < 0 ? p_so : wp->w_p_so;
+  return wp->w_p_so < 0 ? (linenr_T)p_so : (linenr_T)wp->w_p_so;
 }
 
 /// Return the effective 'sidescrolloff' value for the current window, using the

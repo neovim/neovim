@@ -1334,7 +1334,7 @@ bool scrolldown(long line_count, int byfold)
 ///
 /// @param line_count number of lines to scroll
 /// @param byfold if true, count a closed fold as one line
-bool scrollup(long line_count, int byfold)
+bool scrollup(linenr_T line_count, int byfold)
 {
   linenr_T topline = curwin->w_topline;
   linenr_T botline = curwin->w_botline;
@@ -1402,8 +1402,8 @@ bool scrollup(long line_count, int byfold)
       redraw_later(curwin, UPD_NOT_VALID);
     }
   } else {
-    curwin->w_topline += (linenr_T)line_count;
-    curwin->w_botline += (linenr_T)line_count;            // approximate w_botline
+    curwin->w_topline += line_count;
+    curwin->w_botline += line_count;            // approximate w_botline
   }
 
   if (curwin->w_topline > curbuf->b_ml.ml_line_count) {

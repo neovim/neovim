@@ -1020,10 +1020,10 @@ static int add_llist_tags(char *tag, int num_matches, char **matches)
 
     // Get the line number or the search pattern used to locate
     // the tag.
-    long lnum = 0;
+    linenr_T lnum = 0;
     if (isdigit((uint8_t)(*tagp.command))) {
       // Line number is used to locate the tag
-      lnum = atol(tagp.command);
+      lnum = atoi(tagp.command);
     } else {
       char *cmd_start, *cmd_end;
 
@@ -2979,15 +2979,14 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, int keep_help)
         // start search before first line
         curwin->w_cursor.lnum = 0;
       }
-      if (do_search(NULL, pbuf[0], pbuf[0], pbuf + 1, (long)1,
-                    search_options, NULL)) {
+      if (do_search(NULL, pbuf[0], pbuf[0], pbuf + 1, 1, search_options, NULL)) {
         retval = OK;
       } else {
         int found = 1;
 
         // try again, ignore case now
         p_ic = true;
-        if (!do_search(NULL, pbuf[0], pbuf[0], pbuf + 1, (long)1,
+        if (!do_search(NULL, pbuf[0], pbuf[0], pbuf + 1, 1,
                        search_options, NULL)) {
           // Failed to find pattern, take a guess: "^func  ("
           found = 2;
@@ -2995,11 +2994,11 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, int keep_help)
           char cc = *tagp.tagname_end;
           *tagp.tagname_end = NUL;
           snprintf(pbuf, LSIZE, "^%s\\s\\*(", tagp.tagname);
-          if (!do_search(NULL, '/', '/', pbuf, (long)1, search_options, NULL)) {
+          if (!do_search(NULL, '/', '/', pbuf, 1, search_options, NULL)) {
             // Guess again: "^char * \<func  ("
             snprintf(pbuf, LSIZE, "^\\[#a-zA-Z_]\\.\\*\\<%s\\s\\*(",
                      tagp.tagname);
-            if (!do_search(NULL, '/', '/', pbuf, (long)1, search_options, NULL)) {
+            if (!do_search(NULL, '/', '/', pbuf, 1, search_options, NULL)) {
               found = 0;
             }
           }

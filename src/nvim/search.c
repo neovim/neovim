@@ -549,7 +549,7 @@ void last_pat_prog(regmmatch_T *regmatch)
 ///                   the index of the first matching
 ///                   subpattern plus one; one if there was none.
 int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, char *pat,
-             long count, int options, int pat_use, searchit_arg_T *extra_arg)
+             int count, int options, int pat_use, searchit_arg_T *extra_arg)
 {
   int found;
   linenr_T lnum;                // no init to shut up Apollo cc
@@ -1024,7 +1024,7 @@ static int first_submatch(regmmatch_T *rp)
 /// @param sia           optional arguments or NULL
 ///
 /// @return              0 for failure, 1 for found, 2 for found and line offset added.
-int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, long count, int options,
+int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, int count, int options,
               searchit_arg_T *sia)
 {
   pos_T pos;                    // position of the last match
@@ -1500,7 +1500,7 @@ int searchc(cmdarg_T *cap, int t_cmd)
 {
   int c = cap->nchar;                   // char to search for
   int dir = cap->arg;                   // true for searching forward
-  long count = cap->count1;             // repeat count
+  int count = cap->count1;              // repeat count
   bool stop = true;
 
   if (c != NUL) {       // normal search: remember args for repeat
@@ -2380,7 +2380,7 @@ void showmatch(int c)
 /// Used while an operator is pending, and in Visual mode.
 ///
 /// @param forward  true for forward, false for backward
-int current_search(long count, bool forward)
+int current_search(int count, bool forward)
 {
   bool old_p_ws = p_ws;
   pos_T save_VIsual = VIsual;
@@ -3546,12 +3546,12 @@ static char *get_line_and_copy(linenr_T lnum, char *buf)
 /// @param start_lnum     first line to start searching
 /// @param end_lnum       last line for searching
 void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool skip_comments,
-                          int type, long count, int action, linenr_T start_lnum, linenr_T end_lnum)
+                          int type, int count, int action, linenr_T start_lnum, linenr_T end_lnum)
 {
   SearchedFile *files;                  // Stack of included files
   SearchedFile *bigger;                 // When we need more space
   int max_path_depth = 50;
-  long match_count = 1;
+  int match_count = 1;
 
   char *pat;
   char *new_fname;
@@ -4142,7 +4142,7 @@ fpip_end:
 }
 
 static void show_pat_in_path(char *line, int type, bool did_show, int action, FILE *fp,
-                             linenr_T *lnum, long count)
+                             linenr_T *lnum, int count)
   FUNC_ATTR_NONNULL_ARG(1, 6)
 {
   if (did_show) {
@@ -4166,7 +4166,7 @@ static void show_pat_in_path(char *line, int type, bool did_show, int action, FI
       *(p + 1) = NUL;
     }
     if (action == ACTION_SHOW_ALL) {
-      snprintf(IObuff, IOSIZE, "%3ld: ", count);  // Show match nr.
+      snprintf(IObuff, IOSIZE, "%3d: ", count);  // Show match nr.
       msg_puts(IObuff);
       snprintf(IObuff, IOSIZE, "%4" PRIdLINENR, *lnum);  // Show line nr.
       // Highlight line numbers.

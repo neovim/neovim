@@ -3192,12 +3192,12 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
                    ? " " : "");
   // With 32 bit longs and more than 21,474,836 lines multiplying by 100
   // causes an overflow, thus for large numbers divide instead.
-  if (curwin->w_cursor.lnum > 1000000L) {
-    n = (int)(((long)curwin->w_cursor.lnum) /
-              ((long)curbuf->b_ml.ml_line_count / 100L));
+  if (curwin->w_cursor.lnum > 1000000) {
+    n = ((curwin->w_cursor.lnum) /
+         (curbuf->b_ml.ml_line_count / 100));
   } else {
-    n = (int)(((long)curwin->w_cursor.lnum * 100L) /
-              (long)curbuf->b_ml.ml_line_count);
+    n = ((curwin->w_cursor.lnum * 100) /
+         curbuf->b_ml.ml_line_count);
   }
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
     vim_snprintf_add(buffer, IOSIZE, "%s", _(no_lines_msg));

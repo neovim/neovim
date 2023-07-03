@@ -441,7 +441,7 @@ void appended_lines(linenr_T lnum, linenr_T count)
 }
 
 /// Like appended_lines(), but adjust marks first.
-void appended_lines_mark(linenr_T lnum, long count)
+void appended_lines_mark(linenr_T lnum, int count)
 {
   mark_adjust(lnum + 1, (linenr_T)MAXLNUM, (linenr_T)count, 0L, kExtmarkUndo);
   changed_lines(lnum + 1, 0, lnum + 1, (linenr_T)count, true);
@@ -458,7 +458,7 @@ void deleted_lines(linenr_T lnum, linenr_T count)
 /// Like deleted_lines(), but adjust marks first.
 /// Make sure the cursor is on a valid line before calling, a GUI callback may
 /// be triggered to display the cursor.
-void deleted_lines_mark(linenr_T lnum, long count)
+void deleted_lines_mark(linenr_T lnum, int count)
 {
   bool made_empty = (count > 0) && curbuf->b_ml.ml_flags & ML_EMPTY;
 
@@ -812,7 +812,7 @@ int del_char(bool fixpos)
 }
 
 /// Like del_bytes(), but delete characters instead of bytes.
-int del_chars(long count, int fixpos)
+int del_chars(int count, int fixpos)
 {
   int bytes = 0;
   char *p = get_cursor_pos_ptr();
@@ -1928,7 +1928,7 @@ void truncate_line(int fixpos)
 /// Saves the lines for undo first if "undo" is true.
 void del_lines(long nlines, bool undo)
 {
-  long n;
+  int n;
   linenr_T first = curwin->w_cursor.lnum;
 
   if (nlines <= 0) {
