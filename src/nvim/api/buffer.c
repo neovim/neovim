@@ -1334,27 +1334,6 @@ static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)
   invalidate_botline();
 }
 
-// Normalizes 0-based indexes to buffer line numbers
-static int64_t normalize_index(buf_T *buf, int64_t index, bool end_exclusive, bool *oob)
-{
-  assert(buf->b_ml.ml_line_count > 0);
-  int64_t max_index = buf->b_ml.ml_line_count + (int)end_exclusive - 1;
-  // Fix if < 0
-  index = index < 0 ? max_index + index + 1 : index;
-
-  // Check for oob
-  if (index > max_index) {
-    *oob = true;
-    index = max_index;
-  } else if (index < 0) {
-    *oob = true;
-    index = 0;
-  }
-  // Convert the index to a vim line number
-  index++;
-  return index;
-}
-
 /// Initialise a string array either:
 /// - on the Lua stack (as a table) (if lstate is not NULL)
 /// - as an API array object (if lstate is NULL).

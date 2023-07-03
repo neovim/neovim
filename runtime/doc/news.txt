@@ -99,6 +99,9 @@ The following new APIs and features were added.
 
 • |vim.system()| for running system commands.
 
+• Added |nvim_win_text_height()| to get the number of screen lines occupied by
+  a range of text in a given window.
+
 • |nvim_set_keymap()| and |nvim_del_keymap()| now support abbreviations.
 
 • Implemented LSP inlay hints: |vim.lsp.inlay_hint()|

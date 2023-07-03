@@ -8,6 +8,7 @@
 
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/api/window.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
@@ -20,6 +21,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/memline_defs.h"
 #include "nvim/move.h"
+#include "nvim/plines.h"
 #include "nvim/pos.h"
 #include "nvim/types.h"
 #include "nvim/window.h"
@@ -461,4 +463,105 @@ void nvim_win_set_hl_ns(Window window, Integer ns_id, Error *err)
   win->w_ns_hl = (NS)ns_id;
   win->w_hl_needs_update = true;
   redraw_later(win, UPD_NOT_VALID);
+}
+
+/// Computes the number of screen lines occupied by a range of text in a given window.
+/// Works for off-screen text and takes folds into account.
+///
+/// Diff filler or virtual lines above a line are counted as a part of that line,
+/// unless the line is on "start_row" and "start_vcol" is specified.
+///
+/// Diff filler or virtual lines below the last buffer line are counted in the result
+/// when "end_row" is omitted.
+///
+/// Line indexing is similar to |nvim_buf_get_text()|.
+///
+/// @param window  Window handle, or 0 for current window.
+/// @param opts    Optional parameters:
+///                - start_row: Starting line index, 0-based inclusive.
+///                             When omitted start at the very top.
+///                - end_row: Ending line index, 0-based inclusive.
+///                           When omitted end at the very bottom.
+///                - start_vcol: Starting virtual column index on "start_row",
+///                              0-based inclusive, rounded down to full screen lines.
+///                              When omitted include the whole line.
+///                - end_vcol: Ending virtual column index on "end_row",
+///                            0-based exclusive, rounded up to full screen lines.
+///                            When omitted include the whole line.
+/// @return  The number of screen lines that the range of text occupy.
+///
+/// @see |virtcol()| for text width.
+Object nvim_win_text_height(Window window, Dict(win_text_height) *opts, Error *err)
+  FUNC_API_SINCE(12)
+{
+  win_T *const win = find_window_by_handle(window, err);
+  if (!win) {
+    return NIL;
+  }
+  buf_T *const buf = win->w_buffer;
+  const linenr_T line_count = buf->b_ml.ml_line_count;
+
+  linenr_T start_lnum = 1;
+  linenr_T end_lnum = line_count;
+  int64_t start_vcol = -1;
+  int64_t end_vcol = -1;
+
+  bool oob = false;
+
+  if (HAS_KEY(opts->start_row)) {
+    VALIDATE_T("start_row", kObjectTypeInteger, opts->start_row.type, {
+      return NIL;
+    });
+    start_lnum = (linenr_T)normalize_index(buf, opts->start_row.data.integer, false, &oob);
+  }
+
+  if (HAS_KEY(opts->end_row)) {
+    VALIDATE_T("end_row", kObjectTypeInteger, opts->end_row.type, {
+      return NIL;
+    });
+    end_lnum = (linenr_T)normalize_index(buf, opts->end_row.data.integer, false, &oob);
+  }
+
+  VALIDATE(!oob, "%s", "Line index out of bounds", {
+    return NIL;
+  });
+  VALIDATE((start_lnum <= end_lnum), "%s", "'start_row' is higher than 'end_row'", {
+    return NIL;
+  });
+
+  if (HAS_KEY(opts->start_vcol)) {
+    VALIDATE(HAS_KEY(opts->start_row), "%s", "'start_vcol' specified without 'start_row'", {
+      return NIL;
+    });
+    VALIDATE_T("start_vcol", kObjectTypeInteger, opts->start_vcol.type, {
+      return NIL;
+    });
+    start_vcol = opts->start_vcol.data.integer;
+    VALIDATE_RANGE((start_vcol >= 0 && start_vcol <= MAXCOL), "start_vcol", {
+      return NIL;
+    });
+  }
+
+  if (HAS_KEY(opts->end_vcol)) {
+    VALIDATE(HAS_KEY(opts->end_row), "%s", "'end_vcol' specified without 'end_row'", {
+      return NIL;
+    });
+    VALIDATE_T("end_vcol", kObjectTypeInteger, opts->end_vcol.type, {
+      return NIL;
+    });
+    end_vcol = opts->end_vcol.data.integer;
+    VALIDATE_RANGE((end_vcol >= 0 && end_vcol <= MAXCOL), "end_vcol", {
+      return NIL;
+    });
+  }
+
+  if (start_lnum == end_lnum && start_vcol >= 0 && end_vcol >= 0) {
+    VALIDATE((start_vcol <= end_vcol), "%s", "'start_vcol' is higher than 'end_vcol'", {
+      return NIL;
+    });
+  }
+
+  const int64_t res = win_text_height(win, start_lnum, start_vcol, end_lnum, end_vcol)
+                      + (HAS_KEY(opts->end_row) ? 0 : win_get_fill(win, line_count + 1));
+  return INTEGER_OBJ(res);
 }

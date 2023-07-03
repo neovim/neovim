@@ -478,6 +478,27 @@ Array string_to_array(const String input, bool crlf)
   return ret;
 }
 
+/// Normalizes 0-based indexes to buffer line numbers.
+int64_t normalize_index(buf_T *buf, int64_t index, bool end_exclusive, bool *oob)
+{
+  assert(buf->b_ml.ml_line_count > 0);
+  int64_t max_index = buf->b_ml.ml_line_count + (int)end_exclusive - 1;
+  // A negative index counts from the bottom.
+  index = index < 0 ? max_index + index + 1 : index;
+
+  // Check for oob and clamp.
+  if (index > max_index) {
+    *oob = true;
+    index = max_index;
+  } else if (index < 0) {
+    *oob = true;
+    index = 0;
+  }
+  // Convert the index to a 1-based line number.
+  index++;
+  return index;
+}
+
 /// Returns a substring of a buffer line
 ///
 /// @param buf          Buffer handle
