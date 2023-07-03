@@ -1769,9 +1769,9 @@ do --[[ References ]]
 
   --- Removes document highlights from a buffer.
   ---
-  ---@param bufnr integer Buffer id
+  ---@param bufnr integer|nil Buffer id
   function M.buf_clear_references(bufnr)
-    validate({ bufnr = { bufnr, { 'n', 'nil' }, true } })
+    validate({ bufnr = { bufnr, { 'n' }, true } })
     api.nvim_buf_clear_namespace(bufnr or 0, reference_ns, 0, -1)
   end
 

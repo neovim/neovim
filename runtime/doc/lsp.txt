@@ -1078,11 +1078,8 @@ add_workspace_folder({workspace_folder})
     Add the folder at path to the workspace folders. If {path} is not
     provided, the user will be prompted for a path using |input()|.
 
-clear_references({bufnr})                     *vim.lsp.buf.clear_references()*
+clear_references()                            *vim.lsp.buf.clear_references()*
     Removes document highlights from current buffer.
-
-    Parameters: ~
-      • {bufnr}  integer|nil
 
 code_action({options})                             *vim.lsp.buf.code_action()*
     Selects a code action available at the current cursor position.
@@ -1567,7 +1564,7 @@ buf_clear_references({bufnr})            *vim.lsp.util.buf_clear_references()*
     Removes document highlights from a buffer.
 
     Parameters: ~
-      • {bufnr}  (integer) Buffer id
+      • {bufnr}  (integer|nil) Buffer id
 
                                      *vim.lsp.util.buf_highlight_references()*
 buf_highlight_references({bufnr}, {references}, {offset_encoding})
