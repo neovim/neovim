@@ -577,7 +577,6 @@ describe('API', function()
     local start_dir
 
     before_each(function()
-      clear()
       funcs.mkdir("Xtestdir")
       start_dir = funcs.getcwd()
     end)
@@ -1990,6 +1989,39 @@ describe('API', function()
       ]])
       eq('\naaa\n' .. ('a'):rep(5002) .. '\naaa', meths.get_var('out'))
     end)
+
+    it('blank line in message works', function()
+      local screen = Screen.new(40, 8)
+      screen:attach()
+      screen:set_default_attr_ids({
+        [0] = {bold = true, foreground = Screen.colors.Blue},
+        [1] = {bold = true, foreground = Screen.colors.SeaGreen},
+        [2] = {bold = true, reverse = true},
+      })
+      feed([[:call nvim_out_write("\na\n")<CR>]])
+      screen:expect{grid=[[
+                                                |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {2:                                        }|
+                                                |
+        a                                       |
+        {1:Press ENTER or type command to continue}^ |
+      ]]}
+      feed('<CR>')
+      feed([[:call nvim_out_write("b\n\nc\n")<CR>]])
+      screen:expect{grid=[[
+                                                |
+        {0:~                                       }|
+        {0:~                                       }|
+        {2:                                        }|
+        b                                       |
+                                                |
+        c                                       |
+        {1:Press ENTER or type command to continue}^ |
+      ]]}
+    end)
   end)
 
   describe('nvim_err_write', function()
@@ -3029,11 +3061,10 @@ describe('API', function()
     local screen
 
     before_each(function()
-      clear()
       screen = Screen.new(40, 8)
       screen:attach()
       screen:set_default_attr_ids({
-        [0] = {bold=true, foreground=Screen.colors.Blue},
+        [0] = {bold = true, foreground = Screen.colors.Blue},
         [1] = {bold = true, foreground = Screen.colors.SeaGreen},
         [2] = {bold = true, reverse = true},
         [3] = {foreground = Screen.colors.Brown, bold = true}, -- Statement
@@ -3103,7 +3134,6 @@ describe('API', function()
     local screen
 
     before_each(function()
-      clear()
       screen = Screen.new(100, 35)
       screen:attach()
       screen:set_default_attr_ids({
