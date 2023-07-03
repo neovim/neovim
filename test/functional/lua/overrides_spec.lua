@@ -15,8 +15,6 @@ local exec_lua = helpers.exec_lua
 local pcall_err = helpers.pcall_err
 local is_os = helpers.is_os
 
-local screen
-
 local fname = 'Xtest-functional-lua-overrides-luafile'
 
 before_each(clear)
@@ -138,9 +136,44 @@ describe('print', function()
     ]], (is_os('win') and "timeout 1") or "sleep 0.1")
     eq('very slow\nvery fast', exec_capture('lua test()'))
   end)
+
+  it('blank line in message works', function()
+    local screen = Screen.new(40, 8)
+    screen:attach()
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground=Screen.colors.Blue},
+      [1] = {bold = true, foreground = Screen.colors.SeaGreen},
+      [2] = {bold = true, reverse = true},
+    })
+    feed([[:lua print('\na')<CR>]])
+    screen:expect{grid=[[
+                                              |
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
+      {2:                                        }|
+                                              |
+      a                                       |
+      {1:Press ENTER or type command to continue}^ |
+    ]]}
+    feed('<CR>')
+    feed([[:lua print('b\n\nc')<CR>]])
+    screen:expect{grid=[[
+                                              |
+      {0:~                                       }|
+      {0:~                                       }|
+      {2:                                        }|
+      b                                       |
+                                              |
+      c                                       |
+      {1:Press ENTER or type command to continue}^ |
+    ]]}
+  end)
 end)
 
 describe('debug.debug', function()
+  local screen
+
   before_each(function()
     screen = Screen.new()
     screen:attach()
