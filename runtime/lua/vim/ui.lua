@@ -72,6 +72,11 @@ end
 ---     - highlight (function)
 ---               Function that will be used for highlighting
 ---               user inputs.
+---     - secret (boolean|nil)
+---               (default: false) If `true`, user input is hidden (displayed as asterisks "*")
+---               instead of echoed.
+---               See |inputsecret()|.
+---
 ---@param on_confirm function ((input|nil) -> ())
 ---               Called once the user confirms or abort the input.
 ---               `input` is what the user typed (it might be
@@ -96,7 +101,7 @@ function M.input(opts, on_confirm)
   local _canceled = vim.NIL
   opts = vim.tbl_extend('keep', opts, { cancelreturn = _canceled })
 
-  local ok, input = pcall(vim.fn.input, opts)
+  local ok, input = pcall(opts.secret and vim.fn.inputsecret or vim.fn.input, opts)
   if not ok or input == _canceled then
     on_confirm(nil)
   else

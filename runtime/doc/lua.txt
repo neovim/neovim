@@ -2338,6 +2338,9 @@ input({opts}, {on_confirm})                                   *vim.ui.input()*
                         "-complete=" argument. See |:command-completion|
                       • highlight (function) Function that will be used for
                         highlighting user inputs.
+                      • secret (boolean|nil) (default: false) If `true`, user
+                        input is hidden (displayed as asterisks "*") instead
+                        of echoed. See |inputsecret()|.
       • {on_confirm}  (function) ((input|nil) -> ()) Called once the user
                       confirms or abort the input. `input` is what the user
                       typed (it might be an empty string if nothing was
