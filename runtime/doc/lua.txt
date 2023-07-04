@@ -2345,7 +2345,8 @@ input({opts}, {on_confirm})                                   *vim.ui.input()*
 
 open({path})                                                   *vim.ui.open()*
     Opens `path` with the system default handler (macOS `open`, Windows
-    `explorer.exe`, Linux `xdg-open`, …), or shows a message on failure.
+    `explorer.exe`, Linux `xdg-open`, …), or returns (but does not show) an
+    error message on failure.
 
     Expands "~/" and environment variables in filesystem paths.
 
@@ -2360,7 +2361,8 @@ open({path})                                                   *vim.ui.open()*
       • {path}  (string) Path or URL to open
 
     Return: ~
-        SystemCompleted|nil result Command result, or nil if not found.
+        SystemCompleted|nil # Command result, or nil if not found.
+        (string|nil) # Error message on failure
 
     See also: ~
       • |vim.system()|

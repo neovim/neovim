@@ -573,15 +573,14 @@ M['window/showDocument'] = function(_, result, ctx, _)
 
   if result.external then
     -- TODO(lvimuser): ask the user for confirmation
-
-    local ret = vim.ui.open(uri)
+    local ret, err = vim.ui.open(uri)
 
     if ret == nil or ret.code ~= 0 then
       return {
         success = false,
         error = {
           code = protocol.ErrorCodes.UnknownErrorCode,
-          message = ret and ret.stderr or 'No handler found',
+          message = ret and ret.stderr or err,
         },
       }
     end

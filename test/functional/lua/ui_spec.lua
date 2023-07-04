@@ -5,6 +5,7 @@ local exec_lua = helpers.exec_lua
 local clear = helpers.clear
 local feed = helpers.feed
 local eval = helpers.eval
+local is_os = helpers.is_os
 local poke_eventloop = helpers.poke_eventloop
 
 describe('vim.ui', function()
@@ -133,15 +134,17 @@ describe('vim.ui', function()
 
   describe('open()', function()
     it('validation', function()
-      exec_lua[[vim.ui.open('non-existent-file')]]
-      matches('vim.ui.open: command failed %(%d%): { "[^"]+", "non%-existent%-file" }', eval('v:errmsg'))
+      if not is_os('bsd') then
+        matches('vim.ui.open: command failed %(%d%): { "[^"]+", "non%-existent%-file" }',
+          exec_lua[[local _, err = vim.ui.open('non-existent-file') ; return err]])
+      end
 
       exec_lua[[
         vim.fn.has = function() return 0 end
         vim.fn.executable = function() return 0 end
       ]]
-      exec_lua[[vim.ui.open('foo')]]
-      eq('vim.ui.open: no handler found (tried: wslview, xdg-open)', eval('v:errmsg'))
+      eq('vim.ui.open: no handler found (tried: wslview, xdg-open)',
+        exec_lua[[local _, err = vim.ui.open('foo') ; return err]])
     end)
   end)
 end)

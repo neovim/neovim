@@ -22,12 +22,23 @@ end, { desc = 'Inspect treesitter language tree for buffer', count = true })
 -- TODO: use vim.region() when it lands... #13896 #16843
 local function get_visual_selection()
   local save_a = vim.fn.getreginfo('a')
-  vim.cmd[[norm! "ay]]
+  vim.cmd([[norm! "ay]])
   local selection = vim.fn.getreg('a', 1)
   vim.fn.setreg('a', save_a)
   return selection
 end
 
-local gx_desc = 'Opens filepath or URI under cursor with the system handler (file explorer, web browser, …)'
-vim.keymap.set({ 'n' }, 'gx', function() vim.ui.open(vim.fn.expand('<cfile>')) end, { desc = gx_desc })
-vim.keymap.set({ 'x' }, 'gx', function() vim.ui.open(get_visual_selection()) end, { desc = gx_desc })
+local gx_desc =
+  'Opens filepath or URI under cursor with the system handler (file explorer, web browser, …)'
+local function do_open(uri)
+  local _, err = vim.ui.open(uri)
+  if err then
+    vim.notify(err, vim.log.levels.ERROR)
+  end
+end
+vim.keymap.set({ 'n' }, 'gx', function()
+  do_open(vim.fn.expand('<cfile>'))
+end, { desc = gx_desc })
+vim.keymap.set({ 'x' }, 'gx', function()
+  do_open(get_visual_selection())
+end, { desc = gx_desc })
