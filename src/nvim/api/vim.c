@@ -949,7 +949,7 @@ fail:
 ///                 ["input", term, bufnr, data]
 /// @param[out] err Error details, if any
 /// @return Channel id, or 0 on error
-Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
+Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
   FUNC_API_SINCE(7)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -957,37 +957,51 @@ Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
     return 0;
   }
 
+  bool pty = api_object_to_bool(opts->pty, "pty", false, err);
+
   LuaRef cb = LUA_NOREF;
-  for (size_t i = 0; i < opts.size; i++) {
-    String k = opts.items[i].key;
-    Object *v = &opts.items[i].value;
-    if (strequal("on_input", k.data)) {
-      VALIDATE_T("on_input", kObjectTypeLuaRef, v->type, {
-        return 0;
-      });
-      cb = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-      break;
-    } else {
-      VALIDATE_S(false, "'opts' key", k.data, {});
+  if (HAS_KEY(opts->on_input)) {
+    Object *on_input = &opts->on_input;
+    VALIDATE_T("on_input", kObjectTypeLuaRef, on_input->type, {
+      return 0;
+    });
+    if (pty) {
+      // TODO: allow this, can be good to have...
+      api_set_error(err, kErrorTypeException, "whaaa");
+      return 0;
     }
+    cb = on_input->data.luaref;
+    on_input->data.luaref = LUA_NOREF;
   }
 
-  TerminalOptions topts;
-  Channel *chan = channel_alloc(kChannelStreamInternal);
-  chan->stream.internal.cb = cb;
-  chan->stream.internal.closed = false;
-  topts.data = chan;
-  // NB: overridden in terminal_check_size if a window is already
-  // displaying the buffer
-  topts.width = (uint16_t)MAX(curwin->w_width_inner - win_col_off(curwin), 0);
-  topts.height = (uint16_t)curwin->w_height_inner;
-  topts.write_cb = term_write;
-  topts.resize_cb = term_resize;
-  topts.close_cb = term_close;
-  Terminal *term = terminal_open(buf, topts);
-  terminal_check_size(term);
-  chan->term = term;
+  // NB: overridden in terminal_check_size if a window is already displaying the buffer
+  uint16_t width = (uint16_t)MAX(curwin->w_width_inner - win_col_off(curwin), 0);
+  uint16_t height = (uint16_t)curwin->w_height_inner;
+
+  Channel *chan = channel_alloc(pty ? kChannelStreamPty : kChannelStreamInternal);
+  if (pty) {
+    chan->stream.pty = pty_process_init(&main_loop, chan, false);
+    chan->stream.pty.width = width; // TODO: is uze??
+    chan->stream.pty.height = height;
+    channel_pty_open(chan);
+    channel_terminal_open(buf, chan);
+    // TODO: a bit fugly, can we make the pty be the right size immediately?
+    terminal_check_size(buf->terminal);
+    channel_create_event(chan, NULL);
+  } else {
+    TerminalOptions topts;
+    chan->stream.internal.cb = cb;
+    chan->stream.internal.closed = false;
+    topts.data = chan;
+    topts.width = width;
+    topts.height = height;
+    topts.write_cb = term_write;
+    topts.resize_cb = term_resize;
+    topts.close_cb = term_close;
+    Terminal *term = terminal_open(buf, topts);
+    terminal_check_size(term);
+    chan->term = term;
+  }
   return (Integer)chan->id;
 }
 

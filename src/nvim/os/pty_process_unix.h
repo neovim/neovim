@@ -11,16 +11,19 @@ typedef struct pty_process {
   Process process;
   uint16_t width, height;
   struct winsize winsize;
-  int tty_fd;
+  int master_fd;
+  int slave_fd;  ///< only set for kChannelStreamPty
 } PtyProcess;
 
-static inline PtyProcess pty_process_init(Loop *loop, void *data)
+static inline PtyProcess pty_process_init(Loop *loop, void *data, bool process)
 {
+  // TODO: if pty_process_win don't need this either,
+  (void)process;
   PtyProcess rv;
   rv.process = process_init(loop, kProcessTypePty, data);
   rv.width = 80;
   rv.height = 24;
-  rv.tty_fd = -1;
+  rv.master_fd = -1;
   return rv;
 }
 

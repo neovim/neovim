@@ -90,7 +90,6 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream)
   stream->internal_data = NULL;
   stream->fpos = 0;
   stream->curmem = 0;
-  stream->maxmem = 0;
   stream->pending_reqs = 0;
   stream->read_cb = NULL;
   stream->write_cb = NULL;
