@@ -1532,8 +1532,6 @@ describe('lua stdlib', function()
     eq(0, funcs.luaeval "vim.wo[1001].cole")
     matches("Invalid option %(not found%): 'notanopt'$",
        pcall_err(exec_lua, 'return vim.wo.notanopt'))
-    matches("Expected lua string$",
-       pcall_err(exec_lua, 'return vim.wo[0][0].list'))
     matches("Invalid window id: %-1$",
        pcall_err(exec_lua, 'return vim.wo[-1].list'))
     eq(2, funcs.luaeval "vim.wo[1000].cole")
@@ -1547,6 +1545,11 @@ describe('lua stdlib', function()
     exec_lua [[vim.wo.scrolloff = 200]]
     eq(200, funcs.luaeval "vim.wo.scrolloff")
     exec_lua [[vim.wo.scrolloff = -1]]
+    eq(100, funcs.luaeval "vim.wo.scrolloff")
+    exec_lua [[
+    vim.wo[0][0].scrolloff = 200
+    vim.cmd "split"
+    ]]
     eq(100, funcs.luaeval "vim.wo.scrolloff")
   end)
 
