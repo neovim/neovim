@@ -128,17 +128,25 @@ These dependencies are "vendored" (inlined), we must update the sources manually
 
 We may maintain forks, if we are waiting on upstream changes: https://github.com/neovim/neovim/wiki/Deps
 
-CI
---------------
+Non-technical dependencies
+--------------------------
+
+* Domain names (held in https://namecheap.com):
+    * neovim.org
+    * neovim.io
+    * packspec.org
+    * pkgjson.org
+
+Automation (CI)
+---------------
+
+Our CI and automation jobs are primarily driven by GitHub Actions. Guidelines:
 
 ### General
 
-As our CI is primarily dependent on GitHub Actions at the moment, then so will
-our CI strategy be. The following guidelines have worked well for us so far:
-
-* Never use a macOS runner if an Ubuntu or a Windows runner can be used
-  instead. This is because macOS runners have a [tighter restrictions on the
-  number of concurrent jobs](https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration#usage-limits).
+* Avoid macOS if an Ubuntu or a Windows runner can be used instead. This is
+  because macOS runners have [tighter restrictions on the number of concurrent
+  jobs](https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration#usage-limits).
 
 ### Runner versions
 

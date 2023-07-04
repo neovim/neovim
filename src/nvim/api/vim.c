@@ -1980,12 +1980,13 @@ Boolean nvim_del_mark(String name, Error *err)
   return res;
 }
 
-/// Return a tuple (row, col, buffer, buffername) representing the position of
-/// the uppercase/file named mark. See |mark-motions|.
+/// Returns a `(row, col, buffer, buffername)` tuple representing the position
+/// of the uppercase/file named mark. "End of line" column position is returned
+/// as |v:maxcol| (big number). See |mark-motions|.
 ///
 /// Marks are (1,0)-indexed. |api-indexing|
 ///
-/// @note fails with error if a lowercase or buffer local named mark is used.
+/// @note Lowercase name (or other buffer-local mark) is an error.
 /// @param name       Mark name
 /// @param opts       Optional parameters. Reserved for future use.
 /// @return 4-tuple (row, col, buffer, buffername), (0, 0, 0, '') if the mark is
