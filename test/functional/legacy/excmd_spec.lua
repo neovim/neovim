@@ -23,20 +23,22 @@ end
 
 describe('Ex command', function()
   before_each(clear)
-  after_each(function() eq({}, meths.get_vvar('errors')) end)
+  after_each(function()
+    eq({}, meths.get_vvar('errors'))
+  end)
 
   it('checks for address line overflow', function()
     if sizeoflong() < 8 then
       pending('Skipped: only works with 64 bit long ints')
     end
 
-    source [[
+    source([[
       new
       call setline(1, 'text')
       call assert_fails('|.44444444444444444444444', 'E1247:')
       call assert_fails('|.9223372036854775806', 'E1247:')
       bwipe!
-    ]]
+    ]])
   end)
 end)
 
@@ -47,10 +49,10 @@ describe(':confirm command dialog', function()
     clear()
     screen = Screen.new(75, 20)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {bold = true, reverse = true},  -- StatusLine, MsgSeparator
-      [2] = {reverse = true},  -- StatusLineNC
-      [3] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { bold = true, reverse = true }, -- StatusLine, MsgSeparator
+      [2] = { reverse = true }, -- StatusLineNC
+      [3] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
     })
     screen:attach()
   end
@@ -400,7 +402,7 @@ describe(':confirm command dialog', function()
       ]])
     end
     eq('foobar\n', read_file('Xconfirm_write_ro'))
-    feed('<CR>')  -- suppress hit-enter prompt
+    feed('<CR>') -- suppress hit-enter prompt
 
     -- Try to write with read-only file permissions.
     funcs.setfperm('Xconfirm_write_ro', 'r--r--r--')
@@ -440,7 +442,7 @@ describe(':confirm command dialog', function()
       ]])
     end
     eq('foo\n', read_file('Xconfirm_write_ro'))
-    feed('<CR>')  -- suppress hit-enter prompt
+    feed('<CR>') -- suppress hit-enter prompt
 
     os.remove('Xconfirm_write_ro')
   end)

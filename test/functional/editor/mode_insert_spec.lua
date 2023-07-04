@@ -53,13 +53,13 @@ describe('insert-mode', function()
     it('double quote is removed after hit-enter prompt #22609', function()
       local screen = Screen.new(60, 6)
       screen:set_default_attr_ids({
-        [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-        [1] = {foreground = Screen.colors.Blue},  -- SpecialKey
-        [2] = {foreground = Screen.colors.SlateBlue},
-        [3] = {bold = true},  -- ModeMsg
-        [4] = {reverse = true, bold = true},  -- MsgSeparator
-        [5] = {background = Screen.colors.Red, foreground = Screen.colors.White},  -- ErrorMsg
-        [6] = {foreground = Screen.colors.SeaGreen, bold = true},  -- MoreMsg
+        [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+        [1] = { foreground = Screen.colors.Blue }, -- SpecialKey
+        [2] = { foreground = Screen.colors.SlateBlue },
+        [3] = { bold = true }, -- ModeMsg
+        [4] = { reverse = true, bold = true }, -- MsgSeparator
+        [5] = { background = Screen.colors.Red, foreground = Screen.colors.White }, -- ErrorMsg
+        [6] = { foreground = Screen.colors.SeaGreen, bold = true }, -- MoreMsg
       })
       screen:attach()
       feed('i<C-R>')

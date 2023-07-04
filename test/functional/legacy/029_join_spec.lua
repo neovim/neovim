@@ -313,7 +313,9 @@ describe('joining lines', function()
     feed('j')
     feed_command('.,+5join')
     feed('j6J<cr>')
-    feed('oSome code!<cr>// Make sure backspacing does not remove this comment leader.<esc>0i<bs><esc>')
+    feed(
+      'oSome code!<cr>// Make sure backspacing does not remove this comment leader.<esc>0i<bs><esc>'
+    )
 
     expect([[
       {

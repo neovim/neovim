@@ -8,44 +8,53 @@ local meths = helpers.meths
 local curwin = helpers.curwin
 local poke_eventloop = helpers.poke_eventloop
 
-
 describe('ext_multigrid', function()
   local screen
 
   before_each(function()
-    clear{args_rm={'--headless'}, args={'--cmd', 'set laststatus=2'}}
-    screen = Screen.new(53,14)
-    screen:attach({ext_multigrid=true})
+    clear({ args_rm = { '--headless' }, args = { '--cmd', 'set laststatus=2' } })
+    screen = Screen.new(53, 14)
+    screen:attach({ ext_multigrid = true })
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {foreground = Screen.colors.Magenta},
-      [3] = {foreground = Screen.colors.Brown, bold = true},
-      [4] = {foreground = Screen.colors.SlateBlue},
-      [5] = {bold = true, foreground = Screen.colors.SlateBlue},
-      [6] = {foreground = Screen.colors.Cyan4},
-      [7] = {bold = true},
-      [8] = {underline = true, bold = true, foreground = Screen.colors.SlateBlue},
-      [9] = {foreground = Screen.colors.SlateBlue, underline = true},
-      [10] = {foreground = Screen.colors.Red},
-      [11] = {bold = true, reverse = true},
-      [12] = {reverse = true},
-      [13] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
-      [14] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [15] = {bold = true, foreground = Screen.colors.SeaGreen4},
-      [16] = {background = Screen.colors.LightGrey, underline = true},
-      [17] = {background = Screen.colors.LightGrey, underline = true, bold = true, foreground = Screen.colors.Magenta},
-      [18] = {bold = true, foreground = Screen.colors.Magenta},
-      [19] = {foreground = Screen.colors.Brown},
-      [20] = {background = Screen.colors.LightGrey},
-      [21] = {background = Screen.colors.LightMagenta},
-      [22] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue},
-      [23] = {background = Screen.colors.Grey90},
-      [24] = {background = Screen.colors.Grey},
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { foreground = Screen.colors.Magenta },
+      [3] = { foreground = Screen.colors.Brown, bold = true },
+      [4] = { foreground = Screen.colors.SlateBlue },
+      [5] = { bold = true, foreground = Screen.colors.SlateBlue },
+      [6] = { foreground = Screen.colors.Cyan4 },
+      [7] = { bold = true },
+      [8] = { underline = true, bold = true, foreground = Screen.colors.SlateBlue },
+      [9] = { foreground = Screen.colors.SlateBlue, underline = true },
+      [10] = { foreground = Screen.colors.Red },
+      [11] = { bold = true, reverse = true },
+      [12] = { reverse = true },
+      [13] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey },
+      [14] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      [15] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+      [16] = { background = Screen.colors.LightGrey, underline = true },
+      [17] = {
+        background = Screen.colors.LightGrey,
+        underline = true,
+        bold = true,
+        foreground = Screen.colors.Magenta,
+      },
+      [18] = { bold = true, foreground = Screen.colors.Magenta },
+      [19] = { foreground = Screen.colors.Brown },
+      [20] = { background = Screen.colors.LightGrey },
+      [21] = { background = Screen.colors.LightMagenta },
+      [22] = {
+        background = Screen.colors.LightMagenta,
+        bold = true,
+        foreground = Screen.colors.Blue,
+      },
+      [23] = { background = Screen.colors.Grey90 },
+      [24] = { background = Screen.colors.Grey },
     })
   end)
 
   it('default initial screen', function()
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [2:-----------------------------------------------------]|
       [2:-----------------------------------------------------]|
@@ -76,12 +85,14 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
     ## grid 3
                                                            |
-    ]]}
+    ]],
+    })
   end)
 
   it('positions windows correctly', function()
     command('vsplit')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:--------------------------]│[2:--------------------------]|
       [4:--------------------------]│[2:--------------------------]|
@@ -125,15 +136,18 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ]], condition=function()
-      eq({
-        [2] = { win = {id=1000}, startrow = 0, startcol = 27, width = 26, height = 12 },
-        [4] = { win = {id=1001}, startrow = 0, startcol =  0, width = 26, height = 12 }
-      }, screen.win_position)
-    end}
+    ]],
+      condition = function()
+        eq({
+          [2] = { win = { id = 1000 }, startrow = 0, startcol = 27, width = 26, height = 12 },
+          [4] = { win = { id = 1001 }, startrow = 0, startcol = 0, width = 26, height = 12 },
+        }, screen.win_position)
+      end,
+    })
     command('wincmd l')
     command('split')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:--------------------------]│[5:--------------------------]|
       [4:--------------------------]│[5:--------------------------]|
@@ -177,16 +191,19 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ]], condition=function()
-      eq({
-        [2] = { win = {id=1000}, startrow = 7, startcol = 27, width = 26, height =  5 },
-        [4] = { win = {id=1001}, startrow = 0, startcol =  0, width = 26, height = 12 },
-        [5] = { win = {id=1002}, startrow = 0, startcol = 27, width = 26, height =  6 }
-      }, screen.win_position)
-    end}
+    ]],
+      condition = function()
+        eq({
+          [2] = { win = { id = 1000 }, startrow = 7, startcol = 27, width = 26, height = 5 },
+          [4] = { win = { id = 1001 }, startrow = 0, startcol = 0, width = 26, height = 12 },
+          [5] = { win = { id = 1002 }, startrow = 0, startcol = 27, width = 26, height = 6 },
+        }, screen.win_position)
+      end,
+    })
     command('wincmd h')
     command('q')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:-----------------------------------------------------]|
       [5:-----------------------------------------------------]|
@@ -217,17 +234,19 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
-    ]], condition=function()
-      eq({
-        [2] = { win = {id=1000}, startrow = 7, startcol = 0, width = 53, height =  5 },
-        [5] = { win = {id=1002}, startrow = 0, startcol = 0, width = 53, height =  6 }
-      }, screen.win_position)
-    end}
+    ]],
+      condition = function()
+        eq({
+          [2] = { win = { id = 1000 }, startrow = 7, startcol = 0, width = 53, height = 5 },
+          [5] = { win = { id = 1002 }, startrow = 0, startcol = 0, width = 53, height = 6 },
+        }, screen.win_position)
+      end,
+    })
   end)
 
-  describe('split', function ()
-    describe('horizontally', function ()
-      it('allocates grids', function ()
+  describe('split', function()
+    describe('horizontally', function()
+      it('allocates grids', function()
         command('sp')
         screen:expect([[
         ## grid 1
@@ -263,7 +282,7 @@ describe('ext_multigrid', function()
         ]])
       end)
 
-      it('resizes grids', function ()
+      it('resizes grids', function()
         command('sp')
         command('resize 8')
         screen:expect([[
@@ -304,7 +323,8 @@ describe('ext_multigrid', function()
         command('sp')
         command('vsp')
         command('vsp')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [6:--------------------]│[5:----------------]│[4:---------------]|
           [6:--------------------]│[5:----------------]│[4:---------------]|
@@ -349,9 +369,11 @@ describe('ext_multigrid', function()
           {1:~                   }|
           {1:~                   }|
           {1:~                   }|
-        ]]}
+        ]],
+        })
         insert('hello')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [6:--------------------]│[5:----------------]│[4:---------------]|
           [6:--------------------]│[5:----------------]│[4:---------------]|
@@ -396,11 +418,13 @@ describe('ext_multigrid', function()
           {1:~                   }|
           {1:~                   }|
           {1:~                   }|
-        ]]}
+        ]],
+        })
       end)
-      it('closes splits', function ()
+      it('closes splits', function()
         command('sp')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [4:-----------------------------------------------------]|
           [4:-----------------------------------------------------]|
@@ -431,9 +455,11 @@ describe('ext_multigrid', function()
           {1:~                                                    }|
           {1:~                                                    }|
           {1:~                                                    }|
-        ]]}
+        ]],
+        })
         command('q')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:-----------------------------------------------------]|
           [2:-----------------------------------------------------]|
@@ -464,14 +490,16 @@ describe('ext_multigrid', function()
           {1:~                                                    }|
         ## grid 3
                                                                |
-        ]]}
+        ]],
+        })
       end)
     end)
 
-    describe('vertically', function ()
-      it('allocates grids', function ()
+    describe('vertically', function()
+      it('allocates grids', function()
         command('vsp')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [4:--------------------------]│[2:--------------------------]|
           [4:--------------------------]│[2:--------------------------]|
@@ -515,12 +543,14 @@ describe('ext_multigrid', function()
           {1:~                         }|
           {1:~                         }|
           {1:~                         }|
-        ]]}
+        ]],
+        })
       end)
-      it('resizes grids', function ()
+      it('resizes grids', function()
         command('vsp')
         command('vertical resize 10')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [4:----------]│[2:------------------------------------------]|
           [4:----------]│[2:------------------------------------------]|
@@ -564,12 +594,14 @@ describe('ext_multigrid', function()
           {1:~         }|
           {1:~         }|
           {1:~         }|
-        ]]}
+        ]],
+        })
       end)
-      it('splits horizontally', function ()
+      it('splits horizontally', function()
         command('vsp')
         command('sp')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [5:--------------------------]│[2:--------------------------]|
           [5:--------------------------]│[2:--------------------------]|
@@ -613,9 +645,11 @@ describe('ext_multigrid', function()
           {1:~                         }|
           {1:~                         }|
           {1:~                         }|
-        ]]}
+        ]],
+        })
         insert('hello')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [5:--------------------------]│[2:--------------------------]|
           [5:--------------------------]│[2:--------------------------]|
@@ -659,11 +693,13 @@ describe('ext_multigrid', function()
           {1:~                         }|
           {1:~                         }|
           {1:~                         }|
-        ]]}
+        ]],
+        })
       end)
-      it('closes splits', function ()
+      it('closes splits', function()
         command('vsp')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [4:--------------------------]│[2:--------------------------]|
           [4:--------------------------]│[2:--------------------------]|
@@ -707,9 +743,11 @@ describe('ext_multigrid', function()
           {1:~                         }|
           {1:~                         }|
           {1:~                         }|
-        ]]}
+        ]],
+        })
         command('q')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:-----------------------------------------------------]|
           [2:-----------------------------------------------------]|
@@ -740,15 +778,17 @@ describe('ext_multigrid', function()
           {1:~                                                    }|
         ## grid 3
                                                                |
-        ]]}
+        ]],
+        })
       end)
     end)
   end)
 
-  describe('on resize', function ()
-    it('rebuilds all grids', function ()
+  describe('on resize', function()
+    it('rebuilds all grids', function()
       screen:try_resize(25, 6)
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
       ## grid 1
         [2:-------------------------]|
         [2:-------------------------]|
@@ -763,12 +803,14 @@ describe('ext_multigrid', function()
         {1:~                        }|
       ## grid 3
                                  |
-      ]]}
+      ]],
+      })
     end)
 
     it('has minimum width/height values', function()
       screen:try_resize(1, 1)
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
       ## grid 1
         [2:------------]|
         {11:[No Name]   }|
@@ -777,10 +819,12 @@ describe('ext_multigrid', function()
         ^            |
       ## grid 3
                     |
-      ]]}
+      ]],
+      })
 
       feed('<esc>:ls')
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
       ## grid 1
         [2:------------]|
         {11:[No Name]   }|
@@ -789,7 +833,8 @@ describe('ext_multigrid', function()
                     |
       ## grid 3
         :ls^         |
-      ]]}
+      ]],
+      })
     end)
   end)
 
@@ -797,7 +842,8 @@ describe('ext_multigrid', function()
     it('is rendered correctly', function()
       screen:try_resize_grid(2, 8, 5)
 
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
       ## grid 1
         [2:-----------------------------------------------------]|
         [2:-----------------------------------------------------]|
@@ -821,7 +867,8 @@ describe('ext_multigrid', function()
         {1:~       }|
       ## grid 3
                                                              |
-      ]]}
+      ]],
+      })
     end)
   end)
 
@@ -829,7 +876,8 @@ describe('ext_multigrid', function()
     it('is rendered correctly', function()
       screen:try_resize_grid(2, 80, 20)
 
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
       ## grid 1
         [2:-----------------------------------------------------]|
         [2:-----------------------------------------------------]|
@@ -868,10 +916,10 @@ describe('ext_multigrid', function()
         {1:~                                                                               }|
       ## grid 3
                                                              |
-      ]]}
+      ]],
+      })
     end)
   end)
-
 
   describe('with resized grid', function()
     before_each(function()
@@ -887,8 +935,9 @@ describe('ext_multigrid', function()
     end)
 
     it('gets written till grid width', function()
-      insert(('a'):rep(60).."\n")
-      screen:expect{grid=[[
+      insert(('a'):rep(60) .. '\n')
+      screen:expect({
+        grid = [[
       ## grid 1
         [2:-----------------------------------------------------]|
         [2:-----------------------------------------------------]|
@@ -927,14 +976,16 @@ describe('ext_multigrid', function()
         {1:~                                                           }|
       ## grid 3
                                                              |
-      ]]}
+      ]],
+      })
     end)
 
     it('"g$" works correctly with double-width characters and no wrapping', function()
       command('set nowrap')
       insert(('a'):rep(58) .. ('哦'):rep(3))
       feed('0')
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
       ## grid 1
         [2:-----------------------------------------------------]|
         [2:-----------------------------------------------------]|
@@ -973,9 +1024,11 @@ describe('ext_multigrid', function()
         {1:~                                                           }|
       ## grid 3
                                                              |
-      ]]}
+      ]],
+      })
       feed('g$')
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
       ## grid 1
         [2:-----------------------------------------------------]|
         [2:-----------------------------------------------------]|
@@ -1014,12 +1067,14 @@ describe('ext_multigrid', function()
         {1:~                                                           }|
       ## grid 3
                                                              |
-      ]]}
+      ]],
+      })
     end)
 
     it('wraps with grid width', function()
-      insert(('b'):rep(160).."\n")
-      screen:expect{grid=[[
+      insert(('b'):rep(160) .. '\n')
+      screen:expect({
+        grid = [[
       ## grid 1
         [2:-----------------------------------------------------]|
         [2:-----------------------------------------------------]|
@@ -1058,10 +1113,12 @@ describe('ext_multigrid', function()
         {1:~                                                           }|
       ## grid 3
                                                              |
-      ]]}
+      ]],
+      })
       feed('2gk')
       command('setlocal cursorline cursorlineopt=screenline')
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
       ## grid 1
         [2:-----------------------------------------------------]|
         [2:-----------------------------------------------------]|
@@ -1100,13 +1157,14 @@ describe('ext_multigrid', function()
         {1:~                                                           }|
       ## grid 3
                                                              |
-      ]]}
+      ]],
+      })
     end)
 
     it('displays messages with default grid width', function()
-      command('echomsg "this is a very very very very very very very very'..
-        ' long message"')
-      screen:expect{grid=[[
+      command('echomsg "this is a very very very very very very very very' .. ' long message"')
+      screen:expect({
+        grid = [[
       ## grid 1
         [2:-----------------------------------------------------]|
         [2:-----------------------------------------------------]|
@@ -1145,13 +1203,15 @@ describe('ext_multigrid', function()
         {1:~                                                           }|
       ## grid 3
         this is a very very very...ry very very long message |
-      ]]}
+      ]],
+      })
     end)
 
     it('creates folds with grid width', function()
       insert('this is a fold\nthis is inside fold\nthis is outside fold')
       feed('kzfgg')
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
       ## grid 1
         [2:-----------------------------------------------------]|
         [2:-----------------------------------------------------]|
@@ -1190,12 +1250,14 @@ describe('ext_multigrid', function()
         {1:~                                                           }|
       ## grid 3
                                                              |
-      ]]}
+      ]],
+      })
     end)
 
     it('anchored float window "bufpos"', function()
       insert(('c'):rep(1111))
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
       ## grid 1
         [2:-----------------------------------------------------]|
         [2:-----------------------------------------------------]|
@@ -1234,17 +1296,19 @@ describe('ext_multigrid', function()
         {1:~                                                           }|
       ## grid 3
                                                              |
-      ]]}
+      ]],
+      })
       local float_buf = meths.create_buf(false, false)
       meths.open_win(float_buf, false, {
         relative = 'win',
         win = curwin(),
-        bufpos = {0, 1018},
+        bufpos = { 0, 1018 },
         anchor = 'SE',
         width = 5,
         height = 5,
       })
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
       ## grid 1
         [2:-----------------------------------------------------]|
         [2:-----------------------------------------------------]|
@@ -1289,15 +1353,18 @@ describe('ext_multigrid', function()
         {22:~    }|
         {22:~    }|
         {22:~    }|
-      ]], float_pos={
-        [4] = {{id = 1001}, "SE", 2, 16, 58, true, 50};
-      }}
+      ]],
+        float_pos = {
+          [4] = { { id = 1001 }, 'SE', 2, 16, 58, true, 50 },
+        },
+      })
     end)
 
     it('completion popup position', function()
       insert(('\n'):rep(14) .. ('foo bar '):rep(7))
       feed('A<C-X><C-N>')
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
       ## grid 1
         [2:-----------------------------------------------------]|
         [2:-----------------------------------------------------]|
@@ -1339,14 +1406,17 @@ describe('ext_multigrid', function()
       ## grid 4
         {24: foo}|
         {21: bar}|
-      ]], float_pos={
-        [4] = {{id = -1}, "NW", 2, 15, 55, false, 100};
-      }}
+      ]],
+        float_pos = {
+          [4] = { { id = -1 }, 'NW', 2, 15, 55, false, 100 },
+        },
+      })
       feed('<C-E><Esc>')
 
       command('setlocal rightleft')
       feed('o<C-X><C-N>')
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
       ## grid 1
         [2:-----------------------------------------------------]|
         [2:-----------------------------------------------------]|
@@ -1388,14 +1458,17 @@ describe('ext_multigrid', function()
       ## grid 4
         {24:            oof}|
         {21:            rab}|
-      ]], float_pos={
-        [4] = {{id = -1}, "NW", 2, 16, 45, false, 100};
-      }}
+      ]],
+        float_pos = {
+          [4] = { { id = -1 }, 'NW', 2, 16, 45, false, 100 },
+        },
+      })
       feed('<C-E><Esc>')
 
       command('set wildoptions+=pum')
       feed(':sign un<Tab>')
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
       ## grid 1
         [2:-----------------------------------------------------]|
         [2:-----------------------------------------------------]|
@@ -1437,16 +1510,19 @@ describe('ext_multigrid', function()
       ## grid 4
         {24: undefine       }|
         {21: unplace        }|
-      ]], float_pos={
-        [4] = {{id = -1}, "SW", 1, 13, 5, false, 250};
-      }}
+      ]],
+        float_pos = {
+          [4] = { { id = -1 }, 'SW', 1, 13, 5, false, 250 },
+        },
+      })
     end)
   end)
 
   it('multiline messages scroll over windows', function()
     command('sp')
     command('vsp')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:--------------------------]│[4:--------------------------]|
       [5:--------------------------]│[4:--------------------------]|
@@ -1484,10 +1560,12 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ]]}
+    ]],
+    })
 
     feed(":echoerr 'very' | echoerr 'much' | echoerr 'fail'<cr>")
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:--------------------------]│[4:--------------------------]|
       [5:--------------------------]│[4:--------------------------]|
@@ -1528,10 +1606,12 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ]]}
+    ]],
+    })
 
     feed('<cr>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:--------------------------]│[4:--------------------------]|
       [5:--------------------------]│[4:--------------------------]|
@@ -1569,7 +1649,8 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ]]}
+    ]],
+    })
 
     command([[
       func! ErrMsg()
@@ -1577,8 +1658,9 @@ describe('ext_multigrid', function()
           echoerr "error ".i
         endfor
       endfunc]])
-    feed(":call ErrMsg()<cr>")
-    screen:expect{grid=[[
+    feed(':call ErrMsg()<cr>')
+    screen:expect({
+      grid = [[
     ## grid 1
       [3:-----------------------------------------------------]|
       [3:-----------------------------------------------------]|
@@ -1629,10 +1711,12 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ]]}
+    ]],
+    })
 
-    feed("<c-c>")
-    screen:expect{grid=[[
+    feed('<c-c>')
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:--------------------------]│[4:--------------------------]|
       [5:--------------------------]│[4:--------------------------]|
@@ -1670,12 +1754,14 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ]]}
+    ]],
+    })
   end)
 
   it('handles switch tabs', function()
     command('vsp')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:--------------------------]│[2:--------------------------]|
       [4:--------------------------]│[2:--------------------------]|
@@ -1719,12 +1805,13 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ]]}
-
+    ]],
+    })
 
     command('tabnew')
     -- note the old grids aren't resized yet
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       {16: }{17:2}{16: [No Name] }{7: [No Name] }{12:                            }{16:X}|
       [5:-----------------------------------------------------]|
@@ -1780,10 +1867,12 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
-    ]]}
+    ]],
+    })
 
     command('sp')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       {16: }{17:2}{16: [No Name] }{7: }{18:2}{7: [No Name] }{12:                          }{16:X}|
       [6:-----------------------------------------------------]|
@@ -1839,10 +1928,12 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
-    ]]}
+    ]],
+    })
 
     command('tabnext')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       {7: }{18:2}{7: [No Name] }{16: }{17:2}{16: [No Name] }{12:                          }{16:X}|
       [4:--------------------------]│[2:--------------------------]|
@@ -1896,10 +1987,12 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
-    ]]}
+    ]],
+    })
 
     command('tabnext')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       {16: }{17:2}{16: [No Name] }{7: }{18:2}{7: [No Name] }{12:                          }{16:X}|
       [6:-----------------------------------------------------]|
@@ -1953,11 +2046,13 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
-    ]]}
+    ]],
+    })
 
     command('tabnext')
     command('$tabnew')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       {16: }{17:2}{16: [No Name]  }{17:2}{16: [No Name] }{7: [No Name] }{12:               }{16:X}|
       [7:-----------------------------------------------------]|
@@ -2023,11 +2118,13 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
-    ]]}
+    ]],
+    })
 
     command('tabclose')
     command('tabclose')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:--------------------------]│[2:--------------------------]|
       [4:--------------------------]│[2:--------------------------]|
@@ -2071,12 +2168,14 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ]]}
+    ]],
+    })
   end)
 
   it('supports mouse', function()
     insert('some text\nto be clicked')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [2:-----------------------------------------------------]|
       [2:-----------------------------------------------------]|
@@ -2107,10 +2206,12 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
     ## grid 3
                                                            |
-    ]]}
+    ]],
+    })
 
     meths.input_mouse('left', 'press', '', 2, 0, 5)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [2:-----------------------------------------------------]|
       [2:-----------------------------------------------------]|
@@ -2141,12 +2242,14 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
     ## grid 3
                                                            |
-    ]]}
+    ]],
+    })
 
     feed(':new<cr>')
     insert('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmo')
 
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -2177,10 +2280,12 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
-    ]]}
+    ]],
+    })
 
     meths.input_mouse('left', 'press', '', 2, 1, 6)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -2211,10 +2316,12 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
-    ]]}
+    ]],
+    })
 
     meths.input_mouse('left', 'press', '', 4, 1, 4)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -2245,10 +2352,12 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
-    ]]}
+    ]],
+    })
 
     screen:try_resize_grid(4, 80, 2)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -2275,10 +2384,12 @@ describe('ext_multigrid', function()
     ## grid 4
       Lorem ipsum dolor sit amet, consectetur adipiscing elit, ^sed do eiusmo          |
       {1:~                                                                               }|
-    ]]}
+    ]],
+    })
 
     meths.input_mouse('left', 'press', '', 4, 0, 64)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -2305,7 +2416,8 @@ describe('ext_multigrid', function()
     ## grid 4
       Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do ^eiusmo          |
       {1:~                                                                               }|
-    ]]}
+    ]],
+    })
 
     meths.input_mouse('left', 'press', '', 1, 6, 20)
     -- TODO(bfredl): "batching" input_mouse is formally not supported yet.
@@ -2313,7 +2425,8 @@ describe('ext_multigrid', function()
     -- but add a poke_eventloop be sure.
     poke_eventloop()
     meths.input_mouse('left', 'drag', '', 1, 4, 20)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -2342,10 +2455,12 @@ describe('ext_multigrid', function()
     ## grid 4
       Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do ^eiusmo          |
       {1:~                                                                               }|
-    ]]}
+    ]],
+    })
 
     feed('<c-w><c-w><c-w>v')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -2382,12 +2497,14 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ]]}
+    ]],
+    })
 
     meths.input_mouse('left', 'press', '', 1, 8, 26)
     poke_eventloop()
     meths.input_mouse('left', 'drag', '', 1, 6, 30)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -2424,13 +2541,15 @@ describe('ext_multigrid', function()
       {1:~                             }|
       {1:~                             }|
       {1:~                             }|
-    ]]}
+    ]],
+    })
 
     command('aunmenu PopUp | vmenu PopUp.Copy y')
 
     funcs.setreg('"', '')
     meths.input_mouse('left', 'press', '2', 2, 1, 6)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -2467,10 +2586,12 @@ describe('ext_multigrid', function()
       {1:~                             }|
       {1:~                             }|
       {1:~                             }|
-    ]]}
+    ]],
+    })
     meths.input_mouse('right', 'press', '', 2, 1, 6)
     meths.input_mouse('right', 'release', '', 2, 1, 6)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -2509,11 +2630,14 @@ describe('ext_multigrid', function()
       {1:~                             }|
     ## grid 6
       {21: Copy }|
-    ]], float_pos={
-      [6] = {{id = -1}, "NW", 2, 2, 5, false, 250};
-    }}
+    ]],
+      float_pos = {
+        [6] = { { id = -1 }, 'NW', 2, 2, 5, false, 250 },
+      },
+    })
     feed('<Down><CR>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -2550,12 +2674,14 @@ describe('ext_multigrid', function()
       {1:~                             }|
       {1:~                             }|
       {1:~                             }|
-    ]]}
+    ]],
+    })
     eq('clicked', funcs.getreg('"'))
 
     funcs.setreg('"', '')
     meths.input_mouse('left', 'press', '2', 4, 0, 64)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -2592,10 +2718,12 @@ describe('ext_multigrid', function()
       {1:~                             }|
       {1:~                             }|
       {1:~                             }|
-    ]]}
+    ]],
+    })
     meths.input_mouse('right', 'press', '', 4, 0, 64)
     meths.input_mouse('right', 'release', '', 4, 0, 64)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -2634,11 +2762,14 @@ describe('ext_multigrid', function()
       {1:~                             }|
     ## grid 6
       {21: Copy }|
-    ]], float_pos={
-      [6] = {{id = -1}, "NW", 4, 1, 63, false, 250};
-    }}
+    ]],
+      float_pos = {
+        [6] = { { id = -1 }, 'NW', 4, 1, 63, false, 250 },
+      },
+    })
     feed('<Down><CR>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -2675,12 +2806,14 @@ describe('ext_multigrid', function()
       {1:~                             }|
       {1:~                             }|
       {1:~                             }|
-    ]]}
+    ]],
+    })
     eq('eiusmo', funcs.getreg('"'))
 
     command('wincmd J')
     screen:try_resize_grid(4, 7, 10)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:------------------------------]│[2:----------------------]|
       [5:------------------------------]│[2:----------------------]|
@@ -2721,11 +2854,13 @@ describe('ext_multigrid', function()
       {1:~                             }|
       {1:~                             }|
       {1:~                             }|
-    ]]}
+    ]],
+    })
 
     funcs.setreg('"', '')
     meths.input_mouse('left', 'press', '2', 4, 9, 1)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:------------------------------]│[2:----------------------]|
       [5:------------------------------]│[2:----------------------]|
@@ -2766,10 +2901,12 @@ describe('ext_multigrid', function()
       {1:~                             }|
       {1:~                             }|
       {1:~                             }|
-    ]]}
+    ]],
+    })
     meths.input_mouse('right', 'press', '', 4, 9, 1)
     meths.input_mouse('right', 'release', '', 4, 9, 1)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:------------------------------]│[2:----------------------]|
       [5:------------------------------]│[2:----------------------]|
@@ -2812,11 +2949,14 @@ describe('ext_multigrid', function()
       {1:~                             }|
     ## grid 6
       {21: Copy }|
-    ]], float_pos={
-      [6] = {{id = -1}, "SW", 4, 9, 0, false, 250};
-    }}
+    ]],
+      float_pos = {
+        [6] = { { id = -1 }, 'SW', 4, 9, 0, false, 250 },
+      },
+    })
     feed('<Down><CR>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:------------------------------]│[2:----------------------]|
       [5:------------------------------]│[2:----------------------]|
@@ -2857,11 +2997,13 @@ describe('ext_multigrid', function()
       {1:~                             }|
       {1:~                             }|
       {1:~                             }|
-    ]]}
+    ]],
+    })
     eq('eiusmo', funcs.getreg('"'))
 
     screen:try_resize_grid(4, 7, 11)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:------------------------------]│[2:----------------------]|
       [5:------------------------------]│[2:----------------------]|
@@ -2903,11 +3045,13 @@ describe('ext_multigrid', function()
       {1:~                             }|
       {1:~                             }|
       {1:~                             }|
-    ]]}
+    ]],
+    })
 
     funcs.setreg('"', '')
     meths.input_mouse('left', 'press', '2', 4, 9, 1)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:------------------------------]│[2:----------------------]|
       [5:------------------------------]│[2:----------------------]|
@@ -2949,10 +3093,12 @@ describe('ext_multigrid', function()
       {1:~                             }|
       {1:~                             }|
       {1:~                             }|
-    ]]}
+    ]],
+    })
     meths.input_mouse('right', 'press', '', 4, 9, 1)
     meths.input_mouse('right', 'release', '', 4, 9, 1)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:------------------------------]│[2:----------------------]|
       [5:------------------------------]│[2:----------------------]|
@@ -2996,11 +3142,14 @@ describe('ext_multigrid', function()
       {1:~                             }|
     ## grid 6
       {21: Copy }|
-    ]], float_pos={
-      [6] = {{id = -1}, "NW", 4, 10, 0, false, 250};
-    }}
+    ]],
+      float_pos = {
+        [6] = { { id = -1 }, 'NW', 4, 10, 0, false, 250 },
+      },
+    })
     feed('<Down><CR>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:------------------------------]│[2:----------------------]|
       [5:------------------------------]│[2:----------------------]|
@@ -3042,7 +3191,8 @@ describe('ext_multigrid', function()
       {1:~                             }|
       {1:~                             }|
       {1:~                             }|
-    ]]}
+    ]],
+    })
     eq('eiusmo', funcs.getreg('"'))
   end)
 
@@ -3058,7 +3208,8 @@ describe('ext_multigrid', function()
     poke_eventloop()
     meths.input_mouse('left', 'drag', '', 5, 1, 2)
 
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:--------------------------]│[5:--------------------------]|
       [4:--------------------------]│[5:--------------------------]|
@@ -3102,12 +3253,14 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ]]}
+    ]],
+    })
   end)
 
   it('has viewport information', function()
     screen:try_resize(48, 8)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [2:------------------------------------------------]|
       [2:------------------------------------------------]|
@@ -3126,9 +3279,19 @@ describe('ext_multigrid', function()
       {1:~                                               }|
     ## grid 3
                                                       |
-    ]], win_viewport={
-      [2] = {win = { id = 1000 }, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0}
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 2,
+          curline = 0,
+          curcol = 0,
+          linecount = 1,
+          sum_scroll_delta = 0,
+        },
+      },
+    })
     insert([[
       Lorem ipsum dolor sit amet, consectetur
       adipisicing elit, sed do eiusmod tempor
@@ -3142,7 +3305,8 @@ describe('ext_multigrid', function()
       qui officia deserunt mollit anim id est
       laborum.]])
 
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [2:------------------------------------------------]|
       [2:------------------------------------------------]|
@@ -3161,13 +3325,23 @@ describe('ext_multigrid', function()
       laborum^.                                        |
     ## grid 3
                                                       |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 5, botline = 11, curline = 10, curcol = 7, linecount = 11, sum_scroll_delta = 5},
-    }}
-
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 5,
+          botline = 11,
+          curline = 10,
+          curcol = 7,
+          linecount = 11,
+          sum_scroll_delta = 5,
+        },
+      },
+    })
 
     feed('<c-u>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [2:------------------------------------------------]|
       [2:------------------------------------------------]|
@@ -3186,12 +3360,23 @@ describe('ext_multigrid', function()
       ^dolore eu fugiat nulla pariatur. Excepteur sint |
     ## grid 3
                                                       |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 2, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 2},
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 2,
+          botline = 9,
+          curline = 7,
+          curcol = 0,
+          linecount = 11,
+          sum_scroll_delta = 2,
+        },
+      },
+    })
 
-    command("split")
-    screen:expect{grid=[[
+    command('split')
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:------------------------------------------------]|
       [4:------------------------------------------------]|
@@ -3210,13 +3395,32 @@ describe('ext_multigrid', function()
       ea commodo consequat. Duis aute irure dolor in  |
       reprehenderit in voluptate velit esse cillum    |
       ^dolore eu fugiat nulla pariatur. Excepteur sint |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 6, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 6},
-      [4] = {win = {id = 1001}, topline = 5, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 5},
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 6,
+          botline = 9,
+          curline = 7,
+          curcol = 0,
+          linecount = 11,
+          sum_scroll_delta = 6,
+        },
+        [4] = {
+          win = { id = 1001 },
+          topline = 5,
+          botline = 9,
+          curline = 7,
+          curcol = 0,
+          linecount = 11,
+          sum_scroll_delta = 5,
+        },
+      },
+    })
 
-    feed("b")
-    screen:expect{grid=[[
+    feed('b')
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:------------------------------------------------]|
       [4:------------------------------------------------]|
@@ -3235,13 +3439,32 @@ describe('ext_multigrid', function()
       ea commodo consequat. Duis aute irure dolor in  |
       reprehenderit in voluptate velit esse ^cillum    |
       dolore eu fugiat nulla pariatur. Excepteur sint |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 6, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 6},
-      [4] = {win = {id = 1001}, topline = 5, botline = 9, curline = 6, curcol = 38, linecount = 11, sum_scroll_delta = 5},
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 6,
+          botline = 9,
+          curline = 7,
+          curcol = 0,
+          linecount = 11,
+          sum_scroll_delta = 6,
+        },
+        [4] = {
+          win = { id = 1001 },
+          topline = 5,
+          botline = 9,
+          curline = 6,
+          curcol = 38,
+          linecount = 11,
+          sum_scroll_delta = 5,
+        },
+      },
+    })
 
-    feed("2k")
-    screen:expect{grid=[[
+    feed('2k')
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:------------------------------------------------]|
       [4:------------------------------------------------]|
@@ -3260,14 +3483,33 @@ describe('ext_multigrid', function()
       exercitation ullamco laboris nisi ut a^liquip ex |
       ea commodo consequat. Duis aute irure dolor in  |
       reprehenderit in voluptate velit esse cillum    |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 6, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 6},
-      [4] = {win = {id = 1001}, topline = 4, botline = 8, curline = 4, curcol = 38, linecount = 11, sum_scroll_delta = 4},
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 6,
+          botline = 9,
+          curline = 7,
+          curcol = 0,
+          linecount = 11,
+          sum_scroll_delta = 6,
+        },
+        [4] = {
+          win = { id = 1001 },
+          topline = 4,
+          botline = 8,
+          curline = 4,
+          curcol = 38,
+          linecount = 11,
+          sum_scroll_delta = 4,
+        },
+      },
+    })
 
     -- handles non-current window
-    meths.win_set_cursor(1000, {1, 10})
-    screen:expect{grid=[[
+    meths.win_set_cursor(1000, { 1, 10 })
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:------------------------------------------------]|
       [4:------------------------------------------------]|
@@ -3286,14 +3528,33 @@ describe('ext_multigrid', function()
       exercitation ullamco laboris nisi ut a^liquip ex |
       ea commodo consequat. Duis aute irure dolor in  |
       reprehenderit in voluptate velit esse cillum    |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0},
-      [4] = {win = {id = 1001}, topline = 4, botline = 8, curline = 4, curcol = 38, linecount = 11, sum_scroll_delta = 4},
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 3,
+          curline = 0,
+          curcol = 10,
+          linecount = 11,
+          sum_scroll_delta = 0,
+        },
+        [4] = {
+          win = { id = 1001 },
+          topline = 4,
+          botline = 8,
+          curline = 4,
+          curcol = 38,
+          linecount = 11,
+          sum_scroll_delta = 4,
+        },
+      },
+    })
 
     -- sum_scroll_delta works with folds
     feed('zfj')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:------------------------------------------------]|
       [4:------------------------------------------------]|
@@ -3312,13 +3573,32 @@ describe('ext_multigrid', function()
       {13:^+--  2 lines: exercitation ullamco laboris nisi }|
       reprehenderit in voluptate velit esse cillum    |
       dolore eu fugiat nulla pariatur. Excepteur sint |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0},
-      [4] = {win = {id = 1001}, topline = 4, botline = 9, curline = 4, curcol = 38, linecount = 11, sum_scroll_delta = 4},
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 3,
+          curline = 0,
+          curcol = 10,
+          linecount = 11,
+          sum_scroll_delta = 0,
+        },
+        [4] = {
+          win = { id = 1001 },
+          topline = 4,
+          botline = 9,
+          curline = 4,
+          curcol = 38,
+          linecount = 11,
+          sum_scroll_delta = 4,
+        },
+      },
+    })
 
     feed('<c-e>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:------------------------------------------------]|
       [4:------------------------------------------------]|
@@ -3337,13 +3617,32 @@ describe('ext_multigrid', function()
       ^reprehenderit in voluptate velit esse cillum    |
       dolore eu fugiat nulla pariatur. Excepteur sint |
       occaecat cupidatat non proident, sunt in culpa  |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0},
-      [4] = {win = {id = 1001}, topline = 6, botline = 10, curline = 6, curcol = 0, linecount = 11, sum_scroll_delta = 5},
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 3,
+          curline = 0,
+          curcol = 10,
+          linecount = 11,
+          sum_scroll_delta = 0,
+        },
+        [4] = {
+          win = { id = 1001 },
+          topline = 6,
+          botline = 10,
+          curline = 6,
+          curcol = 0,
+          linecount = 11,
+          sum_scroll_delta = 5,
+        },
+      },
+    })
 
     command('close | 21vsplit | setlocal number smoothscroll')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:---------------------]│[2:--------------------------]|
       [5:---------------------]│[2:--------------------------]|
@@ -3369,13 +3668,32 @@ describe('ext_multigrid', function()
       {19:  2 }adipisicing elit,|
       {19:    } sed do eiusmod t|
       {19:    }empor            |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 4,
+          curline = 0,
+          curcol = 10,
+          linecount = 11,
+          sum_scroll_delta = 0,
+        },
+        [5] = {
+          win = { id = 1002 },
+          topline = 0,
+          botline = 3,
+          curline = 0,
+          curcol = 10,
+          linecount = 11,
+          sum_scroll_delta = 0,
+        },
+      },
+    })
 
     feed('5<C-E>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:---------------------]│[2:--------------------------]|
       [5:---------------------]│[2:--------------------------]|
@@ -3401,13 +3719,32 @@ describe('ext_multigrid', function()
       {19:    }na aliqua.       |
       {19:  4 }Ut enim ad minim |
       {19:    }veniam, quis n{1:@@@}|
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 1, botline = 4, curline = 1, curcol = 38, linecount = 11, sum_scroll_delta = 5};
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 4,
+          curline = 0,
+          curcol = 10,
+          linecount = 11,
+          sum_scroll_delta = 0,
+        },
+        [5] = {
+          win = { id = 1002 },
+          topline = 1,
+          botline = 4,
+          curline = 1,
+          curcol = 38,
+          linecount = 11,
+          sum_scroll_delta = 5,
+        },
+      },
+    })
 
     feed('<C-Y>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:---------------------]│[2:--------------------------]|
       [5:---------------------]│[2:--------------------------]|
@@ -3433,13 +3770,32 @@ describe('ext_multigrid', function()
       {19:    }ore et dolore mag|
       {19:    }na aliqua.       |
       {19:  4 }Ut enim ad min{1:@@@}|
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 1, botline = 4, curline = 1, curcol = 38, linecount = 11, sum_scroll_delta = 4};
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 4,
+          curline = 0,
+          curcol = 10,
+          linecount = 11,
+          sum_scroll_delta = 0,
+        },
+        [5] = {
+          win = { id = 1002 },
+          topline = 1,
+          botline = 4,
+          curline = 1,
+          curcol = 38,
+          linecount = 11,
+          sum_scroll_delta = 4,
+        },
+      },
+    })
 
     command('set cpoptions+=n')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:---------------------]│[2:--------------------------]|
       [5:---------------------]│[2:--------------------------]|
@@ -3465,13 +3821,32 @@ describe('ext_multigrid', function()
       ore et dolore magna a|
       liqua.               |
       {19:  4 }Ut enim ad min{1:@@@}|
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 1, botline = 4, curline = 1, curcol = 38, linecount = 11, sum_scroll_delta = 4};
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 4,
+          curline = 0,
+          curcol = 10,
+          linecount = 11,
+          sum_scroll_delta = 0,
+        },
+        [5] = {
+          win = { id = 1002 },
+          topline = 1,
+          botline = 4,
+          curline = 1,
+          curcol = 38,
+          linecount = 11,
+          sum_scroll_delta = 4,
+        },
+      },
+    })
 
     feed('4<C-E>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:---------------------]│[2:--------------------------]|
       [5:---------------------]│[2:--------------------------]|
@@ -3497,13 +3872,32 @@ describe('ext_multigrid', function()
       {19:  5 }exercitation ulla|
       mco laboris nisi ut a|
       liquip ex            |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 2, botline = 6, curline = 2, curcol = 43, linecount = 11, sum_scroll_delta = 8};
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 4,
+          curline = 0,
+          curcol = 10,
+          linecount = 11,
+          sum_scroll_delta = 0,
+        },
+        [5] = {
+          win = { id = 1002 },
+          topline = 2,
+          botline = 6,
+          curline = 2,
+          curcol = 43,
+          linecount = 11,
+          sum_scroll_delta = 8,
+        },
+      },
+    })
 
     feed('2<C-Y>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:---------------------]│[2:--------------------------]|
       [5:---------------------]│[2:--------------------------]|
@@ -3529,13 +3923,32 @@ describe('ext_multigrid', function()
       {19:  4 }Ut enim ad minim |
       veniam, quis nostrud |
       {19:  5 }exercitation u{1:@@@}|
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 2, botline = 5, curline = 2, curcol = 43, linecount = 11, sum_scroll_delta = 6};
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 4,
+          curline = 0,
+          curcol = 10,
+          linecount = 11,
+          sum_scroll_delta = 0,
+        },
+        [5] = {
+          win = { id = 1002 },
+          topline = 2,
+          botline = 5,
+          curline = 2,
+          curcol = 43,
+          linecount = 11,
+          sum_scroll_delta = 6,
+        },
+      },
+    })
 
     command('setlocal numberwidth=12')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:---------------------]│[2:--------------------------]|
       [5:---------------------]│[2:--------------------------]|
@@ -3561,13 +3974,32 @@ describe('ext_multigrid', function()
       {19:          4 }Ut enim a|
       d minim veniam, quis |
       nostrud              |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 2, botline = 5, curline = 2, curcol = 43, linecount = 11, sum_scroll_delta = 6};
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 4,
+          curline = 0,
+          curcol = 10,
+          linecount = 11,
+          sum_scroll_delta = 0,
+        },
+        [5] = {
+          win = { id = 1002 },
+          topline = 2,
+          botline = 5,
+          curline = 2,
+          curcol = 43,
+          linecount = 11,
+          sum_scroll_delta = 6,
+        },
+      },
+    })
 
     feed('2<C-E>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:---------------------]│[2:--------------------------]|
       [5:---------------------]│[2:--------------------------]|
@@ -3593,13 +4025,32 @@ describe('ext_multigrid', function()
       nostrud              |
       {19:          5 }exercitat|
       ion ullamco labori{1:@@@}|
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 2, botline = 5, curline = 2, curcol = 43, linecount = 11, sum_scroll_delta = 8};
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 4,
+          curline = 0,
+          curcol = 10,
+          linecount = 11,
+          sum_scroll_delta = 0,
+        },
+        [5] = {
+          win = { id = 1002 },
+          topline = 2,
+          botline = 5,
+          curline = 2,
+          curcol = 43,
+          linecount = 11,
+          sum_scroll_delta = 8,
+        },
+      },
+    })
 
     feed('<C-E>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [5:---------------------]│[2:--------------------------]|
       [5:---------------------]│[2:--------------------------]|
@@ -3625,16 +4076,35 @@ describe('ext_multigrid', function()
       {19:          5 }exercitat|
       ion ullamco laboris n|
       isi ut aliquip ex    |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 3, botline = 6, curline = 3, curcol = 36, linecount = 11, sum_scroll_delta = 9};
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 4,
+          curline = 0,
+          curcol = 10,
+          linecount = 11,
+          sum_scroll_delta = 0,
+        },
+        [5] = {
+          win = { id = 1002 },
+          topline = 3,
+          botline = 6,
+          curline = 3,
+          curcol = 36,
+          linecount = 11,
+          sum_scroll_delta = 9,
+        },
+      },
+    })
   end)
 
   it('scroll_delta is approximated reasonably when scrolling many lines #24234', function()
     command('setlocal number nowrap')
     command('edit test/functional/fixtures/bigfile.txt')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [2:-----------------------------------------------------]|
       [2:-----------------------------------------------------]|
@@ -3665,11 +4135,22 @@ describe('ext_multigrid', function()
       {19:   12 }000B;<control>;Cc;0;S;;;;;N;LINE TABULATION;;;;|
     ## grid 3
                                                            |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 13, curline = 0, curcol = 0, linecount = 30592, sum_scroll_delta = 0};
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 13,
+          curline = 0,
+          curcol = 0,
+          linecount = 30592,
+          sum_scroll_delta = 0,
+        },
+      },
+    })
     feed('G')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [2:-----------------------------------------------------]|
       [2:-----------------------------------------------------]|
@@ -3700,11 +4181,22 @@ describe('ext_multigrid', function()
       {19:30592 }^10FFFD;<Plane 16 Private Use, Last>;Co;0;L;;;;;|
     ## grid 3
                                                            |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 30580, botline = 30592, curline = 30591, curcol = 0, linecount = 30592, sum_scroll_delta = 30580};
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 30580,
+          botline = 30592,
+          curline = 30591,
+          curcol = 0,
+          linecount = 30592,
+          sum_scroll_delta = 30580,
+        },
+      },
+    })
     feed('gg')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [2:-----------------------------------------------------]|
       [2:-----------------------------------------------------]|
@@ -3735,11 +4227,22 @@ describe('ext_multigrid', function()
       {19:   12 }000B;<control>;Cc;0;S;;;;;N;LINE TABULATION;;;;|
     ## grid 3
                                                            |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 13, curline = 0, curcol = 0, linecount = 30592, sum_scroll_delta = 0};
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 13,
+          curline = 0,
+          curcol = 0,
+          linecount = 30592,
+          sum_scroll_delta = 0,
+        },
+      },
+    })
     command('setlocal wrap')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [2:-----------------------------------------------------]|
       [2:-----------------------------------------------------]|
@@ -3770,11 +4273,22 @@ describe('ext_multigrid', function()
       {19:   10 }0009;<control>;Cc;0;S;;;;;N;CHARACTER TABULA{1:@@@}|
     ## grid 3
                                                            |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 10, curline = 0, curcol = 0, linecount = 30592, sum_scroll_delta = 0};
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 10,
+          curline = 0,
+          curcol = 0,
+          linecount = 30592,
+          sum_scroll_delta = 0,
+        },
+      },
+    })
     feed('G')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [2:-----------------------------------------------------]|
       [2:-----------------------------------------------------]|
@@ -3805,12 +4319,23 @@ describe('ext_multigrid', function()
       {19:      }N;;;;;                                         |
     ## grid 3
                                                            |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 30586, botline = 30592, curline = 30591, curcol = 0, linecount = 30592, sum_scroll_delta = 30588};
-    }}
-    command('autocmd CursorMoved * ++once call line("w$")')  -- FIXME: this should not be needed
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 30586,
+          botline = 30592,
+          curline = 30591,
+          curcol = 0,
+          linecount = 30592,
+          sum_scroll_delta = 30588,
+        },
+      },
+    })
+    command('autocmd CursorMoved * ++once call line("w$")') -- FIXME: this should not be needed
     feed('gg')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [2:-----------------------------------------------------]|
       [2:-----------------------------------------------------]|
@@ -3841,14 +4366,25 @@ describe('ext_multigrid', function()
       {19:   10 }0009;<control>;Cc;0;S;;;;;N;CHARACTER TABULA{1:@@@}|
     ## grid 3
                                                            |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 10, curline = 0, curcol = 0, linecount = 30592, sum_scroll_delta = 0};
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 10,
+          curline = 0,
+          curcol = 0,
+          linecount = 30592,
+          sum_scroll_delta = 0,
+        },
+      },
+    })
   end)
 
   it('does not crash when dragging mouse across grid boundary', function()
     screen:try_resize(48, 8)
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [2:------------------------------------------------]|
       [2:------------------------------------------------]|
@@ -3867,9 +4403,19 @@ describe('ext_multigrid', function()
       {1:~                                               }|
     ## grid 3
                                                       |
-    ]], win_viewport={
-      [2] = {win = { id = 1000 }, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0}
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 2,
+          curline = 0,
+          curcol = 0,
+          linecount = 1,
+          sum_scroll_delta = 0,
+        },
+      },
+    })
     insert([[
       Lorem ipsum dolor sit amet, consectetur
       adipisicing elit, sed do eiusmod tempor
@@ -3883,7 +4429,8 @@ describe('ext_multigrid', function()
       qui officia deserunt mollit anim id est
       laborum.]])
 
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [2:------------------------------------------------]|
       [2:------------------------------------------------]|
@@ -3902,15 +4449,26 @@ describe('ext_multigrid', function()
       laborum^.                                        |
     ## grid 3
                                                       |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 5, botline = 11, curline = 10, curcol = 7, linecount = 11, sum_scroll_delta = 5},
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 5,
+          botline = 11,
+          curline = 10,
+          curcol = 7,
+          linecount = 11,
+          sum_scroll_delta = 5,
+        },
+      },
+    })
 
-    meths.input_mouse('left', 'press', '', 1,5, 1)
+    meths.input_mouse('left', 'press', '', 1, 5, 1)
     poke_eventloop()
     meths.input_mouse('left', 'drag', '', 1, 6, 1)
 
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [2:------------------------------------------------]|
       [2:------------------------------------------------]|
@@ -3929,14 +4487,25 @@ describe('ext_multigrid', function()
       {1:~                                               }|
     ## grid 3
       {7:-- VISUAL --}                                    |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 6, botline = 12, curline = 10, curcol = 1, linecount = 11, sum_scroll_delta = 6},
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 6,
+          botline = 12,
+          curline = 10,
+          curcol = 1,
+          linecount = 11,
+          sum_scroll_delta = 6,
+        },
+      },
+    })
   end)
 
   it('with winbar', function()
     command('split')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -3967,21 +4536,40 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
-      [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 2,
+          curline = 0,
+          curcol = 0,
+          linecount = 1,
+          sum_scroll_delta = 0,
+        },
+        [4] = {
+          win = { id = 1001 },
+          topline = 0,
+          botline = 2,
+          curline = 0,
+          curcol = 0,
+          linecount = 1,
+          sum_scroll_delta = 0,
+        },
+      },
+    })
 
     -- XXX: hack to get notifications. Could use next_msg() also.
     local orig_handle_win_pos = screen._handle_win_pos
     local win_pos = {}
     function screen._handle_win_pos(self, grid, win, startrow, startcol, width, height)
-      table.insert(win_pos, {grid, win, startrow, startcol, width, height})
+      table.insert(win_pos, { grid, win, startrow, startcol, width, height })
       orig_handle_win_pos(self, grid, win, startrow, startcol, width, height)
     end
 
     command('setlocal winbar=very%=bar')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -4012,14 +4600,33 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
-      [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 2,
+          curline = 0,
+          curcol = 0,
+          linecount = 1,
+          sum_scroll_delta = 0,
+        },
+        [4] = {
+          win = { id = 1001 },
+          topline = 0,
+          botline = 2,
+          curline = 0,
+          curcol = 0,
+          linecount = 1,
+          sum_scroll_delta = 0,
+        },
+      },
+    })
     eq({}, win_pos)
 
     command('setlocal winbar=')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -4050,10 +4657,28 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
-      [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
-    }}
+    ]],
+      win_viewport = {
+        [2] = {
+          win = { id = 1000 },
+          topline = 0,
+          botline = 2,
+          curline = 0,
+          curcol = 0,
+          linecount = 1,
+          sum_scroll_delta = 0,
+        },
+        [4] = {
+          win = { id = 1001 },
+          topline = 0,
+          botline = 2,
+          curline = 0,
+          curcol = 0,
+          linecount = 1,
+          sum_scroll_delta = 0,
+        },
+      },
+    })
     eq({}, win_pos)
   end)
 

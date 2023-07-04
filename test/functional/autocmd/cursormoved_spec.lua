@@ -19,9 +19,9 @@ describe('CursorMoved', function()
     ]])
     eq({}, eval('g:log'))
     command('new')
-    eq({'BufEnter2', 'CursorMoved2'}, eval('g:log'))
+    eq({ 'BufEnter2', 'CursorMoved2' }, eval('g:log'))
     command('wincmd w')
-    eq({'BufEnter2', 'CursorMoved2', 'BufEnter1', 'CursorMoved1'}, eval('g:log'))
+    eq({ 'BufEnter2', 'CursorMoved2', 'BufEnter1', 'CursorMoved1' }, eval('g:log'))
   end)
 
   it("is not triggered by functions that don't change the window", function()
@@ -32,11 +32,11 @@ describe('CursorMoved', function()
     autocmd CursorMoved * let g:cursormoved += 1
     call nvim_buf_set_lines(g:buf, 0, -1, v:true, ['aaa'])
     ]])
-    eq({'aaa'}, funcs.nvim_buf_get_lines(eval('g:buf'), 0, -1, true))
+    eq({ 'aaa' }, funcs.nvim_buf_get_lines(eval('g:buf'), 0, -1, true))
     eq(0, eval('g:cursormoved'))
   end)
 
-  it("is not triggered by cursor movement prior to first CursorMoved instantiation", function()
+  it('is not triggered by cursor movement prior to first CursorMoved instantiation', function()
     source([[
     let g:cursormoved = 0
     autocmd! CursorMoved

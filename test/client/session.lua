@@ -7,7 +7,7 @@ if package.loaded['jit'] then
   -- luajit pcall is already coroutine safe
   Session.safe_pcall = pcall
 else
-  Session.safe_pcall = require'coxpcall'.pcall
+  Session.safe_pcall = require('coxpcall').pcall
 end
 
 local function resume(co, ...)
@@ -25,7 +25,7 @@ local function resume(co, ...)
 end
 
 local function coroutine_exec(func, ...)
-  local args = {...}
+  local args = { ... }
   local on_complete
 
   if #args > 0 and type(args[#args]) == 'function' then
@@ -50,18 +50,18 @@ function Session.new(stream)
     _pending_messages = {},
     _prepare = uv.new_prepare(),
     _timer = uv.new_timer(),
-    _is_running = false
+    _is_running = false,
   }, Session)
 end
 
 function Session:next_message(timeout)
   local function on_request(method, args, response)
-    table.insert(self._pending_messages, {'request', method, args, response})
+    table.insert(self._pending_messages, { 'request', method, args, response })
     uv.stop()
   end
 
   local function on_notification(method, args)
-    table.insert(self._pending_messages, {'notification', method, args})
+    table.insert(self._pending_messages, { 'notification', method, args })
     uv.stop()
   end
 
@@ -78,11 +78,11 @@ function Session:next_message(timeout)
 end
 
 function Session:notify(method, ...)
-  self._msgpack_rpc_stream:write(method, {...})
+  self._msgpack_rpc_stream:write(method, { ... })
 end
 
 function Session:request(method, ...)
-  local args = {...}
+  local args = { ... }
   local err, result
   if self._is_running then
     err, result = self:_yielding_request(method, args)
@@ -136,8 +136,12 @@ function Session:stop()
 end
 
 function Session:close(signal)
-  if not self._timer:is_closing() then self._timer:close() end
-  if not self._prepare:is_closing() then self._prepare:close() end
+  if not self._timer:is_closing() then
+    self._timer:close()
+  end
+  if not self._prepare:is_closing() then
+    self._prepare:close()
+  end
   self._msgpack_rpc_stream:close(signal)
 end
 
@@ -153,11 +157,11 @@ function Session:_blocking_request(method, args)
   local err, result
 
   local function on_request(method_, args_, response)
-    table.insert(self._pending_messages, {'request', method_, args_, response})
+    table.insert(self._pending_messages, { 'request', method_, args_, response })
   end
 
   local function on_notification(method_, args_)
-    table.insert(self._pending_messages, {'notification', method_, args_})
+    table.insert(self._pending_messages, { 'notification', method_, args_ })
   end
 
   self._msgpack_rpc_stream:write(method, args, function(e, r)
@@ -181,7 +185,7 @@ function Session:_run(request_cb, notification_cb, timeout)
   end
   self._msgpack_rpc_stream:read_start(request_cb, notification_cb, function()
     uv.stop()
-    self.eof_err = {1, "EOF was received from Nvim. Likely the Nvim process crashed."}
+    self.eof_err = { 1, 'EOF was received from Nvim. Likely the Nvim process crashed.' }
   end)
   uv.run()
   self._prepare:stop()

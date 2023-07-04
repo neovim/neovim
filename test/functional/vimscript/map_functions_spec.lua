@@ -19,19 +19,19 @@ describe('maparg()', function()
   before_each(clear)
 
   local foo_bar_map_table = {
-      lhs='foo',
-      lhsraw='foo',
-      script=0,
-      silent=0,
-      rhs='bar',
-      expr=0,
-      sid=0,
-      buffer=0,
-      nowait=0,
-      mode='n',
-      noremap=1,
-      lnum=0,
-    }
+    lhs = 'foo',
+    lhsraw = 'foo',
+    script = 0,
+    silent = 0,
+    rhs = 'bar',
+    expr = 0,
+    sid = 0,
+    buffer = 0,
+    nowait = 0,
+    mode = 'n',
+    noremap = 1,
+    lnum = 0,
+  }
 
   it('returns a dictionary', function()
     nvim('command', 'nnoremap foo bar')
@@ -61,7 +61,7 @@ describe('maparg()', function()
     eq(
       funcs.maparg('hello', 'i', false, true)['noremap'],
       funcs.maparg('this', 'i', false, true)['noremap']
-      )
+    )
   end)
 
   it('returns a boolean for buffer', function()
@@ -132,7 +132,7 @@ describe('maparg()', function()
   it('works with combining characters', function()
     -- Using addacutes to make combining character better visible
     local function ac(s)
-      local acute = '\204\129'  -- U+0301 COMBINING ACUTE ACCENT
+      local acute = '\204\129' -- U+0301 COMBINING ACUTE ACCENT
       local ret = s:gsub('`', acute)
       return ret
     end
@@ -142,8 +142,8 @@ describe('maparg()', function()
       nnoremap e` f`
     ]]))
     eq(ac('b`'), funcs.maparg(ac('a')))
-    eq(ac(''),   funcs.maparg(ac('c')))
-    eq(ac('d'),  funcs.maparg(ac('c`')))
+    eq(ac(''), funcs.maparg(ac('c')))
+    eq(ac('d'), funcs.maparg(ac('c`')))
     eq(ac('f`'), funcs.maparg(ac('e`')))
 
     local function acmap(lhs, rhs)
@@ -157,16 +157,16 @@ describe('maparg()', function()
         mode = 'n',
         noremap = 1,
         nowait = 0,
-        script=0,
+        script = 0,
         sid = 0,
         silent = 0,
         lnum = 0,
       }
     end
 
-    eq({}, funcs.maparg(ac('c'),  'n', 0, 1))
-    eq(acmap('a',  'b`'), funcs.maparg(ac('a'),  'n', 0, 1))
-    eq(acmap('c`', 'd'),  funcs.maparg(ac('c`'), 'n', 0, 1))
+    eq({}, funcs.maparg(ac('c'), 'n', 0, 1))
+    eq(acmap('a', 'b`'), funcs.maparg(ac('a'), 'n', 0, 1))
+    eq(acmap('c`', 'd'), funcs.maparg(ac('c`'), 'n', 0, 1))
     eq(acmap('e`', 'f`'), funcs.maparg(ac('e`'), 'n', 0, 1))
   end)
 end)
@@ -175,21 +175,21 @@ describe('mapset()', function()
   before_each(clear)
 
   it('can restore mapping description from the dict returned by maparg()', function()
-    meths.set_keymap('n', 'lhs', 'rhs', {desc = 'map description'})
-    eq('\nn  lhs           rhs\n                 map description', exec_capture("nmap lhs"))
+    meths.set_keymap('n', 'lhs', 'rhs', { desc = 'map description' })
+    eq('\nn  lhs           rhs\n                 map description', exec_capture('nmap lhs'))
     local mapargs = funcs.maparg('lhs', 'n', false, true)
-    meths.set_keymap('n', 'lhs', 'rhs', {desc = 'MAP DESCRIPTION'})
-    eq('\nn  lhs           rhs\n                 MAP DESCRIPTION', exec_capture("nmap lhs"))
+    meths.set_keymap('n', 'lhs', 'rhs', { desc = 'MAP DESCRIPTION' })
+    eq('\nn  lhs           rhs\n                 MAP DESCRIPTION', exec_capture('nmap lhs'))
     funcs.mapset('n', false, mapargs)
-    eq('\nn  lhs           rhs\n                 map description', exec_capture("nmap lhs"))
+    eq('\nn  lhs           rhs\n                 map description', exec_capture('nmap lhs'))
   end)
 
   it('can restore "replace_keycodes" from the dict returned by maparg()', function()
-    meths.set_keymap('i', 'foo', [['<l' .. 't>']], {expr = true, replace_keycodes = true})
+    meths.set_keymap('i', 'foo', [['<l' .. 't>']], { expr = true, replace_keycodes = true })
     feed('Afoo')
     expect('<')
     local mapargs = funcs.maparg('foo', 'i', false, true)
-    meths.set_keymap('i', 'foo', [['<l' .. 't>']], {expr = true})
+    meths.set_keymap('i', 'foo', [['<l' .. 't>']], { expr = true })
     feed('foo')
     expect('<<lt>')
     funcs.mapset('i', false, mapargs)
@@ -214,11 +214,14 @@ describe('mapset()', function()
   end)
 
   it('can restore Lua callback from the dict returned by maparg()', function()
-    eq(0, exec_lua([[
+    eq(
+      0,
+      exec_lua([[
       GlobalCount = 0
       vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
       return GlobalCount
-    ]]))
+    ]])
+    )
     feed('asdf')
     eq(1, exec_lua([[return GlobalCount]]))
 
@@ -246,9 +249,13 @@ describe('mapset()', function()
   end)
 
   it('does not leak memory if lhs is missing', function()
-    eq('Vim:E460: Entries missing in mapset() dict argument',
-       pcall_err(exec_lua, [[vim.fn.mapset('n', false, {rhs = 'foo'})]]))
-    eq('Vim:E460: Entries missing in mapset() dict argument',
-       pcall_err(exec_lua, [[vim.fn.mapset('n', false, {callback = function() end})]]))
+    eq(
+      'Vim:E460: Entries missing in mapset() dict argument',
+      pcall_err(exec_lua, [[vim.fn.mapset('n', false, {rhs = 'foo'})]])
+    )
+    eq(
+      'Vim:E460: Entries missing in mapset() dict argument',
+      pcall_err(exec_lua, [[vim.fn.mapset('n', false, {callback = function() end})]])
+    )
   end)
 end)

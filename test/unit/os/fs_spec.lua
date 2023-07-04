@@ -72,7 +72,7 @@ describe('fs.c', function()
   end
 
   before_each(function()
-    mkdir('unit-test-directory');
+    mkdir('unit-test-directory')
 
     io.open('unit-test-directory/test.file', 'w'):close()
 
@@ -119,8 +119,8 @@ describe('fs.c', function()
       eq(OK, fs.os_dirname(expected_cwd, length))
 
       -- os_chdir returns 0 for success, not OK (1).
-      neq(0, fs.os_chdir('~'))    -- fail
-      neq(0, fs.os_chdir('~/'))   -- fail
+      neq(0, fs.os_chdir('~')) -- fail
+      neq(0, fs.os_chdir('~/')) -- fail
 
       eq(OK, fs.os_dirname(cwd, length))
       -- CWD did not change.
@@ -288,31 +288,34 @@ describe('fs.c', function()
       end)
 
       -- Some systems may not have `id` utility.
-      if (os.execute('id -G > /dev/null 2>&1') ~= 0) then
+      if os.execute('id -G > /dev/null 2>&1') ~= 0 then
         pending('skipped (missing `id` utility)', function() end)
       else
-        itp('owner of a file may change the group of the file to any group of which that owner is a member', function()
-          local file_gid = luv.fs_stat(filename).gid
+        itp(
+          'owner of a file may change the group of the file to any group of which that owner is a member',
+          function()
+            local file_gid = luv.fs_stat(filename).gid
 
-          -- Gets ID of any group of which current user is a member except the
-          -- group that owns the file.
-          local id_fd = io.popen('id -G')
-          local new_gid = id_fd:read('*n')
-          if (new_gid == file_gid) then
-            new_gid = id_fd:read('*n')
-          end
-          id_fd:close()
+            -- Gets ID of any group of which current user is a member except the
+            -- group that owns the file.
+            local id_fd = io.popen('id -G')
+            local new_gid = id_fd:read('*n')
+            if new_gid == file_gid then
+              new_gid = id_fd:read('*n')
+            end
+            id_fd:close()
 
-          -- User can be a member of only one group.
-          -- In that case we can not perform this test.
-          if new_gid then
-            eq(0, (os_fchown(filename, -1, new_gid)))
-            eq(new_gid, luv.fs_stat(filename).gid)
+            -- User can be a member of only one group.
+            -- In that case we can not perform this test.
+            if new_gid then
+              eq(0, (os_fchown(filename, -1, new_gid)))
+              eq(new_gid, luv.fs_stat(filename).gid)
+            end
           end
-        end)
+        )
       end
 
-      if (ffi.os == 'Windows' or ffi.C.geteuid() == 0) then
+      if ffi.os == 'Windows' or ffi.C.geteuid() == 0 then
         pending('skipped (uv_fs_chown is no-op on Windows)', function() end)
       else
         itp('returns nonzero if process has not enough permissions', function()
@@ -321,7 +324,6 @@ describe('fs.c', function()
         end)
       end
     end)
-
 
     describe('os_file_is_readable', function()
       itp('returns false if the file is not readable', function()
@@ -334,13 +336,11 @@ describe('fs.c', function()
       end)
 
       itp('returns false if the file does not exist', function()
-        eq(false, os_file_is_readable(
-          'unit-test-directory/what_are_you_smoking.gif'))
+        eq(false, os_file_is_readable('unit-test-directory/what_are_you_smoking.gif'))
       end)
 
       itp('returns true if the file is readable', function()
-        eq(true, os_file_is_readable(
-          'unit-test-directory/test.file'))
+        eq(true, os_file_is_readable('unit-test-directory/test.file'))
       end)
     end)
 
@@ -391,7 +391,7 @@ describe('fs.c', function()
       else
         buf = ffi.new('char[?]', size + 1, ('\0'):rep(size))
       end
-      local eof = ffi.new('bool[?]', 1, {true})
+      local eof = ffi.new('bool[?]', 1, { true })
       local ret2 = fs.os_read(fd, eof, buf, size, false)
       local ret1 = eof[0]
       local ret3 = ''
@@ -404,16 +404,16 @@ describe('fs.c', function()
       local bufs = {}
       for i, size in ipairs(sizes) do
         bufs[i] = {
-          iov_base=ffi.new('char[?]', size + 1, ('\0'):rep(size)),
-          iov_len=size,
+          iov_base = ffi.new('char[?]', size + 1, ('\0'):rep(size)),
+          iov_len = size,
         }
       end
       local iov = ffi.new('struct iovec[?]', #sizes, bufs)
-      local eof = ffi.new('bool[?]', 1, {true})
+      local eof = ffi.new('bool[?]', 1, { true })
       local ret2 = fs.os_readv(fd, eof, iov, #sizes, false)
       local ret1 = eof[0]
       local ret3 = {}
-      for i = 1,#sizes do
+      for i = 1, #sizes do
         -- Warning: iov may not be used.
         ret3[i] = ffi.string(bufs[i].iov_base, bufs[i].iov_len)
       end
@@ -449,7 +449,7 @@ describe('fs.c', function()
         eq(OK, (os_rename(test, not_exist)))
         eq(false, (os_path_exists(test)))
         eq(true, (os_path_exists(not_exist)))
-        eq(OK, (os_rename(not_exist, test)))  -- restore test file
+        eq(OK, (os_rename(not_exist, test))) -- restore test file
       end)
 
       itp('fail if source file does not exist', function()
@@ -498,14 +498,19 @@ describe('fs.c', function()
         local dup0 = fs.os_dup(0)
         local dup1 = fs.os_dup(1)
         local dup2 = fs.os_dup(2)
-        local tbl = {[0]=true, [1]=true, [2]=true,
-                     [tonumber(dup0)]=true, [tonumber(dup1)]=true,
-                     [tonumber(dup2)]=true}
+        local tbl = {
+          [0] = true,
+          [1] = true,
+          [2] = true,
+          [tonumber(dup0)] = true,
+          [tonumber(dup1)] = true,
+          [tonumber(dup2)] = true,
+        }
         local i = 0
         for _, _ in pairs(tbl) do
           i = i + 1
         end
-        eq(i, 6)  -- All fds must be unique
+        eq(i, 6) -- All fds must be unique
       end)
     end)
 
@@ -526,12 +531,15 @@ describe('fs.c', function()
         eq(ffi.C.UV_ENOENT, (os_open('non-existing-file', ffi.C.kO_RDWR, 0)))
       end)
 
-      itp('returns non-negative for O_CREAT on a non-existing file which then can be closed', function()
-        assert_file_does_not_exist(new_file)
-        local fd = os_open(new_file, ffi.C.kO_CREAT, 0)
-        assert.is_true(0 <= fd)
-        eq(0, os_close(fd))
-      end)
+      itp(
+        'returns non-negative for O_CREAT on a non-existing file which then can be closed',
+        function()
+          assert_file_does_not_exist(new_file)
+          local fd = os_open(new_file, ffi.C.kO_CREAT, 0)
+          assert.is_true(0 <= fd)
+          eq(0, os_close(fd))
+        end
+      )
 
       itp('returns non-negative for O_CREAT on a existing file which then can be closed', function()
         assert_file_exists(existing_file)
@@ -548,7 +556,7 @@ describe('fs.c', function()
       itp('sets `rwx` permissions for O_CREAT 700 which then can be closed', function()
         assert_file_does_not_exist(new_file)
         --create the file
-        local fd = os_open(new_file, ffi.C.kO_CREAT, tonumber("700", 8))
+        local fd = os_open(new_file, ffi.C.kO_CREAT, tonumber('700', 8))
         --verify permissions
         eq(33216, luv.fs_stat(new_file).mode)
         eq(0, os_close(fd))
@@ -557,17 +565,20 @@ describe('fs.c', function()
       itp('sets `rw` permissions for O_CREAT 600 which then can be closed', function()
         assert_file_does_not_exist(new_file)
         --create the file
-        local fd = os_open(new_file, ffi.C.kO_CREAT, tonumber("600", 8))
+        local fd = os_open(new_file, ffi.C.kO_CREAT, tonumber('600', 8))
         --verify permissions
         eq(33152, luv.fs_stat(new_file).mode)
         eq(0, os_close(fd))
       end)
 
-      itp('returns a non-negative file descriptor for an existing file which then can be closed', function()
-        local fd = os_open(existing_file, ffi.C.kO_RDWR, 0)
-        assert.is_true(0 <= fd)
-        eq(0, os_close(fd))
-      end)
+      itp(
+        'returns a non-negative file descriptor for an existing file which then can be closed',
+        function()
+          local fd = os_open(existing_file, ffi.C.kO_RDWR, 0)
+          assert.is_true(0 <= fd)
+          eq(0, os_close(fd))
+        end
+      )
     end)
 
     describe('os_close', function()
@@ -593,43 +604,48 @@ describe('fs.c', function()
       itp('can read zero bytes from a file', function()
         local fd = os_open(file, ffi.C.kO_RDONLY, 0)
         ok(fd >= 0)
-        eq({false, 0, ''}, {os_read(fd, nil)})
-        eq({false, 0, ''}, {os_read(fd, 0)})
+        eq({ false, 0, '' }, { os_read(fd, nil) })
+        eq({ false, 0, '' }, { os_read(fd, 0) })
         eq(0, os_close(fd))
       end)
 
       itp('can read from a file multiple times', function()
         local fd = os_open(file, ffi.C.kO_RDONLY, 0)
         ok(fd >= 0)
-        eq({false, 2, '\000\001'}, {os_read(fd, 2)})
-        eq({false, 2, '\002\003'}, {os_read(fd, 2)})
+        eq({ false, 2, '\000\001' }, { os_read(fd, 2) })
+        eq({ false, 2, '\002\003' }, { os_read(fd, 2) })
         eq(0, os_close(fd))
       end)
 
       itp('can read the whole file at once and then report eof', function()
         local fd = os_open(file, ffi.C.kO_RDONLY, 0)
         ok(fd >= 0)
-        eq({false, #fcontents, fcontents}, {os_read(fd, #fcontents)})
-        eq({true, 0, ('\0'):rep(#fcontents)}, {os_read(fd, #fcontents)})
+        eq({ false, #fcontents, fcontents }, { os_read(fd, #fcontents) })
+        eq({ true, 0, ('\0'):rep(#fcontents) }, { os_read(fd, #fcontents) })
         eq(0, os_close(fd))
       end)
 
       itp('can read the whole file in two calls, one partially', function()
         local fd = os_open(file, ffi.C.kO_RDONLY, 0)
         ok(fd >= 0)
-        eq({false, #fcontents * 3/4, fcontents:sub(1, #fcontents * 3/4)},
-           {os_read(fd, #fcontents * 3/4)})
-        eq({true,
-            (#fcontents * 1/4),
-            fcontents:sub(#fcontents * 3/4 + 1) .. ('\0'):rep(#fcontents * 2/4)},
-           {os_read(fd, #fcontents * 3/4)})
+        eq(
+          { false, #fcontents * 3 / 4, fcontents:sub(1, #fcontents * 3 / 4) },
+          { os_read(fd, #fcontents * 3 / 4) }
+        )
+        eq({
+          true,
+          (#fcontents * 1 / 4),
+          fcontents:sub(#fcontents * 3 / 4 + 1) .. ('\0'):rep(#fcontents * 2 / 4),
+        }, { os_read(fd, #fcontents * 3 / 4) })
         eq(0, os_close(fd))
       end)
     end)
 
     describe('os_readv', function()
       -- Function may be absent
-      if not pcall(function() return fs.os_readv end) then
+      if not pcall(function()
+        return fs.os_readv
+      end) then
         return
       end
       local file = 'test-unit-os-fs_spec-os_readv.dat'
@@ -647,45 +663,53 @@ describe('fs.c', function()
       itp('can read zero bytes from a file', function()
         local fd = os_open(file, ffi.C.kO_RDONLY, 0)
         ok(fd >= 0)
-        eq({false, 0, {}}, {os_readv(fd, {})})
-        eq({false, 0, {'', '', ''}}, {os_readv(fd, {0, 0, 0})})
+        eq({ false, 0, {} }, { os_readv(fd, {}) })
+        eq({ false, 0, { '', '', '' } }, { os_readv(fd, { 0, 0, 0 }) })
         eq(0, os_close(fd))
       end)
 
       itp('can read from a file multiple times to a differently-sized buffers', function()
         local fd = os_open(file, ffi.C.kO_RDONLY, 0)
         ok(fd >= 0)
-        eq({false, 2, {'\000\001'}}, {os_readv(fd, {2})})
-        eq({false, 5, {'\002\003', '\004\005\006'}}, {os_readv(fd, {2, 3})})
+        eq({ false, 2, { '\000\001' } }, { os_readv(fd, { 2 }) })
+        eq({ false, 5, { '\002\003', '\004\005\006' } }, { os_readv(fd, { 2, 3 }) })
         eq(0, os_close(fd))
       end)
 
       itp('can read the whole file at once and then report eof', function()
         local fd = os_open(file, ffi.C.kO_RDONLY, 0)
         ok(fd >= 0)
-        eq({false,
-            #fcontents,
-            {fcontents:sub(1, #fcontents * 1/4),
-             fcontents:sub(#fcontents * 1/4 + 1, #fcontents * 3/4),
-             fcontents:sub(#fcontents * 3/4 + 1, #fcontents * 15/16),
-             fcontents:sub(#fcontents * 15/16 + 1, #fcontents)}},
-           {os_readv(fd, {#fcontents * 1/4,
-                          #fcontents * 2/4,
-                          #fcontents * 3/16,
-                          #fcontents * 1/16})})
-        eq({true, 0, {'\0'}}, {os_readv(fd, {1})})
+        eq({
+          false,
+          #fcontents,
+          {
+            fcontents:sub(1, #fcontents * 1 / 4),
+            fcontents:sub(#fcontents * 1 / 4 + 1, #fcontents * 3 / 4),
+            fcontents:sub(#fcontents * 3 / 4 + 1, #fcontents * 15 / 16),
+            fcontents:sub(#fcontents * 15 / 16 + 1, #fcontents),
+          },
+        }, {
+          os_readv(
+            fd,
+            { #fcontents * 1 / 4, #fcontents * 2 / 4, #fcontents * 3 / 16, #fcontents * 1 / 16 }
+          ),
+        })
+        eq({ true, 0, { '\0' } }, { os_readv(fd, { 1 }) })
         eq(0, os_close(fd))
       end)
 
       itp('can read the whole file in two calls, one partially', function()
         local fd = os_open(file, ffi.C.kO_RDONLY, 0)
         ok(fd >= 0)
-        eq({false, #fcontents * 3/4, {fcontents:sub(1, #fcontents * 3/4)}},
-           {os_readv(fd, {#fcontents * 3/4})})
-        eq({true,
-            (#fcontents * 1/4),
-            {fcontents:sub(#fcontents * 3/4 + 1) .. ('\0'):rep(#fcontents * 2/4)}},
-           {os_readv(fd, {#fcontents * 3/4})})
+        eq(
+          { false, #fcontents * 3 / 4, { fcontents:sub(1, #fcontents * 3 / 4) } },
+          { os_readv(fd, { #fcontents * 3 / 4 }) }
+        )
+        eq({
+          true,
+          (#fcontents * 1 / 4),
+          { fcontents:sub(#fcontents * 3 / 4 + 1) .. ('\0'):rep(#fcontents * 2 / 4) },
+        }, { os_readv(fd, { #fcontents * 3 / 4 }) })
         eq(0, os_close(fd))
       end)
     end)
@@ -748,8 +772,8 @@ describe('fs.c', function()
     end
 
     local function os_mkdir_recurse(path, mode)
-      local failed_str = ffi.new('char *[1]', {nil})
-      local created_str = ffi.new('char *[1]', {nil})
+      local failed_str = ffi.new('char *[1]', { nil })
+      local created_str = ffi.new('char *[1]', { nil })
       local ret = fs.os_mkdir_recurse(path, mode, failed_str, created_str)
       local failed_dir = failed_str[0]
       if failed_dir ~= nil then
@@ -788,8 +812,7 @@ describe('fs.c', function()
 
       itp('fails to create a directory where there is a file', function()
         local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
-        local ret, failed_dir, created_dir = os_mkdir_recurse(
-            'unit-test-directory/test.file', mode)
+        local ret, failed_dir, created_dir = os_mkdir_recurse('unit-test-directory/test.file', mode)
         neq(0, ret)
         eq('unit-test-directory/test.file', failed_dir)
         eq(nil, created_dir)
@@ -797,8 +820,8 @@ describe('fs.c', function()
 
       itp('fails to create a directory where there is a file in path', function()
         local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
-        local ret, failed_dir, created_dir = os_mkdir_recurse(
-            'unit-test-directory/test.file/test', mode)
+        local ret, failed_dir, created_dir =
+          os_mkdir_recurse('unit-test-directory/test.file/test', mode)
         neq(0, ret)
         eq('unit-test-directory/test.file', failed_dir)
         eq(nil, created_dir)
@@ -806,8 +829,8 @@ describe('fs.c', function()
 
       itp('succeeds to create a directory', function()
         local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
-        local ret, failed_dir, created_dir = os_mkdir_recurse(
-            'unit-test-directory/new-dir-recurse', mode)
+        local ret, failed_dir, created_dir =
+          os_mkdir_recurse('unit-test-directory/new-dir-recurse', mode)
         eq(0, ret)
         eq(nil, failed_dir)
         ok(endswith(created_dir, 'unit-test-directory/new-dir-recurse'))
@@ -818,8 +841,8 @@ describe('fs.c', function()
 
       itp('succeeds to create a directory ending with ///', function()
         local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
-        local ret, failed_dir, created_dir = os_mkdir_recurse(
-            'unit-test-directory/new-dir-recurse///', mode)
+        local ret, failed_dir, created_dir =
+          os_mkdir_recurse('unit-test-directory/new-dir-recurse///', mode)
         eq(0, ret)
         eq(nil, failed_dir)
         ok(endswith(created_dir, 'unit-test-directory/new-dir-recurse'))
@@ -830,8 +853,8 @@ describe('fs.c', function()
 
       itp('succeeds to create a directory ending with /', function()
         local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
-        local ret, failed_dir, created_dir = os_mkdir_recurse(
-            'unit-test-directory/new-dir-recurse/', mode)
+        local ret, failed_dir, created_dir =
+          os_mkdir_recurse('unit-test-directory/new-dir-recurse/', mode)
         eq(0, ret)
         eq(nil, failed_dir)
         ok(endswith(created_dir, 'unit-test-directory/new-dir-recurse'))
@@ -842,8 +865,8 @@ describe('fs.c', function()
 
       itp('succeeds to create a directory tree', function()
         local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
-        local ret, failed_dir, created_dir = os_mkdir_recurse(
-            'unit-test-directory/new-dir-recurse/1/2/3', mode)
+        local ret, failed_dir, created_dir =
+          os_mkdir_recurse('unit-test-directory/new-dir-recurse/1/2/3', mode)
         eq(0, ret)
         eq(nil, failed_dir)
         ok(endswith(created_dir, 'unit-test-directory/new-dir-recurse'))

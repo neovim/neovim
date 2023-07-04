@@ -10,15 +10,15 @@ describe('oldtests', function()
   before_each(clear)
 
   local exec_lines = function(str)
-    return funcs.split(funcs.execute(str), "\n")
+    return funcs.split(funcs.execute(str), '\n')
   end
 
   local add_an_autocmd = function()
-    exec [[
+    exec([[
       augroup vimBarTest
         au BufReadCmd * echo 'hello'
       augroup END
-    ]]
+    ]])
 
     eq(3, #exec_lines('au vimBarTest'))
     eq(1, #meths.get_autocmds({ group = 'vimBarTest' }))
@@ -27,29 +27,28 @@ describe('oldtests', function()
   it('should recognize a bar before the {event}', function()
     -- Good spacing
     add_an_autocmd()
-    exec [[ augroup vimBarTest | au! | augroup END ]]
+    exec([[ augroup vimBarTest | au! | augroup END ]])
     eq(1, #exec_lines('au vimBarTest'))
     eq({}, meths.get_autocmds({ group = 'vimBarTest' }))
 
     -- Sad spacing
     add_an_autocmd()
-    exec [[ augroup vimBarTest| au!| augroup END ]]
+    exec([[ augroup vimBarTest| au!| augroup END ]])
     eq(1, #exec_lines('au vimBarTest'))
-
 
     -- test that a bar is recognized after the {event}
     add_an_autocmd()
-    exec [[ augroup vimBarTest| au!BufReadCmd| augroup END ]]
+    exec([[ augroup vimBarTest| au!BufReadCmd| augroup END ]])
     eq(1, #exec_lines('au vimBarTest'))
 
     add_an_autocmd()
-    exec [[ au! vimBarTest|echo 'hello' ]]
+    exec([[ au! vimBarTest|echo 'hello' ]])
     eq(1, #exec_lines('au vimBarTest'))
   end)
 
   it('should fire on unload buf', function()
-    funcs.writefile({'Test file Xxx1'}, 'Xxx1')
-    funcs.writefile({'Test file Xxx2'}, 'Xxx2')
+    funcs.writefile({ 'Test file Xxx1' }, 'Xxx1')
+    funcs.writefile({ 'Test file Xxx2' }, 'Xxx2')
     local fname = 'Xtest_functional_autocmd_unload'
 
     local content = [[
@@ -70,7 +69,7 @@ describe('oldtests', function()
       q
     ]]
 
-    funcs.writefile(funcs.split(content, "\n"), fname)
+    funcs.writefile(funcs.split(content, '\n'), fname)
 
     funcs.delete('Xout')
     funcs.system(string.format('%s -u NORC -i NONE -N -S %s', meths.get_vvar('progpath'), fname))

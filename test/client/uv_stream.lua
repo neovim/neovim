@@ -6,7 +6,7 @@ StdioStream.__index = StdioStream
 function StdioStream.open()
   local self = setmetatable({
     _in = uv.new_pipe(false),
-    _out = uv.new_pipe(false)
+    _out = uv.new_pipe(false),
   }, StdioStream)
   self._in:open(0)
   self._out:open(1)
@@ -42,9 +42,9 @@ function SocketStream.open(file)
   local socket = uv.new_pipe(false)
   local self = setmetatable({
     _socket = socket,
-    _stream_error = nil
+    _stream_error = nil,
   }, SocketStream)
-  uv.pipe_connect(socket, file, function (err)
+  uv.pipe_connect(socket, file, function(err)
     self._stream_error = self._stream_error or err
   end)
   return self
@@ -54,14 +54,13 @@ function SocketStream.connect(host, port)
   local socket = uv.new_tcp()
   local self = setmetatable({
     _socket = socket,
-    _stream_error = nil
+    _stream_error = nil,
   }, SocketStream)
-  uv.tcp_connect(socket, host, port, function (err)
+  uv.tcp_connect(socket, host, port, function(err)
     self._stream_error = self._stream_error or err
   end)
   return self
 end
-
 
 function SocketStream:write(data)
   if self._stream_error then
@@ -102,9 +101,9 @@ ChildProcessStream.__index = ChildProcessStream
 
 function ChildProcessStream.spawn(argv, env, io_extra)
   local self = setmetatable({
-    _child_stdin = uv.new_pipe(false);
-    _child_stdout = uv.new_pipe(false);
-    _exiting = false;
+    _child_stdin = uv.new_pipe(false),
+    _child_stdout = uv.new_pipe(false),
+    _exiting = false,
   }, ChildProcessStream)
   local prog = argv[1]
   local args = {}
@@ -112,7 +111,7 @@ function ChildProcessStream.spawn(argv, env, io_extra)
     args[#args + 1] = argv[i]
   end
   self._proc, self._pid = uv.spawn(prog, {
-    stdio = {self._child_stdin, self._child_stdout, 2, io_extra},
+    stdio = { self._child_stdin, self._child_stdout, 2, io_extra },
     args = args,
     env = env,
   }, function(status, signal)
@@ -154,16 +153,16 @@ function ChildProcessStream:close(signal)
   self._child_stdin:close()
   self._child_stdout:close()
   if type(signal) == 'string' then
-    self._proc:kill('sig'..signal)
+    self._proc:kill('sig' .. signal)
   end
   while self.status == nil do
-    uv.run 'once'
+    uv.run('once')
   end
   return self.status, self.signal
 end
 
 return {
-  StdioStream = StdioStream;
-  ChildProcessStream = ChildProcessStream;
-  SocketStream = SocketStream;
+  StdioStream = StdioStream,
+  ChildProcessStream = ChildProcessStream,
+  SocketStream = SocketStream,
 }

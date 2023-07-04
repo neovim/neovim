@@ -9,7 +9,7 @@ describe('changelist', function()
   setup(clear)
 
   it('is working', function()
-    insert("1\n2")
+    insert('1\n2')
 
     feed('Gkylp')
     feed_command('set ul=100')

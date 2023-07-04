@@ -1,11 +1,11 @@
 -- Tests for tag search with !_TAG_FILE_ENCODING.
 
 local helpers = require('test.functional.helpers')(after_each)
-local insert, source, clear, expect, write_file = helpers.insert,
-  helpers.source, helpers.clear, helpers.expect, helpers.write_file
+local insert, source, clear, expect, write_file =
+  helpers.insert, helpers.source, helpers.clear, helpers.expect, helpers.write_file
 
 local function has_iconv()
-  clear()  -- ensures session
+  clear() -- ensures session
   return 1 == helpers.eval('has("iconv")')
 end
 
@@ -18,14 +18,17 @@ describe('tag search with !_TAG_FILE_ENCODING', function()
     write_file('Xtags1.txt', 'text for tags1\nabcdefghijklmnopqrs\n')
     write_file('Xtags2.txt', 'text for tags2\nＡＢＣ\n')
     write_file('Xtags3.txt', 'text for tags3\nＡＢＣ\n')
-    write_file('Xtags1', [[
+    write_file(
+      'Xtags1',
+      [[
       !_TAG_FILE_ENCODING	utf-8	//
       abcdefghijklmnopqrs	Xtags1.txt	/abcdefghijklmnopqrs
-      ]])
-    write_file('test83-tags2',
-      '!_TAG_FILE_ENCODING	cp932	//\n' ..
-      '\130`\130a\130b	Xtags2.txt	/\130`\130a\130b\n'
-      )
+      ]]
+    )
+    write_file(
+      'test83-tags2',
+      '!_TAG_FILE_ENCODING	cp932	//\n' .. '\130`\130a\130b	Xtags2.txt	/\130`\130a\130b\n'
+    )
     -- The last file is very long but repetitive and can be generated on the
     -- fly.
     local text = helpers.dedent([[
@@ -51,7 +54,6 @@ describe('tag search with !_TAG_FILE_ENCODING', function()
     pending('skipped (missing iconv)', function() end)
   else
     it('is working', function()
-
       insert('Results of test83')
 
       -- Case1:

@@ -12,4 +12,3 @@ describe('v:event', function()
     eq(false, pcall(command, 'let v:event.mykey = {}'))
   end)
 end)
-

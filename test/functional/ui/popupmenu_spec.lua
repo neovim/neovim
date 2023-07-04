@@ -18,16 +18,16 @@ describe('ui/ext_popupmenu', function()
   before_each(function()
     clear()
     screen = Screen.new(60, 8)
-    screen:attach({rgb=true, ext_popupmenu=true})
+    screen:attach({ rgb = true, ext_popupmenu = true })
     screen:set_default_attr_ids({
-      [1] = {bold=true, foreground=Screen.colors.Blue},
-      [2] = {bold = true},
-      [3] = {reverse = true},
-      [4] = {bold = true, reverse = true},
-      [5] = {bold = true, foreground = Screen.colors.SeaGreen},
-      [6] = {background = Screen.colors.WebGray},
-      [7] = {background = Screen.colors.LightMagenta},
-      [8] = {foreground = Screen.colors.Red},
+      [1] = { bold = true, foreground = Screen.colors.Blue },
+      [2] = { bold = true },
+      [3] = { reverse = true },
+      [4] = { bold = true, reverse = true },
+      [5] = { bold = true, foreground = Screen.colors.SeaGreen },
+      [6] = { background = Screen.colors.WebGray },
+      [7] = { background = Screen.colors.LightMagenta },
+      [8] = { foreground = Screen.colors.Red },
     })
     source([[
       function! TestComplete() abort
@@ -38,14 +38,15 @@ describe('ui/ext_popupmenu', function()
   end)
 
   local expected = {
-    {'fo', 'x', 'the foo', 'foo-y'},
-    {'bar', '', '', ''},
-    {'spam', '', '', ''},
+    { 'fo', 'x', 'the foo', 'foo-y' },
+    { 'bar', '', '', '' },
+    { 'spam', '', '', '' },
   }
 
   it('works', function()
     feed('o<C-r>=TestComplete()<CR>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                                                   |
       foo^                                                         |
       {1:~                                                           }|
@@ -54,14 +55,17 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=expected,
-      pos=0,
-      anchor={1,1,0},
-    }}
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = 0,
+        anchor = { 1, 1, 0 },
+      },
+    })
 
     feed('<c-p>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                                                   |
       ^                                                            |
       {1:~                                                           }|
@@ -70,15 +74,18 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=expected,
-      pos=-1,
-      anchor={1,1,0},
-    }}
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = -1,
+        anchor = { 1, 1, 0 },
+      },
+    })
 
     -- down moves the selection in the menu, but does not insert anything
     feed('<down><down>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                                                   |
       ^                                                            |
       {1:~                                                           }|
@@ -87,14 +94,17 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=expected,
-      pos=1,
-      anchor={1,1,0},
-    }}
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = 1,
+        anchor = { 1, 1, 0 },
+      },
+    })
 
     feed('<cr>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                                                   |
       bar^                                                         |
       {1:~                                                           }|
@@ -103,12 +113,14 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-    ]]}
+    ]],
+    })
   end)
 
   it('can be controlled by API', function()
     feed('o<C-r>=TestComplete()<CR>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                                                   |
       foo^                                                         |
       {1:~                                                           }|
@@ -117,14 +129,17 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=expected,
-      pos=0,
-      anchor={1,1,0},
-    }}
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = 0,
+        anchor = { 1, 1, 0 },
+      },
+    })
 
-    meths.select_popupmenu_item(1,false,false,{})
-    screen:expect{grid=[[
+    meths.select_popupmenu_item(1, false, false, {})
+    screen:expect({
+      grid = [[
                                                                   |
       foo^                                                         |
       {1:~                                                           }|
@@ -133,14 +148,17 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=expected,
-      pos=1,
-      anchor={1,1,0},
-    }}
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = 1,
+        anchor = { 1, 1, 0 },
+      },
+    })
 
-    meths.select_popupmenu_item(2,true,false,{})
-    screen:expect{grid=[[
+    meths.select_popupmenu_item(2, true, false, {})
+    screen:expect({
+      grid = [[
                                                                   |
       spam^                                                        |
       {1:~                                                           }|
@@ -149,13 +167,15 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=expected,
-      pos=2,
-      anchor={1,1,0},
-    }}
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = 2,
+        anchor = { 1, 1, 0 },
+      },
+    })
 
-    meths.select_popupmenu_item(0,true,true,{})
+    meths.select_popupmenu_item(0, true, true, {})
     screen:expect([[
                                                                   |
       foo^                                                         |
@@ -167,9 +187,9 @@ describe('ui/ext_popupmenu', function()
       {2:-- INSERT --}                                                |
     ]])
 
-
     feed('<c-w><C-r>=TestComplete()<CR>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                                                   |
       foo^                                                         |
       {1:~                                                           }|
@@ -178,14 +198,17 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=expected,
-      pos=0,
-      anchor={1,1,0},
-    }}
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = 0,
+        anchor = { 1, 1, 0 },
+      },
+    })
 
-    meths.select_popupmenu_item(-1,false,false,{})
-    screen:expect{grid=[[
+    meths.select_popupmenu_item(-1, false, false, {})
+    screen:expect({
+      grid = [[
                                                                   |
       foo^                                                         |
       {1:~                                                           }|
@@ -194,14 +217,17 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=expected,
-      pos=-1,
-      anchor={1,1,0},
-    }}
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = -1,
+        anchor = { 1, 1, 0 },
+      },
+    })
 
-    meths.select_popupmenu_item(1,true,false,{})
-    screen:expect{grid=[[
+    meths.select_popupmenu_item(1, true, false, {})
+    screen:expect({
+      grid = [[
                                                                   |
       bar^                                                         |
       {1:~                                                           }|
@@ -210,14 +236,17 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=expected,
-      pos=1,
-      anchor={1,1,0},
-    }}
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = 1,
+        anchor = { 1, 1, 0 },
+      },
+    })
 
-    meths.select_popupmenu_item(-1,true,false,{})
-    screen:expect{grid=[[
+    meths.select_popupmenu_item(-1, true, false, {})
+    screen:expect({
+      grid = [[
                                                                   |
       ^                                                            |
       {1:~                                                           }|
@@ -226,14 +255,17 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=expected,
-      pos=-1,
-      anchor={1,1,0},
-    }}
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = -1,
+        anchor = { 1, 1, 0 },
+      },
+    })
 
-    meths.select_popupmenu_item(0,true,false,{})
-    screen:expect{grid=[[
+    meths.select_popupmenu_item(0, true, false, {})
+    screen:expect({
+      grid = [[
                                                                   |
       foo^                                                         |
       {1:~                                                           }|
@@ -242,13 +274,15 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=expected,
-      pos=0,
-      anchor={1,1,0},
-    }}
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = 0,
+        anchor = { 1, 1, 0 },
+      },
+    })
 
-    meths.select_popupmenu_item(-1,true,true,{})
+    meths.select_popupmenu_item(-1, true, true, {})
     screen:expect([[
                                                                   |
       ^                                                            |
@@ -263,15 +297,16 @@ describe('ui/ext_popupmenu', function()
     command('set wildmenu')
     command('set wildoptions=pum')
     local expected_wildpum = {
-      { "define", "", "", "" },
-      { "jump", "", "", "" },
-      { "list", "", "", "" },
-      { "place", "", "", "" },
-      { "undefine", "", "", "" },
-      { "unplace", "", "", "" },
+      { 'define', '', '', '' },
+      { 'jump', '', '', '' },
+      { 'list', '', '', '' },
+      { 'place', '', '', '' },
+      { 'undefine', '', '', '' },
+      { 'unplace', '', '', '' },
     }
     feed('<Esc>:sign <Tab>')
-    screen:expect({grid = [[
+    screen:expect({
+      grid = [[
                                                                   |
                                                                   |
       {1:~                                                           }|
@@ -280,14 +315,17 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       :sign define^                                                |
-    ]], popupmenu = {
-      items = expected_wildpum,
-      pos = 0,
-      anchor = { 1, 7, 6 },
-    }})
+    ]],
+      popupmenu = {
+        items = expected_wildpum,
+        pos = 0,
+        anchor = { 1, 7, 6 },
+      },
+    })
 
     meths.select_popupmenu_item(-1, true, false, {})
-    screen:expect({grid = [[
+    screen:expect({
+      grid = [[
                                                                   |
                                                                   |
       {1:~                                                           }|
@@ -296,14 +334,17 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       :sign ^                                                      |
-    ]], popupmenu = {
-      items = expected_wildpum,
-      pos = -1,
-      anchor = { 1, 7, 6 },
-    }})
+    ]],
+      popupmenu = {
+        items = expected_wildpum,
+        pos = -1,
+        anchor = { 1, 7, 6 },
+      },
+    })
 
     meths.select_popupmenu_item(5, true, false, {})
-    screen:expect({grid = [[
+    screen:expect({
+      grid = [[
                                                                   |
                                                                   |
       {1:~                                                           }|
@@ -312,14 +353,17 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       :sign unplace^                                               |
-    ]], popupmenu = {
-      items = expected_wildpum,
-      pos = 5,
-      anchor = { 1, 7, 6 },
-    }})
+    ]],
+      popupmenu = {
+        items = expected_wildpum,
+        pos = 5,
+        anchor = { 1, 7, 6 },
+      },
+    })
 
     meths.select_popupmenu_item(-1, true, true, {})
-    screen:expect({grid = [[
+    screen:expect({
+      grid = [[
                                                                   |
                                                                   |
       {1:~                                                           }|
@@ -328,10 +372,12 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       :sign ^                                                      |
-    ]]})
+    ]],
+    })
 
     feed('<Tab>')
-    screen:expect({grid = [[
+    screen:expect({
+      grid = [[
                                                                   |
                                                                   |
       {1:~                                                           }|
@@ -340,14 +386,17 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       :sign define^                                                |
-    ]], popupmenu = {
-      items = expected_wildpum,
-      pos = 0,
-      anchor = { 1, 7, 6 },
-    }})
+    ]],
+      popupmenu = {
+        items = expected_wildpum,
+        pos = 0,
+        anchor = { 1, 7, 6 },
+      },
+    })
 
     meths.select_popupmenu_item(5, true, true, {})
-    screen:expect({grid = [[
+    screen:expect({
+      grid = [[
                                                                   |
                                                                   |
       {1:~                                                           }|
@@ -356,12 +405,14 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       :sign unplace^                                               |
-    ]]})
+    ]],
+    })
 
     local function test_pum_select_mappings()
       screen:set_option('ext_popupmenu', true)
       feed('<Esc>A<C-r>=TestComplete()<CR>')
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
                                                                     |
         foo^                                                         |
         {1:~                                                           }|
@@ -370,14 +421,17 @@ describe('ui/ext_popupmenu', function()
         {1:~                                                           }|
         {1:~                                                           }|
         {2:-- INSERT --}                                                |
-      ]], popupmenu={
-        items=expected,
-        pos=0,
-        anchor={1,1,0},
-      }}
+      ]],
+        popupmenu = {
+          items = expected,
+          pos = 0,
+          anchor = { 1, 1, 0 },
+        },
+      })
 
       feed('<f1>')
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
                                                                     |
         spam^                                                        |
         {1:~                                                           }|
@@ -386,14 +440,17 @@ describe('ui/ext_popupmenu', function()
         {1:~                                                           }|
         {1:~                                                           }|
         {2:-- INSERT --}                                                |
-      ]], popupmenu={
-        items=expected,
-        pos=2,
-        anchor={1,1,0},
-      }}
+      ]],
+        popupmenu = {
+          items = expected,
+          pos = 2,
+          anchor = { 1, 1, 0 },
+        },
+      })
 
       feed('<f2>')
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
                                                                     |
         spam^                                                        |
         {1:~                                                           }|
@@ -402,11 +459,13 @@ describe('ui/ext_popupmenu', function()
         {1:~                                                           }|
         {1:~                                                           }|
         {2:-- INSERT --}                                                |
-      ]], popupmenu={
-        items=expected,
-        pos=-1,
-        anchor={1,1,0},
-      }}
+      ]],
+        popupmenu = {
+          items = expected,
+          pos = -1,
+          anchor = { 1, 1, 0 },
+        },
+      })
 
       feed('<f3>')
       screen:expect([[
@@ -421,7 +480,8 @@ describe('ui/ext_popupmenu', function()
       ]])
 
       feed('<Esc>:sign <Tab>')
-      screen:expect({grid = [[
+      screen:expect({
+        grid = [[
                                                                     |
         bar                                                         |
         {1:~                                                           }|
@@ -430,14 +490,17 @@ describe('ui/ext_popupmenu', function()
         {1:~                                                           }|
         {1:~                                                           }|
         :sign define^                                                |
-      ]], popupmenu = {
-        items = expected_wildpum,
-        pos = 0,
-        anchor = { 1, 7, 6 },
-      }})
+      ]],
+        popupmenu = {
+          items = expected_wildpum,
+          pos = 0,
+          anchor = { 1, 7, 6 },
+        },
+      })
 
       feed('<f1>')
-      screen:expect({grid = [[
+      screen:expect({
+        grid = [[
                                                                     |
         bar                                                         |
         {1:~                                                           }|
@@ -446,14 +509,17 @@ describe('ui/ext_popupmenu', function()
         {1:~                                                           }|
         {1:~                                                           }|
         :sign list^                                                  |
-      ]], popupmenu = {
-        items = expected_wildpum,
-        pos = 2,
-        anchor = { 1, 7, 6 },
-      }})
+      ]],
+        popupmenu = {
+          items = expected_wildpum,
+          pos = 2,
+          anchor = { 1, 7, 6 },
+        },
+      })
 
       feed('<f2>')
-      screen:expect({grid = [[
+      screen:expect({
+        grid = [[
                                                                     |
         bar                                                         |
         {1:~                                                           }|
@@ -462,14 +528,17 @@ describe('ui/ext_popupmenu', function()
         {1:~                                                           }|
         {1:~                                                           }|
         :sign ^                                                      |
-      ]], popupmenu = {
-        items = expected_wildpum,
-        pos = -1,
-        anchor = { 1, 7, 6 },
-      }})
+      ]],
+        popupmenu = {
+          items = expected_wildpum,
+          pos = -1,
+          anchor = { 1, 7, 6 },
+        },
+      })
 
       feed('<f3>')
-      screen:expect({grid = [[
+      screen:expect({
+        grid = [[
                                                                     |
         bar                                                         |
         {1:~                                                           }|
@@ -478,7 +547,8 @@ describe('ui/ext_popupmenu', function()
         {1:~                                                           }|
         {1:~                                                           }|
         :sign jump^                                                  |
-      ]]})
+      ]],
+      })
 
       -- also should work for builtin popupmenu
       screen:set_option('ext_popupmenu', false)
@@ -659,18 +729,18 @@ describe('ui/ext_popupmenu', function()
     it('can set pum height', function()
       source_complete_month()
       local month_expected = {
-        {'January', '', '', ''},
-        {'February', '', '', ''},
-        {'March', '', '', ''},
-        {'April', '', '', ''},
-        {'May', '', '', ''},
-        {'June', '', '', ''},
-        {'July', '', '', ''},
-        {'August', '', '', ''},
-        {'September', '', '', ''},
-        {'October', '', '', ''},
-        {'November', '', '', ''},
-        {'December', '', '', ''},
+        { 'January', '', '', '' },
+        { 'February', '', '', '' },
+        { 'March', '', '', '' },
+        { 'April', '', '', '' },
+        { 'May', '', '', '' },
+        { 'June', '', '', '' },
+        { 'July', '', '', '' },
+        { 'August', '', '', '' },
+        { 'September', '', '', '' },
+        { 'October', '', '', '' },
+        { 'November', '', '', '' },
+        { 'December', '', '', '' },
       }
       local pum_height = 6
       feed('o<C-r>=TestCompleteMonth()<CR>')
@@ -678,7 +748,8 @@ describe('ui/ext_popupmenu', function()
       feed('<PageDown>')
       -- pos becomes pum_height-2 because it is subtracting 2 to keep some
       -- context in ins_compl_key2count()
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
                                                                   |
       January^                                                     |
       {1:~                                                           }|
@@ -687,24 +758,24 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-      ]], popupmenu={
-        items=month_expected,
-        pos=pum_height-2,
-        anchor={1,1,0},
-      }}
+      ]],
+        popupmenu = {
+          items = month_expected,
+          pos = pum_height - 2,
+          anchor = { 1, 1, 0 },
+        },
+      })
     end)
 
     it('an error occurs if set 0 or less', function()
       meths.ui_pum_set_height(1)
-      eq('Expected pum height > 0',
-         pcall_err(meths.ui_pum_set_height, 0))
+      eq('Expected pum height > 0', pcall_err(meths.ui_pum_set_height, 0))
     end)
 
     it('an error occurs when ext_popupmenu is false', function()
       meths.ui_pum_set_height(1)
       screen:set_option('ext_popupmenu', false)
-      eq('It must support the ext_popupmenu option',
-         pcall_err(meths.ui_pum_set_height, 1))
+      eq('It must support the ext_popupmenu option', pcall_err(meths.ui_pum_set_height, 1))
     end)
   end)
 
@@ -712,18 +783,18 @@ describe('ui/ext_popupmenu', function()
     it('can set pum bounds', function()
       source_complete_month()
       local month_expected = {
-        {'January', '', '', ''},
-        {'February', '', '', ''},
-        {'March', '', '', ''},
-        {'April', '', '', ''},
-        {'May', '', '', ''},
-        {'June', '', '', ''},
-        {'July', '', '', ''},
-        {'August', '', '', ''},
-        {'September', '', '', ''},
-        {'October', '', '', ''},
-        {'November', '', '', ''},
-        {'December', '', '', ''},
+        { 'January', '', '', '' },
+        { 'February', '', '', '' },
+        { 'March', '', '', '' },
+        { 'April', '', '', '' },
+        { 'May', '', '', '' },
+        { 'June', '', '', '' },
+        { 'July', '', '', '' },
+        { 'August', '', '', '' },
+        { 'September', '', '', '' },
+        { 'October', '', '', '' },
+        { 'November', '', '', '' },
+        { 'December', '', '', '' },
       }
       local pum_height = 6
       feed('o<C-r>=TestCompleteMonth()<CR>')
@@ -733,7 +804,8 @@ describe('ui/ext_popupmenu', function()
       feed('<PageDown>')
       -- pos becomes pum_height-2 because it is subtracting 2 to keep some
       -- context in ins_compl_key2count()
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
                                                                   |
       January^                                                     |
       {1:~                                                           }|
@@ -742,11 +814,13 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-      ]], popupmenu={
-        items=month_expected,
-        pos=pum_height-2,
-        anchor={1,1,0},
-      }}
+      ]],
+        popupmenu = {
+          items = month_expected,
+          pos = pum_height - 2,
+          anchor = { 1, 1, 0 },
+        },
+      })
     end)
 
     it('no error occurs if row or col set less than 0', function()
@@ -757,39 +831,40 @@ describe('ui/ext_popupmenu', function()
 
     it('an error occurs if width or height set 0 or less', function()
       meths.ui_pum_set_bounds(1.0, 1.0, 0.0, 1.5)
-      eq('Expected width > 0',
-         pcall_err(meths.ui_pum_set_bounds, 0.0, 1.0, 1.0, 0.0))
-      eq('Expected height > 0',
-         pcall_err(meths.ui_pum_set_bounds, 1.0, -1.0, 1.0, 0.0))
+      eq('Expected width > 0', pcall_err(meths.ui_pum_set_bounds, 0.0, 1.0, 1.0, 0.0))
+      eq('Expected height > 0', pcall_err(meths.ui_pum_set_bounds, 1.0, -1.0, 1.0, 0.0))
     end)
 
     it('an error occurs when ext_popupmenu is false', function()
       meths.ui_pum_set_bounds(1.0, 1.0, 0.0, 1.5)
       screen:set_option('ext_popupmenu', false)
-      eq('UI must support the ext_popupmenu option',
-         pcall_err(meths.ui_pum_set_bounds, 1.0, 1.0, 0.0, 1.5))
+      eq(
+        'UI must support the ext_popupmenu option',
+        pcall_err(meths.ui_pum_set_bounds, 1.0, 1.0, 0.0, 1.5)
+      )
     end)
   end)
 
   it('<PageUP>, <PageDown> works without ui_pum_set_height', function()
     source_complete_month()
     local month_expected = {
-      {'January', '', '', ''},
-      {'February', '', '', ''},
-      {'March', '', '', ''},
-      {'April', '', '', ''},
-      {'May', '', '', ''},
-      {'June', '', '', ''},
-      {'July', '', '', ''},
-      {'August', '', '', ''},
-      {'September', '', '', ''},
-      {'October', '', '', ''},
-      {'November', '', '', ''},
-      {'December', '', '', ''},
+      { 'January', '', '', '' },
+      { 'February', '', '', '' },
+      { 'March', '', '', '' },
+      { 'April', '', '', '' },
+      { 'May', '', '', '' },
+      { 'June', '', '', '' },
+      { 'July', '', '', '' },
+      { 'August', '', '', '' },
+      { 'September', '', '', '' },
+      { 'October', '', '', '' },
+      { 'November', '', '', '' },
+      { 'December', '', '', '' },
     }
     feed('o<C-r>=TestCompleteMonth()<CR>')
     feed('<PageDown>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                                                 |
     January^                                                     |
     {1:~                                                           }|
@@ -798,13 +873,16 @@ describe('ui/ext_popupmenu', function()
     {1:~                                                           }|
     {1:~                                                           }|
     {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=month_expected,
-      pos=3,
-      anchor={1,1,0},
-    }}
+    ]],
+      popupmenu = {
+        items = month_expected,
+        pos = 3,
+        anchor = { 1, 1, 0 },
+      },
+    })
     feed('<PageUp>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                                                 |
     January^                                                     |
     {1:~                                                           }|
@@ -813,25 +891,27 @@ describe('ui/ext_popupmenu', function()
     {1:~                                                           }|
     {1:~                                                           }|
     {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=month_expected,
-      pos=0,
-      anchor={1,1,0},
-    }}
+    ]],
+      popupmenu = {
+        items = month_expected,
+        pos = 0,
+        anchor = { 1, 1, 0 },
+      },
+    })
   end)
 
   it('works with wildoptions=pum', function()
-    screen:try_resize(32,10)
+    screen:try_resize(32, 10)
     command('set wildmenu')
     command('set wildoptions=pum')
 
     local wild_expected = {
-        {'define', '', '', ''},
-        {'jump', '', '', ''},
-        {'list', '', '', ''},
-        {'place', '', '', ''},
-        {'undefine', '', '', ''},
-        {'unplace', '', '', ''},
+      { 'define', '', '', '' },
+      { 'jump', '', '', '' },
+      { 'list', '', '', '' },
+      { 'place', '', '', '' },
+      { 'undefine', '', '', '' },
+      { 'unplace', '', '', '' },
     }
 
     feed(':sign ')
@@ -850,7 +930,8 @@ describe('ui/ext_popupmenu', function()
     eq(0, funcs.wildmenumode())
 
     feed('<tab>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                       |
       {1:~                               }|
       {1:~                               }|
@@ -861,11 +942,14 @@ describe('ui/ext_popupmenu', function()
       {1:~                               }|
       {1:~                               }|
       :sign define^                    |
-    ]], popupmenu={items=wild_expected, pos=0, anchor={1, 9, 6}}}
+    ]],
+      popupmenu = { items = wild_expected, pos = 0, anchor = { 1, 9, 6 } },
+    })
     eq(1, funcs.wildmenumode())
 
     feed('<left>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                       |
       {1:~                               }|
       {1:~                               }|
@@ -876,10 +960,13 @@ describe('ui/ext_popupmenu', function()
       {1:~                               }|
       {1:~                               }|
       :sign ^                          |
-    ]], popupmenu={items=wild_expected, pos=-1, anchor={1, 9, 6}}}
+    ]],
+      popupmenu = { items = wild_expected, pos = -1, anchor = { 1, 9, 6 } },
+    })
 
     feed('<left>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                       |
       {1:~                               }|
       {1:~                               }|
@@ -890,7 +977,9 @@ describe('ui/ext_popupmenu', function()
       {1:~                               }|
       {1:~                               }|
       :sign unplace^                   |
-    ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
+    ]],
+      popupmenu = { items = wild_expected, pos = 5, anchor = { 1, 9, 6 } },
+    })
 
     feed('x')
     screen:expect([[
@@ -909,7 +998,8 @@ describe('ui/ext_popupmenu', function()
 
     -- #10042: make sure shift-tab also triggers the pum
     feed(':sign <S-tab>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                       |
       {1:~                               }|
       {1:~                               }|
@@ -920,15 +1010,18 @@ describe('ui/ext_popupmenu', function()
       {1:~                               }|
       {1:~                               }|
       :sign unplace^                   |
-    ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
+    ]],
+      popupmenu = { items = wild_expected, pos = 5, anchor = { 1, 9, 6 } },
+    })
     feed('<esc>')
     eq(0, funcs.wildmenumode())
 
     -- check positioning with multibyte char in pattern
-    command("e långfile1")
-    command("sp långfile2")
+    command('e långfile1')
+    command('sp långfile2')
     feed(':b lå<tab>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                       |
       {1:~                               }|
       {1:~                               }|
@@ -939,12 +1032,13 @@ describe('ui/ext_popupmenu', function()
       {1:~                               }|
       {3:långfile1                       }|
       :b långfile1^                    |
-    ]], popupmenu={
-      anchor = {1, 9, 3},
-      items = {{"långfile1", "", "", "" }, {"långfile2", "", "", ""}},
-      pos = 0,
-    }}
-
+    ]],
+      popupmenu = {
+        anchor = { 1, 9, 3 },
+        items = { { 'långfile1', '', '', '' }, { 'långfile2', '', '', '' } },
+        pos = 0,
+      },
+    })
   end)
 
   it('does not interfere with mousemodel=popup', function()
@@ -957,7 +1051,8 @@ describe('ui/ext_popupmenu', function()
       menu PopUp.baz :let g:menustr = 'baz'<CR>
     ]])
     feed('o<C-r>=TestComplete()<CR>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                                                   |
       foo^                                                         |
       {1:~                                                           }|
@@ -966,14 +1061,17 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=expected,
-      pos=0,
-      anchor={1,1,0},
-    }}
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = 0,
+        anchor = { 1, 1, 0 },
+      },
+    })
 
     feed('<c-p>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                                                   |
       ^                                                            |
       {1:~                                                           }|
@@ -982,14 +1080,17 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=expected,
-      pos=-1,
-      anchor={1,1,0},
-    }}
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = -1,
+        anchor = { 1, 1, 0 },
+      },
+    })
 
     feed('<esc>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                                                   |
       ^                                                            |
       {1:~                                                           }|
@@ -998,7 +1099,8 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
                                                                   |
-    ]]}
+    ]],
+    })
     feed('<RightMouse><0,0>')
     screen:expect([[
                                                                   |
@@ -1030,51 +1132,51 @@ describe("builtin popupmenu 'pumblend'", function()
   it('RGB-color', function()
     local screen = Screen.new(60, 14)
     screen:set_default_attr_ids({
-      [1] = {background = Screen.colors.Yellow},
-      [2] = {bold = true, reverse = true},
-      [3] = {bold = true, foreground = Screen.colors.Brown},
-      [4] = {foreground = Screen.colors.Blue1},
-      [5] = {reverse = true},
-      [6] = {background = Screen.colors.Gray55, foreground = Screen.colors.Grey45},
-      [7] = {background = Screen.colors.Gray55, foreground = Screen.colors.Grey0},
-      [8] = {background = tonumber('0x191919'), foreground = Screen.colors.Grey0},
-      [9] = {background = tonumber('0xffc1ff'), foreground = tonumber('0xe5a8e5')},
-      [10] = {background = tonumber('0xffc1ff'), foreground = Screen.colors.Grey0},
-      [11] = {foreground = tonumber('0xffc1ff'), background = tonumber('0xe5a8e5'), bold = true},
-      [12] = {foreground = Screen.colors.Grey55, background = Screen.colors.Gray45, bold = true},
-      [13] = {background = tonumber('0xffc1e5'), foreground = Screen.colors.Grey0},
-      [14] = {background = tonumber('0xffc1e5'), foreground = tonumber('0xe5a8e5')},
-      [15] = {background = tonumber('0xffc1ff'), foreground = tonumber('0x080202')},
-      [16] = {background = tonumber('0xffc1ff'), bold = true, foreground = tonumber('0xf6ace9')},
-      [17] = {background = tonumber('0xffc1ff'), foreground = tonumber('0xe5a8ff')},
-      [18] = {background = tonumber('0xe5a8e5'), foreground = tonumber('0xffc1ff')},
-      [19] = {background = Screen.colors.Gray45, foreground = Screen.colors.Grey55},
-      [20] = {bold = true},
-      [21] = {bold = true, foreground = Screen.colors.SeaGreen4},
-      [22] = {background = Screen.colors.WebGray},
-      [23] = {background = Screen.colors.Grey0},
-      [24] = {background = Screen.colors.LightMagenta},
-      [25] = {background = Screen.colors.Gray75, foreground = Screen.colors.Grey25},
-      [26] = {background = Screen.colors.Gray75, foreground = Screen.colors.Grey0},
-      [27] = {background = Screen.colors.Gray50, foreground = Screen.colors.Grey0},
-      [28] = {background = tonumber('0xffddff'), foreground = tonumber('0x7f5d7f')},
-      [29] = {background = tonumber('0xffddff'), foreground = Screen.colors.Grey0},
-      [30] = {foreground = tonumber('0xffddff'), background = tonumber('0x7f5d7f'), bold = true},
-      [31] = {foreground = tonumber('0xffddff'), background = Screen.colors.Grey0, bold = true},
-      [32] = {foreground = Screen.colors.Gray75, background = Screen.colors.Grey25, bold = true},
-      [33] = {background = tonumber('0xffdd7f'), foreground = Screen.colors.Grey0},
-      [34] = {background = tonumber('0xffdd7f'), foreground = tonumber('0x7f5d7f')},
-      [35] = {background = tonumber('0xffddff'), bold = true, foreground = tonumber('0x290a0a')},
-      [36] = {background = tonumber('0xffddff'), bold = true, foreground = tonumber('0xd27294')},
-      [37] = {background = tonumber('0xffddff'), foreground = tonumber('0x7f5dff')},
-      [38] = {background = tonumber('0x7f5d7f'), foreground = tonumber('0xffddff')},
-      [39] = {background = Screen.colors.Grey0, foreground = tonumber('0xffddff')},
-      [40] = {background = Screen.colors.Gray25, foreground = Screen.colors.Grey75},
-      [41] = {background = tonumber('0xffddff'), foreground = tonumber('0x00003f')},
-      [42] = {foreground = tonumber('0x0c0c0c'), background = tonumber('0xe5a8e5')},
-      [43] = {background = tonumber('0x7f5d7f'), bold = true, foreground = tonumber('0x3f3f3f')},
-      [44] = {foreground = tonumber('0x3f3f3f'), background = tonumber('0x7f5d7f')},
-      [45] = {background = Screen.colors.WebGray, blend=0},
+      [1] = { background = Screen.colors.Yellow },
+      [2] = { bold = true, reverse = true },
+      [3] = { bold = true, foreground = Screen.colors.Brown },
+      [4] = { foreground = Screen.colors.Blue1 },
+      [5] = { reverse = true },
+      [6] = { background = Screen.colors.Gray55, foreground = Screen.colors.Grey45 },
+      [7] = { background = Screen.colors.Gray55, foreground = Screen.colors.Grey0 },
+      [8] = { background = tonumber('0x191919'), foreground = Screen.colors.Grey0 },
+      [9] = { background = tonumber('0xffc1ff'), foreground = tonumber('0xe5a8e5') },
+      [10] = { background = tonumber('0xffc1ff'), foreground = Screen.colors.Grey0 },
+      [11] = { foreground = tonumber('0xffc1ff'), background = tonumber('0xe5a8e5'), bold = true },
+      [12] = { foreground = Screen.colors.Grey55, background = Screen.colors.Gray45, bold = true },
+      [13] = { background = tonumber('0xffc1e5'), foreground = Screen.colors.Grey0 },
+      [14] = { background = tonumber('0xffc1e5'), foreground = tonumber('0xe5a8e5') },
+      [15] = { background = tonumber('0xffc1ff'), foreground = tonumber('0x080202') },
+      [16] = { background = tonumber('0xffc1ff'), bold = true, foreground = tonumber('0xf6ace9') },
+      [17] = { background = tonumber('0xffc1ff'), foreground = tonumber('0xe5a8ff') },
+      [18] = { background = tonumber('0xe5a8e5'), foreground = tonumber('0xffc1ff') },
+      [19] = { background = Screen.colors.Gray45, foreground = Screen.colors.Grey55 },
+      [20] = { bold = true },
+      [21] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+      [22] = { background = Screen.colors.WebGray },
+      [23] = { background = Screen.colors.Grey0 },
+      [24] = { background = Screen.colors.LightMagenta },
+      [25] = { background = Screen.colors.Gray75, foreground = Screen.colors.Grey25 },
+      [26] = { background = Screen.colors.Gray75, foreground = Screen.colors.Grey0 },
+      [27] = { background = Screen.colors.Gray50, foreground = Screen.colors.Grey0 },
+      [28] = { background = tonumber('0xffddff'), foreground = tonumber('0x7f5d7f') },
+      [29] = { background = tonumber('0xffddff'), foreground = Screen.colors.Grey0 },
+      [30] = { foreground = tonumber('0xffddff'), background = tonumber('0x7f5d7f'), bold = true },
+      [31] = { foreground = tonumber('0xffddff'), background = Screen.colors.Grey0, bold = true },
+      [32] = { foreground = Screen.colors.Gray75, background = Screen.colors.Grey25, bold = true },
+      [33] = { background = tonumber('0xffdd7f'), foreground = Screen.colors.Grey0 },
+      [34] = { background = tonumber('0xffdd7f'), foreground = tonumber('0x7f5d7f') },
+      [35] = { background = tonumber('0xffddff'), bold = true, foreground = tonumber('0x290a0a') },
+      [36] = { background = tonumber('0xffddff'), bold = true, foreground = tonumber('0xd27294') },
+      [37] = { background = tonumber('0xffddff'), foreground = tonumber('0x7f5dff') },
+      [38] = { background = tonumber('0x7f5d7f'), foreground = tonumber('0xffddff') },
+      [39] = { background = Screen.colors.Grey0, foreground = tonumber('0xffddff') },
+      [40] = { background = Screen.colors.Gray25, foreground = Screen.colors.Grey75 },
+      [41] = { background = tonumber('0xffddff'), foreground = tonumber('0x00003f') },
+      [42] = { foreground = tonumber('0x0c0c0c'), background = tonumber('0xe5a8e5') },
+      [43] = { background = tonumber('0x7f5d7f'), bold = true, foreground = tonumber('0x3f3f3f') },
+      [44] = { foreground = tonumber('0x3f3f3f'), background = tonumber('0x7f5d7f') },
+      [45] = { background = Screen.colors.WebGray, blend = 0 },
     })
     screen:attach()
     command('syntax on')
@@ -1228,18 +1330,18 @@ describe("builtin popupmenu 'pumblend'", function()
   it('256-color (non-RGB)', function()
     local screen = Screen.new(60, 8)
     screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.Grey0, background = tonumber('0x000007')},
-      [2] = {foreground = tonumber('0x000055'), background = tonumber('0x000007')},
-      [3] = {foreground = tonumber('0x00008f'), background = Screen.colors.Grey0},
-      [4] = {foreground = Screen.colors.Grey0, background = tonumber('0x0000e1')},
-      [5] = {foreground = tonumber('0x0000d1'), background = tonumber('0x0000e1')},
-      [6] = {foreground = Screen.colors.NavyBlue, background = tonumber('0x0000f8')},
-      [7] = {foreground = tonumber('0x0000a5'), background = tonumber('0x0000f8')},
-      [8] = {foreground = tonumber('0x00000c')},
-      [9] = {bold = true},
-      [10] = {foreground = tonumber('0x000002')},
+      [1] = { foreground = Screen.colors.Grey0, background = tonumber('0x000007') },
+      [2] = { foreground = tonumber('0x000055'), background = tonumber('0x000007') },
+      [3] = { foreground = tonumber('0x00008f'), background = Screen.colors.Grey0 },
+      [4] = { foreground = Screen.colors.Grey0, background = tonumber('0x0000e1') },
+      [5] = { foreground = tonumber('0x0000d1'), background = tonumber('0x0000e1') },
+      [6] = { foreground = Screen.colors.NavyBlue, background = tonumber('0x0000f8') },
+      [7] = { foreground = tonumber('0x0000a5'), background = tonumber('0x0000f8') },
+      [8] = { foreground = tonumber('0x00000c') },
+      [9] = { bold = true },
+      [10] = { foreground = tonumber('0x000002') },
     })
-    screen:attach({rgb=false})
+    screen:attach({ rgb = false })
     command('set notermguicolors pumblend=10')
     insert([[
       Lorem ipsum dolor sit amet, consectetur
@@ -1271,21 +1373,21 @@ describe('builtin popupmenu', function()
       screen = Screen.new(32, 20)
       screen:set_default_attr_ids({
         -- popup selected item / scrollbar track
-        ['s'] = {background = Screen.colors.WebGray},
+        ['s'] = { background = Screen.colors.WebGray },
         -- popup non-selected item
-        ['n'] = {background = Screen.colors.LightMagenta},
+        ['n'] = { background = Screen.colors.LightMagenta },
         -- popup scrollbar knob
-        ['c'] = {background = Screen.colors.Grey0},
-        [1] = {bold = true, foreground = Screen.colors.Blue},
-        [2] = {bold = true},
-        [3] = {reverse = true},
-        [4] = {bold = true, reverse = true},
-        [5] = {bold = true, foreground = Screen.colors.SeaGreen},
-        [6] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-        [7] = {background = Screen.colors.Yellow},  -- Search
-        [8] = {foreground = Screen.colors.Red},
+        ['c'] = { background = Screen.colors.Grey0 },
+        [1] = { bold = true, foreground = Screen.colors.Blue },
+        [2] = { bold = true },
+        [3] = { reverse = true },
+        [4] = { bold = true, reverse = true },
+        [5] = { bold = true, foreground = Screen.colors.SeaGreen },
+        [6] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+        [7] = { background = Screen.colors.Yellow }, -- Search
+        [8] = { foreground = Screen.colors.Red },
       })
-      screen:attach({ext_multigrid=multigrid})
+      screen:attach({ ext_multigrid = multigrid })
     end)
 
     it('with preview-window above', function()
@@ -1293,7 +1395,8 @@ describe('builtin popupmenu', function()
       feed('iaa bb cc dd ee ff gg hh ii jj<cr>')
       feed('<c-x><c-n>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [4:--------------------------------]|
           [4:--------------------------------]|
@@ -1345,9 +1448,11 @@ describe('builtin popupmenu', function()
           {n:ff             }{c: }|
           {n:gg             }{s: }|
           {n:hh             }{s: }|
-        ]], float_pos={
-          [5] = {{id = -1}, "NW", 2, 2, 0, false, 100};
-        }}
+        ]],
+          float_pos = {
+            [5] = { { id = -1 }, 'NW', 2, 2, 0, false, 100 },
+          },
+        })
       else
         screen:expect([[
           aa bb cc dd ee ff gg hh ii jj   |
@@ -1379,7 +1484,8 @@ describe('builtin popupmenu', function()
       feed('iaa bb cc dd ee ff gg hh ii jj<cr>')
       feed('<c-x><c-n>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -1431,9 +1537,11 @@ describe('builtin popupmenu', function()
           {n:ff             }{c: }|
           {n:gg             }{s: }|
           {n:hh             }{s: }|
-        ]], float_pos={
-          [5] = {{id = -1}, "NW", 2, 2, 0, false, 100};
-        }}
+        ]],
+          float_pos = {
+            [5] = { { id = -1 }, 'NW', 2, 2, 0, false, 100 },
+          },
+        })
       else
         screen:expect([[
           aa bb cc dd ee ff gg hh ii jj   |
@@ -1467,7 +1575,8 @@ describe('builtin popupmenu', function()
       feed('kk<cr>ll<cr>mm<cr>nn<cr>oo<cr>')
       feed('<c-x><c-n>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [4:--------------------------------]|
           [4:--------------------------------]|
@@ -1524,9 +1633,11 @@ describe('builtin popupmenu', function()
           {n:kk             }{c: }|
           {n:ll             }{s: }|
           {n:mm             }{s: }|
-        ]], float_pos={
-          [5] = {{id = -1}, "SW", 2, 12, 0, false, 100};
-        }}
+        ]],
+          float_pos = {
+            [5] = { { id = -1 }, 'SW', 2, 12, 0, false, 100 },
+          },
+        })
       else
         screen:expect([[
           aa                              |
@@ -1559,7 +1670,8 @@ describe('builtin popupmenu', function()
       feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
       feed('<c-x><c-n>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [4:--------------------------------]|
           [4:--------------------------------]|
@@ -1612,9 +1724,11 @@ describe('builtin popupmenu', function()
           {n:gg             }{c: }|
           {n:hh             }{c: }|
           {n:ii             }{s: }|
-        ]], float_pos={
-          [5] = {{id = -1}, "SW", 2, 8, 0, false, 100};
-        }}
+        ]],
+          float_pos = {
+            [5] = { { id = -1 }, 'SW', 2, 8, 0, false, 100 },
+          },
+        })
       else
         screen:expect([[
           aa                              |
@@ -1647,7 +1761,8 @@ describe('builtin popupmenu', function()
       feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
       feed('<c-x><c-n>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -1699,9 +1814,11 @@ describe('builtin popupmenu', function()
           {n:ff             }{c: }|
           {n:gg             }{s: }|
           {n:hh             }{s: }|
-        ]], float_pos={
-          [5] = {{id = -1}, "SW", 2, 8, 0, false, 100};
-        }}
+        ]],
+          float_pos = {
+            [5] = { { id = -1 }, 'SW', 2, 8, 0, false, 100 },
+          },
+        })
       else
         screen:expect([[
           {s:aa             }{c: }                |
@@ -1795,7 +1912,8 @@ describe('builtin popupmenu', function()
       insert('aaa aab aac\n')
       feed(':vsplit<cr>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [4:--------------------]│[2:-----------]|
           [4:--------------------]│[2:-----------]|
@@ -1821,7 +1939,8 @@ describe('builtin popupmenu', function()
           {1:~                   }|
           {1:~                   }|
           {1:~                   }|
-        ]]}
+        ]],
+        })
       else
         screen:expect([[
           aaa aab aac         │aaa aab aac|
@@ -1837,7 +1956,8 @@ describe('builtin popupmenu', function()
 
       feed('ibbb a<c-x><c-n>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [4:--------------------]│[2:-----------]|
           [4:--------------------]│[2:-----------]|
@@ -1867,9 +1987,11 @@ describe('builtin popupmenu', function()
           {s: aaa            }|
           {n: aab            }|
           {n: aac            }|
-        ]], float_pos={
-          [5] = {{id = -1}, "NW", 4, 2, 3, false, 100};
-        }}
+        ]],
+          float_pos = {
+            [5] = { { id = -1 }, 'NW', 4, 2, 3, false, 100 },
+          },
+        })
       else
         screen:expect([[
           aaa aab aac         │aaa aab aac|
@@ -1885,7 +2007,8 @@ describe('builtin popupmenu', function()
 
       feed('<esc><c-w><c-w>oc a<c-x><c-n>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [4:-----------]│[2:--------------------]|
           [4:-----------]│[2:--------------------]|
@@ -1915,9 +2038,11 @@ describe('builtin popupmenu', function()
           {s: aaa            }|
           {n: aab            }|
           {n: aac            }|
-        ]], float_pos={
-          [5] = {{id = -1}, "NW", 2, 3, 1, false, 100};
-        }}
+        ]],
+          float_pos = {
+            [5] = { { id = -1 }, 'NW', 2, 3, 1, false, 100 },
+          },
+        })
       else
         screen:expect([[
           aaa aab aac│aaa aab aac         |
@@ -1933,7 +2058,8 @@ describe('builtin popupmenu', function()
 
       feed('bcdef ccc a<c-x><c-n>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [4:-----------]│[2:--------------------]|
           [4:-----------]│[2:--------------------]|
@@ -1964,9 +2090,11 @@ describe('builtin popupmenu', function()
           {n: aab     }|
           {n: aac     }|
           {n: aaabcdef}|
-        ]], float_pos={
-          [5] = {{id = -1}, "NW", 2, 3, 11, false, 100};
-        }}
+        ]],
+          float_pos = {
+            [5] = { { id = -1 }, 'NW', 2, 3, 11, false, 100 },
+          },
+        })
       else
         screen:expect([[
           aaa aab aac│aaa aab aac         |
@@ -1982,7 +2110,8 @@ describe('builtin popupmenu', function()
 
       feed('\n<c-x><c-n>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [4:-----------]│[2:--------------------]|
           [4:-----------]│[2:--------------------]|
@@ -2012,9 +2141,11 @@ describe('builtin popupmenu', function()
           {s: aaa            }{c: }|
           {n: aab            }{s: }|
           {n: aac            }{s: }|
-        ]], float_pos={
-          [5] = {{id = -1}, "NW", 2, 4, -1, false, 100};
-        }}
+        ]],
+          float_pos = {
+            [5] = { { id = -1 }, 'NW', 2, 4, -1, false, 100 },
+          },
+        })
       else
         screen:expect([[
           aaa aab aac│aaa aab aac         |
@@ -2031,10 +2162,10 @@ describe('builtin popupmenu', function()
 
     if not multigrid then
       it('with split and scroll', function()
-        screen:try_resize(60,14)
-        command("split")
-        command("set completeopt+=noinsert")
-        command("set mouse=a")
+        screen:try_resize(60, 14)
+        command('split')
+        command('set completeopt+=noinsert')
+        command('set mouse=a')
         insert([[
           Lorem ipsum dolor sit amet, consectetur
           adipisicing elit, sed do eiusmod tempor
@@ -2228,7 +2359,10 @@ describe('builtin popupmenu', function()
           {2:-- Keyword Local completion (^N^P) }{5:match 22 of 65}           |
         ]])
 
-        funcs.complete(4, {'ea', 'eeeeeeeeeeeeeeeeee', 'ei', 'eo', 'eu', 'ey', 'eå', 'eä', 'eö'})
+        funcs.complete(
+          4,
+          { 'ea', 'eeeeeeeeeeeeeeeeee', 'ei', 'eo', 'eu', 'ey', 'eå', 'eä', 'eö' }
+        )
         screen:expect([[
           Est eu^                                                      |
             {s: ea                 }t amet, consectetur                   |
@@ -2246,7 +2380,7 @@ describe('builtin popupmenu', function()
           {2:-- Keyword Local completion (^N^P) }{5:match 1 of 9}             |
         ]])
 
-        funcs.complete(4, {'ea', 'eee', 'ei', 'eo', 'eu', 'ey', 'eå', 'eä', 'eö'})
+        funcs.complete(4, { 'ea', 'eee', 'ei', 'eo', 'eu', 'ey', 'eå', 'eä', 'eö' })
         screen:expect([[
           Est eu^                                                      |
             {s: ea             }r sit amet, consectetur                   |
@@ -2282,7 +2416,7 @@ describe('builtin popupmenu', function()
           {2:-- INSERT --}                                                |
         ]])
 
-        funcs.complete(6, {'foo', 'bar'})
+        funcs.complete(6, { 'foo', 'bar' })
         screen:expect([[
           Esteee^                                                      |
             Lo{s: foo            }sit amet, consectetur                   |
@@ -2321,9 +2455,9 @@ describe('builtin popupmenu', function()
 
       it('can be moved due to wrap or resize', function()
         feed('isome long prefix before the ')
-        command("set completeopt+=noinsert,noselect")
-        command("set linebreak")
-        funcs.complete(29, {'word', 'choice', 'text', 'thing'})
+        command('set completeopt+=noinsert,noselect')
+        command('set linebreak')
+        funcs.complete(29, { 'word', 'choice', 'text', 'thing' })
         screen:expect([[
           some long prefix before the ^    |
           {1:~                        }{n: word  }|
@@ -2395,7 +2529,7 @@ describe('builtin popupmenu', function()
           {2:-- INSERT --}                    |
         ]])
 
-        screen:try_resize(30,8)
+        screen:try_resize(30, 8)
         screen:expect([[
           some long prefix before the   |
           text^                          |
@@ -2407,7 +2541,7 @@ describe('builtin popupmenu', function()
           {2:-- INSERT --}                  |
         ]])
 
-        screen:try_resize(50,8)
+        screen:try_resize(50, 8)
         screen:expect([[
           some long prefix before the text^                  |
           {1:~                          }{n: word           }{1:       }|
@@ -2419,7 +2553,7 @@ describe('builtin popupmenu', function()
           {2:-- INSERT --}                                      |
         ]])
 
-        screen:try_resize(25,10)
+        screen:try_resize(25, 10)
         screen:expect([[
           some long prefix before  |
           the text^                 |
@@ -2433,7 +2567,7 @@ describe('builtin popupmenu', function()
           {2:-- INSERT --}             |
         ]])
 
-        screen:try_resize(12,5)
+        screen:try_resize(12, 5)
         screen:expect([[
           some long   |
           prefix      |
@@ -2443,14 +2577,14 @@ describe('builtin popupmenu', function()
         ]])
 
         -- can't draw the pum, but check we don't crash
-        screen:try_resize(12,2)
+        screen:try_resize(12, 2)
         screen:expect([[
           {1:<<<}t^        |
           {2:-- INSERT -} |
         ]])
 
         -- but state is preserved, pum reappears
-        screen:try_resize(20,8)
+        screen:try_resize(20, 8)
         screen:expect([[
           some long prefix    |
           before the text^     |
@@ -2465,10 +2599,10 @@ describe('builtin popupmenu', function()
 
       it('with VimResized autocmd', function()
         feed('isome long prefix before the ')
-        command("set completeopt+=noinsert,noselect")
-        command("autocmd VimResized * redraw!")
-        command("set linebreak")
-        funcs.complete(29, {'word', 'choice', 'text', 'thing'})
+        command('set completeopt+=noinsert,noselect')
+        command('autocmd VimResized * redraw!')
+        command('set linebreak')
+        funcs.complete(29, { 'word', 'choice', 'text', 'thing' })
         screen:expect([[
           some long prefix before the ^    |
           {1:~                        }{n: word  }|
@@ -2492,7 +2626,7 @@ describe('builtin popupmenu', function()
           {2:-- INSERT --}                    |
         ]])
 
-        screen:try_resize(16,10)
+        screen:try_resize(16, 10)
         screen:expect([[
           some long       |
           prefix before   |
@@ -2508,7 +2642,7 @@ describe('builtin popupmenu', function()
       end)
 
       it('with rightleft window', function()
-        command("set rl wildoptions+=pum")
+        command('set rl wildoptions+=pum')
         feed('isome rightleft ')
         screen:expect([[
                           ^  tfelthgir emos|
@@ -2533,8 +2667,8 @@ describe('builtin popupmenu', function()
           {2:-- INSERT --}                    |
         ]])
 
-        command("set completeopt+=noinsert,noselect")
-        funcs.complete(16, {'word', 'choice', 'text', 'thing'})
+        command('set completeopt+=noinsert,noselect')
+        funcs.complete(16, { 'word', 'choice', 'text', 'thing' })
         screen:expect([[
                           ^  tfelthgir emos|
           {1:  }{n:           drow }{1:             ~}|
@@ -2608,7 +2742,8 @@ describe('builtin popupmenu', function()
 
         -- not rightleft on the cmdline
         feed('<esc>:sign ')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
                        drow tfelthgir emos|
           {1:                               ~}|
           {1:                               ~}|
@@ -2629,10 +2764,12 @@ describe('builtin popupmenu', function()
           {1:                               ~}|
           {1:                               ~}|
           :sign ^                          |
-        ]]}
+        ]],
+        })
 
         feed('<tab>')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
                        drow tfelthgir emos|
           {1:                               ~}|
           {1:                               ~}|
@@ -2653,7 +2790,8 @@ describe('builtin popupmenu', function()
           {1:     }{n: undefine       }{1:          ~}|
           {1:     }{n: unplace        }{1:          ~}|
           :sign define^                    |
-        ]]}
+        ]],
+        })
       end)
     end
 
@@ -2664,9 +2802,10 @@ describe('builtin popupmenu', function()
       command('set completeopt+=noinsert,noselect')
       command('set pumheight=2')
       feed('isome rightleft ')
-      funcs.complete(16, {'word', 'choice', 'text', 'thing'})
+      funcs.complete(16, { 'word', 'choice', 'text', 'thing' })
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:-------------------]│[4:--------------------]|
           [2:-------------------]│[4:--------------------]|
@@ -2689,9 +2828,11 @@ describe('builtin popupmenu', function()
         ## grid 5
           {c: }{n:           drow }|
           {s: }{n:         eciohc }|
-        ]], float_pos={
-          [5] = {{id = -1}, "NW", 4, 1, -11, false, 100};
-        }}
+        ]],
+          float_pos = {
+            [5] = { { id = -1 }, 'NW', 4, 1, -11, false, 100 },
+          },
+        })
       else
         screen:expect([[
                tfelthgir emos│    ^  tfelthgir emos|
@@ -2703,9 +2844,10 @@ describe('builtin popupmenu', function()
         ]])
       end
       feed('<C-E><CR>')
-      funcs.complete(1, {'word', 'choice', 'text', 'thing'})
+      funcs.complete(1, { 'word', 'choice', 'text', 'thing' })
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:-------------------]│[4:--------------------]|
           [2:-------------------]│[4:--------------------]|
@@ -2728,9 +2870,11 @@ describe('builtin popupmenu', function()
         ## grid 5
           {c: }{n:           drow}|
           {s: }{n:         eciohc}|
-        ]], float_pos={
-          [5] = {{id = -1}, "NW", 4, 2, 4, false, 100};
-        }}
+        ]],
+          float_pos = {
+            [5] = { { id = -1 }, 'NW', 4, 2, 4, false, 100 },
+          },
+        })
       else
         screen:expect([[
                tfelthgir emos│      tfelthgir emos|
@@ -2742,9 +2886,10 @@ describe('builtin popupmenu', function()
         ]])
       end
       feed('<C-E>')
-      async_meths.call_function('input', {'', '', 'sign'})
+      async_meths.call_function('input', { '', '', 'sign' })
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:-------------------]│[4:--------------------]|
           [2:-------------------]│[4:--------------------]|
@@ -2764,7 +2909,8 @@ describe('builtin popupmenu', function()
                               |
           {1:                   ~}|
           {1:                   ~}|
-        ]]}
+        ]],
+        })
       else
         screen:expect([[
                tfelthgir emos│      tfelthgir emos|
@@ -2778,7 +2924,8 @@ describe('builtin popupmenu', function()
       command('set wildoptions+=pum')
       feed('<Tab>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:-------------------]│[4:--------------------]|
           [2:-------------------]│[4:--------------------]|
@@ -2801,9 +2948,11 @@ describe('builtin popupmenu', function()
         ## grid 5
           {s:define         }{c: }|
           {n:jump           }{s: }|
-        ]], float_pos={
-          [5] = {{id = -1}, "SW", 1, 5, 0, false, 250};
-        }}
+        ]],
+          float_pos = {
+            [5] = { { id = -1 }, 'SW', 1, 5, 0, false, 250 },
+          },
+        })
       else
         screen:expect([[
                tfelthgir emos│      tfelthgir emos|
@@ -2818,10 +2967,10 @@ describe('builtin popupmenu', function()
 
     if not multigrid then
       it('with multiline messages', function()
-        screen:try_resize(40,8)
+        screen:try_resize(40, 8)
         feed('ixx<cr>')
         command('imap <f2> <cmd>echoerr "very"\\|echoerr "much"\\|echoerr "error"<cr>')
-        funcs.complete(1, {'word', 'choice', 'text', 'thing'})
+        funcs.complete(1, { 'word', 'choice', 'text', 'thing' })
         screen:expect([[
           xx                                      |
           word^                                    |
@@ -2869,7 +3018,7 @@ describe('builtin popupmenu', function()
           {2:-- INSERT --}                            |
         ]])
 
-        command("split")
+        command('split')
         screen:expect([[
           xx                                      |
           choice^                                  |
@@ -2882,7 +3031,8 @@ describe('builtin popupmenu', function()
         ]])
 
         meths.input_mouse('wheel', 'down', '', 0, 6, 15)
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
           xx                                      |
           choice^                                  |
           {n:word           }{1:                         }|
@@ -2891,13 +3041,19 @@ describe('builtin popupmenu', function()
           {n:thing          }{1:                         }|
           {3:[No Name] [+]                           }|
           {2:-- INSERT --}                            |
-        ]], unchanged=true}
+        ]],
+          unchanged = true,
+        })
       end)
 
       it('with kind, menu and abbr attributes', function()
-        screen:try_resize(40,8)
+        screen:try_resize(40, 8)
         feed('ixx ')
-        funcs.complete(4, {{word='wordey', kind= 'x', menu='extrainfo'}, 'thing', {word='secret', abbr='sneaky', menu='bar'}})
+        funcs.complete(4, {
+          { word = 'wordey', kind = 'x', menu = 'extrainfo' },
+          'thing',
+          { word = 'secret', abbr = 'sneaky', menu = 'bar' },
+        })
         screen:expect([[
           xx wordey^                               |
           {1:~ }{s: wordey x extrainfo }{1:                  }|
@@ -2947,11 +3103,11 @@ describe('builtin popupmenu', function()
       end)
 
       it('wildoptions=pum', function()
-        screen:try_resize(32,10)
+        screen:try_resize(32, 10)
         command('set wildmenu')
         command('set wildoptions=pum')
         command('set shellslash')
-        command("cd test/functional/fixtures/wildpum")
+        command('cd test/functional/fixtures/wildpum')
 
         feed(':sign ')
         screen:expect([[
@@ -3514,8 +3670,8 @@ describe('builtin popupmenu', function()
         feed('<Esc>')
 
         -- check positioning with multibyte char in pattern
-        command("e långfile1")
-        command("sp långfile2")
+        command('e långfile1')
+        command('sp långfile2')
         feed(':b lå<tab>')
         screen:expect([[
                                           |
@@ -3531,7 +3687,7 @@ describe('builtin popupmenu', function()
         ]])
 
         -- check doesn't crash on screen resize
-        screen:try_resize(20,6)
+        screen:try_resize(20, 6)
         screen:expect([[
                               |
           {1:~                   }|
@@ -3541,7 +3697,7 @@ describe('builtin popupmenu', function()
           :b långfile1^        |
         ]])
 
-        screen:try_resize(50,15)
+        screen:try_resize(50, 15)
         screen:expect([[
                                                             |
           {1:~                                                 }|
@@ -3583,7 +3739,7 @@ describe('builtin popupmenu', function()
         ]])
 
         feed('<esc>')
-        command("close")
+        command('close')
         command('set wildmode=full')
 
         -- special case: when patterns ends with "/", show menu items aligned
@@ -3609,12 +3765,13 @@ describe('builtin popupmenu', function()
       end)
 
       it('wildoptions=pum with scrolled messages', function()
-        screen:try_resize(40,10)
+        screen:try_resize(40, 10)
         command('set wildmenu')
         command('set wildoptions=pum')
 
         feed(':echoerr "fail"|echoerr "error"<cr>')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
                                                   |
           {1:~                                       }|
           {1:~                                       }|
@@ -3625,10 +3782,12 @@ describe('builtin popupmenu', function()
           {6:fail}                                    |
           {6:error}                                   |
           {5:Press ENTER or type command to continue}^ |
-        ]]}
+        ]],
+        })
 
         feed(':sign <tab>')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
                                                   |
           {1:~                                       }|
           {1:~                                       }|
@@ -3639,10 +3798,12 @@ describe('builtin popupmenu', function()
           {6:fail} {n: undefine       }                   |
           {6:error}{n: unplace        }                   |
           :sign define^                            |
-        ]]}
+        ]],
+        })
 
         feed('d')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
                                                   |
           {1:~                                       }|
           {1:~                                       }|
@@ -3653,11 +3814,12 @@ describe('builtin popupmenu', function()
           {6:fail}                                    |
           {6:error}                                   |
           :sign defined^                           |
-        ]]}
+        ]],
+        })
       end)
 
       it('wildoptions=pum and wildmode=longest,full #11622', function()
-        screen:try_resize(30,8)
+        screen:try_resize(30, 8)
         command('set wildmenu')
         command('set wildoptions=pum')
         command('set wildmode=longest,full')
@@ -3665,7 +3827,8 @@ describe('builtin popupmenu', function()
         -- With 'wildmode' set to 'longest,full', completing a match should display
         -- the longest match, the wildmenu should not be displayed.
         feed(':sign u<Tab>')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
                                         |
           {1:~                             }|
           {1:~                             }|
@@ -3674,12 +3837,14 @@ describe('builtin popupmenu', function()
           {1:~                             }|
           {1:~                             }|
           :sign un^                      |
-        ]]}
+        ]],
+        })
         eq(0, funcs.wildmenumode())
 
         -- pressing <Tab> should display the wildmenu
         feed('<Tab>')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
                                         |
           {1:~                             }|
           {1:~                             }|
@@ -3688,12 +3853,14 @@ describe('builtin popupmenu', function()
           {1:~    }{s: undefine       }{1:         }|
           {1:~    }{n: unplace        }{1:         }|
           :sign undefine^                |
-        ]]}
+        ]],
+        })
         eq(1, funcs.wildmenumode())
 
         -- pressing <Tab> second time should select the next entry in the menu
         feed('<Tab>')
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
                                         |
           {1:~                             }|
           {1:~                             }|
@@ -3702,7 +3869,8 @@ describe('builtin popupmenu', function()
           {1:~    }{n: undefine       }{1:         }|
           {1:~    }{s: unplace        }{1:         }|
           :sign unplace^                 |
-        ]]}
+        ]],
+        })
       end)
 
       it('wildoptions=pum with a wrapped line in buffer vim-patch:8.2.4655', function()
@@ -3750,14 +3918,15 @@ describe('builtin popupmenu', function()
     end
 
     it("'pumheight'", function()
-      screen:try_resize(32,8)
+      screen:try_resize(32, 8)
       feed('isome long prefix before the ')
-      command("set completeopt+=noinsert,noselect")
-      command("set linebreak")
-      command("set pumheight=2")
-      funcs.complete(29, {'word', 'choice', 'text', 'thing'})
+      command('set completeopt+=noinsert,noselect')
+      command('set linebreak')
+      command('set pumheight=2')
+      funcs.complete(29, { 'word', 'choice', 'text', 'thing' })
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -3780,9 +3949,11 @@ describe('builtin popupmenu', function()
         ## grid 4
           {n: word  }{c: }|
           {n: choice}{s: }|
-        ]], float_pos={
-          [4] = {{id = -1}, "NW", 2, 1, 24, false, 100};
-        }}
+        ]],
+          float_pos = {
+            [4] = { { id = -1 }, 'NW', 2, 1, 24, false, 100 },
+          },
+        })
       else
         screen:expect([[
           some long prefix before the ^    |
@@ -3798,14 +3969,15 @@ describe('builtin popupmenu', function()
     end)
 
     it("'pumwidth'", function()
-      screen:try_resize(32,8)
+      screen:try_resize(32, 8)
       feed('isome long prefix before the ')
-      command("set completeopt+=noinsert,noselect")
-      command("set linebreak")
-      command("set pumwidth=8")
-      funcs.complete(29, {'word', 'choice', 'text', 'thing'})
+      command('set completeopt+=noinsert,noselect')
+      command('set linebreak')
+      command('set pumwidth=8')
+      funcs.complete(29, { 'word', 'choice', 'text', 'thing' })
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -3830,9 +4002,11 @@ describe('builtin popupmenu', function()
           {n: choice}|
           {n: text  }|
           {n: thing }|
-        ]], float_pos={
-          [4] = {{id = -1}, "NW", 2, 1, 25, false, 100};
-        }}
+        ]],
+          float_pos = {
+            [4] = { { id = -1 }, 'NW', 2, 1, 25, false, 100 },
+          },
+        })
       else
         screen:expect([[
           some long prefix before the ^    |
@@ -3849,14 +4023,14 @@ describe('builtin popupmenu', function()
 
     it('does not crash when displayed in the last column with rightleft #12032', function()
       local col = 30
-      local items = {'word', 'choice', 'text', 'thing'}
+      local items = { 'word', 'choice', 'text', 'thing' }
       local max_len = 0
       for _, v in ipairs(items) do
         max_len = max_len < #v and #v or max_len
       end
       screen:try_resize(col, 8)
       command('set rightleft')
-      command('call setline(1, repeat(" ", &columns - '..max_len..'))')
+      command('call setline(1, repeat(" ", &columns - ' .. max_len .. '))')
       feed('$i')
       funcs.complete(col - max_len, items)
       feed('<c-y>')
@@ -3867,9 +4041,10 @@ describe('builtin popupmenu', function()
       screen:try_resize(32, 8)
       command('set completeopt+=menuone,noselect')
       feed('i' .. string.rep(' ', 13))
-      funcs.complete(14, {'哦哦哦哦哦哦哦哦哦哦'})
+      funcs.complete(14, { '哦哦哦哦哦哦哦哦哦哦' })
       if multigrid then
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
           ## grid 1
             [2:--------------------------------]|
             [2:--------------------------------]|
@@ -3891,7 +4066,9 @@ describe('builtin popupmenu', function()
             {2:-- INSERT --}                    |
           ## grid 4
             {n: 哦哦哦哦哦哦哦哦哦>}|
-        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 12, false, 100}}})
+        ]],
+          float_pos = { [4] = { { id = -1 }, 'NW', 2, 1, 12, false, 100 } },
+        })
       else
         screen:expect([[
                        ^                   |
@@ -3907,17 +4084,18 @@ describe('builtin popupmenu', function()
     end)
 
     it('truncates double-width character correctly with scrollbar', function()
-      screen:try_resize(32,8)
+      screen:try_resize(32, 8)
       command('set completeopt+=noselect')
       command('set pumheight=4')
       feed('i' .. string.rep(' ', 12))
       local items = {}
       for _ = 1, 8 do
-        table.insert(items, {word = '哦哦哦哦哦哦哦哦哦哦', equal = 1, dup = 1})
+        table.insert(items, { word = '哦哦哦哦哦哦哦哦哦哦', equal = 1, dup = 1 })
       end
       funcs.complete(13, items)
       if multigrid then
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
           ## grid 1
             [2:--------------------------------]|
             [2:--------------------------------]|
@@ -3942,7 +4120,9 @@ describe('builtin popupmenu', function()
             {n: 哦哦哦哦哦哦哦哦哦>}{c: }|
             {n: 哦哦哦哦哦哦哦哦哦>}{s: }|
             {n: 哦哦哦哦哦哦哦哦哦>}{s: }|
-        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 11, false, 100}}})
+        ]],
+          float_pos = { [4] = { { id = -1 }, 'NW', 2, 1, 11, false, 100 } },
+        })
       else
         screen:expect([[
                       ^                    |
@@ -3971,7 +4151,8 @@ describe('builtin popupmenu', function()
 
       if multigrid then
         meths.input_mouse('right', 'press', '', 2, 0, 4)
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -3991,7 +4172,9 @@ describe('builtin popupmenu', function()
           {n: foo }|
           {n: bar }|
           {n: baz }|
-        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
+        ]],
+          float_pos = { [4] = { { id = -1 }, 'NW', 2, 1, 3, false, 250 } },
+        })
       else
         feed('<RightMouse><4,0>')
         screen:expect([[
@@ -4005,7 +4188,8 @@ describe('builtin popupmenu', function()
       end
       feed('<Down>')
       if multigrid then
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -4025,7 +4209,9 @@ describe('builtin popupmenu', function()
           {s: foo }|
           {n: bar }|
           {n: baz }|
-        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
+        ]],
+          float_pos = { [4] = { { id = -1 }, 'NW', 2, 1, 3, false, 250 } },
+        })
       else
         screen:expect([[
           ^popup menu test                 |
@@ -4038,7 +4224,8 @@ describe('builtin popupmenu', function()
       end
       feed('<Down>')
       if multigrid then
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -4058,7 +4245,9 @@ describe('builtin popupmenu', function()
           {n: foo }|
           {s: bar }|
           {n: baz }|
-        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
+        ]],
+          float_pos = { [4] = { { id = -1 }, 'NW', 2, 1, 3, false, 250 } },
+        })
       else
         screen:expect([[
           ^popup menu test                 |
@@ -4071,7 +4260,8 @@ describe('builtin popupmenu', function()
       end
       feed('<CR>')
       if multigrid then
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -4087,7 +4277,8 @@ describe('builtin popupmenu', function()
           {1:~                               }|
         ## grid 3
           :let g:menustr = 'bar'          |
-        ]]})
+        ]],
+        })
       else
         screen:expect([[
           ^popup menu test                 |
@@ -4102,7 +4293,8 @@ describe('builtin popupmenu', function()
 
       if multigrid then
         meths.input_mouse('right', 'press', '', 2, 2, 20)
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -4122,7 +4314,9 @@ describe('builtin popupmenu', function()
           {n: foo }|
           {n: bar }|
           {n: baz }|
-        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 3, 19, false, 250}}})
+        ]],
+          float_pos = { [4] = { { id = -1 }, 'NW', 2, 3, 19, false, 250 } },
+        })
       else
         feed('<RightMouse><20,2>')
         screen:expect([[
@@ -4136,7 +4330,8 @@ describe('builtin popupmenu', function()
       end
       if multigrid then
         meths.input_mouse('left', 'press', '', 4, 2, 2)
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -4152,7 +4347,8 @@ describe('builtin popupmenu', function()
           {1:~                               }|
         ## grid 3
           :let g:menustr = 'baz'          |
-        ]]})
+        ]],
+        })
       else
         feed('<LeftMouse><22,5>')
         screen:expect([[
@@ -4168,7 +4364,8 @@ describe('builtin popupmenu', function()
 
       if multigrid then
         meths.input_mouse('right', 'press', '', 2, 0, 4)
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -4188,7 +4385,9 @@ describe('builtin popupmenu', function()
           {n: foo }|
           {n: bar }|
           {n: baz }|
-        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
+        ]],
+          float_pos = { [4] = { { id = -1 }, 'NW', 2, 1, 3, false, 250 } },
+        })
       else
         feed('<RightMouse><4,0>')
         screen:expect([[
@@ -4202,7 +4401,8 @@ describe('builtin popupmenu', function()
       end
       if multigrid then
         meths.input_mouse('right', 'drag', '', 2, 3, 6)
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -4222,7 +4422,9 @@ describe('builtin popupmenu', function()
           {n: foo }|
           {n: bar }|
           {s: baz }|
-        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
+        ]],
+          float_pos = { [4] = { { id = -1 }, 'NW', 2, 1, 3, false, 250 } },
+        })
       else
         feed('<RightDrag><6,3>')
         screen:expect([[
@@ -4236,7 +4438,8 @@ describe('builtin popupmenu', function()
       end
       if multigrid then
         meths.input_mouse('right', 'release', '', 2, 1, 6)
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -4252,7 +4455,8 @@ describe('builtin popupmenu', function()
           {1:~                               }|
         ## grid 3
           :let g:menustr = 'foo'          |
-        ]]})
+        ]],
+        })
       else
         feed('<RightRelease><6,1>')
         screen:expect([[
@@ -4269,7 +4473,8 @@ describe('builtin popupmenu', function()
       eq(false, screen.options.mousemoveevent)
       if multigrid then
         meths.input_mouse('right', 'press', '', 2, 0, 4)
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -4289,7 +4494,9 @@ describe('builtin popupmenu', function()
           {n: foo }|
           {n: bar }|
           {n: baz }|
-        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
+        ]],
+          float_pos = { [4] = { { id = -1 }, 'NW', 2, 1, 3, false, 250 } },
+        })
       else
         feed('<RightMouse><4,0>')
         screen:expect([[
@@ -4304,7 +4511,8 @@ describe('builtin popupmenu', function()
       eq(true, screen.options.mousemoveevent)
       if multigrid then
         meths.input_mouse('move', '', '', 2, 3, 6)
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -4324,7 +4532,9 @@ describe('builtin popupmenu', function()
           {n: foo }|
           {n: bar }|
           {s: baz }|
-        ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 250}}})
+        ]],
+          float_pos = { [4] = { { id = -1 }, 'NW', 2, 1, 3, false, 250 } },
+        })
       else
         feed('<MouseMove><6,3>')
         screen:expect([[
@@ -4339,7 +4549,8 @@ describe('builtin popupmenu', function()
       eq(true, screen.options.mousemoveevent)
       if multigrid then
         meths.input_mouse('left', 'press', '', 2, 2, 6)
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -4355,7 +4566,8 @@ describe('builtin popupmenu', function()
           {1:~                               }|
         ## grid 3
           :let g:menustr = 'bar'          |
-        ]]})
+        ]],
+        })
       else
         feed('<LeftMouse><6,2>')
         screen:expect([[
@@ -4373,7 +4585,8 @@ describe('builtin popupmenu', function()
       command('set laststatus=0 | botright split')
       if multigrid then
         meths.input_mouse('right', 'press', '', 5, 1, 20)
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -4393,7 +4606,9 @@ describe('builtin popupmenu', function()
         ## grid 5
           ^popup menu test                 |
           {1:~                               }|
-        ]], float_pos={[4] = {{id = -1}, "SW", 5, 1, 19, false, 250}}})
+        ]],
+          float_pos = { [4] = { { id = -1 }, 'SW', 5, 1, 19, false, 250 } },
+        })
       else
         feed('<RightMouse><20,4>')
         screen:expect([[
@@ -4407,7 +4622,8 @@ describe('builtin popupmenu', function()
       end
       if multigrid then
         meths.input_mouse('left', 'press', '', 4, 2, 2)
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -4423,7 +4639,8 @@ describe('builtin popupmenu', function()
         ## grid 5
           ^popup menu test                 |
           {1:~                               }|
-        ]]})
+        ]],
+        })
       else
         feed('<LeftMouse><22,3>')
         screen:expect([[
@@ -4440,7 +4657,8 @@ describe('builtin popupmenu', function()
       command('set winwidth=1 | rightbelow vsplit')
       if multigrid then
         meths.input_mouse('right', 'press', '', 6, 1, 14)
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -4463,7 +4681,9 @@ describe('builtin popupmenu', function()
         ## grid 6
           ^popup menu test |
           {1:~               }|
-        ]], float_pos={[4] = {{id = -1}, "SW", 6, 1, 12, false, 250}}})
+        ]],
+          float_pos = { [4] = { { id = -1 }, 'SW', 6, 1, 12, false, 250 } },
+        })
       else
         feed('<RightMouse><30,4>')
         screen:expect([[
@@ -4477,7 +4697,8 @@ describe('builtin popupmenu', function()
       end
       if multigrid then
         meths.input_mouse('left', 'press', '', 4, 0, 2)
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -4496,7 +4717,8 @@ describe('builtin popupmenu', function()
         ## grid 6
           ^popup menu test |
           {1:~               }|
-        ]]})
+        ]],
+        })
       else
         feed('<LeftMouse><31,1>')
         screen:expect([[
@@ -4513,7 +4735,8 @@ describe('builtin popupmenu', function()
       command('setlocal winbar=WINBAR')
       if multigrid then
         meths.input_mouse('right', 'press', '', 6, 1, 14)
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -4536,7 +4759,9 @@ describe('builtin popupmenu', function()
         ## grid 6
           {2:WINBAR          }|
           ^popup menu test |
-        ]], float_pos={[4] = {{id = -1}, "SW", 6, 1, 12, false, 250}}})
+        ]],
+          float_pos = { [4] = { { id = -1 }, 'SW', 6, 1, 12, false, 250 } },
+        })
       else
         feed('<RightMouse><30,4>')
         screen:expect([[
@@ -4550,7 +4775,8 @@ describe('builtin popupmenu', function()
       end
       if multigrid then
         meths.input_mouse('left', 'press', '', 4, 1, 2)
-        screen:expect({grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:--------------------------------]|
           [2:--------------------------------]|
@@ -4569,7 +4795,8 @@ describe('builtin popupmenu', function()
         ## grid 6
           {2:WINBAR          }|
           ^popup menu test |
-        ]]})
+        ]],
+        })
       else
         feed('<LeftMouse><31,2>')
         screen:expect([[
@@ -4807,12 +5034,13 @@ describe('builtin popupmenu', function()
             hi PmenuExtraSel  guifg=Black guibg=Grey
           ]])
           local attrs = screen:get_default_attr_ids()
-          attrs.kn = {foreground = Screen.colors.Red, background = Screen.colors.Magenta}
-          attrs.ks = {foreground = Screen.colors.Red, background = Screen.colors.Grey}
-          attrs.xn = {foreground = Screen.colors.White, background = Screen.colors.Magenta}
-          attrs.xs = {foreground = Screen.colors.Black, background = Screen.colors.Grey}
+          attrs.kn = { foreground = Screen.colors.Red, background = Screen.colors.Magenta }
+          attrs.ks = { foreground = Screen.colors.Red, background = Screen.colors.Grey }
+          attrs.xn = { foreground = Screen.colors.White, background = Screen.colors.Magenta }
+          attrs.xs = { foreground = Screen.colors.Black, background = Screen.colors.Grey }
           feed('iaw<C-X><C-u>')
-          screen:expect([[
+          screen:expect(
+            [[
             aword1^                        |
             {s:aword1 }{ks:W }{xs:extra text 1 }{1:        }|
             {n:aword2 }{kn:W }{xn:extra text 2 }{1:        }|
@@ -4821,7 +5049,9 @@ describe('builtin popupmenu', function()
             {1:~                             }|
             {1:~                             }|
             {2:-- }{5:match 1 of 3}               |
-          ]], attrs)
+          ]],
+            attrs
+          )
         end)
       end)
     end

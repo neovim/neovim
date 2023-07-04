@@ -13,8 +13,8 @@ describe('visual line mode', function()
     local screen = Screen.new(30, 7)
     screen:attach()
     screen:set_default_attr_ids({
-      [1] = {bold = true},
-      [2] = {background = Screen.colors.LightGrey},
+      [1] = { bold = true },
+      [2] = { background = Screen.colors.LightGrey },
     })
 
     exec([[
@@ -42,9 +42,9 @@ describe('visual block mode', function()
   it('shows selection correctly with virtualedit=block', function()
     local screen = Screen.new(30, 7)
     screen:set_default_attr_ids({
-      [1] = {bold = true},  -- ModeMsg
-      [2] = {background = Screen.colors.LightGrey},  -- Visual
-      [3] = {foreground = Screen.colors.Blue, bold = true}  -- NonText
+      [1] = { bold = true }, -- ModeMsg
+      [2] = { background = Screen.colors.LightGrey }, -- Visual
+      [3] = { foreground = Screen.colors.Blue, bold = true }, -- NonText
     })
     screen:attach()
 

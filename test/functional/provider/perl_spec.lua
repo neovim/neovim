@@ -14,7 +14,10 @@ do
   clear()
   local reason = missing_provider('perl')
   if reason then
-    pending(string.format("Missing perl host, or perl version is too old (%s)", reason), function() end)
+    pending(
+      string.format('Missing perl host, or perl version is too old (%s)', reason),
+      function() end
+    )
     return
   end
 end
@@ -30,7 +33,7 @@ describe('legacy perl provider', function()
 
   it(':perl command', function()
     command('perl $vim->vars->{set_by_perl} = [100, 0];')
-    eq({100, 0}, eval('g:set_by_perl'))
+    eq({ 100, 0 }, eval('g:set_by_perl'))
   end)
 
   it(':perlfile command', function()
@@ -61,19 +64,21 @@ describe('legacy perl provider', function()
   end)
 
   it('perleval()', function()
-    eq({1, 2, {['key'] = 'val'}}, eval([[perleval('[1, 2, {"key" => "val"}]')]]))
+    eq({ 1, 2, { ['key'] = 'val' } }, eval([[perleval('[1, 2, {"key" => "val"}]')]]))
   end)
 end)
 
 describe('perl provider', function()
-  teardown(function ()
+  teardown(function()
     os.remove('Xtest-perl-hello.pl')
     os.remove('Xtest-perl-hello-plugin.pl')
   end)
 
   it('works', function()
     local fname = 'Xtest-perl-hello.pl'
-    write_file(fname, [[
+    write_file(
+      fname,
+      [[
       package main;
       use strict;
       use warnings;
@@ -84,14 +89,19 @@ describe('perl provider', function()
       my $nvim = Neovim::Ext::from_session($session);
       $nvim->command('let g:job_out = "hello"');
       1;
-    ]])
-    command('let g:job_id = jobstart(["perl", "'..fname..'"])')
-    retry(nil, 3000, function() eq('hello', eval('g:job_out')) end)
+    ]]
+    )
+    command('let g:job_id = jobstart(["perl", "' .. fname .. '"])')
+    retry(nil, 3000, function()
+      eq('hello', eval('g:job_out'))
+    end)
   end)
 
   it('plugin works', function()
     local fname = 'Xtest-perl-hello-plugin.pl'
-    write_file(fname, [[
+    write_file(
+      fname,
+      [[
       package TestPlugin;
       use strict;
       use warnings;
@@ -118,8 +128,11 @@ describe('perl provider', function()
       my $plugin = TestPlugin->new($nvim);
       $plugin->test_command();
       1;
-    ]])
-    command('let g:job_id = jobstart(["perl", "'..fname..'"])')
-    retry(nil, 3000, function() eq('hello-plugin', eval('g:job_out')) end)
+    ]]
+    )
+    command('let g:job_id = jobstart(["perl", "' .. fname .. '"])')
+    retry(nil, 3000, function()
+      eq('hello-plugin', eval('g:job_out'))
+    end)
   end)
 end)

@@ -31,13 +31,19 @@ describe(':terminal buffer', function()
   it('terminal-mode forces various options', function()
     feed([[<C-\><C-N>]])
     command('setlocal cursorline cursorlineopt=both cursorcolumn scrolloff=4 sidescrolloff=7')
-    eq({ 'both', 1, 1, 4, 7 }, eval('[&l:cursorlineopt, &l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'))
+    eq(
+      { 'both', 1, 1, 4, 7 },
+      eval('[&l:cursorlineopt, &l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]')
+    )
     eq('nt', eval('mode(1)'))
 
     -- Enter terminal-mode ("insert" mode in :terminal).
     feed('i')
     eq('t', eval('mode(1)'))
-    eq({ 'number', 1, 0, 0, 0 }, eval('[&l:cursorlineopt, &l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'))
+    eq(
+      { 'number', 1, 0, 0, 0 },
+      eval('[&l:cursorlineopt, &l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]')
+    )
   end)
 
   it('terminal-mode does not change cursorlineopt if cursorline is disabled', function()
@@ -202,9 +208,7 @@ describe(':terminal buffer', function()
 
     -- Save the buffer number of the terminal for later testing.
     local tbuf = eval('bufnr("%")')
-    local exitcmd = is_os('win')
-      and "['cmd', '/c', 'exit']"
-      or "['sh', '-c', 'exit']"
+    local exitcmd = is_os('win') and "['cmd', '/c', 'exit']" or "['sh', '-c', 'exit']"
     source([[
     function! SplitWindow(id, data, event)
       new
@@ -212,7 +216,7 @@ describe(':terminal buffer', function()
     endfunction
 
     startinsert
-    call jobstart(]]..exitcmd..[[, {'on_exit': function("SplitWindow")})
+    call jobstart(]] .. exitcmd .. [[, {'on_exit': function("SplitWindow")})
     call feedkeys("\<C-\>", 't')  " vim will expect <C-n>, but be exited out of
                                   " the terminal before it can be entered.
     ]])
@@ -229,10 +233,10 @@ describe(':terminal buffer', function()
     ]])
 
     neq(tbuf, eval('bufnr("%")'))
-    feed_command('quit!')  -- Should exit the new window, not the terminal.
+    feed_command('quit!') -- Should exit the new window, not the terminal.
     eq(tbuf, eval('bufnr("%")'))
 
-    feed_command('set laststatus=1')  -- Restore laststatus to the default.
+    feed_command('set laststatus=1') -- Restore laststatus to the default.
   end)
 
   it('term_close() use-after-free #4393', function()
@@ -246,18 +250,18 @@ describe(':terminal buffer', function()
       feed_command('terminal')
       feed('<c-\\><c-n>')
       feed_command('confirm bdelete')
-      screen:expect{any='Close "term://'}
+      screen:expect({ any = 'Close "term://' })
     end)
 
     it('with &confirm', function()
       feed_command('terminal')
       feed('<c-\\><c-n>')
       feed_command('bdelete')
-      screen:expect{any='E89'}
+      screen:expect({ any = 'E89' })
       feed('<cr>')
       eq('terminal', eval('&buftype'))
       feed_command('set confirm | bdelete')
-      screen:expect{any='Close "term://'}
+      screen:expect({ any = 'Close "term://' })
       feed('y')
       neq('terminal', eval('&buftype'))
     end)
@@ -281,11 +285,15 @@ describe(':terminal buffer', function()
   end)
 
   it('requires bang (!) to close a running job #15402', function()
-    skip(is_os('win'), "Test freezes the CI and makes it time out")
+    skip(is_os('win'), 'Test freezes the CI and makes it time out')
     eq('Vim(wqall):E948: Job still running', exc_exec('wqall'))
     for _, cmd in ipairs({ 'bdelete', '%bdelete', 'bwipeout', 'bunload' }) do
-      matches('^Vim%('..cmd:gsub('%%', '')..'%):E89: term://.*tty%-test.* will be killed %(add %! to override%)$',
-        exc_exec(cmd))
+      matches(
+        '^Vim%('
+          .. cmd:gsub('%%', '')
+          .. '%):E89: term://.*tty%-test.* will be killed %(add %! to override%)$',
+        exc_exec(cmd)
+      )
     end
     command('call jobstop(&channel)')
     assert(0 >= eval('jobwait([&channel], 1000)[0]'))
@@ -302,14 +310,15 @@ describe(':terminal buffer', function()
 
   it('does not segfault when pasting empty register #13955', function()
     feed('<c-\\><c-n>')
-    feed_command('put a')  -- register a is empty
+    feed_command('put a') -- register a is empty
     helpers.assert_alive()
   end)
 
   it([[can use temporary normal mode <c-\><c-o>]], function()
     eq('t', funcs.mode(1))
-    feed [[<c-\><c-o>]]
-    screen:expect{grid=[[
+    feed([[<c-\><c-o>]])
+    screen:expect({
+      grid = [[
       tty ready                                         |
       {2:^ }                                                 |
                                                         |
@@ -317,11 +326,13 @@ describe(':terminal buffer', function()
                                                         |
                                                         |
       {3:-- (terminal) --}                                  |
-    ]]}
+    ]],
+    })
     eq('ntT', funcs.mode(1))
 
-    feed [[:let g:x = 17]]
-    screen:expect{grid=[[
+    feed([[:let g:x = 17]])
+    screen:expect({
+      grid = [[
       tty ready                                         |
       {2: }                                                 |
                                                         |
@@ -329,10 +340,12 @@ describe(':terminal buffer', function()
                                                         |
                                                         |
       :let g:x = 17^                                     |
-    ]]}
+    ]],
+    })
 
-    feed [[<cr>]]
-    screen:expect{grid=[[
+    feed([[<cr>]])
+    screen:expect({
+      grid = [[
       tty ready                                         |
       {1: }                                                 |
                                                         |
@@ -340,13 +353,16 @@ describe(':terminal buffer', function()
                                                         |
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
     eq('t', funcs.mode(1))
   end)
 
   it('writing to an existing file with :w fails #13549', function()
-    eq('Vim(write):E13: File exists (add ! to override)',
-       pcall_err(command, 'write test/functional/fixtures/tty-test.c'))
+    eq(
+      'Vim(write):E13: File exists (add ! to override)',
+      pcall_err(command, 'write test/functional/fixtures/tty-test.c')
+    )
   end)
 end)
 
@@ -354,7 +370,7 @@ describe('No heap-buffer-overflow when using', function()
   local testfilename = 'Xtestfile-functional-terminal-buffers_spec'
 
   before_each(function()
-    write_file(testfilename, "aaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+    write_file(testfilename, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaa')
   end)
 
   after_each(function()
@@ -428,7 +444,9 @@ it('terminal truncates number of composing characters to 5', function()
   local chan = meths.open_term(0, {})
   local composing = ('a̳'):sub(2)
   meths.chan_send(chan, 'a' .. composing:rep(8))
-  retry(nil, nil, function() eq('a' .. composing:rep(5), meths.get_current_line()) end)
+  retry(nil, nil, function()
+    eq('a' .. composing:rep(5), meths.get_current_line())
+  end)
 end)
 
 if is_os('win') then

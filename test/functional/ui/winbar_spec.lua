@@ -19,17 +19,26 @@ describe('winbar', function()
     screen = Screen.new(60, 13)
     screen:attach()
     screen:set_default_attr_ids({
-      [1] = {bold = true},
-      [2] = {reverse = true},
-      [3] = {bold = true, foreground = Screen.colors.Blue},
-      [4] = {bold = true, reverse = true},
-      [5] = {bold = true, foreground = Screen.colors.Red},
-      [6] = {foreground = Screen.colors.Blue},
-      [7] = {background = Screen.colors.LightGrey},
-      [8] = {background = Screen.colors.LightMagenta},
-      [9] = {bold = true, foreground = Screen.colors.Blue, background = Screen.colors.LightMagenta},
-      [10] = {background = Screen.colors.LightGrey, underline = true},
-      [11] = {background = Screen.colors.LightGrey, underline = true, bold = true, foreground = Screen.colors.Magenta},
+      [1] = { bold = true },
+      [2] = { reverse = true },
+      [3] = { bold = true, foreground = Screen.colors.Blue },
+      [4] = { bold = true, reverse = true },
+      [5] = { bold = true, foreground = Screen.colors.Red },
+      [6] = { foreground = Screen.colors.Blue },
+      [7] = { background = Screen.colors.LightGrey },
+      [8] = { background = Screen.colors.LightMagenta },
+      [9] = {
+        bold = true,
+        foreground = Screen.colors.Blue,
+        background = Screen.colors.LightMagenta,
+      },
+      [10] = { background = Screen.colors.LightGrey, underline = true },
+      [11] = {
+        background = Screen.colors.LightGrey,
+        underline = true,
+        bold = true,
+        foreground = Screen.colors.Magenta,
+      },
     })
     meths.set_option_value('winbar', 'Set Up The Bars', {})
   end)
@@ -57,7 +66,7 @@ describe('winbar', function()
     eq(1, win_info.winbar)
   end)
 
-  it('works with custom \'fillchars\' value', function()
+  it("works with custom 'fillchars' value", function()
     command('set fillchars=wbr:+')
     screen:expect([[
       {1:Set Up The Bars+++++++++++++++++++++++++++++++++++++++++++++}|
@@ -151,7 +160,7 @@ describe('winbar', function()
     ]])
   end)
 
-  it('works when switching value of \'winbar\'', function()
+  it("works when switching value of 'winbar'", function()
     command('belowright vsplit | split | split | set winbar=')
     screen:expect([[
                                    │^                              |
@@ -203,11 +212,12 @@ describe('winbar', function()
   end)
 
   it('can be ruler', function()
-    insert [[
+    insert([[
       just some
-      random text]]
+      random text]])
     meths.set_option_value('winbar', 'Hello, I am a ruler: %l,%c', {})
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       {1:Hello, I am a ruler: 2,11                                   }|
       just some                                                   |
       random tex^t                                                 |
@@ -221,9 +231,11 @@ describe('winbar', function()
       {3:~                                                           }|
       {3:~                                                           }|
                                                                   |
-    ]]}
-    feed 'b'
-    screen:expect{grid=[[
+    ]],
+    })
+    feed('b')
+    screen:expect({
+      grid = [[
       {1:Hello, I am a ruler: 2,8                                    }|
       just some                                                   |
       random ^text                                                 |
@@ -237,9 +249,11 @@ describe('winbar', function()
       {3:~                                                           }|
       {3:~                                                           }|
                                                                   |
-    ]]}
-    feed 'k'
-    screen:expect{grid=[[
+    ]],
+    })
+    feed('k')
+    screen:expect({
+      grid = [[
       {1:Hello, I am a ruler: 1,8                                    }|
       just so^me                                                   |
       random text                                                 |
@@ -253,7 +267,8 @@ describe('winbar', function()
       {3:~                                                           }|
       {3:~                                                           }|
                                                                   |
-    ]]}
+    ]],
+    })
   end)
 
   it('works with laststatus=3', function()
@@ -335,7 +350,7 @@ describe('winbar', function()
       {3:~                                                           }|
                                                                   |
     ]])
-    eq({5, 1}, meths.win_get_cursor(0))
+    eq({ 5, 1 }, meths.win_get_cursor(0))
 
     meths.input_mouse('left', 'drag', '', 0, 6, 2)
     screen:expect([[
@@ -353,7 +368,7 @@ describe('winbar', function()
       {3:~                                                           }|
       {1:-- VISUAL --}                                                |
     ]])
-    eq({6, 2}, meths.win_get_cursor(0))
+    eq({ 6, 2 }, meths.win_get_cursor(0))
 
     meths.input_mouse('left', 'drag', '', 0, 1, 2)
     screen:expect([[
@@ -371,11 +386,11 @@ describe('winbar', function()
       {3:~                                                           }|
       {1:-- VISUAL --}                                                |
     ]])
-    eq({1, 2}, meths.win_get_cursor(0))
+    eq({ 1, 2 }, meths.win_get_cursor(0))
 
     meths.input_mouse('left', 'drag', '', 0, 0, 2)
     screen:expect_unchanged()
-    eq({1, 2}, meths.win_get_cursor(0))
+    eq({ 1, 2 }, meths.win_get_cursor(0))
   end)
 
   it('dragging statusline with mouse works correctly', function()
@@ -493,10 +508,11 @@ describe('winbar', function()
   end)
 
   it('requires window-local value for floating windows', function()
-    local win = meths.open_win(0, false, { relative = 'editor', row = 2, col = 10, height = 7,
-                                           width = 30 })
+    local win =
+      meths.open_win(0, false, { relative = 'editor', row = 2, col = 10, height = 7, width = 30 })
     meths.set_option_value('winbar', 'bar', {})
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       {1:bar                                                         }|
       ^                                                            |
       {3:~         }{8:                              }{3:                    }|
@@ -510,9 +526,11 @@ describe('winbar', function()
       {3:~                                                           }|
       {3:~                                                           }|
                                                                   |
-    ]]}
+    ]],
+    })
     meths.set_option_value('winbar', 'floaty bar', { scope = 'local', win = win.id })
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       {1:bar                                                         }|
       ^                                                            |
       {3:~         }{1:floaty bar                    }{3:                    }|
@@ -526,7 +544,8 @@ describe('winbar', function()
       {3:~                                                           }|
       {3:~                                                           }|
                                                                   |
-    ]]}
+    ]],
+    })
   end)
 
   it('works correctly when moving a split', function()
@@ -628,10 +647,10 @@ describe('local winbar with tabs', function()
     screen = Screen.new(60, 10)
     screen:attach()
     screen:set_default_attr_ids({
-      [1] = {bold = true},
-      [2] = {reverse = true},
-      [3] = {bold = true, foreground = Screen.colors.Blue},
-      [4] = {underline = true, background = Screen.colors.LightGray}
+      [1] = { bold = true },
+      [2] = { reverse = true },
+      [3] = { bold = true, foreground = Screen.colors.Blue },
+      [4] = { underline = true, background = Screen.colors.LightGray },
     })
     meths.set_option_value('winbar', 'foo', { scope = 'local', win = 0 })
   end)
@@ -651,7 +670,8 @@ describe('local winbar with tabs', function()
                                                                   |
     ]])
     command('tabnext')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       {1: [No Name] }{4: [No Name] }{2:                                     }{4:X}|
       {1:foo                                                         }|
       ^                                                            |
@@ -662,15 +682,17 @@ describe('local winbar with tabs', function()
       {3:~                                                           }|
       {3:~                                                           }|
                                                                   |
-    ]]}
+    ]],
+    })
   end)
 
   it('can edit new empty buffer #19458', function()
-    insert [[
+    insert([[
       some
       goofy
-      text]]
-    screen:expect{grid=[[
+      text]])
+    screen:expect({
+      grid = [[
       {1:foo                                                         }|
       some                                                        |
       goofy                                                       |
@@ -681,11 +703,13 @@ describe('local winbar with tabs', function()
       {3:~                                                           }|
       {3:~                                                           }|
                                                                   |
-    ]]}
+    ]],
+    })
 
     -- this used to throw an E315 ml_get error
-    command 'tabedit'
-    screen:expect{grid=[[
+    command('tabedit')
+    screen:expect({
+      grid = [[
       {4: + [No Name] }{1: [No Name] }{2:                                   }{4:X}|
       ^                                                            |
       {3:~                                                           }|
@@ -696,10 +720,12 @@ describe('local winbar with tabs', function()
       {3:~                                                           }|
       {3:~                                                           }|
                                                                   |
-    ]]}
+    ]],
+    })
 
-    command 'tabprev'
-    screen:expect{grid=[[
+    command('tabprev')
+    screen:expect({
+      grid = [[
       {1: + [No Name] }{4: [No Name] }{2:                                   }{4:X}|
       {1:foo                                                         }|
       some                                                        |
@@ -710,22 +736,28 @@ describe('local winbar with tabs', function()
       {3:~                                                           }|
       {3:~                                                           }|
                                                                   |
-    ]]}
+    ]],
+    })
   end)
 end)
 
 it('winbar works properly when redrawing is postponed #23534', function()
-  clear({args = {
-    '-c', 'set laststatus=2 lazyredraw',
-    '-c', 'setlocal statusline=(statusline) winbar=(winbar)',
-    '-c', 'call nvim_input(":<Esc>")',
-  }})
+  clear({
+    args = {
+      '-c',
+      'set laststatus=2 lazyredraw',
+      '-c',
+      'setlocal statusline=(statusline) winbar=(winbar)',
+      '-c',
+      'call nvim_input(":<Esc>")',
+    },
+  })
   local screen = Screen.new(60, 6)
   screen:attach()
   screen:set_default_attr_ids({
-    [0] = {foreground = Screen.colors.Blue, bold = true},
-    [1] = {bold = true},
-    [2] = {bold = true, reverse = true},
+    [0] = { foreground = Screen.colors.Blue, bold = true },
+    [1] = { bold = true },
+    [2] = { bold = true, reverse = true },
   })
   screen:expect([[
     {1:(winbar)                                                    }|

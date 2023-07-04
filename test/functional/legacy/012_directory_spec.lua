@@ -21,7 +21,7 @@ local mkdir = helpers.mkdir
 local function ls_dir_sorted(dirname)
   local files = {}
   for f in vim.fs.dir(dirname) do
-    if f ~= "." and f~= ".." then
+    if f ~= '.' and f ~= '..' then
       table.insert(files, f)
     end
   end
@@ -78,7 +78,7 @@ describe("'directory' option", function()
     -- swapfile should no longer exist in CWD.
     eq(nil, luv.fs_stat('.Xtest1.swp'))
 
-    eq({ "Xtest1.swp", "Xtest3" }, ls_dir_sorted("Xtest2"))
+    eq({ 'Xtest1.swp', 'Xtest3' }, ls_dir_sorted('Xtest2'))
 
     meths.set_option_value('directory', 'Xtest.je', {})
     command('bdelete')
@@ -86,7 +86,7 @@ describe("'directory' option", function()
     eq(true, meths.get_option_value('swapfile', {}))
     poke_eventloop()
 
-    eq({ "Xtest3" }, ls_dir_sorted("Xtest2"))
-    eq({ "Xtest3.swp" }, ls_dir_sorted("Xtest.je"))
+    eq({ 'Xtest3' }, ls_dir_sorted('Xtest2'))
+    eq({ 'Xtest3.swp' }, ls_dir_sorted('Xtest.je'))
   end)
 end)

@@ -2,8 +2,8 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 
-local insert, command, clear, expect, eq, poke_eventloop = helpers.insert,
-  helpers.command, helpers.clear, helpers.expect, helpers.eq, helpers.poke_eventloop
+local insert, command, clear, expect, eq, poke_eventloop =
+  helpers.insert, helpers.command, helpers.clear, helpers.expect, helpers.eq, helpers.poke_eventloop
 local exc_exec = helpers.exc_exec
 
 describe(':sort', function()

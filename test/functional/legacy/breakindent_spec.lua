@@ -11,9 +11,9 @@ describe('breakindent', function()
   it('cursor shown at correct position with showbreak', function()
     local screen = Screen.new(75, 6)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue},  -- SignColumn
-      [2] = {bold = true},  -- ModeMsg
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue }, -- SignColumn
+      [2] = { bold = true }, -- ModeMsg
     })
     screen:attach()
     exec([[

@@ -28,8 +28,8 @@ end)
 
 describe('tv_clear()', function()
   itp('successfully frees all lists in [&l [1], *l, *l]', function()
-    local l_inner = {1}
-    local list = {l_inner, l_inner, l_inner}
+    local l_inner = { 1 }
+    local list = { l_inner, l_inner, l_inner }
     local list_tv = ffi.gc(lua2typvalt(list), nil)
     local list_p = list_tv.vval.v_list
     local lis = list_items(list_p)
@@ -55,8 +55,8 @@ describe('tv_clear()', function()
     })
   end)
   itp('successfully frees all lists in [&l [], *l, *l]', function()
-    local l_inner = {[type_key]=list_type}
-    local list = {l_inner, l_inner, l_inner}
+    local l_inner = { [type_key] = list_type }
+    local list = { l_inner, l_inner, l_inner }
     local list_tv = ffi.gc(lua2typvalt(list), nil)
     local list_p = list_tv.vval.v_list
     local lis = list_items(list_p)
@@ -80,7 +80,7 @@ describe('tv_clear()', function()
   end)
   itp('successfully frees all dictionaries in [&d {}, *d]', function()
     local d_inner = {}
-    local list = {d_inner, d_inner}
+    local list = { d_inner, d_inner }
     local list_tv = ffi.gc(lua2typvalt(list), nil)
     local list_p = list_tv.vval.v_list
     local lis = list_items(list_p)
@@ -101,8 +101,8 @@ describe('tv_clear()', function()
     })
   end)
   itp('successfully frees all dictionaries in [&d {a: 1}, *d]', function()
-    local d_inner = {a=1}
-    local list = {d_inner, d_inner}
+    local d_inner = { a = 1 }
+    local list = { d_inner, d_inner }
     local list_tv = ffi.gc(lua2typvalt(list), nil)
     local list_p = list_tv.vval.v_list
     local lis = list_items(list_p)

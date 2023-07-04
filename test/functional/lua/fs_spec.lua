@@ -54,7 +54,8 @@ describe('vim.fs', function()
     it('works', function()
       local test_dir = nvim_dir .. '/test'
       mkdir_p(test_dir)
-      local dirs = exec_lua([[
+      local dirs = exec_lua(
+        [[
         local test_dir, test_build_dir = ...
         local dirs = {}
         for dir in vim.fs.parents(test_dir .. "/foo.txt") do
@@ -64,30 +65,45 @@ describe('vim.fs', function()
           end
         end
         return dirs
-      ]], test_dir, test_build_dir)
-      eq({test_dir, nvim_dir, test_build_dir}, dirs)
+      ]],
+        test_dir,
+        test_build_dir
+      )
+      eq({ test_dir, nvim_dir, test_build_dir }, dirs)
       rmdir(test_dir)
     end)
   end)
 
   describe('dirname()', function()
     it('works', function()
-      eq(test_build_dir, exec_lua([[
+      eq(
+        test_build_dir,
+        exec_lua(
+          [[
         local nvim_dir = ...
         return vim.fs.dirname(nvim_dir)
-      ]], nvim_dir))
+      ]],
+          nvim_dir
+        )
+      )
 
       local function test_paths(paths)
         for _, path in ipairs(paths) do
           eq(
-            exec_lua([[
+            exec_lua(
+              [[
               local path = ...
               return vim.fn.fnamemodify(path,':h'):gsub('\\', '/')
-            ]], path),
-            exec_lua([[
+            ]],
+              path
+            ),
+            exec_lua(
+              [[
               local path = ...
               return vim.fs.dirname(path)
-            ]], path),
+            ]],
+              path
+            ),
             path
           )
         end
@@ -102,23 +118,34 @@ describe('vim.fs', function()
 
   describe('basename()', function()
     it('works', function()
-
-      eq(nvim_prog_basename, exec_lua([[
+      eq(
+        nvim_prog_basename,
+        exec_lua(
+          [[
         local nvim_prog = ...
         return vim.fs.basename(nvim_prog)
-      ]], nvim_prog))
+      ]],
+          nvim_prog
+        )
+      )
 
       local function test_paths(paths)
         for _, path in ipairs(paths) do
           eq(
-            exec_lua([[
+            exec_lua(
+              [[
               local path = ...
               return vim.fn.fnamemodify(path,':t'):gsub('\\', '/')
-            ]], path),
-            exec_lua([[
+            ]],
+              path
+            ),
+            exec_lua(
+              [[
               local path = ...
               return vim.fs.basename(path)
-            ]], path),
+            ]],
+              path
+            ),
             path
           )
         end
@@ -144,7 +171,10 @@ describe('vim.fs', function()
     end)
 
     it('works', function()
-      eq(true, exec_lua([[
+      eq(
+        true,
+        exec_lua(
+          [[
         local dir, nvim = ...
         for name, type in vim.fs.dir(dir) do
           if name == nvim and type == 'file' then
@@ -152,7 +182,11 @@ describe('vim.fs', function()
           end
         end
         return false
-      ]], nvim_dir, nvim_prog_basename))
+      ]],
+          nvim_dir,
+          nvim_prog_basename
+        )
+      )
     end)
 
     it('works with opts.depth and opts.skip', function()
@@ -170,7 +204,8 @@ describe('vim.fs', function()
       io.open('testd/a/b/c/c4', 'w'):close()
 
       local function run(dir, depth, skip)
-         local r = exec_lua([[
+        local r = exec_lua(
+          [[
           local dir, depth, skip = ...
           local r = {}
           local skip_f
@@ -185,7 +220,11 @@ describe('vim.fs', function()
             r[name] = type_
           end
           return r
-        ]], dir, depth, skip)
+        ]],
+          dir,
+          depth,
+          skip
+        )
         return r
       end
 
@@ -211,7 +250,7 @@ describe('vim.fs', function()
       exp['a/b/c'] = 'directory'
 
       eq(exp, run('testd', 3))
-      eq(exp, run('testd', 999, {'a/b/c'}))
+      eq(exp, run('testd', 999, { 'a/b/c' }))
 
       exp['a/b/c/a4'] = 'file'
       exp['a/b/c/b4'] = 'file'
@@ -223,83 +262,151 @@ describe('vim.fs', function()
 
   describe('find()', function()
     it('works', function()
-      eq({test_build_dir .. "/build"}, exec_lua([[
+      eq(
+        { test_build_dir .. '/build' },
+        exec_lua(
+          [[
         local dir = ...
         return vim.fs.find('build', { path = dir, upward = true, type = 'directory' })
-      ]], nvim_dir))
-      eq({nvim_prog}, exec_lua([[
+      ]],
+          nvim_dir
+        )
+      )
+      eq(
+        { nvim_prog },
+        exec_lua(
+          [[
         local dir, nvim = ...
         return vim.fs.find(nvim, { path = dir, type = 'file' })
-      ]], test_build_dir, nvim_prog_basename))
-      eq({nvim_dir}, exec_lua([[
+      ]],
+          test_build_dir,
+          nvim_prog_basename
+        )
+      )
+      eq(
+        { nvim_dir },
+        exec_lua(
+          [[
         local dir = ...
         local parent, name = dir:match('^(.*/)([^/]+)$')
         return vim.fs.find(name, { path = parent, upward = true, type = 'directory' })
-      ]], nvim_dir))
+      ]],
+          nvim_dir
+        )
+      )
     end)
 
     it('accepts predicate as names', function()
-      eq({test_build_dir .. "/build"}, exec_lua([[
+      eq(
+        { test_build_dir .. '/build' },
+        exec_lua(
+          [[
         local dir = ...
         local opts = { path = dir, upward = true, type = 'directory' }
         return vim.fs.find(function(x) return x == 'build' end, opts)
-      ]], nvim_dir))
-      eq({nvim_prog}, exec_lua([[
+      ]],
+          nvim_dir
+        )
+      )
+      eq(
+        { nvim_prog },
+        exec_lua(
+          [[
         local dir, nvim = ...
         return vim.fs.find(function(x) return x == nvim end, { path = dir, type = 'file' })
-      ]], test_build_dir, nvim_prog_basename))
-      eq({}, exec_lua([[
+      ]],
+          test_build_dir,
+          nvim_prog_basename
+        )
+      )
+      eq(
+        {},
+        exec_lua(
+          [[
         local dir = ...
         local opts = { path = dir, upward = true, type = 'directory' }
         return vim.fs.find(function(x) return x == 'no-match' end, opts)
-      ]], nvim_dir))
+      ]],
+          nvim_dir
+        )
+      )
       eq(
-        exec_lua([[
+        exec_lua(
+          [[
           local dir = ...
           return vim.tbl_map(vim.fs.basename, vim.fn.glob(dir..'/contrib/*', false, true))
-        ]], test_source_path),
-        exec_lua([[
+        ]],
+          test_source_path
+        ),
+        exec_lua(
+          [[
           local dir = ...
           local opts = { path = dir .. "/contrib", limit = math.huge }
           return vim.tbl_map(vim.fs.basename, vim.fs.find(function(_, d) return d:match('[\\/]contrib$') end, opts))
-        ]], test_source_path))
+        ]],
+          test_source_path
+        )
+      )
     end)
   end)
 
   describe('joinpath()', function()
     it('works', function()
-      eq('foo/bar/baz', exec_lua([[
+      eq(
+        'foo/bar/baz',
+        exec_lua(
+          [[
         return vim.fs.joinpath('foo', 'bar', 'baz')
-      ]], nvim_dir))
-      eq('foo/bar/baz', exec_lua([[
+      ]],
+          nvim_dir
+        )
+      )
+      eq(
+        'foo/bar/baz',
+        exec_lua(
+          [[
         return vim.fs.joinpath('foo', '/bar/', '/baz')
-      ]], nvim_dir))
+      ]],
+          nvim_dir
+        )
+      )
     end)
   end)
 
   describe('normalize()', function()
     it('works with backward slashes', function()
-      eq('C:/Users/jdoe', exec_lua [[ return vim.fs.normalize('C:\\Users\\jdoe') ]])
+      eq('C:/Users/jdoe', exec_lua([[ return vim.fs.normalize('C:\\Users\\jdoe') ]]))
     end)
     it('removes trailing /', function()
-      eq('/home/user', exec_lua [[ return vim.fs.normalize('/home/user/') ]])
+      eq('/home/user', exec_lua([[ return vim.fs.normalize('/home/user/') ]]))
     end)
     it('works with /', function()
-      eq('/', exec_lua [[ return vim.fs.normalize('/') ]])
+      eq('/', exec_lua([[ return vim.fs.normalize('/') ]]))
     end)
     it('works with ~', function()
-      eq( exec_lua([[
+      eq(
+        exec_lua(
+          [[
       local home = ...
       return home .. '/src/foo'
-      ]], is_os('win') and vim.fs.normalize(os.getenv('USERPROFILE')) or os.getenv('HOME')
-      ) , exec_lua [[ return vim.fs.normalize('~/src/foo') ]])
+      ]],
+          is_os('win') and vim.fs.normalize(os.getenv('USERPROFILE')) or os.getenv('HOME')
+        ),
+        exec_lua([[ return vim.fs.normalize('~/src/foo') ]])
+      )
     end)
     it('works with environment variables', function()
       local xdg_config_home = test_build_dir .. '/.config'
-      eq(xdg_config_home .. '/nvim', exec_lua([[
+      eq(
+        xdg_config_home .. '/nvim',
+        exec_lua(
+          [[
         vim.env.XDG_CONFIG_HOME = ...
         return vim.fs.normalize('$XDG_CONFIG_HOME/nvim')
-      ]], xdg_config_home))
+      ]],
+          xdg_config_home
+        )
+      )
     end)
   end)
 end)

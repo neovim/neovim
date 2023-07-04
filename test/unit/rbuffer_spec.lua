@@ -1,4 +1,4 @@
-local helpers = require("test.unit.helpers")(after_each)
+local helpers = require('test.unit.helpers')(after_each)
 local itp = helpers.gen_itp(it)
 
 local eq = helpers.eq
@@ -7,7 +7,7 @@ local cstr = helpers.cstr
 local to_cstr = helpers.to_cstr
 local child_call_once = helpers.child_call_once
 
-local rbuffer = helpers.cimport("./test/unit/fixtures/rbuffer.h")
+local rbuffer = helpers.cimport('./test/unit/fixtures/rbuffer.h')
 
 describe('rbuffer functions', function()
   local capacity = 16
@@ -56,7 +56,7 @@ describe('rbuffer functions', function()
     describe('with empty buffer in one contiguous chunk', function()
       itp('is called once with the empty chunk', function()
         collect_write_chunks()
-        eq({'0000000000000000'}, chunks)
+        eq({ '0000000000000000' }, chunks)
       end)
     end)
 
@@ -64,7 +64,7 @@ describe('rbuffer functions', function()
       itp('is called once with the empty chunk', function()
         write('string')
         collect_write_chunks()
-        eq({'0000000000'}, chunks)
+        eq({ '0000000000' }, chunks)
       end)
     end)
 
@@ -81,7 +81,7 @@ describe('rbuffer functions', function()
         write('1234567890')
         read(8)
         collect_write_chunks()
-        eq({'000000', '12345678'}, chunks)
+        eq({ '000000', '12345678' }, chunks)
       end)
     end)
 
@@ -90,7 +90,7 @@ describe('rbuffer functions', function()
         write('12345678')
         read(8)
         collect_write_chunks()
-        eq({'00000000', '12345678'}, chunks)
+        eq({ '00000000', '12345678' }, chunks)
       end)
     end)
 
@@ -129,7 +129,7 @@ describe('rbuffer functions', function()
       itp('is called once with the filled chunk', function()
         write('string')
         collect_read_chunks()
-        eq({'string'}, chunks)
+        eq({ 'string' }, chunks)
       end)
     end)
 
@@ -137,7 +137,7 @@ describe('rbuffer functions', function()
       itp('is called once with the filled chunk', function()
         write('abcdefghijklmnopq')
         collect_read_chunks()
-        eq({'abcdefghijklmnop'}, chunks)
+        eq({ 'abcdefghijklmnop' }, chunks)
       end)
     end)
 
@@ -147,7 +147,7 @@ describe('rbuffer functions', function()
         read(10)
         write('long string')
         collect_read_chunks()
-        eq({'long s', 'tring'}, chunks)
+        eq({ 'long s', 'tring' }, chunks)
       end)
     end)
 
@@ -157,7 +157,7 @@ describe('rbuffer functions', function()
         read(8)
         write('abcdefghijklmnopq')
         collect_read_chunks()
-        eq({'abcdefgh', 'ijklmnop'}, chunks)
+        eq({ 'abcdefgh', 'ijklmnop' }, chunks)
       end)
     end)
   end)
@@ -167,7 +167,7 @@ describe('rbuffer functions', function()
 
     local function collect_chars()
       rbuffer.ut_rbuffer_each(rbuf, function(c, i)
-        table.insert(chars, {string.char(c), tonumber(i)})
+        table.insert(chars, { string.char(c), tonumber(i) })
       end)
     end
     before_each(function()
@@ -187,8 +187,19 @@ describe('rbuffer functions', function()
         read(10)
         write('long string')
         collect_chars()
-        eq({{'l', 0}, {'o', 1}, {'n', 2}, {'g', 3}, {' ', 4}, {'s', 5},
-            {'t', 6}, {'r', 7}, {'i', 8}, {'n', 9}, {'g', 10}}, chars)
+        eq({
+          { 'l', 0 },
+          { 'o', 1 },
+          { 'n', 2 },
+          { 'g', 3 },
+          { ' ', 4 },
+          { 's', 5 },
+          { 't', 6 },
+          { 'r', 7 },
+          { 'i', 8 },
+          { 'n', 9 },
+          { 'g', 10 },
+        }, chars)
       end)
     end)
   end)
@@ -198,7 +209,7 @@ describe('rbuffer functions', function()
 
     local function collect_chars()
       rbuffer.ut_rbuffer_each_reverse(rbuf, function(c, i)
-        table.insert(chars, {string.char(c), tonumber(i)})
+        table.insert(chars, { string.char(c), tonumber(i) })
       end)
     end
     before_each(function()
@@ -218,8 +229,19 @@ describe('rbuffer functions', function()
         read(10)
         write('long string')
         collect_chars()
-        eq({{'g', 10}, {'n', 9}, {'i', 8}, {'r', 7}, {'t', 6}, {'s', 5},
-            {' ', 4}, {'g', 3}, {'n', 2}, {'o', 1}, {'l', 0}}, chars)
+        eq({
+          { 'g', 10 },
+          { 'n', 9 },
+          { 'i', 8 },
+          { 'r', 7 },
+          { 't', 6 },
+          { 's', 5 },
+          { ' ', 4 },
+          { 'g', 3 },
+          { 'n', 2 },
+          { 'o', 1 },
+          { 'l', 0 },
+        }, chars)
       end)
     end)
   end)

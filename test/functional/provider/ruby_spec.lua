@@ -43,7 +43,7 @@ end)
 describe(':ruby command', function()
   it('evaluates ruby', function()
     command('ruby VIM.command("let g:set_by_ruby = [100, 0]")')
-    eq({100, 0}, meths.get_var('set_by_ruby'))
+    eq({ 100, 0 }, meths.get_var('set_by_ruby'))
   end)
 
   it('supports nesting', function()
@@ -112,7 +112,7 @@ end)
 
 describe('rubyeval()', function()
   it('evaluates ruby objects', function()
-    eq({1, 2, {['key'] = 'val'}}, funcs.rubyeval('[1, 2, {key: "val"}]'))
+    eq({ 1, 2, { ['key'] = 'val' } }, funcs.rubyeval('[1, 2, {key: "val"}]'))
   end)
 
   it('returns nil for empty strings', function()

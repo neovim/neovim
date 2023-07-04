@@ -15,7 +15,8 @@ describe('autocmd SearchWrapped', function()
     command('autocmd! SearchWrapped * let g:test += 1')
     curbufmeths.set_lines(0, 1, false, {
       'The quick brown fox',
-      'jumps over the lazy dog'})
+      'jumps over the lazy dog',
+    })
   end)
 
   it('gets triggered when search wraps the end', function()

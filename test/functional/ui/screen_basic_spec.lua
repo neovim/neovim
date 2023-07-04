@@ -9,23 +9,31 @@ local funcs, meths = helpers.funcs, helpers.meths
 
 describe('screen', function()
   local screen
-  local nvim_argv = {helpers.nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
-                     '--cmd', 'set shortmess+=I background=light noswapfile belloff= noshowcmd noruler',
-                     '--embed'}
+  local nvim_argv = {
+    helpers.nvim_prog,
+    '-u',
+    'NONE',
+    '-i',
+    'NONE',
+    '-N',
+    '--cmd',
+    'set shortmess+=I background=light noswapfile belloff= noshowcmd noruler',
+    '--embed',
+  }
 
   before_each(function()
     local screen_nvim = spawn(nvim_argv)
     set_session(screen_nvim)
     screen = Screen.new()
     screen:attach()
-    screen:set_default_attr_ids( {
-      [0] = {bold=true, foreground=255},
-      [1] = {bold=true, reverse=true},
-    } )
+    screen:set_default_attr_ids({
+      [0] = { bold = true, foreground = 255 },
+      [1] = { bold = true, reverse = true },
+    })
   end)
 
   it('default initial screen', function()
-      screen:expect([[
+    screen:expect([[
       ^                                                     |
       {0:~                                                    }|
       {0:~                                                    }|
@@ -50,18 +58,23 @@ local function screen_tests(linegrid)
   before_each(function()
     clear()
     screen = Screen.new()
-    screen:attach({rgb=true,ext_linegrid=linegrid})
-    screen:set_default_attr_ids( {
-      [0] = {bold=true, foreground=255},
-      [1] = {bold=true, reverse=true},
-      [2] = {bold=true},
-      [3] = {reverse=true},
-      [4] = {background = Screen.colors.LightGrey, underline = true},
-      [5] = {background = Screen.colors.LightGrey, underline = true, bold = true, foreground = Screen.colors.Fuchsia},
-      [6] = {bold = true, foreground = Screen.colors.Fuchsia},
-      [7] = {bold = true, foreground = Screen.colors.SeaGreen},
-      [8] = {foreground = Screen.colors.White, background = Screen.colors.Red},
-    } )
+    screen:attach({ rgb = true, ext_linegrid = linegrid })
+    screen:set_default_attr_ids({
+      [0] = { bold = true, foreground = 255 },
+      [1] = { bold = true, reverse = true },
+      [2] = { bold = true },
+      [3] = { reverse = true },
+      [4] = { background = Screen.colors.LightGrey, underline = true },
+      [5] = {
+        background = Screen.colors.LightGrey,
+        underline = true,
+        bold = true,
+        foreground = Screen.colors.Fuchsia,
+      },
+      [6] = { bold = true, foreground = Screen.colors.Fuchsia },
+      [7] = { bold = true, foreground = Screen.colors.SeaGreen },
+      [8] = { foreground = Screen.colors.White, background = Screen.colors.Red },
+    })
   end)
 
   describe(':suspend', function()
@@ -112,7 +125,7 @@ local function screen_tests(linegrid)
   describe(':set title', function()
     it('is forwarded to the UI', function()
       local expected = 'test-title'
-      command('set titlestring='..expected)
+      command('set titlestring=' .. expected)
       command('set title')
       screen:expect(function()
         eq(expected, screen.title)
@@ -129,7 +142,7 @@ local function screen_tests(linegrid)
   describe(':set icon', function()
     it('is forwarded to the UI', function()
       local expected = 'test-icon'
-      command('set iconstring='..expected)
+      command('set iconstring=' .. expected)
       command('set icon')
       screen:expect(function()
         eq(expected, screen.icon)
@@ -164,7 +177,8 @@ local function screen_tests(linegrid)
       ]])
 
       feed('<c-l>')
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
         ^                                                     |
         {0:~                                                    }|
         {0:~                                                    }|
@@ -179,7 +193,9 @@ local function screen_tests(linegrid)
         {0:~                                                    }|
         {1:[No Name]                                            }|
                                                              |
-      ]], reset=true}
+      ]],
+        reset = true,
+      })
 
       command('split')
       screen:expect([[
@@ -200,7 +216,8 @@ local function screen_tests(linegrid)
       ]])
 
       feed('<c-l>')
-      screen:expect{grid=[[
+      screen:expect({
+        grid = [[
         ^                                                     |
         {0:~                                                    }|
         {0:~                                                    }|
@@ -215,7 +232,9 @@ local function screen_tests(linegrid)
         {0:~                                                    }|
         {3:[No Name]                                            }|
                                                              |
-      ]], reset=true}
+      ]],
+        reset = true,
+      })
     end)
   end)
 
@@ -382,7 +401,7 @@ local function screen_tests(linegrid)
                                                              |
       ]])
 
-      feed(':echo "'..string.rep('x\\n', 11)..'"<cr>')
+      feed(':echo "' .. string.rep('x\\n', 11) .. '"<cr>')
       screen:expect([[
         {1:                                                     }|
         x                                                    |
@@ -418,7 +437,7 @@ local function screen_tests(linegrid)
                                                              |
       ]])
 
-      feed(':echo "'..string.rep('x\\n', 12)..'"<cr>')
+      feed(':echo "' .. string.rep('x\\n', 12) .. '"<cr>')
       screen:expect([[
         x                                                    |
         x                                                    |
@@ -453,7 +472,6 @@ local function screen_tests(linegrid)
         {0:~                                                    }|
                                                              |
       ]])
-
     end)
 
     it('redraws properly with :tab split right after scroll', function()
@@ -1013,11 +1031,11 @@ local function screen_tests(linegrid)
   end)
 end
 
-describe("Screen (char-based)", function()
+describe('Screen (char-based)', function()
   screen_tests(false)
 end)
 
-describe("Screen (line-based)", function()
+describe('Screen (line-based)', function()
   screen_tests(true)
 end)
 
@@ -1026,41 +1044,73 @@ describe('Screen default colors', function()
   local function startup(light, termcolors)
     local extra = (light and ' background=light') or ''
 
-    local nvim_argv = {helpers.nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
-                       '--cmd', 'set shortmess+=I noswapfile belloff= noshowcmd noruler'..extra,
-                       '--embed'}
+    local nvim_argv = {
+      helpers.nvim_prog,
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '-N',
+      '--cmd',
+      'set shortmess+=I noswapfile belloff= noshowcmd noruler' .. extra,
+      '--embed',
+    }
     local screen_nvim = spawn(nvim_argv)
     set_session(screen_nvim)
     screen = Screen.new()
-    screen:attach(termcolors and {rgb=true,ext_termcolors=true} or {rgb=true})
+    screen:attach(termcolors and { rgb = true, ext_termcolors = true } or { rgb = true })
   end
 
   it('are dark per default', function()
     startup(false, false)
-    screen:expect{condition=function()
-      eq({rgb_bg=0, rgb_fg=Screen.colors.White, rgb_sp=Screen.colors.Red,
-          cterm_bg=0, cterm_fg=0}, screen.default_colors)
-    end}
+    screen:expect({
+      condition = function()
+        eq({
+          rgb_bg = 0,
+          rgb_fg = Screen.colors.White,
+          rgb_sp = Screen.colors.Red,
+          cterm_bg = 0,
+          cterm_fg = 0,
+        }, screen.default_colors)
+      end,
+    })
   end)
 
   it('can be set to light', function()
     startup(true, false)
-    screen:expect{condition=function()
-      eq({rgb_fg=Screen.colors.White, rgb_bg=0, rgb_sp=Screen.colors.Red,
-          cterm_bg=0, cterm_fg=0}, screen.default_colors)
-    end}
+    screen:expect({
+      condition = function()
+        eq({
+          rgb_fg = Screen.colors.White,
+          rgb_bg = 0,
+          rgb_sp = Screen.colors.Red,
+          cterm_bg = 0,
+          cterm_fg = 0,
+        }, screen.default_colors)
+      end,
+    })
   end)
 
   it('can be handled by external terminal', function()
     startup(false, true)
-    screen:expect{condition=function()
-      eq({rgb_bg=-1, rgb_fg=-1, rgb_sp=-1, cterm_bg=0, cterm_fg=0}, screen.default_colors)
-    end}
+    screen:expect({
+      condition = function()
+        eq(
+          { rgb_bg = -1, rgb_fg = -1, rgb_sp = -1, cterm_bg = 0, cterm_fg = 0 },
+          screen.default_colors
+        )
+      end,
+    })
 
     startup(true, true)
-    screen:expect{condition=function()
-      eq({rgb_bg=-1, rgb_fg=-1, rgb_sp=-1, cterm_bg=0, cterm_fg=0}, screen.default_colors)
-    end}
+    screen:expect({
+      condition = function()
+        eq(
+          { rgb_bg = -1, rgb_fg = -1, rgb_sp = -1, cterm_bg = 0, cterm_fg = 0 },
+          screen.default_colors
+        )
+      end,
+    })
   end)
 end)
 
@@ -1101,13 +1151,15 @@ it("showcmd doesn't cause empty grid_line with redrawdebug=compositor #22593", f
   clear()
   local screen = Screen.new(30, 2)
   screen:set_default_attr_ids({
-    [0] = {bold = true, foreground = Screen.colors.Blue},
+    [0] = { bold = true, foreground = Screen.colors.Blue },
   })
   screen:attach()
   command('set showcmd redrawdebug=compositor')
   feed('d')
-  screen:expect{grid=[[
+  screen:expect({
+    grid = [[
     ^                              |
                        d          |
-  ]]}
+  ]],
+  })
 end)

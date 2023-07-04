@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, eq, eval, next_msg, ok, source = helpers.clear, helpers.eq,
-   helpers.eval, helpers.next_msg, helpers.ok, helpers.source
+local clear, eq, eval, next_msg, ok, source =
+  helpers.clear, helpers.eq, helpers.eval, helpers.next_msg, helpers.ok, helpers.source
 local command, funcs, meths = helpers.command, helpers.funcs, helpers.meths
 local sleep = helpers.sleep
 local spawn, nvim_argv = helpers.spawn, helpers.nvim_argv
@@ -40,7 +40,7 @@ describe('channels', function()
 
     meths.set_var('address', address)
     command("let g:id = sockconnect('pipe', address, {'on_data':'OnEvent'})")
-    local id = eval("g:id")
+    local id = eval('g:id')
     ok(id > 0)
 
     command("call chansend(g:id, msgpackdump([[2,'nvim_set_var',['code',23]]]))")
@@ -52,12 +52,11 @@ describe('channels', function()
 
     command("call chansend(g:id, msgpackdump([[0,0,'nvim_eval',['2+3']]]))")
 
-
-    local res = eval("msgpackdump([[1,0,v:null,5]])")
-    eq({"\148\001\n\192\005"}, res)
-    eq({'notification', 'data', {id, res}}, next_msg())
+    local res = eval('msgpackdump([[1,0,v:null,5]])')
+    eq({ '\148\001\n\192\005' }, res)
+    eq({ 'notification', 'data', { id, res } }, next_msg())
     command("call chansend(g:id, msgpackdump([[2,'nvim_command',['quit']]]))")
-    eq({'notification', 'data', {id, {''}}}, next_msg())
+    eq({ 'notification', 'data', { id, { '' } } }, next_msg())
   end)
 
   it('can use stdio channel', function()
@@ -68,8 +67,10 @@ describe('channels', function()
       \ 'on_exit': function('OnEvent'),
       \ }
     ]])
-    meths.set_var("nvim_prog", nvim_prog)
-    meths.set_var("code", [[
+    meths.set_var('nvim_prog', nvim_prog)
+    meths.set_var(
+      'code',
+      [[
       function! OnEvent(id, data, event) dict
         let text = string([a:id, a:data, a:event])
         call chansend(g:x, text)
@@ -81,25 +82,31 @@ describe('channels', function()
       endfunction
       let g:x = stdioopen({'on_stdin':'OnEvent'})
       call chansend(x, "hello")
-    ]])
-    command("let g:id = jobstart([ g:nvim_prog, '-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--headless', '--cmd', g:code], g:job_opts)")
-    local id = eval("g:id")
+    ]]
+    )
+    command(
+      "let g:id = jobstart([ g:nvim_prog, '-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--headless', '--cmd', g:code], g:job_opts)"
+    )
+    local id = eval('g:id')
     ok(id > 0)
 
-    eq({ "notification", "stdout", {id, { "hello" } } }, next_msg())
+    eq({ 'notification', 'stdout', { id, { 'hello' } } }, next_msg())
 
     command("call chansend(id, 'howdy')")
-    eq({"notification", "stdout", {id, {"[1, ['howdy'], 'stdin']"}}}, next_msg())
+    eq({ 'notification', 'stdout', { id, { "[1, ['howdy'], 'stdin']" } } }, next_msg())
 
-    command("call chansend(id, 0z686f6c61)")
-    eq({"notification", "stdout", {id, {"[1, ['hola'], 'stdin']"}}}, next_msg())
+    command('call chansend(id, 0z686f6c61)')
+    eq({ 'notification', 'stdout', { id, { "[1, ['hola'], 'stdin']" } } }, next_msg())
 
     command("call chanclose(id, 'stdin')")
-    expect_twostreams({{"notification", "stdout", {id, {"[1, [''], 'stdin']"}}},
-                       {'notification', 'stdout', {id, {''}}}},
-                      {{"notification", "stderr", {id, {"*dies*"}}},
-                       {'notification', 'stderr', {id, {''}}}})
-    eq({"notification", "exit", {3,0}}, next_msg())
+    expect_twostreams({
+      { 'notification', 'stdout', { id, { "[1, [''], 'stdin']" } } },
+      { 'notification', 'stdout', { id, { '' } } },
+    }, {
+      { 'notification', 'stderr', { id, { '*dies*' } } },
+      { 'notification', 'stderr', { id, { '' } } },
+    })
+    eq({ 'notification', 'exit', { 3, 0 } }, next_msg())
   end)
 
   it('can use stdio channel and on_print callback', function()
@@ -110,8 +117,10 @@ describe('channels', function()
       \ 'on_exit': function('OnEvent'),
       \ }
     ]])
-    meths.set_var("nvim_prog", nvim_prog)
-    meths.set_var("code", [[
+    meths.set_var('nvim_prog', nvim_prog)
+    meths.set_var(
+      'code',
+      [[
       function! OnStdin(id, data, event) dict
         echo string([a:id, a:data, a:event])
         if a:data == ['']
@@ -123,24 +132,27 @@ describe('channels', function()
       endfunction
       let g:x = stdioopen({'on_stdin': funcref('OnStdin'), 'on_print':'OnPrint'})
       call chansend(x, "hello")
-    ]])
-    command("let g:id = jobstart([ g:nvim_prog, '-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--headless', '--cmd', g:code], g:job_opts)")
-    local id = eval("g:id")
+    ]]
+    )
+    command(
+      "let g:id = jobstart([ g:nvim_prog, '-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--headless', '--cmd', g:code], g:job_opts)"
+    )
+    local id = eval('g:id')
     ok(id > 0)
 
-    eq({ "notification", "stdout", {id, { "hello" } } }, next_msg())
+    eq({ 'notification', 'stdout', { id, { 'hello' } } }, next_msg())
 
     command("call chansend(id, 'howdy')")
-    eq({"notification", "stdout", {id, {"OnPrint:[1, ['howdy'], 'stdin']"}}}, next_msg())
+    eq({ 'notification', 'stdout', { id, { "OnPrint:[1, ['howdy'], 'stdin']" } } }, next_msg())
   end)
 
   local function expect_twoline(id, stream, line1, line2, nobr)
     local msg = next_msg()
-    local joined = nobr and {line1..line2} or {line1, line2}
-    if not pcall(eq, {"notification", stream, {id, joined}}, msg) then
-      local sep = (not nobr) and "" or nil
-      eq({"notification", stream, {id, {line1, sep}}}, msg)
-      eq({"notification", stream, {id, {line2}}}, next_msg())
+    local joined = nobr and { line1 .. line2 } or { line1, line2 }
+    if not pcall(eq, { 'notification', stream, { id, joined } }, msg) then
+      local sep = (not nobr) and '' or nil
+      eq({ 'notification', stream, { id, { line1, sep } } }, msg)
+      eq({ 'notification', stream, { id, { line2 } } }, next_msg())
     end
   end
 
@@ -153,49 +165,51 @@ describe('channels', function()
       \ 'pty': v:true,
       \ }
     ]])
-    meths.set_var("nvim_prog", nvim_prog)
-    meths.set_var("code", [[
+    meths.set_var('nvim_prog', nvim_prog)
+    meths.set_var(
+      'code',
+      [[
       function! OnEvent(id, data, event) dict
         let text = string([a:id, a:data, a:event])
         call chansend(g:x, text)
       endfunction
       let g:x = stdioopen({'on_stdin':'OnEvent'})
-    ]])
-    command("let g:id = jobstart([ g:nvim_prog, '-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--headless', '--cmd', g:code], g:job_opts)")
-    local id = eval("g:id")
+    ]]
+    )
+    command(
+      "let g:id = jobstart([ g:nvim_prog, '-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--headless', '--cmd', g:code], g:job_opts)"
+    )
+    local id = eval('g:id')
     ok(id > 0)
 
     command("call chansend(id, 'TEXT\n')")
-    expect_twoline(id, "stdout", "TEXT\r", "[1, ['TEXT', ''], 'stdin']")
+    expect_twoline(id, 'stdout', 'TEXT\r', "[1, ['TEXT', ''], 'stdin']")
 
-    command("call chansend(id, 0z426c6f6273210a)")
-    expect_twoline(id, "stdout", "Blobs!\r", "[1, ['Blobs!', ''], 'stdin']")
+    command('call chansend(id, 0z426c6f6273210a)')
+    expect_twoline(id, 'stdout', 'Blobs!\r', "[1, ['Blobs!', ''], 'stdin']")
 
     command("call chansend(id, 'neovan')")
-    eq({"notification", "stdout", {id, {"neovan"}}}, next_msg())
+    eq({ 'notification', 'stdout', { id, { 'neovan' } } }, next_msg())
     command("call chansend(id, '\127\127im\n')")
-    expect_twoline(id, "stdout", "\b \b\b \bim\r", "[1, ['neovim', ''], 'stdin']")
+    expect_twoline(id, 'stdout', '\b \b\b \bim\r', "[1, ['neovim', ''], 'stdin']")
 
     command("call chansend(id, 'incomplet\004')")
 
     local bsdlike = is_os('bsd') or is_os('mac')
-    local extra = bsdlike and "^D\008\008" or ""
-    expect_twoline(id, "stdout",
-                   "incomplet"..extra, "[1, ['incomplet'], 'stdin']", true)
-
+    local extra = bsdlike and '^D\008\008' or ''
+    expect_twoline(id, 'stdout', 'incomplet' .. extra, "[1, ['incomplet'], 'stdin']", true)
 
     command("call chansend(id, '\004')")
     if bsdlike then
-      expect_twoline(id, "stdout", extra, "[1, [''], 'stdin']", true)
+      expect_twoline(id, 'stdout', extra, "[1, [''], 'stdin']", true)
     else
-      eq({"notification", "stdout", {id, {"[1, [''], 'stdin']"}}}, next_msg())
+      eq({ 'notification', 'stdout', { id, { "[1, [''], 'stdin']" } } }, next_msg())
     end
 
     -- channel is still open
     command("call chansend(id, 'hi again!\n')")
-    eq({"notification", "stdout", {id, {"hi again!\r", ""}}}, next_msg())
+    eq({ 'notification', 'stdout', { id, { 'hi again!\r', '' } } }, next_msg())
   end)
-
 
   it('stdio channel can use rpc and stderr simultaneously', function()
     skip(is_os('win'))
@@ -206,27 +220,33 @@ describe('channels', function()
       \ 'rpc': v:true,
       \ }
     ]])
-    meths.set_var("nvim_prog", nvim_prog)
-    meths.set_var("code", [[
+    meths.set_var('nvim_prog', nvim_prog)
+    meths.set_var(
+      'code',
+      [[
       let id = stdioopen({'rpc':v:true})
       call rpcnotify(id,"nvim_call_function", "rpcnotify", [1, "message", "hi there!", id])
       call chansend(v:stderr, "trouble!")
-    ]])
-    command("let id = jobstart([ g:nvim_prog, '-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--headless', '--cmd', g:code], g:job_opts)")
-    eq({"notification", "message", {"hi there!", 1}}, next_msg())
-    eq({"notification", "stderr", {3, {"trouble!"}}}, next_msg())
+    ]]
+    )
+    command(
+      "let id = jobstart([ g:nvim_prog, '-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--headless', '--cmd', g:code], g:job_opts)"
+    )
+    eq({ 'notification', 'message', { 'hi there!', 1 } }, next_msg())
+    eq({ 'notification', 'stderr', { 3, { 'trouble!' } } }, next_msg())
 
     eq(30, eval("rpcrequest(id, 'nvim_eval', '[chansend(v:stderr, \"math??\"), 5*6][1]')"))
-    eq({"notification", "stderr", {3, {"math??"}}}, next_msg())
+    eq({ 'notification', 'stderr', { 3, { 'math??' } } }, next_msg())
 
-    local _, err = pcall(command,"call rpcrequest(id, 'nvim_command', 'call chanclose(v:stderr, \"stdin\")')")
-    ok(string.find(err,"E906: invalid stream for channel") ~= nil)
+    local _, err =
+      pcall(command, "call rpcrequest(id, 'nvim_command', 'call chanclose(v:stderr, \"stdin\")')")
+    ok(string.find(err, 'E906: invalid stream for channel') ~= nil)
 
     eq(1, eval("rpcrequest(id, 'nvim_eval', 'chanclose(v:stderr, \"stderr\")')"))
-    eq({"notification", "stderr", {3, {""}}}, next_msg())
+    eq({ 'notification', 'stderr', { 3, { '' } } }, next_msg())
 
     command("call rpcnotify(id, 'nvim_command', 'quit')")
-    eq({"notification", "exit", {3, 0}}, next_msg())
+    eq({ 'notification', 'exit', { 3, 0 } }, next_msg())
   end)
 
   it('can use buffered output mode', function()
@@ -239,27 +259,29 @@ describe('channels', function()
       \ }
     ]])
     command("let id = jobstart(['grep', '^[0-9]'], g:job_opts)")
-    local id = eval("g:id")
+    local id = eval('g:id')
 
     command([[call chansend(id, "stuff\n10 PRINT \"NVIM\"\nxx")]])
     sleep(10)
     command([[call chansend(id, "xx\n20 GOTO 10\nzz\n")]])
     command("call chanclose(id, 'stdin')")
 
-    eq({"notification", "stdout", {id, {'10 PRINT "NVIM"',
-                                       '20 GOTO 10', ''}}}, next_msg())
-    eq({"notification", "exit", {id, 0}}, next_msg())
+    eq({
+      'notification',
+      'stdout',
+      { id, { '10 PRINT "NVIM"', '20 GOTO 10', '' } },
+    }, next_msg())
+    eq({ 'notification', 'exit', { id, 0 } }, next_msg())
 
     command("let id = jobstart(['grep', '^[0-9]'], g:job_opts)")
-    id = eval("g:id")
+    id = eval('g:id')
 
     command([[call chansend(id, "is no number\nnot at all")]])
     command("call chanclose(id, 'stdin')")
 
     -- works correctly with no output
-    eq({"notification", "stdout", {id, {''}}}, next_msg())
-    eq({"notification", "exit", {id, 1}}, next_msg())
-
+    eq({ 'notification', 'stdout', { id, { '' } } }, next_msg())
+    eq({ 'notification', 'exit', { id, 1 } }, next_msg())
   end)
 
   it('can use buffered output mode with no stream callback', function()
@@ -274,31 +296,40 @@ describe('channels', function()
       \ }
     ]])
     command("let id = jobstart(['grep', '^[0-9]'], g:job_opts)")
-    local id = eval("g:id")
+    local id = eval('g:id')
 
     command([[call chansend(id, "stuff\n10 PRINT \"NVIM\"\nxx")]])
     sleep(10)
     command([[call chansend(id, "xx\n20 GOTO 10\nzz\n")]])
     command("call chanclose(id, 'stdin')")
 
-    eq({"notification", "exit", {id, 0, {'10 PRINT "NVIM"',
-                                         '20 GOTO 10', ''}}}, next_msg())
+    eq({
+      'notification',
+      'exit',
+      { id, 0, { '10 PRINT "NVIM"', '20 GOTO 10', '' } },
+    }, next_msg())
 
     -- if dict is reused the new value is not stored,
     -- but nvim also does not crash
     command("let id = jobstart(['cat'], g:job_opts)")
-    id = eval("g:id")
+    id = eval('g:id')
 
     command([[call chansend(id, "cat text\n")]])
     sleep(10)
     command("call chanclose(id, 'stdin')")
 
     -- old value was not overwritten
-    eq({"notification", "exit", {id, 0, {'10 PRINT "NVIM"',
-                                         '20 GOTO 10', ''}}}, next_msg())
+    eq({
+      'notification',
+      'exit',
+      { id, 0, { '10 PRINT "NVIM"', '20 GOTO 10', '' } },
+    }, next_msg())
 
     -- and an error was thrown.
-    eq("E5210: dict key 'stdout' already set for buffered stream in channel "..id, eval('v:errmsg'))
+    eq(
+      "E5210: dict key 'stdout' already set for buffered stream in channel " .. id,
+      eval('v:errmsg')
+    )
 
     -- reset dictionary
     source([[
@@ -308,13 +339,13 @@ describe('channels', function()
       \ }
     ]])
     command("let id = jobstart(['grep', '^[0-9]'], g:job_opts)")
-    id = eval("g:id")
+    id = eval('g:id')
 
     command([[call chansend(id, "is no number\nnot at all")]])
     command("call chanclose(id, 'stdin')")
 
     -- works correctly with no output
-    eq({"notification", "exit", {id, 1, {''}}}, next_msg())
+    eq({ 'notification', 'exit', { id, 1, { '' } } }, next_msg())
   end)
 end)
 
@@ -325,8 +356,10 @@ describe('loopback', function()
   end)
 
   it('does not crash when sending raw data', function()
-    eq("Vim(call):Can't send raw data to rpc channel",
-       pcall_err(command, "call chansend(chan, 'test')"))
+    eq(
+      "Vim(call):Can't send raw data to rpc channel",
+      pcall_err(command, "call chansend(chan, 'test')")
+    )
     assert_alive()
   end)
 

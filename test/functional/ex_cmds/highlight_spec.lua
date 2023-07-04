@@ -1,5 +1,5 @@
 local Screen = require('test.functional.ui.screen')
-local helpers = require("test.functional.helpers")(after_each)
+local helpers = require('test.functional.helpers')(after_each)
 local eq, command = helpers.eq, helpers.command
 local clear = helpers.clear
 local eval, exc_exec = helpers.eval, helpers.exc_exec
@@ -17,15 +17,18 @@ describe(':highlight', function()
   end)
 
   it('invalid color name', function()
-    eq('Vim(highlight):E421: Color name or number not recognized: ctermfg=#181818',
-       exc_exec("highlight normal ctermfg=#181818"))
-    eq('Vim(highlight):E421: Color name or number not recognized: ctermbg=#181818',
-       exc_exec("highlight normal ctermbg=#181818"))
+    eq(
+      'Vim(highlight):E421: Color name or number not recognized: ctermfg=#181818',
+      exc_exec('highlight normal ctermfg=#181818')
+    )
+    eq(
+      'Vim(highlight):E421: Color name or number not recognized: ctermbg=#181818',
+      exc_exec('highlight normal ctermbg=#181818')
+    )
   end)
 
   it('invalid group name', function()
-    eq('Vim(highlight):E411: Highlight group not found: foo',
-       exc_exec("highlight foo"))
+    eq('Vim(highlight):E411: Highlight group not found: foo', exc_exec('highlight foo'))
   end)
 
   it('"Normal" foreground with red', function()

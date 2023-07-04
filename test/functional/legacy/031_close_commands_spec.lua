@@ -119,9 +119,12 @@ describe('Commands that close windows and/or buffers', function()
     feed_command('q!')
     feed('<CR>')
     expect('testtext 1')
-    expect_exit(source, [[
+    expect_exit(
+      source,
+      [[
       q!
       " Now nvim should have exited
-      throw "Oh, Not finished yet."]])
+      throw "Oh, Not finished yet."]]
+    )
   end)
 end)

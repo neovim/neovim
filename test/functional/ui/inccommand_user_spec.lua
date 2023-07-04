@@ -236,15 +236,15 @@ describe("'inccommand' for user commands", function()
     clear()
     screen = Screen.new(40, 17)
     screen:set_default_attr_ids({
-      [1] = {background = Screen.colors.Yellow1},
-      [2] = {foreground = Screen.colors.Blue1, bold = true},
-      [3] = {reverse = true},
-      [4] = {reverse = true, bold = true}
+      [1] = { background = Screen.colors.Yellow1 },
+      [2] = { foreground = Screen.colors.Blue1, bold = true },
+      [3] = { reverse = true },
+      [4] = { reverse = true, bold = true },
     })
     screen:attach()
     exec_lua(setup_replace_cmd)
     command('set cmdwinheight=5')
-    insert[[
+    insert([[
       text on line 1
       more text on line 2
       oh no, even more text
@@ -253,7 +253,7 @@ describe("'inccommand' for user commands", function()
       did the text stop
       why won't it stop
       make the text stop
-    ]]
+    ]])
   end)
 
   it('works with inccommand=nosplit', function()
@@ -444,25 +444,25 @@ describe("'inccommand' with multiple buffers", function()
     clear()
     screen = Screen.new(40, 17)
     screen:set_default_attr_ids({
-      [1] = {background = Screen.colors.Yellow1},
-      [2] = {foreground = Screen.colors.Blue1, bold = true},
-      [3] = {reverse = true},
-      [4] = {reverse = true, bold = true}
+      [1] = { background = Screen.colors.Yellow1 },
+      [2] = { foreground = Screen.colors.Blue1, bold = true },
+      [3] = { reverse = true },
+      [4] = { reverse = true, bold = true },
     })
     screen:attach()
     exec_lua(setup_replace_cmd)
     command('set cmdwinheight=10')
-    insert[[
+    insert([[
       foo bar baz
       bar baz foo
       baz foo bar
-    ]]
+    ]])
     command('vsplit | enew')
-    insert[[
+    insert([[
       bar baz foo
       baz foo bar
       foo bar baz
-    ]]
+    ]])
   end)
 
   it('works', function()

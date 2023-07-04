@@ -11,7 +11,6 @@ describe('treesitter utils', function()
   before_each(clear)
 
   it('can find an ancestor', function()
-
     insert([[
       int main() {
         int x = 3;

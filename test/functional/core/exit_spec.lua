@@ -27,8 +27,8 @@ describe('v:exiting', function()
 
   local function test_exiting(setup_fn)
     local function on_setup()
-      command('autocmd VimLeavePre * call rpcrequest('..cid..', "exit", "VimLeavePre")')
-      command('autocmd VimLeave    * call rpcrequest('..cid..', "exit", "VimLeave")')
+      command('autocmd VimLeavePre * call rpcrequest(' .. cid .. ', "exit", "VimLeavePre")')
+      command('autocmd VimLeave    * call rpcrequest(' .. cid .. ', "exit", "VimLeave")')
       setup_fn()
     end
     local requests_args = {}
@@ -39,7 +39,7 @@ describe('v:exiting', function()
       return ''
     end
     run(on_request, nil, on_setup)
-    eq({{'VimLeavePre'}, {'VimLeave'}}, requests_args)
+    eq({ { 'VimLeavePre' }, { 'VimLeave' } }, requests_args)
   end
 
   it('is 0 on normal exit', function()
@@ -59,11 +59,16 @@ end)
 describe(':cquit', function()
   local function test_cq(cmdline, exit_code, redir_msg)
     if redir_msg then
-      eq(redir_msg, pcall_err(function() return exec_capture(cmdline) end))
+      eq(
+        redir_msg,
+        pcall_err(function()
+          return exec_capture(cmdline)
+        end)
+      )
       poke_eventloop()
       assert_alive()
     else
-      funcs.system({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--cmd', cmdline})
+      funcs.system({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--cmd', cmdline })
       eq(exit_code, eval('v:shell_error'))
     end
   end

@@ -31,7 +31,9 @@ local set_session = helpers.set_session
 local feed = helpers.feed
 local eval = helpers.eval
 
-if helpers.skip(helpers.is_os('win')) then return end
+if helpers.skip(helpers.is_os('win')) then
+  return
+end
 
 describe('TUI', function()
   local screen
@@ -41,9 +43,15 @@ describe('TUI', function()
   before_each(function()
     clear()
     local child_server = new_pipename()
-    screen = thelpers.screen_setup(0,
-      string.format([=[["%s", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "%s laststatus=2 background=dark"]]=],
-        nvim_prog, child_server, nvim_set))
+    screen = thelpers.screen_setup(
+      0,
+      string.format(
+        [=[["%s", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "%s laststatus=2 background=dark"]]=],
+        nvim_prog,
+        child_server,
+        nvim_set
+      )
+    )
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|
@@ -69,15 +77,14 @@ describe('TUI', function()
   local function expect_child_buf_lines(expected)
     assert(type({}) == type(expected))
     retry(nil, nil, function()
-      local _, buflines = child_session:request(
-        'nvim_buf_get_lines', 0, 0, -1, false)
+      local _, buflines = child_session:request('nvim_buf_get_lines', 0, 0, -1, false)
       eq(expected, buflines)
     end)
   end
 
   it('rapid resize #7572 #7628', function()
     -- Need buffer rows to provoke the behavior.
-    feed_data(":edit test/functional/fixtures/bigfile.txt\n")
+    feed_data(':edit test/functional/fixtures/bigfile.txt\n')
     screen:expect([[
       {1:0}000;<control>;Cc;0;BN;;;;;N;NULL;;;;             |
       0001;<control>;Cc;0;BN;;;;;N;START OF HEADING;;;; |
@@ -104,21 +111,26 @@ describe('TUI', function()
     screen:try_resize(57, 17)
     command('call jobresize(b:terminal_job_id, 57, 17)')
     retry(nil, nil, function()
-      eq({true, 57}, {child_session:request('nvim_win_get_width', 0)})
+      eq({ true, 57 }, { child_session:request('nvim_win_get_width', 0) })
     end)
   end)
 
   it('accepts resize while pager is active', function()
-    child_session:request("nvim_exec", [[
+    child_session:request(
+      'nvim_exec',
+      [[
     set more
     func! ManyErr()
       for i in range(20)
         echoerr "FAIL ".i
       endfor
     endfunc
-    ]], false)
+    ]],
+      false
+    )
     feed_data(':call ManyErr()\r')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       {8:Error detected while processing function ManyErr:} |
       {11:line    2:}                                        |
       {8:FAIL 0}                                            |
@@ -126,10 +138,12 @@ describe('TUI', function()
       {8:FAIL 2}                                            |
       {10:-- More --}{1: }                                       |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
 
-    screen:try_resize(50,10)
-    screen:expect{grid=[[
+    screen:try_resize(50, 10)
+    screen:expect({
+      grid = [[
       :call ManyErr()                                   |
       {8:Error detected while processing function ManyErr:} |
       {11:line    2:}                                        |
@@ -140,10 +154,12 @@ describe('TUI', function()
                                                         |
       {10:-- More --}{1: }                                       |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
 
     feed_data('j')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       {8:Error detected while processing function ManyErr:} |
       {11:line    2:}                                        |
       {8:FAIL 0}                                            |
@@ -154,10 +170,12 @@ describe('TUI', function()
       {8:FAIL 5}                                            |
       {10:-- More --}{1: }                                       |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
 
-    screen:try_resize(50,7)
-    screen:expect{grid=[[
+    screen:try_resize(50, 7)
+    screen:expect({
+      grid = [[
       {8:FAIL 1}                                            |
       {8:FAIL 2}                                            |
       {8:FAIL 3}                                            |
@@ -165,28 +183,34 @@ describe('TUI', function()
       {8:FAIL 5}                                            |
       {10:-- More --}{1: }                                       |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
 
-    screen:try_resize(50,5)
-    screen:expect{grid=[[
+    screen:try_resize(50, 5)
+    screen:expect({
+      grid = [[
       {8:FAIL 3}                                            |
       {8:FAIL 4}                                            |
       {8:FAIL 5}                                            |
       {10:-- More --}{1: }                                       |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
 
     feed_data('g')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       :call ManyErr()                                   |
       {8:Error detected while processing function ManyErr:} |
       {11:line    2:}                                        |
       {10:-- More --}{1: }                                       |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
 
-    screen:try_resize(50,10)
-    screen:expect{grid=[[
+    screen:try_resize(50, 10)
+    screen:expect({
+      grid = [[
       :call ManyErr()                                   |
       {8:Error detected while processing function ManyErr:} |
       {11:line    2:}                                        |
@@ -197,10 +221,12 @@ describe('TUI', function()
       {8:FAIL 4}                                            |
       {10:-- More --}{1: }                                       |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
 
     feed_data('\003')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       {1: }                                                 |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -211,7 +237,8 @@ describe('TUI', function()
       {5:[No Name]                                         }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
   end)
 
   it('accepts basic utf-8 input', function()
@@ -240,8 +267,8 @@ describe('TUI', function()
   it('interprets leading <Esc> byte as ALT modifier in normal-mode', function()
     local keys = 'dfghjkl'
     for c in keys:gmatch('.') do
-      feed_command('nnoremap <a-'..c..'> ialt-'..c..'<cr><esc>')
-      feed_data('\027'..c)
+      feed_command('nnoremap <a-' .. c .. '> ialt-' .. c .. '<cr><esc>')
+      feed_data('\027' .. c)
     end
     screen:expect([[
       alt-j                                             |
@@ -317,8 +344,9 @@ describe('TUI', function()
     feed_data('\022\022') -- ctrl+v
     feed_data('\022\013') -- ctrl+m
     local attrs = screen:get_default_attr_ids()
-    attrs[11] = {foreground = 81}
-    screen:expect([[
+    attrs[11] = { foreground = 81 }
+    screen:expect(
+      [[
     {11:^G^V^M}{1: }                                           |
     {4:~                                                 }|
     {4:~                                                 }|
@@ -326,15 +354,21 @@ describe('TUI', function()
     {5:[No Name] [+]                                     }|
     {3:-- INSERT --}                                      |
     {3:-- TERMINAL --}                                    |
-    ]], attrs)
+    ]],
+      attrs
+    )
   end)
 
   it('accepts mouse wheel events #19992', function()
-    child_session:request('nvim_exec', [[
+    child_session:request(
+      'nvim_exec',
+      [[
       set number nostartofline nowrap mousescroll=hor:1,ver:1
       call setline(1, repeat([join(range(10), '----')], 10))
       vsplit
-    ]], false)
+    ]],
+      false
+    )
     screen:expect([[
       {11:  1 }{1:0}----1----2----3----4│{11:  1 }0----1----2----3----|
       {11:  2 }0----1----2----3----4│{11:  2 }0----1----2----3----|
@@ -660,11 +694,15 @@ describe('TUI', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
-    child_session:request('nvim_exec', [[
+    child_session:request(
+      'nvim_exec',
+      [[
       tab split
       tabnew
       highlight Tabline ctermbg=NONE ctermfg=NONE cterm=underline
-    ]], false)
+    ]],
+      false
+    )
     screen:expect([[
       {12: + [No Name]  + [No Name] }{3: [No Name] }{1:            }{12:X}|
       {1: }                                                 |
@@ -697,7 +735,9 @@ describe('TUI', function()
   end)
 
   it('mouse events work with right-click menu', function()
-    child_session:request('nvim_exec', [[
+    child_session:request(
+      'nvim_exec',
+      [[
       call setline(1, 'popup menu test')
       set mouse=a mousemodel=popup
 
@@ -707,7 +747,9 @@ describe('TUI', function()
       menu PopUp.baz :let g:menustr = 'baz'<CR>
       highlight Pmenu ctermbg=NONE ctermfg=NONE cterm=underline,reverse
       highlight PmenuSel ctermbg=NONE ctermfg=NONE cterm=underline,reverse,bold
-    ]], false)
+    ]],
+      false
+    )
     meths.input_mouse('right', 'press', '', 0, 0, 4)
     screen:expect([[
       {1:p}opup menu test                                   |
@@ -757,7 +799,7 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     feed_data('pasted from terminal')
-    expect_child_buf_lines({'"pasted from terminal"'})
+    expect_child_buf_lines({ '"pasted from terminal"' })
     screen:expect([[
       "pasted from terminal{1:"}                            |
       {4:~                                                 }|
@@ -767,8 +809,8 @@ describe('TUI', function()
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
-    feed_data('\027[201~')  -- End paste.
-    feed_data('\027[27u')   -- ESC: go to Normal mode.
+    feed_data('\027[201~') -- End paste.
+    feed_data('\027[27u') -- ESC: go to Normal mode.
     wait_for_mode('n')
     screen:expect([[
       "pasted from termina{1:l}"                            |
@@ -781,8 +823,7 @@ describe('TUI', function()
     ]])
     -- Dot-repeat/redo.
     feed_data('2.')
-    expect_child_buf_lines(
-      {'"pasted from terminapasted from terminalpasted from terminall"'})
+    expect_child_buf_lines({ '"pasted from terminapasted from terminalpasted from terminall"' })
     screen:expect([[
       "pasted from terminapasted from terminalpasted fro|
       m termina{1:l}l"                                      |
@@ -794,17 +835,18 @@ describe('TUI', function()
     ]])
     -- Undo.
     feed_data('u')
-    expect_child_buf_lines({'"pasted from terminal"'})
+    expect_child_buf_lines({ '"pasted from terminal"' })
     feed_data('u')
-    expect_child_buf_lines({'""'})
+    expect_child_buf_lines({ '""' })
     feed_data('u')
-    expect_child_buf_lines({''})
+    expect_child_buf_lines({ '' })
   end)
 
   it('paste: select-mode', function()
     feed_data('ithis is line 1\nthis is line 2\nline 3 is here\n\027')
     wait_for_mode('n')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       this is line 1                                    |
       this is line 2                                    |
       line 3 is here                                    |
@@ -812,14 +854,16 @@ describe('TUI', function()
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
     -- Select-mode. Use <C-n> to move down.
     feed_data('gg04lgh\14\14')
     wait_for_mode('s')
     feed_data('\027[200~')
     feed_data('just paste it™')
     feed_data('\027[201~')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       thisjust paste it{1:™}3 is here                       |
                                                         |
       {4:~                                                 }|
@@ -827,31 +871,33 @@ describe('TUI', function()
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
     -- Undo.
     feed_data('u')
-    expect_child_buf_lines{
+    expect_child_buf_lines({
       'this is line 1',
       'this is line 2',
       'line 3 is here',
       '',
-      }
+    })
     -- Redo.
-    feed_data('\18')  -- <C-r>
-    expect_child_buf_lines{
+    feed_data('\18') -- <C-r>
+    expect_child_buf_lines({
       'thisjust paste it™3 is here',
       '',
-      }
+    })
   end)
 
   it('paste: terminal mode', function()
     if is_ci('github') then
-        pending("tty-test complains about not owning the terminal -- actions/runner#241")
+      pending('tty-test complains about not owning the terminal -- actions/runner#241')
     end
     child_exec_lua('vim.o.statusline="^^^^^^^"')
     child_exec_lua('vim.cmd.terminal(...)', testprg('tty-test'))
     feed_data('i')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       tty ready                                         |
       {1: }                                                 |
                                                         |
@@ -859,11 +905,13 @@ describe('TUI', function()
       {5:^^^^^^^                                           }|
       {3:-- TERMINAL --}                                    |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
     feed_data('\027[200~')
     feed_data('hallo')
     feed_data('\027[201~')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       tty ready                                         |
       hallo{1: }                                            |
                                                         |
@@ -871,7 +919,8 @@ describe('TUI', function()
       {5:^^^^^^^                                           }|
       {3:-- TERMINAL --}                                    |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
   end)
 
   it('paste: normal-mode (+CRLF #10872)', function()
@@ -879,8 +928,8 @@ describe('TUI', function()
     wait_for_mode('c')
     feed_data('\n')
     wait_for_mode('n')
-    local expected_lf   = {'line 1', 'ESC:\027 / CR: \rx'}
-    local expected_crlf = {'line 1', 'ESC:\027 / CR: ', 'x'}
+    local expected_lf = { 'line 1', 'ESC:\027 / CR: \rx' }
+    local expected_crlf = { 'line 1', 'ESC:\027 / CR: ', 'x' }
     local expected_grid1 = [[
       line 1                                            |
       ESC:{11:^[} / CR:                                      |
@@ -891,20 +940,20 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]]
     local expected_attr = {
-      [1] = {reverse = true},
-      [3] = {bold = true},
-      [4] = {foreground = tonumber('0x00000c')},
-      [5] = {bold = true, reverse = true},
-      [11] = {foreground = tonumber('0x000051')},
-      [12] = {reverse = true, foreground = tonumber('0x000051')},
+      [1] = { reverse = true },
+      [3] = { bold = true },
+      [4] = { foreground = tonumber('0x00000c') },
+      [5] = { bold = true, reverse = true },
+      [11] = { foreground = tonumber('0x000051') },
+      [12] = { reverse = true, foreground = tonumber('0x000051') },
     }
     -- "bracketed paste"
-    feed_data('\027[200~'..table.concat(expected_lf,'\n')..'\027[201~')
-    screen:expect{grid=expected_grid1, attr_ids=expected_attr}
+    feed_data('\027[200~' .. table.concat(expected_lf, '\n') .. '\027[201~')
+    screen:expect({ grid = expected_grid1, attr_ids = expected_attr })
     -- Dot-repeat/redo.
     feed_data('.')
-    screen:expect{
-      grid=[[
+    screen:expect({
+      grid = [[
         ESC:{11:^[} / CR:                                      |
         xline 1                                           |
         ESC:{11:^[} / CR:                                      |
@@ -913,33 +962,35 @@ describe('TUI', function()
                                                           |
         {3:-- TERMINAL --}                                    |
       ]],
-      attr_ids=expected_attr}
+      attr_ids = expected_attr,
+    })
     -- Undo.
     feed_data('u')
     expect_child_buf_lines(expected_crlf)
     feed_data('u')
-    expect_child_buf_lines({''})
+    expect_child_buf_lines({ '' })
     feed_data(':echo')
     wait_for_mode('c')
     feed_data('\n')
     wait_for_mode('n')
     -- CRLF input
-    feed_data('\027[200~'..table.concat(expected_lf,'\r\n')..'\027[201~')
-    screen:expect{grid=expected_grid1, attr_ids=expected_attr}
+    feed_data('\027[200~' .. table.concat(expected_lf, '\r\n') .. '\027[201~')
+    screen:expect({ grid = expected_grid1, attr_ids = expected_attr })
     expect_child_buf_lines(expected_crlf)
   end)
 
   it('paste: cmdline-mode inserts 1 line', function()
-    feed_data('ifoo\n')   -- Insert some text (for dot-repeat later).
-    feed_data('\027:""')  -- Enter Cmdline-mode.
-    feed_data('\027[D')   -- <Left> to place cursor between quotes.
+    feed_data('ifoo\n') -- Insert some text (for dot-repeat later).
+    feed_data('\027:""') -- Enter Cmdline-mode.
+    feed_data('\027[D') -- <Left> to place cursor between quotes.
     wait_for_mode('c')
     -- "bracketed paste"
     feed_data('\027[200~line 1\nline 2\n')
     wait_for_mode('c')
     feed_data('line 3\nline 4\n\027[201~')
     wait_for_mode('c')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       foo                                               |
                                                         |
       {4:~                                                 }|
@@ -947,12 +998,14 @@ describe('TUI', function()
       {5:[No Name] [+]                                     }|
       :"line 1{1:"}                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
     -- Dot-repeat/redo.
     feed_data('\027[27u')
     wait_for_mode('n')
     feed_data('.')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       foo                                               |
       foo                                               |
       {1: }                                                 |
@@ -960,19 +1013,19 @@ describe('TUI', function()
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
   end)
 
   it('paste: cmdline-mode collects chunks of unfinished line', function()
     local function expect_cmdline(expected)
       retry(nil, nil, function()
-        local _, cmdline = child_session:request(
-          'nvim_call_function', 'getcmdline', {})
+        local _, cmdline = child_session:request('nvim_call_function', 'getcmdline', {})
         eq(expected, cmdline)
       end)
     end
-    feed_data('\027:""')  -- Enter Cmdline-mode.
-    feed_data('\027[D')   -- <Left> to place cursor between quotes.
+    feed_data('\027:""') -- Enter Cmdline-mode.
+    feed_data('\027[D') -- <Left> to place cursor between quotes.
     wait_for_mode('c')
     feed_data('\027[200~stuff 1 ')
     expect_cmdline('"stuff 1 "')
@@ -988,16 +1041,21 @@ describe('TUI', function()
   end)
 
   it('paste: recovers from vim.paste() failure', function()
-    child_session:request('nvim_exec_lua', [[
+    child_session:request(
+      'nvim_exec_lua',
+      [[
       _G.save_paste_fn = vim.paste
       -- Stack traces for this test are non-deterministic, so disable them
       _G.debug.traceback = function(msg) return msg end
       vim.paste = function(lines, phase) error("fake fail") end
-    ]], {})
+    ]],
+      {}
+    )
     -- Prepare something for dot-repeat/redo.
     feed_data('ifoo\n\027[27u')
     wait_for_mode('n')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       foo                                               |
       {1: }                                                 |
       {4:~                                                 }|
@@ -1005,10 +1063,12 @@ describe('TUI', function()
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
     -- Start pasting...
     feed_data('\027[200~line 1\nline 2\n')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       foo                                               |
                                                         |
       {5:                                                  }|
@@ -1016,18 +1076,20 @@ describe('TUI', function()
       {8:ake fail}                                          |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
     -- Remaining chunks are discarded after vim.paste() failure.
     feed_data('line 3\nline 4\n')
     feed_data('line 5\nline 6\n')
     feed_data('line 7\nline 8\n')
     -- Stop paste.
     feed_data('\027[201~')
-    feed_data('\n')  -- <CR>
-    expect_child_buf_lines({'foo',''})
+    feed_data('\n') -- <CR>
+    expect_child_buf_lines({ 'foo', '' })
     --Dot-repeat/redo is not modified by failed paste.
     feed_data('.')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       foo                                               |
       foo                                               |
       {1: }                                                 |
@@ -1035,10 +1097,12 @@ describe('TUI', function()
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
     -- Editor should still work after failed/drained paste.
     feed_data('ityped input...\027[27u')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       foo                                               |
       foo                                               |
       typed input..{1:.}                                    |
@@ -1046,14 +1110,20 @@ describe('TUI', function()
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
     -- Paste works if vim.paste() succeeds.
-    child_session:request('nvim_exec_lua', [[
+    child_session:request(
+      'nvim_exec_lua',
+      [[
       vim.paste = _G.save_paste_fn
-    ]], {})
+    ]],
+      {}
+    )
     feed_data('\027[200~line A\nline B\n\027[201~')
-    feed_data('\n')  -- <CR>
-    screen:expect{grid=[[
+    feed_data('\n') -- <CR>
+    screen:expect({
+      grid = [[
       foo                                               |
       typed input...line A                              |
       line B                                            |
@@ -1061,28 +1131,38 @@ describe('TUI', function()
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
   end)
 
   it('paste: vim.paste() cancel (retval=false) #10865', function()
     -- This test only exercises the "cancel" case.  Use-case would be "dangling
     -- paste", but that is not implemented yet. #10865
-    child_session:request('nvim_exec_lua', [[
+    child_session:request(
+      'nvim_exec_lua',
+      [[
       vim.paste = function(lines, phase) return false end
-    ]], {})
+    ]],
+      {}
+    )
     feed_data('\027[200~line A\nline B\n\027[201~')
     feed_data('ifoo\n\027[27u')
-    expect_child_buf_lines({'foo',''})
+    expect_child_buf_lines({ 'foo', '' })
   end)
 
   it("paste: 'nomodifiable' buffer", function()
     child_session:request('nvim_command', 'set nomodifiable')
-    child_session:request('nvim_exec_lua', [[
+    child_session:request(
+      'nvim_exec_lua',
+      [[
       -- Truncate the error message to hide the line number
       _G.debug.traceback = function(msg) return msg:sub(-49) end
-    ]], {})
+    ]],
+      {}
+    )
     feed_data('\027[200~fail 1\nfail 2\n\027[201~')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                                         |
       {4:~                                                 }|
       {5:                                                  }|
@@ -1090,11 +1170,13 @@ describe('TUI', function()
       {8:hanges, 'modifiable' is off}                       |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
-    ]]}
-    feed_data('\n')  -- <Enter>
+    ]],
+    })
+    feed_data('\n') -- <Enter>
     child_session:request('nvim_command', 'set modifiable')
     feed_data('\027[200~success 1\nsuccess 2\n\027[201~')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       success 1                                         |
       success 2                                         |
       {1: }                                                 |
@@ -1102,7 +1184,8 @@ describe('TUI', function()
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
   end)
 
   it('paste: exactly 64 bytes #10311', function()
@@ -1110,10 +1193,10 @@ describe('TUI', function()
     feed_data('i')
     wait_for_mode('i')
     -- "bracketed paste"
-    feed_data('\027[200~'..expected..'\027[201~')
-    expect_child_buf_lines({expected})
+    feed_data('\027[200~' .. expected .. '\027[201~')
+    expect_child_buf_lines({ expected })
     feed_data(' end')
-    expected = expected..' end'
+    expected = expected .. ' end'
     screen:expect([[
       zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz|
       zzzzzzzzzzzzzz end{1: }                               |
@@ -1123,7 +1206,7 @@ describe('TUI', function()
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
-    expect_child_buf_lines({expected})
+    expect_child_buf_lines({ expected })
   end)
 
   it('paste: less-than sign in cmdline  #11088', function()
@@ -1131,8 +1214,9 @@ describe('TUI', function()
     feed_data(':')
     wait_for_mode('c')
     -- "bracketed paste"
-    feed_data('\027[200~'..expected..'\027[201~')
-    screen:expect{grid=[[
+    feed_data('\027[200~' .. expected .. '\027[201~')
+    screen:expect({
+      grid = [[
                                                         |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -1140,7 +1224,8 @@ describe('TUI', function()
       {5:[No Name]                                         }|
       :<{1: }                                               |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
   end)
 
   it('paste: big burst of input', function()
@@ -1152,7 +1237,7 @@ describe('TUI', function()
     feed_data('i')
     wait_for_mode('i')
     -- "bracketed paste"
-    feed_data('\027[200~'..table.concat(t, '\n')..'\027[201~')
+    feed_data('\027[200~' .. table.concat(t, '\n') .. '\027[201~')
     expect_child_buf_lines(t)
     feed_data(' end')
     screen:expect([[
@@ -1164,7 +1249,7 @@ describe('TUI', function()
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
-    feed_data('\027[27u')  -- ESC: go to Normal mode.
+    feed_data('\027[27u') -- ESC: go to Normal mode.
     wait_for_mode('n')
     -- Dot-repeat/redo.
     feed_data('.')
@@ -1192,7 +1277,8 @@ describe('TUI', function()
     -- Send the "stop paste" sequence.
     feed_data('\027[201~')
 
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                                         |
       pasted from terminal (1)                          |
       {6:^[}[200~                                           |
@@ -1201,14 +1287,15 @@ describe('TUI', function()
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]],
-    attr_ids={
-      [1] = {reverse = true},
-      [2] = {background = tonumber('0x00000b')},
-      [3] = {bold = true},
-      [4] = {foreground = tonumber('0x00000c')},
-      [5] = {bold = true, reverse = true},
-      [6] = {foreground = tonumber('0x000051')},
-    }}
+      attr_ids = {
+        [1] = { reverse = true },
+        [2] = { background = tonumber('0x00000b') },
+        [3] = { bold = true },
+        [4] = { foreground = tonumber('0x00000c') },
+        [5] = { bold = true, reverse = true },
+        [6] = { foreground = tonumber('0x000051') },
+      },
+    })
   end)
 
   it('paste: ignores spurious "stop paste" code', function()
@@ -1230,7 +1317,8 @@ describe('TUI', function()
 
   it('paste: split "start paste" code', function()
     feed_data('i')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       {1: }                                                 |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -1238,7 +1326,8 @@ describe('TUI', function()
       {5:[No Name]                                         }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
     -- Send split "start paste" sequence.
     feed_data('\027[2')
     feed_data('00~pasted from terminal\027[201~')
@@ -1255,7 +1344,8 @@ describe('TUI', function()
 
   it('paste: split "stop paste" code', function()
     feed_data('i')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       {1: }                                                 |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -1263,7 +1353,8 @@ describe('TUI', function()
       {5:[No Name]                                         }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
     -- Send split "stop paste" sequence.
     feed_data('\027[200~pasted from terminal\027[20')
     feed_data('1~')
@@ -1279,7 +1370,9 @@ describe('TUI', function()
   end)
 
   it('paste: streamed paste with isolated "stop paste" code', function()
-    child_session:request('nvim_exec_lua', [[
+    child_session:request(
+      'nvim_exec_lua',
+      [[
       _G.paste_phases = {}
       vim.paste = (function(overridden)
         return function(lines, phase)
@@ -1287,9 +1380,12 @@ describe('TUI', function()
           overridden(lines, phase)
         end
       end)(vim.paste)
-    ]], {})
+    ]],
+      {}
+    )
     feed_data('i')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       {1: }                                                 |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -1297,8 +1393,9 @@ describe('TUI', function()
       {5:[No Name]                                         }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
-    ]]}
-    feed_data('\027[200~pasted')  -- phase 1
+    ]],
+    })
+    feed_data('\027[200~pasted') -- phase 1
     screen:expect([[
       pasted{1: }                                           |
       {4:~                                                 }|
@@ -1308,7 +1405,7 @@ describe('TUI', function()
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
-    feed_data(' from terminal')  -- phase 2
+    feed_data(' from terminal') -- phase 2
     screen:expect([[
       pasted from terminal{1: }                             |
       {4:~                                                 }|
@@ -1319,25 +1416,25 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- Send isolated "stop paste" sequence.
-    feed_data('\027[201~')  -- phase 3
+    feed_data('\027[201~') -- phase 3
     screen:expect_unchanged()
     local _, rv = child_session:request('nvim_exec_lua', [[return _G.paste_phases]], {})
-    eq({1, 2, 3}, rv)
+    eq({ 1, 2, 3 }, rv)
   end)
 
   it('allows termguicolors to be set at runtime', function()
     screen:set_option('rgb', true)
     screen:set_default_attr_ids({
-      [1] = {reverse = true},
-      [2] = {foreground = tonumber('0x4040ff'), fg_indexed=true},
-      [3] = {bold = true, reverse = true},
-      [4] = {bold = true},
-      [5] = {reverse = true, foreground = tonumber('0xe0e000'), fg_indexed=true},
-      [6] = {foreground = tonumber('0xe0e000'), fg_indexed=true},
-      [7] = {reverse = true, foreground = Screen.colors.SeaGreen4},
-      [8] = {foreground = Screen.colors.SeaGreen4},
-      [9] = {bold = true, foreground = Screen.colors.Blue1},
-      [10] = {foreground = Screen.colors.Blue},
+      [1] = { reverse = true },
+      [2] = { foreground = tonumber('0x4040ff'), fg_indexed = true },
+      [3] = { bold = true, reverse = true },
+      [4] = { bold = true },
+      [5] = { reverse = true, foreground = tonumber('0xe0e000'), fg_indexed = true },
+      [6] = { foreground = tonumber('0xe0e000'), fg_indexed = true },
+      [7] = { reverse = true, foreground = Screen.colors.SeaGreen4 },
+      [8] = { foreground = Screen.colors.SeaGreen4 },
+      [9] = { bold = true, foreground = Screen.colors.Blue1 },
+      [10] = { foreground = Screen.colors.Blue },
     })
 
     feed_data(':hi SpecialKey ctermfg=3 guifg=SeaGreen\n')
@@ -1380,21 +1477,22 @@ describe('TUI', function()
 
   it('forwards :term palette colors with termguicolors', function()
     if is_ci('github') then
-        pending("tty-test complains about not owning the terminal -- actions/runner#241")
+      pending('tty-test complains about not owning the terminal -- actions/runner#241')
     end
     screen:set_rgb_cterm(true)
     screen:set_default_attr_ids({
-      [1] = {{reverse = true}, {reverse = true}},
-      [2] = {{bold = true, reverse = true}, {bold = true, reverse = true}},
-      [3] = {{bold = true}, {bold = true}},
-      [4] = {{fg_indexed = true, foreground = tonumber('0xe0e000')}, {foreground = 3}},
-      [5] = {{foreground = tonumber('0xff8000')}, {}},
+      [1] = { { reverse = true }, { reverse = true } },
+      [2] = { { bold = true, reverse = true }, { bold = true, reverse = true } },
+      [3] = { { bold = true }, { bold = true } },
+      [4] = { { fg_indexed = true, foreground = tonumber('0xe0e000') }, { foreground = 3 } },
+      [5] = { { foreground = tonumber('0xff8000') }, {} },
     })
 
     child_exec_lua('vim.o.statusline="^^^^^^^"')
     child_exec_lua('vim.o.termguicolors=true')
     child_exec_lua('vim.cmd.terminal(...)', testprg('tty-test'))
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       {1:t}ty ready                                         |
                                                         |
                                                         |
@@ -1402,9 +1500,13 @@ describe('TUI', function()
       {2:^^^^^^^                                           }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
-    feed_data(':call chansend(&channel, "\\033[38;5;3mtext\\033[38:2:255:128:0mcolor\\033[0;10mtext")\n')
-    screen:expect{grid=[[
+    ]],
+    })
+    feed_data(
+      ':call chansend(&channel, "\\033[38;5;3mtext\\033[38:2:255:128:0mcolor\\033[0;10mtext")\n'
+    )
+    screen:expect({
+      grid = [[
       {1:t}ty ready                                         |
       {4:text}{5:color}text                                     |
                                                         |
@@ -1412,10 +1514,12 @@ describe('TUI', function()
       {2:^^^^^^^                                           }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
 
     feed_data(':set notermguicolors\n')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       {1:t}ty ready                                         |
       {4:text}colortext                                     |
                                                         |
@@ -1423,7 +1527,8 @@ describe('TUI', function()
       {2:^^^^^^^                                           }|
       :set notermguicolors                              |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
   end)
 
   it('in nvim_list_uis()', function()
@@ -1431,36 +1536,43 @@ describe('TUI', function()
     local exp_term = is_os('bsd') and 'builtin_xterm' or 'xterm-256color'
     local expected = {
       {
-         chan = 1,
-         ext_cmdline = false,
-         ext_hlstate = false,
-         ext_linegrid = true,
-         ext_messages = false,
-         ext_multigrid = false,
-         ext_popupmenu = false,
-         ext_tabline = false,
-         ext_termcolors = true,
-         ext_wildmenu = false,
-         height = 6,
-         override = false,
-         rgb = false,
-         stdin_tty = true,
-         stdout_tty = true,
-         term_background = '',
-         term_colors = 256,
-         term_name = exp_term,
-         width = 50
-       },
+        chan = 1,
+        ext_cmdline = false,
+        ext_hlstate = false,
+        ext_linegrid = true,
+        ext_messages = false,
+        ext_multigrid = false,
+        ext_popupmenu = false,
+        ext_tabline = false,
+        ext_termcolors = true,
+        ext_wildmenu = false,
+        height = 6,
+        override = false,
+        rgb = false,
+        stdin_tty = true,
+        stdout_tty = true,
+        term_background = '',
+        term_colors = 256,
+        term_name = exp_term,
+        width = 50,
+      },
     }
     local _, rv = child_session:request('nvim_list_uis')
     eq(expected, rv)
   end)
 
   it('allows grid to assume wider ambiguous-width characters than host terminal #19686', function()
-    child_session:request('nvim_buf_set_lines', 0, 0, -1, true, { ('℃'):rep(60), ('℃'):rep(60) })
+    child_session:request(
+      'nvim_buf_set_lines',
+      0,
+      0,
+      -1,
+      true,
+      { ('℃'):rep(60), ('℃'):rep(60) }
+    )
     child_session:request('nvim_set_option_value', 'cursorline', true, {})
     child_session:request('nvim_set_option_value', 'list', true, {})
-    child_session:request('nvim_set_option_value', 'listchars', 'eol:$', {win=0})
+    child_session:request('nvim_set_option_value', 'listchars', 'eol:$', { win = 0 })
     feed_data('gg')
     local singlewidth_screen = [[
       {13:℃}{12:℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃}|
@@ -1487,9 +1599,9 @@ describe('TUI', function()
     screen:expect(doublewidth_screen)
     child_session:request('nvim_set_option_value', 'ambiwidth', 'single', {})
     screen:expect(singlewidth_screen)
-    child_session:request('nvim_call_function', 'setcellwidths', {{{0x2103, 0x2103, 2}}})
+    child_session:request('nvim_call_function', 'setcellwidths', { { { 0x2103, 0x2103, 2 } } })
     screen:expect(doublewidth_screen)
-    child_session:request('nvim_call_function', 'setcellwidths', {{{0x2103, 0x2103, 1}}})
+    child_session:request('nvim_call_function', 'setcellwidths', { { { 0x2103, 0x2103, 1 } } })
     screen:expect(singlewidth_screen)
   end)
 
@@ -1497,11 +1609,11 @@ describe('TUI', function()
     helpers.skip(helpers.is_os('mac'), 'FIXME: crashes/errors on macOS')
     screen:try_resize(77, 834)
     retry(nil, nil, function()
-      eq({true, 831}, {child_session:request('nvim_win_get_height', 0)})
+      eq({ true, 831 }, { child_session:request('nvim_win_get_height', 0) })
     end)
     -- Use full screen message so that redrawing afterwards is more deterministic.
     child_session:notify('nvim_command', 'intro')
-    screen:expect({any = 'Nvim'})
+    screen:expect({ any = 'Nvim' })
     -- Going to top-left corner needs 3 bytes.
     -- Setting underline attribute needs 9 bytes.
     -- With screen width 77, 63857 characters need 829 full screen lines.
@@ -1510,25 +1622,38 @@ describe('TUI', function()
     -- The whole line needs 3 + 9 + 79 * 829 + 27 = 65530 bytes.
     -- The cursor_address that comes after will overflow the 65535-byte buffer.
     local line = ('a'):rep(63857) .. '℃'
-    child_session:notify('nvim_exec_lua', [[
+    child_session:notify(
+      'nvim_exec_lua',
+      [[
       vim.api.nvim_buf_set_lines(0, 0, -1, true, {...})
       vim.o.cursorline = true
-    ]], {line, 'b'})
+    ]],
+      { line, 'b' }
+    )
     -- Close the :intro message and redraw the lines.
     feed_data('\n')
     screen:expect(
-      '{13:a}{12:' .. ('a'):rep(76) .. '}|\n'
-      .. ('{12:' .. ('a'):rep(77) .. '}|\n'):rep(828)
-      .. '{12:' .. ('a'):rep(24) .. '℃' .. (' '):rep(52) .. '}|\n' .. dedent([[
+      '{13:a}{12:'
+        .. ('a'):rep(76)
+        .. '}|\n'
+        .. ('{12:' .. ('a'):rep(77) .. '}|\n'):rep(828)
+        .. '{12:'
+        .. ('a'):rep(24)
+        .. '℃'
+        .. (' '):rep(52)
+        .. '}|\n'
+        .. dedent([[
       b                                                                            |
       {5:[No Name] [+]                                                                }|
                                                                                    |
-      {3:-- TERMINAL --}                                                               |]]))
+      {3:-- TERMINAL --}                                                               |]])
+    )
   end)
 
   it('visual bell (padding) does not crash #21610', function()
-    feed_data ':set visualbell\n'
-    screen:expect{grid=[[
+    feed_data(':set visualbell\n')
+    screen:expect({
+      grid = [[
       {1: }                                                 |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -1536,13 +1661,15 @@ describe('TUI', function()
       {5:[No Name]                                         }|
       :set visualbell                                   |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
 
     -- move left is enough to invoke the bell
-    feed_data 'h'
+    feed_data('h')
     -- visual change to show we process events after this
-    feed_data 'i'
-    screen:expect{grid=[[
+    feed_data('i')
+    screen:expect({
+      grid = [[
       {1: }                                                 |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -1550,28 +1677,33 @@ describe('TUI', function()
       {5:[No Name]                                         }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
   end)
 
   it('no assert failure on deadly signal #21896', function()
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
-    screen:expect({any = '%[Process exited 1%]'})
+    screen:expect({ any = '%[Process exited 1%]' })
   end)
 
   it('no stack-use-after-scope with cursor color #22432', function()
     screen:set_option('rgb', true)
     command('set termguicolors')
-    child_session:request('nvim_exec', [[
+    child_session:request(
+      'nvim_exec',
+      [[
       set tgc
       hi Cursor guifg=Red guibg=Green
       set guicursor=n:block-Cursor/lCursor
-    ]], false)
+    ]],
+      false
+    )
     screen:set_default_attr_ids({
-      [1] = {reverse = true},
-      [2] = {bold = true, foreground = Screen.colors.Blue},
-      [3] = {foreground = Screen.colors.Blue},
-      [4] = {reverse = true, bold = true},
-      [5] = {bold = true},
+      [1] = { reverse = true },
+      [2] = { bold = true, foreground = Screen.colors.Blue },
+      [3] = { foreground = Screen.colors.Blue },
+      [4] = { reverse = true, bold = true },
+      [5] = { bold = true },
     })
     screen:expect([[
       {1: }                                                 |
@@ -1595,7 +1727,7 @@ describe('TUI', function()
   end)
 
   it('redraws on SIGWINCH even if terminal size is unchanged #23411', function()
-    child_session:request('nvim_echo', {{'foo'}}, false, {})
+    child_session:request('nvim_echo', { { 'foo' } }, false, {})
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|
@@ -1627,11 +1759,11 @@ describe('TUI', function()
   it('resize at startup #17285 #15044 #11330', function()
     local screen = Screen.new(50, 10)
     screen:set_default_attr_ids({
-      [1] = {reverse = true},
-      [2] = {bold = true, foreground = Screen.colors.Blue},
-      [3] = {bold = true},
-      [4] = {foreground = tonumber('0x4040ff'), fg_indexed = true},
-      [5] = {bold = true, reverse = true},
+      [1] = { reverse = true },
+      [2] = { bold = true, foreground = Screen.colors.Blue },
+      [3] = { bold = true },
+      [4] = { foreground = tonumber('0x4040ff'), fg_indexed = true },
+      [5] = { bold = true, reverse = true },
     })
     screen:attach()
     exec([[
@@ -1654,8 +1786,12 @@ describe('TUI', function()
   end)
 
   it('with non-tty (pipe) stdout/stderr', function()
-    local screen = thelpers.screen_setup(0, '"'..nvim_prog
-      ..' -u NONE -i NONE --cmd \'set noswapfile noshowcmd noruler\' --cmd \'normal iabc\' > /dev/null 2>&1 && cat testF && rm testF"')
+    local screen = thelpers.screen_setup(
+      0,
+      '"'
+        .. nvim_prog
+        .. " -u NONE -i NONE --cmd 'set noswapfile noshowcmd noruler' --cmd 'normal iabc' > /dev/null 2>&1 && cat testF && rm testF\""
+    )
     feed_data(':w testF\n:q\n')
     screen:expect([[
       :w testF                                          |
@@ -1669,9 +1805,15 @@ describe('TUI', function()
   end)
 
   it('<C-h> #10134', function()
-    local screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..[[", "-u", "NONE", "-i", "NONE", "--cmd", "set noruler", "--cmd", ':nnoremap <C-h> :echomsg "\<C-h\>"<CR>']]..']')
-    screen:expect{grid=[[
+    local screen = thelpers.screen_setup(
+      0,
+      '["'
+        .. nvim_prog
+        .. [[", "-u", "NONE", "-i", "NONE", "--cmd", "set noruler", "--cmd", ':nnoremap <C-h> :echomsg "\<C-h\>"<CR>']]
+        .. ']'
+    )
+    screen:expect({
+      grid = [[
       {1: }                                                 |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -1679,7 +1821,8 @@ describe('TUI', function()
       {5:[No Name]                                         }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
 
     command([[call chansend(b:terminal_job_id, "\<C-h>")]])
     screen:expect([[
@@ -1697,16 +1840,20 @@ end)
 describe('TUI UIEnter/UILeave', function()
   it('fires exactly once, after VimEnter', function()
     clear()
-    local screen = thelpers.screen_setup(0,
-      '["'..nvim_prog..'", "-u", "NONE", "-i", "NONE"'
-      ..[[, "--cmd", "set noswapfile noshowcmd noruler"]]
-      ..[[, "--cmd", "let g:evs = []"]]
-      ..[[, "--cmd", "autocmd UIEnter  * :call add(g:evs, 'UIEnter')"]]
-      ..[[, "--cmd", "autocmd UILeave  * :call add(g:evs, 'UILeave')"]]
-      ..[[, "--cmd", "autocmd VimEnter * :call add(g:evs, 'VimEnter')"]]
-      ..']'
+    local screen = thelpers.screen_setup(
+      0,
+      '["'
+        .. nvim_prog
+        .. '", "-u", "NONE", "-i", "NONE"'
+        .. [[, "--cmd", "set noswapfile noshowcmd noruler"]]
+        .. [[, "--cmd", "let g:evs = []"]]
+        .. [[, "--cmd", "autocmd UIEnter  * :call add(g:evs, 'UIEnter')"]]
+        .. [[, "--cmd", "autocmd UILeave  * :call add(g:evs, 'UILeave')"]]
+        .. [[, "--cmd", "autocmd VimEnter * :call add(g:evs, 'VimEnter')"]]
+        .. ']'
     )
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       {1: }                                                 |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -1714,9 +1861,11 @@ describe('TUI UIEnter/UILeave', function()
       {5:[No Name]                                         }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
-    feed_data(":echo g:evs\n")
-    screen:expect{grid=[[
+    ]],
+    })
+    feed_data(':echo g:evs\n')
+    screen:expect({
+      grid = [[
       {1: }                                                 |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -1724,7 +1873,8 @@ describe('TUI UIEnter/UILeave', function()
       {5:[No Name]                                         }|
       ['VimEnter', 'UIEnter']                           |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
   end)
 end)
 
@@ -1735,10 +1885,14 @@ describe('TUI FocusGained/FocusLost', function()
   before_each(function()
     clear()
     local child_server = new_pipename()
-    screen = thelpers.screen_setup(0,
+    screen = thelpers.screen_setup(
+      0,
       string.format(
         [=[["%s", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]]=],
-        nvim_prog, child_server))
+        nvim_prog,
+        child_server
+      )
+    )
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|
@@ -1749,11 +1903,15 @@ describe('TUI FocusGained/FocusLost', function()
       {3:-- TERMINAL --}                                    |
     ]])
     child_session = helpers.connect(child_server)
-    child_session:request('nvim_exec', [[
+    child_session:request(
+      'nvim_exec',
+      [[
       autocmd FocusGained * echo 'gained'
       autocmd FocusLost * echo 'lost'
-    ]], false)
-    feed_data("\034\016")  -- CTRL-\ CTRL-N
+    ]],
+      false
+    )
+    feed_data('\034\016') -- CTRL-\ CTRL-N
   end)
 
   it('in normal-mode', function()
@@ -1785,7 +1943,8 @@ describe('TUI FocusGained/FocusLost', function()
   it('in insert-mode', function()
     feed_command('set noshowmode')
     feed_data('i')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       {1: }                                                 |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -1793,7 +1952,8 @@ describe('TUI FocusGained/FocusLost', function()
       {5:[No Name]                                         }|
       :set noshowmode                                   |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
     retry(2, 3 * screen.timeout, function()
       feed_data('\027[I')
       screen:expect([[
@@ -1833,7 +1993,8 @@ describe('TUI FocusGained/FocusLost', function()
       {3:-- TERMINAL --}                                    |
     ]])
     feed_data('\027[O')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                                         |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -1841,18 +2002,24 @@ describe('TUI FocusGained/FocusLost', function()
       {5:[No Name]                                         }|
       :{1: }                                                |
       {3:-- TERMINAL --}                                    |
-    ]], unchanged=true}
+    ]],
+      unchanged = true,
+    })
   end)
 
   it('in cmdline-mode', function()
     -- Set up autocmds that modify the buffer, instead of just calling :echo.
     -- This is how we can test handling of focus gained/lost during cmdline-mode.
     -- See commit: 5cc87d4dabd02167117be7a978b5c8faaa975419.
-    child_session:request('nvim_exec', [[
+    child_session:request(
+      'nvim_exec',
+      [[
       autocmd!
       autocmd FocusLost * call append(line('$'), 'lost')
       autocmd FocusGained * call append(line('$'), 'gained')
-    ]], false)
+    ]],
+      false
+    )
     retry(2, 3 * screen.timeout, function()
       -- Enter cmdline-mode.
       feed_data(':')
@@ -1864,17 +2031,18 @@ describe('TUI FocusGained/FocusLost', function()
       -- Exit cmdline-mode. Redraws from timers/events are blocked during
       -- cmdline-mode, so the buffer won't be updated until we exit cmdline-mode.
       feed_data('\n')
-      screen:expect{any='lost'..(' '):rep(46)..'|\ngained'}
+      screen:expect({ any = 'lost' .. (' '):rep(46) .. '|\ngained' })
     end)
   end)
 
   it('in terminal-mode', function()
-    feed_data(':set shell='..testprg('shell-test')..'\n')
+    feed_data(':set shell=' .. testprg('shell-test') .. '\n')
     feed_data(':set noshowmode laststatus=0\n')
 
     feed_data(':terminal\n')
     -- Wait for terminal to be ready.
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       {1:r}eady $                                           |
       [Process exited 0]                                |
                                                         |
@@ -1882,10 +2050,12 @@ describe('TUI FocusGained/FocusLost', function()
                                                         |
       :terminal                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
 
     feed_data('\027[I')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       {1:r}eady $                                           |
       [Process exited 0]                                |
                                                         |
@@ -1893,7 +2063,9 @@ describe('TUI FocusGained/FocusLost', function()
                                                         |
       gained                                            |
       {3:-- TERMINAL --}                                    |
-    ]], timeout=(4 * screen.timeout)}
+    ]],
+      timeout = (4 * screen.timeout),
+    })
 
     feed_data('\027[O')
     screen:expect([[
@@ -1910,8 +2082,9 @@ describe('TUI FocusGained/FocusLost', function()
   it('in press-enter prompt', function()
     feed_data(":echom 'msg1'|echom 'msg2'|echom 'msg3'|echom 'msg4'|echom 'msg5'\n")
     -- Execute :messages to provoke the press-enter prompt.
-    feed_data(":messages\n")
-    screen:expect{grid=[[
+    feed_data(':messages\n')
+    screen:expect({
+      grid = [[
       msg1                                              |
       msg2                                              |
       msg3                                              |
@@ -1919,10 +2092,12 @@ describe('TUI FocusGained/FocusLost', function()
       msg5                                              |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
     feed_data('\027[I')
     feed_data('\027[I')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       msg1                                              |
       msg2                                              |
       msg3                                              |
@@ -1930,7 +2105,9 @@ describe('TUI FocusGained/FocusLost', function()
       msg5                                              |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
-    ]], unchanged=true}
+    ]],
+      unchanged = true,
+    })
   end)
 end)
 
@@ -1940,24 +2117,29 @@ describe("TUI 't_Co' (terminal colors)", function()
   local screen
 
   local function assert_term_colors(term, colorterm, maxcolors)
-    helpers.clear({env={TERM=term}, args={}})
+    helpers.clear({ env = { TERM = term }, args = {} })
     -- This is ugly because :term/termopen() forces TERM=xterm-256color.
     -- TODO: Revisit this after jobstart/termopen accept `env` dict.
-    screen = thelpers.screen_setup(0, string.format(
-      [=[['sh', '-c', 'LANG=C TERM=%s %s %s -u NONE -i NONE --cmd "%s"']]=],
-      term or "",
-      (colorterm ~= nil and "COLORTERM="..colorterm or ""),
-      nvim_prog,
-      nvim_set))
+    screen = thelpers.screen_setup(
+      0,
+      string.format(
+        [=[['sh', '-c', 'LANG=C TERM=%s %s %s -u NONE -i NONE --cmd "%s"']]=],
+        term or '',
+        (colorterm ~= nil and 'COLORTERM=' .. colorterm or ''),
+        nvim_prog,
+        nvim_set
+      )
+    )
 
     local tline
     if maxcolors == 8 or maxcolors == 16 then
-      tline = "~                                                 "
+      tline = '~                                                 '
     else
-      tline = "{4:~                                                 }"
+      tline = '{4:~                                                 }'
     end
 
-    screen:expect(string.format([[
+    screen:expect(string.format(
+      [[
       {1: }                                                 |
       %s|
       %s|
@@ -1965,10 +2147,16 @@ describe("TUI 't_Co' (terminal colors)", function()
       %s|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]], tline, tline, tline, tline))
+    ]],
+      tline,
+      tline,
+      tline,
+      tline
+    ))
 
-    feed_data(":echo &t_Co\n")
-    screen:expect(string.format([[
+    feed_data(':echo &t_Co\n')
+    screen:expect(string.format(
+      [[
       {1: }                                                 |
       %s|
       %s|
@@ -1976,61 +2164,67 @@ describe("TUI 't_Co' (terminal colors)", function()
       %s|
       %-3s                                               |
       {3:-- TERMINAL --}                                    |
-    ]], tline, tline, tline, tline, tostring(maxcolors and maxcolors or "")))
+    ]],
+      tline,
+      tline,
+      tline,
+      tline,
+      tostring(maxcolors and maxcolors or '')
+    ))
   end
 
   -- ansi and no terminal type at all:
 
-  it("no TERM uses 8 colors", function()
+  it('no TERM uses 8 colors', function()
     assert_term_colors(nil, nil, 8)
   end)
 
-  it("TERM=ansi no COLORTERM uses 8 colors", function()
-    assert_term_colors("ansi", nil, 8)
+  it('TERM=ansi no COLORTERM uses 8 colors', function()
+    assert_term_colors('ansi', nil, 8)
   end)
 
-  it("TERM=ansi with COLORTERM=anything-no-number uses 16 colors", function()
-    assert_term_colors("ansi", "yet-another-term", 16)
+  it('TERM=ansi with COLORTERM=anything-no-number uses 16 colors', function()
+    assert_term_colors('ansi', 'yet-another-term', 16)
   end)
 
-  it("unknown TERM COLORTERM with 256 in name uses 256 colors", function()
-    assert_term_colors("ansi", "yet-another-term-256color", 256)
+  it('unknown TERM COLORTERM with 256 in name uses 256 colors', function()
+    assert_term_colors('ansi', 'yet-another-term-256color', 256)
   end)
 
-  it("TERM=ansi-256color sets 256 colours", function()
-    assert_term_colors("ansi-256color", nil, 256)
+  it('TERM=ansi-256color sets 256 colours', function()
+    assert_term_colors('ansi-256color', nil, 256)
   end)
 
   -- Unknown terminal types:
 
-  it("unknown TERM no COLORTERM sets 8 colours", function()
-    assert_term_colors("yet-another-term", nil, 8)
+  it('unknown TERM no COLORTERM sets 8 colours', function()
+    assert_term_colors('yet-another-term', nil, 8)
   end)
 
-  it("unknown TERM with COLORTERM=anything-no-number uses 16 colors", function()
-    assert_term_colors("yet-another-term", "yet-another-term", 16)
+  it('unknown TERM with COLORTERM=anything-no-number uses 16 colors', function()
+    assert_term_colors('yet-another-term', 'yet-another-term', 16)
   end)
 
-  it("unknown TERM with 256 in name sets 256 colours", function()
-    assert_term_colors("yet-another-term-256color", nil, 256)
+  it('unknown TERM with 256 in name sets 256 colours', function()
+    assert_term_colors('yet-another-term-256color', nil, 256)
   end)
 
-  it("unknown TERM COLORTERM with 256 in name uses 256 colors", function()
-    assert_term_colors("yet-another-term", "yet-another-term-256color", 256)
+  it('unknown TERM COLORTERM with 256 in name uses 256 colors', function()
+    assert_term_colors('yet-another-term', 'yet-another-term-256color', 256)
   end)
 
   -- Linux kernel terminal emulator:
 
-  it("TERM=linux uses 256 colors", function()
-    assert_term_colors("linux", nil, 256)
+  it('TERM=linux uses 256 colors', function()
+    assert_term_colors('linux', nil, 256)
   end)
 
-  it("TERM=linux-16color uses 256 colors", function()
-    assert_term_colors("linux-16color", nil, 256)
+  it('TERM=linux-16color uses 256 colors', function()
+    assert_term_colors('linux-16color', nil, 256)
   end)
 
-  it("TERM=linux-256color uses 256 colors", function()
-    assert_term_colors("linux-256color", nil, 256)
+  it('TERM=linux-256color uses 256 colors', function()
+    assert_term_colors('linux-256color', nil, 256)
   end)
 
   -- screen:
@@ -2039,28 +2233,28 @@ describe("TUI 't_Co' (terminal colors)", function()
   -- Linux and MacOS have a screen entry in external terminfo with 8 colours,
   -- which is raised to 16 by COLORTERM.
 
-  it("TERM=screen no COLORTERM uses 8/256 colors", function()
+  it('TERM=screen no COLORTERM uses 8/256 colors', function()
     if is_os('freebsd') then
-      assert_term_colors("screen", nil, 256)
+      assert_term_colors('screen', nil, 256)
     else
-      assert_term_colors("screen", nil, 8)
+      assert_term_colors('screen', nil, 8)
     end
   end)
 
-  it("TERM=screen COLORTERM=screen uses 16/256 colors", function()
+  it('TERM=screen COLORTERM=screen uses 16/256 colors', function()
     if is_os('freebsd') then
-      assert_term_colors("screen", "screen", 256)
+      assert_term_colors('screen', 'screen', 256)
     else
-      assert_term_colors("screen", "screen", 16)
+      assert_term_colors('screen', 'screen', 16)
     end
   end)
 
-  it("TERM=screen COLORTERM=screen-256color uses 256 colors", function()
-    assert_term_colors("screen", "screen-256color", 256)
+  it('TERM=screen COLORTERM=screen-256color uses 256 colors', function()
+    assert_term_colors('screen', 'screen-256color', 256)
   end)
 
-  it("TERM=screen-256color no COLORTERM uses 256 colors", function()
-    assert_term_colors("screen-256color", nil, 256)
+  it('TERM=screen-256color no COLORTERM uses 256 colors', function()
+    assert_term_colors('screen-256color', nil, 256)
   end)
 
   -- tmux:
@@ -2069,38 +2263,38 @@ describe("TUI 't_Co' (terminal colors)", function()
   -- Linux has a tmux entry in external terminfo with 8 colours,
   -- which is raised to 256.
 
-  it("TERM=tmux no COLORTERM uses 256 colors", function()
-    assert_term_colors("tmux", nil, 256)
+  it('TERM=tmux no COLORTERM uses 256 colors', function()
+    assert_term_colors('tmux', nil, 256)
   end)
 
-  it("TERM=tmux COLORTERM=tmux uses 256 colors", function()
-    assert_term_colors("tmux", "tmux", 256)
+  it('TERM=tmux COLORTERM=tmux uses 256 colors', function()
+    assert_term_colors('tmux', 'tmux', 256)
   end)
 
-  it("TERM=tmux COLORTERM=tmux-256color uses 256 colors", function()
-    assert_term_colors("tmux", "tmux-256color", 256)
+  it('TERM=tmux COLORTERM=tmux-256color uses 256 colors', function()
+    assert_term_colors('tmux', 'tmux-256color', 256)
   end)
 
-  it("TERM=tmux-256color no COLORTERM uses 256 colors", function()
-    assert_term_colors("tmux-256color", nil, 256)
+  it('TERM=tmux-256color no COLORTERM uses 256 colors', function()
+    assert_term_colors('tmux-256color', nil, 256)
   end)
 
   -- xterm and imitators:
 
-  it("TERM=xterm uses 256 colors", function()
-    assert_term_colors("xterm", nil, 256)
+  it('TERM=xterm uses 256 colors', function()
+    assert_term_colors('xterm', nil, 256)
   end)
 
-  it("TERM=xterm COLORTERM=gnome-terminal uses 256 colors", function()
-    assert_term_colors("xterm", "gnome-terminal", 256)
+  it('TERM=xterm COLORTERM=gnome-terminal uses 256 colors', function()
+    assert_term_colors('xterm', 'gnome-terminal', 256)
   end)
 
-  it("TERM=xterm COLORTERM=mate-terminal uses 256 colors", function()
-    assert_term_colors("xterm", "mate-terminal", 256)
+  it('TERM=xterm COLORTERM=mate-terminal uses 256 colors', function()
+    assert_term_colors('xterm', 'mate-terminal', 256)
   end)
 
-  it("TERM=xterm-256color uses 256 colors", function()
-    assert_term_colors("xterm-256color", nil, 256)
+  it('TERM=xterm-256color uses 256 colors', function()
+    assert_term_colors('xterm-256color', nil, 256)
   end)
 
   -- rxvt and stterm:
@@ -2110,44 +2304,44 @@ describe("TUI 't_Co' (terminal colors)", function()
   -- Linux has an rxvt, an st, and an st-16color entry in external terminfo
   -- with 8, 8, and 16 colours respectively, which are raised to 256.
 
-  it("TERM=rxvt no COLORTERM uses 256 colors", function()
-    assert_term_colors("rxvt", nil, 256)
+  it('TERM=rxvt no COLORTERM uses 256 colors', function()
+    assert_term_colors('rxvt', nil, 256)
   end)
 
-  it("TERM=rxvt COLORTERM=rxvt uses 256 colors", function()
-    assert_term_colors("rxvt", "rxvt", 256)
+  it('TERM=rxvt COLORTERM=rxvt uses 256 colors', function()
+    assert_term_colors('rxvt', 'rxvt', 256)
   end)
 
-  it("TERM=rxvt-256color uses 256 colors", function()
-    assert_term_colors("rxvt-256color", nil, 256)
+  it('TERM=rxvt-256color uses 256 colors', function()
+    assert_term_colors('rxvt-256color', nil, 256)
   end)
 
-  it("TERM=st no COLORTERM uses 256 colors", function()
-    assert_term_colors("st", nil, 256)
+  it('TERM=st no COLORTERM uses 256 colors', function()
+    assert_term_colors('st', nil, 256)
   end)
 
-  it("TERM=st COLORTERM=st uses 256 colors", function()
-    assert_term_colors("st", "st", 256)
+  it('TERM=st COLORTERM=st uses 256 colors', function()
+    assert_term_colors('st', 'st', 256)
   end)
 
-  it("TERM=st COLORTERM=st-256color uses 256 colors", function()
-    assert_term_colors("st", "st-256color", 256)
+  it('TERM=st COLORTERM=st-256color uses 256 colors', function()
+    assert_term_colors('st', 'st-256color', 256)
   end)
 
-  it("TERM=st-16color no COLORTERM uses 8/256 colors", function()
-    assert_term_colors("st", nil, 256)
+  it('TERM=st-16color no COLORTERM uses 8/256 colors', function()
+    assert_term_colors('st', nil, 256)
   end)
 
-  it("TERM=st-16color COLORTERM=st uses 16/256 colors", function()
-    assert_term_colors("st", "st", 256)
+  it('TERM=st-16color COLORTERM=st uses 16/256 colors', function()
+    assert_term_colors('st', 'st', 256)
   end)
 
-  it("TERM=st-16color COLORTERM=st-256color uses 256 colors", function()
-    assert_term_colors("st", "st-256color", 256)
+  it('TERM=st-16color COLORTERM=st-256color uses 256 colors', function()
+    assert_term_colors('st', 'st-256color', 256)
   end)
 
-  it("TERM=st-256color uses 256 colors", function()
-    assert_term_colors("st-256color", nil, 256)
+  it('TERM=st-256color uses 256 colors', function()
+    assert_term_colors('st-256color', nil, 256)
   end)
 
   -- gnome and vte:
@@ -2157,54 +2351,53 @@ describe("TUI 't_Co' (terminal colors)", function()
   -- external terminfo with 8, 8, 256, and 256 colours respectively, which are
   -- raised to 256.
 
-  it("TERM=gnome no COLORTERM uses 256 colors", function()
-    assert_term_colors("gnome", nil, 256)
+  it('TERM=gnome no COLORTERM uses 256 colors', function()
+    assert_term_colors('gnome', nil, 256)
   end)
 
-  it("TERM=gnome COLORTERM=gnome uses 256 colors", function()
-    assert_term_colors("gnome", "gnome", 256)
+  it('TERM=gnome COLORTERM=gnome uses 256 colors', function()
+    assert_term_colors('gnome', 'gnome', 256)
   end)
 
-  it("TERM=gnome COLORTERM=gnome-256color uses 256 colors", function()
-    assert_term_colors("gnome", "gnome-256color", 256)
+  it('TERM=gnome COLORTERM=gnome-256color uses 256 colors', function()
+    assert_term_colors('gnome', 'gnome-256color', 256)
   end)
 
-  it("TERM=gnome-256color uses 256 colors", function()
-    assert_term_colors("gnome-256color", nil, 256)
+  it('TERM=gnome-256color uses 256 colors', function()
+    assert_term_colors('gnome-256color', nil, 256)
   end)
 
-  it("TERM=vte no COLORTERM uses 256 colors", function()
-    assert_term_colors("vte", nil, 256)
+  it('TERM=vte no COLORTERM uses 256 colors', function()
+    assert_term_colors('vte', nil, 256)
   end)
 
-  it("TERM=vte COLORTERM=vte uses 256 colors", function()
-    assert_term_colors("vte", "vte", 256)
+  it('TERM=vte COLORTERM=vte uses 256 colors', function()
+    assert_term_colors('vte', 'vte', 256)
   end)
 
-  it("TERM=vte COLORTERM=vte-256color uses 256 colors", function()
-    assert_term_colors("vte", "vte-256color", 256)
+  it('TERM=vte COLORTERM=vte-256color uses 256 colors', function()
+    assert_term_colors('vte', 'vte-256color', 256)
   end)
 
-  it("TERM=vte-256color uses 256 colors", function()
-    assert_term_colors("vte-256color", nil, 256)
+  it('TERM=vte-256color uses 256 colors', function()
+    assert_term_colors('vte-256color', nil, 256)
   end)
 
   -- others:
 
   -- TODO(blueyed): this is made pending, since it causes failure + later hang
   --                when using non-compatible libvterm (#9494/#10179).
-  pending("TERM=interix uses 8 colors", function()
-    assert_term_colors("interix", nil, 8)
+  pending('TERM=interix uses 8 colors', function()
+    assert_term_colors('interix', nil, 8)
   end)
 
-  it("TERM=iTerm.app uses 256 colors", function()
-    assert_term_colors("iTerm.app", nil, 256)
+  it('TERM=iTerm.app uses 256 colors', function()
+    assert_term_colors('iTerm.app', nil, 256)
   end)
 
-  it("TERM=iterm uses 256 colors", function()
-    assert_term_colors("iterm", nil, 256)
+  it('TERM=iterm uses 256 colors', function()
+    assert_term_colors('iterm', nil, 256)
   end)
-
 end)
 
 -- These tests require `thelpers` because --headless/--embed
@@ -2218,35 +2411,36 @@ describe("TUI 'term' option", function()
     -- TODO: Revisit this after jobstart/termopen accept `env` dict.
     local cmd = string.format(
       [=[['sh', '-c', 'LANG=C TERM=%s %s -u NONE -i NONE --cmd "%s"']]=],
-      term_envvar or "",
+      term_envvar or '',
       nvim_prog,
-      nvim_set)
+      nvim_set
+    )
     screen = thelpers.screen_setup(0, cmd)
 
     local full_timeout = screen.timeout
-    screen.timeout = 250  -- We want screen:expect() to fail quickly.
-    retry(nil, 2 * full_timeout, function()  -- Wait for TUI thread to set 'term'.
+    screen.timeout = 250 -- We want screen:expect() to fail quickly.
+    retry(nil, 2 * full_timeout, function() -- Wait for TUI thread to set 'term'.
       feed_data(":echo 'term='.(&term)\n")
-      screen:expect{any='term='..term_expected}
+      screen:expect({ any = 'term=' .. term_expected })
     end)
   end
 
   it('gets builtin term if $TERM is invalid', function()
-    assert_term("foo", "builtin_ansi")
+    assert_term('foo', 'builtin_ansi')
   end)
 
   it('gets system-provided term if $TERM is valid', function()
     if is_os('openbsd') then
-      assert_term("xterm", "xterm")
-    elseif is_os('bsd') then  -- BSD lacks terminfo, builtin is always used.
-      assert_term("xterm", "builtin_xterm")
+      assert_term('xterm', 'xterm')
+    elseif is_os('bsd') then -- BSD lacks terminfo, builtin is always used.
+      assert_term('xterm', 'builtin_xterm')
     elseif is_os('mac') then
-      local status, _ = pcall(assert_term, "xterm", "xterm")
+      local status, _ = pcall(assert_term, 'xterm', 'xterm')
       if not status then
-        pending("macOS: unibilium could not find terminfo")
+        pending('macOS: unibilium could not find terminfo')
       end
     else
-      assert_term("xterm", "xterm")
+      assert_term('xterm', 'xterm')
     end
   end)
 
@@ -2256,12 +2450,11 @@ describe("TUI 'term' option", function()
     assert_term('conemu', 'builtin_conemu')
     assert_term('vtpcon', 'builtin_vtpcon')
   end)
-
 end)
 
 -- These tests require `thelpers` because --headless/--embed
 -- does not initialize the TUI.
-describe("TUI", function()
+describe('TUI', function()
   local screen
   local logfile = 'Xtest_tui_verbose_log'
   after_each(function()
@@ -2276,13 +2469,14 @@ describe("TUI", function()
     local cmd = string.format(
       [=[['sh', '-c', 'LANG=C %s -u NONE -i NONE %s --cmd "%s"']]=],
       nvim_prog,
-      extra_args or "",
-      nvim_set)
+      extra_args or '',
+      nvim_set
+    )
     screen = thelpers.screen_setup(0, cmd)
   end
 
   it('-V3log logs terminfo values', function()
-    nvim_tui('-V3'..logfile)
+    nvim_tui('-V3' .. logfile)
 
     -- Wait for TUI to start.
     feed_data('Gitext')
@@ -2296,13 +2490,12 @@ describe("TUI", function()
       {3:-- TERMINAL --}                                    |
     ]])
 
-    retry(nil, 3000, function()  -- Wait for log file to be flushed.
+    retry(nil, 3000, function() -- Wait for log file to be flushed.
       local log = read_file('Xtest_tui_verbose_log') or ''
       eq('--- Terminal info --- {{{\n', string.match(log, '%-%-%- Terminal.-\n')) -- }}}
       ok(#log > 50)
     end)
   end)
-
 end)
 
 describe('TUI bg color', function()
@@ -2312,9 +2505,13 @@ describe('TUI bg color', function()
     -- Only single integration test.
     -- See test/unit/tui_spec.lua for unit tests.
     clear()
-    screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile", '
-      ..'"-c", "autocmd OptionSet background echo \\"did OptionSet, yay!\\""]')
+    screen = thelpers.screen_setup(
+      0,
+      '["'
+        .. nvim_prog
+        .. '", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile", '
+        .. '"-c", "autocmd OptionSet background echo \\"did OptionSet, yay!\\""]'
+    )
   end
 
   before_each(setup)
@@ -2330,10 +2527,10 @@ describe('TUI bg color', function()
     {3:-- TERMINAL --}                                    |
     ]])
     feed_data('\027]11;rgb:ffff/ffff/ffff\007')
-    screen:expect{any='did OptionSet, yay!'}
+    screen:expect({ any = 'did OptionSet, yay!' })
 
     feed_data(':echo "new_bg=".&background\n')
-    screen:expect{any='new_bg=light'}
+    screen:expect({ any = 'new_bg=light' })
 
     setup()
     screen:expect([[
@@ -2346,10 +2543,10 @@ describe('TUI bg color', function()
     {3:-- TERMINAL --}                                    |
     ]])
     feed_data('\027]11;rgba:ffff/ffff/ffff/8000\027\\')
-    screen:expect{any='did OptionSet, yay!'}
+    screen:expect({ any = 'did OptionSet, yay!' })
 
     feed_data(':echo "new_bg=".&background\n')
-    screen:expect{any='new_bg=light'}
+    screen:expect({ any = 'new_bg=light' })
   end)
 
   it('triggers OptionSet event with split terminal-response', function()
@@ -2365,10 +2562,10 @@ describe('TUI bg color', function()
     -- Send a background response with the OSC command part split.
     feed_data('\027]11;rgb')
     feed_data(':ffff/ffff/ffff\027\\')
-    screen:expect{any='did OptionSet, yay!'}
+    screen:expect({ any = 'did OptionSet, yay!' })
 
     feed_data(':echo "new_bg=".&background\n')
-    screen:expect{any='new_bg=light'}
+    screen:expect({ any = 'new_bg=light' })
 
     setup()
     screen:expect([[
@@ -2383,10 +2580,10 @@ describe('TUI bg color', function()
     -- Send a background response with the Pt portion split.
     feed_data('\027]11;rgba:ffff/fff')
     feed_data('f/ffff/8000\007')
-    screen:expect{any='did OptionSet, yay!'}
+    screen:expect({ any = 'did OptionSet, yay!' })
 
     feed_data(':echo "new_bg=".&background\n')
-    screen:expect{any='new_bg=light'}
+    screen:expect({ any = 'new_bg=light' })
   end)
 
   it('not triggers OptionSet event with invalid terminal-response', function()
@@ -2403,7 +2600,7 @@ describe('TUI bg color', function()
     screen:expect_unchanged()
 
     feed_data(':echo "new_bg=".&background\n')
-    screen:expect{any='new_bg=dark'}
+    screen:expect({ any = 'new_bg=dark' })
 
     setup()
     screen:expect([[
@@ -2419,26 +2616,32 @@ describe('TUI bg color', function()
     screen:expect_unchanged()
 
     feed_data(':echo "new_bg=".&background\n')
-    screen:expect{any='new_bg=dark'}
+    screen:expect({ any = 'new_bg=dark' })
   end)
 end)
 
 -- These tests require `thelpers` because --headless/--embed
 -- does not initialize the TUI.
-describe("TUI as a client", function()
-
-  it("connects to remote instance (with its own TUI)", function()
+describe('TUI as a client', function()
+  it('connects to remote instance (with its own TUI)', function()
     local server_super = spawn_argv(false) -- equivalent to clear()
     local client_super = spawn_argv(true)
 
     set_session(server_super)
     local server_pipe = new_pipename()
-    local screen_server = thelpers.screen_setup(0,
-      string.format([=[["%s", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "%s laststatus=2 background=dark"]]=],
-        nvim_prog, server_pipe, nvim_set))
+    local screen_server = thelpers.screen_setup(
+      0,
+      string.format(
+        [=[["%s", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "%s laststatus=2 background=dark"]]=],
+        nvim_prog,
+        server_pipe,
+        nvim_set
+      )
+    )
 
-    feed_data("iHello, World")
-    screen_server:expect{grid=[[
+    feed_data('iHello, World')
+    screen_server:expect({
+      grid = [[
       Hello, World{1: }                                     |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -2446,9 +2649,11 @@ describe("TUI as a client", function()
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
-    ]]}
-    feed_data("\027")
-    screen_server:expect{grid=[[
+    ]],
+    })
+    feed_data('\027')
+    screen_server:expect({
+      grid = [[
       Hello, Worl{1:d}                                      |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -2456,14 +2661,17 @@ describe("TUI as a client", function()
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
 
     set_session(client_super)
-    local screen_client = thelpers.screen_setup(0,
-      string.format([=[["%s", "--server", "%s", "--remote-ui"]]=],
-                    nvim_prog, server_pipe))
+    local screen_client = thelpers.screen_setup(
+      0,
+      string.format([=[["%s", "--server", "%s", "--remote-ui"]]=], nvim_prog, server_pipe)
+    )
 
-    screen_client:expect{grid=[[
+    screen_client:expect({
+      grid = [[
       Hello, Worl{1:d}                                      |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -2471,12 +2679,14 @@ describe("TUI as a client", function()
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
 
     -- grid smaller than containing terminal window is cleared properly
     feed_data(":call setline(1,['a'->repeat(&columns)]->repeat(&lines))\n")
-    feed_data("0:set lines=3\n")
-    screen_server:expect{grid=[[
+    feed_data('0:set lines=3\n')
+    screen_server:expect({
+      grid = [[
       {1:a}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {5:[No Name] [+]                                     }|
                                                         |
@@ -2484,28 +2694,31 @@ describe("TUI as a client", function()
                                                         |
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
 
-    feed_data(":q!\n")
+    feed_data(':q!\n')
 
     server_super:close()
     client_super:close()
   end)
 
-  it("connects to remote instance (--headless)", function()
+  it('connects to remote instance (--headless)', function()
     local server = helpers.spawn_argv(false) -- equivalent to clear()
     local client_super = spawn_argv(true)
 
     set_session(server)
-    local server_pipe = eval'v:servername'
-    feed'iHalloj!<esc>'
+    local server_pipe = eval('v:servername')
+    feed('iHalloj!<esc>')
 
     set_session(client_super)
-    local screen = thelpers.screen_setup(0,
-      string.format([=[["%s", "--server", "%s", "--remote-ui"]]=],
-                    nvim_prog, server_pipe))
+    local screen = thelpers.screen_setup(
+      0,
+      string.format([=[["%s", "--server", "%s", "--remote-ui"]]=], nvim_prog, server_pipe)
+    )
 
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       Halloj{1:!}                                           |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -2513,27 +2726,30 @@ describe("TUI as a client", function()
       {4:~                                                 }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
 
     -- No heap-use-after-free when receiving UI events after deadly signal #22184
     server:request('nvim_input', ('a'):rep(1000))
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
-    screen:expect({any = '%[Process exited 1%]'})
+    screen:expect({ any = '%[Process exited 1%]' })
 
     eq(0, meths.get_vvar('shell_error'))
     -- exits on input eof #22244
-    funcs.system({nvim_prog, '--server', server_pipe, '--remote-ui'})
+    funcs.system({ nvim_prog, '--server', server_pipe, '--remote-ui' })
     eq(1, meths.get_vvar('shell_error'))
 
     client_super:close()
     server:close()
   end)
 
-  it("throws error when no server exists", function()
+  it('throws error when no server exists', function()
     clear()
-    local screen = thelpers.screen_setup(0,
-      string.format([=[["%s", "--server", "127.0.0.1:2436546", "--remote-ui"]]=],
-                    nvim_prog), 60)
+    local screen = thelpers.screen_setup(
+      0,
+      string.format([=[["%s", "--server", "127.0.0.1:2436546", "--remote-ui"]]=], nvim_prog),
+      60
+    )
 
     screen:expect([[
       Remote ui failed to start: {MATCH:.*}|
@@ -2546,18 +2762,25 @@ describe("TUI as a client", function()
     ]])
   end)
 
-  it("exits when server quits", function()
+  it('exits when server quits', function()
     local server_super = spawn_argv(false) -- equivalent to clear()
     local client_super = spawn_argv(true)
 
     set_session(server_super)
     local server_pipe = new_pipename()
-    local screen_server = thelpers.screen_setup(0,
-      string.format([=[["%s", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "%s laststatus=2 background=dark"]]=],
-        nvim_prog, server_pipe, nvim_set))
+    local screen_server = thelpers.screen_setup(
+      0,
+      string.format(
+        [=[["%s", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "%s laststatus=2 background=dark"]]=],
+        nvim_prog,
+        server_pipe,
+        nvim_set
+      )
+    )
 
-    feed_data("iHello, World")
-    screen_server:expect{grid=[[
+    feed_data('iHello, World')
+    screen_server:expect({
+      grid = [[
       Hello, World{1: }                                     |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -2565,9 +2788,11 @@ describe("TUI as a client", function()
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
-    ]]}
-    feed_data("\027")
-    screen_server:expect{grid=[[
+    ]],
+    })
+    feed_data('\027')
+    screen_server:expect({
+      grid = [[
       Hello, Worl{1:d}                                      |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -2575,14 +2800,17 @@ describe("TUI as a client", function()
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
 
     set_session(client_super)
-    local screen_client = thelpers.screen_setup(0,
-      string.format([=[["%s", "--server", "%s", "--remote-ui"]]=],
-                    nvim_prog, server_pipe))
+    local screen_client = thelpers.screen_setup(
+      0,
+      string.format([=[["%s", "--server", "%s", "--remote-ui"]]=], nvim_prog, server_pipe)
+    )
 
-    screen_client:expect{grid=[[
+    screen_client:expect({
+      grid = [[
       Hello, Worl{1:d}                                      |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -2590,15 +2818,16 @@ describe("TUI as a client", function()
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    })
 
     -- quitting the server
     set_session(server_super)
-    feed_data(":q!\n")
-    screen_server:expect({any="Process exited 0"})
+    feed_data(':q!\n')
+    screen_server:expect({ any = 'Process exited 0' })
 
     -- assert that client has exited
-    screen_client:expect({any="Process exited 0"})
+    screen_client:expect({ any = 'Process exited 0' })
 
     server_super:close()
     client_super:close()

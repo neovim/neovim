@@ -8,7 +8,6 @@ describe('CTRL-W in Insert mode', function()
 
   -- luacheck: ignore 611 (Line contains only whitespaces)
   it('works for multi-byte characters', function()
-
     for i = 1, 6 do
       feed('o wwwこんにちわ世界ワールドvim ' .. string.rep('<C-w>', i) .. '<esc>')
     end

@@ -103,10 +103,10 @@ describe("'listchars'", function()
   it('"exceeds" character does not appear in foldcolumn vim-patch:8.2.3121', function()
     local screen = Screen.new(60, 10)
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [2] = {bold = true, reverse = true},  -- StatusLine
-      [3] = {reverse = true},  -- StatusLineNC
-      [4] = {background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue},  -- FoldColumn, SignColumn
+      [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [2] = { bold = true, reverse = true }, -- StatusLine
+      [3] = { reverse = true }, -- StatusLineNC
+      [4] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue }, -- FoldColumn, SignColumn
     })
     screen:attach()
     exec([[

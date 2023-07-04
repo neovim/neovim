@@ -14,7 +14,7 @@ describe('display', function()
     local screen = Screen.new(20, 4)
     screen:attach()
     screen:set_default_attr_ids({
-      [1] = {bold = true},
+      [1] = { bold = true },
     })
 
     command([[call setline(1, repeat('a', 21))]])
@@ -32,9 +32,9 @@ describe('display', function()
     local screen = Screen.new(60, 8)
     screen:attach()
     screen:set_default_attr_ids({
-      [1] = {bold = true},  -- ModeMsg
-      [2] = {background = Screen.colors.LightGrey},  -- Visual
-      [3] = {background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue},  -- SignColumn
+      [1] = { bold = true }, -- ModeMsg
+      [2] = { background = Screen.colors.LightGrey }, -- Visual
+      [3] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue }, -- SignColumn
     })
 
     exec([[
@@ -62,8 +62,8 @@ describe('display', function()
   it('matchparen highlight is cleared when switching buffer', function()
     local screen = Screen.new(20, 5)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},
-      [1] = {background = Screen.colors.Cyan},
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { background = Screen.colors.Cyan },
     })
     screen:attach()
 
@@ -106,9 +106,9 @@ describe('display', function()
   local function run_test_display_lastline(euro)
     local screen = Screen.new(75, 10)
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [2] = {bold = true, reverse = true},  -- StatusLine
-      [3] = {reverse = true},  -- StatusLineNC
+      [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [2] = { bold = true, reverse = true }, -- StatusLine
+      [3] = { reverse = true }, -- StatusLineNC
     })
     screen:attach()
     exec([[

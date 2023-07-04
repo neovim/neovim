@@ -14,15 +14,15 @@ local exec_capture = helpers.exec_capture
 local matches = helpers.matches
 
 describe(':echo :echon :echomsg :echoerr', function()
-  local fn_tbl = {'String', 'StringN', 'StringMsg', 'StringErr'}
+  local fn_tbl = { 'String', 'StringN', 'StringMsg', 'StringErr' }
   local function assert_same_echo_dump(expected, input, use_eval)
-    for _,v in pairs(fn_tbl) do
-      eq(expected, use_eval and eval(v..'('..input..')') or funcs[v](input))
+    for _, v in pairs(fn_tbl) do
+      eq(expected, use_eval and eval(v .. '(' .. input .. ')') or funcs[v](input))
     end
   end
   local function assert_matches_echo_dump(expected, input, use_eval)
-    for _,v in pairs(fn_tbl) do
-      matches(expected, use_eval and eval(v..'('..input..')') or funcs[v](input))
+    for _, v in pairs(fn_tbl) do
+      matches(expected, use_eval and eval(v .. '(' .. input .. ')') or funcs[v](input))
     end
   end
 
@@ -85,14 +85,12 @@ describe(':echo :echon :echomsg :echoerr', function()
       eq('v:null', funcs.StringErr(NIL))
     end)
 
-    it('dumps values with at most six digits after the decimal point',
-    function()
+    it('dumps values with at most six digits after the decimal point', function()
       assert_same_echo_dump('1.234568e-20', 1.23456789123456789123456789e-020)
       assert_same_echo_dump('1.234568', 1.23456789123456789123456789)
     end)
 
-    it('dumps values with at most seven digits before the decimal point',
-    function()
+    it('dumps values with at most seven digits before the decimal point', function()
       assert_same_echo_dump('1234567.891235', 1234567.89123456789123456789)
       assert_same_echo_dump('1.234568e7', 12345678.9123456789123456789)
     end)
@@ -115,8 +113,8 @@ describe(':echo :echon :echomsg :echoerr', function()
     end)
 
     it('dumps large values', function()
-      assert_same_echo_dump('2147483647', 2^31-1)
-      assert_same_echo_dump('-2147483648', -2^31)
+      assert_same_echo_dump('2147483647', 2 ^ 31 - 1)
+      assert_same_echo_dump('-2147483648', -2 ^ 31)
     end)
   end)
 
@@ -198,75 +196,95 @@ describe(':echo :echon :echomsg :echoerr', function()
         let TestDictRef = function('TestDict', d)
         let d.tdr = TestDictRef
       ]])
-      eq(dedent([[
+      eq(
+        dedent([[
           function('TestDict', {'tdr': function('TestDict', {...@1})})]]),
-         exec_capture('echo String(d.tdr)'))
+        exec_capture('echo String(d.tdr)')
+      )
     end)
 
     it('dumps automatically created partials', function()
       assert_same_echo_dump(
         "function('<SNR>1_Test2', {'f': function('<SNR>1_Test2')})",
         '{"f": Test2_f}.f',
-        true)
+        true
+      )
       assert_same_echo_dump(
         "function('<SNR>1_Test2', [1], {'f': function('<SNR>1_Test2', [1])})",
         '{"f": function(Test2_f, [1])}.f',
-        true)
+        true
+      )
     end)
 
     it('dumps manually created partials', function()
-      assert_same_echo_dump("function('Test3', [1, 2], {})",
-                            "function('Test3', [1, 2], {})", true)
-      assert_same_echo_dump("function('Test3', [1, 2])",
-                            "function('Test3', [1, 2])", true)
-      assert_same_echo_dump("function('Test3', {})",
-                            "function('Test3', {})", true)
+      assert_same_echo_dump("function('Test3', [1, 2], {})", "function('Test3', [1, 2], {})", true)
+      assert_same_echo_dump("function('Test3', [1, 2])", "function('Test3', [1, 2])", true)
+      assert_same_echo_dump("function('Test3', {})", "function('Test3', {})", true)
     end)
 
-    it('does not crash or halt when dumping partials with reference cycles in self',
-    function()
-      meths.set_var('d', {v=true})
-      eq(dedent([[
-          {'p': function('<SNR>1_Test2', {...@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}]]),
-        exec_capture('echo String(extend(extend(g:d, {"f": g:Test2_f}), {"p": g:d.f}))'))
+    it('does not crash or halt when dumping partials with reference cycles in self', function()
+      meths.set_var('d', { v = true })
+      eq(
+        dedent(
+          [[
+          {'p': function('<SNR>1_Test2', {...@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}]]
+        ),
+        exec_capture('echo String(extend(extend(g:d, {"f": g:Test2_f}), {"p": g:d.f}))')
+      )
     end)
 
-    it('does not show errors when dumping partials referencing the same dictionary',
-    function()
+    it('does not show errors when dumping partials referencing the same dictionary', function()
       command('let d = {}')
       -- Regression for “eval/typval_encode: Dump empty dictionary before
       -- checking for refcycle”, results in error.
-      eq('[function(\'tr\', {}), function(\'tr\', {})]', eval('String([function("tr", d), function("tr", d)])'))
+      eq(
+        "[function('tr', {}), function('tr', {})]",
+        eval('String([function("tr", d), function("tr", d)])')
+      )
       -- Regression for “eval: Work with reference cycles in partials (self)
       -- properly”, results in crash.
       eval('extend(d, {"a": 1})')
-      eq('[function(\'tr\', {\'a\': 1}), function(\'tr\', {\'a\': 1})]', eval('String([function("tr", d), function("tr", d)])'))
+      eq(
+        "[function('tr', {'a': 1}), function('tr', {'a': 1})]",
+        eval('String([function("tr", d), function("tr", d)])')
+      )
     end)
 
-    it('does not crash or halt when dumping partials with reference cycles in arguments',
-    function()
+    it('does not crash or halt when dumping partials with reference cycles in arguments', function()
       meths.set_var('l', {})
       eval('add(l, l)')
       -- Regression: the below line used to crash (add returns original list and
       -- there was error in dumping partials). Tested explicitly in
       -- test/unit/api/private_helpers_spec.lua.
       eval('add(l, function("Test1", l))')
-      eq(dedent([=[
-          function('Test1', [[[...@2], function('Test1', [[...@2]])], function('Test1', [[[...@4], function('Test1', [[...@4]])]])])]=]),
-        exec_capture('echo String(function("Test1", l))'))
+      eq(
+        dedent(
+          [=[
+          function('Test1', [[[...@2], function('Test1', [[...@2]])], function('Test1', [[[...@4], function('Test1', [[...@4]])]])])]=]
+        ),
+        exec_capture('echo String(function("Test1", l))')
+      )
     end)
 
-    it('does not crash or halt when dumping partials with reference cycles in self and arguments',
-    function()
-      meths.set_var('d', {v=true})
-      meths.set_var('l', {})
-      eval('add(l, l)')
-      eval('add(l, function("Test1", l))')
-      eval('add(l, function("Test1", d))')
-      eq(dedent([=[
-          {'p': function('<SNR>1_Test2', [[[...@3], function('Test1', [[...@3]]), function('Test1', {...@0})], function('Test1', [[[...@5], function('Test1', [[...@5]]), function('Test1', {...@0})]]), function('Test1', {...@0})], {...@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}]=]),
-        exec_capture('echo String(extend(extend(g:d, {"f": g:Test2_f}), {"p": function(g:d.f, l)}))'))
-    end)
+    it(
+      'does not crash or halt when dumping partials with reference cycles in self and arguments',
+      function()
+        meths.set_var('d', { v = true })
+        meths.set_var('l', {})
+        eval('add(l, l)')
+        eval('add(l, function("Test1", l))')
+        eval('add(l, function("Test1", d))')
+        eq(
+          dedent(
+            [=[
+          {'p': function('<SNR>1_Test2', [[[...@3], function('Test1', [[...@3]]), function('Test1', {...@0})], function('Test1', [[[...@5], function('Test1', [[...@5]]), function('Test1', {...@0})]]), function('Test1', {...@0})], {...@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}]=]
+          ),
+          exec_capture(
+            'echo String(extend(extend(g:d, {"f": g:Test2_f}), {"p": function(g:d.f, l)}))'
+          )
+        )
+      end
+    )
   end)
 
   describe('used to represent lists', function()
@@ -275,15 +293,15 @@ describe(':echo :echon :echomsg :echoerr', function()
     end)
 
     it('dumps non-empty list', function()
-      assert_same_echo_dump('[1, 2]', {1,2})
+      assert_same_echo_dump('[1, 2]', { 1, 2 })
     end)
 
     it('dumps nested lists', function()
-      assert_same_echo_dump('[[[[[]]]]]', {{{{{}}}}})
+      assert_same_echo_dump('[[[[[]]]]]', { { { { {} } } } })
     end)
 
     it('dumps nested non-empty lists', function()
-      assert_same_echo_dump('[1, [[3, [[5], 4]], 2]]', {1, {{3, {{5}, 4}}, 2}})
+      assert_same_echo_dump('[1, [[3, [[5], 4]], 2]]', { 1, { { 3, { { 5 }, 4 } }, 2 } })
     end)
 
     it('does not error when dumping recursive lists', function()
@@ -308,27 +326,25 @@ describe(':echo :echon :echomsg :echoerr', function()
     it('dumps list with two same empty dictionaries, also in partials', function()
       command('let d = {}')
       assert_same_echo_dump('[{}, {}]', '[d, d]', true)
-      eq('[function(\'tr\', {}), {}]', eval('String([function("tr", d), d])'))
-      eq('[{}, function(\'tr\', {})]', eval('String([d, function("tr", d)])'))
+      eq("[function('tr', {}), {}]", eval('String([function("tr", d), d])'))
+      eq("[{}, function('tr', {})]", eval('String([d, function("tr", d)])'))
     end)
 
     it('dumps non-empty dictionary', function()
-      assert_same_echo_dump("{'t''est': 1}", {["t'est"]=1})
+      assert_same_echo_dump("{'t''est': 1}", { ["t'est"] = 1 })
     end)
 
     it('does not error when dumping recursive dictionaries', function()
-      meths.set_var('d', {d=1})
+      meths.set_var('d', { d = 1 })
       eval('extend(d, {"d": d})')
       eq(0, exc_exec('echo String(d)'))
     end)
 
     it('dumps recursive dictionaries without the error', function()
-      meths.set_var('d', {d=1})
+      meths.set_var('d', { d = 1 })
       eval('extend(d, {"d": d})')
-      eq('{\'d\': {...@0}}',
-         exec_capture('echo String(d)'))
-      eq('{\'out\': {\'d\': {...@1}}}',
-         exec_capture('echo String({"out": d})'))
+      eq("{'d': {...@0}}", exec_capture('echo String(d)'))
+      eq("{'out': {'d': {...@1}}}", exec_capture('echo String({"out": d})'))
     end)
   end)
 

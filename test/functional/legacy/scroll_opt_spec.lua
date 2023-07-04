@@ -22,9 +22,9 @@ describe('smoothscroll', function()
       set number
     ]])
     feed('<C-Y>')
-    screen:expect({any = "  1 ^one"})
+    screen:expect({ any = '  1 ^one' })
     feed('<C-E><C-E><C-E>')
-    screen:expect({any = "  2 ^two"})
+    screen:expect({ any = '  2 ^two' })
   end)
 
   -- oldtest: Test_smoothscroll_CtrlE_CtrlY()
@@ -361,7 +361,7 @@ describe('smoothscroll', function()
   end)
 
   -- oldtest: Test_smoothscroll_list()
-  it("works with list mode", function()
+  it('works with list mode', function()
     screen:try_resize(40, 8)
     exec([[
       set smoothscroll scrolloff=0
@@ -393,7 +393,7 @@ describe('smoothscroll', function()
   end)
 
   -- oldtest: Test_smoothscroll_diff_mode()
-  it("works with diff mode", function()
+  it('works with diff mode', function()
     screen:try_resize(40, 8)
     exec([[
       let text = 'just some text here'
@@ -475,7 +475,7 @@ describe('smoothscroll', function()
   end)
 
   -- oldtest: Test_smoothscroll_wrap_long_line()
-  it("adjusts the cursor position in a long line", function()
+  it('adjusts the cursor position in a long line', function()
     screen:try_resize(40, 6)
     exec([[
       call setline(1, ['one', 'two', 'Line' .. (' with lots of text'->repeat(30)) .. ' end', 'four'])
@@ -607,7 +607,9 @@ describe('smoothscroll', function()
     -- This time, use a shorter long line that is barely long enough to span more
     -- than one window. Note that the cursor is at the bottom this time because
     -- Vim prefers to do so if we are scrolling a few lines only.
-    exec("call setline(1, ['one', 'two', 'Line' .. (' with lots of text'->repeat(10)) .. ' end', 'four'])")
+    exec(
+      "call setline(1, ['one', 'two', 'Line' .. (' with lots of text'->repeat(10)) .. ' end', 'four'])"
+    )
     -- Currently visible lines were replaced, test that the lines and cursor
     -- are correctly displayed.
     screen:expect_unchanged()
@@ -629,7 +631,7 @@ describe('smoothscroll', function()
   end)
 
   -- oldtest: Test_smoothscroll_one_long_line()
-  it("scrolls correctly when moving the cursor", function()
+  it('scrolls correctly when moving the cursor', function()
     screen:try_resize(40, 6)
     exec([[
       call setline(1, 'with lots of text '->repeat(7))
@@ -658,7 +660,7 @@ describe('smoothscroll', function()
   end)
 
   -- oldtest: Test_smoothscroll_long_line_showbreak()
-  it("cursor is not one screen line too far down", function()
+  it('cursor is not one screen line too far down', function()
     screen:try_resize(40, 6)
     -- a line that spans four screen lines
     exec("call setline(1, 'with lots of text in one line '->repeat(6))")
@@ -712,11 +714,11 @@ describe('smoothscroll', function()
   end)
 
   -- oldtest: Test_smoothscroll_zero_width()
-  it("does not divide by zero with a narrow window", function()
+  it('does not divide by zero with a narrow window', function()
     screen:try_resize(12, 2)
     screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.Brown},
-      [2] = {foreground = Screen.colors.Blue1, bold = true},
+      [1] = { foreground = Screen.colors.Brown },
+      [2] = { foreground = Screen.colors.Blue1, bold = true },
     })
     exec([[
       call setline(1, ['a'->repeat(100)])
@@ -738,7 +740,7 @@ describe('smoothscroll', function()
   end)
 
   -- oldtest: Test_smoothscroll_ins_lines()
-  it("does not unnecessarily insert lines", function()
+  it('does not unnecessarily insert lines', function()
     screen:try_resize(40, 6)
     exec([=[
       set wrap smoothscroll scrolloff=0 conceallevel=2 concealcursor=nc
@@ -762,7 +764,7 @@ describe('smoothscroll', function()
   end)
 
   -- oldtest: Test_smoothscroll_cursormoved_line()
-  it("does not place the cursor in the command line", function()
+  it('does not place the cursor in the command line', function()
     screen:try_resize(40, 6)
     exec([=[
       set smoothscroll
@@ -785,7 +787,7 @@ describe('smoothscroll', function()
   end)
 
   -- oldtest: Test_smoothscroll_eob()
-  it("does not scroll halfway at end of buffer", function()
+  it('does not scroll halfway at end of buffer', function()
     screen:try_resize(40, 10)
     exec([[
       set smoothscroll
@@ -823,13 +825,13 @@ describe('smoothscroll', function()
   end)
 
   -- oldtest: Test_smoothscroll_incsearch()
-  it("does not reset skipcol when doing incremental search on the same word", function()
+  it('does not reset skipcol when doing incremental search on the same word', function()
     screen:try_resize(40, 8)
     screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.Brown},
-      [2] = {foreground = Screen.colors.Blue1, bold = true},
-      [3] = {background = Screen.colors.Yellow1},
-      [4] = {reverse = true},
+      [1] = { foreground = Screen.colors.Brown },
+      [2] = { foreground = Screen.colors.Blue1, bold = true },
+      [3] = { background = Screen.colors.Yellow1 },
+      [4] = { reverse = true },
     })
     exec([[
       set smoothscroll number scrolloff=0 incsearch
@@ -887,8 +889,8 @@ describe('smoothscroll', function()
   it('scrolling mulitple lines and stopping at non-zero skipcol', function()
     screen:try_resize(40, 10)
     screen:set_default_attr_ids({
-      [0] = {foreground = Screen.colors.Blue, bold = true},
-      [1] = {background = Screen.colors.Grey90},
+      [0] = { foreground = Screen.colors.Blue, bold = true },
+      [1] = { background = Screen.colors.Grey90 },
     })
     exec([[
       setlocal cursorline scrolloff=0 smoothscroll
@@ -943,10 +945,10 @@ describe('smoothscroll', function()
   it('does not divide by zero in zero-width window', function()
     screen:try_resize(40, 19)
     screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.Brown};  -- LineNr
-      [2] = {bold = true, foreground = Screen.colors.Blue};  -- NonText
-      [3] = {bold = true, reverse = true};  -- StatusLine
-      [4] = {reverse = true};  -- StatusLineNC
+      [1] = { foreground = Screen.colors.Brown }, -- LineNr
+      [2] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [3] = { bold = true, reverse = true }, -- StatusLine
+      [4] = { reverse = true }, -- StatusLineNC
     })
     exec([[
       silent normal yy
@@ -982,7 +984,7 @@ describe('smoothscroll', function()
     ]])
   end)
 
-  it("works with virt_lines above and below", function()
+  it('works with virt_lines above and below', function()
     screen:try_resize(55, 7)
     exec([=[
       call setline(1, ['Line' .. (' with some text'->repeat(7))]->repeat(3))

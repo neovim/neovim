@@ -28,7 +28,7 @@ describe(':edit', function()
 
     -- Open Xfile2 using '|' range
     command('edit Xfile2|1')
-    command("s/\\//SLASH/")
+    command('s/\\//SLASH/')
     command('yank A')
     command('w! Xfile2')
 

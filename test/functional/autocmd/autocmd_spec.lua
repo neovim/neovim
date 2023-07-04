@@ -26,23 +26,23 @@ describe('autocmd', function()
 
   it(':tabnew, :split, :close events order, <afile>', function()
     local expected = {
-      {'WinLeave', ''},
-      {'TabLeave', ''},
-      {'WinEnter', ''},
-      {'TabNew', 'testfile1'},    -- :tabnew
-      {'TabEnter', ''},
-      {'BufLeave', ''},
-      {'BufEnter', 'testfile1'},  -- :split
-      {'WinLeave', 'testfile1'},
-      {'WinEnter', 'testfile1'},
-      {'WinLeave', 'testfile1'},
-      {'WinClosed', '1002'},      -- :close, WinClosed <afile> = window-id
-      {'WinEnter', 'testfile1'},
-      {'WinLeave', 'testfile1'},  -- :bdelete
-      {'WinEnter', 'testfile1'},
-      {'BufLeave', 'testfile1'},
-      {'BufEnter', 'testfile2'},
-      {'WinClosed', '1000'},
+      { 'WinLeave', '' },
+      { 'TabLeave', '' },
+      { 'WinEnter', '' },
+      { 'TabNew', 'testfile1' }, -- :tabnew
+      { 'TabEnter', '' },
+      { 'BufLeave', '' },
+      { 'BufEnter', 'testfile1' }, -- :split
+      { 'WinLeave', 'testfile1' },
+      { 'WinEnter', 'testfile1' },
+      { 'WinLeave', 'testfile1' },
+      { 'WinClosed', '1002' }, -- :close, WinClosed <afile> = window-id
+      { 'WinEnter', 'testfile1' },
+      { 'WinLeave', 'testfile1' }, -- :bdelete
+      { 'WinEnter', 'testfile1' },
+      { 'BufLeave', 'testfile1' },
+      { 'BufEnter', 'testfile2' },
+      { 'WinClosed', '1000' },
     }
     command('let g:evs = []')
     command('autocmd BufEnter * :call add(g:evs, ["BufEnter", expand("<afile>")])')
@@ -63,10 +63,10 @@ describe('autocmd', function()
 
   it('first edit causes BufUnload on NoName', function()
     local expected = {
-      {'BufUnload', ''},
-      {'BufDelete', ''},
-      {'BufWipeout', ''},
-      {'BufEnter', 'testfile1'},
+      { 'BufUnload', '' },
+      { 'BufDelete', '' },
+      { 'BufWipeout', '' },
+      { 'BufEnter', 'testfile1' },
     }
     command('let g:evs = []')
     command('autocmd BufEnter * :call add(g:evs, ["BufEnter", expand("<afile>")])')
@@ -106,20 +106,23 @@ describe('autocmd', function()
     local buf1 = eval("bufnr('%')")
     command('new')
     local buf2 = eval("bufnr('%')")
-    command('autocmd WinClosed <buffer> :call add(g:evs, ["WinClosed", expand("<abuf>")])'
-      -- Attempt recursion.
-      ..' | bdelete '..buf2)
+    command(
+      'autocmd WinClosed <buffer> :call add(g:evs, ["WinClosed", expand("<abuf>")])'
+        -- Attempt recursion.
+        .. ' | bdelete '
+        .. buf2
+    )
     command('tabedit testfile2')
     command('tabedit testfile3')
-    command('bdelete '..buf2)
+    command('bdelete ' .. buf2)
     -- Non-recursive: only triggered once.
     eq({
-      {'WinClosed', '2'},
+      { 'WinClosed', '2' },
     }, eval('g:evs'))
-    command('bdelete '..buf1)
+    command('bdelete ' .. buf1)
     eq({
-      {'WinClosed', '2'},
-      {'WinClosed', '1'},
+      { 'WinClosed', '2' },
+      { 'WinClosed', '1' },
     }, eval('g:evs'))
   end)
 
@@ -130,7 +133,7 @@ describe('autocmd', function()
     command('new')
     command('close')
     eq({
-      {'WinClosed', '1001'},
+      { 'WinClosed', '1001' },
     }, eval('g:evs'))
   end)
 
@@ -139,16 +142,15 @@ describe('autocmd', function()
   end)
 
   describe('BufLeave autocommand', function()
-    it('can wipe out the buffer created by :edit which triggered autocmd',
-    function()
+    it('can wipe out the buffer created by :edit which triggered autocmd', function()
       meths.set_option_value('hidden', true, {})
       curbufmeths.set_lines(0, 1, false, {
         'start of test file xx',
-        'end of test file xx'})
+        'end of test file xx',
+      })
 
       command('autocmd BufLeave * bwipeout yy')
-      eq('Vim(edit):E143: Autocommands unexpectedly deleted new buffer yy',
-         exc_exec('edit yy'))
+      eq('Vim(edit):E143: Autocommands unexpectedly deleted new buffer yy', exc_exec('edit yy'))
 
       expect([[
         start of test file xx
@@ -156,7 +158,7 @@ describe('autocmd', function()
     end)
   end)
 
-  it('++once', function()  -- :help autocmd-once
+  it('++once', function() -- :help autocmd-once
     --
     -- ":autocmd ... ++once" executes its handler once, then removes the handler.
     --
@@ -177,7 +179,8 @@ describe('autocmd', function()
     command('autocmd TabNew * ++once :call add(g:foo, "Once2")')
     command('autocmd TabNew * :call add(g:foo, "Many2")')
     command('autocmd TabNew * ++once :call add(g:foo, "Once3")')
-    eq(dedent([[
+    eq(
+      dedent([[
 
        --- Autocommands ---
        TabNew
@@ -186,18 +189,21 @@ describe('autocmd', function()
                      :call add(g:foo, "Once2")
                      :call add(g:foo, "Many2")
                      :call add(g:foo, "Once3")]]),
-       funcs.execute('autocmd Tabnew'))
+      funcs.execute('autocmd Tabnew')
+    )
     command('tabnew')
     command('tabnew')
     command('tabnew')
     eq(expected, eval('g:foo'))
-    eq(dedent([[
+    eq(
+      dedent([[
 
        --- Autocommands ---
        TabNew
            *         :call add(g:foo, "Many1")
                      :call add(g:foo, "Many2")]]),
-       funcs.execute('autocmd Tabnew'))
+      funcs.execute('autocmd Tabnew')
+    )
 
     --
     -- ":autocmd ... ++once" handlers can be deleted.
@@ -218,7 +224,9 @@ describe('autocmd', function()
     }
     command('let g:foo = []')
     command('autocmd OptionSet binary ++nested ++once :call add(g:foo, "OptionSet-Once")')
-    command('autocmd CursorMoved <buffer> ++once ++nested setlocal binary|:call add(g:foo, "CursorMoved-Once")')
+    command(
+      'autocmd CursorMoved <buffer> ++once ++nested setlocal binary|:call add(g:foo, "CursorMoved-Once")'
+    )
     command("put ='foo bar baz'")
     feed('0llhlh')
     eq(expected, eval('g:foo'))
@@ -231,15 +239,17 @@ describe('autocmd', function()
       'Once2',
     }
     command('let g:foo = []')
-    command('autocmd! TabNew')  -- Clear all TabNew handlers.
+    command('autocmd! TabNew') -- Clear all TabNew handlers.
     command('autocmd TabNew * ++once :call add(g:foo, "Once1")')
     command('autocmd TabNew * ++once :call add(g:foo, "Once2")')
     command('tabnew')
     eq(expected, eval('g:foo'))
-    eq(dedent([[
+    eq(
+      dedent([[
 
        --- Autocommands ---]]),
-       funcs.execute('autocmd Tabnew'))
+      funcs.execute('autocmd Tabnew')
+    )
   end)
 
   it('internal `aucmd_win` window', function()
@@ -250,9 +260,13 @@ describe('autocmd', function()
     local screen = Screen.new(50, 10)
     screen:attach()
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {background = Screen.colors.LightMagenta},
-      [3] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue1},
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { background = Screen.colors.LightMagenta },
+      [3] = {
+        background = Screen.colors.LightMagenta,
+        bold = true,
+        foreground = Screen.colors.Blue1,
+      },
     })
 
     source([[
@@ -283,7 +297,7 @@ describe('autocmd', function()
                                                         |
     ]])
 
-    feed(":enew | doautoall User<cr>")
+    feed(':enew | doautoall User<cr>')
     screen:expect([[
       {2:bb                                                }|
       {3:~                                                 }|
@@ -313,14 +327,16 @@ describe('autocmd', function()
     eq(7, eval('g:test'))
 
     -- API calls are blocked when aucmd_win is not in scope
-    eq('Vim(call):E5555: API call: Invalid window id: 1001',
-      pcall_err(command, "call nvim_set_current_win(g:winid)"))
+    eq(
+      'Vim(call):E5555: API call: Invalid window id: 1001',
+      pcall_err(command, 'call nvim_set_current_win(g:winid)')
+    )
 
     -- second time aucmd_win is needed, a different code path is invoked
     -- to reuse the same window, so check again
-    command("let g:test = v:null")
-    command("let g:had_value = v:null")
-    feed(":doautoall User<cr>")
+    command('let g:test = v:null')
+    command('let g:had_value = v:null')
+    feed(':doautoall User<cr>')
     screen:expect([[
       {2:bb                                                }|
       {3:~                                                 }|
@@ -351,27 +367,29 @@ describe('autocmd', function()
     eq(0, eval('g:had_value'))
     eq(7, eval('g:test'))
 
-    eq('Vim(call):E5555: API call: Invalid window id: 1001',
-      pcall_err(command, "call nvim_set_current_win(g:winid)"))
+    eq(
+      'Vim(call):E5555: API call: Invalid window id: 1001',
+      pcall_err(command, 'call nvim_set_current_win(g:winid)')
+    )
   end)
 
-  it("`aucmd_win` cannot be changed into a normal window #13699", function()
+  it('`aucmd_win` cannot be changed into a normal window #13699', function()
     local screen = Screen.new(50, 10)
     screen:attach()
-    screen:set_default_attr_ids {
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {reverse = true},
-      [3] = {bold = true, reverse = true},
-    }
+    screen:set_default_attr_ids({
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { reverse = true },
+      [3] = { bold = true, reverse = true },
+    })
 
     -- Create specific layout and ensure it's left unchanged.
     -- Use nvim_buf_call on a hidden buffer so aucmd_win is used.
-    exec_lua [[
+    exec_lua([[
       vim.cmd "wincmd s | wincmd _"
       _G.buf = vim.api.nvim_create_buf(true, true)
       vim.api.nvim_buf_call(_G.buf, function() vim.cmd "wincmd J" end)
-    ]]
-    screen:expect [[
+    ]])
+    screen:expect([[
       ^                                                  |
       {1:~                                                 }|
       {1:~                                                 }|
@@ -382,18 +400,18 @@ describe('autocmd', function()
                                                         |
       {2:[No Name]                                         }|
                                                         |
-    ]]
+    ]])
     -- This used to crash after making aucmd_win a normal window via the above.
-    exec_lua [[
+    exec_lua([[
       vim.cmd "tabnew | tabclose # | wincmd s | wincmd _"
       vim.api.nvim_buf_call(_G.buf, function() vim.cmd "wincmd K" end)
-    ]]
+    ]])
     assert_alive()
     screen:expect_unchanged()
 
     -- Ensure splitting still works from inside the aucmd_win.
-    exec_lua [[vim.api.nvim_buf_call(_G.buf, function() vim.cmd "split" end)]]
-    screen:expect [[
+    exec_lua([[vim.api.nvim_buf_call(_G.buf, function() vim.cmd "split" end)]])
+    screen:expect([[
       ^                                                  |
       {1:~                                                 }|
       {3:[No Name]                                         }|
@@ -404,17 +422,20 @@ describe('autocmd', function()
       {1:~                                                 }|
       {2:[No Name]                                         }|
                                                         |
-    ]]
+    ]])
 
     -- After all of our messing around, aucmd_win should still be floating.
     -- Use :only to ensure _G.buf is hidden again (so the aucmd_win is used).
-    eq("editor", exec_lua [[
+    eq(
+      'editor',
+      exec_lua([[
       vim.cmd "only"
       vim.api.nvim_buf_call(_G.buf, function()
         _G.config = vim.api.nvim_win_get_config(0)
       end)
       return _G.config.relative
     ]])
+    )
   end)
 
   describe('closing last non-floating window in tab from `aucmd_win`', function()
@@ -425,14 +446,18 @@ describe('autocmd', function()
     end)
 
     it('gives E814 when there are no other floating windows', function()
-      eq('BufAdd Autocommands for "Xa.txt": Vim(close):E814: Cannot close window, only autocmd window would remain',
-         pcall_err(command, 'doautoall BufAdd'))
+      eq(
+        'BufAdd Autocommands for "Xa.txt": Vim(close):E814: Cannot close window, only autocmd window would remain',
+        pcall_err(command, 'doautoall BufAdd')
+      )
     end)
 
     it('gives E814 when there are other floating windows', function()
-      meths.open_win(0, true, {width = 10, height = 10, relative = 'editor', row = 10, col = 10})
-      eq('BufAdd Autocommands for "Xa.txt": Vim(close):E814: Cannot close window, only autocmd window would remain',
-         pcall_err(command, 'doautoall BufAdd'))
+      meths.open_win(0, true, { width = 10, height = 10, relative = 'editor', row = 10, col = 10 })
+      eq(
+        'BufAdd Autocommands for "Xa.txt": Vim(close):E814: Cannot close window, only autocmd window would remain',
+        pcall_err(command, 'doautoall BufAdd')
+      )
     end)
   end)
 
@@ -441,60 +466,88 @@ describe('autocmd', function()
       vim.cmd('tabnew')
       _G.buf = vim.api.nvim_create_buf(true, true)
     ]])
-    matches('Vim:E813: Cannot close autocmd window$', pcall_err(exec_lua, [[
+    matches(
+      'Vim:E813: Cannot close autocmd window$',
+      pcall_err(
+        exec_lua,
+        [[
       vim.api.nvim_buf_call(_G.buf, function()
         local win = vim.api.nvim_get_current_win()
         vim.api.nvim_win_close(win, true)
       end)
-    ]]))
-    matches('Vim:E813: Cannot close autocmd window$', pcall_err(exec_lua, [[
+    ]]
+      )
+    )
+    matches(
+      'Vim:E813: Cannot close autocmd window$',
+      pcall_err(
+        exec_lua,
+        [[
       vim.api.nvim_buf_call(_G.buf, function()
         local win = vim.api.nvim_get_current_win()
         vim.cmd('tabnext')
         vim.api.nvim_win_close(win, true)
       end)
-    ]]))
-    matches('Vim:E813: Cannot close autocmd window$', pcall_err(exec_lua, [[
+    ]]
+      )
+    )
+    matches(
+      'Vim:E813: Cannot close autocmd window$',
+      pcall_err(
+        exec_lua,
+        [[
       vim.api.nvim_buf_call(_G.buf, function()
         local win = vim.api.nvim_get_current_win()
         vim.api.nvim_win_hide(win)
       end)
-    ]]))
-    matches('Vim:E813: Cannot close autocmd window$', pcall_err(exec_lua, [[
+    ]]
+      )
+    )
+    matches(
+      'Vim:E813: Cannot close autocmd window$',
+      pcall_err(
+        exec_lua,
+        [[
       vim.api.nvim_buf_call(_G.buf, function()
         local win = vim.api.nvim_get_current_win()
         vim.cmd('tabnext')
         vim.api.nvim_win_hide(win)
       end)
-    ]]))
+    ]]
+      )
+    )
   end)
 
   it(':doautocmd does not warn "No matching autocommands" #10689', function()
     local screen = Screen.new(32, 3)
     screen:attach()
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
     })
 
     feed(':doautocmd User Foo<cr>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       ^                                |
       {1:~                               }|
       :doautocmd User Foo             |
-    ]]}
+    ]],
+    })
     feed(':autocmd! SessionLoadPost<cr>')
     feed(':doautocmd SessionLoadPost<cr>')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       ^                                |
       {1:~                               }|
       :doautocmd SessionLoadPost      |
-    ]]}
+    ]],
+    })
   end)
 
   describe('v:event is readonly #18063', function()
     it('during ChanOpen event', function()
       command('autocmd ChanOpen * let v:event.info.id = 0')
-      funcs.jobstart({'cat'})
+      funcs.jobstart({ 'cat' })
       retry(nil, nil, function()
         eq('E46: Cannot change read-only variable "v:event.info"', meths.get_vvar('errmsg'))
       end)
@@ -510,21 +563,25 @@ describe('autocmd', function()
 
     it('during RecordingLeave event', function()
       command([[autocmd RecordingLeave * let v:event.regname = '']])
-      eq('RecordingLeave Autocommands for "*": Vim(let):E46: Cannot change read-only variable "v:event.regname"',
-         pcall_err(command, 'normal! qqq'))
+      eq(
+        'RecordingLeave Autocommands for "*": Vim(let):E46: Cannot change read-only variable "v:event.regname"',
+        pcall_err(command, 'normal! qqq')
+      )
     end)
 
     it('during TermClose event', function()
       command('autocmd TermClose * let v:event.status = 0')
       command('terminal')
-      eq('TermClose Autocommands for "*": Vim(let):E46: Cannot change read-only variable "v:event.status"',
-         pcall_err(command, 'bdelete!'))
+      eq(
+        'TermClose Autocommands for "*": Vim(let):E46: Cannot change read-only variable "v:event.status"',
+        pcall_err(command, 'bdelete!')
+      )
     end)
   end)
 
   describe('old_tests', function()
     it('vimscript: WinNew ++once', function()
-      source [[
+      source([[
         " Without ++once WinNew triggers twice
         let g:did_split = 0
         augroup Testing
@@ -552,11 +609,11 @@ describe('autocmd', function()
         close
 
         call assert_fails('au WinNew * ++once ++once echo bad', 'E983:')
-      ]]
+      ]])
 
       meths.set_var('did_split', 0)
 
-      source [[
+      source([[
         augroup Testing
           au!
           au WinNew * let g:did_split += 1
@@ -564,7 +621,7 @@ describe('autocmd', function()
 
         split
         split
-      ]]
+      ]])
 
       eq(2, meths.get_var('did_split'))
       eq(1, funcs.exists('#WinNew'))
@@ -572,7 +629,7 @@ describe('autocmd', function()
       -- Now with once
       meths.set_var('did_split', 0)
 
-      source [[
+      source([[
         augroup Testing
           au!
           au WinNew * ++once let g:did_split += 1
@@ -580,40 +637,43 @@ describe('autocmd', function()
 
         split
         split
-      ]]
+      ]])
 
       eq(1, meths.get_var('did_split'))
       eq(0, funcs.exists('#WinNew'))
 
       -- call assert_fails('au WinNew * ++once ++once echo bad', 'E983:')
-      local ok, msg = pcall(source, [[
+      local ok, msg = pcall(
+        source,
+        [[
         au WinNew * ++once ++once echo bad
-      ]])
+      ]]
+      )
 
       eq(false, ok)
       eq(true, not not string.find(msg, 'E983:'))
     end)
 
     it('should have autocmds in filetypedetect group', function()
-      source [[filetype on]]
-      neq({}, meths.get_autocmds { group = "filetypedetect" })
+      source([[filetype on]])
+      neq({}, meths.get_autocmds({ group = 'filetypedetect' }))
     end)
 
     it('should allow comma-separated patterns', function()
-      source [[
+      source([[
         augroup TestingPatterns
           au!
           autocmd BufReadCmd *.shada,*.shada.tmp.[a-z] echo 'hello'
           autocmd BufReadCmd *.shada,*.shada.tmp.[a-z] echo 'hello'
         augroup END
-      ]]
+      ]])
 
-      eq(4, #meths.get_autocmds { event = "BufReadCmd", group = "TestingPatterns" })
+      eq(4, #meths.get_autocmds({ event = 'BufReadCmd', group = 'TestingPatterns' }))
     end)
   end)
 
   it('no use-after-free when adding autocommands from a callback', function()
-    exec_lua [[
+    exec_lua([[
       vim.cmd "autocmd! TabNew"
       vim.g.count = 0
       vim.api.nvim_create_autocmd('TabNew', {
@@ -626,12 +686,12 @@ describe('autocmd', function()
         end,
       })
       vim.cmd "tabnew"
-    ]]
-    eq(1, eval('g:count'))  -- Added autocommands should not be executed
+    ]])
+    eq(1, eval('g:count')) -- Added autocommands should not be executed
   end)
 
   it('no crash when clearing a group inside a callback #23355', function()
-    exec_lua [[
+    exec_lua([[
       vim.cmd "autocmd! TabNew"
       local group = vim.api.nvim_create_augroup('Test', {})
       local id
@@ -643,6 +703,6 @@ describe('autocmd', function()
         end,
       })
       vim.cmd "tabnew"
-    ]]
+    ]])
   end)
 end)

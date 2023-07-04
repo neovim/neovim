@@ -55,7 +55,9 @@ if(LANG STREQUAL c)
   endif()
 elseif(LANG STREQUAL lua)
   list(FILTER changed_files INCLUDE REGEX "\\.lua$")
-  list(FILTER changed_files INCLUDE REGEX "^runtime/")
+  list(FILTER changed_files INCLUDE REGEX "^(runtime|test)/")
+  # Skip syntax_error.lua
+  list(FILTER changed_files EXCLUDE REGEX "^test/functional/fixtures/lua/syntax_error.lua$")
 
   if(changed_files)
     if(FORMAT_PRG)

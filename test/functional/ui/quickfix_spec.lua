@@ -3,7 +3,6 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, meths = helpers.clear, helpers.feed, helpers.meths
 local insert, command = helpers.insert, helpers.command
 
-
 describe('quickfix selection highlight', function()
   local screen
 
@@ -14,17 +13,17 @@ describe('quickfix selection highlight', function()
     screen:attach()
     screen:set_default_attr_ids({
       [1] = { bold = true, foreground = Screen.colors.Blue },
-      [2] = {reverse = true},
-      [3] = {foreground = Screen.colors.Brown},
-      [4] = {bold = true, reverse = true},
-      [5] = {background = Screen.colors.Green},
-      [6] = {foreground = Screen.colors.Brown, background = Screen.colors.Green},
-      [7] = {background = Screen.colors.Red},
-      [8] = {foreground = Screen.colors.Brown, background = Screen.colors.Red},
-      [9] = {background = Screen.colors.Fuchsia},
-      [10] = {foreground = Screen.colors.Red, background = Screen.colors.Fuchsia},
-      [11] = {foreground = Screen.colors.Red},
-      [12] = {foreground = Screen.colors.Brown, background = Screen.colors.Fuchsia},
+      [2] = { reverse = true },
+      [3] = { foreground = Screen.colors.Brown },
+      [4] = { bold = true, reverse = true },
+      [5] = { background = Screen.colors.Green },
+      [6] = { foreground = Screen.colors.Brown, background = Screen.colors.Green },
+      [7] = { background = Screen.colors.Red },
+      [8] = { foreground = Screen.colors.Brown, background = Screen.colors.Red },
+      [9] = { background = Screen.colors.Fuchsia },
+      [10] = { foreground = Screen.colors.Red, background = Screen.colors.Fuchsia },
+      [11] = { foreground = Screen.colors.Red },
+      [12] = { foreground = Screen.colors.Brown, background = Screen.colors.Fuchsia },
     })
 
     meths.set_option_value('errorformat', '%m %l', {})

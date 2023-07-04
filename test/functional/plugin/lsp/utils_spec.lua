@@ -8,7 +8,8 @@ describe('vim.lsp.util', function()
 
   describe('stylize_markdown', function()
     local stylize_markdown = function(content, opts)
-      return exec_lua([[
+      return exec_lua(
+        [[
         local bufnr = vim.uri_to_bufnr("file:///fake/uri")
         vim.fn.bufload(bufnr)
 
@@ -18,14 +19,17 @@ describe('vim.lsp.util', function()
         local stripped_content = vim.lsp.util.stylize_markdown(bufnr, content, opts)
 
         return stripped_content
-      ]], content, opts)
+      ]],
+        content,
+        opts
+      )
     end
 
     it('code fences', function()
       local lines = {
-        "```lua",
+        '```lua',
         "local hello = 'world'",
-        "```",
+        '```',
       }
       local expected = {
         "local hello = 'world'",
@@ -36,16 +40,16 @@ describe('vim.lsp.util', function()
 
     it('adds separator after code block', function()
       local lines = {
-        "```lua",
+        '```lua',
         "local hello = 'world'",
-        "```",
-        "",
-        "something",
+        '```',
+        '',
+        'something',
       }
       local expected = {
         "local hello = 'world'",
-        "─────────────────────",
-        "something",
+        '─────────────────────',
+        'something',
       }
       local opts = { separator = true }
       eq(expected, stylize_markdown(lines, opts))
@@ -53,20 +57,20 @@ describe('vim.lsp.util', function()
 
     it('replaces supported HTML entities', function()
       local lines = {
-        "1 &lt; 2",
-        "3 &gt; 2",
-        "&quot;quoted&quot;",
-        "&apos;apos&apos;",
-        "&ensp; &emsp;",
-        "&amp;",
+        '1 &lt; 2',
+        '3 &gt; 2',
+        '&quot;quoted&quot;',
+        '&apos;apos&apos;',
+        '&ensp; &emsp;',
+        '&amp;',
       }
       local expected = {
-        "1 < 2",
-        "3 > 2",
+        '1 < 2',
+        '3 > 2',
         '"quoted"',
         "'apos'",
-        "   ",
-        "&",
+        '   ',
+        '&',
       }
       local opts = {}
       eq(expected, stylize_markdown(lines, opts))

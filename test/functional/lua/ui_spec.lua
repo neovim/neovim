@@ -11,10 +11,9 @@ describe('vim.ui', function()
     clear()
   end)
 
-
   describe('select', function()
     it('can select an item', function()
-      local result = exec_lua[[
+      local result = exec_lua([[
         local items = {
           { name = 'Item 1' },
           { name = 'Item 2' },
@@ -37,7 +36,7 @@ describe('vim.ui', function()
         vim.ui.select(items, opts, cb)
         vim.wait(100, function() return selected ~= nil end)
         return {selected, choices}
-      ]]
+      ]])
       eq({ name = 'Item 1' }, result[1])
       eq({
         'Select one of:',
@@ -49,7 +48,7 @@ describe('vim.ui', function()
 
   describe('input', function()
     it('can input text', function()
-      local result = exec_lua[[
+      local result = exec_lua([[
         local opts = {
             prompt = 'Input: ',
         }
@@ -66,7 +65,7 @@ describe('vim.ui', function()
         vim.ui.input(opts, cb)
         vim.wait(100, function() return input ~= nil end)
         return {input, prompt}
-      ]]
+      ]])
       eq('Inputted text', result[1])
       eq('Input: ', result[2])
     end)
@@ -115,19 +114,21 @@ describe('vim.ui', function()
     it('can return nil when interrupted with Ctrl-C #18144', function()
       feed(':lua result = "on_confirm not called"<cr>')
       feed(':lua vim.ui.input({}, function(input) result = input end)<cr>')
-      poke_eventloop()  -- This is needed because Ctrl-C flushes input
+      poke_eventloop() -- This is needed because Ctrl-C flushes input
       feed('Inputted Text<c-c>')
       eq(true, exec_lua('return (nil == result)'))
     end)
 
-    it('can return the identical object when an arbitrary opts.cancelreturn object is given', function()
-      feed(':lua fn = function() return 42 end<CR>')
-      eq(42, exec_lua('return fn()'))
-      feed(':lua vim.ui.input({ cancelreturn = fn }, function(input) result = input end)<cr>')
-      feed('cancel<esc>')
-      eq(true, exec_lua('return (result == fn)'))
-      eq(42, exec_lua('return result()'))
-    end)
-
+    it(
+      'can return the identical object when an arbitrary opts.cancelreturn object is given',
+      function()
+        feed(':lua fn = function() return 42 end<CR>')
+        eq(42, exec_lua('return fn()'))
+        feed(':lua vim.ui.input({ cancelreturn = fn }, function(input) result = input end)<cr>')
+        feed('cancel<esc>')
+        eq(true, exec_lua('return (result == fn)'))
+        eq(42, exec_lua('return result()'))
+      end
+    )
   end)
 end)

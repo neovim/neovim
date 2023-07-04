@@ -11,11 +11,11 @@ describe(':move', function()
   it('redraws correctly when undone', function()
     local screen = Screen.new(60, 10)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
     })
     screen:attach()
 
-    funcs.setline(1, {'First', 'Second', 'Third', 'Fourth'})
+    funcs.setline(1, { 'First', 'Second', 'Third', 'Fourth' })
     feed('gg:move +1<CR>')
     screen:expect([[
       Second                                                      |

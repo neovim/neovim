@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local assert_alive = helpers.assert_alive
 local clear, command, write_file = helpers.clear, helpers.command, helpers.write_file
 
-describe("modeline", function()
+describe('modeline', function()
   local tempfile = helpers.tmpname()
   before_each(clear)
 

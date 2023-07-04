@@ -29,7 +29,7 @@ end
 
 describe('b:changedtick', function()
   -- Ported tests from Vim-8.0.333
-  it('increments', function()  -- Test_changedtick_increments
+  it('increments', function() -- Test_changedtick_increments
     -- New buffer has an empty line, tick starts at 2
     eq(2, changedtick())
     funcs.setline(1, 'hello')
@@ -56,35 +56,55 @@ describe('b:changedtick', function()
     local ct = changedtick()
     local ctn = ct + 100500
     eq(0, exc_exec('let d = b:'))
-    eq('Vim(let):E46: Cannot change read-only variable "b:changedtick"',
-       pcall_err(command, 'let b:changedtick = ' .. ctn))
-    eq('Vim(let):E46: Cannot change read-only variable "b:["changedtick"]"',
-       pcall_err(command, 'let b:["changedtick"] = ' .. ctn))
-    eq('Vim(let):E46: Cannot change read-only variable "b:.changedtick"',
-       pcall_err(command, 'let b:.changedtick = ' .. ctn))
-    eq('Vim(let):E46: Cannot change read-only variable "d.changedtick"',
-       pcall_err(command, 'let d.changedtick = ' .. ctn))
-    eq('Key is read-only: changedtick',
-      pcall_err(curbufmeths.set_var, 'changedtick', ctn))
+    eq(
+      'Vim(let):E46: Cannot change read-only variable "b:changedtick"',
+      pcall_err(command, 'let b:changedtick = ' .. ctn)
+    )
+    eq(
+      'Vim(let):E46: Cannot change read-only variable "b:["changedtick"]"',
+      pcall_err(command, 'let b:["changedtick"] = ' .. ctn)
+    )
+    eq(
+      'Vim(let):E46: Cannot change read-only variable "b:.changedtick"',
+      pcall_err(command, 'let b:.changedtick = ' .. ctn)
+    )
+    eq(
+      'Vim(let):E46: Cannot change read-only variable "d.changedtick"',
+      pcall_err(command, 'let d.changedtick = ' .. ctn)
+    )
+    eq('Key is read-only: changedtick', pcall_err(curbufmeths.set_var, 'changedtick', ctn))
 
-    eq('Vim(unlet):E795: Cannot delete variable b:changedtick',
-       pcall_err(command, 'unlet b:changedtick'))
-    eq('Vim(unlet):E46: Cannot change read-only variable "b:.changedtick"',
-       pcall_err(command, 'unlet b:.changedtick'))
-    eq('Vim(unlet):E46: Cannot change read-only variable "b:["changedtick"]"',
-       pcall_err(command, 'unlet b:["changedtick"]'))
-    eq('Vim(unlet):E46: Cannot change read-only variable "d.changedtick"',
-       pcall_err(command, 'unlet d.changedtick'))
-    eq('Key is read-only: changedtick',
-      pcall_err(curbufmeths.del_var, 'changedtick'))
+    eq(
+      'Vim(unlet):E795: Cannot delete variable b:changedtick',
+      pcall_err(command, 'unlet b:changedtick')
+    )
+    eq(
+      'Vim(unlet):E46: Cannot change read-only variable "b:.changedtick"',
+      pcall_err(command, 'unlet b:.changedtick')
+    )
+    eq(
+      'Vim(unlet):E46: Cannot change read-only variable "b:["changedtick"]"',
+      pcall_err(command, 'unlet b:["changedtick"]')
+    )
+    eq(
+      'Vim(unlet):E46: Cannot change read-only variable "d.changedtick"',
+      pcall_err(command, 'unlet d.changedtick')
+    )
+    eq('Key is read-only: changedtick', pcall_err(curbufmeths.del_var, 'changedtick'))
     eq(ct, changedtick())
 
-    eq('Vim(let):E46: Cannot change read-only variable "b:["changedtick"]"',
-       pcall_err(command, 'let b:["changedtick"] += ' .. ctn))
-    eq('Vim(let):E46: Cannot change read-only variable "b:["changedtick"]"',
-       pcall_err(command, 'let b:["changedtick"] -= ' .. ctn))
-    eq('Vim(let):E46: Cannot change read-only variable "b:["changedtick"]"',
-       pcall_err(command, 'let b:["changedtick"] .= ' .. ctn))
+    eq(
+      'Vim(let):E46: Cannot change read-only variable "b:["changedtick"]"',
+      pcall_err(command, 'let b:["changedtick"] += ' .. ctn)
+    )
+    eq(
+      'Vim(let):E46: Cannot change read-only variable "b:["changedtick"]"',
+      pcall_err(command, 'let b:["changedtick"] -= ' .. ctn)
+    )
+    eq(
+      'Vim(let):E46: Cannot change read-only variable "b:["changedtick"]"',
+      pcall_err(command, 'let b:["changedtick"] .= ' .. ctn)
+    )
 
     eq(ct, changedtick())
 
@@ -99,16 +119,24 @@ describe('b:changedtick', function()
     eq(0, exc_exec('let d = b:'))
     eq(0, funcs.islocked('b:changedtick'))
     eq(0, funcs.islocked('d.changedtick'))
-    eq('Vim(unlockvar):E940: Cannot lock or unlock variable b:changedtick',
-       pcall_err(command, 'unlockvar b:changedtick'))
-    eq('Vim(unlockvar):E46: Cannot change read-only variable "d.changedtick"',
-       pcall_err(command, 'unlockvar d.changedtick'))
+    eq(
+      'Vim(unlockvar):E940: Cannot lock or unlock variable b:changedtick',
+      pcall_err(command, 'unlockvar b:changedtick')
+    )
+    eq(
+      'Vim(unlockvar):E46: Cannot change read-only variable "d.changedtick"',
+      pcall_err(command, 'unlockvar d.changedtick')
+    )
     eq(0, funcs.islocked('b:changedtick'))
     eq(0, funcs.islocked('d.changedtick'))
-    eq('Vim(lockvar):E940: Cannot lock or unlock variable b:changedtick',
-       pcall_err(command, 'lockvar b:changedtick'))
-    eq('Vim(lockvar):E46: Cannot change read-only variable "d.changedtick"',
-       pcall_err(command, 'lockvar d.changedtick'))
+    eq(
+      'Vim(lockvar):E940: Cannot lock or unlock variable b:changedtick',
+      pcall_err(command, 'lockvar b:changedtick')
+    )
+    eq(
+      'Vim(lockvar):E46: Cannot change read-only variable "d.changedtick"',
+      pcall_err(command, 'lockvar d.changedtick')
+    )
     eq(0, funcs.islocked('b:changedtick'))
     eq(0, funcs.islocked('d.changedtick'))
   end)
@@ -118,18 +146,26 @@ describe('b:changedtick', function()
   end)
   it('cannot be changed by filter() or map()', function()
     eq(2, changedtick())
-    eq('Vim(call):E795: Cannot delete variable filter() argument',
-       pcall_err(command, 'call filter(b:, 0)'))
-    eq('Vim(call):E742: Cannot change value of map() argument',
-       pcall_err(command, 'call map(b:, 0)'))
-    eq('Vim(call):E742: Cannot change value of map() argument',
-       pcall_err(command, 'call map(b:, "v:val")'))
+    eq(
+      'Vim(call):E795: Cannot delete variable filter() argument',
+      pcall_err(command, 'call filter(b:, 0)')
+    )
+    eq(
+      'Vim(call):E742: Cannot change value of map() argument',
+      pcall_err(command, 'call map(b:, 0)')
+    )
+    eq(
+      'Vim(call):E742: Cannot change value of map() argument',
+      pcall_err(command, 'call map(b:, "v:val")')
+    )
     eq(2, changedtick())
   end)
   it('cannot be remove()d', function()
     eq(2, changedtick())
-    eq('Vim(call):E795: Cannot delete variable remove() argument',
-       pcall_err(command, 'call remove(b:, "changedtick")'))
+    eq(
+      'Vim(call):E795: Cannot delete variable remove() argument',
+      pcall_err(command, 'call remove(b:, "changedtick")')
+    )
     eq(2, changedtick())
   end)
   it('does not inherit VAR_FIXED when copying dictionary over', function()

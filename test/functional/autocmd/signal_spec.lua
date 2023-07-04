@@ -8,10 +8,12 @@ local next_msg = helpers.next_msg
 local is_os = helpers.is_os
 local skip = helpers.skip
 
-if skip(is_os('win'), 'Only applies to POSIX systems') then return end
+if skip(is_os('win'), 'Only applies to POSIX systems') then
+  return
+end
 
 local function posix_kill(signame, pid)
-  os.execute('kill -s '..signame..' -- '..pid..' >/dev/null')
+  os.execute('kill -s ' .. signame .. ' -- ' .. pid .. ' >/dev/null')
 end
 
 describe('autocmd Signal', function()
@@ -20,19 +22,19 @@ describe('autocmd Signal', function()
   it('matches *', function()
     command('autocmd Signal * call rpcnotify(1, "foo")')
     posix_kill('USR1', funcs.getpid())
-    eq({'notification', 'foo', {}}, next_msg())
+    eq({ 'notification', 'foo', {} }, next_msg())
   end)
 
   it('matches SIGUSR1', function()
     command('autocmd Signal SIGUSR1 call rpcnotify(1, "foo")')
     posix_kill('USR1', funcs.getpid())
-    eq({'notification', 'foo', {}}, next_msg())
+    eq({ 'notification', 'foo', {} }, next_msg())
   end)
 
   it('matches SIGWINCH', function()
     command('autocmd Signal SIGWINCH call rpcnotify(1, "foo")')
     posix_kill('WINCH', funcs.getpid())
-    eq({'notification', 'foo', {}}, next_msg())
+    eq({ 'notification', 'foo', {} }, next_msg())
   end)
 
   it('does not match unknown patterns', function()

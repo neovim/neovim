@@ -15,7 +15,7 @@ describe(':grep', function()
     -- Change to test directory so that the test does not run too long.
     feed_command('cd test')
     feed_command('grep a **/*')
-    feed('<cr>')  -- Press ENTER
-    ok(eval('len(getqflist())') > 9000)  -- IT'S OVER 9000!!1
+    feed('<cr>') -- Press ENTER
+    ok(eval('len(getqflist())') > 9000) -- IT'S OVER 9000!!1
   end)
 end)

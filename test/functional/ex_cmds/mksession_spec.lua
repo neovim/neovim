@@ -18,7 +18,9 @@ local mkdir = helpers.mkdir
 
 local file_prefix = 'Xtest-functional-ex_cmds-mksession_spec'
 
-if helpers.skip(helpers.is_os('win')) then return end
+if helpers.skip(helpers.is_os('win')) then
+  return
+end
 
 describe(':mksession', function()
   local session_file = file_prefix .. '.vim'

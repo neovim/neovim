@@ -9,7 +9,6 @@ local meths = helpers.meths
 local exec = helpers.exec
 local assert_alive = helpers.assert_alive
 
-
 local content1 = [[
         This is a
         valid English
@@ -18,7 +17,7 @@ local content1 = [[
         in his cave.
         ]]
 
-describe("folded lines", function()
+describe('folded lines', function()
   before_each(function()
     clear()
     command('hi VertSplit gui=reverse')
@@ -28,31 +27,31 @@ describe("folded lines", function()
     local screen
     before_each(function()
       screen = Screen.new(45, 8)
-      screen:attach({rgb=true, ext_multigrid=multigrid})
+      screen:attach({ rgb = true, ext_multigrid = multigrid })
       screen:set_default_attr_ids({
-        [1] = {bold = true, foreground = Screen.colors.Blue1},
-        [2] = {reverse = true},
-        [3] = {bold = true, reverse = true},
-        [4] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-        [5] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
-        [6] = {background = Screen.colors.Yellow},
-        [7] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
-        [8] = {foreground = Screen.colors.Brown },
-        [9] = {bold = true, foreground = Screen.colors.Brown},
-        [10] = {background = Screen.colors.LightGrey, underline = true},
-        [11] = {bold=true},
-        [12] = {foreground = Screen.colors.Red},
-        [13] = {foreground = Screen.colors.Red, background = Screen.colors.LightGrey},
-        [14] = {background = Screen.colors.Red},
-        [15] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Red},
-        [16] = {background = Screen.colors.LightGrey},
+        [1] = { bold = true, foreground = Screen.colors.Blue1 },
+        [2] = { reverse = true },
+        [3] = { bold = true, reverse = true },
+        [4] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+        [5] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey },
+        [6] = { background = Screen.colors.Yellow },
+        [7] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray },
+        [8] = { foreground = Screen.colors.Brown },
+        [9] = { bold = true, foreground = Screen.colors.Brown },
+        [10] = { background = Screen.colors.LightGrey, underline = true },
+        [11] = { bold = true },
+        [12] = { foreground = Screen.colors.Red },
+        [13] = { foreground = Screen.colors.Red, background = Screen.colors.LightGrey },
+        [14] = { background = Screen.colors.Red },
+        [15] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Red },
+        [16] = { background = Screen.colors.LightGrey },
       })
     end)
 
-    it("work with more than one signcolumn", function()
-      command("set signcolumn=yes:9")
-      feed("i<cr><esc>")
-      feed("vkzf")
+    it('work with more than one signcolumn', function()
+      command('set signcolumn=yes:9')
+      feed('i<cr><esc>')
+      feed('vkzf')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -90,10 +89,10 @@ describe("folded lines", function()
     end)
 
     local function test_folded_cursorline()
-      command("set number cursorline foldcolumn=2")
-      command("hi link CursorLineFold Search")
+      command('set number cursorline foldcolumn=2')
+      command('hi link CursorLineFold Search')
       insert(content1)
-      feed("ggzf3jj")
+      feed('ggzf3jj')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -128,7 +127,7 @@ describe("folded lines", function()
                                                        |
         ]])
       end
-      feed("k")
+      feed('k')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -164,12 +163,12 @@ describe("folded lines", function()
         ]])
       end
       -- CursorLine is applied correctly with screenrow motions #22232
-      feed("jgk")
+      feed('jgk')
       screen:expect_unchanged(true)
       -- CursorLine is applied correctly when closing a fold when cursor is not at fold start
-      feed("zo4Gzc")
+      feed('zo4Gzc')
       screen:expect_unchanged(true)
-      command("set cursorlineopt=line")
+      command('set cursorlineopt=line')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -204,7 +203,7 @@ describe("folded lines", function()
                                                        |
         ]])
       end
-      command("set relativenumber cursorlineopt=number")
+      command('set relativenumber cursorlineopt=number')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -243,28 +242,33 @@ describe("folded lines", function()
 
     describe("when 'cursorline' is set", function()
       it('with high-priority CursorLine', function()
-        command("hi! CursorLine guibg=NONE guifg=Red gui=NONE")
+        command('hi! CursorLine guibg=NONE guifg=Red gui=NONE')
         test_folded_cursorline()
       end)
 
       it('with low-priority CursorLine', function()
-        command("hi! CursorLine guibg=NONE guifg=NONE gui=underline")
+        command('hi! CursorLine guibg=NONE guifg=NONE gui=underline')
         local attrs = screen:get_default_attr_ids()
-        attrs[12] = {underline = true}
-        attrs[13] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey, underline = true}
+        attrs[12] = { underline = true }
+        attrs[13] = {
+          foreground = Screen.colors.DarkBlue,
+          background = Screen.colors.LightGrey,
+          underline = true,
+        }
         screen:set_default_attr_ids(attrs)
         test_folded_cursorline()
       end)
     end)
 
-    it("work with spell", function()
-      command("set spell")
+    it('work with spell', function()
+      command('set spell')
       insert(content1)
 
-      feed("gg")
-      feed("zf3j")
+      feed('gg')
+      feed('zf3j')
       if not multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
           {5:^+--  4 lines: This is a······················}|
           in his cave.                                 |
                                                        |
@@ -273,18 +277,20 @@ describe("folded lines", function()
           {1:~                                            }|
           {1:~                                            }|
                                                        |
-        ]]}
+        ]],
+        })
       end
     end)
 
-    it("work with matches", function()
+    it('work with matches', function()
       insert(content1)
-      command("highlight MyWord gui=bold guibg=red   guifg=white")
+      command('highlight MyWord gui=bold guibg=red   guifg=white')
       command("call matchadd('MyWord', '\\V' . 'test', -1)")
-      feed("gg")
-      feed("zf3j")
+      feed('gg')
+      feed('zf3j')
       if not multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
           {5:^+--  4 lines: This is a······················}|
           in his cave.                                 |
                                                        |
@@ -293,11 +299,12 @@ describe("folded lines", function()
           {1:~                                            }|
           {1:~                                            }|
                                                        |
-        ]]}
+        ]],
+        })
       end
     end)
 
-    it("works with multibyte fillchars", function()
+    it('works with multibyte fillchars', function()
       insert([[
         aa
         bb
@@ -305,9 +312,9 @@ describe("folded lines", function()
         dd
         ee
         ff]])
-      command("set fillchars+=foldopen:▾,foldsep:│,foldclose:▸")
+      command('set fillchars+=foldopen:▾,foldsep:│,foldclose:▸')
       feed_command('1')
-      command("set foldcolumn=2")
+      command('set foldcolumn=2')
       feed('zf4j')
       feed('zf2j')
       feed('zO')
@@ -346,7 +353,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed_command("set rightleft")
+      feed_command('set rightleft')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -382,7 +389,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed_command("set norightleft")
+      feed_command('set norightleft')
       if multigrid then
         meths.input_mouse('left', 'press', '', 2, 0, 1)
         screen:expect([[
@@ -421,7 +428,7 @@ describe("folded lines", function()
       end
     end)
 
-    it("works with split", function()
+    it('works with split', function()
       insert([[
         aa
         bb
@@ -430,12 +437,12 @@ describe("folded lines", function()
         ee
         ff]])
       feed_command('2')
-      command("set foldcolumn=1")
+      command('set foldcolumn=1')
       feed('zf3j')
       feed_command('1')
       feed('zf2j')
       feed('zO')
-      feed_command("rightbelow new")
+      feed_command('rightbelow new')
       insert([[
         aa
         bb
@@ -444,7 +451,7 @@ describe("folded lines", function()
         ee
         ff]])
       feed_command('2')
-      command("set foldcolumn=1")
+      command('set foldcolumn=1')
       feed('zf3j')
       feed_command('1')
       feed('zf2j')
@@ -593,7 +600,7 @@ describe("folded lines", function()
       end
     end)
 
-    it("works with vsplit", function()
+    it('works with vsplit', function()
       insert([[
         aa
         bb
@@ -602,12 +609,12 @@ describe("folded lines", function()
         ee
         ff]])
       feed_command('2')
-      command("set foldcolumn=1")
+      command('set foldcolumn=1')
       feed('zf3j')
       feed_command('1')
       feed('zf2j')
       feed('zO')
-      feed_command("rightbelow vnew")
+      feed_command('rightbelow vnew')
       insert([[
         aa
         bb
@@ -616,7 +623,7 @@ describe("folded lines", function()
         ee
         ff]])
       feed_command('2')
-      command("set foldcolumn=1")
+      command('set foldcolumn=1')
       feed('zf3j')
       feed_command('1')
       feed('zf2j')
@@ -793,7 +800,7 @@ describe("folded lines", function()
       end
     end)
 
-    it("works with tab", function()
+    it('works with tab', function()
       insert([[
         aa
         bb
@@ -802,12 +809,12 @@ describe("folded lines", function()
         ee
         ff]])
       feed_command('2')
-      command("set foldcolumn=2")
+      command('set foldcolumn=2')
       feed('zf3j')
       feed_command('1')
       feed('zf2j')
       feed('zO')
-      feed_command("tab split")
+      feed_command('tab split')
       if multigrid then
         meths.input_mouse('left', 'press', '', 4, 1, 1)
         screen:expect([[
@@ -896,7 +903,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed_command("tabnext")
+      feed_command('tabnext')
       if multigrid then
         meths.input_mouse('left', 'press', '', 2, 1, 1)
         screen:expect([[
@@ -984,7 +991,7 @@ describe("folded lines", function()
       end
     end)
 
-    it("works with multibyte text", function()
+    it('works with multibyte text', function()
       -- Currently the only allowed value of 'maxcombine'
       eq(6, meths.get_option_value('maxcombine', {}))
       eq(true, meths.get_option_value('arabicshape', {}))
@@ -1062,7 +1069,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed_command("set noarabicshape")
+      feed_command('set noarabicshape')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1098,7 +1105,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed_command("set number foldcolumn=2")
+      feed_command('set number foldcolumn=2')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1135,7 +1142,7 @@ describe("folded lines", function()
       end
 
       -- Note: too much of the folded line gets cut off.This is a vim bug.
-      feed_command("set rightleft")
+      feed_command('set rightleft')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1171,7 +1178,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed_command("set nonumber foldcolumn=0")
+      feed_command('set nonumber foldcolumn=0')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1207,7 +1214,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed_command("set arabicshape")
+      feed_command('set arabicshape')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1314,16 +1321,15 @@ describe("folded lines", function()
           :set noarabicshape                           |
         ]])
       end
-
     end)
 
-    it("work in cmdline window", function()
-      feed_command("set foldmethod=manual")
-      feed_command("let x = 1")
-      feed_command("/alpha")
-      feed_command("/omega")
+    it('work in cmdline window', function()
+      feed_command('set foldmethod=manual')
+      feed_command('let x = 1')
+      feed_command('/alpha')
+      feed_command('/omega')
 
-      feed("<cr>q:")
+      feed('<cr>q:')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1358,7 +1364,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed("kzfk")
+      feed('kzfk')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1393,7 +1399,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed("<cr>")
+      feed('<cr>')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1429,7 +1435,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed("/<c-f>")
+      feed('/<c-f>')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1464,7 +1470,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed("ggzfG")
+      feed('ggzfG')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1498,18 +1504,16 @@ describe("folded lines", function()
           /                                            |
         ]])
       end
-
     end)
 
-    it("work with autoresize", function()
-
+    it('work with autoresize', function()
       funcs.setline(1, 'line 1')
       funcs.setline(2, 'line 2')
       funcs.setline(3, 'line 3')
       funcs.setline(4, 'line 4')
 
-      feed("zfj")
-      command("set foldcolumn=0")
+      feed('zfj')
+      command('set foldcolumn=0')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1545,7 +1549,7 @@ describe("folded lines", function()
         ]])
       end
       -- should adapt to the current nesting of folds (e.g., 1)
-      command("set foldcolumn=auto:1")
+      command('set foldcolumn=auto:1')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1580,9 +1584,10 @@ describe("folded lines", function()
                                                        |
         ]])
       end
-      command("set foldcolumn=auto")
+      command('set foldcolumn=auto')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:---------------------------------------------]|
           [2:---------------------------------------------]|
@@ -1602,9 +1607,12 @@ describe("folded lines", function()
           {1:~                                            }|
         ## grid 3
                                                        |
-        ]], unchanged=true}
+        ]],
+          unchanged = true,
+        })
       else
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
           {7:+}{5:^+--  2 lines: line 1························}|
           {7: }line 3                                      |
           {7: }line 4                                      |
@@ -1613,10 +1621,12 @@ describe("folded lines", function()
           {1:~                                            }|
           {1:~                                            }|
                                                        |
-        ]], unchanged=true}
+        ]],
+          unchanged = true,
+        })
       end
       -- fdc should not change with a new fold as the maximum is 1
-      feed("zf3j")
+      feed('zf3j')
 
       if multigrid then
         screen:expect([[
@@ -1653,8 +1663,10 @@ describe("folded lines", function()
         ]])
       end
 
-      command("set foldcolumn=auto:1")
-      if multigrid then screen:expect{grid=[[
+      command('set foldcolumn=auto:1')
+      if multigrid then
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:---------------------------------------------]|
           [2:---------------------------------------------]|
@@ -1674,9 +1686,12 @@ describe("folded lines", function()
           {1:~                                            }|
         ## grid 3
                                                        |
-        ]], unchanged=true}
+        ]],
+          unchanged = true,
+        })
       else
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
           {7:+}{5:^+--  4 lines: line 1························}|
           {1:~                                            }|
           {1:~                                            }|
@@ -1685,12 +1700,14 @@ describe("folded lines", function()
           {1:~                                            }|
           {1:~                                            }|
                                                        |
-        ]], unchanged=true}
+        ]],
+          unchanged = true,
+        })
       end
 
       -- relax the maximum fdc thus fdc should expand to
       -- accommodate the current number of folds
-      command("set foldcolumn=auto:4")
+      command('set foldcolumn=auto:4')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1734,8 +1751,8 @@ describe("folded lines", function()
         endfunction
       ]])
       command('set foldtext=MyFoldText()')
-      feed("i<cr><esc>")
-      feed("vkzf")
+      feed('i<cr><esc>')
+      feed('vkzf')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1916,14 +1933,27 @@ describe("folded lines", function()
       funcs.setline(2, 'line 2')
       funcs.setline(3, 'line 3')
       funcs.setline(4, 'line 4')
-      feed("zfj")
+      feed('zfj')
       local ns = meths.create_namespace('ns')
-      meths.buf_set_extmark(0, ns, 0, 0, { virt_lines_above = true, virt_lines = {{{"virt_line above line 1", ""}}} })
-      meths.buf_set_extmark(0, ns, 1, 0, { virt_lines = {{{"virt_line below line 2", ""}}} })
-      meths.buf_set_extmark(0, ns, 2, 0, { virt_lines_above = true, virt_lines = {{{"virt_line above line 3", ""}}} })
-      meths.buf_set_extmark(0, ns, 3, 0, { virt_lines = {{{"virt_line below line 4", ""}}} })
+      meths.buf_set_extmark(
+        0,
+        ns,
+        0,
+        0,
+        { virt_lines_above = true, virt_lines = { { { 'virt_line above line 1', '' } } } }
+      )
+      meths.buf_set_extmark(0, ns, 1, 0, { virt_lines = { { { 'virt_line below line 2', '' } } } })
+      meths.buf_set_extmark(
+        0,
+        ns,
+        2,
+        0,
+        { virt_lines_above = true, virt_lines = { { { 'virt_line above line 3', '' } } } }
+      )
+      meths.buf_set_extmark(0, ns, 3, 0, { virt_lines = { { { 'virt_line below line 4', '' } } } })
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:---------------------------------------------]|
           [2:---------------------------------------------]|
@@ -1943,9 +1973,19 @@ describe("folded lines", function()
           {1:~                                            }|
         ## grid 3
                                                        |
-        ]], win_viewport={
-          [2] = {win = {id = 1000}, topline = 0, botline = 5, curline = 0, curcol = 0, linecount = 4, sum_scroll_delta = 0};
-        }}
+        ]],
+          win_viewport = {
+            [2] = {
+              win = { id = 1000 },
+              topline = 0,
+              botline = 5,
+              curline = 0,
+              curcol = 0,
+              linecount = 4,
+              sum_scroll_delta = 0,
+            },
+          },
+        })
       else
         screen:expect([[
           {5:^+--  2 lines: line 1·························}|
@@ -1961,7 +2001,8 @@ describe("folded lines", function()
 
       feed('jzfj')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:---------------------------------------------]|
           [2:---------------------------------------------]|
@@ -1981,9 +2022,19 @@ describe("folded lines", function()
           {1:~                                            }|
         ## grid 3
                                                        |
-        ]], win_viewport={
-          [2] = {win = {id = 1000}, topline = 0, botline = 5, curline = 2, curcol = 0, linecount = 4, sum_scroll_delta = 0};
-        }}
+        ]],
+          win_viewport = {
+            [2] = {
+              win = { id = 1000 },
+              topline = 0,
+              botline = 5,
+              curline = 2,
+              curcol = 0,
+              linecount = 4,
+              sum_scroll_delta = 0,
+            },
+          },
+        })
       else
         screen:expect([[
           {5:+--  2 lines: line 1·························}|
@@ -2000,7 +2051,8 @@ describe("folded lines", function()
       feed('kzo<C-Y>')
       funcs.setline(5, 'line 5')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:---------------------------------------------]|
           [2:---------------------------------------------]|
@@ -2020,9 +2072,19 @@ describe("folded lines", function()
           {1:~                                            }|
         ## grid 3
                                                        |
-        ]], win_viewport={
-          [2] = {win = {id = 1000}, topline = 0, botline = 6, curline = 0, curcol = 0, linecount = 5, sum_scroll_delta = -1};
-        }}
+        ]],
+          win_viewport = {
+            [2] = {
+              win = { id = 1000 },
+              topline = 0,
+              botline = 6,
+              curline = 0,
+              curcol = 0,
+              linecount = 5,
+              sum_scroll_delta = -1,
+            },
+          },
+        })
       else
         screen:expect([[
           virt_line above line 1                       |
@@ -2047,10 +2109,17 @@ describe("folded lines", function()
         winrow = 5,
       }, funcs.getmousepos())
 
-      meths.buf_set_extmark(0, ns, 1, 0, { virt_lines = {{{"more virt_line below line 2", ""}}} })
+      meths.buf_set_extmark(
+        0,
+        ns,
+        1,
+        0,
+        { virt_lines = { { { 'more virt_line below line 2', '' } } } }
+      )
       feed('G<C-E>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:---------------------------------------------]|
           [2:---------------------------------------------]|
@@ -2070,9 +2139,19 @@ describe("folded lines", function()
           {1:~                                            }|
         ## grid 3
                                                        |
-        ]], win_viewport={
-          [2] = {win = {id = 1000}, topline = 0, botline = 6, curline = 4, curcol = 0, linecount = 5, sum_scroll_delta = 0};
-        }}
+        ]],
+          win_viewport = {
+            [2] = {
+              win = { id = 1000 },
+              topline = 0,
+              botline = 6,
+              curline = 4,
+              curcol = 0,
+              linecount = 5,
+              sum_scroll_delta = 0,
+            },
+          },
+        })
       else
         screen:expect([[
           line 1                                       |
@@ -2088,7 +2167,8 @@ describe("folded lines", function()
 
       feed('<C-E>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:---------------------------------------------]|
           [2:---------------------------------------------]|
@@ -2108,9 +2188,19 @@ describe("folded lines", function()
           {1:~                                            }|
         ## grid 3
                                                        |
-        ]], win_viewport={
-          [2] = {win = {id = 1000}, topline = 1, botline = 6, curline = 4, curcol = 0, linecount = 5, sum_scroll_delta = 1};
-        }}
+        ]],
+          win_viewport = {
+            [2] = {
+              win = { id = 1000 },
+              topline = 1,
+              botline = 6,
+              curline = 4,
+              curcol = 0,
+              linecount = 5,
+              sum_scroll_delta = 1,
+            },
+          },
+        })
       else
         screen:expect([[
           line 2                                       |
@@ -2126,7 +2216,8 @@ describe("folded lines", function()
 
       feed('<C-E>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:---------------------------------------------]|
           [2:---------------------------------------------]|
@@ -2146,9 +2237,19 @@ describe("folded lines", function()
           {1:~                                            }|
         ## grid 3
                                                        |
-        ]], win_viewport={
-          [2] = {win = {id = 1000}, topline = 2, botline = 6, curline = 4, curcol = 0, linecount = 5, sum_scroll_delta = 2};
-        }}
+        ]],
+          win_viewport = {
+            [2] = {
+              win = { id = 1000 },
+              topline = 2,
+              botline = 6,
+              curline = 4,
+              curcol = 0,
+              linecount = 5,
+              sum_scroll_delta = 2,
+            },
+          },
+        })
       else
         screen:expect([[
           virt_line below line 2                       |
@@ -2164,7 +2265,8 @@ describe("folded lines", function()
 
       feed('<C-E>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:---------------------------------------------]|
           [2:---------------------------------------------]|
@@ -2184,9 +2286,19 @@ describe("folded lines", function()
           {1:~                                            }|
         ## grid 3
                                                        |
-        ]], win_viewport={
-          [2] = {win = {id = 1000}, topline = 2, botline = 6, curline = 4, curcol = 0, linecount = 5, sum_scroll_delta = 3};
-        }}
+        ]],
+          win_viewport = {
+            [2] = {
+              win = { id = 1000 },
+              topline = 2,
+              botline = 6,
+              curline = 4,
+              curcol = 0,
+              linecount = 5,
+              sum_scroll_delta = 3,
+            },
+          },
+        })
       else
         screen:expect([[
           more virt_line below line 2                  |
@@ -2202,7 +2314,8 @@ describe("folded lines", function()
 
       feed('<C-E>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:---------------------------------------------]|
           [2:---------------------------------------------]|
@@ -2222,9 +2335,19 @@ describe("folded lines", function()
           {1:~                                            }|
         ## grid 3
                                                        |
-        ]], win_viewport={
-          [2] = {win = {id = 1000}, topline = 2, botline = 6, curline = 4, curcol = 0, linecount = 5, sum_scroll_delta = 4};
-        }}
+        ]],
+          win_viewport = {
+            [2] = {
+              win = { id = 1000 },
+              topline = 2,
+              botline = 6,
+              curline = 4,
+              curcol = 0,
+              linecount = 5,
+              sum_scroll_delta = 4,
+            },
+          },
+        })
       else
         screen:expect([[
           {5:+--  2 lines: line 3·························}|
@@ -2240,7 +2363,8 @@ describe("folded lines", function()
 
       feed('<C-E>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:---------------------------------------------]|
           [2:---------------------------------------------]|
@@ -2260,9 +2384,19 @@ describe("folded lines", function()
           {1:~                                            }|
         ## grid 3
                                                        |
-        ]], win_viewport={
-          [2] = {win = {id = 1000}, topline = 4, botline = 6, curline = 4, curcol = 0, linecount = 5, sum_scroll_delta = 5};
-        }}
+        ]],
+          win_viewport = {
+            [2] = {
+              win = { id = 1000 },
+              topline = 4,
+              botline = 6,
+              curline = 4,
+              curcol = 0,
+              linecount = 5,
+              sum_scroll_delta = 5,
+            },
+          },
+        })
       else
         screen:expect([[
           ^line 5                                       |
@@ -2278,7 +2412,8 @@ describe("folded lines", function()
 
       feed('3<C-Y>')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:---------------------------------------------]|
           [2:---------------------------------------------]|
@@ -2298,9 +2433,19 @@ describe("folded lines", function()
           {1:~                                            }|
         ## grid 3
                                                        |
-        ]], win_viewport={
-          [2] = {win = {id = 1000}, topline = 2, botline = 6, curline = 4, curcol = 0, linecount = 5, sum_scroll_delta = 2};
-        }}
+        ]],
+          win_viewport = {
+            [2] = {
+              win = { id = 1000 },
+              topline = 2,
+              botline = 6,
+              curline = 4,
+              curcol = 0,
+              linecount = 5,
+              sum_scroll_delta = 2,
+            },
+          },
+        })
       else
         screen:expect([[
           virt_line below line 2                       |
@@ -2316,7 +2461,8 @@ describe("folded lines", function()
 
       meths.input_mouse('left', 'press', '3', multigrid and 2 or 0, 3, 0)
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:---------------------------------------------]|
           [2:---------------------------------------------]|
@@ -2336,9 +2482,19 @@ describe("folded lines", function()
           {1:~                                            }|
         ## grid 3
           {11:-- VISUAL LINE --}                            |
-        ]], win_viewport={
-          [2] = {win = {id = 1000}, topline = 2, botline = 6, curline = 4, curcol = 0, linecount = 5, sum_scroll_delta = 2};
-        }}
+        ]],
+          win_viewport = {
+            [2] = {
+              win = { id = 1000 },
+              topline = 2,
+              botline = 6,
+              curline = 4,
+              curcol = 0,
+              linecount = 5,
+              sum_scroll_delta = 2,
+            },
+          },
+        })
       else
         screen:expect([[
           virt_line below line 2                       |
@@ -2354,7 +2510,8 @@ describe("folded lines", function()
 
       meths.input_mouse('left', 'drag', '3', multigrid and 2 or 0, 7, 0)
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:---------------------------------------------]|
           [2:---------------------------------------------]|
@@ -2374,9 +2531,19 @@ describe("folded lines", function()
           {1:~                                            }|
         ## grid 3
           {11:-- VISUAL LINE --}                            |
-        ]], win_viewport={
-          [2] = {win = {id = 1000}, topline = 2, botline = 6, curline = 4, curcol = 0, linecount = 5, sum_scroll_delta = 3};
-        }}
+        ]],
+          win_viewport = {
+            [2] = {
+              win = { id = 1000 },
+              topline = 2,
+              botline = 6,
+              curline = 4,
+              curcol = 0,
+              linecount = 5,
+              sum_scroll_delta = 3,
+            },
+          },
+        })
       else
         screen:expect([[
           more virt_line below line 2                  |
@@ -2392,7 +2559,8 @@ describe("folded lines", function()
 
       meths.input_mouse('left', 'drag', '3', multigrid and 2 or 0, 7, 5)
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect({
+          grid = [[
         ## grid 1
           [2:---------------------------------------------]|
           [2:---------------------------------------------]|
@@ -2412,9 +2580,19 @@ describe("folded lines", function()
           {1:~                                            }|
         ## grid 3
           {11:-- VISUAL LINE --}                            |
-        ]], win_viewport={
-          [2] = {win = {id = 1000}, topline = 2, botline = 6, curline = 4, curcol = 5, linecount = 5, sum_scroll_delta = 4};
-        }}
+        ]],
+          win_viewport = {
+            [2] = {
+              win = { id = 1000 },
+              topline = 2,
+              botline = 6,
+              curline = 4,
+              curcol = 5,
+              linecount = 5,
+              sum_scroll_delta = 4,
+            },
+          },
+        })
       else
         screen:expect([[
           {5:+--  2 lines: line 3·························}|
@@ -2561,7 +2739,7 @@ describe("folded lines", function()
     end)
   end
 
-  describe("with ext_multigrid", function()
+  describe('with ext_multigrid', function()
     with_ext_multigrid(true)
   end)
 

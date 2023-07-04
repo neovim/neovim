@@ -1,4 +1,4 @@
-local uv = require'luv'
+local uv = require('luv')
 
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
@@ -10,17 +10,17 @@ local clear = helpers.clear
 local function test_embed(ext_linegrid)
   local screen
   local function startup(...)
-    clear{args_rm={'--headless'}, args={...}}
+    clear({ args_rm = { '--headless' }, args = { ... } })
 
     -- attach immediately after startup, for early UI
     screen = Screen.new(60, 8)
-    screen:attach{ext_linegrid=ext_linegrid}
+    screen:attach({ ext_linegrid = ext_linegrid })
     screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [2] = {bold = true, foreground = Screen.colors.SeaGreen4},
-      [3] = {bold = true, foreground = Screen.colors.Blue1},
-      [4] = {bold = true, foreground = Screen.colors.Green},
-      [5] = {bold = true, reverse = true},
+      [1] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      [2] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+      [3] = { bold = true, foreground = Screen.colors.Blue1 },
+      [4] = { bold = true, foreground = Screen.colors.Green },
+      [5] = { bold = true, reverse = true },
     })
   end
 
@@ -69,7 +69,8 @@ local function test_embed(ext_linegrid)
 
   it("doesn't erase output when setting Normal colors", function()
     startup('--cmd', 'echoerr "foo"', '--cmd', 'hi Normal guibg=Green', '--cmd', 'echoerr "bar"')
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
                                                                   |
                                                                   |
                                                                   |
@@ -78,14 +79,20 @@ local function test_embed(ext_linegrid)
       foo                                                         |
       bar                                                         |
       Press ENTER or type command to continue^                     |
-    ]], condition=function()
-      eq(Screen.colors.Green, screen.default_colors.rgb_bg)
-    end}
+    ]],
+      condition = function()
+        eq(Screen.colors.Green, screen.default_colors.rgb_bg)
+      end,
+    })
   end)
 end
 
-describe('--embed UI on startup (ext_linegrid=true)', function() test_embed(true) end)
-describe('--embed UI on startup (ext_linegrid=false)', function() test_embed(false) end)
+describe('--embed UI on startup (ext_linegrid=true)', function()
+  test_embed(true)
+end)
+describe('--embed UI on startup (ext_linegrid=false)', function()
+  test_embed(false)
+end)
 
 describe('--embed UI', function()
   it('can pass stdin', function()
@@ -94,20 +101,23 @@ describe('--embed UI', function()
     local writer = assert(uv.new_pipe(false))
     writer:open(pipe.write)
 
-    clear {args_rm={'--headless'}, io_extra=pipe.read}
+    clear({ args_rm = { '--headless' }, io_extra = pipe.read })
 
     -- attach immediately after startup, for early UI
     local screen = Screen.new(40, 8)
-    screen:attach {stdin_fd=3}
-    screen:set_default_attr_ids {
-      [1] = {bold = true, foreground = Screen.colors.Blue1};
-      [2] = {bold = true};
-    }
+    screen:attach({ stdin_fd = 3 })
+    screen:set_default_attr_ids({
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { bold = true },
+    })
 
-    writer:write "hello nvim\nfrom external input\n"
-    writer:shutdown(function() writer:close() end)
+    writer:write('hello nvim\nfrom external input\n')
+    writer:shutdown(function()
+      writer:close()
+    end)
 
-    screen:expect{grid=[[
+    screen:expect({
+      grid = [[
       ^hello nvim                              |
       from external input                     |
       {1:~                                       }|
@@ -116,11 +126,13 @@ describe('--embed UI', function()
       {1:~                                       }|
       {1:~                                       }|
                                               |
-    ]]}
+    ]],
+    })
 
     -- stdin (rpc input) still works
-    feed 'o'
-    screen:expect{grid=[[
+    feed('o')
+    screen:expect({
+      grid = [[
       hello nvim                              |
       ^                                        |
       from external input                     |
@@ -129,6 +141,7 @@ describe('--embed UI', function()
       {1:~                                       }|
       {1:~                                       }|
       {2:-- INSERT --}                            |
-    ]]}
+    ]],
+    })
   end)
 end)

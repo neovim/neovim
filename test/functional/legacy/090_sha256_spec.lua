@@ -8,7 +8,7 @@ describe('sha256()', function()
   setup(clear)
 
   it('is working', function()
-    insert("start:")
+    insert('start:')
 
     source([[
       let testcase='test for empty string: '

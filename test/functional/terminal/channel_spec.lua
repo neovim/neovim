@@ -22,8 +22,10 @@ describe('terminal channel is closed and later released if', function()
     command([[let id = nvim_open_term(0, {})]])
     local chans = eval('len(nvim_list_chans())')
     -- channel hasn't been released yet
-    eq("Vim(call):Can't send data to closed stream",
-       pcall_err(command, [[bdelete! | call chansend(id, 'test')]]))
+    eq(
+      "Vim(call):Can't send data to closed stream",
+      pcall_err(command, [[bdelete! | call chansend(id, 'test')]])
+    )
     -- channel has been released after one main loop iteration
     eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
@@ -32,9 +34,11 @@ describe('terminal channel is closed and later released if', function()
     command('let id = nvim_open_term(0, {})')
     local chans = eval('len(nvim_list_chans())')
     -- channel has been closed but not released
-    eq("Vim(call):Can't send data to closed stream",
-       pcall_err(command, [[call chanclose(id) | call chansend(id, 'test')]]))
-    screen:expect({any='%[Terminal closed%]'})
+    eq(
+      "Vim(call):Can't send data to closed stream",
+      pcall_err(command, [[call chanclose(id) | call chansend(id, 'test')]])
+    )
+    screen:expect({ any = '%[Terminal closed%]' })
     eq(chans, eval('len(nvim_list_chans())'))
     -- delete terminal
     feed('i<CR>')
@@ -48,13 +52,17 @@ describe('terminal channel is closed and later released if', function()
     command('let id = nvim_open_term(0, {})')
     local chans = eval('len(nvim_list_chans())')
     -- channel has been closed but not released
-    eq("Vim(call):Can't send data to closed stream",
-       pcall_err(command, [[call chanclose(id) | call chansend(id, 'test')]]))
-    screen:expect({any='%[Terminal closed%]'})
+    eq(
+      "Vim(call):Can't send data to closed stream",
+      pcall_err(command, [[call chanclose(id) | call chansend(id, 'test')]])
+    )
+    screen:expect({ any = '%[Terminal closed%]' })
     eq(chans, eval('len(nvim_list_chans())'))
     -- channel still hasn't been released yet
-    eq("Vim(call):Can't send data to closed stream",
-       pcall_err(command, [[bdelete | call chansend(id, 'test')]]))
+    eq(
+      "Vim(call):Can't send data to closed stream",
+      pcall_err(command, [[bdelete | call chansend(id, 'test')]])
+    )
     -- channel has been released after one main loop iteration
     eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
@@ -63,10 +71,12 @@ describe('terminal channel is closed and later released if', function()
     command([[let id = termopen('echo')]])
     local chans = eval('len(nvim_list_chans())')
     -- wait for process to exit
-    screen:expect({any='%[Process exited 0%]'})
+    screen:expect({ any = '%[Process exited 0%]' })
     -- process has exited but channel has't been released
-    eq("Vim(call):Can't send data to closed stream",
-       pcall_err(command, [[call chansend(id, 'test')]]))
+    eq(
+      "Vim(call):Can't send data to closed stream",
+      pcall_err(command, [[call chansend(id, 'test')]])
+    )
     eq(chans, eval('len(nvim_list_chans())'))
     -- delete terminal
     feed('i<CR>')
@@ -81,33 +91,37 @@ describe('terminal channel is closed and later released if', function()
     command([[let id = termopen('echo')]])
     local chans = eval('len(nvim_list_chans())')
     -- wait for process to exit
-    screen:expect({any='%[Process exited 0%]'})
+    screen:expect({ any = '%[Process exited 0%]' })
     -- process has exited but channel hasn't been released
-    eq("Vim(call):Can't send data to closed stream",
-       pcall_err(command, [[call chansend(id, 'test')]]))
+    eq(
+      "Vim(call):Can't send data to closed stream",
+      pcall_err(command, [[call chansend(id, 'test')]])
+    )
     eq(chans, eval('len(nvim_list_chans())'))
     -- channel still hasn't been released yet
-    eq("Vim(call):Can't send data to closed stream",
-       pcall_err(command, [[bdelete | call chansend(id, 'test')]]))
+    eq(
+      "Vim(call):Can't send data to closed stream",
+      pcall_err(command, [[bdelete | call chansend(id, 'test')]])
+    )
     -- channel has been released after one main loop iteration
     eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
 end)
 
 it('chansend sends lines to terminal channel in proper order', function()
-  clear({args = {'--cmd', 'set laststatus=2'}})
+  clear({ args = { '--cmd', 'set laststatus=2' } })
   local screen = Screen.new(100, 20)
   screen:attach()
-  local shells = is_os('win') and {'cmd.exe', 'pwsh.exe -nop', 'powershell.exe -nop'} or {'sh'}
+  local shells = is_os('win') and { 'cmd.exe', 'pwsh.exe -nop', 'powershell.exe -nop' } or { 'sh' }
   for _, sh in ipairs(shells) do
     command([[let id = termopen(']] .. sh .. [[')]])
     command([[call chansend(id, ['echo "hello"', 'echo "world"', ''])]])
-    screen:expect{
-      any=[[echo "hello".*echo "world"]]
-    }
+    screen:expect({
+      any = [[echo "hello".*echo "world"]],
+    })
     command('bdelete!')
-    screen:expect{
-      any='%[No Name%]'
-    }
+    screen:expect({
+      any = '%[No Name%]',
+    })
   end
 end)

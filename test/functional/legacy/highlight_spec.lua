@@ -39,7 +39,9 @@ describe(':highlight', function()
 
     -- Test setting colors.
     -- Test clearing one color and all doesn't generate error or warning
-    feed_command('hi NewGroup cterm=italic ctermfg=DarkBlue ctermbg=Grey gui=NONE guifg=#00ff00 guibg=Cyan')
+    feed_command(
+      'hi NewGroup cterm=italic ctermfg=DarkBlue ctermbg=Grey gui=NONE guifg=#00ff00 guibg=Cyan'
+    )
     feed_command('hi Group2 cterm=NONE')
     feed_command('hi Group3 cterm=bold')
     feed_command('redir! @a')
@@ -54,8 +56,7 @@ describe(':highlight', function()
     feed_command('hi clear')
     feed_command('hi Group3')
     feed('<cr>')
-    eq('Vim(highlight):E475: Invalid argument: cterm=\'asdf',
-       exc_exec([[hi Crash cterm='asdf]]))
+    eq("Vim(highlight):E475: Invalid argument: cterm='asdf", exc_exec([[hi Crash cterm='asdf]]))
     feed_command('redir END')
 
     -- Filter ctermfg and ctermbg, the numbers depend on the terminal
@@ -99,9 +100,9 @@ describe('Visual selection highlight', function()
   it("when 'showbreak' is set", function()
     local screen = Screen.new(60, 6)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {background = Screen.colors.LightGrey},  -- Visual
-      [2] = {bold = true},  -- ModeMsg
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { background = Screen.colors.LightGrey }, -- Visual
+      [2] = { bold = true }, -- ModeMsg
     })
     screen:attach()
     exec([[

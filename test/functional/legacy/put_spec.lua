@@ -15,19 +15,21 @@ end
 
 describe('put', function()
   before_each(clear)
-  after_each(function() eq({}, meths.get_vvar('errors')) end)
+  after_each(function()
+    eq({}, meths.get_vvar('errors'))
+  end)
 
   it('very large count 64-bit', function()
     if sizeoflong() < 8 then
       pending('Skipped: only works with 64 bit long ints')
     end
 
-    source [[
+    source([[
       new
       let @" = repeat('x', 100)
       call assert_fails('norm 999999999p', 'E1240:')
       bwipe!
-    ]]
+    ]])
   end)
 
   it('very large count (visual block) 64-bit', function()
@@ -35,13 +37,13 @@ describe('put', function()
       pending('Skipped: only works with 64 bit long ints')
     end
 
-    source [[
+    source([[
       new
       call setline(1, repeat('x', 100))
       exe "norm \<C-V>$y"
       call assert_fails('norm 999999999p', 'E1240:')
       bwipe!
-    ]]
+    ]])
   end)
 
   -- oldtest: Test_put_other_window()

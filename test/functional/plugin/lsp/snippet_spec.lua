@@ -149,61 +149,68 @@ describe('vim.lsp._snippet', function()
   end)
 
   it('should parse format', function()
-    eq({
-      type = snippet.NodeType.SNIPPET,
-      children = {
-        {
-          type = snippet.NodeType.VARIABLE,
-          name = 'VAR',
-          transform = {
-            type = snippet.NodeType.TRANSFORM,
-            pattern = 'regex',
-            format = {
-              {
-                type = snippet.NodeType.FORMAT,
-                capture_index = 1,
-                modifier = 'upcase',
-              },
-              {
-                type = snippet.NodeType.FORMAT,
-                capture_index = 1,
-                if_text = 'if_text',
-                else_text = '',
-              },
-              {
-                type = snippet.NodeType.FORMAT,
-                capture_index = 1,
-                if_text = '',
-                else_text = 'else_text',
-              },
-              {
-                type = snippet.NodeType.FORMAT,
-                capture_index = 1,
-                else_text = 'else_text',
-                if_text = 'if_text',
-              },
-              {
-                type = snippet.NodeType.FORMAT,
-                capture_index = 1,
-                if_text = '',
-                else_text = 'else_text',
+    eq(
+      {
+        type = snippet.NodeType.SNIPPET,
+        children = {
+          {
+            type = snippet.NodeType.VARIABLE,
+            name = 'VAR',
+            transform = {
+              type = snippet.NodeType.TRANSFORM,
+              pattern = 'regex',
+              format = {
+                {
+                  type = snippet.NodeType.FORMAT,
+                  capture_index = 1,
+                  modifier = 'upcase',
+                },
+                {
+                  type = snippet.NodeType.FORMAT,
+                  capture_index = 1,
+                  if_text = 'if_text',
+                  else_text = '',
+                },
+                {
+                  type = snippet.NodeType.FORMAT,
+                  capture_index = 1,
+                  if_text = '',
+                  else_text = 'else_text',
+                },
+                {
+                  type = snippet.NodeType.FORMAT,
+                  capture_index = 1,
+                  else_text = 'else_text',
+                  if_text = 'if_text',
+                },
+                {
+                  type = snippet.NodeType.FORMAT,
+                  capture_index = 1,
+                  if_text = '',
+                  else_text = 'else_text',
+                },
               },
             },
           },
         },
       },
-    }, parse('${VAR/regex/${1:/upcase}${1:+if_text}${1:-else_text}${1:?if_text:else_text}${1:else_text}/}'))
+      parse(
+        '${VAR/regex/${1:/upcase}${1:+if_text}${1:-else_text}${1:?if_text:else_text}${1:else_text}/}'
+      )
+    )
   end)
 
   it('should parse empty strings', function()
     eq({
       children = {
         {
-          children = { {
-            esc = '',
-            raw = '',
-            type = 7,
-          } },
+          children = {
+            {
+              esc = '',
+              raw = '',
+              type = 7,
+            },
+          },
           tabstop = 1,
           type = 2,
         },

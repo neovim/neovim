@@ -1,1 +1,1 @@
-return "I am init.lua of fancy_x!"
+return 'I am init.lua of fancy_x!'

@@ -23,11 +23,11 @@ describe("'mousescroll'", function()
   local digit_expected = 'Vim(set):E5080: Digit expected: mousescroll='
 
   local function should_fail(val, errorstr)
-    eq(errorstr..val, exc_exec('set mousescroll='..val))
+    eq(errorstr .. val, exc_exec('set mousescroll=' .. val))
   end
 
   local function should_succeed(val)
-    eq(0, exc_exec('set mousescroll='..val))
+    eq(0, exc_exec('set mousescroll=' .. val))
   end
 
   before_each(function()
@@ -147,15 +147,15 @@ describe("'mousescroll'", function()
 
     command('set mousescroll=hor:1')
     scroll('right')
-    eq(9,  screencol())
+    eq(9, screencol())
 
     command('set mousescroll=hor:3')
     scroll('right')
-    eq(6,  screencol())
+    eq(6, screencol())
 
     command('set mousescroll=hor:2')
     scroll('left')
-    eq(8,  screencol())
+    eq(8, screencol())
   end
 
   it('controls horizontal scrolling in normal mode', function()

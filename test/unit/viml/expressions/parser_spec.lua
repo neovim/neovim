@@ -25,100 +25,99 @@ local conv_cmp_type = viml_helpers.conv_cmp_type
 local pstate_set_str = viml_helpers.pstate_set_str
 local conv_expr_asgn_type = viml_helpers.conv_expr_asgn_type
 
-local lib = cimport('./src/nvim/viml/parser/expressions.h',
-                    './src/nvim/syntax.h')
+local lib = cimport('./src/nvim/viml/parser/expressions.h', './src/nvim/syntax.h')
 
 local alloc_log = alloc_log_new()
 
 local predefined_hl_defs = {
   -- From highlight_init_both
-  Conceal=true,
-  Cursor=true,
-  lCursor=true,
-  DiffText=true,
-  ErrorMsg=true,
-  IncSearch=true,
-  ModeMsg=true,
-  NonText=true,
-  PmenuSbar=true,
-  StatusLine=true,
-  StatusLineNC=true,
-  TabLineFill=true,
-  TabLineSel=true,
-  TermCursor=true,
-  VertSplit=true,
-  WildMenu=true,
-  WinSeparator=true,
-  EndOfBuffer=true,
-  QuickFixLine=true,
-  Substitute=true,
-  Whitespace=true,
-  Error=true,
-  Todo=true,
-  String=true,
-  Character=true,
-  Number=true,
-  Boolean=true,
-  Float=true,
-  Function=true,
-  Conditional=true,
-  Repeat=true,
-  Label=true,
-  Operator=true,
-  Keyword=true,
-  Exception=true,
-  Include=true,
-  Define=true,
-  Macro=true,
-  PreCondit=true,
-  StorageClass=true,
-  Structure=true,
-  Typedef=true,
-  Tag=true,
-  SpecialChar=true,
-  Delimiter=true,
-  SpecialComment=true,
-  Debug=true,
+  Conceal = true,
+  Cursor = true,
+  lCursor = true,
+  DiffText = true,
+  ErrorMsg = true,
+  IncSearch = true,
+  ModeMsg = true,
+  NonText = true,
+  PmenuSbar = true,
+  StatusLine = true,
+  StatusLineNC = true,
+  TabLineFill = true,
+  TabLineSel = true,
+  TermCursor = true,
+  VertSplit = true,
+  WildMenu = true,
+  WinSeparator = true,
+  EndOfBuffer = true,
+  QuickFixLine = true,
+  Substitute = true,
+  Whitespace = true,
+  Error = true,
+  Todo = true,
+  String = true,
+  Character = true,
+  Number = true,
+  Boolean = true,
+  Float = true,
+  Function = true,
+  Conditional = true,
+  Repeat = true,
+  Label = true,
+  Operator = true,
+  Keyword = true,
+  Exception = true,
+  Include = true,
+  Define = true,
+  Macro = true,
+  PreCondit = true,
+  StorageClass = true,
+  Structure = true,
+  Typedef = true,
+  Tag = true,
+  SpecialChar = true,
+  Delimiter = true,
+  SpecialComment = true,
+  Debug = true,
 
   -- From highlight_init_(dark|light)
-  ColorColumn=true,
-  CursorColumn=true,
-  CursorLine=true,
-  CursorLineNr=true,
-  DiffAdd=true,
-  DiffChange=true,
-  DiffDelete=true,
-  Directory=true,
-  FoldColumn=true,
-  Folded=true,
-  LineNr=true,
-  MatchParen=true,
-  MoreMsg=true,
-  Pmenu=true,
-  PmenuSel=true,
-  PmenuThumb=true,
-  Question=true,
-  Search=true,
-  SignColumn=true,
-  SpecialKey=true,
-  SpellBad=true,
-  SpellCap=true,
-  SpellLocal=true,
-  SpellRare=true,
-  TabLine=true,
-  Title=true,
-  Visual=true,
-  WarningMsg=true,
-  Normal=true,
-  Comment=true,
-  Constant=true,
-  Special=true,
-  Identifier=true,
-  Statement=true,
-  PreProc=true,
-  Type=true,
-  Underlined=true,
-  Ignore=true,
+  ColorColumn = true,
+  CursorColumn = true,
+  CursorLine = true,
+  CursorLineNr = true,
+  DiffAdd = true,
+  DiffChange = true,
+  DiffDelete = true,
+  Directory = true,
+  FoldColumn = true,
+  Folded = true,
+  LineNr = true,
+  MatchParen = true,
+  MoreMsg = true,
+  Pmenu = true,
+  PmenuSel = true,
+  PmenuThumb = true,
+  Question = true,
+  Search = true,
+  SignColumn = true,
+  SpecialKey = true,
+  SpellBad = true,
+  SpellCap = true,
+  SpellLocal = true,
+  SpellRare = true,
+  TabLine = true,
+  Title = true,
+  Visual = true,
+  WarningMsg = true,
+  Normal = true,
+  Comment = true,
+  Constant = true,
+  Special = true,
+  Identifier = true,
+  Statement = true,
+  PreProc = true,
+  Type = true,
+  Underlined = true,
+  Ignore = true,
 }
 
 local nvim_hl_defs = {}
@@ -136,22 +135,18 @@ child_call_once(function()
         --       linking, otherwise it will be created as cleared. So existence
         --       of the group is checked here and not in the next pass over
         --       nvim_hl_defs.
-        eq(true, not not (nvim_hl_defs[grp_link]
-                          or predefined_hl_defs[grp_link]))
-        eq(false, not not (nvim_hl_defs[new_grp]
-                           or predefined_hl_defs[new_grp]))
-        nvim_hl_defs[new_grp] = {'link', grp_link}
+        eq(true, not not (nvim_hl_defs[grp_link] or predefined_hl_defs[grp_link]))
+        eq(false, not not (nvim_hl_defs[new_grp] or predefined_hl_defs[new_grp]))
+        nvim_hl_defs[new_grp] = { 'link', grp_link }
       else
         local new_grp, grp_args = s:match('^(%w+) (.*)')
         neq(nil, new_grp)
-        eq(false, not not (nvim_hl_defs[new_grp]
-                           or predefined_hl_defs[new_grp]))
-        nvim_hl_defs[new_grp] = {'definition', grp_args}
+        eq(false, not not (nvim_hl_defs[new_grp] or predefined_hl_defs[new_grp]))
+        nvim_hl_defs[new_grp] = { 'definition', grp_args }
       end
     end)
     if not err then
-      msg = format_string(
-        'Error while processing string %s at position %u:\n%s', s, i, msg)
+      msg = format_string('Error while processing string %s at position %u:\n%s', s, i, msg)
       error(msg)
     end
     i = i + 1
@@ -185,12 +180,12 @@ local function hls_to_hl_fs(hls)
     local col_shift = col - next_col
     assert(col_shift >= 0)
     next_col = col + #str
-    ret[i] = format_string('hl(%r, %r%s)',
-                           group,
-                           str,
-                           (col_shift == 0
-                            and ''
-                            or (', %u'):format(col_shift)))
+    ret[i] = format_string(
+      'hl(%r, %r%s)',
+      group,
+      str,
+      (col_shift == 0 and '' or (', %u'):format(col_shift))
+    )
   end
   return ret
 end
@@ -205,9 +200,9 @@ local function format_check(expr, format_check_data, opts)
     dig_len = #opts.funcname + 2
   else
     print(format_string('\n_check_parsing(%r, %r, {', opts, expr))
-    dig_len = #('_check_parsing(, \'') + #(format_string('%r', opts))
+    dig_len = #"_check_parsing(, '" + #(format_string('%r', opts))
   end
-  local digits = '  --' .. (' '):rep(dig_len - #('  --'))
+  local digits = '  --' .. (' '):rep(dig_len - #'  --')
   local digits2 = digits:sub(1, -10)
   for i = 0, #expr - 1 do
     if i % 10 == 0 then
@@ -240,10 +235,9 @@ local function format_check(expr, format_check_data, opts)
       diffs[flags] = dictdiff(zdata, v)
       if diffs[flags] then
         if flags == 3 + zflags then
-          if (dictdiff(format_check_data[1 + zflags],
-                       format_check_data[3 + zflags]) == nil
-              or dictdiff(format_check_data[2 + zflags],
-                          format_check_data[3 + zflags]) == nil)
+          if
+            dictdiff(format_check_data[1 + zflags], format_check_data[3 + zflags]) == nil
+            or dictdiff(format_check_data[2 + zflags], format_check_data[3 + zflags]) == nil
           then
             diffs[flags] = nil
           else
@@ -268,7 +262,7 @@ local function format_check(expr, format_check_data, opts)
         end
         if diff.hl_fs then
           print('    hl_fs = ' .. format_luav(diff.hl_fs, '    ', {
-            literal_strings=true
+            literal_strings = true,
           }) .. ',')
         end
         print('  },')
@@ -280,47 +274,54 @@ local function format_check(expr, format_check_data, opts)
 end
 
 local east_node_type_tab
-make_enum_conv_tab(lib, {
-  'kExprNodeMissing',
-  'kExprNodeOpMissing',
-  'kExprNodeTernary',
-  'kExprNodeTernaryValue',
-  'kExprNodeRegister',
-  'kExprNodeSubscript',
-  'kExprNodeListLiteral',
-  'kExprNodeUnaryPlus',
-  'kExprNodeBinaryPlus',
-  'kExprNodeNested',
-  'kExprNodeCall',
-  'kExprNodePlainIdentifier',
-  'kExprNodePlainKey',
-  'kExprNodeComplexIdentifier',
-  'kExprNodeUnknownFigure',
-  'kExprNodeLambda',
-  'kExprNodeDictLiteral',
-  'kExprNodeCurlyBracesIdentifier',
-  'kExprNodeComma',
-  'kExprNodeColon',
-  'kExprNodeArrow',
-  'kExprNodeComparison',
-  'kExprNodeConcat',
-  'kExprNodeConcatOrSubscript',
-  'kExprNodeInteger',
-  'kExprNodeFloat',
-  'kExprNodeSingleQuotedString',
-  'kExprNodeDoubleQuotedString',
-  'kExprNodeOr',
-  'kExprNodeAnd',
-  'kExprNodeUnaryMinus',
-  'kExprNodeBinaryMinus',
-  'kExprNodeNot',
-  'kExprNodeMultiplication',
-  'kExprNodeDivision',
-  'kExprNodeMod',
-  'kExprNodeOption',
-  'kExprNodeEnvironment',
-  'kExprNodeAssignment',
-}, 'kExprNode', function(ret) east_node_type_tab = ret end)
+make_enum_conv_tab(
+  lib,
+  {
+    'kExprNodeMissing',
+    'kExprNodeOpMissing',
+    'kExprNodeTernary',
+    'kExprNodeTernaryValue',
+    'kExprNodeRegister',
+    'kExprNodeSubscript',
+    'kExprNodeListLiteral',
+    'kExprNodeUnaryPlus',
+    'kExprNodeBinaryPlus',
+    'kExprNodeNested',
+    'kExprNodeCall',
+    'kExprNodePlainIdentifier',
+    'kExprNodePlainKey',
+    'kExprNodeComplexIdentifier',
+    'kExprNodeUnknownFigure',
+    'kExprNodeLambda',
+    'kExprNodeDictLiteral',
+    'kExprNodeCurlyBracesIdentifier',
+    'kExprNodeComma',
+    'kExprNodeColon',
+    'kExprNodeArrow',
+    'kExprNodeComparison',
+    'kExprNodeConcat',
+    'kExprNodeConcatOrSubscript',
+    'kExprNodeInteger',
+    'kExprNodeFloat',
+    'kExprNodeSingleQuotedString',
+    'kExprNodeDoubleQuotedString',
+    'kExprNodeOr',
+    'kExprNodeAnd',
+    'kExprNodeUnaryMinus',
+    'kExprNodeBinaryMinus',
+    'kExprNodeNot',
+    'kExprNodeMultiplication',
+    'kExprNodeDivision',
+    'kExprNodeMod',
+    'kExprNodeOption',
+    'kExprNodeEnvironment',
+    'kExprNodeAssignment',
+  },
+  'kExprNode',
+  function(ret)
+    east_node_type_tab = ret
+  end
+)
 
 local function conv_east_node_type(typ)
   return conv_enum(east_node_type_tab, typ)
@@ -346,25 +347,35 @@ local function eastnode2lua(pstate, eastnode, checked_nodes)
     ret_str = ('%u:%u:%s'):format(str.start.line, str.start.col, str.str)
   end
   if typ == 'Register' then
-    typ = typ .. ('(name=%s)'):format(
-      tostring(intchar2lua(eastnode.data.reg.name)))
+    typ = typ .. ('(name=%s)'):format(tostring(intchar2lua(eastnode.data.reg.name)))
   elseif typ == 'PlainIdentifier' then
-    typ = typ .. ('(scope=%s,ident=%s)'):format(
-      tostring(intchar2lua(eastnode.data.var.scope)),
-      ffi.string(eastnode.data.var.ident, eastnode.data.var.ident_len))
+    typ = typ
+      .. ('(scope=%s,ident=%s)'):format(
+        tostring(intchar2lua(eastnode.data.var.scope)),
+        ffi.string(eastnode.data.var.ident, eastnode.data.var.ident_len)
+      )
   elseif typ == 'PlainKey' then
-    typ = typ .. ('(key=%s)'):format(
-      ffi.string(eastnode.data.var.ident, eastnode.data.var.ident_len))
-  elseif (typ == 'UnknownFigure' or typ == 'DictLiteral'
-          or typ == 'CurlyBracesIdentifier' or typ == 'Lambda') then
-    typ = typ .. ('(%s)'):format(
-      (eastnode.data.fig.type_guesses.allow_lambda and '\\' or '-')
-      .. (eastnode.data.fig.type_guesses.allow_dict and 'd' or '-')
-      .. (eastnode.data.fig.type_guesses.allow_ident and 'i' or '-'))
+    typ = typ
+      .. ('(key=%s)'):format(ffi.string(eastnode.data.var.ident, eastnode.data.var.ident_len))
+  elseif
+    typ == 'UnknownFigure'
+    or typ == 'DictLiteral'
+    or typ == 'CurlyBracesIdentifier'
+    or typ == 'Lambda'
+  then
+    typ = typ
+      .. ('(%s)'):format(
+        (eastnode.data.fig.type_guesses.allow_lambda and '\\' or '-')
+          .. (eastnode.data.fig.type_guesses.allow_dict and 'd' or '-')
+          .. (eastnode.data.fig.type_guesses.allow_ident and 'i' or '-')
+      )
   elseif typ == 'Comparison' then
-    typ = typ .. ('(type=%s,inv=%u,ccs=%s)'):format(
-      conv_cmp_type(eastnode.data.cmp.type), eastnode.data.cmp.inv and 1 or 0,
-      conv_ccs(eastnode.data.cmp.ccs))
+    typ = typ
+      .. ('(type=%s,inv=%u,ccs=%s)'):format(
+        conv_cmp_type(eastnode.data.cmp.type),
+        eastnode.data.cmp.inv and 1 or 0,
+        conv_ccs(eastnode.data.cmp.ccs)
+      )
   elseif typ == 'Integer' then
     typ = typ .. ('(val=%u)'):format(tonumber(eastnode.data.num.value))
   elseif typ == 'Float' then
@@ -380,11 +391,13 @@ local function eastnode2lua(pstate, eastnode, checked_nodes)
     typ = ('%s(scope=%s,ident=%s)'):format(
       typ,
       tostring(intchar2lua(eastnode.data.opt.scope)),
-      ffi.string(eastnode.data.opt.ident, eastnode.data.opt.ident_len))
+      ffi.string(eastnode.data.opt.ident, eastnode.data.opt.ident_len)
+    )
   elseif typ == 'Environment' then
     typ = ('%s(ident=%s)'):format(
       typ,
-      ffi.string(eastnode.data.env.ident, eastnode.data.env.ident_len))
+      ffi.string(eastnode.data.env.ident, eastnode.data.env.ident_len)
+    )
   elseif typ == 'Assignment' then
     typ = ('%s(%s)'):format(typ, conv_expr_asgn_type(eastnode.data.ass.type))
   end
@@ -433,22 +446,21 @@ local function phl2lua(pstate)
   local ret = {}
   for i = 0, (tonumber(pstate.colors.size) - 1) do
     local chunk = pstate.colors.items[i]
-    local chunk_tbl = pstate_set_str(
-      pstate, chunk.start, chunk.end_col - chunk.start.col, {
-        group = ffi.string(chunk.group),
-      })
+    local chunk_tbl = pstate_set_str(pstate, chunk.start, chunk.end_col - chunk.start.col, {
+      group = ffi.string(chunk.group),
+    })
     ret[i + 1] = ('%s:%u:%u:%s'):format(
       chunk_tbl.group,
       chunk_tbl.start.line,
       chunk_tbl.start.col,
-      chunk_tbl.str)
+      chunk_tbl.str
+    )
   end
   return ret
 end
 
 describe('Expressions parser', function()
-  local function _check_parsing(opts, str, exp_ast, exp_highlighting_fs,
-                                nz_flags_exps)
+  local function _check_parsing(opts, str, exp_ast, exp_highlighting_fs, nz_flags_exps)
     local zflags = opts.flags[1]
     nz_flags_exps = nz_flags_exps or {}
     local format_check_data = {}
@@ -460,12 +472,12 @@ describe('Expressions parser', function()
         end
         alloc_log:check({})
 
-        local pstate = new_pstate({str})
+        local pstate = new_pstate({ str })
         local east = lib.viml_pexpr_parse(pstate, flags)
         local ast = east2lua(str, pstate, east)
         local hls = phl2lua(pstate)
         if exp_ast == nil then
-          format_check_data[flags] = {ast=ast, hl_fs=hls_to_hl_fs(hls)}
+          format_check_data[flags] = { ast = ast, hl_fs = hls_to_hl_fs(hls) }
         else
           local exps = {
             ast = exp_ast,
@@ -499,8 +511,7 @@ describe('Expressions parser', function()
         alloc_log:check({})
       end)
       if not err then
-        msg = format_string('Error while processing test (%r, %u):\n%s',
-                            str, flags, msg)
+        msg = format_string('Error while processing test (%r, %u):\n%s', str, flags, msg)
         error(msg)
       end
     end
@@ -514,16 +525,11 @@ describe('Expressions parser', function()
         error(('Unknown group: Nvim%s'):format(group))
       end
       local col = next_col + (shift or 0)
-      return (('%s:%u:%u:%s'):format(
-        'Nvim' .. group,
-        0,
-        col,
-        str)), (col + #str)
+      return (('%s:%u:%u:%s'):format('Nvim' .. group, 0, col, str)), (col + #str)
     end
   end
   local function fmtn(typ, args, rest)
     return ('%s(%s)%s'):format(typ, args, rest)
   end
-  require('test.unit.viml.expressions.parser_tests')(
-      itp, _check_parsing, hl, fmtn)
+  require('test.unit.viml.expressions.parser_tests')(itp, _check_parsing, hl, fmtn)
 end)

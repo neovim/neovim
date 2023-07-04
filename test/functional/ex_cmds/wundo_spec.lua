@@ -2,9 +2,12 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local command, clear, eval, spawn, nvim_prog, set_session =
-  helpers.command, helpers.clear, helpers.eval, helpers.spawn,
-  helpers.nvim_prog, helpers.set_session
-
+  helpers.command,
+  helpers.clear,
+  helpers.eval,
+  helpers.spawn,
+  helpers.nvim_prog,
+  helpers.set_session
 
 describe(':wundo', function()
   before_each(clear)
@@ -21,10 +24,18 @@ end)
 
 describe('u_* functions', function()
   it('safely fail on new, non-empty buffer', function()
-    local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed',
-                           '-c', 'set undodir=. undofile'})
+    local session = spawn({
+      nvim_prog,
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--embed',
+      '-c',
+      'set undodir=. undofile',
+    })
     set_session(session)
-    command('echo "True"')  -- Should not error out due to crashed Neovim
+    command('echo "True"') -- Should not error out due to crashed Neovim
     session:close()
   end)
 end)

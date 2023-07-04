@@ -11,7 +11,9 @@ describe('ffi.cdef', function()
       pending('missing LuaJIT FFI')
     end
 
-    eq(12, exec_lua[[
+    eq(
+      12,
+      exec_lua([[
       local ffi = require('ffi')
 
       ffi.cdef('int curwin_col_off(void);')
@@ -20,8 +22,11 @@ describe('ffi.cdef', function()
 
       return ffi.C.curwin_col_off()
     ]])
+    )
 
-    eq(20, exec_lua[=[
+    eq(
+      20,
+      exec_lua([=[
       local ffi = require('ffi')
 
       ffi.cdef[[
@@ -62,14 +67,18 @@ describe('ffi.cdef', function()
         nil
       )
     ]=])
+    )
 
     -- Check that extern symbols are exported and accessible
-    eq(true, exec_lua[[
+    eq(
+      true,
+      exec_lua([[
       local ffi = require('ffi')
 
       ffi.cdef('uint64_t display_tick;')
 
       return ffi.C.display_tick >= 0
     ]])
+    )
   end)
 end)

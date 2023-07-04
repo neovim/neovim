@@ -8,11 +8,11 @@ describe('search stat', function()
     clear()
     screen = Screen.new(30, 10)
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [2] = {background = Screen.colors.Yellow},  -- Search
-      [3] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},  -- Folded
-      [4] = {reverse = true},  -- IncSearch, TabLineFill
-      [5] = {foreground = Screen.colors.Red},  -- WarningMsg
+      [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [2] = { background = Screen.colors.Yellow }, -- Search
+      [3] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey }, -- Folded
+      [4] = { reverse = true }, -- IncSearch, TabLineFill
+      [5] = { foreground = Screen.colors.Red }, -- WarningMsg
     })
     screen:attach()
   end)

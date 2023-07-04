@@ -76,7 +76,7 @@ describe('prompt buffer', function()
   -- oldtest: Test_prompt_basic()
   it('works', function()
     source_script()
-    feed("hello\n")
+    feed('hello\n')
     screen:expect([[
       cmd: hello               |
       Command: "hello"         |
@@ -89,7 +89,7 @@ describe('prompt buffer', function()
       ~                        |
       -- INSERT --             |
     ]])
-    feed("exit\n")
+    feed('exit\n')
     screen:expect([[
       ^other buffer             |
       ~                        |
@@ -107,7 +107,7 @@ describe('prompt buffer', function()
   -- oldtest: Test_prompt_editing()
   it('editing', function()
     source_script()
-    feed("hello<BS><BS>")
+    feed('hello<BS><BS>')
     screen:expect([[
       cmd: hel^                 |
       ~                        |
@@ -120,7 +120,7 @@ describe('prompt buffer', function()
       ~                        |
       -- INSERT --             |
     ]])
-    feed("<Left><Left><Left><BS>-")
+    feed('<Left><Left><Left><BS>-')
     screen:expect([[
       cmd: -^hel                |
       ~                        |
@@ -133,7 +133,7 @@ describe('prompt buffer', function()
       ~                        |
       -- INSERT --             |
     ]])
-    feed("<C-O>lz")
+    feed('<C-O>lz')
     screen:expect([[
       cmd: -hz^el               |
       ~                        |
@@ -146,7 +146,7 @@ describe('prompt buffer', function()
       ~                        |
       -- INSERT --             |
     ]])
-    feed("<End>x")
+    feed('<End>x')
     screen:expect([[
       cmd: -hzelx^              |
       ~                        |
@@ -159,7 +159,7 @@ describe('prompt buffer', function()
       ~                        |
       -- INSERT --             |
     ]])
-    feed("<C-U>exit\n")
+    feed('<C-U>exit\n')
     screen:expect([[
       ^other buffer             |
       ~                        |
@@ -177,8 +177,9 @@ describe('prompt buffer', function()
   -- oldtest: Test_prompt_switch_windows()
   it('switch windows', function()
     source_script()
-    feed("<C-O>:call SwitchWindows()<CR>")
-    screen:expect{grid=[[
+    feed('<C-O>:call SwitchWindows()<CR>')
+    screen:expect({
+      grid = [[
       cmd:                     |
       ~                        |
       ~                        |
@@ -189,8 +190,9 @@ describe('prompt buffer', function()
       ~                        |
       ~                        |
                                |
-    ]]}
-    feed("<C-O>:call SwitchWindows()<CR>")
+    ]],
+    })
+    feed('<C-O>:call SwitchWindows()<CR>')
     screen:expect([[
       cmd: ^                    |
       ~                        |
@@ -203,7 +205,7 @@ describe('prompt buffer', function()
       ~                        |
       -- INSERT --             |
     ]])
-    feed("<Esc>")
+    feed('<Esc>')
     screen:expect([[
       cmd:^                     |
       ~                        |
@@ -221,10 +223,10 @@ describe('prompt buffer', function()
   -- oldtest: Test_prompt_while_writing_to_hidden_buffer()
   it('keeps insert mode after aucmd_restbuf in callback', function()
     source_script()
-    source [[
+    source([[
       let s:buf = nvim_create_buf(1, 1)
       call timer_start(0, {-> nvim_buf_set_lines(s:buf, -1, -1, 0, ['walrus'])})
-    ]]
+    ]])
     poke_eventloop()
     eq({ mode = 'i', blocking = false }, meths.get_mode())
   end)

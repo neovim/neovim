@@ -34,19 +34,19 @@ describe('macros', function()
   end)
 
   it('can be replayed with Q', function()
-    insert [[hello
+    insert([[hello
 hello
-hello]]
-    feed [[gg]]
+hello]])
+    feed([[gg]])
 
-    feed [[qqAFOO<esc>q]]
-    eq({'helloFOO', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+    feed([[qqAFOO<esc>q]])
+    eq({ 'helloFOO', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
 
-    feed[[Q]]
-    eq({'helloFOOFOO', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+    feed([[Q]])
+    eq({ 'helloFOOFOO', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
 
-    feed[[G3Q]]
-    eq({'helloFOOFOO', 'hello', 'helloFOOFOOFOO'}, curbufmeths.get_lines(0, -1, false))
+    feed([[G3Q]])
+    eq({ 'helloFOOFOO', 'hello', 'helloFOOFOOFOO' }, curbufmeths.get_lines(0, -1, false))
   end)
 end)
 
@@ -74,16 +74,16 @@ describe('immediately after a macro has finished executing,', function()
     end)
 
     it('if the macro does not end with a <Nop> mapping', function()
-      feed('@asq')  -- "q" from "s" mapping should start recording a macro instead of being no-op
-      eq({mode = 'n', blocking = false}, meths.get_mode())
+      feed('@asq') -- "q" from "s" mapping should start recording a macro instead of being no-op
+      eq({ mode = 'n', blocking = false }, meths.get_mode())
       expect('')
       eq('', eval('@a'))
     end)
 
     it('if the macro ends with a <Nop> mapping', function()
       command('nnoremap 0 <Nop>')
-      feed('@asq')  -- "q" from "s" mapping should start recording a macro instead of being no-op
-      eq({mode = 'n', blocking = false}, meths.get_mode())
+      feed('@asq') -- "q" from "s" mapping should start recording a macro instead of being no-op
+      eq({ mode = 'n', blocking = false }, meths.get_mode())
       expect('')
       eq('', eval('@a'))
     end)
@@ -92,7 +92,7 @@ end)
 
 describe('reg_recorded()', function()
   it('returns the correct value', function()
-    feed [[qqyyq]]
+    feed([[qqyyq]])
     eq('q', eval('reg_recorded()'))
   end)
 end)

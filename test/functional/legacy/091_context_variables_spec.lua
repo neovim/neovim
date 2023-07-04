@@ -8,7 +8,7 @@ describe('context variables', function()
   setup(clear)
 
   it('is working', function()
-    insert("start:")
+    insert('start:')
 
     -- Test for getbufvar().
     -- Use strings to test for memory leaks.

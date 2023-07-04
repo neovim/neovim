@@ -43,16 +43,16 @@ describe('API', function()
     end)
 
     it('validation', function()
-      local status, rv = pcall(request, "nvim_get_proc_children", -1)
+      local status, rv = pcall(request, 'nvim_get_proc_children', -1)
       eq(false, status)
-      eq("Invalid 'pid': -1", string.match(rv, "Invalid.*"))
+      eq("Invalid 'pid': -1", string.match(rv, 'Invalid.*'))
 
-      status, rv = pcall(request, "nvim_get_proc_children", 0)
+      status, rv = pcall(request, 'nvim_get_proc_children', 0)
       eq(false, status)
-      eq("Invalid 'pid': 0", string.match(rv, "Invalid.*"))
+      eq("Invalid 'pid': 0", string.match(rv, 'Invalid.*'))
 
       -- Assume PID 99999 does not exist.
-      status, rv = pcall(request, "nvim_get_proc_children", 99999)
+      status, rv = pcall(request, 'nvim_get_proc_children', 99999)
       eq(true, status)
       eq({}, rv)
     end)
@@ -69,16 +69,16 @@ describe('API', function()
     end)
 
     it('validation', function()
-      local status, rv = pcall(request, "nvim_get_proc", -1)
+      local status, rv = pcall(request, 'nvim_get_proc', -1)
       eq(false, status)
-      eq("Invalid 'pid': -1", string.match(rv, "Invalid.*"))
+      eq("Invalid 'pid': -1", string.match(rv, 'Invalid.*'))
 
-      status, rv = pcall(request, "nvim_get_proc", 0)
+      status, rv = pcall(request, 'nvim_get_proc', 0)
       eq(false, status)
-      eq("Invalid 'pid': 0", string.match(rv, "Invalid.*"))
+      eq("Invalid 'pid': 0", string.match(rv, 'Invalid.*'))
 
       -- Assume PID 99999 does not exist.
-      status, rv = pcall(request, "nvim_get_proc", 99999)
+      status, rv = pcall(request, 'nvim_get_proc', 99999)
       eq(true, status)
       eq(NIL, rv)
     end)

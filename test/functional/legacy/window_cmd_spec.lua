@@ -11,7 +11,7 @@ it('scrolling with laststatus=0 and :botright split', function()
   clear('--cmd', 'set ruler')
   local screen = Screen.new(40, 10)
   screen:set_default_attr_ids({
-    [1] = {reverse = true},  -- StatusLineNC
+    [1] = { reverse = true }, -- StatusLineNC
   })
   screen:attach()
   exec([[
