@@ -595,3 +595,52 @@ static int win_nolbr_chartabsize(chartabsize_T *cts, int *headp)
   }
   return n;
 }
+
+int64_t win_get_text_height(win_T *const wp, const linenr_T first, const linenr_T last,
+                            const int64_t start_vcol, const int64_t end_vcol)
+{
+  int width1 = 0;
+  int width2 = 0;
+  if (start_vcol >= 0 || end_vcol >= 0) {
+    width1 = wp->w_width_inner - win_col_off(wp);
+    width2 = width1 + win_col_off2(wp);
+    width1 = MAX(width1, 0);
+    width2 = MAX(width2, 0);
+  }
+
+  int64_t size = 0;
+  int64_t height_nofill = 0;
+  linenr_T lnum = first;
+
+  if (start_vcol >= 0) {
+    linenr_T lnum_next = lnum;
+    const bool folded = hasFoldingWin(wp, lnum, &lnum, &lnum_next, true, NULL);
+    height_nofill = folded ? 1 : plines_win_nofill(wp, lnum, false);
+    size += height_nofill;
+    const int64_t row_off = (start_vcol < width1 || width2 <= 0)
+                            ? 0
+                            : 1 + (start_vcol - width1) / width2;
+    size -= MIN(row_off, height_nofill);
+    lnum = lnum_next + 1;
+  }
+
+  while (lnum <= last) {
+    linenr_T lnum_next = lnum;
+    const bool folded = hasFoldingWin(wp, lnum, &lnum, &lnum_next, true, NULL);
+    height_nofill = folded ? 1 : plines_win_nofill(wp, lnum, false);
+    size += win_get_fill(wp, lnum) + height_nofill;
+    lnum = lnum_next + 1;
+  }
+
+  if (end_vcol >= 0) {
+    size -= height_nofill;
+    const int64_t row_off = end_vcol == 0
+                            ? 0
+                            : (end_vcol <= width1 || width2 <= 0)
+                              ? 1
+                              : 1 + (end_vcol - width1 + width2 - 1) / width2;
+    size += MIN(row_off, height_nofill);
+  }
+
+  return size;
+}

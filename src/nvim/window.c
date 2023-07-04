@@ -1037,22 +1037,31 @@ void ui_ext_win_viewport(win_T *wp)
       // interact with incomplete final line? Diff filler lines?
       botline = wp->w_buffer->b_ml.ml_line_count;
     }
-    int scroll_delta = 0;
-    if (wp->w_viewport_last_topline > line_count) {
-      scroll_delta -= wp->w_viewport_last_topline - line_count;
-      wp->w_viewport_last_topline = line_count;
+    int64_t delta = 0;
+    linenr_T last_topline = wp->w_viewport_last_topline;
+    int last_topfill = wp->w_viewport_last_topfill;
+    int64_t last_skipcol = wp->w_viewport_last_skipcol;
+    if (last_topline > line_count) {
+      delta -= last_topline - line_count;
+      last_topline = line_count;
+      last_topfill = 0;
+      last_skipcol = MAXCOL;
     }
-    if (wp->w_topline < wp->w_viewport_last_topline) {
-      scroll_delta -= plines_m_win(wp, wp->w_topline, wp->w_viewport_last_topline - 1);
-    } else if (wp->w_topline > wp->w_viewport_last_topline
-               && wp->w_topline <= line_count) {
-      scroll_delta += plines_m_win(wp, wp->w_viewport_last_topline, wp->w_topline - 1);
+    if (wp->w_topline < last_topline
+        || (wp->w_topline == last_topline && wp->w_skipcol < last_skipcol)) {
+      delta -= win_get_text_height(wp, wp->w_topline, last_topline, wp->w_skipcol, last_skipcol);
+    } else if ((wp->w_topline > last_topline && wp->w_topline <= line_count)
+               || (wp->w_topline == last_topline && wp->w_skipcol > last_skipcol)) {
+      delta += win_get_text_height(wp, last_topline, wp->w_topline, last_skipcol, wp->w_skipcol);
     }
-    ui_call_win_viewport(wp->w_grid_alloc.handle, wp->handle, wp->w_topline - 1,
-                         botline, wp->w_cursor.lnum - 1, wp->w_cursor.col,
-                         line_count, scroll_delta);
+    delta += last_topfill;
+    delta -= wp->w_topfill;
+    ui_call_win_viewport(wp->w_grid_alloc.handle, wp->handle, wp->w_topline - 1, botline,
+                         wp->w_cursor.lnum - 1, wp->w_cursor.col, line_count, delta);
     wp->w_viewport_invalid = false;
     wp->w_viewport_last_topline = wp->w_topline;
+    wp->w_viewport_last_topfill = wp->w_topfill;
+    wp->w_viewport_last_skipcol = wp->w_skipcol;
   }
 }
 

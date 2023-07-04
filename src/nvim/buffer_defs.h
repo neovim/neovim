@@ -1226,6 +1226,8 @@ struct window_S {
 
   bool w_viewport_invalid;
   linenr_T w_viewport_last_topline;  // topline when the viewport was last updated
+  linenr_T w_viewport_last_topfill;  // topfill when the viewport was last updated
+  linenr_T w_viewport_last_skipcol;  // skipcol when the viewport was last updated
 
   // w_cline_height is the number of physical lines taken by the buffer line
   // that the cursor is on.  We use this to avoid extra calls to plines_win().
