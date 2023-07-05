@@ -98,19 +98,15 @@ int plines_win_nofill(win_T *wp, linenr_T lnum, bool winheight)
 /// "wp".  Does not care about folding, 'wrap' or 'diff'.
 int plines_win_nofold(win_T *wp, linenr_T lnum)
 {
-  char *s;
-  unsigned col;
-  int width;
+  char *s = ml_get_buf(wp->w_buffer, lnum, false);
   chartabsize_T cts;
-
-  s = ml_get_buf(wp->w_buffer, lnum, false);
   init_chartabsize_arg(&cts, wp, lnum, 0, s, s);
   if (*s == NUL && !cts.cts_has_virt_text) {
     return 1;  // be quick for an empty line
   }
   win_linetabsize_cts(&cts, (colnr_T)MAXCOL);
   clear_chartabsize_arg(&cts);
-  col = (unsigned)cts.cts_vcol;
+  int64_t col = cts.cts_vcol;
 
   // If list mode is on, then the '$' at the end of the line may take up one
   // extra column.
@@ -119,17 +115,17 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   }
 
   // Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
-  width = wp->w_width_inner - win_col_off(wp);
-  if (width <= 0 || col > 32000) {
-    return 32000;  // bigger than the number of screen columns
+  int width = wp->w_width_inner - win_col_off(wp);
+  if (width <= 0) {
+    return 32000;  // bigger than the number of screen lines
   }
-  if (col <= (unsigned)width) {
+  if (col <= width) {
     return 1;
   }
-  col -= (unsigned)width;
+  col -= width;
   width += win_col_off2(wp);
-  assert(col <= INT_MAX && (int)col < INT_MAX - (width - 1));
-  return ((int)col + (width - 1)) / width + 1;
+  const int64_t lines = (col + (width - 1)) / width + 1;
+  return (lines > 0 && lines <= INT_MAX) ? (int)lines : INT_MAX;
 }
 
 /// Like plines_win(), but only reports the number of physical screen lines
