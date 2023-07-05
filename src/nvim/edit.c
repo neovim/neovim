@@ -610,7 +610,9 @@ static int insert_execute(VimState *state, int key)
     }
   }
 
-  s->c = do_digraph(s->c);
+  if (s->c != K_EVENT) {
+    s->c = do_digraph(s->c);
+  }
 
   if ((s->c == Ctrl_V || s->c == Ctrl_Q) && ctrl_x_mode_cmdline()) {
     insert_do_complete(s);
