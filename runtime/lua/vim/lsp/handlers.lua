@@ -573,22 +573,14 @@ M['window/showDocument'] = function(_, result, ctx, _)
 
   if result.external then
     -- TODO(lvimuser): ask the user for confirmation
-    local cmd
-    if vim.fn.has('win32') == 1 then
-      cmd = { 'cmd.exe', '/c', 'start', '""', uri }
-    elseif vim.fn.has('macunix') == 1 then
-      cmd = { 'open', uri }
-    else
-      cmd = { 'xdg-open', uri }
-    end
+    local ret, err = vim.ui.open(uri)
 
-    local ret = vim.fn.system(cmd)
-    if vim.v.shell_error ~= 0 then
+    if ret == nil or ret.code ~= 0 then
       return {
         success = false,
         error = {
           code = protocol.ErrorCodes.UnknownErrorCode,
-          message = ret,
+          message = ret and ret.stderr or err,
         },
       }
     end
@@ -600,7 +592,7 @@ M['window/showDocument'] = function(_, result, ctx, _)
   local client = vim.lsp.get_client_by_id(client_id)
   local client_name = client and client.name or string.format('id=%d', client_id)
   if not client then
-    err_message({ 'LSP[', client_name, '] client has shut down after sending ', ctx.method })
+    err_message('LSP[', client_name, '] client has shut down after sending ', ctx.method)
     return vim.NIL
   end
 

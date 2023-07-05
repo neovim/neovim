@@ -97,6 +97,15 @@ g8			Print the hex values of the bytes used in the
 			cursor is halfway through a multibyte character the
 			command won't move the cursor.
 
+							*gx*
+gx			Opens the current filepath or URL (decided by
+			|<cfile>|, 'isfname') at cursor using the system
+			default handler, by calling |vim.ui.open()|.
+
+							*v_gx*
+{Visual}gx		Opens the selected text using the system default
+			handler, by calling |vim.ui.open()|.
+
 						*:p* *:pr* *:print* *E749*
 :[range]p[rint] [flags]
 			Print [range] lines (default current line).

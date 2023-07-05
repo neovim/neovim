@@ -104,4 +104,54 @@ function M.input(opts, on_confirm)
   end
 end
 
+--- Opens `path` with the system default handler (macOS `open`, Windows `explorer.exe`, Linux
+--- `xdg-open`, …), or returns (but does not show) an error message on failure.
+---
+--- Expands "~/" and environment variables in filesystem paths.
+---
+--- Examples:
+--- <pre>lua
+--- vim.ui.open("https://neovim.io/")
+--- vim.ui.open("~/path/to/file")
+--- vim.ui.open("$VIMRUNTIME")
+--- </pre>
+---
+---@param path string Path or URL to open
+---
+---@return SystemCompleted|nil # Command result, or nil if not found.
+---@return string|nil # Error message on failure
+---
+---@see |vim.system()|
+function M.open(path)
+  vim.validate({
+    path = { path, 'string' },
+  })
+  local is_uri = path:match('%w+:')
+  if not is_uri then
+    path = vim.fn.expand(path)
+  end
+
+  local cmd
+
+  if vim.fn.has('mac') == 1 then
+    cmd = { 'open', path }
+  elseif vim.fn.has('win32') == 1 then
+    cmd = { 'explorer', path }
+  elseif vim.fn.executable('wslview') == 1 then
+    cmd = { 'wslview', path }
+  elseif vim.fn.executable('xdg-open') == 1 then
+    cmd = { 'xdg-open', path }
+  else
+    return nil, 'vim.ui.open: no handler found (tried: wslview, xdg-open)'
+  end
+
+  local rv = vim.system(cmd, { text = true, detach = true }):wait()
+  if rv.code ~= 0 then
+    local msg = ('vim.ui.open: command failed (%d): %s'):format(rv.code, vim.inspect(cmd))
+    return rv, msg
+  end
+
+  return rv, nil
+end
+
 return M

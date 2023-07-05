@@ -105,7 +105,10 @@ The following new APIs and features were added.
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_inlayHint
 
 • Bundled treesitter parser and queries (highlight, folds) for Markdown,
-Python, and Bash.
+  Python, and Bash.
+
+• |vim.ui.open()| opens URIs using the system default handler (macOS `open`,
+  Windows `explorer`, Linux `xdg-open`, etc.)
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
@@ -142,6 +145,10 @@ The following changes to existing APIs or features add new behavior.
   defined by the 'foldenable' option.
 
 • |:Man| now respects 'wrapmargin'
+
+• |gx| now uses |vim.ui.open()| and not netrw. To customize, you can redefine
+  `vim.ui.open` or remap `gx`. To continue using netrw (deprecated): >vim
+  :call netrw#BrowseX(expand(exists("g:netrw_gx")? g:netrw_gx : '<cfile>'), netrw#CheckIfRemote())<CR>
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
