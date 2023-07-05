@@ -36,9 +36,13 @@ local function do_open(uri)
     vim.notify(err, vim.log.levels.ERROR)
   end
 end
-vim.keymap.set({ 'n' }, 'gx', function()
-  do_open(vim.fn.expand('<cfile>'))
-end, { desc = gx_desc })
-vim.keymap.set({ 'x' }, 'gx', function()
-  do_open(get_visual_selection())
-end, { desc = gx_desc })
+if vim.fn.maparg('gx', 'n') == '' then
+  vim.keymap.set({ 'n' }, 'gx', function()
+    do_open(vim.fn.expand('<cfile>'))
+  end, { desc = gx_desc })
+end
+if vim.fn.maparg('gx', 'x') == '' then
+  vim.keymap.set({ 'x' }, 'gx', function()
+    do_open(get_visual_selection())
+  end, { desc = gx_desc })
+end
