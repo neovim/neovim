@@ -1828,6 +1828,23 @@ describe('API', function()
       feed('<C-D>')
       expect('a')  -- recognized i_0_CTRL-D
     end)
+
+    it("does not interrupt with 'digraph'", function()
+      command('set digraph')
+      feed('i,')
+      eq(2, eval('1+1'))  -- causes K_EVENT key
+      feed('<BS>')
+      eq(2, eval('1+1'))  -- causes K_EVENT key
+      feed('.')
+      expect('…')  -- digraph ",." worked
+      feed('<Esc>')
+      feed(':,')
+      eq(2, eval('1+1'))  -- causes K_EVENT key
+      feed('<BS>')
+      eq(2, eval('1+1'))  -- causes K_EVENT key
+      feed('.')
+      eq('…', funcs.getcmdline())  -- digraph ",." worked
+    end)
   end)
 
   describe('nvim_get_context', function()
