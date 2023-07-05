@@ -210,10 +210,11 @@ local keysets_defs = io.open(keysets_outputf, 'wb')
 --  so that the dispatcher can find the C functions that you are creating!
 -- ===========================================================================
 output:write([[
+#include "nvim/ex_docmd.h"
+#include "nvim/ex_getln.h"
 #include "nvim/log.h"
 #include "nvim/map.h"
 #include "nvim/msgpack_rpc/helpers.h"
-#include "nvim/vim.h"
 
 #include "nvim/api/autocmd.h"
 #include "nvim/api/buffer.h"
@@ -389,8 +390,13 @@ for i = 1, #functions do
       args[#args + 1] = converted
     end
 
-    if fn.check_textlock then
-      output:write('\n  if (textlock != 0) {')
+    if fn.textlock then
+      output:write('\n  if (text_locked()) {')
+      output:write('\n    api_set_error(error, kErrorTypeException, "%s", get_text_locked_msg());')
+      output:write('\n    goto cleanup;')
+      output:write('\n  }\n')
+    elseif fn.textlock_allow_cmdwin then
+      output:write('\n  if (textlock != 0 || expr_map_locked()) {')
       output:write('\n    api_set_error(error, kErrorTypeException, "%s", e_textlock);')
       output:write('\n    goto cleanup;')
       output:write('\n  }\n')
@@ -525,6 +531,8 @@ output:write([[
 #include <lualib.h>
 #include <lauxlib.h>
 
+#include "nvim/ex_docmd.h"
+#include "nvim/ex_getln.h"
 #include "nvim/func_attr.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
@@ -565,9 +573,16 @@ local function process_function(fn)
     ]], fn.name))
   end
 
-  if fn.check_textlock then
+  if fn.textlock then
     write_shifted_output(output, [[
-    if (textlock != 0) {
+    if (text_locked()) {
+      api_set_error(&err, kErrorTypeException, "%s", get_text_locked_msg());
+      goto exit_0;
+    }
+    ]])
+  elseif fn.textlock_allow_cmdwin then
+    write_shifted_output(output, [[
+    if (textlock != 0 || expr_map_locked()) {
       api_set_error(&err, kErrorTypeException, "%s", e_textlock);
       goto exit_0;
     }

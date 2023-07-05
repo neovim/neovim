@@ -310,7 +310,8 @@ param_exclude = (
 # Annotations are displayed as line items after API function descriptions.
 annotation_map = {
     'FUNC_API_FAST': '|api-fast|',
-    'FUNC_API_CHECK_TEXTLOCK': 'not allowed when |textlock| is active',
+    'FUNC_API_TEXTLOCK': 'not allowed when |textlock| is active or in the |cmdwin|',
+    'FUNC_API_TEXTLOCK_ALLOW_CMDWIN': 'not allowed when |textlock| is active',
     'FUNC_API_REMOTE_ONLY': '|RPC| only',
     'FUNC_API_LUA_ONLY': 'Lua |vim.api| only',
 }

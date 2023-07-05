@@ -8385,7 +8385,10 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (check_secure()) {
     return;
   }
-
+  if (text_locked()) {
+    text_locked_msg();
+    return;
+  }
   if (curbuf->b_changed) {
     emsg(_("Can only call this function in an unmodified buffer"));
     return;
