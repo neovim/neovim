@@ -1408,26 +1408,7 @@ deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
       • {backtrace}    boolean|nil Prints backtrace. Defaults to true.
 
     Return: ~
-        Deprecated message, or nil if no message was shown.
-
-                                                  *vim.get_visual_selection()*
-get_visual_selection({list}, {append_empty})
-    Gets the content of the visual selection.
-
-    The result is either a string or, if {list} is `true`, a list of strings.
-    If not in any |visual-mode|, `nil` is returned.
-
-    Parameters: ~
-      • {list}          boolean|nil Return a list of strings instead of a
-                        string. See |getreg()|. Defaults to `false`.
-      • {append_empty}  boolean|nil Append an empty string to the result when
-                        in |linewise-visual| mode and {list} is `true`. This
-                        will preserve the trailing newline of the selection
-                        when the result is concatenated with `"\n"`. Defaults
-                        to `false`.
-
-    Return: ~
-        string|table
+        (string|nil) # Deprecated message, or nil if no message was shown.
 
 inspect({object}, {options})                                   *vim.inspect()*
     Gets a human-readable representation of the given object.

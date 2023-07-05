@@ -114,15 +114,14 @@ DEFAULT MAPPINGS
 							*default-mappings*
 Nvim creates the following default mappings at |startup|. You can disable any
 of these in your config by simply removing the mapping, e.g. ":unmap Y".
->vim
-	nnoremap Y y$
-	nnoremap <C-L> <Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>
-	inoremap <C-U> <C-G>u<C-U>
-	inoremap <C-W> <C-G>u<C-W>
-	nnoremap & :&&<CR>
-<
-Default mappings composed of Lua code are not listed above. Use ":map" to see
-the |map-listing|.
+
+- |Y-default|
+- |i_CTRL-U-default|
+- |i_CTRL-W-default|
+- |CTRL-L-default|
+- |&-default|
+- |v_#-default|
+- |v_star-default|
 
 DEFAULT AUTOCOMMANDS
 							*default-autocmds*
