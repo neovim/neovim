@@ -94,8 +94,8 @@ int plines_win_nofill(win_T *wp, linenr_T lnum, bool winheight)
   return lines;
 }
 
-/// @Return number of window lines physical line "lnum" will occupy in window
-/// "wp".  Does not care about folding, 'wrap' or 'diff'.
+/// Get number of window lines physical line "lnum" will occupy in window "wp".
+/// Does not care about folding, 'wrap' or filler lines.
 int plines_win_nofold(win_T *wp, linenr_T lnum)
 {
   char *s = ml_get_buf(wp->w_buffer, lnum, false);
@@ -179,10 +179,12 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   return lines;
 }
 
-/// Get the number of screen lines lnum takes up. This takes care of
-/// both folds and topfill, and limits to the current window height.
+/// Get the number of screen lines buffer line "lnum" will take in window "wp".
+/// This takes care of both folds and topfill.
 ///
-/// @param[in]  wp       window line is in
+/// XXX: Because of topfill, this only makes sense when lnum >= wp->w_topline.
+///
+/// @param[in]  wp       window the line is in
 /// @param[in]  lnum     line number
 /// @param[out] nextp    if not NULL, the line after a fold
 /// @param[out] foldedp  if not NULL, whether lnum is on a fold
@@ -201,6 +203,16 @@ int plines_win_full(win_T *wp, linenr_T lnum, linenr_T *const nextp, bool *const
           (lnum == wp->w_topline ? wp->w_topfill : win_get_fill(wp, lnum)));
 }
 
+/// Get the number of screen lines a range of buffer lines will take in window "wp".
+/// This takes care of both folds and topfill.
+///
+/// XXX: Because of topfill, this only makes sense when first >= wp->w_topline.
+/// XXX: This limits the size of each line to current window height.
+///
+/// @param first  first line number
+/// @param last   last line number
+///
+/// @see win_text_height
 int plines_m_win(win_T *wp, linenr_T first, linenr_T last)
 {
   int count = 0;
@@ -282,7 +294,7 @@ unsigned win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T len)
 }
 
 /// Return the number of cells line "lnum" of window "wp" will take on the
-/// screen, taking into account the size of a tab and text properties.
+/// screen, taking into account the size of a tab and inline virtual text.
 unsigned linetabsize(win_T *wp, linenr_T lnum)
 {
   return win_linetabsize(wp, lnum, ml_get_buf(wp->w_buffer, lnum, false), (colnr_T)MAXCOL);
@@ -294,7 +306,7 @@ void win_linetabsize_cts(chartabsize_T *cts, colnr_T len)
        MB_PTR_ADV(cts->cts_ptr)) {
     cts->cts_vcol += win_lbr_chartabsize(cts, NULL);
   }
-  // check for a virtual text after the end of the line
+  // check for inline virtual text after the end of the line
   if (len == MAXCOL && cts->cts_has_virt_text && *cts->cts_ptr == NUL) {
     (void)win_lbr_chartabsize(cts, NULL);
     cts->cts_vcol += cts->cts_cur_text_width_left + cts->cts_cur_text_width_right;
@@ -333,9 +345,7 @@ void clear_chartabsize_arg(chartabsize_T *cts)
 
 /// like win_chartabsize(), but also check for line breaks on the screen
 ///
-/// @param line
-/// @param s
-/// @param col
+/// @param cts
 ///
 /// @return The number of characters taken up on the screen.
 int lbr_chartabsize(chartabsize_T *cts)
@@ -352,9 +362,7 @@ int lbr_chartabsize(chartabsize_T *cts)
 
 /// Call lbr_chartabsize() and advance the pointer.
 ///
-/// @param line
-/// @param s
-/// @param col
+/// @param cts
 ///
 /// @return The number of characters take up on the screen.
 int lbr_chartabsize_adv(chartabsize_T *cts)
@@ -399,7 +407,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
     return win_chartabsize(wp, s, vcol);
   }
 
-  // First get normal size, without 'linebreak' or virtual text
+  // First get normal size, without 'linebreak' or inline virtual text
   int size = win_chartabsize(wp, s, vcol);
 
   if (cts->cts_has_virt_text) {
@@ -561,9 +569,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
 /// 'wrap' is on.  This means we need to check for a double-byte character that
 /// doesn't fit at the end of the screen line.
 ///
-/// @param wp
-/// @param s
-/// @param col
+/// @param cts
 /// @param headp
 ///
 /// @return The number of characters take up on the screen.
@@ -592,8 +598,18 @@ static int win_nolbr_chartabsize(chartabsize_T *cts, int *headp)
   return n;
 }
 
-int64_t win_get_text_height(win_T *const wp, const linenr_T first, const linenr_T last,
-                            const int64_t start_vcol, const int64_t end_vcol)
+/// Get the number of screen lines a range of text will take in window "wp".
+///
+/// @param start_lnum  first line number
+/// @param start_vcol  >= 0: virtual column on "start_lnum" where counting starts,
+///                          rounded down to full screen lines
+///                    < 0:  count a full "start_lnum", including filler lines above
+/// @param end_lnum    last line number
+/// @param end_vcol    >= 0: virtual column on "end_lnum" where counting ends,
+///                          rounded up to full screen lines
+///                    < 0:  count a full "end_lnum", not including fillers lines below
+int64_t win_text_height(win_T *const wp, const linenr_T start_lnum, const int64_t start_vcol,
+                        const linenr_T end_lnum, const int64_t end_vcol)
 {
   int width1 = 0;
   int width2 = 0;
@@ -606,7 +622,7 @@ int64_t win_get_text_height(win_T *const wp, const linenr_T first, const linenr_
 
   int64_t size = 0;
   int64_t height_nofill = 0;
-  linenr_T lnum = first;
+  linenr_T lnum = start_lnum;
 
   if (start_vcol >= 0) {
     linenr_T lnum_next = lnum;
@@ -620,7 +636,7 @@ int64_t win_get_text_height(win_T *const wp, const linenr_T first, const linenr_
     lnum = lnum_next + 1;
   }
 
-  while (lnum <= last) {
+  while (lnum <= end_lnum) {
     linenr_T lnum_next = lnum;
     const bool folded = hasFoldingWin(wp, lnum, &lnum, &lnum_next, true, NULL);
     height_nofill = folded ? 1 : plines_win_nofill(wp, lnum, false);
