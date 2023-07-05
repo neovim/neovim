@@ -3808,7 +3808,6 @@ describe('ext_multigrid', function()
     ]], win_viewport={
       [2] = {win = {id = 1000}, topline = 30586, botline = 30592, curline = 30591, curcol = 0, linecount = 30592, sum_scroll_delta = 30588};
     }}
-    command('autocmd CursorMoved * ++once call line("w$")')  -- FIXME: this should not be needed
     feed('gg')
     screen:expect{grid=[[
     ## grid 1

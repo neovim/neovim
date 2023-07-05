@@ -1029,7 +1029,9 @@ void ui_ext_win_position(win_T *wp, bool validate)
 
 void ui_ext_win_viewport(win_T *wp)
 {
-  if ((wp == curwin || ui_has(kUIMultigrid)) && wp->w_viewport_invalid) {
+  // NOTE: The win_viewport command is delayed until the next flush when there are pending updates.
+  // This ensures that the updates and the viewport are sent together.
+  if ((wp == curwin || ui_has(kUIMultigrid)) && wp->w_viewport_invalid && wp->w_redr_type == 0) {
     const linenr_T line_count = wp->w_buffer->b_ml.ml_line_count;
     // Avoid ml_get errors when producing "scroll_delta".
     const linenr_T cur_topline = MIN(wp->w_topline, line_count);
