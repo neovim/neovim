@@ -2107,6 +2107,49 @@ bbbbbbb]])
       ]]}
   end)
 
+  it('inside highlight range of another extmark', function()
+    insert('foo foo foo foo\nfoo foo foo foo')
+    meths.buf_set_extmark(0, ns, 0, 8, { virt_text = { { 'AAA', 'Special' } }, virt_text_pos = 'inline' })
+    meths.buf_set_extmark(0, ns, 0, 8, { virt_text = { { 'BBB', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'combine' })
+    meths.buf_set_extmark(0, ns, 1, 8, { virt_text = { { 'CCC', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'combine' })
+    meths.buf_set_extmark(0, ns, 1, 8, { virt_text = { { 'DDD', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'replace' })
+    meths.buf_set_extmark(0, ns, 0, 4, { end_col = 11, hl_group = 'Search' })
+    meths.buf_set_extmark(0, ns, 1, 4, { end_col = 11, hl_group = 'Search' })
+    screen:expect{grid=[[
+      foo {12:foo }{10:AAA}{19:BBB}{12:foo} foo                             |
+      foo {12:foo }{19:CCC}{10:DDD}{12:foo} fo^o                             |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+  end)
+
+  it('inside highlight range of syntax', function()
+    insert('foo foo foo foo\nfoo foo foo foo')
+    meths.buf_set_extmark(0, ns, 0, 8, { virt_text = { { 'AAA', 'Special' } }, virt_text_pos = 'inline' })
+    meths.buf_set_extmark(0, ns, 0, 8, { virt_text = { { 'BBB', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'combine' })
+    meths.buf_set_extmark(0, ns, 1, 8, { virt_text = { { 'CCC', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'combine' })
+    meths.buf_set_extmark(0, ns, 1, 8, { virt_text = { { 'DDD', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'replace' })
+    command([[syntax match Search 'foo \zsfoo foo\ze foo']])
+    screen:expect{grid=[[
+      foo {12:foo }{10:AAA}{19:BBB}{12:foo} foo                             |
+      foo {12:foo }{19:CCC}{10:DDD}{12:foo} fo^o                             |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+  end)
+
   it('cursor position is correct when inserting around a virtual text with right gravity set to false', function()
     insert('foo foo foo foo')
     meths.buf_set_extmark(0, ns, 0, 8,
