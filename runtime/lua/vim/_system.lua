@@ -287,6 +287,7 @@ function M.run(cmd, opts, on_exit)
         end
       end
       check:stop()
+      check:close()
 
       state.done = true
       state.result = {
