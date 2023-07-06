@@ -356,6 +356,64 @@ describe('statuscolumn', function()
       {2: }{1:  │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaa          |
                                                            |
     ]])
+    -- Also test fold and sign column when 'cpoptions' includes "n"
+    command('set cpoptions+=n')
+    feed('Hgjg0')
+    screen:expect([[
+      {2: }{4: 0│}{1:>>}{2:                }{4: }{5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2:                   }{5:^aaaaaaaaaaaaaaaaaaaa              }|
+      {2: }{1: 3│}{0:>!}{2:                }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
+      {2: }{1: 2│>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
+      {2: }{1: 1│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
+      {2:+}{1: 4│}{2:                  }{1: }{3:+--  1 line: aaaaaaaaaaaaaaaaa}|
+      {2: }{1: 1│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
+      {2: }{1: 2│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
+                                                           |
+    ]])
+    command('set breakindent')
+    feed('J2gjg0')
+    screen:expect([[
+      {2: }{4: 0│}{1:>>}{2:                }{4: }{5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2:                   }    {5:aaaaaaaaaaaaaaaaaaaa aaaaaaaaa}|
+      {2:                   }    {5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2:                   }    {5:^aaaaaaaaaaa                   }|
+      {2: }{1: 1│>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }    aaaaaaaaaaaaaaaaaaaa          |
+      {2: }{1: 2│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }    aaaaaaaaaaaaaaaaaaaa          |
+      {2:+}{1: 3│}{2:                  }{1: }{3:+--  1 line: aaaaaaaaaaaaaaaaa}|
+      {2: }{1: 4│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }    aaaaaaaaaaaaaaaaaaaa          |
+      {2: }{1: 5│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }    aaaaaaaaaaaaaaaaaaaa          |
+                                                           |
+    ]])
+    command('set nobreakindent')
+    feed('$g0')
+    screen:expect([[
+      {2: }{4: 0│}{1:>>}{2:                }{4: }{5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2:                   }{5:aaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaa}|
+      {2:                   }{5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2:                   }{5:^aaa                               }|
+      {2: }{1: 1│>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
+      {2: }{1: 2│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
+      {2:+}{1: 3│}{2:                  }{1: }{3:+--  1 line: aaaaaaaaaaaaaaaaa}|
+      {2: }{1: 4│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
+      {2: }{1: 5│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
+                                                           |
+    ]])
+    command('silent undo')
+    feed('8gg')
+    command('set cpoptions-=n')
     -- Status column is re-evaluated for virt_lines, buffer line, and wrapped line
     exec_lua([[
       vim.api.nvim_buf_set_extmark(0, ns, 5, 0, {
