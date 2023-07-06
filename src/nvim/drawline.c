@@ -1114,10 +1114,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
   bool area_highlighting = false;       // Visual or incsearch highlighting in this line
   int vi_attr = 0;                      // attributes for Visual and incsearch highlighting
   int area_attr = 0;                    // attributes desired by highlighting
-  int saved_area_attr = 0;              // idem for area_attr
   int search_attr = 0;                  // attributes desired by 'hlsearch'
-  int saved_search_attr = 0;            // search_attr to be used when n_extra
-                                        // goes to zero
   int vcol_save_attr = 0;               // saved attr for 'cursorcolumn'
   int decor_attr = 0;                   // attributes desired by syntax and extmarks
   bool has_syntax = false;              // this buffer has syntax highl.
@@ -1150,8 +1147,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
   int prev_c1 = 0;                      // first composing char for prev_c
 
   bool search_attr_from_match = false;  // if search_attr is from :match
-  bool saved_search_attr_from_match = false;  // if search_attr is from :match
   bool has_decor = false;               // this buffer has decoration
+
+  int saved_search_attr = 0;            // search_attr to be used when n_extra goes to zero
+  int saved_area_attr = 0;              // idem for area_attr
+  int saved_decor_attr = 0;             // idem for decor_attr
+  bool saved_search_attr_from_match = false;
+
   int win_col_offset = 0;               // offset for window columns
 
   char buf_fold[FOLD_TEXT_LEN];         // Hold value returned by get_foldtext
@@ -1836,11 +1838,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
             // TODO(bfredl): this is ugly as fuck. look if we can do this some other way.
             saved_search_attr = search_attr;
             saved_area_attr = area_attr;
+            saved_decor_attr = decor_attr;
             saved_search_attr_from_match = search_attr_from_match;
-            search_attr_from_match = false;
             search_attr = 0;
             area_attr = 0;
-            extmark_attr = 0;
+            decor_attr = 0;
+            search_attr_from_match = false;
             n_skip = 0;
           }
         }
@@ -2013,6 +2016,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           }
           if (area_attr == 0 && *ptr != NUL) {
             area_attr = saved_area_attr;
+          }
+          if (decor_attr == 0) {
+            decor_attr = saved_decor_attr;
           }
 
           if (wlv.extra_for_extmark) {
