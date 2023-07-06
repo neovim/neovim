@@ -1126,8 +1126,9 @@ completion({context})                               *vim.lsp.buf.completion()*
 
 declaration({options})                             *vim.lsp.buf.declaration()*
     Jumps to the declaration of the symbol under the cursor.
-    Note:
-        Many servers do not implement this method. Generally, see
+
+    Note: ~
+      • Many servers do not implement this method. Generally, see
         |vim.lsp.buf.definition()| instead.
 
     Parameters: ~

@@ -1475,14 +1475,10 @@ on_key({fn}, {ns_id})                                           *vim.on_key()*
     The Nvim command-line option |-w| is related but does not support
     callbacks and cannot be toggled dynamically.
 
-    Note:
-        {fn} will be removed on error.
-
-    Note:
-        {fn} will not be cleared by |nvim_buf_clear_namespace()|
-
-    Note:
-        {fn} will receive the keys after mappings have been evaluated
+    Note: ~
+      • {fn} will be removed on error.
+      • {fn} will not be cleared by |nvim_buf_clear_namespace()|
+      • {fn} will receive the keys after mappings have been evaluated
 
     Parameters: ~
       • {fn}     fun(key: string) Function invoked on every key press.
@@ -2912,8 +2908,8 @@ cmp({v1}, {v2})                                            *vim.version.cmp()*
        end
 <
 
-    Note:
-        Per semver, build metadata is ignored when comparing two
+    Note: ~
+      • Per semver, build metadata is ignored when comparing two
         otherwise-equivalent versions.
 
     Parameters: ~

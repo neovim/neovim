@@ -1958,7 +1958,7 @@ Object nvim__unpack(String str, Error *err)
 
 /// Deletes an uppercase/file named mark. See |mark-motions|.
 ///
-/// @note fails with error if a lowercase or buffer local named mark is used.
+/// @note Lowercase name (or other buffer-local mark) is an error.
 /// @param name       Mark name
 /// @return true if the mark was deleted, else false.
 /// @see |nvim_buf_del_mark()|
