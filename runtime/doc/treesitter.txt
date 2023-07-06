@@ -617,7 +617,7 @@ get_node_range({node_or_range})              *vim.treesitter.get_node_range()*
     Parameters: ~
       • {node_or_range}  (|TSNode| | table) Node or table of positions
 
-    Return: ~
+    Return (multiple): ~
         (integer) start_row
         (integer) start_col
         (integer) end_row

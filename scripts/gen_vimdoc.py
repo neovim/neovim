@@ -745,7 +745,7 @@ def fmt_node_as_vimhelp(parent, width=text_width - indentation, indent='',
             chunks.append('\nParameters: ~')
             chunks.append(fmt_param_doc(para['params']))
         if len(para['return']) > 0:
-            chunks.append('\nReturn: ~')
+            chunks.append('\nReturn (multiple): ~' if len(para['return']) > 1 else '\nReturn: ~')
             for s in para['return']:
                 chunks.append(s)
         if len(para['seealso']) > 0:

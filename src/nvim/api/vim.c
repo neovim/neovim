@@ -87,6 +87,9 @@ Integer nvim_get_hl_id_by_name(String name)
 
 /// Gets all or specific highlight groups in a namespace.
 ///
+/// @note When the `link` attribute is defined in the highlight definition
+///       map, other attributes will not be taking effect (see |:hi-link|).
+///
 /// @param ns_id Get highlight groups for namespace ns_id |nvim_get_namespaces()|.
 ///              Use 0 to get global highlight groups |:highlight|.
 /// @param opts  Options dict:
@@ -97,9 +100,6 @@ Integer nvim_get_hl_id_by_name(String name)
 /// @param[out] err Error details, if any.
 /// @return Highlight groups as a map from group name to a highlight definition map as in |nvim_set_hl()|,
 ///                   or only a single highlight definition map if requested by name or id.
-///
-/// @note When the `link` attribute is defined in the highlight definition
-///       map, other attributes will not be taking effect (see |:hi-link|).
 Dictionary nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(11)
 {

@@ -2364,7 +2364,7 @@ open({path})                                                   *vim.ui.open()*
     Parameters: ~
       • {path}  (string) Path or URL to open
 
-    Return: ~
+    Return (multiple): ~
         SystemCompleted|nil # Command result, or nil if not found.
         (string|nil) # Error message on failure
 
@@ -2567,7 +2567,7 @@ match({args})                                           *vim.filetype.match()*
                   contents to use for matching. Can be used with {filename}.
                   Mutually exclusive with {buf}.
 
-    Return: ~
+    Return (multiple): ~
         (string|nil) If a match was found, the matched filetype.
         (function|nil) A function that modifies buffer state when called (for
         example, to set some filetype specific buffer variables). The function
