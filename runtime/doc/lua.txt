@@ -1408,7 +1408,7 @@ deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
       • {backtrace}    boolean|nil Prints backtrace. Defaults to true.
 
     Return: ~
-        Deprecated message, or nil if no message was shown.
+        (string|nil) # Deprecated message, or nil if no message was shown.
 
 inspect({object}, {options})                                   *vim.inspect()*
     Gets a human-readable representation of the given object.

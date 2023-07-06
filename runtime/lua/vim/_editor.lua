@@ -435,7 +435,7 @@ vim.cmd = setmetatable({}, {
 do
   local validate = vim.validate
 
-  --@private
+  ---@private
   local function make_dict_accessor(scope, handle)
     validate({
       scope = { scope, 's' },
@@ -985,7 +985,7 @@ end
 ---                              Defaults to "Nvim".
 ---@param backtrace   boolean|nil Prints backtrace. Defaults to true.
 ---
----@returns Deprecated message, or nil if no message was shown.
+---@return string|nil # Deprecated message, or nil if no message was shown.
 function vim.deprecate(name, alternative, version, plugin, backtrace)
   local msg = ('%s is deprecated'):format(name)
   plugin = plugin or 'Nvim'
@@ -1000,9 +1000,7 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
   if displayed and backtrace ~= false then
     vim.notify(debug.traceback('', 2):sub(2), vim.log.levels.WARN)
   end
-  if displayed then
-    return msg
-  end
+  return displayed and msg or nil
 end
 
 --- Create builtin mappings (incl. menus).
@@ -1010,9 +1008,38 @@ end
 function vim._init_default_mappings()
   -- mappings
 
-  --@private
+  ---@private
+  local function region_chunks(region)
+    local chunks = {}
+    local maxcol = vim.v.maxcol
+    for line, cols in vim.spairs(region) do
+      local endcol = cols[2] == maxcol and -1 or cols[2]
+      local chunk = vim.api.nvim_buf_get_text(0, line, cols[1], line, endcol, {})[1]
+      table.insert(chunks, chunk)
+    end
+    return chunks
+  end
+
+  ---@private
+  local function _visual_search(cmd)
+    assert(cmd == '/' or cmd == '?')
+    vim.api.nvim_feedkeys('\27', 'nx', true) -- Escape visual mode.
+    local region = vim.region(0, "'<", "'>", vim.fn.visualmode(), vim.o.selection == 'inclusive')
+    local chunks = region_chunks(region)
+    local esc_chunks = vim
+      .iter(chunks)
+      :map(function(v)
+        return vim.fn.escape(v, [[/\]])
+      end)
+      :totable()
+    local esc_pat = table.concat(esc_chunks, [[\n]])
+    local search_cmd = ([[%s\V%s%s]]):format(cmd, esc_pat, '\n')
+    vim.api.nvim_feedkeys(search_cmd, 'nx', true)
+  end
+
+  ---@private
   local function map(mode, lhs, rhs)
-    vim.api.nvim_set_keymap(mode, lhs, rhs, { noremap = true, desc = 'Nvim builtin' })
+    vim.keymap.set(mode, lhs, rhs, { desc = 'Nvim builtin' })
   end
 
   map('n', 'Y', 'y$')
@@ -1020,8 +1047,12 @@ function vim._init_default_mappings()
   map('n', '<C-L>', '<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>')
   map('i', '<C-U>', '<C-G>u<C-U>')
   map('i', '<C-W>', '<C-G>u<C-W>')
-  map('x', '*', 'y/\\V<C-R>"<CR>')
-  map('x', '#', 'y?\\V<C-R>"<CR>')
+  vim.keymap.set('x', '*', function()
+    _visual_search('/')
+  end, { desc = 'Nvim builtin', silent = true })
+  vim.keymap.set('x', '#', function()
+    _visual_search('?')
+  end, { desc = 'Nvim builtin', silent = true })
   -- Use : instead of <Cmd> so that ranges are supported. #19365
   map('n', '&', ':&&<CR>')
 
