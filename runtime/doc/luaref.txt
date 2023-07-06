@@ -1528,7 +1528,7 @@ Whenever Lua calls C, the called function gets a new stack, which is
 independent of previous stacks and of stacks of C functions that are still
 active. This stack initially contains any arguments to the C function and it
 is where the C function pushes its results to be returned to the caller (see
-|lua_CFunction()|).
+|lua_CFunction|).
 
                                                              *luaref-stackindex*
 For convenience, most query operations in the API do not follow a strict stack
@@ -1638,7 +1638,7 @@ Inside a C function you can raise an error by calling `lua_error`  (see
 
 Here we list all functions and types from the C API in alphabetical order.
 
-lua_Alloc                                                          *lua_Alloc()*
+lua_Alloc                                                            *lua_Alloc*
 >c
     typedef void * (*lua_Alloc) (void *ud,
                                  void *ptr,
@@ -1736,7 +1736,7 @@ lua_call                                                            *lua_call()*
         to its original configuration. This is considered good programming
         practice.
 
-lua_CFunction                             *luaref-cfunction* *lua_CFunction()*
+lua_CFunction                                   *luaref-cfunction* *lua_CFunction*
 >c
     typedef int (*lua_CFunction) (lua_State *L);
 <
@@ -1836,7 +1836,7 @@ lua_dump                                                            *lua_dump()*
         of the stack and produces a binary chunk that, if loaded again,
         results in a function equivalent to the one dumped. As it produces
         parts of the chunk, `lua_dump` calls function `writer` (see
-        |lua_Writer()|) with the given `data` to write them.
+        |lua_Writer|) with the given `data` to write them.
 
         The value returned is the error code returned by the last call to the
         writer; 0 means no errors.
@@ -1963,7 +1963,7 @@ lua_insert                                                        *lua_insert()*
         elements above this index to open space. Cannot be called with a
         pseudo-index, because a pseudo-index is not an actual stack position.
 
-lua_Integer                                                      *lua_Integer()*
+lua_Integer                                                        *lua_Integer*
 >c
     typedef ptrdiff_t lua_Integer;
 <
@@ -2072,7 +2072,7 @@ lua_load                                                            *lua_load()*
         and loads it accordingly (see program `luac`).
 
         The `lua_load` function uses a user-supplied `reader` function to read
-        the chunk (see |lua_Reader()|). The `data` argument is an opaque
+        the chunk (see |lua_Reader|). The `data` argument is an opaque
         value passed to the reader function.
 
         The `chunkname` argument gives a name to the chunk, which is used for
@@ -2101,7 +2101,7 @@ lua_newthread                                                  *lua_newthread()*
     lua_State *lua_newthread (lua_State *L);
 <
         Creates a new thread, pushes it on the stack, and returns a pointer to
-        a `lua_State`  (see |lua_State()|) that represents this new
+        a `lua_State`  (see |lua_State|) that represents this new
         thread. The new state returned by this function shares with the
         original state all global objects (such as tables), but has an
         independent execution stack.
@@ -2155,7 +2155,7 @@ lua_next                                                            *lua_next()*
         key is actually a string. Recall that `lua_tolstring` `changes` the
         value at the given index; this confuses the next call to `lua_next`.
 
-lua_Number                                                        *lua_Number()*
+lua_Number                                                          *lua_Number*
 >c
     typedef double lua_Number;
 <
@@ -2247,7 +2247,7 @@ lua_pushcfunction                                          *lua_pushcfunction()*
 
         Any function to be registered in Lua must follow the correct protocol
         to receive its parameters and return its results (see
-        |lua_CFunction()|).
+        |lua_CFunction|).
 
         `lua_pushcfunction` is defined as a macro:
 >c
@@ -2386,7 +2386,7 @@ lua_rawseti                                                      *lua_rawseti()*
         This function pops the value from the stack. The assignment is raw;
         that is, it does not invoke metamethods.
 
-lua_Reader                                                        *lua_Reader()*
+lua_Reader                                                          *lua_Reader*
 >c
     typedef const char * (*lua_Reader) (lua_State *L,
                                         void *data,
@@ -2516,7 +2516,7 @@ lua_settop                                                        *lua_settop()*
         elements are filled with `nil`. If `index` is 0, then all stack
         elements are removed.
 
-lua_State                                                          *lua_State()*
+lua_State                                                            *lua_State*
 >c
     typedef struct lua_State lua_State;
 <
@@ -2561,7 +2561,7 @@ lua_tointeger                                                  *lua_tointeger()*
     lua_Integer lua_tointeger (lua_State *L, int idx);
 <
         Converts the Lua value at the given acceptable index to the signed
-        integral type `lua_Integer` (see |lua_Integer()|). The Lua value
+        integral type `lua_Integer` (see |lua_Integer|). The Lua value
         must be a number or a string convertible to a number (see
         |luaref-langCoercion|); otherwise, `lua_tointeger` returns 0.
 
@@ -2592,7 +2592,7 @@ lua_tonumber                                                    *lua_tonumber()*
     lua_Number lua_tonumber (lua_State *L, int index);
 <
         Converts the Lua value at the given acceptable index to the C type
-        `lua_Number` (see |lua_Number()|). The Lua value must be a number
+        `lua_Number` (see |lua_Number|). The Lua value must be a number
         or a string convertible to a number (see |luaref-langCoercion|);
         otherwise, `lua_tonumber` returns 0.
 
@@ -2620,7 +2620,7 @@ lua_tothread                                                    *lua_tothread()*
     lua_State *lua_tothread (lua_State *L, int index);
 <
         Converts the value at the given acceptable index to a Lua thread
-        (represented as `lua_State*` |lua_State()|). This value must be a
+        (represented as `lua_State*` |lua_State|). This value must be a
         thread; otherwise, the function returns `NULL`.
 
 lua_touserdata                                                *lua_touserdata()*
@@ -2649,7 +2649,7 @@ lua_typename                                                    *lua_typename()*
         Returns the name of the type encoded by the value `tp`, which must be
         one the values returned by `lua_type`.
 
-lua_Writer                                                        *lua_Writer()*
+lua_Writer                                                          *lua_Writer*
 >c
     typedef int (*lua_Writer) (lua_State *L,
                                const void* p,
@@ -2713,7 +2713,7 @@ interface by means of functions and hooks. This interface allows the
 construction of different kinds of debuggers, profilers, and other tools that
 need "inside information" from the interpreter.
 
-lua_Debug                                                          *lua_Debug()*
+lua_Debug                                                            *lua_Debug*
 
 >c
     typedef struct lua_Debug {
@@ -2737,7 +2737,7 @@ function. `lua_getstack` (see |lua_getstack()|) fills only the private part
 of this structure, for later use. To fill the other fields of `lua_Debug` with
 useful information, call `lua_getinfo` (see |lua_getinfo()|).
 
-The fields of `lua_Debug`  have the following meaning:
+The fields of `lua_Debug` have the following meaning:
 
 - `source`             If the function was defined in a string, then `source` is
                      that string. If the function was defined in a file, then
@@ -2794,7 +2794,7 @@ lua_getinfo                                                      *lua_getinfo()*
         To get information about a function invocation, the parameter `ar`
         must be a valid activation record that was filled by a previous call
         to `lua_getstack` (see |lua_getstack()|) or given as argument to
-        a hook (see |lua_Hook()|).
+        a hook (see |lua_Hook|).
 
         To get information about a function you push it onto the stack and
         start the `what` string with the character `>`. (In that case,
@@ -2832,7 +2832,7 @@ lua_getlocal                                                    *lua_getlocal()*
         Gets information about a local variable of a given activation record.
         The parameter `ar` must be a valid activation record that was filled
         by a previous call to `lua_getstack` (see |lua_getstack()|) or
-        given as argument to a hook (see |lua_Hook()|). The index `n`
+        given as argument to a hook (see |lua_Hook|). The index `n`
         selects which local variable to inspect (1 is the first parameter or
         active local variable, and so on, until the last active local
         variable). `lua_getlocal` pushes the variable's value onto the stack
@@ -2851,7 +2851,7 @@ lua_getstack                                                    *lua_getstack()*
 <
         Gets information about the interpreter runtime stack.
 
-        This function fills parts of a `lua_Debug` (see |lua_Debug()|)
+        This function fills parts of a `lua_Debug` (see |lua_Debug|)
         structure with an identification of the `activation record` of the
         function executing at a given level. Level 0 is the current running
         function, whereas level `n+1` is the function that has called level
@@ -2874,7 +2874,7 @@ lua_getupvalue                                                *lua_getupvalue()*
         number of upvalues. For C functions, this function uses the empty
         string `""` as a name for all upvalues.
 
-lua_Hook                                                            *lua_Hook()*
+lua_Hook                                                              *lua_Hook*
 >c
     typedef void (*lua_Hook) (lua_State *L, lua_Debug *ar);
 <
@@ -3005,20 +3005,20 @@ luaL_addchar                                                    *luaL_addchar()*
 >c
     void luaL_addchar (luaL_Buffer *B, char c);
 <
-        Adds the character `c` to the buffer `B` (see |luaL_Buffer()|).
+        Adds the character `c` to the buffer `B` (see |luaL_Buffer|).
 
 luaL_addlstring                                              *luaL_addlstring()*
 >c
     void luaL_addlstring (luaL_Buffer *B, const char *s, size_t l);
 <
         Adds the string pointed to by `s` with length `l` to the buffer `B`
-        (see |luaL_Buffer()|). The string may contain embedded zeros.
+        (see |luaL_Buffer|). The string may contain embedded zeros.
 
 luaL_addsize                                                    *luaL_addsize()*
 >c
     void luaL_addsize (luaL_Buffer *B, size_t n);
 <
-        Adds to the buffer `B` (see |luaL_Buffer()|) a string of length
+        Adds to the buffer `B` (see |luaL_Buffer|) a string of length
         `n` previously copied to the buffer area (see
         |luaL_prepbuffer()|).
 
@@ -3027,14 +3027,14 @@ luaL_addstring                                                *luaL_addstring()*
     void luaL_addstring (luaL_Buffer *B, const char *s);
 <
         Adds the zero-terminated string pointed to by `s` to the buffer `B`
-        (see |luaL_Buffer()|). The string may not contain embedded zeros.
+        (see |luaL_Buffer|). The string may not contain embedded zeros.
 
 luaL_addvalue                                                  *luaL_addvalue()*
 >c
     void luaL_addvalue (luaL_Buffer *B);
 <
         Adds the value at the top of the stack to the buffer `B` (see
-        |luaL_Buffer()|). Pops the value.
+        |luaL_Buffer|). Pops the value.
 
         This is the only function on string buffers that can (and must) be
         called with an extra element on the stack, which is the value to be
@@ -3065,7 +3065,7 @@ luaL_argerror                                                  *luaL_argerror()*
         This function never returns, but it is an idiom to use it in C
         functions as `return luaL_argerror(` `args` `)`.
 
-luaL_Buffer                                                      *luaL_Buffer()*
+luaL_Buffer                                                        *luaL_Buffer*
 >c
     typedef struct luaL_Buffer luaL_Buffer;
 <
@@ -3099,7 +3099,7 @@ luaL_buffinit                                                  *luaL_buffinit()*
     void luaL_buffinit (lua_State *L, luaL_Buffer *B);
 <
         Initializes a buffer `B`. This function does not allocate any space;
-        the buffer must be declared as a variable (see |luaL_Buffer()|).
+        the buffer must be declared as a variable (see |luaL_Buffer|).
 
 luaL_callmeta                                                  *luaL_callmeta()*
 >c
@@ -3133,7 +3133,7 @@ luaL_checkinteger                                          *luaL_checkinteger()*
     lua_Integer luaL_checkinteger (lua_State *L, int narg);
 <
         Checks whether the function argument `narg` is a number and returns
-        this number cast to a `lua_Integer` (see |lua_Integer()|).
+        this number cast to a `lua_Integer` (see |lua_Integer|).
 
 luaL_checklong                                                *luaL_checklong()*
 >c
@@ -3154,7 +3154,7 @@ luaL_checknumber                                            *luaL_checknumber()*
     lua_Number luaL_checknumber (lua_State *L, int narg);
 <
         Checks whether the function argument `narg` is a number and returns
-        this number (see |lua_Number()|).
+        this number (see |lua_Number|).
 
 luaL_checkoption                                            *luaL_checkoption()*
 >c
@@ -3351,7 +3351,7 @@ luaL_optinteger                                              *luaL_optinteger()*
                                  lua_Integer d);
 <
         If the function argument `narg` is a number, returns this number cast
-        to a `lua_Integer` (see |lua_Integer()|). If this argument is
+        to a `lua_Integer` (see |lua_Integer|). If this argument is
         absent or is `nil`, returns `d`. Otherwise, raises an error.
 
 luaL_optlong                                                    *luaL_optlong()*
@@ -3398,7 +3398,7 @@ luaL_prepbuffer                                              *luaL_prepbuffer()*
     char *luaL_prepbuffer (luaL_Buffer *B);
 <
         Returns an address to a space of size `LUAL_BUFFERSIZE` where you can
-        copy a string to be added to buffer `B` (see |luaL_Buffer()|).
+        copy a string to be added to buffer `B` (see |luaL_Buffer|).
         After copying the string into this space you must call `luaL_addsize`
         (see |luaL_addsize()|) with the size of the string to actually
         add it to the buffer.
@@ -3428,7 +3428,7 @@ luaL_ref                                                            *luaL_ref()*
         constant `LUA_REFNIL`. The constant `LUA_NOREF` is guaranteed to be
         different from any reference returned by `luaL_ref`.
 
-luaL_Reg                                                            *luaL_Reg()*
+luaL_Reg                                                              *luaL_Reg*
 >c
     typedef struct luaL_Reg {
         const char *name;
@@ -3449,7 +3449,7 @@ luaL_register                                                  *luaL_register()*
         Opens a library.
 
         When called with `libname` equal to `NULL`, it simply registers all
-        functions in the list `l` (see |luaL_Reg()|) into the table on
+        functions in the list `l` (see |luaL_Reg|) into the table on
         the top of the stack.
 
         When called with a non-null `libname`, `luaL_register` creates a new
@@ -3592,7 +3592,7 @@ error({message} [, {level}])                                    *luaref-error()*
         a level 0 avoids the addition of error position information to the
         message.
 
-_G                                                                 *luaref-_G()*
+_G                                                                   *luaref-_G*
         A global variable (not a function) that holds the global environment
         (that is, `_G._G = _G`). Lua itself does not use this variable;
         changing its value does not affect any environment, nor vice-versa.
@@ -3763,7 +3763,7 @@ unpack({list} [, {i} [, {j}]])                                 *luaref-unpack()*
         elements. By default, {i} is 1 and {j} is the length of the list, as
         defined by the length operator(see |luaref-langLength|).
 
-_VERSION                                                     *luaref-_VERSION()*
+_VERSION                                                       *luaref-_VERSION*
         A global variable (not a function) that holds a string containing the
         current interpreter version. The current contents of this string is
         `"Lua 5.1"` .
@@ -3830,14 +3830,14 @@ coroutine.yield({...})                                       *coroutine.yield()*
         to `yield` are passed as extra results to `resume`.
 
 ==============================================================================
-5.3 Modules                                                 *luaref-libModule*
+5.3 Modules                                                   *luaref-libModule*
 
 The package library provides basic facilities for loading and building modules
 in Lua. It exports two of its functions directly in the global environment:
 `require` and `module` (see |luaref-require()| and |luaref-module()|). Everything else is
 exported in a table `package`.
 
-module({name} [, {...}])                                      *luaref-module()*
+module({name} [, {...}])                                       *luaref-module()*
         Creates a module. If there is a table in `package.loaded[name]`, this
         table is the module. Otherwise, if there is a global table `t` with
         the given name, this table is the module. Otherwise creates a new
@@ -3901,7 +3901,7 @@ require({modname})                                            *luaref-require()*
         If there is any error loading or running the module, or if it cannot
         find any loader for the module, then `require` signals an error.
 
-package.cpath                                                  *package.cpath*
+package.cpath                                                    *package.cpath*
         The path used by `require` to search for a C loader.
 
         Lua initializes the C path `package.cpath` in the same way it
@@ -3914,11 +3914,11 @@ package.loaded                                                *package.loaded()*
         When you require a module `modname` and `package.loaded[modname]` is
         not false, `require` simply returns the value stored there.
 
-package.loadlib({libname}, {funcname})                     *package.loadlib()*
+package.loadlib({libname}, {funcname})                       *package.loadlib()*
         Dynamically links the host program with the C library {libname}.
         Inside this library, looks for a function {funcname} and returns this
         function as a C function. (So, {funcname} must follow the protocol
-        (see |lua_CFunction()|)).
+        (see |lua_CFunction|)).
 
         This is a low-level function. It completely bypasses the package and
         module system. Unlike `require`, it does not perform any path
@@ -3931,7 +3931,7 @@ package.loadlib({libname}, {funcname})                     *package.loadlib()*
         available on some platforms (Windows, Linux, Mac OS X, Solaris, BSD,
         plus other Unix systems that support the `dlfcn` standard).
 
-package.path                                                    *package.path*
+package.path                                                      *package.path*
         The path used by `require` to search for a Lua loader.
 
         At start-up, Lua initializes this variable with the value of the
@@ -3960,7 +3960,7 @@ package.seeall({module})                                      *package.seeall()*
         global environment. To be used as an option to function {module}.
 
 ==============================================================================
-5.4 String Manipulation                                     *luaref-libString*
+5.4 String Manipulation                                       *luaref-libString*
 
 This library provides generic functions for string manipulation, such as
 finding and extracting substrings, and pattern matching. When indexing a
@@ -4060,7 +4060,7 @@ string.gmatch({s}, {pattern})                                  *string.gmatch()*
                end
 <
 
-string.gsub({s}, {pattern}, {repl} [, {n}])                    *string.gsub()*
+string.gsub({s}, {pattern}, {repl} [, {n}])                      *string.gsub()*
         Returns a copy of {s} in which all occurrences of the {pattern} have
         been replaced by a replacement string specified by {repl}, which may
         be a string, a table, or a function. `gsub` also returns, as its
@@ -4265,7 +4265,7 @@ table.concat({table} [, {sep} [, {i} [, {j}]]])                 *table.concat()*
         for {j} is the length of the table. If {i} is greater than {j},
         returns the empty string.
 
-table.foreach({table}, {f})                                  *table.foreach()*
+table.foreach({table}, {f})                                    *table.foreach()*
         Executes the given {f} over all elements of {table}. For each element,
         {f} is called with the index and respective value as arguments. If {f}
         returns a non-`nil` value, then the loop is broken, and this value is
@@ -4273,7 +4273,7 @@ table.foreach({table}, {f})                                  *table.foreach()*
 
         See |luaref-next()| for extra information about table traversals.
 
-table.foreachi({table}, {f})                                *table.foreachi()*
+table.foreachi({table}, {f})                                  *table.foreachi()*
         Executes the given {f} over the numerical indices of {table}. For each
         index, {f} is called with the index and respective value as arguments.
         Indices are visited in sequential order, from 1 to `n`, where `n` is
@@ -4293,14 +4293,14 @@ table.maxn({table})                                               *table.maxn()*
         zero if the table has no positive numerical indices. (To do its job
         this function does a linear traversal of the whole table.)
 
-table.remove({table} [, {pos}])                               *table.remove()*
+table.remove({table} [, {pos}])                                 *table.remove()*
         Removes from {table} the element at position {pos}, shifting down
         other elements to close the space, if necessary. Returns the value of
         the removed element. The default value for {pos} is `n`, where `n` is
         the length of the table (see |luaref-langLength|), so that a call
         `table.remove(t)` removes the last element of table `t`.
 
-table.sort({table} [, {comp}])                                  *table.sort()*
+table.sort({table} [, {comp}])                                    *table.sort()*
         Sorts table elements in a given order, `in-place`, from `table[1]` to
         `table[n]`, where `n` is the length of the table (see
         |luaref-langLength|). If {comp} is given, then it must be a function
