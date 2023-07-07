@@ -144,6 +144,11 @@ typedef struct cmdpreview_buf_info {
   time_t save_b_u_time_cur;
   long save_b_u_seq_cur;
   u_header_T *save_b_u_newhead;
+  u_header_T *save_b_u_oldhead;
+  u_header_T *save_b_u_curhead;
+  int save_b_u_numhead;
+  char *save_b_u_line_ptr;
+  linenr_T save_b_u_line_lnum;
   long save_b_p_ul;
   int save_b_changed;
   varnumber_T save_changedtick;
@@ -2296,9 +2301,15 @@ static void cmdpreview_prepare(CpInfo *cpinfo)
     cp_bufinfo.save_b_u_time_cur = buf->b_u_time_cur;
     cp_bufinfo.save_b_u_seq_cur = buf->b_u_seq_cur;
     cp_bufinfo.save_b_u_newhead = buf->b_u_newhead;
+    cp_bufinfo.save_b_u_oldhead = buf->b_u_oldhead;
+    cp_bufinfo.save_b_u_curhead = buf->b_u_curhead;
+    cp_bufinfo.save_b_u_numhead = buf->b_u_numhead;
+    cp_bufinfo.save_b_u_line_ptr = buf->b_u_line_ptr;
+    cp_bufinfo.save_b_u_line_lnum = buf->b_u_line_lnum;
     cp_bufinfo.save_b_p_ul = buf->b_p_ul;
     cp_bufinfo.save_b_changed = buf->b_changed;
     cp_bufinfo.save_changedtick = buf_get_changedtick(buf);
+    u_clearall(buf);
 
     kv_push(cpinfo->buf_info, cp_bufinfo);
 
@@ -2347,8 +2358,8 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
       int count = 0;
 
       // Calculate how many undo steps are necessary to restore earlier state.
-      for (u_header_T *uhp = buf->b_u_curhead ? buf->b_u_curhead : buf->b_u_newhead;
-           uhp != NULL && uhp->uh_seq > cp_bufinfo.save_b_u_seq_cur;
+      for (u_header_T *uhp = buf->b_u_newhead;
+           uhp != NULL;
            uhp = uhp->uh_next.ptr, ++count) {}
 
       aco_save_T aco;
@@ -2358,12 +2369,16 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
         abort();
       }
       aucmd_restbuf(&aco);
-
-      // Restore newhead. It is meaningless when curhead is valid, but we must
-      // restore it so that undotree() is identical before/after the preview.
-      buf->b_u_newhead = cp_bufinfo.save_b_u_newhead;
-      buf->b_u_time_cur = cp_bufinfo.save_b_u_time_cur;
     }
+
+    buf->b_u_newhead = cp_bufinfo.save_b_u_newhead;
+    buf->b_u_oldhead = cp_bufinfo.save_b_u_oldhead;
+    buf->b_u_curhead = cp_bufinfo.save_b_u_curhead;
+    buf->b_u_numhead = cp_bufinfo.save_b_u_numhead;
+    buf->b_u_line_ptr = cp_bufinfo.save_b_u_line_ptr;
+    buf->b_u_line_lnum = cp_bufinfo.save_b_u_line_lnum;
+    buf->b_u_time_cur = cp_bufinfo.save_b_u_time_cur;
+    buf->b_u_seq_cur = cp_bufinfo.save_b_u_seq_cur;
 
     if (buf->b_u_curhead == NULL) {
       buf->b_u_synced = cp_bufinfo.save_b_u_synced;

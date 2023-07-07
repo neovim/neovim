@@ -1802,7 +1802,6 @@ bool u_undo_and_forget(int count, bool do_buf_event)
 {
   if (curbuf->b_u_synced == false) {
     u_sync(true);
-    count = 1;
   }
   undo_undoes = true;
   u_doit(count, true, do_buf_event);
