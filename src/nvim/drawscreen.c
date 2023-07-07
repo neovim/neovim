@@ -2235,7 +2235,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
 
         // Display one line
         spellvars_T zero_spv = { 0 };
-        row = win_line(wp, lnum, srow, foldinfo.fi_lines > 0 ? srow : wp->w_grid.rows, false,
+        row = win_line(wp, lnum, srow, wp->w_grid.rows, false,
                        foldinfo.fi_lines > 0 ? &zero_spv : &spv,
                        foldinfo, &line_providers, &provider_err);
 
