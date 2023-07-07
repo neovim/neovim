@@ -1187,9 +1187,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
     wlv.boguscols = 0; \
   }
 
-  if (startrow > endrow) {              // past the end already!
-    return startrow;
-  }
+  assert(startrow < endrow);
 
   CLEAR_FIELD(wlv);
 

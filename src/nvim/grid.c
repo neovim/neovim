@@ -508,11 +508,9 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
                                             // 2: occupies two display cells
   int start_dirty = -1, end_dirty = 0;
 
+  assert(row < grid->rows);
   // TODO(bfredl): check all callsites and eliminate
-  // Check for illegal row and col, just in case
-  if (row >= grid->rows) {
-    row = grid->rows - 1;
-  }
+  // Check for illegal col, just in case
   if (endcol > grid->cols) {
     endcol = grid->cols;
   }

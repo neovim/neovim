@@ -2427,6 +2427,83 @@ describe("folded lines", function()
           {11:-- VISUAL LINE --}                            |
         ]])
       end
+
+      feed('<Esc>gg')
+      command('botright 1split | wincmd w')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          {3:[No Name] [+]                                }|
+          [4:---------------------------------------------]|
+          {2:[No Name] [+]                                }|
+          [3:---------------------------------------------]|
+        ## grid 2
+          ^line 1                                       |
+          line 2                                       |
+          virt_line below line 2                       |
+          more virt_line below line 2                  |
+        ## grid 3
+                                                       |
+        ## grid 4
+          line 1                                       |
+        ]], win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 5, sum_scroll_delta = 0};
+          [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 5, sum_scroll_delta = 0};
+        }}
+      else
+        screen:expect([[
+          ^line 1                                       |
+          line 2                                       |
+          virt_line below line 2                       |
+          more virt_line below line 2                  |
+          {3:[No Name] [+]                                }|
+          line 1                                       |
+          {2:[No Name] [+]                                }|
+                                                       |
+        ]])
+      end
+
+      feed('<C-Y>')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          {3:[No Name] [+]                                }|
+          [4:---------------------------------------------]|
+          {2:[No Name] [+]                                }|
+          [3:---------------------------------------------]|
+        ## grid 2
+          virt_line above line 1                       |
+          ^line 1                                       |
+          line 2                                       |
+          virt_line below line 2                       |
+        ## grid 3
+                                                       |
+        ## grid 4
+          line 1                                       |
+        ]], win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 5, sum_scroll_delta = -1};
+          [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 5, sum_scroll_delta = 0};
+        }}
+      else
+        screen:expect([[
+          virt_line above line 1                       |
+          ^line 1                                       |
+          line 2                                       |
+          virt_line below line 2                       |
+          {3:[No Name] [+]                                }|
+          line 1                                       |
+          {2:[No Name] [+]                                }|
+                                                       |
+        ]])
+      end
     end)
 
     it('Folded and Visual highlights are combined #19691', function()
