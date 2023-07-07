@@ -110,6 +110,9 @@ The following new APIs and features were added.
 • |vim.ui.open()| opens URIs using the system default handler (macOS `open`,
   Windows `explorer`, Linux `xdg-open`, etc.)
 
+• |vim.wo| can now be double indexed for |:setlocal| behaviour. Currently only
+  `0` for the buffer index is currently supported.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
