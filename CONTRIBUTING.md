@@ -37,14 +37,14 @@ Developer guidelines
 - Read [:help dev-ui](https://neovim.io/doc/user/develop.html#dev-ui) if you are developing a UI.
 - Read [:help dev-api-client](https://neovim.io/doc/user/develop.html#dev-api-client) if you are developing an API client.
 - Install `ninja` for faster builds of Nvim.
-  ```
+  ```bash
   sudo apt-get install ninja-build
   make distclean
   make  # Nvim build system uses ninja automatically, if available.
   ```
 - Install `ccache` for faster rebuilds of Nvim. Nvim will use it automatically
   if it's found. To disable caching use:
-  ```
+  ```bash
   CCACHE_DISABLE=true make
   ```
 
@@ -55,12 +55,8 @@ Pull requests (PRs)
 - Your PR must include [test coverage][run-tests].
 - Avoid cosmetic changes to unrelated files in the same commit.
 - Use a [feature branch][git-feature-branch] instead of the master branch.
-- Use a _rebase workflow_ for small PRs.
+- Use a _rebase workflow_ for all PRs.
   - After addressing review comments, it's fine to force-push.
-- Use a _merge workflow_ (as opposed to "rebase") for big, high-risk PRs.
-  - Merge `master` into your PR when there are conflicts or when master
-    introduces breaking changes.
-  - Do not edit commits that come before the merge commit.
 
 ### Merging to master
 
@@ -115,6 +111,11 @@ the VCS/git logs more valuable. The general structure of a commit message is:
        BREAKING CHANGE: refactor to use Python 3 features since Python 2 is no longer supported.
        ```
 
+### News
+
+High level release notes are maintained in [news.txt](runtime/doc/news.txt). A PR is not required to add a news item
+but is generally recommended.
+
 ### Automated builds (CI)
 
 Each pull request must pass the automated builds on [Cirrus CI] and [GitHub Actions].
@@ -138,11 +139,11 @@ View the [Clang report] to see potential bugs found by the Clang
 [scan-build](https://clang-analyzer.llvm.org/scan-build.html) analyzer.
 
 - Search the Neovim commit history to find examples:
-  ```
+  ```bash
   git log --oneline --no-merges --grep clang
   ```
 - To verify a fix locally, run `scan-build` like this:
-  ```
+  ```bash
   rm -rf build/
   scan-build --use-analyzer=/usr/bin/clang make
   ```
@@ -157,7 +158,7 @@ see potential bugs found by [PVS Studio](https://www.viva64.com/en/pvs-studio/).
   fix(PVS/V{id}): {description}
   ```
 - Search the Neovim commit history to find examples:
-  ```
+  ```bash
   git log --oneline --no-merges --grep PVS
   ```
 - Try `./scripts/pvscheck.sh` to run PVS locally.
@@ -173,7 +174,7 @@ master build. To view the defects, just request access; you will be approved.
   fix(coverity/{id}): {description}
   ```
 - Search the Neovim commit history to find examples:
-  ```
+  ```bash
   git log --oneline --no-merges --grep coverity
   ```
 
@@ -199,25 +200,20 @@ Coding
 
 You can run the linter locally by:
 
-    make lint
-
-The lint step downloads the [master error list] and excludes them, so only lint
-errors related to the local changes are reported.
-
-You can lint a single file (but this will _not_ exclude legacy errors):
-
-    ./src/clint.py src/nvim/ops.c
+```bash
+make lint
+```
 
 ### Style
 
 - You can format files by using:
-  ```
-    make format
+  ```bash
+  make format  # or formatc, formatlua
   ```
   This will format changed Lua and C files with all appropriate flags set.
 - Style rules are (mostly) defined by `src/uncrustify.cfg` which tries to match
   the [style-guide]. To use the Nvim `gq` command with `uncrustify`:
-  ```
+  ```vim
   if !empty(findfile('src/uncrustify.cfg', ';'))
     setlocal formatprg=uncrustify\ -q\ -l\ C\ -c\ src/uncrustify.cfg\ --no-backup
   endif
@@ -225,7 +221,7 @@ You can lint a single file (but this will _not_ exclude legacy errors):
   The required version of `uncrustify` is specified in `uncrustify.cfg`.
 - There is also `.clang-format` which has drifted from the [style-guide], but
   is available for reference. To use the Nvim `gq` command with `clang-format`:
-  ```
+  ```vim
   if !empty(findfile('.clang-format', ';'))
     setlocal formatprg=clang-format\ -style=file
   endif
@@ -233,8 +229,8 @@ You can lint a single file (but this will _not_ exclude legacy errors):
 
 ### Navigate
 
-- Set `blame.ignoreRevsFile` to ignore [noise commits](https://github.com/neovim/neovim/commit/2d240024acbd68c2d3f82bc72cb12b1a4928c6bf) in git blame:
-  ```
+- Set `blame.ignoreRevsFile` to ignore [noisy commits](https://github.com/neovim/neovim/commit/2d240024acbd68c2d3f82bc72cb12b1a4928c6bf) in git blame:
+  ```bash
   git config blame.ignoreRevsFile .git-blame-ignore-revs
   ```
 
@@ -244,7 +240,9 @@ You can lint a single file (but this will _not_ exclude legacy errors):
 - If using [lua-language-server], symlink `contrib/luarc.json` into the
   project root:
 
-      $ ln -s contrib/luarc.json .luarc.json
+  ```bash
+  ln -s contrib/luarc.json .luarc.json
+  ```
 
 ### Includes
 
@@ -252,13 +250,13 @@ For managing includes in C files, use [include-what-you-use].
 
 - [Install include-what-you-use][include-what-you-use-install]
 - To see which includes needs fixing use the cmake preset `iwyu`:
-  ```
+  ```bash
   cmake --preset iwyu
   cmake --build build iwyu
   ```
 - There's also a make target that automatically fixes the suggestions from
   IWYU:
-  ```
+  ```bash
   make iwyu
   ```
 
@@ -271,7 +269,9 @@ bytecode, so changes to those files won't get used unless you rebuild Nvim or
 by passing `--luamod-dev` and `$VIMRUNTIME`. For example, try adding a function
 to `runtime/lua/vim/_editor.lua` then:
 
-    VIMRUNTIME=./runtime ./build/bin/nvim --luamod-dev
+```bash
+VIMRUNTIME=./runtime ./build/bin/nvim --luamod-dev
+```
 
 Documenting
 -----------
@@ -283,7 +283,9 @@ Read [:help dev-doc][dev-doc-guide] to understand the expected documentation sty
 Many `:help` docs are autogenerated from (C or Lua) docstrings by the `./scripts/gen_vimdoc.py` script.
 For convenience you can filter the regeneration by target (api, lua, lsp) using the `-t` option, for example:
 
-    ./scripts/gen_vimdoc.py -t lua
+```bash
+./scripts/gen_vimdoc.py -t lua
+```
 
 ### Lua docstrings
 
@@ -320,7 +322,9 @@ Reviewing can be done on GitHub, but you may find it easier to do locally.
 Using [GitHub CLI][gh], you can create a new branch with the contents of a pull
 request, e.g. [#1820][1820]:
 
-    gh pr checkout https://github.com/neovim/neovim/pull/1820
+```bash
+gh pr checkout https://github.com/neovim/neovim/pull/1820
+```
 
 Use [`git log -p master..FETCH_HEAD`][git-history-filtering] to list all
 commits in the feature branch which aren't in the `master` branch; `-p`
