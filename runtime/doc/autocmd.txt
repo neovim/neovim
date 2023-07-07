@@ -664,6 +664,12 @@ FilterWritePre			Before writing a file for a filter command or
 				temporary file that is the output of the
 				filter command.
 				Not triggered when 'shelltemp' is off.
+							*FoldChanged*
+FoldChanged			When a fold in a window is either: updated,
+				changed, opened or closed.
+
+				Both <amatch> and <afile> are set to the
+				|window-ID|.
 							*FocusGained*
 FocusGained			Nvim got focus.
 							*FocusLost*

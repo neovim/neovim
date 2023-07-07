@@ -2404,7 +2404,7 @@ static const char *did_set_arabic(optset_T *args)
       // set rightleft mode
       if (!win->w_p_rl) {
         win->w_p_rl = true;
-        changed_window_setting();
+        changed_window_setting_win(win);
       }
 
       // Enable Arabic shaping (major part of what Arabic requires)
@@ -2435,7 +2435,7 @@ static const char *did_set_arabic(optset_T *args)
       // reset rightleft mode
       if (win->w_p_rl) {
         win->w_p_rl = false;
-        changed_window_setting();
+        changed_window_setting_win(win);
       }
 
       // 'arabicshape' isn't reset, it is a global option and
@@ -2635,6 +2635,17 @@ static const char *did_set_smoothscroll(optset_T *args FUNC_ATTR_UNUSED)
 
   win->w_skipcol = 0;
   changed_line_abv_curs_win(win);
+  return NULL;
+}
+
+/// Process the new 'foldenable' option value.
+static const char *did_set_foldenable(optset_T *args)
+{
+  win_T *win = (win_T *)args->os_win;
+  bool old_value = args->os_oldval.boolean;
+  if (win->w_p_fen != old_value) {
+    foldChanged(win);
+  }
   return NULL;
 }
 

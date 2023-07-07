@@ -62,6 +62,7 @@ return {
     'FilterWritePre',         -- before writing to a filter
     'FocusGained',            -- got the focus
     'FocusLost',              -- lost the focus to another app
+    'FoldChanged',            -- Folds are updated, opened or closed
     'FuncUndefined',          -- if calling a function which doesn't exist
     'GUIEnter',               -- after starting the GUI
     'GUIFailed',              -- after starting the GUI failed

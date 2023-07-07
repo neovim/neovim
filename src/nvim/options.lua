@@ -870,7 +870,8 @@ return {
       short_desc=N_("set to display all folds open"),
       type='bool', scope={'window'},
       redraw={'current_window'},
-      defaults={if_true=true}
+      defaults={if_true=true},
+      cb='did_set_foldenable'
     },
     {
       full_name='foldexpr', abbreviation='fde',

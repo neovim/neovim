@@ -4257,7 +4257,7 @@ skip:
 
   if (subflags.do_ask && hasAnyFolding(curwin)) {
     // Cursor position may require updating
-    changed_window_setting();
+    changed_window_setting_win(curwin);
   }
 
   vim_regfree(regmatch.regprog);

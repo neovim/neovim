@@ -3007,7 +3007,7 @@ static void nv_zet(cmdarg_T *cap)
   case 'E':
     if (foldmethodIsManual(curwin)) {
       clearFolding(curwin);
-      changed_window_setting();
+      foldChanged(curwin);
     } else if (foldmethodIsMarker(curwin)) {
       deleteFold(curwin, 1, curbuf->b_ml.ml_line_count, true, false);
     } else {
@@ -3177,12 +3177,14 @@ static void nv_zet(cmdarg_T *cap)
       // Adjust 'foldenable' in diff-synced windows.
       FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         if (wp != curwin && foldmethodIsDiff(wp) && wp->w_p_scb) {
-          wp->w_p_fen = curwin->w_p_fen;
-          changed_window_setting_win(wp);
+          if (wp->w_p_fen != curwin->w_p_fen) {
+            wp->w_p_fen = curwin->w_p_fen;
+            foldChanged(wp);
+          }
         }
       }
     }
-    changed_window_setting();
+    foldChanged(curwin);
   }
 
   // Redraw when 'foldlevel' changed.

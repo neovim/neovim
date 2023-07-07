@@ -831,7 +831,7 @@ void f_winrestview(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   check_cursor();
   win_new_height(curwin, curwin->w_height);
   win_new_width(curwin, curwin->w_width);
-  changed_window_setting();
+  changed_window_setting_win(curwin);
 
   if (curwin->w_topline <= 0) {
     curwin->w_topline = 1;

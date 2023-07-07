@@ -116,6 +116,8 @@ The following new APIs and features were added.
 • |vim.wo| can now be double indexed for |:setlocal| behaviour. Currently only
   `0` for the buffer index is currently supported.
 
+• Added |FoldChanged| autocmd event.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

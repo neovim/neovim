@@ -515,11 +515,6 @@ void check_cursor_moved(win_T *wp)
 // Call this function when some window settings have changed, which require
 // the cursor position, botline and topline to be recomputed and the window to
 // be redrawn.  E.g, when changing the 'wrap' option or folding.
-void changed_window_setting(void)
-{
-  changed_window_setting_win(curwin);
-}
-
 void changed_window_setting_win(win_T *wp)
 {
   wp->w_lines_valid = 0;

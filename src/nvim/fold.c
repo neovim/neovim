@@ -457,6 +457,19 @@ void newFoldLevel(void)
   }
 }
 
+void foldChanged(win_T *wp)
+{
+  if (wp->w_lines_valid != 0) {
+    // Only trigger once per window redraw
+    char winid[NUMBUFLEN];
+    vim_snprintf(winid, sizeof(winid), "%d", wp->handle);
+    apply_autocmds(EVENT_FOLDCHANGED, winid, winid, false, wp->w_buffer);
+  }
+
+  // redraw
+  changed_window_setting_win(wp);
+}
+
 static void newFoldLevelWin(win_T *wp)
 {
   checkupdate(wp);
@@ -470,7 +483,7 @@ static void newFoldLevelWin(win_T *wp)
     }
     wp->w_fold_manual = false;
   }
-  changed_window_setting_win(wp);
+  foldChanged(wp);
 }
 
 // foldCheckClose() {{{2
@@ -485,7 +498,7 @@ void foldCheckClose(void)
   checkupdate(curwin);
   if (checkCloseRec(&curwin->w_folds, curwin->w_cursor.lnum,
                     (int)curwin->w_p_fdl)) {
-    changed_window_setting();
+    changed_window_setting_win(curwin);
   }
 }
 
@@ -653,8 +666,7 @@ void foldCreate(win_T *wp, pos_T start, pos_T end)
     fp->fd_flags = FD_CLOSED;
     fp->fd_small = kNone;
 
-    // redraw
-    changed_window_setting_win(wp);
+    foldChanged(wp);
   }
 }
 
@@ -727,8 +739,7 @@ void deleteFold(win_T *const wp, const linenr_T start, const linenr_T end, const
       }
       did_one = true;
 
-      // redraw window
-      changed_window_setting_win(wp);
+      foldChanged(wp);
     }
   }
   if (!did_one) {
@@ -1265,7 +1276,7 @@ static linenr_T setManualFoldWin(win_T *wp, linenr_T lnum, int opening, int recu
     }
     wp->w_fold_manual = true;
     if (done & DONE_ACTION) {
-      changed_window_setting_win(wp);
+      foldChanged(wp);
     }
     done |= DONE_FOLD;
   } else if (donep == NULL && wp == curwin) {
@@ -2099,7 +2110,7 @@ static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
 
   // If some fold changed, need to redraw and position cursor.
   if (fold_changed && wp->w_p_fen) {
-    changed_window_setting_win(wp);
+    foldChanged(wp);
   }
 
   // If we updated folds past "bot", need to redraw more lines.  Don't do
