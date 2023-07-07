@@ -733,6 +733,12 @@ module.cmds = {
     func='ex_delfunction',
   },
   {
+    command='detach',
+    flags=bit.bor(TRLBAR, BANG, CMDWIN, LOCK_OK),
+    addr_type='ADDR_NONE',
+    func='ex_detach',
+  },
+  {
     command='display',
     flags=bit.bor(EXTRA, NOTRLCOM, TRLBAR, SBOXOK, CMDWIN, LOCK_OK),
     addr_type='ADDR_NONE',

@@ -600,7 +600,7 @@ void rpc_close(Channel *channel)
   channel->rpc.closed = true;
   channel_decref(channel);
 
-  if (channel->streamtype == kChannelStreamStdio
+  if ((channel->streamtype == kChannelStreamStdio && !embed_ui_detached)
       || (channel->id == ui_client_channel_id && channel->streamtype != kChannelStreamProc)) {
     if (channel->streamtype == kChannelStreamStdio) {
       // Avoid hanging when there are no other UIs and a prompt is triggered on exit.
