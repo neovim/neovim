@@ -1596,6 +1596,7 @@ describe('decorations: inline virtual text', function()
       [18] = {background = Screen.colors.LightGrey, foreground = Screen.colors.Red};
       [19] = {background = Screen.colors.Yellow, foreground = Screen.colors.SlateBlue};
       [20] = {background = Screen.colors.LightGrey, foreground = Screen.colors.SlateBlue};
+      [21] = {reverse = true, foreground = Screen.colors.SlateBlue}
     }
 
     ns = meths.create_namespace 'test'
@@ -2068,6 +2069,27 @@ bbbbbbb]])
       {1:~                                                 }|
       /foo^                                              |
       ]]}
+    feed('<enter>')
+
+    feed('dddd')
+    insert('foo foo bar foo')
+    meths.buf_set_extmark(0, ns, 0, 9, { virt_text = { { 'AAA', 'Special' } }, virt_text_pos = 'inline' })
+    meths.buf_set_extmark(0, ns, 0, 9, { virt_text = { { 'BBB', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'combine' })
+    meths.buf_set_extmark(0, ns, 0, 11, { virt_text = { { 'EEE', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'combine' })
+    feed('/bar')
+
+    screen:expect { grid = [[
+      foo foo {13:b}{10:AAA}{21:BBB}{13:ar}{19:EEE} foo                          |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      /bar^                                              |
+      ]]}
   end)
 
   it('visual select highlight is correct', function()
@@ -2095,6 +2117,20 @@ bbbbbbb]])
     feed('2hj')
     screen:expect { grid = [[
       foo fo{7:o }{10:AAA}{20:BBB}{7:f}oo foo                             |
+      foo fo^o{7: }{20:CCC}{10:DDD}{7:f}oo foo                             |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {8:-- VISUAL BLOCK --}                                |
+      ]]}
+
+    meths.buf_set_extmark(0, ns, 0, 10, { virt_text = { { 'EEE', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'combine' })
+    screen:expect { grid = [[
+      foo fo{7:o }{10:AAA}{20:BBB}{7:f}o{10:EEE}o foo                          |
       foo fo^o{7: }{20:CCC}{10:DDD}{7:f}oo foo                             |
       {1:~                                                 }|
       {1:~                                                 }|

@@ -2011,12 +2011,15 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         if (wlv.saved_n_extra <= 0) {
           if (search_attr == 0) {
             search_attr = saved_search_attr;
+            saved_search_attr = 0;
           }
           if (area_attr == 0 && *ptr != NUL) {
             area_attr = saved_area_attr;
+            saved_area_attr = 0;
           }
           if (decor_attr == 0) {
             decor_attr = saved_decor_attr;
+            saved_decor_attr = 0;
           }
 
           if (wlv.extra_for_extmark) {
