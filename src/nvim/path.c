@@ -1163,7 +1163,7 @@ static bool has_env_var(char *p)
 
 // Return true if "p" contains a special wildcard character, one that Vim
 // cannot expand, requires using a shell.
-static bool has_special_wildchar(char *p)
+static bool has_special_wildchar(char *p, int flags)
 {
   for (; *p; MB_PTR_ADV(p)) {
     // Disallow line break characters.
@@ -1174,6 +1174,10 @@ static bool has_special_wildchar(char *p)
     if (*p == '\\' && p[1] != NUL && p[1] != '\r' && p[1] != '\n') {
       p++;
     } else if (vim_strchr(SPECIAL_WILDCHAR, (uint8_t)(*p)) != NULL) {
+      // Need a shell for curly braces only when including non-existing files.
+      if (*p == '{' && !(flags & EW_NOTFOUND)) {
+        continue;
+      }
       // A { must be followed by a matching }.
       if (*p == '{' && vim_strchr(p, '}') == NULL) {
         continue;
@@ -1233,7 +1237,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
   // avoids starting the shell for each argument separately.
   // For `=expr` do use the internal function.
   for (int i = 0; i < num_pat; i++) {
-    if (has_special_wildchar(pat[i])
+    if (has_special_wildchar(pat[i], flags)
         && !(vim_backtick(pat[i]) && pat[i][1] == '=')) {
       return os_expand_wildcards(num_pat, pat, num_file, file, flags);
     }
