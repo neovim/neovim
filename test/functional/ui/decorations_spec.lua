@@ -1596,6 +1596,7 @@ describe('decorations: inline virtual text', function()
       [18] = {background = Screen.colors.LightGrey, foreground = Screen.colors.Red};
       [19] = {background = Screen.colors.Yellow, foreground = Screen.colors.SlateBlue};
       [20] = {background = Screen.colors.LightGrey, foreground = Screen.colors.SlateBlue};
+      [21] = {reverse = true, foreground = Screen.colors.SlateBlue}
     }
 
     ns = meths.create_namespace 'test'
@@ -2036,15 +2037,15 @@ bbbbbbb]])
   end)
 
   it('search highlight is correct', function()
-    insert('foo foo foo foo\nfoo foo foo foo')
+    insert('foo foo foo bar\nfoo foo foo bar')
     feed('gg0')
     meths.buf_set_extmark(0, ns, 0, 9, { virt_text = { { 'AAA', 'Special' } }, virt_text_pos = 'inline' })
     meths.buf_set_extmark(0, ns, 0, 9, { virt_text = { { 'BBB', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'combine' })
     meths.buf_set_extmark(0, ns, 1, 9, { virt_text = { { 'CCC', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'combine' })
     meths.buf_set_extmark(0, ns, 1, 9, { virt_text = { { 'DDD', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'replace' })
     screen:expect { grid = [[
-      ^foo foo f{10:AAABBB}oo foo                             |
-      foo foo f{10:CCCDDD}oo foo                             |
+      ^foo foo f{10:AAABBB}oo bar                             |
+      foo foo f{10:CCCDDD}oo bar                             |
       {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
@@ -2057,8 +2058,23 @@ bbbbbbb]])
 
     feed('/foo')
     screen:expect { grid = [[
-      {12:foo} {13:foo} {12:f}{10:AAA}{19:BBB}{12:oo} {12:foo}                             |
-      {12:foo} {12:foo} {12:f}{19:CCC}{10:DDD}{12:oo} {12:foo}                             |
+      {12:foo} {13:foo} {12:f}{10:AAA}{19:BBB}{12:oo} bar                             |
+      {12:foo} {12:foo} {12:f}{19:CCC}{10:DDD}{12:oo} bar                             |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      /foo^                                              |
+      ]]}
+
+    meths.buf_set_extmark(0, ns, 0, 13, { virt_text = { { 'EEE', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'combine' })
+    feed('<C-G>')
+    screen:expect{ grid = [[
+      {12:foo} {12:foo} {13:f}{10:AAA}{21:BBB}{13:oo} b{10:EEE}ar                          |
+      {12:foo} {12:foo} {12:f}{19:CCC}{10:DDD}{12:oo} bar                             |
       {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
@@ -2071,7 +2087,7 @@ bbbbbbb]])
   end)
 
   it('visual select highlight is correct', function()
-    insert('foo foo foo foo\nfoo foo foo foo')
+    insert('foo foo foo bar\nfoo foo foo bar')
     feed('gg0')
     meths.buf_set_extmark(0, ns, 0, 8, { virt_text = { { 'AAA', 'Special' } }, virt_text_pos = 'inline' })
     meths.buf_set_extmark(0, ns, 0, 8, { virt_text = { { 'BBB', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'combine' })
@@ -2079,8 +2095,8 @@ bbbbbbb]])
     meths.buf_set_extmark(0, ns, 1, 8, { virt_text = { { 'DDD', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'replace' })
     feed('8l')
     screen:expect { grid = [[
-      foo foo {10:AAABBB}^foo foo                             |
-      foo foo {10:CCCDDD}foo foo                             |
+      foo foo {10:AAABBB}^foo bar                             |
+      foo foo {10:CCCDDD}foo bar                             |
       {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
@@ -2094,8 +2110,22 @@ bbbbbbb]])
     feed('<C-V>')
     feed('2hj')
     screen:expect { grid = [[
-      foo fo{7:o }{10:AAA}{20:BBB}{7:f}oo foo                             |
-      foo fo^o{7: }{20:CCC}{10:DDD}{7:f}oo foo                             |
+      foo fo{7:o }{10:AAA}{20:BBB}{7:f}oo bar                             |
+      foo fo^o{7: }{20:CCC}{10:DDD}{7:f}oo bar                             |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {8:-- VISUAL BLOCK --}                                |
+      ]]}
+
+    meths.buf_set_extmark(0, ns, 0, 10, { virt_text = { { 'EEE', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'combine' })
+    screen:expect { grid = [[
+      foo fo{7:o }{10:AAA}{20:BBB}{7:f}o{10:EEE}o bar                          |
+      foo fo^o{7: }{20:CCC}{10:DDD}{7:f}oo bar                             |
       {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
@@ -2108,7 +2138,7 @@ bbbbbbb]])
   end)
 
   it('inside highlight range of another extmark', function()
-    insert('foo foo foo foo\nfoo foo foo foo')
+    insert('foo foo foo bar\nfoo foo foo bar')
     meths.buf_set_extmark(0, ns, 0, 8, { virt_text = { { 'AAA', 'Special' } }, virt_text_pos = 'inline' })
     meths.buf_set_extmark(0, ns, 0, 8, { virt_text = { { 'BBB', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'combine' })
     meths.buf_set_extmark(0, ns, 1, 8, { virt_text = { { 'CCC', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'combine' })
@@ -2116,8 +2146,8 @@ bbbbbbb]])
     meths.buf_set_extmark(0, ns, 0, 4, { end_col = 11, hl_group = 'Search' })
     meths.buf_set_extmark(0, ns, 1, 4, { end_col = 11, hl_group = 'Search' })
     screen:expect{grid=[[
-      foo {12:foo }{10:AAA}{19:BBB}{12:foo} foo                             |
-      foo {12:foo }{19:CCC}{10:DDD}{12:foo} fo^o                             |
+      foo {12:foo }{10:AAA}{19:BBB}{12:foo} bar                             |
+      foo {12:foo }{19:CCC}{10:DDD}{12:foo} ba^r                             |
       {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
@@ -2130,15 +2160,15 @@ bbbbbbb]])
   end)
 
   it('inside highlight range of syntax', function()
-    insert('foo foo foo foo\nfoo foo foo foo')
+    insert('foo foo foo bar\nfoo foo foo bar')
     meths.buf_set_extmark(0, ns, 0, 8, { virt_text = { { 'AAA', 'Special' } }, virt_text_pos = 'inline' })
     meths.buf_set_extmark(0, ns, 0, 8, { virt_text = { { 'BBB', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'combine' })
     meths.buf_set_extmark(0, ns, 1, 8, { virt_text = { { 'CCC', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'combine' })
     meths.buf_set_extmark(0, ns, 1, 8, { virt_text = { { 'DDD', 'Special' } }, virt_text_pos = 'inline', hl_mode = 'replace' })
-    command([[syntax match Search 'foo \zsfoo foo\ze foo']])
+    command([[syntax match Search 'foo \zsfoo foo\ze bar']])
     screen:expect{grid=[[
-      foo {12:foo }{10:AAA}{19:BBB}{12:foo} foo                             |
-      foo {12:foo }{19:CCC}{10:DDD}{12:foo} fo^o                             |
+      foo {12:foo }{10:AAA}{19:BBB}{12:foo} bar                             |
+      foo {12:foo }{19:CCC}{10:DDD}{12:foo} ba^r                             |
       {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
