@@ -18,7 +18,10 @@ describe('runtime:', function()
     io.open(init, 'w'):close()  --  touch init file
     clear{args = {'-u', init}}
     exec('set rtp+=' .. plug_dir)
-    exec('set completeslash=slash')
+    exec([[
+      set completeslash=slash
+      set isfname+=(,)
+    ]])
   end)
 
   teardown(function()

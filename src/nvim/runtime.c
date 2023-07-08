@@ -338,7 +338,7 @@ int do_in_path(char *path, char *name, int flags, DoInRuntimepathCB callback, vo
           }
 
           int ew_flags = ((flags & DIP_DIR) ? EW_DIR : EW_FILE)
-                         | (flags & DIP_DIRFILE) ? (EW_DIR|EW_FILE) : 0;
+                         | ((flags & DIP_DIRFILE) ? (EW_DIR|EW_FILE) : 0);
 
           // Expand wildcards, invoke the callback for each match.
           if (gen_expand_wildcards(1, &buf, &num_files, &files, ew_flags) == OK) {
@@ -1222,9 +1222,9 @@ static void ExpandRTDir_int(char *pat, size_t pat_len, int flags, bool keep_ext,
     bool expand_dirs = false;
 
     if (*dirnames[i] == NUL) {  // empty dir used for :runtime
-      snprintf(tail, tail_buflen, "%s*.\\(vim\\|lua\\)", pat);
+      snprintf(tail, tail_buflen, "%s*.{vim,lua}", pat);
     } else {
-      snprintf(tail, tail_buflen, "%s/%s*.\\(vim\\|lua\\)", dirnames[i], pat);
+      snprintf(tail, tail_buflen, "%s/%s*.{vim,lua}", dirnames[i], pat);
     }
 
 expand:
