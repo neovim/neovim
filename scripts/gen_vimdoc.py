@@ -585,10 +585,12 @@ def render_node(n, text, prefix='', indent='', width=text_width - indentation,
                                               indent=indent, width=width))
             i = i + 1
     elif n.nodeName == 'simplesect' and 'note' == n.getAttribute('kind'):
-        text += '\nNote:\n    '
+        text += ind('  ')
         for c in n.childNodes:
-            text += render_node(c, text, indent='    ', width=width)
-        text += '\n'
+            if is_blank(render_node(c, text, prefix='• ', indent='    ', width=width)):
+                continue
+            text += render_node(c, text, prefix='• ', indent='    ', width=width)
+        # text += '\n'
     elif n.nodeName == 'simplesect' and 'warning' == n.getAttribute('kind'):
         text += 'Warning:\n    '
         for c in n.childNodes:
@@ -620,6 +622,7 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
 
     Keys:
         'text': Text from this <para> element
+        'note': List of @note strings
         'params': <parameterlist> map
         'return': List of @return strings
         'seealso': List of @see strings
@@ -627,6 +630,7 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
     """
     chunks = {
         'text': '',
+        'note': [],
         'params': collections.OrderedDict(),
         'return': [],
         'seealso': [],
@@ -635,6 +639,7 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
 
     # Ordered dict of ordered lists.
     groups = collections.OrderedDict([
+        ('note', []),
         ('params', []),
         ('return', []),
         ('seealso', []),
@@ -645,7 +650,6 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
     # nodes to appear together.
     text = ''
     kind = ''
-    last = ''
     if is_inline(parent):
         # Flatten inline text from a tree of non-block nodes.
         text = doc_wrap(render_node(parent, "", fmt_vimhelp=fmt_vimhelp),
@@ -658,13 +662,14 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
             elif child.nodeName == 'xrefsect':
                 groups['xrefs'].append(child)
             elif child.nodeName == 'simplesect':
-                last = kind
                 kind = child.getAttribute('kind')
-                if kind == 'return' or (kind == 'note' and last == 'return'):
+                if kind == 'note':
+                    groups['note'].append(child)
+                elif kind == 'return':
                     groups['return'].append(child)
                 elif kind == 'see':
                     groups['seealso'].append(child)
-                elif kind in ('note', 'warning'):
+                elif kind == 'warning':
                     text += render_node(child, text, indent=indent,
                                         width=width, fmt_vimhelp=fmt_vimhelp)
                 else:
@@ -689,6 +694,9 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
     if len(groups['params']) > 0:
         for child in groups['params']:
             update_params_map(child, ret_map=chunks['params'], width=width)
+    for child in groups['note']:
+        chunks['note'].append(render_node(
+            child, '', indent=indent, width=width, fmt_vimhelp=fmt_vimhelp).rstrip())
     for child in groups['return']:
         chunks['return'].append(render_node(
             child, '', indent=indent, width=width, fmt_vimhelp=fmt_vimhelp))
@@ -741,11 +749,15 @@ def fmt_node_as_vimhelp(parent, width=text_width - indentation, indent='',
 
         # Generate text from the gathered items.
         chunks = [para['text']]
+        if len(para['note']) > 0:
+            chunks.append('\nNote: ~')
+            for s in para['note']:
+                chunks.append(s)
         if len(para['params']) > 0 and has_nonexcluded_params(para['params']):
             chunks.append('\nParameters: ~')
             chunks.append(fmt_param_doc(para['params']))
         if len(para['return']) > 0:
-            chunks.append('\nReturn: ~')
+            chunks.append('\nReturn (multiple): ~' if len(para['return']) > 1 else '\nReturn: ~')
             for s in para['return']:
                 chunks.append(s)
         if len(para['seealso']) > 0:

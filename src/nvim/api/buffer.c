@@ -1192,8 +1192,9 @@ Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col,
   return res;
 }
 
-/// Returns a tuple (row,col) representing the position of the named mark. See
-/// |mark-motions|.
+/// Returns a `(row,col)` tuple representing the position of the named mark.
+/// "End of line" column position is returned as |v:maxcol| (big number).
+/// See |mark-motions|.
 ///
 /// Marks are (1,0)-indexed. |api-indexing|
 ///

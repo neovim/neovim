@@ -680,7 +680,7 @@ buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
       • {timeout_ms}  (integer|nil) Maximum time in milliseconds to wait for a
                       result. Defaults to 1000
 
-    Return: ~
+    Return (multiple): ~
         (table) result Map of client_id:request_result.
         (string|nil) err On timeout, cancel, or error, `err` is a string
         describing the failure reason, and `result` is nil.
@@ -1126,8 +1126,9 @@ completion({context})                               *vim.lsp.buf.completion()*
 
 declaration({options})                             *vim.lsp.buf.declaration()*
     Jumps to the declaration of the symbol under the cursor.
-    Note:
-        Many servers do not implement this method. Generally, see
+
+    Note: ~
+      • Many servers do not implement this method. Generally, see
         |vim.lsp.buf.definition()| instead.
 
     Parameters: ~
@@ -1623,7 +1624,7 @@ convert_signature_help_to_markdown_lines({signature_help}, {ft}, {triggers})
       • {triggers}        (table|nil) list of trigger characters from the lsp
                           server. used to better determine parameter offsets
 
-    Return: ~
+    Return (multiple): ~
         (table|nil) table list of lines of converted markdown.
         (table|nil) table of active hl
 
@@ -1833,7 +1834,7 @@ open_floating_preview({contents}, {syntax}, {opts})
                       {focusable} is also `true`, focus an existing floating
                       window with the same {focus_id}
 
-    Return: ~
+    Return (multiple): ~
         (integer) bufnr of newly created float window
         (integer) winid of newly created float window preview window
 
@@ -1857,7 +1858,7 @@ preview_location({location}, {opts})         *vim.lsp.util.preview_location()*
     Parameters: ~
       • {location}  (table) a single `Location` or `LocationLink`
 
-    Return: ~
+    Return (multiple): ~
         (integer|nil) buffer id of float window
         (integer|nil) window id of float window
 
@@ -2091,7 +2092,7 @@ start({cmd}, {cmd_args}, {dispatchers}, {extra_spawn_params})
                               • {env} (table) Additional environment variables
                                 for LSP server process
 
-    Return: ~
+    Return (multiple): ~
         Client RPC object.
         Methods:
         • `notify()` |vim.lsp.rpc.notify()|

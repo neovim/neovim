@@ -1475,26 +1475,21 @@ on_key({fn}, {ns_id})                                           *vim.on_key()*
     The Nvim command-line option |-w| is related but does not support
     callbacks and cannot be toggled dynamically.
 
-    Note:
-        {fn} will not be cleared by |nvim_buf_clear_namespace()|
-
-    Note:
-        {fn} will receive the keys after mappings have been evaluated
+    Note: ~
+      • {fn} will be removed on error.
+      • {fn} will not be cleared by |nvim_buf_clear_namespace()|
+      • {fn} will receive the keys after mappings have been evaluated
 
     Parameters: ~
-      • {fn}     (function) Callback function. It should take one string
-                 argument. On each key press, Nvim passes the key char to
-                 fn(). |i_CTRL-V| If {fn} is nil, it removes the callback for
-                 the associated {ns_id}
+      • {fn}     fun(key: string) Function invoked on every key press.
+                 |i_CTRL-V| Returning nil removes the callback associated with
+                 namespace {ns_id}.
       • {ns_id}  integer? Namespace ID. If nil or 0, generates and returns a
                  new |nvim_create_namespace()| id.
 
     Return: ~
         (integer) Namespace id associated with {fn}. Or count of all callbacks
         if on_key() is called without arguments.
-
-    Note:
-        {fn} will be removed if an error occurs while calling.
 
 paste({lines}, {phase})                                          *vim.paste()*
     Paste handler, invoked by |nvim_paste()| when a conforming UI (such as the
@@ -1543,22 +1538,26 @@ print({...})                                                     *vim.print()*
       • |:=|
 
 region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})         *vim.region()*
-    Get a table of lines with start, end columns for a region marked by two
-    points. Input and output positions are (0,0)-indexed and indicate byte
-    positions.
+    Gets a dict of line segment ("chunk") positions for the region from `pos1`
+    to `pos2`.
+
+    Input and output positions are byte positions, (0,0)-indexed. "End of
+    line" column position (for example, |linewise| visual selection) is
+    returned as |v:maxcol| (big number).
 
     Parameters: ~
-      • {bufnr}      (integer) number of buffer
-      • {pos1}       integer[]|string start of region as a (line, column)
-                     tuple or string accepted by |getpos()|
-      • {pos2}       integer[]|string end of region as a (line, column) tuple
-                     or string accepted by |getpos()|
-      • {regtype}    (string) type of selection, see |setreg()|
-      • {inclusive}  (boolean) indicating whether column of pos2 is inclusive
+      • {bufnr}      (integer) Buffer number, or 0 for current buffer
+      • {pos1}       integer[]|string Start of region as a (line, column)
+                     tuple or |getpos()|-compatible string
+      • {pos2}       integer[]|string End of region as a (line, column) tuple
+                     or |getpos()|-compatible string
+      • {regtype}    (string) |setreg()|-style selection type
+      • {inclusive}  (boolean) Controls whether `pos2` column is inclusive
+                     (see also 'selection').
 
     Return: ~
-        (table) region Table of the form `{linenr = {startcol,endcol}}`.
-        `endcol` is exclusive, and whole lines are marked with
+        (table) region Dict of the form `{linenr = {startcol,endcol}}`.
+        `endcol` is exclusive, and whole lines are returned as
         `{startcol,endcol} = {0,-1}`.
 
 schedule_wrap({cb})                                      *vim.schedule_wrap()*
@@ -2361,7 +2360,7 @@ open({path})                                                   *vim.ui.open()*
     Parameters: ~
       • {path}  (string) Path or URL to open
 
-    Return: ~
+    Return (multiple): ~
         SystemCompleted|nil # Command result, or nil if not found.
         (string|nil) # Error message on failure
 
@@ -2564,7 +2563,7 @@ match({args})                                           *vim.filetype.match()*
                   contents to use for matching. Can be used with {filename}.
                   Mutually exclusive with {buf}.
 
-    Return: ~
+    Return (multiple): ~
         (string|nil) If a match was found, the matched filetype.
         (function|nil) A function that modifies buffer state when called (for
         example, to set some filetype specific buffer variables). The function
@@ -2909,8 +2908,8 @@ cmp({v1}, {v2})                                            *vim.version.cmp()*
        end
 <
 
-    Note:
-        Per semver, build metadata is ignored when comparing two
+    Note: ~
+      • Per semver, build metadata is ignored when comparing two
         otherwise-equivalent versions.
 
     Parameters: ~

@@ -87,6 +87,9 @@ Integer nvim_get_hl_id_by_name(String name)
 
 /// Gets all or specific highlight groups in a namespace.
 ///
+/// @note When the `link` attribute is defined in the highlight definition
+///       map, other attributes will not be taking effect (see |:hi-link|).
+///
 /// @param ns_id Get highlight groups for namespace ns_id |nvim_get_namespaces()|.
 ///              Use 0 to get global highlight groups |:highlight|.
 /// @param opts  Options dict:
@@ -97,9 +100,6 @@ Integer nvim_get_hl_id_by_name(String name)
 /// @param[out] err Error details, if any.
 /// @return Highlight groups as a map from group name to a highlight definition map as in |nvim_set_hl()|,
 ///                   or only a single highlight definition map if requested by name or id.
-///
-/// @note When the `link` attribute is defined in the highlight definition
-///       map, other attributes will not be taking effect (see |:hi-link|).
 Dictionary nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(11)
 {
@@ -1958,7 +1958,7 @@ Object nvim__unpack(String str, Error *err)
 
 /// Deletes an uppercase/file named mark. See |mark-motions|.
 ///
-/// @note fails with error if a lowercase or buffer local named mark is used.
+/// @note Lowercase name (or other buffer-local mark) is an error.
 /// @param name       Mark name
 /// @return true if the mark was deleted, else false.
 /// @see |nvim_buf_del_mark()|
@@ -1980,12 +1980,13 @@ Boolean nvim_del_mark(String name, Error *err)
   return res;
 }
 
-/// Return a tuple (row, col, buffer, buffername) representing the position of
-/// the uppercase/file named mark. See |mark-motions|.
+/// Returns a `(row, col, buffer, buffername)` tuple representing the position
+/// of the uppercase/file named mark. "End of line" column position is returned
+/// as |v:maxcol| (big number). See |mark-motions|.
 ///
 /// Marks are (1,0)-indexed. |api-indexing|
 ///
-/// @note fails with error if a lowercase or buffer local named mark is used.
+/// @note Lowercase name (or other buffer-local mark) is an error.
 /// @param name       Mark name
 /// @param opts       Optional parameters. Reserved for future use.
 /// @return 4-tuple (row, col, buffer, buffername), (0, 0, 0, '') if the mark is

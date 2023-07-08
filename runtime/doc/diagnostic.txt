@@ -361,8 +361,8 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
 
     then virtual text will not be enabled for those diagnostics.
 
-    Note:
-        Each of the configuration options below accepts one of the following:
+    Note: ~
+      • Each of the configuration options below accepts one of the following:
         • `false`: Disable this feature
         • `true`: Enable this feature, use default settings.
         • `table`: Enable this feature with overrides. Use an empty table to

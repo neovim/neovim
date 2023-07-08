@@ -460,17 +460,18 @@ do
   vim.t = make_dict_accessor('t')
 end
 
---- Get a table of lines with start, end columns for a region marked by two points.
---- Input and output positions are (0,0)-indexed and indicate byte positions.
+--- Gets a dict of line segment ("chunk") positions for the region from `pos1` to `pos2`.
 ---
----@param bufnr integer number of buffer
----@param pos1 integer[]|string start of region as a (line, column) tuple or string accepted by |getpos()|
----@param pos2 integer[]|string end of region as a (line, column) tuple or string accepted by |getpos()|
----@param regtype string type of selection, see |setreg()|
----@param inclusive boolean indicating whether column of pos2 is inclusive
----@return table region Table of the form `{linenr = {startcol,endcol}}`.
----        `endcol` is exclusive, and whole lines are marked with
----        `{startcol,endcol} = {0,-1}`.
+--- Input and output positions are byte positions, (0,0)-indexed. "End of line" column
+--- position (for example, |linewise| visual selection) is returned as |v:maxcol| (big number).
+---
+---@param bufnr integer Buffer number, or 0 for current buffer
+---@param pos1 integer[]|string Start of region as a (line, column) tuple or |getpos()|-compatible string
+---@param pos2 integer[]|string End of region as a (line, column) tuple or |getpos()|-compatible string
+---@param regtype string \|setreg()|-style selection type
+---@param inclusive boolean Controls whether `pos2` column is inclusive (see also 'selection').
+---@return table region Dict of the form `{linenr = {startcol,endcol}}`. `endcol` is exclusive, and
+---whole lines are returned as `{startcol,endcol} = {0,-1}`.
 function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
@@ -610,18 +611,17 @@ local on_key_cbs = {}
 --- The Nvim command-line option |-w| is related but does not support callbacks
 --- and cannot be toggled dynamically.
 ---
----@param fn function: Callback function. It should take one string argument.
----                   On each key press, Nvim passes the key char to fn(). |i_CTRL-V|
----                   If {fn} is nil, it removes the callback for the associated {ns_id}
+---@note {fn} will be removed on error.
+---@note {fn} will not be cleared by |nvim_buf_clear_namespace()|
+---@note {fn} will receive the keys after mappings have been evaluated
+---
+---@param fn fun(key: string) Function invoked on every key press. |i_CTRL-V|
+---                   Returning nil removes the callback associated with namespace {ns_id}.
 ---@param ns_id integer? Namespace ID. If nil or 0, generates and returns a new
 ---                    |nvim_create_namespace()| id.
 ---
 ---@return integer Namespace id associated with {fn}. Or count of all callbacks
 ---if on_key() is called without arguments.
----
----@note {fn} will be removed if an error occurs while calling.
----@note {fn} will not be cleared by |nvim_buf_clear_namespace()|
----@note {fn} will receive the keys after mappings have been evaluated
 function vim.on_key(fn, ns_id)
   if fn == nil and ns_id == nil then
     return #on_key_cbs
@@ -1049,10 +1049,10 @@ function vim._init_default_mappings()
   map('i', '<C-W>', '<C-G>u<C-W>')
   vim.keymap.set('x', '*', function()
     _visual_search('/')
-  end, { desc = 'Nvim builtin', silent = true })
+  end, { desc = ':help v_star-default', silent = true })
   vim.keymap.set('x', '#', function()
     _visual_search('?')
-  end, { desc = 'Nvim builtin', silent = true })
+  end, { desc = ':help v_#-default', silent = true })
   -- Use : instead of <Cmd> so that ranges are supported. #19365
   map('n', '&', ':&&<CR>')
 

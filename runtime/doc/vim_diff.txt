@@ -536,12 +536,14 @@ Working directory (Vim implemented some of these after Nvim):
   working directory. Use `getcwd(-1, -1)` to get the global working directory.
 
 ==============================================================================
-Missing legacy features					 *nvim-missing*
+Missing features					 *nvim-missing*
 
 These legacy Vim features are not yet implemented:
 
-*:gui*
-*:gvim*
+- *:gui*
+- *:gvim*
+- *'completepopup'*
+- *'previewpopup'*
 
 ==============================================================================
 Removed legacy features					 *nvim-removed*
@@ -644,6 +646,7 @@ Options:
   'highlight' (Names of builtin |highlight-groups| cannot be changed.)
   *'hkmap'* *'hk'* use `set keymap=hebrew` instead.
   *'hkmapp'* *'hkp'* use `set keymap=hebrewp` instead.
+  keyprotocol
 
   *'pastetoggle'* *'pt'* Just Paste It.™ |paste| is handled automatically when
   you paste text using your terminal's or GUI's paste feature (CTRL-SHIFT-v,
@@ -687,6 +690,7 @@ Options:
     Use |g8| or |ga|.  See |mbyte-combining|.
   *'maxmem'* Nvim delegates memory-management to the OS.
   *'maxmemtot'* Nvim delegates memory-management to the OS.
+  printoptions
   *'printdevice'*
   *'printencoding'*
   *'printexpr'*
