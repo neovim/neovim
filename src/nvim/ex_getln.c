@@ -2358,7 +2358,7 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
       int count = 0;
 
       // Calculate how many undo steps are necessary to restore earlier state.
-      for (u_header_T *uhp = buf->b_u_newhead;
+      for (u_header_T *uhp = buf->b_u_curhead ? buf->b_u_curhead : buf->b_u_newhead;
            uhp != NULL;
            uhp = uhp->uh_next.ptr, ++count) {}
 
