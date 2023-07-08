@@ -1029,7 +1029,7 @@ function vim._init_default_mappings()
     local esc_chunks = vim
       .iter(chunks)
       :map(function(v)
-        return vim.fn.escape(v, [[/\]])
+        return vim.fn.escape(v, [[?/\]])
       end)
       :totable()
     local esc_pat = table.concat(esc_chunks, [[\n]])
