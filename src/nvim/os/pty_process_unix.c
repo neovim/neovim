@@ -285,7 +285,7 @@ static void init_child(PtyProcess *ptyproc)
     return;
   }
 
-  char *prog = ptyproc->process.argv[0];
+  const char *prog = process_get_exepath(proc);
 
   assert(proc->env);
   environ = tv_dict_to_env(proc->env);

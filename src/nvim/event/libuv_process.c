@@ -24,7 +24,7 @@ int libuv_process_spawn(LibuvProcess *uvproc)
   FUNC_ATTR_NONNULL_ALL
 {
   Process *proc = (Process *)uvproc;
-  uvproc->uvopts.file = proc->argv[0];
+  uvproc->uvopts.file = process_get_exepath(proc);
   uvproc->uvopts.args = proc->argv;
   uvproc->uvopts.flags = UV_PROCESS_WINDOWS_HIDE;
 #ifdef MSWIN
