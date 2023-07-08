@@ -709,15 +709,16 @@ local function gen_one(fname, to_fname, old, commit, parser_path)
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Neovim user documentation">
+
+    <!-- algolia docsearch https://docsearch.algolia.com/docs/docsearch-v3/ -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3" />
+    <link rel="preconnect" href="https://X185E15FPG-dsn.algolia.net" crossorigin />
+
     <link href="/css/normalize.min.css" rel="stylesheet">
     <link href="/css/bootstrap.css" rel="stylesheet">
     <link href="/css/main.css" rel="stylesheet">
     <link href="help.css" rel="stylesheet">
     <link href="/highlight/styles/neovim.min.css" rel="stylesheet">
-
-    <!-- algolia docsearch https://docsearch.algolia.com/docs/docsearch-v3/ -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3" />
-    <link rel="preconnect" href="https://X185E15FPG-dsn.algolia.net" crossorigin />
 
     <script src="/highlight/highlight.min.js"></script>
     <script>hljs.highlightAll();</script>

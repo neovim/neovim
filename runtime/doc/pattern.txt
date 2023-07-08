@@ -72,7 +72,7 @@ N			Repeat the latest "/" or "?" [count] times in
 			command "/\<keyword\>".  |exclusive|
 			'ignorecase' is used, 'smartcase' is not.
 							*v_star-default*
-			In Visual mode, search forward for the current selection.
+{Visual}*		In Visual mode, search forward for the current selection.
 			|default-mappings|
 
 							*#*
@@ -81,7 +81,7 @@ N			Repeat the latest "/" or "?" [count] times in
 			backspace, try using "stty erase <BS>" before starting
 			Vim (<BS> is CTRL-H or a real backspace).
 							*v_#-default*
-			In Visual mode, search backward for the current selection.
+{Visual}#		In Visual mode, search backward for the current selection.
 			|default-mappings|
 
 							*gstar*
