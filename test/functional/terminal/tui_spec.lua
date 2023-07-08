@@ -30,6 +30,7 @@ local spawn_argv = helpers.spawn_argv
 local set_session = helpers.set_session
 local feed = helpers.feed
 local eval = helpers.eval
+local write_file = helpers.write_file
 
 if helpers.skip(helpers.is_os('win')) then return end
 
@@ -1620,9 +1621,6 @@ end)
 
 describe('TUI', function()
   before_each(clear)
-  after_each(function()
-    os.remove('testF')
-  end)
 
   it('resize at startup #17285 #15044 #11330', function()
     local screen = Screen.new(50, 10)
@@ -1653,7 +1651,46 @@ describe('TUI', function()
     ]])
   end)
 
+  it('argv[0] can be overridden #23953', function()
+    if not exec_lua('return pcall(require, "ffi")') then
+      pending('missing LuaJIT FFI')
+    end
+    local script_file = 'Xargv0.lua'
+    write_file(script_file, [=[
+      local ffi = require('ffi')
+      ffi.cdef([[int execl(const char *, const char *, ...);]])
+      ffi.C.execl(vim.v.progpath, 'Xargv0nvim', '--clean')
+    ]=])
+    finally(function()
+      os.remove(script_file)
+    end)
+    local screen = thelpers.screen_setup(0, string.format([=[["%s", "--clean", "-l", "%s"]]=],
+                                                          nvim_prog, script_file))
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                       0,0-1          All}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    feed_data(':put =v:argv + [v:progname]\n')
+    screen:expect{grid=[[
+      Xargv0nvim                                        |
+      --embed                                           |
+      --clean                                           |
+      {1:X}argv0nvim                                        |
+      {5:[No Name] [+]                   5,1            Bot}|
+      4 more lines                                      |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+  end)
+
   it('with non-tty (pipe) stdout/stderr', function()
+    finally(function()
+      os.remove('testF')
+    end)
     local screen = thelpers.screen_setup(0, '"'..nvim_prog
       ..' -u NONE -i NONE --cmd \'set noswapfile noshowcmd noruler\' --cmd \'normal iabc\' > /dev/null 2>&1 && cat testF && rm testF"')
     feed_data(':w testF\n:q\n')
