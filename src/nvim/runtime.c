@@ -1249,7 +1249,7 @@ expand:
     if (*dirnames[i] == NUL && !expand_dirs) {
       // expand dir names in another round
       snprintf(tail, tail_buflen, "%s*", pat);
-      glob_flags = WILD_ADD_SLASH;
+      glob_flags |= WILD_ADD_SLASH;
       expand_dirs = true;
       goto expand;
     }

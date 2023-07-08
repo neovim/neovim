@@ -684,7 +684,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
 
   // convert the file pattern to a regexp pattern
   int starts_with_dot = *s == '.';
-  char *pat = file_pat_to_reg_pat(s, e, NULL, false);
+  char *pat = file_pat_to_reg_pat(s, e, NULL, flags & EW_KEEPBSLASH);
   if (pat == NULL) {
     xfree(buf);
     return 0;

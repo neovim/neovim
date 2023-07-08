@@ -27,6 +27,7 @@
 #define EW_EMPTYOK      0x8000   // no matches is not an error
 #define EW_NOTENV       0x10000  // do not expand environment variables
 #define EW_NOBREAK      0x20000  // do not invoke breakcheck
+#define EW_KEEPBSLASH   0x40000  // do not escape backslash
 
 /// Return value for the comparison of two files. Also @see path_full_compare.
 typedef enum file_comparison {

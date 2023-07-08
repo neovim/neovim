@@ -2659,6 +2659,9 @@ static int map_wildopts_to_ewflags(int options)
   if (options & WILD_ALLLINKS) {
     flags |= EW_ALLLINKS;
   }
+  if (options & WILD_KEEP_BSLASH) {
+    flags |= EW_KEEPBSLASH;
+  }
 
   return flags;
 }
