@@ -289,7 +289,6 @@ api.nvim_set_decoration_provider(namespace, {
               virt_text_pos = 'inline',
               ephemeral = false,
               virt_text = vt,
-              hl_mode = 'combine',
             })
           end
         end
