@@ -2368,6 +2368,8 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
       aucmd_restbuf(&aco);
     }
 
+    u_blockfree(buf);
+
     buf->b_u_newhead = cp_bufinfo.save_b_u_newhead;
     buf->b_u_oldhead = cp_bufinfo.save_b_u_oldhead;
     buf->b_u_curhead = cp_bufinfo.save_b_u_curhead;
