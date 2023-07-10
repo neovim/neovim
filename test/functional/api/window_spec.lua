@@ -595,6 +595,217 @@ describe('API/win', function()
     end)
   end)
 
+  describe('text_height', function()
+    it('validation', function()
+      local X = meths.get_vvar('maxcol')
+      insert([[
+        aaa
+        bbb
+        ccc
+        ddd
+        eee]])
+      eq("Invalid window id: 23",
+         pcall_err(meths.win_text_height, 23, {}))
+      eq("Line index out of bounds",
+         pcall_err(curwinmeths.text_height, { start_row = 5 }))
+      eq("Line index out of bounds",
+         pcall_err(curwinmeths.text_height, { start_row = -6 }))
+      eq("Line index out of bounds",
+         pcall_err(curwinmeths.text_height, { end_row = 5 }))
+      eq("Line index out of bounds",
+         pcall_err(curwinmeths.text_height, { end_row = -6 }))
+      eq("'start_row' is higher than 'end_row'",
+         pcall_err(curwinmeths.text_height, { start_row = 3, end_row = 1 }))
+      eq("'start_vcol' specified without 'start_row'",
+         pcall_err(curwinmeths.text_height, { end_row = 2, start_vcol = 0 }))
+      eq("'end_vcol' specified without 'end_row'",
+         pcall_err(curwinmeths.text_height, { start_row = 2, end_vcol = 0 }))
+      eq("Invalid 'start_vcol': out of range",
+         pcall_err(curwinmeths.text_height, { start_row = 2, start_vcol = -1 }))
+      eq("Invalid 'start_vcol': out of range",
+         pcall_err(curwinmeths.text_height, { start_row = 2, start_vcol = X + 1 }))
+      eq("Invalid 'end_vcol': out of range",
+         pcall_err(curwinmeths.text_height, { end_row = 2, end_vcol = -1 }))
+      eq("Invalid 'end_vcol': out of range",
+         pcall_err(curwinmeths.text_height, { end_row = 2, end_vcol = X + 1 }))
+      eq("'start_vcol' is higher than 'end_vcol'",
+         pcall_err(curwinmeths.text_height, { start_row = 2, end_row = 2, start_vcol = 10, end_vcol = 5 }))
+    end)
+
+    it('with two diff windows', function()
+      local X = meths.get_vvar('maxcol')
+      local screen = Screen.new(45, 22)
+      screen:set_default_attr_ids({
+        [0] = {foreground = Screen.colors.Blue1, bold = true};
+        [1] = {foreground = Screen.colors.Blue4, background = Screen.colors.Grey};
+        [2] = {foreground = Screen.colors.Brown};
+        [3] = {foreground = Screen.colors.Blue1, background = Screen.colors.LightCyan1, bold = true};
+        [4] = {background = Screen.colors.LightBlue};
+        [5] = {foreground = Screen.colors.Blue4, background = Screen.colors.LightGrey};
+        [6] = {background = Screen.colors.Plum1};
+        [7] = {background = Screen.colors.Red, bold = true};
+        [8] = {reverse = true};
+        [9] = {bold = true, reverse = true};
+      })
+      screen:attach()
+      exec([[
+        set diffopt+=context:2 number
+        let expr = 'printf("%08d", v:val) .. repeat("!", v:val)'
+        call setline(1, map(range(1, 20) + range(25, 45), expr))
+        vnew
+        call setline(1, map(range(3, 20) + range(28, 50), expr))
+        windo diffthis
+      ]])
+      feed('24gg')
+      screen:expect{grid=[[
+        {1:  }{2:    }{3:----------------}│{1:  }{2:  1 }{4:00000001!       }|
+        {1:  }{2:    }{3:----------------}│{1:  }{2:  2 }{4:00000002!!      }|
+        {1:  }{2:  1 }00000003!!!     │{1:  }{2:  3 }00000003!!!     |
+        {1:  }{2:  2 }00000004!!!!    │{1:  }{2:  4 }00000004!!!!    |
+        {1:+ }{2:  3 }{5:+-- 14 lines: 00}│{1:+ }{2:  5 }{5:+-- 14 lines: 00}|
+        {1:  }{2: 17 }00000019!!!!!!!!│{1:  }{2: 19 }00000019!!!!!!!!|
+        {1:  }{2: 18 }00000020!!!!!!!!│{1:  }{2: 20 }00000020!!!!!!!!|
+        {1:  }{2:    }{3:----------------}│{1:  }{2: 21 }{4:00000025!!!!!!!!}|
+        {1:  }{2:    }{3:----------------}│{1:  }{2: 22 }{4:00000026!!!!!!!!}|
+        {1:  }{2:    }{3:----------------}│{1:  }{2: 23 }{4:00000027!!!!!!!!}|
+        {1:  }{2: 19 }00000028!!!!!!!!│{1:  }{2: 24 }^00000028!!!!!!!!|
+        {1:  }{2: 20 }00000029!!!!!!!!│{1:  }{2: 25 }00000029!!!!!!!!|
+        {1:+ }{2: 21 }{5:+-- 14 lines: 00}│{1:+ }{2: 26 }{5:+-- 14 lines: 00}|
+        {1:  }{2: 35 }00000044!!!!!!!!│{1:  }{2: 40 }00000044!!!!!!!!|
+        {1:  }{2: 36 }00000045!!!!!!!!│{1:  }{2: 41 }00000045!!!!!!!!|
+        {1:  }{2: 37 }{4:00000046!!!!!!!!}│{1:  }{2:    }{3:----------------}|
+        {1:  }{2: 38 }{4:00000047!!!!!!!!}│{1:  }{2:    }{3:----------------}|
+        {1:  }{2: 39 }{4:00000048!!!!!!!!}│{1:  }{2:    }{3:----------------}|
+        {1:  }{2: 40 }{4:00000049!!!!!!!!}│{1:  }{2:    }{3:----------------}|
+        {1:  }{2: 41 }{4:00000050!!!!!!!!}│{1:  }{2:    }{3:----------------}|
+        {8:[No Name] [+]          }{9:[No Name] [+]         }|
+                                                     |
+      ]]}
+      screen:try_resize(45, 3)
+      screen:expect{grid=[[
+        {1:  }{2: 19 }00000028!!!!!!!!│{1:  }{2: 24 }^00000028!!!!!!!!|
+        {8:[No Name] [+]          }{9:[No Name] [+]         }|
+                                                     |
+      ]]}
+      eq(20, meths.win_text_height(1000, {}))
+      eq(20, meths.win_text_height(1001, {}))
+      eq(20, meths.win_text_height(1000, { start_row = 0 }))
+      eq(20, meths.win_text_height(1001, { start_row = 0 }))
+      eq(15, meths.win_text_height(1000, { end_row = -1 }))
+      eq(20, meths.win_text_height(1001, { end_row = -1 }))
+      eq(15, meths.win_text_height(1000, { end_row = 40 }))
+      eq(20, meths.win_text_height(1001, { end_row = 40 }))
+      eq(10, meths.win_text_height(1000, { start_row = 23 }))
+      eq(13, meths.win_text_height(1001, { start_row = 18 }))
+      eq(11, meths.win_text_height(1000, { end_row = 23 }))
+      eq(11, meths.win_text_height(1001, { end_row = 18 }))
+      eq(11, meths.win_text_height(1000, { start_row = 3, end_row = 39 }))
+      eq(11, meths.win_text_height(1001, { start_row = 1, end_row = 34 }))
+      eq(9, meths.win_text_height(1000, { start_row = 4, end_row = 38 }))
+      eq(9, meths.win_text_height(1001, { start_row = 2, end_row = 33 }))
+      eq(9, meths.win_text_height(1000, { start_row = 5, end_row = 37 }))
+      eq(9, meths.win_text_height(1001, { start_row = 3, end_row = 32 }))
+      eq(9, meths.win_text_height(1000, { start_row = 17, end_row = 25 }))
+      eq(9, meths.win_text_height(1001, { start_row = 15, end_row = 20 }))
+      eq(7, meths.win_text_height(1000, { start_row = 18, end_row = 24 }))
+      eq(7, meths.win_text_height(1001, { start_row = 16, end_row = 19 }))
+      eq(6, meths.win_text_height(1000, { start_row = -1 }))
+      eq(5, meths.win_text_height(1000, { start_row = -1, start_vcol = X }))
+      eq(0, meths.win_text_height(1000, { start_row = -1, start_vcol = X, end_row = -1 }))
+      eq(0, meths.win_text_height(1000, { start_row = -1, start_vcol = X, end_row = -1, end_vcol = X }))
+      eq(1, meths.win_text_height(1000, { start_row = -1, start_vcol = 0, end_row = -1, end_vcol = X }))
+      eq(3, meths.win_text_height(1001, { end_row = 0 }))
+      eq(2, meths.win_text_height(1001, { end_row = 0, end_vcol = 0 }))
+      eq(2, meths.win_text_height(1001, { start_row = 0, end_row = 0, end_vcol = 0 }))
+      eq(0, meths.win_text_height(1001, { start_row = 0, start_vcol = 0, end_row = 0, end_vcol = 0 }))
+      eq(1, meths.win_text_height(1001, { start_row = 0, start_vcol = 0, end_row = 0, end_vcol = X }))
+      eq(11, meths.win_text_height(1001, { end_row = 18 }))
+      eq(9, meths.win_text_height(1001, { start_row = 0, start_vcol = 0, end_row = 18 }))
+      eq(10, meths.win_text_height(1001, { end_row = 18, end_vcol = 0 }))
+      eq(8, meths.win_text_height(1001, { start_row = 0, start_vcol = 0, end_row = 18, end_vcol = 0 }))
+    end)
+
+    it('with wrapped lines', function()
+      local X = meths.get_vvar('maxcol')
+      local screen = Screen.new(45, 22)
+      screen:set_default_attr_ids({
+        [0] = {foreground = Screen.colors.Blue1, bold = true};
+        [1] = {foreground = Screen.colors.Brown};
+        [2] = {background = Screen.colors.Yellow};
+      })
+      screen:attach()
+      exec([[
+        set number cpoptions+=n
+        call setline(1, repeat([repeat('foobar-', 36)], 3))
+      ]])
+      local ns = meths.create_namespace('')
+      meths.buf_set_extmark(0, ns, 1, 100, { virt_text = {{('?'):rep(15), 'Search'}}, virt_text_pos = 'inline' })
+      meths.buf_set_extmark(0, ns, 2, 200, { virt_text = {{('!'):rep(75), 'Search'}}, virt_text_pos = 'inline' })
+      screen:expect{grid=[[
+        {1:  1 }^foobar-foobar-foobar-foobar-foobar-foobar|
+        -foobar-foobar-foobar-foobar-foobar-foobar-fo|
+        obar-foobar-foobar-foobar-foobar-foobar-fooba|
+        r-foobar-foobar-foobar-foobar-foobar-foobar-f|
+        oobar-foobar-foobar-foobar-foobar-foobar-foob|
+        ar-foobar-foobar-foobar-foobar-              |
+        {1:  2 }foobar-foobar-foobar-foobar-foobar-foobar|
+        -foobar-foobar-foobar-foobar-foobar-foobar-fo|
+        obar-foobar-fo{2:???????????????}obar-foobar-foob|
+        ar-foobar-foobar-foobar-foobar-foobar-foobar-|
+        foobar-foobar-foobar-foobar-foobar-foobar-foo|
+        bar-foobar-foobar-foobar-foobar-foobar-foobar|
+        -                                            |
+        {1:  3 }foobar-foobar-foobar-foobar-foobar-foobar|
+        -foobar-foobar-foobar-foobar-foobar-foobar-fo|
+        obar-foobar-foobar-foobar-foobar-foobar-fooba|
+        r-foobar-foobar-foobar-foobar-foobar-foobar-f|
+        oobar-foobar-foobar-foob{2:!!!!!!!!!!!!!!!!!!!!!}|
+        {2:!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!}|
+        {2:!!!!!!!!!}ar-foobar-foobar-foobar-foobar-fooba|
+        r-foobar-foobar-                             |
+                                                     |
+      ]]}
+      screen:try_resize(45, 2)
+      screen:expect{grid=[[
+        {1:  1 }^foobar-foobar-foobar-foobar-foobar-foobar|
+                                                     |
+      ]]}
+      eq(21, meths.win_text_height(0, {}))
+      eq(6, meths.win_text_height(0, { start_row = 0, end_row = 0 }))
+      eq(7, meths.win_text_height(0, { start_row = 1, end_row = 1 }))
+      eq(8, meths.win_text_height(0, { start_row = 2, end_row = 2 }))
+      eq(1, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 41 }))
+      eq(2, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 42 }))
+      eq(2, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 86 }))
+      eq(3, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 87 }))
+      eq(6, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 266 }))
+      eq(7, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 267 }))
+      eq(7, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 311 }))
+      eq(7, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 312 }))
+      eq(7, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = X }))
+      eq(7, meths.win_text_height(0, { start_row = 1, start_vcol = 40, end_row = 1, end_vcol = X }))
+      eq(6, meths.win_text_height(0, { start_row = 1, start_vcol = 41, end_row = 1, end_vcol = X }))
+      eq(6, meths.win_text_height(0, { start_row = 1, start_vcol = 85, end_row = 1, end_vcol = X }))
+      eq(5, meths.win_text_height(0, { start_row = 1, start_vcol = 86, end_row = 1, end_vcol = X }))
+      eq(2, meths.win_text_height(0, { start_row = 1, start_vcol = 265, end_row = 1, end_vcol = X }))
+      eq(1, meths.win_text_height(0, { start_row = 1, start_vcol = 266, end_row = 1, end_vcol = X }))
+      eq(1, meths.win_text_height(0, { start_row = 1, start_vcol = 310, end_row = 1, end_vcol = X }))
+      eq(0, meths.win_text_height(0, { start_row = 1, start_vcol = 311, end_row = 1, end_vcol = X }))
+      eq(18, meths.win_text_height(0, { start_row = 0, start_vcol = 131 }))
+      eq(19, meths.win_text_height(0, { start_row = 0, start_vcol = 130 }))
+      eq(20, meths.win_text_height(0, { end_row = 2, end_vcol = 311 }))
+      eq(21, meths.win_text_height(0, { end_row = 2, end_vcol = 312 }))
+      eq(17, meths.win_text_height(0, { start_row = 0, start_vcol = 131, end_row = 2, end_vcol = 311 }))
+      eq(19, meths.win_text_height(0, { start_row = 0, start_vcol = 130, end_row = 2, end_vcol = 312 }))
+      eq(16, meths.win_text_height(0, { start_row = 0, start_vcol = 221 }))
+      eq(17, meths.win_text_height(0, { start_row = 0, start_vcol = 220 }))
+      eq(14, meths.win_text_height(0, { end_row = 2, end_vcol = 41 }))
+      eq(15, meths.win_text_height(0, { end_row = 2, end_vcol = 42 }))
+      eq(9, meths.win_text_height(0, { start_row = 0, start_vcol = 221, end_row = 2, end_vcol = 41 }))
+      eq(11, meths.win_text_height(0, { start_row = 0, start_vcol = 220, end_row = 2, end_vcol = 42 }))
+    end)
+  end)
+
   describe('open_win', function()
     it('noautocmd option works', function()
       command('autocmd BufEnter,BufLeave,BufWinEnter * let g:fired = 1')

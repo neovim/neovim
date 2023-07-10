@@ -172,6 +172,13 @@ typedef struct {
 } Dict(get_highlight);
 
 typedef struct {
+  Object start_row;
+  Object end_row;
+  Object start_vcol;
+  Object end_vcol;
+} Dict(win_text_height);
+
+typedef struct {
   Object buffer;
   Object event;
   Object group;
