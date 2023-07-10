@@ -8,7 +8,7 @@ local is_win = uv.os_uname().version:find('Windows')
 ---@private
 --- Checks whether a given path exists and is a directory.
 ---@param filename (string) path to check
----@returns (bool)
+---@return boolean
 local function is_dir(filename)
   local stat = uv.fs_stat(filename)
   return stat and stat.type == 'directory' or false
@@ -18,7 +18,7 @@ end
 --- Embeds the given string into a table and correctly computes `Content-Length`.
 ---
 ---@param encoded_message (string)
----@returns (table) table containing encoded message and `Content-Length` attribute
+---@return string containing encoded message and `Content-Length` attribute
 local function format_message_with_content_length(encoded_message)
   return table.concat({
     'Content-Length: ',
@@ -32,7 +32,7 @@ end
 --- Parses an LSP Message's header
 ---
 ---@param header string: The header to parse.
----@return table parsed headers
+---@return table # parsed headers
 local function parse_headers(header)
   assert(type(header) == 'string', 'header must be a string')
   local headers = {}
@@ -190,7 +190,8 @@ end
 ---
 ---@param method (string) The invoked LSP method
 ---@param params (table): Parameters for the invoked LSP method
----@returns `nil` and `vim.lsp.protocol.ErrorCodes.MethodNotFound`.
+---@return nil
+---@return table `vim.lsp.protocol.ErrorCodes.MethodNotFound`
 function default_dispatchers.server_request(method, params)
   local _ = log.debug() and log.debug('server_request', method, params)
   return nil, rpc_response_error(protocol.ErrorCodes.MethodNotFound)
@@ -268,7 +269,7 @@ end
 --- Sends a notification to the LSP server.
 ---@param method (string) The invoked LSP method
 ---@param params (any): Parameters for the invoked LSP method
----@returns (bool) `true` if notification could be sent, `false` if not
+---@return boolean `true` if notification could be sent, `false` if not
 function Client:notify(method, params)
   return self:encode_and_send({
     jsonrpc = '2.0',
@@ -522,7 +523,7 @@ local function public_client(client)
   --- Sends a notification to the LSP server.
   ---@param method (string) The invoked LSP method
   ---@param params (table|nil): Parameters for the invoked LSP method
-  ---@returns (bool) `true` if notification could be sent, `false` if not
+  ---@return boolean `true` if notification could be sent, `false` if not
   function result.notify(method, params)
     return client:notify(method, params)
   end
@@ -624,9 +625,7 @@ end
 --- server process. May contain:
 --- - {cwd} (string) Working directory for the LSP server process
 --- - {env} (table) Additional environment variables for LSP server process
----@returns Client RPC object.
----
----@returns Methods:
+---@return table|nil Client RPC object, with these methods:
 --- - `notify()` |vim.lsp.rpc.notify()|
 --- - `request()` |vim.lsp.rpc.request()|
 --- - `is_closing()` returns a boolean indicating if the RPC is closing.

@@ -20,7 +20,7 @@ local iswin = vim.uv.os_uname().sysname == 'Windows_NT'
 --- </pre>
 ---
 ---@param start (string) Initial file or directory.
----@return (function) Iterator
+---@return function Iterator
 function M.parents(start)
   return function(_, dir)
     local parent = M.dirname(dir)
@@ -37,7 +37,7 @@ end
 --- Return the parent directory of the given file or directory
 ---
 ---@param file (string) File or directory
----@return (string) Parent directory of {file}
+---@return string|nil Parent directory of {file}
 function M.dirname(file)
   if file == nil then
     return nil
@@ -59,8 +59,8 @@ end
 
 --- Return the basename of the given file or directory
 ---
----@param file (string) File or directory
----@return (string) Basename of {file}
+---@param file string File or directory
+---@return string|nil Basename of {file}
 function M.basename(file)
   if file == nil then
     return nil

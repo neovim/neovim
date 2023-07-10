@@ -663,7 +663,7 @@ buf_request_all({bufnr}, {method}, {params}, {handler})
                    Server results are passed as a `client_id:result` map.
 
     Return: ~
-        fun() cancel Function that cancels all requests.
+        (function) cancel Function that cancels all requests.
 
                                                   *vim.lsp.buf_request_sync()*
 buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
@@ -802,7 +802,7 @@ get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
       • {client_id}  (integer) client id
 
     Return: ~
-        |vim.lsp.client| object, or nil
+        (nil|lsp.Client) client rpc object
 
 get_log_path()                                        *vim.lsp.get_log_path()*
     Gets the path of the logfile used by the LSP client.
@@ -825,7 +825,7 @@ omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
       • {base}       (integer) findstart=0, text to match against
 
     Return: ~
-        (integer) Decided by {findstart}:
+        integer|table Decided by {findstart}:
         • findstart=0: column where the completion starts, or -2 or -3
         • findstart=1: list of matches (actually just calls |complete()|)
 
@@ -1116,7 +1116,7 @@ completion({context})                               *vim.lsp.buf.completion()*
     called in Insert mode.
 
     Parameters: ~
-      • {context}  (context support not yet implemented) Additional
+      • {context}  (table) (context support not yet implemented) Additional
                    information about the context in which a completion was
                    triggered (how it was triggered, and by which trigger
                    character, if applicable)
@@ -1296,7 +1296,7 @@ workspace_symbol({query}, {options})          *vim.lsp.buf.workspace_symbol()*
     string means no filtering is done.
 
     Parameters: ~
-      • {query}    (string, optional)
+      • {query}    (string|nil) optional
       • {options}  (table|nil) additional options
                    • on_list: (function) handler for list results. See
                      |lsp-on-list-handler|
@@ -2040,7 +2040,7 @@ notify({method}, {params})                              *vim.lsp.rpc.notify()*
       • {params}  (table|nil) Parameters for the invoked LSP method
 
     Return: ~
-        (bool) `true` if notification could be sent, `false` if not
+        (boolean) `true` if notification could be sent, `false` if not
 
                                                        *vim.lsp.rpc.request()*
 request({method}, {params}, {callback}, {notify_reply_callback})
@@ -2092,9 +2092,8 @@ start({cmd}, {cmd_args}, {dispatchers}, {extra_spawn_params})
                               • {env} (table) Additional environment variables
                                 for LSP server process
 
-    Return (multiple): ~
-        Client RPC object.
-        Methods:
+    Return: ~
+        (table|nil) Client RPC object, with these methods:
         • `notify()` |vim.lsp.rpc.notify()|
         • `request()` |vim.lsp.rpc.request()|
         • `is_closing()` returns a boolean indicating if the RPC is closing.

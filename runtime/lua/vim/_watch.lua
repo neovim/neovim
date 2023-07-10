@@ -37,7 +37,7 @@ end
 ---     - uvflags (table|nil)
 ---                Same flags as accepted by |uv.fs_event_start()|
 ---@param callback (function) The function called when new events
----@return (function) A function to stop the watch
+---@return (function) Stops the watcher
 function M.watch(path, opts, callback)
   vim.validate({
     path = { path, 'string', false },
@@ -208,7 +208,7 @@ end
 ---                not match the pattern will be reported. Matches against both files and
 ---                directories. When nil, matches nothing.
 ---@param callback (function) The function called when new events
----@returns (function) A function to stop the watch.
+---@return function Stops the watcher
 function M.poll(path, opts, callback)
   vim.validate({
     path = { path, 'string', false },

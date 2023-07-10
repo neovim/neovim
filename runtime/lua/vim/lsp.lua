@@ -1951,7 +1951,7 @@ end
 ---
 ---@param client_id integer client id
 ---
----@returns |vim.lsp.client| object, or nil
+---@return (nil|lsp.Client) client rpc object
 function lsp.get_client_by_id(client_id)
   return active_clients[client_id] or uninitialized_clients[client_id]
 end
@@ -2090,13 +2090,14 @@ api.nvim_create_autocmd('VimLeavePre', {
 ---@param bufnr (integer) Buffer handle, or 0 for current.
 ---@param method (string) LSP method name
 ---@param params table|nil Parameters to send to the server
----@param handler lsp-handler|nil See |lsp-handler|
+---@param handler lsp-handler See |lsp-handler|
 ---       If nil, follows resolution strategy defined in |lsp-handler-configuration|
 ---
----@return table<integer, integer>, fun() 2-tuple:
----  - Map of client-id:request-id pairs for all successful requests.
----  - Function which can be used to cancel all the requests. You could instead
----    iterate all clients and call their `cancel_request()` methods.
+---@return table<integer, integer> client_request_ids Map of client-id:request-id pairs
+---for all successful requests.
+---@return function _cancel_all_requests Function which can be used to
+---cancel all the requests. You could instead
+---iterate all clients and call their `cancel_request()` methods.
 function lsp.buf_request(bufnr, method, params, handler)
   validate({
     bufnr = { bufnr, 'n', true },
@@ -2147,8 +2148,7 @@ end
 ---@param handler fun(results: table<integer, {error: lsp.ResponseError, result: any}>) (function)
 --- Handler called after all requests are completed. Server results are passed as
 --- a `client_id:result` map.
----
----@return fun() cancel Function that cancels all requests.
+---@return function cancel Function that cancels all requests.
 function lsp.buf_request_all(bufnr, method, params, handler)
   local results = {}
   local result_count = 0
@@ -2257,7 +2257,7 @@ end
 ---@param findstart integer 0 or 1, decides behavior
 ---@param base integer findstart=0, text to match against
 ---
----@returns (integer) Decided by {findstart}:
+---@return integer|table Decided by {findstart}:
 --- - findstart=0: column where the completion starts, or -2 or -3
 --- - findstart=1: list of matches (actually just calls |complete()|)
 function lsp.omnifunc(findstart, base)
@@ -2405,7 +2405,7 @@ end
 --- is a |vim.lsp.client| object.
 ---
 ---@param bufnr (integer|nil): Buffer handle, or 0 for current
----@returns (table) Table of (client_id, client) pairs
+---@return table result is table of (client_id, client) pairs
 ---@deprecated Use |vim.lsp.get_active_clients()| instead.
 function lsp.buf_get_clients(bufnr)
   local result = {}

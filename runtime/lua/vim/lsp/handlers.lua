@@ -382,7 +382,7 @@ M['textDocument/hover'] = M.hover
 
 ---@private
 --- Jumps to a location. Used as a handler for multiple LSP methods.
----@param _ (not used)
+---@param _ nil not used
 ---@param result (table) result of LSP method; a location or a list of locations.
 ---@param ctx (table) table containing the context of the request, including the method
 ---(`textDocument/definition` can return `Location` or `Location[]`
@@ -496,8 +496,9 @@ end
 --- Displays call hierarchy in the quickfix window.
 ---
 ---@param direction `"from"` for incoming calls and `"to"` for outgoing calls
----@returns `CallHierarchyIncomingCall[]` if {direction} is `"from"`,
----@returns `CallHierarchyOutgoingCall[]` if {direction} is `"to"`,
+---@return function
+--- `CallHierarchyIncomingCall[]` if {direction} is `"from"`,
+--- `CallHierarchyOutgoingCall[]` if {direction} is `"to"`,
 local make_call_hierarchy_handler = function(direction)
   return function(_, result)
     if not result then
