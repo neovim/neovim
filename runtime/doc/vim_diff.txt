@@ -598,6 +598,7 @@ Cscope:
 Eval:
   Vim9script
   *cscope_connection()*
+  *err_teapot()*
   *js_encode()*
   *js_decode()*
   *v:none* (used by Vim to represent JavaScript "undefined"); use |v:null| instead.
