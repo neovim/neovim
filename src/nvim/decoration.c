@@ -592,26 +592,34 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fo
     return 0;
   }
 
-  int virt_lines = 0;
-  int row = MAX(lnum - 2, 0);
-  int end_row = (int)lnum;
-  MarkTreeIter itr[1] = { 0 };
-  marktree_itr_get(buf->b_marktree, row, 0,  itr);
+  assert(lnum > 0);
   bool below_fold = lnum > 1 && hasFoldingWin(wp, lnum - 1, NULL, NULL, true, NULL);
   if (has_fold == kNone) {
     has_fold = hasFoldingWin(wp, lnum, NULL, NULL, true, NULL);
   }
+
+  const int row = lnum - 1;
+  const int start_row = below_fold ? row : MAX(row - 1, 0);
+  const int end_row = has_fold ? row : row + 1;
+  if (start_row >= end_row) {
+    return 0;
+  }
+
+  int virt_lines = 0;
+  MarkTreeIter itr[1] = { 0 };
+  marktree_itr_get(buf->b_marktree, start_row, 0, itr);
   while (true) {
     mtkey_t mark = marktree_itr_current(itr);
     if (mark.pos.row < 0 || mark.pos.row >= end_row) {
       break;
-    } else if (mt_end(mark) || marktree_decor_level(mark) < kDecorLevelVirtLine) {
+    } else if (mt_end(mark)
+               || marktree_decor_level(mark) < kDecorLevelVirtLine
+               || !mark.decor_full) {
       goto next_mark;
     }
-    bool above = mark.pos.row > (lnum - 2);
-    bool has_fold_cur = above ? has_fold : below_fold;
-    Decoration *decor = mark.decor_full;
-    if (!has_fold_cur && decor && decor->virt_lines_above == above) {
+    Decoration *const decor = mark.decor_full;
+    const int draw_row = mark.pos.row + (decor->virt_lines_above ? 0 : 1);
+    if (draw_row == row) {
       virt_lines += (int)kv_size(decor->virt_lines);
       if (lines) {
         kv_splice(*lines, decor->virt_lines);
