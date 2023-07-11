@@ -269,7 +269,7 @@ void set_context_in_runtime_cmd(expand_T *xp, const char *arg)
   xp->xp_pattern = (char *)arg;
 }
 
-// Source all vim and lua files in fnames with vim files given higher priority
+/// Source all .vim and .lua files in "fnames" with .vim files given higher priority.
 static bool source_callback_vim_lua(int num_fnames, char **fnames, bool all, void *cookie)
 {
   bool did_one = false;
@@ -297,7 +297,7 @@ static bool source_callback_vim_lua(int num_fnames, char **fnames, bool all, voi
   return did_one;
 }
 
-// Source all files in fnames with vim files given higher priority
+/// Source all files in "fnames" with .vim files given higher priority.
 static bool source_callback(int num_fnames, char **fnames, bool all, void *cookie)
 {
   bool did_one = source_callback_vim_lua(num_fnames, fnames, all, cookie);
@@ -881,7 +881,7 @@ int source_in_path(char *path, char *name, int flags)
   return do_in_path_and_pp(path, name, flags, source_callback, NULL);
 }
 
-/// Just like source_in_path(), but only source vim and lua files
+/// Just like source_in_path(), but only source .vim and .lua files
 int source_in_path_vim_lua(char *path, char *name, int flags)
 {
   return do_in_path_and_pp(path, name, flags, source_callback_vim_lua, NULL);
@@ -1073,14 +1073,14 @@ theend:
 /// load these from filetype.vim)
 static int load_pack_plugin(bool opt, char *fname)
 {
-  static const char *ftpat = "%s/ftdetect/*.\\(vim\\|lua\\)";  // NOLINT
+  static const char *ftpat = "%s/ftdetect/*";  // NOLINT
 
   char *const ffname = fix_fname(fname);
   size_t len = strlen(ffname) + strlen(ftpat);
   char *pat = xmallocz(len);
 
-  vim_snprintf(pat, len, "%s/plugin/**/*.\\(vim\\|lua\\)", ffname);  // NOLINT
-  gen_expand_wildcards_and_cb(1, &pat, EW_FILE, true, source_callback, NULL);
+  vim_snprintf(pat, len, "%s/plugin/**/*", ffname);  // NOLINT
+  gen_expand_wildcards_and_cb(1, &pat, EW_FILE, true, source_callback_vim_lua, NULL);
 
   char *cmd = xstrdup("g:did_load_filetypes");
 
@@ -1089,7 +1089,7 @@ static int load_pack_plugin(bool opt, char *fname)
   if (opt && eval_to_number(cmd) > 0) {
     do_cmdline_cmd("augroup filetypedetect");
     vim_snprintf(pat, len, ftpat, ffname);
-    gen_expand_wildcards_and_cb(1, &pat, EW_FILE, true, source_callback, NULL);
+    gen_expand_wildcards_and_cb(1, &pat, EW_FILE, true, source_callback_vim_lua, NULL);
     do_cmdline_cmd("augroup END");
   }
   xfree(cmd);

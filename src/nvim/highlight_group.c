@@ -698,11 +698,7 @@ int load_colors(char *name)
   char *buf = xmalloc(buflen);
   apply_autocmds(EVENT_COLORSCHEMEPRE, name, curbuf->b_fname, false, curbuf);
   snprintf(buf, buflen, "colors/%s.*", name);
-  int retval = source_runtime_vim_lua(buf, 0);
-  if (retval == FAIL) {
-    snprintf(buf, buflen, "colors/%s.*", name);
-    retval = source_runtime_vim_lua(buf, DIP_NORTP + DIP_START + DIP_OPT);
-  }
+  int retval = source_runtime_vim_lua(buf, DIP_START + DIP_OPT);
   xfree(buf);
   if (retval == OK) {
     apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, false, curbuf);
