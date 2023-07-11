@@ -197,15 +197,6 @@ end
 function M.format(options)
   options = options or {}
   local bufnr = options.bufnr or api.nvim_get_current_buf()
-  local clients = vim.lsp.get_active_clients({
-    id = options.id,
-    bufnr = bufnr,
-    name = options.name,
-  })
-
-  if options.filter then
-    clients = vim.tbl_filter(options.filter, clients)
-  end
 
   local mode = api.nvim_get_mode().mode
   local range = options.range
@@ -214,9 +205,15 @@ function M.format(options)
   end
   local method = range and 'textDocument/rangeFormatting' or 'textDocument/formatting'
 
-  clients = vim.tbl_filter(function(client)
-    return client.supports_method(method)
-  end, clients)
+  local clients = vim.lsp.get_active_clients({
+    id = options.id,
+    bufnr = bufnr,
+    name = options.name,
+    method = method,
+  })
+  if options.filter then
+    clients = vim.tbl_filter(options.filter, clients)
+  end
 
   if #clients == 0 then
     vim.notify('[LSP] Format request failed, no matching language servers.')
@@ -277,15 +274,12 @@ function M.rename(new_name, options)
   local clients = vim.lsp.get_active_clients({
     bufnr = bufnr,
     name = options.name,
+    -- Clients must at least support rename, prepareRename is optional
+    method = 'textDocument/rename',
   })
   if options.filter then
     clients = vim.tbl_filter(options.filter, clients)
   end
-
-  -- Clients must at least support rename, prepareRename is optional
-  clients = vim.tbl_filter(function(client)
-    return client.supports_method('textDocument/rename')
-  end, clients)
 
   if #clients == 0 then
     vim.notify('[LSP] Rename, no matching language servers with rename capability.')

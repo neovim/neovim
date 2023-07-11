@@ -1995,6 +1995,7 @@ end
 ---@field id integer|nil Match clients by id
 ---@field bufnr integer|nil match clients attached to the given buffer
 ---@field name string|nil match clients by name
+---@field method string|nil match client by supported method name
 
 --- Get active clients.
 ---
@@ -2004,6 +2005,7 @@ end
 ---               - id (number): Only return clients with the given id
 ---               - bufnr (number): Only return clients attached to this buffer
 ---               - name (string): Only return clients with the given name
+---               - method (string): Only return clients supporting the given method
 ---@return lsp.Client[]: List of |vim.lsp.client| objects
 function lsp.get_active_clients(filter)
   validate({ filter = { filter, 't', true } })
@@ -2020,6 +2022,7 @@ function lsp.get_active_clients(filter)
       client
       and (filter.id == nil or client.id == filter.id)
       and (filter.name == nil or client.name == filter.name)
+      and (filter.method == nil or client.supports_method(filter.method, { bufnr = filter.bufnr }))
     then
       clients[#clients + 1] = client
     end
