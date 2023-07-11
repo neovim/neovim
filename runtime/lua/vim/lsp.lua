@@ -963,6 +963,9 @@ function lsp._set_defaults(client, bufnr)
   then
     vim.bo[bufnr].formatexpr = 'v:lua.vim.lsp.formatexpr()'
   end
+  if client.supports_method('textDocument/hover') and is_empty_or_default(bufnr, 'keywordprg') then
+    vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = bufnr })
+  end
 end
 
 --- @class lsp.ClientConfig
@@ -1211,6 +1214,13 @@ function lsp.start_client(config)
     end
     if vim.bo[bufnr].formatexpr == 'v:lua.vim.lsp.formatexpr()' then
       vim.bo[bufnr].formatexpr = nil
+    end
+    local keymaps = api.nvim_buf_get_keymap(bufnr, "n")
+    for _, keymap in ipairs(keymaps) do
+      if keymap.lhs == "K" and keymap.callback == vim.lsp.buf.hover then
+        vim.keymap.del("n", "K", { buffer = bufnr })
+        return
+      end
     end
   end
 
