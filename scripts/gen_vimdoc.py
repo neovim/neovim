@@ -32,7 +32,7 @@ The generated :help text for each function is formatted as follows:
     parameter is marked as [out].
   - Each function documentation is separated by a single line.
 """
-import argparse
+import argparse as argp
 import os
 import re
 import sys
