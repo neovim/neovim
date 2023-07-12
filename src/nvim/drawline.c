@@ -1831,7 +1831,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
                                          && wlv.vcol == wp->w_virtcol));
         extmark_attr = decor_redraw_col(wp, (colnr_T)v, wlv.off, selected, &decor_state);
 
-        if (!has_fold) {
+        if (!has_fold && wp->w_buffer->b_virt_text_inline > 0) {
           handle_inline_virtual_text(wp, &wlv, v);
           if (wlv.n_extra > 0 && wlv.virt_inline_hl_mode <= kHlModeReplace) {
             // restore search_attr and area_attr when n_extra is down to zero
