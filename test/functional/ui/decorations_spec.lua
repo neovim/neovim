@@ -1130,7 +1130,45 @@ describe('extmark decorations', function()
                                                         |
     ]]}
 
-    command 'set nowrap'
+    command 'set number'
+    screen:expect{grid=[[
+      {2:  1 }for _,item in ipairs(items) do                |
+      {2:  2 }    local text, hl_id_cell, cou{4:Very} unpack{4:VERY}|
+      {2:    }m)                                            |
+      {2:  3 }    if                                        |
+      {2:  4 }hl_id_cell ~= nil then         {4:Much}       {4:MUCH}|
+      {2:  5 }        --^ -- -- -- -- -- -- -- -- -- -- -- hl|
+      {2:    }_id = hl_id_cell               {4:Error}     {4:ERROR}|
+      {2:  6 }    end                                       |
+      {2:  7 }    for _ = 1, (count or 1) do                |
+      {2:  8 }        local cell = line[colpos]             |
+      {2:  9 }    {1:-}   cell.text = text                     {1:-}|
+      {2: 10 }        cell.hl_id = hl_id                    |
+      {2: 11 }        colpos = colpos+1                     |
+      {2: 12 }    end                                       |
+                                                        |
+    ]]}
+
+    command 'set cpoptions+=n'
+    screen:expect{grid=[[
+      {2:  1 }for _,item in ipairs(items) do                |
+      {2:  2 }    local text, hl_id_cell, cou{4:Very} unpack{4:VERY}|
+      m)                                                |
+      {2:  3 }    if                                        |
+      {2:  4 }hl_id_cell ~= nil then         {4:Much}       {4:MUCH}|
+      {2:  5 }        --^ -- -- -- -- -- -- -- -- -- -- -- hl|
+      _id = hl_id_cell               {4:Error}         {4:ERROR}|
+      {2:  6 }    end                                       |
+      {2:  7 }    for _ = 1, (count or 1) do                |
+      {2:  8 }        local cell = line[colpos]             |
+      {2:  9 }    {1:-}   cell.text = text                     {1:-}|
+      {2: 10 }        cell.hl_id = hl_id                    |
+      {2: 11 }        colpos = colpos+1                     |
+      {2: 12 }    end                                       |
+                                                        |
+    ]]}
+
+    command 'set cpoptions-=n nonumber nowrap'
     screen:expect{grid=[[
       for _,item in ipairs(items) do                    |
           local text, hl_id_cell, cou{4:Very} unpack(ite{4:VERY}|
@@ -1149,7 +1187,7 @@ describe('extmark decorations', function()
                                                         |
     ]]}
 
-    feed('8zl')
+    feed '8zl'
     screen:expect{grid=[[
       em in ipairs(items) do                            |
       l text, hl_id_cell, count = unp{4:Very}item)      {4:VERY}|
