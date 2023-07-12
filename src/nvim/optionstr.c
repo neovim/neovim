@@ -428,7 +428,7 @@ void set_string_option_direct_in_buf(buf_T *buf, const char *name, int opt_idx, 
 ///
 /// @return NULL on success, an untranslated error message on error.
 const char *set_string_option(const int opt_idx, const char *const value, const int opt_flags,
-                              char *const errbuf, const size_t errbuflen)
+                              int *value_checked, char *const errbuf, const size_t errbuflen)
   FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   vimoption_T *opt = get_option(opt_idx);
@@ -457,13 +457,8 @@ const char *set_string_option(const int opt_idx, const char *const value, const 
   char *const saved_oldval_g = (oldval_g != NULL) ? xstrdup(oldval_g) : 0;
   char *const saved_newval = xstrdup(*varp);
 
-  int value_checked = false;
   const char *const errmsg = did_set_string_option(curbuf, curwin, opt_idx, varp, oldval, errbuf,
-                                                   errbuflen, opt_flags, &value_checked);
-  if (errmsg == NULL) {
-    did_set_option(opt_idx, opt_flags, true, value_checked);
-  }
-
+                                                   errbuflen, opt_flags, value_checked);
   // call autocommand after handling side effects
   if (errmsg == NULL) {
     if (!starting) {

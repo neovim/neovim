@@ -1598,7 +1598,7 @@ int do_set(char *arg, int opt_flags)
 /// @param opt_flags  possibly with OPT_MODELINE
 /// @param new_value  value was replaced completely
 /// @param value_checked  value was checked to be safe, no need to set P_INSECURE
-void did_set_option(int opt_idx, int opt_flags, int new_value, int value_checked)
+void did_set_option(int opt_idx, int opt_flags, bool new_value, bool value_checked)
 {
   options[opt_idx].flags |= P_WAS_SET;
 
@@ -3793,6 +3793,8 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
     goto end;
   }
 
+  int value_checked = false;
+
   switch (v.type) {
   case kOptValTypeNil:
     abort();  // This will never happen.
@@ -3825,9 +3827,13 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
     if (s == NULL || opt_flags & OPT_CLEAR) {
       s = "";
     }
-    errmsg = set_string_option(opt_idx, s, opt_flags, errbuf, sizeof(errbuf));
+    errmsg = set_string_option(opt_idx, s, opt_flags, &value_checked, errbuf, sizeof(errbuf));
     break;
   }
+  }
+
+  if (errmsg != NULL) {
+    did_set_option(opt_idx, opt_flags, true, value_checked);
   }
 
 end:
