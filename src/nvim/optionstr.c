@@ -2086,8 +2086,8 @@ const char *did_set_string_option(buf_T *buf, win_T *win, int opt_idx, char **va
     .os_restore_chartab = false,
     .os_errbuf = errbuf,
     .os_errbuflen = errbuflen,
-    .os_win = curwin,
-    .os_buf = curbuf,
+    .os_win = win,
+    .os_buf = buf,
   };
 
   // Disallow changing some options from secure mode
