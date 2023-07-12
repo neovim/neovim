@@ -1692,7 +1692,8 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
   // highlighting the second byte, not the ninth.
 
   linenr_T lnum = wp->w_cursor.lnum;
-  char *line = ml_get(lnum);
+  // Make a copy of the line, because syntax matching may free it.
+  char *line = xstrdup(ml_get(lnum));
   char *ptr = line;
   char *ptr_end;
   char *ptr_row_offset = line;  // Where we begin adjusting `ptr_end`
@@ -1733,8 +1734,8 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
 
   vcol = offset;
 
-#define INCR() nudge++; ptr_end += utfc_ptr2len((char *)ptr_end)
-#define DECR() nudge--; ptr_end -= utfc_ptr2len((char *)ptr_end)
+#define INCR() nudge++; ptr_end += utfc_ptr2len(ptr_end)
+#define DECR() nudge--; ptr_end -= utfc_ptr2len(ptr_end)
 
   while (ptr < ptr_end && *ptr != NUL) {
     int cwidth = win_chartabsize(curwin, ptr, vcol);
@@ -1776,6 +1777,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
     ptr += utfc_ptr2len(ptr);
   }
 
+  xfree(line);
   return col + nudge;
 }
 
