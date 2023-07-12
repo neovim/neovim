@@ -148,8 +148,9 @@ LSP FUNCTIONS
 						`progress` of |vim.lsp.Client|
 - *vim.lsp.get_active_clients()*		Use |vim.lsp.get_clients()|
 - *vim.lsp.for_each_buffer_client()*		Use |vim.lsp.get_clients()|
-- *vim.lsp.util.lookup_section()*		Use |vim.tbl_get()| and
-						|vim.split()| with {plain=true} instead.
+- *vim.lsp.util.lookup_section()*		Use |vim.tbl_get()| instead: >
+						local keys = vim.split(section, '.', { plain = true })
+						local  vim.tbl_get(table, unpack(keys))
 - *vim.lsp.util.trim_empty_lines()*		Use |vim.split()| with `trimempty` instead.
 - *vim.lsp.util.try_trim_markdown_code_blocks()*
 - *vim.lsp.util.set_lines()*
@@ -217,8 +218,10 @@ UI EXTENSIONS
 			by the Nvim core directly instead of the TUI.
 
 VARIABLES
-- *b:terminal_job_pid*	PID of the top-level process in a |:terminal|.
-			Use `jobpid(&channel)` instead.
+- *b:terminal_job_pid*	Use `jobpid(&channel)` instead.
+- *b:terminal_job_id*	Use `&channel` instead. To access in non-current buffer:
+			- Lua: `vim.bo[bufnr].channel`
+			- Vimscript: `getbufvar(bufnr, '&channel')`
 
 
  vim:noet:tw=78:ts=8:ft=help:norl:

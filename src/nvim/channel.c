@@ -544,10 +544,9 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
   }
 #else
   if (embedded_mode) {
-    // In embedded mode redirect stdout and stdin to stderr, since they are used for the UI channel.
-    // NOTE: fnctl with F_DUPFD_CLOEXEC is used instead of dup to prevent child processes from
-    // inheriting the file descriptors, which make it impossible for UIs to detect when nvim exits
-    // while one or more of its child processes are still running.
+    // Redirect stdout/stdin (the UI channel) to stderr. Use fnctl(F_DUPFD_CLOEXEC) instead of dup()
+    // to prevent child processes from inheriting the file descriptors, which are used by UIs to
+    // detect when Nvim exits.
     stdin_dup_fd = fcntl(STDIN_FILENO, F_DUPFD_CLOEXEC, STDERR_FILENO + 1);
     stdout_dup_fd = fcntl(STDOUT_FILENO, F_DUPFD_CLOEXEC, STDERR_FILENO + 1);
     dup2(STDERR_FILENO, STDOUT_FILENO);

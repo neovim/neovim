@@ -317,36 +317,39 @@ Normal commands:
   |Q| replays the last recorded macro instead of switching to Ex mode (|gQ|).
 
 Options:
-  Local values for global-local number/boolean options are unset when the
-  option is set without a scope (e.g. by using |:set|), similarly to how
-  global-local string options work.
 
-  'autoread'    works in the terminal (if it supports "focus" events)
-  'cpoptions'   flags: |cpo-_|
-  'diffopt'     "linematch" feature
-  'exrc'        searches for ".nvim.lua", ".nvimrc", or ".exrc" files. The
+Local values for global-local number/boolean options are unset when the option
+is set without a scope (e.g. by using |:set|), similarly to how global-local
+string options work.
+
+- 'autoread'    works in the terminal (if it supports "focus" events)
+- 'cpoptions'   flags: |cpo-_|
+- 'diffopt'     "linematch" feature
+- 'exrc'        searches for ".nvim.lua", ".nvimrc", or ".exrc" files. The
                 user is prompted whether to trust the file.
-  'fillchars'   flags: "msgsep", "horiz", "horizup", "horizdown",
+- 'fillchars'   flags: "msgsep", "horiz", "horizup", "horizdown",
                 "vertleft", "vertright", "verthoriz"
-  'foldcolumn'  supports up to 9 dynamic/fixed columns
-  'guicursor'   works in the terminal (TUI)
-  'inccommand'  shows interactive results for |:substitute|-like commands
+- 'foldcolumn'  supports up to 9 dynamic/fixed columns
+- 'guicursor'   works in the terminal (TUI)
+- 'inccommand'  shows interactive results for |:substitute|-like commands
                 and |:command-preview| commands
-  'jumpoptions' "view" tries to restore the |mark-view| when moving through
-  the |jumplist|, |changelist|, |alternate-file| or using |mark-motions|.
-  'laststatus'  global statusline support
-  'mousescroll' amount to scroll by when scrolling with a mouse
-  'pumblend'    pseudo-transparent popupmenu
-  'scrollback'
-  'shortmess'   "F" flag does not affect output from autocommands
-  'signcolumn'  supports up to 9 dynamic/fixed columns
-  'statuscolumn' full control of columns using 'statusline' format
-  'tabline'     middle-click on tabpage label closes tabpage,
+- 'jumpoptions' "view" tries to restore the |mark-view| when moving through
+- the |jumplist|, |changelist|, |alternate-file| or using |mark-motions|.
+- 'laststatus'  global statusline support
+- 'mousescroll' amount to scroll by when scrolling with a mouse
+- 'pumblend'    pseudo-transparent popupmenu
+- 'scrollback'
+- 'shortmess'
+    - "F" flag does not affect output from autocommands.
+    - "q" flag fully hides macro recording message.
+- 'signcolumn'  supports up to 9 dynamic/fixed columns
+- 'statuscolumn' full control of columns using 'statusline' format
+- 'tabline'     middle-click on tabpage label closes tabpage,
                 and %@Func@foo%X can call any function on mouse-click
-  'termpastefilter'
-  'ttimeout', 'ttimeoutlen' behavior was simplified
-  'winblend'    pseudo-transparency in floating windows |api-floatwin|
-  'winhighlight' window-local highlights
+- 'termpastefilter'
+- 'ttimeout', 'ttimeoutlen' behavior was simplified
+- 'winblend'    pseudo-transparency in floating windows |api-floatwin|
+- 'winhighlight' window-local highlights
 
 Providers:
   If a Python interpreter is available on your `$PATH`, |:python| and
@@ -595,9 +598,6 @@ Autocommands:
   https://github.com/neovim/neovim/issues/23368
 - |TermResponse| is fired for any OSC sequence received from the terminal,
   instead of the Primary Device Attributes response. |v:termresponse|
-
-Options:
-- |shm-q| fully hides macro recording message instead of only shortening it.
 
 ==============================================================================
 Missing features					 *nvim-missing*

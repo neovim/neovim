@@ -7446,6 +7446,7 @@ vim.bo.vts = vim.bo.vartabstop
 ---
 --- Level   Messages ~
 --- ----------------------------------------------------------------------
+--- 1	Enables Lua tracing (see above). Does not produce messages.
 --- 2	When a file is ":source"'ed, or `shada` file is read or written.
 --- 3	UI info, terminal capabilities.
 --- 4	Shell commands.

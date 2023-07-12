@@ -331,8 +331,8 @@ numerical highlight ids to the actual attributes.
 	`blend`:		blend level (0-100). Could be used by UIs to
 				support blending floating windows to the
 				background or to signal a transparent cursor.
-	`url`:			a URL associated with this highlight. UIs can
-				display this URL however they wish.
+	`url`:			URL associated with this highlight. UIs should
+				present the region as a clickable hyperlink.
 
 	For absent color keys the default color should be used. Don't store
 	the default value in the table, rather a sentinel value, so that

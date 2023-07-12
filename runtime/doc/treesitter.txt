@@ -18,15 +18,25 @@ changes. This documentation may also not fully reflect the latest changes.
 PARSER FILES                                              *treesitter-parsers*
 
 Parsers are the heart of treesitter. They are libraries that treesitter will
-search for in the `parser` runtime directory. By default, Nvim bundles parsers
-for C, Lua, Vimscript, Vimdoc and Treesitter query files, but parsers can be
-installed via a plugin like https://github.com/nvim-treesitter/nvim-treesitter
-or even manually.
+search for in the `parser` runtime directory.
+
+Nvim includes these parsers:
+
+- C
+- Lua
+- Markdown
+- Vimscript
+- Vimdoc
+- Treesitter query files |ft-query-plugin|
+
+You can install more parsers manually, or with a plugin like
+https://github.com/nvim-treesitter/nvim-treesitter .
 
 Parsers are searched for as `parser/{lang}.*` in any 'runtimepath' directory.
 If multiple parsers for the same language are found, the first one is used.
 (NOTE: This typically implies the priority "user config > plugins > bundled".)
-A parser can also be loaded manually using a full path: >lua
+
+To load a parser from its filepath: >lua
 
     vim.treesitter.language.add('python', { path = "/path/to/python.so" })
 <
