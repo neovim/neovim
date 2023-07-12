@@ -473,15 +473,16 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   either as a string or as an integer, the latter which
 ///                   can be obtained using |nvim_get_hl_id_by_name()|.
 ///               - virt_text_pos : position of virtual text. Possible values:
-///                 - "eol": right after eol character (default)
+///                 - "eol": right after eol character (default).
 ///                 - "overlay": display over the specified column, without
 ///                              shifting the underlying text.
 ///                 - "right_align": display right aligned in the window.
 ///                 - "inline": display at the specified column, and
-///                             shift the buffer text to the right as needed
+///                             shift the buffer text to the right as needed.
 ///               - virt_text_win_col : position the virtual text at a fixed
 ///                                     window column (starting from the first
-///                                     text column)
+///                                     text column of the screen line) instead
+///                                     of "virt_text_pos".
 ///               - virt_text_hide : hide the virtual text when the background
 ///                                  text is selected or hidden because of
 ///                                  scrolling with 'nowrap' or 'smoothscroll'.
