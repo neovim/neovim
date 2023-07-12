@@ -1024,13 +1024,15 @@ describe('ui/mouse/input', function()
       })
       feed('ggdG')
 
-      feed_command('set concealcursor=ni')
-      feed_command('set nowrap')
-      feed_command('set shiftwidth=2 tabstop=4 list')
-      feed_command('setl listchars=tab:>-')
-      feed_command('syntax match NonText "\\*" conceal')
-      feed_command('syntax match NonText "cats" conceal cchar=X')
-      feed_command('syntax match NonText "x" conceal cchar=>')
+      command([[setlocal concealcursor=ni nowrap shiftwidth=2 tabstop=4 list listchars=tab:>-]])
+      command([[syntax region X0 matchgroup=X1 start=/\*/ end=/\*/ concealends contains=X2]])
+      command([[syntax match X2 /cats/ conceal cchar=X contained]])
+      -- No heap-use-after-free with multi-line syntax pattern #24317
+      command([[syntax match X3 /\n\@<=x/ conceal cchar=>]])
+      command([[highlight link X0 Normal]])
+      command([[highlight link X1 NonText]])
+      command([[highlight link X2 NonText]])
+      command([[highlight link X3 NonText]])
 
       -- First column is there to retain the tabs.
       insert([[
