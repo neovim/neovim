@@ -60,7 +60,8 @@ function vim.deepcopy(orig)
   return deepcopy(orig)
 end
 
---- Splits a string at each instance of a separator.
+--- Gets an |iterator| that splits a string at each instance of a separator, in "lazy" fashion
+--- (as opposed to |vim.split()| which is "eager").
 ---
 --- Example:
 ---   <pre>lua
@@ -159,7 +160,8 @@ function vim.gsplit(s, sep, opts)
   end
 end
 
---- Splits a string at each instance of a separator.
+--- Splits a string at each instance of a separator and returns the result as a table (unlike
+--- |vim.gsplit()|).
 ---
 --- Examples:
 --- <pre>lua
@@ -530,8 +532,8 @@ end
 ---
 ---@see Based on https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
----@param t table List-like table
----@return iterator over sorted keys and their values
+---@param t table Dict-like table
+---@return # iterator over sorted keys and their values
 function vim.spairs(t)
   assert(type(t) == 'table', string.format('Expected table, got %s', type(t)))
 

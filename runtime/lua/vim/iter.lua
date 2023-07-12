@@ -1,22 +1,15 @@
 ---@defgroup vim.iter
 ---
---- This module provides a generic interface for working with
---- iterables: tables, lists, iterator functions, pair()/ipair()-like iterators,
---- and \`vim.iter()\` objects.
----
---- \*vim.iter()\* wraps its table or function argument into an \*Iter\* object
---- with methods (such as |Iter:filter()| and |Iter:map()|) that transform the
---- underlying source data. These methods can be chained together to create
---- iterator "pipelines". Each pipeline stage receives as input the output
---- values from the prior stage. The values used in the first stage of the
---- pipeline depend on the type passed to this function:
+--- \*vim.iter()\* is an interface for |iterable|s: it wraps a table or function argument into an
+--- \*Iter\* object with methods (such as |Iter:filter()| and |Iter:map()|) that transform the
+--- underlying source data. These methods can be chained together to create iterator "pipelines".
+--- Each pipeline stage receives as input the output values from the prior stage. The values used in
+--- the first stage of the pipeline depend on the type passed to this function:
 ---
 --- - List tables pass only the value of each element
---- - Non-list tables pass both the key and value of each element
---- - Function iterators pass all of the values returned by their respective
----   function
---- - Tables with a metatable implementing __call are treated as function
----   iterators
+--- - Non-list (dict) tables pass both the key and value of each element
+--- - Function |iterator|s pass all of the values returned by their respective function
+--- - Tables with a metatable implementing |__call()| are treated as function iterators
 ---
 --- Examples:
 --- <pre>lua

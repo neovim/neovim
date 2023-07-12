@@ -304,14 +304,10 @@ Lua documentation uses a subset of [EmmyLua] annotations. See [:help dev-doc-lua
   ---@return type {description}
   ```
 - If possible, add type information (`table`, `string`, `number`, ...). Multiple valid types are separated by a bar (`string|table`). Indicate optional parameters via `type|nil`.
-- If a function in your Lua module should _not_ be documented (e.g. internal or local function), set the doc comment to:
-  ```
-  ---@private
-  ```
-- Mark deprecated functions with:
-  ```
-  ---@deprecated
-  ```
+- If a function in your Lua module should _not_ be documented, add `@nodoc`.
+- If the function is internal or otherwise non-public add `@private`.
+      - Private functions usually should be underscore-prefixed (named "_foo", not "foo").
+- Mark deprecated functions with `@deprecated`.
 
 Reviewing
 ---------

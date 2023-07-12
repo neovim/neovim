@@ -437,7 +437,7 @@ middle of a block, then an explicit inner block can be used, as in the idioms
 the last statements in their (inner) blocks.
 
 ------------------------------------------------------------------------------
-2.4.5  For Statement                             *luaref-for* *luaref-langForStat*
+2.4.5  For Statement                             *for* *luaref-langForStat*
 
 The `for` statement has two forms: one numeric and one generic.
 
@@ -477,8 +477,8 @@ Note the following:
    after the `for` ends or is broken. If you need this value, assign it to
    another variable before breaking or exiting the loop.
 
-                                                                     *luaref-in*
-The generic `for` statement works over functions, called iterators. On each
+                                                                      *for-in*
+The generic `for` statement works over functions, called |iterator|s. On each
 iteration, the iterator function is called to produce a new value, stopping
 when this new value is `nil`. The generic `for` loop has the following syntax:
 >
@@ -3611,8 +3611,8 @@ getmetatable({object})                                   *luaref-getmetatable()*
         associated value. Otherwise, returns the metatable of the given
         object.
 
-ipairs({t})                                                    *luaref-ipairs()*
-        Returns three values: an iterator function, the table {t}, and 0, so
+ipairs({t})                                                           *ipairs()*
+        Returns three values: an |iterator| function, the table {t}, and 0, so
         that the construction
 
                `for i,v in ipairs(t) do`  `body`  `end`
@@ -3645,7 +3645,7 @@ loadstring({string} [, {chunkname}])                       *luaref-loadstring()*
                assert(loadstring(s))()
 <
 
-next({table} [, {index}])                                        *luaref-next()*
+next({table} [, {index}])                                        *next()*
         Allows a program to traverse all fields of a table. Its first argument
         is a table and its second argument is an index in this table. `next`
         returns the next index of the table and its associated value. When
@@ -3657,15 +3657,15 @@ next({table} [, {index}])                                        *luaref-next()*
 
         The order in which the indices are enumerated is not specified, `even
         for` `numeric indices`. (To traverse a table in numeric order, use a
-        numerical `for` or the `ipairs` |luaref-ipairs()| function.)
+        numerical `for` or the |ipairs()| function.)
 
         The behavior of `next` is `undefined` if, during the traversal, you
         assign any value to a non-existent field in the table. You may however
         modify existing fields. In particular, you may clear existing fields.
 
-pairs({t})                                                      *luaref-pairs()*
-        Returns three values: the `next` |luaref-next()| function, the table
-        {t}, and `nil`, so that the construction
+pairs({t})                                                             *pairs()*
+        Returns three values: the |next()| function, the table {t}, and `nil`,
+        so that the construction
 
                `for k,v in pairs(t) do`  `body`  `end`
 
@@ -3826,7 +3826,7 @@ coroutine.wrap({f})                                           *coroutine.wrap()*
 
 coroutine.yield({...})                                       *coroutine.yield()*
         Suspends the execution of the calling coroutine. The coroutine cannot
-        be running a C function, a metamethod, or an iterator. Any arguments
+        be running a C function, a metamethod, or an |iterator|. Any arguments
         to `yield` are passed as extra results to `resume`.
 
 ==============================================================================
@@ -4036,7 +4036,7 @@ string.format({formatstring}, {...})                           *string.format()*
         This function does not accept string values containing embedded zeros.
 
 string.gmatch({s}, {pattern})                                  *string.gmatch()*
-        Returns an iterator function that, each time it is called, returns the
+        Returns an |iterator| function that, each time it is called, returns the
         next captures from {pattern} over string {s}.
 
         If {pattern} specifies no captures, then the whole match is produced
@@ -4271,7 +4271,7 @@ table.foreach({table}, {f})                                    *table.foreach()*
         returns a non-`nil` value, then the loop is broken, and this value is
         returned as the final value of `table.foreach`.
 
-        See |luaref-next()| for extra information about table traversals.
+        See |next()| for extra information about table traversals.
 
 table.foreachi({table}, {f})                                  *table.foreachi()*
         Executes the given {f} over the numerical indices of {table}. For each
@@ -4464,7 +4464,7 @@ io.input([{file}])                                                  *io.input()*
         an error code.
 
 io.lines([{filename}])                                              *io.lines()*
-        Opens the given file name in read mode and returns an iterator
+        Opens the given file name in read mode and returns an |iterator|
         function that, each time it is called, returns a new line from the
         file. Therefore, the construction
 
@@ -4533,7 +4533,7 @@ file:flush()                                               *luaref-file:flush()*
         Saves any written data to `file`.
 
 file:lines()                                               *luaref-file:lines()*
-        Returns an iterator function that, each time it is called, returns a
+        Returns an |iterator| function that, each time it is called, returns a
         new line from the file. Therefore, the construction
 
                `for line in file:lines() do`  `body`  `end`

@@ -71,7 +71,7 @@ The following new APIs and features were added.
     https://github.com/neovim/neovim/pull/23611
 
 • |vim.iter()| provides a generic iterator interface for tables and Lua
-  iterators |luaref-in|.
+  iterators |for-in|.
 
 • Added |vim.ringbuf()| to create ring buffers.
 

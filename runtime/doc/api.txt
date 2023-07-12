@@ -1849,6 +1849,9 @@ nvim_get_commands({*opts})                               *nvim_get_commands()*
     Return: ~
         Map of maps describing commands.
 
+    See also: ~
+      • |nvim_get_all_options_info()|
+
 nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
     Parse command line.
 
@@ -1932,6 +1935,9 @@ nvim_get_all_options_info()                      *nvim_get_all_options_info()*
 
     Return: ~
         dictionary of all options
+
+    See also: ~
+      • |nvim_get_commands()|
 
 nvim_get_option_info2({name}, {*opts})               *nvim_get_option_info2()*
     Gets the option information for one option from arbitrary buffer or window
@@ -3238,8 +3244,8 @@ nvim_tabpage_set_var({tabpage}, {name}, {value})
 Autocmd Functions                                                *api-autocmd*
 
 nvim_clear_autocmds({*opts})                           *nvim_clear_autocmds()*
-    Clear all autocommands that match the corresponding {opts}. To delete a
-    particular autocmd, see |nvim_del_autocmd()|.
+    Clears all autocommands selected by {opts}. To delete autocmds see
+    |nvim_del_autocmd()|.
 
     Parameters: ~
       • {opts}  Parameters
@@ -3381,15 +3387,10 @@ nvim_del_augroup_by_name({name})                  *nvim_del_augroup_by_name()*
       • |autocmd-groups|
 
 nvim_del_autocmd({id})                                    *nvim_del_autocmd()*
-    Delete an autocommand by id.
-
-    NOTE: Only autocommands created via the API have an id.
+    Deletes an autocommand by id.
 
     Parameters: ~
-      • {id}  Integer The id returned by nvim_create_autocmd
-
-    See also: ~
-      • |nvim_create_autocmd()|
+      • {id}  Integer Autocommand id returned by |nvim_create_autocmd()|
 
 nvim_exec_autocmds({event}, {*opts})                    *nvim_exec_autocmds()*
     Execute all autocommands for {event} that match the corresponding {opts}

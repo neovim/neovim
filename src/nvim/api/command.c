@@ -1230,6 +1230,8 @@ err:
 ///
 /// Currently only |user-commands| are supported, not builtin Ex commands.
 ///
+/// @see |nvim_get_all_options_info()|
+///
 /// @param  opts  Optional parameters. Currently only supports
 ///               {"builtin":false}
 /// @param[out]  err   Error details, if any.

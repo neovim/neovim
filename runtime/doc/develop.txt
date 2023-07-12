@@ -132,7 +132,7 @@ DOCUMENTATION						*dev-doc*
   optimize for the reader's time and energy: be "precise yet concise".
     - Prefer the active voice: "Foo does X", not "X is done by Foo".
     - "The words you choose are an essential part of the user experience."
-      https://developer.apple.com/design/human-interface-guidelines/foundations/writing/
+      https://developer.apple.com/design/human-interface-guidelines/writing
     - "...without being overly colloquial or frivolous."
       https://developers.google.com/style/tone
 - Write docstrings (as opposed to inline comments) with present tense ("Gets"),
