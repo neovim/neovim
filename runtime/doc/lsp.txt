@@ -780,6 +780,8 @@ get_active_clients({filter})                    *vim.lsp.get_active_clients()*
                   • bufnr (number): Only return clients attached to this
                     buffer
                   • name (string): Only return clients with the given name
+                  • method (string): Only return clients supporting the given
+                    method
 
     Return: ~
         lsp.Client []: List of |vim.lsp.client| objects
