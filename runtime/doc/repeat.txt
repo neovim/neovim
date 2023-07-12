@@ -232,8 +232,8 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 <			would source the first file only.
 
 			For each {file} pattern, if a file has both a `.vim`
-			and `.lua` extensions, the `.vim` version will take
-			priority and be sourced first.
+			and `.lua` extensions, the `.vim` version will be sourced
+			first.
 
 			When 'verbose' is one or higher, there is a message
 			when no file could be found.

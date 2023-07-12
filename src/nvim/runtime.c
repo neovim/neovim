@@ -269,7 +269,8 @@ void set_context_in_runtime_cmd(expand_T *xp, const char *arg)
   xp->xp_pattern = (char *)arg;
 }
 
-/// Source all .vim and .lua files in "fnames" with .vim files given higher priority.
+/// Source all .vim and .lua files in "fnames" with .vim files being sourced
+/// first.
 static bool source_callback_vim_lua(int num_fnames, char **fnames, bool all, void *cookie)
 {
   bool did_one = false;
@@ -875,13 +876,9 @@ int source_runtime_vim_lua(char *name, int flags)
   return do_in_runtimepath(name, flags, source_callback_vim_lua, NULL);
 }
 
-/// Just like source_runtime(), but use "path" instead of 'runtimepath'.
-int source_in_path(char *path, char *name, int flags)
-{
-  return do_in_path_and_pp(path, name, flags, source_callback, NULL);
-}
-
-/// Just like source_in_path(), but only source .vim and .lua files
+/// Just like source_runtime(), but:
+/// - use "path" instead of 'runtimepath'.
+/// - only source .vim and .lua files
 int source_in_path_vim_lua(char *path, char *name, int flags)
 {
   return do_in_path_and_pp(path, name, flags, source_callback_vim_lua, NULL);
