@@ -4,7 +4,9 @@
                             NVIM REFERENCE MANUAL
 
 
-Notable changes in Nvim 0.10 since 0.9 (see also |news-0.9|)             *news*
+Notable changes since Nvim 0.9                                  *news*
+
+For changes in the previous release, see |news-0.9|.
 
                                        Type |gO| to see the table of contents.
 
@@ -126,21 +128,13 @@ The following changes may require adaptations in user config or plugins.
 ==============================================================================
 BREAKING CHANGES IN HEAD                                    *news-breaking-dev*
 
+              ====== Remove this section before release. ======
+
 The following breaking changes were made during the development cycle to
-unreleased features on Nvim HEAD.
+UNRELEASED features on Nvim HEAD (the unreleased "master" branch).
 
 • Removed `vim.treesitter.foldtext` as transparent foldtext is now supported
   https://github.com/neovim/neovim/pull/20750
-
-==============================================================================
-BREAKING CHANGES TO UNRELEASED FEATURES                         *news-breaking-dev*
-
-              ====== Remove this section before release. ======
-
-Following is a reference of breaking changes to UNRELEASED (in development) features.
-This is provided for users following Nvim HEAD (unreleased "master" branch).
-
-• ...
 
 ==============================================================================
 NEW FEATURES                                                    *news-features*
@@ -197,6 +191,8 @@ The following new APIs and features were added.
     swapfile is owned by a running Nvim process, instead of prompting. If you
     always want the swapfile dialog, delete the default SwapExists handler:
     `autocmd! nvim_swapfile`. |default-autocmds|
+  • Navigating the |jumplist| with CTRL+O, CTRL+I behaves more intuitively
+    when deleting buffers, and avoids "invalid buffer" cases. #25461
 
 • LSP
   • LSP method names are available in |vim.lsp.protocol.Methods|.
@@ -318,9 +314,10 @@ The following new APIs and features were added.
 
 • |vim.version.le()| and |vim.version.ge()| are added to |vim.version|.
 
-• |extmarks| can be associated with a URL and URLs are included as a new
-  highlight attribute. The TUI will display URLs using the OSC 8 control
-  sequence, enabling clickable text in supporting terminals.
+• |extmarks| can set a "url" highlight attribute, so the text region can
+  become a clickable hyperlink (assuming UI support). The TUI renders URLs
+  using the OSC 8 control sequence, enabling clickable text in supporting
+  terminals.
 
 • Added |nvim_tabpage_set_win()| to set the current window of a tabpage.
 

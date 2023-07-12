@@ -82,33 +82,36 @@ a comment.
 ### Commit messages
 
 Follow the [conventional commits guidelines][conventional_commits] to *make reviews easier* and to make
-the VCS/git logs more valuable. The general structure of a commit message is:
+the VCS/git logs more valuable. The structure of a commit message is:
 
-```
-<type>([optional scope]): <description>
+    type(scope): subject
 
-[optional body]
+    Problem:
+    ...
 
-[optional footer(s)]
-```
+    Solution:
+    ...
 
-- Prefix the commit subject with one of these [_types_](https://github.com/commitizen/conventional-commit-types/blob/master/index.json):
-    - `build`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `test`, `vim-patch`
-    - You can **ignore this for "fixup" commits** or any commits you expect to be squashed.
-- Append optional scope to _type_ such as `(lsp)`, `(treesitter)`, `(float)`, …
-- _Description_ shouldn't start with a capital letter or end in a period.
-- Use the _imperative voice_: "Fix bug" rather than "Fixed bug" or "Fixes bug."
-- Try to keep the first line under 72 characters.
-- A blank line must follow the subject.
-- Breaking API changes must be indicated by
-    1. "!" after the type/scope, and
-    2. a "BREAKING CHANGE" footer describing the change.
-       Example:
-       ```
-       refactor(provider)!: drop support for Python 2
+- Commit message **subject** (you can **ignore this for "fixup" commits** or any commits you expect to be squashed):
+    - Prefix with a [_type_](https://github.com/commitizen/conventional-commit-types/blob/master/index.json):
+        - `build ci docs feat fix perf refactor revert test vim-patch`
+    - Append an optional `(scope)` such as `(lsp)`, `(treesitter)`, `(float)`, …
+    - Use the _imperative voice_: "Fix bug" rather than "Fixed bug" or "Fixes bug."
+    - Keep it short (under 72 characters).
+- Commit message **body** (detail):
+    - Concisely describe the Problem/Solution in the commit **body**. [Describing the problem](https://lamport.azurewebsites.net/pubs/state-the-problem.pdf)
+      _independently of the solution_ often leads to a better understanding for you, reviewers, and future readers.
+      ```
+      Problem:
 
-       BREAKING CHANGE: refactor to use Python 3 features since Python 2 is no longer supported.
-       ```
+      Solution:
+      ```
+- Indicate breaking API changes with "!" after the type, and a "BREAKING CHANGE" footer. Example:
+  ```
+  refactor(provider)!: drop support for Python 2
+
+  BREAKING CHANGE: refactor to use Python 3 features since Python 2 is no longer supported.
+  ```
 
 ### News
 

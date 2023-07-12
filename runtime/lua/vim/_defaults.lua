@@ -157,7 +157,7 @@ do
 
   vim.api.nvim_create_autocmd('TermRequest', {
     group = nvim_terminal_augroup,
-    desc = 'Respond to OSC foreground/background color requests',
+    desc = 'Handles OSC foreground/background color requests',
     callback = function(args)
       local fg_request = args.data == '\027]10;?'
       local bg_request = args.data == '\027]11;?'

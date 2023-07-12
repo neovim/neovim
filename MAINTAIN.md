@@ -165,12 +165,14 @@ These dependencies are "vendored" (inlined), we must update the sources manually
 * `runtime/lua/coxpcall.lua`: coxpcall (only needed for PUC lua, builtin to luajit)
 * `src/termkey`: [libtermkey](https://github.com/neovim/libtermkey)
 
-Non-technical dependencies
+Other dependencies
 --------------------------
 
 * GitHub users:
     * https://github.com/marvim
     * https://github.com/nvim-winget
+* Org secrets/tokens:
+    * `CODECOV_TOKEN`
 * Domain names (held in https://namecheap.com):
     * neovim.org
     * neovim.io
