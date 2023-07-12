@@ -459,8 +459,8 @@ const char *set_string_option(const int opt_idx, const char *const value, const 
   char *const saved_newval = xstrdup(s);
 
   int value_checked = false;
-  const char *const errmsg = did_set_string_option(opt_idx, varp, oldval, s, errbuf, errbuflen,
-                                                   opt_flags, &value_checked);
+  const char *const errmsg = did_set_string_option(curbuf, curwin, opt_idx, varp, oldval, s, errbuf,
+                                                   errbuflen, opt_flags, &value_checked);
   if (errmsg == NULL) {
     did_set_option(opt_idx, opt_flags, true, value_checked);
   }
@@ -2066,9 +2066,9 @@ static void do_spelllang_source(win_T *win)
 /// @param value_checked  value was checked to be safe, no need to set P_INSECURE
 ///
 /// @return  NULL for success, or an untranslated error message for an error
-static const char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char **varp,
-                                             char *oldval, const char *value, char *errbuf,
-                                             size_t errbuflen, int opt_flags, int *value_checked)
+const char *did_set_string_option(buf_T *buf, win_T *win, int opt_idx, char **varp, char *oldval,
+                                  const char *value, char *errbuf, size_t errbuflen, int opt_flags,
+                                  int *value_checked)
 {
   const char *errmsg = NULL;
   int restore_chartab = false;
@@ -2184,13 +2184,6 @@ static const char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx
   check_redraw_for(buf, win, opt->flags);
 
   return errmsg;
-}
-
-const char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *value, char *errbuf,
-                                  size_t errbuflen, int opt_flags, int *value_checked)
-{
-  return did_set_string_option_for(curbuf, curwin, opt_idx, varp, oldval, value, errbuf,
-                                   errbuflen, opt_flags, value_checked);
 }
 
 /// Check an option that can be a range of string values.
