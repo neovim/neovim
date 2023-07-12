@@ -437,7 +437,6 @@ const char *set_string_option(const int opt_idx, const char *const value, const 
     return NULL;
   }
 
-  char *const s = xstrdup(value);
   char **const varp
     = (char **)get_varp_scope(opt, ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
                                     ? ((opt->indir & PV_BOTH) ? OPT_GLOBAL : OPT_LOCAL)
@@ -451,15 +450,15 @@ const char *set_string_option(const int opt_idx, const char *const value, const 
     oldval_g = *(char **)get_varp_scope(opt, OPT_GLOBAL);
   }
 
-  *varp = s;
+  *varp = xstrdup(value);
 
   char *const saved_oldval = xstrdup(oldval);
   char *const saved_oldval_l = (oldval_l != NULL) ? xstrdup(oldval_l) : 0;
   char *const saved_oldval_g = (oldval_g != NULL) ? xstrdup(oldval_g) : 0;
-  char *const saved_newval = xstrdup(s);
+  char *const saved_newval = xstrdup(*varp);
 
   int value_checked = false;
-  const char *const errmsg = did_set_string_option(curbuf, curwin, opt_idx, varp, oldval, s, errbuf,
+  const char *const errmsg = did_set_string_option(curbuf, curwin, opt_idx, varp, oldval, errbuf,
                                                    errbuflen, opt_flags, &value_checked);
   if (errmsg == NULL) {
     did_set_option(opt_idx, opt_flags, true, value_checked);
@@ -2067,8 +2066,7 @@ static void do_spelllang_source(win_T *win)
 ///
 /// @return  NULL for success, or an untranslated error message for an error
 const char *did_set_string_option(buf_T *buf, win_T *win, int opt_idx, char **varp, char *oldval,
-                                  const char *value, char *errbuf, size_t errbuflen, int opt_flags,
-                                  int *value_checked)
+                                  char *errbuf, size_t errbuflen, int opt_flags, int *value_checked)
 {
   const char *errmsg = NULL;
   int restore_chartab = false;
@@ -2082,7 +2080,7 @@ const char *did_set_string_option(buf_T *buf, win_T *win, int opt_idx, char **va
     .os_idx = opt_idx,
     .os_flags = opt_flags,
     .os_oldval.string = oldval,
-    .os_newval.string = value,
+    .os_newval.string = *varp,
     .os_value_checked = false,
     .os_value_changed = false,
     .os_restore_chartab = false,
