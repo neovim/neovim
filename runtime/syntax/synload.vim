@@ -48,8 +48,8 @@ fun! s:SynSet()
     " load each in sequence.  Skip empty entries.
     for name in split(s, '\.')
       if !empty(name)
-        exe "runtime! syntax/" . name . ".vim syntax/" . name . "/*.vim"
-        exe "runtime! syntax/" . name . ".lua syntax/" . name . "/*.lua"
+        " XXX: "[.]" in the first pattern makes it a wildcard on Windows
+        exe $'runtime! syntax/{name}[.]{{vim,lua}} syntax/{name}/*.{{vim,lua}}'
       endif
     endfor
   endif

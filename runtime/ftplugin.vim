@@ -30,10 +30,8 @@ augroup filetypeplugin
       for name in split(s, '\.')
         " Load Lua ftplugins after Vim ftplugins _per directory_
         " TODO(clason): use nvim__get_runtime when supports globs and modeline
-        exe printf('runtime! ftplugin/%s.vim ftplugin/%s.lua
-                           \ ftplugin/%s_*.vim ftplugin/%s_*.lua
-                           \ ftplugin/%s/*.vim ftplugin/%s/*.lua',
-                           \ name, name, name, name, name, name)
+        " XXX: "[.]" in the first pattern makes it a wildcard on Windows
+        exe $'runtime! ftplugin/{name}[.]{{vim,lua}} ftplugin/{name}_*.{{vim,lua}} ftplugin/{name}/*.{{vim,lua}}'
       endfor
     endif
   endfunc

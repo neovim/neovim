@@ -1067,21 +1067,22 @@ theend:
 
 /// Load scripts in "plugin" directory of the package.
 /// For opt packages, also load scripts in "ftdetect" (start packages already
-/// load these from filetype.vim)
+/// load these from filetype.lua)
 static int load_pack_plugin(bool opt, char *fname)
 {
-  static const char *ftpat = "%s/ftdetect/*";  // NOLINT
+  static const char plugpat[] = "%s/plugin/**/*";  // NOLINT
+  static const char ftpat[] = "%s/ftdetect/*";  // NOLINT
 
   char *const ffname = fix_fname(fname);
-  size_t len = strlen(ffname) + strlen(ftpat);
+  size_t len = strlen(ffname) + sizeof(plugpat);
   char *pat = xmallocz(len);
 
-  vim_snprintf(pat, len, "%s/plugin/**/*", ffname);  // NOLINT
+  vim_snprintf(pat, len, plugpat, ffname);  // NOLINT
   gen_expand_wildcards_and_cb(1, &pat, EW_FILE, true, source_callback_vim_lua, NULL);
 
   char *cmd = xstrdup("g:did_load_filetypes");
 
-  // If runtime/filetype.vim wasn't loaded yet, the scripts will be
+  // If runtime/filetype.lua wasn't loaded yet, the scripts will be
   // found when it loads.
   if (opt && eval_to_number(cmd) > 0) {
     do_cmdline_cmd("augroup filetypedetect");
@@ -1255,7 +1256,7 @@ void load_plugins(void)
 /// ":packadd[!] {name}"
 void ex_packadd(exarg_T *eap)
 {
-  static const char *plugpat = "pack/*/%s/%s";    // NOLINT
+  static const char plugpat[] = "pack/*/%s/%s";  // NOLINT
   int res = OK;
 
   // Round 1: use "start", round 2: use "opt".
@@ -1265,7 +1266,7 @@ void ex_packadd(exarg_T *eap)
       continue;
     }
 
-    const size_t len = strlen(plugpat) + strlen(eap->arg) + 5;
+    const size_t len = sizeof(plugpat) + strlen(eap->arg) + 5;
     char *pat = xmallocz(len);
     vim_snprintf(pat, len, plugpat, round == 1 ? "start" : "opt", eap->arg);
     // The first round don't give a "not found" error, in the second round
@@ -1367,11 +1368,11 @@ expand:
 
 /// Expand color scheme, compiler or filetype names.
 /// Search from 'runtimepath':
-///   'runtimepath'/{dirnames}/{pat}.(vim|lua)
+///   'runtimepath'/{dirnames}/{pat}.{vim,lua}
 /// When "flags" has DIP_START: search also from "start" of 'packpath':
-///   'packpath'/pack/*/start/*/{dirnames}/{pat}.(vim|lua)
+///   'packpath'/pack/*/start/*/{dirnames}/{pat}.{vim,lua}
 /// When "flags" has DIP_OPT: search also from "opt" of 'packpath':
-///   'packpath'/pack/*/opt/*/{dirnames}/{pat}.(vim|lua)
+///   'packpath'/pack/*/opt/*/{dirnames}/{pat}.{vim,lua}
 /// "dirnames" is an array with one or more directory names.
 int ExpandRTDir(char *pat, int flags, int *num_file, char ***file, char *dirnames[])
 {

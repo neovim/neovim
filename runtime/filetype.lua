@@ -32,8 +32,7 @@ vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile', 'StdinReadPost' }, {
 if not vim.g.did_load_ftdetect then
   vim.cmd([[
   augroup filetypedetect
-  runtime! ftdetect/*.vim
-  runtime! ftdetect/*.lua
+  runtime! ftdetect/*.{vim,lua}
   augroup END
   ]])
 end

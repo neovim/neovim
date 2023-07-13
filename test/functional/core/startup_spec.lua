@@ -975,16 +975,23 @@ describe('runtime:', function()
   end)
 
 
-  it('loads ftdetect/*.lua', function()
+  it("loads ftdetect/*.{vim,lua} respecting 'rtp' order", function()
     local ftdetect_folder = table.concat({xconfig, 'nvim', 'ftdetect'}, pathsep)
-    local ftdetect_file = table.concat({ftdetect_folder , 'new-ft.lua'}, pathsep)
+    local after_ftdetect_folder = table.concat({xconfig, 'nvim', 'after', 'ftdetect'}, pathsep)
     mkdir_p(ftdetect_folder)
-    write_file(ftdetect_file , [[vim.g.lua_ftdetect = 1]])
-
-    clear{ args_rm={'-u'}, env=xenv }
-
-    eq(1, eval('g:lua_ftdetect'))
-    rmdir(ftdetect_folder)
+    mkdir_p(after_ftdetect_folder)
+    finally(function()
+      rmdir(ftdetect_folder)
+      rmdir(after_ftdetect_folder)
+    end)
+      -- A .lua file is loaded after a .vim file if they only differ in extension.
+      -- All files in after/ftdetect/ are loaded after all files in ftdetect/.
+    write_file(table.concat({ftdetect_folder, 'new-ft.vim'}, pathsep), [[let g:seq ..= 'A']])
+    write_file(table.concat({ftdetect_folder, 'new-ft.lua'}, pathsep), [[vim.g.seq = vim.g.seq .. 'B']])
+    write_file(table.concat({after_ftdetect_folder, 'new-ft.vim'}, pathsep), [[let g:seq ..= 'a']])
+    write_file(table.concat({after_ftdetect_folder, 'new-ft.lua'}, pathsep), [[vim.g.seq = vim.g.seq .. 'b']])
+    clear{ args_rm={'-u'}, args = {'--cmd', 'let g:seq = ""'}, env=xenv }
+    eq('ABab', eval('g:seq'))
   end)
 end)
 
