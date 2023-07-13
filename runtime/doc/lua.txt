@@ -2625,6 +2625,9 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
 
     See also: ~
       • |nvim_set_keymap()|
+      • |maparg()|
+      • |mapcheck()|
+      • |mapset()|
 
 
 ==============================================================================
