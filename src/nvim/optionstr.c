@@ -2036,10 +2036,8 @@ static void do_spelllang_source(win_T *win)
     }
   }
   if (p > q) {
-    vim_snprintf(fname, sizeof(fname), "spell/%.*s.vim", (int)(p - q), q);
-    source_runtime(fname, DIP_ALL);
-    vim_snprintf(fname, sizeof(fname), "spell/%.*s.lua", (int)(p - q), q);
-    source_runtime(fname, DIP_ALL);
+    vim_snprintf(fname, sizeof(fname), "spell/%.*s.*", (int)(p - q), q);
+    source_runtime_vim_lua(fname, DIP_ALL);
   }
 }
 

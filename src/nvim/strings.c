@@ -436,6 +436,25 @@ char *vim_strchr(const char *const string, const int c)
   }
 }
 
+/// Test if "str" ends with "suffix"
+///
+/// @param[in] str
+/// @param[in] suffix to match
+///
+/// @return [allocated] Copy of the string.
+bool str_ends_with(const char *str, const char *suffix)
+{
+  if (!str || !suffix) {
+    return false;
+  }
+  size_t lenstr = strlen(str);
+  size_t lensuffix = strlen(suffix);
+  if (lensuffix > lenstr) {
+    return false;
+  }
+  return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+}
+
 // Sort an array of strings.
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

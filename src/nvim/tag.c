@@ -2482,15 +2482,23 @@ static garray_T tag_fnames = GA_EMPTY_INIT_VALUE;
 
 // Callback function for finding all "tags" and "tags-??" files in
 // 'runtimepath' doc directories.
-static void found_tagfile_cb(char *fname, void *cookie)
+static bool found_tagfile_cb(int num_fnames, char **fnames, bool all, void *cookie)
 {
-  char *const tag_fname = xstrdup(fname);
+  for (int i = 0; i < num_fnames; i++) {
+    char *const tag_fname = xstrdup(fnames[i]);
 
 #ifdef BACKSLASH_IN_FILENAME
-  slash_adjust(tag_fname);
+    slash_adjust(tag_fname);
 #endif
-  simplify_filename(tag_fname);
-  GA_APPEND(char *, &tag_fnames, tag_fname);
+    simplify_filename(tag_fname);
+    GA_APPEND(char *, &tag_fnames, tag_fname);
+
+    if (!all) {
+      break;
+    }
+  }
+
+  return num_fnames > 0;
 }
 
 #if defined(EXITFREE)

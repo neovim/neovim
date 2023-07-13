@@ -506,12 +506,12 @@ accordingly, proceeding as follows:
 
 10. Load the plugin scripts.					*load-plugins*
 	This does the same as the command: >
-		:runtime! plugin/**/*.vim
-		:runtime! plugin/**/*.lua
+		:runtime! plugin/**/*.{vim,lua}
 <	The result is that all directories in 'runtimepath' will be searched
 	for the "plugin" sub-directory and all files ending in ".vim" or
 	".lua" will be sourced (in alphabetical order per directory),
-	also in subdirectories. First "*.vim" are sourced, then "*.lua" files.
+	also in subdirectories. First "*.vim" are sourced, then "*.lua" files,
+	per directory.
 
 	However, directories in 'runtimepath' ending in "after" are skipped
 	here and only loaded after packages, see below.

@@ -1717,23 +1717,32 @@ void slang_clear_sug(slang_T *lp)
 
 // Load one spell file and store the info into a slang_T.
 // Invoked through do_in_runtimepath().
-static void spell_load_cb(char *fname, void *cookie)
+static bool spell_load_cb(int num_fnames, char **fnames, bool all, void *cookie)
 {
   spelload_T *slp = (spelload_T *)cookie;
-  slang_T *slang = spell_load_file(fname, slp->sl_lang, NULL, false);
-  if (slang == NULL) {
-    return;
+  for (int i = 0; i < num_fnames; i++) {
+    slang_T *slang = spell_load_file(fnames[i], slp->sl_lang, NULL, false);
+
+    if (slang == NULL) {
+      continue;
+    }
+
+    // When a previously loaded file has NOBREAK also use it for the
+    // ".add" files.
+    if (slp->sl_nobreak && slang->sl_add) {
+      slang->sl_nobreak = true;
+    } else if (slang->sl_nobreak) {
+      slp->sl_nobreak = true;
+    }
+
+    slp->sl_slang = slang;
+
+    if (!all) {
+      break;
+    }
   }
 
-  // When a previously loaded file has NOBREAK also use it for the
-  // ".add" files.
-  if (slp->sl_nobreak && slang->sl_add) {
-    slang->sl_nobreak = true;
-  } else if (slang->sl_nobreak) {
-    slp->sl_nobreak = true;
-  }
-
-  slp->sl_slang = slang;
+  return num_fnames > 0;
 }
 
 /// Add a word to the hashtable of common words.
