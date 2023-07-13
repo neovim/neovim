@@ -15,6 +15,7 @@ local mkdir = helpers.mkdir
 
 cimport('string.h')
 local cimp = cimport('./src/nvim/os/os.h', './src/nvim/path.h')
+local options = cimport('./src/nvim/option_defs.h')
 
 local length = 0
 local buffer = nil
@@ -635,6 +636,15 @@ describe('path.c', function()
     itp('returns false if filename does not include a provided extension', function()
       eq(false, path_with_extension('/some/path/file.vim', 'lua'))
       eq(false, path_with_extension('/some/path/file', 'lua'))
+    end)
+
+    itp("respects 'fileignorecase' option", function()
+      options.p_fic = false
+      eq(false, path_with_extension('/some/path/file.VIM', 'vim'))
+      eq(false, path_with_extension('/some/path/file.LUA', 'lua'))
+      options.p_fic = true
+      eq(true, path_with_extension('/some/path/file.VIM', 'vim'))
+      eq(true, path_with_extension('/some/path/file.LUA', 'lua'))
     end)
   end)
 

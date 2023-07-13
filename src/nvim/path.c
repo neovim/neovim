@@ -1810,7 +1810,7 @@ bool path_with_extension(const char *path, const char *extension)
   if (!last_dot) {
     return false;
   }
-  return strcmp(last_dot + 1, extension) == 0;
+  return mb_strcmp_ic((bool)p_fic, last_dot + 1, extension) == 0;
 }
 
 /// Return true if "name" is a full (absolute) path name or URL.

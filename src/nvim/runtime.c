@@ -275,7 +275,7 @@ static bool source_callback_vim_lua(int num_fnames, char **fnames, bool all, voi
   bool did_one = false;
 
   for (int i = 0; i < num_fnames; i++) {
-    if (str_ends_with(fnames[i], ".vim")) {
+    if (path_with_extension(fnames[i], "vim")) {
       (void)do_source(fnames[i], false, DOSO_NONE, cookie);
       did_one = true;
       if (!all) {
@@ -285,7 +285,7 @@ static bool source_callback_vim_lua(int num_fnames, char **fnames, bool all, voi
   }
 
   for (int i = 0; i < num_fnames; i++) {
-    if (str_ends_with(fnames[i], ".lua")) {
+    if (path_with_extension(fnames[i], "lua")) {
       (void)do_source(fnames[i], false, DOSO_NONE, cookie);
       did_one = true;
       if (!all) {
@@ -308,7 +308,8 @@ static bool source_callback(int num_fnames, char **fnames, bool all, void *cooki
   }
 
   for (int i = 0; i < num_fnames; i++) {
-    if (!str_ends_with(fnames[i], ".vim") && !str_ends_with(fnames[i], ".lua")) {
+    if (!path_with_extension(fnames[i], "vim")
+        && !path_with_extension(fnames[i], "lua")) {
       (void)do_source(fnames[i], false, DOSO_NONE, cookie);
       did_one = true;
       if (!all) {
