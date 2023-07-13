@@ -3756,6 +3756,29 @@ static OptVal clear_optval(const char *name, uint32_t flags, void *varp, buf_T *
   return v;
 }
 
+static const char *set_option(int opt_idx, void *varp, OptVal *v, int opt_flags, char *errbuf,
+                              size_t errbuflen)
+{
+  const char *errmsg = NULL;
+
+  bool value_checked = false;
+
+  if (v->type == kOptValTypeBoolean) {
+    errmsg = set_bool_option(opt_idx, varp, (int)v->data.boolean, opt_flags);
+  } else if (v->type == kOptValTypeNumber) {
+    errmsg = set_num_option(opt_idx, varp, (long)v->data.number, errbuf, errbuflen, opt_flags);
+  } else if (v->type == kOptValTypeString) {
+    errmsg = set_string_option(opt_idx, varp, v->data.string.data, opt_flags, &value_checked,
+                               errbuf, errbuflen);
+  }
+
+  if (errmsg != NULL) {
+    did_set_option(opt_idx, opt_flags, true, value_checked);
+  }
+
+  return errmsg;
+}
+
 /// Set the value of an option
 ///
 /// @param[in]  name       Option name.
@@ -3814,29 +3837,7 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
     goto end;
   }
 
-  bool value_checked = false;
-
-  switch (v.type) {
-  case kOptValTypeNil:
-    abort();  // This will never happen.
-  case kOptValTypeBoolean: {
-    errmsg = set_bool_option(opt_idx, varp, (int)v.data.boolean, opt_flags);
-    break;
-  }
-  case kOptValTypeNumber: {
-    errmsg = set_num_option(opt_idx, varp, (long)v.data.number, errbuf, sizeof(errbuf), opt_flags);
-    break;
-  }
-  case kOptValTypeString: {
-    errmsg = set_string_option(opt_idx, varp, v.data.string.data, opt_flags, &value_checked, errbuf,
-                               sizeof(errbuf));
-    break;
-  }
-  }
-
-  if (errmsg != NULL) {
-    did_set_option(opt_idx, opt_flags, true, value_checked);
-  }
+  errmsg = set_option(opt_idx, varp, &v, opt_flags, errbuf, sizeof(errbuf));
 
 end:
   optval_free(v);  // Free the copied OptVal.
