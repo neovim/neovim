@@ -2218,71 +2218,143 @@ bbbbbbb]])
     ]]}
   end)
 
-  it('cursor position is correct when inserting around a virtual text with right gravity set to false', function()
+  it('cursor position is correct when inserting around a virtual text with left gravity', function()
+    screen:try_resize(50, 3)
     insert('foo foo foo foo')
     meths.buf_set_extmark(0, ns, 0, 8,
       { virt_text = { { 'virtual text', 'Special' } }, virt_text_pos = 'inline', right_gravity = false })
     feed('0')
     feed('8l')
-    screen:expect { grid = [[
+    screen:expect{grid=[[
       foo foo {10:virtual text}^foo foo                       |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
       {1:~                                                 }|
                                                         |
-      ]]}
+    ]]}
 
     feed('i')
-    screen:expect { grid = [[
+    screen:expect{grid=[[
       foo foo {10:virtual text}^foo foo                       |
       {1:~                                                 }|
+      {8:-- INSERT --}                                      |
+    ]]}
+
+    feed([[<C-\><C-O>]])
+    screen:expect{grid=[[
+      foo foo {10:virtual text}^foo foo                       |
       {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {8:-- (insert) --}                                    |
+    ]]}
+
+    feed('D')
+    screen:expect{grid=[[
+      foo foo {10:virtual text}^                              |
       {1:~                                                 }|
       {8:-- INSERT --}                                      |
-      ]]}
+    ]]}
+
+    feed('<C-U>')
+    screen:expect{grid=[[
+      {10:virtual text}^                                      |
+      {1:~                                                 }|
+      {8:-- INSERT --}                                      |
+    ]]}
+
+    feed('a')
+    screen:expect{grid=[[
+      {10:virtual text}a^                                     |
+      {1:~                                                 }|
+      {8:-- INSERT --}                                      |
+    ]]}
+
+    feed('<Esc>')
+    screen:expect{grid=[[
+      {10:virtual text}^a                                     |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+
+    feed('x')
+    screen:expect{grid=[[
+      {10:^virtual text}                                      |
+      {1:~                                                 }|
+                                                        |
+    ]]}
   end)
 
   it('cursor position is correct when inserting around virtual texts with both left and right gravity', function()
+    screen:try_resize(50, 3)
     insert('foo foo foo foo')
     meths.buf_set_extmark(0, ns, 0, 8, { virt_text = {{ '>>', 'Special' }}, virt_text_pos = 'inline', right_gravity = false })
     meths.buf_set_extmark(0, ns, 0, 8, { virt_text = {{ '<<', 'Special' }}, virt_text_pos = 'inline', right_gravity = true })
     feed('08l')
-    screen:expect{ grid = [[
+    screen:expect{grid=[[
       foo foo {10:>><<}^foo foo                               |
       {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
                                                         |
-      ]]}
+    ]]}
 
     feed('i')
-    screen:expect { grid = [[
+    screen:expect{grid=[[
       foo foo {10:>>^<<}foo foo                               |
       {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {8:-- INSERT --}                                      |
+    ]]}
+
+    feed('a')
+    screen:expect{grid=[[
+      foo foo {10:>>}a{10:^<<}foo foo                              |
       {1:~                                                 }|
       {8:-- INSERT --}                                      |
-      ]]}
+    ]]}
+
+    feed([[<C-\><C-O>]])
+    screen:expect{grid=[[
+      foo foo {10:>>}a{10:<<}^foo foo                              |
+      {1:~                                                 }|
+      {8:-- (insert) --}                                    |
+    ]]}
+
+    feed('D')
+    screen:expect{grid=[[
+      foo foo {10:>>}a{10:^<<}                                     |
+      {1:~                                                 }|
+      {8:-- INSERT --}                                      |
+    ]]}
+
+    feed('<BS>')
+    screen:expect{grid=[[
+      foo foo {10:>>^<<}                                      |
+      {1:~                                                 }|
+      {8:-- INSERT --}                                      |
+    ]]}
+
+    feed('<C-U>')
+    screen:expect{grid=[[
+      {10:>>^<<}                                              |
+      {1:~                                                 }|
+      {8:-- INSERT --}                                      |
+    ]]}
+
+    feed('a')
+    screen:expect{grid=[[
+      {10:>>}a{10:^<<}                                             |
+      {1:~                                                 }|
+      {8:-- INSERT --}                                      |
+    ]]}
+
+    feed('<Esc>')
+    screen:expect{grid=[[
+      {10:>>}^a{10:<<}                                             |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+
+    feed('x')
+    screen:expect{grid=[[
+      {10:^>><<}                                              |
+      {1:~                                                 }|
+                                                        |
+    ]]}
   end)
 
   it('draws correctly with no wrap multiple virtual text, where one is hidden', function()

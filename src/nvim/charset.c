@@ -1089,12 +1089,11 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
       // cursor at end
       *cursor = vcol + incr - 1;
     } else {
-      if (!on_NUL) {
-        // cursor is after inserted text, unless on the NUL
+      if (!on_NUL || !(State & MODE_NORMAL)) {
         vcol += cts.cts_cur_text_width_left;
-        if ((State & MODE_INSERT) == 0) {
-          vcol += cts.cts_cur_text_width_right;
-        }
+      }
+      if (!on_NUL && (State & MODE_NORMAL)) {
+        vcol += cts.cts_cur_text_width_right;
       }
       // cursor at start
       *cursor = vcol + head;
