@@ -419,7 +419,9 @@ void set_string_option_direct_in_buf(buf_T *buf, const char *name, int opt_idx, 
   curbuf = save_curbuf;
   unblock_autocmds();
 }
+
 /// Set a string option to a new value, handling the effects
+/// Must not be called with a hidden option!
 ///
 /// @param[in]  opt_idx  Option to set.
 /// @param[in]  value  New value.
@@ -432,10 +434,6 @@ const char *set_string_option(const int opt_idx, const char *const value, const 
   FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   vimoption_T *opt = get_option(opt_idx);
-
-  if (opt->var == NULL) {  // don't set hidden option
-    return NULL;
-  }
 
   char **const varp
     = (char **)get_varp_scope(opt, ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
