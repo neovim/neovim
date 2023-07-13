@@ -32,6 +32,9 @@ local keymap = {}
 ---                        - "remap": (boolean) Make the mapping recursive. Inverse of "noremap".
 ---                        Defaults to `false`.
 ---@see |nvim_set_keymap()|
+---@see |maparg()|
+---@see |mapcheck()|
+---@see |mapset()|
 function keymap.set(mode, lhs, rhs, opts)
   vim.validate({
     mode = { mode, { 's', 't' } },
