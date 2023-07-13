@@ -939,6 +939,7 @@ function tests.set_defaults_all_capabilities()
           definitionProvider = true,
           completionProvider = true,
           documentRangeFormattingProvider = true,
+          hoverProvider = true,
         }
       }
     end;
