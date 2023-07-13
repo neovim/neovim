@@ -1175,6 +1175,7 @@ static void do_set_option_string(int opt_idx, int opt_flags, char **argp, int ne
 
   secure = secure_saved;
 
+  // call autocommand after handling side effects
   if (*errmsg == NULL) {
     if (!starting) {
       trigger_optionset_string(opt_idx, opt_flags, saved_origval, saved_origval_l,
@@ -4485,7 +4486,7 @@ void *get_option_varp_scope_from(int opt_idx, int scope, buf_T *buf, win_T *win)
   return get_varp_scope_from(&(options[opt_idx]), scope, buf, win);
 }
 
-static void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
+void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
 {
   // hidden option, always return NULL
   if (p->var == NULL) {

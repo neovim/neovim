@@ -435,12 +435,19 @@ const char *set_string_option(const int opt_idx, const char *const value, const 
 {
   vimoption_T *opt = get_option(opt_idx);
 
-  char **const varp
-    = (char **)get_varp_scope(opt, ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
-                                    ? ((opt->indir & PV_BOTH) ? OPT_GLOBAL : OPT_LOCAL)
-                                    : opt_flags));
+  char **varp = (char **)get_varp_scope(opt, ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
+                                              ? ((opt->indir & PV_BOTH) ? OPT_GLOBAL : OPT_LOCAL)
+                                              : opt_flags));
   char *origval_l = NULL;
   char *origval_g = NULL;
+
+  // When using ":set opt=val" for a global option
+  // with a local value the local value will be
+  // reset, use the global value here.
+  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
+      && ((int)opt->indir & PV_BOTH)) {
+    varp = (char **)opt->var;
+  }
 
   // The old value is kept until we are sure that the new value is valid.
   char *const oldval = *varp;
@@ -448,11 +455,26 @@ const char *set_string_option(const int opt_idx, const char *const value, const 
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
     origval_l = *(char **)get_varp_scope(opt, OPT_LOCAL);
     origval_g = *(char **)get_varp_scope(opt, OPT_GLOBAL);
+
+    // A global-local string option might have an empty option as value to
+    // indicate that the global value should be used.
+    if (((int)opt->indir & PV_BOTH) && origval_l == empty_option) {
+      origval_l = origval_g;
+    }
+  }
+
+  char *origval;
+  // When setting the local value of a global option, the old value may be
+  // the global value.
+  if (((int)opt->indir & PV_BOTH) && (opt_flags & OPT_LOCAL)) {
+    origval = *(char **)get_varp_from(opt, curbuf, curwin);
+  } else {
+    origval = oldval;
   }
 
   *varp = xstrdup(value);
 
-  char *const saved_oldval = xstrdup(oldval);
+  char *const saved_origval = (origval != NULL) ? xstrdup(origval) : NULL;
   char *const saved_oldval_l = (origval_l != NULL) ? xstrdup(origval_l) : 0;
   char *const saved_oldval_g = (origval_g != NULL) ? xstrdup(origval_g) : 0;
 
@@ -460,12 +482,26 @@ const char *set_string_option(const int opt_idx, const char *const value, const 
   // autocommands.
   char *const saved_newval = xstrdup(*varp);
 
+  const int secure_saved = secure;
+
+  // When an option is set in the sandbox, from a modeline or in secure
+  // mode, then deal with side effects in secure mode.  Also when the
+  // value was set with the P_INSECURE flag and is not completely
+  // replaced.
+  if ((opt_flags & OPT_MODELINE)
+      || sandbox != 0) {
+    secure = 1;
+  }
+
   const char *const errmsg = did_set_string_option(curbuf, curwin, opt_idx, varp, oldval, errbuf,
                                                    errbuflen, opt_flags, value_checked);
+
+  secure = secure_saved;
+
   // call autocommand after handling side effects
   if (errmsg == NULL) {
     if (!starting) {
-      trigger_optionset_string(opt_idx, opt_flags, saved_oldval, saved_oldval_l,
+      trigger_optionset_string(opt_idx, opt_flags, saved_origval, saved_oldval_l,
                                saved_oldval_g, saved_newval);
     }
     if (opt->flags & P_UI_OPTION) {
@@ -473,7 +509,7 @@ const char *set_string_option(const int opt_idx, const char *const value, const 
                          CSTR_AS_OBJ(saved_newval));
     }
   }
-  xfree(saved_oldval);
+  xfree(saved_origval);
   xfree(saved_oldval_l);
   xfree(saved_oldval_g);
   xfree(saved_newval);
