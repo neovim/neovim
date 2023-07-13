@@ -771,6 +771,13 @@ describe('api/buf', function()
       set_text(1, 4, -1, 4, { ' and', 'more' })
       eq({ 'goodbye bar', 'text and', 'more' }, get_lines(0, 3, true))
 
+      -- can append after line end
+      set_text(0, 20, 0, 21, {'foo'})
+      eq({'goodbye bar         foo', 'text and', 'more'}, get_lines(0, 3, true))
+
+      set_text(2, 6, 2, 15, {'baz'})
+      eq({'more  baz      '}, get_lines(2, 3, true))
+
       -- can use negative column numbers
       set_text(0, -5, 0, -1, { '!' })
       eq({ 'goodbye!' }, get_lines(0, 1, true))
