@@ -428,7 +428,7 @@ void set_string_option_direct_in_buf(buf_T *buf, const char *name, int opt_idx, 
 ///
 /// @return NULL on success, an untranslated error message on error.
 const char *set_string_option(const int opt_idx, const char *const value, const int opt_flags,
-                              int *value_checked, char *const errbuf, const size_t errbuflen)
+                              bool *value_checked, char *const errbuf, const size_t errbuflen)
   FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   vimoption_T *opt = get_option(opt_idx);
@@ -2061,7 +2061,8 @@ static void do_spelllang_source(win_T *win)
 ///
 /// @return  NULL for success, or an untranslated error message for an error
 const char *did_set_string_option(buf_T *buf, win_T *win, int opt_idx, char **varp, char *oldval,
-                                  char *errbuf, size_t errbuflen, int opt_flags, int *value_checked)
+                                  char *errbuf, size_t errbuflen, int opt_flags,
+                                  bool *value_checked)
 {
   const char *errmsg = NULL;
   int restore_chartab = false;

@@ -1098,7 +1098,7 @@ static char *stropt_get_newval(int nextchar, int opt_idx, char **argp, void *var
 /// Part of do_set() for string options.
 static void do_set_option_string(int opt_idx, int opt_flags, char **argp, int nextchar,
                                  set_op_T op_arg, uint32_t flags, void *varp_arg, char *errbuf,
-                                 size_t errbuflen, int *value_checked, const char **errmsg)
+                                 size_t errbuflen, bool *value_checked, const char **errmsg)
 {
   char *arg = *argp;
   set_op_T op = op_arg;
@@ -1337,7 +1337,7 @@ static void do_set_option_value(int opt_idx, int opt_flags, char **argp, int pre
                                 set_op_T op, uint32_t flags, void *varp, char *errbuf,
                                 size_t errbuflen, const char **errmsg)
 {
-  int value_checked = false;
+  bool value_checked = false;
   if (flags & P_BOOL) {        // boolean
     do_set_bool(opt_idx, opt_flags, prefix, nextchar, varp, errmsg);
   } else if (flags & P_NUM) {  // numeric
@@ -3793,7 +3793,7 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
     goto end;
   }
 
-  int value_checked = false;
+  bool value_checked = false;
 
   switch (v.type) {
   case kOptValTypeNil:

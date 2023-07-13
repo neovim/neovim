@@ -1009,9 +1009,9 @@ typedef struct {
 
   // Option value was checked to be safe, no need to set P_INSECURE
   // Used for the 'keymap', 'filetype' and 'syntax' options.
-  int os_value_checked;
+  bool os_value_checked;
   // Option value changed.  Used for the 'filetype' and 'syntax' options.
-  int os_value_changed;
+  bool os_value_changed;
 
   // Used by the 'isident', 'iskeyword', 'isprint' and 'isfname' options.
   // Set to true if the character table is modified when processing the
