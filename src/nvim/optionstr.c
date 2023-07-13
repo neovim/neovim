@@ -429,11 +429,15 @@ void set_string_option_direct_in_buf(buf_T *buf, const char *name, int opt_idx, 
 ///                        #OPT_GLOBAL.
 ///
 /// @return NULL on success, an untranslated error message on error.
-const char *set_string_option(const int opt_idx, const char *const value, const int opt_flags,
+const char *set_string_option(const int opt_idx, const char *value, const int opt_flags,
                               bool *value_checked, char *const errbuf, const size_t errbuflen)
-  FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   vimoption_T *opt = get_option(opt_idx);
+
+  if (value == NULL) {
+    value = "";
+  }
 
   char **varp = (char **)get_varp_scope(opt, ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
                                               ? ((opt->indir & PV_BOTH) ? OPT_GLOBAL : OPT_LOCAL)

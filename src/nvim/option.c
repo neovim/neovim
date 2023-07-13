@@ -3717,6 +3717,45 @@ vimoption_T *get_option(int opt_idx)
   return &options[opt_idx];
 }
 
+/// Clear an option
+///
+/// The exact semantics of this depend on the option.
+static OptVal clear_optval(const char *name, uint32_t flags, void *varp, buf_T *buf, win_T *win)
+{
+  OptVal v = NIL_OPTVAL;
+
+  // Change the type of the OptVal to the type used by the option so that it can be cleared.
+  // TODO(famiu): Clean up all of this after set_(num|bool|string)_option() is unified.
+
+  if (flags & P_BOOL) {
+    v.type = kOptValTypeBoolean;
+    if ((int *)varp == &buf->b_p_ar) {
+      // TODO(lewis6991): replace this with a more general condition that
+      // indicates we are setting the local value of a global-local option
+      v.data.boolean = kNone;
+    } else {
+      v = get_option_value(name, NULL, OPT_GLOBAL, NULL);
+    }
+  } else if (flags & P_NUM) {
+    v.type = kOptValTypeNumber;
+    if ((long *)varp == &curbuf->b_p_ul) {
+      // The one true special case
+      v.data.number = NO_LOCAL_UNDOLEVEL;
+    } else if ((long *)varp == &win->w_p_so || (long *)varp == &win->w_p_siso) {
+      // TODO(lewis6991): replace this with a more general condition that
+      // indicates we are setting the local value of a global-local option
+      v.data.number = -1;
+    } else {
+      v = get_option_value(name, NULL, OPT_GLOBAL, NULL);
+    }
+  } else if (flags & P_STRING) {
+    v.type = kOptValTypeString;
+    v.data.string.data = NULL;
+  }
+
+  return v;
+}
+
 /// Set the value of an option
 ///
 /// @param[in]  name       Option name.
@@ -3762,20 +3801,8 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
   // Copy the value so we can modify the copy.
   OptVal v = optval_copy(value);
 
-  // Clear an option. For global-local options clear the local value
-  // (the exact semantics of this depend on the option).
-  bool clear = v.type == kOptValTypeNil;
-
   if (v.type == kOptValTypeNil) {
-    // Change the type of the OptVal to the type used by the option so that it can be cleared.
-    // TODO(famiu): Clean up all of this after set_(num|bool|string)_option() is unified.
-    if (flags & P_BOOL) {
-      v.type = kOptValTypeBoolean;
-    } else if (flags & P_NUM) {
-      v.type = kOptValTypeNumber;
-    } else if (flags & P_STRING) {
-      v.type = kOptValTypeString;
-    }
+    v = clear_optval(name, flags, varp, curbuf, curwin);
   } else if (!optval_match_type(v, opt_idx)) {
     char *rep = optval_to_cstr(v);
     char *valid_types = option_get_valid_types(opt_idx);
@@ -3793,35 +3820,16 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
   case kOptValTypeNil:
     abort();  // This will never happen.
   case kOptValTypeBoolean: {
-    if (clear) {
-      if ((int *)varp == &curbuf->b_p_ar) {
-        v.data.boolean = kNone;
-      } else {
-        v = get_option_value(name, NULL, OPT_GLOBAL, NULL);
-      }
-    }
     errmsg = set_bool_option(opt_idx, varp, (int)v.data.boolean, opt_flags);
     break;
   }
   case kOptValTypeNumber: {
-    if (clear) {
-      if ((long *)varp == &curbuf->b_p_ul) {
-        v.data.number = NO_LOCAL_UNDOLEVEL;
-      } else if ((long *)varp == &curwin->w_p_so || (long *)varp == &curwin->w_p_siso) {
-        v.data.number = -1;
-      } else {
-        v = get_option_value(name, NULL, OPT_GLOBAL, NULL);
-      }
-    }
     errmsg = set_num_option(opt_idx, varp, (long)v.data.number, errbuf, sizeof(errbuf), opt_flags);
     break;
   }
   case kOptValTypeString: {
-    const char *s = v.data.string.data;
-    if (s == NULL || clear) {
-      s = "";
-    }
-    errmsg = set_string_option(opt_idx, s, opt_flags, &value_checked, errbuf, sizeof(errbuf));
+    errmsg = set_string_option(opt_idx, v.data.string.data, opt_flags, &value_checked, errbuf,
+                               sizeof(errbuf));
     break;
   }
   }
