@@ -3828,7 +3828,7 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
     break;
   }
   case kOptValTypeString: {
-    errmsg = set_string_option(opt_idx, v.data.string.data, opt_flags, &value_checked, errbuf,
+    errmsg = set_string_option(opt_idx, varp, v.data.string.data, opt_flags, &value_checked, errbuf,
                                sizeof(errbuf));
     break;
   }

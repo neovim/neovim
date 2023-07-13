@@ -429,19 +429,14 @@ void set_string_option_direct_in_buf(buf_T *buf, const char *name, int opt_idx, 
 ///                        #OPT_GLOBAL.
 ///
 /// @return NULL on success, an untranslated error message on error.
-const char *set_string_option(const int opt_idx, const char *value, const int opt_flags,
-                              bool *value_checked, char *const errbuf, const size_t errbuflen)
+const char *set_string_option(const int opt_idx, void *varp_arg, const char *value,
+                              const int opt_flags, bool *value_checked, char *const errbuf,
+                              const size_t errbuflen)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   vimoption_T *opt = get_option(opt_idx);
 
-  if (value == NULL) {
-    value = "";
-  }
-
-  char **varp = (char **)get_varp_scope(opt, ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
-                                              ? ((opt->indir & PV_BOTH) ? OPT_GLOBAL : OPT_LOCAL)
-                                              : opt_flags));
+  void *varp = (char **)varp_arg;
   char *origval_l = NULL;
   char *origval_g = NULL;
 
@@ -450,11 +445,11 @@ const char *set_string_option(const int opt_idx, const char *value, const int op
   // reset, use the global value here.
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
       && ((int)opt->indir & PV_BOTH)) {
-    varp = (char **)opt->var;
+    varp = opt->var;
   }
 
   // The old value is kept until we are sure that the new value is valid.
-  char *const oldval = *varp;
+  char *oldval = *(char **)varp;
 
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
     origval_l = *(char **)get_varp_scope(opt, OPT_LOCAL);
@@ -476,7 +471,7 @@ const char *set_string_option(const int opt_idx, const char *value, const int op
     origval = oldval;
   }
 
-  *varp = xstrdup(value);
+  *(char **)varp = xstrdup(value != NULL ? value : empty_option);
 
   char *const saved_origval = (origval != NULL) ? xstrdup(origval) : NULL;
   char *const saved_oldval_l = (origval_l != NULL) ? xstrdup(origval_l) : 0;
@@ -484,7 +479,7 @@ const char *set_string_option(const int opt_idx, const char *value, const int op
 
   // newval (and varp) may become invalid if the buffer is closed by
   // autocommands.
-  char *const saved_newval = xstrdup(*varp);
+  char *const saved_newval = xstrdup(*(char **)varp);
 
   const int secure_saved = secure;
 
