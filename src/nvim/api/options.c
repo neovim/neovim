@@ -465,9 +465,6 @@ OptVal get_option_value_for(const char *const name, uint32_t *flagsp, int scope,
 /// @param[in]   name       Option name.
 /// @param[in]   value      Option value.
 /// @param[in]   opt_flags  Flags: OPT_LOCAL, OPT_GLOBAL, or 0 (both).
-///                         If OPT_CLEAR is set, the value of the option
-///                         is cleared  (the exact semantics of this depend
-///                         on the option).
 /// @param[in]   opt_type   Option type. See SREQ_* in option_defs.h.
 /// @param[in]   from       Target buffer/window.
 /// @param[out]  err        Error message, if any.

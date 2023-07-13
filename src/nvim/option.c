@@ -3722,9 +3722,6 @@ vimoption_T *get_option(int opt_idx)
 /// @param[in]  name       Option name.
 /// @param[in]  value      Option value. If NIL_OPTVAL, the option value is cleared.
 /// @param[in]  opt_flags  Flags: OPT_LOCAL, OPT_GLOBAL, or 0 (both).
-///                        If OPT_CLEAR is set, the value of the option
-///                        is cleared  (the exact semantics of this depend
-///                        on the option).
 ///
 /// @return NULL on success, an untranslated error message on error.
 const char *set_option_value(const char *const name, const OptVal value, int opt_flags)
@@ -3765,9 +3762,11 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
   // Copy the value so we can modify the copy.
   OptVal v = optval_copy(value);
 
-  if (v.type == kOptValTypeNil) {
-    opt_flags |= OPT_CLEAR;
+  // Clear an option. For global-local options clear the local value
+  // (the exact semantics of this depend on the option).
+  bool clear = v.type == kOptValTypeNil;
 
+  if (v.type == kOptValTypeNil) {
     // Change the type of the OptVal to the type used by the option so that it can be cleared.
     // TODO(famiu): Clean up all of this after set_(num|bool|string)_option() is unified.
     if (flags & P_BOOL) {
@@ -3794,7 +3793,7 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
   case kOptValTypeNil:
     abort();  // This will never happen.
   case kOptValTypeBoolean: {
-    if (opt_flags & OPT_CLEAR) {
+    if (clear) {
       if ((int *)varp == &curbuf->b_p_ar) {
         v.data.boolean = kNone;
       } else {
@@ -3805,7 +3804,7 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
     break;
   }
   case kOptValTypeNumber: {
-    if (opt_flags & OPT_CLEAR) {
+    if (clear) {
       if ((long *)varp == &curbuf->b_p_ul) {
         v.data.number = NO_LOCAL_UNDOLEVEL;
       } else if ((long *)varp == &curwin->w_p_so || (long *)varp == &curwin->w_p_siso) {
@@ -3819,7 +3818,7 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
   }
   case kOptValTypeString: {
     const char *s = v.data.string.data;
-    if (s == NULL || opt_flags & OPT_CLEAR) {
+    if (s == NULL || clear) {
       s = "";
     }
     errmsg = set_string_option(opt_idx, s, opt_flags, &value_checked, errbuf, sizeof(errbuf));

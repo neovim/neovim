@@ -70,7 +70,6 @@ typedef enum {
   OPT_ONECOLUMN = 0x40,   ///< list options one per line
   OPT_NO_REDRAW = 0x80,   ///< ignore redraw flags on option
   OPT_SKIPRTP   = 0x100,  ///< "skiprtp" in 'sessionoptions'
-  OPT_CLEAR     = 0x200,  ///< Clear local value of an option.
 } OptionFlags;
 
 // Return value from get_option_value_strict
