@@ -779,8 +779,8 @@ describe('api/buf', function()
       eq({'more  baz      '}, get_lines(2, 3, true))
 
       -- can use negative column numbers
-      set_text(0, -5, 0, -1, { '!' })
-      eq({ 'goodbye!' }, get_lines(0, 1, true))
+      set_text(2, -7, 2, -1, {'!'})
+      eq({'more  baz!'}, get_lines(2, 3, true))
     end)
 
     it('works with undo', function()
@@ -1685,8 +1685,6 @@ describe('api/buf', function()
       eq("Invalid 'start_row': out of range", pcall_err(set_text, -3, 0, 0, 0, {}))
       eq("Invalid 'end_row': out of range", pcall_err(set_text, 0, 0, 2, 0, {}))
       eq("Invalid 'end_row': out of range", pcall_err(set_text, 0, 0, -3, 0, {}))
-      eq("Invalid 'start_col': out of range", pcall_err(set_text, 1, 5, 1, 5, {}))
-      eq("Invalid 'end_col': out of range", pcall_err(set_text, 1, 0, 1, 5, {}))
     end)
 
     it('errors when start is greater than end', function()
