@@ -439,20 +439,25 @@ const char *set_string_option(const int opt_idx, const char *const value, const 
     = (char **)get_varp_scope(opt, ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
                                     ? ((opt->indir & PV_BOTH) ? OPT_GLOBAL : OPT_LOCAL)
                                     : opt_flags));
+  char *origval_l = NULL;
+  char *origval_g = NULL;
+
+  // The old value is kept until we are sure that the new value is valid.
   char *const oldval = *varp;
-  char *oldval_l = NULL;
-  char *oldval_g = NULL;
 
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
-    oldval_l = *(char **)get_varp_scope(opt, OPT_LOCAL);
-    oldval_g = *(char **)get_varp_scope(opt, OPT_GLOBAL);
+    origval_l = *(char **)get_varp_scope(opt, OPT_LOCAL);
+    origval_g = *(char **)get_varp_scope(opt, OPT_GLOBAL);
   }
 
   *varp = xstrdup(value);
 
   char *const saved_oldval = xstrdup(oldval);
-  char *const saved_oldval_l = (oldval_l != NULL) ? xstrdup(oldval_l) : 0;
-  char *const saved_oldval_g = (oldval_g != NULL) ? xstrdup(oldval_g) : 0;
+  char *const saved_oldval_l = (origval_l != NULL) ? xstrdup(origval_l) : 0;
+  char *const saved_oldval_g = (origval_g != NULL) ? xstrdup(origval_g) : 0;
+
+  // newval (and varp) may become invalid if the buffer is closed by
+  // autocommands.
   char *const saved_newval = xstrdup(*varp);
 
   const char *const errmsg = did_set_string_option(curbuf, curwin, opt_idx, varp, oldval, errbuf,
@@ -460,12 +465,12 @@ const char *set_string_option(const int opt_idx, const char *const value, const 
   // call autocommand after handling side effects
   if (errmsg == NULL) {
     if (!starting) {
-      trigger_optionset_string(opt_idx, opt_flags, saved_oldval, saved_oldval_l, saved_oldval_g,
-                               saved_newval);
+      trigger_optionset_string(opt_idx, opt_flags, saved_oldval, saved_oldval_l,
+                               saved_oldval_g, saved_newval);
     }
     if (opt->flags & P_UI_OPTION) {
       ui_call_option_set(cstr_as_string(opt->fullname),
-                         STRING_OBJ(cstr_as_string(saved_newval)));
+                         CSTR_AS_OBJ(saved_newval));
     }
   }
   xfree(saved_oldval);
