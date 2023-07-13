@@ -1100,7 +1100,6 @@ static void do_set_option_string(int opt_idx, int opt_flags, char **argp, int ne
                                  set_op_T op_arg, uint32_t flags, void *varp_arg, char *errbuf,
                                  size_t errbuflen, bool *value_checked, const char **errmsg)
 {
-  char *arg = *argp;
   set_op_T op = op_arg;
   void *varp = varp_arg;
   char *origval_l = NULL;
@@ -1138,7 +1137,7 @@ static void do_set_option_string(int opt_idx, int opt_flags, char **argp, int ne
   }
 
   // Get the new value for the option
-  char *newval = stropt_get_newval(nextchar, opt_idx, &arg, varp, origval, &op, flags);
+  char *newval = stropt_get_newval(nextchar, opt_idx, argp, varp, origval, &op, flags);
 
   // Set the new value.
   *(char **)(varp) = newval;
@@ -1193,8 +1192,6 @@ static void do_set_option_string(int opt_idx, int opt_flags, char **argp, int ne
   xfree(saved_origval_l);
   xfree(saved_origval_g);
   xfree(saved_newval);
-
-  *argp = arg;
 }
 
 static set_op_T get_op(const char *arg)
