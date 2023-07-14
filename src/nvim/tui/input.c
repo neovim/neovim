@@ -250,6 +250,31 @@ static void handle_kitty_key_protocol(TermInput *input, TermKeyKey *key)
   }
 }
 
+static void handle_unknown_csi(TermInput *input, long codepoint, long biased_mods) {
+  const char *name = map_get(int, cstr_t)(&kitty_key_map, codepoint);
+  if(name) {
+    char buf[64];
+    size_t len = 0;
+    buf[len++] = '<';
+    long mods = biased_mods - 1;
+    if(mods & 1) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "S-");
+    }
+    if(mods & 2) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "A-");
+    }
+    if(mods & 4) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "C-");
+    }
+    if(mods & 32) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "T-");
+    }
+
+    len += (size_t)snprintf(buf + len, sizeof(buf) - len, "%s>", name);
+    tinput_enqueue(input, buf, len);
+  }
+}
+
 static void forward_simple_utf8(TermInput *input, TermKeyKey *key)
 {
   size_t len = 0;
@@ -443,6 +468,8 @@ static void tk_getkeys(TermInput *input, bool force)
           } else {
             input->waiting_for_csiu_response--;
           }
+        } else if(nargs == 2) {
+          handle_unknown_csi(input, args[0], args[1]);
         }
       }
     }
