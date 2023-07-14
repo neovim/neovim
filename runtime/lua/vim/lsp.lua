@@ -963,6 +963,15 @@ function lsp._set_defaults(client, bufnr)
   then
     vim.bo[bufnr].formatexpr = 'v:lua.vim.lsp.formatexpr()'
   end
+  api.nvim_buf_call(bufnr, function()
+    if
+      client.supports_method('textDocument/hover')
+      and is_empty_or_default(bufnr, 'keywordprg')
+      and vim.fn.maparg('K', 'n', false, false) == ''
+    then
+      vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = bufnr })
+    end
+  end)
 end
 
 --- @class lsp.ClientConfig
@@ -1202,7 +1211,7 @@ function lsp.start_client(config)
   ---@private
   --- Reset defaults set by `set_defaults`.
   --- Must only be called if the last client attached to a buffer exits.
-  local function unset_defaults(bufnr)
+  local function reset_defaults(bufnr)
     if vim.bo[bufnr].tagfunc == 'v:lua.vim.lsp.tagfunc' then
       vim.bo[bufnr].tagfunc = nil
     end
@@ -1212,6 +1221,12 @@ function lsp.start_client(config)
     if vim.bo[bufnr].formatexpr == 'v:lua.vim.lsp.formatexpr()' then
       vim.bo[bufnr].formatexpr = nil
     end
+    api.nvim_buf_call(bufnr, function()
+      local keymap = vim.fn.maparg('K', 'n', false, true)
+      if keymap and keymap.callback == vim.lsp.buf.hover then
+        vim.keymap.del('n', 'K', { buffer = bufnr })
+      end
+    end)
   end
 
   ---@private
@@ -1243,7 +1258,7 @@ function lsp.start_client(config)
 
           client_ids[client_id] = nil
           if vim.tbl_isempty(client_ids) then
-            unset_defaults(bufnr)
+            reset_defaults(bufnr)
           end
         end)
       end

@@ -365,6 +365,14 @@ describe('LSP', function()
             eq('v:lua.vim.lsp.tagfunc', get_buf_option("tagfunc"))
             eq('v:lua.vim.lsp.omnifunc', get_buf_option("omnifunc"))
             eq('v:lua.vim.lsp.formatexpr()', get_buf_option("formatexpr"))
+            eq('', get_buf_option("keywordprg"))
+            eq(true, exec_lua[[
+              local keymap
+              vim.api.nvim_buf_call(BUFFER, function()
+                keymap = vim.fn.maparg("K", "n", false, true)
+              end)
+              return keymap.callback == vim.lsp.buf.hover
+            ]])
             client.stop()
           end
         end;
@@ -372,6 +380,13 @@ describe('LSP', function()
           eq('', get_buf_option("tagfunc"))
           eq('', get_buf_option("omnifunc"))
           eq('', get_buf_option("formatexpr"))
+          eq('', exec_lua[[
+            local keymap
+            vim.api.nvim_buf_call(BUFFER, function()
+              keymap = vim.fn.maparg("K", "n", false, false)
+            end)
+            return keymap
+          ]])
         end;
       }
     end)

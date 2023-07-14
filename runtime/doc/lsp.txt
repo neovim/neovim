@@ -58,6 +58,8 @@ options are not restored when the LSP client is stopped or detached.
 - 'formatexpr' is set to |vim.lsp.formatexpr()|, so you can format lines via
   |gq| if the language server supports it.
   - To opt out of this use |gw| instead of gq, or set 'formatexpr' on LspAttach.
+- |K| is mapped to |vim.lsp.buf.hover()| unless |'keywordprg'| is customized or
+  a custom keymap for `K` exists.
 
                                                         *lsp-defaults-disable*
 To override the above defaults, set or unset the options on |LspAttach|: >lua
@@ -65,6 +67,7 @@ To override the above defaults, set or unset the options on |LspAttach|: >lua
       callback = function(ev)
         vim.bo[ev.buf].formatexpr = nil
         vim.bo[ev.buf].omnifunc = nil
+        vim.keymap.del("n", "K", { bufnr = ev.buf })
       end,
     })
 

@@ -156,6 +156,10 @@ The following changes to existing APIs or features add new behavior.
   `vim.ui.open` or remap `gx`. To continue using netrw (deprecated): >vim
   :call netrw#BrowseX(expand(exists("g:netrw_gx")? g:netrw_gx : '<cfile>'), netrw#CheckIfRemote())<CR>
 
+• |vim.lsp.start()| now maps |K| to use |vim.lsp.buf.hover()| if the server
+  supports it, unless |'keywordprg'| was customized before calling
+  |vim.lsp.start()|.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
