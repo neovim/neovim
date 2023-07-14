@@ -844,7 +844,6 @@ function protocol.make_client_capabilities()
             return res
           end)(),
         },
-        hierarchicalWorkspaceSymbolSupport = true,
       },
       configuration = true,
       workspaceFolders = true,
