@@ -1084,6 +1084,108 @@ something
       end
     )
   end)
+  describe('show a diff with charmatch enabled', function()
+    before_each(function()
+      local f1 = [[
+abbcabbcdefghijklmnop
+      ]]
+      local f2 = [[
+abca?bc
+dfgh?ijl
+mnop?
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+    describe('when the entire hunk is compared, cross-line', function()
+      before_each(function()
+        feed(':set diffopt+=chardiff:100<cr>')
+      end)
+      it('display results', function()
+        screen:expect([[
+       {1:  }{10:  1 }{9:^abca}{8:?}{9:bc                                    }│{1:  }{10:  1 }{9:a}{8:b}{9:bca}{8:b}{9:bcd}{8:e}{9:fghij}{8:k}{9:lmnop                       }|
+       {1:  }{10:  2 }{9:dfgh}{8:?}{9:ijl                                   }│{1:  }{10:    }{2:--------------------------------------------}|
+       {1:  }{10:  3 }{9:mnop}{8:?}{9:                                      }│{1:  }{10:    }{2:--------------------------------------------}|
+       {1:  }{10:  4 }                                           │{1:  }{10:  2 }                                            |
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=chardiff:100                                                                          |
+        ]])
+      end)
+    end)
+    describe('when the single line is compared, cross-line', function()
+      before_each(function()
+        feed(':set diffopt+=chardiff:30<cr>')
+      end)
+      it('display results', function()
+        screen:expect([[
+       {1:  }{10:  1 }{9:^abca}{8:?}{9:bc                                    }│{1:  }{10:  1 }{9:a}{8:b}{9:bca}{8:b}{9:bc}{8:defghijklmnop}{9:                       }|
+       {1:  }{10:  2 }{4:dfgh?ijl                                   }│{1:  }{10:    }{2:--------------------------------------------}|
+       {1:  }{10:  3 }{4:mnop?                                      }│{1:  }{10:    }{2:--------------------------------------------}|
+       {1:  }{10:  4 }                                           │{1:  }{10:  2 }                                            |
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=chardiff:30                                                                           |
+        ]])
+      end)
+    end)
+    describe('when the diff hunk and the single line are too long to run chardiff', function()
+      before_each(function()
+        feed(':set diffopt+=chardiff:10<cr>')
+      end)
+      it('display results', function()
+        screen:expect([[
+       {1:  }{10:  1 }{9:^ab}{8:ca?bc}{9:                                    }│{1:  }{10:  1 }{9:ab}{8:bcabbcdefghijklmnop}{9:                       }|
+       {1:  }{10:  2 }{4:dfgh?ijl                                   }│{1:  }{10:    }{2:--------------------------------------------}|
+       {1:  }{10:  3 }{4:mnop?                                      }│{1:  }{10:    }{2:--------------------------------------------}|
+       {1:  }{10:  4 }                                           │{1:  }{10:  2 }                                            |
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=chardiff:10                                                                           |
+        ]])
+      end)
+    end)
+  end)
 end)
 
 describe('regressions', function()
