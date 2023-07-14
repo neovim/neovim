@@ -3,7 +3,9 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local eq = helpers.eq
 local eval = helpers.eval
+local exec = helpers.exec
 local meths = helpers.meths
+local connect = helpers.connect
 local request = helpers.request
 local pcall_err = helpers.pcall_err
 
@@ -75,4 +77,51 @@ it('autocmds UIEnter/UILeave', function()
     'UIEnter',
     'UILeave',
   }, eval('g:evs'))
+end)
+
+it('autocmds VimSuspend/VimResume', function()
+  clear()
+  exec([[
+    let g:evs = []
+    autocmd VimSuspend * call add(g:evs, 'VimSuspend')
+    autocmd VimResume * call add(g:evs, 'VimResume')
+  ]])
+
+  local servername = eval('v:servername')
+  local session0 = connect(servername)
+  local session1 = connect(servername)
+
+  local screen0 = Screen.new()
+  local screen1 = Screen.new()
+
+  screen0:attach(nil, session0)
+  screen1:attach(nil, session1)
+  eq({}, eval('g:evs'))
+  screen0:detach()
+  eq({}, eval('g:evs'))
+  screen0:attach(nil, session0)
+  eq({}, eval('g:evs'))
+  screen1:detach()
+  eq({}, eval('g:evs'))
+  screen1:attach(nil, session1)
+  eq({}, eval('g:evs'))
+
+  -- VimSuspend is triggered when the last UI detaches
+  -- VimResume is triggered when a UI attaches afterwards
+  screen0:detach()
+  eq({}, eval('g:evs'))
+  screen1:detach()
+  eq({'VimSuspend'}, eval('g:evs'))
+  screen0:attach(nil, session0)
+  eq({'VimSuspend', 'VimResume'}, eval('g:evs'))
+  screen1:attach(nil, session1)
+  eq({'VimSuspend', 'VimResume'}, eval('g:evs'))
+  screen0:detach()
+  eq({'VimSuspend', 'VimResume'}, eval('g:evs'))
+  screen1:detach()
+  eq({'VimSuspend', 'VimResume', 'VimSuspend'}, eval('g:evs'))
+  screen0:attach(nil, session0)
+  eq({'VimSuspend', 'VimResume', 'VimSuspend', 'VimResume'}, eval('g:evs'))
+  screen1:attach(nil, session1)
+  eq({'VimSuspend', 'VimResume', 'VimSuspend', 'VimResume'}, eval('g:evs'))
 end)

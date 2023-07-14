@@ -2521,10 +2521,11 @@ static bool arg_autocmd_flag_get(bool *flag, char **cmd_ptr, char *pattern, int 
   return false;
 }
 
-// UI Enter
+/// UIEnter, UILeave, VimSuspend, VimResume
 void do_autocmd_uienter(uint64_t chanid, bool attached)
 {
   static bool recursive = false;
+  static bool pending_resume = false;
 
   if (recursive) {
     return;  // disallow recursion
@@ -2538,6 +2539,14 @@ void do_autocmd_uienter(uint64_t chanid, bool attached)
   tv_dict_set_keys_readonly(dict);
   apply_autocmds(attached ? EVENT_UIENTER : EVENT_UILEAVE, NULL, NULL, false, curbuf);
   restore_v_event(dict, &save_v_event);
+
+  if (!attached && !ui_active()) {
+    apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, false, NULL);
+    pending_resume = true;
+  } else if (attached && pending_resume) {
+    pending_resume = false;
+    apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
+  }
 
   recursive = false;
 }
