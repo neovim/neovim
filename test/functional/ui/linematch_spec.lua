@@ -1186,6 +1186,48 @@ mnop?
       end)
     end)
   end)
+  describe('show a diff with charmatch enabled, with and without ignore white', function()
+    before_each(function()
+      local f1 = [[
+ababcabcdabcde
+      ]]
+      local f2 = [[
+abc abcd abcde abcdef
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+    describe('when the entire hunk is compared, cross-line', function()
+      before_each(function()
+        feed(':set diffopt+=chardiff:100<cr>')
+      end)
+      it('display results', function()
+        screen:expect([[
+        {1:  }{10:  1 }{9:^ab}{8:c }{9:abc}{8:d }{9:abcd}{8:e }{9:abcde}{8:f}{9:                      }│{1:  }{10:  1 }{9:ababcabcdabcde                              }|
+        {1:  }{10:  2 }                                           │{1:  }{10:  2 }                                            |
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+        :set diffopt+=chardiff:100                                                                          |
+        ]])
+      end)
+    end)
+  end)
 end)
 
 describe('regressions', function()
