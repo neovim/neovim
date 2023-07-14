@@ -22,20 +22,20 @@ func Test_whichwrap()
   set whichwrap=h,h,h
   call assert_equal('h', &whichwrap)
 
-  " For compatibility with Vim 3.0 and before, number values are also
-  " supported for 'whichwrap'
-  set whichwrap=1
-  call assert_equal('b', &whichwrap)
-  set whichwrap=2
-  call assert_equal('s', &whichwrap)
-  set whichwrap=4
-  call assert_equal('h,l', &whichwrap)
-  set whichwrap=8
-  call assert_equal('<,>', &whichwrap)
-  set whichwrap=16
-  call assert_equal('[,]', &whichwrap)
-  set whichwrap=31
-  call assert_equal('b,s,h,l,<,>,[,]', &whichwrap)
+  " " For compatibility with Vim 3.0 and before, number values are also
+  " " supported for 'whichwrap'
+  " set whichwrap=1
+  " call assert_equal('b', &whichwrap)
+  " set whichwrap=2
+  " call assert_equal('s', &whichwrap)
+  " set whichwrap=4
+  " call assert_equal('h,l', &whichwrap)
+  " set whichwrap=8
+  " call assert_equal('<,>', &whichwrap)
+  " set whichwrap=16
+  " call assert_equal('[,]', &whichwrap)
+  " set whichwrap=31
+  " call assert_equal('b,s,h,l,<,>,[,]', &whichwrap)
 
   set whichwrap&
 endfunc

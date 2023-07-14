@@ -623,10 +623,17 @@ Highlight groups:
 Options:
   *'aleph'* *'al'*
   antialias
+  'backspace' no longer supports number values. Instead:
+    - for `backspace=0` set `backspace=` (empty)
+    - for `backspace=1` set `backspace=indent,eol`
+    - for `backspace=2` set `backspace=indent,eol,start` (default behavior in Nvim)
+    - for `backspace=3` set `backspace=indent,eol,nostop`
   *'balloondelay'* *'bdlay'*
   *'ballooneval'* *'beval'* *'noballooneval'* *'nobeval'*
   *'balloonexpr'* *'bexpr'*
+  'backupdir': paths can no longer be separated with spaces.
   bioskey (MS-DOS)
+  'cdpath': paths can no longer be separated with spaces.
   conskey (MS-DOS)
   *'cp'* *'nocompatible'* *'nocp'* *'compatible'* (Nvim is always "nocompatible".)
   'cpoptions' (gjkHw<*- and all POSIX flags were removed)
@@ -691,6 +698,7 @@ Options:
     Use |g8| or |ga|.  See |mbyte-combining|.
   *'maxmem'* Nvim delegates memory-management to the OS.
   *'maxmemtot'* Nvim delegates memory-management to the OS.
+  |'path'|: paths can no longer be separated with spaces.
   printoptions
   *'printdevice'*
   *'printencoding'*

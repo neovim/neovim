@@ -842,77 +842,6 @@ static void do_set_num(int opt_idx, int opt_flags, char **argp, int nextchar, co
                            errbuf, errbuflen, opt_flags);
 }
 
-// Handle some special cases with string option values
-static void munge_string_opt_val(char **varp, char **oldval, char **const origval,
-                                 char **const origval_l, char **const origval_g, char **const argp,
-                                 char *const whichwrap, size_t whichwraplen, char **const save_argp)
-{
-  // Set 'keywordprg' to ":help" if an empty
-  // value was passed to :set by the user.
-  if (varp == &p_kp && (**argp == NUL || **argp == ' ')) {
-    *save_argp = *argp;
-    *argp = ":help";
-  } else if (varp == &p_bs && ascii_isdigit((uint8_t)(**varp))) {
-    // Convert 'backspace' number to string, for
-    // adding, prepending and removing string.
-    const int i = getdigits_int(varp, true, 0);
-    switch (i) {
-    case 0:
-      *varp = empty_option;
-      break;
-    case 1:
-      *varp = xstrdup("indent,eol");
-      break;
-    case 2:
-      *varp = xstrdup("indent,eol,start");
-      break;
-    case 3:
-      *varp = xstrdup("indent,eol,nostop");
-      break;
-    }
-    xfree(*oldval);
-    if (*origval == *oldval) {
-      *origval = *varp;
-    }
-    if (*origval_l == *oldval) {
-      *origval_l = *varp;
-    }
-    if (*origval_g == *oldval) {
-      *origval_g = *varp;
-    }
-    *oldval = *varp;
-  } else if (varp == &p_ww && ascii_isdigit(**argp)) {
-    // Convert 'whichwrap' number to string, for backwards compatibility
-    // with Vim 3.0.
-    *whichwrap = NUL;
-    int i = getdigits_int(argp, true, 0);
-    if (i & 1) {
-      xstrlcat(whichwrap, "b,", whichwraplen);
-    }
-    if (i & 2) {
-      xstrlcat(whichwrap, "s,", whichwraplen);
-    }
-    if (i & 4) {
-      xstrlcat(whichwrap, "h,l,", whichwraplen);
-    }
-    if (i & 8) {
-      xstrlcat(whichwrap, "<,>,", whichwraplen);
-    }
-    if (i & 16) {
-      xstrlcat(whichwrap, "[,],", whichwraplen);
-    }
-    if (*whichwrap != NUL) {  // remove trailing ,
-      whichwrap[strlen(whichwrap) - 1] = NUL;
-    }
-    *save_argp = *argp;
-    *argp = whichwrap;
-  } else if (**argp == '>' && (varp == &p_dir || varp == &p_bdir)) {
-    // Remove '>' before 'dir' and 'bdir', for backwards compatibility with
-    // version 3.0
-    (*argp)++;
-  }
-}
-
 /// Get the default value for a string option.
 static char *stropt_get_default_val(int opt_idx, uint64_t flags)
 {
@@ -1084,20 +1013,14 @@ static void stropt_remove_dupflags(char *newval, uint32_t flags)
 ///     set {opt}<
 ///     set {opt}={val}
 ///     set {opt}:{val}
-static char *stropt_get_newval(int nextchar, int opt_idx, char **argp, void *varp,
-                               char **origval_arg, char **origval_l_arg, char **origval_g_arg,
-                               char **oldval_arg, set_op_T *op_arg, uint32_t flags)
+static char *stropt_get_newval(int nextchar, int opt_idx, char **argp, void *varp, char *origval,
+                               set_op_T *op_arg, uint32_t flags)
 {
   char *arg = *argp;
-  char *origval = *origval_arg;
-  char *origval_l = *origval_l_arg;
-  char *origval_g = *origval_g_arg;
-  char *oldval = *oldval_arg;
   set_op_T op = *op_arg;
   char *save_arg = NULL;
   char *newval;
   char *s = NULL;
-  char whichwrap[80];
   if (nextchar == '&') {  // set to default val
     newval = stropt_get_default_val(opt_idx, flags);
   } else if (nextchar == '<') {  // set to global val
@@ -1105,8 +1028,12 @@ static char *stropt_get_newval(int nextchar, int opt_idx, char **argp, void *var
   } else {
     arg++;  // jump to after the '=' or ':'
 
-    munge_string_opt_val((char **)varp, &oldval, &origval, &origval_l, &origval_g, &arg,
-                         whichwrap, sizeof(whichwrap), &save_arg);
+    // Set 'keywordprg' to ":help" if an empty
+    // value was passed to :set by the user.
+    if (varp == &p_kp && (*arg == NUL || *arg == ' ')) {
+      save_arg = arg;
+      arg = ":help";
+    }
 
     // Copy the new string into allocated memory.
     newval = stropt_copy_value(origval, &arg, op, flags);
@@ -1155,10 +1082,6 @@ static char *stropt_get_newval(int nextchar, int opt_idx, char **argp, void *var
     arg = save_arg;  // arg was temporarily changed, restore it
   }
   *argp = arg;
-  *origval_arg = origval;
-  *origval_l_arg = origval_l;
-  *origval_g_arg = origval_g;
-  *oldval_arg = oldval;
   *op_arg = op;
 
   return newval;
@@ -1207,8 +1130,7 @@ static void do_set_option_string(int opt_idx, int opt_flags, char **argp, int ne
   }
 
   // Get the new value for the option
-  char *newval = stropt_get_newval(nextchar, opt_idx, &arg, varp, &origval,
-                                   &origval_l, &origval_g, &oldval, &op, flags);
+  char *newval = stropt_get_newval(nextchar, opt_idx, &arg, varp, origval, &op, flags);
 
   // Set the new value.
   *(char **)(varp) = newval;
@@ -5903,16 +5825,13 @@ bool can_bs(int what)
   if (what == BS_START && bt_prompt(curbuf)) {
     return false;
   }
-  switch (*p_bs) {
-  case '3':
-    return true;
-  case '2':
+
+  // support for number values was removed but we keep '2' since it is used in
+  // legacy tests
+  if (*p_bs == '2') {
     return what != BS_NOSTOP;
-  case '1':
-    return what != BS_START;
-  case '0':
-    return false;
   }
+
   return vim_strchr(p_bs, what) != NULL;
 }
 

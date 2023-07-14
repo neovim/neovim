@@ -36,15 +36,15 @@ func Test_backspace_option()
   " NOTE: Vim doesn't check following error...
   "call assert_fails('set backspace-=ghi', 'E474:')
 
-  " Check backwards compatibility with version 5.4 and earlier
-  set backspace=0
-  call assert_equal('0', &backspace)
-  set backspace=1
-  call assert_equal('1', &backspace)
-  set backspace=2
-  call assert_equal('2', &backspace)
-  set backspace=3
-  call assert_equal('3', &backspace)
+  " " Check backwards compatibility with version 5.4 and earlier
+  " set backspace=0
+  " call assert_equal('0', &backspace)
+  " set backspace=1
+  " call assert_equal('1', &backspace)
+  " set backspace=2
+  " call assert_equal('2', &backspace)
+  " set backspace=3
+  " call assert_equal('3', &backspace)
   call assert_fails('set backspace=4', 'E474:')
   call assert_fails('set backspace=10', 'E474:')
 
