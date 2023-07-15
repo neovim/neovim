@@ -5724,7 +5724,7 @@ static void ex_sleep(exarg_T *eap)
   case 'm':
     break;
   case NUL:
-    len *= 1000L; break;
+    len *= 1000; break;
   default:
     semsg(_(e_invarg2), eap->arg); return;
   }
