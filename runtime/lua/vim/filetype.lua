@@ -1146,6 +1146,7 @@ local extension = {
   mpd = 'xml',
   rss = 'xml',
   fsproj = 'xml',
+  u = 'unison',
   ui = 'xml',
   vbproj = 'xml',
   xlf = 'xml',
