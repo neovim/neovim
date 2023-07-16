@@ -25,7 +25,8 @@ function! s:selection.on_exit(jobid, data, event) abort
   if self.owner == a:jobid
     let self.owner = 0
   endif
-  if a:data != 0
+  " Don't print if exit code is >= 128 ( exit is 128+SIGNUM if by signal (e.g. 143 on SIGTERM))
+  if a:data > 0 && a:data < 128
     echohl WarningMsg
     echomsg 'clipboard: error invoking '.get(self.argv, 0, '?').': '.join(self.stderr)
     echohl None
