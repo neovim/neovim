@@ -600,16 +600,17 @@ static int win_nolbr_chartabsize(chartabsize_T *cts, int *headp)
 
 /// Get the number of screen lines a range of text will take in window "wp".
 ///
-/// @param start_lnum  Starting line number, 1-based inclusive.
-/// @param start_vcol  >= 0: Starting virtual column index on "start_lnum",
-///                          0-based inclusive, rounded down to full screen lines.
-///                    < 0:  Count a full "start_lnum", including filler lines above.
-/// @param end_lnum    Ending line number, 1-based inclusive.
-/// @param end_vcol    >= 0: Ending virtual column index on "end_lnum",
-///                          0-based exclusive, rounded up to full screen lines.
-///                    < 0:  Count a full "end_lnum", not including fillers lines below.
+/// @param[in] start_lnum  Starting line number, 1-based inclusive.
+/// @param[in] start_vcol  >= 0: Starting virtual column index on "start_lnum",
+///                              0-based inclusive, rounded down to full screen lines.
+///                        < 0:  Count a full "start_lnum", including filler lines above.
+/// @param[in] end_lnum    Ending line number, 1-based inclusive.
+/// @param[in] end_vcol    >= 0: Ending virtual column index on "end_lnum",
+///                              0-based exclusive, rounded up to full screen lines.
+///                        < 0:  Count a full "end_lnum", not including filler lines below.
+/// @param[out] fill       If not NULL, set to the number of filler lines in the range.
 int64_t win_text_height(win_T *const wp, const linenr_T start_lnum, const int64_t start_vcol,
-                        const linenr_T end_lnum, const int64_t end_vcol)
+                        const linenr_T end_lnum, const int64_t end_vcol, int64_t *const fill)
 {
   int width1 = 0;
   int width2 = 0;
@@ -620,39 +621,44 @@ int64_t win_text_height(win_T *const wp, const linenr_T start_lnum, const int64_
     width2 = MAX(width2, 0);
   }
 
-  int64_t height_sum = 0;
+  int64_t height_sum_fill = 0;
   int64_t height_cur_nofill = 0;
+  int64_t height_sum_nofill = 0;
   linenr_T lnum = start_lnum;
 
   if (start_vcol >= 0) {
     linenr_T lnum_next = lnum;
     const bool folded = hasFoldingWin(wp, lnum, &lnum, &lnum_next, true, NULL);
     height_cur_nofill = folded ? 1 : plines_win_nofill(wp, lnum, false);
-    height_sum += height_cur_nofill;
+    height_sum_nofill += height_cur_nofill;
     const int64_t row_off = (start_vcol < width1 || width2 <= 0)
                             ? 0
                             : 1 + (start_vcol - width1) / width2;
-    height_sum -= MIN(row_off, height_cur_nofill);
+    height_sum_nofill -= MIN(row_off, height_cur_nofill);
     lnum = lnum_next + 1;
   }
 
   while (lnum <= end_lnum) {
     linenr_T lnum_next = lnum;
     const bool folded = hasFoldingWin(wp, lnum, &lnum, &lnum_next, true, NULL);
+    height_sum_fill += win_get_fill(wp, lnum);
     height_cur_nofill = folded ? 1 : plines_win_nofill(wp, lnum, false);
-    height_sum += win_get_fill(wp, lnum) + height_cur_nofill;
+    height_sum_nofill += height_cur_nofill;
     lnum = lnum_next + 1;
   }
 
   if (end_vcol >= 0) {
-    height_sum -= height_cur_nofill;
+    height_sum_nofill -= height_cur_nofill;
     const int64_t row_off = end_vcol == 0
                             ? 0
                             : (end_vcol <= width1 || width2 <= 0)
                               ? 1
                               : 1 + (end_vcol - width1 + width2 - 1) / width2;
-    height_sum += MIN(row_off, height_cur_nofill);
+    height_sum_nofill += MIN(row_off, height_cur_nofill);
   }
 
-  return height_sum;
+  if (fill != NULL) {
+    *fill = height_sum_fill;
+  }
+  return height_sum_fill + height_sum_nofill;
 }
