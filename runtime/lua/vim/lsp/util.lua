@@ -1347,7 +1347,7 @@ function M.stylize_markdown(bufnr, contents, opts)
   -- table of fence types to {ft, begin, end}
   -- when ft is nil, we get the ft from the regex match
   local matchers = {
-    block = { nil, '```+([a-zA-Z0-9_]*)', '```+' },
+    block = { nil, '```+%s*([a-zA-Z0-9_]*)', '```+' },
     pre = { nil, '<pre>([a-z0-9]*)', '</pre>' },
     code = { '', '<code>', '</code>' },
     text = { 'text', '<text>', '</text>' },
