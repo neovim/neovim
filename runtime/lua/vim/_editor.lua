@@ -968,6 +968,6 @@ function vim._init_defaults()
   vim._init_default_autocmds()
 end
 
-require('vim._meta')
+require('vim._options')
 
 return vim
