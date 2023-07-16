@@ -1026,6 +1026,12 @@ CTRL-O			Go to [count] Older cursor position in jump list
 CTRL-I			Go to [count] newer cursor position in jump list
 			(not a motion command).
 
+			NOTE: In the GUI and in a terminal supporting
+			|tui-modifyOtherKeys| or |tui-csiu|, CTRL-I can be
+			mapped separately from <Tab>, on the condition that
+			both keys are mapped, otherwise the mapping applies to
+			both.
+
 							*:ju* *:jumps*
 :ju[mps]		Print the jump list (not a motion command).
 
