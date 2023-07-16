@@ -34,6 +34,19 @@ describe('vim.lsp.util', function()
       eq(expected, stylize_markdown(lines, opts))
     end)
 
+    it('code fences with whitespace surrounded info string', function()
+      local lines = {
+        "```   lua   ",
+        "local hello = 'world'",
+        "```",
+      }
+      local expected = {
+        "local hello = 'world'",
+      }
+      local opts = {}
+      eq(expected, stylize_markdown(lines, opts))
+    end)
+
     it('adds separator after code block', function()
       local lines = {
         "```lua",
