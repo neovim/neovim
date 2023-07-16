@@ -1189,8 +1189,8 @@ format({options})                                       *vim.lsp.buf.format()*
     server clients.
 
     Parameters: ~
-      • {options}  table|nil Optional table which holds the following optional
-                   fields:
+      • {options}  (table|nil) Optional table which holds the following
+                   optional fields:
                    • formatting_options (table|nil): Can be used to specify
                      FormattingOptions. Some unspecified options will be
                      automatically derived from the current Nvim options. See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#formattingOptions
@@ -1204,10 +1204,10 @@ format({options})                                       *vim.lsp.buf.format()*
                      Receives a client as argument and must return a boolean.
                      Clients matching the predicate are included. Example:               • >lua
 
-              -- Never request typescript-language-server for formatting
-              vim.lsp.buf.format {
-                filter = function(client) return client.name ~= "tsserver" end
-              }
+               -- Never request typescript-language-server for formatting
+               vim.lsp.buf.format {
+                 filter = function(client) return client.name ~= "tsserver" end
+               }
 <
                    • async boolean|nil If true the method won't block.
                      Defaults to false. Editing the buffer while formatting

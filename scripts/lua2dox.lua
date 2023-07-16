@@ -328,6 +328,7 @@ function TLua2DoX_filter.filter(this, AppStamp, Filename)
       line = string_trim(inStream:getLine())
       l = l + 1
       if string.sub(line, 1, 2) == '--' then -- it's a comment
+        line = line:gsub('^---%s+@', '---@')
         -- Allow people to write style similar to EmmyLua (since they are basically the same)
         -- instead of silently skipping things that start with ---
         if string.sub(line, 3, 3) == '@' then -- it's a magic comment
@@ -341,6 +342,7 @@ function TLua2DoX_filter.filter(this, AppStamp, Filename)
         if vim.startswith(line, '---@cast')
           or vim.startswith(line, '---@diagnostic')
           or vim.startswith(line, '---@overload')
+          or vim.startswith(line, '---@meta')
           or vim.startswith(line, '---@type') then
           -- Ignore LSP directives
           outStream:writeln('// gg:"' .. line .. '"')

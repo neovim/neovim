@@ -1423,15 +1423,16 @@ keycode({str})                                                 *vim.keycode()*
     Translate keycodes.
 
     Example: >lua
-      local k = vim.keycode
-      vim.g.mapleader = k'<bs>'
+
+       local k = vim.keycode
+       vim.g.mapleader = k'<bs>'
 <
 
     Parameters: ~
-      • {str}  string String to be converted.
+      • {str}  (string) String to be converted.
 
     Return: ~
-        string
+        (string)
 
     See also: ~
       • |nvim_replace_termcodes()|
@@ -1527,7 +1528,8 @@ print({...})                                                     *vim.print()*
     "Pretty prints" the given arguments and returns them unmodified.
 
     Example: >lua
-      local hl_normal = vim.print(vim.api.nvim_get_hl_by_name('Normal', true))
+
+       local hl_normal = vim.print(vim.api.nvim_get_hl_by_name('Normal', true))
 <
 
     Return: ~
@@ -1579,19 +1581,19 @@ system({cmd}, {opts}, {on_exit})                                *vim.system()*
 
     Examples: >lua
 
-      local on_exit = function(obj)
-        print(obj.code)
-        print(obj.signal)
-        print(obj.stdout)
-        print(obj.stderr)
-      end
+       local on_exit = function(obj)
+         print(obj.code)
+         print(obj.signal)
+         print(obj.stdout)
+         print(obj.stderr)
+       end
 
-      -- Run asynchronously
-      vim.system({'echo', 'hello'}, { text = true }, on_exit)
+       -- Run asynchronously
+       vim.system({'echo', 'hello'}, { text = true }, on_exit)
 
-      -- Run synchronously
-      local obj = vim.system({'echo', 'hello'}, { text = true }):wait()
-      -- { code = 0, signal = 0, stdout = 'hello', stderr = '' }
+       -- Run synchronously
+       local obj = vim.system({'echo', 'hello'}, { text = true }):wait()
+       -- { code = 0, signal = 0, stdout = 'hello', stderr = '' }
 <
 
     See |uv.spawn()| for more details.
@@ -1775,8 +1777,8 @@ gsplit({s}, {sep}, {opts})                                      *vim.gsplit()*
 <
 
     Parameters: ~
-      • {s}     string String to split
-      • {sep}   string Separator or pattern
+      • {s}     (string) String to split
+      • {sep}   (string) Separator or pattern
       • {opts}  (table|nil) Keyword arguments |kwargs|:
                 • plain: (boolean) Use `sep` literally (as in string.find).
                 • trimempty: (boolean) Discard empty segments at start and end
@@ -2501,7 +2503,8 @@ get_option({filetype}, {option})                   *vim.filetype.get_option()*
     files.
 
     Example: >lua
-      vim.filetype.get_option('vim', 'commentstring')
+
+       vim.filetype.get_option('vim', 'commentstring')
 <
 
     Note: this uses |nvim_get_option_value()| but caches the result. This
@@ -2509,8 +2512,8 @@ get_option({filetype}, {option})                   *vim.filetype.get_option()*
     may not reflect later changes.
 
     Parameters: ~
-      • {filetype}  string Filetype
-      • {option}    string Option name
+      • {filetype}  (string) Filetype
+      • {option}    (string) Option name
 
     Return: ~
         string|boolean|integer: Option value
@@ -2649,7 +2652,7 @@ dir({path}, {opts})                                             *vim.fs.dir()*
       • {path}  (string) An absolute or relative path to the directory to
                 iterate over. The path is first normalized
                 |vim.fs.normalize()|.
-      • {opts}  table|nil Optional keyword arguments:
+      • {opts}  (table|nil) Optional keyword arguments:
                 • depth: integer|nil How deep the traverse (default 1)
                 • skip: (fun(dir_name: string): boolean)|nil Predicate to
                   control traversal. Return false to stop searching the
@@ -2847,10 +2850,10 @@ and dependencies on the current system.
 
 Example: >lua
 
-  local v = vim.version.parse(vim.fn.system({'tmux', '-V'}), {strict=false})
-  if vim.version.gt(v, {3, 2, 0}) then
-    -- ...
-  end
+   local v = vim.version.parse(vim.fn.system({'tmux', '-V'}), {strict=false})
+   if vim.version.gt(v, {3, 2, 0}) then
+     -- ...
+   end
 
 <
 
@@ -2864,33 +2867,33 @@ tested against a version, using |vim.version.range()|.
 Supported range specs are shown in the following table. Note: suffixed
 versions (1.2.3-rc1) are not matched. >
 
-  1.2.3             is 1.2.3
-  =1.2.3            is 1.2.3
-  >1.2.3            greater than 1.2.3
-  <1.2.3            before 1.2.3
-  >=1.2.3           at least 1.2.3
-  ~1.2.3            is >=1.2.3 <1.3.0       "reasonably close to 1.2.3"
-  ^1.2.3            is >=1.2.3 <2.0.0       "compatible with 1.2.3"
-  ^0.2.3            is >=0.2.3 <0.3.0       (0.x.x is special)
-  ^0.0.1            is =0.0.1               (0.0.x is special)
-  ^1.2              is >=1.2.0 <2.0.0       (like ^1.2.0)
-  ~1.2              is >=1.2.0 <1.3.0       (like ~1.2.0)
-  ^1                is >=1.0.0 <2.0.0       "compatible with 1"
-  ~1                same                    "reasonably close to 1"
-  1.x               same
-  1.*               same
-  1                 same
-  *                 any version
-  x                 same
+   1.2.3             is 1.2.3
+   =1.2.3            is 1.2.3
+   >1.2.3            greater than 1.2.3
+   <1.2.3            before 1.2.3
+   >=1.2.3           at least 1.2.3
+   ~1.2.3            is >=1.2.3 <1.3.0       "reasonably close to 1.2.3"
+   ^1.2.3            is >=1.2.3 <2.0.0       "compatible with 1.2.3"
+   ^0.2.3            is >=0.2.3 <0.3.0       (0.x.x is special)
+   ^0.0.1            is =0.0.1               (0.0.x is special)
+   ^1.2              is >=1.2.0 <2.0.0       (like ^1.2.0)
+   ~1.2              is >=1.2.0 <1.3.0       (like ~1.2.0)
+   ^1                is >=1.0.0 <2.0.0       "compatible with 1"
+   ~1                same                    "reasonably close to 1"
+   1.x               same
+   1.*               same
+   1                 same
+   *                 any version
+   x                 same
 
-  1.2.3 - 2.3.4     is >=1.2.3 <=2.3.4
+   1.2.3 - 2.3.4     is >=1.2.3 <=2.3.4
 
-  Partial right: missing pieces treated as x (2.3 => 2.3.x).
-  1.2.3 - 2.3       is >=1.2.3 <2.4.0
-  1.2.3 - 2         is >=1.2.3 <3.0.0
+   Partial right: missing pieces treated as x (2.3 => 2.3.x).
+   1.2.3 - 2.3       is >=1.2.3 <2.4.0
+   1.2.3 - 2         is >=1.2.3 <3.0.0
 
-  Partial left: missing pieces treated as 0 (1.2 => 1.2.0).
-  1.2 - 2.3.0       is 1.2.0 - 2.3.0
+   Partial left: missing pieces treated as 0 (1.2 => 1.2.0).
+   1.2 - 2.3.0       is 1.2.0 - 2.3.0
 
 <
 
@@ -2985,11 +2988,11 @@ parse({version}, {opts})                                 *vim.version.parse()*
 range({spec})                                            *vim.version.range()*
     Parses a semver |version-range| "spec" and returns a range object: >
 
-      {
-        from: Version
-        to: Version
-        has(v: string|Version)
-      }
+       {
+         from: Version
+         to: Version
+         has(v: string|Version)
+       }
 <
 
     `:has()` checks if a version is in the range (inclusive `from`, exclusive
@@ -2997,20 +3000,20 @@ range({spec})                                            *vim.version.range()*
 
     Example: >lua
 
-      local r = vim.version.range('1.0.0 - 2.0.0')
-      print(r:has('1.9.9'))       -- true
-      print(r:has('2.0.0'))       -- false
-      print(r:has(vim.version())) -- check against current Nvim version
+       local r = vim.version.range('1.0.0 - 2.0.0')
+       print(r:has('1.9.9'))       -- true
+       print(r:has('2.0.0'))       -- false
+       print(r:has(vim.version())) -- check against current Nvim version
 <
 
     Or use cmp(), eq(), lt(), and gt() to compare `.to` and `.from` directly: >lua
 
-      local r = vim.version.range('1.0.0 - 2.0.0')
-      print(vim.version.gt({1,0,3}, r.from) and vim.version.lt({1,0,3}, r.to))
+       local r = vim.version.range('1.0.0 - 2.0.0')
+       print(vim.version.gt({1,0,3}, r.from) and vim.version.lt({1,0,3}, r.to))
 <
 
     Parameters: ~
-      • {spec}  string Version range "spec"
+      • {spec}  (string) Version range "spec"
 
     See also: ~
       • # https://github.com/npm/node-semver#ranges
