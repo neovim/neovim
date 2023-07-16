@@ -3,7 +3,6 @@ local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 local clear = helpers.clear
 local is_os = helpers.is_os
-local mkdir = helpers.mkdir
 
 describe('vim._watch', function()
   before_each(function()
@@ -12,9 +11,7 @@ describe('vim._watch', function()
 
   describe('watch', function()
     it('detects file changes', function()
-      local root_dir = helpers.tmpname()
-      os.remove(root_dir)
-      mkdir(root_dir)
+      local root_dir = vim.loop.fs_mkdtemp(vim.fs.dirname(helpers.tmpname()) .. '/nvim_XXXXXXXXXX')
 
       local result = exec_lua(
         [[
@@ -100,9 +97,7 @@ describe('vim._watch', function()
 
   describe('poll', function()
     it('detects file changes', function()
-      local root_dir = helpers.tmpname()
-      os.remove(root_dir)
-      mkdir(root_dir)
+      local root_dir = vim.loop.fs_mkdtemp(vim.fs.dirname(helpers.tmpname()) .. '/nvim_XXXXXXXXXX')
 
       local result = exec_lua(
         [[
