@@ -1052,19 +1052,19 @@ void ui_ext_win_viewport(win_T *wp)
         || (cur_topline == last_topline && wp->w_skipcol < last_skipcol)) {
       if (last_topline > 0 && cur_botline < last_topline) {
         // Scrolling too many lines: only give an approximate "scroll_delta".
-        delta -= win_text_height(wp, cur_topline, wp->w_skipcol, cur_botline, 0);
+        delta -= win_text_height(wp, cur_topline, wp->w_skipcol, cur_botline, 0, NULL);
         delta -= last_topline - cur_botline;
       } else {
-        delta -= win_text_height(wp, cur_topline, wp->w_skipcol, last_topline, last_skipcol);
+        delta -= win_text_height(wp, cur_topline, wp->w_skipcol, last_topline, last_skipcol, NULL);
       }
     } else if (cur_topline > last_topline
                || (cur_topline == last_topline && wp->w_skipcol > last_skipcol)) {
       if (last_botline > 0 && cur_topline > last_botline) {
         // Scrolling too many lines: only give an approximate "scroll_delta".
-        delta += win_text_height(wp, last_topline, last_skipcol, last_botline, 0);
+        delta += win_text_height(wp, last_topline, last_skipcol, last_botline, 0, NULL);
         delta += cur_topline - last_botline;
       } else {
-        delta += win_text_height(wp, last_topline, last_skipcol, cur_topline, wp->w_skipcol);
+        delta += win_text_height(wp, last_topline, last_skipcol, cur_topline, wp->w_skipcol, NULL);
       }
     }
     delta += last_topfill;
