@@ -1,6 +1,6 @@
 ---@meta
 
----@defgroup lua-builtin
+---@defgroup vim.builtin
 ---
 ---@brief <pre>help
 ---vim.api.{func}({...})                                                    *vim.api*

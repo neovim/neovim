@@ -1,8 +1,8 @@
 --- @meta
 
---- @defgroup lua-json
+--- @defgroup vim.json
 ---
---- @brief The \*vim.json\* module provides encoding and decoding of Lua objects to and
+--- This module provides encoding and decoding of Lua objects to and
 --- from JSON-encoded strings. Supports |vim.NIL| and |vim.empty_dict()|.
 
 --- Decodes (or "unpacks") the JSON-encoded {str} to a Lua object.

@@ -1,4 +1,4 @@
----@defgroup lua-highlight
+---@defgroup vim.highlight
 ---
 ---@brief
 ---Nvim includes a function for highlighting a selection on yank.

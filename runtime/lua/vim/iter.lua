@@ -1,6 +1,6 @@
----@defgroup lua-iter
+---@defgroup vim.iter
 ---
---- @brief The \*vim.iter\* module provides a generic interface for working with
+--- This module provides a generic interface for working with
 --- iterables: tables, lists, iterator functions, pair()/ipair()-like iterators,
 --- and \`vim.iter()\` objects.
 ---

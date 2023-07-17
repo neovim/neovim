@@ -573,7 +573,7 @@ The Lpeg library for parsing expression grammars is being included as
 interface is available as `vim.re` (https://www.inf.puc-rio.br/~roberto/lpeg/re.html).
 
 ==============================================================================
-VIM.HIGHLIGHT                                                  *lua-highlight*
+VIM.HIGHLIGHT                                                  *vim.highlight*
 
 
 Nvim includes a function for highlighting a selection on yank.
@@ -637,7 +637,7 @@ vim.highlight.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
 
 
 ==============================================================================
-VIM.REGEX                                                          *lua-regex*
+VIM.REGEX                                                          *vim.regex*
 
 
 Vim regexes can be used directly from Lua. Currently they only allow
@@ -678,7 +678,7 @@ vim.regex:match_str({str})                                 *regex:match_str()*
 
 
 ==============================================================================
-VIM.DIFF                                                            *lua-diff*
+VIM.DIFF                                                            *vim.diff*
 
 vim.diff({a}, {b}, {opts})                                        *vim.diff()*
     Run diff on strings {a} and {b}. Any indices returned by this function,
@@ -747,13 +747,11 @@ vim.diff({a}, {b}, {opts})                                        *vim.diff()*
 
 
 ==============================================================================
-VIM.MPACK                                                          *lua-mpack*
+VIM.MPACK                                                          *vim.mpack*
 
 
-The *vim.mpack* module provides encoding and decoding of Lua objects to
-and from msgpack-encoded strings. Supports |vim.NIL| and
-|vim.empty_dict()|.
-
+This module provides encoding and decoding of Lua objects to and from
+msgpack-encoded strings. Supports |vim.NIL| and |vim.empty_dict()|.
 
 vim.mpack.decode({str})                                   *vim.mpack.decode()*
     Decodes (or "unpacks") the msgpack-encoded {str} to a Lua object.
@@ -766,12 +764,11 @@ vim.mpack.encode({obj})                                   *vim.mpack.encode()*
 
 
 ==============================================================================
-VIM.JSON                                                            *lua-json*
+VIM.JSON                                                            *vim.json*
 
 
-The *vim.json* module provides encoding and decoding of Lua objects to and
-from JSON-encoded strings. Supports |vim.NIL| and |vim.empty_dict()|.
-
+This module provides encoding and decoding of Lua objects to and from
+JSON-encoded strings. Supports |vim.NIL| and |vim.empty_dict()|.
 
 vim.json.decode({str}, {opts})                             *vim.json.decode()*
     Decodes (or "unpacks") the JSON-encoded {str} to a Lua object.
@@ -806,7 +803,7 @@ vim.json.encode({obj})                                     *vim.json.encode()*
 
 
 ==============================================================================
-VIM.SPELL                                                          *lua-spell*
+VIM.SPELL                                                          *vim.spell*
 
 vim.spell.check({str})                                     *vim.spell.check()*
     Check {str} for spelling errors. Similar to the Vimscript function
@@ -839,7 +836,7 @@ vim.spell.check({str})                                     *vim.spell.check()*
 
 
 ==============================================================================
-VIM                                                              *lua-builtin*
+VIM                                                              *vim.builtin*
 
 
 vim.api.{func}({...})                                                    *vim.api*
@@ -1744,7 +1741,7 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
 
 
 ==============================================================================
-Lua module: vim.inspector                                      *lua-inspector*
+Lua module: vim.inspector                                      *vim.inspector*
 
 vim.inspect_pos({bufnr}, {row}, {col}, {filter})           *vim.inspect_pos()*
     Get all the items at a given buffer position.
@@ -2324,7 +2321,7 @@ vim.validate({opt})                                           *vim.validate()*
 
 
 ==============================================================================
-Lua module: vim.loader                                            *lua-loader*
+Lua module: vim.loader                                            *vim.loader*
 
 vim.loader.disable()                                    *vim.loader.disable()*
     Disables the experimental Lua module loader:
@@ -2371,7 +2368,7 @@ vim.loader.reset({path})                                  *vim.loader.reset()*
 
 
 ==============================================================================
-Lua module: vim.uri                                                  *lua-uri*
+Lua module: vim.uri                                                  *vim.uri*
 
 vim.uri_from_bufnr({bufnr})                             *vim.uri_from_bufnr()*
     Get a URI from a bufnr
@@ -2412,7 +2409,7 @@ vim.uri_to_fname({uri})                                   *vim.uri_to_fname()*
 
 
 ==============================================================================
-Lua module: vim.ui                                                    *lua-ui*
+Lua module: vim.ui                                                    *vim.ui*
 
 vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
     Prompts the user for input, allowing arbitrary (potentially asynchronous)
@@ -2502,7 +2499,7 @@ vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
 
 
 ==============================================================================
-Lua module: vim.filetype                                        *lua-filetype*
+Lua module: vim.filetype                                        *vim.filetype*
 
 vim.filetype.add({filetypes})                             *vim.filetype.add()*
     Add new filetype mappings.
@@ -2670,7 +2667,7 @@ vim.filetype.match({args})                              *vim.filetype.match()*
 
 
 ==============================================================================
-Lua module: vim.keymap                                            *lua-keymap*
+Lua module: vim.keymap                                            *vim.keymap*
 
 vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
     Remove an existing mapping. Examples: >lua
@@ -2730,7 +2727,7 @@ vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
 
 
 ==============================================================================
-Lua module: vim.fs                                                    *lua-fs*
+Lua module: vim.fs                                                    *vim.fs*
 
 vim.fs.basename({file})                                    *vim.fs.basename()*
     Return the basename of the given file or directory
@@ -2893,7 +2890,7 @@ vim.fs.parents({start})                                     *vim.fs.parents()*
 
 
 ==============================================================================
-Lua module: vim.secure                                            *lua-secure*
+Lua module: vim.secure                                            *vim.secure*
 
 vim.secure.read({path})                                    *vim.secure.read()*
     Attempt to read the file at {path} prompting the user if the file should
@@ -2933,7 +2930,7 @@ vim.secure.trust({opts})                                  *vim.secure.trust()*
 
 
 ==============================================================================
-Lua module: vim.version                                          *lua-version*
+Lua module: vim.version                                          *vim.version*
 
 
 The `vim.version` module provides functions for comparing versions and
@@ -3116,12 +3113,12 @@ vim.version.range({spec})                                *vim.version.range()*
 
 
 ==============================================================================
-Lua module: vim.iter                                                *lua-iter*
+Lua module: vim.iter                                                *vim.iter*
 
 
-The *vim.iter* module provides a generic interface for working with
-iterables: tables, lists, iterator functions, pair()/ipair()-like
-iterators, and `vim.iter()` objects.
+This module provides a generic interface for working with iterables:
+tables, lists, iterator functions, pair()/ipair()-like iterators, and
+`vim.iter()` objects.
 
 *vim.iter()* wraps its table or function argument into an *Iter* object
 with methods (such as |Iter:filter()| and |Iter:map()|) that transform the

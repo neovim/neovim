@@ -208,7 +208,7 @@ CONFIG = {
         'helptag_fmt': lambda name: (
             '*lua-vim*' if name.lower() == '_editor' else
             '*lua-vimscript*' if name.lower() == '_options' else
-            f'*lua-{name.lower()}*'),
+            f'*vim.{name.lower()}*'),
         'fn_helptag_fmt': lambda fstem, name: (
             f'*vim.opt:{name.split(":")[-1]}()*' if ':' in name and name.startswith('Option') else
             # Exclude fstem for methods
@@ -1159,6 +1159,10 @@ def main(doxygen_config, args):
 
                 if doc:
                     doc_list.append(doc)
+
+            # Can't use '.' in @defgroup, so convert to '--'
+            # "vim.json" => "vim-dot-json"
+            groupname = groupname.replace('-dot-', '.')
 
             section_docs[groupname] = "\n".join(doc_list)
 

@@ -416,6 +416,11 @@ function TLua2DoX_filter.filter(this, AppStamp, Filename)
 
             magic = table.concat(magic_split, ' ')
 
+            if magic_split[1] == 'defgroup' or magic_split[1] == 'addtogroup' then
+              -- Can't use '.' in defgroup, so convert to '--'
+              magic = magic:gsub('%.', '-dot-')
+            end
+
             outStream:writeln('/// @' .. magic)
             fn_magic = checkComment4fn(fn_magic, magic)
           end
