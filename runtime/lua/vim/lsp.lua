@@ -612,7 +612,7 @@ do
   ---@private
   function changetracking.send_changes(bufnr, firstline, lastline, new_lastline)
     local groups = {} ---@type table<string,CTGroup>
-    for _, client in pairs(lsp.get_active_clients({ bufnr = bufnr })) do
+    for _, client in pairs(lsp.get_clients({ bufnr = bufnr })) do
       local group = get_group(client)
       groups[group_key(group)] = group
     end
@@ -734,7 +734,7 @@ end
 -- FIXME: DOC: Shouldn't need to use a dummy function
 --
 --- LSP client object. You can get an active client object via
---- |vim.lsp.get_client_by_id()| or |vim.lsp.get_active_clients()|.
+--- |vim.lsp.get_client_by_id()| or |vim.lsp.get_clients()|.
 ---
 --- - Methods:
 ---
@@ -880,7 +880,7 @@ function lsp.start(config, opts)
   if bufnr == nil or bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
   end
-  for _, clients in ipairs({ uninitialized_clients, lsp.get_active_clients() }) do
+  for _, clients in ipairs({ uninitialized_clients, lsp.get_clients() }) do
     for _, client in pairs(clients) do
       if reuse_client(client, config) then
         lsp.buf_attach_client(bufnr, client.id)
@@ -903,7 +903,7 @@ end
 function lsp.status()
   local percentage = nil
   local messages = {}
-  for _, client in ipairs(vim.lsp.get_active_clients()) do
+  for _, client in ipairs(vim.lsp.get_clients()) do
     for progress in client.progress do
       local value = progress.value
       if type(value) == 'table' and value.kind then
@@ -1755,7 +1755,7 @@ local function text_document_did_save_handler(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
   local text = once(buf_get_full_text)
-  for _, client in ipairs(lsp.get_active_clients({ bufnr = bufnr })) do
+  for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
     local name = api.nvim_buf_get_name(bufnr)
     local old_name = changetracking._get_and_set_name(client, bufnr, name)
     if old_name and name ~= old_name then
@@ -1823,7 +1823,7 @@ function lsp.buf_attach_client(bufnr, client_id)
       buffer = bufnr,
       desc = 'vim.lsp: textDocument/willSave',
       callback = function(ctx)
-        for _, client in ipairs(lsp.get_active_clients({ bufnr = ctx.buf })) do
+        for _, client in ipairs(lsp.get_clients({ bufnr = ctx.buf })) do
           local params = {
             textDocument = {
               uri = uri,
@@ -1858,7 +1858,7 @@ function lsp.buf_attach_client(bufnr, client_id)
       on_lines = text_document_did_change_handler,
       on_reload = function()
         local params = { textDocument = { uri = uri } }
-        for _, client in ipairs(lsp.get_active_clients({ bufnr = bufnr })) do
+        for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
           changetracking.reset_buf(client, bufnr)
           if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
             client.notify('textDocument/didClose', params)
@@ -1868,7 +1868,7 @@ function lsp.buf_attach_client(bufnr, client_id)
       end,
       on_detach = function()
         local params = { textDocument = { uri = uri } }
-        for _, client in ipairs(lsp.get_active_clients({ bufnr = bufnr })) do
+        for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
           changetracking.reset_buf(client, bufnr)
           if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
             client.notify('textDocument/didClose', params)
@@ -1985,7 +1985,7 @@ end
 --- You can also use the `stop()` function on a |vim.lsp.client| object.
 --- To stop all clients:
 --- <pre>lua
---- vim.lsp.stop_client(vim.lsp.get_active_clients())
+--- vim.lsp.stop_client(vim.lsp.get_clients())
 --- </pre>
 ---
 --- By default asks the server to shutdown, unless stop was requested
@@ -2006,7 +2006,7 @@ function lsp.stop_client(client_id, force)
   end
 end
 
----@class vim.lsp.get_active_clients.filter
+---@class vim.lsp.get_clients.filter
 ---@field id integer|nil Match clients by id
 ---@field bufnr integer|nil match clients attached to the given buffer
 ---@field name string|nil match clients by name
@@ -2014,7 +2014,7 @@ end
 
 --- Get active clients.
 ---
----@param filter vim.lsp.get_active_clients.filter|nil (table|nil) A table with
+---@param filter vim.lsp.get_clients.filter|nil (table|nil) A table with
 ---              key-value pairs used to filter the returned clients.
 ---              The available keys are:
 ---               - id (number): Only return clients with the given id
@@ -2022,7 +2022,7 @@ end
 ---               - name (string): Only return clients with the given name
 ---               - method (string): Only return clients supporting the given method
 ---@return lsp.Client[]: List of |vim.lsp.client| objects
-function lsp.get_active_clients(filter)
+function lsp.get_clients(filter)
   validate({ filter = { filter, 't', true } })
 
   filter = filter or {}
@@ -2043,6 +2043,13 @@ function lsp.get_active_clients(filter)
     end
   end
   return clients
+end
+
+---@private
+---@deprecated
+function lsp.get_active_clients(filter)
+  -- TODO: add vim.deprecate call after 0.10 is out for removal in 0.12
+  return lsp.get_clients(filter)
 end
 
 api.nvim_create_autocmd('VimLeavePre', {
@@ -2125,7 +2132,7 @@ function lsp.buf_request(bufnr, method, params, handler)
 
   bufnr = resolve_bufnr(bufnr)
   local method_supported = false
-  local clients = lsp.get_active_clients({ bufnr = bufnr })
+  local clients = lsp.get_clients({ bufnr = bufnr })
   local client_request_ids = {}
   for _, client in ipairs(clients) do
     if client.supports_method(method, { bufnr = bufnr }) then
@@ -2173,7 +2180,7 @@ function lsp.buf_request_all(bufnr, method, params, handler)
   local expected_result_count = 0
 
   local set_expected_result_count = once(function()
-    for _, client in ipairs(lsp.get_active_clients({ bufnr = bufnr })) do
+    for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
       if client.supports_method(method, { bufnr = bufnr }) then
         expected_result_count = expected_result_count + 1
       end
@@ -2240,7 +2247,7 @@ function lsp.buf_notify(bufnr, method, params)
     method = { method, 's' },
   })
   local resp = false
-  for _, client in ipairs(lsp.get_active_clients({ bufnr = bufnr })) do
+  for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
     if client.rpc.notify(method, params) then
       resp = true
     end
@@ -2367,7 +2374,7 @@ function lsp.formatexpr(opts)
     return 0
   end
   local bufnr = api.nvim_get_current_buf()
-  for _, client in pairs(lsp.get_active_clients({ bufnr = bufnr })) do
+  for _, client in pairs(lsp.get_clients({ bufnr = bufnr })) do
     if client.supports_method('textDocument/rangeFormatting') then
       local params = util.make_formatting_params()
       local end_line = vim.fn.getline(end_lnum) --[[@as string]]
@@ -2424,10 +2431,10 @@ end
 ---
 ---@param bufnr (integer|nil): Buffer handle, or 0 for current
 ---@return table result is table of (client_id, client) pairs
----@deprecated Use |vim.lsp.get_active_clients()| instead.
+---@deprecated Use |vim.lsp.get_clients()| instead.
 function lsp.buf_get_clients(bufnr)
   local result = {}
-  for _, client in ipairs(lsp.get_active_clients({ bufnr = resolve_bufnr(bufnr) })) do
+  for _, client in ipairs(lsp.get_clients({ bufnr = resolve_bufnr(bufnr) })) do
     result[client.id] = client
   end
   return result
@@ -2478,7 +2485,7 @@ end
 ---                 vim.print(client)
 ---               end)
 ---             </pre>
----@deprecated use lsp.get_active_clients({ bufnr = bufnr }) with regular loop
+---@deprecated use lsp.get_clients({ bufnr = bufnr }) with regular loop
 function lsp.for_each_buffer_client(bufnr, fn)
   return for_each_buffer_client(bufnr, fn)
 end
