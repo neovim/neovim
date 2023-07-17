@@ -3086,8 +3086,7 @@ end)
 it('long :%s/ with inccommand does not collapse cmdline', function()
   clear()
   local screen = Screen.new(10,5)
-  common_setup(screen)
-  command('set inccommand=nosplit')
+  common_setup(screen, 'nosplit')
   feed(':%s/AAAAAAA', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
     'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A')
   screen:expect([[
@@ -3096,6 +3095,21 @@ it('long :%s/ with inccommand does not collapse cmdline', function()
     :%s/AAAAAAAA|
     AAAAAAAAAAAA|
     AAAAAAA^     |
+  ]])
+end)
+
+it("with 'inccommand' typing invalid `={expr}` does not show error", function()
+  clear()
+  local screen = Screen.new(30, 6)
+  common_setup(screen, 'nosplit')
+  feed(':edit `=`')
+  screen:expect([[
+                                  |
+    {15:~                             }|
+    {15:~                             }|
+    {15:~                             }|
+    {15:~                             }|
+    :edit `=`^                     |
   ]])
 end)
 
