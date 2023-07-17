@@ -766,7 +766,7 @@ void terminal_send_key(Terminal *term, int c)
 
   if (key) {
     vterm_keyboard_key(term->vt, key, mod);
-  } else {
+  } else if (!IS_SPECIAL(c)) {
     vterm_keyboard_unichar(term->vt, (uint32_t)c, mod);
   }
 }

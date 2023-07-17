@@ -431,6 +431,30 @@ it('terminal truncates number of composing characters to 5', function()
   retry(nil, nil, function() eq('a' .. composing:rep(5), meths.get_current_line()) end)
 end)
 
+describe('terminal input', function()
+  before_each(function()
+    clear()
+    exec_lua([[
+      _G.input_data = ''
+      vim.api.nvim_open_term(0, { on_input = function(_, _, _, data)
+        _G.input_data = _G.input_data .. data
+      end })
+    ]])
+    command('startinsert')
+    poke_eventloop()
+  end)
+
+  it('<C-Space> is sent as NUL byte', function()
+    feed('aaa<C-Space>bbb')
+    eq('aaa\0bbb', exec_lua([[return _G.input_data]]))
+  end)
+
+  it('unknown special keys are not sent', function()
+    feed('aaa<Help>bbb')
+    eq('aaabbb', exec_lua([[return _G.input_data]]))
+  end)
+end)
+
 if is_os('win') then
   describe(':terminal in Windows', function()
     local screen
