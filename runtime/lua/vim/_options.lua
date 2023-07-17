@@ -846,7 +846,7 @@ end
 ---</pre>
 
 --- @diagnostic disable-next-line:unused-local used for gen_vimdoc
-local Option = {}
+local Option = {} -- luacheck: no unused
 
 ---Returns a Lua-representation of the option. Boolean, number and string
 ---values will be returned in exactly the same fashion.
@@ -901,7 +901,7 @@ function Option:get() end
 ---</pre>
 ---@param value string Value to append
 --- @diagnostic disable-next-line:unused-local used for gen_vimdoc
-function Option:append(value) end
+function Option:append(value) end -- luacheck: no unused
 
 ---Prepend a value to string-style options. See |:set^=|
 ---
@@ -911,7 +911,7 @@ function Option:append(value) end
 ---</pre>
 ---@param value string Value to prepend
 ---@diagnostic disable-next-line:unused-local used for gen_vimdoc
-function Option:prepend(value) end
+function Option:prepend(value) end -- luacheck: no unused
 
 ---Remove a value from string-style options. See |:set-=|
 ---
@@ -921,7 +921,7 @@ function Option:prepend(value) end
 ---</pre>
 ---@param value string Value to remove
 ---@diagnostic disable-next-line:unused-local used for gen_vimdoc
-function Option:remove(value) end
+function Option:remove(value) end -- luacheck: no unused
 
 vim.opt = create_option_accessor()
 vim.opt_local = create_option_accessor('local')

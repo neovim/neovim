@@ -1,5 +1,7 @@
 --- @meta
 
+-- luacheck: no unused args
+
 --- @defgroup vim.regex
 ---
 --- @brief Vim regexes can be used directly from Lua. Currently they only allow
@@ -13,7 +15,7 @@
 function vim.regex(re) end
 
 --- @class vim.regex
-local regex = {}
+local regex = {} -- luacheck: no unused
 
 --- Match the string against the regex. If the string should match the regex
 --- precisely, surround the regex with `^` and `$`. If the was a match, the

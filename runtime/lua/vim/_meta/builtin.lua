@@ -1,5 +1,7 @@
 ---@meta
 
+-- luacheck: no unused args
+
 ---@defgroup vim.builtin
 ---
 ---@brief <pre>help

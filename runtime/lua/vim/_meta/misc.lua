@@ -1,5 +1,7 @@
 ---@meta
 
+-- luacheck: no unused args
+
 --- Invokes |vim-function| or |user-function| {func} with arguments {...}.
 --- See also |vim.fn|.
 --- Equivalent to:

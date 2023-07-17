@@ -1,5 +1,7 @@
 --- @meta
 
+-- luacheck: no unused args
+
 --- Check {str} for spelling errors. Similar to the Vimscript function
 --- |spellbadword()|.
 ---

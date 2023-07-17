@@ -1,5 +1,7 @@
 ---@meta
 
+-- luacheck: no unused args
+
 --- Run diff on strings {a} and {b}. Any indices returned by this function,
 --- either directly or via callback arguments, are 1-based.
 ---

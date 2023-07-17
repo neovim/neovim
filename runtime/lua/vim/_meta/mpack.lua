@@ -1,5 +1,7 @@
 --- @meta
 
+-- luacheck: no unused args
+
 --- @defgroup vim.mpack
 ---
 --- This module provides encoding and decoding of Lua objects to and
