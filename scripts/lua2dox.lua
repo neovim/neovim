@@ -363,6 +363,8 @@ function TLua2DoX_filter.filter(this, AppStamp, Filename)
               magic = magic:gsub('^return%s+.*%((' .. type .. ')%)', 'return %1')
               magic = magic:gsub('^return%s+.*%((' .. type .. '|nil)%)', 'return %1')
             end
+            -- handle the return of vim.spell.check
+            magic = magic:gsub('({.*}%[%])', '`%1`')
             magic_split = string_split(magic, ' ')
           end
 

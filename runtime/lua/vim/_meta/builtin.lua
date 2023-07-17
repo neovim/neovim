@@ -141,7 +141,7 @@ function vim.str_utfindex(str, index) end
 --- @param str string Text to convert
 --- @param from number Encoding of {str}
 --- @param to number Target encoding
---- @param opts? table<string, any>
+--- @param opts? table<string,any>
 --- @return string|nil Converted string if conversion succeeds, `nil` otherwise.
 function vim.iconv(str, from, to, opts) end
 

@@ -826,8 +826,7 @@ vim.spell.check({str})                                     *vim.spell.check()*
       • {str}  (string)
 
     Return: ~
-        {[1]: string, [2]: string, [3]: string}[] List of tuples with three
-        items:
+        `{[1]: string, [2]: string, [3]: string}[]` List of tuples with three items:
         • The badly spelled word.
         • The type of the spelling error: "bad" spelling mistake "rare" rare
           word "local" word only valid in another region "caps" word should
@@ -914,7 +913,7 @@ vim.iconv({str}, {from}, {to}, {opts})                           *vim.iconv()*
       • {str}   (string) Text to convert
       • {from}  (number) Encoding of {str}
       • {to}    (number) Target encoding
-      • {opts}  table<string,|nil any>
+      • {opts}  table<string,any>|nil
 
     Return: ~
         (string|nil) Converted string if conversion succeeds, `nil` otherwise.
