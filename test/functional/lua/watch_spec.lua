@@ -11,7 +11,7 @@ describe('vim._watch', function()
 
   describe('watch', function()
     it('detects file changes', function()
-      local root_dir = vim.loop.fs_mkdtemp(vim.fs.dirname(helpers.tmpname()) .. '/nvim_XXXXXXXXXX')
+      local root_dir = vim.uv.fs_mkdtemp(vim.fs.dirname(helpers.tmpname()) .. '/nvim_XXXXXXXXXX')
 
       local result = exec_lua(
         [[
@@ -97,7 +97,7 @@ describe('vim._watch', function()
 
   describe('poll', function()
     it('detects file changes', function()
-      local root_dir = vim.loop.fs_mkdtemp(vim.fs.dirname(helpers.tmpname()) .. '/nvim_XXXXXXXXXX')
+      local root_dir = vim.uv.fs_mkdtemp(vim.fs.dirname(helpers.tmpname()) .. '/nvim_XXXXXXXXXX')
 
       local result = exec_lua(
         [[
