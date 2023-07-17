@@ -17,7 +17,7 @@ local function tofile(fname, text)
 end
 
 function M.gen(opt)
-  if vim.loop.fs_stat('./lsp.json') then
+  if vim.uv.fs_stat('./lsp.json') then
     vim.fn.delete('./lsp.json')
   end
   vim.fn.system({
