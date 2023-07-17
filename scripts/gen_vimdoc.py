@@ -46,6 +46,7 @@ from pathlib import Path
 
 from xml.dom import minidom
 Element = minidom.Element
+Document = minidom.Document
 
 MIN_PYTHON_VERSION = (3, 6)
 MIN_DOXYGEN_VERSION = (1, 9, 0)
@@ -1089,6 +1090,42 @@ def delete_lines_below(filename, tokenstr):
         fp.writelines(lines[0:i])
 
 
+def extract_defgroups(base: str, dom: Document):
+    '''Generate module-level (section) docs (@defgroup).'''
+    section_docs = {}
+
+    for compound in dom.getElementsByTagName('compound'):
+        if compound.getAttribute('kind') != 'group':
+            continue
+
+        # Doxygen "@defgroup" directive.
+        groupname = get_text(find_first(compound, 'name'))
+        groupxml = os.path.join(base, '%s.xml' %
+                                compound.getAttribute('refid'))
+
+        group_parsed = minidom.parse(groupxml)
+        doc_list = []
+        brief_desc = find_first(group_parsed, 'briefdescription')
+        if brief_desc:
+            for child in brief_desc.childNodes:
+                doc_list.append(fmt_node_as_vimhelp(child))
+
+        desc = find_first(group_parsed, 'detaileddescription')
+        if desc:
+            doc = fmt_node_as_vimhelp(desc)
+
+            if doc:
+                doc_list.append(doc)
+
+        # Can't use '.' in @defgroup, so convert to '--'
+        # "vim.json" => "vim-dot-json"
+        groupname = groupname.replace('-dot-', '.')
+
+        section_docs[groupname] = "\n".join(doc_list)
+
+    return section_docs
+
+
 def main(doxygen_config, args):
     """Generates:
 
@@ -1130,41 +1167,12 @@ def main(doxygen_config, args):
 
         fn_map_full = {}  # Collects all functions as each module is processed.
         sections = {}
-        section_docs = {}
         sep = '=' * text_width
 
         base = os.path.join(output_dir, 'xml')
         dom = minidom.parse(os.path.join(base, 'index.xml'))
 
-        # Generate module-level (section) docs (@defgroup).
-        for compound in dom.getElementsByTagName('compound'):
-            if compound.getAttribute('kind') != 'group':
-                continue
-
-            # Doxygen "@defgroup" directive.
-            groupname = get_text(find_first(compound, 'name'))
-            groupxml = os.path.join(base, '%s.xml' %
-                                    compound.getAttribute('refid'))
-
-            group_parsed = minidom.parse(groupxml)
-            doc_list = []
-            brief_desc = find_first(group_parsed, 'briefdescription')
-            if brief_desc:
-                for child in brief_desc.childNodes:
-                    doc_list.append(fmt_node_as_vimhelp(child))
-
-            desc = find_first(group_parsed, 'detaileddescription')
-            if desc:
-                doc = fmt_node_as_vimhelp(desc)
-
-                if doc:
-                    doc_list.append(doc)
-
-            # Can't use '.' in @defgroup, so convert to '--'
-            # "vim.json" => "vim-dot-json"
-            groupname = groupname.replace('-dot-', '.')
-
-            section_docs[groupname] = "\n".join(doc_list)
+        section_docs = extract_defgroups(base, dom)
 
         # Generate docs for all functions in the current module.
         for compound in dom.getElementsByTagName('compound'):
