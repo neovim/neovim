@@ -119,11 +119,11 @@ The following new APIs or features were added.
 
 • Added an omnifunc implementation for Lua, |vim.lua_omnifunc()|
 
-• Added a new experimental |lua-loader| that byte-compiles and caches Lua files.
+• Added a new experimental |vim.loader| that byte-compiles and caches Lua files.
   To enable the new loader, add the following at the top of your |init.lua|: >lua
     vim.loader.enable()
 
-• Added |lua-version| for parsing and comparing version strings conforming to
+• Added |vim.version| for parsing and comparing version strings conforming to
   the semver specification.
 
 • When using Nvim inside tmux 3.2 or later, the default clipboard provider
@@ -273,7 +273,7 @@ REMOVED FEATURES
 
 The following deprecated functions or APIs were removed.
 
-• `filetype.vim` is removed in favor of |lua-filetype|
+• `filetype.vim` is removed in favor of |vim.filetype|
   (Note that filetype logic and tests still align with Vim, so additions or
   changes need to be contributed there first.)
   See https://github.com/neovim/neovim/pull/20674.

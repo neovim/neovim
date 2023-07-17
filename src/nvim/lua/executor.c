@@ -2036,9 +2036,9 @@ void nlua_set_sctx(sctx_T *current)
   lua_Debug *info = (lua_Debug *)xmalloc(sizeof(lua_Debug));
 
   // Files where internal wrappers are defined so we can ignore them
-  // like vim.o/opt etc are defined in _meta.lua
+  // like vim.o/opt etc are defined in _options.lua
   char *ignorelist[] = {
-    "vim/_meta.lua",
+    "vim/_options.lua",
     "vim/keymap.lua",
   };
   int ignorelist_size = sizeof(ignorelist) / sizeof(ignorelist[0]);

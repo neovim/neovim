@@ -1,4 +1,4 @@
---- @defgroup lua-version
+--- @defgroup vim.version
 ---
 --- @brief The \`vim.version\` module provides functions for comparing versions and ranges
 --- conforming to the https://semver.org spec. Plugins, and plugin managers, can use this to check
