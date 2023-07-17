@@ -51,6 +51,16 @@ The following changes may require adaptations in user config or plugins.
   • `vim.json.null` is redundant with `vim.NIL`.
   • `vim.json.array_mt` (and related) is redundant with `vim.empty_dict()`.
 
+• Removed some Vim 5.0<= option compatibilities:
+  • |'backspace'| no longer supports number values. Instead:
+    • for `backspace=0` set `backspace=` (empty)
+    • for `backspace=1` set `backspace=indent,eol`
+    • for `backspace=2` set `backspace=indent,eol,start` (default behavior in Nvim)
+    • for `backspace=3` set `backspace=indent,eol,nostop`
+  • paths in |'backupdir'|, |'path'| and |'cdpath'| can no longer be separated with
+    spaces (but paths themselves may contain spaces now).
+  • |'directory'| will no longer remove a `>` at the start of the option.
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 

@@ -1664,7 +1664,7 @@ const char *did_set_foldcolumn(optset_T *args)
 const char *did_set_backspace(optset_T *args FUNC_ATTR_UNUSED)
 {
   if (ascii_isdigit(*p_bs)) {
-    if (*p_bs > '3' || p_bs[1] != NUL) {
+    if (*p_bs != '2') {
       return e_invarg;
     }
   } else if (check_opt_strings(p_bs, p_bs_values, true) != OK) {

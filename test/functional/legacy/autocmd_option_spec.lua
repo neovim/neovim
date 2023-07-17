@@ -542,13 +542,6 @@ describe('au OptionSet', function()
       expected_combination({'cursorcolumn', 0, 0, 0, 1, 'global', 'set'})
     end)
 
-    it('with option value converted internally', function()
-      command('noa set backspace=1')
-      command('set backspace=2')
-      expected_combination(({
-        'backspace', 'indent,eol', 'indent,eol', 'indent,eol', '2', 'global', 'set'
-      }))
-    end)
   end)
 
   describe('with specific option', function()
