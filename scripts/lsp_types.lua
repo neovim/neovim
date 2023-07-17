@@ -22,7 +22,7 @@ function M.gen(opt)
   end
   vim.fn.system({
     'curl',
-    'https://raw.githubusercontent.com/microsoft/lsprotocol/main/generator/lsp.json',
+    'https://raw.githubusercontent.com/microsoft/lsprotocol/2023.0.0a2/generator/lsp.json',
     '-o',
     './lsp.json',
   })
