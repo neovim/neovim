@@ -1888,22 +1888,22 @@ ringbuf({size})                                                *vim.ringbuf()*
     Return: ~
         (table)
 
-Ringbuf:clear({self})                                        *Ringbuf:clear()*
+Ringbuf:clear()                                              *Ringbuf:clear()*
     Clear all items.
 
-Ringbuf:peek({self})                                          *Ringbuf:peek()*
+Ringbuf:peek()                                                *Ringbuf:peek()*
     Returns the first unread item without removing it
 
     Return: ~
         any?|ni
 
-Ringbuf:pop({self})                                            *Ringbuf:pop()*
+Ringbuf:pop()                                                  *Ringbuf:pop()*
     Removes and returns the first unread item
 
     Return: ~
         any?|ni
 
-Ringbuf:push({self}, {item})                                  *Ringbuf:push()*
+Ringbuf:push({item})                                          *Ringbuf:push()*
     Adds an item, overriding the oldest item if the buffer is full.
 
     Parameters: ~
@@ -3101,7 +3101,7 @@ filter({f}, {src}, {...})                                  *vim.iter.filter()*
     See also: ~
       • |Iter:filter()|
 
-Iter:all({self}, {pred})                                          *Iter:all()*
+Iter:all({pred})                                                  *Iter:all()*
     Return true if all of the items in the iterator match the given predicate.
 
     Parameters: ~
@@ -3109,7 +3109,7 @@ Iter:all({self}, {pred})                                          *Iter:all()*
                 returned from the previous stage in the pipeline as arguments
                 and returns true if the predicate matches.
 
-Iter:any({self}, {pred})                                          *Iter:any()*
+Iter:any({pred})                                                  *Iter:any()*
     Return true if any of the items in the iterator match the given predicate.
 
     Parameters: ~
@@ -3117,7 +3117,7 @@ Iter:any({self}, {pred})                                          *Iter:any()*
                 returned from the previous stage in the pipeline as arguments
                 and returns true if the predicate matches.
 
-Iter:each({self}, {f})                                           *Iter:each()*
+Iter:each({f})                                                   *Iter:each()*
     Call a function once for each item in the pipeline.
 
     This is used for functions which have side effects. To modify the values
@@ -3130,7 +3130,7 @@ Iter:each({self}, {f})                                           *Iter:each()*
              Takes all of the values returned by the previous stage in the
              pipeline as arguments.
 
-Iter:enumerate({self})                                      *Iter:enumerate()*
+Iter:enumerate()                                            *Iter:enumerate()*
     Add an iterator stage that returns the current iterator count as well as
     the iterator value.
 
@@ -3160,7 +3160,7 @@ Iter:enumerate({self})                                      *Iter:enumerate()*
     Return: ~
         Iter
 
-Iter:filter({self}, {f})                                       *Iter:filter()*
+Iter:filter({f})                                               *Iter:filter()*
     Add a filter step to the iterator pipeline.
 
     Example: >lua
@@ -3176,7 +3176,7 @@ Iter:filter({self}, {f})                                       *Iter:filter()*
     Return: ~
         Iter
 
-Iter:find({self}, {f})                                           *Iter:find()*
+Iter:find({f})                                                   *Iter:find()*
     Find the first value in the iterator that satisfies the given predicate.
 
     Advances the iterator. Returns nil and drains the iterator if no value is
@@ -3200,7 +3200,7 @@ Iter:find({self}, {f})                                           *Iter:find()*
     Return: ~
         any
 
-Iter:fold({self}, {init}, {f})                                   *Iter:fold()*
+Iter:fold({init}, {f})                                           *Iter:fold()*
     Fold ("reduce") an iterator or table into a single value.
 
     Examples: >lua
@@ -3223,7 +3223,7 @@ Iter:fold({self}, {init}, {f})                                   *Iter:fold()*
     Return: ~
         any
 
-Iter:last({self})                                                *Iter:last()*
+Iter:last()                                                      *Iter:last()*
     Return the last item in the iterator.
 
     Drains the iterator.
@@ -3242,7 +3242,7 @@ Iter:last({self})                                                *Iter:last()*
     Return: ~
         any
 
-Iter:map({self}, {f})                                             *Iter:map()*
+Iter:map({f})                                                     *Iter:map()*
     Add a map step to the iterator pipeline.
 
     If the map function returns nil, the value is filtered from the iterator.
@@ -3267,7 +3267,7 @@ Iter:map({self}, {f})                                             *Iter:map()*
     Return: ~
         Iter
 
-Iter:next({self})                                                *Iter:next()*
+Iter:next()                                                      *Iter:next()*
     Return the next value from the iterator.
 
     Example: >lua
@@ -3284,7 +3284,7 @@ Iter:next({self})                                                *Iter:next()*
     Return: ~
         any
 
-Iter:nextback({self})                                        *Iter:nextback()*
+Iter:nextback()                                              *Iter:nextback()*
     Return the next value from the end of the iterator.
 
     Only supported for iterators on list-like tables.
@@ -3301,7 +3301,7 @@ Iter:nextback({self})                                        *Iter:nextback()*
     Return: ~
         any
 
-Iter:nth({self}, {n})                                             *Iter:nth()*
+Iter:nth({n})                                                     *Iter:nth()*
     Return the nth value in the iterator.
 
     This function advances the iterator.
@@ -3321,7 +3321,7 @@ Iter:nth({self}, {n})                                             *Iter:nth()*
     Return: ~
         any
 
-Iter:nthback({self}, {n})                                     *Iter:nthback()*
+Iter:nthback({n})                                             *Iter:nthback()*
     Return the nth value from the end of the iterator.
 
     This function advances the iterator.
@@ -3343,7 +3343,7 @@ Iter:nthback({self}, {n})                                     *Iter:nthback()*
     Return: ~
         any
 
-Iter:peek({self})                                                *Iter:peek()*
+Iter:peek()                                                      *Iter:peek()*
     Peek at the next value in the iterator without consuming it.
 
     Only supported for iterators on list-like tables.
@@ -3362,7 +3362,7 @@ Iter:peek({self})                                                *Iter:peek()*
     Return: ~
         any
 
-Iter:peekback({self})                                        *Iter:peekback()*
+Iter:peekback()                                              *Iter:peekback()*
     Return the next value from the end of the iterator without consuming it.
 
     Only supported for iterators on list-like tables.
@@ -3381,7 +3381,7 @@ Iter:peekback({self})                                        *Iter:peekback()*
     Return: ~
         any
 
-Iter:rev({self})                                                  *Iter:rev()*
+Iter:rev()                                                        *Iter:rev()*
     Reverse an iterator.
 
     Only supported for iterators on list-like tables.
@@ -3396,7 +3396,7 @@ Iter:rev({self})                                                  *Iter:rev()*
     Return: ~
         Iter
 
-Iter:rfind({self}, {f})                                         *Iter:rfind()*
+Iter:rfind({f})                                                 *Iter:rfind()*
     Find the first value in the iterator that satisfies the given predicate,
     starting from the end.
 
@@ -3420,7 +3420,7 @@ Iter:rfind({self}, {f})                                         *Iter:rfind()*
     See also: ~
       • Iter.find
 
-Iter:skip({self}, {n})                                           *Iter:skip()*
+Iter:skip({n})                                                   *Iter:skip()*
     Skip values in the iterator.
 
     Example: >lua
@@ -3436,7 +3436,7 @@ Iter:skip({self}, {n})                                           *Iter:skip()*
     Return: ~
         Iter
 
-Iter:skipback({self}, {n})                                   *Iter:skipback()*
+Iter:skipback({n})                                           *Iter:skipback()*
     Skip values in the iterator starting from the end.
 
     Only supported for iterators on list-like tables.
@@ -3456,7 +3456,7 @@ Iter:skipback({self}, {n})                                   *Iter:skipback()*
     Return: ~
         Iter
 
-Iter:slice({self}, {first}, {last})                             *Iter:slice()*
+Iter:slice({first}, {last})                                     *Iter:slice()*
     Slice an iterator, changing its start and end positions.
 
     This is equivalent to :skip(first - 1):skipback(len - last + 1)
@@ -3470,7 +3470,7 @@ Iter:slice({self}, {first}, {last})                             *Iter:slice()*
     Return: ~
         Iter
 
-Iter:totable({self})                                          *Iter:totable()*
+Iter:totable()                                                *Iter:totable()*
     Collect the iterator into a table.
 
     The resulting table depends on the initial source in the iterator

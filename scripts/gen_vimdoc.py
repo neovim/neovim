@@ -45,6 +45,7 @@ import logging
 from pathlib import Path
 
 from xml.dom import minidom
+Element = minidom.Element
 
 MIN_PYTHON_VERSION = (3, 6)
 MIN_DOXYGEN_VERSION = (1, 9, 0)
@@ -720,8 +721,7 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
 
     return chunks, xrefs
 
-
-def fmt_node_as_vimhelp(parent, width=text_width - indentation, indent='',
+def fmt_node_as_vimhelp(parent: Element, width=text_width - indentation, indent='',
                         fmt_vimhelp=False):
     """Renders (nested) Doxygen <para> nodes as Vim :help text.
 
@@ -734,6 +734,8 @@ def fmt_node_as_vimhelp(parent, width=text_width - indentation, indent='',
         max_name_len = max_name(m.keys()) + 4
         out = ''
         for name, desc in m.items():
+            if name == 'self':
+                continue
             name = '  • {}'.format('{{{}}}'.format(name).ljust(max_name_len))
             out += '{}{}\n'.format(name, desc)
         return out.rstrip()
@@ -851,6 +853,7 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
                 and any(x[1] == 'self' for x in params):
             split_return = return_type.split(' ')
             name = f'{split_return[1]}:{name}'
+            params = [x for x in params if x[1] != 'self']
 
         c_args = []
         for param_type, param_name in params:
