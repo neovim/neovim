@@ -96,8 +96,11 @@ function M.on_refresh(err, _, ctx, _)
   for _, bufnr in ipairs(vim.lsp.get_buffers_by_client_id(ctx.client_id)) do
     for _, winid in ipairs(api.nvim_list_wins()) do
       if api.nvim_win_get_buf(winid) == bufnr then
-        util._refresh('textDocument/inlayHint', { bufnr = bufnr })
-        break
+        local bufstate = bufstates[bufnr]
+        if bufstate and bufstate.enabled then
+          util._refresh('textDocument/inlayHint', { bufnr = bufnr })
+          break
+        end
       end
     end
   end
