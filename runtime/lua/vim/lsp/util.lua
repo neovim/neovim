@@ -2209,6 +2209,7 @@ end
 
 M._get_line_byte_from_position = get_line_byte_from_position
 
+---@nodoc
 M.buf_versions = {}
 
 return M

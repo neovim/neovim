@@ -21,7 +21,10 @@ local M = {}
 
 ---@alias LoaderStats table<string, {total:number, time:number, [string]:number?}?>
 
+---@nodoc
 M.path = vim.fn.stdpath('cache') .. '/luac'
+
+---@nodoc
 M.enabled = false
 
 ---@class Loader

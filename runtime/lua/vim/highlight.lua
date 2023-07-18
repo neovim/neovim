@@ -18,23 +18,18 @@
 ---<pre>vim
 ---    au TextYankPost * silent! lua vim.highlight.on_yank {on_visual=false}
 ---</pre>
----
---- <pre>help
----vim.highlight.priorities                            *vim.highlight.priorities*
----
----    Table with default priorities used for highlighting:
----        • `syntax`: `50`, used for standard syntax highlighting
----        • `treesitter`: `100`, used for tree-sitter-based highlighting
----        • `semantic_tokens`: `125`, used for LSP semantic token highlighting
----        • `diagnostics`: `150`, used for code analysis such as diagnostics
----        • `user`: `200`, used for user-triggered highlights such as LSP document
----          symbols or `on_yank` autocommands
----</pre>
 
 local api = vim.api
 
 local M = {}
 
+--- Table with default priorities used for highlighting:
+---     - `syntax`: `50`, used for standard syntax highlighting
+---     - `treesitter`: `100`, used for tree-sitter-based highlighting
+---     - `semantic_tokens`: `125`, used for LSP semantic token highlighting
+---     - `diagnostics`: `150`, used for code analysis such as diagnostics
+---     - `user`: `200`, used for user-triggered highlights such as LSP document
+---       symbols or `on_yank` autocommands
 M.priorities = {
   syntax = 50,
   treesitter = 100,

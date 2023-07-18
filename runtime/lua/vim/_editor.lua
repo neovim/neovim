@@ -54,6 +54,7 @@ vim._extra = {
   inspect_pos = true,
 }
 
+--- @private
 vim.log = {
   levels = {
     TRACE = 0,
@@ -328,6 +329,7 @@ function vim.schedule_wrap(cb)
 end
 
 -- vim.fn.{func}(...)
+---@private
 vim.fn = setmetatable({}, {
   __index = function(t, key)
     local _fn
@@ -345,9 +347,12 @@ vim.fn = setmetatable({}, {
   end,
 })
 
+--- @private
 vim.funcref = function(viml_func_name)
   return vim.fn[viml_func_name]
 end
+
+local VIM_CMD_ARG_MAX = 20
 
 --- Execute Vim script commands.
 ---
@@ -389,12 +394,6 @@ end
 ---                            If a table, executes a single command. In this case, it is an alias
 ---                            to |nvim_cmd()| where `opts` is empty.
 ---@see |ex-cmd-index|
-function vim.cmd(command) -- luacheck: no unused
-  error(command) -- Stub for gen_vimdoc.py
-end
-
-local VIM_CMD_ARG_MAX = 20
-
 vim.cmd = setmetatable({}, {
   __call = function(_, command)
     if type(command) == 'table' then

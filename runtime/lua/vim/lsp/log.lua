@@ -2,14 +2,11 @@
 
 local log = {}
 
--- FIXME: DOC
--- Should be exposed in the vim docs.
---
--- Log level dictionary with reverse lookup as well.
---
--- Can be used to lookup the number from the name or the name from the number.
--- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF"
--- Level numbers begin with "TRACE" at 0
+--- Log level dictionary with reverse lookup as well.
+---
+--- Can be used to lookup the number from the name or the name from the number.
+--- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF"
+--- Level numbers begin with "TRACE" at 0
 log.levels = vim.deepcopy(vim.log.levels)
 
 -- Default log level is warn.

@@ -39,7 +39,10 @@ local M = setmetatable({}, {
   end,
 })
 
+--- @nodoc
 M.language_version = vim._ts_get_language_version()
+
+--- @nodoc
 M.minimum_language_version = vim._ts_get_minimum_language_version()
 
 --- Creates a new parser

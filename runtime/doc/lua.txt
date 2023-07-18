@@ -591,16 +591,6 @@ If you want to exclude visual selections from highlighting on yank, use: >vim
     au TextYankPost * silent! lua vim.highlight.on_yank {on_visual=false}
 <
 
-vim.highlight.priorities                            *vim.highlight.priorities*
-
-    Table with default priorities used for highlighting:
-        • `syntax`: `50`, used for standard syntax highlighting
-        • `treesitter`: `100`, used for tree-sitter-based highlighting
-        • `semantic_tokens`: `125`, used for LSP semantic token highlighting
-        • `diagnostics`: `150`, used for code analysis such as diagnostics
-        • `user`: `200`, used for user-triggered highlights such as LSP document
-          symbols or `on_yank` autocommands
-
 vim.highlight.on_yank({opts})                        *vim.highlight.on_yank()*
     Highlight the yanked text
 
@@ -615,6 +605,15 @@ vim.highlight.on_yank({opts})                        *vim.highlight.on_yank()*
                 • event event structure (default vim.v.event)
                 • priority integer priority (default
                   |vim.highlight.priorities|`.user`)
+
+vim.highlight.priorities                          *vim.highlight.priorities()*
+    Table with default priorities used for highlighting:
+    • `syntax`: `50`, used for standard syntax highlighting
+    • `treesitter`: `100`, used for tree-sitter-based highlighting
+    • `semantic_tokens`: `125`, used for LSP semantic token highlighting
+    • `diagnostics`: `150`, used for code analysis such as diagnostics
+    • `user`: `200`, used for user-triggered highlights such as LSP document
+      symbols or `on_yank` autocommands
 
                                                        *vim.highlight.range()*
 vim.highlight.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
@@ -1189,15 +1188,6 @@ vim.v                                                                  *vim.v*
     |v:| variables.
     Invalid or unset key returns `nil`.
 
-vim.env                                                              *vim.env*
-    Environment variables defined in the editor session.
-    See |expand-env| and |:let-environment| for the Vimscript behavior.
-    Invalid or unset key returns `nil`.
-    Example: >lua
-        vim.env.FOO = 'bar'
-        print(vim.env.TERM)
-<
-
 ` `                                                                *lua-options*
                                                              *lua-vim-options*
                                                                  *lua-vim-set*
@@ -1220,62 +1210,6 @@ Similarly, there is |vim.bo| and |vim.wo| for setting buffer-scoped and
 window-scoped options. Note that this must NOT be confused with
 |local-options| and |:setlocal|. There is also |vim.go| that only accesses the
 global value of a |global-local| option, see |:setglobal|.
-
-vim.o                                                                  *vim.o*
-    Get or set |options|. Like `:set`. Invalid key is an error.
-
-    Note: this works on both buffer-scoped and window-scoped options using the
-    current buffer and window.
-
-    Example: >lua
-        vim.o.cmdheight = 4
-        print(vim.o.columns)
-        print(vim.o.foo)     -- error: invalid key
-<
-
-vim.go                                                                *vim.go*
-    Get or set global |options|. Like `:setglobal`. Invalid key is
-    an error.
-
-    Note: this is different from |vim.o| because this accesses the global
-    option value and thus is mostly useful for use with |global-local|
-    options.
-
-    Example: >lua
-        vim.go.cmdheight = 4
-        print(vim.go.columns)
-        print(vim.go.bar)     -- error: invalid key
-<
-
-vim.bo[{bufnr}]                                                                *vim.bo*
-    Get or set buffer-scoped |options| for the buffer with number {bufnr}.
-    Like `:set` and `:setlocal`. If [{bufnr}] is omitted then the current
-    buffer is used. Invalid {bufnr} or key is an error.
-
-    Note: this is equivalent to both `:set` and `:setlocal`.
-
-    Example: >lua
-        local bufnr = vim.api.nvim_get_current_buf()
-        vim.bo[bufnr].buflisted = true    -- same as vim.bo.buflisted = true
-        print(vim.bo.comments)
-        print(vim.bo.baz)                 -- error: invalid key
-
-vim.wo[{winid}][{bufnr}]                                                       *vim.wo*
-    Get or set window-scoped |options| for the window with handle {winid} and
-    buffer with number {bufnr}. Like `:setlocal` if {bufnr} is provided, like
-    `:set` otherwise. If [{winid}] is omitted then the current window is
-    used. Invalid {winid}, {bufnr} or key is an error.
-
-    Note: only {bufnr} with value `0` (the current buffer in the window) is
-    supported.
-
-    Example: >lua
-        local winid = vim.api.nvim_get_current_win()
-        vim.wo[winid].number = true    -- same as vim.wo.number = true
-        print(vim.wo.foldmarker)
-        print(vim.wo.quux)             -- error: invalid key
-        vim.wo[winid][0].spell = false -- like ':setlocal nospell'
-<
 
 ` `                                                                       *vim.opt_local*
                                                                        *vim.opt_global*
@@ -1419,11 +1353,81 @@ Option:remove({value})                                      *vim.opt:remove()*
     Parameters: ~
       • {value}  (string) Value to remove
 
+vim.bo                                                                *vim.bo*
+    Get or set buffer-scoped |options| for the buffer with number {bufnr}.
+    Like `:set` and `:setlocal`. If [{bufnr}] is omitted then the current
+    buffer is used. Invalid {bufnr} or key is an error.
+
+    Note: this is equivalent to both `:set` and `:setlocal`.
+
+    Example: >lua
+        local bufnr = vim.api.nvim_get_current_buf()
+        vim.bo[bufnr].buflisted = true    -- same as vim.bo.buflisted = true
+        print(vim.bo.comments)
+        print(vim.bo.baz)                 -- error: invalid key
+<
+
+    Parameters: ~
+      • {bufnr}  (integer|nil)
+
+vim.env                                                              *vim.env*
+    Environment variables defined in the editor session. See |expand-env| and
+    |:let-environment| for the Vimscript behavior. Invalid or unset key
+    returns `nil` . Example: >lua
+        vim.env.FOO = 'bar'
+        print(vim.env.TERM)
+<
+
+    Parameters: ~
+      • {var}  (string)
+
+vim.go                                                                *vim.go*
+    Get or set global |options|. Like `:setglobal`. Invalid key is an error.
+
+    Note: this is different from |vim.o| because this accesses the global
+    option value and thus is mostly useful for use with |global-local|
+    options.
+
+    Example: >lua
+        vim.go.cmdheight = 4
+        print(vim.go.columns)
+        print(vim.go.bar)     -- error: invalid key
+<
+
+vim.o                                                                  *vim.o*
+    Get or set |options|. Like `:set`. Invalid key is an error.
+
+    Note: this works on both buffer-scoped and window-scoped options using the
+    current buffer and window.
+
+    Example: >lua
+        vim.o.cmdheight = 4
+        print(vim.o.columns)
+        print(vim.o.foo)     -- error: invalid key
+<
+
+vim.wo                                                                *vim.wo*
+    Get or set window-scoped |options| for the window with handle {winid} and
+    buffer with number {bufnr}. Like `:setlocal` if {bufnr} is provided, like
+    `:set` otherwise. If [{winid}] is omitted then the current window is used.
+    Invalid {winid}, {bufnr} or key is an error.
+
+    Note: only {bufnr} with value `0` (the current buffer in the window) is
+    supported.
+
+    Example: >lua
+        local winid = vim.api.nvim_get_current_win()
+        vim.wo[winid].number = true    -- same as vim.wo.number = true
+        print(vim.wo.foldmarker)
+        print(vim.wo.quux)             -- error: invalid key
+        vim.wo[winid][0].spell = false -- like ':setlocal nospell'
+<
+
 
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
 
-vim.cmd({command})                                                 *vim.cmd()*
+vim.cmd                                                            *vim.cmd()*
     Execute Vim script commands.
 
     Note that `vim.cmd` can be indexed with a command name to return a

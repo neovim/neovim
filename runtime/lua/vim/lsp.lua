@@ -185,9 +185,9 @@ local function for_each_buffer_client(bufnr, fn, restrict_client_ids)
   end
 end
 
--- Error codes to be used with `on_error` from |vim.lsp.start_client|.
--- Can be used to look up the string from a the number or the number
--- from the string.
+--- Error codes to be used with `on_error` from |vim.lsp.start_client|.
+--- Can be used to look up the string from a the number or the number
+--- from the string.
 lsp.client_errors = tbl_extend(
   'error',
   lsp_rpc.client_errors,
@@ -2440,12 +2440,13 @@ function lsp.buf_get_clients(bufnr)
   return result
 end
 
--- Log level dictionary with reverse lookup as well.
---
--- Can be used to lookup the number from the name or the
--- name from the number.
--- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF"
--- Level numbers begin with "TRACE" at 0
+--- Log level dictionary with reverse lookup as well.
+---
+--- Can be used to lookup the number from the name or the
+--- name from the number.
+--- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF"
+--- Level numbers begin with "TRACE" at 0
+--- @nodoc
 lsp.log_levels = log.levels
 
 --- Sets the global log level for LSP logging.

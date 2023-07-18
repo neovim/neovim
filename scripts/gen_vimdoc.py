@@ -135,7 +135,7 @@ CONFIG = {
         # Section helptag.
         'helptag_fmt': lambda name: f'*api-{name.lower()}*',
         # Per-function helptag.
-        'fn_helptag_fmt': lambda fstem, name: f'*{name}()*',
+        'fn_helptag_fmt': lambda fstem, name, istbl: f'*{name}()*',
         # Module name overrides (for Lua).
         'module_override': {},
         # Append the docs for these modules, do not start a new section.
@@ -193,6 +193,7 @@ CONFIG = {
         'fn_name_fmt': lambda fstem, name: (
             name if fstem in [ 'vim.iter' ] else
             f'vim.{name}' if fstem in [ '_editor', 'vim.regex'] else
+            f'vim.{name}' if fstem == '_options' and not name[0].isupper() else
             f'{fstem}.{name}' if fstem.startswith('vim') else
             name
         ),
@@ -210,11 +211,12 @@ CONFIG = {
             '*lua-vim*' if name.lower() == '_editor' else
             '*lua-vimscript*' if name.lower() == '_options' else
             f'*vim.{name.lower()}*'),
-        'fn_helptag_fmt': lambda fstem, name: (
+        'fn_helptag_fmt': lambda fstem, name, istbl: (
             f'*vim.opt:{name.split(":")[-1]}()*' if ':' in name and name.startswith('Option') else
             # Exclude fstem for methods
             f'*{name}()*' if ':' in name else
             f'*vim.{name}()*' if fstem.lower() == '_editor' else
+            f'*vim.{name}*' if fstem.lower() == '_options' and istbl else
             # Prevents vim.regex.regex
             f'*{fstem}()*' if fstem.endswith('.' + name) else
             f'*{fstem}.{name}()*'
@@ -275,7 +277,7 @@ CONFIG = {
             '*lsp-core*'
             if name.lower() == 'lsp'
             else f'*lsp-{name.lower()}*'),
-        'fn_helptag_fmt': lambda fstem, name: (
+        'fn_helptag_fmt': lambda fstem, name, istbl: (
             f'*vim.lsp.{name}()*'
             if fstem == 'lsp' and name != 'client'
             else (
@@ -295,10 +297,11 @@ CONFIG = {
         'files': ['runtime/lua/vim/diagnostic.lua'],
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
+        'include_tables': False,
         'section_name': {'diagnostic.lua': 'diagnostic'},
         'section_fmt': lambda _: 'Lua module: vim.diagnostic',
         'helptag_fmt': lambda _: '*diagnostic-api*',
-        'fn_helptag_fmt': lambda fstem, name: f'*vim.{fstem}.{name}()*',
+        'fn_helptag_fmt': lambda fstem, name, istbl: f'*vim.{fstem}.{name}()*',
         'module_override': {},
         'append_only': [],
     },
@@ -328,7 +331,7 @@ CONFIG = {
             '*lua-treesitter-core*'
             if name.lower() == 'treesitter'
             else f'*lua-treesitter-{name.lower()}*'),
-        'fn_helptag_fmt': lambda fstem, name: (
+        'fn_helptag_fmt': lambda fstem, name, istbl: (
             f'*vim.{fstem}.{name}()*'
             if fstem == 'treesitter'
             else f'*{name}()*'
@@ -842,6 +845,12 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
         if return_type == '':
             continue
 
+        if not CONFIG[target].get('include_tables', True):
+            if return_type.startswith('table'):
+                continue
+
+        istbl = return_type.startswith('table')
+
         if return_type.startswith(('ArrayOf', 'DictionaryOf')):
             parts = return_type.strip('_').split('_')
             return_type = '{}({})'.format(parts[0], ', '.join(parts[1:]))
@@ -904,15 +913,20 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
             if '.' in compoundname:
                 fstem = compoundname.split('.')[0]
                 fstem = CONFIG[target]['module_override'].get(fstem, fstem)
-            vimtag = CONFIG[target]['fn_helptag_fmt'](fstem, name)
+            vimtag = CONFIG[target]['fn_helptag_fmt'](fstem, name, istbl)
 
             if 'fn_name_fmt' in CONFIG[target]:
                 name = CONFIG[target]['fn_name_fmt'](fstem, name)
 
-        prefix = '%s(' % name
-        suffix = '%s)' % ', '.join('{%s}' % a[1] for a in params
-                                   if a[0] not in ('void', 'Error', 'Arena',
-                                                   'lua_State'))
+        if istbl:
+            aopen, aclose = '', ''
+        else:
+            aopen, aclose = '(', ')'
+
+        prefix = name + aopen
+        suffix = ', '.join('{%s}' % a[1] for a in params
+                           if a[0] not in ('void', 'Error', 'Arena',
+                                           'lua_State')) + aclose
 
         if not fmt_vimhelp:
             c_decl = '%s %s(%s);' % (return_type, name, ', '.join(c_args))

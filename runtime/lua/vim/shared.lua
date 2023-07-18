@@ -8,6 +8,45 @@
 
 vim = vim or {}
 
+local function _id(v)
+  return v
+end
+
+local deepcopy
+
+local deepcopy_funcs = {
+  table = function(orig, cache)
+    if cache[orig] then
+      return cache[orig]
+    end
+    local copy = {}
+
+    cache[orig] = copy
+    local mt = getmetatable(orig)
+    for k, v in pairs(orig) do
+      copy[deepcopy(k, cache)] = deepcopy(v, cache)
+    end
+    return setmetatable(copy, mt)
+  end,
+  number = _id,
+  string = _id,
+  ['nil'] = _id,
+  boolean = _id,
+  ['function'] = _id,
+}
+
+deepcopy = function(orig, _cache)
+  local f = deepcopy_funcs[type(orig)]
+  if f then
+    return f(orig, _cache or {})
+  else
+    if type(orig) == 'userdata' and orig == vim.NIL then
+      return vim.NIL
+    end
+    error('Cannot deepcopy object of type ' .. type(orig))
+  end
+end
+
 --- Returns a deep copy of the given object. Non-table objects are copied as
 --- in a typical Lua assignment, whereas table objects are copied recursively.
 --- Functions are naively copied, so functions in the copied table point to the
@@ -17,45 +56,9 @@ vim = vim or {}
 ---@generic T: table
 ---@param orig T Table to copy
 ---@return T Table of copied keys and (nested) values.
-function vim.deepcopy(orig) end -- luacheck: no unused
-vim.deepcopy = (function()
-  local function _id(v)
-    return v
-  end
-
-  local deepcopy_funcs = {
-    table = function(orig, cache)
-      if cache[orig] then
-        return cache[orig]
-      end
-      local copy = {}
-
-      cache[orig] = copy
-      local mt = getmetatable(orig)
-      for k, v in pairs(orig) do
-        copy[vim.deepcopy(k, cache)] = vim.deepcopy(v, cache)
-      end
-      return setmetatable(copy, mt)
-    end,
-    number = _id,
-    string = _id,
-    ['nil'] = _id,
-    boolean = _id,
-    ['function'] = _id,
-  }
-
-  return function(orig, cache)
-    local f = deepcopy_funcs[type(orig)]
-    if f then
-      return f(orig, cache or {})
-    else
-      if type(orig) == 'userdata' and orig == vim.NIL then
-        return vim.NIL
-      end
-      error('Cannot deepcopy object of type ' .. type(orig))
-    end
-  end
-end)()
+function vim.deepcopy(orig)
+  return deepcopy(orig)
+end
 
 --- Splits a string at each instance of a separator.
 ---
