@@ -2048,7 +2048,7 @@ end
 ---@private
 ---@deprecated
 function lsp.get_active_clients(filter)
-  -- TODO: add vim.deprecate call after 0.10 is out for removal in 0.12
+  vim.deprecate('vim.lsp.get_active_cients', 'vim.lsp.get_clients', '0.12')
   return lsp.get_clients(filter)
 end
 
