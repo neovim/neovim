@@ -917,27 +917,27 @@ describe('runtime:', function()
     local plugin_folder_path = table.concat({xconfig, 'nvim', 'plugin'}, pathsep)
     local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'}, pathsep)
     mkdir_p(plugin_folder_path)
+    finally(function()
+      rmdir(plugin_folder_path)
+    end)
     write_file(plugin_file_path, [[ vim.g.lua_plugin = 1 ]])
 
     clear{ args_rm={'-u'}, env=xenv }
 
     eq(1, eval('g:lua_plugin'))
-    rmdir(plugin_folder_path)
   end)
 
   it('loads plugin/*.lua from start packages', function()
-    local plugin_path = table.concat({xconfig, 'nvim', 'pack', 'category',
-    'start', 'test_plugin'}, pathsep)
+    local plugin_path = table.concat({xconfig, 'nvim', 'pack', 'category', 'start', 'test_plugin'}, pathsep)
     local plugin_folder_path = table.concat({plugin_path, 'plugin'}, pathsep)
-    local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'},
-    pathsep)
+    local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'}, pathsep)
     local profiler_file = 'test_startuptime.log'
+    mkdir_p(plugin_folder_path)
     finally(function()
       os.remove(profiler_file)
       rmdir(plugin_path)
     end)
 
-    mkdir_p(plugin_folder_path)
     write_file(plugin_file_path, [[vim.g.lua_plugin = 2]])
 
     clear{ args_rm={'-u'}, args={'--startuptime', profiler_file}, env=xenv }
@@ -961,19 +961,41 @@ describe('runtime:', function()
     local plugin_after_path = table.concat({plugin_path, 'after', 'plugin'}, pathsep)
     local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'}, pathsep)
     local plugin_after_file_path = table.concat({plugin_after_path, 'helloo.lua'}, pathsep)
-
     mkdir_p(plugin_folder_path)
-    write_file(plugin_file_path, [[table.insert(_G.lista, "unos")]])
     mkdir_p(plugin_after_path)
+    finally(function()
+      rmdir(plugin_path)
+    end)
+
+    write_file(plugin_file_path, [[table.insert(_G.lista, "unos")]])
     write_file(plugin_after_file_path, [[table.insert(_G.lista, "dos")]])
 
     clear{ args_rm={'-u'}, args={'--cmd', 'lua _G.lista = {}'}, env=xenv }
 
     eq({'unos', 'dos'}, exec_lua "return _G.lista")
-
-    rmdir(plugin_path)
   end)
 
+  it('no crash setting &rtp in plugins with :packloadall called before #18315', function()
+    local plugin_folder_path = table.concat({xconfig, 'nvim', 'plugin'}, pathsep)
+    mkdir_p(plugin_folder_path)
+    finally(function()
+      rmdir(plugin_folder_path)
+    end)
+
+    write_file(table.concat({plugin_folder_path, 'plugin.vim'}, pathsep), [[
+      let &runtimepath = &runtimepath
+      let g:vim_plugin = 1
+    ]])
+    write_file(table.concat({plugin_folder_path, 'plugin.lua'}, pathsep), [[
+      vim.o.runtimepath = vim.o.runtimepath
+      vim.g.lua_plugin = 1
+    ]])
+
+    clear{ args_rm={'-u'}, args = {'--cmd', 'packloadall'}, env=xenv }
+
+    eq(1, eval('g:vim_plugin'))
+    eq(1, eval('g:lua_plugin'))
+  end)
 
   it("loads ftdetect/*.{vim,lua} respecting 'rtp' order", function()
     local ftdetect_folder = table.concat({xconfig, 'nvim', 'ftdetect'}, pathsep)
