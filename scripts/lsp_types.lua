@@ -190,7 +190,7 @@ end
 
 local opt = {
   output_file = 'runtime/lua/vim/lsp/types/protocol.lua',
-  ref = "main"
+  ref = 'main',
 }
 
 for i = 1, #_G.arg do
