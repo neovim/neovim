@@ -674,7 +674,7 @@ vim.regex:match_str({str})                                 *regex:match_str()*
     match is returned. When there is no match, `nil` is returned. As any integer is truth-y, `regex:match()` can be directly used as a condition in an if-statement.
 
     Parameters: ~
-      • {str}   (string)
+      • {str}  (string)
 
 
 ==============================================================================
@@ -1988,13 +1988,13 @@ vim.Ringbuf:peek()                                            *Ringbuf:peek()*
     Returns the first unread item without removing it
 
     Return: ~
-        any?|ni
+        any?|nil
 
 vim.Ringbuf:pop()                                              *Ringbuf:pop()*
     Removes and returns the first unread item
 
     Return: ~
-        any?|ni
+        any?|nil
 
 vim.Ringbuf:push({item})                                      *Ringbuf:push()*
     Adds an item, overriding the oldest item if the buffer is full.
@@ -3044,7 +3044,7 @@ vim.version.last({versions})                              *vim.version.last()*
       • {versions}  Version []
 
     Return: ~
-        Version ?|ni
+        Version ?|nil
 
 vim.version.lt({v1}, {v2})                                  *vim.version.lt()*
     Returns `true` if `v1 < v2` . See |vim.version.cmp()| for usage.

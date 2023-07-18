@@ -1035,7 +1035,7 @@ set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
 Lua module: vim.treesitter.highlighter            *lua-treesitter-highlighter*
 
 TSHighlighter:destroy()                              *TSHighlighter:destroy()*
-    Removes all internal references to the highlighter
+    Removes all internal references to the highlighter.
 
 
 ==============================================================================
@@ -1100,7 +1100,8 @@ LanguageTree:destroy()                                *LanguageTree:destroy()*
 
     Any cleanup logic should be performed here.
 
-    Note: This DOES NOT remove this tree from a parent. Instead, `remove_child` must be called on the parent to remove it.
+    Note: This DOES NOT remove this tree from a parent. Instead,
+    `remove_child` must be called on the parent to remove it.
 
                                                *LanguageTree:for_each_child()*
 LanguageTree:for_each_child({fn}, {include_self})
@@ -1117,7 +1118,7 @@ LanguageTree:for_each_tree({fn})                *LanguageTree:for_each_tree()*
     Note: This includes the invoking tree's child trees as well.
 
     Parameters: ~
-      • {fn}    fun(tree: TSTree, ltree: LanguageTree)
+      • {fn}  fun(tree: TSTree, ltree: LanguageTree)
 
 LanguageTree:included_regions()              *LanguageTree:included_regions()*
     Gets the set of included regions
