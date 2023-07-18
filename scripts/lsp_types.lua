@@ -1,7 +1,9 @@
 --[[
 Generates lua-ls annotations for lsp
 USAGE:
-nvim -l scripts/lsp_types.lua gen --runtime/lua/vim/lsp/types/protocol.lua
+nvim -l scripts/lsp_types.lua gen  # this will overwrite runtime/lua/vim/lsp/types/protocol.lua
+nvim -l scripts/lsp_types.lua gen --build/new_lsp_types.lua
+nvim -l scripts/lsp_types.lua gen --out runtime/lua/vim/lsp/types/protocol.lua --ref 2023.0.0a2 # specify a git reference from microsoft/lsprotocol
 --]]
 
 local M = {}
@@ -17,18 +19,17 @@ local function tofile(fname, text)
 end
 
 function M.gen(opt)
-  if vim.loop.fs_stat('./lsp.json') then
+  if vim.uv.fs_stat('./lsp.json') then
     vim.fn.delete('./lsp.json')
   end
   vim.fn.system({
     'curl',
-    'https://raw.githubusercontent.com/microsoft/lsprotocol/main/generator/lsp.json',
+    'https://raw.githubusercontent.com/microsoft/lsprotocol/' .. opt.ref .. '/generator/lsp.json',
     '-o',
     './lsp.json',
   })
   local protocol = vim.fn.json_decode(vim.fn.readfile('./lsp.json'))
   vim.fn.delete('./lsp.json')
-  local output_file = opt[1]
   protocol = protocol or {}
   local output = {
     '--[[',
@@ -184,17 +185,21 @@ function M.gen(opt)
     output[#output + 1] = line
   end
 
-  tofile(output_file, table.concat(output, '\n'))
+  tofile(opt.output_file, table.concat(output, '\n'))
 end
 
-local opt = {}
+local opt = {
+  output_file = 'runtime/lua/vim/lsp/types/protocol.lua',
+  ref = 'main',
+}
 
-local index = 1
-for _, a in ipairs(arg) do
-  if vim.startswith(a, '--') then
-    local name = a:sub(3)
-    opt[index] = name
-    index = index + 1
+for i = 1, #_G.arg do
+  if _G.arg[i] == '--out' then
+    opt.output_file = _G.arg[i+1]
+  elseif _G.arg[i] == '--ref' then
+    opt.ref = _G.arg[i+1]
+  elseif vim.startswith(_G.arg[i], '--') then
+    opt.output_file = _G.arg[i]:sub(3)
   end
 end
 
