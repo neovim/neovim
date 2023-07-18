@@ -69,6 +69,26 @@ struct u_header {
 #endif
 };
 
+typedef struct u_state {
+  buf_T *buf;
+  bool save_b_u_synced;
+  time_t save_b_u_time_cur;
+  long save_b_u_seq_cur;
+  long save_b_u_seq_last;            // last used undo sequence number
+  u_header_T *save_b_u_newhead;
+  u_header_T *save_b_u_oldhead;
+  u_header_T *save_b_u_curhead;
+  int save_b_u_numhead;
+  char *save_b_u_line_ptr;
+  linenr_T save_b_u_line_lnum;
+  colnr_T save_b_u_line_colnr;       // optional column number
+  long save_b_p_ul;
+  int save_b_changed;
+  varnumber_T save_changedtick;
+  long save_b_u_save_nr_cur;         // file write nr after which we are now
+  long save_b_u_save_nr_last;        // counter for last file write
+} u_state_T;
+
 // values for uh_flags
 #define UH_CHANGED  0x01        // b_changed flag before undo/after redo
 #define UH_EMPTYBUF 0x02        // buffer was empty
