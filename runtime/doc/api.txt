@@ -1018,6 +1018,19 @@ nvim_get_mode()                                              *nvim_get_mode()*
     Attributes: ~
         |api-fast|
 
+nvim_get_ns({*opts})                                           *nvim_get_ns()*
+    Gets the active highlight namespace.
+
+    Parameters: ~
+      • {opts}  Optional parameters
+                • winid: (number) |window-ID| for retrieving a window's
+                  highlight namespace. A value of -1 is returned when
+                  |nvim_win_set_hl_ns()| has not been called for the window
+                  (or was called with a namespace of -1).
+
+    Return: ~
+        Namespace id, or -1
+
 nvim_get_proc({pid})                                         *nvim_get_proc()*
     Gets info describing process `pid`.
 

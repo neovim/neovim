@@ -172,6 +172,10 @@ typedef struct {
 } Dict(get_highlight);
 
 typedef struct {
+  Object winid;
+} Dict(get_ns);
+
+typedef struct {
   Object start_row;
   Object end_row;
   Object start_vcol;
