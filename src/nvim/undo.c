@@ -1615,20 +1615,26 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
   // Now that we have read the undo info successfully, free the current undo
   // info and use the info from the file.
   u_blockfree(curbuf);
-  curbuf->b_u_oldhead = old_idx < 0 ? NULL : uhp_table[old_idx];
-  curbuf->b_u_newhead = new_idx < 0 ? NULL : uhp_table[new_idx];
-  curbuf->b_u_curhead = cur_idx < 0 ? NULL : uhp_table[cur_idx];
-  curbuf->b_u_line_ptr = line_ptr;
-  curbuf->b_u_line_lnum = line_lnum;
-  curbuf->b_u_line_colnr = line_colnr;
-  curbuf->b_u_numhead = num_head;
-  curbuf->b_u_seq_last = seq_last;
-  curbuf->b_u_seq_cur = seq_cur;
-  curbuf->b_u_time_cur = seq_time;
-  curbuf->b_u_save_nr_last = last_save_nr;
-  curbuf->b_u_save_nr_cur = last_save_nr;
-
-  curbuf->b_u_synced = true;
+  u_state_T undostate = {
+    .buf = curbuf,
+    .save_b_u_synced = true,
+    .save_b_u_time_cur = seq_time,
+    .save_b_u_seq_cur = seq_cur,
+    .save_b_u_seq_last = seq_last,
+    .save_b_u_newhead = new_idx < 0 ? NULL : uhp_table[new_idx],
+    .save_b_u_oldhead = old_idx < 0 ? NULL : uhp_table[old_idx],
+    .save_b_u_curhead = cur_idx < 0 ? NULL : uhp_table[cur_idx],
+    .save_b_u_numhead = num_head,
+    .save_b_u_line_ptr = line_ptr,
+    .save_b_u_line_lnum = line_lnum,
+    .save_b_u_line_colnr = line_colnr,
+    .save_b_p_ul = curbuf->b_p_ul,
+    .save_b_changed = curbuf->b_changed,
+    .save_changedtick = buf_get_changedtick(curbuf),
+    .save_b_u_save_nr_cur = last_save_nr,
+    .save_b_u_save_nr_last = last_save_nr,
+  };
+  u_restore_state(&undostate);
   xfree(uhp_table);
 
 #ifdef U_DEBUG
@@ -3042,6 +3048,58 @@ void u_undoline(void)
   curwin->w_cursor.col = t;
   curwin->w_cursor.lnum = curbuf->b_u_line_lnum;
   check_cursor_col();
+}
+
+/// Save the undo state of a buffer.
+void u_save_state(u_state_T *cp_bufinfo, buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  cp_bufinfo->buf = buf;
+  cp_bufinfo->save_b_u_synced = buf->b_u_synced;
+  cp_bufinfo->save_b_u_time_cur = buf->b_u_time_cur;
+  cp_bufinfo->save_b_u_seq_cur = buf->b_u_seq_cur;
+  cp_bufinfo->save_b_u_seq_last = buf->b_u_seq_last;
+  cp_bufinfo->save_b_u_newhead = buf->b_u_newhead;
+  cp_bufinfo->save_b_u_oldhead = buf->b_u_oldhead;
+  cp_bufinfo->save_b_u_curhead = buf->b_u_curhead;
+  cp_bufinfo->save_b_u_numhead = buf->b_u_numhead;
+  cp_bufinfo->save_b_u_line_ptr = buf->b_u_line_ptr;
+  cp_bufinfo->save_b_u_line_lnum = buf->b_u_line_lnum;
+  cp_bufinfo->save_b_u_line_colnr = buf->b_u_line_colnr;
+  cp_bufinfo->save_b_p_ul = buf->b_p_ul;
+  cp_bufinfo->save_b_changed = buf->b_changed;
+  cp_bufinfo->save_changedtick = buf_get_changedtick(buf);
+  cp_bufinfo->save_b_u_save_nr_cur = buf->b_u_save_nr_cur;
+  cp_bufinfo->save_b_u_save_nr_last = buf->b_u_save_nr_last;
+}
+
+/// Restore the undo state of a buffer.
+void u_restore_state(const u_state_T *cp_bufinfo)
+  FUNC_ATTR_NONNULL_ALL
+{
+  buf_T *buf = cp_bufinfo->buf;
+  buf->b_u_time_cur = cp_bufinfo->save_b_u_time_cur;
+  buf->b_u_seq_cur = cp_bufinfo->save_b_u_seq_cur;
+  buf->b_u_seq_last = cp_bufinfo->save_b_u_seq_last;
+  buf->b_u_newhead = cp_bufinfo->save_b_u_newhead;
+  buf->b_u_oldhead = cp_bufinfo->save_b_u_oldhead;
+  buf->b_u_curhead = cp_bufinfo->save_b_u_curhead;
+  buf->b_u_numhead = cp_bufinfo->save_b_u_numhead;
+  buf->b_u_line_ptr = cp_bufinfo->save_b_u_line_ptr;
+  buf->b_u_line_lnum = cp_bufinfo->save_b_u_line_lnum;
+  buf->b_u_line_colnr = cp_bufinfo->save_b_u_line_colnr;
+  buf->b_p_ul = cp_bufinfo->save_b_p_ul;
+  buf->b_changed = cp_bufinfo->save_b_changed;
+  buf->b_u_save_nr_cur = cp_bufinfo->save_b_u_save_nr_cur;
+  buf->b_u_save_nr_last = cp_bufinfo->save_b_u_save_nr_last;
+
+  if (buf->b_u_curhead == NULL) {
+    buf->b_u_synced = cp_bufinfo->save_b_u_synced;
+  }
+
+  if (cp_bufinfo->save_changedtick != buf_get_changedtick(buf)) {
+    buf_set_changedtick(buf, cp_bufinfo->save_changedtick);
+  }
 }
 
 /// Free all allocated memory blocks for the buffer 'buf'.

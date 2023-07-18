@@ -138,25 +138,9 @@ typedef struct cmdpreview_win_info {
   int save_w_p_cuc;
 } CpWinInfo;
 
-typedef struct cmdpreview_buf_info {
-  buf_T *buf;
-  bool save_b_u_synced;
-  time_t save_b_u_time_cur;
-  long save_b_u_seq_cur;
-  u_header_T *save_b_u_newhead;
-  u_header_T *save_b_u_oldhead;
-  u_header_T *save_b_u_curhead;
-  int save_b_u_numhead;
-  char *save_b_u_line_ptr;
-  linenr_T save_b_u_line_lnum;
-  long save_b_p_ul;
-  int save_b_changed;
-  varnumber_T save_changedtick;
-} CpBufInfo;
-
 typedef struct cmdpreview_info {
   kvec_t(CpWinInfo) win_info;
-  kvec_t(CpBufInfo) buf_info;
+  kvec_t(u_state_T) buf_info;
   bool save_hls;
   cmdmod_T save_cmdmod;
   garray_T save_view;
@@ -2294,21 +2278,8 @@ static void cmdpreview_prepare(CpInfo *cpinfo)
       continue;
     }
 
-    CpBufInfo cp_bufinfo;
-    cp_bufinfo.buf = buf;
-
-    cp_bufinfo.save_b_u_synced = buf->b_u_synced;
-    cp_bufinfo.save_b_u_time_cur = buf->b_u_time_cur;
-    cp_bufinfo.save_b_u_seq_cur = buf->b_u_seq_cur;
-    cp_bufinfo.save_b_u_newhead = buf->b_u_newhead;
-    cp_bufinfo.save_b_u_oldhead = buf->b_u_oldhead;
-    cp_bufinfo.save_b_u_curhead = buf->b_u_curhead;
-    cp_bufinfo.save_b_u_numhead = buf->b_u_numhead;
-    cp_bufinfo.save_b_u_line_ptr = buf->b_u_line_ptr;
-    cp_bufinfo.save_b_u_line_lnum = buf->b_u_line_lnum;
-    cp_bufinfo.save_b_p_ul = buf->b_p_ul;
-    cp_bufinfo.save_b_changed = buf->b_changed;
-    cp_bufinfo.save_changedtick = buf_get_changedtick(buf);
+    u_state_T cp_bufinfo;
+    u_save_state(&cp_bufinfo, buf);
     u_clearall(buf);
 
     kv_push(cpinfo->buf_info, cp_bufinfo);
@@ -2349,7 +2320,7 @@ static void cmdpreview_prepare(CpInfo *cpinfo)
 static void cmdpreview_restore_state(CpInfo *cpinfo)
 {
   for (size_t i = 0; i < cpinfo->buf_info.size; i++) {
-    CpBufInfo cp_bufinfo = cpinfo->buf_info.items[i];
+    u_state_T cp_bufinfo = cpinfo->buf_info.items[i];
     buf_T *buf = cp_bufinfo.buf;
 
     buf->b_changed = cp_bufinfo.save_b_changed;
@@ -2376,25 +2347,7 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
     }
 
     u_blockfree(buf);
-
-    buf->b_u_newhead = cp_bufinfo.save_b_u_newhead;
-    buf->b_u_oldhead = cp_bufinfo.save_b_u_oldhead;
-    buf->b_u_curhead = cp_bufinfo.save_b_u_curhead;
-    buf->b_u_numhead = cp_bufinfo.save_b_u_numhead;
-    buf->b_u_line_ptr = cp_bufinfo.save_b_u_line_ptr;
-    buf->b_u_line_lnum = cp_bufinfo.save_b_u_line_lnum;
-    buf->b_u_time_cur = cp_bufinfo.save_b_u_time_cur;
-    buf->b_u_seq_cur = cp_bufinfo.save_b_u_seq_cur;
-
-    if (buf->b_u_curhead == NULL) {
-      buf->b_u_synced = cp_bufinfo.save_b_u_synced;
-    }
-
-    if (cp_bufinfo.save_changedtick != buf_get_changedtick(buf)) {
-      buf_set_changedtick(buf, cp_bufinfo.save_changedtick);
-    }
-
-    buf->b_p_ul = cp_bufinfo.save_b_p_ul;        // Restore 'undolevels'
+    u_restore_state(&cp_bufinfo);
 
     // Clear preview highlights.
     extmark_clear(buf, (uint32_t)cmdpreview_ns, 0, 0, MAXLNUM, MAXCOL);
