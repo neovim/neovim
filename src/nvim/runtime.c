@@ -1237,7 +1237,8 @@ void load_plugins(void)
       add_pack_start_dirs();
     }
 
-    // don't use source_runtime() yet so we can check for :packloadall below
+    // Don't use source_runtime_vim_lua() yet so we can check for :packloadall below.
+    // NB: after calling this "rtp_copy" may have been freed if it wasn't copied.
     source_in_path_vim_lua(rtp_copy, plugin_pattern, DIP_ALL | DIP_NOAFTER);
     TIME_MSG("loading rtp plugins");
 
