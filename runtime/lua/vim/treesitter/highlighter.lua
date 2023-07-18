@@ -17,6 +17,7 @@ local query = vim.treesitter.query
 local TSHighlighter = rawget(vim.treesitter, 'TSHighlighter') or {}
 TSHighlighter.__index = TSHighlighter
 
+--- @nodoc
 TSHighlighter.active = TSHighlighter.active or {}
 
 ---@class TSHighlighterQuery
@@ -205,7 +206,6 @@ function TSHighlighter:get_query(lang)
   return self._queries[lang]
 end
 
----@private
 ---@param self TSHighlighter
 ---@param buf integer
 ---@param line integer

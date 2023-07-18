@@ -66,7 +66,6 @@ lsp._request_name_to_capability = {
 
 -- TODO improve handling of scratch buffers with LSP attached.
 
----@private
 --- Concatenates and writes a list of strings to the Vim error buffer.
 ---
 ---@param ... string List to write to the buffer
@@ -75,7 +74,6 @@ local function err_message(...)
   nvim_command('redraw')
 end
 
----@private
 --- Returns the buffer number for the given {bufnr}.
 ---
 ---@param bufnr (integer|nil) Buffer number to resolve. Defaults to current buffer
@@ -101,7 +99,6 @@ function lsp._unsupported_method(method)
   return msg
 end
 
----@private
 --- Checks whether a given path is a directory.
 ---
 ---@param filename (string) path to check
@@ -132,7 +129,6 @@ local format_line_ending = {
   ['mac'] = '\r',
 }
 
----@private
 ---@param bufnr (number)
 ---@return string
 local function buf_get_line_ending(bufnr)
@@ -140,7 +136,6 @@ local function buf_get_line_ending(bufnr)
 end
 
 local client_index = 0
----@private
 --- Returns a new, unused client id.
 ---
 ---@return integer client_id
@@ -153,7 +148,6 @@ local active_clients = {} --- @type table<integer,lsp.Client>
 local all_buffer_active_clients = {} --- @type table<integer,table<integer,true>>
 local uninitialized_clients = {} --- @type table<integer,lsp.Client>
 
----@private
 ---@param bufnr? integer
 ---@param fn fun(client: lsp.Client, client_id: integer, bufnr: integer)
 local function for_each_buffer_client(bufnr, fn, restrict_client_ids)
@@ -185,9 +179,10 @@ local function for_each_buffer_client(bufnr, fn, restrict_client_ids)
   end
 end
 
--- Error codes to be used with `on_error` from |vim.lsp.start_client|.
--- Can be used to look up the string from a the number or the number
--- from the string.
+--- Error codes to be used with `on_error` from |vim.lsp.start_client|.
+--- Can be used to look up the string from a the number or the number
+--- from the string.
+--- @nodoc
 lsp.client_errors = tbl_extend(
   'error',
   lsp_rpc.client_errors,
@@ -196,7 +191,6 @@ lsp.client_errors = tbl_extend(
   })
 )
 
----@private
 --- Normalizes {encoding} to valid LSP encoding names.
 ---
 ---@param encoding (string) Encoding to normalize
@@ -243,7 +237,6 @@ function lsp._cmd_parts(input)
   return cmd, cmd_args
 end
 
----@private
 --- Augments a validator function with support for optional (nil) values.
 ---
 ---@param fn (fun(v): boolean) The original validator function; should return a
@@ -256,7 +249,6 @@ local function optional_validator(fn)
   end
 end
 
----@private
 --- Validates a client configuration as given to |vim.lsp.start_client()|.
 ---
 ---@param config (lsp.ClientConfig)
@@ -308,7 +300,6 @@ local function validate_client_config(config)
   return cmd, cmd_args, offset_encoding
 end
 
----@private
 --- Returns full text of buffer {bufnr} as a string.
 ---
 ---@param bufnr (number) Buffer handle, or 0 for current.
@@ -322,7 +313,6 @@ local function buf_get_full_text(bufnr)
   return text
 end
 
----@private
 --- Memoizes a function. On first run, the function return value is saved and
 --- immediately returned on subsequent runs. If the function returns a multival,
 --- only the first returned value will be memoized and returned. The function will only be run once,
@@ -382,7 +372,6 @@ do
   --- @field debounce integer debounce duration in ms
   --- @field clients table<integer, table> clients using this state. {client_id, client}
 
-  ---@private
   ---@param group CTGroup
   ---@return string
   local function group_key(group)
@@ -403,7 +392,6 @@ do
     end,
   })
 
-  ---@private
   ---@return CTGroup
   local function get_group(client)
     local allow_inc_sync = if_nil(client.config.flags.allow_incremental_sync, true)
@@ -419,7 +407,6 @@ do
     }
   end
 
-  ---@private
   ---@param state CTBufferState
   local function incremental_changes(state, encoding, bufnr, firstline, lastline, new_lastline)
     local prev_lines = state.lines
@@ -543,8 +530,6 @@ do
     end
   end
 
-  ---@private
-  --
   -- Adjust debounce time by taking time of last didChange notification into
   -- consideration. If the last didChange happened more than `debounce` time ago,
   -- debounce can be skipped and otherwise maybe reduced.
@@ -567,7 +552,6 @@ do
     return math.max(debounce - ms_since_last_flush, 0)
   end
 
-  ---@private
   ---@param bufnr integer
   ---@param sync_kind integer protocol.TextDocumentSyncKind
   ---@param state CTGroupState
@@ -694,7 +678,6 @@ do
   end
 end
 
----@private
 --- Default handler for the 'textDocument/didOpen' LSP notification.
 ---
 ---@param bufnr integer Number of the buffer, or 0 for current
@@ -924,7 +907,6 @@ function lsp.status()
   return message
 end
 
----@private
 -- Determines whether the given option can be set by `set_defaults`.
 local function is_empty_or_default(bufnr, option)
   if vim.bo[bufnr][option] == '' then
@@ -1138,7 +1120,6 @@ function lsp.start_client(config)
 
   local dispatch = {}
 
-  ---@private
   --- Returns the handler associated with an LSP method.
   --- Returns the default handler if the user hasn't set a custom one.
   ---
@@ -1208,7 +1189,6 @@ function lsp.start_client(config)
     end
   end
 
-  ---@private
   --- Reset defaults set by `set_defaults`.
   --- Must only be called if the last client attached to a buffer exits.
   local function reset_defaults(bufnr)
@@ -1337,7 +1317,6 @@ function lsp.start_client(config)
   -- Store the uninitialized_clients for cleanup in case we exit before initialize finishes.
   uninitialized_clients[client_id] = client
 
-  ---@private
   local function initialize()
     local valid_traces = {
       off = 'off',
@@ -1749,7 +1728,6 @@ do
   end
 end
 
----@private
 ---Buffer lifecycle handler for textDocument/didSave
 local function text_document_did_save_handler(bufnr)
   bufnr = resolve_bufnr(bufnr)
@@ -2082,7 +2060,6 @@ api.nvim_create_autocmd('VimLeavePre', {
 
     local poll_time = 50
 
-    ---@private
     local function check_clients_closed()
       for client_id, timeout in pairs(timeouts) do
         timeouts[client_id] = timeout - poll_time
@@ -2440,12 +2417,13 @@ function lsp.buf_get_clients(bufnr)
   return result
 end
 
--- Log level dictionary with reverse lookup as well.
---
--- Can be used to lookup the number from the name or the
--- name from the number.
--- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF"
--- Level numbers begin with "TRACE" at 0
+--- Log level dictionary with reverse lookup as well.
+---
+--- Can be used to lookup the number from the name or the
+--- name from the number.
+--- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF"
+--- Level numbers begin with "TRACE" at 0
+--- @nodoc
 lsp.log_levels = log.levels
 
 --- Sets the global log level for LSP logging.

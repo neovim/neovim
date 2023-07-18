@@ -85,7 +85,6 @@ end
 --- Packed tables use this as their metatable
 local packedmt = {}
 
----@private
 local function unpack(t)
   if type(t) == 'table' and getmetatable(t) == packedmt then
     return _G.unpack(t, 1, t.n)
@@ -93,7 +92,6 @@ local function unpack(t)
   return t
 end
 
----@private
 local function pack(...)
   local n = select('#', ...)
   if n > 1 then
@@ -102,7 +100,6 @@ local function pack(...)
   return ...
 end
 
----@private
 local function sanitize(t)
   if type(t) == 'table' and getmetatable(t) == packedmt then
     -- Remove length tag
@@ -120,7 +117,6 @@ end
 ---@param ... any Function arguments.
 ---@return boolean True if the iterator stage should continue, false otherwise
 ---@return any Function arguments.
----@private
 local function continue(...)
   if select('#', ...) > 0 then
     return false, ...
@@ -137,7 +133,6 @@ end
 ---@param ... any Arguments to apply to f
 ---@return boolean True if the iterator pipeline should continue, false otherwise
 ---@return any Return values of f
----@private
 local function apply(f, ...)
   if select('#', ...) > 0 then
     return continue(f(...))
@@ -230,7 +225,6 @@ function Iter.map(self, f)
   ---                    values passed.
   ---@param ... any Values to return if cont is false.
   ---@return any
-  ---@private
   local function fn(cont, ...)
     if cont then
       return fn(apply(f, next(self)))
@@ -270,7 +264,6 @@ end
 ---                       Takes all of the values returned by the previous stage
 ---                       in the pipeline as arguments.
 function Iter.each(self, f)
-  ---@private
   local function fn(...)
     if select('#', ...) > 0 then
       f(...)
@@ -383,7 +376,6 @@ function Iter.fold(self, init, f)
   local acc = init
 
   --- Use a closure to handle var args returned from iterator
-  ---@private
   local function fn(...)
     if select(1, ...) ~= nil then
       acc = f(acc, ...)
@@ -525,7 +517,6 @@ function Iter.find(self, f)
   local result = nil
 
   --- Use a closure to handle var args returned from iterator
-  ---@private
   local function fn(...)
     if select(1, ...) ~= nil then
       if f(...) then
@@ -768,7 +759,6 @@ function Iter.any(self, pred)
   local any = false
 
   --- Use a closure to handle var args returned from iterator
-  ---@private
   local function fn(...)
     if select(1, ...) ~= nil then
       if pred(...) then
@@ -792,7 +782,6 @@ end
 function Iter.all(self, pred)
   local all = true
 
-  ---@private
   local function fn(...)
     if select(1, ...) ~= nil then
       if not pred(...) then
@@ -929,7 +918,6 @@ function Iter.new(src, ...)
     local s, var = ...
 
     --- Use a closure to handle var args returned from iterator
-    ---@private
     local function fn(...)
       if select(1, ...) ~= nil then
         var = select(1, ...)

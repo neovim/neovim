@@ -8,7 +8,6 @@ do
   local schar = string.char
 
   --- Convert hex to char
-  ---@private
   local function hex_to_char(hex)
     return schar(tonumber(hex, 16))
   end
@@ -33,7 +32,6 @@ do
   local sbyte = string.byte
   local tohex = require('bit').tohex
 
-  ---@private
   local function percent_encode_char(char)
     return '%' .. tohex(sbyte(char), 2)
   end
@@ -46,15 +44,16 @@ do
   end
 end
 
----@private
 local function is_windows_file_uri(uri)
   return uri:match('^file:/+[a-zA-Z]:') ~= nil
 end
 
+local M = {}
+
 --- Get a URI from a file path.
 ---@param path string Path to file
 ---@return string URI
-local function uri_from_fname(path)
+function M.uri_from_fname(path)
   local volume_path, fname = path:match('^([a-zA-Z]:)(.*)')
   local is_windows = volume_path ~= nil
   if is_windows then
@@ -76,7 +75,7 @@ local WINDOWS_URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):[a-zA-Z]:.*'
 --- Get a URI from a bufnr
 ---@param bufnr integer
 ---@return string URI
-local function uri_from_bufnr(bufnr)
+function M.uri_from_bufnr(bufnr)
   local fname = vim.api.nvim_buf_get_name(bufnr)
   local volume_path = fname:match('^([a-zA-Z]:).*')
   local is_windows = volume_path ~= nil
@@ -90,14 +89,14 @@ local function uri_from_bufnr(bufnr)
   if scheme then
     return fname
   else
-    return uri_from_fname(fname)
+    return M.uri_from_fname(fname)
   end
 end
 
 --- Get a filename from a URI
 ---@param uri string
 ---@return string filename or unchanged URI for non-file URIs
-local function uri_to_fname(uri)
+function M.uri_to_fname(uri)
   local scheme = assert(uri:match(URI_SCHEME_PATTERN), 'URI must contain a scheme: ' .. uri)
   if scheme ~= 'file' then
     return uri
@@ -118,13 +117,8 @@ end
 --
 ---@param uri string
 ---@return integer bufnr
-local function uri_to_bufnr(uri)
-  return vim.fn.bufadd(uri_to_fname(uri))
+function M.uri_to_bufnr(uri)
+  return vim.fn.bufadd(M.uri_to_fname(uri))
 end
 
-return {
-  uri_from_fname = uri_from_fname,
-  uri_from_bufnr = uri_from_bufnr,
-  uri_to_fname = uri_to_fname,
-  uri_to_bufnr = uri_to_bufnr,
-}
+return M

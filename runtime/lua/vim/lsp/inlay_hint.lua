@@ -17,7 +17,6 @@ local namespace = api.nvim_create_namespace('vim_lsp_inlayhint')
 local augroup = api.nvim_create_augroup('vim_lsp_inlayhint', {})
 
 --- Reset the request debounce timer of a buffer
----@private
 local function reset_timer(reset_bufnr)
   local timer = bufstates[reset_bufnr].timer
   if timer then
@@ -63,7 +62,6 @@ function M.on_inlayhint(err, result, ctx, _)
   end
 
   local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  ---@private
   local function pos_to_byte(position)
     local col = position.character
     if col > 0 then
@@ -89,7 +87,6 @@ function M.on_inlayhint(err, result, ctx, _)
   api.nvim__buf_redraw_range(bufnr, 0, -1)
 end
 
----@private
 local function resolve_bufnr(bufnr)
   return bufnr > 0 and bufnr or api.nvim_get_current_buf()
 end
@@ -100,7 +97,6 @@ end
 ---  - bufnr (integer, default: 0): Buffer whose hints to refresh
 ---  - only_visible (boolean, default: false): Whether to only refresh hints for the visible regions of the buffer
 ---
----@private
 local function refresh(opts)
   opts = opts or {}
   local bufnr = resolve_bufnr(opts.bufnr or 0)
@@ -159,7 +155,6 @@ end
 
 --- Clear inlay hints
 ---@param bufnr (integer) Buffer handle, or 0 for current
----@private
 local function clear(bufnr)
   bufnr = resolve_bufnr(bufnr)
   if not bufstates[bufnr] then
@@ -178,7 +173,6 @@ local function clear(bufnr)
   api.nvim__buf_redraw_range(bufnr, 0, -1)
 end
 
----@private
 local function make_request(request_bufnr)
   reset_timer(request_bufnr)
   refresh({ bufnr = request_bufnr })
@@ -186,7 +180,6 @@ end
 
 --- Enable inlay hints for a buffer
 ---@param bufnr (integer) Buffer handle, or 0 for current
----@private
 local function enable(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local bufstate = bufstates[bufnr]
@@ -228,7 +221,6 @@ end
 
 --- Disable inlay hints for a buffer
 ---@param bufnr (integer) Buffer handle, or 0 for current
----@private
 local function disable(bufnr)
   bufnr = resolve_bufnr(bufnr)
   if bufstates[bufnr] and bufstates[bufnr].enabled then
@@ -240,7 +232,6 @@ end
 
 --- Toggle inlay hints for a buffer
 ---@param bufnr (integer) Buffer handle, or 0 for current
----@private
 local function toggle(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local bufstate = bufstates[bufnr]

@@ -160,6 +160,7 @@ end
 local function process_magic(line, generics)
   line = line:gsub('^%s+@', '@')
   line = line:gsub('@package', '@private')
+  line = line:gsub('@nodoc', '@private')
 
   if not vim.startswith(line, '@') then -- it's a magic comment
     return '/// ' .. line
@@ -327,6 +328,11 @@ local function process_function_header(line)
       .. fn:sub(paren_start + 1)
   end
 
+  if line:match('local') then
+    -- Special: tell gen_vimdoc.py this is a local function.
+    return 'local_function ' .. fn .. '{}'
+  end
+
   -- add vanilla function
   return 'function ' .. fn .. '{}'
 end
@@ -336,6 +342,9 @@ end
 --- @param generics table<string,string>>
 --- @return string?
 local function process_line(line, in_stream, generics)
+  local line_raw = line
+  line = vim.trim(line)
+
   if vim.startswith(line, '---') then
     return process_magic(line:sub(4), generics)
   end
@@ -346,6 +355,14 @@ local function process_line(line, in_stream, generics)
 
   if line:find('^function') or line:find('^local%s+function') then
     return process_function_header(line)
+  end
+
+  if not line:match('^local') then
+    local v = line_raw:match('^([A-Za-z][.a-zA-Z_]*)%s+%=')
+    if v and v:match('%.') then
+      -- Special: this lets gen_vimdoc.py handle tables.
+      return 'table '..v..'() {}'
+    end
   end
 
   if #line > 0 then -- we don't know what this line means, so just comment it out
@@ -363,11 +380,11 @@ function Lua2DoxFilter:filter(filename)
   local generics = {} --- @type table<string,string>
 
   while not in_stream:eof() do
-    local line = vim.trim(in_stream:getLine())
+    local line = in_stream:getLine()
 
     local out_line = process_line(line, in_stream, generics)
 
-    if not vim.startswith(line, '---') then
+    if not vim.startswith(vim.trim(line), '---') then
       generics = {}
     end
 

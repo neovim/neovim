@@ -41,8 +41,6 @@ local STHighlighter = { active = {} }
 ---
 --- Return the index i in range such that tokens[j].line < line for all j < i, and
 --- tokens[j].line >= line for all j >= i, or return hi if no such index is found.
----
----@private
 local function lower_bound(tokens, line, lo, hi)
   while lo < hi do
     local mid = bit.rshift(lo + hi, 1) -- Equivalent to floor((lo + hi) / 2).
@@ -59,8 +57,6 @@ end
 ---
 --- Return the index i in range such that tokens[j].line <= line for all j < i, and
 --- tokens[j].line > line for all j >= i, or return hi if no such index is found.
----
----@private
 local function upper_bound(tokens, line, lo, hi)
   while lo < hi do
     local mid = bit.rshift(lo + hi, 1) -- Equivalent to floor((lo + hi) / 2).
@@ -75,7 +71,6 @@ end
 
 --- Extracts modifier strings from the encoded number in the token array
 ---
----@private
 ---@return table<string, boolean>
 local function modifiers_from_number(x, modifiers_table)
   local modifiers = {}
@@ -93,7 +88,6 @@ end
 
 --- Converts a raw token list to a list of highlight ranges used by the on_win callback
 ---
----@private
 ---@return STTokenRange[]
 local function tokens_to_ranges(data, bufnr, client, request)
   local legend = client.server_capabilities.semanticTokensProvider.legend
@@ -137,7 +131,6 @@ local function tokens_to_ranges(data, bufnr, client, request)
     local token_type = token_types[data[i + 3] + 1]
     local modifiers = modifiers_from_number(data[i + 4], token_modifiers)
 
-    ---@private
     local function _get_byte_pos(col)
       if col > 0 then
         local buf_line = lines[line + 1] or ''

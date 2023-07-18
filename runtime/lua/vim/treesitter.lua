@@ -39,7 +39,10 @@ local M = setmetatable({}, {
   end,
 })
 
+--- @nodoc
 M.language_version = vim._ts_get_language_version()
+
+--- @nodoc
 M.minimum_language_version = vim._ts_get_minimum_language_version()
 
 --- Creates a new parser
@@ -60,12 +63,10 @@ function M._create_parser(bufnr, lang, opts)
 
   local self = LanguageTree.new(bufnr, lang, opts)
 
-  ---@private
   local function bytes_cb(_, ...)
     self:_on_bytes(...)
   end
 
-  ---@private
   local function detach_cb(_, ...)
     if parsers[bufnr] == self then
       parsers[bufnr] = nil
@@ -73,7 +74,6 @@ function M._create_parser(bufnr, lang, opts)
     self:_on_detach(...)
   end
 
-  ---@private
   local function reload_cb(_)
     self:_on_reload()
   end
@@ -91,7 +91,6 @@ function M._create_parser(bufnr, lang, opts)
   return self
 end
 
---- @private
 local function valid_lang(lang)
   return lang and lang ~= ''
 end
@@ -205,7 +204,6 @@ function M.get_range(node, source, metadata)
   return { node:range(true) }
 end
 
----@private
 ---@param buf integer
 ---@param range Range
 ---@returns string

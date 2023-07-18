@@ -92,15 +92,6 @@
 ---vim.v                                                                  *vim.v*
 ---    |v:| variables.
 ---    Invalid or unset key returns `nil`.
----
----vim.env                                                              *vim.env*
----    Environment variables defined in the editor session.
----    See |expand-env| and |:let-environment| for the Vimscript behavior.
----    Invalid or unset key returns `nil`.
----    Example: >lua
----        vim.env.FOO = 'bar'
----        print(vim.env.TERM)
----<
 ---</pre>
 
 local api = vim.api
@@ -118,7 +109,6 @@ local key_value_options = {
 
 --- Convert a vimoption_T style dictionary to the correct OptionType associated with it.
 ---@return string
----@private
 local function get_option_metatype(name, info)
   if info.type == 'string' then
     if info.flaglist then
@@ -143,6 +133,14 @@ local options_info = setmetatable({}, {
   end,
 })
 
+---Environment variables defined in the editor session.
+---See |expand-env| and |:let-environment| for the Vimscript behavior.
+---Invalid or unset key returns `nil`.
+---Example: <pre>lua
+---    vim.env.FOO = 'bar'
+---    print(vim.env.TERM)
+---</pre>
+---@param var string
 vim.env = setmetatable({}, {
   __index = function(_, k)
     local v = vim.fn.getenv(k)
@@ -157,7 +155,6 @@ vim.env = setmetatable({}, {
   end,
 })
 
----@private
 local function opt_validate(option_name, target_scope)
   local scope = options_info[option_name].scope
   if scope ~= target_scope then
@@ -174,7 +171,6 @@ local function opt_validate(option_name, target_scope)
   end
 end
 
----@private
 local function new_buf_opt_accessor(bufnr)
   return setmetatable({}, {
     __index = function(_, k)
@@ -192,7 +188,6 @@ local function new_buf_opt_accessor(bufnr)
   })
 end
 
----@private
 local function new_win_opt_accessor(winid, bufnr)
   return setmetatable({}, {
     __index = function(_, k)
@@ -253,19 +248,15 @@ end
 ---global value of a |global-local| option, see |:setglobal|.
 ---</pre>
 
----@addtogroup lua-vimscript
----@brief <pre>help
----vim.o                                                                  *vim.o*
----    Get or set |options|. Like `:set`. Invalid key is an error.
+---Get or set |options|. Like `:set`. Invalid key is an error.
 ---
----    Note: this works on both buffer-scoped and window-scoped options using the
----    current buffer and window.
+---Note: this works on both buffer-scoped and window-scoped options using the
+---current buffer and window.
 ---
----    Example: >lua
----        vim.o.cmdheight = 4
----        print(vim.o.columns)
----        print(vim.o.foo)     -- error: invalid key
----<
+---Example: <pre>lua
+---    vim.o.cmdheight = 4
+---    print(vim.o.columns)
+---    print(vim.o.foo)     -- error: invalid key
 ---</pre>
 vim.o = setmetatable({}, {
   __index = function(_, k)
@@ -276,21 +267,17 @@ vim.o = setmetatable({}, {
   end,
 })
 
----@addtogroup lua-vimscript
----@brief <pre>help
----vim.go                                                                *vim.go*
----    Get or set global |options|. Like `:setglobal`. Invalid key is
----    an error.
+---Get or set global |options|. Like `:setglobal`. Invalid key is
+---an error.
 ---
----    Note: this is different from |vim.o| because this accesses the global
----    option value and thus is mostly useful for use with |global-local|
----    options.
+---Note: this is different from |vim.o| because this accesses the global
+---option value and thus is mostly useful for use with |global-local|
+---options.
 ---
----    Example: >lua
----        vim.go.cmdheight = 4
----        print(vim.go.columns)
----        print(vim.go.bar)     -- error: invalid key
----<
+---Example: <pre>lua
+---    vim.go.cmdheight = 4
+---    print(vim.go.columns)
+---    print(vim.go.bar)     -- error: invalid key
 ---</pre>
 vim.go = setmetatable({}, {
   __index = function(_, k)
@@ -301,41 +288,36 @@ vim.go = setmetatable({}, {
   end,
 })
 
----@addtogroup lua-vimscript
----@brief <pre>help
----vim.bo[{bufnr}]                                                                *vim.bo*
----    Get or set buffer-scoped |options| for the buffer with number {bufnr}.
----    Like `:set` and `:setlocal`. If [{bufnr}] is omitted then the current
----    buffer is used. Invalid {bufnr} or key is an error.
+---Get or set buffer-scoped |options| for the buffer with number {bufnr}.
+---Like `:set` and `:setlocal`. If [{bufnr}] is omitted then the current
+---buffer is used. Invalid {bufnr} or key is an error.
 ---
----    Note: this is equivalent to both `:set` and `:setlocal`.
+---Note: this is equivalent to both `:set` and `:setlocal`.
 ---
----    Example: >lua
----        local bufnr = vim.api.nvim_get_current_buf()
----        vim.bo[bufnr].buflisted = true    -- same as vim.bo.buflisted = true
----        print(vim.bo.comments)
----        print(vim.bo.baz)                 -- error: invalid key
+---Example: <pre>lua
+---    local bufnr = vim.api.nvim_get_current_buf()
+---    vim.bo[bufnr].buflisted = true    -- same as vim.bo.buflisted = true
+---    print(vim.bo.comments)
+---    print(vim.bo.baz)                 -- error: invalid key
 ---</pre>
+---@param bufnr integer|nil
 vim.bo = new_buf_opt_accessor()
 
----@addtogroup lua-vimscript
----@brief <pre>help
----vim.wo[{winid}][{bufnr}]                                                       *vim.wo*
----    Get or set window-scoped |options| for the window with handle {winid} and
----    buffer with number {bufnr}. Like `:setlocal` if {bufnr} is provided, like
----    `:set` otherwise. If [{winid}] is omitted then the current window is
----    used. Invalid {winid}, {bufnr} or key is an error.
+---Get or set window-scoped |options| for the window with handle {winid} and
+---buffer with number {bufnr}. Like `:setlocal` if {bufnr} is provided, like
+---`:set` otherwise. If [{winid}] is omitted then the current window is
+---used. Invalid {winid}, {bufnr} or key is an error.
 ---
----    Note: only {bufnr} with value `0` (the current buffer in the window) is
----    supported.
+---Note: only {bufnr} with value `0` (the current buffer in the window) is
+---supported.
 ---
----    Example: >lua
----        local winid = vim.api.nvim_get_current_win()
----        vim.wo[winid].number = true    -- same as vim.wo.number = true
----        print(vim.wo.foldmarker)
----        print(vim.wo.quux)             -- error: invalid key
----        vim.wo[winid][0].spell = false -- like ':setlocal nospell'
----<
+---Example: <pre>lua
+---    local winid = vim.api.nvim_get_current_win()
+---    vim.wo[winid].number = true    -- same as vim.wo.number = true
+---    print(vim.wo.foldmarker)
+---    print(vim.wo.quux)             -- error: invalid key
+---    vim.wo[winid][0].spell = false -- like ':setlocal nospell'
+---
 ---</pre>
 vim.wo = new_win_opt_accessor()
 
@@ -348,7 +330,6 @@ vim.wo = new_win_opt_accessor()
 ---@brief ]]
 
 --- Preserves the order and does not mutate the original list
---- @private
 local function remove_duplicate_values(t)
   local result, seen = {}, {}
   for _, v in ipairs(t) do
@@ -364,7 +345,6 @@ end
 
 -- Check whether the OptionTypes is allowed for vim.opt
 -- If it does not match, throw an error which indicates which option causes the error.
---- @private
 local function assert_valid_value(name, value, types)
   local type_of_value = type(value)
   for _, valid_type in ipairs(types) do
@@ -383,17 +363,14 @@ local function assert_valid_value(name, value, types)
   )
 end
 
---- @private
 local function passthrough(_, x)
   return x
 end
 
---- @private
 local function tbl_merge(left, right)
   return vim.tbl_extend('force', left, right)
 end
 
---- @private
 local function tbl_remove(t, value)
   if type(value) == 'string' then
     t[value] = nil
@@ -475,7 +452,6 @@ local to_vim_value = {
 }
 
 --- Convert a Lua value to a vimoption_T value
---- @private
 local function convert_value_to_vim(name, info, value)
   if value == nil then
     return vim.NIL
@@ -591,7 +567,6 @@ local to_lua_value = {
 }
 
 --- Converts a vimoption_T style value to a Lua value
---- @private
 local function convert_value_to_lua(info, option_value)
   return to_lua_value[info.metatype](info, option_value)
 end
@@ -618,7 +593,6 @@ local prepend_methods = {
 }
 
 --- Handles the '^' operator
---- @private
 local function prepend_value(info, current, new)
   return prepend_methods[info.metatype](
     convert_value_to_lua(info, current),
@@ -648,7 +622,6 @@ local add_methods = {
 }
 
 --- Handles the '+' operator
---- @private
 local function add_value(info, current, new)
   return add_methods[info.metatype](
     convert_value_to_lua(info, current),
@@ -656,7 +629,6 @@ local function add_value(info, current, new)
   )
 end
 
---- @private
 local function remove_one_item(t, val)
   if vim.tbl_islist(t) then
     local remove_index = nil
@@ -700,16 +672,13 @@ local remove_methods = {
 }
 
 --- Handles the '-' operator
---- @private
 local function remove_value(info, current, new)
   return remove_methods[info.metatype](convert_value_to_lua(info, current), new)
 end
 
---- @private
 local function create_option_accessor(scope)
   local option_mt
 
-  --- @private
   local function make_option(name, value)
     local info = assert(options_info[name], 'Not a valid option name: ' .. name)
 
@@ -923,6 +892,11 @@ function Option:prepend(value) end -- luacheck: no unused
 ---@diagnostic disable-next-line:unused-local used for gen_vimdoc
 function Option:remove(value) end -- luacheck: no unused
 
+---@private
 vim.opt = create_option_accessor()
+
+---@private
 vim.opt_local = create_option_accessor('local')
+
+---@private
 vim.opt_global = create_option_accessor('global')

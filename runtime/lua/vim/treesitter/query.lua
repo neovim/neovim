@@ -15,7 +15,6 @@ Query.__index = Query
 ---@class TSQueryModule
 local M = {}
 
----@private
 ---@param files string[]
 ---@return string[]
 local function dedupe_files(files)
@@ -33,7 +32,6 @@ local function dedupe_files(files)
   return result
 end
 
----@private
 local function safe_read(filename, read_quantifier)
   local file, err = io.open(filename, 'r')
   if not file then
@@ -44,7 +42,6 @@ local function safe_read(filename, read_quantifier)
   return content
 end
 
----@private
 --- Adds {ilang} to {base_langs}, only if {ilang} is different than {lang}
 ---
 ---@return boolean true If lang == ilang
@@ -153,7 +150,6 @@ function M.get_files(lang, query_name, is_included)
   return query_files
 end
 
----@private
 ---@param filenames string[]
 ---@return string
 local function read_query_files(filenames)
@@ -335,7 +331,6 @@ local predicate_handlers = {
 
   ['match?'] = (function()
     local magic_prefixes = { ['\\v'] = true, ['\\m'] = true, ['\\M'] = true, ['\\V'] = true }
-    ---@private
     local function check_magic(str)
       if string.len(str) < 2 or magic_prefixes[string.sub(str, 1, 2)] then
         return str
@@ -624,12 +619,10 @@ function M.list_predicates()
   return vim.tbl_keys(predicate_handlers)
 end
 
----@private
 local function xor(x, y)
   return (x or y) and not (x and y)
 end
 
----@private
 local function is_directive(name)
   return string.sub(name, -1) == '!'
 end
@@ -700,7 +693,6 @@ end
 --- Returns the start and stop value if set else the node's range.
 -- When the node's range is used, the stop is incremented by 1
 -- to make the search inclusive.
----@private
 ---@param start integer
 ---@param stop integer
 ---@param node TSNode
@@ -750,7 +742,6 @@ function Query:iter_captures(node, source, start, stop)
   start, stop = value_or_node_range(start, stop, node)
 
   local raw_iter = node:_rawquery(self.query, true, start, stop)
-  ---@private
   local function iter()
     local capture, captured_node, match = raw_iter()
     local metadata = {}

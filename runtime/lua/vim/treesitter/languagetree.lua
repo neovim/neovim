@@ -164,7 +164,6 @@ function LanguageTree:_set_logger()
   self._parser:_set_logger(log_lex, log_parse, self._logger)
 end
 
----@private
 ---Measure execution time of a function
 ---@generic R1, R2, R3
 ---@param f fun(): R1, R2, R2
@@ -444,7 +443,6 @@ function LanguageTree:destroy()
   end
 end
 
----@private
 ---@param region Range6[]
 local function region_tostr(region)
   if #region == 0 then
@@ -560,7 +558,6 @@ function LanguageTree:included_regions()
   return regions
 end
 
----@private
 ---@param node TSNode
 ---@param source string|integer
 ---@param metadata TSMetadata
@@ -600,7 +597,6 @@ end
 
 ---@alias TSInjection table<string,table<integer,TSInjectionElem>>
 
----@private
 ---@param t table<integer,TSInjection>
 ---@param tree_index integer
 ---@param pattern integer
@@ -963,7 +959,6 @@ function LanguageTree:register_cbs(cbs, recursive)
   end
 end
 
----@private
 ---@param tree TSTree
 ---@param range Range
 ---@return boolean

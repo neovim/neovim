@@ -2,14 +2,12 @@
 
 local log = {}
 
--- FIXME: DOC
--- Should be exposed in the vim docs.
---
--- Log level dictionary with reverse lookup as well.
---
--- Can be used to lookup the number from the name or the name from the number.
--- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF"
--- Level numbers begin with "TRACE" at 0
+--- Log level dictionary with reverse lookup as well.
+---
+--- Can be used to lookup the number from the name or the name from the number.
+--- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF"
+--- Level numbers begin with "TRACE" at 0
+--- @nodoc
 log.levels = vim.deepcopy(vim.log.levels)
 
 -- Default log level is warn.
@@ -20,7 +18,6 @@ local format_func = function(arg)
 end
 
 do
-  ---@private
   local function notify(msg, level)
     if vim.in_fast_event() then
       vim.schedule(function()
@@ -32,7 +29,6 @@ do
   end
 
   local path_sep = vim.uv.os_uname().version:match('Windows') and '\\' or '/'
-  ---@private
   local function path_join(...)
     return table.concat(vim.tbl_flatten({ ... }), path_sep)
   end
@@ -50,7 +46,6 @@ do
   end
 
   local logfile, openerr
-  ---@private
   --- Opens log file. Returns true if file is open, false on error
   local function open_logfile()
     -- Try to open file only once

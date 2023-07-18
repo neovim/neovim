@@ -5,7 +5,7 @@ local protocol = require('vim.lsp.protocol')
 local M = {}
 
 local DEFAULT_CLIENT_ID = -1
----@private
+
 local function get_client_id(client_id)
   if client_id == nil then
     client_id = DEFAULT_CLIENT_ID
@@ -14,7 +14,6 @@ local function get_client_id(client_id)
   return client_id
 end
 
----@private
 ---@param severity lsp.DiagnosticSeverity
 local function severity_lsp_to_vim(severity)
   if type(severity) == 'string' then
@@ -23,7 +22,6 @@ local function severity_lsp_to_vim(severity)
   return severity
 end
 
----@private
 ---@return lsp.DiagnosticSeverity
 local function severity_vim_to_lsp(severity)
   if type(severity) == 'string' then
@@ -32,7 +30,6 @@ local function severity_vim_to_lsp(severity)
   return severity
 end
 
----@private
 ---@return integer
 local function line_byte_from_position(lines, lnum, col, offset_encoding)
   if not lines or offset_encoding == 'utf-8' then
@@ -48,7 +45,6 @@ local function line_byte_from_position(lines, lnum, col, offset_encoding)
   return col
 end
 
----@private
 local function get_buf_lines(bufnr)
   if vim.api.nvim_buf_is_loaded(bufnr) then
     return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
@@ -73,7 +69,6 @@ local function get_buf_lines(bufnr)
   return lines
 end
 
---- @private
 --- @param diagnostic lsp.Diagnostic
 --- @param client_id integer
 --- @return table?
@@ -96,7 +91,6 @@ local function tags_lsp_to_vim(diagnostic, client_id)
   return tags
 end
 
----@private
 ---@param diagnostics lsp.Diagnostic[]
 ---@param bufnr integer
 ---@param client_id integer
@@ -133,7 +127,6 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
   end, diagnostics)
 end
 
---- @private
 --- @param diagnostics Diagnostic[]
 --- @return lsp.Diagnostic[]
 local function diagnostic_vim_to_lsp(diagnostics)

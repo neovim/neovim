@@ -233,6 +233,8 @@ Docstring format:
   - List-items start with `-` (useful to nest or "indent")
 - Use `<pre>` for code samples.
   Code samples can be annotated as `vim` or `lua`
+- Use `@nodoc` to prevent documentation generation.
+- Files which has `@meta` are only used for typing and documentation.
 
 Example: the help for |vim.paste()| is generated from a docstring decorating
 vim.paste in runtime/lua/vim/_editor.lua like this: >

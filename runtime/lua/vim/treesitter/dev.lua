@@ -42,7 +42,6 @@ local TSTreeView = {}
 ---@param injections table<integer,TSP.Node> Mapping of node ids to root nodes of injected language trees (see
 ---                        explanation above)
 ---@param tree TSP.Node[] Output table containing a list of tables each representing a node in the tree
----@private
 local function traverse(node, depth, lang, injections, tree)
   local injection = injections[node:id()]
   if injection then
@@ -141,7 +140,6 @@ end
 
 local decor_ns = api.nvim_create_namespace('ts.dev')
 
----@private
 ---@param lnum integer
 ---@param col integer
 ---@param end_lnum integer
