@@ -218,7 +218,6 @@ function M.find(names, opts)
 
   local matches = {}
 
-  ---@private
   local function add(match)
     matches[#matches + 1] = M.normalize(match)
     if #matches == limit then

@@ -72,7 +72,6 @@ local bufs_waiting_to_update = setmetatable({}, bufnr_and_namespace_cacher_mt)
 
 local all_namespaces = {}
 
----@private
 local function to_severity(severity)
   if type(severity) == 'string' then
     return assert(
@@ -83,7 +82,6 @@ local function to_severity(severity)
   return severity
 end
 
----@private
 local function filter_by_severity(severity, diagnostics)
   if not severity then
     return diagnostics
@@ -104,7 +102,6 @@ local function filter_by_severity(severity, diagnostics)
   end, diagnostics)
 end
 
----@private
 local function count_sources(bufnr)
   local seen = {}
   local count = 0
@@ -119,7 +116,6 @@ local function count_sources(bufnr)
   return count
 end
 
----@private
 local function prefix_source(diagnostics)
   return vim.tbl_map(function(d)
     if not d.source then
@@ -132,7 +128,6 @@ local function prefix_source(diagnostics)
   end, diagnostics)
 end
 
----@private
 local function reformat_diagnostics(format, diagnostics)
   vim.validate({
     format = { format, 'f' },
@@ -146,7 +141,6 @@ local function reformat_diagnostics(format, diagnostics)
   return formatted
 end
 
----@private
 local function enabled_value(option, namespace)
   local ns = namespace and M.get_namespace(namespace) or {}
   if ns.opts and type(ns.opts[option]) == 'table' then
@@ -160,7 +154,6 @@ local function enabled_value(option, namespace)
   return {}
 end
 
----@private
 local function resolve_optional_value(option, value, namespace, bufnr)
   if not value then
     return false
@@ -180,7 +173,6 @@ local function resolve_optional_value(option, value, namespace, bufnr)
   end
 end
 
----@private
 local function get_resolved_options(opts, namespace, bufnr)
   local ns = namespace and M.get_namespace(namespace) or {}
   -- Do not use tbl_deep_extend so that an empty table can be used to reset to default values
@@ -202,7 +194,6 @@ local diagnostic_severities = {
 }
 
 -- Make a map from DiagnosticSeverity -> Highlight Name
----@private
 local function make_highlight_map(base_name)
   local result = {}
   for k in pairs(diagnostic_severities) do
@@ -243,7 +234,6 @@ local define_default_signs = (function()
   end
 end)()
 
----@private
 local function get_bufnr(bufnr)
   if not bufnr or bufnr == 0 then
     return api.nvim_get_current_buf()
@@ -251,7 +241,6 @@ local function get_bufnr(bufnr)
   return bufnr
 end
 
----@private
 local function diagnostic_lines(diagnostics)
   if not diagnostics then
     return {}
@@ -269,7 +258,6 @@ local function diagnostic_lines(diagnostics)
   return diagnostics_by_line
 end
 
----@private
 local function set_diagnostic_cache(namespace, bufnr, diagnostics)
   for _, diagnostic in ipairs(diagnostics) do
     assert(diagnostic.lnum, 'Diagnostic line number is required')
@@ -284,7 +272,6 @@ local function set_diagnostic_cache(namespace, bufnr, diagnostics)
   diagnostic_cache[bufnr][namespace] = diagnostics
 end
 
----@private
 local function restore_extmarks(bufnr, last)
   for ns, extmarks in pairs(diagnostic_cache_extmarks[bufnr]) do
     local extmarks_current = api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, { details = true })
@@ -306,7 +293,6 @@ local function restore_extmarks(bufnr, last)
   end
 end
 
----@private
 local function save_extmarks(namespace, bufnr)
   bufnr = get_bufnr(bufnr)
   if not diagnostic_attached_buffers[bufnr] then
@@ -326,13 +312,11 @@ end
 
 local registered_autocmds = {}
 
----@private
 local function make_augroup_key(namespace, bufnr)
   local ns = M.get_namespace(namespace)
   return string.format('DiagnosticInsertLeave:%s:%s', bufnr, ns.name)
 end
 
----@private
 local function execute_scheduled_display(namespace, bufnr)
   local args = bufs_waiting_to_update[bufnr][namespace]
   if not args then
@@ -348,7 +332,6 @@ end
 --- Table of autocmd events to fire the update for displaying new diagnostic information
 local insert_leave_auto_cmds = { 'InsertLeave', 'CursorHoldI' }
 
----@private
 local function schedule_display(namespace, bufnr, args)
   bufs_waiting_to_update[bufnr][namespace] = args
 
@@ -367,7 +350,6 @@ local function schedule_display(namespace, bufnr, args)
   end
 end
 
----@private
 local function clear_scheduled_display(namespace, bufnr)
   local key = make_augroup_key(namespace, bufnr)
 
@@ -377,7 +359,6 @@ local function clear_scheduled_display(namespace, bufnr)
   end
 end
 
----@private
 local function get_diagnostics(bufnr, opts, clamp)
   opts = opts or {}
 
@@ -392,7 +373,6 @@ local function get_diagnostics(bufnr, opts, clamp)
     end,
   })
 
-  ---@private
   local function add(b, d)
     if not opts.lnum or d.lnum == opts.lnum then
       if clamp and api.nvim_buf_is_loaded(b) then
@@ -416,7 +396,6 @@ local function get_diagnostics(bufnr, opts, clamp)
     end
   end
 
-  ---@private
   local function add_all_diags(buf, diags)
     for _, diagnostic in pairs(diags) do
       add(buf, diagnostic)
@@ -450,7 +429,6 @@ local function get_diagnostics(bufnr, opts, clamp)
   return diagnostics
 end
 
----@private
 local function set_list(loclist, opts)
   opts = opts or {}
   local open = vim.F.if_nil(opts.open, true)
@@ -474,7 +452,6 @@ local function set_list(loclist, opts)
   end
 end
 
----@private
 local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
   position[1] = position[1] - 1
   bufnr = get_bufnr(bufnr)
@@ -525,7 +502,6 @@ local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
   end
 end
 
----@private
 local function diagnostic_move_pos(opts, pos)
   opts = opts or {}
 

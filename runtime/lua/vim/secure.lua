@@ -1,6 +1,5 @@
 local M = {}
 
----@private
 --- Reads trust database from $XDG_STATE_HOME/nvim/trust.
 ---
 ---@return (table) Contents of trust database, if it exists. Empty table otherwise.
@@ -22,7 +21,6 @@ local function read_trust()
   return trust
 end
 
----@private
 --- Writes provided {trust} table to trust database at
 --- $XDG_STATE_HOME/nvim/trust.
 ---

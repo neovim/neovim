@@ -321,7 +321,6 @@ function vim.tbl_isempty(t)
 end
 
 --- We only merge empty tables or tables that are not an array (indexed by integers)
----@private
 local function can_merge(v)
   return type(v) == 'table' and (vim.tbl_isempty(v) or not vim.tbl_isarray(v))
 end
@@ -773,7 +772,6 @@ do
     return type(val) == t or (t == 'callable' and vim.is_callable(val))
   end
 
-  ---@private
   local function is_valid(opt)
     if type(opt) ~= 'table' then
       return false, string.format('opt: expected table, got %s', type(opt))

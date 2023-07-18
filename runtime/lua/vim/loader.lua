@@ -61,7 +61,6 @@ function Loader.get_hash(path)
   return Loader._hashes[path]
 end
 
----@private
 local function normalize(path)
   return vim.fs.normalize(path, { expand_env = false })
 end
@@ -125,7 +124,6 @@ end
 --- @param path string
 --- @param mode integer
 --- @return string? data
---- @private
 local function readfile(path, mode)
   local f = uv.fs_open(path, 'r', mode)
   if f then
@@ -313,7 +311,6 @@ function M.find(modname, opts)
   local results = {}
 
   -- Only continue if we haven't found anything yet or we want to find all
-  ---@private
   local function continue()
     return #results == 0 or opts.all
   end
@@ -321,7 +318,6 @@ function M.find(modname, opts)
   -- Checks if the given paths contain the top-level module.
   -- If so, it tries to find the module path for the given module name.
   ---@param paths string[]
-  ---@private
   local function _find(paths)
     for _, path in ipairs(paths) do
       if topmod == '*' then
@@ -507,7 +503,6 @@ end
 ---@private
 function M._inspect(opts)
   if opts and opts.print then
-    ---@private
     local function ms(nsec)
       return math.floor(nsec / 1e6 * 1000 + 0.5) / 1000 .. 'ms'
     end

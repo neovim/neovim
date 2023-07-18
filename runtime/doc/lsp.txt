@@ -749,11 +749,6 @@ client()                                                      *vim.lsp.client*
       • {progress} A ring buffer (|vim.ringbuf()|) containing progress
         messages sent by the server.
 
-client_errors                                        *vim.lsp.client_errors()*
-    Error codes to be used with `on_error` from |vim.lsp.start_client|. Can be
-    used to look up the string from a the number or the number from the
-    string.
-
 client_is_stopped({client_id})                   *vim.lsp.client_is_stopped()*
     Checks whether a client is stopped.
 
@@ -763,7 +758,7 @@ client_is_stopped({client_id})                   *vim.lsp.client_is_stopped()*
     Return: ~
         (boolean) stopped true if client is stopped, false otherwise.
 
-commands                                                  *vim.lsp.commands()*
+commands                                                    *vim.lsp.commands*
     Registry for client side commands. This is an extension point for plugins
     to handle custom commands which are not part of the core language server
     protocol specification.
@@ -2013,13 +2008,6 @@ get_level()                                          *vim.lsp.log.get_level()*
 
     Return: ~
         (integer) current log level
-
-levels()                                                *vim.lsp.log.levels()*
-    Log level dictionary with reverse lookup as well.
-
-    Can be used to lookup the number from the name or the name from the
-    number. Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF"
-    Level numbers begin with "TRACE" at 0
 
 set_format_func({handle})                      *vim.lsp.log.set_format_func()*
     Sets formatting function used to format logs

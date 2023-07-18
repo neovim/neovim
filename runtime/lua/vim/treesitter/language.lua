@@ -104,7 +104,6 @@ function M.add(lang, opts)
   vim._ts_add_language(path, lang, symbol_name)
 end
 
---- @private
 --- @param x string|string[]
 --- @return string[]
 local function ensure_list(x)

@@ -56,7 +56,6 @@ function vim.inspect_pos(bufnr, row, col, filter)
   }
 
   -- resolve hl links
-  ---@private
   local function resolve_hl(data)
     if data.hl_group then
       local hlid = vim.api.nvim_get_hl_id_by_name(data.hl_group)
@@ -91,7 +90,6 @@ function vim.inspect_pos(bufnr, row, col, filter)
   end
 
   --- Convert an extmark tuple into a table
-  --- @private
   local function to_map(extmark)
     extmark = {
       id = extmark[1],
@@ -107,7 +105,6 @@ function vim.inspect_pos(bufnr, row, col, filter)
   end
 
   --- Check if an extmark overlaps this position
-  --- @private
   local function is_here(extmark)
     return (row >= extmark.row and row <= extmark.end_row) -- within the rows of the extmark
       and (row > extmark.row or col >= extmark.col) -- either not the first row, or in range of the col
@@ -148,17 +145,14 @@ function vim.show_pos(bufnr, row, col, filter)
 
   local lines = { {} }
 
-  ---@private
   local function append(str, hl)
     table.insert(lines[#lines], { str, hl })
   end
 
-  ---@private
   local function nl()
     table.insert(lines, {})
   end
 
-  ---@private
   local function item(data, comment)
     append('  - ')
     append(data.hl_group, data.hl_group)

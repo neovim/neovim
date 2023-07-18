@@ -1,7 +1,6 @@
 local lsp = vim.lsp
 local util = lsp.util
 
----@private
 local function mk_tag_item(name, range, uri, offset_encoding)
   local bufnr = vim.uri_to_bufnr(uri)
   -- This is get_line_byte_from_position is 0-indexed, call cursor expects a 1-indexed position
@@ -13,7 +12,6 @@ local function mk_tag_item(name, range, uri, offset_encoding)
   }
 end
 
----@private
 local function query_definition(pattern)
   local params = util.make_position_params()
   local results_by_client, err = lsp.buf_request_sync(0, 'textDocument/definition', params, 1000)
@@ -42,7 +40,6 @@ local function query_definition(pattern)
   return results
 end
 
----@private
 local function query_workspace_symbols(pattern)
   local results_by_client, err =
     lsp.buf_request_sync(0, 'workspace/symbol', { query = pattern }, 1000)
@@ -62,7 +59,6 @@ local function query_workspace_symbols(pattern)
   return results
 end
 
----@private
 local function tagfunc(pattern, flags)
   local matches
   if string.match(flags, 'c') then

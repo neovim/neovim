@@ -2,7 +2,6 @@ local api = vim.api
 
 local M = {}
 
----@private
 local function starsetf(ft, opts)
   return {
     function(path, bufnr)
@@ -2317,7 +2316,6 @@ local pattern = {
 -- luacheck: pop
 -- luacheck: pop
 
----@private
 local function sort_by_priority(t)
   local sorted = {}
   for k, v in pairs(t) do
@@ -2341,7 +2339,6 @@ end
 
 local pattern_sorted = sort_by_priority(pattern)
 
----@private
 local function normalize_path(path, as_pattern)
   local normal = path:gsub('\\', '/')
   if normal:find('^~') then
@@ -2456,7 +2453,6 @@ function M.add(filetypes)
   end
 end
 
----@private
 local function dispatch(ft, path, bufnr, ...)
   local on_detect
   if type(ft) == 'function' then
@@ -2483,7 +2479,6 @@ end
 -- Lookup table/cache for patterns that contain an environment variable pattern, e.g. ${SOME_VAR}.
 local expand_env_lookup = {}
 
----@private
 local function match_pattern(name, path, tail, pat)
   if expand_env_lookup[pat] == nil then
     expand_env_lookup[pat] = pat:find('%${') ~= nil

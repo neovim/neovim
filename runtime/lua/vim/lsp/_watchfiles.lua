@@ -5,7 +5,6 @@ local lpeg = vim.lpeg
 
 local M = {}
 
----@private
 --- Parses the raw pattern into an |lpeg| pattern. LPeg patterns natively support the "this" or "that"
 --- alternative constructions described in the LSP spec that cannot be expressed in a standard Lua pattern.
 ---

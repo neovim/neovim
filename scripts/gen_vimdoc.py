@@ -219,7 +219,7 @@ CONFIG = {
             f'*vim.{name}*' if fstem.lower() == '_options' and istbl else
             # Prevents vim.regex.regex
             f'*{fstem}()*' if fstem.endswith('.' + name) else
-            f'*{fstem}.{name}()*'
+            f'*{fstem}.{name}{"" if istbl else "()"}*'
             ),
         'module_override': {
             # `shared` functions are exposed on the `vim` module.
@@ -278,13 +278,10 @@ CONFIG = {
             if name.lower() == 'lsp'
             else f'*lsp-{name.lower()}*'),
         'fn_helptag_fmt': lambda fstem, name, istbl: (
-            f'*vim.lsp.{name}()*'
-            if fstem == 'lsp' and name != 'client'
-            else (
-                '*vim.lsp.client*'
-                # HACK. TODO(justinmk): class/structure support in lua2dox
-                if 'lsp.client' == f'{fstem}.{name}'
-                else f'*vim.lsp.{fstem}.{name}()*')),
+            f'*vim.lsp.{name}{"" if istbl else "()"}*' if fstem == 'lsp' and name != 'client' else
+            # HACK. TODO(justinmk): class/structure support in lua2dox
+            '*vim.lsp.client*' if 'lsp.client' == f'{fstem}.{name}' else
+            f'*vim.lsp.{fstem}.{name}{"" if istbl else "()"}*'),
         'module_override': {},
         'append_only': [],
     },
@@ -301,7 +298,7 @@ CONFIG = {
         'section_name': {'diagnostic.lua': 'diagnostic'},
         'section_fmt': lambda _: 'Lua module: vim.diagnostic',
         'helptag_fmt': lambda _: '*diagnostic-api*',
-        'fn_helptag_fmt': lambda fstem, name, istbl: f'*vim.{fstem}.{name}()*',
+        'fn_helptag_fmt': lambda fstem, name, istbl: f'*vim.{fstem}.{name}{"" if istbl else "()"}*',
         'module_override': {},
         'append_only': [],
     },
@@ -843,6 +840,9 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
 
         return_type = get_text(get_child(member, 'type'))
         if return_type == '':
+            continue
+
+        if 'local_function' in return_type:
             continue
 
         if not CONFIG[target].get('include_tables', True):

@@ -606,7 +606,7 @@ vim.highlight.on_yank({opts})                        *vim.highlight.on_yank()*
                 • priority integer priority (default
                   |vim.highlight.priorities|`.user`)
 
-vim.highlight.priorities                          *vim.highlight.priorities()*
+vim.highlight.priorities                            *vim.highlight.priorities*
     Table with default priorities used for highlighting:
     • `syntax`: `50`, used for standard syntax highlighting
     • `treesitter`: `100`, used for tree-sitter-based highlighting
@@ -1472,10 +1472,6 @@ vim.cmd                                                            *vim.cmd()*
     See also: ~
       • |ex-cmd-index|
 
-                                             *vim.connection_failure_errmsg()*
-vim.connection_failure_errmsg({consequence})
-    TODO: Documentation
-
 vim.defer_fn({fn}, {timeout})                                 *vim.defer_fn()*
     Defers calling {fn} until {timeout} ms passes.
 
@@ -1505,7 +1501,7 @@ vim.deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
     Return: ~
         (string|nil) # Deprecated message, or nil if no message was shown.
 
-vim.inspect({object}, {options})                               *vim.inspect()*
+vim.inspect                                                    *vim.inspect()*
     Gets a human-readable representation of the given object.
 
     See also: ~

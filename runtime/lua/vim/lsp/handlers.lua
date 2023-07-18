@@ -7,7 +7,6 @@ local M = {}
 
 -- FIXME: DOC: Expose in vimdocs
 
----@private
 --- Writes to error buffer.
 ---@param ... string Will be concatenated before being written
 local function err_message(...)
@@ -246,7 +245,6 @@ M['textDocument/references'] = function(_, result, ctx, config)
   end
 end
 
----@private
 --- Return a function that converts LSP responses to list items and opens the list
 ---
 --- The returned function has an optional {config} parameter that accepts a table
@@ -380,7 +378,6 @@ end
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
 M['textDocument/hover'] = M.hover
 
----@private
 --- Jumps to a location. Used as a handler for multiple LSP methods.
 ---@param _ nil not used
 ---@param result (table) result of LSP method; a location or a list of locations.

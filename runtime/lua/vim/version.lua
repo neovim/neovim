@@ -65,8 +65,6 @@ local M = {}
 local Version = {}
 Version.__index = Version
 
---- @private
----
 --- Compares prerelease strings: per semver, number parts must be must be treated as numbers:
 --- "pre1.10" is greater than "pre1.2". https://semver.org/#spec-item-11
 local function cmp_prerel(prerel1, prerel2)
@@ -332,7 +330,6 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
   end
 end
 
----@private
 ---@param v string|Version
 ---@return string
 local function create_err_msg(v)

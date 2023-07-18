@@ -30,7 +30,6 @@ local uv = vim.uv
 --- @field cmd string[]
 --- @field result? SystemCompleted
 
----@private
 ---@param state SystemState
 local function close_handles(state)
   for _, handle in pairs({ state.handle, state.stdin, state.stdout, state.stderr }) do
@@ -128,7 +127,6 @@ function SystemObj:is_closing()
   return handle == nil or handle:is_closing()
 end
 
----@private
 ---@param output function|'false'
 ---@return uv_stream_t?
 ---@return function? Handler
@@ -145,7 +143,6 @@ local function setup_output(output)
   return nil, nil
 end
 
----@private
 ---@param input string|string[]|true|nil
 ---@return uv_stream_t?
 ---@return string|string[]?

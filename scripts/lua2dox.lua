@@ -328,6 +328,10 @@ local function process_function_header(line)
       .. fn:sub(paren_start + 1)
   end
 
+  if line:match('local') then
+    return 'local_function ' .. fn .. '{}'
+  end
+
   -- add vanilla function
   return 'function ' .. fn .. '{}'
 end

@@ -7,7 +7,6 @@ M.FileChangeType = vim.tbl_add_reverse_lookup({
   Deleted = 3,
 })
 
----@private
 --- Joins filepath elements by static '/' separator
 ---
 ---@param ... (string) The path elements.
@@ -16,7 +15,6 @@ local function filepath_join(...)
   return table.concat({ ... }, '/')
 end
 
----@private
 --- Stops and closes a libuv |uv_fs_event_t| or |uv_fs_poll_t| handle
 ---
 ---@param handle (uv_fs_event_t|uv_fs_poll_t) The handle to stop
@@ -88,7 +86,6 @@ local default_poll_interval_ms = 2000
 --- @field include_pattern? userdata
 --- @field exclude_pattern? userdata
 
----@private
 --- Implementation for poll, hiding internally-used parameters.
 ---
 ---@param path string

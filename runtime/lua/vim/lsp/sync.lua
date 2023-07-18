@@ -48,7 +48,6 @@ local str_utfindex = vim.str_utfindex
 local str_utf_start = vim.str_utf_start
 local str_utf_end = vim.str_utf_end
 
----@private
 -- Given a line, byte idx, and offset_encoding convert to the
 -- utf-8, utf-16, or utf-32 index.
 ---@param line string the line to index into
@@ -74,7 +73,6 @@ local function byte_to_utf(line, byte, offset_encoding)
   return utf_idx + 1
 end
 
----@private
 local function compute_line_length(line, offset_encoding)
   local length
   local _
@@ -88,7 +86,6 @@ local function compute_line_length(line, offset_encoding)
   return length
 end
 
----@private
 -- Given a line, byte idx, alignment, and offset_encoding convert to the aligned
 -- utf-8 index and either the utf-16, or utf-32 index.
 ---@param line string the line to index into
@@ -122,7 +119,6 @@ local function align_end_position(line, byte, offset_encoding)
   return byte, char
 end
 
----@private
 --- Finds the first line, byte, and char index of the difference between the previous and current lines buffer normalized to the previous codepoint.
 ---@param prev_lines table list of lines from previous buffer
 ---@param curr_lines table list of lines from current buffer
@@ -198,7 +194,6 @@ local function compute_start_range(
   return { line_idx = firstline, byte_idx = byte_idx, char_idx = char_idx }
 end
 
----@private
 --- Finds the last line and byte index of the differences between prev and current buffer.
 --- Normalized to the next codepoint.
 --- prev_end_range is the text range sent to the server representing the changed region.
@@ -307,7 +302,6 @@ local function compute_end_range(
   return prev_end_range, curr_end_range
 end
 
----@private
 --- Get the text of the range defined by start and end line/column
 ---@param lines table list of lines
 ---@param start_range table table returned by first_difference
@@ -343,7 +337,6 @@ local function extract_text(lines, start_range, end_range, line_ending)
   end
 end
 
----@private
 -- rangelength depends on the offset encoding
 -- bytes for utf-8 (clangd with extension)
 -- codepoints for utf-16

@@ -188,9 +188,7 @@ end
 ---@see |vim.print()|
 ---@see https://github.com/kikito/inspect.lua
 ---@see https://github.com/mpeterv/vinspect
-local function inspect(object, options) -- luacheck: no unused
-  error(object, options) -- Stub for gen_vimdoc.py
-end
+vim.inspect = vim.inspect
 
 do
   local tdots, tick, got_line1, undo_started, trailing_nl = 0, 0, false, false, false
@@ -434,7 +432,6 @@ vim.cmd = setmetatable({}, {
 do
   local validate = vim.validate
 
-  ---@private
   local function make_dict_accessor(scope, handle)
     validate({
       scope = { scope, 's' },
@@ -744,7 +741,6 @@ function vim._expand_pat(pat, env)
   end
 
   local keys = {}
-  ---@private
   local function insert_keys(obj)
     for k, _ in pairs(obj) do
       if type(k) == 'string' and string.sub(k, 1, string.len(match_part)) == match_part then
@@ -1007,7 +1003,6 @@ end
 function vim._init_default_mappings()
   -- mappings
 
-  ---@private
   local function region_chunks(region)
     local chunks = {}
     local maxcol = vim.v.maxcol
@@ -1019,7 +1014,6 @@ function vim._init_default_mappings()
     return chunks
   end
 
-  ---@private
   local function _visual_search(cmd)
     assert(cmd == '/' or cmd == '?')
     vim.api.nvim_feedkeys('\27', 'nx', true) -- Escape visual mode.
@@ -1036,7 +1030,6 @@ function vim._init_default_mappings()
     vim.api.nvim_feedkeys(search_cmd, 'nx', true)
   end
 
-  ---@private
   local function map(mode, lhs, rhs)
     vim.keymap.set(mode, lhs, rhs, { desc = 'Nvim builtin' })
   end

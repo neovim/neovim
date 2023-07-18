@@ -206,7 +206,6 @@ function TSHighlighter:get_query(lang)
   return self._queries[lang]
 end
 
----@private
 ---@param self TSHighlighter
 ---@param buf integer
 ---@param line integer
