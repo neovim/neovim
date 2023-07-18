@@ -329,6 +329,7 @@ local function process_function_header(line)
   end
 
   if line:match('local') then
+    -- Special: tell gen_vimdoc.py this is a local function.
     return 'local_function ' .. fn .. '{}'
   end
 
@@ -359,6 +360,7 @@ local function process_line(line, in_stream, generics)
   if not line:match('^local') then
     local v = line_raw:match('^([A-Za-z][.a-zA-Z_]*)%s+%=')
     if v and v:match('%.') then
+      -- Special: this lets gen_vimdoc.py handle tables.
       return 'table '..v..'() {}'
     end
   end

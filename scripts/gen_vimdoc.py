@@ -842,14 +842,12 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
         if return_type == '':
             continue
 
-        if 'local_function' in return_type:
+        if 'local_function' in return_type:  # Special from lua2dox.lua.
             continue
 
-        if not CONFIG[target].get('include_tables', True):
-            if return_type.startswith('table'):
-                continue
-
-        istbl = return_type.startswith('table')
+        istbl = return_type.startswith('table')  # Special from lua2dox.lua.
+        if istbl and not CONFIG[target].get('include_tables', True):
+            continue
 
         if return_type.startswith(('ArrayOf', 'DictionaryOf')):
             parts = return_type.strip('_').split('_')
