@@ -1572,9 +1572,9 @@ function lsp.start_client(config)
       changetracking.flush(client)
     end
 
-    local result = rpc.notify(method, params)
+    local client_active = rpc.notify(method, params)
 
-    if result then
+    if client_active then
       vim.schedule(function()
         nvim_exec_autocmds('LspNotify', {
           modeline = false,
@@ -1587,7 +1587,7 @@ function lsp.start_client(config)
       end)
     end
 
-    return result
+    return client_active
   end
 
   ---@private
