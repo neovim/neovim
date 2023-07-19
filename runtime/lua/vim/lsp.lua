@@ -2268,8 +2268,9 @@ function lsp.omnifunc(findstart, base)
   end
 
   local bufnr = resolve_bufnr()
-  local has_buffer_clients = not tbl_isempty(all_buffer_active_clients[bufnr] or {})
-  if not has_buffer_clients then
+  local clients = lsp.get_clients({ bufnr = bufnr, method = 'textDocument/completion' })
+  local remaining = #clients
+  if remaining == 0 then
     return findstart == 1 and -1 or {}
   end
 
@@ -2278,47 +2279,66 @@ function lsp.omnifunc(findstart, base)
     log.info('base ', base)
   end
 
-  local pos = api.nvim_win_get_cursor(0)
+  local win = api.nvim_get_current_win()
+  local pos = api.nvim_win_get_cursor(win)
   local line = api.nvim_get_current_line()
   local line_to_cursor = line:sub(1, pos[2])
   local _ = log.trace() and log.trace('omnifunc.line', pos, line)
 
   -- Get the start position of the current keyword
-  local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
-
-  local params = util.make_position_params()
-
+  local match_pos = vim.fn.match(line_to_cursor, '\\k*$') + 1
   local items = {}
-  lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, result, ctx)
-    if err or not result or vim.fn.mode() ~= 'i' then
-      return
-    end
 
-    -- Completion response items may be relative to a position different than `textMatch`.
-    -- Concrete example, with sumneko/lua-language-server:
-    --
-    -- require('plenary.asy|
-    --         ▲       ▲   ▲
-    --         │       │   └── cursor_pos: 20
-    --         │       └────── textMatch: 17
-    --         └────────────── textEdit.range.start.character: 9
-    --                                 .newText = 'plenary.async'
-    --                  ^^^
-    --                  prefix (We'd remove everything not starting with `asy`,
-    --                  so we'd eliminate the `plenary.async` result
-    --
-    -- `adjust_start_col` is used to prefer the language server boundary.
-    --
-    local client = lsp.get_client_by_id(ctx.client_id)
-    local encoding = client and client.offset_encoding or 'utf-16'
-    local candidates = util.extract_completion_items(result)
-    local startbyte = adjust_start_col(pos[1], line, candidates, encoding) or textMatch
-    local prefix = line:sub(startbyte + 1, pos[2])
-    local matches = util.text_document_completion_list_to_complete_items(result, prefix)
-    -- TODO(ashkan): is this the best way to do this?
-    vim.list_extend(items, matches)
-    vim.fn.complete(startbyte + 1, items)
-  end)
+  local startbyte
+
+  ---@private
+  local function on_done()
+    local mode = api.nvim_get_mode()['mode']
+    if mode == 'i' or mode == 'ic' then
+      vim.fn.complete(startbyte or match_pos, items)
+    end
+  end
+
+  for _, client in ipairs(clients) do
+    local params = util.make_position_params(win, client.offset_encoding)
+    client.request('textDocument/completion', params, function(err, result)
+      if err then
+        log.warn(err.message)
+      end
+      if result and vim.fn.mode() == 'i' then
+        -- Completion response items may be relative to a position different than `textMatch`.
+        -- Concrete example, with sumneko/lua-language-server:
+        --
+        -- require('plenary.asy|
+        --         ▲       ▲   ▲
+        --         │       │   └── cursor_pos: 20
+        --         │       └────── textMatch: 17
+        --         └────────────── textEdit.range.start.character: 9
+        --                                 .newText = 'plenary.async'
+        --                  ^^^
+        --                  prefix (We'd remove everything not starting with `asy`,
+        --                  so we'd eliminate the `plenary.async` result
+        --
+        -- `adjust_start_col` is used to prefer the language server boundary.
+        --
+        local encoding = client.offset_encoding
+        local candidates = util.extract_completion_items(result)
+        local curstartbyte = adjust_start_col(pos[1], line, candidates, encoding)
+        if startbyte == nil then
+          startbyte = curstartbyte
+        elseif curstartbyte ~= nil and curstartbyte ~= startbyte then
+          startbyte = match_pos
+        end
+        local prefix = startbyte and line:sub(startbyte + 1) or line_to_cursor:sub(match_pos)
+        local matches = util.text_document_completion_list_to_complete_items(result, prefix)
+        vim.list_extend(items, matches)
+      end
+      remaining = remaining - 1
+      if remaining == 0 then
+        vim.schedule(on_done)
+      end
+    end, bufnr)
+  end
 
   -- Return -2 to signal that we should continue completion so that we can
   -- async complete.
