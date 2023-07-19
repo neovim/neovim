@@ -69,10 +69,10 @@
 --- to other restrictions such as |textlock|).
 function vim.in_fast_event() end
 
---- Creates a special empty table (marked with a metatable), which Nvim to an
---- empty dictionary when translating Lua values to Vimscript or API types.
---- Nvim by default converts an empty table `{}` without this metatable to an
---- list/array.
+--- Creates a special empty table (marked with a metatable), which Nvim
+--- converts to an empty dictionary when translating Lua values to Vimscript
+--- or API types. Nvim by default converts an empty table `{}` without this
+--- metatable to an list/array.
 ---
 --- Note: If numeric keys are present in the table, Nvim ignores the metatable
 --- marker and converts the dict to a list/array anyway.
