@@ -1543,8 +1543,9 @@ int tslua_parse_query(lua_State *L)
   TSQuery *query = ts_query_new(lang, src, (uint32_t)len, &error_offset, &error_type);
 
   if (!query) {
-    return luaL_error(L, "query: %s at position %d for language %s",
-                      query_err_string(error_type), (int)error_offset, lang_name);
+    char err_msg[IOSIZE];
+    query_err_string(src, (int)error_offset, error_type, err_msg, sizeof(err_msg));
+    return luaL_error(L, "%s", err_msg);
   }
 
   TSQuery **ud = lua_newuserdata(L, sizeof(TSQuery *));  // [udata]
@@ -1554,22 +1555,83 @@ int tslua_parse_query(lua_State *L)
   return 1;
 }
 
-static const char *query_err_string(TSQueryError err)
+static const char *query_err_to_string(TSQueryError error_type)
 {
-  switch (err) {
+  switch (error_type) {
   case TSQueryErrorSyntax:
-    return "invalid syntax";
+    return "Invalid syntax:\n";
   case TSQueryErrorNodeType:
-    return "invalid node type";
+    return "Invalid node type ";
   case TSQueryErrorField:
-    return "invalid field";
+    return "Invalid field name ";
   case TSQueryErrorCapture:
-    return "invalid capture";
+    return "Invalid capture name ";
   case TSQueryErrorStructure:
-    return "invalid structure";
+    return "Impossible pattern:\n";
   default:
     return "error";
   }
+}
+
+static void query_err_string(const char *src, int error_offset, TSQueryError error_type, char *err,
+                             size_t errlen)
+{
+  int line_start = 0;
+  int row = 0;
+  const char *error_line = NULL;
+  int error_line_len = 0;
+
+  const char *end_str;
+  const char *src_tmp = src;
+  while ((end_str = strchr(src_tmp, '\n')) != NULL) {
+    int line_length = (int)(end_str - src_tmp) + 1;
+    int line_end = line_start + line_length;
+    if (line_end > error_offset) {
+      error_line = src_tmp;
+      error_line_len = line_length;
+      break;
+    }
+    line_start = line_end;
+    row++;
+    src_tmp += line_length;
+  }
+
+  // Additional check for the last line
+  if (line_start <= error_offset) {
+    error_line = src_tmp;
+    error_line_len = (int)strlen(src_tmp);
+  }
+
+  int column = error_offset - line_start;
+
+  const char *type_msg = query_err_to_string(error_type);
+  snprintf(err, errlen, "Query error at %d:%d. %s", row + 1, column + 1, type_msg);
+  size_t offset = strlen(err);
+  errlen = errlen - offset;
+  err = err + offset;
+
+  // Error types that report names
+  if (error_type == TSQueryErrorNodeType
+      || error_type == TSQueryErrorField
+      || error_type == TSQueryErrorCapture) {
+    const char *suffix = src + error_offset;
+    int suffix_len = 0;
+    char c = suffix[suffix_len];
+    while (isalnum(c) || c == '_' || c == '-' || c == '.') {
+      c = suffix[++suffix_len];
+    }
+    snprintf(err, errlen, "\"%.*s\":\n", suffix_len, suffix);
+    offset = strlen(err);
+    errlen = errlen - offset;
+    err = err + offset;
+  }
+
+  if (!error_line) {
+    snprintf(err, errlen, "Unexpected EOF\n");
+    return;
+  }
+
+  snprintf(err, errlen, "%.*s\n%*s^\n", error_line_len, error_line, column, "");
 }
 
 static TSQuery *query_check(lua_State *L, int index)

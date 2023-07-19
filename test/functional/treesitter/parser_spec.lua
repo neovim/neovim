@@ -1055,4 +1055,44 @@ int x = INT_MAX;
     ]])
   end)
 
+  it('fails to load queries', function()
+    local function test(exp, cquery)
+      eq(exp, pcall_err(exec_lua, "vim.treesitter.query.parse('c', ...)", cquery))
+    end
+
+    -- Invalid node type
+    test(
+      '.../query.lua:0: Query error at 1:2. Invalid node type "dentifier":\n'..
+      '(dentifier) @variable\n'..
+      ' ^',
+      '(dentifier) @variable')
+
+    -- Impossible pattern
+    test(
+      '.../query.lua:0: Query error at 1:13. Impossible pattern:\n'..
+      '(identifier (identifier) @variable)\n'..
+      '            ^',
+      '(identifier (identifier) @variable)')
+
+    -- Invalid syntax
+    test(
+      '.../query.lua:0: Query error at 1:13. Invalid syntax:\n'..
+      '(identifier @variable\n'..
+      '            ^',
+      '(identifier @variable')
+
+    -- Invalid field name
+    test(
+      '.../query.lua:0: Query error at 1:15. Invalid field name "invalid_field":\n'..
+      '((identifier) invalid_field: (identifier))\n'..
+      '              ^',
+      '((identifier) invalid_field: (identifier))')
+
+    -- Invalid capture name
+    test(
+      '.../query.lua:0: Query error at 1:30. Invalid capture name "ok.capture":\n'..
+      '((identifier) @id (#eq? @id @ok.capture))\n'..
+      '                             ^',
+      '((identifier) @id (#eq? @id @ok.capture))')
+  end)
 end)

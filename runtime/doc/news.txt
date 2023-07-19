@@ -135,6 +135,7 @@ The following new APIs and features were added.
     or the parent LanguageTree's language, respectively.
   • Added `vim.treesitter.preview_query()`, for live editing of treesitter
     queries.
+  • Improved error messages for query parsing.
 
 • |vim.ui.open()| opens URIs using the system default handler (macOS `open`,
   Windows `explorer`, Linux `xdg-open`, etc.)

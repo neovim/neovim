@@ -54,7 +54,7 @@ describe('print', function()
     -- TODO(bfredl): these look weird, print() should not use "E5114:" style errors..
     eq('Vim(lua):E5108: Error executing lua E5114: Error while converting print argument #2: [NULL]',
        pcall_err(command, 'lua print("foo", v_nilerr, "bar")'))
-    eq('Vim(lua):E5108: Error executing lua E5114: Error while converting print argument #2: Xtest-functional-lua-overrides-luafile:0: abc',
+    eq('Vim(lua):E5108: Error executing lua E5114: Error while converting print argument #2: Xtest-functional-lua-overrides-luafile:2: abc',
        pcall_err(command, 'lua print("foo", v_abcerr, "bar")'))
     eq('Vim(lua):E5108: Error executing lua E5114: Error while converting print argument #2: <Unknown error: lua_tolstring returned NULL for tostring result>',
        pcall_err(command, 'lua print("foo", v_tblout, "bar")'))
@@ -84,9 +84,9 @@ describe('print', function()
     end
     ]])
     eq('', exec_capture('luafile ' .. fname))
-    eq('Vim(lua):E5108: Error executing lua Xtest-functional-lua-overrides-luafile:0: my mistake',
+    eq('Vim(lua):E5108: Error executing lua Xtest-functional-lua-overrides-luafile:1: my mistake',
       pcall_err(command, 'lua string_error()'))
-    eq('Vim(lua):E5108: Error executing lua Xtest-functional-lua-overrides-luafile:0: 1234',
+    eq('Vim(lua):E5108: Error executing lua Xtest-functional-lua-overrides-luafile:2: 1234',
       pcall_err(command, 'lua number_error()'))
     eq('Vim(lua):E5108: Error executing lua [NULL]',
       pcall_err(command, 'lua nil_error()'))

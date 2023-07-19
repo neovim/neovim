@@ -188,10 +188,16 @@ function module.pcall(fn, ...)
   local errmsg = tostring(rv):gsub('([%s<])vim[/\\]([^%s:/\\]+):%d+', '%1\xffvim\xff%2:0')
                              :gsub('[^%s<]-[/\\]([^%s:/\\]+):%d+', '.../%1:0')
                              :gsub('\xffvim\xff', 'vim/')
+
   -- Scrub numbers in paths/stacktraces:
   --    shared.lua:0: in function 'gsplit'
   --    shared.lua:0: in function <shared.lua:0>'
-  errmsg = errmsg:gsub('([^%s]):%d+', '%1:0')
+  errmsg = errmsg:gsub('([^%s].lua):%d+', '%1:0')
+  --    [string "<nvim>"]:0:
+  --    [string ":lua"]:0:
+  --    [string ":luado"]:0:
+  errmsg = errmsg:gsub('(%[string "[^"]+"%]):%d+', '%1:0')
+
   -- Scrub tab chars:
   errmsg = errmsg:gsub('\t', '    ')
   -- In Lua 5.1, we sometimes get a "(tail call): ?" on the last line.
