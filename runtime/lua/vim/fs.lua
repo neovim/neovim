@@ -2,7 +2,7 @@ local M = {}
 
 local iswin = vim.uv.os_uname().sysname == 'Windows_NT'
 
---- Iterate over all the parents of the given file or directory.
+--- Iterate over all the parents of the given path.
 ---
 --- Example:
 --- <pre>lua
@@ -19,7 +19,7 @@ local iswin = vim.uv.os_uname().sysname == 'Windows_NT'
 --- end
 --- </pre>
 ---
----@param start (string) Initial file or directory.
+---@param start (string) Initial path.
 ---@return function Iterator
 function M.parents(start)
   return function(_, dir)
@@ -34,9 +34,9 @@ function M.parents(start)
     start
 end
 
---- Return the parent directory of the given file or directory
+--- Return the parent directory of the given path
 ---
----@param file (string) File or directory
+---@param file (string) Path
 ---@return string|nil Parent directory of {file}
 function M.dirname(file)
   if file == nil then
@@ -57,9 +57,9 @@ function M.dirname(file)
   return (dir:gsub('\\', '/'))
 end
 
---- Return the basename of the given file or directory
+--- Return the basename of the given path
 ---
----@param file string File or directory
+---@param file string Path
 ---@return string|nil Basename of {file}
 function M.basename(file)
   if file == nil then
@@ -83,7 +83,7 @@ end
 
 ---@alias Iterator fun(): string?, string?
 
---- Return an iterator over the files and directories located in {path}
+--- Return an iterator over the items located in {path}
 ---
 ---@param path (string) An absolute or relative path to the directory to iterate
 ---            over. The path is first normalized |vim.fs.normalize()|.
@@ -93,9 +93,10 @@ end
 ---               to control traversal. Return false to stop searching the current directory.
 ---               Only useful when depth > 1
 ---
----@return Iterator over files and directories in {path}. Each iteration yields
----        two values: name and type. Each "name" is the basename of the file or
----        directory relative to {path}. Type is one of "file" or "directory".
+---@return Iterator over items in {path}. Each iteration yields two values: "name" and "type".
+---        "name" is the basename of the item relative to {path}.
+---        "type" is one of the following:
+---        "file", "directory", "link", "fifo", "socket", "char", "block", "unknown".
 function M.dir(path, opts)
   opts = opts or {}
 
@@ -142,16 +143,16 @@ function M.dir(path, opts)
   end)
 end
 
---- Find files or directories in the given path.
+--- Find files or directories (or other items as specified by `opts.type`) in the given path.
 ---
---- Finds any files or directories given in {names} starting from {path}. If
---- {upward} is "true" then the search traverses upward through parent
---- directories; otherwise, the search traverses downward. Note that downward
---- searches are recursive and may search through many directories! If {stop}
---- is non-nil, then the search stops when the directory given in {stop} is
---- reached. The search terminates when {limit} (default 1) matches are found.
---- The search can be narrowed to find only files or only directories by
---- specifying {type} to be "file" or "directory", respectively.
+--- Finds items given in {names} starting from {path}. If {upward} is "true"
+--- then the search traverses upward through parent directories; otherwise,
+--- the search traverses downward. Note that downward searches are recursive
+--- and may search through many directories! If {stop} is non-nil, then the
+--- search stops when the directory given in {stop} is reached. The search
+--- terminates when {limit} (default 1) matches are found. You can set {type}
+--- to "file", "directory", "link", "socket", "char", "block", or "fifo"
+--- to narrow the search to find only that type.
 ---
 --- Examples:
 --- <pre>lua
@@ -174,13 +175,12 @@ end
 --- end, {limit = math.huge, type = 'file'})
 --- </pre>
 ---
----@param names (string|table|fun(name: string, path: string): boolean) Names of the files
----             and directories to find.
+---@param names (string|table|fun(name: string, path: string): boolean) Names of the items to find.
 ---             Must be base names, paths and globs are not supported when {names} is a string or a table.
----             If {names} is a function, it is called for each traversed file and directory with args:
+---             If {names} is a function, it is called for each traversed item with args:
 ---             - name: base name of the current item
 ---             - path: full path of the current item
----             The function should return `true` if the given file or directory is considered a match.
+---             The function should return `true` if the given item is considered a match.
 ---
 ---@param opts (table) Optional keyword arguments:
 ---                       - path (string): Path to begin searching from. If
@@ -191,14 +191,12 @@ end
 ---                                (recursively).
 ---                       - stop (string): Stop searching when this directory is
 ---                              reached. The directory itself is not searched.
----                       - type (string): Find only files ("file") or
----                              directories ("directory"). If omitted, both
----                              files and directories that match {names} are
----                              included.
+---                       - type (string): Find only items of the given type.
+---                               If omitted, all items that match {names} are included.
 ---                       - limit (number, default 1): Stop the search after
 ---                               finding this many matches. Use `math.huge` to
 ---                               place no limit on the number of matches.
----@return (table) Normalized paths |vim.fs.normalize()| of all matching files or directories
+---@return (table) Normalized paths |vim.fs.normalize()| of all matching items
 function M.find(names, opts)
   opts = opts or {}
   vim.validate({
