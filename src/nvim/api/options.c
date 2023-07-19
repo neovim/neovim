@@ -23,8 +23,8 @@
 # include "api/options.c.generated.h"
 #endif
 
-static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_type, void **from,
-                                      char **filetype, Error *err)
+static int validate_option_value_args(Dict(option) *opts, char *name, int *scope, int *opt_type,
+                                      void **from, char **filetype, Error *err)
 {
   if (HAS_KEY(opts->scope)) {
     VALIDATE_T("scope", kObjectTypeString, opts->scope.type, {
@@ -91,6 +91,24 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
   VALIDATE((!HAS_KEY(opts->win) || !HAS_KEY(opts->buf)), "%s", "cannot use both 'buf' and 'win'", {
     return FAIL;
   });
+
+  int flags = get_option_value_strict(name, NULL, NULL, 0, NULL);
+  if (flags == 0) {
+    // hidden or unknown option
+    api_set_error(err, kErrorTypeValidation, "Unknown option '%s'", name);
+  } else if (*opt_type & (SREQ_BUF | SREQ_WIN)) {
+    // if 'buf' or 'win' is passed, make sure the option supports it
+    int req_flags = *opt_type & SREQ_BUF ? SOPT_BUF : SOPT_WIN;
+    if (!(flags & req_flags)) {
+      char *tgt = *opt_type & SREQ_BUF ? "buf" : "win";
+      char *global = flags & SOPT_GLOBAL ? "global ": "";
+      char *req = flags & SOPT_BUF ? "buffer-local " :
+                  flags & SOPT_WIN ? "window-local " : "";
+
+      api_set_error(err, kErrorTypeValidation, "'%s' cannot be passed for %s%soption '%s'",
+                    tgt, global, req, name);
+    }
+  }
 
   return OK;
 }
@@ -197,7 +215,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   void *from = NULL;
   char *filetype = NULL;
 
-  if (!validate_option_value_args(opts, &scope, &opt_type, &from, &filetype, err)) {
+  if (!validate_option_value_args(opts, name.data, &scope, &opt_type, &from, &filetype, err)) {
     goto err;
   }
 
@@ -259,7 +277,7 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
   int scope = 0;
   int opt_type = SREQ_GLOBAL;
   void *to = NULL;
-  if (!validate_option_value_args(opts, &scope, &opt_type, &to, NULL, err)) {
+  if (!validate_option_value_args(opts, name.data, &scope, &opt_type, &to, NULL, err)) {
     return;
   }
 
@@ -343,7 +361,7 @@ Dictionary nvim_get_option_info2(String name, Dict(option) *opts, Error *err)
   int scope = 0;
   int opt_type = SREQ_GLOBAL;
   void *from = NULL;
-  if (!validate_option_value_args(opts, &scope, &opt_type, &from, NULL, err)) {
+  if (!validate_option_value_args(opts, name.data, &scope, &opt_type, &from, NULL, err)) {
     return (Dictionary)ARRAY_DICT_INIT;
   }
 

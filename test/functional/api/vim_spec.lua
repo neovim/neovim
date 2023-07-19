@@ -2445,7 +2445,7 @@ describe('API', function()
   it('can throw exceptions', function()
     local status, err = pcall(nvim, 'get_option_value', 'invalid-option', {})
     eq(false, status)
-    ok(err:match("Invalid 'option': 'invalid%-option'") ~= nil)
+    ok(err:match("Unknown option 'invalid%-option'") ~= nil)
   end)
 
   it('does not truncate error message <1 MB #5984', function()
