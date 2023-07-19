@@ -136,7 +136,11 @@ function M.open(path)
   if vim.fn.has('mac') == 1 then
     cmd = { 'open', path }
   elseif vim.fn.has('win32') == 1 then
-    cmd = { 'explorer', path }
+    if vim.fn.executable('rundll32') == 1 then
+      cmd = { 'rundll32', 'url.dll,FileProtocolHandler', path }
+    else
+      return nil, 'vim.ui.open: rundll32 not found'
+    end
   elseif vim.fn.executable('wslview') == 1 then
     cmd = { 'wslview', path }
   elseif vim.fn.executable('xdg-open') == 1 then
