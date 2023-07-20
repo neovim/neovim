@@ -896,10 +896,10 @@ void msg_schedule_semsg_multiline(const char *const fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);
-  vim_vsnprintf((char *)IObuff, IOSIZE, fmt, ap);
+  vim_vsnprintf(IObuff, IOSIZE, fmt, ap);
   va_end(ap);
 
-  char *s = xstrdup((char *)IObuff);
+  char *s = xstrdup(IObuff);
   loop_schedule_deferred(&main_loop, event_create(msg_semsg_multiline_event, 1, s));
 }
 
