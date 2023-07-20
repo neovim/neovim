@@ -641,6 +641,9 @@ function protocol.make_client_capabilities()
       },
     },
     textDocument = {
+      diagnostic = {
+        dynamicRegistration = false,
+      },
       inlayHint = {
         dynamicRegistration = true,
         resolveSupport = {

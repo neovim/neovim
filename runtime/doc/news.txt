@@ -117,8 +117,11 @@ The following new APIs and features were added.
 • Builtin TUI can now recognize "super" (|<D-|) and "meta" (|<T-|) modifiers in a
   terminal emulator that supports |tui-csiu|.
 
-• Implemented LSP inlay hints: |vim.lsp.inlay_hint()|
-  https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_inlayHint
+• LSP
+  • Implemented LSP inlay hints: |vim.lsp.inlay_hint()|
+    https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_inlayHint
+  • Implemented pull diagnostic textDocument/diagnostic: |vim.lsp.diagnostic.on_diagnostic()|
+    https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_diagnostic
 
 • Bundled treesitter parser and queries (highlight, folds) for Markdown,
   Python, and Bash.

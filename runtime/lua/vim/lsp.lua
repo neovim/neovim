@@ -61,6 +61,7 @@ lsp._request_name_to_capability = {
   ['textDocument/semanticTokens/full'] = { 'semanticTokensProvider' },
   ['textDocument/semanticTokens/full/delta'] = { 'semanticTokensProvider' },
   ['textDocument/inlayHint'] = { 'inlayHintProvider' },
+  ['textDocument/diagnostic'] = { 'diagnosticProvider' },
   ['inlayHint/resolve'] = { 'inlayHintProvider', 'resolveProvider' },
 }
 
@@ -954,6 +955,9 @@ function lsp._set_defaults(client, bufnr)
       vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = bufnr })
     end
   end)
+  if client.supports_method('textDocument/diagnostic') then
+    lsp.diagnostic._enable(bufnr)
+  end
 end
 
 --- @class lsp.ClientConfig
@@ -1567,7 +1571,23 @@ function lsp.start_client(config)
     if method ~= 'textDocument/didChange' then
       changetracking.flush(client)
     end
-    return rpc.notify(method, params)
+
+    local result = rpc.notify(method, params)
+
+    if result then
+      vim.schedule(function()
+        nvim_exec_autocmds('LspNotify', {
+          modeline = false,
+          data = {
+            client_id = client.id,
+            method = method,
+            params = params,
+          },
+        })
+      end)
+    end
+
+    return result
   end
 
   ---@private

@@ -1,8 +1,13 @@
 ---@brief lsp-diagnostic
 
+local util = require('vim.lsp.util')
 local protocol = require('vim.lsp.protocol')
 
+local api = vim.api
+
 local M = {}
+
+local augroup = api.nvim_create_augroup('vim_lsp_diagnostic', {})
 
 local DEFAULT_CLIENT_ID = -1
 
@@ -154,19 +159,43 @@ local function diagnostic_vim_to_lsp(diagnostics)
 end
 
 ---@type table<integer,integer>
-local _client_namespaces = {}
+local _client_push_namespaces = {}
+---@type table<integer,integer>
+local _client_pull_namespaces = {}
 
---- Get the diagnostic namespace associated with an LSP client |vim.diagnostic|.
+--- Get the diagnostic namespace associated with an LSP client |vim.diagnostic| for diagnostics
 ---
 ---@param client_id integer The id of the LSP client
-function M.get_namespace(client_id)
+---@param is_pull boolean Whether the namespace is for a pull or push client
+function M.get_namespace(client_id, is_pull)
   vim.validate({ client_id = { client_id, 'n' } })
-  if not _client_namespaces[client_id] then
-    local client = vim.lsp.get_client_by_id(client_id)
-    local name = string.format('vim.lsp.%s.%d', client and client.name or 'unknown', client_id)
-    _client_namespaces[client_id] = vim.api.nvim_create_namespace(name)
+
+  local namespace_table
+  local key
+  local name
+  local client = vim.lsp.get_client_by_id(client_id)
+
+  if is_pull then
+    namespace_table = _client_pull_namespaces
+    local server_id = vim.tbl_get(client.server_capabilities, 'diagnosticProvider', 'identifier')
+    key = string.format('%d:%s', client_id, server_id or 'nil')
+    name = string.format(
+      'vim.lsp.%s.%d.%s',
+      client and client.name or 'unknown',
+      client_id,
+      server_id or 'nil'
+    )
+  else
+    namespace_table = _client_push_namespaces
+    key = client_id
+    name = string.format('vim.lsp.%s.%d', client and client.name or 'unknown', client_id)
   end
-  return _client_namespaces[client_id]
+
+  if not namespace_table[key] then
+    namespace_table[key] = api.nvim_create_namespace(name)
+  end
+
+  return namespace_table[key]
 end
 
 --- |lsp-handler| for the method "textDocument/publishDiagnostics"
@@ -209,7 +238,7 @@ function M.on_publish_diagnostics(_, result, ctx, config)
   end
 
   client_id = get_client_id(client_id)
-  local namespace = M.get_namespace(client_id)
+  local namespace = M.get_namespace(client_id, false)
 
   if config then
     for _, opt in pairs(config) do
@@ -229,7 +258,75 @@ function M.on_publish_diagnostics(_, result, ctx, config)
   vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
 end
 
---- Clear diagnostics and diagnostic cache.
+--- |lsp-handler| for the method "textDocument/diagnostic"
+---
+--- See |vim.diagnostic.config()| for configuration options. Handler-specific
+--- configuration can be set using |vim.lsp.with()|:
+--- <pre>lua
+--- vim.lsp.handlers["textDocument/diagnostic"] = vim.lsp.with(
+---   vim.lsp.diagnostic.on_diagnostic, {
+---     -- Enable underline, use default values
+---     underline = true,
+---     -- Enable virtual text, override spacing to 4
+---     virtual_text = {
+---       spacing = 4,
+---     },
+---     -- Use a function to dynamically turn signs off
+---     -- and on, using buffer local variables
+---     signs = function(namespace, bufnr)
+---       return vim.b[bufnr].show_signs == true
+---     end,
+---     -- Disable a feature
+---     update_in_insert = false,
+---   }
+--- )
+--- </pre>
+---
+---@param config table Configuration table (see |vim.diagnostic.config()|).
+function M.on_diagnostic(_, result, ctx, config)
+  local client_id = ctx.client_id
+  local uri = ctx.params.textDocument.uri
+  local fname = vim.uri_to_fname(uri)
+
+  if result == nil then
+    return
+  end
+
+  if result.kind == 'unchanged' then
+    return
+  end
+
+  local diagnostics = result.items
+  if #diagnostics == 0 and vim.fn.bufexists(fname) == 0 then
+    return
+  end
+  local bufnr = vim.fn.bufadd(fname)
+
+  if not bufnr then
+    return
+  end
+
+  client_id = get_client_id(client_id)
+
+  local namespace = M.get_namespace(client_id, true)
+
+  if config then
+    for _, opt in pairs(config) do
+      if type(opt) == 'table' and not opt.severity and opt.severity_limit then
+        opt.severity = { min = severity_lsp_to_vim(opt.severity_limit) }
+      end
+    end
+
+    -- Persist configuration to ensure buffer reloads use the same
+    -- configuration. To make lsp.with configuration work (See :help
+    -- lsp-handler-configuration)
+    vim.diagnostic.config(config, namespace)
+  end
+
+  vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
+end
+
+--- Clear push diagnostics and diagnostic cache.
 ---
 --- Diagnostic producers should prefer |vim.diagnostic.reset()|. However,
 --- this method signature is still used internally in some parts of the LSP
@@ -243,7 +340,7 @@ function M.reset(client_id, buffer_client_map)
   vim.schedule(function()
     for bufnr, client_ids in pairs(buffer_client_map) do
       if client_ids[client_id] then
-        local namespace = M.get_namespace(client_id)
+        local namespace = M.get_namespace(client_id, false)
         vim.diagnostic.reset(namespace, bufnr)
       end
     end
@@ -275,7 +372,7 @@ function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
   end
 
   if client_id then
-    opts.namespace = M.get_namespace(client_id)
+    opts.namespace = M.get_namespace(client_id, false)
   end
 
   if not line_nr then
@@ -285,6 +382,72 @@ function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
   opts.lnum = line_nr
 
   return diagnostic_vim_to_lsp(vim.diagnostic.get(bufnr, opts))
+end
+
+--- Clear diagnostics from pull based clients
+--- @private
+local function clear(bufnr)
+  for _, namespace in pairs(_client_pull_namespaces) do
+    vim.diagnostic.reset(namespace, bufnr)
+  end
+end
+
+--- autocmd ids for LspNotify handlers per buffer
+--- @private
+--- @type table<integer,integer>
+local _autocmd_ids = {}
+
+--- Disable pull diagnostics for a buffer
+--- @private
+local function disable(bufnr)
+  if not _autocmd_ids[bufnr] then
+    return
+  end
+  api.nvim_del_autocmd(_autocmd_ids[bufnr])
+  _autocmd_ids[bufnr] = nil
+  clear(bufnr)
+end
+
+--- Enable pull diagnostics for a buffer
+---@param bufnr (integer) Buffer handle, or 0 for current
+---@private
+function M._enable(bufnr)
+  if bufnr == nil or bufnr == 0 then
+    bufnr = api.nvim_get_current_buf()
+  end
+
+  if _autocmd_ids[bufnr] then
+    return
+  end
+
+  _autocmd_ids[bufnr] = api.nvim_create_autocmd('LspNotify', {
+    buffer = bufnr,
+    callback = function(opts)
+      if opts.data.method ~= 'textDocument/didChange' then
+        return
+      end
+      util._refresh('textDocument/diagnostic', { bufnr = bufnr, only_visible = true })
+    end,
+    group = augroup,
+  })
+
+  api.nvim_buf_attach(bufnr, false, {
+    on_reload = function()
+      util._refresh('textDocument/diagnostic', { bufnr = bufnr })
+    end,
+    on_detach = function()
+      disable(bufnr)
+    end,
+  })
+
+  api.nvim_create_autocmd('LspDetach', {
+    buffer = bufnr,
+    callback = function()
+      disable(bufnr)
+    end,
+    once = true,
+    group = augroup,
+  })
 end
 
 return M
