@@ -1,7 +1,7 @@
 runtime! syntax/dosini.vim
 unlet! b:current_syntax
 
-syntax match editorconfigUnknownProperty "^\s*\zs\w\+\ze\s*="
+syntax match editorconfigUnknownProperty "^\s*\zs[a-zA-Z0-9_-]\+\ze\s*="
 syntax keyword editorconfigProperty root
 
 lua<<
