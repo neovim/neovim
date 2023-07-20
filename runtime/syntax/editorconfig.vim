@@ -11,11 +11,8 @@ syntax match editorconfigUnknownProperty "^\s*\zs[a-zA-Z0-9_-]\+\ze\s*="
 syntax keyword editorconfigProperty root
 
 lua<<
-local props = {}
-for k in pairs(require('editorconfig').properties) do
-  props[#props + 1] = k
-end
-vim.cmd(string.format('syntax keyword editorconfigProperty %s', table.concat(props, ' ')))
+local props = vim.tbl_keys(require('editorconfig').properties)
+vim.cmd.syntax { 'keyword', 'editorconfigProperty', unpack(props) }
 .
 
 hi def link editorconfigProperty dosiniLabel
