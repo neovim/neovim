@@ -1,3 +1,9 @@
+" Nvim syntax file
+" Language:     EditorConfig
+" Last Change:  2023-07-20
+"
+" This file is intentionally _not_ copied from Vim.
+
 runtime! syntax/dosini.vim
 unlet! b:current_syntax
 
