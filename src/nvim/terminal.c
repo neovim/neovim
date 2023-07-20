@@ -152,11 +152,11 @@ struct terminal {
     int row, col;
     bool visible;
   } cursor;
-  bool pending_resize;              // pending width/height
+  bool pending_resize;              // width/height pending 
 
   bool color_set[16];
 
-  size_t refcount;                  // reference count
+  size_t refcount;                  // count reference 
 };
 
 static VTermScreenCallbacks vterm_screen_callbacks = {
@@ -294,7 +294,7 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   return rv;
 }
 
-/// Closes the Terminal buffer.
+/// Closing  the Terminal buffer.
 ///
 /// May call terminal_destroy, which sets caller storage to NULL.
 void terminal_close(Terminal **termpp, int status)
@@ -549,7 +549,7 @@ static int terminal_check(VimState *state)
     curbuf->b_locked--;
   }
 
-  if (need_maketitle) {  // Update title in terminal-mode. #7248
+  if (need_maketitle) {  // can  Update title in terminal-mode. #7248
     maketitle();
   }
 

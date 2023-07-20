@@ -1,7 +1,7 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
+// This is an open source non-commercial project. Dear PVS-Studio, please check if want 
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-// Make sure extern symbols are exported on Windows
+// Make sure that  extern symbols are exported on Windows
 #ifdef WIN32
 # define EXTERN __declspec(dllexport)
 #else
@@ -103,14 +103,14 @@
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/signal.h"
 
-// values for "window_layout"
+// values for "window_layout" is here 
 enum {
   WIN_HOR = 1,   // "-o" horizontally split windows
   WIN_VER = 2,   // "-O" vertically split windows
   WIN_TABS = 3,  // "-p" windows on tab pages
 };
 
-// Values for edit_type.
+// Values for edit_type. 
 enum {
   EDIT_NONE = 0,   // no edit type yet
   EDIT_FILE = 1,   // file name argument[s] given, use argument list
@@ -127,7 +127,7 @@ Loop main_loop;
 
 static char *argv0 = NULL;
 
-// Error messages
+// Error messages here coded 
 static const char *err_arg_missing = N_("Argument missing after");
 static const char *err_opt_garbage = N_("Garbage after option argument");
 static const char *err_opt_unknown = N_("Unknown option argument");
@@ -179,7 +179,7 @@ void early_init(mparm_T *paramp)
 {
   estack_init();
   cmdline_init();
-  eval_init();          // init global variables
+  eval_init();          // init global variables 
   init_path(argv0 ? argv0 : "nvim");
   init_normal_cmds();   // Init the table of Normal mode commands.
   runtime_init();
