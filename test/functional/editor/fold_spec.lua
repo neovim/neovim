@@ -7,6 +7,7 @@ local expect = helpers.expect
 local command = helpers.command
 local funcs = helpers.funcs
 local eq = helpers.eq
+local neq = helpers.neq
 
 describe('Folds', function()
   local tempfname = 'Xtest-fold.txt'
@@ -416,5 +417,32 @@ a]], '13m7')
     feed('gg0<C-v>jI  <Esc>') -- indent both lines using visual blockwise mode
     eq(1, funcs.foldlevel(1))
     eq(1, funcs.foldlevel(2))
+  end)
+
+  it("doesn't open folds with indent method when inserting lower foldlevel line", function()
+    insert([[
+      insert an unindented line under this line
+      keep the lines under this line folded
+        keep this line folded 1
+        keep this line folded 2
+    ]])
+    command('set foldmethod=indent shiftwidth=2 noautoindent')
+    eq(1, funcs.foldlevel(1))
+    eq(1, funcs.foldlevel(2))
+    eq(2, funcs.foldlevel(3))
+    eq(2, funcs.foldlevel(4))
+
+    feed('zo') -- open the outer fold
+    neq(-1, funcs.foldclosed(3)) -- make sure the inner fold is not open
+
+    feed('gg0oa<Esc>') -- insert unindented line
+
+    eq(1, funcs.foldlevel(1)) --|  insert an unindented line under this line
+    eq(0, funcs.foldlevel(2)) --|a
+    eq(1, funcs.foldlevel(3)) --|  keep the lines under this line folded
+    eq(2, funcs.foldlevel(4)) --|    keep this line folded 1
+    eq(2, funcs.foldlevel(5)) --|    keep this line folded 2
+
+    neq(-1, funcs.foldclosed(4)) -- make sure the inner fold is still not open
   end)
 end)
