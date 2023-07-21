@@ -34,6 +34,8 @@ local spell_dict = {
   neovim = 'Nvim',
   lua = 'Lua',
   VimL = 'Vimscript',
+  vimL = 'Vimscript',
+  viml = 'Vimscript',
 }
 local language = nil
 

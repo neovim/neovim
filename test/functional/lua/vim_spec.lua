@@ -276,7 +276,7 @@ describe('lua stdlib', function()
                                                                   |
     ]]}
 
-    -- nvim_command causes a vimL exception, check that it is properly caught
+    -- nvim_command causes a Vimscript exception, check that it is properly caught
     -- and propagated as an error message in async contexts.. #10809
     exec_lua([[
       vim.schedule(function()
@@ -831,7 +831,7 @@ describe('lua stdlib', function()
   it('vim.call, vim.fn', function()
     eq(true, exec_lua([[return vim.call('sin', 0.0) == 0.0 ]]))
     eq(true, exec_lua([[return vim.fn.sin(0.0) == 0.0 ]]))
-    -- compat: nvim_call_function uses "special" value for vimL float
+    -- compat: nvim_call_function uses "special" value for Vimscript float
     eq(false, exec_lua([[return vim.api.nvim_call_function('sin', {0.0}) == 0.0 ]]))
 
     exec([[

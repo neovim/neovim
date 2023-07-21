@@ -1250,8 +1250,8 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 /// Otherwise a temporary scratch window (called the "autocmd window" for
 /// historical reasons) will be used.
 ///
-/// This is useful e.g. to call vimL functions that only work with the current
-/// buffer/window currently, like |termopen()|.
+/// This is useful e.g. to call Vimscript functions that only work with the
+/// current buffer/window currently, like |termopen()|.
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param fun        Function to call inside the buffer (currently Lua callable
