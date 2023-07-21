@@ -500,10 +500,10 @@ The following groups are linked by default to standard |group-name|s:
 ==============================================================================
 EVENTS                                                            *lsp-events*
 
-                                                                   *LspAttach*
-After an LSP client attaches to a buffer. The |autocmd-pattern| is the
-name of the buffer. When used from Lua, the client ID is passed to the
-callback in the "data" table. Example: >lua
+LspAttach                                                          *LspAttach*
+    After an LSP client attaches to a buffer. The |autocmd-pattern| is the
+    name of the buffer. When used from Lua, the client ID is passed to the
+    callback in the "data" table. Example: >lua
 
     vim.api.nvim_create_autocmd("LspAttach", {
       callback = function(args)
@@ -518,10 +518,11 @@ callback in the "data" table. Example: >lua
       end,
     })
 <
-                                                                   *LspDetach*
-Just before an LSP client detaches from a buffer. The |autocmd-pattern| is the
-name of the buffer. When used from Lua, the client ID is passed to the
-callback in the "data" table. Example: >lua
+
+LspDetach                                                          *LspDetach*
+    Just before an LSP client detaches from a buffer. The |autocmd-pattern|
+    is the name of the buffer. When used from Lua, the client ID is passed
+    to the callback in the "data" table. Example: >lua
 
     vim.api.nvim_create_autocmd("LspDetach", {
       callback = function(args)
@@ -532,34 +533,12 @@ callback in the "data" table. Example: >lua
     })
 <
 
-LspTokenUpdate                                                *LspTokenUpdate*
-
-When a visible semantic token is sent or updated by the LSP server, or when an
-existing token becomes visible for the first time. The |autocmd-pattern| is
-the name of the buffer. When used from Lua, the token and client ID are passed
-to the callback in the "data" table. The token fields are documented in
-|vim.lsp.semantic_tokens.get_at_pos()|. Example: >lua
-
-    vim.api.nvim_create_autocmd('LspTokenUpdate', {
-      callback = function(args)
-        local token = args.data.token
-        if token.type == 'variable' and not token.modifiers.readonly then
-          vim.lsp.semantic_tokens.highlight_token(
-            token, args.buf, args.data.client_id, 'MyMutableVariableHighlight'
-          )
-        end
-      end,
-    })
-<
-Note: doing anything other than calling
-|vim.lsp.semantic_tokens.highlight_token()| is considered experimental.
-
 LspNotify                                                          *LspNotify*
+    This event is triggered after each successful notification sent to an
+    LSP server.
 
-This event is triggered after each successful notification sent to an LSP server.
-
-When used from Lua, the client_id, LSP method, and parameters are sent in the
-"data" table. Example: >lua
+    When used from Lua, the client_id, LSP method, and parameters are sent
+    in the "data" table. Example: >lua
 
     vim.api.nvim_create_autocmd('LspNotify', {
       callback = function(args)
@@ -576,23 +555,38 @@ When used from Lua, the client_id, LSP method, and parameters are sent in the
     })
 <
 
+LspProgress                                                       *LspProgress*
+    Upon receipt of a progress notification from the server. Notifications can
+    be polled from a `progress` ring buffer of a |vim.lsp.client| or use
+    |vim.lsp.status()| to get an aggregate message
+
+    If the server sends a "work done progress", the `pattern` is set to `kind`
+    (one of `begin`, `report` or `end`).
+
+    When used from Lua, the event contains a `data` table with `client_id` and
+    `result` properties. `result` will contain the request params sent by the
+    server.
+
+    Example: >vim
+        autocmd LspProgress * redrawstatus
+<
+
 LspRequest                                                        *LspRequest*
+    For each request sent to an LSP server, this event is triggered for
+    every change to the request's status. The status can be one of
+    `pending`, `complete`, or `cancel` and is sent as the {type} on the
+    "data" table passed to the callback function.
 
-For each request sent to an LSP server, this event is triggered for every
-change to the request's status. The status can be one of `pending`,
-`complete`, or `cancel` and is sent as the {type} on the "data" table passed
-to the callback function.
+    It triggers when the initial request is sent ({type} == `pending`) and
+    when the LSP server responds ({type} == `complete`). If a cancelation
+    is requested using `client.cancel_request(request_id)`, then this event
+    will trigger with {type} == `cancel`.
 
-It triggers when the initial request is sent ({type} == `pending`) and when
-the LSP server responds ({type} == `complete`). If a cancelation is requested
-using `client.cancel_request(request_id)`, then this event will trigger with
-{type} == `cancel`.
-
-When used from Lua, the client ID, request ID, and request are sent in the
-"data" table. See {requests} in |vim.lsp.client| for details on the {request}
-value. If the request type is `complete`, the request will be deleted from the
-client's pending requests table immediately after calling the event's
-callbacks. Example: >lua
+    When used from Lua, the client ID, request ID, and request are sent in
+    the "data" table. See {requests} in |vim.lsp.client| for details on the
+    {request} value. If the request type is `complete`, the request will be
+    deleted from the client's pending requests table immediately after
+    calling the event's callbacks. Example: >lua
 
     vim.api.nvim_create_autocmd('LspRequest', {
       callback = function(args)
@@ -615,21 +609,28 @@ callbacks. Example: >lua
     })
 <
 
-LspProgress                                                       *LspProgress*
-    Upon receipt of a progress notification from the server. Notifications can
-    be polled from a `progress` ring buffer of a |vim.lsp.client| or use
-    |vim.lsp.status()| to get an aggregate message
+LspTokenUpdate                                                *LspTokenUpdate*
+    When a visible semantic token is sent or updated by the LSP server, or
+    when an existing token becomes visible for the first time. The
+    |autocmd-pattern| is the name of the buffer. When used from Lua, the
+    token and client ID are passed to the callback in the "data" table. The
+    token fields are documented in |vim.lsp.semantic_tokens.get_at_pos()|.
+    Example:
+    >lua
 
-    If the server sends a "work done progress", the `pattern` is set to `kind`
-    (one of `begin`, `report` or `end`).
-
-    When used from Lua, the event contains a `data` table with `client_id` and
-    `result` properties. `result` will contain the request params sent by the
-    server.
-
-Example: >vim
-    autocmd LspProgress * redrawstatus
+    vim.api.nvim_create_autocmd('LspTokenUpdate', {
+      callback = function(args)
+        local token = args.data.token
+        if token.type == 'variable' and not token.modifiers.readonly then
+          vim.lsp.semantic_tokens.highlight_token(
+            token, args.buf, args.data.client_id, 'MyMutableVariableHighlight'
+          )
+        end
+      end,
+    })
 <
+    Note: doing anything other than calling
+    |vim.lsp.semantic_tokens.highlight_token()| is considered experimental.
 
 ==============================================================================
 Lua module: vim.lsp                                                 *lsp-core*
