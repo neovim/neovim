@@ -402,7 +402,7 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///                    stringified without "kExprNode" prefix.
 ///          - "start": a pair [line, column] describing where node is "started"
 ///                     where "line" is always 0 (will not be 0 if you will be
-///                     using nvim_parse_viml() on e.g. ":let", but that is not
+///                     using this API on e.g. ":let", but that is not
 ///                     present yet). Both elements are Integers.
 ///          - "len": “length” of the node. This and "start" are there for
 ///                   debugging purposes primary (debugging parser and providing

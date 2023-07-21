@@ -1139,7 +1139,7 @@ static bool viml_func_is_fast(const char *name)
   if (fdef) {
     return fdef->fast;
   }
-  // Not a vimL function
+  // Not a Vimscript function
   return false;
 }
 
@@ -1149,7 +1149,7 @@ int nlua_call(lua_State *lstate)
   size_t name_len;
   const char *name = luaL_checklstring(lstate, 1, &name_len);
   if (!nlua_is_deferred_safe() && !viml_func_is_fast(name)) {
-    return luaL_error(lstate, e_luv_api_disabled, "vimL function");
+    return luaL_error(lstate, e_luv_api_disabled, "Vimscript function");
   }
 
   int nargs = lua_gettop(lstate) - 1;
