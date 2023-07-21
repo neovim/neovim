@@ -26,11 +26,11 @@ static kvec_t(DecorProvider) decor_providers = KV_INITIAL_VALUE;
     LUA_NOREF, LUA_NOREF, LUA_NOREF, \
     LUA_NOREF, -1, false, false, 0 }
 
-static void decor_provider_error(DecorProvider *provider, const char *name, Error err)
+static void decor_provider_error(DecorProvider *provider, const char *name, const char *msg)
 {
   const char *ns_name = describe_ns(provider->ns_id);
-  ELOG("error in provider %s.%s: %s", ns_name, name, err.msg);
-  msg_schedule_semsg_multiline("Error in decoration provider %s.%s:\n%s", ns_name, name, err.msg);
+  ELOG("error in provider %s.%s: %s", ns_name, name, msg);
+  msg_schedule_semsg_multiline("Error in decoration provider %s.%s:\n%s", ns_name, name, msg);
 }
 
 static bool decor_provider_invoke(DecorProvider *provider, const char *name, LuaRef ref, Array args,
@@ -51,7 +51,7 @@ static bool decor_provider_invoke(DecorProvider *provider, const char *name, Lua
   }
 
   if (ERROR_SET(&err)) {
-    decor_provider_error(provider, name, err);
+    decor_provider_error(provider, name, err.msg);
     provider->error_count++;
 
     if (provider->error_count >= DP_MAX_ERROR) {
@@ -59,6 +59,7 @@ static bool decor_provider_invoke(DecorProvider *provider, const char *name, Lua
     }
   }
 
+  api_clear_error(&err);
   api_free_object(ret);
   return false;
 }
