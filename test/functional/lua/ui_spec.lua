@@ -6,6 +6,7 @@ local clear = helpers.clear
 local feed = helpers.feed
 local eval = helpers.eval
 local is_ci = helpers.is_ci
+local is_os = helpers.is_os
 local poke_eventloop = helpers.poke_eventloop
 
 describe('vim.ui', function()
@@ -134,8 +135,11 @@ describe('vim.ui', function()
 
   describe('open()', function()
     it('validation', function()
-      if is_ci('github') then
-        matches('vim.ui.open: command failed %(%d%): { "[^"]+", "non%-existent%-file" }',
+      if is_os('win') or not is_ci('github') then
+        exec_lua[[vim.system = function() return { wait=function() return { code=3} end } end]]
+      end
+      if not is_os('bsd') then
+        matches('vim.ui.open: command failed %(%d%): { "[^"]+", .*"non%-existent%-file" }',
           exec_lua[[local _, err = vim.ui.open('non-existent-file') ; return err]])
       end
 
