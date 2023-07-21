@@ -771,7 +771,7 @@ void clearFolding(win_T *win)
 /// The changes in lines from top to bot (inclusive).
 void foldUpdate(win_T *wp, linenr_T top, linenr_T bot)
 {
-  if (disable_fold_update || State & MODE_INSERT) {
+  if (disable_fold_update || (State & MODE_INSERT && !foldmethodIsIndent(wp))) {
     return;
   }
 
