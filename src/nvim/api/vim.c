@@ -305,6 +305,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
 Integer nvim_input(String keys)
   FUNC_API_SINCE(1) FUNC_API_FAST
 {
+  may_trigger_vim_suspend_resume(false);
   return (Integer)input_enqueue(keys);
 }
 
@@ -334,6 +335,8 @@ void nvim_input_mouse(String button, String action, String modifier, Integer gri
                       Integer col, Error *err)
   FUNC_API_SINCE(6) FUNC_API_FAST
 {
+  may_trigger_vim_suspend_resume(false);
+
   if (button.data == NULL || action.data == NULL) {
     goto error;
   }
