@@ -46,6 +46,7 @@
 #include "nvim/search.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
+#include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/vim.h"
@@ -2519,6 +2520,30 @@ static bool arg_autocmd_flag_get(bool *flag, char **cmd_ptr, char *pattern, int 
   }
 
   return false;
+}
+
+/// When kFalse: VimSuspend should be triggered next.
+/// When kTrue: VimResume should be triggerd next.
+/// When kNone: Currently triggering VimSuspend or VimResume.
+static TriState pending_vimresume = kFalse;
+
+static void vimresume_event(void **argv)
+{
+  apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
+  pending_vimresume = kFalse;
+}
+
+/// Trigger VimSuspend or VimResume autocommand.
+void may_trigger_vim_suspend_resume(bool suspend)
+{
+  if (suspend && pending_vimresume == kFalse) {
+    pending_vimresume = kNone;
+    apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, false, NULL);
+    pending_vimresume = kTrue;
+  } else if (!suspend && pending_vimresume == kTrue) {
+    pending_vimresume = kNone;
+    multiqueue_put(main_loop.events, vimresume_event, 0);
+  }
 }
 
 // UI Enter
