@@ -3530,7 +3530,7 @@ void unputcmdline(void)
 // part will be redrawn, otherwise it will not.  If this function is called
 // twice in a row, then 'redraw' should be false and redrawcmd() should be
 // called afterwards.
-void put_on_cmdline(char *str, int len, int redraw)
+void put_on_cmdline(const char *str, int len, int redraw)
 {
   int i;
   int m;
@@ -3740,7 +3740,7 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
 // When "literally" is true, insert literally.
 // When "literally" is false, insert as typed, but don't leave the command
 // line.
-void cmdline_paste_str(char *s, int literally)
+void cmdline_paste_str(const char *s, int literally)
 {
   if (literally) {
     put_on_cmdline(s, -1, true);
@@ -3750,7 +3750,7 @@ void cmdline_paste_str(char *s, int literally)
       if (cv == Ctrl_V && s[1]) {
         s++;
       }
-      int c = mb_cptr2char_adv((const char **)&s);
+      int c = mb_cptr2char_adv(&s);
       if (cv == Ctrl_V || c == ESC || c == Ctrl_C
           || c == CAR || c == NL || c == Ctrl_L
           || (c == Ctrl_BSL && *s == Ctrl_N)) {

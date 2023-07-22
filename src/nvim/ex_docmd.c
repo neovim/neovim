@@ -2879,10 +2879,10 @@ bool checkforcmd(char **pp, const char *cmd, int len)
 /// Append "cmd" to the error message in IObuff.
 /// Takes care of limiting the length and handling 0xa0, which would be
 /// invisible otherwise.
-static void append_command(char *cmd)
+static void append_command(const char *cmd)
 {
   size_t len = strlen(IObuff);
-  char *s = cmd;
+  const char *s = cmd;
   char *d;
 
   if (len > IOSIZE - 100) {
@@ -2901,7 +2901,7 @@ static void append_command(char *cmd)
     } else if (d - IObuff + utfc_ptr2len(s) + 1 >= IOSIZE) {
       break;
     } else {
-      mb_copy_char((const char **)&s, &d);
+      mb_copy_char(&s, &d);
     }
   }
   *d = NUL;
