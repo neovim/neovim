@@ -3612,6 +3612,20 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
+  int num_digits = 0;
+  bool error = false;
+
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    num_digits = (int)tv_get_number_chk(&argvars[1], &error);
+    if (error) {
+      return;  // type error; errmsg already given
+    }
+    if (num_digits < 0) {
+      semsg(_(e_invarg2), tv_get_string(&argvars[1]));
+      return;
+    }
+  }
+
   msg_start();
   msg_row = Rows - 1;   // for when 'cmdheight' > 1
   lines_left = Rows;    // avoid more prompt
@@ -3625,7 +3639,7 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   // Ask for choice.
   int mouse_used;
-  int selected = prompt_for_number(&mouse_used);
+  int selected = prompt_for_number(&mouse_used, num_digits);
   if (mouse_used) {
     selected -= lines_left;
   }

@@ -605,7 +605,7 @@ void spell_suggest(int count)
     cmdmsg_rl = false;
     msg_col = 0;
     // Ask for choice.
-    selected = prompt_for_number(&mouse_used);
+    selected = prompt_for_number(&mouse_used, 0);
 
     if (ui_has(kUIMessages)) {
       ui_call_msg_clear();

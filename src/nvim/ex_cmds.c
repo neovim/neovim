@@ -4788,7 +4788,7 @@ void ex_oldfiles(exarg_T *eap)
   // File selection prompt on ":browse oldfiles"
   if (cmdmod.cmod_flags & CMOD_BROWSE) {
     quit_more = false;
-    nr = prompt_for_number(false);
+    nr = prompt_for_number(false, 0);
     msg_starthere();
     if (nr > 0 && nr <= tv_list_len(l)) {
       const char *const p = tv_list_find_str(l, (int)nr - 1);

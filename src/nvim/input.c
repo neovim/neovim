@@ -162,7 +162,7 @@ int get_keystroke(MultiQueue *events)
 /// When "mouse_used" is not NULL allow using the mouse.
 ///
 /// @param colon  allow colon to abort
-int get_number(int colon, int *mouse_used)
+int get_number(int colon, int num_digits, int *mouse_used)
 {
   int n = 0;
   int typed = 0;
@@ -186,6 +186,8 @@ int get_number(int colon, int *mouse_used)
       n = n * 10 + c - '0';
       msg_putchar(c);
       typed++;
+      if (num_digits != 0 && typed == num_digits)
+        break;
     } else if (c == K_DEL || c == K_KDEL || c == K_BS || c == Ctrl_H) {
       if (typed > 0) {
         msg_puts("\b \b");
@@ -220,7 +222,7 @@ int get_number(int colon, int *mouse_used)
 ///
 /// When "mouse_used" is not NULL allow using the mouse and in that case return
 /// the line number.
-int prompt_for_number(int *mouse_used)
+int prompt_for_number(int *mouse_used, int num_digits)
 {
   int i;
   int save_cmdline_row;
@@ -243,7 +245,7 @@ int prompt_for_number(int *mouse_used)
   // May show different mouse shape.
   setmouse();
 
-  i = get_number(true, mouse_used);
+  i = get_number(true, num_digits, mouse_used);
   if (KeyTyped) {
     // don't call wait_return() now
     if (msg_row > 0) {

@@ -669,7 +669,7 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
 
       if (ask_for_selection) {
         // Ask to select a tag from the list.
-        i = prompt_for_number(NULL);
+        i = prompt_for_number(NULL, 0);
         if (i <= 0 || i > num_matches || got_int) {
           // no valid choice: don't change anything
           if (use_tagstack) {
