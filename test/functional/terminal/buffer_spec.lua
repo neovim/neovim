@@ -17,6 +17,7 @@ local sleep = helpers.sleep
 local funcs = helpers.funcs
 local is_os = helpers.is_os
 local skip = helpers.skip
+local nvim_prog = helpers.nvim_prog
 
 describe(':terminal buffer', function()
   local screen
@@ -452,6 +453,33 @@ describe('terminal input', function()
   it('unknown special keys are not sent', function()
     feed('aaa<Help>bbb')
     eq('aaabbb', exec_lua([[return _G.input_data]]))
+  end)
+end)
+
+describe('terminal input', function()
+  it('sends various special keys with modifiers', function()
+    clear()
+    local screen = thelpers.screen_setup(0,
+      string.format([=[["%s", "-u", "NONE", "-i", "NONE", "--cmd", "startinsert"]]=], nvim_prog))
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                       0,1            All}|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    for _, key in ipairs({
+      '<M-Tab>', '<M-CR>', '<M-Esc>',
+      '<BS>', '<S-Tab>', '<Insert>', '<Del>', '<PageUp>', '<PageDown>',
+      '<S-Up>', '<C-Up>', '<Up>', '<S-Down>', '<C-Down>', '<Down>',
+      '<S-Left>', '<C-Left>', '<Left>', '<S-Right>', '<C-Right>', '<Right>',
+      '<S-Home>', '<C-Home>', '<Home>', '<S-End>', '<C-End>', '<End>',
+    }) do
+      feed('<CR><C-V>' .. key)
+      retry(nil, nil, function() eq(key, meths.get_current_line()) end)
+    end
   end)
 end)
 
