@@ -20,6 +20,8 @@
   (uri_autolink)
 ] @text.uri @nospell
 
+(shortcut_link (link_text) @nospell)
+
 [
   (link_label)
   (link_text)
