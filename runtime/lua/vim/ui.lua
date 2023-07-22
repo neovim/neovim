@@ -15,6 +15,10 @@ local M = {}
 ---               Plugins reimplementing `vim.ui.select` may wish to
 ---               use this to infer the structure or semantics of
 ---               `items`, or the context in which select() was called.
+---     - num_digits (int|nil)
+---               Maximum number of entered digits before the function
+---               returns automatically (without hitting enter), 0 for
+---               no limit.
 ---@param on_choice function ((item|nil, idx|nil) -> ())
 ---               Called once the user made a choice.
 ---               `idx` is the 1-based index of `item` within `items`.
@@ -28,6 +32,7 @@ local M = {}
 ---     format_item = function(item)
 ---         return "I'd like to choose " .. item
 ---     end,
+---     num_digits = 2,
 --- }, function(choice)
 ---     if choice == 'spaces' then
 ---         vim.o.expandtab = true
@@ -44,10 +49,11 @@ function M.select(items, opts, on_choice)
   opts = opts or {}
   local choices = { opts.prompt or 'Select one of:' }
   local format_item = opts.format_item or tostring
+  local num_digits = opts.num_digits or 0
   for i, item in pairs(items) do
     table.insert(choices, string.format('%d: %s', i, format_item(item)))
   end
-  local choice = vim.fn.inputlist(choices)
+  local choice = vim.fn.inputlist(choices, num_digits)
   if choice < 1 or choice > #items then
     on_choice(nil, nil)
   else
