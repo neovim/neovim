@@ -124,14 +124,12 @@ local function get_option_metatype(name, info)
   return info.type
 end
 
-local options_info = setmetatable({}, {
-  __index = function(t, k)
-    local info = api.nvim_get_option_info(k)
-    info.metatype = get_option_metatype(k, info)
-    rawset(t, k, info)
-    return rawget(t, k)
-  end,
-})
+--- @param name string
+local function get_options_info(name)
+  local info = api.nvim_get_option_info(name)
+  info.metatype = get_option_metatype(name, info)
+  return info
+end
 
 ---Environment variables defined in the editor session.
 ---See |expand-env| and |:let-environment| for the Vimscript behavior.
@@ -155,34 +153,16 @@ vim.env = setmetatable({}, {
   end,
 })
 
-local function opt_validate(option_name, target_scope)
-  local scope = options_info[option_name].scope
-  if scope ~= target_scope then
-    local scope_to_string = { buf = 'buffer', win = 'window' }
-    error(
-      string.format(
-        [['%s' is a %s option, not a %s option. See ":help %s"]],
-        option_name,
-        scope_to_string[scope] or scope,
-        scope_to_string[target_scope] or target_scope,
-        option_name
-      )
-    )
-  end
-end
-
 local function new_buf_opt_accessor(bufnr)
   return setmetatable({}, {
     __index = function(_, k)
       if bufnr == nil and type(k) == 'number' then
         return new_buf_opt_accessor(k)
       end
-      opt_validate(k, 'buf')
       return api.nvim_get_option_value(k, { buf = bufnr or 0 })
     end,
 
     __newindex = function(_, k, v)
-      opt_validate(k, 'buf')
       return api.nvim_set_option_value(k, v, { buf = bufnr or 0 })
     end,
   })
@@ -203,7 +183,6 @@ local function new_win_opt_accessor(winid, bufnr)
         error('only bufnr=0 is supported')
       end
 
-      opt_validate(k, 'win')
       -- TODO(lewis6991): allow passing both buf and win to nvim_get_option_value
       return api.nvim_get_option_value(k, {
         scope = bufnr and 'local' or nil,
@@ -212,7 +191,6 @@ local function new_win_opt_accessor(winid, bufnr)
     end,
 
     __newindex = function(_, k, v)
-      opt_validate(k, 'win')
       -- TODO(lewis6991): allow passing both buf and win to nvim_set_option_value
       return api.nvim_set_option_value(k, v, {
         scope = bufnr and 'local' or nil,
@@ -680,7 +658,7 @@ local function create_option_accessor(scope)
   local option_mt
 
   local function make_option(name, value)
-    local info = assert(options_info[name], 'Not a valid option name: ' .. name)
+    local info = assert(get_options_info(name), 'Not a valid option name: ' .. name)
 
     if type(value) == 'table' and getmetatable(value) == option_mt then
       assert(name == value._name, "must be the same value, otherwise that's weird.")
