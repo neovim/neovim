@@ -532,6 +532,7 @@ static int terminal_check(VimState *state)
   }
 
   terminal_check_cursor();
+  validate_cursor();
 
   if (must_redraw) {
     update_screen();
