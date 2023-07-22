@@ -4874,12 +4874,9 @@ static void ex_stop(exarg_T *eap)
   if (!eap->forceit) {
     autowrite_all();
   }
-  apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, false, NULL);
-
+  may_trigger_vim_suspend_resume(true);
   ui_call_suspend();
   ui_flush();
-
-  apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
 }
 
 /// ":exit", ":xit" and ":wq": Write file and quit the current window.
