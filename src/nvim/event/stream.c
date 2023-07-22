@@ -133,15 +133,22 @@ void stream_may_close(Stream *stream)
 void stream_close_handle(Stream *stream)
   FUNC_ATTR_NONNULL_ALL
 {
+  // Workaround: loop_close might forcibly close uv handles. Streams don't know about this,
+  // and their callbacks might call this function, which results in uv_close being called
+  // twice. We have to check uv_is_closing before trying to close the handle.
   if (stream->uvstream) {
     if (uv_stream_get_write_queue_size(stream->uvstream) > 0) {
       WLOG("closed Stream (%p) with %zu unwritten bytes",
            (void *)stream,
            uv_stream_get_write_queue_size(stream->uvstream));
     }
-    uv_close((uv_handle_t *)stream->uvstream, close_cb);
+    if (!uv_is_closing((uv_handle_t *)stream->uvstream)) {
+      uv_close((uv_handle_t *)stream->uvstream, close_cb);
+    }
   } else {
-    uv_close((uv_handle_t *)&stream->uv.idle, close_cb);
+    if (!uv_is_closing((uv_handle_t *)&stream->uv.idle)) {
+      uv_close((uv_handle_t *)&stream->uv.idle, close_cb);
+    }
   }
 }
 
