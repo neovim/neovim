@@ -2238,10 +2238,10 @@ static int find_region(const char *rp, const char *region)
 /// @param[in]  end  End of word or NULL for NUL delimited string
 ///
 /// @returns  Case type of word
-int captype(char *word, const char *end)
+int captype(const char *word, const char *end)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  char *p;
+  const char *p;
 
   // find first letter
   for (p = word; !spell_iswordp_nmw(p, curwin); MB_PTR_ADV(p)) {
@@ -2249,7 +2249,7 @@ int captype(char *word, const char *end)
       return 0;             // only non-word characters, illegal word
     }
   }
-  int c = mb_ptr2char_adv((const char **)&p);
+  int c = mb_ptr2char_adv(&p);
   bool allcap;
   bool firstcap = allcap = SPELL_ISUPPER(c);
   bool past_second = false;              // past second word char
@@ -2503,7 +2503,7 @@ static bool spell_iswordp_w(const int *p, const win_T *wp)
 // Uses the character definitions from the .spl file.
 // When using a multi-byte 'encoding' the length may change!
 // Returns FAIL when something wrong.
-int spell_casefold(const win_T *wp, char *str, int len, char *buf, int buflen)
+int spell_casefold(const win_T *wp, const char *str, int len, char *buf, int buflen)
   FUNC_ATTR_NONNULL_ALL
 {
   if (len >= buflen) {
@@ -2514,12 +2514,12 @@ int spell_casefold(const win_T *wp, char *str, int len, char *buf, int buflen)
   int outi = 0;
 
   // Fold one character at a time.
-  for (char *p = str; p < str + len;) {
+  for (const char *p = str; p < str + len;) {
     if (outi + MB_MAXBYTES > buflen) {
       buf[outi] = NUL;
       return FAIL;
     }
-    int c = mb_cptr2char_adv((const char **)&p);
+    int c = mb_cptr2char_adv(&p);
 
     // Exception: greek capital sigma 0x03A3 folds to 0x03C3, except
     // when it is the last character in a word, then it folds to
@@ -2668,10 +2668,10 @@ void ex_spellrepall(exarg_T *eap)
 /// @param[in]  word  source string to copy
 /// @param[in,out]  wcopy  copied string, with case of first letter changed
 /// @param[in]  upper  True to upper case, otherwise lower case
-void onecap_copy(char *word, char *wcopy, bool upper)
+void onecap_copy(const char *word, char *wcopy, bool upper)
 {
-  char *p = word;
-  int c = mb_cptr2char_adv((const char **)&p);
+  const char *p = word;
+  int c = mb_cptr2char_adv(&p);
   if (upper) {
     c = SPELL_TOUPPER(c);
   } else {
@@ -2683,11 +2683,11 @@ void onecap_copy(char *word, char *wcopy, bool upper)
 
 // Make a copy of "word" with all the letters upper cased into
 // "wcopy[MAXWLEN]".  The result is NUL terminated.
-void allcap_copy(char *word, char *wcopy)
+void allcap_copy(const char *word, char *wcopy)
 {
   char *d = wcopy;
-  for (char *s = word; *s != NUL;) {
-    int c = mb_cptr2char_adv((const char **)&s);
+  for (const char *s = word; *s != NUL;) {
+    int c = mb_cptr2char_adv(&s);
 
     if (c == 0xdf) {
       c = 'S';
@@ -2802,7 +2802,7 @@ void spell_soundfold(slang_T *slang, char *inword, bool folded, char *res)
 
 // Perform sound folding of "inword" into "res" according to SOFOFROM and
 // SOFOTO lines.
-static void spell_soundfold_sofo(slang_T *slang, char *inword, char *res)
+static void spell_soundfold_sofo(slang_T *slang, const char *inword, char *res)
 {
   int ri = 0;
 
@@ -2810,8 +2810,8 @@ static void spell_soundfold_sofo(slang_T *slang, char *inword, char *res)
 
   // The sl_sal_first[] table contains the translation for chars up to
   // 255, sl_sal the rest.
-  for (char *s = inword; *s != NUL;) {
-    int c = mb_cptr2char_adv((const char **)&s);
+  for (const char *s = inword; *s != NUL;) {
+    int c = mb_cptr2char_adv(&s);
     if (utf_class(c) == 0) {
       c = ' ';
     } else if (c < 256) {

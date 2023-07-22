@@ -1412,7 +1412,7 @@ static int cstrncmp(char *s1, char *s2, int *n)
 
   // if it failed and it's utf8 and we want to combineignore:
   if (result != 0 && rex.reg_icombine) {
-    char *str1, *str2;
+    const char *str1, *str2;
     int c1, c2, c11, c12;
     int junk;
 
@@ -1422,8 +1422,8 @@ static int cstrncmp(char *s1, char *s2, int *n)
     str2 = s2;
     c1 = c2 = 0;
     while ((int)(str1 - s1) < *n) {
-      c1 = mb_ptr2char_adv((const char **)&str1);
-      c2 = mb_ptr2char_adv((const char **)&str2);
+      c1 = mb_ptr2char_adv(&str1);
+      c2 = mb_ptr2char_adv(&str2);
 
       // decompose the character if necessary, into 'base' characters
       // because I don't care about Arabic, I will hard-code the Hebrew

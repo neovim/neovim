@@ -1143,10 +1143,11 @@ bool uc_split_args_iter(const char *arg, size_t arglen, size_t *end, char *buf, 
 }
 
 /// split and quote args for <f-args>
-static char *uc_split_args(char *arg, char **args, const size_t *arglens, size_t argc, size_t *lenp)
+static char *uc_split_args(const char *arg, char **args, const size_t *arglens, size_t argc,
+                           size_t *lenp)
 {
   char *buf;
-  char *p;
+  const char *p;
   char *q;
   int len;
 
@@ -1229,7 +1230,7 @@ static char *uc_split_args(char *arg, char **args, const size_t *arglens, size_t
         *q++ = ' ';
         *q++ = '"';
       } else {
-        mb_copy_char((const char **)&p, &q);
+        mb_copy_char(&p, &q);
       }
     }
   } else {
@@ -1242,7 +1243,7 @@ static char *uc_split_args(char *arg, char **args, const size_t *arglens, size_t
           *q++ = '\\';
           *q++ = *p++;
         } else {
-          mb_copy_char((const char **)&p, &q);
+          mb_copy_char(&p, &q);
         }
       }
       if (i != argc - 1) {

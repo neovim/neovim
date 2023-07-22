@@ -1547,10 +1547,10 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
 
 // Set the SOFOFROM and SOFOTO items in language "lp".
 // Returns SP_*ERROR flags when there is something wrong.
-static int set_sofo(slang_T *lp, char *from, char *to)
+static int set_sofo(slang_T *lp, const char *from, const char *to)
 {
-  char *s;
-  char *p;
+  const char *s;
+  const char *p;
 
   // Use "sl_sal" as an array with 256 pointers to a list of wide
   // characters.  The index is the low byte of the character.
@@ -1565,7 +1565,7 @@ static int set_sofo(slang_T *lp, char *from, char *to)
   // First count the number of items for each list.  Temporarily use
   // sl_sal_first[] for this.
   for (p = from, s = to; *p != NUL && *s != NUL;) {
-    const int c = mb_cptr2char_adv((const char **)&p);
+    const int c = mb_cptr2char_adv(&p);
     MB_CPTR_ADV(s);
     if (c >= 256) {
       lp->sl_sal_first[c & 0xff]++;
@@ -1588,8 +1588,8 @@ static int set_sofo(slang_T *lp, char *from, char *to)
   // list.
   memset(lp->sl_sal_first, 0, sizeof(salfirst_T) * 256);
   for (p = from, s = to; *p != NUL && *s != NUL;) {
-    const int c = mb_cptr2char_adv((const char **)&p);
-    const int i = mb_cptr2char_adv((const char **)&s);
+    const int c = mb_cptr2char_adv(&p);
+    const int i = mb_cptr2char_adv(&s);
     if (c >= 256) {
       // Append the from-to chars at the end of the list with
       // the low byte.
@@ -1657,13 +1657,13 @@ static void set_sal_first(slang_T *lp)
 
 // Turn a multi-byte string into a wide character string.
 // Return it in allocated memory.
-static int *mb_str2wide(char *s)
+static int *mb_str2wide(const char *s)
 {
   int i = 0;
 
   int *res = xmalloc(((size_t)mb_charlen(s) + 1) * sizeof(int));
-  for (char *p = s; *p != NUL;) {
-    res[i++] = mb_ptr2char_adv((const char **)&p);
+  for (const char *p = s; *p != NUL;) {
+    res[i++] = mb_ptr2char_adv(&p);
   }
   res[i] = NUL;
 
@@ -5732,13 +5732,13 @@ static void init_spellfile(void)
 /// Set the spell character tables from strings in the .spl file.
 ///
 /// @param cnt  length of "flags"
-static void set_spell_charflags(const char *flags_in, int cnt, char *fol)
+static void set_spell_charflags(const char *flags_in, int cnt, const char *fol)
 {
   const uint8_t *flags = (uint8_t *)flags_in;
   // We build the new tables here first, so that we can compare with the
   // previous one.
   spelltab_T new_st;
-  char *p = fol;
+  const char *p = fol;
   int c;
 
   clear_spell_chartab(&new_st);
@@ -5750,7 +5750,7 @@ static void set_spell_charflags(const char *flags_in, int cnt, char *fol)
     }
 
     if (*p != NUL) {
-      c = mb_ptr2char_adv((const char **)&p);
+      c = mb_ptr2char_adv(&p);
       new_st.st_fold[i + 128] = (uint8_t)c;
       if (i + 128 != c && new_st.st_isu[i + 128] && c < 256) {
         new_st.st_upper[c] = (uint8_t)(i + 128);
@@ -5814,9 +5814,9 @@ static int write_spell_prefcond(FILE *fd, garray_T *gap, size_t *fwv)
 }
 
 // Use map string "map" for languages "lp".
-static void set_map_str(slang_T *lp, char *map)
+static void set_map_str(slang_T *lp, const char *map)
 {
-  char *p;
+  const char *p;
   int headc = 0;
 
   if (*map == NUL) {
@@ -5835,7 +5835,7 @@ static void set_map_str(slang_T *lp, char *map)
   // "aaa/bbb/ccc/".  Fill sl_map_array[c] with the character before c and
   // before the same slash.  For characters above 255 sl_map_hash is used.
   for (p = map; *p != NUL;) {
-    int c = mb_cptr2char_adv((const char **)&p);
+    int c = mb_cptr2char_adv(&p);
     if (c == '/') {
       headc = 0;
     } else {
