@@ -4376,10 +4376,13 @@ input({opts})
 <		Can also be used as a |method|: >
 			GetPrompt()->input()
 
-inputlist({textlist})					*inputlist()*
+inputlist({textlist} [, {num_digits}])			*inputlist()*
 		{textlist} must be a |List| of strings.  This |List| is
 		displayed, one string per line.  The user will be prompted to
 		enter a number, which is returned.
+		If the user enters {num_digits} digits, the function will
+		immediately return with the entered number (without hitting
+		enter).
 		The user can also select an item by clicking on it with the
 		mouse, if the mouse is enabled in the command line ('mouse' is
 		"a" or includes "c").  For the first string 0 is returned.
