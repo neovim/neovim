@@ -698,15 +698,9 @@ static void cmd_with_count(char *cmd, char *bufp, size_t bufsize, int64_t Prenum
   }
 }
 
-void win_set_buf(Window window, Buffer buffer, bool noautocmd, Error *err)
+void win_set_buf(win_T *win, buf_T *buf, bool noautocmd, Error *err)
+  FUNC_ATTR_NONNULL_ALL
 {
-  win_T *win = find_window_by_handle(window, err);
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-
-  if (!win || !buf) {
-    return;
-  }
-
   tabpage_T *tab = win_find_tabpage(win);
 
   // no redrawing and don't set the window title
@@ -720,7 +714,7 @@ void win_set_buf(Window window, Buffer buffer, bool noautocmd, Error *err)
     api_set_error(err,
                   kErrorTypeException,
                   "Failed to switch to window %d",
-                  window);
+                  win->handle);
   }
 
   try_start();
@@ -729,7 +723,7 @@ void win_set_buf(Window window, Buffer buffer, bool noautocmd, Error *err)
     api_set_error(err,
                   kErrorTypeException,
                   "Failed to set buffer %d",
-                  buffer);
+                  buf->handle);
   }
 
   // If window is not current, state logic will not validate its cursor.

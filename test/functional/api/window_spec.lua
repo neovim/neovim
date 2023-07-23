@@ -43,6 +43,22 @@ describe('API/win', function()
       eq('Invalid buffer id: 23', pcall_err(window, 'set_buf', nvim('get_current_win'), 23))
       eq('Invalid window id: 23', pcall_err(window, 'set_buf', 23, nvim('get_current_buf')))
     end)
+
+    it('disallowed in cmdwin if win=curwin or buf=curbuf', function()
+      local new_buf = meths.create_buf(true, true)
+      local new_win = meths.open_win(new_buf, false, {
+        relative='editor', row=10, col=10, width=50, height=10,
+      })
+      feed('q:')
+      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+         pcall_err(meths.win_set_buf, 0, new_buf))
+      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+         pcall_err(meths.win_set_buf, new_win, 0))
+
+      local next_buf = meths.create_buf(true, true)
+      meths.win_set_buf(new_win, next_buf)
+      eq(next_buf, meths.win_get_buf(new_win))
+    end)
   end)
 
   describe('{get,set}_cursor', function()
@@ -820,6 +836,31 @@ describe('API/win', function()
         relative='win', row=3, col=3, width=12, height=3
       })
       eq(1, funcs.exists('g:fired'))
+    end)
+
+    it('disallowed in cmdwin if enter=true or buf=curbuf', function()
+      local new_buf = meths.create_buf(true, true)
+      feed('q:')
+      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+         pcall_err(meths.open_win, new_buf, true, {
+           relative='editor', row=5, col=5, width=5, height=5,
+         }))
+      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+         pcall_err(meths.open_win, 0, false, {
+           relative='editor', row=5, col=5, width=5, height=5,
+         }))
+
+      eq(new_buf, meths.win_get_buf(meths.open_win(new_buf, false, {
+           relative='editor', row=5, col=5, width=5, height=5,
+         })))
+    end)
+
+    it('aborts if buffer is invalid', function()
+      local wins_before = meths.list_wins()
+      eq('Invalid buffer id: 1337', pcall_err(meths.open_win, 1337, false, {
+           relative='editor', row=5, col=5, width=5, height=5,
+         }))
+      eq(wins_before, meths.list_wins())
     end)
   end)
 
