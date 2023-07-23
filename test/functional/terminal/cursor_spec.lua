@@ -6,7 +6,7 @@ local testprg, command = helpers.testprg, helpers.command
 local nvim_prog = helpers.nvim_prog
 local eq, eval = helpers.eq, helpers.eval
 local matches = helpers.matches
-local feed_command = helpers.feed_command
+local poke_eventloop = helpers.poke_eventloop
 local hide_cursor = thelpers.hide_cursor
 local show_cursor = thelpers.show_cursor
 local is_os = helpers.is_os
@@ -153,7 +153,8 @@ describe('cursor with customized highlighting', function()
     })
     screen:attach({rgb=false})
     command('call termopen(["'..testprg('tty-test')..'"])')
-    feed_command('startinsert')
+    feed('i')
+    poke_eventloop()
   end)
 
   it('overrides the default highlighting', function()

@@ -24,8 +24,7 @@ describe(':terminal buffer', function()
 
   before_each(function()
     clear()
-    feed_command('set modifiable swapfile undolevels=20')
-    poke_eventloop()
+    command('set modifiable swapfile undolevels=20')
     screen = thelpers.screen_setup()
   end)
 
@@ -198,8 +197,7 @@ describe(':terminal buffer', function()
 
   it('handles loss of focus gracefully', function()
     -- Change the statusline to avoid printing the file name, which varies.
-    nvim('set_option', 'statusline', '==========')
-    feed_command('set laststatus=0')
+    nvim('set_option_value', 'statusline', '==========', {})
 
     -- Save the buffer number of the terminal for later testing.
     local tbuf = eval('bufnr("%")')
@@ -232,8 +230,6 @@ describe(':terminal buffer', function()
     neq(tbuf, eval('bufnr("%")'))
     feed_command('quit!')  -- Should exit the new window, not the terminal.
     eq(tbuf, eval('bufnr("%")'))
-
-    feed_command('set laststatus=1')  -- Restore laststatus to the default.
   end)
 
   it('term_close() use-after-free #4393', function()
@@ -432,7 +428,7 @@ describe('terminal input', function()
         _G.input_data = _G.input_data .. data
       end })
     ]])
-    command('startinsert')
+    feed('i')
     poke_eventloop()
   end)
 
