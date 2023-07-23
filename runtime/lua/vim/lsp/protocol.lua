@@ -828,6 +828,7 @@ function protocol.make_client_capabilities()
             return res
           end)(),
         },
+        dataSupport = true,
       },
       callHierarchy = {
         dynamicRegistration = false,
