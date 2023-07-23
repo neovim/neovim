@@ -147,7 +147,8 @@ static void redraw_for_cursorcolumn(win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
   if ((wp->w_valid & VALID_VIRTCOL) == 0 && !pum_visible()) {
-    if (wp->w_p_cuc || ((HL_ATTR(HLF_LC) || win_hl_attr(wp, HLF_LC)) && using_hlsearch())) {
+    if (wp->w_p_cuc
+        || (win_hl_attr(wp, HLF_LC) != win_hl_attr(wp, HLF_L) && using_hlsearch())) {
       // When 'cursorcolumn' is set or "CurSearch" is in use
       // need to redraw with UPD_SOME_VALID.
       redraw_later(wp, UPD_SOME_VALID);
