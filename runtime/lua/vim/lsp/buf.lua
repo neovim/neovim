@@ -514,7 +514,7 @@ function M.remove_workspace_folder(workspace_folder)
     return
   end
   local params = util.make_workspace_params(
-    { {} },
+    {},
     { { uri = vim.uri_from_fname(workspace_folder), name = workspace_folder } }
   )
   for _, client in pairs(vim.lsp.get_clients({ bufnr = 0 })) do
