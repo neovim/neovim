@@ -535,6 +535,10 @@ Working directory (Vim implemented some of these after Nvim):
 - `getcwd(-1)` is equivalent to `getcwd(-1, 0)` instead of returning the global
   working directory. Use `getcwd(-1, -1)` to get the global working directory.
 
+Autocommands:
+- Fixed inconsistent behavior in execution of nested autocommands:
+  https://github.com/neovim/neovim/issues/23368
+
 ==============================================================================
 Missing features					 *nvim-missing*
 
