@@ -162,6 +162,7 @@ static const char *highlight_init_both[] = {
   "default link QuickFixLine Search",
   "default link CursorLineSign SignColumn",
   "default link CursorLineFold FoldColumn",
+  "default link CurSearch Search",
   "default link PmenuKind Pmenu",
   "default link PmenuKindSel PmenuSel",
   "default link PmenuExtra Pmenu",
@@ -2163,8 +2164,7 @@ void highlight_changed(void)
       id_S = final_id;
     }
 
-    highlight_attr[hlf] = hl_get_ui_attr(ns_id, hlf, final_id,
-                                         (hlf == HLF_INACTIVE || hlf == HLF_LC));
+    highlight_attr[hlf] = hl_get_ui_attr(ns_id, hlf, final_id, hlf == HLF_INACTIVE);
 
     if (highlight_attr[hlf] != highlight_attr_last[hlf]) {
       if (hlf == HLF_MSG) {
