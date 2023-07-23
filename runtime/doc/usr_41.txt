@@ -1782,7 +1782,7 @@ PITFALLS
 Even bigger problem arises in the following example: >
 
 	:map ,ab o#include
-	:unmap ,ab 
+	:unmap ,ab
 
 Here the unmap command will not work, because it tries to unmap ",ab ".  This
 does not exist as a mapped sequence.  An error will be issued, which is very
@@ -2244,7 +2244,7 @@ Example: >
 
 Write this single-line file as "ftdetect/foofoo.vim" in the first directory
 that appears in 'runtimepath'.  For Unix that would be
-"~/.config/nvim/ftdetect/foofoo.vim".  The convention is to use the name of 
+"~/.config/nvim/ftdetect/foofoo.vim".  The convention is to use the name of
 the filetype for the script name.
 
 You can make more complicated checks if you like, for example to inspect the
@@ -2315,7 +2315,7 @@ you can write the different setting in a script: >
 
 Now write this in the "after" directory, so that it gets sourced after the
 distributed "vim.vim" ftplugin |after-directory|.  For Unix this would be
-"~/.config/nvim/after/ftplugin/vim.vim".  Note that the default plugin will 
+"~/.config/nvim/after/ftplugin/vim.vim".  Note that the default plugin will
 have set "b:did_ftplugin", but it is ignored here.
 
 
@@ -2485,7 +2485,7 @@ a user to overrule or add to the default file.  The default files start with: >
 	:let current_compiler = "mine"
 
 When you write a compiler file and put it in your personal runtime directory
-(e.g., ~/.config/nvim/compiler for Unix), you set the "current_compiler" 
+(e.g., ~/.config/nvim/compiler for Unix), you set the "current_compiler"
 variable to make the default file skip the settings.
 							*:CompilerSet*
 The second mechanism is to use ":set" for ":compiler!" and ":setlocal" for

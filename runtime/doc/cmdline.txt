@@ -981,7 +981,7 @@ These modifiers can be given, in this order:
 		precede any :r or :e.
 	:r	Root of the file name (the last extension removed).  When
 		there is only an extension (file name that starts with '.',
-		e.g., ".nvimrc"), it is not removed.  Can be repeated to 
+		e.g., ".nvimrc"), it is not removed.  Can be repeated to
 		remove several extensions (last one first).
 	:e	Extension of the file name.  Only makes sense when used alone.
 		When there is no extension the result is empty.

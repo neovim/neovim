@@ -231,7 +231,7 @@ o  Enable Arabic settings [short-cut]
       - While in Left-to-right mode, enter ':set rl' in the command line
 	('rl' is the abbreviation for rightleft).
 
-      - Put the ':set rl' line in your vimrc file to start Vim in 
+      - Put the ':set rl' line in your vimrc file to start Vim in
         right-to-left mode permanently.
 
    +  Arabic right-to-left command-line Mode

@@ -391,7 +391,7 @@ This section documents various low-level behavior changes.
 
 |mkdir()| behaviour changed:
 1. Assuming /tmp/foo does not exist and /tmp can be written to
-   mkdir('/tmp/foo/bar', 'p', 0700) will create both /tmp/foo and /tmp/foo/bar 
+   mkdir('/tmp/foo/bar', 'p', 0700) will create both /tmp/foo and /tmp/foo/bar
    with 0700 permissions. Vim mkdir will create /tmp/foo with 0755.
 2. If you try to create an existing directory with `'p'` (e.g. mkdir('/',
    'p')) mkdir() will silently exit. In Vim this was an error.
@@ -416,16 +416,16 @@ This section documents various low-level behavior changes.
    error out.
 5. Stringifyed infinite and NaN values now use |str2float()| and can be evaled
    back.
-6. (internal) Trying to print or stringify VAR_UNKNOWN in Vim results in 
+6. (internal) Trying to print or stringify VAR_UNKNOWN in Vim results in
    nothing, E908, in Nvim it is internal error.
 
 |json_decode()| behaviour changed:
 1. It may output |msgpack-special-dict|.
-2. |msgpack-special-dict| is emitted also in case of duplicate keys, while in 
+2. |msgpack-special-dict| is emitted also in case of duplicate keys, while in
    Vim it errors out.
 3. It accepts only valid JSON.  Trailing commas are not accepted.
 
-|json_encode()| behaviour slightly changed: now |msgpack-special-dict| values 
+|json_encode()| behaviour slightly changed: now |msgpack-special-dict| values
 are accepted, but |v:none| is not.
 
 Viminfo text files were replaced with binary (messagepack) |shada| files.
@@ -444,10 +444,10 @@ Additional differences:
   |shada-error-handling|
 - ShaDa file keeps search direction (|v:searchforward|), viminfo does not.
 
-|printf()| returns something meaningful when used with `%p` argument: in Vim 
-it used to return useless address of the string (strings are copied to the 
-newly allocated memory all over the place) and fail on types which cannot be 
-coerced to strings. See |id()| for more details, currently it uses 
+|printf()| returns something meaningful when used with `%p` argument: in Vim
+it used to return useless address of the string (strings are copied to the
+newly allocated memory all over the place) and fail on types which cannot be
+coerced to strings. See |id()| for more details, currently it uses
 `printf("%p", {expr})` internally.
 
 |c_CTRL-R| pasting a non-special register into |cmdline| omits the last <CR>.

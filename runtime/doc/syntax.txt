@@ -3270,7 +3270,7 @@ This covers the shell named "tcsh".  It is a superset of csh.  See |csh.vim|
 for how the filetype is detected.
 
 Tcsh does not allow \" in strings unless the "backslash_quote" shell variable
-is set.  If you want VIM to assume that no backslash quote constructs exist 
+is set.  If you want VIM to assume that no backslash quote constructs exist
 add this line to your vimrc: >
 
 	:let tcsh_backslash_quote = 0
@@ -5067,7 +5067,7 @@ ctermbg={color-nr}				*ctermbg*
 	a number instead of a color name.
 
 	Note that for 16 color ansi style terminals (including xterms), the
-	numbers in the NR-8 column is used.  Here "*" means "add 8" so that 
+	numbers in the NR-8 column is used.  Here "*" means "add 8" so that
 	Blue is 12, DarkGray is 8 etc.
 
 	Note that for some color terminals these names may result in the wrong
