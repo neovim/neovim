@@ -404,10 +404,11 @@ void nvim_win_close(Window window, Boolean force, Error *err)
   if (cmdwin_type != 0) {
     if (win == curwin) {
       cmdwin_result = Ctrl_C;
-    } else {
+      return;
+    } else if (win == cmdwin_old_curwin) {
       api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
+      return;
     }
-    return;
   }
 
   tabpage_T *tabpage = win_find_tabpage(win);

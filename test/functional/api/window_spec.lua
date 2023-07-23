@@ -540,15 +540,21 @@ describe('API/win', function()
       command('split')
       eq(2, #meths.list_wins())
       local oldwin = meths.get_current_win()
+      local otherwin = meths.open_win(0, false, {
+        relative='editor', row=10, col=10, width=10, height=10,
+      })
       -- Open cmdline-window.
       feed('q:')
-      eq(3, #meths.list_wins())
+      eq(4, #meths.list_wins())
       eq(':', funcs.getcmdwintype())
-      -- Vim: not allowed to close other windows from cmdline-window.
+      -- Not allowed to close previous window from cmdline-window.
       eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-        pcall_err(meths.win_close, oldwin, true))
+         pcall_err(meths.win_close, oldwin, true))
+      -- Closing other windows is fine.
+      meths.win_close(otherwin, true)
+      eq(false, meths.win_is_valid(otherwin))
       -- Close cmdline-window.
-      meths.win_close(0,true)
+      meths.win_close(0, true)
       eq(2, #meths.list_wins())
       eq('', funcs.getcmdwintype())
     end)
