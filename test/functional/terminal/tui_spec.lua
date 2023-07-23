@@ -8,7 +8,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local Screen = require('test.functional.ui.screen')
 local eq = helpers.eq
-local feed_command = helpers.feed_command
 local feed_data = thelpers.feed_data
 local clear = helpers.clear
 local command = helpers.command
@@ -110,14 +109,14 @@ describe('TUI', function()
   end)
 
   it('accepts resize while pager is active', function()
-    child_session:request("nvim_exec", [[
-    set more
-    func! ManyErr()
-      for i in range(20)
-        echoerr "FAIL ".i
-      endfor
-    endfunc
-    ]], false)
+    child_session:request('nvim_exec2', [[
+      set more
+      func! ManyErr()
+        for i in range(20)
+          echoerr "FAIL ".i
+        endfor
+      endfunc
+    ]], {})
     feed_data(':call ManyErr()\r')
     screen:expect{grid=[[
       {8:Error detected while processing function ManyErr:} |
@@ -241,7 +240,7 @@ describe('TUI', function()
   it('interprets leading <Esc> byte as ALT modifier in normal-mode', function()
     local keys = 'dfghjkl'
     for c in keys:gmatch('.') do
-      feed_command('nnoremap <a-'..c..'> ialt-'..c..'<cr><esc>')
+      feed_data(':nnoremap <a-'..c..'> ialt-'..c..'<cr><esc>\r')
       feed_data('\027'..c)
     end
     screen:expect([[
@@ -281,9 +280,11 @@ describe('TUI', function()
   end)
 
   it('interprets <Esc>[27u as <Esc>', function()
-    feed_command('nnoremap <M-;> <Nop>')
-    feed_command('nnoremap <Esc> AESC<Esc>')
-    feed_command('nnoremap ; Asemicolon<Esc>')
+    child_session:request('nvim_exec2', [[
+      nnoremap <M-;> <Nop>
+      nnoremap <Esc> AESC<Esc>
+      nnoremap ; Asemicolon<Esc>
+    ]], {})
     feed_data('\027[27u;')
     screen:expect([[
       ESCsemicolo{1:n}                                      |
@@ -331,11 +332,11 @@ describe('TUI', function()
   end)
 
   it('accepts mouse wheel events #19992', function()
-    child_session:request('nvim_exec', [[
+    child_session:request('nvim_exec2', [[
       set number nostartofline nowrap mousescroll=hor:1,ver:1
       call setline(1, repeat([join(range(10), '----')], 10))
       vsplit
-    ]], false)
+    ]], {})
     screen:expect([[
       {11:  1 }{1:0}----1----2----3----4│{11:  1 }0----1----2----3----|
       {11:  2 }0----1----2----3----4│{11:  2 }0----1----2----3----|
@@ -661,11 +662,11 @@ describe('TUI', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
-    child_session:request('nvim_exec', [[
+    child_session:request('nvim_exec2', [[
       tab split
       tabnew
       highlight Tabline ctermbg=NONE ctermfg=NONE cterm=underline
-    ]], false)
+    ]], {})
     screen:expect([[
       {12: + [No Name]  + [No Name] }{3: [No Name] }{1:            }{12:X}|
       {1: }                                                 |
@@ -720,7 +721,7 @@ describe('TUI', function()
   end)
 
   it('mouse events work with right-click menu', function()
-    child_session:request('nvim_exec', [[
+    child_session:request('nvim_exec2', [[
       call setline(1, 'popup menu test')
       set mouse=a mousemodel=popup
 
@@ -730,7 +731,7 @@ describe('TUI', function()
       menu PopUp.baz :let g:menustr = 'baz'<CR>
       highlight Pmenu ctermbg=NONE ctermfg=NONE cterm=underline,reverse
       highlight PmenuSel ctermbg=NONE ctermfg=NONE cterm=underline,reverse,bold
-    ]], false)
+    ]], {})
     meths.input_mouse('right', 'press', '', 0, 0, 4)
     screen:expect([[
       {1:p}opup menu test                                   |
@@ -1584,11 +1585,11 @@ describe('TUI', function()
   it('no stack-use-after-scope with cursor color #22432', function()
     screen:set_option('rgb', true)
     command('set termguicolors')
-    child_session:request('nvim_exec', [[
+    child_session:request('nvim_exec2', [[
       set tgc
       hi Cursor guifg=Red guibg=Green
       set guicursor=n:block-Cursor/lCursor
-    ]], false)
+    ]], {})
     screen:set_default_attr_ids({
       [1] = {reverse = true},
       [2] = {bold = true, foreground = Screen.colors.Blue},
@@ -1808,10 +1809,10 @@ describe('TUI FocusGained/FocusLost', function()
       {3:-- TERMINAL --}                                    |
     ]])
     child_session = helpers.connect(child_server)
-    child_session:request('nvim_exec', [[
+    child_session:request('nvim_exec2', [[
       autocmd FocusGained * echo 'gained'
       autocmd FocusLost * echo 'lost'
-    ]], false)
+    ]], {})
     feed_data("\034\016")  -- CTRL-\ CTRL-N
   end)
 
@@ -1842,7 +1843,7 @@ describe('TUI FocusGained/FocusLost', function()
   end)
 
   it('in insert-mode', function()
-    feed_command('set noshowmode')
+    feed_data(':set noshowmode\r')
     feed_data('i')
     screen:expect{grid=[[
       {1: }                                                 |
@@ -1907,11 +1908,11 @@ describe('TUI FocusGained/FocusLost', function()
     -- Set up autocmds that modify the buffer, instead of just calling :echo.
     -- This is how we can test handling of focus gained/lost during cmdline-mode.
     -- See commit: 5cc87d4dabd02167117be7a978b5c8faaa975419.
-    child_session:request('nvim_exec', [[
+    child_session:request('nvim_exec2', [[
       autocmd!
       autocmd FocusLost * call append(line('$'), 'lost')
       autocmd FocusGained * call append(line('$'), 'gained')
-    ]], false)
+    ]], {})
     retry(2, 3 * screen.timeout, function()
       -- Enter cmdline-mode.
       feed_data(':')

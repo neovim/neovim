@@ -2,7 +2,7 @@ local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
-local feed, testprg, feed_command = helpers.feed, helpers.testprg, helpers.feed_command
+local feed, testprg = helpers.feed, helpers.testprg
 local eval = helpers.eval
 local command = helpers.command
 local matches = helpers.matches
@@ -349,8 +349,7 @@ describe(':terminal prints more lines than the screen height and exits', functio
     clear()
     local screen = Screen.new(30, 7)
     screen:attach({rgb=false})
-    feed_command(("call termopen(['%s', '10']) | startinsert"):format(testprg('tty-test')))
-    poke_eventloop()
+    command(("call termopen(['%s', '10']) | startinsert"):format(testprg('tty-test')))
     screen:expect([[
       line6                         |
       line7                         |
