@@ -1107,21 +1107,11 @@ retnomove:
   }
 
   bool below_window = grid == DEFAULT_GRID_HANDLE && row + wp->w_winbar_height >= wp->w_height;
-  on_status_line = (below_window)
-    ? row + wp->w_winbar_height - wp->w_height + 1 == 1
-    : false;
-
-  on_winbar = (row == -1)
-    ? wp->w_winbar_height != 0
-    : false;
-
-  on_statuscol = !below_window && !on_status_line && !on_winbar && col < win_col_off(wp)
-    ? *wp->w_p_stc != NUL
-    : false;
-
-  on_sep_line = grid == DEFAULT_GRID_HANDLE && col >= wp->w_width
-    ? col - wp->w_width + 1 == 1
-    : false;
+  on_status_line = below_window && row + wp->w_winbar_height - wp->w_height + 1 == 1;
+  on_sep_line = grid == DEFAULT_GRID_HANDLE && col >= wp->w_width && col - wp->w_width + 1 == 1;
+  on_winbar = row == -1 && wp->w_winbar_height != 0;
+  on_statuscol = !below_window && !on_status_line && !on_sep_line && !on_winbar
+                 && *wp->w_p_stc != NUL && col < win_col_off(wp);
 
   // The rightmost character of the status line might be a vertical
   // separator character if there is no connecting window to the right.
