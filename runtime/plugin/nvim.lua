@@ -18,31 +18,3 @@ vim.api.nvim_create_user_command('InspectTree', function(cmd)
     vim.treesitter.inspect_tree()
   end
 end, { desc = 'Inspect treesitter language tree for buffer', count = true })
-
--- TODO: use vim.region() when it lands... #13896 #16843
-local function get_visual_selection()
-  local save_a = vim.fn.getreginfo('a')
-  vim.cmd([[norm! "ay]])
-  local selection = vim.fn.getreg('a', 1)
-  vim.fn.setreg('a', save_a)
-  return selection
-end
-
-local gx_desc =
-  'Opens filepath or URI under cursor with the system handler (file explorer, web browser, …)'
-local function do_open(uri)
-  local _, err = vim.ui.open(uri)
-  if err then
-    vim.notify(err, vim.log.levels.ERROR)
-  end
-end
-if vim.fn.maparg('gx', 'n') == '' then
-  vim.keymap.set({ 'n' }, 'gx', function()
-    do_open(vim.fn.expand('<cfile>'))
-  end, { desc = gx_desc })
-end
-if vim.fn.maparg('gx', 'x') == '' then
-  vim.keymap.set({ 'x' }, 'gx', function()
-    do_open(get_visual_selection())
-  end, { desc = gx_desc })
-end
