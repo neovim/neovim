@@ -494,7 +494,7 @@ function M.add_workspace_folder(workspace_folder)
       end
     end
     if not found then
-      vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
+      client.notify('workspace/didChangeWorkspaceFolders', params)
       if not client.workspace_folders then
         client.workspace_folders = {}
       end
@@ -517,16 +517,20 @@ function M.remove_workspace_folder(workspace_folder)
     {},
     { { uri = vim.uri_from_fname(workspace_folder), name = workspace_folder } }
   )
+  local sent = false
   for _, client in pairs(vim.lsp.get_clients({ bufnr = 0 })) do
     for idx, folder in pairs(client.workspace_folders or {}) do
       if folder.name == workspace_folder then
-        vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
+        sent = true
+        client.notify('workspace/didChangeWorkspaceFolders', params)
         client.workspace_folders[idx] = nil
-        return
+        break
       end
     end
   end
-  print(workspace_folder, 'is not currently part of the workspace')
+  if not sent then
+    print(workspace_folder, 'is not currently part of the workspace')
+  end
 end
 
 --- Lists all symbols in the current workspace in the quickfix window.
