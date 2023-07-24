@@ -1137,7 +1137,7 @@ static void recording_mode(int attr)
 /// of 'ru_col'.
 void comp_col(void)
 {
-  int last_has_status = (p_ls > 1 || (p_ls == 1 && !ONE_WINDOW));
+  bool last_has_status = last_stl_height(false) > 0;
 
   sc_col = 0;
   ru_col = 0;
