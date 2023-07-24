@@ -4,6 +4,8 @@
 
 runtime/doc/*   linguist-documentation
 
+runtime/lua/vim/_meta/vimfn.lua linguist-generated
+
 src/xdiff/**    linguist-vendored
 src/cjson/**    linguist-vendored
 src/unicode/**  linguist-vendored

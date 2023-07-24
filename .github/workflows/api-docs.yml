@@ -1,14 +1,15 @@
 # Check if any PR needs to run the autogenerate script
-name: Autogenerate API docs
+name: Autogenerate API docs and types
 on:
   pull_request:
     paths:
       - 'src/nvim/api/*.[ch]'
+      - 'src/nvim/eval.lua'
       - 'runtime/lua/**.lua'
       - 'runtime/doc/**'
 
 jobs:
-  regen-api-docs:
+  regen-api-docs-and-types:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -28,11 +29,13 @@ jobs:
         id: docs
         run: |
           python3 scripts/gen_vimdoc.py
+          ./scripts/gen_vimfn_types.lua
           printf 'UPDATED_DOCS=%s\n' $([ -z "$(git diff)" ]; echo $?) >> $GITHUB_OUTPUT
 
       - name: FAIL, PR has not committed doc changes
         if: ${{ steps.docs.outputs.UPDATED_DOCS != 0 }}
         run: |
-          echo "Job failed, run ./scripts/gen_vimdoc.py and commit your doc changes"
+          echo "Job failed, run ./scripts/gen_vimdoc.py and/or ./scripts/gen_vimfn_types.lua"
+          echo "and commit your doc changes"
           echo "The doc generation produces the following changes:"
           git diff --color --exit-code
