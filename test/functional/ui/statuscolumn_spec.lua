@@ -9,6 +9,7 @@ local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 local meths = helpers.meths
 local pcall_err = helpers.pcall_err
+local assert_alive = helpers.assert_alive
 
 local mousemodels = { "extend", "popup", "popup_setpos" }
 
@@ -577,8 +578,8 @@ describe('statuscolumn', function()
     end)
   end
 
-  it('click labels do not leak memory', function()
-    command([[
+  it('click labels do not leak memory #21878', function()
+    exec([[
       set laststatus=2
       setlocal statuscolumn=%0@MyClickFunc@abcd%T
       4vsplit
@@ -588,6 +589,18 @@ describe('statuscolumn', function()
       only
       redraw
     ]])
+  end)
+
+  it('click labels do not crash when initial width is 0 #24428', function()
+    exec([[
+      set nonumber
+      bwipe!
+      setlocal statuscolumn=abcd
+      redraw
+      setlocal statuscolumn=%0@MyClickFunc@abcd%T
+      redraw
+    ]])
+    assert_alive()
   end)
 
   it('works with foldcolumn', function()

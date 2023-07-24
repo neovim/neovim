@@ -890,7 +890,9 @@ void draw_tabline(void)
 /// @return  The width of the built status column string for line "lnum"
 int build_statuscol_str(win_T *wp, linenr_T lnum, long relnum, statuscol_T *stcp)
 {
-  bool fillclick = relnum >= 0 && lnum == wp->w_topline;
+  // Only update click definitions once per window per redraw.
+  // Don't update when current width is 0, since it will be redrawn again if not empty.
+  const bool fillclick = relnum >= 0 && stcp->width > 0 && lnum == wp->w_topline;
 
   if (relnum >= 0) {
     set_vim_var_nr(VV_LNUM, lnum);
@@ -903,7 +905,6 @@ int build_statuscol_str(win_T *wp, linenr_T lnum, long relnum, statuscol_T *stcp
                                stcp->width, &stcp->hlrec, fillclick ? &clickrec : NULL, stcp);
   xfree(stc);
 
-  // Only update click definitions once per window per redraw
   if (fillclick) {
     stl_clear_click_defs(wp->w_statuscol_click_defs, wp->w_statuscol_click_defs_size);
     wp->w_statuscol_click_defs = stl_alloc_click_defs(wp->w_statuscol_click_defs, stcp->width,
@@ -1973,8 +1974,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
 
   int width = vim_strsize(out);
   // Return truncated width for 'statuscolumn'
-  if (stcp != NULL && width > maxwidth) {
-    stcp->truncate = width - maxwidth;
+  if (stcp != NULL && width > stcp->width) {
+    stcp->truncate = width - stcp->width;
   }
   if (maxwidth > 0 && width > maxwidth) {
     // Result is too long, must truncate somewhere.

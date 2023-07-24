@@ -686,7 +686,7 @@ static void get_statuscol_str(win_T *wp, linenr_T lnum, int virtnum, statuscol_T
   int width = build_statuscol_str(wp, lnum, relnum, stcp);
   // Force a redraw in case of error or when truncated
   if (*wp->w_p_stc == NUL || (stcp->truncate > 0 && wp->w_nrwidth < MAX_NUMBERWIDTH)) {
-    if (stcp->truncate) {  // Avoid truncating 'statuscolumn'
+    if (stcp->truncate > 0) {  // Avoid truncating 'statuscolumn'
       wp->w_nrwidth = MIN(MAX_NUMBERWIDTH, wp->w_nrwidth + stcp->truncate);
       wp->w_nrwidth_width = wp->w_nrwidth;
     } else {  // 'statuscolumn' reset due to error
