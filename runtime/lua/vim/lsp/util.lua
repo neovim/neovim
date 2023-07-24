@@ -2026,7 +2026,7 @@ function M._get_offset_encoding(bufnr)
     if not offset_encoding then
       offset_encoding = this_offset_encoding
     elseif offset_encoding ~= this_offset_encoding then
-      vim.notify(
+      vim.notify_once(
         'warning: multiple different client offset_encodings detected for buffer, this is not supported yet',
         vim.log.levels.WARN
       )
