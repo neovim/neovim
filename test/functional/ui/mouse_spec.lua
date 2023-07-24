@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, meths = helpers.clear, helpers.feed, helpers.meths
 local insert, feed_command = helpers.insert, helpers.feed_command
 local eq, funcs = helpers.eq, helpers.funcs
+local poke_eventloop = helpers.poke_eventloop
 local command = helpers.command
 local exec = helpers.exec
 
@@ -32,6 +33,7 @@ describe('ui/mouse/input', function()
       [5] = {bold = true, reverse = true},
       [6] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
       [7] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [8] = {foreground = Screen.colors.Brown},
     })
     command("set mousemodel=extend")
     feed('itesting<cr>mouse<cr>support and selection<esc>')
@@ -796,6 +798,66 @@ describe('ui/mouse/input', function()
       {7:nd to continue}^           |
     ]])
     feed('<cr>')
+  end)
+
+  it('dragging vertical separator', function()
+    screen:try_resize(45, 5)
+    command('setlocal nowrap')
+    local oldwin = meths.get_current_win().id
+    command('rightbelow vnew')
+    screen:expect([[
+      testing               │{0:^$}                     |
+      mouse                 │{0:~                     }|
+      support and selection │{0:~                     }|
+      {4:[No Name] [+]          }{5:[No Name]             }|
+                                                   |
+    ]])
+    meths.input_mouse('left', 'press', '', 0, 0, 22)
+    poke_eventloop()
+    meths.input_mouse('left', 'drag', '', 0, 1, 12)
+    screen:expect([[
+      testing     │{0:^$}                               |
+      mouse       │{0:~                               }|
+      support and │{0:~                               }|
+      {4:< Name] [+]  }{5:[No Name]                       }|
+                                                   |
+    ]])
+    meths.input_mouse('left', 'drag', '', 0, 2, 2)
+    screen:expect([[
+      te│{0:^$}                                         |
+      mo│{0:~                                         }|
+      su│{0:~                                         }|
+      {4:<  }{5:[No Name]                                 }|
+                                                   |
+    ]])
+    meths.input_mouse('left', 'release', '', 0, 2, 2)
+    meths.set_option_value('statuscolumn', 'foobar', { win = oldwin })
+    screen:expect([[
+      {8:fo}│{0:^$}                                         |
+      {8:fo}│{0:~                                         }|
+      {8:fo}│{0:~                                         }|
+      {4:<  }{5:[No Name]                                 }|
+                                                   |
+    ]])
+    meths.input_mouse('left', 'press', '', 0, 0, 2)
+    poke_eventloop()
+    meths.input_mouse('left', 'drag', '', 0, 1, 12)
+    screen:expect([[
+      {8:foobar}testin│{0:^$}                               |
+      {8:foobar}mouse │{0:~                               }|
+      {8:foobar}suppor│{0:~                               }|
+      {4:< Name] [+]  }{5:[No Name]                       }|
+                                                   |
+    ]])
+    meths.input_mouse('left', 'drag', '', 0, 2, 22)
+    screen:expect([[
+      {8:foobar}testing         │{0:^$}                     |
+      {8:foobar}mouse           │{0:~                     }|
+      {8:foobar}support and sele│{0:~                     }|
+      {4:[No Name] [+]          }{5:[No Name]             }|
+                                                   |
+    ]])
+    meths.input_mouse('left', 'release', '', 0, 2, 22)
   end)
 
   local function wheel(use_api)
