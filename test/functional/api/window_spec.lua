@@ -615,6 +615,24 @@ describe('API/win', function()
       eq({oldwin}, meths.list_wins())
       eq({oldbuf}, meths.list_bufs())
     end)
+    it('in the cmdwin', function()
+      feed('q:')
+      -- Can close the cmdwin.
+      meths.win_hide(0)
+      eq('', funcs.getcmdwintype())
+
+      local old_win = meths.get_current_win()
+      local other_win = meths.open_win(0, false, {
+        relative='win', row=3, col=3, width=12, height=3
+      })
+      feed('q:')
+      -- Cannot close the previous window.
+      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+         pcall_err(meths.win_hide, old_win))
+      -- Can close other windows.
+      meths.win_hide(other_win)
+      eq(false, meths.win_is_valid(other_win))
+    end)
   end)
 
   describe('text_height', function()

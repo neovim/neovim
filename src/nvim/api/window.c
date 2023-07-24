@@ -362,10 +362,10 @@ Boolean nvim_win_is_valid(Window window)
 /// @param[out] err Error details, if any
 void nvim_win_hide(Window window, Error *err)
   FUNC_API_SINCE(7)
-  FUNC_API_TEXTLOCK
+  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
   win_T *win = find_window_by_handle(window, err);
-  if (!win) {
+  if (!win || !can_close_in_cmdwin(win, err)) {
     return;
   }
 
@@ -397,18 +397,8 @@ void nvim_win_close(Window window, Boolean force, Error *err)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
   win_T *win = find_window_by_handle(window, err);
-  if (!win) {
+  if (!win || !can_close_in_cmdwin(win, err)) {
     return;
-  }
-
-  if (cmdwin_type != 0) {
-    if (win == curwin) {
-      cmdwin_result = Ctrl_C;
-      return;
-    } else if (win == cmdwin_old_curwin) {
-      api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
-      return;
-    }
   }
 
   tabpage_T *tabpage = win_find_tabpage(win);

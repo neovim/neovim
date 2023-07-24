@@ -2897,7 +2897,7 @@ nvim_win_hide({window})                                      *nvim_win_hide()*
     or |nvim_win_close()|, which will close the buffer.
 
     Attributes: ~
-        not allowed when |textlock| is active or in the |cmdwin|
+        not allowed when |textlock| is active
 
     Parameters: ~
       • {window}  Window handle, or 0 for current window
