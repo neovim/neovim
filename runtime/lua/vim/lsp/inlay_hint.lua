@@ -3,12 +3,12 @@ local log = require('vim.lsp.log')
 local api = vim.api
 local M = {}
 
----@class lsp._inlay_hint.bufstate
+---@class lsp.inlay_hint.bufstate
 ---@field version integer
 ---@field client_hint table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
 ---@field applied table<integer, integer> Last version of hints applied to this line
 ---@field enabled boolean Whether inlay hints are enabled for this buffer
----@type table<integer, lsp._inlay_hint.bufstate>
+---@type table<integer, lsp.inlay_hint.bufstate>
 local bufstates = {}
 
 local namespace = api.nvim_create_namespace('vim_lsp_inlayhint')
@@ -169,7 +169,6 @@ local function enable(bufnr)
       callback = function()
         disable(bufnr)
       end,
-      once = true,
       group = augroup,
     })
   else
