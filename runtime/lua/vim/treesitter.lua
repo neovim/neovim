@@ -462,7 +462,7 @@ end
 ---
 ---@param bufnr (integer|nil) Buffer to stop highlighting (default: current buffer)
 function M.stop(bufnr)
-  bufnr = bufnr or api.nvim_get_current_buf()
+  bufnr = (bufnr and bufnr ~= 0) and bufnr or api.nvim_get_current_buf()
 
   if M.highlighter.active[bufnr] then
     M.highlighter.active[bufnr]:destroy()
