@@ -1002,6 +1002,12 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
   end
   list_extend(contents, split(label, '\n', { plain = true }))
   if signature.documentation then
+    -- if LSP returns plain string, we treat it as plaintext. This avoids
+    -- special characters like underscore or similar from being interpreted
+    -- as markdown font modifiers
+    if type(signature.documentation) == 'string' then
+      signature.documentation = { kind = 'plaintext', value = signature.documentation }
+    end
     M.convert_input_to_markdown_lines(signature.documentation, contents)
   end
   if signature.parameters and #signature.parameters > 0 then
