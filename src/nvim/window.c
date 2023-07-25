@@ -987,7 +987,9 @@ void ui_ext_win_position(win_T *wp, bool validate)
 
 void ui_ext_win_viewport(win_T *wp)
 {
-  if ((wp == curwin || ui_has(kUIMultigrid)) && wp->w_viewport_invalid) {
+  // NOTE: The win_viewport command is delayed until the next flush when there are pending updates.
+  // This ensures that the updates and the viewport are sent together.
+  if ((wp == curwin || ui_has(kUIMultigrid)) && wp->w_viewport_invalid && wp->w_redr_type == 0) {
     int botline = wp->w_botline;
     int line_count = wp->w_buffer->b_ml.ml_line_count;
     if (botline == line_count + 1 && wp->w_empty_rows == 0) {
