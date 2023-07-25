@@ -421,7 +421,10 @@ function M._enable(bufnr)
     api.nvim_create_autocmd('LspNotify', {
       buffer = bufnr,
       callback = function(opts)
-        if opts.data.method ~= 'textDocument/didChange' then
+        if
+          opts.data.method ~= 'textDocument/didChange'
+          and opts.data.method ~= 'textDocument/didOpen'
+        then
           return
         end
         if bufstates[bufnr] and bufstates[bufnr].enabled then
