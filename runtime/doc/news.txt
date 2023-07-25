@@ -207,8 +207,8 @@ release.
 
 • vim.lsp functions:
   - |vim.lsp.util.get_progress_messages()|	Use |vim.lsp.status()| instead.
-  - |vim.lsp.get_active_clients()|	  	Use |vim.lsp.get_clients()| instead.
-  - |vim.lsp.for_each_buffer_client()|	  	Use |vim.lsp.get_clients()| instead.
+  - |vim.lsp.get_active_clients()|		Use |vim.lsp.get_clients()| instead.
+  - |vim.lsp.for_each_buffer_client()|		Use |vim.lsp.get_clients()| instead.
 
 • `vim.loop` has been renamed to `vim.uv`.
 
