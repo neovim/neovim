@@ -1466,7 +1466,7 @@ function M.stylize_markdown(bufnr, contents, opts)
       if #api.nvim_get_runtime_file(('syntax/%s.vim'):format(ft), true) == 0 then
         return
       end
-      vim.cmd(string.format('syntax include %s syntax/%s.vim', lang, ft))
+      pcall(vim.cmd, string.format('syntax include %s syntax/%s.vim', lang, ft))
       langs[lang] = true
     end
     vim.cmd(
