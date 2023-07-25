@@ -27,7 +27,7 @@ want to set the 'softtabstop' option to 4 and define a mapping to insert a
 three-line comment.  You do this with only two steps:
 
 							*your-runtime-dir*
-1. Create your own runtime directory.  On Unix this usually is 
+1. Create your own runtime directory.  On Unix this usually is
    "~/.config/nvim".  In this directory create the "ftplugin" directory: >
 
 	mkdir -p ~/.config/nvim/ftplugin
@@ -125,7 +125,7 @@ What will happen now is that Vim searches for "filetype.vim" files in each
 directory in 'runtimepath'.  First ~/.config/nvim/filetype.vim is found.  The
 autocommand to catch `*.txt` files is defined there.  Then Vim finds the
 filetype.vim file in $VIMRUNTIME, which is halfway 'runtimepath'.  Finally
-~/.config/nvim/after/filetype.vim is found and the autocommand for detecting 
+~/.config/nvim/after/filetype.vim is found and the autocommand for detecting
 ruby files in /usr/share/scripts is added.
    When you now edit /usr/share/scripts/README.txt, the autocommands are
 checked in the order in which they were defined.  The `*.txt` pattern matches,

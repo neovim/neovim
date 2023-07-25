@@ -82,7 +82,7 @@ only bytes can be written to Nvim's own stderr.
     thus the first and last items in the {data} list may be partial lines.
     Empty string completes the previous partial line. Examples (not including
     the final `['']` emitted at EOF):
-      - `foobar` may arrive as `['fo'], ['obar']` 
+      - `foobar` may arrive as `['fo'], ['obar']`
       - `foo\nbar` may arrive as
 	- `['foo','bar']`
 	- or `['foo',''], ['bar']`

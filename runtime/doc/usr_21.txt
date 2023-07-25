@@ -82,7 +82,7 @@ After editing for a while you will have text in registers, marks in various
 files, a command line history filled with carefully crafted commands.  When
 you exit Vim all of this is lost.  But you can get it back!
 
-The ShaDa (abbreviation of SHAred DAta) file is designed to store status 
+The ShaDa (abbreviation of SHAred DAta) file is designed to store status
 information:
 
 	Command-line and Search pattern history
@@ -218,8 +218,8 @@ Obviously, the "w" stands for "write" and the "r" for "read".
    The ! character is used by ":wshada" to forcefully overwrite an existing
 file.  When it is omitted, and the file exists, the information is merged into
 the file.
-   The ! character used for ":rshada" means that all the information in ShaDa 
-file has priority over existing information, this may overwrite it.  Without 
+   The ! character used for ":rshada" means that all the information in ShaDa
+file has priority over existing information, this may overwrite it.  Without
 the ! only information that wasn't set is used.
    These commands can also be used to store info and use it again later.  You
 could make a directory full of ShaDa files, each containing info for a
@@ -277,8 +277,8 @@ example, use: >
 SESSION HERE, SESSION THERE
 
 The obvious way to use sessions is when working on different projects.
-Suppose you store your session files in the directory "~/.config/nvim".  You 
-are currently working on the "secret" project and have to switch to the 
+Suppose you store your session files in the directory "~/.config/nvim".  You
+are currently working on the "secret" project and have to switch to the
 "boring" project: >
 
 	:wall

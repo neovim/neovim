@@ -434,7 +434,7 @@ numerical highlight ids to the actual attributes.
 		+-------------------------+
 <
 	`cols` is always zero in this version of Nvim, and reserved for future
-	use. 
+	use.
 
 	Note when updating code from |ui-grid-old| events: ranges are
 	end-exclusive, which is consistent with API conventions, but different
@@ -652,7 +652,7 @@ tabs.
 
 ["win_extmark", grid, win, ns_id, mark_id, row, col] ~
 	Updates the position of an extmark which is currently visible in a
-	window. Only emitted if the mark has the `ui_watched` attribute. 
+	window. Only emitted if the mark has the `ui_watched` attribute.
 
 ==============================================================================
 Popupmenu Events						 *ui-popupmenu*

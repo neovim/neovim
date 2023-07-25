@@ -2046,7 +2046,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Possible items:
 	- The swap file will be created in the first directory where this is
-	  possible.  If it is not possible in any directory, but last 
+	  possible.  If it is not possible in any directory, but last
 	  directory listed in the option does not exist, it is created.
 	- Empty means that no swap file will be used (recovery is
 	  impossible!) and no |E303| error will be given.
@@ -4830,7 +4830,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Defaults are setup to search these locations:
 	1. Your home directory, for personal preferences.
 	   Given by `stdpath("config")`.  |$XDG_CONFIG_HOME|
-	2. Directories which must contain configuration files according to 
+	2. Directories which must contain configuration files according to
 	   |xdg| ($XDG_CONFIG_DIRS, defaults to /etc/xdg).  This also contains
 	   preferences from system administrator.
 	3. Data home directory, for plugins installed by user.
@@ -5070,8 +5070,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	%	When included, save and restore the buffer list.  If Vim is
 		started with a file name argument, the buffer list is not
 		restored.  If Vim is started without a file name argument, the
-		buffer list is restored from the shada file.  Quickfix 
-		('buftype'), unlisted ('buflisted'), unnamed and buffers on 
+		buffer list is restored from the shada file.  Quickfix
+		('buftype'), unlisted ('buflisted'), unnamed and buffers on
 		removable media (|shada-r|) are not saved.
 		When followed by a number, the number specifies the maximum
 		number of buffers that are stored.  Without a number all
@@ -5099,8 +5099,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	@	Maximum number of items in the input-line history to be
 		saved.  When not included, the value of 'history' is used.
 							*shada-c*
-	c	Dummy option, kept for compatibility reasons.  Has no actual 
-		effect: ShaDa always uses UTF-8 and 'encoding' value is fixed 
+	c	Dummy option, kept for compatibility reasons.  Has no actual
+		effect: ShaDa always uses UTF-8 and 'encoding' value is fixed
 		to UTF-8 as well.
 							*shada-f*
 	f	Whether file marks need to be stored.  If zero, file marks ('0
@@ -5125,13 +5125,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 		could use "ra:,rb:".  You can also use it for temp files,
 		e.g., for Unix: "r/tmp".  Case is ignored.
 							*shada-s*
-	s	Maximum size of an item contents in KiB.  If zero then nothing 
-		is saved.  Unlike Vim this applies to all items, except for 
-		the buffer list and header.  Full item size is off by three 
-		unsigned integers: with `s10` maximum item size may be 1 byte 
-		(type: 7-bit integer) + 9 bytes (timestamp: up to 64-bit 
-		integer) + 3 bytes (item size: up to 16-bit integer because 
-		2^8 < 10240 < 2^16) + 10240 bytes (requested maximum item 
+	s	Maximum size of an item contents in KiB.  If zero then nothing
+		is saved.  Unlike Vim this applies to all items, except for
+		the buffer list and header.  Full item size is off by three
+		unsigned integers: with `s10` maximum item size may be 1 byte
+		(type: 7-bit integer) + 9 bytes (timestamp: up to 64-bit
+		integer) + 3 bytes (item size: up to 16-bit integer because
+		2^8 < 10240 < 2^16) + 10240 bytes (requested maximum item
 		contents size) = 10253 bytes.
 
 	Example: >
@@ -5141,7 +5141,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			edited.
 	<1000		Contents of registers (up to 1000 lines each) will be
 			remembered.
-	s100		Items with contents occupying more then 100 KiB are 
+	s100		Items with contents occupying more then 100 KiB are
 			skipped.
 	:0		Command-line history will not be saved.
 	n~/nvim/shada	The name of the file to use is "~/nvim/shada".
@@ -5180,30 +5180,30 @@ A jump table for the options with a short description can be found at |Q_op|.
 	If the name of the shell contains a space, you need to enclose it in
 	quotes.  Example with quotes: >
 		:set shell=\"c:\program\ files\unix\sh.exe\"\ -f
-<	Note the backslash before each quote (to avoid starting a comment) and 
-	each space (to avoid ending the option value), so better use |:let-&| 
+<	Note the backslash before each quote (to avoid starting a comment) and
+	each space (to avoid ending the option value), so better use |:let-&|
 	like this: >
 		:let &shell='"C:\Program Files\unix\sh.exe" -f'
-<	Also note that the "-f" is not inside the quotes, because it is not 
+<	Also note that the "-f" is not inside the quotes, because it is not
 	part of the command name.
 							*shell-unquoting*
 	Rules regarding quotes:
-	1. Option is split on space and tab characters that are not inside 
-	   quotes: "abc def" runs shell named "abc" with additional argument 
-	   "def", '"abc def"' runs shell named "abc def" with no additional 
-	   arguments (here and below: additional means “additional to 
+	1. Option is split on space and tab characters that are not inside
+	   quotes: "abc def" runs shell named "abc" with additional argument
+	   "def", '"abc def"' runs shell named "abc def" with no additional
+	   arguments (here and below: additional means “additional to
 	   'shellcmdflag'”).
-	2. Quotes in option may be present in any position and any number: 
-	   '"abc"', '"a"bc', 'a"b"c', 'ab"c"' and '"a"b"c"' are all equivalent 
+	2. Quotes in option may be present in any position and any number:
+	   '"abc"', '"a"bc', 'a"b"c', 'ab"c"' and '"a"b"c"' are all equivalent
 	   to just "abc".
-	3. Inside quotes backslash preceding backslash means one backslash.  
-	   Backslash preceding quote means one quote. Backslash preceding 
-	   anything else means backslash and next character literally: 
-	   '"a\\b"' is the same as "a\b", '"a\\"b"' runs shell named literally 
+	3. Inside quotes backslash preceding backslash means one backslash.
+	   Backslash preceding quote means one quote. Backslash preceding
+	   anything else means backslash and next character literally:
+	   '"a\\b"' is the same as "a\b", '"a\\"b"' runs shell named literally
 	   'a"b', '"a\b"' is the same as "a\b" again.
-	4. Outside of quotes backslash always means itself, it cannot be used 
+	4. Outside of quotes backslash always means itself, it cannot be used
 	   to escape quote: 'a\"b"' is the same as "a\b".
-	Note that such processing is done after |:set| did its own round of 
+	Note that such processing is done after |:set| did its own round of
 	unescaping, so to keep yourself sane use |:let-&| like shown above.
 							*shell-powershell*
 	To use PowerShell: >
@@ -5226,7 +5226,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	On Unix it can have more than one flag.  Each white space separated
 	part is passed as an argument to the shell command.
 	See |option-backslash| about including spaces and backslashes.
-	See |shell-unquoting| which talks about separating this option into 
+	See |shell-unquoting| which talks about separating this option into
 	multiple arguments.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
@@ -6032,36 +6032,36 @@ A jump table for the options with a short description can be found at |Q_op|.
 	( -   Start of item group.  Can be used for setting the width and
 	      alignment of a section.  Must be followed by %) somewhere.
 	) -   End of item group.  No width fields allowed.
-	T N   For 'tabline': start of tab page N label.  Use %T or %X to end 
-	      the label.  Clicking this label with left mouse button switches 
+	T N   For 'tabline': start of tab page N label.  Use %T or %X to end
+	      the label.  Clicking this label with left mouse button switches
 	      to the specified tab page.
-	X N   For 'tabline': start of close tab N label.  Use %X or %T to end 
-	      the label, e.g.: %3Xclose%X.  Use %999X for a "close current 
-	      tab" label.    Clicking this label with left mouse button closes 
+	X N   For 'tabline': start of close tab N label.  Use %X or %T to end
+	      the label, e.g.: %3Xclose%X.  Use %999X for a "close current
+	      tab" label.    Clicking this label with left mouse button closes
 	      specified tab page.
-	@ N   Start of execute function label. Use %X or %T to 
-	      end the label, e.g.: %10@SwitchBuffer@foo.c%X.  Clicking this 
-	      label runs specified function: in the example when clicking once 
-	      using left mouse button on "foo.c" "SwitchBuffer(10, 1, 'l', 
-	      '    ')" expression will be run.  Function receives the 
+	@ N   Start of execute function label. Use %X or %T to
+	      end the label, e.g.: %10@SwitchBuffer@foo.c%X.  Clicking this
+	      label runs specified function: in the example when clicking once
+	      using left mouse button on "foo.c" "SwitchBuffer(10, 1, 'l',
+	      '    ')" expression will be run.  Function receives the
 	      following arguments in order:
 	      1. minwid field value or zero if no N was specified
 	      2. number of mouse clicks to detect multiple clicks
-	      3. mouse button used: "l", "r" or "m" for left, right or middle 
-	         button respectively; one should not rely on third argument 
-	         being only "l", "r" or "m": any other non-empty string value 
-	         that contains only ASCII lower case letters may be expected 
+	      3. mouse button used: "l", "r" or "m" for left, right or middle
+	         button respectively; one should not rely on third argument
+	         being only "l", "r" or "m": any other non-empty string value
+	         that contains only ASCII lower case letters may be expected
 	         for other mouse buttons
-	      4. modifiers pressed: string which contains "s" if shift 
-	         modifier was pressed, "c" for control, "a" for alt and "m" 
-	         for meta; currently if modifier is not pressed string 
-	         contains space instead, but one should not rely on presence 
-	         of spaces or specific order of modifiers: use |stridx()| to 
-	         test whether some modifier is present; string is guaranteed 
-	         to contain only ASCII letters and spaces, one letter per 
-	         modifier; "?" modifier may also be present, but its presence 
-	         is a bug that denotes that new mouse button recognition was 
-	         added without modifying code that reacts on mouse clicks on 
+	      4. modifiers pressed: string which contains "s" if shift
+	         modifier was pressed, "c" for control, "a" for alt and "m"
+	         for meta; currently if modifier is not pressed string
+	         contains space instead, but one should not rely on presence
+	         of spaces or specific order of modifiers: use |stridx()| to
+	         test whether some modifier is present; string is guaranteed
+	         to contain only ASCII letters and spaces, one letter per
+	         modifier; "?" modifier may also be present, but its presence
+	         is a bug that denotes that new mouse button recognition was
+	         added without modifying code that reacts on mouse clicks on
 	         this label.
 	      Use |getmousepos()|.winid in the specified function to get the
 	      corresponding window id of the clicked item.

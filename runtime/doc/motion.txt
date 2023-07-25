@@ -892,7 +892,7 @@ was made yet in the current file.
 			for each opened file.
 			Only one position is remembered per buffer, not one
 			for each window.  As long as the buffer is visible in
-			a window the position won't be changed.  Mark is also 
+			a window the position won't be changed.  Mark is also
 			reset when |:wshada| is run.
 
 							*'^* *`^*
@@ -1149,7 +1149,7 @@ locations being removed:
    3  1260    8 src/nvim/mark.c
    2   685    0 src/nvim/option_defs.h
    1   462   36 src/nvim/option_defs.h  <-- location X
-> 
+>
 
 Then, when yet another location Z is jumped to, the new location Y appears
 directly after location X in the jumplist and location X remains in the same
@@ -1161,7 +1161,7 @@ prior to the original jump from X to Y:
    3   685    0 src/nvim/option_defs.h  <-- location X-1
    2   462   36 src/nvim/option_defs.h  <-- location X
    1   100    0 src/nvim/option_defs.h  <-- location Y
-> 
+>
 
 CHANGE LIST JUMPS			*changelist* *change-list-jumps* *E664*
 

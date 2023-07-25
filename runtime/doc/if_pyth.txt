@@ -635,7 +635,7 @@ To see what version of Python is being used: >vim
 	:pyx print(sys.version)
 <
 					*:pyxfile* *python_x-special-comments*
-`:pyxfile` works the same as `:py3file`. 
+`:pyxfile` works the same as `:py3file`.
 
 							*:pyxdo*
 `:pyxdo` works the same as `:py3do`.

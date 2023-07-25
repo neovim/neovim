@@ -386,9 +386,9 @@ window is used:
 >lua
     vim.bo[4].expandtab = true -- sets expandtab to true in buffer 4
     vim.wo.number = true       -- sets number to true in current window
-    vim.wo[0].number = true    -- same as above 
+    vim.wo[0].number = true    -- same as above
     vim.wo[0][0].number = true -- sets number to true in current buffer
-                               -- in current window only 
+                               -- in current window only
     print(vim.wo[0].number)    --> true
 <
 ------------------------------------------------------------------------------
