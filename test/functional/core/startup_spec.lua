@@ -9,6 +9,7 @@ local ok = helpers.ok
 local eq = helpers.eq
 local matches = helpers.matches
 local eval = helpers.eval
+local exec = helpers.exec
 local exec_capture = helpers.exec_capture
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
@@ -21,7 +22,6 @@ local nvim_set = helpers.nvim_set
 local read_file = helpers.read_file
 local retry = helpers.retry
 local rmdir = helpers.rmdir
-local skip = helpers.skip
 local sleep = helpers.sleep
 local startswith = helpers.startswith
 local write_file = helpers.write_file
@@ -435,15 +435,23 @@ describe('startup', function()
   end)
 
   it('-r works without --headless in PTY #23294', function()
-    skip(is_os('win'))
-    eq({ 0 }, exec_lua([[return vim.fn.jobwait({ vim.fn.jobstart({...}, {
-      pty = true,
-      stdout_buffered = true,
-      on_stdout = function(_, data, _)
-        _G.Recovery_stdout = data
-      end,
-    }) })]], nvim_prog, '-u', 'NONE', '-i', 'NONE', '-r'))
-    matches('Swap files found:\r*', exec_lua('return _G.Recovery_stdout[1]'))
+    exec([[
+      func Normalize(data) abort
+        " Windows: remove ^M and term escape sequences
+        return map(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
+      endfunc
+      func OnOutput(id, data, event) dict
+        let g:stdout = Normalize(a:data)
+      endfunc
+      call jobstart([v:progpath, '-u', 'NONE', '-i', 'NONE', '-r'], {
+      \ 'pty': v:true,
+      \ 'stdout_buffered': v:true,
+      \ 'on_stdout': function('OnOutput'),
+      \ })
+    ]])
+    retry(nil, nil, function()
+      eq('Swap files found:', eval('g:stdout[0]'))
+    end)
   end)
 
   it('fixed hang issue with --headless (#11386)', function()
