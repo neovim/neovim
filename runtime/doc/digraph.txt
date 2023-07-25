@@ -203,7 +203,7 @@ The rouble sign was added in 2014 as 0x20bd.  Vim supports the digraphs =R and
   ^]	GS	0x1d	 29	GROUP SEPARATOR (IS3)
   ^^	RS	0x1e	 30	RECORD SEPARATOR (IS2)
   ^_	US	0x1f	 31	UNIT SEPARATOR (IS1)
-  	SP	0x20	 32	SPACE
+	SP	0x20	 32	SPACE
   #	Nb	0x23	 35	NUMBER SIGN
   $	DO	0x24	 36	DOLLAR SIGN
   @	At	0x40	 64	COMMERCIAL AT

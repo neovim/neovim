@@ -94,6 +94,9 @@ let s:test_script_fname = expand('%')
 au! SwapExists * call HandleSwapExists()
 func HandleSwapExists()
   if exists('g:ignoreSwapExists')
+    if type(g:ignoreSwapExists) == v:t_string
+      let v:swapchoice = g:ignoreSwapExists
+    endif
     return
   endif
   " Ignore finding a swap file for the test script (the user might be
