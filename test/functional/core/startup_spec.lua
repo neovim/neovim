@@ -21,6 +21,7 @@ local nvim_set = helpers.nvim_set
 local read_file = helpers.read_file
 local retry = helpers.retry
 local rmdir = helpers.rmdir
+local skip = helpers.skip
 local sleep = helpers.sleep
 local startswith = helpers.startswith
 local write_file = helpers.write_file
@@ -458,6 +459,18 @@ describe('startup', function()
                                                                   |
                                                                   |
     ]])
+  end)
+
+  it('-r works without --headless in PTY #23294', function()
+    skip(is_os('win'))
+    eq({ 0 }, exec_lua([[return vim.fn.jobwait({ vim.fn.jobstart({...}, {
+      pty = true,
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        _G.Recovery_stdout = data
+      end,
+    }) })]], nvim_prog, '-u', 'NONE', '-i', 'NONE', '-r'))
+    matches('Swap files found:\r*', exec_lua('return _G.Recovery_stdout[1]'))
   end)
 
   it('fixed hang issue with --headless (#11386)', function()

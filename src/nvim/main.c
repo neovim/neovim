@@ -305,6 +305,16 @@ int main(int argc, char **argv)
     }
   }
 
+  if (GARGCOUNT > 0) {
+    fname = get_fname(&params, cwd);
+  }
+
+  // Recovery mode without a file name: List swap files.
+  // In this case, no UI is needed.
+  if (recoverymode && fname == NULL) {
+    headless_mode = true;
+  }
+
 #ifdef MSWIN
   // on windows we use CONIN special file, thus we don't know this yet.
   bool has_term = true;
@@ -334,16 +344,6 @@ int main(int argc, char **argv)
       getout(1);
     }
     ui_client_channel_id = rv;
-  }
-
-  if (GARGCOUNT > 0) {
-    fname = get_fname(&params, cwd);
-  }
-
-  // Recovery mode without a file name: List swap files.
-  // In this case, no UI is needed.
-  if (recoverymode && fname == NULL) {
-    headless_mode = true;
   }
 
   TIME_MSG("expanding arguments");
