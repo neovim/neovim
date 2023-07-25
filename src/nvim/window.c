@@ -990,29 +990,56 @@ void ui_ext_win_viewport(win_T *wp)
   // NOTE: The win_viewport command is delayed until the next flush when there are pending updates.
   // This ensures that the updates and the viewport are sent together.
   if ((wp == curwin || ui_has(kUIMultigrid)) && wp->w_viewport_invalid && wp->w_redr_type == 0) {
-    int botline = wp->w_botline;
-    int line_count = wp->w_buffer->b_ml.ml_line_count;
-    if (botline == line_count + 1 && wp->w_empty_rows == 0) {
+    const linenr_T line_count = wp->w_buffer->b_ml.ml_line_count;
+    // Avoid ml_get errors when producing "scroll_delta".
+    const linenr_T cur_topline = MIN(wp->w_topline, line_count);
+    const linenr_T cur_botline = MIN(wp->w_botline, line_count);
+    int64_t delta = 0;
+    linenr_T last_topline = wp->w_viewport_last_topline;
+    linenr_T last_botline = wp->w_viewport_last_botline;
+    int last_topfill = wp->w_viewport_last_topfill;
+    int64_t last_skipcol = wp->w_viewport_last_skipcol;
+    if (last_topline > line_count) {
+      delta -= last_topline - line_count;
+      last_topline = line_count;
+      last_topfill = 0;
+      last_skipcol = MAXCOL;
+    }
+    last_botline = MIN(last_botline, line_count);
+    if (cur_topline < last_topline
+        || (cur_topline == last_topline && wp->w_skipcol < last_skipcol)) {
+      if (last_topline > 0 && cur_botline < last_topline) {
+        // Scrolling too many lines: only give an approximate "scroll_delta".
+        delta -= win_text_height(wp, cur_topline, wp->w_skipcol, cur_botline, 0, NULL);
+        delta -= last_topline - cur_botline;
+      } else {
+        delta -= win_text_height(wp, cur_topline, wp->w_skipcol, last_topline, last_skipcol, NULL);
+      }
+    } else if (cur_topline > last_topline
+               || (cur_topline == last_topline && wp->w_skipcol > last_skipcol)) {
+      if (last_botline > 0 && cur_topline > last_botline) {
+        // Scrolling too many lines: only give an approximate "scroll_delta".
+        delta += win_text_height(wp, last_topline, last_skipcol, last_botline, 0, NULL);
+        delta += cur_topline - last_botline;
+      } else {
+        delta += win_text_height(wp, last_topline, last_skipcol, cur_topline, wp->w_skipcol, NULL);
+      }
+    }
+    delta += last_topfill;
+    delta -= wp->w_topfill;
+    linenr_T ev_botline = wp->w_botline;
+    if (ev_botline == line_count + 1 && wp->w_empty_rows == 0) {
       // TODO(bfredl): The might be more cases to consider, like how does this
       // interact with incomplete final line? Diff filler lines?
-      botline = wp->w_buffer->b_ml.ml_line_count;
+      ev_botline = line_count;
     }
-    int scroll_delta = 0;
-    if (wp->w_viewport_last_topline > line_count) {
-      scroll_delta -= wp->w_viewport_last_topline - line_count;
-      wp->w_viewport_last_topline = line_count;
-    }
-    if (wp->w_topline < wp->w_viewport_last_topline) {
-      scroll_delta -= plines_m_win(wp, wp->w_topline, wp->w_viewport_last_topline - 1);
-    } else if (wp->w_topline > wp->w_viewport_last_topline
-               && wp->w_topline <= line_count) {
-      scroll_delta += plines_m_win(wp, wp->w_viewport_last_topline, wp->w_topline - 1);
-    }
-    ui_call_win_viewport(wp->w_grid_alloc.handle, wp->handle, wp->w_topline - 1,
-                         botline, wp->w_cursor.lnum - 1, wp->w_cursor.col,
-                         line_count, scroll_delta);
+    ui_call_win_viewport(wp->w_grid_alloc.handle, wp->handle, wp->w_topline - 1, ev_botline,
+                         wp->w_cursor.lnum - 1, wp->w_cursor.col, line_count, delta);
     wp->w_viewport_invalid = false;
     wp->w_viewport_last_topline = wp->w_topline;
+    wp->w_viewport_last_botline = wp->w_botline;
+    wp->w_viewport_last_topfill = wp->w_topfill;
+    wp->w_viewport_last_skipcol = wp->w_skipcol;
   }
 }
 
