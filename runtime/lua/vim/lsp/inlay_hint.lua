@@ -144,7 +144,7 @@ local function enable(bufnr)
       callback = function(opts)
         if
           opts.data.method ~= 'textDocument/didChange'
-          and opts.data.method ~= 'textDocumen/didOpen'
+          and opts.data.method ~= 'textDocument/didOpen'
         then
           return
         end
