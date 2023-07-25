@@ -18,7 +18,7 @@ function vim.regex(re) end
 local regex = {} -- luacheck: no unused
 
 --- Match the string against the regex. If the string should match the regex
---- precisely, surround the regex with `^` and `$`. If the was a match, the
+--- precisely, surround the regex with `^` and `$`. If there was a match, the
 --- byte indices for the beginning and end of the match is returned. When
 --- there is no match, `nil` is returned. As any integer is truth-y,
 --- `regex:match()` can be directly used as a condition in an if-statement.
