@@ -46,4 +46,5 @@ exclude_files = {
   'runtime/lua/vim/treesitter/_meta.lua',
   'runtime/lua/vim/_meta/vimfn.lua',
   'runtime/lua/vim/re.lua',
+  'src/nvim/eval.lua',
 }

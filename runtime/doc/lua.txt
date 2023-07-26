@@ -296,7 +296,7 @@ arguments separated by " " (space) instead of "\t" (tab).
 <
 
 ==============================================================================
-luaeval()                                                 *lua-eval* *luaeval()*
+luaeval()                                                 *lua-eval*
 
 The (dual) equivalent of "vim.eval" for passing Lua values to Nvim is
 "luaeval". "luaeval" takes an expression string and an optional argument used

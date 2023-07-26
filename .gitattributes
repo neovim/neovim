@@ -3,6 +3,7 @@
 *CMakeLists.txt linguist-language=CMake
 
 runtime/doc/*   linguist-documentation
+runtime/doc/builtin.txt linguist-generated
 
 runtime/lua/vim/_meta/vimfn.lua linguist-generated
 

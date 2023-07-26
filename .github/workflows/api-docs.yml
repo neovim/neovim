@@ -29,7 +29,6 @@ jobs:
         id: docs
         run: |
           python3 scripts/gen_vimdoc.py
-          ./scripts/gen_vimfn_types.lua
           printf 'UPDATED_DOCS=%s\n' $([ -z "$(git diff)" ]; echo $?) >> $GITHUB_OUTPUT
 
       - name: FAIL, PR has not committed doc changes
