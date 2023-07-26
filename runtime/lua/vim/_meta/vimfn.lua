@@ -135,14 +135,12 @@ function vim.fn.appendbufline(buf, lnum, text) end
 --- list is used: either the window number or the window ID.
 --- Returns -1 if the {winid} argument is invalid.
 ---
----           *argidx()*
 --- @param winid? integer
 --- @return integer
 function vim.fn.argc(winid) end
 
 --- the first file.  argc() - 1 is the last one.  See |arglist|.
 ---
----           *arglistid()*
 --- @return integer
 function vim.fn.argidx() end
 
@@ -157,7 +155,6 @@ function vim.fn.argidx() end
 --- page.
 --- {winnr} can be the window number or the |window-ID|.
 ---
----           *argv()*
 --- @param winnr? integer
 --- @param tabnr? integer
 --- @return integer
@@ -217,7 +214,6 @@ function vim.fn.asin(expr) end
 --- Can also be used as a |method|: >
 ---   GetCmd()->assert_beeps()
 --- <
----           *assert_equal()*
 --- @param cmd any
 --- @return 0|1
 function vim.fn.assert_beeps(cmd) end
@@ -240,7 +236,6 @@ function vim.fn.assert_beeps(cmd) end
 --- Can also be used as a |method|: >
 ---   mylist->assert_equal([1, 2, 3])
 ---
---- <          *assert_equalfile()*
 --- @param expected any
 --- @param actual any
 --- @param msg? any
@@ -271,7 +266,6 @@ function vim.fn.assert_equalfile() end
 ---     call assert_exception('E492:')
 ---   endtry
 --- <
----           *assert_fails()*
 --- @param error any
 --- @param msg? any
 --- @return 0|1
@@ -345,7 +339,6 @@ function vim.fn.assert_false(actual, msg) end
 --- but got {actual}".  When {msg} is present it is prefixed to
 --- that.
 ---
----             *assert_match()*
 --- @param lower any
 --- @param upper any
 --- @param actual any
@@ -387,7 +380,6 @@ function vim.fn.assert_match(pattern, actual, msg) end
 --- Can also be used as a |method|: >
 ---   GetCmd()->assert_nobeep()
 --- <
----           *assert_notequal()*
 --- @param cmd any
 --- @return 0|1
 function vim.fn.assert_nobeep(cmd) end
@@ -399,7 +391,6 @@ function vim.fn.assert_nobeep(cmd) end
 --- Can also be used as a |method|: >
 ---   mylist->assert_notequal([1, 2, 3])
 ---
---- <          *assert_notmatch()*
 --- @param expected any
 --- @param actual any
 --- @param msg? any
@@ -493,7 +484,6 @@ function vim.fn.atan2(expr1, expr2) end
 --- Can also be used as a |method|: >
 ---   GetBlob()->blob2list()
 --- <
----           *browse()*
 --- @param blob any
 --- @return any
 function vim.fn.blob2list(blob) end
@@ -508,7 +498,6 @@ function vim.fn.blob2list(blob) end
 --- An empty string is returned when the "Cancel" button is hit,
 --- something went wrong, or browsing is not possible.
 ---
----           *browsedir()*
 --- @param save any
 --- @param title any
 --- @param initdir any
@@ -660,7 +649,6 @@ function vim.fn.bufloaded(buf) end
 ---   bufname("%")    name of current buffer
 ---   bufname("file2")  name of buffer where "file2" matches.
 --- <
----           *bufnr()*
 --- @param buf? any
 --- @return string
 function vim.fn.bufname(buf) end
@@ -931,7 +919,6 @@ function vim.fn.charclass(string) end
 --- <Can also be used as a |method|: >
 ---   GetPos()->col()
 --- <
----           *charidx()*
 --- @param expr any
 --- @param winid? integer
 --- @return any
@@ -1202,7 +1189,6 @@ function vim.fn.complete_check() end
 --- <Can also be used as a |method|: >
 ---   GetItems()->complete_info()
 --- <
----         *confirm()*
 --- @param what? any
 --- @return table
 function vim.fn.complete_info(what) end
@@ -1261,7 +1247,6 @@ function vim.fn.complete_info(what) end
 --- Can also be used as a |method|in: >
 ---   BuildMessage()->confirm("&Yes\n&No")
 --- <
----           *copy()*
 --- @param msg any
 --- @param choices? any
 --- @param default? any
@@ -1554,7 +1539,6 @@ function vim.fn.dictwatcheradd(dict, pattern, callback) end
 --- arguments must match the ones passed to |dictwatcheradd()| in
 --- order for the watcher to be successfully deleted.
 ---
----           *did_filetype()*
 --- @param dict any
 --- @param pattern any
 --- @param callback any
@@ -1734,7 +1718,6 @@ function vim.fn.environ() end
 --- Can also be used as a |method|: >
 ---   GetText()->escape(' \')
 --- <
----           *eval()*
 --- @param string string
 --- @param chars any
 --- @return any
@@ -1832,7 +1815,6 @@ function vim.fn.execute(command, silent) end
 --- Can also be used as a |method|: >
 ---   GetCommand()->exepath()
 --- <
----           *exists()*
 --- @param expr any
 --- @return any
 function vim.fn.exepath(expr) end
@@ -2506,7 +2488,6 @@ function vim.fn.foldclosedend(lnum) end
 --- Can also be used as a |method|: >
 ---   GetLnum()->foldlevel()
 --- <
----           *foldtext()*
 --- @param lnum integer
 --- @return integer
 function vim.fn.foldlevel(lnum) end
@@ -2558,7 +2539,6 @@ function vim.fn.foldtextresult(lnum) end
 --- Can also be used as a |method|: >
 ---   GetName()->fullcommand()
 --- <
----         *funcref()*
 --- @param name string
 --- @return string
 function vim.fn.fullcommand(name) end
@@ -2577,7 +2557,6 @@ function vim.fn.fullcommand(name) end
 --- Can also be used as a |method|: >
 ---   GetFuncname()->funcref([arg])
 --- <
----     *function()* *partial* *E700* *E923*
 --- @param name string
 --- @param arglist? any
 --- @param dict? any
@@ -2701,7 +2680,6 @@ function vim.fn.garbagecollect(atexit) end
 ---   "args"  The list with arguments
 --- Returns zero on error.
 ---
----           *getbufinfo()*
 --- @param func any
 --- @param what any
 --- @return any
@@ -2775,7 +2753,6 @@ function vim.fn.get(func, what) end
 ---   GetBufnr()->getbufinfo()
 --- <
 ---
----           *getbufline()*
 --- @param dict? any
 --- @return any
 function vim.fn.getbufinfo(dict) end
@@ -2807,7 +2784,6 @@ function vim.fn.getbufinfo(dict) end
 --- <Can also be used as a |method|: >
 ---   GetBufnr()->getbufline(lnum)
 --- <
----           *getbufoneline()*
 --- @param buf any
 --- @param lnum integer
 --- @param end_? any
@@ -2963,7 +2939,6 @@ function vim.fn.getchar() end
 --- character itself are obtained.  Thus Shift-a results in "A"
 --- without a modifier.  Returns 0 if no modifiers are used.
 ---
----           *getcharpos()*
 --- @return integer
 function vim.fn.getcharmod() end
 
@@ -3162,7 +3137,6 @@ function vim.fn.getcmdwintype() end
 --- Can also be used as a |method|: >
 ---   GetPattern()->getcompletion('color')
 --- <
----           *getcurpos()*
 --- @param pat any
 --- @param type any
 --- @param filtered? any
@@ -3196,7 +3170,6 @@ function vim.fn.getcompletion(pat, type, filtered) end
 --- Can also be used as a |method|: >
 ---   GetWinid()->getcurpos()
 --- <
----           *getcursorcharpos()*
 --- @param winid? integer
 --- @return any
 function vim.fn.getcurpos(winid) end
@@ -3367,7 +3340,6 @@ function vim.fn.getftype(fname) end
 --- Can also be used as a |method|: >
 ---   GetWinnr()->getjumplist()
 ---
---- <          *getline()*
 --- @param winnr? integer
 --- @param tabnr? integer
 --- @return any
@@ -3528,13 +3500,11 @@ function vim.fn.getmatches(win) end
 --- When using |getchar()| the Vim variables |v:mouse_lnum|,
 --- |v:mouse_col| and |v:mouse_winid| also provide these values.
 ---
----           *getpid()*
 --- @return any
 function vim.fn.getmousepos() end
 
 --- This is a unique number, until Vim exits.
 ---
----           *getpos()*
 --- @return integer
 function vim.fn.getpid() end
 
@@ -3975,7 +3945,6 @@ function vim.fn.getwininfo(winid) end
 --- Can also be used as a |method|: >
 ---   GetTimeout()->getwinpos()
 --- <
----           *getwinposx()*
 --- @param timeout? integer
 --- @return any
 function vim.fn.getwinpos(timeout) end
@@ -3984,7 +3953,6 @@ function vim.fn.getwinpos(timeout) end
 --- -1 if the information is not available.
 --- The value can be used with `:winpos`.
 ---
----           *getwinposy()*
 --- @return integer
 function vim.fn.getwinposx() end
 
@@ -4067,7 +4035,6 @@ function vim.fn.glob(expr, nosuf, list, alllinks) end
 ---
 --- Can also be used as a |method|: >
 ---   GetExpr()->glob2regpat()
---- <            *globpath()*
 --- @param string string
 --- @return any
 function vim.fn.glob2regpat(string) end
@@ -4110,7 +4077,6 @@ function vim.fn.glob2regpat(string) end
 --- second argument: >
 ---   GetExpr()->globpath(&rtp)
 --- <
----           *has()*
 --- @param path string
 --- @param expr any
 --- @param nosuf? boolean
@@ -4391,7 +4357,6 @@ function vim.fn.hlID(name) end
 --- Can also be used as a |method|: >
 ---   GetName()->hlexists()
 --- <
----           *hlID()*
 --- @param name string
 --- @return 0|1
 function vim.fn.hlexists(name) end
@@ -4417,7 +4382,6 @@ function vim.fn.hostname() end
 --- Can also be used as a |method|: >
 ---   GetText()->iconv('latin1', 'utf-8')
 --- <
----           *indent()*
 --- @param string string
 --- @param from any
 --- @param to any
@@ -5067,7 +5031,6 @@ function vim.fn.keys(dict) end
 --- Can also be used as a |method|: >
 ---   "\<C-Home>"->keytrans()
 ---
---- <          *len()* *E701*
 --- @param string string
 --- @return any
 function vim.fn.keytrans(string) end
@@ -5088,7 +5051,6 @@ function vim.fn.last_buffer_nr(...) end
 --- Can also be used as a |method|: >
 ---   mylist->len()
 ---
---- <        *libcall()* *E364* *E368*
 --- @param expr any
 --- @return any
 function vim.fn.len(expr) end
@@ -5138,7 +5100,6 @@ function vim.fn.len(expr) end
 --- third argument: >
 ---   GetValue()->libcall("libc.so", "getenv")
 --- <
----           *libcallnr()*
 --- @param libname string
 --- @param funcname string
 --- @param argument any
@@ -5578,7 +5539,6 @@ function vim.fn.mapset(mode, abbr, dict) end
 ---   GetText()->match('word')
 ---   GetList()->match('word')
 --- <
----   *matchadd()* *E798* *E799* *E801* *E957*
 --- @param expr any
 --- @param pat any
 --- @param start? any
@@ -5646,7 +5606,6 @@ function vim.fn.match(expr, pat, start, count) end
 --- Can also be used as a |method|: >
 ---   GetGroup()->matchadd('TODO')
 --- <
----           *matchaddpos()*
 --- @param group any
 --- @param pattern any
 --- @param priority? any
@@ -5922,7 +5881,6 @@ function vim.fn.matchstr(expr, pat, start, count) end
 ---   GetText()->matchstrpos('word')
 --- <
 ---
----           *max()*
 --- @param expr any
 --- @param pat any
 --- @param start? any
@@ -6069,7 +6027,6 @@ function vim.fn.menu_get(path, modes) end
 ---   GetMenuName()->menu_info('v')
 ---
 ---
---- <          *min()*
 --- @param name string
 --- @param mode? string
 --- @return any
@@ -6086,7 +6043,6 @@ function vim.fn.menu_info(name, mode) end
 --- Can also be used as a |method|: >
 ---   mylist->min()
 ---
---- <          *mkdir()* *E739*
 --- @param expr any
 --- @return any
 function vim.fn.min(expr) end
@@ -6136,7 +6092,6 @@ function vim.fn.min(expr) end
 --- Can also be used as a |method|: >
 ---   GetName()->mkdir()
 --- <
----           *mode()*
 --- @param name string
 --- @param flags? string
 --- @param prot? any
@@ -6867,7 +6822,6 @@ function vim.fn.range(expr, max, stride) end
 --- Also see |readfile()| and |writefile()|.
 ---
 ---
----           *readdir()*
 --- @param fname integer
 --- @param offset? any
 --- @param size? any
@@ -6907,7 +6861,6 @@ function vim.fn.readblob(fname, offset, size) end
 ---   GetDirName()->readdir()
 --- <
 ---
----           *readfile()*
 --- @param directory any
 --- @param expr? any
 --- @return any
@@ -7120,7 +7073,6 @@ vim.fn['repeat'] = function(expr, count) end
 --- Can also be used as a |method|: >
 ---   GetName()->resolve()
 --- <
----           *reverse()*
 --- @param filename any
 --- @return any
 function vim.fn.resolve(filename) end
@@ -7325,7 +7277,6 @@ function vim.fn.screenrow() end
 --- Can also be used as a |method|: >
 ---   GetRow()->screenstring(col)
 --- <
----             *search()*
 --- @param row any
 --- @param col integer
 --- @return any
@@ -7589,7 +7540,6 @@ function vim.fn.searchcount(options) end
 --- Can also be used as a |method|: >
 ---   GetName()->searchdecl()
 --- <
----           *searchpair()*
 --- @param name string
 --- @param global? any
 --- @param thisblock? any
@@ -7974,7 +7924,6 @@ function vim.fn.setloclist(nr, list, action, what) end
 --- Can also be used as a |method|: >
 ---   GetMatches()->setmatches()
 --- <
----           *setpos()*
 --- @param list any
 --- @param win? any
 --- @return any
@@ -8150,7 +8099,6 @@ function vim.fn.setpos(expr, list) end
 --- second argument: >
 ---   GetErrorlist()->setqflist()
 --- <
----           *setreg()*
 --- @param list any
 --- @param action? any
 --- @param what? any
@@ -8553,7 +8501,6 @@ function vim.fn.sign_getdefined(name) end
 --- Can also be used as a |method|: >
 ---   GetBufname()->sign_getplaced()
 --- <
----           *sign_jump()*
 --- @param buf? any
 --- @param dict? any
 --- @return any
@@ -8576,7 +8523,6 @@ function vim.fn.sign_getplaced(buf, dict) end
 --- Can also be used as a |method|: >
 ---   GetSignid()->sign_jump()
 --- <
----           *sign_place()*
 --- @param id any
 --- @param group any
 --- @param buf any
@@ -8633,7 +8579,6 @@ function vim.fn.sign_jump(id, group, buf) end
 --- Can also be used as a |method|: >
 ---   GetSignid()->sign_place(group, name, expr)
 --- <
----           *sign_placelist()*
 --- @param id any
 --- @param group any
 --- @param name string
@@ -8996,7 +8941,6 @@ function vim.fn.sockconnect(mode, address, opts) end
 --- <For a simple expression you can use a lambda: >
 ---   eval mylist->sort({i1, i2 -> i1 - i2})
 --- <
----           *soundfold()*
 --- @param list any
 --- @param func? any
 --- @param dict? any
@@ -9013,7 +8957,6 @@ function vim.fn.sort(list, func, dict) end
 --- Can also be used as a |method|: >
 ---   GetWord()->soundfold()
 --- <
----           *spellbadword()*
 --- @param word any
 --- @return any
 function vim.fn.soundfold(word) end
@@ -9044,7 +8987,6 @@ function vim.fn.soundfold(word) end
 --- Can also be used as a |method|: >
 ---   GetText()->spellbadword()
 --- <
----           *spellsuggest()*
 --- @param sentence? any
 --- @return any
 function vim.fn.spellbadword(sentence) end
@@ -9429,7 +9371,6 @@ function vim.fn.strgetchar(str, index) end
 --- Can also be used as a |method|: >
 ---   GetHaystack()->stridx(needle)
 --- <
----           *string()*
 --- @param haystack any
 --- @param needle any
 --- @param start? any
@@ -10042,7 +9983,6 @@ function vim.fn.tabpagenr(arg) end
 --- Can also be used as a |method|: >
 ---   GetTabpage()->tabpagewinnr()
 --- <
----           *tagfiles()*
 --- @param tabarg any
 --- @param arg? any
 --- @return any
@@ -10134,7 +10074,6 @@ function vim.fn.tan(expr) end
 --- Can also be used as a |method|: >
 ---   Compute()->tanh()
 --- <
----           *timer_info()*
 --- @param expr any
 --- @return any
 function vim.fn.tanh(expr) end
@@ -10203,7 +10142,6 @@ function vim.fn.timer_info(id) end
 --- Can also be used as a |method|: >
 ---   GetTimer()->timer_pause(1)
 --- <
----         *timer_start()* *timer* *timers*
 --- @param timer any
 --- @param paused any
 --- @return any
@@ -10472,7 +10410,6 @@ function vim.fn.undotree() end
 --- Can also be used as a |method|: >
 ---   mylist->uniq()
 --- <
----           *utf16idx()*
 --- @param list any
 --- @param func? any
 --- @param dict? any
@@ -10849,7 +10786,6 @@ function vim.fn.win_screenpos(nr) end
 --- Can also be used as a |method|: >
 ---   GetWinid()->win_splitmove(target)
 --- <
----           *winbufnr()*
 --- @param nr integer
 --- @param target any
 --- @param options? table
@@ -10867,7 +10803,6 @@ function vim.fn.win_splitmove(nr, target, options) end
 --- Can also be used as a |method|: >
 ---   FindWindow()->winbufnr()->bufname()
 --- <
----           *wincol()*
 --- @param nr integer
 --- @return integer
 function vim.fn.winbufnr(nr) end
@@ -10875,7 +10810,6 @@ function vim.fn.winbufnr(nr) end
 --- cursor in the window.  This is counting screen cells from the
 --- left side of the window.  The leftmost column is one.
 ---
----           *windowsversion()*
 --- @return integer
 function vim.fn.wincol() end
 
@@ -10935,7 +10869,6 @@ function vim.fn.winheight(nr) end
 --- Can also be used as a |method|: >
 ---   GetTabnr()->winlayout()
 --- <
----           *winline()*
 --- @param tabnr? integer
 --- @return any
 function vim.fn.winlayout(tabnr) end
@@ -10945,7 +10878,6 @@ function vim.fn.winlayout(tabnr) end
 --- If the cursor was moved the view on the file will be updated
 --- first, this may cause a scroll.
 ---
----           *winnr()*
 --- @return integer
 function vim.fn.winline() end
 
@@ -10979,7 +10911,6 @@ function vim.fn.winline() end
 --- <Can also be used as a |method|: >
 ---   GetWinval()->winnr()
 --- <
----           *winrestcmd()*
 --- @param arg? any
 --- @return any
 function vim.fn.winnr(arg) end
@@ -10992,7 +10923,6 @@ function vim.fn.winnr(arg) end
 ---   :call MessWithWindowSizes()
 ---   :exe cmd
 --- <
----           *winrestview()*
 --- @return any
 function vim.fn.winrestcmd() end
 
@@ -11014,7 +10944,6 @@ function vim.fn.winrestcmd() end
 --- Can also be used as a |method|: >
 ---   GetView()->winrestview()
 --- <
----           *winsaveview()*
 --- @param dict any
 --- @return any
 function vim.fn.winrestview(dict) end
@@ -11089,7 +11018,6 @@ function vim.fn.winwidth(nr) end
 ---       (only in Visual mode)
 ---
 ---
----           *writefile()*
 --- @return any
 function vim.fn.wordcount() end
 

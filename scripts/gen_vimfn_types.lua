@@ -95,6 +95,7 @@ local function process_source(source)
 
   local lines = {} --- @type string[]
   local last_f --- @type string?
+  local last_l --- @type string?
 
   for i = s, #src_lines do
     local l = src_lines[i]
@@ -104,11 +105,14 @@ local function process_source(source)
     local f = l:match('^([a-z][a-zA-Z0-9_]*)%(')
     if f then
       if last_f then
+        if last_l and last_l:find('*' .. f .. '()*', 1, true) then
+          lines[#lines] = nil
+        end
         funcs[last_f].desc = lines
       end
       last_f = f
       local sig = l:match('[^)]+%)')
-      local params = {} --- @type string[]
+      local params = {} --- @type table[]
       if sig then
         for param in string.gmatch(sig, '{([a-z][a-zA-Z0-9_]*)}') do
           local t = ARG_NAME_TYPES[param] or 'any'
@@ -125,6 +129,7 @@ local function process_source(source)
     else
       lines[#lines+1] = l:gsub('^(<?)\t\t', '%1'):gsub('\t', '  ')
     end
+    last_l = l
   end
 
   if last_f then
