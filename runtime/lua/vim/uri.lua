@@ -1,65 +1,71 @@
---- TODO: This is implemented only for files now.
+---TODO: This is implemented only for files currently.
 -- https://tools.ietf.org/html/rfc3986
 -- https://tools.ietf.org/html/rfc2732
 -- https://tools.ietf.org/html/rfc2396
 
-local uri_decode
-do
-  local schar = string.char
+local M = {}
+local sbyte = string.byte
+local schar = string.char
+local tohex = require('bit').tohex
+local URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):.*'
+local WINDOWS_URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):[a-zA-Z]:.*'
+local PATTERNS = {
+  ---RFC 2396
+  ---https://tools.ietf.org/html/rfc2396#section-2.2
+  rfc2396 = "^A-Za-z0-9%-_.!~*'()",
+  ---RFC 2732
+  ---https://tools.ietf.org/html/rfc2732
+  rfc2732 = "^A-Za-z0-9%-_.!~*'()[]",
+  ---RFC 3986
+  ---https://tools.ietf.org/html/rfc3986#section-2.2
+  rfc3986 = "^A-Za-z0-9%-._~!$&'()*+,;=:@/",
+}
 
-  --- Convert hex to char
-  local function hex_to_char(hex)
-    return schar(tonumber(hex, 16))
-  end
-  uri_decode = function(str)
-    return str:gsub('%%([a-fA-F0-9][a-fA-F0-9])', hex_to_char)
-  end
+---Converts hex to char
+---@param hex string
+---@return string
+local function hex_to_char(hex)
+  return schar(tonumber(hex, 16))
 end
 
-local uri_encode
-do
-  local PATTERNS = {
-    --- RFC 2396
-    -- https://tools.ietf.org/html/rfc2396#section-2.2
-    rfc2396 = "^A-Za-z0-9%-_.!~*'()",
-    --- RFC 2732
-    -- https://tools.ietf.org/html/rfc2732
-    rfc2732 = "^A-Za-z0-9%-_.!~*'()[]",
-    --- RFC 3986
-    -- https://tools.ietf.org/html/rfc3986#section-2.2
-    rfc3986 = "^A-Za-z0-9%-._~!$&'()*+,;=:@/",
-  }
-  local sbyte = string.byte
-  local tohex = require('bit').tohex
-
-  local function percent_encode_char(char)
-    return '%' .. tohex(sbyte(char), 2)
-  end
-  uri_encode = function(text, rfc)
-    if not text then
-      return
-    end
-    local pattern = PATTERNS[rfc] or PATTERNS.rfc3986
-    return text:gsub('([' .. pattern .. '])', percent_encode_char)
-  end
+---@param char string
+---@return string
+local function percent_encode_char(char)
+  return '%' .. tohex(sbyte(char), 2)
 end
 
+---@param uri string
+---@return boolean
 local function is_windows_file_uri(uri)
   return uri:match('^file:/+[a-zA-Z]:') ~= nil
 end
 
-local M = {}
+---URI-encodes a string using percent escapes.
+---@param str string string to encode
+---@param rfc "rfc2396" | "rfc2732" | "rfc3986" | nil
+---@return string encoded string
+function M.uri_encode(str, rfc)
+  local pattern = PATTERNS[rfc] or PATTERNS.rfc3986
+  return (str:gsub('([' .. pattern .. '])', percent_encode_char)) -- clamped to 1 retval with ()
+end
 
---- Get a URI from a file path.
+---URI-decodes a string containing percent escapes.
+---@param str string string to decode
+---@return string decoded string
+function M.uri_decode(str)
+  return (str:gsub('%%([a-fA-F0-9][a-fA-F0-9])', hex_to_char)) -- clamped to 1 retval with ()
+end
+
+---Gets a URI from a file path.
 ---@param path string Path to file
 ---@return string URI
 function M.uri_from_fname(path)
   local volume_path, fname = path:match('^([a-zA-Z]:)(.*)')
   local is_windows = volume_path ~= nil
   if is_windows then
-    path = volume_path .. uri_encode(fname:gsub('\\', '/'))
+    path = volume_path .. M.uri_encode(fname:gsub('\\', '/'))
   else
-    path = uri_encode(path)
+    path = M.uri_encode(path)
   end
   local uri_parts = { 'file://' }
   if is_windows then
@@ -69,10 +75,7 @@ function M.uri_from_fname(path)
   return table.concat(uri_parts)
 end
 
-local URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):.*'
-local WINDOWS_URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):[a-zA-Z]:.*'
-
---- Get a URI from a bufnr
+---Gets a URI from a bufnr.
 ---@param bufnr integer
 ---@return string URI
 function M.uri_from_bufnr(bufnr)
@@ -93,7 +96,7 @@ function M.uri_from_bufnr(bufnr)
   end
 end
 
---- Get a filename from a URI
+---Gets a filename from a URI.
 ---@param uri string
 ---@return string filename or unchanged URI for non-file URIs
 function M.uri_to_fname(uri)
@@ -101,8 +104,8 @@ function M.uri_to_fname(uri)
   if scheme ~= 'file' then
     return uri
   end
-  uri = uri_decode(uri)
-  -- TODO improve this.
+  uri = M.uri_decode(uri)
+  --TODO improve this.
   if is_windows_file_uri(uri) then
     uri = uri:gsub('^file:/+', '')
     uri = uri:gsub('/', '\\')
@@ -112,8 +115,8 @@ function M.uri_to_fname(uri)
   return uri
 end
 
---- Get the buffer for a uri.
---- Creates a new unloaded buffer if no buffer for the uri already exists.
+---Gets the buffer for a uri.
+---Creates a new unloaded buffer if no buffer for the uri already exists.
 --
 ---@param uri string
 ---@return integer bufnr
