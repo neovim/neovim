@@ -435,6 +435,28 @@ describe("'inccommand' for user commands", function()
     ]])
     assert_alive()
   end)
+
+  it("no crash if preview callback executes undo", function()
+    command('set inccommand=nosplit')
+    exec_lua([[
+      vim.api.nvim_create_user_command('Foo', function() end, {
+        nargs = '?',
+        preview = function(_, _, _)
+          vim.cmd.undo()
+        end,
+      })
+    ]])
+
+    -- Clear undo history
+    command('set undolevels=-1')
+    feed('ggyyp')
+    command('set undolevels=1000')
+
+    feed('yypp:Fo')
+    assert_alive()
+    feed('<Esc>:Fo')
+    assert_alive()
+  end)
 end)
 
 describe("'inccommand' with multiple buffers", function()
