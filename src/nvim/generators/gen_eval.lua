@@ -39,6 +39,7 @@ hashpipe:write([[
 #include "nvim/strings.h"
 #include "nvim/sign.h"
 #include "nvim/testing.h"
+#include "nvim/undo.h"
 
 ]])
 
