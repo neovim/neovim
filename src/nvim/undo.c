@@ -3118,7 +3118,7 @@ bool curbufIsChanged(void)
 /// @param[in]  first_uhp  Undo blocks list to start with.
 ///
 /// @return [allocated] List with a representation of undo blocks.
-list_T *u_eval_tree(const u_header_T *const first_uhp)
+static list_T *u_eval_tree(const u_header_T *const first_uhp)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   list_T *const list = tv_list_alloc(kListLenMayKnow);
@@ -3146,6 +3146,42 @@ list_T *u_eval_tree(const u_header_T *const first_uhp)
   }
 
   return list;
+}
+
+/// "undofile(name)" function
+void f_undofile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  rettv->v_type = VAR_STRING;
+  const char *const fname = tv_get_string(&argvars[0]);
+
+  if (*fname == NUL) {
+    // If there is no file name there will be no undo file.
+    rettv->vval.v_string = NULL;
+  } else {
+    char *ffname = FullName_save(fname, true);
+
+    if (ffname != NULL) {
+      rettv->vval.v_string = u_get_undo_file_name(ffname, false);
+    }
+    xfree(ffname);
+  }
+}
+
+/// "undotree()" function
+void f_undotree(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  tv_dict_alloc_ret(rettv);
+
+  dict_T *dict = rettv->vval.v_dict;
+
+  tv_dict_add_nr(dict, S_LEN("synced"), (varnumber_T)curbuf->b_u_synced);
+  tv_dict_add_nr(dict, S_LEN("seq_last"), (varnumber_T)curbuf->b_u_seq_last);
+  tv_dict_add_nr(dict, S_LEN("save_last"), (varnumber_T)curbuf->b_u_save_nr_last);
+  tv_dict_add_nr(dict, S_LEN("seq_cur"), (varnumber_T)curbuf->b_u_seq_cur);
+  tv_dict_add_nr(dict, S_LEN("time_cur"), (varnumber_T)curbuf->b_u_time_cur);
+  tv_dict_add_nr(dict, S_LEN("save_cur"), (varnumber_T)curbuf->b_u_save_nr_cur);
+
+  tv_dict_add_list(dict, S_LEN("entries"), u_eval_tree(curbuf->b_u_oldhead));
 }
 
 // Given the buffer, Return the undo header. If none is set, set one first.

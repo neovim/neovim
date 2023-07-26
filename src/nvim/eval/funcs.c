@@ -114,7 +114,6 @@
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
 #include "nvim/ui.h"
-#include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
@@ -8627,43 +8626,6 @@ static void f_type(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     break;
   }
   rettv->vval.v_number = n;
-}
-
-/// "undofile(name)" function
-static void f_undofile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  rettv->v_type = VAR_STRING;
-  const char *const fname = tv_get_string(&argvars[0]);
-
-  if (*fname == NUL) {
-    // If there is no file name there will be no undo file.
-    rettv->vval.v_string = NULL;
-  } else {
-    char *ffname = FullName_save(fname, true);
-
-    if (ffname != NULL) {
-      rettv->vval.v_string = u_get_undo_file_name(ffname, false);
-    }
-    xfree(ffname);
-  }
-}
-
-/// "undotree()" function
-static void f_undotree(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  tv_dict_alloc_ret(rettv);
-
-  dict_T *dict = rettv->vval.v_dict;
-
-  tv_dict_add_nr(dict, S_LEN("synced"), (varnumber_T)curbuf->b_u_synced);
-  tv_dict_add_nr(dict, S_LEN("seq_last"), (varnumber_T)curbuf->b_u_seq_last);
-  tv_dict_add_nr(dict, S_LEN("save_last"),
-                 (varnumber_T)curbuf->b_u_save_nr_last);
-  tv_dict_add_nr(dict, S_LEN("seq_cur"), (varnumber_T)curbuf->b_u_seq_cur);
-  tv_dict_add_nr(dict, S_LEN("time_cur"), (varnumber_T)curbuf->b_u_time_cur);
-  tv_dict_add_nr(dict, S_LEN("save_cur"), (varnumber_T)curbuf->b_u_save_nr_cur);
-
-  tv_dict_add_list(dict, S_LEN("entries"), u_eval_tree(curbuf->b_u_oldhead));
 }
 
 /// "virtcol(string, bool)" function
