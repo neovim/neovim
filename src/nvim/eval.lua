@@ -12,7 +12,7 @@
 --- @field func? string Name of the C function which implements the Vimscript function. Defaults to
 ---       `f_{funcname}`.
 --- @field fast? boolean Function can run in |api-fast| events. Defaults to false.
---- @field deprecated? string[]|true
+--- @field deprecated? string[]
 --- @field returns? string|false
 
 -- Usable with the base key: use the last function argument as the method base.
