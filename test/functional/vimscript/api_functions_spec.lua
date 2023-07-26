@@ -73,9 +73,10 @@ describe('eval-API', function()
 
     -- Some functions checking textlock (usually those that may change the current window or buffer)
     -- also ought to not be usable in the cmdwin.
+    local old_win = meths.get_current_win()
     feed("q:")
     eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-       pcall_err(meths.win_hide, 0))
+       pcall_err(meths.set_current_win, old_win))
 
     -- But others, like nvim_buf_set_lines(), which just changes text, is OK.
     curbufmeths.set_lines(0, -1, 1, {"wow!"})

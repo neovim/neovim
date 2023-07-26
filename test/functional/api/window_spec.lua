@@ -43,6 +43,22 @@ describe('API/win', function()
       eq('Invalid buffer id: 23', pcall_err(window, 'set_buf', nvim('get_current_win'), 23))
       eq('Invalid window id: 23', pcall_err(window, 'set_buf', 23, nvim('get_current_buf')))
     end)
+
+    it('disallowed in cmdwin if win=curwin or buf=curbuf', function()
+      local new_buf = meths.create_buf(true, true)
+      local new_win = meths.open_win(new_buf, false, {
+        relative='editor', row=10, col=10, width=50, height=10,
+      })
+      feed('q:')
+      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+         pcall_err(meths.win_set_buf, 0, new_buf))
+      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+         pcall_err(meths.win_set_buf, new_win, 0))
+
+      local next_buf = meths.create_buf(true, true)
+      meths.win_set_buf(new_win, next_buf)
+      eq(next_buf, meths.win_get_buf(new_win))
+    end)
   end)
 
   describe('{get,set}_cursor', function()
@@ -524,15 +540,21 @@ describe('API/win', function()
       command('split')
       eq(2, #meths.list_wins())
       local oldwin = meths.get_current_win()
+      local otherwin = meths.open_win(0, false, {
+        relative='editor', row=10, col=10, width=10, height=10,
+      })
       -- Open cmdline-window.
       feed('q:')
-      eq(3, #meths.list_wins())
+      eq(4, #meths.list_wins())
       eq(':', funcs.getcmdwintype())
-      -- Vim: not allowed to close other windows from cmdline-window.
+      -- Not allowed to close previous window from cmdline-window.
       eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-        pcall_err(meths.win_close, oldwin, true))
+         pcall_err(meths.win_close, oldwin, true))
+      -- Closing other windows is fine.
+      meths.win_close(otherwin, true)
+      eq(false, meths.win_is_valid(otherwin))
       -- Close cmdline-window.
-      meths.win_close(0,true)
+      meths.win_close(0, true)
       eq(2, #meths.list_wins())
       eq('', funcs.getcmdwintype())
     end)
@@ -592,6 +614,24 @@ describe('API/win', function()
       meths.win_hide(newwin)
       eq({oldwin}, meths.list_wins())
       eq({oldbuf}, meths.list_bufs())
+    end)
+    it('in the cmdwin', function()
+      feed('q:')
+      -- Can close the cmdwin.
+      meths.win_hide(0)
+      eq('', funcs.getcmdwintype())
+
+      local old_win = meths.get_current_win()
+      local other_win = meths.open_win(0, false, {
+        relative='win', row=3, col=3, width=12, height=3
+      })
+      feed('q:')
+      -- Cannot close the previous window.
+      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+         pcall_err(meths.win_hide, old_win))
+      -- Can close other windows.
+      meths.win_hide(other_win)
+      eq(false, meths.win_is_valid(other_win))
     end)
   end)
 
@@ -820,6 +860,31 @@ describe('API/win', function()
         relative='win', row=3, col=3, width=12, height=3
       })
       eq(1, funcs.exists('g:fired'))
+    end)
+
+    it('disallowed in cmdwin if enter=true or buf=curbuf', function()
+      local new_buf = meths.create_buf(true, true)
+      feed('q:')
+      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+         pcall_err(meths.open_win, new_buf, true, {
+           relative='editor', row=5, col=5, width=5, height=5,
+         }))
+      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+         pcall_err(meths.open_win, 0, false, {
+           relative='editor', row=5, col=5, width=5, height=5,
+         }))
+
+      eq(new_buf, meths.win_get_buf(meths.open_win(new_buf, false, {
+           relative='editor', row=5, col=5, width=5, height=5,
+         })))
+    end)
+
+    it('aborts if buffer is invalid', function()
+      local wins_before = meths.list_wins()
+      eq('Invalid buffer id: 1337', pcall_err(meths.open_win, 1337, false, {
+           relative='editor', row=5, col=5, width=5, height=5,
+         }))
+      eq(wins_before, meths.list_wins())
     end)
   end)
 

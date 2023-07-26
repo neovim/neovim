@@ -50,9 +50,18 @@ Buffer nvim_win_get_buf(Window window, Error *err)
 /// @param[out] err Error details, if any
 void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
   FUNC_API_SINCE(5)
-  FUNC_API_TEXTLOCK
+  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
-  win_set_buf(window, buffer, false, err);
+  win_T *win = find_window_by_handle(window, err);
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!win || !buf) {
+    return;
+  }
+  if (cmdwin_type != 0 && (win == curwin || buf == curbuf)) {
+    api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
+    return;
+  }
+  win_set_buf(win, buf, false, err);
 }
 
 /// Gets the (1,0)-indexed, buffer-relative cursor position for a given window
@@ -353,10 +362,10 @@ Boolean nvim_win_is_valid(Window window)
 /// @param[out] err Error details, if any
 void nvim_win_hide(Window window, Error *err)
   FUNC_API_SINCE(7)
-  FUNC_API_TEXTLOCK
+  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
   win_T *win = find_window_by_handle(window, err);
-  if (!win) {
+  if (!win || !can_close_in_cmdwin(win, err)) {
     return;
   }
 
@@ -388,16 +397,7 @@ void nvim_win_close(Window window, Boolean force, Error *err)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
   win_T *win = find_window_by_handle(window, err);
-  if (!win) {
-    return;
-  }
-
-  if (cmdwin_type != 0) {
-    if (win == curwin) {
-      cmdwin_result = Ctrl_C;
-    } else {
-      api_set_error(err, kErrorTypeException, "%s", _(e_cmdwin));
-    }
+  if (!win || !can_close_in_cmdwin(win, err)) {
     return;
   }
 

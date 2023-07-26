@@ -158,8 +158,17 @@
 /// @return Window handle, or 0 on error
 Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, Error *err)
   FUNC_API_SINCE(6)
-  FUNC_API_TEXTLOCK
+  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return 0;
+  }
+  if (cmdwin_type != 0 && (enter || buf == curbuf)) {
+    api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
+    return 0;
+  }
+
   FloatConfig fconfig = FLOAT_CONFIG_INIT;
   if (!parse_float_config(config, &fconfig, false, true, err)) {
     return 0;
@@ -173,7 +182,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, E
   }
   // autocmds in win_enter or win_set_buf below may close the window
   if (win_valid(wp) && buffer > 0) {
-    win_set_buf(wp->handle, buffer, fconfig.noautocmd, err);
+    win_set_buf(wp, buf, fconfig.noautocmd, err);
   }
   if (!win_valid(wp)) {
     api_set_error(err, kErrorTypeException, "Window was closed immediately");

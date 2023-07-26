@@ -698,15 +698,9 @@ static void cmd_with_count(char *cmd, char *bufp, size_t bufsize, int64_t Prenum
   }
 }
 
-void win_set_buf(Window window, Buffer buffer, bool noautocmd, Error *err)
+void win_set_buf(win_T *win, buf_T *buf, bool noautocmd, Error *err)
+  FUNC_ATTR_NONNULL_ALL
 {
-  win_T *win = find_window_by_handle(window, err);
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-
-  if (!win || !buf) {
-    return;
-  }
-
   tabpage_T *tab = win_find_tabpage(win);
 
   // no redrawing and don't set the window title
@@ -720,7 +714,7 @@ void win_set_buf(Window window, Buffer buffer, bool noautocmd, Error *err)
     api_set_error(err,
                   kErrorTypeException,
                   "Failed to switch to window %d",
-                  window);
+                  win->handle);
   }
 
   try_start();
@@ -729,7 +723,7 @@ void win_set_buf(Window window, Buffer buffer, bool noautocmd, Error *err)
     api_set_error(err,
                   kErrorTypeException,
                   "Failed to set buffer %d",
-                  buffer);
+                  buf->handle);
   }
 
   // If window is not current, state logic will not validate its cursor.
@@ -2670,6 +2664,23 @@ static bool can_close_floating_windows(void)
     int need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
 
     if (need_hide && !buf_hide(buf)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/// @return true if, considering the cmdwin, `win` is safe to close.
+/// If false and `win` is the cmdwin, it is closed; otherwise, `err` is set.
+bool can_close_in_cmdwin(win_T *win, Error *err)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (cmdwin_type != 0) {
+    if (win == curwin) {
+      cmdwin_result = Ctrl_C;
+      return false;
+    } else if (win == cmdwin_old_curwin) {
+      api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
       return false;
     }
   }
@@ -5701,8 +5712,9 @@ void win_size_save(garray_T *gap)
 {
   ga_init(gap, (int)sizeof(int), 1);
   ga_grow(gap, win_count() * 2 + 1);
-  // first entry is value of 'lines'
-  ((int *)gap->ga_data)[gap->ga_len++] = Rows;
+  // first entry is the total lines available for windows
+  ((int *)gap->ga_data)[gap->ga_len++] =
+    (int)ROWS_AVAIL + global_stl_height() - last_stl_height(false);
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     ((int *)gap->ga_data)[gap->ga_len++] =
@@ -5712,13 +5724,14 @@ void win_size_save(garray_T *gap)
 }
 
 // Restore window sizes, but only if the number of windows is still the same
-// and 'lines' didn't change.
+// and total lines available for windows didn't change.
 // Does not free the growarray.
 void win_size_restore(garray_T *gap)
   FUNC_ATTR_NONNULL_ALL
 {
   if (win_count() * 2 + 1 == gap->ga_len
-      && ((int *)gap->ga_data)[0] == Rows) {
+      && ((int *)gap->ga_data)[0] ==
+      (int)ROWS_AVAIL + global_stl_height() - last_stl_height(false)) {
     // The order matters, because frames contain other frames, but it's
     // difficult to get right. The easy way out is to do it twice.
     for (int j = 0; j < 2; j++) {
@@ -6982,8 +6995,7 @@ char *file_name_in_line(char *line, int col, int options, int count, char *rel_f
 void last_status(bool morewin)
 {
   // Don't make a difference between horizontal or vertical split.
-  last_status_rec(topframe, (p_ls == 2 || (p_ls == 1 && (morewin || !one_nonfloat()))),
-                  global_stl_height() > 0);
+  last_status_rec(topframe, last_stl_height(morewin) > 0, global_stl_height() > 0);
 }
 
 // Remove status line from window, replacing it with a horizontal separator if needed.
@@ -7180,6 +7192,14 @@ int global_winbar_height(void)
 int global_stl_height(void)
 {
   return (p_ls == 3) ? STATUS_HEIGHT : 0;
+}
+
+/// Return the height of the last window's statusline, or the global statusline if set.
+///
+/// @param morewin  pretend there are two or more windows if true.
+int last_stl_height(bool morewin)
+{
+  return (p_ls > 1 || (p_ls == 1 && (!one_nonfloat() || morewin))) ? STATUS_HEIGHT : 0;
 }
 
 /// Return the minimal number of rows that is needed on the screen to display

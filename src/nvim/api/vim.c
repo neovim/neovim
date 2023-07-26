@@ -967,7 +967,7 @@ Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
   }
 
   if (cmdwin_type != 0 && buf == curbuf) {
-    api_set_error(err, kErrorTypeException, "%s", _(e_cmdwin));
+    api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return 0;
   }
 

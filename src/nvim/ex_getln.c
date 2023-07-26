@@ -4398,6 +4398,7 @@ static int open_cmdwin(void)
   // Set "cmdwin_type" before any autocommands may mess things up.
   cmdwin_type = get_cmdline_type();
   cmdwin_level = ccline.level;
+  cmdwin_old_curwin = old_curwin;
 
   // Create empty command-line buffer.
   if (buf_open_scratch(0, _("[Command Line]")) == FAIL) {
@@ -4405,6 +4406,7 @@ static int open_cmdwin(void)
     win_close(curwin, true, false);
     ga_clear(&winsizes);
     cmdwin_type = 0;
+    cmdwin_old_curwin = NULL;
     return Ctrl_C;
   }
   // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
@@ -4501,6 +4503,7 @@ static int open_cmdwin(void)
 
   cmdwin_type = 0;
   cmdwin_level = 0;
+  cmdwin_old_curwin = NULL;
 
   exmode_active = save_exmode;
 
