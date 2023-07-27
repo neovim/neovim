@@ -93,4 +93,37 @@ func Test_cmdwin_restore_heights()
   set cmdheight& showtabline& laststatus&
 endfunc
 
+func Test_cmdwin_temp_curwin()
+  func CheckWraps(expect_wrap)
+    setlocal textwidth=0 wrapmargin=1
+
+    call deletebufline('', 1, '$')
+    let as = repeat('a', winwidth(0) - 2 - &wrapmargin)
+    call setline(1, as .. ' b')
+    normal! gww
+
+    setlocal textwidth& wrapmargin&
+    call assert_equal(a:expect_wrap ? [as, 'b'] : [as .. ' b'], getline(1, '$'))
+  endfunc
+
+  func CheckCmdWin()
+    call assert_equal('command', win_gettype())
+    " textoff and &wrapmargin formatting considers the cmdwin_type char.
+    call assert_equal(1, getwininfo(win_getid())[0].textoff)
+    call CheckWraps(1)
+  endfunc
+
+  func CheckOtherWin()
+    call assert_equal('', win_gettype())
+    call assert_equal(0, getwininfo(win_getid())[0].textoff)
+    call CheckWraps(0)
+  endfunc
+
+  call feedkeys("q::call CheckCmdWin()\<CR>:call win_execute(win_getid(winnr('#')), 'call CheckOtherWin()')\<CR>:q<CR>", 'ntx')
+
+  delfunc CheckWraps
+  delfunc CheckCmdWin
+  delfunc CheckOtherWin
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

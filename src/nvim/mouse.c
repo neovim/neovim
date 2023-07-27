@@ -1326,18 +1326,18 @@ retnomove:
                 && !sep_line_offset
                 && (wp->w_p_rl
                     ? col < wp->w_width_inner - fdc
-                    : col >= fdc + (cmdwin_type == 0 && wp == curwin ? 0 : 1))
+                    : col >= fdc + (wp != cmdwin_win ? 0 : 1))
                 && (flags & MOUSE_MAY_STOP_VIS)))) {
       end_visual_mode();
       redraw_curbuf_later(UPD_INVERTED);  // delete the inversion
     }
-    if (cmdwin_type != 0 && wp != curwin) {
+    if (cmdwin_type != 0 && wp != cmdwin_win) {
       // A click outside the command-line window: Use modeless
       // selection if possible.  Allow dragging the status lines.
       sep_line_offset = 0;
       row = 0;
       col += wp->w_wincol;
-      wp = curwin;
+      wp = cmdwin_win;
     }
     // Only change window focus when not clicking on or dragging the
     // status line.  Do change focus when releasing the mouse button

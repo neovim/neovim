@@ -4326,9 +4326,10 @@ static int open_cmdwin(void)
   // Don't let quitting the More prompt make this fail.
   got_int = false;
 
-  // Set "cmdwin_type" before any autocommands may mess things up.
+  // Set "cmdwin_..." variables before any autocommands may mess things up.
   cmdwin_type = get_cmdline_type();
   cmdwin_level = ccline.level;
+  cmdwin_win = curwin;
   cmdwin_old_curwin = old_curwin;
 
   // Create empty command-line buffer.
@@ -4337,9 +4338,12 @@ static int open_cmdwin(void)
     win_close(curwin, true, false);
     ga_clear(&winsizes);
     cmdwin_type = 0;
+    cmdwin_win = NULL;
     cmdwin_old_curwin = NULL;
     return Ctrl_C;
   }
+  cmdwin_buf = curbuf;
+
   // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
   set_option_value_give_err(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL);
   curbuf->b_p_ma = true;
@@ -4434,6 +4438,8 @@ static int open_cmdwin(void)
 
   cmdwin_type = 0;
   cmdwin_level = 0;
+  cmdwin_buf = NULL;
+  cmdwin_win = NULL;
   cmdwin_old_curwin = NULL;
 
   exmode_active = save_exmode;
