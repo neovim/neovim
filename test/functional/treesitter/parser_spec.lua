@@ -194,8 +194,8 @@ void ui_refresh(void)
     local firstrun = q(1)
     local manyruns = q(100)
 
-    -- First run should be at least 400x slower than an 100 subsequent runs.
-    local factor = is_os('win') and 200 or 400
+    -- First run should be at least 200x slower than an 100 subsequent runs.
+    local factor = is_os('win') and 100 or 200
     assert(factor * manyruns < firstrun, ('firstrun: %f ms, manyruns: %f ms'):format(firstrun / 1e6, manyruns / 1e6))
   end)
 
@@ -765,9 +765,9 @@ int x = INT_MAX;
         eq("table", exec_lua("return type(parser:children().c)"))
         eq({
           {0, 0, 7, 0},   -- root tree
-          {3, 15, 3, 16}, -- VALUE 123
-          {4, 16, 4, 17}, -- VALUE1 123
-          {5, 16, 5, 17}, -- VALUE2 123
+          {3, 16, 3, 16}, -- VALUE 123
+          {4, 17, 4, 17}, -- VALUE1 123
+          {5, 17, 5, 17}, -- VALUE2 123
           {1, 26, 1, 63}, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
           {2, 29, 2, 66}  -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())

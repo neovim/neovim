@@ -8,9 +8,14 @@
   "typedef"
   "union"
   "goto"
+  "asm"
+  "__asm__"
 ] @keyword
 
-"sizeof" @keyword.operator
+[
+  "sizeof"
+  "offsetof"
+] @keyword.operator
 
 "return" @keyword.return
 
@@ -36,6 +41,8 @@
   "#else"
   "#elif"
   "#endif"
+  "#elifdef"
+  "#elifndef"
   (preproc_directive)
 ] @preproc
 
@@ -43,7 +50,7 @@
 
 "#include" @include
 
-[ ";" ":" "," ] @punctuation.delimiter
+[ ";" ":" "," "::" ] @punctuation.delimiter
 
 "..." @punctuation.special
 
@@ -98,8 +105,8 @@
 (comma_expression [ "," ] @operator)
 
 [
- (true)
- (false)
+  (true)
+  (false)
 ] @boolean
 
 (conditional_expression [ "?" ":" ] @conditional.ternary)
@@ -112,10 +119,8 @@
 (number_literal) @number
 (char_literal) @character
 
-[
- (preproc_arg)
- (preproc_defined)
-]  @function.macro
+((preproc_arg) @function.macro (#set! "priority" 90))
+(preproc_defined) @function.macro
 
 (((field_expression
      (field_identifier) @property)) @_parent
@@ -135,7 +140,10 @@
 
 (storage_class_specifier) @storageclass
 
-(type_qualifier) @type.qualifier
+[
+  (type_qualifier) 
+  (gnu_asm_qualifier)
+] @type.qualifier
 
 (linkage_specification
   "extern" @storageclass)
@@ -195,15 +203,15 @@
 
 [
   "__attribute__"
+  "__declspec"
+  "__based"
   "__cdecl"
   "__clrcall"
   "__stdcall"
   "__fastcall"
   "__thiscall"
   "__vectorcall"
-  "_unaligned"
-  "__unaligned"
-  "__declspec"
+  (ms_pointer_modifier)
   (attribute_declaration)
 ] @attribute
 

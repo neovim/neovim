@@ -13,7 +13,8 @@
  (preproc_else)
  (preproc_ifdef)
  (initializer_list)
+ (gnu_asm_expression)
 ] @fold
 
- (compound_statement
+(compound_statement
   (compound_statement) @fold)
