@@ -504,4 +504,34 @@ function M.foldexpr(lnum)
   return require('vim.treesitter._fold').foldexpr(lnum)
 end
 
+--- Move the cursor to the given node.
+---
+--- Example:
+---
+--- <pre>lua
+--- local parser = vim.treesitter.get_parser()
+--- local tree = parser:parse()[0]
+--- local root = tree:root()
+--- vim.treesitter.goto_node(root, { offset = { 0, 3 } })
+--- </pre>
+---
+---@param node TSNode Node to move cursor to.
+---@param opts table|nil Optional arguments:
+---                      - winid (number): Window ID to move cursor in. Defaults to 0 (current
+---                                        window).
+---                      - offset (table): (row, col) offset from the node's start position.
+function M.goto_node(node, opts)
+  assert(node, 'Missing required argument: node')
+
+  opts = opts or {}
+  local winid = opts.winid or 0
+  local buf = api.nvim_win_get_buf(winid)
+  local metadata = opts.metadata or {}
+  local range = vim.treesitter.get_range(node, buf, metadata)
+  local row, col = unpack(range)
+  local offset = opts.offset or { 0, 0 }
+  assert(#offset == 2, 'offset must be a (row, col) tuple')
+  api.nvim_win_set_cursor(winid, { row + 1 + offset[1], col + offset[2] })
+end
+
 return M

@@ -1,9 +1,13 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
-local insert = helpers.insert
+local command = helpers.command
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
+local insert = helpers.insert
+local matches = helpers.matches
+local meths = helpers.meths
+local pcall_err = helpers.pcall_err
 
 before_each(clear)
 
@@ -44,5 +48,70 @@ describe('treesitter utils', function()
     end
     -- End column exclusive
     eq(false, exec_lua('return vim.treesitter.is_in_node_range(node, 0, 8)'))
+  end)
+
+  it('can move the cursor to a given node', function()
+    insert([[
+      int main() {
+        int x = 3;
+      }]])
+
+    local winid = meths.get_current_win().id
+    local buf = meths.get_current_buf().id
+
+    do
+      -- Create new window and make it current. Use goto_node to move cursor in previous
+      -- (non-current) window
+      command('new')
+      exec_lua([[
+        local buf, winid = ...
+        local parser = vim.treesitter.get_parser(buf, "c")
+        local tree = parser:parse()[1]
+        local root = tree:root()
+        vim.treesitter.goto_node(root, { winid = winid, offset = { 1, 2 } })
+      ]], buf, winid)
+
+      eq({ 2, 2 }, meths.win_get_cursor(winid))
+
+      -- Restore original window
+      meths.set_current_win(winid)
+    end
+
+    do
+      meths.win_set_cursor(0, { 2, 4 })
+
+      -- Missing offset defaults to (0, 0)
+      -- Missing winid defaults to current window
+      exec_lua([[
+        local parser = vim.treesitter.get_parser(0, "c")
+        local tree = parser:parse()[1]
+        local root = tree:root()
+        vim.treesitter.goto_node(root)
+      ]])
+
+      eq({ 1, 0 }, meths.win_get_cursor(0))
+    end
+
+    do
+      -- Invalid offset
+      matches('offset must be a %(row, col%) tuple', pcall_err(exec_lua, [[
+        local parser = vim.treesitter.get_parser(0, "c")
+        local tree = parser:parse()[1]
+        local root = tree:root()
+        vim.treesitter.goto_node(root, { offset = {} })
+      ]]))
+      matches('offset must be a %(row, col%) tuple', pcall_err(exec_lua, [[
+        local parser = vim.treesitter.get_parser(0, "c")
+        local tree = parser:parse()[1]
+        local root = tree:root()
+        vim.treesitter.goto_node(root, { offset = { 1 } })
+      ]]))
+      matches('offset must be a %(row, col%) tuple', pcall_err(exec_lua, [[
+        local parser = vim.treesitter.get_parser(0, "c")
+        local tree = parser:parse()[1]
+        local root = tree:root()
+        vim.treesitter.goto_node(root, { offset = { 1, 2, 3 } })
+      ]]))
+    end
   end)
 end)

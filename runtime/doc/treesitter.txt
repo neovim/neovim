@@ -679,6 +679,27 @@ get_string_parser({str}, {lang}, {opts})
     Return: ~
         |LanguageTree| object to use for parsing
 
+goto_node({node}, {opts})                         *vim.treesitter.goto_node()*
+    Move the cursor to the given node.
+
+    Example:
+
+    >lua
+
+     local parser = vim.treesitter.get_parser()
+     local tree = parser:parse()[0]
+     local root = tree:root()
+     vim.treesitter.goto_node(root, { offset = { 0, 3 } })
+<
+
+    Parameters: ~
+      • {node}  |TSNode| Node to move cursor to.
+      • {opts}  (table|nil) Optional arguments:
+                • winid (number): Window ID to move cursor in. Defaults to 0
+                  (current window).
+                • offset (table): (row, col) offset from the node's start
+                  position.
+
 inspect_tree({opts})                           *vim.treesitter.inspect_tree()*
     Open a window that displays a textual representation of the nodes in the
     language tree.
