@@ -4115,6 +4115,7 @@ isinf({expr})						*isinf()*
 
 		Can also be used as a |method|: >
 			Compute()->isinf()
+<
 
 								*E786*
 islocked({expr})						*islocked()*

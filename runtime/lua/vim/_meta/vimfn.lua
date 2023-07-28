@@ -4867,6 +4867,7 @@ function vim.fn.isdirectory(directory) end
 ---
 --- Can also be used as a |method|: >
 ---   Compute()->isinf()
+--- <
 ---
 --- @param expr any
 --- @return 1|0|-1

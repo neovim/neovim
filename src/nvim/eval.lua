@@ -5856,7 +5856,7 @@ M.funcs = {
 
       Can also be used as a |method|: >
       	Compute()->isinf()
-
+      <
     ]=],
     name = 'isinf',
     params = { { 'expr', 'any' } },
