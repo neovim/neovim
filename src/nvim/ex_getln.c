@@ -2333,6 +2333,8 @@ static void cmdpreview_restore_undo(const CpUndoInfo *cp_undoinfo, buf_T *buf)
 static void cmdpreview_prepare(CpInfo *cpinfo)
   FUNC_ATTR_NONNULL_ALL
 {
+  Set(ptr_t) saved_bufs = SET_INIT;
+
   kv_init(cpinfo->buf_info);
   kv_init(cpinfo->win_info);
 
@@ -2344,19 +2346,19 @@ static void cmdpreview_prepare(CpInfo *cpinfo)
       continue;
     }
 
-    CpBufInfo cp_bufinfo;
-    cp_bufinfo.buf = buf;
+    if (!set_has(ptr_t, &saved_bufs, buf)) {
+      CpBufInfo cp_bufinfo;
+      cp_bufinfo.buf = buf;
+      cp_bufinfo.save_b_p_ul = buf->b_p_ul;
+      cp_bufinfo.save_b_changed = buf->b_changed;
+      cp_bufinfo.save_changedtick = buf_get_changedtick(buf);
+      cmdpreview_save_undo(&cp_bufinfo.undo_info, buf);
+      kv_push(cpinfo->buf_info, cp_bufinfo);
+      set_put(ptr_t, &saved_bufs, buf);
 
-    cp_bufinfo.save_b_p_ul = buf->b_p_ul;
-    cp_bufinfo.save_b_changed = buf->b_changed;
-    cp_bufinfo.save_changedtick = buf_get_changedtick(buf);
-
-    cmdpreview_save_undo(&cp_bufinfo.undo_info, buf);
-    u_clearall(buf);
-
-    kv_push(cpinfo->buf_info, cp_bufinfo);
-
-    buf->b_p_ul = LONG_MAX;     // Make sure we can undo all changes
+      u_clearall(buf);
+      buf->b_p_ul = LONG_MAX;  // Make sure we can undo all changes
+    }
 
     CpWinInfo cp_wininfo;
     cp_wininfo.win = win;
@@ -2374,6 +2376,8 @@ static void cmdpreview_prepare(CpInfo *cpinfo)
     win->w_p_cul = false;       // Disable 'cursorline' so it doesn't mess up the highlights
     win->w_p_cuc = false;       // Disable 'cursorcolumn' so it doesn't mess up the highlights
   }
+
+  set_destroy(ptr_t, &saved_bufs);
 
   cpinfo->save_hls = p_hls;
   cpinfo->save_cmdmod = cmdmod;
@@ -2431,6 +2435,7 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
     // Clear preview highlights.
     extmark_clear(buf, (uint32_t)cmdpreview_ns, 0, 0, MAXLNUM, MAXCOL);
   }
+
   for (size_t i = 0; i < cpinfo->win_info.size; i++) {
     CpWinInfo cp_wininfo = cpinfo->win_info.items[i];
     win_T *win = cp_wininfo.win;
