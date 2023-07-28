@@ -435,6 +435,82 @@ describe("'inccommand' for user commands", function()
     ]])
     assert_alive()
   end)
+
+  it('no crash if preview callback executes undo #20036', function()
+    command('set inccommand=nosplit')
+    exec_lua([[
+      vim.api.nvim_create_user_command('Foo', function() end, {
+        nargs = '?',
+        preview = function(_, _, _)
+          vim.cmd.undo()
+        end,
+      })
+    ]])
+
+    -- Clear undo history
+    command('set undolevels=-1')
+    feed('ggyyp')
+    command('set undolevels=1000')
+
+    feed('yypp:Fo')
+    assert_alive()
+    feed('<Esc>:Fo')
+    assert_alive()
+  end)
+
+  it('breaking undo chain in Insert mode works properly #20248', function()
+    command('set inccommand=nosplit')
+    command('inoremap . .<C-G>u')
+    exec_lua([[
+      vim.api.nvim_create_user_command('Test', function() end, {
+        nargs = 1,
+        preview = function(opts, _, _)
+          vim.cmd('norm i' .. opts.args)
+          return 1
+        end
+      })
+    ]])
+    feed(':Test a.a.a.a.')
+    screen:expect([[
+        text on line 1                        |
+        more text on line 2                   |
+        oh no, even more text                 |
+        will the text ever stop               |
+        oh well                               |
+        did the text stop                     |
+        why won't it stop                     |
+        make the text stop                    |
+      a.a.a.a.                                |
+      {2:~                                       }|
+      {2:~                                       }|
+      {2:~                                       }|
+      {2:~                                       }|
+      {2:~                                       }|
+      {2:~                                       }|
+      {2:~                                       }|
+      :Test a.a.a.a.^                          |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+        text on line 1                        |
+        more text on line 2                   |
+        oh no, even more text                 |
+        will the text ever stop               |
+        oh well                               |
+        did the text stop                     |
+        why won't it stop                     |
+        make the text stop                    |
+      ^                                        |
+      {2:~                                       }|
+      {2:~                                       }|
+      {2:~                                       }|
+      {2:~                                       }|
+      {2:~                                       }|
+      {2:~                                       }|
+      {2:~                                       }|
+                                              |
+    ]])
+  end)
 end)
 
 describe("'inccommand' with multiple buffers", function()
