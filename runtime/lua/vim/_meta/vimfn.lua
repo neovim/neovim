@@ -794,7 +794,6 @@ function vim.fn.byteidx(expr, nr, utf16) end
 ---
 --- Can also be used as a |method|: >
 ---   GetName()->byteidxcomp(idx)
---- <
 ---
 --- @param expr any
 --- @param nr integer
@@ -4867,7 +4866,6 @@ function vim.fn.isdirectory(directory) end
 ---
 --- Can also be used as a |method|: >
 ---   Compute()->isinf()
---- <
 ---
 --- @param expr any
 --- @return 1|0|-1

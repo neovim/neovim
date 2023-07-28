@@ -633,7 +633,6 @@ byteidxcomp({expr}, {nr} [, {utf16}])			*byteidxcomp()*
 
 		Can also be used as a |method|: >
 			GetName()->byteidxcomp(idx)
-<
 
 call({func}, {arglist} [, {dict}])			*call()* *E699*
 		Call function {func} with the items in |List| {arglist} as
@@ -4111,7 +4110,6 @@ isinf({expr})						*isinf()*
 
 		Can also be used as a |method|: >
 			Compute()->isinf()
-<
 
 islocked({expr})					*islocked()* *E786*
 		The result is a Number, which is |TRUE| when {expr} is the
