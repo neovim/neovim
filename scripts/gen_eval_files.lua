@@ -127,51 +127,47 @@ local function render_eval_doc(f, fun, write)
 
   local desc = fun.desc
 
+  if not desc then
+    write(fun.signature)
+    return
+  end
+
+  local name = fun.name or f
+  local tags = { '*' .. name .. '()*' }
   if fun.tags then
-    local tags = {} --- @type string[]
     for _, t in ipairs(fun.tags) do
       tags[#tags + 1] = '*' .. t .. '*'
     end
-    local s = table.concat(tags, ' ')
-    local pad = math.max(0, 76 - #s) / 8
-    write(string.rep('\t', pad) .. table.concat(tags, ' '))
   end
+  local tag = table.concat(tags, ' ')
 
-  if not desc then
+  local siglen = #fun.signature
+  if rendered_tags[name] then
     write(fun.signature)
   else
-    local siglen = #fun.signature
-    local name = fun.name or f
-    local tag = '*' .. name .. '()*'
-    if rendered_tags[name] then
+    if siglen + #tag > 80 then
+      write(string.rep('\t', 6) .. tag)
       write(fun.signature)
     else
-      if siglen > 80 then
-        write(fun.signature)
-        write(string.rep('\t', 6) .. tag)
-      else
-        local tt = math.max(1, (76 - siglen - #tag) / 8)
-        write(string.format('%s%s%s', fun.signature, string.rep('\t', tt), tag))
-      end
+      local tt = math.max(1, (76 - siglen - #tag) / 8)
+      write(string.format('%s%s%s', fun.signature, string.rep('\t', tt), tag))
     end
-    rendered_tags[name] = true
+  end
+  rendered_tags[name] = true
+
+  desc = vim.trim(desc)
+  local desc_l = vim.split(desc, '\n', { plain = true })
+  for _, l in ipairs(desc_l) do
+    l = l:gsub('^      ', '')
+    if vim.startswith(l, '<') and not l:match('^<[A-Z][A-Z]') then
+      write('<\t\t' .. l:sub(2))
+    else
+      write('\t\t' .. l)
+    end
   end
 
-  if desc then
-    desc = vim.trim(desc)
-    local desc_l = vim.split(desc, '\n', { plain = true })
-    for _, l in ipairs(desc_l) do
-      l = l:gsub('^      ', '')
-      if vim.startswith(l, '<') and not l:match('^<[A-Z][A-Z]') then
-        write('<\t\t' .. l:sub(2))
-      else
-        write('\t\t' .. l)
-      end
-    end
-
-    if #desc_l > 0 and not desc_l[#desc_l]:match('^<?$') then
-      write('')
-    end
+  if #desc_l > 0 and not desc_l[#desc_l]:match('^<?$') then
+    write('')
   end
 end
 

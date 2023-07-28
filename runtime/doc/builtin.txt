@@ -226,7 +226,8 @@ assert_exception({error} [, {msg}])		*assert_exception()*
 			endtry
 <
 
-assert_fails({cmd} [, {error} [, {msg} [, {lnum} [, {context}]]]])	*assert_fails()*
+						*assert_fails()*
+assert_fails({cmd} [, {error} [, {msg} [, {lnum} [, {context}]]]])
 		Run {cmd} and add an error message to |v:errors| if it does
 		NOT produce an error or when {error} is not found in the
 		error message.  Also see |assert-return|.
@@ -634,8 +635,7 @@ byteidxcomp({expr}, {nr} [, {utf16}])			*byteidxcomp()*
 			GetName()->byteidxcomp(idx)
 <
 
-								*E699*
-call({func}, {arglist} [, {dict}])				*call()*
+call({func}, {arglist} [, {dict}])			*call()* *E699*
 		Call function {func} with the items in |List| {arglist} as
 		arguments.
 		{func} can either be a |Funcref| or the name of a function.
@@ -870,8 +870,7 @@ col({expr} [, {winid}])					*col()*
 			GetPos()->col()
 <
 
-								*E785*
-complete({startcol}, {matches})				*complete()*
+complete({startcol}, {matches})			*complete()* *E785*
 		Set the matches for Insert mode completion.
 		Can only be used in Insert mode.  You need to use a mapping
 		with CTRL-R = (see |i_CTRL-R|).  It does not work after CTRL-O
@@ -1173,8 +1172,7 @@ debugbreak({pid})					*debugbreak()*
 			GetPid()->debugbreak()
 <
 
-								*E698*
-deepcopy({expr} [, {noref}])				*deepcopy()*
+deepcopy({expr} [, {noref}])			*deepcopy()* *E698*
 		Make a copy of {expr}.  For Numbers and Strings this isn't
 		different from using {expr} directly.
 		When {expr} is a |List| a full copy is created.  This means
@@ -1321,8 +1319,7 @@ diff_hlID({lnum}, {col})				*diff_hlID()*
 			GetLnum()->diff_hlID(col)
 <
 
-								*E1214*
-digraph_get({chars})					*digraph_get()*
+digraph_get({chars})				*digraph_get()* *E1214*
 		Return the digraph of {chars}.  This should be a string with
 		exactly two characters.  If {chars} are not just two
 		characters, or the digraph of {chars} does not exist, an error
@@ -2165,8 +2162,7 @@ funcref({name} [, {arglist}] [, {dict}])			*funcref()*
 			GetFuncname()->funcref([arg])
 <
 
-						*partial* *E700* *E923*
-function({name} [, {arglist}] [, {dict}])		*function()*
+function({name} [, {arglist}] [, {dict}])	*function()* *partial* *E700* *E923*
 		Return a |Funcref| variable that refers to function {name}.
 		{name} can be the name of a user defined function or an
 		internal function.
@@ -4117,8 +4113,7 @@ isinf({expr})						*isinf()*
 			Compute()->isinf()
 <
 
-								*E786*
-islocked({expr})						*islocked()*
+islocked({expr})					*islocked()* *E786*
 		The result is a Number, which is |TRUE| when {expr} is the
 		name of a locked variable.
 		The string argument {expr} must be the name of a variable,
@@ -4347,8 +4342,7 @@ keytrans({string})					*keytrans()*
 			"\<C-Home>"->keytrans()
 <
 
-								*E701*
-len({expr})							*len()*
+len({expr})						*len()* *E701*
 		When {expr} is a String or a Number the length in bytes is
 		used, as with |strlen()|.
 		When {expr} is a |List| the number of items in the |List| is
@@ -4362,8 +4356,7 @@ len({expr})							*len()*
 			mylist->len()
 <
 
-							*E364* *E368*
-libcall({libname}, {funcname}, {argument})		*libcall()*
+libcall({libname}, {funcname}, {argument})	*libcall()* *E364* *E368*
 		Call function {funcname} in the run-time library {libname}
 		with single argument {argument}.
 		This is useful to call functions in a library that you
@@ -4791,8 +4784,8 @@ match({expr}, {pat} [, {start} [, {count}]])		*match()*
 			GetList()->match('word')
 <
 
-						*E798* *E799* *E801* *E957*
-matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])	*matchadd()*
+						*matchadd()* *E798* *E799* *E801* *E957*
+matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])
 		Defines a pattern to be highlighted in the current window (a
 		"match").  It will be highlighted with {group}.  Returns an
 		identification number (ID), which can be used to delete the
@@ -4909,8 +4902,7 @@ matcharg({nr})						*matcharg()*
 		Can also be used as a |method|: >
 			GetMatch()->matcharg()
 
-							*E802* *E803*
-matchdelete({id} [, {win}])				*matchdelete()*
+matchdelete({id} [, {win}])		*matchdelete()* *E802* *E803*
 		Deletes a match with ID {id} previously defined by |matchadd()|
 		or one of the |:match| commands.  Returns 0 if successful,
 		otherwise -1.  See example for |matchadd()|.  All matches can
@@ -5229,8 +5221,7 @@ min({expr})							*min()*
 			mylist->min()
 <
 
-								*E739*
-mkdir({name} [, {flags} [, {prot}]])			*mkdir()*
+mkdir({name} [, {flags} [, {prot}]])			*mkdir()* *E739*
 		Create directory {name}.
 
 		When {flags} is present it must be a string.  An empty string
@@ -5454,8 +5445,7 @@ nr2char({expr} [, {utf8}])				*nr2char()*
 			GetNumber()->nr2char()
 <
 
-							*E5555* *eval-api*
-nvim_...({...})						*nvim_...()*
+nvim_...({...})			*nvim_...()* *E5555* *eval-api*
 		Call nvim |api| functions. The type checking of arguments will
 		be stricter than for most other builtins. For instance,
 		if Integer is expected, a |Number| must be passed in, a
@@ -5842,8 +5832,7 @@ py3eval({expr})						*py3eval()*
 			GetExpr()->py3eval()
 <
 
-							*E858* *E859*
-pyeval({expr})						*pyeval()*
+pyeval({expr})				*pyeval()* *E858* *E859*
 		Evaluate Python expression {expr} and return its result
 		converted to Vim data structures.
 		Numbers and strings are returned as they are (strings are
@@ -5884,8 +5873,7 @@ rand([{expr}])						*rand()*
 			seed->rand()
 <
 
-							*E726* *E727*
-range({expr} [, {max} [, {stride}]])			*range()*
+range({expr} [, {max} [, {stride}]])		*range()* *E726* *E727*
 		Returns a |List| with Numbers:
 		- If only {expr} is specified: [0, 1, ..., {expr} - 1]
 		- If {max} is specified: [{expr}, {expr} + 1, ..., {max}]
@@ -6002,8 +5990,7 @@ readfile({fname} [, {type} [, {max}]])			*readfile()*
 			GetFileName()->readfile()
 <
 
-								*E998*
-reduce({object}, {func} [, {initial}])			*reduce()*
+reduce({object}, {func} [, {initial}])		*reduce()* *E998*
 		{func} is called for every item in {object}, which can be a
 		|List| or a |Blob|.  {func} is called with two arguments: the
 		result so far and current item.  After processing all items
@@ -6157,8 +6144,7 @@ repeat({expr}, {count})					*repeat()*
 			mylist->repeat(count)
 <
 
-								*E655*
-resolve({filename})					*resolve()*
+resolve({filename})				*resolve()* *E655*
 		On MS-Windows, when {filename} is a shortcut (a .lnk file),
 		returns the path the shortcut points to in a simplified form.
 		On Unix, repeat resolving symbolic links in all path
@@ -6578,8 +6564,8 @@ searchdecl({name} [, {global} [, {thisblock}]])	*searchdecl()*
 			GetName()->searchdecl()
 <
 
-searchpair({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeout}]]]])
 						*searchpair()*
+searchpair({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeout}]]]])
 		Search for the match of a nested start-end pair.  This can be
 		used to find the "endif" that matches an "if", while other
 		if/endif pairs in between are ignored.
@@ -6664,8 +6650,8 @@ searchpair({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeo
 			     \ 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string"')
 <
 
-searchpairpos({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeout}]]]])
 						*searchpairpos()*
+searchpairpos({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeout}]]]])
 		Same as |searchpair()|, but returns a |List| with the line and
 		column position of the match. The first element of the |List|
 		is the line number and the second element is the byte index of
@@ -6676,7 +6662,8 @@ searchpairpos({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {ti
 <
 		See |match-parens| for a bigger and more useful example.
 
-searchpos({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])	*searchpos()*
+						*searchpos()*
+searchpos({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])
 		Same as |search()|, but returns a |List| with the line and
 		column position of the match. The first element of the |List|
 		is the line number and the second element is the byte index of
@@ -6911,8 +6898,7 @@ setenv({name}, {val})					*setenv()*
 			GetPath()->setenv('PATH')
 <
 
-								*chmod*
-setfperm({fname}, {mode})				*setfperm()*
+setfperm({fname}, {mode})			*setfperm()* *chmod*
 		Set the file permissions for {fname} to {mode}.
 		{mode} must be a string with 9 characters.  It is of the form
 		"rwxrwxrwx", where each group of "rwx" flags represent, in
@@ -7841,8 +7827,7 @@ sockconnect({mode}, {address} [, {opts}])		*sockconnect()*
 		  - The channel ID on success (greater than zero)
 		  - 0 on invalid arguments or connection failure.
 
-								*E702*
-sort({list} [, {func} [, {dict}]])				*sort()*
+sort({list} [, {func} [, {dict}]])			*sort()* *E702*
 		Sort the items in {list} in-place.  Returns {list}.
 
 		If you want a list to remain unmodified make a copy first: >
@@ -8062,8 +8047,7 @@ stdioopen({opts})					*stdioopen()*
 		  - |channel-id| on success (value is always 1)
 		  - 0 on invalid arguments
 
-								*E6100*
-stdpath({what})						*stdpath()*
+stdpath({what})					*stdpath()* *E6100*
 		Returns |standard-path| locations of various default files and
 		directories.
 
@@ -8445,8 +8429,7 @@ strwidth({string})					*strwidth()*
 		Can also be used as a |method|: >
 			GetString()->strwidth()
 
-								*E935*
-submatch({nr} [, {list}])				*submatch()*
+submatch({nr} [, {list}])				*submatch()* *E935*
 		Only for an expression in a |:substitute| command or
 		substitute() function.
 		Returns the {nr}th submatch of the matched text.  When {nr}
@@ -8692,8 +8675,7 @@ synstack({lnum}, {col})					*synstack()*
 		character in a line and the first column in an empty line are
 		valid positions.
 
-								*E677*
-system({cmd} [, {input}])					*system()*
+system({cmd} [, {input}])				*system()* *E677*
 		Note: Prefer |vim.system()| in Lua.
 
 		Gets the output of {cmd} as a |string| (|systemlist()| returns
@@ -9161,8 +9143,7 @@ undotree()						*undotree()*
 				blocks.  Each item may again have an "alt"
 				item.
 
-								*E882*
-uniq({list} [, {func} [, {dict}]])				*uniq()*
+uniq({list} [, {func} [, {dict}]])			*uniq()* *E882*
 		Remove second and succeeding copies of repeated adjacent
 		{list} items in-place.  Returns {list}.  If you want a list
 		to remain unmodified make a copy first: >
