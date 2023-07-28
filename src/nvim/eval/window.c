@@ -212,7 +212,7 @@ win_T *find_tabwin(typval_T *wvp, typval_T *tvp)
 }
 
 /// Get the layout of the given tab page for winlayout().
-static void get_framelayout(const frame_T *fr, list_T *l, bool outer)
+void get_framelayout(const frame_T *fr, list_T *l, bool outer)
 {
   if (fr == NULL) {
     return;

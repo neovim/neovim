@@ -362,6 +362,10 @@ UI
 • |:checkhealth| can be display in a floating window and controlled by
   the |g:health| variable.
 
+• Added |nvim_tabpage_get_layout()| to retrieve the window layout for a tabpage.
+
+• Added |nvim_tabpage_set_layout()| to set the window layout of a tabpage.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
