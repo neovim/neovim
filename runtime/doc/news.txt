@@ -176,6 +176,8 @@ The following changes to existing APIs or features add new behavior.
   supports it, unless |'keywordprg'| was customized before calling
   |vim.lsp.start()|.
 
+• |vim.lsp.protocol.Methods| all the lsp methods constants.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
