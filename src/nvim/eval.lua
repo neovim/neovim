@@ -8270,9 +8270,9 @@ M.funcs = {
 
       <If you want to get a directory tree: >
         function! s:tree(dir)
-           return {a:dir : map(readdir(a:dir),
-           \ {_, x -> isdirectory(x) ?
-           \          {x : s:tree(a:dir .. '/' .. x)} : x})}
+            return {a:dir : map(readdir(a:dir),
+            \ {_, x -> isdirectory(x) ?
+            \          {x : s:tree(a:dir .. '/' .. x)} : x})}
         endfunction
         echo s:tree(".")
       <
