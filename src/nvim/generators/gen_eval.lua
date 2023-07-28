@@ -10,7 +10,7 @@ local funcsfname = autodir .. '/funcs.generated.h'
 
 local hashy = require'generators.hashy'
 
-local hashpipe = io.open(funcsfname, 'wb')
+local hashpipe = assert(io.open(funcsfname, 'wb'))
 
 hashpipe:write([[
 #include "nvim/arglist.h"
@@ -62,16 +62,22 @@ for _,fun in ipairs(metadata) do
   end
 end
 
-local func_names = vim.tbl_keys(funcs)
+local func_names = vim.tbl_filter(function(name)
+  return name:match('__%d*$') == nil
+end, vim.tbl_keys(funcs))
+
 table.sort(func_names)
-local funcsdata = io.open(funcs_file, 'w')
+
+local funcsdata = assert(io.open(funcs_file, 'w'))
 funcsdata:write(mpack.encode(func_names))
 funcsdata:close()
 
 local neworder, hashfun = hashy.hashy_hash("find_internal_func", func_names, function (idx)
   return "functions["..idx.."].name"
 end)
+
 hashpipe:write("static const EvalFuncDef functions[] = {\n")
+
 for _, name in ipairs(neworder) do
   local def = funcs[name]
   local args = def.args or 0
