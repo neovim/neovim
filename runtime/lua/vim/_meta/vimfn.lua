@@ -794,6 +794,7 @@ function vim.fn.byteidx(expr, nr, utf16) end
 ---
 --- Can also be used as a |method|: >
 ---   GetName()->byteidxcomp(idx)
+--- <
 ---
 --- @param expr any
 --- @param nr integer

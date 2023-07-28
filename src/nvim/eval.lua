@@ -1047,7 +1047,7 @@ M.funcs = {
 
       Can also be used as a |method|: >
       	GetName()->byteidxcomp(idx)
-
+      <
     ]=],
     fast = true,
     name = 'byteidxcomp',

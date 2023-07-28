@@ -632,6 +632,7 @@ byteidxcomp({expr}, {nr} [, {utf16}])			*byteidxcomp()*
 
 		Can also be used as a |method|: >
 			GetName()->byteidxcomp(idx)
+<
 
 								*E699*
 call({func}, {arglist} [, {dict}])				*call()*
