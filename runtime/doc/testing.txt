@@ -37,4 +37,22 @@ test_garbagecollect_now()			 *test_garbagecollect_now()*
 		internally, and |v:testing| must have been set before calling
 		any function.
 
+==============================================================================
+3. Assert functions				*assert-functions-details*
+
+See:
+  - |assert_beeps()|
+  - |assert_equal()|
+  - |assert_equalfile()|
+  - |assert_exception()|
+  - |assert_fails()|
+  - |assert_false()|
+  - |assert_inrange()|
+  - |assert_match()|
+  - |assert_nobeep()|
+  - |assert_notequal()|
+  - |assert_notmatch()|
+  - |assert_report()|
+  - |assert_true()|
+
  vim:tw=78:ts=8:noet:ft=help:norl:

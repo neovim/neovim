@@ -366,4 +366,18 @@ See |sign_jump()| for the equivalent Vim script function.
 		Same but jump to the sign in group {group}
 
 
+==============================================================================
+3. Functions					*sign-functions-details*
+
+See:
+  - |sign_define()|
+  - |sign_getdefined()|
+  - |sign_getplaced()|
+  - |sign_jump()|
+  - |sign_place()|
+  - |sign_placelist()|
+  - |sign_undefine()|
+  - |sign_unplace()|
+  - |sign_unplacelist()|
+
  vim:tw=78:ts=8:noet:ft=help:norl:

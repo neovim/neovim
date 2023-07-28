@@ -12286,6 +12286,7 @@ M.funcs = {
   timer_start = {
     args = { 2, 3 },
     base = 1,
+    tags = { 'timer' },
     desc = [=[
       Create a timer and return the timer ID.
 

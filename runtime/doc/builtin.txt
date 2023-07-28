@@ -8926,7 +8926,7 @@ timer_pause({timer}, {paused})			*timer_pause()*
 			GetTimer()->timer_pause(1)
 <
 
-timer_start({time}, {callback} [, {options}])		*timer_start()*
+timer_start({time}, {callback} [, {options}])	*timer_start()* *timer*
 		Create a timer and return the timer ID.
 
 		{time} is the waiting time in milliseconds. This is the
