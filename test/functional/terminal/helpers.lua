@@ -5,7 +5,7 @@ local helpers = require('test.functional.helpers')(nil)
 local Screen = require('test.functional.ui.screen')
 local testprg = helpers.testprg
 local exec_lua = helpers.exec_lua
-local feed_command, nvim = helpers.feed_command, helpers.nvim
+local nvim = helpers.nvim
 
 local function feed_data(data)
   if type(data) == 'table' then
@@ -82,15 +82,16 @@ local function screen_setup(extra_rows, command, cols, opts)
 
   screen:attach(opts or {rgb=false})
 
-  feed_command('enew | call termopen('..command..')')
+  nvim('command', 'enew | call termopen('..command..')')
   nvim('input', '<CR>')
   local vim_errmsg = nvim('eval', 'v:errmsg')
   if vim_errmsg and "" ~= vim_errmsg then
     error(vim_errmsg)
   end
 
-  feed_command('setlocal scrollback=10')
-  feed_command('startinsert')
+  nvim('command', 'setlocal scrollback=10')
+  nvim('command', 'startinsert')
+  nvim('input', '<Ignore>')  -- Add input to separate two RPC requests
 
   -- tty-test puts the terminal into raw mode and echoes input. Tests work by
   -- feeding termcodes to control the display and asserting by screen:expect.

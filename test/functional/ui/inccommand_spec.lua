@@ -2,7 +2,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local command = helpers.command
-local curbufmeths = helpers.curbufmeths
 local eq = helpers.eq
 local eval = helpers.eval
 local feed_command = helpers.feed_command
@@ -175,11 +174,14 @@ describe(":substitute, 'inccommand' preserves", function()
     it("'undolevels' (inccommand="..case..")", function()
       feed_command("set undolevels=139")
       feed_command("setlocal undolevels=34")
+      feed_command("split")  -- Show the buffer in multiple windows
       feed_command("set inccommand=" .. case)
       insert("as")
-      feed(":%s/as/glork/<enter>")
-      eq(meths.get_option('undolevels'), 139)
-      eq(curbufmeths.get_option('undolevels'), 34)
+      feed(":%s/as/glork/")
+      poke_eventloop()
+      feed("<enter>")
+      eq(meths.get_option_value('undolevels', {scope='global'}), 139)
+      eq(meths.get_option_value('undolevels', {buf=0}), 34)
     end)
   end
 
