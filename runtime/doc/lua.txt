@@ -969,6 +969,65 @@ vim.str_byteindex({str}, {index}, {use_utf16})           *vim.str_byteindex()*
       • {index}      (number)
       • {use_utf16}  any|nil
 
+vim.str_utf_end({str}, {index})                            *vim.str_utf_end()*
+    Gets the distance (in bytes) from the last byte of the codepoint
+    (character) that {index} points to.
+
+    Examples: >lua
+
+     -- The character 'æ' are equal to the bytes '\xc3\xa6' (using UTF-8)
+
+     -- Returns 0 because the index is pointing at the last byte of a character
+     vim.str_utf_end('æ', 2)
+
+     -- Returns 1 because the index is pointing at the second last byte of a character
+     vim.str_utf_end('æ', 1)
+<
+
+    Parameters: ~
+      • {str}    (string)
+      • {index}  (number)
+
+    Return: ~
+        (number)
+
+vim.str_utf_pos({str})                                     *vim.str_utf_pos()*
+    Gets a list of the starting byte positions of each UTF-8 codepoint in the
+    given string.
+
+    Embedded NUL bytes are treated as terminating the string.
+
+    Parameters: ~
+      • {str}  (string)
+
+    Return: ~
+        (table)
+
+vim.str_utf_start({str}, {index})                        *vim.str_utf_start()*
+    Gets the distance (in bytes) from the starting byte of the codepoint
+    (character) that {index} points to.
+
+    The result can be added to {index} to get the starting byte of a
+    character.
+
+    Examples: >lua
+
+     -- The character 'æ' are equal to the bytes '\xc3\xa6' (using UTF-8)
+
+     -- Returns 0 because the index is pointing at the first byte of a character
+     vim.str_utf_start('æ', 1)
+
+     -- Returns -1 because the index is pointing at the second byte of a character
+     vim.str_utf_start('æ', 2)
+<
+
+    Parameters: ~
+      • {str}    (string)
+      • {index}  (number)
+
+    Return: ~
+        (number)
+
 vim.str_utfindex({str}, {index})                          *vim.str_utfindex()*
     Convert byte index to UTF-32 and UTF-16 indices. If {index} is not
     supplied, the length of the string is used. All indices are zero-based.
