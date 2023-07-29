@@ -1261,7 +1261,7 @@ function lsp.start_client(config)
       end
       if code ~= 0 or (signal ~= 0 and signal ~= 15) then
         local msg = string.format(
-          'Client %s quit with exit code %s and signal %s. Check %s for errors',
+          'Client %s quit with exit code %s and signal %s. Check log for errors: %s',
           name,
           code,
           signal,
