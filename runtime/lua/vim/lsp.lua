@@ -1260,8 +1260,13 @@ function lsp.start_client(config)
         changetracking.reset(client)
       end
       if code ~= 0 or (signal ~= 0 and signal ~= 15) then
-        local msg =
-          string.format('Client %s quit with exit code %s and signal %s', client_id, code, signal)
+        local msg = string.format(
+          'Client %s quit with exit code %s and signal %s. Check log for errors: %s',
+          name,
+          code,
+          signal,
+          lsp.get_log_path()
+        )
         vim.notify(msg, vim.log.levels.WARN)
       end
     end)
