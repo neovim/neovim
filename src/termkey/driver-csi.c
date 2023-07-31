@@ -241,6 +241,8 @@ TermKeyResult termkey_interpret_mouse(TermKey *tk, const TermKeyKey *key, TermKe
 
   case 64:
   case 65:
+  case 66:
+  case 67:
     *event = drag ? TERMKEY_MOUSE_DRAG : TERMKEY_MOUSE_PRESS;
     btn = code + 4 - 64;
     break;
