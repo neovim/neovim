@@ -33,4 +33,24 @@ describe('vim.loader', function()
       return _G.TEST
     ]], tmp))
   end)
+
+  it('handles % signs in modpath (#24491)', function()
+    exec_lua[[
+      vim.loader.enable()
+    ]]
+
+    local tmp1, tmp2 = (function (t)
+      assert(os.remove(t))
+      assert(helpers.mkdir(t))
+      assert(helpers.mkdir(t .. '/%'))
+      return t .. '/%/x', t .. '/%%x'
+    end)(helpers.tmpname())
+
+    helpers.write_file(tmp1, 'return 1', true)
+    helpers.write_file(tmp2, 'return 2', true)
+    vim.uv.fs_utime(tmp1, 0, 0)
+    vim.uv.fs_utime(tmp2, 0, 0)
+    eq(1, exec_lua('return loadfile(...)()', tmp1))
+    eq(2, exec_lua('return loadfile(...)()', tmp2))
+  end)
 end)

@@ -2428,8 +2428,27 @@ vim.loader.reset({path})                                  *vim.loader.reset()*
 ==============================================================================
 Lua module: vim.uri                                                  *vim.uri*
 
+vim.uri_decode({str})                                       *vim.uri_decode()*
+    URI-decodes a string containing percent escapes.
+
+    Parameters: ~
+      • {str}  (string) string to decode
+
+    Return: ~
+        (string) decoded string
+
+vim.uri_encode({str}, {rfc})                                *vim.uri_encode()*
+    URI-encodes a string using percent escapes.
+
+    Parameters: ~
+      • {str}  (string) string to encode
+      • {rfc}  "rfc2396" | "rfc2732" | "rfc3986" | nil
+
+    Return: ~
+        (string) encoded string
+
 vim.uri_from_bufnr({bufnr})                             *vim.uri_from_bufnr()*
-    Get a URI from a bufnr
+    Gets a URI from a bufnr.
 
     Parameters: ~
       • {bufnr}  (integer)
@@ -2438,7 +2457,7 @@ vim.uri_from_bufnr({bufnr})                             *vim.uri_from_bufnr()*
         (string) URI
 
 vim.uri_from_fname({path})                              *vim.uri_from_fname()*
-    Get a URI from a file path.
+    Gets a URI from a file path.
 
     Parameters: ~
       • {path}  (string) Path to file
@@ -2447,7 +2466,7 @@ vim.uri_from_fname({path})                              *vim.uri_from_fname()*
         (string) URI
 
 vim.uri_to_bufnr({uri})                                   *vim.uri_to_bufnr()*
-    Get the buffer for a uri. Creates a new unloaded buffer if no buffer for
+    Gets the buffer for a uri. Creates a new unloaded buffer if no buffer for
     the uri already exists.
 
     Parameters: ~
@@ -2457,7 +2476,7 @@ vim.uri_to_bufnr({uri})                                   *vim.uri_to_bufnr()*
         (integer) bufnr
 
 vim.uri_to_fname({uri})                                   *vim.uri_to_fname()*
-    Get a filename from a URI
+    Gets a filename from a URI.
 
     Parameters: ~
       • {uri}  (string)
