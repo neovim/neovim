@@ -530,24 +530,26 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E env
       "LUAC_PRG=${LUAC_PRG}"
       ${LUA_PRG} ${CHAR_BLOB_GENERATOR} -c ${VIM_MODULE_FILE}
+      # NB: vim._init_packages and vim.inspect must be be first and second ones
+      # respectively, otherwise --luamod-dev won't work properly.
+      ${LUA_INIT_PACKAGES_MODULE_SOURCE} "vim._init_packages"
+      ${LUA_INSPECT_MODULE_SOURCE} "vim.inspect"
       ${LUA_EDITOR_MODULE_SOURCE} "vim._editor"
       ${LUA_FILETYPE_MODULE_SOURCE} "vim.filetype"
       ${LUA_FS_MODULE_SOURCE} "vim.fs"
       ${LUA_F_MODULE_SOURCE} "vim.F"
-      ${LUA_INIT_PACKAGES_MODULE_SOURCE} "vim._init_packages"
-      ${LUA_INSPECT_MODULE_SOURCE} "vim.inspect"
       ${LUA_KEYMAP_MODULE_SOURCE} "vim.keymap"
       ${LUA_LOADER_MODULE_SOURCE} "vim.loader"
       ${LUA_OPTIONS_MODULE_SOURCE} "vim._options"
       ${LUA_SHARED_MODULE_SOURCE} "vim.shared"
   DEPENDS
     ${CHAR_BLOB_GENERATOR}
+    ${LUA_INIT_PACKAGES_MODULE_SOURCE}
+    ${LUA_INSPECT_MODULE_SOURCE}
     ${LUA_EDITOR_MODULE_SOURCE}
     ${LUA_FILETYPE_MODULE_SOURCE}
     ${LUA_FS_MODULE_SOURCE}
     ${LUA_F_MODULE_SOURCE}
-    ${LUA_INIT_PACKAGES_MODULE_SOURCE}
-    ${LUA_INSPECT_MODULE_SOURCE}
     ${LUA_KEYMAP_MODULE_SOURCE}
     ${LUA_LOADER_MODULE_SOURCE}
     ${LUA_OPTIONS_MODULE_SOURCE}
