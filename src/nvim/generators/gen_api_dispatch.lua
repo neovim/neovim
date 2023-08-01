@@ -244,12 +244,12 @@ for _,keyset in ipairs(keysets) do
 
   local key_names = {}
   for i = 1,#keys do
-    local name = keys[i][1]
-    if vim.endswith(name, "_") then
-      name = string.sub(name,1, #name - 1)
-      special[name] = true
+    local kname = keys[i][1]
+    if vim.endswith(kname, "_") then
+      kname = string.sub(kname,1, #kname - 1)
+      special[kname] = true
     end
-    key_names[i] = name
+    key_names[i] = kname
   end
   local neworder, hashfun = hashy.hashy_hash(name, key_names, function (idx)
     return name.."_table["..idx.."].str"
