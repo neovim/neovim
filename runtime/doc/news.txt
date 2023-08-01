@@ -132,6 +132,11 @@ The following new APIs and features were added.
 • |vim.wo| can now be double indexed for |:setlocal| behaviour. Currently only
   `0` for the buffer index is currently supported.
 
+• Lua type annotations for:
+  • `vim.*`
+  • `vim.fn.*`
+  • `vim.api.*`
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
