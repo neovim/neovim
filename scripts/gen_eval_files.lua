@@ -113,6 +113,31 @@ end
 --- @type table<string,true>
 local rendered_tags = {}
 
+--- @param name string
+--- @param fun vim.EvalFn
+--- @param write fun(line: string)
+local function render_sig_and_tag(name, fun, write)
+  local tags = { '*' .. name .. '()*' }
+
+  if fun.tags then
+    for _, t in ipairs(fun.tags) do
+      tags[#tags + 1] = '*' .. t .. '*'
+    end
+  end
+
+  local tag = table.concat(tags, ' ')
+  local siglen = #fun.signature
+  local conceal_offset = 2*(#tags - 1)
+  local tag_pad_len = math.max(1, 80 - #tag + conceal_offset)
+
+  if siglen + #tag > 80 then
+    write(string.rep(' ', tag_pad_len) .. tag)
+    write(fun.signature)
+  else
+    write(string.format('%s%s%s', fun.signature, string.rep(' ', tag_pad_len - siglen), tag))
+  end
+end
+
 --- @param f string
 --- @param fun vim.EvalFn
 --- @param write fun(line: string)
@@ -133,27 +158,13 @@ local function render_eval_doc(f, fun, write)
   end
 
   local name = fun.name or f
-  local tags = { '*' .. name .. '()*' }
-  if fun.tags then
-    for _, t in ipairs(fun.tags) do
-      tags[#tags + 1] = '*' .. t .. '*'
-    end
-  end
-  local tag = table.concat(tags, ' ')
 
-  local siglen = #fun.signature
   if rendered_tags[name] then
     write(fun.signature)
   else
-    if siglen + #tag > 80 then
-      write(string.rep('\t', 6) .. tag)
-      write(fun.signature)
-    else
-      local tt = math.max(1, (76 - siglen - #tag) / 8)
-      write(string.format('%s%s%s', fun.signature, string.rep('\t', tt), tag))
-    end
+    render_sig_and_tag(name, fun, write)
+    rendered_tags[name] = true
   end
-  rendered_tags[name] = true
 
   desc = vim.trim(desc)
   local desc_l = vim.split(desc, '\n', { plain = true })
