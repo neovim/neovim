@@ -2558,26 +2558,22 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
 
   const sctx_T save_current_sctx = api_set_sctx(channel_id);
 
-  if (opts != NULL && opts->callback.type == kObjectTypeLuaRef) {
-    lua_funcref = opts->callback.data.luaref;
-    opts->callback.data.luaref = LUA_NOREF;
-  }
   MapArguments parsed_args = MAP_ARGUMENTS_INIT;
   if (opts) {
-#define KEY_TO_BOOL(name) \
-  parsed_args.name = api_object_to_bool(opts->name, #name, false, err); \
-  if (ERROR_SET(err)) { \
-    goto fail_and_free; \
-  }
-
-    KEY_TO_BOOL(nowait);
-    KEY_TO_BOOL(noremap);
-    KEY_TO_BOOL(silent);
-    KEY_TO_BOOL(script);
-    KEY_TO_BOOL(expr);
-    KEY_TO_BOOL(unique);
-    KEY_TO_BOOL(replace_keycodes);
-#undef KEY_TO_BOOL
+    parsed_args.nowait = opts->nowait;
+    parsed_args.noremap = opts->noremap;
+    parsed_args.silent = opts->silent;
+    parsed_args.script = opts->script;
+    parsed_args.expr = opts->expr;
+    parsed_args.unique = opts->unique;
+    parsed_args.replace_keycodes = opts->replace_keycodes;
+    if (HAS_KEY(opts, keymap, callback)) {
+      lua_funcref = opts->callback;
+      opts->callback = LUA_NOREF;
+    }
+    if (HAS_KEY(opts, keymap, desc)) {
+      parsed_args.desc = string_to_cstr(opts->desc);
+    }
   }
   parsed_args.buffer = !global;
 
@@ -2593,11 +2589,6 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     goto fail_and_free;
   }
 
-  if (opts != NULL && opts->desc.type == kObjectTypeString) {
-    parsed_args.desc = string_to_cstr(opts->desc.data.string);
-  } else {
-    parsed_args.desc = NULL;
-  }
   if (parsed_args.lhs_len > MAXMAPLEN || parsed_args.alt_lhs_len > MAXMAPLEN) {
     api_set_error(err, kErrorTypeValidation,  "LHS exceeds maximum map length: %s", lhs.data);
     goto fail_and_free;

@@ -124,10 +124,20 @@ struct key_value_pair {
   Object value;
 };
 
-typedef Object *(*field_hash)(void *retval, const char *str, size_t len);
+typedef uint64_t OptionalKeys;
+
+// this is the prefix of all keysets with optional keys
+typedef struct {
+  OptionalKeys is_set_;
+} OptKeySet;
+
 typedef struct {
   char *str;
   size_t ptr_off;
+  ObjectType type;  // kObjectTypeNil == untyped
+  int opt_index;
 } KeySetLink;
+
+typedef KeySetLink *(*FieldHashfn)(const char *str, size_t len);
 
 #endif  // NVIM_API_PRIVATE_DEFS_H

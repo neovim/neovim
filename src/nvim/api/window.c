@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
 #include "nvim/api/window.h"
@@ -513,18 +514,12 @@ Dictionary nvim_win_text_height(Window window, Dict(win_text_height) *opts, Aren
 
   bool oob = false;
 
-  if (HAS_KEY(opts->start_row)) {
-    VALIDATE_T("start_row", kObjectTypeInteger, opts->start_row.type, {
-      return rv;
-    });
-    start_lnum = (linenr_T)normalize_index(buf, opts->start_row.data.integer, false, &oob);
+  if (HAS_KEY(opts, win_text_height, start_row)) {
+    start_lnum = (linenr_T)normalize_index(buf, opts->start_row, false, &oob);
   }
 
-  if (HAS_KEY(opts->end_row)) {
-    VALIDATE_T("end_row", kObjectTypeInteger, opts->end_row.type, {
-      return rv;
-    });
-    end_lnum = (linenr_T)normalize_index(buf, opts->end_row.data.integer, false, &oob);
+  if (HAS_KEY(opts, win_text_height, end_row)) {
+    end_lnum = (linenr_T)normalize_index(buf, opts->end_row, false, &oob);
   }
 
   VALIDATE(!oob, "%s", "Line index out of bounds", {
@@ -534,27 +529,23 @@ Dictionary nvim_win_text_height(Window window, Dict(win_text_height) *opts, Aren
     return rv;
   });
 
-  if (HAS_KEY(opts->start_vcol)) {
-    VALIDATE(HAS_KEY(opts->start_row), "%s", "'start_vcol' specified without 'start_row'", {
+  if (HAS_KEY(opts, win_text_height, start_vcol)) {
+    VALIDATE(HAS_KEY(opts, win_text_height, start_row),
+             "%s", "'start_vcol' specified without 'start_row'", {
       return rv;
     });
-    VALIDATE_T("start_vcol", kObjectTypeInteger, opts->start_vcol.type, {
-      return rv;
-    });
-    start_vcol = opts->start_vcol.data.integer;
+    start_vcol = opts->start_vcol;
     VALIDATE_RANGE((start_vcol >= 0 && start_vcol <= MAXCOL), "start_vcol", {
       return rv;
     });
   }
 
-  if (HAS_KEY(opts->end_vcol)) {
-    VALIDATE(HAS_KEY(opts->end_row), "%s", "'end_vcol' specified without 'end_row'", {
+  if (HAS_KEY(opts, win_text_height, end_vcol)) {
+    VALIDATE(HAS_KEY(opts, win_text_height, end_row),
+             "%s", "'end_vcol' specified without 'end_row'", {
       return rv;
     });
-    VALIDATE_T("end_vcol", kObjectTypeInteger, opts->end_vcol.type, {
-      return rv;
-    });
-    end_vcol = opts->end_vcol.data.integer;
+    end_vcol = opts->end_vcol;
     VALIDATE_RANGE((end_vcol >= 0 && end_vcol <= MAXCOL), "end_vcol", {
       return rv;
     });
@@ -568,7 +559,7 @@ Dictionary nvim_win_text_height(Window window, Dict(win_text_height) *opts, Aren
 
   int64_t fill = 0;
   int64_t all = win_text_height(win, start_lnum, start_vcol, end_lnum, end_vcol, &fill);
-  if (!HAS_KEY(opts->end_row)) {
+  if (!HAS_KEY(opts, win_text_height, end_row)) {
     const int64_t end_fill = win_get_fill(win, line_count + 1);
     fill += end_fill;
     all += end_fill;

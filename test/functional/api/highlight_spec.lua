@@ -434,10 +434,8 @@ describe('API: get highlight', function()
   before_each(clear)
 
   it('validation', function()
-    eq(
-      'Invalid highlight name: expected String, got Integer',
-      pcall_err(meths.get_hl, 0, { name = 177 })
-    )
+    eq("Invalid 'name': expected String, got Integer",
+       pcall_err(meths.get_hl, 0, { name = 177 }))
     eq('Highlight id out of bounds', pcall_err(meths.get_hl, 0, { name = 'Test set hl' }))
   end)
 
@@ -534,7 +532,7 @@ describe('API: get highlight', function()
     eq('Highlight id out of bounds', pcall_err(meths.get_hl, 0, { id = 0 }))
 
     eq(
-      'Invalid highlight id: expected Integer, got String',
+      "Invalid 'id': expected Integer, got String",
       pcall_err(meths.get_hl, 0, { id = 'Test_set_hl' })
     )
 

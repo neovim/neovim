@@ -271,8 +271,7 @@ static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
       size_t cmd_len = sizeof("func! ") + strlen(name);
       char *cmd = xmalloc(cmd_len);
       snprintf(cmd, cmd_len, "func! %s", name);
-      Dict(exec_opts) opts = { 0 };
-      opts.output = BOOLEAN_OBJ(true);
+      Dict(exec_opts) opts = { .output = true };
       String func_body = exec_impl(VIML_INTERNAL_CALL, cstr_as_string(cmd),
                                    &opts, &err);
       xfree(cmd);

@@ -558,16 +558,15 @@ ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, E
   FUNC_API_SINCE(8)
   FUNC_API_FAST
 {
-  bool is_lua = api_object_to_bool(opts->is_lua, "is_lua", false, err);
-  bool source = api_object_to_bool(opts->do_source, "do_source", false, err);
-  VALIDATE((!source || nlua_is_deferred_safe()), "%s", "'do_source' used in fast callback", {});
+  VALIDATE((!opts->do_source || nlua_is_deferred_safe()), "%s", "'do_source' used in fast callback",
+           {});
   if (ERROR_SET(err)) {
     return (Array)ARRAY_DICT_INIT;
   }
 
-  ArrayOf(String) res = runtime_get_named(is_lua, pat, all);
+  ArrayOf(String) res = runtime_get_named(opts->is_lua, pat, all);
 
-  if (source) {
+  if (opts->do_source) {
     for (size_t i = 0; i < res.size; i++) {
       String name = res.items[i].data.string;
       (void)do_source(name.data, false, DOSO_NONE, NULL);
@@ -718,15 +717,13 @@ void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
     goto error;
   }
 
-  bool verbose = api_object_to_bool(opts->verbose, "verbose", false, err);
-
-  if (verbose) {
+  if (opts->verbose) {
     verbose_enter();
   }
 
   msg_multiattr(hl_msg, history ? "echomsg" : "echo", history);
 
-  if (verbose) {
+  if (opts->verbose) {
     verbose_leave();
     verbose_stop();  // flush now
   }
@@ -1323,11 +1320,8 @@ Dictionary nvim_get_context(Dict(context) *opts, Error *err)
   FUNC_API_SINCE(6)
 {
   Array types = ARRAY_DICT_INIT;
-  if (HAS_KEY(opts->types)) {
-    VALIDATE_T("types", kObjectTypeArray, opts->types.type, {
-      return (Dictionary)ARRAY_DICT_INIT;
-    });
-    types = opts->types.data.array;
+  if (HAS_KEY(opts, context, types)) {
+    types = opts->types;
   }
 
   int int_types = types.size > 0 ? 0 : kCtxAll;
@@ -2091,12 +2085,8 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 
   int maxwidth;
   int fillchar = 0;
-  int use_bools = 0;
   int statuscol_lnum = 0;
   Window window = 0;
-  bool use_winbar = false;
-  bool use_tabline = false;
-  bool highlights = false;
 
   if (str.size < 2 || memcmp(str.data, "%!", 2) != 0) {
     const char *const errmsg = check_stl_option(str.data);
@@ -2105,58 +2095,28 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
     });
   }
 
-  if (HAS_KEY(opts->winid)) {
-    VALIDATE_T("winid", kObjectTypeInteger, opts->winid.type, {
-      return result;
-    });
-
-    window = (Window)opts->winid.data.integer;
+  if (HAS_KEY(opts, eval_statusline, winid)) {
+    window = opts->winid;
   }
-  if (HAS_KEY(opts->fillchar)) {
-    VALIDATE_T("fillchar", kObjectTypeString, opts->fillchar.type, {
-      return result;
-    });
-    VALIDATE_EXP((opts->fillchar.data.string.size != 0
-                  && ((size_t)utf_ptr2len(opts->fillchar.data.string.data)
-                      == opts->fillchar.data.string.size)),
+  if (HAS_KEY(opts, eval_statusline, fillchar)) {
+    VALIDATE_EXP((*opts->fillchar.data != 0
+                  && ((size_t)utf_ptr2len(opts->fillchar.data) == opts->fillchar.size)),
                  "fillchar", "single character", NULL, {
       return result;
     });
-    fillchar = utf_ptr2char(opts->fillchar.data.string.data);
-  }
-  if (HAS_KEY(opts->highlights)) {
-    highlights = api_object_to_bool(opts->highlights, "highlights", false, err);
-
-    if (ERROR_SET(err)) {
-      return result;
-    }
-  }
-  if (HAS_KEY(opts->use_winbar)) {
-    use_winbar = api_object_to_bool(opts->use_winbar, "use_winbar", false, err);
-    if (ERROR_SET(err)) {
-      return result;
-    }
-    use_bools++;
-  }
-  if (HAS_KEY(opts->use_tabline)) {
-    use_tabline = api_object_to_bool(opts->use_tabline, "use_tabline", false, err);
-    if (ERROR_SET(err)) {
-      return result;
-    }
-    use_bools++;
+    fillchar = utf_ptr2char(opts->fillchar.data);
   }
 
-  win_T *wp = use_tabline ? curwin : find_window_by_handle(window, err);
+  int use_bools = (int)opts->use_winbar + (int)opts->use_tabline;
+
+  win_T *wp = opts->use_tabline ? curwin : find_window_by_handle(window, err);
   if (wp == NULL) {
     api_set_error(err, kErrorTypeException, "unknown winid %d", window);
     return result;
   }
 
-  if (HAS_KEY(opts->use_statuscol_lnum)) {
-    VALIDATE_T("use_statuscol_lnum", kObjectTypeInteger, opts->use_statuscol_lnum.type, {
-      return result;
-    });
-    statuscol_lnum = (int)opts->use_statuscol_lnum.data.integer;
+  if (HAS_KEY(opts, eval_statusline, use_statuscol_lnum)) {
+    statuscol_lnum = (int)opts->use_statuscol_lnum;
     VALIDATE_RANGE(statuscol_lnum > 0 && statuscol_lnum <= wp->w_buffer->b_ml.ml_line_count,
                    "use_statuscol_lnum", {
       return result;
@@ -2172,11 +2132,11 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   statuscol_T statuscol = { 0 };
   SignTextAttrs sattrs[SIGN_SHOW_MAX] = { 0 };
 
-  if (use_tabline) {
+  if (opts->use_tabline) {
     fillchar = ' ';
   } else {
     if (fillchar == 0) {
-      if (use_winbar) {
+      if (opts->use_winbar) {
         fillchar = wp->w_p_fcs_chars.wbr;
       } else {
         int attr;
@@ -2220,15 +2180,12 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
     }
   }
 
-  if (HAS_KEY(opts->maxwidth)) {
-    VALIDATE_T("maxwidth", kObjectTypeInteger, opts->maxwidth.type, {
-      return result;
-    });
-
-    maxwidth = (int)opts->maxwidth.data.integer;
+  if (HAS_KEY(opts, eval_statusline, maxwidth)) {
+    maxwidth = (int)opts->maxwidth;
   } else {
     maxwidth = statuscol_lnum ? win_col_off(wp)
-               : (use_tabline || (!use_winbar && global_stl_height() > 0)) ? Columns : wp->w_width;
+               : (opts->use_tabline
+                  || (!opts->use_winbar && global_stl_height() > 0)) ? Columns : wp->w_width;
   }
 
   char buf[MAXPATHL];
@@ -2246,7 +2203,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
                                0,
                                fillchar,
                                maxwidth,
-                               highlights ? &hltab : NULL,
+                               opts->highlights ? &hltab : NULL,
                                NULL,
                                statuscol_lnum ? &statuscol : NULL);
 
@@ -2255,7 +2212,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   // Restore original value of 'cursorbind'
   wp->w_p_crb = p_crb_save;
 
-  if (highlights) {
+  if (opts->highlights) {
     Array hl_values = ARRAY_DICT_INIT;
     const char *grpname;
     char user_group[15];  // strlen("User") + strlen("2147483647") + NUL
@@ -2264,7 +2221,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
     // add the default highlight at the beginning of the highlight list
     if (hltab->start == NULL || (hltab->start - buf) != 0) {
       Dictionary hl_info = ARRAY_DICT_INIT;
-      grpname = get_default_stl_hl(use_tabline ? NULL : wp, use_winbar, stc_hl_id);
+      grpname = get_default_stl_hl(opts->use_tabline ? NULL : wp, opts->use_winbar, stc_hl_id);
 
       PUT(hl_info, "start", INTEGER_OBJ(0));
       PUT(hl_info, "group", CSTR_TO_OBJ(grpname));
@@ -2278,7 +2235,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
       PUT(hl_info, "start", INTEGER_OBJ(sp->start - buf));
 
       if (sp->userhl == 0) {
-        grpname = get_default_stl_hl(use_tabline ? NULL : wp, use_winbar, stc_hl_id);
+        grpname = get_default_stl_hl(opts->use_tabline ? NULL : wp, opts->use_winbar, stc_hl_id);
       } else if (sp->userhl < 0) {
         grpname = syn_id2name(-sp->userhl);
       } else {

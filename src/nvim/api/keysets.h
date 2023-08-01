@@ -4,135 +4,144 @@
 #include "nvim/api/private/defs.h"
 
 typedef struct {
-  Object types;
+  OptionalKeys is_set__context_;
+  Array types;
 } Dict(context);
 
 typedef struct {
-  Object on_start;
-  Object on_buf;
-  Object on_win;
-  Object on_line;
-  Object on_end;
-  Object _on_hl_def;
-  Object _on_spell_nav;
+  OptionalKeys is_set__set_decoration_provider_;
+  LuaRef on_start;
+  LuaRef on_buf;
+  LuaRef on_win;
+  LuaRef on_line;
+  LuaRef on_end;
+  LuaRef _on_hl_def;
+  LuaRef _on_spell_nav;
 } Dict(set_decoration_provider);
 
 typedef struct {
-  Object id;
-  Object end_line;
-  Object end_row;
-  Object end_col;
+  OptionalKeys is_set__set_extmark_;
+  Integer id;
+  Integer end_line;
+  Integer end_row;
+  Integer end_col;
   Object hl_group;
-  Object virt_text;
-  Object virt_text_pos;
-  Object virt_text_win_col;
-  Object virt_text_hide;
-  Object hl_eol;
-  Object hl_mode;
-  Object ephemeral;
-  Object priority;
-  Object right_gravity;
-  Object end_right_gravity;
-  Object virt_lines;
-  Object virt_lines_above;
-  Object virt_lines_leftcol;
-  Object strict;
-  Object sign_text;
+  Array virt_text;
+  String virt_text_pos;
+  Integer virt_text_win_col;
+  Boolean virt_text_hide;
+  Boolean hl_eol;
+  String hl_mode;
+  Boolean ephemeral;
+  Integer priority;
+  Boolean right_gravity;
+  Boolean end_right_gravity;
+  Array virt_lines;
+  Boolean virt_lines_above;
+  Boolean virt_lines_leftcol;
+  Boolean strict;
+  String sign_text;
   Object sign_hl_group;
   Object number_hl_group;
   Object line_hl_group;
   Object cursorline_hl_group;
-  Object conceal;
-  Object spell;
-  Object ui_watched;
+  String conceal;
+  Boolean spell;
+  Boolean ui_watched;
 } Dict(set_extmark);
 
 typedef struct {
-  Object noremap;
-  Object nowait;
-  Object silent;
-  Object script;
-  Object expr;
-  Object unique;
-  Object callback;
-  Object desc;
-  Object replace_keycodes;
+  OptionalKeys is_set__keymap_;
+  Boolean noremap;
+  Boolean nowait;
+  Boolean silent;
+  Boolean script;
+  Boolean expr;
+  Boolean unique;
+  LuaRef callback;
+  String desc;
+  Boolean replace_keycodes;
 } Dict(keymap);
 
 typedef struct {
-  Object builtin;
+  Boolean builtin;
 } Dict(get_commands);
 
 typedef struct {
+  OptionalKeys is_set__user_command_;
   Object addr;
-  Object bang;
-  Object bar;
+  Boolean bang;
+  Boolean bar;
   Object complete;
   Object count;
   Object desc;
-  Object force;
-  Object keepscript;
+  Boolean force;
+  Boolean keepscript;
   Object nargs;
   Object preview;
   Object range;
-  Object register_;
+  Boolean register_;
 } Dict(user_command);
 
 typedef struct {
-  Object row;
-  Object col;
-  Object width;
-  Object height;
-  Object anchor;
-  Object relative;
-  Object win;
-  Object bufpos;
-  Object external;
-  Object focusable;
-  Object zindex;
+  OptionalKeys is_set__float_config_;
+  Float row;
+  Float col;
+  Integer width;
+  Integer height;
+  String anchor;
+  String relative;
+  Window win;
+  Array bufpos;
+  Boolean external;
+  Boolean focusable;
+  Integer zindex;
   Object border;
   Object title;
-  Object title_pos;
-  Object style;
-  Object noautocmd;
+  String title_pos;
+  String style;
+  Boolean noautocmd;
 } Dict(float_config);
 
 typedef struct {
-  Object is_lua;
-  Object do_source;
+  Boolean is_lua;
+  Boolean do_source;
 } Dict(runtime);
 
 typedef struct {
-  Object winid;
-  Object maxwidth;
-  Object fillchar;
-  Object highlights;
-  Object use_winbar;
-  Object use_tabline;
-  Object use_statuscol_lnum;
+  OptionalKeys is_set__eval_statusline_;
+  Window winid;
+  Integer maxwidth;
+  String fillchar;
+  Boolean highlights;
+  Boolean use_winbar;
+  Boolean use_tabline;
+  Integer use_statuscol_lnum;
 } Dict(eval_statusline);
 
 typedef struct {
-  Object scope;
-  Object win;
-  Object buf;
-  Object filetype;
+  OptionalKeys is_set__option_;
+  String scope;
+  Window win;
+  Buffer buf;
+  String filetype;
 } Dict(option);
 
 typedef struct {
-  Object bold;
-  Object standout;
-  Object strikethrough;
-  Object underline;
-  Object undercurl;
-  Object underdouble;
-  Object underdotted;
-  Object underdashed;
-  Object italic;
-  Object reverse;
-  Object altfont;
-  Object nocombine;
-  Object default_;
+  OptionalKeys is_set__highlight_;
+  Boolean bold;
+  Boolean standout;
+  Boolean strikethrough;
+  Boolean underline;
+  Boolean undercurl;
+  Boolean underdouble;
+  Boolean underdotted;
+  Boolean underdashed;
+  Boolean italic;
+  Boolean reverse;
+  Boolean altfont;
+  Boolean nocombine;
+  Boolean default_;
   Object cterm;
   Object foreground;
   Object fg;
@@ -144,67 +153,73 @@ typedef struct {
   Object sp;
   Object link;
   Object global_link;
-  Object fallback;
-  Object blend;
-  Object fg_indexed;
-  Object bg_indexed;
+  Boolean fallback;
+  Integer blend;
+  Boolean fg_indexed;
+  Boolean bg_indexed;
 } Dict(highlight);
 
 typedef struct {
-  Object bold;
-  Object standout;
-  Object strikethrough;
-  Object underline;
-  Object undercurl;
-  Object underdouble;
-  Object underdotted;
-  Object underdashed;
-  Object italic;
-  Object reverse;
-  Object altfont;
-  Object nocombine;
+  Boolean bold;
+  Boolean standout;
+  Boolean strikethrough;
+  Boolean underline;
+  Boolean undercurl;
+  Boolean underdouble;
+  Boolean underdotted;
+  Boolean underdashed;
+  Boolean italic;
+  Boolean reverse;
+  Boolean altfont;
+  Boolean nocombine;
 } Dict(highlight_cterm);
 
 typedef struct {
-  Object id;
-  Object name;
-  Object link;
+  OptionalKeys is_set__get_highlight_;
+  Integer id;
+  String name;
+  Boolean link;
 } Dict(get_highlight);
 
 typedef struct {
-  Object start_row;
-  Object end_row;
-  Object start_vcol;
-  Object end_vcol;
+  OptionalKeys is_set__win_text_height_;
+  Integer start_row;
+  Integer end_row;
+  Integer start_vcol;
+  Integer end_vcol;
 } Dict(win_text_height);
 
 typedef struct {
-  Object buffer;
+  OptionalKeys is_set__clear_autocmds_;
+  Buffer buffer;
   Object event;
   Object group;
   Object pattern;
 } Dict(clear_autocmds);
 
 typedef struct {
-  Object buffer;
+  OptionalKeys is_set__create_autocmd_;
+  Buffer buffer;
   Object callback;
-  Object command;
-  Object desc;
+  String command;
+  String desc;
   Object group;
-  Object nested;
-  Object once;
+  Boolean nested;
+  Boolean once;
   Object pattern;
 } Dict(create_autocmd);
 
 typedef struct {
-  Object buffer;
+  OptionalKeys is_set__exec_autocmds_;
+  Buffer buffer;
   Object group;
-  Object modeline;
+  Boolean modeline;
   Object pattern;
   Object data;
 } Dict(exec_autocmds);
 
 typedef struct {
+  OptionalKeys is_set__get_autocmds_;
   Object event;
   Object group;
   Object pattern;
@@ -216,62 +231,66 @@ typedef struct {
 } Dict(create_augroup);
 
 typedef struct {
-  Object cmd;
-  Object range;
-  Object count;
-  Object reg;
-  Object bang;
-  Object args;
-  Object magic;
-  Object mods;
+  OptionalKeys is_set__cmd_;
+  String cmd;
+  Array range;
+  Integer count;
+  String reg;
+  Boolean bang;
+  Array args;
+  Dictionary magic;
+  Dictionary mods;
   Object nargs;
   Object addr;
   Object nextcmd;
 } Dict(cmd);
 
 typedef struct {
-  Object file;
-  Object bar;
+  OptionalKeys is_set__cmd_magic_;
+  Boolean file;
+  Boolean bar;
 } Dict(cmd_magic);
 
 typedef struct {
-  Object silent;
-  Object emsg_silent;
-  Object unsilent;
-  Object filter;
-  Object sandbox;
-  Object noautocmd;
-  Object browse;
-  Object confirm;
-  Object hide;
-  Object horizontal;
-  Object keepalt;
-  Object keepjumps;
-  Object keepmarks;
-  Object keeppatterns;
-  Object lockmarks;
-  Object noswapfile;
-  Object tab;
-  Object verbose;
-  Object vertical;
-  Object split;
+  OptionalKeys is_set__cmd_mods_;
+  Boolean silent;
+  Boolean emsg_silent;
+  Boolean unsilent;
+  Dictionary filter;
+  Boolean sandbox;
+  Boolean noautocmd;
+  Boolean browse;
+  Boolean confirm;
+  Boolean hide;
+  Boolean horizontal;
+  Boolean keepalt;
+  Boolean keepjumps;
+  Boolean keepmarks;
+  Boolean keeppatterns;
+  Boolean lockmarks;
+  Boolean noswapfile;
+  Integer tab;
+  Integer verbose;
+  Boolean vertical;
+  String split;
 } Dict(cmd_mods);
 
 typedef struct {
-  Object pattern;
-  Object force;
+  OptionalKeys is_set__cmd_mods_filter_;
+  String pattern;
+  Boolean force;
 } Dict(cmd_mods_filter);
 
 typedef struct {
-  Object output;
+  Boolean output;
 } Dict(cmd_opts);
 
 typedef struct {
-  Object verbose;
+  Boolean verbose;
 } Dict(echo_opts);
 
 typedef struct {
-  Object output;
+  Boolean output;
 } Dict(exec_opts);
 
 #endif  // NVIM_API_KEYSETS_H

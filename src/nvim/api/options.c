@@ -8,6 +8,7 @@
 
 #include "nvim/api/options.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
 #include "nvim/autocmd.h"
@@ -26,14 +27,11 @@
 static int validate_option_value_args(Dict(option) *opts, char *name, int *scope, int *opt_type,
                                       void **from, char **filetype, Error *err)
 {
-  if (HAS_KEY(opts->scope)) {
-    VALIDATE_T("scope", kObjectTypeString, opts->scope.type, {
-      return FAIL;
-    });
-
-    if (!strcmp(opts->scope.data.string.data, "local")) {
+#define HAS_KEY_X(d, v) HAS_KEY(d, option, v)
+  if (HAS_KEY_X(opts, scope)) {
+    if (!strcmp(opts->scope.data, "local")) {
       *scope = OPT_LOCAL;
-    } else if (!strcmp(opts->scope.data.string.data, "global")) {
+    } else if (!strcmp(opts->scope.data, "global")) {
       *scope = OPT_GLOBAL;
     } else {
       VALIDATE_EXP(false, "scope", "'local' or 'global'", NULL, {
@@ -44,51 +42,40 @@ static int validate_option_value_args(Dict(option) *opts, char *name, int *scope
 
   *opt_type = SREQ_GLOBAL;
 
-  if (filetype != NULL && HAS_KEY(opts->filetype)) {
-    VALIDATE_T("scope", kObjectTypeString, opts->filetype.type, {
-      return FAIL;
-    });
-
-    *filetype = opts->filetype.data.string.data;
+  if (filetype != NULL && HAS_KEY_X(opts, filetype)) {
+    *filetype = opts->filetype.data;
   }
 
-  if (HAS_KEY(opts->win)) {
-    VALIDATE_T_HANDLE("win", kObjectTypeWindow, opts->win.type, {
-      return FAIL;
-    });
-
+  if (HAS_KEY_X(opts, win)) {
     *opt_type = SREQ_WIN;
-    *from = find_window_by_handle((int)opts->win.data.integer, err);
+    *from = find_window_by_handle(opts->win, err);
     if (ERROR_SET(err)) {
       return FAIL;
     }
   }
 
-  if (HAS_KEY(opts->buf)) {
-    VALIDATE_T_HANDLE("buf", kObjectTypeBuffer, opts->buf.type, {
-      return FAIL;
-    });
-
+  if (HAS_KEY_X(opts, buf)) {
     *scope = OPT_LOCAL;
     *opt_type = SREQ_BUF;
-    *from = find_buffer_by_handle((int)opts->buf.data.integer, err);
+    *from = find_buffer_by_handle(opts->buf, err);
     if (ERROR_SET(err)) {
       return FAIL;
     }
   }
 
-  VALIDATE((!HAS_KEY(opts->filetype)
-            || !(HAS_KEY(opts->buf) || HAS_KEY(opts->scope) || HAS_KEY(opts->win))),
+  VALIDATE((!HAS_KEY_X(opts, filetype)
+            || !(HAS_KEY_X(opts, buf) || HAS_KEY_X(opts, scope) || HAS_KEY_X(opts, win))),
            "%s", "cannot use 'filetype' with 'scope', 'buf' or 'win'", {
     return FAIL;
   });
 
-  VALIDATE((!HAS_KEY(opts->scope) || !HAS_KEY(opts->buf)), "%s",
+  VALIDATE((!HAS_KEY_X(opts, scope) || !HAS_KEY_X(opts, buf)), "%s",
            "cannot use both 'scope' and 'buf'", {
     return FAIL;
   });
 
-  VALIDATE((!HAS_KEY(opts->win) || !HAS_KEY(opts->buf)), "%s", "cannot use both 'buf' and 'win'", {
+  VALIDATE((!HAS_KEY_X(opts, win) || !HAS_KEY_X(opts, buf)),
+           "%s", "cannot use both 'buf' and 'win'", {
     return FAIL;
   });
 
@@ -111,6 +98,7 @@ static int validate_option_value_args(Dict(option) *opts, char *name, int *scope
   }
 
   return OK;
+#undef HAS_KEY_X
 }
 
 /// Create a dummy buffer and run the FileType autocmd on it.

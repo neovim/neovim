@@ -35,8 +35,7 @@ String nvim_exec(uint64_t channel_id, String src, Boolean output, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_DEPRECATED_SINCE(11)
 {
-  Dict(exec_opts) opts = { 0 };
-  opts.output = BOOLEAN_OBJ(output);
+  Dict(exec_opts) opts = { .output = output };
   return exec_impl(channel_id, src, &opts, err);
 }
 
@@ -46,8 +45,7 @@ String nvim_command_output(uint64_t channel_id, String command, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_DEPRECATED_SINCE(7)
 {
-  Dict(exec_opts) opts = { 0 };
-  opts.output = BOOLEAN_OBJ(true);
+  Dict(exec_opts) opts = { .output = true };
   return exec_impl(channel_id, command, &opts, err);
 }
 

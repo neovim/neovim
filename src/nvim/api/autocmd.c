@@ -11,6 +11,7 @@
 #include "lauxlib.h"
 #include "nvim/api/autocmd.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
 #include "nvim/ascii.h"
@@ -125,7 +126,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
     });
   }
 
-  if (HAS_KEY(opts->event)) {
+  if (HAS_KEY(opts, get_autocmds, event)) {
     check_event = true;
 
     Object v = opts->event;
@@ -148,13 +149,13 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
     }
   }
 
-  VALIDATE((!HAS_KEY(opts->pattern) || !HAS_KEY(opts->buffer)),
+  VALIDATE((!HAS_KEY(opts, get_autocmds, pattern) || !HAS_KEY(opts, get_autocmds, buffer)),
            "%s", "Cannot use both 'pattern' and 'buffer'", {
     goto cleanup;
   });
 
   int pattern_filter_count = 0;
-  if (HAS_KEY(opts->pattern)) {
+  if (HAS_KEY(opts, get_autocmds, pattern)) {
     Object v = opts->pattern;
     if (v.type == kObjectTypeString) {
       pattern_filters[pattern_filter_count] = v.data.string.data;
@@ -209,7 +210,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
       snprintf(pattern_buflocal, BUFLOCAL_PAT_LEN, "<buffer=%d>", (int)buf->handle);
       ADD(buffers, CSTR_TO_OBJ(pattern_buflocal));
     });
-  } else if (HAS_KEY(opts->buffer)) {
+  } else if (HAS_KEY(opts, get_autocmds, buffer)) {
     VALIDATE_EXP(false, "buffer", "Integer or Array", api_typename(opts->buffer.type), {
       goto cleanup;
     });
@@ -408,12 +409,12 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
     goto cleanup;
   }
 
-  VALIDATE((!HAS_KEY(opts->callback) || !HAS_KEY(opts->command)),
+  VALIDATE((!HAS_KEY(opts, create_autocmd, callback) || !HAS_KEY(opts, create_autocmd, command)),
            "%s", "Cannot use both 'callback' and 'command'", {
     goto cleanup;
   });
 
-  if (HAS_KEY(opts->callback)) {
+  if (HAS_KEY(opts, create_autocmd, callback)) {
     // NOTE: We could accept callable tables, but that isn't common in the API.
 
     Object *callback = &opts->callback;
@@ -442,36 +443,33 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
 
     aucmd.type = CALLABLE_CB;
     aucmd.callable.cb = cb;
-  } else if (HAS_KEY(opts->command)) {
-    Object *command = &opts->command;
-    VALIDATE_T("command", kObjectTypeString, command->type, {
-      goto cleanup;
-    });
+  } else if (HAS_KEY(opts, create_autocmd, command)) {
     aucmd.type = CALLABLE_EX;
-    aucmd.callable.cmd = string_to_cstr(command->data.string);
+    aucmd.callable.cmd = string_to_cstr(opts->command);
   } else {
     VALIDATE(false, "%s", "Required: 'command' or 'callback'", {
       goto cleanup;
     });
   }
 
-  bool is_once = api_object_to_bool(opts->once, "once", false, err);
-  bool is_nested = api_object_to_bool(opts->nested, "nested", false, err);
-
   int au_group = get_augroup_from_object(opts->group, err);
   if (au_group == AUGROUP_ERROR) {
     goto cleanup;
   }
 
-  if (!get_patterns_from_pattern_or_buf(&patterns, opts->pattern, opts->buffer, err)) {
+  bool has_buffer = HAS_KEY(opts, create_autocmd, buffer);
+
+  VALIDATE((!HAS_KEY(opts, create_autocmd, pattern) || !has_buffer),
+           "%s", "Cannot use both 'pattern' and 'buffer' for the same autocmd", {
+    goto cleanup;
+  });
+
+  if (!get_patterns_from_pattern_or_buf(&patterns, opts->pattern, has_buffer, opts->buffer, err)) {
     goto cleanup;
   }
 
-  if (HAS_KEY(opts->desc)) {
-    VALIDATE_T("desc", kObjectTypeString, opts->desc.type, {
-      goto cleanup;
-    });
-    desc = opts->desc.data.string.data;
+  if (HAS_KEY(opts, create_autocmd, desc)) {
+    desc = opts->desc.data;
   }
 
   if (patterns.size == 0) {
@@ -496,8 +494,8 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
                                   pat.data.string.data,
                                   (int)pat.data.string.size,
                                   au_group,
-                                  is_once,
-                                  is_nested,
+                                  opts->once,
+                                  opts->nested,
                                   desc,
                                   aucmd);
       });
@@ -568,7 +566,9 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Error *err)
     goto cleanup;
   }
 
-  VALIDATE((!HAS_KEY(opts->pattern) || !HAS_KEY(opts->buffer)),
+  bool has_buffer = HAS_KEY(opts, clear_autocmds, buffer);
+
+  VALIDATE((!HAS_KEY(opts, clear_autocmds, pattern) || !has_buffer),
            "%s", "Cannot use both 'pattern' and 'buffer'", {
     goto cleanup;
   });
@@ -578,7 +578,7 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Error *err)
     goto cleanup;
   }
 
-  if (!get_patterns_from_pattern_or_buf(&patterns, opts->pattern, opts->buffer, err)) {
+  if (!get_patterns_from_pattern_or_buf(&patterns, opts->pattern, has_buffer, opts->buffer, err)) {
     goto cleanup;
   }
 
@@ -742,21 +742,22 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
     });
   }
 
-  if (HAS_KEY(opts->buffer)) {
-    Object buf_obj = opts->buffer;
-    VALIDATE_EXP((buf_obj.type == kObjectTypeInteger || buf_obj.type == kObjectTypeBuffer),
-                 "buffer", "Integer", api_typename(buf_obj.type), {
+  bool has_buffer = false;
+  if (HAS_KEY(opts, exec_autocmds, buffer)) {
+    VALIDATE((!HAS_KEY(opts, exec_autocmds, pattern)),
+             "%s", "Cannot use both 'pattern' and 'buffer' for the same autocmd", {
       goto cleanup;
     });
 
-    buf = find_buffer_by_handle((Buffer)buf_obj.data.integer, err);
+    has_buffer = true;
+    buf = find_buffer_by_handle(opts->buffer, err);
 
     if (ERROR_SET(err)) {
       goto cleanup;
     }
   }
 
-  if (!get_patterns_from_pattern_or_buf(&patterns, opts->pattern, opts->buffer, err)) {
+  if (!get_patterns_from_pattern_or_buf(&patterns, opts->pattern, has_buffer, opts->buffer, err)) {
     goto cleanup;
   }
 
@@ -764,20 +765,19 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
     ADD(patterns, STATIC_CSTR_TO_OBJ(""));
   }
 
-  if (HAS_KEY(opts->data)) {
+  if (HAS_KEY(opts, exec_autocmds, data)) {
     data = &opts->data;
   }
 
-  modeline = api_object_to_bool(opts->modeline, "modeline", true, err);
+  modeline = GET_BOOL_OR_TRUE(opts, exec_autocmds, modeline);
 
   bool did_aucmd = false;
   FOREACH_ITEM(event_array, event_str, {
     GET_ONE_EVENT(event_nr, event_str, cleanup)
 
     FOREACH_ITEM(patterns, pat, {
-      char *fname = !HAS_KEY(opts->buffer) ? pat.data.string.data : NULL;
-      did_aucmd |=
-        apply_autocmds_group(event_nr, fname, NULL, true, au_group, buf, NULL, data);
+      char *fname = !has_buffer ? pat.data.string.data : NULL;
+      did_aucmd |= apply_autocmds_group(event_nr, fname, NULL, true, au_group, buf, NULL, data);
     })
   })
 
@@ -837,17 +837,12 @@ static int get_augroup_from_object(Object group, Error *err)
   }
 }
 
-static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Object buffer,
-                                             Error *err)
+static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, bool has_buffer,
+                                             Buffer buffer, Error *err)
 {
   const char pattern_buflocal[BUFLOCAL_PAT_LEN];
 
-  VALIDATE((!HAS_KEY(pattern) || !HAS_KEY(buffer)),
-           "%s", "Cannot use both 'pattern' and 'buffer' for the same autocmd", {
-    return false;
-  });
-
-  if (HAS_KEY(pattern)) {
+  if (pattern.type != kObjectTypeNil) {
     Object *v = &pattern;
 
     if (v->type == kObjectTypeString) {
@@ -880,13 +875,8 @@ static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Ob
         return false;
       });
     }
-  } else if (HAS_KEY(buffer)) {
-    VALIDATE_EXP((buffer.type == kObjectTypeInteger || buffer.type == kObjectTypeBuffer),
-                 "buffer", "Integer", api_typename(buffer.type), {
-      return false;
-    });
-
-    buf_T *buf = find_buffer_by_handle((Buffer)buffer.data.integer, err);
+  } else if (has_buffer) {
+    buf_T *buf = find_buffer_by_handle(buffer, err);
     if (ERROR_SET(err)) {
       return false;
     }
