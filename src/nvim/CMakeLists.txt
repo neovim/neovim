@@ -857,4 +857,6 @@ add_custom_target(generated-sources DEPENDS
   ${NVIM_GENERATED_SOURCES}
 )
 
+add_custom_target(api-metadata DEPENDS ${API_METADATA})
+
 add_subdirectory(po)

@@ -131,7 +131,7 @@ functionaltest-lua: | nvim
 FORMAT=formatc formatlua format
 LINT=lintlua lintsh lintc clang-tidy lintcommit lint
 TEST=functionaltest unittest
-generated-sources benchmark $(FORMAT) $(LINT) $(TEST): | build/.ran-cmake
+generated-sources benchmark $(FORMAT) $(LINT) $(TEST) api-metadata: | build/.ran-cmake
 	$(CMAKE_PRG) --build build --target $@
 
 test: $(TEST)

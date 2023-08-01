@@ -1,7 +1,35 @@
 #!/usr/bin/env -S nvim -l
 -- Generator for src/nvim/eval.lua
 
-local funcs = require('src/nvim/eval').funcs
+--- @class vim.api.metadata
+--- @field name string
+--- @field parameters {[1]:string,[2]:string}[]
+--- @field return_type string
+--- @field deprecated_since integer
+--- @field eval boolean
+--- @field fast boolean
+--- @field handler_id integer
+--- @field impl_name string
+--- @field lua boolean
+--- @field method boolean
+--- @field remote boolean
+--- @field since integer
+
+LUA_META_HEADER = {
+  '--- @meta',
+  '-- THIS FILE IS GENERATED',
+  '-- DO NOT EDIT',
+  "error('Cannot require a meta file')",
+}
+
+LUA_API_META_HEADER = {
+  '--- @meta',
+  '-- THIS FILE IS GENERATED',
+  '-- DO NOT EDIT',
+  "error('Cannot require a meta file')",
+  '',
+  'vim.api = {}',
+}
 
 local LUA_KEYWORDS = {
   ['and'] = true,
@@ -12,6 +40,47 @@ local LUA_KEYWORDS = {
   ['while'] = true,
   ['repeat'] = true,
 }
+
+local API_TYPES = {
+  Window = 'integer',
+  Tabpage = 'integer',
+  Buffer = 'integer',
+  Boolean = 'boolean',
+  Object = 'any',
+  Integer = 'integer',
+  String = 'string',
+  Array = 'any[]',
+  LuaRef = 'function',
+  Dictionary = 'table<string,any>',
+  Float = 'number',
+  void = '',
+}
+
+--- Convert an API type to Lua
+--- @param t string
+--- @return string
+local function api_type(t)
+  if t:match('^ArrayOf%(([z-aA-Z]+), %d+%') then
+    print(t:match('^ArrayOf%(([z-aA-Z]+), %d+%'))
+  end
+  local as0 = t:match('^ArrayOf%((.*)%)')
+  if as0 then
+    local as = vim.split(as0, ', ', { plain = true })
+    return api_type(as[1]) .. '[]'
+  end
+
+  local d = t:match('^Dict%((.*)%)')
+  if d then
+    return 'vim.api.keyset.' .. d
+  end
+
+  local d0 = t:match('^DictionaryOf%((.*)%)')
+  if d0 then
+    return 'table<string,' .. api_type(d0) .. '>'
+  end
+
+  return API_TYPES[t] or t
+end
 
 --- @param f string
 --- @param params {[1]:string,[2]:string}[]|true
@@ -41,8 +110,8 @@ end
 
 --- Uniquify names
 --- Fix any names that are lua keywords
---- @param params {[1]:string,[2]:string}[]
---- @return {[1]:string,[2]:string}[]
+--- @param params {[1]:string,[2]:string,[3]:string}[]
+--- @return {[1]:string,[2]:string,[3]:string}[]
 local function process_params(params)
   local seen = {} --- @type table<string,true>
   local sfx = 1
@@ -60,6 +129,170 @@ local function process_params(params)
   end
 
   return params
+end
+
+--- @class vim.gen_vim_doc_fun
+--- @field signature string
+--- @field doc string[]
+--- @field parameters_doc table<string,string>
+--- @field return string[]
+--- @field seealso string[]
+--- @field annotations string[]
+
+--- @return table<string, vim.EvalFn>
+local function get_api_funcs()
+  local mpack_f = assert(io.open('build/api_metadata.mpack', 'rb'))
+  local metadata = vim.mpack.decode(mpack_f:read('*all')) --[[@as vim.api.metadata[] ]]
+  local ret = {} --- @type table<string, vim.EvalFn>
+
+  local doc_mpack_f = assert(io.open('runtime/doc/api.mpack', 'rb'))
+  local doc_metadata = vim.mpack.decode(doc_mpack_f:read('*all')) --[[@as table<string,vim.gen_vim_doc_fun>]]
+
+  for _, fun in ipairs(metadata) do
+    local fdoc = doc_metadata[fun.name]
+
+    local params = {} --- @type {[1]:string,[2]:string}[]
+    for _, p in ipairs(fun.parameters) do
+      local pty, pname = p[1], p[2]
+      params[#params + 1] = {
+        pname,
+        api_type(pty),
+        fdoc and fdoc.parameters_doc[pname] or nil,
+      }
+    end
+
+    local r = {
+      signature = 'NA',
+      name = fun.name,
+      params = params,
+      returns = api_type(fun.return_type),
+      deprecated = fun.deprecated_since ~= nil,
+    }
+
+    if fdoc then
+      if #fdoc.doc > 0 then
+        r.desc = table.concat(fdoc.doc, '\n')
+      end
+      r.return_desc = (fdoc['return'] or {})[1]
+    end
+
+    ret[fun.name] = r
+  end
+  return ret
+end
+
+--- Convert vimdoc references to markdown literals
+--- Convert vimdoc codeblocks to markdown codeblocks
+--- @param x string
+--- @return string
+local function norm_text(x)
+  return (
+    x:gsub('|([^ ]+)|', '`%1`')
+      :gsub('>lua', '\n```lua')
+      :gsub('>vim', '\n```vim')
+      :gsub('\n<$', '\n```')
+      :gsub('\n<\n', '\n```\n')
+  )
+end
+
+--- @param _f string
+--- @param fun vim.EvalFn
+--- @param write fun(line: string)
+local function render_api_fun(_f, fun, write)
+  if not vim.startswith(fun.name, 'nvim_') then
+    return
+  end
+
+  write('')
+
+  if vim.startswith(fun.name, 'nvim__') then
+    write('--- @private')
+  end
+
+  if fun.deprecated then
+    write('--- @deprecated')
+  end
+
+  local desc = fun.desc
+  if desc then
+    for _, l in ipairs(vim.split(norm_text(desc), '\n', { plain = true })) do
+      write('--- ' .. l)
+    end
+    write('---')
+  end
+
+  local param_names = {} --- @type string[]
+  local params = process_params(fun.params)
+  for _, p in ipairs(params) do
+    param_names[#param_names + 1] = p[1]
+    local pdesc = p[3]
+    if pdesc then
+      local pdesc_a = vim.split(norm_text(pdesc), '\n', { plain = true })
+      write('--- @param ' .. p[1] .. ' ' .. p[2] .. ' ' .. pdesc_a[1])
+      for i = 2, #pdesc_a do
+        if not pdesc_a[i] then
+          break
+        end
+        write('--- ' .. pdesc_a[i])
+      end
+    else
+      write('--- @param ' .. p[1] .. ' ' .. p[2])
+    end
+  end
+  if fun.returns ~= '' then
+    if fun.returns_desc then
+      write('--- @return ' .. fun.returns .. ' : ' .. fun.returns_desc)
+    else
+      write('--- @return ' .. fun.returns)
+    end
+  end
+  local param_str = table.concat(param_names, ', ')
+
+  write(string.format('function vim.api.%s(%s) end', fun.name, param_str))
+end
+
+--- @return table<string, vim.EvalFn>
+local function get_api_keysets()
+  local mpack_f = assert(io.open('build/api_metadata.mpack', 'rb'))
+
+  --- @diagnostic disable-next-line:no-unknown
+  local metadata = assert(vim.mpack.decode(mpack_f:read('*all')))
+
+  local ret = {} --- @type table<string, vim.EvalFn>
+
+  --- @type {[1]: string, [2]: {[1]: string, [2]: string}[] }[]
+  local keysets = metadata.keysets
+
+  for _, keyset in ipairs(keysets) do
+    local kname = keyset[1]
+    local kdef = keyset[2]
+    for _, field in ipairs(kdef) do
+      field[2] = api_type(field[2])
+    end
+    ret[kname] = {
+      signature = 'NA',
+      name = kname,
+      params = kdef,
+    }
+  end
+
+  return ret
+end
+
+--- @param _f string
+--- @param fun vim.EvalFn
+--- @param write fun(line: string)
+local function render_api_keyset(_f, fun, write)
+  write('')
+  write('--- @class vim.api.keyset.' .. fun.name)
+  for _, p in ipairs(fun.params) do
+    write('--- @field ' .. p[1] .. ' ' .. p[2])
+  end
+end
+
+--- @return table<string, vim.EvalFn>
+local function get_eval_funcs()
+  return require('src/nvim/eval').funcs
 end
 
 --- @param f string
@@ -83,6 +316,7 @@ local function render_vimfn(f, fun, write)
     local desc = fun.desc
 
     if desc then
+      --- @type string
       desc = desc:gsub('\n%s*\n%s*$', '\n')
       for _, l in ipairs(vim.split(desc, '\n', { plain = true })) do
         l = l:gsub('^      ', ''):gsub('\t', '  '):gsub('@', '\\@')
@@ -173,6 +407,7 @@ end
 
 --- @class nvim.gen_eval_files.elem
 --- @field path string
+--- @field funcs fun(): table<string, vim.EvalFn>
 --- @field render fun(f:string,fun:vim.EvalFn,write:fun(line:string))
 --- @field header? string[]
 --- @field footer? string[]
@@ -181,15 +416,25 @@ end
 local CONFIG = {
   {
     path = 'runtime/lua/vim/_meta/vimfn.lua',
+    header = LUA_META_HEADER,
+    funcs = get_eval_funcs,
     render = render_vimfn,
-    header = {
-      '--- @meta',
-      '-- THIS FILE IS GENERATED',
-      '-- DO NOT EDIT',
-    },
+  },
+  {
+    path = 'runtime/lua/vim/_meta/api.lua',
+    header = LUA_API_META_HEADER,
+    funcs = get_api_funcs,
+    render = render_api_fun,
+  },
+  {
+    path = 'runtime/lua/vim/_meta/api_keysets.lua',
+    header = LUA_META_HEADER,
+    funcs = get_api_keysets,
+    render = render_api_keyset,
   },
   {
     path = 'runtime/doc/builtin.txt',
+    funcs = get_eval_funcs,
     render = render_eval_doc,
     header = {
       '*builtin.txt*	Nvim',
@@ -249,6 +494,8 @@ local function render(elem)
   for _, l in ipairs(elem.header or {}) do
     write(l)
   end
+
+  local funcs = elem.funcs()
 
   --- @type string[]
   local fnames = vim.tbl_keys(funcs)

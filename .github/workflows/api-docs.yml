@@ -23,7 +23,12 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
+          ./.github/scripts/install_deps.sh
           sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y doxygen python3 python3-msgpack
+
+      - name: Build metadata
+        run: |
+          make api-metadata
 
       - name: Generate docs
         id: docs
