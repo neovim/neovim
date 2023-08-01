@@ -120,7 +120,7 @@ These dependencies are "vendored" (inlined), we must update the sources manually
 * `src/nvim/tui/terminfo_defs.h`: terminfo definitions
     * Run `scripts/update_terminfo.sh` to update these definitions.
 * `runtime/lua/vim/lsp/types/protocol.lua`: LSP specification
-    * Run `scripts/lsp_types.lua` to update.
+    * Run `scripts/gen_lsp.lua` to update.
 * `src/bit.c`: only for PUC lua: port of `require'bit'` from luajit https://bitop.luajit.org/
 * [treesitter parsers](https://github.com/neovim/neovim/blob/fcc24e43e0b5f9d801a01ff2b8f78ce8c16dd551/cmake.deps/CMakeLists.txt#L197-L210)
 

@@ -70,21 +70,6 @@ The following new APIs and features were added.
   • 'diffopt' "linematch" scoring algorithm now favours larger and less groups
     https://github.com/neovim/neovim/pull/23611
 
-• Added |vim.lsp.status()| to consume the last progress messages as a string.
-
-• Neovim's LSP client now always saves and restores named buffer marks when
-  applying text edits.
-
-• Nvim now supports the `positionEncoding` server capability. If a server
-  responds with the `positionEncoding` capability in its initialization
-  response, Nvim automatically sets the client's `offset_encoding` field.
-
-• Dynamic registration of LSP capabilities. An implication of this change is
-  that checking a client's `server_capabilities` is no longer a sufficient
-  indicator to see if a server supports a feature. Instead use
-  `client.supports_method(<method>)`. It considers both the dynamic
-  capabilities and static `server_capabilities`.
-
 • |vim.iter()| provides a generic iterator interface for tables and Lua
   iterators |luaref-in|.
 
@@ -118,10 +103,22 @@ The following new APIs and features were added.
   terminal emulator that supports |tui-csiu|.
 
 • LSP
+  • LSP method names are available in |vim.lsp.protocol.Methods|.
   • Implemented LSP inlay hints: |vim.lsp.inlay_hint()|
     https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_inlayHint
   • Implemented pull diagnostic textDocument/diagnostic: |vim.lsp.diagnostic.on_diagnostic()|
     https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_diagnostic
+  • Added |vim.lsp.status()| to consume the last progress messages as a string.
+  • LSP client now always saves and restores named buffer marks when applying
+    text edits.
+  • LSP client now supports the `positionEncoding` server capability. If a server
+    responds with the `positionEncoding` capability in its initialization
+    response, Nvim automatically sets the client's `offset_encoding` field.
+  • Dynamic registration of LSP capabilities. An implication of this change is
+    that checking a client's `server_capabilities` is no longer a sufficient
+    indicator to see if a server supports a feature. Instead use
+    `client.supports_method(<method>)`. It considers both the dynamic
+    capabilities and static `server_capabilities`.
 
 • Bundled treesitter parser and queries (highlight, folds) for Markdown,
   Python, and Bash.
@@ -175,8 +172,6 @@ The following changes to existing APIs or features add new behavior.
 • |vim.lsp.start()| now maps |K| to use |vim.lsp.buf.hover()| if the server
   supports it, unless |'keywordprg'| was customized before calling
   |vim.lsp.start()|.
-
-• |vim.lsp.protocol.Methods| all the lsp methods constants.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
