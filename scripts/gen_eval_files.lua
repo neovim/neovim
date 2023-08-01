@@ -15,14 +15,14 @@
 --- @field remote boolean
 --- @field since integer
 
-LUA_META_HEADER = {
+local LUA_META_HEADER = {
   '--- @meta',
   '-- THIS FILE IS GENERATED',
   '-- DO NOT EDIT',
   "error('Cannot require a meta file')",
 }
 
-LUA_API_META_HEADER = {
+local LUA_API_META_HEADER = {
   '--- @meta',
   '-- THIS FILE IS GENERATED',
   '-- DO NOT EDIT',
