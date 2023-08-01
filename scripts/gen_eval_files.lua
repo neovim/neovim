@@ -451,7 +451,7 @@ local CONFIG = {
       '*builtin.txt*	Nvim',
       '',
       '',
-      '\t\t  VIM REFERENCE MANUAL\t  by Bram Moolenaar',
+      '\t\t  NVIM REFERENCE MANUAL',
       '',
       '',
       'Builtin functions\t\t*vimscript-functions* *builtin-functions*',
