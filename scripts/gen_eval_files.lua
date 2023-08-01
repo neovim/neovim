@@ -153,10 +153,10 @@ local function get_api_funcs()
 
     local params = {} --- @type {[1]:string,[2]:string}[]
     for _, p in ipairs(fun.parameters) do
-      local pty, pname = p[1], p[2]
+      local ptype, pname = p[1], p[2]
       params[#params + 1] = {
         pname,
-        api_type(pty),
+        api_type(ptype),
         fdoc and fdoc.parameters_doc[pname] or nil,
       }
     end
