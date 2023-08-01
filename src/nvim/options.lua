@@ -556,6 +556,14 @@ return {
       cb='did_set_cursorlineopt'
     },
     {
+      full_name='cursormvonyank', abbreviation='cmoy',
+      short_desc=N_("Move cursor to the start of the copied text on yank."),
+      type='bool', scope={'global'},
+      redraw={'curswant'},
+      varname='p_cmoy',
+      defaults={if_true=true}
+    },
+    {
       full_name='debug',
       short_desc=N_("to \"msg\" to see all error messages"),
       type='string', scope={'global'},
