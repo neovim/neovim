@@ -558,6 +558,7 @@ local function process_function(fn)
   static int %s(lua_State *lstate)
   {
     Error err = ERROR_INIT;
+    char *err_param = 0;
     if (lua_gettop(lstate) != %i) {
       api_set_error(&err, kErrorTypeValidation, "Expected %i argument%s");
       goto exit_0;
@@ -605,6 +606,7 @@ local function process_function(fn)
       extra = "true, "
     end
     local errshift = 0
+    local seterr = ''
     if string.match(param_type, '^KeyDict_') then
       write_shifted_output(output, string.format([[
       %s %s = { 0 }; nlua_pop_keydict(lstate, &%s, %s_get_field, %s&err);]], param_type, cparam, cparam, param_type, extra))
@@ -613,11 +615,13 @@ local function process_function(fn)
     else
       write_shifted_output(output, string.format([[
       const %s %s = nlua_pop_%s(lstate, %s&err);]], param[1], cparam, param_type, extra))
+      seterr = [[
+      err_param = "]]..param[2]..[[";]]
     end
 
     write_shifted_output(output, string.format([[
 
-    if (ERROR_SET(&err)) {
+    if (ERROR_SET(&err)) {]]..seterr..[[
       goto exit_%u;
     }
 
@@ -661,9 +665,14 @@ local function process_function(fn)
   exit_0:
     if (ERROR_SET(&err)) {
       luaL_where(lstate, 1);
+      if (err_param) {
+        lua_pushstring(lstate, "param '");
+        lua_pushstring(lstate, err_param);
+        lua_pushstring(lstate, "': ");
+      }
       lua_pushstring(lstate, err.msg);
       api_clear_error(&err);
-      lua_concat(lstate, 2);
+      lua_concat(lstate, err_param ? 5 : 2);
       return lua_error(lstate);
     }
   ]]
