@@ -1,6 +1,6 @@
 local options_file = arg[1]
 
-local opt_fd = io.open(options_file, 'w')
+local opt_fd = assert(io.open(options_file, 'w'))
 
 local w = function(s)
   if s:match('^    %.') then
@@ -10,6 +10,7 @@ local w = function(s)
   end
 end
 
+--- @module 'nvim.options'
 local options = require('options')
 
 local cstr = options.cstr
@@ -38,7 +39,10 @@ local list_flags={
   flagscomma='P_COMMA|P_FLAGLIST',
 }
 
-local get_flags = function(o)
+--- @param o vim.option_meta
+--- @return string
+local function get_flags(o)
+  --- @type string[]
   local ret = {type_flags[o.type]}
   local add_flag = function(f)
     ret[1] = ret[1] .. '|' .. f
@@ -81,8 +85,10 @@ local get_flags = function(o)
   return ret[1]
 end
 
-local get_cond
-get_cond = function(c, base_string)
+--- @param c string|string[]
+--- @param base_string? string
+--- @return string
+local function get_cond(c, base_string)
   local cond_string = base_string or '#if '
   if type(c) == 'table' then
     cond_string = cond_string .. get_cond(c[1], '')
@@ -118,9 +124,12 @@ local get_defaults = function(d,n)
   return get_value(d)
 end
 
+--- @type {[1]:string,[2]:string}[]
 local defines = {}
 
-local dump_option = function(i, o)
+--- @param i integer
+--- @param o vim.option_meta
+local function dump_option(i, o)
   w('  [' .. ('%u'):format(i - 1) .. ']={')
   w('    .fullname=' .. cstr(o.full_name))
   if o.abbreviation then

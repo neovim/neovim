@@ -1378,7 +1378,7 @@ exists({expr})                                                        *exists()*
 		future, thus don't count on it!
 		Working example: >vim
 			echo exists(":make")
-		<NOT working example: >vim
+<		NOT working example: >vim
 			echo exists(":make install")
 
 <		Note that the argument must be a string, not the name of the
