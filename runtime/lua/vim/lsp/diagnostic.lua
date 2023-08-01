@@ -392,19 +392,18 @@ local function clear(bufnr)
   end
 end
 
---- autocmd ids for LspNotify handlers per buffer
---- @private
---- @type table<integer,integer>
-local _autocmd_ids = {}
+---@class lsp.diagnostic.bufstate
+---@field enabled boolean Whether inlay hints are enabled for this buffer
+---@type table<integer, lsp.diagnostic.bufstate>
+local bufstates = {}
 
 --- Disable pull diagnostics for a buffer
 --- @private
 local function disable(bufnr)
-  if not _autocmd_ids[bufnr] then
-    return
+  local bufstate = bufstates[bufnr]
+  if bufstate then
+    bufstate.enabled = false
   end
-  api.nvim_del_autocmd(_autocmd_ids[bufnr])
-  _autocmd_ids[bufnr] = nil
   clear(bufnr)
 end
 
@@ -416,38 +415,46 @@ function M._enable(bufnr)
     bufnr = api.nvim_get_current_buf()
   end
 
-  if _autocmd_ids[bufnr] then
-    return
+  if not bufstates[bufnr] then
+    bufstates[bufnr] = { enabled = true }
+
+    api.nvim_create_autocmd('LspNotify', {
+      buffer = bufnr,
+      callback = function(opts)
+        if
+          opts.data.method ~= 'textDocument/didChange'
+          and opts.data.method ~= 'textDocument/didOpen'
+        then
+          return
+        end
+        if bufstates[bufnr] and bufstates[bufnr].enabled then
+          util._refresh('textDocument/diagnostic', { bufnr = bufnr, only_visible = true })
+        end
+      end,
+      group = augroup,
+    })
+
+    api.nvim_buf_attach(bufnr, false, {
+      on_reload = function()
+        if bufstates[bufnr] and bufstates[bufnr].enabled then
+          util._refresh('textDocument/diagnostic', { bufnr = bufnr })
+        end
+      end,
+      on_detach = function()
+        disable(bufnr)
+      end,
+    })
+
+    api.nvim_create_autocmd('LspDetach', {
+      buffer = bufnr,
+      callback = function()
+        disable(bufnr)
+      end,
+      group = augroup,
+    })
+  else
+    bufstates[bufnr].enabled = true
   end
-
-  _autocmd_ids[bufnr] = api.nvim_create_autocmd('LspNotify', {
-    buffer = bufnr,
-    callback = function(opts)
-      if opts.data.method ~= 'textDocument/didChange' then
-        return
-      end
-      util._refresh('textDocument/diagnostic', { bufnr = bufnr, only_visible = true })
-    end,
-    group = augroup,
-  })
-
-  api.nvim_buf_attach(bufnr, false, {
-    on_reload = function()
-      util._refresh('textDocument/diagnostic', { bufnr = bufnr })
-    end,
-    on_detach = function()
-      disable(bufnr)
-    end,
-  })
-
-  api.nvim_create_autocmd('LspDetach', {
-    buffer = bufnr,
-    callback = function()
-      disable(bufnr)
-    end,
-    once = true,
-    group = augroup,
-  })
 end
 
 return M
