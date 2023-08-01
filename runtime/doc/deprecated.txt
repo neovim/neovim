@@ -301,6 +301,12 @@ LSP FUNCTIONS
 
 LUA
 • vim.register_keystroke_callback()	Use |vim.on_key()| instead.
+- *vim.pretty_print()*			Use |vim.print()| instead.
+- *vim.loop*				Use |vim.uv| instead.
+- *vim.uri_from_fname()*		Use |vim.uri.from_fname()| instead.
+- *vim.uri_from_bufnr()*		Use |vim.uri.from_bufnr()| instead.
+- *vim.uri_to_fname()*			Use |vim.uri.to_fname()| instead.
+- *vim.uri_to_bufn()*			Use |vim.uri.to_bufnr()| instead.
 
 NORMAL COMMANDS
 • *]f* *[f*		Same as "gf".

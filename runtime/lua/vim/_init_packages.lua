@@ -73,14 +73,6 @@ setmetatable(vim, {
     elseif key == 'inspect_pos' or key == 'show_pos' then
       require('vim._inspector')
       return t[key]
-    elseif vim.startswith(key, 'uri_') then
-      --- @type any?
-      local val = require('vim.uri')[key]
-      if val ~= nil then
-        -- Expose all `vim.uri` functions on the `vim` module.
-        t[key] = val
-        return t[key]
-      end
     end
   end,
 })
