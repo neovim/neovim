@@ -71,7 +71,7 @@ local function add_keyset(val)
     if field.type ~= 'Object' then
       error 'not yet implemented: types other than Object'
     end
-    table.insert(keys, field.name)
+    table.insert(keys, {field.name, field.type})
   end
   table.insert(keysets, {val.keyset_name, keys})
 end
@@ -242,13 +242,16 @@ for _,keyset in ipairs(keysets) do
     return key
   end
 
+  local key_names = {}
   for i = 1,#keys do
-    if vim.endswith(keys[i], "_") then
-      keys[i] = string.sub(keys[i],1, #(keys[i]) - 1)
-      special[keys[i]] = true
+    local kname = keys[i][1]
+    if vim.endswith(kname, "_") then
+      kname = string.sub(kname,1, #kname - 1)
+      special[kname] = true
     end
+    key_names[i] = kname
   end
-  local neworder, hashfun = hashy.hashy_hash(name, keys, function (idx)
+  local neworder, hashfun = hashy.hashy_hash(name, key_names, function (idx)
     return name.."_table["..idx.."].str"
   end)
 
@@ -502,6 +505,7 @@ output:write(hashfun)
 
 output:close()
 
+functions.keysets = keysets
 local mpack_output = io.open(mpack_outputf, 'wb')
 mpack_output:write(mpack.encode(functions))
 mpack_output:close()

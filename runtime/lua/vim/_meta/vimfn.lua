@@ -1,6 +1,7 @@
 --- @meta
 -- THIS FILE IS GENERATED
 -- DO NOT EDIT
+error('Cannot require a meta file')
 
 --- Return the absolute value of {expr}.  When {expr} evaluates to
 --- a |Float| abs() returns a |Float|.  When {expr} can be
