@@ -813,7 +813,7 @@ String nlua_pop_String(lua_State *lstate, Error *err)
 {
   if (lua_type(lstate, -1) != LUA_TSTRING) {
     lua_pop(lstate, 1);
-    api_set_error(err, kErrorTypeValidation, "Expected lua string");
+    api_set_error(err, kErrorTypeValidation, "Expected Lua string");
     return (String) { .size = 0, .data = NULL };
   }
   String ret;
@@ -834,7 +834,7 @@ Integer nlua_pop_Integer(lua_State *lstate, Error *err)
 {
   if (lua_type(lstate, -1) != LUA_TNUMBER) {
     lua_pop(lstate, 1);
-    api_set_error(err, kErrorTypeValidation, "Expected lua number");
+    api_set_error(err, kErrorTypeValidation, "Expected Lua number");
     return 0;
   }
   const lua_Number n = lua_tonumber(lstate, -1);
@@ -871,7 +871,7 @@ static inline LuaTableProps nlua_check_type(lua_State *const lstate, Error *cons
 {
   if (lua_type(lstate, -1) != LUA_TTABLE) {
     if (err) {
-      api_set_error(err, kErrorTypeValidation, "Expected lua %s",
+      api_set_error(err, kErrorTypeValidation, "Expected Lua %s",
                     (type == kObjectTypeFloat) ? "number" : "table");
     }
     return (LuaTableProps) { .type = kObjectTypeNil };
@@ -885,7 +885,7 @@ static inline LuaTableProps nlua_check_type(lua_State *const lstate, Error *cons
 
   if (table_props.type != type) {
     if (err) {
-      api_set_error(err, kErrorTypeValidation, "Expected %s-like lua table", api_typename(type));
+      api_set_error(err, kErrorTypeValidation, "Expected %s-like Lua table", api_typename(type));
     }
   }
 
@@ -1169,7 +1169,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
         break;
       case kObjectTypeNil:
         api_set_error(err, kErrorTypeValidation,
-                      "Cannot convert given lua table");
+                      "Cannot convert given Lua table");
         break;
       default:
         abort();
@@ -1287,10 +1287,10 @@ void nlua_init_types(lua_State *const lstate)
 }
 
 // lua specific variant of api_dict_to_keydict
-void nlua_pop_keydict(lua_State *L, void *retval, FieldHashfn hashy, Error *err)
+void nlua_pop_keydict(lua_State *L, void *retval, FieldHashfn hashy, char **err_opt, Error *err)
 {
   if (!lua_istable(L, -1)) {
-    api_set_error(err, kErrorTypeValidation, "Expected lua table");
+    api_set_error(err, kErrorTypeValidation, "Expected Lua table");
     lua_pop(L, -1);
     return;
   }
@@ -1336,6 +1336,7 @@ void nlua_pop_keydict(lua_State *L, void *retval, FieldHashfn hashy, Error *err)
       abort();
     }
     if (ERROR_SET(err)) {
+      *err_opt = field->str;
       break;
     }
   }

@@ -630,7 +630,7 @@ local function process_function(fn)
     local seterr = ''
     if string.match(param_type, '^KeyDict_') then
       write_shifted_output(output, string.format([[
-      %s %s = { 0 }; nlua_pop_keydict(lstate, &%s, %s_get_field, %s&err);]], param_type, cparam, cparam, param_type, extra))
+      %s %s = { 0 }; nlua_pop_keydict(lstate, &%s, %s_get_field, &err_param, &err);]], param_type, cparam, cparam, param_type))
       cparam = '&'..cparam
       errshift = 1 -- free incomplete dict on error
     else
