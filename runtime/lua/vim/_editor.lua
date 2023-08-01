@@ -1016,8 +1016,13 @@ function vim._init_default_mappings()
 
   local function _visual_search(cmd)
     assert(cmd == '/' or cmd == '?')
-    vim.api.nvim_feedkeys('\27', 'nx', true) -- Escape visual mode.
-    local region = vim.region(0, "'<", "'>", vim.fn.visualmode(), vim.o.selection == 'inclusive')
+    local region = vim.region(
+      0,
+      '.',
+      'v',
+      vim.api.nvim_get_mode().mode:sub(1, 1),
+      vim.o.selection == 'inclusive'
+    )
     local chunks = region_chunks(region)
     local esc_chunks = vim
       .iter(chunks)
@@ -1027,7 +1032,7 @@ function vim._init_default_mappings()
       :totable()
     local esc_pat = table.concat(esc_chunks, [[\n]])
     local search_cmd = ([[%s\V%s%s]]):format(cmd, esc_pat, '\n')
-    vim.api.nvim_feedkeys(search_cmd, 'nx', true)
+    return '\27' .. search_cmd
   end
 
   local function map(mode, lhs, rhs)
@@ -1040,11 +1045,11 @@ function vim._init_default_mappings()
   map('i', '<C-U>', '<C-G>u<C-U>')
   map('i', '<C-W>', '<C-G>u<C-W>')
   vim.keymap.set('x', '*', function()
-    _visual_search('/')
-  end, { desc = ':help v_star-default', silent = true })
+    return _visual_search('/')
+  end, { desc = ':help v_star-default', expr = true, silent = true })
   vim.keymap.set('x', '#', function()
-    _visual_search('?')
-  end, { desc = ':help v_#-default', silent = true })
+    return _visual_search('?')
+  end, { desc = ':help v_#-default', expr = true, silent = true })
   -- Use : instead of <Cmd> so that ranges are supported. #19365
   map('n', '&', ':&&<CR>')
 
