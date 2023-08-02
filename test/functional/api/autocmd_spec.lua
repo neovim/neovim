@@ -737,7 +737,7 @@ describe('autocmd api', function()
       eq("Invalid 'group': 0", pcall_err(meths.exec_autocmds, 'FileType', {
         group = 0,
       }))
-      eq("Invalid 'buffer': expected Integer, got Array", pcall_err(meths.exec_autocmds, 'FileType', {
+      eq("Invalid 'buffer': expected Buffer, got Array", pcall_err(meths.exec_autocmds, 'FileType', {
         buffer = {},
       }))
       eq("Invalid 'event' item: expected String, got Array", pcall_err(meths.exec_autocmds,
