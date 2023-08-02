@@ -2118,7 +2118,7 @@ api.nvim_create_autocmd('VimLeavePre', {
 ---@param bufnr (integer) Buffer handle, or 0 for current.
 ---@param method (string) LSP method name
 ---@param params table|nil Parameters to send to the server
----@param handler lsp-handler See |lsp-handler|
+---@param handler lsp-handler|nil See |lsp-handler|
 ---       If nil, follows resolution strategy defined in |lsp-handler-configuration|
 ---
 ---@return table<integer, integer> client_request_ids Map of client-id:request-id pairs

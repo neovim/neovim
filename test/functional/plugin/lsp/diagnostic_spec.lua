@@ -84,6 +84,7 @@ describe('vim.lsp.diagnostic', function()
       local lines = {"1st line of text", "2nd line of text", "wow", "cool", "more", "lines"}
       vim.fn.bufload(diagnostic_bufnr)
       vim.api.nvim_buf_set_lines(diagnostic_bufnr, 0, 1, false, lines)
+      vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
       return diagnostic_bufnr
     ]], fake_uri)
   end)
@@ -359,6 +360,64 @@ describe('vim.lsp.diagnostic', function()
       )
       eq(2, #extmarks)
       eq(expected_spacing, #extmarks[1][4].virt_text[1][1])
+    end)
+
+    it('clears diagnostics when client detaches', function()
+      exec_lua([[
+        vim.lsp.diagnostic.on_diagnostic(nil,
+          {
+            kind = 'full',
+            items = {
+              make_error('Pull Diagnostic', 4, 4, 4, 4),
+            }
+          },
+          {
+            params = {
+              textDocument = { uri = fake_uri },
+            },
+            uri = fake_uri,
+            client_id = client_id,
+          },
+          {}
+        )
+      ]])
+      local diags = exec_lua([[return vim.diagnostic.get(diagnostic_bufnr)]])
+      eq(1, #diags)
+
+      exec_lua([[ vim.lsp.stop_client(client_id) ]])
+
+      diags = exec_lua([[return vim.diagnostic.get(diagnostic_bufnr)]])
+      eq(0, #diags)
+    end)
+
+    it('keeps diagnostics when one client detaches and others still are attached', function()
+      exec_lua([[
+        client_id2 = vim.lsp.start({ name = 'dummy2', cmd = server.cmd })
+
+        vim.lsp.diagnostic.on_diagnostic(nil,
+          {
+            kind = 'full',
+            items = {
+              make_error('Pull Diagnostic', 4, 4, 4, 4),
+            }
+          },
+          {
+            params = {
+              textDocument = { uri = fake_uri },
+            },
+            uri = fake_uri,
+            client_id = client_id,
+          },
+          {}
+        )
+      ]])
+      local diags = exec_lua([[return vim.diagnostic.get(diagnostic_bufnr)]])
+      eq(1, #diags)
+
+      exec_lua([[ vim.lsp.stop_client(client_id2) ]])
+
+      diags = exec_lua([[return vim.diagnostic.get(diagnostic_bufnr)]])
+      eq(1, #diags)
     end)
   end)
 end)

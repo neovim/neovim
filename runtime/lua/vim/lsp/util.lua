@@ -2122,6 +2122,7 @@ end
 function M.make_workspace_params(added, removed)
   return { event = { added = added, removed = removed } }
 end
+
 --- Returns indentation size.
 ---
 ---@see 'shiftwidth'
@@ -2193,15 +2194,23 @@ end
 --- Request updated LSP information for a buffer.
 ---
 ---@param method string LSP method to call
----@param opts (nil|table) Optional arguments
+---@param opts? table Optional arguments
 ---  - bufnr (integer, default: 0): Buffer to refresh
 ---  - only_visible (boolean, default: false): Whether to only refresh for the visible regions of the buffer
+---  - force (boolean, default: false): Whether to force a refresh even if no clients support the method
 function M._refresh(method, opts)
   opts = opts or {}
   local bufnr = opts.bufnr
   if bufnr == nil or bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
   end
+
+  if
+    not (opts.force or false) and #vim.lsp.get_clients({ bufnr = bufnr, method = method }) == 0
+  then
+    return
+  end
+
   local only_visible = opts.only_visible or false
   for _, window in ipairs(api.nvim_list_wins()) do
     if api.nvim_win_get_buf(window) == bufnr then
