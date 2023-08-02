@@ -1728,7 +1728,7 @@ M.funcs = {
 
     ]=],
     name = 'delete',
-    params = { { 'fname', 'integer' }, { 'flags', 'string' } },
+    params = { { 'fname', 'string' }, { 'flags', 'string' } },
     returns = 'integer',
     signature = 'delete({fname} [, {flags}])',
   },
@@ -2799,7 +2799,7 @@ M.funcs = {
     ]=],
     fast = true,
     name = 'fnamemodify',
-    params = { { 'fname', 'integer' }, { 'mods', 'string' } },
+    params = { { 'fname', 'string' }, { 'mods', 'string' } },
     returns = 'string',
     signature = 'fnamemodify({fname}, {mods})',
   },
@@ -3767,7 +3767,7 @@ M.funcs = {
     ]=],
     fast = true,
     name = 'getfperm',
-    params = { { 'fname', 'integer' } },
+    params = { { 'fname', 'string' } },
     returns = 'string',
     signature = 'getfperm({fname})',
   },
@@ -3785,7 +3785,7 @@ M.funcs = {
     ]=],
     fast = true,
     name = 'getfsize',
-    params = { { 'fname', 'integer' } },
+    params = { { 'fname', 'string' } },
     returns = 'integer',
     signature = 'getfsize({fname})',
   },
@@ -3802,7 +3802,7 @@ M.funcs = {
     ]=],
     fast = true,
     name = 'getftime',
-    params = { { 'fname', 'integer' } },
+    params = { { 'fname', 'string' } },
     returns = 'integer',
     signature = 'getftime({fname})',
   },
@@ -3832,7 +3832,7 @@ M.funcs = {
     ]=],
     fast = true,
     name = 'getftype',
-    params = { { 'fname', 'integer' } },
+    params = { { 'fname', 'string' } },
     returns = "'file'|'dir'|'link'|'bdev'|'cdev'|'socket'|'fifo'|'other'",
     signature = 'getftype({fname})',
   },
@@ -7649,7 +7649,7 @@ M.funcs = {
       Also see |readfile()| and |writefile()|.
     ]=],
     name = 'readblob',
-    params = { { 'fname', 'integer' }, { 'offset', 'any' }, { 'size', 'any' } },
+    params = { { 'fname', 'string' }, { 'offset', 'any' }, { 'size', 'any' } },
     signature = 'readblob({fname} [, {offset} [, {size}]])',
   },
   readdir = {
@@ -7728,7 +7728,7 @@ M.funcs = {
 
     ]=],
     name = 'readfile',
-    params = { { 'fname', 'integer' }, { 'type', 'any' }, { 'max', 'any' } },
+    params = { { 'fname', 'string' }, { 'type', 'any' }, { 'max', 'any' } },
     signature = 'readfile({fname} [, {type} [, {max}]])',
   },
   reduce = {
@@ -8948,7 +8948,7 @@ M.funcs = {
       To read permissions see |getfperm()|.
     ]=],
     name = 'setfperm',
-    params = { { 'fname', 'integer' }, { 'mode', 'string' } },
+    params = { { 'fname', 'string' }, { 'mode', 'string' } },
     signature = 'setfperm({fname}, {mode})',
   },
   setline = {
@@ -10870,7 +10870,7 @@ M.funcs = {
 
     ]=],
     name = 'swapinfo',
-    params = { { 'fname', 'integer' } },
+    params = { { 'fname', 'string' } },
     signature = 'swapinfo({fname})',
   },
   swapname = {
@@ -12406,7 +12406,7 @@ M.funcs = {
 
     ]=],
     name = 'writefile',
-    params = { { 'object', 'any' }, { 'fname', 'integer' }, { 'flags', 'string' } },
+    params = { { 'object', 'any' }, { 'fname', 'string' }, { 'flags', 'string' } },
     signature = 'writefile({object}, {fname} [, {flags}])',
   },
   xor = {

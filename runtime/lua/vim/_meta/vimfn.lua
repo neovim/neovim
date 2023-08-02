@@ -2222,7 +2222,7 @@ function vim.fn.fnameescape(string) end
 --- Note: Environment variables don't work in {fname}, use
 --- |expand()| first then.
 ---
---- @param fname integer
+--- @param fname string
 --- @param mods string
 --- @return string
 function vim.fn.fnamemodify(fname, mods) end
