@@ -1315,7 +1315,7 @@ function vim.fn.deepcopy(expr, noref) end
 --- operation was successful and -1/true when the deletion failed
 --- or partly failed.
 ---
---- @param fname integer
+--- @param fname string
 --- @param flags? string
 --- @return integer
 function vim.fn.delete(fname, flags) end
@@ -2222,7 +2222,7 @@ function vim.fn.fnameescape(string) end
 --- Note: Environment variables don't work in {fname}, use
 --- |expand()| first then.
 ---
---- @param fname integer
+--- @param fname string
 --- @param mods string
 --- @return string
 function vim.fn.fnamemodify(fname, mods) end
@@ -3029,7 +3029,7 @@ function vim.fn.getfontname(name) end
 ---
 --- For setting permissions use |setfperm()|.
 ---
---- @param fname integer
+--- @param fname string
 --- @return string
 function vim.fn.getfperm(fname) end
 
@@ -3040,7 +3040,7 @@ function vim.fn.getfperm(fname) end
 --- If the size of {fname} is too big to fit in a Number then -2
 --- is returned.
 ---
---- @param fname integer
+--- @param fname string
 --- @return integer
 function vim.fn.getfsize(fname) end
 
@@ -3050,7 +3050,7 @@ function vim.fn.getfsize(fname) end
 --- |localtime()| and |strftime()|.
 --- If the file {fname} can't be found -1 is returned.
 ---
---- @param fname integer
+--- @param fname string
 --- @return integer
 function vim.fn.getftime(fname) end
 
@@ -3073,7 +3073,7 @@ function vim.fn.getftime(fname) end
 --- systems that support it.  On some systems only "dir" and
 --- "file" are returned.
 ---
---- @param fname integer
+--- @param fname string
 --- @return 'file'|'dir'|'link'|'bdev'|'cdev'|'socket'|'fifo'|'other'
 function vim.fn.getftype(fname) end
 
@@ -6339,7 +6339,7 @@ function vim.fn.range(expr, max, stride) end
 --- is truncated.
 --- Also see |readfile()| and |writefile()|.
 ---
---- @param fname integer
+--- @param fname string
 --- @param offset? any
 --- @param size? any
 --- @return any
@@ -6411,7 +6411,7 @@ function vim.fn.readdir(directory, expr) end
 --- the result is an empty list.
 --- Also see |writefile()|.
 ---
---- @param fname integer
+--- @param fname string
 --- @param type? any
 --- @param max? any
 --- @return any
@@ -7441,7 +7441,7 @@ function vim.fn.setenv(name, val) end
 ---
 --- To read permissions see |getfperm()|.
 ---
---- @param fname integer
+--- @param fname string
 --- @param mode string
 --- @return any
 function vim.fn.setfperm(fname, mode) end
@@ -9127,7 +9127,7 @@ function vim.fn.swapfilelist() end
 ---   Not a swap file: does not contain correct block ID
 ---   Magic number mismatch: Info in first block is invalid
 ---
---- @param fname integer
+--- @param fname string
 --- @return any
 function vim.fn.swapinfo(fname) end
 
@@ -10391,7 +10391,7 @@ function vim.fn.wordcount() end
 ---   call writefile(fl, "foocopy", "b")
 ---
 --- @param object any
---- @param fname integer
+--- @param fname string
 --- @param flags? string
 --- @return any
 function vim.fn.writefile(object, fname, flags) end
