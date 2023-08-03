@@ -1,6 +1,7 @@
 local api = vim.api
 local bit = require('bit')
 local handlers = require('vim.lsp.handlers')
+local ms = require('vim.lsp.protocol').Methods
 local util = require('vim.lsp.util')
 local uv = vim.uv
 
@@ -292,7 +293,7 @@ function STHighlighter:send_request()
       local hasEditProvider = type(spec) == 'table' and spec.delta
 
       local params = { textDocument = util.make_text_document_params(self.bufnr) }
-      local method = 'textDocument/semanticTokens/full'
+      local method = ms.textDocument_semanticTokens_full
 
       if hasEditProvider and current_result.result_id then
         method = method .. '/delta'
@@ -755,7 +756,7 @@ end
 --- the BufWinEnter event should take care of it next time it's displayed.
 ---
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#semanticTokens_refreshRequest
-handlers['workspace/semanticTokens/refresh'] = function(err, _, ctx)
+handlers[ms.workspace_semanticTokens_refresh] = function(err, _, ctx)
   if err then
     return vim.NIL
   end

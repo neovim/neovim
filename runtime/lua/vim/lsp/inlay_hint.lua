@@ -1,5 +1,6 @@
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
+local ms = require('vim.lsp.protocol').Methods
 local api = vim.api
 local M = {}
 
@@ -87,7 +88,7 @@ function M.on_refresh(err, _, ctx, _)
       if api.nvim_win_get_buf(winid) == bufnr then
         local bufstate = bufstates[bufnr]
         if bufstate then
-          util._refresh('textDocument/inlayHint', { bufnr = bufnr })
+          util._refresh(ms.textDocument_inlayHint, { bufnr = bufnr })
           break
         end
       end
@@ -143,24 +144,24 @@ local function enable(bufnr)
       buffer = bufnr,
       callback = function(opts)
         if
-          opts.data.method ~= 'textDocument/didChange'
-          and opts.data.method ~= 'textDocument/didOpen'
+          opts.data.method ~= ms.textDocument_didChange
+          and opts.data.method ~= ms.textDocument_didOpen
         then
           return
         end
         if bufstates[bufnr] and bufstates[bufnr].enabled then
-          util._refresh('textDocument/inlayHint', { bufnr = bufnr })
+          util._refresh(ms.textDocument_inlayHint, { bufnr = bufnr })
         end
       end,
       group = augroup,
     })
-    util._refresh('textDocument/inlayHint', { bufnr = bufnr })
+    util._refresh(ms.textDocument_inlayHint, { bufnr = bufnr })
     api.nvim_buf_attach(bufnr, false, {
       on_reload = function(_, cb_bufnr)
         clear(cb_bufnr)
         if bufstates[cb_bufnr] and bufstates[cb_bufnr].enabled then
           bufstates[cb_bufnr].applied = {}
-          util._refresh('textDocument/inlayHint', { bufnr = cb_bufnr })
+          util._refresh(ms.textDocument_inlayHint, { bufnr = cb_bufnr })
         end
       end,
       on_detach = function(_, cb_bufnr)
@@ -176,7 +177,7 @@ local function enable(bufnr)
     })
   else
     bufstate.enabled = true
-    util._refresh('textDocument/inlayHint', { bufnr = bufnr })
+    util._refresh(ms.textDocument_inlayHint, { bufnr = bufnr })
   end
 end
 

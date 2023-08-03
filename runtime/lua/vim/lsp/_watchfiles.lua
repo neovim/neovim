@@ -1,6 +1,7 @@
 local bit = require('bit')
 local watch = require('vim._watch')
 local protocol = require('vim.lsp.protocol')
+local ms = protocol.Methods
 local lpeg = vim.lpeg
 
 local M = {}
@@ -190,7 +191,7 @@ function M.register(reg, ctx)
 
           if not queue_timers[client_id] then
             queue_timers[client_id] = vim.defer_fn(function()
-              client.notify('workspace/didChangeWatchedFiles', {
+              client.notify(ms.workspace_didChangeWatchedFiles, {
                 changes = change_queues[client_id],
               })
               queue_timers[client_id] = nil

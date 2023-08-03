@@ -3,6 +3,7 @@ local default_handlers = require('vim.lsp.handlers')
 local log = require('vim.lsp.log')
 local lsp_rpc = require('vim.lsp.rpc')
 local protocol = require('vim.lsp.protocol')
+local ms = protocol.Methods
 local util = require('vim.lsp.util')
 local sync = require('vim.lsp.sync')
 local semantic_tokens = require('vim.lsp.semantic_tokens')
@@ -35,34 +36,34 @@ local lsp = {
 
 -- maps request name to the required server_capability in the client.
 lsp._request_name_to_capability = {
-  ['textDocument/hover'] = { 'hoverProvider' },
-  ['textDocument/signatureHelp'] = { 'signatureHelpProvider' },
-  ['textDocument/definition'] = { 'definitionProvider' },
-  ['textDocument/implementation'] = { 'implementationProvider' },
-  ['textDocument/declaration'] = { 'declarationProvider' },
-  ['textDocument/typeDefinition'] = { 'typeDefinitionProvider' },
-  ['textDocument/documentSymbol'] = { 'documentSymbolProvider' },
-  ['textDocument/prepareCallHierarchy'] = { 'callHierarchyProvider' },
-  ['callHierarchy/incomingCalls'] = { 'callHierarchyProvider' },
-  ['callHierarchy/outgoingCalls'] = { 'callHierarchyProvider' },
-  ['textDocument/rename'] = { 'renameProvider' },
-  ['textDocument/prepareRename'] = { 'renameProvider', 'prepareProvider' },
-  ['textDocument/codeAction'] = { 'codeActionProvider' },
-  ['textDocument/codeLens'] = { 'codeLensProvider' },
-  ['codeLens/resolve'] = { 'codeLensProvider', 'resolveProvider' },
-  ['codeAction/resolve'] = { 'codeActionProvider', 'resolveProvider' },
-  ['workspace/executeCommand'] = { 'executeCommandProvider' },
-  ['workspace/symbol'] = { 'workspaceSymbolProvider' },
-  ['textDocument/references'] = { 'referencesProvider' },
-  ['textDocument/rangeFormatting'] = { 'documentRangeFormattingProvider' },
-  ['textDocument/formatting'] = { 'documentFormattingProvider' },
-  ['textDocument/completion'] = { 'completionProvider' },
-  ['textDocument/documentHighlight'] = { 'documentHighlightProvider' },
-  ['textDocument/semanticTokens/full'] = { 'semanticTokensProvider' },
-  ['textDocument/semanticTokens/full/delta'] = { 'semanticTokensProvider' },
-  ['textDocument/inlayHint'] = { 'inlayHintProvider' },
-  ['textDocument/diagnostic'] = { 'diagnosticProvider' },
-  ['inlayHint/resolve'] = { 'inlayHintProvider', 'resolveProvider' },
+  [ms.textDocument_hover] = { 'hoverProvider' },
+  [ms.textDocument_signatureHelp] = { 'signatureHelpProvider' },
+  [ms.textDocument_definition] = { 'definitionProvider' },
+  [ms.textDocument_implementation] = { 'implementationProvider' },
+  [ms.textDocument_declaration] = { 'declarationProvider' },
+  [ms.textDocument_typeDefinition] = { 'typeDefinitionProvider' },
+  [ms.textDocument_documentSymbol] = { 'documentSymbolProvider' },
+  [ms.textDocument_prepareCallHierarchy] = { 'callHierarchyProvider' },
+  [ms.callHierarchy_incomingCalls] = { 'callHierarchyProvider' },
+  [ms.callHierarchy_outgoingCalls] = { 'callHierarchyProvider' },
+  [ms.textDocument_rename] = { 'renameProvider' },
+  [ms.textDocument_prepareRename] = { 'renameProvider', 'prepareProvider' },
+  [ms.textDocument_codeAction] = { 'codeActionProvider' },
+  [ms.textDocument_codeLens] = { 'codeLensProvider' },
+  [ms.codeLens_resolve] = { 'codeLensProvider', 'resolveProvider' },
+  [ms.codeAction_resolve] = { 'codeActionProvider', 'resolveProvider' },
+  [ms.workspace_executeCommand] = { 'executeCommandProvider' },
+  [ms.workspace_symbol] = { 'workspaceSymbolProvider' },
+  [ms.textDocument_references] = { 'referencesProvider' },
+  [ms.textDocument_rangeFormatting] = { 'documentRangeFormattingProvider' },
+  [ms.textDocument_formatting] = { 'documentFormattingProvider' },
+  [ms.textDocument_completion] = { 'completionProvider' },
+  [ms.textDocument_documentHighlight] = { 'documentHighlightProvider' },
+  [ms.textDocument_semanticTokens_full] = { 'semanticTokensProvider' },
+  [ms.textDocument_semanticTokens_full_delta] = { 'semanticTokensProvider' },
+  [ms.textDocument_inlayHint] = { 'inlayHintProvider' },
+  [ms.textDocument_diagnostic] = { 'diagnosticProvider' },
+  [ms.inlayHint_resolve] = { 'inlayHintProvider', 'resolveProvider' },
 }
 
 -- TODO improve handling of scratch buffers with LSP attached.
@@ -583,7 +584,7 @@ do
     local uri = vim.uri_from_bufnr(bufnr)
     for _, client in pairs(state.clients) do
       if not client.is_stopped() and lsp.buf_is_attached(bufnr, client.id) then
-        client.notify('textDocument/didChange', {
+        client.notify(ms.textDocument_didChange, {
           textDocument = {
             uri = uri,
             version = util.buf_versions[bufnr],
@@ -701,7 +702,7 @@ local function text_document_did_open_handler(bufnr, client)
       text = buf_get_full_text(bufnr),
     },
   }
-  client.notify('textDocument/didOpen', params)
+  client.notify(ms.textDocument_didOpen, params)
   util.buf_versions[bufnr] = params.textDocument.version
 
   -- Next chance we get, we should re-do the diagnostics
@@ -930,17 +931,17 @@ end
 ---@param client lsp.Client
 function lsp._set_defaults(client, bufnr)
   if
-    client.supports_method('textDocument/definition') and is_empty_or_default(bufnr, 'tagfunc')
+    client.supports_method(ms.textDocument_definition) and is_empty_or_default(bufnr, 'tagfunc')
   then
     vim.bo[bufnr].tagfunc = 'v:lua.vim.lsp.tagfunc'
   end
   if
-    client.supports_method('textDocument/completion') and is_empty_or_default(bufnr, 'omnifunc')
+    client.supports_method(ms.textDocument_completion) and is_empty_or_default(bufnr, 'omnifunc')
   then
     vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
   end
   if
-    client.supports_method('textDocument/rangeFormatting')
+    client.supports_method(ms.textDocument_rangeFormatting)
     and is_empty_or_default(bufnr, 'formatprg')
     and is_empty_or_default(bufnr, 'formatexpr')
   then
@@ -948,14 +949,14 @@ function lsp._set_defaults(client, bufnr)
   end
   api.nvim_buf_call(bufnr, function()
     if
-      client.supports_method('textDocument/hover')
+      client.supports_method(ms.textDocument_hover)
       and is_empty_or_default(bufnr, 'keywordprg')
       and vim.fn.maparg('K', 'n', false, false) == ''
     then
       vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = bufnr })
     end
   end)
-  if client.supports_method('textDocument/diagnostic') then
+  if client.supports_method(ms.textDocument_diagnostic) then
     lsp.diagnostic._enable(bufnr)
   end
 end
@@ -1431,7 +1432,7 @@ function lsp.start_client(config)
       end
 
       if next(config.settings) then
-        client.notify('workspace/didChangeConfiguration', { settings = config.settings })
+        client.notify(ms.workspace_didChangeConfiguration, { settings = config.settings })
       end
 
       if config.on_init then
@@ -1573,7 +1574,7 @@ function lsp.start_client(config)
   ---If it is false, then it will always be false
   ---(the client has shutdown).
   function client.notify(method, params)
-    if method ~= 'textDocument/didChange' then
+    if method ~= ms.textDocument_didChange then
       changetracking.flush(client)
     end
 
@@ -1693,7 +1694,7 @@ function lsp.start_client(config)
       command = command.command,
       arguments = command.arguments,
     }
-    client.request('workspace/executeCommand', params, handler, context.bufnr)
+    client.request(ms.workspace_executeCommand, params, handler, context.bufnr)
   end
 
   ---@private
@@ -1763,12 +1764,12 @@ local function text_document_did_save_handler(bufnr)
     local name = api.nvim_buf_get_name(bufnr)
     local old_name = changetracking._get_and_set_name(client, bufnr, name)
     if old_name and name ~= old_name then
-      client.notify('textDocument/didClose', {
+      client.notify(ms.textDocument_didClose, {
         textDocument = {
           uri = vim.uri_from_fname(old_name),
         },
       })
-      client.notify('textDocument/didOpen', {
+      client.notify(ms.textDocument_didOpen, {
         textDocument = {
           version = 0,
           uri = uri,
@@ -1784,7 +1785,7 @@ local function text_document_did_save_handler(bufnr)
       if type(save_capability) == 'table' and save_capability.includeText then
         included_text = text(bufnr)
       end
-      client.notify('textDocument/didSave', {
+      client.notify(ms.textDocument_didSave, {
         textDocument = {
           uri = uri,
         },
@@ -1835,11 +1836,11 @@ function lsp.buf_attach_client(bufnr, client_id)
             reason = protocol.TextDocumentSaveReason.Manual,
           }
           if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'willSave') then
-            client.notify('textDocument/willSave', params)
+            client.notify(ms.textDocument_willSave, params)
           end
           if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'willSaveWaitUntil') then
             local result, err =
-              client.request_sync('textDocument/willSaveWaitUntil', params, 1000, ctx.buf)
+              client.request_sync(ms.textDocument_willSaveWaitUntil, params, 1000, ctx.buf)
             if result and result.result then
               util.apply_text_edits(result.result, ctx.buf, client.offset_encoding)
             elseif err then
@@ -1865,7 +1866,7 @@ function lsp.buf_attach_client(bufnr, client_id)
         for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
           changetracking.reset_buf(client, bufnr)
           if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
-            client.notify('textDocument/didClose', params)
+            client.notify(ms.textDocument_didClose, params)
           end
           text_document_did_open_handler(bufnr, client)
         end
@@ -1875,7 +1876,7 @@ function lsp.buf_attach_client(bufnr, client_id)
         for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
           changetracking.reset_buf(client, bufnr)
           if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
-            client.notify('textDocument/didClose', params)
+            client.notify(ms.textDocument_didClose, params)
           end
           client.attached_buffers[bufnr] = nil
         end
@@ -1940,7 +1941,7 @@ function lsp.buf_detach_client(bufnr, client_id)
   if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
     local uri = vim.uri_from_bufnr(bufnr)
     local params = { textDocument = { uri = uri } }
-    client.notify('textDocument/didClose', params)
+    client.notify(ms.textDocument_didClose, params)
   end
 
   client.attached_buffers[bufnr] = nil
@@ -2294,7 +2295,7 @@ function lsp.omnifunc(findstart, base)
   end
 
   local bufnr = resolve_bufnr()
-  local clients = lsp.get_clients({ bufnr = bufnr, method = 'textDocument/completion' })
+  local clients = lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_completion })
   local remaining = #clients
   if remaining == 0 then
     return findstart == 1 and -1 or {}
@@ -2326,7 +2327,7 @@ function lsp.omnifunc(findstart, base)
 
   for _, client in ipairs(clients) do
     local params = util.make_position_params(win, client.offset_encoding)
-    client.request('textDocument/completion', params, function(err, result)
+    client.request(ms.textDocument_completion, params, function(err, result)
       if err then
         log.warn(err.message)
       end
@@ -2397,7 +2398,7 @@ function lsp.formatexpr(opts)
   end
   local bufnr = api.nvim_get_current_buf()
   for _, client in pairs(lsp.get_clients({ bufnr = bufnr })) do
-    if client.supports_method('textDocument/rangeFormatting') then
+    if client.supports_method(ms.textDocument_rangeFormatting) then
       local params = util.make_formatting_params()
       local end_line = vim.fn.getline(end_lnum) --[[@as string]]
       local end_col = util._str_utfindex_enc(end_line, nil, client.offset_encoding)
@@ -2412,7 +2413,7 @@ function lsp.formatexpr(opts)
         },
       }
       local response =
-        client.request_sync('textDocument/rangeFormatting', params, timeout_ms, bufnr)
+        client.request_sync(ms.textDocument_rangeFormatting, params, timeout_ms, bufnr)
       if response and response.result then
         lsp.util.apply_text_edits(response.result, 0, client.offset_encoding)
         return 0
