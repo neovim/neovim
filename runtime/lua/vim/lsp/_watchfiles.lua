@@ -121,12 +121,15 @@ M._poll_exclude_pattern = parse('**/.git/{objects,subtree-cache}/**')
 function M.register(reg, ctx)
   local client_id = ctx.client_id
   local client = vim.lsp.get_client_by_id(client_id)
-  if
-    -- Ill-behaved servers may not honor the client capability and try to register
-    -- anyway, so ignore requests when the user has opted out of the feature.
-    not client.config.capabilities.workspace.didChangeWatchedFiles.dynamicRegistration
-    or not client.workspace_folders
-  then
+  -- Ill-behaved servers may not honor the client capability and try to register
+  -- anyway, so ignore requests when the user has opted out of the feature.
+  local has_capability = vim.tbl_get(
+    client.config.capabilities or {},
+    'workspace',
+    'didChangeWatchedFiles',
+    'dynamicRegistration'
+  )
+  if not has_capability or not client.workspace_folders then
     return
   end
   local watch_regs = {} --- @type table<string,{pattern:userdata,kind:integer}>

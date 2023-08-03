@@ -1027,8 +1027,7 @@ end
 ---       \|vim.lsp.protocol.make_client_capabilities()|, passed to the language
 ---       server on initialization. Hint: use make_client_capabilities() and modify
 ---       its result.
----       - Note: To send an empty dictionary use
----         `{[vim.type_idx]=vim.types.dictionary}`, else it will be encoded as an
+---       - Note: To send an empty dictionary use |vim.empty_dict()|, else it will be encoded as an
 ---         array.
 ---
 --- - handlers: Map of language server method names to |lsp-handler|
