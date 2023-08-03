@@ -315,6 +315,8 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
 /// The dictionary has the full option names as keys and option metadata
 /// dictionaries as detailed at |nvim_get_option_info2()|.
 ///
+/// @see |nvim_get_commands()|
+///
 /// @return dictionary of all options
 Dictionary nvim_get_all_options_info(Error *err)
   FUNC_API_SINCE(7)

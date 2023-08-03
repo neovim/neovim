@@ -517,11 +517,9 @@ cleanup:
   return autocmd_id;
 }
 
-/// Delete an autocommand by id.
+/// Deletes an autocommand by id.
 ///
-/// NOTE: Only autocommands created via the API have an id.
-/// @param id Integer The id returned by nvim_create_autocmd
-/// @see |nvim_create_autocmd()|
+/// @param id Integer Autocommand id returned by |nvim_create_autocmd()|
 void nvim_del_autocmd(Integer id, Error *err)
   FUNC_API_SINCE(9)
 {
@@ -533,8 +531,8 @@ void nvim_del_autocmd(Integer id, Error *err)
   }
 }
 
-/// Clear all autocommands that match the corresponding {opts}. To delete
-/// a particular autocmd, see |nvim_del_autocmd()|.
+/// Clears all autocommands selected by {opts}. To delete autocmds see |nvim_del_autocmd()|.
+///
 /// @param opts Parameters
 ///         - event: (string|table)
 ///              Examples:

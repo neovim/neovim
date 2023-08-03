@@ -289,7 +289,8 @@ For convenience you can filter the regeneration by target (api, lua, lsp) using 
 
 ### Lua docstrings
 
-Lua documentation uses a subset of [EmmyLua] annotations. See [:help dev-doc-lua][dev-doc-lua].
+Use [LuaLS] annotations in Lua docstrings to annotate parameter types, return
+types, etc. See [:help dev-doc-lua][dev-doc-lua].
 
 - The template for function documentation is:
   ```lua
@@ -304,14 +305,10 @@ Lua documentation uses a subset of [EmmyLua] annotations. See [:help dev-doc-lua
   ---@return type {description}
   ```
 - If possible, add type information (`table`, `string`, `number`, ...). Multiple valid types are separated by a bar (`string|table`). Indicate optional parameters via `type|nil`.
-- If a function in your Lua module should _not_ be documented (e.g. internal or local function), set the doc comment to:
-  ```
-  ---@private
-  ```
-- Mark deprecated functions with:
-  ```
-  ---@deprecated
-  ```
+- If a function in your Lua module should _not_ be documented, add `@nodoc`.
+- If the function is internal or otherwise non-public add `@private`.
+      - Private functions usually should be underscore-prefixed (named "_foo", not "foo").
+- Mark deprecated functions with `@deprecated`.
 
 Reviewing
 ---------
@@ -344,7 +341,7 @@ as context, use the `-W` argument as well.
 [conventional_commits]: https://www.conventionalcommits.org
 [dev-doc-guide]: https://neovim.io/doc/user/develop.html#dev-doc
 [dev-doc-lua]: https://neovim.io/doc/user/develop.html#dev-lua-doc
-[EmmyLua]: https://github.com/sumneko/lua-language-server/wiki/Annotations
+[LuaLS]: https://github.com/LuaLS/lua-language-server/wiki/Annotations
 [gcc-warnings]: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
 [gh]: https://cli.github.com/
 [git-bisect]: http://git-scm.com/book/en/v2/Git-Tools-Debugging-with-Git

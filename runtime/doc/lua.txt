@@ -70,6 +70,17 @@ https://www.lua.org/doc/cacm2018.pdf
 - Stackful coroutines enable cooperative multithreading, generators, and
   versatile control for both Lua and its host (Nvim).
 
+                                                           *iterator*
+An iterator is just a function that can be called repeatedly to get the "next"
+value of a collection (or any other |iterable|). This interface is expected by
+|for-in| loops, produced by |pairs()|, supported by |vim.iter|, etc.
+https://www.lua.org/pil/7.1.html
+
+                                                           *iterable*
+An "iterable" is anything that |vim.iter()| can consume: tables, dicts, lists,
+iterator functions, tables implementing the |__call()| metamethod, and
+|vim.iter()| objects.
+
                                                            *lua-call-function*
 Lua functions can be called in multiple ways. Consider the function: >lua
     local foo = function(a, b)
@@ -1558,7 +1569,7 @@ vim.deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
       • {backtrace}    boolean|nil Prints backtrace. Defaults to true.
 
     Return: ~
-        (string|nil) # Deprecated message, or nil if no message was shown.
+        (string|nil) Deprecated message, or nil if no message was shown.
 
 vim.inspect                                                    *vim.inspect()*
     Gets a human-readable representation of the given object.
@@ -1682,7 +1693,7 @@ vim.print({...})                                                 *vim.print()*
 <
 
     Return: ~
-        any # given arguments.
+        any given arguments.
 
     See also: ~
       • |vim.inspect()|
@@ -1909,7 +1920,8 @@ vim.endswith({s}, {suffix})                                   *vim.endswith()*
         (boolean) `true` if `suffix` is a suffix of `s`
 
 vim.gsplit({s}, {sep}, {opts})                                  *vim.gsplit()*
-    Splits a string at each instance of a separator.
+    Gets an |iterator| that splits a string at each instance of a separator,
+    in "lazy" fashion (as opposed to |vim.split()| which is "eager").
 
     Example: >lua
 
@@ -2065,7 +2077,7 @@ vim.spairs({t})                                                 *vim.spairs()*
     Enumerate a table sorted by its keys.
 
     Parameters: ~
-      • {t}  (table) List-like table
+      • {t}  (table) Dict-like table
 
     Return: ~
         iterator over sorted keys and their values
@@ -2074,7 +2086,8 @@ vim.spairs({t})                                                 *vim.spairs()*
       • Based on https://github.com/premake/premake-core/blob/master/src/base/table.lua
 
 vim.split({s}, {sep}, {opts})                                    *vim.split()*
-    Splits a string at each instance of a separator.
+    Splits a string at each instance of a separator and returns the result as
+    a table (unlike |vim.gsplit()|).
 
     Examples: >lua
 
@@ -2532,8 +2545,8 @@ vim.ui.open({path})                                            *vim.ui.open()*
       • {path}  (string) Path or URL to open
 
     Return (multiple): ~
-        SystemCompleted|nil # Command result, or nil if not found.
-        (string|nil) # Error message on failure
+        SystemCompleted|nil Command result, or nil if not found.
+        (string|nil) Error message on failure
 
     See also: ~
       • |vim.system()|
@@ -3192,22 +3205,19 @@ vim.version.range({spec})                                *vim.version.range()*
 Lua module: vim.iter                                                *vim.iter*
 
 
-This module provides a generic interface for working with iterables:
-tables, lists, iterator functions, pair()/ipair()-like iterators, and
-`vim.iter()` objects.
-
-*vim.iter()* wraps its table or function argument into an *Iter* object
-with methods (such as |Iter:filter()| and |Iter:map()|) that transform the
-underlying source data. These methods can be chained together to create
-iterator "pipelines". Each pipeline stage receives as input the output
-values from the prior stage. The values used in the first stage of the
-pipeline depend on the type passed to this function:
+*vim.iter()* is an interface for |iterable|s: it wraps a table or function
+argument into an *Iter* object with methods (such as |Iter:filter()| and
+|Iter:map()|) that transform the underlying source data. These methods can
+be chained together to create iterator "pipelines". Each pipeline stage
+receives as input the output values from the prior stage. The values used
+in the first stage of the pipeline depend on the type passed to this
+function:
 
 • List tables pass only the value of each element
-• Non-list tables pass both the key and value of each element
-• Function iterators pass all of the values returned by their respective
+• Non-list (dict) tables pass both the key and value of each element
+• Function |iterator|s pass all of the values returned by their respective
   function
-• Tables with a metatable implementing __call are treated as function
+• Tables with a metatable implementing |__call()| are treated as function
   iterators
 
 Examples: >lua

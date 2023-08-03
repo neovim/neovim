@@ -495,6 +495,9 @@ user command or autocommand, the script in which it was defined is reported.
 <			- When 'keywordprg' is equal to "man -s", a [count]
 			  before "K" is inserted after the "-s".  If there is
 			  no count, the "-s" is removed.
+							       *K-lsp-default*
+			- The Nvim |LSP| client sets K to show LSP "hover"
+			  feature. |lsp-defaults|
 
 							*v_K*
 {Visual}K		Like "K", but use the visually highlighted text for
