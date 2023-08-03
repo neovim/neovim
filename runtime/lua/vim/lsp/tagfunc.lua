@@ -1,5 +1,6 @@
 local lsp = vim.lsp
 local util = lsp.util
+local ms = lsp.protocol.Methods
 
 local function mk_tag_item(name, range, uri, offset_encoding)
   local bufnr = vim.uri_to_bufnr(uri)
@@ -14,7 +15,7 @@ end
 
 local function query_definition(pattern)
   local params = util.make_position_params()
-  local results_by_client, err = lsp.buf_request_sync(0, 'textDocument/definition', params, 1000)
+  local results_by_client, err = lsp.buf_request_sync(0, ms.textDocument_definition, params, 1000)
   if err then
     return {}
   end
@@ -42,7 +43,7 @@ end
 
 local function query_workspace_symbols(pattern)
   local results_by_client, err =
-    lsp.buf_request_sync(0, 'workspace/symbol', { query = pattern }, 1000)
+    lsp.buf_request_sync(0, ms.workspace_symbol, { query = pattern }, 1000)
   if err then
     return {}
   end

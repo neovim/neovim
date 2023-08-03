@@ -2,6 +2,7 @@ local api = vim.api
 local validate = vim.validate
 local util = require('vim.lsp.util')
 local npcall = vim.F.npcall
+local ms = require('vim.lsp.protocol').Methods
 
 local M = {}
 
@@ -41,7 +42,7 @@ end
 --- window. Calling the function twice will jump into the floating window.
 function M.hover()
   local params = util.make_position_params()
-  request('textDocument/hover', params)
+  request(ms.textDocument_hover, params)
 end
 
 local function request_with_options(name, params, options)
@@ -64,7 +65,7 @@ end
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.declaration(options)
   local params = util.make_position_params()
-  request_with_options('textDocument/declaration', params, options)
+  request_with_options(ms.textDocument_declaration, params, options)
 end
 
 --- Jumps to the definition of the symbol under the cursor.
@@ -74,7 +75,7 @@ end
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.definition(options)
   local params = util.make_position_params()
-  request_with_options('textDocument/definition', params, options)
+  request_with_options(ms.textDocument_definition, params, options)
 end
 
 --- Jumps to the definition of the type of the symbol under the cursor.
@@ -84,7 +85,7 @@ end
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.type_definition(options)
   local params = util.make_position_params()
-  request_with_options('textDocument/typeDefinition', params, options)
+  request_with_options(ms.textDocument_typeDefinition, params, options)
 end
 
 --- Lists all the implementations for the symbol under the cursor in the
@@ -94,14 +95,14 @@ end
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.implementation(options)
   local params = util.make_position_params()
-  request_with_options('textDocument/implementation', params, options)
+  request_with_options(ms.textDocument_implementation, params, options)
 end
 
 --- Displays signature information about the symbol under the cursor in a
 --- floating window.
 function M.signature_help()
   local params = util.make_position_params()
-  request('textDocument/signatureHelp', params)
+  request(ms.textDocument_signatureHelp, params)
 end
 
 --- Retrieves the completion items at the current cursor position. Can only be
@@ -115,7 +116,7 @@ end
 function M.completion(context)
   local params = util.make_position_params()
   params.context = context
-  return request('textDocument/completion', params)
+  return request(ms.textDocument_completion, params)
 end
 
 ---@param bufnr integer
@@ -199,7 +200,7 @@ function M.format(options)
   if not range and mode == 'v' or mode == 'V' then
     range = range_from_selection(bufnr, mode)
   end
-  local method = range and 'textDocument/rangeFormatting' or 'textDocument/formatting'
+  local method = range and ms.textDocument_rangeFormatting or ms.textDocument_formatting
 
   local clients = vim.lsp.get_clients({
     id = options.id,
@@ -270,7 +271,7 @@ function M.rename(new_name, options)
     bufnr = bufnr,
     name = options.name,
     -- Clients must at least support rename, prepareRename is optional
-    method = 'textDocument/rename',
+    method = ms.textDocument_rename,
   })
   if options.filter then
     clients = vim.tbl_filter(options.filter, clients)
@@ -305,17 +306,17 @@ function M.rename(new_name, options)
     local function rename(name)
       local params = util.make_position_params(win, client.offset_encoding)
       params.newName = name
-      local handler = client.handlers['textDocument/rename']
-        or vim.lsp.handlers['textDocument/rename']
-      client.request('textDocument/rename', params, function(...)
+      local handler = client.handlers[ms.textDocument_rename]
+        or vim.lsp.handlers[ms.textDocument_rename]
+      client.request(ms.textDocument_rename, params, function(...)
         handler(...)
         try_use_client(next(clients, idx))
       end, bufnr)
     end
 
-    if client.supports_method('textDocument/prepareRename') then
+    if client.supports_method(ms.textDocument_prepareRename) then
       local params = util.make_position_params(win, client.offset_encoding)
-      client.request('textDocument/prepareRename', params, function(err, result)
+      client.request(ms.textDocument_prepareRename, params, function(err, result)
         if err or result == nil then
           if next(clients, idx) then
             try_use_client(next(clients, idx))
@@ -354,7 +355,7 @@ function M.rename(new_name, options)
       end, bufnr)
     else
       assert(
-        client.supports_method('textDocument/rename'),
+        client.supports_method(ms.textDocument_rename),
         'Client must support textDocument/rename'
       )
       if new_name then
@@ -390,7 +391,7 @@ function M.references(context, options)
   params.context = context or {
     includeDeclaration = true,
   }
-  request_with_options('textDocument/references', params, options)
+  request_with_options(ms.textDocument_references, params, options)
 end
 
 --- Lists all symbols in the current buffer in the quickfix window.
@@ -399,7 +400,7 @@ end
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.document_symbol(options)
   local params = { textDocument = util.make_text_document_params() }
-  request_with_options('textDocument/documentSymbol', params, options)
+  request_with_options(ms.textDocument_documentSymbol, params, options)
 end
 
 local function pick_call_hierarchy_item(call_hierarchy_items)
@@ -423,7 +424,7 @@ end
 
 local function call_hierarchy(method)
   local params = util.make_position_params()
-  request('textDocument/prepareCallHierarchy', params, function(err, result, ctx)
+  request(ms.textDocument_prepareCallHierarchy, params, function(err, result, ctx)
     if err then
       vim.notify(err.message, vim.log.levels.WARN)
       return
@@ -496,7 +497,7 @@ function M.add_workspace_folder(workspace_folder)
       end
     end
     if not found then
-      client.notify('workspace/didChangeWorkspaceFolders', params)
+      client.notify(ms.workspace_didChangeWorkspaceFolders, params)
       if not client.workspace_folders then
         client.workspace_folders = {}
       end
@@ -524,7 +525,7 @@ function M.remove_workspace_folder(workspace_folder)
   for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
     for idx, folder in pairs(client.workspace_folders) do
       if folder.name == workspace_folder then
-        client.notify('workspace/didChangeWorkspaceFolders', params)
+        client.notify(ms.workspace_didChangeWorkspaceFolders, params)
         client.workspace_folders[idx] = nil
         return
       end
@@ -548,7 +549,7 @@ function M.workspace_symbol(query, options)
     return
   end
   local params = { query = query }
-  request_with_options('workspace/symbol', params, options)
+  request_with_options(ms.workspace_symbol, params, options)
 end
 
 --- Send request to the server to resolve document highlights for the current
@@ -567,7 +568,7 @@ end
 ---         |hl-LspReferenceWrite|
 function M.document_highlight()
   local params = util.make_position_params()
-  request('textDocument/documentHighlight', params)
+  request(ms.textDocument_documentHighlight, params)
 end
 
 --- Removes document highlights from current buffer.
@@ -655,7 +656,7 @@ local function on_code_action_results(results, ctx, options)
     local client = vim.lsp.get_client_by_id(action_tuple[1])
     local action = action_tuple[2]
 
-    local reg = client.dynamic_capabilities:get('textDocument/codeAction', { bufnr = ctx.bufnr })
+    local reg = client.dynamic_capabilities:get(ms.textDocument_codeAction, { bufnr = ctx.bufnr })
 
     local supports_resolve = vim.tbl_get(reg or {}, 'registerOptions', 'resolveProvider')
       or client.supports_method('codeAction/resolve')
@@ -694,9 +695,8 @@ end
 --- with all aggregated results
 local function code_action_request(params, options)
   local bufnr = api.nvim_get_current_buf()
-  local method = 'textDocument/codeAction'
-  vim.lsp.buf_request_all(bufnr, method, params, function(results)
-    local ctx = { bufnr = bufnr, method = method, params = params }
+  vim.lsp.buf_request_all(bufnr, ms.textDocument_codeAction, params, function(results)
+    local ctx = { bufnr = bufnr, method = ms.textDocument_codeAction, params = params }
     on_code_action_results(results, ctx, options)
   end)
 end
@@ -776,7 +776,7 @@ function M.execute_command(command_params)
     arguments = command_params.arguments,
     workDoneToken = command_params.workDoneToken,
   }
-  request('workspace/executeCommand', command_params)
+  request(ms.workspace_executeCommand, command_params)
 end
 
 return M

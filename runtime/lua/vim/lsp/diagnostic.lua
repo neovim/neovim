@@ -2,6 +2,7 @@
 
 local util = require('vim.lsp.util')
 local protocol = require('vim.lsp.protocol')
+local ms = protocol.Methods
 
 local api = vim.api
 
@@ -422,13 +423,13 @@ function M._enable(bufnr)
       buffer = bufnr,
       callback = function(opts)
         if
-          opts.data.method ~= 'textDocument/didChange'
-          and opts.data.method ~= 'textDocument/didOpen'
+          opts.data.method ~= ms.textDocument_didChange
+          and opts.data.method ~= ms.textDocument_didOpen
         then
           return
         end
         if bufstates[bufnr] and bufstates[bufnr].enabled then
-          util._refresh('textDocument/diagnostic', { bufnr = bufnr, only_visible = true })
+          util._refresh(ms.textDocument_diagnostic, { bufnr = bufnr, only_visible = true })
         end
       end,
       group = augroup,
@@ -437,7 +438,7 @@ function M._enable(bufnr)
     api.nvim_buf_attach(bufnr, false, {
       on_reload = function()
         if bufstates[bufnr] and bufstates[bufnr].enabled then
-          util._refresh('textDocument/diagnostic', { bufnr = bufnr })
+          util._refresh(ms.textDocument_diagnostic, { bufnr = bufnr })
         end
       end,
       on_detach = function()
