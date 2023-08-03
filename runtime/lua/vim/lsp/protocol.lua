@@ -954,22 +954,46 @@ protocol.Methods = {
   --- parameter is of type {@link DocumentLink} the response
   --- is of type {@link DocumentLink} or a Thenable that resolves to such.
   documentLink_resolve = 'documentLink/resolve',
+  dollar_cancelRequest = '$/cancelRequest',
+  dollar_logTrace = '$/logTrace',
+  dollar_progress = '$/progress',
+  dollar_setTrace = '$/setTrace',
+  --- The exit event is sent from the client to the server to
+  --- ask the server to exit its process.
+  exit = 'exit',
   --- The initialize request is sent from the client to the server.
   --- It is sent once as the request after starting up the server.
   --- The requests parameter is of type {@link InitializeParams}
   --- the response if of type {@link InitializeResult} of a Thenable that
   --- resolves to such.
   initialize = 'initialize',
+  --- The initialized notification is sent from the client to the
+  --- server after the client is fully initialized and the server
+  --- is allowed to send requests from the server to the client.
+  initialized = 'initialized',
   --- A request to resolve additional properties for an inlay hint.
   --- The request's parameter is of type {@link InlayHint}, the response is
   --- of type {@link InlayHint} or a Thenable that resolves to such.
   --- @since 3.17.0
   inlayHint_resolve = 'inlayHint/resolve',
+  notebookDocument_didChange = 'notebookDocument/didChange',
+  --- A notification sent when a notebook closes.
+  --- @since 3.17.0
+  notebookDocument_didClose = 'notebookDocument/didClose',
+  --- A notification sent when a notebook opens.
+  --- @since 3.17.0
+  notebookDocument_didOpen = 'notebookDocument/didOpen',
+  --- A notification sent when a notebook document is saved.
+  --- @since 3.17.0
+  notebookDocument_didSave = 'notebookDocument/didSave',
   --- A shutdown request is sent from the client to the server.
   --- It is sent once when the client decides to shutdown the
   --- server. The only notification that is sent after a shutdown request
   --- is the exit event.
   shutdown = 'shutdown',
+  --- The telemetry event notification is sent from the server to the client to ask
+  --- the client to log telemetry data.
+  telemetry_event = 'telemetry/event',
   --- A request to provide commands for the given text document and range.
   textDocument_codeAction = 'textDocument/codeAction',
   --- A request to provide code lens for the given text document.
@@ -1003,6 +1027,29 @@ protocol.Methods = {
   --- The document diagnostic request definition.
   --- @since 3.17.0
   textDocument_diagnostic = 'textDocument/diagnostic',
+  --- The document change notification is sent from the client to the server to signal
+  --- changes to a text document.
+  textDocument_didChange = 'textDocument/didChange',
+  --- The document close notification is sent from the client to the server when
+  --- the document got closed in the client. The document's truth now exists where
+  --- the document's uri points to (e.g. if the document's uri is a file uri the
+  --- truth now exists on disk). As with the open notification the close notification
+  --- is about managing the document's content. Receiving a close notification
+  --- doesn't mean that the document was open in an editor before. A close
+  --- notification requires a previous open notification to be sent.
+  textDocument_didClose = 'textDocument/didClose',
+  --- The document open notification is sent from the client to the server to signal
+  --- newly opened text documents. The document's truth is now managed by the client
+  --- and the server must not try to read the document's truth using the document's
+  --- uri. Open in this sense means it is managed by the client. It doesn't necessarily
+  --- mean that its content is presented in an editor. An open notification must not
+  --- be sent more than once without a corresponding close notification send before.
+  --- This means open and close notification must be balanced and the max open count
+  --- is one.
+  textDocument_didOpen = 'textDocument/didOpen',
+  --- The document save notification is sent from the client to the server when
+  --- the document got saved in the client.
+  textDocument_didSave = 'textDocument/didSave',
   --- A request to list all color symbols found in a given text document. The request's
   --- parameter is of type {@link DocumentColorParams} the
   --- response is of type {@link ColorInformation ColorInformation[]} or a Thenable
@@ -1025,7 +1072,7 @@ protocol.Methods = {
   --- response is of type {@link FoldingRangeList} or a Thenable
   --- that resolves to such.
   textDocument_foldingRange = 'textDocument/foldingRange',
-  --- A request to format a whole document.
+  --- A request to to format a whole document.
   textDocument_formatting = 'textDocument/formatting',
   --- Request to request hover information at a given text document position. The request's
   --- parameter is of type {@link TextDocumentPosition} the response is of
@@ -1071,6 +1118,9 @@ protocol.Methods = {
   --- Can be used as an input to a subtypes or supertypes type hierarchy.
   --- @since 3.17.0
   textDocument_prepareTypeHierarchy = 'textDocument/prepareTypeHierarchy',
+  --- Diagnostics notification are sent from the server to the client to signal
+  --- results of validation runs.
+  textDocument_publishDiagnostics = 'textDocument/publishDiagnostics',
   --- A request to format a range in a document.
   textDocument_rangeFormatting = 'textDocument/rangeFormatting',
   --- A request to format ranges in a document.
@@ -1101,6 +1151,9 @@ protocol.Methods = {
   --- (#TextDocumentPositionParams) the response is of type {@link Definition} or a
   --- Thenable that resolves to such.
   textDocument_typeDefinition = 'textDocument/typeDefinition',
+  --- A document will save notification is sent from the client to the server before
+  --- the document is actually saved.
+  textDocument_willSave = 'textDocument/willSave',
   --- A document will save request is sent from the client to the server before
   --- the document is actually saved. The request can return an array of TextEdits
   --- which will be applied to the text document before it is saved. Please note that
@@ -1114,15 +1167,24 @@ protocol.Methods = {
   --- A request to resolve the supertypes for a given `TypeHierarchyItem`.
   --- @since 3.17.0
   typeHierarchy_supertypes = 'typeHierarchy/supertypes',
+  --- The log message notification is sent from the server to the client to ask
+  --- the client to log a particular message.
+  window_logMessage = 'window/logMessage',
   --- A request to show a document. This request might open an
   --- external program depending on the value of the URI to open.
   --- For example a request to open `https://code.visualstudio.com/`
   --- will very likely open the URI in a WEB browser.
   --- @since 3.16.0
   window_showDocument = 'window/showDocument',
+  --- The show message notification is sent from a server to a client to ask
+  --- the client to display a particular message in the user interface.
+  window_showMessage = 'window/showMessage',
   --- The show message request is sent from the server to the client to show a message
   --- and a set of options actions to the user.
   window_showMessageRequest = 'window/showMessageRequest',
+  --- The `window/workDoneProgress/cancel` notification is sent from  the client to the server to cancel a progress
+  --- initiated on the server side.
+  window_workDoneProgress_cancel = 'window/workDoneProgress/cancel',
   --- The `window/workDoneProgress/create` request is sent from the server to the client to initiate progress
   --- reporting from the server.
   window_workDoneProgress_create = 'window/workDoneProgress/create',
@@ -1148,6 +1210,28 @@ protocol.Methods = {
   --- The diagnostic refresh request definition.
   --- @since 3.17.0
   workspace_diagnostic_refresh = 'workspace/diagnostic/refresh',
+  --- The configuration change notification is sent from the client to the server
+  --- when the client's configuration has changed. The notification contains
+  --- the changed configuration as defined by the language client.
+  workspace_didChangeConfiguration = 'workspace/didChangeConfiguration',
+  --- The watched files notification is sent from the client to the server when
+  --- the client detects changes to file watched by the language client.
+  workspace_didChangeWatchedFiles = 'workspace/didChangeWatchedFiles',
+  --- The `workspace/didChangeWorkspaceFolders` notification is sent from the client to the server when the workspace
+  --- folder configuration changes.
+  workspace_didChangeWorkspaceFolders = 'workspace/didChangeWorkspaceFolders',
+  --- The did create files notification is sent from the client to the server when
+  --- files were created from within the client.
+  --- @since 3.16.0
+  workspace_didCreateFiles = 'workspace/didCreateFiles',
+  --- The will delete files request is sent from the client to the server before files are actually
+  --- deleted as long as the deletion is triggered from within the client.
+  --- @since 3.16.0
+  workspace_didDeleteFiles = 'workspace/didDeleteFiles',
+  --- The did rename files notification is sent from the client to the server when
+  --- files were renamed from within the client.
+  --- @since 3.16.0
+  workspace_didRenameFiles = 'workspace/didRenameFiles',
   --- A request send from the client to the server to execute a command. The request might return
   --- a workspace edit which the client will apply to the workspace.
   workspace_executeCommand = 'workspace/executeCommand',

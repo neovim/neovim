@@ -35,7 +35,8 @@ end
 
 -- Gets the Lua symbol for a given fully-qualified LSP method name.
 local function name(s)
-  return s:gsub('/', '_', 3)
+  -- "$/" prefix is special: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#dollarRequests
+  return s:gsub('^%$', 'dollar'):gsub('/', '_')
 end
 
 local function gen_methods(protocol)
@@ -48,10 +49,11 @@ local function gen_methods(protocol)
   }
   local indent = (' '):rep(2)
 
-  table.sort(protocol.requests, function(a, b)
+  local all = vim.list_extend(protocol.requests, protocol.notifications)
+  table.sort(all, function(a, b)
     return name(a.method) < name(b.method)
   end)
-  for _, item in ipairs(protocol.requests) do
+  for _, item in ipairs(all) do
     if item.method then
       if item.documentation then
         local document = vim.split(item.documentation, '\n?\n', { trimempty = true })
