@@ -1569,7 +1569,7 @@ vim.deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
       • {backtrace}    boolean|nil Prints backtrace. Defaults to true.
 
     Return: ~
-        (string|nil) # Deprecated message, or nil if no message was shown.
+        (string|nil) Deprecated message, or nil if no message was shown.
 
 vim.inspect                                                    *vim.inspect()*
     Gets a human-readable representation of the given object.
@@ -1693,7 +1693,7 @@ vim.print({...})                                                 *vim.print()*
 <
 
     Return: ~
-        any # given arguments.
+        any given arguments.
 
     See also: ~
       • |vim.inspect()|
@@ -2080,7 +2080,7 @@ vim.spairs({t})                                                 *vim.spairs()*
       • {t}  (table) Dict-like table
 
     Return: ~
-        _ iterator over sorted keys and their values
+        iterator over sorted keys and their values
 
     See also: ~
       • Based on https://github.com/premake/premake-core/blob/master/src/base/table.lua
@@ -2545,8 +2545,8 @@ vim.ui.open({path})                                            *vim.ui.open()*
       • {path}  (string) Path or URL to open
 
     Return (multiple): ~
-        SystemCompleted|nil # Command result, or nil if not found.
-        (string|nil) # Error message on failure
+        SystemCompleted|nil Command result, or nil if not found.
+        (string|nil) Error message on failure
 
     See also: ~
       • |vim.system()|

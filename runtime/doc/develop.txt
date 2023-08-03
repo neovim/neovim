@@ -226,6 +226,7 @@ Lua documentation lives in the source code, as docstrings on the function
 definitions.  The |lua-vim| :help is generated from the docstrings.
 
 Docstring format:
+- Use LuaLS annotations: https://github.com/LuaLS/lua-language-server/wiki/Annotations
 - Lines in the main description start with `---`
 - Special tokens start with `---@` followed by the token name:
   `---@see`, `---@param`, `---@returns`
