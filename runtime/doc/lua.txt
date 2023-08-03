@@ -2065,7 +2065,7 @@ vim.spairs({t})                                                 *vim.spairs()*
     Enumerate a table sorted by its keys.
 
     Parameters: ~
-      • {t}  (table) List-like table
+      • {t}  (table) not List-like table
 
     Return: ~
         iterator over sorted keys and their values
