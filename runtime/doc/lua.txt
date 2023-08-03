@@ -62,10 +62,10 @@ programming": tables, closures, and coroutines.
 https://www.lua.org/doc/cacm2018.pdf
 - Tables are the "object" or container datastructure: they represent both
   lists and maps, you can extend them to represent your own datatypes and
-  change their behavior using |luaref-metatable| (like Python's "datamodel").
+  change their behavior using |metatable|s (like Python's "datamodel").
 - EVERY scope in Lua is a closure: a function is a closure, a module is
-  a closure, a `do` block (|luaref-do|) is a closure--and they all work the
-  same. A Lua module is literally just a big closure discovered on the "path"
+  a closure, a `do` block (|lua-do|) is a closure--and they all work the same.
+  A Lua module is literally just a big closure discovered on the "path"
   (where your modules are found: |package.cpath|).
 - Stackful coroutines enable cooperative multithreading, generators, and
   versatile control for both Lua and its host (Nvim).
@@ -81,7 +81,7 @@ An "iterable" is anything that |vim.iter()| can consume: tables, dicts, lists,
 iterator functions, tables implementing the |__call()| metamethod, and
 |vim.iter()| objects.
 
-                                                           *lua-call-function*
+                                                           *lua-function-call*
 Lua functions can be called in multiple ways. Consider the function: >lua
     local foo = function(a, b)
         print("A: ", a)
@@ -94,21 +94,19 @@ The first way to call this function is: >lua
     -- A: 1
     -- B: 2
 
-This way of calling a function is familiar from most scripting languages.
-In Lua, any missing arguments are passed as `nil`. Example: >lua
+This way of calling a function is familiar from most scripting languages. In
+Lua, any missing arguments are passed as `nil`, and extra parameters are
+silently discarded. Example: >lua
     foo(1)
     -- ==== Result ====
     -- A: 1
     -- B: nil
-
-Furthermore it is not an error if extra parameters are passed, they are just
-discarded.
-
+<
                                                                       *kwargs*
 When calling a function, you can omit the parentheses if the function takes
 exactly one string literal (`"foo"`) or table literal (`{1,2,3}`). The latter
-is often used to approximate "named parameters" ("kwargs" or "keyword args")
-as in languages like Python and C#. Example: >lua
+is often used to mimic "named parameters" ("kwargs" or "keyword args") as in
+languages like Python and C#. Example: >lua
     local func_with_opts = function(opts)
         local will_do_foo = opts.foo
         local filename = opts.filename
@@ -119,21 +117,16 @@ as in languages like Python and C#. Example: >lua
 <
 There's nothing special going on here except that parentheses are treated as
 whitespace. But visually, this small bit of sugar gets reasonably close to
-a "keyword args" interface.
-
-It is of course also valid to call the function with parentheses: >lua
-    func_with_opts({ foo = true, filename = "hello.world" })
-<
-Nvim tends to prefer the keyword args style.
+a "keyword args" interface. Nvim code tends to prefer this style.
 
 ------------------------------------------------------------------------------
 LUA PATTERNS                                                    *lua-patterns*
 
 Lua intentionally does not support regular expressions, instead it has limited
-"patterns" |luaref-patterns| which avoid the performance pitfalls of extended
+"patterns" |lua-pattern| which avoid the performance pitfalls of extended
 regex. Lua scripts can also use Vim regex via |vim.regex()|.
 
-These examples use |string.match()| to demonstrate Lua patterns: >lua
+Examples: >lua
 
     print(string.match("foo123bar123", "%d+"))
     -- 123
@@ -145,7 +138,7 @@ These examples use |string.match()| to demonstrate Lua patterns: >lua
     -- .bar
 
 ==============================================================================
-IMPORTING LUA MODULES                                  *require()* *lua-require*
+IMPORTING LUA MODULES                                        *lua-module-load*
 
 Modules are searched for under the directories specified in 'runtimepath', in
 the order they appear.  Any "." in the module name is treated as a directory
@@ -159,7 +152,7 @@ back to Lua's default search mechanism. The first script found is run and
 
 The return value is cached after the first call to `require()` for each module,
 with subsequent calls returning the cached value without searching for, or
-executing any script. For further details on `require()`, see |luaref-require()|.
+executing any script. For further details see |require()|.
 
 For example, if 'runtimepath' is `foo,bar` and |package.cpath| was
 `./?.so;./?.dll` at startup, `require('mod')` searches these paths in order
@@ -332,22 +325,22 @@ Example: >vim
     :echo luaeval('string.match(_A, "[a-z]+")', 'XYXfoo123')
     " foo
 <
-                                                                    *lua-table*
+                                                         *lua-table-ambiguous*
 Lua tables are used as both dictionaries and lists, so it is impossible to
 determine whether empty table is meant to be empty list or empty dictionary.
 Additionally Lua does not have integer numbers. To distinguish between these
 cases there is the following agreement:
-                                                                     *lua-list*
+                                                                    *lua-list*
 0. Empty table is empty list.
 1. Table with N incrementally growing integral numbers, starting from 1 and
    ending with N is considered to be a list.
-                                                                     *lua-dict*
+                                                                    *lua-dict*
 2. Table with string keys, none of which contains NUL byte, is considered to
    be a dictionary.
 3. Table with string keys, at least one of which contains NUL byte, is also
    considered to be a dictionary, but this time it is converted to
    a |msgpack-special-map|.
-                                                              *lua-special-tbl*
+                                                             *lua-special-tbl*
 4. Table with `vim.type_idx` key may be a dictionary, a list or floating-point
    value:
    - `{[vim.type_idx]=vim.types.float, [vim.val_idx]=1}` is converted to
@@ -680,8 +673,8 @@ vim.regex:match_line({bufnr}, {line_idx}, {start}, {end_})
 
 vim.regex:match_str({str})                                 *regex:match_str()*
     Match the string against the regex. If the string should match the regex
-    precisely, surround the regex with `^` and `$` . If the was a match, the byte indices for the beginning and end of the
-    match is returned. When there is no match, `nil` is returned. As any integer is truth-y, `regex:match()` can be directly used as a condition in an if-statement.
+    precisely, surround the regex with `^` and `$` . If there was a match, the byte indices for the beginning and end of the
+    match are returned. When there is no match, `nil` is returned. Because any integer is "truthy", `regex:match()` can be directly used as a condition in an if-statement.
 
     Parameters: ~
       • {str}  (string)
@@ -1952,7 +1945,7 @@ vim.gsplit({s}, {sep}, {opts})                                  *vim.gsplit()*
     See also: ~
       • |string.gmatch()|
       • |vim.split()|
-      • |luaref-patterns|
+      • |lua-patterns|
       • https://www.lua.org/pil/20.2.html
       • http://lua-users.org/wiki/StringLibraryTutorial
 
@@ -2333,7 +2326,7 @@ vim.trim({s})                                                     *vim.trim()*
         (string) String with whitespace removed from its beginning and end
 
     See also: ~
-      • |luaref-patterns|
+      • |lua-patterns|
       • https://www.lua.org/pil/20.2.html
 
 vim.validate({opt})                                           *vim.validate()*

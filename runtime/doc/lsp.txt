@@ -67,7 +67,7 @@ To override the above defaults, set or unset the options on |LspAttach|: >lua
       callback = function(ev)
         vim.bo[ev.buf].formatexpr = nil
         vim.bo[ev.buf].omnifunc = nil
-        vim.keymap.del("n", "K", { bufnr = ev.buf })
+        vim.keymap.del("n", "K", { buffer = ev.buf })
       end,
     })
 

@@ -167,8 +167,8 @@ the cache manually first:
 <
 ------------------------------------------------------------------------------
 See also:
-• |lua-require|
-• |luaref-pcall()|
+• |lua-module-load|
+• |pcall()|
 
 ==============================================================================
 Using Vim commands and functions from Lua                  *lua-guide-vimscript*
@@ -186,7 +186,7 @@ Note that special characters will need to be escaped with backslashes:
 >lua
     vim.cmd("%s/\\Vfoo/bar/g")
 <
-An alternative is to use a literal string (see |luaref-literal|) delimited by
+An alternative is to use a literal string (see |lua-literal|) delimited by
 double brackets `[[ ]]` as in
 >lua
     vim.cmd([[%s/\Vfoo/bar/g]])
