@@ -466,7 +466,7 @@ Lua interface (|lua.txt|):
 <  whereas Vim emits only "TEST".
 - Lua has direct access to Nvim |API| via `vim.api`.
 - Lua package.path and package.cpath are automatically updated according to
-  'runtimepath': |lua-require|.
+  'runtimepath'. |lua-module-load|
 
 Commands:
   |:doautocmd| does not warn about "No matching autocommands".
