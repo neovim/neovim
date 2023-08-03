@@ -35,10 +35,8 @@ end
 
 -- Gets the Lua symbol for a given fully-qualified LSP method name.
 local function name(s)
-  if vim.startswith(s, '$') then
-    s = s:gsub('^%$', 'dollar')
-  end
-  return s:gsub('/', '_')
+  -- "$/" prefix is special: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#dollarRequests
+  return s:gsub('^%$', 'dollar'):gsub('/', '_')
 end
 
 local function gen_methods(protocol)

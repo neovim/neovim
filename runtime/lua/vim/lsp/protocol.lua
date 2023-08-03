@@ -954,6 +954,10 @@ protocol.Methods = {
   --- parameter is of type {@link DocumentLink} the response
   --- is of type {@link DocumentLink} or a Thenable that resolves to such.
   documentLink_resolve = 'documentLink/resolve',
+  dollar_cancelRequest = '$/cancelRequest',
+  dollar_logTrace = '$/logTrace',
+  dollar_progress = '$/progress',
+  dollar_setTrace = '$/setTrace',
   --- The exit event is sent from the client to the server to
   --- ask the server to exit its process.
   exit = 'exit',
@@ -982,10 +986,6 @@ protocol.Methods = {
   --- A notification sent when a notebook document is saved.
   --- @since 3.17.0
   notebookDocument_didSave = 'notebookDocument/didSave',
-  notification_cancelRequest = '$/cancelRequest',
-  notification_logTrace = '$/logTrace',
-  notification_progress = '$/progress',
-  notification_setTrace = '$/setTrace',
   --- A shutdown request is sent from the client to the server.
   --- It is sent once when the client decides to shutdown the
   --- server. The only notification that is sent after a shutdown request
