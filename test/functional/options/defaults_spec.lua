@@ -8,13 +8,13 @@ local meths = helpers.meths
 local command = helpers.command
 local clear = helpers.clear
 local exc_exec = helpers.exc_exec
+local exec_lua = helpers.exec_lua
 local eval = helpers.eval
 local eq = helpers.eq
 local ok = helpers.ok
 local funcs = helpers.funcs
 local insert = helpers.insert
 local neq = helpers.neq
-local nvim_prog = helpers.nvim_prog
 local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
 local alter_slashes = helpers.alter_slashes
@@ -200,11 +200,23 @@ describe('startup defaults', function()
 
   it("'shadafile' ('viminfofile')", function()
     local env = {XDG_DATA_HOME='Xtest-userdata', XDG_STATE_HOME='Xtest-userstate', XDG_CONFIG_HOME='Xtest-userconfig'}
+    finally(function()
+      command('set shadafile=NONE')  -- Avoid writing shada file on exit
+      rmdir('Xtest-userstate')
+      os.remove('Xtest-foo')
+    end)
+
     clear{args={}, args_rm={'-i'}, env=env}
     -- Default 'shadafile' is empty.
     -- This means use the default location. :help shada-file-name
     eq('', meths.get_option_value('shadafile', {}))
     eq('', meths.get_option_value('viminfofile', {}))
+    -- Handles viminfo/viminfofile as alias for shada/shadafile.
+    eq('\n  shadafile=', eval('execute("set shadafile?")'))
+    eq('\n  shadafile=', eval('execute("set viminfofile?")'))
+    eq("\n  shada=!,'100,<50,s10,h", eval('execute("set shada?")'))
+    eq("\n  shada=!,'100,<50,s10,h", eval('execute("set viminfo?")'))
+
     -- Check that shada data (such as v:oldfiles) is saved/restored.
     command('edit Xtest-foo')
     command('write')
@@ -213,14 +225,6 @@ describe('startup defaults', function()
     expect_exit(command, 'qall')
     clear{args={}, args_rm={'-i'}, env=env}
     eq({ f }, eval('v:oldfiles'))
-    os.remove('Xtest-foo')
-    rmdir('Xtest-userstate')
-
-    -- Handles viminfo/viminfofile as alias for shada/shadafile.
-    eq('\n  shadafile=', eval('execute("set shadafile?")'))
-    eq('\n  shadafile=', eval('execute("set viminfofile?")'))
-    eq("\n  shada=!,'100,<50,s10,h", eval('execute("set shada?")'))
-    eq("\n  shada=!,'100,<50,s10,h", eval('execute("set viminfo?")'))
   end)
 
   it("'packpath'", function()
@@ -432,7 +436,12 @@ describe('XDG defaults', function()
           XDG_RUNTIME_DIR='$XDG_RUNTIME_DIR',
           XDG_STATE_HOME='$XDG_CONFIG_HOME',
           XDG_DATA_DIRS='$XDG_CONFIG_DIRS',
-      }})
+        }
+      })
+    end)
+
+    after_each(function()
+      command('set shadafile=NONE')  -- Avoid writing shada file on exit
     end)
 
     it('are not expanded', function()
@@ -588,7 +597,7 @@ describe('stdpath()', function()
     assert_alive()  -- Check for crash. #8393
   end)
 
-  it('reacts to #NVIM_APPNAME', function()
+  it('reacts to $NVIM_APPNAME', function()
     local appname = "NVIM_APPNAME_TEST____________________________________" ..
       "______________________________________________________________________"
     clear({env={ NVIM_APPNAME=appname }})
@@ -605,12 +614,15 @@ describe('stdpath()', function()
     end
     assert_alive()  -- Check for crash. #8393
 
-    --  Check that nvim rejects invalid APPNAMEs
-    local child = funcs.jobstart({ nvim_prog }, {env={NVIM_APPNAME='a/b\\c'}})
-    eq(1, funcs.jobwait({child}, 3000)[1])
+    -- Check that Nvim rejects invalid APPNAMEs
+    -- Call jobstart() and jobwait() in the same RPC request to reduce flakiness.
+    eq(1, exec_lua([[
+      local child = vim.fn.jobstart({ vim.v.progpath }, { env = { NVIM_APPNAME = 'a/b\\c' } })
+      return vim.fn.jobwait({ child }, 3000)[1]
+    ]]))
   end)
 
-  context('returns a String', function()
+  describe('returns a String', function()
 
     describe('with "config"' , function ()
       it('knows XDG_CONFIG_HOME', function()
@@ -745,7 +757,7 @@ describe('stdpath()', function()
     end)
   end)
 
-  context('returns a List', function()
+  describe('returns a List', function()
     -- Some OS specific variables the system would have set.
     local function base_env()
       if is_os('win') then
