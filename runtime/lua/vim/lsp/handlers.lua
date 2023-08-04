@@ -403,6 +403,8 @@ local function location_handler(_, result, ctx, config)
   if vim.tbl_islist(result) then
     local title = 'LSP locations'
     local items = util.locations_to_items(result, client.offset_encoding)
+    local tag_item = { tagname = vim.fn.expand('<cword>') }
+    local curwin = api.nvim_get_current_win()
 
     if config.on_list then
       assert(type(config.on_list) == 'function', 'on_list is not a function')
@@ -414,6 +416,15 @@ local function location_handler(_, result, ctx, config)
       end
       vim.fn.setqflist({}, ' ', { title = title, items = items })
       api.nvim_command('botright copen')
+      local qf_winid = api.nvim_get_current_win()
+      vim.keymap.set('n', '<CR>', function()
+        local lnum = api.nvim_win_get_cursor(qf_winid)[1]
+        api.nvim_set_current_win(curwin)
+        vim.cmd.edit(items[lnum].filename)
+        api.nvim_win_set_cursor(curwin, { items[lnum].lnum, items[lnum].col - 1 })
+        tag_item.from = { vim.fn.bufnr('%'), vim.fn.line('.'), vim.fn.col('.'), 0 }
+        vim.fn.settagstack(vim.fn.win_getid(), { items = { tag_item } }, 't')
+      end, { buffer = api.nvim_get_current_buf(), noremap = true })
     end
   else
     util.jump_to_location(result, client.offset_encoding, config.reuse_win)
