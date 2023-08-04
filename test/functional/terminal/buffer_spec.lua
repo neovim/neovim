@@ -467,6 +467,7 @@ describe('terminal input', function()
       '<S-RightMouse>', '<S-RightRelease>', '<2-RightMouse>', '<2-RightRelease>',
       '<M-MiddleMouse>', '<M-MiddleRelease>', '<2-MiddleMouse>', '<2-MiddleRelease>',
       '<S-ScrollWheelUp>', '<S-ScrollWheelDown>', '<ScrollWheelUp>', '<ScrollWheelDown>',
+      '<S-ScrollWheelLeft>', '<S-ScrollWheelRight>', '<ScrollWheelLeft>', '<ScrollWheelRight>',
     }) do
       feed('<CR><C-V>' .. key)
       retry(nil, nil, function() eq(key, meths.get_current_line()) end)
