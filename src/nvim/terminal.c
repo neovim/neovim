@@ -1444,7 +1444,9 @@ static bool send_mouse_event(Terminal *term, int c)
       return false;
     }
 
-    mouse_action(term, button, row, col - offset, pressed, 0);
+    VTermModifier mod = VTERM_MOD_NONE;
+    convert_modifiers(c, &mod);
+    mouse_action(term, button, row, col - offset, pressed, mod);
     return false;
   }
 
