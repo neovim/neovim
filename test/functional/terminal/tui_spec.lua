@@ -331,7 +331,7 @@ describe('TUI', function()
     ]], attrs)
   end)
 
-  it('accepts mouse wheel events #19992', function()
+  local function test_mouse_wheel(esc)
     child_session:request('nvim_exec2', [[
       set number nostartofline nowrap mousescroll=hor:1,ver:1
       call setline(1, repeat([join(range(10), '----')], 10))
@@ -347,7 +347,11 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- <ScrollWheelDown> in active window
-    feed_data('\027[<65;8;1M')
+    if esc then
+      feed_data('\027[<65;8;1M')
+    else
+      meths.input_mouse('wheel', 'down', '', 0, 0, 7)
+    end
     screen:expect([[
       {11:  2 }{1:0}----1----2----3----4│{11:  1 }0----1----2----3----|
       {11:  3 }0----1----2----3----4│{11:  2 }0----1----2----3----|
@@ -358,7 +362,11 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- <ScrollWheelDown> in inactive window
-    feed_data('\027[<65;48;1M')
+    if esc then
+      feed_data('\027[<65;48;1M')
+    else
+      meths.input_mouse('wheel', 'down', '', 0, 0, 47)
+    end
     screen:expect([[
       {11:  2 }{1:0}----1----2----3----4│{11:  2 }0----1----2----3----|
       {11:  3 }0----1----2----3----4│{11:  3 }0----1----2----3----|
@@ -369,7 +377,11 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- <ScrollWheelRight> in active window
-    feed_data('\027[<67;8;1M')
+    if esc then
+      feed_data('\027[<67;8;1M')
+    else
+      meths.input_mouse('wheel', 'right', '', 0, 0, 7)
+    end
     screen:expect([[
       {11:  2 }{1:-}---1----2----3----4-│{11:  2 }0----1----2----3----|
       {11:  3 }----1----2----3----4-│{11:  3 }0----1----2----3----|
@@ -380,7 +392,11 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- <ScrollWheelRight> in inactive window
-    feed_data('\027[<67;48;1M')
+    if esc then
+      feed_data('\027[<67;48;1M')
+    else
+      meths.input_mouse('wheel', 'right', '', 0, 0, 47)
+    end
     screen:expect([[
       {11:  2 }{1:-}---1----2----3----4-│{11:  2 }----1----2----3----4|
       {11:  3 }----1----2----3----4-│{11:  3 }----1----2----3----4|
@@ -391,7 +407,11 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- <S-ScrollWheelDown> in active window
-    feed_data('\027[<69;8;1M')
+    if esc then
+      feed_data('\027[<69;8;1M')
+    else
+      meths.input_mouse('wheel', 'down', 'S', 0, 0, 7)
+    end
     screen:expect([[
       {11:  5 }{1:-}---1----2----3----4-│{11:  2 }----1----2----3----4|
       {11:  6 }----1----2----3----4-│{11:  3 }----1----2----3----4|
@@ -402,7 +422,11 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- <S-ScrollWheelDown> in inactive window
-    feed_data('\027[<69;48;1M')
+    if esc then
+      feed_data('\027[<69;48;1M')
+    else
+      meths.input_mouse('wheel', 'down', 'S', 0, 0, 47)
+    end
     screen:expect([[
       {11:  5 }{1:-}---1----2----3----4-│{11:  5 }----1----2----3----4|
       {11:  6 }----1----2----3----4-│{11:  6 }----1----2----3----4|
@@ -413,7 +437,11 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- <S-ScrollWheelRight> in active window
-    feed_data('\027[<71;8;1M')
+    if esc then
+      feed_data('\027[<71;8;1M')
+    else
+      meths.input_mouse('wheel', 'right', 'S', 0, 0, 7)
+    end
     screen:expect([[
       {11:  5 }{1:-}---6----7----8----9 │{11:  5 }----1----2----3----4|
       {11:  6 }----6----7----8----9 │{11:  6 }----1----2----3----4|
@@ -424,7 +452,11 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- <S-ScrollWheelRight> in inactive window
-    feed_data('\027[<71;48;1M')
+    if esc then
+      feed_data('\027[<71;48;1M')
+    else
+      meths.input_mouse('wheel', 'right', 'S', 0, 0, 47)
+    end
     screen:expect([[
       {11:  5 }{1:-}---6----7----8----9 │{11:  5 }5----6----7----8----|
       {11:  6 }----6----7----8----9 │{11:  6 }5----6----7----8----|
@@ -435,7 +467,11 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- <ScrollWheelUp> in active window
-    feed_data('\027[<64;8;1M')
+    if esc then
+      feed_data('\027[<64;8;1M')
+    else
+      meths.input_mouse('wheel', 'up', '', 0, 0, 7)
+    end
     screen:expect([[
       {11:  4 }----6----7----8----9 │{11:  5 }5----6----7----8----|
       {11:  5 }{1:-}---6----7----8----9 │{11:  6 }5----6----7----8----|
@@ -446,7 +482,11 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- <ScrollWheelUp> in inactive window
-    feed_data('\027[<64;48;1M')
+    if esc then
+      feed_data('\027[<64;48;1M')
+    else
+      meths.input_mouse('wheel', 'up', '', 0, 0, 47)
+    end
     screen:expect([[
       {11:  4 }----6----7----8----9 │{11:  4 }5----6----7----8----|
       {11:  5 }{1:-}---6----7----8----9 │{11:  5 }5----6----7----8----|
@@ -457,7 +497,11 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- <ScrollWheelLeft> in active window
-    feed_data('\027[<66;8;1M')
+    if esc then
+      feed_data('\027[<66;8;1M')
+    else
+      meths.input_mouse('wheel', 'left', '', 0, 0, 7)
+    end
     screen:expect([[
       {11:  4 }5----6----7----8----9│{11:  4 }5----6----7----8----|
       {11:  5 }5{1:-}---6----7----8----9│{11:  5 }5----6----7----8----|
@@ -468,7 +512,11 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- <ScrollWheelLeft> in inactive window
-    feed_data('\027[<66;48;1M')
+    if esc then
+      feed_data('\027[<66;48;1M')
+    else
+      meths.input_mouse('wheel', 'left', '', 0, 0, 47)
+    end
     screen:expect([[
       {11:  4 }5----6----7----8----9│{11:  4 }-5----6----7----8---|
       {11:  5 }5{1:-}---6----7----8----9│{11:  5 }-5----6----7----8---|
@@ -479,7 +527,11 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- <S-ScrollWheelUp> in active window
-    feed_data('\027[<68;8;1M')
+    if esc then
+      feed_data('\027[<68;8;1M')
+    else
+      meths.input_mouse('wheel', 'up', 'S', 0, 0, 7)
+    end
     screen:expect([[
       {11:  1 }5----6----7----8----9│{11:  4 }-5----6----7----8---|
       {11:  2 }5----6----7----8----9│{11:  5 }-5----6----7----8---|
@@ -490,7 +542,11 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- <S-ScrollWheelUp> in inactive window
-    feed_data('\027[<68;48;1M')
+    if esc then
+      feed_data('\027[<68;48;1M')
+    else
+      meths.input_mouse('wheel', 'up', 'S', 0, 0, 47)
+    end
     screen:expect([[
       {11:  1 }5----6----7----8----9│{11:  1 }-5----6----7----8---|
       {11:  2 }5----6----7----8----9│{11:  2 }-5----6----7----8---|
@@ -501,7 +557,11 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- <S-ScrollWheelLeft> in active window
-    feed_data('\027[<70;8;1M')
+    if esc then
+      feed_data('\027[<70;8;1M')
+    else
+      meths.input_mouse('wheel', 'left', 'S', 0, 0, 7)
+    end
     screen:expect([[
       {11:  1 }0----1----2----3----4│{11:  1 }-5----6----7----8---|
       {11:  2 }0----1----2----3----4│{11:  2 }-5----6----7----8---|
@@ -512,7 +572,11 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- <S-ScrollWheelLeft> in inactive window
-    feed_data('\027[<70;48;1M')
+    if esc then
+      feed_data('\027[<70;48;1M')
+    else
+      meths.input_mouse('wheel', 'left', 'S', 0, 0, 47)
+    end
     screen:expect([[
       {11:  1 }0----1----2----3----4│{11:  1 }0----1----2----3----|
       {11:  2 }0----1----2----3----4│{11:  2 }0----1----2----3----|
@@ -522,6 +586,136 @@ describe('TUI', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
+  end
+
+  describe('accepts mouse wheel events', function()
+    it('(mouse events sent to host)', function()
+      test_mouse_wheel(false)
+    end)
+
+    it('(escape sequences sent to child)', function()
+      test_mouse_wheel(true)
+    end)
+  end)
+
+  local function test_mouse_popup(esc)
+    child_session:request('nvim_exec2', [[
+      call setline(1, 'popup menu test')
+      set mouse=a mousemodel=popup
+
+      aunmenu PopUp
+      menu PopUp.foo :let g:menustr = 'foo'<CR>
+      menu PopUp.bar :let g:menustr = 'bar'<CR>
+      menu PopUp.baz :let g:menustr = 'baz'<CR>
+      highlight Pmenu ctermbg=NONE ctermfg=NONE cterm=underline,reverse
+      highlight PmenuSel ctermbg=NONE ctermfg=NONE cterm=underline,reverse,bold
+    ]], {})
+    if esc then
+      feed_data('\027[<2;5;1M')
+    else
+      meths.input_mouse('right', 'press', '', 0, 0, 4)
+    end
+    screen:expect([[
+      {1:p}opup menu test                                   |
+      {4:~  }{13: foo }{4:                                          }|
+      {4:~  }{13: bar }{4:                                          }|
+      {4:~  }{13: baz }{4:                                          }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    if esc then
+      feed_data('\027[<2;5;1m')
+    else
+      meths.input_mouse('right', 'release', '', 0, 0, 4)
+    end
+    screen:expect_unchanged()
+    if esc then
+      feed_data('\027[<35;7;4M')
+    else
+      meths.input_mouse('move', '', '', 0, 3, 6)
+    end
+    screen:expect([[
+      {1:p}opup menu test                                   |
+      {4:~  }{13: foo }{4:                                          }|
+      {4:~  }{13: bar }{4:                                          }|
+      {4:~  }{14: baz }{4:                                          }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    if esc then
+      feed_data('\027[<0;7;3M')
+    else
+      meths.input_mouse('left', 'press', '', 0, 2, 6)
+    end
+    screen:expect([[
+      {1:p}opup menu test                                   |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      :let g:menustr = 'bar'                            |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    if esc then
+      feed_data('\027[<0;7;3m')
+    else
+      meths.input_mouse('left', 'release', '', 0, 2, 6)
+    end
+    screen:expect_unchanged()
+    if esc then
+      feed_data('\027[<2;45;3M')
+    else
+      meths.input_mouse('right', 'press', '', 0, 2, 44)
+    end
+    screen:expect([[
+      {1:p}opup menu test                                   |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                          }{13: foo }{4:  }|
+      {5:[No Name] [+]                              }{13: bar }{5:  }|
+      :let g:menustr = 'bar'                     {13: baz }  |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    if esc then
+      feed_data('\027[<34;48;6M')
+    else
+      meths.input_mouse('right', 'drag', '', 0, 5, 47)
+    end
+    screen:expect([[
+      {1:p}opup menu test                                   |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                          }{13: foo }{4:  }|
+      {5:[No Name] [+]                              }{13: bar }{5:  }|
+      :let g:menustr = 'bar'                     {14: baz }  |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    if esc then
+      feed_data('\027[<2;48;6m')
+    else
+      meths.input_mouse('right', 'release', '', 0, 5, 47)
+    end
+    screen:expect([[
+      {1:p}opup menu test                                   |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      :let g:menustr = 'baz'                            |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end
+
+  describe('mouse events work with right-click menu', function()
+    it('(mouse events sent to host)', function()
+      test_mouse_popup(false)
+    end)
+
+    it('(escape sequences sent to child)', function()
+      test_mouse_popup(true)
+    end)
   end)
 
   it('accepts keypad keys from kitty keyboard protocol #19180', function()
@@ -718,54 +912,6 @@ describe('TUI', function()
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
-  end)
-
-  it('mouse events work with right-click menu', function()
-    child_session:request('nvim_exec2', [[
-      call setline(1, 'popup menu test')
-      set mouse=a mousemodel=popup
-
-      aunmenu PopUp
-      menu PopUp.foo :let g:menustr = 'foo'<CR>
-      menu PopUp.bar :let g:menustr = 'bar'<CR>
-      menu PopUp.baz :let g:menustr = 'baz'<CR>
-      highlight Pmenu ctermbg=NONE ctermfg=NONE cterm=underline,reverse
-      highlight PmenuSel ctermbg=NONE ctermfg=NONE cterm=underline,reverse,bold
-    ]], {})
-    meths.input_mouse('right', 'press', '', 0, 0, 4)
-    screen:expect([[
-      {1:p}opup menu test                                   |
-      {4:~  }{13: foo }{4:                                          }|
-      {4:~  }{13: bar }{4:                                          }|
-      {4:~  }{13: baz }{4:                                          }|
-      {5:[No Name] [+]                                     }|
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]])
-    meths.input_mouse('right', 'release', '', 0, 0, 4)
-    screen:expect_unchanged()
-    meths.input_mouse('move', '', '', 0, 3, 6)
-    screen:expect([[
-      {1:p}opup menu test                                   |
-      {4:~  }{13: foo }{4:                                          }|
-      {4:~  }{13: bar }{4:                                          }|
-      {4:~  }{14: baz }{4:                                          }|
-      {5:[No Name] [+]                                     }|
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]])
-    meths.input_mouse('left', 'press', '', 0, 2, 6)
-    screen:expect([[
-      {1:p}opup menu test                                   |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {5:[No Name] [+]                                     }|
-      :let g:menustr = 'bar'                            |
-      {3:-- TERMINAL --}                                    |
-    ]])
-    meths.input_mouse('left', 'release', '', 0, 2, 6)
-    screen:expect_unchanged()
   end)
 
   it('paste: Insert mode', function()
