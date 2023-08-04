@@ -7658,7 +7658,7 @@ return {
       abbreviation = 'spc',
       alloced = true,
       cb = 'did_set_spellcapcheck',
-      defaults = { if_true = '[.?!]\\_[\\])\'"\t ]\\+' },
+      defaults = { if_true = '[.?!]\\_[\\])\'"\\t ]\\+' },
       desc = [=[
         Pattern to locate the end of a sentence.  The following word will be
         checked to start with a capital letter.  If not then it is highlighted

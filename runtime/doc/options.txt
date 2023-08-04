@@ -5666,7 +5666,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The languages are specified with 'spelllang'.
 
 						*'spellcapcheck'* *'spc'*
-'spellcapcheck' 'spc'	string	(default "[.?!]\_[\])'"	 ]\+")
+'spellcapcheck' 'spc'	string	(default "[.?!]\_[\])'"\t ]\+")
 			local to buffer
 	Pattern to locate the end of a sentence.  The following word will be
 	checked to start with a capital letter.  If not then it is highlighted

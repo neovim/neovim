@@ -6014,7 +6014,7 @@ vim.wo.spell = vim.o.spell
 --- `set-spc-auto`.
 ---
 --- @type string
-vim.o.spellcapcheck = "[.?!]\\_[\\])'\"\t ]\\+"
+vim.o.spellcapcheck = "[.?!]\\_[\\])'\"\\t ]\\+"
 vim.o.spc = vim.o.spellcapcheck
 vim.bo.spellcapcheck = vim.o.spellcapcheck
 vim.bo.spc = vim.bo.spellcapcheck
