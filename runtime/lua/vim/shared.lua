@@ -425,6 +425,7 @@ function vim.deep_equal(a, b)
   return false
 end
 
+--- @deprecated
 --- Add the reverse lookup values to an existing table.
 --- For example:
 --- ``tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }``
@@ -448,6 +449,24 @@ function vim.tbl_add_reverse_lookup(o)
     o[v] = k
   end
   return o
+end
+
+--- Return the inverse table with the keys and values swapped
+--- Examples:
+--- <pre>lua
+---   vim.tbl_inv({ a = 1, b = 2, c = 3 })
+---   -- == { [1] = 'a', [2] = 'b', [3] = 'c'}
+--- </pre>
+--- @param t table Table to invert
+--- @return table # Inverted table
+function vim.tbl_inv(t)
+  local r = {}
+  --- @diagnostic disable-next-line:no-unknown
+  for k, v in pairs(t) do
+    --- @diagnostic disable-next-line:no-unknown
+    r[v] = k
+  end
+  return r
 end
 
 --- Index into a table (first argument) via string keys passed as subsequent arguments.

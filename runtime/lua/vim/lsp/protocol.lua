@@ -1,7 +1,5 @@
 -- Protocol for the Microsoft Language Server Protocol (mslsp)
 
-local protocol = {}
-
 --[=[
 ---@private
 --- Useful for interfacing with:
@@ -20,8 +18,11 @@ function transform_schema_to_table()
 end
 --]=]
 
-local constants = {
-  --- @enum lsp.DiagnosticSeverity
+--- @diagnostic disable-next-line:deprecated
+local bitable = vim.tbl_add_reverse_lookup
+
+local protocol = {
+  --- @enum vim.lsp.DiagnosticSeverity
   DiagnosticSeverity = {
     -- Reports an error.
     Error = 1,
@@ -33,7 +34,7 @@ local constants = {
     Hint = 4,
   },
 
-  --- @enum lsp.DiagnosticTag
+  --- @enum vim.lsp.DiagnosticTag
   DiagnosticTag = {
     -- Unused or unnecessary code
     Unnecessary = 1,
@@ -41,7 +42,7 @@ local constants = {
     Deprecated = 2,
   },
 
-  ---@enum lsp.MessageType
+  ---@enum vim.lsp.MessageType
   MessageType = {
     -- An error message.
     Error = 1,
@@ -54,7 +55,7 @@ local constants = {
   },
 
   -- The file event type.
-  ---@enum lsp.FileChangeType
+  ---@enum vim.lsp.FileChangeType
   FileChangeType = {
     -- The file got created.
     Created = 1,
@@ -64,8 +65,10 @@ local constants = {
     Deleted = 3,
   },
 
-  -- The kind of a completion entry.
-  CompletionItemKind = {
+  --- The kind of a completion entry.
+  --- @class vim.lsp.CompletionItemKind
+  --- @field [lsp.CompletionItemKind] string
+  CompletionItemKind = bitable({
     Text = 1,
     Method = 2,
     Function = 3,
@@ -91,7 +94,7 @@ local constants = {
     Event = 23,
     Operator = 24,
     TypeParameter = 25,
-  },
+  }),
 
   -- How a completion was triggered
   CompletionTriggerKind = {
@@ -115,8 +118,10 @@ local constants = {
     Write = 3,
   },
 
-  -- A symbol kind.
-  SymbolKind = {
+  --- A symbol kind.
+  --- @class vim.lsp.SymbolKind
+  --- @field [lsp.SymbolKind] string
+  SymbolKind = bitable({
     File = 1,
     Module = 2,
     Namespace = 3,
@@ -143,10 +148,10 @@ local constants = {
     Event = 24,
     Operator = 25,
     TypeParameter = 26,
-  },
+  }),
 
   -- Represents reasons why a text document is saved.
-  ---@enum lsp.TextDocumentSaveReason
+  ---@enum vim.lsp.TextDocumentSaveReason
   TextDocumentSaveReason = {
     -- Manually triggered, e.g. by the user pressing save, by starting debugging,
     -- or by an API call.
@@ -218,8 +223,10 @@ local constants = {
     unknownProtocolVersion = 1,
   },
 
-  -- Defines how the host (editor) should sync document changes to the language server.
-  TextDocumentSyncKind = {
+  --- Defines how the host (editor) should sync document changes to the language server.
+  --- @class vim.lsp.TextDocumentSyncKind
+  --- @field [lsp.TextDocumentSyncKind] string
+  TextDocumentSyncKind = bitable({
     -- Documents should not be synced at all.
     None = 0,
     -- Documents are synced by always sending the full content
@@ -229,7 +236,7 @@ local constants = {
     -- After that only incremental updates to the document are
     -- send.
     Incremental = 2,
-  },
+  }),
 
   WatchKind = {
     -- Interested in create events.
@@ -240,9 +247,11 @@ local constants = {
     Delete = 4,
   },
 
-  -- Defines whether the insert text in a completion item should be interpreted as
-  -- plain text or a snippet.
-  InsertTextFormat = {
+  --- Defines whether the insert text in a completion item should be interpreted as
+  --- plain text or a snippet.
+  --- @class vim.lsp.InsertTextFormat
+  --- @field [lsp.InsertTextFormat] string
+  InsertTextFormat = bitable({
     -- The primary text to be inserted is treated as a plain string.
     PlainText = 1,
     -- The primary text to be inserted is treated as a snippet.
@@ -252,7 +261,7 @@ local constants = {
     -- the end of the snippet. Placeholders with equal identifiers are linked,
     -- that is typing in one will update others too.
     Snippet = 2,
-  },
+  }),
 
   -- A set of predefined code action kinds
   CodeActionKind = {
@@ -300,7 +309,7 @@ local constants = {
     SourceOrganizeImports = 'source.organizeImports',
   },
   -- The reason why code actions were requested.
-  ---@enum lsp.CodeActionTriggerKind
+  ---@enum vim.lsp.CodeActionTriggerKind
   CodeActionTriggerKind = {
     -- Code actions were explicitly requested by the user or by an extension.
     Invoked = 1,
@@ -311,12 +320,6 @@ local constants = {
     Automatic = 2,
   },
 }
-
-for k, v in pairs(constants) do
-  local tbl = vim.deepcopy(v)
-  vim.tbl_add_reverse_lookup(tbl)
-  protocol[k] = tbl
-end
 
 --[=[
 --Text document specific client capabilities.
@@ -717,7 +720,7 @@ function protocol.make_client_capabilities()
         codeActionLiteralSupport = {
           codeActionKind = {
             valueSet = (function()
-              local res = vim.tbl_values(constants.CodeActionKind)
+              local res = vim.tbl_values(protocol.CodeActionKind)
               table.sort(res)
               return res
             end)(),

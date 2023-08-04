@@ -125,7 +125,9 @@ M.client_errors = {
   SERVER_RESULT_CALLBACK_ERROR = 7,
 }
 
-M.client_errors = vim.tbl_add_reverse_lookup(M.client_errors)
+--- @nodoc
+--- @type table<integer,string>
+local client_errors_inv = vim.tbl_inv(M.client_errors)
 
 --- Constructs an error message from an LSP error object.
 ---
@@ -214,7 +216,7 @@ end
 ---@param err (any): Details about the error
 ---any)
 function default_dispatchers.on_error(code, err)
-  local _ = log.error() and log.error('client_error:', M.client_errors[code], err)
+  local _ = log.error() and log.error('client_error:', client_errors_inv[code], err)
 end
 
 ---@private

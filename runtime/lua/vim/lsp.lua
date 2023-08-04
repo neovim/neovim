@@ -188,10 +188,11 @@ end
 lsp.client_errors = tbl_extend(
   'error',
   lsp_rpc.client_errors,
-  vim.tbl_add_reverse_lookup({
-    ON_INIT_CALLBACK_ERROR = table.maxn(lsp_rpc.client_errors) + 1,
-  })
+  { ON_INIT_CALLBACK_ERROR = table.maxn(lsp_rpc.client_errors) + 1 }
 )
+
+--- @nodoc
+lsp.client_errors_inv = vim.tbl_inv(lsp.client_errors)
 
 --- Normalizes {encoding} to valid LSP encoding names.
 ---
@@ -1057,7 +1058,7 @@ end
 ---       when the client operation throws an error. `code` is a number describing
 ---       the error. Other arguments may be passed depending on the error kind.  See
 ---       `vim.lsp.rpc.client_errors` for possible errors.
----       Use `vim.lsp.rpc.client_errors[code]` to get human-friendly name.
+---       Use `vim.lsp.rpc.client_errors_inv[code]` to get human-friendly name.
 ---
 --- - before_init: Callback with parameters (initialize_params, config)
 ---       invoked before the LSP "initialize" phase, where `params` contains the
@@ -1178,12 +1179,13 @@ function lsp.start_client(config)
   ---@param code (integer) Error code
   ---@param err (...) Other arguments may be passed depending on the error kind
   ---@see vim.lsp.rpc.client_errors for possible errors. Use
-  ---`vim.lsp.rpc.client_errors[code]` to get a human-friendly name.
+  ---`vim.lsp.rpc.client_errors_inv[code]` to get a human-friendly name.
   function dispatch.on_error(code, err)
+    local code_name = lsp.client_errors_inv[code]
     if log.error() then
-      log.error(log_prefix, 'on_error', { code = lsp.client_errors[code], err = err })
+      log.error(log_prefix, 'on_error', { code = code_name, err = err })
     end
-    err_message(log_prefix, ': Error ', lsp.client_errors[code], ': ', vim.inspect(err))
+    err_message(log_prefix, ': Error ', code_name, ': ', vim.inspect(err))
     if config.on_error then
       local status, usererr = pcall(config.on_error, code, err)
       if not status then

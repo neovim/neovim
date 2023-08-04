@@ -131,10 +131,6 @@ do
   end
 end
 
--- This is put here on purpose after the loop above so that it doesn't
--- interfere with iterating the levels
-vim.tbl_add_reverse_lookup(log.levels)
-
 --- Sets the current log level.
 ---@param level (string|integer) One of `vim.lsp.log.levels`
 function log.set_level(level)

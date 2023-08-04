@@ -796,24 +796,6 @@ describe('lua stdlib', function()
     eq({2}, exec_lua [[ return vim.list_extend({}, {2;a=1}, -1, 2) ]])
   end)
 
-  it('vim.tbl_add_reverse_lookup', function()
-    eq(true, exec_lua [[
-    local a = { A = 1 }
-    vim.tbl_add_reverse_lookup(a)
-    return vim.deep_equal(a, { A = 1; [1] = 'A'; })
-    ]])
-    -- Throw an error for trying to do it twice (run into an existing key)
-    local code = [[
-    local res = {}
-    local a = { A = 1 }
-    vim.tbl_add_reverse_lookup(a)
-    assert(vim.deep_equal(a, { A = 1; [1] = 'A'; }))
-    vim.tbl_add_reverse_lookup(a)
-    ]]
-    matches('The reverse lookup found an existing value for "[1A]" while processing key "[1A]"$',
-      pcall_err(exec_lua, code))
-  end)
-
   it('vim.spairs', function()
     local res = ''
     local table = {

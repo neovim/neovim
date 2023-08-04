@@ -1,11 +1,11 @@
 local M = {}
 
 --- Enumeration describing the types of events watchers will emit.
-M.FileChangeType = vim.tbl_add_reverse_lookup({
+M.FileChangeType = {
   Created = 1,
   Changed = 2,
   Deleted = 3,
-})
+}
 
 --- Joins filepath elements by static '/' separator
 ---

@@ -2113,18 +2113,6 @@ vim.startswith({s}, {prefix})                               *vim.startswith()*
     Return: ~
         (boolean) `true` if `prefix` is a prefix of `s`
 
-vim.tbl_add_reverse_lookup({o})                 *vim.tbl_add_reverse_lookup()*
-    Add the reverse lookup values to an existing table. For example:
-    `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
-
-    Note that this modifies the input.
-
-    Parameters: ~
-      • {o}  (table) Table to add the reverse to
-
-    Return: ~
-        (table) o
-
 vim.tbl_contains({t}, {value}, {opts})                    *vim.tbl_contains()*
     Checks if a table contains a given value, specified either directly or via
     a predicate that is checked for each value.
@@ -2242,6 +2230,19 @@ vim.tbl_get({o}, {...})                                        *vim.tbl_get()*
 
     Return: ~
         any Nested value indexed by key (if it exists), else nil
+
+vim.tbl_inv({t})                                               *vim.tbl_inv()*
+    Return the inverse table with the keys and values swapped Examples: >lua
+
+       vim.tbl_inv({ a = 1, b = 2, c = 3 })
+       -- == { [1] = 'a', [2] = 'b', [3] = 'c'}
+<
+
+    Parameters: ~
+      • {t}  (table) Table to invert
+
+    Return: ~
+        (table) Inverted table
 
 vim.tbl_isarray({t})                                       *vim.tbl_isarray()*
     Tests if a Lua table can be treated as an array (a table indexed by

@@ -2,6 +2,12 @@ local api, if_nil = vim.api, vim.F.if_nil
 
 local M = {}
 
+--- @alias DiagnosticSeverityName
+--- | 'ERROR'
+--- | 'WARN'
+--- | 'INFO'
+--- | 'HINT'
+
 ---@enum DiagnosticSeverity
 M.severity = {
   ERROR = 1,
@@ -10,7 +16,8 @@ M.severity = {
   HINT = 4,
 }
 
-vim.tbl_add_reverse_lookup(M.severity)
+--- @type table<integer,DiagnosticSeverityName>
+local severity_name = vim.tbl_inv(M.severity)
 
 -- Mappings from qflist/loclist error types to severities
 M.severity.E = M.severity.ERROR
@@ -195,9 +202,9 @@ local diagnostic_severities = {
 
 -- Make a map from DiagnosticSeverity -> Highlight Name
 local function make_highlight_map(base_name)
-  local result = {}
+  local result = {} --- @type table<DiagnosticSeverity,string>
   for k in pairs(diagnostic_severities) do
-    local name = M.severity[k]
+    local name = severity_name[k]
     name = name:sub(1, 1) .. name:sub(2):lower()
     result[k] = 'Diagnostic' .. base_name .. name
   end
@@ -220,9 +227,8 @@ local define_default_signs = (function()
 
     for severity, sign_hl_name in pairs(sign_highlight_map) do
       if vim.tbl_isempty(vim.fn.sign_getdefined(sign_hl_name)) then
-        local severity_name = M.severity[severity]
         vim.fn.sign_define(sign_hl_name, {
-          text = (severity_name or 'U'):sub(1, 1),
+          text = (severity_name[severity] or 'U'):sub(1, 1),
           texthl = sign_hl_name,
           linehl = '',
           numhl = '',
