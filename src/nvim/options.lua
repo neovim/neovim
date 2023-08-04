@@ -3029,6 +3029,7 @@ return {
       redraw = { 'current_window' },
       scope = { 'window' },
       short_desc = N_('markers used when \'foldmethod\' is "marker"'),
+      tags = { 'E536' },
       type = 'string',
     },
     {
@@ -6775,7 +6776,7 @@ return {
         if_true = "!,'100,<50,s10,h",
         doc = [[for
                Win32:  !,'100,<50,s10,h,rA:,rB:
-               others: !,'100,<50,s10,h)]],
+               others: !,'100,<50,s10,h]],
       },
       deny_duplicates = true,
       desc = [=[
@@ -7062,7 +7063,7 @@ return {
       abbreviation = 'shq',
       defaults = {
         if_true = '',
-        doc = [[""; Windows, when \'shell\'
+        doc = [[""; Windows, when 'shell'
                contains "sh" somewhere: "\""]],
       },
       desc = [=[

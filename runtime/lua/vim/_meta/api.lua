@@ -691,8 +691,8 @@ function vim.api.nvim_call_function(fn, args) end
 --- @param data string data to write. 8-bit clean: can contain NUL bytes.
 function vim.api.nvim_chan_send(chan, data) end
 
---- Clears all autocommands selected by {opts}. To delete autocmds see
---- `nvim_del_autocmd()`.
+--- Clear all autocommands that match the corresponding {opts}. To delete a
+--- particular autocmd, see `nvim_del_autocmd()`.
 ---
 --- @param opts vim.api.keyset.clear_autocmds Parameters
 ---             • event: (string|table) Examples:
@@ -919,9 +919,10 @@ function vim.api.nvim_del_augroup_by_id(id) end
 --- @param name string String The name of the group.
 function vim.api.nvim_del_augroup_by_name(name) end
 
---- Deletes an autocommand by id.
+--- Delete an autocommand by id.
+--- NOTE: Only autocommands created via the API have an id.
 ---
---- @param id integer Integer Autocommand id returned by `nvim_create_autocmd()`
+--- @param id integer Integer The id returned by nvim_create_autocmd
 function vim.api.nvim_del_autocmd(id) end
 
 --- Deletes the current line.

@@ -2584,7 +2584,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	overrule the 'foldlevel' value for specific files.
 	When the value is negative, it is not used.
 
-						*'foldmarker'* *'fmr'*
+					*'foldmarker'* *'fmr'* *E536*
 'foldmarker' 'fmr'	string	(default "{{{,}}}")
 			local to window
 	The start and end marker used when 'foldmethod' is "marker".  There
@@ -5038,7 +5038,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'shada'* *'sd'* *E526* *E527* *E528*
 'shada' 'sd'		string	(default for
                                    Win32:  !,'100,<50,s10,h,rA:,rB:
-                                   others: !,'100,<50,s10,h))
+                                   others: !,'100,<50,s10,h)
 			global
 	When non-empty, the shada file is read upon startup and written
 	when exiting Vim (see |shada-file|).  The string should be a comma-
@@ -5258,7 +5258,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'shellquote'* *'shq'*
-'shellquote' 'shq'	string	(default ""; Windows, when \'shell\'
+'shellquote' 'shq'	string	(default ""; Windows, when 'shell'
                                         contains "sh" somewhere: "\"")
 			global
 	Quoting character(s), put around the command passed to the shell, for
