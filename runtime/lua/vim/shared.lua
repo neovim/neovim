@@ -544,14 +544,9 @@ function vim.spairs(t)
   end
   table.sort(keys)
 
-  -- Return the iterator function.
-  -- TODO(justinmk): Return "iterator function, table {t}, and nil", like pairs()?
-  local i = 0
+  local it = vim.iter(t)
   return function()
-    i = i + 1
-    if keys[i] then
-      return keys[i], t[keys[i]]
-    end
+    return it:next()
   end
 end
 
