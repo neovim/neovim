@@ -3738,7 +3738,7 @@ jobresize({job}, {width}, {height})                                *jobresize()*
 		Fails if the job was not started with `"pty":v:true`.
 
 jobstart({cmd} [, {opts}])                                          *jobstart()*
-		Note: Prefer |vim.system()| in Lua.
+		Note: Prefer |vim.system()| in Lua (unless using the `pty` option).
 
 		Spawns {cmd} as a job.
 		If {cmd} is a List it runs directly (no 'shell').

@@ -3088,9 +3088,8 @@ vim.go.icon = vim.o.icon
 vim.o.iconstring = ""
 vim.go.iconstring = vim.o.iconstring
 
---- Ignore case in search patterns.  Also used when searching in the tags
---- file.
---- Also see 'smartcase' and 'tagcase'.
+--- Ignore case in search patterns, completion, and when searching the tags file.
+--- See also 'smartcase' and 'tagcase'.
 --- Can be overruled by using "\c" or "\C" in the pattern, see
 --- `/ignorecase`.
 ---

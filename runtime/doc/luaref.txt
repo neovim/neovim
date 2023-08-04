@@ -568,8 +568,7 @@ Binary operators comprise arithmetic operators (see |lua-arithmetic|),
 relational operators (see |lua-relational|), logical operators (see
 |lua-logicalop|), and the concatenation operator (see |lua-concat|).
 Unary operators comprise the unary minus (see |lua-arithmetic|), the unary
-`not` (see |lua-logicalop|), and the unary length operator (see
-|lua-length|).
+`not` (see |lua-logicalop|), and the unary length operator (see |lua-length|).
 
 Both function calls and vararg expressions may result in multiple values. If
 the expression is used as a statement (see |lua-funcstatement|)
@@ -690,7 +689,7 @@ according to the rules mentioned in |lua-coercion|. Otherwise, the
 "concat" metamethod is called (see |lua-metatable|).
 
 ------------------------------------------------------------------------------
-2.5.5  The Length Operator                                   *lua-length*
+2.5.5  The Length Operator                                   *lua-#* *lua-length*
 
 The length operator is denoted by the unary operator `#`. The length of a
 string is its number of bytes (that is, the usual meaning of string length
@@ -3505,7 +3504,7 @@ luaL_where                                                        *luaL_where()*
         This function is used to build a prefix for error messages.
 
 ==============================================================================
-5  STANDARD LIBRARIES                                               *lua-Lib*
+5  STANDARD LIBRARIES                                               *lua-lib*
 
 The standard libraries provide useful functions that are implemented directly
 through the C API. Some of these functions provide essential services to the
@@ -3653,8 +3652,8 @@ next({table} [, {index}])                               *next()*
         argument is absent, then it is interpreted as `nil`. In particular,
         you can use `next(t)` to check whether a table is empty.
 
-        The order in which the indices are enumerated is not specified, `even
-        for` `numeric indices`. (To traverse a table in numeric order, use a
+        The order in which the indices are enumerated is not specified, even
+        for numeric indices. (To traverse a table in numeric order, use a
         numerical `for` or the |ipairs()| function.)
 
         The behavior of `next` is `undefined` if, during the traversal, you
@@ -3759,7 +3758,7 @@ unpack({list} [, {i} [, {j}]])                          *unpack()*
 <
         except that the above code can be written only for a fixed number of
         elements. By default, {i} is 1 and {j} is the length of the list, as
-        defined by the length operator(see |lua-length|).
+        defined by the length operator (see |lua-length|).
 
 _VERSION                                                *_VERSION*
         A global variable (not a function) that holds a string containing the
@@ -4299,12 +4298,11 @@ table.remove({table} [, {pos}])                                 *table.remove()*
 
 table.sort({table} [, {comp}])                                    *table.sort()*
         Sorts table elements in a given order, `in-place`, from `table[1]` to
-        `table[n]`, where `n` is the length of the table (see
-        |lua-length|). If {comp} is given, then it must be a function
-        that receives two table elements, and returns true when the first is
-        less than the second (so that `not comp(a[i+1],a[i])` will be true
-        after the sort). If {comp} is not given, then the standard Lua
-        operator `<` is used instead.
+        `table[n]`, where `n` is the length of the table (see |lua-length|).
+        If {comp} is given, then it must be a function that receives two table
+        elements, and returns true when the first is less than the second (so
+        that `not comp(a[i+1],a[i])` will be true after the sort). If {comp}
+        is not given, then the standard Lua operator `<` is used instead.
 
 The sort algorithm is `not` stable, that is, elements considered equal by the
 given order may have their relative positions changed by the sort.

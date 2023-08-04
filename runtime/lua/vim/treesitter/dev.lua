@@ -597,8 +597,9 @@ function M.edit_query(lang)
   })
 
   api.nvim_buf_set_lines(query_buf, 0, -1, false, {
-    ';; Write your query here. Use @captures to highlight matches in the source buffer.',
-    ';; Completion for grammar nodes is available (see :h compl-omni)',
+    ';; Write queries here (see $VIMRUNTIME/queries/ for examples).',
+    ';; Move cursor to a capture ("@foo") to highlight matches in the source buffer.',
+    ';; Completion for grammar nodes is available (:help compl-omni)',
     '',
     '',
   })

@@ -1903,7 +1903,7 @@ function vim.api.nvim_set_hl_ns_fast(ns_id) end
 --- @param rhs string Right-hand-side `{rhs}` of the mapping.
 --- @param opts vim.api.keyset.keymap Optional parameters map: Accepts all `:map-arguments` as keys
 ---             except `<buffer>`, values are booleans (default false). Also:
----             • "noremap" non-recursive mapping `:noremap`
+---             • "noremap" disables `recursive_mapping`, like `:noremap`
 ---             • "desc" human-readable description.
 ---             • "callback" Lua function called in place of {rhs}.
 ---             • "replace_keycodes" (boolean) When "expr" is true, replace

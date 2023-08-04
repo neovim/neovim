@@ -312,6 +312,12 @@ See also |dev-naming|.
 - Avoid functions that depend on cursor position, current buffer, etc. Instead
   the function should take a position parameter, buffer parameter, etc.
 
+Where things go ~
+
+- API (libnvim/RPC): exposes low-level internals, or fundamental things (such
+  as `nvim_exec_lua()`) needed by clients or C consumers.
+- Lua stdlib = high-level functionality that builds on top of the API.
+
 NAMING GUIDELINES                                       *dev-naming*
 
 Naming is exceedingly important: the name of a thing is the primary interface

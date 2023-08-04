@@ -10,7 +10,7 @@ low-risk/isolated tasks:
 - Try a [complexity:low] issue.
 - Fix bugs found by [Clang](#clang-scan-build), [PVS](#pvs-studio) or
   [Coverity](#coverity).
-- [Improve documentation](#documenting)
+- [Improve documentation](#documentation)
 - [Merge a Vim patch] (requires strong familiarity with Vim)
   - NOTE: read the above link before sending improvements to "runtime files" (anything in `runtime/`).
     - Vimscript and documentation files are (mostly) maintained by [Vim](https://github.com/vim/vim), not Nvim.
@@ -267,8 +267,8 @@ to `runtime/lua/vim/_editor.lua` then:
 VIMRUNTIME=./runtime ./build/bin/nvim --luamod-dev
 ```
 
-Documenting
------------
+Documentation
+-------------
 
 Read [:help dev-doc][dev-doc-guide] to understand the expected documentation style and conventions.
 
@@ -287,10 +287,15 @@ If you need to modify or debug the documentation flow, these are the main files:
 - `./scripts/lua2dox.lua`:
   Used by `gen_vimdoc.py` to transform Lua files into a format compatible with doxygen.
 - `./scripts/gen_eval_files.lua`:
-  Generates documentation and Lua type files from metadata files including:
-    - Eval functions (`src/nvim/eval.lua`)
-    - Options (`src/nvim/options.lua`)
-    - API
+  Generates documentation and Lua type files from metadata files:
+  ```
+  runtime/lua/vim/*     =>  runtime/doc/lua.txt
+  runtime/lua/vim/*     =>  runtime/doc/lua.txt
+  runtime/lua/vim/lsp/  =>  runtime/doc/lsp.txt
+  src/nvim/api/*        =>  runtime/doc/api.txt
+  src/nvim/eval.lua     =>  runtime/doc/builtin.txt
+  src/nvim/options.lua  =>  runtime/doc/options.txt
+  ```
 
 ### Lua docstrings
 
