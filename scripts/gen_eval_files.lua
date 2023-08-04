@@ -31,6 +31,21 @@ local LUA_API_META_HEADER = {
   'vim.api = {}',
 }
 
+local LUA_OPTION_META_HEADER = {
+  '--- @meta',
+  '-- THIS FILE IS GENERATED',
+  '-- DO NOT EDIT',
+  "error('Cannot require a meta file')",
+  '',
+  '---@class vim.bo',
+  '---@field [integer] vim.bo',
+  'vim.bo = vim.bo',
+  '',
+  '---@class vim.wo',
+  '---@field [integer] vim.wo',
+  'vim.wo = vim.wo',
+}
+
 local LUA_KEYWORDS = {
   ['and'] = true,
   ['end'] = true,
@@ -39,6 +54,12 @@ local LUA_KEYWORDS = {
   ['if'] = true,
   ['while'] = true,
   ['repeat'] = true,
+}
+
+local OPTION_TYPES = {
+  bool = 'boolean',
+  number = 'integer',
+  string = 'string',
 }
 
 local API_TYPES = {
@@ -56,16 +77,20 @@ local API_TYPES = {
   void = '',
 }
 
+--- @param x string
+--- @param sep? string
+--- @return string[]
+local function split(x, sep)
+  return vim.split(x, sep or '\n', { plain = true })
+end
+
 --- Convert an API type to Lua
 --- @param t string
 --- @return string
 local function api_type(t)
-  if t:match('^ArrayOf%(([z-aA-Z]+), %d+%') then
-    print(t:match('^ArrayOf%(([z-aA-Z]+), %d+%'))
-  end
   local as0 = t:match('^ArrayOf%((.*)%)')
   if as0 then
-    local as = vim.split(as0, ', ', { plain = true })
+    local as = split(as0, ', ')
     return api_type(as[1]) .. '[]'
   end
 
@@ -84,6 +109,7 @@ end
 
 --- @param f string
 --- @param params {[1]:string,[2]:string}[]|true
+--- @return string
 local function render_fun_sig(f, params)
   local param_str --- @type string
   if params == true then
@@ -92,6 +118,7 @@ local function render_fun_sig(f, params)
     param_str = table.concat(
       vim.tbl_map(
         --- @param v {[1]:string,[2]:string}
+        --- @return string
         function(v)
           return v[1]
         end,
@@ -140,7 +167,7 @@ end
 --- @field annotations string[]
 
 --- @return table<string, vim.EvalFn>
-local function get_api_funcs()
+local function get_api_meta()
   local mpack_f = assert(io.open('build/api_metadata.mpack', 'rb'))
   local metadata = vim.mpack.decode(mpack_f:read('*all')) --[[@as vim.api.metadata[] ]]
   local ret = {} --- @type table<string, vim.EvalFn>
@@ -192,13 +219,15 @@ local function norm_text(x)
       :gsub('>vim', '\n```vim')
       :gsub('\n<$', '\n```')
       :gsub('\n<\n', '\n```\n')
+      :gsub('%s+>\n', '\n```\n')
+      :gsub('\n<%s+\n?', '\n```\n')
   )
 end
 
 --- @param _f string
 --- @param fun vim.EvalFn
 --- @param write fun(line: string)
-local function render_api_fun(_f, fun, write)
+local function render_api_meta(_f, fun, write)
   if not vim.startswith(fun.name, 'nvim_') then
     return
   end
@@ -215,7 +244,7 @@ local function render_api_fun(_f, fun, write)
 
   local desc = fun.desc
   if desc then
-    for _, l in ipairs(vim.split(norm_text(desc), '\n', { plain = true })) do
+    for _, l in ipairs(split(norm_text(desc))) do
       write('--- ' .. l)
     end
     write('---')
@@ -227,7 +256,7 @@ local function render_api_fun(_f, fun, write)
     param_names[#param_names + 1] = p[1]
     local pdesc = p[3]
     if pdesc then
-      local pdesc_a = vim.split(norm_text(pdesc), '\n', { plain = true })
+      local pdesc_a = split(norm_text(pdesc))
       write('--- @param ' .. p[1] .. ' ' .. p[2] .. ' ' .. pdesc_a[1])
       for i = 2, #pdesc_a do
         if not pdesc_a[i] then
@@ -252,7 +281,7 @@ local function render_api_fun(_f, fun, write)
 end
 
 --- @return table<string, vim.EvalFn>
-local function get_api_keysets()
+local function get_api_keysets_meta()
   local mpack_f = assert(io.open('build/api_metadata.mpack', 'rb'))
 
   --- @diagnostic disable-next-line:no-unknown
@@ -282,7 +311,7 @@ end
 --- @param _f string
 --- @param fun vim.EvalFn
 --- @param write fun(line: string)
-local function render_api_keyset(_f, fun, write)
+local function render_api_keyset_meta(_f, fun, write)
   write('')
   write('--- @class vim.api.keyset.' .. fun.name)
   for _, p in ipairs(fun.params) do
@@ -291,14 +320,14 @@ local function render_api_keyset(_f, fun, write)
 end
 
 --- @return table<string, vim.EvalFn>
-local function get_eval_funcs()
+local function get_eval_meta()
   return require('src/nvim/eval').funcs
 end
 
 --- @param f string
 --- @param fun vim.EvalFn
 --- @param write fun(line: string)
-local function render_vimfn(f, fun, write)
+local function render_eval_meta(f, fun, write)
   if fun.lua == false then
     return
   end
@@ -318,7 +347,7 @@ local function render_vimfn(f, fun, write)
     if desc then
       --- @type string
       desc = desc:gsub('\n%s*\n%s*$', '\n')
-      for _, l in ipairs(vim.split(desc, '\n', { plain = true })) do
+      for _, l in ipairs(split(desc)) do
         l = l:gsub('^      ', ''):gsub('\t', '  '):gsub('@', '\\@')
         write('--- ' .. l)
       end
@@ -401,10 +430,10 @@ local function render_eval_doc(f, fun, write)
   end
 
   desc = vim.trim(desc)
-  local desc_l = vim.split(desc, '\n', { plain = true })
+  local desc_l = split(desc)
   for _, l in ipairs(desc_l) do
     l = l:gsub('^      ', '')
-    if vim.startswith(l, '<') and not l:match('^<[A-Z][A-Z]') then
+    if vim.startswith(l, '<') and not l:match('^<[^ \t]+>') then
       write('<\t\t' .. l:sub(2))
     else
       write('\t\t' .. l)
@@ -416,10 +445,201 @@ local function render_eval_doc(f, fun, write)
   end
 end
 
+--- @param d vim.option_defaults
+--- @param vimdoc? boolean
+--- @return string
+local function render_option_default(d, vimdoc)
+  local dt --- @type integer|boolean|string|fun(): string
+  if d.if_false ~= nil then
+    dt = d.if_false
+  else
+    dt = d.if_true
+  end
+
+  if vimdoc then
+    if d.doc then
+      return d.doc
+    end
+    if type(dt) == 'boolean' then
+      return dt and 'on' or 'off'
+    end
+  end
+
+  if dt == "" or dt == nil or type(dt) == 'function' then
+    dt = d.meta
+  end
+
+  local v --- @type string
+  if not vimdoc then
+    v = vim.inspect(dt) --[[@as string]]
+  else
+    v = type(dt) == 'string' and '"'..dt..'"' or tostring(dt)
+  end
+
+  --- @type table<string, string|false>
+  local envvars = {
+    TMPDIR = false,
+    VIMRUNTIME = false,
+    XDG_CONFIG_HOME = vim.env.HOME..'/.local/config',
+    XDG_DATA_HOME = vim.env.HOME..'/.local/share',
+    XDG_STATE_HOME = vim.env.HOME..'/.local/state',
+  }
+
+  for name, default in pairs(envvars) do
+    local value = vim.env[name] or default
+    if value then
+      v = v:gsub(vim.pesc(value), '$'..name)
+    end
+  end
+
+  return v
+end
+
+--- @param _f string
+--- @param opt vim.option_meta
+--- @param write fun(line: string)
+local function render_option_meta(_f, opt, write)
+  write('')
+  for _, l in ipairs(split(norm_text(opt.desc))) do
+    write('--- '..l)
+  end
+
+  write('--- @type '..OPTION_TYPES[opt.type])
+  write('vim.o.'..opt.full_name..' = '..render_option_default(opt.defaults))
+  if opt.abbreviation then
+    write('vim.o.'..opt.abbreviation..' = vim.o.'..opt.full_name)
+  end
+
+  for _, s in pairs {
+    {'wo', 'window'},
+    {'bo', 'buffer'},
+    {'go', 'global'},
+  } do
+    local id, scope = s[1], s[2]
+    if vim.list_contains(opt.scope, scope) or (id == 'go' and #opt.scope > 1) then
+      local pfx = 'vim.'..id..'.'
+      write(pfx..opt.full_name..' = vim.o.'..opt.full_name)
+      if opt.abbreviation then
+        write(pfx..opt.abbreviation..' = '..pfx..opt.full_name)
+      end
+    end
+  end
+end
+
+--- @param s string[]
+--- @return string
+local function scope_to_doc(s)
+  local m = {
+    global = 'global',
+    buffer = 'local to buffer',
+    window = 'local to window',
+    tab = 'local to tab page'
+  }
+
+  if #s == 1 then
+    return m[s[1]]
+  end
+  assert(s[1] == 'global')
+  return 'global or '..m[s[2]]..' |global-local|'
+end
+
+--- @return table<string,vim.option_meta>
+local function get_option_meta()
+  local opts = require('src/nvim/options').options
+  local optinfo = vim.api.nvim_get_all_options_info()
+  local ret = {} --- @type table<string,vim.option_meta>
+  for _, o in ipairs(opts) do
+    if o.desc then
+      if o.full_name == 'cmdheight' then
+        table.insert(o.scope, 'tab')
+      end
+      local r = vim.deepcopy(o) --[[@as vim.option_meta]]
+      r.desc = o.desc:gsub('^        ', ''):gsub('\n        ', '\n')
+      r.defaults = r.defaults or {}
+      if r.defaults.meta == nil then
+        r.defaults.meta = optinfo[o.full_name].default
+      end
+      ret[o.full_name] = r
+    end
+  end
+  return ret
+end
+
+--- @param opt vim.option_meta
+--- @return string[]
+local function build_option_tags(opt)
+  --- @type string[]
+  local tags = { opt.full_name }
+
+  tags[#tags+1] = opt.abbreviation
+  if opt.type == 'bool' then
+    for i = 1, #tags do
+      tags[#tags+1] = 'no'..tags[i]
+    end
+  end
+
+  for i, t in ipairs(tags) do
+    tags[i] = "'"..t.."'"
+  end
+
+  for _, t in ipairs(opt.tags or {}) do
+    tags[#tags+1] = t
+  end
+
+  for i, t in ipairs(tags) do
+    tags[i] = "*"..t.."*"
+  end
+
+  return tags
+end
+
+--- @param _f string
+--- @param opt vim.option_meta
+--- @param write fun(line: string)
+local function render_option_doc(_f, opt, write)
+  local tags = build_option_tags(opt)
+  local tag_str = table.concat(tags, ' ')
+  local conceal_offset = 2*(#tags - 1)
+  local tag_pad = string.rep('\t', math.ceil((64 - #tag_str + conceal_offset) / 8))
+  -- local pad = string.rep(' ', 80 - #tag_str + conceal_offset)
+  write(tag_pad..tag_str)
+
+  local name_str --- @type string
+  if opt.abbreviation then
+    name_str = string.format("'%s' '%s'", opt.full_name, opt.abbreviation)
+  else
+    name_str = string.format("'%s'", opt.full_name)
+  end
+
+  local otype = opt.type == 'bool' and 'boolean' or opt.type
+  if opt.defaults.doc or opt.defaults.if_true ~= nil or opt.defaults.meta ~= nil then
+    local v = render_option_default(opt.defaults, true)
+    local pad = string.rep('\t', math.max(1, math.ceil((24 - #name_str) / 8)))
+    if opt.defaults.doc then
+      local deflen = #string.format('%s%s%s (', name_str, pad, otype)
+      --- @type string
+      v = v:gsub('\n', '\n'..string.rep(' ', deflen - 2))
+    end
+    write(string.format('%s%s%s\t(default %s)', name_str, pad, otype, v))
+  else
+    write(string.format('%s\t%s', name_str, otype))
+  end
+
+  write('\t\t\t'..scope_to_doc(opt.scope))
+  for _, l in ipairs(split(opt.desc)) do
+    if l == '<' or l:match('^<%s') then
+      write(l)
+    else
+      write('\t'..l:gsub('\\<', '<'))
+    end
+  end
+end
+
 --- @class nvim.gen_eval_files.elem
 --- @field path string
---- @field funcs fun(): table<string, vim.EvalFn>
---- @field render fun(f:string,fun:vim.EvalFn,write:fun(line:string))
+--- @field from? string Skip lines in path until this pattern is reached.
+--- @field funcs fun(): table<string, table>
+--- @field render fun(f:string,obj:table,write:fun(line:string))
 --- @field header? string[]
 --- @field footer? string[]
 
@@ -428,24 +648,24 @@ local CONFIG = {
   {
     path = 'runtime/lua/vim/_meta/vimfn.lua',
     header = LUA_META_HEADER,
-    funcs = get_eval_funcs,
-    render = render_vimfn,
+    funcs = get_eval_meta,
+    render = render_eval_meta,
   },
   {
     path = 'runtime/lua/vim/_meta/api.lua',
     header = LUA_API_META_HEADER,
-    funcs = get_api_funcs,
-    render = render_api_fun,
+    funcs = get_api_meta,
+    render = render_api_meta,
   },
   {
     path = 'runtime/lua/vim/_meta/api_keysets.lua',
     header = LUA_META_HEADER,
-    funcs = get_api_keysets,
-    render = render_api_keyset,
+    funcs = get_api_keysets_meta,
+    render = render_api_keyset_meta,
   },
   {
     path = 'runtime/doc/builtin.txt',
-    funcs = get_eval_funcs,
+    funcs = get_eval_meta,
     render = render_eval_doc,
     header = {
       '*builtin.txt*	Nvim',
@@ -489,10 +709,38 @@ local CONFIG = {
       ' vim:tw=78:ts=8:noet:ft=help:norl:',
     },
   },
+  {
+    path = 'runtime/lua/vim/_meta/options.lua',
+    header = LUA_OPTION_META_HEADER,
+    funcs = get_option_meta,
+    render = render_option_meta,
+  },
+  {
+    path = 'runtime/doc/options.txt',
+    header = { '' },
+    from = 'A jump table for the options with a short description can be found at |Q_op|.',
+    footer = {
+      ' vim:tw=78:ts=8:noet:ft=help:norl:'
+    },
+    funcs = get_option_meta,
+    render = render_option_doc,
+  }
 }
 
 --- @param elem nvim.gen_eval_files.elem
 local function render(elem)
+  print('Rendering '..elem.path)
+  local from_lines = {}  --- @type string[]
+  local from = elem.from
+  if from then
+    for line in io.lines(elem.path) do
+      from_lines[#from_lines+1] = line
+      if line:match(from) then
+        break
+      end
+    end
+  end
+
   local o = assert(io.open(elem.path, 'w'))
 
   --- @param l string
@@ -500,6 +748,10 @@ local function render(elem)
     local l1 = l:gsub('%s+$', '')
     o:write(l1)
     o:write('\n')
+  end
+
+  for _, l in ipairs(from_lines) do
+    write(l)
   end
 
   for _, l in ipairs(elem.header or {}) do

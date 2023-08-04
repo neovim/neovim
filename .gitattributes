@@ -8,6 +8,7 @@ runtime/doc/builtin.txt linguist-generated
 runtime/lua/vim/_meta/vimfn.lua linguist-generated
 runtime/lua/vim/_meta/api.lua linguist-generated
 runtime/lua/vim/_meta/api_keysets.lua linguist-generated
+runtime/lua/vim/_meta/options.lua linguist-generated
 
 src/xdiff/**    linguist-vendored
 src/cjson/**    linguist-vendored
