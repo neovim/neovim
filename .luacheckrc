@@ -48,5 +48,4 @@ exclude_files = {
   'runtime/lua/vim/_meta/api.lua',
   'runtime/lua/vim/re.lua',
   'src/nvim/eval.lua',
-  'src/nvim/options.lua',
 }

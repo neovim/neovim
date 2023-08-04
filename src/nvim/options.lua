@@ -78,6 +78,7 @@ local function N_(s) -- luacheck: ignore 211 (currently unused)
   end
 end
 
+-- luacheck: ignore 621
 return {
   cstr = cstr,
   --- @type vim.option_meta[]
